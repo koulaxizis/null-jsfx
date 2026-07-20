@@ -1,0 +1,15 @@
+desc:Phase Flip
+//tags: phase polarity flip invert reverse channel left right microphone stereo
+//author: Christos Koulaxizis
+
+slider1:0<0,1,1{Normal,Inverted}>Left Channel
+slider2:0<0,1,1{Normal,Inverted}>Right Channel
+
+in_pin:left input
+in_pin:right input
+out_pin:left output
+out_pin:right output
+
+@sample
+  spl0 = slider1 ? -spl0 : spl0;
+  spl1 = slider2 ? -spl1 : spl1;

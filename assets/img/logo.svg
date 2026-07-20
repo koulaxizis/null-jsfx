@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 80" width="320" height="80">
+  <defs>
+    <linearGradient id="nGrad" x1="0%" y1="100%" x2="0%" y2="0%">
+      <stop offset="0%" stop-color="#888888"/>
+      <stop offset="100%" stop-color="#aaaaaa"/>
+    </linearGradient>
+  </defs>
+  <rect x="0" y="0" width="80" height="80" rx="12" fill="#2d2d2d" stroke="#4a4a4a" stroke-width="1"/>
+  <path d="M 24,20 L 24,60 L 56,20 L 56,60" 
+        stroke="url(#nGrad)" 
+        stroke-width="6" 
+        stroke-linejoin="round" 
+        stroke-linecap="round" 
+        fill="none"/>
+  <text x="95" y="42" font-family="'Segoe UI', system-ui, sans-serif" font-size="24" font-weight="700" fill="#d4d4d4" letter-spacing="4">NULL JSFX</text>
+  <text x="97" y="62" font-family="'Segoe UI', system-ui, sans-serif" font-size="10" fill="#888888" letter-spacing="3" text-transform="uppercase">Audio Without Noise</text>
+</svg>

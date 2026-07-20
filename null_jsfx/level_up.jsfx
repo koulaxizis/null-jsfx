@@ -1,0 +1,60 @@
+desc:Level Up
+//tags: gain volume amplification boost level input output pad headroom loudness
+//author: Christos Koulaxizis
+
+slider1:0<-12,18,0.1>Input-Gain-dB
+slider2:0<-12,12,0.1>Output-Gain-dB
+slider3:0<0,1,1{Off,On}>Clip-Indicator
+slider4:0<0,1,1{None,-6,-12}>Input-Pad
+
+in_pin:left input
+in_pin:right input
+out_pin:left output
+out_pin:right output
+
+@init
+  DB2LIN = 0.11512925464970228420;
+  clip_peak_l = 0;
+  clip_peak_r = 0;
+  clip_decay = 0.995;
+  db2lin_pad = 1;
+
+@slider
+  pad_db = slider4 == 1 ? -6 : (slider4 == 2 ? -12 : 0);
+  db2lin_pad = exp(pad_db * DB2LIN);
+  
+  in_gain_lin = exp(slider1 * DB2LIN);
+  out_gain_lin = exp(slider2 * DB2LIN);
+
+@sample
+  il = spl0 * db2lin_pad * in_gain_lin;
+  ir = spl1 * db2lin_pad * in_gain_lin;
+
+  // Clip indicator tracking
+  clip_peak_l = clip_peak_l * clip_decay;
+  clip_peak_r = clip_peak_r * clip_decay;
+  
+  abs_l = abs(il);
+  abs_r = abs(ir);
+  
+  abs_l > clip_peak_l ? clip_peak_l = abs_l;
+  abs_r > clip_peak_r ? clip_peak_r = abs_r;
+  
+  // Output with clipping check
+  ol = il * out_gain_lin;
+  orr = ir * out_gain_lin;
+  
+  // Soft limit for clip indicator
+  slider3 ? (
+    ol = abs(ol) > 0.99 ? sign(ol) * 0.99 : ol;
+    orr = abs(orr) > 0.99 ? sign(orr) * 0.99 : orr;
+  );
+  
+  // Peak tracking for visualization (if expanded later)
+  out_peak_l = abs(ol);
+  out_peak_r = abs(orr);
+  out_peak_l > clip_peak_l ? clip_peak_l = out_peak_l;
+  out_peak_r > clip_peak_r ? clip_peak_r = out_peak_r;
+
+  spl0 = ol;
+  spl1 = orr;

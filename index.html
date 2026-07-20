@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NULL JSFX — Audio Without Noise</title>
+    <meta name="description" content="Premium audio effects for Cockos Reaper. Minimal design, maximum precision.">
+    <link rel="icon" type="image/svg+xml" href="assets/img/favicon.svg">
+    <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+    <main>
+        <header class="site-header">
+            <img src="assets/img/logo.svg" alt="NULL JSFX" class="site-icon">
+        </header>
+
+        <div class="platform-note">
+            <span>These plugins are designed exclusively for</span>
+            <a href="https://reaper.fm" target="_blank" rel="noopener">Cockos Reaper</a>
+        </div>
+
+        <div class="suite-features">
+            <span>EEL2 Scripting</span>
+            <span class="sep">&bull;</span>
+            <span>Native Sliders</span>
+            <span class="sep">&bull;</span>
+            <span>Zero Dependencies</span>
+            <span class="sep">&bull;</span>
+            <span>CPU Efficient</span>
+        </div>
+
+        <div class="download-section">
+            <a href="https://github.com/koulaxizis/null-jsfx/releases" target="_blank" rel="noopener" class="btn-download">Download</a>
+        </div>
+
+        <details class="install-guide">
+            <summary>How to install</summary>
+            <div class="install-content">
+                <p class="install-intro">After downloading, extract the <code>null-jsfx</code> folder to your Reaper Effects directory:</p>
+                <dl class="install-paths">
+                    <div class="install-os">
+                        <dt>Windows</dt>
+                        <dd><code>C:/Users/[Username]/AppData/Roaming/REAPER/Effects/</code></dd>
+                    </div>
+                    <div class="install-os">
+                        <dt>macOS</dt>
+                        <dd><code>~/Library/Application Support/REAPER/Effects/</code></dd>
+                    </div>
+                    <div class="install-os">
+                        <dt>Linux</dt>
+                        <dd><code>~/.config/REAPER/Effects/</code></dd>
+                    </div>
+                </dl>
+                <p class="install-note">Restart Reaper or re-scan your plugins folders. <strong>NULL JSFX</strong> will be available under the <strong>JS</strong> category in the FX browser.</p>
+            </div>
+        </details>
+
+        <section class="plugins">
+            <div class="plugin-grid">
+                <article class="plugin-card">
+                    <div class="plugin-icon">
+                        <svg viewBox="0 0 64 64" width="64" height="64">
+                            <defs>
+                                <linearGradient id="icon-lvlup" x1="0%" y1="100%" x2="0%" y2="0%">
+                                    <stop offset="0%" stop-color="#888888"/>
+                                    <stop offset="100%" stop-color="#aaaaaa"/>
+                                </linearGradient>
+                            </defs>
+                            <rect x="14" y="36" width="8" height="16" rx="2" fill="url(#icon-lvlup)" opacity="0.5"/>
+                            <rect x="28" y="26" width="8" height="26" rx="2" fill="url(#icon-lvlup)" opacity="0.7"/>
+                            <rect x="42" y="14" width="8" height="38" rx="2" fill="url(#icon-lvlup)"/>
+                        </svg>
+                    </div>
+                    <div class="plugin-info">
+                        <h3>LEVEL UP</h3>
+                        <p class="plugin-desc">Clean Gain &amp; Boost</p>
+                    </div>
+                </article>
+
+                <article class="plugin-card">
+                    <div class="plugin-icon">
+                        <svg viewBox="0 0 64 64" width="64" height="64">
+                            <defs>
+                                <linearGradient id="icon-phase" x1="0%" y1="100%" x2="0%" y2="0%">
+                                    <stop offset="0%" stop-color="#888888"/>
+                                    <stop offset="100%" stop-color="#aaaaaa"/>
+                                </linearGradient>
+                            </defs>
+                            <path d="M 22,48 L 22,16 L 16,22 M 22,16 L 28,22" stroke="url(#icon-phase)" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M 42,16 L 42,48 L 36,42 M 42,48 L 48,42" stroke="url(#icon-phase)" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round" opacity="0.5"/>
+                        </svg>
+                    </div>
+                    <div class="plugin-info">
+                        <h3>PHASE FLIP</h3>
+                        <p class="plugin-desc">Polarity Inverter</p>
+                    </div>
+                </article>
+
+                <article class="plugin-card coming-soon">
+                    <div class="plugin-icon">
+                        <svg viewBox="0 0 64 64" width="64" height="64">
+                            <defs>
+                                <linearGradient id="icon-soon" x1="0%" y1="100%" x2="0%" y2="0%">
+                                    <stop offset="0%" stop-color="#666666"/>
+                                    <stop offset="100%" stop-color="#888888"/>
+                                </linearGradient>
+                            </defs>
+                            <text x="32" y="42" font-family="'Segoe UI'" font-size="32" fill="url(#icon-soon)" text-anchor="middle">?</text>
+                        </svg>
+                    </div>
+                    <div class="plugin-info">
+                        <h3>Coming Soon</h3>
+                        <p class="plugin-desc">More tools in development</p>
+                    </div>
+                </article>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="footer-left">
+            <span>v0.2</span>
+            <span class="sep">&bull;</span>
+            <span id="last-update">Updated: 19/07/26</span>
+        </div>
+        <div class="footer-center">
+            NULL JSFX &bull; AUDIO WITHOUT NOISE
+        </div>
+        <div class="footer-right">
+            Made with &#9825; by <a href="https://koulaxizis.gr" target="_blank" rel="noopener">Christos Koulaxizis</a>
+        </div>
+    </footer>
+
+    <script>
+        const lastUpdateDate = document.getElementById('last-update');
+        lastUpdateDate.textContent = 'Updated: ' + new Date().toLocaleDateString('en-GB');
+    </script>
+</body>
+</html>
