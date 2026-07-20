@@ -1,0 +1,41 @@
+desc:DC Block
+//tags: dc offset highpass filter cleanup bias removal analog clean
+//author: Christos Koulaxizis
+
+slider1:20<10,100,1>Freq-(Hz)
+slider2:100<0,100,1>Mix-%
+
+in_pin:left input
+in_pin:right input
+out_pin:left output
+out_pin:right output
+
+@init
+  sample_rate = sr;
+  x_prev_l = 0;
+  x_prev_r = 0;
+  y_prev_l = 0;
+  y_prev_r = 0;
+  freq_hz = slider1;
+  alpha = 1 / (1 + 3.14159265358979 * freq_hz / sample_rate);
+  mix_pct = slider2 / 100;
+
+@slider
+  freq_hz = slider1;
+  mix_pct = slider2 / 100;
+  alpha = 1 / (1 + 3.14159265358979 * freq_hz / sample_rate);
+
+@sample
+  blocked_l = alpha * (y_prev_l + spl0 - x_prev_l);
+  blocked_r = alpha * (y_prev_r + spl1 - x_prev_r);
+  
+  x_prev_l = spl0;
+  x_prev_r = spl1;
+  y_prev_l = blocked_l;
+  y_prev_r = blocked_r;
+  
+  out_l = (1 - mix_pct) * spl0 + mix_pct * blocked_l;
+  out_r = (1 - mix_pct) * spl1 + mix_pct * blocked_r;
+  
+  spl0 = out_l;
+  spl1 = out_r;

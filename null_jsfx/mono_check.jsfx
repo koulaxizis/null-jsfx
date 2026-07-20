@@ -1,0 +1,32 @@
+desc:Mono Check
+//tags: mono stereo compatibility phase check width sum mixing master
+//author: Christos Koulaxizis
+
+slider1:0<0,1,1{Stereo,Mono}>Mode
+slider2:0<-12,12,0.1>Trim-(dB)
+
+in_pin:left input
+in_pin:right input
+out_pin:right output
+out_pin:right output
+
+@init
+  DB2LIN = 0.11512925464970228420;
+  trim_lin = 1;
+
+@slider
+  mode_mono = slider1;
+  trim_lin = exp(slider2 * DB2LIN);
+
+@sample
+  if (mode_mono) {
+    mono = (spl0 + spl1) * 0.707;
+    out_l = mono * trim_lin;
+    out_r = mono * trim_lin;
+  } else {
+    out_l = spl0 * trim_lin;
+    out_r = spl1 * trim_lin;
+  }
+  
+  spl0 = out_l;
+  spl1 = out_r;
