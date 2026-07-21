@@ -50,7 +50,7 @@ main {
 }
 
 .platform-note a {
-    color: var(--text);  /* Άλλαξε από var(--accent) σε var(--text) */
+    color: var(--text);
     text-decoration: none;
 }
 
@@ -78,6 +78,20 @@ main {
 .download-section {
     text-align: center;
     margin-bottom: 32px;
+}
+
+.download-meta {
+    margin-top: 12px;
+    font-size: 11px;
+    color: var(--muted);
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 14px;
+    background: rgba(35, 34, 32, 0.6);
+    border: 1px solid rgba(136, 136, 136, 0.3);
+    border-radius: 20px;
+    backdrop-filter: blur(4px);
 }
 
 .btn-download {
@@ -508,29 +522,41 @@ main {
     border-bottom: none;
 }
 
-/* Footer — Compact */
+/* Footer — Centered, Slim, Rounded Edges */
 .site-footer {
     max-width: 1200px;
     margin: 48px auto 0;
-    padding: 20px;
+    padding: 18px 20px;
     border-top: 1px solid var(--border);
+    position: relative;
+}
+
+.site-footer::before,
+.site-footer::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    width: 80px;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--border));
+}
+
+.site-footer::before {
+    left: 0;
+}
+
+.site-footer::after {
+    right: 0;
+    transform: scaleX(-1);
+}
+
+.footer-content {
     display: flex;
-    justify-content: space-between;
+    justify-content: center;
     align-items: center;
     font-size: 12px;
     color: var(--muted);
     gap: 16px;
-}
-
-.footer-left,
-.footer-right {
-    white-space: nowrap;
-}
-
-.footer-center {
-    flex: 1;
-    text-align: center;
-    white-space: nowrap;
 }
 
 .site-footer a {
@@ -589,12 +615,12 @@ main {
     }
 
     .site-footer {
-        flex-direction: column;
-        text-align: center;
+        padding: 16px 16px;
     }
 
-    .footer-center {
-        order: -1;
+    .footer-content {
+        font-size: 11px;
+        gap: 12px;
     }
 
     .install-paths {
