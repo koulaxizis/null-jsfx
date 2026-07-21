@@ -36,9 +36,9 @@ main {
 }
 
 .site-logo {
-    width: 120px;
+    width: 240px;
     height: auto;
-    max-height: 120px;
+    max-height: 240px;
 }
 
 /* Platform Note */
@@ -50,7 +50,7 @@ main {
 }
 
 .platform-note a {
-    color: var(--accent);
+    color: var(--text);  /* Άλλαξε από var(--accent) σε var(--text) */
     text-decoration: none;
 }
 
@@ -127,7 +127,7 @@ main {
     content: '+';
     float: right;
     font-weight: bold;
-    color: var(--accent);
+    color: #aaaaaa;
 }
 
 .install-guide[open] summary::after {
@@ -151,23 +151,34 @@ main {
 
 .install-paths {
     margin: 0 0 14px 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 24px;
+    justify-content: center;
 }
 
 .install-os {
-    margin-bottom: 8px;
+    margin-bottom: 0;
+    flex: 1;
+    min-width: 200px;
+    text-align: center;
 }
 
 .install-os dt {
     font-size: 12px;
     font-weight: 600;
     color: var(--text);
-    margin-bottom: 2px;
+    margin-bottom: 4px;
 }
 
 .install-os dd {
-    font-size: 12px;
+    font-size: 11px;
     color: var(--muted);
     margin-left: 0;
+    padding: 4px 8px;
+    background: var(--bg-secondary);
+    border-radius: 3px;
+    word-break: break-all;
 }
 
 .install-content code {
@@ -523,12 +534,48 @@ main {
 }
 
 .site-footer a {
-    color: var(--accent);
+    color: var(--text);
     text-decoration: none;
 }
 
 .site-footer a:hover {
     text-decoration: underline;
+}
+
+/* Back to Top Button */
+.back-to-top {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #555555, #444444);
+    color: #cccccc;
+    font-size: 18px;
+    font-weight: bold;
+    border: 1px solid #666666;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s, visibility 0.3s, transform 0.2s, box-shadow 0.2s;
+    z-index: 999;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.back-to-top.visible {
+    opacity: 0.6;
+    visibility: visible;
+}
+
+.back-to-top:hover {
+    background: linear-gradient(135deg, #666666, #555555);
+    opacity: 1;
+    transform: translateY(-3px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
 }
 
 /* Responsive */
@@ -549,8 +596,13 @@ main {
     .footer-center {
         order: -1;
     }
-    
-    .install-guide {
-        margin: 0 0 48px;
+
+    .install-paths {
+        flex-direction: column;
+    }
+
+    .back-to-top {
+        bottom: 16px;
+        right: 16px;
     }
 }

@@ -302,7 +302,7 @@ const guides = {
             { title: 'Narrow to mono', desc: '0% for club compatibility' }
         ]
     },
-        'auto-pan': {
+    'auto-pan': {
         title: 'AUTO PAN',
         desc: 'LFO Panning',
         sliders: [
@@ -332,7 +332,7 @@ const guides = {
 function openGuide(id) {
     const guide = guides[id];
     if (!guide) return;
-    
+
     const modalBody = document.getElementById('modal-body');
     modalBody.innerHTML = `
         <div class="guide-header">
@@ -361,7 +361,7 @@ function openGuide(id) {
             </div>
         </div>
     `;
-    
+
     document.getElementById('guide-modal').classList.add('active');
 }
 
@@ -380,5 +380,15 @@ document.getElementById('guide-modal').addEventListener('click', (e) => {
 document.querySelectorAll('.info-badge').forEach(badge => {
     badge.addEventListener('click', (e) => {
         e.stopPropagation();
+        const card = badge.closest('.plugin-card');
+        if (card) {
+            const onclickAttr = card.getAttribute('onclick');
+            if (onclickAttr) {
+                const match = onclickAttr.match(/'([^']+)'/);
+                if (match) {
+                    openGuide(match[1]);
+                }
+            }
+        }
     });
 });
