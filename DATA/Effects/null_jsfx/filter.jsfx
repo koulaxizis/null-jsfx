@@ -1,0 +1,60 @@
+desc:NULL Filter
+//tags: filter resonant low-pass high-pass band-pass notch
+//author: Christos Koulaxizis
+
+slider1:1000<20,20000,1>Cutoff-(Hz)
+slider2:1<0.1,10,0.1>Resonance
+slider3:0<-12,12,0.1>Gain-(dB)
+slider4:0<0,1,1>Mode
+slider5:0<0,1,1>Bypass
+
+in_pin:left input
+in_pin:right input
+out_pin:left output
+out_pin:right output
+
+@init
+  z1_l = 0; z2_l = 0;
+  z1_r = 0; z2_r = 0;
+
+@slider
+  cutoff_norm = slider1 / (sr / 2);
+  cutoff_norm = cutoff_norm > 0.95 ? 0.95 : cutoff_norm;
+  resonance = slider2 * 0.8;
+  filter_gain = pow(10, slider3 / 20);
+  mode = slider4;
+  q_factor = 1 / max(0.01, (1 - resonance * 0.9));
+
+@sample
+  freq_coef = 2 * 3.14159265358979 * cutoff_norm;
+  g = tan(freq_coef / 2);
+  g_inv = 1 / g;
+  
+  inp_l = spl0;
+  
+  hp_in = inp_l - z2_l;
+  hp = hp_in / (1 + g * g * q_factor);
+  bp = g * hp + z1_l;
+  lp = g * bp + z2_l;
+  
+  z1_l = bp + hp;
+  z2_l = lp + bp;
+  
+  out_l = mode == 0 ? lp : mode == 1 ? bp : mode == 2 ? hp : lp + bp * resonance;
+  out_l = out_l * filter_gain;
+  
+  inp_r = spl1;
+  
+  hp_in_r = inp_r - z2_r;
+  hp_r = hp_in_r / (1 + g * g * q_factor);
+  bp_r = g * hp_r + z1_r;
+  lp_r = g * bp_r + z2_r;
+  
+  z1_r = bp_r + hp_r;
+  z2_r = lp_r + bp_r;
+  
+  out_r = mode == 0 ? lp_r : mode == 1 ? bp_r : mode == 2 ? hp_r : lp_r + bp_r * resonance;
+  out_r = out_r * filter_gain;
+  
+  spl0 = slider5 > 0 ? spl0 : out_l;
+  spl1 = slider5 > 0 ? spl1 : out_r;

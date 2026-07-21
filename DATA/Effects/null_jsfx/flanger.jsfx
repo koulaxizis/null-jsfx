@@ -1,0 +1,59 @@
+desc:NULL Flanger
+//tags: flanger jet sweep modulation feedback
+//author: Christos Koulaxizis
+
+slider1:0.3<0.1,5,0.1>Rate-(Hz)
+slider2:5<1,20,0.1>Depth-ms
+slider3:50<0,100,1>Feedback-%
+slider4:40<0,100,1>Mix-%
+slider5:0<0,1,1>Bypass
+
+in_pin:left input
+in_pin:right input
+out_pin:left output
+out_pin:right output
+
+@init
+  buf_size = sr * 0.05;
+  wpos = 0;
+  phase = 0;
+  fb_l = 0;
+  fb_r = 0;
+end
+
+@slider
+  rate = slider1;
+  depth = slider2 * sr / 1000;
+  feedback_amt = slider3 / 100 * 0.7;
+  mix_amt = slider4 / 100;
+  lfo_freq = 2 * 3.14159265358979 * rate / sr;
+
+@sample
+  lfo = sin(phase);
+  phase = phase + lfo_freq;
+  phase = phase >= 6.28318530717958 ? phase - 6.28318530717958 : phase;
+  
+  mod_delay = depth + lfo * depth * 0.5;
+  mod_delay = mod_delay < 1 ? 1 : mod_delay;
+  
+  rpos = wpos - mod_delay;
+  rpos = rpos < 0 ? rpos + buf_size : rpos;
+  
+  rpos_int = floor(rpos);
+  rpos_frac = rpos - rpos_int;
+  
+  d1 = [rpos_int];
+  d2 = [rpos_int >= buf_size - 1 ? 0 : rpos_int + 1];
+  delayed = d1 + (d2 - d1) * rpos_frac;
+  
+  fb_combined = spl0 + fb_l * feedback_amt;
+  [wpos] = fb_combined;
+  wpos = wpos + 1;
+  wpos = wpos >= buf_size ? 0 : wpos;
+  fb_l = delayed;
+  
+  out_l = spl0 * (1 - mix_amt) + delayed * mix_amt;
+  out_r = spl1 * (1 - mix_amt) + delayed * mix_amt;
+  
+  spl0 = slider5 > 0 ? spl0 : out_l;
+  spl1 = slider5 > 0 ? spl1 : out_r;

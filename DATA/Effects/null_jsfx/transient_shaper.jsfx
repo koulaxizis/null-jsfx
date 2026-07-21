@@ -1,0 +1,54 @@
+desc:NULL Transient Shaper
+//tags: transient attack release envelope shaper percussive
+//author: Christos Koulaxizis
+
+slider1:0<-100,100,1>Attack
+slider2:0<-100,100,1>Sustain
+slider3:50<0,100,1>Threshold-%
+slider4:0<0,1,1>Bypass
+
+in_pin:left input
+in_pin:right input
+out_pin:left output
+out_pin:right output
+
+@init
+  env_peak = 0;
+  env_attack = 0;
+  env_release = 0;
+  threshold = 0.1;
+
+@slider
+  attack_mult = 1 + slider1 / 100 * 0.5;
+  sustain_mult = 1 + slider2 / 100 * 0.3;
+  threshold = slider3 / 100 * 0.5;
+  attack_coefs = 0.1;
+  release_coefs = 0.01;
+
+@sample
+  abs_val = abs(spl0);
+  env_peak = max(abs_val, env_peak * 0.995);
+  
+  if (abs_val > env_attack)
+    env_attack = env_attack + attack_coefs * (abs_val - env_attack);
+  else
+    env_attack = env_attack + release_coefs * (abs_val - env_attack);
+  fi
+  
+  ratio = env_attack > threshold ? attack_mult : sustain_mult;
+  out_l = spl0 * ratio;
+  
+  abs_val_r = abs(spl1);
+  env_peak_r = max(abs_val_r, env_peak_r * 0.995);
+  
+  if (abs_val_r > env_attack)
+    env_attack_r = env_attack_r + attack_coefs * (abs_val_r - env_attack_r);
+  else
+    env_attack_r = env_attack_r + release_coefs * (abs_val_r - env_attack_r);
+  fi
+  
+  ratio_r = env_attack_r > threshold ? attack_mult : sustain_mult;
+  out_r = spl1 * ratio_r;
+  
+  spl0 = slider4 > 0 ? spl0 : out_l;
+  spl1 = slider4 > 0 ? spl1 : out_r;

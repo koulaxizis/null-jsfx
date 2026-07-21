@@ -1,0 +1,44 @@
+desc:NULL Comb Filter
+//tags: comb filter resonant metallic flanger feedback
+//author: Christos Koulaxizis
+
+slider1:1000<20,8000,1>Frequency-(Hz)
+slider2:50<0,95,1>Feedback-%
+slider3:30<0,100,1>Mix-%
+slider4:0<0,1,1>Bypass
+
+in_pin:left input
+in_pin:right input
+out_pin:left output
+out_pin:right output
+
+@init
+  buf_size = sr * 0.05;
+  wpos = 0;
+  fb_l = 0;
+  fb_r = 0;
+
+@slider
+  delay_samples = sr / max(1, slider1);
+  delay_samples = delay_samples >= buf_size ? buf_size - 1 : delay_samples;
+  feedback_amt = slider2 / 100 * 0.95;
+  mix_amt = slider3 / 100;
+
+@sample
+  rpos = wpos - delay_samples;
+  rpos = rpos < 0 ? rpos + buf_size : rpos;
+  
+  delayed_l = buf_l[rpos];
+  delayed_r = buf_r[rpos];
+  
+  buf_l[wpos] = spl0 + feedback_amt * delayed_l;
+  buf_r[wpos] = spl1 + feedback_amt * delayed_r;
+  
+  wpos = wpos + 1;
+  wpos = wpos >= buf_size ? 0 : wpos;
+  
+  out_l = spl0 * (1 - mix_amt) + delayed_l * mix_amt;
+  out_r = spl1 * (1 - mix_amt) + delayed_r * mix_amt;
+  
+  spl0 = slider4 > 0 ? spl0 : out_l;
+  spl1 = slider4 > 0 ? spl1 : out_r;

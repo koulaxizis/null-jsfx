@@ -1,0 +1,39 @@
+desc:NULL Clipper
+//tags: clipper hard clip saturation mastering peak ceiling
+//author: Christos Koulaxizis
+
+slider1:-1<-24,0,0.1>Threshold-(dB)
+slider2:50<0,100,1>Softness-%
+slider3:0<-12,0,0.1>Output-Gain-(dB)
+slider4:0<0,1,1>Bypass
+
+in_pin:left input
+in_pin:right input
+out_pin:left output
+out_pin:right output
+
+@init
+  threshold_lin = 1;
+  softness = 0.5;
+  output_gain = 1;
+
+@slider
+  threshold_lin = pow(10, slider1 / 20);
+  softness = slider2 / 100;
+  output_gain = pow(10, slider3 / 20);
+
+@sample
+  inp_l = spl0;
+  inp_r = spl1;
+  
+  clipped_l = abs(inp_l) > threshold_lin ? (inp_l > 0 ? threshold_lin : -threshold_lin) : inp_l;
+  soft_clipped_l = inp_l * (1 - softness) + clipped_l * softness;
+  
+  clipped_r = abs(inp_r) > threshold_lin ? (inp_r > 0 ? threshold_lin : -threshold_lin) : inp_r;
+  soft_clipped_r = inp_r * (1 - softness) + clipped_r * softness;
+  
+  out_l = soft_clipped_l * output_gain;
+  out_r = soft_clipped_r * output_gain;
+  
+  spl0 = slider4 > 0 ? spl0 : out_l;
+  spl1 = slider4 > 0 ? spl1 : out_r;

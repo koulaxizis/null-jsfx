@@ -68,6 +68,10 @@
                     </div>
                 </dl>
                 <p class="install-note">Restart Reaper or re-scan your plugins folders. <strong>NULL JSFX</strong> will be available under the <strong>JS</strong> category in the FX browser.</p>
+                
+                <div class="install-tip">
+                    <strong>💡 Tip:</strong> To see all plugins organized in the FX explorer, filter by searching <code>"NULL"</code> or create a Smart Folder: Menu "View" → FX Browser → right-click on "Folders" → "Add folder" → "Smart folder" → Filter contains <code>"NULL"</code>. They will auto-categorize!
+                </div>
             </div>
         </details>
 		
@@ -575,6 +579,10 @@
                         </div>
                     </dl>
                     <p class="install-note">In Reaper: open the FX window, navigate to the <strong>FX Chains</strong> category in the left panel. Select your chain — all plugins load automatically in the correct order.</p>
+                    
+                    <div class="install-warning">
+                        <strong>⚠️ Important:</strong> For FX Chains to load correctly, the <code>null-jsfx</code> plugins must be installed in the Effects folder as a <em>subfolder</em> (not scattered files). Path example: <code>Effects/null-jsfx/*.jsfx</code>
+                    </div>
                 </div>
             </details>
 
@@ -583,7 +591,7 @@
                 <!-- Chain 1: VOCAL CHAIN -->
                 <article class="chain-card">
                     <div class="chain-icon">
-                        <svg viewBox="0 0 64 64" width="48" height="48">
+                                                <svg viewBox="0 0 64 64" width="48" height="48">
                             <defs><linearGradient id="chain-vocal" x1="0%" y1="100%" x2="0%" y2="0%"><stop offset="0%" stop-color="#888888"/><stop offset="100%" stop-color="#aaaaaa"/></linearGradient></defs>
                             <text x="32" y="42" font-family="'Segoe UI'" font-size="28" font-weight="bold" fill="url(#chain-vocal)" text-anchor="middle">V</text>
                             <circle cx="32" cy="24" r="6" stroke="url(#chain-vocal)" stroke-width="2" fill="none"/>
@@ -866,8 +874,6 @@
                             <defs><linearGradient id="chain-ambient" x1="0%" y1="100%" x2="0%" y2="0%"><stop offset="0%" stop-color="#888888"/><stop offset="100%" stop-color="#aaaaaa"/></linearGradient></defs>
                             <path d="M 8,36 Q 16,28 24,36 Q 32,44 40,36 Q 48,28 56,36" stroke="url(#chain-ambient)" stroke-width="2" fill="none" stroke-linecap="round" opacity="0.5"/>
                             <path d="M 8,32 Q 16,20 24,32 Q 32,44 40,32 Q 48,20 56,32" stroke="url(#chain-ambient)" stroke-width="2.5" fill="none" stroke-linecap="round"/>
-                                                        <path d="M 8,36 Q 16,28 24,36 Q 32,44 40,36 Q 48,28 56,36" stroke="url(#chain-ambient)" stroke-width="2" fill="none" stroke-linecap="round" opacity="0.5"/>
-                            <path d="M 8,32 Q 16,20 24,32 Q 32,44 40,32 Q 48,20 56,32" stroke="url(#chain-ambient)" stroke-width="2.5" fill="none" stroke-linecap="round"/>
                             <path d="M 8,28 Q 16,16 24,28 Q 32,40 40,28 Q 48,16 56,28" stroke="url(#chain-ambient)" stroke-width="1.5" fill="none" stroke-linecap="round" opacity="0.3"/>
                         </svg>
                     </div>
@@ -965,10 +971,10 @@
     </main>
 
     <footer class="site-footer">
-    <div class="footer-content">
-        Made with &#9825; by <a href="https://koulaxizis.gr" target="_blank" rel="noopener">Christos Koulaxizis</a>
-    </div>
-</footer>
+        <div class="footer-content">
+            Made with &#9825; by <a href="https://koulaxizis.gr" target="_blank" rel="noopener">Christos Koulaxizis</a>
+        </div>
+    </footer>
 
     <!-- Back to Top Button -->
     <button id="back-to-top" class="back-to-top" aria-label="Back to top">↑</button>

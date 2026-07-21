@@ -1,0 +1,45 @@
+desc:NULL Pitch Shifter
+//tags: pitch shift detune harmonizer transposition semitone
+//author: Christos Koulaxizis
+
+slider1:0<-12,12,1>Semitones
+slider2:50<0,100,1>Mix-%
+slider3:0<0,1,1>Bypass
+
+in_pin:left input
+in_pin:right input
+out_pin:left output
+out_pin:right output
+
+@init
+  buf_size = sr * 0.1;
+  wpos = 0;
+  readpos = 0;
+  phase = 0;
+
+@slider
+  semitones = slider1;
+  pitch_factor = pow(2, semitones / 12);
+  mix_amt = slider2 / 100;
+  playback_rate = pitch_factor;
+
+@sample
+  wpos = wpos + 1;
+  wpos = wpos >= buf_size ? 0 : wpos;
+  [wpos] = spl0;
+  
+  readpos = readpos + playback_rate;
+  readpos = readpos >= buf_size ? readpos - buf_size : readpos;
+  
+  rpos_int = floor(readpos);
+  rpos_frac = readpos - rpos_int;
+  
+  d1 = [rpos_int];
+  d2 = [rpos_int >= buf_size - 1 ? 0 : rpos_int + 1];
+  shifted = d1 + (d2 - d1) * rpos_frac;
+  
+  out_l = spl0 * (1 - mix_amt) + shifted * mix_amt;
+  out_r = spl1 * (1 - mix_amt) + shifted * mix_amt;
+  
+  spl0 = slider3 > 0 ? spl0 : out_l;
+  spl1 = slider3 > 0 ? spl1 : out_r;

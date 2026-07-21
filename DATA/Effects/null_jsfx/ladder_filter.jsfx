@@ -1,0 +1,62 @@
+desc:NULL Ladder Filter
+//tags: ladder filter moog analog low-pass resonance transistor
+//author: Christos Koulaxizis
+
+slider1:1000<20,20000,1>Cutoff-(Hz)
+slider2:3<0,10,0.1>Resonance
+slider3:0<0,1,1>Mode
+slider4:0<-12,12,0.1>Gain-(dB)
+slider5:0<0,1,1>Bypass
+
+in_pin:left input
+in_pin:right input
+out_pin:left output
+out_pin:right output
+
+@init
+  s1_l = 0; s2_l = 0; s3_l = 0; s4_l = 0;
+  s1_r = 0; s2_r = 0; s3_r = 0; s4_r = 0;
+  k = 1;
+
+@slider
+  wc = 2 * 3.14159265358979 * slider1 / sr;
+  g = 0.9892 * wc - 0.4342 * wc * wc + 0.1381 * wc * wc * wc;
+  g = g > 0.99 ? 0.99 : g;
+  g = g < 0.01 ? 0.01 : g;
+  k = 1 - slider2 * 0.09;
+  k = k < 0.1 ? 0.1 : k;
+  filter_gain = pow(10, slider4 / 20);
+  mode = slider3;
+
+@sample
+  inp_l = spl0;
+  inp_r = spl1;
+  
+  fb_l = s4_l * (1 - k);
+  inp_f_l = (inp_l - fb_l) * g;
+  s1_l = s1_l + inp_f_l;
+  s2_l = s2_l + (s1_l - s2_l) * g;
+  s3_l = s3_l + (s2_l - s3_l) * g;
+  s4_l = s4_l + (s3_l - s4_l) * g;
+  
+  lp_l = s4_l;
+  hp_l = inp_l - s4_l;
+  bp_l = s2_l - s4_l;
+  out_l = mode == 0 ? lp_l : mode > 0 ? bp_l : hp_l;
+  out_l = out_l * filter_gain;
+  
+  fb_r = s4_r * (1 - k);
+  inp_f_r = (inp_r - fb_r) * g;
+  s1_r = s1_r + inp_f_r;
+  s2_r = s2_r + (s1_r - s2_r) * g;
+  s3_r = s3_r + (s2_r - s3_r) * g;
+  s4_r = s4_r + (s3_r - s4_r) * g;
+  
+  lp_r = s4_r;
+  hp_r = inp_r - s4_r;
+  bp_r = s2_r - s4_r;
+  out_r = mode == 0 ? lp_r : mode > 0 ? bp_r : hp_r;
+  out_r = out_r * filter_gain;
+  
+  spl0 = slider5 > 0 ? spl0 : out_l;
+  spl1 = slider5 > 0 ? spl1 : out_r;

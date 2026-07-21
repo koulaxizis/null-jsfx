@@ -1,0 +1,46 @@
+desc:NULL Distortion
+//tags: distortion overdrive saturation drive grit
+//author: Christos Koulaxizis
+
+slider1:30<0,100,1>Drive-%
+slider2:0<-12,12,0.1>Tone-(dB)
+slider3:50<0,100,1>Mix-%
+slider4:0<0,1,1>Bypass
+
+in_pin:left input
+in_pin:right input
+out_pin:left output
+out_pin:right output
+
+@init
+  pre_gain = 1;
+  tone_filter = 0;
+
+@slider
+  drive = slider1 / 100 * 3;
+  pre_gain = pow(10, drive / 20);
+  tone_gain = pow(10, slider2 / 20);
+  mix_amt = slider3 / 100;
+
+@sample
+  input_l = spl0 * pre_gain;
+  input_r = spl1 * pre_gain;
+  
+  tan_l = tan(input_l * 0.5);
+  tan_r = tan(input_r * 0.5);
+  
+  soft_l = tan_l / (1 + abs(tan_l));
+  soft_r = tan_r / (1 + abs(tan_r));
+  
+  tone_l = tone_filter + 0.01 * (soft_l - tone_filter);
+  tone_r = tone_r + 0.01 * (soft_r - tone_r);
+  tone_filter = tone_l;
+  
+  out_l = soft_l * tone_gain;
+  out_r = soft_r * tone_gain;
+  
+  final_l = spl0 * (1 - mix_amt) + out_l * mix_amt;
+  final_r = spl1 * (1 - mix_amt) + out_r * mix_amt;
+  
+  spl0 = slider4 > 0 ? spl0 : final_l;
+  spl1 = slider4 > 0 ? spl1 : final_r;

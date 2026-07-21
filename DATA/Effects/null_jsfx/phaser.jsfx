@@ -1,0 +1,76 @@
+desc:NULL Phaser
+//tags: phaser modulation sweep notch moving filter
+//author: Christos Koulaxizis
+
+slider1:0.5<0.1,5,0.1>Rate-(Hz)
+slider2:5<1,20,0.1>Stages
+slider3:2<0.5,5,0.1>Depth
+slider4:30<0,100,1>Mix-%
+slider5:0<0,1,1>Bypass
+
+in_pin:left input
+in_pin:right input
+out_pin:left output
+out_pin:right output
+
+@init
+  allpass1 = 0; allpass2 = 1000; allpass3 = 2000; allpass4 = 3000;
+  w1 = 0; w2 = 0; w3 = 0; w4 = 0;
+  phase = 0;
+  a1_1 = 0; a1_r = 0;
+  a2_1 = 0; a2_r = 0;
+
+@slider
+  rate = slider1;
+  depth = slider2;
+  lfo_freq = 2 * 3.14159265358979 * rate / sr;
+  base_freq = 1000;
+  sweep_depth = depth;
+  mix_amt = slider4 / 100;
+
+@sample
+  lfo = sin(phase);
+  phase = phase + lfo_freq;
+  phase = phase >= 6.28318530717958 ? phase - 6.28318530717958 : phase;
+  
+  freq_mod = base_freq * (1 + lfo * sweep_depth * 0.3);
+  ap_coef = cos(2 * 3.14159265358979 * freq_mod / sr);
+  
+  inp_l = spl0;
+  out_l = inp_l;
+  
+  for (i = 0; i < 4; i++) {
+    rpos = w1 - i * 1000;
+    rpos = rpos < 0 ? rpos + 4000 : rpos;
+    delay_sig = [rpos];
+    feed = out_l - delay_sig;
+    out_l = feed * ap_coef + delay_sig;
+    [w1] = out_l;
+    w1 = w1 + 1;
+    w1 = w1 >= 4000 ? 0 : w1;
+  }
+  
+  wet_l = out_l;
+  dry_l = spl0;
+  final_l = dry_l * (1 - mix_amt) + wet_l * mix_amt;
+  
+  inp_r = spl1;
+  out_r = inp_r;
+  
+  for (i = 0; i < 4; i++) {
+    rpos = w2 - i * 1000;
+    rpos = rpos < 0 ? rpos + 4000 : rpos;
+    delay_sig = [rpos];
+    feed = out_r - delay_sig;
+    out_r = feed * ap_coef + delay_sig;
+    [w2] = out_r;
+    w2 = w2 + 1;
+    w2 = w2 >= 4000 ? 0 : w2;
+  }
+  
+  wet_r = out_r;
+  dry_r = spl1;
+  final_r = dry_r * (1 - mix_amt) + wet_r * mix_amt;
+  
+  spl0 = slider5 > 0 ? spl0 : final_l;
+  spl1 = slider5 > 0 ? spl1 : final_r;

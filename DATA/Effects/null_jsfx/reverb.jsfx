@@ -1,0 +1,96 @@
+desc:NULL Reverb
+//tags: reverb room space ambience hall plate decay
+//author: Christos Koulaxizis
+
+slider1:50<10,100,1>Room-Size-%
+slider2:50<0,100,1>Decay-%
+slider3:30<0,100,1>Damping-%
+slider4:30<0,100,1>Mix-%
+slider5:0<0,1,1>Bypass
+
+in_pin:left input
+in_pin:right input
+out_pin:left output
+out_pin:right output
+
+@init
+  cb1 = 0; cb2 = 10000; cb3 = 20000; cb4 = 30000;
+  ap1 = 40000; ap2 = 50000;
+  w1 = 0; w2 = 0; w3 = 0; w4 = 0;
+  wa1 = 0; wa2 = 0;
+  d1 = 0; d2 = 0; d3 = 0; d4 = 0;
+
+@slider
+  room = slider1 / 100;
+  cb1_d = 1687 * room + 1;
+  cb2_d = 1601 * room + 1;
+  cb3_d = 1483 * room + 1;
+  cb4_d = 1423 * room + 1;
+  ap1_d = 891 * room + 1;
+  ap2_d = 757 * room + 1;
+  fb = slider2 / 100 * 0.28 + 0.6;
+  damp_coef = slider3 / 100 * 0.4;
+  mix = slider4 / 100;
+  ap_fb = 0.7;
+
+@sample
+  orig_l = spl0;
+  orig_r = spl1;
+  input = (spl0 + spl1) * 0.5;
+  
+  r1 = w1 - cb1_d;
+  r1 = r1 < 0 ? r1 + cb1_d : r1;
+  c1 = cb1[r1];
+  d1 = d1 + damp_coef * (c1 - d1);
+  cb1[w1] = input + d1 * fb;
+  w1 = w1 + 1;
+  w1 = w1 >= cb1_d ? 0 : w1;
+  
+  r2 = w2 - cb2_d;
+  r2 = r2 < 0 ? r2 + cb2_d : r2;
+  c2 = cb2[r2];
+  d2 = d2 + damp_coef * (c2 - d2);
+  cb2[w2] = input + d2 * fb;
+  w2 = w2 + 1;
+  w2 = w2 >= cb2_d ? 0 : w2;
+  
+  r3 = w3 - cb3_d;
+  r3 = r3 < 0 ? r3 + cb3_d : r3;
+  c3 = cb3[r3];
+  d3 = d3 + damp_coef * (c3 - d3);
+  cb3[w3] = input + d3 * fb;
+  w3 = w3 + 1;
+  w3 = w3 >= cb3_d ? 0 : w3;
+  
+  r4 = w4 - cb4_d;
+  r4 = r4 < 0 ? r4 + cb4_d : r4;
+  c4 = cb4[r4];
+  d4 = d4 + damp_coef * (c4 - d4);
+  cb4[w4] = input + d4 * fb;
+  w4 = w4 + 1;
+  w4 = w4 >= cb4_d ? 0 : w4;
+  
+  comb_sum = c1 + c2 + c3 + c4;
+  
+  ra1 = wa1 - ap1_d;
+  ra1 = ra1 < 0 ? ra1 + ap1_d : ra1;
+  ap1_dly = ap1[ra1];
+  ap1[wa1] = comb_sum + ap1_dly * ap_fb;
+  ap1_out = ap1_dly - comb_sum * ap_fb;
+    wa1 = wa1 + 1;
+  wa1 = wa1 >= ap1_d ? 0 : wa1;
+  
+  ra2 = wa2 - ap2_d;
+  ra2 = ra2 < 0 ? ra2 + ap2_d : ra2;
+  ap2_dly = ap2[ra2];
+  ap2[wa2] = comb_sum + ap2_dly * ap_fb;
+  ap2_out = ap2_dly - comb_sum * ap_fb;
+  wa2 = wa2 + 1;
+  wa2 = wa2 >= ap2_d ? 0 : wa2;
+  
+  reverb = (ap1_out + ap2_out) * 0.5;
+  out_l = orig_l * (1 - mix) + reverb * mix;
+  out_r = orig_r * (1 - mix) + reverb * mix;
+  
+  spl0 = slider5 > 0 ? spl0 : out_l;
+  spl1 = slider5 > 0 ? spl1 : out_r;
