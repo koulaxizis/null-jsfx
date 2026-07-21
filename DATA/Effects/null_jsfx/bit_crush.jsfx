@@ -1,0 +1,47 @@
+desc:Bit Crush
+//tags: bitcrush lofi retro degrade quantize crusher
+//author: Christos Koulaxizis
+
+slider1:16<1,16,1>Bits
+slider2:44100<1000,44100,100>Sample-Rate-(Hz)
+
+in_pin:left input
+in_pin:right input
+out_pin:left output
+out_pin:right output
+
+@init
+  sample_rate = sr;
+  bits = slider1;
+  levels = pow(2, bits);
+  quant_step = 2 / levels;
+  
+  target_sr = slider2;
+  hold_counter = 0;
+  hold_value_l = 0;
+  hold_value_r = 0;
+  sr_ratio = sample_rate / target_sr;
+
+@slider
+  bits = slider1;
+  levels = pow(2, bits);
+  quant_step = 2 / levels;
+  
+  target_sr = slider2;
+  sr_ratio = sample_rate / target_sr;
+
+@sample
+  // Bit crushing (quantization)
+  quantized_l = floor(spl0 / quant_step + 0.5) * quant_step;
+  quantized_r = floor(spl1 / quant_step + 0.5) * quant_step;
+  
+  // Sample rate reduction (hold-and-sample)
+  hold_counter += 1;
+  if (hold_counter >= sr_ratio) (
+    hold_value_l = quantized_l;
+    hold_value_r = quantized_r;
+    hold_counter = 0;
+  );
+  
+  spl0 = hold_value_l;
+  spl1 = hold_value_r;

@@ -1,0 +1,30 @@
+desc:Tape Saturation
+//tags: tape saturation harmonic warmth vintage analog drive
+//author: Christos Koulaxizis
+
+slider1:0<0,100,1>Drive-%
+
+in_pin:left input
+in_pin:right input
+out_pin:left output
+out_pin:right output
+
+@init
+  drive_pct = slider1 / 100;
+  drive_gain = 1 + drive_pct * 3;
+  makeup_gain = 1;
+
+@slider
+  drive_pct = slider1 / 100;
+  drive_gain = 1 + drive_pct * 3;
+  makeup_gain = 1 + drive_pct * 0.5;
+
+@sample
+  driven_l = spl0 * drive_gain;
+  driven_r = spl1 * drive_gain;
+  
+  sat_l = tanh(driven_l);
+  sat_r = tanh(driven_r);
+  
+  spl0 = sat_l * makeup_gain;
+  spl1 = sat_r * makeup_gain;

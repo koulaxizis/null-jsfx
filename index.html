@@ -11,7 +11,7 @@
 <body>
     <main>
         <header class="site-header">
-            <img src="assets/img/logo.svg" alt="NULL JSFX" class="site-icon">
+            <img src="assets/img/logo.svg" alt="NULL JSFX" class="site-logo">
         </header>
 
         <div class="platform-note">
@@ -55,37 +55,40 @@
             </div>
         </details>
 
+        <!-- Modal Container -->
+        <div id="guide-modal" class="modal-overlay">
+            <div class="modal-content">
+                <button class="modal-close" onclick="closeModal()">&times;</button>
+                <div id="modal-body"></div>
+            </div>
+        </div>
+
         <section class="plugins">
+            <h2 class="section-title">Individual Plugins</h2>
             <div class="plugin-grid">
-                <article class="plugin-card">
+
+                <!-- Plugin 1: GAIN STAGE -->
+                <article class="plugin-card" onclick="openGuide('gain-stage')">
                     <div class="plugin-icon">
-                        <svg viewBox="0 0 64 64" width="64" height="64">
-                            <defs>
-                                <linearGradient id="icon-lvlup" x1="0%" y1="100%" x2="0%" y2="0%">
-                                    <stop offset="0%" stop-color="#888888"/>
-                                    <stop offset="100%" stop-color="#aaaaaa"/>
-                                </linearGradient>
-                            </defs>
-                            <rect x="14" y="36" width="8" height="16" rx="2" fill="url(#icon-lvlup)" opacity="0.5"/>
-                            <rect x="28" y="26" width="8" height="26" rx="2" fill="url(#icon-lvlup)" opacity="0.7"/>
-                            <rect x="42" y="14" width="8" height="38" rx="2" fill="url(#icon-lvlup)"/>
+                        <svg viewBox="0 0 64 64" width="48" height="48">
+                            <defs><linearGradient id="icon-gain" x1="0%" y1="100%" x2="0%" y2="0%"><stop offset="0%" stop-color="#888888"/><stop offset="100%" stop-color="#aaaaaa"/></linearGradient></defs>
+                            <rect x="14" y="36" width="8" height="16" rx="2" fill="url(#icon-gain)" opacity="0.5"/>
+                            <rect x="28" y="26" width="8" height="26" rx="2" fill="url(#icon-gain)" opacity="0.7"/>
+                            <rect x="42" y="14" width="8" height="38" rx="2" fill="url(#icon-gain)"/>
                         </svg>
                     </div>
                     <div class="plugin-info">
-                        <h3>LEVEL UP</h3>
+                        <h3>GAIN STAGE</h3>
                         <p class="plugin-desc">Clean Gain &amp; Boost</p>
+                        <span class="info-badge">?</span>
                     </div>
                 </article>
 
-                <article class="plugin-card">
+                <!-- Plugin 2: PHASE FLIP -->
+                <article class="plugin-card" onclick="openGuide('phase-flip')">
                     <div class="plugin-icon">
-                        <svg viewBox="0 0 64 64" width="64" height="64">
-                            <defs>
-                                <linearGradient id="icon-phase" x1="0%" y1="100%" x2="0%" y2="0%">
-                                    <stop offset="0%" stop-color="#888888"/>
-                                    <stop offset="100%" stop-color="#aaaaaa"/>
-                                </linearGradient>
-                            </defs>
+                        <svg viewBox="0 0 64 64" width="48" height="48">
+                            <defs><linearGradient id="icon-phase" x1="0%" y1="100%" x2="0%" y2="0%"><stop offset="0%" stop-color="#888888"/><stop offset="100%" stop-color="#aaaaaa"/></linearGradient></defs>
                             <path d="M 22,48 L 22,16 L 16,22 M 22,16 L 28,22" stroke="url(#icon-phase)" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
                             <path d="M 42,16 L 42,48 L 36,42 M 42,48 L 48,42" stroke="url(#icon-phase)" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round" opacity="0.5"/>
                         </svg>
@@ -93,18 +96,15 @@
                     <div class="plugin-info">
                         <h3>PHASE FLIP</h3>
                         <p class="plugin-desc">Polarity Inverter</p>
+                        <span class="info-badge">?</span>
                     </div>
                 </article>
 
-                <article class="plugin-card">
+                <!-- Plugin 3: DC BLOCK -->
+                <article class="plugin-card" onclick="openGuide('dc-block')">
                     <div class="plugin-icon">
-                        <svg viewBox="0 0 64 64" width="64" height="64">
-                            <defs>
-                                <linearGradient id="icon-dc" x1="0%" y1="100%" x2="0%" y2="0%">
-                                    <stop offset="0%" stop-color="#888888"/>
-                                    <stop offset="100%" stop-color="#aaaaaa"/>
-                                </linearGradient>
-                            </defs>
+                        <svg viewBox="0 0 64 64" width="48" height="48">
+                            <defs><linearGradient id="icon-dc" x1="0%" y1="100%" x2="0%" y2="0%"><stop offset="0%" stop-color="#888888"/><stop offset="100%" stop-color="#aaaaaa"/></linearGradient></defs>
                             <path d="M 8,32 Q 16,24 24,32 Q 32,40 40,32 Q 48,24 56,32" stroke="url(#icon-dc)" stroke-width="2.5" fill="none" stroke-linecap="round" opacity="0.4"/>
                             <path d="M 8,32 L 56,32" stroke="url(#icon-dc)" stroke-width="1.5" fill="none" stroke-dasharray="3,3"/>
                             <circle cx="32" cy="32" r="4" fill="url(#icon-dc)"/>
@@ -113,18 +113,15 @@
                     <div class="plugin-info">
                         <h3>DC BLOCK</h3>
                         <p class="plugin-desc">Offset Remover</p>
+                        <span class="info-badge">?</span>
                     </div>
                 </article>
 
-                <article class="plugin-card">
+                <!-- Plugin 4: MONO CHECK -->
+                <article class="plugin-card" onclick="openGuide('mono-check')">
                     <div class="plugin-icon">
-                        <svg viewBox="0 0 64 64" width="64" height="64">
-                            <defs>
-                                <linearGradient id="icon-mono" x1="0%" y1="100%" x2="0%" y2="0%">
-                                    <stop offset="0%" stop-color="#888888"/>
-                                    <stop offset="100%" stop-color="#aaaaaa"/>
-                                </linearGradient>
-                            </defs>
+                        <svg viewBox="0 0 64 64" width="48" height="48">
+                            <defs><linearGradient id="icon-mono" x1="0%" y1="100%" x2="0%" y2="0%"><stop offset="0%" stop-color="#888888"/><stop offset="100%" stop-color="#aaaaaa"/></linearGradient></defs>
                             <circle cx="24" cy="32" r="10" stroke="url(#icon-mono)" stroke-width="3" fill="none" opacity="0.5"/>
                             <circle cx="40" cy="32" r="10" stroke="url(#icon-mono)" stroke-width="3" fill="none" opacity="0.5"/>
                             <circle cx="32" cy="32" r="14" stroke="url(#icon-mono)" stroke-width="3" fill="none"/>
@@ -133,18 +130,409 @@
                     <div class="plugin-info">
                         <h3>MONO CHECK</h3>
                         <p class="plugin-desc">Compatibility Test</p>
+                        <span class="info-badge">?</span>
                     </div>
                 </article>
 
+                <!-- Plugin 5: LOW CUT -->
+                <article class="plugin-card" onclick="openGuide('low-cut')">
+                    <div class="plugin-icon">
+                        <svg viewBox="0 0 64 64" width="48" height="48">
+                            <defs><linearGradient id="icon-lowcut" x1="0%" y1="100%" x2="0%" y2="0%"><stop offset="0%" stop-color="#888888"/><stop offset="100%" stop-color="#aaaaaa"/></linearGradient></defs>
+                            <path d="M 8,20 Q 16,20 16,32 Q 16,44 24,44 L 56,44" stroke="url(#icon-lowcut)" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M 8,44 L 8,20" stroke="url(#icon-lowcut)" stroke-width="1.5" fill="none" stroke-dasharray="2,2" opacity="0.4"/>
+                        </svg>
+                    </div>
+                    <div class="plugin-info">
+                        <h3>LOW CUT</h3>
+                        <p class="plugin-desc">High-Pass Filter</p>
+                        <span class="info-badge">?</span>
+                    </div>
+                </article>
+
+                <!-- Plugin 6: HIGH CUT -->
+                <article class="plugin-card" onclick="openGuide('high-cut')">
+                    <div class="plugin-icon">
+                        <svg viewBox="0 0 64 64" width="48" height="48">
+                            <defs><linearGradient id="icon-highcut" x1="0%" y1="100%" x2="0%" y2="0%"><stop offset="0%" stop-color="#888888"/><stop offset="100%" stop-color="#aaaaaa"/></linearGradient></defs>
+                            <path d="M 8,44 Q 16,44 16,32 Q 16,20 24,20 L 56,20" stroke="url(#icon-highcut)" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M 8,20 L 8,44" stroke="url(#icon-highcut)" stroke-width="1.5" fill="none" stroke-dasharray="2,2" opacity="0.4"/>
+                        </svg>
+                    </div>
+                    <div class="plugin-info">
+                        <h3>HIGH CUT</h3>
+                        <p class="plugin-desc">Low-Pass Filter</p>
+                        <span class="info-badge">?</span>
+                    </div>
+                </article>
+
+                <!-- Plugin 7: CLICK REPAIR -->
+                <article class="plugin-card" onclick="openGuide('click-repair')">
+                    <div class="plugin-icon">
+                        <svg viewBox="0 0 64 64" width="48" height="48">
+                            <defs><linearGradient id="icon-click" x1="0%" y1="100%" x2="0%" y2="0%"><stop offset="0%" stop-color="#888888"/><stop offset="100%" stop-color="#aaaaaa"/></linearGradient></defs>
+                            <path d="M 8,32 L 24,32 L 28,12 L 32,52 L 36,20 L 40,32 L 56,32" stroke="url(#icon-click)" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </div>
+                    <div class="plugin-info">
+                        <h3>CLICK REPAIR</h3>
+                        <p class="plugin-desc">Artifact Remover</p>
+                        <span class="info-badge">?</span>
+                    </div>
+                </article>
+
+                <!-- Plugin 8: SOLO MUTE -->
+                <article class="plugin-card" onclick="openGuide('solo-mute')">
+                    <div class="plugin-icon">
+                        <svg viewBox="0 0 64 64" width="48" height="48">
+                            <defs><linearGradient id="icon-solo" x1="0%" y1="100%" x2="0%" y2="0%"><stop offset="0%" stop-color="#888888"/><stop offset="100%" stop-color="#aaaaaa"/></linearGradient></defs>
+                            <rect x="18" y="16" width="10" height="32" rx="2" stroke="url(#icon-solo)" stroke-width="3" fill="none"/>
+                            <rect x="36" y="16" width="10" height="32" rx="2" stroke="url(#icon-solo)" stroke-width="3" fill="none" opacity="0.4"/>
+                        </svg>
+                    </div>
+                    <div class="plugin-info">
+                        <h3>SOLO MUTE</h3>
+                        <p class="plugin-desc">Channel Isolator</p>
+                        <span class="info-badge">?</span>
+                    </div>
+                </article>
+
+                <!-- Plugin 9: NOTCH FILTER -->
+                <article class="plugin-card" onclick="openGuide('notch-filter')">
+                    <div class="plugin-icon">
+                        <svg viewBox="0 0 64 64" width="48" height="48">
+                            <defs><linearGradient id="icon-notch" x1="0%" y1="100%" x2="0%" y2="0%"><stop offset="0%" stop-color="#888888"/><stop offset="100%" stop-color="#aaaaaa"/></linearGradient></defs>
+                            <path d="M 8,32 L 24,32 L 28,16 L 36,16 L 40,32 L 56,32" stroke="url(#icon-notch)" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </div>
+                    <div class="plugin-info">
+                        <h3>NOTCH FILTER</h3>
+                        <p class="plugin-desc">Surgical EQ</p>
+                        <span class="info-badge">?</span>
+                    </div>
+                </article>
+
+                <!-- Plugin 10: PRE DELAY -->
+                <article class="plugin-card" onclick="openGuide('pre-delay')">
+                    <div class="plugin-icon">
+                        <svg viewBox="0 0 64 64" width="48" height="48">
+                            <defs><linearGradient id="icon-predelay" x1="0%" y1="100%" x2="0%" y2="0%"><stop offset="0%" stop-color="#888888"/><stop offset="100%" stop-color="#aaaaaa"/></linearGradient></defs>
+                            <path d="M 8,32 L 20,32" stroke="url(#icon-predelay)" stroke-width="3" fill="none" stroke-linecap="round"/>
+                            <path d="M 32,32 L 56,32" stroke="url(#icon-predelay)" stroke-width="3" fill="none" stroke-linecap="round" opacity="0.5"/>
+                            <circle cx="26" cy="32" r="3" fill="url(#icon-predelay)"/>
+                            <circle cx="38" cy="32" r="3" fill="url(#icon-predelay)" opacity="0.5"/>
+                        </svg>
+                    </div>
+                    <div class="plugin-info">
+                        <h3>PRE DELAY</h3>
+                        <p class="plugin-desc">Short Thickening</p>
+                        <span class="info-badge">?</span>
+                    </div>
+                </article>
+
+                <!-- Plugin 11: HARMONIC DRIVE -->
+                <article class="plugin-card" onclick="openGuide('harmonic-drive')">
+                    <div class="plugin-icon">
+                        <svg viewBox="0 0 64 64" width="48" height="48">
+                            <defs><linearGradient id="icon-harmonic" x1="0%" y1="100%" x2="0%" y2="0%"><stop offset="0%" stop-color="#888888"/><stop offset="100%" stop-color="#aaaaaa"/></linearGradient></defs>
+                            <path d="M 8,40 Q 16,40 16,32 Q 16,24 24,24 Q 32,24 32,32 Q 32,40 40,40 Q 48,40 48,28 Q 48,16 56,16" stroke="url(#icon-harmonic)" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+                            <path d="M 8,44 Q 16,44 16,36 Q 16,28 24,28 Q 32,28 32,36 Q 32,44 40,44 Q 48,44 48,32 Q 48,20 56,20" stroke="url(#icon-harmonic)" stroke-width="1.5" fill="none" stroke-linecap="round" opacity="0.4"/>
+                        </svg>
+                    </div>
+                    <div class="plugin-info">
+                        <h3>HARMONIC DRIVE</h3>
+                        <p class="plugin-desc">Warmth Exciter</p>
+                        <span class="info-badge">?</span>
+                    </div>
+                </article>
+
+                <!-- Plugin 12: AIR BOOST -->
+                <article class="plugin-card" onclick="openGuide('air-boost')">
+                    <div class="plugin-icon">
+                        <svg viewBox="0 0 64 64" width="48" height="48">
+                            <defs><linearGradient id="icon-air" x1="0%" y1="100%" x2="0%" y2="0%"><stop offset="0%" stop-color="#888888"/><stop offset="100%" stop-color="#aaaaaa"/></linearGradient></defs>
+                            <path d="M 8,40 L 20,40 L 24,24 L 28,44 L 32,20 L 36,40 L 56,40" stroke="url(#icon-air)" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M 8,40 L 56,40" stroke="url(#icon-air)" stroke-width="1" fill="none" stroke-dasharray="2,3" opacity="0.3"/>
+                        </svg>
+                    </div>
+                    <div class="plugin-info">
+                        <h3>AIR BOOST</h3>
+                        <p class="plugin-desc">High Shelf Sparkle</p>
+                        <span class="info-badge">?</span>
+                    </div>
+                </article>
+
+                <!-- Plugin 13: NOISE GATE -->
+                <article class="plugin-card" onclick="openGuide('noise-gate')">
+                    <div class="plugin-icon">
+                        <svg viewBox="0 0 64 64" width="48" height="48">
+                            <defs><linearGradient id="icon-gate" x1="0%" y1="100%" x2="0%" y2="0%"><stop offset="0%" stop-color="#888888"/><stop offset="100%" stop-color="#aaaaaa"/></linearGradient></defs>
+                            <path d="M 8,32 L 16,32 L 20,16 L 24,48 L 28,32 L 56,32" stroke="url(#icon-gate)" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M 8,44 L 56,44" stroke="url(#icon-gate)" stroke-width="1.5" fill="none" stroke-dasharray="3,3" opacity="0.4"/>
+                        </svg>
+                    </div>
+                    <div class="plugin-info">
+                        <h3>NOISE GATE</h3>
+                        <p class="plugin-desc">Floor Suppressor</p>
+                        <span class="info-badge">?</span>
+                    </div>
+                </article>
+
+                <!-- Plugin 14: SUB BOOST -->
+                <article class="plugin-card" onclick="openGuide('sub-boost')">
+                    <div class="plugin-icon">
+                        <svg viewBox="0 0 64 64" width="48" height="48">
+                            <defs><linearGradient id="icon-sub" x1="0%" y1="100%" x2="0%" y2="0%"><stop offset="0%" stop-color="#888888"/><stop offset="100%" stop-color="#aaaaaa"/></linearGradient></defs>
+                            <path d="M 8,40 Q 20,40 20,32 Q 20,24 32,24 Q 44,24 44,32 Q 44,40 56,40" stroke="url(#icon-sub)" stroke-width="3" fill="none" stroke-linecap="round"/>
+                            <path d="M 32,40 L 32,16" stroke="url(#icon-sub)" stroke-width="2" fill="none" stroke-linecap="round" opacity="0.5"/>
+                            <path d="M 28,20 L 32,14 L 36,20" stroke="url(#icon-sub)" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </div>
+                    <div class="plugin-info">
+                        <h3>SUB BOOST</h3>
+                        <p class="plugin-desc">Low Shelf Enhancer</p>
+                        <span class="info-badge">?</span>
+                    </div>
+                </article>
+
+                <!-- Plugin 15: MID PRESENCE -->
+                <article class="plugin-card" onclick="openGuide('mid-presence')">
+                    <div class="plugin-icon">
+                        <svg viewBox="0 0 64 64" width="48" height="48">
+                            <defs><linearGradient id="icon-mid" x1="0%" y1="100%" x2="0%" y2="0%"><stop offset="0%" stop-color="#888888"/><stop offset="100%" stop-color="#aaaaaa"/></linearGradient></defs>
+                            <path d="M 8,32 L 24,32 Q 28,32 28,24 Q 28,16 32,16 Q 36,16 36,24 Q 36,32 40,32 L 56,32" stroke="url(#icon-mid)" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </div>
+                    <div class="plugin-info">
+                        <h3>MID PRESENCE</h3>
+                        <p class="plugin-desc">Clarity Booster</p>
+                        <span class="info-badge">?</span>
+                    </div>
+                </article>
+
+                <!-- Plugin 16: CEILING LIMIT -->
+                <article class="plugin-card" onclick="openGuide('ceiling-limit')">
+                    <div class="plugin-icon">
+                        <svg viewBox="0 0 64 64" width="48" height="48">
+                            <defs><linearGradient id="icon-ceiling" x1="0%" y1="100%" x2="0%" y2="0%"><stop offset="0%" stop-color="#888888"/><stop offset="100%" stop-color="#aaaaaa"/></linearGradient></defs>
+                            <path d="M 8,16 L 56,16" stroke="url(#icon-ceiling)" stroke-width="3" fill="none" stroke-linecap="round"/>
+                            <path d="M 8,16 L 8,32 L 16,32 L 16,48 L 24,48 L 24,28 L 32,28 L 32,44 L 40,44 L 40,24 L 48,24 L 48,36 L 56,36" stroke="url(#icon-ceiling)" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" opacity="0.6"/>
+                        </svg>
+                    </div>
+                    <div class="plugin-info">
+                        <h3>CEILING LIMIT</h3>
+                        <p class="plugin-desc">Brickwall Protector</p>
+                        <span class="info-badge">?</span>
+                    </div>
+                </article>
+
+                <!-- Plugin 17: CHANNEL BALANCE -->
+                <article class="plugin-card" onclick="openGuide('channel-balance')">
+                    <div class="plugin-icon">
+                        <svg viewBox="0 0 64 64" width="48" height="48">
+                            <defs><linearGradient id="icon-balance" x1="0%" y1="100%" x2="0%" y2="0%"><stop offset="0%" stop-color="#888888"/><stop offset="100%" stop-color="#aaaaaa"/></linearGradient></defs>
+                            <rect x="16" y="20" width="12" height="28" rx="2" stroke="url(#icon-balance)" stroke-width="3" fill="none"/>
+                            <rect x="36" y="28" width="12" height="20" rx="2" stroke="url(#icon-balance)" stroke-width="3" fill="none" opacity="0.5"/>
+                        </svg>
+                    </div>
+                    <div class="plugin-info">
+                        <h3>CHANNEL BALANCE</h3>
+                        <p class="plugin-desc">L/R Level Trim</p>
+                        <span class="info-badge">?</span>
+                    </div>
+                </article>
+
+                <!-- Plugin 18: WIDE CUT -->
+                <article class="plugin-card" onclick="openGuide('wide-cut')">
+                    <div class="plugin-icon">
+                        <svg viewBox="0 0 64 64" width="48" height="48">
+                            <defs><linearGradient id="icon-widecut" x1="0%" y1="100%" x2="0%" y2="0%"><stop offset="0%" stop-color="#888888"/><stop offset="100%" stop-color="#aaaaaa"/></linearGradient></defs>
+                            <path d="M 8,32 L 20,32 Q 24,18 32,18 Q 40,18 44,32 L 56,32" stroke="url(#icon-widecut)" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M 8,32 Q 16,38 24,32 Q 32,26 40,32 Q 48,38 56,32" stroke="url(#icon-widecut)" stroke-width="1.5" fill="none" opacity="0.3"/>
+                        </svg>
+                    </div>
+                    <div class="plugin-info">
+                        <h3>WIDE CUT</h3>
+                        <p class="plugin-desc">Mud Remover</p>
+                        <span class="info-badge">?</span>
+                    </div>
+                </article>
+
+                <!-- Plugin 19: TAPE SATURATION -->
+                <article class="plugin-card" onclick="openGuide('tape-saturation')">
+                    <div class="plugin-icon">
+                        <svg viewBox="0 0 64 64" width="48" height="48">
+                            <defs><linearGradient id="icon-tape" x1="0%" y1="100%" x2="0%" y2="0%"><stop offset="0%" stop-color="#888888"/><stop offset="100%" stop-color="#aaaaaa"/></linearGradient></defs>
+                            <circle cx="20" cy="32" r="10" stroke="url(#icon-tape)" stroke-width="3" fill="none"/>
+                            <circle cx="44" cy="32" r="10" stroke="url(#icon-tape)" stroke-width="3" fill="none"/>
+                            <circle cx="20" cy="32" r="3" fill="url(#icon-tape)" opacity="0.5"/>
+                            <circle cx="44" cy="32" r="3" fill="url(#icon-tape)" opacity="0.5"/>
+                            <path d="M 30,32 L 34,32" stroke="url(#icon-tape)" stroke-width="3" stroke-linecap="round"/>
+                        </svg>
+                    </div>
+                    <div class="plugin-info">
+                        <h3>TAPE SATURATION</h3>
+                        <p class="plugin-desc">Analog Warmth</p>
+                        <span class="info-badge">?</span>
+                    </div>
+                </article>
+
+                <!-- Plugin 20: BIT CRUSH -->
+                <article class="plugin-card" onclick="openGuide('bit-crush')">
+                    <div class="plugin-icon">
+                        <svg viewBox="0 0 64 64" width="48" height="48">
+                            <defs><linearGradient id="icon-bitcrush" x1="0%" y1="100%" x2="0%" y2="0%"><stop offset="0%" stop-color="#888888"/><stop offset="100%" stop-color="#aaaaaa"/></linearGradient></defs>
+                            <path d="M 8,40 L 16,40 L 16,24 L 24,24 L 24,36 L 32,36 L 32,20 L 40,20 L 40,32 L 48,32 L 48,28 L 56,28" stroke="url(#icon-bitcrush)" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </div>
+                    <div class="plugin-info">
+                        <h3>BIT CRUSH</h3>
+                        <p class="plugin-desc">Lo-Fi Degradation</p>
+                        <span class="info-badge">?</span>
+                    </div>
+                </article>
+
+                <!-- Plugin 21: TREMOLO -->
+                <article class="plugin-card" onclick="openGuide('tremolo')">
+                    <div class="plugin-icon">
+                        <svg viewBox="0 0 64 64" width="48" height="48">
+                            <defs><linearGradient id="icon-tremolo" x1="0%" y1="100%" x2="0%" y2="0%"><stop offset="0%" stop-color="#888888"/><stop offset="100%" stop-color="#aaaaaa"/></linearGradient></defs>
+                            <path d="M 8,32 Q 16,16 24,32 Q 32,48 40,32 Q 48,16 56,32" stroke="url(#icon-tremolo)" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+                            <path d="M 8,32 L 56,32" stroke="url(#icon-tremolo)" stroke-width="1" fill="none" stroke-dasharray="2,3" opacity="0.3"/>
+                        </svg>
+                    </div>
+                    <div class="plugin-info">
+                        <h3>TREMOLO</h3>
+                        <p class="plugin-desc">Amplitude Modulation</p>
+                        <span class="info-badge">?</span>
+                    </div>
+                </article>
+
+                <!-- Plugin 22: COMPRESSOR -->
+                <article class="plugin-card" onclick="openGuide('compressor')">
+                    <div class="plugin-icon">
+                        <svg viewBox="0 0 64 64" width="48" height="48">
+                            <defs><linearGradient id="icon-compressor" x1="0%" y1="100%" x2="0%" y2="0%"><stop offset="0%" stop-color="#888888"/><stop offset="100%" stop-color="#aaaaaa"/></linearGradient></defs>
+                            <path d="M 8,32 L 20,32 Q 20,20 32,20 Q 44,20 44,32 L 56,32" stroke="url(#icon-compressor)" stroke-width="3" fill="none" stroke-linecap="round"/>
+                            <path d="M 8,44 L 20,44 Q 20,52 32,52 Q 44,52 44,44 L 56,44" stroke="url(#icon-compressor)" stroke-width="1.5" fill="none" stroke-linecap="round" opacity="0.4"/>
+                            <path d="M 32,16 L 32,12" stroke="url(#icon-compressor)" stroke-width="2" stroke-linecap="round"/>
+                            <path d="M 28,10 L 32,6 L 36,10" stroke="url(#icon-compressor)" stroke-width="2" fill="none"/>
+                        </svg>
+                    </div>
+                    <div class="plugin-info">
+                        <h3>COMPRESSOR</h3>
+                        <p class="plugin-desc">Dynamic Control</p>
+                        <span class="info-badge">?</span>
+                    </div>
+                </article>
+
+                <!-- Plugin 23: EXPANDER -->
+                <article class="plugin-card" onclick="openGuide('expander')">
+                    <div class="plugin-icon">
+                        <svg viewBox="0 0 64 64" width="48" height="48">
+                            <defs><linearGradient id="icon-expander" x1="0%" y1="100%" x2="0%" y2="0%"><stop offset="0%" stop-color="#888888"/><stop offset="100%" stop-color="#aaaaaa"/></linearGradient></defs>
+                            <path d="M 8,44 L 20,44 Q 20,32 32,32 Q 44,32 44,44 L 56,44" stroke="url(#icon-expander)" stroke-width="3" fill="none" stroke-linecap="round"/>
+                            <path d="M 8,20 L 20,20 Q 20,16 32,16 Q 44,16 44,20 L 56,20" stroke="url(#icon-expander)" stroke-width="1.5" fill="none" stroke-linecap="round" opacity="0.4"/>
+                        </svg>
+                    </div>
+                    <div class="plugin-info">
+                        <h3>EXPANDER</h3>
+                        <p class="plugin-desc">Downward Expansion</p>
+                        <span class="info-badge">?</span>
+                    </div>
+                </article>
+
+                <!-- Plugin 24: SOFT LIMIT -->
+                <article class="plugin-card" onclick="openGuide('soft-limit')">
+                    <div class="plugin-icon">
+                        <svg viewBox="0 0 64 64" width="48" height="48">
+                            <defs><linearGradient id="icon-softlimit" x1="0%" y1="100%" x2="0%" y2="0%"><stop offset="0%" stop-color="#888888"/><stop offset="100%" stop-color="#aaaaaa"/></linearGradient></defs>
+                            <path d="M 8,28 L 16,28 Q 20,44 32,44 Q 44,44 48,28 L 56,28" stroke="url(#icon-softlimit)" stroke-width="3" fill="none" stroke-linecap="round"/>
+                            <path d="M 8,28 L 56,28" stroke="url(#icon-softlimit)" stroke-width="1" fill="none" stroke-dasharray="2,2" opacity="0.3"/>
+                        </svg>
+                    </div>
+                    <div class="plugin-info">
+                        <h3>SOFT LIMIT</h3>
+                        <p class="plugin-desc">Transparent Ceiling</p>
+                        <span class="info-badge">?</span>
+                    </div>
+                </article>
+
+                <!-- Plugin 25: DE-ESSER -->
+                <article class="plugin-card" onclick="openGuide('de-esser')">
+                    <div class="plugin-icon">
+                        <svg viewBox="0 0 64 64" width="48" height="48">
+                            <defs><linearGradient id="icon-deesser" x1="0%" y1="100%" x2="0%" y2="0%"><stop offset="0%" stop-color="#888888"/><stop offset="100%" stop-color="#aaaaaa"/></linearGradient></defs>
+                            <text x="32" y="42" font-family="'Segoe UI'" font-size="28" font-weight="bold" fill="url(#icon-deesser)" text-anchor="middle">S</text>
+                            <path d="M 32,16 L 32,36" stroke="url(#icon-deesser)" stroke-width="2" stroke-linecap="round"/>
+                            <circle cx="32" cy="38" r="4" fill="url(#icon-deesser)" opacity="0.5"/>
+                        </svg>
+                    </div>
+                    <div class="plugin-info">
+                        <h3>DE-ESSER</h3>
+                        <p class="plugin-desc">Sibilance Control</p>
+                        <span class="info-badge">?</span>
+                    </div>
+                </article>
+
+                <!-- Plugin 26: STEREO WIDTH -->
+                <article class="plugin-card" onclick="openGuide('stereo-width')">
+                    <div class="plugin-icon">
+                        <svg viewBox="0 0 64 64" width="48" height="48">
+                            <defs><linearGradient id="icon-stereo" x1="0%" y1="100%" x2="0%" y2="0%"><stop offset="0%" stop-color="#888888"/><stop offset="100%" stop-color="#aaaaaa"/></linearGradient></defs>
+                            <circle cx="20" cy="32" r="8" stroke="url(#icon-stereo)" stroke-width="2" fill="none"/>
+                            <circle cx="44" cy="32" r="8" stroke="url(#icon-stereo)" stroke-width="2" fill="none"/>
+                            <path d="M 28,32 L 36,32" stroke="url(#icon-stereo)" stroke-width="3" stroke-linecap="round"/>
+                            <path d="M 12,32 L 8,32 M 56,32 L 60,32" stroke="url(#icon-stereo)" stroke-width="2" stroke-linecap="round"/>
+                        </svg>
+                    </div>
+                    <div class="plugin-info">
+                        <h3>STEREO WIDTH</h3>
+                        <p class="plugin-desc">Mid/Side Spread</p>
+                        <span class="info-badge">?</span>
+                    </div>
+                </article>
+
+                <!-- Plugin 27: AUTO PAN -->
+                <article class="plugin-card" onclick="openGuide('auto-pan')">
+                    <div class="plugin-icon">
+                        <svg viewBox="0 0 64 64" width="48" height="48">
+                            <defs><linearGradient id="icon-autopan" x1="0%" y1="100%" x2="0%" y2="0%"><stop offset="0%" stop-color="#888888"/><stop offset="100%" stop-color="#aaaaaa"/></linearGradient></defs>
+                            <path d="M 8,32 Q 16,20 24,32 Q 32,44 40,32 Q 48,20 56,32" stroke="url(#icon-autopan)" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+                            <circle cx="24" cy="32" r="3" fill="url(#icon-autopan)"/>
+                            <circle cx="40" cy="32" r="3" fill="url(#icon-autopan)"/>
+                            <path d="M 8,32 L 56,32" stroke="url(#icon-autopan)" stroke-width="1" fill="none" stroke-dasharray="2,3" opacity="0.3"/>
+                        </svg>
+                    </div>
+                    <div class="plugin-info">
+                        <h3>AUTO PAN</h3>
+                        <p class="plugin-desc">LFO Panning</p>
+                        <span class="info-badge">?</span>
+                    </div>
+                </article>
+
+                <!-- Plugin 28: VOCAL GATE -->
+                <article class="plugin-card" onclick="openGuide('vocal-gate')">
+                    <div class="plugin-icon">
+                        <svg viewBox="0 0 64 64" width="48" height="48">
+                            <defs><linearGradient id="icon-vocalgate" x1="0%" y1="100%" x2="0%" y2="0%"><stop offset="0%" stop-color="#888888"/><stop offset="100%" stop-color="#aaaaaa"/></linearGradient></defs>
+                            <text x="32" y="42" font-family="'Segoe UI'" font-size="28" font-weight="bold" fill="url(#icon-vocalgate)" text-anchor="middle">V</text>
+                            <path d="M 20,24 L 24,16 L 28,24" stroke="url(#icon-vocalgate)" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M 36,24 L 40,16 L 44,24" stroke="url(#icon-vocalgate)" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </div>
+                    <div class="plugin-info">
+                        <h3>VOCAL GATE</h3>
+                        <p class="plugin-desc">Voice Optimized</p>
+                        <span class="info-badge">?</span>
+                    </div>
+                </article>
+
+                <!-- Coming Soon Card -->
                 <article class="plugin-card coming-soon">
                     <div class="plugin-icon">
-                        <svg viewBox="0 0 64 64" width="64" height="64">
-                            <defs>
-                                <linearGradient id="icon-soon" x1="0%" y1="100%" x2="0%" y2="0%">
-                                    <stop offset="0%" stop-color="#666666"/>
-                                    <stop offset="100%" stop-color="#888888"/>
-                                </linearGradient>
-                            </defs>
+                        <svg viewBox="0 0 64 64" width="48" height="48">
+                            <defs><linearGradient id="icon-soon" x1="0%" y1="100%" x2="0%" y2="0%"><stop offset="0%" stop-color="#666666"/><stop offset="100%" stop-color="#888888"/></linearGradient></defs>
                             <text x="32" y="42" font-family="'Segoe UI'" font-size="32" fill="url(#icon-soon)" text-anchor="middle">?</text>
                         </svg>
                     </div>
@@ -153,15 +541,156 @@
                         <p class="plugin-desc">More tools in development</p>
                     </div>
                 </article>
+
             </div>
+        </section>
+
+        <!-- FX CHAINS SECTION -->
+        <section class="fx-chains">
+            <h2 class="section-title">FX Chains</h2>
+            <p class="chains-intro">Pre-configured plugin combinations for common workflows.</p>
+
+            <div class="chains-grid">
+                <article class="chain-card">
+                    <div class="chain-icon">
+                        <svg viewBox="0 0 64 64" width="48" height="48">
+                            <defs><linearGradient id="chain-vocal" x1="0%" y1="100%" x2="0%" y2="0%"><stop offset="0%" stop-color="#888888"/><stop offset="100%" stop-color="#aaaaaa"/></linearGradient></defs>
+                            <text x="32" y="42" font-family="'Segoe UI'" font-size="28" font-weight="bold" fill="url(#chain-vocal)" text-anchor="middle">V</text>
+                            <circle cx="32" cy="24" r="6" stroke="url(#chain-vocal)" stroke-width="2" fill="none"/>
+                            <path d="M 32,18 L 32,12" stroke="url(#chain-vocal)" stroke-width="2"/>
+                        </svg>
+                    </div>
+                    <div class="chain-info">
+                        <h3>VOCAL CHAIN</h3>
+                        <p class="chain-desc">Complete vocal processing</p>
+                        <ul class="chain-plugins">
+                            <li>1. GAIN STAGE</li>
+                            <li>2. NOISE GATE</li>
+                            <li>3. DE-ESSER</li>
+                            <li>4. COMPRESSOR</li>
+                            <li>5. MID PRESENCE</li>
+                            <li>6. CEILING LIMIT</li>
+                        </ul>
+                    </div>
+                </article>
+
+                <article class="chain-card">
+                    <div class="chain-icon">
+                        <svg viewBox="0 0 64 64" width="48" height="48">
+                            <defs><linearGradient id="chain-drums" x1="0%" y1="100%" x2="0%" y2="0%"><stop offset="0%" stop-color="#888888"/><stop offset="100%" stop-color="#aaaaaa"/></linearGradient></defs>
+                            <text x="32" y="42" font-family="'Segoe UI'" font-size="28" font-weight="bold" fill="url(#chain-drums)" text-anchor="middle">D</text>
+                            <circle cx="20" cy="32" r="8" stroke="url(#chain-drums)" stroke-width="2" fill="none"/>
+                            <circle cx="44" cy="32" r="8" stroke="url(#chain-drums)" stroke-width="2" fill="none"/>
+                        </svg>
+                    </div>
+                    <div class="chain-info">
+                        <h3>DRUM CHAIN</h3>
+                        <p class="chain-desc">Punchy drum bus</p>
+                        <ul class="chain-plugins">
+                            <li>1. GAIN STAGE</li>
+                            <li>2. LOW CUT</li>
+                            <li>3. COMPRESSOR</li>
+                            <li>4. SUB BOOST</li>
+                            <li>5. CEILING LIMIT</li>
+                        </ul>
+                    </div>
+                </article>
+
+                <article class="chain-card">
+                    <div class="chain-icon">
+                        <svg viewBox="0 0 64 64" width="48" height="48">
+                            <defs><linearGradient id="chain-guitar" x1="0%" y1="100%" x2="0%" y2="0%"><stop offset="0%" stop-color="#888888"/><stop offset="100%" stop-color="#aaaaaa"/></linearGradient></defs>
+                            <text x="32" y="42" font-family="'Segoe UI'" font-size="28" font-weight="bold" fill="url(#chain-guitar)" text-anchor="middle">G</text>
+                            <path d="M 20,44 Q 32,20 44,44" stroke="url(#chain-guitar)" stroke-width="3" fill="none"/>
+                        </svg>
+                    </div>
+                    <div class="chain-info">
+                        <h3>GUITAR CHAIN</h3>
+                        <p class="chain-desc">Rich guitar tone</p>
+                        <ul class="chain-plugins">
+                            <li>1. LOW CUT</li>
+                            <li>2. NOTCH FILTER</li>
+                            <li>3. HARMONIC DRIVE</li>
+                            <li>4. TAPE SATURATION</li>
+                            <li>5. AIR BOOST</li>
+                        </ul>
+                    </div>
+                </article>
+
+                <article class="chain-card">
+                    <div class="chain-icon">
+                        <svg viewBox="0 0 64 64" width="48" height="48">
+                            <defs><linearGradient id="chain-master" x1="0%" y1="100%" x2="0%" y2="0%"><stop offset="0%" stop-color="#888888"/><stop offset="100%" stop-color="#aaaaaa"/></linearGradient></defs>
+                            <text x="32" y="42" font-family="'Segoe UI'" font-size="28" font-weight="bold" fill="url(#chain-master)" text-anchor="middle">M</text>
+                            <rect x="16" y="24" width="12" height="20" stroke="url(#chain-master)" stroke-width="2" fill="none"/>
+                            <rect x="36" y="20" width="12" height="24" stroke="url(#chain-master)" stroke-width="2" fill="none"/>
+                        </svg>
+                    </div>
+                    <div class="chain-info">
+                        <h3>MASTER BUS</h3>
+                        <p class="chain-desc">Professional mastering</p>
+                        <ul class="chain-plugins">
+                            <li>1. GAIN STAGE</li>
+                            <li>2. WIDE CUT</li>
+                            <li>3. COMPRESSOR</li>
+                            <li>4. STEREO WIDTH</li>
+                            <li>5. CEILING LIMIT</li>
+                        </ul>
+                    </div>
+                </article>
+
+                <article class="chain-card">
+                    <div class="chain-icon">
+                        <svg viewBox="0 0 64 64" width="48" height="48">
+                            <defs><linearGradient id="chain-clean" x1="0%" y1="100%" x2="0%" y2="0%"><stop offset="0%" stop-color="#888888"/><stop offset="100%" stop-color="#aaaaaa"/></linearGradient></defs>
+                            <text x="32" y="42" font-family="'Segoe UI'" font-size="28" font-weight="bold" fill="url(#chain-clean)" text-anchor="middle">C</text>
+                            <circle cx="32" cy="32" r="14" stroke="url(#chain-clean)" stroke-width="2" fill="none"/>
+                            <path d="M 22,22 L 42,42 M 42,22 L 22,42" stroke="url(#chain-clean)" stroke-width="2"/>
+                        </svg>
+                    </div>
+                    <div class="chain-info">
+                        <h3>CLEANING CHAIN</h3>
+                        <p class="chain-desc">Audio restoration</p>
+                        <ul class="chain-plugins">
+                            <li>1. CLICK REPAIR</li>
+                            <li>2. DC BLOCK</li>
+                            <li>3. LOW CUT</li>
+                            <li>4. HIGH CUT</li>
+                            <li>5. NOISE GATE</li>
+                        </ul>
+                    </div>
+                </article>
+            </div>
+
+            <details class="install-guide">
+                <summary>How to install FX Chains</summary>
+                <div class="install-content">
+                    <p class="install-intro">Copy the <code>.fxchain</code> files to your Reaper FXChains folder:</p>
+                    <dl class="install-paths">
+                        <div class="install-os">
+                            <dt>Windows</dt>
+                            <dd><code>C:/Users/[Username]/AppData/Roaming/REAPER/FXChains/</code></dd>
+                        </div>
+                        <div class="install-os">
+                            <dt>macOS</dt>
+                            <dd><code>~/Library/Application Support/REAPER/FXChains/</code></dd>
+                        </div>
+                        <div class="install-os">
+                            <dt>Linux</dt>
+                            <dd><code>~/.config/REAPER/FXChains/</code></dd>
+                        </div>
+                    </dl>
+                    <p class="install-note">In Reaper: open the FX window, navigate to the <strong>FX Chains</strong> category in the left panel. Select your chain — all plugins load automatically in the correct order.</p>
+                </div>
+            </details>
         </section>
     </main>
 
     <footer class="site-footer">
         <div class="footer-left">
-            <span>v0.3</span>
+            <span>v0.7</span>
             <span class="sep">&bull;</span>
-            <span id="last-update">Updated: 19/07/26</span>
+            <span id="last-update">Updated: 21/07/26</span>
         </div>
         <div class="footer-center">
             NULL JSFX &bull; AUDIO WITHOUT NOISE
@@ -171,6 +700,7 @@
         </div>
     </footer>
 
+    <script src="assets/js/modals.js"></script>
     <script>
         const lastUpdateDate = document.getElementById('last-update');
         lastUpdateDate.textContent = 'Updated: ' + new Date().toLocaleDateString('en-GB');

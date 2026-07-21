@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<RAXFXCHAIN>
+  <ITEM id="1">
+    <PLUGIN>JS: GAIN STAGE</PLUGIN>
+    <STATE>
+      <SLIDER id="0">0.0</SLIDER>
+      <SLIDER id="1">0.0</SLIDER>
+      <SLIDER id="0">0</SLIDER>
+      <SLIDER id="1">0</SLIDER>
+    </STATE>
+  </ITEM>
+  <ITEM id="2">
+    <PLUGIN>JS: NOISE GATE</PLUGIN>
+    <STATE>
+      <SLIDER>-35.0</SLIDER>
+      <SLIDER>5.0</SLIDER>
+      <SLIDER>150.0</SLIDER>
+    </STATE>
+  </ITEM>
+  <ITEM id="3">
+    <PLUGIN>JS: DE-ESSER</PLUGIN>
+    <STATE>
+      <SLIDER>6000.0</SLIDER>
+      <SLIDER>-12.0</SLIDER>
+    </STATE>
+  </ITEM>
+  <ITEM id="4">
+    <PLUGIN>JS: COMPRESSOR</PLUGIN>
+    <STATE>
+      <SLIDER>-20.0</SLIDER>
+      <SLIDER>4.0</SLIDER>
+    </STATE>
+  </ITEM>
+  <ITEM id="5">
+    <PLUGIN>JS: MID PRESENCE</PLUGIN>
+    <STATE>
+      <SLIDER>2000.0</SLIDER>
+      <SLIDER>4.0</SLIDER>
+    </STATE>
+  </ITEM>
+  <ITEM id="6">
+    <PLUGIN>JS: CEILING LIMIT</PLUGIN>
+    <STATE>
+      <SLIDER>-0.3</SLIDER>
+      <SLIDER>1.0</SLIDER>
+    </STATE>
+  </ITEM>
+</RAXFXCHAIN>

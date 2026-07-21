@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<RAXFXCHAIN>
+  <ITEM id="1">
+    <PLUGIN>JS: GAIN STAGE</PLUGIN>
+  </ITEM>
+  <ITEM id="2">
+    <PLUGIN>JS: WIDE CUT</PLUGIN>
+    <STATE>
+      <SLIDER>300.0</SLIDER>
+      <SLIDER>-6.0</SLIDER>
+    </STATE>
+  </ITEM>
+  <ITEM id="3">
+    <PLUGIN>JS: COMPRESSOR</PLUGIN>
+    <STATE>
+      <SLIDER>-30.0</SLIDER>
+      <SLIDER>2.0</SLIDER>
+    </STATE>
+  </ITEM>
+  <ITEM id="4">
+    <PLUGIN>JS: STEREO WIDTH</PLUGIN>
+    <STATE>
+      <SLIDER>120.0</SLIDER>
+    </STATE>
+  </ITEM>
+  <ITEM id="5">
+    <PLUGIN>JS: CEILING LIMIT</PLUGIN>
+    <STATE>
+      <SLIDER>-0.5</SLIDER>
+      <SLIDER>3.0</SLIDER>
+    </STATE>
+  </ITEM>
+</RAXFXCHAIN>

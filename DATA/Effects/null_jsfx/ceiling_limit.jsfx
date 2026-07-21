@@ -1,0 +1,81 @@
+desc:Ceiling Limit
+//tags: limiter brickwall ceiling safety peak protection clipping
+//author: Christos Koulaxizis
+
+slider1:-0.3<-3.0,-0.1,0.1>Ceiling-(dB)
+slider2:1<0,5,0.1>Lookahead-(ms)
+
+in_pin:left input
+out_pin:right output
+out_pin:right output
+
+@init
+  sample_rate = sr;
+  DB2LIN = 0.11512925464970228420;
+  ceiling_db = slider1;
+  lookahead_ms = slider2;
+  ceiling_lin = pow(10, ceiling_db / 20);
+  
+  buffer_size = 1000;
+  delay_buffer[1000] = 0;
+  write_pos = 0;
+  lookahead_samples = int(lookahead_ms * sample_rate / 1000);
+  
+  gain_release = 0.99;
+  current_gain = 1;
+
+@slider
+  ceiling_db = slider1;
+  lookahead_ms = slider2;
+  ceiling_lin = pow(10, ceiling_db / 20);
+  lookahead_samples = int(lookahead_ms * sample_rate / 1000);
+  if (lookahead_samples >= buffer_size) lookahead_samples = buffer_size - 1;
+
+@sample
+  // Write current sample to delay buffer
+  delay_buffer[write_pos] = spl0;
+  
+  // Calculate lookahead gain
+  read_pos = (write_pos - lookahead_samples + buffer_size) % buffer_size;
+  lookahead_sample = delay_buffer[read_pos];
+  
+  // Determine required gain to avoid clipping
+  abs_sample = abs(lookahead_sample);
+  if (abs_sample > ceiling_lin) {
+    needed_gain = ceiling_lin / abs_sample;
+  } else {
+    needed_gain = 1;
+  }
+  
+  // Smooth gain changes (release)
+  if (needed_gain < current_gain) {
+    current_gain = needed_gain;
+  } else {
+    current_gain = current_gain * gain_release + needed_gain * (1 - gain_release);
+  }
+  
+  // Apply to current sample
+  out_l = spl0 * current_gain;
+  
+  // Right channel (linked processing)
+  delay_buffer[write_pos + buffer_size] = spl1;
+  lookahead_sample_r = delay_buffer[(read_pos + buffer_size) % buffer_size];
+  abs_sample_r = abs(lookahead_sample_r);
+  
+  if (abs_sample_r > ceiling_lin) {
+    needed_gain_r = ceiling_lin / abs_sample_r;
+  } else {
+    needed_gain_r = 1;
+  }
+  
+  if (needed_gain_r < current_gain) {
+    current_gain = needed_gain_r;
+  }
+  
+  out_r = spl1 * current_gain;
+  
+  // Update buffer position
+  write_pos = (write_pos + 1) % buffer_size;
+  
+  spl0 = out_l;
+  spl1 = out_r;

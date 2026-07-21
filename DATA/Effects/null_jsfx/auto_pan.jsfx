@@ -1,0 +1,38 @@
+desc:Auto Pan
+//tags: autopan pan modulation LFO movement stereo auto
+//author: Christos Koulaxizis
+
+slider1:2<0.1,10,0.1>Rate-(Hz)
+slider2:50<0,100,1>Depth-%
+
+in_pin:left input
+out_pin:right output
+out_pin:right output
+
+@init
+  sample_rate = sr;
+  rate_hz = slider1;
+  depth_pct = slider2 / 100;
+  phase = 0;
+  phase_inc = 2 * 3.14159265358979 * rate_hz / sample_rate;
+
+@slider
+  rate_hz = slider1;
+  depth_pct = slider2 / 100;
+  phase_inc = 2 * 3.14159265358979 * rate_hz / sample_rate;
+
+@sample
+  // LFO: sine wave from -depth to +depth
+  lfo = sin(phase);
+  phase += phase_inc;
+  if (phase > 2 * 3.14159265358979) phase -= 2 * 3.14159265358979;
+  
+  // Pan automation: L = 1 - depth + depth*sin, R = 1 - depth - depth*sin
+  l_pan = 1 - depth_pct + depth_pct * lfo;
+  r_pan = 1 - depth_pct - depth_pct * lfo;
+  
+  // Normalize to prevent level change
+  normalize = 1 / max(l_pan, r_pan);
+  
+  spl0 = spl0 * l_pan * normalize;
+  spl1 = spl1 * r_pan * normalize;

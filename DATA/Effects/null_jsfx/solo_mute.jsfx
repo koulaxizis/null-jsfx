@@ -1,0 +1,38 @@
+desc:Solo Mute
+//tags: solo mute channel isolation monitoring check A-B
+//author: Christos Koulaxizis
+
+slider1:0<0,1,1{Off,On}>Mute-L
+slider2:0<0,1,1{Off,On}>Mute-R
+slider3:0<0,1,1{Stereo,Solo}>Mode
+
+in_pin:left input
+in_pin:right input
+out_pin:left output
+out_pin:right output
+
+@slider
+  mute_l = slider1;
+  mute_r = slider2;
+  solo_mode = slider3;
+
+@sample
+  if (solo_mode) {
+    // Solo mode — only play selected channel
+    if (mute_l && !mute_r) {
+      spl0 = spl1;
+      spl1 = spl1;
+    } else if (!mute_l && mute_r) {
+      spl0 = spl0;
+      spl1 = spl0;
+    } else if (mute_l && mute_r) {
+      spl0 = 0;
+      spl1 = 0;
+    }
+  } else {
+    // Mute mode
+    out_l = mute_l ? 0 : spl0;
+    out_r = mute_r ? 0 : spl1;
+    spl0 = out_l;
+    spl1 = out_r;
+  }

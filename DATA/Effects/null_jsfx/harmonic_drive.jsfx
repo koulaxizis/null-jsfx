@@ -1,0 +1,33 @@
+desc:Harmonic Drive
+//tags: harmonics warmth saturation exciter tube tape glow drive
+//author: Christos Koulaxizis
+
+slider1:0<0,50,0.1>Amount-%
+slider2:0<-6,6,0.1>Tone-(dB)
+
+in_pin:left input
+in_pin:right input
+out_pin:left output
+out_pin:right output
+
+@init
+  DB2LIN = 0.11512925464970228420;
+  amount_pct = slider1 / 100;
+  tone_db = slider2;
+  tone_lin = exp(tone_db * DB2LIN);
+  tanh_coeff = 1.5;
+
+@slider
+  amount_pct = slider1 / 100;
+  tone_db = slider2;
+  tone_lin = exp(tone_db * DB2LIN);
+
+@sample
+  sat_l = tanh(spl0 * tanh_coeff);
+  sat_r = tanh(spl1 * tanh_coeff);
+  
+  mixed_l = (1 - amount_pct) * spl0 + amount_pct * sat_l;
+  mixed_r = (1 - amount_pct) * spl1 + amount_pct * sat_r;
+  
+  spl0 = mixed_l * tone_lin;
+  spl1 = mixed_r * tone_lin;

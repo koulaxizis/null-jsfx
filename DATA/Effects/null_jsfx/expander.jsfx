@@ -1,0 +1,60 @@
+desc:Expander
+//tags: expand dynamics noise reduction gate threshold ratio
+//author: Christos Koulaxizis
+
+slider1:-40<-60,0,0.1>Threshold-dB
+slider2:2<1,4,0.1>Ratio
+
+in_pin:left input
+out_pin:right output
+out_pin:right output
+
+@init
+  sample_rate = sr;
+  threshold_db = slider1;
+  ratio = slider2;
+  threshold_lin = pow(10, threshold_db / 20);
+  
+  attack_ms = 5;
+  release_ms = 200;
+  
+  attack_time = sample_rate * attack_ms / 1000;
+  release_time = sample_rate * release_ms / 1000;
+  
+  attack_coef = 1 - exp(-1 / max(1, attack_time));
+  release_coef = 1 - exp(-1 / max(1, release_time));
+  
+  gain_expansion = 1;
+  env_peak = 0;
+
+@slider
+  threshold_db = slider1;
+  ratio = slider2;
+  threshold_lin = pow(10, threshold_db / 20);
+
+@sample
+  // Peak detection
+  abs_l = abs(spl0);
+  env_l = max(abs_l, env_peak * 0.995);
+  env_peak = env_l;
+  
+  // Below threshold: expand downward
+  if (env_l < threshold_lin && ratio > 1) {
+    excess = (threshold_lin / env_l - 1) / ratio;
+    gain_needed = threshold_lin / (threshold_lin + excess * threshold_lin);
+    gain_needed = max(gain_needed, 0.1); // Minimum gain to avoid extreme quiet
+    
+    if (gain_needed < gain_expansion) {
+      gain_expansion = gain_expansion + attack_coef * (gain_needed - gain_expansion);
+    } else {
+      gain_expansion = gain_expansion + release_coef * (gain_needed - gain_expansion);
+    }
+  } else {
+    // Above threshold: restore to unity
+    if (gain_expansion < 1) {
+      gain_expansion = gain_expansion + release_coef * (1 - gain_expansion);
+    }
+  }
+  
+  spl0 = spl0 * gain_expansion;
+  spl1 = spl1 * gain_expansion;

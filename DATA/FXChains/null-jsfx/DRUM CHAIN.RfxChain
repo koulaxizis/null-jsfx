@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<RAXFXCHAIN>
+  <ITEM id="1">
+    <PLUGIN>JS: GAIN STAGE</PLUGIN>
+  </ITEM>
+  <ITEM id="2">
+    <PLUGIN>JS: LOW CUT</PLUGIN>
+    <STATE>
+      <SLIDER>80.0</SLIDER>
+      <SLIDER>0</SLIDER>
+    </STATE>
+  </ITEM>
+  <ITEM id="3">
+    <PLUGIN>JS: COMPRESSOR</PLUGIN>
+    <STATE>
+      <SLIDER>-15.0</SLIDER>
+      <SLIDER>8.0</SLIDER>
+    </STATE>
+  </ITEM>
+  <ITEM id="4">
+    <PLUGIN>JS: SUB BOOST</PLUGIN>
+    <STATE>
+      <SLIDER>80.0</SLIDER>
+      <SLIDER>6.0</SLIDER>
+    </STATE>
+  </ITEM>
+  <ITEM id="5">
+    <PLUGIN>JS: CEILING LIMIT</PLUGIN>
+    <STATE>
+      <SLIDER>-0.3</SLIDER>
+      <SLIDER>1.0</SLIDER>
+    </STATE>
+  </ITEM>
+</RAXFXCHAIN>

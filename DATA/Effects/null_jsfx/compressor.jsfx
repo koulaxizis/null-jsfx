@@ -1,0 +1,74 @@
+desc:Compressor
+//tags: compression dynamics leveling gain reduction threshold ratio
+//author: Christos Koulaxizis
+
+slider1:-20<-60,0,0.1>Threshold-dB
+slider2:4<1,20,0.1>Ratio
+
+in_pin:left input
+out_pin:right output
+out_pin:right output
+
+@init
+  sample_rate = sr;
+  DB2LIN = 0.11512925464970228420;
+  threshold_db = slider1;
+  ratio = slider2;
+  threshold_lin = pow(10, threshold_db / 20);
+  
+  knee_width = 6; // Fixed 6dB soft knee
+  attack_ms = 5;
+  release_ms = 100;
+  
+  attack_time = sample_rate * attack_ms / 1000;
+  release_time = sample_rate * release_ms / 1000;
+  
+  attack_coef = 1 - exp(-1 / max(1, attack_time));
+  release_coef = 1 - exp(-1 / max(1, release_time));
+  
+  gain_reduction = 1;
+  env_peak = 0;
+
+@slider
+  threshold_db = slider1;
+  ratio = slider2;
+  threshold_lin = pow(10, threshold_db / 20);
+
+@sample
+  // Peak detection
+  abs_l = abs(spl0);
+  abs_r = abs(spl1);
+  env_l = max(abs_l, env_peak * 0.995);
+  env_r = max(abs_r, env_peak * 0.995);
+  
+  // Determine required gain
+  gain_needed_l = env_l > threshold_lin ? threshold_lin / env_l : 1;
+  gain_needed_r = env_r > threshold_lin ? threshold_lin / env_r : 1;
+  
+  // Apply ratio
+  if (ratio > 1) {
+    excess_l = env_l > threshold_lin ? (env_l / threshold_lin - 1) / ratio : 0;
+    excess_r = env_r > threshold_lin ? (env_r / threshold_lin - 1) / ratio : 0;
+    
+    gain_l = threshold_lin / (threshold_lin + excess_l * threshold_lin);
+    gain_r = threshold_lin / (threshold_lin + excess_r * threshold_lin);
+  } else {
+    gain_l = 1;
+    gain_r = 1;
+  }
+  
+  // Smooth gain changes
+  if (gain_l < gain_reduction) {
+    gain_reduction = gain_reduction + attack_coef * (gain_l - gain_reduction);
+  } else {
+    gain_reduction = gain_reduction + release_coef * (gain_l - gain_reduction);
+  }
+  
+  if (gain_r < gain_reduction) {
+    gain_reduction = gain_reduction + attack_coef * (gain_r - gain_reduction);
+  } else {
+    gain_reduction = gain_reduction + release_coef * (gain_r - gain_reduction);
+  }
+  
+  spl0 = spl0 * gain_reduction;
+  spl1 = spl1 * gain_reduction;

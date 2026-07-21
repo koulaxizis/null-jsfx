@@ -1,0 +1,67 @@
+desc:Soft Limit
+//tags: limiter soft knee peak protection leveling transparent
+//author: Christos Koulaxizis
+
+slider1:-0.5<-3.0,0,0.1>Ceiling-dB
+slider2:3<1,10,0.1>Ratio
+
+in_pin:left input
+out_pin:right output
+out_pin:right output
+
+@init
+  sample_rate = sr;
+  DB2LIN = 0.11512925464970228420;
+  ceiling_db = slider1;
+  ratio = slider2;
+  ceiling_lin = pow(10, ceiling_db / 20);
+  
+  knee_width = 3; // 3dB soft knee
+  attack_ms = 1;
+  release_ms = 50;
+  
+  attack_time = sample_rate * attack_ms / 1000;
+  release_time = sample_rate * release_ms / 1000;
+  
+  attack_coef = 1 - exp(-1 / max(1, attack_time));
+  release_coef = 1 - exp(-1 / max(1, release_time));
+  
+  gain_smooth = 1;
+  env_peak = 0;
+
+@slider
+  ceiling_db = slider1;
+  ratio = slider2;
+  ceiling_lin = pow(10, ceiling_db / 20);
+
+@sample
+  // Peak detection
+  abs_l = abs(spl0);
+  abs_r = abs(spl1);
+  env_l = max(abs_l, env_peak * 0.995);
+  env_r = max(abs_r, env_peak * 0.995);
+  env_peak = max(env_l, env_r);
+  
+  // Soft knee calculation
+  above_knee = env_l - ceiling_lin + knee_width * ceiling_lin * 0.05;
+  
+  if (env_l > ceiling_lin) {
+    excess = (env_l - ceiling_lin) / (ceiling_lin * ratio);
+    gain_needed = 1 / (1 + excess);
+  } else {
+    // Soft knee roll-off
+    ratio_effective = 1 + (ratio - 1) * ((env_l - (ceiling_lin - knee_width * ceiling_lin * 0.05)) / (knee_width * ceiling_lin * 0.05));
+    gain_needed = 1 / (1 + (env_l / ceiling_lin - 1) * (ratio_effective - 1));
+  }
+  
+  gain_needed = min(gain_needed, 1);
+  gain_needed = max(gain_needed, 0.1);
+  
+  if (gain_needed < gain_smooth) {
+    gain_smooth = gain_smooth + attack_coef * (gain_needed - gain_smooth);
+  } else {
+    gain_smooth = gain_smooth + release_coef * (gain_needed - gain_smooth);
+  }
+  
+  spl0 = spl0 * gain_smooth;
+  spl1 = spl1 * gain_smooth;

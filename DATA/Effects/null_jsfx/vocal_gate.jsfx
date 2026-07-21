@@ -1,0 +1,65 @@
+desc:Vocal Gate
+//tags: vocal gate speech voice gate fast attack release talking
+//author: Christos Koulaxizis
+
+slider1:-35<-60,0,0.1>Threshold-dB
+slider2:5<1,50,1>Attack-ms
+slider3:150<50,500,10>Release-ms
+
+in_pin:left input
+out_pin:right output
+out_pin:right output
+
+@init
+  sample_rate = sr;
+  threshold_db = slider1;
+  attack_ms = slider2;
+  release_ms = slider3;
+  
+  threshold_lin = pow(10, threshold_db / 20);
+  
+  attack_time = sample_rate * attack_ms / 1000;
+  release_time = sample_rate * release_ms / 1000;
+  
+  attack_coef = 1 - exp(-1 / max(1, attack_time));
+  release_coef = 1 - exp(-1 / max(1, release_time));
+  
+  gate_level = 0;
+  env_peak = 0;
+
+@slider
+  threshold_db = slider1;
+  attack_ms = slider2;
+  release_ms = slider3;
+  
+  threshold_lin = pow(10, threshold_db / 20);
+  
+  attack_time = sample_rate * attack_ms / 1000;
+  release_time = sample_rate * release_ms / 1000;
+  
+  attack_coef = 1 - exp(-1 / max(1, attack_time));
+  release_coef = 1 - exp(-1 / max(1, release_time));
+
+@sample
+  // Fast envelope detection for voice
+  abs_l = abs(spl0);
+  env_l = max(abs_l, env_peak * 0.99);
+  env_peak = env_l;
+  
+  // Above threshold: open gate
+  if (env_l > threshold_lin) {
+    if (gate_level < 1) {
+      gate_level = gate_level + attack_coef * (1 - gate_level);
+    }
+  } else {
+    // Below threshold: close gate
+    if (gate_level > 0) {
+      gate_level = gate_level + release_coef * (0 - gate_level);
+    }
+  }
+  
+  // Soft floor (prevent complete silence)
+  gate_level = max(gate_level, 0.05);
+  
+  spl0 = spl0 * gate_level;
+  spl1 = spl1 * gate_level;

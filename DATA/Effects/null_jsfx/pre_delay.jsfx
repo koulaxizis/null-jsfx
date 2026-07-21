@@ -1,0 +1,43 @@
+desc:Pre Delay
+//tags: delay thickening vocal pre echo short depth
+//author: Christos Koulaxizis
+
+slider1:10<1,50,0.1>Time-(ms)
+slider2:30<0,100,1>Mix-%
+
+in_pin:left input
+in_pin:right input
+out_pin:left output
+out_pin:right output
+
+@init
+  sample_rate = sr;
+  buffer_size = 1000;
+  delay_l[1000] = 0;
+  delay_r[1000] = 0;
+  write_pos = 0;
+  time_ms = slider1;
+  mix_pct = slider2 / 100;
+  delay_samples = int(time_ms * sample_rate / 1000);
+
+@slider
+  time_ms = slider1;
+  mix_pct = slider2 / 100;
+  delay_samples = int(time_ms * sample_rate / 1000);
+  if (delay_samples >= buffer_size) delay_samples = buffer_size - 1;
+
+@sample
+  read_pos = (write_pos - delay_samples + buffer_size) % buffer_size;
+  delayed_l = delay_l[read_pos];
+  delayed_r = delay_r[read_pos];
+  
+  delay_l[write_pos] = spl0;
+  delay_r[write_pos] = spl1;
+  
+  out_l = (1 - mix_pct) * spl0 + mix_pct * delayed_l;
+  out_r = (1 - mix_pct) * spl1 + mix_pct * delayed_r;
+  
+  spl0 = out_l;
+  spl1 = out_r;
+  
+  write_pos = (write_pos + 1) % buffer_size;

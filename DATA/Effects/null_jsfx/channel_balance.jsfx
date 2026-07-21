@@ -1,0 +1,27 @@
+desc:Channel Balance
+//tags: balance stereo trim L-R left-right independent level correction
+//author: Christos Koulaxizis
+
+slider1:0<-6,6,0.1>Left-(dB)
+slider2:0<-6,6,0.1>Right-(dB)
+
+in_pin:left input
+out_pin:right output
+out_pin:right output
+
+@init
+  DB2LIN = 0.11512925464970228420;
+  left_gain_db = slider1;
+  right_gain_db = slider2;
+  left_lin = exp(left_gain_db * DB2LIN);
+  right_lin = exp(right_gain_db * DB2LIN);
+
+@slider
+  left_gain_db = slider1;
+  right_gain_db = slider2;
+  left_lin = exp(left_gain_db * DB2LIN);
+  right_lin = exp(right_gain_db * DB2LIN);
+
+@sample
+  spl0 = spl0 * left_lin;
+  spl1 = spl1 * right_lin;
