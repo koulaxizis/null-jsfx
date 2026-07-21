@@ -78,14 +78,19 @@ main {
 .download-section {
     text-align: center;
     margin-bottom: 32px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 }
 
+/* Download Meta — From Below Download Button */
 .download-meta {
     margin-top: 12px;
     font-size: 11px;
     color: var(--muted);
-    display: inline-flex;
+    display: flex;
     align-items: center;
+    justify-content: center;
     gap: 8px;
     padding: 6px 14px;
     background: rgba(35, 34, 32, 0.6);
@@ -556,7 +561,6 @@ main {
     align-items: center;
     font-size: 12px;
     color: var(--muted);
-    gap: 16px;
 }
 
 .site-footer a {
@@ -620,7 +624,6 @@ main {
 
     .footer-content {
         font-size: 11px;
-        gap: 12px;
     }
 
     .install-paths {
