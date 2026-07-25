@@ -1,11 +1,12 @@
-desc:NULL Tremolo
-//tags: tremolo amplitude modulation LFO rhythmic pulsing
+desc:NULL Ring Mod
+//tags: ringmod ring modulator amplitude modulation metallic carrier
 //author: Christos Koulaxizis
 //Collection: NULL JSFX
 
 slider1:5<0.1,20,0.1>Rate-(Hz)
-slider2:50<0,100,1>Depth-%
-slider3:40<0,100,1>Mix-%
+slider2:200<100,2000,10>Carrier-Freq-(Hz)
+slider3:50<0,100,1>Depth-%
+slider4:40<0,100,1>Mix-%
 
 in_pin:left input
 in_pin:right input
@@ -17,18 +18,18 @@ out_pin:right output
 
 @slider
   rate = slider1;
-  depth_pct = slider2 / 100;
-  mix_amt = slider3 / 100;
+  carrier_freq = slider2;
+  depth_pct = slider3 / 100;
+  mix_amt = slider4 / 100;
   phase_inc = 6.28318530717958 * rate / srate;
 
 @sample
   phase >= 6.28318530717958 ? (phase = phase - 6.28318530717958;);
-  lfo = sin(phase);
+  carrier = sin(phase * carrier_freq / rate);
   phase = phase + phase_inc;
   
-  amplitude = 1 - depth_pct + depth_pct * lfo;
-  proc_l = spl0 * amplitude;
-  proc_r = spl1 * amplitude;
+  proc_l = spl0 * carrier * depth_pct;
+  proc_r = spl1 * carrier * depth_pct;
   
   out_l = spl0 * (1 - mix_amt) + proc_l * mix_amt;
   out_r = spl1 * (1 - mix_amt) + proc_r * mix_amt;

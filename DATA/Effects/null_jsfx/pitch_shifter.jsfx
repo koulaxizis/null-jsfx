@@ -1,10 +1,12 @@
 desc:NULL Pitch Shifter
-//tags: pitch shift detune harmonizer transposition semitone
-//author: Christos Koulaxizis
+//tags: pitch shift detune harmonizer transposition semitone octave
+//Collection: NULL JSFX
+//Author: Christos Koulaxizis
 
-slider1:0<-12,12,1>Semitones
-slider2:50<0,100,1>Mix-%
-slider3:0<0,1,1>Bypass
+slider1:0<-2,2,1>Octave
+slider2:0<-12,12,1>Semitones
+slider3:0<-50,50,0.1>Fine-(cents)
+slider4:50<0,100,1>Mix-%
 
 in_pin:left input
 in_pin:right input
@@ -12,34 +14,44 @@ out_pin:left output
 out_pin:right output
 
 @init
-  buf_size = sr * 0.1;
+  buf_size = srate * 0.1;
   wpos = 0;
   readpos = 0;
-  phase = 0;
+  
+  i = 0;
+  while(i < buf_size)(buffer_l[i] = 0; buffer_r[i] = 0; i += 1);
 
 @slider
-  semitones = slider1;
-  pitch_factor = pow(2, semitones / 12);
-  mix_amt = slider2 / 100;
-  playback_rate = pitch_factor;
+  octave = slider1;
+  semitones = slider2;
+  fine = slider3;
+  mix_amt = slider4 / 100;
+  total_shift = octave * 12 + semitones + fine / 100;
+  pitch_factor = pow(2, total_shift / 12);
 
 @sample
-  wpos = wpos + 1;
-  wpos = wpos >= buf_size ? 0 : wpos;
-  [wpos] = spl0;
+  buffer_l[wpos] = spl0;
+  buffer_r[wpos] = spl1;
   
-  readpos = readpos + playback_rate;
-  readpos = readpos >= buf_size ? readpos - buf_size : readpos;
+  wpos = wpos + 1;
+  wpos >= buf_size ? wpos = 0;
+  
+  readpos = readpos + pitch_factor;
+  readpos >= buf_size ? readpos = readpos - buf_size;
   
   rpos_int = floor(readpos);
   rpos_frac = readpos - rpos_int;
   
-  d1 = [rpos_int];
-  d2 = [rpos_int >= buf_size - 1 ? 0 : rpos_int + 1];
-  shifted = d1 + (d2 - d1) * rpos_frac;
+  rpos_next = rpos_int + 1;
+  rpos_next >= buf_size ? rpos_next = 0;
   
-  out_l = spl0 * (1 - mix_amt) + shifted * mix_amt;
-  out_r = spl1 * (1 - mix_amt) + shifted * mix_amt;
+  d1_l = buffer_l[rpos_int];
+  d2_l = buffer_l[rpos_next];
+  d1_r = buffer_r[rpos_int];
+  d2_r = buffer_r[rpos_next];
   
-  spl0 = slider3 > 0 ? spl0 : out_l;
-  spl1 = slider3 > 0 ? spl1 : out_r;
+  shifted_l = d1_l + (d2_l - d1_l) * rpos_frac;
+  shifted_r = d1_r + (d2_r - d1_r) * rpos_frac;
+  
+  spl0 = spl0 * (1 - mix_amt) + shifted_l * mix_amt;
+  spl1 = spl1 * (1 - mix_amt) + shifted_r * mix_amt;

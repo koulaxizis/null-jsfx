@@ -1,529 +1,357 @@
 const guides = {
 
   // ─── UTILITY ───
-  'gain-stage': {
-    title: 'GAIN STAGE',
-    subtitle: 'Clean Gain &amp; Boost',
+    'channel-utility': {
+    title: 'CHANNEL UTILITY',
+    subtitle: 'All-in-One Channel Tool',
     sliders: [
-      { name: 'Input Gain', range: '-12 to +12 dB', desc: 'Adjust input level before processing' },
-      { name: 'Output Gain', range: '-12 to +12 dB', desc: 'Adjust final output level' },
-      { name: 'Bypass', range: '0 or 1', desc: 'Toggle plugin on/off' }
+      { name: 'Input Pad', range: 'None / -6 / -12 dB', desc: 'Fixed input attenuation' },
+      { name: 'Input Gain', range: '-12 to +18 dB', desc: 'Input level adjustment' },
+      { name: 'Phase Left', range: 'Normal / Inverted', desc: 'Left channel polarity' },
+      { name: 'Phase Right', range: 'Normal / Inverted', desc: 'Right channel polarity' },
+      { name: 'DC Block Freq', range: '10 to 100 Hz', desc: 'DC offset filter cutoff' },
+      { name: 'DC Block Mix', range: '0 to 100%', desc: 'Dry/wet blend for DC filter' },
+      { name: 'Balance Left', range: '-6 to +6 dB', desc: 'Left channel trim' },
+      { name: 'Balance Right', range: '-6 to +6 dB', desc: 'Right channel trim' },
+      { name: 'Solo L', range: 'Off / On', desc: 'Isolate left channel (mutes right)' },
+      { name: 'Solo R', range: 'Off / On', desc: 'Isolate right channel (mutes left)' },
+      { name: 'Mono Check', range: 'Stereo / Mono', desc: 'Sum L+R to check phase cancellation' },
+      { name: 'Output Gain', range: '-12 to +12 dB', desc: 'Final output level' },
+      { name: 'Hard Limit', range: 'Off / On', desc: 'Clip protection at -0.09 dBFS' }
     ],
-    uses: ['Match track levels in a mix', 'Prevent digital clipping downstream', 'Add clean headroom'],
-    properties: 'Transparent amplification, no coloration'
+    uses: ['Gain staging at the start of a chain', 'Fix phase issues with multi-mic setups', 'Remove DC offset from recordings', 'Trim L/R channel imbalance', 'Check mono compatibility', 'Solo individual channels for monitoring'],
+    properties: 'Signal chain: Pad → Gain → Phase → DC Block → Balance → Solo → Mono → Output → Hard Limit'
   },
-  'phase-flip': {
-    title: 'PHASE FLIP',
-    subtitle: 'Polarity Inverter',
+
+  'stereo-width': {
+    title: 'STEREO WIDTH',
+    subtitle: 'Mid/Side Stereo Imaging',
     sliders: [
-      { name: 'Phase', range: '0 or 180 degrees', desc: 'Invert signal polarity' },
-      { name: 'Bypass', range: '0 or 1', desc: 'Toggle plugin on/off' }
+      { name: 'Width', range: '0 to 200%', desc: 'Stereo width (0=mono, 100=neutral, 200=super-wide)' },
+      { name: 'Mix', range: '0 to 100%', desc: 'Dry/wet blend' },
+      { name: 'Crossover', range: '0 to 500 Hz', desc: 'Frequency cutoff for selective widening (0=full range, 200Hz+=bass stays mono)' }
     ],
-    uses: ['Fix phase cancellation with mics', 'Align multi-mic setups', 'Correct wiring polarity'],
-    properties: 'Instant polarity reversal, no latency'
+    uses: ['Widen mono sources for stereo placement', 'Narrow stereo tracks for mono compatibility', 'Enhance stereo imaging on mixes', 'Keep bass frequencies mono for tighter low-end', 'Create mid-side processing workflows'],
+    properties: 'Signal chain: Input → Mid/Side Encoding → Crossover Split (optional) → Width Adjustment → Side/Mid Decoding → Mix → Output. Crossover at 0Hz applies width to full spectrum. Above 0Hz, low frequencies remain mono while only highs are widened. One-pole filter for frequency split.'
+},
+
+  // ─── EQ / FILTERS ───
+    '5-band-parametric-eq': {
+    title: '5-BAND PARAMETRIC EQ',
+    subtitle: 'Flexible Multi-Filter EQ',
+    sliders: [
+      { name: 'Low Freq', range: '20–300 Hz', desc: 'Band 1 frequency center' },
+      { name: 'Low Gain', range: '−18 to +18 dB', desc: 'Band 1 boost/cut' },
+      { name: 'Low Q', range: '0.1–10', desc: 'Band 1 bandwidth' },
+      { name: 'Low Type', range: '8 filter types', desc: 'Low Shelf, High Shelf, Peaking, LP, HP, Notch, BP, All Pass' },
+      { name: 'Low Mode', range: 'Active/Bypass/Solo', desc: 'Band 1 operation mode' },
+      { name: 'Low Mid Freq', range: '300–1000 Hz', desc: 'Band 2 frequency center' },
+      { name: 'Low Mid Gain', range: '−18 to +18 dB', desc: 'Band 2 boost/cut' },
+      { name: 'Low Mid Q', range: '0.1–10', desc: 'Band 2 bandwidth' },
+      { name: 'Low Mid Type', range: '8 filter types', desc: 'Low Shelf, High Shelf, Peaking, LP, HP, Notch, BP, All Pass' },
+      { name: 'Low Mid Mode', range: 'Active/Bypass/Solo', desc: 'Band 2 operation mode' },
+      { name: 'Mid High Freq', range: '1000–5000 Hz', desc: 'Band 3 frequency center' },
+      { name: 'Mid High Gain', range: '−18 to +18 dB', desc: 'Band 3 boost/cut' },
+      { name: 'Mid High Q', range: '0.1–10', desc: 'Band 3 bandwidth' },
+      { name: 'Mid High Type', range: '8 filter types', desc: 'Low Shelf, High Shelf, Peaking, LP, HP, Notch, BP, All Pass' },
+      { name: 'Mid High Mode', range: 'Active/Bypass/Solo', desc: 'Band 3 operation mode' },
+      { name: 'High Freq', range: '5000–20000 Hz', desc: 'Band 4 frequency center' },
+      { name: 'High Gain', range: '−18 to +18 dB', desc: 'Band 4 boost/cut' },
+      { name: 'High Q', range: '0.1–10', desc: 'Band 4 bandwidth' },
+      { name: 'High Type', range: '8 filter types', desc: 'Low Shelf, High Shelf, Peaking, LP, HP, Notch, BP, All Pass' },
+      { name: 'High Mode', range: 'Active/Bypass/Solo', desc: 'Band 4 operation mode' },
+      { name: 'Ultra High Freq', range: '10000–24000 Hz', desc: 'Band 5 frequency center' },
+      { name: 'Ultra High Gain', range: '−18 to +18 dB', desc: 'Band 5 boost/cut' },
+      { name: 'Ultra High Q', range: '0.1–10', desc: 'Band 5 bandwidth' },
+      { name: 'Ultra High Type', range: '8 filter types', desc: 'Low Shelf, High Shelf, Peaking, LP, HP, Notch, BP, All Pass' },
+      { name: 'Ultra High Mode', range: 'Active/Bypass/Solo', desc: 'Band 5 operation mode' }
+    ],
+    uses: ['Surgical frequency corrections', 'Tonal shaping across the full spectrum', 'Mastering-grade EQ workflow', 'Per-band isolation for problem solving'],
+    properties: 'RBJ biquad coefficients, 8 filter types per band, per-band Bypass/Solo, automatic sample-rate recalculation'
   },
-  'dc-block': {
-    title: 'DC BLOCK',
-    subtitle: 'Offset Remover',
+
+  'filter': {
+  title: 'FILTER',
+  subtitle: 'TPT State-Variable Lowpass',
+  sliders: [
+    { name: 'Cutoff', range: '20 to 20000 Hz', desc: 'Filter cutoff frequency (logarithmic scale)' },
+    { name: 'Resonance', range: '0.1 to 10', desc: 'Q factor - higher values increase resonance peak near cutoff' },
+    { name: 'Gain', range: '−12 to +12 dB', desc: 'Output level adjustment' }
+  ],
+  uses: [
+    'Clean lowpass filtering with resonance',
+    'Remove high-frequency noise or harshness',
+    'Create wah-like effects with high Q values',
+    'Smooth transients while preserving dynamics',
+    'Subtractive synthesis tone shaping'
+  ],
+  properties: 'TPT (Trapezoidal Integrator) State-Variable Filter implementation with zero-delay feedback correction. Formula: v3 = (input - ic2 - (R+g)*ic1) / denom. Pure lowpass output at 12dB/oct rolloff. Resonance controlled via Q = 1/(2*R) relationship.'
+},
+
+  // ─── SATURATION ───
+  'tape-saturation': {
+    title: 'TAPE SATURATION',
+    subtitle: 'Vintage Warmth & Glue',
     sliders: [
-      { name: 'Cutoff', range: '5 to 20 Hz', desc: 'High-pass frequency threshold' },
-      { name: 'Bypass', range: '0 or 1', desc: 'Toggle plugin on/off' }
+      { name: 'Drive', range: '0 to 100%', desc: 'Saturation intensity' },
+      { name: 'Tone', range: '−12 to +12 dB', desc: 'Tilt EQ: +treble/−bass or −treble/+bass' },
+      { name: 'Mix', range: '0 to 100%', desc: 'Dry/wet blend' }
     ],
-    uses: ['Remove DC offset from recordings', 'Clean up subsonic rumble', 'Fix ADC artifacts'],
-    properties: 'Subtractive filtering below audible range'
+    uses: ['Add vintage tape warmth to tracks', 'Glue mix elements together', 'Subtle harmonic enhancement on buses', 'Smooth transient peaks naturally'],
+    properties: 'Signal chain: Input → Drive Gain → Polynomial Tanh Saturation → Makeup → Tilt EQ (1.5kHz crossover) → Mix → Output'
   },
-  'mono-check': {
-    title: 'MONO CHECK',
-    subtitle: 'Compatibility Test',
+
+  'harmonic-drive': {
+    title: 'HARMONIC DRIVE',
+    subtitle: 'Even-Order Exciter',
     sliders: [
-      { name: 'Mode', range: 'Stereo or Mono', desc: 'Collapse to mono sum' },
-      { name: 'Bypass', range: '0 or 1', desc: 'Toggle plugin on/off' }
+      { name: 'Drive', range: '0 to 100%', desc: 'Harmonic blend amount' },
+      { name: 'Tone', range: '−12 to +12 dB', desc: 'Tilt EQ: +treble/−bass or −treble/+bass' },
+      { name: 'Mix', range: '0 to 100%', desc: 'Dry/wet blend' }
     ],
-    uses: ['Check for phase issues in mono', 'Test club PA compatibility', 'Verify stereo balance'],
-    properties: 'L+R summed, detects cancellation'
+    uses: ['Excite dull tracks with harmonics', 'Add tube-style warmth', 'Enhance presence and clarity', 'Parallel saturation processing'],
+    properties: 'Signal chain: Input → Polynomial Tanh (2x) → Dry/Wet Blend → Tilt EQ (1.5kHz crossover) → Mix → Output'
   },
-  'solo-mute': {
-    title: 'SOLO MUTE',
-    subtitle: 'Channel Isolator',
+
+  'distortion': {
+    title: 'DISTORTION',
+    subtitle: 'Aggressive Dual-Stage Overdrive',
     sliders: [
-      { name: 'Mode', range: 'Mute L / Mute R / Solo L / Solo R', desc: 'Operation mode' },
-      { name: 'Bypass', range: '0 or 1', desc: 'Toggle plugin on/off' }
+      { name: 'Drive', range: '0 to 100%', desc: 'Pre-gain intensity (up to 50x)' },
+      { name: 'Tone', range: '−12 to +12 dB', desc: 'Tilt EQ: +treble/−bass or −treble/+bass' },
+      { name: 'Mix', range: '0 to 100%', desc: 'Dry/wet blend' }
     ],
-    uses: ['Listen to single channel', 'Isolate problems', 'Check phase issues'],
-    properties: 'Channel selection, not routing'
+    uses: ['Aggressive guitar-style overdrive', 'Add grit and character to synths', 'Hard clip drum transients', 'Creative sound destruction'],
+    properties: 'Signal chain: Input → Pre-Gain → Cubic Soft Clip → Hard Clip (0.8 threshold) → Tilt EQ (1.5kHz crossover) → Mix → Output'
   },
-  'channel-balance': {
-    title: 'CHANNEL BALANCE',
-    subtitle: 'L/R Level Trim',
+
+  'bit-crush': {
+    title: 'BIT CRUSH',
+    subtitle: 'Lo-Fi Quantization & Downsampling',
     sliders: [
-      { name: 'Left', range: '-6 to +6 dB', desc: 'Left channel trim' },
-      { name: 'Right', range: '-6 to +6 dB', desc: 'Right channel trim' },
-      { name: 'Bypass', range: '0 or 1', desc: 'Toggle plugin on/off' }
+      { name: 'Drive', range: '0 to 100%', desc: 'Pre-quantization gain' },
+      { name: 'Bit Depth', range: '1 to 16 bits', desc: 'Quantization resolution' },
+      { name: 'Sample Rate', range: '1k to 44.1kHz', desc: 'Downsampling frequency' },
+      { name: 'Tone', range: '−12 to +12 dB', desc: 'Tilt EQ: +treble/−bass or −treble/+bass' },
+      { name: 'Mix', range: '0 to 100%', desc: 'Dry/wet blend' }
     ],
-    uses: ['Correct mic imbalance', 'Fix stereo field', 'Fine-tune mixes'],
-    properties: 'Independent channel gain'
+    uses: ['Lo-fi retro degradation', 'Drum bitcrushing for texture', 'Synth voice deterioration', 'Creative sample rate reduction effects'],
+    properties: 'Signal chain: Input → Pre-Gain → Bit Quantization → Hold-and-Sample Downsampling → Tilt EQ (1.5kHz crossover) → Mix → Output'
   },
-  'click-repair': {
-    title: 'CLICK REPAIR',
-    subtitle: 'Artifact Remover',
+
+  // ─── TIME MODULATION ───
+  'chorus': {
+    title: 'CHORUS',
+    subtitle: 'Stereo Thickening & Detune',
     sliders: [
-      { name: 'Threshold', range: '-60 to 0 dB', desc: 'Detection sensitivity' },
-      { name: 'Window', range: '1 to 20 samples', desc: 'Repair window size' },
-      { name: 'Bypass', range: '0 or 1', desc: 'Toggle plugin on/off' }
+      { name: 'Rate', range: '0.1 to 20 Hz', desc: 'LFO frequency' },
+      { name: 'Depth', range: '0 to 10 ms', desc: 'Modulation delay depth' },
+      { name: 'Mix', range: '0 to 100%', desc: 'Dry/wet blend' }
     ],
-    uses: ['Remove vinyl clicks and pops', 'Clean digital glitches', 'Restore old recordings'],
-    properties: 'Transient detection and interpolation'
+    uses: ['Thicken vocals and guitars', 'Add stereo width to mono sources', 'Create lush ambient textures', 'Simulate ensemble playing'],
+    properties: 'Signal chain: Input → LFO → Modulated Delay (3ms base) → Linear Interpolation → Mix → Output'
+  },
+
+  'flanger': {
+    title: 'FLANGER',
+    subtitle: 'Jet Sweep with Feedback',
+    sliders: [
+      { name: 'Rate', range: '0.1 to 5 Hz', desc: 'LFO frequency' },
+      { name: 'Depth', range: '1 to 20 ms', desc: 'Modulation delay depth' },
+      { name: 'Feedback', range: '0 to 100%', desc: 'Resonant feedback amount' },
+      { name: 'Mix', range: '0 to 100%', desc: 'Dry/wet blend' }
+    ],
+    uses: ['Classic jet-plane sweep effects', 'Add motion to static sounds', 'Create metallic resonances', 'Enhance drum overheads'],
+    properties: 'Signal chain: Input → Feedback Loop → LFO → Modulated Delay (1ms base) → Mix → Output'
+  },
+
+  'phaser': {
+    title: 'PHASER',
+    subtitle: 'Moving Notch Sweep',
+    sliders: [
+      { name: 'Rate', range: '0.1 to 5 Hz', desc: 'LFO frequency' },
+      { name: 'Stages', range: '1 to 8', desc: 'Allpass filter count' },
+      { name: 'Mix', range: '0 to 100%', desc: 'Dry/wet blend' }
+    ],
+    uses: ['Add swirling motion to guitars', 'Create psychedelic vocal effects', 'Enhance synth pads', 'Classic 70s style phase sweeping'],
+    properties: 'Signal chain: Input → LFO → Cascaded Allpass Filters → Mix → Output'
+  },
+
+  'vibrato': {
+    title: 'VIBRATO',
+    subtitle: 'Pitch Modulation Wobble',
+    sliders: [
+      { name: 'Rate', range: '0.1 to 15 Hz', desc: 'LFO frequency' },
+      { name: 'Depth', range: '0 to 20 ms', desc: 'Pitch deviation amount' },
+      { name: 'Mix', range: '0 to 100%', desc: 'Dry/wet blend' }
+    ],
+    uses: ['Add natural pitch variation', 'Create tape wow and flutter', 'Simulate string instrument vibrato', 'Subtle detune for thickness'],
+    properties: 'Signal chain: Input → LFO → Modulated Delay (0ms base) → Linear Interpolation → Mix → Output'
+  },
+
+  'tremolo': {
+    title: 'TREMOLO',
+    subtitle: 'Rhythmic Amplitude Modulation',
+    sliders: [
+      { name: 'Rate', range: '0.1 to 20 Hz', desc: 'LFO frequency' },
+      { name: 'Depth', range: '0 to 100%', desc: 'Amplitude variation depth' },
+      { name: 'Mix', range: '0 to 100%', desc: 'Dry/wet blend' }
+    ],
+    uses: ['Add rhythmic pulsing to guitars', 'Create vintage amp tremolo', 'Enhance ambient textures', 'Rhythmic gating effects'],
+    properties: 'Signal chain: Input → LFO → Amplitude Modulation → Mix → Output'
+  },
+
+    'auto-pan': {
+    title: 'AUTO PAN',
+    subtitle: 'Stereo Movement & Width',
+    sliders: [
+      { name: 'Rate', range: '0.1 to 10 Hz', desc: 'LFO frequency (ignored when Tempo Sync ON)' },
+      { name: 'Depth', range: '0 to 100%', desc: 'Pan excursion amount' },
+      { name: 'Mix', range: '0 to 100%', desc: 'Dry/wet blend' },
+      { name: 'Tempo Sync', range: 'OFF / ON', desc: 'Enable project tempo synchronization' },
+      { name: 'Subdivision', range: '1/2 / 1/4 / 1/8 / 1/16', desc: 'Note division when Tempo Sync ON' }
+    ],
+    uses: ['Add stereo movement to mono sources', 'Create wide rhythmic effects synced to project tempo', 'Enhance static pad sounds', 'Simulate rotary speaker movement', 'LFO synchronized with drum patterns'],
+    properties: 'Signal chain: Input → LFO → Complementary L/R Gain → Mix → Output. When Tempo Sync OFF: Rate slider controls Hz directly. When Tempo Sync ON: Rate calculated from project tempo × Subdivision (1/2=×0.5, 1/4=×1, 1/8=×2, 1/16=×4). Uses tempo variable (read-only in @block/@sample).'
+  },
+
+  'ring-mod': {
+    title: 'RING MOD',
+    subtitle: 'Metallic Carrier Modulation',
+    sliders: [
+      { name: 'Rate', range: '0.1 to 20 Hz', desc: 'Base modulation frequency' },
+      { name: 'Carrier Freq', range: '100 to 2000 Hz', desc: 'Carrier oscillator frequency' },
+      { name: 'Depth', range: '0 to 100%', desc: 'Modulation depth' },
+      { name: 'Mix', range: '0 to 100%', desc: 'Dry/wet blend' }
+    ],
+    uses: ['Create metallic bell tones', 'Generate alien dissonant textures', 'Sound design for sci-fi effects', 'Classic drum voice transformation'],
+    properties: 'Signal chain: Input → Sine Carrier Oscillator → Signal Multiplication → Mix → Output'
   },
 
   // ─── DYNAMICS ───
-  'compressor': {
-    title: 'COMPRESSOR',
-    subtitle: 'Dynamic Control',
+  'gate': {
+    title: 'GATE',
+    subtitle: 'Noise & Vocal Gate',
     sliders: [
-      { name: 'Threshold', range: '-60 to 0 dB', desc: 'Level above which compression starts' },
-      { name: 'Ratio', range: '1:1 to 20:1', desc: 'Compression intensity' },
-      { name: 'Attack', range: '1 to 100 ms', desc: 'Time to engage compression' },
-      { name: 'Release', range: '10 to 500 ms', desc: 'Time to disengage compression' },
-      { name: 'Makeup', range: '-12 to +12 dB', desc: 'Output gain compensation' },
-      { name: 'Bypass', range: '0 or 1', desc: 'Toggle plugin on/off' }
+      { name: 'Threshold', range: '−60 to 0 dB', desc: 'Gate opening threshold' },
+      { name: 'Attack', range: '1 to 100 ms', desc: 'Gate opening speed' },
+      { name: 'Release', range: '50 to 1000 ms', desc: 'Gate closing speed' },
+      { name: 'Sidechain HPF', range: '0 to 500 Hz', desc: 'High-pass filter for detection (0=full-range noise gate, 80Hz+=vocal gate)' }
     ],
-    uses: ['Control vocal dynamics', 'Glue drum bus together', 'Smooth out bass playing'],
-    properties: 'VCA-style compression, low latency'
-  },
-  'expander': {
-    title: 'EXPANDER',
-    subtitle: 'Downward Expansion',
-    sliders: [
-      { name: 'Threshold', range: '-60 to 0 dB', desc: 'Level below which expansion occurs' },
-      { name: 'Ratio', range: '1:1 to 1:4', desc: 'Expansion amount' },
-      { name: 'Range', range: '-60 to 0 dB', desc: 'Maximum gain reduction' },
-      { name: 'Bypass', range: '0 or 1', desc: 'Toggle plugin on/off' }
-    ],
-    uses: ['Reduce noise between passages', 'Open up dynamics after compression', 'Tame quiet ambient noise'],
-    properties: 'Inverse of compression, increases dynamic range'
-  },
-  'noise-gate': {
-    title: 'NOISE GATE',
-    subtitle: 'Floor Suppressor',
-    sliders: [
-      { name: 'Threshold', range: '-60 to 0 dB', desc: 'Level below which gate closes' },
-      { name: 'Attack', range: '0.1 to 50 ms', desc: 'Time to open gate' },
-      { name: 'Release', range: '10 to 500 ms', desc: 'Time to close gate' },
-      { name: 'Hold', range: '0 to 200 ms', desc: 'Minimum time gate stays open' },
-      { name: 'Bypass', range: '0 or 1', desc: 'Toggle plugin on/off' }
-    ],
-    uses: ['Silence guitar between riffs', 'Kick drum separation', 'Mic bleed reduction'],
-    properties: 'Mutes signal below threshold'
-  },
-  'de-esser': {
-    title: 'DE-ESSER',
-    subtitle: 'Sibilance Control',
-    sliders: [
-      { name: 'Frequency', range: '2000 to 8000 Hz', desc: 'Target sibilance frequency' },
-      { name: 'Threshold', range: '-60 to 0 dB', desc: 'Level to trigger reduction' },
-      { name: 'Amount', range: '0 to 100%', desc: 'Maximum attenuation' },
-      { name: 'Bypass', range: '0 or 1', desc: 'Toggle plugin on/off' }
-    ],
-    uses: ['Reduce harsh "S" and "T" sounds', 'Smooth vocal recordings', 'Fix bright consonants'],
-    properties: 'Frequency-selective compression'
-  },
-  'vocal-gate': {
-    title: 'VOCAL GATE',
-    subtitle: 'Voice Optimized',
-    sliders: [
-      { name: 'Threshold', range: '-60 to 0 dB', desc: 'Gate activation point' },
-      { name: 'Range', range: '-60 to 0 dB', desc: 'Reduction amount' },
-      { name: 'Attack', range: '1 to 20 ms', desc: 'Opening speed' },
-      { name: 'Release', range: '50 to 300 ms', desc: 'Closing speed' },
-      { name: 'Bypass', range: '0 or 1', desc: 'Toggle plugin on/off' }
-    ],
-    uses: ['Live vocal cleanup', 'Podcast silence removal', 'Narration gating'],
-    properties: 'Voice-tuned detection curve'
-  },
-  'ceiling-limit': {
-    title: 'CEILING LIMIT',
-    subtitle: 'Brickwall Protector',
-    sliders: [
-      { name: 'Ceiling', range: '-3 to 0 dBTP', desc: 'Maximum output level' },
-      { name: 'Lookahead', range: '0.5 to 5 ms', desc: 'Anticipation buffer' },
-      { name: 'Bypass', range: '0 or 1', desc: 'Toggle plugin on/off' }
-    ],
-    uses: ['Prevent inter-sample peaks', 'Protect masters from clipping', 'Streaming loudness safety'],
-    properties: 'True-peak brickwall limiting'
-  },
-  'soft-limit': {
-    title: 'SOFT LIMIT',
-    subtitle: 'Transparent Ceiling',
-    sliders: [
-      { name: 'Ceiling', range: '-6 to 0 dB', desc: 'Soft ceiling threshold' },
-      { name: 'Knee', range: '0.5 to 5 dB', desc: 'Transition softness' },
-      { name: 'Bypass', range: '0 or 1', desc: 'Toggle plugin on/off' }
-    ],
-    uses: ['Musical loudness control', 'Transparent mastering', 'Avoid aggressive limiting'],
-    properties: 'Program-dependent soft knee'
-  },
-  'transient-shaper': {
-    title: 'TRANSIENT SHAPER',
-    subtitle: 'Envelope Shaper',
-    sliders: [
-      { name: 'Attack', range: '-100 to +100', desc: 'Increase/decrease transients' },
-      { name: 'Sustain', range: '-100 to +100', desc: 'Increase/decrease sustain' },
-      { name: 'Threshold', range: '0 to 100%', desc: 'Detection sensitivity' },
-      { name: 'Bypass', range: '0 or 1', desc: 'Toggle plugin on/off' }
-    ],
-    uses: ['Punchy kick drums', 'Extend guitar sustain', 'Control percussive attacks'],
-    properties: 'Envelope detection, not EQ-based'
-  },
-  'clipper': {
-    title: 'CLIPPER',
-    subtitle: 'Hard Peak Limiter',
-    sliders: [
-      { name: 'Threshold', range: '-24 to 0 dB', desc: 'Clipping point' },
-      { name: 'Softness', range: '0 to 100%', desc: 'Hard vs soft clip character' },
-      { name: 'Output', range: '-12 to 0 dB', desc: 'Post-clip gain' },
-      { name: 'Bypass', range: '0 or 1', desc: 'Toggle plugin on/off' }
-    ],
-    uses: ['Digital saturation', 'Mastering loudness', 'Aggressive limiting alternative'],
-    properties: 'Symmetrical clipping with blendable softness'
+    uses: ['Remove background noise between phrases', 'Clean up vocal recordings', 'Gate drum close-mics', 'Reduce headphone bleed on vocal takes'],
+    properties: 'Signal chain: Input → Sidechain HPF Detection → Threshold Comparison → Attack/Release Smoothing → Gain → Output. Sidechain HPF at 0Hz = standard noise gate; raise to 80Hz+ for vocal-specific detection.'
   },
 
-  // ─── EQ / FILTERS ───
-  'low-cut': {
-    title: 'LOW CUT',
-    subtitle: 'High-Pass Filter',
+  'dynamics': {
+    title: 'DYNAMICS',
+    subtitle: 'Compressor & Expander',
     sliders: [
-      { name: 'Frequency', range: '20 to 500 Hz', desc: 'Cut-off point' },
-      { name: 'Slope', range: '12 to 48 dB/oct', desc: 'Filter steepness' },
-      { name: 'Bypass', range: '0 or 1', desc: 'Toggle plugin on/off' }
+      { name: 'Mode', range: 'Compress / Expand', desc: 'Processing direction (Compress = reduce above threshold, Expand = reduce below threshold)' },
+      { name: 'Threshold', range: '−60 to 0 dB', desc: 'Processing threshold' },
+      { name: 'Ratio', range: '1 to 20', desc: 'Gain reduction ratio' },
+      { name: 'Knee', range: '0 to 100%', desc: 'Soft knee width (0=hard, 100=very soft)' },
+      { name: 'Attack', range: '0 to 100 ms', desc: 'Gain reduction onset speed' },
+      { name: 'Release', range: '0 to 1000 ms', desc: 'Gain recovery speed' },
+      { name: 'Makeup', range: '−20 to +20 dB', desc: 'Output compensation gain' }
     ],
-    uses: ['Remove rumble from vocals', 'Clean sub frequencies', 'Free up low-end for bass/kick'],
-    properties: 'Steep high-pass, phase-linear'
-  },
-  'high-cut': {
-    title: 'HIGH CUT',
-    subtitle: 'Low-Pass Filter',
-    sliders: [
-      { name: 'Frequency', range: '500 to 20000 Hz', desc: 'Cut-off point' },
-      { name: 'Slope', range: '12 to 48 dB/oct', desc: 'Filter steepness' },
-      { name: 'Bypass', range: '0 or 1', desc: 'Toggle plugin on/off' }
-    ],
-    uses: ['Remove hiss/treble', 'Vintage tone darkening', 'Sidechain ducking cleanup'],
-    properties: 'Steep low-pass, phase-linear'
-  },
-  'notch-filter': {
-    title: 'NOTCH FILTER',
-    subtitle: 'Surgical EQ',
-    sliders: [
-      { name: 'Frequency', range: '20 to 20000 Hz', desc: 'Center frequency' },
-      { name: 'Width', range: '0.1 to 5 octaves', desc: 'Q factor' },
-      { name: 'Gain', range: '-60 to 0 dB', desc: 'Attenuation depth' },
-      { name: 'Bypass', range: '0 or 1', desc: 'Toggle plugin on/off' }
-    ],
-    uses: ['Remove hum (50/60 Hz)', 'Eliminate ringing frequencies', 'Fix resonant peaks'],
-    properties: 'Very narrow bandwidth rejection'
-  },
-  'wide-cut': {
-    title: 'WIDE CUT',
-    subtitle: 'Mud Remover',
-    sliders: [
-      { name: 'Frequency', range: '100 to 500 Hz', desc: 'Center of mud zone' },
-      { name: 'Width', range: '0.5 to 2 octaves', desc: 'Q factor' },
-      { name: 'Gain', range: '-12 to 0 dB', desc: 'Attenuation' },
-      { name: 'Bypass', range: '0 or 1', desc: 'Toggle plugin on/off' }
-    ],
-    uses: ['Clear muddy mixes', 'Tighten bass guitars', 'Reduce boxiness'],
-    properties: 'Wide Q subtraction for mix clarity'
-  },
-  'sub-boost': {
-    title: 'SUB BOOST',
-    subtitle: 'Low Shelf Enhancer',
-    sliders: [
-      { name: 'Frequency', range: '20 to 200 Hz', desc: 'Shelf point' },
-      { name: 'Gain', range: '0 to +12 dB', desc: 'Boost amount' },
-      { name: 'Q', range: '0.5 to 3', desc: 'Shelf width' },
-      { name: 'Bypass', range: '0 or 1', desc: 'Toggle plugin on/off' }
-    ],
-    uses: ['Add bass weight', 'Enhance kick/sub', 'Thicken synth bass'],
-    properties: 'Shelving boost at low end'
-  },
-  'mid-presence': {
-    title: 'MID PRESENCE',
-    subtitle: 'Clarity Booster',
-    sliders: [
-      { name: 'Frequency', range: '500 to 4000 Hz', desc: 'Presence zone' },
-      { name: 'Gain', range: '0 to +12 dB', desc: 'Boost amount' },
-      { name: 'Q', range: '0.5 to 3', desc: 'Bandwidth' },
-      { name: 'Bypass', range: '0 or 1', desc: 'Toggle plugin on/off' }
-    ],
-    uses: ['Make vocals cut through', 'Add instrument definition', 'Fix distant recordings'],
-    properties: 'Targeted mid-range enhancement'
-  },
-  'air-boost': {
-    title: 'AIR BOOST',
-    subtitle: 'High Shelf Sparkle',
-    sliders: [
-      { name: 'Frequency', range: '5000 to 20000 Hz', desc: 'Air shelf point' },
-      { name: 'Gain', range: '0 to +12 dB', desc: 'Sparkle amount' },
-      { name: 'Q', range: '0.5 to 2', desc: 'Shelf width' },
-      { name: 'Bypass', range: '0 or 1', desc: 'Toggle plugin on/off' }
-    ],
-    uses: ['Add brilliance to vocals', 'Brighten dull recordings', 'Modern sheen effect'],
-    properties: 'Shelving boost at high end'
-  },
-  '3-band-eq': {
-    title: '3-BAND EQ',
-    subtitle: 'Parametric EQ',
-    sliders: [
-      { name: 'Low Gain', range: '-12 to +12 dB', desc: 'Low shelf boost/cut' },
-      { name: 'Mid Gain', range: '-12 to +12 dB', desc: 'Bell boost/cut' },
-      { name: 'High Gain', range: '-12 to +12 dB', desc: 'High shelf boost/cut' },
-      { name: 'Low-Mid Xover', range: '50 to 2000 Hz', desc: 'Low/mid crossover' },
-      { name: 'Mid-High Xover', range: '500 to 10000 Hz', desc: 'Mid/high crossover' },
-      { name: 'Bypass', range: '0 or 1', desc: 'Toggle plugin on/off' }
-    ],
-    uses: ['Basic tone shaping', 'Mix balance', 'Instrument carving'],
-    properties: 'Three-band parametric structure'
-  },
-  'filter': {
-    title: 'FILTER',
-    subtitle: 'Resonant Filter',
-    sliders: [
-      { name: 'Cutoff', range: '20 to 20000 Hz', desc: 'Filter frequency' },
-      { name: 'Resonance', range: '0.1 to 10', desc: 'Peak emphasis at cutoff' },
-      { name: 'Gain', range: '-12 to +12 dB', desc: 'Output gain' },
-      { name: 'Mode', range: 'LP / BP / HP / Notch', desc: 'Filter type' },
-      { name: 'Bypass', range: '0 or 1', desc: 'Toggle plugin on/off' }
-    ],
-    uses: ['Synth-style filtering', 'Creative sweeps', 'DJ-style transitions'],
-    properties: 'State-variable, resonance adjustable'
-  },
-  'comb-filter': {
-    title: 'COMB FILTER',
-    subtitle: 'Resonant Notches',
-    sliders: [
-      { name: 'Frequency', range: '20 to 8000 Hz', desc: 'Spacing between notches' },
-      { name: 'Feedback', range: '0 to 95%', desc: 'Resonance level' },
-      { name: 'Mix', range: '0 to 100%', desc: 'Dry/wet balance' },
-      { name: 'Bypass', range: '0 or 1', desc: 'Toggle plugin on/off' }
-    ],
-    uses: ['Metallic tones', 'Flanger-style effects', 'Alien textures'],
-    properties: 'Series of harmonic notches'
-  },
-  'ladder-filter': {
-    title: 'LADDER FILTER',
-    subtitle: 'Moog-Style Filter',
-    sliders: [
-      { name: 'Cutoff', range: '20 to 20000 Hz', desc: 'Filter frequency' },
-      { name: 'Resonance', range: '0 to 10', desc: 'Emphasis at cutoff' },
-      { name: 'Mode', range: 'LP / BP / HP', desc: 'Filter type' },
-      { name: 'Gain', range: '-12 to +12 dB', desc: 'Output gain' },
-      { name: 'Bypass', range: '0 or 1', desc: 'Toggle plugin on/off' }
-    ],
-    uses: ['Analog bass lines', 'Classic synth tones', 'Warm filter sweeps'],
-    properties: 'Four-pole transistor ladder emulation'
-  },
+    uses: ['Control dynamic range of vocals and instruments', 'Add punch to drums with compression', 'Reduce noise floor with expansion', 'Glue mix elements together', 'Parallel compression workflows'],
+    properties: 'Signal chain: Input → Envelope Detection → Mode (Compress above threshold / Expand below threshold) → Ratio + Knee → Attack/Release Smoothing → Makeup → Output'
+},
 
-  // ─── TIME-BASED ───
-  'pre-delay': {
-    title: 'PRE DELAY',
-    subtitle: 'Short Thickening',
+  'limiter': {
+    title: 'LIMITER',
+    subtitle: 'Limiter & Clipper & Brickwall',
     sliders: [
-      { name: 'Time', range: '1 to 50 ms', desc: 'Delay before effect' },
-      { name: 'Mix', range: '0 to 100%', desc: 'Effect level' },
-      { name: 'Bypass', range: '0 or 1', desc: 'Toggle plugin on/off' }
+      { name: 'Mode', range: 'Limiter / Clipper / Brickwall', desc: 'Processing algorithm' },
+      { name: 'Threshold', range: '−30 to 0 dB', desc: 'Level where limiting begins (Limiter & Clipper only — Brickwall uses Ceiling directly)' },
+      { name: 'Ceiling', range: '−6 to −0.1 dB', desc: 'Absolute maximum output level' },
+      { name: 'Release', range: '0 to 1000 ms', desc: 'Gain recovery speed (Limiter only — Clipper and Brickwall are instant)' },
+      { name: 'Lookahead', range: '0 to 10 ms', desc: 'Pre-detection time for transparent peak catching (Limiter & Brickwall only)' }
     ],
-    uses: ['Separate vocal from reverb', 'Add depth without wash', 'Double-track effect'],
-    properties: 'Sub-50ms slapback only'
-  },
+    uses: [
+      'Mastering peak protection with transparent limiting',
+      'Drum bus crunch and harmonic saturation with Clipper',
+      'Absolute brickwall ceiling for broadcast compliance',
+      'Parallel limiting with dry/wet mix'
+    ],
+    properties: 'Three algorithms: Limiter (MGA-style envelope smoothing with auto makeup gain = ceiling/threshold, release-controlled recovery), Clipper (soft-clip curve above threshold with hard ceiling safety), Brickwall (instant gain reduction = ceiling/peak, zero overshoot). All modes apply hard clip at ceiling as safety. Makeup gain is automatic: ceiling ÷ threshold.'
+},
+
+  // ─── DELAY ───
   'delay': {
     title: 'DELAY',
-    subtitle: 'Echo &amp; Feedback',
+    subtitle: 'Echo & Pre-Delay',
     sliders: [
-      { name: 'Time', range: '1 to 2000 ms', desc: 'Delay time' },
-      { name: 'Feedback', range: '0 to 100%', desc: 'Repetition amount' },
-      { name: 'Mix', range: '0 to 100%', desc: 'Dry/wet balance' },
-      { name: 'Bypass', range: '0 or 1', desc: 'Toggle plugin on/off' }
+      { name: 'Time', range: '0 to 2000 ms', desc: 'Delay time (short=pre-delay, long=echo)' },
+      { name: 'Feedback', range: '0 to 100%', desc: 'Repeat decay (0=single slap, high=cascading echoes)' },
+      { name: 'Mix', range: '0 to 100%', desc: 'Dry/wet blend (100%=pre-delay mode)' }
     ],
-    uses: ['Slapback echoes', 'Spacey repeats', 'Doubling effect'],
-    properties: 'Stereo delay, variable feedback'
-  },
-  'reverb': {
-    title: 'REVERB',
-    subtitle: 'Room Simulation',
-    sliders: [
-      { name: 'Room Size', range: '10 to 100%', desc: 'Simulated space' },
-      { name: 'Decay', range: '0 to 100%', desc: 'Reverb length' },
-      { name: 'Damping', range: '0 to 100%', desc: 'High-frequency loss' },
-      { name: 'Mix', range: '0 to 100%', desc: 'Dry/wet balance' },
-      { name: 'Bypass', range: '0 or 1', desc: 'Toggle plugin on/off' }
-    ],
-    uses: ['Add natural space', 'Hall ambience', 'Plate-style reverb'],
-    properties: 'Algorithmic reverb with comb filters and all-pass'
+    uses: ['Slapback echo for vocals and guitars', 'Pre-delay for reverb placement (short time, 0 feedback, 100% mix)', 'Cascading feedback delays', 'Stereo echo effects'],
+    properties: 'Signal chain: Input → Circular Buffer → Read Position (Time) → Feedback Loop → Mix → Output. For pre-delay: set Time short (1-50ms), Feedback=0, Mix=100%'
   },
 
-  // ─── MODULATION ───
-  'tremolo': {
-    title: 'TREMOLO',
-    subtitle: 'Amplitude Modulation',
+  // ─── SPECIALIZED ───
+  'click-repair': {
+    title: 'CLICK REPAIR',
+    subtitle: 'Audio Restoration',
     sliders: [
-      { name: 'Rate', range: '0.1 to 20 Hz', desc: 'Modulation speed' },
-      { name: 'Depth', range: '0 to 100%', desc: 'Modulation intensity' },
-      { name: 'Wave', range: 'Sine / Triangle / Square', desc: 'LFO shape' },
-      { name: 'Bypass', range: '0 or 1', desc: 'Toggle plugin on/off' }
+      { name: 'Threshold', range: '−60 to 0 dB', desc: 'Click detection sensitivity' },
+      { name: 'Window Size', range: '1 to 20 samples', desc: 'Interpolation window' }
     ],
-    uses: ['Vintage amp pulsing', 'Rhythmic gating', '60s organ effect'],
-    properties: 'Pure amplitude oscillation'
-  },
-  'auto-pan': {
-    title: 'AUTO PAN',
-    subtitle: 'LFO Panning',
-    sliders: [
-      { name: 'Rate', range: '0.1 to 20 Hz', desc: 'Panning speed' },
-      { name: 'Depth', range: '0 to 100%', desc: 'L/R swing amount' },
-      { name: 'Bypass', range: '0 or 1', desc: 'Toggle plugin on/off' }
-    ],
-    uses: ['Stereo movement', 'Dubby left/right panning', 'Psychedelic swells'],
-    properties: 'Automatic left/right oscillation'
-  },
-  'chorus': {
-    title: 'CHORUS',
-    subtitle: 'Detune Thickening',
-    sliders: [
-      { name: 'Rate', range: '0.5 to 30 Hz', desc: 'Modulation speed' },
-      { name: 'Depth', range: '0 to 10 ms', desc: 'Detune amount' },
-      { name: 'Mix', range: '0 to 100%', desc: 'Effect level' },
-      { name: 'Bypass', range: '0 or 1', desc: 'Toggle plugin on/off' }
-    ],
-    uses: ['90s chorus guitars', 'Thicken pads', 'Vocal doubling'],
-    properties: 'Pitch-modulated delay with detune'
-  },
-  'phaser': {
-    title: 'PHASER',
-    subtitle: 'Moving Notches',
-    sliders: [
-      { name: 'Rate', range: '0.1 to 5 Hz', desc: 'Sweep speed' },
-      { name: 'Stages', range: '1 to 20', desc: 'Number of all-pass filters' },
-      { name: 'Depth', range: '0.5 to 5', desc: 'Sweep extent' },
-      { name: 'Mix', range: '0 to 100%', desc: 'Dry/wet balance' },
-      { name: 'Bypass', range: '0 or 1', desc: 'Toggle plugin on/off' }
-    ],
-    uses: ['Classic guitar phaser', '70s keyboard swirl', 'Vocal sweep effect'],
-    properties: 'Phase cancellation moving notches'
-  },
-  'flanger': {
-    title: 'FLANGER',
-    subtitle: 'Jet Sweep Effect',
-    sliders: [
-      { name: 'Rate', range: '0.1 to 5 Hz', desc: 'Sweep speed' },
-      { name: 'Depth', range: '1 to 20 ms', desc: 'Delay variation' },
-      { name: 'Feedback', range: '0 to 100%', desc: 'Intensity' },
-      { name: 'Mix', range: '0 to 100%', desc: 'Dry/wet balance' },
-      { name: 'Bypass', range: '0 or 1', desc: 'Toggle plugin on/off' }
-    ],
-    uses: ['Jet-plane whoosh', 'Drum flanging', 'Spacey textures'],
-    properties: 'Very short modulated delay with feedback'
-  },
-  'ring-mod': {
-    title: 'RING MOD',
-    subtitle: 'Metallic Modulation',
-    sliders: [
-      { name: 'Frequency', range: '20 to 2000 Hz', desc: 'Carrier frequency' },
-      { name: 'Mix', range: '0 to 100%', desc: 'Modulation level' },
-      { name: 'Gain', range: '-12 to +12 dB', desc: 'Output gain' },
-      { name: 'Bypass', range: '0 or 1', desc: 'Toggle plugin on/off' }
-    ],
-    uses: ['Sci-fi robot voices', 'Bell-like harmonics', 'Industrial textures'],
-    properties: 'Multiplication of signal by sine wave'
-  },
-  'vibrato': {
-    title: 'VIBRATO',
-    subtitle: 'Pitch Modulation',
-    sliders: [
-      { name: 'Rate', range: '0.1 to 15 Hz', desc: 'Pitch modulation speed' },
-      { name: 'Depth', range: '0 to 20 cents', desc: 'Pitch deviation' },
-      { name: 'Mix', range: '0 to 100%', desc: 'Effect level' },
-      { name: 'Bypass', range: '0 or 1', desc: 'Toggle plugin on/off' }
-    ],
-    uses: ['Classic amp vibrato', 'Detuned vocals', 'Tape flutter effect'],
-    properties: 'Pitch modulation, not amplitude (vs tremolo)'
+    uses: ['Remove vinyl crackle and pops', 'Clean up digital click artifacts', 'Repair corrupted audio samples', 'Restore archived recordings'],
+    properties: 'Signal chain: Input → Click Detection → Adaptive Interpolation → Output'
   },
 
-  // ─── SATURATION / DISTORTION ───
-  'tape-saturation': {
-    title: 'TAPE SATURATION',
-    subtitle: 'Analog Warmth',
+  'deesser': {
+    title: 'DEESSER',
+    subtitle: 'Sibilance Reduction',
     sliders: [
-      { name: 'Drive', range: '0 to 100%', desc: 'Saturation level' },
-      { name: 'Bias', range: '0 to 100%', desc: 'High-frequency loss' },
-      { name: 'Hiss', range: '0 to 100%', desc: 'Tape noise simulation' },
-      { name: 'Mix', range: '0 to 100%', desc: 'Dry/wet balance' },
-      { name: 'Bypass', range: '0 or 1', desc: 'Toggle plugin on/off' }
+      { name: 'Threshold', range: '−60 to 0 dB', desc: 'Sibilance detection level' },
+      { name: 'Frequency', range: '2000 to 12000 Hz', desc: 'Sibilance center frequency' },
+      { name: 'Bandwidth', range: '0.1 to 5 octaves', desc: 'Detection range width' },
+      { name: 'Reduction', range: '0 to 24 dB', desc: 'Maximum sibilance attenuation' },
+      { name: 'Mix', range: '0 to 100%', desc: 'Dry/wet blend' }
     ],
-    uses: ['Vintage warmth', 'Glue bus compression', 'Analog emulation'],
-    properties: 'Soft-knee harmonic saturation'
-  },
-  'harmonic-drive': {
-    title: 'HARMONIC DRIVE',
-    subtitle: 'Warmth Exciter',
-    sliders: [
-      { name: 'Drive', range: '0 to 100%', desc: 'Harmonic generation' },
-      { name: 'Tone', range: '-12 to +12 dB', desc: 'Frequency balance' },
-      { name: 'Mix', range: '0 to 100%', desc: 'Effect level' },
-      { name: 'Bypass', range: '0 or 1', desc: 'Toggle plugin on/off' }
-    ],
-    uses: ['Add harmonics to quiet tracks', 'Exciter effect', 'Perceived loudness'],
-    properties: 'Even-order harmonic emphasis'
-  },
-  'distortion': {
-    title: 'DISTORTION',
-    subtitle: 'Overdrive &amp; Grit',
-    sliders: [
-      { name: 'Drive', range: '0 to 100%', desc: 'Distortion amount' },
-      { name: 'Tone', range: '-12 to +12 dB', desc: 'Frequency balance' },
-      { name: 'Mix', range: '0 to 100%', desc: 'Dry/wet balance' },
-      { name: 'Bypass', range: '0 or 1', desc: 'Toggle plugin on/off' }
-    ],
-    uses: ['Guitar amps', 'Aggressive synths', 'Lo-fi grit'],
-    properties: 'Soft-clipping wavefolding'
-  },
-  'bit-crush': {
-    title: 'BIT CRUSH',
-    subtitle: 'Lo-Fi Degradation',
-    sliders: [
-      { name: 'Bit Depth', range: '4 to 24 bits', desc: 'Sample resolution' },
-      { name: 'Sample Rate', range: '1k to 48k Hz', desc: 'Downsample factor' },
-      { name: 'Mix', range: '0 to 100%', desc: 'Effect level' },
-      { name: 'Bypass', range: '0 or 1', desc: 'Toggle plugin on/off' }
-    ],
-    uses: ['8-bit retro sounds', 'Digital artifacts', 'Chiptune emulation'],
-    properties: 'Quantization and sample rate reduction'
+    uses: ['Tame harsh vocal sibilants (S, T, Ch)', 'Reduce cymbal bleed on close-mic tracks', 'Smooth high-frequency harshness', 'Dynamic frequency-specific compression'],
+    properties: 'Signal chain: Input → Bandpass Detection (Freq + Bandwidth) → Threshold Comparison → Gain Reduction (up to Reduction dB) → Mix → Output'
   },
 
-  // ─── STEREO ───
-  'stereo-width': {
-    title: 'STEREO WIDTH',
-    subtitle: 'Mid/Side Spread',
-    sliders: [
-      { name: 'Width', range: '0 to 200%', desc: 'Stereo image size' },
-      { name: 'Low Cut', range: '20 to 500 Hz', desc: 'Bass mono threshold' },
-      { name: 'High Cut', range: '500 to 20000 Hz', desc: 'Treble mono threshold' },
-      { name: 'Bypass', range: '0 or 1', desc: 'Toggle plugin on/off' }
-    ],
-    uses: ['Widen synths', 'Monaural bass', 'Fix narrow recordings'],
-    properties: 'Mid/Side manipulation'
-  },
-
-  // ─── CREATIVE ───
   'pitch-shifter': {
     title: 'PITCH SHIFTER',
-    subtitle: 'Harmony Generator',
+    subtitle: 'Real-Time Pitch Shift',
     sliders: [
-      { name: 'Semitones', range: '-12 to +12', desc: 'Pitch shift interval' },
-      { name: 'Mix', range: '0 to 100%', desc: 'Effect level' },
-      { name: 'Bypass', range: '0 or 1', desc: 'Toggle plugin on/off' }
+      { name: 'Octave', range: '−2 to +2', desc: 'Octave transposition (−2=two octaves down, +2=two octaves up)' },
+      { name: 'Semitones', range: '−12 to +12', desc: 'Semitone transposition within the octave' },
+      { name: 'Fine', range: '−50 to +50 cents', desc: 'Microtuning offset for precise pitch adjustment' },
+      { name: 'Mix', range: '0 to 100%', desc: 'Dry/wet blend' }
     ],
-    uses: ['Create harmonies', 'Detune guitars', 'Pitch correction assist'],
-    properties: 'Granular pitch shifting'
+    uses: ['Harmony generation', 'Octave doubling effects', 'Corrective pitch adjustment', 'Creative sound design'],
+    properties: 'Signal chain: Input → Circular Buffer → Variable Read Rate → Linear Interpolation → Mix → Output. Total pitch shift = (Octave × 12) + Semitones + (Fine / 100). Uses delay-based pitch shifting with linear interpolation.'
+},
+  'reverb': {
+    title: 'REVERB',
+    subtitle: 'Space & Ambience',
+    sliders: [
+      { name: 'Size', range: '0 to 100%', desc: 'Room/space size' },
+      { name: 'Decay', range: '0.1 to 10 s', desc: 'Reverb tail length' },
+      { name: 'Predelay', range: '0 to 200 ms', desc: 'Initial delay before reflections' },
+      { name: 'Damping', range: '0 to 100%', desc: 'High-frequency absorption' },
+      { name: 'Mix', range: '0 to 100%', desc: 'Dry/wet blend' }
+    ],
+    uses: ['Add natural room ambience', 'Create lush hall spaces', 'Simulate plate reverb for vocals', 'Enhance stereo depth on dry tracks'],
+    properties: 'Signal chain: Input → Predelay → Diffusion Network → Schroeder Allpass Filters → Feedback Delay Network → Damping → Mix → Output'
+  },
+
+  'transient-shaper': {
+    title: 'TRANSIENT SHAPER',
+    subtitle: 'Attack & Sustain Control',
+    sliders: [
+      { name: 'Attack', range: '−20 to +20 dB', desc: 'Transient emphasis/reduction' },
+      { name: 'Sustain', range: '−20 to +20 dB', desc: 'Tail emphasis/reduction' },
+      { name: 'Mix', range: '0 to 100%', desc: 'Dry/wet blend' }
+    ],
+    uses: ['Add punch to drum transients', 'Reduce room bleed on drum tracks', 'Emphasize pluck on guitar attacks', 'Enhance sustain on sustained notes'],
+    properties: 'Signal chain: Input → Transient Detection → Attack Envelope Gain → Sustain Envelope Gain → Mix → Output. Threshold-free design: operates on all material dynamically.'
   }
 };
 

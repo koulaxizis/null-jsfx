@@ -1,11 +1,11 @@
 desc:NULL Vibrato
-//tags: vibrato pitch modulation detune lfo
+//tags: vibrato pitch modulation detune lfo warble
 //author: Christos Koulaxizis
+//Collection: NULL JSFX
 
 slider1:5<0.1,15,0.1>Rate-(Hz)
-slider2:5<0,20,0.1>Depth-cents
+slider2:5<0,20,0.1>Depth-ms
 slider3:40<0,100,1>Mix-%
-slider4:0<0,1,1>Bypass
 
 in_pin:left input
 in_pin:right input
@@ -13,46 +13,47 @@ out_pin:left output
 out_pin:right output
 
 @init
-  buf_size = sr * 0.1;
+  buf_size = 4410;
+  i = 0;
+  loop(buf_size, (delay_l[i] = 0; delay_r[i] = 0;));
   wpos = 0;
   phase = 0;
 
 @slider
   rate = slider1;
-  depth_samples = slider2 / 100 * 12 * sr / 1000;
+  depth = slider2;
   mix_amt = slider3 / 100;
-  lfo_freq = 2 * 3.14159265358979 * rate / sr;
+  phase_inc = 6.28318530717958 * rate / srate;
 
 @sample
+  phase >= 6.28318530717958 ? (phase = phase - 6.28318530717958;);
   lfo = sin(phase);
-  phase = phase + lfo_freq;
-  phase = phase >= 6.28318530717958 ? phase - 6.28318530717958 : phase;
+  phase = phase + phase_inc;
   
-  mod_delay = depth_samples + lfo * depth_samples;
-  mod_delay = mod_delay < 1 ? 1 : mod_delay;
+  max_delay = depth * 0.3;
+  mod_delay = lfo * max_delay;
+  delay_samples = mod_delay * srate / 1000;
   
-  buf_l[wpos] = spl0;
-  buf_r[wpos] = spl1;
-  
-  rpos = wpos - mod_delay;
+  rpos = wpos - delay_samples;
   rpos = rpos < 0 ? rpos + buf_size : rpos;
   
-  rpos_int = floor(rpos);
-  rpos_frac = rpos - rpos_int;
+  rpos_i = floor(rpos);
+  rpos_f = rpos - rpos_i;
+  d1_l = delay_l[rpos_i];
+  d2_l = delay_l[rpos_i >= buf_size - 1 ? 0 : rpos_i + 1];
+  d_l = d1_l + (d2_l - d1_l) * rpos_f;
   
-  d1_l = buf_l[rpos_int];
-  d2_l = buf_l[rpos_int >= buf_size - 1 ? 0 : rpos_int + 1];
-  delayed_l = d1_l + (d2_l - d1_l) * rpos_frac;
+  d1_r = delay_r[rpos_i];
+  d2_r = delay_r[rpos_i >= buf_size - 1 ? 0 : rpos_i + 1];
+  d_r = d1_r + (d2_r - d1_r) * rpos_f;
   
-  d1_r = buf_r[rpos_int];
-  d2_r = buf_r[rpos_int >= buf_size - 1 ? 0 : rpos_int + 1];
-  delayed_r = d1_r + (d2_r - d1_r) * rpos_frac;
-  
+  delay_l[wpos] = spl0;
+  delay_r[wpos] = spl1;
   wpos = wpos + 1;
   wpos = wpos >= buf_size ? 0 : wpos;
   
-  out_l = spl0 * (1 - mix_amt) + delayed_l * mix_amt;
-  out_r = spl1 * (1 - mix_amt) + delayed_r * mix_amt;
+  out_l = spl0 * (1 - mix_amt) + d_l * mix_amt;
+  out_r = spl1 * (1 - mix_amt) + d_r * mix_amt;
   
-  spl0 = slider4 > 0 ? spl0 : out_l;
-  spl1 = slider4 > 0 ? spl1 : out_r;
+  spl0 = out_l;
+  spl1 = out_r;

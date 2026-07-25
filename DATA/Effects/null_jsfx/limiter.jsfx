@@ -1,0 +1,121 @@
+desc:NULL Limiter
+//tags: limiter ceiling clipper brickwall peak protection mastering
+//Collection: NULL JSFX
+//Author: Christos Koulaxizis
+
+slider1:0<0,2,1{Limiter,Clipper,Brickwall}>Mode
+slider2:0<-30,0,0.1>Threshold-(dB)
+slider3:-0.1<-6,-0.1,0.1>Ceiling-(dB)
+slider4:200<0,1000,1>Release-(ms)
+slider5:2<0,10,0.1>Lookahead-(ms)
+
+in_pin:left input
+in_pin:right input
+out_pin:left output
+out_pin:right output
+
+@init
+  db2log = 0.11512925464970228420;
+  
+  buffer_size = 2000;
+  i = 0;
+  loop(buffer_size * 2, delay_buffer[i] = 0);
+  write_pos = 0;
+  
+  env = 0;
+  gain = 1;
+
+@slider
+  slider_mode = slider1;
+  thresh_db = slider2;
+  ceil_db = slider3;
+  release_ms = slider4;
+  lookahead_ms = slider5;
+  
+  thresh = exp(thresh_db * db2log);
+  ceiling = exp(ceil_db * db2log);
+  makeup = ceiling / thresh;
+  
+  release_s = release_ms / 1000;
+  release_s = max(release_s, 0.05);
+  rel_coef = exp(-3 / (srate * release_s));
+  
+  lookahead_samples = lookahead_ms * srate / 1000;
+  lookahead_samples = min(lookahead_samples, buffer_size - 1);
+  lookahead_samples = max(lookahead_samples, 1);
+
+@sample
+  slider_mode == 0 ? (
+    // ─── Limiter (MGA-style: envelope + makeup) ───
+    write_pos = write_pos + 1;
+    write_pos >= buffer_size ? write_pos = 0;
+    
+    delay_buffer[write_pos] = spl0;
+    delay_buffer[write_pos + buffer_size] = spl1;
+    
+    read_pos = write_pos - lookahead_samples;
+    read_pos = read_pos < 0 ? read_pos + buffer_size : read_pos;
+    
+    delayed_l = delay_buffer[read_pos];
+    delayed_r = delay_buffer[read_pos + buffer_size];
+    
+    maxSpls = max(abs(delayed_l), abs(delayed_r));
+    env = env < maxSpls ? maxSpls : maxSpls + rel_coef * (env - maxSpls);
+    
+    env > thresh ? gain = (thresh / env) * makeup : gain = makeup;
+    
+    spl0 = delayed_l * gain;
+    spl1 = delayed_r * gain;
+    
+    spl0 = max(-ceiling, min(ceiling, spl0));
+    spl1 = max(-ceiling, min(ceiling, spl1));
+  );
+  
+  slider_mode == 1 ? (
+    // ─── Clipper (soft clip above threshold) ───
+    in_l = spl0 * makeup;
+    in_r = spl1 * makeup;
+    
+    abs_l = abs(in_l);
+    abs_r = abs(in_r);
+    sign_l = in_l < 0 ? -1 : 1;
+    sign_r = in_r < 0 ? -1 : 1;
+    
+    abs_l > thresh ? (
+      over = (abs_l - thresh) / thresh;
+      soft_l = thresh * (1 + over / (1 + over));
+    ) : soft_l = abs_l;
+    
+    abs_r > thresh ? (
+      over = (abs_r - thresh) / thresh;
+      soft_r = thresh * (1 + over / (1 + over));
+    ) : soft_r = abs_r;
+    
+    spl0 = sign_l * min(soft_l, ceiling);
+    spl1 = sign_r * min(soft_r, ceiling);
+  );
+  
+  slider_mode == 2 ? (
+    // ─── Brickwall (instant gain reduction + lookahead) ───
+    write_pos = write_pos + 1;
+    write_pos >= buffer_size ? write_pos = 0;
+    
+    delay_buffer[write_pos] = spl0;
+    delay_buffer[write_pos + buffer_size] = spl1;
+    
+    read_pos = write_pos - lookahead_samples;
+    read_pos = read_pos < 0 ? read_pos + buffer_size : read_pos;
+    
+    delayed_l = delay_buffer[read_pos];
+    delayed_r = delay_buffer[read_pos + buffer_size];
+    
+    lookahead_sample = max(abs(delayed_l), abs(delayed_r));
+    
+    lookahead_sample > ceiling ? gain = ceiling / lookahead_sample : gain = 1;
+    
+    spl0 = delayed_l * gain;
+    spl1 = delayed_r * gain;
+    
+    spl0 = max(-ceiling, min(ceiling, spl0));
+    spl1 = max(-ceiling, min(ceiling, spl1));
+  );

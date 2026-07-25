@@ -1,0 +1,107 @@
+desc:NULL Channel Utility
+//tags: gain phase polarity dc block solo mute balance mono utility trim pad stereo channel
+//author: Christos Koulaxizis
+//Collection: NULL JSFX
+
+slider1:0<0,1,1{None,-6,-12}>Input Pad
+slider2:0<-12,18,0.1>Input Gain (dB)
+slider3:0<0,1,1{Normal,Inverted}>Phase Left
+slider4:0<0,1,1{Normal,Inverted}>Phase Right
+slider5:20<10,100,1>DC Block Freq (Hz)
+slider6:100<0,100,1>DC Block Mix (%)
+slider7:0<-6,6,0.1>Balance Left (dB)
+slider8:0<-6,6,0.1>Balance Right (dB)
+slider9:0<0,1,1{Off,On}>Solo L
+slider10:0<0,1,1{Off,On}>Solo R
+slider11:0<0,1,1{Stereo,Mono}>Mono Check
+slider12:0<-12,12,0.1>Output Gain (dB)
+slider13:0<0,1,1{Off,On}>Hard Limit
+
+in_pin:left input
+in_pin:right input
+out_pin:left output
+out_pin:right output
+
+@init
+  DB2LIN = 0.11512925464970228420;
+  clip_peak_l = 0;
+  clip_peak_r = 0;
+  clip_decay = 0.995;
+  dc_xl = 0; dc_xr = 0; dc_yl = 0; dc_yr = 0;
+  ext_prev_srate = srate;
+
+@slider
+  pad_db = slider1 == 1 ? -6 : (slider1 == 2 ? -12 : 0);
+  db2lin_pad = exp(pad_db * DB2LIN);
+  in_gain_lin = exp(slider2 * DB2LIN);
+
+  dc_freq = slider5;
+  dc_mix = slider6 / 100;
+  dc_alpha = 1 / (1 + 3.14159265358979 * dc_freq / srate);
+
+  bal_l_lin = exp(slider7 * DB2LIN);
+  bal_r_lin = exp(slider8 * DB2LIN);
+
+  out_gain_lin = exp(slider12 * DB2LIN);
+
+  solo_l = floor(slider9);
+  solo_r = floor(slider10);
+  mono_mode = floor(slider11);
+
+@block
+  ext_prev_srate != srate ? (
+    dc_alpha = 1 / (1 + 3.14159265358979 * dc_freq / srate);
+    ext_prev_srate = srate;
+  );
+
+@sample
+  // 1. Input Pad + Input Gain
+  out_l = spl0 * db2lin_pad * in_gain_lin;
+  out_r = spl1 * db2lin_pad * in_gain_lin;
+
+  // 2. Phase Flip
+  slider3 ? (out_l = -out_l;);
+  slider4 ? (out_r = -out_r;);
+
+  // 3. DC Block
+  dc_bl = dc_alpha * (dc_yl + out_l - dc_xl);
+  dc_br = dc_alpha * (dc_yr + out_r - dc_xr);
+  dc_xl = out_l; dc_xr = out_r;
+  dc_yl = dc_bl; dc_yr = dc_br;
+  out_l = (1 - dc_mix) * out_l + dc_mix * dc_bl;
+  out_r = (1 - dc_mix) * out_r + dc_mix * dc_br;
+
+  // 4. Channel Balance
+  out_l *= bal_l_lin;
+  out_r *= bal_r_lin;
+
+  // 5. Solo L / Solo R
+  solo_l ? (
+    out_r = 0;
+  ) : (
+    solo_r ? (out_l = 0;);
+  );
+
+  // 6. Mono Check
+  mono_mode ? (
+    out_l = (out_l + out_r) / 2;
+    out_r = out_l;
+  );
+
+  // 7. Output Gain
+  out_l *= out_gain_lin;
+  out_r *= out_gain_lin;
+
+  // 8. Hard Limit
+  clip_peak_l *= clip_decay;
+  clip_peak_r *= clip_decay;
+  abs(out_l) > clip_peak_l ? clip_peak_l = abs(out_l);
+  abs(out_r) > clip_peak_r ? clip_peak_r = abs(out_r);
+
+  slider13 ? (
+    abs(out_l) > 0.99 ? (out_l = sign(out_l) * 0.99;);
+    abs(out_r) > 0.99 ? (out_r = sign(out_r) * 0.99;);
+  );
+
+  spl0 = out_l;
+  spl1 = out_r;

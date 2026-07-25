@@ -1,12 +1,11 @@
 desc:NULL Phaser
-//tags: phaser modulation sweep notch moving filter
-//author: Christos Koulaxizis
+//tags: phaser modulation sweep notch moving filter allpass
+//Collection: NULL JSFX
+//Author: Christos Koulaxizis
 
 slider1:0.5<0.1,5,0.1>Rate-(Hz)
-slider2:5<1,20,0.1>Stages
-slider3:2<0.5,5,0.1>Depth
-slider4:30<0,100,1>Mix-%
-slider5:0<0,1,1>Bypass
+slider2:4<1,8,1>Stages
+slider3:30<0,100,1>Mix-%
 
 in_pin:left input
 in_pin:right input
@@ -14,63 +13,58 @@ out_pin:left output
 out_pin:right output
 
 @init
-  allpass1 = 0; allpass2 = 1000; allpass3 = 2000; allpass4 = 3000;
-  w1 = 0; w2 = 0; w3 = 0; w4 = 0;
-  phase = 0;
-  a1_1 = 0; a1_r = 0;
-  a2_1 = 0; a2_r = 0;
+  lfo_phase = 0;
+  ly1=0; ly2=0; ly3=0; ly4=0; ly5=0; ly6=0; ly7=0; ly8=0;
+  lx1=0; lx2=0; lx3=0; lx4=0; lx5=0; lx6=0; lx7=0; lx8=0;
+  ry1=0; ry2=0; ry3=0; ry4=0; ry5=0; ry6=0; ry7=0; ry8=0;
+  rx1=0; rx2=0; rx3=0; rx4=0; rx5=0; rx6=0; rx7=0; rx8=0;
+  last_l = 0;
+  last_r = 0;
 
 @slider
   rate = slider1;
-  depth = slider2;
-  lfo_freq = 2 * 3.14159265358979 * rate / sr;
-  base_freq = 1000;
-  sweep_depth = depth;
-  mix_amt = slider4 / 100;
+  stages = floor(slider2);
+  mix_amt = slider3 / 100;
+  lfo_inc = 2 * $pi * rate / srate;
+  d_min = 440 * 2 / srate;
+  d_max = 1600 * 2 / srate;
+  d_sc = abs(d_max - d_min) * 0.5;
+  d_min = d_min < d_max ? d_min : d_max;
+  feedback = 0.3;
 
 @sample
-  lfo = sin(phase);
-  phase = phase + lfo_freq;
-  phase = phase >= 6.28318530717958 ? phase - 6.28318530717958 : phase;
+  lfo_phase += lfo_inc;
+  lfo_phase >= 2 * $pi ? lfo_phase -= 2 * $pi;
   
-  freq_mod = base_freq * (1 + lfo * sweep_depth * 0.3);
-  ap_coef = cos(2 * 3.14159265358979 * freq_mod / sr);
+  d = d_min + d_sc * (sin(lfo_phase) + 1);
+  coef = (1 - d) / (1 + d);
   
-  inp_l = spl0;
-  out_l = inp_l;
+  // Left channel
+  wet_l = spl0 + last_l * feedback;
   
-  for (i = 0; i < 4; i++) {
-    rpos = w1 - i * 1000;
-    rpos = rpos < 0 ? rpos + 4000 : rpos;
-    delay_sig = [rpos];
-    feed = out_l - delay_sig;
-    out_l = feed * ap_coef + delay_sig;
-    [w1] = out_l;
-    w1 = w1 + 1;
-    w1 = w1 >= 4000 ? 0 : w1;
-  }
+  ly1 = coef * (ly1 + wet_l) - lx1;  lx1 = wet_l;  wet_l = ly1;
+  stages >= 2 ? (ly2 = coef * (ly2 + wet_l) - lx2;  lx2 = wet_l;  wet_l = ly2;);
+  stages >= 3 ? (ly3 = coef * (ly3 + wet_l) - lx3;  lx3 = wet_l;  wet_l = ly3;);
+  stages >= 4 ? (ly4 = coef * (ly4 + wet_l) - lx4;  lx4 = wet_l;  wet_l = ly4;);
+  stages >= 5 ? (ly5 = coef * (ly5 + wet_l) - lx5;  lx5 = wet_l;  wet_l = ly5;);
+  stages >= 6 ? (ly6 = coef * (ly6 + wet_l) - lx6;  lx6 = wet_l;  wet_l = ly6;);
+  stages >= 7 ? (ly7 = coef * (ly7 + wet_l) - lx7;  lx7 = wet_l;  wet_l = ly7;);
+  stages >= 8 ? (ly8 = coef * (ly8 + wet_l) - lx8;  lx8 = wet_l;  wet_l = ly8;);
   
-  wet_l = out_l;
-  dry_l = spl0;
-  final_l = dry_l * (1 - mix_amt) + wet_l * mix_amt;
+  last_l = wet_l;
+  spl0 += wet_l * mix_amt;
   
-  inp_r = spl1;
-  out_r = inp_r;
+  // Right channel
+  wet_r = spl1 + last_r * feedback;
   
-  for (i = 0; i < 4; i++) {
-    rpos = w2 - i * 1000;
-    rpos = rpos < 0 ? rpos + 4000 : rpos;
-    delay_sig = [rpos];
-    feed = out_r - delay_sig;
-    out_r = feed * ap_coef + delay_sig;
-    [w2] = out_r;
-    w2 = w2 + 1;
-    w2 = w2 >= 4000 ? 0 : w2;
-  }
+  ry1 = coef * (ry1 + wet_r) - rx1;  rx1 = wet_r;  wet_r = ry1;
+  stages >= 2 ? (ry2 = coef * (ry2 + wet_r) - rx2;  rx2 = wet_r;  wet_r = ry2;);
+  stages >= 3 ? (ry3 = coef * (ry3 + wet_r) - rx3;  rx3 = wet_r;  wet_r = ry3;);
+  stages >= 4 ? (ry4 = coef * (ry4 + wet_r) - rx4;  rx4 = wet_r;  wet_r = ry4;);
+  stages >= 5 ? (ry5 = coef * (ry5 + wet_r) - rx5;  rx5 = wet_r;  wet_r = ry5;);
+  stages >= 6 ? (ry6 = coef * (ry6 + wet_r) - rx6;  rx6 = wet_r;  wet_r = ry6;);
+  stages >= 7 ? (ry7 = coef * (ry7 + wet_r) - rx7;  rx7 = wet_r;  wet_r = ry7;);
+  stages >= 8 ? (ry8 = coef * (ry8 + wet_r) - rx8;  rx8 = wet_r;  wet_r = ry8;);
   
-  wet_r = out_r;
-  dry_r = spl1;
-  final_r = dry_r * (1 - mix_amt) + wet_r * mix_amt;
-  
-  spl0 = slider5 > 0 ? spl0 : final_l;
-  spl1 = slider5 > 0 ? spl1 : final_r;
+  last_r = wet_r;
+  spl1 += wet_r * mix_amt;

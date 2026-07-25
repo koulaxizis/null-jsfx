@@ -1,38 +1,61 @@
 desc:NULL Auto Pan
-//tags: autopan pan modulation LFO movement stereo auto
+//tags: autopan pan modulation LFO movement stereo width tempo sync
 //author: Christos Koulaxizis
+//Collection: NULL JSFX
 
 slider1:2<0.1,10,0.1>Rate-(Hz)
 slider2:50<0,100,1>Depth-%
+slider3:40<0,100,1>Mix-%
+slider4:0<0,1,1{OFF,ON}>Tempo-Sync
+slider5:0<0,3,1{1/2,1/4,1/8,1/16}>Subdivision
 
 in_pin:left input
-out_pin:right output
+in_pin:right input
+out_pin:left output
 out_pin:right output
 
 @init
-  sample_rate = sr;
-  rate_hz = slider1;
-  depth_pct = slider2 / 100;
   phase = 0;
-  phase_inc = 2 * 3.14159265358979 * rate_hz / sample_rate;
+  calc_rate = 2;
+  phase_inc = 6.28318530717958 * calc_rate / srate;
+  tempo_sync = 0;
+  mult = 0.5;
 
 @slider
-  rate_hz = slider1;
   depth_pct = slider2 / 100;
-  phase_inc = 2 * 3.14159265358979 * rate_hz / sample_rate;
+  mix_amt = slider3 / 100;
+  tempo_sync = slider4;
+  subdivision = slider5;
+  
+  subdivision == 0 ? mult = 0.5;
+  subdivision == 1 ? mult = 1;
+  subdivision == 2 ? mult = 2;
+  subdivision == 3 ? mult = 4;
+  
+  tempo_sync == 0 ? (
+    calc_rate = slider1;
+    phase_inc = 6.28318530717958 * calc_rate / srate;
+  );
+
+@block
+  tempo_sync == 1 ? (
+    calc_rate = (tempo / 60) * mult;
+    phase_inc = 6.28318530717958 * calc_rate / srate;
+  );
 
 @sample
-  // LFO: sine wave from -depth to +depth
+  phase >= 6.28318530717958 ? phase = phase - 6.28318530717958;
   lfo = sin(phase);
-  phase += phase_inc;
-  if (phase > 2 * 3.14159265358979) phase -= 2 * 3.14159265358979;
+  phase = phase + phase_inc;
   
-  // Pan automation: L = 1 - depth + depth*sin, R = 1 - depth - depth*sin
-  l_pan = 1 - depth_pct + depth_pct * lfo;
-  r_pan = 1 - depth_pct - depth_pct * lfo;
+  left_gain = 0.5 + 0.5 * depth_pct * lfo;
+  right_gain = 0.5 - 0.5 * depth_pct * lfo;
   
-  // Normalize to prevent level change
-  normalize = 1 / max(l_pan, r_pan);
+  proc_l = spl0 * left_gain;
+  proc_r = spl1 * right_gain;
   
-  spl0 = spl0 * l_pan * normalize;
-  spl1 = spl1 * r_pan * normalize;
+  out_l = spl0 * (1 - mix_amt) + proc_l * mix_amt;
+  out_r = spl1 * (1 - mix_amt) + proc_r * mix_amt;
+  
+  spl0 = out_l;
+  spl1 = out_r;

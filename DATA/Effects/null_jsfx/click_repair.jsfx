@@ -1,9 +1,10 @@
 desc:NULL Click Repair
-//tags: click pop repair restoration vinyl digital artifact removal
+//tags: click repair audio restoration pop click crackle vinyl denoise
 //author: Christos Koulaxizis
+//Collection: NULL JSFX
 
 slider1:50<0,100,1>Threshold-%
-slider2:10<1,50,1>Window-Samples
+slider2:10<1,50,1>Window-(Samples)
 
 in_pin:left input
 in_pin:right input
@@ -11,47 +12,41 @@ out_pin:left output
 out_pin:right output
 
 @init
-  threshold_pct = slider1 / 100;
-  window_size = slider2;
-  buffer_idx = 0;
-  buffer_idx_r = 0;
-  threshold = 0.5;
-  
-  i = 0;
-  while (i < 50)(window_samples[i] = 0; window_samples_r[i] = 0; i += 1;);
+  win_idx = 0;
+  threshold_db = slider1 / 100;
+  window_len = floor(slider2);
+  loop(window_len, window_data[i] = 0;);
+  prev_sample = 0;
 
 @slider
-  threshold_pct = slider1 / 100;
-  window_size = slider2;
-  threshold = threshold_pct;
+  threshold_db = slider1 / 100;
+  window_len = floor(slider2);
 
 @sample
-  window_samples[buffer_idx] = spl0;
-  buffer_idx = (buffer_idx + 1) % window_size;
+  current = spl0;
+  diff = current - prev_sample;
   
-  sum = 0;
-  i = 0;
-  while (i < window_size)(sum = sum + window_samples[i]; i += 1;);
-  avg = sum / window_size;
+  diff > threshold_db || diff < -threshold_db ? (
+    interpolated = 0;
+    loop(window_len, 
+      sum = 0;
+      count = 0;
+      loop(window_len,
+        k = win_idx - j;
+        k < 0 ? k = k + window_len;
+        k >= window_len ? k = k - window_len;
+        sum = sum + window_data[k];
+        count = count + 1;
+      );
+      interpolated = sum / count;
+    );
+    
+    spl0 = interpolated;
+    spl1 = interpolated;
+  );
   
-  diff = abs(spl0 - avg);
-  if (diff > threshold) {
-    prev_val = window_samples[(buffer_idx - 1 + window_size) % window_size];
-    next_val = window_samples[(buffer_idx + 1) % window_size];
-    spl0 = (prev_val + next_val) * 0.5;
-  }
+  window_data[win_idx] = spl0;
+  win_idx = win_idx + 1;
+  win_idx >= window_len ? win_idx = 0;
   
-  window_samples_r[buffer_idx_r] = spl1;
-  buffer_idx_r = (buffer_idx_r + 1) % window_size;
-  
-  sum_r = 0;
-  i = 0;
-  while (i < window_size)(sum_r = sum_r + window_samples_r[i]; i += 1;);
-  avg_r = sum_r / window_size;
-  
-  diff_r = abs(spl1 - avg_r);
-  if (diff_r > threshold) {
-    prev_val_r = window_samples_r[(buffer_idx_r - 1 + window_size) % window_size];
-    next_val_r = window_samples_r[(buffer_idx_r + 1) % window_size];
-    spl1 = (prev_val_r + next_val_r) * 0.5;
-  }
+  prev_sample = current;

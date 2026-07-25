@@ -1,9 +1,11 @@
 desc:NULL Harmonic Drive
 //tags: harmonics warmth saturation exciter tube tape glow drive
 //author: Christos Koulaxizis
+//Collection: NULL JSFX
 
-slider1:0<0,50,0.1>Amount-%
-slider2:0<-6,6,0.1>Tone-(dB)
+slider1:30<0,100,0.1>Drive-%
+slider2:0<-12,12,0.1>Tone-(dB)
+slider3:100<0,100,1>Mix-%
 
 in_pin:left input
 in_pin:right input
@@ -12,22 +14,38 @@ out_pin:right output
 
 @init
   DB2LIN = 0.11512925464970228420;
-  amount_pct = slider1 / 100;
-  tone_db = slider2;
-  tone_lin = exp(tone_db * DB2LIN);
-  tanh_coeff = 1.5;
+  tilt_lp_l = 0;
+  tilt_lp_r = 0;
 
 @slider
-  amount_pct = slider1 / 100;
-  tone_db = slider2;
-  tone_lin = exp(tone_db * DB2LIN);
+  drive_pct = slider1 / 100;
+  tilt_db = slider2;
+  mix_pct = slider3 / 100;
+
+  tilt_alpha = 1 - exp(-2 * 3.14159265 * 1500 / srate);
+  tilt_hi = pow(10, tilt_db / 40);
+  tilt_lo = pow(10, -tilt_db / 40);
 
 @sample
-  sat_l = tanh(spl0 * tanh_coeff);
-  sat_r = tanh(spl1 * tanh_coeff);
+  h_l = spl0 * 2.0;
+  h_r = spl1 * 2.0;
   
-  mixed_l = (1 - amount_pct) * spl0 + amount_pct * sat_l;
-  mixed_r = (1 - amount_pct) * spl1 + amount_pct * sat_r;
+  sat_l = h_l * (27 + h_l * h_l) / (27 + 9 * h_l * h_l);
+  sat_r = h_r * (27 + h_r * h_r) / (27 + 9 * h_r * h_r);
   
-  spl0 = mixed_l * tone_lin;
-  spl1 = mixed_r * tone_lin;
+  proc_l = (1 - drive_pct) * spl0 + drive_pct * sat_l;
+  proc_r = (1 - drive_pct) * spl1 + drive_pct * sat_r;
+  
+  tilt_lp_l = tilt_lp_l + tilt_alpha * (proc_l - tilt_lp_l);
+  tilt_lp_r = tilt_lp_r + tilt_alpha * (proc_r - tilt_lp_r);
+  tilt_hp_l = proc_l - tilt_lp_l;
+  tilt_hp_r = proc_r - tilt_lp_r;
+  
+  tilt_out_l = tilt_hp_l * tilt_hi + tilt_lp_l * tilt_lo;
+  tilt_out_r = tilt_hp_r * tilt_hi + tilt_lp_r * tilt_lo;
+  
+  out_l = spl0 * (1 - mix_pct) + tilt_out_l * mix_pct;
+  out_r = spl1 * (1 - mix_pct) + tilt_out_r * mix_pct;
+  
+  spl0 = out_l;
+  spl1 = out_r;

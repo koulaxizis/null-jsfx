@@ -1,11 +1,11 @@
 desc:NULL Transient Shaper
-//tags: transient attack release envelope shaper percussive
-//author: Christos Koulaxizis
+//tags: transient attack sustain punch envelope dynamics shaping
+//Collection: NULL JSFX
+//Author: Christos Koulaxizis
 
-slider1:0<-100,100,1>Attack
-slider2:0<-100,100,1>Sustain
-slider3:50<0,100,1>Threshold-%
-slider4:0<0,1,1>Bypass
+slider1:0<-20,20,0.1>Attack-(dB)
+slider2:0<-20,20,0.1>Sustain-(dB)
+slider3:100<0,100,1>Mix-%
 
 in_pin:left input
 in_pin:right input
@@ -13,42 +13,66 @@ out_pin:left output
 out_pin:right output
 
 @init
-  env_peak = 0;
-  env_attack = 0;
-  env_release = 0;
-  threshold = 0.1;
+  fast_env = 0;
+  slow_env = 0;
+  gain_lin_att = 1;
+  gain_lin_sus = 1;
 
 @slider
-  attack_mult = 1 + slider1 / 100 * 0.5;
-  sustain_mult = 1 + slider2 / 100 * 0.3;
-  threshold = slider3 / 100 * 0.5;
-  attack_coefs = 0.1;
-  release_coefs = 0.01;
+  attack_db = slider1;
+  sustain_db = slider2;
+  mix_amt = slider3 / 100;
+  
+  attack_boost = exp(attack_db * 0.11512925464970228420);
+  sustain_boost = exp(sustain_db * 0.11512925464970228420);
+  
+  // Envelope time constants
+  fast_attack = 0.001;   // 1ms fast envelope attack
+  fast_release = 0.020;  // 20ms fast envelope release
+  slow_attack = 0.020;   // 20ms slow envelope attack
+  slow_release = 0.150;  // 150ms slow envelope release
+  
+  fa_coef = 1 - exp(-1 / (fast_attack * srate));
+  fr_coef = 1 - exp(-1 / (fast_release * srate));
+  sa_coef = 1 - exp(-1 / (slow_attack * srate));
+  sr_coef = 1 - exp(-1 / (slow_release * srate));
 
 @sample
-  abs_val = abs(spl0);
-  env_peak = max(abs_val, env_peak * 0.995);
+  // Detect signal level (max of both channels)
+  abs_l = spl0 < 0 ? -spl0 : spl0;
+  abs_r = spl1 < 0 ? -spl1 : spl1;
+  input_level = abs_l > abs_r ? abs_l : abs_r;
   
-  if (abs_val > env_attack)
-    env_attack = env_attack + attack_coefs * (abs_val - env_attack);
-  else
-    env_attack = env_attack + release_coefs * (abs_val - env_attack);
-  fi
+  // Fast envelope (catches transients)
+  input_level > fast_env ? (
+    fast_env = fast_env + fa_coef * (input_level - fast_env);
+  ) : (
+    fast_env = fast_env + fr_coef * (input_level - fast_env);
+  );
   
-  ratio = env_attack > threshold ? attack_mult : sustain_mult;
-  out_l = spl0 * ratio;
+  // Slow envelope (catches sustain)
+  input_level > slow_env ? (
+    slow_env = slow_env + sa_coef * (input_level - slow_env);
+  ) : (
+    slow_env = slow_env + sr_coef * (input_level - slow_env);
+  );
   
-  abs_val_r = abs(spl1);
-  env_peak_r = max(abs_val_r, env_peak_r * 0.995);
+  // Transient detection: difference between fast and slow envelopes
+  slow_env > 0.0001 ? (
+    transient_amount = (fast_env - slow_env) / slow_env;
+  ) : transient_amount = 0;
   
-  if (abs_val_r > env_attack)
-    env_attack_r = env_attack_r + attack_coefs * (abs_val_r - env_attack_r);
-  else
-    env_attack_r = env_attack_r + release_coefs * (abs_val_r - env_attack_r);
-  fi
+  transient_amount = transient_amount > 1 ? 1 : transient_amount;
+  transient_amount = transient_amount < 0 ? 0 : transient_amount;
   
-  ratio_r = env_attack_r > threshold ? attack_mult : sustain_mult;
-  out_r = spl1 * ratio_r;
+  // Sustain amount: inverse of transient
+  sustain_amount = 1 - transient_amount;
   
-  spl0 = slider4 > 0 ? spl0 : out_l;
-  spl1 = slider4 > 0 ? spl1 : out_r;
+  // Apply gains
+  total_gain = 1 + (attack_boost - 1) * transient_amount + (sustain_boost - 1) * sustain_amount;
+  
+  out_l = spl0 * total_gain;
+  out_r = spl1 * total_gain;
+  
+  spl0 = spl0 * (1 - mix_amt) + out_l * mix_amt;
+  spl1 = spl1 * (1 - mix_amt) + out_r * mix_amt;

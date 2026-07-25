@@ -1,36 +1,58 @@
 desc:NULL Stereo Width
-//tags: stereo width mid side widening narrowing spread stereo image
-//author: Christos Koulaxizis
+//tags: stereo width mid side widening narrowing spread stereo image crossover
+//Collection: NULL JSFX
+//Author: Christos Koulaxizis
 
 slider1:100<0,200,1>Width-%
+slider2:100<0,100,1>Mix-%
+slider3:0<0,500,1>Crossover-(Hz)
 
 in_pin:left input
-out_pin:right output
+in_pin:right input
+out_pin:left output
 out_pin:right output
 
 @init
-  width_pct = slider1 / 100;
-  mid_gain = 1;
-  side_gain = 1;
+  width_pct = 1;
+  mix_amt = 1;
+  xover_freq = 0;
+  lp_mid_l = 0;
+  lp_mid_r = 0;
+  lp_side = 0;
 
 @slider
   width_pct = slider1 / 100;
+  mix_amt = slider2 / 100;
+  xover_freq = slider3;
   
-  // Width 100% = original, 200% = wider, 0% = mono
-  side_gain = width_pct / 100;
-  mid_gain = 1;
+  xover_freq > 0 ? (
+    xover_coef = 1 - exp(-2 * 3.14159265358979 * xover_freq / srate);
+  ) : xover_coef = 0;
 
 @sample
-  // Mid/Side processing
   mid = (spl0 + spl1) * 0.5;
   side = (spl0 - spl1) * 0.5;
   
-  // Apply width to side channel
-  new_side = side * side_gain;
+  xover_freq > 0 ? (
+    // Crossover mode: only widen highs, keep bass mono
+    lp_mid_l = lp_mid_l + xover_coef * (mid - lp_mid_l);
+    hp_mid = mid - lp_mid_l;
+    
+    lp_side = lp_side + xover_coef * (side - lp_side);
+    hp_side = side - lp_side;
+    
+    // Bass: mid only (mono), no side
+    out_l = lp_mid_l;
+    out_r = lp_mid_l;
+    
+    // Highs: widened mid + side
+    out_l += hp_mid + hp_side * width_pct;
+    out_r += hp_mid - hp_side * width_pct;
+  ) : (
+    // Full range mode
+    out_l = mid + side * width_pct;
+    out_r = mid - side * width_pct;
+  );
   
-  // Reconstruct L/R
-  out_l = mid + new_side;
-  out_r = mid - new_side;
-  
-  spl0 = out_l;
-  spl1 = out_r;
+  spl0 = spl0 * (1 - mix_amt) + out_l * mix_amt;
+  spl1 = spl1 * (1 - mix_amt) + out_r * mix_amt;

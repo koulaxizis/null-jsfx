@@ -1,0 +1,84 @@
+desc:NULL Dynamics
+//tags: dynamics compressor expander gain reduction ratio threshold knee
+//author: Christos Koulaxizis
+//Collection: NULL JSFX
+
+slider1:0<0,1,1{Compressor,Expander}>Mode
+slider2:-20<-60,0,1>Threshold-(dB)
+slider3:4<1,20,0.1>Ratio
+slider4:6<0,20,1>Knee-(dB)
+slider5:10<0,200,1>Attack-(ms)
+slider6:100<0,1000,1>Release-(ms)
+slider7:0<0,20,1>Makeup-(dB)
+
+in_pin:left input
+in_pin:right input
+out_pin:left output
+out_pin:right output
+
+@init
+  gain_env = 1;
+  ln10 = 2.302585;
+  db_to_lin = ln10 / 20;
+
+@slider
+  mode = slider1;
+  threshold_db = slider2;
+  ratio = slider3;
+  knee_db = slider4;
+  attack_ms = slider5;
+  release_ms = slider6;
+  makeup_db = slider7;
+  
+  attack_ms > 0 ? (
+    attack_tc = 1 - exp(-1 / (attack_ms * srate / 1000));
+  ) : (
+    attack_tc = 1;
+  );
+  
+  release_ms > 0 ? (
+    release_tc = 1 - exp(-1 / (release_ms * srate / 1000));
+  ) : (
+    release_tc = 1;
+  );
+
+@sample
+  input_abs = max(abs(spl0), abs(spl1));
+  input_abs < 0.000001 ? input_abs = 0.000001;
+  input_db = log(input_abs) / ln10 * 20;
+  
+  gr_target = 0;
+  
+  mode == 0 ? (
+    // COMPRESSOR: above threshold
+    excess = input_db - threshold_db;
+    excess > 0 ? (
+      knee_db > 0 && excess < knee_db ? (
+        gr_target = excess * (1 - 1/ratio) * (excess / knee_db);
+      ) : (
+        gr_target = excess * (1 - 1/ratio);
+      );
+    );
+  ) : (
+    // EXPANDER: below threshold
+    deficit = threshold_db - input_db;
+    deficit > 0 ? (
+      knee_db > 0 && deficit < knee_db ? (
+        gr_target = deficit * (1 - 1/ratio) * (deficit / knee_db);
+      ) : (
+        gr_target = deficit * (1 - 1/ratio);
+      );
+    );
+  );
+  
+  gain_target = exp(-gr_target * db_to_lin);
+  
+  gain_target < gain_env ? (
+    gain_env = gain_env + (gain_target - gain_env) * attack_tc;
+  ) : (
+    gain_env = gain_env + (gain_target - gain_env) * release_tc;
+  );
+  
+  makeup_linear = exp(makeup_db * db_to_lin);
+  spl0 = spl0 * gain_env * makeup_linear;
+  spl1 = spl1 * gain_env * makeup_linear;

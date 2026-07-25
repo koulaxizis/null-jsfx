@@ -1,0 +1,89 @@
+desc:NULL Gate
+//tags: gate noise vocal floor reduce silence threshold mute sidechain
+//Author: Christos Koulaxizis
+//Collection: NULL JSFX
+
+slider1:-40<-60,0,0.1>Threshold-(dB)
+slider2:10<1,100,1>Attack-(ms)
+slider3:200<50,1000,1>Release-(ms)
+slider4:0<0,500,1>Sidechain-HPF-(Hz)
+
+in_pin:left input
+in_pin:right input
+out_pin:left output
+out_pin:right output
+
+@init
+  threshold_db = -40;
+  attack_ms = 10;
+  release_ms = 200;
+  sc_hpf = 0;
+  
+  threshold_lin = pow(10, threshold_db / 20);
+  
+  attack_time = srate * attack_ms / 1000;
+  release_time = srate * release_ms / 1000;
+  
+  at = attack_time > 1 ? attack_time : 1;
+  rt = release_time > 1 ? release_time : 1;
+  
+  attack_coef = 1 - exp(-1 / at);
+  release_coef = 1 - exp(-1 / rt);
+  
+  gate_level = 0;
+  env_peak_l = 0;
+  env_peak_r = 0;
+  sc_lpf_l = 0;
+  sc_lpf_r = 0;
+  sc_lpf_coef = 0;
+
+@slider
+  threshold_db = slider1;
+  attack_ms = slider2;
+  release_ms = slider3;
+  sc_hpf = slider4;
+  
+  threshold_lin = pow(10, threshold_db / 20);
+  
+  attack_time = srate * attack_ms / 1000;
+  release_time = srate * release_ms / 1000;
+  
+  at = attack_time > 1 ? attack_time : 1;
+  rt = release_time > 1 ? release_time : 1;
+  
+  attack_coef = 1 - exp(-1 / at);
+  release_coef = 1 - exp(-1 / rt);
+  
+  sc_hpf > 0 ? (
+    sc_lpf_coef = 1 - exp(-2 * 3.14159265358979 * sc_hpf / srate);
+  );
+
+@sample
+  sc_hpf > 0 ? (
+    sc_lpf_l = sc_lpf_l + sc_lpf_coef * (spl0 - sc_lpf_l);
+    sc_lpf_r = sc_lpf_r + sc_lpf_coef * (spl1 - sc_lpf_r);
+    input_l = spl0 - sc_lpf_l;
+    input_r = spl1 - sc_lpf_r;
+  ) : (
+    input_l = spl0;
+    input_r = spl1;
+  );
+  
+  abs_l = input_l < 0 ? -input_l : input_l;
+  abs_r = input_r < 0 ? -input_r : input_r;
+  
+  decay_l = env_peak_l * 0.995;
+  decay_r = env_peak_r * 0.995;
+  env_peak_l = abs_l > decay_l ? abs_l : decay_l;
+  env_peak_r = abs_r > decay_r ? abs_r : decay_r;
+  
+  env_detected = env_peak_l > env_peak_r ? env_peak_l : env_peak_r;
+  
+  env_detected > threshold_lin ? (
+    gate_level < 1 ? gate_level = gate_level + attack_coef * (1 - gate_level);
+  ) : (
+    gate_level > 0 ? gate_level = gate_level + release_coef * (0 - gate_level);
+  );
+  
+  spl0 = spl0 * gate_level;
+  spl1 = spl1 * gate_level;
