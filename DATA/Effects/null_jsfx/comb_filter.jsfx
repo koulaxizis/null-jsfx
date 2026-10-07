@@ -15,48 +15,43 @@ out_pin:Left
 out_pin:Right
 
 @init
-  comb_buf_size = 44100;
-  comb_buf_l = 0;
-  comb_buf_r = 0;
-  comb_wr = 0;
-  i = 0;
-  loop(comb_buf_size, comb_buf_l[i] = 0; comb_buf_r[i] = 0; i += 1;);
+  // Adds a copy of the signal delayed by one period of Frequency, which puts peaks at
+  // Frequency and its harmonics. Feed-Backward recirculates the delay for a ringing,
+  // pitched tone. The output is level-compensated so high Feedback does not blow up.
+  buf_size = ceil(srate / 20) + 4;
+  buf_l = 0;
+  buf_r = buf_l + buf_size;
+  memset(buf_l, 0, 2 * buf_size);
+  freembuf(buf_r + buf_size);
+  wpos = 0;
 
-  gain_lin = 1;
-
-@slider
-  comb_freq = slider1;
-  comb_feedback = slider2;
-  comb_mode = slider3;
-  gain_lin = exp(slider4 * 0.11512925464970228420);
-
-  delay_samples = floor(srate / comb_freq);
-  delay_samples < 1 ? delay_samples = 1;
-  delay_samples >= comb_buf_size ? delay_samples = comb_buf_size - 1;
-
-@sample
-  read_ptr = comb_wr - delay_samples;
-  read_ptr < 0 ? read_ptr += comb_buf_size;
-
-  delayed_l = comb_buf_l[read_ptr];
-  delayed_r = comb_buf_r[read_ptr];
-
-  comb_mode == 0 ? (
-    // FEED-FORWARD: out = input + feedback * delayed
-    out_l = spl0 + comb_feedback * delayed_l;
-    out_r = spl1 + comb_feedback * delayed_r;
-    comb_buf_l[comb_wr] = spl0;
-    comb_buf_r[comb_wr] = spl1;
-  ) : (
-    // FEED-BACKWARD: out = input + feedback * previous_out
-    out_l = spl0 + comb_feedback * delayed_l;
-    out_r = spl1 + comb_feedback * delayed_r;
-    comb_buf_l[comb_wr] = out_l;
-    comb_buf_r[comb_wr] = out_r;
+  function tap(buf) local(rp, i, fr, i2)
+  (
+    rp = wpos - delay;
+    rp < 0 ? rp += buf_size;
+    i = floor(rp);
+    fr = rp - i;
+    i2 = i + 1;
+    i2 >= buf_size ? i2 = 0;
+    buf[i] + (buf[i2] - buf[i]) * fr;
   );
 
+@slider
+  fb = slider2;
+  mode = slider3;
+  delay = max(1, min(buf_size - 2, srate / slider1));
+  // peak gain of the comb is 1 + fb (feed-forward) or 1 / (1 - fb) (feed-backward)
+  norm = mode == 0 ? 1 / (1 + fb) : (1 - fb);
+  gain_lin = 10 ^ (slider4 / 20) * norm;
+
+@sample
+  d_l = tap(buf_l);
+  d_r = tap(buf_r);
+  out_l = spl0 + fb * d_l;
+  out_r = spl1 + fb * d_r;
+  buf_l[wpos] = mode == 0 ? spl0 : out_l;
+  buf_r[wpos] = mode == 0 ? spl1 : out_r;
+  wpos += 1;
+  wpos >= buf_size ? wpos = 0;
   spl0 = out_l * gain_lin;
   spl1 = out_r * gain_lin;
-
-  comb_wr += 1;
-  comb_wr >= comb_buf_size ? comb_wr = 0;

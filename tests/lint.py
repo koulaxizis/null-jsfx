@@ -95,7 +95,7 @@ def check(path):
     for name, args, extra in re.findall(r"function\s+([\w.]+)\s*\(([^)]*)\)\s*(?:(?:local|instance|static|global)\s*\(([^)]*)\))?", code):
         functions.add(name.split(".")[-1])
         params |= {a.strip() for a in (args + "," + extra).split(",") if a.strip()}
-    used = set(re.findall(r"(?<![\w.$#@'\"])([A-Za-z_]\w*)\b(?!\s*\()", code))
+    used = set(re.findall(r"(?<![\w.$#@'\"])([A-Za-z_]\w*)\b(?!\s*\(|\.)", code))
     called = set(re.findall(r"(?<![\w.])([A-Za-z_]\w*)\s*\(", code))
     for name in sorted(used - assigned - BUILTINS - functions - params):
         if re.fullmatch(r"slider\d+|function|local|instance|static|global", name):

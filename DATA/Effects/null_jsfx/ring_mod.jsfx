@@ -15,25 +15,24 @@ out_pin:Left
 out_pin:Right
 
 @init
-  phase = 0;
+  // Multiplies the input by a sine carrier (classic ring modulation: metallic, bell-like
+  // tones). An LFO at Rate sweeps the carrier up and down by up to one octave (Depth).
+  c_phase = 0;
+  lfo_phase = 0;
 
 @slider
-  rate = slider1;
-  carrier_freq = slider2;
-  depth_pct = slider3 / 100;
+  carrier = slider2;
+  lfo_inc = 2 * $pi * slider1 / srate;
+  depth = slider3 / 100;
   mix_amt = slider4 / 100;
-  phase_inc = 6.28318530717958 * rate / srate;
 
 @sample
-  phase >= 6.28318530717958 ? (phase = phase - 6.28318530717958;);
-  carrier = sin(phase * carrier_freq / rate);
-  phase = phase + phase_inc;
-  
-  proc_l = spl0 * carrier * depth_pct;
-  proc_r = spl1 * carrier * depth_pct;
-  
-  out_l = spl0 * (1 - mix_amt) + proc_l * mix_amt;
-  out_r = spl1 * (1 - mix_amt) + proc_r * mix_amt;
-  
-  spl0 = out_l;
-  spl1 = out_r;
+  lfo_phase += lfo_inc;
+  lfo_phase >= 2 * $pi ? lfo_phase -= 2 * $pi;
+  freq = carrier * 2 ^ (depth * sin(lfo_phase));
+  c_phase += 2 * $pi * freq / srate;
+  c_phase >= 2 * $pi ? c_phase -= 2 * $pi;
+  c = sin(c_phase);
+
+  spl0 = spl0 * (1 - mix_amt) + spl0 * c * mix_amt;
+  spl1 = spl1 * (1 - mix_amt) + spl1 * c * mix_amt;

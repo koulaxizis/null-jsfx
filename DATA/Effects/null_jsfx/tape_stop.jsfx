@@ -14,71 +14,70 @@ out_pin:Left
 out_pin:Right
 
 @init
-buf_size = srate * 10;
-buf_l = 0;
-buf_r = buf_size;
-write_pos = 0;
-read_pos = 0;
-play_rate = 1.0;
-state = 0;
-state_timer = 0;
-prev_trigger = 0;
-
-loop(buf_size, buf_l[_] = 0);
-loop(buf_size, buf_r[_] = 0);
+  // Idle: the audio passes untouched. Trigger: playback slows to a stop over Stop Time,
+  // then spins back up over Start Time and fades back to the live signal.
+  buf_size = ceil(srate * 12);
+  buf_l = 0;
+  buf_r = buf_l + buf_size;
+  memset(buf_l, 0, 2 * buf_size);
+  freembuf(buf_r + buf_size);
+  write_pos = 0;
+  read_pos = 0;
+  rate = 1;
+  state = 0;
+  timer = 0;
+  wet = 0;
+  fade_step = 1 / (0.01 * srate);
 
 @slider
-stop_ms = slider2;
-start_ms = slider3;
-
-slider1 > prev_trigger ? (
-  state = 1;
-  state_timer = 0;
-);
-prev_trigger = slider1;
+  stop_samples = max(1, srate * slider2 / 1000);
+  start_samples = max(1, srate * slider3 / 1000);
+  slider1 >= 1 && state == 0 ? (
+    state = 1;
+    timer = 0;
+    read_pos = write_pos - 1;
+    read_pos < 0 ? read_pos += buf_size;
+  );
 
 @sample
-in_l = spl0;
-in_r = spl1;
+  buf_l[write_pos] = spl0;
+  buf_r[write_pos] = spl1;
+  write_pos += 1;
+  write_pos >= buf_size ? write_pos = 0;
 
-state == 1 ? (
-  stop_samples = srate * stop_ms * 0.001;
-  play_rate = 1.0 - (state_timer / stop_samples);
-  play_rate < 0 ? play_rate = 0;
-  state_timer += 1;
-  state_timer >= stop_samples ? (
-    state = 2;
-    state_timer = 0;
+  state == 1 ? (
+    // slowing down (curved like a real tape motor)
+    rate = 1 - timer / stop_samples;
+    rate = rate * rate;
+    timer += 1;
+    timer >= stop_samples ? (state = 2; timer = 0; rate = 0);
+  ) : state == 2 ? (
+    // spinning back up
+    rate = timer / start_samples;
+    rate = sqrt(rate);
+    timer += 1;
+    timer >= start_samples ? (
+      state = 0;
+      rate = 1;
+      slider1 = 0;
+      sliderchange(slider1);
+    );
   );
-);
-state == 2 ? (
-  start_samples = srate * start_ms * 0.001;
-  play_rate = state_timer / start_samples;
-  play_rate > 1 ? play_rate = 1;
-  state_timer += 1;
-  state_timer >= start_samples ? (
-    state = 0;
-    play_rate = 1.0;
-    slider1 = 0;
-    prev_trigger = 0;
+
+  // the wet signal fades in at the trigger and back out after the spin-up
+  wet = state > 0 ? min(1, wet + fade_step) : max(0, wet - fade_step);
+
+  wet > 0 ? (
+    read_pos += rate;
+    read_pos >= buf_size ? read_pos -= buf_size;
+    ri = floor(read_pos);
+    fr = read_pos - ri;
+    r2 = ri + 1;
+    r2 >= buf_size ? r2 = 0;
+    tape_l = buf_l[ri] + (buf_l[r2] - buf_l[ri]) * fr;
+    tape_r = buf_r[ri] + (buf_r[r2] - buf_r[ri]) * fr;
+    // tape output also dies away as the motor stops
+    lvl = min(1, rate * 8);
+    spl0 = spl0 * (1 - wet) + tape_l * lvl * wet;
+    spl1 = spl1 * (1 - wet) + tape_r * lvl * wet;
   );
-);
-
-buf_l[write_pos] = in_l;
-buf_r[write_pos] = in_r;
-write_pos = (write_pos + 1) % buf_size;
-
-read_pos += play_rate;
-read_pos >= buf_size ? read_pos -= buf_size;
-read_int = read_pos | 0;
-frac = read_pos - read_int;
-rp2 = read_int + 1;
-rp2 >= buf_size ? rp2 = 0;
-
-wet_l = buf_l[read_int] * (1 - frac) + buf_l[rp2] * frac;
-wet_r = buf_r[read_int] * (1 - frac) + buf_r[rp2] * frac;
-
-out_level = play_rate < 0.02 ? 0 : 1;
-
-spl0 = wet_l * out_level;
-spl1 = wet_r * out_level;

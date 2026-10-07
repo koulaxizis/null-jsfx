@@ -4,28 +4,28 @@ tags: equalizer parametric eq 5-band shelving filter mixing mastering
 //category: Essentials
 //NULL JSFX v2.0 • https://nulljsfx.tech • MIT License
 
-slider1:77<20,300,1>Low Freq
-slider2:0<-18,18,0.1>Low Gain
+slider1:77<20,300,1>Low Freq (Hz)
+slider2:0<-18,18,0.1>Low Gain (dB)
 slider3:1.0<0.1,10.0,0.1>Low Q
 slider4:2<0,7,1{Low Shelf,High Shelf,Peaking,Low Pass,High Pass,Notch,Band Pass,All Pass}>Low Type
 slider5:0<0,2,1{Active,Bypass,Solo}>Low Mode
-slider6:548<300,1000,1>Low Mid Freq
-slider7:0<-18,18,0.1>Low Mid Gain
+slider6:548<300,1000,1>Low Mid Freq (Hz)
+slider7:0<-18,18,0.1>Low Mid Gain (dB)
 slider8:1.0<0.1,10.0,0.1>Low Mid Q
 slider9:2<0,7,1{Low Shelf,High Shelf,Peaking,Low Pass,High Pass,Notch,Band Pass,All Pass}>Low Mid Type
 slider10:0<0,2,1{Active,Bypass,Solo}>Low Mid Mode
-slider11:2236<1000,5000,1>Mid High Freq
-slider12:0<-18,18,0.1>Mid High Gain
+slider11:2236<1000,5000,1>Mid High Freq (Hz)
+slider12:0<-18,18,0.1>Mid High Gain (dB)
 slider13:1.0<0.1,10.0,0.1>Mid High Q
 slider14:2<0,7,1{Low Shelf,High Shelf,Peaking,Low Pass,High Pass,Notch,Band Pass,All Pass}>Mid High Type
 slider15:0<0,2,1{Active,Bypass,Solo}>Mid High Mode
-slider16:10000<5000,20000,1>High Freq
-slider17:0<-18,18,0.1>High Gain
+slider16:10000<5000,20000,1>High Freq (Hz)
+slider17:0<-18,18,0.1>High Gain (dB)
 slider18:1.0<0.1,10.0,0.1>High Q
 slider19:2<0,7,1{Low Shelf,High Shelf,Peaking,Low Pass,High Pass,Notch,Band Pass,All Pass}>High Type
 slider20:0<0,2,1{Active,Bypass,Solo}>High Mode
-slider21:15000<10000,24000,1>Ultra High Freq
-slider22:0<-18,18,0.1>Ultra High Gain
+slider21:15000<10000,24000,1>Ultra High Freq (Hz)
+slider22:0<-18,18,0.1>Ultra High Gain (dB)
 slider23:1.0<0.1,10.0,0.1>Ultra High Q
 slider24:2<0,7,1{Low Shelf,High Shelf,Peaking,Low Pass,High Pass,Notch,Band Pass,All Pass}>Ultra High Type
 slider25:0<0,2,1{Active,Bypass,Solo}>Ultra High Mode
@@ -36,104 +36,91 @@ out_pin:Left
 out_pin:Right
 
 @init
-cb0=0;cb1=4;cb2=8;ca1=12;ca2=16;x1l=20;x2l=24;y1l=28;y2l=32;x1r=36;x2r=40;y1r=44;y2r=48;x1ul=48;x2ul=52;y1ul=56;y2ul=60;x1ur=64;x2ur=68;y1ur=72;y2ur=76;
-i=0;loop(5,cb0[i]=1;cb1[i]=0;cb2[i]=0;ca1[i]=0;ca2[i]=0;x1l[i]=0;x2l[i]=0;y1l[i]=0;x1r[i]=0;x2r[i]=0;y1r[i]=0;x1ul[i]=0;x2ul[i]=0;y1ul[i]=0;x1ur[i]=0;x2ur[i]=0;y1ur[i]=0;i+=1;);
-ext_prev_srate=srate;
+  // Five fully parametric bands in series. Each band can be any of eight RBJ filter
+  // shapes. Mode: Bypass skips the band; Solo plays only what that band's frequency
+  // and Q select (band-pass), to find problem frequencies.
+
+  // coefficients for one band: this.b0 .. this.a2
+  function design(freq, gain, q, type) local(w, c, s, al, A, sq, a0)
+  (
+    w = 2 * $pi * min(freq, srate * 0.49) / srate;
+    c = cos(w); s = sin(w);
+    al = s / (2 * max(q, 0.05));
+    A = 10 ^ (gain / 40); sq = sqrt(A);
+    type == 0 ? (       // low shelf
+      this.b0 = A * ((A + 1) - (A - 1) * c + 2 * sq * al);
+      this.b1 = 2 * A * ((A - 1) - (A + 1) * c);
+      this.b2 = A * ((A + 1) - (A - 1) * c - 2 * sq * al);
+      a0 = (A + 1) + (A - 1) * c + 2 * sq * al;
+      this.a1 = -2 * ((A - 1) + (A + 1) * c);
+      this.a2 = (A + 1) + (A - 1) * c - 2 * sq * al;
+    ) : type == 1 ? (   // high shelf
+      this.b0 = A * ((A + 1) + (A - 1) * c + 2 * sq * al);
+      this.b1 = -2 * A * ((A - 1) + (A + 1) * c);
+      this.b2 = A * ((A + 1) + (A - 1) * c - 2 * sq * al);
+      a0 = (A + 1) - (A - 1) * c + 2 * sq * al;
+      this.a1 = 2 * ((A - 1) - (A + 1) * c);
+      this.a2 = (A + 1) - (A - 1) * c - 2 * sq * al;
+    ) : type == 2 ? (   // peaking
+      this.b0 = 1 + al * A; this.b1 = -2 * c; this.b2 = 1 - al * A;
+      a0 = 1 + al / A; this.a1 = -2 * c; this.a2 = 1 - al / A;
+    ) : type == 3 ? (   // low pass
+      this.b0 = (1 - c) / 2; this.b1 = 1 - c; this.b2 = (1 - c) / 2;
+      a0 = 1 + al; this.a1 = -2 * c; this.a2 = 1 - al;
+    ) : type == 4 ? (   // high pass
+      this.b0 = (1 + c) / 2; this.b1 = -(1 + c); this.b2 = (1 + c) / 2;
+      a0 = 1 + al; this.a1 = -2 * c; this.a2 = 1 - al;
+    ) : type == 5 ? (   // notch
+      this.b0 = 1; this.b1 = -2 * c; this.b2 = 1;
+      a0 = 1 + al; this.a1 = -2 * c; this.a2 = 1 - al;
+    ) : type == 6 ? (   // band pass (0 dB peak)
+      this.b0 = al; this.b1 = 0; this.b2 = -al;
+      a0 = 1 + al; this.a1 = -2 * c; this.a2 = 1 - al;
+    ) : (               // all pass
+      this.b0 = 1 - al; this.b1 = -2 * c; this.b2 = 1 + al;
+      a0 = 1 + al; this.a1 = -2 * c; this.a2 = 1 - al;
+    );
+    this.b0 /= a0; this.b1 /= a0; this.b2 /= a0; this.a1 /= a0; this.a2 /= a0;
+  );
+
+  function setup(freq, gain, q, type, mode)
+  (
+    this.design(freq, gain, q, mode == 2 ? 6 : type);
+    this.on = mode != 1;
+    this.solo = mode == 2;
+  );
+
+  // run one channel through one band; state is per band and per channel (this.xl1 ...)
+  function run_l(x) local(y)
+  (
+    y = this.b0 * x + this.b1 * this.xl1 + this.b2 * this.xl2 - this.a1 * this.yl1 - this.a2 * this.yl2;
+    this.xl2 = this.xl1; this.xl1 = x; this.yl2 = this.yl1; this.yl1 = y;
+    y;
+  );
+  function run_r(x) local(y)
+  (
+    y = this.b0 * x + this.b1 * this.xr1 + this.b2 * this.xr2 - this.a1 * this.yr1 - this.a2 * this.yr2;
+    this.xr2 = this.xr1; this.xr1 = x; this.yr2 = this.yr1; this.yr1 = y;
+    y;
+  );
+  function band(xl*, xr*, active)
+  (
+    active ? (xl = this.run_l(xl); xr = this.run_r(xr));
+  );
 
 @slider
-// Band 1 (LOW)
-fn=slider1;gn=slider2;qn=max(0.05,slider3);ft=floor(slider4);
-om=2*3.14159265358979*fn/srate;c=cos(om);s=sin(om);al=s/(2*qn);
-A=pow(10,gn/40);sq=sqrt(A);
-ft==0?(tb0=A*((A+1)-(A-1)*c+2*sq*al);tb1=2*A*((A-1)-(A+1)*c);tb2=A*((A+1)-(A-1)*c-2*sq*al);ta0=(A+1)+(A-1)*c+2*sq*al;ta1=-2*((A-1)+(A+1)*c);ta2=(A+1)+(A-1)*c-2*sq*al);;
-ft==1?(tb0=A*((A+1)+(A-1)*c+2*sq*al);tb1=-2*A*((A-1)+(A+1)*c);tb2=A*((A+1)-(A-1)*c-2*sq*al);ta0=(A+1)-(A-1)*c+2*sq*al;ta1=2*((A-1)-(A+1)*c);ta2=(A+1)-(A-1)*c-2*sq*al);;
-ft==2?(tb0=1+al*A;tb1=-2*c;tb2=1-al*A;ta0=1+al/A;ta1=-2*c;ta2=1-al/A);;
-ft==3?(tb0=(1-c)/2;tb1=1-c;tb2=(1-c)/2;ta0=1+al;ta1=-2*c;ta2=1-al);;
-ft==4?(tb0=(1+c)/2;tb1=-(1+c);tb2=(1+c)/2;ta0=1+al;ta1=-2*c;ta2=1-al);;
-ft==5?(tb0=1;tb1=-2*c;tb2=1;ta0=1+al;ta1=-2*c;ta2=1-al);;
-ft==6?(tb0=al;tb1=0;tb2=-al;ta0=1+al;ta1=-2*c;ta2=1-al);;
-ft==7?(tb0=1-al;tb1=-2*c;tb2=1+al;ta0=1+al;ta1=-2*c;ta2=1-al);;
-ta0s=max(0.001,ta0);cb0[0]=tb0/ta0s;cb1[0]=tb1/ta0s;cb2[0]=tb2/ta0s;ca1[0]=ta1/ta0s;ca2[0]=ta2/ta0s;
-
-// Band 2 (LOW MID)
-fn=slider6;gn=slider7;qn=max(0.05,slider8);ft=floor(slider9);
-om=2*3.14159265358979*fn/srate;c=cos(om);s=sin(om);al=s/(2*qn);
-A=pow(10,gn/40);sq=sqrt(A);
-ft==0?(tb0=A*((A+1)-(A-1)*c+2*sq*al);tb1=2*A*((A-1)-(A+1)*c);tb2=A*((A+1)-(A-1)*c-2*sq*al);ta0=(A+1)+(A-1)*c+2*sq*al;ta1=-2*((A-1)+(A+1)*c);ta2=(A+1)+(A-1)*c-2*sq*al);;
-ft==1?(tb0=A*((A+1)+(A-1)*c+2*sq*al);tb1=-2*A*((A-1)+(A+1)*c);tb2=A*((A+1)-(A-1)*c-2*sq*al);ta0=(A+1)-(A-1)*c+2*sq*al;ta1=2*((A-1)-(A+1)*c);ta2=(A+1)-(A-1)*c-2*sq*al);;
-ft==2?(tb0=1+al*A;tb1=-2*c;tb2=1-al*A;ta0=1+al/A;ta1=-2*c;ta2=1-al/A);;
-ft==3?(tb0=(1-c)/2;tb1=1-c;tb2=(1-c)/2;ta0=1+al;ta1=-2*c;ta2=1-al);;
-ft==4?(tb0=(1+c)/2;tb1=-(1+c);tb2=(1+c)/2;ta0=1+al;ta1=-2*c;ta2=1-al);;
-ft==5?(tb0=1;tb1=-2*c;tb2=1;ta0=1+al;ta1=-2*c;ta2=1-al);;
-ft==6?(tb0=al;tb1=0;tb2=-al;ta0=1+al;ta1=-2*c;ta2=1-al);;
-ft==7?(tb0=1-al;tb1=-2*c;tb2=1+al;ta0=1+al;ta1=-2*c;ta2=1-al);;
-ta0s=max(0.001,ta0);cb0[1]=tb0/ta0s;cb1[1]=tb1/ta0s;cb2[1]=tb2/ta0s;ca1[1]=ta1/ta0s;ca2[1]=ta2/ta0s;
-
-// Band 3 (MID HIGH)
-fn=slider11;gn=slider12;qn=max(0.05,slider13);ft=floor(slider14);
-om=2*3.14159265358979*fn/srate;c=cos(om);s=sin(om);al=s/(2*qn);
-A=pow(10,gn/40);sq=sqrt(A);
-ft==0?(tb0=A*((A+1)-(A-1)*c+2*sq*al);tb1=2*A*((A-1)-(A+1)*c);tb2=A*((A+1)-(A-1)*c-2*sq*al);ta0=(A+1)+(A-1)*c+2*sq*al;ta1=-2*((A-1)+(A+1)*c);ta2=(A+1)+(A-1)*c-2*sq*al);;
-ft==1?(tb0=A*((A+1)+(A-1)*c+2*sq*al);tb1=-2*A*((A-1)+(A+1)*c);tb2=A*((A+1)-(A-1)*c-2*sq*al);ta0=(A+1)-(A-1)*c+2*sq*al;ta1=2*((A-1)-(A+1)*c);ta2=(A+1)-(A-1)*c-2*sq*al);;
-ft==2?(tb0=1+al*A;tb1=-2*c;tb2=1-al*A;ta0=1+al/A;ta1=-2*c;ta2=1-al/A);;
-ft==3?(tb0=(1-c)/2;tb1=1-c;tb2=(1-c)/2;ta0=1+al;ta1=-2*c;ta2=1-al);;
-ft==4?(tb0=(1+c)/2;tb1=-(1+c);tb2=(1+c)/2;ta0=1+al;ta1=-2*c;ta2=1-al);;
-ft==5?(tb0=1;tb1=-2*c;tb2=1;ta0=1+al;ta1=-2*c;ta2=1-al);;
-ft==6?(tb0=al;tb1=0;tb2=-al;ta0=1+al;ta1=-2*c;ta2=1-al);;
-ft==7?(tb0=1-al;tb1=-2*c;tb2=1+al;ta0=1+al;ta1=-2*c;ta2=1-al);;
-ta0s=max(0.001,ta0);cb0[2]=tb0/ta0s;cb1[2]=tb1/ta0s;cb2[2]=tb2/ta0s;ca1[2]=ta1/ta0s;ca2[2]=ta2/ta0s;
-
-// Band 4 (HIGH)
-fn=slider16;gn=slider17;qn=max(0.05,slider18);ft=floor(slider19);
-om=2*3.14159265358979*fn/srate;c=cos(om);s=sin(om);al=s/(2*qn);
-A=pow(10,gn/40);sq=sqrt(A);
-ft==0?(tb0=A*((A+1)-(A-1)*c+2*sq*al);tb1=2*A*((A-1)-(A+1)*c);tb2=A*((A+1)-(A-1)*c-2*sq*al);ta0=(A+1)+(A-1)*c+2*sq*al;ta1=-2*((A-1)+(A+1)*c);ta2=(A+1)+(A-1)*c-2*sq*al);;
-ft==1?(tb0=A*((A+1)+(A-1)*c+2*sq*al);tb1=-2*A*((A-1)+(A+1)*c);tb2=A*((A+1)-(A-1)*c-2*sq*al);ta0=(A+1)-(A-1)*c+2*sq*al;ta1=2*((A-1)-(A+1)*c);ta2=(A+1)-(A-1)*c-2*sq*al);;
-ft==2?(tb0=1+al*A;tb1=-2*c;tb2=1-al*A;ta0=1+al/A;ta1=-2*c;ta2=1-al/A);;
-ft==3?(tb0=(1-c)/2;tb1=1-c;tb2=(1-c)/2;ta0=1+al;ta1=-2*c;ta2=1-al);;
-ft==4?(tb0=(1+c)/2;tb1=-(1+c);tb2=(1+c)/2;ta0=1+al;ta1=-2*c;ta2=1-al);;
-ft==5?(tb0=1;tb1=-2*c;tb2=1;ta0=1+al;ta1=-2*c;ta2=1-al);;
-ft==6?(tb0=al;tb1=0;tb2=-al;ta0=1+al;ta1=-2*c;ta2=1-al);;
-ft==7?(tb0=1-al;tb1=-2*c;tb2=1+al;ta0=1+al;ta1=-2*c;ta2=1-al);;
-ta0s=max(0.001,ta0);cb0[3]=tb0/ta0s;cb1[3]=tb1/ta0s;cb2[3]=tb2/ta0s;ca1[3]=ta1/ta0s;ca2[3]=ta2/ta0s;
-
-// Band 5 (ULTRA HIGH)
-fn=slider21;gn=slider22;qn=max(0.05,slider23);ft=floor(slider24);
-om=2*3.14159265358979*fn/srate;c=cos(om);s=sin(om);al=s/(2*qn);
-A=pow(10,gn/40);sq=sqrt(A);
-ft==0?(tb0=A*((A+1)-(A-1)*c+2*sq*al);tb1=2*A*((A-1)-(A+1)*c);tb2=A*((A+1)-(A-1)*c-2*sq*al);ta0=(A+1)+(A-1)*c+2*sq*al;ta1=-2*((A-1)+(A+1)*c);ta2=(A+1)+(A-1)*c-2*sq*al);;
-ft==1?(tb0=A*((A+1)+(A-1)*c+2*sq*al);tb1=-2*A*((A-1)+(A+1)*c);tb2=A*((A+1)-(A-1)*c-2*sq*al);ta0=(A+1)-(A-1)*c+2*sq*al;ta1=2*((A-1)-(A+1)*c);ta2=(A+1)-(A-1)*c-2*sq*al);;
-ft==2?(tb0=1+al*A;tb1=-2*c;tb2=1-al*A;ta0=1+al/A;ta1=-2*c;ta2=1-al/A);;
-ft==3?(tb0=(1-c)/2;tb1=1-c;tb2=(1-c)/2;ta0=1+al;ta1=-2*c;ta2=1-al);;
-ft==4?(tb0=(1+c)/2;tb1=-(1+c);tb2=(1+c)/2;ta0=1+al;ta1=-2*c;ta2=1-al);;
-ft==5?(tb0=1;tb1=-2*c;tb2=1;ta0=1+al;ta1=-2*c;ta2=1-al);;
-ft==6?(tb0=al;tb1=0;tb2=-al;ta0=1+al;ta1=-2*c;ta2=1-al);;
-ft==7?(tb0=1-al;tb1=-2*c;tb2=1+al;ta0=1+al;ta1=-2*c;ta2=1-al);;
-ta0s=max(0.001,ta0);cb0[4]=tb0/ta0s;cb1[4]=tb1/ta0s;cb2[4]=tb2/ta0s;ca1[4]=ta1/ta0s;ca2[4]=ta2/ta0s;
-
-// Band Mode Override (Bypass/Solo)
-solo_any = (slider5==2 || slider10==2 || slider15==2 || slider20==2 || slider25==2);
-(slider5==1 || (solo_any && slider5!=2)) ? (cb0[0]=1;cb1[0]=0;cb2[0]=0;ca1[0]=0;ca2[0]=0;);
-(slider10==1 || (solo_any && slider10!=2)) ? (cb0[1]=1;cb1[1]=0;cb2[1]=0;ca1[1]=0;ca2[1]=0;);
-(slider15==1 || (solo_any && slider15!=2)) ? (cb0[2]=1;cb1[2]=0;cb2[2]=0;ca1[2]=0;ca2[2]=0;);
-(slider20==1 || (solo_any && slider20!=2)) ? (cb0[3]=1;cb1[3]=0;cb2[3]=0;ca1[3]=0;ca2[3]=0;);
-(slider25==1 || (solo_any && slider25!=2)) ? (cb0[4]=1;cb1[4]=0;cb2[4]=0;ca1[4]=0;ca2[4]=0;);
-
-@block
-ext_prev_srate!=srate?(sliderchange(1);sliderchange(6);sliderchange(11);sliderchange(16);sliderchange(21);ext_prev_srate=srate;);
+  b1.setup(slider1, slider2, slider3, slider4, slider5);
+  b2.setup(slider6, slider7, slider8, slider9, slider10);
+  b3.setup(slider11, slider12, slider13, slider14, slider15);
+  b4.setup(slider16, slider17, slider18, slider19, slider20);
+  b5.setup(slider21, slider22, slider23, slider24, slider25);
+  solo_any = b1.solo || b2.solo || b3.solo || b4.solo || b5.solo;
 
 @sample
-inp_l=spl0;out_l=inp_l;
-tmp=cb0[0]*out_l+cb1[0]*x1l[0]+cb2[0]*x2l[0]-ca1[0]*y1l[0]-ca2[0]*y2l[0];x2l[0]=x1l[0];x1l[0]=out_l;y2l[0]=y1l[0];y1l[0]=tmp;out_l=tmp;
-tmp=cb0[1]*out_l+cb1[1]*x1l[1]+cb2[1]*x2l[1]-ca1[1]*y1l[1]-ca2[1]*y2l[1];x2l[1]=x1l[1];x1l[1]=out_l;y2l[1]=y1l[1];y1l[1]=tmp;out_l=tmp;
-tmp=cb0[2]*out_l+cb1[2]*x1l[2]+cb2[2]*x2l[2]-ca1[2]*y1l[2]-ca2[2]*y2l[2];x2l[2]=x1l[2];x1l[2]=out_l;y2l[2]=y1l[2];y1l[2]=tmp;out_l=tmp;
-tmp=cb0[3]*out_l+cb1[3]*x1l[3]+cb2[3]*x2l[3]-ca1[3]*y1l[3]-ca2[3]*y2l[3];x2l[3]=x1l[3];x1l[3]=out_l;y2l[3]=y1l[3];y1l[3]=tmp;out_l=tmp;
-tmp=cb0[4]*out_l+cb1[4]*x1ul[4]+cb2[4]*x2ul[4]-ca1[4]*y1ul[4]-ca2[4]*y2ul[4];x2ul[4]=x1ul[4];x1ul[4]=out_l;y2ul[4]=y1ul[4];y1ul[4]=tmp;out_l=tmp;
-spl0=out_l;
-inp_r=spl1;out_r=inp_r;
-tmp=cb0[0]*out_r+cb1[0]*x1r[0]+cb2[0]*x2r[0]-ca1[0]*y1r[0]-ca2[0]*y2r[0];x2r[0]=x1r[0];x1r[0]=out_r;y2r[0]=y1r[0];y1r[0]=tmp;out_r=tmp;
-tmp=cb0[1]*out_r+cb1[1]*x1r[1]+cb2[1]*x2r[1]-ca1[1]*y1r[1]-ca2[1]*y2r[1];x2r[1]=x1r[1];x1r[1]=out_r;y2r[1]=y1r[1];y1r[1]=tmp;out_r=tmp;
-tmp=cb0[2]*out_r+cb1[2]*x1r[2]+cb2[2]*x2r[2]-ca1[2]*y1r[2]-ca2[2]*y2r[2];x2r[2]=x1r[2];x1r[2]=out_r;y2r[2]=y1r[2];y1r[2]=tmp;out_r=tmp;
-tmp=cb0[3]*out_r+cb1[3]*x1r[3]+cb2[3]*x2r[3]-ca1[3]*y1r[3]-ca2[3]*y2r[3];x2r[3]=x1r[3];x1r[3]=out_r;y2r[3]=y1r[3];y1r[3]=tmp;out_r=tmp;
-tmp=cb0[4]*out_r+cb1[4]*x1ur[4]+cb2[4]*x2ur[4]-ca1[4]*y1ur[4]-ca2[4]*y2ur[4];x2ur[4]=x1ur[4];x1ur[4]=out_r;y2ur[4]=y1ur[4];y1ur[4]=tmp;out_r=tmp;
-spl1=out_r;
+  l = spl0; r = spl1;
+  b1.band(l, r, solo_any ? b1.solo : b1.on);
+  b2.band(l, r, solo_any ? b2.solo : b2.on);
+  b3.band(l, r, solo_any ? b3.solo : b3.on);
+  b4.band(l, r, solo_any ? b4.solo : b4.on);
+  b5.band(l, r, solo_any ? b5.solo : b5.on);
+  spl0 = l; spl1 = r;

@@ -24,8 +24,8 @@ fa0 = 1; fa1 = 0; fa2 = 0;
 fb0 = 1; fb1 = 0; fb2 = 0;
 fx1 = 0; fx2 = 0; fy1 = 0; fy2 = 0;
 
-loop(max_buf, buf_l[_] = 0);
-loop(max_buf, buf_r[_] = 0);
+memset(buf_l, 0, 2 * max_buf);
+freembuf(buf_r + max_buf);
 
 @slider
 cur_buf_size = (srate * slider1) | 0;
