@@ -1,9 +1,15 @@
-desc:NULL ONE SLIDER Grit
-//tags: bitcrush samplerate lofi degradation digital
-// Collection: NULL JSFX
-// Author: Christos Koulaxizis
+desc:NULL Grit
+author: Christos Koulaxizis
+tags: bitcrush samplerate lofi degradation digital
+//category: One Slider
+//NULL JSFX v2.0 • https://nulljsfx.tech • MIT License
 
 slider1:0<0,100,1>Grit Intensity
+
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
 
 @init
 bit_depth_min = 1;

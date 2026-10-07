@@ -1,10 +1,16 @@
-desc:NULL ONE SLIDER Tilt 
-//tags: eq tilt bass treble balance tonal 
-// Collection: NULL JSFX 
-// Author: Christos Koulaxizis 
-// v1.0 — One slider bass/treble tilt EQ
+desc:NULL Tilt
+author: Christos Koulaxizis
+tags: eq tilt bass treble balance tonal
+//category: One Slider
+//NULL JSFX v2.0 • https://nulljsfx.tech • MIT License
 
 slider1:0<-100,100,1>0 Tilt Amount (Negative=Bass+, Treble-, Positive=Treble+, Bass-)
+
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
+
 @init
 // Initialize variables
 tilt_val = 0;

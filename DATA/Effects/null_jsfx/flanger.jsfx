@@ -1,17 +1,18 @@
 desc:NULL Flanger
-//tags: flanger jet sweep modulation feedback comb filter
-//author: Christos Koulaxizis
-//Collection: NULL JSFX
+author: Christos Koulaxizis
+tags: flanger jet sweep modulation feedback comb filter
+//category: Essentials
+//NULL JSFX v2.0 • https://nulljsfx.tech • MIT License
 
-slider1:0.3<0.1,5,0.1>Rate-(Hz)
-slider2:5<1,20,0.1>Depth-ms
-slider3:50<0,100,1>Feedback-%
-slider4:40<0,100,1>Mix-%
+slider1:0.3<0.1,5,0.1>Rate (Hz)
+slider2:5<1,20,0.1>Depth (ms)
+slider3:50<0,100,1>Feedback (%)
+slider4:40<0,100,1>Mix (%)
 
-in_pin:left input
-in_pin:right input
-out_pin:left output
-out_pin:right output
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
 
 @init
   buf_size = 2205;

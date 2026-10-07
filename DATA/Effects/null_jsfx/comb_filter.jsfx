@@ -1,17 +1,18 @@
 desc:NULL Comb Filter
-//tags: filter comb delay feedback metallic frequency resonant
-//Collection: NULL JSFX
-//Author: Christos Koulaxizis
+author: Christos Koulaxizis
+tags: filter comb delay feedback metallic frequency resonant
+//category: Advanced
+//NULL JSFX v2.0 • https://nulljsfx.tech • MIT License
 
-slider1:500<20,20000,1:log>Frequency-(Hz)
+slider1:500<20,20000,1:log>Frequency (Hz)
 slider2:0.5<0,0.99,0.01>Feedback
 slider3:0<0,1,1{Feed-Forward,Feed-Backward}>Mode
-slider4:0<-12,12,0.1>Gain-(dB)
+slider4:0<-12,12,0.1>Gain (dB)
 
-in_pin:left input
-in_pin:right input
-out_pin:left output
-out_pin:right output
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
 
 @init
   comb_buf_size = 44100;

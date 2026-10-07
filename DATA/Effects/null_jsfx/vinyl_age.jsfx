@@ -1,8 +1,8 @@
 desc:NULL Vinyl Age
-//tags: vinyl lo-fi wow flutter crackle bitcrush degradation
-// Collection: NULL JSFX
-// Author: Christos Koulaxizis
-// v1.0 — Vinyl & lo-fi simulator
+author: Christos Koulaxizis
+tags: vinyl lo-fi wow flutter crackle bitcrush degradation
+//category: Advanced
+//NULL JSFX v2.0 • https://nulljsfx.tech • MIT License
 
 slider1:30<0,100,1>Wow (%)
 slider2:20<0,100,1>Flutter (%)
@@ -13,10 +13,10 @@ slider6:22050<2000,44100,100>Sample Rate (Hz)
 slider7:8000<1000,20000,100>Lowpass Freq (Hz)
 slider8:80<0,100,1>Mix (%)
 
-in_pin:left
-in_pin:right
-out_pin:left
-out_pin:right
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
 
 @init
 buf_size = srate * 0.15;

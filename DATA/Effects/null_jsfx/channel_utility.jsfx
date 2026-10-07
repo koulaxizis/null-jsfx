@@ -1,7 +1,8 @@
 desc:NULL Channel Utility
-//tags: gain phase polarity dc block solo mute balance mono utility trim pad stereo channel
-//author: Christos Koulaxizis
-//Collection: NULL JSFX
+author: Christos Koulaxizis
+tags: gain phase polarity dc block solo mute balance mono utility trim pad stereo channel
+//category: Essentials
+//NULL JSFX v2.0 • https://nulljsfx.tech • MIT License
 
 slider1:0<0,1,1{None,-6,-12}>Input Pad
 slider2:0<-12,18,0.1>Input Gain (dB)
@@ -17,10 +18,10 @@ slider11:0<0,1,1{Stereo,Mono}>Mono Check
 slider12:0<-12,12,0.1>Output Gain (dB)
 slider13:0<0,1,1{Off,On}>Hard Limit
 
-in_pin:left input
-in_pin:right input
-out_pin:left output
-out_pin:right output
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
 
 @init
   DB2LIN = 0.11512925464970228420;

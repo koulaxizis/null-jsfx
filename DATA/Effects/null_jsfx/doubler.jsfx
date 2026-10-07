@@ -1,11 +1,17 @@
-desc:NULL ONE SLIDER Doubler
-//tags: doubler vocal doubling delay chorus stereo null jsfx one slider
-// Collection: NULL JSFX
-// Author: Christos Koulaxizis
+desc:NULL Doubler
+author: Christos Koulaxizis
+tags: doubler vocal doubling delay chorus stereo
+//category: One Slider
+//NULL JSFX v2.0 • https://nulljsfx.tech • MIT License
 
 slider1:40<10,100,1>Mix
 slider2:25<10,50,1>Delay ms
 slider3:0<-10,10,1>Detune cents
+
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
 
 @init
   delay_buffer_size = 44100;

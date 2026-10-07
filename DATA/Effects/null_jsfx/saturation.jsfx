@@ -1,17 +1,18 @@
 desc:NULL Saturation
-//tags: saturation distortion tape tube overdrive fuzz bitcrush waveshaper drive
-//Collection: NULL JSFX
-//Author: Christos Koulaxizis
+author: Christos Koulaxizis
+tags: saturation distortion tape tube overdrive fuzz bitcrush waveshaper drive
+//category: Essentials
+//NULL JSFX v2.0 • https://nulljsfx.tech • MIT License
 
 slider1:30<0,100,1>Drive (%)
 slider2:0<-12,12,0.1>Tone (dB)
 slider3:50<0,100,1>Mix (%)
 slider4:0<0,5,1{Tape,Tube,Overdrive,Fuzz,Bitcrush,Waveshaper}>Mode
 
-in_pin:left input
-in_pin:right input
-out_pin:left output
-out_pin:right output
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
 
 @init
   tone_l = 0;

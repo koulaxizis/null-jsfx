@@ -1,18 +1,19 @@
 desc:NULL Delay
-//tags: delay echo slapback feedback pre-delay timing sync tempo
-//author: Christos Koulaxizis
-//Collection: NULL JSFX
+author: Christos Koulaxizis
+tags: delay echo slapback feedback pre-delay timing sync tempo
+//category: Essentials
+//NULL JSFX v2.0 • https://nulljsfx.tech • MIT License
 
-slider1:250<0,2000,1>Time-(ms)
-slider2:0<0,100,1>Feedback-%
-slider3:30<0,100,1>Mix-%
-slider4:0<0,1,1{OFF,ON}>Tempo-Sync
+slider1:250<0,2000,1>Time (ms)
+slider2:0<0,100,1>Feedback (%)
+slider3:30<0,100,1>Mix (%)
+slider4:0<0,1,1{OFF,ON}>Tempo Sync
 slider5:0<0,3,1{1/4,1/8,1/16,1/32}>Subdivision
 
-in_pin:left input
-in_pin:right input
-out_pin:left output
-out_pin:right output
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
 
 @init
   buf_size = 88200;

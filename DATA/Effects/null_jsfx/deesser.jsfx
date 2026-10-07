@@ -1,13 +1,16 @@
-desc:NULL De-Esser
-//tags: deess sibilance sibilants hiss vocal harshness frequency
-//author: Christos Koulaxizis
+desc:NULL DeEsser
+author: Christos Koulaxizis
+tags: deess sibilance sibilants hiss vocal harshness frequency
+//category: Essentials
+//NULL JSFX v2.0 • https://nulljsfx.tech • MIT License
 
-slider1:6000<4000,10000,100>Target-(Hz)
-slider2:-6<-18,0,0.1>Reduction-dB
+slider1:6000<4000,10000,100>Target (Hz)
+slider2:-6<-18,0,0.1>Reduction (dB)
 
-in_pin:left input
-out_pin:right output
-out_pin:right output
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
 
 @init
   sample_rate = sr;

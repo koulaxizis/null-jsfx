@@ -1,5 +1,16 @@
-desc:STRETCH v1.0 //tags: time stretch pitch shift granular warp tempo // Collection: NULL JSFX // Author: Christos Koulaxizis // v1.0 — One slider time stretch + pitch combo
+desc:NULL Stretch
+author: Christos Koulaxizis
+tags: 
+//category: One Slider
+//NULL JSFX v2.0 • https://nulljsfx.tech • MIT License
+
 slider1:0<-100,100,1>Stretch/Pitch (Negative=Slower+Down, Positive=Faster+Up)
+
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
+
 @init
 // Granular synthesis parameters
 granule_size_ms = 50;

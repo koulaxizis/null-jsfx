@@ -1,8 +1,8 @@
 desc:NULL Maximizer
-//tags: limiter maximizing loudness ceiling mastering peak protection
-// Collection: NULL JSFX
-// Author: Christos Koulaxizis
-// v1.3 — Final: dropdown at end, correct slider order, all working
+author: Christos Koulaxizis
+tags: limiter maximizing loudness ceiling mastering peak protection
+//category: Essentials
+//NULL JSFX v2.0 • https://nulljsfx.tech • MIT License
 
 slider1:0<-12,12,0.1>Input Gain (dB)
 slider2:-0.3<-3,-0.1,0.1>Ceiling (dB)
@@ -11,15 +11,10 @@ slider4:2<0,5,1>Lookahead (ms)
 slider5:0<-12,12,0.1>Output Gain (dB)
 slider6:1<0,1,1{OFF,ON}>Stereo Link
 
-in_pin:left
-in_pin:right
-out_pin:left
-out_pin:right
-
-// === DELAY BUFFER FOR LOOKAHEAD ===
-lookahead_buf[441];
-write_pos = 0;
-read_pos = 0;
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
 
 @init
 PI = 3.14159265358979;

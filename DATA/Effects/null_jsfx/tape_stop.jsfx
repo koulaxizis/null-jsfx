@@ -1,17 +1,17 @@
 desc:NULL Tape Stop
-//tags: tape stop start motor slowdown pitch ramp dj
-// Collection: NULL JSFX
-// Author: Christos Koulaxizis
-// v1.1 — CHANGED: Fixed at 100% mix (always processed)
+author: Christos Koulaxizis
+tags: tape stop start motor slowdown pitch ramp dj
+//category: Advanced
+//NULL JSFX v2.0 • https://nulljsfx.tech • MIT License
 
 slider1:0<0,1,1{Idle,Trigger}>Trigger
 slider2:500<50,5000,10>Stop Time (ms)
 slider3:500<50,5000,10>Start Time (ms)
 
-in_pin:left
-in_pin:right
-out_pin:left
-out_pin:right
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
 
 @init
 buf_size = srate * 10;

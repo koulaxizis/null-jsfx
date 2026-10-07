@@ -1,17 +1,19 @@
 desc:NULL Reverb
-//tags: reverb room space ambience hall plate decay
-//author: Christos Koulaxizis
+author: Christos Koulaxizis
+tags: reverb room space ambience hall plate decay
+//category: Essentials
+//NULL JSFX v2.0 • https://nulljsfx.tech • MIT License
 
-slider1:50<10,100,1>Room-Size-%
-slider2:50<0,100,1>Decay-%
-slider3:30<0,100,1>Damping-%
-slider4:30<0,100,1>Mix-%
+slider1:50<10,100,1>Room Size (%)
+slider2:50<0,100,1>Decay (%)
+slider3:30<0,100,1>Damping (%)
+slider4:30<0,100,1>Mix (%)
 slider5:0<0,1,1>Bypass
 
-in_pin:left input
-in_pin:right input
-out_pin:left output
-out_pin:right output
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
 
 @init
   cb1 = 0; cb2 = 10000; cb3 = 20000; cb4 = 30000;

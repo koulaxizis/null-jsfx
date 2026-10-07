@@ -1,11 +1,17 @@
-desc:NULL Breath Control v1.0
-//tags: breath vocal dynamics null jsfx
-// Collection: NULL JSFX
-// Author: Christos Koulaxizis
+desc:NULL Breath Control
+author: Christos Koulaxizis
+tags: breath vocal dynamics
+//category: Essentials
+//NULL JSFX v2.0 • https://nulljsfx.tech • MIT License
 
 slider1:50<0,100,1>Threshold
 slider2:24<6,48,1>Release
 slider3:-12<-24,0,1>Range Limit
+
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
 
 @init
 gain_reduction = 1;

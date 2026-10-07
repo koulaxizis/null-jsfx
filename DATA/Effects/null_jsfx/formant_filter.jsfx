@@ -1,16 +1,17 @@
 desc:NULL Formant Filter
-//author: Christos Koulaxizis
-// Collection: NULL JSFX
-//tags: filter formant vowel voice speech synthesis a e i o u
+author: Christos Koulaxizis
+tags: filter formant vowel voice speech synthesis a e i o u
+//category: Advanced
+//NULL JSFX v2.0 • https://nulljsfx.tech • MIT License
 
 slider1:0<0,4,1{A,E,I,O,U}>Vowel
-slider2:0<-12,12,0.1>Gain-(dB)
-slider3:10<5,20,1>Q-Factor
+slider2:0<-12,12,0.1>Gain (dB)
+slider3:10<5,20,1>Q
 
-in_pin:left input
-in_pin:right input
-out_pin:left output
-out_pin:right output
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
 
 @init
   PI=3.14159265358979;

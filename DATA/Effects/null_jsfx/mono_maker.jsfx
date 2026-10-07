@@ -1,9 +1,15 @@
-desc:NULL ONE SLIDER Mono Maker
-//tags: mono bass low frequency summing stereo width null jsfx one slider
-// Collection: NULL JSFX
-// Author: Christos Koulaxizis
+desc:NULL Mono Maker
+author: Christos Koulaxizis
+tags: mono bass low frequency summing stereo width
+//category: One Slider
+//NULL JSFX v2.0 • https://nulljsfx.tech • MIT License
 
 slider1:0.5<0,1,0.01>Mix
+
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
 
 @init
   lp_state_l = 0

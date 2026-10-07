@@ -1,14 +1,15 @@
-desc:NULL ONE SLIDER Pumper
-//tags: sidechain ducking pumping rhythm groove
-//Collection: NULL JSFX
-//Author: Christos Koulaxizis
+desc:NULL Pumper
+author: Christos Koulaxizis
+tags: sidechain ducking pumping rhythm groove
+//category: One Slider
+//NULL JSFX v2.0 • https://nulljsfx.tech • MIT License
 
 slider1:50<0,100,1>Amount
 
-in_pin:left input
-in_pin:right input
-out_pin:left output
-out_pin:right output
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
 
 @init
   phase = 0;

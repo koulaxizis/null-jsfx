@@ -1,47 +1,15 @@
-desc:NULL ONE SLIDER Chorus One
-//tags: chorus thickening detune stereo lfo width
-// Collection: NULL JSFX
-// Author: Christos Koulaxizis
+desc:NULL Chorus One
+author: Christos Koulaxizis
+tags: chorus thickening detune stereo lfo width
+//category: One Slider
+//NULL JSFX v2.0 • https://nulljsfx.tech • MIT License
 
 slider1:50<0,100,1>Chorus Amount
 
-// === STATIC DELAY BUFFERS ===
-delay_buf_l[44100];
-delay_buf_r[44100];
-
-// === VARIABLES DECLARED FIRST ===
-delay_head_l;
-delay_head_r;
-lfo_phase;
-lfo_rate_base;
-lfo_depth_base;
-base_delay_ms;
-fb_l;
-fb_r;
-lfo_rate;
-lfo_depth;
-delay_base;
-feedback_level;
-ms_to_samples;
-chorus_val;
-lfo_output;
-delay_l_ms;
-delay_r_ms;
-delay_l_samples;
-delay_r_samples;
-delay_int_l;
-delay_frac_l;
-read_pos_l;
-read_pos_l2;
-delay_out_l;
-delay_int_r;
-delay_frac_r;
-read_pos_r;
-read_pos_r2;
-delay_out_r;
-wet_mix;
-dry_mix;
-temp_val;
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
 
 @slider
 // Map slider to chorus parameters

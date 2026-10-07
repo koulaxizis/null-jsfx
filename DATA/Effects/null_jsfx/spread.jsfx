@@ -1,5 +1,16 @@
-desc:SPREAD v1.0 //tags: stereo width decorrelation phase spread // Collection: NULL JSFX // Author: Christos Koulaxizis // v1.0 — One slider stereo decorrelator
+desc:NULL Spread
+author: Christos Koulaxizis
+tags: 
+//category: One Slider
+//NULL JSFX v2.0 • https://nulljsfx.tech • MIT License
+
 slider1:50<0,100,1>Spread Amount (0=Stereo Original, 100=Max Decorrelated)
+
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
+
 @init
 // Initialize delay line for decorrelation
 delay_line_size = 44100; // 1 second at 44.1kHz

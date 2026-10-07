@@ -1,18 +1,19 @@
 desc:NULL Limiter
-//tags: limiter ceiling clipper brickwall peak protection mastering
-//Collection: NULL JSFX
-//Author: Christos Koulaxizis
+author: Christos Koulaxizis
+tags: limiter ceiling clipper brickwall peak protection mastering
+//category: Essentials
+//NULL JSFX v2.0 • https://nulljsfx.tech • MIT License
 
 slider1:0<0,2,1{Limiter,Clipper,Brickwall}>Mode
-slider2:0<-30,0,0.1>Threshold-(dB)
-slider3:-0.1<-6,-0.1,0.1>Ceiling-(dB)
-slider4:200<0,1000,1>Release-(ms)
-slider5:2<0,10,0.1>Lookahead-(ms)
+slider2:0<-30,0,0.1>Threshold (dB)
+slider3:-0.1<-6,-0.1,0.1>Ceiling (dB)
+slider4:200<0,1000,1>Release (ms)
+slider5:2<0,10,0.1>Lookahead (ms)
 
-in_pin:left input
-in_pin:right input
-out_pin:left output
-out_pin:right output
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
 
 @init
   db2log = 0.11512925464970228420;

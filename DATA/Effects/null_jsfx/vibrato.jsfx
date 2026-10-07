@@ -1,16 +1,17 @@
 desc:NULL Vibrato
-//tags: vibrato pitch modulation detune lfo warble
-//author: Christos Koulaxizis
-//Collection: NULL JSFX
+author: Christos Koulaxizis
+tags: vibrato pitch modulation detune lfo warble
+//category: Essentials
+//NULL JSFX v2.0 • https://nulljsfx.tech • MIT License
 
-slider1:5<0.1,15,0.1>Rate-(Hz)
-slider2:5<0,20,0.1>Depth-ms
-slider3:40<0,100,1>Mix-%
+slider1:5<0.1,15,0.1>Rate (Hz)
+slider2:5<0,20,0.1>Depth (ms)
+slider3:40<0,100,1>Mix (%)
 
-in_pin:left input
-in_pin:right input
-out_pin:left output
-out_pin:right output
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
 
 @init
   buf_size = 4410;

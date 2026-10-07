@@ -1,59 +1,37 @@
-desc:NULL Multiband Compressor
-//tags: multiband compressor four-band crossover dynamics mastering per-band
-//Collection: NULL JSFX
-//Author: Christos Koulaxizis
+desc:NULL Multiband Comp
+author: Christos Koulaxizis
+tags: multiband compressor four-band crossover dynamics mastering per-band
+//category: Essentials
+//NULL JSFX v2.0 • https://nulljsfx.tech • MIT License
 
-// ════════════════════════════════════════
-// CROSSOVER FREQUENCIES
-// ════════════════════════════════════════
 slider1:120<50,1000,1>Crossover 1 (Hz)
 slider2:1000<500,4000,1>Crossover 2 (Hz)
 slider3:6000<4000,12000,1>Crossover 3 (Hz)
-
-// ════════════════════════════════════════
-// LOW BAND
-// ════════════════════════════════════════
 slider4:-20<-60,0,1>Low Threshold (dB)
 slider5:3<1,20,0.1>Low Ratio
 slider6:0<0,12,1>Low Makeup (dB)
 slider7:0<0,1,1{Active,Bypass,Mute,Solo}>Low Mode
-
-// ════════════════════════════════════════
-// LOW MID BAND
-// ════════════════════════════════════════
 slider8:-20<-60,0,1>LowMid Threshold (dB)
 slider9:3<1,20,0.1>LowMid Ratio
 slider10:0<0,12,1>LowMid Makeup (dB)
 slider11:0<0,1,1{Active,Bypass,Mute,Solo}>LowMid Mode
-
-// ════════════════════════════════════════
-// HIGH MID BAND
-// ════════════════════════════════════════
 slider12:-20<-60,0,1>HighMid Threshold (dB)
 slider13:3<1,20,0.1>HighMid Ratio
 slider14:0<0,12,1>HighMid Makeup (dB)
 slider15:0<0,1,1{Active,Bypass,Mute,Solo}>HighMid Mode
-
-// ════════════════════════════════════════
-// HIGH BAND
-// ════════════════════════════════════════
 slider16:-20<-60,0,1>High Threshold (dB)
 slider17:3<1,20,0.1>High Ratio
 slider18:0<0,12,1>High Makeup (dB)
 slider19:0<0,1,1{Active,Bypass,Mute,Solo}>High Mode
-
-// ════════════════════════════════════════
-// GLOBAL CONTROLS
-// ════════════════════════════════════════
 slider20:10<0,200,1>Attack (ms)
 slider21:100<0,1000,1>Release (ms)
 slider22:0<0,100,1>Knee (%)
 slider23:0<0,12,1>Master Output (dB)
 
-in_pin:left input
-in_pin:right input
-out_pin:left output
-out_pin:right output
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
 
 @init
   PI = 3.14159265358979;

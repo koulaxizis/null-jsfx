@@ -1,17 +1,18 @@
 desc:NULL Ring Mod
-//tags: ringmod ring modulator amplitude modulation metallic carrier
-//author: Christos Koulaxizis
-//Collection: NULL JSFX
+author: Christos Koulaxizis
+tags: ringmod ring modulator amplitude modulation metallic carrier
+//category: Essentials
+//NULL JSFX v2.0 • https://nulljsfx.tech • MIT License
 
-slider1:5<0.1,20,0.1>Rate-(Hz)
-slider2:200<100,2000,10>Carrier-Freq-(Hz)
-slider3:50<0,100,1>Depth-%
-slider4:40<0,100,1>Mix-%
+slider1:5<0.1,20,0.1>Rate (Hz)
+slider2:200<100,2000,10>Carrier Freq (Hz)
+slider3:50<0,100,1>Depth (%)
+slider4:40<0,100,1>Mix (%)
 
-in_pin:left input
-in_pin:right input
-out_pin:left output
-out_pin:right output
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
 
 @init
   phase = 0;

@@ -1,18 +1,18 @@
 desc:NULL Reverser
-//tags: reverse buffer playback realtime backwards filter
-// Collection: NULL JSFX
-// Author: Christos Koulaxizis
-// v1.1 — ENHANCED: Added feedback path filter (OFF/LP/BP/HP)
+author: Christos Koulaxizis
+tags: reverse buffer playback realtime backwards filter
+//category: Advanced
+//NULL JSFX v2.0 • https://nulljsfx.tech • MIT License
 
 slider1:2<1,10,0.1>Buffer Length (s)
 slider2:0<0,3,1{Off,LP,BP,HP}>Filter
 slider3:2000<100,20000,100>Filter Freq (Hz)
 slider4:50<0,100,1>Mix (%)
 
-in_pin:left
-in_pin:right
-out_pin:left
-out_pin:right
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
 
 @init
 max_buf = srate * 10;

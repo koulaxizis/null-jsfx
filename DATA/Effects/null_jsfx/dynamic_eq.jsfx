@@ -1,31 +1,33 @@
-desc:NULL Dynamic EQ
-//tags: dynamic eq equalizer parametric compressor expander null jsfx essentials
-// Collection: NULL JSFX
-// Author: Christos Koulaxizis
+desc:NULL Dynamic Eq
+author: Christos Koulaxizis
+tags: dynamic eq equalizer parametric compressor expander essentials
+//category: Essentials
+//NULL JSFX v2.0 • https://nulljsfx.tech • MIT License
 
 slider1:200<20,1000,10>B1 Freq
 slider2:0<-12,12,0.5>B1 Gain
 slider3:1<0.5,4,0.1>B1 Q
 slider4:-12<-36,0,1>B1 Threshold
-
 slider5:1000<200,4000,100>B2 Freq
 slider6:0<-12,12,0.5>B2 Gain
 slider7:1<0.5,4,0.1>B2 Q
 slider8:-12<-36,0,1>B2 Threshold
-
 slider9:2000<500,8000,100>B3 Freq
 slider10:0<-12,12,0.5>B3 Gain
 slider11:1<0.5,4,0.1>B3 Q
 slider12:-12<-36,0,1>B3 Threshold
-
 slider13:6000<2000,15000,500>B4 Freq
 slider14:0<-12,12,0.5>B4 Gain
 slider15:1<0.5,4,0.1>B4 Q
 slider16:-12<-36,0,1>B4 Threshold
-
 slider17:1<0.1,10,0.1>Attack
 slider18:100<1,500,1>Release
 slider19:0<0,24,1>Makeup
+
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
 
 @init
   b1_prev = 0; b2_prev = 0; b3_prev = 0; b4_prev = 0;

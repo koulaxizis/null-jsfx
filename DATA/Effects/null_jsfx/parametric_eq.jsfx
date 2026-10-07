@@ -1,7 +1,8 @@
-desc:NULL 5-Band EQ 
-//author: Christos Koulaxizis 
-// Collection: NULL JSFX
-//tags: equalizer parametric eq 5-band shelving filter mixing mastering
+desc:NULL Parametric EQ
+author: Christos Koulaxizis
+tags: equalizer parametric eq 5-band shelving filter mixing mastering
+//category: Essentials
+//NULL JSFX v2.0 • https://nulljsfx.tech • MIT License
 
 slider1:77<20,300,1>Low Freq
 slider2:0<-18,18,0.1>Low Gain
@@ -29,10 +30,10 @@ slider23:1.0<0.1,10.0,0.1>Ultra High Q
 slider24:2<0,7,1{Low Shelf,High Shelf,Peaking,Low Pass,High Pass,Notch,Band Pass,All Pass}>Ultra High Type
 slider25:0<0,2,1{Active,Bypass,Solo}>Ultra High Mode
 
-in_pin:left input
-in_pin:right input
-out_pin:left output
-out_pin:right output
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
 
 @init
 cb0=0;cb1=4;cb2=8;ca1=12;ca2=16;x1l=20;x2l=24;y1l=28;y2l=32;x1r=36;x2r=40;y1r=44;y2r=48;x1ul=48;x2ul=52;y1ul=56;y2ul=60;x1ur=64;x2ur=68;y1ur=72;y2ur=76;

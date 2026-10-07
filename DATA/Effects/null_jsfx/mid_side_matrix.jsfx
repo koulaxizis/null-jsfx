@@ -1,24 +1,17 @@
 desc:NULL Mid/Side Matrix
-//tags: mid side stereo matrix encode decode m/s processing
-//Collection: NULL JSFX
-//Author: Christos Koulaxizis
+author: Christos Koulaxizis
+tags: mid side stereo matrix encode decode m/s processing
+//category: Essentials
+//NULL JSFX v2.0 • https://nulljsfx.tech • MIT License
 
-slider1:0<-6,6,0.1>Mid-Gain (dB)
-slider2:0<-6,6,0.1>Side-Gain (dB)
+slider1:0<-6,6,0.1>Mid Gain (dB)
+slider2:0<-6,6,0.1>Side Gain (dB)
 slider3:1<0,1,1{Encode,Decode}>Mode
 
-in_pin:left input
-in_pin:right input
-out_pin:left output
-out_pin:right output
-
-// === VARIABLES (ALL DECLARED HERE) ===
-in_l; in_r;
-mid_enc; side_enc;
-mid_dec; side_dec;
-blend_decode; blend_encode;
-result_l; result_r;
-mid_gain; side_gain; matrix_mode;
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
 
 @init
 mid_gain = 1;

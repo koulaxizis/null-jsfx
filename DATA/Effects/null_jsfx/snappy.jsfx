@@ -1,14 +1,15 @@
-desc:NULL ONE SLIDER Snappy
-//tags: transient attack punch drums percussive snappy
-//Collection: NULL JSFX
-//Author: Christos Koulaxizis
+desc:NULL Snappy
+author: Christos Koulaxizis
+tags: transient attack punch drums percussive snappy
+//category: One Slider
+//NULL JSFX v2.0 • https://nulljsfx.tech • MIT License
 
 slider1:50<0,100,1>Amount
 
-in_pin:left input
-in_pin:right input
-out_pin:left output
-out_pin:right output
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
 
 @init
   prev_l = 0; prev_r = 0;

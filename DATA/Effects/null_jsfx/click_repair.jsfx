@@ -1,15 +1,16 @@
 desc:NULL Click Repair
-//tags: click repair audio restoration pop click crackle vinyl denoise
-//author: Christos Koulaxizis
-//Collection: NULL JSFX
+author: Christos Koulaxizis
+tags: click repair audio restoration pop crackle vinyl denoise
+//category: Essentials
+//NULL JSFX v2.0 • https://nulljsfx.tech • MIT License
 
-slider1:50<0,100,1>Threshold-%
-slider2:10<1,50,1>Window-(Samples)
+slider1:50<0,100,1>Threshold (%)
+slider2:10<1,50,1>Window (Samples)
 
-in_pin:left input
-in_pin:right input
-out_pin:left output
-out_pin:right output
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
 
 @init
   win_idx = 0;

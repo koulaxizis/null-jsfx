@@ -1,16 +1,17 @@
 desc:NULL Phaser
-//tags: phaser modulation sweep notch moving filter allpass
-//Collection: NULL JSFX
-//Author: Christos Koulaxizis
+author: Christos Koulaxizis
+tags: phaser modulation sweep notch moving filter allpass
+//category: Essentials
+//NULL JSFX v2.0 • https://nulljsfx.tech • MIT License
 
-slider1:0.5<0.1,5,0.1>Rate-(Hz)
+slider1:0.5<0.1,5,0.1>Rate (Hz)
 slider2:4<1,8,1>Stages
-slider3:30<0,100,1>Mix-%
+slider3:30<0,100,1>Mix (%)
 
-in_pin:left input
-in_pin:right input
-out_pin:left output
-out_pin:right output
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
 
 @init
   lfo_phase = 0;

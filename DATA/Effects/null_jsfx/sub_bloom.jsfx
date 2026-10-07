@@ -1,8 +1,8 @@
 desc:NULL Sub Bloom
-//tags: bass sub harmonic enhancement low frequency
-// Collection: NULL JSFX
-// Author: Christos Koulaxizis
-// v1.0 — Sub-harmonic generator inspired by WAP BassShaper
+author: Christos Koulaxizis
+tags: bass sub harmonic enhancement low frequency
+//category: Advanced
+//NULL JSFX v2.0 • https://nulljsfx.tech • MIT License
 
 slider1:100<50,300,1>Source Frequency (Hz)
 slider2:50<0,100,1>Sub Level (%)
@@ -10,10 +10,10 @@ slider3:1<1,2,1>Sub Octave (1=-1oct, 2=-2oct)
 slider4:80<0,100,1>Original Mix (%)
 slider5:0<-12,12,1>Output (dB)
 
-in_pin:left
-in_pin:right
-out_pin:left
-out_pin:right
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
 
 @init
 srate = srate;

@@ -1,8 +1,8 @@
 desc:NULL Warped Delay
-//tags: delay modulated feedback distortion filter warping
-// Collection: NULL JSFX
-// Author: Christos Koulaxizis
-// v1.6 — ENHANCED: Filter mode as dropdown
+author: Christos Koulaxizis
+tags: delay modulated feedback distortion filter warping
+//category: Advanced
+//NULL JSFX v2.0 • https://nulljsfx.tech • MIT License
 
 slider1:150<1,1000,1>Time (ms)
 slider2:2<0.1,10,0.1>Mod Rate (Hz)
@@ -13,10 +13,10 @@ slider6:0<0,3,1{Off,LP,HP,BP}>Filter
 slider7:2000<100,20000,100>Filter Freq (Hz)
 slider8:50<0,100,1>Mix (%)
 
-in_pin:left
-in_pin:right
-out_pin:left
-out_pin:right
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
 
 @init
 buf_size = srate * 2;

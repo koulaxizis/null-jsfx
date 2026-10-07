@@ -1,8 +1,8 @@
 desc:NULL Trance Gate
-//tags: trance gate 16-step sequencer rhythmic pattern staccato tempo sync
-// Collection: NULL JSFX
-// Author: Christos Koulaxizis
-// v1.1 — ENHANCED: Tempo Sync, Gate Depth per step
+author: Christos Koulaxizis
+tags: trance gate 16-step sequencer rhythmic pattern staccato tempo sync
+//category: Advanced
+//NULL JSFX v2.0 • https://nulljsfx.tech • MIT License
 
 slider1:1<0,1,1{Off,On}>Step 1
 slider2:1<0,1,1{Off,On}>Step 2
@@ -26,10 +26,10 @@ slider19:20<1,100,1>Attack (ms)
 slider20:80<10,500,1>Release (ms)
 slider21:100<0,100,1>Gate Depth (%)
 
-in_pin:left
-in_pin:right
-out_pin:left
-out_pin:right
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
 
 @init
 step_pos = 0;

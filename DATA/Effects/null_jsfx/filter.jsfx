@@ -1,16 +1,17 @@
 desc:NULL Filter
-//tags: filter lowpass resonance q cutoff svf tpt
-//Collection: NULL JSFX
-//Author: Christos Koulaxizis
+author: Christos Koulaxizis
+tags: filter lowpass resonance q cutoff svf tpt
+//category: Essentials
+//NULL JSFX v2.0 • https://nulljsfx.tech • MIT License
 
-slider1:1000<20,20000,1:log>Cutoff-(Hz)
+slider1:1000<20,20000,1:log>Cutoff (Hz)
 slider2:1<0.1,10,0.1>Resonance
-slider3:0<-12,12,0.1>Gain-(dB)
+slider3:0<-12,12,0.1>Gain (dB)
 
-in_pin:left input
-in_pin:right input
-out_pin:left output
-out_pin:right output
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
 
 @init
   ic1_l = 0; ic2_l = 0;
