@@ -14,9 +14,11 @@ out_pin:Left
 out_pin:Right
 
 @init
-  buf_size = 4410;
-  i = 0;
-  loop(buf_size, (delay_l[i] = 0; delay_r[i] = 0;));
+  buf_size = ceil(srate * 0.1);
+  delay_l = 0;
+  delay_r = delay_l + buf_size;
+  memset(delay_l, 0, 2 * buf_size);
+  freembuf(delay_r + buf_size);
   wpos = 0;
   phase = 0;
 

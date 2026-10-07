@@ -15,12 +15,27 @@ out_pin:Left
 out_pin:Right
 
 @init
-  buf_size = srate * 0.1;
+  // Two read taps sweep through a 60 ms delay line in opposite phase; a Hann crossfade
+  // hides each tap while it jumps back, so the pitch changes without clicks.
+  win = floor(srate * 0.06);
+  buf_size = win + 4;
+  buf_l = 0;
+  buf_r = buf_l + buf_size;
+  memset(buf_l, 0, 2 * buf_size);
+  freembuf(buf_r + buf_size);
   wpos = 0;
-  readpos = 0;
-  
-  i = 0;
-  while(i < buf_size)(buffer_l[i] = 0; buffer_r[i] = 0; i += 1);
+  ph = 0;
+
+  function read_tap(buf, delay) local(rp, i, fr, i2)
+  (
+    rp = wpos - delay;
+    rp < 0 ? rp += buf_size;
+    i = floor(rp);
+    fr = rp - i;
+    i2 = i + 1;
+    i2 >= buf_size ? i2 -= buf_size;
+    buf[i] + (buf[i2] - buf[i]) * fr;
+  );
 
 @slider
   octave = slider1;
@@ -29,30 +44,28 @@ out_pin:Right
   mix_amt = slider4 / 100;
   total_shift = octave * 12 + semitones + fine / 100;
   pitch_factor = pow(2, total_shift / 12);
+  ph_inc = (1 - pitch_factor) / win;
 
 @sample
-  buffer_l[wpos] = spl0;
-  buffer_r[wpos] = spl1;
-  
-  wpos = wpos + 1;
+  buf_l[wpos] = spl0;
+  buf_r[wpos] = spl1;
+
+  ph += ph_inc;
+  ph >= 1 ? ph -= 1;
+  ph < 0 ? ph += 1;
+  ph2 = ph + 0.5;
+  ph2 >= 1 ? ph2 -= 1;
+
+  d1 = 1 + ph * win;
+  d2 = 1 + ph2 * win;
+  g1 = 0.5 - 0.5 * cos(2 * $pi * ph);
+  g2 = 1 - g1;
+
+  shifted_l = read_tap(buf_l, d1) * g1 + read_tap(buf_l, d2) * g2;
+  shifted_r = read_tap(buf_r, d1) * g1 + read_tap(buf_r, d2) * g2;
+
+  wpos += 1;
   wpos >= buf_size ? wpos = 0;
-  
-  readpos = readpos + pitch_factor;
-  readpos >= buf_size ? readpos = readpos - buf_size;
-  
-  rpos_int = floor(readpos);
-  rpos_frac = readpos - rpos_int;
-  
-  rpos_next = rpos_int + 1;
-  rpos_next >= buf_size ? rpos_next = 0;
-  
-  d1_l = buffer_l[rpos_int];
-  d2_l = buffer_l[rpos_next];
-  d1_r = buffer_r[rpos_int];
-  d2_r = buffer_r[rpos_next];
-  
-  shifted_l = d1_l + (d2_l - d1_l) * rpos_frac;
-  shifted_r = d1_r + (d2_r - d1_r) * rpos_frac;
-  
+
   spl0 = spl0 * (1 - mix_amt) + shifted_l * mix_amt;
   spl1 = spl1 * (1 - mix_amt) + shifted_r * mix_amt;

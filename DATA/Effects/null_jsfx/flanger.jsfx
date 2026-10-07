@@ -15,9 +15,11 @@ out_pin:Left
 out_pin:Right
 
 @init
-  buf_size = 2205;
-  i = 0;
-  loop(buf_size, (delay_l[i] = 0; delay_r[i] = 0;));
+  buf_size = ceil(srate * 0.05);
+  delay_l = 0;
+  delay_r = delay_l + buf_size;
+  memset(delay_l, 0, 2 * buf_size);
+  freembuf(delay_r + buf_size);
   wpos = 0;
   phase = 0;
   fb_l = 0;
@@ -35,9 +37,8 @@ out_pin:Right
   lfo = sin(phase);
   phase = phase + phase_inc;
   
-  base_delay = 1;
-  mod_amount = depth * 0.3;
-  mod_delay = base_delay + lfo * mod_amount;
+  // sweep between 0.5 ms and 0.5 ms + Depth
+  mod_delay = 0.5 + depth * 0.5 * (1 + lfo);
   delay_samples = mod_delay * srate / 1000;
   
   rpos = wpos - delay_samples;

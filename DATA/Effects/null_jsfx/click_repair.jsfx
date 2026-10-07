@@ -13,41 +13,57 @@ out_pin:Left
 out_pin:Right
 
 @init
-  win_idx = 0;
-  threshold_db = slider1 / 100;
-  window_len = floor(slider2);
-  loop(window_len, window_data[i] = 0;);
-  prev_sample = 0;
+  // Finds samples that jump far away from the recent signal (clicks, pops, digital
+  // spikes), marks Window samples from there as damaged, and redraws them as a straight
+  // line between the good samples on either side. The output is delayed by
+  // 2 x Window samples (reported to REAPER for delay compensation) so the repair can
+  // see the good sample after each click.
+  ring = 256;
+  buf_l = 0;
+  buf_r = buf_l + ring;
+  bad_l = buf_r + ring;
+  bad_r = bad_l + ring;
+  freembuf(bad_r + ring);
+  memset(buf_l, 0, 4 * ring);
+  pos = 0;
+  avg_l = avg_r = 0.01;
+  left_l = left_r = 0;
+  last_l = last_r = 0;
+  pdc_bot_ch = 0;
+  pdc_top_ch = 2;
+
+  function store(buf, bad, x, avg*, left*) local(d)
+  (
+    d = abs(x - buf[(pos - 1 + ring) % ring]);
+    left <= 0 && d > max(avg * ratio, 0.01) ? left = win;
+    left > 0 ? (bad[pos] = 1; left -= 1) : (bad[pos] = 0; avg = avg * 0.995 + d * 0.005);
+    buf[pos] = x;
+  );
+
+  function repaired(buf, bad, last*) local(o, j, n, y)
+  (
+    o = (pos - delay + ring) % ring;
+    bad[o] ? (
+      j = o;
+      n = 1;
+      while (j = (j + 1) % ring; n += 1; bad[j] && n < ring);
+      y = last + (buf[j] - last) / n;
+    ) : (
+      y = buf[o];
+    );
+    last = y;
+  );
 
 @slider
-  threshold_db = slider1 / 100;
-  window_len = floor(slider2);
+  win = max(1, min(50, floor(slider2)));
+  delay = 2 * win;
+  pdc_delay = delay;
+  // 0% = most sensitive (step 4x the average), 100% = least sensitive (step 30x)
+  ratio = 4 + slider1 / 100 * 26;
 
 @sample
-  current = spl0;
-  diff = current - prev_sample;
-  
-  diff > threshold_db || diff < -threshold_db ? (
-    interpolated = 0;
-    loop(window_len, 
-      sum = 0;
-      count = 0;
-      loop(window_len,
-        k = win_idx - j;
-        k < 0 ? k = k + window_len;
-        k >= window_len ? k = k - window_len;
-        sum = sum + window_data[k];
-        count = count + 1;
-      );
-      interpolated = sum / count;
-    );
-    
-    spl0 = interpolated;
-    spl1 = interpolated;
-  );
-  
-  window_data[win_idx] = spl0;
-  win_idx = win_idx + 1;
-  win_idx >= window_len ? win_idx = 0;
-  
-  prev_sample = current;
+  store(buf_l, bad_l, spl0, avg_l, left_l);
+  store(buf_r, bad_r, spl1, avg_r, left_r);
+  spl0 = repaired(buf_l, bad_l, last_l);
+  spl1 = repaired(buf_r, bad_r, last_r);
+  pos = (pos + 1) % ring;
