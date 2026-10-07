@@ -1,0 +1,30 @@
+desc:NULL ONE SLIDER Mono Maker
+//tags: mono bass low frequency summing stereo width null jsfx one slider
+// Collection: NULL JSFX
+// Author: Christos Koulaxizis
+
+slider1:0.5<0,1,0.01>Mix
+
+@init
+  lp_state_l = 0
+  lp_state_r = 0
+
+@slider
+  mix_amount = slider1
+  fc = 120 / sr
+
+@sample
+  lp_coeff = 2*3.14159*fc / (2*3.14159*fc + 1)
+  low_l = lp_state_l*(1-lp_coeff) + spl0*lp_coeff
+  low_r = lp_state_r*(1-lp_coeff) + spl1*lp_coeff
+  lp_state_l = low_l
+  lp_state_r = low_r
+  high_l = spl0 - low_l
+  high_r = spl1 - low_r
+  low_mono = (low_l + low_r)*0.5
+  spl0 = low_mono*mix_amount + high_l*mix_amount + spl0*(1-mix_amount)
+  spl1 = low_mono*mix_amount + high_r*mix_amount + spl1*(1-mix_amount)
+  spl0 < -1 ? spl0 = -1
+  spl0 > 1 ? spl0 = 1
+  spl1 < -1 ? spl1 = -1
+  spl1 > 1 ? spl1 = 1

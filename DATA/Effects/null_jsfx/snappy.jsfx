@@ -1,0 +1,33 @@
+desc:NULL ONE SLIDER Snappy
+//tags: transient attack punch drums percussive snappy
+//Collection: NULL JSFX
+//Author: Christos Koulaxizis
+
+slider1:50<0,100,1>Amount
+
+in_pin:left input
+in_pin:right input
+out_pin:left output
+out_pin:right output
+
+@init
+  prev_l = 0; prev_r = 0;
+
+@slider
+  amount = slider1 / 100;
+  attack_gain = 1 + amount * 1.5;
+  sustain_gain = 1 - amount * 0.3;
+
+@sample
+  signal_l = abs(spl0);
+  signal_r = abs(spl1);
+  thresh_l = abs(prev_l) * 0.5;
+  thresh_r = abs(prev_r) * 0.5;
+  is_trans_l = signal_l > thresh_l ? 1 : 0;
+  is_trans_r = signal_r > thresh_r ? 1 : 0;
+  gain_l = attack_gain * is_trans_l + sustain_gain * (1 - is_trans_l);
+  gain_r = attack_gain * is_trans_r + sustain_gain * (1 - is_trans_r);
+  spl0 = spl0 * gain_l;
+  spl1 = spl1 * gain_r;
+  prev_l = spl0;
+  prev_r = spl1;

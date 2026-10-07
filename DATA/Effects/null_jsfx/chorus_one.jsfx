@@ -1,0 +1,115 @@
+desc:NULL ONE SLIDER Chorus One
+//tags: chorus thickening detune stereo lfo width
+// Collection: NULL JSFX
+// Author: Christos Koulaxizis
+
+slider1:50<0,100,1>Chorus Amount
+
+// === STATIC DELAY BUFFERS ===
+delay_buf_l[44100];
+delay_buf_r[44100];
+
+// === VARIABLES DECLARED FIRST ===
+delay_head_l;
+delay_head_r;
+lfo_phase;
+lfo_rate_base;
+lfo_depth_base;
+base_delay_ms;
+fb_l;
+fb_r;
+lfo_rate;
+lfo_depth;
+delay_base;
+feedback_level;
+ms_to_samples;
+chorus_val;
+lfo_output;
+delay_l_ms;
+delay_r_ms;
+delay_l_samples;
+delay_r_samples;
+delay_int_l;
+delay_frac_l;
+read_pos_l;
+read_pos_l2;
+delay_out_l;
+delay_int_r;
+delay_frac_r;
+read_pos_r;
+read_pos_r2;
+delay_out_r;
+wet_mix;
+dry_mix;
+temp_val;
+
+@slider
+// Map slider to chorus parameters
+chorus_val = slider1 / 100;
+
+// === CHORUS-OPTIMIZED PARAMETERS ===
+lfo_rate = 0.3 + chorus_val * 2.5;      // 0.3 to 2.8 Hz (slower, warmer)
+lfo_depth = 1 + chorus_val * 7;          // 1 to 8 ms (proper chorus depth!)
+delay_base = 5 + chorus_val * 7;         // 5 to 12 ms (classic chorus range)
+feedback_level = chorus_val * 0.15;      // 0 to 0.15 (less feedback for chorus)
+
+ms_to_samples = srate / 1000;
+
+@sample
+// === LFO UPDATE (Triangle Wave) ===
+lfo_phase = lfo_phase + lfo_rate / srate;
+(lfo_phase >= 1) ? (lfo_phase = lfo_phase - 1);
+
+// Triangle wave using conditional instead of abs()
+temp_val = lfo_phase * 4 - 2;
+(temp_val < 0) ? (lfo_output = -temp_val - 1);
+(temp_val >= 0) ? (lfo_output = temp_val - 1);
+
+// === CALCULATE STEREO DELAY TIMES ===
+delay_l_ms = delay_base + lfo_output * lfo_depth;
+delay_r_ms = delay_base - lfo_output * lfo_depth;
+delay_l_samples = delay_l_ms * ms_to_samples;
+delay_r_samples = delay_r_ms * ms_to_samples;
+
+// === LEFT CHANNEL ===
+delay_int_l = floor(delay_l_samples);
+delay_frac_l = delay_l_samples - delay_int_l;
+
+delay_head_l = (delay_head_l + 1) % 44100;
+
+read_pos_l = (delay_head_l - delay_int_l);
+(read_pos_l < 0) ? (read_pos_l = 44100 + read_pos_l);
+(read_pos_l >= 44100) ? (read_pos_l = read_pos_l - 44100);
+
+read_pos_l2 = (read_pos_l - 1);
+(read_pos_l2 < 0) ? (read_pos_l2 = 44100 + read_pos_l2);
+
+delay_out_l = delay_buf_l[read_pos_l] * (1 - delay_frac_l) + delay_buf_l[read_pos_l2] * delay_frac_l;
+
+delay_buf_l[delay_head_l] = spl0 + fb_l * feedback_level;
+fb_l = delay_out_l;
+
+// === RIGHT CHANNEL ===
+delay_int_r = floor(delay_r_samples);
+delay_frac_r = delay_r_samples - delay_int_r;
+
+delay_head_r = (delay_head_r + 1) % 44100;
+
+read_pos_r = (delay_head_r - delay_int_r);
+(read_pos_r < 0) ? (read_pos_r = 44100 + read_pos_r);
+(read_pos_r >= 44100) ? (read_pos_r = read_pos_r - 44100);
+
+read_pos_r2 = (read_pos_r - 1);
+(read_pos_r2 < 0) ? (read_pos_r2 = 44100 + read_pos_r2);
+
+delay_out_r = delay_buf_r[read_pos_r] * (1 - delay_frac_r) + delay_buf_r[read_pos_r2] * delay_frac_r;
+
+delay_buf_r[delay_head_r] = spl1 + fb_r * feedback_level;
+fb_r = delay_out_r;
+
+// === MIX DRY/WET ===
+wet_mix = chorus_val * 0.85;            // Max 85% wet (keep some dry signal)
+dry_mix = 1 - wet_mix;
+
+spl0 = spl0 * dry_mix + delay_out_l * wet_mix;
+spl1 = spl1 * dry_mix + delay_out_r * wet_mix;

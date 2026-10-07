@@ -1,0 +1,56 @@
+desc:NULL Sub Bloom
+//tags: bass sub harmonic enhancement low frequency
+// Collection: NULL JSFX
+// Author: Christos Koulaxizis
+// v1.0 — Sub-harmonic generator inspired by WAP BassShaper
+
+slider1:100<50,300,1>Source Frequency (Hz)
+slider2:50<0,100,1>Sub Level (%)
+slider3:1<1,2,1>Sub Octave (1=-1oct, 2=-2oct)
+slider4:80<0,100,1>Original Mix (%)
+slider5:0<-12,12,1>Output (dB)
+
+in_pin:left
+in_pin:right
+out_pin:left
+out_pin:right
+
+@init
+srate = srate;
+buf_l = 0;
+buf_r = 0;
+env_l = 0;
+env_r = 0;
+phase_l = 0;
+phase_r = 0;
+
+@slider
+src_freq = slider1;
+sub_level = slider2 / 100;
+sub_oct = slider3;
+orig_mix = slider4 / 100;
+out_gain = 10 ^ (slider5 / 20);
+
+@sample
+// Bandpass detection via simple HP+LP
+in_l = spl0;
+in_r = spl1;
+
+// Envelope follower on source band
+env_l = env_l + (abs(in_l) - env_l) * 0.001;
+env_r = env_r + (abs(in_r) - env_r) * 0.001;
+
+// Sub-harmonic oscillator
+sub_freq = src_freq / (sub_oct == 1 ? 2 : 4);
+phase_l += 2 * $pi * sub_freq / srate;
+phase_r += 2 * $pi * sub_freq / srate;
+phase_l = phase_l > 2*$pi ? phase_l - 2*$pi : phase_l;
+phase_r = phase_r > 2*$pi ? phase_r - 2*$pi : phase_r;
+
+// Generate sub based on detected envelope
+sub_out_l = sin(phase_l) * env_l * sub_level;
+sub_out_r = sin(phase_r) * env_r * sub_level;
+
+// Mix
+spl0 = (in_l * orig_mix + sub_out_l) * out_gain;
+spl1 = (in_r * orig_mix + sub_out_r) * out_gain;

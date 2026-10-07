@@ -1,0 +1,56 @@
+desc:NULL ONE SLIDER Grit
+//tags: bitcrush samplerate lofi degradation digital
+// Collection: NULL JSFX
+// Author: Christos Koulaxizis
+
+slider1:0<0,100,1>Grit Intensity
+
+@init
+bit_depth_min = 1;
+bit_depth_max = 24;
+sample_acc = 0;
+held_l = 0;
+held_r = 0;
+
+@slider
+grit_val = slider1 / 100;
+
+// Bit depth: 24 at clean, 1 at max grit
+bits_to_use = bit_depth_min + (1 - grit_val) * (bit_depth_max - bit_depth_min);
+(bits_to_use < 1) ? (bits_to_use = 1);
+range = pow(2, ceil(bits_to_use));
+
+// Downsample factor: 1 at clean, 8 at max grit
+downsample_factor = 1 + grit_val * 7;
+
+@sample
+// === DOWNSAMPLE (hold & decimate) ===
+sample_acc += 1;
+(sample_acc >= downsample_factor) ? (
+  sample_acc = 0;
+  held_l = spl0;
+  held_r = spl1;
+);
+
+// === BITCRUSH (applied to held signal — SERIAL not parallel!) ===
+steps_l = floor((held_l + 1) * range / 2);
+(steps_l < 0) ? (steps_l = 0);
+(steps_l > range - 1) ? (steps_l = range - 1);
+crushed_l = (steps_l / range) * 2 - 1;
+
+steps_r = floor((held_r + 1) * range / 2);
+(steps_r < 0) ? (steps_r = 0);
+(steps_r > range - 1) ? (steps_r = range - 1);
+crushed_r = (steps_r / range) * 2 - 1;
+
+// === CROSSFADE: dry ↔ crushed ===
+// grit_val=0 → 100% dry (TRUE BYPASS)
+// grit_val=1 → 100% crushed
+spl0 = spl0 * (1 - grit_val) + crushed_l * grit_val;
+spl1 = spl1 * (1 - grit_val) + crushed_r * grit_val;
+
+// === CLAMP ===
+(spl0 < -1) ? (spl0 = -1);
+(spl0 > 1) ? (spl0 = 1);
+(spl1 < -1) ? (spl1 = -1);
+(spl1 > 1) ? (spl1 = 1);

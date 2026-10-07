@@ -1,0 +1,31 @@
+desc:NULL Breath Control v1.0
+//tags: breath vocal dynamics null jsfx
+// Collection: NULL JSFX
+// Author: Christos Koulaxizis
+
+slider1:50<0,100,1>Threshold
+slider2:24<6,48,1>Release
+slider3:-12<-24,0,1>Range Limit
+
+@init
+gain_reduction = 1;
+env_peak = 0;
+
+@slider
+threshold_val = slider1/100;
+release_val = slider2/1000;
+range_db = slider3;
+target_gain = exp(range_db * 0.115129254);
+
+@sample
+current_level = abs(spl0);
+env_peak = current_level > env_peak ? env_peak*0.99+current_level*0.01 : env_peak*(1-release_val);
+threshold_db = threshold_val*-60;
+current_level_db = 20*log(max(current_level,0.0001))/log(10);
+current_level_db < threshold_db && env_peak > threshold_db*1.5 ? gain_reduction = gain_reduction*0.95+target_gain*0.05 : gain_reduction = gain_reduction*0.98+0.02;
+spl0 *= gain_reduction;
+spl1 *= gain_reduction;
+spl0 < -1 ? spl0 = -1;
+spl0 > 1 ? spl0 = 1;
+spl1 < -1 ? spl1 = -1;
+spl1 > 1 ? spl1 = 1;

@@ -1,0 +1,64 @@
+desc:NULL Ladder Filter
+//tags: filter ladder moog 24db lowpass highpass resonance drive analog
+//Collection: NULL JSFX
+//Author: Christos Koulaxizis
+
+slider1:1000<20,20000,1:log>Cutoff-(Hz)
+slider2:0.5<0,4,0.1>Resonance
+slider3:0<0,100,1>Drive-(%)
+slider4:0<0,1,1{Lowpass,Highpass}>Mode
+slider5:0<-12,12,0.1>Gain-(dB)
+
+in_pin:left input
+in_pin:right input
+out_pin:left output
+out_pin:right output
+
+@init
+  s1_l=0; s2_l=0; s3_l=0; s4_l=0;
+  s1_r=0; s2_r=0; s3_r=0; s4_r=0;
+  gain_lin = 1;
+
+@slider
+  fc = slider1;
+  res = slider2;
+  drive_amt = slider3 / 100;
+  lad_mode = slider4;
+  gain_lin = exp(slider5 * 0.11512925464970228420);
+
+  g = 1 - exp(-2 * 3.14159265358979 * fc / srate);
+  k = res * 4;
+  k > 3.8 ? k = 3.8;
+
+@sample
+  // Saturation input stage
+  in_l = spl0 * (1 + drive_amt * 2);
+  in_r = spl1 * (1 + drive_amt * 2);
+  in_l > 1 ? in_l = 1 : (in_l < -1 ? in_l = -1);
+  in_r > 1 ? in_r = 1 : (in_r < -1 ? in_r = -1);
+
+  // 4-pole cascade LEFT
+  fb_l = k * s4_l;
+  u_l = in_l - fb_l;
+  s1_l = s1_l + g * (u_l - s1_l);
+  s2_l = s2_l + g * (s1_l - s2_l);
+  s3_l = s3_l + g * (s2_l - s3_l);
+  s4_l = s4_l + g * (s3_l - s4_l);
+
+  // 4-pole cascade RIGHT
+  fb_r = k * s4_r;
+  u_r = in_r - fb_r;
+  s1_r = s1_r + g * (u_r - s1_r);
+  s2_r = s2_r + g * (s1_r - s2_r);
+  s3_r = s3_r + g * (s2_r - s3_r);
+  s4_r = s4_r + g * (s3_r - s4_r);
+
+  lad_mode == 0 ? (
+    // LOWPASS: 4th pole output
+    spl0 = s4_l * gain_lin;
+    spl1 = s4_r * gain_lin;
+  ) : (
+    // HIGHPASS: input - 4th pole
+    spl0 = (in_l - s4_l) * gain_lin;
+    spl1 = (in_r - s4_r) * gain_lin;
+  );

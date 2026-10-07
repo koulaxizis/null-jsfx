@@ -1,0 +1,49 @@
+desc:NULL ONE SLIDER Exciter
+//tags: exciter harmonics saturation high shelf enhancer null jsfx one slider
+// Collection: NULL JSFX
+// Author: Christos Koulaxizis
+
+slider1:50<0,100,1>Amount
+slider2:8000<3000,15000,100>Frequency
+slider3:1<0,2,1>Character
+
+@init
+  hs_state = 0;
+
+@slider
+  amount = slider1 / 100;
+  freq_hz = slider2;
+  character = slider3;
+  boost = amount * 6;
+
+@sample
+  // High shelf filter
+  fc = freq_hz / sr;
+  alpha = fc / (fc + 1);
+  high_shelf = hs_state * (1 - alpha) + spl0 * alpha;
+  hs_state = high_shelf;
+  
+  // Generate harmonics based on character
+  if (character == 0) {
+    harmonic = spl0 * spl0 * spl0 * 0.05;
+  } else if (character == 1) {
+    harmonic = spl0 * spl0 * spl0 * 0.1;
+  } else {
+    harmonic = spl0 * spl0 * spl0 * 0.15;
+  }
+  
+  // Mix dry and processed
+  shelf_coef = pow(10, boost / 20);
+  processed = high_shelf * shelf_coef + harmonic;
+  spl0 = spl0 * (1 - amount) + processed * amount;
+  spl1 = spl1 * (1 - amount) + processed * amount;
+  
+  // Normalization
+  if (abs(spl0) > 0.95) { spl0 = spl0 * 0.95 / abs(spl0); }
+  if (abs(spl1) > 0.95) { spl1 = spl1 * 0.95 / abs(spl1); }
+  
+  // Clamp
+  (spl0 < -1) ? (spl0 = -1);
+  (spl0 > 1) ? (spl0 = 1);
+  (spl1 < -1) ? (spl1 = -1);
+  (spl1 > 1) ? (spl1 = 1);

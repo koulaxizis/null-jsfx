@@ -1,0 +1,160 @@
+desc:NULL Glitch FX
+//tags: glitch stutter pitch tape-stop reverse granular freeze random creative
+// Collection: NULL JSFX
+// Author: Christos Koulaxizis
+
+slider1:4<0.1,20,0.1>Rate (Hz)
+slider2:8<1,64,1>Stutter Length (1/x notes)
+slider3:1<0,1,1{OFF,ON}>Stutter
+slider4:30<0,100,1>Gate Depth (%)
+slider5:0<0,1,1{OFF,ON}>Gate
+slider6:0<-24,24,0.1>Pitch Shift (semitones)
+slider7:0<0,1,1{OFF,ON}>Pitch Shift
+slider8:0<0,100,1>Reverse Chance (%)
+slider9:0<0,1,1{OFF,ON}>Reverse
+slider10:300<10,1000,10>Tape Stop Time (ms)
+slider11:0<0,1,1{OFF,ON}>Tape Stop
+slider12:200<10,500,10>Grain Size (ms)
+slider13:0<0,1,1{OFF,ON}>Granular
+slider14:50<0,100,1>Mix (%)
+
+in_pin:left
+in_pin:right
+out_pin:left
+out_pin:right
+
+@init
+buf_size = 44100;
+delay_buf = 0;
+freembuf(delay_buf + buf_size);
+write_pos = 0;
+stutter_cnt = 0;
+gate_state = 0;
+gate_timer = 0;
+tape_stop_active = 0;
+tape_stop_target = 1;
+slide_cnt = 0;
+grain_start = 0;
+reverse_flag = 0;
+pitch_ratio = 1;
+
+@slider
+rate_hz = slider1;
+stutter_notes = slider2;
+stutter_on = slider3;
+gate_pct = slider4 / 100;
+gate_on = slider5;
+pitch_semitones = slider6;
+pitch_on = slider7;
+reverse_pct = slider8;
+reverse_on = slider9;
+tape_stop_ms = slider10 / 1000;
+tape_stop_on = slider11;
+grain_ms = slider12 / 1000;
+grain_on = slider13;
+mix_pct = slider14 / 100;
+
+pitch_ratio = pitch_on ? pow(2, pitch_semitones / 12) : 1;
+
+stutter_dur = 1 / (rate_hz * stutter_notes) * 4;
+gate_window = 1 / rate_hz * 0.3;
+grain_samples = srate * grain_ms;
+tape_stop_samples = srate * tape_stop_ms;
+
+@sample
+in_l = spl0;
+in_r = spl1;
+
+/* ─── WRITE TO BUFFER ─── */
+delay_buf[write_pos] = in_l;
+write_pos = write_pos + 1;
+write_pos = write_pos >= buf_size ? 0 : write_pos;
+
+/* ─── RATE TIMER ─── */
+stutter_cnt += 1;
+stutter_samples = srate * stutter_dur;
+
+/* ─── TRIGGER EVENTS AT RATE ─── */
+stutter_cnt >= stutter_samples ? (
+  stutter_cnt = 0;
+
+  gate_state = gate_state ? 0 : 1;
+  gate_timer = 0;
+
+  rand_val = rand(100);
+  reverse_flag = (reverse_on && rand_val < reverse_pct) ? 1 : 0;
+
+  tape_trig = (tape_stop_on && rand(100) < 20) ? 1 : 0;
+  tape_stop_active = tape_trig ? 1 : 0;
+  tape_stop_target = tape_trig ? 0.1 : 1;
+  slide_cnt = 0;
+
+  grain_start = write_pos;
+);
+
+gate_timer += 1;
+
+/* ─── TAPE STOP ANIMATION ─── */
+slide_cnt += 1;
+slide_progress = tape_stop_active ? slide_cnt / tape_stop_samples : 0;
+slide_progress = slide_progress > 1 ? 1 : slide_progress;
+pitch_slide = 1 + (tape_stop_target - 1) * slide_progress;
+
+/* ─── START WITH INPUT (when stutter OFF) ─── */
+wet = in_l;
+
+/* ─── STUTTER: READ FROM BUFFER ─── */
+stutter_on ? (
+  stutter_samples > 0 ? (
+    read_base = write_pos - stutter_samples;
+    read_base = read_base < 0 ? read_base + buf_size : read_base;
+
+    read_dir = (reverse_on && reverse_flag) ? -1 : 1;
+    read_pos = read_base + (stutter_cnt * read_dir);
+    read_pos = read_pos < 0 ? read_pos + buf_size : (read_pos >= buf_size ? read_pos - buf_size : read_pos);
+
+    read_next = read_pos + read_dir;
+    read_next = read_next < 0 ? read_next + buf_size : (read_next >= buf_size ? read_next - buf_size : read_next);
+
+    actual_pitch = pitch_ratio * pitch_slide;
+    actual_read = read_pos * actual_pitch;
+    actual_read = actual_read < 0 ? actual_read + buf_size : (actual_read >= buf_size ? actual_read - buf_size : actual_read);
+
+    int_part = floor(actual_read);
+    frac_part = actual_read - int_part;
+
+    val1 = delay_buf[int_part];
+    val2 = delay_buf[int_part >= buf_size ? 0 : int_part];
+    wet = val1 * (1 - frac_part) + val2 * frac_part;
+  );
+);
+
+/* ─── PITCH SHIFT ONLY (stutter OFF) ─── */
+(!stutter_on && pitch_on) ? (
+  wet = in_l * pitch_ratio * pitch_slide;
+);
+
+/* ─── GRANULAR OVERLAY ─── */
+grain_on ? (
+  grain_diff = write_pos - grain_start;
+  grain_diff = grain_diff < 0 ? grain_diff + buf_size : grain_diff;
+  grain_active = grain_diff < grain_samples ? 1 : 0;
+
+  grain_mix = grain_active ? 0.3 : 0;
+  grain_val = delay_buf[grain_start] * grain_mix;
+  wet = wet + grain_val;
+);
+
+/* ─── GATE ─── */
+gate_on ? (
+  gate_active = gate_state && gate_timer < srate * gate_window ? 1 : 0;
+  wet = gate_active || !gate_state ? wet : 0;
+);
+
+/* ─── DRY/WET MIX ─── */
+dry_mix = 1 - mix_pct;
+out_l = in_l * dry_mix + wet * mix_pct;
+out_r = in_r * dry_mix + wet * mix_pct;
+
+spl0 = out_l;
+spl1 = out_r;

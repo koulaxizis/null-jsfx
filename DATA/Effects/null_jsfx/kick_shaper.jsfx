@@ -1,0 +1,86 @@
+desc:NULL Kick Shaper
+//tags: kick drum transient shaping punch body thump click decay
+// Collection: NULL JSFX
+// Author: Christos Koulaxizis
+
+slider1:0<-20,20,0.1>Attack Shape (dB)
+slider2:0<-12,12,0.1>Body Tone (dB)
+slider3:0<-12,12,0.1>Thump (dB)
+slider4:0<-12,12,0.1>Click (dB)
+slider5:250<50,500,1>Decay (ms)
+slider6:0<-12,12,0.1>Output Gain (dB)
+
+in_pin:left
+in_pin:right
+out_pin:left
+out_pin:right
+
+@init
+PI = 3.14159265358979;
+
+lp_thump = 0;
+lp_body = 0;
+hp_click = 0;
+env_attack = 0;
+decay_pos = 0;
+decay_time = 0.25;
+
+// Temp variables
+attack_db; body_db; thump_db; click_db; decay_ms; output_db;
+abs_in; lp_thump_coef; lp_body_coef; hp_click_coef;
+thump_out; body_out; click_out;
+decay_envelope; attack_envelope; mixed;
+
+@slider
+attack_db = slider1 / 6;
+body_db = slider2 / 6;
+thump_db = slider3 / 6;
+click_db = slider4 / 6;
+decay_ms = slider5 / 1000;
+output_db = slider6 / 6;
+
+decay_time = decay_ms;
+lp_thump_coef = 1 - exp(-2 * PI * 60 / srate);
+lp_body_coef = 1 - exp(-2 * PI * 100 / srate);
+hp_click_coef = 1 - exp(-2 * PI * 2000 / srate);
+
+@sample
+in_l = spl0;
+in_r = spl1;
+
+/* ─── ATTACK ENVELOPE DETECTION (Mono detection for both channels) ─── */
+abs_in = in_l < 0 ? -in_l : in_l;
+env_attack = env_attack * 0.9 + abs_in * 0.1;
+(env_attack > 1) ? (env_attack = 1);
+
+/* ─── THUMP EXTRACTION (Sub-bass 60Hz lowpass) ─── */
+lp_thump = lp_thump + lp_thump_coef * (in_l - lp_thump);
+thump_out = lp_thump * (1 + thump_db);
+
+/* ─── BODY EXTRACTION (Low-mid 100Hz lowpass) ─── */
+lp_body = lp_body + lp_body_coef * (in_l - lp_body);
+body_out = lp_body * (1 + body_db);
+
+/* ─── CLICK EXTRACTION (High transient 2kHz highpass) ─── */
+hp_click = hp_click + hp_click_coef * (in_l - hp_click);
+click_out = hp_click * (1 + click_db);
+
+/* ─── DECAY SHAPE GENERATOR ─── */
+decay_pos = decay_pos + 1 / srate;
+(decay_pos >= decay_time) ? (decay_pos = 0);
+decay_envelope = decay_pos < 0.1 ? 1 : exp(-(decay_pos - 0.1) / (decay_time - 0.1));
+(decay_envelope < 0.01) ? (decay_envelope = 0);
+
+/* ─── ATTACK BOOST/CUT ─── */
+attack_envelope = 1 + (env_attack - 0.5) * attack_db * 2;
+(attack_envelope < 0) ? (attack_envelope = 0);
+
+/* ─── MIX COMPONENTS (Apply to BOTH channels!) ─── */
+mixed = (thump_out + body_out + click_out) * decay_envelope * attack_envelope;
+
+/* ─── OUTPUT GAIN (Stereo balanced!) ─── */
+out_l = mixed * (1 + output_db);
+out_r = mixed * (1 + output_db);  // FIXED: was in_r * (1+output_db)
+
+spl0 = out_l;
+spl1 = out_r;

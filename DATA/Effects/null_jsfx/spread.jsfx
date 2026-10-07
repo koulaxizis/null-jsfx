@@ -1,0 +1,34 @@
+desc:SPREAD v1.0 //tags: stereo width decorrelation phase spread // Collection: NULL JSFX // Author: Christos Koulaxizis // v1.0 — One slider stereo decorrelator
+slider1:50<0,100,1>Spread Amount (0=Stereo Original, 100=Max Decorrelated)
+@init
+// Initialize delay line for decorrelation
+delay_line_size = 44100; // 1 second at 44.1kHz
+delay_pos = 0;
+delay_max = 22050; // 0.5 second max delay
+prev_sample_l = 0;
+prev_sample_r = 0;
+allpass_coef = 0.5;
+@slider
+// Read slider value
+spread_val = slider1 / 100; // 0 to 1
+// Calculate decorrelation parameters
+delay_time = spread_val * 22050; // 0-22050 samples
+allpass_gain = spread_val * 0.7; // 0-0.7
+@sample
+// Allpass decorfilter for left channel
+ap_in_l = in_l;
+ap_out_l = ap_in_l * allpass_gain + prev_sample_l;
+prev_sample_l = ap_in_l - prev_sample_l * allpass_gain;
+// Delay line for right channel (creates phase difference)
+delay_pos = (delay_pos + 1) % delay_line_size;
+delay_buffer[delay_pos] = in_r;
+delay_read_pos = (delay_pos - int(delay_time)) % delay_line_size;
+if (delay_read_pos < 0) delay_read_pos += delay_line_size;
+delay_out = delay_buffer[delay_read_pos];
+// Mix original and processed signals
+mixed_l = (in_l + ap_out_l) * 0.5;
+mixed_r = (in_r + delay_out) * 0.5;
+// Crossfeed for more natural stereo (optional)
+crossfeed_amount = spread_val * 0.15; // Max 15% crossfeed
+out_l = mixed_l - crossfeed_amount * in_r;
+out_r = mixed_r - crossfeed_amount * in_l;

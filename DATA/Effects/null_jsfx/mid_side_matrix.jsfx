@@ -1,0 +1,59 @@
+desc:NULL Mid/Side Matrix
+//tags: mid side stereo matrix encode decode m/s processing
+//Collection: NULL JSFX
+//Author: Christos Koulaxizis
+
+slider1:0<-6,6,0.1>Mid-Gain (dB)
+slider2:0<-6,6,0.1>Side-Gain (dB)
+slider3:1<0,1,1{Encode,Decode}>Mode
+
+in_pin:left input
+in_pin:right input
+out_pin:left output
+out_pin:right output
+
+// === VARIABLES (ALL DECLARED HERE) ===
+in_l; in_r;
+mid_enc; side_enc;
+mid_dec; side_dec;
+blend_decode; blend_encode;
+result_l; result_r;
+mid_gain; side_gain; matrix_mode;
+
+@init
+mid_gain = 1;
+side_gain = 1;
+
+@slider
+mid_gain = exp(slider1 * 0.11512925464970228420);
+side_gain = exp(slider2 * 0.11512925464970228420);
+matrix_mode = slider3;
+
+@sample
+// 1. Read inputs
+in_l = spl0;
+in_r = spl1;
+
+// 2. Compute Encode outputs
+mid_enc = (in_l + in_r) * 0.707 * mid_gain;
+side_enc = (in_l - in_r) * 0.707 * side_gain;
+
+// 3. Compute Decode outputs  
+mid_dec = in_l * mid_gain;
+side_dec = in_r * side_gain;
+mid_sum = (mid_dec + side_dec) * 0.707;
+mid_diff = (mid_dec - side_dec) * 0.707;
+
+// 4. Calculate blend factors (mathematical NOT conditional!)
+// matrix_mode = 0 → blend_encode = 1, blend_decode = 0
+// matrix_mode = 1 → blend_encode = 0, blend_decode = 1
+blend_encode = 1 - matrix_mode;
+blend_decode = matrix_mode;
+
+// 5. Mix the two paths
+result_l = mid_enc * blend_encode + mid_sum * blend_decode;
+result_r = side_enc * blend_encode + mid_diff * blend_decode;
+
+// 6. Write output ONCE
+spl0 = result_l;
+spl1 = result_r;

@@ -1,0 +1,59 @@
+desc:NULL ONE SLIDER Wetter
+//tags: reverb space ambience hall room wet
+//Collection: NULL JSFX
+//Author: Christos Koulaxizis
+
+slider1:50<0,100,1>Amount
+
+in_pin:left input
+in_pin:right input
+out_pin:left output
+out_pin:right output
+
+@init
+  buf_size = 44100;
+  buf1 = 0;
+  buf2 = buf_size;
+  buf3 = buf_size * 2;
+  buf4 = buf_size * 3;
+  wr1 = 0; wr2 = 0; wr3 = 0; wr4 = 0;
+
+@slider
+  amount = slider1 / 100;
+  d1 = max(1, floor(srate * 0.0297));
+  d2 = max(1, floor(srate * 0.0371));
+  d3 = max(1, floor(srate * 0.0411));
+  d4 = max(1, floor(srate * 0.0437));
+
+@sample
+  wet = amount;
+  dry = 1 - wet;
+  decay = 0.5 + amount * 0.35;
+  
+  in_mono = (spl0 + spl1) * 0.5;
+  
+  rd1 = wr1 - d1; rd1 < 0 ? rd1 += buf_size;
+  rd2 = wr2 - d2; rd2 < 0 ? rd2 += buf_size;
+  rd3 = wr3 - d3; rd3 < 0 ? rd3 += buf_size;
+  rd4 = wr4 - d4; rd4 < 0 ? rd4 += buf_size;
+  
+  c1 = buf1[rd1];
+  c2 = buf2[rd2];
+  c3 = buf3[rd3];
+  c4 = buf4[rd4];
+  
+  buf1[wr1] = in_mono + c1 * decay;
+  buf2[wr2] = in_mono + c2 * decay;
+  buf3[wr3] = in_mono + c3 * decay;
+  buf4[wr4] = in_mono + c4 * decay;
+  
+  wet_l = (c1 + c3) * 0.5;
+  wet_r = (c2 + c4) * 0.5;
+  
+  spl0 = spl0 * dry + wet_l * wet;
+  spl1 = spl1 * dry + wet_r * wet;
+  
+  wr1 += 1; wr1 >= buf_size ? wr1 = 0;
+  wr2 += 1; wr2 >= buf_size ? wr2 = 0;
+  wr3 += 1; wr3 >= buf_size ? wr3 = 0;
+  wr4 += 1; wr4 >= buf_size ? wr4 = 0;

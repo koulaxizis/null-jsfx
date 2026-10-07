@@ -1,0 +1,110 @@
+desc:NULL Maximizer
+//tags: limiter maximizing loudness ceiling mastering peak protection
+// Collection: NULL JSFX
+// Author: Christos Koulaxizis
+// v1.3 — Final: dropdown at end, correct slider order, all working
+
+slider1:0<-12,12,0.1>Input Gain (dB)
+slider2:-0.3<-3,-0.1,0.1>Ceiling (dB)
+slider3:50<10,200,1>Release (ms)
+slider4:2<0,5,1>Lookahead (ms)
+slider5:0<-12,12,0.1>Output Gain (dB)
+slider6:1<0,1,1{OFF,ON}>Stereo Link
+
+in_pin:left
+in_pin:right
+out_pin:left
+out_pin:right
+
+// === DELAY BUFFER FOR LOOKAHEAD ===
+lookahead_buf[441];
+write_pos = 0;
+read_pos = 0;
+
+@init
+PI = 3.14159265358979;
+gain_store = 1;
+lp_peak = 0;
+delay_samps = 0;
+
+// Temp variables
+input_gain; ceiling_db; release_ms; lookahead_ms; output_gain; stereo_link;
+lp_coef; release_const; signed_in_l; signed_in_r; delayed_in; abs_sig;
+ceiling_linear; needed_gain; temp_gain; limited_l; limited_r; limit_abs;
+out_l; out_r;
+
+@slider
+input_gain = slider1 / 6;
+ceiling_db = slider2;
+release_ms = slider3;
+lookahead_ms = slider4;
+output_gain = slider5 / 6;
+stereo_link = slider6;
+
+// Convert ceiling dB to LINEAR
+ceiling_linear = pow(10, ceiling_db / 20);
+
+// Release constant
+release_const = 1 - exp(-1 / (release_ms * srate / 1000));
+lp_coef = 1 - exp(-2 * PI * 100 / srate);
+
+// Calculate delay samples
+delay_samps = lookahead_ms * srate / 1000;
+(delay_samps < 1) ? (delay_samps = 1);
+(delay_samps > 441) ? (delay_samps = 441);
+
+@sample
+/* ─── INPUT STAGE ─── */
+signed_in_l = spl0 * (1 + input_gain);
+signed_in_r = spl1 * (1 + input_gain);
+
+/* ─── LOOKAHEAD DELAY BUFFER ─── */
+lookahead_buf[write_pos] = signed_in_l;
+write_pos = write_pos + 1;
+(write_pos >= delay_samps) ? (write_pos = 0);
+
+read_pos = write_pos - delay_samps;
+(read_pos < 0) ? (read_pos = read_pos + delay_samps);
+
+delayed_in = lookahead_buf[read_pos];
+
+/* ─── PEAK DETECTION ─── */
+abs_sig = delayed_in < 0 ? -delayed_in : delayed_in;
+lp_peak = lp_peak + lp_coef * (abs_sig - lp_peak);
+(lp_peak > 1) ? (lp_peak = 1);
+(lp_peak < 0.001) ? (lp_peak = 0.001);
+
+/* ─── GAIN CALCULATION ─── */
+needed_gain = ceiling_linear / lp_peak;
+(needed_gain > 1) ? (needed_gain = 1);
+(needed_gain < 0.001) ? (needed_gain = 0.001);
+
+/* ─── SMOOTHING ─── */
+temp_gain = gain_store * (1 - release_const) + needed_gain * release_const;
+(needed_gain < gain_store) ? (gain_store = temp_gain);
+(needed_gain >= gain_store) ? (gain_store = needed_gain);
+
+/* ─── APPLY LIMITING ─── */
+limited_l = signed_in_l * gain_store;
+(stereo_link == 1) ? (limited_r = limited_l);
+(stereo_link == 0) ? (limited_r = signed_in_r * gain_store);
+
+/* ─── HARD CEILING SAFETY ─── */
+limit_abs = limited_l < 0 ? -limited_l : limited_l;
+(limit_abs > 0.98) ? (limited_l = limited_l > 0 ? 0.98 : -0.98);
+
+limit_abs = limited_r < 0 ? -limited_r : limited_r;
+(limit_abs > 0.98) ? (limited_r = limited_r > 0 ? 0.98 : -0.98);
+
+/* ─── OUTPUT GAIN ─── */
+out_l = limited_l * (1 + output_gain);
+out_r = limited_r * (1 + output_gain);
+
+/* ─── FINAL CLAMPING ─── */
+(out_l > 1) ? (out_l = 1);
+(out_l < -1) ? (out_l = -1);
+(out_r > 1) ? (out_r = 1);
+(out_r < -1) ? (out_r = -1);
+
+spl0 = out_l;
+spl1 = out_r;

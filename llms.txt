@@ -1,0 +1,19 @@
+# NULL JSFX
+
+> 59 professional audio effects for Cockos Reaper. Minimal design, maximum precision. Free and open source.
+
+## Overview
+NULL JSFX is a suite of 71 audio effect plugins written in EEL2 for Cockos Reaper's JSFX platform. Organized into three categories: ONE SLIDER (single-control effects), ESSENTIALS (daily-use tools), and ADVANCED (specialized processing).
+
+## Categories
+- ONE SLIDER: 19 plugins with single-control interfaces
+- ESSENTIALS: 30 plugins for daily mixing and mastering
+- ADVANCED: 22 plugins for specialized creative processing
+
+## Links
+- Website: https://nulljsfx.tech
+- GitHub: https://github.com/koulaxizis/null-jsfx
+- Author: Christos Koulaxizis (https://koulaxizis.gr)
+- Platform: Cockos Reaper (JSFX/EEL2)
+- License: Open source
+- Version: 2

@@ -1,0 +1,47 @@
+desc:NULL ONE SLIDER Doubler
+//tags: doubler vocal doubling delay chorus stereo null jsfx one slider
+// Collection: NULL JSFX
+// Author: Christos Koulaxizis
+
+slider1:40<10,100,1>Mix
+slider2:25<10,50,1>Delay ms
+slider3:0<-10,10,1>Detune cents
+
+@init
+  delay_buffer_size = 44100;
+  delay_write_pos = 0;
+  lfo_phase = 0;
+  lfo_freq = 5;
+
+@slider
+  mix_amt = slider1 / 100;
+  delay_ms = slider2;
+  detune = slider3;
+
+@sample
+  // Write to delay buffer
+  delay_buffer[delay_write_pos] = spl0;
+  delay_write_pos = (delay_write_pos + 1) % delay_buffer_size;
+  
+  // Read with wiggle
+  delay_samples = (delay_ms / 1000) * sr;
+  lfo_phase = lfo_phase + 2 * 3.14159 * lfo_freq / sr;
+  wiggle = sin(lfo_phase) * 0.5;
+  
+  read_pos = floor(delay_write_pos - delay_samples + wiggle);
+  if (read_pos < 0) read_pos = read_pos + delay_buffer_size;
+  if (read_pos >= delay_buffer_size) read_pos = read_pos - delay_buffer_size;
+  
+  // Linear interpolation
+  frac = delay_write_pos - delay_samples + wiggle - read_pos;
+  delay_out = delay_buffer[read_pos] * (1 - frac) + delay_buffer[(read_pos + 1) % delay_buffer_size] * frac;
+  
+  // Stereo widening
+  spl0 = spl0 * (1 - mix_amt) + delay_out * mix_amt;
+  spl1 = spl1 * (1 - mix_amt) + delay_out * mix_amt * 0.9;
+  
+  // Clamp
+  (spl0 < -1) ? (spl0 = -1);
+  (spl0 > 1) ? (spl0 = 1);
+  (spl1 < -1) ? (spl1 = -1);
+  (spl1 > 1) ? (spl1 = 1);

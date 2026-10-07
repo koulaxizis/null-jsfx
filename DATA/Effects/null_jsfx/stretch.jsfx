@@ -1,0 +1,95 @@
+desc:STRETCH v1.0 //tags: time stretch pitch shift granular warp tempo // Collection: NULL JSFX // Author: Christos Koulaxizis // v1.0 — One slider time stretch + pitch combo
+slider1:0<-100,100,1>Stretch/Pitch (Negative=Slower+Down, Positive=Faster+Up)
+@init
+// Granular synthesis parameters
+granule_size_ms = 50;
+granule_overlap = 0.5;
+playback_rate = 1.0;
+pitch_shift_semitones = 0.0;
+// Circular buffer for granular processing
+buffer_size = 88200; // 2 seconds at 44.1kHz
+buffer_pos = 0;
+read_pos = 0;
+// State variables
+prev_out_l = 0;
+prev_out_r = 0;
+fade_pos = 0;
+fade_active = 0;
+sample_counter = 0;
+@slider
+// Read slider value (-100 to +100)
+stretch_val = slider1;
+// Calculate playback rate and pitch shift based on slider
+// Negative values: slower playback + down pitch
+// Positive values: faster playback + up pitch
+if (stretch_val < 0) {
+    // Slower + down
+    playback_rate = 1 + (stretch_val / 200); // 0.5 to 1.0
+    pitch_shift_semitones = stretch_val / 20; // -5 to 0 semitones
+} else {
+    // Faster + up
+    playback_rate = 1 + (stretch_val / 100) * 0.5; // 1.0 to 1.5
+    pitch_shift_semitones = stretch_val / 20; // 0 to +5 semitones
+}
+// Calculate pitch shift factor
+pitch_factor = pow(2, pitch_shift_semitones / 12);
+// Granule settings
+granule_samples = int(granule_size_ms * sr / 1000);
+overlap_samples = int(granule_samples * granule_overlap);
+@sample
+// Write input to circular buffer
+buffer[buffer_pos] = in_l;
+buffer_r[buffer_pos] = in_r;
+buffer_pos = (buffer_pos + 1) % buffer_size;
+
+// Granular playback with variable rate
+sample_counter = sample_counter + 1;
+
+// New granule?
+if (sample_counter >= granule_samples - overlap_samples) {
+    sample_counter = 0;
+    fade_active = 1;
+    fade_pos = 0;
+    // Set read position based on playback rate
+    read_offset = int(granule_samples / playback_rate);
+    if (read_offset < 1) read_offset = 1;
+    read_pos = (buffer_pos - read_offset) % buffer_size;
+    if (read_pos < 0) read_pos += buffer_size;
+    // Apply pitch shift to read position
+    pitch_read_step = pitch_factor;
+}
+
+// Read and pitch shift
+if (read_pos < buffer_size - 1) {
+    raw_sample_l = buffer[read_pos];
+    raw_sample_r = buffer_r[read_pos];
+} else {
+    raw_sample_l = buffer[0];
+    raw_sample_r = buffer_r[0];
+}
+
+// Simple pitch shifting via interpolation (variable read rate)
+read_pos = read_pos + pitch_read_step;
+if (read_pos >= buffer_size) read_pos = read_pos - buffer_size;
+
+// Crossfade between granules
+if (fade_active) {
+    fade_pos = fade_pos + 1;
+    fade_factor = fade_pos / overlap_samples;
+    if (fade_factor > 1) fade_factor = 1;
+    // Blend with previous output
+    out_l = raw_sample_l * fade_factor + prev_out_l * (1 - fade_factor);
+    out_r = raw_sample_r * fade_factor + prev_out_r * (1 - fade_factor);
+    if (fade_factor >= 1) fade_active = 0;
+} else {
+    out_l = raw_sample_l;
+    out_r = raw_sample_r;
+}
+
+// Store for next crossfade
+prev_out_l = out_l;
+prev_out_r = out_r;
+
+// Clamp output
+out_l = min(max(out_l, -1), 1);
+out_r = min(max(out_r, -1), 1);

@@ -1,0 +1,123 @@
+desc:NULL Trance Gate
+//tags: trance gate 16-step sequencer rhythmic pattern staccato tempo sync
+// Collection: NULL JSFX
+// Author: Christos Koulaxizis
+// v1.1 — ENHANCED: Tempo Sync, Gate Depth per step
+
+slider1:1<0,1,1{Off,On}>Step 1
+slider2:1<0,1,1{Off,On}>Step 2
+slider3:0<0,1,1{Off,On}>Step 3
+slider4:1<0,1,1{Off,On}>Step 4
+slider5:1<0,1,1{Off,On}>Step 5
+slider6:0<0,1,1{Off,On}>Step 6
+slider7:0<0,1,1{Off,On}>Step 7
+slider8:1<0,1,1{Off,On}>Step 8
+slider9:1<0,1,1{Off,On}>Step 9
+slider10:0<0,1,1{Off,On}>Step 10
+slider11:0<0,1,1{Off,On}>Step 11
+slider12:1<0,1,1{Off,On}>Step 12
+slider13:1<0,1,1{Off,On}>Step 13
+slider14:0<0,1,1{Off,On}>Step 14
+slider15:0<0,1,1{Off,On}>Step 15
+slider16:1<0,1,1{Off,On}>Step 16
+slider17:120<10,500,1>BPM (Tempo Sync OFF)
+slider18:0<0,1,1{Hz,Sync}>Rate Unit
+slider19:20<1,100,1>Attack (ms)
+slider20:80<10,500,1>Release (ms)
+slider21:100<0,100,1>Gate Depth (%)
+
+in_pin:left
+in_pin:right
+out_pin:left
+out_pin:right
+
+@init
+step_pos = 0;
+cur_step = 0;
+gate_gain = 0;
+target = 0;
+bpm = 120;
+sync_enabled = 0;
+
+@slider
+s0 = slider1; s1 = slider2; s2 = slider3; s3 = slider4;
+s4 = slider5; s5 = slider6; s6 = slider7; s7 = slider8;
+s8 = slider9; s9 = slider10; s10 = slider11; s11 = slider12;
+s12 = slider13; s13 = slider14; s14 = slider15; s15 = slider16;
+bpm = slider17;
+sync_enabled = slider18;
+attack_ms = slider19;
+release_ms = slider20;
+gate_depth = slider21 / 100;
+attack_coef = 1 / (srate * attack_ms * 0.001);
+release_coef = 1 / (srate * release_ms * 0.001);
+
+sync_enabled == 0 ? (
+  rate_hz = slider17;
+);
+sync_enabled == 1 ? (
+  bpm_val = bpm;
+  beat_period = 60 / bpm_val;
+  rate_hz = 4 / beat_period;
+);
+
+target = 0;
+cur_step == 0 ? target = s0;
+cur_step == 1 ? target = s1;
+cur_step == 2 ? target = s2;
+cur_step == 3 ? target = s3;
+cur_step == 4 ? target = s4;
+cur_step == 5 ? target = s5;
+cur_step == 6 ? target = s6;
+cur_step == 7 ? target = s7;
+cur_step == 8 ? target = s8;
+cur_step == 9 ? target = s9;
+cur_step == 10 ? target = s10;
+cur_step == 11 ? target = s11;
+cur_step == 12 ? target = s12;
+cur_step == 13 ? target = s13;
+cur_step == 14 ? target = s14;
+cur_step == 15 ? target = s15;
+
+@sample
+in_l = spl0;
+in_r = spl1;
+
+step_pos += rate_hz / srate;
+step_pos >= 1 ? (
+  step_pos -= 1;
+  cur_step += 1;
+  cur_step >= 16 ? cur_step = 0;
+  target = 0;
+  cur_step == 0 ? target = s0;
+  cur_step == 1 ? target = s1;
+  cur_step == 2 ? target = s2;
+  cur_step == 3 ? target = s3;
+  cur_step == 4 ? target = s4;
+  cur_step == 5 ? target = s5;
+  cur_step == 6 ? target = s6;
+  cur_step == 7 ? target = s7;
+  cur_step == 8 ? target = s8;
+  cur_step == 9 ? target = s9;
+  cur_step == 10 ? target = s10;
+  cur_step == 11 ? target = s11;
+  cur_step == 12 ? target = s12;
+  cur_step == 13 ? target = s13;
+  cur_step == 14 ? target = s14;
+  cur_step == 15 ? target = s15;
+);
+
+target * gate_depth > gate_gain ? (
+  gate_gain += attack_coef;
+  gate_gain > target * gate_depth ? gate_gain = target * gate_depth;
+);
+target * gate_depth < gate_gain ? (
+  gate_gain -= release_coef;
+  gate_gain < target * gate_depth ? gate_gain = target * gate_depth;
+);
+
+out_l = in_l * gate_gain;
+out_r = in_r * gate_gain;
+
+spl0 = out_l;
+spl1 = out_r;

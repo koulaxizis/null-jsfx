@@ -1,0 +1,46 @@
+desc:NULL ONE SLIDER Pressure
+//tags: compressor dynamics leveling glue squash
+//Collection: NULL JSFX
+//Author: Christos Koulaxizis
+
+slider1:50<0,100,1>Amount
+
+in_pin:left input
+in_pin:right input
+out_pin:left output
+out_pin:right output
+
+@init
+  DB2LIN = 0.11512925464970228420;
+  PI = 3.14159265358979;
+  env = 1;
+
+@slider
+  amount = slider1 / 100;
+  threshold_db = -12 - amount * 28;
+  threshold_lin = exp(threshold_db * DB2LIN);
+  ratio = 1.5 + amount * 8.5;
+  reduction_factor = 1 - (1 / ratio);
+  attack_coef = 1 - exp(-2 * PI * 2000 / srate);
+  release_coef = 1 - exp(-2 * PI * 150 / srate);
+  makeup_db = amount * 6;
+  makeup_lin = exp(makeup_db * DB2LIN);
+
+@sample
+  peak = abs(spl0) > abs(spl1) ? abs(spl0) : abs(spl1);
+  
+  peak > threshold_lin ? (
+    over = peak / threshold_lin;
+    target_gain = pow(over, -reduction_factor);
+  ) : (
+    target_gain = 1;
+  );
+  
+  target_gain < env ? (
+    env = env + (target_gain - env) * attack_coef;
+  ) : (
+    env = env + (target_gain - env) * release_coef;
+  );
+  
+  spl0 = spl0 * env * makeup_lin;
+  spl1 = spl1 * env * makeup_lin;

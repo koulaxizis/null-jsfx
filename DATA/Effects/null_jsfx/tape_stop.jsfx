@@ -1,0 +1,84 @@
+desc:NULL Tape Stop
+//tags: tape stop start motor slowdown pitch ramp dj
+// Collection: NULL JSFX
+// Author: Christos Koulaxizis
+// v1.1 — CHANGED: Fixed at 100% mix (always processed)
+
+slider1:0<0,1,1{Idle,Trigger}>Trigger
+slider2:500<50,5000,10>Stop Time (ms)
+slider3:500<50,5000,10>Start Time (ms)
+
+in_pin:left
+in_pin:right
+out_pin:left
+out_pin:right
+
+@init
+buf_size = srate * 10;
+buf_l = 0;
+buf_r = buf_size;
+write_pos = 0;
+read_pos = 0;
+play_rate = 1.0;
+state = 0;
+state_timer = 0;
+prev_trigger = 0;
+
+loop(buf_size, buf_l[_] = 0);
+loop(buf_size, buf_r[_] = 0);
+
+@slider
+stop_ms = slider2;
+start_ms = slider3;
+
+slider1 > prev_trigger ? (
+  state = 1;
+  state_timer = 0;
+);
+prev_trigger = slider1;
+
+@sample
+in_l = spl0;
+in_r = spl1;
+
+state == 1 ? (
+  stop_samples = srate * stop_ms * 0.001;
+  play_rate = 1.0 - (state_timer / stop_samples);
+  play_rate < 0 ? play_rate = 0;
+  state_timer += 1;
+  state_timer >= stop_samples ? (
+    state = 2;
+    state_timer = 0;
+  );
+);
+state == 2 ? (
+  start_samples = srate * start_ms * 0.001;
+  play_rate = state_timer / start_samples;
+  play_rate > 1 ? play_rate = 1;
+  state_timer += 1;
+  state_timer >= start_samples ? (
+    state = 0;
+    play_rate = 1.0;
+    slider1 = 0;
+    prev_trigger = 0;
+  );
+);
+
+buf_l[write_pos] = in_l;
+buf_r[write_pos] = in_r;
+write_pos = (write_pos + 1) % buf_size;
+
+read_pos += play_rate;
+read_pos >= buf_size ? read_pos -= buf_size;
+read_int = read_pos | 0;
+frac = read_pos - read_int;
+rp2 = read_int + 1;
+rp2 >= buf_size ? rp2 = 0;
+
+wet_l = buf_l[read_int] * (1 - frac) + buf_l[rp2] * frac;
+wet_r = buf_r[read_int] * (1 - frac) + buf_r[rp2] * frac;
+
+out_level = play_rate < 0.02 ? 0 : 1;
+
+spl0 = wet_l * out_level;
+spl1 = wet_r * out_level;

@@ -1,0 +1,79 @@
+desc:NULL Dynamic EQ
+//tags: dynamic eq equalizer parametric compressor expander null jsfx essentials
+// Collection: NULL JSFX
+// Author: Christos Koulaxizis
+
+slider1:200<20,1000,10>B1 Freq
+slider2:0<-12,12,0.5>B1 Gain
+slider3:1<0.5,4,0.1>B1 Q
+slider4:-12<-36,0,1>B1 Threshold
+
+slider5:1000<200,4000,100>B2 Freq
+slider6:0<-12,12,0.5>B2 Gain
+slider7:1<0.5,4,0.1>B2 Q
+slider8:-12<-36,0,1>B2 Threshold
+
+slider9:2000<500,8000,100>B3 Freq
+slider10:0<-12,12,0.5>B3 Gain
+slider11:1<0.5,4,0.1>B3 Q
+slider12:-12<-36,0,1>B3 Threshold
+
+slider13:6000<2000,15000,500>B4 Freq
+slider14:0<-12,12,0.5>B4 Gain
+slider15:1<0.5,4,0.1>B4 Q
+slider16:-12<-36,0,1>B4 Threshold
+
+slider17:1<0.1,10,0.1>Attack
+slider18:100<1,500,1>Release
+slider19:0<0,24,1>Makeup
+
+@init
+  b1_prev = 0; b2_prev = 0; b3_prev = 0; b4_prev = 0;
+  gr_1 = 1; gr_2 = 1; gr_3 = 1; gr_4 = 1;
+
+@slider
+  makeup_gain = pow(10, slider19 / 20);
+  attack_time = slider17;
+  release_time = slider18;
+
+@sample
+  function process_band(input, freq, gain, q, thresh) {
+    fc = freq / sr;
+    w0 = 2 * 3.14159 * fc;
+    alpha = sin(w0) / (2 * q);
+    
+    // Bandpass
+    bp = (alpha * input - 0 * b1_prev - alpha * b2_prev) / (1 + alpha);
+    b2_prev = b1_prev;
+    b1_prev = input;
+    
+    // Detect level
+    level = abs(bp);
+    thresh_lin = pow(10, thresh / 20);
+    
+    // Dynamic gain
+    if (level > thresh_lin) {
+      target = 1 + (gain / 20);
+      target = max(target, 0.1);
+      gr = gr + (target - gr) * (1 - exp(-1 / (attack_time * sr)));
+    } else {
+      gr = gr + (1 - gr) * (1 - exp(-1 / (release_time * sr)));
+    }
+    
+    return bp * gr;
+  }
+  
+  b1_out = process_band(spl0, slider1, slider2, slider3, slider4);
+  b2_out = process_band(spl0, slider5, slider6, slider7, slider8);
+  b3_out = process_band(spl0, slider9, slider10, slider11, slider12);
+  b4_out = process_band(spl0, slider13, slider14, slider15, slider16);
+  
+  // Combine
+  spl0 = (spl0 * 0.6 + b1_out + b2_out + b3_out + b4_out) * makeup_gain;
+  spl1 = (spl1 * 0.6 + b1_out + b2_out + b3_out + b4_out) * makeup_gain;
+  
+  // Clamp
+  (spl0 < -1) ? (spl0 = -1);
+  (spl0 > 1) ? (spl0 = 1);
+  (spl1 < -1) ? (spl1 = -1);
+  (spl1 > 1) ? (spl1 = 1);

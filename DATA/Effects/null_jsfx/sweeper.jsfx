@@ -1,0 +1,39 @@
+desc:NULL ONE SLIDER Sweeper
+//tags: filter sweep lowpass resonance creative
+//Collection: NULL JSFX
+//Author: Christos Koulaxizis
+
+slider1:50<0,100,1>Amount
+
+in_pin:left input
+in_pin:right input
+out_pin:left output
+out_pin:right output
+
+@init
+  PI = 3.14159265358979;
+  x1l = 0; x2l = 0; y1l = 0; y2l = 0;
+  x1r = 0; x2r = 0; y1r = 0; y2r = 0;
+
+@slider
+  amount = slider1 / 100;
+  cutoff_hz = 20 + (1 - amount) * 19980;
+  resonance = 1 + amount * 4;
+  norm_freq = cutoff_hz / (srate * 0.5);
+  omega = PI * norm_freq;
+  alpha = sin(omega);
+  cos_w = cos(omega);
+  a0 = 1 + alpha * resonance;
+  b0 = alpha / a0;
+  b1 = 0;
+  b2 = -alpha / a0;
+  a1 = -2 * cos_w / a0;
+  a2 = (alpha * resonance - 1) / a0;
+
+@sample
+  tmp_l = b0 * spl0 + b1 * x1l + b2 * x2l - a1 * y1l - a2 * y2l;
+  x2l = x1l; x1l = spl0; y2l = y1l; y1l = tmp_l;
+  tmp_r = b0 * spl1 + b1 * x1r + b2 * x2r - a1 * y1r - a2 * y2r;
+  x2r = x1r; x1r = spl1; y2r = y1r; y1r = tmp_r;
+  spl0 = tmp_l;
+  spl1 = tmp_r;

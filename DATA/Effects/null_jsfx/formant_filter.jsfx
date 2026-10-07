@@ -1,0 +1,87 @@
+desc:NULL Formant Filter
+//author: Christos Koulaxizis
+// Collection: NULL JSFX
+//tags: filter formant vowel voice speech synthesis a e i o u
+
+slider1:0<0,4,1{A,E,I,O,U}>Vowel
+slider2:0<-12,12,0.1>Gain-(dB)
+slider3:10<5,20,1>Q-Factor
+
+in_pin:left input
+in_pin:right input
+out_pin:left output
+out_pin:right output
+
+@init
+  PI=3.14159265358979;
+
+@slider
+  vowel=slider1;
+  g=exp(slider2*0.11512925464970228420);
+  q=max(1,slider3);
+
+  vowel==0?(f1=730;f2=1090;f3=2440;);
+  vowel==1?(f1=400;f2=1220;f3=2550;);
+  vowel==2?(f1=270;f2=2290;f3=3010;);
+  vowel==3?(f1=530;f2=1840;f3=2600;);
+  vowel==4?(f1=530;f2=1220;f3=2440;);
+
+  // Reset state
+  x1f1l=0;x2f1l=0;y1f1l=0;y2f1l=0;x1f1r=0;x2f1r=0;y1f1r=0;y2f1r=0;
+  x1f2l=0;x2f2l=0;y1f2l=0;y2f2l=0;x1f2r=0;x2f2r=0;y1f2r=0;y2f2r=0;
+  x1f3l=0;x2f3l=0;y1f3l=0;y2f3l=0;x1f3r=0;x2f3r=0;y1f3r=0;y2f3r=0;
+
+  // F1 RBJ Bandpass (constant 0 dB peak gain)
+  w0=2*PI*f1/srate;
+  alpha=sin(w0)/(2*q);
+  a0inv=1/(1+alpha);
+  b0_f1=a0inv*alpha;
+  b1_f1=0;
+  b2_f1=-a0inv*alpha;
+  a1_f1=-2*a0inv*cos(w0);
+  a2_f1=a0inv*(1-alpha);
+
+  // F2 RBJ Bandpass
+  w0=2*PI*f2/srate;
+  alpha=sin(w0)/(2*q);
+  a0inv=1/(1+alpha);
+  b0_f2=a0inv*alpha;
+  b1_f2=0;
+  b2_f2=-a0inv*alpha;
+  a1_f2=-2*a0inv*cos(w0);
+  a2_f2=a0inv*(1-alpha);
+
+  // F3 RBJ Bandpass
+  w0=2*PI*f3/srate;
+  alpha=sin(w0)/(2*q);
+  a0inv=1/(1+alpha);
+  b0_f3=a0inv*alpha;
+  b1_f3=0;
+  b2_f3=-a0inv*alpha;
+  a1_f3=-2*a0inv*cos(w0);
+  a2_f3=a0inv*(1-alpha);
+
+@sample
+  // F1 Left
+  out_f1l=b0_f1*spl0+b1_f1*x1f1l+b2_f1*x2f1l-a1_f1*y1f1l-a2_f1*y2f1l;
+  x2f1l=x1f1l;x1f1l=spl0;y2f1l=y1f1l;y1f1l=out_f1l;
+  // F1 Right
+  out_f1r=b0_f1*spl1+b1_f1*x1f1r+b2_f1*x2f1r-a1_f1*y1f1r-a2_f1*y2f1r;
+  x2f1r=x1f1r;x1f1r=spl1;y2f1r=y1f1r;y1f1r=out_f1r;
+
+  // F2 Left
+  out_f2l=b0_f2*spl0+b1_f2*x1f2l+b2_f2*x2f2l-a1_f2*y1f2l-a2_f2*y2f2l;
+  x2f2l=x1f2l;x1f2l=spl0;y2f2l=y1f2l;y1f2l=out_f2l;
+  // F2 Right
+  out_f2r=b0_f2*spl1+b1_f2*x1f2r+b2_f2*x2f2r-a1_f2*y1f2r-a2_f2*y2f2r;
+  x2f2r=x1f2r;x1f2r=spl1;y2f2r=y1f2r;y1f2r=out_f2r;
+
+  // F3 Left
+  out_f3l=b0_f3*spl0+b1_f3*x1f3l+b2_f3*x2f3l-a1_f3*y1f3l-a2_f3*y2f3l;
+  x2f3l=x1f3l;x1f3l=spl0;y2f3l=y1f3l;y1f3l=out_f3l;
+  // F3 Right
+  out_f3r=b0_f3*spl1+b1_f3*x1f3r+b2_f3*x2f3r-a1_f3*y1f3r-a2_f3*y2f3r;
+  x2f3r=x1f3r;x1f3r=spl1;y2f3r=y1f3r;y1f3r=out_f3r;
+
+  spl0=(out_f1l+out_f2l+out_f3l)*g*3;
+  spl1=(out_f1r+out_f2r+out_f3r)*g*3;

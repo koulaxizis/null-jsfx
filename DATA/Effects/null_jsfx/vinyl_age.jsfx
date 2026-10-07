@@ -1,0 +1,142 @@
+desc:NULL Vinyl Age
+//tags: vinyl lo-fi wow flutter crackle bitcrush degradation
+// Collection: NULL JSFX
+// Author: Christos Koulaxizis
+// v1.0 — Vinyl & lo-fi simulator
+
+slider1:30<0,100,1>Wow (%)
+slider2:20<0,100,1>Flutter (%)
+slider3:25<0,100,1>Crackle (%)
+slider4:10<0,100,1>Noise Level (%)
+slider5:12<4,16,1>Bit Depth
+slider6:22050<2000,44100,100>Sample Rate (Hz)
+slider7:8000<1000,20000,100>Lowpass Freq (Hz)
+slider8:80<0,100,1>Mix (%)
+
+in_pin:left
+in_pin:right
+out_pin:left
+out_pin:right
+
+@init
+buf_size = srate * 0.15;
+buf_l = 0;
+buf_r = buf_size;
+freembuf(buf_r + buf_size);
+write_pos = 0;
+lp1_l = 0; lp2_l = 0;
+lp1_r = 0; lp2_r = 0;
+crackle_env = 0;
+crackle_cnt = 0;
+noise_seed_l = 12345;
+noise_seed_r = 67890;
+wow_phase = 0;
+flutter_phase = 0;
+sr_cnt = 0;
+hold_l = 0;
+hold_r = 0;
+
+@slider
+wow_amt = slider1 / 100;
+flutter_amt = slider2 / 100;
+crackle_amt = slider3 / 100;
+noise_lvl = slider4 / 100;
+bits = slider5 < 4 ? 4 : slider5;
+sr_target = slider6;
+lp_freq = slider7;
+mix = slider8 / 100;
+
+lp_coef = 1 - exp(-2 * $pi * lp_freq / srate);
+
+sr_div = srate / sr_target;
+sr_div = sr_div < 1 ? 1 : floor(sr_div);
+
+@sample
+in_l = spl0;
+in_r = spl1;
+
+/* ─── WOW (slow pitch drift ~0.5Hz) ─── */
+wow_phase += 2 * $pi * 0.5 / srate;
+wow_phase > 2*$pi ? wow_phase -= 2*$pi;
+wow_val = sin(wow_phase) * wow_amt;
+
+/* ─── FLUTTER (fast pitch wobble ~6Hz) ─── */
+flutter_phase += 2 * $pi * 6 / srate;
+flutter_phase > 2*$pi ? flutter_phase -= 2*$pi;
+flutter_val = sin(flutter_phase) * flutter_amt;
+
+/* Combined pitch modulation in ms */
+mod_ms = wow_val * 40 + flutter_val * 15;
+mod_ms = mod_ms < -50 ? -50 : (mod_ms > 50 ? 50 : mod_ms);
+
+/* Delay in samples (base 50ms + modulation) */
+delay_samps = (50 + mod_ms) * 0.001 * srate;
+delay_samps = delay_samps < 1 ? 1 : delay_samps;
+
+/* Read from delay buffer with linear interpolation */
+read_pos = write_pos - delay_samps;
+read_pos < 0 ? read_pos += buf_size;
+
+rp_int = floor(read_pos);
+rp_frac = read_pos - rp_int;
+rp_next = rp_int + 1;
+rp_next >= buf_size ? rp_next = 0;
+
+wet_l = buf_l[rp_int] * (1 - rp_frac) + buf_l[rp_next] * rp_frac;
+wet_r = buf_r[rp_int] * (1 - rp_frac) + buf_r[rp_next] * rp_frac;
+
+/* Write current input to buffer */
+buf_l[write_pos] = in_l;
+buf_r[write_pos] = in_r;
+write_pos += 1;
+write_pos >= buf_size ? write_pos = 0;
+
+/* ─── BITCRUSH ─── */
+levels = pow(2, bits) - 1;
+wet_l = floor(wet_l * levels + 0.5) / levels;
+wet_r = floor(wet_r * levels + 0.5) / levels;
+
+/* ─── DOWNSAMPLE (hold) ─── */
+sr_cnt += 1;
+sr_cnt >= sr_div ? (
+  sr_cnt = 0;
+  hold_l = wet_l;
+  hold_r = wet_r;
+);
+wet_l = hold_l;
+wet_r = hold_r;
+
+/* ─── LOWPASS FILTER — 2-POLE CASCADE (12dB/oct) ─── */
+lp1_l += lp_coef * (wet_l - lp1_l);
+lp2_l += lp_coef * (lp1_l - lp2_l);
+wet_l = lp2_l;
+
+lp1_r += lp_coef * (wet_r - lp1_r);
+lp2_r += lp_coef * (lp1_r - lp2_r);
+wet_r = lp2_r;
+
+/* ─── VINYL CRACKLE ─── */
+crackle_cnt += 1;
+crackle_env *= 0.95;
+crackle_cnt > (srate / (5 + crackle_amt * 150)) && crackle_amt > 0 ? (
+  crackle_cnt = 0;
+  crackle_env = (rand(2) - 1) * crackle_amt * 0.5;
+);
+wet_l += crackle_env;
+wet_r += crackle_env;
+
+/* ─── BACKGROUND NOISE ─── */
+noise_seed_l = (noise_seed_l * 1103515245 + 12345) & 0x7fffffff;
+noise_seed_r = (noise_seed_r * 1103515245 + 67890) & 0x7fffffff;
+noise_l = ((noise_seed_l / 0x7fffffff) * 2 - 1) * noise_lvl * 0.05;
+noise_r = ((noise_seed_r / 0x7fffffff) * 2 - 1) * noise_lvl * 0.05;
+wet_l += noise_l;
+wet_r += noise_r;
+
+/* ─── MIX & OUTPUT ─── */
+dry = 1 - mix;
+out_l = in_l * dry + wet_l * mix;
+out_r = in_r * dry + wet_r * mix;
+
+spl0 = out_l;
+spl1 = out_r;

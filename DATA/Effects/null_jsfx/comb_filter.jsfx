@@ -1,0 +1,61 @@
+desc:NULL Comb Filter
+//tags: filter comb delay feedback metallic frequency resonant
+//Collection: NULL JSFX
+//Author: Christos Koulaxizis
+
+slider1:500<20,20000,1:log>Frequency-(Hz)
+slider2:0.5<0,0.99,0.01>Feedback
+slider3:0<0,1,1{Feed-Forward,Feed-Backward}>Mode
+slider4:0<-12,12,0.1>Gain-(dB)
+
+in_pin:left input
+in_pin:right input
+out_pin:left output
+out_pin:right output
+
+@init
+  comb_buf_size = 44100;
+  comb_buf_l = 0;
+  comb_buf_r = 0;
+  comb_wr = 0;
+  i = 0;
+  loop(comb_buf_size, comb_buf_l[i] = 0; comb_buf_r[i] = 0; i += 1;);
+
+  gain_lin = 1;
+
+@slider
+  comb_freq = slider1;
+  comb_feedback = slider2;
+  comb_mode = slider3;
+  gain_lin = exp(slider4 * 0.11512925464970228420);
+
+  delay_samples = floor(srate / comb_freq);
+  delay_samples < 1 ? delay_samples = 1;
+  delay_samples >= comb_buf_size ? delay_samples = comb_buf_size - 1;
+
+@sample
+  read_ptr = comb_wr - delay_samples;
+  read_ptr < 0 ? read_ptr += comb_buf_size;
+
+  delayed_l = comb_buf_l[read_ptr];
+  delayed_r = comb_buf_r[read_ptr];
+
+  comb_mode == 0 ? (
+    // FEED-FORWARD: out = input + feedback * delayed
+    out_l = spl0 + comb_feedback * delayed_l;
+    out_r = spl1 + comb_feedback * delayed_r;
+    comb_buf_l[comb_wr] = spl0;
+    comb_buf_r[comb_wr] = spl1;
+  ) : (
+    // FEED-BACKWARD: out = input + feedback * previous_out
+    out_l = spl0 + comb_feedback * delayed_l;
+    out_r = spl1 + comb_feedback * delayed_r;
+    comb_buf_l[comb_wr] = out_l;
+    comb_buf_r[comb_wr] = out_r;
+  );
+
+  spl0 = out_l * gain_lin;
+  spl1 = out_r * gain_lin;
+
+  comb_wr += 1;
+  comb_wr >= comb_buf_size ? comb_wr = 0;

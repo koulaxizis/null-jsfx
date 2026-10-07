@@ -1,0 +1,135 @@
+desc:NULL Warped Delay
+//tags: delay modulated feedback distortion filter warping
+// Collection: NULL JSFX
+// Author: Christos Koulaxizis
+// v1.6 — ENHANCED: Filter mode as dropdown
+
+slider1:150<1,1000,1>Time (ms)
+slider2:2<0.1,10,0.1>Mod Rate (Hz)
+slider3:10<0,50,0.1>Mod Depth (ms)
+slider4:40<0,99,1>Feedback (%)
+slider5:30<0,100,1>Distortion (%)
+slider6:0<0,3,1{Off,LP,HP,BP}>Filter
+slider7:2000<100,20000,100>Filter Freq (Hz)
+slider8:50<0,100,1>Mix (%)
+
+in_pin:left
+in_pin:right
+out_pin:left
+out_pin:right
+
+@init
+buf_size = srate * 2;
+delay_buf = 0;
+delay_pos = 0;
+mod_phase = 0;
+fx1 = 0; fx2 = 0; fy1 = 0; fy2 = 0;
+
+loop(buf_size, delay_buf[_] = 0);
+
+@slider
+del_ms = slider1;
+mod_rate = slider2;
+mod_depth = slider3;
+feedback = slider4 / 100;
+dist_amt = slider5 / 100;
+filt_mode = slider6;
+filt_freq = slider7;
+mix = slider8 / 100;
+
+// Biquad filter coefficients (Q = 0.707 Butterworth)
+freq = filt_freq;
+omega = 2 * $pi * freq / srate;
+cs = cos(omega);
+sn = sin(omega);
+q = 0.707;
+alpha = sn / (2 * q);
+
+filt_mode == 1 ? (
+  b0 = (1 - cs) * 0.5;
+  b1 = 1 - cs;
+  b2 = (1 - cs) * 0.5;
+  a0 = 1 / (1 + alpha);
+  a1 = -2 * cs;
+  a2 = 1 - alpha;
+);
+filt_mode == 2 ? (
+  b0 = (1 + cs) * 0.5;
+  b1 = -(1 + cs);
+  b2 = (1 + cs) * 0.5;
+  a0 = 1 / (1 + alpha);
+  a1 = -2 * cs;
+  a2 = 1 - alpha;
+);
+filt_mode == 3 ? (
+  b0 = alpha;
+  b1 = 0;
+  b2 = -alpha;
+  a0 = 1 / (1 + alpha);
+  a1 = -2 * cs;
+  a2 = 1 - alpha;
+);
+filt_mode == 0 ? (
+  b0 = 1; b1 = 0; b2 = 0;
+  a0 = 1; a1 = 0; a2 = 0;
+);
+
+// Normalize
+fa0 = a0;
+fb0 = b0 * a0; fb1 = b1 * a0; fb2 = b2 * a0;
+fa1 = a1; fa2 = a2;
+
+// Reset filter state
+fx1 = 0; fx2 = 0; fy1 = 0; fy2 = 0;
+
+@sample
+in_l = spl0;
+in_r = spl1;
+
+// LFO for delay modulation
+mod_phase += 2 * $pi * mod_rate / srate;
+mod_phase > 2*$pi ? mod_phase -= 2*$pi;
+mod_val = sin(mod_phase) * mod_depth;
+
+total_del = (del_ms + mod_val) * 0.001 * srate;
+total_del < 1 ? total_del = 1;
+total_del >= buf_size ? total_del = buf_size - 1;
+
+del_int = total_del | 0;
+frac = total_del - del_int;
+
+rp = delay_pos - del_int;
+rp < 0 ? rp += buf_size;
+rp2 = rp - 1;
+rp2 < 0 ? rp2 += buf_size;
+
+wet = delay_buf[rp] * (1 - frac) + delay_buf[rp2] * frac;
+
+// Apply filter in feedback path
+filt_mode > 0 ? (
+  filt_in = wet;
+  filt_out = fa0 * (fb0*filt_in + fb1*fx1 + fb2*fx2 - fa1*fy1 - fa2*fy2);
+  fx2 = fx1; fx1 = filt_in;
+  fy2 = fy1; fy1 = filt_out;
+  wet = filt_out;
+);
+
+// Apply distortion — polynomial tanh approximation
+dist_amt > 0 ? (
+  drv = wet * (1 + dist_amt * 3);
+  drv > 3 ? drv = 3;
+  drv < -3 ? drv = -3;
+  drv2 = drv * drv;
+  wet = drv * (27 + drv2) / (27 + 9 * drv2);
+);
+
+// Write to buffer with feedback
+delay_buf[delay_pos] = in_l + wet * feedback;
+delay_pos = (delay_pos + 1) % buf_size;
+
+// Mix dry and wet
+out_l = in_l * (1 - mix) + wet * mix;
+out_r = in_r * (1 - mix) + wet * mix;
+
+spl0 = out_l;
+spl1 = out_r;

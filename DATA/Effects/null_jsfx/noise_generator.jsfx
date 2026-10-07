@@ -1,0 +1,69 @@
+desc:NULL Noise Generator
+//tags: noise generator pink white brown test tone calibration stereo
+//Collection: NULL JSFX
+//Author: Christos Koulaxizis
+
+slider1:0<0,2,1{White,Pink,Brown}>Type
+slider2:-24<-60,0,0.1>Level (dB)
+slider3:100<0,100,1>Stereo Width (%)
+
+in_pin:left input
+in_pin:right input
+out_pin:left output
+out_pin:right output
+
+@init
+  pb0_l=0; pb1_l=0; pb2_l=0; pb3_l=0; pb4_l=0; pb5_l=0; pb6_l=0;
+  pb0_r=0; pb1_r=0; pb2_r=0; pb3_r=0; pb4_r=0; pb5_r=0; pb6_r=0;
+  brn_l=0; brn_r=0;
+
+@slider
+  noise_type = slider1;
+  level_db = slider2;
+  stereo_width = slider3 / 100;
+  gain_lin = exp(level_db * 0.11512925464970228420);
+
+@sample
+  rnd_l = rand() * 2 - 1;
+  rnd_r = rand() * 2 - 1;
+  rnd_r = rnd_l * (1 - stereo_width) + rnd_r * stereo_width;
+
+  noise_type == 0 ? (
+    nse_l = rnd_l * gain_lin;
+    nse_r = rnd_r * gain_lin;
+  );
+
+  noise_type == 1 ? (
+    pb0_l = 0.99886 * pb0_l + rnd_l * 0.0555179;
+    pb1_l = 0.99332 * pb1_l + rnd_l * 0.0750759;
+    pb2_l = 0.96900 * pb2_l + rnd_l * 0.1538520;
+    pb3_l = 0.86600 * pb3_l + rnd_l * 0.3104856;
+    pb4_l = 0.55000 * pb4_l + rnd_l * 0.5329522;
+    pb5_l = 0.31300 * pb5_l + rnd_l * 0.5329522;
+    pb6_l = 0.11000 * pb6_l + rnd_l * 0.5329522;
+    nse_l = (pb0_l + pb1_l + pb2_l + pb3_l + pb4_l + pb5_l + pb6_l + rnd_l * 0.5362) * 0.11 * gain_lin;
+
+    pb0_r = 0.99886 * pb0_r + rnd_r * 0.0555179;
+    pb1_r = 0.99332 * pb1_r + rnd_r * 0.0750759;
+    pb2_r = 0.96900 * pb2_r + rnd_r * 0.1538520;
+    pb3_r = 0.86600 * pb3_r + rnd_r * 0.3104856;
+    pb4_r = 0.55000 * pb4_r + rnd_r * 0.5329522;
+    pb5_r = 0.31300 * pb5_r + rnd_r * 0.5329522;
+    pb6_r = 0.11000 * pb6_r + rnd_r * 0.5329522;
+    nse_r = (pb0_r + pb1_r + pb2_r + pb3_r + pb4_r + pb5_r + pb6_r + rnd_r * 0.5362) * 0.11 * gain_lin;
+  );
+
+  noise_type == 2 ? (
+    brn_l = brn_l + rnd_l * 0.02;
+    brn_l = brn_l * 0.997;
+    brn_l > 1 ? brn_l = 1 : (brn_l < -1 ? brn_l = -1);
+    nse_l = brn_l * gain_lin * 3.5;
+
+    brn_r = brn_r + rnd_r * 0.02;
+    brn_r = brn_r * 0.997;
+    brn_r > 1 ? brn_r = 1 : (brn_r < -1 ? brn_r = -1);
+    nse_r = brn_r * gain_lin * 3.5;
+  );
+
+  spl0 = nse_l;
+  spl1 = nse_r;

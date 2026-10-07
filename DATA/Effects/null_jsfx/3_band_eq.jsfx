@@ -1,0 +1,47 @@
+desc:NULL 3-Band EQ
+//tags: equalizer EQ 3-band low mid high tone shaping
+//author: Christos Koulaxizis
+
+slider1:0<-12,12,0.1>Low-Gain-(dB)
+slider2:0<-12,12,0.1>Mid-Gain-(dB)
+slider3:0<-12,12,0.1>High-Gain-(dB)
+slider4:200<50,2000,1>Low-Mid-Xover-(Hz)
+slider5:2000<500,10000,1>Mid-High-Xover-(Hz)
+slider6:0<0,1,1>Bypass
+
+in_pin:left input
+in_pin:right input
+out_pin:left output
+out_pin:right output
+
+@init
+  lp1_l = 0; lp1_r = 0;
+  lp2_l = 0; lp2_r = 0;
+
+@slider
+  x1_coef = 1 - exp(-2 * 3.14159265358979 * slider4 / sr);
+  x2_coef = 1 - exp(-2 * 3.14159265358979 * slider5 / sr);
+  low_gain = pow(10, slider1 / 20);
+  mid_gain = pow(10, slider2 / 20);
+  high_gain = pow(10, slider3 / 20);
+
+@sample
+  lp1_l = lp1_l + x1_coef * (spl0 - lp1_l);
+  low_l = lp1_l;
+  mh_l = spl0 - low_l;
+  lp2_l = lp2_l + x2_coef * (mh_l - lp2_l);
+  mid_l = lp2_l;
+  high_l = mh_l - mid_l;
+  
+  lp1_r = lp1_r + x1_coef * (spl1 - lp1_r);
+  low_r = lp1_r;
+  mh_r = spl1 - low_r;
+  lp2_r = lp2_r + x2_coef * (mh_r - lp2_r);
+  mid_r = lp2_r;
+  high_r = mh_r - mid_r;
+  
+  out_l = low_l * low_gain + mid_l * mid_gain + high_l * high_gain;
+  out_r = low_r * low_gain + mid_r * mid_gain + high_r * high_gain;
+  
+  spl0 = slider6 > 0 ? spl0 : out_l;
+  spl1 = slider6 > 0 ? spl1 : out_r;

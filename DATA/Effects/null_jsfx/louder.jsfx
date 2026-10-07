@@ -1,0 +1,27 @@
+desc:NULL ONE SLIDER Louder
+//tags: loudness gain volume boost makeup utility
+//Collection: NULL JSFX
+//Author: Christos Koulaxizis
+
+slider1:50<0,100,1>Amount
+
+in_pin:left input
+in_pin:right input
+out_pin:left output
+out_pin:right output
+
+@init
+  DB2LIN = 0.11512925464970228420;
+
+@slider
+  amount = slider1 / 100;
+  gain_db = amount * 12;
+  gain_lin = exp(gain_db * DB2LIN);
+
+@sample
+  out_l = spl0 * gain_lin;
+  out_r = spl1 * gain_lin;
+  out_l = out_l > 0.99 ? 0.99 : out_l < -0.99 ? -0.99 : out_l;
+  out_r = out_r > 0.99 ? 0.99 : out_r < -0.99 ? -0.99 : out_r;
+  spl0 = out_l;
+  spl1 = out_r;

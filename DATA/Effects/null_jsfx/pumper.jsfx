@@ -1,0 +1,33 @@
+desc:NULL ONE SLIDER Pumper
+//tags: sidechain ducking pumping rhythm groove
+//Collection: NULL JSFX
+//Author: Christos Koulaxizis
+
+slider1:50<0,100,1>Amount
+
+in_pin:left input
+in_pin:right input
+out_pin:left output
+out_pin:right output
+
+@init
+  phase = 0;
+
+@slider
+  amount = slider1 / 100;
+  rate = 2.0;
+
+@sample
+  phase += rate / srate;
+  phase >= 1 ? phase -= 1;
+  
+  phase < 0.15 ? (
+    dip = 1 - phase / 0.15;
+  ) : (
+    dip = (phase - 0.15) / 0.85;
+  );
+  
+  gain = 1 - amount * (1 - dip);
+  
+  spl0 = spl0 * gain;
+  spl1 = spl1 * gain;

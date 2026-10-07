@@ -1,0 +1,30 @@
+desc:NULL ONE SLIDER Driver
+//tags: saturation drive warmth tube tape overdrive
+//Collection: NULL JSFX
+//Author: Christos Koulaxizis
+
+slider1:50<0,100,1>Amount
+
+in_pin:left input
+in_pin:right input
+out_pin:left output
+out_pin:right output
+
+@init
+  DB2LIN = 0.11512925464970228420;
+
+@slider
+  amount = slider1 / 100;
+  drive = 1 + amount * 3;
+  makeup_db = amount * 3;
+  makeup_lin = exp(makeup_db * DB2LIN);
+
+@sample
+  driven_l = spl0 * drive;
+  driven_r = spl1 * drive;
+  sat_l = driven_l > 1 ? 1 : driven_l < -1 ? -1 : driven_l;
+  sat_l = sat_l * (1 - abs(sat_l) * 0.3);
+  sat_r = driven_r > 1 ? 1 : driven_r < -1 ? -1 : driven_r;
+  sat_r = sat_r * (1 - abs(sat_r) * 0.3);
+  spl0 = sat_l * makeup_lin;
+  spl1 = sat_r * makeup_lin;

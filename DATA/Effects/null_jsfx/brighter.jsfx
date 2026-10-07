@@ -1,0 +1,30 @@
+desc:NULL ONE SLIDER Brighter
+//tags: bright treble highs presence air brilliance
+//Collection: NULL JSFX
+//Author: Christos Koulaxizis
+
+slider1:50<0,100,1>Amount
+
+in_pin:left input
+in_pin:right input
+out_pin:left output
+out_pin:right output
+
+@init
+  DB2LIN = 0.11512925464970228420;
+  PI = 3.14159265358979;
+  lp_l = 0; lp_r = 0;
+
+@slider
+  amount = slider1 / 100;
+  boost_db = amount * 9;
+  boost_lin = exp(boost_db * DB2LIN);
+  hp_alpha = 1 - exp(-2 * PI * 6000 / srate);
+
+@sample
+  lp_l = lp_l + hp_alpha * (spl0 - lp_l);
+  lp_r = lp_r + hp_alpha * (spl1 - lp_r);
+  hp_l = spl0 - lp_l;
+  hp_r = spl1 - lp_r;
+  spl0 = spl0 + hp_l * (boost_lin - 1);
+  spl1 = spl1 + hp_r * (boost_lin - 1);
