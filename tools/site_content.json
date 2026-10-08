@@ -1,0 +1,1389 @@
+{
+  "auto_leveler": {
+    "card_desc": "Automatic Gain Rider",
+    "keywords": "auto leveler leveller gain rider riding agc automatic volume loudness dialogue podcast voice",
+    "slider_desc": [
+      "Average (RMS) level the leveler steers toward.",
+      "How quickly the gain moves toward the target.",
+      "Largest boost allowed.",
+      "Largest cut allowed.",
+      "Below this level the gain holds instead of boosting pauses and room noise."
+    ],
+    "uses": [
+      "Evening out dialogue and podcast levels",
+      "Riding inconsistent vocal takes",
+      "Smoothing level changes in live recordings",
+      "Pre-leveling before compression"
+    ],
+    "properties": "Input → stereo RMS detection (~300 ms) → gain target (Target − level, limited by Max Boost/Cut, frozen below Gate) → smoothed at Speed → Output. Zero latency.",
+    "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-auto-leveler\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><path d=\"M 8,32 L 56,32\" stroke=\"url(#icon-auto-leveler)\" stroke-width=\"1.5\" fill=\"none\" stroke-linecap=\"round\" opacity=\"0.4\"/><path d=\"M 8,44 C 16,44 18,20 26,20 C 32,20 34,32 40,32 L 56,32\" stroke=\"url(#icon-auto-leveler)\" stroke-width=\"2.5\" fill=\"none\" stroke-linecap=\"round\"/><path d=\"M 48,14 L 48,26 M 44,18 L 48,14 L 52,18 M 44,22 L 48,26 L 52,22\" stroke=\"url(#icon-auto-leveler)\" stroke-width=\"1.5\" fill=\"none\" stroke-linecap=\"round\" opacity=\"0.5\"/></svg>"
+  },
+  "auto_pan": {
+    "card_desc": "LFO Stereo Panner",
+    "keywords": "auto pan autopan panner panning lfo stereo movement modulation tempo sync ping pong",
+    "slider_desc": [
+      "Speed of the sine LFO in free-running mode.",
+      "How far the LFO pushes the signal between left and right; at 0% both sides sit at half level.",
+      "Blend between the dry signal and the panned signal.",
+      "Locks the LFO rate to the project tempo instead of the Rate slider.",
+      "LFO cycle length when synced: 1/2 = one sweep every two beats, up to 1/16 = four sweeps per beat."
+    ],
+    "uses": [
+      "Moving pads and synth beds",
+      "Rhythmic tempo-synced panning on guitars or keys",
+      "Subtle stereo motion on ambience returns",
+      "Ping-pong style movement on percussion loops"
+    ],
+    "properties": "Input → Sine LFO (free or tempo-synced) → opposite gain curves on L and R → Dry/Wet Mix → Output. Each channel keeps its own content (no channel crossfeed) and the effect has zero latency.",
+    "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\">\n<defs><linearGradient id=\"icon-autopan\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs>\n<path d=\"M 16,24 L 10,32 L 16,40\" stroke=\"url(#icon-autopan)\" stroke-width=\"2.5\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/>\n<path d=\"M 48,24 L 54,32 L 48,40\" stroke=\"url(#icon-autopan)\" stroke-width=\"2.5\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/>\n<path d=\"M 10,32 L 54,32\" stroke=\"url(#icon-autopan)\" stroke-width=\"1.5\" opacity=\"0.3\" stroke-dasharray=\"3,3\"/>\n</svg>"
+  },
+  "breath_control": {
+    "card_desc": "Vocal Breath Reduction",
+    "keywords": "breath control breaths vocal de-breath reduce attenuate expander dynamics voice podcast",
+    "slider_desc": [
+      "Level (RMS-style, dBFS) below which the signal is treated as breath or noise and turned down; above it the voice passes at full level.",
+      "How fast the gain returns to unity when the voice comes back above Threshold.",
+      "How fast the gain moves down to Range once the level falls below Threshold.",
+      "How much quieter breaths get: the gain applied while the level is below Threshold."
+    ],
+    "uses": [
+      "Turning down breaths between vocal phrases",
+      "Softening low-level noise in voice-over takes",
+      "Quick cleanup of podcast dialogue",
+      "Gentle alternative to a hard gate on vocals"
+    ],
+    "properties": "Input → stereo-linked level detector (max of L/R, 1 ms rise / 30 ms fall) → compare with Threshold (3 dB hysteresis) → gain smoothed toward unity (Attack) or Range (Release) → applied to both channels → Output. No clipping; zero latency.",
+    "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-breath-control\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><path d=\"M 8,32 C 14,20 20,20 24,32 C 28,44 34,44 38,32\" stroke=\"url(#icon-breath-control)\" stroke-width=\"2.5\" fill=\"none\" stroke-linecap=\"round\"/><path d=\"M 38,32 C 42,26 46,26 50,32 C 52,35 54,35 56,32\" stroke=\"url(#icon-breath-control)\" stroke-width=\"1.5\" fill=\"none\" stroke-linecap=\"round\" opacity=\"0.5\"/><path d=\"M 44,14 L 44,24 M 40,20 L 44,24 L 48,20\" stroke=\"url(#icon-breath-control)\" stroke-width=\"2.5\" fill=\"none\" stroke-linecap=\"round\"/></svg>"
+  },
+  "brighter": {
+    "card_desc": "One-Knob Treble Lift",
+    "keywords": "brighter bright treble highs high shelf presence air brilliance sparkle eq boost",
+    "slider_desc": [
+      "High-frequency boost above ~6 kHz: 0 leaves the signal untouched, 100 adds up to +9 dB of air and sparkle"
+    ],
+    "uses": [
+      "Open up dull vocals",
+      "Add air to acoustic guitars",
+      "Brighten dark overheads",
+      "Quick top-end lift on a bus",
+      "Restore highs on muffled recordings"
+    ],
+    "properties": "Input → 6 kHz one-pole high-pass split → highs boosted (0 to +9 dB) and added back → Output. Zero latency, stereo channels processed independently.",
+    "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-brighter\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><path d=\"M 8,46 L 28,46 Q 38,46 42,24 L 56,24\" stroke=\"url(#icon-brighter)\" stroke-width=\"2.5\" fill=\"none\" stroke-linecap=\"round\"/><path d=\"M 42,46 L 56,46\" stroke=\"url(#icon-brighter)\" stroke-width=\"1.5\" fill=\"none\" stroke-linecap=\"round\" opacity=\"0.3\"/><circle cx=\"50\" cy=\"14\" r=\"3\" stroke=\"url(#icon-brighter)\" stroke-width=\"1.5\" fill=\"none\" stroke-linecap=\"round\" opacity=\"0.5\"/><path d=\"M 50,6 L 50,8 M 58,14 L 56,14 M 44,14 L 42,14\" stroke=\"url(#icon-brighter)\" stroke-width=\"1.5\" fill=\"none\" stroke-linecap=\"round\" opacity=\"0.4\"/></svg>"
+  },
+  "cabinet_simulator": {
+    "card_desc": "Speaker Cabinet Simulation",
+    "keywords": "cabinet simulator cab speaker guitar bass amp sim di reamp mic impulse free",
+    "slider_desc": [
+      "Cabinet model: 1x12 Open Back, 2x12 Combo, 4x12 Closed Back, 1x15 Bass or Small Radio.",
+      "0% = centre of the cone (brighter), 100% = edge (lower roll-off and softer presence).",
+      "High-pass frequency; it never goes below the selected cabinet's own minimum (30–250 Hz).",
+      "Blend between dry and cabinet signal.",
+      "Final output level."
+    ],
+    "uses": [
+      "Turning DI guitar or bass into a miked-cab tone",
+      "Taming fizz after amp sims and distortion",
+      "Lo-fi small-speaker effects",
+      "Quick re-amp tones without impulse files"
+    ],
+    "properties": "Input → high-pass → box resonance, low-mid, mid scoop and presence peaking filters → two cascaded low-pass roll-off stages → Dry/Wet Mix → Output. Filter-based (no impulse responses), identical on both channels; zero latency.",
+    "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-cabinet-simulator\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><rect x=\"10\" y=\"8\" width=\"44\" height=\"48\" rx=\"3\" stroke=\"url(#icon-cabinet-simulator)\" stroke-width=\"2.5\" fill=\"none\" stroke-linecap=\"round\"/><circle cx=\"32\" cy=\"32\" r=\"14\" stroke=\"url(#icon-cabinet-simulator)\" stroke-width=\"2.5\" fill=\"none\" stroke-linecap=\"round\"/><circle cx=\"32\" cy=\"32\" r=\"5\" stroke=\"url(#icon-cabinet-simulator)\" stroke-width=\"1.5\" fill=\"none\" stroke-linecap=\"round\" opacity=\"0.5\"/></svg>"
+  },
+  "channel_utility": {
+    "card_desc": "Gain, Phase & Routing",
+    "keywords": "channel utility gain trim pad phase polarity invert dc offset block balance solo mono check hard limit clip tool",
+    "slider_desc": [
+      "Fixed input attenuation of 0, −6 or −12 dB.",
+      "Continuous input trim before all other stages.",
+      "Inverts the polarity of the left channel.",
+      "Inverts the polarity of the right channel.",
+      "Cutoff of the one-pole DC-blocking high-pass filter.",
+      "Blend between the unfiltered and the DC-blocked signal.",
+      "Level offset for the left channel.",
+      "Level offset for the right channel.",
+      "Mutes the right channel so only the left is heard (takes priority over Solo R).",
+      "Mutes the left channel so only the right is heard.",
+      "Sums both channels to mono on both outputs.",
+      "Final level trim after all processing.",
+      "Clips any sample above ±0.99 to protect the output."
+    ],
+    "uses": [
+      "Gain staging at the start of a chain",
+      "Fixing polarity problems on multi-mic recordings",
+      "Removing DC offset from recordings",
+      "Checking mono compatibility and each side individually",
+      "Correcting left/right level imbalance"
+    ],
+    "properties": "Input → Pad + Input Gain → Polarity L/R → DC Block (one-pole high-pass) → Balance L/R → Solo L/R → Mono Check → Output Gain → Hard Limit (±0.99) → Output. Zero latency.",
+    "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\">\n<defs><linearGradient id=\"icon-chutil\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs>\n<rect x=\"14\" y=\"14\" width=\"3\" height=\"36\" rx=\"1.5\" fill=\"url(#icon-chutil)\" opacity=\"0.4\"/>\n<rect x=\"47\" y=\"14\" width=\"3\" height=\"36\" rx=\"1.5\" fill=\"url(#icon-chutil)\" opacity=\"0.4\"/>\n<circle cx=\"16\" cy=\"40\" r=\"6\" stroke=\"url(#icon-chutil)\" stroke-width=\"2.5\" fill=\"none\"/>\n<circle cx=\"48\" cy=\"24\" r=\"6\" stroke=\"url(#icon-chutil)\" stroke-width=\"2.5\" fill=\"none\"/>\n</svg>"
+  },
+  "chorus": {
+    "card_desc": "Classic Delay Chorus",
+    "keywords": "chorus modulation thickening detune doubling lfo ensemble",
+    "slider_desc": [
+      "Speed of the sine LFO modulating the delay time.",
+      "Sweep of the delay time; the delay moves between 5 ms and 5 ms + Depth, so it never runs out of range.",
+      "Blend between dry signal and modulated delay."
+    ],
+    "uses": [
+      "Thickening clean guitars",
+      "Widening the feel of pads and keys",
+      "Adding movement to backing vocals",
+      "Subtle detune on synth leads"
+    ],
+    "properties": "Input → delay line swept by a sine LFO between 5 ms and 5 ms + Depth → linear (fractional) interpolation → Dry/Wet Mix → Output. One LFO drives both channels, there is no feedback, and no latency.",
+    "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\">\n<defs><linearGradient id=\"icon-chorus\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs>\n<path d=\"M 8,28 Q 16,16 24,28 Q 32,40 40,28 Q 48,16 56,28\" stroke=\"url(#icon-chorus)\" stroke-width=\"2\" fill=\"none\" stroke-linecap=\"round\" opacity=\"0.4\"/>\n<path d=\"M 8,36 Q 16,24 24,36 Q 32,48 40,36 Q 48,24 56,36\" stroke=\"url(#icon-chorus)\" stroke-width=\"2.5\" fill=\"none\" stroke-linecap=\"round\"/>\n</svg>"
+  },
+  "chorus_one": {
+    "card_desc": "One-Knob Stereo Chorus",
+    "keywords": "chorus one thickening detune modulation stereo lfo width ensemble shimmer",
+    "slider_desc": [
+      "Scales the whole chorus at once: 0 is dry, higher values speed up the LFO (0.3 to 2.8 Hz), deepen the modulation (1 to 8 ms), lengthen the delay (5 to 12 ms), add light feedback and raise the wet mix to 85%"
+    ],
+    "uses": [
+      "Thicken clean guitars",
+      "Widen synth pads",
+      "Add movement to electric piano",
+      "Subtle stereo shimmer on backing vocals",
+      "Lush 80s-style chorus at high settings"
+    ],
+    "properties": "Input → L/R modulated delay lines (triangle LFO, opposite polarity per side) with feedback → dry/wet blend → Output. The single slider drives rate, depth, base delay, feedback (0–0.15) and mix (max 85% wet); zero latency.",
+    "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-chorus-one\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><path d=\"M 8,26 Q 16,16 24,26 T 40,26 T 56,26\" stroke=\"url(#icon-chorus-one)\" stroke-width=\"2.5\" fill=\"none\" stroke-linecap=\"round\"/><path d=\"M 8,38 Q 16,48 24,38 T 40,38 T 56,38\" stroke=\"url(#icon-chorus-one)\" stroke-width=\"2.5\" fill=\"none\" stroke-linecap=\"round\"/><path d=\"M 8,32 L 56,32\" stroke=\"url(#icon-chorus-one)\" stroke-width=\"1.5\" fill=\"none\" stroke-linecap=\"round\" opacity=\"0.3\"/></svg>"
+  },
+  "click_repair": {
+    "card_desc": "Click & Pop Removal",
+    "keywords": "click repair declick pop crackle vinyl restoration spike digital glitch denoise",
+    "slider_desc": [
+      "Detection sensitivity: 0% flags jumps 4x the running average step, 100% only flags jumps 30x larger.",
+      "Number of samples marked as damaged after each detected click and redrawn."
+    ],
+    "uses": [
+      "Removing clicks and pops from vinyl transfers",
+      "Fixing digital spikes and edit clicks",
+      "Cleaning mouth clicks on close-miked vocals",
+      "Restoring archival recordings"
+    ],
+    "properties": "Input → step detector (sample jump vs running average) → mark Window samples as damaged → linear interpolation between the good samples on either side → Output. Latency of 2 × Window samples, reported to REAPER for delay compensation; each channel is repaired independently.",
+    "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\">\n<defs><linearGradient id=\"icon-click\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs>\n<path d=\"M 8,32 L 16,32 L 16,24 L 24,40 L 32,16 L 40,44 L 48,24 L 48,32 L 56,32\" stroke=\"url(#icon-click)\" stroke-width=\"2.5\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/>\n<path d=\"M 32,24 L 32,40\" stroke=\"url(#icon-click)\" stroke-width=\"2\" opacity=\"0.5\"/>\n</svg>"
+  },
+  "comb_filter": {
+    "card_desc": "Resonant Delay Comb",
+    "keywords": "comb filter delay feedback metallic resonant flanger pitched ringing harmonic peaks karplus",
+    "slider_desc": [
+      "Fundamental of the comb; delay time is one period of this frequency, with peaks at it and its harmonics",
+      "Amount of the delayed copy added back; higher values give sharper, more resonant peaks",
+      "Feed-Forward adds a single delayed copy; Feed-Backward recirculates the delay for a ringing, pitched tone",
+      "Output level, applied after automatic level compensation"
+    ],
+    "uses": [
+      "Add metallic, pitched resonance to drums and percussion",
+      "Tune noise or hats to a musical note",
+      "Create Karplus-style plucked ringing with Feed-Backward",
+      "Hollow, flanger-like coloration on pads",
+      "Sound design for robotic or tube-like textures"
+    ],
+    "properties": "Signal chain: Input → Delay (1 period of Frequency, interpolated) → Feed-Forward or Feed-Backward sum → Level Compensation → Gain → Output. Output is normalised by 1/(1+fb) or (1−fb) so high Feedback does not blow up; stereo channels processed independently, zero latency.",
+    "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-comb\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><path d=\"M 8,16 L 8,48 M 14,16 L 14,48 M 20,16 L 20,48 M 26,16 L 26,48 M 32,16 L 32,48 M 38,16 L 38,48 M 44,16 L 44,48 M 50,16 L 50,48 M 56,16 L 56,48\" stroke=\"url(#icon-comb)\" stroke-width=\"1.5\"/></svg>"
+  },
+  "convolution": {
+    "card_desc": "Impulse Response Reverb",
+    "keywords": "convolution reverb impulse response ir room hall plate cathedral cabinet wav file",
+    "slider_desc": [
+      "Built-in generated IR (Small Room, Large Room, Hall, Plate, Cathedral) or IR File",
+      "WAV impulse response loaded from REAPER’s Data/null_jsfx_ir folder (used when Source = IR File)",
+      "Trims the IR length",
+      "Shifts the IR later in time",
+      "One-pole low cut on the wet signal",
+      "One-pole high cut on the wet signal",
+      "Dry/wet blend",
+      "Final output level"
+    ],
+    "uses": [
+      "Realistic rooms, halls and plates",
+      "Load your own IRs of spaces or devices",
+      "Guitar cabinet IRs via IR File",
+      "Short ambience on drums and vocals",
+      "Cathedral-scale tails"
+    ],
+    "properties": "Signal chain: Input → Uniformly Partitioned FFT Convolution (1024-sample blocks) → Low Cut → High Cut → Mix → Output. Latency 1024 samples (reported to REAPER); custom IRs are WAV files placed in REAPER’s Data/null_jsfx_ir folder, resampled, level-normalised and limited to 3 s, stereo IRs per channel.",
+    "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-convolution\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><path d=\"M6,52 L58,52\" stroke=\"url(#icon-convolution)\" stroke-width=\"1.5\" fill=\"none\" stroke-linecap=\"round\" opacity=\"0.4\"/><path d=\"M12,52 L12,10\" stroke=\"url(#icon-convolution)\" stroke-width=\"2.5\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M18,52 L18,28 M23,52 L23,34 M28,52 L28,38 M33,52 L33,42 M38,52 L38,45 M43,52 L43,47 M48,52 L48,49\" stroke=\"url(#icon-convolution)\" stroke-width=\"2.5\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M12,10 Q20,40 56,50\" stroke=\"url(#icon-convolution)\" stroke-width=\"1.5\" fill=\"none\" stroke-linecap=\"round\" opacity=\"0.4\"/></svg>"
+  },
+  "crunch": {
+    "card_desc": "One-Knob Hard Distortion",
+    "keywords": "crunch distortion grit fuzz clipping hard clip aggressive overdrive dirt",
+    "slider_desc": [
+      "Drive, clipping hardness and mix together: 0 is the untouched signal, 100 drives the input 20x into a clipper with a hard knee, crossfaded fully to the distorted sound and level-compensated"
+    ],
+    "uses": [
+      "Aggressive drum bus dirt",
+      "Gritty bass layers",
+      "Distorted vocal effects",
+      "Edge on synth leads",
+      "Lo-fi parallel crunch"
+    ],
+    "properties": "Input → drive (1–20x) → variable-knee clipper (knee 2 to 10, soft to near-hard) → 9 kHz one-pole low-pass to tame fizz → level compensation → dry/crunch crossfade by Amount → Output. Zero latency, no oversampling; 0 is a clean pass-through.",
+    "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-crunch\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><path d=\"M 8,32 L 14,18 L 50,18 L 56,32\" stroke=\"url(#icon-crunch)\" stroke-width=\"2.5\" fill=\"none\" stroke-linecap=\"round\"/><path d=\"M 8,32 L 14,46 L 50,46 L 56,32\" stroke=\"url(#icon-crunch)\" stroke-width=\"2.5\" fill=\"none\" stroke-linecap=\"round\"/><path d=\"M 8,32 Q 20,6 32,32 T 56,32\" stroke=\"url(#icon-crunch)\" stroke-width=\"1.5\" fill=\"none\" stroke-linecap=\"round\" opacity=\"0.3\"/></svg>"
+  },
+  "deesser": {
+    "card_desc": "Split-Band Sibilance Control",
+    "keywords": "deesser de-esser de-ess sibilance sibilants esses hiss vocal harshness",
+    "slider_desc": [
+      "Centre frequency of the band-pass that isolates the sibilance.",
+      "Maximum cut applied to that band when sibilance gets loud."
+    ],
+    "uses": [
+      "Taming harsh S, T and Ch sounds on vocals",
+      "Softening sibilant voice-over and podcast speech",
+      "Reducing hissy cymbal splash on overheads",
+      "Controlling brittle highs on bright acoustic guitar"
+    ],
+    "properties": "Input → band-pass at Target (Q 2) → stereo-linked envelope follower (0.5 ms attack, 60 ms release) → band attenuation above a fixed −30 dB threshold, reaching full Reduction 12 dB above it → Output. Only the sibilant band is turned down; zero latency.",
+    "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\">\n<defs><linearGradient id=\"icon-deess\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs>\n<path d=\"M 16,32 Q 24,20 32,32 Q 40,44 48,32\" stroke=\"url(#icon-deess)\" stroke-width=\"2.5\" fill=\"none\" stroke-linecap=\"round\" opacity=\"0.5\"/>\n<path d=\"M 16,32 Q 24,28 32,32 Q 40,36 48,32\" stroke=\"url(#icon-deess)\" stroke-width=\"2\" fill=\"none\" stroke-linecap=\"round\"/>\n<circle cx=\"32\" cy=\"28\" r=\"8\" stroke=\"url(#icon-deess)\" stroke-width=\"2\" fill=\"none\"/>\n<text x=\"32\" y=\"34\" font-family=\"'Segoe UI'\" font-size=\"12\" fill=\"url(#icon-deess)\" text-anchor=\"middle\">S</text>\n</svg>"
+  },
+  "delay": {
+    "card_desc": "Stereo Echo & Slapback",
+    "keywords": "delay echo slapback feedback repeat tempo sync time",
+    "slider_desc": [
+      "Delay time in free mode.",
+      "Amount of the echo fed back into the delay line, capped internally at 95%.",
+      "Blend between dry signal and echoes.",
+      "Locks the delay time to the project tempo.",
+      "Synced delay length: 1/4 = one beat, down to 1/32."
+    ],
+    "uses": [
+      "Slapback on vocals and guitars",
+      "Tempo-synced rhythmic echoes",
+      "Long feedback trails for transitions",
+      "Short delays for depth and doubling"
+    ],
+    "properties": "Input → stereo delay line (up to 2 s, or tempo-synced) with feedback → Dry/Wet Mix → Output. Left and right are delayed independently with no filtering in the feedback loop; zero latency.",
+    "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\">\n<defs><linearGradient id=\"icon-delay\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs>\n<circle cx=\"20\" cy=\"32\" r=\"10\" stroke=\"url(#icon-delay)\" stroke-width=\"2\" fill=\"none\"/>\n<circle cx=\"44\" cy=\"32\" r=\"10\" stroke=\"url(#icon-delay)\" stroke-width=\"2\" fill=\"none\"/>\n<path d=\"M 20,32 L 44,32\" stroke=\"url(#icon-delay)\" stroke-width=\"2\"/>\n<text x=\"20\" y=\"36\" font-family=\"'Segoe UI'\" font-size=\"10\" fill=\"url(#icon-delay)\" text-anchor=\"middle\">L</text>\n<text x=\"44\" y=\"36\" font-family=\"'Segoe UI'\" font-size=\"10\" fill=\"url(#icon-delay)\" text-anchor=\"middle\">R</text>\n</svg>"
+  },
+  "doubler": {
+    "card_desc": "Automatic Double Tracking",
+    "keywords": "doubler double tracking adt vocal doubling stereo width thicken second take",
+    "slider_desc": [
+      "Level and width of the two doubles: 0 is the dry signal, higher values make the left and right copies louder (up to 80%) and push their delays later (about 14–20 ms and 21–29 ms)"
+    ],
+    "uses": [
+      "Fake a double-tracked vocal",
+      "Widen mono guitar parts",
+      "Thicken backing vocals",
+      "Stereo spread for mono synths",
+      "Subtle width on lead lines"
+    ],
+    "properties": "Input → mono sum → two delayed taps with slow independent drift (0.13 Hz / 0.21 Hz) → one double added left, one right → level compensation → Output. Original stays centred; zero latency.",
+    "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-doubler\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><path d=\"M 8,32 Q 18,20 28,32 T 48,32\" stroke=\"url(#icon-doubler)\" stroke-width=\"2.5\" fill=\"none\" stroke-linecap=\"round\"/><path d=\"M 14,24 Q 24,12 34,24 T 54,24\" stroke=\"url(#icon-doubler)\" stroke-width=\"1.5\" fill=\"none\" stroke-linecap=\"round\" opacity=\"0.4\"/><path d=\"M 14,40 Q 24,28 34,40 T 54,40\" stroke=\"url(#icon-doubler)\" stroke-width=\"1.5\" fill=\"none\" stroke-linecap=\"round\" opacity=\"0.4\"/></svg>"
+  },
+  "driver": {
+    "card_desc": "One-Knob Warm Tube Drive",
+    "keywords": "driver drive saturation warmth tube tape overdrive harmonics warm asymmetric",
+    "slider_desc": [
+      "Drive and mix together: 0 is the untouched signal, higher values push the input up to 12x into an asymmetric tanh curve and crossfade toward the fully driven sound at 100, level-compensated throughout"
+    ],
+    "uses": [
+      "Warm up thin vocals",
+      "Glue on the drum bus",
+      "Tube-like weight on bass",
+      "Even-harmonic colour on synths",
+      "Push a mix bus into soft saturation"
+    ],
+    "properties": "Input → drive (1–12x) with bias (0 to 0.25) → tanh curve (bias offset removed, even plus odd harmonics) → DC blocker → level compensation → dry/drive crossfade by Amount → Output. Zero latency, no oversampling; 0 is a clean pass-through.",
+    "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-driver\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><path d=\"M 8,46 Q 24,46 32,32 Q 40,18 56,18\" stroke=\"url(#icon-driver)\" stroke-width=\"2.5\" fill=\"none\" stroke-linecap=\"round\"/><path d=\"M 8,50 L 56,14\" stroke=\"url(#icon-driver)\" stroke-width=\"1.5\" fill=\"none\" stroke-linecap=\"round\" opacity=\"0.3\"/><circle cx=\"32\" cy=\"32\" r=\"3\" stroke=\"url(#icon-driver)\" stroke-width=\"1.5\" fill=\"none\" stroke-linecap=\"round\" opacity=\"0.5\"/></svg>"
+  },
+  "dynamic_eq": {
+    "card_desc": "Four-Band Dynamic EQ",
+    "keywords": "dynamic eq equalizer equaliser parametric resonance harshness compressor expander frequency dependent dynamics",
+    "slider_desc": [
+      "Centre frequency of band 1.",
+      "Boost or cut band 1 reaches once its level is 12 dB over the threshold.",
+      "Bandwidth of band 1.",
+      "Level at which band 1 starts to act.",
+      "Centre frequency of band 2.",
+      "Boost or cut band 2 reaches once its level is 12 dB over the threshold.",
+      "Bandwidth of band 2.",
+      "Level at which band 2 starts to act.",
+      "Centre frequency of band 3.",
+      "Boost or cut band 3 reaches once its level is 12 dB over the threshold.",
+      "Bandwidth of band 3.",
+      "Level at which band 3 starts to act.",
+      "Centre frequency of band 4.",
+      "Boost or cut band 4 reaches once its level is 12 dB over the threshold.",
+      "Bandwidth of band 4.",
+      "Level at which band 4 starts to act.",
+      "How fast each band's detector reacts to rising level.",
+      "How fast each band's detector recovers.",
+      "Output gain after all four bands."
+    ],
+    "uses": [
+      "Taming resonances only when they ring out",
+      "Controlling boomy low notes on bass or vocals",
+      "Reducing harshness on loud passages only",
+      "Lifting a band only when it is played",
+      "Frequency-specific control on mixes"
+    ],
+    "properties": "Input → four bell bands in series (each: band-pass detector → envelope → gain scaled by level over Threshold) → Makeup → Output. Below Threshold a band is neutral; detection is stereo-linked per band and there is no latency.",
+    "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-dynamic-eq\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><path d=\"M 8,44 L 20,44 C 26,44 28,22 32,22 C 36,22 38,44 44,44 L 56,44\" stroke=\"url(#icon-dynamic-eq)\" stroke-width=\"2.5\" fill=\"none\" stroke-linecap=\"round\"/><path d=\"M 20,44 C 26,44 28,34 32,34 C 36,34 38,44 44,44\" stroke=\"url(#icon-dynamic-eq)\" stroke-width=\"1.5\" fill=\"none\" stroke-linecap=\"round\" opacity=\"0.5\"/><path d=\"M 32,10 L 32,18 M 28,14 L 32,10 L 36,14\" stroke=\"url(#icon-dynamic-eq)\" stroke-width=\"2.5\" fill=\"none\" stroke-linecap=\"round\"/></svg>"
+  },
+  "dynamics": {
+    "card_desc": "Compressor & Expander",
+    "keywords": "dynamics compressor compression expander downward expansion gain reduction ratio threshold knee",
+    "slider_desc": [
+      "Compressor reduces level above the threshold; Expander reduces level below it.",
+      "Level where gain reduction begins.",
+      "Strength of the gain change once past the threshold.",
+      "Width of the soft transition above (or below) the threshold.",
+      "How fast gain reduction is applied (0 = instant).",
+      "How fast gain recovers (0 = instant).",
+      "Gain added after processing."
+    ],
+    "uses": [
+      "General-purpose bus and track compression",
+      "Evening out vocal and bass levels",
+      "Downward expansion to reduce noise and bleed",
+      "Controlling dynamics on drums"
+    ],
+    "properties": "Input → stereo-linked peak detection → gain computer (compress above / expand below Threshold, soft knee) → attack/release smoothing → Makeup → Output. Zero latency.",
+    "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\">\n<defs><linearGradient id=\"icon-dyn\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs>\n<path d=\"M 8,32 L 16,32 L 18,24 L 24,40 L 30,20 L 36,44 L 42,16 L 48,32 L 56,32\" stroke=\"url(#icon-dyn)\" stroke-width=\"2.5\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/>\n<path d=\"M 12,28 L 18,28 M 24,36 L 30,36 M 36,24 L 42,24 M 48,28 L 54,28\" stroke=\"url(#icon-dyn)\" stroke-width=\"1.5\" opacity=\"0.4\"/>\n</svg>"
+  },
+  "envelope_follower": {
+    "card_desc": "Auto-Wah & Envelope Filter",
+    "keywords": "envelope follower filter auto wah autowah touch wah funk dynamic filter",
+    "slider_desc": [
+      "What the envelope controls: low-pass, band-pass or high-pass filter cutoff, or the volume.",
+      "How quickly the envelope follows rising level.",
+      "How quickly the envelope falls back.",
+      "Input gain into the detector; higher values reach the end of the sweep with softer playing.",
+      "Cutoff at the quiet end of the sweep.",
+      "Cutoff at the loud end of the sweep.",
+      "Filter Q; higher values give a more vocal, peaky wah.",
+      "Up = louder playing opens the filter; Down = louder playing closes it.",
+      "Blend between dry and processed signal."
+    ],
+    "uses": [
+      "Funk auto-wah on guitar and bass",
+      "Touch-sensitive synth filtering",
+      "Dynamic filter effects on drums",
+      "Envelope-driven volume swells and ducking"
+    ],
+    "properties": "Input → stereo-linked envelope (−48 to 0 dB mapped to 0–1) → exponential cutoff sweep from Low Freq to High Freq → TPT state-variable filter (or VCA in Volume mode) → Dry/Wet Mix → Output. Zero latency.",
+    "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-envelope-follower\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><path d=\"M 8,46 L 18,22 L 30,30 L 42,38 L 56,44\" stroke=\"url(#icon-envelope-follower)\" stroke-width=\"1.5\" fill=\"none\" stroke-linecap=\"round\" opacity=\"0.5\"/><path d=\"M 8,40 L 22,40 C 30,40 30,18 36,18 C 40,18 42,30 44,40 L 56,40\" stroke=\"url(#icon-envelope-follower)\" stroke-width=\"2.5\" fill=\"none\" stroke-linecap=\"round\"/></svg>"
+  },
+  "exciter": {
+    "card_desc": "Harmonic High Enhancer",
+    "keywords": "exciter enhancer aural harmonics brightness presence air sparkle saturation top end",
+    "slider_desc": [
+      "Exciter intensity: 0 is untouched, higher values drive the high band harder (up to 10x) into the saturator and blend more generated harmonics back in"
+    ],
+    "uses": [
+      "Add sparkle to vocals without harsh EQ",
+      "Bring dull cymbals forward",
+      "Presence on acoustic guitar",
+      "Air on a mix bus",
+      "Revive old or lo-fi recordings"
+    ],
+    "properties": "Input → 3 kHz 12 dB/oct high-pass → drive → asymmetric soft clip (odd + even harmonics) → second 3 kHz high-pass → blended onto the dry signal → Output. Blend is drive-compensated; zero latency.",
+    "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-exciter\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><path d=\"M 8,46 L 30,46 Q 36,46 40,30\" stroke=\"url(#icon-exciter)\" stroke-width=\"2.5\" fill=\"none\" stroke-linecap=\"round\"/><path d=\"M 40,30 L 44,20 L 48,30 L 52,14 L 56,30\" stroke=\"url(#icon-exciter)\" stroke-width=\"2.5\" fill=\"none\" stroke-linecap=\"round\"/><path d=\"M 30,46 L 56,46\" stroke=\"url(#icon-exciter)\" stroke-width=\"1.5\" fill=\"none\" stroke-linecap=\"round\" opacity=\"0.3\"/></svg>"
+  },
+  "filter": {
+    "card_desc": "Resonant Low-Pass Filter",
+    "keywords": "filter lowpass low pass low-pass cutoff resonance q svf tpt state variable",
+    "slider_desc": [
+      "Low-pass cutoff frequency.",
+      "Q of the filter; higher values add a resonant peak at the cutoff.",
+      "Output level after the filter."
+    ],
+    "uses": [
+      "Taking the top end off harsh sources",
+      "Filter sweeps via automation",
+      "Lo-fi and muffled effects",
+      "Resonant synth-style tones"
+    ],
+    "properties": "Input → 2-pole (12 dB/oct) TPT state-variable low-pass → Gain → Output. Zero-delay-feedback design that stays stable under fast automation; zero latency.",
+    "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\">\n<defs><linearGradient id=\"icon-filter\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs>\n<path d=\"M 8,32 Q 20,16 32,32 Q 44,48 56,32\" stroke=\"url(#icon-filter)\" stroke-width=\"2.5\" fill=\"none\" stroke-linecap=\"round\"/>\n<path d=\"M 8,32 L 16,32 M 48,32 L 56,32\" stroke=\"url(#icon-filter)\" stroke-width=\"2\"/>\n<circle cx=\"20\" cy=\"28\" r=\"2\" fill=\"url(#icon-filter)\" opacity=\"0.5\"/>\n<circle cx=\"32\" cy=\"32\" r=\"2\" fill=\"url(#icon-filter)\" opacity=\"0.5\"/>\n<circle cx=\"44\" cy=\"28\" r=\"2\" fill=\"url(#icon-filter)\" opacity=\"0.5\"/>\n</svg>"
+  },
+  "flanger": {
+    "card_desc": "Jet Sweep Flanger",
+    "keywords": "flanger flanging jet sweep comb filter modulation feedback",
+    "slider_desc": [
+      "Speed of the sine LFO.",
+      "Sweep range of the delay, from 0.5 ms up to 0.5 ms + Depth.",
+      "Amount of delayed signal fed back for a stronger, more resonant comb (capped internally at 70%).",
+      "Blend between dry signal and flanged signal."
+    ],
+    "uses": [
+      "Jet-plane sweeps on drums and cymbals",
+      "Movement on guitars and synths",
+      "Psychedelic effects on vocals",
+      "Build-ups and transitions"
+    ],
+    "properties": "Input → short modulated delay (0.5 ms to 0.5 ms + Depth) with feedback → linear interpolation → Dry/Wet Mix → Output. One LFO drives both channels; zero latency.",
+    "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\">\n<defs><linearGradient id=\"icon-flange\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs>\n<path d=\"M 8,32 Q 16,12 24,32 Q 32,52 40,32 Q 48,12 56,32\" stroke=\"url(#icon-flange)\" stroke-width=\"2.5\" fill=\"none\" stroke-linecap=\"round\"/>\n<path d=\"M 8,32 Q 16,20 24,32 Q 32,44 40,32 Q 48,20 56,32\" stroke=\"url(#icon-flange)\" stroke-width=\"1\" fill=\"none\" opacity=\"0.3\"/>\n</svg>"
+  },
+  "formant_filter": {
+    "card_desc": "Vowel Formant Filter",
+    "keywords": "formant filter vowel voice speech talking a e i o u resonance bandpass wah",
+    "slider_desc": [
+      "Selects the vowel shape (A, E, I, O, U), which sets the three formant centre frequencies",
+      "Output level of the summed formant bands",
+      "Bandwidth of each formant band; higher Q gives narrower, more vocal peaks"
+    ],
+    "uses": [
+      "Make synths and pads “talk” with vowel colours",
+      "Add vocal character to drums, noise or guitar",
+      "Automate Vowel for talking-filter sweeps",
+      "Sound design for creatures and robotic voices"
+    ],
+    "properties": "Signal chain: Input → 3 parallel RBJ Band-Pass Filters (F1, F2, F3 per vowel, e.g. A = 730 / 1090 / 2440 Hz) → Sum ×3 → Gain → Output. Stereo channels processed independently. Filter state is never reset and the formants glide (~15 ms) to a new vowel, so Vowel, Gain and Q can be automated without clicks.",
+    "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-formant\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><circle cx=\"32\" cy=\"32\" r=\"16\" stroke=\"url(#icon-formant)\" stroke-width=\"2\" fill=\"none\"/><text x=\"32\" y=\"38\" font-size=\"14\" font-weight=\"bold\" text-anchor=\"middle\" fill=\"#999999\">AEIOU</text></svg>"
+  },
+  "formant_shift": {
+    "card_desc": "Vocal Formant Morph",
+    "keywords": "formant shift vocal morph gender voice vowel resonance character tract",
+    "slider_desc": [
+      "Formant position with 50 as bypass: moving left lowers the three resonances (down to 0.5x) for a deeper, larger character, moving right raises them (up to 2x) for a smaller, brighter one, with the filtered blend growing toward both ends (max 80% wet)"
+    ],
+    "uses": [
+      "Gender-bend vocal character",
+      "Make backing vocals sound like a different singer",
+      "Creative vowel colouring on synths",
+      "Robotic or cartoon voice effects",
+      "Subtle vocal timbre change"
+    ],
+    "properties": "Input → three parallel band-pass resonators (base 300 / 850 / 2250 Hz, Q 2.5) scaled by the shift factor → weighted sum blended with dry → Output. Not a pitch shifter: only the resonant colour moves; zero latency.",
+    "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-formant-shift\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><path d=\"M 6,46 Q 14,46 16,30 Q 18,46 28,46 Q 32,46 34,22 Q 36,46 46,46 Q 50,46 52,34 Q 54,46 58,46\" stroke=\"url(#icon-formant-shift)\" stroke-width=\"2.5\" fill=\"none\" stroke-linecap=\"round\"/><path d=\"M 20,14 L 44,14 M 38,9 L 44,14 L 38,19\" stroke=\"url(#icon-formant-shift)\" stroke-width=\"1.5\" fill=\"none\" stroke-linecap=\"round\" opacity=\"0.4\"/></svg>"
+  },
+  "frequency_shifter": {
+    "card_desc": "Bode Frequency Shifter",
+    "keywords": "frequency shifter bode hilbert inharmonic barberpole metallic sci-fi ring shift phasing",
+    "slider_desc": [
+      "Amount every frequency is moved up or down, in Hz",
+      "Extra shift applied to the right channel only, for stereo movement",
+      "Output fed back into the shifter for spiralling barber-pole sweeps",
+      "Dry/wet blend"
+    ],
+    "uses": [
+      "Subtle phasing and beating with small shifts",
+      "Metallic, bell-like inharmonic tones",
+      "Barber-pole rising or falling effects with Feedback",
+      "Stereo widening via Stereo Offset",
+      "Sci-fi sound design"
+    ],
+    "properties": "Signal chain: Input → Hilbert Transform (two 4-stage allpass chains) → Quadrature Oscillator Mix → Feedback (DC-blocked, soft-limited) → Mix → Output. Shifts by a fixed Hz amount rather than a ratio, so harmonics become inharmonic; zero latency.",
+    "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-frequency-shifter\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><path d=\"M6,26 Q12,12 18,26 T30,26 T42,26\" stroke=\"url(#icon-frequency-shifter)\" stroke-width=\"1.5\" fill=\"none\" stroke-linecap=\"round\" opacity=\"0.4\"/><path d=\"M18,40 Q24,26 30,40 T42,40 T54,40\" stroke=\"url(#icon-frequency-shifter)\" stroke-width=\"2.5\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M8,52 L28,52 M23,47 L28,52 L23,57\" stroke=\"url(#icon-frequency-shifter)\" stroke-width=\"2.5\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/></svg>"
+  },
+  "gate": {
+    "card_desc": "Noise Gate with Sidechain HPF",
+    "keywords": "gate noise gate expander range silence mute threshold sidechain filter bleed drums vocal",
+    "slider_desc": [
+      "Level the signal must exceed for the gate to open.",
+      "How fast the gate opens.",
+      "How fast the gate closes once the signal drops.",
+      "High-pass on the detector only, so low-end rumble or bleed does not open the gate (0 = off).",
+      "How far the gate turns the signal down when closed: −80 dB closes fully, higher values only duck it (0 dB = no gating)."
+    ],
+    "uses": [
+      "Removing noise between vocal phrases",
+      "Cutting bleed on tom and snare mics",
+      "Cleaning amp hiss between guitar parts",
+      "Tightening drum tails"
+    ],
+    "properties": "Input → optional one-pole high-pass on the detector → stereo-linked peak envelope → open/close against Threshold with attack/release smoothing → closed gain set by Range → Output. Zero latency.",
+    "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\">\n<defs><linearGradient id=\"icon-gate\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs>\n<rect x=\"12\" y=\"12\" width=\"40\" height=\"40\" rx=\"4\" stroke=\"url(#icon-gate)\" stroke-width=\"2\" fill=\"none\"/>\n<path d=\"M 12,32 L 24,32 M 40,32 L 52,32\" stroke=\"url(#icon-gate)\" stroke-width=\"2\"/>\n<rect x=\"24\" y=\"24\" width=\"16\" height=\"16\" fill=\"url(#icon-gate)\" opacity=\"0.4\"/>\n</svg>"
+  },
+  "glitch_fx": {
+    "card_desc": "Stutter & Glitch Engine",
+    "keywords": "glitch fx stutter repeat loop slice pitch tape stop reverse granular gate chop random creative edm",
+    "slider_desc": [
+      "How often a new glitch event starts (events per second)",
+      "Length of the captured slice as a note value (1/x) at the project tempo (120 BPM if none)",
+      "Loops the latest slice until the next event; off lets the other effects work on the live signal",
+      "Attenuation applied to the second half of each gate cycle",
+      "Enables the rhythmic gate chop",
+      "Playback pitch of the loop in semitones (varispeed)",
+      "Enables Pitch Shift",
+      "Probability that an event plays its slice backwards",
+      "Enables random reversal: reverses the stutter loop, or with Stutter off plays the live audio back in reversed chunks",
+      "How long a tape-stop event takes to slow to a halt",
+      "Enables tape stops, triggered on about 30% of events",
+      "Length of the Hann-windowed grain looped instead of the full slice",
+      "Loops a short windowed grain instead of the whole slice, or with Stutter off turns the live signal into overlapping grains",
+      "Dry/wet blend"
+    ],
+    "uses": [
+      "Beat-repeat and stutter fills on drums",
+      "Random reverse and tape-stop transitions",
+      "Granular buzz and freeze textures on vocals",
+      "Chopped, gated rhythmic effects on pads",
+      "Live performance glitching via automation"
+    ],
+    "properties": "Signal chain: Input → 4 s Ring Buffer → Event Clock (Rate) → Slice Loop (Stutter / Granular grain, Reverse, Pitch, Tape Stop) or, with Stutter off, live processing (reversed chunks, two overlapping Hann grains, varispeed pitch / tape stop) → Gate → Mix → Output. Every effect works on its own; slice length follows host tempo; loop seams get 3 ms fades; zero latency.",
+    "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-glitch-fx\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><path d=\"M6,32 L58,32\" stroke=\"url(#icon-glitch-fx)\" stroke-width=\"1.5\" fill=\"none\" stroke-linecap=\"round\" opacity=\"0.4\"/><path d=\"M6,32 L12,32 L12,18 L20,18 L20,46 L26,46 L26,32\" stroke=\"url(#icon-glitch-fx)\" stroke-width=\"2.5\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M32,22 L38,22 L38,42 L44,42\" stroke=\"url(#icon-glitch-fx)\" stroke-width=\"2.5\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M50,26 L50,38 M54,32 L58,32\" stroke=\"url(#icon-glitch-fx)\" stroke-width=\"2.5\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/></svg>"
+  },
+  "granular_delay": {
+    "card_desc": "Grain Cloud Delay",
+    "keywords": "granular delay grains cloud texture pitch spray ambient glitch reverse shimmer",
+    "slider_desc": [
+      "How far back grains read from the delay line",
+      "Length of each windowed grain",
+      "Number of grains started per second",
+      "Playback pitch of each grain",
+      "Random extra delay per grain (up to 1 s)",
+      "Probability that a grain plays backwards",
+      "Grain cloud fed back into the delay line",
+      "Random stereo panning of grains",
+      "Dry/wet blend"
+    ],
+    "uses": [
+      "Ambient clouds from vocals or guitar",
+      "Pitched, shimmering delay textures",
+      "Reverse grain swells",
+      "Evolving pads from short sources",
+      "Glitchy, scattered echoes"
+    ],
+    "properties": "Signal chain: Input + Feedback → 3 s Delay Line → Grain Scheduler (up to 16 Hann-windowed grains, random timing, Spray, Reverse, Pan) → Level Normalisation → Mix → Output. Zero latency.",
+    "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-granular-delay\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><path d=\"M6,52 L58,52\" stroke=\"url(#icon-granular-delay)\" stroke-width=\"1.5\" fill=\"none\" stroke-linecap=\"round\" opacity=\"0.4\"/><path d=\"M10,40 L10,40 M16,30 L16,30 M22,44 L22,44 M28,22 L28,22 M33,36 L33,36 M39,28 L39,28 M45,42 L45,42 M50,24 L50,24 M55,34 L55,34\" stroke=\"url(#icon-granular-delay)\" stroke-width=\"5\" fill=\"none\" stroke-linecap=\"round\"/></svg>"
+  },
+  "grit": {
+    "card_desc": "One-Knob Bitcrusher",
+    "keywords": "grit bitcrush bit crusher sample rate reduction decimate lofi degradation digital",
+    "slider_desc": [
+      "Crush intensity: 0 leaves the signal untouched, 100 is fully crushed with bit depth dropping from 16 to 3 bits and sample-and-hold downsampling up to 8x"
+    ],
+    "uses": [
+      "Lo-fi drum textures",
+      "8-bit / chiptune character",
+      "Digital grit on synths",
+      "Degraded radio-style effects",
+      "Parallel crunch on percussion"
+    ],
+    "properties": "Input → sample-and-hold decimation (hold 1–8 samples) → bit-depth quantisation (16 to 3 bits) → crossfade with dry by the same amount → Output. Zero latency, no anti-aliasing (aliasing is intended).",
+    "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-grit\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><path d=\"M 8,40 L 8,32 L 16,32 L 16,22 L 24,22 L 24,28 L 32,28 L 32,40 L 40,40 L 40,24 L 48,24 L 48,34 L 56,34\" stroke=\"url(#icon-grit)\" stroke-width=\"2.5\" fill=\"none\" stroke-linecap=\"round\"/><path d=\"M 8,32 Q 20,14 32,34 T 56,30\" stroke=\"url(#icon-grit)\" stroke-width=\"1.5\" fill=\"none\" stroke-linecap=\"round\" opacity=\"0.3\"/></svg>"
+  },
+  "harmonizer": {
+    "card_desc": "Two-Voice Pitch Harmonizer",
+    "keywords": "harmonizer harmony pitch shift voices interval thirds fifths octave backing vocals doubler chord",
+    "slider_desc": [
+      "Interval of voice 1 in semitones",
+      "Interval of voice 2 in semitones",
+      "Level of voice 1",
+      "Level of voice 2",
+      "Opposite detune of the two voices for a natural, separate-performer feel",
+      "Delay of the voices (voice 2 is delayed 1.37× longer)",
+      "Pans voice 1 left and voice 2 right",
+      "Equal-power dry/wet: 0% = original only, 50% = both at −3 dB, 100% = harmony voices only"
+    ],
+    "uses": [
+      "Instant backing vocal harmonies",
+      "Thirds and fifths on lead lines",
+      "Octave doubling on guitars and synths",
+      "Wide stereo harmony beds"
+    ],
+    "properties": "Signal chain: Input (summed to mono) → 2 Crossfading Delay-Line Pitch Shifters (50 ms window) → Detune + Delay → Equal-Power Spread → Equal-Power Dry/Wet Mix → Output. Fixed intervals (no key detection); Mix at 100% outputs only the harmony for printing to its own track; zero latency.",
+    "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-harmonizer\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><path d=\"M8,18 Q16,10 24,18 T40,18 T56,18\" stroke=\"url(#icon-harmonizer)\" stroke-width=\"1.5\" fill=\"none\" stroke-linecap=\"round\" opacity=\"0.4\"/><path d=\"M8,32 Q16,22 24,32 T40,32 T56,32\" stroke=\"url(#icon-harmonizer)\" stroke-width=\"2.5\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M8,46 Q16,38 24,46 T40,46 T56,46\" stroke=\"url(#icon-harmonizer)\" stroke-width=\"1.5\" fill=\"none\" stroke-linecap=\"round\" opacity=\"0.4\"/></svg>"
+  },
+  "kick_shaper": {
+    "card_desc": "Kick Drum Sculptor",
+    "keywords": "kick shaper drum transient punch body thump click decay attack bass drum shaping",
+    "slider_desc": [
+      "Boosts or softens the first milliseconds of each hit via transient detection",
+      "Bell EQ at 120 Hz for the body of the kick",
+      "Bell EQ at 55 Hz for the low-end thump",
+      "Bell EQ at 4 kHz for beater click",
+      "Tail time constant after each detected hit; lower values give a shorter, tighter kick (500 ms leaves it nearly untouched)",
+      "Final output level"
+    ],
+    "uses": [
+      "Add punch and beater click to kick drums",
+      "Tighten boomy kicks by shortening the tail",
+      "Fatten thin kicks with extra thump and body",
+      "Shape sampled 808s and electronic kicks",
+      "Reduce bleed between hits on live kick tracks"
+    ],
+    "properties": "Signal chain: Input → Thump (55 Hz) → Body (120 Hz) → Click (4 kHz) bell EQs → Transient Shaper (fast/slow envelope) → Hit-Triggered Decay (starts after 20 ms) → Output Gain → Output. Linked stereo detection, zero latency.",
+    "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-kick-shaper\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><path d=\"M6,32 L58,32\" stroke=\"url(#icon-kick-shaper)\" stroke-width=\"1.5\" fill=\"none\" stroke-linecap=\"round\" opacity=\"0.4\"/><path d=\"M6,32 Q10,4 14,32 Q18,56 22,32 Q26,18 30,32 Q34,42 38,32 Q42,27 46,32 Q50,35 54,32 L58,32\" stroke=\"url(#icon-kick-shaper)\" stroke-width=\"2.5\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/></svg>"
+  },
+  "ladder_filter": {
+    "card_desc": "Moog-Style Ladder Filter",
+    "keywords": "ladder filter moog 24db lowpass highpass resonance drive analog synth zdf self-oscillation",
+    "slider_desc": [
+      "Filter cutoff frequency",
+      "Feedback around the ladder; high values approach self-oscillation (capped at 3.95)",
+      "Input gain into the saturating ladder for analog growl (level-compensated)",
+      "Lowpass or Highpass 24 dB/oct response",
+      "Output level"
+    ],
+    "uses": [
+      "Classic resonant synth filter sweeps",
+      "Warm, driven lowpass on drums and bass",
+      "Automated filter build-ups",
+      "Highpass sweeps with resonant peak",
+      "Taming harsh digital sources with analog character"
+    ],
+    "properties": "Signal chain: Input → Drive → 4-Pole Zero-Delay-Feedback Ladder (24 dB/oct, tanh saturation in the loop) → LP / HP Output → Gain → Output. Stable and in tune up to 20 kHz at full resonance; stereo channels independent, zero latency.",
+    "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-ladder\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><path d=\"M 16,16 L 16,48 M 24,16 L 24,32 M 32,16 L 32,40 M 40,16 L 40,36 M 48,16 L 48,44\" stroke=\"url(#icon-ladder)\" stroke-width=\"2\"/><circle cx=\"8\" cy=\"32\" r=\"6\" stroke=\"url(#icon-ladder)\" stroke-width=\"1.5\" fill=\"none\"/><circle cx=\"56\" cy=\"32\" r=\"6\" stroke=\"url(#icon-ladder)\" stroke-width=\"1.5\" fill=\"none\"/></svg>"
+  },
+  "limiter": {
+    "card_desc": "Limiter, Clipper & Brickwall",
+    "keywords": "limiter clipper brickwall ceiling peak protection lookahead mastering true loudness",
+    "slider_desc": [
+      "Limiter = look-ahead limiting; Clipper = soft clipping with no delay; Brickwall = look-ahead with instant gain drop.",
+      "Drive control: a signal at Threshold comes out at the Ceiling, so lower values push harder.",
+      "Maximum output level.",
+      "How fast the gain recovers after a peak.",
+      "How far ahead peaks are detected (ignored in Clipper mode)."
+    ],
+    "uses": [
+      "Peak protection on the master bus",
+      "Transparent loudness gain in mastering",
+      "Soft clipping for drums and transient-heavy material",
+      "Catching stray peaks on individual tracks"
+    ],
+    "properties": "Input → drive (Ceiling − Threshold) → Limiter/Brickwall: held peak detector + delayed signal + gain, followed by a safety clamp at Ceiling; Clipper: smooth knee from 70% of Ceiling → Output. Stereo-linked; latency equals Lookahead (0 in Clipper mode) and is reported for delay compensation.",
+    "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\">\n<defs><linearGradient id=\"icon-limit\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs>\n<path d=\"M 8,20 L 16,20 L 16,44 L 24,44 L 24,20 L 32,20 L 32,44 L 40,44 L 40,20 L 48,20 L 48,44 L 56,44\" stroke=\"url(#icon-limit)\" stroke-width=\"2\" opacity=\"0.4\"/>\n<path d=\"M 8,32 L 16,32 L 16,20 L 24,44 L 32,16 L 40,40 L 48,24 L 56,32\" stroke=\"url(#icon-limit)\" stroke-width=\"2.5\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/>\n</svg>"
+  },
+  "louder": {
+    "card_desc": "One-Knob Loudness Maximizer",
+    "keywords": "louder loudness maximizer limiter gain volume boost makeup ceiling look-ahead",
+    "slider_desc": [
+      "Gain into the limiter: 0 is unity, 100 adds +12 dB; peaks are held under a -0.3 dBFS ceiling by a look-ahead limiter"
+    ],
+    "uses": [
+      "Quick loudness on a mix or stem",
+      "Makeup gain after quiet processing",
+      "Boost low-level recordings without clipping",
+      "Final ceiling on a bounce",
+      "Push a bus louder while catching peaks"
+    ],
+    "properties": "Input → gain (0 to +12 dB) → stereo-linked look-ahead peak limiter (2 ms look-ahead with gain hold, 80 ms release, -0.3 dBFS ceiling) → safety clip at the ceiling → Output. 2 ms latency, reported to REAPER for compensation; at 0 only peaks above the ceiling are touched.",
+    "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-louder\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><path d=\"M 12,40 L 12,24 L 22,24 L 34,14 L 34,50 L 22,40 Z\" stroke=\"url(#icon-louder)\" stroke-width=\"2.5\" fill=\"none\" stroke-linecap=\"round\"/><path d=\"M 42,24 Q 47,32 42,40\" stroke=\"url(#icon-louder)\" stroke-width=\"2.5\" fill=\"none\" stroke-linecap=\"round\"/><path d=\"M 48,18 Q 57,32 48,46\" stroke=\"url(#icon-louder)\" stroke-width=\"1.5\" fill=\"none\" stroke-linecap=\"round\" opacity=\"0.4\"/></svg>"
+  },
+  "maximizer": {
+    "card_desc": "Look-Ahead Loudness Maximizer",
+    "keywords": "maximizer maximiser limiter loudness ceiling mastering peak lookahead louder",
+    "slider_desc": [
+      "Gain driving the signal into the limiter.",
+      "Maximum peak level out of the limiter.",
+      "How fast the gain recovers after a peak.",
+      "How far ahead peaks are detected.",
+      "Trim after limiting (cut only, −12 to 0 dB), so the output never exceeds Ceiling; use Input Gain to make it louder.",
+      "ON uses one gain for both channels to keep the image stable; OFF limits each channel independently."
+    ],
+    "uses": [
+      "Final loudness stage in mastering",
+      "Raising stems and bounces to a target level",
+      "Peak control on buses",
+      "Dual-mono limiting for independent channels"
+    ],
+    "properties": "Input Gain → held peak detector + look-ahead delay → gain reduction to Ceiling → clamp at Ceiling → Output Gain trim (≤ 0 dB) → Output. Latency equals Lookahead (0–5 ms), reported to REAPER for delay compensation.",
+    "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-maximizer\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><path d=\"M 8,16 L 56,16\" stroke=\"url(#icon-maximizer)\" stroke-width=\"2.5\" fill=\"none\" stroke-linecap=\"round\"/><path d=\"M 10,40 L 16,22 L 22,36 L 28,18 L 34,34 L 40,18 L 46,30 L 54,20\" stroke=\"url(#icon-maximizer)\" stroke-width=\"1.5\" fill=\"none\" stroke-linecap=\"round\" opacity=\"0.5\"/><path d=\"M 32,54 L 32,30 M 26,36 L 32,30 L 38,36\" stroke=\"url(#icon-maximizer)\" stroke-width=\"2.5\" fill=\"none\" stroke-linecap=\"round\"/></svg>"
+  },
+  "mid_side_matrix": {
+    "card_desc": "M/S Encode & Decode",
+    "keywords": "mid side matrix m/s ms encode decode stereo sum difference",
+    "slider_desc": [
+      "Level of the Mid component.",
+      "Level of the Side component.",
+      "Encode turns L/R into Mid (left output) and Side (right output); Decode turns Mid/Side back into L/R."
+    ],
+    "uses": [
+      "Mid/side processing with other plugins between an encoder and decoder",
+      "Adjusting the balance of centre and sides",
+      "Recording and decoding M/S microphone setups",
+      "Inspecting the mid and side content separately"
+    ],
+    "properties": "Encode: L/R → Mid = (L+R)×0.707, Side = (L−R)×0.707 → Mid on left, Side on right. Decode: Mid (left) / Side (right) → gains → L/R. Encode followed by Decode is unity gain; zero latency.",
+    "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-ms\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><circle cx=\"32\" cy=\"32\" r=\"14\" stroke=\"url(#icon-ms)\" stroke-width=\"2\" fill=\"none\"/><text x=\"32\" y=\"36\" font-size=\"14\" font-weight=\"bold\" text-anchor=\"middle\" fill=\"#999999\">MS</text></svg>"
+  },
+  "mono_maker": {
+    "card_desc": "Low-End Mono Summing",
+    "keywords": "mono maker bass mono low frequency summing stereo width elliptical eq side",
+    "slider_desc": [
+      "Crossover frequency below which the side signal is removed: 0 is off, 100 makes everything under 400 Hz mono (exponential 20–400 Hz sweep)"
+    ],
+    "uses": [
+      "Centre the bass on mix and master buses",
+      "Fix wide, phasey low end from stereo synths",
+      "Vinyl-safe low frequencies",
+      "Tighten kick and bass in stereo samples",
+      "Keep highs wide while lows stay mono"
+    ],
+    "properties": "Input → M/S split → side signal through a 4th-order low-pass (two Butterworth stages) → low side removed from L/R → Output. Mid and high side content are untouched; zero latency.",
+    "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-mono-maker\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><path d=\"M 8,18 Q 20,18 32,40 Q 44,18 56,18\" stroke=\"url(#icon-mono-maker)\" stroke-width=\"2.5\" fill=\"none\" stroke-linecap=\"round\"/><path d=\"M 32,40 L 32,52\" stroke=\"url(#icon-mono-maker)\" stroke-width=\"2.5\" fill=\"none\" stroke-linecap=\"round\"/><path d=\"M 8,26 L 56,26\" stroke=\"url(#icon-mono-maker)\" stroke-width=\"1.5\" fill=\"none\" stroke-linecap=\"round\" opacity=\"0.3\"/></svg>"
+  },
+  "multiband_compressor": {
+    "card_desc": "Four-Band Compressor",
+    "keywords": "multiband multi-band compressor four band crossover dynamics mastering per band split",
+    "slider_desc": [
+      "Split between Low and LowMid bands (50–1000 Hz).",
+      "Split between LowMid and HighMid bands (500–4000 Hz, kept at least 1.5× above Crossover 1).",
+      "Split between HighMid and High bands (4–12 kHz, kept at least 1.5× above Crossover 2).",
+      "Level where the Low band starts compressing.",
+      "Compression strength for the Low band.",
+      "Gain added to the Low band after compression.",
+      "Active compresses the Low band; Bypass passes it uncompressed (makeup still applies); Mute removes it; Solo plays only soloed bands.",
+      "Level where the LowMid band starts compressing.",
+      "Compression strength for the LowMid band.",
+      "Gain added to the LowMid band after compression.",
+      "Active compresses the LowMid band; Bypass passes it uncompressed (makeup still applies); Mute removes it; Solo plays only soloed bands.",
+      "Level where the HighMid band starts compressing.",
+      "Compression strength for the HighMid band.",
+      "Gain added to the HighMid band after compression.",
+      "Active compresses the HighMid band; Bypass passes it uncompressed (makeup still applies); Mute removes it; Solo plays only soloed bands.",
+      "Level where the High band starts compressing.",
+      "Compression strength for the High band.",
+      "Gain added to the High band after compression.",
+      "Active compresses the High band; Bypass passes it uncompressed (makeup still applies); Mute removes it; Solo plays only soloed bands.",
+      "How fast gain reduction is applied in all bands.",
+      "How fast gain recovers in all bands.",
+      "Width of the soft knee around each threshold (100% = ±60 dB).",
+      "Overall output gain after the bands are summed."
+    ],
+    "uses": [
+      "Mastering bus dynamics",
+      "Controlling a boomy low end without dulling the top",
+      "Taming harsh upper mids on vocals or guitars",
+      "Per-band level balancing with Solo to audition each band",
+      "Broadcast-style density"
+    ],
+    "properties": "Input → complementary crossovers (four cascaded one-pole low-passes, subtracted from the remainder) → 4 bands, each with stereo-linked peak compression, knee and makeup → Mute/Solo/Bypass → Sum → Master Output → Output. The bands sum back to the original signal with compression off; zero latency.",
+    "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-mbc\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><rect x=\"8\" y=\"12\" width=\"12\" height=\"40\" stroke=\"url(#icon-mbc)\" stroke-width=\"1.5\" fill=\"none\"/><rect x=\"22\" y=\"16\" width=\"12\" height=\"32\" stroke=\"url(#icon-mbc)\" stroke-width=\"1.5\" fill=\"none\"/><rect x=\"36\" y=\"16\" width=\"12\" height=\"32\" stroke=\"url(#icon-mbc)\" stroke-width=\"1.5\" fill=\"none\"/><rect x=\"50\" y=\"12\" width=\"12\" height=\"40\" stroke=\"url(#icon-mbc)\" stroke-width=\"1.5\" fill=\"none\"/></svg>"
+  },
+  "noise_generator": {
+    "card_desc": "White, Pink & Brown Noise",
+    "keywords": "noise generator white pink brown test signal calibration stereo",
+    "slider_desc": [
+      "Noise colour: White (flat), Pink (−3 dB/oct) or Brown (−6 dB/oct).",
+      "Output level of the noise.",
+      "Correlation between channels: 0% = identical mono noise, 100% = fully independent left and right."
+    ],
+    "uses": [
+      "Gain staging and monitor calibration",
+      "Testing filters and EQs",
+      "Sound design layers for risers and sweeps",
+      "Masking or ambience beds"
+    ],
+    "properties": "Random generator → colour filter (Pink: multi-pole filter bank; Brown: leaky integrator) → Level → Stereo Width → Output. The input is replaced by the noise, not mixed with it.",
+    "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-noise\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><rect x=\"16\" y=\"20\" width=\"6\" height=\"24\" fill=\"url(#icon-noise)\"/><rect x=\"24\" y=\"12\" width=\"6\" height=\"40\" fill=\"url(#icon-noise)\"/><rect x=\"32\" y=\"24\" width=\"6\" height=\"16\" fill=\"url(#icon-noise)\"/><rect x=\"40\" y=\"16\" width=\"6\" height=\"32\" fill=\"url(#icon-noise)\"/><rect x=\"48\" y=\"28\" width=\"6\" height=\"8\" fill=\"url(#icon-noise)\"/></svg>"
+  },
+  "ott": {
+    "card_desc": "Multiband Upward/Downward Compressor",
+    "keywords": "ott over the top multiband compression upward downward edm loud aggressive dense squash",
+    "slider_desc": [
+      "Blend between dry signal and the compressed signal",
+      "Scales attack and release times (100% = 13.5 ms / 132 ms)",
+      "Amount of upward compression lifting quiet parts",
+      "Amount of downward compression pushing down loud parts",
+      "Gain of the low band (below 88 Hz)",
+      "Gain of the mid band (88 Hz–2.5 kHz)",
+      "Gain of the high band (above 2.5 kHz)",
+      "Final output level"
+    ],
+    "uses": [
+      "Aggressive, dense EDM sound design",
+      "Bring out detail and tails in synths",
+      "Make drums and loops hit harder",
+      "Thicken vocals and effects for impact",
+      "Parallel squash with low Depth"
+    ],
+    "properties": "Signal chain: Input → 3-Band Linkwitz-Riley Split (88 Hz, 2.5 kHz) → Per-Band Downward (66:1 above −33 dB) + Upward (4:1 below −41 dB, up to +24 dB) → Band Gains → Make-up → Depth Mix → Output → Soft Safety Clip. Linked stereo detection per band, zero latency.",
+    "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-ott\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><path d=\"M8,32 L56,32\" stroke=\"url(#icon-ott)\" stroke-width=\"1.5\" fill=\"none\" stroke-linecap=\"round\" opacity=\"0.4\"/><path d=\"M14,8 L20,16 L26,8 M38,8 L44,16 L50,8\" stroke=\"url(#icon-ott)\" stroke-width=\"2.5\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M14,56 L20,48 L26,56 M38,56 L44,48 L50,56\" stroke=\"url(#icon-ott)\" stroke-width=\"2.5\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M20,22 L20,42 M32,20 L32,44 M44,22 L44,42\" stroke=\"url(#icon-ott)\" stroke-width=\"2.5\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/></svg>"
+  },
+  "parametric_eq": {
+    "card_desc": "Five-Band Parametric EQ",
+    "keywords": "parametric eq equalizer equaliser five band shelf peaking bell notch low pass high pass band pass all pass mixing mastering",
+    "slider_desc": [
+      "Centre or corner frequency of the Low band.",
+      "Boost or cut of the Low band (shelf and peaking types).",
+      "Bandwidth or slope of the Low band.",
+      "Filter shape of the Low band.",
+      "Active, Bypass, or Solo (hear only this band's region).",
+      "Centre or corner frequency of the Low Mid band.",
+      "Boost or cut of the Low Mid band (shelf and peaking types).",
+      "Bandwidth or slope of the Low Mid band.",
+      "Filter shape of the Low Mid band.",
+      "Active, Bypass, or Solo (hear only this band's region).",
+      "Centre or corner frequency of the Mid High band.",
+      "Boost or cut of the Mid High band (shelf and peaking types).",
+      "Bandwidth or slope of the Mid High band.",
+      "Filter shape of the Mid High band.",
+      "Active, Bypass, or Solo (hear only this band's region).",
+      "Centre or corner frequency of the High band.",
+      "Boost or cut of the High band (shelf and peaking types).",
+      "Bandwidth or slope of the High band.",
+      "Filter shape of the High band.",
+      "Active, Bypass, or Solo (hear only this band's region).",
+      "Centre or corner frequency of the Ultra High band.",
+      "Boost or cut of the Ultra High band (shelf and peaking types).",
+      "Bandwidth or slope of the Ultra High band.",
+      "Filter shape of the Ultra High band.",
+      "Active, Bypass, or Solo (hear only this band's region)."
+    ],
+    "uses": [
+      "Surgical cuts of problem frequencies",
+      "Broad tonal shaping with shelves",
+      "High-pass and low-pass cleanup",
+      "Finding resonances with band Solo",
+      "Mastering EQ"
+    ],
+    "properties": "Input → five RBJ biquad bands in series (Low Shelf, High Shelf, Peaking, Low Pass, High Pass, Notch, Band Pass or All Pass per band) → Output. Solo replaces the soloed band with a band-pass and mutes the other bands' processing; Gain only affects shelf and peaking types; zero latency.",
+    "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\">\n<defs><linearGradient id=\"icon-5bpeq\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs>\n<path d=\"M 4,44 L 60,44\" stroke=\"url(#icon-5bpeq)\" stroke-width=\"1\" fill=\"none\" stroke-dasharray=\"2,3\" opacity=\"0.3\"/>\n<path d=\"M 4,44 Q 9,36 14,44\" stroke=\"url(#icon-5bpeq)\" stroke-width=\"2.5\" fill=\"none\" stroke-linecap=\"round\"/>\n<path d=\"M 16,44 Q 21,28 26,44\" stroke=\"url(#icon-5bpeq)\" stroke-width=\"2.5\" fill=\"none\" stroke-linecap=\"round\"/>\n<path d=\"M 28,44 Q 33,18 38,44\" stroke=\"url(#icon-5bpeq)\" stroke-width=\"2.5\" fill=\"none\" stroke-linecap=\"round\"/>\n<path d=\"M 40,44 Q 45,26 50,44\" stroke=\"url(#icon-5bpeq)\" stroke-width=\"2.5\" fill=\"none\" stroke-linecap=\"round\"/>\n<path d=\"M 52,44 Q 56,34 60,44\" stroke=\"url(#icon-5bpeq)\" stroke-width=\"2.5\" fill=\"none\" stroke-linecap=\"round\"/>\n</svg>"
+  },
+  "phaser": {
+    "card_desc": "All-Pass Sweep Phaser",
+    "keywords": "phaser phasing all-pass allpass sweep notch modulation",
+    "slider_desc": [
+      "Speed of the sine LFO sweeping the all-pass filters.",
+      "Number of all-pass stages; more stages create more notches.",
+      "Amount of phased signal added to the dry signal."
+    ],
+    "uses": [
+      "Swirling movement on guitars and keys",
+      "Vintage phasing on synths",
+      "Subtle motion on pads",
+      "Psychedelic effects on drums and vocals"
+    ],
+    "properties": "Input → 1–8 first-order all-pass stages swept by a sine LFO (roughly 440–1600 Hz range) with fixed 30% feedback → added to the dry signal by Mix → Output. One LFO drives both channels; zero latency.",
+    "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\">\n<defs><linearGradient id=\"icon-phase\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs>\n<path d=\"M 8,32 Q 14,12 20,32 Q 26,52 32,32 Q 38,12 44,32 Q 50,52 56,32\" stroke=\"url(#icon-phase)\" stroke-width=\"2.5\" fill=\"none\" stroke-linecap=\"round\"/>\n<path d=\"M 8,24 L 20,24 M 28,24 L 44,24 M 48,24 L 56,24\" stroke=\"url(#icon-phase)\" stroke-width=\"1.5\" opacity=\"0.4\"/>\n<path d=\"M 8,40 L 24,40 M 32,40 L 48,40 M 52,40 L 56,40\" stroke=\"url(#icon-phase)\" stroke-width=\"1.5\" opacity=\"0.4\"/>\n</svg>"
+  },
+  "phatter": {
+    "card_desc": "One-Knob Low-End Boost",
+    "keywords": "phatter phat fat bass low end enhancement sub weight boost thickness warmth",
+    "slider_desc": [
+      "Low-frequency boost below ~200 Hz: 0 leaves the signal untouched, 100 adds up to +12 dB of weight"
+    ],
+    "uses": [
+      "Add weight to thin kicks",
+      "Fatten bass lines",
+      "Warmth on a drum bus",
+      "Body for small-sounding synths",
+      "Quick low-end fix on samples"
+    ],
+    "properties": "Input → 200 Hz one-pole low-pass → low band boosted (0 to +12 dB) and added back → Output. No limiting, so watch headroom at high settings; zero latency.",
+    "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-phatter\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><path d=\"M 8,18 L 22,18 Q 30,18 34,40 Q 38,46 56,46\" stroke=\"url(#icon-phatter)\" stroke-width=\"2.5\" fill=\"none\" stroke-linecap=\"round\"/><path d=\"M 8,46 L 34,46\" stroke=\"url(#icon-phatter)\" stroke-width=\"1.5\" fill=\"none\" stroke-linecap=\"round\" opacity=\"0.3\"/><circle cx=\"15\" cy=\"30\" r=\"5\" stroke=\"url(#icon-phatter)\" stroke-width=\"1.5\" fill=\"none\" stroke-linecap=\"round\" opacity=\"0.4\"/></svg>"
+  },
+  "pitch_shifter": {
+    "card_desc": "Real-Time Pitch Shift",
+    "keywords": "pitch shifter shift transpose detune octave semitone harmony harmonizer",
+    "slider_desc": [
+      "Shift in whole octaves.",
+      "Shift in semitones, added to the octave setting.",
+      "Fine tuning in cents.",
+      "Blend between dry and shifted signal."
+    ],
+    "uses": [
+      "Octave doubling",
+      "Simple parallel harmonies",
+      "Detune and thickening with Fine",
+      "Creative sound design"
+    ],
+    "properties": "Input → 60 ms delay line read by two taps in opposite phase with Hann crossfades → Dry/Wet Mix → Output. Total shift = Octave × 12 + Semitones + Fine/100 semitones; the window-based method adds some smearing on transients.",
+    "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\">\n<defs><linearGradient id=\"icon-pitch\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs>\n<path d=\"M 8,32 L 16,32 L 18,26 L 20,38 L 22,26 L 24,38 L 26,26 L 28,38 L 30,32 L 38,32\" stroke=\"url(#icon-pitch)\" stroke-width=\"2.5\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/>\n<path d=\"M 38,32 L 48,20 M 38,32 L 48,44\" stroke=\"url(#icon-pitch)\" stroke-width=\"2\"/>\n<path d=\"M 48,20 L 48,44\" stroke=\"url(#icon-pitch)\" stroke-width=\"2\"/>\n</svg>"
+  },
+  "pressure": {
+    "card_desc": "One-Knob Bus Compressor",
+    "keywords": "pressure compressor compression dynamics leveling glue bus squash rms",
+    "slider_desc": [
+      "Compression amount: 0 does nothing, higher values lower the threshold (down to -30 dB) and raise the ratio (up to 6:1), with automatic makeup gain"
+    ],
+    "uses": [
+      "Glue a bus with one control",
+      "Even out vocals quickly",
+      "Level bass guitar",
+      "Squash drum room mics",
+      "Gentle mix bus control at low settings"
+    ],
+    "properties": "Input → stereo-linked RMS-style detector (5 ms) → gain computer (threshold 0 to -30 dB, ratio 1:1 to 6:1) → 10 ms attack, 150 ms release smoothing → automatic makeup (half the gain reduction at threshold, up to about +12.5 dB) → Output. Zero latency; 0 is a clean pass-through.",
+    "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-pressure\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><path d=\"M 10,54 L 32,32 L 54,22\" stroke=\"url(#icon-pressure)\" stroke-width=\"2.5\" fill=\"none\" stroke-linecap=\"round\"/><path d=\"M 32,32 L 54,10\" stroke=\"url(#icon-pressure)\" stroke-width=\"1.5\" fill=\"none\" stroke-linecap=\"round\" opacity=\"0.3\"/><path d=\"M 22,12 L 22,20 M 18,16 L 22,20 L 26,16\" stroke=\"url(#icon-pressure)\" stroke-width=\"1.5\" fill=\"none\" stroke-linecap=\"round\" opacity=\"0.4\"/></svg>"
+  },
+  "pumper": {
+    "card_desc": "Tempo-Synced Volume Pump",
+    "keywords": "pumper pump pumping sidechain ducking rhythm groove volume tempo sync beat edm",
+    "slider_desc": [
+      "Depth of the dip on every beat: 0 has no effect, 100 ducks the level by up to -20 dB before it swells back over the beat"
+    ],
+    "uses": [
+      "Fake sidechain pumping on pads",
+      "EDM-style breathing on a synth bus",
+      "Rhythmic movement on sustained chords",
+      "Groove on reverb returns",
+      "Quick ducking effect without routing"
+    ],
+    "properties": "Input → gain from a quarter-note envelope locked to the project tempo (fast fade down over 2% of the beat, smooth S-curve release over 60%) → Output. Follows the beat position during playback and free-runs at the project tempo when stopped; zero latency.",
+    "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-pumper\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><path d=\"M 8,18 L 12,46 Q 20,20 28,18 L 32,46 Q 40,20 48,18 L 52,46 Q 54,32 56,26\" stroke=\"url(#icon-pumper)\" stroke-width=\"2.5\" fill=\"none\" stroke-linecap=\"round\"/></svg>"
+  },
+  "reverb": {
+    "card_desc": "Compact Stereo Algorithmic Reverb",
+    "keywords": "reverb room ambience space comb allpass schroeder decay tail",
+    "slider_desc": [
+      "Scales all delay lengths (25–100% of full size); larger values give longer, sparser reflections and a longer tail.",
+      "Comb feedback; higher values give a longer tail (roughly 0.4 s to 4 s at default size).",
+      "High-frequency absorption in the tail: 0% is bright, higher values make the tail progressively darker (low-pass from 16 kHz down to 1.2 kHz).",
+      "Blend between dry signal and reverb.",
+      "Passes the input unprocessed when set to 1."
+    ],
+    "uses": [
+      "Room and hall ambience on dry sources",
+      "Stereo space on vocals and instruments",
+      "Dark, damped tails for pads",
+      "Quick sketch reverb during writing"
+    ],
+    "properties": "Input → mono sum → four damped feedback combs per side (right side slightly longer for a decorrelated stereo tail) → two series all-passes per side → Dry/Wet Mix → Output. Delay lengths and damping are scaled to the sample rate, so it sounds the same at 44.1, 48 or 96 kHz; zero latency.",
+    "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\">\n<defs><linearGradient id=\"icon-reverb\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs>\n<circle cx=\"32\" cy=\"32\" r=\"20\" stroke=\"url(#icon-reverb)\" stroke-width=\"1.5\" fill=\"none\" opacity=\"0.3\"/>\n<circle cx=\"32\" cy=\"32\" r=\"14\" stroke=\"url(#icon-reverb)\" stroke-width=\"1.5\" fill=\"none\" opacity=\"0.5\"/>\n<circle cx=\"32\" cy=\"32\" r=\"8\" stroke=\"url(#icon-reverb)\" stroke-width=\"2\" fill=\"none\"/>\n<path d=\"M 8,32 Q 16,20 24,32 Q 32,44 40,32 Q 48,20 56,32\" stroke=\"url(#icon-reverb)\" stroke-width=\"1.5\" fill=\"none\" opacity=\"0.4\"/>\n</svg>"
+  },
+  "reverser": {
+    "card_desc": "Real-Time Reverse Buffer",
+    "keywords": "reverser reverse backwards buffer playback realtime filter reverse reverb swell",
+    "slider_desc": [
+      "Length of the circular buffer that is read backwards",
+      "Optional filter on the reversed signal: Off, Lowpass, Bandpass or Highpass",
+      "Cutoff / centre frequency of the filter",
+      "Dry/wet blend"
+    ],
+    "uses": [
+      "Backwards textures from live input",
+      "Reverse swells on vocals and guitars",
+      "Filtered reverse ambience under a mix",
+      "Experimental sound design"
+    ],
+    "properties": "Signal chain: Input → Circular Buffer (1–10 s) → Backwards Read → Optional RBJ Filter (Q 0.707, independent state per channel) → Mix → Output. The read head runs in reverse while the write head moves forward, so the reversed audio is continuous rather than chunked; filter changes do not reset the filter (no clicks); zero latency.",
+    "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-rev2\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><path d=\"M 8,24 L 48,24 L 42,18 M 48,24 L 42,30\" stroke=\"url(#icon-rev2)\" stroke-width=\"2.5\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M 56,40 L 16,40 L 22,34 M 16,40 L 22,46\" stroke=\"url(#icon-rev2)\" stroke-width=\"2.5\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/></svg>"
+  },
+  "ring_mod": {
+    "card_desc": "Swept Ring Modulator",
+    "keywords": "ring mod modulator ringmod amplitude modulation carrier metallic bell robotic",
+    "slider_desc": [
+      "Speed of the LFO sweeping the carrier frequency.",
+      "Base frequency of the sine carrier.",
+      "How far the LFO sweeps the carrier, up to ±1 octave.",
+      "Blend between dry and ring-modulated signal."
+    ],
+    "uses": [
+      "Metallic, bell-like tones",
+      "Robotic vocal textures",
+      "Sci-fi sound design",
+      "Inharmonic drum and percussion effects"
+    ],
+    "properties": "Input → multiplied by a sine carrier whose frequency is swept by an LFO (Carrier × 2^(Depth × LFO)) → Dry/Wet Mix → Output. Zero latency.",
+    "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\">\n<defs><linearGradient id=\"icon-ring\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs>\n<circle cx=\"32\" cy=\"32\" r=\"18\" stroke=\"url(#icon-ring)\" stroke-width=\"2.5\" fill=\"none\"/>\n<circle cx=\"32\" cy=\"32\" r=\"10\" stroke=\"url(#icon-ring)\" stroke-width=\"1.5\" fill=\"none\" opacity=\"0.4\"/>\n<circle cx=\"32\" cy=\"32\" r=\"3\" fill=\"url(#icon-ring)\" opacity=\"0.5\"/>\n</svg>"
+  },
+  "robotizer": {
+    "card_desc": "FFT Robot Voice",
+    "keywords": "robotizer robot voice monotone sci-fi dalek metallic fft vocoder buzz",
+    "slider_desc": [
+      "Fixed pitch of the robot voice",
+      "Tuned comb resonance at the robot pitch",
+      "Blend of 30 Hz ring modulation for a Dalek tone",
+      "Dry/wet blend"
+    ],
+    "uses": [
+      "Robot and android voices",
+      "Monotone sci-fi dialogue",
+      "Dalek-style ring-modulated speech",
+      "Buzzing, pitched textures from drums or noise"
+    ],
+    "properties": "Signal chain: Input → 1024-Point FFT every Pitch period → Phase Zeroing → IFFT Overlap-Add → Comb Resonance → Ring Mod → Mix → Output. Latency 1024 samples (reported to REAPER, dry path aligned); stereo channels processed independently.",
+    "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-robotizer\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><rect x=\"16\" y=\"20\" width=\"32\" height=\"30\" rx=\"4\" stroke=\"url(#icon-robotizer)\" stroke-width=\"2.5\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M32,20 L32,11 M24,42 L40,42\" stroke=\"url(#icon-robotizer)\" stroke-width=\"2.5\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><circle cx=\"26\" cy=\"31\" r=\"3\" stroke=\"url(#icon-robotizer)\" stroke-width=\"2.5\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><circle cx=\"38\" cy=\"31\" r=\"3\" stroke=\"url(#icon-robotizer)\" stroke-width=\"2.5\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/></svg>"
+  },
+  "rotary_speaker": {
+    "card_desc": "Leslie Rotary Simulation",
+    "keywords": "rotary speaker leslie organ doppler tremolo chorale horn drum b3 hammond",
+    "slider_desc": [
+      "Rotor speed: Slow (Chorale), Fast (Tremolo) or Stop",
+      "Scales how long the rotors take to change speed",
+      "Balance between the horn (highs) and drum (lows)",
+      "Tube-amp style overdrive before the rotors",
+      "Angle between the virtual left/right mics",
+      "Dry/wet blend"
+    ],
+    "uses": [
+      "Classic organ rotary sound",
+      "Swirling guitar and electric piano",
+      "Speed-ramp transitions via automation",
+      "Stereo movement on pads and vocals"
+    ],
+    "properties": "Signal chain: Input (summed to mono) → Drive → 800 Hz Crossover → Horn (0.8/6.7 Hz) + Drum (0.7/5.8 Hz) with AM and Doppler → Two Virtual Mics → Mix → Output. Rotors ramp with inertia (horn ~0.7 s, drum ~3 s, scaled by Acceleration); zero latency.",
+    "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-rotary-speaker\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><circle cx=\"32\" cy=\"32\" r=\"24\" stroke=\"url(#icon-rotary-speaker)\" stroke-width=\"1.5\" fill=\"none\" stroke-linecap=\"round\" opacity=\"0.4\"/><path d=\"M32,12 A20,20 0 0 1 52,32 M52,32 L48,25 M52,32 L57,26\" stroke=\"url(#icon-rotary-speaker)\" stroke-width=\"2.5\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M32,52 A20,20 0 0 1 12,32 M12,32 L16,39 M12,32 L7,38\" stroke=\"url(#icon-rotary-speaker)\" stroke-width=\"2.5\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><circle cx=\"32\" cy=\"32\" r=\"5\" stroke=\"url(#icon-rotary-speaker)\" stroke-width=\"2.5\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/></svg>"
+  },
+  "saturation": {
+    "card_desc": "Six-Mode Saturation",
+    "keywords": "saturation saturator distortion tape tube overdrive fuzz bitcrush bitcrusher waveshaper wavefolder drive warmth",
+    "slider_desc": [
+      "Input gain into the saturation stage (up to 4x); in Bitcrush mode it also lowers the bit depth from 8 to 2 bits.",
+      "Tilt EQ on the saturated signal around 800 Hz: negative values darken (lows up, highs down), positive values brighten; 0 dB is flat.",
+      "Blend between dry and saturated signal.",
+      "Saturation curve: Tape, Tube, Overdrive, Fuzz, Bitcrush or Waveshaper (wavefolding)."
+    ],
+    "uses": [
+      "Warmth and density on buses",
+      "Fuzz and overdrive on guitars and bass",
+      "Bit-crushed lo-fi textures",
+      "Wavefolded synth tones"
+    ],
+    "properties": "Input → Drive → selected curve → Tone tilt EQ (one-pole split at 800 Hz, ±Tone/2 dB on each side) on the wet signal → Dry/Wet Mix → Output. No oversampling; zero latency.",
+    "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-sat\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><path d=\"M 8,32 L 20,32 L 16,44 L 28,24 L 24,36 L 36,32 L 56,32\" stroke=\"url(#icon-sat)\" stroke-width=\"2\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/></svg>"
+  },
+  "shimmer_reverb": {
+    "card_desc": "Pitched Ambient Reverb",
+    "keywords": "shimmer reverb octave pitch ambient pad ethereal cinematic fdn halo",
+    "slider_desc": [
+      "Size of the reverb space (scales the delay lines)",
+      "Reverb decay time",
+      "How much of the tail is pitch-shifted back into the reverb",
+      "Interval the shimmer climbs each round trip",
+      "Lowpass damping inside the loop",
+      "Dry/wet blend"
+    ],
+    "uses": [
+      "Ethereal pads and ambient beds",
+      "Shimmering guitar swells",
+      "Cinematic tails on vocals and pianos",
+      "Octave-down dark ambience"
+    ],
+    "properties": "Signal chain: Input → 4-Line Feedback Delay Network (Hadamard matrix) → Damping → Pitch Shifter (crossfading taps, 80 ms window) → Feedback into the network → Mix → Output. Each round trip the tail climbs another interval; zero latency.",
+    "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-shimmer-reverb\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><path d=\"M6,48 L58,48\" stroke=\"url(#icon-shimmer-reverb)\" stroke-width=\"1.5\" fill=\"none\" stroke-linecap=\"round\" opacity=\"0.4\"/><path d=\"M6,48 Q10,28 14,48 Q18,62 22,48 Q26,38 30,48 Q34,54 38,48 Q42,44 46,48 L58,48\" stroke=\"url(#icon-shimmer-reverb)\" stroke-width=\"2.5\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M44,6 L44,22 M36,14 L52,14\" stroke=\"url(#icon-shimmer-reverb)\" stroke-width=\"2.5\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M54,22 L54,30 M50,26 L58,26\" stroke=\"url(#icon-shimmer-reverb)\" stroke-width=\"1.5\" fill=\"none\" stroke-linecap=\"round\" opacity=\"0.4\"/></svg>"
+  },
+  "snappy": {
+    "card_desc": "One-Knob Transient Shaper",
+    "keywords": "snappy transient shaper attack punch drums percussive snap sustain",
+    "slider_desc": [
+      "Transient emphasis: 0 is unity, 100 boosts detected attacks by up to +9 dB and trims the sustain by up to -3 dB"
+    ],
+    "uses": [
+      "Add snap to snares and kicks",
+      "Sharpen percussion loops",
+      "Punch on a drum bus",
+      "Bite on plucked instruments",
+      "Tighten roomy drum recordings"
+    ],
+    "properties": "Input → stereo-linked level → fast (1 ms) and slow (25 ms) attack envelopes, 80 ms release → transient amount from their difference → gain between -3 and +9 dB scaled by Amount → Output. Zero latency, no look-ahead.",
+    "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-snappy\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><path d=\"M 8,46 L 18,46 L 22,10 L 30,38 Q 40,46 56,46\" stroke=\"url(#icon-snappy)\" stroke-width=\"2.5\" fill=\"none\" stroke-linecap=\"round\"/><path d=\"M 22,10 L 26,10\" stroke=\"url(#icon-snappy)\" stroke-width=\"1.5\" fill=\"none\" stroke-linecap=\"round\" opacity=\"0.4\"/><path d=\"M 8,46 L 56,46\" stroke=\"url(#icon-snappy)\" stroke-width=\"1.5\" fill=\"none\" stroke-linecap=\"round\" opacity=\"0.3\"/></svg>"
+  },
+  "spectral_freeze": {
+    "card_desc": "FFT Spectrum Freeze",
+    "keywords": "spectral freeze fft sustain drone infinite hold pad ambient snapshot",
+    "slider_desc": [
+      "Captures the current spectrum and holds it as a sustained texture",
+      "Crossfade time into and out of the frozen sound",
+      "Phase randomisation: 0% tonal and buzzy, 100% smooth and airy",
+      "Level of the frozen sound",
+      "Dry/wet blend"
+    ],
+    "uses": [
+      "Infinite sustain on chords and notes",
+      "Drones and pads from any sound",
+      "Freeze reverb tails for transitions",
+      "Ambient layers under a mix"
+    ],
+    "properties": "Signal chain: Input → 2048-Point FFT (4× overlap) → Magnitude Snapshot on Freeze → Phase Advance + Smear → IFFT Overlap-Add → Level → Mix → Output. Freezes only after a full 2048-sample window; stereo channels independent.",
+    "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-spectral-freeze\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><path d=\"M32,8 L32,56 M11,20 L53,44 M11,44 L53,20\" stroke=\"url(#icon-spectral-freeze)\" stroke-width=\"2.5\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M26,12 L32,18 L38,12 M26,52 L32,46 L38,52\" stroke=\"url(#icon-spectral-freeze)\" stroke-width=\"1.5\" fill=\"none\" stroke-linecap=\"round\" opacity=\"0.4\"/></svg>"
+  },
+  "spread": {
+    "card_desc": "Mono-Safe Stereo Widener",
+    "keywords": "spread stereo width widener decorrelation wide mono-compatible haas imager",
+    "slider_desc": [
+      "Width of the added side content: 0 is unchanged, 100 adds the decorrelated signal at 70% level for a clearly wider image"
+    ],
+    "uses": [
+      "Widen mono synths and guitars",
+      "Open up a vocal bus",
+      "Mono-safe width on the master",
+      "Spread pads and ambiences",
+      "Keep bass centred while widening the top"
+    ],
+    "properties": "Input → mid signal → 250 Hz one-pole high-pass → two delay taps (11.3 ms × 0.6 + 17.9 ms × 0.4) → added to L, subtracted from R → Output. Cancels completely in mono; low end stays centred; zero latency.",
+    "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-spread\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><path d=\"M 32,32 L 10,18 M 32,32 L 54,18\" stroke=\"url(#icon-spread)\" stroke-width=\"2.5\" fill=\"none\" stroke-linecap=\"round\"/><path d=\"M 32,32 L 10,46 M 32,32 L 54,46\" stroke=\"url(#icon-spread)\" stroke-width=\"2.5\" fill=\"none\" stroke-linecap=\"round\"/><circle cx=\"32\" cy=\"32\" r=\"4\" stroke=\"url(#icon-spread)\" stroke-width=\"1.5\" fill=\"none\" stroke-linecap=\"round\" opacity=\"0.5\"/></svg>"
+  },
+  "spring_reverb": {
+    "card_desc": "Vintage Spring Tank",
+    "keywords": "spring reverb guitar amp vintage surf drip boing dub chirp tank",
+    "slider_desc": [
+      "Reverb decay time",
+      "Strength of the dispersive chirp",
+      "Darkness of the tank (lowpass in the loop)",
+      "Level of the splashy, unfiltered spring echo",
+      "Delay before the reverb",
+      "Dry/wet blend"
+    ],
+    "uses": [
+      "Surf guitar and amp-style reverb",
+      "Dub drips and boings on snares",
+      "Vintage character on vocals",
+      "Lo-fi organ and keys ambience"
+    ],
+    "properties": "Signal chain: Input (summed to mono) → 120 Hz Highpass → Pre-Delay → Two Springs (40-stage dispersive allpass chains in feedback loops, 43.7 / 53.1 ms) → Tone Lowpass + Drip → Mix → Output. Left and right springs differ in length for stereo; zero latency.",
+    "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-spring-reverb\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><path d=\"M6,32 L10,32 L14,20 L18,44 L22,20 L26,44 L30,20 L34,44 L38,20 L42,44 L46,20 L50,44 L54,32 L58,32\" stroke=\"url(#icon-spring-reverb)\" stroke-width=\"2.5\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><circle cx=\"6\" cy=\"32\" r=\"2\" stroke=\"url(#icon-spring-reverb)\" stroke-width=\"1.5\" fill=\"none\" stroke-linecap=\"round\" opacity=\"0.4\"/><circle cx=\"58\" cy=\"32\" r=\"2\" stroke=\"url(#icon-spring-reverb)\" stroke-width=\"1.5\" fill=\"none\" stroke-linecap=\"round\" opacity=\"0.4\"/></svg>"
+  },
+  "stereo_width": {
+    "card_desc": "M/S Width with Mono Bass",
+    "keywords": "stereo width widener imager mid side narrow mono bass crossover spread",
+    "slider_desc": [
+      "Side level: 0% = mono, 100% = unchanged, 200% = twice as wide.",
+      "Blend between original and processed signal.",
+      "Below this frequency the signal is made mono and the width setting only applies above it (0 = off)."
+    ],
+    "uses": [
+      "Widening pads, synths and backing vocals",
+      "Keeping bass and kick mono while widening the top",
+      "Narrowing overly wide sources",
+      "Mastering stereo adjustments"
+    ],
+    "properties": "Input → Mid/Side split → optional one-pole crossover (lows mono, highs widened) → Side × Width → L/R → Dry/Wet Mix → Output. Zero latency.",
+    "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\">\n<defs><linearGradient id=\"icon-width\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs>\n<path d=\"M 8,32 L 20,32 M 44,32 L 56,32\" stroke=\"url(#icon-width)\" stroke-width=\"2\" opacity=\"0.4\"/>\n<path d=\"M 20,20 L 20,44 M 44,20 L 44,44\" stroke=\"url(#icon-width)\" stroke-width=\"2\"/>\n<circle cx=\"20\" cy=\"32\" r=\"4\" fill=\"url(#icon-width)\" opacity=\"0.5\"/>\n<circle cx=\"44\" cy=\"32\" r=\"4\" fill=\"url(#icon-width)\" opacity=\"0.5\"/>\n<path d=\"M 20,32 Q 32,24 44,32\" stroke=\"url(#icon-width)\" stroke-width=\"1.5\" fill=\"none\" opacity=\"0.3\"/>\n<path d=\"M 20,32 Q 32,40 44,32\" stroke=\"url(#icon-width)\" stroke-width=\"1.5\" fill=\"none\" opacity=\"0.3\"/>\n</svg>"
+  },
+  "stretch": {
+    "card_desc": "Granular Pitch Stretch",
+    "keywords": "stretch pitch shift granular slow motion warp texture tape stretch grain octave",
+    "slider_desc": [
+      "Bipolar: negative values lower the pitch (up to -1 octave) with long, smeared grains up to 240 ms; positive values raise it (up to +1 octave) with tighter 25 ms grains; 0 is untouched and the effect is fully wet from ±25"
+    ],
+    "uses": [
+      "Slowed-down, tape-stretched vocal textures",
+      "Octave-down sound design",
+      "Chipmunk or octave-up effects",
+      "Granular pad texture",
+      "Transitions and risers"
+    ],
+    "properties": "Input → circular buffer → two crossfading grains (Hann windows, half a cycle apart) read at 2^Amount speed → dry/wet blend → Output. Pitch changes but length does not; grain length scales from 25 to 240 ms.",
+    "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-stretch\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><path d=\"M 8,32 Q 14,20 20,32 T 32,32\" stroke=\"url(#icon-stretch)\" stroke-width=\"2.5\" fill=\"none\" stroke-linecap=\"round\"/><path d=\"M 32,32 Q 44,14 56,32\" stroke=\"url(#icon-stretch)\" stroke-width=\"2.5\" fill=\"none\" stroke-linecap=\"round\"/><path d=\"M 8,48 L 56,48 M 50,44 L 56,48 L 50,52\" stroke=\"url(#icon-stretch)\" stroke-width=\"1.5\" fill=\"none\" stroke-linecap=\"round\" opacity=\"0.4\"/></svg>"
+  },
+  "sub_bloom": {
+    "card_desc": "Pitch-Tracking Subharmonic Generator",
+    "keywords": "sub bloom bass sub harmonic subharmonic synth octave divider low frequency enhancement 808 rumble pitch tracking",
+    "slider_desc": [
+      "Upper edge of the detection band: the input is low-passed here (and high-passed at a quarter of it); set it just above the bass notes you want to track",
+      "Level of the generated sub",
+      "Generated octave: −1 octave, −2 octaves, or both blended",
+      "Level of the original signal",
+      "Final output level"
+    ],
+    "uses": [
+      "Add a sub octave that follows bass lines and kick pitch",
+      "Reinforce thin low end on small-speaker mixes",
+      "Deepen synth and DI bass with an octave-down layer",
+      "Cinematic rumble on hits and drones"
+    ],
+    "properties": "Signal chain (per channel): Input → Band-Limit (HP at Source/4, 24 dB/oct LP at Source) → Zero-Crossing Tracker with Hysteresis → Flip-Flop Dividers (÷2, ÷4) × Band Envelope → 24 dB/oct Low-Pass → Sub Level + Original × Mix → Output Gain → Output. The sub follows the pitch of the played note and its level follows the bass band's dynamics; silence or no bass in the band produces no sub. Zero latency.",
+    "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-sub\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><circle cx=\"32\" cy=\"32\" r=\"18\" stroke=\"url(#icon-sub)\" stroke-width=\"2\" fill=\"none\"/><ellipse cx=\"32\" cy=\"36\" rx=\"14\" ry=\"6\" stroke=\"url(#icon-sub)\" stroke-width=\"1.5\" fill=\"none\" opacity=\"0.6\"/></svg>"
+  },
+  "sweeper": {
+    "card_desc": "DJ Filter Sweep",
+    "keywords": "sweeper filter sweep dj lowpass highpass resonance creative transition",
+    "slider_desc": [
+      "Bipolar sweep with 50 as open (bypass): toward 0 a low-pass closes from 20 kHz to 80 Hz, toward 100 a high-pass rises from 20 Hz to 8 kHz, with resonance growing away from the centre"
+    ],
+    "uses": [
+      "Build-ups and breakdowns",
+      "DJ-style transitions",
+      "Filter automation on loops",
+      "Thin out a part for an intro",
+      "Muffled \"next room\" effect"
+    ],
+    "properties": "Input → TPT state-variable filter (low-pass below 50, high-pass above, Q 0.707 to 2.2) → Output. Exact bypass at 50, stereo channels processed independently, zero latency.",
+    "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-sweeper\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><path d=\"M 8,30 L 26,30 Q 34,30 36,22 Q 40,30 44,46\" stroke=\"url(#icon-sweeper)\" stroke-width=\"2.5\" fill=\"none\" stroke-linecap=\"round\"/><path d=\"M 8,44 L 56,44\" stroke=\"url(#icon-sweeper)\" stroke-width=\"1.5\" fill=\"none\" stroke-linecap=\"round\" opacity=\"0.3\"/><path d=\"M 20,54 L 44,54 M 38,50 L 44,54 L 38,58\" stroke=\"url(#icon-sweeper)\" stroke-width=\"1.5\" fill=\"none\" stroke-linecap=\"round\" opacity=\"0.4\"/></svg>"
+  },
+  "tape_stop": {
+    "card_desc": "Tape Stop & Spin-Up",
+    "keywords": "tape stop start motor slowdown spin down spin up pitch ramp dj brake turntable",
+    "slider_desc": [
+      "Set to Trigger to start a stop; returns to Idle automatically after the spin-up",
+      "Time for playback to slow to a halt",
+      "Time for playback to spin back up to normal speed"
+    ],
+    "uses": [
+      "Tape-stop transitions at the end of sections",
+      "DJ-style turntable brakes",
+      "Dramatic drops and breakdowns",
+      "Automated spin-down effects on vocals or full mixes"
+    ],
+    "properties": "Signal chain: Input → 12 s Buffer → Varispeed Read (quadratic slow-down, square-root spin-up) → 10 ms Crossfade → Output. Audio passes untouched while Idle; the tape output also fades as the motor stops; zero latency.",
+    "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-tape\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><circle cx=\"32\" cy=\"32\" r=\"18\" stroke=\"url(#icon-tape)\" stroke-width=\"2\" fill=\"none\"/><circle cx=\"32\" cy=\"32\" r=\"10\" stroke=\"url(#icon-tape)\" stroke-width=\"1\" fill=\"none\" opacity=\"0.4\"/><circle cx=\"32\" cy=\"32\" r=\"3\" fill=\"url(#icon-tape)\" opacity=\"0.5\"/><path d=\"M 8,32 Q 20,28 32,32 Q 44,36 56,32\" stroke=\"url(#icon-tape)\" stroke-width=\"1.5\" fill=\"none\" opacity=\"0.3\" stroke-dasharray=\"3,2\"/></svg>"
+  },
+  "tilt": {
+    "card_desc": "One-Knob Tilt EQ",
+    "keywords": "tilt eq equalizer tone bass treble balance tonal brighter darker",
+    "slider_desc": [
+      "Bipolar tilt around 700 Hz: positive values brighten (treble up, bass down), negative values darken, up to ±6 dB each side; 0 is flat"
+    ],
+    "uses": [
+      "Quick tonal balance on a mix bus",
+      "Darken harsh recordings",
+      "Brighten dull stems",
+      "Match the tone of two takes",
+      "Mastering tonal nudges"
+    ],
+    "properties": "Input → 700 Hz one-pole split → low band × opposite gain of high band (±6 dB) → summed → Output. Zero latency, stereo channels processed independently.",
+    "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-tilt\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><path d=\"M 8,44 L 56,20\" stroke=\"url(#icon-tilt)\" stroke-width=\"2.5\" fill=\"none\" stroke-linecap=\"round\"/><path d=\"M 8,32 L 56,32\" stroke=\"url(#icon-tilt)\" stroke-width=\"1.5\" fill=\"none\" stroke-linecap=\"round\" opacity=\"0.3\"/><circle cx=\"32\" cy=\"32\" r=\"3\" stroke=\"url(#icon-tilt)\" stroke-width=\"1.5\" fill=\"none\" stroke-linecap=\"round\" opacity=\"0.5\"/></svg>"
+  },
+  "trance_gate": {
+    "card_desc": "16-Step Rhythmic Gate",
+    "keywords": "trance gate 16 step sequencer rhythmic pattern chopper staccato volume gate tempo sync host tempo grid",
+    "slider_desc": [
+      "Step 1 open or closed",
+      "Step 2 open or closed",
+      "Step 3 open or closed",
+      "Step 4 open or closed",
+      "Step 5 open or closed",
+      "Step 6 open or closed",
+      "Step 7 open or closed",
+      "Step 8 open or closed",
+      "Step 9 open or closed",
+      "Step 10 open or closed",
+      "Step 11 open or closed",
+      "Step 12 open or closed",
+      "Step 13 open or closed",
+      "Step 14 open or closed",
+      "Step 15 open or closed",
+      "Step 16 open or closed",
+      "Sync: steps follow the host tempo and lock to the bar grid while playing; Free: steps run at Free Rate",
+      "Note value of one step in Sync mode (1/16 = classic trance gate)",
+      "Steps per second in Free mode (8 Hz = 16ths at 120 BPM)",
+      "Time for the gate to ramp open",
+      "Time for the gate to ramp closed",
+      "How far closed steps are turned down (0% = no gating, 100% = silence)"
+    ],
+    "uses": [
+      "Classic trance-gated pads and supersaws",
+      "Rhythmic chopping of sustained chords",
+      "Stutter-like patterns on vocals",
+      "Turning drones into sequenced rhythms"
+    ],
+    "properties": "Signal chain: Input → 16-Step Sequencer → Linear Attack/Release Gain Ramp × Depth → Output. In Sync mode the step clock follows the host tempo and, while the transport plays, is read from the song position so step 1 lands on every bar; when stopped it free-runs at the host tempo. Free mode runs at a fixed rate in steps per second. Stereo-linked, zero latency.",
+    "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-trance\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><path d=\"M 8,20 L 8,44 M 18,20 L 18,44 M 28,20 L 28,44 M 38,20 L 38,44 M 48,20 L 48,44 M 56,20 L 56,44\" stroke=\"url(#icon-trance)\" stroke-width=\"1.5\" opacity=\"0.3\"/><path d=\"M 8,20 L 8,36 M 18,20 L 18,36 M 28,28 L 28,44 M 38,20 L 38,36 M 48,20 L 48,36 M 56,28 L 56,44\" stroke=\"url(#icon-trance)\" stroke-width=\"3\" stroke-linecap=\"round\"/></svg>"
+  },
+  "transient_shaper": {
+    "card_desc": "Attack & Sustain Shaper",
+    "keywords": "transient shaper attack sustain punch envelope snap drums dynamics",
+    "slider_desc": [
+      "Boost or cut applied to transients.",
+      "Boost or cut applied to the sustain and body.",
+      "Blend between dry and shaped signal."
+    ],
+    "uses": [
+      "Adding punch to kicks and snares",
+      "Shortening room ring on drums",
+      "Bringing out pick attack on guitars",
+      "Softening harsh transients"
+    ],
+    "properties": "Input → stereo-linked fast (1/20 ms) and slow (20/150 ms) envelopes → transient amount from their difference → gain blend of Attack and Sustain → Dry/Wet Mix → Output. Level-independent, no threshold; zero latency.",
+    "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\">\n<defs><linearGradient id=\"icon-trans\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs>\n<path d=\"M 8,32 L 16,32 L 20,16 L 28,48 L 36,16 L 44,48 L 48,32 L 56,32\" stroke=\"url(#icon-trans)\" stroke-width=\"2.5\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/>\n<path d=\"M 20,32 L 20,48 M 28,32 L 28,48 M 36,32 L 36,48 M 44,32 L 44,48\" stroke=\"url(#icon-trans)\" stroke-width=\"1.5\" opacity=\"0.4\"/>\n</svg>"
+  },
+  "tremolo": {
+    "card_desc": "Sine LFO Tremolo",
+    "keywords": "tremolo amplitude modulation volume lfo pulse rhythmic",
+    "slider_desc": [
+      "Speed of the sine LFO.",
+      "Modulation amount; the gain dips from full level down to 1 − Depth, so 100% goes fully silent at the trough without flipping polarity.",
+      "Blend between dry and modulated signal."
+    ],
+    "uses": [
+      "Vintage amp tremolo on guitars",
+      "Pulsing pads and keys",
+      "Rhythmic movement on sustained notes",
+      "Choppy effects at high rates"
+    ],
+    "properties": "Input → gain of 1 − Depth × (0.5 − 0.5 × sine LFO), always between 0 and 1 → Dry/Wet Mix → Output. Same modulation on both channels; zero latency.",
+    "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\">\n<defs><linearGradient id=\"icon-trem\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs>\n<path d=\"M 8,20 L 16,20 L 16,44 L 24,44 L 24,20 L 32,20 L 32,44 L 40,44 L 40,20 L 48,20 L 48,44 L 56,44\" stroke=\"url(#icon-trem)\" stroke-width=\"2.5\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"miter\"/>\n</svg>"
+  },
+  "vibrato": {
+    "card_desc": "Delay-Line Pitch Vibrato",
+    "keywords": "vibrato pitch modulation wobble warble detune lfo",
+    "slider_desc": [
+      "Speed of the sine LFO.",
+      "Delay sweep range, from 0.1 ms to 0.1 ms + Depth; more depth means wider pitch swing.",
+      "Blend between dry and modulated signal (100% for pure vibrato, lower for chorus-like detune)."
+    ],
+    "uses": [
+      "Vibrato on vocals and leads",
+      "Tape-style warble",
+      "Chorus-like detune at partial mix",
+      "Lo-fi wobble effects"
+    ],
+    "properties": "Input → modulated delay line (0.1 ms to 0.1 ms + Depth) with linear interpolation → Dry/Wet Mix → Output. One LFO drives both channels; zero latency.",
+    "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\">\n<defs><linearGradient id=\"icon-vib\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs>\n<path d=\"M 8,32 L 14,32 L 16,26 L 18,38 L 20,26 L 22,38 L 24,26 L 26,38 L 28,30 L 36,30 L 38,26 L 40,38 L 42,26 L 44,38 L 46,26 L 48,38 L 50,32 L 56,32\" stroke=\"url(#icon-vib)\" stroke-width=\"2.5\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/>\n</svg>"
+  },
+  "vinyl_age": {
+    "card_desc": "Vintage Vinyl Degrader",
+    "keywords": "vinyl age lo-fi lofi record wow flutter crackle noise bitcrush downsample degradation old",
+    "slider_desc": [
+      "Slow pitch drift (0.5 Hz delay modulation)",
+      "Fast pitch wobble (6 Hz delay modulation)",
+      "Amount and rate of random crackle pops",
+      "Background hiss level",
+      "Quantisation bit depth",
+      "Sample-and-hold rate reduction",
+      "Cutoff of the 12 dB/oct lowpass",
+      "Dry/wet blend (the dry signal is delayed to stay aligned with the wet path)"
+    ],
+    "uses": [
+      "Lo-fi hip-hop and chillout textures",
+      "Make samples sound like old records",
+      "Nostalgic, worn character on pianos and vocals",
+      "Degraded radio or memory effects"
+    ],
+    "properties": "Signal chain: Input → Wow/Flutter Modulated Delay (50 ms centre) → Bitcrush → Downsample → 2-Pole Lowpass → Crackle → Noise → Mix → Output. The dry signal is delayed by the same 50 ms so any Mix setting blends in phase (no slapback); the 50 ms latency is reported to the host for delay compensation.",
+    "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-vinyl\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><circle cx=\"32\" cy=\"32\" r=\"16\" stroke=\"url(#icon-vinyl)\" stroke-width=\"2\" fill=\"none\"/><circle cx=\"32\" cy=\"32\" r=\"4\" fill=\"#999999\"/><path d=\"M 16,32 Q 20,28 24,32 Q 28,36 32,32 Q 36,28 40,32 Q 44,36 48,32\" stroke=\"url(#icon-vinyl)\" stroke-width=\"1\" fill=\"none\" opacity=\"0.4\"/></svg>"
+  },
+  "vocoder": {
+    "card_desc": "16-Band Channel Vocoder",
+    "keywords": "vocoder talkbox robot voice synth carrier modulator filterbank daft stereo",
+    "slider_desc": [
+      "Carrier source: Right Input (route a synth there) or the built-in Saw, Pulse or Noise",
+      "Pitch of the built-in Saw and Pulse oscillators",
+      "Shifts the carrier bands up or down for smaller/bigger voices",
+      "How fast band envelopes respond to the voice",
+      "How fast band envelopes fall",
+      "Passes the voice’s highs (above ~6 kHz) for intelligibility",
+      "Dry/wet blend",
+      "Output level",
+      "Spreads the bands across the stereo field: even bands lean left, odd bands right (0% = mono)"
+    ],
+    "uses": [
+      "Classic robot / synth-voice vocals",
+      "Talking synths with a sidechained carrier",
+      "Whispered noise-vocoded textures",
+      "Rhythmic vocoding of drums"
+    ],
+    "properties": "Signal chain: Left Input (modulator) → 16 Band-Pass Bands (100 Hz–8 kHz, log spaced) → Envelope Followers × Carrier Bands → Alternating L/R Band Panning (Stereo Width) → Sum + Centred Sibilance → Mix → Output. Modulator is the left channel; Carrier Pitch applies to the Saw and Pulse carriers only; zero latency.",
+    "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-vocoder\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><path d=\"M6,50 L58,50\" stroke=\"url(#icon-vocoder)\" stroke-width=\"1.5\" fill=\"none\" stroke-linecap=\"round\" opacity=\"0.4\"/><path d=\"M10,50 L10,38 M18,50 L18,26 M26,50 L26,32 M34,50 L34,16 M42,50 L42,28 M50,50 L50,36\" stroke=\"url(#icon-vocoder)\" stroke-width=\"2.5\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/></svg>"
+  },
+  "warped_delay": {
+    "card_desc": "Modulated Degrading Delay",
+    "keywords": "warped delay echo modulated tape warble feedback distortion saturation filter lofi dub",
+    "slider_desc": [
+      "Base delay time",
+      "Speed of the LFO wobbling the delay time",
+      "Amount of delay time modulation (limited to the delay time)",
+      "Amount of the repeats fed back",
+      "Saturation inside the feedback loop (level-compensated)",
+      "Filter type inside the loop: Off, LP, HP or BP",
+      "Filter cutoff / centre frequency",
+      "Dry/wet blend"
+    ],
+    "uses": [
+      "Warbly tape-style echoes",
+      "Dub delays that darken and distort as they repeat",
+      "Wide, wobbling stereo delays on guitars",
+      "Lo-fi textures on vocals and synths"
+    ],
+    "properties": "Signal chain: Input → Modulated Delay Line → Filter → Saturation (tanh) → Feedback → Mix → Output. Right-channel LFO runs a quarter cycle behind the left for width; repeats degrade on each pass; max 1 s delay, zero latency.",
+    "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-warped\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><path d=\"M 8,32 L 20,32 L 24,20 L 28,44 L 32,20 L 36,44 L 40,20 L 44,32 L 56,32\" stroke=\"url(#icon-warped)\" stroke-width=\"2\" fill=\"none\"/></svg>"
+  },
+  "wetter": {
+    "card_desc": "One-Knob Room Reverb",
+    "keywords": "wetter wet reverb space ambience room hall freeverb depth tail",
+    "slider_desc": [
+      "Reverb amount and room size together: 0 is dry, higher values raise the wet level (up to 45%) and lengthen the decay (comb feedback 0.70 to 0.88), while the dry signal dips to 75% at 100"
+    ],
+    "uses": [
+      "Quick sense of space on dry sources",
+      "Room ambience on drums",
+      "Sit vocals back in the mix",
+      "Larger, longer tails at high settings",
+      "Fast ambience sketches"
+    ],
+    "properties": "Input → mono sum → Freeverb-style network per channel: four damped feedback combs (damping 0.35) → two allpass diffusers; right channel uses slightly longer delays for width → mixed with dry → Output. Delay lengths scale with sample rate; zero latency.",
+    "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-wetter\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><path d=\"M 8,32 L 16,32\" stroke=\"url(#icon-wetter)\" stroke-width=\"2.5\" fill=\"none\" stroke-linecap=\"round\"/><path d=\"M 22,22 Q 30,32 22,42\" stroke=\"url(#icon-wetter)\" stroke-width=\"2.5\" fill=\"none\" stroke-linecap=\"round\"/><path d=\"M 32,16 Q 44,32 32,48\" stroke=\"url(#icon-wetter)\" stroke-width=\"1.5\" fill=\"none\" stroke-linecap=\"round\" opacity=\"0.5\"/><path d=\"M 42,10 Q 58,32 42,54\" stroke=\"url(#icon-wetter)\" stroke-width=\"1.5\" fill=\"none\" stroke-linecap=\"round\" opacity=\"0.3\"/></svg>"
+  }
+}

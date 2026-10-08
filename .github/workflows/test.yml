@@ -15,3 +15,4 @@ jobs:
           key: ysfx-${{ hashFiles('tests/run.sh') }}
       - run: sudo apt-get install -y nasm
       - run: tests/run.sh
+      - run: python3 tools/build_site.py --check
