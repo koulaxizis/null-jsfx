@@ -1,121 +1,80 @@
 desc:NULL Limiter
-//tags: limiter ceiling clipper brickwall peak protection mastering
-//Collection: NULL JSFX
-//Author: Christos Koulaxizis
+author: Christos Koulaxizis
+tags: limiter ceiling clipper brickwall peak protection mastering
+//category: Essentials
+//NULL JSFX v2.0 • https://nulljsfx.tech • MIT License
 
 slider1:0<0,2,1{Limiter,Clipper,Brickwall}>Mode
-slider2:0<-30,0,0.1>Threshold-(dB)
-slider3:-0.1<-6,-0.1,0.1>Ceiling-(dB)
-slider4:200<0,1000,1>Release-(ms)
-slider5:2<0,10,0.1>Lookahead-(ms)
+slider2:0<-30,0,0.1>Threshold (dB)
+slider3:-0.1<-6,-0.1,0.1>Ceiling (dB)
+slider4:200<0,1000,1>Release (ms)
+slider5:2<0,10,0.1>Lookahead (ms)
 
-in_pin:left input
-in_pin:right input
-out_pin:left output
-out_pin:right output
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
 
 @init
-  db2log = 0.11512925464970228420;
-  
-  buffer_size = 2000;
-  i = 0;
-  loop(buffer_size * 2, delay_buffer[i] = 0);
-  write_pos = 0;
-  
-  env = 0;
+  // Limiter:   look-ahead limiter; the gain starts falling before a peak arrives.
+  // Clipper:   soft clipper, no delay.
+  // Brickwall: like Limiter but the gain drops instantly, so nothing passes the ceiling.
+  // Threshold sets how hard the signal is pushed: the level at Threshold comes out at Ceiling.
+  max_look = ceil(srate * 0.011) + 2;
+  buf_l = 0;
+  buf_r = buf_l + max_look;
+  memset(buf_l, 0, 2 * max_look);
+  freembuf(buf_r + max_look);
+  wpos = 0;
+  hold_val = 0;
+  hold_cnt = 0;
   gain = 1;
+  pdc_bot_ch = 0;
+  pdc_top_ch = 2;
 
 @slider
-  slider_mode = slider1;
-  thresh_db = slider2;
-  ceil_db = slider3;
-  release_ms = slider4;
-  lookahead_ms = slider5;
-  
-  thresh = exp(thresh_db * db2log);
-  ceiling = exp(ceil_db * db2log);
-  makeup = ceiling / thresh;
-  
-  release_s = release_ms / 1000;
-  release_s = max(release_s, 0.05);
-  rel_coef = exp(-3 / (srate * release_s));
-  
-  lookahead_samples = lookahead_ms * srate / 1000;
-  lookahead_samples = min(lookahead_samples, buffer_size - 1);
-  lookahead_samples = max(lookahead_samples, 1);
+  mode = slider1;
+  ceiling = 10 ^ (slider3 / 20);
+  drive = 10 ^ ((slider3 - slider2) / 20);
+  look = mode == 1 ? 0 : floor(slider5 * srate / 1000 + 0.5);
+  pdc_delay = look;
+  rel = exp(-1 / max(1, slider4 * srate / 1000));
+  att = mode == 2 || look < 1 ? 1 : 1 - exp(-5 / look);
 
 @sample
-  slider_mode == 0 ? (
-    // ─── Limiter (MGA-style: envelope + makeup) ───
-    write_pos = write_pos + 1;
-    write_pos >= buffer_size ? write_pos = 0;
-    
-    delay_buffer[write_pos] = spl0;
-    delay_buffer[write_pos + buffer_size] = spl1;
-    
-    read_pos = write_pos - lookahead_samples;
-    read_pos = read_pos < 0 ? read_pos + buffer_size : read_pos;
-    
-    delayed_l = delay_buffer[read_pos];
-    delayed_r = delay_buffer[read_pos + buffer_size];
-    
-    maxSpls = max(abs(delayed_l), abs(delayed_r));
-    env = env < maxSpls ? maxSpls : maxSpls + rel_coef * (env - maxSpls);
-    
-    env > thresh ? gain = (thresh / env) * makeup : gain = makeup;
-    
-    spl0 = delayed_l * gain;
-    spl1 = delayed_r * gain;
-    
-    spl0 = max(-ceiling, min(ceiling, spl0));
-    spl1 = max(-ceiling, min(ceiling, spl1));
-  );
-  
-  slider_mode == 1 ? (
-    // ─── Clipper (soft clip above threshold) ───
-    in_l = spl0 * makeup;
-    in_r = spl1 * makeup;
-    
-    abs_l = abs(in_l);
-    abs_r = abs(in_r);
-    sign_l = in_l < 0 ? -1 : 1;
-    sign_r = in_r < 0 ? -1 : 1;
-    
-    abs_l > thresh ? (
-      over = (abs_l - thresh) / thresh;
-      soft_l = thresh * (1 + over / (1 + over));
-    ) : soft_l = abs_l;
-    
-    abs_r > thresh ? (
-      over = (abs_r - thresh) / thresh;
-      soft_r = thresh * (1 + over / (1 + over));
-    ) : soft_r = abs_r;
-    
-    spl0 = sign_l * min(soft_l, ceiling);
-    spl1 = sign_r * min(soft_r, ceiling);
-  );
-  
-  slider_mode == 2 ? (
-    // ─── Brickwall (instant gain reduction + lookahead) ───
-    write_pos = write_pos + 1;
-    write_pos >= buffer_size ? write_pos = 0;
-    
-    delay_buffer[write_pos] = spl0;
-    delay_buffer[write_pos + buffer_size] = spl1;
-    
-    read_pos = write_pos - lookahead_samples;
-    read_pos = read_pos < 0 ? read_pos + buffer_size : read_pos;
-    
-    delayed_l = delay_buffer[read_pos];
-    delayed_r = delay_buffer[read_pos + buffer_size];
-    
-    lookahead_sample = max(abs(delayed_l), abs(delayed_r));
-    
-    lookahead_sample > ceiling ? gain = ceiling / lookahead_sample : gain = 1;
-    
-    spl0 = delayed_l * gain;
-    spl1 = delayed_r * gain;
-    
-    spl0 = max(-ceiling, min(ceiling, spl0));
-    spl1 = max(-ceiling, min(ceiling, spl1));
+  in_l = spl0 * drive;
+  in_r = spl1 * drive;
+
+  mode == 1 ? (
+    // soft clip: linear up to 70% of the ceiling, then a smooth knee into the ceiling
+    knee = 0.7 * ceiling;
+    a = abs(in_l);
+    a > knee ? in_l = sign(in_l) * (knee + (ceiling - knee) * (1 - exp(-(a - knee) / (ceiling - knee))));
+    a = abs(in_r);
+    a > knee ? in_r = sign(in_r) * (knee + (ceiling - knee) * (1 - exp(-(a - knee) / (ceiling - knee))));
+    spl0 = in_l;
+    spl1 = in_r;
+  ) : (
+    // peak detector on the incoming (not yet delayed) signal, held for the look-ahead time
+    peak = max(abs(in_l), abs(in_r));
+    peak >= hold_val ? (
+      hold_val = peak;
+      hold_cnt = look;
+    ) : hold_cnt > 0 ? (
+      hold_cnt -= 1;
+    ) : (
+      hold_val = max(peak, hold_val * rel);
+    );
+    target = hold_val > ceiling ? ceiling / hold_val : 1;
+    gain = target < gain ? gain + (target - gain) * att : target + (gain - target) * rel;
+
+    buf_l[wpos] = in_l;
+    buf_r[wpos] = in_r;
+    rpos = wpos - look;
+    rpos < 0 ? rpos += max_look;
+    wpos += 1;
+    wpos >= max_look ? wpos = 0;
+
+    spl0 = max(-ceiling, min(ceiling, buf_l[rpos] * gain));
+    spl1 = max(-ceiling, min(ceiling, buf_r[rpos] * gain));
   );

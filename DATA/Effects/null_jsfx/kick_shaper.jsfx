@@ -1,7 +1,8 @@
 desc:NULL Kick Shaper
-//tags: kick drum transient shaping punch body thump click decay
-// Collection: NULL JSFX
-// Author: Christos Koulaxizis
+author: Christos Koulaxizis
+tags: kick drum transient shaping punch body thump click decay
+//category: Advanced
+//NULL JSFX v2.0 • https://nulljsfx.tech • MIT License
 
 slider1:0<-20,20,0.1>Attack Shape (dB)
 slider2:0<-12,12,0.1>Body Tone (dB)
@@ -10,77 +11,68 @@ slider4:0<-12,12,0.1>Click (dB)
 slider5:250<50,500,1>Decay (ms)
 slider6:0<-12,12,0.1>Output Gain (dB)
 
-in_pin:left
-in_pin:right
-out_pin:left
-out_pin:right
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
 
 @init
-PI = 3.14159265358979;
+  // Shapes a kick drum in four parts:
+  //   Thump (bell at 55 Hz), Body (bell at 120 Hz), Click (bell at 4 kHz),
+  //   Attack Shape: boosts or softens the first milliseconds of each hit,
+  //   Decay: each detected hit starts a timer; after 20 ms the tail fades out with
+  //   this time constant, so lower values give a shorter, tighter kick.
+  fast = slow = 0;
+  t = 1000000;
+  armed = 1;
 
-lp_thump = 0;
-lp_body = 0;
-hp_click = 0;
-env_attack = 0;
-decay_pos = 0;
-decay_time = 0.25;
-
-// Temp variables
-attack_db; body_db; thump_db; click_db; decay_ms; output_db;
-abs_in; lp_thump_coef; lp_body_coef; hp_click_coef;
-thump_out; body_out; click_out;
-decay_envelope; attack_envelope; mixed;
+  function peak(freq, q, gain) local(w, c, al, A, a0)
+  (
+    w = 2 * $pi * freq / srate; c = cos(w); al = sin(w) / (2 * q); A = 10 ^ (gain / 40);
+    a0 = 1 + al / A;
+    this.b0 = (1 + al * A) / a0; this.b1 = -2 * c / a0; this.b2 = (1 - al * A) / a0;
+    this.a1 = -2 * c / a0; this.a2 = (1 - al / A) / a0;
+  );
+  function eq_l(x) local(y)
+  (
+    y = this.b0 * x + this.b1 * this.xl1 + this.b2 * this.xl2 - this.a1 * this.yl1 - this.a2 * this.yl2;
+    this.xl2 = this.xl1; this.xl1 = x; this.yl2 = this.yl1; this.yl1 = y; y;
+  );
+  function eq_r(x) local(y)
+  (
+    y = this.b0 * x + this.b1 * this.xr1 + this.b2 * this.xr2 - this.a1 * this.yr1 - this.a2 * this.yr2;
+    this.xr2 = this.xr1; this.xr1 = x; this.yr2 = this.yr1; this.yr1 = y; y;
+  );
 
 @slider
-attack_db = slider1 / 6;
-body_db = slider2 / 6;
-thump_db = slider3 / 6;
-click_db = slider4 / 6;
-decay_ms = slider5 / 1000;
-output_db = slider6 / 6;
-
-decay_time = decay_ms;
-lp_thump_coef = 1 - exp(-2 * PI * 60 / srate);
-lp_body_coef = 1 - exp(-2 * PI * 100 / srate);
-hp_click_coef = 1 - exp(-2 * PI * 2000 / srate);
+  thump.peak(55, 0.8, slider3);
+  body.peak(120, 1, slider2);
+  click.peak(4000, 0.7, slider4);
+  attack_db = slider1;
+  decay_s = slider5 / 1000;
+  out_gain = 10 ^ (slider6 / 20);
+  fa = exp(-1 / (0.001 * srate)); fr = exp(-1 / (0.02 * srate));
+  sa = exp(-1 / (0.015 * srate)); sr_ = exp(-1 / (0.02 * srate));
 
 @sample
-in_l = spl0;
-in_r = spl1;
+  l = click.eq_l(body.eq_l(thump.eq_l(spl0)));
+  r = click.eq_r(body.eq_r(thump.eq_r(spl1)));
 
-/* ─── ATTACK ENVELOPE DETECTION (Mono detection for both channels) ─── */
-abs_in = in_l < 0 ? -in_l : in_l;
-env_attack = env_attack * 0.9 + abs_in * 0.1;
-(env_attack > 1) ? (env_attack = 1);
+  lev = max(abs(l), abs(r));
+  fast = lev > fast ? fa * fast + (1 - fa) * lev : fr * fast + (1 - fr) * lev;
+  slow = lev > slow ? sa * slow + (1 - sa) * lev : sr_ * slow + (1 - sr_) * lev;
 
-/* ─── THUMP EXTRACTION (Sub-bass 60Hz lowpass) ─── */
-lp_thump = lp_thump + lp_thump_coef * (in_l - lp_thump);
-thump_out = lp_thump * (1 + thump_db);
+  // transient = how far the fast envelope is ahead of the slow one (0..1)
+  trans = fast > 0.000001 ? max(0, min(1, (fast - slow) / fast)) : 0;
+  g = 10 ^ (attack_db * trans / 20);
 
-/* ─── BODY EXTRACTION (Low-mid 100Hz lowpass) ─── */
-lp_body = lp_body + lp_body_coef * (in_l - lp_body);
-body_out = lp_body * (1 + body_db);
+  // hit detection re-arms once the transient has passed
+  armed && trans > 0.5 && fast > 0.01 ? (t = 0; armed = 0);
+  trans < 0.2 ? armed = 1;
+  t += 1 / srate;
+  tail = t < 0.02 ? 1 : exp(-(t - 0.02) / decay_s);
+  // Decay at its maximum (500 ms) leaves the kick almost untouched
+  tail = tail + (1 - tail) * (decay_s - 0.05) / 0.45 * 0.9;
 
-/* ─── CLICK EXTRACTION (High transient 2kHz highpass) ─── */
-hp_click = hp_click + hp_click_coef * (in_l - hp_click);
-click_out = hp_click * (1 + click_db);
-
-/* ─── DECAY SHAPE GENERATOR ─── */
-decay_pos = decay_pos + 1 / srate;
-(decay_pos >= decay_time) ? (decay_pos = 0);
-decay_envelope = decay_pos < 0.1 ? 1 : exp(-(decay_pos - 0.1) / (decay_time - 0.1));
-(decay_envelope < 0.01) ? (decay_envelope = 0);
-
-/* ─── ATTACK BOOST/CUT ─── */
-attack_envelope = 1 + (env_attack - 0.5) * attack_db * 2;
-(attack_envelope < 0) ? (attack_envelope = 0);
-
-/* ─── MIX COMPONENTS (Apply to BOTH channels!) ─── */
-mixed = (thump_out + body_out + click_out) * decay_envelope * attack_envelope;
-
-/* ─── OUTPUT GAIN (Stereo balanced!) ─── */
-out_l = mixed * (1 + output_db);
-out_r = mixed * (1 + output_db);  // FIXED: was in_r * (1+output_db)
-
-spl0 = out_l;
-spl1 = out_r;
+  spl0 = l * g * tail * out_gain;
+  spl1 = r * g * tail * out_gain;

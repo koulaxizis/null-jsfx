@@ -1,89 +1,81 @@
-desc:NUL ONE SLIDER Riser
-//tags: build tension riser sweep transition edm pre-drop 
-// Collection: NULL JSFX 
-// Author: Christos Koulaxizis 
-// v1.0 — One slider tension builder (pitch rise + filter + noise + reverb)
+desc:NULL Riser
+author: Christos Koulaxizis
+tags: riser build-up tension sweep transition edm pre-drop noise
+//category: One Slider
+//NULL JSFX v2.0 • https://nulljsfx.tech • MIT License
 
-slider1:0<0,100,1>Riser Intensity (0=Bypass, 100=Full Build Effect)
+slider1:0<0,100,1>Intensity (%)
+
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
+
 @init
-// Riser parameters - all mapped to single slider
-pitch_rate = 0;
-filter_cutoff = 20;
-noise_level = 0;
-reverb_decay = 0;
-white_noise_buffer = 0;
-noise_phase = 0;
-// Filter state (highpass for tension)
-hp_prev_in = 0;
-hp_prev_out = 0;
-hp_a0 = 0; hp_a1 = 0; hp_a2 = 0; hp_b1 = 0; hp_b2 = 0;
-// Reverb delay line
-reverb_delay_size = 44100;
-reverb_pos = 0;
-reverb_feedback = 0;
-reverb_out = 0;
-// Pitch modulation
-pitch_osc = 0;
-pitch_osc_rate = 0;
+  // Build-up in one control: automate Intensity from 0 to 100 into a drop.
+  //   - a resonant high-pass climbs from 20 Hz to 2.5 kHz (exponential, so the sweep sounds even),
+  //     with resonance rising as it goes
+  //   - a band of white noise swells in, centred an octave above the filter, so it rises with it
+  //   - the stereo image widens (side boosted up to +6 dB)
+  //   - a short diffuse wash (two allpass-smeared delays with feedback) blooms behind the sound
+  // All moves are smoothed (30 ms) so automation never zips. At 0 the signal is untouched.
+  bs = ceil(srate * 0.12) + 2;
+  memset(0, 0, bs * 2); freembuf(bs * 2);
+  dl = max(1, floor(0.083 * srate)); dr = max(1, floor(0.097 * srate));
+  pl = pr = 0;
+  sm = exp(-1 / (0.03 * srate));
+  seed = 12345;
+
+  function svf_set(f, q) ( this.g = tan($pi * min(f, 0.45 * srate) / srate); this.k = 1 / q; );
+  function svf_hp(x) local(v1, v2, v3)
+  (
+    v3 = (x - this.s2 - (this.k + this.g) * this.s1) / (1 + this.g * (this.k + this.g));
+    v1 = this.g * v3 + this.s1; v2 = this.g * v1 + this.s2;
+    this.s1 = 2 * v1 - this.s1; this.s2 = 2 * v2 - this.s2;
+    v3;
+  );
+  function svf_bp(x) local(v1, v2, v3)
+  (
+    v3 = (x - this.s2 - (this.k + this.g) * this.s1) / (1 + this.g * (this.k + this.g));
+    v1 = this.g * v3 + this.s1; v2 = this.g * v1 + this.s2;
+    this.s1 = 2 * v1 - this.s1; this.s2 = 2 * v2 - this.s2;
+    this.k * v1;
+  );
+
 @slider
-// Read slider (0-100)
-riser_val = slider1 / 100; // 0 to 1
-// Map to multiple parameters
-pitch_rate = riser_val * 10; // 0 to 10 Hz upward pitch sweep
-filter_cutoff = 20 + riser_val * 19980; // 20Hz to 20kHz (opens up)
-noise_level = riser_val * 0.3; // 0 to 30% white noise
-reverb_decay = riser_val * 2; // 0 to 2 sec tail
-pitch_osc_rate = 10 + riser_val * 20; // 10-30 Hz vibrato for tension
-// Highpass filter coefficients for tension buildup
-f_norm = filter_cutoff / sr * 2;
-w = f_norm * 3.14159265359;
-alpha = sin(w) / 2;
-// HPF RBJ coefficients
-hp_a0 = 1 / (1 + alpha);
-hp_a1 = -2 * cos(w) * hp_a0;
-hp_a2 = (1 - alpha) * hp_a0;
-hp_b1 = -(1 - alpha) * hp_a0;
-hp_b2 = (1 - alpha) * hp_a0;
-// Reverb parameters
-reverb_feedback = riser_val * 0.8; // 0 to 0.8 feedback
+  target = slider1 / 100;
+
+@block
+  // coefficients follow the smoothed intensity once per block
+  a = amt * amt;
+  fc = 20 * 125 ^ amt;
+  hl.svf_set(fc, 0.707 + 2.3 * a); hr.svf_set(fc, 0.707 + 2.3 * a);
+  nl.svf_set(fc * 2 + 200, 1.5); nr.svf_set(fc * 2 + 200, 1.5);
+  noise = 0.35 * a;
+  width = 10 ^ (6 * amt / 20);
+  wash = 0.35 * amt;
+  fb = 0.55 * amt;
+
 @sample
-// Generate white noise for riser texture
-noise_phase = noise_phase + 1;
-if (noise_phase >= 44100) noise_phase = 0;
-// Pseudo-random noise (simple PRNG)
-white_noise_buffer = white_noise_buffer * 16807 % 2147483647;
-noise_sample = (white_noise_buffer / 2147483647.0) * 2 - 1;
-// Apply white noise
-noise_out_l = noise_sample * noise_level;
-noise_out_r = noise_sample * noise_level;
-// Highpass filter for tension (cutoff opens with slider)
-hp_in = in_l + noise_out_l;
-hp_out_l = hp_a0 * hp_in + hp_a1 * hp_prev_in + hp_a2 * hp_prev2_in - hp_b1 * hp_prev_out_l - hp_b2 * hp_prev2_out_l;
-hp_prev2_in = hp_prev_in; hp_prev_in = hp_in;
-hp_prev2_out_l = hp_prev_out_l; hp_prev_out_l = hp_out_l;
-// Same for right channel
-hp_in_r = in_r + noise_out_r;
-hp_out_r = hp_a0 * hp_in_r + hp_a1 * hp_prev_in_r + hp_a2 * hp_prev2_in_r - hp_b1 * hp_prev_out_r - hp_b2 * hp_prev2_out_r;
-hp_prev2_in_r = hp_prev_in_r; hp_prev_in_r = hp_in_r;
-hp_prev2_out_r = hp_prev_out_r; hp_prev_out_r = hp_out_r;
-// Pitch modulation (subtle upward sweep for tension)
-pitch_osc = pitch_osc + pitch_osc_rate / sr;
-if (pitch_osc > 1) pitch_osc = pitch_osc - 1;
-pitch_mod = sin(pitch_osc * 6.28318530718) * riser_val * 0.1; // +/- 10% pitch variation
-// Combine filtered signal + original + noise
-filtered_mix = riser_val; // More filter as slider increases
-out_l = in_l * (1 - filtered_mix) + hp_out_l * filtered_mix + noise_out_l;
-out_r = in_r * (1 - filtered_mix) + hp_out_r * filtered_mix + noise_out_r;
-// Simple reverb tail for build-up atmosphere (running comb filter)
-reverb_pos = (reverb_pos + 1) % reverb_delay_size;
-reverb_delay[reverb_pos] = out_l + reverb_feedback * reverb_out;
-reverb_read = (reverb_pos - int(sr * reverb_decay / 2)) % reverb_delay_size;
-if (reverb_read < 0) reverb_read += reverb_delay_size;
-reverb_out = reverb_delay[reverb_read];
-// Mix in reverb (increases with intensity)
-reverb_mix = riser_val * 0.2; // Max 20% reverb
-out_l = out_l * (1 - reverb_mix) + reverb_out * reverb_mix;
-out_r = out_r * (1 - reverb_mix) + reverb_out * reverb_mix;
-// Clamp
-out_l = min(max(out_l, -1), 1);
-out_r = min(max(out_r, -1), 1);
+  amt = sm * amt + (1 - sm) * target;
+  amt < 0.0005 && target == 0 ? (
+    amt = 0;
+  ) : (
+    // filtered noise, decorrelated L/R
+    seed = (seed * 1103515245 + 12345) % 2147483648; n1 = seed / 1073741824 - 1;
+    seed = (seed * 1103515245 + 12345) % 2147483648; n2 = seed / 1073741824 - 1;
+    l = hl.svf_hp(spl0) + noise * nl.svf_bp(n1);
+    r = hr.svf_hp(spl1) + noise * nr.svf_bp(n2);
+    // wider image
+    m = (l + r) * 0.5; s = (l - r) * 0.5 * width;
+    l = m + s; r = m - s;
+    // diffuse wash, cross-fed so it spreads across the stereo field
+    wl = 0[pl]; wr = bs[pr];
+    0[pl] = l + wr * fb; bs[pr] = r + wl * fb;
+    pl = (pl + 1) % dl; pr = (pr + 1) % dr;
+    l += wash * wl; r += wash * wr;
+    // fade from the untouched signal at very low settings
+    x = min(1, amt * 20);
+    spl0 += x * (l - spl0);
+    spl1 += x * (r - spl1);
+  );

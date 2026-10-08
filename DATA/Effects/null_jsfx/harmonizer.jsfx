@@ -1,0 +1,77 @@
+desc:NULL Harmonizer
+author: Christos Koulaxizis
+tags: harmonizer harmony pitch shift voices interval thirds fifths octave backing vocals
+//category: Advanced
+//NULL JSFX v2.0 • https://nulljsfx.tech • MIT License
+
+slider1:4<-12,12,1>Voice 1 Interval (semitones)
+slider2:7<-12,12,1>Voice 2 Interval (semitones)
+slider3:-6<-48,0,0.5>Voice 1 Level (dB)
+slider4:-6<-48,0,0.5>Voice 2 Level (dB)
+slider5:8<0,30,0.5>Detune (cents)
+slider6:15<0,80,1>Delay (ms)
+slider7:70<0,100,1>Spread (%)
+slider8:50<0,100,1>Mix (%)
+
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
+
+@init
+  // Adds two pitch-shifted copies of the input at fixed intervals (e.g. +4 and +7 =
+  // a major chord). Each voice is slightly detuned and delayed so it sounds like a
+  // separate performer, and Spread pans voice 1 left and voice 2 right.
+  // Mix is an equal-power dry/wet crossfade: 0% = original only, 50% = original and
+  // harmony each at -3 dB (constant loudness), 100% = harmony voices only (for
+  // printing the harmony to its own track).
+  win = floor(srate * 0.05);
+  buf_size = ceil(srate * 0.2) + win;
+  buf = 0;
+  memset(buf, 0, buf_size);
+  freembuf(buf + buf_size);
+  wpos = 0;
+
+  function tap(d) local(rp, i, f, i2)
+  (
+    rp = wpos - d;
+    rp < 0 ? rp += buf_size;
+    i = floor(rp); f = rp - i;
+    i2 = i + 1; i2 >= buf_size ? i2 = 0;
+    buf[i] + (buf[i2] - buf[i]) * f;
+  );
+  // two-tap crossfading pitch shifter, state in this.ph
+  function voice(ratio, base) local(p2, g)
+  (
+    this.ph += (1 - ratio) / win;
+    this.ph >= 1 ? this.ph -= 1;
+    this.ph < 0 ? this.ph += 1;
+    p2 = this.ph + 0.5; p2 >= 1 ? p2 -= 1;
+    g = 0.5 - 0.5 * cos(2 * $pi * this.ph);
+    tap(base + 1 + this.ph * win) * g + tap(base + 1 + p2 * win) * (1 - g);
+  );
+
+@slider
+  r1 = 2 ^ ((slider1 + slider5 / 100) / 12);
+  r2 = 2 ^ ((slider2 - slider5 / 100) / 12);
+  g1 = 10 ^ (slider3 / 20);
+  g2 = 10 ^ (slider4 / 20);
+  base1 = slider6 * srate / 1000;
+  base2 = slider6 * 1.37 * srate / 1000;
+  sp = slider7 / 100;
+  dry_g = cos(slider8 / 100 * $pi / 2);
+  wet_g = sin(slider8 / 100 * $pi / 2);
+
+@sample
+  buf[wpos] = (spl0 + spl1) * 0.5;
+  v1 = v1s.voice(r1, base1) * g1;
+  v2 = v2s.voice(r2, base2) * g2;
+  wpos += 1;
+  wpos >= buf_size ? wpos = 0;
+  // equal-power panning: Spread 0 = both centred, 100 = voice 1 left, voice 2 right
+  p1 = $pi / 4 * (1 - sp);
+  p2 = $pi / 2 - p1;
+  w_l = v1 * cos(p1) + v2 * cos(p2);
+  w_r = v1 * sin(p1) + v2 * sin(p2);
+  spl0 = spl0 * dry_g + w_l * wet_g;
+  spl1 = spl1 * dry_g + w_r * wet_g;

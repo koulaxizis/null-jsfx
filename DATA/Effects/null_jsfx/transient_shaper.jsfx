@@ -1,16 +1,17 @@
 desc:NULL Transient Shaper
-//tags: transient attack sustain punch envelope dynamics shaping
-//Collection: NULL JSFX
-//Author: Christos Koulaxizis
+author: Christos Koulaxizis
+tags: transient attack sustain punch envelope dynamics shaping
+//category: Essentials
+//NULL JSFX v2.0 • https://nulljsfx.tech • MIT License
 
-slider1:0<-20,20,0.1>Attack-(dB)
-slider2:0<-20,20,0.1>Sustain-(dB)
-slider3:100<0,100,1>Mix-%
+slider1:0<-20,20,0.1>Attack (dB)
+slider2:0<-20,20,0.1>Sustain (dB)
+slider3:100<0,100,1>Mix (%)
 
-in_pin:left input
-in_pin:right input
-out_pin:left output
-out_pin:right output
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
 
 @init
   fast_env = 0;

@@ -1,70 +1,51 @@
-desc:NULL De-Esser
-//tags: deess sibilance sibilants hiss vocal harshness frequency
-//author: Christos Koulaxizis
+desc:NULL DeEsser
+author: Christos Koulaxizis
+tags: deess sibilance sibilants hiss vocal harshness frequency
+//category: Essentials
+//NULL JSFX v2.0 • https://nulljsfx.tech • MIT License
 
-slider1:6000<4000,10000,100>Target-(Hz)
-slider2:-6<-18,0,0.1>Reduction-dB
+slider1:6000<4000,10000,100>Target (Hz)
+slider2:-6<-18,0,0.1>Reduction (dB)
 
-in_pin:left input
-out_pin:right output
-out_pin:right output
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
 
 @init
-  sample_rate = sr;
-  DB2LIN = 0.11512925464970228420;
-  target_hz = slider1;
-  reduction_db = slider2;
-  reduction_lin = exp(reduction_db * DB2LIN);
-  
-  w0 = 0;
-  alpha = 0;
-  cos_w0 = 0;
-  
-  b0 = 0; b1 = 0; b2 = 0;
-  a0 = 0; a1 = 0; a2 = 0;
-  
-  x1_l = 0; x2_l = 0; y1_l = 0; y2_l = 0;
-  x1_r = 0; x2_r = 0; y1_r = 0; y2_r = 0;
-  
-  // Bandpass filter coefficients for sibilance detection
-  q_factor = 4;
+  // Split-band de-esser: a band-pass around Target isolates the sibilance, an envelope
+  // follower measures it, and only that band is turned down (by up to Reduction dB)
+  // when it gets loud, so the rest of the voice is untouched.
+  threshold = 10 ^ (-30 / 20);
+  att = exp(-1 / (0.0005 * srate));
+  rel = exp(-1 / (0.06 * srate));
+  env = 0;
+  x1l = x2l = y1l = y2l = 0;
+  x1r = x2r = y1r = y2r = 0;
 
 @slider
-  target_hz = slider1;
-  reduction_db = slider2;
-  reduction_lin = exp(reduction_db * DB2LIN);
-  
-  w0 = 2 * 3.14159265358979 * target_hz / sample_rate;
-  alpha = sin(w0) / (2 * q_factor);
-  cos_w0 = cos(w0);
-  
-  // Bandpass coefficients
-  a0_inv = 1 / (1 + alpha);
-  b0 = a0_inv * alpha;
-  b1 = a0_inv * (0);
-  b2 = a0_inv * (-alpha);
-  a1 = a0_inv * (-2 * cos_w0);
-  a2 = a0_inv * (1 - alpha);
+  w0 = 2 * $pi * min(slider1, srate * 0.45) / srate;
+  q = 2;
+  alpha = sin(w0) / (2 * q);
+  a0 = 1 + alpha;
+  b0 = alpha / a0;
+  b2 = -alpha / a0;
+  a1 = -2 * cos(w0) / a0;
+  a2 = (1 - alpha) / a0;
+  max_cut = 1 - 10 ^ (slider2 / 20);   // fraction of the band that may be removed
 
 @sample
-  // Detect sibilance in target band
-  bp_l = b0 * spl0 + b1 * x1_l + b2 * x2_l - a1 * y1_l - a2 * y2_l;
-  
-  x2_l = x1_l;
-  x1_l = spl0;
-  y2_l = y1_l;
-  y1_l = bp_l;
-  
-  // Sidechain: detect amplitude of bandpassed signal
-  sibilance_level_l = abs(bp_l);
-  
-  // Threshold at 0.1 (adjustable)
-  threshold = 0.1;
-  excess = sibilance_level_l > threshold ? (sibilance_level_l - threshold) / threshold : 0;
-  
-  // Reduce gain based on sibilance detected
-  gain_l = 1 - (excess * (1 - reduction_lin));
-  gain_l = max(gain_l, reduction_lin);
-  
-  spl0 = spl0 * gain_l;
-  spl1 = spl1 * gain_l;
+  bl = b0 * spl0 + b2 * x2l - a1 * y1l - a2 * y2l;
+  x2l = x1l; x1l = spl0; y2l = y1l; y1l = bl;
+  br = b0 * spl1 + b2 * x2r - a1 * y1r - a2 * y2r;
+  x2r = x1r; x1r = spl1; y2r = y1r; y1r = br;
+
+  level = max(abs(bl), abs(br));
+  env = level > env ? att * env + (1 - att) * level : rel * env + (1 - rel) * level;
+
+  // 0 below threshold, rising to full reduction 12 dB above it
+  over = env > threshold ? min(log(env / threshold) / log(4), 1) : 0;
+  cut = over * max_cut;
+
+  spl0 -= bl * cut;
+  spl1 -= br * cut;

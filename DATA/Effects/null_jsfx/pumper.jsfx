@@ -1,33 +1,33 @@
-desc:NULL ONE SLIDER Pumper
-//tags: sidechain ducking pumping rhythm groove
-//Collection: NULL JSFX
-//Author: Christos Koulaxizis
+desc:NULL Pumper
+author: Christos Koulaxizis
+tags: sidechain ducking pumping rhythm groove
+//category: One Slider
+//NULL JSFX v2.0 • https://nulljsfx.tech • MIT License
 
 slider1:50<0,100,1>Amount
 
-in_pin:left input
-in_pin:right input
-out_pin:left output
-out_pin:right output
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
 
 @init
-  phase = 0;
+  // Sidechain-style pumping locked to the project tempo: the level ducks on every beat
+  // and swells back over the beat, like a compressor keyed from a four-on-the-floor kick.
+  // While the transport is stopped it keeps running at the project tempo.
+  // Amount sets the depth of the dip (up to -20 dB).
+  ph = 0;
 
 @slider
-  amount = slider1 / 100;
-  rate = 2.0;
+  depth = slider1 / 100;
 
 @sample
-  phase += rate / srate;
-  phase >= 1 ? phase -= 1;
-  
-  phase < 0.15 ? (
-    dip = 1 - phase / 0.15;
-  ) : (
-    dip = (phase - 0.15) / 0.85;
+  play_state & 1 ? ph = beat_position - floor(beat_position) : (
+    ph += tempo / 60 / srate; ph >= 1 ? ph -= 1;
   );
-  
-  gain = 1 - amount * (1 - dip);
-  
-  spl0 = spl0 * gain;
-  spl1 = spl1 * gain;
+  // fast 5 ms fade down, then a smooth release over 60% of the beat
+  shape = ph < 0.02 ? 1 - ph / 0.02 : min(1, (ph - 0.02) / 0.6);
+  shape = shape * shape * (3 - 2 * shape);
+  g = 1 - depth * 0.9 * (1 - shape);
+  spl0 *= g;
+  spl1 *= g;

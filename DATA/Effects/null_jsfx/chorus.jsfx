@@ -1,21 +1,24 @@
 desc:NULL Chorus
-//tags: chorus modulation thickening detune lfo stereo width
-//author: Christos Koulaxizis
-//Collection: NULL JSFX
+author: Christos Koulaxizis
+tags: chorus modulation thickening detune lfo stereo width
+//category: Essentials
+//NULL JSFX v2.0 • https://nulljsfx.tech • MIT License
 
-slider1:5<0.1,20,0.1>Rate-(Hz)
-slider2:3<0,10,0.1>Depth-ms
-slider3:50<0,100,1>Mix-%
+slider1:5<0.1,20,0.1>Rate (Hz)
+slider2:3<0,10,0.1>Depth (ms)
+slider3:50<0,100,1>Mix (%)
 
-in_pin:left input
-in_pin:right input
-out_pin:left output
-out_pin:right output
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
 
 @init
-  buf_size = 4410;
-  i = 0;
-  loop(buf_size, (delay_l[i] = 0; delay_r[i] = 0;));
+  buf_size = ceil(srate * 0.1);
+  delay_l = 0;
+  delay_r = delay_l + buf_size;
+  memset(delay_l, 0, 2 * buf_size);
+  freembuf(delay_r + buf_size);
   wpos = 0;
   phase = 0;
 
@@ -30,8 +33,10 @@ out_pin:right output
   lfo = sin(phase);
   phase = phase + phase_inc;
   
-  base_delay = 3;
+  // The delay sweeps between 5 ms and 5 ms + Depth, so the read position is
+  // always at least 5 ms behind the write position (never negative or ahead).
   mod_amount = depth * 0.5;
+  base_delay = 5 + mod_amount;
   mod_delay = base_delay + lfo * mod_amount;
   delay_samples = mod_delay * srate / 1000;
   

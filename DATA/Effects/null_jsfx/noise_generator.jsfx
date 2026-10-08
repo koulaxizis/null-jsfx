@@ -1,16 +1,17 @@
 desc:NULL Noise Generator
-//tags: noise generator pink white brown test tone calibration stereo
-//Collection: NULL JSFX
-//Author: Christos Koulaxizis
+author: Christos Koulaxizis
+tags: noise generator pink white brown test tone calibration stereo
+//category: Essentials
+//NULL JSFX v2.0 • https://nulljsfx.tech • MIT License
 
 slider1:0<0,2,1{White,Pink,Brown}>Type
 slider2:-24<-60,0,0.1>Level (dB)
 slider3:100<0,100,1>Stereo Width (%)
 
-in_pin:left input
-in_pin:right input
-out_pin:left output
-out_pin:right output
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
 
 @init
   pb0_l=0; pb1_l=0; pb2_l=0; pb3_l=0; pb4_l=0; pb5_l=0; pb6_l=0;

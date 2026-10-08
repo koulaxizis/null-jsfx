@@ -1,81 +1,59 @@
 desc:NULL Delay
-//tags: delay echo slapback feedback pre-delay timing sync tempo
-//author: Christos Koulaxizis
-//Collection: NULL JSFX
+author: Christos Koulaxizis
+tags: delay echo slapback feedback pre-delay timing sync tempo
+//category: Essentials
+//NULL JSFX v2.0 • https://nulljsfx.tech • MIT License
 
-slider1:250<0,2000,1>Time-(ms)
-slider2:0<0,100,1>Feedback-%
-slider3:30<0,100,1>Mix-%
-slider4:0<0,1,1{OFF,ON}>Tempo-Sync
+slider1:250<0,2000,1>Time (ms)
+slider2:0<0,100,1>Feedback (%)
+slider3:30<0,100,1>Mix (%)
+slider4:0<0,1,1{OFF,ON}>Tempo Sync
 slider5:0<0,3,1{1/4,1/8,1/16,1/32}>Subdivision
 
-in_pin:left input
-in_pin:right input
-out_pin:left output
-out_pin:right output
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
 
 @init
-  buf_size = 88200;
-  i = 0;
-  loop(buf_size, delay_buf[i] = 0; i += 1;);
-  write_ptr = 0;
-  read_ptr = 0;
-  delay_samples = 11025;
-  feedback_pct = 0;
-  mix_amt = 0.3;
-  tempo_sync = 0;
-  subdivision = 0;
+  buf_size = ceil(srate * 2.1);
+  buf_l = 0;
+  buf_r = buf_l + buf_size;
+  memset(buf_l, 0, 2 * buf_size);
+  freembuf(buf_r + buf_size);
+  wpos = 0;
+  delay_samples = 1;
+
+  function update_time()
+  (
+    tempo_sync && tempo > 0 ? (
+      delay_ms = 60000 / tempo * (slider5 == 0 ? 1 : slider5 == 1 ? 0.5 : slider5 == 2 ? 0.25 : 0.125);
+    ) : (
+      delay_ms = slider1;
+    );
+    delay_samples = floor(delay_ms * srate / 1000 + 0.5);
+    delay_samples = max(1, min(buf_size - 1, delay_samples));
+  );
 
 @slider
-  prev_feedback = feedback_pct;
-  feedback_pct = slider2 / 100;
+  feedback = slider2 / 100 * 0.95;
   mix_amt = slider3 / 100;
   tempo_sync = slider4;
-  subdivision = slider5;
-  
-  feedback_pct == 0 && prev_feedback > 0 ? (
-    i = 0;
-    loop(buf_size, delay_buf[i] = 0; i += 1;);
-    write_ptr = 0;
-  );
-  
-  tempo_sync == 0 ? (
-    delay_ms = slider1;
-    delay_samples = floor(delay_ms * srate / 1000 + 0.5);
-  );
-  
-  delay_samples >= buf_size ? delay_samples = buf_size - 1;
-  delay_samples < 1 ? delay_samples = 1;
-  read_ptr = write_ptr - delay_samples;
-  read_ptr < 0 ? read_ptr = read_ptr + buf_size;
+  update_time();
 
 @block
-  tempo_sync == 1 ? (
-    beat_time = 60 / tempo;
-    mult = subdivision == 0 ? 1 : subdivision == 1 ? 0.5 : subdivision == 2 ? 0.25 : 0.125;
-    delay_seconds = beat_time * mult;
-    delay_ms = delay_seconds * 1000;
-    delay_samples = floor(delay_ms * srate / 1000 + 0.5);
-    
-    delay_samples >= buf_size ? delay_samples = buf_size - 1;
-    delay_samples < 1 ? delay_samples = 1;
-    read_ptr = write_ptr - delay_samples;
-    read_ptr < 0 ? read_ptr = read_ptr + buf_size;
-  );
+  tempo_sync ? update_time();
 
 @sample
-  read_val = delay_buf[read_ptr];
-  write_val = spl0 + read_val * feedback_pct;
-  
-  delay_buf[write_ptr] = write_val;
-  
-  out_l = spl0 * (1 - mix_amt) + read_val * mix_amt;
-  out_r = spl1 * (1 - mix_amt) + read_val * mix_amt;
-  
-  spl0 = out_l;
-  spl1 = out_r;
-  
-  write_ptr += 1;
-  write_ptr >= buf_size ? write_ptr = 0;
-  read_ptr += 1;
-  read_ptr >= buf_size ? read_ptr = 0;
+  rpos = wpos - delay_samples;
+  rpos < 0 ? rpos += buf_size;
+  echo_l = buf_l[rpos];
+  echo_r = buf_r[rpos];
+
+  buf_l[wpos] = spl0 + echo_l * feedback;
+  buf_r[wpos] = spl1 + echo_r * feedback;
+  wpos += 1;
+  wpos >= buf_size ? wpos = 0;
+
+  spl0 = spl0 * (1 - mix_amt) + echo_l * mix_amt;
+  spl1 = spl1 * (1 - mix_amt) + echo_r * mix_amt;

@@ -1,0 +1,94 @@
+desc:NULL OTT
+author: Christos Koulaxizis
+tags: ott multiband upward downward compression edm loud aggressive
+//category: Advanced
+//NULL JSFX v2.0 • https://nulljsfx.tech • MIT License
+
+slider1:100<0,100,1>Depth (%)
+slider2:100<0,400,1>Time (%)
+slider3:100<0,100,1>Upward (%)
+slider4:100<0,100,1>Downward (%)
+slider5:0<-12,12,0.1>Low Gain (dB)
+slider6:0<-12,12,0.1>Mid Gain (dB)
+slider7:0<-12,12,0.1>High Gain (dB)
+slider8:0<-12,12,0.1>Output (dB)
+
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
+
+@init
+  // "Over The Top" multiband compression: three bands (split at 88 Hz and 2.5 kHz), each
+  // squashed from above (loud parts pushed down, 66:1 above -33 dB) and lifted from
+  // below (quiet parts brought up, 4:1 below -41 dB, up to +24 dB). Everything gets
+  // dense, loud and detailed. Depth blends with the dry signal; Time scales the
+  // attack/release; Upward/Downward scale each half of the effect.
+
+  // 2nd-order Butterworth low-pass, two in series = 4th-order Linkwitz-Riley
+  function lp_set(freq) local(k, n)
+  (
+    k = tan($pi * freq / srate);
+    n = 1 / (1 + sqrt(2) * k + k * k);
+    this.b0 = k * k * n; this.b1 = 2 * this.b0; this.a1 = 2 * (k * k - 1) * n; this.a2 = (1 - sqrt(2) * k + k * k) * n;
+  );
+  function lp_run(x) local(y)
+  (
+    y = this.b0 * x + this.s1;
+    this.s1 = this.b1 * x - this.a1 * y + this.s2;
+    this.s2 = this.b0 * x - this.a2 * y;
+    y;
+  );
+
+  // gain (linear) for one band from its envelope; envelope state in this.env
+  function band_gain(x) local(lev, db, g)
+  (
+    lev = abs(x);
+    this.env = lev > this.env ? att * this.env + (1 - att) * lev : rel * this.env + (1 - rel) * lev;
+    db = 20 * log10(max(this.env, 0.000001));
+    g = 0;
+    db > -33 ? g -= (db + 33) * (1 - 1 / 66) * down;
+    db < -41 && db > -80 ? g += min(24, (-41 - db) * (1 - 1 / 4)) * up;
+    10 ^ (g / 20);
+  );
+
+@slider
+  // each filter stage is its own object (coefficients + state), per channel
+  a1l.lp_set(88); a2l.lp_set(88); a1r.lp_set(88); a2r.lp_set(88);
+  b1l.lp_set(2500); b2l.lp_set(2500); b1r.lp_set(2500); b2r.lp_set(2500);
+  depth = slider1 / 100;
+  t = max(slider2, 1) / 100;
+  att = exp(-1 / (0.0135 * t * srate));
+  rel = exp(-1 / (0.132 * t * srate));
+  up = slider3 / 100;
+  down = slider4 / 100;
+  g_low = 10 ^ (slider5 / 20);
+  g_mid = 10 ^ (slider6 / 20);
+  g_high = 10 ^ (slider7 / 20);
+  // fixed make-up for the downward half, so Depth 100% sits near the input loudness
+  makeup = 10 ^ (12 * down / 20);
+  out = 10 ^ (slider8 / 20);
+
+@sample
+  // split: low = LR4 low-pass, rest = input - low (sums back exactly)
+  lo_l = a2l.lp_run(a1l.lp_run(spl0));
+  lo_r = a2r.lp_run(a1r.lp_run(spl1));
+  rest_l = spl0 - lo_l; rest_r = spl1 - lo_r;
+  mid_l = b2l.lp_run(b1l.lp_run(rest_l));
+  mid_r = b2r.lp_run(b1r.lp_run(rest_r));
+  hi_l = rest_l - mid_l; hi_r = rest_r - mid_r;
+
+  // linked detection per band (both channels share one gain)
+  gl = lowb.band_gain(max(abs(lo_l), abs(lo_r))) * g_low;
+  gm = midb.band_gain(max(abs(mid_l), abs(mid_r))) * g_mid;
+  gh = hib.band_gain(max(abs(hi_l), abs(hi_r))) * g_high;
+
+  wet_l = (lo_l * gl + mid_l * gm + hi_l * gh) * makeup;
+  wet_r = (lo_r * gl + mid_r * gm + hi_r * gh) * makeup;
+  spl0 = (spl0 * (1 - depth) + wet_l * depth) * out;
+  spl1 = (spl1 * (1 - depth) + wet_r * depth) * out;
+
+  // safety: anything above 0 dBFS is bent smoothly towards +6 dBFS instead of running away
+  // when every gain stage is turned up at once
+  abs(spl0) > 1 ? spl0 = sign(spl0) * (1 + (abs(spl0) - 1) / abs(spl0));
+  abs(spl1) > 1 ? spl1 = sign(spl1) * (1 + (abs(spl1) - 1) / abs(spl1));

@@ -1,7 +1,8 @@
 desc:NULL Glitch FX
-//tags: glitch stutter pitch tape-stop reverse granular freeze random creative
-// Collection: NULL JSFX
-// Author: Christos Koulaxizis
+author: Christos Koulaxizis
+tags: glitch stutter pitch tape-stop reverse granular freeze random creative
+//category: Advanced
+//NULL JSFX v2.0 • https://nulljsfx.tech • MIT License
 
 slider1:4<0.1,20,0.1>Rate (Hz)
 slider2:8<1,64,1>Stutter Length (1/x notes)
@@ -18,143 +19,133 @@ slider12:200<10,500,10>Grain Size (ms)
 slider13:0<0,1,1{OFF,ON}>Granular
 slider14:50<0,100,1>Mix (%)
 
-in_pin:left
-in_pin:right
-out_pin:left
-out_pin:right
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
 
 @init
-buf_size = 44100;
-delay_buf = 0;
-freembuf(delay_buf + buf_size);
-write_pos = 0;
-stutter_cnt = 0;
-gate_state = 0;
-gate_timer = 0;
-tape_stop_active = 0;
-tape_stop_target = 1;
-slide_cnt = 0;
-grain_start = 0;
-reverse_flag = 0;
-pitch_ratio = 1;
+  // Every 1/Rate seconds a new "event" starts. At each event the plugin grabs the most
+  // recent slice of audio (Stutter Length, in note values at the project tempo) and
+  // loops it until the next event. On top of that loop, each switch adds a variation:
+  // Gate chops it, Pitch Shift replays it faster/slower, Reverse plays it backwards
+  // (with Reverse Chance), Tape Stop slows some events to a halt, and Granular loops a
+  // short windowed grain instead of the whole slice.
+  // Every effect also works with Stutter OFF, on the live signal: Reverse plays the
+  // audio back in reversed chunks (each chunk = Stutter Length) during the events it
+  // picks, Granular turns the live signal into overlapping Hann grains taken from the
+  // last moments of audio (two grains, half a grain apart), Pitch Shift and Tape Stop
+  // change their playback speed, and Gate chops whatever comes out.
+  buf_size = ceil(srate * 4);
+  buf_l = 0;
+  buf_r = buf_l + buf_size;
+  memset(buf_l, 0, 2 * buf_size);
+  freembuf(buf_r + buf_size);
+  wpos = 0;
+  ev_cnt = 1000000000;
+  slice_start = 0;
+  read = 0;
+  speed = 1;
+  dir = 1;
+  tape = 0;
+  rread = 0;
+  g1ph = 0; g2ph = 0.5;
+  g1st = g2st = 0;
+
+  function rd(buf, p) local(i, f, i2)
+  (
+    p < 0 ? p += buf_size;
+    p >= buf_size ? p -= buf_size;
+    i = floor(p);
+    f = p - i;
+    i2 = i + 1;
+    i2 >= buf_size ? i2 = 0;
+    buf[i] + (buf[i2] - buf[i]) * f;
+  );
 
 @slider
-rate_hz = slider1;
-stutter_notes = slider2;
-stutter_on = slider3;
-gate_pct = slider4 / 100;
-gate_on = slider5;
-pitch_semitones = slider6;
-pitch_on = slider7;
-reverse_pct = slider8;
-reverse_on = slider9;
-tape_stop_ms = slider10 / 1000;
-tape_stop_on = slider11;
-grain_ms = slider12 / 1000;
-grain_on = slider13;
-mix_pct = slider14 / 100;
-
-pitch_ratio = pitch_on ? pow(2, pitch_semitones / 12) : 1;
-
-stutter_dur = 1 / (rate_hz * stutter_notes) * 4;
-gate_window = 1 / rate_hz * 0.3;
-grain_samples = srate * grain_ms;
-tape_stop_samples = srate * tape_stop_ms;
+  ev_len = max(1, floor(srate / slider1));
+  pitch = slider7 ? 2 ^ (slider6 / 12) : 1;
+  gate_depth = slider4 / 100;
+  rev_chance = slider8;
+  tape_len = max(1, srate * slider10 / 1000);
+  grain_len = max(16, floor(srate * slider12 / 1000));
+  mix = slider14 / 100;
 
 @sample
-in_l = spl0;
-in_r = spl1;
+  buf_l[wpos] = spl0;
+  buf_r[wpos] = spl1;
 
-/* ─── WRITE TO BUFFER ─── */
-delay_buf[write_pos] = in_l;
-write_pos = write_pos + 1;
-write_pos = write_pos >= buf_size ? 0 : write_pos;
+  bpm = tempo > 0 ? tempo : 120;
+  slice_len = max(16, min(buf_size / 2, floor(srate * 240 / bpm / slider2)));
+  loop_len = slider13 ? min(grain_len, slice_len) : slice_len;
 
-/* ─── RATE TIMER ─── */
-stutter_cnt += 1;
-stutter_samples = srate * stutter_dur;
-
-/* ─── TRIGGER EVENTS AT RATE ─── */
-stutter_cnt >= stutter_samples ? (
-  stutter_cnt = 0;
-
-  gate_state = gate_state ? 0 : 1;
-  gate_timer = 0;
-
-  rand_val = rand(100);
-  reverse_flag = (reverse_on && rand_val < reverse_pct) ? 1 : 0;
-
-  tape_trig = (tape_stop_on && rand(100) < 20) ? 1 : 0;
-  tape_stop_active = tape_trig ? 1 : 0;
-  tape_stop_target = tape_trig ? 0.1 : 1;
-  slide_cnt = 0;
-
-  grain_start = write_pos;
-);
-
-gate_timer += 1;
-
-/* ─── TAPE STOP ANIMATION ─── */
-slide_cnt += 1;
-slide_progress = tape_stop_active ? slide_cnt / tape_stop_samples : 0;
-slide_progress = slide_progress > 1 ? 1 : slide_progress;
-pitch_slide = 1 + (tape_stop_target - 1) * slide_progress;
-
-/* ─── START WITH INPUT (when stutter OFF) ─── */
-wet = in_l;
-
-/* ─── STUTTER: READ FROM BUFFER ─── */
-stutter_on ? (
-  stutter_samples > 0 ? (
-    read_base = write_pos - stutter_samples;
-    read_base = read_base < 0 ? read_base + buf_size : read_base;
-
-    read_dir = (reverse_on && reverse_flag) ? -1 : 1;
-    read_pos = read_base + (stutter_cnt * read_dir);
-    read_pos = read_pos < 0 ? read_pos + buf_size : (read_pos >= buf_size ? read_pos - buf_size : read_pos);
-
-    read_next = read_pos + read_dir;
-    read_next = read_next < 0 ? read_next + buf_size : (read_next >= buf_size ? read_next - buf_size : read_next);
-
-    actual_pitch = pitch_ratio * pitch_slide;
-    actual_read = read_pos * actual_pitch;
-    actual_read = actual_read < 0 ? actual_read + buf_size : (actual_read >= buf_size ? actual_read - buf_size : actual_read);
-
-    int_part = floor(actual_read);
-    frac_part = actual_read - int_part;
-
-    val1 = delay_buf[int_part];
-    val2 = delay_buf[int_part >= buf_size ? 0 : int_part];
-    wet = val1 * (1 - frac_part) + val2 * frac_part;
+  ev_cnt += 1;
+  ev_cnt >= ev_len ? (
+    // new event: capture the latest slice and roll the dice
+    ev_cnt = 0;
+    slice_start = wpos - slice_len;
+    read = 0;
+    rread = 0;
+    dir = slider9 && rand(100) < rev_chance ? -1 : 1;
+    tape = slider11 && rand(100) < 30;
   );
-);
 
-/* ─── PITCH SHIFT ONLY (stutter OFF) ─── */
-(!stutter_on && pitch_on) ? (
-  wet = in_l * pitch_ratio * pitch_slide;
-);
+  speed = pitch;
+  tape ? speed *= max(0, 1 - ev_cnt / tape_len);
 
-/* ─── GRANULAR OVERLAY ─── */
-grain_on ? (
-  grain_diff = write_pos - grain_start;
-  grain_diff = grain_diff < 0 ? grain_diff + buf_size : grain_diff;
-  grain_active = grain_diff < grain_samples ? 1 : 0;
+  slider3 ? (
+    read += speed;
+    read >= loop_len ? read -= loop_len;
+    pos = dir > 0 ? slice_start + read : slice_start + loop_len - 1 - read;
+    wet_l = rd(buf_l, pos);
+    wet_r = rd(buf_r, pos);
+    // short fades at the loop seam (or a full Hann window for grains)
+    ph = read / loop_len;
+    win = slider13 ? 0.5 - 0.5 * cos(2 * $pi * ph) : min(1, min(ph, 1 - ph) * loop_len / (0.003 * srate));
+    wet_l *= win;
+    wet_r *= win;
+  ) : slider13 ? (
+    // no stutter, granular: two overlapping grains read from the recent past
+    gstep = 1 / grain_len;
+    g1ph += gstep; g1ph >= 1 ? (g1ph -= 1; g1st = wpos - grain_len * (max(speed, 1) + 1) - rand(grain_len););
+    g2ph += gstep; g2ph >= 1 ? (g2ph -= 1; g2st = wpos - grain_len * (max(speed, 1) + 1) - rand(grain_len););
+    gp1 = dir > 0 ? g1ph : 1 - g1ph;
+    gp2 = dir > 0 ? g2ph : 1 - g2ph;
+    gw1 = 0.5 - 0.5 * cos(2 * $pi * g1ph);
+    gw2 = 0.5 - 0.5 * cos(2 * $pi * g2ph);
+    wet_l = rd(buf_l, g1st + gp1 * grain_len * speed) * gw1 + rd(buf_l, g2st + gp2 * grain_len * speed) * gw2;
+    wet_r = rd(buf_r, g1st + gp1 * grain_len * speed) * gw1 + rd(buf_r, g2st + gp2 * grain_len * speed) * gw2;
+  ) : dir < 0 ? (
+    // no stutter, reverse: play each newest chunk of audio backwards
+    rread += speed;
+    rread >= slice_len ? (rread -= slice_len; slice_start = wpos - slice_len;);
+    pos = slice_start + slice_len - 1 - rread;
+    wet_l = rd(buf_l, pos);
+    wet_r = rd(buf_r, pos);
+    ph = rread / slice_len;
+    win = min(1, min(ph, 1 - ph) * slice_len / (0.003 * srate));
+    wet_l *= win;
+    wet_r *= win;
+  ) : (
+    // no stutter: the effects act on the live signal (pitch via a short varispeed read)
+    read += 1 - speed;
+    read < 0 ? read += 0.05 * srate;
+    read >= 0.05 * srate ? read -= 0.05 * srate;
+    wet_l = rd(buf_l, wpos - 1 - read);
+    wet_r = rd(buf_r, wpos - 1 - read);
+  );
 
-  grain_mix = grain_active ? 0.3 : 0;
-  grain_val = delay_buf[grain_start] * grain_mix;
-  wet = wet + grain_val;
-);
+  slider5 ? (
+    // gate: silence the second half of every stutter repetition
+    (ev_cnt % max(16, slice_len / 2)) > slice_len / 4 ? (
+      wet_l *= 1 - gate_depth;
+      wet_r *= 1 - gate_depth;
+    );
+  );
 
-/* ─── GATE ─── */
-gate_on ? (
-  gate_active = gate_state && gate_timer < srate * gate_window ? 1 : 0;
-  wet = gate_active || !gate_state ? wet : 0;
-);
+  wpos += 1;
+  wpos >= buf_size ? wpos = 0;
 
-/* ─── DRY/WET MIX ─── */
-dry_mix = 1 - mix_pct;
-out_l = in_l * dry_mix + wet * mix_pct;
-out_r = in_r * dry_mix + wet * mix_pct;
-
-spl0 = out_l;
-spl1 = out_r;
+  spl0 = spl0 * (1 - mix) + wet_l * mix;
+  spl1 = spl1 * (1 - mix) + wet_r * mix;

@@ -34,6 +34,11 @@
             }
         });
 
+        // hide a category heading when none of its plugins match
+        document.querySelectorAll('.plugin-category').forEach(group => {
+            group.classList.toggle('hidden', !group.querySelector('.plugin-card[data-name]:not(.hidden)'));
+        });
+
         if (query.trim() === '') {
             searchCount.textContent = '';
         } else {
@@ -50,6 +55,7 @@
         pluginCards.forEach(card => {
             card.classList.remove('hidden');
         });
+        document.querySelectorAll('.plugin-category').forEach(group => group.classList.remove('hidden'));
         searchInput.focus();
     }
 

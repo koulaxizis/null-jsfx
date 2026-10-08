@@ -1,14 +1,15 @@
-desc:NULL ONE SLIDER Formant Shift
-//author: Christos Koulaxizis
-// Collection: NULL JSFX
-//tags: formant vocal morph gender shift voice vowel
+desc:NULL Formant Shift
+author: Christos Koulaxizis
+tags: formant vocal morph gender shift voice vowel
+//category: One Slider
+//NULL JSFX v2.0 • https://nulljsfx.tech • MIT License
 
 slider1:50<0,100,1>Formant Position
 
-in_pin:left input
-in_pin:right input
-out_pin:left output
-out_pin:right output
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
 
 @init
   PI=3.14159265358979;
@@ -30,8 +31,8 @@ out_pin:right output
   // Slider 0-1
   pos = slider1 / 100;
 
-  // Shift range: 0.5x (male/deep) to 2.0x (female/high)
-  shift = pow(2.0, (0.5 - pos) * 2);
+  // Shift range: 0.5x (male/deep, left) to 2.0x (female/high, right)
+  shift = pow(2.0, (pos - 0.5) * 2);
 
   // Calculate shifted formant frequencies
   cf0 = f0_base * shift;

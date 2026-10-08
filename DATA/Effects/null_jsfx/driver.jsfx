@@ -1,30 +1,31 @@
-desc:NULL ONE SLIDER Driver
-//tags: saturation drive warmth tube tape overdrive
-//Collection: NULL JSFX
-//Author: Christos Koulaxizis
+desc:NULL Driver
+author: Christos Koulaxizis
+tags: saturation drive warmth tube tape overdrive
+//category: One Slider
+//NULL JSFX v2.0 • https://nulljsfx.tech • MIT License
 
 slider1:50<0,100,1>Amount
 
-in_pin:left input
-in_pin:right input
-out_pin:left output
-out_pin:right output
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
 
 @init
-  DB2LIN = 0.11512925464970228420;
+  // Warm tube-style drive: the signal is pushed into a slightly asymmetric tanh curve
+  // (even plus odd harmonics), the DC this creates is removed, and the level is
+  // compensated. Amount fades from the untouched signal (0) to full drive (100).
+  function sat(x) local(e) ( e = exp(2 * max(-20, min(20, x))); (e - 1) / (e + 1); );
+  function dcb(x) local(y) ( y = x - this.x1 + 0.9995 * this.y1; this.x1 = x; this.y1 = y; y; );
 
 @slider
   amount = slider1 / 100;
-  drive = 1 + amount * 3;
-  makeup_db = amount * 3;
-  makeup_lin = exp(makeup_db * DB2LIN);
+  drive = 1 + amount * 11;
+  bias = 0.25 * amount;
+  comp = 1 / (sat(drive * 0.5 + bias) - sat(bias)) * 0.5;
 
 @sample
-  driven_l = spl0 * drive;
-  driven_r = spl1 * drive;
-  sat_l = driven_l > 1 ? 1 : driven_l < -1 ? -1 : driven_l;
-  sat_l = sat_l * (1 - abs(sat_l) * 0.3);
-  sat_r = driven_r > 1 ? 1 : driven_r < -1 ? -1 : driven_r;
-  sat_r = sat_r * (1 - abs(sat_r) * 0.3);
-  spl0 = sat_l * makeup_lin;
-  spl1 = sat_r * makeup_lin;
+  wl = dl.dcb((sat(spl0 * drive + bias) - sat(bias)) * comp);
+  wr = dr.dcb((sat(spl1 * drive + bias) - sat(bias)) * comp);
+  spl0 += amount * (wl - spl0);
+  spl1 += amount * (wr - spl1);

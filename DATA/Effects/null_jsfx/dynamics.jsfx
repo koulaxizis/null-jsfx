@@ -1,20 +1,21 @@
 desc:NULL Dynamics
-//tags: dynamics compressor expander gain reduction ratio threshold knee
-//author: Christos Koulaxizis
-//Collection: NULL JSFX
+author: Christos Koulaxizis
+tags: dynamics compressor expander gain reduction ratio threshold knee
+//category: Essentials
+//NULL JSFX v2.0 • https://nulljsfx.tech • MIT License
 
 slider1:0<0,1,1{Compressor,Expander}>Mode
-slider2:-20<-60,0,1>Threshold-(dB)
+slider2:-20<-60,0,1>Threshold (dB)
 slider3:4<1,20,0.1>Ratio
-slider4:6<0,20,1>Knee-(dB)
-slider5:10<0,200,1>Attack-(ms)
-slider6:100<0,1000,1>Release-(ms)
-slider7:0<0,20,1>Makeup-(dB)
+slider4:6<0,20,1>Knee (dB)
+slider5:10<0,200,1>Attack (ms)
+slider6:100<0,1000,1>Release (ms)
+slider7:0<0,20,1>Makeup (dB)
 
-in_pin:left input
-in_pin:right input
-out_pin:left output
-out_pin:right output
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
 
 @init
   gain_env = 1;

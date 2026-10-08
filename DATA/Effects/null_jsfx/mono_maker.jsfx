@@ -1,30 +1,44 @@
-desc:NULL ONE SLIDER Mono Maker
-//tags: mono bass low frequency summing stereo width null jsfx one slider
-// Collection: NULL JSFX
-// Author: Christos Koulaxizis
+desc:NULL Mono Maker
+author: Christos Koulaxizis
+tags: mono bass low frequency summing stereo width
+//category: One Slider
+//NULL JSFX v2.0 • https://nulljsfx.tech • MIT License
 
-slider1:0.5<0,1,0.01>Mix
+slider1:50<0,100,1>Amount
+
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
 
 @init
-  lp_state_l = 0
-  lp_state_r = 0
+  // Removes the side (L-R) content below a crossover, so the low end becomes mono
+  // while everything above stays as wide as it was. Amount moves the crossover
+  // from 0 (off) up to 400 Hz.
+  s1 = s2 = s3 = s4 = 0;
 
 @slider
-  mix_amount = slider1
-  fc = 120 / sr
+  amount = slider1 / 100;
+  fc = 20 * pow(20, amount);   // 20 Hz .. 400 Hz
+  w = 2 * $pi * fc / srate;
+  k = tan(w / 2);
+  norm = 1 / (1 + sqrt(2) * k + k * k);
+  b0 = k * k * norm;
+  b1 = 2 * b0;
+  b2 = b0;
+  a1 = 2 * (k * k - 1) * norm;
+  a2 = (1 - sqrt(2) * k + k * k) * norm;
 
 @sample
-  lp_coeff = 2*3.14159*fc / (2*3.14159*fc + 1)
-  low_l = lp_state_l*(1-lp_coeff) + spl0*lp_coeff
-  low_r = lp_state_r*(1-lp_coeff) + spl1*lp_coeff
-  lp_state_l = low_l
-  lp_state_r = low_r
-  high_l = spl0 - low_l
-  high_r = spl1 - low_r
-  low_mono = (low_l + low_r)*0.5
-  spl0 = low_mono*mix_amount + high_l*mix_amount + spl0*(1-mix_amount)
-  spl1 = low_mono*mix_amount + high_r*mix_amount + spl1*(1-mix_amount)
-  spl0 < -1 ? spl0 = -1
-  spl0 > 1 ? spl0 = 1
-  spl1 < -1 ? spl1 = -1
-  spl1 > 1 ? spl1 = 1
+  side = (spl0 - spl1) * 0.5;
+  // 4th-order low-pass (two Butterworth stages) on the side signal
+  y = b0 * side + s1;
+  s1 = b1 * side - a1 * y + s2;
+  s2 = b2 * side - a2 * y;
+  low_side = b0 * y + s3;
+  s3 = b1 * y - a1 * low_side + s4;
+  s4 = b2 * y - a2 * low_side;
+  amount > 0 ? (
+    spl0 -= low_side;
+    spl1 += low_side;
+  );

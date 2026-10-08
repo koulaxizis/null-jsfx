@@ -1,0 +1,92 @@
+desc:NULL Shimmer Reverb
+author: Christos Koulaxizis
+tags: shimmer reverb octave pitch ambient pad ethereal cinematic
+//category: Advanced
+//NULL JSFX v2.0 • https://nulljsfx.tech • MIT License
+
+slider1:70<0,100,1>Size (%)
+slider2:6<1,20,0.1>Decay (s)
+slider3:50<0,100,1>Shimmer (%)
+slider4:0<0,4,1{+12 (Octave),+7 (Fifth),+19 (Octave + Fifth),+24 (Two Octaves),-12 (Octave Down)}>Pitch
+slider5:6000<1000,16000,10>Damping (Hz)
+slider6:35<0,100,1>Mix (%)
+
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
+
+@init
+  // A large, smooth reverb (4-line feedback delay network with a Hadamard mixing
+  // matrix) whose tail is fed through a pitch shifter and back into the network. Each
+  // round trip the tail climbs another interval, building the bright, organ-like
+  // "shimmer" cloud. Shimmer sets how much of the tail is pitched.
+  max_len = ceil(srate * 0.2);
+  win = floor(srate * 0.08);
+  d1 = 0; d2 = d1 + max_len; d3 = d2 + max_len; d4 = d3 + max_len;
+  ps = d4 + max_len;
+  ps_size = win + 4;
+  freembuf(ps + ps_size);
+  memset(d1, 0, ps + ps_size);
+  wpos = 0; ppos = 0; ph = 0;
+  f1 = f2 = f3 = f4 = 0;
+  shim = 0;
+
+  function line(buf, len) local(rp)
+  (
+    rp = wpos - len;
+    rp < 0 ? rp += max_len;
+    buf[rp];
+  );
+  function ps_tap(d) local(rp, i, f, i2)
+  (
+    rp = ppos - d; rp < 0 ? rp += ps_size;
+    i = floor(rp); f = rp - i;
+    i2 = i + 1; i2 >= ps_size ? i2 = 0;
+    ps[i] + (ps[i2] - ps[i]) * f;
+  );
+
+@slider
+  sz = 0.4 + slider1 / 100 * 0.6;
+  // mutually prime-ish line lengths (ms)
+  l1 = floor(srate * 0.0731 * sz); l2 = floor(srate * 0.0857 * sz);
+  l3 = floor(srate * 0.0997 * sz); l4 = floor(srate * 0.1129 * sz);
+  avg = (l1 + l2 + l3 + l4) / 4 / srate;
+  g = 10 ^ (-3 * avg / slider2);
+  shimmer = slider3 / 100;
+  semis = slider4 == 0 ? 12 : slider4 == 1 ? 7 : slider4 == 2 ? 19 : slider4 == 3 ? 24 : -12;
+  ratio = 2 ^ (semis / 12);
+  ph_inc = (1 - ratio) / win;
+  damp = exp(-2 * $pi * slider5 / srate);
+  mix = slider6 / 100;
+
+@sample
+  x_l = spl0; x_r = spl1;
+  o1 = line(d1, l1); o2 = line(d2, l2); o3 = line(d3, l3); o4 = line(d4, l4);
+  // damping in the loop
+  f1 = (1 - damp) * o1 + damp * f1; f2 = (1 - damp) * o2 + damp * f2;
+  f3 = (1 - damp) * o3 + damp * f3; f4 = (1 - damp) * o4 + damp * f4;
+
+  // pitch-shift the tail (two crossfading taps)
+  ps[ppos] = (f1 + f2 + f3 + f4) * 0.25;
+  ph += ph_inc; ph >= 1 ? ph -= 1; ph < 0 ? ph += 1;
+  ph2 = ph + 0.5; ph2 >= 1 ? ph2 -= 1;
+  gw = 0.5 - 0.5 * cos(2 * $pi * ph);
+  shim = ps_tap(1 + ph * win) * gw + ps_tap(1 + ph2 * win) * (1 - gw);
+  ppos += 1; ppos >= ps_size ? ppos = 0;
+
+  // Hadamard mix (energy preserving), feedback gain g, shimmer replaces part of it
+  h1 = (f1 + f2 + f3 + f4) * 0.5; h2 = (f1 - f2 + f3 - f4) * 0.5;
+  h3 = (f1 + f2 - f3 - f4) * 0.5; h4 = (f1 - f2 - f3 + f4) * 0.5;
+  s = shim * shimmer;
+  k = g * (1 - shimmer * 0.5);
+  d1[wpos] = x_l + h1 * k + s * g;
+  d2[wpos] = x_r + h2 * k + s * g;
+  d3[wpos] = x_l + h3 * k;
+  d4[wpos] = x_r + h4 * k;
+  wpos += 1; wpos >= max_len ? wpos = 0;
+
+  w_l = (o1 + o3) * 0.35;
+  w_r = (o2 + o4) * 0.35;
+  spl0 = spl0 * (1 - mix) + w_l * mix;
+  spl1 = spl1 * (1 - mix) + w_r * mix;

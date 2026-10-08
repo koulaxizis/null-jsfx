@@ -1,0 +1,230 @@
+desc:NULL Convolution
+author: Christos Koulaxizis
+tags: convolution reverb impulse response ir room hall plate cabinet
+//category: Advanced
+//NULL JSFX v2.0 • https://nulljsfx.tech • MIT License
+
+slider1:2<0,5,1{Small Room,Large Room,Hall,Plate,Cathedral,IR File}>Source
+slider2:/null_jsfx_ir:none:IR File
+slider3:100<10,100,1>Length (%)
+slider4:0<0,200,1>Pre-Delay (ms)
+slider5:80<20,1000,1>Low Cut (Hz)
+slider6:12000<1000,20000,10>High Cut (Hz)
+slider7:30<0,100,1>Mix (%)
+slider8:0<-24,12,0.1>Output (dB)
+
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
+
+@init
+  // Convolution reverb: the input is convolved with an impulse response (IR), the
+  // recorded "fingerprint" of a space or device, using uniformly partitioned FFT
+  // convolution (1024-sample blocks; this latency is reported to REAPER).
+  // Five IRs are built in (generated, so no files are needed). To use your own,
+  // put .wav files in REAPER's Data/null_jsfx_ir folder, choose Source = IR File and
+  // pick the file. Stereo IRs are used per channel, mono IRs for both. IRs are limited
+  // to 3 seconds and level-normalised.
+  B = 1024; M = 2 * B;               // block size, FFT size (complex points)
+  FS = 2 * M;                        // slots per spectrum (aligned to 4096 -> no 65536 crossing)
+  P_max = ceil(3 * srate / B);
+  inb_l = 0; inb_r = M;              // last M input samples per channel (time domain)
+  ola_l = 2 * M; ola_r = 3 * M;      // output of the current block per channel
+  tmp = 4 * M; acc = tmp + FS;       // work buffers (one spectrum each)
+  outq_l = acc + FS; outq_r = outq_l + B;
+  H_l = 65536; H_r = H_l + P_max * FS;
+  X_l = H_r + P_max * FS; X_r = X_l + P_max * FS;
+  ir_tmp = X_r + P_max * FS;         // raw IR before partitioning (2 channels)
+  ir_len_max = P_max * B;
+  freembuf(ir_tmp + 3 * ir_len_max + 16);
+  memset(0, 0, ir_tmp + 3 * ir_len_max + 16);
+  P = 1; pos = 0; slot = 0;
+  last_key = -1;
+  pdc_delay = B;
+  pdc_bot_ch = 0;
+  pdc_top_ch = 2;
+  lc1 = lc2 = hc1 = hc2 = 0;
+
+  // generated room: early reflections + exponentially decaying noise that darkens over time
+  function gen_ir(dst, len, t60, bright, er_ms, seed_off) local(n, t, env, c, lp, x, k)
+  (
+    memset(dst, 0, len);
+    lp = 0;
+    n = 0;
+    loop(len,
+      t = n / srate;
+      env = exp(-6.9 * t / t60);
+      c = exp(-2 * $pi * (300 + bright * exp(-t / (t60 * 0.35))) / srate);
+      x = rand(2) - 1;
+      lp = (1 - c) * x + c * lp;
+      // short fade-in so the tail starts after the first reflections
+      dst[n] = lp * env * min(1, t / (er_ms / 1000));
+      n += 1;
+    );
+    // a handful of early reflections
+    k = 0;
+    loop(8,
+      n = floor((2 + rand(er_ms)) * srate / 1000);
+      n < len ? dst[n] += (rand(2) - 1) * 0.6 * exp(-k * 0.25);
+      k += 1;
+    );
+  );
+
+  // load a .wav chosen in the IR File slider; returns the length per channel (0 = failed)
+  function load_file() local(h, nch, fsr, avail, n, len, ratio, i, p, f, c)
+  (
+    len = 0;
+    h = file_open(slider2);
+    h >= 0 ? (
+      file_riff(h, nch, fsr);
+      nch > 0 && fsr > 0 ? (
+        avail = min(file_avail(h), ir_len_max * nch * 2);
+        n = floor(avail / nch);
+        // read interleaved data after the two IR channel buffers, then resample
+        file_mem(h, ir_tmp + 2 * ir_len_max, min(n * nch, ir_len_max));
+        n = floor(min(n * nch, ir_len_max) / nch);
+        ratio = fsr / srate;
+        len = min(ir_len_max, floor(n / ratio));
+        c = 0;
+        loop(2,
+          i = 0;
+          loop(len,
+            p = i * ratio;
+            f = p - floor(p);
+            p = floor(p);
+            ir_tmp[c * ir_len_max + i] =
+              ir_tmp[2 * ir_len_max + p * nch + min(c, nch - 1)] * (1 - f) +
+              ir_tmp[2 * ir_len_max + min(p + 1, n - 1) * nch + min(c, nch - 1)] * f;
+            i += 1;
+          );
+          c += 1;
+        );
+      );
+      file_close(h);
+    );
+    len;
+  );
+
+  // split one channel's IR into P partitions and FFT each one
+  function partition(src, H, len) local(p, i, e, g)
+  (
+    e = 0;
+    i = 0;
+    loop(len, e += src[i] * src[i]; i += 1);
+    g = e > 0 ? 1 / sqrt(e) : 0;
+    p = 0;
+    loop(P,
+      memset(H + p * FS, 0, FS);
+      i = 0;
+      loop(B,
+        p * B + i < len ? H[p * FS + 2 * i] = src[p * B + i] * g;
+        i += 1;
+      );
+      fft(H + p * FS, M);
+      p += 1;
+    );
+  );
+
+  function build() local(len, t60, pd, i, src_len)
+  (
+    pd = floor(slider4 * srate / 1000);
+    src == 5 ? (
+      src_len = load_file();
+    ) : (
+      t60 = src == 0 ? 0.5 : src == 1 ? 1.2 : src == 2 ? 2.4 : src == 3 ? 1.8 : 3;
+      src_len = min(ir_len_max - pd, floor(min(3, t60 * 1.2) * srate));
+      gen_ir(ir_tmp, src_len, t60, src == 3 ? 9000 : src == 4 ? 3500 : 6000, src == 0 ? 8 : src == 3 ? 2 : 25, 0);
+      gen_ir(ir_tmp + ir_len_max, src_len, t60, src == 3 ? 9000 : src == 4 ? 3500 : 6000, src == 0 ? 8 : src == 3 ? 2 : 25, 1);
+    );
+    src_len = floor(src_len * slider3 / 100);
+    // pre-delay: shift the IR later in time
+    pd > 0 && src_len > 0 ? (
+      src_len = min(src_len, ir_len_max - pd);
+      i = src_len - 1;
+      loop(src_len,
+        ir_tmp[i + pd] = ir_tmp[i];
+        ir_tmp[ir_len_max + i + pd] = ir_tmp[ir_len_max + i];
+        i -= 1;
+      );
+      memset(ir_tmp, 0, pd);
+      memset(ir_tmp + ir_len_max, 0, pd);
+      src_len += pd;
+    );
+    // fade out the last 50 ms so a trimmed IR does not end with a click
+    i = 0;
+    loop(min(src_len, floor(0.05 * srate)),
+      ir_tmp[src_len - 1 - i] *= i / (0.05 * srate);
+      ir_tmp[ir_len_max + src_len - 1 - i] *= i / (0.05 * srate);
+      i += 1;
+    );
+    P = max(1, min(P_max, ceil(src_len / B)));
+    src_len > 0 ? (
+      partition(ir_tmp, H_l, src_len);
+      partition(ir_tmp + ir_len_max, H_r, src_len);
+    ) : (
+      memset(H_l, 0, P * FS);
+      memset(H_r, 0, P * FS);
+    );
+    memset(X_l, 0, P_max * FS * 2);
+  );
+
+  // one block of overlap-save convolution for one channel
+  function conv_block(inb, X, H, ola) local(p, s, i)
+  (
+    // spectrum of the last M input samples goes into the delay line slot
+    i = 0;
+    loop(M, X[slot * FS + 2 * i] = inb[(pos + i) % M]; X[slot * FS + 2 * i + 1] = 0; i += 1);
+    fft(X + slot * FS, M);
+    memset(acc, 0, FS);
+    p = 0;
+    loop(P,
+      s = slot - p; s < 0 ? s += P;
+      memcpy(tmp, X + s * FS, FS);
+      convolve_c(tmp, H + p * FS, M);
+      i = 0;
+      loop(FS, acc[i] += tmp[i]; i += 1);
+      p += 1;
+    );
+    ifft(acc, M);
+    // overlap-save: the last B outputs are valid
+    i = 0;
+    loop(B, ola[i] = acc[2 * (B + i)] / M; i += 1);
+  );
+
+@slider
+  src = slider1;
+  key = src * 1000003 + slider2 * 1009 + slider3 * 7 + slider4 * 13 + srate;
+  key != last_key ? (
+    build();
+    slot = 0;
+    last_key = key;
+  );
+  lc = exp(-2 * $pi * slider5 / srate);
+  hc = exp(-2 * $pi * min(slider6, srate * 0.45) / srate);
+  mix = slider7 / 100;
+  out = 10 ^ (slider8 / 20);
+
+@sample
+  inb_l[pos] = spl0; inb_r[pos] = spl1;
+  pos += 1; pos >= M ? pos = 0;
+  bpos = pos % B;
+  w_l = ola_l[bpos];
+  w_r = ola_r[bpos];
+  // dry signal delayed by one block to stay aligned with the wet signal
+  dpos = pos - B - 1; dpos < 0 ? dpos += M;
+  d_l = inb_l[dpos]; d_r = inb_r[dpos];
+  bpos == B - 1 ? (
+    slot += 1; slot >= P ? slot = 0;
+    conv_block(inb_l, X_l, H_l, ola_l);
+    conv_block(inb_r, X_r, H_r, ola_r);
+  );
+
+  // wet tone: one-pole low cut and high cut
+  lc1 = lc * (lc1 + w_l - lc2); lc2 = w_l; w_l = lc1;
+  hc1 = (1 - hc) * w_l + hc * hc1; w_l = hc1;
+  lcr1 = lc * (lcr1 + w_r - lcr2); lcr2 = w_r; w_r = lcr1;
+  hcr1 = (1 - hc) * w_r + hc * hcr1; w_r = hcr1;
+
+  spl0 = (d_l * (1 - mix) + w_l * mix) * out;
+  spl1 = (d_r * (1 - mix) + w_r * mix) * out;

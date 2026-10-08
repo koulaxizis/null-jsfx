@@ -1,110 +1,80 @@
 desc:NULL Maximizer
-//tags: limiter maximizing loudness ceiling mastering peak protection
-// Collection: NULL JSFX
-// Author: Christos Koulaxizis
-// v1.3 — Final: dropdown at end, correct slider order, all working
+author: Christos Koulaxizis
+tags: limiter maximizing loudness ceiling mastering peak protection
+//category: Essentials
+//NULL JSFX v2.0 • https://nulljsfx.tech • MIT License
 
 slider1:0<-12,12,0.1>Input Gain (dB)
 slider2:-0.3<-3,-0.1,0.1>Ceiling (dB)
 slider3:50<10,200,1>Release (ms)
 slider4:2<0,5,1>Lookahead (ms)
-slider5:0<-12,12,0.1>Output Gain (dB)
+slider5:0<-12,0,0.1>Output Gain (dB)
 slider6:1<0,1,1{OFF,ON}>Stereo Link
 
-in_pin:left
-in_pin:right
-out_pin:left
-out_pin:right
-
-// === DELAY BUFFER FOR LOOKAHEAD ===
-lookahead_buf[441];
-write_pos = 0;
-read_pos = 0;
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
 
 @init
-PI = 3.14159265358979;
-gain_store = 1;
-lp_peak = 0;
-delay_samps = 0;
+  // Loudness maximizer: Input Gain pushes the mix into a look-ahead limiter that
+  // holds the peaks at Ceiling. Stereo Link uses one gain for both channels so the
+  // image does not shift; OFF limits each channel on its own.
+  max_look = ceil(srate * 0.006) + 2;
+  buf_l = 0;
+  buf_r = buf_l + max_look;
+  memset(buf_l, 0, 2 * max_look);
+  freembuf(buf_r + max_look);
+  wpos = 0;
+  hv_l = hv_r = 0;
+  hc_l = hc_r = 0;
+  g_l = g_r = 1;
+  pdc_bot_ch = 0;
+  pdc_top_ch = 2;
 
-// Temp variables
-input_gain; ceiling_db; release_ms; lookahead_ms; output_gain; stereo_link;
-lp_coef; release_const; signed_in_l; signed_in_r; delayed_in; abs_sig;
-ceiling_linear; needed_gain; temp_gain; limited_l; limited_r; limit_abs;
-out_l; out_r;
+  function detect(peak, hv*, hc*, g*) local(target)
+  (
+    peak >= hv ? (
+      hv = peak;
+      hc = look;
+    ) : hc > 0 ? (
+      hc -= 1;
+    ) : (
+      hv = max(peak, hv * rel);
+    );
+    target = hv > ceiling ? ceiling / hv : 1;
+    g = target < g ? g + (target - g) * att : target + (g - target) * rel;
+  );
 
 @slider
-input_gain = slider1 / 6;
-ceiling_db = slider2;
-release_ms = slider3;
-lookahead_ms = slider4;
-output_gain = slider5 / 6;
-stereo_link = slider6;
-
-// Convert ceiling dB to LINEAR
-ceiling_linear = pow(10, ceiling_db / 20);
-
-// Release constant
-release_const = 1 - exp(-1 / (release_ms * srate / 1000));
-lp_coef = 1 - exp(-2 * PI * 100 / srate);
-
-// Calculate delay samples
-delay_samps = lookahead_ms * srate / 1000;
-(delay_samps < 1) ? (delay_samps = 1);
-(delay_samps > 441) ? (delay_samps = 441);
+  in_gain = 10 ^ (slider1 / 20);
+  ceiling = 10 ^ (slider2 / 20);
+  rel = exp(-1 / (slider3 * srate / 1000));
+  look = floor(slider4 * srate / 1000 + 0.5);
+  pdc_delay = look;
+  att = look < 1 ? 1 : 1 - exp(-5 / look);
+  // Output Gain is a trim (cut only), applied after the ceiling clamp, so the
+  // output can never exceed Ceiling; use Input Gain to make it louder.
+  out_gain = 10 ^ (min(slider5, 0) / 20);
+  link = slider6;
 
 @sample
-/* ─── INPUT STAGE ─── */
-signed_in_l = spl0 * (1 + input_gain);
-signed_in_r = spl1 * (1 + input_gain);
+  in_l = spl0 * in_gain;
+  in_r = spl1 * in_gain;
+  link ? (
+    detect(max(abs(in_l), abs(in_r)), hv_l, hc_l, g_l);
+    g_r = g_l;
+  ) : (
+    detect(abs(in_l), hv_l, hc_l, g_l);
+    detect(abs(in_r), hv_r, hc_r, g_r);
+  );
 
-/* ─── LOOKAHEAD DELAY BUFFER ─── */
-lookahead_buf[write_pos] = signed_in_l;
-write_pos = write_pos + 1;
-(write_pos >= delay_samps) ? (write_pos = 0);
+  buf_l[wpos] = in_l;
+  buf_r[wpos] = in_r;
+  rpos = wpos - look;
+  rpos < 0 ? rpos += max_look;
+  wpos += 1;
+  wpos >= max_look ? wpos = 0;
 
-read_pos = write_pos - delay_samps;
-(read_pos < 0) ? (read_pos = read_pos + delay_samps);
-
-delayed_in = lookahead_buf[read_pos];
-
-/* ─── PEAK DETECTION ─── */
-abs_sig = delayed_in < 0 ? -delayed_in : delayed_in;
-lp_peak = lp_peak + lp_coef * (abs_sig - lp_peak);
-(lp_peak > 1) ? (lp_peak = 1);
-(lp_peak < 0.001) ? (lp_peak = 0.001);
-
-/* ─── GAIN CALCULATION ─── */
-needed_gain = ceiling_linear / lp_peak;
-(needed_gain > 1) ? (needed_gain = 1);
-(needed_gain < 0.001) ? (needed_gain = 0.001);
-
-/* ─── SMOOTHING ─── */
-temp_gain = gain_store * (1 - release_const) + needed_gain * release_const;
-(needed_gain < gain_store) ? (gain_store = temp_gain);
-(needed_gain >= gain_store) ? (gain_store = needed_gain);
-
-/* ─── APPLY LIMITING ─── */
-limited_l = signed_in_l * gain_store;
-(stereo_link == 1) ? (limited_r = limited_l);
-(stereo_link == 0) ? (limited_r = signed_in_r * gain_store);
-
-/* ─── HARD CEILING SAFETY ─── */
-limit_abs = limited_l < 0 ? -limited_l : limited_l;
-(limit_abs > 0.98) ? (limited_l = limited_l > 0 ? 0.98 : -0.98);
-
-limit_abs = limited_r < 0 ? -limited_r : limited_r;
-(limit_abs > 0.98) ? (limited_r = limited_r > 0 ? 0.98 : -0.98);
-
-/* ─── OUTPUT GAIN ─── */
-out_l = limited_l * (1 + output_gain);
-out_r = limited_r * (1 + output_gain);
-
-/* ─── FINAL CLAMPING ─── */
-(out_l > 1) ? (out_l = 1);
-(out_l < -1) ? (out_l = -1);
-(out_r > 1) ? (out_r = 1);
-(out_r < -1) ? (out_r = -1);
-
-spl0 = out_l;
-spl1 = out_r;
+  spl0 = max(-ceiling, min(ceiling, buf_l[rpos] * g_l)) * out_gain;
+  spl1 = max(-ceiling, min(ceiling, buf_r[rpos] * g_r)) * out_gain;

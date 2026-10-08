@@ -1,39 +1,47 @@
-desc:NULL ONE SLIDER Sweeper
-//tags: filter sweep lowpass resonance creative
-//Collection: NULL JSFX
-//Author: Christos Koulaxizis
+desc:NULL Sweeper
+author: Christos Koulaxizis
+tags: filter sweep lowpass resonance creative
+//category: One Slider
+//NULL JSFX v2.0 • https://nulljsfx.tech • MIT License
 
 slider1:50<0,100,1>Amount
 
-in_pin:left input
-in_pin:right input
-out_pin:left output
-out_pin:right output
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
 
 @init
-  PI = 3.14159265358979;
-  x1l = 0; x2l = 0; y1l = 0; y2l = 0;
-  x1r = 0; x2r = 0; y1r = 0; y2r = 0;
+  // DJ-style filter sweep on one knob. 50 = open (no effect). Below 50 a low-pass closes
+  // from 20 kHz down to 80 Hz; above 50 a high-pass rises from 20 Hz up to 8 kHz.
+  // A little resonance builds up as the filter moves away from the centre.
+
+  // TPT state-variable filter, state in this.ic1 / this.ic2
+  function svf(x) local(v1, v2, v3)
+  (
+    v3 = x - this.ic2;
+    v1 = a1 * this.ic1 + a2 * v3;
+    v2 = this.ic2 + a2 * this.ic1 + a3 * v3;
+    this.ic1 = 2 * v1 - this.ic1;
+    this.ic2 = 2 * v2 - this.ic2;
+    mode < 0 ? v2 : x - k * v1 - v2;
+  );
 
 @slider
-  amount = slider1 / 100;
-  cutoff_hz = 20 + (1 - amount) * 19980;
-  resonance = 1 + amount * 4;
-  norm_freq = cutoff_hz / (srate * 0.5);
-  omega = PI * norm_freq;
-  alpha = sin(omega);
-  cos_w = cos(omega);
-  a0 = 1 + alpha * resonance;
-  b0 = alpha / a0;
-  b1 = 0;
-  b2 = -alpha / a0;
-  a1 = -2 * cos_w / a0;
-  a2 = (alpha * resonance - 1) / a0;
+  pos = (slider1 - 50) / 50;      // -1 .. +1
+  mode = pos < 0 ? -1 : pos > 0 ? 1 : 0;
+  d = abs(pos);
+  fc = mode < 0 ? 20000 * pow(80 / 20000, d) : 20 * pow(8000 / 20, d);
+  fc = min(fc, srate * 0.45);
+  q = 0.707 + d * 1.5;
+  g = tan($pi * fc / srate);
+  k = 1 / q;
+  a1 = 1 / (1 + g * (g + k));
+  a2 = g * a1;
+  a3 = g * a2;
 
 @sample
-  tmp_l = b0 * spl0 + b1 * x1l + b2 * x2l - a1 * y1l - a2 * y2l;
-  x2l = x1l; x1l = spl0; y2l = y1l; y1l = tmp_l;
-  tmp_r = b0 * spl1 + b1 * x1r + b2 * x2r - a1 * y1r - a2 * y2r;
-  x2r = x1r; x1r = spl1; y2r = y1r; y1r = tmp_r;
-  spl0 = tmp_l;
-  spl1 = tmp_r;
+  mode != 0 ? (
+    spl0 = L.svf(spl0);
+    spl1 = R.svf(spl1);
+  );

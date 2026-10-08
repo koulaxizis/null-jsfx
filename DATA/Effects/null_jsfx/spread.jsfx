@@ -1,34 +1,50 @@
-desc:SPREAD v1.0 //tags: stereo width decorrelation phase spread // Collection: NULL JSFX // Author: Christos Koulaxizis // v1.0 — One slider stereo decorrelator
-slider1:50<0,100,1>Spread Amount (0=Stereo Original, 100=Max Decorrelated)
+desc:NULL Spread
+author: Christos Koulaxizis
+tags: stereo width spread decorrelation widener mono-compatible
+//category: One Slider
+//NULL JSFX v2.0 • https://nulljsfx.tech • MIT License
+
+slider1:50<0,100,1>Amount
+
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
+
 @init
-// Initialize delay line for decorrelation
-delay_line_size = 44100; // 1 second at 44.1kHz
-delay_pos = 0;
-delay_max = 22050; // 0.5 second max delay
-prev_sample_l = 0;
-prev_sample_r = 0;
-allpass_coef = 0.5;
+  // Widens the stereo image while staying mono-compatible: a delayed, high-passed copy
+  // of the mid signal is added to the left and subtracted from the right. When the mix
+  // is summed to mono the two copies cancel, so nothing is lost; the low end (below
+  // ~250 Hz) is left alone so the bass stays centred.
+  buf_size = ceil(srate * 0.05);
+  buf = 0;
+  memset(buf, 0, buf_size);
+  freembuf(buf + buf_size);
+  wpos = 0;
+  hp_x = hp_y = 0;
+  a1 = a2 = 0;
+
+  function tap(ms) local(rp)
+  (
+    rp = wpos - floor(ms * srate / 1000);
+    rp < 0 ? rp += buf_size;
+    buf[rp];
+  );
+
 @slider
-// Read slider value
-spread_val = slider1 / 100; // 0 to 1
-// Calculate decorrelation parameters
-delay_time = spread_val * 22050; // 0-22050 samples
-allpass_gain = spread_val * 0.7; // 0-0.7
+  amount = slider1 / 100;
+  hp_c = exp(-2 * $pi * 250 / srate);
+  width = amount * 0.7;
+
 @sample
-// Allpass decorfilter for left channel
-ap_in_l = in_l;
-ap_out_l = ap_in_l * allpass_gain + prev_sample_l;
-prev_sample_l = ap_in_l - prev_sample_l * allpass_gain;
-// Delay line for right channel (creates phase difference)
-delay_pos = (delay_pos + 1) % delay_line_size;
-delay_buffer[delay_pos] = in_r;
-delay_read_pos = (delay_pos - int(delay_time)) % delay_line_size;
-if (delay_read_pos < 0) delay_read_pos += delay_line_size;
-delay_out = delay_buffer[delay_read_pos];
-// Mix original and processed signals
-mixed_l = (in_l + ap_out_l) * 0.5;
-mixed_r = (in_r + delay_out) * 0.5;
-// Crossfeed for more natural stereo (optional)
-crossfeed_amount = spread_val * 0.15; // Max 15% crossfeed
-out_l = mixed_l - crossfeed_amount * in_r;
-out_r = mixed_r - crossfeed_amount * in_l;
+  mid = (spl0 + spl1) * 0.5;
+  // one-pole high-pass so only the upper range is decorrelated
+  hp_y = hp_c * (hp_y + mid - hp_x);
+  hp_x = mid;
+  buf[wpos] = hp_y;
+  // two taps at unrelated times give a smooth, comb-free spread
+  d = tap(11.3) * 0.6 + tap(17.9) * 0.4;
+  wpos += 1;
+  wpos >= buf_size ? wpos = 0;
+  spl0 += d * width;
+  spl1 -= d * width;

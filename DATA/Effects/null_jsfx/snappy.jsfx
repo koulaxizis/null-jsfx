@@ -1,33 +1,33 @@
-desc:NULL ONE SLIDER Snappy
-//tags: transient attack punch drums percussive snappy
-//Collection: NULL JSFX
-//Author: Christos Koulaxizis
+desc:NULL Snappy
+author: Christos Koulaxizis
+tags: transient attack punch drums percussive snappy
+//category: One Slider
+//NULL JSFX v2.0 • https://nulljsfx.tech • MIT License
 
 slider1:50<0,100,1>Amount
 
-in_pin:left input
-in_pin:right input
-out_pin:left output
-out_pin:right output
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
 
 @init
-  prev_l = 0; prev_r = 0;
+  // Transient punch: a fast envelope (1 ms attack) is compared with a slow one (25 ms
+  // attack); where the fast one runs ahead there is a hit, and that part is boosted
+  // (up to +9 dB) while the sustain is trimmed slightly (up to -3 dB). Stereo-linked.
+  fast = slow = 0;
 
 @slider
   amount = slider1 / 100;
-  attack_gain = 1 + amount * 1.5;
-  sustain_gain = 1 - amount * 0.3;
+  fa = exp(-1 / (0.001 * srate)); sa = exp(-1 / (0.025 * srate));
+  re = exp(-1 / (0.08 * srate));
+  boost = amount * 9; cut = amount * 3;
 
 @sample
-  signal_l = abs(spl0);
-  signal_r = abs(spl1);
-  thresh_l = abs(prev_l) * 0.5;
-  thresh_r = abs(prev_r) * 0.5;
-  is_trans_l = signal_l > thresh_l ? 1 : 0;
-  is_trans_r = signal_r > thresh_r ? 1 : 0;
-  gain_l = attack_gain * is_trans_l + sustain_gain * (1 - is_trans_l);
-  gain_r = attack_gain * is_trans_r + sustain_gain * (1 - is_trans_r);
-  spl0 = spl0 * gain_l;
-  spl1 = spl1 * gain_r;
-  prev_l = spl0;
-  prev_r = spl1;
+  lev = max(abs(spl0), abs(spl1));
+  fast = lev > fast ? fa * fast + (1 - fa) * lev : re * fast + (1 - re) * lev;
+  slow = lev > slow ? sa * slow + (1 - sa) * lev : re * slow + (1 - re) * lev;
+  trans = fast > 0.00001 ? max(0, min(1, (fast - slow) / fast)) : 0;
+  g = 10 ^ ((boost * trans - cut * (1 - trans)) / 20);
+  spl0 *= g;
+  spl1 *= g;

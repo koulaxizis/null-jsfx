@@ -1,79 +1,93 @@
 desc:NULL Dynamic EQ
-//tags: dynamic eq equalizer parametric compressor expander null jsfx essentials
-// Collection: NULL JSFX
-// Author: Christos Koulaxizis
+author: Christos Koulaxizis
+tags: dynamic eq equalizer parametric compressor expander essentials
+//category: Essentials
+//NULL JSFX v2.0 • https://nulljsfx.tech • MIT License
 
-slider1:200<20,1000,10>B1 Freq
-slider2:0<-12,12,0.5>B1 Gain
+slider1:200<20,1000,10>B1 Freq (Hz)
+slider2:0<-12,12,0.5>B1 Gain (dB)
 slider3:1<0.5,4,0.1>B1 Q
-slider4:-12<-36,0,1>B1 Threshold
-
-slider5:1000<200,4000,100>B2 Freq
-slider6:0<-12,12,0.5>B2 Gain
+slider4:-12<-36,0,1>B1 Threshold (dB)
+slider5:1000<200,4000,100>B2 Freq (Hz)
+slider6:0<-12,12,0.5>B2 Gain (dB)
 slider7:1<0.5,4,0.1>B2 Q
-slider8:-12<-36,0,1>B2 Threshold
-
-slider9:2000<500,8000,100>B3 Freq
-slider10:0<-12,12,0.5>B3 Gain
+slider8:-12<-36,0,1>B2 Threshold (dB)
+slider9:2000<500,8000,100>B3 Freq (Hz)
+slider10:0<-12,12,0.5>B3 Gain (dB)
 slider11:1<0.5,4,0.1>B3 Q
-slider12:-12<-36,0,1>B3 Threshold
-
-slider13:6000<2000,15000,500>B4 Freq
-slider14:0<-12,12,0.5>B4 Gain
+slider12:-12<-36,0,1>B3 Threshold (dB)
+slider13:6000<2000,15000,500>B4 Freq (Hz)
+slider14:0<-12,12,0.5>B4 Gain (dB)
 slider15:1<0.5,4,0.1>B4 Q
-slider16:-12<-36,0,1>B4 Threshold
+slider16:-12<-36,0,1>B4 Threshold (dB)
+slider17:1<0.1,10,0.1>Attack (ms)
+slider18:100<1,500,1>Release (ms)
+slider19:0<0,24,1>Makeup (dB)
 
-slider17:1<0.1,10,0.1>Attack
-slider18:100<1,500,1>Release
-slider19:0<0,24,1>Makeup
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
 
 @init
-  b1_prev = 0; b2_prev = 0; b3_prev = 0; b4_prev = 0;
-  gr_1 = 1; gr_2 = 1; gr_3 = 1; gr_4 = 1;
+  // Four bell bands that only act when their band gets loud. Each band measures its own
+  // frequency range; once that level passes Threshold, the band's Gain is applied,
+  // fading in fully at 12 dB over the threshold. Negative Gain tames resonances or
+  // harshness only when they happen; positive Gain lifts a band only when it is played.
+
+  // constant-peak band-pass (RBJ), coefficients this.b0 / this.a1 / this.a2
+  function setup(freq, q, gain, thresh)
+  (
+    w = 2 * $pi * min(freq, srate * 0.45) / srate;
+    al = sin(w) / (2 * q);
+    this.b0 = al / (1 + al);
+    this.a1 = -2 * cos(w) / (1 + al);
+    this.a2 = (1 - al) / (1 + al);
+    this.gain = gain;
+    this.thresh = thresh;
+  );
+
+  function bp_l(x) local(y)
+  (
+    y = this.b0 * (x - this.xl2) - this.a1 * this.yl1 - this.a2 * this.yl2;
+    this.xl2 = this.xl1; this.xl1 = x; this.yl2 = this.yl1; this.yl1 = y;
+    y;
+  );
+  function bp_r(x) local(y)
+  (
+    y = this.b0 * (x - this.xr2) - this.a1 * this.yr1 - this.a2 * this.yr2;
+    this.xr2 = this.xr1; this.xr1 = x; this.yr2 = this.yr1; this.yr1 = y;
+    y;
+  );
+
+  // adds (A - 1) x band to each channel, where A follows the band's level
+  function band(l*, r*) local(bl, br, lev, over, A)
+  (
+    bl = this.bp_l(l);
+    br = this.bp_r(r);
+    lev = max(abs(bl), abs(br));
+    this.env = lev > this.env ? att * this.env + (1 - att) * lev : rel * this.env + (1 - rel) * lev;
+    over = this.env > 0.00001 ? (20 * log10(this.env) - this.thresh) / 12 : 0;
+    over = max(0, min(1, over));
+    A = 10 ^ (this.gain * over / 20);
+    l += (A - 1) * bl;
+    r += (A - 1) * br;
+  );
 
 @slider
-  makeup_gain = pow(10, slider19 / 20);
-  attack_time = slider17;
-  release_time = slider18;
+  e1.setup(slider1, slider3, slider2, slider4);
+  e2.setup(slider5, slider7, slider6, slider8);
+  e3.setup(slider9, slider11, slider10, slider12);
+  e4.setup(slider13, slider15, slider14, slider16);
+  att = exp(-1 / (slider17 * srate / 1000));
+  rel = exp(-1 / (slider18 * srate / 1000));
+  makeup = 10 ^ (slider19 / 20);
 
 @sample
-  function process_band(input, freq, gain, q, thresh) {
-    fc = freq / sr;
-    w0 = 2 * 3.14159 * fc;
-    alpha = sin(w0) / (2 * q);
-    
-    // Bandpass
-    bp = (alpha * input - 0 * b1_prev - alpha * b2_prev) / (1 + alpha);
-    b2_prev = b1_prev;
-    b1_prev = input;
-    
-    // Detect level
-    level = abs(bp);
-    thresh_lin = pow(10, thresh / 20);
-    
-    // Dynamic gain
-    if (level > thresh_lin) {
-      target = 1 + (gain / 20);
-      target = max(target, 0.1);
-      gr = gr + (target - gr) * (1 - exp(-1 / (attack_time * sr)));
-    } else {
-      gr = gr + (1 - gr) * (1 - exp(-1 / (release_time * sr)));
-    }
-    
-    return bp * gr;
-  }
-  
-  b1_out = process_band(spl0, slider1, slider2, slider3, slider4);
-  b2_out = process_band(spl0, slider5, slider6, slider7, slider8);
-  b3_out = process_band(spl0, slider9, slider10, slider11, slider12);
-  b4_out = process_band(spl0, slider13, slider14, slider15, slider16);
-  
-  // Combine
-  spl0 = (spl0 * 0.6 + b1_out + b2_out + b3_out + b4_out) * makeup_gain;
-  spl1 = (spl1 * 0.6 + b1_out + b2_out + b3_out + b4_out) * makeup_gain;
-  
-  // Clamp
-  (spl0 < -1) ? (spl0 = -1);
-  (spl0 > 1) ? (spl0 = 1);
-  (spl1 < -1) ? (spl1 = -1);
-  (spl1 > 1) ? (spl1 = 1);
+  l = spl0; r = spl1;
+  e1.band(l, r);
+  e2.band(l, r);
+  e3.band(l, r);
+  e4.band(l, r);
+  spl0 = l * makeup;
+  spl1 = r * makeup;

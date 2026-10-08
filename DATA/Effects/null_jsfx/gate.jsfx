@@ -1,19 +1,22 @@
 desc:NULL Gate
-//tags: gate noise vocal floor reduce silence threshold mute sidechain
-//Author: Christos Koulaxizis
-//Collection: NULL JSFX
+author: Christos Koulaxizis
+tags: gate noise vocal floor reduce silence threshold mute sidechain
+//category: Essentials
+//NULL JSFX v2.0 • https://nulljsfx.tech • MIT License
 
-slider1:-40<-60,0,0.1>Threshold-(dB)
-slider2:10<1,100,1>Attack-(ms)
-slider3:200<50,1000,1>Release-(ms)
-slider4:0<0,500,1>Sidechain-HPF-(Hz)
+slider1:-40<-60,0,0.1>Threshold (dB)
+slider2:10<1,100,1>Attack (ms)
+slider3:200<50,1000,1>Release (ms)
+slider4:0<0,500,1>Sidechain HPF (Hz)
+slider5:-80<-80,0,0.1>Range (dB)
 
-in_pin:left input
-in_pin:right input
-out_pin:left output
-out_pin:right output
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
 
 @init
+  pk_decay = exp(-1 / (0.0045 * srate)); // peak-envelope fall, 4.5 ms at any sample rate
   threshold_db = -40;
   attack_ms = 10;
   release_ms = 200;
@@ -42,6 +45,8 @@ out_pin:right output
   attack_ms = slider2;
   release_ms = slider3;
   sc_hpf = slider4;
+  // Range: gain when the gate is closed (-80 dB = fully closed, 0 dB = no gating)
+  range_lin = slider5 <= -80 ? 0 : 10 ^ (slider5 / 20);
   
   threshold_lin = pow(10, threshold_db / 20);
   
@@ -72,8 +77,8 @@ out_pin:right output
   abs_l = input_l < 0 ? -input_l : input_l;
   abs_r = input_r < 0 ? -input_r : input_r;
   
-  decay_l = env_peak_l * 0.995;
-  decay_r = env_peak_r * 0.995;
+  decay_l = env_peak_l * pk_decay;
+  decay_r = env_peak_r * pk_decay;
   env_peak_l = abs_l > decay_l ? abs_l : decay_l;
   env_peak_r = abs_r > decay_r ? abs_r : decay_r;
   
@@ -85,5 +90,6 @@ out_pin:right output
     gate_level > 0 ? gate_level = gate_level + release_coef * (0 - gate_level);
   );
   
-  spl0 = spl0 * gate_level;
-  spl1 = spl1 * gate_level;
+  gate_gain = range_lin + (1 - range_lin) * gate_level;
+  spl0 = spl0 * gate_gain;
+  spl1 = spl1 * gate_gain;

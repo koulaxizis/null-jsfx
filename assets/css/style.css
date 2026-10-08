@@ -515,6 +515,37 @@ main {
     gap: 20px;
 }
 
+/* Plugin categories */
+.plugin-category {
+    margin-bottom: 40px;
+}
+
+.plugin-category.hidden {
+    display: none;
+}
+
+.category-title {
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text);
+    margin-bottom: 4px;
+}
+
+.category-count {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--muted);
+    margin-left: 6px;
+}
+
+.category-desc {
+    font-size: 12px;
+    color: var(--muted);
+    margin-bottom: 16px;
+}
+
 .plugin-card {
     background: var(--card-bg);
     border: 1px solid var(--border);
@@ -785,6 +816,15 @@ html, body {
 .guide-header {
     padding: 18px 22px;
     border-bottom: 1px solid var(--border);
+}
+
+.guide-category {
+    display: block;
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 6px;
 }
 
 .guide-header h3 {

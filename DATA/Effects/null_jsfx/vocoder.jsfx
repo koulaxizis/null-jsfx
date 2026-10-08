@@ -1,0 +1,106 @@
+desc:NULL Vocoder
+author: Christos Koulaxizis
+tags: vocoder talkbox robot voice synth carrier modulator filterbank
+//category: Advanced
+//NULL JSFX v2.0 • https://nulljsfx.tech • MIT License
+
+slider1:1<0,3,1{Right Input,Saw,Pulse,Noise}>Carrier
+slider2:110<40,880,0.1>Carrier Pitch (Hz)
+slider3:0<-12,12,0.1>Formant Shift (semitones)
+slider4:5<0.5,50,0.1>Attack (ms)
+slider5:40<5,500,1>Release (ms)
+slider6:20<0,100,1>Sibilance (%)
+slider7:100<0,100,1>Mix (%)
+slider8:0<-12,24,0.1>Output (dB)
+slider9:60<0,100,1>Stereo Width (%)
+
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
+
+@init
+  // 16-band channel vocoder. The modulator (your voice) is the LEFT input; the carrier
+  // is either the RIGHT input (route a synth there) or a built-in saw, pulse or noise
+  // oscillator at Carrier Pitch. The voice's level in each band is measured and imposed
+  // on the same band of the carrier, so the carrier "speaks". Formant Shift moves the
+  // carrier bands up or down for smaller/bigger voices; Sibilance lets the voice's
+  // highs (s, t, ch) through so words stay clear. Stereo Width spreads the bands:
+  // even bands lean left, odd bands lean right (equal power; 0% = mono centre,
+  // 100% = alternate bands hard left / hard right). The sibilance stays centred.
+  nb = 16;
+  // memory: 32 slots per band = modulator coefs [0..2], carrier coefs [3..5],
+  // modulator filter state [8..15], carrier filter state [16..23], envelope [24],
+  // left/right band gains [25..26]
+  freembuf(nb * 32);
+  memset(0, 0, nb * 32);
+  osc = 0;
+  sib_x = sib_y = 0;
+
+  // band-pass coefficients for band i at centre f (stored in the band's block)
+  function set_bp(b, f) local(w, al, n)
+  (
+    w = 2 * $pi * min(f, srate * 0.45) / srate;
+    al = sin(w) / (2 * 6);
+    n = 1 / (1 + al);
+    b[0] = al * n; b[1] = -2 * cos(w) * n; b[2] = (1 - al) * n;
+  );
+  // two cascaded band-passes (steeper bands); state at s[0..3], s[4..7]
+  function bp2(b, s, x) local(y)
+  (
+    y = b[0] * (x - s[1]) - b[1] * s[2] - b[2] * s[3];
+    s[1] = s[0]; s[0] = x; s[3] = s[2]; s[2] = y;
+    x = y;
+    y = b[0] * (x - s[5]) - b[1] * s[6] - b[2] * s[7];
+    s[5] = s[4]; s[4] = x; s[7] = s[6]; s[6] = y;
+    y;
+  );
+
+@slider
+  src = slider1;
+  inc = slider2 / srate;
+  shift = 2 ^ (slider3 / 12);
+  att = exp(-1 / (slider4 / 1000 * srate));
+  rel = exp(-1 / (slider5 / 1000 * srate));
+  sib = slider6 / 100;
+  width = slider9 / 100;
+  mix = slider7 / 100;
+  out = 10 ^ (slider8 / 20) * 30;
+  i = 0;
+  loop(nb,
+    f = 100 * (8000 / 100) ^ (i / (nb - 1));   // 100 Hz .. 8 kHz, log spaced
+    set_bp(i * 32, f);                           // modulator band
+    set_bp(i * 32 + 3, f * shift);               // carrier band
+    th = $pi / 4 * (1 + (i % 2 ? width : -width));
+    (i * 32)[25] = sqrt(2) * cos(th);             // left gain (1 at width 0)
+    (i * 32)[26] = sqrt(2) * sin(th);             // right gain
+    i += 1;
+  );
+  sib_c = exp(-2 * $pi * 6000 / srate);
+
+@sample
+  mod = spl0;
+  osc += inc; osc >= 1 ? osc -= 1;
+  car = src == 0 ? spl1 : src == 1 ? 2 * osc - 1 : src == 2 ? (osc < 0.5 ? 1 : -1) : rand(2) - 1;
+
+  acc_l = acc_r = 0;
+  i = 0;
+  loop(nb,
+    b = i * 32;
+    m = bp2(b, b + 8, mod);
+    c = bp2(b + 3, b + 16, car);
+    lev = abs(m);
+    env = b[24];
+    env = lev > env ? att * env + (1 - att) * lev : rel * env + (1 - rel) * lev;
+    b[24] = env;
+    c *= env;
+    acc_l += c * b[25];
+    acc_r += c * b[26];
+    i += 1;
+  );
+  // let the voice's highest frequencies through for intelligibility
+  sib_y = sib_c * (sib_y + mod - sib_x); sib_x = mod;
+  wet_l = acc_l * out + sib_y * sib;
+  wet_r = acc_r * out + sib_y * sib;
+  spl0 = spl0 * (1 - mix) + wet_l * mix;
+  spl1 = spl1 * (1 - mix) + wet_r * mix;
