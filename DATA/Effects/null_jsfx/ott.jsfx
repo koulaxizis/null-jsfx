@@ -87,3 +87,8 @@ out_pin:Right
   wet_r = (lo_r * gl + mid_r * gm + hi_r * gh) * makeup;
   spl0 = (spl0 * (1 - depth) + wet_l * depth) * out;
   spl1 = (spl1 * (1 - depth) + wet_r * depth) * out;
+
+  // safety: anything above 0 dBFS is bent smoothly towards +6 dBFS instead of running away
+  // when every gain stage is turned up at once
+  abs(spl0) > 1 ? spl0 = sign(spl0) * (1 + (abs(spl0) - 1) / abs(spl0));
+  abs(spl1) > 1 ? spl1 = sign(spl1) * (1 + (abs(spl1) - 1) / abs(spl1));

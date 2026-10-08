@@ -1,0 +1,106 @@
+desc:NULL Granular Delay
+author: Christos Koulaxizis
+tags: granular delay grains cloud texture pitch spray ambient glitch
+//category: Advanced
+//NULL JSFX v2.0 • https://nulljsfx.tech • MIT License
+
+slider1:300<10,2000,1>Delay Time (ms)
+slider2:80<10,500,1>Grain Size (ms)
+slider3:20<1,100,1>Density (grains/s)
+slider4:0<-24,24,0.1>Pitch (semitones)
+slider5:30<0,100,1>Spray (%)
+slider6:0<0,100,1>Reverse (%)
+slider7:40<0,95,1>Feedback (%)
+slider8:70<0,100,1>Stereo Spread (%)
+slider9:40<0,100,1>Mix (%)
+
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
+
+@init
+  // A delay that plays back in small grains. Density grains per second are started;
+  // each one reads a short window (Grain Size) from Delay Time ago, randomly moved by
+  // Spray, at the chosen Pitch, sometimes backwards (Reverse), panned randomly by
+  // Stereo Spread. The grain cloud is fed back into the delay line (Feedback), so the
+  // texture keeps evolving. Up to 16 grains sound at once.
+  buf_size = ceil(srate * 3);
+  bl = 0; br = bl + buf_size;
+  gr = br + buf_size;            // grain table: 16 grains x 6 values
+  freembuf(gr + 96);
+  memset(bl, 0, 2 * buf_size + 96);
+  wpos = 0;
+  next_grain = 0;
+  fb_l = fb_r = 0;
+
+  function rd(buf, p) local(i, f, i2)
+  (
+    p = p - floor(p / buf_size) * buf_size;
+    i = floor(p); f = p - i;
+    i2 = i + 1; i2 >= buf_size ? i2 = 0;
+    buf[i] + (buf[i2] - buf[i]) * f;
+  );
+
+@slider
+  dtime = slider1 * srate / 1000;
+  glen = max(32, floor(slider2 * srate / 1000));
+  interval = srate / slider3;
+  ratio = 2 ^ (slider4 / 12);
+  spray = slider5 / 100;
+  rev = slider6;
+  feedback = slider7 / 100;
+  spread = slider8 / 100;
+  mix = slider9 / 100;
+  // grains overlap glen / interval times on average; scale to keep the level steady
+  gnorm = 1 / sqrt(max(1, glen / interval));
+
+@sample
+  bl[wpos] = spl0 + fb_l * feedback;
+  br[wpos] = spl1 + fb_r * feedback;
+
+  // start a new grain in the first free slot
+  next_grain -= 1;
+  next_grain <= 0 ? (
+    next_grain = interval * (0.75 + rand(0.5));
+    i = 0; found = 0;
+    while (found == 0 && i < 16) (
+      g = gr + 6 * i;
+      g[0] <= 0 ? (
+        found = 1;
+        dir = rand(100) < rev ? -1 : 1;
+        // start position: Delay Time ago, randomly earlier by up to Spray x 1 s
+        g[1] = wpos - dtime - rand(spray * srate) - (dir < 0 ? 0 : glen * max(0, ratio - 1));
+        g[2] = ratio * dir;            // read speed
+        g[0] = glen;                   // samples left
+        pan = 0.5 + (rand(1) - 0.5) * spread;
+        g[3] = cos(pan * $pi / 2);     // left gain
+        g[4] = sin(pan * $pi / 2);     // right gain
+        dir < 0 ? g[1] += glen * ratio;
+      );
+      i += 1;
+    );
+  );
+
+  out_l = out_r = 0;
+  i = 0;
+  loop(16,
+    g = gr + 6 * i;
+    g[0] > 0 ? (
+      ph = 1 - g[0] / glen;
+      w = 0.5 - 0.5 * cos(2 * $pi * ph);
+      out_l += rd(bl, g[1]) * w * g[3];
+      out_r += rd(br, g[1]) * w * g[4];
+      g[1] += g[2];
+      g[0] -= 1;
+    );
+    i += 1;
+  );
+  out_l *= gnorm * 1.4;
+  out_r *= gnorm * 1.4;
+  fb_l = out_l; fb_r = out_r;
+
+  wpos += 1;
+  wpos >= buf_size ? wpos = 0;
+  spl0 = spl0 * (1 - mix) + out_l * mix;
+  spl1 = spl1 * (1 - mix) + out_r * mix;

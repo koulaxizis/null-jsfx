@@ -1,0 +1,90 @@
+desc:NULL Spring Reverb
+author: Christos Koulaxizis
+tags: spring reverb guitar amp vintage surf drip boing dub
+//category: Advanced
+//NULL JSFX v2.0 • https://nulljsfx.tech • MIT License
+
+slider1:2.5<0.5,8,0.1>Decay (s)
+slider2:60<0,100,1>Tension (%)
+slider3:4000<1000,8000,10>Tone (Hz)
+slider4:40<0,100,1>Drip (%)
+slider5:0<0,100,1>Pre-Delay (ms)
+slider6:30<0,100,1>Mix (%)
+
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
+
+@init
+  // Two-spring reverb tank as found in guitar amps. Each spring is a long chain of
+  // dispersive all-pass filters (high frequencies travel faster than low ones, which
+  // makes the characteristic "chirp" and "drip") inside a feedback delay loop. The
+  // left and right springs have different lengths. Tension sets how strong the chirp
+  // is, Drip boosts the splashy echo on transients, Tone sets how dark the tank is.
+  stages = 40;
+  max_line = ceil(srate * 0.08);
+  max_pre = ceil(srate * 0.1) + 2;
+  ap_l = 0; ap_r = ap_l + stages;
+  line_l = ap_r + stages; line_r = line_l + max_line;
+  pre = line_r + max_line;
+  freembuf(pre + max_pre);
+  memset(ap_l, 0, pre + max_pre);
+  wpos = 0; ppos = 0;
+  lp_l = lp_r = 0; hp_x = hp_y = 0;
+  len_l = floor(srate * 0.0437);
+  len_r = floor(srate * 0.0531);
+
+  // cascade of first-order all-pass filters (states in apb[0..stages-1])
+  function disperse(x, apb) local(i, y, s)
+  (
+    i = 0;
+    loop(stages,
+      s = apb[i];
+      y = s - a * x;
+      apb[i] = x + a * y;
+      x = y;
+      i += 1;
+    );
+    x;
+  );
+
+@slider
+  // all-pass coefficient: more Tension = stronger dispersion
+  a = 0.35 + slider2 / 100 * 0.35;
+  g_l = 10 ^ (-3 * (len_l / srate + stages * 0.0001) / slider1);
+  g_r = 10 ^ (-3 * (len_r / srate + stages * 0.0001) / slider1);
+  g_l = min(g_l, 0.97); g_r = min(g_r, 0.97);
+  tone_c = exp(-2 * $pi * slider3 / srate);
+  drip = slider4 / 100;
+  pre_d = max(1, floor(slider5 * srate / 1000));
+  mix = slider6 / 100;
+  hp_c = exp(-2 * $pi * 120 / srate);
+
+@sample
+  x = (spl0 + spl1) * 0.5;
+  // springs do not carry deep bass
+  hp_y = hp_c * (hp_y + x - hp_x); hp_x = x;
+  pre[ppos] = hp_y;
+  pr = ppos - pre_d; pr < 0 ? pr += max_pre;
+  xin = pre[pr];
+  ppos += 1; ppos >= max_pre ? ppos = 0;
+
+  rp = wpos - len_l; rp < 0 ? rp += max_line;
+  fb_l = line_l[rp];
+  rp = wpos - len_r; rp < 0 ? rp += max_line;
+  fb_r = line_r[rp];
+
+  s_l = disperse(xin + fb_l * g_l, ap_l);
+  s_r = disperse(xin + fb_r * g_r, ap_r);
+  lp_l = (1 - tone_c) * s_l + tone_c * lp_l;
+  lp_r = (1 - tone_c) * s_r + tone_c * lp_r;
+  // drip: the unfiltered, chirpy part of the spring
+  o_l = lp_l + (s_l - lp_l) * drip * 0.7;
+  o_r = lp_r + (s_r - lp_r) * drip * 0.7;
+  line_l[wpos] = lp_l;
+  line_r[wpos] = lp_r;
+  wpos += 1; wpos >= max_line ? wpos = 0;
+
+  spl0 = spl0 * (1 - mix) + o_l * mix;
+  spl1 = spl1 * (1 - mix) + o_r * mix;
