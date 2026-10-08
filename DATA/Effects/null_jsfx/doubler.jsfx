@@ -1,12 +1,10 @@
 desc:NULL Doubler
 author: Christos Koulaxizis
-tags: doubler vocal doubling delay chorus stereo
+tags: doubler vocal doubling double-tracking adt stereo width
 //category: One Slider
 //NULL JSFX v2.0 • https://nulljsfx.tech • MIT License
 
-slider1:40<10,100,1>Mix
-slider2:25<10,50,1>Delay ms
-slider3:0<-10,10,1>Detune cents
+slider1:40<0,100,1>Amount
 
 in_pin:Left
 in_pin:Right
@@ -14,40 +12,44 @@ out_pin:Left
 out_pin:Right
 
 @init
-  delay_buffer_size = 44100;
-  delay_write_pos = 0;
-  lfo_phase = 0;
-  lfo_freq = 5;
+  // Automatic double tracking: two copies of the input, each delayed 12-30 ms with a
+  // slow, slightly different pitch drift (a few cents), are placed left and right
+  // around the original, like a second take of the same part. Amount sets how loud
+  // and how wide the doubles are.
+  buf_size = ceil(srate * 0.05);
+  buf = 0;
+  freembuf(buf + buf_size);
+  memset(buf, 0, buf_size);
+  wpos = 0;
+  ph1 = 0;
+  ph2 = 0.37;
+
+  function tap(delay_ms) local(rp, i, f, i2)
+  (
+    rp = wpos - delay_ms * srate / 1000;
+    rp < 0 ? rp += buf_size;
+    i = floor(rp);
+    f = rp - i;
+    i2 = i + 1;
+    i2 >= buf_size ? i2 = 0;
+    buf[i] + (buf[i2] - buf[i]) * f;
+  );
 
 @slider
-  mix_amt = slider1 / 100;
-  delay_ms = slider2;
-  detune = slider3;
+  amount = slider1 / 100;
+  level = amount * 0.8;
+  dry = 1 / (1 + level * 0.5);
 
 @sample
-  // Write to delay buffer
-  delay_buffer[delay_write_pos] = spl0;
-  delay_write_pos = (delay_write_pos + 1) % delay_buffer_size;
-  
-  // Read with wiggle
-  delay_samples = (delay_ms / 1000) * sr;
-  lfo_phase = lfo_phase + 2 * 3.14159 * lfo_freq / sr;
-  wiggle = sin(lfo_phase) * 0.5;
-  
-  read_pos = floor(delay_write_pos - delay_samples + wiggle);
-  if (read_pos < 0) read_pos = read_pos + delay_buffer_size;
-  if (read_pos >= delay_buffer_size) read_pos = read_pos - delay_buffer_size;
-  
-  // Linear interpolation
-  frac = delay_write_pos - delay_samples + wiggle - read_pos;
-  delay_out = delay_buffer[read_pos] * (1 - frac) + delay_buffer[(read_pos + 1) % delay_buffer_size] * frac;
-  
-  // Stereo widening
-  spl0 = spl0 * (1 - mix_amt) + delay_out * mix_amt;
-  spl1 = spl1 * (1 - mix_amt) + delay_out * mix_amt * 0.9;
-  
-  // Clamp
-  (spl0 < -1) ? (spl0 = -1);
-  (spl0 > 1) ? (spl0 = 1);
-  (spl1 < -1) ? (spl1 = -1);
-  (spl1 > 1) ? (spl1 = 1);
+  mono = (spl0 + spl1) * 0.5;
+  buf[wpos] = mono;
+  // two slow, unrelated drifts (0.13 Hz and 0.21 Hz) give each double its own timing and pitch
+  ph1 += 0.13 / srate; ph1 >= 1 ? ph1 -= 1;
+  ph2 += 0.21 / srate; ph2 >= 1 ? ph2 -= 1;
+  d1 = tap(14 + 2 * sin(2 * $pi * ph1) + amount * 6);
+  d2 = tap(21 + 2.5 * sin(2 * $pi * ph2) + amount * 8);
+  wpos += 1;
+  wpos >= buf_size ? wpos = 0;
+
+  spl0 = (spl0 + d1 * level) * dry;
+  spl1 = (spl1 + d2 * level) * dry;

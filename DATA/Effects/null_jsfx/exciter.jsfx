@@ -1,12 +1,10 @@
 desc:NULL Exciter
 author: Christos Koulaxizis
-tags: exciter harmonics saturation high shelf enhancer
+tags: exciter enhancer harmonics brightness presence air saturation
 //category: One Slider
 //NULL JSFX v2.0 • https://nulljsfx.tech • MIT License
 
-slider1:50<0,100,1>Amount
-slider2:8000<3000,15000,100>Frequency
-slider3:1<0,2,1>Character
+slider1:30<0,100,1>Amount
 
 in_pin:Left
 in_pin:Right
@@ -14,42 +12,40 @@ out_pin:Left
 out_pin:Right
 
 @init
-  hs_state = 0;
+  // Harmonic exciter: the highs above ~3 kHz are split off, gently saturated to create
+  // new upper harmonics, filtered again so only the fresh top end remains, and blended
+  // back in. Adds presence and sparkle without simply turning up the treble.
+
+  // 2nd-order high-pass, state in this.*
+  function hp(x) local(y)
+  (
+    y = hb0 * x + hb1 * this.x1 + hb0 * this.x2 - ha1 * this.y1 - ha2 * this.y2;
+    this.x2 = this.x1; this.x1 = x; this.y2 = this.y1; this.y1 = y;
+    y;
+  );
+  function excite(x) local(h, d)
+  (
+    h = this.pre.hp(x) * drive;
+    // asymmetric soft clip: odd + even harmonics
+    d = h + 0.3 * h * h;
+    d = max(-3, min(3, d));
+    d = d * (27 + d * d) / (27 + 9 * d * d);
+    x + this.post.hp(d) * blend;
+  );
 
 @slider
   amount = slider1 / 100;
-  freq_hz = slider2;
-  character = slider3;
-  boost = amount * 6;
+  w = 2 * $pi * 3000 / srate;
+  c = cos(w);
+  al = sin(w) / (2 * 0.707);
+  n = 1 / (1 + al);
+  hb0 = (1 + c) / 2 * n;
+  hb1 = -(1 + c) * n;
+  ha1 = -2 * c * n;
+  ha2 = (1 - al) * n;
+  drive = 1 + amount * 9;
+  blend = amount * 0.6 / sqrt(drive);
 
 @sample
-  // High shelf filter
-  fc = freq_hz / sr;
-  alpha = fc / (fc + 1);
-  high_shelf = hs_state * (1 - alpha) + spl0 * alpha;
-  hs_state = high_shelf;
-  
-  // Generate harmonics based on character
-  if (character == 0) {
-    harmonic = spl0 * spl0 * spl0 * 0.05;
-  } else if (character == 1) {
-    harmonic = spl0 * spl0 * spl0 * 0.1;
-  } else {
-    harmonic = spl0 * spl0 * spl0 * 0.15;
-  }
-  
-  // Mix dry and processed
-  shelf_coef = pow(10, boost / 20);
-  processed = high_shelf * shelf_coef + harmonic;
-  spl0 = spl0 * (1 - amount) + processed * amount;
-  spl1 = spl1 * (1 - amount) + processed * amount;
-  
-  // Normalization
-  if (abs(spl0) > 0.95) { spl0 = spl0 * 0.95 / abs(spl0); }
-  if (abs(spl1) > 0.95) { spl1 = spl1 * 0.95 / abs(spl1); }
-  
-  // Clamp
-  (spl0 < -1) ? (spl0 = -1);
-  (spl0 > 1) ? (spl0 = 1);
-  (spl1 < -1) ? (spl1 = -1);
-  (spl1 > 1) ? (spl1 = 1);
+  spl0 = L.excite(spl0);
+  spl1 = R.excite(spl1);
