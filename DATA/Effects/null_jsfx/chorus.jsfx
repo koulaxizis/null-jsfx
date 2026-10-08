@@ -33,8 +33,10 @@ out_pin:Right
   lfo = sin(phase);
   phase = phase + phase_inc;
   
-  base_delay = 3;
+  // The delay sweeps between 5 ms and 5 ms + Depth, so the read position is
+  // always at least 5 ms behind the write position (never negative or ahead).
   mod_amount = depth * 0.5;
+  base_delay = 5 + mod_amount;
   mod_delay = base_delay + lfo * mod_amount;
   delay_samples = mod_delay * srate / 1000;
   

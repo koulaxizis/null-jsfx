@@ -4,9 +4,10 @@ tags: breath vocal dynamics
 //category: Essentials
 //NULL JSFX v2.0 • https://nulljsfx.tech • MIT License
 
-slider1:50<0,100,1>Threshold
-slider2:24<6,48,1>Release
-slider3:-12<-24,0,1>Range Limit
+slider1:-40<-70,0,0.5>Threshold (dB)
+slider2:5<1,50,1>Attack (ms)
+slider3:120<20,1000,1>Release (ms)
+slider4:-12<-24,0,1>Range (dB)
 
 in_pin:Left
 in_pin:Right
@@ -14,24 +15,30 @@ out_pin:Left
 out_pin:Right
 
 @init
-gain_reduction = 1;
-env_peak = 0;
+  // Breath reducer: a stereo-linked level detector (max of L/R power, 1 ms rise and
+  // 30 ms fall smoothing) is compared with Threshold. While the level stays below Threshold
+  // (breaths, room noise between phrases) the gain moves down to Range; when the
+  // voice comes back above Threshold the gain returns to unity. A 3 dB hysteresis
+  // keeps it from chattering around the threshold. No clipping, zero latency.
+  env = 0;
+  gain = 1;
+  open = 1;
 
 @slider
-threshold_val = slider1/100;
-release_val = slider2/1000;
-range_db = slider3;
-target_gain = exp(range_db * 0.115129254);
+  thr_lin = 10 ^ (slider1 / 20);
+  thr_open = thr_lin * thr_lin;
+  thr_close = thr_open * 0.5;
+  att_c = 1 - exp(-1 / (max(slider2, 0.1) * srate / 1000));
+  rel_c = 1 - exp(-1 / (max(slider3, 1) * srate / 1000));
+  range_lin = 10 ^ (slider4 / 20);
+  env_up = 1 - exp(-1 / (0.001 * srate));
+  env_dn = 1 - exp(-1 / (0.03 * srate));
 
 @sample
-current_level = abs(spl0);
-env_peak = current_level > env_peak ? env_peak*0.99+current_level*0.01 : env_peak*(1-release_val);
-threshold_db = threshold_val*-60;
-current_level_db = 20*log(max(current_level,0.0001))/log(10);
-current_level_db < threshold_db && env_peak > threshold_db*1.5 ? gain_reduction = gain_reduction*0.95+target_gain*0.05 : gain_reduction = gain_reduction*0.98+0.02;
-spl0 *= gain_reduction;
-spl1 *= gain_reduction;
-spl0 < -1 ? spl0 = -1;
-spl0 > 1 ? spl0 = 1;
-spl1 < -1 ? spl1 = -1;
-spl1 > 1 ? spl1 = 1;
+  pw = max(spl0 * spl0, spl1 * spl1);
+  env += (pw > env ? env_up : env_dn) * (pw - env);
+  open = open ? (env > thr_close) : (env > thr_open);
+  target = open ? 1 : range_lin;
+  gain += (target > gain ? att_c : rel_c) * (target - gain);
+  spl0 *= gain;
+  spl1 *= gain;

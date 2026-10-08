@@ -27,7 +27,8 @@ out_pin:Right
   lfo = sin(phase);
   phase = phase + phase_inc;
   
-  amplitude = 1 - depth_pct + depth_pct * lfo;
+  // Gain stays within 0..1: full level at the LFO peak, 1 - Depth at the trough
+  amplitude = 1 - depth_pct * (0.5 - 0.5 * lfo);
   proc_l = spl0 * amplitude;
   proc_r = spl1 * amplitude;
   

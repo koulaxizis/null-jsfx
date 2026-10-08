@@ -8,7 +8,7 @@ slider1:0<-12,12,0.1>Input Gain (dB)
 slider2:-0.3<-3,-0.1,0.1>Ceiling (dB)
 slider3:50<10,200,1>Release (ms)
 slider4:2<0,5,1>Lookahead (ms)
-slider5:0<-12,12,0.1>Output Gain (dB)
+slider5:0<-12,0,0.1>Output Gain (dB)
 slider6:1<0,1,1{OFF,ON}>Stereo Link
 
 in_pin:Left
@@ -53,7 +53,9 @@ out_pin:Right
   look = floor(slider4 * srate / 1000 + 0.5);
   pdc_delay = look;
   att = look < 1 ? 1 : 1 - exp(-5 / look);
-  out_gain = 10 ^ (slider5 / 20);
+  // Output Gain is a trim (cut only), applied after the ceiling clamp, so the
+  // output can never exceed Ceiling; use Input Gain to make it louder.
+  out_gain = 10 ^ (min(slider5, 0) / 20);
   link = slider6;
 
 @sample

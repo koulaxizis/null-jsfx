@@ -15,15 +15,20 @@ out_pin:Left
 out_pin:Right
 
 @init
+  // Tone is a tilt EQ on the wet signal: a one-pole split at 800 Hz, with the
+  // highs raised by Tone/2 dB and the lows lowered by Tone/2 dB (and the reverse
+  // for negative values). 0 dB is flat; -12 dB is dark, +12 dB is bright.
   tone_l = 0;
   tone_r = 0;
-  tone_alpha = 0;
+  tone_alpha = 1 - exp(-2 * 3.14159265358979 * 800 / srate);
 
 @slider
   drive = slider1 / 100;
   mix = slider3 / 100;
   sat_mode = slider4;
-  tone_alpha = 1 - exp(-2 * 3.14159265358979 * 500 / srate);
+  tone_alpha = 1 - exp(-2 * 3.14159265358979 * 800 / srate);
+  tone_hi = 10 ^ (slider2 / 40);
+  tone_lo = 1 / tone_hi;
 
 @sample
   dry_l = spl0;
@@ -34,6 +39,8 @@ out_pin:Right
 
   /* MODE 0 - TAPE: Soft clipping (αντί για tanh που δεν υποστηρίζεται) */
   sat_mode == 0 ? (
+    // the curve x(1 - 0.3|x|) peaks at |x| = 1/0.6; hold it there instead of folding back
+    in_l = max(-1 / 0.6, min(1 / 0.6, in_l)); in_r = max(-1 / 0.6, min(1 / 0.6, in_r));
     wet_l = in_l * (1 - abs(in_l) * 0.3);
     wet_r = in_r * (1 - abs(in_r) * 0.3);
   ) : (
@@ -95,10 +102,12 @@ out_pin:Right
     );
   );
 
-  /* Tone filtering (low-pass envelope follower) */
+  /* Tone: tilt EQ on the wet signal (low band + high band, opposite gains) */
   tone_l += tone_alpha * (wet_l - tone_l);
   tone_r += tone_alpha * (wet_r - tone_r);
+  wet_l = tone_l * tone_lo + (wet_l - tone_l) * tone_hi;
+  wet_r = tone_r * tone_lo + (wet_r - tone_r) * tone_hi;
 
   /* Dry/Wet mix */
-  spl0 = dry_l * (1 - mix) + tone_l * mix;
-  spl1 = dry_r * (1 - mix) + tone_r * mix;
+  spl0 = dry_l * (1 - mix) + wet_l * mix;
+  spl1 = dry_r * (1 - mix) + wet_r * mix;

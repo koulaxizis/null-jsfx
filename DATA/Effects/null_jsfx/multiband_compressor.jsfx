@@ -10,19 +10,19 @@ slider3:6000<4000,12000,1>Crossover 3 (Hz)
 slider4:-20<-60,0,1>Low Threshold (dB)
 slider5:3<1,20,0.1>Low Ratio
 slider6:0<0,12,1>Low Makeup (dB)
-slider7:0<0,1,1{Active,Bypass,Mute,Solo}>Low Mode
+slider7:0<0,3,1{Active,Bypass,Mute,Solo}>Low Mode
 slider8:-20<-60,0,1>LowMid Threshold (dB)
 slider9:3<1,20,0.1>LowMid Ratio
 slider10:0<0,12,1>LowMid Makeup (dB)
-slider11:0<0,1,1{Active,Bypass,Mute,Solo}>LowMid Mode
+slider11:0<0,3,1{Active,Bypass,Mute,Solo}>LowMid Mode
 slider12:-20<-60,0,1>HighMid Threshold (dB)
 slider13:3<1,20,0.1>HighMid Ratio
 slider14:0<0,12,1>HighMid Makeup (dB)
-slider15:0<0,1,1{Active,Bypass,Mute,Solo}>HighMid Mode
+slider15:0<0,3,1{Active,Bypass,Mute,Solo}>HighMid Mode
 slider16:-20<-60,0,1>High Threshold (dB)
 slider17:3<1,20,0.1>High Ratio
 slider18:0<0,12,1>High Makeup (dB)
-slider19:0<0,1,1{Active,Bypass,Mute,Solo}>High Mode
+slider19:0<0,3,1{Active,Bypass,Mute,Solo}>High Mode
 slider20:10<0,200,1>Attack (ms)
 slider21:100<0,1000,1>Release (ms)
 slider22:0<0,100,1>Knee (%)
@@ -50,9 +50,13 @@ out_pin:Right
   env_lo=1; env_lm=1; env_hm=1; env_hi=1;
 
 @slider
-  xover1 = max(50, min(900, slider1));
-  xover2 = max(xover1 + 200, min(4000, slider2));
-  xover3 = max(xover2 + 500, min(12000, slider3));
+  // Internal limits match the slider ranges. Each crossover is kept at least
+  // 1.5x (about 7 semitones) above the one below it, so the bands never overlap
+  // or invert: Crossover 2 >= 1.5 x Crossover 1, Crossover 3 >= 1.5 x Crossover 2.
+  xover1 = max(50, min(1000, slider1));
+  xover2 = max(xover1 * 1.5, max(500, min(4000, slider2)));
+  xover3 = max(xover2 * 1.5, max(4000, min(12000, slider3)));
+  xover3 = min(xover3, 0.45 * srate);
 
   lo_thr = slider4;
   lo_ratio = max(1, min(20, slider5));
