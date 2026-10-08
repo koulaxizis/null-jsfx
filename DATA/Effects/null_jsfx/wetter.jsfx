@@ -12,51 +12,47 @@ out_pin:Left
 out_pin:Right
 
 @init
-  buf_size = ceil(srate * 0.05);
-  buf1 = 0;
-  buf2 = buf_size;
-  buf3 = buf_size * 2;
-  buf4 = buf_size * 3;
-  memset(buf1, 0, 4 * buf_size);
-  freembuf(buf4 + buf_size);
-  wr1 = 0; wr2 = 0; wr3 = 0; wr4 = 0;
+  // Instant room: a compact Freeverb-style reverb (four damped feedback combs and two
+  // allpass diffusers per channel, right channel slightly longer for width).
+  // Amount raises the wet level (up to 45%) and the room size together.
+  bs = ceil(srate * 0.05) + 2;
+  memset(0, 0, bs * 12); freembuf(bs * 12);
+  sc = srate / 44100;
+  function comb_init(b, len) ( this.b = b; this.len = max(1, floor(len * sc)); this.p = 0; this.f = 0; );
+  function comb(x, fb, damp) local(y)
+  (
+    y = this.b[this.p];
+    this.f = y * (1 - damp) + this.f * damp;
+    this.b[this.p] = x + this.f * fb;
+    this.p = (this.p + 1) % this.len;
+    y;
+  );
+  function ap_init(b, len) ( this.b = b; this.len = max(1, floor(len * sc)); this.p = 0; );
+  function ap(x) local(y, v)
+  (
+    v = this.b[this.p];
+    y = v - x;
+    this.b[this.p] = x + v * 0.5;
+    this.p = (this.p + 1) % this.len;
+    y;
+  );
+  cl1.comb_init(bs * 0, 1116); cl2.comb_init(bs * 1, 1188); cl3.comb_init(bs * 2, 1277); cl4.comb_init(bs * 3, 1356);
+  cr1.comb_init(bs * 4, 1139); cr2.comb_init(bs * 5, 1211); cr3.comb_init(bs * 6, 1300); cr4.comb_init(bs * 7, 1379);
+  al1.ap_init(bs * 8, 556); al2.ap_init(bs * 9, 341);
+  ar1.ap_init(bs * 10, 579); ar2.ap_init(bs * 11, 364);
 
 @slider
   amount = slider1 / 100;
-  d1 = max(1, floor(srate * 0.0297));
-  d2 = max(1, floor(srate * 0.0371));
-  d3 = max(1, floor(srate * 0.0411));
-  d4 = max(1, floor(srate * 0.0437));
+  fb = 0.70 + amount * 0.18;
+  damp = 0.35;
+  wet = amount * 0.45 * 0.25;
+  dry = 1 - amount * 0.25;
 
 @sample
-  wet = amount;
-  dry = 1 - wet;
-  decay = 0.5 + amount * 0.35;
-  
-  in_mono = (spl0 + spl1) * 0.5;
-  
-  rd1 = wr1 - d1; rd1 < 0 ? rd1 += buf_size;
-  rd2 = wr2 - d2; rd2 < 0 ? rd2 += buf_size;
-  rd3 = wr3 - d3; rd3 < 0 ? rd3 += buf_size;
-  rd4 = wr4 - d4; rd4 < 0 ? rd4 += buf_size;
-  
-  c1 = buf1[rd1];
-  c2 = buf2[rd2];
-  c3 = buf3[rd3];
-  c4 = buf4[rd4];
-  
-  buf1[wr1] = in_mono + c1 * decay;
-  buf2[wr2] = in_mono + c2 * decay;
-  buf3[wr3] = in_mono + c3 * decay;
-  buf4[wr4] = in_mono + c4 * decay;
-  
-  wet_l = (c1 + c3) * 0.5;
-  wet_r = (c2 + c4) * 0.5;
-  
-  spl0 = spl0 * dry + wet_l * wet;
-  spl1 = spl1 * dry + wet_r * wet;
-  
-  wr1 += 1; wr1 >= buf_size ? wr1 = 0;
-  wr2 += 1; wr2 >= buf_size ? wr2 = 0;
-  wr3 += 1; wr3 >= buf_size ? wr3 = 0;
-  wr4 += 1; wr4 >= buf_size ? wr4 = 0;
+  in = (spl0 + spl1) * 0.5;
+  l = cl1.comb(in, fb, damp) + cl2.comb(in, fb, damp) + cl3.comb(in, fb, damp) + cl4.comb(in, fb, damp);
+  r = cr1.comb(in, fb, damp) + cr2.comb(in, fb, damp) + cr3.comb(in, fb, damp) + cr4.comb(in, fb, damp);
+  l = al2.ap(al1.ap(l));
+  r = ar2.ap(ar1.ap(r));
+  spl0 = spl0 * dry + l * wet;
+  spl1 = spl1 * dry + r * wet;

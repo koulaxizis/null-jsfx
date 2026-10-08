@@ -12,17 +12,29 @@ out_pin:Left
 out_pin:Right
 
 @init
-  DB2LIN = 0.11512925464970228420;
+  // Loudness maximizer: up to +12 dB of gain into a 2 ms look-ahead peak limiter
+  // (ceiling -0.3 dBFS, 80 ms release), so the track gets louder without clipping.
+  // At 0 nothing happens below the ceiling.
+  la = max(1, floor(0.002 * srate));
+  buf = 0; memset(buf, 0, 2 * la + 2); freembuf(2 * la + 2);
+  pos = 0; env = 1; hval = 1; hcount = 0;
+  ceiling = 10 ^ (-0.3 / 20);
+  att = exp(-3 / la);
+  rel = exp(-1 / (0.08 * srate));
+  pdc_delay = la; pdc_bot_ch = 0; pdc_top_ch = 2;
 
 @slider
-  amount = slider1 / 100;
-  gain_db = amount * 12;
-  gain_lin = exp(gain_db * DB2LIN);
+  gain = 10 ^ (slider1 / 100 * 12 / 20);
 
 @sample
-  out_l = spl0 * gain_lin;
-  out_r = spl1 * gain_lin;
-  out_l = out_l > 0.99 ? 0.99 : out_l < -0.99 ? -0.99 : out_l;
-  out_r = out_r > 0.99 ? 0.99 : out_r < -0.99 ? -0.99 : out_r;
-  spl0 = out_l;
-  spl1 = out_r;
+  xl = spl0 * gain; xr = spl1 * gain;
+  pk = max(abs(xl), abs(xr));
+  target = pk > ceiling ? ceiling / pk : 1;
+  // hold the deepest gain reduction for the look-ahead time so the delayed peak is caught
+  target <= hval ? (hval = target; hcount = la) : hcount > 0 ? hcount -= 1 : hval = target;
+  env = hval < env ? att * env + (1 - att) * hval : rel * env + (1 - rel) * hval;
+  dl = buf[pos]; dr = buf[pos + la];
+  buf[pos] = xl; buf[pos + la] = xr;
+  pos = (pos + 1) % la;
+  spl0 = max(-ceiling, min(ceiling, dl * env));
+  spl1 = max(-ceiling, min(ceiling, dr * env));

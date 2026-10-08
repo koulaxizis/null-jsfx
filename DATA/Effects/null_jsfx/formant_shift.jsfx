@@ -31,8 +31,8 @@ out_pin:Right
   // Slider 0-1
   pos = slider1 / 100;
 
-  // Shift range: 0.5x (male/deep) to 2.0x (female/high)
-  shift = pow(2.0, (0.5 - pos) * 2);
+  // Shift range: 0.5x (male/deep, left) to 2.0x (female/high, right)
+  shift = pow(2.0, (pos - 0.5) * 2);
 
   // Calculate shifted formant frequencies
   cf0 = f0_base * shift;

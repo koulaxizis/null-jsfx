@@ -12,22 +12,21 @@ out_pin:Left
 out_pin:Right
 
 @init
-  DB2LIN = 0.11512925464970228420;
+  // Hard, gritty clipping: the signal is driven into a clipper whose knee gets harder as
+  // Amount rises, then a gentle top-end roll-off takes the fizz off. Level compensated.
+  // Amount fades from the untouched signal (0) to full crunch (100).
+  function clip(x, k) ( x / (1 + abs(x) ^ k) ^ (1 / k); );
+  function lp(x) ( this.y += this.c * (x - this.y); );
 
 @slider
   amount = slider1 / 100;
-  drive = 1 + amount * 3;
-  makeup_db = -amount * 2;
-  makeup_lin = exp(makeup_db * DB2LIN);
+  drive = 1 + amount * 19;
+  knee = 2 + amount * 8;
+  comp = 0.7 / clip(drive * 0.7, knee);
+  fl.c = fr.c = 1 - exp(-2 * $pi * 9000 / srate);
 
 @sample
-  in_l = spl0 * drive;
-  in_r = spl1 * drive;
-  hard_l = in_l > 1 ? 1 : in_l < -1 ? -1 : in_l;
-  hard_r = in_r > 1 ? 1 : in_r < -1 ? -1 : in_r;
-  soft_l = hard_l * (1 - abs(hard_l) * 0.2);
-  soft_r = hard_r * (1 - abs(hard_r) * 0.2);
-  out_l = soft_l * (1 - amount * 0.5) + hard_l * amount * 0.5;
-  out_r = soft_r * (1 - amount * 0.5) + hard_r * amount * 0.5;
-  spl0 = out_l * makeup_lin;
-  spl1 = out_r * makeup_lin;
+  wl = fl.lp(clip(spl0 * drive, knee)) * comp;
+  wr = fr.lp(clip(spl1 * drive, knee)) * comp;
+  spl0 += amount * (wl - spl0);
+  spl1 += amount * (wr - spl1);
