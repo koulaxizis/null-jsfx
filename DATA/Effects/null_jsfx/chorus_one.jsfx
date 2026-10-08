@@ -11,6 +11,17 @@ in_pin:Right
 out_pin:Left
 out_pin:Right
 
+@init
+// Two delay lines (left/right) long enough for the deepest modulation at any sample rate
+buf_size = ceil(srate * 0.05);
+delay_buf_l = 0;
+delay_buf_r = delay_buf_l + buf_size;
+memset(delay_buf_l, 0, 2 * buf_size);
+freembuf(delay_buf_r + buf_size);
+delay_head_l = delay_head_r = 0;
+lfo_phase = 0;
+fb_l = fb_r = 0;
+
 @slider
 // Map slider to chorus parameters
 chorus_val = slider1 / 100;
@@ -43,14 +54,14 @@ delay_r_samples = delay_r_ms * ms_to_samples;
 delay_int_l = floor(delay_l_samples);
 delay_frac_l = delay_l_samples - delay_int_l;
 
-delay_head_l = (delay_head_l + 1) % 44100;
+delay_head_l = (delay_head_l + 1) % buf_size;
 
 read_pos_l = (delay_head_l - delay_int_l);
-(read_pos_l < 0) ? (read_pos_l = 44100 + read_pos_l);
-(read_pos_l >= 44100) ? (read_pos_l = read_pos_l - 44100);
+(read_pos_l < 0) ? (read_pos_l = buf_size + read_pos_l);
+(read_pos_l >= buf_size) ? (read_pos_l = read_pos_l - buf_size);
 
 read_pos_l2 = (read_pos_l - 1);
-(read_pos_l2 < 0) ? (read_pos_l2 = 44100 + read_pos_l2);
+(read_pos_l2 < 0) ? (read_pos_l2 = buf_size + read_pos_l2);
 
 delay_out_l = delay_buf_l[read_pos_l] * (1 - delay_frac_l) + delay_buf_l[read_pos_l2] * delay_frac_l;
 
@@ -61,14 +72,14 @@ fb_l = delay_out_l;
 delay_int_r = floor(delay_r_samples);
 delay_frac_r = delay_r_samples - delay_int_r;
 
-delay_head_r = (delay_head_r + 1) % 44100;
+delay_head_r = (delay_head_r + 1) % buf_size;
 
 read_pos_r = (delay_head_r - delay_int_r);
-(read_pos_r < 0) ? (read_pos_r = 44100 + read_pos_r);
-(read_pos_r >= 44100) ? (read_pos_r = read_pos_r - 44100);
+(read_pos_r < 0) ? (read_pos_r = buf_size + read_pos_r);
+(read_pos_r >= buf_size) ? (read_pos_r = read_pos_r - buf_size);
 
 read_pos_r2 = (read_pos_r - 1);
-(read_pos_r2 < 0) ? (read_pos_r2 = 44100 + read_pos_r2);
+(read_pos_r2 < 0) ? (read_pos_r2 = buf_size + read_pos_r2);
 
 delay_out_r = delay_buf_r[read_pos_r] * (1 - delay_frac_r) + delay_buf_r[read_pos_r2] * delay_frac_r;
 

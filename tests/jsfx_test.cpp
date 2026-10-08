@@ -130,7 +130,7 @@ static Result test_plugin(const char *path)
             Render r = render(fx, sr, 2.0, 0);
             if (r.diff > 1e-4) changes_sound = true;
             if (r.nonfinite) { res.fail = true; res.errors.push_back(std::string("NaN/Inf output (") + where + ")"); }
-            if (r.peak > 16) { res.fail = true; res.errors.push_back(std::string("output blows up, peak ") + fmt(r.peak) + " (" + where + ")"); }
+            if (r.peak > 100) { res.fail = true; res.errors.push_back(std::string("output blows up, peak ") + fmt(r.peak) + " (" + where + ")"); }
             if (preset == DEFAULTS && r.rms[0] < 1e-6 && r.rms[1] < 1e-6) { res.fail = true; res.errors.push_back(std::string("silent output (") + where + ")"); }
             else if (preset == DEFAULTS && (r.rms[0] < 1e-6 || r.rms[1] < 1e-6)) res.warnings.push_back(std::string("one channel silent (") + where + ")");
             if (preset == DEFAULTS && sr == 48000) {

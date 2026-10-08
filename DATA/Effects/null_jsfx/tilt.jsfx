@@ -1,10 +1,10 @@
 desc:NULL Tilt
 author: Christos Koulaxizis
-tags: eq tilt bass treble balance tonal
+tags: eq tilt tone bass treble balance tonal
 //category: One Slider
 //NULL JSFX v2.0 • https://nulljsfx.tech • MIT License
 
-slider1:0<-100,100,1>0 Tilt Amount (Negative=Bass+, Treble-, Positive=Treble+, Bass-)
+slider1:0<-100,100,1>Amount
 
 in_pin:Left
 in_pin:Right
@@ -12,83 +12,19 @@ out_pin:Left
 out_pin:Right
 
 @init
-// Initialize variables
-tilt_val = 0;
-slope_db = 0;
-lp_freq = 400;
-hp_freq = 400;
-lp_q = 0.707;
-hp_q = 0.707;
-// Precompute filter coefficients
-lp_prev = 0;
-hp_prev = 0;
-lp_a0 = 0; lp_a1 = 0; lp_a2 = 0; lp_b1 = 0; lp_b2 = 0;
-hp_a0 = 0; hp_a1 = 0; hp_a2 = 0; hp_b1 = 0; hp_b2 = 0;
+  // Tilts the whole spectrum around 700 Hz: positive values brighten (treble up, bass
+  // down), negative values darken (bass up, treble down), up to 6 dB each way. The
+  // centre (0) is flat.
+  lp_l = lp_r = 0;
+
 @slider
-// Read slider value (-100 to +100)
-tilt_val = slider1;
-// Calculate slope (max ±12 dB at extremes)
-slope_db = tilt_val * 0.12;
-// Set crossover frequency (fixed at 400 Hz for simplicity)
-lp_freq = 400;
-hp_freq = 400;
-// Compute low shelf filter coefficients (boost/cut below crossover)
-// Using simplified shelf formula
-f_norm_lp = lp_freq / sr * 2;
-w_lp = f_norm_lp * 3.14159265359;
-cos_lp = cos(w_lp);
-sin_lp = sin(w_lp);
-alpha_lp = sin_lp / 2 * 0.5; // Q factor approximation
-gain_lp = pow(10, slope_db / 40); // Convert dB to linear for shelf
-// Low shelf coefficients (RBJ)
-bs_lp_a0 = (1 + alpha_lp * gain_lp);
-bs_lp_a1 = -2 * cos_lp * alpha_lp * gain_lp;
-bs_lp_a2 = (1 - alpha_lp * gain_lp);
-bs_lp_b0 = (1 + alpha_lp) * gain_lp;
-bs_lp_b1 = -2 * cos_lp * alpha_lp;
-bs_lp_b2 = (1 - alpha_lp) * gain_lp;
-lp_a0 = bs_lp_b0 / bs_lp_a0;
-lp_a1 = bs_lp_b1 / bs_lp_a0;
-lp_a2 = bs_lp_b2 / bs_lp_a0;
-lp_b1 = bs_lp_a1 / bs_lp_a0;
-lp_b2 = bs_lp_a2 / bs_lp_a0;
-// Compute high shelf filter coefficients (opposite boost/cut above crossover)
-f_norm_hp = hp_freq / sr * 2;
-w_hp = f_norm_hp * 3.14159265359;
-cos_hp = cos(w_hp);
-sin_hp = sin(w_hp);
-alpha_hp = sin_hp / 2 * 0.5;
-gain_hp = pow(10, -slope_db / 40); // Inverse of low shelf
-// High shelf coefficients (RBJ)
-bs_hp_a0 = (1 + alpha_hp / gain_hp);
-bs_hp_a1 = -2 * cos_hp * alpha_hp / gain_hp;
-bs_hp_a2 = (1 - alpha_hp / gain_hp);
-bs_hp_b0 = (1 + alpha_hp) / gain_hp;
-bs_hp_b1 = -2 * cos_hp * alpha_hp;
-bs_hp_b2 = (1 - alpha_hp) / gain_hp;
-hp_a0 = bs_hp_b0 / bs_hp_a0;
-hp_a1 = bs_hp_b1 / bs_hp_a0;
-hp_a2 = bs_hp_b2 / bs_hp_a0;
-hp_b1 = bs_hp_a1 / bs_hp_a0;
-hp_b2 = bs_hp_a2 / bs_hp_a0;
+  t = slider1 / 100;
+  c = exp(-2 * $pi * 700 / srate);
+  g_low = 10 ^ (-t * 6 / 20);
+  g_high = 10 ^ (t * 6 / 20);
+
 @sample
-// Low shelf section (below 400 Hz)
-// Second-order IIR filter
-lp_out_l = lp_a0 * in_l + lp_a1 * lp_prev_l + lp_a2 * lp_prev2_l - lp_b1 * lp_out_prev_l - lp_b2 * lp_out_prev2_l;
-lp_out_r = lp_a0 * in_r + hp_a1 * lp_prev_r + hp_a2 * lp_prev2_r - hp_b1 * lp_out_prev_r - hp_b2 * hp_out_prev2_r;
-// Store state
-lp_prev_l = in_l; lp_prev2_l = lp_prev_l; lp_prev_r = in_r; lp_prev2_r = lp_prev_r;
-lp_out_prev_l = lp_out_l; lp_out_prev2_l = lp_out_prev_l;
-lp_out_prev_r = lp_out_r; lp_out_prev2_r = lp_out_prev_r;
-// High shelf section (above 400 Hz) - parallel processing
-hp_out_l = hp_a0 * in_l + hp_a1 * hp_prev_l + hp_a2 * hp_prev2_l - hp_b1 * hp_out_prev_l - hp_b2 * hp_out_prev2_l;
-hp_out_r = hp_a0 * in_r + hp_a1 * hp_prev_r + hp_a2 * hp_prev2_r - hp_b1 * hp_out_prev_r - hp_b2 * hp_out_prev2_r;
-// Store state
-hp_prev_l = in_l; hp_prev2_l = hp_prev_l; hp_prev_r = in_r; hp_prev2_r = hp_prev_r;
-hp_out_prev_l = hp_out_l; hp_out_prev2_l = hp_out_prev_l;
-hp_out_prev_r = hp_out_r; hp_out_prev2_r = hp_out_prev_r;
-// Mix low and high shelves (crossover blend)
-// Simple crossover: low shelf for low freq, high shelf for high freq
-// For this simple version, we'll use allpass crossover at 400Hz
-out_l = (lp_out_l + hp_out_l) * 0.5;
-out_r = (lp_out_r + hp_out_r) * 0.5;
+  lp_l = (1 - c) * spl0 + c * lp_l;
+  lp_r = (1 - c) * spl1 + c * lp_r;
+  spl0 = lp_l * g_low + (spl0 - lp_l) * g_high;
+  spl1 = lp_r * g_low + (spl1 - lp_r) * g_high;

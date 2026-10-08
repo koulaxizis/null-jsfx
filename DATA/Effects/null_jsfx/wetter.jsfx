@@ -12,11 +12,13 @@ out_pin:Left
 out_pin:Right
 
 @init
-  buf_size = 44100;
+  buf_size = ceil(srate * 0.05);
   buf1 = 0;
   buf2 = buf_size;
   buf3 = buf_size * 2;
   buf4 = buf_size * 3;
+  memset(buf1, 0, 4 * buf_size);
+  freembuf(buf4 + buf_size);
   wr1 = 0; wr2 = 0; wr3 = 0; wr4 = 0;
 
 @slider
