@@ -1,0 +1,31 @@
+NULL Tilt prototypes: the same Tilt effect built three ways
+============================================================
+
+All three sound identical (bit for bit) to NULL Tilt. Only the packaging and
+the interface differ. The colours are provisional.
+
+1 - NULL Tilt GFX (JSFX)
+    REAPER only. Copy null_tilt_gfx.jsfx into the REAPER Effects folder
+    (Options > Show REAPER resource path > Effects), rescan, then load
+    "JS: NULL Tilt GFX". It opens with its own knob and EQ-curve display.
+
+2 - NULL Tilt YS (VST3, CLAP; AU on macOS)
+    Any DAW. The JSFX above is embedded in a ysfx-based plugin, so it shows
+    the same interface. Install like any plugin:
+      Windows: VST3 -> C:\Program Files\Common Files\VST3
+               CLAP -> C:\Program Files\Common Files\CLAP
+      macOS:   VST3 -> ~/Library/Audio/Plug-Ins/VST3
+               CLAP -> ~/Library/Audio/Plug-Ins/CLAP
+               AU   -> ~/Library/Audio/Plug-Ins/Components
+      Linux:   VST3 -> ~/.vst3     CLAP -> ~/.clap
+
+3 - NULL Tilt Native (VST3, CLAP)
+    Any DAW. A C++ rewrite (DPF) with its own native interface. Same folders
+    as above.
+
+macOS: these builds are not code-signed. If macOS refuses to load them, run
+    xattr -dr com.apple.quarantine <path to the .vst3/.clap/.component>
+and rescan the plugins.
+
+Controls (all versions): drag the knob (Ctrl/Cmd or Shift for fine steps),
+double-click to reset to 0, mouse wheel steps by 1.

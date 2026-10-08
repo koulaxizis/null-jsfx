@@ -1,0 +1,264 @@
+diff --git a/plugin/editor.cpp b/plugin/editor.cpp
+index a407569..19c5d09 100644
+--- a/plugin/editor.cpp
++++ b/plugin/editor.cpp
+@@ -38,6 +38,10 @@
+ #include <iostream>
+ #include <cmath>
+ 
++#ifndef NULL_EMBEDDED_JSFX
++#define NULL_EMBEDDED_JSFX 0
++#endif
++
+ struct YsfxEditor::Impl {
+     YsfxEditor *m_self = nullptr;
+     YsfxProcessor *m_proc = nullptr;
+@@ -184,7 +188,7 @@ struct YsfxEditor::Impl {
+     juce::String getLabel() const;
+ };
+ 
+-static const int defaultEditorWidth = 700;
++static const int defaultEditorWidth = NULL_EMBEDDED_JSFX ? 360 : 700;  // embedded: fit the @gfx size
+ static const int defaultEditorHeight = 50;
+ 
+ YsfxEditor::YsfxEditor(YsfxProcessor &proc)
+@@ -202,6 +206,9 @@ YsfxEditor::YsfxEditor(YsfxProcessor &proc)
+     juce::LookAndFeel::setDefaultLookAndFeel(&lnf);
+ 
+     setOpaque(true);
++#if NULL_EMBEDDED_JSFX
++    m_headerSize = 0;  // single-purpose plugin: no load/preset/edit header
++#endif
+     setSize(defaultEditorWidth, defaultEditorHeight);
+     setResizable(true, true);
+     m_impl->createUI();
+@@ -311,6 +318,9 @@ YsfxEditor::~YsfxEditor()
+ bool YsfxEditor::isInterestedInFileDrag(const juce::StringArray &files)
+ {
+     (void)files;
++#if NULL_EMBEDDED_JSFX
++    return false;
++#endif
+ 
+     YsfxInfo::Ptr info = m_impl->m_info;
+     ysfx_t *fx = info->effect.get();
+@@ -416,7 +426,7 @@ void YsfxEditor::Impl::grabInfoAndUpdate()
+         juce::AccessibilityHandler::postAnnouncement(m_lastReadPreset, juce::AccessibilityHandler::AnnouncementPriority::medium);
+     }
+ 
+-    if ((m_proc->retryLoad() == RetryState::mustRetry) && !m_fileChooserActive) {
++    if (!NULL_EMBEDDED_JSFX && (m_proc->retryLoad() == RetryState::mustRetry) && !m_fileChooserActive) {
+         chooseFileAndLoad();
+         m_btnLoadFile->setButtonText(TRANS("Locate"));
+         m_btnRecentFiles->setVisible(false);
+@@ -1469,6 +1479,17 @@ void YsfxEditor::Impl::relayoutUI()
+         m_centerViewPort->setViewedComponent(viewed, false);
+     }
+ 
++#if NULL_EMBEDDED_JSFX
++    for (juce::Component *c : {(juce::Component *)m_btnLoadFile.get(), (juce::Component *)m_btnRecentFiles.get(),
++                               (juce::Component *)m_btnRecentFilesOpts.get(), (juce::Component *)m_btnEditCode.get(),
++                               (juce::Component *)m_btnLoadPreset.get(), (juce::Component *)m_btnPresetOpts.get(),
++                               (juce::Component *)m_btnSwitchEditor.get(), (juce::Component *)m_btnReload.get(),
++                               (juce::Component *)m_btnUndo.get(), (juce::Component *)m_btnRedo.get(),
++                               (juce::Component *)m_btnGfxScaling.get(), (juce::Component *)m_lblFilePath.get(),
++                               (juce::Component *)m_lblIO.get()})
++        c->setVisible(false);
++#endif
++
+     if (m_relayoutTimer)
+         m_relayoutTimer->stopTimer();
+ }
+diff --git a/plugin/parameter.cpp b/plugin/parameter.cpp
+index 61d77b2..ce6bdaf 100644
+--- a/plugin/parameter.cpp
++++ b/plugin/parameter.cpp
+@@ -128,6 +128,10 @@ void YsfxParameter::setValueNoNotify(float newValue)
+ 
+ float YsfxParameter::getDefaultValue() const
+ {
++#if NULL_EMBEDDED_JSFX
++    if (existsAsSlider())
++        return convertFromYsfxValue(getSliderRange().def);
++#endif
+     return 0.0f;
+ }
+ 
+diff --git a/plugin/parameter.h b/plugin/parameter.h
+index 42708cb..1eb9045 100644
+--- a/plugin/parameter.h
++++ b/plugin/parameter.h
+@@ -45,6 +45,7 @@ public:
+     juce::String getText(float normalisedValue, int) const override;
+     float getValueForText(const juce::String &text) const override;
+     bool wasUpdatedByHost();  // Fetches whether this was updated by host and resets it
++    bool hostUpdatePending() const { return m_hostUpdated.load(); }
+ 
+     juce::String getName(int maximumStringLength) const override;
+     juce::CriticalSection m_nameSection;
+diff --git a/plugin/processor.cpp b/plugin/processor.cpp
+index f9f1b1e..103ab2d 100644
+--- a/plugin/processor.cpp
++++ b/plugin/processor.cpp
+@@ -24,6 +24,9 @@
+ #include "utility/sync_bitset.hpp"
+ #include "ysfx.h"
+ #include "bank_io.h"
++#if NULL_EMBEDDED_JSFX
++#include "null_embedded.h"
++#endif
+ #include <atomic>
+ #include <thread>
+ #include <mutex>
+@@ -177,12 +180,15 @@ struct YsfxProcessor::Impl : public juce::AudioProcessorListener {
+     juce::CriticalSection m_loadLock;
+     juce::String m_lastLoadPath{""};
+     ysfx_state_u m_failedLoadState{nullptr};  // Holds the state of a failed load
++
++    std::vector<std::unique_ptr<YsfxParameter>> m_unlistedParams;  // sliders not exposed to the host
+ };
+ 
+ //==============================================================================
+ YsfxProcessor::YsfxProcessor()
+     : AudioProcessor(BusesProperties()
+                      .withInput("Input", juce::AudioChannelSet::stereo(), true)
++#if !NULL_EMBEDDED_JSFX
+                      .withInput("Input 2", juce::AudioChannelSet::stereo(), false)
+                      .withInput("Input 3", juce::AudioChannelSet::stereo(), false)
+                      .withInput("Input 4", juce::AudioChannelSet::stereo(), false)
+@@ -197,7 +203,9 @@ YsfxProcessor::YsfxProcessor()
+                      .withInput("Input 13", juce::AudioChannelSet::stereo(), false)
+                      .withInput("Input 14", juce::AudioChannelSet::stereo(), false)
+                      .withInput("Input 15", juce::AudioChannelSet::stereo(), false)
++#endif
+                      .withOutput("Output", juce::AudioChannelSet::stereo(), true)
++#if !NULL_EMBEDDED_JSFX
+                      .withOutput("Output 2", juce::AudioChannelSet::stereo(), false)
+                      .withOutput("Output 3", juce::AudioChannelSet::stereo(), false)
+                      .withOutput("Output 4", juce::AudioChannelSet::stereo(), false)
+@@ -212,6 +220,7 @@ YsfxProcessor::YsfxProcessor()
+                      .withOutput("Output 13", juce::AudioChannelSet::stereo(), false)
+                      .withOutput("Output 14", juce::AudioChannelSet::stereo(), false)
+                      .withOutput("Output 15", juce::AudioChannelSet::stereo(), false)
++#endif
+                      ),
+                      
+     m_impl(new Impl)
+@@ -240,6 +249,9 @@ YsfxProcessor::YsfxProcessor()
+     ///
+     m_impl->m_sliderParamOffset = getParameters().size();
+     for (int i = 0; i < ysfx_max_sliders; ++i)
++#if NULL_EMBEDDED_JSFX
++        if (i >= NULL_NUM_PARAMS) m_impl->m_unlistedParams.emplace_back(new YsfxParameter(fx, i)); else
++#endif
+         addParameter(new YsfxParameter(fx, i));
+ 
+     ///
+@@ -256,6 +268,10 @@ YsfxProcessor::YsfxProcessor()
+ 
+     ///
+     addListener(m_impl.get());
++
++#if NULL_EMBEDDED_JSFX
++    loadJsfxFile(nullEmbeddedJsfxFile().getFullPathName(), nullptr, false, false);
++#endif
+ }
+ 
+ juce::String YsfxProcessor::lastLoadPath()
+@@ -285,6 +301,10 @@ YsfxParameter *YsfxProcessor::getYsfxParameter(int sliderIndex)
+ {
+     if (sliderIndex < 0 || sliderIndex >= ysfx_max_sliders)
+         return nullptr;
++#if NULL_EMBEDDED_JSFX
++    if (sliderIndex >= NULL_NUM_PARAMS)
++        return m_impl->m_unlistedParams[(size_t)(sliderIndex - NULL_NUM_PARAMS)].get();
++#endif
+ 
+     int paramIndex = sliderIndex + m_impl->m_sliderParamOffset;
+     return static_cast<YsfxParameter *>(getParameters()[paramIndex]);
+@@ -541,6 +561,9 @@ void YsfxProcessor::reset()
+ void YsfxProcessor::Impl::processBlockGenerically(const void *inputs[], void *outputs[], uint32_t numIns, uint32_t numOuts, uint32_t numFrames, uint32_t processBits, juce::MidiBuffer &midiMessages)
+ {
+     ysfx_t *fx = m_fx.get();
++#if NULL_EMBEDDED_JSFX
++    juce::ScopedNoDenormals noDenormals;
++#endif
+ 
+     for (auto group = 0; group < ysfx_max_slider_groups; group++) {
+         uint64_t sliderParametersChanged = m_sliderParametersChanged[group].exchange(0);
+@@ -555,6 +578,16 @@ void YsfxProcessor::Impl::processBlockGenerically(const void *inputs[], void *ou
+         }
+     }
+ 
++#if NULL_EMBEDDED_JSFX
++    // The CLAP wrapper applies host parameter events with setValue() only and
++    // calls the parameter listeners later on the main thread, after
++    // processSliderChanges() below would have reverted the value. Pick such
++    // pending host changes up here.
++    for (int i = 0; i < NULL_NUM_PARAMS; ++i)
++        if (m_self->getYsfxParameter(i)->hostUpdatePending())
++            syncParameterToSlider(i);
++#endif
++
+     updateTimeInfo();
+     ysfx_set_time_info(fx, &m_timeInfo);
+ 
+@@ -624,12 +657,12 @@ const juce::String YsfxProcessor::getName() const
+ 
+ bool YsfxProcessor::acceptsMidi() const
+ {
+-    return true;
++    return JucePlugin_WantsMidiInput;
+ }
+ 
+ bool YsfxProcessor::producesMidi() const
+ {
+-    return true;
++    return JucePlugin_ProducesMidiOutput;
+ }
+ 
+ bool YsfxProcessor::isMidiEffect() const
+@@ -661,6 +694,9 @@ void YsfxProcessor::setCurrentProgram(int index)
+ const juce::String YsfxProcessor::getProgramName(int index)
+ {
+     (void)index;
++#if NULL_EMBEDDED_JSFX
++    return "Default";  // VST3 validator: programs must be named
++#endif
+     return {};
+ }
+ 
+@@ -679,6 +715,12 @@ void YsfxProcessor::getStateInformation(juce::MemoryBlock &destData)
+     {
+         AudioProcessorSuspender sus(*this);
+         sus.lockCallbacks();
++#if NULL_EMBEDDED_JSFX
++        // host values set via CLAP params.flush() without a process() call yet
++        for (int i = 0; i < NULL_NUM_PARAMS; ++i)
++            if (getYsfxParameter(i)->hostUpdatePending())
++                m_impl->syncParameterToSlider(i);
++#endif
+         ysfx_t *fx = m_impl->m_fx.get();
+         path = juce::CharPointer_UTF8(ysfx_get_file_path(fx));
+         state.reset(ysfx_save_state(fx));
+@@ -718,6 +760,9 @@ void YsfxProcessor::setStateInformation(const void *data, int sizeInBytes)
+         return;
+ 
+     path = root.getProperty("path").toString();
++#if NULL_EMBEDDED_JSFX
++    path = nullEmbeddedJsfxFile();  // always the embedded effect
++#endif
+ 
+     juce::ValueTree stateTree = root.getChildWithName("state");
+     if (stateTree != juce::ValueTree{}) {
+@@ -750,6 +795,10 @@ void YsfxProcessor::setStateInformation(const void *data, int sizeInBytes)
+     else {
+         loadJsfxFile(path.getFullPathName(), nullptr, false, false);
+     }
++#if NULL_EMBEDDED_JSFX
++    // tell the host right away that all parameter values changed
++    updateHostDisplay(ChangeDetails().withProgramChanged(true));
++#endif
+ }
+ 
+ //==============================================================================

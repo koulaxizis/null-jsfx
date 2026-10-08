@@ -33,6 +33,9 @@ sin cos tan asin acos atan atan2 sqrt pow exp log log10 abs min max sign floor c
 memset memcpy freembuf loop while this local static instance global
 fft ifft fft_permute fft_ipermute fft_real ifft_real convolve_c file_open file_close file_avail file_riff file_mem file_var
 pdc_delay pdc_bot_ch pdc_top_ch ext_noinit ext_tail_size ext_nodenorm slider_automate sliderchange
+gfx_r gfx_g gfx_b gfx_a gfx_x gfx_y gfx_w gfx_h gfx_texth gfx_set gfx_rect gfx_line gfx_lineto gfx_circle gfx_arc
+gfx_drawstr gfx_drawnumber gfx_measurestr gfx_setfont gfx_roundrect gfx_triangle gfx_getchar gfx_clienttoscreen
+mouse_x mouse_y mouse_cap mouse_wheel gfx_ext_retina time_precise sprintf strlen strcpy_substr
 """.split())
 
 
@@ -100,6 +103,7 @@ def check(path):
     for name, args, extra in re.findall(r"function\s+([\w.]+)\s*\(([^)]*)\)\s*(?:(?:local|instance|static|global)\s*\(([^)]*)\))?", code):
         functions.add(name.split(".")[-1])
         params |= {a.strip() for a in (args + "," + extra).split(",") if a.strip()}
+    code = re.sub(r'"[^"\n]*"', '""', code)  # words inside string literals are not variables
     used = set(re.findall(r"(?<![\w.$#@'\"])([A-Za-z_]\w*)\b(?!\s*\(|\.)", code))
     called = set(re.findall(r"(?<![\w.])([A-Za-z_]\w*)\s*\(", code))
     for name in sorted(used - assigned - BUILTINS - functions - params):
