@@ -1,0 +1,79 @@
+desc:NULL Cabinet Simulator
+author: Christos Koulaxizis
+tags: cabinet cab speaker guitar bass amp simulation di re-amp
+//category: Essentials
+//NULL JSFX v2.0 • https://nulljsfx.tech • MIT License
+
+slider1:2<0,4,1{1x12 Open Back,2x12 Combo,4x12 Closed Back,1x15 Bass,Small Radio}>Cabinet
+slider2:30<0,100,1>Mic Position (%)
+slider3:80<20,300,1>Low Cut (Hz)
+slider4:100<0,100,1>Mix (%)
+slider5:0<-12,12,0.1>Output (dB)
+
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
+
+@init
+  // Turns a DI or amp-output signal into the sound of a miked speaker cabinet, without
+  // impulse files. Each cabinet is a set of filters: the low-end resonance of the box,
+  // the cone's mid character and presence peak, and the steep roll-off of the speaker.
+  // Mic Position: 0% = centre of the cone (bright), 100% = edge (darker, softer).
+
+  function biquad(type, freq, q, gain) local(w, c, s, al, A, a0)
+  (
+    w = 2 * $pi * min(freq, srate * 0.45) / srate; c = cos(w); s = sin(w);
+    al = s / (2 * q); A = 10 ^ (gain / 40);
+    type == 0 ? (       // high-pass
+      this.b0 = (1 + c) / 2; this.b1 = -(1 + c); this.b2 = this.b0; a0 = 1 + al; this.a1 = -2 * c; this.a2 = 1 - al;
+    ) : type == 1 ? (   // low-pass
+      this.b0 = (1 - c) / 2; this.b1 = 1 - c; this.b2 = this.b0; a0 = 1 + al; this.a1 = -2 * c; this.a2 = 1 - al;
+    ) : (               // peaking
+      this.b0 = 1 + al * A; this.b1 = -2 * c; this.b2 = 1 - al * A; a0 = 1 + al / A; this.a1 = -2 * c; this.a2 = 1 - al / A;
+    );
+    this.b0 /= a0; this.b1 /= a0; this.b2 /= a0; this.a1 /= a0; this.a2 /= a0;
+  );
+  function run(x) local(y)
+  (
+    y = this.b0 * x + this.b1 * this.x1 + this.b2 * this.x2 - this.a1 * this.y1 - this.a2 * this.y2;
+    this.x2 = this.x1; this.x1 = x; this.y2 = this.y1; this.y1 = y; y;
+  );
+  // the same coefficients go to both channels
+  function set_stage(type, freq, q, gain)
+  (
+    this.l.biquad(type, freq, q, gain);
+    this.r.biquad(type, freq, q, gain);
+  );
+
+@slider
+  cab = slider1;
+  m = slider2 / 100;
+  // per cabinet: box resonance, low-mid, mid scoop, presence, roll-off frequency
+  cab == 0 ? (res = 110; res_g = 4;  lm = 400;  lm_g = 1;  sc = 900;  sc_g = -3; pr = 2500; pr_g = 5; lp = 5500; base_lc = 70);
+  cab == 1 ? (res = 100; res_g = 5;  lm = 350;  lm_g = 2;  sc = 800;  sc_g = -4; pr = 2200; pr_g = 4; lp = 5000; base_lc = 60);
+  cab == 2 ? (res = 85;  res_g = 7;  lm = 250;  lm_g = 2;  sc = 650;  sc_g = -6; pr = 2000; pr_g = 5; lp = 4500; base_lc = 50);
+  cab == 3 ? (res = 60;  res_g = 6;  lm = 200;  lm_g = 3;  sc = 600;  sc_g = -5; pr = 1500; pr_g = 3; lp = 3000; base_lc = 30);
+  cab == 4 ? (res = 300; res_g = 3;  lm = 800;  lm_g = 4;  sc = 1500; sc_g = -2; pr = 2500; pr_g = 6; lp = 3500; base_lc = 250);
+  lp *= 1 - 0.45 * m;
+  pr_g *= 1 - 0.7 * m;
+  lc = max(slider3, base_lc);
+  st1.set_stage(0, lc, 0.707, 0);
+  st2.set_stage(2, res, 1.2, res_g);
+  st3.set_stage(2, lm, 0.9, lm_g);
+  st4.set_stage(2, sc, 1.0, sc_g);
+  st5.set_stage(2, pr, 1.5, pr_g);
+  st6.set_stage(1, lp, 0.6, 0);
+  st7.set_stage(1, lp * 1.3, 0.9, 0);
+  mix = slider4 / 100;
+  out = 10 ^ (slider5 / 20);
+
+@sample
+  // left channel
+  y = st1.l.run(spl0); y = st2.l.run(y); y = st3.l.run(y); y = st4.l.run(y);
+  y = st5.l.run(y); y = st6.l.run(y); wl = st7.l.run(y);
+  // right channel
+  y = st1.r.run(spl1); y = st2.r.run(y); y = st3.r.run(y); y = st4.r.run(y);
+  y = st5.r.run(y); y = st6.r.run(y); wr = st7.r.run(y);
+  spl0 = (spl0 * (1 - mix) + wl * mix) * out;
+  spl1 = (spl1 * (1 - mix) + wr * mix) * out;

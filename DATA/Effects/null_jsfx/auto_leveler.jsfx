@@ -1,0 +1,43 @@
+desc:NULL Auto-Leveler
+author: Christos Koulaxizis
+tags: auto leveler gain riding loudness level agc volume dialogue podcast
+//category: Essentials
+//NULL JSFX v2.0 • https://nulljsfx.tech • MIT License
+
+slider1:-18<-36,-6,0.5>Target (dB)
+slider2:1000<100,5000,10>Speed (ms)
+slider3:12<0,24,0.5>Max Boost (dB)
+slider4:12<0,24,0.5>Max Cut (dB)
+slider5:-50<-80,-30,1>Gate (dB)
+
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
+
+@init
+  // Rides the gain like an engineer on a fader: the average (RMS) level is measured
+  // over ~300 ms and the gain moves slowly, at Speed, toward whatever brings that level
+  // to Target. Gain changes are limited to Max Boost / Max Cut, and when the signal
+  // falls below Gate (pauses, room noise) the gain holds still instead of pumping up.
+  ms = 0;
+  gain_db = 0;
+
+@slider
+  target = slider1;
+  rms_c = exp(-1 / (0.3 * srate));
+  speed_c = exp(-1 / (slider2 / 1000 * srate));
+  max_up = slider3;
+  max_down = slider4;
+  gate = slider5;
+
+@sample
+  ms = rms_c * ms + (1 - rms_c) * 0.5 * (spl0 * spl0 + spl1 * spl1);
+  level_db = 10 * log10(max(ms, 0.000000000001));
+  level_db > gate ? (
+    want = max(-max_down, min(max_up, target - level_db));
+    gain_db = speed_c * gain_db + (1 - speed_c) * want;
+  );
+  g = 10 ^ (gain_db / 20);
+  spl0 *= g;
+  spl1 *= g;

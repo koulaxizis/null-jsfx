@@ -1,0 +1,69 @@
+desc:NULL Frequency Shifter
+author: Christos Koulaxizis
+tags: frequency shifter bode hilbert inharmonic barberpole metallic sci-fi
+//category: Advanced
+//NULL JSFX v2.0 • https://nulljsfx.tech • MIT License
+
+slider1:100<-2000,2000,0.1>Shift (Hz)
+slider2:0<-100,100,0.1>Stereo Offset (Hz)
+slider3:0<0,95,1>Feedback (%)
+slider4:50<0,100,1>Mix (%)
+
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
+
+@init
+  // Bode-style frequency shifter: every frequency in the signal moves up (or down) by
+  // the same number of Hz, unlike a pitch shifter. Small shifts give phasing/beating,
+  // larger ones turn harmonic sounds metallic and bell-like. A Hilbert transform (two
+  // allpass chains, Niemitalo design) produces the quadrature pair; a sine/cosine
+  // oscillator then shifts it. Stereo Offset shifts the right channel by a different
+  // amount; Feedback sends the output back in for a spiralling "barber-pole" sound.
+
+  // first-order-in-z^2 allpass section: y = a*(x + y[n-2]) - x[n-2]
+  function ap(x, a) local(y)
+  (
+    y = a * (x + this.y2) - this.x2;
+    this.x2 = this.x1; this.x1 = x;
+    this.y2 = this.y1; this.y1 = y;
+    y;
+  );
+  // returns the real part, the imaginary part goes to this.im
+  function hilbert(x) local(re, im)
+  (
+    re = this.a4.ap(this.a3.ap(this.a2.ap(this.a1.ap(x, 0.479401), 0.876218), 0.976597), 0.997499);
+    im = this.b4.ap(this.b3.ap(this.b2.ap(this.b1.ap(x, 0.161758), 0.733029), 0.945349), 0.990598);
+    // the imaginary path is one sample behind the real path
+    this.im = this.imd;
+    this.imd = im;
+    re;
+  );
+  function shift(x, inc) local(re, f)
+  (
+    this.ph += inc;
+    this.ph >= 1 ? this.ph -= 1;
+    this.ph < 0 ? this.ph += 1;
+    // feedback is high-passed (the Hilbert pair is inaccurate below ~20 Hz) and
+    // softly limited so the loop can never run away
+    f = this.fb * feedback;
+    this.dc = this.dc * 0.995 + f * 0.005;
+    f -= this.dc;
+    f = f / (1 + abs(f));
+    re = this.h.hilbert(x + f);
+    this.fb = re * cos(2 * $pi * this.ph) + this.h.im * sin(2 * $pi * this.ph);
+    this.fb;
+  );
+
+@slider
+  inc_l = slider1 / srate;
+  inc_r = (slider1 + slider2) / srate;
+  feedback = slider3 / 100;
+  mix = slider4 / 100;
+
+@sample
+  w_l = L.shift(spl0, inc_l);
+  w_r = R.shift(spl1, inc_r);
+  spl0 = spl0 * (1 - mix) + w_l * mix;
+  spl1 = spl1 * (1 - mix) + w_r * mix;

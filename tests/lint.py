@@ -28,6 +28,7 @@ BUILTINS = set("""
 spl0 spl1 srate samplesblock tempo play_state play_position beat_position ts_num ts_denom num_ch trigger
 sin cos tan asin acos atan atan2 sqrt pow exp log log10 abs min max sign floor ceil rand invsqrt sqr
 memset memcpy freembuf loop while this local static instance global
+fft ifft fft_permute fft_ipermute fft_real ifft_real convolve_c file_open file_close file_avail file_riff file_mem file_var
 pdc_delay pdc_bot_ch pdc_top_ch ext_noinit ext_tail_size ext_nodenorm slider_automate sliderchange
 """.split())
 

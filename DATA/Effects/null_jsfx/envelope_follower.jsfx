@@ -1,0 +1,72 @@
+desc:NULL Envelope Follower
+author: Christos Koulaxizis
+tags: envelope follower auto wah filter dynamic modulation funk touch
+//category: Essentials
+//NULL JSFX v2.0 • https://nulljsfx.tech • MIT License
+
+slider1:0<0,3,1{Lowpass,Bandpass,Highpass,Volume}>Target
+slider2:5<0.1,100,0.1>Attack (ms)
+slider3:150<10,2000,1>Release (ms)
+slider4:0<-24,24,0.5>Sensitivity (dB)
+slider5:200<20,2000,1:log>Low Freq (Hz)
+slider6:3000<500,15000,10:log>High Freq (Hz)
+slider7:3<0.5,10,0.1>Resonance
+slider8:0<0,1,1{Up,Down}>Direction
+slider9:100<0,100,1>Mix (%)
+
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
+
+@init
+  // Follows the loudness of the input and uses it to move a filter (auto-wah) or the
+  // volume. Louder playing opens the filter from Low Freq toward High Freq (Direction
+  // Up) or closes it (Down). Sensitivity sets how hard you need to play to reach the end.
+  env = 0;
+
+  // TPT state-variable filter; returns low, band or high output
+  function svf(x) local(v1, v2, v3, hp)
+  (
+    v3 = x - this.ic2;
+    v1 = a1 * this.ic1 + a2 * v3;
+    v2 = this.ic2 + a2 * this.ic1 + a3 * v3;
+    this.ic1 = 2 * v1 - this.ic1;
+    this.ic2 = 2 * v2 - this.ic2;
+    hp = x - k * v1 - v2;
+    target == 0 ? v2 : target == 1 ? v1 : hp;
+  );
+
+@slider
+  target = slider1;
+  att = exp(-1 / (slider2 / 1000 * srate));
+  rel = exp(-1 / (slider3 / 1000 * srate));
+  sens = 10 ^ (slider4 / 20);
+  f_lo = slider5;
+  f_hi = max(slider6, slider5);
+  k = 1 / slider7;
+  down = slider8;
+  mix = slider9 / 100;
+
+@sample
+  lev = max(abs(spl0), abs(spl1)) * sens;
+  env = lev > env ? att * env + (1 - att) * lev : rel * env + (1 - rel) * lev;
+  // -48 dB .. 0 dB of envelope maps to 0 .. 1
+  e = env > 0.004 ? min(1, 1 + log10(env) * 20 / 48) : 0;
+  e = max(0, e);
+  down ? e = 1 - e;
+
+  target == 3 ? (
+    w_l = spl0 * e;
+    w_r = spl1 * e;
+  ) : (
+    fc = min(f_lo * (f_hi / f_lo) ^ e, srate * 0.45);
+    g = tan($pi * fc / srate);
+    a1 = 1 / (1 + g * (g + k));
+    a2 = g * a1;
+    a3 = g * a2;
+    w_l = L.svf(spl0);
+    w_r = R.svf(spl1);
+  );
+  spl0 = spl0 * (1 - mix) + w_l * mix;
+  spl1 = spl1 * (1 - mix) + w_r * mix;

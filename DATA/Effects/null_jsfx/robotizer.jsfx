@@ -1,0 +1,121 @@
+desc:NULL Robotizer
+author: Christos Koulaxizis
+tags: robot robotizer voice monotone sci-fi dalek metallic fft
+//category: Advanced
+//NULL JSFX v2.0 • https://nulljsfx.tech • MIT License
+
+slider1:120<50,400,1>Pitch (Hz)
+slider2:30<0,100,1>Metallic (%)
+slider3:0<0,100,1>Ring (%)
+slider4:100<0,100,1>Mix (%)
+
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
+
+@init
+  // Classic FFT robotization: once every Pitch period a 1024-point slice of the input
+  // is analysed, all of its phases are set to zero and it is resynthesised. Each slice
+  // becomes a single buzz pulse with the voice's spectrum, and the pulses repeat at
+  // exactly Pitch, so speech keeps its words but drones on one note. Metallic adds a
+  // tuned comb resonance at Pitch; Ring blends in ring modulation for a Dalek tone.
+  // Latency: 1024 samples (reported to REAPER).
+  N = 1024;
+  fft_buf = 0;                 // 2N slots, does not cross a 65536 boundary
+  win = 2048;                  // Hann window, N
+  in_l = 4096; in_r = in_l + N;
+  out_l = in_r + N; out_r = out_l + 2 * N;
+  comb_l = out_r + 2 * N; comb_r = comb_l + 1024;
+  freembuf(comb_r + 1024);
+  memset(in_l, 0, comb_r + 1024 - in_l);
+  i = 0;
+  loop(N, win[i] = 0.5 - 0.5 * cos(2 * $pi * i / N); i += 1);
+  ipos = 0;    // write position in the input rings
+  opos = 0;    // read position in the output accumulators
+  cnt = 0;
+  cpos = 0;
+  rph = 0;
+  pdc_delay = N;
+  pdc_bot_ch = 0;
+  pdc_top_ch = 2;
+
+  // analyse the last N input samples of one channel, zero the phases, and add the
+  // resulting pulse to the output accumulator starting at the current read point
+  function robot_frame(inb, outb) local(i, k, re, im, m, p)
+  (
+    i = 0;
+    loop(N,
+      p = (ipos + i) % N;            // oldest sample first
+      fft_buf[2 * i] = inb[p] * win[i];
+      fft_buf[2 * i + 1] = 0;
+      i += 1;
+    );
+    fft(fft_buf, N);
+    fft_permute(fft_buf, N);
+    k = 0;
+    loop(N,
+      re = fft_buf[2 * k]; im = fft_buf[2 * k + 1];
+      m = sqrt(re * re + im * im);
+      // zero phase, then (-1)^k moves the pulse to the middle of the frame
+      fft_buf[2 * k] = k & 1 ? -m : m;
+      fft_buf[2 * k + 1] = 0;
+      k += 1;
+    );
+    fft_ipermute(fft_buf, N);
+    ifft(fft_buf, N);
+    i = 0;
+    loop(N,
+      p = (opos + i) % (2 * N);
+      outb[p] += fft_buf[2 * i] * norm;
+      i += 1;
+    );
+  );
+
+@slider
+  P = max(16, floor(srate / slider1 + 0.5));
+  // pulses overlap N/P times; keep the level close to the input
+  norm = P / N * 2 / N;
+  metal = slider2 / 100 * 0.85;
+  ring = slider3 / 100;
+  mix = slider4 / 100;
+
+@sample
+  in_l[ipos] = spl0;
+  in_r[ipos] = spl1;
+  ipos += 1;
+  ipos >= N ? ipos = 0;
+
+  cnt += 1;
+  cnt >= P ? (
+    cnt = 0;
+    robot_frame(in_l, out_l);
+    robot_frame(in_r, out_r);
+  );
+
+  r_l = out_l[opos]; out_l[opos] = 0;
+  r_r = out_r[opos]; out_r[opos] = 0;
+  opos += 1;
+  opos >= 2 * N ? opos = 0;
+
+  // tuned comb resonance at the robot pitch
+  cp = cpos - P; cp < 0 ? cp += 1024;
+  c_l = r_l + metal * comb_l[cp];
+  c_r = r_r + metal * comb_r[cp];
+  comb_l[cpos] = c_l;
+  comb_r[cpos] = c_r;
+  cpos += 1; cpos >= 1024 ? cpos = 0;
+  c_l *= 1 - metal;
+  c_r *= 1 - metal;
+
+  rph += 30 / srate;
+  rph >= 1 ? rph -= 1;
+  rm = sin(2 * $pi * rph);
+  c_l = c_l * (1 - ring) + c_l * rm * ring;
+  c_r = c_r * (1 - ring) + c_r * rm * ring;
+
+  // the dry signal is delayed by N to line up with the robot voice
+  dry_l = in_l[ipos];
+  dry_r = in_r[ipos];
+  spl0 = dry_l * (1 - mix) + c_l * mix;
+  spl1 = dry_r * (1 - mix) + c_r * mix;
