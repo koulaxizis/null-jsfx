@@ -383,15 +383,16 @@ const guides = {
   },
   'filter': {
     title: 'FILTER',
-    subtitle: 'Resonant Low-Pass Filter',
+    subtitle: 'Resonant Multi-Mode Filter',
     category: 'Essentials',
     sliders: [
-      { name: 'Cutoff', range: '20 to 20000 Hz', desc: 'Low-pass cutoff frequency.' },
-      { name: 'Resonance', range: '0.1 to 10', desc: 'Q of the filter; higher values add a resonant peak at the cutoff.' },
-      { name: 'Gain', range: '−12 to +12 dB', desc: 'Output level after the filter.' }
+      { name: 'Cutoff', range: '20 to 20000 Hz', desc: 'Cutoff (or centre) frequency of the filter.' },
+      { name: 'Resonance', range: '0.1 to 10', desc: 'Q of the filter; higher values add a resonant peak at the cutoff (narrower band in Band Pass and Notch).' },
+      { name: 'Gain', range: '−12 to +12 dB', desc: 'Output level after the filter.' },
+      { name: 'Mode', range: 'Low Pass / High Pass / Band Pass / Notch', desc: 'Filter response: Low Pass, High Pass, Band Pass (unity peak) or Notch.' }
     ],
-    uses: ['Taking the top end off harsh sources', 'Filter sweeps via automation', 'Lo-fi and muffled effects', 'Resonant synth-style tones'],
-    properties: 'Input → 2-pole (12 dB/oct) TPT state-variable low-pass → Gain → Output. Zero-delay-feedback design that stays stable under fast automation; zero latency.'
+    uses: ['Taking the top end off harsh sources', 'Thinning out the low end with High Pass', 'Filter sweeps via automation', 'Telephone and radio tones with Band Pass', 'Cutting a single resonance with Notch'],
+    properties: 'Input → 2-pole (12 dB/oct) state-variable filter (low-pass, high-pass, band-pass and notch from the same structure) → Gain → Output. Stable under fast automation; zero latency.'
   },
   'flanger': {
     title: 'FLANGER',

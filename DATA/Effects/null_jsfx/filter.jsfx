@@ -7,6 +7,7 @@ tags: filter lowpass resonance q cutoff svf tpt
 slider1:1000<20,20000,1:log>Cutoff (Hz)
 slider2:1<0.1,10,0.1>Resonance
 slider3:0<-12,12,0.1>Gain (dB)
+slider4:0<0,3,1{Low Pass,High Pass,Band Pass,Notch}>Mode
 
 in_pin:Left
 in_pin:Right
@@ -28,6 +29,7 @@ out_pin:Right
   denom = 1 / (1 + Rg + g2);
   
   gain_lin = exp(slider3 * 0.11513);
+  mode = slider4;
 
 @sample
   // Left channel
@@ -36,7 +38,8 @@ out_pin:Right
   v2 = g * v1 + ic2_l;
   ic1_l = v1;
   ic2_l = v2;
-  spl0 = v2 * gain_lin;
+  // v3 = high-pass, v1 = band-pass, v2 = low-pass; input = v3 + R*v1 + v2
+  spl0 = (mode == 0 ? v2 : mode == 1 ? v3 : mode == 2 ? R * v1 : v3 + v2) * gain_lin;
   
   // Right channel
   v3 = (spl1 - ic2_r - (R + g) * ic1_r) * denom;
@@ -44,4 +47,4 @@ out_pin:Right
   v2 = g * v1 + ic2_r;
   ic1_r = v1;
   ic2_r = v2;
-  spl1 = v2 * gain_lin;
+  spl1 = (mode == 0 ? v2 : mode == 1 ? v3 : mode == 2 ? R * v1 : v3 + v2) * gain_lin;

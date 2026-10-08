@@ -387,20 +387,22 @@
     "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-exciter\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><path d=\"M 8,46 L 30,46 Q 36,46 40,30\" stroke=\"url(#icon-exciter)\" stroke-width=\"2.5\" fill=\"none\" stroke-linecap=\"round\"/><path d=\"M 40,30 L 44,20 L 48,30 L 52,14 L 56,30\" stroke=\"url(#icon-exciter)\" stroke-width=\"2.5\" fill=\"none\" stroke-linecap=\"round\"/><path d=\"M 30,46 L 56,46\" stroke=\"url(#icon-exciter)\" stroke-width=\"1.5\" fill=\"none\" stroke-linecap=\"round\" opacity=\"0.3\"/></svg>"
   },
   "filter": {
-    "card_desc": "Resonant Low-Pass Filter",
-    "keywords": "filter lowpass low pass low-pass cutoff resonance q svf tpt state variable",
+    "card_desc": "Resonant Multi-Mode Filter",
+    "keywords": "filter lowpass low pass highpass high pass bandpass band pass notch cutoff resonance q svf tpt state variable sweep",
     "slider_desc": [
-      "Low-pass cutoff frequency.",
-      "Q of the filter; higher values add a resonant peak at the cutoff.",
-      "Output level after the filter."
+      "Cutoff (or centre) frequency of the filter.",
+      "Q of the filter; higher values add a resonant peak at the cutoff (narrower band in Band Pass and Notch).",
+      "Output level after the filter.",
+      "Filter response: Low Pass, High Pass, Band Pass (unity peak) or Notch."
     ],
     "uses": [
       "Taking the top end off harsh sources",
+      "Thinning out the low end with High Pass",
       "Filter sweeps via automation",
-      "Lo-fi and muffled effects",
-      "Resonant synth-style tones"
+      "Telephone and radio tones with Band Pass",
+      "Cutting a single resonance with Notch"
     ],
-    "properties": "Input → 2-pole (12 dB/oct) TPT state-variable low-pass → Gain → Output. Zero-delay-feedback design that stays stable under fast automation; zero latency.",
+    "properties": "Input → 2-pole (12 dB/oct) state-variable filter (low-pass, high-pass, band-pass and notch from the same structure) → Gain → Output. Stable under fast automation; zero latency.",
     "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\">\n<defs><linearGradient id=\"icon-filter\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs>\n<path d=\"M 8,32 Q 20,16 32,32 Q 44,48 56,32\" stroke=\"url(#icon-filter)\" stroke-width=\"2.5\" fill=\"none\" stroke-linecap=\"round\"/>\n<path d=\"M 8,32 L 16,32 M 48,32 L 56,32\" stroke=\"url(#icon-filter)\" stroke-width=\"2\"/>\n<circle cx=\"20\" cy=\"28\" r=\"2\" fill=\"url(#icon-filter)\" opacity=\"0.5\"/>\n<circle cx=\"32\" cy=\"32\" r=\"2\" fill=\"url(#icon-filter)\" opacity=\"0.5\"/>\n<circle cx=\"44\" cy=\"28\" r=\"2\" fill=\"url(#icon-filter)\" opacity=\"0.5\"/>\n</svg>"
   },
   "flanger": {

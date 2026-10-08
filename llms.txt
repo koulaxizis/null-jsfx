@@ -46,7 +46,7 @@ The everyday mixing and mastering toolbox.
 - Dynamic EQ: Four-Band Dynamic EQ
 - Dynamics: Compressor & Expander
 - Envelope Follower: Auto-Wah & Envelope Filter
-- Filter: Resonant Low-Pass Filter
+- Filter: Resonant Multi-Mode Filter
 - Flanger: Jet Sweep Flanger
 - Gate: Noise Gate with Sidechain HPF
 - Limiter: Limiter, Clipper & Brickwall
