@@ -37,20 +37,8 @@ include(FetchContent)
 # MSVC's Windows SDK ships only OpenGL 1.1 headers; DPF's NanoVG backend needs the GL 2.0
 # types and prototypes from the Khronos glext.h (MinGW and the other OSes already have them).
 if(MSVC)
-  set(khronos_dir "${CMAKE_BINARY_DIR}/khronos")
-  foreach(hdr "OpenGL/api/GL/glext.h" "EGL/api/KHR/khrplatform.h")
-    get_filename_component(sub "${hdr}" DIRECTORY)
-    get_filename_component(sub "${sub}" NAME)
-    get_filename_component(name "${hdr}" NAME)
-    if(NOT EXISTS "${khronos_dir}/${sub}/${name}")
-      file(DOWNLOAD "https://registry.khronos.org/${hdr}" "${khronos_dir}/${sub}/${name}" STATUS st TLS_VERIFY ON)
-      list(GET st 0 code)
-      if(NOT code EQUAL 0)
-        message(FATAL_ERROR "could not download ${hdr}: ${st}")
-      endif()
-    endif()
-  endforeach()
-  include_directories(BEFORE "${khronos_dir}")
+  # MSVC ships only OpenGL 1.1 headers; NanoVG needs the GL 2.0 types from Khronos (MIT)
+  include_directories(BEFORE "${CMAKE_CURRENT_SOURCE_DIR}/third_party/khronos")
 endif()
 FetchContent_Declare(dpf
   GIT_REPOSITORY https://github.com/DISTRHO/DPF.git
