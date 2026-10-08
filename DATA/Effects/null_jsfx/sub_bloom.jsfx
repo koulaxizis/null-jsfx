@@ -6,7 +6,7 @@ tags: bass sub harmonic enhancement low frequency
 
 slider1:100<50,300,1>Source Frequency (Hz)
 slider2:50<0,100,1>Sub Level (%)
-slider3:1<1,2,1>Sub Octave (1=-1oct, 2=-2oct)
+slider3:0<0,2,1{-1 Octave,-2 Octaves,Both}>Sub Octave
 slider4:80<0,100,1>Original Mix (%)
 slider5:0<-12,12,1>Output (dB)
 
@@ -16,41 +16,70 @@ out_pin:Left
 out_pin:Right
 
 @init
-srate = srate;
-buf_l = 0;
-buf_r = 0;
-env_l = 0;
-env_r = 0;
-phase_l = 0;
-phase_r = 0;
+  // Subharmonic synthesizer (per channel). The input is band-limited to the bass range
+  // (high-pass at Source Frequency / 4, 24 dB/oct low-pass at Source Frequency), the
+  // band's zero crossings (with hysteresis) clock a flip-flop that toggles once per input
+  // period -> a square wave one octave down; a second flip-flop gives two octaves down.
+  // The square is shaped by the band's envelope and low-passed into a clean sine-like
+  // sub that follows the played note. No bass in the band = no sub.
+  function bq_set(type, f) instance(b0, b1, b2, a1, a2) local(w, al, cs, n)
+  (
+    w = 2 * $pi * min(f, srate * 0.45) / srate;
+    cs = cos(w); al = sin(w) / (2 * 0.7071);
+    n = 1 / (1 + al);
+    type == 0 ? (
+      b0 = (1 - cs) * 0.5 * n; b1 = (1 - cs) * n; b2 = b0;      // low-pass
+    ) : (
+      b0 = (1 + cs) * 0.5 * n; b1 = -(1 + cs) * n; b2 = b0;     // high-pass
+    );
+    a1 = -2 * cs * n; a2 = (1 - al) * n;
+  );
+  function bq(x) instance(b0, b1, b2, a1, a2, x1, x2, y1, y2) local(y)
+  (
+    y = b0 * x + b1 * x1 + b2 * x2 - a1 * y1 - a2 * y2;
+    x2 = x1; x1 = x; y2 = y1; y1 = y;
+    y;
+  );
+  // one channel: band-limit, track, divide, smooth; returns the sub sample
+  function sub(x) instance(hp, lpa, lpb, env, arm, ff1, ff2, s1a, s1b, s2a, s2b) local(band, th, sq1, sq2)
+  (
+    band = lpb.bq(lpa.bq(hp.bq(x)));
+    env += (abs(band) - env) * (abs(band) > env ? env_att : env_rel);
+    th = max(0.0005, env * 0.3);
+    // Schmitt trigger: arm below -th, count a period on the next rise above +th
+    band < -th ? arm = 1;
+    band > th && arm ? (
+      arm = 0;
+      ff1 = ff1 > 0 ? -1 : 1;
+      ff1 > 0 ? ff2 = ff2 > 0 ? -1 : 1;
+    );
+    ff1 == 0 ? ff1 = 1; ff2 == 0 ? ff2 = 1;
+    // square * envelope (pi/2 turns mean-abs back into peak), then 24 dB/oct smoothing
+    sq1 = s1b.bq(s1a.bq(ff1 * env * 1.5708));
+    sq2 = s2b.bq(s2a.bq(ff2 * env * 1.5708));
+    oct_mode == 0 ? sq1 : oct_mode == 1 ? sq2 : (sq1 + sq2) * 0.7071;
+  );
+  function setup(f) instance(hp, lpa, lpb, s1a, s1b, s2a, s2b)
+  (
+    hp.bq_set(1, f * 0.25);
+    lpa.bq_set(0, f); lpb.bq_set(0, f);
+    s1a.bq_set(0, f * 0.5); s1b.bq_set(0, f * 0.5);
+    s2a.bq_set(0, f * 0.25); s2b.bq_set(0, f * 0.25);
+  );
+  env_att = 1 - exp(-1 / (0.005 * srate));
+  env_rel = 1 - exp(-1 / (0.06 * srate));
 
 @slider
-src_freq = slider1;
-sub_level = slider2 / 100;
-sub_oct = slider3;
-orig_mix = slider4 / 100;
-out_gain = 10 ^ (slider5 / 20);
+  src_freq = slider1;
+  sub_level = slider2 / 100;
+  oct_mode = slider3;
+  orig_mix = slider4 / 100;
+  out_gain = 10 ^ (slider5 / 20);
+  chl.setup(src_freq);
+  chr.setup(src_freq);
 
 @sample
-// Bandpass detection via simple HP+LP
-in_l = spl0;
-in_r = spl1;
-
-// Envelope follower on source band
-env_l = env_l + (abs(in_l) - env_l) * 0.001;
-env_r = env_r + (abs(in_r) - env_r) * 0.001;
-
-// Sub-harmonic oscillator
-sub_freq = src_freq / (sub_oct == 1 ? 2 : 4);
-phase_l += 2 * $pi * sub_freq / srate;
-phase_r += 2 * $pi * sub_freq / srate;
-phase_l = phase_l > 2*$pi ? phase_l - 2*$pi : phase_l;
-phase_r = phase_r > 2*$pi ? phase_r - 2*$pi : phase_r;
-
-// Generate sub based on detected envelope
-sub_out_l = sin(phase_l) * env_l * sub_level;
-sub_out_r = sin(phase_r) * env_r * sub_level;
-
-// Mix
-spl0 = (in_l * orig_mix + sub_out_l) * out_gain;
-spl1 = (in_r * orig_mix + sub_out_r) * out_gain;
+  sub_l = chl.sub(spl0) * sub_level;
+  sub_r = chr.sub(spl1) * sub_level;
+  spl0 = (spl0 * orig_mix + sub_l) * out_gain;
+  spl1 = (spl1 * orig_mix + sub_r) * out_gain;

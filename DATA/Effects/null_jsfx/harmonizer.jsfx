@@ -22,6 +22,9 @@ out_pin:Right
   // Adds two pitch-shifted copies of the input at fixed intervals (e.g. +4 and +7 =
   // a major chord). Each voice is slightly detuned and delayed so it sounds like a
   // separate performer, and Spread pans voice 1 left and voice 2 right.
+  // Mix is an equal-power dry/wet crossfade: 0% = original only, 50% = original and
+  // harmony each at -3 dB (constant loudness), 100% = harmony voices only (for
+  // printing the harmony to its own track).
   win = floor(srate * 0.05);
   buf_size = ceil(srate * 0.2) + win;
   buf = 0;
@@ -56,7 +59,8 @@ out_pin:Right
   base1 = slider6 * srate / 1000;
   base2 = slider6 * 1.37 * srate / 1000;
   sp = slider7 / 100;
-  mix = slider8 / 100;
+  dry_g = cos(slider8 / 100 * $pi / 2);
+  wet_g = sin(slider8 / 100 * $pi / 2);
 
 @sample
   buf[wpos] = (spl0 + spl1) * 0.5;
@@ -69,6 +73,5 @@ out_pin:Right
   p2 = $pi / 2 - p1;
   w_l = v1 * cos(p1) + v2 * cos(p2);
   w_r = v1 * sin(p1) + v2 * sin(p2);
-  // the original always stays; Mix sets how loud the harmony voices are
-  spl0 += w_l * mix;
-  spl1 += w_r * mix;
+  spl0 = spl0 * dry_g + w_l * wet_g;
+  spl1 = spl1 * dry_g + w_r * wet_g;

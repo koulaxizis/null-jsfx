@@ -19,7 +19,14 @@ out_pin:Left
 out_pin:Right
 
 @init
-buf_size = srate * 0.15;
+/* The wow/flutter delay line sits at a fixed 50 ms centre, so the dry signal is read
+   from the same buffer at exactly that delay: dry and wet stay time-aligned at any Mix.
+   The 50 ms is reported to the host as plug-in delay compensation. */
+buf_size = ceil(srate * 0.15);
+base_samps = floor(0.05 * srate);
+pdc_bot_ch = 0;
+pdc_top_ch = 2;
+pdc_delay = base_samps;
 buf_l = 0;
 buf_r = buf_size;
 freembuf(buf_r + buf_size);
@@ -70,7 +77,7 @@ mod_ms = wow_val * 40 + flutter_val * 15;
 mod_ms = mod_ms < -50 ? -50 : (mod_ms > 50 ? 50 : mod_ms);
 
 /* Delay in samples (base 50ms + modulation) */
-delay_samps = (50 + mod_ms) * 0.001 * srate;
+delay_samps = base_samps + mod_ms * 0.001 * srate;
 delay_samps = delay_samps < 1 ? 1 : delay_samps;
 
 /* Read from delay buffer with linear interpolation */
@@ -84,6 +91,12 @@ rp_next >= buf_size ? rp_next = 0;
 
 wet_l = buf_l[rp_int] * (1 - rp_frac) + buf_l[rp_next] * rp_frac;
 wet_r = buf_r[rp_int] * (1 - rp_frac) + buf_r[rp_next] * rp_frac;
+
+/* Dry signal delayed by the wet path's centre delay (phase-coherent mixing) */
+dp = write_pos - base_samps;
+dp < 0 ? dp += buf_size;
+dry_l = buf_l[dp];
+dry_r = buf_r[dp];
 
 /* Write current input to buffer */
 buf_l[write_pos] = in_l;
@@ -135,8 +148,8 @@ wet_r += noise_r;
 
 /* ─── MIX & OUTPUT ─── */
 dry = 1 - mix;
-out_l = in_l * dry + wet_l * mix;
-out_r = in_r * dry + wet_r * mix;
+out_l = dry_l * dry + wet_l * mix;
+out_r = dry_r * dry + wet_r * mix;
 
 spl0 = out_l;
 spl1 = out_r;

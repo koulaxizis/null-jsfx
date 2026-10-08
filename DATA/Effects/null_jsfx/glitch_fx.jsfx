@@ -31,6 +31,11 @@ out_pin:Right
   // Gate chops it, Pitch Shift replays it faster/slower, Reverse plays it backwards
   // (with Reverse Chance), Tape Stop slows some events to a halt, and Granular loops a
   // short windowed grain instead of the whole slice.
+  // Every effect also works with Stutter OFF, on the live signal: Reverse plays the
+  // audio back in reversed chunks (each chunk = Stutter Length) during the events it
+  // picks, Granular turns the live signal into overlapping Hann grains taken from the
+  // last moments of audio (two grains, half a grain apart), Pitch Shift and Tape Stop
+  // change their playback speed, and Gate chops whatever comes out.
   buf_size = ceil(srate * 4);
   buf_l = 0;
   buf_r = buf_l + buf_size;
@@ -43,6 +48,9 @@ out_pin:Right
   speed = 1;
   dir = 1;
   tape = 0;
+  rread = 0;
+  g1ph = 0; g2ph = 0.5;
+  g1st = g2st = 0;
 
   function rd(buf, p) local(i, f, i2)
   (
@@ -78,6 +86,7 @@ out_pin:Right
     ev_cnt = 0;
     slice_start = wpos - slice_len;
     read = 0;
+    rread = 0;
     dir = slider9 && rand(100) < rev_chance ? -1 : 1;
     tape = slider11 && rand(100) < 30;
   );
@@ -94,6 +103,28 @@ out_pin:Right
     // short fades at the loop seam (or a full Hann window for grains)
     ph = read / loop_len;
     win = slider13 ? 0.5 - 0.5 * cos(2 * $pi * ph) : min(1, min(ph, 1 - ph) * loop_len / (0.003 * srate));
+    wet_l *= win;
+    wet_r *= win;
+  ) : slider13 ? (
+    // no stutter, granular: two overlapping grains read from the recent past
+    gstep = 1 / grain_len;
+    g1ph += gstep; g1ph >= 1 ? (g1ph -= 1; g1st = wpos - grain_len * (max(speed, 1) + 1) - rand(grain_len););
+    g2ph += gstep; g2ph >= 1 ? (g2ph -= 1; g2st = wpos - grain_len * (max(speed, 1) + 1) - rand(grain_len););
+    gp1 = dir > 0 ? g1ph : 1 - g1ph;
+    gp2 = dir > 0 ? g2ph : 1 - g2ph;
+    gw1 = 0.5 - 0.5 * cos(2 * $pi * g1ph);
+    gw2 = 0.5 - 0.5 * cos(2 * $pi * g2ph);
+    wet_l = rd(buf_l, g1st + gp1 * grain_len * speed) * gw1 + rd(buf_l, g2st + gp2 * grain_len * speed) * gw2;
+    wet_r = rd(buf_r, g1st + gp1 * grain_len * speed) * gw1 + rd(buf_r, g2st + gp2 * grain_len * speed) * gw2;
+  ) : dir < 0 ? (
+    // no stutter, reverse: play each newest chunk of audio backwards
+    rread += speed;
+    rread >= slice_len ? (rread -= slice_len; slice_start = wpos - slice_len;);
+    pos = slice_start + slice_len - 1 - rread;
+    wet_l = rd(buf_l, pos);
+    wet_r = rd(buf_r, pos);
+    ph = rread / slice_len;
+    win = min(1, min(ph, 1 - ph) * slice_len / (0.003 * srate));
     wet_l *= win;
     wet_r *= win;
   ) : (

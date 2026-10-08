@@ -12,6 +12,7 @@ slider5:40<5,500,1>Release (ms)
 slider6:20<0,100,1>Sibilance (%)
 slider7:100<0,100,1>Mix (%)
 slider8:0<-12,24,0.1>Output (dB)
+slider9:60<0,100,1>Stereo Width (%)
 
 in_pin:Left
 in_pin:Right
@@ -24,10 +25,13 @@ out_pin:Right
   // oscillator at Carrier Pitch. The voice's level in each band is measured and imposed
   // on the same band of the carrier, so the carrier "speaks". Formant Shift moves the
   // carrier bands up or down for smaller/bigger voices; Sibilance lets the voice's
-  // highs (s, t, ch) through so words stay clear. Output is mono on both channels.
+  // highs (s, t, ch) through so words stay clear. Stereo Width spreads the bands:
+  // even bands lean left, odd bands lean right (equal power; 0% = mono centre,
+  // 100% = alternate bands hard left / hard right). The sibilance stays centred.
   nb = 16;
   // memory: 32 slots per band = modulator coefs [0..2], carrier coefs [3..5],
-  // modulator filter state [8..15], carrier filter state [16..23], envelope [24]
+  // modulator filter state [8..15], carrier filter state [16..23], envelope [24],
+  // left/right band gains [25..26]
   freembuf(nb * 32);
   memset(0, 0, nb * 32);
   osc = 0;
@@ -59,6 +63,7 @@ out_pin:Right
   att = exp(-1 / (slider4 / 1000 * srate));
   rel = exp(-1 / (slider5 / 1000 * srate));
   sib = slider6 / 100;
+  width = slider9 / 100;
   mix = slider7 / 100;
   out = 10 ^ (slider8 / 20) * 30;
   i = 0;
@@ -66,6 +71,9 @@ out_pin:Right
     f = 100 * (8000 / 100) ^ (i / (nb - 1));   // 100 Hz .. 8 kHz, log spaced
     set_bp(i * 32, f);                           // modulator band
     set_bp(i * 32 + 3, f * shift);               // carrier band
+    th = $pi / 4 * (1 + (i % 2 ? width : -width));
+    (i * 32)[25] = sqrt(2) * cos(th);             // left gain (1 at width 0)
+    (i * 32)[26] = sqrt(2) * sin(th);             // right gain
     i += 1;
   );
   sib_c = exp(-2 * $pi * 6000 / srate);
@@ -75,7 +83,7 @@ out_pin:Right
   osc += inc; osc >= 1 ? osc -= 1;
   car = src == 0 ? spl1 : src == 1 ? 2 * osc - 1 : src == 2 ? (osc < 0.5 ? 1 : -1) : rand(2) - 1;
 
-  acc = 0;
+  acc_l = acc_r = 0;
   i = 0;
   loop(nb,
     b = i * 32;
@@ -85,11 +93,14 @@ out_pin:Right
     env = b[24];
     env = lev > env ? att * env + (1 - att) * lev : rel * env + (1 - rel) * lev;
     b[24] = env;
-    acc += c * env;
+    c *= env;
+    acc_l += c * b[25];
+    acc_r += c * b[26];
     i += 1;
   );
   // let the voice's highest frequencies through for intelligibility
   sib_y = sib_c * (sib_y + mod - sib_x); sib_x = mod;
-  wet = acc * out + sib_y * sib;
-  spl0 = spl0 * (1 - mix) + wet * mix;
-  spl1 = spl1 * (1 - mix) + wet * mix;
+  wet_l = acc_l * out + sib_y * sib;
+  wet_r = acc_r * out + sib_y * sib;
+  spl0 = spl0 * (1 - mix) + wet_l * mix;
+  spl1 = spl1 * (1 - mix) + wet_r * mix;

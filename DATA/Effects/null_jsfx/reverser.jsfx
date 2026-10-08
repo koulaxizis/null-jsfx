@@ -22,7 +22,9 @@ write_pos = 0;
 read_pos = 0;
 fa0 = 1; fa1 = 0; fa2 = 0;
 fb0 = 1; fb1 = 0; fb2 = 0;
-fx1 = 0; fx2 = 0; fy1 = 0; fy2 = 0;
+// filter state: separate for each channel (no left/right bleed)
+lx1 = 0; lx2 = 0; ly1 = 0; ly2 = 0;
+rx1 = 0; rx2 = 0; ry1 = 0; ry2 = 0;
 
 memset(buf_l, 0, 2 * max_buf);
 freembuf(buf_r + max_buf);
@@ -76,7 +78,7 @@ filt_mode == 0 ? (
 fa0 = a0;
 fb0 = b0 * a0; fb1 = b1 * a0; fb2 = b2 * a0;
 fa1 = a1; fa2 = a2;
-fx1 = 0; fx2 = 0; fy1 = 0; fy2 = 0;
+// filter state is kept across slider moves (resetting it would click)
 
 @sample
 in_l = spl0;
@@ -93,15 +95,15 @@ read_pos < 0 ? read_pos = cur_buf_size - 1;
 
 filt_mode > 0 ? (
   filt_in_l = wet_l;
-  filt_out_l = fa0 * (fb0*filt_in_l + fb1*fx1 + fb2*fx2 - fa1*fy1 - fa2*fy2);
-  fx2 = fx1; fx1 = filt_in_l;
-  fy2 = fy1; fy1 = filt_out_l;
+  filt_out_l = fb0*filt_in_l + fb1*lx1 + fb2*lx2 - fa0*(fa1*ly1 + fa2*ly2);
+  lx2 = lx1; lx1 = filt_in_l;
+  ly2 = ly1; ly1 = filt_out_l;
   wet_l = filt_out_l;
   
   filt_in_r = wet_r;
-  filt_out_r = fa0 * (fb0*filt_in_r + fb1*fx1 + fb2*fx2 - fa1*fy1 - fa2*fy2);
-  fx2 = fx1; fx1 = filt_in_r;
-  fy2 = fy1; fy1 = filt_out_r;
+  filt_out_r = fb0*filt_in_r + fb1*rx1 + fb2*rx2 - fa0*(fa1*ry1 + fa2*ry2);
+  rx2 = rx1; rx1 = filt_in_r;
+  ry2 = ry1; ry1 = filt_out_r;
   wet_r = filt_out_r;
 );
 
