@@ -10,7 +10,8 @@ Header (first lines of every file, in this order):
     //NULL JSFX v2.0 • https://nulljsfx.tech • MIT License
 
 followed by a blank line, the sliders, a blank line and the four pins
-(in_pin:Left, in_pin:Right, out_pin:Left, out_pin:Right).
+(in_pin:Left, in_pin:Right, out_pin:Left, out_pin:Right); sidechain plugins add
+in_pin:Sidechain Left and in_pin:Sidechain Right after the two main inputs.
 
 Usage: lint.py file.jsfx [...]   Exit status 1 if any file has an error.
 """
@@ -22,6 +23,8 @@ AUTHOR = "author: Christos Koulaxizis"
 FOOTER = "//NULL JSFX v2.0 • https://nulljsfx.tech • MIT License"
 CATEGORIES = ("One Slider", "Essentials", "Advanced")
 PINS = ["in_pin:Left", "in_pin:Right", "out_pin:Left", "out_pin:Right"]
+SIDECHAIN_PINS = ["in_pin:Left", "in_pin:Right", "in_pin:Sidechain Left", "in_pin:Sidechain Right",
+                  "out_pin:Left", "out_pin:Right"]
 
 # EEL2 built-ins and keywords that may be read without being assigned first.
 BUILTINS = set("""
@@ -71,8 +74,9 @@ def check(path):
     if category in ("Essentials", "Advanced") and len(sliders) == 1:
         errors.append(f"{category} plugin has only one slider; should it be One Slider?")
     pins = [l.strip() for l in header if l.startswith(("in_pin:", "out_pin:"))]
-    if pins != PINS:
-        errors.append("pins must be in_pin:Left, in_pin:Right, out_pin:Left, out_pin:Right")
+    if pins not in (PINS, SIDECHAIN_PINS):
+        errors.append("pins must be in_pin:Left, in_pin:Right, out_pin:Left, out_pin:Right "
+                      "(plus in_pin:Sidechain Left/Right after the main inputs for sidechain plugins)")
 
     # --- code ---
     code = strip_comments("\n".join(lines[header_end:]))
@@ -99,7 +103,7 @@ def check(path):
     used = set(re.findall(r"(?<![\w.$#@'\"])([A-Za-z_]\w*)\b(?!\s*\(|\.)", code))
     called = set(re.findall(r"(?<![\w.])([A-Za-z_]\w*)\s*\(", code))
     for name in sorted(used - assigned - BUILTINS - functions - params):
-        if re.fullmatch(r"slider\d+|function|local|instance|static|global", name):
+        if re.fullmatch(r"slider\d+|spl\d+|function|local|instance|static|global", name):
             continue
         errors.append(f"'{name}' is read but never assigned (EEL2 treats it as 0)")
     for name in sorted(called - functions - BUILTINS):

@@ -53,8 +53,10 @@ struct Render { double peak = 0, rms[2] = {0, 0}, diff = 0; bool nonfinite = fal
 static Render render(ysfx_t *fx, double sr, double seconds, int signal)
 {
     const uint32_t block = 256;
-    std::vector<double> inL(block), inR(block), outL(block), outR(block);
-    const double *ins[2] = {inL.data(), inR.data()};
+    std::vector<double> inL(block), inR(block), outL(block), outR(block), sc(block);
+    // plugins with sidechain pins (inputs 3/4) get a kick-like pulse there: 60 Hz, 4 hits per second
+    const uint32_t nin = ysfx_get_num_inputs(fx) > 2 ? 4 : 2;
+    const double *ins[4] = {inL.data(), inR.data(), sc.data(), sc.data()};
     double *outs[2] = {outL.data(), outR.data()};
     ysfx_time_info_t ti = {120.0, ysfx_playback_playing, 0, 0, {4, 4}};
     Render res;
@@ -70,11 +72,13 @@ static Render render(ysfx_t *fx, double sr, double seconds, int signal)
             double r = 0.25 * env * (std::sin(2 * M_PI * 330 * t) + 0.3 * noise(rng));
             inL[i] = (signal == 2) ? 0 : l;  // signal 1: left only ; 2: right only
             inR[i] = (signal == 1) ? 0 : r;
+            double tk = std::fmod(t, 0.25);
+            sc[i] = 0.8 * std::exp(-tk * 20) * std::sin(2 * M_PI * 60 * tk);
         }
         ti.time_position = n / sr;
         ti.beat_position = ti.time_position * 2;
         ysfx_set_time_info(fx, &ti);
-        ysfx_process_double(fx, ins, outs, 2, 2, block);
+        ysfx_process_double(fx, ins, outs, nin, 2, block);
         for (uint32_t i = 0; i < block; ++i) {
             double o[2] = {outL[i], outR[i]};
             for (int c = 0; c < 2; ++c) {

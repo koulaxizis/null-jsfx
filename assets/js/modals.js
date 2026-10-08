@@ -132,6 +132,16 @@ const guides = {
     uses: ['Fake sidechain pumping on pads', 'EDM-style breathing on a synth bus', 'Rhythmic movement on sustained chords', 'Groove on reverb returns', 'Quick ducking effect without routing'],
     properties: 'Input → gain from a quarter-note envelope locked to the project tempo (fast fade down over 2% of the beat, smooth S-curve release over 60%) → Output. Follows the beat position during playback and free-runs at the project tempo when stopped; zero latency.'
   },
+  'riser': {
+    title: 'RISER',
+    subtitle: 'One-Knob Build-Up',
+    category: 'One Slider',
+    sliders: [
+      { name: 'Intensity', range: '0 to 100%', desc: 'Build-up amount: a resonant high-pass climbs from 20 Hz to 2.5 kHz, a rising noise band swells in, the image widens and a short wash blooms. Automate 0 → 100 into a drop; 0 leaves the signal untouched.' }
+    ],
+    uses: ['EDM and pop build-ups before a drop', 'Transitions between song sections', 'Turning any loop into a riser', 'Tension under a vocal pickup'],
+    properties: 'Input → resonant 12 dB/oct high-pass (exponential sweep) + band-passed noise tracking the filter → Mid/Side widening → cross-fed diffuse wash → Output. Every move is smoothed over 30 ms so automation never zips; zero latency.'
+  },
   'snappy': {
     title: 'SNAPPY',
     subtitle: 'One-Knob Transient Shaper',
@@ -604,6 +614,22 @@ const guides = {
     ],
     uses: ['Warmth and density on buses', 'Fuzz and overdrive on guitars and bass', 'Bit-crushed lo-fi textures', 'Wavefolded synth tones'],
     properties: 'Input → Drive → selected curve → Tone tilt EQ (one-pole split at 800 Hz, ±Tone/2 dB on each side) on the wet signal → Dry/Wet Mix → Output. No oversampling; zero latency.'
+  },
+  'sidechain-ducker': {
+    title: 'SIDECHAIN DUCKER',
+    subtitle: 'Sidechain Ducking',
+    category: 'Essentials',
+    sliders: [
+      { name: 'Threshold', range: '−60 to 0 dB', desc: 'Key level above which ducking starts.' },
+      { name: 'Depth', range: '−40 to 0 dB', desc: 'How far the track is turned down while ducked.' },
+      { name: 'Attack', range: '0.1 to 50 ms', desc: 'How fast the level drops once the key crosses Threshold.' },
+      { name: 'Hold', range: '0 to 500 ms', desc: 'How long the level stays down after the key falls below Threshold.' },
+      { name: 'Release', range: '10 to 2000 ms', desc: 'How fast the level recovers after Hold.' },
+      { name: 'Key', range: 'Sidechain / Main Input', desc: 'Key source: Sidechain (track channels 3/4) or the track\'s own Main Input.' },
+      { name: 'Key High Pass', range: '0 to 500 Hz', desc: 'High-passes the key so only its attack triggers ducking (0 = off).' }
+    ],
+    uses: ['Kick ducking the bass for a clean low end', 'Music ducking under voice-over or podcast speech', 'Pumping pads and synths from a kick', 'Making room for a lead vocal'],
+    properties: 'Key (sidechain channels 3/4 or main input) → optional high-pass → peak detector → threshold with hold → attack/release gain smoothing → stereo-linked gain on the main signal. Zero latency. In REAPER, send the key track to channels 3/4 of this track.'
   },
   'stereo-width': {
     title: 'STEREO WIDTH',

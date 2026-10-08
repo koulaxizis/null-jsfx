@@ -970,6 +970,21 @@
     "properties": "Input → multiplied by a sine carrier whose frequency is swept by an LFO (Carrier × 2^(Depth × LFO)) → Dry/Wet Mix → Output. Zero latency.",
     "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\">\n<defs><linearGradient id=\"icon-ring\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs>\n<circle cx=\"32\" cy=\"32\" r=\"18\" stroke=\"url(#icon-ring)\" stroke-width=\"2.5\" fill=\"none\"/>\n<circle cx=\"32\" cy=\"32\" r=\"10\" stroke=\"url(#icon-ring)\" stroke-width=\"1.5\" fill=\"none\" opacity=\"0.4\"/>\n<circle cx=\"32\" cy=\"32\" r=\"3\" fill=\"url(#icon-ring)\" opacity=\"0.5\"/>\n</svg>"
   },
+  "riser": {
+    "card_desc": "One-Knob Build-Up",
+    "keywords": "riser build up build-up tension sweep transition edm drop pre-drop noise swell high pass automation",
+    "slider_desc": [
+      "Build-up amount: a resonant high-pass climbs from 20 Hz to 2.5 kHz, a rising noise band swells in, the image widens and a short wash blooms. Automate 0 → 100 into a drop; 0 leaves the signal untouched."
+    ],
+    "uses": [
+      "EDM and pop build-ups before a drop",
+      "Transitions between song sections",
+      "Turning any loop into a riser",
+      "Tension under a vocal pickup"
+    ],
+    "properties": "Input → resonant 12 dB/oct high-pass (exponential sweep) + band-passed noise tracking the filter → Mid/Side widening → cross-fed diffuse wash → Output. Every move is smoothed over 30 ms so automation never zips; zero latency.",
+    "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-riser\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><path d=\"M 8,52 Q 30,50 40,34 T 56,10\" stroke=\"url(#icon-riser)\" stroke-width=\"2.5\" fill=\"none\" stroke-linecap=\"round\"/><path d=\"M 48,10 L 56,10 L 56,18\" stroke=\"url(#icon-riser)\" stroke-width=\"2.5\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M 14,52 L 14,48 M 22,52 L 22,46 M 30,52 L 30,42 M 38,52 L 38,36\" stroke=\"url(#icon-riser)\" stroke-width=\"1.5\" opacity=\"0.4\" stroke-linecap=\"round\"/></svg>"
+  },
   "robotizer": {
     "card_desc": "FFT Robot Voice",
     "keywords": "robotizer robot voice monotone sci-fi dalek metallic fft vocoder buzz",
@@ -1045,6 +1060,27 @@
     ],
     "properties": "Signal chain: Input → 4-Line Feedback Delay Network (Hadamard matrix) → Damping → Pitch Shifter (crossfading taps, 80 ms window) → Feedback into the network → Mix → Output. Each round trip the tail climbs another interval; zero latency.",
     "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-shimmer-reverb\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><path d=\"M6,48 L58,48\" stroke=\"url(#icon-shimmer-reverb)\" stroke-width=\"1.5\" fill=\"none\" stroke-linecap=\"round\" opacity=\"0.4\"/><path d=\"M6,48 Q10,28 14,48 Q18,62 22,48 Q26,38 30,48 Q34,54 38,48 Q42,44 46,48 L58,48\" stroke=\"url(#icon-shimmer-reverb)\" stroke-width=\"2.5\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M44,6 L44,22 M36,14 L52,14\" stroke=\"url(#icon-shimmer-reverb)\" stroke-width=\"2.5\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M54,22 L54,30 M50,26 L58,26\" stroke=\"url(#icon-shimmer-reverb)\" stroke-width=\"1.5\" fill=\"none\" stroke-linecap=\"round\" opacity=\"0.4\"/></svg>"
+  },
+  "sidechain_ducker": {
+    "card_desc": "Sidechain Ducking",
+    "keywords": "sidechain side chain ducker ducking duck pump pumping kick bass voice over voiceover compressor key",
+    "slider_desc": [
+      "Key level above which ducking starts.",
+      "How far the track is turned down while ducked.",
+      "How fast the level drops once the key crosses Threshold.",
+      "How long the level stays down after the key falls below Threshold.",
+      "How fast the level recovers after Hold.",
+      "Key source: Sidechain (track channels 3/4) or the track's own Main Input.",
+      "High-passes the key so only its attack triggers ducking (0 = off)."
+    ],
+    "uses": [
+      "Kick ducking the bass for a clean low end",
+      "Music ducking under voice-over or podcast speech",
+      "Pumping pads and synths from a kick",
+      "Making room for a lead vocal"
+    ],
+    "properties": "Key (sidechain channels 3/4 or main input) → optional high-pass → peak detector → threshold with hold → attack/release gain smoothing → stereo-linked gain on the main signal. Zero latency. In REAPER, send the key track to channels 3/4 of this track.",
+    "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-sidechain-ducker\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><path d=\"M 8,18 L 18,18 L 22,40 L 26,26 Q 30,20 34,18 L 38,18 L 42,40 L 46,26 Q 50,20 56,18\" stroke=\"url(#icon-sidechain-ducker)\" stroke-width=\"2.5\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M 20,52 L 22,46 L 24,52 M 40,52 L 42,46 L 44,52\" stroke=\"url(#icon-sidechain-ducker)\" stroke-width=\"1.5\" opacity=\"0.5\" fill=\"none\" stroke-linecap=\"round\"/></svg>"
   },
   "snappy": {
     "card_desc": "One-Knob Transient Shaper",
