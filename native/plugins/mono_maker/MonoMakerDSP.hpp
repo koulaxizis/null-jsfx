@@ -4,9 +4,9 @@
  * SPDX-License-Identifier: MIT
  *
  * Port of DATA/Effects/null_jsfx/mono_maker.jsfx, computed in double like EEL2 and in the
- * same order: the side signal (L-R)/2 runs through two identical Butterworth low-pass
- * stages (fc = 20 * 20^amount Hz) and the result is subtracted from the side
- * (L -= low, R += low). At amount 0 the plugin passes the input through.
+ * same order: the side signal (L-R)/2 runs through two identical Butterworth high-pass
+ * stages (fc = 20 * 20^amount Hz); the part below, side - high, is removed from the
+ * side (L -= low, R += low). At amount 0 the plugin passes the input through.
  */
 
 #pragma once
@@ -31,15 +31,15 @@ inline Coeffs coeffsFor(double v, double sr) noexcept
     const double w = 2.0 * kPi * c.fc / sr;
     const double k = std::tan(w / 2.0);
     const double norm = 1.0 / (1.0 + std::sqrt(2.0) * k + k * k);
-    c.b0 = k * k * norm;
-    c.b1 = 2.0 * c.b0;
+    c.b0 = norm; // high-pass
+    c.b1 = -2.0 * c.b0;
     c.b2 = c.b0;
     c.a1 = 2.0 * (k * k - 1.0) * norm;
     c.a2 = (1.0 - std::sqrt(2.0) * k + k * k) * norm;
     return c;
 }
 
-// display: the side response in dB at f, 1 - H(z)^2 (0 dB when off)
+// display: the side response in dB at f, H(z)^2 (0 dB when off)
 inline double sideDb(const Coeffs& c, double f, double sr) noexcept
 {
     if (!(c.amount > 0.0))
@@ -53,9 +53,8 @@ inline double sideDb(const Coeffs& c, double f, double sr) noexcept
     const double dd = dr * dr + di * di;
     const double hr = (nr * dr + ni * di) / dd;
     const double hi = (ni * dr - nr * di) / dd;
-    const double sr_ = 1.0 - (hr * hr - hi * hi);
-    const double si = -2.0 * hr * hi;
-    return 10.0 * std::log10(std::fmax(sr_ * sr_ + si * si, 1e-10));
+    const double m = hr * hr + hi * hi;
+    return 10.0 * std::log10(std::fmax(m * m, 1e-10));
 }
 
 class MonoMakerProcessor {
@@ -85,9 +84,10 @@ public:
             const double y = c.b0 * side + fS1;
             fS1 = c.b1 * side - c.a1 * y + fS2;
             fS2 = c.b2 * side - c.a2 * y;
-            const double low = c.b0 * y + fS3;
-            fS3 = c.b1 * y - c.a1 * low + fS4;
-            fS4 = c.b2 * y - c.a2 * low;
+            const double high = c.b0 * y + fS3;
+            fS3 = c.b1 * y - c.a1 * high + fS4;
+            fS4 = c.b2 * y - c.a2 * high;
+            const double low = side - high;
             if (c.amount > 0.0) {
                 x0 -= low;
                 x1 += low;
