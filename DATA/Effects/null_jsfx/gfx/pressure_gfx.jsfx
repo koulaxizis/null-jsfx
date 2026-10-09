@@ -1,0 +1,97 @@
+desc:NULL Pressure GFX
+author: Christos Koulaxizis
+tags: compressor dynamics leveling glue squash gui
+//category: One Slider
+//NULL JSFX v2.0 • https://nulljsfx.tech • MIT License
+
+import null_gfx.jsfx-inc
+
+slider1:50<0,100,1>-Amount
+
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
+
+@init
+  // NULL Pressure (../pressure.jsfx) with its own interface: same audio code, plus @gfx.
+  // Bus glue: a stereo-linked RMS-style compressor whose threshold drops (0 to -30 dB) and
+  // ratio rises (1:1 to 6:1) with Amount, with 10 ms attack, 150 ms release and automatic
+  // makeup gain. At 0 it does nothing.
+  env = 0; gr = 1;
+  gfx_ext_retina = 1;
+  // meters (interface only): peak followers of input and output, 300 ms release
+  prs_rel = exp(-1 / (0.3 * srate));
+  prs_in = prs_out = 0;
+
+  function update()
+  (
+    a = slider1 / 100;
+    thr = -30 * a;
+    ratio = 1 + 5 * a;
+    makeup = 10 ^ (-thr * (1 - 1 / ratio) * 0.5 / 20);
+    att = exp(-1 / (0.01 * srate)); rel = exp(-1 / (0.15 * srate));
+    det = exp(-1 / (0.005 * srate));
+  );
+
+  // static curve in dB: output level for input level d (the gain computer plus makeup)
+  function prs_curve(d) ( d - (d > thr ? (d - thr) * (1 - 1 / ratio) : 0) - thr * (1 - 1 / ratio) * 0.5; );
+
+@slider
+  update();
+
+@sample
+  prs_lv = max(abs(spl0), abs(spl1));
+  prs_in = prs_lv > prs_in ? prs_lv : prs_in * prs_rel;
+  lev = max(spl0 * spl0, spl1 * spl1);
+  env = det * env + (1 - det) * lev;
+  db = 10 * log10(env + 0.0000000001);
+  target = db > thr ? 10 ^ (-(db - thr) * (1 - 1 / ratio) / 20) : 1;
+  gr = target < gr ? att * gr + (1 - att) * target : rel * gr + (1 - rel) * target;
+  spl0 *= gr * makeup;
+  spl1 *= gr * makeup;
+  prs_lv = max(abs(spl0), abs(spl1));
+  prs_out = prs_lv > prs_out ? prs_lv : prs_out * prs_rel;
+
+@gfx 360 240
+  ng_one_slider_begin("PRESSURE");
+
+  // display, left: the static curve (input -60..0 dB across, output -60..0 dB up) with the
+  // detector level as a dot; right: input, gain-reduction and output meters
+  prs_tw = prs_th = 0;
+  ng_plot(54, 66, 84, 80);
+  ng_grid(4, 4, 0);
+  ng_font(4, 8, 0);
+  ng_col(NG_MUTED, 1);
+  i = 0;
+  loop(3,
+    yy = floor(ng_py + ng_ph * i / 2) + 0.5;
+    sprintf(#prs_l, "%d", -30 * i);
+    gfx_measurestr(#prs_l, prs_tw, prs_th);
+    gfx_x = ng_px - 6 * ng_s - prs_tw; gfx_y = yy - gfx_texth / 2;
+    gfx_drawstr(#prs_l);
+    i += 1;
+  );
+  ng_col(NG_ACCENT, 0.25);
+  gfx_line(ng_px, ng_py + ng_ph, ng_px + ng_pw, ng_py, 1);
+  ng_col(NG_ACCENT, 1);
+  i = 0;
+  loop(floor(ng_pw) + 1,
+    yy = ng_lin_y(prs_curve(-60 + 60 * i / ng_pw), -60, 0);
+    i == 0 ? ng_line_start(ng_px, yy) : ng_line_to(ng_px + i, yy);
+    i += 1;
+  );
+  db > -60 ? (
+    ng_col(NG_TEXT, 1);
+    gfx_circle(ng_lin_x(min(0, db), -60, 0), ng_lin_y(prs_curve(min(0, db)), -60, 0), 2.5 * ng_s, 1, 1);
+  );
+  ng_meter(160, 77, 168, 10, "IN", ng_to_db(prs_in), -140, -60);
+  ng_gr_meter(160, 101, 168, 10, "GR", -20 * log10(max(gr, 0.0000001)), 24);
+  ng_meter(160, 125, 168, 10, "OUT", ng_to_db(prs_out), -140, -60);
+
+  // slider card
+  slider1 == 0 ? sprintf(#cap, "OFF") : sprintf(#cap, "THR %.1f dB  RATIO %.2f:1", slider1 * -0.3, 1 + slider1 * 0.05);
+  sprintf(#val, "%d", floor(slider1 + 0.5));
+  ng_set_slider(ng_one_slider_control("AMOUNT", #cap, #val, "LIGHT", "HEAVY", slider1, 0, 100, 50, 0), 1) ? update();
+
+  ng_end();

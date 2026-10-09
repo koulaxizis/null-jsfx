@@ -1,0 +1,94 @@
+desc:NULL Driver GFX
+author: Christos Koulaxizis
+tags: saturation drive warmth tube tape overdrive gui
+//category: One Slider
+//NULL JSFX v2.0 • https://nulljsfx.tech • MIT License
+
+import null_gfx.jsfx-inc
+
+slider1:50<0,100,1>-Amount
+
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
+
+@init
+  // NULL Driver (../driver.jsfx) with its own interface: same audio code, plus @gfx.
+  // Warm tube-style drive: the signal is pushed into a slightly asymmetric tanh curve
+  // (even plus odd harmonics), the DC this creates is removed, and the level is
+  // compensated. Amount fades from the untouched signal (0) to full drive (100).
+  function sat(x) local(e) ( e = exp(2 * max(-20, min(20, x))); (e - 1) / (e + 1); );
+  function dcb(x) local(y) ( y = x - this.x1 + 0.9995 * this.y1; this.x1 = x; this.y1 = y; y; );
+  gfx_ext_retina = 1;
+
+  function update()
+  (
+    amount = slider1 / 100;
+    drive = 1 + amount * 11;
+    bias = 0.25 * amount;
+    comp = 1 / (sat(drive * 0.5 + bias) - sat(bias)) * 0.5;
+  );
+
+  // static transfer curve of @sample (the DC blocker left out): output for input x
+  function drv_curve(x) ( x + amount * ((sat(x * drive + bias) - sat(bias)) * comp - x); );
+
+  // transfer plot: grid, axis labels, unity line, curve filled to the 0 line
+  function drv_plot() local(i, xx, yy, zy)
+  (
+    drv_tw = drv_th = 0;
+    ng_plot(46, 64, 284, 78);
+    ng_grid(8, 4, 1);
+    ng_font(4, 8, 0);
+    ng_col(NG_MUTED, 1);
+    i = 0;
+    loop(3,
+      yy = floor(ng_py + ng_ph * i / 2) + 0.5;
+      i == 1 ? sprintf(#drv_l, "0") : sprintf(#drv_l, "%+d", 1 - i);
+      gfx_measurestr(#drv_l, drv_tw, drv_th);
+      gfx_x = ng_px - 6 * ng_s - drv_tw; gfx_y = yy - gfx_texth / 2;
+      gfx_drawstr(#drv_l);
+      i += 1;
+    );
+    gfx_measurestr("IN", drv_tw, drv_th);
+    gfx_x = ng_px + ng_pw / 2 - drv_tw / 2; gfx_y = ng_py + ng_ph + 5 * ng_s;
+    gfx_drawstr("IN");
+    ng_col(NG_ACCENT, 0.25);
+    gfx_line(ng_px, ng_py + ng_ph, ng_px + ng_pw, ng_py, 1);
+    zy = ng_lin_y(0, -1, 1);
+    ng_col(NG_ACCENT, 0.10);
+    i = 0;
+    loop(floor(ng_pw) + 1,
+      gfx_line(ng_px + i, zy, ng_px + i, ng_lin_y(drv_curve(-1 + 2 * i / ng_pw), -1, 1), 0);
+      i += 1;
+    );
+    ng_col(NG_ACCENT, 1);
+    i = 0;
+    loop(floor(ng_pw) + 1,
+      yy = ng_lin_y(drv_curve(-1 + 2 * i / ng_pw), -1, 1);
+      i == 0 ? ng_line_start(ng_px, yy) : ng_line_to(ng_px + i, yy);
+      i += 1;
+    );
+  );
+
+@slider
+  update();
+
+@sample
+  wl = dl.dcb((sat(spl0 * drive + bias) - sat(bias)) * comp);
+  wr = dr.dcb((sat(spl1 * drive + bias) - sat(bias)) * comp);
+  spl0 += amount * (wl - spl0);
+  spl1 += amount * (wr - spl1);
+
+@gfx 360 240
+  ng_one_slider_begin("DRIVER");
+
+  // display: the transfer curve (input -1..+1 across, output -1..+1 up), unity line dim
+  drv_plot();
+
+  // slider card
+  slider1 == 0 ? sprintf(#cap, "CLEAN") : sprintf(#cap, "DRIVE %.1fx", 1 + slider1 * 0.11);
+  sprintf(#val, "%d", floor(slider1 + 0.5));
+  ng_set_slider(ng_one_slider_control("AMOUNT", #cap, #val, "CLEAN", "DRIVEN", slider1, 0, 100, 50, 0), 1) ? update();
+
+  ng_end();

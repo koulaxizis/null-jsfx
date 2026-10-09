@@ -1,0 +1,94 @@
+desc:NULL Grit GFX
+author: Christos Koulaxizis
+tags: bitcrush samplerate lofi degradation digital gui
+//category: One Slider
+//NULL JSFX v2.0 • https://nulljsfx.tech • MIT License
+
+import null_gfx.jsfx-inc
+
+slider1:0<0,100,1>-Grit Intensity
+
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
+
+@init
+  // NULL Grit (../grit.jsfx) with its own interface: same audio code, plus @gfx.
+  // Lo-fi grit: sample-rate reduction (hold every 1 to 8 samples) and bit reduction
+  // (16 bits down to 3), crossfaded with the clean signal by the same amount.
+  // At 0 the signal is untouched.
+  acc = 1; held_l = held_r = 0;
+  gfx_ext_retina = 1;
+
+  function update()
+  (
+    g = slider1 / 100;
+    steps = 2 ^ (16 - g * 13 - 1);
+    hop = 1 / (1 + g * 7);
+  );
+
+  // static transfer curve of @sample (the sample hold left out): output for input x
+  function grt_curve(x) ( x + g * (floor(x * steps + 0.5) / steps - x); );
+
+  // transfer plot: grid, axis labels, unity line, staircase filled to the 0 line
+  function grt_plot() local(i, yy, zy)
+  (
+    grt_tw = grt_th = 0;
+    ng_plot(46, 64, 284, 78);
+    ng_grid(8, 4, 1);
+    ng_font(4, 8, 0);
+    ng_col(NG_MUTED, 1);
+    i = 0;
+    loop(3,
+      yy = floor(ng_py + ng_ph * i / 2) + 0.5;
+      i == 1 ? sprintf(#grt_l, "0") : sprintf(#grt_l, "%+d", 1 - i);
+      gfx_measurestr(#grt_l, grt_tw, grt_th);
+      gfx_x = ng_px - 6 * ng_s - grt_tw; gfx_y = yy - gfx_texth / 2;
+      gfx_drawstr(#grt_l);
+      i += 1;
+    );
+    gfx_measurestr("IN", grt_tw, grt_th);
+    gfx_x = ng_px + ng_pw / 2 - grt_tw / 2; gfx_y = ng_py + ng_ph + 5 * ng_s;
+    gfx_drawstr("IN");
+    ng_col(NG_ACCENT, 0.25);
+    gfx_line(ng_px, ng_py + ng_ph, ng_px + ng_pw, ng_py, 1);
+    zy = ng_lin_y(0, -1, 1);
+    ng_col(NG_ACCENT, 0.10);
+    i = 0;
+    loop(floor(ng_pw) + 1,
+      gfx_line(ng_px + i, zy, ng_px + i, ng_lin_y(grt_curve(-1 + 2 * i / ng_pw), -1, 1), 0);
+      i += 1;
+    );
+    ng_col(NG_ACCENT, 1);
+    i = 0;
+    loop(floor(ng_pw) + 1,
+      yy = ng_lin_y(grt_curve(-1 + 2 * i / ng_pw), -1, 1);
+      i == 0 ? ng_line_start(ng_px, yy) : ng_line_to(ng_px + i, yy);
+      i += 1;
+    );
+  );
+
+@slider
+  update();
+
+@sample
+  acc += hop;
+  acc >= 1 ? (acc -= 1; held_l = spl0; held_r = spl1);
+  cl = floor(held_l * steps + 0.5) / steps;
+  cr = floor(held_r * steps + 0.5) / steps;
+  spl0 += g * (cl - spl0);
+  spl1 += g * (cr - spl1);
+
+@gfx 360 240
+  ng_one_slider_begin("GRIT");
+
+  // display: the bit-reduction staircase (input -1..+1 across, output -1..+1 up)
+  grt_plot();
+
+  // slider card
+  slider1 == 0 ? sprintf(#cap, "CLEAN") : sprintf(#cap, "%.1f BITS  HOLD %.1f", 16 - slider1 * 0.13, 1 + slider1 * 0.07);
+  sprintf(#val, "%d", floor(slider1 + 0.5));
+  ng_set_slider(ng_one_slider_control("INTENSITY", #cap, #val, "CLEAN", "LO-FI", slider1, 0, 100, 0, 0), 1) ? update();
+
+  ng_end();

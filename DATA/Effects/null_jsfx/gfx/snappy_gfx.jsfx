@@ -1,0 +1,111 @@
+desc:NULL Snappy GFX
+author: Christos Koulaxizis
+tags: transient attack punch drums percussive snappy gui
+//category: One Slider
+//NULL JSFX v2.0 • https://nulljsfx.tech • MIT License
+
+import null_gfx.jsfx-inc
+
+slider1:50<0,100,1>-Amount
+
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
+
+@init
+  // NULL Snappy (../snappy.jsfx) with its own interface: same audio code, plus @gfx.
+  // Transient punch: a fast envelope (1 ms attack) is compared with a slow one (25 ms
+  // attack); where the fast one runs ahead there is a hit, and that part is boosted
+  // (up to +9 dB) while the sustain is trimmed slightly (up to -3 dB). Stereo-linked.
+  fast = slow = 0;
+  gfx_ext_retina = 1;
+  // interface only: a 2 s history of the gain and the output level, one entry per 7 ms
+  // (284 entries, one per display pixel) in memory from 4000000
+  snp_buf = 4000000; snp_len = 284; snp_w = 0;
+  snp_chunk = max(1, floor(srate * 0.007));
+  snp_n = 0; snp_pk = 0; snp_gh = 0; snp_gl = 1000;
+  i = 0;
+  loop(snp_len, snp_buf[i * 2] = 0; snp_buf[i * 2 + 1] = 1; i += 1;);
+
+  function update()
+  (
+    amount = slider1 / 100;
+    fa = exp(-1 / (0.001 * srate)); sa = exp(-1 / (0.025 * srate));
+    re = exp(-1 / (0.08 * srate));
+    boost = amount * 9; cut = amount * 3;
+  );
+
+  // gain history: output level as dim bars (-48..0 dB), gain as the line (-3..+9 dB)
+  function snp_history() local(i, k, xx, yy, h, gdb)
+  (
+    snp_tw = snp_th = 0;
+    ng_plot(46, 64, 284, 78);
+    ng_grid(8, 4, 0);
+    yy = floor(ng_lin_y(0, -3, 9)) + 0.5;
+    ng_col(0x45433f, 1);
+    gfx_line(ng_px, yy, ng_px + ng_pw, yy, 0);
+    ng_font(4, 8, 0);
+    ng_col(NG_MUTED, 1);
+    i = 0;
+    loop(5,
+      yy = floor(ng_py + ng_ph * i / 4) + 0.5;
+      9 - 3 * i > 0 ? sprintf(#snp_l, "+%d", 9 - 3 * i) : sprintf(#snp_l, "%d", 9 - 3 * i);
+      gfx_measurestr(#snp_l, snp_tw, snp_th);
+      gfx_x = ng_px - 6 * ng_s - snp_tw; gfx_y = yy - gfx_texth / 2;
+      gfx_drawstr(#snp_l);
+      i += 1;
+    );
+    ng_col(NG_ACCENT, 0.08);
+    i = 0;
+    loop(snp_len,
+      k = (snp_w + i) % snp_len;
+      h = ng_ph * ng_db_norm(ng_to_db(snp_buf[k * 2]), -48);
+      h > 0 ? gfx_rect(ng_px + i * ng_s, ng_py + ng_ph - h, ng_s, h);
+      i += 1;
+    );
+    ng_col(NG_ACCENT, 1);
+    i = 0;
+    loop(snp_len,
+      k = (snp_w + i) % snp_len;
+      gdb = 20 * log10(max(snp_buf[k * 2 + 1], 0.0000001));
+      xx = ng_px + (i + 0.5) * ng_s;
+      yy = ng_lin_y(gdb, -3, 9);
+      i == 0 ? ng_line_start(xx, yy) : ng_line_to(xx, yy);
+      i += 1;
+    );
+  );
+
+@slider
+  update();
+
+@sample
+  lev = max(abs(spl0), abs(spl1));
+  fast = lev > fast ? fa * fast + (1 - fa) * lev : re * fast + (1 - re) * lev;
+  slow = lev > slow ? sa * slow + (1 - sa) * lev : re * slow + (1 - re) * lev;
+  trans = fast > 0.00001 ? max(0, min(1, (fast - slow) / fast)) : 0;
+  g = 10 ^ ((boost * trans - cut * (1 - trans)) / 20);
+  spl0 *= g;
+  spl1 *= g;
+  snp_pk = max(snp_pk, max(abs(spl0), abs(spl1)));
+  snp_gh = max(snp_gh, g);
+  snp_gl = min(snp_gl, g);
+  (snp_n += 1) >= snp_chunk ? (
+    snp_buf[snp_w * 2] = snp_pk;
+    snp_buf[snp_w * 2 + 1] = snp_gh * snp_gl > 1 ? snp_gh : snp_gl;
+    snp_w = (snp_w + 1) % snp_len;
+    snp_n = 0; snp_pk = 0; snp_gh = 0; snp_gl = 1000;
+  );
+
+@gfx 360 240
+  ng_one_slider_begin("SNAPPY");
+
+  // display: the last 2 s of gain (line, -3..+9 dB) over the output level (bars)
+  snp_history();
+
+  // slider card
+  slider1 == 0 ? sprintf(#cap, "OFF") : sprintf(#cap, "HITS %+.1f  SUSTAIN %+.1f dB", slider1 * 0.09, slider1 * -0.03);
+  sprintf(#val, "%d", floor(slider1 + 0.5));
+  ng_set_slider(ng_one_slider_control("AMOUNT", #cap, #val, "SOFT", "PUNCH", slider1, 0, 100, 50, 0), 1) ? update();
+
+  ng_end();
