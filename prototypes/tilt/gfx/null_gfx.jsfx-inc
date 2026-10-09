@@ -195,10 +195,52 @@ desc:NULL JSFX shared GFX library
     hover;
   );
 
-  // Knob interaction for a value in [lo, hi]. Call once per frame per knob with its hover
-  // result and an id; returns the new value. Drag (Ctrl = fine), double-click resets to
-  // def, wheel steps by step. px_range = design pixels for the full range.
-  function ng_knob_input(id, hover, v, lo, hi, def, step, px_range) local(sens, nv)
+  // horizontal slider (the One Slider series) from design x to x + w at height y; norm 0..1;
+  // bipolar fills from the centre. Returns 1 while the mouse is over it.
+  function ng_slider(x, y, w, norm, bipolar, active) local(x0, x1, yy, th, tx, f0, hover, i, n, tw, tth)
+  (
+    x0 = X(x); x1 = X(x + w); yy = Y(y);
+    th = 6 * ng_s;
+    tx = x0 + norm * (x1 - x0);
+    f0 = bipolar ? (x0 + x1) / 2 : x0;
+    hover = mouse_x > x0 - 10 * ng_s && mouse_x < x1 + 10 * ng_s && abs(mouse_y - yy) < 16 * ng_s;
+
+    // track and value fill
+    ng_col(hover || active ? 0x45433f : NG_BORDER, 1);
+    gfx_roundrect(x0, yy - th / 2, x1 - x0, th, th / 2, 1);
+    gfx_rect(x0 + th / 2, yy - th / 2, x1 - x0 - th, th + 1);
+    ng_col(NG_ACCENT, 1);
+    abs(tx - f0) > 0.5 ? gfx_rect(min(f0, tx), yy - th / 2 + 1, abs(tx - f0), th - 1);
+    bipolar ? (
+      ng_col(NG_MUTED, 1);
+      gfx_line((x0 + x1) / 2, yy - th / 2 - 4 * ng_s, (x0 + x1) / 2, yy - th / 2 - 7 * ng_s, 1);
+    );
+
+    // thumb: shadow, grey-gradient body like the site icons, dark grip line
+    tw = 12 * ng_s;
+    tth = 22 * ng_s;
+    ng_col(0x000000, 0.35);
+    gfx_roundrect(tx - tw / 2, yy - tth / 2 + 2 * ng_s, tw, tth, 3 * ng_s, 1);
+    gfx_rect(tx - tw / 2 + 1, yy - tth / 2 + 2 * ng_s + 1, tw - 1, tth - 1);
+    n = floor(tth);
+    i = 0;
+    loop(n,
+      ng_mix(NG_ICON_B, NG_ICON_A, i / max(1, n - 1), 1);
+      gfx_line(tx - tw / 2 + 1, yy - tth / 2 + i, tx + tw / 2 - 1, yy - tth / 2 + i, 0);
+      i += 1;
+    );
+    ng_col(NG_ICON_A, 1);
+    gfx_roundrect(tx - tw / 2, yy - tth / 2, tw, tth, 3 * ng_s, 1);
+    ng_col(NG_CARD, 1);
+    gfx_rect(tx - max(1, ng_s), yy - tth * 0.3, max(2, 2 * ng_s), tth * 0.6);
+    hover;
+  );
+
+  // Knob or slider interaction for a value in [lo, hi]. Call once per frame per control with
+  // its hover result and an id; returns the new value. Drag (Ctrl = fine), double-click
+  // resets to def, wheel steps by step. px_range = design pixels for the full range;
+  // horiz = 1 for sliders (only sideways movement counts), 0 for knobs (both directions).
+  function ng_input(id, hover, v, lo, hi, def, step, px_range, horiz) local(sens, nv, mv)
   (
     nv = v;
     ng_click && hover ? (
@@ -218,7 +260,8 @@ desc:NULL JSFX shared GFX library
     !ng_lmb ? ng_drag = 0;
     ng_drag == id ? (
       sens = (hi - lo) / px_range * ((mouse_cap & 4) ? 0.1 : 1);
-      ng_drag_val = max(lo, min(hi, ng_drag_val + ((mouse_x - ng_lx) + (ng_ly - mouse_y)) / ng_s * sens));
+      mv = horiz ? mouse_x - ng_lx : (mouse_x - ng_lx) + (ng_ly - mouse_y);
+      ng_drag_val = max(lo, min(hi, ng_drag_val + mv / ng_s * sens));
       ng_lx = mouse_x;
       ng_ly = mouse_y;
       nv = ng_drag_val;

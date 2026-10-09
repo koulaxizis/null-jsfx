@@ -6,7 +6,7 @@ silver accent.
 
 | Folder | Name | Format | Interface |
 |---|---|---|---|
-| `gfx/` | NULL Tilt GFX | JSFX (REAPER) | `@gfx` knob and response curve, drawn by the shared `null_gfx.jsfx-inc` |
+| `gfx/` | NULL Tilt GFX | JSFX (REAPER) | `@gfx` slider and response curve, drawn by the shared `null_gfx.jsfx-inc` |
 | `dpf/` | NULL Tilt Native | VST3, CLAP | C++ rewrite with [DPF](https://github.com/DISTRHO/DPF), NanoVG interface |
 
 The palette lives in two places that must match: `gfx/null_gfx.jsfx-inc` (`NG_*`) and

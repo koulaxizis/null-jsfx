@@ -22,10 +22,10 @@ constexpr float kMinAmount = -100.0f;
 constexpr float kMaxAmount = 100.0f;
 
 // Layout (1x coordinates), the same as the GFX JSFX
-constexpr float kKnobCardX = 14.0f, kKnobCardY = 56.0f, kKnobCardW = 136.0f, kKnobCardH = 170.0f;
-constexpr float kKnobCX = 82.0f, kKnobCY = 132.0f, kKnobR = 30.0f;
-constexpr float kGraphX = 160.0f, kGraphY = 56.0f, kGraphW = 186.0f, kGraphH = 170.0f;
-constexpr float kPlotX = 186.0f, kPlotY = 70.0f, kPlotW = 150.0f, kPlotH = 130.0f;
+constexpr float kGraphX = 14.0f, kGraphY = 54.0f, kGraphW = 332.0f, kGraphH = 110.0f;
+constexpr float kPlotX = 46.0f, kPlotY = 64.0f, kPlotW = 284.0f, kPlotH = 78.0f;
+constexpr float kSliderCardX = 14.0f, kSliderCardY = 172.0f, kSliderCardW = 332.0f, kSliderCardH = 54.0f;
+constexpr float kSliderX = 74.0f, kSliderY = 210.0f, kSliderW = 212.0f;
 
 constexpr float kFMin = 20.0f, kFMax = 20000.0f, kDbRange = 8.0f;
 
@@ -89,8 +89,8 @@ protected:
         fontFace(NANOVG_DEJAVU_SANS_TTF);
 
         drawHeader("TILT", "ONE SLIDER");
-        drawKnobCard();
         drawGraph();
+        drawSliderCard();
     }
 
     // text with letter spacing; bold is faked with a second pass shifted by a fraction of a pixel
@@ -155,87 +155,75 @@ protected:
         stroke();
     }
 
-    void drawKnobCard()
+    // horizontal slider (the One Slider series); norm 0..1, bipolar fills from the centre
+    void drawSlider(float x, float y, float w, float norm, bool bipolar)
     {
-        card(kKnobCardX, kKnobCardY, kKnobCardW, kKnobCardH);
-        label(kKnobCX, 70.0f, ALIGN_CENTER, 8.5f, 2.0f, theme::kMuted, "AMOUNT", true);
-
-        // angles: 0 = up, clockwise, +-135 deg; NanoVG measures from +x, so subtract 90 deg
-        const float amax = 0.75f * float(nulltilt::kPi);
-        const float aVal = (fAmount / kMaxAmount) * amax;
-        const float q = 0.5f * float(nulltilt::kPi);
-        const float tr = kKnobR + 10.0f;
+        const float th = 6.0f;
+        const float tx = x + norm * w;
+        const float f0 = bipolar ? x + w * 0.5f : x;
 
         beginPath();
-        arc(kKnobCX, kKnobCY, tr, -amax - q, amax - q, CW);
-        strokeColor(col(fDragging || fHover ? theme::kTrackHover : theme::kBorder));
-        strokeWidth(4.0f);
-        stroke();
+        roundedRect(x, y - th * 0.5f, w, th, th * 0.5f);
+        fillColor(col(fDragging || fHover ? theme::kTrackHover : theme::kBorder));
+        fill();
 
-        if (std::fabs(fAmount) > 0.05f)
+        if (std::fabs(tx - f0) > 0.25f)
         {
             beginPath();
-            arc(kKnobCX, kKnobCY, tr, std::fmin(0.0f, aVal) - q, std::fmax(0.0f, aVal) - q, CW);
-            strokeColor(col(theme::kAccent));
-            strokeWidth(4.0f);
+            rect(std::fmin(f0, tx), y - th * 0.5f, std::fabs(tx - f0), th);
+            fillColor(col(theme::kAccent));
+            fill();
+        }
+
+        if (bipolar)
+        {
+            beginPath();
+            moveTo(x + w * 0.5f, y - th * 0.5f - 4.0f);
+            lineTo(x + w * 0.5f, y - th * 0.5f - 7.0f);
+            strokeColor(col(theme::kMuted));
+            strokeWidth(1.0f);
             stroke();
         }
 
-        // centre tick
+        // thumb: shadow, grey-gradient body like the site icons, dark grip line
+        const float tw = 12.0f, tth = 22.0f;
         beginPath();
-        moveTo(kKnobCX, kKnobCY - tr - 5.0f);
-        lineTo(kKnobCX, kKnobCY - tr - 8.0f);
-        strokeColor(col(theme::kMuted));
-        strokeWidth(1.0f);
-        stroke();
-
-        // body: shadow, grey-gradient rim like the site icons, dark cap
-        beginPath();
-        circle(kKnobCX, kKnobCY + 2.0f, kKnobR + 1.5f);
+        roundedRect(tx - tw * 0.5f, y - tth * 0.5f + 2.0f, tw, tth, 3.0f);
         fillColor(Color(0, 0, 0, 0.35f));
         fill();
 
         beginPath();
-        circle(kKnobCX, kKnobCY, kKnobR);
-        fillPaint(linearGradient(kKnobCX, kKnobCY + kKnobR, kKnobCX, kKnobCY - kKnobR,
-                                 col(theme::kIconLo), col(theme::kIconHi)));
+        roundedRect(tx - tw * 0.5f, y - tth * 0.5f, tw, tth, 3.0f);
+        fillPaint(linearGradient(tx, y - tth * 0.5f, tx, y + tth * 0.5f, col(theme::kIconHi), col(theme::kIconLo)));
         fill();
 
         beginPath();
-        circle(kKnobCX, kKnobCY, kKnobR - 3.0f);
-        fillPaint(radialGradient(kKnobCX, kKnobCY - 3.0f, 2.0f, kKnobR - 3.0f,
-                                 col(theme::kCapTop), col(theme::kCard)));
+        rect(tx - 1.0f, y - tth * 0.3f, 2.0f, tth * 0.6f);
+        fillColor(col(theme::kCard));
         fill();
+    }
 
-        // pointer
-        const float sa = std::sin(aVal), ca = std::cos(aVal);
-        beginPath();
-        moveTo(kKnobCX + sa * kKnobR * 0.30f, kKnobCY - ca * kKnobR * 0.30f);
-        lineTo(kKnobCX + sa * (kKnobR - 7.0f), kKnobCY - ca * (kKnobR - 7.0f));
-        strokeColor(col(theme::kText));
-        strokeWidth(2.8f);
-        lineCap(ROUND);
-        stroke();
-        lineCap(BUTT);
+    void drawSliderCard()
+    {
+        card(kSliderCardX, kSliderCardY, kSliderCardW, kSliderCardH);
+        label(28.0f, 187.0f, ALIGN_LEFT, 8.5f, 2.0f, theme::kMuted, "AMOUNT", true);
 
-        label(kKnobCX - 32.0f, kKnobCY + 36.0f, ALIGN_CENTER, 7.5f, 1.0f, theme::kMuted, "DARK", true);
-        label(kKnobCX + 32.0f, kKnobCY + 36.0f, ALIGN_CENTER, 7.5f, 1.0f, theme::kMuted, "BRIGHT", true);
-
-        // value readout
         char buf[48];
         const int v = int(std::lround(fAmount));
-        if (v > 0)
-            std::snprintf(buf, sizeof(buf), "+%d", v);
-        else
-            std::snprintf(buf, sizeof(buf), "%d", v);
-        label(kKnobCX, 196.0f, ALIGN_CENTER, 23.0f, 0.0f, theme::kText, buf, true);
-
         const double hiDb = fAmount / 100.0 * nulltilt::kMaxDb;
         if (v == 0)
             std::snprintf(buf, sizeof(buf), "FLAT");
         else
             std::snprintf(buf, sizeof(buf), "LOW %+.1f  HIGH %+.1f dB", -hiDb, hiDb);
-        label(kKnobCX, 214.0f, ALIGN_CENTER, 8.0f, 0.3f, theme::kMuted, buf);
+        label(180.0f, 187.0f, ALIGN_CENTER, 8.0f, 0.3f, theme::kMuted, buf);
+
+        std::snprintf(buf, sizeof(buf), v > 0 ? "+%d" : "%d", v);
+        label(332.0f, 187.0f, ALIGN_RIGHT, 14.0f, 0.0f, theme::kText, buf, true);
+
+        label(28.0f, kSliderY, ALIGN_LEFT, 7.5f, 1.0f, theme::kMuted, "DARK", true);
+        label(332.0f, kSliderY, ALIGN_RIGHT, 7.5f, 1.0f, theme::kMuted, "BRIGHT", true);
+
+        drawSlider(kSliderX, kSliderY, kSliderW, (fAmount - kMinAmount) / (kMaxAmount - kMinAmount), true);
     }
 
     static float freqToX(float f)
@@ -284,12 +272,12 @@ protected:
             {
                 char buf[8];
                 std::snprintf(buf, sizeof(buf), db > 0 ? "+%d" : "%d", db);
-                label(kPlotX - 5.0f, dbToY(float(db)), ALIGN_RIGHT, 8.0f, 0.0f, theme::kMuted, buf);
+                label(kPlotX - 6.0f, dbToY(float(db)), ALIGN_RIGHT, 8.0f, 0.0f, theme::kMuted, buf);
             }
         }
-        label(freqToX(100.0f), 212.0f, ALIGN_CENTER, 8.0f, 0.0f, theme::kMuted, "100");
-        label(freqToX(1000.0f), 212.0f, ALIGN_CENTER, 8.0f, 0.0f, theme::kMuted, "1k");
-        label(freqToX(10000.0f), 212.0f, ALIGN_CENTER, 8.0f, 0.0f, theme::kMuted, "10k");
+        label(freqToX(100.0f), 153.0f, ALIGN_CENTER, 8.0f, 0.0f, theme::kMuted, "100");
+        label(freqToX(1000.0f), 153.0f, ALIGN_CENTER, 8.0f, 0.0f, theme::kMuted, "1k");
+        label(freqToX(10000.0f), 153.0f, ALIGN_CENTER, 8.0f, 0.0f, theme::kMuted, "10k");
 
         // 700 Hz pivot (dashed)
         {
@@ -345,10 +333,9 @@ protected:
     // ----------------------------------------------------------------------------------------------------------------
     // Interaction
 
-    bool inKnobArea(float x, float y) const
+    bool inSliderArea(float x, float y) const
     {
-        const float dx = x - kKnobCX, dy = y - kKnobCY;
-        return std::sqrt(dx * dx + dy * dy) < kKnobR + 16.0f;
+        return x > kSliderX - 10.0f && x < kSliderX + kSliderW + 10.0f && std::fabs(y - kSliderY) < 16.0f;
     }
 
     float uiScale() const { return float(getWidth()) / float(kWidth); }
@@ -380,7 +367,7 @@ protected:
 
         if (ev.press)
         {
-            if (!inKnobArea(x, y))
+            if (!inSliderArea(x, y))
                 return false;
 
             // double-click -> reset to 0
@@ -417,7 +404,7 @@ protected:
         const float s = uiScale();
         const float x = float(ev.pos.getX()) / s, y = float(ev.pos.getY()) / s;
 
-        const bool hover = inKnobArea(x, y);
+        const bool hover = inSliderArea(x, y);
         if (hover != fHover)
         {
             fHover = hover;
@@ -426,14 +413,14 @@ protected:
         if (!fDragging)
             return false;
 
-        const float dx = x - fDragLastX, dy = fDragLastY - y;
+        const float dx = x - fDragLastX;
         fDragLastX = x;
         fDragLastY = y;
 
         const bool fine = (ev.mod & (kModifierControl | kModifierShift)) != 0;
-        // 200 units over ~200 px normally, 10x finer with Ctrl/Shift
-        const float perPx = fine ? 0.1f : 1.0f;
-        fDragValue = clampf(fDragValue + (dx + dy) * perPx, kMinAmount, kMaxAmount);
+        // the full range over the slider width normally, 10x finer with Ctrl/Shift
+        const float perPx = (kMaxAmount - kMinAmount) / kSliderW * (fine ? 0.1f : 1.0f);
+        fDragValue = clampf(fDragValue + dx * perPx, kMinAmount, kMaxAmount);
 
         const float q = fine ? std::round(fDragValue * 10.0f) / 10.0f : std::round(fDragValue);
         setAmountFromUI(q);
@@ -444,7 +431,7 @@ protected:
     {
         const float s = uiScale();
         const float x = float(ev.pos.getX()) / s, y = float(ev.pos.getY()) / s;
-        if (!inKnobArea(x, y))
+        if (!inSliderArea(x, y))
             return false;
 
         const float d = float(ev.delta.getY()) + float(ev.delta.getX());

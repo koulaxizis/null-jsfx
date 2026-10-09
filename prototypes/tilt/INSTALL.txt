@@ -10,7 +10,7 @@ Both sound identical (bit for bit) to NULL Tilt. Only the packaging differs.
     null_gfx.jsfx-inc holds the shared look and is not an effect by itself.
 
 2 - NULL Tilt Native (VST3, CLAP)
-    Any DAW. Install like any plugin:
+    Any DAW. It shows up as "Tilt" by "NULL JSFX". Install like any plugin:
       Windows: VST3 -> C:\Program Files\Common Files\VST3
                CLAP -> C:\Program Files\Common Files\CLAP
       macOS:   VST3 -> ~/Library/Audio/Plug-Ins/VST3
@@ -22,5 +22,6 @@ refuses to load them, run
     xattr -dr com.apple.quarantine <path to the .vst3/.clap>
 and rescan the plugins.
 
-Controls: drag the knob (Ctrl/Cmd or Shift for fine steps), double-click to
-reset to 0, mouse wheel steps by 1. Drag the window corner to resize.
+Controls: drag the slider sideways (Ctrl/Cmd or Shift for fine steps),
+double-click to reset to 0, mouse wheel steps by 1. Resize the window from
+its edge or corner.

@@ -26,7 +26,7 @@ public:
     }
 
 protected:
-    const char* getLabel() const override       { return "NullTiltNative"; }
+    const char* getLabel() const override       { return "Tilt"; }
     const char* getDescription() const override
     {
         return "Tilts the spectrum around 700 Hz: positive brightens, negative darkens, up to 6 dB each way.";
