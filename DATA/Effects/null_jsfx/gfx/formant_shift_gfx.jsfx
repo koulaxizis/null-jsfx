@@ -1,0 +1,191 @@
+desc:NULL Formant Shift GFX
+author: Christos Koulaxizis
+tags: formant vocal morph gender shift voice vowel gui
+//category: One Slider
+//NULL JSFX v2.0 • https://nulljsfx.tech • MIT License
+
+import null_gfx.jsfx-inc
+
+slider1:50<0,100,1>-Formant Position
+
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
+
+@init
+  // NULL Formant Shift (../formant_shift.jsfx) with its own interface: same audio code,
+  // plus @gfx.
+  PI=3.14159265358979;
+  gfx_ext_retina = 1;
+
+  // Better formant base frequencies (closer to real vocal tract)
+  f0_base = 300;   // Lower fundamental formant
+  f1_base = 850;   // F1 for neutral vowel
+  f2_base = 2250;  // F2 for neutral vowel
+
+  // Filter state - all zeros
+  f1_x1l=0; f1_x2l=0; f1_y1l=0; f1_y2l=0;
+  f2_x1l=0; f2_x2l=0; f2_y1l=0; f2_y2l=0;
+  f3_x1l=0; f3_x2l=0; f3_y1l=0; f3_y2l=0;
+  f1_x1r=0; f1_x2r=0; f1_y1r=0; f1_y2r=0;
+  f2_x1r=0; f2_x2r=0; f2_y1r=0; f2_y2r=0;
+  f3_x1r=0; f3_x2r=0; f3_y1r=0; f3_y2r=0;
+
+  function update()
+  (
+    // Slider 0-1
+    pos = slider1 / 100;
+
+    // Shift range: 0.5x (male/deep, left) to 2.0x (female/high, right)
+    shift = pow(2.0, (pos - 0.5) * 2);
+
+    // Calculate shifted formant frequencies
+    cf0 = f0_base * shift;
+    cf1 = f1_base * shift;
+    cf2 = f2_base * shift;
+
+    // Clamp to safe range
+    (cf0 < 80) ? (cf0 = 80);
+    (cf1 < 200) ? (cf1 = 200);
+    (cf2 < 400) ? (cf2 = 400);
+    (cf0 > srate/2 - 200) ? (cf0 = srate/2 - 200);
+    (cf1 > srate/2 - 200) ? (cf1 = srate/2 - 200);
+    (cf2 > srate/2 - 200) ? (cf2 = srate/2 - 200);
+
+    // WET AMOUNT - More aggressive at extremes
+    wet = (pos < 0.5) ? (1 - pos*2) : ((1-pos)*2);
+    wet = wet * 1.2;  // Boost wet signal slightly
+    (wet > 0.8) ? (wet = 0.8);
+    dry = 1 - wet;
+
+    // HIGHER Q for sharper, more vocal-like peaks
+    q = 2.5;  // Was 4.0 - lower = sharper peaks
+
+    // === Filter 1 coefficients ===
+    w0 = 2*PI*cf0/srate;
+    alpha = sin(w0)/(2*q);
+    a0inv = 1/(1+alpha);
+    f1_b0 = a0inv*alpha;
+    f1_b1 = 0;
+    f1_b2 = -a0inv*alpha;
+    f1_a1 = -2*a0inv*cos(w0);
+    f1_a2 = a0inv*(1-alpha);
+
+    // === Filter 2 coefficients ===
+    w0 = 2*PI*cf1/srate;
+    alpha = sin(w0)/(2*q);
+    a0inv = 1/(1+alpha);
+    f2_b0 = a0inv*alpha;
+    f2_b1 = 0;
+    f2_b2 = -a0inv*alpha;
+    f2_a1 = -2*a0inv*cos(w0);
+    f2_a2 = a0inv*(1-alpha);
+
+    // === Filter 3 coefficients ===
+    w0 = 2*PI*cf2/srate;
+    alpha = sin(w0)/(2*q);
+    a0inv = 1/(1+alpha);
+    f3_b0 = a0inv*alpha;
+    f3_b1 = 0;
+    f3_b2 = -a0inv*alpha;
+    f3_a1 = -2*a0inv*cos(w0);
+    f3_a2 = a0inv*(1-alpha);
+  );
+
+  // adds gain * wet * H(e^jw) of one band-pass to gx_hr / gx_hi (c1, s1, c2, s2 = cos/sin w, 2w)
+  function gx_band(b0, b1, b2, a1, a2, gain) local(nr, ni, dr, di, dd)
+  (
+    nr = b0 + b1 * gx_c1 + b2 * gx_c2;
+    ni = -b1 * gx_s1 - b2 * gx_s2;
+    dr = 1 + a1 * gx_c1 + a2 * gx_c2;
+    di = -a1 * gx_s1 - a2 * gx_s2;
+    dd = dr * dr + di * di;
+    gx_hr += wet * gain * (nr * dr + ni * di) / dd;
+    gx_hi += wet * gain * (ni * dr - nr * di) / dd;
+  );
+
+  // response in dB at frequency f of dry + wet * (1.5 F1 + 1.2 F2 + 0.8 F3)
+  function gx_db(f) local(w)
+  (
+    w = 2 * PI * min(f, srate * 0.499) / srate;
+    gx_c1 = cos(w); gx_s1 = sin(w); gx_c2 = cos(2 * w); gx_s2 = sin(2 * w);
+    gx_hr = dry; gx_hi = 0;
+    gx_band(f1_b0, f1_b1, f1_b2, f1_a1, f1_a2, 1.5);
+    gx_band(f2_b0, f2_b1, f2_b2, f2_a1, f2_a2, 1.2);
+    gx_band(f3_b0, f3_b1, f3_b2, f3_a1, f3_a2, 0.8);
+    10 * log10(max(gx_hr * gx_hr + gx_hi * gx_hi, 0.0000000001));
+  );
+
+  // dashed vertical marker at frequency f
+  function gx_mark(f) local(xx, yy)
+  (
+    xx = floor(ng_freq_x(f)) + 0.5;
+    ng_col(NG_ACCENT, 0.5);
+    yy = ng_py;
+    while(
+      gfx_line(xx, yy, xx, min(yy + 3 * ng_s, ng_py + ng_ph), 0);
+      yy += 6 * ng_s;
+      yy < ng_py + ng_ph;
+    );
+  );
+
+@slider
+  update();
+
+@sample
+  // === F1 Left ===
+  out1l = f1_b0*spl0 + f1_b1*f1_x1l + f1_b2*f1_x2l - f1_a1*f1_y1l - f1_a2*f1_y2l;
+  f1_x2l=f1_x1l; f1_x1l=spl0; f1_y2l=f1_y1l; f1_y1l=out1l;
+  // === F1 Right ===
+  out1r = f1_b0*spl1 + f1_b1*f1_x1r + f1_b2*f1_x2r - f1_a1*f1_y1r - f1_a2*f1_y2r;
+  f1_x2r=f1_x1r; f1_x1r=spl1; f1_y2r=f1_y1r; f1_y1r=out1r;
+
+  // === F2 Left ===
+  out2l = f2_b0*spl0 + f2_b1*f2_x1l + f2_b2*f2_x2l - f2_a1*f2_y1l - f2_a2*f2_y2l;
+  f2_x2l=f2_x1l; f2_x1l=spl0; f2_y2l=f2_y1l; f2_y1l=out2l;
+  // === F2 Right ===
+  out2r = f2_b0*spl1 + f2_b1*f2_x1r + f2_b2*f2_x2r - f2_a1*f2_y1r - f2_a2*f2_y2r;
+  f2_x2r=f2_x1r; f2_x1r=spl1; f2_y2r=f2_y1r; f2_y1r=out2r;
+
+  // === F3 Left ===
+  out3l = f3_b0*spl0 + f3_b1*f3_x1l + f3_b2*f3_x2l - f3_a1*f3_y1l - f3_a2*f3_y2l;
+  f3_x2l=f3_x1l; f3_x1l=spl0; f3_y2l=f3_y1l; f3_y1l=out3l;
+  // === F3 Right ===
+  out3r = f3_b0*spl1 + f3_b1*f3_x1r + f3_b2*f3_x2r - f3_a1*f3_y1r - f3_a2*f3_y2r;
+  f3_x2r=f3_x1r; f3_x1r=spl1; f3_y2r=f3_y1r; f3_y1r=out3r;
+
+  // === Output with gain compensation ===
+  spl0 = spl0*dry + (out1l*1.5 + out2l*1.2 + out3l*0.8)*wet;
+  spl1 = spl1*dry + (out1r*1.5 + out2r*1.2 + out3r*0.8)*wet;
+
+@gfx 360 240
+  ng_one_slider_begin("FORMANT SHIFT");
+
+  // display: response of the dry + formant blend, the three formants dashed
+  ng_plot(46, 64, 284, 78);
+  ng_grid_freq(12);
+  gx_mark(cf0);
+  gx_mark(cf1);
+  gx_mark(cf2);
+  gx_zy = ng_lin_y(0, -8, 8);
+  ng_col(NG_ACCENT, 0.10);
+  gx_i = 0;
+  loop(floor(ng_pw) + 1,
+    gfx_line(ng_px + gx_i, gx_zy, ng_px + gx_i, ng_lin_y(gx_db(20 * 1000 ^ (gx_i / ng_pw)), -8, 8), 0);
+    gx_i += 1;
+  );
+  ng_col(NG_ACCENT, 1);
+  gx_i = 0;
+  loop(floor(ng_pw) + 1,
+    gx_y = ng_lin_y(gx_db(20 * 1000 ^ (gx_i / ng_pw)), -8, 8);
+    gx_i == 0 ? ng_line_start(ng_px, gx_y) : ng_line_to(ng_px + gx_i, gx_y);
+    gx_i += 1;
+  );
+
+  // slider card
+  sprintf(#gx_cap, "SHIFT x%.2f  WET %d%%", shift, floor(wet * 100 + 0.5));
+  sprintf(#gx_val, "%d", floor(slider1 + 0.5));
+  ng_set_slider(ng_one_slider_control("FORMANT", #gx_cap, #gx_val, "DEEP", "HIGH", slider1, 0, 100, 50, 1), 1) ? update();
+
+  ng_end();

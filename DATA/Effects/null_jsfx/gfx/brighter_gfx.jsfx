@@ -1,0 +1,92 @@
+desc:NULL Brighter GFX
+author: Christos Koulaxizis
+tags: bright treble highs presence air brilliance gui
+//category: One Slider
+//NULL JSFX v2.0 • https://nulljsfx.tech • MIT License
+
+import null_gfx.jsfx-inc
+
+slider1:50<0,100,1>-Amount
+
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
+
+@init
+  // NULL Brighter (../brighter.jsfx) with its own interface: same audio code, plus @gfx.
+  DB2LIN = 0.11512925464970228420;
+  PI = 3.14159265358979;
+  lp_l = 0; lp_r = 0;
+  gfx_ext_retina = 1;
+
+  function update()
+  (
+    amount = slider1 / 100;
+    boost_db = amount * 9;
+    boost_lin = exp(boost_db * DB2LIN);
+    hp_alpha = 1 - exp(-2 * PI * 6000 / srate);
+  );
+
+  // response in dB at frequency f: 1 + (1 - LP) * (boost_lin - 1), LP the one-pole of @sample
+  function gx_db(f) local(w, b, dr, di, dd, lr, li, hr, hi)
+  (
+    w = 2 * PI * min(f, srate * 0.499) / srate;
+    b = 1 - hp_alpha;
+    dr = 1 - b * cos(w);
+    di = b * sin(w);
+    dd = dr * dr + di * di;
+    lr = hp_alpha * dr / dd;
+    li = -hp_alpha * di / dd;
+    hr = 1 + (1 - lr) * (boost_lin - 1);
+    hi = -li * (boost_lin - 1);
+    10 * log10(max(hr * hr + hi * hi, 0.0000000001));
+  );
+
+@slider
+  update();
+
+@sample
+  lp_l = lp_l + hp_alpha * (spl0 - lp_l);
+  lp_r = lp_r + hp_alpha * (spl1 - lp_r);
+  hp_l = spl0 - lp_l;
+  hp_r = spl1 - lp_r;
+  spl0 = spl0 + hp_l * (boost_lin - 1);
+  spl1 = spl1 + hp_r * (boost_lin - 1);
+
+@gfx 360 240
+  ng_one_slider_begin("BRIGHTER");
+
+  // display: the high shelf's magnitude response, 6 kHz corner dashed
+  ng_plot(46, 64, 284, 78);
+  ng_grid_freq(16);
+  gx_x = floor(ng_freq_x(6000)) + 0.5;
+  ng_col(NG_ACCENT, 0.5);
+  gx_y = ng_py;
+  while(
+    gfx_line(gx_x, gx_y, gx_x, min(gx_y + 3 * ng_s, ng_py + ng_ph), 0);
+    gx_y += 6 * ng_s;
+    gx_y < ng_py + ng_ph;
+  );
+  gx_lim = 32 / 3;
+  gx_zy = ng_lin_y(0, -gx_lim, gx_lim);
+  ng_col(NG_ACCENT, 0.10);
+  gx_i = 0;
+  loop(floor(ng_pw) + 1,
+    gfx_line(ng_px + gx_i, gx_zy, ng_px + gx_i, ng_lin_y(gx_db(20 * 1000 ^ (gx_i / ng_pw)), -gx_lim, gx_lim), 0);
+    gx_i += 1;
+  );
+  ng_col(NG_ACCENT, 1);
+  gx_i = 0;
+  loop(floor(ng_pw) + 1,
+    gx_y = ng_lin_y(gx_db(20 * 1000 ^ (gx_i / ng_pw)), -gx_lim, gx_lim);
+    gx_i == 0 ? ng_line_start(ng_px, gx_y) : ng_line_to(ng_px + gx_i, gx_y);
+    gx_i += 1;
+  );
+
+  // slider card
+  slider1 == 0 ? sprintf(#gx_cap, "FLAT") : sprintf(#gx_cap, "TREBLE +%.1f dB", slider1 * 0.09);
+  sprintf(#gx_val, "%d", floor(slider1 + 0.5));
+  ng_set_slider(ng_one_slider_control("AMOUNT", #gx_cap, #gx_val, "FLAT", "BRIGHT", slider1, 0, 100, 50, 0), 1) ? update();
+
+  ng_end();

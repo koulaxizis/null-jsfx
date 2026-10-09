@@ -1,0 +1,110 @@
+desc:NULL Sweeper GFX
+author: Christos Koulaxizis
+tags: filter sweep lowpass resonance creative gui
+//category: One Slider
+//NULL JSFX v2.0 • https://nulljsfx.tech • MIT License
+
+import null_gfx.jsfx-inc
+
+slider1:50<0,100,1>-Amount
+
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
+
+@init
+  // NULL Sweeper (../sweeper.jsfx) with its own interface: same audio code, plus @gfx.
+  // DJ-style filter sweep on one knob. 50 = open (no effect). Below 50 a low-pass closes
+  // from 20 kHz down to 80 Hz; above 50 a high-pass rises from 20 Hz up to 8 kHz.
+  // A little resonance builds up as the filter moves away from the centre.
+  gfx_ext_retina = 1;
+
+  // TPT state-variable filter, state in this.ic1 / this.ic2
+  function svf(x) local(v1, v2, v3)
+  (
+    v3 = x - this.ic2;
+    v1 = a1 * this.ic1 + a2 * v3;
+    v2 = this.ic2 + a2 * this.ic1 + a3 * v3;
+    this.ic1 = 2 * v1 - this.ic1;
+    this.ic2 = 2 * v2 - this.ic2;
+    mode < 0 ? v2 : x - k * v1 - v2;
+  );
+
+  function update()
+  (
+    pos = (slider1 - 50) / 50;      // -1 .. +1
+    mode = pos < 0 ? -1 : pos > 0 ? 1 : 0;
+    d = abs(pos);
+    fc = mode < 0 ? 20000 * pow(80 / 20000, d) : 20 * pow(8000 / 20, d);
+    fc = min(fc, srate * 0.45);
+    q = 0.707 + d * 1.5;
+    g = tan($pi * fc / srate);
+    k = 1 / q;
+    a1 = 1 / (1 + g * (g + k));
+    a2 = g * a1;
+    a3 = g * a2;
+  );
+
+  // response in dB at frequency f: the TPT SVF is the bilinear transform of
+  // 1/(s^2 + k s + 1) (LP) and s^2/(s^2 + k s + 1) (HP), s = j tan(pi f/srate) / g
+  function gx_db(f) local(om, re, im)
+  (
+    mode == 0 ? 0 : (
+      om = tan($pi * min(f, srate * 0.499) / srate) / g;
+      re = 1 - om * om;
+      im = k * om;
+      10 * log10(max((mode < 0 ? 1 : om * om * om * om) / (re * re + im * im), 0.0000000001));
+    );
+  );
+
+@slider
+  update();
+
+@sample
+  mode != 0 ? (
+    spl0 = L.svf(spl0);
+    spl1 = R.svf(spl1);
+  );
+
+@gfx 360 240
+  ng_one_slider_begin("SWEEPER");
+
+  // display: the filter's magnitude response, cutoff dashed
+  ng_plot(46, 64, 284, 78);
+  ng_grid_freq(24);
+  mode != 0 ? (
+    gx_x = floor(ng_freq_x(fc)) + 0.5;
+    ng_col(NG_ACCENT, 0.5);
+    gx_y = ng_py;
+    while(
+      gfx_line(gx_x, gx_y, gx_x, min(gx_y + 3 * ng_s, ng_py + ng_ph), 0);
+      gx_y += 6 * ng_s;
+      gx_y < ng_py + ng_ph;
+    );
+  );
+  gx_zy = ng_lin_y(0, -16, 16);
+  ng_col(NG_ACCENT, 0.10);
+  gx_i = 0;
+  loop(floor(ng_pw) + 1,
+    gfx_line(ng_px + gx_i, gx_zy, ng_px + gx_i, ng_lin_y(gx_db(20 * 1000 ^ (gx_i / ng_pw)), -16, 16), 0);
+    gx_i += 1;
+  );
+  ng_col(NG_ACCENT, 1);
+  gx_i = 0;
+  loop(floor(ng_pw) + 1,
+    gx_y = ng_lin_y(gx_db(20 * 1000 ^ (gx_i / ng_pw)), -16, 16);
+    gx_i == 0 ? ng_line_start(ng_px, gx_y) : ng_line_to(ng_px + gx_i, gx_y);
+    gx_i += 1;
+  );
+
+  // slider card
+  mode == 0 ? sprintf(#gx_cap, "OPEN") : (
+    strcpy(#gx_type, mode < 0 ? "LOW-PASS" : "HIGH-PASS");
+    fc >= 1000 ? sprintf(#gx_cap, "%s %.1f kHz  Q %.2f", #gx_type, fc / 1000, q)
+               : sprintf(#gx_cap, "%s %.0f Hz  Q %.2f", #gx_type, fc, q);
+  );
+  sprintf(#gx_val, "%d", floor(slider1 + 0.5));
+  ng_set_slider(ng_one_slider_control("AMOUNT", #gx_cap, #gx_val, "LOW", "HIGH", slider1, 0, 100, 50, 1), 1) ? update();
+
+  ng_end();
