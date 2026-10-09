@@ -36,7 +36,7 @@ plugin/DistrhoPluginInfo.h
 plugin/PluginTilt.cpp   DPF Plugin wrapper
 plugin/TiltDSP.hpp      Framework-free DSP and magnitude-response maths (shared by the UI and the test)
 plugin/UITilt.cpp       NanoVG UI, 360x240, scales automatically for HiDPI
-plugin/Theme.hpp        Provisional "carbon" palette, kept in one place
+plugin/Theme.hpp        nulljsfx.tech palette with a silver accent (matches gfx/null_gfx.jsfx-inc)
 test/compare_tilt.cpp   Sample-by-sample comparison: ysfx(JSFX) vs CLAP (dlopen) vs DSP class
 scripts/build.sh        One build script for Linux, macOS and Windows (Git Bash), also used by CI
 (CI: the repository workflow .github/workflows/prototypes.yml builds this on all three OSes)
@@ -80,7 +80,8 @@ apt-get install xvfb jackd2 xdotool imagemagick
 cmake -S . -B build-jack -DNULLTILT_JACK=ON -DNULLTILT_VST3=OFF -DNULLTILT_CLAP=OFF && cmake --build build-jack
 Xvfb :77 & export DISPLAY=:77
 jackd -d dummy -r 48000 & ./build-jack/bin/null_tilt_native &
-import -window "$(xdotool search --name 'Tilt Native')" shot.png
+xdotool windowsize "$(xdotool search --name "Tilt Native")" 720 480   # 2x; the UI scales itself
+import -window "$(xdotool search --name "Tilt Native")" shot.png
 ```
 
 ## Known limitations

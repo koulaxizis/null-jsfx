@@ -1,0 +1,230 @@
+desc:NULL JSFX shared GFX library
+//NULL JSFX v2.0 • https://nulljsfx.tech • MIT License
+//
+// Shared look for every "NULL X GFX" plugin: the nulljsfx.tech palette, header, cards,
+// knobs and text helpers. Import it with `import null_gfx.jsfx-inc` and draw in design
+// units (ng_begin sets the scale); X() and Y() turn design units into window pixels.
+
+@init
+  // ---- palette: the nulljsfx.tech dark theme (assets/css/style.css) ---------------------
+  NG_BG      = 0x1b1a18;  // --bg
+  NG_BG2     = 0x131211;  // --bg-secondary
+  NG_CARD    = 0x232220;  // --card-bg
+  NG_BORDER  = 0x333333;  // --border
+  NG_TEXT    = 0xe0e0e0;  // --text
+  NG_MUTED   = 0x999999;  // --muted
+  NG_ACCENT  = 0xc4c4c4;  // silver (the site purple belongs to Noxpress)
+  NG_ICON_A  = 0x888888;  // icon gradient, bottom
+  NG_ICON_B  = 0xaaaaaa;  // icon gradient, top
+  NG_LOGO_BG = 0x2d2d2d;  // logo tile
+  NG_LOGO_ED = 0x4a4a4a;  // logo tile outline
+  NG_FONT    = "Segoe UI";
+
+  function ng_col(rgb, a)
+  (
+    gfx_r = ((rgb >> 16) & 255) / 255;
+    gfx_g = ((rgb >> 8) & 255) / 255;
+    gfx_b = (rgb & 255) / 255;
+    gfx_a = a;
+  );
+
+  function ng_mix(c1, c2, k, a)
+  (
+    gfx_r = (((c1 >> 16) & 255) * (1 - k) + ((c2 >> 16) & 255) * k) / 255;
+    gfx_g = (((c1 >> 8) & 255) * (1 - k) + ((c2 >> 8) & 255) * k) / 255;
+    gfx_b = ((c1 & 255) * (1 - k) + (c2 & 255) * k) / 255;
+    gfx_a = a;
+  );
+
+  // design units -> pixels
+  function X(v) ( ng_ox + v * ng_s; );
+  function Y(v) ( ng_oy + v * ng_s; );
+
+  // font slot, size in design units, bold flag
+  function ng_font(slot, size, bold)
+  (
+    bold ? gfx_setfont(slot, NG_FONT, max(7, floor(size * ng_s)), 'b')
+         : gfx_setfont(slot, NG_FONT, max(7, floor(size * ng_s)));
+  );
+
+  // text at design (x, y), vertically centred; align 0 left, 1 centre, 2 right;
+  // track = letter spacing in design units. Leaves gfx_x at the end of the text.
+  function ng_txt(str, x, y, align, track) local(n, i, w, cw, chh, tr)
+  (
+    tr = track * ng_s;
+    n = strlen(str);
+    w = 0;
+    i = 0;
+    loop(n, strcpy_substr(#ng_ch, str, i, 1); gfx_measurestr(#ng_ch, cw, chh); w += cw + tr; i += 1;);
+    w -= tr;
+    gfx_x = align == 1 ? X(x) - w / 2 : (align == 2 ? X(x) - w : X(x));
+    gfx_y = floor(Y(y) - gfx_texth / 2 + 0.5);
+    i = 0;
+    loop(n, strcpy_substr(#ng_ch, str, i, 1); gfx_drawstr(#ng_ch); gfx_x += tr; i += 1;);
+  );
+
+  // arc of thickness th pixels (angles in radians, 0 = up, clockwise), pixel coordinates
+  function ng_arc(x, y, r, a1, a2, th) local(k, n)
+  (
+    n = max(1, floor(th * 2));
+    k = 0;
+    loop(n + 1, gfx_arc(x, y, r - th / 2 + k * th / n, a1, a2, 1); k += 1;);
+  );
+
+  // card: --card-bg with a 1px --border outline, design units
+  function ng_card(x, y, w, h)
+  (
+    ng_col(NG_CARD, 1);
+    gfx_roundrect(X(x), Y(y), w * ng_s, h * ng_s, 6 * ng_s, 1);
+    gfx_rect(X(x) + 1, Y(y) + 1, w * ng_s - 1, h * ng_s - 1);
+    ng_col(NG_BORDER, 1);
+    gfx_roundrect(X(x), Y(y), w * ng_s, h * ng_s, 6 * ng_s, 1);
+  );
+
+  // the site logo tile: rounded square with the grey-gradient "N", design units
+  function ng_logo(x, y, size) local(px, py, sz, k, n, th, i)
+  (
+    px = X(x); py = Y(y); sz = size * ng_s;
+    ng_col(NG_LOGO_BG, 1);
+    gfx_roundrect(px, py, sz, sz, sz * 0.15, 1);
+    gfx_rect(px + 1, py + 1, sz - 1, sz - 1);
+    ng_col(NG_LOGO_ED, 1);
+    gfx_roundrect(px, py, sz, sz, sz * 0.15, 1);
+    th = max(1, sz * 0.075);
+    n = max(1, floor(th * 2));
+    i = 0;
+    loop(n + 1,
+      k = (i / n - 0.5) * th;
+      ng_mix(NG_ICON_A, NG_ICON_B, i / n, 1);
+      gfx_line(px + sz * 0.30 + k, py + sz * 0.75, px + sz * 0.30 + k, py + sz * 0.25, 1);
+      gfx_line(px + sz * 0.30 + k, py + sz * 0.25, px + sz * 0.70 + k, py + sz * 0.75, 1);
+      gfx_line(px + sz * 0.70 + k, py + sz * 0.75, px + sz * 0.70 + k, py + sz * 0.25, 1);
+      i += 1;
+    );
+  );
+
+  // start a frame: fit the design (dw x dh) into the window, centred, and clear it
+  function ng_begin(dw, dh)
+  (
+    ng_dw = dw;
+    ng_dh = dh;
+    ng_s = min(gfx_w / dw, gfx_h / dh);
+    ng_ox = floor((gfx_w - dw * ng_s) / 2);
+    ng_oy = floor((gfx_h - dh * ng_s) / 2);
+    ng_col(NG_BG, 1);
+    gfx_rect(0, 0, gfx_w, gfx_h);
+    ng_lmb = mouse_cap & 1;
+    ng_click = ng_lmb && !ng_prev_lmb;
+    ng_now = time_precise();
+  );
+
+  // end a frame: remember the mouse button for click detection
+  function ng_end()
+  (
+    ng_prev_lmb = ng_lmb;
+    mouse_wheel = 0;
+  );
+
+  // header: logo, "NULL JSFX" above the plugin name, category on the right, divider below
+  function ng_header(name, category)
+  (
+    ng_logo(14, 10, 24);
+    ng_font(1, 8, 1);
+    ng_col(NG_MUTED, 1);
+    ng_txt("NULL JSFX", 46, 15, 0, 2.5);
+    ng_font(2, 14, 1);
+    ng_col(NG_TEXT, 1);
+    ng_txt(name, 46, 28, 0, 2);
+    ng_font(1, 8, 1);
+    ng_col(NG_MUTED, 1);
+    ng_txt(category, ng_dw - 14, 22, 2, 2);
+    ng_col(NG_BORDER, 1);
+    gfx_line(X(0), Y(44), X(ng_dw), Y(44), 0);
+  );
+
+  // knob at design (x, y) with body radius r; norm 0..1; bipolar draws the value arc from
+  // the centre. Returns 1 while the mouse is over it.
+  function ng_knob(x, y, r, norm, bipolar, active) local(kx, ky, kr, tr, amax, ang, a0, hover, i, n, px1, py1, px2, py2, k, dx, dy)
+  (
+    kx = X(x); ky = Y(y); kr = r * ng_s; tr = (r + 10) * ng_s;
+    amax = 0.75 * $pi;
+    ang = (norm * 2 - 1) * amax;
+    a0 = bipolar ? 0 : -amax;
+    dx = mouse_x - kx; dy = mouse_y - ky;
+    hover = sqrt(dx * dx + dy * dy) < tr + 6 * ng_s;
+
+    // track and value arc
+    ng_col(hover || active ? 0x45433f : NG_BORDER, 1);
+    ng_arc(kx, ky, tr, -amax, amax, 4 * ng_s);
+    ng_col(NG_ACCENT, 1);
+    abs(ang - a0) > 0.001 ? ng_arc(kx, ky, tr, min(a0, ang), max(a0, ang), 4 * ng_s);
+    bipolar ? (
+      ng_col(NG_MUTED, 1);
+      gfx_line(kx, ky - tr - 5 * ng_s, kx, ky - tr - 8 * ng_s, 1);
+    );
+
+    // body: shadow, grey-gradient rim like the site icons, dark cap
+    ng_col(0x000000, 0.35);
+    gfx_circle(kx, ky + 2 * ng_s, kr + 1.5 * ng_s, 1, 1);
+    n = 12;
+    i = 0;
+    loop(n,
+      ng_mix(NG_ICON_A, NG_ICON_B, i / (n - 1), 1);
+      gfx_circle(kx, ky - i / n * 2 * ng_s, kr * (1 - i / n * 0.06), 1, 1);
+      i += 1;
+    );
+    n = 10;
+    i = 0;
+    loop(n,
+      ng_mix(NG_CARD, 0x34322f, i / (n - 1), 1);
+      gfx_circle(kx, ky - i / n * 3 * ng_s, (kr - 3 * ng_s) * (1 - i / n * 0.35), 1, 1);
+      i += 1;
+    );
+
+    // pointer
+    px1 = kx + sin(ang) * kr * 0.30;
+    py1 = ky - cos(ang) * kr * 0.30;
+    px2 = kx + sin(ang) * (kr - 7 * ng_s);
+    py2 = ky - cos(ang) * (kr - 7 * ng_s);
+    ng_col(NG_TEXT, 1);
+    k = -1.2 * ng_s;
+    loop(7,
+      gfx_line(px1 + cos(ang) * k, py1 + sin(ang) * k, px2 + cos(ang) * k, py2 + sin(ang) * k, 1);
+      k += 0.4 * ng_s;
+    );
+    hover;
+  );
+
+  // Knob interaction for a value in [lo, hi]. Call once per frame per knob with its hover
+  // result and an id; returns the new value. Drag (Ctrl = fine), double-click resets to
+  // def, wheel steps by step. px_range = design pixels for the full range.
+  function ng_knob_input(id, hover, v, lo, hi, def, step, px_range) local(sens, nv)
+  (
+    nv = v;
+    ng_click && hover ? (
+      ng_now - ng_last_click < 0.3 && ng_last_id == id ? (
+        nv = def;
+        ng_drag = 0;
+        ng_last_click = 0;
+      ) : (
+        ng_drag = id;
+        ng_drag_val = v;
+        ng_lx = mouse_x;
+        ng_ly = mouse_y;
+        ng_last_click = ng_now;
+        ng_last_id = id;
+      );
+    );
+    !ng_lmb ? ng_drag = 0;
+    ng_drag == id ? (
+      sens = (hi - lo) / px_range * ((mouse_cap & 4) ? 0.1 : 1);
+      ng_drag_val = max(lo, min(hi, ng_drag_val + ((mouse_x - ng_lx) + (ng_ly - mouse_y)) / ng_s * sens));
+      ng_lx = mouse_x;
+      ng_ly = mouse_y;
+      nv = ng_drag_val;
+    );
+    hover && mouse_wheel != 0 && !ng_drag ? (
+      nv = max(lo, min(hi, v + (mouse_wheel > 0 ? step : -step)));
+    );
+    nv;
+  );

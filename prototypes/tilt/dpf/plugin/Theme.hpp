@@ -1,10 +1,10 @@
 /*
- * NULL Tilt Native - provisional "carbon" palette
+ * NULL JSFX - shared palette for the VST3/CLAP plugins
  * Copyright (C) 2026 Christos Koulaxizis / NULL JSFX
  * SPDX-License-Identifier: MIT
  *
- * All UI colours live here so the palette can be swapped in one place.
- * Values are 0xRRGGBB; alpha is applied at the call site where needed.
+ * The nulljsfx.tech dark theme (assets/css/style.css), the same values as the GFX JSFX
+ * library (null_gfx.jsfx-inc). Values are 0xRRGGBB; alpha is applied at the call site.
  */
 
 #pragma once
@@ -13,15 +13,17 @@
 
 namespace theme {
 
-static constexpr uint32_t kBackground = 0x232323; // window background
-static constexpr uint32_t kPanel      = 0x2b2b2b; // knob well / graph panel
-static constexpr uint32_t kPanelEdge  = 0x363636; // 1px panel outline
-static constexpr uint32_t kAccentLo   = 0x888888; // knob / curve gradient start
-static constexpr uint32_t kAccentHi   = 0xaaaaaa; // knob / curve gradient end
-static constexpr uint32_t kText       = 0xd0d0d0; // primary text
-static constexpr uint32_t kTextMuted  = 0x808080; // labels, grid captions
-static constexpr uint32_t kGrid       = 0x3a3a3a; // graph grid lines
-static constexpr uint32_t kKnobBody   = 0x1c1c1c; // knob cap (darker than panel)
-static constexpr uint32_t kTrack      = 0x3c3c3c; // unfilled knob arc
+static constexpr uint32_t kBackground = 0x1b1a18; // --bg
+static constexpr uint32_t kCard       = 0x232220; // --card-bg
+static constexpr uint32_t kBorder     = 0x333333; // --border
+static constexpr uint32_t kText       = 0xe0e0e0; // --text
+static constexpr uint32_t kMuted      = 0x999999; // --muted
+static constexpr uint32_t kAccent     = 0xc4c4c4; // silver (the site purple belongs to Noxpress)
+static constexpr uint32_t kIconLo     = 0x888888; // icon gradient, bottom
+static constexpr uint32_t kIconHi     = 0xaaaaaa; // icon gradient, top
+static constexpr uint32_t kLogoTile   = 0x2d2d2d; // logo tile
+static constexpr uint32_t kLogoEdge   = 0x4a4a4a; // logo tile outline
+static constexpr uint32_t kTrackHover = 0x45433f; // knob track under the mouse, 0 dB line
+static constexpr uint32_t kCapTop     = 0x34322f; // knob cap highlight
 
 } // namespace theme

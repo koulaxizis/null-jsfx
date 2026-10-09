@@ -1,8 +1,7 @@
 name: Tilt prototypes
 
-# Builds the three NULL Tilt prototypes for Windows, macOS and Linux:
+# Builds the NULL Tilt prototypes for Windows, macOS and Linux:
 #   NULL Tilt GFX     JSFX with its own @gfx interface (prototypes/tilt/gfx)
-#   NULL Tilt YS      the GFX JSFX embedded in a ysfx-based VST3/CLAP (prototypes/tilt/ysfx)
 #   NULL Tilt Native  C++ rewrite with DPF, VST3/CLAP (prototypes/tilt/dpf)
 # Download "NULL-Tilt-prototypes-<os>" from the run's artifacts.
 
@@ -33,7 +32,7 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update
-          sudo apt-get install -y build-essential cmake ninja-build git pkg-config nasm \
+          sudo apt-get install -y build-essential cmake ninja-build git pkg-config \
             libasound2-dev libfreetype-dev libfontconfig1-dev libgl1-mesa-dev libx11-dev \
             libxcomposite-dev libxcursor-dev libxext-dev libxinerama-dev libxrandr-dev \
             libxrender-dev libdbus-1-dev
@@ -42,23 +41,15 @@ jobs:
         if: runner.os == 'macOS'
         run: brew install ninja
 
-      - name: Windows deps
-        if: runner.os == 'Windows'
-        run: choco install nasm -y
-
-      - name: Build NULL Tilt YS
-        run: prototypes/tilt/ysfx/build.sh
-
       - name: Build NULL Tilt Native
         run: prototypes/tilt/dpf/scripts/build.sh
 
       - name: Package
         run: |
           out="NULL-Tilt-prototypes-${{ matrix.name }}"
-          mkdir -p "$out/1 - NULL Tilt GFX (JSFX)" "$out/2 - NULL Tilt YS (VST3, CLAP)" "$out/3 - NULL Tilt Native (VST3, CLAP)"
-          cp prototypes/tilt/gfx/null_tilt_gfx.jsfx "$out/1 - NULL Tilt GFX (JSFX)/"
-          cp -R prototypes/tilt/ysfx/dist/${{ matrix.name }}/. "$out/2 - NULL Tilt YS (VST3, CLAP)/"
-          cp -R prototypes/tilt/dpf/dist/null_tilt_native.vst3 prototypes/tilt/dpf/dist/null_tilt_native.clap "$out/3 - NULL Tilt Native (VST3, CLAP)/"
+          mkdir -p "$out/1 - NULL Tilt GFX (JSFX)" "$out/2 - NULL Tilt Native (VST3, CLAP)"
+          cp prototypes/tilt/gfx/null_tilt_gfx.jsfx prototypes/tilt/gfx/null_gfx.jsfx-inc "$out/1 - NULL Tilt GFX (JSFX)/"
+          cp -R prototypes/tilt/dpf/dist/null_tilt_native.vst3 prototypes/tilt/dpf/dist/null_tilt_native.clap "$out/2 - NULL Tilt Native (VST3, CLAP)/"
           cp prototypes/tilt/INSTALL.txt "$out/"
 
       - uses: actions/upload-artifact@v4

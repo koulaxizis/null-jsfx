@@ -4,6 +4,8 @@ tags: eq tilt tone bass treble balance tonal gui
 //category: One Slider
 //NULL JSFX v2.0 • https://nulljsfx.tech • MIT License
 
+import null_gfx.jsfx-inc
+
 slider1:0<-100,100,1>-Amount
 
 in_pin:Left
@@ -20,61 +22,12 @@ out_pin:Right
   gain_init = 0;
   gfx_ext_retina = 1;
 
-  // ---- theme "carbon" (provisional): swap the palette here --------------------------
-  COL_BG     = 0x232323;  // window background
-  COL_PANEL  = 0x2b2b2b;  // panels
-  COL_EDGE   = 0x343434;  // panel outline / knob track
-  COL_GRID   = 0x3c3c3c;  // display grid
-  COL_KNOB_A = 0x888888;  // knob gradient, edge
-  COL_KNOB_B = 0xaaaaaa;  // knob gradient, highlight
-  COL_TEXT   = 0xd0d0d0;  // main text
-  COL_MUTED  = 0x808080;  // secondary text
-  COL_ACCENT = 0xaaaaaa;  // the one accent colour (value arc, response curve)
-
   function update_coefs()
   (
     t = slider1 / 100;
     c = exp(-2 * $pi * 700 / srate);
     g_low = 10 ^ (-t * 6 / 20);
     g_high = 10 ^ (t * 6 / 20);
-  );
-
-  function col(rgb, a)
-  (
-    gfx_r = ((rgb >> 16) & 255) / 255;
-    gfx_g = ((rgb >> 8) & 255) / 255;
-    gfx_b = (rgb & 255) / 255;
-    gfx_a = a;
-  );
-
-  function colmix(c1, c2, k, a)
-  (
-    gfx_r = (((c1 >> 16) & 255) * (1 - k) + ((c2 >> 16) & 255) * k) / 255;
-    gfx_g = (((c1 >> 8) & 255) * (1 - k) + ((c2 >> 8) & 255) * k) / 255;
-    gfx_b = ((c1 & 255) * (1 - k) + (c2 & 255) * k) / 255;
-    gfx_a = a;
-  );
-
-  // text at (x, y) vertically centred; align 0 left, 1 centre, 2 right; track = letter spacing
-  function txt(str, x, y, align, track) local(n, i, w, cw, chh)
-  (
-    n = strlen(str);
-    w = 0;
-    i = 0;
-    loop(n, strcpy_substr(#ch, str, i, 1); gfx_measurestr(#ch, cw, chh); w += cw + track; i += 1;);
-    w -= track;
-    gfx_x = align == 1 ? x - w / 2 : (align == 2 ? x - w : x);
-    gfx_y = floor(y - gfx_texth / 2 + 0.5);
-    i = 0;
-    loop(n, strcpy_substr(#ch, str, i, 1); gfx_drawstr(#ch); gfx_x += track; i += 1;);
-  );
-
-  // arc of thickness th (angles in radians, 0 = up, clockwise)
-  function arc(x, y, r, a1, a2, th) local(k, n)
-  (
-    n = max(1, floor(th * 2));
-    k = 0;
-    loop(n + 1, gfx_arc(x, y, r - th / 2 + k * th / n, a1, a2, 1); k += 1;);
   );
 
   function set_amount(v)
@@ -128,102 +81,33 @@ out_pin:Right
   spl1 = lp_r * gl + (spl1 - lp_r) * gh;
 
 @gfx 360 240
-  // ---- layout: design at 360x240, scaled uniformly and centred in the window ----------
-  s = min(gfx_w / 360, gfx_h / 240);
-  ox = floor((gfx_w - 360 * s) / 2);
-  oy = floor((gfx_h - 240 * s) / 2);
+  ng_begin(360, 240);
+  ng_header("TILT", "ONE SLIDER");
 
-  col(COL_BG, 1);
-  gfx_rect(0, 0, gfx_w, gfx_h);
-
-  // ---- header ---------------------------------------------------------------------------
-  gfx_setfont(1, "Arial", max(8, floor(11 * s)), 'b');
-  col(COL_TEXT, 1);
-  txt("NULL", ox + 16 * s, oy + 18 * s, 0, 2 * s);
-  col(COL_MUTED, 1);
-  txt("TILT", gfx_x + 5 * s, oy + 18 * s, 0, 2 * s);
-  gfx_setfont(2, "Arial", max(7, floor(9 * s)), 'b');
-  col(COL_EDGE, 1);
-  gfx_roundrect(ox + 312 * s, oy + 11 * s, 32 * s, 14 * s, 3 * s, 1);
-  col(COL_MUTED, 1);
-  txt("GFX", ox + 328 * s, oy + 18 * s, 1, 1 * s);
-
-  // ---- knob ----------------------------------------------------------------------------
-  kx = ox + 80 * s;
-  ky = oy + 112 * s;
-  kr = 34 * s;          // knob body radius
-  tr = 46 * s;          // value arc radius
-  amax = 0.75 * $pi;
-  ang = slider1 / 100 * amax;
-
-  mdx = mouse_x - kx;
-  mdy = mouse_y - ky;
-  hover = sqrt(mdx * mdx + mdy * mdy) < tr + 8 * s;
-
-  col(COL_PANEL, 1);
-  gfx_circle(kx, ky, tr + 10 * s, 1, 1);
-  col(drag || hover ? COL_GRID : COL_EDGE, 1);
-  arc(kx, ky, tr, -amax, amax, 4 * s);
-  col(COL_ACCENT, 1);
-  ang != 0 ? arc(kx, ky, tr, min(0, ang), max(0, ang), 4 * s);
-
-  // centre and end ticks
-  col(COL_MUTED, 1);
-  gfx_line(kx, ky - tr - 6 * s, kx, ky - tr - 10 * s, 1);
-
-  // body: stacked circles shifted upwards give a soft top-lit dome
-  col(0x1a1a1a, 1);
-  gfx_circle(kx, ky + 1.5 * s, kr + 1.5 * s, 1, 1);
-  i = 0;
-  n = 14;
-  loop(n,
-    colmix(COL_KNOB_A, COL_KNOB_B, i / (n - 1), 1);
-    gfx_circle(kx, ky - i / n * 4 * s, kr * (1 - i / n * 0.55), 1, 1);
-    i += 1;
-  );
-  // pointer
-  px1 = kx + sin(ang) * kr * 0.35;
-  py1 = ky - cos(ang) * kr * 0.35;
-  px2 = kx + sin(ang) * kr * 0.86;
-  py2 = ky - cos(ang) * kr * 0.86;
-  col(COL_BG, 1);
-  k = -1.2;
-  loop(7,
-    gfx_line(px1 + cos(ang) * k * s, py1 + sin(ang) * k * s, px2 + cos(ang) * k * s, py2 + sin(ang) * k * s, 1);
-    k += 0.4;
-  );
-
-  // end labels
-  gfx_setfont(2, "Arial", max(7, floor(9 * s)), 'b');
-  col(COL_MUTED, 1);
-  txt("DARK", kx - sin(amax) * tr - 2 * s, ky + cos(amax) * -tr + 14 * s, 1, 1 * s);
-  txt("BRIGHT", kx + sin(amax) * tr + 2 * s, ky + cos(amax) * -tr + 14 * s, 1, 1 * s);
-
-  // value readout
+  // ---- knob card -------------------------------------------------------------------------
+  ng_card(14, 56, 136, 170);
+  ng_font(1, 8, 1);
+  ng_col(NG_MUTED, 1);
+  ng_txt("AMOUNT", 82, 70, 1, 2);
+  hover = ng_knob(82, 132, 30, (slider1 + 100) / 200, 1, ng_drag == 1);
+  set_amount(ng_knob_input(1, hover, slider1, -100, 100, 0, 1, 200));
+  ng_font(1, 7, 1);
+  ng_col(NG_MUTED, 1);
+  ng_txt("DARK", 82 - 32, 132 + 36, 1, 1);
+  ng_txt("BRIGHT", 82 + 32, 132 + 36, 1, 1);
   v = floor(slider1 + 0.5);
   v > 0 ? sprintf(#val, "+%d", v) : sprintf(#val, "%d", v);
-  gfx_setfont(3, "Arial", max(10, floor(22 * s)), 'b');
-  col(COL_TEXT, 1);
-  txt(#val, kx, oy + 190 * s, 1, 0);
-  gfx_setfont(2, "Arial", max(7, floor(9 * s)), 'b');
-  col(COL_MUTED, 1);
-  txt("AMOUNT", kx, oy + 212 * s, 1, 2 * s);
+  ng_font(3, 22, 1);
+  ng_col(NG_TEXT, 1);
+  ng_txt(#val, 82, 196, 1, 0);
+  ng_font(4, 8, 0);
+  ng_col(NG_MUTED, 1);
+  slider1 == 0 ? sprintf(#cap, "FLAT") : sprintf(#cap, "LOW %+.1f  HIGH %+.1f dB", 0 - slider1 * 0.06, slider1 * 0.06);
+  ng_txt(#cap, 82, 214, 1, 0.3);
 
-  // ---- response display ----------------------------------------------------------------
-  bx = ox + 156 * s;
-  by = oy + 36 * s;
-  bw = 192 * s;
-  bh = 192 * s;
-  col(COL_PANEL, 1);
-  gfx_roundrect(bx, by, bw, bh, 4 * s, 1);
-  gfx_rect(bx + 1, by + 1, bw - 1, bh - 1);
-  col(COL_EDGE, 1);
-  gfx_roundrect(bx, by, bw, bh, 4 * s, 1);
-
-  gx = bx + 26 * s;     // plot area
-  gy = by + 14 * s;
-  gw = bw - 36 * s;
-  gh_px = bh - 42 * s;
+  // ---- response card ---------------------------------------------------------------------
+  ng_card(160, 56, 186, 170);
+  gx = X(186); gy = Y(70); gw = 150 * ng_s; gh_px = 130 * ng_s;
   lf = log(1000);
 
   // frequency grid: 1..9 x decade, decades brighter
@@ -234,109 +118,61 @@ out_pin:Right
       f = m * d;
       f >= 20 && f <= 20000 ? (
         xx = floor(gx + gw * log(f / 20) / lf) + 0.5;
-        col(COL_GRID, m == 1 ? 1 : 0.45);
+        ng_col(NG_BORDER, m == 1 ? 1 : 0.5);
         gfx_line(xx, gy, xx, gy + gh_px, 0);
       );
       m += 1;
     );
     d *= 10;
   );
-  // dB grid (+-6, +-3) and 0 dB line
-  gfx_setfont(4, "Arial", max(7, floor(8 * s)));
+  // dB grid and labels
+  ng_font(4, 8, 0);
   db = -6;
   loop(5,
     yy = floor(gy + gh_px * (0.5 - db / 16)) + 0.5;
-    col(db == 0 ? 0x4a4a4a : COL_GRID, db == 0 ? 1 : 0.6);
+    ng_col(db == 0 ? 0x45433f : NG_BORDER, db == 0 ? 1 : 0.6);
     gfx_line(gx, yy, gx + gw, yy, 0);
     abs(db) == 6 || db == 0 ? (
-      col(COL_MUTED, 1);
+      ng_col(NG_MUTED, 1);
       db > 0 ? sprintf(#lbl, "+%d", db) : sprintf(#lbl, "%d", db);
-      txt(#lbl, gx - 5 * s, yy, 2, 0);
+      ng_txt(#lbl, 181, 70 + 130 * (0.5 - db / 16), 2, 0);
     );
     db += 3;
   );
-  // frequency labels
-  col(COL_MUTED, 1);
-  txt("100", gx + gw * log(5) / lf, gy + gh_px + 10 * s, 1, 0);
-  txt("1k", gx + gw * log(50) / lf, gy + gh_px + 10 * s, 1, 0);
-  txt("10k", gx + gw * log(500) / lf, gy + gh_px + 10 * s, 1, 0);
+  ng_col(NG_MUTED, 1);
+  ng_txt("100", 186 + 150 * log(5) / lf, 212, 1, 0);
+  ng_txt("1k", 186 + 150 * log(50) / lf, 212, 1, 0);
+  ng_txt("10k", 186 + 150 * log(500) / lf, 212, 1, 0);
 
-  // 700 Hz pivot marker (dashed)
+  // 700 Hz pivot (dashed)
   mx = floor(gx + gw * log(35) / lf) + 0.5;
-  col(COL_ACCENT, 0.35);
+  ng_col(NG_ACCENT, 0.5);
   yy = gy;
   while(
-    gfx_line(mx, yy, mx, min(yy + 3 * s, gy + gh_px), 0);
-    yy += 6 * s;
+    gfx_line(mx, yy, mx, min(yy + 3 * ng_s, gy + gh_px), 0);
+    yy += 6 * ng_s;
     yy < gy + gh_px;
   );
-  col(COL_MUTED, 1);
-  txt("700", mx, gy - 7 * s, 1, 0);
 
-  // actual magnitude response of the one-pole split for the current Amount
+  // magnitude response: soft fill to 0 dB, then the curve
   zy = gy + gh_px * 0.5;
-  col(COL_ACCENT, 0.10);
+  ng_col(NG_ACCENT, 0.10);
   xi = 0;
   loop(floor(gw) + 1,
-    f = 20 * 1000 ^ (xi / gw);
-    yy = gy + gh_px * (0.5 - tilt_db(f) / 16);
+    yy = gy + gh_px * (0.5 - tilt_db(20 * 1000 ^ (xi / gw)) / 16);
     gfx_line(gx + xi, zy, gx + xi, yy, 0);
     xi += 1;
   );
-  col(COL_ACCENT, 1);
+  ng_col(NG_ACCENT, 1);
   k = 0;
-  loop(2,
+  loop(3,
     xi = 0;
     loop(floor(gw) + 1,
-      f = 20 * 1000 ^ (xi / gw);
-      yy = gy + gh_px * (0.5 - tilt_db(f) / 16) + k * 0.7 * s;
+      yy = gy + gh_px * (0.5 - tilt_db(20 * 1000 ^ (xi / gw)) / 16) + (k - 1) * 0.6 * ng_s;
       xi == 0 ? (gfx_x = gx; gfx_y = yy;) : gfx_lineto(gx + xi, yy, 1);
       xi += 1;
     );
     k += 1;
   );
 
-  // gain at the ends of the spectrum
-  gfx_setfont(4, "Arial", max(7, floor(8 * s)));
-  col(COL_MUTED, 1);
-  slider1 == 0 ? (
-    sprintf(#lo, "0.0 dB");
-    sprintf(#hi, "0.0 dB");
-  ) : (
-    sprintf(#lo, "%+.1f dB", 0 - slider1 * 0.06);
-    sprintf(#hi, "%+.1f dB", slider1 * 0.06);
-  );
-  txt(#lo, gx + 4 * s, gy + 8 * s, 0, 0);
-  txt(#hi, gx + gw - 4 * s, gy + 8 * s, 2, 0);
-
-  // ---- interaction -----------------------------------------------------------------------
-  lmb = mouse_cap & 1;
-  now = time_precise();
-  lmb && !prev_lmb ? (
-    hover ? (
-      now - last_click < 0.3 ? (
-        set_amount(0);
-        drag = 0;
-        last_click = 0;
-      ) : (
-        drag = 1;
-        drag_val = slider1;
-        lx = mouse_x;
-        ly = mouse_y;
-        last_click = now;
-      );
-    );
-  );
-  !lmb ? drag = 0;
-  drag ? (
-    sens = (mouse_cap & 4) ? 0.1 : 0.8;
-    drag_val = max(-100, min(100, drag_val + ((mouse_x - lx) + (ly - mouse_y)) * sens / s));
-    lx = mouse_x;
-    ly = mouse_y;
-    set_amount(drag_val);
-  );
-  prev_lmb = lmb;
-  mouse_wheel != 0 ? (
-    set_amount(slider1 + (mouse_wheel > 0 ? 1 : -1));
-    mouse_wheel = 0;
-  );
+  ng_end();
