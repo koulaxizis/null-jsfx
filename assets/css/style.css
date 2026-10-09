@@ -1120,3 +1120,98 @@ html, body {
         margin-top: 0;
     }
 }
+/* Download modal */
+.modal-download {
+    max-width: 520px;
+}
+
+.download-options {
+    padding: 18px 22px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.download-option {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 14px 16px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--card-bg);
+    color: var(--text);
+    text-decoration: none;
+    transition: border-color 0.15s ease;
+}
+
+a.download-option:hover {
+    border-color: var(--muted);
+}
+
+.download-option-title {
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.download-option-desc {
+    font-size: 12px;
+    color: var(--muted);
+    line-height: 1.5;
+}
+
+.download-option-file {
+    font-size: 11px;
+    color: var(--muted);
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+.download-other {
+    margin: -2px 0 4px;
+    font-size: 11px;
+    color: var(--muted);
+    text-align: center;
+}
+
+.download-other a,
+.modal-download .changelog-footer a {
+    color: var(--muted);
+}
+
+.download-other a:hover,
+.modal-download .changelog-footer a:hover {
+    color: var(--text);
+}
+
+.download-copy {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    margin-top: 4px;
+}
+
+.download-copy code {
+    flex: 1;
+    min-width: 0;
+    overflow-x: auto;
+    white-space: nowrap;
+    font-size: 11px;
+    padding: 6px 8px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    background: var(--bg);
+}
+
+.download-copy button {
+    padding: 6px 12px;
+    font-size: 11px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    background: var(--bg);
+    color: var(--text);
+    cursor: pointer;
+}
+
+.download-copy button:hover {
+    border-color: var(--muted);
+}

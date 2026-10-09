@@ -7,13 +7,19 @@ Every plugin comes in up to three versions that sound the same:
   JSFX GFX    REAPER only, with its own interface ("NULL <Name> GFX")
   VST3, CLAP  any DAW, with the same interface ("<Name>" by NULL JSFX)
 
-JSFX (REAPER)
-    Copy the folder JSFX/null_jsfx into REAPER's Effects folder (Options >
+JSFX (REAPER), from NULL-JSFX-JSFX.zip
+    Copy the folder null_jsfx into REAPER's Effects folder (Options >
     Show REAPER resource path > Effects), then rescan in the FX browser. Keep
     the gfx folder inside it together: gfx/null_gfx.jsfx-inc holds the shared
     look of the GFX versions and is not an effect by itself.
 
-VST3 and CLAP (any DAW)
+JSFX with ReaPack (single plugins and automatic updates)
+    In REAPER: Extensions > ReaPack > Import repositories, paste
+      https://github.com/koulaxizis/null-jsfx/releases/latest/download/index.xml
+    then Extensions > ReaPack > Browse packages and install what you want.
+    The GFX versions are one package, "NULL JSFX GFX".
+
+VST3 and CLAP (any DAW), from NULL-JSFX-VST3-CLAP-<your OS>.zip
     Copy the "NULL JSFX" folder from VST3 and from CLAP to:
       Windows: C:\Program Files\Common Files\VST3
                C:\Program Files\Common Files\CLAP

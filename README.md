@@ -22,17 +22,25 @@ Each plugin belongs to one of three categories, written on line 4 of its file:
 
 ## Installation
 
-1. Download the latest release from [GitHub Releases](https://github.com/koulaxizis/null-jsfx/releases)
-2. Extract the `null-jsfx` folder to your Reaper Effects directory:
+Each [release](https://github.com/koulaxizis/null-jsfx/releases) has:
 
-   | OS | Path |
-   |----|------|
-   | **Windows** | `C:/Users/[Username]/AppData/Roaming/REAPER/Effects/` |
-   | **macOS** | `~/Library/Application Support/REAPER/Effects/` |
-   | **Linux** | `~/.config/REAPER/Effects/` |
+| File | What |
+|------|------|
+| `NULL-JSFX-JSFX.zip` | all JSFX plugins and their GFX versions, for every OS |
+| `NULL-JSFX-VST3-CLAP-Windows.zip` / `-macOS.zip` / `-Linux.zip` | the VST3 and CLAP versions |
+| `index.xml` | the ReaPack repository |
 
-3. Restart Reaper or re-scan plugin folders
-4. Find plugins under **JS: NULL JSFX** in the FX browser. The GFX versions (`NULL <Name> GFX`) live in the `gfx` folder; keep it inside `null_jsfx`.
+**JSFX:** extract the `null_jsfx` folder to your Reaper Effects directory, then restart Reaper or re-scan:
+
+| OS | Path |
+|----|------|
+| **Windows** | `C:/Users/[Username]/AppData/Roaming/REAPER/Effects/` |
+| **macOS** | `~/Library/Application Support/REAPER/Effects/` |
+| **Linux** | `~/.config/REAPER/Effects/` |
+
+Find plugins under **JS: NULL JSFX** in the FX browser. The GFX versions (`NULL <Name> GFX`) live in the `gfx` folder; keep it inside `null_jsfx`.
+
+**ReaPack** (single plugins, automatic updates): in REAPER, Extensions → ReaPack → Import repositories, paste `https://github.com/koulaxizis/null-jsfx/releases/latest/download/index.xml`, then browse packages. The GFX versions are one package, "NULL JSFX GFX".
 
 **VST3 and CLAP:** copy the `NULL JSFX` folders from the download's `VST3` and `CLAP` folders to `C:/Program Files/Common Files/VST3` and `.../CLAP` (Windows), `~/Library/Audio/Plug-Ins/VST3` and `.../CLAP` (macOS) or `~/.vst3` and `~/.clap` (Linux), then rescan in your DAW. They show up under their own names with **NULL JSFX** as the maker. The macOS builds are not code-signed; see `native/INSTALL.txt`.
 
@@ -47,7 +55,7 @@ Each plugin belongs to one of three categories, written on line 4 of its file:
 ## Development
 
 - `tests/run.sh` lints every plugin and renders it at 44.1, 48 and 96 kHz with default, extreme and random settings (it builds the [ysfx](https://github.com/jpcima/ysfx) JSFX engine on first run). CI runs it on every push.
-- `native/` builds the VST3/CLAP versions with [DPF](https://github.com/DISTRHO/DPF); `DATA/Effects/null_jsfx/gfx/` holds the GFX versions and their shared interface code. `native/README.md` explains how to add a plugin. CI builds all three OSes, checks that every version sounds identical to its JSFX and uploads a package per OS (attached to each published release).
+- `native/` builds the VST3/CLAP versions with [DPF](https://github.com/DISTRHO/DPF); `DATA/Effects/null_jsfx/gfx/` holds the GFX versions and their shared interface code. `native/README.md` explains how to add a plugin. CI builds all three OSes, checks that every version sounds identical to its JSFX and uploads the packages (attached to each published release, together with the ReaPack index from `tools/build_reapack.py`).
 - `tools/build_site.py` regenerates the plugin cards and info guides on the website and the plugin lists in this README and `llms.txt` from the plugin headers and `tools/site_content.json`. Run it after adding a plugin or changing its sliders; CI fails if the site is out of date.
 
 ## Website

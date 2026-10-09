@@ -88,6 +88,44 @@
         </div>
 
         <!-- Changelog Modal -->
+        <div id="download-modal" class="modal-overlay">
+            <div class="modal-content modal-download">
+                <button class="modal-close" onclick="closeDownload()">&times;</button>
+                <div class="changelog-header">
+                    <h3>Download NULL JSFX v2.0</h3>
+                    <p class="changelog-date">Free and open source. Pick what you need.</p>
+                </div>
+                <div class="download-options">
+                    <a class="download-option" id="dl-jsfx" href="https://github.com/koulaxizis/null-jsfx/releases/latest/download/NULL-JSFX-JSFX.zip">
+                        <span class="download-option-title">JSFX for REAPER</span>
+                        <span class="download-option-desc">All 73 plugins, plus the GFX versions with their own interface. One package for Windows, macOS and Linux.</span>
+                        <span class="download-option-file">NULL-JSFX-JSFX.zip</span>
+                    </a>
+                    <a class="download-option" id="dl-native" href="https://github.com/koulaxizis/null-jsfx/releases/latest/download/NULL-JSFX-VST3-CLAP-Windows.zip">
+                        <span class="download-option-title">VST3 &amp; CLAP for <span id="dl-os">Windows</span></span>
+                        <span class="download-option-desc">The One Slider plugins for any DAW, with the same interface and the same sound.</span>
+                        <span class="download-option-file" id="dl-native-file">NULL-JSFX-VST3-CLAP-Windows.zip</span>
+                    </a>
+                    <p class="download-other">Other systems:
+                        <a href="https://github.com/koulaxizis/null-jsfx/releases/latest/download/NULL-JSFX-VST3-CLAP-Windows.zip">Windows</a> &bull;
+                        <a href="https://github.com/koulaxizis/null-jsfx/releases/latest/download/NULL-JSFX-VST3-CLAP-macOS.zip">macOS</a> &bull;
+                        <a href="https://github.com/koulaxizis/null-jsfx/releases/latest/download/NULL-JSFX-VST3-CLAP-Linux.zip">Linux</a>
+                    </p>
+                    <div class="download-option download-reapack">
+                        <span class="download-option-title">ReaPack</span>
+                        <span class="download-option-desc">Install single plugins inside REAPER and get updates automatically: Extensions &rarr; ReaPack &rarr; Import repositories, then paste:</span>
+                        <span class="download-copy">
+                            <code id="reapack-url">https://github.com/koulaxizis/null-jsfx/releases/latest/download/index.xml</code>
+                            <button type="button" id="reapack-copy">Copy</button>
+                        </span>
+                    </div>
+                </div>
+                <div class="changelog-footer">
+                    <small><a href="https://github.com/koulaxizis/null-jsfx/releases" target="_blank" rel="noopener">All releases on GitHub</a> &bull; macOS builds are not code-signed, see INSTALL.txt</small>
+                </div>
+            </div>
+        </div>
+
         <div id="changelog-modal" class="modal-overlay">
             <div class="modal-content modal-changelog">
                 <button class="modal-close" onclick="closeChangelog()">&times;</button>
@@ -155,7 +193,7 @@
                         <span class="step-number">1</span>
                         <div class="step-content">
                             <h4>Install Effects</h4>
-                            <p>After downloading, extract the <code>null-jsfx</code> folder to your Reaper Effects directory:</p>
+                            <p>Download <strong>JSFX for REAPER</strong> and extract the <code>null_jsfx</code> folder to your Reaper Effects directory (or install single plugins with <strong>ReaPack</strong>, see Download):</p>
                             <dl class="install-paths">
                                 <div class="install-os">
                                     <dt>Windows</dt>
@@ -177,7 +215,7 @@
                         <span class="step-number">+</span>
                         <div class="step-content">
                             <h4>VST3 and CLAP (any DAW)</h4>
-                            <p>Plugins marked <strong>VST3</strong> and <strong>CLAP</strong> also come as regular plugins. Copy the <code>NULL JSFX</code> folders from the download's <code>VST3</code> and <code>CLAP</code> folders to:</p>
+                            <p>Plugins marked <strong>VST3</strong> and <strong>CLAP</strong> also come as regular plugins. Download <strong>VST3 &amp; CLAP</strong> for your system and copy the <code>NULL JSFX</code> folders from its <code>VST3</code> and <code>CLAP</code> folders to:</p>
                             <dl class="install-paths">
                                 <div class="install-os">
                                     <dt>Windows</dt>
@@ -1114,6 +1152,7 @@
     <script src="assets/js/modals.js"></script>
     <script src="assets/js/search.js"></script>
     <script src="assets/js/theme.js"></script>
+    <script src="assets/js/download.js"></script>
     <script>
         const lastUpdateDate = document.getElementById('last-update');
         lastUpdateDate.textContent = 'Updated: ' + new Date().toLocaleDateString('en-GB');
@@ -1143,6 +1182,7 @@
             if (e.key === 'Escape') {
                 closeChangelog();
                 closeModal();
+                closeDownload();
             }
         });
 
