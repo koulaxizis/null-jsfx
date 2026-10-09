@@ -102,7 +102,8 @@ protected:
         drawLogo(14.0f, 10.0f, 24.0f);
         label(46.0f, 15.0f, ALIGN_LEFT, 8.5f, 2.5f, theme::kMuted, "NULL JSFX", true);
         label(46.0f, 28.0f, ALIGN_LEFT, 15.0f, 2.0f, theme::kText, name, true);
-        label(kWidth - 14.0f, 22.0f, ALIGN_RIGHT, 8.5f, 2.0f, theme::kMuted, category, true);
+        label(kWidth - 14.0f, 15.0f, ALIGN_RIGHT, 7.5f, 2.0f, theme::kSlogan, "AUDIO WITHOUT NOISE", true);
+        label(kWidth - 14.0f, 29.0f, ALIGN_RIGHT, 8.5f, 2.0f, theme::kMuted, category, true);
 
         beginPath();
         moveTo(0, 44.5f);

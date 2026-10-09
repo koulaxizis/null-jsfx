@@ -18,6 +18,7 @@ static constexpr uint32_t kCard       = 0x232220; // --card-bg
 static constexpr uint32_t kBorder     = 0x333333; // --border
 static constexpr uint32_t kText       = 0xe0e0e0; // --text
 static constexpr uint32_t kMuted      = 0x999999; // --muted
+static constexpr uint32_t kSlogan     = 0x6a6a6a; // the "AUDIO WITHOUT NOISE" line in the header
 static constexpr uint32_t kAccent     = 0xc4c4c4; // silver (the site purple belongs to Noxpress)
 static constexpr uint32_t kIconLo     = 0x888888; // icon gradient, bottom
 static constexpr uint32_t kIconHi     = 0xaaaaaa; // icon gradient, top

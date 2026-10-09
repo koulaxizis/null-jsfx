@@ -13,6 +13,7 @@ desc:NULL JSFX shared GFX library
   NG_BORDER  = 0x333333;  // --border
   NG_TEXT    = 0xe0e0e0;  // --text
   NG_MUTED   = 0x999999;  // --muted
+  NG_SLOGAN  = 0x6a6a6a;  // the "AUDIO WITHOUT NOISE" line in the header
   NG_ACCENT  = 0xc4c4c4;  // silver (the site purple belongs to Noxpress)
   NG_ICON_A  = 0x888888;  // icon gradient, bottom
   NG_ICON_B  = 0xaaaaaa;  // icon gradient, top
@@ -135,9 +136,12 @@ desc:NULL JSFX shared GFX library
     ng_font(2, 14, 1);
     ng_col(NG_TEXT, 1);
     ng_txt(name, 46, 28, 0, 2);
+    ng_font(1, 7, 1);
+    ng_col(NG_SLOGAN, 1);
+    ng_txt("AUDIO WITHOUT NOISE", ng_dw - 14, 15, 2, 2);
     ng_font(1, 8, 1);
     ng_col(NG_MUTED, 1);
-    ng_txt(category, ng_dw - 14, 22, 2, 2);
+    ng_txt(category, ng_dw - 14, 29, 2, 2);
     ng_col(NG_BORDER, 1);
     gfx_line(X(0), Y(44), X(ng_dw), Y(44), 0);
   );
