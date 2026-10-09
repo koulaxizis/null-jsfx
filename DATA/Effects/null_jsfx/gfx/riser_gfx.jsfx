@@ -1,0 +1,146 @@
+desc:NULL Riser GFX
+author: Christos Koulaxizis
+tags: riser build-up tension sweep transition edm pre-drop noise gui
+//category: One Slider
+//NULL JSFX v2.0 • https://nulljsfx.tech • MIT License
+
+import null_gfx.jsfx-inc
+
+slider1:0<0,100,1>-Intensity (%)
+
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
+
+@init
+  // NULL Riser (../riser.jsfx) with its own interface: same audio code, plus @gfx.
+  // Build-up in one control: automate Intensity from 0 to 100 into a drop.
+  //   - a resonant high-pass climbs from 20 Hz to 2.5 kHz (exponential, so the sweep sounds even),
+  //     with resonance rising as it goes
+  //   - a band of white noise swells in, centred an octave above the filter, so it rises with it
+  //   - the stereo image widens (side boosted up to +6 dB)
+  //   - a short diffuse wash (two allpass-smeared delays with feedback) blooms behind the sound
+  // All moves are smoothed (30 ms) so automation never zips. At 0 the signal is untouched.
+  bs = ceil(srate * 0.12) + 2;
+  memset(0, 0, bs * 2); freembuf(bs * 2);
+  dl = max(1, floor(0.083 * srate)); dr = max(1, floor(0.097 * srate));
+  pl = pr = 0;
+  sm = exp(-1 / (0.03 * srate));
+  seed = 12345;
+
+  function svf_set(f, q) ( this.g = tan($pi * min(f, 0.45 * srate) / srate); this.k = 1 / q; );
+  function svf_hp(x) local(v1, v2, v3)
+  (
+    v3 = (x - this.s2 - (this.k + this.g) * this.s1) / (1 + this.g * (this.k + this.g));
+    v1 = this.g * v3 + this.s1; v2 = this.g * v1 + this.s2;
+    this.s1 = 2 * v1 - this.s1; this.s2 = 2 * v2 - this.s2;
+    v3;
+  );
+  function svf_bp(x) local(v1, v2, v3)
+  (
+    v3 = (x - this.s2 - (this.k + this.g) * this.s1) / (1 + this.g * (this.k + this.g));
+    v1 = this.g * v3 + this.s1; v2 = this.g * v1 + this.s2;
+    this.s1 = 2 * v1 - this.s1; this.s2 = 2 * v2 - this.s2;
+    this.k * v1;
+  );
+  gfx_ext_retina = 1;
+
+  function update()
+  (
+    target = slider1 / 100;
+  );
+
+  // high-pass magnitude (dB) at frequency f for the slider setting (the svf_hp of @sample)
+  function rsr_db(f) local(t, a, fc, g, k, w, w2)
+  (
+    t = slider1 / 100;
+    a = t * t;
+    fc = 20 * 125 ^ t;
+    g = tan($pi * min(fc, 0.45 * srate) / srate);
+    k = 1 / (0.707 + 2.3 * a);
+    w = tan($pi * min(f, srate * 0.499) / srate) / g;
+    w2 = w * w;
+    10 * log10(max(w2 * w2 / ((1 - w2) * (1 - w2) + k * k * w2), 0.0000000001));
+  );
+
+@slider
+  update();
+
+@block
+  // coefficients follow the smoothed intensity once per block
+  a = amt * amt;
+  fc = 20 * 125 ^ amt;
+  hl.svf_set(fc, 0.707 + 2.3 * a); hr.svf_set(fc, 0.707 + 2.3 * a);
+  nl.svf_set(fc * 2 + 200, 1.5); nr.svf_set(fc * 2 + 200, 1.5);
+  noise = 0.35 * a;
+  width = 10 ^ (6 * amt / 20);
+  wash = 0.35 * amt;
+  fb = 0.55 * amt;
+
+@sample
+  amt = sm * amt + (1 - sm) * target;
+  amt < 0.0005 && target == 0 ? (
+    amt = 0;
+  ) : (
+    // filtered noise, decorrelated L/R
+    seed = (seed * 1103515245 + 12345) % 2147483648; n1 = seed / 1073741824 - 1;
+    seed = (seed * 1103515245 + 12345) % 2147483648; n2 = seed / 1073741824 - 1;
+    l = hl.svf_hp(spl0) + noise * nl.svf_bp(n1);
+    r = hr.svf_hp(spl1) + noise * nr.svf_bp(n2);
+    // wider image
+    m = (l + r) * 0.5; s = (l - r) * 0.5 * width;
+    l = m + s; r = m - s;
+    // diffuse wash, cross-fed so it spreads across the stereo field
+    wl = 0[pl]; wr = bs[pr];
+    0[pl] = l + wr * fb; bs[pr] = r + wl * fb;
+    pl = (pl + 1) % dl; pr = (pr + 1) % dr;
+    l += wash * wl; r += wash * wr;
+    // fade from the untouched signal at very low settings
+    x = min(1, amt * 20);
+    spl0 += x * (l - spl0);
+    spl1 += x * (r - spl1);
+  );
+
+@gfx 360 240
+  ng_one_slider_begin("RISER");
+
+  // display: the high-pass response at the slider setting, the noise band centre dashed
+  rsr_t = slider1 / 100;
+  rsr_fc = 20 * 125 ^ rsr_t;
+  ng_plot(46, 64, 284, 78);
+  ng_grid_freq(24);
+  slider1 > 0 ? (
+    rsr_x = floor(ng_freq_x(rsr_fc * 2 + 200)) + 0.5;
+    ng_col(NG_ACCENT, 0.5);
+    rsr_y = ng_py;
+    while(
+      gfx_line(rsr_x, rsr_y, rsr_x, min(rsr_y + 3 * ng_s, ng_py + ng_ph), 0);
+      rsr_y += 6 * ng_s;
+      rsr_y < ng_py + ng_ph;
+    );
+  );
+  rsr_zy = ng_lin_y(0, -16, 16);
+  ng_col(NG_ACCENT, 0.10);
+  rsr_i = 0;
+  loop(floor(ng_pw) + 1,
+    gfx_line(ng_px + rsr_i, rsr_zy, ng_px + rsr_i, ng_lin_y(rsr_db(20 * 1000 ^ (rsr_i / ng_pw)), -16, 16), 0);
+    rsr_i += 1;
+  );
+  ng_col(NG_ACCENT, 1);
+  rsr_i = 0;
+  loop(floor(ng_pw) + 1,
+    rsr_y = ng_lin_y(rsr_db(20 * 1000 ^ (rsr_i / ng_pw)), -16, 16);
+    rsr_i == 0 ? ng_line_start(ng_px, rsr_y) : ng_line_to(ng_px + rsr_i, rsr_y);
+    rsr_i += 1;
+  );
+
+  // slider card
+  slider1 == 0 ? sprintf(#cap, "UNTOUCHED") : (
+    rsr_fc < 1000 ? sprintf(#rsr_f, "%d Hz", floor(rsr_fc + 0.5)) : sprintf(#rsr_f, "%.1f kHz", rsr_fc / 1000);
+    sprintf(#cap, "HP %s  WIDTH +%.1f dB", #rsr_f, rsr_t * 6);
+  );
+  sprintf(#val, "%d%%", floor(slider1 + 0.5));
+  ng_set_slider(ng_one_slider_control("INTENSITY", #cap, #val, "OFF", "DROP", slider1, 0, 100, 0, 0), 1) ? update();
+
+  ng_end();

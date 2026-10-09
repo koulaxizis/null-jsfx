@@ -1,0 +1,107 @@
+desc:NULL Pumper GFX
+author: Christos Koulaxizis
+tags: sidechain ducking pumping rhythm groove gui
+//category: One Slider
+//NULL JSFX v2.0 • https://nulljsfx.tech • MIT License
+
+import null_gfx.jsfx-inc
+
+slider1:50<0,100,1>-Amount
+
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
+
+@init
+  // NULL Pumper (../pumper.jsfx) with its own interface: same audio code, plus @gfx.
+  // Sidechain-style pumping locked to the project tempo: the level ducks on every beat
+  // and swells back over the beat, like a compressor keyed from a four-on-the-floor kick.
+  // While the transport is stopped it keeps running at the project tempo.
+  // Amount sets the depth of the dip (up to -20 dB).
+  ph = 0;
+  gfx_ext_retina = 1;
+
+  function update()
+  (
+    depth = slider1 / 100;
+  );
+
+  // gain (dB) at beat phase p, the envelope of @sample
+  function pmp_db(p) local(sh)
+  (
+    sh = p < 0.02 ? 1 - p / 0.02 : min(1, (p - 0.02) / 0.6);
+    sh = sh * sh * (3 - 2 * sh);
+    20 * log10(max(1 - slider1 / 100 * 0.9 * (1 - sh), 0.0000001));
+  );
+
+  // a text at pixel (x, y), vertically centred; align 0 left, 1 centre, 2 right
+  function pmp_lbl(str, x, y, align) local(w, h)
+  (
+    gfx_measurestr(str, w, h);
+    gfx_x = align == 1 ? x - w / 2 : (align == 2 ? x - w : x);
+    gfx_y = y - gfx_texth / 2;
+    gfx_drawstr(str);
+  );
+
+@slider
+  update();
+
+@block
+  // while playing, lock the phase to the host at the start of every block
+  play_state & 1 ? ph = beat_position - floor(beat_position);
+
+@sample
+  ph += tempo / 60 / srate; ph >= 1 ? ph -= 1;
+  // fast fade down over 0.02 beat, then a smooth release over 60% of the beat
+  shape = ph < 0.02 ? 1 - ph / 0.02 : min(1, (ph - 0.02) / 0.6);
+  shape = shape * shape * (3 - 2 * shape);
+  g = 1 - depth * 0.9 * (1 - shape);
+  spl0 *= g;
+  spl1 *= g;
+
+@gfx 360 240
+  ng_one_slider_begin("PUMPER");
+
+  // display: the gain envelope over two beats (0 to -24 dB), the playhead dashed
+  ng_plot(46, 64, 284, 78);
+  ng_grid(8, 4, 0);
+  ng_font(4, 8, 0);
+  ng_col(NG_MUTED, 1);
+  pmp_lbl("0", ng_px - 6 * ng_s, floor(ng_py) + 0.5, 2);
+  pmp_lbl("-12", ng_px - 6 * ng_s, floor(ng_py + ng_ph / 2) + 0.5, 2);
+  pmp_lbl("-24", ng_px - 6 * ng_s, floor(ng_py + ng_ph) + 0.5, 2);
+  pmp_lbl("BEAT 1", ng_px + ng_pw * 0.25, ng_py + ng_ph + 11 * ng_s, 1);
+  pmp_lbl("BEAT 2", ng_px + ng_pw * 0.75, ng_py + ng_ph + 11 * ng_s, 1);
+
+  pmp_x = floor(ng_px + ph * ng_pw / 2) + 0.5;
+  ng_col(NG_ACCENT, 0.5);
+  pmp_y = ng_py;
+  while(
+    gfx_line(pmp_x, pmp_y, pmp_x, min(pmp_y + 3 * ng_s, ng_py + ng_ph), 0);
+    pmp_y += 6 * ng_s;
+    pmp_y < ng_py + ng_ph;
+  );
+
+  ng_col(NG_ACCENT, 0.10);
+  pmp_i = 0;
+  loop(floor(ng_pw) + 1,
+    pmp_p = 2 * pmp_i / ng_pw;
+    gfx_line(ng_px + pmp_i, ng_py, ng_px + pmp_i, ng_lin_y(pmp_db(pmp_p - floor(pmp_p)), -24, 0), 0);
+    pmp_i += 1;
+  );
+  ng_col(NG_ACCENT, 1);
+  pmp_i = 0;
+  loop(floor(ng_pw) + 1,
+    pmp_p = 2 * pmp_i / ng_pw;
+    pmp_y = ng_lin_y(pmp_db(pmp_p - floor(pmp_p)), -24, 0);
+    pmp_i == 0 ? ng_line_start(ng_px, pmp_y) : ng_line_to(ng_px + pmp_i, pmp_y);
+    pmp_i += 1;
+  );
+
+  // slider card
+  slider1 == 0 ? sprintf(#cap, "NO DIP") : sprintf(#cap, "DIP %.1f dB ON EVERY BEAT", 20 * log10(1 - slider1 * 0.009));
+  sprintf(#val, "%d", floor(slider1 + 0.5));
+  ng_set_slider(ng_one_slider_control("AMOUNT", #cap, #val, "SUBTLE", "DEEP", slider1, 0, 100, 50, 0), 1) ? update();
+
+  ng_end();
