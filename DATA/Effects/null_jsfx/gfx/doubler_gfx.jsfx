@@ -1,0 +1,126 @@
+desc:NULL Doubler GFX
+author: Christos Koulaxizis
+tags: doubler vocal doubling double-tracking adt stereo width gui
+//category: One Slider
+//NULL JSFX v2.0 • https://nulljsfx.tech • MIT License
+
+import null_gfx.jsfx-inc
+
+slider1:40<0,100,1>-Amount
+
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
+
+@init
+  // NULL Doubler (../doubler.jsfx) with its own interface: same audio code, plus @gfx.
+  // Automatic double tracking: two copies of the input, each delayed 12-30 ms with a
+  // slow, slightly different pitch drift (a few cents), are placed left and right
+  // around the original, like a second take of the same part. Amount sets how loud
+  // and how wide the doubles are.
+  buf_size = ceil(srate * 0.05);
+  buf = 0;
+  freembuf(buf + buf_size);
+  memset(buf, 0, buf_size);
+  wpos = 0;
+  ph1 = 0;
+  ph2 = 0.37;
+
+  function tap(delay_ms) local(rp, i, f, i2)
+  (
+    rp = wpos - delay_ms * srate / 1000;
+    rp < 0 ? rp += buf_size;
+    i = floor(rp);
+    f = rp - i;
+    i2 = i + 1;
+    i2 >= buf_size ? i2 = 0;
+    buf[i] + (buf[i2] - buf[i]) * f;
+  );
+  gfx_ext_retina = 1;
+
+  function update()
+  (
+    amount = slider1 / 100;
+    level = amount * 0.8;
+    dry = 1 / (1 + level * 0.5);
+  );
+
+  // display: one bar of the echogram at ms (0..40 ms), height gain; drift = +-ms band;
+  // dir -1 draws up (left), 1 down (right), 0 both (the dry signal)
+  function dbl_bar(ms, drift, gain, dir) local(cy, hh, x0, x1, xx)
+  (
+    cy = ng_py + ng_ph / 2;
+    hh = gain * ng_ph / 2 * 0.9;
+    hh > 0 ? (
+      drift > 0 ? (
+        x0 = ng_lin_x(ms - drift, 0, 40);
+        x1 = ng_lin_x(ms + drift, 0, 40);
+        ng_col(NG_ACCENT, 0.12);
+        dir < 0 ? gfx_rect(x0, cy - hh, x1 - x0, hh) : gfx_rect(x0, cy, x1 - x0, hh);
+      );
+      xx = max(ng_px, ng_lin_x(ms, 0, 40) - 1.5 * ng_s);
+      ng_col(NG_ACCENT, 1);
+      dir <= 0 ? gfx_rect(xx, cy - hh, 3 * ng_s, hh);
+      dir >= 0 ? gfx_rect(xx, cy, 3 * ng_s, hh);
+    );
+  );
+
+@slider
+  update();
+
+@sample
+  mono = (spl0 + spl1) * 0.5;
+  buf[wpos] = mono;
+  // two slow, unrelated drifts (0.13 Hz and 0.21 Hz) give each double its own timing and pitch
+  ph1 += 0.13 / srate; ph1 >= 1 ? ph1 -= 1;
+  ph2 += 0.21 / srate; ph2 >= 1 ? ph2 -= 1;
+  d1 = tap(14 + 2 * sin(2 * $pi * ph1) + amount * 6);
+  d2 = tap(21 + 2.5 * sin(2 * $pi * ph2) + amount * 8);
+  wpos += 1;
+  wpos >= buf_size ? wpos = 0;
+
+  spl0 = (spl0 + d1 * level) * dry;
+  spl1 = (spl1 + d2 * level) * dry;
+
+@gfx 360 240
+  ng_one_slider_begin("DOUBLER");
+
+  // display: echogram, left channel up and right channel down: the dry signal at 0 ms and
+  // each double at its average delay, the shaded band showing its slow drift
+  ng_plot(46, 64, 284, 78);
+  ng_grid(8, 2, 0);
+  ng_col(0x45433f, 1);
+  g_y = floor(ng_py + ng_ph / 2) + 0.5;
+  gfx_line(ng_px, g_y, ng_px + ng_pw, g_y, 0);
+  ng_font(4, 8, 0);
+  g_tw = g_th = 0;
+  ng_col(NG_MUTED, 1);
+  gfx_measurestr("L", g_tw, g_th);
+  gfx_x = ng_px - 6 * ng_s - g_tw;
+  gfx_y = floor(ng_py + ng_ph / 4 - gfx_texth / 2 + 0.5);
+  gfx_drawstr("L");
+  gfx_measurestr("R", g_tw, g_th);
+  gfx_x = ng_px - 6 * ng_s - g_tw;
+  gfx_y = floor(ng_py + ng_ph * 3 / 4 - gfx_texth / 2 + 0.5);
+  gfx_drawstr("R");
+  g_k = 1;
+  loop(3,
+    sprintf(#g_lbl, "%d ms", g_k * 10);
+    gfx_measurestr(#g_lbl, g_tw, g_th);
+    gfx_x = ng_lin_x(g_k * 10, 0, 40) - g_tw / 2;
+    gfx_y = ng_py + ng_ph + 5 * ng_s;
+    gfx_drawstr(#g_lbl);
+    g_k += 1;
+  );
+  g_a = slider1 / 100;
+  dbl_bar(14 + g_a * 6, 2, g_a * 0.8 / (1 + g_a * 0.4), -1);
+  dbl_bar(21 + g_a * 8, 2.5, g_a * 0.8 / (1 + g_a * 0.4), 1);
+  dbl_bar(0, 0, 1 / (1 + g_a * 0.4), 0);
+
+  // slider card
+  slider1 == 0 ? sprintf(#g_cap, "OFF") : sprintf(#g_cap, "L %.1f ms  R %.1f ms", 14 + g_a * 6, 21 + g_a * 8);
+  sprintf(#g_val, "%d", floor(slider1 + 0.5));
+  ng_set_slider(ng_one_slider_control("AMOUNT", #g_cap, #g_val, "DRY", "DOUBLE", slider1, 0, 100, 40, 0), 1) ? update();
+
+  ng_end();
