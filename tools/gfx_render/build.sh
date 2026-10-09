@@ -2,7 +2,7 @@
 # Builds ysfx with graphics (once) and gfx_render. Usage: build.sh [build-dir]  (default: tests/.build/ysfx-gfx)
 set -euo pipefail
 here="$(cd "$(dirname "$0")" && pwd)"
-root="$(cd "$here/../../../.." && pwd)"
+root="$(cd "$here/../.." && pwd)"
 out="${1:-$root/tests/.build/ysfx-gfx}"
 ysfx_rev=8077347ccf4115567aed81400281dca57acbb0cc
 if [ ! -f "$out/build/libysfx.a" ]; then

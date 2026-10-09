@@ -1,5 +1,5 @@
 /*
- * NULL Tilt Native - DPF plugin metadata
+ * NULL JSFX - Tilt (VST3/CLAP) metadata
  * Copyright (C) 2026 Christos Koulaxizis / NULL JSFX
  * SPDX-License-Identifier: MIT
  */
@@ -16,7 +16,7 @@
 #define DISTRHO_PLUGIN_BRAND_ID  NulJ
 #define DISTRHO_PLUGIN_UNIQUE_ID NTlt
 
-#ifdef NULLTILT_NO_UI
+#ifdef NULL_NO_UI
 #define DISTRHO_PLUGIN_HAS_UI        0
 #else
 #define DISTRHO_PLUGIN_HAS_UI        1
@@ -26,6 +26,7 @@
 #define DISTRHO_PLUGIN_NUM_OUTPUTS   2
 #define DISTRHO_PLUGIN_WANT_LATENCY  0
 #define DISTRHO_PLUGIN_WANT_STATE    0
+#define DISTRHO_PLUGIN_WANT_DIRECT_ACCESS 1
 #define DISTRHO_UI_USE_NANOVG        1
 #define DISTRHO_UI_USER_RESIZABLE    1
 #define DISTRHO_UI_DEFAULT_WIDTH     360

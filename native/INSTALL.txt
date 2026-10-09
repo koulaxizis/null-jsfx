@@ -1,0 +1,32 @@
+NULL JSFX: installation
+=======================
+
+Every plugin comes in up to three versions that sound the same:
+
+  JSFX        REAPER only, REAPER's own sliders (the original)
+  JSFX GFX    REAPER only, with its own interface ("NULL <Name> GFX")
+  VST3, CLAP  any DAW, with the same interface ("<Name>" by NULL JSFX)
+
+JSFX (REAPER)
+    Copy the folder JSFX/null_jsfx into REAPER's Effects folder (Options >
+    Show REAPER resource path > Effects), then rescan in the FX browser. Keep
+    the gfx folder inside it together: gfx/null_gfx.jsfx-inc holds the shared
+    look of the GFX versions and is not an effect by itself.
+
+VST3 and CLAP (any DAW)
+    Copy the "NULL JSFX" folder from VST3 and from CLAP to:
+      Windows: C:\Program Files\Common Files\VST3
+               C:\Program Files\Common Files\CLAP
+      macOS:   ~/Library/Audio/Plug-Ins/VST3
+               ~/Library/Audio/Plug-Ins/CLAP
+      Linux:   ~/.vst3   and   ~/.clap
+    then rescan plugins in your DAW.
+
+macOS (not officially supported): the builds are not code-signed. If macOS
+refuses to load them, run
+    xattr -dr com.apple.quarantine <path to the .vst3/.clap>
+and rescan.
+
+Controls: drag the slider sideways (Ctrl/Cmd or Shift for fine steps),
+double-click to reset, mouse wheel steps by 1. Resize the window from its
+edge or corner.

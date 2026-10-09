@@ -4,6 +4,7 @@
 //          -lfreetype -lfontconfig -lpthread -ldl -o gfx_render     (see build.sh)
 #include "ysfx.h"
 #include <cstdio>
+#include <cmath>
 #include <cstdlib>
 #include <vector>
 #define STB_IMAGE_WRITE_STATIC
@@ -39,12 +40,28 @@ int main(int argc, char **argv)
     ysfx_init(fx);
     for (int i = 5, s = 0; i < argc; ++i, ++s)
         ysfx_slider_set_value(fx, (uint32_t)s, atof(argv[i]));
-    // run a few audio blocks so @slider/@block/@sample see the values
-    std::vector<double> buf(256, 0.0);
-    const double *ins[2] = {buf.data(), buf.data()};
-    std::vector<double> o0(256), o1(256);
+    // run ~1.2 s of a music-like stereo signal (kick every 0.5 s, bass, chord, hats) so
+    // @slider/@block/@sample see the values and meters/scopes have something to show
+    std::vector<double> i0(256), i1(256), o0(256), o1(256);
+    const double *ins[2] = {i0.data(), i1.data()};
     double *outs[2] = {o0.data(), o1.data()};
-    for (int b = 0; b < 8; ++b) ysfx_process_double(fx, ins, outs, 2, 2, 256);
+    uint32_t seed = 1;
+    long n = 0;
+    for (int b = 0; b < 225; ++b) {
+        for (int k = 0; k < 256; ++k, ++n) {
+            const double t = n / 48000.0, tk = std::fmod(t, 0.5), th = std::fmod(t, 0.125);
+            seed = seed * 1664525u + 1013904223u;
+            const double noise = (seed >> 9) / 4194304.0 - 1.0;
+            const double kick = 0.7 * std::exp(-tk * 18) * std::sin(2 * M_PI * (50 + 90 * std::exp(-tk * 40)) * tk);
+            const double bass = 0.18 * std::sin(2 * M_PI * 55 * t);
+            const double chordL = 0.06 * (std::sin(2 * M_PI * 220 * t) + std::sin(2 * M_PI * 277.2 * t) + std::sin(2 * M_PI * 329.6 * t));
+            const double chordR = 0.06 * (std::sin(2 * M_PI * 220.7 * t + 0.4) + std::sin(2 * M_PI * 276.6 * t + 1.1) + std::sin(2 * M_PI * 330.4 * t + 2.0));
+            const double hat = 0.08 * std::exp(-th * 60) * noise;
+            i0[k] = kick + bass + chordL + hat;
+            i1[k] = kick + bass + chordR - 0.6 * hat;
+        }
+        ysfx_process_double(fx, ins, outs, 2, 2, 256);
+    }
 
     std::vector<uint8_t> px((size_t)w * h * 4, 0);
     ysfx_gfx_config_t gc = {};

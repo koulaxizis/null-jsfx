@@ -1,0 +1,90 @@
+desc:NULL Tilt GFX
+author: Christos Koulaxizis
+tags: eq tilt tone bass treble balance tonal gui
+//category: One Slider
+//NULL JSFX v2.0 • https://nulljsfx.tech • MIT License
+
+import null_gfx.jsfx-inc
+
+slider1:0<-100,100,1>-Amount
+
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
+
+@init
+  // NULL Tilt (../tilt.jsfx) with its own interface: same audio code, plus @gfx.
+  // Tilts the whole spectrum around 700 Hz: positive values brighten (treble up, bass
+  // down), negative values darken (bass up, treble down), up to 6 dB each way. The
+  // centre (0) is flat.
+  lp_l = lp_r = 0;
+  gfx_ext_retina = 1;
+
+  function update()
+  (
+    t = slider1 / 100;
+    c = exp(-2 * $pi * 700 / srate);
+    g_low = 10 ^ (-t * 6 / 20);
+    g_high = 10 ^ (t * 6 / 20);
+  );
+
+  // tilt response in dB at frequency f (the one-pole split of @sample)
+  function tilt_db(f) local(w, cw, sw, den, lr, li, hr, hi)
+  (
+    w = 2 * $pi * min(f, srate * 0.499) / srate;
+    cw = cos(w);
+    sw = sin(w);
+    den = (1 - c * cw) * (1 - c * cw) + c * c * sw * sw;
+    lr = (1 - c) * (1 - c * cw) / den;
+    li = -(1 - c) * c * sw / den;
+    hr = g_high + (g_low - g_high) * lr;
+    hi = (g_low - g_high) * li;
+    10 * log10(max(hr * hr + hi * hi, 0.0000000001));
+  );
+
+@slider
+  update();
+
+@sample
+  lp_l = (1 - c) * spl0 + c * lp_l;
+  lp_r = (1 - c) * spl1 + c * lp_r;
+  spl0 = lp_l * g_low + (spl0 - lp_l) * g_high;
+  spl1 = lp_r * g_low + (spl1 - lp_r) * g_high;
+
+@gfx 360 240
+  ng_one_slider_begin("TILT");
+
+  // display: the filter's magnitude response, 700 Hz pivot dashed
+  ng_plot(46, 64, 284, 78);
+  ng_grid_freq(12);
+  xx = floor(ng_freq_x(700)) + 0.5;
+  ng_col(NG_ACCENT, 0.5);
+  yy = ng_py;
+  while(
+    gfx_line(xx, yy, xx, min(yy + 3 * ng_s, ng_py + ng_ph), 0);
+    yy += 6 * ng_s;
+    yy < ng_py + ng_ph;
+  );
+  zy = ng_lin_y(0, -8, 8);
+  ng_col(NG_ACCENT, 0.10);
+  i = 0;
+  loop(floor(ng_pw) + 1,
+    gfx_line(ng_px + i, zy, ng_px + i, ng_lin_y(tilt_db(20 * 1000 ^ (i / ng_pw)), -8, 8), 0);
+    i += 1;
+  );
+  ng_col(NG_ACCENT, 1);
+  i = 0;
+  loop(floor(ng_pw) + 1,
+    yy = ng_lin_y(tilt_db(20 * 1000 ^ (i / ng_pw)), -8, 8);
+    i == 0 ? ng_line_start(ng_px, yy) : ng_line_to(ng_px + i, yy);
+    i += 1;
+  );
+
+  // slider card
+  slider1 == 0 ? sprintf(#cap, "FLAT") : sprintf(#cap, "LOW %+.1f  HIGH %+.1f dB", 0 - slider1 * 0.06, slider1 * 0.06);
+  v = floor(slider1 + 0.5);
+  v > 0 ? sprintf(#val, "+%d", v) : sprintf(#val, "%d", v);
+  ng_set_slider(ng_one_slider_control("AMOUNT", #cap, #val, "DARK", "BRIGHT", slider1, -100, 100, 0, 1), 1) ? update();
+
+  ng_end();

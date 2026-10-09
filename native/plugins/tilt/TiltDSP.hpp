@@ -1,5 +1,5 @@
 /*
- * NULL Tilt Native - framework-independent DSP core
+ * NULL JSFX - Tilt, framework-independent DSP core
  * Copyright (C) 2026 Christos Koulaxizis / NULL JSFX
  * SPDX-License-Identifier: MIT
  *

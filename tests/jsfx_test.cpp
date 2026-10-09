@@ -115,6 +115,7 @@ static Result test_plugin(const char *path)
         for (int p = DEFAULTS; p <= RANDOM + 2; ++p) {
             Preset preset = (Preset)std::min(p, (int)RANDOM);
             ysfx_config_t *cfg = ysfx_config_new();
+            ysfx_guess_file_roots(cfg, path);
             ysfx_set_log_reporter(cfg, &reporter);
             ysfx_t *fx = ysfx_new(cfg);
             ysfx_config_free(cfg);

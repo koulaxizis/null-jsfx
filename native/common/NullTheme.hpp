@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: MIT
  *
  * The nulljsfx.tech dark theme (assets/css/style.css), the same values as the GFX JSFX
- * library (null_gfx.jsfx-inc). Values are 0xRRGGBB; alpha is applied at the call site.
+ * library (DATA/Effects/null_jsfx/gfx/null_gfx.jsfx-inc). Values are 0xRRGGBB; alpha is applied at the call site.
  */
 
 #pragma once
