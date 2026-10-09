@@ -2,7 +2,9 @@ name: VST3 and CLAP
 
 # Builds the VST3/CLAP plugins (native/) for Windows, macOS and Linux, checks on Linux and macOS
 # that each one sounds identical to its JSFX, and uploads one "NULL-JSFX-<os>" package per OS
-# with the JSFX (plain and GFX), VST3 and CLAP versions and native/INSTALL.txt.
+# with the JSFX (plain and GFX), VST3 and CLAP versions and native/INSTALL.txt. When a GitHub
+# release is published, the three packages are also attached to it as NULL-JSFX-<os>.zip, which
+# is what the site's Download button leads to.
 
 on:
   push:
@@ -10,6 +12,11 @@ on:
   pull_request:
     paths: ["native/**", "DATA/**", "tests/**", ".github/workflows/native.yml"]
   workflow_dispatch:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
 
 jobs:
   build:
@@ -53,3 +60,16 @@ jobs:
         with:
           name: NULL-JSFX-${{ matrix.name }}
           path: NULL-JSFX-${{ matrix.name }}
+
+      - name: Attach to the release
+        if: github.event_name == 'release'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          out="NULL-JSFX-${{ matrix.name }}"
+          if [ "$RUNNER_OS" = Windows ]; then
+            powershell -Command "Compress-Archive -Path '$out' -DestinationPath '$out.zip'"
+          else
+            zip -qry "$out.zip" "$out"
+          fi
+          gh release upload "${{ github.event.release.tag_name }}" "$out.zip" --clobber

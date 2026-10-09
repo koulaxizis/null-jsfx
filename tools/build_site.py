@@ -17,6 +17,8 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 PLUGINS = ROOT / "DATA/Effects/null_jsfx"
+GFX = PLUGINS / "gfx"
+NATIVE = ROOT / "native/plugins"
 CONTENT = ROOT / "tools/site_content.json"
 INDEX = ROOT / "index.html"
 MODALS = ROOT / "assets/js/modals.js"
@@ -64,6 +66,16 @@ def parse_sliders(text):
     return sliders
 
 
+def formats(stem):
+    """The versions a plugin ships in: always JSFX, plus GFX and VST3/CLAP when they exist."""
+    out = ["JSFX"]
+    if (GFX / f"{stem}_gfx.jsfx").exists():
+        out.append("GFX")
+    if (NATIVE / stem / "Plugin.cpp").exists():
+        out += ["VST3", "CLAP"]
+    return out
+
+
 def load():
     content = json.loads(CONTENT.read_text(encoding="utf-8"))
     plugins, errors = [], []
@@ -88,6 +100,7 @@ def load():
             "name": c.get("name") or lines[0][len("desc:NULL "):],
             "category": category,
             "sliders": [(n, r, d) for (n, r), d in zip(sliders, c["slider_desc"])],
+            "formats": formats(stem),
             **{k: c[k] for k in ("card_desc", "keywords", "uses", "properties", "icon")},
         })
     for stem in sorted(set(content) - {p.stem for p in files}):
@@ -101,13 +114,20 @@ def card(p):
     e = html.escape
     icon = re.sub(r"\s*\n\s*", "\n                            ", p["icon"].strip())
     icon = icon.replace("\n                            </svg>", "\n                        </svg>")
-    return f"""                <article class="plugin-card" data-name="{e(p['keywords'])}" onclick="openGuide('{p['key']}')">
+    keywords = p["keywords"]
+    badges = ""
+    if len(p["formats"]) > 1:
+        keywords += " " + " ".join(f.lower() for f in p["formats"][1:])
+        spans = "".join(f"<span>{f}</span>" for f in p["formats"])
+        badges = f"""
+                        <div class="plugin-formats">{spans}</div>"""
+    return f"""                <article class="plugin-card" data-name="{e(keywords)}" onclick="openGuide('{p['key']}')">
                     <div class="plugin-icon">
                         {icon}
                     </div>
                     <div class="plugin-info">
                         <h3>{e(p['name'].upper())}</h3>
-                        <p class="plugin-desc">{e(p['card_desc'])}</p>
+                        <p class="plugin-desc">{e(p['card_desc'])}</p>{badges}
                         <span class="info-badge">?</span>
                     </div>
                 </article>
@@ -150,7 +170,8 @@ def guides_block(plugins):
 {sliders}
     ],
     uses: [{uses}],
-    properties: {js(p['properties'])}
+    properties: {js(p['properties'])},
+    formats: [{", ".join(js(f) for f in p['formats'])}]
   }},
 """)
     out[-1] = out[-1].rstrip(",\n") + "\n"
@@ -164,7 +185,9 @@ def list_block(plugins, with_desc):
         group = [p for p in plugins if p["category"] == title]
         if with_desc:
             out.append(f"\n### {title} ({len(group)})\n{desc}\n\n")
-            out += [f"- {p['name']}: {p['card_desc']}\n" for p in group]
+            out += [f"- {p['name']}: {p['card_desc']}"
+                    + (f" (also as {', '.join(p['formats'][1:])})" if len(p['formats']) > 1 else "") + "\n"
+                    for p in group]
         else:
             out.append(f"| **{title}** ({len(group)}) | {', '.join(p['name'] for p in group)} |\n")
     return ("| Category | Plugins |\n|----------|---------|\n" if not with_desc else "") + "".join(out)
