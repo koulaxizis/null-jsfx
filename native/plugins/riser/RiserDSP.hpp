@@ -20,11 +20,11 @@ namespace nullriser {
 
 static constexpr double kPi = 3.141592653589793; // EEL2 $pi
 
-// EEL2's % on x86-64: both sides |x| truncated to 64-bit integers, 0 when dividing by 0
-inline double eelMod(double a, double b) noexcept
+// Park-Miller step in exact double arithmetic, as in the JSFX
+inline double nextSeed(double seed) noexcept
 {
-    const uint64_t x = uint64_t(int64_t(std::fabs(a))), y = uint64_t(int64_t(std::fabs(b)));
-    return y ? double(int64_t(x % y)) : 0.0;
+    seed *= 16807.0;
+    return seed - std::floor(seed / 2147483647.0) * 2147483647.0;
 }
 
 // trapezoidal state-variable filter, as svf_set / svf_hp / svf_bp in the JSFX
@@ -99,9 +99,9 @@ public:
                 fAmt = 0.0;
             else
             {
-                fSeed = eelMod(fSeed * 1103515245.0 + 12345.0, 2147483648.0);
+                fSeed = nextSeed(fSeed);
                 const double n1 = fSeed / 1073741824.0 - 1.0;
-                fSeed = eelMod(fSeed * 1103515245.0 + 12345.0, 2147483648.0);
+                fSeed = nextSeed(fSeed);
                 const double n2 = fSeed / 1073741824.0 - 1.0;
                 double l = fHl.hp(spl0);
                 l = l + noise * fNl.bp(n1);
