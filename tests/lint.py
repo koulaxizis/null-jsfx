@@ -35,7 +35,7 @@ fft ifft fft_permute fft_ipermute fft_real ifft_real convolve_c file_open file_c
 pdc_delay pdc_bot_ch pdc_top_ch ext_noinit ext_tail_size ext_nodenorm slider_automate sliderchange
 gfx_r gfx_g gfx_b gfx_a gfx_x gfx_y gfx_w gfx_h gfx_texth gfx_set gfx_rect gfx_line gfx_lineto gfx_circle gfx_arc
 gfx_drawstr gfx_drawnumber gfx_measurestr gfx_setfont gfx_roundrect gfx_triangle gfx_getchar gfx_clienttoscreen
-mouse_x mouse_y mouse_cap mouse_wheel gfx_ext_retina time_precise sprintf strlen strcpy_substr
+mouse_x mouse_y mouse_cap mouse_wheel gfx_ext_retina time_precise sprintf strcpy strlen strcpy_substr
 """.split())
 
 

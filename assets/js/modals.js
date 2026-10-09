@@ -11,7 +11,7 @@ const guides = {
     ],
     uses: ['Open up dull vocals', 'Add air to acoustic guitars', 'Brighten dark overheads', 'Quick top-end lift on a bus', 'Restore highs on muffled recordings'],
     properties: 'Input → 6 kHz one-pole high-pass split → highs boosted (0 to +9 dB) and added back → Output. Zero latency, stereo channels processed independently.',
-    formats: ['JSFX']
+    formats: ['JSFX', 'GFX', 'VST3', 'CLAP']
   },
   'chorus-one': {
     title: 'CHORUS ONE',
@@ -22,7 +22,7 @@ const guides = {
     ],
     uses: ['Thicken clean guitars', 'Widen synth pads', 'Add movement to electric piano', 'Subtle stereo shimmer on backing vocals', 'Lush 80s-style chorus at high settings'],
     properties: 'Input → L/R modulated delay lines (triangle LFO, opposite polarity per side) with feedback → dry/wet blend → Output. The single slider drives rate, depth, base delay, feedback (0–0.15) and mix (max 85% wet); zero latency.',
-    formats: ['JSFX']
+    formats: ['JSFX', 'GFX', 'VST3', 'CLAP']
   },
   'crunch': {
     title: 'CRUNCH',
@@ -33,7 +33,7 @@ const guides = {
     ],
     uses: ['Aggressive drum bus dirt', 'Gritty bass layers', 'Distorted vocal effects', 'Edge on synth leads', 'Lo-fi parallel crunch'],
     properties: 'Input → drive (1–20x) → variable-knee clipper (knee 2 to 10, soft to near-hard) → 9 kHz one-pole low-pass to tame fizz → level compensation → dry/crunch crossfade by Amount → Output. Zero latency, no oversampling; 0 is a clean pass-through.',
-    formats: ['JSFX']
+    formats: ['JSFX', 'GFX', 'VST3', 'CLAP']
   },
   'doubler': {
     title: 'DOUBLER',
@@ -44,7 +44,7 @@ const guides = {
     ],
     uses: ['Fake a double-tracked vocal', 'Widen mono guitar parts', 'Thicken backing vocals', 'Stereo spread for mono synths', 'Subtle width on lead lines'],
     properties: 'Input → mono sum → two delayed taps with slow independent drift (0.13 Hz / 0.21 Hz) → one double added left, one right → level compensation → Output. Original stays centred; zero latency.',
-    formats: ['JSFX']
+    formats: ['JSFX', 'GFX', 'VST3', 'CLAP']
   },
   'driver': {
     title: 'DRIVER',
@@ -55,7 +55,7 @@ const guides = {
     ],
     uses: ['Warm up thin vocals', 'Glue on the drum bus', 'Tube-like weight on bass', 'Even-harmonic colour on synths', 'Push a mix bus into soft saturation'],
     properties: 'Input → drive (1–12x) with bias (0 to 0.25) → tanh curve (bias offset removed, even plus odd harmonics) → DC blocker → level compensation → dry/drive crossfade by Amount → Output. Zero latency, no oversampling; 0 is a clean pass-through.',
-    formats: ['JSFX']
+    formats: ['JSFX', 'GFX', 'VST3', 'CLAP']
   },
   'exciter': {
     title: 'EXCITER',
@@ -66,7 +66,7 @@ const guides = {
     ],
     uses: ['Add sparkle to vocals without harsh EQ', 'Bring dull cymbals forward', 'Presence on acoustic guitar', 'Air on a mix bus', 'Revive old or lo-fi recordings'],
     properties: 'Input → 3 kHz 12 dB/oct high-pass → drive → asymmetric soft clip (odd + even harmonics) → second 3 kHz high-pass → blended onto the dry signal → Output. Blend is drive-compensated; zero latency.',
-    formats: ['JSFX']
+    formats: ['JSFX', 'GFX', 'VST3', 'CLAP']
   },
   'formant-shift': {
     title: 'FORMANT SHIFT',
@@ -77,7 +77,7 @@ const guides = {
     ],
     uses: ['Gender-bend vocal character', 'Make backing vocals sound like a different singer', 'Creative vowel colouring on synths', 'Robotic or cartoon voice effects', 'Subtle vocal timbre change'],
     properties: 'Input → three parallel band-pass resonators (base 300 / 850 / 2250 Hz, Q 2.5) scaled by the shift factor → weighted sum blended with dry → Output. Not a pitch shifter: only the resonant colour moves; zero latency.',
-    formats: ['JSFX']
+    formats: ['JSFX', 'GFX', 'VST3', 'CLAP']
   },
   'grit': {
     title: 'GRIT',
@@ -88,7 +88,7 @@ const guides = {
     ],
     uses: ['Lo-fi drum textures', '8-bit / chiptune character', 'Digital grit on synths', 'Degraded radio-style effects', 'Parallel crunch on percussion'],
     properties: 'Input → sample-and-hold decimation (hold 1–8 samples) → bit-depth quantisation (16 to 3 bits) → crossfade with dry by the same amount → Output. Zero latency, no anti-aliasing (aliasing is intended).',
-    formats: ['JSFX']
+    formats: ['JSFX', 'GFX', 'VST3', 'CLAP']
   },
   'louder': {
     title: 'LOUDER',
@@ -99,7 +99,7 @@ const guides = {
     ],
     uses: ['Quick loudness on a mix or stem', 'Makeup gain after quiet processing', 'Boost low-level recordings without clipping', 'Final ceiling on a bounce', 'Push a bus louder while catching peaks'],
     properties: 'Input → gain (0 to +12 dB) → stereo-linked look-ahead peak limiter (2 ms look-ahead with gain hold, 80 ms release, -0.3 dBFS ceiling) → safety clip at the ceiling → Output. 2 ms latency, reported to REAPER for compensation; at 0 only peaks above the ceiling are touched.',
-    formats: ['JSFX']
+    formats: ['JSFX', 'GFX', 'VST3', 'CLAP']
   },
   'mono-maker': {
     title: 'MONO MAKER',
@@ -110,7 +110,7 @@ const guides = {
     ],
     uses: ['Centre the bass on mix and master buses', 'Fix wide, phasey low end from stereo synths', 'Vinyl-safe low frequencies', 'Tighten kick and bass in stereo samples', 'Keep highs wide while lows stay mono'],
     properties: 'Input → M/S split → side signal through a 4th-order low-pass (two Butterworth stages) → low side removed from L/R → Output. Mid and high side content are untouched; zero latency.',
-    formats: ['JSFX']
+    formats: ['JSFX', 'GFX', 'VST3', 'CLAP']
   },
   'phatter': {
     title: 'PHATTER',
@@ -121,7 +121,7 @@ const guides = {
     ],
     uses: ['Add weight to thin kicks', 'Fatten bass lines', 'Warmth on a drum bus', 'Body for small-sounding synths', 'Quick low-end fix on samples'],
     properties: 'Input → 200 Hz one-pole low-pass → low band boosted (0 to +12 dB) and added back → Output. No limiting, so watch headroom at high settings; zero latency.',
-    formats: ['JSFX']
+    formats: ['JSFX', 'GFX', 'VST3', 'CLAP']
   },
   'pressure': {
     title: 'PRESSURE',
@@ -132,7 +132,7 @@ const guides = {
     ],
     uses: ['Glue a bus with one control', 'Even out vocals quickly', 'Level bass guitar', 'Squash drum room mics', 'Gentle mix bus control at low settings'],
     properties: 'Input → stereo-linked RMS-style detector (5 ms) → gain computer (threshold 0 to -30 dB, ratio 1:1 to 6:1) → 10 ms attack, 150 ms release smoothing → automatic makeup (half the gain reduction at threshold, up to about +12.5 dB) → Output. Zero latency; 0 is a clean pass-through.',
-    formats: ['JSFX']
+    formats: ['JSFX', 'GFX', 'VST3', 'CLAP']
   },
   'pumper': {
     title: 'PUMPER',
@@ -143,7 +143,7 @@ const guides = {
     ],
     uses: ['Fake sidechain pumping on pads', 'EDM-style breathing on a synth bus', 'Rhythmic movement on sustained chords', 'Groove on reverb returns', 'Quick ducking effect without routing'],
     properties: 'Input → gain from a quarter-note envelope locked to the project tempo (fast fade down over 2% of the beat, smooth S-curve release over 60%) → Output. Follows the beat position during playback and free-runs at the project tempo when stopped; zero latency.',
-    formats: ['JSFX']
+    formats: ['JSFX', 'GFX', 'VST3', 'CLAP']
   },
   'riser': {
     title: 'RISER',
@@ -154,7 +154,7 @@ const guides = {
     ],
     uses: ['EDM and pop build-ups before a drop', 'Transitions between song sections', 'Turning any loop into a riser', 'Tension under a vocal pickup'],
     properties: 'Input → resonant 12 dB/oct high-pass (exponential sweep) + band-passed noise tracking the filter → Mid/Side widening → cross-fed diffuse wash → Output. Every move is smoothed over 30 ms so automation never zips; zero latency.',
-    formats: ['JSFX']
+    formats: ['JSFX', 'GFX', 'VST3', 'CLAP']
   },
   'snappy': {
     title: 'SNAPPY',
@@ -165,7 +165,7 @@ const guides = {
     ],
     uses: ['Add snap to snares and kicks', 'Sharpen percussion loops', 'Punch on a drum bus', 'Bite on plucked instruments', 'Tighten roomy drum recordings'],
     properties: 'Input → stereo-linked level → fast (1 ms) and slow (25 ms) attack envelopes, 80 ms release → transient amount from their difference → gain between -3 and +9 dB scaled by Amount → Output. Zero latency, no look-ahead.',
-    formats: ['JSFX']
+    formats: ['JSFX', 'GFX', 'VST3', 'CLAP']
   },
   'spread': {
     title: 'SPREAD',
@@ -176,7 +176,7 @@ const guides = {
     ],
     uses: ['Widen mono synths and guitars', 'Open up a vocal bus', 'Mono-safe width on the master', 'Spread pads and ambiences', 'Keep bass centred while widening the top'],
     properties: 'Input → mid signal → 250 Hz one-pole high-pass → two delay taps (11.3 ms × 0.6 + 17.9 ms × 0.4) → added to L, subtracted from R → Output. Cancels completely in mono; low end stays centred; zero latency.',
-    formats: ['JSFX']
+    formats: ['JSFX', 'GFX', 'VST3', 'CLAP']
   },
   'stretch': {
     title: 'STRETCH',
@@ -187,7 +187,7 @@ const guides = {
     ],
     uses: ['Slowed-down, tape-stretched vocal textures', 'Octave-down sound design', 'Chipmunk or octave-up effects', 'Granular pad texture', 'Transitions and risers'],
     properties: 'Input → circular buffer → two crossfading grains (Hann windows, half a cycle apart) read at 2^Amount speed → dry/wet blend → Output. Pitch changes but length does not; grain length scales from 25 to 240 ms.',
-    formats: ['JSFX']
+    formats: ['JSFX', 'GFX', 'VST3', 'CLAP']
   },
   'sweeper': {
     title: 'SWEEPER',
@@ -198,7 +198,7 @@ const guides = {
     ],
     uses: ['Build-ups and breakdowns', 'DJ-style transitions', 'Filter automation on loops', 'Thin out a part for an intro', 'Muffled "next room" effect'],
     properties: 'Input → TPT state-variable filter (low-pass below 50, high-pass above, Q 0.707 to 2.2) → Output. Exact bypass at 50, stereo channels processed independently, zero latency.',
-    formats: ['JSFX']
+    formats: ['JSFX', 'GFX', 'VST3', 'CLAP']
   },
   'tilt': {
     title: 'TILT',
@@ -220,7 +220,7 @@ const guides = {
     ],
     uses: ['Quick sense of space on dry sources', 'Room ambience on drums', 'Sit vocals back in the mix', 'Larger, longer tails at high settings', 'Fast ambience sketches'],
     properties: 'Input → mono sum → Freeverb-style network per channel: four damped feedback combs (damping 0.35) → two allpass diffusers; right channel uses slightly longer delays for width → mixed with dry → Output. Delay lengths scale with sample rate; zero latency.',
-    formats: ['JSFX']
+    formats: ['JSFX', 'GFX', 'VST3', 'CLAP']
   },
 
   // ─── ESSENTIALS ───
