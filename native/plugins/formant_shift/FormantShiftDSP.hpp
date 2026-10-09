@@ -5,9 +5,8 @@
  *
  * Port of DATA/Effects/null_jsfx/formant_shift.jsfx, computed in double like EEL2: three
  * RBJ band-passes (Q 2.5) at 300/850/2250 Hz times shift = 2^((pos-0.5)*2), blended with the
- * dry signal as dry*x + wet*(1.5*F1 + 1.2*F2 + 0.8*F3), wet = min(0.8, 1.2*(1 - 2*pos)) below
- * the centre and min(0.8, 1.2*(2 - 2*pos)) from it: as in the JSFX it is 0.8 at both 0 and 50,
- * falls to ~0 just below 50 and to 0 at 100 (ported as is).
+ * dry signal as dry*x + wet*(1.5*F1 + 1.2*F2 + 0.8*F3), wet = min(0.8, 1.2*|2*pos - 1|):
+ * dry at the centre (no shift), 0.8 towards both ends.
  */
 
 #pragma once
@@ -44,7 +43,7 @@ inline Coeffs coeffsFor(double slider, double srate) noexcept
     for (int i = 0; i < 3; ++i)
         if (c.cf[i] > srate / 2.0 - 200.0) c.cf[i] = srate / 2.0 - 200.0;
 
-    double wet = (pos < 0.5) ? (1.0 - pos * 2.0) : ((1.0 - pos) * 2.0);
+    double wet = std::fabs(pos - 0.5) * 2.0;
     wet = wet * 1.2;
     if (wet > 0.8) wet = 0.8;
     c.wet = wet;
