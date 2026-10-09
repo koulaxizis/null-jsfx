@@ -17,7 +17,7 @@ while [ $# -gt 0 ]; do
   shift
 done
 build="$here/build-shot-$plugin"
-cmake -S "$here" -B "$build" -G Ninja -DNULL_JACK=ON -DNULL_VST3=OFF -DNULL_CLAP=OFF -DNULL_PLUGINS="$plugin" "${extra[@]}" >/dev/null
+cmake -S "$here" -B "$build" -G Ninja -DNULL_JACK=ON -DNULL_VST3=OFF -DNULL_CLAP=OFF -DNULL_PLUGINS="$plugin" ${extra[@]+"${extra[@]}"} >/dev/null
 cmake --build "$build" >/dev/null
 
 disp=":$(( 90 + RANDOM % 100 ))"

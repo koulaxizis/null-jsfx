@@ -47,7 +47,7 @@ if [ "$tests" = ON ] && [ ! -f "$repo/tests/.build/ysfx/build/libysfx.a" ]; then
   bash "$repo/tests/run.sh" >/dev/null || true
 fi
 
-cmake -S "$here" -B "$build" "${gen[@]}" -DCMAKE_BUILD_TYPE=Release -DNULL_TESTS="$tests" "${extra[@]}"
+cmake -S "$here" -B "$build" ${gen[@]+"${gen[@]}"} -DCMAKE_BUILD_TYPE=Release -DNULL_TESTS="$tests" ${extra[@]+"${extra[@]}"}
 cmake --build "$build" --config Release --parallel
 
 if [ "$tests" = ON ]; then

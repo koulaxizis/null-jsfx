@@ -115,6 +115,14 @@ static bool renderJsfx(const char* path, double sr, double value, const Stereo& 
     ysfx_set_sample_rate(fx, sr);
     ysfx_set_block_size(fx, kBlock);
     ysfx_init(fx);
+    // transport stopped at 120 bpm, 4/4, like a DAW that is not playing (the CLAP host gives
+    // no transport either); ysfx would otherwise report "playing", frozen at beat 0
+    ysfx_time_info_t ti {};
+    ti.tempo = 120;
+    ti.playback_state = ysfx_playback_paused;
+    ti.time_signature[0] = 4;
+    ti.time_signature[1] = 4;
+    ysfx_set_time_info(fx, &ti);
     ysfx_slider_set_value(fx, 0, value);
     const uint32_t frames = uint32_t(in.l.size());
     for (uint32_t pos = 0; pos < frames; pos += kBlock) {
