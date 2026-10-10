@@ -49,6 +49,18 @@ jobs:
       - name: Build
         run: native/scripts/build.sh ${{ matrix.test }}
 
+      - name: Validate the VST3 plugins (pluginval)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get install -y xvfb
+          curl -sSL -o pluginval.zip https://github.com/Tracktion/pluginval/releases/download/v1.0.4/pluginval_Linux.zip
+          unzip -q pluginval.zip
+          for p in native/dist/VST3/"NULL JSFX"/*.vst3; do
+            echo "::group::$(basename "$p")"
+            xvfb-run -a ./pluginval --strictness-level 5 --validate-in-process --validate "$p"
+            echo "::endgroup::"
+          done
+
       - name: Package
         run: |
           out="NULL-JSFX-VST3-CLAP-${{ matrix.name }}"
