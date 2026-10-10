@@ -1,0 +1,112 @@
+name: VST3 and CLAP
+
+# Builds the VST3/CLAP plugins (native/) for Windows, macOS and Linux, checks on Linux and macOS
+# that each one sounds identical to its JSFX, and uploads these packages:
+#   NULL-JSFX-JSFX                 the JSFX (plain and GFX), the same for every OS
+#   NULL-JSFX-VST3-CLAP-<OS>       the VST3 and CLAP versions for Windows, macOS or Linux
+# each with native/INSTALL.txt. When a GitHub release is published, they are attached to it as
+# zips with these names (the site's Download links use releases/latest/download/<name>.zip).
+
+on:
+  push:
+    paths: ["native/**", "DATA/**", "tests/**", ".github/workflows/native.yml"]
+  pull_request:
+    paths: ["native/**", "DATA/**", "tests/**", ".github/workflows/native.yml"]
+  workflow_dispatch:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { os: ubuntu-22.04, name: Linux, test: "--test" }
+          - { os: macos-14, name: macOS, test: "--test" }
+          - { os: windows-2022, name: Windows, test: "" }
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Linux deps
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential cmake ninja-build git pkg-config nasm \
+            libgl1-mesa-dev libx11-dev libxcursor-dev libxext-dev libxrandr-dev libdbus-1-dev
+
+      - name: macOS deps
+        if: runner.os == 'macOS'
+        run: brew install ninja nasm
+
+      - name: Build
+        run: native/scripts/build.sh ${{ matrix.test }}
+
+      - name: Validate the VST3 plugins (pluginval)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get install -y xvfb
+          curl -sSL -o pluginval.zip https://github.com/Tracktion/pluginval/releases/download/v1.0.4/pluginval_Linux.zip
+          unzip -q pluginval.zip
+          for p in native/dist/VST3/"NULL JSFX"/*.vst3; do
+            echo "::group::$(basename "$p")"
+            xvfb-run -a ./pluginval --strictness-level 5 --validate-in-process --validate "$p"
+            echo "::endgroup::"
+          done
+
+      - name: Package
+        run: |
+          out="NULL-JSFX-VST3-CLAP-${{ matrix.name }}"
+          mkdir -p "$out"
+          cp -R native/dist/VST3 native/dist/CLAP "$out/"
+          cp native/INSTALL.txt "$out/"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: NULL-JSFX-VST3-CLAP-${{ matrix.name }}
+          path: NULL-JSFX-VST3-CLAP-${{ matrix.name }}
+
+      - name: Attach to the release
+        if: github.event_name == 'release'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          out="NULL-JSFX-VST3-CLAP-${{ matrix.name }}"
+          if [ "$RUNNER_OS" = Windows ]; then
+            powershell -Command "Compress-Archive -Path '$out' -DestinationPath '$out.zip'"
+          else
+            zip -qry "$out.zip" "$out"
+          fi
+          gh release upload "${{ github.event.release.tag_name }}" "$out.zip" --clobber
+
+  jsfx:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Package
+        run: |
+          out="NULL-JSFX-JSFX"
+          mkdir -p "$out"
+          cp -R DATA/Effects/null_jsfx "$out/"
+          cp native/INSTALL.txt "$out/"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: NULL-JSFX-JSFX
+          path: NULL-JSFX-JSFX
+
+      - name: Attach to the release
+        if: github.event_name == 'release'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          zip -qry NULL-JSFX-JSFX.zip NULL-JSFX-JSFX
+          gh release upload "${{ github.event.release.tag_name }}" NULL-JSFX-JSFX.zip --clobber

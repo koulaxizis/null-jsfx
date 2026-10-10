@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>NULL JSFX — Audio Without Noise</title>
-    <meta name="description" content="24 professional audio effects for Cockos Reaper. Minimal design, maximum precision. Free and open source.">
+    <meta name="description" content="73 professional audio effects for Cockos Reaper. Minimal design, maximum precision. Free and open source.">
     <meta name="keywords" content="JSFX, Reaper plugins, audio effects, open source, mixing, mastering, EEL2, NULL JSFX, free plugins, audio engineering">
     <meta name="author" content="Christos Koulaxizis">
     <link rel="canonical" href="https://nulljsfx.tech">
@@ -12,15 +12,16 @@
     <!-- Open Graph / Social Media -->
     <meta property="og:type" content="website">
     <meta property="og:title" content="NULL JSFX — Audio Without Noise">
-    <meta property="og:description" content="24 professional audio effects for Cockos Reaper. Free, open source, zero dependencies.">
+    <meta property="og:description" content="73 professional audio effects for Cockos Reaper. Free, open source, zero dependencies.">
     <meta property="og:url" content="https://nulljsfx.tech">
     <meta property="og:image" content="https://nulljsfx.tech/assets/img/social-preview.jpg">
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="NULL JSFX — Audio Without Noise">
-    <meta name="twitter:description" content="24 professional audio effects for Cockos Reaper. Free, open source, zero dependencies.">
+    <meta name="twitter:description" content="73 professional audio effects for Cockos Reaper. Free, open source, zero dependencies.">
     <meta name="twitter:image" content="https://nulljsfx.tech/assets/img/social-preview.jpg">
 
     <link rel="icon" type="image/svg+xml" href="assets/img/favicon.svg">
+    <link rel="alternate" type="application/atom+xml" title="NULL JSFX releases" href="https://github.com/koulaxizis/null-jsfx/releases.atom">
     <link rel="stylesheet" href="assets/css/style.css">
 </head>
 <body>
@@ -30,14 +31,19 @@
         </header>
 
         <div class="platform-note">
-            <span>These plugins are designed exclusively for</span>
+            <span>Made for</span>
             <a href="https://reaper.fm" target="_blank" rel="noopener">Cockos Reaper</a>
+            <span>&bull; One Slider plugins also as VST3 and CLAP for any DAW</span>
         </div>
 
         <div class="suite-features">
             <span>EEL2 Scripting</span>
             <span class="sep">&bull;</span>
             <span>Native Sliders</span>
+            <span class="sep">&bull;</span>
+            <span>GFX Interfaces</span>
+            <span class="sep">&bull;</span>
+            <span>VST3 &amp; CLAP</span>
             <span class="sep">&bull;</span>
             <span>Zero Dependencies</span>
             <span class="sep">&bull;</span>
@@ -52,16 +58,23 @@
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                     <span class="btn-text">Download</span>
                     <div class="download-meta">
-                        <span><b>v1.0</b></span>
+                        <span><b id="release-version">v2.0</b></span>
+                        <span class="release-new" id="release-new" hidden>NEW</span>
                         <span class="sep">&bull;</span>
-                        <span id="last-update">Updated: 25/07/26</span>
+                        <span id="last-update">Released: 09/10/26</span>
                     </div>
                 </div>
             </a>
-            <button class="changelog-btn" onclick="openChangelog()">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v5h5"/><path d="M3.05 13A9 9 0 1 0 6 5.3L3 8"/><path d="M12 7v5l4 2"/></svg>
-                <span>Changelog</span>
-            </button>
+            <div class="download-links">
+                <a class="changelog-btn support-btn" href="https://ko-fi.com/koulaxizis" target="_blank" rel="noopener">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 8h1a4 4 0 1 1 0 8h-1"/><path d="M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4Z"/><line x1="6" y1="2" x2="6" y2="4"/><line x1="10" y1="2" x2="10" y2="4"/><line x1="14" y1="2" x2="14" y2="4"/></svg>
+                    <span>Support on Ko-fi</span>
+                </a>
+                <button class="changelog-btn" onclick="openChangelog()">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v5h5"/><path d="M3.05 13A9 9 0 1 0 6 5.3L3 8"/><path d="M12 7v5l4 2"/></svg>
+                    <span>Changelog</span>
+                </button>
+            </div>
         </div>
 
         <!-- Search Bar -->
@@ -83,55 +96,87 @@
         </div>
 
         <!-- Changelog Modal -->
+        <div id="download-modal" class="modal-overlay">
+            <div class="modal-content modal-download">
+                <button class="modal-close" onclick="closeDownload()">&times;</button>
+                <div class="changelog-header">
+                    <h3>Download NULL JSFX v2.0</h3>
+                    <p class="changelog-date">Free and open source. Pick what you need.</p>
+                </div>
+                <div class="download-support" id="download-support" hidden>
+                    <p class="download-support-text">Your download is ready. NULL JSFX is free and made by one person: if it helps your music, a coffee or a newsletter sign-up keeps it going.</p>
+                    <div class="download-support-actions">
+                        <a class="download-support-btn" id="support-kofi" href="https://ko-fi.com/koulaxizis" target="_blank" rel="noopener">&#9749; Support on Ko-fi</a>
+                        <a class="download-support-btn" id="support-news" href="https://preview.mailerlite.io/forms/642133/200884431727101575/share" target="_blank" rel="noopener">&#9993; Join the newsletter</a>
+                    </div>
+                    <a class="download-skip" id="download-skip" href="#">Skip to download &rarr;</a>
+                </div>
+                <div class="download-options">
+                    <a class="download-option" id="dl-jsfx" href="https://github.com/koulaxizis/null-jsfx/releases/latest/download/NULL-JSFX-JSFX.zip">
+                        <span class="download-option-title">JSFX for REAPER</span>
+                        <span class="download-option-desc">All 73 plugins, plus the GFX versions with their own interface. One package for Windows, macOS and Linux.</span>
+                        <span class="download-option-file">NULL-JSFX-JSFX.zip</span>
+                    </a>
+                    <a class="download-option" id="dl-native" href="https://github.com/koulaxizis/null-jsfx/releases/latest/download/NULL-JSFX-VST3-CLAP-Windows.zip">
+                        <span class="download-option-title">VST3 &amp; CLAP for <span id="dl-os">Windows</span></span>
+                        <span class="download-option-desc">The One Slider plugins for any DAW, with the same interface and the same sound.</span>
+                        <span class="download-option-file" id="dl-native-file">NULL-JSFX-VST3-CLAP-Windows.zip</span>
+                    </a>
+                    <p class="download-other">Other systems:
+                        <a href="https://github.com/koulaxizis/null-jsfx/releases/latest/download/NULL-JSFX-VST3-CLAP-Windows.zip">Windows</a> &bull;
+                        <a href="https://github.com/koulaxizis/null-jsfx/releases/latest/download/NULL-JSFX-VST3-CLAP-macOS.zip">macOS</a> &bull;
+                        <a href="https://github.com/koulaxizis/null-jsfx/releases/latest/download/NULL-JSFX-VST3-CLAP-Linux.zip">Linux</a>
+                    </p>
+                </div>
+                <div class="changelog-footer">
+                    <small><a href="https://github.com/koulaxizis/null-jsfx/releases" target="_blank" rel="noopener">All releases on GitHub</a> &bull; macOS builds are not code-signed, see INSTALL.txt</small>
+                </div>
+            </div>
+        </div>
+
         <div id="changelog-modal" class="modal-overlay">
             <div class="modal-content modal-changelog">
                 <button class="modal-close" onclick="closeChangelog()">&times;</button>
                 <div class="changelog-header">
-                    <h3>Release Notes v1.0</h3>
-                    <p class="changelog-date">July 25, 2026</p>
+                    <h3>Release Notes v2.0</h3>
+                    <p class="changelog-date">October 8, 2026</p>
                 </div>
                 <div class="changelog-body">
                     <div class="changelog-section">
-                        <h4 class="changelog-title">INITIAL RELEASE</h4>
+                        <h4 class="changelog-title">73 PLUGINS IN THREE CATEGORIES</h4>
                         <ul>
-                            <li>Added 24 JSFX units for recording, mixing and mastering — useful for professionals and amateur audio engineers and musicians</li>
+                            <li><strong>ONE SLIDER</strong> (20): one control, instant result</li>
+                            <li><strong>ESSENTIALS</strong> (31): the everyday mixing and mastering toolbox</li>
+                            <li><strong>ADVANCED</strong> (22): sound design, creative effects and special processing</li>
                         </ul>
                     </div>
                     <div class="changelog-section">
-                        <h4 class="changelog-title">PLUGINS</h4>
+                        <h4 class="changelog-title">NEW FORMATS</h4>
                         <ul>
-                            <li><strong>5-BAND PARAMETRIC EQ</strong> — Flexible multi-filter EQ with 8 filter types per band</li>
-                            <li><strong>CHANNEL UTILITY</strong> — All-in-one channel tool with phase, DC block, mono check</li>
-                            <li><strong>STEREO WIDTH</strong> — Mid/Side imaging with frequency crossover</li>
-                            <li><strong>FILTER</strong> — TPT State-Variable Lowpass with resonance</li>
-                            <li><strong>TAPE SATURATION</strong> — Vintage warmth and glue</li>
-                            <li><strong>HARMONIC DRIVE</strong> — Even-order exciter</li>
-                            <li><strong>DISTORTION</strong> — Aggressive dual-stage overdrive</li>
-                            <li><strong>BIT CRUSH</strong> — Lo-fi quantization and downsampling</li>
-                            <li><strong>CHORUS</strong> — Stereo thickening and detune</li>
-                            <li><strong>FLANGER</strong> — Jet sweep with feedback</li>
-                            <li><strong>PHASER</strong> — Moving notch sweep with 1-8 stages</li>
-                            <li><strong>VIBRATO</strong> — Pitch modulation wobble</li>
-                            <li><strong>TREMOLO</strong> — Rhythmic amplitude modulation</li>
-                            <li><strong>AUTO PAN</strong> — Stereo movement with tempo sync</li>
-                            <li><strong>RING MOD</strong> — Metallic carrier modulation</li>
-                            <li><strong>GATE</strong> — Noise and vocal gate with sidechain HPF</li>
-                            <li><strong>DYNAMICS</strong> — Compressor and expander</li>
-                            <li><strong>LIMITER</strong> — Limiter, clipper, and brickwall modes</li>
-                            <li><strong>DELAY</strong> — Echo and pre-delay</li>
-                            <li><strong>CLICK REPAIR</strong> — Audio restoration</li>
-                            <li><strong>DEESSER</strong> — Sibilance reduction</li>
-                            <li><strong>PITCH SHIFTER</strong> — Real-time pitch shift with octave/semitone/cents</li>
-                            <li><strong>REVERB</strong> — Space and ambience</li>
-                            <li><strong>TRANSIENT SHAPER</strong> — Attack and sustain control</li>
+                            <li>All 20 <strong>ONE SLIDER</strong> plugins now come in three versions that sound the same: the original JSFX, a <strong>GFX</strong> version with its own interface, and <strong>VST3 / CLAP</strong> for any DAW on Windows, macOS and Linux</li>
+                            <li>One shared look across the GFX and VST3/CLAP versions: a live display (response curve, transfer curve, meters or scope) above a single slider</li>
+                        </ul>
+                    </div>
+                    <div class="changelog-section">
+                        <h4 class="changelog-title">NEW</h4>
+                        <ul>
+                            <li>53 new plugins, including Convolution, Spring Reverb, Shimmer Reverb, Harmonizer, Vocoder, Spectral Freeze, Granular Delay, OTT, Frequency Shifter, Rotary Speaker, Robotizer, Cabinet Simulator, Sidechain Ducker, Riser, Auto-Leveler and Envelope Follower</li>
+                            <li>Single-purpose v1.0 tools are merged into their full versions: Tape Saturation, Harmonic Drive, Distortion and Bit Crush now live in <strong>SATURATION</strong>; the 5-Band EQ is now <strong>PARAMETRIC EQ</strong></li>
+                        </ul>
+                    </div>
+                    <div class="changelog-section">
+                        <h4 class="changelog-title">FIXES</h4>
+                        <ul>
+                            <li>Sample-rate math fixed across the suite: filters, envelopes and delay times now behave the same at 44.1, 48 and 96 kHz</li>
+                            <li>Every plugin is rendered by an automated test at three sample rates and extreme settings before release; every GFX and VST3/CLAP version is checked to sound identical to its JSFX</li>
+                            <li>Uniform plugin header: name, author, tags, category and version on every file</li>
                         </ul>
                     </div>
                     <div class="changelog-section">
                         <h4 class="changelog-title">PROPERTIES</h4>
                         <ul>
-                            <li>Pure EEL2 scripting — zero external dependencies</li>
+                            <li>Pure EEL2 scripting, zero external dependencies</li>
                             <li>Native Reaper sliders for maximum stability</li>
-                            <li>Carbon (#232323) visual theme across all plugins</li>
                             <li>CPU-efficient design for real-time processing</li>
                             <li>Free and open source</li>
                         </ul>
@@ -144,7 +189,7 @@
         </div>
 
         <section class="plugins">
-            <h2 class="section-title">Individual Plugins</h2>
+            <h2 class="section-title">Plugins</h2>
 
             <details class="install-guide">
                 <summary>
@@ -156,7 +201,7 @@
                         <span class="step-number">1</span>
                         <div class="step-content">
                             <h4>Install Effects</h4>
-                            <p>After downloading, extract the <code>null-jsfx</code> folder to your Reaper Effects directory:</p>
+                            <p>Download <strong>JSFX for REAPER</strong> and extract the <code>null_jsfx</code> folder to your Reaper Effects directory:</p>
                             <dl class="install-paths">
                                 <div class="install-os">
                                     <dt>Windows</dt>
@@ -171,7 +216,29 @@
                                     <dd><code>~/.config/REAPER/Effects/</code></dd>
                                 </div>
                             </dl>
-                            <p class="install-note">Restart Reaper or re-scan your plugins folders. <strong>NULL JSFX</strong> will be available under the <strong>JS</strong> category in the FX browser.</p>
+                            <p class="install-note">Restart Reaper or re-scan your plugins folders. <strong>NULL JSFX</strong> will be available under the <strong>JS</strong> category in the FX browser. Keep the <code>gfx</code> folder inside it: it holds the GFX versions (<strong>NULL &lt;Name&gt; GFX</strong>) and the file that draws their interface.</p>
+                        </div>
+                    </div>
+                    <div class="install-step">
+                        <span class="step-number">+</span>
+                        <div class="step-content">
+                            <h4>VST3 and CLAP (any DAW)</h4>
+                            <p>Plugins marked <strong>VST3</strong> and <strong>CLAP</strong> also come as regular plugins. Download <strong>VST3 &amp; CLAP</strong> for your system and copy the <code>NULL JSFX</code> folders from its <code>VST3</code> and <code>CLAP</code> folders to:</p>
+                            <dl class="install-paths">
+                                <div class="install-os">
+                                    <dt>Windows</dt>
+                                    <dd><code>C:/Program Files/Common Files/VST3/</code> and <code>C:/Program Files/Common Files/CLAP/</code></dd>
+                                </div>
+                                <div class="install-os">
+                                    <dt>macOS</dt>
+                                    <dd><code>~/Library/Audio/Plug-Ins/VST3/</code> and <code>~/Library/Audio/Plug-Ins/CLAP/</code></dd>
+                                </div>
+                                <div class="install-os">
+                                    <dt>Linux</dt>
+                                    <dd><code>~/.vst3/</code> and <code>~/.clap/</code></dd>
+                                </div>
+                            </dl>
+                            <p class="install-note">Rescan plugins in your DAW. They appear under their own names (e.g. <strong>Tilt</strong>) with <strong>NULL JSFX</strong> as the maker.</p>
                         </div>
                     </div>
                     <div class="install-step">
@@ -187,22 +254,6 @@
                             </ol>
                         </div>
                     </div>
-                    <div class="install-step">
-                        <span class="step-number">3</span>
-                        <div class="step-content">
-                            <h4>FX Chains (Optional)</h4>
-                            <p>Copy <code>.RfxChain</code> files to your <strong>FXChains</strong> folder:</p>
-                            <ol class="usage-steps">
-                                <li>Windows: <code>C:/Users/[Username]/AppData/Roaming/REAPER/FXChains/</code></li>
-                                <li>macOS: <code>~/Library/Application Support/REAPER/FXChains/</code></li>
-                                <li>In Reaper's FX Window, go to <strong>FX Chains</strong> category</li>
-                                <li>Double-click any chain to load all plugins automatically</li>
-                            </ol>
-                            <div class="install-warning">
-                                <strong>&#9888; Important:</strong> Plugins must be installed in <code>Effects/null-jsfx/</code> subfolder for chains to work properly.
-                            </div>
-                        </div>
-                    </div>
                     <div class="install-tips">
                         <div class="install-tip">
                             <strong>&#128161; Tip:</strong> To see all plugins organized in the FX explorer, filter by searching <code>"NULL"</code> or create a Smart Folder: Menu "View" &#8594; FX Browser &#8594; right-click on "Folders" &#8594; "Add folder" &#8594; "Smart folder" &#8594; Filter contains <code>"NULL"</code>. They will auto-categorize!
@@ -214,29 +265,283 @@
                 </div>
             </details>
 
-            <div class="plugin-grid" id="plugin-grid">
-                <!-- Plugin: 5-BAND PARAMETRIC EQ -->
-                <article class="plugin-card" data-name="5-band parametric eq flexible multi-filter" onclick="openGuide('5-band-parametric-eq')">
+            <!-- BEGIN PLUGINS: generated by tools/build_site.py -->
+            <div class="plugin-category" id="one-slider">
+                <h3 class="category-title">One Slider <span class="category-count">20</span></h3>
+                <p class="category-desc">One control, instant result. Turn it up until it sounds right.</p>
+                <div class="plugin-grid">
+                <article class="plugin-card" data-name="brighter bright treble highs high shelf presence air brilliance sparkle eq boost gfx vst3 clap" onclick="openGuide('brighter')">
                     <div class="plugin-icon">
-                        <svg viewBox="0 0 64 64" width="48" height="48">
-                            <defs><linearGradient id="icon-5bpeq" x1="0%" y1="100%" x2="0%" y2="0%"><stop offset="0%" stop-color="#888888"/><stop offset="100%" stop-color="#aaaaaa"/></linearGradient></defs>
-                            <path d="M 4,44 L 60,44" stroke="url(#icon-5bpeq)" stroke-width="1" fill="none" stroke-dasharray="2,3" opacity="0.3"/>
-                            <path d="M 4,44 Q 9,36 14,44" stroke="url(#icon-5bpeq)" stroke-width="2.5" fill="none" stroke-linecap="round"/>
-                            <path d="M 16,44 Q 21,28 26,44" stroke="url(#icon-5bpeq)" stroke-width="2.5" fill="none" stroke-linecap="round"/>
-                            <path d="M 28,44 Q 33,18 38,44" stroke="url(#icon-5bpeq)" stroke-width="2.5" fill="none" stroke-linecap="round"/>
-                            <path d="M 40,44 Q 45,26 50,44" stroke="url(#icon-5bpeq)" stroke-width="2.5" fill="none" stroke-linecap="round"/>
-                            <path d="M 52,44 Q 56,34 60,44" stroke="url(#icon-5bpeq)" stroke-width="2.5" fill="none" stroke-linecap="round"/>
-                        </svg>
+                        <svg viewBox="0 0 64 64" width="48" height="48"><defs><linearGradient id="icon-brighter" x1="0%" y1="100%" x2="0%" y2="0%"><stop offset="0%" stop-color="#888888"/><stop offset="100%" stop-color="#aaaaaa"/></linearGradient></defs><path d="M 8,46 L 28,46 Q 38,46 42,24 L 56,24" stroke="url(#icon-brighter)" stroke-width="2.5" fill="none" stroke-linecap="round"/><path d="M 42,46 L 56,46" stroke="url(#icon-brighter)" stroke-width="1.5" fill="none" stroke-linecap="round" opacity="0.3"/><circle cx="50" cy="14" r="3" stroke="url(#icon-brighter)" stroke-width="1.5" fill="none" stroke-linecap="round" opacity="0.5"/><path d="M 50,6 L 50,8 M 58,14 L 56,14 M 44,14 L 42,14" stroke="url(#icon-brighter)" stroke-width="1.5" fill="none" stroke-linecap="round" opacity="0.4"/></svg>
                     </div>
                     <div class="plugin-info">
-                        <h3>5-BAND EQ</h3>
-                        <p class="plugin-desc">Flexible Multi-Filter EQ</p>
+                        <h3>BRIGHTER</h3>
+                        <p class="plugin-desc">One-Knob Treble Lift</p>
+                        <div class="plugin-formats"><span>JSFX</span><span>GFX</span><span>VST3</span><span>CLAP</span></div>
                         <span class="info-badge">?</span>
                     </div>
                 </article>
-
-                <!-- Plugin: CHANNEL UTILITY -->
-                <article class="plugin-card" data-name="channel utility stereo mono conversion" onclick="openGuide('channel-utility')">
+                <article class="plugin-card" data-name="chorus one thickening detune modulation stereo lfo width ensemble shimmer gfx vst3 clap" onclick="openGuide('chorus-one')">
+                    <div class="plugin-icon">
+                        <svg viewBox="0 0 64 64" width="48" height="48"><defs><linearGradient id="icon-chorus-one" x1="0%" y1="100%" x2="0%" y2="0%"><stop offset="0%" stop-color="#888888"/><stop offset="100%" stop-color="#aaaaaa"/></linearGradient></defs><path d="M 8,26 Q 16,16 24,26 T 40,26 T 56,26" stroke="url(#icon-chorus-one)" stroke-width="2.5" fill="none" stroke-linecap="round"/><path d="M 8,38 Q 16,48 24,38 T 40,38 T 56,38" stroke="url(#icon-chorus-one)" stroke-width="2.5" fill="none" stroke-linecap="round"/><path d="M 8,32 L 56,32" stroke="url(#icon-chorus-one)" stroke-width="1.5" fill="none" stroke-linecap="round" opacity="0.3"/></svg>
+                    </div>
+                    <div class="plugin-info">
+                        <h3>CHORUS ONE</h3>
+                        <p class="plugin-desc">One-Knob Stereo Chorus</p>
+                        <div class="plugin-formats"><span>JSFX</span><span>GFX</span><span>VST3</span><span>CLAP</span></div>
+                        <span class="info-badge">?</span>
+                    </div>
+                </article>
+                <article class="plugin-card" data-name="crunch distortion grit fuzz clipping hard clip aggressive overdrive dirt gfx vst3 clap" onclick="openGuide('crunch')">
+                    <div class="plugin-icon">
+                        <svg viewBox="0 0 64 64" width="48" height="48"><defs><linearGradient id="icon-crunch" x1="0%" y1="100%" x2="0%" y2="0%"><stop offset="0%" stop-color="#888888"/><stop offset="100%" stop-color="#aaaaaa"/></linearGradient></defs><path d="M 8,32 L 14,18 L 50,18 L 56,32" stroke="url(#icon-crunch)" stroke-width="2.5" fill="none" stroke-linecap="round"/><path d="M 8,32 L 14,46 L 50,46 L 56,32" stroke="url(#icon-crunch)" stroke-width="2.5" fill="none" stroke-linecap="round"/><path d="M 8,32 Q 20,6 32,32 T 56,32" stroke="url(#icon-crunch)" stroke-width="1.5" fill="none" stroke-linecap="round" opacity="0.3"/></svg>
+                    </div>
+                    <div class="plugin-info">
+                        <h3>CRUNCH</h3>
+                        <p class="plugin-desc">One-Knob Hard Distortion</p>
+                        <div class="plugin-formats"><span>JSFX</span><span>GFX</span><span>VST3</span><span>CLAP</span></div>
+                        <span class="info-badge">?</span>
+                    </div>
+                </article>
+                <article class="plugin-card" data-name="doubler double tracking adt vocal doubling stereo width thicken second take gfx vst3 clap" onclick="openGuide('doubler')">
+                    <div class="plugin-icon">
+                        <svg viewBox="0 0 64 64" width="48" height="48"><defs><linearGradient id="icon-doubler" x1="0%" y1="100%" x2="0%" y2="0%"><stop offset="0%" stop-color="#888888"/><stop offset="100%" stop-color="#aaaaaa"/></linearGradient></defs><path d="M 8,32 Q 18,20 28,32 T 48,32" stroke="url(#icon-doubler)" stroke-width="2.5" fill="none" stroke-linecap="round"/><path d="M 14,24 Q 24,12 34,24 T 54,24" stroke="url(#icon-doubler)" stroke-width="1.5" fill="none" stroke-linecap="round" opacity="0.4"/><path d="M 14,40 Q 24,28 34,40 T 54,40" stroke="url(#icon-doubler)" stroke-width="1.5" fill="none" stroke-linecap="round" opacity="0.4"/></svg>
+                    </div>
+                    <div class="plugin-info">
+                        <h3>DOUBLER</h3>
+                        <p class="plugin-desc">Automatic Double Tracking</p>
+                        <div class="plugin-formats"><span>JSFX</span><span>GFX</span><span>VST3</span><span>CLAP</span></div>
+                        <span class="info-badge">?</span>
+                    </div>
+                </article>
+                <article class="plugin-card" data-name="driver drive saturation warmth tube tape overdrive harmonics warm asymmetric gfx vst3 clap" onclick="openGuide('driver')">
+                    <div class="plugin-icon">
+                        <svg viewBox="0 0 64 64" width="48" height="48"><defs><linearGradient id="icon-driver" x1="0%" y1="100%" x2="0%" y2="0%"><stop offset="0%" stop-color="#888888"/><stop offset="100%" stop-color="#aaaaaa"/></linearGradient></defs><path d="M 8,46 Q 24,46 32,32 Q 40,18 56,18" stroke="url(#icon-driver)" stroke-width="2.5" fill="none" stroke-linecap="round"/><path d="M 8,50 L 56,14" stroke="url(#icon-driver)" stroke-width="1.5" fill="none" stroke-linecap="round" opacity="0.3"/><circle cx="32" cy="32" r="3" stroke="url(#icon-driver)" stroke-width="1.5" fill="none" stroke-linecap="round" opacity="0.5"/></svg>
+                    </div>
+                    <div class="plugin-info">
+                        <h3>DRIVER</h3>
+                        <p class="plugin-desc">One-Knob Warm Tube Drive</p>
+                        <div class="plugin-formats"><span>JSFX</span><span>GFX</span><span>VST3</span><span>CLAP</span></div>
+                        <span class="info-badge">?</span>
+                    </div>
+                </article>
+                <article class="plugin-card" data-name="exciter enhancer aural harmonics brightness presence air sparkle saturation top end gfx vst3 clap" onclick="openGuide('exciter')">
+                    <div class="plugin-icon">
+                        <svg viewBox="0 0 64 64" width="48" height="48"><defs><linearGradient id="icon-exciter" x1="0%" y1="100%" x2="0%" y2="0%"><stop offset="0%" stop-color="#888888"/><stop offset="100%" stop-color="#aaaaaa"/></linearGradient></defs><path d="M 8,46 L 30,46 Q 36,46 40,30" stroke="url(#icon-exciter)" stroke-width="2.5" fill="none" stroke-linecap="round"/><path d="M 40,30 L 44,20 L 48,30 L 52,14 L 56,30" stroke="url(#icon-exciter)" stroke-width="2.5" fill="none" stroke-linecap="round"/><path d="M 30,46 L 56,46" stroke="url(#icon-exciter)" stroke-width="1.5" fill="none" stroke-linecap="round" opacity="0.3"/></svg>
+                    </div>
+                    <div class="plugin-info">
+                        <h3>EXCITER</h3>
+                        <p class="plugin-desc">Harmonic High Enhancer</p>
+                        <div class="plugin-formats"><span>JSFX</span><span>GFX</span><span>VST3</span><span>CLAP</span></div>
+                        <span class="info-badge">?</span>
+                    </div>
+                </article>
+                <article class="plugin-card" data-name="formant shift vocal morph gender voice vowel resonance character tract gfx vst3 clap" onclick="openGuide('formant-shift')">
+                    <div class="plugin-icon">
+                        <svg viewBox="0 0 64 64" width="48" height="48"><defs><linearGradient id="icon-formant-shift" x1="0%" y1="100%" x2="0%" y2="0%"><stop offset="0%" stop-color="#888888"/><stop offset="100%" stop-color="#aaaaaa"/></linearGradient></defs><path d="M 6,46 Q 14,46 16,30 Q 18,46 28,46 Q 32,46 34,22 Q 36,46 46,46 Q 50,46 52,34 Q 54,46 58,46" stroke="url(#icon-formant-shift)" stroke-width="2.5" fill="none" stroke-linecap="round"/><path d="M 20,14 L 44,14 M 38,9 L 44,14 L 38,19" stroke="url(#icon-formant-shift)" stroke-width="1.5" fill="none" stroke-linecap="round" opacity="0.4"/></svg>
+                    </div>
+                    <div class="plugin-info">
+                        <h3>FORMANT SHIFT</h3>
+                        <p class="plugin-desc">Vocal Formant Morph</p>
+                        <div class="plugin-formats"><span>JSFX</span><span>GFX</span><span>VST3</span><span>CLAP</span></div>
+                        <span class="info-badge">?</span>
+                    </div>
+                </article>
+                <article class="plugin-card" data-name="grit bitcrush bit crusher sample rate reduction decimate lofi degradation digital gfx vst3 clap" onclick="openGuide('grit')">
+                    <div class="plugin-icon">
+                        <svg viewBox="0 0 64 64" width="48" height="48"><defs><linearGradient id="icon-grit" x1="0%" y1="100%" x2="0%" y2="0%"><stop offset="0%" stop-color="#888888"/><stop offset="100%" stop-color="#aaaaaa"/></linearGradient></defs><path d="M 8,40 L 8,32 L 16,32 L 16,22 L 24,22 L 24,28 L 32,28 L 32,40 L 40,40 L 40,24 L 48,24 L 48,34 L 56,34" stroke="url(#icon-grit)" stroke-width="2.5" fill="none" stroke-linecap="round"/><path d="M 8,32 Q 20,14 32,34 T 56,30" stroke="url(#icon-grit)" stroke-width="1.5" fill="none" stroke-linecap="round" opacity="0.3"/></svg>
+                    </div>
+                    <div class="plugin-info">
+                        <h3>GRIT</h3>
+                        <p class="plugin-desc">One-Knob Bitcrusher</p>
+                        <div class="plugin-formats"><span>JSFX</span><span>GFX</span><span>VST3</span><span>CLAP</span></div>
+                        <span class="info-badge">?</span>
+                    </div>
+                </article>
+                <article class="plugin-card" data-name="louder loudness maximizer limiter gain volume boost makeup ceiling look-ahead gfx vst3 clap" onclick="openGuide('louder')">
+                    <div class="plugin-icon">
+                        <svg viewBox="0 0 64 64" width="48" height="48"><defs><linearGradient id="icon-louder" x1="0%" y1="100%" x2="0%" y2="0%"><stop offset="0%" stop-color="#888888"/><stop offset="100%" stop-color="#aaaaaa"/></linearGradient></defs><path d="M 12,40 L 12,24 L 22,24 L 34,14 L 34,50 L 22,40 Z" stroke="url(#icon-louder)" stroke-width="2.5" fill="none" stroke-linecap="round"/><path d="M 42,24 Q 47,32 42,40" stroke="url(#icon-louder)" stroke-width="2.5" fill="none" stroke-linecap="round"/><path d="M 48,18 Q 57,32 48,46" stroke="url(#icon-louder)" stroke-width="1.5" fill="none" stroke-linecap="round" opacity="0.4"/></svg>
+                    </div>
+                    <div class="plugin-info">
+                        <h3>LOUDER</h3>
+                        <p class="plugin-desc">One-Knob Loudness Maximizer</p>
+                        <div class="plugin-formats"><span>JSFX</span><span>GFX</span><span>VST3</span><span>CLAP</span></div>
+                        <span class="info-badge">?</span>
+                    </div>
+                </article>
+                <article class="plugin-card" data-name="mono maker bass mono low frequency summing stereo width elliptical eq side gfx vst3 clap" onclick="openGuide('mono-maker')">
+                    <div class="plugin-icon">
+                        <svg viewBox="0 0 64 64" width="48" height="48"><defs><linearGradient id="icon-mono-maker" x1="0%" y1="100%" x2="0%" y2="0%"><stop offset="0%" stop-color="#888888"/><stop offset="100%" stop-color="#aaaaaa"/></linearGradient></defs><path d="M 8,18 Q 20,18 32,40 Q 44,18 56,18" stroke="url(#icon-mono-maker)" stroke-width="2.5" fill="none" stroke-linecap="round"/><path d="M 32,40 L 32,52" stroke="url(#icon-mono-maker)" stroke-width="2.5" fill="none" stroke-linecap="round"/><path d="M 8,26 L 56,26" stroke="url(#icon-mono-maker)" stroke-width="1.5" fill="none" stroke-linecap="round" opacity="0.3"/></svg>
+                    </div>
+                    <div class="plugin-info">
+                        <h3>MONO MAKER</h3>
+                        <p class="plugin-desc">Low-End Mono Summing</p>
+                        <div class="plugin-formats"><span>JSFX</span><span>GFX</span><span>VST3</span><span>CLAP</span></div>
+                        <span class="info-badge">?</span>
+                    </div>
+                </article>
+                <article class="plugin-card" data-name="phatter phat fat bass low end enhancement sub weight boost thickness warmth gfx vst3 clap" onclick="openGuide('phatter')">
+                    <div class="plugin-icon">
+                        <svg viewBox="0 0 64 64" width="48" height="48"><defs><linearGradient id="icon-phatter" x1="0%" y1="100%" x2="0%" y2="0%"><stop offset="0%" stop-color="#888888"/><stop offset="100%" stop-color="#aaaaaa"/></linearGradient></defs><path d="M 8,18 L 22,18 Q 30,18 34,40 Q 38,46 56,46" stroke="url(#icon-phatter)" stroke-width="2.5" fill="none" stroke-linecap="round"/><path d="M 8,46 L 34,46" stroke="url(#icon-phatter)" stroke-width="1.5" fill="none" stroke-linecap="round" opacity="0.3"/><circle cx="15" cy="30" r="5" stroke="url(#icon-phatter)" stroke-width="1.5" fill="none" stroke-linecap="round" opacity="0.4"/></svg>
+                    </div>
+                    <div class="plugin-info">
+                        <h3>PHATTER</h3>
+                        <p class="plugin-desc">One-Knob Low-End Boost</p>
+                        <div class="plugin-formats"><span>JSFX</span><span>GFX</span><span>VST3</span><span>CLAP</span></div>
+                        <span class="info-badge">?</span>
+                    </div>
+                </article>
+                <article class="plugin-card" data-name="pressure compressor compression dynamics leveling glue bus squash rms gfx vst3 clap" onclick="openGuide('pressure')">
+                    <div class="plugin-icon">
+                        <svg viewBox="0 0 64 64" width="48" height="48"><defs><linearGradient id="icon-pressure" x1="0%" y1="100%" x2="0%" y2="0%"><stop offset="0%" stop-color="#888888"/><stop offset="100%" stop-color="#aaaaaa"/></linearGradient></defs><path d="M 10,54 L 32,32 L 54,22" stroke="url(#icon-pressure)" stroke-width="2.5" fill="none" stroke-linecap="round"/><path d="M 32,32 L 54,10" stroke="url(#icon-pressure)" stroke-width="1.5" fill="none" stroke-linecap="round" opacity="0.3"/><path d="M 22,12 L 22,20 M 18,16 L 22,20 L 26,16" stroke="url(#icon-pressure)" stroke-width="1.5" fill="none" stroke-linecap="round" opacity="0.4"/></svg>
+                    </div>
+                    <div class="plugin-info">
+                        <h3>PRESSURE</h3>
+                        <p class="plugin-desc">One-Knob Bus Compressor</p>
+                        <div class="plugin-formats"><span>JSFX</span><span>GFX</span><span>VST3</span><span>CLAP</span></div>
+                        <span class="info-badge">?</span>
+                    </div>
+                </article>
+                <article class="plugin-card" data-name="pumper pump pumping sidechain ducking rhythm groove volume tempo sync beat edm gfx vst3 clap" onclick="openGuide('pumper')">
+                    <div class="plugin-icon">
+                        <svg viewBox="0 0 64 64" width="48" height="48"><defs><linearGradient id="icon-pumper" x1="0%" y1="100%" x2="0%" y2="0%"><stop offset="0%" stop-color="#888888"/><stop offset="100%" stop-color="#aaaaaa"/></linearGradient></defs><path d="M 8,18 L 12,46 Q 20,20 28,18 L 32,46 Q 40,20 48,18 L 52,46 Q 54,32 56,26" stroke="url(#icon-pumper)" stroke-width="2.5" fill="none" stroke-linecap="round"/></svg>
+                    </div>
+                    <div class="plugin-info">
+                        <h3>PUMPER</h3>
+                        <p class="plugin-desc">Tempo-Synced Volume Pump</p>
+                        <div class="plugin-formats"><span>JSFX</span><span>GFX</span><span>VST3</span><span>CLAP</span></div>
+                        <span class="info-badge">?</span>
+                    </div>
+                </article>
+                <article class="plugin-card" data-name="riser build up build-up tension sweep transition edm drop pre-drop noise swell high pass automation gfx vst3 clap" onclick="openGuide('riser')">
+                    <div class="plugin-icon">
+                        <svg viewBox="0 0 64 64" width="48" height="48"><defs><linearGradient id="icon-riser" x1="0%" y1="100%" x2="0%" y2="0%"><stop offset="0%" stop-color="#888888"/><stop offset="100%" stop-color="#aaaaaa"/></linearGradient></defs><path d="M 8,52 Q 30,50 40,34 T 56,10" stroke="url(#icon-riser)" stroke-width="2.5" fill="none" stroke-linecap="round"/><path d="M 48,10 L 56,10 L 56,18" stroke="url(#icon-riser)" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/><path d="M 14,52 L 14,48 M 22,52 L 22,46 M 30,52 L 30,42 M 38,52 L 38,36" stroke="url(#icon-riser)" stroke-width="1.5" opacity="0.4" stroke-linecap="round"/></svg>
+                    </div>
+                    <div class="plugin-info">
+                        <h3>RISER</h3>
+                        <p class="plugin-desc">One-Knob Build-Up</p>
+                        <div class="plugin-formats"><span>JSFX</span><span>GFX</span><span>VST3</span><span>CLAP</span></div>
+                        <span class="info-badge">?</span>
+                    </div>
+                </article>
+                <article class="plugin-card" data-name="snappy transient shaper attack punch drums percussive snap sustain gfx vst3 clap" onclick="openGuide('snappy')">
+                    <div class="plugin-icon">
+                        <svg viewBox="0 0 64 64" width="48" height="48"><defs><linearGradient id="icon-snappy" x1="0%" y1="100%" x2="0%" y2="0%"><stop offset="0%" stop-color="#888888"/><stop offset="100%" stop-color="#aaaaaa"/></linearGradient></defs><path d="M 8,46 L 18,46 L 22,10 L 30,38 Q 40,46 56,46" stroke="url(#icon-snappy)" stroke-width="2.5" fill="none" stroke-linecap="round"/><path d="M 22,10 L 26,10" stroke="url(#icon-snappy)" stroke-width="1.5" fill="none" stroke-linecap="round" opacity="0.4"/><path d="M 8,46 L 56,46" stroke="url(#icon-snappy)" stroke-width="1.5" fill="none" stroke-linecap="round" opacity="0.3"/></svg>
+                    </div>
+                    <div class="plugin-info">
+                        <h3>SNAPPY</h3>
+                        <p class="plugin-desc">One-Knob Transient Shaper</p>
+                        <div class="plugin-formats"><span>JSFX</span><span>GFX</span><span>VST3</span><span>CLAP</span></div>
+                        <span class="info-badge">?</span>
+                    </div>
+                </article>
+                <article class="plugin-card" data-name="spread stereo width widener decorrelation wide mono-compatible haas imager gfx vst3 clap" onclick="openGuide('spread')">
+                    <div class="plugin-icon">
+                        <svg viewBox="0 0 64 64" width="48" height="48"><defs><linearGradient id="icon-spread" x1="0%" y1="100%" x2="0%" y2="0%"><stop offset="0%" stop-color="#888888"/><stop offset="100%" stop-color="#aaaaaa"/></linearGradient></defs><path d="M 32,32 L 10,18 M 32,32 L 54,18" stroke="url(#icon-spread)" stroke-width="2.5" fill="none" stroke-linecap="round"/><path d="M 32,32 L 10,46 M 32,32 L 54,46" stroke="url(#icon-spread)" stroke-width="2.5" fill="none" stroke-linecap="round"/><circle cx="32" cy="32" r="4" stroke="url(#icon-spread)" stroke-width="1.5" fill="none" stroke-linecap="round" opacity="0.5"/></svg>
+                    </div>
+                    <div class="plugin-info">
+                        <h3>SPREAD</h3>
+                        <p class="plugin-desc">Mono-Safe Stereo Widener</p>
+                        <div class="plugin-formats"><span>JSFX</span><span>GFX</span><span>VST3</span><span>CLAP</span></div>
+                        <span class="info-badge">?</span>
+                    </div>
+                </article>
+                <article class="plugin-card" data-name="stretch pitch shift granular slow motion warp texture tape stretch grain octave gfx vst3 clap" onclick="openGuide('stretch')">
+                    <div class="plugin-icon">
+                        <svg viewBox="0 0 64 64" width="48" height="48"><defs><linearGradient id="icon-stretch" x1="0%" y1="100%" x2="0%" y2="0%"><stop offset="0%" stop-color="#888888"/><stop offset="100%" stop-color="#aaaaaa"/></linearGradient></defs><path d="M 8,32 Q 14,20 20,32 T 32,32" stroke="url(#icon-stretch)" stroke-width="2.5" fill="none" stroke-linecap="round"/><path d="M 32,32 Q 44,14 56,32" stroke="url(#icon-stretch)" stroke-width="2.5" fill="none" stroke-linecap="round"/><path d="M 8,48 L 56,48 M 50,44 L 56,48 L 50,52" stroke="url(#icon-stretch)" stroke-width="1.5" fill="none" stroke-linecap="round" opacity="0.4"/></svg>
+                    </div>
+                    <div class="plugin-info">
+                        <h3>STRETCH</h3>
+                        <p class="plugin-desc">Granular Pitch Stretch</p>
+                        <div class="plugin-formats"><span>JSFX</span><span>GFX</span><span>VST3</span><span>CLAP</span></div>
+                        <span class="info-badge">?</span>
+                    </div>
+                </article>
+                <article class="plugin-card" data-name="sweeper filter sweep dj lowpass highpass resonance creative transition gfx vst3 clap" onclick="openGuide('sweeper')">
+                    <div class="plugin-icon">
+                        <svg viewBox="0 0 64 64" width="48" height="48"><defs><linearGradient id="icon-sweeper" x1="0%" y1="100%" x2="0%" y2="0%"><stop offset="0%" stop-color="#888888"/><stop offset="100%" stop-color="#aaaaaa"/></linearGradient></defs><path d="M 8,30 L 26,30 Q 34,30 36,22 Q 40,30 44,46" stroke="url(#icon-sweeper)" stroke-width="2.5" fill="none" stroke-linecap="round"/><path d="M 8,44 L 56,44" stroke="url(#icon-sweeper)" stroke-width="1.5" fill="none" stroke-linecap="round" opacity="0.3"/><path d="M 20,54 L 44,54 M 38,50 L 44,54 L 38,58" stroke="url(#icon-sweeper)" stroke-width="1.5" fill="none" stroke-linecap="round" opacity="0.4"/></svg>
+                    </div>
+                    <div class="plugin-info">
+                        <h3>SWEEPER</h3>
+                        <p class="plugin-desc">DJ Filter Sweep</p>
+                        <div class="plugin-formats"><span>JSFX</span><span>GFX</span><span>VST3</span><span>CLAP</span></div>
+                        <span class="info-badge">?</span>
+                    </div>
+                </article>
+                <article class="plugin-card" data-name="tilt eq equalizer tone bass treble balance tonal brighter darker gfx vst3 clap" onclick="openGuide('tilt')">
+                    <div class="plugin-icon">
+                        <svg viewBox="0 0 64 64" width="48" height="48"><defs><linearGradient id="icon-tilt" x1="0%" y1="100%" x2="0%" y2="0%"><stop offset="0%" stop-color="#888888"/><stop offset="100%" stop-color="#aaaaaa"/></linearGradient></defs><path d="M 8,44 L 56,20" stroke="url(#icon-tilt)" stroke-width="2.5" fill="none" stroke-linecap="round"/><path d="M 8,32 L 56,32" stroke="url(#icon-tilt)" stroke-width="1.5" fill="none" stroke-linecap="round" opacity="0.3"/><circle cx="32" cy="32" r="3" stroke="url(#icon-tilt)" stroke-width="1.5" fill="none" stroke-linecap="round" opacity="0.5"/></svg>
+                    </div>
+                    <div class="plugin-info">
+                        <h3>TILT</h3>
+                        <p class="plugin-desc">One-Knob Tilt EQ</p>
+                        <div class="plugin-formats"><span>JSFX</span><span>GFX</span><span>VST3</span><span>CLAP</span></div>
+                        <span class="info-badge">?</span>
+                    </div>
+                </article>
+                <article class="plugin-card" data-name="wetter wet reverb space ambience room hall freeverb depth tail gfx vst3 clap" onclick="openGuide('wetter')">
+                    <div class="plugin-icon">
+                        <svg viewBox="0 0 64 64" width="48" height="48"><defs><linearGradient id="icon-wetter" x1="0%" y1="100%" x2="0%" y2="0%"><stop offset="0%" stop-color="#888888"/><stop offset="100%" stop-color="#aaaaaa"/></linearGradient></defs><path d="M 8,32 L 16,32" stroke="url(#icon-wetter)" stroke-width="2.5" fill="none" stroke-linecap="round"/><path d="M 22,22 Q 30,32 22,42" stroke="url(#icon-wetter)" stroke-width="2.5" fill="none" stroke-linecap="round"/><path d="M 32,16 Q 44,32 32,48" stroke="url(#icon-wetter)" stroke-width="1.5" fill="none" stroke-linecap="round" opacity="0.5"/><path d="M 42,10 Q 58,32 42,54" stroke="url(#icon-wetter)" stroke-width="1.5" fill="none" stroke-linecap="round" opacity="0.3"/></svg>
+                    </div>
+                    <div class="plugin-info">
+                        <h3>WETTER</h3>
+                        <p class="plugin-desc">One-Knob Room Reverb</p>
+                        <div class="plugin-formats"><span>JSFX</span><span>GFX</span><span>VST3</span><span>CLAP</span></div>
+                        <span class="info-badge">?</span>
+                    </div>
+                </article>
+                </div>
+            </div>
+            <div class="plugin-category" id="essentials">
+                <h3 class="category-title">Essentials <span class="category-count">31</span></h3>
+                <p class="category-desc">The everyday mixing and mastering toolbox.</p>
+                <div class="plugin-grid">
+                <article class="plugin-card" data-name="auto pan autopan panner panning lfo stereo movement modulation tempo sync ping pong" onclick="openGuide('auto-pan')">
+                    <div class="plugin-icon">
+                        <svg viewBox="0 0 64 64" width="48" height="48">
+                            <defs><linearGradient id="icon-autopan" x1="0%" y1="100%" x2="0%" y2="0%"><stop offset="0%" stop-color="#888888"/><stop offset="100%" stop-color="#aaaaaa"/></linearGradient></defs>
+                            <path d="M 16,24 L 10,32 L 16,40" stroke="url(#icon-autopan)" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M 48,24 L 54,32 L 48,40" stroke="url(#icon-autopan)" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M 10,32 L 54,32" stroke="url(#icon-autopan)" stroke-width="1.5" opacity="0.3" stroke-dasharray="3,3"/>
+                        </svg>
+                    </div>
+                    <div class="plugin-info">
+                        <h3>AUTO PAN</h3>
+                        <p class="plugin-desc">LFO Stereo Panner</p>
+                        <span class="info-badge">?</span>
+                    </div>
+                </article>
+                <article class="plugin-card" data-name="auto leveler leveller gain rider riding agc automatic volume loudness dialogue podcast voice" onclick="openGuide('auto-leveler')">
+                    <div class="plugin-icon">
+                        <svg viewBox="0 0 64 64" width="48" height="48"><defs><linearGradient id="icon-auto-leveler" x1="0%" y1="100%" x2="0%" y2="0%"><stop offset="0%" stop-color="#888888"/><stop offset="100%" stop-color="#aaaaaa"/></linearGradient></defs><path d="M 8,32 L 56,32" stroke="url(#icon-auto-leveler)" stroke-width="1.5" fill="none" stroke-linecap="round" opacity="0.4"/><path d="M 8,44 C 16,44 18,20 26,20 C 32,20 34,32 40,32 L 56,32" stroke="url(#icon-auto-leveler)" stroke-width="2.5" fill="none" stroke-linecap="round"/><path d="M 48,14 L 48,26 M 44,18 L 48,14 L 52,18 M 44,22 L 48,26 L 52,22" stroke="url(#icon-auto-leveler)" stroke-width="1.5" fill="none" stroke-linecap="round" opacity="0.5"/></svg>
+                    </div>
+                    <div class="plugin-info">
+                        <h3>AUTO-LEVELER</h3>
+                        <p class="plugin-desc">Automatic Gain Rider</p>
+                        <span class="info-badge">?</span>
+                    </div>
+                </article>
+                <article class="plugin-card" data-name="breath control breaths vocal de-breath reduce attenuate expander dynamics voice podcast" onclick="openGuide('breath-control')">
+                    <div class="plugin-icon">
+                        <svg viewBox="0 0 64 64" width="48" height="48"><defs><linearGradient id="icon-breath-control" x1="0%" y1="100%" x2="0%" y2="0%"><stop offset="0%" stop-color="#888888"/><stop offset="100%" stop-color="#aaaaaa"/></linearGradient></defs><path d="M 8,32 C 14,20 20,20 24,32 C 28,44 34,44 38,32" stroke="url(#icon-breath-control)" stroke-width="2.5" fill="none" stroke-linecap="round"/><path d="M 38,32 C 42,26 46,26 50,32 C 52,35 54,35 56,32" stroke="url(#icon-breath-control)" stroke-width="1.5" fill="none" stroke-linecap="round" opacity="0.5"/><path d="M 44,14 L 44,24 M 40,20 L 44,24 L 48,20" stroke="url(#icon-breath-control)" stroke-width="2.5" fill="none" stroke-linecap="round"/></svg>
+                    </div>
+                    <div class="plugin-info">
+                        <h3>BREATH CONTROL</h3>
+                        <p class="plugin-desc">Vocal Breath Reduction</p>
+                        <span class="info-badge">?</span>
+                    </div>
+                </article>
+                <article class="plugin-card" data-name="cabinet simulator cab speaker guitar bass amp sim di reamp mic impulse free" onclick="openGuide('cabinet-simulator')">
+                    <div class="plugin-icon">
+                        <svg viewBox="0 0 64 64" width="48" height="48"><defs><linearGradient id="icon-cabinet-simulator" x1="0%" y1="100%" x2="0%" y2="0%"><stop offset="0%" stop-color="#888888"/><stop offset="100%" stop-color="#aaaaaa"/></linearGradient></defs><rect x="10" y="8" width="44" height="48" rx="3" stroke="url(#icon-cabinet-simulator)" stroke-width="2.5" fill="none" stroke-linecap="round"/><circle cx="32" cy="32" r="14" stroke="url(#icon-cabinet-simulator)" stroke-width="2.5" fill="none" stroke-linecap="round"/><circle cx="32" cy="32" r="5" stroke="url(#icon-cabinet-simulator)" stroke-width="1.5" fill="none" stroke-linecap="round" opacity="0.5"/></svg>
+                    </div>
+                    <div class="plugin-info">
+                        <h3>CABINET SIMULATOR</h3>
+                        <p class="plugin-desc">Speaker Cabinet Simulation</p>
+                        <span class="info-badge">?</span>
+                    </div>
+                </article>
+                <article class="plugin-card" data-name="channel utility gain trim pad phase polarity invert dc offset block balance solo mono check hard limit clip tool" onclick="openGuide('channel-utility')">
                     <div class="plugin-icon">
                         <svg viewBox="0 0 64 64" width="48" height="48">
                             <defs><linearGradient id="icon-chutil" x1="0%" y1="100%" x2="0%" y2="0%"><stop offset="0%" stop-color="#888888"/><stop offset="100%" stop-color="#aaaaaa"/></linearGradient></defs>
@@ -248,122 +553,11 @@
                     </div>
                     <div class="plugin-info">
                         <h3>CHANNEL UTILITY</h3>
-                        <p class="plugin-desc">All-in-One Channel Tool</p>
+                        <p class="plugin-desc">Gain, Phase &amp; Routing</p>
                         <span class="info-badge">?</span>
                     </div>
                 </article>
-
-                <!-- Plugin: STEREO WIDTH -->
-                <article class="plugin-card" data-name="stereo width mid side imaging crossover" onclick="openGuide('stereo-width')">
-                    <div class="plugin-icon">
-                        <svg viewBox="0 0 64 64" width="48" height="48">
-                            <defs><linearGradient id="icon-width" x1="0%" y1="100%" x2="0%" y2="0%"><stop offset="0%" stop-color="#888888"/><stop offset="100%" stop-color="#aaaaaa"/></linearGradient></defs>
-                            <path d="M 8,32 L 20,32 M 44,32 L 56,32" stroke="url(#icon-width)" stroke-width="2" opacity="0.4"/>
-                            <path d="M 20,20 L 20,44 M 44,20 L 44,44" stroke="url(#icon-width)" stroke-width="2"/>
-                            <circle cx="20" cy="32" r="4" fill="url(#icon-width)" opacity="0.5"/>
-                            <circle cx="44" cy="32" r="4" fill="url(#icon-width)" opacity="0.5"/>
-                            <path d="M 20,32 Q 32,24 44,32" stroke="url(#icon-width)" stroke-width="1.5" fill="none" opacity="0.3"/>
-                            <path d="M 20,32 Q 32,40 44,32" stroke="url(#icon-width)" stroke-width="1.5" fill="none" opacity="0.3"/>
-                        </svg>
-                    </div>
-                    <div class="plugin-info">
-                        <h3>STEREO WIDTH</h3>
-                        <p class="plugin-desc">Mid/Side Stereo Imaging</p>
-                        <span class="info-badge">?</span>
-                    </div>
-                </article>
-
-                <!-- Plugin: FILTER -->
-                <article class="plugin-card" data-name="filter svf lowpass resonance tpt" onclick="openGuide('filter')">
-                    <div class="plugin-icon">
-                        <svg viewBox="0 0 64 64" width="48" height="48">
-                            <defs><linearGradient id="icon-filter" x1="0%" y1="100%" x2="0%" y2="0%"><stop offset="0%" stop-color="#888888"/><stop offset="100%" stop-color="#aaaaaa"/></linearGradient></defs>
-                            <path d="M 8,32 Q 20,16 32,32 Q 44,48 56,32" stroke="url(#icon-filter)" stroke-width="2.5" fill="none" stroke-linecap="round"/>
-                            <path d="M 8,32 L 16,32 M 48,32 L 56,32" stroke="url(#icon-filter)" stroke-width="2"/>
-                            <circle cx="20" cy="28" r="2" fill="url(#icon-filter)" opacity="0.5"/>
-                            <circle cx="32" cy="32" r="2" fill="url(#icon-filter)" opacity="0.5"/>
-                            <circle cx="44" cy="28" r="2" fill="url(#icon-filter)" opacity="0.5"/>
-                        </svg>
-                    </div>
-                    <div class="plugin-info">
-                        <h3>FILTER</h3>
-                        <p class="plugin-desc">TPT State-Variable Lowpass</p>
-                        <span class="info-badge">?</span>
-                    </div>
-                </article>
-
-                <!-- Plugin: TAPE SATURATION -->
-                <article class="plugin-card" data-name="tape saturation vintage warmth analog emulation" onclick="openGuide('tape-saturation')">
-                    <div class="plugin-icon">
-                        <svg viewBox="0 0 64 64" width="48" height="48">
-                            <defs><linearGradient id="icon-tape" x1="0%" y1="100%" x2="0%" y2="0%"><stop offset="0%" stop-color="#888888"/><stop offset="100%" stop-color="#aaaaaa"/></linearGradient></defs>
-                            <circle cx="22" cy="24" r="8" stroke="url(#icon-tape)" stroke-width="2" fill="none"/>
-                            <circle cx="42" cy="24" r="8" stroke="url(#icon-tape)" stroke-width="2" fill="none"/>
-                            <circle cx="22" cy="24" r="3" fill="url(#icon-tape)" opacity="0.4"/>
-                            <circle cx="42" cy="24" r="3" fill="url(#icon-tape)" opacity="0.4"/>
-                            <path d="M 22,32 L 42,32" stroke="url(#icon-tape)" stroke-width="1.5"/>
-                            <path d="M 8,48 Q 16,40 24,48 Q 32,56 40,48 Q 48,40 56,48" stroke="url(#icon-tape)" stroke-width="2" fill="none" stroke-linecap="round" opacity="0.5"/>
-                        </svg>
-                    </div>
-                    <div class="plugin-info">
-                        <h3>TAPE SATURATION</h3>
-                        <p class="plugin-desc">Vintage Warmth &amp; Glue</p>
-                        <span class="info-badge">?</span>
-                    </div>
-                </article>
-
-                <!-- Plugin: HARMONIC DRIVE -->
-                <article class="plugin-card" data-name="harmonic drive exciter even order distortion" onclick="openGuide('harmonic-drive')">
-                    <div class="plugin-icon">
-                        <svg viewBox="0 0 64 64" width="48" height="48">
-                            <defs><linearGradient id="icon-harm" x1="0%" y1="100%" x2="0%" y2="0%"><stop offset="0%" stop-color="#888888"/><stop offset="100%" stop-color="#aaaaaa"/></linearGradient></defs>
-                            <path d="M 8,32 Q 16,18 24,32 Q 32,46 40,32 Q 48,18 56,32" stroke="url(#icon-harm)" stroke-width="1.5" fill="none" opacity="0.3"/>
-                            <path d="M 8,32 Q 14,16 20,32 Q 26,48 32,32 Q 38,16 44,32 Q 50,48 56,32" stroke="url(#icon-harm)" stroke-width="2.5" fill="none" stroke-linecap="round"/>
-                            <circle cx="14" cy="24" r="1.5" fill="url(#icon-harm)" opacity="0.5"/>
-                            <circle cx="26" cy="40" r="1.5" fill="url(#icon-harm)" opacity="0.5"/>
-                            <circle cx="38" cy="24" r="1.5" fill="url(#icon-harm)" opacity="0.5"/>
-                            <circle cx="50" cy="40" r="1.5" fill="url(#icon-harm)" opacity="0.5"/>
-                        </svg>
-                    </div>
-                    <div class="plugin-info">
-                        <h3>HARMONIC DRIVE</h3>
-                        <p class="plugin-desc">Even-Order Exciter</p>
-                        <span class="info-badge">?</span>
-                    </div>
-                </article>
-
-                <!-- Plugin: DISTORTION -->
-                <article class="plugin-card" data-name="distortion overdrive aggressive dual stage" onclick="openGuide('distortion')">
-                    <div class="plugin-icon">
-                        <svg viewBox="0 0 64 64" width="48" height="48">
-                            <defs><linearGradient id="icon-dist" x1="0%" y1="100%" x2="0%" y2="0%"><stop offset="0%" stop-color="#888888"/><stop offset="100%" stop-color="#aaaaaa"/></linearGradient></defs>
-                            <path d="M 8,32 L 14,32 L 16,18 L 22,46 L 28,14 L 34,50 L 40,16 L 46,44 L 50,32 L 56,32" stroke="url(#icon-dist)" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-                        </svg>
-                    </div>
-                    <div class="plugin-info">
-                        <h3>DISTORTION</h3>
-                        <p class="plugin-desc">Aggressive Dual-Stage Overdrive</p>
-                        <span class="info-badge">?</span>
-                    </div>
-                </article>
-
-                <!-- Plugin: BIT CRUSH -->
-                <article class="plugin-card" data-name="bit crush lo-fi quantization downsampling" onclick="openGuide('bit-crush')">
-                    <div class="plugin-icon">
-                        <svg viewBox="0 0 64 64" width="48" height="48">
-                            <defs><linearGradient id="icon-bit" x1="0%" y1="100%" x2="0%" y2="0%"><stop offset="0%" stop-color="#888888"/><stop offset="100%" stop-color="#aaaaaa"/></linearGradient></defs>
-                            <path d="M 8,32 L 16,32 L 16,18 L 24,18 L 24,46 L 32,46 L 32,14 L 40,14 L 40,44 L 48,44 L 48,24 L 56,24 L 56,32" stroke="url(#icon-bit)" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="miter"/>
-                        </svg>
-                    </div>
-                    <div class="plugin-info">
-                        <h3>BIT CRUSH</h3>
-                        <p class="plugin-desc">Lo-Fi Quantization &amp; Downsampling</p>
-                        <span class="info-badge">?</span>
-                    </div>
-                </article>
-
-                <!-- Plugin: CHORUS -->
-                <article class="plugin-card" data-name="chorus stereo thickening detune modulation" onclick="openGuide('chorus')">
+                <article class="plugin-card" data-name="chorus modulation thickening detune doubling lfo ensemble" onclick="openGuide('chorus')">
                     <div class="plugin-icon">
                         <svg viewBox="0 0 64 64" width="48" height="48">
                             <defs><linearGradient id="icon-chorus" x1="0%" y1="100%" x2="0%" y2="0%"><stop offset="0%" stop-color="#888888"/><stop offset="100%" stop-color="#aaaaaa"/></linearGradient></defs>
@@ -373,127 +567,68 @@
                     </div>
                     <div class="plugin-info">
                         <h3>CHORUS</h3>
-                        <p class="plugin-desc">Stereo Thickening &amp; Detune</p>
+                        <p class="plugin-desc">Classic Delay Chorus</p>
                         <span class="info-badge">?</span>
                     </div>
                 </article>
-
-                <!-- Plugin: FLANGER -->
-                <article class="plugin-card" data-name="flanger jet sweep feedback modulation" onclick="openGuide('flanger')">
+                <article class="plugin-card" data-name="click repair declick pop crackle vinyl restoration spike digital glitch denoise" onclick="openGuide('click-repair')">
                     <div class="plugin-icon">
                         <svg viewBox="0 0 64 64" width="48" height="48">
-                            <defs><linearGradient id="icon-flange" x1="0%" y1="100%" x2="0%" y2="0%"><stop offset="0%" stop-color="#888888"/><stop offset="100%" stop-color="#aaaaaa"/></linearGradient></defs>
-                            <path d="M 8,32 Q 16,12 24,32 Q 32,52 40,32 Q 48,12 56,32" stroke="url(#icon-flange)" stroke-width="2.5" fill="none" stroke-linecap="round"/>
-                            <path d="M 8,32 Q 16,20 24,32 Q 32,44 40,32 Q 48,20 56,32" stroke="url(#icon-flange)" stroke-width="1" fill="none" opacity="0.3"/>
+                            <defs><linearGradient id="icon-click" x1="0%" y1="100%" x2="0%" y2="0%"><stop offset="0%" stop-color="#888888"/><stop offset="100%" stop-color="#aaaaaa"/></linearGradient></defs>
+                            <path d="M 8,32 L 16,32 L 16,24 L 24,40 L 32,16 L 40,44 L 48,24 L 48,32 L 56,32" stroke="url(#icon-click)" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M 32,24 L 32,40" stroke="url(#icon-click)" stroke-width="2" opacity="0.5"/>
                         </svg>
                     </div>
                     <div class="plugin-info">
-                        <h3>FLANGER</h3>
-                        <p class="plugin-desc">Jet Sweep with Feedback</p>
+                        <h3>CLICK REPAIR</h3>
+                        <p class="plugin-desc">Click &amp; Pop Removal</p>
                         <span class="info-badge">?</span>
                     </div>
                 </article>
-
-                <!-- Plugin: PHASER -->
-                <article class="plugin-card" data-name="phaser moving notch sweep modulation" onclick="openGuide('phaser')">
+                <article class="plugin-card" data-name="deesser de-esser de-ess sibilance sibilants esses hiss vocal harshness" onclick="openGuide('deesser')">
                     <div class="plugin-icon">
                         <svg viewBox="0 0 64 64" width="48" height="48">
-                            <defs><linearGradient id="icon-phase" x1="0%" y1="100%" x2="0%" y2="0%"><stop offset="0%" stop-color="#888888"/><stop offset="100%" stop-color="#aaaaaa"/></linearGradient></defs>
-                            <path d="M 8,32 Q 14,12 20,32 Q 26,52 32,32 Q 38,12 44,32 Q 50,52 56,32" stroke="url(#icon-phase)" stroke-width="2.5" fill="none" stroke-linecap="round"/>
-                            <path d="M 8,24 L 20,24 M 28,24 L 44,24 M 48,24 L 56,24" stroke="url(#icon-phase)" stroke-width="1.5" opacity="0.4"/>
-                            <path d="M 8,40 L 24,40 M 32,40 L 48,40 M 52,40 L 56,40" stroke="url(#icon-phase)" stroke-width="1.5" opacity="0.4"/>
+                            <defs><linearGradient id="icon-deess" x1="0%" y1="100%" x2="0%" y2="0%"><stop offset="0%" stop-color="#888888"/><stop offset="100%" stop-color="#aaaaaa"/></linearGradient></defs>
+                            <path d="M 16,32 Q 24,20 32,32 Q 40,44 48,32" stroke="url(#icon-deess)" stroke-width="2.5" fill="none" stroke-linecap="round" opacity="0.5"/>
+                            <path d="M 16,32 Q 24,28 32,32 Q 40,36 48,32" stroke="url(#icon-deess)" stroke-width="2" fill="none" stroke-linecap="round"/>
+                            <circle cx="32" cy="28" r="8" stroke="url(#icon-deess)" stroke-width="2" fill="none"/>
+                            <text x="32" y="34" font-family="'Segoe UI'" font-size="12" fill="url(#icon-deess)" text-anchor="middle">S</text>
                         </svg>
                     </div>
                     <div class="plugin-info">
-                        <h3>PHASER</h3>
-                        <p class="plugin-desc">Moving Notch Sweep</p>
+                        <h3>DEESSER</h3>
+                        <p class="plugin-desc">Split-Band Sibilance Control</p>
                         <span class="info-badge">?</span>
                     </div>
                 </article>
-
-                <!-- Plugin: VIBRATO -->
-                <article class="plugin-card" data-name="vibrato pitch modulation wobble" onclick="openGuide('vibrato')">
+                <article class="plugin-card" data-name="delay echo slapback feedback repeat tempo sync time" onclick="openGuide('delay')">
                     <div class="plugin-icon">
                         <svg viewBox="0 0 64 64" width="48" height="48">
-                            <defs><linearGradient id="icon-vib" x1="0%" y1="100%" x2="0%" y2="0%"><stop offset="0%" stop-color="#888888"/><stop offset="100%" stop-color="#aaaaaa"/></linearGradient></defs>
-                            <path d="M 8,32 L 14,32 L 16,26 L 18,38 L 20,26 L 22,38 L 24,26 L 26,38 L 28,30 L 36,30 L 38,26 L 40,38 L 42,26 L 44,38 L 46,26 L 48,38 L 50,32 L 56,32" stroke="url(#icon-vib)" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+                            <defs><linearGradient id="icon-delay" x1="0%" y1="100%" x2="0%" y2="0%"><stop offset="0%" stop-color="#888888"/><stop offset="100%" stop-color="#aaaaaa"/></linearGradient></defs>
+                            <circle cx="20" cy="32" r="10" stroke="url(#icon-delay)" stroke-width="2" fill="none"/>
+                            <circle cx="44" cy="32" r="10" stroke="url(#icon-delay)" stroke-width="2" fill="none"/>
+                            <path d="M 20,32 L 44,32" stroke="url(#icon-delay)" stroke-width="2"/>
+                            <text x="20" y="36" font-family="'Segoe UI'" font-size="10" fill="url(#icon-delay)" text-anchor="middle">L</text>
+                            <text x="44" y="36" font-family="'Segoe UI'" font-size="10" fill="url(#icon-delay)" text-anchor="middle">R</text>
                         </svg>
                     </div>
                     <div class="plugin-info">
-                        <h3>VIBRATO</h3>
-                        <p class="plugin-desc">Pitch Modulation Wobble</p>
+                        <h3>DELAY</h3>
+                        <p class="plugin-desc">Stereo Echo &amp; Slapback</p>
                         <span class="info-badge">?</span>
                     </div>
                 </article>
-
-                <!-- Plugin: TREMOLO -->
-                <article class="plugin-card" data-name="tremolo rhythmic amplitude modulation" onclick="openGuide('tremolo')">
+                <article class="plugin-card" data-name="dynamic eq equalizer equaliser parametric resonance harshness compressor expander frequency dependent dynamics" onclick="openGuide('dynamic-eq')">
                     <div class="plugin-icon">
-                        <svg viewBox="0 0 64 64" width="48" height="48">
-                            <defs><linearGradient id="icon-trem" x1="0%" y1="100%" x2="0%" y2="0%"><stop offset="0%" stop-color="#888888"/><stop offset="100%" stop-color="#aaaaaa"/></linearGradient></defs>
-                            <path d="M 8,20 L 16,20 L 16,44 L 24,44 L 24,20 L 32,20 L 32,44 L 40,44 L 40,20 L 48,20 L 48,44 L 56,44" stroke="url(#icon-trem)" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="miter"/>
-                        </svg>
+                        <svg viewBox="0 0 64 64" width="48" height="48"><defs><linearGradient id="icon-dynamic-eq" x1="0%" y1="100%" x2="0%" y2="0%"><stop offset="0%" stop-color="#888888"/><stop offset="100%" stop-color="#aaaaaa"/></linearGradient></defs><path d="M 8,44 L 20,44 C 26,44 28,22 32,22 C 36,22 38,44 44,44 L 56,44" stroke="url(#icon-dynamic-eq)" stroke-width="2.5" fill="none" stroke-linecap="round"/><path d="M 20,44 C 26,44 28,34 32,34 C 36,34 38,44 44,44" stroke="url(#icon-dynamic-eq)" stroke-width="1.5" fill="none" stroke-linecap="round" opacity="0.5"/><path d="M 32,10 L 32,18 M 28,14 L 32,10 L 36,14" stroke="url(#icon-dynamic-eq)" stroke-width="2.5" fill="none" stroke-linecap="round"/></svg>
                     </div>
                     <div class="plugin-info">
-                        <h3>TREMOLO</h3>
-                        <p class="plugin-desc">Rhythmic Amplitude Modulation</p>
+                        <h3>DYNAMIC EQ</h3>
+                        <p class="plugin-desc">Four-Band Dynamic EQ</p>
                         <span class="info-badge">?</span>
                     </div>
                 </article>
-
-                <!-- Plugin: AUTO PAN -->
-                <article class="plugin-card" data-name="auto pan stereo movement width modulation" onclick="openGuide('auto-pan')">
-                    <div class="plugin-icon">
-                        <svg viewBox="0 0 64 64" width="48" height="48">
-                            <defs><linearGradient id="icon-autopan" x1="0%" y1="100%" x2="0%" y2="0%"><stop offset="0%" stop-color="#888888"/><stop offset="100%" stop-color="#aaaaaa"/></linearGradient></defs>
-                            <path d="M 16,24 L 10,32 L 16,40" stroke="url(#icon-autopan)" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-                            <path d="M 48,24 L 54,32 L 48,40" stroke="url(#icon-autopan)" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-                            <path d="M 10,32 L 54,32" stroke="url(#icon-autopan)" stroke-width="1.5" opacity="0.3" stroke-dasharray="3,3"/>
-                        </svg>
-                    </div>
-                    <div class="plugin-info">
-                        <h3>AUTO PAN</h3>
-                        <p class="plugin-desc">Stereo Movement &amp; Width</p>
-                        <span class="info-badge">?</span>
-                    </div>
-                </article>
-
-                <!-- Plugin: RING MOD -->
-                <article class="plugin-card" data-name="ring mod metallic carrier modulation" onclick="openGuide('ring-mod')">
-                    <div class="plugin-icon">
-                        <svg viewBox="0 0 64 64" width="48" height="48">
-                            <defs><linearGradient id="icon-ring" x1="0%" y1="100%" x2="0%" y2="0%"><stop offset="0%" stop-color="#888888"/><stop offset="100%" stop-color="#aaaaaa"/></linearGradient></defs>
-                            <circle cx="32" cy="32" r="18" stroke="url(#icon-ring)" stroke-width="2.5" fill="none"/>
-                            <circle cx="32" cy="32" r="10" stroke="url(#icon-ring)" stroke-width="1.5" fill="none" opacity="0.4"/>
-                            <circle cx="32" cy="32" r="3" fill="url(#icon-ring)" opacity="0.5"/>
-                        </svg>
-                    </div>
-                    <div class="plugin-info">
-                        <h3>RING MOD</h3>
-                        <p class="plugin-desc">Metallic Carrier Modulation</p>
-                        <span class="info-badge">?</span>
-                    </div>
-                </article>
-
-                <!-- Plugin: GATE -->
-                <article class="plugin-card" data-name="gate noise vocal threshold sidechain" onclick="openGuide('gate')">
-                    <div class="plugin-icon">
-                        <svg viewBox="0 0 64 64" width="48" height="48">
-                            <defs><linearGradient id="icon-gate" x1="0%" y1="100%" x2="0%" y2="0%"><stop offset="0%" stop-color="#888888"/><stop offset="100%" stop-color="#aaaaaa"/></linearGradient></defs>
-                            <rect x="12" y="12" width="40" height="40" rx="4" stroke="url(#icon-gate)" stroke-width="2" fill="none"/>
-                            <path d="M 12,32 L 24,32 M 40,32 L 52,32" stroke="url(#icon-gate)" stroke-width="2"/>
-                            <rect x="24" y="24" width="16" height="16" fill="url(#icon-gate)" opacity="0.4"/>
-                        </svg>
-                    </div>
-                    <div class="plugin-info">
-                        <h3>GATE</h3>
-                        <p class="plugin-desc">Noise &amp; Vocal Gate</p>
-                        <span class="info-badge">?</span>
-                    </div>
-                </article>
-
-                <!-- Plugin: DYNAMICS -->
-                <article class="plugin-card" data-name="dynamics compressor expander leveling" onclick="openGuide('dynamics')">
+                <article class="plugin-card" data-name="dynamics compressor compression expander downward expansion gain reduction ratio threshold knee" onclick="openGuide('dynamics')">
                     <div class="plugin-icon">
                         <svg viewBox="0 0 64 64" width="48" height="48">
                             <defs><linearGradient id="icon-dyn" x1="0%" y1="100%" x2="0%" y2="0%"><stop offset="0%" stop-color="#888888"/><stop offset="100%" stop-color="#aaaaaa"/></linearGradient></defs>
@@ -507,9 +642,63 @@
                         <span class="info-badge">?</span>
                     </div>
                 </article>
-
-                <!-- Plugin: LIMITER -->
-                <article class="plugin-card" data-name="limiter ceiling clipper brickwall maximizer" onclick="openGuide('limiter')">
+                <article class="plugin-card" data-name="envelope follower filter auto wah autowah touch wah funk dynamic filter" onclick="openGuide('envelope-follower')">
+                    <div class="plugin-icon">
+                        <svg viewBox="0 0 64 64" width="48" height="48"><defs><linearGradient id="icon-envelope-follower" x1="0%" y1="100%" x2="0%" y2="0%"><stop offset="0%" stop-color="#888888"/><stop offset="100%" stop-color="#aaaaaa"/></linearGradient></defs><path d="M 8,46 L 18,22 L 30,30 L 42,38 L 56,44" stroke="url(#icon-envelope-follower)" stroke-width="1.5" fill="none" stroke-linecap="round" opacity="0.5"/><path d="M 8,40 L 22,40 C 30,40 30,18 36,18 C 40,18 42,30 44,40 L 56,40" stroke="url(#icon-envelope-follower)" stroke-width="2.5" fill="none" stroke-linecap="round"/></svg>
+                    </div>
+                    <div class="plugin-info">
+                        <h3>ENVELOPE FOLLOWER</h3>
+                        <p class="plugin-desc">Auto-Wah &amp; Envelope Filter</p>
+                        <span class="info-badge">?</span>
+                    </div>
+                </article>
+                <article class="plugin-card" data-name="filter lowpass low pass highpass high pass bandpass band pass notch cutoff resonance q svf tpt state variable sweep" onclick="openGuide('filter')">
+                    <div class="plugin-icon">
+                        <svg viewBox="0 0 64 64" width="48" height="48">
+                            <defs><linearGradient id="icon-filter" x1="0%" y1="100%" x2="0%" y2="0%"><stop offset="0%" stop-color="#888888"/><stop offset="100%" stop-color="#aaaaaa"/></linearGradient></defs>
+                            <path d="M 8,32 Q 20,16 32,32 Q 44,48 56,32" stroke="url(#icon-filter)" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+                            <path d="M 8,32 L 16,32 M 48,32 L 56,32" stroke="url(#icon-filter)" stroke-width="2"/>
+                            <circle cx="20" cy="28" r="2" fill="url(#icon-filter)" opacity="0.5"/>
+                            <circle cx="32" cy="32" r="2" fill="url(#icon-filter)" opacity="0.5"/>
+                            <circle cx="44" cy="28" r="2" fill="url(#icon-filter)" opacity="0.5"/>
+                        </svg>
+                    </div>
+                    <div class="plugin-info">
+                        <h3>FILTER</h3>
+                        <p class="plugin-desc">Resonant Multi-Mode Filter</p>
+                        <span class="info-badge">?</span>
+                    </div>
+                </article>
+                <article class="plugin-card" data-name="flanger flanging jet sweep comb filter modulation feedback" onclick="openGuide('flanger')">
+                    <div class="plugin-icon">
+                        <svg viewBox="0 0 64 64" width="48" height="48">
+                            <defs><linearGradient id="icon-flange" x1="0%" y1="100%" x2="0%" y2="0%"><stop offset="0%" stop-color="#888888"/><stop offset="100%" stop-color="#aaaaaa"/></linearGradient></defs>
+                            <path d="M 8,32 Q 16,12 24,32 Q 32,52 40,32 Q 48,12 56,32" stroke="url(#icon-flange)" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+                            <path d="M 8,32 Q 16,20 24,32 Q 32,44 40,32 Q 48,20 56,32" stroke="url(#icon-flange)" stroke-width="1" fill="none" opacity="0.3"/>
+                        </svg>
+                    </div>
+                    <div class="plugin-info">
+                        <h3>FLANGER</h3>
+                        <p class="plugin-desc">Jet Sweep Flanger</p>
+                        <span class="info-badge">?</span>
+                    </div>
+                </article>
+                <article class="plugin-card" data-name="gate noise gate expander range silence mute threshold sidechain filter bleed drums vocal" onclick="openGuide('gate')">
+                    <div class="plugin-icon">
+                        <svg viewBox="0 0 64 64" width="48" height="48">
+                            <defs><linearGradient id="icon-gate" x1="0%" y1="100%" x2="0%" y2="0%"><stop offset="0%" stop-color="#888888"/><stop offset="100%" stop-color="#aaaaaa"/></linearGradient></defs>
+                            <rect x="12" y="12" width="40" height="40" rx="4" stroke="url(#icon-gate)" stroke-width="2" fill="none"/>
+                            <path d="M 12,32 L 24,32 M 40,32 L 52,32" stroke="url(#icon-gate)" stroke-width="2"/>
+                            <rect x="24" y="24" width="16" height="16" fill="url(#icon-gate)" opacity="0.4"/>
+                        </svg>
+                    </div>
+                    <div class="plugin-info">
+                        <h3>GATE</h3>
+                        <p class="plugin-desc">Noise Gate with Sidechain HPF</p>
+                        <span class="info-badge">?</span>
+                    </div>
+                </article>
+                <article class="plugin-card" data-name="limiter clipper brickwall ceiling peak protection lookahead mastering true loudness" onclick="openGuide('limiter')">
                     <div class="plugin-icon">
                         <svg viewBox="0 0 64 64" width="48" height="48">
                             <defs><linearGradient id="icon-limit" x1="0%" y1="100%" x2="0%" y2="0%"><stop offset="0%" stop-color="#888888"/><stop offset="100%" stop-color="#aaaaaa"/></linearGradient></defs>
@@ -523,62 +712,80 @@
                         <span class="info-badge">?</span>
                     </div>
                 </article>
-
-                <!-- Plugin: DELAY -->
-                <article class="plugin-card" data-name="delay echo pre-delay timing" onclick="openGuide('delay')">
+                <article class="plugin-card" data-name="maximizer maximiser limiter loudness ceiling mastering peak lookahead louder" onclick="openGuide('maximizer')">
                     <div class="plugin-icon">
-                        <svg viewBox="0 0 64 64" width="48" height="48">
-                            <defs><linearGradient id="icon-delay" x1="0%" y1="100%" x2="0%" y2="0%"><stop offset="0%" stop-color="#888888"/><stop offset="100%" stop-color="#aaaaaa"/></linearGradient></defs>
-                            <circle cx="20" cy="32" r="10" stroke="url(#icon-delay)" stroke-width="2" fill="none"/>
-                            <circle cx="44" cy="32" r="10" stroke="url(#icon-delay)" stroke-width="2" fill="none"/>
-                            <path d="M 20,32 L 44,32" stroke="url(#icon-delay)" stroke-width="2"/>
-                            <text x="20" y="36" font-family="'Segoe UI'" font-size="10" fill="url(#icon-delay)" text-anchor="middle">L</text>
-                            <text x="44" y="36" font-family="'Segoe UI'" font-size="10" fill="url(#icon-delay)" text-anchor="middle">R</text>
-                        </svg>
+                        <svg viewBox="0 0 64 64" width="48" height="48"><defs><linearGradient id="icon-maximizer" x1="0%" y1="100%" x2="0%" y2="0%"><stop offset="0%" stop-color="#888888"/><stop offset="100%" stop-color="#aaaaaa"/></linearGradient></defs><path d="M 8,16 L 56,16" stroke="url(#icon-maximizer)" stroke-width="2.5" fill="none" stroke-linecap="round"/><path d="M 10,40 L 16,22 L 22,36 L 28,18 L 34,34 L 40,18 L 46,30 L 54,20" stroke="url(#icon-maximizer)" stroke-width="1.5" fill="none" stroke-linecap="round" opacity="0.5"/><path d="M 32,54 L 32,30 M 26,36 L 32,30 L 38,36" stroke="url(#icon-maximizer)" stroke-width="2.5" fill="none" stroke-linecap="round"/></svg>
                     </div>
                     <div class="plugin-info">
-                        <h3>DELAY</h3>
-                        <p class="plugin-desc">Echo &amp; Pre-Delay</p>
+                        <h3>MAXIMIZER</h3>
+                        <p class="plugin-desc">Look-Ahead Loudness Maximizer</p>
                         <span class="info-badge">?</span>
                     </div>
                 </article>
-
-                <!-- Plugin: CLICK REPAIR -->
-                <article class="plugin-card" data-name="click repair audio restoration click pop" onclick="openGuide('click-repair')">
+                <article class="plugin-card" data-name="mid side matrix m/s ms encode decode stereo sum difference" onclick="openGuide('mid-side-matrix')">
                     <div class="plugin-icon">
-                        <svg viewBox="0 0 64 64" width="48" height="48">
-                            <defs><linearGradient id="icon-click" x1="0%" y1="100%" x2="0%" y2="0%"><stop offset="0%" stop-color="#888888"/><stop offset="100%" stop-color="#aaaaaa"/></linearGradient></defs>
-                            <path d="M 8,32 L 16,32 L 16,24 L 24,40 L 32,16 L 40,44 L 48,24 L 48,32 L 56,32" stroke="url(#icon-click)" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-                            <path d="M 32,24 L 32,40" stroke="url(#icon-click)" stroke-width="2" opacity="0.5"/>
-                        </svg>
+                        <svg viewBox="0 0 64 64" width="48" height="48"><defs><linearGradient id="icon-ms" x1="0%" y1="100%" x2="0%" y2="0%"><stop offset="0%" stop-color="#888888"/><stop offset="100%" stop-color="#aaaaaa"/></linearGradient></defs><circle cx="32" cy="32" r="14" stroke="url(#icon-ms)" stroke-width="2" fill="none"/><text x="32" y="36" font-size="14" font-weight="bold" text-anchor="middle" fill="#999999">MS</text></svg>
                     </div>
                     <div class="plugin-info">
-                        <h3>CLICK REPAIR</h3>
-                        <p class="plugin-desc">Audio Restoration</p>
+                        <h3>MID/SIDE MATRIX</h3>
+                        <p class="plugin-desc">M/S Encode &amp; Decode</p>
                         <span class="info-badge">?</span>
                     </div>
                 </article>
-
-                <!-- Plugin: DEESSER -->
-                <article class="plugin-card" data-name="deesser sibilance reduction vocal ss" onclick="openGuide('deesser')">
+                <article class="plugin-card" data-name="multiband multi-band compressor four band crossover dynamics mastering per band split" onclick="openGuide('multiband-compressor')">
                     <div class="plugin-icon">
-                        <svg viewBox="0 0 64 64" width="48" height="48">
-                            <defs><linearGradient id="icon-deess" x1="0%" y1="100%" x2="0%" y2="0%"><stop offset="0%" stop-color="#888888"/><stop offset="100%" stop-color="#aaaaaa"/></linearGradient></defs>
-                            <path d="M 16,32 Q 24,20 32,32 Q 40,44 48,32" stroke="url(#icon-deess)" stroke-width="2.5" fill="none" stroke-linecap="round" opacity="0.5"/>
-                            <path d="M 16,32 Q 24,28 32,32 Q 40,36 48,32" stroke="url(#icon-deess)" stroke-width="2" fill="none" stroke-linecap="round"/>
-                            <circle cx="32" cy="28" r="8" stroke="url(#icon-deess)" stroke-width="2" fill="none"/>
-                            <text x="32" y="34" font-family="'Segoe UI'" font-size="12" fill="url(#icon-deess)" text-anchor="middle">S</text>
-                        </svg>
+                        <svg viewBox="0 0 64 64" width="48" height="48"><defs><linearGradient id="icon-mbc" x1="0%" y1="100%" x2="0%" y2="0%"><stop offset="0%" stop-color="#888888"/><stop offset="100%" stop-color="#aaaaaa"/></linearGradient></defs><rect x="8" y="12" width="12" height="40" stroke="url(#icon-mbc)" stroke-width="1.5" fill="none"/><rect x="22" y="16" width="12" height="32" stroke="url(#icon-mbc)" stroke-width="1.5" fill="none"/><rect x="36" y="16" width="12" height="32" stroke="url(#icon-mbc)" stroke-width="1.5" fill="none"/><rect x="50" y="12" width="12" height="40" stroke="url(#icon-mbc)" stroke-width="1.5" fill="none"/></svg>
                     </div>
                     <div class="plugin-info">
-                        <h3>DEESSER</h3>
-                        <p class="plugin-desc">Sibilance Reduction</p>
+                        <h3>MULTIBAND COMP</h3>
+                        <p class="plugin-desc">Four-Band Compressor</p>
                         <span class="info-badge">?</span>
                     </div>
                 </article>
-
-                <!-- Plugin: PITCH SHIFTER -->
-                <article class="plugin-card" data-name="pitch shifter real-time transpose octave" onclick="openGuide('pitch-shifter')">
+                <article class="plugin-card" data-name="noise generator white pink brown test signal calibration stereo" onclick="openGuide('noise-generator')">
+                    <div class="plugin-icon">
+                        <svg viewBox="0 0 64 64" width="48" height="48"><defs><linearGradient id="icon-noise" x1="0%" y1="100%" x2="0%" y2="0%"><stop offset="0%" stop-color="#888888"/><stop offset="100%" stop-color="#aaaaaa"/></linearGradient></defs><rect x="16" y="20" width="6" height="24" fill="url(#icon-noise)"/><rect x="24" y="12" width="6" height="40" fill="url(#icon-noise)"/><rect x="32" y="24" width="6" height="16" fill="url(#icon-noise)"/><rect x="40" y="16" width="6" height="32" fill="url(#icon-noise)"/><rect x="48" y="28" width="6" height="8" fill="url(#icon-noise)"/></svg>
+                    </div>
+                    <div class="plugin-info">
+                        <h3>NOISE GENERATOR</h3>
+                        <p class="plugin-desc">White, Pink &amp; Brown Noise</p>
+                        <span class="info-badge">?</span>
+                    </div>
+                </article>
+                <article class="plugin-card" data-name="parametric eq equalizer equaliser five band shelf peaking bell notch low pass high pass band pass all pass mixing mastering" onclick="openGuide('parametric-eq')">
+                    <div class="plugin-icon">
+                        <svg viewBox="0 0 64 64" width="48" height="48">
+                            <defs><linearGradient id="icon-5bpeq" x1="0%" y1="100%" x2="0%" y2="0%"><stop offset="0%" stop-color="#888888"/><stop offset="100%" stop-color="#aaaaaa"/></linearGradient></defs>
+                            <path d="M 4,44 L 60,44" stroke="url(#icon-5bpeq)" stroke-width="1" fill="none" stroke-dasharray="2,3" opacity="0.3"/>
+                            <path d="M 4,44 Q 9,36 14,44" stroke="url(#icon-5bpeq)" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+                            <path d="M 16,44 Q 21,28 26,44" stroke="url(#icon-5bpeq)" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+                            <path d="M 28,44 Q 33,18 38,44" stroke="url(#icon-5bpeq)" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+                            <path d="M 40,44 Q 45,26 50,44" stroke="url(#icon-5bpeq)" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+                            <path d="M 52,44 Q 56,34 60,44" stroke="url(#icon-5bpeq)" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+                        </svg>
+                    </div>
+                    <div class="plugin-info">
+                        <h3>PARAMETRIC EQ</h3>
+                        <p class="plugin-desc">Five-Band Parametric EQ</p>
+                        <span class="info-badge">?</span>
+                    </div>
+                </article>
+                <article class="plugin-card" data-name="phaser phasing all-pass allpass sweep notch modulation" onclick="openGuide('phaser')">
+                    <div class="plugin-icon">
+                        <svg viewBox="0 0 64 64" width="48" height="48">
+                            <defs><linearGradient id="icon-phase" x1="0%" y1="100%" x2="0%" y2="0%"><stop offset="0%" stop-color="#888888"/><stop offset="100%" stop-color="#aaaaaa"/></linearGradient></defs>
+                            <path d="M 8,32 Q 14,12 20,32 Q 26,52 32,32 Q 38,12 44,32 Q 50,52 56,32" stroke="url(#icon-phase)" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+                            <path d="M 8,24 L 20,24 M 28,24 L 44,24 M 48,24 L 56,24" stroke="url(#icon-phase)" stroke-width="1.5" opacity="0.4"/>
+                            <path d="M 8,40 L 24,40 M 32,40 L 48,40 M 52,40 L 56,40" stroke="url(#icon-phase)" stroke-width="1.5" opacity="0.4"/>
+                        </svg>
+                    </div>
+                    <div class="plugin-info">
+                        <h3>PHASER</h3>
+                        <p class="plugin-desc">All-Pass Sweep Phaser</p>
+                        <span class="info-badge">?</span>
+                    </div>
+                </article>
+                <article class="plugin-card" data-name="pitch shifter shift transpose detune octave semitone harmony harmonizer" onclick="openGuide('pitch-shifter')">
                     <div class="plugin-icon">
                         <svg viewBox="0 0 64 64" width="48" height="48">
                             <defs><linearGradient id="icon-pitch" x1="0%" y1="100%" x2="0%" y2="0%"><stop offset="0%" stop-color="#888888"/><stop offset="100%" stop-color="#aaaaaa"/></linearGradient></defs>
@@ -593,9 +800,7 @@
                         <span class="info-badge">?</span>
                     </div>
                 </article>
-
-                <!-- Plugin: REVERB -->
-                <article class="plugin-card" data-name="reverb space ambience room hall" onclick="openGuide('reverb')">
+                <article class="plugin-card" data-name="reverb room ambience space comb allpass schroeder decay tail" onclick="openGuide('reverb')">
                     <div class="plugin-icon">
                         <svg viewBox="0 0 64 64" width="48" height="48">
                             <defs><linearGradient id="icon-reverb" x1="0%" y1="100%" x2="0%" y2="0%"><stop offset="0%" stop-color="#888888"/><stop offset="100%" stop-color="#aaaaaa"/></linearGradient></defs>
@@ -607,13 +812,64 @@
                     </div>
                     <div class="plugin-info">
                         <h3>REVERB</h3>
-                        <p class="plugin-desc">Space &amp; Ambience</p>
+                        <p class="plugin-desc">Compact Stereo Algorithmic Reverb</p>
                         <span class="info-badge">?</span>
                     </div>
                 </article>
-
-                <!-- Plugin: TRANSIENT SHAPER -->
-                <article class="plugin-card" data-name="transient shaper attack sustain punch" onclick="openGuide('transient-shaper')">
+                <article class="plugin-card" data-name="ring mod modulator ringmod amplitude modulation carrier metallic bell robotic" onclick="openGuide('ring-mod')">
+                    <div class="plugin-icon">
+                        <svg viewBox="0 0 64 64" width="48" height="48">
+                            <defs><linearGradient id="icon-ring" x1="0%" y1="100%" x2="0%" y2="0%"><stop offset="0%" stop-color="#888888"/><stop offset="100%" stop-color="#aaaaaa"/></linearGradient></defs>
+                            <circle cx="32" cy="32" r="18" stroke="url(#icon-ring)" stroke-width="2.5" fill="none"/>
+                            <circle cx="32" cy="32" r="10" stroke="url(#icon-ring)" stroke-width="1.5" fill="none" opacity="0.4"/>
+                            <circle cx="32" cy="32" r="3" fill="url(#icon-ring)" opacity="0.5"/>
+                        </svg>
+                    </div>
+                    <div class="plugin-info">
+                        <h3>RING MOD</h3>
+                        <p class="plugin-desc">Swept Ring Modulator</p>
+                        <span class="info-badge">?</span>
+                    </div>
+                </article>
+                <article class="plugin-card" data-name="saturation saturator distortion tape tube overdrive fuzz bitcrush bitcrusher waveshaper wavefolder drive warmth" onclick="openGuide('saturation')">
+                    <div class="plugin-icon">
+                        <svg viewBox="0 0 64 64" width="48" height="48"><defs><linearGradient id="icon-sat" x1="0%" y1="100%" x2="0%" y2="0%"><stop offset="0%" stop-color="#888888"/><stop offset="100%" stop-color="#aaaaaa"/></linearGradient></defs><path d="M 8,32 L 20,32 L 16,44 L 28,24 L 24,36 L 36,32 L 56,32" stroke="url(#icon-sat)" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    </div>
+                    <div class="plugin-info">
+                        <h3>SATURATION</h3>
+                        <p class="plugin-desc">Six-Mode Saturation</p>
+                        <span class="info-badge">?</span>
+                    </div>
+                </article>
+                <article class="plugin-card" data-name="sidechain side chain ducker ducking duck pump pumping kick bass voice over voiceover compressor key" onclick="openGuide('sidechain-ducker')">
+                    <div class="plugin-icon">
+                        <svg viewBox="0 0 64 64" width="48" height="48"><defs><linearGradient id="icon-sidechain-ducker" x1="0%" y1="100%" x2="0%" y2="0%"><stop offset="0%" stop-color="#888888"/><stop offset="100%" stop-color="#aaaaaa"/></linearGradient></defs><path d="M 8,18 L 18,18 L 22,40 L 26,26 Q 30,20 34,18 L 38,18 L 42,40 L 46,26 Q 50,20 56,18" stroke="url(#icon-sidechain-ducker)" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/><path d="M 20,52 L 22,46 L 24,52 M 40,52 L 42,46 L 44,52" stroke="url(#icon-sidechain-ducker)" stroke-width="1.5" opacity="0.5" fill="none" stroke-linecap="round"/></svg>
+                    </div>
+                    <div class="plugin-info">
+                        <h3>SIDECHAIN DUCKER</h3>
+                        <p class="plugin-desc">Sidechain Ducking</p>
+                        <span class="info-badge">?</span>
+                    </div>
+                </article>
+                <article class="plugin-card" data-name="stereo width widener imager mid side narrow mono bass crossover spread" onclick="openGuide('stereo-width')">
+                    <div class="plugin-icon">
+                        <svg viewBox="0 0 64 64" width="48" height="48">
+                            <defs><linearGradient id="icon-width" x1="0%" y1="100%" x2="0%" y2="0%"><stop offset="0%" stop-color="#888888"/><stop offset="100%" stop-color="#aaaaaa"/></linearGradient></defs>
+                            <path d="M 8,32 L 20,32 M 44,32 L 56,32" stroke="url(#icon-width)" stroke-width="2" opacity="0.4"/>
+                            <path d="M 20,20 L 20,44 M 44,20 L 44,44" stroke="url(#icon-width)" stroke-width="2"/>
+                            <circle cx="20" cy="32" r="4" fill="url(#icon-width)" opacity="0.5"/>
+                            <circle cx="44" cy="32" r="4" fill="url(#icon-width)" opacity="0.5"/>
+                            <path d="M 20,32 Q 32,24 44,32" stroke="url(#icon-width)" stroke-width="1.5" fill="none" opacity="0.3"/>
+                            <path d="M 20,32 Q 32,40 44,32" stroke="url(#icon-width)" stroke-width="1.5" fill="none" opacity="0.3"/>
+                        </svg>
+                    </div>
+                    <div class="plugin-info">
+                        <h3>STEREO WIDTH</h3>
+                        <p class="plugin-desc">M/S Width with Mono Bass</p>
+                        <span class="info-badge">?</span>
+                    </div>
+                </article>
+                <article class="plugin-card" data-name="transient shaper attack sustain punch envelope snap drums dynamics" onclick="openGuide('transient-shaper')">
                     <div class="plugin-icon">
                         <svg viewBox="0 0 64 64" width="48" height="48">
                             <defs><linearGradient id="icon-trans" x1="0%" y1="100%" x2="0%" y2="0%"><stop offset="0%" stop-color="#888888"/><stop offset="100%" stop-color="#aaaaaa"/></linearGradient></defs>
@@ -623,34 +879,280 @@
                     </div>
                     <div class="plugin-info">
                         <h3>TRANSIENT SHAPER</h3>
-                        <p class="plugin-desc">Attack &amp; Sustain Control</p>
+                        <p class="plugin-desc">Attack &amp; Sustain Shaper</p>
                         <span class="info-badge">?</span>
                     </div>
                 </article>
-				
-				                <!-- Coming Soon Card -->
-                <article class="plugin-card coming-soon">
+                <article class="plugin-card" data-name="tremolo amplitude modulation volume lfo pulse rhythmic" onclick="openGuide('tremolo')">
                     <div class="plugin-icon">
                         <svg viewBox="0 0 64 64" width="48" height="48">
-                            <defs><linearGradient id="icon-soon" x1="0%" y1="100%" x2="0%" y2="0%"><stop offset="0%" stop-color="#666666"/><stop offset="100%" stop-color="#888888"/></linearGradient></defs>
-                            <text x="32" y="42" font-family="'Segoe UI'" font-size="32" fill="url(#icon-soon)" text-anchor="middle">?</text>
+                            <defs><linearGradient id="icon-trem" x1="0%" y1="100%" x2="0%" y2="0%"><stop offset="0%" stop-color="#888888"/><stop offset="100%" stop-color="#aaaaaa"/></linearGradient></defs>
+                            <path d="M 8,20 L 16,20 L 16,44 L 24,44 L 24,20 L 32,20 L 32,44 L 40,44 L 40,20 L 48,20 L 48,44 L 56,44" stroke="url(#icon-trem)" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="miter"/>
                         </svg>
                     </div>
                     <div class="plugin-info">
-                        <h3>Coming Soon</h3>
-                        <p class="plugin-desc">More tools in development</p>
+                        <h3>TREMOLO</h3>
+                        <p class="plugin-desc">Sine LFO Tremolo</p>
+                        <span class="info-badge">?</span>
                     </div>
                 </article>
+                <article class="plugin-card" data-name="vibrato pitch modulation wobble warble detune lfo" onclick="openGuide('vibrato')">
+                    <div class="plugin-icon">
+                        <svg viewBox="0 0 64 64" width="48" height="48">
+                            <defs><linearGradient id="icon-vib" x1="0%" y1="100%" x2="0%" y2="0%"><stop offset="0%" stop-color="#888888"/><stop offset="100%" stop-color="#aaaaaa"/></linearGradient></defs>
+                            <path d="M 8,32 L 14,32 L 16,26 L 18,38 L 20,26 L 22,38 L 24,26 L 26,38 L 28,30 L 36,30 L 38,26 L 40,38 L 42,26 L 44,38 L 46,26 L 48,38 L 50,32 L 56,32" stroke="url(#icon-vib)" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </div>
+                    <div class="plugin-info">
+                        <h3>VIBRATO</h3>
+                        <p class="plugin-desc">Delay-Line Pitch Vibrato</p>
+                        <span class="info-badge">?</span>
+                    </div>
+                </article>
+                </div>
             </div>
-        </section>
-		
+            <div class="plugin-category" id="advanced">
+                <h3 class="category-title">Advanced <span class="category-count">22</span></h3>
+                <p class="category-desc">Deeper sound design, creative effects and special processing.</p>
+                <div class="plugin-grid">
+                <article class="plugin-card" data-name="comb filter delay feedback metallic resonant flanger pitched ringing harmonic peaks karplus" onclick="openGuide('comb-filter')">
+                    <div class="plugin-icon">
+                        <svg viewBox="0 0 64 64" width="48" height="48"><defs><linearGradient id="icon-comb" x1="0%" y1="100%" x2="0%" y2="0%"><stop offset="0%" stop-color="#888888"/><stop offset="100%" stop-color="#aaaaaa"/></linearGradient></defs><path d="M 8,16 L 8,48 M 14,16 L 14,48 M 20,16 L 20,48 M 26,16 L 26,48 M 32,16 L 32,48 M 38,16 L 38,48 M 44,16 L 44,48 M 50,16 L 50,48 M 56,16 L 56,48" stroke="url(#icon-comb)" stroke-width="1.5"/></svg>
+                    </div>
+                    <div class="plugin-info">
+                        <h3>COMB FILTER</h3>
+                        <p class="plugin-desc">Resonant Delay Comb</p>
+                        <span class="info-badge">?</span>
+                    </div>
+                </article>
+                <article class="plugin-card" data-name="convolution reverb impulse response ir room hall plate cathedral cabinet wav file" onclick="openGuide('convolution')">
+                    <div class="plugin-icon">
+                        <svg viewBox="0 0 64 64" width="48" height="48"><defs><linearGradient id="icon-convolution" x1="0%" y1="100%" x2="0%" y2="0%"><stop offset="0%" stop-color="#888888"/><stop offset="100%" stop-color="#aaaaaa"/></linearGradient></defs><path d="M6,52 L58,52" stroke="url(#icon-convolution)" stroke-width="1.5" fill="none" stroke-linecap="round" opacity="0.4"/><path d="M12,52 L12,10" stroke="url(#icon-convolution)" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/><path d="M18,52 L18,28 M23,52 L23,34 M28,52 L28,38 M33,52 L33,42 M38,52 L38,45 M43,52 L43,47 M48,52 L48,49" stroke="url(#icon-convolution)" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/><path d="M12,10 Q20,40 56,50" stroke="url(#icon-convolution)" stroke-width="1.5" fill="none" stroke-linecap="round" opacity="0.4"/></svg>
+                    </div>
+                    <div class="plugin-info">
+                        <h3>CONVOLUTION</h3>
+                        <p class="plugin-desc">Impulse Response Reverb</p>
+                        <span class="info-badge">?</span>
+                    </div>
+                </article>
+                <article class="plugin-card" data-name="formant filter vowel voice speech talking a e i o u resonance bandpass wah" onclick="openGuide('formant-filter')">
+                    <div class="plugin-icon">
+                        <svg viewBox="0 0 64 64" width="48" height="48"><defs><linearGradient id="icon-formant" x1="0%" y1="100%" x2="0%" y2="0%"><stop offset="0%" stop-color="#888888"/><stop offset="100%" stop-color="#aaaaaa"/></linearGradient></defs><circle cx="32" cy="32" r="16" stroke="url(#icon-formant)" stroke-width="2" fill="none"/><text x="32" y="38" font-size="14" font-weight="bold" text-anchor="middle" fill="#999999">AEIOU</text></svg>
+                    </div>
+                    <div class="plugin-info">
+                        <h3>FORMANT FILTER</h3>
+                        <p class="plugin-desc">Vowel Formant Filter</p>
+                        <span class="info-badge">?</span>
+                    </div>
+                </article>
+                <article class="plugin-card" data-name="frequency shifter bode hilbert inharmonic barberpole metallic sci-fi ring shift phasing" onclick="openGuide('frequency-shifter')">
+                    <div class="plugin-icon">
+                        <svg viewBox="0 0 64 64" width="48" height="48"><defs><linearGradient id="icon-frequency-shifter" x1="0%" y1="100%" x2="0%" y2="0%"><stop offset="0%" stop-color="#888888"/><stop offset="100%" stop-color="#aaaaaa"/></linearGradient></defs><path d="M6,26 Q12,12 18,26 T30,26 T42,26" stroke="url(#icon-frequency-shifter)" stroke-width="1.5" fill="none" stroke-linecap="round" opacity="0.4"/><path d="M18,40 Q24,26 30,40 T42,40 T54,40" stroke="url(#icon-frequency-shifter)" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/><path d="M8,52 L28,52 M23,47 L28,52 L23,57" stroke="url(#icon-frequency-shifter)" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    </div>
+                    <div class="plugin-info">
+                        <h3>FREQUENCY SHIFTER</h3>
+                        <p class="plugin-desc">Bode Frequency Shifter</p>
+                        <span class="info-badge">?</span>
+                    </div>
+                </article>
+                <article class="plugin-card" data-name="glitch fx stutter repeat loop slice pitch tape stop reverse granular gate chop random creative edm" onclick="openGuide('glitch-fx')">
+                    <div class="plugin-icon">
+                        <svg viewBox="0 0 64 64" width="48" height="48"><defs><linearGradient id="icon-glitch-fx" x1="0%" y1="100%" x2="0%" y2="0%"><stop offset="0%" stop-color="#888888"/><stop offset="100%" stop-color="#aaaaaa"/></linearGradient></defs><path d="M6,32 L58,32" stroke="url(#icon-glitch-fx)" stroke-width="1.5" fill="none" stroke-linecap="round" opacity="0.4"/><path d="M6,32 L12,32 L12,18 L20,18 L20,46 L26,46 L26,32" stroke="url(#icon-glitch-fx)" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/><path d="M32,22 L38,22 L38,42 L44,42" stroke="url(#icon-glitch-fx)" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/><path d="M50,26 L50,38 M54,32 L58,32" stroke="url(#icon-glitch-fx)" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    </div>
+                    <div class="plugin-info">
+                        <h3>GLITCH FX</h3>
+                        <p class="plugin-desc">Stutter &amp; Glitch Engine</p>
+                        <span class="info-badge">?</span>
+                    </div>
+                </article>
+                <article class="plugin-card" data-name="granular delay grains cloud texture pitch spray ambient glitch reverse shimmer" onclick="openGuide('granular-delay')">
+                    <div class="plugin-icon">
+                        <svg viewBox="0 0 64 64" width="48" height="48"><defs><linearGradient id="icon-granular-delay" x1="0%" y1="100%" x2="0%" y2="0%"><stop offset="0%" stop-color="#888888"/><stop offset="100%" stop-color="#aaaaaa"/></linearGradient></defs><path d="M6,52 L58,52" stroke="url(#icon-granular-delay)" stroke-width="1.5" fill="none" stroke-linecap="round" opacity="0.4"/><path d="M10,40 L10,40 M16,30 L16,30 M22,44 L22,44 M28,22 L28,22 M33,36 L33,36 M39,28 L39,28 M45,42 L45,42 M50,24 L50,24 M55,34 L55,34" stroke="url(#icon-granular-delay)" stroke-width="5" fill="none" stroke-linecap="round"/></svg>
+                    </div>
+                    <div class="plugin-info">
+                        <h3>GRANULAR DELAY</h3>
+                        <p class="plugin-desc">Grain Cloud Delay</p>
+                        <span class="info-badge">?</span>
+                    </div>
+                </article>
+                <article class="plugin-card" data-name="harmonizer harmony pitch shift voices interval thirds fifths octave backing vocals doubler chord" onclick="openGuide('harmonizer')">
+                    <div class="plugin-icon">
+                        <svg viewBox="0 0 64 64" width="48" height="48"><defs><linearGradient id="icon-harmonizer" x1="0%" y1="100%" x2="0%" y2="0%"><stop offset="0%" stop-color="#888888"/><stop offset="100%" stop-color="#aaaaaa"/></linearGradient></defs><path d="M8,18 Q16,10 24,18 T40,18 T56,18" stroke="url(#icon-harmonizer)" stroke-width="1.5" fill="none" stroke-linecap="round" opacity="0.4"/><path d="M8,32 Q16,22 24,32 T40,32 T56,32" stroke="url(#icon-harmonizer)" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/><path d="M8,46 Q16,38 24,46 T40,46 T56,46" stroke="url(#icon-harmonizer)" stroke-width="1.5" fill="none" stroke-linecap="round" opacity="0.4"/></svg>
+                    </div>
+                    <div class="plugin-info">
+                        <h3>HARMONIZER</h3>
+                        <p class="plugin-desc">Two-Voice Pitch Harmonizer</p>
+                        <span class="info-badge">?</span>
+                    </div>
+                </article>
+                <article class="plugin-card" data-name="kick shaper drum transient punch body thump click decay attack bass drum shaping" onclick="openGuide('kick-shaper')">
+                    <div class="plugin-icon">
+                        <svg viewBox="0 0 64 64" width="48" height="48"><defs><linearGradient id="icon-kick-shaper" x1="0%" y1="100%" x2="0%" y2="0%"><stop offset="0%" stop-color="#888888"/><stop offset="100%" stop-color="#aaaaaa"/></linearGradient></defs><path d="M6,32 L58,32" stroke="url(#icon-kick-shaper)" stroke-width="1.5" fill="none" stroke-linecap="round" opacity="0.4"/><path d="M6,32 Q10,4 14,32 Q18,56 22,32 Q26,18 30,32 Q34,42 38,32 Q42,27 46,32 Q50,35 54,32 L58,32" stroke="url(#icon-kick-shaper)" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    </div>
+                    <div class="plugin-info">
+                        <h3>KICK SHAPER</h3>
+                        <p class="plugin-desc">Kick Drum Sculptor</p>
+                        <span class="info-badge">?</span>
+                    </div>
+                </article>
+                <article class="plugin-card" data-name="ladder filter moog 24db lowpass highpass resonance drive analog synth zdf self-oscillation" onclick="openGuide('ladder-filter')">
+                    <div class="plugin-icon">
+                        <svg viewBox="0 0 64 64" width="48" height="48"><defs><linearGradient id="icon-ladder" x1="0%" y1="100%" x2="0%" y2="0%"><stop offset="0%" stop-color="#888888"/><stop offset="100%" stop-color="#aaaaaa"/></linearGradient></defs><path d="M 16,16 L 16,48 M 24,16 L 24,32 M 32,16 L 32,40 M 40,16 L 40,36 M 48,16 L 48,44" stroke="url(#icon-ladder)" stroke-width="2"/><circle cx="8" cy="32" r="6" stroke="url(#icon-ladder)" stroke-width="1.5" fill="none"/><circle cx="56" cy="32" r="6" stroke="url(#icon-ladder)" stroke-width="1.5" fill="none"/></svg>
+                    </div>
+                    <div class="plugin-info">
+                        <h3>LADDER FILTER</h3>
+                        <p class="plugin-desc">Moog-Style Ladder Filter</p>
+                        <span class="info-badge">?</span>
+                    </div>
+                </article>
+                <article class="plugin-card" data-name="ott over the top multiband compression upward downward edm loud aggressive dense squash" onclick="openGuide('ott')">
+                    <div class="plugin-icon">
+                        <svg viewBox="0 0 64 64" width="48" height="48"><defs><linearGradient id="icon-ott" x1="0%" y1="100%" x2="0%" y2="0%"><stop offset="0%" stop-color="#888888"/><stop offset="100%" stop-color="#aaaaaa"/></linearGradient></defs><path d="M8,32 L56,32" stroke="url(#icon-ott)" stroke-width="1.5" fill="none" stroke-linecap="round" opacity="0.4"/><path d="M14,8 L20,16 L26,8 M38,8 L44,16 L50,8" stroke="url(#icon-ott)" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/><path d="M14,56 L20,48 L26,56 M38,56 L44,48 L50,56" stroke="url(#icon-ott)" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/><path d="M20,22 L20,42 M32,20 L32,44 M44,22 L44,42" stroke="url(#icon-ott)" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    </div>
+                    <div class="plugin-info">
+                        <h3>OTT</h3>
+                        <p class="plugin-desc">Multiband Upward/Downward Compressor</p>
+                        <span class="info-badge">?</span>
+                    </div>
+                </article>
+                <article class="plugin-card" data-name="reverser reverse backwards buffer playback realtime filter reverse reverb swell" onclick="openGuide('reverser')">
+                    <div class="plugin-icon">
+                        <svg viewBox="0 0 64 64" width="48" height="48"><defs><linearGradient id="icon-rev2" x1="0%" y1="100%" x2="0%" y2="0%"><stop offset="0%" stop-color="#888888"/><stop offset="100%" stop-color="#aaaaaa"/></linearGradient></defs><path d="M 8,24 L 48,24 L 42,18 M 48,24 L 42,30" stroke="url(#icon-rev2)" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/><path d="M 56,40 L 16,40 L 22,34 M 16,40 L 22,46" stroke="url(#icon-rev2)" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    </div>
+                    <div class="plugin-info">
+                        <h3>REVERSER</h3>
+                        <p class="plugin-desc">Real-Time Reverse Buffer</p>
+                        <span class="info-badge">?</span>
+                    </div>
+                </article>
+                <article class="plugin-card" data-name="robotizer robot voice monotone sci-fi dalek metallic fft vocoder buzz" onclick="openGuide('robotizer')">
+                    <div class="plugin-icon">
+                        <svg viewBox="0 0 64 64" width="48" height="48"><defs><linearGradient id="icon-robotizer" x1="0%" y1="100%" x2="0%" y2="0%"><stop offset="0%" stop-color="#888888"/><stop offset="100%" stop-color="#aaaaaa"/></linearGradient></defs><rect x="16" y="20" width="32" height="30" rx="4" stroke="url(#icon-robotizer)" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/><path d="M32,20 L32,11 M24,42 L40,42" stroke="url(#icon-robotizer)" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/><circle cx="26" cy="31" r="3" stroke="url(#icon-robotizer)" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/><circle cx="38" cy="31" r="3" stroke="url(#icon-robotizer)" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    </div>
+                    <div class="plugin-info">
+                        <h3>ROBOTIZER</h3>
+                        <p class="plugin-desc">FFT Robot Voice</p>
+                        <span class="info-badge">?</span>
+                    </div>
+                </article>
+                <article class="plugin-card" data-name="rotary speaker leslie organ doppler tremolo chorale horn drum b3 hammond" onclick="openGuide('rotary-speaker')">
+                    <div class="plugin-icon">
+                        <svg viewBox="0 0 64 64" width="48" height="48"><defs><linearGradient id="icon-rotary-speaker" x1="0%" y1="100%" x2="0%" y2="0%"><stop offset="0%" stop-color="#888888"/><stop offset="100%" stop-color="#aaaaaa"/></linearGradient></defs><circle cx="32" cy="32" r="24" stroke="url(#icon-rotary-speaker)" stroke-width="1.5" fill="none" stroke-linecap="round" opacity="0.4"/><path d="M32,12 A20,20 0 0 1 52,32 M52,32 L48,25 M52,32 L57,26" stroke="url(#icon-rotary-speaker)" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/><path d="M32,52 A20,20 0 0 1 12,32 M12,32 L16,39 M12,32 L7,38" stroke="url(#icon-rotary-speaker)" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/><circle cx="32" cy="32" r="5" stroke="url(#icon-rotary-speaker)" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    </div>
+                    <div class="plugin-info">
+                        <h3>ROTARY SPEAKER</h3>
+                        <p class="plugin-desc">Leslie Rotary Simulation</p>
+                        <span class="info-badge">?</span>
+                    </div>
+                </article>
+                <article class="plugin-card" data-name="shimmer reverb octave pitch ambient pad ethereal cinematic fdn halo" onclick="openGuide('shimmer-reverb')">
+                    <div class="plugin-icon">
+                        <svg viewBox="0 0 64 64" width="48" height="48"><defs><linearGradient id="icon-shimmer-reverb" x1="0%" y1="100%" x2="0%" y2="0%"><stop offset="0%" stop-color="#888888"/><stop offset="100%" stop-color="#aaaaaa"/></linearGradient></defs><path d="M6,48 L58,48" stroke="url(#icon-shimmer-reverb)" stroke-width="1.5" fill="none" stroke-linecap="round" opacity="0.4"/><path d="M6,48 Q10,28 14,48 Q18,62 22,48 Q26,38 30,48 Q34,54 38,48 Q42,44 46,48 L58,48" stroke="url(#icon-shimmer-reverb)" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/><path d="M44,6 L44,22 M36,14 L52,14" stroke="url(#icon-shimmer-reverb)" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/><path d="M54,22 L54,30 M50,26 L58,26" stroke="url(#icon-shimmer-reverb)" stroke-width="1.5" fill="none" stroke-linecap="round" opacity="0.4"/></svg>
+                    </div>
+                    <div class="plugin-info">
+                        <h3>SHIMMER REVERB</h3>
+                        <p class="plugin-desc">Pitched Ambient Reverb</p>
+                        <span class="info-badge">?</span>
+                    </div>
+                </article>
+                <article class="plugin-card" data-name="spectral freeze fft sustain drone infinite hold pad ambient snapshot" onclick="openGuide('spectral-freeze')">
+                    <div class="plugin-icon">
+                        <svg viewBox="0 0 64 64" width="48" height="48"><defs><linearGradient id="icon-spectral-freeze" x1="0%" y1="100%" x2="0%" y2="0%"><stop offset="0%" stop-color="#888888"/><stop offset="100%" stop-color="#aaaaaa"/></linearGradient></defs><path d="M32,8 L32,56 M11,20 L53,44 M11,44 L53,20" stroke="url(#icon-spectral-freeze)" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/><path d="M26,12 L32,18 L38,12 M26,52 L32,46 L38,52" stroke="url(#icon-spectral-freeze)" stroke-width="1.5" fill="none" stroke-linecap="round" opacity="0.4"/></svg>
+                    </div>
+                    <div class="plugin-info">
+                        <h3>SPECTRAL FREEZE</h3>
+                        <p class="plugin-desc">FFT Spectrum Freeze</p>
+                        <span class="info-badge">?</span>
+                    </div>
+                </article>
+                <article class="plugin-card" data-name="spring reverb guitar amp vintage surf drip boing dub chirp tank" onclick="openGuide('spring-reverb')">
+                    <div class="plugin-icon">
+                        <svg viewBox="0 0 64 64" width="48" height="48"><defs><linearGradient id="icon-spring-reverb" x1="0%" y1="100%" x2="0%" y2="0%"><stop offset="0%" stop-color="#888888"/><stop offset="100%" stop-color="#aaaaaa"/></linearGradient></defs><path d="M6,32 L10,32 L14,20 L18,44 L22,20 L26,44 L30,20 L34,44 L38,20 L42,44 L46,20 L50,44 L54,32 L58,32" stroke="url(#icon-spring-reverb)" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/><circle cx="6" cy="32" r="2" stroke="url(#icon-spring-reverb)" stroke-width="1.5" fill="none" stroke-linecap="round" opacity="0.4"/><circle cx="58" cy="32" r="2" stroke="url(#icon-spring-reverb)" stroke-width="1.5" fill="none" stroke-linecap="round" opacity="0.4"/></svg>
+                    </div>
+                    <div class="plugin-info">
+                        <h3>SPRING REVERB</h3>
+                        <p class="plugin-desc">Vintage Spring Tank</p>
+                        <span class="info-badge">?</span>
+                    </div>
+                </article>
+                <article class="plugin-card" data-name="sub bloom bass sub harmonic subharmonic synth octave divider low frequency enhancement 808 rumble pitch tracking" onclick="openGuide('sub-bloom')">
+                    <div class="plugin-icon">
+                        <svg viewBox="0 0 64 64" width="48" height="48"><defs><linearGradient id="icon-sub" x1="0%" y1="100%" x2="0%" y2="0%"><stop offset="0%" stop-color="#888888"/><stop offset="100%" stop-color="#aaaaaa"/></linearGradient></defs><circle cx="32" cy="32" r="18" stroke="url(#icon-sub)" stroke-width="2" fill="none"/><ellipse cx="32" cy="36" rx="14" ry="6" stroke="url(#icon-sub)" stroke-width="1.5" fill="none" opacity="0.6"/></svg>
+                    </div>
+                    <div class="plugin-info">
+                        <h3>SUB BLOOM</h3>
+                        <p class="plugin-desc">Pitch-Tracking Subharmonic Generator</p>
+                        <span class="info-badge">?</span>
+                    </div>
+                </article>
+                <article class="plugin-card" data-name="tape stop start motor slowdown spin down spin up pitch ramp dj brake turntable" onclick="openGuide('tape-stop')">
+                    <div class="plugin-icon">
+                        <svg viewBox="0 0 64 64" width="48" height="48"><defs><linearGradient id="icon-tape" x1="0%" y1="100%" x2="0%" y2="0%"><stop offset="0%" stop-color="#888888"/><stop offset="100%" stop-color="#aaaaaa"/></linearGradient></defs><circle cx="32" cy="32" r="18" stroke="url(#icon-tape)" stroke-width="2" fill="none"/><circle cx="32" cy="32" r="10" stroke="url(#icon-tape)" stroke-width="1" fill="none" opacity="0.4"/><circle cx="32" cy="32" r="3" fill="url(#icon-tape)" opacity="0.5"/><path d="M 8,32 Q 20,28 32,32 Q 44,36 56,32" stroke="url(#icon-tape)" stroke-width="1.5" fill="none" opacity="0.3" stroke-dasharray="3,2"/></svg>
+                    </div>
+                    <div class="plugin-info">
+                        <h3>TAPE STOP</h3>
+                        <p class="plugin-desc">Tape Stop &amp; Spin-Up</p>
+                        <span class="info-badge">?</span>
+                    </div>
+                </article>
+                <article class="plugin-card" data-name="trance gate 16 step sequencer rhythmic pattern chopper staccato volume gate tempo sync host tempo grid" onclick="openGuide('trance-gate')">
+                    <div class="plugin-icon">
+                        <svg viewBox="0 0 64 64" width="48" height="48"><defs><linearGradient id="icon-trance" x1="0%" y1="100%" x2="0%" y2="0%"><stop offset="0%" stop-color="#888888"/><stop offset="100%" stop-color="#aaaaaa"/></linearGradient></defs><path d="M 8,20 L 8,44 M 18,20 L 18,44 M 28,20 L 28,44 M 38,20 L 38,44 M 48,20 L 48,44 M 56,20 L 56,44" stroke="url(#icon-trance)" stroke-width="1.5" opacity="0.3"/><path d="M 8,20 L 8,36 M 18,20 L 18,36 M 28,28 L 28,44 M 38,20 L 38,36 M 48,20 L 48,36 M 56,28 L 56,44" stroke="url(#icon-trance)" stroke-width="3" stroke-linecap="round"/></svg>
+                    </div>
+                    <div class="plugin-info">
+                        <h3>TRANCE GATE</h3>
+                        <p class="plugin-desc">16-Step Rhythmic Gate</p>
+                        <span class="info-badge">?</span>
+                    </div>
+                </article>
+                <article class="plugin-card" data-name="vinyl age lo-fi lofi record wow flutter crackle noise bitcrush downsample degradation old" onclick="openGuide('vinyl-age')">
+                    <div class="plugin-icon">
+                        <svg viewBox="0 0 64 64" width="48" height="48"><defs><linearGradient id="icon-vinyl" x1="0%" y1="100%" x2="0%" y2="0%"><stop offset="0%" stop-color="#888888"/><stop offset="100%" stop-color="#aaaaaa"/></linearGradient></defs><circle cx="32" cy="32" r="16" stroke="url(#icon-vinyl)" stroke-width="2" fill="none"/><circle cx="32" cy="32" r="4" fill="#999999"/><path d="M 16,32 Q 20,28 24,32 Q 28,36 32,32 Q 36,28 40,32 Q 44,36 48,32" stroke="url(#icon-vinyl)" stroke-width="1" fill="none" opacity="0.4"/></svg>
+                    </div>
+                    <div class="plugin-info">
+                        <h3>VINYL AGE</h3>
+                        <p class="plugin-desc">Vintage Vinyl Degrader</p>
+                        <span class="info-badge">?</span>
+                    </div>
+                </article>
+                <article class="plugin-card" data-name="vocoder talkbox robot voice synth carrier modulator filterbank daft stereo" onclick="openGuide('vocoder')">
+                    <div class="plugin-icon">
+                        <svg viewBox="0 0 64 64" width="48" height="48"><defs><linearGradient id="icon-vocoder" x1="0%" y1="100%" x2="0%" y2="0%"><stop offset="0%" stop-color="#888888"/><stop offset="100%" stop-color="#aaaaaa"/></linearGradient></defs><path d="M6,50 L58,50" stroke="url(#icon-vocoder)" stroke-width="1.5" fill="none" stroke-linecap="round" opacity="0.4"/><path d="M10,50 L10,38 M18,50 L18,26 M26,50 L26,32 M34,50 L34,16 M42,50 L42,28 M50,50 L50,36" stroke="url(#icon-vocoder)" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    </div>
+                    <div class="plugin-info">
+                        <h3>VOCODER</h3>
+                        <p class="plugin-desc">16-Band Channel Vocoder</p>
+                        <span class="info-badge">?</span>
+                    </div>
+                </article>
+                <article class="plugin-card" data-name="warped delay echo modulated tape warble feedback distortion saturation filter lofi dub" onclick="openGuide('warped-delay')">
+                    <div class="plugin-icon">
+                        <svg viewBox="0 0 64 64" width="48" height="48"><defs><linearGradient id="icon-warped" x1="0%" y1="100%" x2="0%" y2="0%"><stop offset="0%" stop-color="#888888"/><stop offset="100%" stop-color="#aaaaaa"/></linearGradient></defs><path d="M 8,32 L 20,32 L 24,20 L 28,44 L 32,20 L 36,44 L 40,20 L 44,32 L 56,32" stroke="url(#icon-warped)" stroke-width="2" fill="none"/></svg>
+                    </div>
+                    <div class="plugin-info">
+                        <h3>WARPED DELAY</h3>
+                        <p class="plugin-desc">Modulated Degrading Delay</p>
+                        <span class="info-badge">?</span>
+                    </div>
+                </article>
+                </div>
             </div>
+            <!-- END PLUGINS -->
         </section>
     </main>
 
     <footer class="site-footer">
         <div class="footer-content">
             Made with &#9825; by <a href="https://koulaxizis.gr" target="_blank" rel="noopener">Christos Koulaxizis</a>
+            <div class="footer-links">
+                <a href="https://ko-fi.com/koulaxizis" target="_blank" rel="noopener">Support on Ko-fi</a>
+                <span class="sep">&bull;</span>
+                <a href="https://preview.mailerlite.io/forms/642133/200884431727101575/share" target="_blank" rel="noopener">Newsletter</a>
+                <span class="sep">&bull;</span>
+                <a href="https://github.com/koulaxizis/null-jsfx/releases.atom" target="_blank" rel="noopener">Release feed (RSS)</a>
+                <span class="sep">&bull;</span>
+                <a href="https://github.com/koulaxizis/null-jsfx" target="_blank" rel="noopener">GitHub</a>
+            </div>
         </div>
     </footer>
 
@@ -665,13 +1167,11 @@
 
     <!-- Scripts -->
     <script src="assets/js/modals.js"></script>
-    <script src="assets/js/fxchains-modal.js"></script>
     <script src="assets/js/search.js"></script>
     <script src="assets/js/theme.js"></script>
+    <script src="assets/js/download.js"></script>
+    <script src="assets/js/release.js"></script>
     <script>
-        const lastUpdateDate = document.getElementById('last-update');
-        lastUpdateDate.textContent = 'Updated: ' + new Date().toLocaleDateString('en-GB');
-
         // Back to Top functionality
         const backToTopBtn = document.getElementById('back-to-top');
         window.addEventListener('scroll', function() {
@@ -697,6 +1197,7 @@
             if (e.key === 'Escape') {
                 closeChangelog();
                 closeModal();
+                closeDownload();
             }
         });
 

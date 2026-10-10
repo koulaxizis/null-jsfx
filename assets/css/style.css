@@ -592,6 +592,45 @@ main {
     color: var(--muted);
 }
 
+.plugin-formats {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-top: 10px;
+}
+
+.plugin-formats span,
+.format-tag {
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    color: var(--muted);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 1px 5px;
+}
+
+.guide-formats {
+    list-style: none;
+    padding: 0;
+    font-size: 12px;
+    color: var(--muted);
+}
+
+.guide-formats li {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 6px;
+}
+
+.format-tag {
+    display: inline-block;
+    min-width: 34px;
+    text-align: center;
+}
+
 .coming-soon .plugin-info h3 {
     color: var(--muted);
 }
@@ -1080,4 +1119,171 @@ html, body {
     .step-number {
         margin-top: 0;
     }
+}
+/* Download modal */
+.modal-download {
+    max-width: 520px;
+}
+
+.download-options {
+    padding: 18px 22px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.download-option {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 14px 16px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--card-bg);
+    color: var(--text);
+    text-decoration: none;
+    transition: border-color 0.15s ease;
+}
+
+a.download-option:hover {
+    border-color: var(--muted);
+}
+
+.download-option-title {
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.download-option-desc {
+    font-size: 12px;
+    color: var(--muted);
+    line-height: 1.5;
+}
+
+.download-option-file {
+    font-size: 11px;
+    color: var(--muted);
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+.download-other {
+    margin: -2px 0 4px;
+    font-size: 11px;
+    color: var(--muted);
+    text-align: center;
+}
+
+.download-other a,
+.modal-download .changelog-footer a {
+    color: var(--muted);
+}
+
+.download-other a:hover,
+.modal-download .changelog-footer a:hover {
+    color: var(--text);
+}
+
+.download-support {
+    padding: 22px;
+    text-align: center;
+}
+
+.download-support-text {
+    margin: 0 0 16px;
+    font-size: 13px;
+    line-height: 1.6;
+    color: var(--muted);
+}
+
+.download-support-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.download-support-btn {
+    padding: 10px 16px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--card-bg);
+    color: var(--text);
+    font-size: 13px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: border-color 0.15s ease;
+}
+
+.download-support-btn:hover {
+    border-color: var(--muted);
+}
+
+.download-skip {
+    display: inline-block;
+    margin-top: 18px;
+    font-size: 11px;
+    color: var(--muted);
+    text-decoration: none;
+}
+
+.download-skip:hover {
+    color: var(--text);
+    text-decoration: underline;
+}
+
+.support-btn {
+    text-decoration: none;
+    margin-right: 6px;
+}
+
+.release-new {
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    padding: 1px 6px;
+    border-radius: 8px;
+    background: #c4c4c4;
+    color: #1b1a18;
+}
+
+.footer-links {
+    margin-top: 8px;
+    font-size: 11px;
+}
+
+.footer-links a {
+    color: var(--muted);
+}
+
+.footer-links a:hover {
+    color: var(--text);
+}
+
+.footer-links .sep {
+    margin: 0 6px;
+}
+
+.modal-download [hidden],
+.release-new[hidden] {
+    display: none;
+}
+
+.download-links {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.download-links .changelog-btn {
+    margin-right: 0;
+}
+
+.guide-shot {
+    display: block;
+    width: 100%;
+    height: auto;
+    margin-bottom: 18px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
 }

@@ -1,0 +1,484 @@
+desc:NULL JSFX shared GFX library
+//NULL JSFX v2.0 • https://nulljsfx.tech • MIT License
+//
+// Shared look for every "NULL X GFX" plugin: the nulljsfx.tech palette, header, cards,
+// knobs and text helpers. Import it with `import null_gfx.jsfx-inc` and draw in design
+// units (ng_begin sets the scale); X() and Y() turn design units into window pixels.
+
+@init
+  // ---- palette: the nulljsfx.tech dark theme (assets/css/style.css) ---------------------
+  NG_BG      = 0x1b1a18;  // --bg
+  NG_BG2     = 0x131211;  // --bg-secondary
+  NG_CARD    = 0x232220;  // --card-bg
+  NG_BORDER  = 0x333333;  // --border
+  NG_TEXT    = 0xe0e0e0;  // --text
+  NG_MUTED   = 0x999999;  // --muted
+  NG_SLOGAN  = 0x6a6a6a;  // the "AUDIO WITHOUT NOISE" line in the header
+  NG_ACCENT  = 0xc4c4c4;  // silver (the site purple belongs to Noxpress)
+  NG_ICON_A  = 0x888888;  // icon gradient, bottom
+  NG_ICON_B  = 0xaaaaaa;  // icon gradient, top
+  NG_LOGO_BG = 0x2d2d2d;  // logo tile
+  NG_LOGO_ED = 0x4a4a4a;  // logo tile outline
+  NG_FONT    = "Segoe UI";
+
+  function ng_col(rgb, a)
+  (
+    gfx_r = ((rgb >> 16) & 255) / 255;
+    gfx_g = ((rgb >> 8) & 255) / 255;
+    gfx_b = (rgb & 255) / 255;
+    gfx_a = a;
+  );
+
+  function ng_mix(c1, c2, k, a)
+  (
+    gfx_r = (((c1 >> 16) & 255) * (1 - k) + ((c2 >> 16) & 255) * k) / 255;
+    gfx_g = (((c1 >> 8) & 255) * (1 - k) + ((c2 >> 8) & 255) * k) / 255;
+    gfx_b = ((c1 & 255) * (1 - k) + (c2 & 255) * k) / 255;
+    gfx_a = a;
+  );
+
+  // design units -> pixels
+  function X(v) ( ng_ox + v * ng_s; );
+  function Y(v) ( ng_oy + v * ng_s; );
+
+  // font slot, size in design units, bold flag
+  function ng_font(slot, size, bold)
+  (
+    bold ? gfx_setfont(slot, NG_FONT, max(7, floor(size * ng_s)), 'b')
+         : gfx_setfont(slot, NG_FONT, max(7, floor(size * ng_s)));
+  );
+
+  // text at design (x, y), vertically centred; align 0 left, 1 centre, 2 right;
+  // track = letter spacing in design units. Leaves gfx_x at the end of the text.
+  function ng_txt(str, x, y, align, track) local(n, i, w, cw, chh, tr)
+  (
+    tr = track * ng_s;
+    n = strlen(str);
+    w = 0;
+    i = 0;
+    loop(n, strcpy_substr(#ng_ch, str, i, 1); gfx_measurestr(#ng_ch, cw, chh); w += cw + tr; i += 1;);
+    w -= tr;
+    gfx_x = align == 1 ? X(x) - w / 2 : (align == 2 ? X(x) - w : X(x));
+    gfx_y = floor(Y(y) - gfx_texth / 2 + 0.5);
+    i = 0;
+    loop(n, strcpy_substr(#ng_ch, str, i, 1); gfx_drawstr(#ng_ch); gfx_x += tr; i += 1;);
+  );
+
+  // arc of thickness th pixels (angles in radians, 0 = up, clockwise), pixel coordinates
+  function ng_arc(x, y, r, a1, a2, th) local(k, n)
+  (
+    n = max(1, floor(th * 2));
+    k = 0;
+    loop(n + 1, gfx_arc(x, y, r - th / 2 + k * th / n, a1, a2, 1); k += 1;);
+  );
+
+  // card: --card-bg with a 1px --border outline, design units
+  function ng_card(x, y, w, h)
+  (
+    ng_col(NG_CARD, 1);
+    gfx_roundrect(X(x), Y(y), w * ng_s, h * ng_s, 6 * ng_s, 1);
+    gfx_rect(X(x) + 1, Y(y) + 1, w * ng_s - 1, h * ng_s - 1);
+    ng_col(NG_BORDER, 1);
+    gfx_roundrect(X(x), Y(y), w * ng_s, h * ng_s, 6 * ng_s, 1);
+  );
+
+  // the site logo tile: rounded square with the grey-gradient "N", design units
+  function ng_logo(x, y, size) local(px, py, sz, k, n, th, i)
+  (
+    px = X(x); py = Y(y); sz = size * ng_s;
+    ng_col(NG_LOGO_BG, 1);
+    gfx_roundrect(px, py, sz, sz, sz * 0.15, 1);
+    gfx_rect(px + 1, py + 1, sz - 1, sz - 1);
+    ng_col(NG_LOGO_ED, 1);
+    gfx_roundrect(px, py, sz, sz, sz * 0.15, 1);
+    th = max(1, sz * 0.075);
+    n = max(1, floor(th * 2));
+    i = 0;
+    loop(n + 1,
+      k = (i / n - 0.5) * th;
+      ng_mix(NG_ICON_A, NG_ICON_B, i / n, 1);
+      gfx_line(px + sz * 0.30 + k, py + sz * 0.75, px + sz * 0.30 + k, py + sz * 0.25, 1);
+      gfx_line(px + sz * 0.30 + k, py + sz * 0.25, px + sz * 0.70 + k, py + sz * 0.75, 1);
+      gfx_line(px + sz * 0.70 + k, py + sz * 0.75, px + sz * 0.70 + k, py + sz * 0.25, 1);
+      i += 1;
+    );
+  );
+
+  // start a frame: fit the design (dw x dh) into the window, centred, and clear it
+  function ng_begin(dw, dh)
+  (
+    ng_dw = dw;
+    ng_dh = dh;
+    ng_s = min(gfx_w / dw, gfx_h / dh);
+    ng_ox = floor((gfx_w - dw * ng_s) / 2);
+    ng_oy = floor((gfx_h - dh * ng_s) / 2);
+    ng_col(NG_BG, 1);
+    gfx_rect(0, 0, gfx_w, gfx_h);
+    ng_lmb = mouse_cap & 1;
+    ng_click = ng_lmb && !ng_prev_lmb;
+    ng_now = time_precise();
+  );
+
+  // end a frame: remember the mouse button for click detection
+  function ng_end()
+  (
+    ng_prev_lmb = ng_lmb;
+    mouse_wheel = 0;
+  );
+
+  // header: logo, "NULL JSFX" above the plugin name, category on the right, divider below
+  function ng_header(name, category)
+  (
+    ng_logo(14, 10, 24);
+    ng_font(1, 8, 1);
+    ng_col(NG_MUTED, 1);
+    ng_txt("NULL JSFX", 46, 15, 0, 2.5);
+    ng_font(2, 14, 1);
+    ng_col(NG_TEXT, 1);
+    ng_txt(name, 46, 28, 0, 2);
+    ng_font(1, 7, 1);
+    ng_col(NG_SLOGAN, 1);
+    ng_txt("AUDIO WITHOUT NOISE", ng_dw - 14, 15, 2, 2);
+    ng_font(1, 8, 1);
+    ng_col(NG_MUTED, 1);
+    ng_txt(category, ng_dw - 14, 29, 2, 2);
+    ng_col(NG_BORDER, 1);
+    gfx_line(X(0), Y(44), X(ng_dw), Y(44), 0);
+  );
+
+  // knob at design (x, y) with body radius r; norm 0..1; bipolar draws the value arc from
+  // the centre. Returns 1 while the mouse is over it.
+  function ng_knob(x, y, r, norm, bipolar, active) local(kx, ky, kr, tr, amax, ang, a0, hover, i, n, px1, py1, px2, py2, k, dx, dy)
+  (
+    kx = X(x); ky = Y(y); kr = r * ng_s; tr = (r + 10) * ng_s;
+    amax = 0.75 * $pi;
+    ang = (norm * 2 - 1) * amax;
+    a0 = bipolar ? 0 : -amax;
+    dx = mouse_x - kx; dy = mouse_y - ky;
+    hover = sqrt(dx * dx + dy * dy) < tr + 6 * ng_s;
+
+    // track and value arc
+    ng_col(hover || active ? 0x45433f : NG_BORDER, 1);
+    ng_arc(kx, ky, tr, -amax, amax, 4 * ng_s);
+    ng_col(NG_ACCENT, 1);
+    abs(ang - a0) > 0.001 ? ng_arc(kx, ky, tr, min(a0, ang), max(a0, ang), 4 * ng_s);
+    bipolar ? (
+      ng_col(NG_MUTED, 1);
+      gfx_line(kx, ky - tr - 5 * ng_s, kx, ky - tr - 8 * ng_s, 1);
+    );
+
+    // body: shadow, grey-gradient rim like the site icons, dark cap
+    ng_col(0x000000, 0.35);
+    gfx_circle(kx, ky + 2 * ng_s, kr + 1.5 * ng_s, 1, 1);
+    n = 12;
+    i = 0;
+    loop(n,
+      ng_mix(NG_ICON_A, NG_ICON_B, i / (n - 1), 1);
+      gfx_circle(kx, ky - i / n * 2 * ng_s, kr * (1 - i / n * 0.06), 1, 1);
+      i += 1;
+    );
+    n = 10;
+    i = 0;
+    loop(n,
+      ng_mix(NG_CARD, 0x34322f, i / (n - 1), 1);
+      gfx_circle(kx, ky - i / n * 3 * ng_s, (kr - 3 * ng_s) * (1 - i / n * 0.35), 1, 1);
+      i += 1;
+    );
+
+    // pointer
+    px1 = kx + sin(ang) * kr * 0.30;
+    py1 = ky - cos(ang) * kr * 0.30;
+    px2 = kx + sin(ang) * (kr - 7 * ng_s);
+    py2 = ky - cos(ang) * (kr - 7 * ng_s);
+    ng_col(NG_TEXT, 1);
+    k = -1.2 * ng_s;
+    loop(7,
+      gfx_line(px1 + cos(ang) * k, py1 + sin(ang) * k, px2 + cos(ang) * k, py2 + sin(ang) * k, 1);
+      k += 0.4 * ng_s;
+    );
+    hover;
+  );
+
+  // horizontal slider (the One Slider series) from design x to x + w at height y; norm 0..1;
+  // bipolar fills from the centre. Returns 1 while the mouse is over it.
+  function ng_slider(x, y, w, norm, bipolar, active) local(x0, x1, yy, th, tx, f0, hover, i, n, tw, tth)
+  (
+    x0 = X(x); x1 = X(x + w); yy = Y(y);
+    th = 6 * ng_s;
+    tx = x0 + norm * (x1 - x0);
+    f0 = bipolar ? (x0 + x1) / 2 : x0;
+    hover = mouse_x > x0 - 10 * ng_s && mouse_x < x1 + 10 * ng_s && abs(mouse_y - yy) < 16 * ng_s;
+
+    // track and value fill
+    ng_col(hover || active ? 0x45433f : NG_BORDER, 1);
+    gfx_roundrect(x0, yy - th / 2, x1 - x0, th, th / 2, 1);
+    gfx_rect(x0 + th / 2, yy - th / 2, x1 - x0 - th, th + 1);
+    ng_col(NG_ACCENT, 1);
+    abs(tx - f0) > 0.5 ? gfx_rect(min(f0, tx), yy - th / 2 + 1, abs(tx - f0), th - 1);
+    bipolar ? (
+      ng_col(NG_MUTED, 1);
+      gfx_line((x0 + x1) / 2, yy - th / 2 - 4 * ng_s, (x0 + x1) / 2, yy - th / 2 - 7 * ng_s, 1);
+    );
+
+    // thumb: shadow, grey-gradient body like the site icons, dark grip line
+    tw = 12 * ng_s;
+    tth = 22 * ng_s;
+    ng_col(0x000000, 0.35);
+    gfx_roundrect(tx - tw / 2, yy - tth / 2 + 2 * ng_s, tw, tth, 3 * ng_s, 1);
+    gfx_rect(tx - tw / 2 + 1, yy - tth / 2 + 2 * ng_s + 1, tw - 1, tth - 1);
+    n = floor(tth);
+    i = 0;
+    loop(n,
+      ng_mix(NG_ICON_B, NG_ICON_A, i / max(1, n - 1), 1);
+      gfx_line(tx - tw / 2 + 1, yy - tth / 2 + i, tx + tw / 2 - 1, yy - tth / 2 + i, 0);
+      i += 1;
+    );
+    ng_col(NG_ICON_A, 1);
+    gfx_roundrect(tx - tw / 2, yy - tth / 2, tw, tth, 3 * ng_s, 1);
+    ng_col(NG_CARD, 1);
+    gfx_rect(tx - max(1, ng_s), yy - tth * 0.3, max(2, 2 * ng_s), tth * 0.6);
+    hover;
+  );
+
+  // Knob or slider interaction for a value in [lo, hi]. Call once per frame per control with
+  // its hover result and an id; returns the new value. Drag (Ctrl = fine), double-click
+  // resets to def, wheel steps by step. px_range = design pixels for the full range;
+  // horiz = 1 for sliders (only sideways movement counts), 0 for knobs (both directions).
+  function ng_input(id, hover, v, lo, hi, def, step, px_range, horiz) local(sens, nv, mv)
+  (
+    nv = v;
+    ng_click && hover ? (
+      ng_now - ng_last_click < 0.3 && ng_last_id == id ? (
+        nv = def;
+        ng_drag = 0;
+        ng_last_click = 0;
+      ) : (
+        ng_drag = id;
+        ng_drag_val = v;
+        ng_lx = mouse_x;
+        ng_ly = mouse_y;
+        ng_last_click = ng_now;
+        ng_last_id = id;
+      );
+    );
+    !ng_lmb ? ng_drag = 0;
+    ng_drag == id ? (
+      sens = (hi - lo) / px_range * ((mouse_cap & 4) ? 0.1 : 1);
+      mv = horiz ? mouse_x - ng_lx : (mouse_x - ng_lx) + (ng_ly - mouse_y);
+      ng_drag_val = max(lo, min(hi, ng_drag_val + mv / ng_s * sens));
+      ng_lx = mouse_x;
+      ng_ly = mouse_y;
+      nv = ng_drag_val;
+    );
+    hover && mouse_wheel != 0 && !ng_drag ? (
+      nv = max(lo, min(hi, v + (mouse_wheel > 0 ? step : -step)));
+    );
+    nv;
+  );
+
+  // ---- One Slider layout ------------------------------------------------------------------
+  // Every One Slider plugin: 360x240 design, header, a display card (14,54,332,110) and the
+  // slider card (14,172,332,54). Draw the display between ng_one_slider_begin() and
+  // ng_one_slider_control(); the display area is ng_dx/ng_dy/ng_dw/ng_dh (design units).
+  function ng_one_slider_begin(name)
+  (
+    ng_begin(360, 240);
+    ng_header(name, "ONE SLIDER");
+    ng_card(14, 54, 332, 110);
+    ng_dx = 24; ng_dy = 62; ng_dw = 312; ng_dh = 94;
+  );
+
+  // Slider card. label: parameter name; caption: optional detail line (""); value: the value
+  // text; left/right: end labels. Returns the new slider value (unrounded while dragging);
+  // the caller stores it (see ng_set_slider) and re-runs its @slider code.
+  function ng_one_slider_control(label, caption, value, left, right, v, lo, hi, def, bipolar) local(hover, nv)
+  (
+    ng_card(14, 172, 332, 54);
+    ng_font(1, 8, 1);
+    ng_col(NG_MUTED, 1);
+    ng_txt(label, 28, 187, 0, 2);
+    ng_font(4, 8, 0);
+    ng_txt(caption, 180, 187, 1, 0.3);
+    ng_font(3, 13, 1);
+    ng_col(NG_TEXT, 1);
+    ng_txt(value, 332, 187, 2, 0);
+    ng_font(1, 7, 1);
+    ng_col(NG_MUTED, 1);
+    ng_txt(left, 28, 210, 0, 1);
+    ng_txt(right, 332, 210, 2, 1);
+    hover = ng_slider(74, 210, 212, (v - lo) / (hi - lo), bipolar, ng_drag == 1);
+    ng_input(1, hover, v, lo, hi, def, 1, 212, 1);
+  );
+
+  // Rounds to the slider step and, when it changed, writes slider1 and tells the host.
+  // Returns 1 when the value changed, so the caller can re-run its @slider code.
+  function ng_set_slider(v, step) local(changed)
+  (
+    v = floor(v / step + 0.5) * step;
+    changed = v != slider1;
+    changed ? (
+      slider1 = v;
+      sliderchange(slider1);
+      slider_automate(slider1);
+    );
+    changed;
+  );
+
+  // ---- plots ---------------------------------------------------------------------------------
+  // ng_plot(x, y, w, h) sets the plot rectangle in design units; the helpers below map into it.
+  function ng_plot(x, y, w, h) ( ng_px = X(x); ng_py = Y(y); ng_pw = w * ng_s; ng_ph = h * ng_s; );
+  function ng_freq_x(f) ( ng_px + ng_pw * log(max(f, 20) / 20) / log(1000); );
+  function ng_lin_x(v, lo, hi) ( ng_px + ng_pw * (v - lo) / (hi - lo); );
+  function ng_lin_y(v, lo, hi) ( ng_py + ng_ph * (1 - (min(hi, max(lo, v)) - lo) / (hi - lo)); );
+
+  // log-frequency grid (20 Hz to 20 kHz) with dB lines at +-range/2 and 0, plus labels
+  function ng_grid_freq(range) local(d, m, f, xx, db, yy)
+  (
+    d = 10;
+    loop(4,
+      m = 1;
+      loop(9,
+        f = m * d;
+        f >= 20 && f <= 20000 ? (
+          xx = floor(ng_freq_x(f)) + 0.5;
+          ng_col(NG_BORDER, m == 1 ? 1 : 0.5);
+          gfx_line(xx, ng_py, xx, ng_py + ng_ph, 0);
+        );
+        m += 1;
+      );
+      d *= 10;
+    );
+    ng_font(4, 8, 0);
+    db = -range / 2;
+    loop(3,
+      yy = floor(ng_lin_y(db, -range * 2 / 3, range * 2 / 3)) + 0.5;
+      ng_col(db == 0 ? 0x45433f : NG_BORDER, db == 0 ? 1 : 0.6);
+      gfx_line(ng_px, yy, ng_px + ng_pw, yy, 0);
+      ng_col(NG_MUTED, 1);
+      db > 0 ? sprintf(#ng_lbl, "+%d", db) : sprintf(#ng_lbl, "%d", db);
+      gfx_x = ng_px - 6 * ng_s - (gfx_measurestr(#ng_lbl, ng_tw_, ng_th_); ng_tw_);
+      gfx_y = yy - gfx_texth / 2;
+      gfx_drawstr(#ng_lbl);
+      db += range / 2;
+    );
+    ng_col(NG_MUTED, 1);
+    gfx_x = ng_freq_x(100) - 8 * ng_s; gfx_y = ng_py + ng_ph + 5 * ng_s; gfx_drawstr("100");
+    gfx_x = ng_freq_x(1000) - 4 * ng_s; gfx_drawstr("1k");
+    gfx_x = ng_freq_x(10000) - 8 * ng_s; gfx_drawstr("10k");
+  );
+
+  // plain grid: nx x ny cells and a brighter centre cross when centre = 1
+  function ng_grid(nx, ny, centre) local(i, xx, yy)
+  (
+    i = 0;
+    loop(nx + 1,
+      xx = floor(ng_px + ng_pw * i / nx) + 0.5;
+      ng_col(centre && i * 2 == nx ? 0x45433f : NG_BORDER, centre && i * 2 == nx ? 1 : 0.6);
+      gfx_line(xx, ng_py, xx, ng_py + ng_ph, 0);
+      i += 1;
+    );
+    i = 0;
+    loop(ny + 1,
+      yy = floor(ng_py + ng_ph * i / ny) + 0.5;
+      ng_col(centre && i * 2 == ny ? 0x45433f : NG_BORDER, centre && i * 2 == ny ? 1 : 0.6);
+      gfx_line(ng_px, yy, ng_px + ng_pw, yy, 0);
+      i += 1;
+    );
+  );
+
+  // thick polyline in pixels: call ng_line_start(x, y) then ng_line_to(x, y) for each point
+  function ng_line_start(x, y) ( ng_lx_ = x; ng_ly_ = y; );
+  function ng_line_to(x, y)
+  (
+    gfx_line(ng_lx_, ng_ly_ - 0.5 * ng_s, x, y - 0.5 * ng_s, 1);
+    gfx_line(ng_lx_, ng_ly_, x, y, 1);
+    gfx_line(ng_lx_, ng_ly_ + 0.5 * ng_s, x, y + 0.5 * ng_s, 1);
+    ng_lx_ = x; ng_ly_ = y;
+  );
+
+  // ---- meters ---------------------------------------------------------------------------------
+  // dB to 0..1 over [lo, 0] dB
+  function ng_db_norm(db, lo) ( max(0, min(1, (db - lo) / -lo)); );
+  function ng_to_db(a) ( a > 0.0000001 ? 20 * log10(a) : -140; );
+
+  // horizontal level meter in design units: label on the left, bar fills with the level (dB,
+  // floor lo dB); peak = held peak in dB for a thin marker (pass -140 for none)
+  function ng_meter(x, y, w, h, label, db, peak, lo) local(bx, bw, f, p)
+  (
+    ng_font(1, 7, 1);
+    ng_col(NG_MUTED, 1);
+    ng_txt(label, x, y + h / 2, 0, 1);
+    bx = X(x + 30); bw = (w - 30) * ng_s;
+    ng_col(NG_BORDER, 1);
+    gfx_rect(bx, Y(y), bw, h * ng_s);
+    f = ng_db_norm(db, lo);
+    ng_col(NG_ACCENT, 1);
+    f > 0 ? gfx_rect(bx, Y(y), bw * f, h * ng_s);
+    p = ng_db_norm(peak, lo);
+    p > 0 ? (
+      ng_col(NG_TEXT, 1);
+      gfx_rect(bx + bw * p - 1, Y(y), max(1, ng_s), h * ng_s);
+    );
+  );
+
+  // gain-reduction meter: fills from the right by gr dB (positive number) over max_db
+  function ng_gr_meter(x, y, w, h, label, gr, max_db) local(bx, bw, f)
+  (
+    ng_font(1, 7, 1);
+    ng_col(NG_MUTED, 1);
+    ng_txt(label, x, y + h / 2, 0, 1);
+    bx = X(x + 30); bw = (w - 30) * ng_s;
+    ng_col(NG_BORDER, 1);
+    gfx_rect(bx, Y(y), bw, h * ng_s);
+    f = max(0, min(1, gr / max_db));
+    ng_col(NG_ACCENT, 1);
+    f > 0 ? gfx_rect(bx + bw * (1 - f), Y(y), bw * f, h * ng_s);
+  );
+
+  // ---- audio taps for scopes --------------------------------------------------------------------
+  // ng_tap_init(base, len) once in @init (base = a free memory address, e.g. 4000000),
+  // ng_tap(l, r) every sample in @sample. The scope helpers read the last samples.
+  function ng_tap_init(base, len) ( ng_tb = base; ng_tl = len; ng_tw = 0; memset(base, 0, len * 2); );
+  function ng_tap(l, r) ( ng_tb[ng_tw * 2] = l; ng_tb[ng_tw * 2 + 1] = r; ng_tw = (ng_tw + 1) % ng_tl; );
+
+  // waveform of the last ng_tl samples (mid = (l + r) / 2) across the plot rectangle
+  function ng_scope(gain) local(i, n, k, v, xx, yy, mn, mx, per, j)
+  (
+    n = floor(ng_pw);
+    per = max(1, floor(ng_tl / n));
+    ng_col(NG_ACCENT, 0.9);
+    i = 0;
+    loop(n,
+      mn = 1; mx = -1;
+      j = 0;
+      loop(per,
+        k = (ng_tw + i * per + j) % ng_tl;
+        v = (ng_tb[k * 2] + ng_tb[k * 2 + 1]) * 0.5 * gain;
+        mn = min(mn, v); mx = max(mx, v);
+        j += 1;
+      );
+      xx = ng_px + i;
+      gfx_line(xx, ng_py + ng_ph * (0.5 - min(1, mx) * 0.5), xx, ng_py + ng_ph * (0.5 - max(-1, mn) * 0.5), 0);
+      i += 1;
+    );
+  );
+
+  // vectorscope (mid up, side across) of the last samples, drawn as dots in the plot square
+  function ng_vector(gain) local(i, k, l, r, m, sd, cx, cy, rad, xx, yy)
+  (
+    cx = ng_px + ng_pw / 2; cy = ng_py + ng_ph / 2; rad = min(ng_pw, ng_ph) / 2;
+    ng_col(NG_BORDER, 1);
+    gfx_line(cx, cy - rad, cx, cy + rad, 0);
+    gfx_line(cx - rad, cy, cx + rad, cy, 0);
+    ng_col(NG_ACCENT, 0.35);
+    i = 0;
+    loop(ng_tl,
+      k = (ng_tw + i) % ng_tl;
+      l = ng_tb[k * 2] * gain; r = ng_tb[k * 2 + 1] * gain;
+      m = (l + r) * 0.7071; sd = (r - l) * 0.7071;
+      xx = cx + max(-1, min(1, sd)) * rad;
+      yy = cy - max(-1, min(1, m)) * rad;
+      gfx_rect(xx, yy, max(1, ng_s), max(1, ng_s));
+      i += 1;
+    );
+  );

@@ -21,11 +21,13 @@ out_pin:Right
 @slider
   depth = slider1 / 100;
 
+@block
+  // while playing, lock the phase to the host at the start of every block
+  play_state & 1 ? ph = beat_position - floor(beat_position);
+
 @sample
-  play_state & 1 ? ph = beat_position - floor(beat_position) : (
-    ph += tempo / 60 / srate; ph >= 1 ? ph -= 1;
-  );
-  // fast 5 ms fade down, then a smooth release over 60% of the beat
+  ph += tempo / 60 / srate; ph >= 1 ? ph -= 1;
+  // fast fade down over 0.02 beat, then a smooth release over 60% of the beat
   shape = ph < 0.02 ? 1 - ph / 0.02 : min(1, (ph - 0.02) / 0.6);
   shape = shape * shape * (3 - 2 * shape);
   g = 1 - depth * 0.9 * (1 - shape);

@@ -1,0 +1,121 @@
+desc:NULL Wetter GFX
+author: Christos Koulaxizis
+tags: reverb space ambience hall room wet gui
+//category: One Slider
+//NULL JSFX v2.0 • https://nulljsfx.tech • MIT License
+
+import null_gfx.jsfx-inc
+
+slider1:50<0,100,1>-Amount
+
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
+
+@init
+  // NULL Wetter (../wetter.jsfx) with its own interface: same audio code, plus @gfx.
+  // Instant room: a compact Freeverb-style reverb (four damped feedback combs and two
+  // allpass diffusers per channel, right channel slightly longer for width).
+  // Amount raises the wet level (up to 45%) and the room size together.
+  bs = ceil(srate * 0.05) + 2;
+  memset(0, 0, bs * 12); freembuf(bs * 12);
+  sc = srate / 44100;
+  function comb_init(b, len) ( this.b = b; this.len = max(1, floor(len * sc)); this.p = 0; this.f = 0; );
+  function comb(x, fb, damp) local(y)
+  (
+    y = this.b[this.p];
+    this.f = y * (1 - damp) + this.f * damp;
+    this.b[this.p] = x + this.f * fb;
+    this.p = (this.p + 1) % this.len;
+    y;
+  );
+  function ap_init(b, len) ( this.b = b; this.len = max(1, floor(len * sc)); this.p = 0; );
+  function ap(x) local(y, v)
+  (
+    v = this.b[this.p];
+    y = v - x;
+    this.b[this.p] = x + v * 0.5;
+    this.p = (this.p + 1) % this.len;
+    y;
+  );
+  cl1.comb_init(bs * 0, 1116); cl2.comb_init(bs * 1, 1188); cl3.comb_init(bs * 2, 1277); cl4.comb_init(bs * 3, 1356);
+  cr1.comb_init(bs * 4, 1139); cr2.comb_init(bs * 5, 1211); cr3.comb_init(bs * 6, 1300); cr4.comb_init(bs * 7, 1379);
+  al1.ap_init(bs * 8, 556); al2.ap_init(bs * 9, 341);
+  ar1.ap_init(bs * 10, 579); ar2.ap_init(bs * 11, 364);
+  gfx_ext_retina = 1;
+
+  function update()
+  (
+    amount = slider1 / 100;
+    fb = 0.70 + amount * 0.18;
+    damp = 0.35;
+    wet = amount * 0.45 * 0.25;
+    dry = 1 - amount * 0.25;
+  );
+
+  // reverb time (s) to -60 dB at DC: 60 dB over the per-loop loss of the average left comb
+  function wet_rt60() ( 3 * ((1116 + 1188 + 1277 + 1356) / 4 / 44100) / -log10(0.70 + slider1 / 100 * 0.18); );
+
+  // a text at pixel (x, y), vertically centred; align 0 left, 1 centre, 2 right
+  function wet_lbl(str, x, y, align) local(w, h)
+  (
+    gfx_measurestr(str, w, h);
+    gfx_x = align == 1 ? x - w / 2 : (align == 2 ? x - w : x);
+    gfx_y = y - gfx_texth / 2;
+    gfx_drawstr(str);
+  );
+
+@slider
+  update();
+
+@sample
+  in = (spl0 + spl1) * 0.5;
+  l = cl1.comb(in, fb, damp) + cl2.comb(in, fb, damp) + cl3.comb(in, fb, damp) + cl4.comb(in, fb, damp);
+  r = cr1.comb(in, fb, damp) + cr2.comb(in, fb, damp) + cr3.comb(in, fb, damp) + cr4.comb(in, fb, damp);
+  l = al2.ap(al1.ap(l));
+  r = ar2.ap(ar1.ap(r));
+  spl0 = spl0 * dry + l * wet;
+  spl1 = spl1 * dry + r * wet;
+
+@gfx 360 240
+  ng_one_slider_begin("WETTER");
+
+  // display: the dry impulse at 0 and the reverb tail over 2 s (0 to -80 dB), level
+  // relative to the dry signal, falling 60 dB over the reverb time
+  ng_plot(46, 64, 284, 78);
+  ng_grid(4, 4, 0);
+  ng_font(4, 8, 0);
+  ng_col(NG_MUTED, 1);
+  wet_lbl("0", ng_px - 6 * ng_s, floor(ng_py) + 0.5, 2);
+  wet_lbl("-40", ng_px - 6 * ng_s, floor(ng_py + ng_ph / 2) + 0.5, 2);
+  wet_lbl("-80", ng_px - 6 * ng_s, floor(ng_py + ng_ph) + 0.5, 2);
+  wet_lbl("0.5 s", ng_px + ng_pw / 4, ng_py + ng_ph + 11 * ng_s, 1);
+  wet_lbl("1 s", ng_px + ng_pw / 2, ng_py + ng_ph + 11 * ng_s, 1);
+  wet_lbl("1.5 s", ng_px + ng_pw * 3 / 4, ng_py + ng_ph + 11 * ng_s, 1);
+  wet_rt = wet_rt60();
+  wet_l0 = slider1 > 0 ? 20 * log10((slider1 / 100 * 0.45 * 0.25) / (1 - slider1 / 100 * 0.25)) : -200;
+  ng_col(NG_ACCENT, 1);
+  gfx_rect(ng_px, ng_py, max(2, 2 * ng_s), ng_ph);
+  slider1 > 0 ? (
+    ng_col(NG_ACCENT, 0.10);
+    wet_i = 0;
+    loop(floor(ng_pw) + 1,
+      gfx_line(ng_px + wet_i, ng_py + ng_ph, ng_px + wet_i, ng_lin_y(wet_l0 - 60 * (2 * wet_i / ng_pw) / wet_rt, -80, 0), 0);
+      wet_i += 1;
+    );
+    ng_col(NG_ACCENT, 1);
+    wet_i = 0;
+    loop(floor(ng_pw) + 1,
+      wet_y = ng_lin_y(wet_l0 - 60 * (2 * wet_i / ng_pw) / wet_rt, -80, 0);
+      wet_i == 0 ? ng_line_start(ng_px, wet_y) : ng_line_to(ng_px + wet_i, wet_y);
+      wet_i += 1;
+    );
+  );
+
+  // slider card
+  slider1 == 0 ? sprintf(#cap, "DRY") : sprintf(#cap, "WET %d%%  DECAY %.1f s", floor(slider1 * 0.45 + 0.5), wet_rt);
+  sprintf(#val, "%d", floor(slider1 + 0.5));
+  ng_set_slider(ng_one_slider_control("AMOUNT", #cap, #val, "DRY", "WET", slider1, 0, 100, 50, 0), 1) ? update();
+
+  ng_end();

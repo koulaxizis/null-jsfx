@@ -48,7 +48,7 @@ out_pin:Right
   (cf2 > srate/2 - 200) ? (cf2 = srate/2 - 200);
 
   // WET AMOUNT - More aggressive at extremes
-  wet = (pos < 0.5) ? (1 - pos*2) : ((1-pos)*2);
+  wet = abs(pos - 0.5) * 2;  // dry at the centre (no shift), full effect at both ends
   wet = wet * 1.2;  // Boost wet signal slightly
   (wet > 0.8) ? (wet = 0.8);
   dry = 1 - wet;

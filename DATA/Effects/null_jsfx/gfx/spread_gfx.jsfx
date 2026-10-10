@@ -1,0 +1,91 @@
+desc:NULL Spread GFX
+author: Christos Koulaxizis
+tags: stereo width spread decorrelation widener mono-compatible gui
+//category: One Slider
+//NULL JSFX v2.0 • https://nulljsfx.tech • MIT License
+
+import null_gfx.jsfx-inc
+
+slider1:50<0,100,1>-Amount
+
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
+
+@init
+  // NULL Spread (../spread.jsfx) with its own interface: same audio code, plus @gfx.
+  // Widens the stereo image while staying mono-compatible: a delayed, high-passed copy
+  // of the mid signal is added to the left and subtracted from the right. When the mix
+  // is summed to mono the two copies cancel, so nothing is lost; the low end (below
+  // ~250 Hz) is left alone so the bass stays centred.
+  buf_size = ceil(srate * 0.05);
+  buf = 0;
+  memset(buf, 0, buf_size);
+  freembuf(buf + buf_size);
+  wpos = 0;
+  hp_x = hp_y = 0;
+  a1 = a2 = 0;
+
+  function tap(ms) local(rp)
+  (
+    rp = wpos - floor(ms * srate / 1000);
+    rp < 0 ? rp += buf_size;
+    buf[rp];
+  );
+  gfx_ext_retina = 1;
+  // display only: vectorscope taps and mid/side peak followers of the output
+  ng_tap_init(4000000, 2048);
+  g_rel = exp(-1 / (0.3 * srate));
+  g_mid = g_side = 0;
+
+  function update()
+  (
+    amount = slider1 / 100;
+    hp_c = exp(-2 * $pi * 250 / srate);
+    width = amount * 0.7;
+  );
+
+@slider
+  update();
+
+@sample
+  mid = (spl0 + spl1) * 0.5;
+  // one-pole high-pass so only the upper range is decorrelated
+  hp_y = hp_c * (hp_y + mid - hp_x);
+  hp_x = mid;
+  buf[wpos] = hp_y;
+  // two taps at unrelated times give a smooth, comb-free spread
+  d = tap(11.3) * 0.6 + tap(17.9) * 0.4;
+  wpos += 1;
+  wpos >= buf_size ? wpos = 0;
+  spl0 += d * width;
+  spl1 -= d * width;
+
+  // display only (reads the output, never changes it)
+  ng_tap(spl0, spl1);
+  g_m = abs(spl0 + spl1) * 0.5;
+  g_mid = g_m > g_mid ? g_m : g_mid * g_rel;
+  g_m = abs(spl0 - spl1) * 0.5;
+  g_side = g_m > g_side ? g_m : g_side * g_rel;
+
+@gfx 360 240
+  ng_one_slider_begin("SPREAD");
+
+  // display: vectorscope of the output, with mid and side level meters
+  ng_plot(34, 66, 86, 86);
+  ng_vector(2);
+  ng_meter(140, 86, 186, 8, "MID", ng_to_db(g_mid), -140, -60);
+  ng_meter(140, 108, 186, 8, "SIDE", ng_to_db(g_side), -140, -60);
+  ng_font(4, 8, 0);
+  ng_col(NG_MUTED, 1);
+  ng_txt("-60", 170, 131, 0, 0);
+  ng_txt("-30", 248, 131, 1, 0);
+  ng_txt("0 dB", 326, 131, 2, 0);
+
+  // slider card
+  slider1 == 0 ? sprintf(#g_cap, "OFF") : sprintf(#g_cap, "WIDTH +%d%%  ABOVE 250 Hz", floor(slider1 * 0.7 + 0.5));
+  sprintf(#g_val, "%d", floor(slider1 + 0.5));
+  ng_set_slider(ng_one_slider_control("AMOUNT", #g_cap, #g_val, "OFF", "WIDE", slider1, 0, 100, 50, 0), 1) ? update();
+
+  ng_end();

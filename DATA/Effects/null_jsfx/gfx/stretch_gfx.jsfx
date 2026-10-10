@@ -1,0 +1,139 @@
+desc:NULL Stretch GFX
+author: Christos Koulaxizis
+tags: stretch pitch shift granular slow-motion warp texture gui
+//category: One Slider
+//NULL JSFX v2.0 • https://nulljsfx.tech • MIT License
+
+import null_gfx.jsfx-inc
+
+slider1:0<-100,100,1>-Amount
+
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
+
+@init
+  // NULL Stretch (../stretch.jsfx) with its own interface: same audio code, plus @gfx.
+  // Granular "stretch" texture. Negative values drop the pitch (up to one octave) and
+  // smear the sound with long overlapping grains, for a slowed-down, tape-stretched
+  // feel; positive values raise the pitch with shorter, tighter grains. 0 is untouched.
+  max_win = ceil(srate * 0.25);
+  buf_size = max_win + 4;
+  buf_l = 0;
+  buf_r = buf_l + buf_size;
+  memset(buf_l, 0, 2 * buf_size);
+  freembuf(buf_r + buf_size);
+  wpos = 0;
+  ph = 0;
+
+  function tap(buf, delay) local(rp, i, f, i2)
+  (
+    rp = wpos - delay;
+    rp < 0 ? rp += buf_size;
+    i = floor(rp);
+    f = rp - i;
+    i2 = i + 1;
+    i2 >= buf_size ? i2 = 0;
+    buf[i] + (buf[i2] - buf[i]) * f;
+  );
+  gfx_ext_retina = 1;
+
+  function update()
+  (
+    v = slider1 / 100;
+    ratio = 2 ^ v;
+    // grain length: 40 ms at 0, up to 240 ms fully down, 25 ms fully up
+    win = floor(srate * (v < 0 ? 0.04 - v * 0.2 : 0.04 - v * 0.015));
+    win = min(win, max_win);
+    ph_inc = (1 - ratio) / win;
+    wet = min(1, abs(v) * 4);
+  );
+
+  // grain length (s) and the time (s) one grain takes to sweep through it
+  function str_grain() local(v) ( v = slider1 / 100; v < 0 ? 0.04 - v * 0.2 : 0.04 - v * 0.015; );
+  function str_period() ( str_grain() / abs(1 - 2 ^ (slider1 / 100)); );
+
+  // grain gain of the first (b = 0) or second (b = 1) grain at time t (s), times the wet mix
+  function str_env(t, b) local(p)
+  (
+    p = t / str_period() + b * 0.5;
+    p -= floor(p);
+    (0.5 - 0.5 * cos(2 * $pi * p)) * min(1, abs(slider1 / 100) * 4);
+  );
+
+  // a text at pixel (x, y), vertically centred; align 0 left, 1 centre, 2 right
+  function str_lbl(str, x, y, align) local(w, h)
+  (
+    gfx_measurestr(str, w, h);
+    gfx_x = align == 1 ? x - w / 2 : (align == 2 ? x - w : x);
+    gfx_y = y - gfx_texth / 2;
+    gfx_drawstr(str);
+  );
+
+@slider
+  update();
+
+@sample
+  buf_l[wpos] = spl0;
+  buf_r[wpos] = spl1;
+  ph += ph_inc;
+  ph >= 1 ? ph -= 1;
+  ph < 0 ? ph += 1;
+  ph2 = ph + 0.5;
+  ph2 >= 1 ? ph2 -= 1;
+  g1 = 0.5 - 0.5 * cos(2 * $pi * ph);
+  g2 = 1 - g1;
+  s_l = tap(buf_l, 1 + ph * win) * g1 + tap(buf_l, 1 + ph2 * win) * g2;
+  s_r = tap(buf_r, 1 + ph * win) * g1 + tap(buf_r, 1 + ph2 * win) * g2;
+  wpos += 1;
+  wpos >= buf_size ? wpos = 0;
+  spl0 = spl0 * (1 - wet) + s_l * wet;
+  spl1 = spl1 * (1 - wet) + s_r * wet;
+
+@gfx 360 240
+  ng_one_slider_begin("STRETCH");
+
+  // display: the two crossfading grain envelopes over 0.5 s (the second one dim), scaled
+  // by the wet mix; long slow grains when pitched down, short fast ones when pitched up
+  ng_plot(46, 64, 284, 78);
+  ng_grid(10, 2, 0);
+  ng_font(4, 8, 0);
+  ng_col(NG_MUTED, 1);
+  str_lbl("1", ng_px - 6 * ng_s, floor(ng_py) + 0.5, 2);
+  str_lbl("0", ng_px - 6 * ng_s, floor(ng_py + ng_ph) + 0.5, 2);
+  str_lbl("0.1 s", ng_px + ng_pw * 0.2, ng_py + ng_ph + 11 * ng_s, 1);
+  str_lbl("0.2 s", ng_px + ng_pw * 0.4, ng_py + ng_ph + 11 * ng_s, 1);
+  str_lbl("0.3 s", ng_px + ng_pw * 0.6, ng_py + ng_ph + 11 * ng_s, 1);
+  str_lbl("0.4 s", ng_px + ng_pw * 0.8, ng_py + ng_ph + 11 * ng_s, 1);
+  slider1 != 0 ? (
+    ng_col(NG_ACCENT, 0.5);
+    str_i = 0;
+    loop(floor(ng_pw) + 1,
+      str_y = ng_lin_y(str_env(0.5 * str_i / ng_pw, 1), 0, 1);
+      str_i > 0 ? gfx_line(ng_px + str_i - 1, str_py, ng_px + str_i, str_y, 1);
+      str_py = str_y;
+      str_i += 1;
+    );
+    ng_col(NG_ACCENT, 0.10);
+    str_i = 0;
+    loop(floor(ng_pw) + 1,
+      gfx_line(ng_px + str_i, ng_py + ng_ph, ng_px + str_i, ng_lin_y(str_env(0.5 * str_i / ng_pw, 0), 0, 1), 0);
+      str_i += 1;
+    );
+    ng_col(NG_ACCENT, 1);
+    str_i = 0;
+    loop(floor(ng_pw) + 1,
+      str_y = ng_lin_y(str_env(0.5 * str_i / ng_pw, 0), 0, 1);
+      str_i == 0 ? ng_line_start(ng_px, str_y) : ng_line_to(ng_px + str_i, str_y);
+      str_i += 1;
+    );
+  );
+
+  // slider card
+  slider1 == 0 ? sprintf(#cap, "UNTOUCHED") : sprintf(#cap, "PITCH %+.1f st  GRAIN %d ms", slider1 * 0.12, floor(str_grain() * 1000 + 0.5));
+  str_v = floor(slider1 + 0.5);
+  str_v > 0 ? sprintf(#val, "+%d", str_v) : sprintf(#val, "%d", str_v);
+  ng_set_slider(ng_one_slider_control("AMOUNT", #cap, #val, "DOWN", "UP", slider1, -100, 100, 0, 1), 1) ? update();
+
+  ng_end();

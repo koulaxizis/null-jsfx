@@ -1,0 +1,101 @@
+desc:NULL Louder GFX
+author: Christos Koulaxizis
+tags: loudness gain volume boost makeup utility gui
+//category: One Slider
+//NULL JSFX v2.0 • https://nulljsfx.tech • MIT License
+
+import null_gfx.jsfx-inc
+
+slider1:50<0,100,1>-Amount
+
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
+
+@init
+  // NULL Louder (../louder.jsfx) with its own interface: same audio code, plus @gfx.
+  // Loudness maximizer: up to +12 dB of gain into a 2 ms look-ahead peak limiter
+  // (ceiling -0.3 dBFS, 80 ms release), so the track gets louder without clipping.
+  // At 0 nothing happens below the ceiling.
+  la = max(1, floor(0.002 * srate));
+  buf = 0; memset(buf, 0, 2 * la + 2); freembuf(2 * la + 2);
+  pos = 0; env = 1; hval = 1; hcount = 0;
+  ceiling = 10 ^ (-0.3 / 20);
+  att = exp(-3 / la);
+  rel = exp(-1 / (0.08 * srate));
+  pdc_delay = la; pdc_bot_ch = 0; pdc_top_ch = 2;
+  gfx_ext_retina = 1;
+  // meters (interface only): peak followers, instant attack, 300 ms release
+  ldr_mrel = exp(-1 / (0.3 * srate));
+
+  function update()
+  (
+    gain = 10 ^ (slider1 / 100 * 12 / 20);
+  );
+
+  // static curve of the limiter: output level (dB) for a steady input level (dB)
+  function ldr_curve(db) ( min(db + slider1 / 100 * 12, -0.3); );
+
+  // a text at pixel (x, y), vertically centred; align 0 left, 1 centre, 2 right
+  function ldr_lbl(str, x, y, align) local(w, h)
+  (
+    gfx_measurestr(str, w, h);
+    gfx_x = align == 1 ? x - w / 2 : (align == 2 ? x - w : x);
+    gfx_y = y - gfx_texth / 2;
+    gfx_drawstr(str);
+  );
+
+@slider
+  update();
+
+@sample
+  ldr_pk = max(abs(spl0), abs(spl1));
+  ldr_in = ldr_pk > ldr_in ? ldr_pk : ldr_in * ldr_mrel;
+  xl = spl0 * gain; xr = spl1 * gain;
+  pk = max(abs(xl), abs(xr));
+  target = pk > ceiling ? ceiling / pk : 1;
+  // hold the deepest gain reduction for the look-ahead time so the delayed peak is caught
+  target <= hval ? (hval = target; hcount = la) : hcount > 0 ? hcount -= 1 : hval = target;
+  env = hval < env ? att * env + (1 - att) * hval : rel * env + (1 - rel) * hval;
+  dl = buf[pos]; dr = buf[pos + la];
+  buf[pos] = xl; buf[pos + la] = xr;
+  pos = (pos + 1) % la;
+  spl0 = max(-ceiling, min(ceiling, dl * env));
+  spl1 = max(-ceiling, min(ceiling, dr * env));
+  ldr_pk = max(abs(spl0), abs(spl1));
+  ldr_out = ldr_pk > ldr_out ? ldr_pk : ldr_out * ldr_mrel;
+
+@gfx 360 240
+  ng_one_slider_begin("LOUDER");
+
+  // display, left: the static in/out curve (-36..0 dB both ways), unity line dim
+  ng_plot(38, 68, 80, 80);
+  ng_grid(4, 4, 0);
+  ng_col(NG_ACCENT, 0.25);
+  gfx_line(ng_px, ng_py + ng_ph, ng_px + ng_pw, ng_py, 1);
+  ng_col(NG_ACCENT, 0.10);
+  ldr_i = 0;
+  loop(floor(ng_pw) + 1,
+    gfx_line(ng_px + ldr_i, ng_py + ng_ph, ng_px + ldr_i, ng_lin_y(ldr_curve(-36 + 36 * ldr_i / ng_pw), -36, 0), 0);
+    ldr_i += 1;
+  );
+  ng_col(NG_ACCENT, 1);
+  ldr_i = 0;
+  loop(floor(ng_pw) + 1,
+    ldr_y = ng_lin_y(ldr_curve(-36 + 36 * ldr_i / ng_pw), -36, 0);
+    ldr_i == 0 ? ng_line_start(ng_px, ldr_y) : ng_line_to(ng_px + ldr_i, ldr_y);
+    ldr_i += 1;
+  );
+
+  // display, right: input, gain reduction and output meters
+  ng_meter(138, 74, 186, 10, "IN", ng_to_db(ldr_in), -140, -48);
+  ng_gr_meter(138, 104, 186, 10, "GR", -20 * log10(max(env, 0.0000001)), 12);
+  ng_meter(138, 134, 186, 10, "OUT", ng_to_db(ldr_out), -140, -48);
+
+  // slider card
+  sprintf(#cap, "GAIN +%.1f dB  CEILING -0.3 dB", slider1 * 0.12);
+  sprintf(#val, "%d", floor(slider1 + 0.5));
+  ng_set_slider(ng_one_slider_control("AMOUNT", #cap, #val, "NATURAL", "LOUD", slider1, 0, 100, 50, 0), 1) ? update();
+
+  ng_end();

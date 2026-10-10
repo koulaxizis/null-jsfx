@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Builds the ysfx engine (once) and runs the NULL JSFX checks:
 #   1. tests/lint.py      - header and code conventions
-#   2. tests/jsfx_test    - compiles and renders every plugin at 44.1/48/96 kHz
+#   2. tests/jsfx_test    - compiles and renders every plugin (and GFX version) at 44.1/48/96 kHz
 # Usage: tests/run.sh [plugin.jsfx ...]   (default: every plugin)
 set -euo pipefail
 here="$(cd "$(dirname "$0")" && pwd)"
@@ -23,7 +23,7 @@ if [ ! -x "$build/jsfx_test" ] || [ "$here/jsfx_test.cpp" -nt "$build/jsfx_test"
   g++ -O2 -std=c++17 -I "$build/ysfx/include" "$here/jsfx_test.cpp" "$build/ysfx/build/libysfx.a" -lpthread -ldl -o "$build/jsfx_test"
 fi
 
-if [ $# -eq 0 ]; then set -- "$root"/DATA/Effects/null_jsfx/*.jsfx; fi
+if [ $# -eq 0 ]; then set -- "$root"/DATA/Effects/null_jsfx/*.jsfx "$root"/DATA/Effects/null_jsfx/gfx/*.jsfx; fi
 status=0
 python3 "$here/lint.py" "$@" || status=1
 "$build/jsfx_test" "$@" || status=1

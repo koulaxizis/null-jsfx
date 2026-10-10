@@ -1,0 +1,111 @@
+desc:NULL Mono Maker GFX
+author: Christos Koulaxizis
+tags: mono bass low frequency summing stereo width gui
+//category: One Slider
+//NULL JSFX v2.0 • https://nulljsfx.tech • MIT License
+
+import null_gfx.jsfx-inc
+
+slider1:50<0,100,1>-Amount
+
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
+
+@init
+  // NULL Mono Maker (../mono_maker.jsfx) with its own interface: same audio code, plus @gfx.
+  // Removes the side (L-R) content below a crossover, so the low end becomes mono
+  // while everything above stays as wide as it was. Amount moves the crossover
+  // from 0 (off) up to 400 Hz.
+  s1 = s2 = s3 = s4 = 0;
+  gfx_ext_retina = 1;
+
+  function update()
+  (
+    amount = slider1 / 100;
+    fc = 20 * pow(20, amount);   // 20 Hz .. 400 Hz
+    w = 2 * $pi * fc / srate;
+    k = tan(w / 2);
+    norm = 1 / (1 + sqrt(2) * k + k * k);
+    b0 = norm;                   // high-pass
+    b1 = -2 * b0;
+    b2 = b0;
+    a1 = 2 * (k * k - 1) * norm;
+    a2 = (1 - sqrt(2) * k + k * k) * norm;
+  );
+
+  // side (L-R) response in dB at frequency f: H(z)^2, H = the Butterworth high-pass stage of @sample
+  function side_db(f) local(w, c1, s1_, c2, s2_, nr, ni, dr, di, dd, hr, hi, sr)
+  (
+    amount > 0 ? (
+      w = 2 * $pi * min(f, srate * 0.499) / srate;
+      c1 = cos(w); s1_ = sin(w); c2 = cos(2 * w); s2_ = sin(2 * w);
+      nr = b0 + b1 * c1 + b2 * c2;
+      ni = -(b1 * s1_ + b2 * s2_);
+      dr = 1 + a1 * c1 + a2 * c2;
+      di = -(a1 * s1_ + a2 * s2_);
+      dd = dr * dr + di * di;
+      hr = (nr * dr + ni * di) / dd;
+      hi = (ni * dr - nr * di) / dd;
+      sr = hr * hr + hi * hi;
+      10 * log10(max(sr * sr, 0.0000000001));
+    ) : 0;
+  );
+
+@slider
+  update();
+
+@sample
+  side = (spl0 - spl1) * 0.5;
+  // 4th-order high-pass (two Butterworth stages) keeps the side above the crossover;
+  // everything below it is removed (24 dB/oct, no bump at the crossover)
+  y = b0 * side + s1;
+  s1 = b1 * side - a1 * y + s2;
+  s2 = b2 * side - a2 * y;
+  high_side = b0 * y + s3;
+  s3 = b1 * y - a1 * high_side + s4;
+  s4 = b2 * y - a2 * high_side;
+  low_side = side - high_side;
+  amount > 0 ? (
+    spl0 -= low_side;
+    spl1 += low_side;
+  );
+
+@gfx 360 240
+  ng_one_slider_begin("MONO MAKER");
+
+  // display: the side (L-R) response; mid is untouched (0 dB). Crossover dashed.
+  ng_plot(46, 64, 284, 78);
+  ng_grid_freq(24);
+  amount > 0 ? (
+    g_x = floor(ng_freq_x(fc)) + 0.5;
+    ng_col(NG_ACCENT, 0.5);
+    g_y = ng_py;
+    while(
+      gfx_line(g_x, g_y, g_x, min(g_y + 3 * ng_s, ng_py + ng_ph), 0);
+      g_y += 6 * ng_s;
+      g_y < ng_py + ng_ph;
+    );
+  );
+  g_z = ng_lin_y(0, -16, 16);
+  ng_col(NG_ACCENT, 0.10);
+  g_i = 0;
+  loop(floor(ng_pw) + 1,
+    gfx_line(ng_px + g_i, g_z, ng_px + g_i, ng_lin_y(side_db(20 * 1000 ^ (g_i / ng_pw)), -16, 16), 0);
+    g_i += 1;
+  );
+  ng_col(NG_ACCENT, 1);
+  g_i = 0;
+  loop(floor(ng_pw) + 1,
+    g_y = ng_lin_y(side_db(20 * 1000 ^ (g_i / ng_pw)), -16, 16);
+    g_i == 0 ? ng_line_start(ng_px, g_y) : ng_line_to(ng_px + g_i, g_y);
+    g_i += 1;
+  );
+
+  // slider card
+  slider1 > 0 ? sprintf(#g_cap, "SIDE MONO BELOW %d Hz", floor(20 * pow(20, slider1 / 100) + 0.5)) : sprintf(#g_cap, "OFF");
+  sprintf(#g_val, "%d", floor(slider1 + 0.5));
+  ng_set_slider(ng_one_slider_control("AMOUNT", #g_cap, #g_val, "OFF", "400 HZ", slider1, 0, 100, 50, 0), 1) ? update();
+
+  ng_end();

@@ -1,0 +1,95 @@
+desc:NULL Crunch GFX
+author: Christos Koulaxizis
+tags: distortion grit crunch fuzz aggressive gui
+//category: One Slider
+//NULL JSFX v2.0 • https://nulljsfx.tech • MIT License
+
+import null_gfx.jsfx-inc
+
+slider1:50<0,100,1>-Amount
+
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
+
+@init
+  // NULL Crunch (../crunch.jsfx) with its own interface: same audio code, plus @gfx.
+  // Hard, gritty clipping: the signal is driven into a clipper whose knee gets harder as
+  // Amount rises, then a gentle top-end roll-off takes the fizz off. Level compensated.
+  // Amount fades from the untouched signal (0) to full crunch (100).
+  function clip(x, k) ( x / (1 + abs(x) ^ k) ^ (1 / k); );
+  function lp(x) ( this.y += this.c * (x - this.y); );
+  gfx_ext_retina = 1;
+
+  function update()
+  (
+    amount = slider1 / 100;
+    drive = 1 + amount * 19;
+    knee = 2 + amount * 8;
+    comp = 0.7 / clip(drive * 0.7, knee);
+    fl.c = fr.c = 1 - exp(-2 * $pi * 9000 / srate);
+  );
+
+  // static transfer curve of @sample (the 9 kHz roll-off left out): output for input x
+  function crn_curve(x) ( x + amount * (clip(x * drive, knee) * comp - x); );
+
+  // transfer plot: grid, axis labels, unity line, curve filled to the 0 line
+  function crn_plot() local(i, yy, zy)
+  (
+    crn_tw = crn_th = 0;
+    ng_plot(46, 64, 284, 78);
+    ng_grid(8, 4, 1);
+    ng_font(4, 8, 0);
+    ng_col(NG_MUTED, 1);
+    i = 0;
+    loop(3,
+      yy = floor(ng_py + ng_ph * i / 2) + 0.5;
+      i == 1 ? sprintf(#crn_l, "0") : sprintf(#crn_l, "%+d", 1 - i);
+      gfx_measurestr(#crn_l, crn_tw, crn_th);
+      gfx_x = ng_px - 6 * ng_s - crn_tw; gfx_y = yy - gfx_texth / 2;
+      gfx_drawstr(#crn_l);
+      i += 1;
+    );
+    gfx_measurestr("IN", crn_tw, crn_th);
+    gfx_x = ng_px + ng_pw / 2 - crn_tw / 2; gfx_y = ng_py + ng_ph + 5 * ng_s;
+    gfx_drawstr("IN");
+    ng_col(NG_ACCENT, 0.25);
+    gfx_line(ng_px, ng_py + ng_ph, ng_px + ng_pw, ng_py, 1);
+    zy = ng_lin_y(0, -1, 1);
+    ng_col(NG_ACCENT, 0.10);
+    i = 0;
+    loop(floor(ng_pw) + 1,
+      gfx_line(ng_px + i, zy, ng_px + i, ng_lin_y(crn_curve(-1 + 2 * i / ng_pw), -1, 1), 0);
+      i += 1;
+    );
+    ng_col(NG_ACCENT, 1);
+    i = 0;
+    loop(floor(ng_pw) + 1,
+      yy = ng_lin_y(crn_curve(-1 + 2 * i / ng_pw), -1, 1);
+      i == 0 ? ng_line_start(ng_px, yy) : ng_line_to(ng_px + i, yy);
+      i += 1;
+    );
+  );
+
+@slider
+  update();
+
+@sample
+  wl = fl.lp(clip(spl0 * drive, knee)) * comp;
+  wr = fr.lp(clip(spl1 * drive, knee)) * comp;
+  spl0 += amount * (wl - spl0);
+  spl1 += amount * (wr - spl1);
+
+@gfx 360 240
+  ng_one_slider_begin("CRUNCH");
+
+  // display: the clipper's transfer curve (input -1..+1 across, output -1..+1 up)
+  crn_plot();
+
+  // slider card
+  slider1 == 0 ? sprintf(#cap, "CLEAN") : sprintf(#cap, "DRIVE %.1fx  KNEE %.1f", 1 + slider1 * 0.19, 2 + slider1 * 0.08);
+  sprintf(#val, "%d", floor(slider1 + 0.5));
+  ng_set_slider(ng_one_slider_control("AMOUNT", #cap, #val, "CLEAN", "HARSH", slider1, 0, 100, 50, 0), 1) ? update();
+
+  ng_end();

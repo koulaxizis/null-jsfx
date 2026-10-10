@@ -33,6 +33,9 @@ sin cos tan asin acos atan atan2 sqrt pow exp log log10 abs min max sign floor c
 memset memcpy freembuf loop while this local static instance global
 fft ifft fft_permute fft_ipermute fft_real ifft_real convolve_c file_open file_close file_avail file_riff file_mem file_var
 pdc_delay pdc_bot_ch pdc_top_ch ext_noinit ext_tail_size ext_nodenorm slider_automate sliderchange
+gfx_r gfx_g gfx_b gfx_a gfx_x gfx_y gfx_w gfx_h gfx_texth gfx_set gfx_rect gfx_line gfx_lineto gfx_circle gfx_arc
+gfx_drawstr gfx_drawnumber gfx_measurestr gfx_setfont gfx_roundrect gfx_triangle gfx_getchar gfx_clienttoscreen
+mouse_x mouse_y mouse_cap mouse_wheel gfx_ext_retina time_precise sprintf strcpy strlen strcpy_substr
 """.split())
 
 
@@ -80,6 +83,16 @@ def check(path):
 
     # --- code ---
     code = strip_comments("\n".join(lines[header_end:]))
+    # imported libraries (e.g. gfx/null_gfx.jsfx-inc) define functions and variables too
+    lib_code = ""
+    for name in re.findall(r"^import\s+(\S+)", "\n".join(header), flags=re.M):
+        lib = path.parent / name
+        if not lib.exists():
+            errors.append(f"import {name}: file not found next to the plugin")
+            continue
+        lib_lines = lib.read_text(encoding="utf-8").split("\n")
+        lib_start = next((i for i, l in enumerate(lib_lines) if l.startswith("@")), len(lib_lines))
+        lib_code += "\n" + strip_comments("\n".join(lib_lines[lib_start:]))
     for pat, msg in [
         (r"\bif\s*\(", "C-style 'if' (EEL2 uses cond ? (a) : (b))"),
         (r"[{}]", "braces are not EEL2 syntax"),
@@ -95,11 +108,13 @@ def check(path):
         errors.append("no @sample section")
 
     # Variables read but never assigned anywhere evaluate to 0 in EEL2 (e.g. 'sr' instead of 'srate').
-    assigned = set(re.findall(r"\b([A-Za-z_]\w*)(?:\.\w+)*\s*(?:=|\+=|-=|\*=|/=|\|=|&=)(?!=)", code))
+    code_all = code + lib_code
+    assigned = set(re.findall(r"\b([A-Za-z_]\w*)(?:\.\w+)*\s*(?:=|\+=|-=|\*=|/=|\|=|&=)(?!=)", code_all))
     functions, params = set(), set()
-    for name, args, extra in re.findall(r"function\s+([\w.]+)\s*\(([^)]*)\)\s*(?:(?:local|instance|static|global)\s*\(([^)]*)\))?", code):
+    for name, args, extra in re.findall(r"function\s+([\w.]+)\s*\(([^)]*)\)\s*(?:(?:local|instance|static|global)\s*\(([^)]*)\))?", code_all):
         functions.add(name.split(".")[-1])
         params |= {a.strip() for a in (args + "," + extra).split(",") if a.strip()}
+    code = re.sub(r'"[^"\n]*"', '""', code)  # words inside string literals are not variables
     used = set(re.findall(r"(?<![\w.$#@'\"])([A-Za-z_]\w*)\b(?!\s*\(|\.)", code))
     called = set(re.findall(r"(?<![\w.])([A-Za-z_]\w*)\s*\(", code))
     for name in sorted(used - assigned - BUILTINS - functions - params):

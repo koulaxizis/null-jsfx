@@ -1,0 +1,106 @@
+desc:NULL Exciter GFX
+author: Christos Koulaxizis
+tags: exciter enhancer harmonics brightness presence air saturation gui
+//category: One Slider
+//NULL JSFX v2.0 • https://nulljsfx.tech • MIT License
+
+import null_gfx.jsfx-inc
+
+slider1:30<0,100,1>-Amount
+
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
+
+@init
+  // NULL Exciter (../exciter.jsfx) with its own interface: same audio code, plus @gfx.
+  // Harmonic exciter: the highs above ~3 kHz are split off, gently saturated to create
+  // new upper harmonics, filtered again so only the fresh top end remains, and blended
+  // back in. Adds presence and sparkle without simply turning up the treble.
+  gfx_ext_retina = 1;
+
+  // 2nd-order high-pass, state in this.*
+  function hp(x) local(y)
+  (
+    y = hb0 * x + hb1 * this.x1 + hb0 * this.x2 - ha1 * this.y1 - ha2 * this.y2;
+    this.x2 = this.x1; this.x1 = x; this.y2 = this.y1; this.y1 = y;
+    y;
+  );
+  function excite(x) local(h, d)
+  (
+    h = this.pre.hp(x) * drive;
+    // asymmetric soft clip: odd + even harmonics
+    d = h + 0.3 * h * h;
+    d = max(-3, min(3, d));
+    d = d * (27 + d * d) / (27 + 9 * d * d);
+    x + this.post.hp(d) * blend;
+  );
+
+  function update()
+  (
+    amount = slider1 / 100;
+    w = 2 * $pi * 3000 / srate;
+    c = cos(w);
+    al = sin(w) / (2 * 0.707);
+    n = 1 / (1 + al);
+    hb0 = (1 + c) / 2 * n;
+    hb1 = -(1 + c) * n;
+    ha1 = -2 * c * n;
+    ha2 = (1 - al) * n;
+    drive = 1 + amount * 9;
+    blend = amount * 0.6 / sqrt(drive);
+  );
+
+  // the soft clip of excite(), for the display
+  function gx_shape(h) local(d)
+  (
+    d = h + 0.3 * h * h;
+    d = max(-3, min(3, d));
+    d * (27 + d * d) / (27 + 9 * d * d);
+  );
+
+@slider
+  update();
+
+@sample
+  spl0 = L.excite(spl0);
+  spl1 = R.excite(spl1);
+
+@gfx 360 240
+  ng_one_slider_begin("EXCITER");
+
+  // display: transfer curve of the saturator for the high band at the current drive
+  ng_plot(46, 64, 284, 78);
+  ng_grid(8, 4, 1);
+  ng_col(NG_ACCENT, 0.3);
+  gfx_line(ng_px, ng_py + ng_ph, ng_px + ng_pw, ng_py, 1);
+  ng_font(4, 8, 0);
+  ng_col(NG_MUTED, 1);
+  ng_txt("+1", 40, 64, 2, 0);
+  ng_txt("0", 40, 103, 2, 0);
+  ng_txt("-1", 40, 142, 2, 0);
+  ng_txt("-1", 46, 153, 1, 0);
+  ng_txt("IN", 188, 153, 1, 0);
+  ng_txt("+1", 330, 153, 1, 0);
+  gx_zy = ng_lin_y(0, -1, 1);
+  ng_col(NG_ACCENT, 0.10);
+  gx_i = 0;
+  loop(floor(ng_pw) + 1,
+    gfx_line(ng_px + gx_i, gx_zy, ng_px + gx_i, ng_lin_y(gx_shape((2 * gx_i / ng_pw - 1) * drive), -1, 1), 0);
+    gx_i += 1;
+  );
+  ng_col(NG_ACCENT, 1);
+  gx_i = 0;
+  loop(floor(ng_pw) + 1,
+    gx_y = ng_lin_y(gx_shape((2 * gx_i / ng_pw - 1) * drive), -1, 1);
+    gx_i == 0 ? ng_line_start(ng_px, gx_y) : ng_line_to(ng_px + gx_i, gx_y);
+    gx_i += 1;
+  );
+
+  // slider card
+  slider1 == 0 ? sprintf(#gx_cap, "OFF") : sprintf(#gx_cap, "DRIVE x%.1f  MIX %d%%", drive, floor(blend * 100 + 0.5));
+  sprintf(#gx_val, "%d", floor(slider1 + 0.5));
+  ng_set_slider(ng_one_slider_control("AMOUNT", #gx_cap, #gx_val, "CLEAN", "EXCITED", slider1, 0, 100, 30, 0), 1) ? update();
+
+  ng_end();
