@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Screenshot of a plugin's VST3/CLAP interface (Linux): builds its JACK standalone, runs it under
-# Xvfb with a dummy JACK server, sets the value with mouse-wheel steps and captures at 2x.
+# Xvfb with a dummy JACK server, sets the value with mouse-wheel steps (One Slider plugins only)
+# and captures at 2x the default UI size.
 #
 #   scripts/screenshot.sh <plugin> <out.png> [value] [--dpf <dir>]
 #
@@ -34,7 +35,9 @@ for _ in $(seq 20); do
   [ -n "$win" ] && break
   sleep 0.3
 done
-xdotool windowmove "$win" 0 0 windowsize "$win" 720 480
+info="$here/plugins/$plugin/DistrhoPluginInfo.h"
+uw=$(awk '/DISTRHO_UI_DEFAULT_WIDTH/{print $3}' "$info"); uh=$(awk '/DISTRHO_UI_DEFAULT_HEIGHT/{print $3}' "$info")
+xdotool windowmove "$win" 0 0 windowsize "$win" $(( uw * 2 )) $(( uh * 2 ))
 sleep 1
 if [ -n "$value" ]; then
   # wheel steps of 1 from the default, on the slider (design 180,210 -> 2x)

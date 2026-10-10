@@ -6,9 +6,11 @@
  * usage: compare <ref.jsfx> <other.clap|other.jsfx> [--tol 1e-5] [--values v1,v2,...]
  *
  * The signal is 3 s of stereo music-like material (kick, bass, chord, hats, plus noise) whose
- * level steps between -30 and 0 dBFS so dynamics processors move. Slider 1 / parameter 0 is
- * set before processing starts. Default values: min, max, default and the quartiles of the
- * reference's slider 1 range. Every value runs at 44.1 and 96 kHz.
+ * level steps between -30 and 0 dBFS so dynamics processors move. The sliders / parameters are
+ * set before processing starts; the k-th slider the JSFX declares is the k-th CLAP parameter.
+ * With one slider: min, max, default and the quartiles of its range (or --values). With more:
+ * all defaults, then each slider at its min and at its max with the others at default, then
+ * random settings (rounded to each slider's step). Every setting runs at 44.1 and 96 kHz.
  * Exit code 0 when every max diff <= tolerance.
  */
 
@@ -79,7 +81,7 @@ static bool endsWith(const std::string& s, const char* suf)
 // ------------------------------------------------------------------------------------------------
 // JSFX via ysfx
 
-struct SliderRange { double min = 0, max = 100, def = 0; };
+struct Slider { uint32_t index; double min, max, def, inc; std::string name; };
 
 static ysfx_t* loadJsfx(const char* path)
 {
@@ -95,19 +97,25 @@ static ysfx_t* loadJsfx(const char* path)
     return fx;
 }
 
-static bool sliderRange(const char* path, SliderRange& r)
+static bool sliders(const char* path, std::vector<Slider>& out)
 {
     ysfx_t* fx = loadJsfx(path);
     if (!fx)
         return false;
-    ysfx_slider_range_t rg {};
-    ysfx_slider_get_range(fx, 0, &rg);
-    r = { rg.min, rg.max, rg.def };
+    for (uint32_t i = 0; i < ysfx_max_sliders; ++i) {
+        if (!ysfx_slider_exists(fx, i))
+            continue;
+        ysfx_slider_range_t rg {};
+        ysfx_slider_get_range(fx, i, &rg);
+        const char* name = ysfx_slider_get_name(fx, i);
+        out.push_back({ i, rg.min, rg.max, rg.def, rg.inc, name ? name : "" });
+    }
     ysfx_free(fx);
     return true;
 }
 
-static bool renderJsfx(const char* path, double sr, double value, const Stereo& in, Stereo& out)
+static bool renderJsfx(const char* path, double sr, const std::vector<Slider>& sl, const std::vector<double>& values,
+                       const Stereo& in, Stereo& out)
 {
     ysfx_t* fx = loadJsfx(path);
     if (!fx)
@@ -123,7 +131,8 @@ static bool renderJsfx(const char* path, double sr, double value, const Stereo& 
     ti.time_signature[0] = 4;
     ti.time_signature[1] = 4;
     ysfx_set_time_info(fx, &ti);
-    ysfx_slider_set_value(fx, 0, value);
+    for (size_t k = 0; k < sl.size(); ++k)
+        ysfx_slider_set_value(fx, sl[k].index, values[k]);
     const uint32_t frames = uint32_t(in.l.size());
     for (uint32_t pos = 0; pos < frames; pos += kBlock) {
         const uint32_t n = std::min(kBlock, frames - pos);
@@ -156,7 +165,8 @@ struct EventList {
     static bool push(const clap_output_events_t*, const clap_event_header_t*) { return true; }
 };
 
-static bool renderClap(const char* path, double sr, double value, const Stereo& in, Stereo& out, bool verbose)
+static bool renderClap(const char* path, double sr, const std::vector<double>& values, const Stereo& in, Stereo& out,
+                       bool verbose)
 {
     void* lib = dlopen(path, RTLD_NOW | RTLD_LOCAL);
     if (!lib) {
@@ -180,19 +190,25 @@ static bool renderClap(const char* path, double sr, double value, const Stereo& 
     }
 
     const auto* params = static_cast<const clap_plugin_params_t*>(plugin->get_extension(plugin, CLAP_EXT_PARAMS));
-    clap_param_info_t info {};
-    params->get_info(plugin, 0, &info);
+    if (params->count(plugin) != values.size()) {
+        std::fprintf(stderr, "the CLAP has %u parameters, the JSFX %zu sliders\n", params->count(plugin), values.size());
+        return false;
+    }
 
     EventList ev;
-    clap_event_param_value_t pv {};
-    pv.header.size = sizeof(pv);
-    pv.header.space_id = CLAP_CORE_EVENT_SPACE_ID;
-    pv.header.type = CLAP_EVENT_PARAM_VALUE;
-    pv.param_id = info.id;
-    pv.cookie = info.cookie;
-    pv.note_id = -1; pv.port_index = -1; pv.channel = -1; pv.key = -1;
-    pv.value = value;
-    ev.events.push_back(pv);
+    for (uint32_t k = 0; k < values.size(); ++k) {
+        clap_param_info_t info {};
+        params->get_info(plugin, k, &info);
+        clap_event_param_value_t pv {};
+        pv.header.size = sizeof(pv);
+        pv.header.space_id = CLAP_CORE_EVENT_SPACE_ID;
+        pv.header.type = CLAP_EVENT_PARAM_VALUE;
+        pv.param_id = info.id;
+        pv.cookie = info.cookie;
+        pv.note_id = -1; pv.port_index = -1; pv.channel = -1; pv.key = -1;
+        pv.value = values[k];
+        ev.events.push_back(pv);
+    }
     clap_input_events_t inEv { &ev, EventList::size, EventList::get };
     clap_output_events_t outEv { &ev, EventList::push };
 
@@ -255,32 +271,81 @@ int main(int argc, char** argv)
             }
         }
     }
-    if (values.empty()) {
-        SliderRange r;
-        if (!sliderRange(ref, r))
-            return 1;
-        values = { r.min, r.max, r.def, r.min + (r.max - r.min) * 0.25, r.min + (r.max - r.min) * 0.5,
-                   r.min + (r.max - r.min) * 0.75 };
-        std::sort(values.begin(), values.end());
-        values.erase(std::unique(values.begin(), values.end()), values.end());
+    std::vector<Slider> sl;
+    if (!sliders(ref, sl) || sl.empty())
+        return 1;
+
+    // the settings to test, each with a label
+    std::vector<std::vector<double>> sets;
+    std::vector<std::string> labels;
+    std::vector<double> defs;
+    for (const Slider& s : sl)
+        defs.push_back(s.def);
+    char buf[160];
+    if (sl.size() == 1) {
+        const Slider& r = sl[0];
+        if (values.empty()) {
+            values = { r.min, r.max, r.def, r.min + (r.max - r.min) * 0.25, r.min + (r.max - r.min) * 0.5,
+                       r.min + (r.max - r.min) * 0.75 };
+            std::sort(values.begin(), values.end());
+            values.erase(std::unique(values.begin(), values.end()), values.end());
+        }
+        for (double v : values) {
+            sets.push_back({ v });
+            std::snprintf(buf, sizeof(buf), "value %8.2f", v);
+            labels.push_back(buf);
+        }
+    } else {
+        sets.push_back(defs);
+        labels.push_back("all defaults");
+        for (size_t k = 0; k < sl.size(); ++k)
+            for (double v : { sl[k].min, sl[k].max }) {
+                if (v == sl[k].def)
+                    continue;
+                std::vector<double> set = defs;
+                set[k] = v;
+                sets.push_back(set);
+                std::snprintf(buf, sizeof(buf), "%s = %g", sl[k].name.c_str(), v);
+                labels.push_back(buf);
+            }
+        uint32_t seed = 4321;
+        for (int r = 0; r < 6; ++r) {
+            std::vector<double> set;
+            for (const Slider& s : sl) {
+                seed = seed * 1664525u + 1013904223u;
+                double v = s.min + (s.max - s.min) * ((seed >> 8) / 16777216.0);
+                if (s.inc > 0)
+                    v = std::fmin(s.max, s.min + std::round((v - s.min) / s.inc) * s.inc);
+                set.push_back(v);
+            }
+            sets.push_back(set);
+            labels.push_back("random #" + std::to_string(r + 1));
+        }
     }
 
     const bool isJsfx = endsWith(other, ".jsfx");
     bool ok = true, first = true;
     for (double sr : { 44100.0, 96000.0 }) {
         const Stereo in = makeSignal(sr);
-        for (double v : values) {
+        for (size_t i = 0; i < sets.size(); ++i) {
             Stereo a(in.l.size()), b(in.l.size());
-            if (!renderJsfx(ref, sr, v, in, a))
+            if (!renderJsfx(ref, sr, sl, sets[i], in, a))
                 return 1;
-            if (isJsfx ? !renderJsfx(other.c_str(), sr, v, in, b) : !renderClap(other.c_str(), sr, v, in, b, first))
+            if (isJsfx ? !renderJsfx(other.c_str(), sr, sl, sets[i], in, b)
+                       : !renderClap(other.c_str(), sr, sets[i], in, b, first))
                 return 1;
             first = false;
             size_t at = 0;
             const double d = maxDiff(a, b, &at);
             const bool pass = d <= tol && std::isfinite(d);
-            std::printf("%6.0f Hz  value %8.2f  max |diff| = %.3g%s\n", sr, v, d,
+            std::printf("%6.0f Hz  %-28s max |diff| = %.3g%s\n", sr, labels[i].c_str(), d,
                         pass ? "" : (" at sample " + std::to_string(at) + "  FAIL").c_str());
+            if (!pass && sl.size() > 1) {
+                std::string vals;
+                for (size_t k = 0; k < sl.size(); ++k)
+                    vals += (k ? ", " : "") + sl[k].name + "=" + std::to_string(sets[i][k]);
+                std::printf("          settings: %s\n", vals.c_str());
+            }
             ok = ok && pass;
         }
     }
