@@ -1,0 +1,53 @@
+name: Count downloads
+
+# Counts the downloads of every release package for the "More than X downloads" line under the
+# site's Download button, without analytics: it sums the public download_count GitHub keeps for
+# each release asset. tools/count_downloads.py keeps a ledger by asset id that never lowers a
+# count, so the total does not drop when a release is deleted, and rounds the total down to
+# 1, 5, 10, 25, 50, 100, 250, 500, 1,000, 2,500... downloads.json is committed to main only when
+# the shown figure changes or a new asset appears; assets/js/downloads.js reads it.
+
+on:
+  schedule:
+    - cron: "0 3 * * *"
+  workflow_run:
+    workflows: ["VST3 and CLAP"]
+    types: [completed]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: count-downloads
+  cancel-in-progress: false
+
+jobs:
+  count:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Count and push downloads.json
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          result="$(python3 tools/count_downloads.py downloads.json)"
+          echo "downloads.json: $result"
+          if [ "$result" != changed ]; then
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add downloads.json
+          git commit -m 'Update downloads.json'
+          for i in 1 2 3 4; do
+            if git push origin HEAD:main; then exit 0; fi
+            sleep $((i * 4))
+            git pull --rebase origin main
+          done
+          echo "::error::Could not push downloads.json"
+          exit 1

@@ -1268,6 +1268,21 @@ a.download-option:hover {
     display: none;
 }
 
+.download-count {
+    font-size: 13px;
+    color: var(--muted);
+    margin: 10px 0 14px;
+}
+
+.download-count[hidden] {
+    display: none;
+}
+
+.download-count strong {
+    color: var(--text);
+    font-weight: 600;
+}
+
 .download-links {
     display: flex;
     gap: 8px;
