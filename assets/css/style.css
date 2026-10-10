@@ -1183,35 +1183,107 @@ a.download-option:hover {
     color: var(--text);
 }
 
-.download-copy {
+.download-support {
+    padding: 22px;
+    text-align: center;
+}
+
+.download-support-text {
+    margin: 0 0 16px;
+    font-size: 13px;
+    line-height: 1.6;
+    color: var(--muted);
+}
+
+.download-support-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.download-support-btn {
+    padding: 10px 16px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--card-bg);
+    color: var(--text);
+    font-size: 13px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: border-color 0.15s ease;
+}
+
+.download-support-btn:hover {
+    border-color: var(--muted);
+}
+
+.download-skip {
+    display: inline-block;
+    margin-top: 18px;
+    font-size: 11px;
+    color: var(--muted);
+    text-decoration: none;
+}
+
+.download-skip:hover {
+    color: var(--text);
+    text-decoration: underline;
+}
+
+.support-btn {
+    text-decoration: none;
+    margin-right: 6px;
+}
+
+.release-new {
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    padding: 1px 6px;
+    border-radius: 8px;
+    background: #c4c4c4;
+    color: #1b1a18;
+}
+
+.footer-links {
+    margin-top: 8px;
+    font-size: 11px;
+}
+
+.footer-links a {
+    color: var(--muted);
+}
+
+.footer-links a:hover {
+    color: var(--text);
+}
+
+.footer-links .sep {
+    margin: 0 6px;
+}
+
+.modal-download [hidden],
+.release-new[hidden] {
+    display: none;
+}
+
+.download-links {
     display: flex;
     gap: 8px;
-    align-items: center;
-    margin-top: 4px;
+    justify-content: center;
+    flex-wrap: wrap;
 }
 
-.download-copy code {
-    flex: 1;
-    min-width: 0;
-    overflow-x: auto;
-    white-space: nowrap;
-    font-size: 11px;
-    padding: 6px 8px;
+.download-links .changelog-btn {
+    margin-right: 0;
+}
+
+.guide-shot {
+    display: block;
+    width: 100%;
+    height: auto;
+    margin-bottom: 18px;
     border: 1px solid var(--border);
-    border-radius: 4px;
-    background: var(--bg);
-}
-
-.download-copy button {
-    padding: 6px 12px;
-    font-size: 11px;
-    border: 1px solid var(--border);
-    border-radius: 4px;
-    background: var(--bg);
-    color: var(--text);
-    cursor: pointer;
-}
-
-.download-copy button:hover {
-    border-color: var(--muted);
+    border-radius: 6px;
 }

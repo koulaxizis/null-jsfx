@@ -5,14 +5,13 @@ name: VST3 and CLAP
 #   NULL-JSFX-JSFX                 the JSFX (plain and GFX), the same for every OS
 #   NULL-JSFX-VST3-CLAP-<OS>       the VST3 and CLAP versions for Windows, macOS or Linux
 # each with native/INSTALL.txt. When a GitHub release is published, they are attached to it as
-# zips with these names (the site's Download links use releases/latest/download/<name>.zip),
-# together with index.xml, the ReaPack repository made by tools/build_reapack.py.
+# zips with these names (the site's Download links use releases/latest/download/<name>.zip).
 
 on:
   push:
-    paths: ["native/**", "DATA/**", "tests/**", "tools/build_reapack.py", ".github/workflows/native.yml"]
+    paths: ["native/**", "DATA/**", "tests/**", ".github/workflows/native.yml"]
   pull_request:
-    paths: ["native/**", "DATA/**", "tests/**", "tools/build_reapack.py", ".github/workflows/native.yml"]
+    paths: ["native/**", "DATA/**", "tests/**", ".github/workflows/native.yml"]
   workflow_dispatch:
   release:
     types: [published]
@@ -86,19 +85,11 @@ jobs:
           mkdir -p "$out"
           cp -R DATA/Effects/null_jsfx "$out/"
           cp native/INSTALL.txt "$out/"
-          ref="${{ github.event_name == 'release' && github.event.release.tag_name || github.sha }}"
-          ver="$(sed -n 's|^//NULL JSFX v\([0-9.]*\).*|\1|p' DATA/Effects/null_jsfx/tilt.jsfx)"
-          python3 tools/build_reapack.py --ref "$ref" --version "$ver" --out index.xml
 
       - uses: actions/upload-artifact@v4
         with:
           name: NULL-JSFX-JSFX
           path: NULL-JSFX-JSFX
-
-      - uses: actions/upload-artifact@v4
-        with:
-          name: reapack-index
-          path: index.xml
 
       - name: Attach to the release
         if: github.event_name == 'release'
@@ -106,4 +97,4 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           zip -qry NULL-JSFX-JSFX.zip NULL-JSFX-JSFX
-          gh release upload "${{ github.event.release.tag_name }}" NULL-JSFX-JSFX.zip index.xml --clobber
+          gh release upload "${{ github.event.release.tag_name }}" NULL-JSFX-JSFX.zip --clobber

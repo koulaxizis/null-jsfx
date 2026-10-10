@@ -19,6 +19,7 @@ ROOT = Path(__file__).resolve().parent.parent
 PLUGINS = ROOT / "DATA/Effects/null_jsfx"
 GFX = PLUGINS / "gfx"
 NATIVE = ROOT / "native/plugins"
+SHOTS = ROOT / "assets/img/gfx"  # GFX interface screenshots, made by tools/render_gfx_shots.sh
 CONTENT = ROOT / "tools/site_content.json"
 INDEX = ROOT / "index.html"
 MODALS = ROOT / "assets/js/modals.js"
@@ -101,6 +102,7 @@ def load():
             "category": category,
             "sliders": [(n, r, d) for (n, r), d in zip(sliders, c["slider_desc"])],
             "formats": formats(stem),
+            "shot": f"assets/img/gfx/{stem}.png" if (SHOTS / f"{stem}.png").exists() else None,
             **{k: c[k] for k in ("card_desc", "keywords", "uses", "properties", "icon")},
         })
     for stem in sorted(set(content) - {p.stem for p in files}):
@@ -171,8 +173,9 @@ def guides_block(plugins):
     ],
     uses: [{uses}],
     properties: {js(p['properties'])},
-    formats: [{", ".join(js(f) for f in p['formats'])}]
-  }},
+    formats: [{", ".join(js(f) for f in p['formats'])}]""" + (f""",
+    shot: {js(p['shot'])}""" if p["shot"] else "") + """
+  },
 """)
     out[-1] = out[-1].rstrip(",\n") + "\n"
     out.append("};\n")

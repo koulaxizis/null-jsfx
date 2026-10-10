@@ -103,8 +103,8 @@ native/scripts/build.sh --dpf DIR       # offline: a local DPF checkout (with dg
 Requirements: CMake 3.15+, a C++17 compiler, Git. Linux also needs `libgl1-mesa-dev libx11-dev
 libxcursor-dev libxext-dev libxrandr-dev libdbus-1-dev`; Windows needs Visual Studio 2022 and Git
 Bash. `.github/workflows/native.yml` builds all three OSes and uploads `NULL-JSFX-VST3-CLAP-<OS>`
-(VST3 and CLAP) and `NULL-JSFX-JSFX` (plain and GFX JSFX), each with `INSTALL.txt`, plus the
-ReaPack `index.xml`; a published release gets them as zips.
+(VST3 and CLAP) and `NULL-JSFX-JSFX` (plain and GFX JSFX), each with `INSTALL.txt`; a published
+release gets them as zips.
 
 DPF ([DISTRHO Plugin Framework](https://github.com/DISTRHO/DPF), ISC) is fetched at a pinned
 commit. The font is DejaVu Sans, which DPF embeds. On MSVC the Khronos GL headers in

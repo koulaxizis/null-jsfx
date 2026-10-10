@@ -21,6 +21,7 @@
     <meta name="twitter:image" content="https://nulljsfx.tech/assets/img/social-preview.jpg">
 
     <link rel="icon" type="image/svg+xml" href="assets/img/favicon.svg">
+    <link rel="alternate" type="application/atom+xml" title="NULL JSFX releases" href="https://github.com/koulaxizis/null-jsfx/releases.atom">
     <link rel="stylesheet" href="assets/css/style.css">
 </head>
 <body>
@@ -57,16 +58,23 @@
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                     <span class="btn-text">Download</span>
                     <div class="download-meta">
-                        <span><b>v2.0</b></span>
+                        <span><b id="release-version">v2.0</b></span>
+                        <span class="release-new" id="release-new" hidden>NEW</span>
                         <span class="sep">&bull;</span>
-                        <span id="last-update">Updated: 08/10/26</span>
+                        <span id="last-update">Released: 09/10/26</span>
                     </div>
                 </div>
             </a>
-            <button class="changelog-btn" onclick="openChangelog()">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v5h5"/><path d="M3.05 13A9 9 0 1 0 6 5.3L3 8"/><path d="M12 7v5l4 2"/></svg>
-                <span>Changelog</span>
-            </button>
+            <div class="download-links">
+                <a class="changelog-btn support-btn" href="https://ko-fi.com/koulaxizis" target="_blank" rel="noopener">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 8h1a4 4 0 1 1 0 8h-1"/><path d="M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4Z"/><line x1="6" y1="2" x2="6" y2="4"/><line x1="10" y1="2" x2="10" y2="4"/><line x1="14" y1="2" x2="14" y2="4"/></svg>
+                    <span>Support on Ko-fi</span>
+                </a>
+                <button class="changelog-btn" onclick="openChangelog()">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v5h5"/><path d="M3.05 13A9 9 0 1 0 6 5.3L3 8"/><path d="M12 7v5l4 2"/></svg>
+                    <span>Changelog</span>
+                </button>
+            </div>
         </div>
 
         <!-- Search Bar -->
@@ -95,6 +103,14 @@
                     <h3>Download NULL JSFX v2.0</h3>
                     <p class="changelog-date">Free and open source. Pick what you need.</p>
                 </div>
+                <div class="download-support" id="download-support" hidden>
+                    <p class="download-support-text">Your download is ready. NULL JSFX is free and made by one person: if it helps your music, a coffee or a newsletter sign-up keeps it going.</p>
+                    <div class="download-support-actions">
+                        <a class="download-support-btn" id="support-kofi" href="https://ko-fi.com/koulaxizis" target="_blank" rel="noopener">&#9749; Support on Ko-fi</a>
+                        <a class="download-support-btn" id="support-news" href="https://preview.mailerlite.io/forms/642133/200884431727101575/share" target="_blank" rel="noopener">&#9993; Join the newsletter</a>
+                    </div>
+                    <a class="download-skip" id="download-skip" href="#">Skip to download &rarr;</a>
+                </div>
                 <div class="download-options">
                     <a class="download-option" id="dl-jsfx" href="https://github.com/koulaxizis/null-jsfx/releases/latest/download/NULL-JSFX-JSFX.zip">
                         <span class="download-option-title">JSFX for REAPER</span>
@@ -111,14 +127,6 @@
                         <a href="https://github.com/koulaxizis/null-jsfx/releases/latest/download/NULL-JSFX-VST3-CLAP-macOS.zip">macOS</a> &bull;
                         <a href="https://github.com/koulaxizis/null-jsfx/releases/latest/download/NULL-JSFX-VST3-CLAP-Linux.zip">Linux</a>
                     </p>
-                    <div class="download-option download-reapack">
-                        <span class="download-option-title">ReaPack</span>
-                        <span class="download-option-desc">Install single plugins inside REAPER and get updates automatically: Extensions &rarr; ReaPack &rarr; Import repositories, then paste:</span>
-                        <span class="download-copy">
-                            <code id="reapack-url">https://github.com/koulaxizis/null-jsfx/releases/latest/download/index.xml</code>
-                            <button type="button" id="reapack-copy">Copy</button>
-                        </span>
-                    </div>
                 </div>
                 <div class="changelog-footer">
                     <small><a href="https://github.com/koulaxizis/null-jsfx/releases" target="_blank" rel="noopener">All releases on GitHub</a> &bull; macOS builds are not code-signed, see INSTALL.txt</small>
@@ -193,7 +201,7 @@
                         <span class="step-number">1</span>
                         <div class="step-content">
                             <h4>Install Effects</h4>
-                            <p>Download <strong>JSFX for REAPER</strong> and extract the <code>null_jsfx</code> folder to your Reaper Effects directory (or install single plugins with <strong>ReaPack</strong>, see Download):</p>
+                            <p>Download <strong>JSFX for REAPER</strong> and extract the <code>null_jsfx</code> folder to your Reaper Effects directory:</p>
                             <dl class="install-paths">
                                 <div class="install-os">
                                     <dt>Windows</dt>
@@ -1136,6 +1144,15 @@
     <footer class="site-footer">
         <div class="footer-content">
             Made with &#9825; by <a href="https://koulaxizis.gr" target="_blank" rel="noopener">Christos Koulaxizis</a>
+            <div class="footer-links">
+                <a href="https://ko-fi.com/koulaxizis" target="_blank" rel="noopener">Support on Ko-fi</a>
+                <span class="sep">&bull;</span>
+                <a href="https://preview.mailerlite.io/forms/642133/200884431727101575/share" target="_blank" rel="noopener">Newsletter</a>
+                <span class="sep">&bull;</span>
+                <a href="https://github.com/koulaxizis/null-jsfx/releases.atom" target="_blank" rel="noopener">Release feed (RSS)</a>
+                <span class="sep">&bull;</span>
+                <a href="https://github.com/koulaxizis/null-jsfx" target="_blank" rel="noopener">GitHub</a>
+            </div>
         </div>
     </footer>
 
@@ -1153,10 +1170,8 @@
     <script src="assets/js/search.js"></script>
     <script src="assets/js/theme.js"></script>
     <script src="assets/js/download.js"></script>
+    <script src="assets/js/release.js"></script>
     <script>
-        const lastUpdateDate = document.getElementById('last-update');
-        lastUpdateDate.textContent = 'Updated: ' + new Date().toLocaleDateString('en-GB');
-
         // Back to Top functionality
         const backToTopBtn = document.getElementById('back-to-top');
         window.addEventListener('scroll', function() {

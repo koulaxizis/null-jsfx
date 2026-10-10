@@ -13,12 +13,6 @@ JSFX (REAPER), from NULL-JSFX-JSFX.zip
     the gfx folder inside it together: gfx/null_gfx.jsfx-inc holds the shared
     look of the GFX versions and is not an effect by itself.
 
-JSFX with ReaPack (single plugins and automatic updates)
-    In REAPER: Extensions > ReaPack > Import repositories, paste
-      https://github.com/koulaxizis/null-jsfx/releases/latest/download/index.xml
-    then Extensions > ReaPack > Browse packages and install what you want.
-    The GFX versions are one package, "NULL JSFX GFX".
-
 VST3 and CLAP (any DAW), from NULL-JSFX-VST3-CLAP-<your OS>.zip
     Copy the "NULL JSFX" folder from VST3 and from CLAP to:
       Windows: C:\Program Files\Common Files\VST3
