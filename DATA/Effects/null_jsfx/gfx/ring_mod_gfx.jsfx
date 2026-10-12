@@ -1,0 +1,139 @@
+desc:NULL Ring Mod GFX
+author: Christos Koulaxizis
+tags: ringmod ring modulator amplitude modulation metallic carrier gui
+//category: Essentials
+//NULL JSFX v2.0 • https://nulljsfx.tech • MIT License
+
+import null_gfx.jsfx-inc
+
+slider1:5<0.1,20,0.1>-Rate (Hz)
+slider2:200<100,2000,10>-Carrier Freq (Hz)
+slider3:50<0,100,1>-Depth (%)
+slider4:40<0,100,1>-Mix (%)
+
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
+
+@init
+  // NULL Ring Mod (../ring_mod.jsfx) with its own interface: same audio code, plus @gfx.
+  // Multiplies the input by a sine carrier (classic ring modulation: metallic, bell-like
+  // tones). An LFO at Rate sweeps the carrier up and down by up to one octave (Depth).
+  c_phase = 0;
+  lfo_phase = 0;
+  gfx_ext_retina = 1;
+
+  function update()
+  (
+    carrier = slider2;
+    lfo_inc = 2 * $pi * slider1 / srate;
+    depth = slider3 / 100;
+    mix_amt = slider4 / 100;
+  );
+
+  // ---- modulation view: an info line over a plot of two LFO cycles ----
+  // the carrier frequency (log scale 50 Hz to 5 kHz) at u (0..1 = two cycles), as a plot y
+  function md_val(u)
+  (
+    ng_py + ng_ph * (1 - (log(slider2 / 50) / log(2) + slider3 / 100 * sin(4 * $pi * u)) / (log(100) / log(2)));
+  );
+
+  function md_view(left, right)
+  (
+    ng_plot(ng_vx + 26, ng_vy + 14, ng_vw - 30, ng_vh - 30);
+    ng_grid(4, 4, 0);
+    ng_font(4, 8, 0);
+    ng_col(NG_MUTED, 1);
+    ng_ptxt(left, ng_px, Y(ng_vy + 4), 0);
+    ng_ptxt(right, ng_px + ng_pw, Y(ng_vy + 4), 2);
+  );
+
+  // labels at the top, middle and bottom of the plot
+  function md_ylabels(top, mid, bot)
+  (
+    ng_col(NG_MUTED, 1);
+    ng_ptxt(top, ng_px - 6 * ng_s, ng_py, 2);
+    ng_ptxt(mid, ng_px - 6 * ng_s, ng_py + ng_ph / 2, 2);
+    ng_ptxt(bot, ng_px - 6 * ng_s, ng_py + ng_ph, 2);
+  );
+
+  // times under the plot at 1/4, 1/2 and 3/4 of its width for a cycle of period seconds
+  function md_xlabels(period) local(i, t)
+  (
+    ng_col(NG_MUTED, 1);
+    i = 1;
+    loop(3,
+      t = period * i / 2;
+      t < 1 ? sprintf(#md_t, "%d ms", floor(t * 1000 + 0.5)) : sprintf(#md_t, "%.2f s", t);
+      ng_ptxt(#md_t, ng_px + ng_pw * i / 4, ng_py + ng_ph + 10 * ng_s, 1);
+      i += 1;
+    );
+  );
+
+  // md_val across the plot in colour rgb, shaded down to the bottom when fill = 1
+  function md_curve(rgb, fill) local(i)
+  (
+    fill ? (
+      ng_col(NG_ACCENT, 0.10);
+      i = 0;
+      loop(floor(ng_pw) + 1, gfx_line(ng_px + i, ng_py + ng_ph, ng_px + i, md_val(i / ng_pw), 0); i += 1;);
+    );
+    ng_col(rgb, 1);
+    i = 0;
+    loop(floor(ng_pw) + 1,
+      i == 0 ? ng_line_start(ng_px, md_val(0)) : ng_line_to(ng_px + i, md_val(i / ng_pw));
+      i += 1;
+    );
+  );
+
+  // dashed playhead at u (0..1) of the plot width
+  function md_playhead(u) local(x, y)
+  (
+    x = floor(ng_px + max(0, min(1, u)) * ng_pw) + 0.5;
+    ng_col(NG_ACCENT, 0.5);
+    y = ng_py;
+    while (
+      gfx_line(x, y, x, min(y + 3 * ng_s, ng_py + ng_ph), 0);
+      y += 6 * ng_s;
+      y < ng_py + ng_ph;
+    );
+  );
+
+@slider
+  update();
+
+@sample
+  lfo_phase += lfo_inc;
+  lfo_phase >= 2 * $pi ? lfo_phase -= 2 * $pi;
+  freq = carrier * 2 ^ (depth * sin(lfo_phase));
+  c_phase += 2 * $pi * freq / srate;
+  c_phase >= 2 * $pi ? c_phase -= 2 * $pi;
+  c = sin(c_phase);
+
+  spl0 = spl0 * (1 - mix_amt) + spl0 * c * mix_amt;
+  spl1 = spl1 * (1 - mix_amt) + spl1 * c * mix_amt;
+
+@gfx 480 294
+  ng_knobs_begin("RING MOD", "ESSENTIALS", 480, 120, 1, 0);
+
+  // display: the carrier frequency over two LFO cycles (log, 50 Hz to 5 kHz), the LFO
+  // position dashed
+  sprintf(#md_r, "%d TO %d Hz", floor(slider2 * 2 ^ (-slider3 / 100) + 0.5), floor(slider2 * 2 ^ (slider3 / 100) + 0.5));
+  md_view("CARRIER (Hz)", #md_r);
+  md_ylabels("5k", "500", "50");
+  md_xlabels(1 / slider1);
+  md_curve(NG_ACCENT, 1);
+  md_playhead(lfo_phase / (2 * $pi) / 2);
+
+  ng_row(4);
+  sprintf(#v1, "%.1f Hz", slider1);
+  ng_knob_ctl(1, "RATE", #v1, 0.1, 20, 5, 0.1, 0) ? update();
+  sprintf(#v2, "%d Hz", slider2);
+  ng_knob_ctl(2, "CARRIER", #v2, 100, 2000, 200, 10, 0) ? update();
+  sprintf(#v3, "%d%%", slider3);
+  ng_knob_ctl(3, "DEPTH", #v3, 0, 100, 50, 1, 0) ? update();
+  sprintf(#v4, "%d%%", slider4);
+  ng_knob_ctl(4, "MIX", #v4, 0, 100, 40, 1, 0) ? update();
+
+  ng_end();

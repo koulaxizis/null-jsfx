@@ -35,12 +35,12 @@ One control, instant result. Turn it up until it sounds right.
 ### Essentials (31)
 The everyday mixing and mastering toolbox.
 
-- Auto Pan: LFO Stereo Panner
+- Auto Pan: LFO Stereo Panner (also as GFX, VST3, CLAP)
 - Auto-Leveler: Automatic Gain Rider
 - Breath Control: Vocal Breath Reduction
 - Cabinet Simulator: Speaker Cabinet Simulation (also as GFX, VST3, CLAP)
 - Channel Utility: Gain, Phase & Routing (also as GFX, VST3, CLAP)
-- Chorus: Classic Delay Chorus
+- Chorus: Classic Delay Chorus (also as GFX, VST3, CLAP)
 - Click Repair: Click & Pop Removal (also as GFX, VST3, CLAP)
 - DeEsser: Split-Band Sibilance Control
 - Delay: Stereo Echo & Slapback (also as GFX, VST3, CLAP)
@@ -48,7 +48,7 @@ The everyday mixing and mastering toolbox.
 - Dynamics: Compressor & Expander
 - Envelope Follower: Auto-Wah & Envelope Filter
 - Filter: Resonant Multi-Mode Filter (also as GFX, VST3, CLAP)
-- Flanger: Jet Sweep Flanger
+- Flanger: Jet Sweep Flanger (also as GFX, VST3, CLAP)
 - Gate: Noise Gate with Sidechain HPF
 - Limiter: Limiter, Clipper & Brickwall
 - Maximizer: Look-Ahead Loudness Maximizer
@@ -56,16 +56,16 @@ The everyday mixing and mastering toolbox.
 - Multiband Comp: Four-Band Compressor (also as GFX, VST3, CLAP)
 - Noise Generator: White, Pink & Brown Noise (also as GFX, VST3, CLAP)
 - Parametric EQ: Five-Band Parametric EQ (also as GFX, VST3, CLAP)
-- Phaser: All-Pass Sweep Phaser
-- Pitch Shifter: Real-Time Pitch Shift
+- Phaser: All-Pass Sweep Phaser (also as GFX, VST3, CLAP)
+- Pitch Shifter: Real-Time Pitch Shift (also as GFX, VST3, CLAP)
 - Reverb: Compact Stereo Algorithmic Reverb (also as GFX, VST3, CLAP)
-- Ring Mod: Swept Ring Modulator
+- Ring Mod: Swept Ring Modulator (also as GFX, VST3, CLAP)
 - Saturation: Six-Mode Saturation (also as GFX, VST3, CLAP)
 - Sidechain Ducker: Sidechain Ducking
 - Stereo Width: M/S Width with Mono Bass (also as GFX, VST3, CLAP)
 - Transient Shaper: Attack & Sustain Shaper
-- Tremolo: Sine LFO Tremolo
-- Vibrato: Delay-Line Pitch Vibrato
+- Tremolo: Sine LFO Tremolo (also as GFX, VST3, CLAP)
+- Vibrato: Delay-Line Pitch Vibrato (also as GFX, VST3, CLAP)
 
 ### Advanced (24)
 Deeper sound design, creative effects and special processing.

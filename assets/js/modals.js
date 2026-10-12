@@ -257,7 +257,7 @@ const guides = {
     ],
     uses: ['Moving pads and synth beds', 'Rhythmic tempo-synced panning on guitars or keys', 'Subtle stereo motion on ambience returns', 'Ping-pong style movement on percussion loops'],
     properties: 'Input → Sine LFO (free or tempo-synced) → opposite gain curves on L and R → Dry/Wet Mix → Output. Each channel keeps its own content (no channel crossfeed) and the effect has zero latency.',
-    formats: ['JSFX']
+    formats: ['JSFX', 'GFX', 'VST3', 'CLAP']
   },
   'auto-leveler': {
     title: 'AUTO-LEVELER',
@@ -337,7 +337,7 @@ const guides = {
     ],
     uses: ['Thickening clean guitars', 'Widening the feel of pads and keys', 'Adding movement to backing vocals', 'Subtle detune on synth leads'],
     properties: 'Input → delay line swept by a sine LFO between 5 ms and 5 ms + Depth → linear (fractional) interpolation → Dry/Wet Mix → Output. One LFO drives both channels, there is no feedback, and no latency.',
-    formats: ['JSFX']
+    formats: ['JSFX', 'GFX', 'VST3', 'CLAP']
   },
   'click-repair': {
     title: 'CLICK REPAIR',
@@ -470,7 +470,7 @@ const guides = {
     ],
     uses: ['Jet-plane sweeps on drums and cymbals', 'Movement on guitars and synths', 'Psychedelic effects on vocals', 'Build-ups and transitions'],
     properties: 'Input → short modulated delay (0.5 ms to 0.5 ms + Depth) with feedback → linear interpolation → Dry/Wet Mix → Output. One LFO drives both channels; zero latency.',
-    formats: ['JSFX']
+    formats: ['JSFX', 'GFX', 'VST3', 'CLAP']
   },
   'gate': {
     title: 'GATE',
@@ -623,7 +623,7 @@ const guides = {
     ],
     uses: ['Swirling movement on guitars and keys', 'Vintage phasing on synths', 'Subtle motion on pads', 'Psychedelic effects on drums and vocals'],
     properties: 'Input → 1–8 first-order all-pass stages swept by a sine LFO (roughly 440–1600 Hz range) with fixed 30% feedback → added to the dry signal by Mix → Output. One LFO drives both channels; zero latency.',
-    formats: ['JSFX']
+    formats: ['JSFX', 'GFX', 'VST3', 'CLAP']
   },
   'pitch-shifter': {
     title: 'PITCH SHIFTER',
@@ -637,7 +637,7 @@ const guides = {
     ],
     uses: ['Octave doubling', 'Simple parallel harmonies', 'Detune and thickening with Fine', 'Creative sound design'],
     properties: 'Input → 60 ms delay line read by two taps in opposite phase with Hann crossfades → Dry/Wet Mix → Output. Total shift = Octave × 12 + Semitones + Fine/100 semitones; the window-based method adds some smearing on transients.',
-    formats: ['JSFX']
+    formats: ['JSFX', 'GFX', 'VST3', 'CLAP']
   },
   'reverb': {
     title: 'REVERB',
@@ -666,7 +666,7 @@ const guides = {
     ],
     uses: ['Metallic, bell-like tones', 'Robotic vocal textures', 'Sci-fi sound design', 'Inharmonic drum and percussion effects'],
     properties: 'Input → multiplied by a sine carrier whose frequency is swept by an LFO (Carrier × 2^(Depth × LFO)) → Dry/Wet Mix → Output. Zero latency.',
-    formats: ['JSFX']
+    formats: ['JSFX', 'GFX', 'VST3', 'CLAP']
   },
   'saturation': {
     title: 'SATURATION',
@@ -736,7 +736,7 @@ const guides = {
     ],
     uses: ['Vintage amp tremolo on guitars', 'Pulsing pads and keys', 'Rhythmic movement on sustained notes', 'Choppy effects at high rates'],
     properties: 'Input → gain of 1 − Depth × (0.5 − 0.5 × sine LFO), always between 0 and 1 → Dry/Wet Mix → Output. Same modulation on both channels; zero latency.',
-    formats: ['JSFX']
+    formats: ['JSFX', 'GFX', 'VST3', 'CLAP']
   },
   'vibrato': {
     title: 'VIBRATO',
@@ -749,7 +749,7 @@ const guides = {
     ],
     uses: ['Vibrato on vocals and leads', 'Tape-style warble', 'Chorus-like detune at partial mix', 'Lo-fi wobble effects'],
     properties: 'Input → modulated delay line (0.1 ms to 0.1 ms + Depth) with linear interpolation → Dry/Wet Mix → Output. One LFO drives both channels; zero latency.',
-    formats: ['JSFX']
+    formats: ['JSFX', 'GFX', 'VST3', 'CLAP']
   },
 
   // ─── ADVANCED ───

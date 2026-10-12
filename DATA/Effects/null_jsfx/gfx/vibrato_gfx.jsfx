@@ -1,0 +1,164 @@
+desc:NULL Vibrato GFX
+author: Christos Koulaxizis
+tags: vibrato pitch modulation detune lfo warble gui
+//category: Essentials
+//NULL JSFX v2.0 • https://nulljsfx.tech • MIT License
+
+import null_gfx.jsfx-inc
+
+slider1:5<0.1,15,0.1>-Rate (Hz)
+slider2:5<0,20,0.1>-Depth (ms)
+slider3:40<0,100,1>-Mix (%)
+
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
+
+@init
+  // NULL Vibrato (../vibrato.jsfx) with its own interface: same audio code, plus @gfx.
+  buf_size = ceil(srate * 0.1);
+  delay_l = 0;
+  delay_r = delay_l + buf_size;
+  memset(delay_l, 0, 2 * buf_size);
+  freembuf(delay_r + buf_size);
+  wpos = 0;
+  phase = 0;
+  gfx_ext_retina = 1;
+
+  function update()
+  (
+    rate = slider1;
+    depth = slider2;
+    mix_amt = slider3 / 100;
+    phase_inc = 6.28318530717958 * rate / srate;
+  );
+
+  // ---- modulation view: an info line over a plot of two LFO cycles ----
+  // the delay time (0 to 24 ms) at u (0..1 = two cycles), as a plot y
+  function md_val(u)
+  (
+    ng_lin_y(0.1 + slider2 * 0.5 * (1 + sin(4 * $pi * u)), 0, 24);
+  );
+
+  function md_view(left, right)
+  (
+    ng_plot(ng_vx + 26, ng_vy + 14, ng_vw - 30, ng_vh - 30);
+    ng_grid(4, 4, 0);
+    ng_font(4, 8, 0);
+    ng_col(NG_MUTED, 1);
+    ng_ptxt(left, ng_px, Y(ng_vy + 4), 0);
+    ng_ptxt(right, ng_px + ng_pw, Y(ng_vy + 4), 2);
+  );
+
+  // labels at the top, middle and bottom of the plot
+  function md_ylabels(top, mid, bot)
+  (
+    ng_col(NG_MUTED, 1);
+    ng_ptxt(top, ng_px - 6 * ng_s, ng_py, 2);
+    ng_ptxt(mid, ng_px - 6 * ng_s, ng_py + ng_ph / 2, 2);
+    ng_ptxt(bot, ng_px - 6 * ng_s, ng_py + ng_ph, 2);
+  );
+
+  // times under the plot at 1/4, 1/2 and 3/4 of its width for a cycle of period seconds
+  function md_xlabels(period) local(i, t)
+  (
+    ng_col(NG_MUTED, 1);
+    i = 1;
+    loop(3,
+      t = period * i / 2;
+      t < 1 ? sprintf(#md_t, "%d ms", floor(t * 1000 + 0.5)) : sprintf(#md_t, "%.2f s", t);
+      ng_ptxt(#md_t, ng_px + ng_pw * i / 4, ng_py + ng_ph + 10 * ng_s, 1);
+      i += 1;
+    );
+  );
+
+  // md_val across the plot in colour rgb, shaded down to the bottom when fill = 1
+  function md_curve(rgb, fill) local(i)
+  (
+    fill ? (
+      ng_col(NG_ACCENT, 0.10);
+      i = 0;
+      loop(floor(ng_pw) + 1, gfx_line(ng_px + i, ng_py + ng_ph, ng_px + i, md_val(i / ng_pw), 0); i += 1;);
+    );
+    ng_col(rgb, 1);
+    i = 0;
+    loop(floor(ng_pw) + 1,
+      i == 0 ? ng_line_start(ng_px, md_val(0)) : ng_line_to(ng_px + i, md_val(i / ng_pw));
+      i += 1;
+    );
+  );
+
+  // dashed playhead at u (0..1) of the plot width
+  function md_playhead(u) local(x, y)
+  (
+    x = floor(ng_px + max(0, min(1, u)) * ng_pw) + 0.5;
+    ng_col(NG_ACCENT, 0.5);
+    y = ng_py;
+    while (
+      gfx_line(x, y, x, min(y + 3 * ng_s, ng_py + ng_ph), 0);
+      y += 6 * ng_s;
+      y < ng_py + ng_ph;
+    );
+  );
+
+@slider
+  update();
+
+@sample
+  phase >= 6.28318530717958 ? (phase = phase - 6.28318530717958;);
+  lfo = sin(phase);
+  phase = phase + phase_inc;
+  
+  // delay swings between 0.1 ms and 0.1 ms + Depth; the moving read point bends the pitch
+  mod_delay = 0.1 + depth * 0.5 * (1 + lfo);
+  delay_samples = mod_delay * srate / 1000;
+  
+  rpos = wpos - delay_samples;
+  rpos = rpos < 0 ? rpos + buf_size : rpos;
+  
+  rpos_i = floor(rpos);
+  rpos_f = rpos - rpos_i;
+  d1_l = delay_l[rpos_i];
+  d2_l = delay_l[rpos_i >= buf_size - 1 ? 0 : rpos_i + 1];
+  d_l = d1_l + (d2_l - d1_l) * rpos_f;
+  
+  d1_r = delay_r[rpos_i];
+  d2_r = delay_r[rpos_i >= buf_size - 1 ? 0 : rpos_i + 1];
+  d_r = d1_r + (d2_r - d1_r) * rpos_f;
+  
+  delay_l[wpos] = spl0;
+  delay_r[wpos] = spl1;
+  wpos = wpos + 1;
+  wpos = wpos >= buf_size ? 0 : wpos;
+  
+  out_l = spl0 * (1 - mix_amt) + d_l * mix_amt;
+  out_r = spl1 * (1 - mix_amt) + d_r * mix_amt;
+  
+  spl0 = out_l;
+  spl1 = out_r;
+
+@gfx 480 294
+  ng_knobs_begin("VIBRATO", "ESSENTIALS", 480, 120, 1, 0);
+
+  // display: the delay time over two LFO cycles (0 to 24 ms), the LFO position dashed; the
+  // info line gives the pitch swing of the wet signal (its read point moves at up to md_m)
+  md_m = slider2 * $pi * slider1 / 1000;
+  md_m <= 0 ? strcpy(#md_r, "NO PITCH SWING") :
+  md_m < 1 ? sprintf(#md_r, "PITCH +%d / -%d CENTS", floor(1200 * log(1 + md_m) / log(2) + 0.5), floor(-1200 * log(1 - md_m) / log(2) + 0.5)) :
+  sprintf(#md_r, "PITCH +%d CENTS / REVERSED", floor(1200 * log(1 + md_m) / log(2) + 0.5));
+  md_view("DELAY (ms)", #md_r);
+  md_ylabels("24", "12", "0");
+  md_xlabels(1 / slider1);
+  md_curve(NG_ACCENT, 1);
+  md_playhead(phase / 6.28318530717958 / 2);
+
+  ng_row(3);
+  sprintf(#v1, "%.1f Hz", slider1);
+  ng_knob_ctl(1, "RATE", #v1, 0.1, 15, 5, 0.1, 0) ? update();
+  sprintf(#v2, "%.1f ms", slider2);
+  ng_knob_ctl(2, "DEPTH", #v2, 0, 20, 5, 0.1, 0) ? update();
+  sprintf(#v3, "%d%%", slider3);
+  ng_knob_ctl(3, "MIX", #v3, 0, 100, 40, 1, 0) ? update();
+
+  ng_end();
