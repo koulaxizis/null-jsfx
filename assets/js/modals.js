@@ -904,6 +904,22 @@ const guides = {
     properties: 'Signal chain: Input → Drive → 4-Pole Zero-Delay-Feedback Ladder (24 dB/oct, tanh saturation in the loop) → LP / HP Output → Gain → Output. Stable and in tune up to 20 kHz at full resonance; stereo channels independent, zero latency.',
     formats: ['JSFX']
   },
+  'loudness-meter': {
+    title: 'LOUDNESS METER',
+    subtitle: 'EBU R128 LUFS and True Peak Meter',
+    category: 'Advanced',
+    sliders: [
+      { name: 'Target', range: '-14 LUFS / -16 LUFS / -23 LUFS', desc: 'Loudness the readouts and the history graph are referenced to: -14 LUFS (most streaming services), -16 LUFS (Apple Music, podcasts) or -23 LUFS (EBU R128 broadcast).' },
+      { name: 'Scale', range: 'EBU +9 / EBU +18', desc: 'Vertical scale of the history graph, as in EBU Tech 3341: +9 shows 18 LU below to 9 LU above the target, +18 shows 36 LU below to 18 LU above.' },
+      { name: 'History', range: '10 s / 30 s / 1 min / 5 min', desc: 'Time span of the history graph: 10 s, 30 s, 1 min or 5 min of short-term (bright) and momentary (grey) loudness.' },
+      { name: 'Auto Reset', range: 'Off / On Play', desc: 'On Play clears the integrated loudness, LRA, maxima and history every time playback starts; Off keeps measuring until you reset.' },
+      { name: 'Reset', range: 'Reset / Reset', desc: 'Changing it clears the integrated loudness, LRA, true-peak and loudness maxima and the history graph.' },
+      { name: 'Monitor', range: 'Stereo / Mono', desc: 'Stereo passes the audio through untouched (bit-exact). Mono folds it to mono for listening; the meter always measures the stereo input.' }
+    ],
+    uses: ['Hitting streaming loudness targets when mastering', 'Checking broadcast deliveries against EBU R128 (-23 LUFS, -1 dBTP)', 'Keeping podcast episodes at a consistent loudness', 'Watching true-peak overs before encoding to lossy formats'],
+    properties: 'Input → ITU-R BS.1770-4 K-weighting (high shelf + high pass) → 100 ms energy blocks → Momentary (400 ms), Short-term (3 s), Integrated (gated at −70 LUFS and −10 LU), Loudness Range (EBU Tech 3342, 10th to 95th percentile, gated at −70 LUFS and −20 LU), sample peak and 4x oversampled true peak. Audio passes through unchanged (Monitor Mono is a listening aid). Zero latency. The plain JSFX only measures; the GFX, VST3 and CLAP versions show the readouts and a loudness history graph.',
+    formats: ['JSFX', 'GFX', 'VST3', 'CLAP']
+  },
   'ott': {
     title: 'OTT',
     subtitle: 'Multiband Upward/Downward Compressor',
@@ -996,6 +1012,23 @@ const guides = {
     uses: ['Infinite sustain on chords and notes', 'Drones and pads from any sound', 'Freeze reverb tails for transitions', 'Ambient layers under a mix'],
     properties: 'Signal chain: Input → 2048-Point FFT (4× overlap) → Magnitude Snapshot on Freeze → Phase Advance + Smear → IFFT Overlap-Add → Level → Mix → Output. Freezes only after a full 2048-sample window; stereo channels independent.',
     formats: ['JSFX']
+  },
+  'spectrum-analyzer': {
+    title: 'SPECTRUM ANALYZER',
+    subtitle: 'FFT Spectrum Analyzer with Peak Hold',
+    category: 'Advanced',
+    sliders: [
+      { name: 'FFT Size', range: '1024 / 2048 / 4096 / 8192 / 16384', desc: 'Number of samples in each analysis frame: larger sizes resolve low frequencies more finely but react more slowly.' },
+      { name: 'Slope', range: '0 to 6 dB/oct', desc: 'Tilts the display around 1 kHz so a balanced mix looks flat: 0 is a plain FFT, 3 dB/oct suits pink-noise-like material, 4.5 dB/oct is a common mixing reference.' },
+      { name: 'Release', range: '0 to 2000 ms', desc: 'How quickly the curve falls after a peak; rises are instant. 0 shows every frame as it is.' },
+      { name: 'Range', range: '60 dB / 80 dB / 100 dB / 120 dB', desc: 'Lowest level on the display, below 0 dB at the top.' },
+      { name: 'Peak Hold', range: 'Off / 2 s / Infinite', desc: 'Keeps a second, thinner curve at the highest level each frequency reached: for 2 s, or until the setting changes (Infinite).' },
+      { name: 'Channel', range: 'Mid / Left / Right / Side', desc: 'Signal analysed: Mid (L+R)/2, Left, Right or Side (L−R)/2.' },
+      { name: 'Monitor', range: 'Stereo / Solo', desc: 'Stereo passes the audio through untouched (bit-exact). Solo plays the analysed channel on both outputs, e.g. to listen to the side signal.' }
+    ],
+    uses: ['Spotting resonances and build-ups while mixing', 'Comparing the tonal balance of a mix with a reference', 'Checking low-end content and sub-bass on small speakers', 'Inspecting the side signal for stereo problems'],
+    properties: 'Chosen channel → Hann window → FFT (1024 to 16384 points) every 25 ms → per-bin power, instant rise and adjustable release, optional peak hold → log-frequency display 20 Hz to 20 kHz with slope around 1 kHz. Audio passes through unchanged (Monitor Solo is a listening aid). Zero latency. The plain JSFX only analyses; the GFX, VST3 and CLAP versions draw the spectrum.',
+    formats: ['JSFX', 'GFX', 'VST3', 'CLAP']
   },
   'spring-reverb': {
     title: 'SPRING REVERB',
