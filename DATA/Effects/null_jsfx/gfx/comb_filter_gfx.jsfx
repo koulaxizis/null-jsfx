@@ -115,7 +115,7 @@ out_pin:Right
 
   ng_row(4);
   slider1 >= 1000 ? sprintf(#v1, "%.2f kHz", slider1 / 1000) : sprintf(#v1, "%d Hz", slider1);
-  ng_knob_ctl(1, "FREQ", #v1, 20, 20000, 500, 1, 0) ? update();
+  ng_knob_ctl_log(1, "FREQ", #v1, 20, 20000, 500, 1) ? update();
   sprintf(#v2, "%.2f", slider2);
   ng_knob_ctl(2, "FEEDBACK", #v2, 0, 0.99, 0.5, 0.01, 0) ? update();
   ng_select_ctl(3, "MODE", "FWD|BACK", 0) ? update();

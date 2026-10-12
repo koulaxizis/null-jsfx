@@ -124,7 +124,7 @@ out_pin:Right
 
   ng_row(5);
   slider1 >= 1000 ? sprintf(#v1, "%.2f kHz", slider1 / 1000) : sprintf(#v1, "%d Hz", slider1);
-  ng_knob_ctl(1, "CUTOFF", #v1, 20, 20000, 1000, 1, 0) ? update();
+  ng_knob_ctl_log(1, "CUTOFF", #v1, 20, 20000, 1000, 1) ? update();
   sprintf(#v2, "%.1f", slider2);
   ng_knob_ctl(2, "RESONANCE", #v2, 0, 4, 0.5, 0.1, 0) ? update();
   sprintf(#v3, "%d%%", slider3);

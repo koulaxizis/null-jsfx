@@ -15,8 +15,8 @@ static const NullKnobsUI::Control kControls[] = {
     { 2, NullKnobsUI::kKnob, "RELEASE", 0, -1, false },
     { 3, NullKnobsUI::kKnob, "SENSITIVITY", 0, -1, true },
     { 7, NullKnobsUI::kSelect, "DIRECTION", 0, -1, false },
-    { 4, NullKnobsUI::kKnob, "LOW FREQ", 1, -1, false },
-    { 5, NullKnobsUI::kKnob, "HIGH FREQ", 1, -1, false },
+    { 4, NullKnobsUI::kKnob, "LOW FREQ", 1, -1, false, true },
+    { 5, NullKnobsUI::kKnob, "HIGH FREQ", 1, -1, false, true },
     { 6, NullKnobsUI::kKnob, "RESONANCE", 1, -1, false },
     { 8, NullKnobsUI::kKnob, "MIX", 1, -1, false },
 };

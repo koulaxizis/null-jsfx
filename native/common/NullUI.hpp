@@ -677,7 +677,22 @@ public:
         int row;           // row in the controls card, from 0
         int page;          // tab the control is on, or -1 for every tab
         bool bipolar;      // knob arc from the centre
+        bool log = false;  // knob on a log scale, for sliders REAPER shows as ":log" (min > 0)
     };
+
+    // knob position 0..1 for a value, and back
+    static float knobNorm(const Control& c, const SliderInfo& in, float v)
+    {
+        if (c.log)
+            return std::log(std::max(v, in.min) / in.min) / std::log(in.max / in.min);
+        return (v - in.min) / (in.max - in.min);
+    }
+    static float knobValue(const Control& c, const SliderInfo& in, float t)
+    {
+        if (c.log)
+            return in.min * std::exp(t * std::log(in.max / in.min));
+        return in.min + t * (in.max - in.min);
+    }
 
     struct Layout {
         const char* title;    // e.g. "DELAY"
@@ -842,7 +857,7 @@ protected:
             label(cx, ry + 10.0f, ALIGN_CENTER, 7.5f, 1.5f, theme::kMuted, c.label, true);
             if (c.kind == kKnob)
             {
-                drawKnob(cx, ry + 44.0f, 14.0f, (v - in.min) / (in.max - in.min), c.bipolar, lit);
+                drawKnob(cx, ry + 44.0f, 14.0f, knobNorm(c, in, v), c.bipolar, lit);
                 formatValue(c.param, v, buf, sizeof(buf));
                 label(cx, ry + 77.0f, ALIGN_CENTER, 8.5f, 0.0f, theme::kText, buf);
             }
@@ -926,6 +941,13 @@ protected:
     {
         const Control& c = fL.controls[i];
         const SliderInfo& in = fL.sliders[c.param];
+        if (c.kind == kKnob && c.log)
+        {
+            // 1% of the log range per step
+            const float t = clampf(knobNorm(c, in, fValues[c.param]) + float(dir) * 0.01f, 0.0f, 1.0f);
+            setGesture(c.param, snap(in, knobValue(c, in, t)));
+            return;
+        }
         const float st = in.step > 0.0f ? in.step : (in.max - in.min) / 100.0f;
         float v = fValues[c.param] + float(dir) * st;
         if (wrap && v > in.max + st * 0.5f)
@@ -973,7 +995,7 @@ protected:
             fDrag = i;
             fDragX = x;
             fDragY = y;
-            fDragValue = fValues[c.param];
+            fDragValue = knobNorm(c, fL.sliders[c.param], fValues[c.param]);
             editParameter(c.param, true);
             return true;
         }
@@ -1007,8 +1029,8 @@ protected:
         const float mv = (x - fDragX) + (fDragY - y);
         fDragX = x;
         fDragY = y;
-        fDragValue = clampf(fDragValue + mv * (in.max - in.min) / 200.0f * (fine ? 0.1f : 1.0f), in.min, in.max);
-        setFromUI(c.param, snap(in, fDragValue));
+        fDragValue = clampf(fDragValue + mv / 200.0f * (fine ? 0.1f : 1.0f), 0.0f, 1.0f);
+        setFromUI(c.param, snap(in, knobValue(c, in, fDragValue)));
         return true;
     }
 

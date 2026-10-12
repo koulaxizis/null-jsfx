@@ -11,7 +11,7 @@
 START_NAMESPACE_DISTRHO
 
 static const NullKnobsUI::Control kControls[] = {
-    { 0, NullKnobsUI::kKnob, "CUTOFF", 0, -1, false },
+    { 0, NullKnobsUI::kKnob, "CUTOFF", 0, -1, false, true },
     { 1, NullKnobsUI::kKnob, "RESONANCE", 0, -1, false },
     { 2, NullKnobsUI::kKnob, "DRIVE", 0, -1, false },
     { 3, NullKnobsUI::kSelect, "MODE", 0, -1, false },

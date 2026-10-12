@@ -167,9 +167,9 @@ out_pin:Right
   ng_select_ctl(8, "DIRECTION", "UP|DOWN", 0) ? update();
   ng_row(4);
   slider5 >= 1000 ? sprintf(#v5, "%.2f kHz", slider5 / 1000) : sprintf(#v5, "%d Hz", slider5);
-  ng_knob_ctl(5, "LOW FREQ", #v5, 20, 2000, 200, 1, 0) ? update();
+  ng_knob_ctl_log(5, "LOW FREQ", #v5, 20, 2000, 200, 1) ? update();
   slider6 >= 1000 ? sprintf(#v6, "%.2f kHz", slider6 / 1000) : sprintf(#v6, "%d Hz", slider6);
-  ng_knob_ctl(6, "HIGH FREQ", #v6, 500, 15000, 3000, 10, 0) ? update();
+  ng_knob_ctl_log(6, "HIGH FREQ", #v6, 500, 15000, 3000, 10) ? update();
   sprintf(#v7, "%.1f", slider7);
   ng_knob_ctl(7, "RESONANCE", #v7, 0.5, 10, 3, 0.1, 0) ? update();
   sprintf(#v9, "%d%%", slider9);
