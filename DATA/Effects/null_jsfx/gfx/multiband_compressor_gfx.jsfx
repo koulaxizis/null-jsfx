@@ -1,0 +1,440 @@
+desc:NULL Multiband Comp GFX
+author: Christos Koulaxizis
+tags: multiband compressor four-band crossover dynamics mastering per-band gui
+//category: Essentials
+//NULL JSFX v2.0 • https://nulljsfx.tech • MIT License
+
+import null_gfx.jsfx-inc
+
+slider1:120<50,1000,1>-Crossover 1 (Hz)
+slider2:1000<500,4000,1>-Crossover 2 (Hz)
+slider3:6000<4000,12000,1>-Crossover 3 (Hz)
+slider4:-20<-60,0,1>-Low Threshold (dB)
+slider5:3<1,20,0.1>-Low Ratio
+slider6:0<0,12,1>-Low Makeup (dB)
+slider7:0<0,3,1{Active,Bypass,Mute,Solo}>-Low Mode
+slider8:-20<-60,0,1>-LowMid Threshold (dB)
+slider9:3<1,20,0.1>-LowMid Ratio
+slider10:0<0,12,1>-LowMid Makeup (dB)
+slider11:0<0,3,1{Active,Bypass,Mute,Solo}>-LowMid Mode
+slider12:-20<-60,0,1>-HighMid Threshold (dB)
+slider13:3<1,20,0.1>-HighMid Ratio
+slider14:0<0,12,1>-HighMid Makeup (dB)
+slider15:0<0,3,1{Active,Bypass,Mute,Solo}>-HighMid Mode
+slider16:-20<-60,0,1>-High Threshold (dB)
+slider17:3<1,20,0.1>-High Ratio
+slider18:0<0,12,1>-High Makeup (dB)
+slider19:0<0,3,1{Active,Bypass,Mute,Solo}>-High Mode
+slider20:10<0,200,1>-Attack (ms)
+slider21:100<0,1000,1>-Release (ms)
+slider22:0<0,100,1>-Knee (%)
+slider23:0<0,12,1>-Master Output (dB)
+
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
+
+@init
+  // NULL Multiband Comp (../multiband_compressor.jsfx) with its own interface: same audio code, plus @gfx.
+  PI = 3.14159265358979;
+  LN10 = 2.30258509299405;
+  DB2LIN = LN10 / 20;
+
+  x1_l1=0; x1_l2=0; x1_l3=0; x1_l4=0;
+  x1_r1=0; x1_r2=0; x1_r3=0; x1_r4=0;
+
+  x2_l1=0; x2_l2=0; x2_l3=0; x2_l4=0;
+  x2_r1=0; x2_r2=0; x2_r3=0; x2_r4=0;
+
+  x3_l1=0; x3_l2=0; x3_l3=0; x3_l4=0;
+  x3_r1=0; x3_r2=0; x3_r3=0; x3_r4=0;
+
+  env_lo=1; env_lm=1; env_hm=1; env_hi=1;
+
+  gfx_ext_retina = 1;
+  mb_tab = 0;
+
+  function update()
+  (
+    // Internal limits match the slider ranges. Each crossover is kept at least
+    // 1.5x (about 7 semitones) above the one below it, so the bands never overlap
+    // or invert: Crossover 2 >= 1.5 x Crossover 1, Crossover 3 >= 1.5 x Crossover 2.
+    xover1 = max(50, min(1000, slider1));
+    xover2 = max(xover1 * 1.5, max(500, min(4000, slider2)));
+    xover3 = max(xover2 * 1.5, max(4000, min(12000, slider3)));
+    xover3 = min(xover3, 0.45 * srate);
+
+    lo_thr = slider4;
+    lo_ratio = max(1, min(20, slider5));
+    lo_mk = slider6;
+    lo_mode = slider7;
+
+    lm_thr = slider8;
+    lm_ratio = max(1, min(20, slider9));
+    lm_mk = slider10;
+    lm_mode = slider11;
+
+    hm_thr = slider12;
+    hm_ratio = max(1, min(20, slider13));
+    hm_mk = slider14;
+    hm_mode = slider15;
+
+    hi_thr = slider16;
+    hi_ratio = max(1, min(20, slider17));
+    hi_mk = slider18;
+    hi_mode = slider19;
+
+    att_ms = max(0, slider20);
+    rel_ms = max(0, slider21);
+    knee_pct = max(0, min(100, slider22));
+    master_db = slider23;
+
+    alpha1 = 1 - exp(-2 * PI * xover1 / srate);
+    alpha2 = 1 - exp(-2 * PI * xover2 / srate);
+    alpha3 = 1 - exp(-2 * PI * xover3 / srate);
+
+    att_ms > 0 ? (att_c = 1 - exp(-1000 / (att_ms * srate));) : (att_c = 1;);
+    rel_ms > 0 ? (rel_c = 1 - exp(-1000 / (rel_ms * srate));) : (rel_c = 1;);
+
+    lo_mk_lin = exp(lo_mk * DB2LIN);
+    lm_mk_lin = exp(lm_mk * DB2LIN);
+    hm_mk_lin = exp(hm_mk * DB2LIN);
+    hi_mk_lin = exp(hi_mk * DB2LIN);
+    master_lin = exp(master_db * DB2LIN);
+
+    lo_rf = 1 - (1 / lo_ratio);
+    lm_rf = 1 - (1 / lm_ratio);
+    hm_rf = 1 - (1 / hm_ratio);
+    hi_rf = 1 - (1 / hi_ratio);
+
+    knee_w = knee_pct * 0.6;
+  );
+
+  // log-frequency grid (20 Hz to 20 kHz) without labels, for the plot set by ng_plot
+  function mb_freq_grid() local(d, m, f, xx)
+  (
+    d = 10;
+    loop(4,
+      m = 1;
+      loop(9,
+        f = m * d;
+        f >= 20 && f <= 20000 ? (
+          xx = floor(ng_freq_x(f)) + 0.5;
+          ng_col(NG_BORDER, m == 1 ? 1 : 0.5);
+          gfx_line(xx, ng_py, xx, ng_py + ng_ph, 0);
+        );
+        m += 1;
+      );
+      d *= 10;
+    );
+  );
+
+  // frequency as text: "120 Hz" or "1.5 kHz"
+  function mb_hz(f)
+  (
+    f < 1000 ? sprintf(#mb_hz, "%d Hz", floor(f + 0.5)) : sprintf(#mb_hz, "%.1f kHz", f / 1000);
+    #mb_hz;
+  );
+
+  // band b (0..3) of the display between f1 and f2 Hz: gain reduction gr dB hanging from the
+  // top (0 to 24 dB), dimmed when the band is not heard; name and reduction (or mode) text
+  function mb_band(b, f1, f2, gr, mode, name) local(x1, x2, heard, y, cx)
+  (
+    x1 = ng_freq_x(f1); x2 = ng_freq_x(f2);
+    heard = mode != 2 && (!any_solo || mode == 3);
+    b == mb_tab ? (
+      ng_col(NG_ACCENT, 0.06);
+      gfx_rect(x1, ng_py, x2 - x1, ng_ph);
+    );
+    mode == 1 ? gr = 0;
+    y = ng_lin_y(-gr, -24, 0);
+    ng_col(NG_ACCENT, !heard ? 0.2 : (b == mb_tab ? 0.8 : 0.45));
+    y > ng_py + 0.5 ? gfx_rect(x1 + ng_s, ng_py, x2 - x1 - 2 * ng_s, y - ng_py);
+    (x2 - x1) / ng_s >= 44 ? (
+      cx = (x1 + x2) / 2;
+      ng_font(1, 7, 1);
+      ng_col(b == mb_tab ? NG_TEXT : NG_MUTED, 1);
+      mode == 3 ? sprintf(#mb_n, "%s SOLO", name) : strcpy(#mb_n, name);
+      ng_ptxt(#mb_n, cx, ng_py + ng_ph - 22 * ng_s, 1);
+      ng_font(4, 8, 0);
+      mode == 1 ? strcpy(#mb_g, "BYPASS") : mode == 2 ? strcpy(#mb_g, "MUTE") :
+        gr > 0.05 ? sprintf(#mb_g, "-%.1f dB", gr) : strcpy(#mb_g, "0.0 dB");
+      ng_ptxt(#mb_g, cx, ng_py + ng_ph - 10 * ng_s, 1);
+    );
+  );
+
+@slider
+  update();
+
+@sample
+  // CROSSOVER 1: LP at xover1 → Low band
+  x1_l1 = x1_l1 + alpha1 * (spl0 - x1_l1);
+  x1_l2 = x1_l2 + alpha1 * (x1_l1 - x1_l2);
+  x1_l3 = x1_l3 + alpha1 * (x1_l2 - x1_l3);
+  x1_l4 = x1_l4 + alpha1 * (x1_l3 - x1_l4);
+  x1_r1 = x1_r1 + alpha1 * (spl1 - x1_r1);
+  x1_r2 = x1_r2 + alpha1 * (x1_r1 - x1_r2);
+  x1_r3 = x1_r3 + alpha1 * (x1_r2 - x1_r3);
+  x1_r4 = x1_r4 + alpha1 * (x1_r3 - x1_r4);
+  low_l = x1_l4;
+  low_r = x1_r4;
+
+  rem1_l = spl0 - low_l;
+  rem1_r = spl1 - low_r;
+
+  // CROSSOVER 2: LP at xover2 on Remainder 1 → LowMid band
+  x2_l1 = x2_l1 + alpha2 * (rem1_l - x2_l1);
+  x2_l2 = x2_l2 + alpha2 * (x2_l1 - x2_l2);
+  x2_l3 = x2_l3 + alpha2 * (x2_l2 - x2_l3);
+  x2_l4 = x2_l4 + alpha2 * (x2_l3 - x2_l4);
+  x2_r1 = x2_r1 + alpha2 * (rem1_r - x2_r1);
+  x2_r2 = x2_r2 + alpha2 * (x2_r1 - x2_r2);
+  x2_r3 = x2_r3 + alpha2 * (x2_r2 - x2_r3);
+  x2_r4 = x2_r4 + alpha2 * (x2_r3 - x2_r4);
+  lowmid_l = x2_l4;
+  lowmid_r = x2_r4;
+
+  rem2_l = rem1_l - lowmid_l;
+  rem2_r = rem1_r - lowmid_r;
+
+  // CROSSOVER 3: LP at xover3 on Remainder 2 → HighMid band
+  x3_l1 = x3_l1 + alpha3 * (rem2_l - x3_l1);
+  x3_l2 = x3_l2 + alpha3 * (x3_l1 - x3_l2);
+  x3_l3 = x3_l3 + alpha3 * (x3_l2 - x3_l3);
+  x3_l4 = x3_l4 + alpha3 * (x3_l3 - x3_l4);
+  x3_r1 = x3_r1 + alpha3 * (rem2_r - x3_r1);
+  x3_r2 = x3_r2 + alpha3 * (x3_r1 - x3_r2);
+  x3_r3 = x3_r3 + alpha3 * (x3_r2 - x3_r3);
+  x3_r4 = x3_r4 + alpha3 * (x3_r3 - x3_r4);
+  highmid_l = x3_l4;
+  highmid_r = x3_r4;
+
+  high_l = rem2_l - highmid_l;
+  high_r = rem2_r - highmid_r;
+
+  // ─── LOW BAND ───
+  abs_l = low_l < 0 ? -low_l : low_l;
+  abs_r = low_r < 0 ? -low_r : low_r;
+  peak = abs_l > abs_r ? abs_l : abs_r;
+  peak_db = peak > 0 ? log(peak) / LN10 * 20 : -200;
+  ks = lo_thr - knee_w;
+  ke = lo_thr + knee_w;
+  over = peak_db - lo_thr;
+  peak_db > ke ? (
+    gr_db = over * lo_rf;
+  ) : (
+    peak_db > ks ? (
+      kp = (peak_db - ks) / (knee_w * 2);
+      gr_db = over * lo_rf * kp * kp;
+    ) : (
+      gr_db = 0;
+    );
+  );
+  gr_db = gr_db > 60 ? 60 : gr_db;
+  gr_lin = exp(-gr_db * DB2LIN);
+  gr_lin < env_lo ? (
+    env_lo = env_lo + (gr_lin - env_lo) * att_c;
+  ) : (
+    env_lo = env_lo + (gr_lin - env_lo) * rel_c;
+  );
+  lo_mode == 1 ? (
+    lo_out_l = low_l * lo_mk_lin;
+    lo_out_r = low_r * lo_mk_lin;
+  ) : (
+    lo_out_l = low_l * env_lo * lo_mk_lin;
+    lo_out_r = low_r * env_lo * lo_mk_lin;
+  );
+
+  // ─── LOW MID BAND ───
+  abs_l = lowmid_l < 0 ? -lowmid_l : lowmid_l;
+  abs_r = lowmid_r < 0 ? -lowmid_r : lowmid_r;
+  peak = abs_l > abs_r ? abs_l : abs_r;
+  peak_db = peak > 0 ? log(peak) / LN10 * 20 : -200;
+  ks = lm_thr - knee_w;
+  ke = lm_thr + knee_w;
+  over = peak_db - lm_thr;
+  peak_db > ke ? (
+    gr_db = over * lm_rf;
+  ) : (
+    peak_db > ks ? (
+      kp = (peak_db - ks) / (knee_w * 2);
+      gr_db = over * lm_rf * kp * kp;
+    ) : (
+      gr_db = 0;
+    );
+  );
+  gr_db = gr_db > 60 ? 60 : gr_db;
+  gr_lin = exp(-gr_db * DB2LIN);
+  gr_lin < env_lm ? (
+    env_lm = env_lm + (gr_lin - env_lm) * att_c;
+  ) : (
+    env_lm = env_lm + (gr_lin - env_lm) * rel_c;
+  );
+  lm_mode == 1 ? (
+    lm_out_l = lowmid_l * lm_mk_lin;
+    lm_out_r = lowmid_r * lm_mk_lin;
+  ) : (
+    lm_out_l = lowmid_l * env_lm * lm_mk_lin;
+    lm_out_r = lowmid_r * env_lm * lm_mk_lin;
+  );
+
+  // ─── HIGH MID BAND ───
+  abs_l = highmid_l < 0 ? -highmid_l : highmid_l;
+  abs_r = highmid_r < 0 ? -highmid_r : highmid_r;
+  peak = abs_l > abs_r ? abs_l : abs_r;
+  peak_db = peak > 0 ? log(peak) / LN10 * 20 : -200;
+  ks = hm_thr - knee_w;
+  ke = hm_thr + knee_w;
+  over = peak_db - hm_thr;
+  peak_db > ke ? (
+    gr_db = over * hm_rf;
+  ) : (
+    peak_db > ks ? (
+      kp = (peak_db - ks) / (knee_w * 2);
+      gr_db = over * hm_rf * kp * kp;
+    ) : (
+      gr_db = 0;
+    );
+  );
+  gr_db = gr_db > 60 ? 60 : gr_db;
+  gr_lin = exp(-gr_db * DB2LIN);
+  gr_lin < env_hm ? (
+    env_hm = env_hm + (gr_lin - env_hm) * att_c;
+  ) : (
+    env_hm = env_hm + (gr_lin - env_hm) * rel_c;
+  );
+  hm_mode == 1 ? (
+    hm_out_l = highmid_l * hm_mk_lin;
+    hm_out_r = highmid_r * hm_mk_lin;
+  ) : (
+    hm_out_l = highmid_l * env_hm * hm_mk_lin;
+    hm_out_r = highmid_r * env_hm * hm_mk_lin;
+  );
+
+  // ─── HIGH BAND ───
+  abs_l = high_l < 0 ? -high_l : high_l;
+  abs_r = high_r < 0 ? -high_r : high_r;
+  peak = abs_l > abs_r ? abs_l : abs_r;
+  peak_db = peak > 0 ? log(peak) / LN10 * 20 : -200;
+  ks = hi_thr - knee_w;
+  ke = hi_thr + knee_w;
+  over = peak_db - hi_thr;
+  peak_db > ke ? (
+    gr_db = over * hi_rf;
+  ) : (
+    peak_db > ks ? (
+      kp = (peak_db - ks) / (knee_w * 2);
+      gr_db = over * hi_rf * kp * kp;
+    ) : (
+      gr_db = 0;
+    );
+  );
+  gr_db = gr_db > 60 ? 60 : gr_db;
+  gr_lin = exp(-gr_db * DB2LIN);
+  gr_lin < env_hi ? (
+    env_hi = env_hi + (gr_lin - env_hi) * att_c;
+  ) : (
+    env_hi = env_hi + (gr_lin - env_hi) * rel_c;
+  );
+  hi_mode == 1 ? (
+    hi_out_l = high_l * hi_mk_lin;
+    hi_out_r = high_r * hi_mk_lin;
+  ) : (
+    hi_out_l = high_l * env_hi * hi_mk_lin;
+    hi_out_r = high_r * env_hi * hi_mk_lin;
+  );
+
+  // SOLO/MUTE/BYPASS + OUTPUT
+  any_solo = (lo_mode == 3) || (lm_mode == 3) || (hm_mode == 3) || (hi_mode == 3);
+
+  any_solo ? (
+    spl0 = 0;
+    spl1 = 0;
+    lo_mode == 3 ? (spl0 = spl0 + lo_out_l; spl1 = spl1 + lo_out_r;);
+    lm_mode == 3 ? (spl0 = spl0 + lm_out_l; spl1 = spl1 + lm_out_r;);
+    hm_mode == 3 ? (spl0 = spl0 + hm_out_l; spl1 = spl1 + hm_out_r;);
+    hi_mode == 3 ? (spl0 = spl0 + hi_out_l; spl1 = spl1 + hi_out_r;);
+  ) : (
+    spl0 = lo_out_l + lm_out_l + hm_out_l + hi_out_l;
+    spl1 = lo_out_r + lm_out_r + hm_out_r + hi_out_r;
+    lo_mode == 2 ? (spl0 = spl0 - lo_out_l; spl1 = spl1 - lo_out_r;);
+    lm_mode == 2 ? (spl0 = spl0 - lm_out_l; spl1 = spl1 - lm_out_r;);
+    hm_mode == 2 ? (spl0 = spl0 - hm_out_l; spl1 = spl1 - hm_out_r;);
+    hi_mode == 2 ? (spl0 = spl0 - hi_out_l; spl1 = spl1 - hi_out_r;);
+  );
+
+  spl0 = spl0 * master_lin;
+  spl1 = spl1 * master_lin;
+
+@gfx 480 408
+  ng_knobs_begin("MULTIBAND COMP", "ESSENTIALS", 480, 120, 2, 1);
+
+  // display: the four bands across frequency (the crossovers in use) with each band's gain
+  // reduction hanging from the top (0 to 24 dB); the band of the open tab highlighted
+  ng_plot(50, 66, 402, 84);
+  mb_freq_grid();
+  mb_i = 0;
+  loop(5,
+    mb_y = floor(ng_py + ng_ph * mb_i / 4) + 0.5;
+    ng_col(NG_BORDER, 0.6);
+    gfx_line(ng_px, mb_y, ng_px + ng_pw, mb_y, 0);
+    mb_i += 1;
+  );
+  ng_font(4, 8, 0);
+  ng_col(NG_MUTED, 1);
+  ng_ptxt("0", ng_px - 6 * ng_s, ng_py, 2);
+  ng_ptxt("-12", ng_px - 6 * ng_s, ng_py + ng_ph / 2, 2);
+  ng_ptxt("-24", ng_px - 6 * ng_s, ng_py + ng_ph, 2);
+  mb_band(0, 20, xover1, -20 * log10(max(env_lo, 0.0000001)), lo_mode, "LOW");
+  mb_band(1, xover1, xover2, -20 * log10(max(env_lm, 0.0000001)), lm_mode, "LOW MID");
+  mb_band(2, xover2, xover3, -20 * log10(max(env_hm, 0.0000001)), hm_mode, "HIGH MID");
+  mb_band(3, xover3, 20000, -20 * log10(max(env_hi, 0.0000001)), hi_mode, "HIGH");
+  mb_i = 0;
+  loop(3,
+    mb_f = mb_i == 0 ? xover1 : mb_i == 1 ? xover2 : xover3;
+    mb_x = floor(ng_freq_x(mb_f)) + 0.5;
+    ng_col(NG_ACCENT, 0.6);
+    gfx_line(mb_x, ng_py, mb_x, ng_py + ng_ph, 0);
+    ng_font(4, 8, 0);
+    ng_col(NG_MUTED, 1);
+    ng_ptxt(mb_hz(mb_f), mb_x, ng_py + ng_ph + 11 * ng_s, 1);
+    mb_i += 1;
+  );
+
+  mb_tab = ng_tabs("LOW|LOW MID|HIGH MID|HIGH", mb_tab);
+  mb_o = 4 + 4 * mb_tab;
+  mb_thr = mb_tab == 0 ? slider4 : mb_tab == 1 ? slider8 : mb_tab == 2 ? slider12 : slider16;
+  mb_rat = mb_tab == 0 ? slider5 : mb_tab == 1 ? slider9 : mb_tab == 2 ? slider13 : slider17;
+  mb_mk = mb_tab == 0 ? slider6 : mb_tab == 1 ? slider10 : mb_tab == 2 ? slider14 : slider18;
+  ng_row(mb_tab < 3 ? 5 : 4);
+  sprintf(#mb_v, "%d dB", mb_thr);
+  ng_knob_ctl(mb_o, "THRESHOLD", #mb_v, -60, 0, -20, 1, 0) ? update();
+  sprintf(#mb_v, "%.1f:1", mb_rat);
+  ng_knob_ctl(mb_o + 1, "RATIO", #mb_v, 1, 20, 3, 0.1, 0) ? update();
+  sprintf(#mb_v, "%d dB", mb_mk);
+  ng_knob_ctl(mb_o + 2, "MAKEUP", #mb_v, 0, 12, 0, 1, 0) ? update();
+  ng_select_ctl(mb_o + 3, "MODE", "ACTIVE|BYPASS|MUTE|SOLO", 0) ? update();
+  mb_tab == 0 ? (
+    sprintf(#mb_v, "%d Hz", slider1);
+    ng_knob_ctl(1, "XOVER", #mb_v, 50, 1000, 120, 1, 0) ? update();
+  );
+  mb_tab == 1 ? (
+    sprintf(#mb_v, "%d Hz", slider2);
+    ng_knob_ctl(2, "XOVER", #mb_v, 500, 4000, 1000, 1, 0) ? update();
+  );
+  mb_tab == 2 ? (
+    sprintf(#mb_v, "%d Hz", slider3);
+    ng_knob_ctl(3, "XOVER", #mb_v, 4000, 12000, 6000, 1, 0) ? update();
+  );
+  ng_row(4);
+  sprintf(#mb_v, "%d ms", slider20);
+  ng_knob_ctl(20, "ATTACK", #mb_v, 0, 200, 10, 1, 0) ? update();
+  sprintf(#mb_v, "%d ms", slider21);
+  ng_knob_ctl(21, "RELEASE", #mb_v, 0, 1000, 100, 1, 0) ? update();
+  sprintf(#mb_v, "%d%%", slider22);
+  ng_knob_ctl(22, "KNEE", #mb_v, 0, 100, 0, 1, 0) ? update();
+  sprintf(#mb_v, "%d dB", slider23);
+  ng_knob_ctl(23, "OUTPUT", #mb_v, 0, 12, 0, 1, 0) ? update();
+
+  ng_end();

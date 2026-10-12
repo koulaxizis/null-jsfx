@@ -1,0 +1,171 @@
+desc:NULL Limiter GFX
+author: Christos Koulaxizis
+tags: limiter ceiling clipper brickwall peak protection mastering gui
+//category: Essentials
+//NULL JSFX v2.0 • https://nulljsfx.tech • MIT License
+
+import null_gfx.jsfx-inc
+
+slider1:0<0,2,1{Limiter,Clipper,Brickwall}>-Mode
+slider2:0<-30,0,0.1>-Threshold (dB)
+slider3:-0.1<-6,-0.1,0.1>-Ceiling (dB)
+slider4:200<0,1000,1>-Release (ms)
+slider5:2<0,10,0.1>-Lookahead (ms)
+
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
+
+@init
+  // NULL Limiter (../limiter.jsfx) with its own interface: same audio code, plus @gfx.
+  // Limiter:   look-ahead limiter; the gain starts falling before a peak arrives.
+  // Clipper:   soft clipper, no delay.
+  // Brickwall: like Limiter but the gain drops instantly, so nothing passes the ceiling.
+  // Threshold sets how hard the signal is pushed: the level at Threshold comes out at Ceiling.
+  max_look = ceil(srate * 0.011) + 2;
+  buf_l = 0;
+  buf_r = buf_l + max_look;
+  memset(buf_l, 0, 2 * max_look);
+  freembuf(buf_r + max_look);
+  wpos = 0;
+  hold_val = 0;
+  hold_cnt = 0;
+  gain = 1;
+  pdc_bot_ch = 0;
+  pdc_top_ch = 2;
+  gfx_ext_retina = 1;
+
+  // interface only: a 1.8 s history of the output level and the gain, one entry per
+  // 7 ms (260 entries, one per display pixel) in memory from 4000000, and peak meters
+  lm_buf = 4000000; lm_len = 260; lm_w = 0;
+  lm_chunk = max(1, floor(srate * 0.007));
+  lm_n = 0; lm_hl = 0; lm_hgh = 0; lm_hgl = 1000;
+  lm_i = 0;
+  loop(lm_len, lm_buf[lm_i * 2] = 0; lm_buf[lm_i * 2 + 1] = 1; lm_i += 1;);
+  lm_rel = exp(-1 / (0.3 * srate));
+  lm_in = lm_out = 0;
+
+  function update()
+  (
+    mode = slider1;
+    ceiling = 10 ^ (slider3 / 20);
+    drive = 10 ^ ((slider3 - slider2) / 20);
+    look = mode == 1 ? 0 : floor(slider5 * srate / 1000 + 0.5);
+    pdc_delay = look;
+    rel = exp(-1 / max(1, slider4 * srate / 1000));
+    att = mode == 2 || look < 1 ? 1 : 1 - exp(-5 / look);
+  );
+
+  // history: output level as dim bars (-48..0 dB), the gain as the line (-24..0 dB)
+  function lm_history() local(i, k, xx, yy, h)
+  (
+    ng_plot(56, 68, 260, 88);
+    ng_grid(8, 4, 0);
+    ng_font(4, 8, 0);
+    ng_col(NG_MUTED, 1);
+    i = 0;
+    loop(5,
+      0 - 6 * i > 0 ? sprintf(#lm_l, "+%d", 0 - 6 * i) : sprintf(#lm_l, "%d", 0 - 6 * i);
+      ng_ptxt(#lm_l, ng_px - 6 * ng_s, ng_py + ng_ph * i / 4, 2);
+      i += 1;
+    );
+    ng_col(NG_ACCENT, 0.15);
+    i = 0;
+    loop(lm_len,
+      k = (lm_w + i) % lm_len;
+      h = ng_ph * ng_db_norm(ng_to_db(lm_buf[k * 2]), -48);
+      h > 0 ? gfx_rect(ng_px + i * ng_s, ng_py + ng_ph - h, ng_s, h);
+      i += 1;
+    );
+    ng_col(NG_ACCENT, 1);
+    i = 0;
+    loop(lm_len,
+      k = (lm_w + i) % lm_len;
+      xx = ng_px + (i + 0.5) * ng_s;
+      yy = ng_lin_y(ng_to_db(lm_buf[k * 2 + 1]), -24, 0);
+      i == 0 ? ng_line_start(xx, yy) : ng_line_to(xx, yy);
+      i += 1;
+    );
+  );
+
+@slider
+  update();
+
+@sample
+  lm_x = max(abs(spl0), abs(spl1)); // interface only
+  in_l = spl0 * drive;
+  in_r = spl1 * drive;
+
+  mode == 1 ? (
+    // soft clip: linear up to 70% of the ceiling, then a smooth knee into the ceiling
+    knee = 0.7 * ceiling;
+    a = abs(in_l);
+    a > knee ? in_l = sign(in_l) * (knee + (ceiling - knee) * (1 - exp(-(a - knee) / (ceiling - knee))));
+    a = abs(in_r);
+    a > knee ? in_r = sign(in_r) * (knee + (ceiling - knee) * (1 - exp(-(a - knee) / (ceiling - knee))));
+    spl0 = in_l;
+    spl1 = in_r;
+  ) : (
+    // peak detector on the incoming (not yet delayed) signal, held for the look-ahead time
+    peak = max(abs(in_l), abs(in_r));
+    peak >= hold_val ? (
+      hold_val = peak;
+      hold_cnt = look;
+    ) : hold_cnt > 0 ? (
+      hold_cnt -= 1;
+    ) : (
+      hold_val = max(peak, hold_val * rel);
+    );
+    target = hold_val > ceiling ? ceiling / hold_val : 1;
+    gain = target < gain ? gain + (target - gain) * att : target + (gain - target) * rel;
+
+    buf_l[wpos] = in_l;
+    buf_r[wpos] = in_r;
+    rpos = wpos - look;
+    rpos < 0 ? rpos += max_look;
+    wpos += 1;
+    wpos >= max_look ? wpos = 0;
+
+    spl0 = max(-ceiling, min(ceiling, buf_l[rpos] * gain));
+    spl1 = max(-ceiling, min(ceiling, buf_r[rpos] * gain));
+  );
+
+  // interface only: meters and history (read the audio state, never change it)
+  lm_in = lm_x > lm_in ? lm_x : lm_in * lm_rel;
+  lm_lv = max(abs(spl0), abs(spl1));
+  lm_out = lm_lv > lm_out ? lm_lv : lm_out * lm_rel;
+  lm_g = mode == 1 ? (lm_x * drive > lm_lv ? lm_lv / (lm_x * drive) : 1) : gain;
+  lm_hl = max(lm_hl, lm_lv);
+  lm_hgh = max(lm_hgh, lm_g);
+  lm_hgl = min(lm_hgl, lm_g);
+  (lm_n += 1) >= lm_chunk ? (
+    lm_buf[lm_w * 2] = lm_hl;
+    lm_buf[lm_w * 2 + 1] = lm_hgh * lm_hgl > 1 ? lm_hgh : lm_hgl;
+    lm_w = (lm_w + 1) % lm_len;
+    lm_n = 0; lm_hl = 0; lm_hgh = 0; lm_hgl = 1000;
+  );
+
+@gfx 480 294
+  ng_knobs_begin("LIMITER", "ESSENTIALS", 480, 120, 1, 0);
+
+  // display, left: the last 1.8 s of output level (bars) and gain (line; in Clipper mode the
+  // output against the driven input); right: input (Threshold marked), gain-reduction and
+  // output (Ceiling marked) meters
+  lm_history();
+  ng_meter(336, 82, 112, 10, "IN", ng_to_db(lm_in), slider2, -48);
+  ng_gr_meter(336, 106, 112, 10, "GR", -20 * log10(max(lm_g, 0.0000001)), 24);
+  ng_meter(336, 130, 112, 10, "OUT", ng_to_db(lm_out), slider3, -48);
+
+  ng_row(5);
+  ng_select_ctl(1, "MODE", "LIMITER|CLIPPER|BRICK", 0) ? update();
+  sprintf(#v2, "%.1f dB", slider2);
+  ng_knob_ctl(2, "THRESHOLD", #v2, -30, 0, 0, 0.1, 0) ? update();
+  sprintf(#v3, "%.1f dB", slider3);
+  ng_knob_ctl(3, "CEILING", #v3, -6, -0.1, -0.1, 0.1, 0) ? update();
+  sprintf(#v4, "%d ms", slider4);
+  ng_knob_ctl(4, "RELEASE", #v4, 0, 1000, 200, 1, 0) ? update();
+  sprintf(#v5, "%.1f ms", slider5);
+  ng_knob_ctl(5, "LOOKAHEAD", #v5, 0, 10, 2, 0.1, 0) ? update();
+
+  ng_end();

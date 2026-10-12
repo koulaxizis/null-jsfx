@@ -1,0 +1,173 @@
+desc:NULL Phaser GFX
+author: Christos Koulaxizis
+tags: phaser modulation sweep notch moving filter allpass gui
+//category: Essentials
+//NULL JSFX v2.0 • https://nulljsfx.tech • MIT License
+
+import null_gfx.jsfx-inc
+
+slider1:0.5<0.1,5,0.1>-Rate (Hz)
+slider2:4<1,8,1>-Stages
+slider3:30<0,100,1>-Mix (%)
+
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
+
+@init
+  // NULL Phaser (../phaser.jsfx) with its own interface: same audio code, plus @gfx.
+  lfo_phase = 0;
+  ly1=0; ly2=0; ly3=0; ly4=0; ly5=0; ly6=0; ly7=0; ly8=0;
+  lx1=0; lx2=0; lx3=0; lx4=0; lx5=0; lx6=0; lx7=0; lx8=0;
+  ry1=0; ry2=0; ry3=0; ry4=0; ry5=0; ry6=0; ry7=0; ry8=0;
+  rx1=0; rx2=0; rx3=0; rx4=0; rx5=0; rx6=0; rx7=0; rx8=0;
+  last_l = 0;
+  last_r = 0;
+  gfx_ext_retina = 1;
+
+  function update()
+  (
+    rate = slider1;
+    stages = floor(slider2);
+    mix_amt = slider3 / 100;
+    lfo_inc = 2 * $pi * rate / srate;
+    d_min = 440 * 2 / srate;
+    d_max = 1600 * 2 / srate;
+    d_sc = abs(d_max - d_min) * 0.5;
+    d_min = d_min < d_max ? d_min : d_max;
+    feedback = 0.3;
+  );
+
+  // ---- modulation view: an info line over a plot of two LFO cycles ----
+  // the allpass frequency (440 to 1600 Hz, log scale 200 Hz to 3.2 kHz) at u (0..1 = two
+  // cycles), as a plot y
+  function md_val(u)
+  (
+    ng_py + ng_ph * (1 - log((440 + 580 * (sin(4 * $pi * u) + 1)) / 200) / log(16));
+  );
+
+  function md_view(left, right)
+  (
+    ng_plot(ng_vx + 26, ng_vy + 14, ng_vw - 30, ng_vh - 30);
+    ng_grid(4, 4, 0);
+    ng_font(4, 8, 0);
+    ng_col(NG_MUTED, 1);
+    ng_ptxt(left, ng_px, Y(ng_vy + 4), 0);
+    ng_ptxt(right, ng_px + ng_pw, Y(ng_vy + 4), 2);
+  );
+
+  // labels at the top, middle and bottom of the plot
+  function md_ylabels(top, mid, bot)
+  (
+    ng_col(NG_MUTED, 1);
+    ng_ptxt(top, ng_px - 6 * ng_s, ng_py, 2);
+    ng_ptxt(mid, ng_px - 6 * ng_s, ng_py + ng_ph / 2, 2);
+    ng_ptxt(bot, ng_px - 6 * ng_s, ng_py + ng_ph, 2);
+  );
+
+  // times under the plot at 1/4, 1/2 and 3/4 of its width for a cycle of period seconds
+  function md_xlabels(period) local(i, t)
+  (
+    ng_col(NG_MUTED, 1);
+    i = 1;
+    loop(3,
+      t = period * i / 2;
+      t < 1 ? sprintf(#md_t, "%d ms", floor(t * 1000 + 0.5)) : sprintf(#md_t, "%.2f s", t);
+      ng_ptxt(#md_t, ng_px + ng_pw * i / 4, ng_py + ng_ph + 10 * ng_s, 1);
+      i += 1;
+    );
+  );
+
+  // md_val across the plot in colour rgb, shaded down to the bottom when fill = 1
+  function md_curve(rgb, fill) local(i)
+  (
+    fill ? (
+      ng_col(NG_ACCENT, 0.10);
+      i = 0;
+      loop(floor(ng_pw) + 1, gfx_line(ng_px + i, ng_py + ng_ph, ng_px + i, md_val(i / ng_pw), 0); i += 1;);
+    );
+    ng_col(rgb, 1);
+    i = 0;
+    loop(floor(ng_pw) + 1,
+      i == 0 ? ng_line_start(ng_px, md_val(0)) : ng_line_to(ng_px + i, md_val(i / ng_pw));
+      i += 1;
+    );
+  );
+
+  // dashed playhead at u (0..1) of the plot width
+  function md_playhead(u) local(x, y)
+  (
+    x = floor(ng_px + max(0, min(1, u)) * ng_pw) + 0.5;
+    ng_col(NG_ACCENT, 0.5);
+    y = ng_py;
+    while (
+      gfx_line(x, y, x, min(y + 3 * ng_s, ng_py + ng_ph), 0);
+      y += 6 * ng_s;
+      y < ng_py + ng_ph;
+    );
+  );
+
+@slider
+  update();
+
+@sample
+  lfo_phase += lfo_inc;
+  lfo_phase >= 2 * $pi ? lfo_phase -= 2 * $pi;
+  
+  d = d_min + d_sc * (sin(lfo_phase) + 1);
+  coef = (1 - d) / (1 + d);
+  
+  // Left channel
+  wet_l = spl0 + last_l * feedback;
+  
+  ly1 = coef * (ly1 + wet_l) - lx1;  lx1 = wet_l;  wet_l = ly1;
+  stages >= 2 ? (ly2 = coef * (ly2 + wet_l) - lx2;  lx2 = wet_l;  wet_l = ly2;);
+  stages >= 3 ? (ly3 = coef * (ly3 + wet_l) - lx3;  lx3 = wet_l;  wet_l = ly3;);
+  stages >= 4 ? (ly4 = coef * (ly4 + wet_l) - lx4;  lx4 = wet_l;  wet_l = ly4;);
+  stages >= 5 ? (ly5 = coef * (ly5 + wet_l) - lx5;  lx5 = wet_l;  wet_l = ly5;);
+  stages >= 6 ? (ly6 = coef * (ly6 + wet_l) - lx6;  lx6 = wet_l;  wet_l = ly6;);
+  stages >= 7 ? (ly7 = coef * (ly7 + wet_l) - lx7;  lx7 = wet_l;  wet_l = ly7;);
+  stages >= 8 ? (ly8 = coef * (ly8 + wet_l) - lx8;  lx8 = wet_l;  wet_l = ly8;);
+  
+  last_l = wet_l;
+  spl0 += wet_l * mix_amt;
+  
+  // Right channel
+  wet_r = spl1 + last_r * feedback;
+  
+  ry1 = coef * (ry1 + wet_r) - rx1;  rx1 = wet_r;  wet_r = ry1;
+  stages >= 2 ? (ry2 = coef * (ry2 + wet_r) - rx2;  rx2 = wet_r;  wet_r = ry2;);
+  stages >= 3 ? (ry3 = coef * (ry3 + wet_r) - rx3;  rx3 = wet_r;  wet_r = ry3;);
+  stages >= 4 ? (ry4 = coef * (ry4 + wet_r) - rx4;  rx4 = wet_r;  wet_r = ry4;);
+  stages >= 5 ? (ry5 = coef * (ry5 + wet_r) - rx5;  rx5 = wet_r;  wet_r = ry5;);
+  stages >= 6 ? (ry6 = coef * (ry6 + wet_r) - rx6;  rx6 = wet_r;  wet_r = ry6;);
+  stages >= 7 ? (ry7 = coef * (ry7 + wet_r) - rx7;  rx7 = wet_r;  wet_r = ry7;);
+  stages >= 8 ? (ry8 = coef * (ry8 + wet_r) - rx8;  rx8 = wet_r;  wet_r = ry8;);
+  
+  last_r = wet_r;
+  spl1 += wet_r * mix_amt;
+
+@gfx 480 294
+  ng_knobs_begin("PHASER", "ESSENTIALS", 480, 120, 1, 0);
+
+  // display: the allpass frequency over two LFO cycles (log, 200 Hz to 3.2 kHz), the LFO
+  // position dashed
+  md_n = floor(slider2 / 2);
+  slider2 < 2 ? strcpy(#md_r, "1 STAGE, NO NOTCH") :
+  md_n == 1 ? sprintf(#md_r, "%d STAGES, 1 NOTCH", slider2) : sprintf(#md_r, "%d STAGES, %d NOTCHES", slider2, md_n);
+  md_view("SWEEP (Hz)", #md_r);
+  md_ylabels("3.2k", "800", "200");
+  md_xlabels(1 / slider1);
+  md_curve(NG_ACCENT, 1);
+  md_playhead(lfo_phase / (2 * $pi) / 2);
+
+  ng_row(3);
+  sprintf(#v1, "%.1f Hz", slider1);
+  ng_knob_ctl(1, "RATE", #v1, 0.1, 5, 0.5, 0.1, 0) ? update();
+  sprintf(#v2, "%d", slider2);
+  ng_knob_ctl(2, "STAGES", #v2, 1, 8, 4, 1, 0) ? update();
+  sprintf(#v3, "%d%%", slider3);
+  ng_knob_ctl(3, "MIX", #v3, 0, 100, 30, 1, 0) ? update();
+
+  ng_end();

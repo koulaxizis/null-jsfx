@@ -1,0 +1,229 @@
+desc:NULL Parametric EQ GFX
+author: Christos Koulaxizis
+tags: equalizer parametric eq 5-band shelving filter mixing mastering gui
+//category: Essentials
+//NULL JSFX v2.0 • https://nulljsfx.tech • MIT License
+
+import null_gfx.jsfx-inc
+
+slider1:77<20,300,1>-Low Freq (Hz)
+slider2:0<-18,18,0.1>-Low Gain (dB)
+slider3:1.0<0.1,10.0,0.1>-Low Q
+slider4:2<0,7,1{Low Shelf,High Shelf,Peaking,Low Pass,High Pass,Notch,Band Pass,All Pass}>-Low Type
+slider5:0<0,2,1{Active,Bypass,Solo}>-Low Mode
+slider6:548<300,1000,1>-Low Mid Freq (Hz)
+slider7:0<-18,18,0.1>-Low Mid Gain (dB)
+slider8:1.0<0.1,10.0,0.1>-Low Mid Q
+slider9:2<0,7,1{Low Shelf,High Shelf,Peaking,Low Pass,High Pass,Notch,Band Pass,All Pass}>-Low Mid Type
+slider10:0<0,2,1{Active,Bypass,Solo}>-Low Mid Mode
+slider11:2236<1000,5000,1>-Mid High Freq (Hz)
+slider12:0<-18,18,0.1>-Mid High Gain (dB)
+slider13:1.0<0.1,10.0,0.1>-Mid High Q
+slider14:2<0,7,1{Low Shelf,High Shelf,Peaking,Low Pass,High Pass,Notch,Band Pass,All Pass}>-Mid High Type
+slider15:0<0,2,1{Active,Bypass,Solo}>-Mid High Mode
+slider16:10000<5000,20000,1>-High Freq (Hz)
+slider17:0<-18,18,0.1>-High Gain (dB)
+slider18:1.0<0.1,10.0,0.1>-High Q
+slider19:2<0,7,1{Low Shelf,High Shelf,Peaking,Low Pass,High Pass,Notch,Band Pass,All Pass}>-High Type
+slider20:0<0,2,1{Active,Bypass,Solo}>-High Mode
+slider21:15000<10000,24000,1>-Ultra High Freq (Hz)
+slider22:0<-18,18,0.1>-Ultra High Gain (dB)
+slider23:1.0<0.1,10.0,0.1>-Ultra High Q
+slider24:2<0,7,1{Low Shelf,High Shelf,Peaking,Low Pass,High Pass,Notch,Band Pass,All Pass}>-Ultra High Type
+slider25:0<0,2,1{Active,Bypass,Solo}>-Ultra High Mode
+
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
+
+@init
+  // NULL Parametric EQ (../parametric_eq.jsfx) with its own interface: same audio code, plus @gfx.
+  // Five fully parametric bands in series. Each band can be any of eight RBJ filter
+  // shapes. Mode: Bypass skips the band; Solo plays only what that band's frequency
+  // and Q select (band-pass), to find problem frequencies.
+
+  // coefficients for one band: this.b0 .. this.a2
+  function design(freq, gain, q, type) local(w, c, s, al, A, sq, a0)
+  (
+    w = 2 * $pi * min(freq, srate * 0.49) / srate;
+    c = cos(w); s = sin(w);
+    al = s / (2 * max(q, 0.05));
+    A = 10 ^ (gain / 40); sq = sqrt(A);
+    type == 0 ? (       // low shelf
+      this.b0 = A * ((A + 1) - (A - 1) * c + 2 * sq * al);
+      this.b1 = 2 * A * ((A - 1) - (A + 1) * c);
+      this.b2 = A * ((A + 1) - (A - 1) * c - 2 * sq * al);
+      a0 = (A + 1) + (A - 1) * c + 2 * sq * al;
+      this.a1 = -2 * ((A - 1) + (A + 1) * c);
+      this.a2 = (A + 1) + (A - 1) * c - 2 * sq * al;
+    ) : type == 1 ? (   // high shelf
+      this.b0 = A * ((A + 1) + (A - 1) * c + 2 * sq * al);
+      this.b1 = -2 * A * ((A - 1) + (A + 1) * c);
+      this.b2 = A * ((A + 1) + (A - 1) * c - 2 * sq * al);
+      a0 = (A + 1) - (A - 1) * c + 2 * sq * al;
+      this.a1 = 2 * ((A - 1) - (A + 1) * c);
+      this.a2 = (A + 1) - (A - 1) * c - 2 * sq * al;
+    ) : type == 2 ? (   // peaking
+      this.b0 = 1 + al * A; this.b1 = -2 * c; this.b2 = 1 - al * A;
+      a0 = 1 + al / A; this.a1 = -2 * c; this.a2 = 1 - al / A;
+    ) : type == 3 ? (   // low pass
+      this.b0 = (1 - c) / 2; this.b1 = 1 - c; this.b2 = (1 - c) / 2;
+      a0 = 1 + al; this.a1 = -2 * c; this.a2 = 1 - al;
+    ) : type == 4 ? (   // high pass
+      this.b0 = (1 + c) / 2; this.b1 = -(1 + c); this.b2 = (1 + c) / 2;
+      a0 = 1 + al; this.a1 = -2 * c; this.a2 = 1 - al;
+    ) : type == 5 ? (   // notch
+      this.b0 = 1; this.b1 = -2 * c; this.b2 = 1;
+      a0 = 1 + al; this.a1 = -2 * c; this.a2 = 1 - al;
+    ) : type == 6 ? (   // band pass (0 dB peak)
+      this.b0 = al; this.b1 = 0; this.b2 = -al;
+      a0 = 1 + al; this.a1 = -2 * c; this.a2 = 1 - al;
+    ) : (               // all pass
+      this.b0 = 1 - al; this.b1 = -2 * c; this.b2 = 1 + al;
+      a0 = 1 + al; this.a1 = -2 * c; this.a2 = 1 - al;
+    );
+    this.b0 /= a0; this.b1 /= a0; this.b2 /= a0; this.a1 /= a0; this.a2 /= a0;
+  );
+
+  function setup(freq, gain, q, type, mode)
+  (
+    this.design(freq, gain, q, mode == 2 ? 6 : type);
+    this.on = mode != 1;
+    this.solo = mode == 2;
+  );
+
+  // run one channel through one band; state is per band and per channel (this.xl1 ...)
+  function run_l(x) local(y)
+  (
+    y = this.b0 * x + this.b1 * this.xl1 + this.b2 * this.xl2 - this.a1 * this.yl1 - this.a2 * this.yl2;
+    this.xl2 = this.xl1; this.xl1 = x; this.yl2 = this.yl1; this.yl1 = y;
+    y;
+  );
+  function run_r(x) local(y)
+  (
+    y = this.b0 * x + this.b1 * this.xr1 + this.b2 * this.xr2 - this.a1 * this.yr1 - this.a2 * this.yr2;
+    this.xr2 = this.xr1; this.xr1 = x; this.yr2 = this.yr1; this.yr1 = y;
+    y;
+  );
+  function band(xl*, xr*, active)
+  (
+    active ? (xl = this.run_l(xl); xr = this.run_r(xr));
+  );
+
+  function update()
+  (
+    b1.setup(slider1, slider2, slider3, slider4, slider5);
+    b2.setup(slider6, slider7, slider8, slider9, slider10);
+    b3.setup(slider11, slider12, slider13, slider14, slider15);
+    b4.setup(slider16, slider17, slider18, slider19, slider20);
+    b5.setup(slider21, slider22, slider23, slider24, slider25);
+    solo_any = b1.solo || b2.solo || b3.solo || b4.solo || b5.solo;
+  );
+
+  // display: magnitude in dB of this band's biquad at w (radians per sample)
+  function pe_db(w) local(c1, s1, c2, s2, nr, ni, dr, di)
+  (
+    c1 = cos(w); s1 = sin(w); c2 = cos(2 * w); s2 = sin(2 * w);
+    nr = this.b0 + this.b1 * c1 + this.b2 * c2; ni = -(this.b1 * s1 + this.b2 * s2);
+    dr = 1 + this.a1 * c1 + this.a2 * c2; di = -(this.a1 * s1 + this.a2 * s2);
+    10 * log10(max(nr * nr + ni * ni, 0.00000000000000000001) / max(dr * dr + di * di, 0.00000000000000000001));
+  );
+  // the whole EQ at f Hz: the bands the audio runs (solo / bypass as in @sample)
+  function pe_total(f) local(w)
+  (
+    w = 2 * $pi * min(f, srate * 0.4999) / srate;
+    ((solo_any ? b1.solo : b1.on) ? b1.pe_db(w)) + ((solo_any ? b2.solo : b2.on) ? b2.pe_db(w)) +
+    ((solo_any ? b3.solo : b3.on) ? b3.pe_db(w)) + ((solo_any ? b4.solo : b4.on) ? b4.pe_db(w)) +
+    ((solo_any ? b5.solo : b5.on) ? b5.pe_db(w));
+  );
+  // value text for a frequency: Hz below 1 kHz, else kHz
+  function pe_freq_txt(f) ( f >= 1000 ? sprintf(#pe_v, "%.2f kHz", f / 1000) : sprintf(#pe_v, "%d Hz", f); #pe_v; );
+
+  // the value of slider i (1-based)
+  function pe_slider(i)
+  (
+    i == 1 ? slider1 : i == 2 ? slider2 : i == 3 ? slider3 : i == 4 ? slider4 : i == 5 ? slider5 :
+    i == 6 ? slider6 : i == 7 ? slider7 : i == 8 ? slider8 : i == 9 ? slider9 :
+    i == 10 ? slider10 : i == 11 ? slider11 : i == 12 ? slider12 : i == 13 ? slider13 :
+    i == 14 ? slider14 : i == 15 ? slider15 : i == 16 ? slider16 : i == 17 ? slider17 :
+    i == 18 ? slider18 : i == 19 ? slider19 : i == 20 ? slider20 : i == 21 ? slider21 :
+    i == 22 ? slider22 : i == 23 ? slider23 : i == 24 ? slider24 : slider25;
+  );
+
+  gfx_ext_retina = 1;
+
+@slider
+  update();
+
+@sample
+  l = spl0; r = spl1;
+  b1.band(l, r, solo_any ? b1.solo : b1.on);
+  b2.band(l, r, solo_any ? b2.solo : b2.on);
+  b3.band(l, r, solo_any ? b3.solo : b3.on);
+  b4.band(l, r, solo_any ? b4.solo : b4.on);
+  b5.band(l, r, solo_any ? b5.solo : b5.on);
+  spl0 = l; spl1 = r;
+
+@gfx 480 342
+  ng_knobs_begin("PARAMETRIC EQ", "ESSENTIALS", 480, 140, 1, 1);
+
+  // display: the response of the bands the audio runs (-24..+24 dB), the selected band dashed,
+  // a dot per band (filled = selected, hollow = bypassed or not soloed)
+  ng_plot(ng_vx + 26, ng_vy + 4, ng_vw - 30, ng_vh - 20);
+  ng_grid_freq(36);
+  pe_f = pe_slider(1 + pe_tab * 5);
+  pe_x = floor(ng_freq_x(pe_f)) + 0.5;
+  ng_col(NG_ACCENT, 0.5);
+  pe_y = ng_py;
+  while (
+    gfx_line(pe_x, pe_y, pe_x, min(pe_y + 3 * ng_s, ng_py + ng_ph), 0);
+    pe_y += 6 * ng_s;
+    pe_y < ng_py + ng_ph;
+  );
+  pe_zy = ng_lin_y(0, -24, 24);
+  ng_col(NG_ACCENT, 0.10);
+  pe_i = 0;
+  loop(floor(ng_pw) + 1,
+    gfx_line(ng_px + pe_i, pe_zy, ng_px + pe_i, ng_lin_y(pe_total(20 * 1000 ^ (pe_i / ng_pw)), -24, 24), 0);
+    pe_i += 1;
+  );
+  ng_col(NG_ACCENT, 1);
+  pe_i = 0;
+  loop(floor(ng_pw) + 1,
+    pe_y = ng_lin_y(pe_total(20 * 1000 ^ (pe_i / ng_pw)), -24, 24);
+    pe_i == 0 ? ng_line_start(ng_px, pe_y) : ng_line_to(ng_px + pe_i, pe_y);
+    pe_i += 1;
+  );
+  pe_k = 0;
+  loop(5,
+    pe_f = min(20000, pe_slider(1 + pe_k * 5));
+    pe_x = ng_freq_x(pe_f);
+    pe_y = ng_lin_y(pe_total(pe_f), -24, 24);
+    pe_on = solo_any ? pe_slider(5 + pe_k * 5) == 2 : pe_slider(5 + pe_k * 5) != 1;
+    pe_k == pe_tab ? (
+      ng_col(NG_ACCENT, 1);
+      gfx_circle(pe_x, pe_y, 4 * ng_s, 1, 1);
+    ) : (
+      ng_col(pe_on ? NG_ACCENT : NG_MUTED, 1);
+      gfx_circle(pe_x, pe_y, 3 * ng_s, pe_on, 1);
+    );
+    pe_k += 1;
+  );
+
+  pe_tab = ng_tabs("LOW|LOW MID|MID HIGH|HIGH|ULTRA HIGH", pe_tab);
+  pe_b = pe_tab * 5;
+  ng_row(5);
+  pe_tab == 0 ? ng_knob_ctl(1, "FREQ", pe_freq_txt(slider1), 20, 300, 77, 1, 0) ? update();
+  pe_tab == 1 ? ng_knob_ctl(6, "FREQ", pe_freq_txt(slider6), 300, 1000, 548, 1, 0) ? update();
+  pe_tab == 2 ? ng_knob_ctl(11, "FREQ", pe_freq_txt(slider11), 1000, 5000, 2236, 1, 0) ? update();
+  pe_tab == 3 ? ng_knob_ctl(16, "FREQ", pe_freq_txt(slider16), 5000, 20000, 10000, 1, 0) ? update();
+  pe_tab == 4 ? ng_knob_ctl(21, "FREQ", pe_freq_txt(slider21), 10000, 24000, 15000, 1, 0) ? update();
+  sprintf(#pe_g, "%+.1f dB", pe_slider(pe_b + 2));
+  ng_knob_ctl(pe_b + 2, "GAIN", #pe_g, -18, 18, 0, 0.1, 1) ? update();
+  sprintf(#pe_q, "%.1f", pe_slider(pe_b + 3));
+  ng_knob_ctl(pe_b + 3, "Q", #pe_q, 0.1, 10, 1, 0.1, 0) ? update();
+  ng_select_ctl(pe_b + 4, "TYPE", "L SHELF|H SHELF|PEAK|LO PASS|HI PASS|NOTCH|BAND|ALLPASS", 0) ? update();
+  ng_select_ctl(pe_b + 5, "MODE", "ACTIVE|BYPASS|SOLO", 0) ? update();
+
+  ng_end();

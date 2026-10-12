@@ -1,0 +1,112 @@
+desc:NULL Delay GFX
+author: Christos Koulaxizis
+tags: delay echo slapback feedback pre-delay timing sync tempo gui
+//category: Essentials
+//NULL JSFX v2.0 • https://nulljsfx.tech • MIT License
+
+import null_gfx.jsfx-inc
+
+slider1:250<0,2000,1>-Time (ms)
+slider2:0<0,100,1>-Feedback (%)
+slider3:30<0,100,1>-Mix (%)
+slider4:0<0,1,1{OFF,ON}>-Tempo Sync
+slider5:0<0,3,1{1/4,1/8,1/16,1/32}>-Subdivision
+
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
+
+@init
+  // NULL Delay (../delay.jsfx) with its own interface: same audio code, plus @gfx.
+  buf_size = ceil(srate * 2.1);
+  buf_l = 0;
+  buf_r = buf_l + buf_size;
+  memset(buf_l, 0, 2 * buf_size);
+  freembuf(buf_r + buf_size);
+  wpos = 0;
+  delay_samples = 1;
+  gfx_ext_retina = 1;
+
+  function update_time()
+  (
+    tempo_sync && tempo > 0 ? (
+      delay_ms = 60000 / tempo * (slider5 == 0 ? 1 : slider5 == 1 ? 0.5 : slider5 == 2 ? 0.25 : 0.125);
+    ) : (
+      delay_ms = slider1;
+    );
+    delay_samples = floor(delay_ms * srate / 1000 + 0.5);
+    delay_samples = max(1, min(buf_size - 1, delay_samples));
+  );
+
+  function update()
+  (
+    feedback = slider2 / 100 * 0.95;
+    mix_amt = slider3 / 100;
+    tempo_sync = slider4;
+    update_time();
+  );
+
+@slider
+  update();
+
+@block
+  tempo_sync ? update_time();
+
+@sample
+  rpos = wpos - delay_samples;
+  rpos < 0 ? rpos += buf_size;
+  echo_l = buf_l[rpos];
+  echo_r = buf_r[rpos];
+
+  buf_l[wpos] = spl0 + echo_l * feedback;
+  buf_r[wpos] = spl1 + echo_r * feedback;
+  wpos += 1;
+  wpos >= buf_size ? wpos = 0;
+
+  spl0 = spl0 * (1 - mix_amt) + echo_l * mix_amt;
+  spl1 = spl1 * (1 - mix_amt) + echo_r * mix_amt;
+
+@gfx 480 294
+  ng_knobs_begin("DELAY", "ESSENTIALS", 480, 120, 1, 0);
+
+  // display: the dry signal at 0 and the echoes over 2.5 s, level in dB (0 to -48)
+  ng_plot(ng_vx + 26, ng_vy + 4, ng_vw - 30, ng_vh - 20);
+  ng_grid(5, 4, 0);
+  ng_font(4, 8, 0);
+  ng_col(NG_MUTED, 1);
+  ng_ptxt("0", ng_px - 6 * ng_s, ng_py, 2);
+  ng_ptxt("-24", ng_px - 6 * ng_s, ng_py + ng_ph / 2, 2);
+  ng_ptxt("-48", ng_px - 6 * ng_s, ng_py + ng_ph, 2);
+  dl_i = 1;
+  loop(4, sprintf(#dl_t, "%.1f s", dl_i * 0.5); ng_ptxt(#dl_t, ng_px + ng_pw * dl_i / 5, ng_py + ng_ph + 10 * ng_s, 1); dl_i += 1;);
+  dl_bw = max(2, 3 * ng_s);
+  // dry
+  slider3 < 100 ? (
+    ng_col(NG_MUTED, 1);
+    gfx_rect(ng_px, ng_lin_y(20 * log10(1 - slider3 / 100), -48, 0), dl_bw, ng_py + ng_ph - ng_lin_y(20 * log10(1 - slider3 / 100), -48, 0));
+  );
+  // echoes: the first at mix, each next one feedback lower
+  slider3 > 0 && delay_ms > 0 ? (
+    ng_col(NG_ACCENT, 1);
+    dl_g = slider3 / 100;
+    dl_t = delay_ms;
+    while (dl_t <= 2500 && dl_g > 0.004) (
+      dl_y = ng_lin_y(20 * log10(dl_g), -48, 0);
+      gfx_rect(ng_lin_x(dl_t, 0, 2500) - dl_bw / 2, dl_y, dl_bw, ng_py + ng_ph - dl_y);
+      dl_g *= feedback;
+      dl_t += delay_ms;
+    );
+  );
+
+  ng_row(5);
+  slider4 ? sprintf(#v1, "%d ms", floor(delay_ms + 0.5)) : sprintf(#v1, "%d ms", slider1);
+  ng_knob_ctl(1, "TIME", #v1, 0, 2000, 250, 1, 0) ? update();
+  sprintf(#v2, "%d%%", slider2);
+  ng_knob_ctl(2, "FEEDBACK", #v2, 0, 100, 0, 1, 0) ? update();
+  sprintf(#v3, "%d%%", slider3);
+  ng_knob_ctl(3, "MIX", #v3, 0, 100, 30, 1, 0) ? update();
+  ng_select_ctl(4, "SYNC", "OFF|ON", 0) ? update();
+  ng_select_ctl(5, "NOTE", "1/4|1/8|1/16|1/32", 0) ? update();
+
+  ng_end();

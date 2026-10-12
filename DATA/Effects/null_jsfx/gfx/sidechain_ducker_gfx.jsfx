@@ -1,0 +1,117 @@
+desc:NULL Sidechain Ducker GFX
+author: Christos Koulaxizis
+tags: sidechain ducking ducker pump kick bass voice-over duck compressor gui
+//category: Essentials
+//NULL JSFX v2.0 • https://nulljsfx.tech • MIT License
+
+import null_gfx.jsfx-inc
+
+slider1:-30<-60,0,0.1>-Threshold (dB)
+slider2:-12<-40,0,0.1>-Depth (dB)
+slider3:2<0.1,50,0.1>-Attack (ms)
+slider4:50<0,500,1>-Hold (ms)
+slider5:200<10,2000,1>-Release (ms)
+slider6:0<0,1,1{Sidechain,Main Input}>-Key
+slider7:0<0,500,1>-Key High Pass (Hz)
+
+in_pin:Left
+in_pin:Right
+in_pin:Sidechain Left
+in_pin:Sidechain Right
+out_pin:Left
+out_pin:Right
+
+@init
+  // NULL Sidechain Ducker (../sidechain_ducker.jsfx) with its own interface: same audio code, plus @gfx.
+  gfx_ext_retina = 1;
+  // Ducks the track whenever the key signal goes above Threshold: kick under bass, voice-over
+  // under music. Route the key to track channels 3/4 in REAPER (or pick Main Input to duck from
+  // the track itself). The gain falls by up to Depth over Attack, stays down for Hold after the
+  // key drops below Threshold, then recovers over Release. The key can be high-passed so only
+  // its attack, not its low end, triggers ducking. Stereo-linked, zero latency.
+  env = 0; gain = 1; held = 0;
+  function hp(x) ( this.y = this.c * (this.y + x - this.x1); this.x1 = x; this.y; );
+
+  function update()
+  (
+    thr = 10 ^ (slider1 / 20);
+    floor_g = 10 ^ (slider2 / 20);
+    att = exp(-1 / (slider3 * 0.001 * srate));
+    rel = exp(-1 / (slider5 * 0.001 * srate));
+    hold_n = floor(slider4 * 0.001 * srate);
+    det_rel = exp(-1 / (0.01 * srate));
+    use_hp = slider7 > 0;
+    kl.c = kr.c = use_hp ? exp(-2 * $pi * slider7 / srate) : 1;
+  );
+
+  // interface: the ducking shape. The key is above Threshold for 5 attack times, then the
+  // hold runs, then the gain recovers; sd_step moves the gain by dt ms the way the audio
+  // code does (falls with Attack, rises with Release) and returns it in dB
+  function sd_step(t, dt) local(tg, c)
+  (
+    tg = t < 5 * slider3 + slider4 ? 10 ^ (slider2 / 20) : 1;
+    c = exp(-dt / (tg < sd_g ? slider3 : slider5));
+    sd_g = c * sd_g + (1 - c) * tg;
+    20 * log10(max(sd_g, 0.00001));
+  );
+
+@slider
+  update();
+
+@sample
+  kL = slider6 == 0 ? spl2 : spl0;
+  kR = slider6 == 0 ? spl3 : spl1;
+  use_hp ? (kL = kl.hp(kL); kR = kr.hp(kR));
+  lev = max(abs(kL), abs(kR));
+  env = lev > env ? lev : det_rel * env + (1 - det_rel) * lev;
+  env > thr ? held = hold_n : held > 0 ? held -= 1;
+  target = env > thr || held > 0 ? floor_g : 1;
+  gain = target < gain ? att * gain + (1 - att) * target : rel * gain + (1 - rel) * target;
+  spl0 *= gain;
+  spl1 *= gain;
+
+@gfx 480 380
+  ng_knobs_begin("SIDECHAIN DUCKER", "ESSENTIALS", 480, 120, 2, 0);
+
+  // display, left: the ducking shape for one key hit (gain 0 to -40 dB over the attack,
+  // hold and release); right: the key level against Threshold (marker) and the reduction now
+  ng_plot(ng_vx + 26, ng_vy + 4, 210, ng_vh - 20);
+  ng_grid(4, 4, 0);
+  ng_font(4, 8, 0);
+  ng_col(NG_MUTED, 1);
+  ng_ptxt("0", ng_px - 6 * ng_s, ng_py, 2);
+  ng_ptxt("-20", ng_px - 6 * ng_s, ng_py + ng_ph / 2, 2);
+  ng_ptxt("-40", ng_px - 6 * ng_s, ng_py + ng_ph, 2);
+  sd_len = 5 * slider3 + slider4 + 5 * slider5;
+  sd_total = sd_len * 1.25;
+  sprintf(#sd_t, "%d ms", floor(sd_total + 0.5));
+  ng_ptxt(#sd_t, ng_px + ng_pw, ng_py + ng_ph + 10 * ng_s, 2);
+  ng_ptxt("KEY", ng_px, ng_py + ng_ph + 10 * ng_s, 0);
+  ng_col(NG_ACCENT, 1);
+  sd_g = 1;
+  sd_i = 0;
+  loop(121,
+    sd_y = ng_lin_y(sd_i == 0 ? 0 : sd_step(sd_total * (sd_i - 1) / 120, sd_total / 120), -40, 0);
+    sd_i == 0 ? ng_line_start(ng_px, sd_y) : ng_line_to(ng_px + ng_pw * sd_i / 120, sd_y);
+    sd_i += 1;
+  );
+  ng_meter(276, 84, 180, 10, "KEY", ng_to_db(env), slider1, -60);
+  ng_gr_meter(276, 114, 180, 10, "GR", -20 * log10(max(gain, 0.0000001)), 40);
+
+  ng_row(4);
+  sprintf(#v1, "%.1f dB", slider1);
+  ng_knob_ctl(1, "THRESHOLD", #v1, -60, 0, -30, 0.1, 0) ? update();
+  sprintf(#v2, "%.1f dB", slider2);
+  ng_knob_ctl(2, "DEPTH", #v2, -40, 0, -12, 0.1, 0) ? update();
+  ng_select_ctl(6, "KEY", "SIDE|MAIN", 0) ? update();
+  slider7 > 0 ? sprintf(#v7, "%d Hz", slider7) : strcpy(#v7, "OFF");
+  ng_knob_ctl(7, "KEY HP", #v7, 0, 500, 0, 1, 0) ? update();
+  ng_row(3);
+  sprintf(#v3, "%.1f ms", slider3);
+  ng_knob_ctl(3, "ATTACK", #v3, 0.1, 50, 2, 0.1, 0) ? update();
+  sprintf(#v4, "%d ms", slider4);
+  ng_knob_ctl(4, "HOLD", #v4, 0, 500, 50, 1, 0) ? update();
+  sprintf(#v5, "%d ms", slider5);
+  ng_knob_ctl(5, "RELEASE", #v5, 10, 2000, 200, 1, 0) ? update();
+
+  ng_end();

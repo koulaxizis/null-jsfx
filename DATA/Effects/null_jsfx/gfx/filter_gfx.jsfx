@@ -1,0 +1,134 @@
+desc:NULL Filter GFX
+author: Christos Koulaxizis
+tags: filter lowpass resonance q cutoff svf tpt gui
+//category: Essentials
+//NULL JSFX v2.0 • https://nulljsfx.tech • MIT License
+
+import null_gfx.jsfx-inc
+
+slider1:1000<20,20000,1:log>-Cutoff (Hz)
+slider2:1<0.1,10,0.1>-Resonance
+slider3:0<-12,12,0.1>-Gain (dB)
+slider4:0<0,3,1{Low Pass,High Pass,Band Pass,Notch}>-Mode
+
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
+
+@init
+  // NULL Filter (../filter.jsfx) with its own interface: same audio code, plus @gfx.
+  ic1_l = 0; ic2_l = 0;
+  ic1_r = 0; ic2_r = 0;
+
+  function update()
+  (
+    fc = slider1;
+    Q = slider2;
+
+    g = tan($pi * fc / srate);
+    R = 1 / (2 * Q);
+    g2 = g * g;
+    Rg = R * g;
+    denom = 1 / (1 + Rg + g2);
+
+    gain_lin = exp(slider3 * 0.11513);
+    mode = slider4;
+  );
+
+  // display: magnitude in dB at f Hz. The TPT SVF is the bilinear transform of
+  // H(s) = {1, s^2, R s, s^2 + 1}[mode] / (s^2 + R s + 1) with s = j tan(pi f / srate) / g.
+  function fl_db(f) local(o, dr, di, nr, ni)
+  (
+    o = tan($pi * min(f, srate * 0.4999) / srate) / g;
+    dr = 1 - o * o; di = R * o;
+    mode == 0 ? (nr = 1; ni = 0) :
+    mode == 1 ? (nr = -o * o; ni = 0) :
+    mode == 2 ? (nr = 0; ni = R * o) : (nr = 1 - o * o; ni = 0);
+    10 * log10(max((nr * nr + ni * ni) / max(dr * dr + di * di, 0.00000000000000000001), 0.00000000000000000001))
+      + 20 * log10(gain_lin);
+  );
+
+  // knob cell for Cutoff (slider1, log-shaped) like ng_knob_ctl but with a log taper: the
+  // knob, drag and wheel work on log(v / lo) / log(hi / lo); values round to 1
+  function fl_knob_log(label, value, lo, hi, def) local(cx, ry, k, v, hover, nv)
+  (
+    ng_ctl_id += 1;
+    cx = ng_cellx + ng_cw / 2;
+    ry = ng_rowy;
+    ng_cellx += ng_cw;
+    k = log(hi / lo);
+    v = ng_drag == ng_ctl_id ? ng_drag_val : log(slider1 / lo) / k;
+    ng_font(1, 7.5, 1);
+    ng_col(NG_MUTED, 1);
+    ng_txt(label, cx, ry + 10, 1, 1.5);
+    hover = ng_knob(cx, ry + 44, 14, v, 0, ng_drag == ng_ctl_id);
+    ng_font(3, 8.5, 0);
+    ng_col(NG_TEXT, 1);
+    ng_txt(value, cx, ry + 77, 1, 0);
+    nv = ng_input(ng_ctl_id, hover, log(slider1 / lo) / k, 0, 1, log(def / lo) / k, 0.01, 200, 0);
+    ng_slider_set(1, max(lo, min(hi, floor(lo * exp(nv * k) + 0.5))));
+  );
+
+  gfx_ext_retina = 1;
+
+@slider
+  update();
+
+@sample
+  // Left channel
+  v3 = (spl0 - ic2_l - (R + g) * ic1_l) * denom;
+  v1 = g * v3 + ic1_l;
+  v2 = g * v1 + ic2_l;
+  ic1_l = v1;
+  ic2_l = v2;
+  // v3 = high-pass, v1 = band-pass, v2 = low-pass; input = v3 + R*v1 + v2
+  spl0 = (mode == 0 ? v2 : mode == 1 ? v3 : mode == 2 ? R * v1 : v3 + v2) * gain_lin;
+  
+  // Right channel
+  v3 = (spl1 - ic2_r - (R + g) * ic1_r) * denom;
+  v1 = g * v3 + ic1_r;
+  v2 = g * v1 + ic2_r;
+  ic1_r = v1;
+  ic2_r = v2;
+  spl1 = (mode == 0 ? v2 : mode == 1 ? v3 : mode == 2 ? R * v1 : v3 + v2) * gain_lin;
+
+@gfx 480 294
+  ng_knobs_begin("FILTER", "ESSENTIALS", 480, 120, 1, 0);
+
+  // display: the filter's magnitude response with Gain (-24..+24 dB), cutoff dashed
+  ng_plot(ng_vx + 26, ng_vy + 4, ng_vw - 30, ng_vh - 20);
+  ng_grid_freq(36);
+  fl_x = floor(ng_freq_x(slider1)) + 0.5;
+  ng_col(NG_ACCENT, 0.5);
+  fl_y = ng_py;
+  while (
+    gfx_line(fl_x, fl_y, fl_x, min(fl_y + 3 * ng_s, ng_py + ng_ph), 0);
+    fl_y += 6 * ng_s;
+    fl_y < ng_py + ng_ph;
+  );
+  fl_zy = ng_lin_y(0, -24, 24);
+  ng_col(NG_ACCENT, 0.10);
+  fl_i = 0;
+  loop(floor(ng_pw) + 1,
+    gfx_line(ng_px + fl_i, fl_zy, ng_px + fl_i, ng_lin_y(fl_db(20 * 1000 ^ (fl_i / ng_pw)), -24, 24), 0);
+    fl_i += 1;
+  );
+  ng_col(NG_ACCENT, 1);
+  fl_i = 0;
+  loop(floor(ng_pw) + 1,
+    fl_y = ng_lin_y(fl_db(20 * 1000 ^ (fl_i / ng_pw)), -24, 24);
+    fl_i == 0 ? ng_line_start(ng_px, fl_y) : ng_line_to(ng_px + fl_i, fl_y);
+    fl_i += 1;
+  );
+
+  ng_row(4);
+  slider1 >= 1000 ? sprintf(#fl_c, "%.2f kHz", slider1 / 1000) : sprintf(#fl_c, "%d Hz", slider1);
+  fl_knob_log("CUTOFF", #fl_c, 20, 20000, 1000) ? update();
+  sprintf(#fl_q, "%.1f", slider2);
+  ng_knob_ctl(2, "RESONANCE", #fl_q, 0.1, 10, 1, 0.1, 0) ? update();
+  sprintf(#fl_g, "%+.1f dB", slider3);
+  ng_knob_ctl(3, "GAIN", #fl_g, -12, 12, 0, 0.1, 1) ? update();
+  ng_select_ctl(4, "MODE", "LO PASS|HI PASS|BAND|NOTCH", 0) ? update();
+
+  ng_end();

@@ -37,9 +37,11 @@ out_pin:Right
 
 @slider
   fc = min(slider1, srate * 0.45);
-  g = tan($pi * fc / srate);
-  G = g / (1 + g);
-  b = 1 / (1 + g);
+  // EEL2 names are case-insensitive: the warped frequency must not be called g, or G
+  // overwrites it and b (the state weight of the zero-delay feedback solve) comes out wrong
+  wg = tan($pi * fc / srate);
+  G = wg / (1 + wg);
+  b = 1 / (1 + wg);
   Gb = G * b; G2b = G * Gb; G3b = G * G2b;
   G4 = G * G * G * G;
   k = min(slider2, 3.95);

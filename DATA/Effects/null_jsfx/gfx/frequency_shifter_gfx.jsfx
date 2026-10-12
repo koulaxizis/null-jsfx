@@ -1,0 +1,138 @@
+desc:NULL Frequency Shifter GFX
+author: Christos Koulaxizis
+tags: frequency shifter bode hilbert inharmonic barberpole metallic sci-fi gui
+//category: Advanced
+//NULL JSFX v2.0 • https://nulljsfx.tech • MIT License
+
+import null_gfx.jsfx-inc
+
+slider1:100<-2000,2000,0.1>-Shift (Hz)
+slider2:0<-100,100,0.1>-Stereo Offset (Hz)
+slider3:0<0,95,1>-Feedback (%)
+slider4:50<0,100,1>-Mix (%)
+
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
+
+@init
+  // NULL Frequency Shifter (../frequency_shifter.jsfx) with its own interface: same audio code,
+  // plus @gfx.
+  gfx_ext_retina = 1;
+  // Bode-style frequency shifter: every frequency in the signal moves up (or down) by
+  // the same number of Hz, unlike a pitch shifter. Small shifts give phasing/beating,
+  // larger ones turn harmonic sounds metallic and bell-like. A Hilbert transform (two
+  // allpass chains, Niemitalo design) produces the quadrature pair; a sine/cosine
+  // oscillator then shifts it. Stereo Offset shifts the right channel by a different
+  // amount; Feedback sends the output back in for a spiralling "barber-pole" sound.
+
+  // first-order-in-z^2 allpass section: y = a*(x + y[n-2]) - x[n-2]
+  function ap(x, a) local(y)
+  (
+    y = a * (x + this.y2) - this.x2;
+    this.x2 = this.x1; this.x1 = x;
+    this.y2 = this.y1; this.y1 = y;
+    y;
+  );
+  // returns the real part, the imaginary part goes to this.im
+  function hilbert(x) local(re, im)
+  (
+    re = this.a4.ap(this.a3.ap(this.a2.ap(this.a1.ap(x, 0.479401), 0.876218), 0.976597), 0.997499);
+    im = this.b4.ap(this.b3.ap(this.b2.ap(this.b1.ap(x, 0.161758), 0.733029), 0.945349), 0.990598);
+    // the imaginary path is one sample behind the real path
+    this.im = this.imd;
+    this.imd = im;
+    re;
+  );
+  function shift(x, inc) local(re, f)
+  (
+    this.ph += inc;
+    this.ph >= 1 ? this.ph -= 1;
+    this.ph < 0 ? this.ph += 1;
+    // feedback is high-passed (the Hilbert pair is inaccurate below ~20 Hz) and
+    // softly limited so the loop can never run away
+    f = this.fb * feedback;
+    this.dc = this.dc * 0.995 + f * 0.005;
+    f -= this.dc;
+    f = f / (1 + abs(f));
+    re = this.h.hilbert(x + f);
+    this.fb = re * cos(2 * $pi * this.ph) + this.h.im * sin(2 * $pi * this.ph);
+    this.fb;
+  );
+
+  function update()
+  (
+    inc_l = slider1 / srate;
+    inc_r = (slider1 + slider2) / srate;
+    feedback = slider3 / 100;
+    mix = slider4 / 100;
+  );
+
+  // display only: a partial at f Hz (folded at 0 Hz) with amplitude a, w design units wide
+  function fs_bar(f, a, w) local(xx, yy)
+  (
+    f = abs(f);
+    f <= 5000 && a > 0.003 ? (
+      xx = ng_lin_x(f, 0, 5000);
+      yy = ng_lin_y(a, 0, 0.6);
+      gfx_rect(floor(xx - w * ng_s / 2), yy, max(1, floor(w * ng_s)), ng_py + ng_ph - yy);
+    );
+  );
+
+@slider
+  update();
+
+@sample
+  w_l = L.shift(spl0, inc_l);
+  w_r = R.shift(spl1, inc_r);
+  spl0 = spl0 * (1 - mix) + w_l * mix;
+  spl1 = spl1 * (1 - mix) + w_r * mix;
+
+@gfx 480 294
+  ng_knobs_begin("FREQUENCY SHIFTER", "ADVANCED", 480, 120, 1, 0);
+
+  // display: the partials of a 220 Hz tone (thin, at the dry level) and where the shifter
+  // moves them (left channel bright, right channel with Stereo Offset dim, the feedback
+  // spiral fainter), over 0 to 5 kHz; shifts below 0 Hz fold back
+  ng_plot(ng_vx + 4, ng_vy + 16, ng_vw - 8, ng_vh - 32);
+  ng_grid(5, 4, 0);
+  ng_font(4, 8, 0);
+  ng_col(NG_MUTED, 1);
+  fs_i = 1;
+  loop(4, sprintf(#fs_t, "%dk", fs_i); ng_ptxt(#fs_t, ng_px + ng_pw * fs_i / 5, ng_py + ng_ph + 8 * ng_s, 1); fs_i += 1;);
+  sprintf(#fs_t, "L %+.1f Hz", slider1);
+  ng_ptxt(#fs_t, ng_px, ng_py - 8 * ng_s, 0);
+  sprintf(#fs_t, "R %+.1f Hz", slider1 + slider2);
+  ng_ptxt(#fs_t, ng_px + ng_pw, ng_py - 8 * ng_s, 2);
+  fs_n = 1;
+  loop(8,
+    fs_a = 0.9 / sqrt(fs_n);
+    ng_col(NG_MUTED, 1);
+    fs_bar(220 * fs_n, fs_a * (1 - slider4 / 100), 1);
+    fs_k = 1;
+    loop(3,
+      ng_col(NG_ACCENT, 0.35);
+      fs_bar(220 * fs_n + (fs_k + 1) * slider1, fs_a * slider4 / 100 * (slider3 / 100) ^ fs_k, 2);
+      fs_k += 1;
+    );
+    slider2 != 0 ? (
+      ng_col(NG_ACCENT, 0.45);
+      fs_bar(220 * fs_n + slider1 + slider2, fs_a * slider4 / 100, 2);
+    );
+    ng_col(NG_ACCENT, 1);
+    fs_bar(220 * fs_n + slider1, fs_a * slider4 / 100, 2);
+    fs_n += 1;
+  );
+
+  ng_row(4);
+  sprintf(#v1, "%+.1f Hz", slider1);
+  ng_knob_ctl(1, "SHIFT", #v1, -2000, 2000, 100, 0.1, 1) ? update();
+  sprintf(#v2, "%+.1f Hz", slider2);
+  ng_knob_ctl(2, "OFFSET", #v2, -100, 100, 0, 0.1, 1) ? update();
+  sprintf(#v3, "%d%%", slider3);
+  ng_knob_ctl(3, "FEEDBACK", #v3, 0, 95, 0, 1, 0) ? update();
+  sprintf(#v4, "%d%%", slider4);
+  ng_knob_ctl(4, "MIX", #v4, 0, 100, 50, 1, 0) ? update();
+
+  ng_end();

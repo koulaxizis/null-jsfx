@@ -1,0 +1,171 @@
+desc:NULL Rotary Speaker GFX
+author: Christos Koulaxizis
+tags: rotary leslie organ speaker doppler tremolo chorale horn drum gui
+//category: Advanced
+//NULL JSFX v2.0 • https://nulljsfx.tech • MIT License
+
+import null_gfx.jsfx-inc
+
+slider1:0<0,2,1{Slow (Chorale),Fast (Tremolo),Stop}>-Speed
+slider2:100<10,400,1>-Acceleration (%)
+slider3:50<0,100,1>-Horn/Drum Balance (%)
+slider4:20<0,100,1>-Drive (%)
+slider5:80<0,100,1>-Width (%)
+slider6:100<0,100,1>-Mix (%)
+
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
+
+@init
+  // NULL Rotary Speaker (../rotary_speaker.jsfx) with its own interface: same audio code, plus @gfx.
+  // Leslie-style rotary speaker. The signal is split at 800 Hz: the highs go to a
+  // spinning horn, the lows to a spinning drum. Each rotor changes volume, tone and
+  // pitch (Doppler) as it turns, and two virtual microphones, left and right, pick it
+  // up at different angles. Switching Speed makes the rotors speed up or slow down
+  // with real inertia (the light horn faster than the heavy drum); Acceleration scales
+  // how long that takes. Drive adds the warm overdrive of the speaker's tube amp.
+  buf_size = ceil(srate * 0.02);
+  hl = 0; hr = hl + buf_size; dl = hr + buf_size; dr = dl + buf_size;
+  freembuf(dr + buf_size);
+  memset(hl, 0, 4 * buf_size);
+  wpos = 0;
+  horn_ph = 0; drum_ph = 0.25;
+  horn_f = 0.8; drum_f = 0.7;
+  lp1 = lp2 = 0;
+
+  function tap(buf, d) local(rp, i, f, i2)
+  (
+    rp = wpos - d;
+    rp < 0 ? rp += buf_size;
+    i = floor(rp); f = rp - i;
+    i2 = i + 1; i2 >= buf_size ? i2 = 0;
+    buf[i] + (buf[i2] - buf[i]) * f;
+  );
+  gfx_ext_retina = 1;
+
+  function update()
+  (
+    speed = slider1;
+    horn_target = speed == 0 ? 0.8 : speed == 1 ? 6.7 : 0;
+    drum_target = speed == 0 ? 0.7 : speed == 1 ? 5.8 : 0;
+    acc = slider2 / 100;
+    // time constants: horn ~0.7 s, drum ~3 s (scaled by Acceleration)
+    horn_c = exp(-1 / (0.7 * acc * srate));
+    drum_c = exp(-1 / (3.0 * acc * srate));
+    bal = slider3 / 100;
+    drive = 1 + slider4 / 100 * 6;
+    width = slider5 / 100;
+    mix = slider6 / 100;
+    xc = exp(-2 * $pi * 800 / srate);
+  );
+
+  // a rotor seen from above at design (cx, cy), radius r: the body, the two microphones
+  // (L at the top, R turned by Width) and the rotor pointing at angle ph (0..1, clockwise)
+  function rs_rotor(cx, cy, r, ph, name, hz) local(a, off, k)
+  (
+    ng_col(NG_BG, 1);
+    gfx_circle(X(cx), Y(cy), r * ng_s, 1, 1);
+    ng_col(NG_BORDER, 1);
+    gfx_circle(X(cx), Y(cy), r * ng_s, 0, 1);
+    off = 2 * $pi * 0.25 * slider5 / 100;
+    ng_font(4, 8, 0);
+    ng_col(NG_MUTED, 1);
+    ng_ptxt("L", X(cx), Y(cy - r - 7), 1);
+    ng_ptxt("R", X(cx + sin(off) * (r + 7)), Y(cy - cos(off) * (r + 7)), 1);
+    a = 2 * $pi * ph;
+    ng_col(NG_ACCENT, 1);
+    ng_line_start(X(cx - sin(a) * r * 0.45), Y(cy + cos(a) * r * 0.45));
+    ng_line_to(X(cx + sin(a) * (r - 3)), Y(cy - cos(a) * (r - 3)));
+    gfx_circle(X(cx + sin(a) * (r - 3)), Y(cy - cos(a) * (r - 3)), 2.5 * ng_s, 1, 1);
+    gfx_circle(X(cx), Y(cy), 3 * ng_s, 1, 1);
+    ng_font(1, 7.5, 1);
+    ng_col(NG_MUTED, 1);
+    sprintf(#rs_t, "%s %.1f Hz", name, hz);
+    ng_txt(#rs_t, cx, cy + r + 15, 1, 1.5);
+  );
+
+@slider
+  update();
+
+@sample
+  x = (spl0 + spl1) * 0.5 * drive;
+  // tube-amp style soft clip
+  x = max(-3, min(3, x));
+  x = x * (27 + x * x) / (27 + 9 * x * x) / sqrt(drive);
+
+  // 2-pole crossover: lows to the drum, highs to the horn
+  lp1 = (1 - xc) * x + xc * lp1;
+  lp2 = (1 - xc) * lp1 + xc * lp2;
+  low = lp2;
+  high = x - lp2;
+
+  horn_f = horn_c * horn_f + (1 - horn_c) * horn_target;
+  drum_f = drum_c * drum_f + (1 - drum_c) * drum_target;
+  horn_ph += horn_f / srate; horn_ph >= 1 ? horn_ph -= 1;
+  drum_ph += drum_f / srate; drum_ph >= 1 ? drum_ph -= 1;
+
+  hl[wpos] = high; hr[wpos] = high;
+  dl[wpos] = low; dr[wpos] = low;
+
+  // mics 90 degrees apart (Width blends them toward the same angle)
+  off = 0.25 * width;
+  h_a = 2 * $pi * horn_ph;
+  d_a = 2 * $pi * drum_ph;
+  // horn: deep AM and ~0.35 ms Doppler; drum: lighter AM and ~0.5 ms Doppler
+  h_l = tap(hl, 1 + srate * 0.00035 * (1 + sin(h_a))) * (1 - 0.45 * (1 - cos(h_a)));
+  h_r = tap(hr, 1 + srate * 0.00035 * (1 + sin(h_a + 2 * $pi * off))) * (1 - 0.45 * (1 - cos(h_a + 2 * $pi * off)));
+  d_l = tap(dl, 1 + srate * 0.0005 * (1 + sin(d_a))) * (1 - 0.2 * (1 - cos(d_a)));
+  d_r = tap(dr, 1 + srate * 0.0005 * (1 + sin(d_a + 2 * $pi * off))) * (1 - 0.2 * (1 - cos(d_a + 2 * $pi * off)));
+
+  wpos += 1;
+  wpos >= buf_size ? wpos = 0;
+
+  hg = min(1, 2 * bal); dg = min(1, 2 * (1 - bal));
+  w_l = h_l * hg + d_l * dg;
+  w_r = h_r * hg + d_r * dg;
+  spl0 = spl0 * (1 - mix) + w_l * mix;
+  spl1 = spl1 * (1 - mix) + w_r * mix;
+
+@gfx 480 294
+  ng_knobs_begin("ROTARY SPEAKER", "ADVANCED", 480, 120, 1, 0);
+
+  // display: the horn and the drum seen from above, turning at their current speed, and
+  // the curve of the tube amp's overdrive (Drive)
+  rs_rotor(104, 102, 28, horn_ph, "HORN", horn_f);
+  rs_rotor(222, 102, 28, drum_ph, "DRUM", drum_f);
+
+  ng_plot(330, 66, 122, 84);
+  ng_grid(4, 4, 1);
+  ng_font(4, 8, 0);
+  ng_col(NG_MUTED, 1);
+  ng_ptxt("+1", ng_px - 6 * ng_s, ng_py, 2);
+  ng_ptxt("0", ng_px - 6 * ng_s, ng_py + ng_ph / 2, 2);
+  ng_ptxt("-1", ng_px - 6 * ng_s, ng_py + ng_ph, 2);
+  ng_ptxt("AMP CURVE", ng_px + ng_pw / 2, ng_py + ng_ph + 11 * ng_s, 1);
+  rs_d = 1 + slider4 / 100 * 6;
+  ng_col(NG_ACCENT, 1);
+  rs_i = 0;
+  loop(floor(ng_pw) + 1,
+    rs_x = (2 * rs_i / floor(ng_pw) - 1) * rs_d;
+    rs_x = max(-3, min(3, rs_x));
+    rs_y = ng_lin_y(rs_x * (27 + rs_x * rs_x) / (27 + 9 * rs_x * rs_x) / sqrt(rs_d), -1, 1);
+    rs_i == 0 ? ng_line_start(ng_px, rs_y) : ng_line_to(ng_px + rs_i, rs_y);
+    rs_i += 1;
+  );
+
+  ng_row(6);
+  ng_select_ctl(1, "SPEED", "SLOW|FAST|STOP", 0) ? update();
+  sprintf(#v2, "%d%%", slider2);
+  ng_knob_ctl(2, "ACCEL", #v2, 10, 400, 100, 1, 0) ? update();
+  sprintf(#v3, "%d%%", slider3);
+  ng_knob_ctl(3, "BALANCE", #v3, 0, 100, 50, 1, 1) ? update();
+  sprintf(#v4, "%d%%", slider4);
+  ng_knob_ctl(4, "DRIVE", #v4, 0, 100, 20, 1, 0) ? update();
+  sprintf(#v5, "%d%%", slider5);
+  ng_knob_ctl(5, "WIDTH", #v5, 0, 100, 80, 1, 0) ? update();
+  sprintf(#v6, "%d%%", slider6);
+  ng_knob_ctl(6, "MIX", #v6, 0, 100, 100, 1, 0) ? update();
+
+  ng_end();

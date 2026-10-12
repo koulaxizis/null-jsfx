@@ -1,0 +1,181 @@
+desc:NULL Spectral Freeze GFX
+author: Christos Koulaxizis
+tags: spectral freeze fft sustain drone infinite hold pad ambient gui
+//category: Advanced
+//NULL JSFX v2.0 • https://nulljsfx.tech • MIT License
+
+import null_gfx.jsfx-inc
+
+slider1:0<0,1,1{Off,Frozen}>-Freeze
+slider2:300<10,3000,1>-Fade (ms)
+slider3:40<0,100,1>-Smear (%)
+slider4:0<-24,12,0.1>-Level (dB)
+slider5:100<0,100,1>-Mix (%)
+
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
+
+@init
+  // NULL Spectral Freeze (../spectral_freeze.jsfx) with its own interface: same audio code, plus @gfx.
+  gfx_ext_retina = 1;
+  // Captures the spectrum of the sound at the moment Freeze is switched on and holds
+  // it forever as a sustained texture (2048-point FFT, 4x overlap). While Off the audio
+  // passes untouched and the plugin keeps listening. Smear sets how much the frozen
+  // phases are randomised: 0% keeps a tonal, buzzy snapshot; 100% a smooth, airy drone.
+  // Fade crossfades into and out of the frozen sound.
+  N = 2048; H = N / 4; NB = N / 2 + 1;
+  fft_buf = 0;                       // 2N slots, aligned so it never crosses 65536
+  win = 2 * N;
+  in_l = win + N; in_r = in_l + N;
+  mag_l = in_r + N; mag_r = mag_l + NB;
+  ph_l = mag_r + NB; ph_r = ph_l + NB;
+  out_l = ph_r + NB; out_r = out_l + N;
+  freembuf(out_r + N);
+  memset(win, 0, out_r + N - win);
+  i = 0;
+  loop(N, win[i] = 0.5 - 0.5 * cos(2 * $pi * i / N); i += 1);
+  // Park-Miller generator in exact double arithmetic (0 < value < 1), so every CPU and the
+  // VST3/CLAP version get the same random phases
+  seed = 12345;
+  function pm_rand()
+  (
+    seed *= 16807; seed -= floor(seed / 2147483647) * 2147483647;
+    seed / 2147483647;
+  );
+  // random starting phases, so the frozen frame never lines up into a click
+  i = 0;
+  loop(NB, ph_l[i] = pm_rand() * 2 * $pi; ph_r[i] = pm_rand() * 2 * $pi; i += 1);
+  ipos = 0; opos = 0; cnt = 0;
+  frozen = 0; wet = 0; filled = 0;
+
+  // analyse the last N samples into magnitudes
+  function analyse(inb, magb) local(i, re, im)
+  (
+    i = 0;
+    loop(N,
+      fft_buf[2 * i] = inb[(ipos + i) % N] * win[i];
+      fft_buf[2 * i + 1] = 0;
+      i += 1;
+    );
+    fft(fft_buf, N);
+    fft_permute(fft_buf, N);
+    i = 0;
+    loop(NB,
+      re = fft_buf[2 * i]; im = fft_buf[2 * i + 1];
+      magb[i] = sqrt(re * re + im * im);
+      i += 1;
+    );
+  );
+
+  // build one frame from the frozen magnitudes and overlap-add it
+  function synth(magb, phb, outb) local(i, p, m)
+  (
+    i = 0;
+    loop(NB,
+      p = phb[i] + 2 * $pi * i * H / N + smear * (pm_rand() * 2 - 1) * $pi;
+      p -= floor(p / (2 * $pi)) * 2 * $pi;
+      phb[i] = p;
+      m = magb[i];
+      fft_buf[2 * i] = m * cos(p);
+      fft_buf[2 * i + 1] = m * sin(p);
+      i > 0 && i < N / 2 ? (
+        fft_buf[2 * (N - i)] = m * cos(p);
+        fft_buf[2 * (N - i) + 1] = -m * sin(p);
+      );
+      i += 1;
+    );
+    fft_buf[1] = 0; fft_buf[N + 1] = 0;
+    fft_ipermute(fft_buf, N);
+    ifft(fft_buf, N);
+    i = 0;
+    loop(N,
+      p = (opos + i) % N;
+      // synthesis window; overlap-added Hann windows at 4x sum to 2, which makes up
+      // for the 0.5 gain of the analysis window
+      outb[p] += fft_buf[2 * i] * win[i] / N;
+      i += 1;
+    );
+  );
+
+  function update()
+  (
+    want = slider1;
+    fade = 1 / max(1, slider2 / 1000 * srate);
+    smear = slider3 / 100;
+    level = 10 ^ (slider4 / 20);
+    mix = slider5 / 100;
+  );
+
+@slider
+  update();
+
+@sample
+  in_l[ipos] = spl0;
+  in_r[ipos] = spl1;
+  ipos += 1; ipos >= N ? ipos = 0;
+  filled < N ? filled += 1;
+
+  cnt += 1;
+  cnt >= H ? (
+    cnt = 0;
+    // keep the snapshot fresh until Freeze is switched on
+    !frozen ? (analyse(in_l, mag_l); analyse(in_r, mag_r));
+    // only freeze once a full window of audio has been heard
+    want && filled >= N ? frozen = 1;
+    wet > 0 || frozen ? (synth(mag_l, ph_l, out_l); synth(mag_r, ph_r, out_r));
+  );
+  !want && wet <= 0 ? frozen = 0;
+  wet = frozen && want ? min(1, wet + fade) : max(0, wet - fade);
+
+  f_l = out_l[opos]; out_l[opos] = 0;
+  f_r = out_r[opos]; out_r[opos] = 0;
+  opos += 1; opos >= N ? opos = 0;
+
+  w = wet * mix;
+  spl0 = spl0 * (1 - w) + f_l * level * w;
+  spl1 = spl1 * (1 - w) + f_r * level * w;
+
+@gfx 480 294
+  ng_knobs_begin("SPECTRAL FREEZE", "ADVANCED", 480, 120, 1, 0);
+
+  // display: the held spectrum (average of both channels, 0 dB = a full-scale sine, down to
+  // -84 dB) on a log-frequency axis; silver while frozen, grey while it follows the input
+  ng_plot(ng_vx + 26, ng_vy + 4, ng_vw - 30, ng_vh - 20);
+  ng_grid(1, 4, 0);
+  ng_font(4, 8, 0);
+  ng_col(NG_MUTED, 1);
+  ng_ptxt("0", ng_px - 6 * ng_s, ng_py, 2);
+  ng_ptxt("-42", ng_px - 6 * ng_s, ng_py + ng_ph / 2, 2);
+  ng_ptxt("-84", ng_px - 6 * ng_s, ng_py + ng_ph, 2);
+  ng_ptxt("100", ng_freq_x(100), ng_py + ng_ph + 10 * ng_s, 1);
+  ng_ptxt("1k", ng_freq_x(1000), ng_py + ng_ph + 10 * ng_s, 1);
+  ng_ptxt("10k", ng_freq_x(10000), ng_py + ng_ph + 10 * ng_s, 1);
+  frozen && want ? sprintf(#sf_t, "FROZEN %d%%", floor(wet * 100 + 0.5)) : strcpy(#sf_t, "LIVE");
+  ng_ptxt(#sf_t, ng_px + ng_pw, Y(ng_vy + 4), 2);
+  frozen && want ? ng_col(NG_ACCENT, 1) : ng_col(NG_MUTED, 1);
+  sf_j = 0;
+  loop(201,
+    sf_b0 = min(NB - 1, floor(20 * 1000 ^ (sf_j / 200) * N / srate));
+    sf_b1 = max(sf_b0, min(NB - 1, floor(20 * 1000 ^ ((sf_j + 1) / 200) * N / srate)));
+    sf_m = 0;
+    sf_b = sf_b0;
+    loop(sf_b1 - sf_b0 + 1, sf_m = max(sf_m, (mag_l[sf_b] + mag_r[sf_b]) / 2); sf_b += 1;);
+    sf_y = ng_lin_y(20 * log10(max(sf_m / (N / 4), 0.0000001)), -84, 0);
+    sf_j == 0 ? ng_line_start(ng_px, sf_y) : ng_line_to(ng_px + ng_pw * sf_j / 200, sf_y);
+    sf_j += 1;
+  );
+
+  ng_row(5);
+  ng_select_ctl(1, "FREEZE", "OFF|FROZEN", 0) ? update();
+  sprintf(#v2, "%d ms", slider2);
+  ng_knob_ctl(2, "FADE", #v2, 10, 3000, 300, 1, 0) ? update();
+  sprintf(#v3, "%d%%", slider3);
+  ng_knob_ctl(3, "SMEAR", #v3, 0, 100, 40, 1, 0) ? update();
+  sprintf(#v4, "%.1f dB", slider4);
+  ng_knob_ctl(4, "LEVEL", #v4, -24, 12, 0, 0.1, 0) ? update();
+  sprintf(#v5, "%d%%", slider5);
+  ng_knob_ctl(5, "MIX", #v5, 0, 100, 100, 1, 0) ? update();
+
+  ng_end();

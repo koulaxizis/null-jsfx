@@ -1,0 +1,170 @@
+desc:NULL Auto Pan GFX
+author: Christos Koulaxizis
+tags: autopan pan modulation lfo movement stereo width tempo sync gui
+//category: Essentials
+//NULL JSFX v2.0 • https://nulljsfx.tech • MIT License
+
+import null_gfx.jsfx-inc
+
+slider1:2<0.1,10,0.1>-Rate (Hz)
+slider2:50<0,100,1>-Depth (%)
+slider3:40<0,100,1>-Mix (%)
+slider4:0<0,1,1{OFF,ON}>-Tempo Sync
+slider5:0<0,3,1{1/2,1/4,1/8,1/16}>-Subdivision
+
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
+
+@init
+  // NULL Auto Pan (../auto_pan.jsfx) with its own interface: same audio code, plus @gfx.
+  phase = 0;
+  calc_rate = 2;
+  phase_inc = 6.28318530717958 * calc_rate / srate;
+  tempo_sync = 0;
+  mult = 0.5;
+  gfx_ext_retina = 1;
+
+  function update()
+  (
+    depth_pct = slider2 / 100;
+    mix_amt = slider3 / 100;
+    tempo_sync = slider4;
+    subdivision = slider5;
+
+    subdivision == 0 ? mult = 0.5;
+    subdivision == 1 ? mult = 1;
+    subdivision == 2 ? mult = 2;
+    subdivision == 3 ? mult = 4;
+
+    tempo_sync == 0 ? (
+      calc_rate = slider1;
+      phase_inc = 6.28318530717958 * calc_rate / srate;
+    );
+  );
+
+  // ---- modulation view: an info line over a plot of two LFO cycles ----
+  // level of the left (md_ch 0) or right (1) channel at u (0..1 = two cycles), as a plot y
+  function md_val(u) local(lfo)
+  (
+    lfo = sin(4 * $pi * u);
+    ng_lin_y(1 - slider3 / 100 + slider3 / 100 * (0.5 + (md_ch ? -0.5 : 0.5) * slider2 / 100 * lfo), 0, 1);
+  );
+
+  function md_view(left, right)
+  (
+    ng_plot(ng_vx + 26, ng_vy + 14, ng_vw - 30, ng_vh - 30);
+    ng_grid(4, 4, 0);
+    ng_font(4, 8, 0);
+    ng_col(NG_MUTED, 1);
+    ng_ptxt(left, ng_px, Y(ng_vy + 4), 0);
+    ng_ptxt(right, ng_px + ng_pw, Y(ng_vy + 4), 2);
+  );
+
+  // labels at the top, middle and bottom of the plot
+  function md_ylabels(top, mid, bot)
+  (
+    ng_col(NG_MUTED, 1);
+    ng_ptxt(top, ng_px - 6 * ng_s, ng_py, 2);
+    ng_ptxt(mid, ng_px - 6 * ng_s, ng_py + ng_ph / 2, 2);
+    ng_ptxt(bot, ng_px - 6 * ng_s, ng_py + ng_ph, 2);
+  );
+
+  // times under the plot at 1/4, 1/2 and 3/4 of its width for a cycle of period seconds
+  function md_xlabels(period) local(i, t)
+  (
+    ng_col(NG_MUTED, 1);
+    i = 1;
+    loop(3,
+      t = period * i / 2;
+      t < 1 ? sprintf(#md_t, "%d ms", floor(t * 1000 + 0.5)) : sprintf(#md_t, "%.2f s", t);
+      ng_ptxt(#md_t, ng_px + ng_pw * i / 4, ng_py + ng_ph + 10 * ng_s, 1);
+      i += 1;
+    );
+  );
+
+  // md_val across the plot in colour rgb, shaded down to the bottom when fill = 1
+  function md_curve(rgb, fill) local(i)
+  (
+    fill ? (
+      ng_col(NG_ACCENT, 0.10);
+      i = 0;
+      loop(floor(ng_pw) + 1, gfx_line(ng_px + i, ng_py + ng_ph, ng_px + i, md_val(i / ng_pw), 0); i += 1;);
+    );
+    ng_col(rgb, 1);
+    i = 0;
+    loop(floor(ng_pw) + 1,
+      i == 0 ? ng_line_start(ng_px, md_val(0)) : ng_line_to(ng_px + i, md_val(i / ng_pw));
+      i += 1;
+    );
+  );
+
+  // dashed playhead at u (0..1) of the plot width
+  function md_playhead(u) local(x, y)
+  (
+    x = floor(ng_px + max(0, min(1, u)) * ng_pw) + 0.5;
+    ng_col(NG_ACCENT, 0.5);
+    y = ng_py;
+    while (
+      gfx_line(x, y, x, min(y + 3 * ng_s, ng_py + ng_ph), 0);
+      y += 6 * ng_s;
+      y < ng_py + ng_ph;
+    );
+  );
+
+@slider
+  update();
+
+@block
+  tempo_sync == 1 ? (
+    calc_rate = (tempo / 60) * mult;
+    phase_inc = 6.28318530717958 * calc_rate / srate;
+  );
+
+@sample
+  phase >= 6.28318530717958 ? phase = phase - 6.28318530717958;
+  lfo = sin(phase);
+  phase = phase + phase_inc;
+
+  left_gain = 0.5 + 0.5 * depth_pct * lfo;
+  right_gain = 0.5 - 0.5 * depth_pct * lfo;
+
+  proc_l = spl0 * left_gain;
+  proc_r = spl1 * right_gain;
+
+  out_l = spl0 * (1 - mix_amt) + proc_l * mix_amt;
+  out_r = spl1 * (1 - mix_amt) + proc_r * mix_amt;
+
+  spl0 = out_l;
+  spl1 = out_r;
+
+@gfx 480 294
+  ng_knobs_begin("AUTO PAN", "ESSENTIALS", 480, 120, 1, 0);
+
+  // display: the left and right levels over two LFO cycles (0 to 100%), the LFO position dashed
+  sprintf(#md_r, "%.2f Hz", calc_rate);
+  md_view("", #md_r);
+  ng_col(NG_ACCENT, 1);
+  ng_ptxt("LEFT", ng_px, Y(ng_vy + 4), 0);
+  ng_col(NG_MUTED, 1);
+  ng_ptxt("RIGHT", ng_px + 34 * ng_s, Y(ng_vy + 4), 0);
+  md_ylabels("100%", "50%", "0%");
+  calc_rate > 0 ? md_xlabels(1 / calc_rate);
+  md_ch = 1;
+  md_curve(NG_MUTED, 0);
+  md_ch = 0;
+  md_curve(NG_ACCENT, 1);
+  md_playhead(phase / 6.28318530717958 / 2);
+
+  ng_row(5);
+  slider4 ? sprintf(#v1, "%.2f Hz", calc_rate) : sprintf(#v1, "%.1f Hz", slider1);
+  ng_knob_ctl(1, "RATE", #v1, 0.1, 10, 2, 0.1, 0) ? update();
+  sprintf(#v2, "%d%%", slider2);
+  ng_knob_ctl(2, "DEPTH", #v2, 0, 100, 50, 1, 0) ? update();
+  sprintf(#v3, "%d%%", slider3);
+  ng_knob_ctl(3, "MIX", #v3, 0, 100, 40, 1, 0) ? update();
+  ng_select_ctl(4, "SYNC", "OFF|ON", 0) ? update();
+  ng_select_ctl(5, "NOTE", "1/2|1/4|1/8|1/16", 0) ? update();
+
+  ng_end();

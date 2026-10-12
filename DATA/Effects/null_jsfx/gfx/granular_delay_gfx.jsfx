@@ -1,0 +1,202 @@
+desc:NULL Granular Delay GFX
+author: Christos Koulaxizis
+tags: granular delay grains cloud texture pitch spray ambient glitch gui
+//category: Advanced
+//NULL JSFX v2.0 • https://nulljsfx.tech • MIT License
+
+import null_gfx.jsfx-inc
+
+slider1:300<10,2000,1>-Delay Time (ms)
+slider2:80<10,500,1>-Grain Size (ms)
+slider3:20<1,100,1>-Density (grains/s)
+slider4:0<-24,24,0.1>-Pitch (semitones)
+slider5:30<0,100,1>-Spray (%)
+slider6:0<0,100,1>-Reverse (%)
+slider7:40<0,95,1>-Feedback (%)
+slider8:70<0,100,1>-Stereo Spread (%)
+slider9:40<0,100,1>-Mix (%)
+
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
+
+@init
+  // NULL Granular Delay (../granular_delay.jsfx) with its own interface: same audio code, plus @gfx.
+  // A delay that plays back in small grains. Density grains per second are started;
+  // each one reads a short window (Grain Size) from Delay Time ago, randomly moved by
+  // Spray, at the chosen Pitch, sometimes backwards (Reverse), panned randomly by
+  // Stereo Spread. The grain cloud is fed back into the delay line (Feedback), so the
+  // texture keeps evolving. Up to 16 grains sound at once.
+  buf_size = ceil(srate * 3);
+  bl = 0; br = bl + buf_size;
+  gr = br + buf_size;            // grain table: 16 grains x 6 values
+  freembuf(gr + 96);
+  memset(bl, 0, 2 * buf_size + 96);
+  wpos = 0;
+  next_grain = 0;
+  fb_l = fb_r = 0;
+  seed = 12345;
+
+  // Park-Miller generator in exact double arithmetic, so the grains are the same on every
+  // CPU; returns 0 < value < 1
+  function rnd()
+  (
+    seed *= 16807; seed -= floor(seed / 2147483647) * 2147483647;
+    seed / 2147483647;
+  );
+
+  function rd(buf, p) local(i, f, i2)
+  (
+    p = p - floor(p / buf_size) * buf_size;
+    i = floor(p); f = p - i;
+    i2 = i + 1; i2 >= buf_size ? i2 = 0;
+    buf[i] + (buf[i2] - buf[i]) * f;
+  );
+  gfx_ext_retina = 1;
+
+  function update()
+  (
+    dtime = slider1 * srate / 1000;
+    glen = max(32, floor(slider2 * srate / 1000));
+    interval = srate / slider3;
+    ratio = 2 ^ (slider4 / 12);
+    spray = slider5 / 100;
+    rev = slider6;
+    feedback = slider7 / 100;
+    spread = slider8 / 100;
+    mix = slider9 / 100;
+    // grains overlap glen / interval times on average; scale to keep the level steady
+    gnorm = 1 / sqrt(max(1, glen / interval));
+  );
+
+@slider
+  update();
+
+@sample
+  bl[wpos] = spl0 + fb_l * feedback;
+  br[wpos] = spl1 + fb_r * feedback;
+
+  // start a new grain in the first free slot
+  next_grain -= 1;
+  next_grain <= 0 ? (
+    next_grain = interval * (0.75 + 0.5 * rnd());
+    i = 0; found = 0;
+    while (found == 0 && i < 16) (
+      g = gr + 6 * i;
+      g[0] <= 0 ? (
+        found = 1;
+        dir = 100 * rnd() < rev ? -1 : 1;
+        // start position: Delay Time ago, randomly earlier by up to Spray x 1 s
+        g[1] = wpos - dtime - spray * srate * rnd() - (dir < 0 ? 0 : glen * max(0, ratio - 1));
+        g[2] = ratio * dir;            // read speed
+        g[0] = glen;                   // samples left
+        pan = 0.5 + (rnd() - 0.5) * spread;
+        g[3] = cos(pan * $pi / 2);     // left gain
+        g[4] = sin(pan * $pi / 2);     // right gain
+        dir < 0 ? g[1] += glen * ratio;
+      );
+      i += 1;
+    );
+  );
+
+  out_l = out_r = 0;
+  i = 0;
+  loop(16,
+    g = gr + 6 * i;
+    g[0] > 0 ? (
+      ph = 1 - g[0] / glen;
+      w = 0.5 - 0.5 * cos(2 * $pi * ph);
+      out_l += rd(bl, g[1]) * w * g[3];
+      out_r += rd(br, g[1]) * w * g[4];
+      g[1] += g[2];
+      g[0] -= 1;
+    );
+    i += 1;
+  );
+  out_l *= gnorm * 1.4;
+  out_r *= gnorm * 1.4;
+  fb_l = out_l; fb_r = out_r;
+
+  wpos += 1;
+  wpos >= buf_size ? wpos = 0;
+  spl0 = spl0 * (1 - mix) + out_l * mix;
+  spl1 = spl1 * (1 - mix) + out_r * mix;
+
+@gfx 480 380
+  function gd_frac(x) ( x - floor(x); );
+  // Hann window from t0 over len ms (0 to 3000 ms on the plot), height h (0..1)
+  function gd_grain(t0, len, h, col) local(x0, w, c, yb, hh, x, y, px, py, n)
+  (
+    x0 = ng_lin_x(t0, 0, 3000);
+    w = max(3 * ng_s, ng_lin_x(t0 + len, 0, 3000) - x0);
+    yb = ng_py + ng_ph;
+    hh = h * ng_ph * 0.9;
+    n = floor(w);
+    ng_col(col, 0.18);
+    c = 0;
+    loop(n + 1,
+      x = x0 + c;
+      x <= ng_px + ng_pw ? gfx_line(x, yb, x, yb - (0.5 - 0.5 * cos(2 * $pi * c / w)) * hh, 0);
+      c += 1;
+    );
+    ng_col(col, 1);
+    px = x0; py = yb;
+    c = 1;
+    loop(n,
+      x = x0 + c;
+      y = yb - (0.5 - 0.5 * cos(2 * $pi * c / w)) * hh;
+      x <= ng_px + ng_pw ? gfx_line(px, py, x, y, 1);
+      px = x; py = y;
+      c += 1;
+    );
+  );
+
+  ng_knobs_begin("GRANULAR DELAY", "ADVANCED", 480, 120, 2, 0);
+
+  // display: the grain cloud in the delay line, 0 to 3 s ago. Grains (Hann windows of Grain Size)
+  // start at Delay Time and scatter over Spray; reversed ones are dimmer. The fed-back cloud
+  // repeats at every multiple of Delay Time, each time Feedback lower.
+  ng_plot(ng_vx + 6, ng_vy + 4, ng_vw - 12, ng_vh - 20);
+  ng_grid(6, 4, 0);
+  ng_font(4, 8, 0);
+  ng_col(NG_MUTED, 1);
+  gd_i = 1;
+  loop(5, sprintf(#gd_t, "%.1f s", gd_i * 0.5); ng_ptxt(#gd_t, ng_px + ng_pw * gd_i / 6, ng_py + ng_ph + 10 * ng_s, 1); gd_i += 1;);
+  gd_n = min(16, ceil(slider3 * slider2 / 1000) + 1);
+  gd_lvl = 1;
+  gd_e = 1;
+  while (gd_e <= 4 && gd_lvl > 0.05 && slider1 * gd_e < 3000) (
+    gd_k = 0;
+    loop(gd_n,
+      gd_t0 = slider1 * gd_e + slider5 * 10 * gd_frac(gd_k * 0.618034);
+      gd_t0 < 3000 ? gd_grain(gd_t0, slider2, gd_lvl * (0.55 + 0.45 * gd_frac(gd_k * 0.414214 + 0.3)),
+                              gd_frac(gd_k * 0.754878 + 0.1) * 100 < slider6 ? NG_MUTED : NG_ACCENT);
+      gd_k += 1;
+    );
+    gd_lvl *= slider7 / 100;
+    gd_e += 1;
+  );
+
+  ng_row(5);
+  sprintf(#v1, "%d ms", slider1);
+  ng_knob_ctl(1, "TIME", #v1, 10, 2000, 300, 1, 0) ? update();
+  sprintf(#v2, "%d ms", slider2);
+  ng_knob_ctl(2, "SIZE", #v2, 10, 500, 80, 1, 0) ? update();
+  sprintf(#v3, "%d /s", slider3);
+  ng_knob_ctl(3, "DENSITY", #v3, 1, 100, 20, 1, 0) ? update();
+  sprintf(#v4, "%+.1f st", slider4);
+  ng_knob_ctl(4, "PITCH", #v4, -24, 24, 0, 0.1, 1) ? update();
+  sprintf(#v5, "%d%%", slider5);
+  ng_knob_ctl(5, "SPRAY", #v5, 0, 100, 30, 1, 0) ? update();
+  ng_row(4);
+  sprintf(#v6, "%d%%", slider6);
+  ng_knob_ctl(6, "REVERSE", #v6, 0, 100, 0, 1, 0) ? update();
+  sprintf(#v7, "%d%%", slider7);
+  ng_knob_ctl(7, "FEEDBACK", #v7, 0, 95, 40, 1, 0) ? update();
+  sprintf(#v8, "%d%%", slider8);
+  ng_knob_ctl(8, "SPREAD", #v8, 0, 100, 70, 1, 0) ? update();
+  sprintf(#v9, "%d%%", slider9);
+  ng_knob_ctl(9, "MIX", #v9, 0, 100, 40, 1, 0) ? update();
+
+  ng_end();

@@ -1,6 +1,6 @@
 # NULL JSFX — Audio Without Noise
 
-73 professional audio effects for Cockos Reaper. Pure EEL2 scripting, native sliders, zero dependencies. Free and open source.
+75 professional audio effects for Cockos Reaper. Pure EEL2 scripting, native sliders, zero dependencies. Free and open source.
 
 The One Slider plugins also come as **GFX** JSFX with their own interface and as **VST3 / CLAP** for any DAW (Windows, macOS, Linux). All versions of a plugin sound the same.
 
@@ -17,7 +17,7 @@ Each plugin belongs to one of three categories, written on line 4 of its file:
 |----------|---------|
 | **One Slider** (20) | Brighter, Chorus One, Crunch, Doubler, Driver, Exciter, Formant Shift, Grit, Louder, Mono Maker, Phatter, Pressure, Pumper, Riser, Snappy, Spread, Stretch, Sweeper, Tilt, Wetter |
 | **Essentials** (31) | Auto Pan, Auto-Leveler, Breath Control, Cabinet Simulator, Channel Utility, Chorus, Click Repair, DeEsser, Delay, Dynamic EQ, Dynamics, Envelope Follower, Filter, Flanger, Gate, Limiter, Maximizer, Mid/Side Matrix, Multiband Comp, Noise Generator, Parametric EQ, Phaser, Pitch Shifter, Reverb, Ring Mod, Saturation, Sidechain Ducker, Stereo Width, Transient Shaper, Tremolo, Vibrato |
-| **Advanced** (22) | Comb Filter, Convolution, Formant Filter, Frequency Shifter, Glitch FX, Granular Delay, Harmonizer, Kick Shaper, Ladder Filter, OTT, Reverser, Robotizer, Rotary Speaker, Shimmer Reverb, Spectral Freeze, Spring Reverb, Sub Bloom, Tape Stop, Trance Gate, Vinyl Age, Vocoder, Warped Delay |
+| **Advanced** (24) | Comb Filter, Convolution, Formant Filter, Frequency Shifter, Glitch FX, Granular Delay, Harmonizer, Kick Shaper, Ladder Filter, Loudness Meter, OTT, Reverser, Robotizer, Rotary Speaker, Shimmer Reverb, Spectral Freeze, Spectrum Analyzer, Spring Reverb, Sub Bloom, Tape Stop, Trance Gate, Vinyl Age, Vocoder, Warped Delay |
 <!-- END PLUGIN LIST -->
 
 ## Installation

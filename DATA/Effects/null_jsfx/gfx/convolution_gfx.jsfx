@@ -1,0 +1,353 @@
+desc:NULL Convolution GFX
+author: Christos Koulaxizis
+tags: convolution reverb impulse response ir room hall plate cabinet gui
+//category: Advanced
+//NULL JSFX v2.0 • https://nulljsfx.tech • MIT License
+
+import null_gfx.jsfx-inc
+
+slider1:2<0,5,1{Small Room,Large Room,Hall,Plate,Cathedral,IR File}>-Source
+slider2:/null_jsfx_ir:none:-IR File
+slider3:100<10,100,1>-Length (%)
+slider4:0<0,200,1>-Pre-Delay (ms)
+slider5:80<20,1000,1>-Low Cut (Hz)
+slider6:12000<1000,20000,10>-High Cut (Hz)
+slider7:30<0,100,1>-Mix (%)
+slider8:0<-24,12,0.1>-Output (dB)
+
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
+
+@init
+  // NULL Convolution (../convolution.jsfx) with its own interface: same audio code, plus @gfx.
+  gfx_ext_retina = 1;
+  // Convolution reverb: the input is convolved with an impulse response (IR), the
+  // recorded "fingerprint" of a space or device, using uniformly partitioned FFT
+  // convolution (1024-sample blocks; this latency is reported to REAPER).
+  // Five IRs are built in (generated, so no files are needed). To use your own,
+  // put .wav files in REAPER's Data/null_jsfx_ir folder, choose Source = IR File and
+  // pick the file. Stereo IRs are used per channel, mono IRs for both. IRs are limited
+  // to 3 seconds and level-normalised.
+  B = 1024; M = 2 * B;               // block size, FFT size (complex points)
+  FS = 2 * M;                        // slots per spectrum (aligned to 4096 -> no 65536 crossing)
+  P_max = ceil(3 * srate / B);
+  inb_l = 0; inb_r = M;              // last M input samples per channel (time domain)
+  ola_l = 2 * M; ola_r = 3 * M;      // output of the current block per channel
+  tmp = 4 * M; acc = tmp + FS;       // work buffers (one spectrum each)
+  outq_l = acc + FS; outq_r = outq_l + B;
+  H_l = 65536; H_r = H_l + P_max * FS;
+  X_l = H_r + P_max * FS; X_r = X_l + P_max * FS;
+  ir_tmp = X_r + P_max * FS;         // raw IR before partitioning (2 channels)
+  ir_len_max = P_max * B;
+  // after the two IR channels: room for 2 * ir_len_max interleaved file samples (3 s stereo)
+  freembuf(ir_tmp + 4 * ir_len_max + 16);
+  memset(0, 0, ir_tmp + 4 * ir_len_max + 16);
+  P = 1; pos = 0; slot = 0;
+  ir_len = 0;
+  last_src = -1;
+  pdc_delay = B;
+  pdc_bot_ch = 0;
+  pdc_top_ch = 2;
+  lc1 = lc2 = hc1 = hc2 = 0;
+  lcr1 = lcr2 = hcr1 = 0;
+
+  // Park-Miller generator in exact double arithmetic (0 < value < 1): the generated IRs are
+  // the same on every CPU and in the VST3/CLAP version; build() restarts it, so an IR depends
+  // only on its settings
+  seed = 12345;
+  function pm_rand()
+  (
+    seed *= 16807; seed -= floor(seed / 2147483647) * 2147483647;
+    seed / 2147483647;
+  );
+
+  // generated room: early reflections + exponentially decaying noise that darkens over time
+  function gen_ir(dst, len, t60, bright, er_ms, seed_off) local(n, t, env, c, lp, x, k)
+  (
+    memset(dst, 0, len);
+    lp = 0;
+    n = 0;
+    loop(len,
+      t = n / srate;
+      env = exp(-6.9 * t / t60);
+      c = exp(-2 * $pi * (300 + bright * exp(-t / (t60 * 0.35))) / srate);
+      x = pm_rand() * 2 - 1;
+      lp = (1 - c) * x + c * lp;
+      // short fade-in so the tail starts after the first reflections
+      dst[n] = lp * env * min(1, t / (er_ms / 1000));
+      n += 1;
+    );
+    // a handful of early reflections
+    k = 0;
+    loop(8,
+      n = floor((2 + pm_rand() * er_ms) * srate / 1000);
+      n < len ? dst[n] += (pm_rand() * 2 - 1) * 0.6 * exp(-k * 0.25);
+      k += 1;
+    );
+  );
+
+  // load a .wav chosen in the IR File slider; returns the length per channel (0 = failed)
+  function load_file() local(h, nch, fsr, avail, n, len, ratio, i, p, f, c)
+  (
+    len = 0;
+    h = file_open(slider2);
+    h >= 0 ? (
+      file_riff(h, nch, fsr);
+      nch > 0 && fsr > 0 ? (
+        avail = min(file_avail(h), ir_len_max * nch * 2);
+        n = floor(avail / nch);
+        // read interleaved data after the two IR channel buffers, then resample
+        file_mem(h, ir_tmp + 2 * ir_len_max, min(n * nch, 2 * ir_len_max));
+        n = floor(min(n * nch, 2 * ir_len_max) / nch);
+        ratio = fsr / srate;
+        len = min(ir_len_max, floor(n / ratio));
+        c = 0;
+        loop(2,
+          i = 0;
+          loop(len,
+            p = i * ratio;
+            f = p - floor(p);
+            p = floor(p);
+            ir_tmp[c * ir_len_max + i] =
+              ir_tmp[2 * ir_len_max + p * nch + min(c, nch - 1)] * (1 - f) +
+              ir_tmp[2 * ir_len_max + min(p + 1, n - 1) * nch + min(c, nch - 1)] * f;
+            i += 1;
+          );
+          c += 1;
+        );
+      );
+      file_close(h);
+    );
+    len;
+  );
+
+  // split one channel's IR into P partitions and FFT each one (EEL2 names ignore case, so the
+  // partition index is k: a local p would hide the global P and loop(P) would run 0 times)
+  function partition(src, H, len) local(k, i, e, g)
+  (
+    e = 0;
+    i = 0;
+    loop(len, e += src[i] * src[i]; i += 1);
+    g = e > 0 ? 1 / sqrt(e) : 0;
+    k = 0;
+    loop(P,
+      memset(H + k * FS, 0, FS);
+      i = 0;
+      loop(B,
+        k * B + i < len ? H[k * FS + 2 * i] = src[k * B + i] * g;
+        i += 1;
+      );
+      fft(H + k * FS, M);
+      k += 1;
+    );
+  );
+
+  function build() local(len, t60, pd, i, src_len)
+  (
+    pd = floor(slider4 * srate / 1000);
+    seed = 12345;
+    src == 5 ? (
+      src_len = load_file();
+    ) : (
+      t60 = src == 0 ? 0.5 : src == 1 ? 1.2 : src == 2 ? 2.4 : src == 3 ? 1.8 : 3;
+      src_len = min(ir_len_max - pd, floor(min(3, t60 * 1.2) * srate));
+      gen_ir(ir_tmp, src_len, t60, src == 3 ? 9000 : src == 4 ? 3500 : 6000, src == 0 ? 8 : src == 3 ? 2 : 25, 0);
+      gen_ir(ir_tmp + ir_len_max, src_len, t60, src == 3 ? 9000 : src == 4 ? 3500 : 6000, src == 0 ? 8 : src == 3 ? 2 : 25, 1);
+    );
+    src_len = floor(src_len * slider3 / 100);
+    // pre-delay: shift the IR later in time
+    pd > 0 && src_len > 0 ? (
+      src_len = min(src_len, ir_len_max - pd);
+      i = src_len - 1;
+      loop(src_len,
+        ir_tmp[i + pd] = ir_tmp[i];
+        ir_tmp[ir_len_max + i + pd] = ir_tmp[ir_len_max + i];
+        i -= 1;
+      );
+      memset(ir_tmp, 0, pd);
+      memset(ir_tmp + ir_len_max, 0, pd);
+      src_len += pd;
+    );
+    // fade out the last 50 ms so a trimmed IR does not end with a click
+    i = 0;
+    loop(min(src_len, floor(0.05 * srate)),
+      ir_tmp[src_len - 1 - i] *= i / (0.05 * srate);
+      ir_tmp[ir_len_max + src_len - 1 - i] *= i / (0.05 * srate);
+      i += 1;
+    );
+    ir_len = src_len;
+    P = max(1, min(P_max, ceil(src_len / B)));
+    src_len > 0 ? (
+      partition(ir_tmp, H_l, src_len);
+      partition(ir_tmp + ir_len_max, H_r, src_len);
+    ) : (
+      memset(H_l, 0, P * FS);
+      memset(H_r, 0, P * FS);
+    );
+    memset(X_l, 0, P_max * FS * 2);
+  );
+
+  // one block of overlap-save convolution for one channel
+  function conv_block(inb, X, H, ola) local(k, s, i)
+  (
+    // spectrum of the last M input samples goes into the delay line slot
+    i = 0;
+    loop(M, X[slot * FS + 2 * i] = inb[(pos + i) % M]; X[slot * FS + 2 * i + 1] = 0; i += 1);
+    fft(X + slot * FS, M);
+    memset(acc, 0, FS);
+    k = 0;
+    loop(P,
+      s = slot - k; s < 0 ? s += P;
+      memcpy(tmp, X + s * FS, FS);
+      convolve_c(tmp, H + k * FS, M);
+      i = 0;
+      loop(FS, acc[i] += tmp[i]; i += 1);
+      k += 1;
+    );
+    ifft(acc, M);
+    // overlap-save: the last B outputs are valid
+    i = 0;
+    loop(B, ola[i] = acc[2 * (B + i)] / M; i += 1);
+  );
+
+  function update()
+  (
+    src = slider1;
+    // rebuild the IR when the source, file, length or pre-delay changed (@init resets last_src)
+    src != last_src || slider2 != last_file || slider3 != last_len || slider4 != last_pd ? (
+      build();
+      slot = 0;
+      last_src = src; last_file = slider2; last_len = slider3; last_pd = slider4;
+    );
+    lc = exp(-2 * $pi * slider5 / srate);
+    hc = exp(-2 * $pi * min(slider6, srate * 0.45) / srate);
+    mix = slider7 / 100;
+    out = 10 ^ (slider8 / 20);
+  );
+
+  // interface: the IR envelope (peak of both channels per 1/200 of 3 s), recomputed after a
+  // rebuild, kept in memory above everything the audio code uses
+  function cv_envelope() local(j, a, b, i, m)
+  (
+    cv_env = ir_tmp + 4 * ir_len_max + 64;
+    j = 0;
+    loop(200,
+      a = floor(j * 3 * srate / 200);
+      b = min(ir_len, floor((j + 1) * 3 * srate / 200));
+      m = 0;
+      i = a;
+      loop(max(0, b - a), m = max(m, max(abs(ir_tmp[i]), abs(ir_tmp[ir_len_max + i]))); i += 1;);
+      cv_env[j] = m;
+      j += 1;
+    );
+    cv_src = last_src; cv_file = last_file; cv_len = last_len; cv_pd = last_pd; cv_n = ir_len; cv_sr = srate;
+  );
+
+  // interface: the IR File cell, like a selector: the left half picks the previous file in
+  // Data/null_jsfx_ir, the right half the next one (wheel steps); greyed unless Source = IR File
+  function cv_file_ctl() local(cx, ry, pw, hover, v)
+  (
+    ng_ctl_id += 1;
+    cx = ng_cellx + ng_cw / 2;
+    ry = ng_rowy;
+    ng_cellx += ng_cw;
+    ng_font(1, 7.5, 1);
+    ng_col(NG_MUTED, 1);
+    ng_txt("IR FILE", cx, ry + 10, 1, 1.5);
+    pw = ng_cw - 10;
+    hover = mouse_x >= X(cx - pw / 2) && mouse_x < X(cx + pw / 2) && abs(mouse_y - Y(ry + 44)) < 14 * ng_s;
+    ng_col(NG_BG, 1);
+    gfx_roundrect(X(cx - pw / 2), Y(ry + 33), pw * ng_s, 22 * ng_s, 4 * ng_s, 1);
+    gfx_rect(X(cx - pw / 2) + 1, Y(ry + 33) + 1, pw * ng_s - 1, 22 * ng_s - 1);
+    ng_col(hover ? 0x45433f : NG_BORDER, 1);
+    gfx_roundrect(X(cx - pw / 2), Y(ry + 33), pw * ng_s, 22 * ng_s, 4 * ng_s, 1);
+    ng_font(1, 8, 1);
+    ng_col(slider1 == 5 ? NG_TEXT : NG_MUTED, 1);
+    sprintf(#cv_f, "FILE %d", slider2 + 1);
+    ng_txt(#cv_f, cx, ry + 44, 1, 0.5);
+    ng_col(NG_MUTED, 1);
+    ng_arrow(cx - pw / 2 + 7, ry + 44, -1);
+    ng_arrow(cx + pw / 2 - 7, ry + 44, 1);
+    v = slider2;
+    hover && ng_click ? v = mouse_x < X(cx) ? max(0, slider2 - 1) : slider2 + 1;
+    hover && mouse_wheel != 0 ? v = mouse_wheel > 0 ? slider2 + 1 : max(0, slider2 - 1);
+    ng_slider_set(2, v);
+  );
+
+@slider
+  update();
+
+@sample
+  inb_l[pos] = spl0; inb_r[pos] = spl1;
+  pos += 1; pos >= M ? pos = 0;
+  bpos = pos % B;
+  w_l = ola_l[bpos];
+  w_r = ola_r[bpos];
+  // dry signal delayed by one block to stay aligned with the wet signal
+  dpos = pos - B - 1; dpos < 0 ? dpos += M;
+  d_l = inb_l[dpos]; d_r = inb_r[dpos];
+  bpos == B - 1 ? (
+    slot += 1; slot >= P ? slot = 0;
+    conv_block(inb_l, X_l, H_l, ola_l);
+    conv_block(inb_r, X_r, H_r, ola_r);
+  );
+
+  // wet tone: one-pole low cut and high cut
+  lc1 = lc * (lc1 + w_l - lc2); lc2 = w_l; w_l = lc1;
+  hc1 = (1 - hc) * w_l + hc * hc1; w_l = hc1;
+  lcr1 = lc * (lcr1 + w_r - lcr2); lcr2 = w_r; w_r = lcr1;
+  hcr1 = (1 - hc) * w_r + hc * hcr1; w_r = hcr1;
+
+  spl0 = (d_l * (1 - mix) + w_l * mix) * out;
+  spl1 = (d_r * (1 - mix) + w_r * mix) * out;
+
+@gfx 480 380
+  ng_knobs_begin("CONVOLUTION", "ADVANCED", 480, 120, 2, 0);
+
+  // display: the impulse response's envelope over 3 s (0 to -60 dB from its peak) and its length
+  last_src != cv_src || last_file != cv_file || last_len != cv_len || last_pd != cv_pd || ir_len != cv_n || srate != cv_sr ? cv_envelope();
+  ng_plot(ng_vx + 26, ng_vy + 4, ng_vw - 30, ng_vh - 20);
+  ng_grid(6, 4, 0);
+  ng_font(4, 8, 0);
+  ng_col(NG_MUTED, 1);
+  ng_ptxt("0", ng_px - 6 * ng_s, ng_py, 2);
+  ng_ptxt("-30", ng_px - 6 * ng_s, ng_py + ng_ph / 2, 2);
+  ng_ptxt("-60", ng_px - 6 * ng_s, ng_py + ng_ph, 2);
+  ng_ptxt("1 s", ng_px + ng_pw / 3, ng_py + ng_ph + 10 * ng_s, 1);
+  ng_ptxt("2 s", ng_px + ng_pw * 2 / 3, ng_py + ng_ph + 10 * ng_s, 1);
+  ng_ptxt("3 s", ng_px + ng_pw, ng_py + ng_ph + 10 * ng_s, 2);
+  slider1 == 5 && ir_len <= 0 ? strcpy(#cv_t, "NO FILE") : sprintf(#cv_t, "IR %.2f s", ir_len / srate);
+  ng_ptxt(#cv_t, ng_px + ng_pw, Y(ng_vy + 4), 2);
+  cv_pk = 0;
+  cv_j = 0;
+  loop(200, cv_pk = max(cv_pk, cv_env[cv_j]); cv_j += 1;);
+  cv_pk > 0 ? (
+    ng_col(NG_ACCENT, 0.85);
+    cv_j = 0;
+    loop(200,
+      cv_y = ng_lin_y(20 * log10(max(cv_env[cv_j] / cv_pk, 0.000001)), -60, 0);
+      cv_y < ng_py + ng_ph - 1 ? gfx_rect(ng_px + ng_pw * cv_j / 200, cv_y, ng_pw / 200 + 1, ng_py + ng_ph - cv_y);
+      cv_j += 1;
+    );
+  );
+
+  ng_row(4);
+  ng_select_ctl(1, "SOURCE", "SMALL|LARGE|HALL|PLATE|CHURCH|IR FILE", 0) ? update();
+  cv_file_ctl() ? update();
+  sprintf(#v3, "%d%%", slider3);
+  ng_knob_ctl(3, "LENGTH", #v3, 10, 100, 100, 1, 0) ? update();
+  sprintf(#v4, "%d ms", slider4);
+  ng_knob_ctl(4, "PRE-DELAY", #v4, 0, 200, 0, 1, 0) ? update();
+  ng_row(4);
+  sprintf(#v5, "%d Hz", slider5);
+  ng_knob_ctl(5, "LOW CUT", #v5, 20, 1000, 80, 1, 0) ? update();
+  slider6 >= 10000 ? sprintf(#v6, "%.1f kHz", slider6 / 1000) : sprintf(#v6, "%d Hz", slider6);
+  ng_knob_ctl(6, "HIGH CUT", #v6, 1000, 20000, 12000, 10, 0) ? update();
+  sprintf(#v7, "%d%%", slider7);
+  ng_knob_ctl(7, "MIX", #v7, 0, 100, 30, 1, 0) ? update();
+  sprintf(#v8, "%.1f dB", slider8);
+  ng_knob_ctl(8, "OUTPUT", #v8, -24, 12, 0, 0.1, 0) ? update();
+
+  ng_end();

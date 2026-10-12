@@ -55,9 +55,10 @@ out_pin:Right
     excess = input_db - threshold_db;
     excess > 0 ? (
       knee_db > 0 && excess < knee_db ? (
-        gr_target = excess * (1 - 1/ratio) * (excess / knee_db);
+        // quadratic soft knee: the slope rises smoothly from 1 to 1/ratio
+        gr_target = (1 - 1/ratio) * excess * excess / (2 * knee_db);
       ) : (
-        gr_target = excess * (1 - 1/ratio);
+        gr_target = (1 - 1/ratio) * (excess - knee_db / 2);
       );
     );
   ) : (
@@ -65,9 +66,9 @@ out_pin:Right
     deficit = threshold_db - input_db;
     deficit > 0 ? (
       knee_db > 0 && deficit < knee_db ? (
-        gr_target = deficit * (1 - 1/ratio) * (deficit / knee_db);
+        gr_target = (1 - 1/ratio) * deficit * deficit / (2 * knee_db);
       ) : (
-        gr_target = deficit * (1 - 1/ratio);
+        gr_target = (1 - 1/ratio) * (deficit - knee_db / 2);
       );
     );
   );

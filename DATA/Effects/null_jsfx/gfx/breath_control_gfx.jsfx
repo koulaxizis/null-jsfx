@@ -1,0 +1,129 @@
+desc:NULL Breath Control GFX
+author: Christos Koulaxizis
+tags: breath vocal dynamics gui
+//category: Essentials
+//NULL JSFX v2.0 • https://nulljsfx.tech • MIT License
+
+import null_gfx.jsfx-inc
+
+slider1:-40<-70,0,0.5>-Threshold (dB)
+slider2:5<1,50,1>-Attack (ms)
+slider3:120<20,1000,1>-Release (ms)
+slider4:-12<-24,0,1>-Range (dB)
+
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
+
+@init
+  // NULL Breath Control (../breath_control.jsfx) with its own interface: same audio code, plus @gfx.
+  // Breath reducer: a stereo-linked level detector (max of L/R power, 1 ms rise and
+  // 30 ms fall smoothing) is compared with Threshold. While the level stays below Threshold
+  // (breaths, room noise between phrases) the gain moves down to Range; when the
+  // voice comes back above Threshold the gain returns to unity. A 3 dB hysteresis
+  // keeps it from chattering around the threshold. No clipping, zero latency.
+  env = 0;
+  gain = 1;
+  open = 1;
+  gfx_ext_retina = 1;
+
+  // interface only: a 1.8 s history of the detector level and the gain, one entry per 7 ms
+  // (260 entries, one per display pixel) in memory from 4000000, and peak meters
+  bc_buf = 4000000; bc_len = 260; bc_w = 0;
+  bc_chunk = max(1, floor(srate * 0.007));
+  bc_n = 0; bc_emax = 0; bc_gmin = 1;
+  bc_i = 0;
+  loop(bc_len, bc_buf[bc_i * 2] = 0; bc_buf[bc_i * 2 + 1] = 1; bc_i += 1;);
+  bc_rel = exp(-1 / (0.3 * srate));
+  bc_out = 0;
+
+  function update()
+  (
+    thr_lin = 10 ^ (slider1 / 20);
+    thr_open = thr_lin * thr_lin;
+    thr_close = thr_open * 0.5;
+    att_c = 1 - exp(-1 / (max(slider2, 0.1) * srate / 1000));
+    rel_c = 1 - exp(-1 / (max(slider3, 1) * srate / 1000));
+    range_lin = 10 ^ (slider4 / 20);
+    env_up = 1 - exp(-1 / (0.001 * srate));
+    env_dn = 1 - exp(-1 / (0.03 * srate));
+  );
+
+  // history: detector level as dim bars, the gain as the line, both -72..0 dB, and the
+  // threshold as a faint line
+  function bc_history() local(i, k, xx, yy, h)
+  (
+    ng_plot(56, 68, 260, 88);
+    ng_grid(8, 3, 0);
+    ng_font(4, 8, 0);
+    ng_col(NG_MUTED, 1);
+    i = 0;
+    loop(4, sprintf(#bc_l, "%d", -24 * i); ng_ptxt(#bc_l, ng_px - 6 * ng_s, ng_py + ng_ph * i / 3, 2); i += 1;);
+    ng_col(NG_ACCENT, 0.15);
+    i = 0;
+    loop(bc_len,
+      k = (bc_w + i) % bc_len;
+      h = ng_ph * ng_db_norm(ng_to_db(bc_buf[k * 2]), -72);
+      h > 0 ? gfx_rect(ng_px + i * ng_s, ng_py + ng_ph - h, ng_s, h);
+      i += 1;
+    );
+    yy = floor(ng_lin_y(slider1, -72, 0)) + 0.5;
+    ng_col(NG_TEXT, 0.35);
+    gfx_line(ng_px, yy, ng_px + ng_pw, yy, 0);
+    ng_col(NG_ACCENT, 1);
+    i = 0;
+    loop(bc_len,
+      k = (bc_w + i) % bc_len;
+      xx = ng_px + (i + 0.5) * ng_s;
+      yy = ng_lin_y(ng_to_db(bc_buf[k * 2 + 1]), -72, 0);
+      i == 0 ? ng_line_start(xx, yy) : ng_line_to(xx, yy);
+      i += 1;
+    );
+  );
+
+@slider
+  update();
+
+@sample
+  pw = max(spl0 * spl0, spl1 * spl1);
+  env += (pw > env ? env_up : env_dn) * (pw - env);
+  open = open ? (env > thr_close) : (env > thr_open);
+  target = open ? 1 : range_lin;
+  gain += (target > gain ? att_c : rel_c) * (target - gain);
+  spl0 *= gain;
+  spl1 *= gain;
+
+  // interface only: meters and history (reads the audio state, never changes it)
+  bc_lv = max(abs(spl0), abs(spl1));
+  bc_out = bc_lv > bc_out ? bc_lv : bc_out * bc_rel;
+  bc_emax = max(bc_emax, env);
+  bc_gmin = min(bc_gmin, gain);
+  (bc_n += 1) >= bc_chunk ? (
+    bc_buf[bc_w * 2] = sqrt(bc_emax);
+    bc_buf[bc_w * 2 + 1] = bc_gmin;
+    bc_w = (bc_w + 1) % bc_len;
+    bc_n = 0; bc_emax = 0; bc_gmin = 1;
+  );
+
+@gfx 480 294
+  ng_knobs_begin("BREATH CONTROL", "ESSENTIALS", 480, 120, 1, 0);
+
+  // display, left: the last 1.8 s of detector level (bars) and gain (line) with the threshold;
+  // right: detector level (threshold marked), gain-reduction and output meters
+  bc_history();
+  ng_meter(336, 82, 112, 10, "IN", ng_to_db(sqrt(env)), slider1, -72);
+  ng_gr_meter(336, 106, 112, 10, "GR", -20 * log10(max(gain, 0.0000001)), 24);
+  ng_meter(336, 130, 112, 10, "OUT", ng_to_db(bc_out), -140, -72);
+
+  ng_row(4);
+  sprintf(#v1, "%.1f dB", slider1);
+  ng_knob_ctl(1, "THRESHOLD", #v1, -70, 0, -40, 0.5, 0) ? update();
+  sprintf(#v2, "%d ms", slider2);
+  ng_knob_ctl(2, "ATTACK", #v2, 1, 50, 5, 1, 0) ? update();
+  sprintf(#v3, "%d ms", slider3);
+  ng_knob_ctl(3, "RELEASE", #v3, 20, 1000, 120, 1, 0) ? update();
+  sprintf(#v4, "%d dB", slider4);
+  ng_knob_ctl(4, "RANGE", #v4, -24, 0, -12, 1, 0) ? update();
+
+  ng_end();

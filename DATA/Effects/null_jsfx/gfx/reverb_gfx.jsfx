@@ -1,0 +1,164 @@
+desc:NULL Reverb GFX
+author: Christos Koulaxizis
+tags: reverb room space ambience hall plate decay gui
+//category: Essentials
+//NULL JSFX v2.0 • https://nulljsfx.tech • MIT License
+
+import null_gfx.jsfx-inc
+
+slider1:50<10,100,1>-Room Size (%)
+slider2:50<0,100,1>-Decay (%)
+slider3:30<0,100,1>-Damping (%)
+slider4:30<0,100,1>-Mix (%)
+slider5:0<0,1,1>-Bypass
+
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
+
+@init
+  // NULL Reverb (../reverb.jsfx) with its own interface: same audio code, plus @gfx.
+  // Stereo Schroeder/Freeverb-style reverb: the mono sum feeds four damped
+  // feedback combs per side (the right side's delays are 23 samples longer at
+  // 44.1 kHz), then two series all-passes per side. All lengths are scaled by
+  // srate/44100 so the room sounds the same at every sample rate.
+  // Damping is a one-pole low-pass inside each comb's feedback loop: more Damping
+  // absorbs more high frequencies, so the tail gets darker as it decays.
+  sc = srate / 44100;
+  spread = 23;
+  blen = ceil((1687 + spread) * sc) + 4;
+  // buffer and state memory: 8 combs, 4 all-passes
+  cbl1 = 0;          cbl2 = cbl1 + blen; cbl3 = cbl2 + blen; cbl4 = cbl3 + blen;
+  cbr1 = cbl4 + blen; cbr2 = cbr1 + blen; cbr3 = cbr2 + blen; cbr4 = cbr3 + blen;
+  apl1 = cbr4 + blen; apl2 = apl1 + blen; apr1 = apl2 + blen; apr2 = apr1 + blen;
+  memset(0, 0, apr2 + blen);
+  freembuf(apr2 + blen);
+  wl1 = wl2 = wl3 = wl4 = wr1 = wr2 = wr3 = wr4 = 0;
+  wal1 = wal2 = war1 = war2 = 0;
+  fl1 = fl2 = fl3 = fl4 = fr1 = fr2 = fr3 = fr4 = 0;
+
+  function comb(buf, size, w*, f*, x) local(y)
+  (
+    y = buf[w];
+    f = y * damp_a + f * damp;
+    buf[w] = x + f * fb;
+    w += 1;
+    w >= size ? w = 0;
+    y;
+  );
+
+  function allpass(buf, size, w*, x) local(b, y)
+  (
+    b = buf[w];
+    y = b - x;
+    buf[w] = x + b * 0.5;
+    w += 1;
+    w >= size ? w = 0;
+    y;
+  );
+
+  gfx_ext_retina = 1;
+
+  function update()
+  (
+    room = 0.25 + 0.75 * (slider1 / 100);
+    k = room * sc;
+    ll1 = max(1, floor(1557 * k)); lr1 = max(1, floor((1557 + spread) * k));
+    ll2 = max(1, floor(1617 * k)); lr2 = max(1, floor((1617 + spread) * k));
+    ll3 = max(1, floor(1491 * k)); lr3 = max(1, floor((1491 + spread) * k));
+    ll4 = max(1, floor(1687 * k)); lr4 = max(1, floor((1687 + spread) * k));
+    la1 = max(1, floor(556 * k));  lar1 = max(1, floor((556 + spread) * k));
+    la2 = max(1, floor(441 * k));  lar2 = max(1, floor((441 + spread) * k));
+    wl1 >= ll1 ? wl1 = 0; wl2 >= ll2 ? wl2 = 0; wl3 >= ll3 ? wl3 = 0; wl4 >= ll4 ? wl4 = 0;
+    wr1 >= lr1 ? wr1 = 0; wr2 >= lr2 ? wr2 = 0; wr3 >= lr3 ? wr3 = 0; wr4 >= lr4 ? wr4 = 0;
+    wal1 >= la1 ? wal1 = 0; wal2 >= la2 ? wal2 = 0;
+    war1 >= lar1 ? war1 = 0; war2 >= lar2 ? war2 = 0;
+    // Decay: comb feedback 0.70 .. 0.97 (short room .. long hall)
+    fb = 0.7 + 0.27 * (slider2 / 100);
+    // Damping: cutoff of the in-loop low-pass, 16 kHz at 0% (bright) down to
+    // 1.2 kHz at 100% (dark), defined in Hz so it is the same at every sample rate
+    damp_fc = min(16000 * (1200 / 16000) ^ (slider3 / 100), 0.45 * srate);
+    damp = exp(-2 * 3.14159265358979 * damp_fc / srate);
+    damp_a = 1 - damp;
+    mix = slider4 / 100;
+  );
+
+  // decay display: seconds to fall 60 dB for a comb loop gain g (the combs average 1588
+  // samples at 44.1 kHz times the room scale)
+  function rv_rt60(g) ( g > 0 && g < 1 ? -60 / (20 * log10(g)) * 1588 * room / 44100 : 99; );
+  // magnitude of the in-loop damping low-pass at f Hz
+  function rv_lp(f) local(w) ( w = 2 * $pi * f / srate; damp_a / sqrt(1 - 2 * damp * cos(w) + damp * damp); );
+
+@slider
+  update();
+
+@sample
+  orig_l = spl0;
+  orig_r = spl1;
+  x = (spl0 + spl1) * 0.015;
+
+  wet_l = comb(cbl1, ll1, wl1, fl1, x) + comb(cbl2, ll2, wl2, fl2, x)
+        + comb(cbl3, ll3, wl3, fl3, x) + comb(cbl4, ll4, wl4, fl4, x);
+  wet_r = comb(cbr1, lr1, wr1, fr1, x) + comb(cbr2, lr2, wr2, fr2, x)
+        + comb(cbr3, lr3, wr3, fr3, x) + comb(cbr4, lr4, wr4, fr4, x);
+  wet_l = allpass(apl2, la2, wal2, allpass(apl1, la1, wal1, wet_l));
+  wet_r = allpass(apr2, lar2, war2, allpass(apr1, lar1, war1, wet_r));
+
+  out_l = orig_l * (1 - mix) + wet_l * 3 * mix;
+  out_r = orig_r * (1 - mix) + wet_r * 3 * mix;
+
+  spl0 = slider5 > 0 ? orig_l : out_l;
+  spl1 = slider5 > 0 ? orig_r : out_r;
+
+@gfx 480 294
+  ng_knobs_begin("REVERB", "ESSENTIALS", 480, 120, 1, 0);
+
+  // display: the tail's decay over 3 s, level in dB (0 to -60): lows (the comb feedback) in
+  // the accent, highs at 5 kHz (feedback times the damping low-pass) muted
+  ng_plot(ng_vx + 26, ng_vy + 4, ng_vw - 30, ng_vh - 20);
+  ng_grid(6, 4, 0);
+  ng_font(4, 8, 0);
+  ng_col(NG_MUTED, 1);
+  ng_ptxt("0", ng_px - 6 * ng_s, ng_py, 2);
+  ng_ptxt("-30", ng_px - 6 * ng_s, ng_py + ng_ph / 2, 2);
+  ng_ptxt("-60", ng_px - 6 * ng_s, ng_py + ng_ph, 2);
+  rv_i = 1;
+  loop(5, sprintf(#rv_t, "%.1f s", rv_i * 0.5); ng_ptxt(#rv_t, ng_px + ng_pw * rv_i / 6, ng_py + ng_ph + 10 * ng_s, 1); rv_i += 1;);
+  rv_lo = rv_rt60(fb);
+  rv_hi = rv_rt60(fb * rv_lp(5000));
+  rv_a = slider5 > 0 ? 0.35 : 1;
+  // highs
+  rv_te = min(rv_hi, 3);
+  ng_col(NG_MUTED, rv_a);
+  ng_line_start(ng_px, ng_py);
+  ng_line_to(ng_lin_x(rv_te, 0, 3), ng_lin_y(-60 * rv_te / rv_hi, -60, 0));
+  // lows, shaded down to -60
+  rv_te = min(rv_lo, 3);
+  rv_x2 = ng_lin_x(rv_te, 0, 3);
+  rv_y2 = ng_lin_y(-60 * rv_te / rv_lo, -60, 0);
+  ng_col(NG_ACCENT, 0.10 * rv_a);
+  rv_i = 0;
+  loop(floor(rv_x2 - ng_px) + 1,
+    gfx_line(ng_px + rv_i, ng_py + (rv_y2 - ng_py) * rv_i / max(1, rv_x2 - ng_px), ng_px + rv_i, ng_py + ng_ph, 0);
+    rv_i += 1;
+  );
+  ng_col(NG_ACCENT, rv_a);
+  ng_line_start(ng_px, ng_py);
+  ng_line_to(rv_x2, rv_y2);
+  ng_col(NG_MUTED, 1);
+  slider5 > 0 ? sprintf(#rv_t, "BYPASSED") : sprintf(#rv_t, "RT60 %.2f s   5 kHz %.2f s", rv_lo, rv_hi);
+  ng_ptxt(#rv_t, ng_px + ng_pw - 6 * ng_s, ng_py + 9 * ng_s, 2);
+
+  ng_row(5);
+  sprintf(#v1, "%d%%", slider1);
+  ng_knob_ctl(1, "SIZE", #v1, 10, 100, 50, 1, 0) ? update();
+  sprintf(#v2, "%d%%", slider2);
+  ng_knob_ctl(2, "DECAY", #v2, 0, 100, 50, 1, 0) ? update();
+  sprintf(#v3, "%d%%", slider3);
+  ng_knob_ctl(3, "DAMPING", #v3, 0, 100, 30, 1, 0) ? update();
+  sprintf(#v4, "%d%%", slider4);
+  ng_knob_ctl(4, "MIX", #v4, 0, 100, 30, 1, 0) ? update();
+  ng_select_ctl(5, "BYPASS", "OFF|ON", 0) ? update();
+
+  ng_end();

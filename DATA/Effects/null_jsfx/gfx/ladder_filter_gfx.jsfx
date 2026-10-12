@@ -1,0 +1,136 @@
+desc:NULL Ladder Filter GFX
+author: Christos Koulaxizis
+tags: filter ladder moog 24db lowpass highpass resonance drive analog gui
+//category: Advanced
+//NULL JSFX v2.0 • https://nulljsfx.tech • MIT License
+
+import null_gfx.jsfx-inc
+
+slider1:1000<20,20000,1:log>-Cutoff (Hz)
+slider2:0.5<0,4,0.1>-Resonance
+slider3:0<0,100,1>-Drive (%)
+slider4:0<0,1,1{Lowpass,Highpass}>-Mode
+slider5:0<-12,12,0.1>-Gain (dB)
+
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
+
+@init
+  // NULL Ladder Filter (../ladder_filter.jsfx) with its own interface: same audio code, plus @gfx.
+  gfx_ext_retina = 1;
+  // Moog-style 4-pole (24 dB/oct) ladder filter, zero-delay-feedback design so it stays
+  // stable and in tune up to 20 kHz and at full resonance. Drive saturates the input
+  // of the ladder for the classic growl.
+
+  // per-channel ladder; state lives in this.s1 .. this.s4
+  function ladder(x) local(S, u, v, y1, y2, y3, y4)
+  (
+    S = G3b * this.s1 + G2b * this.s2 + Gb * this.s3 + b * this.s4;
+    u = (x * comp - k * S) / (1 + k * G4);
+    // soft saturation inside the loop (tanh approximation)
+    u = max(-3, min(3, u));
+    u = u * (27 + u * u) / (27 + 9 * u * u);
+    v = (u - this.s1) * G;  y1 = v + this.s1;  this.s1 = y1 + v;
+    v = (y1 - this.s2) * G; y2 = v + this.s2;  this.s2 = y2 + v;
+    v = (y2 - this.s3) * G; y3 = v + this.s3;  this.s3 = y3 + v;
+    v = (y3 - this.s4) * G; y4 = v + this.s4;  this.s4 = y4 + v;
+    mode == 0 ? y4 : u - 4 * y1 + 6 * y2 - 4 * y3 + y4;
+  );
+
+  function update()
+  (
+    fc = min(slider1, srate * 0.45);
+    // EEL2 names are case-insensitive: the warped frequency must not be called g, or G
+    // overwrites it and b (the state weight of the zero-delay feedback solve) comes out wrong
+    wg = tan($pi * fc / srate);
+    G = wg / (1 + wg);
+    b = 1 / (1 + wg);
+    Gb = G * b; G2b = G * Gb; G3b = G * G2b;
+    G4 = G * G * G * G;
+    k = min(slider2, 3.95);
+    drive = 1 + slider3 / 100 * 4;
+    mode = slider4;
+    comp = 1 + 0.5 * k;
+    out_gain = 10 ^ (slider5 / 20) / sqrt(drive);
+  );
+
+  // display only: the small-signal response in dB at f (the linear ladder: four TPT one-poles
+  // H, U = comp / (1 + k H^4), out H^4 U or (1 - H)^4 U, times drive and the output gain)
+  function lf_db(f) local(w, cw, sw, nr, ni, dr, di, dd, hr, hi, ar, ai, tr, ti, pr, pi_, er, ei, qr, qi, mr, mi)
+  (
+    w = 2 * $pi * min(f, srate * 0.499) / srate;
+    cw = cos(w); sw = sin(w);
+    nr = wg * (1 + cw); ni = -wg * sw;
+    dr = (1 + wg) - (1 - wg) * cw; di = (1 - wg) * sw;
+    dd = dr * dr + di * di;
+    hr = (nr * dr + ni * di) / dd; hi = (ni * dr - nr * di) / dd;
+    // P = H^4
+    ar = hr * hr - hi * hi; ai = 2 * hr * hi;
+    pr = ar * ar - ai * ai; pi_ = 2 * ar * ai;
+    // E = (1 - H)^4
+    tr = 1 - hr; ti = -hi;
+    ar = tr * tr - ti * ti; ai = 2 * tr * ti;
+    er = ar * ar - ai * ai; ei = 2 * ar * ai;
+    mode == 0 ? (qr = pr; qi = pi_;) : (qr = er; qi = ei;);
+    mr = 1 + k * pr; mi = k * pi_;
+    10 * log10(max(comp * comp * (qr * qr + qi * qi) / (mr * mr + mi * mi) * drive * out_gain * drive * out_gain, 0.0000000001));
+  );
+
+  // display only: dashed vertical marker at pixel x
+  function lf_dash(x) local(yy)
+  (
+    x = floor(x) + 0.5;
+    yy = ng_py;
+    while (
+      gfx_line(x, yy, x, min(yy + 3 * ng_s, ng_py + ng_ph), 0);
+      yy += 6 * ng_s;
+      yy < ng_py + ng_ph;
+    );
+  );
+
+@slider
+  update();
+
+@sample
+  spl0 = L.ladder(spl0 * drive) * out_gain;
+  spl1 = R.ladder(spl1 * drive) * out_gain;
+
+@gfx 480 294
+  ng_knobs_begin("LADDER FILTER", "ADVANCED", 480, 120, 1, 0);
+
+  // display: the small-signal magnitude response (24 dB/oct, the resonance peak at Cutoff),
+  // with drive and Gain; Drive's saturation is not drawn
+  ng_plot(ng_vx + 26, ng_vy + 4, ng_vw - 30, ng_vh - 20);
+  ng_grid_freq(36);
+  ng_col(NG_ACCENT, 0.5);
+  lf_dash(ng_freq_x(fc));
+  lf_zy = ng_lin_y(0, -24, 24);
+  ng_col(NG_ACCENT, 0.10);
+  lf_i = 0;
+  loop(floor(ng_pw) + 1,
+    lf_y = ng_lin_y(lf_db(20 * 1000 ^ (lf_i / ng_pw)), -24, 24);
+    gfx_line(ng_px + lf_i, lf_zy, ng_px + lf_i, lf_y, 0);
+    lf_i += 1;
+  );
+  ng_col(NG_ACCENT, 1);
+  lf_i = 0;
+  loop(floor(ng_pw) + 1,
+    lf_y = ng_lin_y(lf_db(20 * 1000 ^ (lf_i / ng_pw)), -24, 24);
+    lf_i == 0 ? ng_line_start(ng_px, lf_y) : ng_line_to(ng_px + lf_i, lf_y);
+    lf_i += 1;
+  );
+
+  ng_row(5);
+  slider1 >= 1000 ? sprintf(#v1, "%.2f kHz", slider1 / 1000) : sprintf(#v1, "%d Hz", slider1);
+  ng_knob_ctl_log(1, "CUTOFF", #v1, 20, 20000, 1000, 1) ? update();
+  sprintf(#v2, "%.1f", slider2);
+  ng_knob_ctl(2, "RESONANCE", #v2, 0, 4, 0.5, 0.1, 0) ? update();
+  sprintf(#v3, "%d%%", slider3);
+  ng_knob_ctl(3, "DRIVE", #v3, 0, 100, 0, 1, 0) ? update();
+  ng_select_ctl(4, "MODE", "LP|HP", 0) ? update();
+  sprintf(#v5, "%+.1f dB", slider5);
+  ng_knob_ctl(5, "GAIN", #v5, -12, 12, 0, 0.1, 1) ? update();
+
+  ng_end();

@@ -661,6 +661,26 @@
     "properties": "Input → gain (0 to +12 dB) → stereo-linked look-ahead peak limiter (2 ms look-ahead with gain hold, 80 ms release, -0.3 dBFS ceiling) → safety clip at the ceiling → Output. 2 ms latency, reported to REAPER for compensation; at 0 only peaks above the ceiling are touched.",
     "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-louder\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><path d=\"M 12,40 L 12,24 L 22,24 L 34,14 L 34,50 L 22,40 Z\" stroke=\"url(#icon-louder)\" stroke-width=\"2.5\" fill=\"none\" stroke-linecap=\"round\"/><path d=\"M 42,24 Q 47,32 42,40\" stroke=\"url(#icon-louder)\" stroke-width=\"2.5\" fill=\"none\" stroke-linecap=\"round\"/><path d=\"M 48,18 Q 57,32 48,46\" stroke=\"url(#icon-louder)\" stroke-width=\"1.5\" fill=\"none\" stroke-linecap=\"round\" opacity=\"0.4\"/></svg>"
   },
+  "loudness_meter": {
+    "card_desc": "EBU R128 LUFS and True Peak Meter",
+    "keywords": "loudness meter lufs lu lra loudness range true peak dbtp ebu r128 itu bs.1770 momentary short-term integrated metering mastering streaming spotify youtube apple podcast broadcast",
+    "slider_desc": [
+      "Loudness the readouts and the history graph are referenced to: -14 LUFS (most streaming services), -16 LUFS (Apple Music, podcasts) or -23 LUFS (EBU R128 broadcast).",
+      "Vertical scale of the history graph, as in EBU Tech 3341: +9 shows 18 LU below to 9 LU above the target, +18 shows 36 LU below to 18 LU above.",
+      "Time span of the history graph: 10 s, 30 s, 1 min or 5 min of short-term (bright) and momentary (grey) loudness.",
+      "On Play clears the integrated loudness, LRA, maxima and history every time playback starts; Off keeps measuring until you reset.",
+      "Changing it clears the integrated loudness, LRA, true-peak and loudness maxima and the history graph.",
+      "Stereo passes the audio through untouched (bit-exact). Mono folds it to mono for listening; the meter always measures the stereo input."
+    ],
+    "uses": [
+      "Hitting streaming loudness targets when mastering",
+      "Checking broadcast deliveries against EBU R128 (-23 LUFS, -1 dBTP)",
+      "Keeping podcast episodes at a consistent loudness",
+      "Watching true-peak overs before encoding to lossy formats"
+    ],
+    "properties": "Input → ITU-R BS.1770-4 K-weighting (high shelf + high pass) → 100 ms energy blocks → Momentary (400 ms), Short-term (3 s), Integrated (gated at −70 LUFS and −10 LU), Loudness Range (EBU Tech 3342, 10th to 95th percentile, gated at −70 LUFS and −20 LU), sample peak and 4x oversampled true peak. Audio passes through unchanged (Monitor Mono is a listening aid). Zero latency. The plain JSFX only measures; the GFX, VST3 and CLAP versions show the readouts and a loudness history graph.",
+    "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-loudness-meter\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><path d=\"M 12,46 A 22,22 0 1 1 52,46\" stroke=\"url(#icon-loudness-meter)\" stroke-width=\"2.5\" fill=\"none\" stroke-linecap=\"round\"/><path d=\"M 32,40 L 44,22\" stroke=\"url(#icon-loudness-meter)\" stroke-width=\"2.5\" fill=\"none\" stroke-linecap=\"round\"/><path d=\"M 20,52 L 44,52\" stroke=\"url(#icon-loudness-meter)\" stroke-width=\"1.5\" fill=\"none\" stroke-linecap=\"round\" opacity=\"0.5\"/><path d=\"M 17,30 L 21,32 M 32,17 L 32,21 M 47,30 L 43,32\" stroke=\"url(#icon-loudness-meter)\" stroke-width=\"1.5\" fill=\"none\" stroke-linecap=\"round\" opacity=\"0.4\"/></svg>"
+  },
   "maximizer": {
     "card_desc": "Look-Ahead Loudness Maximizer",
     "keywords": "maximizer maximiser limiter loudness ceiling mastering peak lookahead louder",
@@ -1116,6 +1136,27 @@
     ],
     "properties": "Signal chain: Input → 2048-Point FFT (4× overlap) → Magnitude Snapshot on Freeze → Phase Advance + Smear → IFFT Overlap-Add → Level → Mix → Output. Freezes only after a full 2048-sample window; stereo channels independent.",
     "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-spectral-freeze\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><path d=\"M32,8 L32,56 M11,20 L53,44 M11,44 L53,20\" stroke=\"url(#icon-spectral-freeze)\" stroke-width=\"2.5\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M26,12 L32,18 L38,12 M26,52 L32,46 L38,52\" stroke=\"url(#icon-spectral-freeze)\" stroke-width=\"1.5\" fill=\"none\" stroke-linecap=\"round\" opacity=\"0.4\"/></svg>"
+  },
+  "spectrum_analyzer": {
+    "card_desc": "FFT Spectrum Analyzer with Peak Hold",
+    "keywords": "spectrum analyzer analyser fft frequency spectrum meter metering peak hold slope visual eq mixing mastering",
+    "slider_desc": [
+      "Number of samples in each analysis frame: larger sizes resolve low frequencies more finely but react more slowly.",
+      "Tilts the display around 1 kHz so a balanced mix looks flat: 0 is a plain FFT, 3 dB/oct suits pink-noise-like material, 4.5 dB/oct is a common mixing reference.",
+      "How quickly the curve falls after a peak; rises are instant. 0 shows every frame as it is.",
+      "Lowest level on the display, below 0 dB at the top.",
+      "Keeps a second, thinner curve at the highest level each frequency reached: for 2 s, or until the setting changes (Infinite).",
+      "Signal analysed: Mid (L+R)/2, Left, Right or Side (L−R)/2.",
+      "Stereo passes the audio through untouched (bit-exact). Solo plays the analysed channel on both outputs, e.g. to listen to the side signal."
+    ],
+    "uses": [
+      "Spotting resonances and build-ups while mixing",
+      "Comparing the tonal balance of a mix with a reference",
+      "Checking low-end content and sub-bass on small speakers",
+      "Inspecting the side signal for stereo problems"
+    ],
+    "properties": "Chosen channel → Hann window → FFT (1024 to 16384 points) every 25 ms → per-bin power, instant rise and adjustable release, optional peak hold → log-frequency display 20 Hz to 20 kHz with slope around 1 kHz. Audio passes through unchanged (Monitor Solo is a listening aid). Zero latency. The plain JSFX only analyses; the GFX, VST3 and CLAP versions draw the spectrum.",
+    "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-spectrum-analyzer\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><path d=\"M 8,52 L 56,52\" stroke=\"url(#icon-spectrum-analyzer)\" stroke-width=\"1.5\" fill=\"none\" stroke-linecap=\"round\" opacity=\"0.4\"/><path d=\"M 8,44 C 12,30 16,22 22,24 C 27,26 28,34 32,32 C 36,30 38,20 42,22 C 47,25 50,38 56,42\" stroke=\"url(#icon-spectrum-analyzer)\" stroke-width=\"2.5\" fill=\"none\" stroke-linecap=\"round\"/><path d=\"M 8,38 C 12,22 16,16 22,18 C 28,20 30,26 33,25 C 37,24 38,14 42,16 C 47,18 51,30 56,34\" stroke=\"url(#icon-spectrum-analyzer)\" stroke-width=\"1.5\" fill=\"none\" stroke-linecap=\"round\" opacity=\"0.5\"/></svg>"
   },
   "spread": {
     "card_desc": "Mono-Safe Stereo Widener",

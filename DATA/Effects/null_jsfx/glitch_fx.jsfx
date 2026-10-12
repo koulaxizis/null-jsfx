@@ -51,6 +51,15 @@ out_pin:Right
   rread = 0;
   g1ph = 0; g2ph = 0.5;
   g1st = g2st = 0;
+  seed = 12345;
+
+  // random value in [0, x): a Park-Miller generator in exact double arithmetic, so it gives
+  // the same sequence on every CPU (and in the VST3/CLAP build)
+  function prand(x)
+  (
+    seed *= 16807; seed -= floor(seed / 2147483647) * 2147483647;
+    seed / 2147483648 * x;
+  );
 
   function rd(buf, p) local(i, f, i2)
   (
@@ -87,8 +96,8 @@ out_pin:Right
     slice_start = wpos - slice_len;
     read = 0;
     rread = 0;
-    dir = slider9 && rand(100) < rev_chance ? -1 : 1;
-    tape = slider11 && rand(100) < 30;
+    dir = slider9 && prand(100) < rev_chance ? -1 : 1;
+    tape = slider11 && prand(100) < 30;
   );
 
   speed = pitch;
@@ -108,8 +117,8 @@ out_pin:Right
   ) : slider13 ? (
     // no stutter, granular: two overlapping grains read from the recent past
     gstep = 1 / grain_len;
-    g1ph += gstep; g1ph >= 1 ? (g1ph -= 1; g1st = wpos - grain_len * (max(speed, 1) + 1) - rand(grain_len););
-    g2ph += gstep; g2ph >= 1 ? (g2ph -= 1; g2st = wpos - grain_len * (max(speed, 1) + 1) - rand(grain_len););
+    g1ph += gstep; g1ph >= 1 ? (g1ph -= 1; g1st = wpos - grain_len * (max(speed, 1) + 1) - prand(grain_len););
+    g2ph += gstep; g2ph >= 1 ? (g2ph -= 1; g2st = wpos - grain_len * (max(speed, 1) + 1) - prand(grain_len););
     gp1 = dir > 0 ? g1ph : 1 - g1ph;
     gp2 = dir > 0 ? g2ph : 1 - g2ph;
     gw1 = 0.5 - 0.5 * cos(2 * $pi * g1ph);
