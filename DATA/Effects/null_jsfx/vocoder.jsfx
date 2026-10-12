@@ -36,6 +36,8 @@ out_pin:Right
   memset(0, 0, nb * 32);
   osc = 0;
   sib_x = sib_y = 0;
+  // noise carrier: Park-Miller generator in exact double arithmetic (same on every CPU)
+  seed = 12345;
 
   // band-pass coefficients for band i at centre f (stored in the band's block)
   function set_bp(b, f) local(w, al, n)
@@ -81,7 +83,8 @@ out_pin:Right
 @sample
   mod = spl0;
   osc += inc; osc >= 1 ? osc -= 1;
-  car = src == 0 ? spl1 : src == 1 ? 2 * osc - 1 : src == 2 ? (osc < 0.5 ? 1 : -1) : rand(2) - 1;
+  car = src == 0 ? spl1 : src == 1 ? 2 * osc - 1 : src == 2 ? (osc < 0.5 ? 1 : -1) :
+        (seed *= 16807; seed -= floor(seed / 2147483647) * 2147483647; seed / 1073741824 - 1);
 
   acc_l = acc_r = 0;
   i = 0;

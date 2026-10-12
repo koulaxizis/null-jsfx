@@ -26,9 +26,11 @@ out_pin:Right
   win = 2048;                  // Hann window, N
   in_l = 4096; in_r = in_l + N;
   out_l = in_r + N; out_r = out_l + 2 * N;
-  comb_l = out_r + 2 * N; comb_r = comb_l + 1024;
-  freembuf(comb_r + 1024);
-  memset(in_l, 0, comb_r + 1024 - in_l);
+  // comb lines hold up to 8192 samples: one Pitch period (srate / 50 at most) up to 384 kHz
+  CL = 8192;
+  comb_l = out_r + 2 * N; comb_r = comb_l + CL;
+  freembuf(comb_r + CL);
+  memset(in_l, 0, comb_r + CL - in_l);
   i = 0;
   loop(N, win[i] = 0.5 - 0.5 * cos(2 * $pi * i / N); i += 1);
   ipos = 0;    // write position in the input rings
@@ -99,12 +101,12 @@ out_pin:Right
   opos >= 2 * N ? opos = 0;
 
   // tuned comb resonance at the robot pitch
-  cp = cpos - P; cp < 0 ? cp += 1024;
+  cp = cpos - P; cp < 0 ? cp += CL;
   c_l = r_l + metal * comb_l[cp];
   c_r = r_r + metal * comb_r[cp];
   comb_l[cpos] = c_l;
   comb_r[cpos] = c_r;
-  cpos += 1; cpos >= 1024 ? cpos = 0;
+  cpos += 1; cpos >= CL ? cpos = 0;
   c_l *= 1 - metal;
   c_r *= 1 - metal;
 

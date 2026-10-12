@@ -61,7 +61,7 @@ The everyday mixing and mastering toolbox.
 - Reverb: Compact Stereo Algorithmic Reverb (also as GFX, VST3, CLAP)
 - Ring Mod: Swept Ring Modulator (also as GFX, VST3, CLAP)
 - Saturation: Six-Mode Saturation (also as GFX, VST3, CLAP)
-- Sidechain Ducker: Sidechain Ducking
+- Sidechain Ducker: Sidechain Ducking (also as GFX, VST3, CLAP)
 - Stereo Width: M/S Width with Mono Bass (also as GFX, VST3, CLAP)
 - Transient Shaper: Attack & Sustain Shaper (also as GFX, VST3, CLAP)
 - Tremolo: Sine LFO Tremolo (also as GFX, VST3, CLAP)
@@ -71,7 +71,7 @@ The everyday mixing and mastering toolbox.
 Deeper sound design, creative effects and special processing.
 
 - Comb Filter: Resonant Delay Comb (also as GFX, VST3, CLAP)
-- Convolution: Impulse Response Reverb
+- Convolution: Impulse Response Reverb (also as GFX, VST3, CLAP)
 - Formant Filter: Vowel Formant Filter (also as GFX, VST3, CLAP)
 - Frequency Shifter: Bode Frequency Shifter (also as GFX, VST3, CLAP)
 - Glitch FX: Stutter & Glitch Engine (also as GFX, VST3, CLAP)
@@ -80,19 +80,19 @@ Deeper sound design, creative effects and special processing.
 - Kick Shaper: Kick Drum Sculptor (also as GFX, VST3, CLAP)
 - Ladder Filter: Moog-Style Ladder Filter (also as GFX, VST3, CLAP)
 - Loudness Meter: EBU R128 LUFS and True Peak Meter (also as GFX, VST3, CLAP)
-- OTT: Multiband Upward/Downward Compressor
+- OTT: Multiband Upward/Downward Compressor (also as GFX, VST3, CLAP)
 - Reverser: Real-Time Reverse Buffer (also as GFX, VST3, CLAP)
-- Robotizer: FFT Robot Voice
+- Robotizer: FFT Robot Voice (also as GFX, VST3, CLAP)
 - Rotary Speaker: Leslie Rotary Simulation (also as GFX, VST3, CLAP)
 - Shimmer Reverb: Pitched Ambient Reverb (also as GFX, VST3, CLAP)
-- Spectral Freeze: FFT Spectrum Freeze
+- Spectral Freeze: FFT Spectrum Freeze (also as GFX, VST3, CLAP)
 - Spectrum Analyzer: FFT Spectrum Analyzer with Peak Hold (also as GFX, VST3, CLAP)
 - Spring Reverb: Vintage Spring Tank (also as GFX, VST3, CLAP)
 - Sub Bloom: Pitch-Tracking Subharmonic Generator (also as GFX, VST3, CLAP)
 - Tape Stop: Tape Stop & Spin-Up (also as GFX, VST3, CLAP)
 - Trance Gate: 16-Step Rhythmic Gate (also as GFX, VST3, CLAP)
 - Vinyl Age: Vintage Vinyl Degrader (also as GFX, VST3, CLAP)
-- Vocoder: 16-Band Channel Vocoder
+- Vocoder: 16-Band Channel Vocoder (also as GFX, VST3, CLAP)
 - Warped Delay: Modulated Degrading Delay (also as GFX, VST3, CLAP)
 <!-- END PLUGIN LIST -->
 

@@ -12,11 +12,17 @@
  * all defaults, then each slider at its min and at its max with the others at default, then
  * random settings (rounded to each slider's step). Every setting runs at 44.1 and 96 kHz.
  * Exit code 0 when every max diff <= tolerance.
+ *
+ * Sidechain plugins (a JSFX with more than two input pins, a CLAP with a second input port):
+ * pins 3/4 (the sidechain port) get a separate key signal, a kick-like pattern with level steps.
+ * File sliders (slider:/folder:default:Name) stay at their default and are not CLAP parameters:
+ * the k-th other slider is the k-th CLAP parameter.
  */
 
 #include <ysfx.h>
 
 #include <clap/entry.h>
+#include <clap/ext/audio-ports.h>
 #include <clap/events.h>
 #include <clap/ext/params.h>
 #include <clap/plugin-factory.h>
@@ -62,6 +68,23 @@ static Stereo makeSignal(double sr)
     return s;
 }
 
+// key signal for the sidechain inputs: kick-like hits every 0.6 s, level steps every 0.75 s
+// (0, -24, -9 dB, silence) so a ducker triggers, holds and releases
+static Stereo makeSidechain(double sr)
+{
+    const uint32_t frames = uint32_t(sr * 3);
+    Stereo s(frames);
+    for (uint32_t n = 0; n < frames; ++n) {
+        const double t = n / sr, tk = std::fmod(t, 0.6);
+        const double hit = 0.9 * std::exp(-tk * 9) * std::sin(2 * M_PI * (60 + 120 * std::exp(-tk * 30)) * tk);
+        static const double steps[] = { 1.0, 0.063, 0.355, 0.0 };
+        const double g = steps[std::min<uint32_t>(3, uint32_t(t / 0.75))];
+        s.l[n] = float(g * hit);
+        s.r[n] = float(g * hit * 0.7 + g * 0.05 * std::sin(2 * M_PI * 3000 * t));
+    }
+    return s;
+}
+
 static double maxDiff(const Stereo& a, const Stereo& b, size_t* where)
 {
     double m = 0.0;
@@ -81,7 +104,7 @@ static bool endsWith(const std::string& s, const char* suf)
 // ------------------------------------------------------------------------------------------------
 // JSFX via ysfx
 
-struct Slider { uint32_t index; double min, max, def, inc; std::string name; };
+struct Slider { uint32_t index; double min, max, def, inc; std::string name; bool path; };
 
 static ysfx_t* loadJsfx(const char* path)
 {
@@ -108,14 +131,14 @@ static bool sliders(const char* path, std::vector<Slider>& out)
         ysfx_slider_range_t rg {};
         ysfx_slider_get_range(fx, i, &rg);
         const char* name = ysfx_slider_get_name(fx, i);
-        out.push_back({ i, rg.min, rg.max, rg.def, rg.inc, name ? name : "" });
+        out.push_back({ i, rg.min, rg.max, rg.def, rg.inc, name ? name : "", ysfx_slider_is_path(fx, i) });
     }
     ysfx_free(fx);
     return true;
 }
 
 static bool renderJsfx(const char* path, double sr, const std::vector<Slider>& sl, const std::vector<double>& values,
-                       const Stereo& in, Stereo& out)
+                       const Stereo& in, const Stereo& sc, Stereo& out)
 {
     ysfx_t* fx = loadJsfx(path);
     if (!fx)
@@ -134,11 +157,12 @@ static bool renderJsfx(const char* path, double sr, const std::vector<Slider>& s
     for (size_t k = 0; k < sl.size(); ++k)
         ysfx_slider_set_value(fx, sl[k].index, values[k]);
     const uint32_t frames = uint32_t(in.l.size());
+    const uint32_t numIns = ysfx_get_num_inputs(fx) > 2 ? 4 : 2; // pins 3/4: the sidechain
     for (uint32_t pos = 0; pos < frames; pos += kBlock) {
         const uint32_t n = std::min(kBlock, frames - pos);
-        const float* ins[2] = { in.l.data() + pos, in.r.data() + pos };
+        const float* ins[4] = { in.l.data() + pos, in.r.data() + pos, sc.l.data() + pos, sc.r.data() + pos };
         float* outs[2] = { out.l.data() + pos, out.r.data() + pos };
-        ysfx_process_float(fx, ins, outs, 2, 2, n);
+        ysfx_process_float(fx, ins, outs, numIns, 2, n);
     }
     ysfx_free(fx);
     return true;
@@ -165,8 +189,8 @@ struct EventList {
     static bool push(const clap_output_events_t*, const clap_event_header_t*) { return true; }
 };
 
-static bool renderClap(const char* path, double sr, const std::vector<double>& values, const Stereo& in, Stereo& out,
-                       bool verbose)
+static bool renderClap(const char* path, double sr, const std::vector<double>& values, const Stereo& in,
+                       const Stereo& sc, Stereo& out, bool verbose)
 {
     void* lib = dlopen(path, RTLD_NOW | RTLD_LOCAL);
     if (!lib) {
@@ -191,7 +215,7 @@ static bool renderClap(const char* path, double sr, const std::vector<double>& v
 
     const auto* params = static_cast<const clap_plugin_params_t*>(plugin->get_extension(plugin, CLAP_EXT_PARAMS));
     if (params->count(plugin) != values.size()) {
-        std::fprintf(stderr, "the CLAP has %u parameters, the JSFX %zu sliders\n", params->count(plugin), values.size());
+        std::fprintf(stderr, "the CLAP has %u parameters, the JSFX %zu sliders (without file sliders)\n", params->count(plugin), values.size());
         return false;
     }
 
@@ -220,18 +244,43 @@ static bool renderClap(const char* path, double sr, const std::vector<double>& v
         std::fprintf(stderr, "activate failed\n");
         return false;
     }
+    // input ports: the main stereo pair, plus a sidechain port on sidechain plugins; channels
+    // are numbered across the ports like JSFX pins (3/4 = the sidechain), extra ones get silence
+    std::vector<uint32_t> inChannels { 2 };
+    if (const auto* ports = static_cast<const clap_plugin_audio_ports_t*>(plugin->get_extension(plugin, CLAP_EXT_AUDIO_PORTS))) {
+        inChannels.clear();
+        for (uint32_t p = 0; p < ports->count(plugin, true); ++p) {
+            clap_audio_port_info_t pi {};
+            ports->get(plugin, p, true, &pi);
+            inChannels.push_back(pi.channel_count);
+        }
+    }
+    uint32_t totalIns = 0;
+    for (uint32_t c : inChannels)
+        totalIns += c;
+    std::vector<float> silence(kBlock, 0.0f);
+    std::vector<float*> inPtrs(std::max<uint32_t>(totalIns, 1));
+    std::vector<clap_audio_buffer_t> ibs(inChannels.size());
+
     const uint32_t frames = uint32_t(in.l.size());
     for (uint32_t pos = 0; pos < frames; pos += kBlock) {
         const uint32_t n = std::min(kBlock, frames - pos);
-        float* ins[2] = { const_cast<float*>(in.l.data()) + pos, const_cast<float*>(in.r.data()) + pos };
+        float* srcs[4] = { const_cast<float*>(in.l.data()) + pos, const_cast<float*>(in.r.data()) + pos,
+                           const_cast<float*>(sc.l.data()) + pos, const_cast<float*>(sc.r.data()) + pos };
+        for (uint32_t c = 0; c < totalIns; ++c)
+            inPtrs[c] = c < 4 ? srcs[c] : silence.data();
+        for (uint32_t p = 0, c = 0; p < inChannels.size(); c += inChannels[p], ++p) {
+            ibs[p] = clap_audio_buffer_t {};
+            ibs[p].data32 = inPtrs.data() + c;
+            ibs[p].channel_count = inChannels[p];
+        }
         float* outs[2] = { out.l.data() + pos, out.r.data() + pos };
-        clap_audio_buffer_t ib {}, ob {};
-        ib.data32 = ins; ib.channel_count = 2;
+        clap_audio_buffer_t ob {};
         ob.data32 = outs; ob.channel_count = 2;
         clap_process_t proc {};
         proc.steady_time = pos;
         proc.frames_count = n;
-        proc.audio_inputs = &ib; proc.audio_inputs_count = 1;
+        proc.audio_inputs = ibs.data(); proc.audio_inputs_count = uint32_t(ibs.size());
         proc.audio_outputs = &ob; proc.audio_outputs_count = 1;
         proc.in_events = &inEv; proc.out_events = &outEv;
         if (plugin->process(plugin, &proc) == CLAP_PROCESS_ERROR) {
@@ -300,7 +349,7 @@ int main(int argc, char** argv)
         labels.push_back("all defaults");
         for (size_t k = 0; k < sl.size(); ++k)
             for (double v : { sl[k].min, sl[k].max }) {
-                if (v == sl[k].def)
+                if (v == sl[k].def || sl[k].path)
                     continue;
                 std::vector<double> set = defs;
                 set[k] = v;
@@ -312,6 +361,10 @@ int main(int argc, char** argv)
         for (int r = 0; r < 6; ++r) {
             std::vector<double> set;
             for (const Slider& s : sl) {
+                if (s.path) {
+                    set.push_back(s.def);
+                    continue;
+                }
                 seed = seed * 1664525u + 1013904223u;
                 double v = s.min + (s.max - s.min) * ((seed >> 8) / 16777216.0);
                 if (s.inc > 0)
@@ -326,13 +379,18 @@ int main(int argc, char** argv)
     const bool isJsfx = endsWith(other, ".jsfx");
     bool ok = true, first = true;
     for (double sr : { 44100.0, 96000.0 }) {
-        const Stereo in = makeSignal(sr);
+        const Stereo in = makeSignal(sr), sc = makeSidechain(sr);
         for (size_t i = 0; i < sets.size(); ++i) {
             Stereo a(in.l.size()), b(in.l.size());
-            if (!renderJsfx(ref, sr, sl, sets[i], in, a))
+            // the CLAP gets every slider's value except the file sliders'
+            std::vector<double> params;
+            for (size_t k = 0; k < sl.size(); ++k)
+                if (!sl[k].path)
+                    params.push_back(sets[i][k]);
+            if (!renderJsfx(ref, sr, sl, sets[i], in, sc, a))
                 return 1;
-            if (isJsfx ? !renderJsfx(other.c_str(), sr, sl, sets[i], in, b)
-                       : !renderClap(other.c_str(), sr, sets[i], in, b, first))
+            if (isJsfx ? !renderJsfx(other.c_str(), sr, sl, sets[i], in, sc, b)
+                       : !renderClap(other.c_str(), sr, params, in, sc, b, first))
                 return 1;
             first = false;
             size_t at = 0;

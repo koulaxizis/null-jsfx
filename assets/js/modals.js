@@ -697,7 +697,7 @@ const guides = {
     ],
     uses: ['Kick ducking the bass for a clean low end', 'Music ducking under voice-over or podcast speech', 'Pumping pads and synths from a kick', 'Making room for a lead vocal'],
     properties: 'Key (sidechain channels 3/4 or main input) → optional high-pass → peak detector → threshold with hold → attack/release gain smoothing → stereo-linked gain on the main signal. Zero latency. In REAPER, send the key track to channels 3/4 of this track.',
-    formats: ['JSFX']
+    formats: ['JSFX', 'GFX', 'VST3', 'CLAP']
   },
   'stereo-width': {
     title: 'STEREO WIDTH',
@@ -783,7 +783,7 @@ const guides = {
     ],
     uses: ['Realistic rooms, halls and plates', 'Load your own IRs of spaces or devices', 'Guitar cabinet IRs via IR File', 'Short ambience on drums and vocals', 'Cathedral-scale tails'],
     properties: 'Signal chain: Input → Uniformly Partitioned FFT Convolution (1024-sample blocks) → Low Cut → High Cut → Mix → Output. Latency 1024 samples (reported to REAPER); custom IRs are WAV files placed in REAPER’s Data/null_jsfx_ir folder, resampled, level-normalised and limited to 3 s, stereo IRs per channel.',
-    formats: ['JSFX']
+    formats: ['JSFX', 'GFX', 'VST3', 'CLAP']
   },
   'formant-filter': {
     title: 'FORMANT FILTER',
@@ -936,7 +936,7 @@ const guides = {
     ],
     uses: ['Aggressive, dense EDM sound design', 'Bring out detail and tails in synths', 'Make drums and loops hit harder', 'Thicken vocals and effects for impact', 'Parallel squash with low Depth'],
     properties: 'Signal chain: Input → 3-Band Linkwitz-Riley Split (88 Hz, 2.5 kHz) → Per-Band Downward (66:1 above −33 dB) + Upward (4:1 below −41 dB, up to +24 dB) → Band Gains → Make-up → Depth Mix → Output → Soft Safety Clip. Linked stereo detection per band, zero latency.',
-    formats: ['JSFX']
+    formats: ['JSFX', 'GFX', 'VST3', 'CLAP']
   },
   'reverser': {
     title: 'REVERSER',
@@ -964,7 +964,7 @@ const guides = {
     ],
     uses: ['Robot and android voices', 'Monotone sci-fi dialogue', 'Dalek-style ring-modulated speech', 'Buzzing, pitched textures from drums or noise'],
     properties: 'Signal chain: Input → 1024-Point FFT every Pitch period → Phase Zeroing → IFFT Overlap-Add → Comb Resonance → Ring Mod → Mix → Output. Latency 1024 samples (reported to REAPER, dry path aligned); stereo channels processed independently.',
-    formats: ['JSFX']
+    formats: ['JSFX', 'GFX', 'VST3', 'CLAP']
   },
   'rotary-speaker': {
     title: 'ROTARY SPEAKER',
@@ -1011,7 +1011,7 @@ const guides = {
     ],
     uses: ['Infinite sustain on chords and notes', 'Drones and pads from any sound', 'Freeze reverb tails for transitions', 'Ambient layers under a mix'],
     properties: 'Signal chain: Input → 2048-Point FFT (4× overlap) → Magnitude Snapshot on Freeze → Phase Advance + Smear → IFFT Overlap-Add → Level → Mix → Output. Freezes only after a full 2048-sample window; stereo channels independent.',
-    formats: ['JSFX']
+    formats: ['JSFX', 'GFX', 'VST3', 'CLAP']
   },
   'spectrum-analyzer': {
     title: 'SPECTRUM ANALYZER',
@@ -1141,7 +1141,7 @@ const guides = {
     ],
     uses: ['Classic robot / synth-voice vocals', 'Talking synths with a sidechained carrier', 'Whispered noise-vocoded textures', 'Rhythmic vocoding of drums'],
     properties: 'Signal chain: Left Input (modulator) → 16 Band-Pass Bands (100 Hz–8 kHz, log spaced) → Envelope Followers × Carrier Bands → Alternating L/R Band Panning (Stereo Width) → Sum + Centred Sibilance → Mix → Output. Modulator is the left channel; Carrier Pitch applies to the Saw and Pulse carriers only; zero latency.',
-    formats: ['JSFX']
+    formats: ['JSFX', 'GFX', 'VST3', 'CLAP']
   },
   'warped-delay': {
     title: 'WARPED DELAY',
