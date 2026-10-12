@@ -834,7 +834,7 @@ const guides = {
     ],
     uses: ['Beat-repeat and stutter fills on drums', 'Random reverse and tape-stop transitions', 'Granular buzz and freeze textures on vocals', 'Chopped, gated rhythmic effects on pads', 'Live performance glitching via automation'],
     properties: 'Signal chain: Input → 4 s Ring Buffer → Event Clock (Rate) → Slice Loop (Stutter / Granular grain, Reverse, Pitch, Tape Stop) or, with Stutter off, live processing (reversed chunks, two overlapping Hann grains, varispeed pitch / tape stop) → Gate → Mix → Output. Every effect works on its own; slice length follows host tempo; loop seams get 3 ms fades; zero latency.',
-    formats: ['JSFX']
+    formats: ['JSFX', 'GFX', 'VST3', 'CLAP']
   },
   'granular-delay': {
     title: 'GRANULAR DELAY',
@@ -887,7 +887,7 @@ const guides = {
     ],
     uses: ['Add punch and beater click to kick drums', 'Tighten boomy kicks by shortening the tail', 'Fatten thin kicks with extra thump and body', 'Shape sampled 808s and electronic kicks', 'Reduce bleed between hits on live kick tracks'],
     properties: 'Signal chain: Input → Thump (55 Hz) → Body (120 Hz) → Click (4 kHz) bell EQs → Transient Shaper (fast/slow envelope) → Hit-Triggered Decay (starts after 20 ms) → Output Gain → Output. Linked stereo detection, zero latency.',
-    formats: ['JSFX']
+    formats: ['JSFX', 'GFX', 'VST3', 'CLAP']
   },
   'ladder-filter': {
     title: 'LADDER FILTER',
@@ -964,7 +964,7 @@ const guides = {
     ],
     uses: ['Classic organ rotary sound', 'Swirling guitar and electric piano', 'Speed-ramp transitions via automation', 'Stereo movement on pads and vocals'],
     properties: 'Signal chain: Input (summed to mono) → Drive → 800 Hz Crossover → Horn (0.8/6.7 Hz) + Drum (0.7/5.8 Hz) with AM and Doppler → Two Virtual Mics → Mix → Output. Rotors ramp with inertia (horn ~0.7 s, drum ~3 s, scaled by Acceleration); zero latency.',
-    formats: ['JSFX']
+    formats: ['JSFX', 'GFX', 'VST3', 'CLAP']
   },
   'shimmer-reverb': {
     title: 'SHIMMER REVERB',
@@ -1071,7 +1071,7 @@ const guides = {
     ],
     uses: ['Classic trance-gated pads and supersaws', 'Rhythmic chopping of sustained chords', 'Stutter-like patterns on vocals', 'Turning drones into sequenced rhythms'],
     properties: 'Signal chain: Input → 16-Step Sequencer → Linear Attack/Release Gain Ramp × Depth → Output. In Sync mode the step clock follows the host tempo and, while the transport plays, is read from the song position so step 1 lands on every bar; when stopped it free-runs at the host tempo. Free mode runs at a fixed rate in steps per second. Stereo-linked, zero latency.',
-    formats: ['JSFX']
+    formats: ['JSFX', 'GFX', 'VST3', 'CLAP']
   },
   'vinyl-age': {
     title: 'VINYL AGE',

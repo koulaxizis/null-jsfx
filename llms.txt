@@ -74,21 +74,21 @@ Deeper sound design, creative effects and special processing.
 - Convolution: Impulse Response Reverb
 - Formant Filter: Vowel Formant Filter
 - Frequency Shifter: Bode Frequency Shifter
-- Glitch FX: Stutter & Glitch Engine
+- Glitch FX: Stutter & Glitch Engine (also as GFX, VST3, CLAP)
 - Granular Delay: Grain Cloud Delay
 - Harmonizer: Two-Voice Pitch Harmonizer
-- Kick Shaper: Kick Drum Sculptor
+- Kick Shaper: Kick Drum Sculptor (also as GFX, VST3, CLAP)
 - Ladder Filter: Moog-Style Ladder Filter
 - OTT: Multiband Upward/Downward Compressor
 - Reverser: Real-Time Reverse Buffer
 - Robotizer: FFT Robot Voice
-- Rotary Speaker: Leslie Rotary Simulation
+- Rotary Speaker: Leslie Rotary Simulation (also as GFX, VST3, CLAP)
 - Shimmer Reverb: Pitched Ambient Reverb
 - Spectral Freeze: FFT Spectrum Freeze
 - Spring Reverb: Vintage Spring Tank
 - Sub Bloom: Pitch-Tracking Subharmonic Generator
 - Tape Stop: Tape Stop & Spin-Up
-- Trance Gate: 16-Step Rhythmic Gate
+- Trance Gate: 16-Step Rhythmic Gate (also as GFX, VST3, CLAP)
 - Vinyl Age: Vintage Vinyl Degrader
 - Vocoder: 16-Band Channel Vocoder
 - Warped Delay: Modulated Degrading Delay
