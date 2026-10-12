@@ -29,9 +29,10 @@ inline double grDb(const Params& p, double inputDb) noexcept
     const double x = p.expander ? p.thresholdDb - inputDb : inputDb - p.thresholdDb;
     if (x <= 0.0)
         return 0.0;
+    // quadratic soft knee: the slope rises smoothly from 1 to 1/ratio
     if (p.kneeDb > 0.0 && x < p.kneeDb)
-        return x * (1.0 - 1.0 / p.ratio) * (x / p.kneeDb);
-    return x * (1.0 - 1.0 / p.ratio);
+        return (1.0 - 1.0 / p.ratio) * x * x / (2.0 * p.kneeDb);
+    return (1.0 - 1.0 / p.ratio) * (x - p.kneeDb / 2.0);
 }
 
 // static curve: output level in dB for an input level d (for the display)
