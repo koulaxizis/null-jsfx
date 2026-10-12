@@ -1,0 +1,166 @@
+desc:NULL Formant Filter GFX
+author: Christos Koulaxizis
+tags: filter formant vowel voice speech synthesis a e i o u gui
+//category: Advanced
+//NULL JSFX v2.0 • https://nulljsfx.tech • MIT License
+
+import null_gfx.jsfx-inc
+
+slider1:0<0,4,1{A,E,I,O,U}>-Vowel
+slider2:0<-12,12,0.1>-Gain (dB)
+slider3:10<5,20,1>-Q
+
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
+
+@init
+  // NULL Formant Filter (../formant_filter.jsfx) with its own interface: same audio code, plus @gfx.
+  PI=3.14159265358979;
+  gfx_ext_retina = 1;
+  // Filter state is never reset: changing or automating Vowel, Gain or Q keeps the
+  // filters running, and the formant frequencies glide (~15 ms) to the new vowel
+  // instead of jumping, so there are no clicks.
+  first=1;
+
+  // RBJ band-pass (constant 0 dB peak gain) coefficients at frequency f
+  function bp_set(f) instance(b0,b2,a1,a2) local(w0,alpha,a0inv)
+  (
+    w0=2*PI*f/srate;
+    alpha=sin(w0)/(2*q);
+    a0inv=1/(1+alpha);
+    b0=a0inv*alpha;
+    b2=-a0inv*alpha;
+    a1=-2*a0inv*cos(w0);
+    a2=a0inv*(1-alpha);
+  );
+
+  function update()
+  (
+    vowel=slider1;
+    g=exp(slider2*0.11512925464970228420);
+    q=max(1,slider3);
+
+    vowel==0?(t1=730;t2=1090;t3=2440;);
+    vowel==1?(t1=400;t2=1220;t3=2550;);
+    vowel==2?(t1=270;t2=2290;t3=3010;);
+    vowel==3?(t1=530;t2=1840;t3=2600;);
+    vowel==4?(t1=530;t2=1220;t3=2440;);
+    first?(f1=t1;f2=t2;f3=t3;first=0;);
+  );
+
+  // display only: adds the response of an RBJ band-pass at fc (as bp_set) at w to ff_re/ff_im
+  function ff_add(fc, w) local(w0, al, n, k0, k1, k2, nr, ni, dr, di, dd)
+  (
+    w0 = 2 * PI * fc / srate;
+    al = sin(w0) / (2 * q);
+    n = 1 / (1 + al);
+    k0 = n * al; k1 = -2 * n * cos(w0); k2 = n * (1 - al);
+    nr = k0 * (1 - cos(2 * w)); ni = k0 * sin(2 * w);
+    dr = 1 + k1 * cos(w) + k2 * cos(2 * w); di = -(k1 * sin(w) + k2 * sin(2 * w));
+    dd = dr * dr + di * di;
+    ff_re += (nr * dr + ni * di) / dd;
+    ff_im += (ni * dr - nr * di) / dd;
+  );
+
+  // display only: the response in dB at f for the selected vowel (the three band-passes * 3 * Gain)
+  function ff_db(f) local(w)
+  (
+    w = 2 * PI * min(f, srate * 0.499) / srate;
+    ff_re = 0; ff_im = 0;
+    ff_add(t1, w); ff_add(t2, w); ff_add(t3, w);
+    10 * log10(max((ff_re * ff_re + ff_im * ff_im) * 9 * g * g, 0.0000000001));
+  );
+
+  // display only: dashed vertical marker at pixel x
+  function ff_dash(x) local(yy)
+  (
+    x = floor(x) + 0.5;
+    yy = ng_py;
+    while (
+      gfx_line(x, yy, x, min(yy + 3 * ng_s, ng_py + ng_ph), 0);
+      yy += 6 * ng_s;
+      yy < ng_py + ng_ph;
+    );
+  );
+
+@slider
+  update();
+
+@block
+  // glide the formants toward the selected vowel, then update the coefficients
+  k=1-exp(-samplesblock/(0.015*srate));
+  f1+=(t1-f1)*k; f2+=(t2-f2)*k; f3+=(t3-f3)*k;
+  c1.bp_set(f1); c2.bp_set(f2); c3.bp_set(f3);
+  b0_f1=c1.b0; b1_f1=0; b2_f1=c1.b2; a1_f1=c1.a1; a2_f1=c1.a2;
+  b0_f2=c2.b0; b1_f2=0; b2_f2=c2.b2; a1_f2=c2.a1; a2_f2=c2.a2;
+  b0_f3=c3.b0; b1_f3=0; b2_f3=c3.b2; a1_f3=c3.a1; a2_f3=c3.a2;
+
+@sample
+  // F1 Left
+  out_f1l=b0_f1*spl0+b1_f1*x1f1l+b2_f1*x2f1l-a1_f1*y1f1l-a2_f1*y2f1l;
+  x2f1l=x1f1l;x1f1l=spl0;y2f1l=y1f1l;y1f1l=out_f1l;
+  // F1 Right
+  out_f1r=b0_f1*spl1+b1_f1*x1f1r+b2_f1*x2f1r-a1_f1*y1f1r-a2_f1*y2f1r;
+  x2f1r=x1f1r;x1f1r=spl1;y2f1r=y1f1r;y1f1r=out_f1r;
+
+  // F2 Left
+  out_f2l=b0_f2*spl0+b1_f2*x1f2l+b2_f2*x2f2l-a1_f2*y1f2l-a2_f2*y2f2l;
+  x2f2l=x1f2l;x1f2l=spl0;y2f2l=y1f2l;y1f2l=out_f2l;
+  // F2 Right
+  out_f2r=b0_f2*spl1+b1_f2*x1f2r+b2_f2*x2f2r-a1_f2*y1f2r-a2_f2*y2f2r;
+  x2f2r=x1f2r;x1f2r=spl1;y2f2r=y1f2r;y1f2r=out_f2r;
+
+  // F3 Left
+  out_f3l=b0_f3*spl0+b1_f3*x1f3l+b2_f3*x2f3l-a1_f3*y1f3l-a2_f3*y2f3l;
+  x2f3l=x1f3l;x1f3l=spl0;y2f3l=y1f3l;y1f3l=out_f3l;
+  // F3 Right
+  out_f3r=b0_f3*spl1+b1_f3*x1f3r+b2_f3*x2f3r-a1_f3*y1f3r-a2_f3*y2f3r;
+  x2f3r=x1f3r;x1f3r=spl1;y2f3r=y1f3r;y1f3r=out_f3r;
+
+  spl0=(out_f1l+out_f2l+out_f3l)*g*3;
+  spl1=(out_f1r+out_f2r+out_f3r)*g*3;
+
+@gfx 480 294
+  ng_knobs_begin("FORMANT FILTER", "ADVANCED", 480, 120, 1, 0);
+
+  // display: the response of the three formant band-passes for the selected vowel (the
+  // formants glide there in ~15 ms), with Gain; F1..F3 dashed
+  ng_plot(ng_vx + 26, ng_vy + 4, ng_vw - 30, ng_vh - 20);
+  ng_grid_freq(36);
+  ng_font(4, 8, 0);
+  ff_k = 1;
+  loop(3,
+    ff_f = ff_k == 1 ? t1 : ff_k == 2 ? t2 : t3;
+    ng_col(NG_ACCENT, 0.5);
+    ff_dash(ng_freq_x(ff_f));
+    ng_col(NG_MUTED, 1);
+    sprintf(#ff_t, "F%d", ff_k);
+    ng_ptxt(#ff_t, ng_freq_x(ff_f) + 4 * ng_s, ng_py + 7 * ng_s, 0);
+    ff_k += 1;
+  );
+  ff_zy = ng_lin_y(0, -24, 24);
+  ng_col(NG_ACCENT, 0.10);
+  ff_i = 0;
+  loop(floor(ng_pw) + 1,
+    ff_y = ng_lin_y(ff_db(20 * 1000 ^ (ff_i / ng_pw)), -24, 24);
+    gfx_line(ng_px + ff_i, ff_zy, ng_px + ff_i, ff_y, 0);
+    ff_i += 1;
+  );
+  ng_col(NG_ACCENT, 1);
+  ff_i = 0;
+  loop(floor(ng_pw) + 1,
+    ff_y = ng_lin_y(ff_db(20 * 1000 ^ (ff_i / ng_pw)), -24, 24);
+    ff_i == 0 ? ng_line_start(ng_px, ff_y) : ng_line_to(ng_px + ff_i, ff_y);
+    ff_i += 1;
+  );
+
+  ng_row(3);
+  ng_select_ctl(1, "VOWEL", "A|E|I|O|U", 0) ? update();
+  sprintf(#v2, "%+.1f dB", slider2);
+  ng_knob_ctl(2, "GAIN", #v2, -12, 12, 0, 0.1, 1) ? update();
+  sprintf(#v3, "%d", slider3);
+  ng_knob_ctl(3, "Q", #v3, 5, 20, 10, 1, 0) ? update();
+
+  ng_end();

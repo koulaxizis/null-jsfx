@@ -765,7 +765,7 @@ const guides = {
     ],
     uses: ['Add metallic, pitched resonance to drums and percussion', 'Tune noise or hats to a musical note', 'Create Karplus-style plucked ringing with Feed-Backward', 'Hollow, flanger-like coloration on pads', 'Sound design for robotic or tube-like textures'],
     properties: 'Signal chain: Input → Delay (1 period of Frequency, interpolated) → Feed-Forward or Feed-Backward sum → Level Compensation → Gain → Output. Output is normalised by 1/(1+fb) or (1−fb) so high Feedback does not blow up; stereo channels processed independently, zero latency.',
-    formats: ['JSFX']
+    formats: ['JSFX', 'GFX', 'VST3', 'CLAP']
   },
   'convolution': {
     title: 'CONVOLUTION',
@@ -796,7 +796,7 @@ const guides = {
     ],
     uses: ['Make synths and pads “talk” with vowel colours', 'Add vocal character to drums, noise or guitar', 'Automate Vowel for talking-filter sweeps', 'Sound design for creatures and robotic voices'],
     properties: 'Signal chain: Input → 3 parallel RBJ Band-Pass Filters (F1, F2, F3 per vowel, e.g. A = 730 / 1090 / 2440 Hz) → Sum ×3 → Gain → Output. Stereo channels processed independently. Filter state is never reset and the formants glide (~15 ms) to a new vowel, so Vowel, Gain and Q can be automated without clicks.',
-    formats: ['JSFX']
+    formats: ['JSFX', 'GFX', 'VST3', 'CLAP']
   },
   'frequency-shifter': {
     title: 'FREQUENCY SHIFTER',
@@ -810,7 +810,7 @@ const guides = {
     ],
     uses: ['Subtle phasing and beating with small shifts', 'Metallic, bell-like inharmonic tones', 'Barber-pole rising or falling effects with Feedback', 'Stereo widening via Stereo Offset', 'Sci-fi sound design'],
     properties: 'Signal chain: Input → Hilbert Transform (two 4-stage allpass chains) → Quadrature Oscillator Mix → Feedback (DC-blocked, soft-limited) → Mix → Output. Shifts by a fixed Hz amount rather than a ratio, so harmonics become inharmonic; zero latency.',
-    formats: ['JSFX']
+    formats: ['JSFX', 'GFX', 'VST3', 'CLAP']
   },
   'glitch-fx': {
     title: 'GLITCH FX',
@@ -902,7 +902,7 @@ const guides = {
     ],
     uses: ['Classic resonant synth filter sweeps', 'Warm, driven lowpass on drums and bass', 'Automated filter build-ups', 'Highpass sweeps with resonant peak', 'Taming harsh digital sources with analog character'],
     properties: 'Signal chain: Input → Drive → 4-Pole Zero-Delay-Feedback Ladder (24 dB/oct, tanh saturation in the loop) → LP / HP Output → Gain → Output. Stable and in tune up to 20 kHz at full resonance; stereo channels independent, zero latency.',
-    formats: ['JSFX']
+    formats: ['JSFX', 'GFX', 'VST3', 'CLAP']
   },
   'loudness-meter': {
     title: 'LOUDNESS METER',
@@ -950,7 +950,7 @@ const guides = {
     ],
     uses: ['Backwards textures from live input', 'Reverse swells on vocals and guitars', 'Filtered reverse ambience under a mix', 'Experimental sound design'],
     properties: 'Signal chain: Input → Circular Buffer (1–10 s) → Backwards Read → Optional RBJ Filter (Q 0.707, independent state per channel) → Mix → Output. The read head runs in reverse while the write head moves forward, so the reversed audio is continuous rather than chunked; filter changes do not reset the filter (no clicks); zero latency.',
-    formats: ['JSFX']
+    formats: ['JSFX', 'GFX', 'VST3', 'CLAP']
   },
   'robotizer': {
     title: 'ROBOTIZER',
@@ -1059,7 +1059,7 @@ const guides = {
     ],
     uses: ['Add a sub octave that follows bass lines and kick pitch', 'Reinforce thin low end on small-speaker mixes', 'Deepen synth and DI bass with an octave-down layer', 'Cinematic rumble on hits and drones'],
     properties: 'Signal chain (per channel): Input → Band-Limit (HP at Source/4, 24 dB/oct LP at Source) → Zero-Crossing Tracker with Hysteresis → Flip-Flop Dividers (÷2, ÷4) × Band Envelope → 24 dB/oct Low-Pass → Sub Level + Original × Mix → Output Gain → Output. The sub follows the pitch of the played note and its level follows the bass band\'s dynamics; silence or no bass in the band produces no sub. Zero latency.',
-    formats: ['JSFX']
+    formats: ['JSFX', 'GFX', 'VST3', 'CLAP']
   },
   'tape-stop': {
     title: 'TAPE STOP',
@@ -1072,7 +1072,7 @@ const guides = {
     ],
     uses: ['Tape-stop transitions at the end of sections', 'DJ-style turntable brakes', 'Dramatic drops and breakdowns', 'Automated spin-down effects on vocals or full mixes'],
     properties: 'Signal chain: Input → 12 s Buffer → Varispeed Read (quadratic slow-down, square-root spin-up) → 10 ms Crossfade → Output. Audio passes untouched while Idle; the tape output also fades as the motor stops; zero latency.',
-    formats: ['JSFX']
+    formats: ['JSFX', 'GFX', 'VST3', 'CLAP']
   },
   'trance-gate': {
     title: 'TRANCE GATE',
