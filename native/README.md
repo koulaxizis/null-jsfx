@@ -11,7 +11,7 @@ Every NULL JSFX plugin can have two extra versions next to the original JSFX in
 All three sound the same. CI checks it: `gfx_<name>` must match the JSFX exactly and
 `compare_<name>` (the CLAP build) to within 1e-5 at 44.1 and 96 kHz.
 
-They also look the same. Both draw the same 360x240 design: the nulljsfx.tech dark palette
+They also look the same. One Slider plugins draw the same 360x240 design: the nulljsfx.tech dark palette
 with a silver accent (never the site purple), a header with the logo, "NULL JSFX" above the
 plugin name and the category on the right. One Slider plugins have a display card on top and
 a horizontal slider card below. The look lives in two files that must stay in step:
@@ -91,6 +91,49 @@ native/scripts/screenshot.sh <name> out.png <value>                # the VST3/CL
 
 Look at both screenshots side by side: they should match.
 
+## Adding an Essentials or Advanced plugin (knob layout)
+
+`plugins/delay` and `gfx/delay_gfx.jsfx` are the reference. The layout is a header, a display
+card (height `display`) and a controls card of rows of 6 cells: knobs for numeric sliders,
+selectors (pill with arrows) for enum sliders. More than 2 rows of controls go on tabs.
+
+### 1. GFX JSFX: `DATA/Effects/null_jsfx/gfx/<name>_gfx.jsfx`
+
+Copy `<name>.jsfx`, prefix every slider label with `-`, `import null_gfx.jsfx-inc`, move the
+`@slider` code into `function update()` (called from `@slider`), then:
+
+```
+@gfx 480 294
+ng_knobs_begin("DELAY", "ESSENTIALS", 480, 120, 1, 0);    // name, category, width, display h, rows, tabs
+// draw the display in ng_vx, ng_vy, ng_vw, ng_vh
+ng_row(5);
+ng_knob_ctl(1, "TIME", #v, 0, 2000, 250, 1, 0) ? update(); // slider index, label, value text, range, default, step, bipolar
+ng_select_ctl(4, "SYNC", "OFF|ON", 0) ? update();
+```
+
+`ng_tabs("BAND 1|BAND 2", sel)` before the rows switches pages. Never call `slider()` directly
+(the lint rejects it); write sliders with `ng_slider_set(idx, v)`.
+
+### 2. VST3/CLAP: `native/plugins/<name>/`
+
+- `<Name>Sliders.hpp`: one `SliderInfo` per JSFX slider in order (`step`, and `options` for enums).
+- `<Name>DSP.hpp`: the JSFX maths in C++, in double where the JSFX computes. Snap 0.1-step
+  parameters back to the JSFX grid in double before use (a float 0.3 detunes LFOs).
+- `Plugin.cpp`: a `NullMultiPlugin`; `valueChanged` re-runs the `@slider` code; `setLatency`
+  where the JSFX sets `pdc_delay`; `DISTRHO_PLUGIN_WANT_TIMEPOS` for tempo; values for the
+  display go through `taps` (or a plugin-local struct for more than the Taps hold).
+- `UI.cpp`: a `NullKnobsUI` with a `Layout` (title, category, width, display, tabs, rows,
+  sliders, controls) and the same display in `drawDisplay()`; `formatValue` for custom text.
+- `DistrhoPluginInfo.h`: plain name, unique ID, categories, UI size = the `@gfx` size.
+
+`rand()` cannot be matched natively: use an exact Park-Miller step in doubles, as `riser.jsfx`.
+
+### 3. Check
+
+`compare_<name>` sets every slider (defaults, each at min and max, random sets) at 44.1 and
+96 kHz. Build with `cmake -S native -B native/build-x -DNULL_TESTS=ON -DNULL_PLUGINS="<name>"`
+and `ctest`, then compare `gfx_render` (at 2x the `@gfx` size) with `screenshot.sh <name> out.png ""`.
+
 ## Building
 
 ```sh
@@ -107,5 +150,7 @@ Bash. `.github/workflows/native.yml` builds all three OSes and uploads `NULL-JSF
 release gets them as zips.
 
 DPF ([DISTRHO Plugin Framework](https://github.com/DISTRHO/DPF), ISC) is fetched at a pinned
-commit. The font is DejaVu Sans, which DPF embeds. On MSVC the Khronos GL headers in
+commit. The font is Noto Sans (SIL OFL 1.1, `common/fonts/`),
+embedded at configure time as `NullFonts.h`; the GFX JSFX ask REAPER for "Noto Sans" with a
+negative size so every OS uses the em size, and the JSFX package ships the fonts to install. On MSVC the Khronos GL headers in
 `third_party/khronos` (MIT) fill in the GL 2.0 types Windows lacks.
