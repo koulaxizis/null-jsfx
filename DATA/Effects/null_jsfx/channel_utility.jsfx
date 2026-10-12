@@ -4,7 +4,7 @@ tags: gain phase polarity dc block solo mute balance mono utility trim pad stere
 //category: Essentials
 //NULL JSFX v2.0 • https://nulljsfx.tech • MIT License
 
-slider1:0<0,1,1{None,-6,-12}>Input Pad
+slider1:0<0,2,1{None,-6,-12}>Input Pad
 slider2:0<-12,18,0.1>Input Gain (dB)
 slider3:0<0,1,1{Normal,Inverted}>Phase Left
 slider4:0<0,1,1{Normal,Inverted}>Phase Right

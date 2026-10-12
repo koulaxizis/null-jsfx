@@ -324,7 +324,7 @@ const guides = {
     ],
     uses: ['Gain staging at the start of a chain', 'Fixing polarity problems on multi-mic recordings', 'Removing DC offset from recordings', 'Checking mono compatibility and each side individually', 'Correcting left/right level imbalance'],
     properties: 'Input → Pad + Input Gain → Polarity L/R → DC Block (one-pole high-pass) → Balance L/R → Solo L/R → Mono Check → Output Gain → Hard Limit (±0.99) → Output. Zero latency.',
-    formats: ['JSFX']
+    formats: ['JSFX', 'GFX', 'VST3', 'CLAP']
   },
   'chorus': {
     title: 'CHORUS',
@@ -529,7 +529,7 @@ const guides = {
     ],
     uses: ['Mid/side processing with other plugins between an encoder and decoder', 'Adjusting the balance of centre and sides', 'Recording and decoding M/S microphone setups', 'Inspecting the mid and side content separately'],
     properties: 'Encode: L/R → Mid = (L+R)×0.707, Side = (L−R)×0.707 → Mid on left, Side on right. Decode: Mid (left) / Side (right) → gains → L/R. Encode followed by Decode is unity gain; zero latency.',
-    formats: ['JSFX']
+    formats: ['JSFX', 'GFX', 'VST3', 'CLAP']
   },
   'multiband-compressor': {
     title: 'MULTIBAND COMP',
@@ -562,7 +562,7 @@ const guides = {
     ],
     uses: ['Mastering bus dynamics', 'Controlling a boomy low end without dulling the top', 'Taming harsh upper mids on vocals or guitars', 'Per-band level balancing with Solo to audition each band', 'Broadcast-style density'],
     properties: 'Input → complementary crossovers (four cascaded one-pole low-passes, subtracted from the remainder) → 4 bands, each with stereo-linked peak compression, knee and makeup → Mute/Solo/Bypass → Sum → Master Output → Output. The bands sum back to the original signal with compression off; zero latency.',
-    formats: ['JSFX']
+    formats: ['JSFX', 'GFX', 'VST3', 'CLAP']
   },
   'noise-generator': {
     title: 'NOISE GENERATOR',
@@ -710,7 +710,7 @@ const guides = {
     ],
     uses: ['Widening pads, synths and backing vocals', 'Keeping bass and kick mono while widening the top', 'Narrowing overly wide sources', 'Mastering stereo adjustments'],
     properties: 'Input → Mid/Side split → optional one-pole crossover (lows mono, highs widened) → Side × Width → L/R → Dry/Wet Mix → Output. Zero latency.',
-    formats: ['JSFX']
+    formats: ['JSFX', 'GFX', 'VST3', 'CLAP']
   },
   'transient-shaper': {
     title: 'TRANSIENT SHAPER',
