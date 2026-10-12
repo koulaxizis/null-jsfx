@@ -22,7 +22,7 @@ cmake -S "$here" -B "$build" -G Ninja -DNULL_JACK=ON -DNULL_VST3=OFF -DNULL_CLAP
 cmake --build "$build" >/dev/null
 
 disp=":$(( 90 + RANDOM % 100 ))"
-Xvfb "$disp" -screen 0 1024x768x24 >/dev/null 2>&1 & xvfb=$!
+Xvfb "$disp" -screen 0 2048x1600x24 >/dev/null 2>&1 & xvfb=$!
 export DISPLAY="$disp"
 sleep 1
 jackd -n "shot$$" -d dummy -r 48000 >/dev/null 2>&1 & jack=$!
