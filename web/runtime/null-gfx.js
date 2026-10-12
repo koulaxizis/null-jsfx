@@ -293,7 +293,87 @@
     return 0;
   };
 
-  var API = { Gfx: Gfx };
+  // ---------------------------------------------------------------- view ----------------
+  // An effect's interface on a canvas: a mirror instance of the effect runs @init/@slider on
+  // the page and draws @gfx, while the audio runs elsewhere (the worklet) and sends the
+  // variables @gfx shows (setLive). Mouse and wheel drive the effect's own controls; when
+  // the interface moves a slider, opts.onSlider(index, value) tells the page.
+  // FX: globalThis.NULLFX[id]; opts: { srate, sliders: { index: value }, onSlider }
+  function View(FX, canvas, opts) {
+    opts = opts || {};
+    var self = this, Host = g.NULLFXHost, R = g.NULLRT;
+    this.FX = FX;
+    this.canvas = canvas;
+    this.G = new Gfx(canvas, opts);
+    this.fx = new Host.Effect(FX, R, { srate: opts.srate || 48000, sliders: opts.sliders || {}, gfx: this.G });
+    this.fx.inst.slider();
+    this.fx.mustSlider = false;
+    this.onSlider = opts.onSlider || null;
+    this.fx.onAutomate = function (mask) {
+      FX.sliders.forEach(function (sl) {
+        if (mask & Math.pow(2, sl.i - 1) && self.onSlider) self.onSlider(sl.i, self.fx.inst.getSlider(sl.i));
+      });
+    };
+    this.mouse = { x: -1, y: -1, cap: 0, wheel: 0 };
+    this.mods = 0;
+    this.listen();
+  }
+  View.prototype.listen = function () {
+    var self = this, cv = this.canvas, m = this.mouse;
+    function pos(e) {
+      var r = cv.getBoundingClientRect();
+      m.x = e.clientX - r.left; m.y = e.clientY - r.top;
+      m.cap = (m.cap & 0x43) | (e.ctrlKey || e.metaKey ? 4 : 0) | (e.shiftKey ? 8 : 0) | (e.altKey ? 16 : 0);
+    }
+    var BTN = { 0: 1, 1: 64, 2: 2 };
+    this.handlers = {
+      pointerdown: function (e) {
+        pos(e); m.cap |= BTN[e.button] || 1;
+        try { cv.setPointerCapture(e.pointerId); } catch (x) { /* old browsers */ }
+        e.preventDefault();
+      },
+      pointermove: function (e) { pos(e); },
+      pointerup: function (e) { pos(e); m.cap &= ~(BTN[e.button] || 1); },
+      pointercancel: function () { m.cap &= ~0x43; },
+      pointerleave: function (e) { if (!(m.cap & 0x43)) { m.x = -1; m.y = -1; } },
+      wheel: function (e) { pos(e); m.wheel += e.deltaY < 0 ? 1 : e.deltaY > 0 ? -1 : 0; e.preventDefault(); },
+      contextmenu: function (e) { e.preventDefault(); }
+    };
+    Object.keys(this.handlers).forEach(function (k) { cv.addEventListener(k, self.handlers[k], k === "wheel" ? { passive: false } : false); });
+    cv.style.touchAction = "none";
+  };
+  // the audio side changed a slider (automation, the page's own slider row)
+  View.prototype.setSlider = function (i, v) {
+    this.fx.inst.setSlider(i, v);
+    this.fx.inst.slider();
+  };
+  View.prototype.setSrate = function (sr) {
+    if (sr === this.fx.srate) return;
+    this.fx.srate = sr;
+    this.fx.init();
+    this.fx.inst.slider();
+    this.fx.mustSlider = false;
+  };
+  // m: what the worklet's peek() returned
+  View.prototype.setLive = function (m) {
+    if (!m) return;
+    if (m.live) this.fx.inst.setLive(m.live);
+    if (m.mem) this.fx.inst.mem.write(m.mem.base, m.mem.data);
+  };
+  // draws one frame at the canvas's CSS size
+  View.prototype.draw = function () {
+    var cv = this.canvas, w = cv.clientWidth, h = cv.clientHeight;
+    if (!w || !h) return;
+    this.G.frame(this.fx.inst, { w: w, h: h }, g.devicePixelRatio || 1, this.mouse);
+    this.mouse.wheel = 0;
+  };
+  View.prototype.destroy = function () {
+    var cv = this.canvas, self = this;
+    Object.keys(this.handlers || {}).forEach(function (k) { cv.removeEventListener(k, self.handlers[k]); });
+    this.handlers = null;
+  };
+
+  var API = { Gfx: Gfx, View: View };
   g.NULLGfx = API;
   if (typeof module !== "undefined" && module.exports) module.exports = API;
 })(typeof globalThis !== "undefined" ? globalThis : this);
