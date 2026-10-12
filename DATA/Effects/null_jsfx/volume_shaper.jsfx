@@ -1,0 +1,117 @@
+desc:NULL Volume Shaper
+author: Christos Koulaxizis
+tags: volume shaper lfo envelope sidechain pump duck gate trance tempo sync rhythm
+//category: Essentials
+//NULL JSFX v2.0 • https://nulljsfx.tech • MIT License
+
+slider1:0<0,9,1{Pump,Pump Hard,Saw Down,Saw Up,Gate 1/16,Trance 1/8,Sine,Triangle,Half-time Pump,Stutter}>Shape
+slider2:2<0,6,1{1/1,1/2,1/4,1/8,1/16,1/4T,1/8T}>Rate
+slider3:80<0,100,1>Depth (%)
+slider4:3<0,30,1>Smooth (ms)
+slider5:0<0,100,1>Phase (%)
+slider6:100<0,100,1>Mix (%)
+
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
+
+@init
+  // Tempo-synced volume envelope (LFO Tool / Dodge style): a preset shape repeats once per
+  // Rate note at the host tempo and sets the level, 1 = full level and 0 = Depth's dip.
+  // While the transport plays, the cycle is taken from beat_position at every block so the
+  // shape stays locked to the grid (a cycle starts on every beat at 1/4); stopped, it
+  // free-runs at the host tempo. Half-time Pump spans two Rate notes.
+  // Smooth is a one-pole lowpass on the gain (no clicks at the gates' edges); Phase moves
+  // the shape later in the cycle; Mix blends the shaped and the dry signal.
+  // The shapes are breakpoints (x, y, curve of the segment to the next point) over one cycle:
+  // curve 0 linear, 1 ease-in (t^2), 2 ease-out (1-(1-t)^2), 3 ease-out cubic, 4 cosine S.
+  SHAPES = 0;           // 10 shapes x 64 slots; slot 63 holds the point count
+  function vs_begin(s) ( vs_base = SHAPES + s * 64; vs_n = 0; );
+  function vs_pt(x, y, c)
+  (
+    vs_base[vs_n * 3] = x; vs_base[vs_n * 3 + 1] = y; vs_base[vs_n * 3 + 2] = c;
+    vs_n += 1;
+    vs_base[63] = vs_n;
+  );
+
+  // the level of shape s at cycle position p (0..1)
+  function vs_eval(s, p) local(b, n, i, x0, x1, y0, y1, c, t, u)
+  (
+    b = SHAPES + s * 64;
+    n = b[63];
+    i = 0;
+    while (i < n - 2 && p >= b[(i + 1) * 3]) ( i += 1; );
+    x0 = b[i * 3]; y0 = b[i * 3 + 1]; c = b[i * 3 + 2];
+    x1 = b[i * 3 + 3]; y1 = b[i * 3 + 4];
+    t = x1 > x0 ? (p - x0) / (x1 - x0) : 1;
+    u = 1 - t;
+    t = c == 1 ? t * t : c == 2 ? 1 - u * u : c == 3 ? 1 - u * u * u : c == 4 ? 0.5 - 0.5 * cos($pi * t) : t;
+    y0 + (y1 - y0) * t;
+  );
+
+  // Pump: ducked on the beat, a fast swell back, a short fade into the next beat
+  vs_begin(0); vs_pt(0, 0, 3); vs_pt(0.5, 1, 0); vs_pt(0.97, 1, 0); vs_pt(1, 0, 0);
+  // Pump Hard: held down for 10% of the cycle, then a late, steep rise
+  vs_begin(1); vs_pt(0, 0, 0); vs_pt(0.1, 0, 1); vs_pt(0.45, 1, 0); vs_pt(0.97, 1, 0); vs_pt(1, 0, 0);
+  // Saw Down and Saw Up (with a short ramp back so the reset does not click)
+  vs_begin(2); vs_pt(0, 1, 0); vs_pt(0.97, 0, 0); vs_pt(1, 1, 0);
+  vs_begin(3); vs_pt(0, 0, 0); vs_pt(0.97, 1, 0); vs_pt(1, 0, 0);
+  // Gate 1/16: four gates per cycle (sixteenths at 1/4), open for half of each
+  vs_begin(4);
+  vs_k = 0;
+  loop(4,
+    vs_pt(vs_k / 4, 1, 0); vs_pt(vs_k / 4 + 0.125, 1, 0);
+    vs_pt(vs_k / 4 + 0.125, 0, 0); vs_pt(vs_k / 4 + 0.25, 0, 0);
+    vs_k += 1;
+  );
+  // Trance 1/8: two gates per cycle (eighths at 1/4), held then falling fast
+  vs_begin(5);
+  vs_pt(0, 1, 0); vs_pt(0.28, 1, 3); vs_pt(0.46, 0, 0); vs_pt(0.5, 0, 0);
+  vs_pt(0.5, 1, 0); vs_pt(0.78, 1, 3); vs_pt(0.96, 0, 0); vs_pt(1, 0, 0);
+  // Sine and Triangle, lowest on the beat
+  vs_begin(6); vs_pt(0, 0, 4); vs_pt(0.5, 1, 4); vs_pt(1, 0, 0);
+  vs_begin(7); vs_pt(0, 0, 0); vs_pt(0.5, 1, 0); vs_pt(1, 0, 0);
+  // Half-time Pump: the Pump curve over two Rate notes (see @block)
+  vs_begin(8); vs_pt(0, 0, 3); vs_pt(0.5, 1, 0); vs_pt(0.97, 1, 0); vs_pt(1, 0, 0);
+  // Stutter: open for the first half, then four quick chops
+  vs_begin(9);
+  vs_pt(0, 1, 0);
+  vs_k = 0;
+  loop(4,
+    vs_pt(0.5 + vs_k / 8 + 0.0625, 1, 0); vs_pt(0.5 + vs_k / 8 + 0.0625, 0, 0);
+    vs_pt(0.5 + vs_k / 8 + 0.125, 0, 0);
+    vs_k < 3 ? vs_pt(0.5 + vs_k / 8 + 0.125, 1, 0);
+    vs_k += 1;
+  );
+
+  pos = 0;
+  g = 1;
+
+@slider
+  shape = floor(slider1 + 0.5);
+  rate = floor(slider2 + 0.5);
+  // the cycle in beats: 1/1 = 4, 1/2 = 2, 1/4 = 1, ... triplets 2/3 and 1/3; Half-time x2
+  cyc = rate == 0 ? 4 : rate == 1 ? 2 : rate == 2 ? 1 : rate == 3 ? 0.5 : rate == 4 ? 0.25 : rate == 5 ? 2 / 3 : 1 / 3;
+  shape == 8 ? cyc *= 2;
+  depth = slider3 / 100;
+  sm = slider4 > 0 ? exp(-1 / (srate * slider4 * 0.001)) : 0;
+  phase = slider5 / 100;
+  mix = slider6 / 100;
+
+@block
+  bpm = tempo > 0 ? tempo : 120;
+  inc = bpm / 60 / cyc / srate;
+  // lock to the host grid while playing
+  play_state & 1 ? pos = beat_position / cyc - floor(beat_position / cyc);
+
+@sample
+  pos += inc;
+  pos >= 1 ? pos -= 1;
+  p = pos + phase;
+  p >= 1 ? p -= 1;
+  target = 1 - depth * (1 - vs_eval(shape, p));
+  g = target + sm * (g - target);
+  m = 1 - mix + mix * g;
+  spl0 *= m;
+  spl1 *= m;

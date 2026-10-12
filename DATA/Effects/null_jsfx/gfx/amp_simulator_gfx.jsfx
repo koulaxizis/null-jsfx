@@ -1,0 +1,375 @@
+desc:NULL Amp Simulator GFX
+author: Christos Koulaxizis
+tags: amp amplifier guitar bass preamp power amp tube valve distortion overdrive tone stack gui
+//category: Advanced
+//NULL JSFX v2.0 • https://nulljsfx.tech • MIT License
+
+import null_gfx.jsfx-inc
+
+slider1:1<0,3,1{Clean,Crunch,Lead,Bass}>-Model
+slider2:5<0,10,0.1>-Gain
+slider3:5<0,10,0.1>-Bass
+slider4:5<0,10,0.1>-Mid
+slider5:5<0,10,0.1>-Treble
+slider6:5<0,10,0.1>-Presence
+slider7:5<0,10,0.1>-Master
+slider8:0<0,1,1{Off,On}>-Bright
+slider9:30<0,100,1>-Sag (%)
+slider10:1<0,1,1{2x,4x}>-Oversampling
+slider11:0<-24,12,0.1>-Output (dB)
+
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
+
+@init
+  // NULL Amp Simulator (../amp_simulator.jsfx) with its own interface: same audio code, plus @gfx.
+  // A guitar and bass amp without a cabinet (put the Cabinet Simulator after it). The input
+  // gets a tight high-pass and the Bright shelf, then everything nonlinear runs 2x or 4x
+  // oversampled: two to four asymmetric, inverting triode stages, each followed by a coupling
+  // cap high-pass and a Miller cap low-pass; a passive Fender/Marshall tone stack (D. Yeh's
+  // third-order model, so Bass, Mid and Treble interact as in the real circuit); the power
+  // amp's low resonance and Presence shelf; a push-pull power stage whose supply sags with
+  // the level. Oversampling uses polyphase IIR half-band filters (two all-pass chains per 2x
+  // step), so there is no latency.
+  //   Clean: 2 stages, Fender stack. Crunch: 3 stages, Marshall stack.
+  //   Lead: 4 stages, tight low end, Marshall stack. Bass: 2 stages, deep stack.
+  ca = 0;          // half-band all-pass coefficients, first 2x step (8, -99 dB)
+  cb = 8;          // second 2x step (4, -76 dB)
+  rc = 16;         // power amp resonance biquad (b0 b1 b2 a1 a2)
+  pc = 24;         // presence shelf biquad
+  st_l = 64;       // per channel state, 96 slots each (see chan())
+  st_r = 160;
+  freembuf(256);
+  memset(0, 0, 256);
+  ca[0] = 0.040633460924193; ca[1] = 0.150505129022675; ca[2] = 0.300757055991874; ca[3] = 0.460774504961451;
+  ca[4] = 0.609524314896188; ca[5] = 0.738503841118857; ca[6] = 0.849223810392066; ca[7] = 0.949742783705000;
+  cb[0] = 0.070765948976184; cb[1] = 0.257853078513453; cb[2] = 0.513167574748793; cb[3] = 0.817317354417137;
+  os = 0;
+
+  // triode-like asymmetric curve: soft towards +1, harder towards -0.5
+  function tri(x) ( x > 0 ? 1 - exp(-x) : (exp(2 * x) - 1) * 0.5; );
+
+  // one 2x half-band step on the coefficients c (n of them, alternating between the two
+  // all-pass paths) with the states s (x1, y1 per coefficient): the even input e runs through
+  // the first path, the odd input o through the second; the results land in hb_e and hb_o.
+  // Upsampling: e = o = x gives the two new samples. Downsampling: e = the later sample,
+  // o = the earlier one, the output is (hb_e + hb_o) / 2.
+  function hb(c, n, s, e, o) local(i, t)
+  (
+    i = 0;
+    loop(n / 2,
+      t = s[2 * i]; s[2 * i] = e; e = (e - s[2 * i + 1]) * c[i] + t; s[2 * i + 1] = e;
+      t = s[2 * i + 2]; s[2 * i + 2] = o; o = (o - s[2 * i + 3]) * c[i + 1] + t; s[2 * i + 3] = o;
+      i += 2;
+    );
+    hb_e = e; hb_o = o;
+  );
+
+  // inverting triode stage (bias b, its DC t0 removed), coupling cap high-pass (ha) and Miller
+  // cap low-pass (lc); s: x1, y1, low-pass state
+  function stage(x, s, g, b, t0, ha, lc) local(v, y)
+  (
+    v = t0 - tri(g * x + b);
+    y = ha * (s[1] + v - s[0]);
+    s[0] = v; s[1] = y;
+    s[2] += lc * (y - s[2]);
+    s[2];
+  );
+
+  // biquad with the coefficients c; s: x1, x2, y1, y2
+  function bq(x, s, c) local(y)
+  (
+    y = c[0] * x + c[1] * s[0] + c[2] * s[1] - c[3] * s[2] - c[4] * s[3];
+    s[1] = s[0]; s[0] = x; s[3] = s[2]; s[2] = y;
+    y;
+  );
+
+  // everything at the oversampled rate, for one sample of the channel state s
+  function os_run(x, s) local(v, y, a)
+  (
+    v = stage(x, s + 56, g1, b1, t01, ha1, lc1);
+    ns > 1 ? v = stage(v, s + 60, g2, b2, t02, ha2, lc2);
+    ns > 2 ? v = stage(v, s + 64, g3, b3, t03, ha3, lc3);
+    ns > 3 ? v = stage(v, s + 68, g4, b4, t04, ha4, lc4);
+    // tone stack, s + 72: x1 x2 x3 y1 y2 y3
+    y = tb0 * v + tb1 * s[72] + tb2 * s[73] + tb3 * s[74] - ta1 * s[75] - ta2 * s[76] - ta3 * s[77];
+    s[74] = s[73]; s[73] = s[72]; s[72] = v;
+    s[77] = s[76]; s[76] = s[75]; s[75] = y;
+    v = y * ts_mk;
+    v = bq(v, s + 78, rc);
+    v = bq(v, s + 82, pc);
+    // power amp drive, lowered by the sagging supply (s[86]: the output envelope)
+    v *= pa_d / (1 + sag * s[86]);
+    // push-pull power stage (Pade tanh, flat beyond +-3)
+    v = v > 3 ? 1 : v < -3 ? -1 : v * (27 + v * v) / (27 + 9 * v * v);
+    a = abs(v);
+    s[86] += (a > s[86] ? sg_a : sg_r) * (a - s[86]);
+    v;
+  );
+
+  // one channel at the base rate. State s: half-band up 0..15 and down 16..31 (first step),
+  // up 32..39 and down 40..47 (second step), tight 48/49, bright 50/51, DC blocker 52/53,
+  // stages 56..71, tone stack 72..77, resonance 78..81, presence 82..85, sag envelope 86
+  function chan(x, s) local(v, y, u0, u1, w0, w1, w2, w3, d0, d1)
+  (
+    v = ti_a * (s[49] + x - s[48]);
+    s[48] = x; s[49] = v;
+    s[51] = br_a * (s[51] + v - s[50]);
+    s[50] = v;
+    v += br_g * s[51];
+    os == 2 ? (
+      hb(ca, 8, s, v, v);
+      u0 = os_run(hb_e, s);
+      u1 = os_run(hb_o, s);
+      hb(ca, 8, s + 16, u1, u0);
+      v = 0.5 * (hb_e + hb_o);
+    ) : (
+      hb(ca, 8, s, v, v);
+      u0 = hb_e; u1 = hb_o;
+      hb(cb, 4, s + 32, u0, u0);
+      w0 = hb_e; w1 = hb_o;
+      hb(cb, 4, s + 32, u1, u1);
+      w2 = hb_e; w3 = hb_o;
+      w0 = os_run(w0, s); w1 = os_run(w1, s); w2 = os_run(w2, s); w3 = os_run(w3, s);
+      hb(cb, 4, s + 40, w1, w0);
+      d0 = 0.5 * (hb_e + hb_o);
+      hb(cb, 4, s + 40, w3, w2);
+      d1 = 0.5 * (hb_e + hb_o);
+      hb(ca, 8, s + 16, d1, d0);
+      v = 0.5 * (hb_e + hb_o);
+    );
+    y = dc_a * (s[53] + v - s[52]);
+    s[52] = v; s[53] = y;
+    y * out_g;
+  );
+
+  // RBJ peaking and high-shelf biquads into c
+  function set_peak(c, f, q, db, fs) local(A, w, cs, al, a0)
+  (
+    A = 10 ^ (db / 40); w = 2 * $pi * f / fs;
+    cs = cos(w); al = sin(w) / (2 * q);
+    a0 = 1 + al / A;
+    c[0] = (1 + al * A) / a0; c[1] = -2 * cs / a0; c[2] = (1 - al * A) / a0;
+    c[3] = -2 * cs / a0; c[4] = (1 - al / A) / a0;
+  );
+  function set_shelf(c, f, db, fs) local(A, w, cs, al, sa, a0)
+  (
+    A = 10 ^ (db / 40); w = 2 * $pi * f / fs;
+    cs = cos(w); al = sin(w) / 2 * sqrt(2); sa = 2 * sqrt(A) * al;
+    a0 = (A + 1) - (A - 1) * cs + sa;
+    c[0] = A * ((A + 1) + (A - 1) * cs + sa) / a0;
+    c[1] = -2 * A * ((A - 1) + (A + 1) * cs) / a0;
+    c[2] = A * ((A + 1) + (A - 1) * cs - sa) / a0;
+    c[3] = 2 * ((A - 1) - (A + 1) * cs) / a0;
+    c[4] = ((A + 1) - (A - 1) * cs - sa) / a0;
+  );
+
+  function update()
+  (
+    os_new = slider10 ? 4 : 2;
+    // a new oversampling factor starts from clear filters
+    os_new != os ? (memset(st_l, 0, 192); os = os_new);
+    fs_os = srate * os;
+    model = slider1;
+    // per model: stages, Gain range (dB), stage gains, biases, tight / coupling / Miller corners,
+    // tone stack parts (nF, kOhm), stack makeup (dB), power amp resonance and drive, output trim (dB)
+    model == 0 ? (
+      ns = 2; gmin = -12; gmax = 18; g2 = 1.5; g3 = 0; g4 = 0;
+      b1 = 0.05; b2 = 0.15; b3 = 0; b4 = 0;
+      tight = 30; hp1 = 20; hp2 = 30; hp3 = 0; hp4 = 0; lp1 = 14000; lp2 = 10000; lp3 = 0; lp4 = 0;
+      C1 = 0.25; C2 = 20; C3 = 20; R1 = 250; R2 = 1000; R3 = 25; R4 = 56;
+      mk = 6; res_f = 100; res_g = 2; pa_base = 1.5; trim = 0;
+    ) : model == 1 ? (
+      ns = 3; gmin = 0; gmax = 34; g2 = 3; g3 = 2.5; g4 = 0;
+      b1 = 0.1; b2 = 0.2; b3 = 0.3; b4 = 0;
+      tight = 60; hp1 = 30; hp2 = 80; hp3 = 40; hp4 = 0; lp1 = 12000; lp2 = 9000; lp3 = 7500; lp4 = 0;
+      C1 = 0.47; C2 = 22; C3 = 22; R1 = 220; R2 = 1000; R3 = 22; R4 = 33;
+      mk = 5; res_f = 90; res_g = 3; pa_base = 0.8; trim = 0;
+    ) : model == 2 ? (
+      ns = 4; gmin = 6; gmax = 46; g2 = 4; g3 = 3; g4 = 2;
+      b1 = 0.1; b2 = 0.2; b3 = 0.25; b4 = 0.3;
+      tight = 110; hp1 = 60; hp2 = 140; hp3 = 90; hp4 = 40; lp1 = 10000; lp2 = 8000; lp3 = 7000; lp4 = 6500;
+      C1 = 0.47; C2 = 22; C3 = 22; R1 = 220; R2 = 1000; R3 = 22; R4 = 33;
+      mk = 5; res_f = 85; res_g = 4; pa_base = 0.8; trim = -2;
+    ) : (
+      ns = 2; gmin = -6; gmax = 28; g2 = 2.5; g3 = 0; g4 = 0;
+      b1 = 0.05; b2 = 0.25; b3 = 0; b4 = 0;
+      tight = 15; hp1 = 15; hp2 = 20; hp3 = 0; hp4 = 0; lp1 = 9000; lp2 = 6000; lp3 = 0; lp4 = 0;
+      C1 = 0.33; C2 = 47; C3 = 33; R1 = 250; R2 = 1000; R3 = 25; R4 = 47;
+      mk = 6; res_f = 60; res_g = 2; pa_base = 0.7; trim = 2;
+    );
+    pre_db = gmin + (gmax - gmin) * slider2 / 10;
+    g1 = 10 ^ (pre_db / 20);
+    t01 = tri(b1); t02 = tri(b2); t03 = tri(b3); t04 = tri(b4);
+    ha1 = exp(-2 * $pi * hp1 / fs_os); ha2 = exp(-2 * $pi * hp2 / fs_os);
+    ha3 = exp(-2 * $pi * hp3 / fs_os); ha4 = exp(-2 * $pi * hp4 / fs_os);
+    lc1 = 1 - exp(-2 * $pi * lp1 / fs_os); lc2 = 1 - exp(-2 * $pi * lp2 / fs_os);
+    lc3 = 1 - exp(-2 * $pi * lp3 / fs_os); lc4 = 1 - exp(-2 * $pi * lp4 / fs_os);
+
+    // tone stack (Yeh): treble linear, bass audio taper, mid linear
+    t = slider5 / 10; m = slider4 / 10; l = slider3 / 10 * (slider3 / 10);
+    sb1 = t * C1 * R1 + m * C3 * R3 + l * (C1 * R2 + C2 * R2) + (C1 * R3 + C2 * R3);
+    sb2 = t * (C1 * C2 * R1 * R4 + C1 * C3 * R1 * R4) - m * m * (C1 * C3 * R3 * R3 + C2 * C3 * R3 * R3)
+        + m * (C1 * C3 * R1 * R3 + C1 * C3 * R3 * R3 + C2 * C3 * R3 * R3)
+        + l * (C1 * C2 * R1 * R2 + C1 * C2 * R2 * R4 + C1 * C3 * R2 * R4)
+        + l * m * (C1 * C3 * R2 * R3 + C2 * C3 * R2 * R3) + (C1 * C2 * R1 * R3 + C1 * C2 * R3 * R4 + C1 * C3 * R3 * R4);
+    sb3 = l * m * (C1 * C2 * C3 * R1 * R2 * R3 + C1 * C2 * C3 * R2 * R3 * R4)
+        - m * m * (C1 * C2 * C3 * R1 * R3 * R3 + C1 * C2 * C3 * R3 * R3 * R4)
+        + m * (C1 * C2 * C3 * R1 * R3 * R3 + C1 * C2 * C3 * R3 * R3 * R4) + t * C1 * C2 * C3 * R1 * R3 * R4
+        - t * m * C1 * C2 * C3 * R1 * R3 * R4 + t * l * C1 * C2 * C3 * R1 * R2 * R4;
+    sa1 = (C1 * R1 + C1 * R3 + C2 * R3 + C2 * R4 + C3 * R4) + m * C3 * R3 + l * (C1 * R2 + C2 * R2);
+    sa2 = m * (C1 * C3 * R1 * R3 - C2 * C3 * R3 * R4 + C1 * C3 * R3 * R3 + C2 * C3 * R3 * R3)
+        + l * m * (C1 * C3 * R2 * R3 + C2 * C3 * R2 * R3) - m * m * (C1 * C3 * R3 * R3 + C2 * C3 * R3 * R3)
+        + l * (C1 * C2 * R2 * R4 + C1 * C2 * R1 * R2 + C1 * C3 * R2 * R4 + C2 * C3 * R2 * R4)
+        + (C1 * C2 * R1 * R4 + C1 * C3 * R1 * R4 + C1 * C2 * R3 * R4 + C1 * C2 * R1 * R3 + C1 * C3 * R3 * R4 + C2 * C3 * R3 * R4);
+    sa3 = l * m * (C1 * C2 * C3 * R1 * R2 * R3 + C1 * C2 * C3 * R2 * R3 * R4)
+        - m * m * (C1 * C2 * C3 * R1 * R3 * R3 + C1 * C2 * C3 * R3 * R3 * R4)
+        + m * (C1 * C2 * C3 * R3 * R3 * R4 + C1 * C2 * C3 * R1 * R3 * R3 - C1 * C2 * C3 * R1 * R3 * R4)
+        + l * C1 * C2 * C3 * R1 * R2 * R4 + C1 * C2 * C3 * R1 * R3 * R4;
+    // bilinear transform, s = k1 (1 - 1/z) / (1 + 1/z), in units of nF x kOhm = 1 us (EEL2 names
+    // ignore case, so k1..k3 here, not c1..c3: those would be C1..C3)
+    k1 = 2 * fs_os / 1000000; k2 = k1 * k1; k3 = k2 * k1;
+    A0 = 1 + sa1 * k1 + sa2 * k2 + sa3 * k3;
+    tb0 = (sb1 * k1 + sb2 * k2 + sb3 * k3) / A0;
+    tb1 = (sb1 * k1 - sb2 * k2 - 3 * sb3 * k3) / A0;
+    tb2 = (-sb1 * k1 - sb2 * k2 + 3 * sb3 * k3) / A0;
+    tb3 = (-sb1 * k1 + sb2 * k2 - sb3 * k3) / A0;
+    ta1 = (3 + sa1 * k1 - sa2 * k2 - 3 * sa3 * k3) / A0;
+    ta2 = (3 - sa1 * k1 - sa2 * k2 + 3 * sa3 * k3) / A0;
+    ta3 = (1 - sa1 * k1 + sa2 * k2 - sa3 * k3) / A0;
+    ts_mk = 10 ^ (mk / 20);
+
+    set_peak(rc, res_f, 0.8, res_g, fs_os);
+    set_shelf(pc, 3000, (slider6 - 5) * 1.6, fs_os);
+    ti_a = exp(-2 * $pi * tight / srate);
+    br_a = exp(-2 * $pi * 1800 / srate);
+    br_g = slider8 ? 10 ^ (8 * (1 - 0.085 * slider2) / 20) - 1 : 0;
+    dc_a = exp(-2 * $pi * 10 / srate);
+    pa_d = pa_base * 10 ^ ((slider7 - 5) * 2.4 / 20);
+    sag = slider9 / 100 * 1.5;
+    sg_a = 1 - exp(-1 / (0.003 * fs_os));
+    sg_r = 1 - exp(-1 / (0.12 * fs_os));
+    out_g = 0.5 * 10 ^ ((trim + slider11) / 20);
+  );
+
+  // display: (am_hr, am_hi) times (n0 + n1 z + n2 z^2 + n3 z^3) / (1 + d1 z + d2 z^2 + d3 z^3), z = e^-jw
+  function am_mul(w, n0, n1, n2, n3, d1, d2, d3) local(nr, ni, dr, di, d, hr, hi, tr)
+  (
+    nr = n0 + n1 * cos(w) + n2 * cos(2 * w) + n3 * cos(3 * w);
+    ni = -(n1 * sin(w) + n2 * sin(2 * w) + n3 * sin(3 * w));
+    dr = 1 + d1 * cos(w) + d2 * cos(2 * w) + d3 * cos(3 * w);
+    di = -(d1 * sin(w) + d2 * sin(2 * w) + d3 * sin(3 * w));
+    d = max(dr * dr + di * di, 0.00000000000000000001);
+    hr = (nr * dr + ni * di) / d; hi = (ni * dr - nr * di) / d;
+    tr = am_hr * hr - am_hi * hi;
+    am_hi = am_hr * hi + am_hi * hr;
+    am_hr = tr;
+  );
+  // display: the tone shaping at f Hz in dB (tone stack with makeup, resonance, presence, Bright)
+  function am_db(f) local(w)
+  (
+    w = 2 * $pi * min(f, srate * 0.4999) / fs_os;
+    am_hr = ts_mk; am_hi = 0;
+    am_mul(w, tb0, tb1, tb2, tb3, ta1, ta2, ta3);
+    am_mul(w, rc[0], rc[1], rc[2], 0, rc[3], rc[4], 0);
+    am_mul(w, pc[0], pc[1], pc[2], 0, pc[3], pc[4], 0);
+    // Bright: 1 + g a (1 - z) / (1 - a z) at the base rate
+    w = 2 * $pi * min(f, srate * 0.4999) / srate;
+    am_mul(w, 1 + br_g * br_a, -(br_a + br_g * br_a), 0, 0, -br_a, 0, 0);
+    10 * log10(max(am_hr * am_hr + am_hi * am_hi, 0.00000000000000000001));
+  );
+  // display: the preamp's static curve (the stages without their filters) at input x
+  function am_xfer(x) local(v)
+  (
+    v = t01 - tri(g1 * x + b1);
+    ns > 1 ? v = t02 - tri(g2 * v + b2);
+    ns > 2 ? v = t03 - tri(g3 * v + b3);
+    ns > 3 ? v = t04 - tri(g4 * v + b4);
+    v;
+  );
+
+  // display: input peak (instant attack, 300 ms release) for the drive dot
+  am_pk = 0;
+  am_rel = exp(-1 / (0.3 * srate));
+  gfx_ext_retina = 1;
+
+@slider
+  update();
+
+@sample
+  am_a = max(abs(spl0), abs(spl1));
+  am_pk = am_a > am_pk ? am_a : am_pk * am_rel;
+  spl0 = chan(spl0, st_l);
+  spl1 = chan(spl1, st_r);
+
+@gfx 480 400
+  ng_knobs_begin("AMP SIMULATOR", "ADVANCED", 480, 140, 2, 0);
+
+  // display, left: the tone shaping (tone stack, resonance, presence, Bright) from -16 to +16 dB,
+  // the model at the top right
+  ng_plot(ng_vx + 26, ng_vy + 4, ng_vw - 158, ng_vh - 20);
+  ng_grid_freq(24);
+  am_zy = ng_lin_y(0, -16, 16);
+  ng_col(NG_ACCENT, 0.10);
+  am_i = 0;
+  loop(floor(ng_pw) + 1,
+    gfx_line(ng_px + am_i, am_zy, ng_px + am_i, ng_lin_y(am_db(20 * 1000 ^ (am_i / ng_pw)), -16, 16), 0);
+    am_i += 1;
+  );
+  ng_col(NG_ACCENT, 1);
+  am_i = 0;
+  loop(floor(ng_pw) + 1,
+    am_y = ng_lin_y(am_db(20 * 1000 ^ (am_i / ng_pw)), -16, 16);
+    am_i == 0 ? ng_line_start(ng_px, am_y) : ng_line_to(ng_px + am_i, am_y);
+    am_i += 1;
+  );
+  ng_font(4, 8, 0);
+  ng_col(NG_MUTED, 1);
+  ng_ptxt(model == 0 ? "Clean" : model == 1 ? "Crunch" : model == 2 ? "Lead" : "Bass", ng_px + ng_pw - 6 * ng_s, ng_py + 8 * ng_s, 2);
+
+  // display, right: the preamp's transfer curve (input -1..1 across), rising, with the input peak
+  // as a dot on it, and the Gain in dB below
+  ng_plot(ng_vx + ng_vw - 104, ng_vy + 4, 104, ng_vh - 20);
+  ng_grid(4, 4, 1);
+  am_sg = ns == 3 ? -1 : 1;
+  am_nm = max(abs(am_xfer(1)), abs(am_xfer(-1)));
+  ng_col(NG_ACCENT, 1);
+  am_i = 0;
+  loop(floor(ng_pw) + 1,
+    am_y = ng_py + ng_ph * (0.5 - 0.5 * am_sg * am_xfer(am_i / ng_pw * 2 - 1) / am_nm);
+    am_i == 0 ? ng_line_start(ng_px, am_y) : ng_line_to(ng_px + am_i, am_y);
+    am_i += 1;
+  );
+  am_x = min(1, am_pk);
+  ng_col(NG_TEXT, 1);
+  gfx_circle(ng_px + ng_pw * (am_x + 1) / 2, ng_py + ng_ph * (0.5 - 0.5 * am_sg * am_xfer(am_x) / am_nm), 3 * ng_s, 1, 1);
+  ng_col(NG_MUTED, 1);
+  sprintf(#am_t, "DRIVE %+.0f dB", pre_db);
+  ng_ptxt(#am_t, ng_px + ng_pw / 2, ng_py + ng_ph + 10 * ng_s, 1);
+
+  ng_row(6);
+  ng_select_ctl(1, "MODEL", "CLEAN|CRUNCH|LEAD|BASS", 0) ? update();
+  sprintf(#v2, "%.1f", slider2);
+  ng_knob_ctl(2, "GAIN", #v2, 0, 10, 5, 0.1, 0) ? update();
+  sprintf(#v3, "%.1f", slider3);
+  ng_knob_ctl(3, "BASS", #v3, 0, 10, 5, 0.1, 0) ? update();
+  sprintf(#v4, "%.1f", slider4);
+  ng_knob_ctl(4, "MID", #v4, 0, 10, 5, 0.1, 0) ? update();
+  sprintf(#v5, "%.1f", slider5);
+  ng_knob_ctl(5, "TREBLE", #v5, 0, 10, 5, 0.1, 0) ? update();
+  sprintf(#v6, "%.1f", slider6);
+  ng_knob_ctl(6, "PRESENCE", #v6, 0, 10, 5, 0.1, 0) ? update();
+
+  ng_row(5);
+  sprintf(#v7, "%.1f", slider7);
+  ng_knob_ctl(7, "MASTER", #v7, 0, 10, 5, 0.1, 0) ? update();
+  ng_select_ctl(8, "BRIGHT", "OFF|ON", 0) ? update();
+  sprintf(#v9, "%d%%", slider9);
+  ng_knob_ctl(9, "SAG", #v9, 0, 100, 30, 1, 0) ? update();
+  ng_select_ctl(10, "OVERSAMPLE", "2X|4X", 0) ? update();
+  sprintf(#v11, "%+.1f dB", slider11);
+  ng_knob_ctl(11, "OUTPUT", #v11, -24, 12, 0, 0.1, 1) ? update();
+
+  ng_end();

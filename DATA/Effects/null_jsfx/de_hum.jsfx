@@ -1,0 +1,118 @@
+desc:NULL De-Hum
+author: Christos Koulaxizis
+tags: hum mains notch noise reduction repair restoration ground loop buzz rumble
+//category: Essentials
+//NULL JSFX v2.0 • https://nulljsfx.tech • MIT License
+
+slider1:0<0,1,1{50 Hz,60 Hz}>Frequency
+slider2:4<1,8,1>Harmonics
+slider3:30<5,100,1>Q
+slider4:40<0,60,1>Depth (dB)
+slider5:0<-2,2,0.01>Fine (Hz)
+slider6:0<0,3,1{Off,20 Hz,30 Hz,40 Hz}>Low Cut
+
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
+
+@init
+  // Removes mains hum: a cascade of narrow notches at the mains frequency (50 or 60 Hz, plus
+  // Fine) and at its multiples, Harmonics notches in all (1 = the fundamental only). Q sets
+  // the notch width (bandwidth = frequency / Q), Depth how deep each notch cuts. Low Cut adds
+  // a 24 dB/oct high-pass below the hum for rumble.
+  co = 0;      // 8 notches x 5 coefficients: b0, b1, b2, a1, a2
+  st = 40;     // 8 notches x 4 states: z1, z2 left, z1, z2 right
+  memset(st, 0, 32);
+  freembuf(st + 32);
+  l_lc1.ic1 = l_lc1.ic2 = l_lc2.ic1 = l_lc2.ic2 = 0;
+  r_lc1.ic1 = r_lc1.ic2 = r_lc2.ic1 = r_lc2.ic2 = 0;
+
+  // TPT state-variable high-pass stage (state in this.ic1 / this.ic2)
+  function svf_hp(x, a1, a2, a3, k) local(v1, v2, v3)
+  (
+    v3 = x - this.ic2;
+    v1 = a1 * this.ic1 + a2 * v3;
+    v2 = this.ic2 + a2 * this.ic1 + a3 * v3;
+    this.ic1 = 2 * v1 - this.ic1;
+    this.ic2 = 2 * v2 - this.ic2;
+    x - k * v1 - v2;
+  );
+
+  // coefficients of one stage for g = tan(pi fc / srate) and q, into this.a1 .. this.k
+  function stage(g, q)
+  (
+    this.k = 1 / q;
+    this.a1 = 1 / (1 + g * (g + this.k));
+    this.a2 = g * this.a1;
+    this.a3 = g * this.a2;
+  );
+
+  // flushes a stage's state once it decays below -300 dB (no denormals in silence)
+  function flush()
+  (
+    abs(this.ic1) < 0.000000000000001 ? this.ic1 = 0;
+    abs(this.ic2) < 0.000000000000001 ? this.ic2 = 0;
+  );
+
+@slider
+  f0 = (slider1 < 0.5 ? 50 : 60) + slider5;
+  nh = slider2;
+  gd = 10 ^ (0 - slider4 / 20);
+  // notch h: poles of a band of width f / Q, zeros pulled in to gain gd at the centre
+  h = 0;
+  loop(8,
+    w = 2 * $pi * min(f0 * (h + 1), srate * 0.45) / srate;
+    al = sin(w) / (2 * slider3);
+    cw = cos(w);
+    a0 = 1 + al;
+    co[h * 5] = (1 + al * gd) / a0;
+    co[h * 5 + 1] = -2 * cw / a0;
+    co[h * 5 + 2] = (1 - al * gd) / a0;
+    co[h * 5 + 3] = -2 * cw / a0;
+    co[h * 5 + 4] = (1 - al) / a0;
+    // notches that are off start from silence when they come back
+    h >= nh ? memset(st + h * 4, 0, 4);
+    h += 1;
+  );
+  lc = slider6;
+  lc > 0 ? (
+    g = tan($pi * (10 + 10 * lc) / srate);
+    lc1.stage(g, 0.5412);
+    lc2.stage(g, 1.3066);
+  ) : (
+    l_lc1.ic1 = l_lc1.ic2 = l_lc2.ic1 = l_lc2.ic2 = 0;
+    r_lc1.ic1 = r_lc1.ic2 = r_lc2.ic1 = r_lc2.ic2 = 0;
+  );
+
+@block
+  l_lc1.flush(); l_lc2.flush(); r_lc1.flush(); r_lc2.flush();
+  h = 0;
+  loop(32,
+    abs(st[h]) < 0.000000000000001 ? st[h] = 0;
+    h += 1;
+  );
+
+@sample
+  xl = spl0;
+  xr = spl1;
+  lc > 0 ? (
+    xl = l_lc2.svf_hp(l_lc1.svf_hp(xl, lc1.a1, lc1.a2, lc1.a3, lc1.k), lc2.a1, lc2.a2, lc2.a3, lc2.k);
+    xr = r_lc2.svf_hp(r_lc1.svf_hp(xr, lc1.a1, lc1.a2, lc1.a3, lc1.k), lc2.a1, lc2.a2, lc2.a3, lc2.k);
+  );
+  c = co;
+  s = st;
+  loop(nh,
+    yo = c[0] * xl + s[0];
+    s[0] = c[1] * xl - c[3] * yo + s[1];
+    s[1] = c[2] * xl - c[4] * yo;
+    xl = yo;
+    yo = c[0] * xr + s[2];
+    s[2] = c[1] * xr - c[3] * yo + s[3];
+    s[3] = c[2] * xr - c[4] * yo;
+    xr = yo;
+    c += 5;
+    s += 4;
+  );
+  spl0 = xl;
+  spl1 = xr;

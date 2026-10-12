@@ -1,0 +1,283 @@
+desc:NULL Band Splitter GFX
+author: Christos Koulaxizis
+tags: band splitter crossover multiband linkwitz-riley routing split merge utility gui
+//category: Essentials
+//NULL JSFX v2.0 • https://nulljsfx.tech • MIT License
+
+import null_gfx.jsfx-inc
+
+slider1:0<0,1,1{Split,Merge}>-Mode
+slider2:3<2,4,1>-Bands
+slider3:150<30,1000,1:log>-Crossover 1 (Hz)
+slider4:2000<200,6000,1:log>-Crossover 2 (Hz)
+slider5:7000<1000,16000,1:log>-Crossover 3 (Hz)
+slider6:0<0,4,1{Off,Band 1,Band 2,Band 3,Band 4}>-Listen
+
+in_pin:Left
+in_pin:Right
+in_pin:Band 2 Left
+in_pin:Band 2 Right
+in_pin:Band 3 Left
+in_pin:Band 3 Right
+in_pin:Band 4 Left
+in_pin:Band 4 Right
+out_pin:Band 1 Left
+out_pin:Band 1 Right
+out_pin:Band 2 Left
+out_pin:Band 2 Right
+out_pin:Band 3 Left
+out_pin:Band 3 Right
+out_pin:Band 4 Left
+out_pin:Band 4 Right
+
+@init
+  // NULL Band Splitter (../band_splitter.jsfx) with its own interface: same audio code, plus @gfx.
+  // Builds multiband chains from any plugin: Split puts the input (channels 1/2) through a
+  // Linkwitz-Riley 4th-order (24 dB/oct) crossover into 2, 3 or 4 bands, band 1 (lowest) on
+  // channels 1/2, band 2 on 3/4, band 3 on 5/6 and band 4 on 7/8. The lower bands go through
+  // the allpasses of the crossovers above them, so the bands are in phase and their sum is
+  // flat (an allpass). Put plugins on the band channels, then Merge (a second instance at the
+  // end of the chain) sums channels 1-8 back into 1/2.
+  // Listen copies one band to channels 1/2 to hear it on its own (Split only).
+  // Each LR4 filter is two Butterworth stages, built from TPT state-variable filters
+  // (lowpass, highpass and allpass from the same structure, so LP^2 + HP^2 = AP exactly).
+  K2 = sqrt(2);
+
+  // one TPT state-variable filter step with coefficients a1..a3; leaves bp in v1, lp in v2
+  function svf(x, a1, a2, a3) instance(ic1, ic2, v1, v2) local(v3)
+  (
+    v3 = x - ic2;
+    v1 = a1 * ic1 + a2 * v3;
+    v2 = ic2 + a2 * ic1 + a3 * v3;
+    ic1 = 2 * v1 - ic1;
+    ic2 = 2 * v2 - ic2;
+  );
+
+  // coefficients of a Butterworth SVF at f Hz into c[0..2]
+  function svf_coefs(c, f) local(g)
+  (
+    g = tan($pi * f / srate);
+    c[0] = 1 / (1 + g * (g + K2));
+    c[1] = g * c[0];
+    c[2] = g * c[1];
+  );
+
+  // one LR4 crossover on x with coefficients c: the lowpass into lo, the highpass into hi
+  function lr4(x, c) instance(s, l, h, lo, hi) local(hp)
+  (
+    s.svf(x, c[0], c[1], c[2]);
+    hp = x - K2 * s.v1 - s.v2;
+    l.svf(s.v2, c[0], c[1], c[2]);
+    lo = l.v2;
+    h.svf(hp, c[0], c[1], c[2]);
+    hi = hp - K2 * h.v1 - h.v2;
+  );
+
+  // second-order allpass (Q 0.707) on x: the phase of an LR4 crossover at the same frequency
+  function ap(x, c) instance(s)
+  (
+    s.svf(x, c[0], c[1], c[2]);
+    x - 2 * K2 * s.v1;
+  );
+
+  // one channel: the three crossovers in a cascade and the allpasses that keep the lower
+  // bands in phase; the bands in b1..b4 for nb bands (unused ones 0)
+  function split(x, nb) instance(x1, x2, x3, p2, p3a, p3b, b1, b2, b3, b4) local(a2, a3a, a3b)
+  (
+    x1.lr4(x, C1);
+    x2.lr4(x1.hi, C2);
+    x3.lr4(x2.hi, C3);
+    a2 = p2.ap(x1.lo, C2);
+    a3a = p3a.ap(a2, C3);
+    a3b = p3b.ap(x2.lo, C3);
+    nb == 2 ? (
+      b1 = x1.lo; b2 = x1.hi; b3 = 0; b4 = 0;
+    ) : nb == 3 ? (
+      b1 = a2; b2 = x2.lo; b3 = x2.hi; b4 = 0;
+    ) : (
+      b1 = a3a; b2 = a3b; b3 = x3.lo; b4 = x3.hi;
+    );
+  );
+
+  C1 = 0; C2 = 4; C3 = 8;   // coefficient slots
+  L.x1.s.ic1 = L.x1.s.ic2 = L.x1.l.ic1 = L.x1.l.ic2 = L.x1.h.ic1 = L.x1.h.ic2 = 0;
+  L.x2.s.ic1 = L.x2.s.ic2 = L.x2.l.ic1 = L.x2.l.ic2 = L.x2.h.ic1 = L.x2.h.ic2 = 0;
+  L.x3.s.ic1 = L.x3.s.ic2 = L.x3.l.ic1 = L.x3.l.ic2 = L.x3.h.ic1 = L.x3.h.ic2 = 0;
+  L.p2.s.ic1 = L.p2.s.ic2 = L.p3a.s.ic1 = L.p3a.s.ic2 = L.p3b.s.ic1 = L.p3b.s.ic2 = 0;
+  R.x1.s.ic1 = R.x1.s.ic2 = R.x1.l.ic1 = R.x1.l.ic2 = R.x1.h.ic1 = R.x1.h.ic2 = 0;
+  R.x2.s.ic1 = R.x2.s.ic2 = R.x2.l.ic1 = R.x2.l.ic2 = R.x2.h.ic1 = R.x2.h.ic2 = 0;
+  R.x3.s.ic1 = R.x3.s.ic2 = R.x3.l.ic1 = R.x3.l.ic2 = R.x3.h.ic1 = R.x3.h.ic2 = 0;
+  R.p2.s.ic1 = R.p2.s.ic2 = R.p3a.s.ic1 = R.p3a.s.ic2 = R.p3b.s.ic1 = R.p3b.s.ic2 = 0;
+  gfx_ext_retina = 1;
+
+  function update()
+  (
+    merge = slider1;
+    nb = max(2, min(4, floor(slider2 + 0.5)));
+    // each crossover at least 1.5x (about 7 semitones) above the one below it, so the bands
+    // never overlap or invert, and below 0.45 x the sample rate
+    xo1 = max(30, min(1000, slider3));
+    xo2 = max(xo1 * 1.5, max(200, min(6000, slider4)));
+    xo3 = min(max(xo2 * 1.5, max(1000, min(16000, slider5))), 0.45 * srate);
+    svf_coefs(C1, xo1);
+    svf_coefs(C2, xo2);
+    svf_coefs(C3, xo3);
+    listen = floor(slider6 + 0.5);
+  );
+
+  // magnitude of band b (0..nb-1) at f Hz: products of the LR4 lowpass 1/(1+r^4) and highpass
+  // r^4/(1+r^4), r the prewarped frequency ratio (the allpasses have no magnitude)
+  function bs_mag(b, f) local(w, m, k, r, r4)
+  (
+    w = tan($pi * min(f, 0.49 * srate) / srate);
+    m = 1;
+    k = 0;
+    loop(nb - 1,
+      r = w / tan($pi * (k == 0 ? xo1 : k == 1 ? xo2 : xo3) / srate);
+      r4 = r * r * r * r;
+      k == b ? m *= 1 / (1 + r4) : k < b ? m *= r4 / (1 + r4);
+      k += 1;
+    );
+    m;
+  );
+
+  // frequency as text: "150 Hz" or "2.0 kHz"
+  function bs_hz(f)
+  (
+    f < 1000 ? sprintf(#bs_hz, "%d Hz", floor(f + 0.5)) : sprintf(#bs_hz, "%.1f kHz", f / 1000);
+    #bs_hz;
+  );
+
+@slider
+  update();
+
+@sample
+  merge ? (
+    spl0 = spl0 + spl2 + spl4 + spl6;
+    spl1 = spl1 + spl3 + spl5 + spl7;
+    spl2 = spl3 = spl4 = spl5 = spl6 = spl7 = 0;
+  ) : (
+    L.split(spl0, nb);
+    R.split(spl1, nb);
+    spl0 = L.b1; spl1 = R.b1;
+    spl2 = L.b2; spl3 = R.b2;
+    spl4 = L.b3; spl5 = R.b3;
+    spl6 = L.b4; spl7 = R.b4;
+    // Listen: the chosen band also on 1/2 (silence if that band is not in use)
+    listen == 2 ? (spl0 = spl2; spl1 = spl3;);
+    listen == 3 ? (spl0 = spl4; spl1 = spl5;);
+    listen == 4 ? (spl0 = spl6; spl1 = spl7;);
+  );
+
+@gfx 480 294
+  ng_knobs_begin("BAND SPLITTER", "ESSENTIALS", 480, 120, 1, 0);
+
+  // display: each band's response (+12 to -42 dB) over frequency, the flat sum dashed at 0 dB,
+  // the crossovers in use; Listen lights its band; Merge dims it all
+  ng_plot(ng_vx + 26, ng_vy + 4, ng_vw - 30, ng_vh - 20);
+  bs_d = 10;
+  loop(4,
+    bs_m = 1;
+    loop(9,
+      bs_f = bs_m * bs_d;
+      bs_f >= 20 && bs_f <= 20000 ? (
+        bs_x = floor(ng_freq_x(bs_f)) + 0.5;
+        ng_col(NG_BORDER, bs_m == 1 ? 1 : 0.5);
+        gfx_line(bs_x, ng_py, bs_x, ng_py + ng_ph, 0);
+      );
+      bs_m += 1;
+    );
+    bs_d *= 10;
+  );
+  bs_i = 0;
+  loop(4,
+    bs_y = floor(ng_lin_y(-12 * bs_i, -42, 12)) + 0.5;
+    ng_col(NG_BORDER, 0.6);
+    gfx_line(ng_px, bs_y, ng_px + ng_pw, bs_y, 0);
+    ng_font(4, 8, 0);
+    ng_col(NG_MUTED, 1);
+    sprintf(#bs_l, "%d", -12 * bs_i);
+    ng_ptxt(#bs_l, ng_px - 6 * ng_s, bs_y, 2);
+    bs_i += 1;
+  );
+
+  // the sum of the bands: flat, dashed at 0 dB
+  bs_y = floor(ng_lin_y(0, -42, 12)) + 0.5;
+  ng_col(NG_ACCENT, merge ? 0.2 : 0.5);
+  bs_x = ng_px;
+  while(
+    gfx_line(bs_x, bs_y, min(bs_x + 3 * ng_s, ng_px + ng_pw), bs_y, 0);
+    bs_x += 6 * ng_s;
+    bs_x < ng_px + ng_pw;
+  );
+
+  // the bands: a fill under the band Listen picks, then each curve
+  bs_b = 0;
+  loop(nb,
+    bs_on = listen == 0 || listen == bs_b + 1;
+    listen == bs_b + 1 && !merge ? (
+      ng_col(NG_ACCENT, 0.10);
+      bs_i = 0;
+      loop(floor(ng_pw) + 1,
+        bs_f = 20 * 1000 ^ (bs_i / ng_pw);
+        gfx_line(ng_px + bs_i, ng_py + ng_ph, ng_px + bs_i, ng_lin_y(ng_to_db(bs_mag(bs_b, bs_f)), -42, 12), 0);
+        bs_i += 1;
+      );
+    );
+    ng_col(NG_ACCENT, merge ? 0.25 : bs_on ? 1 : 0.35);
+    // the curve stops where it leaves the bottom of the plot (-42 dB)
+    bs_i = 0;
+    bs_vis = 0;
+    loop(floor(ng_pw) + 1,
+      bs_f = 20 * 1000 ^ (bs_i / ng_pw);
+      bs_db = ng_to_db(bs_mag(bs_b, bs_f));
+      bs_y = ng_lin_y(bs_db, -42, 12);
+      bs_db > -42 ? (
+        bs_vis ? ng_line_to(ng_px + bs_i, bs_y) : ng_line_start(ng_px + bs_i, bs_y);
+        bs_vis = 1;
+      ) : (
+        bs_vis ? ng_line_to(ng_px + bs_i, bs_y);
+        bs_vis = 0;
+      );
+      bs_i += 1;
+    );
+    bs_b += 1;
+  );
+
+  // crossover markers and their frequencies; the band numbers at the top
+  bs_k = 0;
+  bs_x0 = ng_px;
+  loop(nb,
+    bs_x1 = bs_k < nb - 1 ? ng_freq_x(bs_k == 0 ? xo1 : bs_k == 1 ? xo2 : xo3) : ng_px + ng_pw;
+    bs_k < nb - 1 ? (
+      bs_x = floor(bs_x1) + 0.5;
+      ng_col(NG_ACCENT, merge ? 0.2 : 0.6);
+      gfx_line(bs_x, ng_py, bs_x, ng_py + ng_ph, 0);
+      ng_font(4, 8, 0);
+      ng_col(NG_MUTED, 1);
+      ng_ptxt(bs_hz(bs_k == 0 ? xo1 : bs_k == 1 ? xo2 : xo3), bs_x, ng_py + ng_ph + 11 * ng_s, 1);
+    );
+    !merge ? (
+      ng_font(1, 7, 1);
+      ng_col(listen == bs_k + 1 ? NG_TEXT : NG_MUTED, 1);
+      sprintf(#bs_n, (bs_x1 - bs_x0) / ng_s >= 44 ? "BAND %d" : "%d", bs_k + 1);
+      ng_ptxt(#bs_n, (bs_x0 + bs_x1) / 2, ng_py + 8 * ng_s, 1);
+    );
+    bs_x0 = bs_x1;
+    bs_k += 1;
+  );
+  merge ? (
+    ng_font(1, 7.5, 1);
+    ng_col(NG_TEXT, 1);
+    ng_ptxt("MERGE: CHANNELS 1-8 SUMMED TO 1/2", ng_px + ng_pw / 2, ng_py + ng_ph / 2 + 10 * ng_s, 1);
+  );
+
+  ng_row(6);
+  ng_select_ctl(1, "MODE", "SPLIT|MERGE", 0) ? update();
+  ng_select_ctl(2, "BANDS", "2|3|4", 2) ? update();
+  ng_knob_ctl_log(3, "XOVER 1", bs_hz(slider3), 30, 1000, 150, 1) ? update();
+  ng_knob_ctl_log(4, "XOVER 2", bs_hz(slider4), 200, 6000, 2000, 1) ? update();
+  ng_knob_ctl_log(5, "XOVER 3", bs_hz(slider5), 1000, 16000, 7000, 1) ? update();
+  ng_select_ctl(6, "LISTEN", "OFF|BAND 1|BAND 2|BAND 3|BAND 4", 0) ? update();
+
+  ng_end();

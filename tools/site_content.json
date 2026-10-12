@@ -242,22 +242,26 @@
     "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\">\n<defs><linearGradient id=\"icon-deess\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs>\n<path d=\"M 16,32 Q 24,20 32,32 Q 40,44 48,32\" stroke=\"url(#icon-deess)\" stroke-width=\"2.5\" fill=\"none\" stroke-linecap=\"round\" opacity=\"0.5\"/>\n<path d=\"M 16,32 Q 24,28 32,32 Q 40,36 48,32\" stroke=\"url(#icon-deess)\" stroke-width=\"2\" fill=\"none\" stroke-linecap=\"round\"/>\n<circle cx=\"32\" cy=\"28\" r=\"8\" stroke=\"url(#icon-deess)\" stroke-width=\"2\" fill=\"none\"/>\n<text x=\"32\" y=\"34\" font-family=\"'Segoe UI'\" font-size=\"12\" fill=\"url(#icon-deess)\" text-anchor=\"middle\">S</text>\n</svg>"
   },
   "delay": {
-    "card_desc": "Stereo Echo & Slapback",
-    "keywords": "delay echo slapback feedback repeat tempo sync time",
+    "card_desc": "Stereo & Ping-Pong Echo",
+    "keywords": "delay echo slapback feedback repeat tempo sync time ping-pong pingpong tape bbd analog low cut high cut drive",
     "slider_desc": [
       "Delay time in free mode.",
       "Amount of the echo fed back into the delay line, capped internally at 95%.",
       "Blend between dry signal and echoes.",
       "Locks the delay time to the project tempo.",
-      "Synced delay length: 1/4 = one beat, down to 1/32."
+      "Synced delay length: 1/4 = one beat, down to 1/32.",
+      "Stereo keeps left and right on their own delay lines; Ping-Pong sends the mono sum into the left line and cross-feeds the lines, so the echoes alternate left and right.",
+      "One-pole high-pass inside the feedback loop: each repeat loses more low end. 20 Hz is off.",
+      "One-pole low-pass inside the feedback loop: each repeat gets darker, like tape or a bucket-brigade delay. 20 kHz is off.",
+      "Soft saturation inside the feedback loop: repeats get rounder and compress as they build up. 0% is off."
     ],
     "uses": [
       "Slapback on vocals and guitars",
       "Tempo-synced rhythmic echoes",
-      "Long feedback trails for transitions",
-      "Short delays for depth and doubling"
+      "Ping-pong echoes that bounce across the stereo field",
+      "Dark, saturated tape-style trails for transitions"
     ],
-    "properties": "Input → stereo delay line (up to 2 s, or tempo-synced) with feedback → Dry/Wet Mix → Output. Left and right are delayed independently with no filtering in the feedback loop; zero latency.",
+    "properties": "Input → delay line (up to 2 s, or tempo-synced; Stereo: left and right independent, Ping-Pong: mono sum into the left line, lines cross-fed) → Low Cut → High Cut → Drive on every repeat inside the feedback loop → Dry/Wet Mix → Output. At their defaults the filters and drive are bypassed; zero latency.",
     "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\">\n<defs><linearGradient id=\"icon-delay\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs>\n<circle cx=\"20\" cy=\"32\" r=\"10\" stroke=\"url(#icon-delay)\" stroke-width=\"2\" fill=\"none\"/>\n<circle cx=\"44\" cy=\"32\" r=\"10\" stroke=\"url(#icon-delay)\" stroke-width=\"2\" fill=\"none\"/>\n<path d=\"M 20,32 L 44,32\" stroke=\"url(#icon-delay)\" stroke-width=\"2\"/>\n<text x=\"20\" y=\"36\" font-family=\"'Segoe UI'\" font-size=\"10\" fill=\"url(#icon-delay)\" text-anchor=\"middle\">L</text>\n<text x=\"44\" y=\"36\" font-family=\"'Segoe UI'\" font-size=\"10\" fill=\"url(#icon-delay)\" text-anchor=\"middle\">R</text>\n</svg>"
   },
   "doubler": {
@@ -683,22 +687,24 @@
   },
   "maximizer": {
     "card_desc": "Look-Ahead Loudness Maximizer",
-    "keywords": "maximizer maximiser limiter loudness ceiling mastering peak lookahead louder",
+    "keywords": "maximizer maximiser limiter loudness ceiling mastering peak lookahead louder dither tpdf noise shaping 16-bit 24-bit",
     "slider_desc": [
       "Gain driving the signal into the limiter.",
       "Maximum peak level out of the limiter.",
       "How fast the gain recovers after a peak.",
       "How far ahead peaks are detected.",
       "Trim after limiting (cut only, −12 to 0 dB), so the output never exceeds Ceiling; use Input Gain to make it louder.",
-      "ON uses one gain for both channels to keep the image stable; OFF limits each channel independently."
+      "ON uses one gain for both channels to keep the image stable; OFF limits each channel independently.",
+      "Last in the chain: OFF, or TPDF dither and rounding to 16-bit (CD) or 24-bit; use it only when the output goes straight to a file of that bit depth.",
+      "ON feeds the rounding error back (first order), moving the dither noise up the spectrum where the ear is less sensitive. Works only with Dither on."
     ],
     "uses": [
       "Final loudness stage in mastering",
       "Raising stems and bounces to a target level",
       "Peak control on buses",
-      "Dual-mono limiting for independent channels"
+      "Dithered 16-bit masters for CD"
     ],
-    "properties": "Input Gain → held peak detector + look-ahead delay → gain reduction to Ceiling → clamp at Ceiling → Output Gain trim (≤ 0 dB) → Output. Latency equals Lookahead (0–5 ms), reported to REAPER for delay compensation.",
+    "properties": "Input Gain → held peak detector + look-ahead delay → gain reduction to Ceiling → clamp at Ceiling → Output Gain trim (≤ 0 dB) → optional TPDF dither and rounding to 16 or 24 bits, with optional first-order noise shaping → Output. Latency equals Lookahead (0–5 ms), reported to REAPER for delay compensation.",
     "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-maximizer\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><path d=\"M 8,16 L 56,16\" stroke=\"url(#icon-maximizer)\" stroke-width=\"2.5\" fill=\"none\" stroke-linecap=\"round\"/><path d=\"M 10,40 L 16,22 L 22,36 L 28,18 L 34,34 L 40,18 L 46,30 L 54,20\" stroke=\"url(#icon-maximizer)\" stroke-width=\"1.5\" fill=\"none\" stroke-linecap=\"round\" opacity=\"0.5\"/><path d=\"M 32,54 L 32,30 M 26,36 L 32,30 L 38,36\" stroke=\"url(#icon-maximizer)\" stroke-width=\"2.5\" fill=\"none\" stroke-linecap=\"round\"/></svg>"
   },
   "mid_side_matrix": {
@@ -1044,13 +1050,13 @@
     "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-rotary-speaker\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><circle cx=\"32\" cy=\"32\" r=\"24\" stroke=\"url(#icon-rotary-speaker)\" stroke-width=\"1.5\" fill=\"none\" stroke-linecap=\"round\" opacity=\"0.4\"/><path d=\"M32,12 A20,20 0 0 1 52,32 M52,32 L48,25 M52,32 L57,26\" stroke=\"url(#icon-rotary-speaker)\" stroke-width=\"2.5\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M32,52 A20,20 0 0 1 12,32 M12,32 L16,39 M12,32 L7,38\" stroke=\"url(#icon-rotary-speaker)\" stroke-width=\"2.5\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><circle cx=\"32\" cy=\"32\" r=\"5\" stroke=\"url(#icon-rotary-speaker)\" stroke-width=\"2.5\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/></svg>"
   },
   "saturation": {
-    "card_desc": "Six-Mode Saturation",
-    "keywords": "saturation saturator distortion tape tube overdrive fuzz bitcrush bitcrusher waveshaper wavefolder drive warmth",
+    "card_desc": "Seven-Mode Saturation",
+    "keywords": "saturation saturator distortion tape tube overdrive fuzz bitcrush bitcrusher waveshaper wavefolder fold sine drive warmth",
     "slider_desc": [
-      "Input gain into the saturation stage (up to 4x); in Bitcrush mode it also lowers the bit depth from 8 to 2 bits.",
+      "Input gain into the saturation stage (up to 4x); in Bitcrush mode it also lowers the bit depth from 8 to 2 bits, in Fold mode it also adds folds.",
       "Tilt EQ on the saturated signal around 800 Hz: negative values darken (lows up, highs down), positive values brighten; 0 dB is flat.",
       "Blend between dry and saturated signal.",
-      "Saturation curve: Tape, Tube, Overdrive, Fuzz, Bitcrush or Waveshaper (wavefolding)."
+      "Saturation curve: Tape, Tube, Overdrive, Fuzz, Bitcrush, Waveshaper (hard wavefolding) or Fold (sine wavefolder; Drive sets the fold depth)."
     ],
     "uses": [
       "Warmth and density on buses",
@@ -1058,7 +1064,7 @@
       "Bit-crushed lo-fi textures",
       "Wavefolded synth tones"
     ],
-    "properties": "Input → Drive → selected curve → Tone tilt EQ (one-pole split at 800 Hz, ±Tone/2 dB on each side) on the wet signal → Dry/Wet Mix → Output. No oversampling; zero latency.",
+    "properties": "Input → Drive → selected curve (Fold: a sine wavefolder whose depth grows with Drive) → Tone tilt EQ (one-pole split at 800 Hz, ±Tone/2 dB on each side) on the wet signal → Dry/Wet Mix → Output. No oversampling; zero latency.",
     "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-sat\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><path d=\"M 8,32 L 20,32 L 16,44 L 28,24 L 24,36 L 36,32 L 56,32\" stroke=\"url(#icon-sat)\" stroke-width=\"2\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/></svg>"
   },
   "shimmer_reverb": {

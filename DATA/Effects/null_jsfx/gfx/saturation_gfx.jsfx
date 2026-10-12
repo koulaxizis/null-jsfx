@@ -1,6 +1,6 @@
 desc:NULL Saturation GFX
 author: Christos Koulaxizis
-tags: saturation distortion tape tube overdrive fuzz bitcrush waveshaper drive gui
+tags: saturation distortion tape tube overdrive fuzz bitcrush waveshaper wavefolder drive gui
 //category: Essentials
 //NULL JSFX v2.0 • https://nulljsfx.tech • MIT License
 
@@ -9,7 +9,7 @@ import null_gfx.jsfx-inc
 slider1:30<0,100,1>-Drive (%)
 slider2:0<-12,12,0.1>-Tone (dB)
 slider3:50<0,100,1>-Mix (%)
-slider4:0<0,5,1{Tape,Tube,Overdrive,Fuzz,Bitcrush,Waveshaper}>-Mode
+slider4:0<0,6,1{Tape,Tube,Overdrive,Fuzz,Bitcrush,Waveshaper,Fold}>-Mode
 
 in_pin:Left
 in_pin:Right
@@ -54,10 +54,12 @@ out_pin:Right
     ) : sat_mode == 4 ? (
       q = pow(2, max(2, 8 - floor(drive * 6))) - 1;
       y = floor(x * q + 0.5) / q;
-    ) : (
+    ) : sat_mode == 5 ? (
       y = x;
       y > 1 ? y = 2 - y; y < -1 ? y = -2 - y;
       y > 1 ? y = 2 - y; y < -1 ? y = -2 - y;
+    ) : (
+      y = sin(x * (1 + drive) * $pi / 2);
     );
     y;
   );
@@ -121,18 +123,25 @@ out_pin:Right
             wet_r = floor(in_r * quants + 0.5) / quants;
           ) : (
             
-            /* MODE 5 - WAVESHAPER */
-            wet_l = in_l;
-            wet_l > 1 ? wet_l = 2 - wet_l;
-            wet_l < -1 ? wet_l = -2 - wet_l;
-            wet_l > 1 ? wet_l = 2 - wet_l;
-            wet_l < -1 ? wet_l = -2 - wet_l;
-            
-            wet_r = in_r;
-            wet_r > 1 ? wet_r = 2 - wet_r;
-            wet_r < -1 ? wet_r = -2 - wet_r;
-            wet_r > 1 ? wet_r = 2 - wet_r;
-            wet_r < -1 ? wet_r = -2 - wet_r;
+            sat_mode == 5 ? (
+              /* MODE 5 - WAVESHAPER */
+              wet_l = in_l;
+              wet_l > 1 ? wet_l = 2 - wet_l;
+              wet_l < -1 ? wet_l = -2 - wet_l;
+              wet_l > 1 ? wet_l = 2 - wet_l;
+              wet_l < -1 ? wet_l = -2 - wet_l;
+              
+              wet_r = in_r;
+              wet_r > 1 ? wet_r = 2 - wet_r;
+              wet_r < -1 ? wet_r = -2 - wet_r;
+              wet_r > 1 ? wet_r = 2 - wet_r;
+              wet_r < -1 ? wet_r = -2 - wet_r;
+            ) : (
+              
+              /* MODE 6 - FOLD: sine wavefolder, Drive adds folds (1x to 2x on top of the drive) */
+              wet_l = sin(in_l * (1 + drive) * $pi / 2);
+              wet_r = sin(in_r * (1 + drive) * $pi / 2);
+            );
           );
         );
       );
@@ -187,6 +196,6 @@ out_pin:Right
   ng_knob_ctl(2, "TONE", #v2, -12, 12, 0, 0.1, 1) ? update();
   sprintf(#v3, "%d%%", slider3);
   ng_knob_ctl(3, "MIX", #v3, 0, 100, 50, 1, 0) ? update();
-  ng_select_ctl(4, "MODE", "TAPE|TUBE|DRIVE|FUZZ|CRUSH|FOLD", 0) ? update();
+  ng_select_ctl(4, "MODE", "TAPE|TUBE|DRIVE|FUZZ|CRUSH|SHAPE|FOLD", 0) ? update();
 
   ng_end();

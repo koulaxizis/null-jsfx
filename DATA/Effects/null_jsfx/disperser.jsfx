@@ -1,0 +1,105 @@
+desc:NULL Disperser
+author: Christos Koulaxizis
+tags: allpass phase dispersion group delay transient laser zap chirp kick sound design
+//category: Essentials
+//NULL JSFX v2.0 • https://nulljsfx.tech • MIT License
+
+slider1:1000<20,20000,1:log>Frequency (Hz)
+slider2:16<0,64,1>Amount
+slider3:50<0,100,1>Pinch (%)
+slider4:100<0,100,1>Mix (%)
+slider5:0<0,1,1{Mono,Stereo}>Mode
+
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
+
+@init
+  // Phase dispersion: a chain of Amount identical 2nd-order all-pass filters (up to 64) around
+  // Frequency. The magnitude stays flat, but frequencies near Frequency are delayed more than
+  // the rest, so transients smear into a falling "laser" chirp and kicks get a tighter, more
+  // focused attack. Pinch sets the all-passes' Q: low spreads the delay over a wide band, high
+  // concentrates it at Frequency. Stereo detunes the two channels a quarter octave apart.
+  // Frequency, Pinch, Mix and Mode glide (20 ms) so changes do not click.
+  stl = 0;     // left chain: 64 stages x (ic1, ic2)
+  str = 128;   // right chain
+  memset(stl, 0, 256);
+  freembuf(str + 128);
+  ks = 1 - exp(-1 / (0.02 * srate));
+  snap = 1;
+
+  // all-pass coefficients for the smoothed values (log frequencies lfl / lfr, log Q lq)
+  function coefs() local(g)
+  (
+    k = 1 / exp(lq);
+    g = tan($pi * exp(lfl) / srate);
+    al1 = 1 / (1 + g * (g + k));
+    al2 = g * al1;
+    al3 = g * al2;
+    g = tan($pi * exp(lfr) / srate);
+    ar1 = 1 / (1 + g * (g + k));
+    ar2 = g * ar1;
+    ar3 = g * ar2;
+  );
+
+@slider
+  tl = log(min(slider1 * (slider5 > 0.5 ? 0.8409 : 1), srate * 0.45));
+  tr = log(min(slider1 * (slider5 > 0.5 ? 1.1892 : 1), srate * 0.45));
+  tq = log(0.25 * 40 ^ (slider3 / 100));
+  tm = slider4 / 100;
+  n = slider2;
+  // stages that are off start from silence when they come back
+  memset(stl + n * 2, 0, 128 - n * 2);
+  memset(str + n * 2, 0, 128 - n * 2);
+  snap ? (
+    lfl = tl; lfr = tr; lq = tq; mx = tm;
+    coefs();
+    snap = 0;
+  );
+
+@block
+  // flush states that decayed below -300 dB (no denormals in silence)
+  i = 0;
+  loop(256,
+    abs(stl[i]) < 0.000000000000001 ? stl[i] = 0;
+    i += 1;
+  );
+
+@sample
+  lfl !== tl || lfr !== tr || lq !== tq || mx !== tm ? (
+    lfl += (tl - lfl) * ks;
+    abs(tl - lfl) < 0.0001 ? lfl = tl;
+    lfr += (tr - lfr) * ks;
+    abs(tr - lfr) < 0.0001 ? lfr = tr;
+    lq += (tq - lq) * ks;
+    abs(tq - lq) < 0.0001 ? lq = tq;
+    mx += (tm - mx) * ks;
+    abs(tm - mx) < 0.0001 ? mx = tm;
+    coefs();
+  );
+  // TPT state-variable all-pass stages: y = x - 2 k bp
+  xl = spl0;
+  s = stl;
+  loop(n,
+    v3 = xl - s[1];
+    v1 = al1 * s[0] + al2 * v3;
+    v2 = s[1] + al2 * s[0] + al3 * v3;
+    s[0] = 2 * v1 - s[0];
+    s[1] = 2 * v2 - s[1];
+    xl -= 2 * k * v1;
+    s += 2;
+  );
+  xr = spl1;
+  s = str;
+  loop(n,
+    v3 = xr - s[1];
+    v1 = ar1 * s[0] + ar2 * v3;
+    v2 = s[1] + ar2 * s[0] + ar3 * v3;
+    s[0] = 2 * v1 - s[0];
+    s[1] = 2 * v2 - s[1];
+    xr -= 2 * k * v1;
+    s += 2;
+  );
+  spl0 += (xl - spl0) * mx;
+  spl1 += (xr - spl1) * mx;

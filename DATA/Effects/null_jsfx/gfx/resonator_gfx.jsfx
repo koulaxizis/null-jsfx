@@ -1,0 +1,271 @@
+desc:NULL Resonator GFX
+author: Christos Koulaxizis
+tags: resonator karplus-strong comb tuned pitch chord ringing sympathetic string gui
+//category: Advanced
+//NULL JSFX v2.0 • https://nulljsfx.tech • MIT License
+
+import null_gfx.jsfx-inc
+
+slider1:0<0,11,1{C,C#,D,D#,E,F,F#,G,G#,A,A#,B}>-Root Note
+slider2:3<1,6,1>-Octave
+slider3:3<0,7,1{Unison,Octaves,Fifth,Major,Minor,Sus4,Maj7,Min7}>-Chord
+slider4:1.5<0.1,10,0.01:log>-Decay (s)
+slider5:50<0,100,1>-Brightness (%)
+slider6:30<0,100,1>-Spread (%)
+slider7:50<0,100,1>-Mix (%)
+
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
+
+@init
+  // NULL Resonator (../resonator.jsfx) with its own interface: same audio code, plus @gfx.
+  // A bank of up to four tuned Karplus-Strong string loops per channel, one per chord note,
+  // that the input excites. Each loop is a delay line, a first-order allpass for the
+  // fractional part of the period and a symmetric 3-tap low-pass (linear phase, exactly one
+  // sample of delay), so every harmonic sits exactly on the note. The loop gain sets the
+  // decay time of the fundamental, the low-pass how much faster the upper harmonics die.
+  // The input to each loop is scaled by sqrt(1 - g^2) (unity noise power gain), and the
+  // wet sum passes a DC blocker and a soft ceiling at 0 dBFS, so it can ring but never run away.
+  buf_size = ceil(srate / 30) + 8;
+  buf = 0;                          // 8 loops: voice v, channel c at buf + (v * 2 + c) * buf_size
+  st = buf + 8 * buf_size;          // per loop: delay M, allpass coef, gain, input scale, states
+  ivs = st + 8 * 16;                // chord table: 8 chords x 4 intervals (-1 = unused)
+  freembuf(ivs + 32);
+  memset(buf, 0, ivs - buf);
+  wpos = 0;
+  hp_x_l = hp_y_l = hp_x_r = hp_y_r = 0;
+  dc_x_l = dc_y_l = dc_x_r = dc_y_r = 0;
+
+  function set_chord(n, a, b, c, d) ( ivs[n * 4] = a; ivs[n * 4 + 1] = b; ivs[n * 4 + 2] = c; ivs[n * 4 + 3] = d; );
+  set_chord(0, 0, -1, -1, -1);      // Unison
+  set_chord(1, 0, 12, 24, -1);      // Octaves
+  set_chord(2, 0, 7, 12, -1);       // Fifth
+  set_chord(3, 0, 4, 7, 12);        // Major
+  set_chord(4, 0, 3, 7, 12);        // Minor
+  set_chord(5, 0, 5, 7, 12);        // Sus4
+  set_chord(6, 0, 4, 7, 11);        // Maj7
+  set_chord(7, 0, 3, 7, 10);        // Min7
+
+  // one string loop: x = input, i = loop index (voice * 2 + channel)
+  function string_tick(x, i) local(p, rp, s, a, f, y)
+  (
+    p = st + i * 16;
+    rp = wpos - p[0];
+    rp < 0 ? rp += buf_size;
+    s = buf[i * buf_size + rp];
+    // first-order allpass: the fractional part of the period
+    a = p[1] * (s - p[5]) + p[4];
+    p[4] = s; p[5] = a;
+    // symmetric 3-tap low-pass, one sample of delay at every frequency
+    f = lp_a0 * (a + p[7]) + lp_a1 * p[6];
+    p[7] = p[6]; p[6] = a;
+    y = x * p[3] + p[2] * f;
+    abs(y) < 0.000000000000000000001 ? y = 0;
+    buf[i * buf_size + wpos] = y;
+    y;
+  );
+  gfx_ext_retina = 1;
+
+  function update()
+  (
+    root = slider1;
+    octave = slider2;
+    chord = slider3;
+    decay = max(0.1, slider4);
+    bright = slider5 / 100;
+    spread = slider6 / 100;
+    mix = slider7 / 100;
+
+    lp_a0 = 0.25 * (1 - bright) * (1 - bright);
+    lp_a1 = 1 - 2 * lp_a0;
+    hp_c = exp(-2 * $pi * 20 / srate);
+    dc_c = exp(-2 * $pi * 8 / srate);
+
+    nv = 0;
+    v = 0;
+    loop(4,
+      ivs[chord * 4 + v] >= 0 ? (
+        note = 12 * (octave + 1) + root + ivs[chord * 4 + v];
+        c = 0;
+        loop(2,
+          // Spread detunes the left loops down and the right ones up, by up to 15 cents
+          f0 = 440 * 2 ^ ((note - 69 + (c == 0 ? -1 : 1) * spread * 0.15) / 12);
+          len = srate / f0;
+          // period = M (delay) + d (allpass, 0.5..1.5) + 1 (low-pass)
+          m = floor(len - 1.5);
+          d = len - 1 - m;
+          p = st + (nv * 2 + c) * 16;
+          p[0] = m;
+          p[1] = (1 - d) / (1 + d);
+          p[2] = min(0.99995, 10 ^ (-3 / (f0 * decay)));
+          p[3] = sqrt(1 - p[2] * p[2]);
+          p[8] = len;                 // period and note, for the GFX display
+          p[9] = note;
+          c += 1;
+        );
+        nv += 1;
+      );
+      v += 1;
+    );
+    wet_gain = 1 / sqrt(nv);
+  );
+
+  // display only: small-signal wet gain in dB at frequency f (each loop as a comb of its
+  // period with the low-pass, power-summed over the voices and both channels)
+  function rs_db(f) local(w, h, sum, i, q, gg)
+  (
+    w = 2 * $pi * f / srate;
+    h = lp_a1 + 2 * lp_a0 * cos(w);
+    sum = 0;
+    i = 0;
+    loop(nv * 2,
+      q = st + i * 16;
+      gg = q[2] * h;
+      sum += q[3] * q[3] / (1 - 2 * gg * cos(w * q[8]) + gg * gg);
+      i += 1;
+    );
+    10 * log10(max(sum * wet_gain * wet_gain * 0.5, 0.0000000001));
+  );
+
+  // display only: the peak of harmonic n of loop i in dB (one loop of the same power sum)
+  function rs_peak_db(i, n) local(q, gg)
+  (
+    q = st + i * 16;
+    gg = q[2] * (lp_a1 + 2 * lp_a0 * cos(2 * $pi * n / q[8]));
+    10 * log10(max(q[3] * q[3] / ((1 - gg) * (1 - gg)) * wet_gain * wet_gain * 0.5, 0.0000000001));
+  );
+
+  // display only: note name of MIDI note n into #rs_nm, e.g. "C#3"
+  function rs_note_name(n) local(k)
+  (
+    k = n % 12;
+    sprintf(#rs_nm, "%s%d", k == 0 ? "C" : k == 1 ? "C#" : k == 2 ? "D" : k == 3 ? "D#" : k == 4 ? "E" : k == 5 ? "F" :
+            k == 6 ? "F#" : k == 7 ? "G" : k == 8 ? "G#" : k == 9 ? "A" : k == 10 ? "A#" : "B", floor(n / 12) - 1);
+  );
+
+  // display only: dashed vertical marker at pixel x
+  function rs_dash(x) local(yy)
+  (
+    x = floor(x) + 0.5;
+    yy = ng_py;
+    while (
+      gfx_line(x, yy, x, min(yy + 3 * ng_s, ng_py + ng_ph), 0);
+      yy += 6 * ng_s;
+      yy < ng_py + ng_ph;
+    );
+  );
+
+@slider
+  update();
+
+@sample
+  // 20 Hz high-pass into the loops, so DC and rumble do not pile up in them
+  hp_y_l = hp_c * (hp_y_l + spl0 - hp_x_l); hp_x_l = spl0;
+  hp_y_r = hp_c * (hp_y_r + spl1 - hp_x_r); hp_x_r = spl1;
+  abs(hp_y_l) < 0.000000000000000000001 ? hp_y_l = 0;
+  abs(hp_y_r) < 0.000000000000000000001 ? hp_y_r = 0;
+
+  wet_l = wet_r = 0;
+  v = 0;
+  loop(nv,
+    wet_l += string_tick(hp_y_l, v * 2);
+    wet_r += string_tick(hp_y_r, v * 2 + 1);
+    v += 1;
+  );
+  wpos += 1;
+  wpos >= buf_size ? wpos = 0;
+  wet_l *= wet_gain;
+  wet_r *= wet_gain;
+
+  // DC blocker on the ringing sum
+  dc_y_l = dc_c * (dc_y_l + wet_l - dc_x_l); dc_x_l = wet_l;
+  dc_y_r = dc_c * (dc_y_r + wet_r - dc_x_r); dc_x_r = wet_r;
+  abs(dc_y_l) < 0.000000000000000000001 ? dc_y_l = 0;
+  abs(dc_y_r) < 0.000000000000000000001 ? dc_y_r = 0;
+
+  // soft ceiling: linear up to 0.7, then bends smoothly towards 1.0
+  wet_l = dc_y_l;
+  wet_r = dc_y_r;
+  abs(wet_l) > 0.7 ? (
+    u = (abs(wet_l) - 0.7) / 0.3;
+    wet_l = sign(wet_l) * (0.7 + 0.3 * u / (1 + u));
+  );
+  abs(wet_r) > 0.7 ? (
+    u = (abs(wet_r) - 0.7) / 0.3;
+    wet_r = sign(wet_r) * (0.7 + 0.3 * u / (1 + u));
+  );
+
+  spl0 = spl0 * (1 - mix) + wet_l * mix;
+  spl1 = spl1 * (1 - mix) + wet_r * mix;
+
+@gfx 480 380
+  ng_knobs_begin("RESONATOR", "ADVANCED", 480, 120, 2, 0);
+
+  // display: the wet gain over frequency, with the resonant peaks (both channels, so Spread
+  // shows as pairs) as lines at their exact height, and the note names of the chord
+  ng_plot(ng_vx + 26, ng_vy + 4, ng_vw - 30, ng_vh - 20);
+  ng_grid_freq(48);
+  rs_by = ng_py + ng_ph;
+  rs_i = 0;
+  loop(floor(ng_pw),
+    rs_mn = 1000; rs_mx = -1000;
+    rs_j = 0;
+    loop(5,
+      rs_d = rs_db(20 * 1000 ^ ((rs_i + rs_j / 4) / ng_pw));
+      rs_mn = min(rs_mn, rs_d); rs_mx = max(rs_mx, rs_d);
+      rs_j += 1;
+    );
+    rs_y1 = ng_lin_y(rs_mx, -32, 32);
+    rs_y2 = ng_lin_y(rs_mn, -32, 32);
+    ng_col(NG_ACCENT, 0.08);
+    gfx_rect(ng_px + rs_i, rs_y1, 1, rs_by - rs_y1);
+    ng_col(NG_ACCENT, 0.45);
+    gfx_rect(ng_px + rs_i, rs_y1, 1, max(ng_s, rs_y2 - rs_y1));
+    rs_i += 1;
+  );
+  ng_col(NG_ACCENT, 0.9);
+  rs_i = 0;
+  loop(nv * 2,
+    rs_q = st + rs_i * 16;
+    rs_n = 1;
+    // stems while neighbouring harmonics are at least 2.5 units apart; above that the
+    // response columns show the dense part
+    while (rs_n * srate / rs_q[8] <= 20000 && log(1 + 1 / rs_n) * ng_pw / log(1000) >= 2.5 * ng_s) (
+      rs_x = floor(ng_freq_x(rs_n * srate / rs_q[8]));
+      rs_y = ng_lin_y(rs_peak_db(rs_i, rs_n), -32, 32);
+      gfx_rect(rs_x, rs_y, max(1, floor(ng_s)), rs_by - rs_y);
+      rs_n += 1;
+    );
+    rs_i += 1;
+  );
+  ng_font(4, 8, 1);
+  rs_v = 0;
+  loop(nv,
+    rs_q = st + rs_v * 2 * 16;
+    rs_x = ng_freq_x(srate / rs_q[8]);
+    ng_col(NG_ACCENT, 0.5);
+    rs_dash(rs_x);
+    rs_note_name(rs_q[9]);
+    ng_col(NG_TEXT, 1);
+    ng_ptxt(#rs_nm, rs_x + 3 * ng_s, ng_py + (6 + (rs_v % 2) * 11) * ng_s, 0);
+    rs_v += 1;
+  );
+
+  ng_row(4);
+  ng_select_ctl(1, "ROOT", "C|C#|D|D#|E|F|F#|G|G#|A|A#|B", 0) ? update();
+  sprintf(#v2, "%d", slider2);
+  ng_knob_ctl(2, "OCTAVE", #v2, 1, 6, 3, 1, 0) ? update();
+  ng_select_ctl(3, "CHORD", "UNISON|OCTAVES|FIFTH|MAJOR|MINOR|SUS4|MAJ7|MIN7", 0) ? update();
+  sprintf(#v4, "%.2f s", slider4);
+  ng_knob_ctl_log(4, "DECAY", #v4, 0.1, 10, 1.5, 0.01) ? update();
+  ng_row(3);
+  sprintf(#v5, "%d%%", slider5);
+  ng_knob_ctl(5, "BRIGHT", #v5, 0, 100, 50, 1, 0) ? update();
+  sprintf(#v6, "%d%%", slider6);
+  ng_knob_ctl(6, "SPREAD", #v6, 0, 100, 30, 1, 0) ? update();
+  sprintf(#v7, "%d%%", slider7);
+  ng_knob_ctl(7, "MIX", #v7, 0, 100, 50, 1, 0) ? update();
+
+  ng_end();

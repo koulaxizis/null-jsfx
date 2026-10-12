@@ -373,17 +373,21 @@ const guides = {
   },
   'delay': {
     title: 'DELAY',
-    subtitle: 'Stereo Echo & Slapback',
+    subtitle: 'Stereo & Ping-Pong Echo',
     category: 'Essentials',
     sliders: [
       { name: 'Time', range: '0 to 2000 ms', desc: 'Delay time in free mode.' },
       { name: 'Feedback', range: '0 to 100%', desc: 'Amount of the echo fed back into the delay line, capped internally at 95%.' },
       { name: 'Mix', range: '0 to 100%', desc: 'Blend between dry signal and echoes.' },
       { name: 'Tempo Sync', range: 'OFF / ON', desc: 'Locks the delay time to the project tempo.' },
-      { name: 'Subdivision', range: '1/4 / 1/8 / 1/16 / 1/32', desc: 'Synced delay length: 1/4 = one beat, down to 1/32.' }
+      { name: 'Subdivision', range: '1/4 / 1/8 / 1/16 / 1/32', desc: 'Synced delay length: 1/4 = one beat, down to 1/32.' },
+      { name: 'Mode', range: 'Stereo / Ping-Pong', desc: 'Stereo keeps left and right on their own delay lines; Ping-Pong sends the mono sum into the left line and cross-feeds the lines, so the echoes alternate left and right.' },
+      { name: 'Low Cut', range: '20 to 2000 Hz', desc: 'One-pole high-pass inside the feedback loop: each repeat loses more low end. 20 Hz is off.' },
+      { name: 'High Cut', range: '1000 to 20000 Hz', desc: 'One-pole low-pass inside the feedback loop: each repeat gets darker, like tape or a bucket-brigade delay. 20 kHz is off.' },
+      { name: 'Drive', range: '0 to 100%', desc: 'Soft saturation inside the feedback loop: repeats get rounder and compress as they build up. 0% is off.' }
     ],
-    uses: ['Slapback on vocals and guitars', 'Tempo-synced rhythmic echoes', 'Long feedback trails for transitions', 'Short delays for depth and doubling'],
-    properties: 'Input → stereo delay line (up to 2 s, or tempo-synced) with feedback → Dry/Wet Mix → Output. Left and right are delayed independently with no filtering in the feedback loop; zero latency.',
+    uses: ['Slapback on vocals and guitars', 'Tempo-synced rhythmic echoes', 'Ping-pong echoes that bounce across the stereo field', 'Dark, saturated tape-style trails for transitions'],
+    properties: 'Input → delay line (up to 2 s, or tempo-synced; Stereo: left and right independent, Ping-Pong: mono sum into the left line, lines cross-fed) → Low Cut → High Cut → Drive on every repeat inside the feedback loop → Dry/Wet Mix → Output. At their defaults the filters and drive are bypassed; zero latency.',
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
     shot: 'assets/img/gfx/delay.png'
   },
@@ -527,10 +531,12 @@ const guides = {
       { name: 'Release', range: '10 to 200 ms', desc: 'How fast the gain recovers after a peak.' },
       { name: 'Lookahead', range: '0 to 5 ms', desc: 'How far ahead peaks are detected.' },
       { name: 'Output Gain', range: '−12 to 0 dB', desc: 'Trim after limiting (cut only, −12 to 0 dB), so the output never exceeds Ceiling; use Input Gain to make it louder.' },
-      { name: 'Stereo Link', range: 'OFF / ON', desc: 'ON uses one gain for both channels to keep the image stable; OFF limits each channel independently.' }
+      { name: 'Stereo Link', range: 'OFF / ON', desc: 'ON uses one gain for both channels to keep the image stable; OFF limits each channel independently.' },
+      { name: 'Dither', range: 'OFF / 16-BIT / 24-BIT', desc: 'Last in the chain: OFF, or TPDF dither and rounding to 16-bit (CD) or 24-bit; use it only when the output goes straight to a file of that bit depth.' },
+      { name: 'Noise Shaping', range: 'OFF / ON', desc: 'ON feeds the rounding error back (first order), moving the dither noise up the spectrum where the ear is less sensitive. Works only with Dither on.' }
     ],
-    uses: ['Final loudness stage in mastering', 'Raising stems and bounces to a target level', 'Peak control on buses', 'Dual-mono limiting for independent channels'],
-    properties: 'Input Gain → held peak detector + look-ahead delay → gain reduction to Ceiling → clamp at Ceiling → Output Gain trim (≤ 0 dB) → Output. Latency equals Lookahead (0–5 ms), reported to REAPER for delay compensation.',
+    uses: ['Final loudness stage in mastering', 'Raising stems and bounces to a target level', 'Peak control on buses', 'Dithered 16-bit masters for CD'],
+    properties: 'Input Gain → held peak detector + look-ahead delay → gain reduction to Ceiling → clamp at Ceiling → Output Gain trim (≤ 0 dB) → optional TPDF dither and rounding to 16 or 24 bits, with optional first-order noise shaping → Output. Latency equals Lookahead (0–5 ms), reported to REAPER for delay compensation.',
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
     shot: 'assets/img/gfx/maximizer.png'
   },
@@ -694,16 +700,16 @@ const guides = {
   },
   'saturation': {
     title: 'SATURATION',
-    subtitle: 'Six-Mode Saturation',
+    subtitle: 'Seven-Mode Saturation',
     category: 'Essentials',
     sliders: [
-      { name: 'Drive', range: '0 to 100%', desc: 'Input gain into the saturation stage (up to 4x); in Bitcrush mode it also lowers the bit depth from 8 to 2 bits.' },
+      { name: 'Drive', range: '0 to 100%', desc: 'Input gain into the saturation stage (up to 4x); in Bitcrush mode it also lowers the bit depth from 8 to 2 bits, in Fold mode it also adds folds.' },
       { name: 'Tone', range: '−12 to +12 dB', desc: 'Tilt EQ on the saturated signal around 800 Hz: negative values darken (lows up, highs down), positive values brighten; 0 dB is flat.' },
       { name: 'Mix', range: '0 to 100%', desc: 'Blend between dry and saturated signal.' },
-      { name: 'Mode', range: 'Tape / Tube / Overdrive / Fuzz / Bitcrush / Waveshaper', desc: 'Saturation curve: Tape, Tube, Overdrive, Fuzz, Bitcrush or Waveshaper (wavefolding).' }
+      { name: 'Mode', range: 'Tape / Tube / Overdrive / Fuzz / Bitcrush / Waveshaper / Fold', desc: 'Saturation curve: Tape, Tube, Overdrive, Fuzz, Bitcrush, Waveshaper (hard wavefolding) or Fold (sine wavefolder; Drive sets the fold depth).' }
     ],
     uses: ['Warmth and density on buses', 'Fuzz and overdrive on guitars and bass', 'Bit-crushed lo-fi textures', 'Wavefolded synth tones'],
-    properties: 'Input → Drive → selected curve → Tone tilt EQ (one-pole split at 800 Hz, ±Tone/2 dB on each side) on the wet signal → Dry/Wet Mix → Output. No oversampling; zero latency.',
+    properties: 'Input → Drive → selected curve (Fold: a sine wavefolder whose depth grows with Drive) → Tone tilt EQ (one-pole split at 800 Hz, ±Tone/2 dB on each side) on the wet signal → Dry/Wet Mix → Output. No oversampling; zero latency.',
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
     shot: 'assets/img/gfx/saturation.png'
   },

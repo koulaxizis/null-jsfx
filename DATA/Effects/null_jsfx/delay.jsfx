@@ -9,6 +9,10 @@ slider2:0<0,100,1>Feedback (%)
 slider3:30<0,100,1>Mix (%)
 slider4:0<0,1,1{OFF,ON}>Tempo Sync
 slider5:0<0,3,1{1/4,1/8,1/16,1/32}>Subdivision
+slider6:0<0,1,1{Stereo,Ping-Pong}>Mode
+slider7:20<20,2000,1:log>Low Cut (Hz)
+slider8:20000<1000,20000,1:log>High Cut (Hz)
+slider9:0<0,100,1>Drive (%)
 
 in_pin:Left
 in_pin:Right
@@ -23,6 +27,17 @@ out_pin:Right
   freembuf(buf_r + buf_size);
   wpos = 0;
   delay_samples = 1;
+  // feedback-path filters (one-pole, per channel); off at their end stops (Low Cut 20 Hz,
+  // High Cut 20 kHz), Drive off at 0%, so the defaults are the plain delay
+  lc_l = lc_r = 0;
+  hc_l = hc_r = 0;
+
+  // soft saturation: a tanh-like curve, slope 1 at 0, flat at |x| = 3
+  function dl_sat(x)
+  (
+    x = max(-3, min(3, x));
+    x * (27 + x * x) / (27 + 9 * x * x);
+  );
 
   function update_time()
   (
@@ -39,6 +54,13 @@ out_pin:Right
   feedback = slider2 / 100 * 0.95;
   mix_amt = slider3 / 100;
   tempo_sync = slider4;
+  ping = slider6;
+  lc_on = slider7 > 20;
+  lc_a = 1 - exp(-2 * $pi * slider7 / srate);
+  hc_on = slider8 < 20000;
+  hc_a = 1 - exp(-2 * $pi * slider8 / srate);
+  drv_on = slider9 > 0;
+  drv_g = 1 + slider9 / 100 * 3;
   update_time();
 
 @block
@@ -50,8 +72,32 @@ out_pin:Right
   echo_l = buf_l[rpos];
   echo_r = buf_r[rpos];
 
-  buf_l[wpos] = spl0 + echo_l * feedback;
-  buf_r[wpos] = spl1 + echo_r * feedback;
+  // inside the feedback loop: every repeat passes the filters and the drive again
+  lc_on ? (
+    lc_l += lc_a * (echo_l - lc_l); echo_l -= lc_l;
+    lc_r += lc_a * (echo_r - lc_r); echo_r -= lc_r;
+  ) : (
+    lc_l = lc_r = 0;
+  );
+  hc_on ? (
+    hc_l += hc_a * (echo_l - hc_l); echo_l = hc_l;
+    hc_r += hc_a * (echo_r - hc_r); echo_r = hc_r;
+  ) : (
+    hc_l = echo_l; hc_r = echo_r;
+  );
+  drv_on ? (
+    echo_l = dl_sat(echo_l * drv_g) / drv_g;
+    echo_r = dl_sat(echo_r * drv_g) / drv_g;
+  );
+
+  ping ? (
+    // ping-pong: the mono input enters the left line, the lines feed each other
+    buf_l[wpos] = (spl0 + spl1) * 0.5 + echo_r * feedback;
+    buf_r[wpos] = echo_l * feedback;
+  ) : (
+    buf_l[wpos] = spl0 + echo_l * feedback;
+    buf_r[wpos] = spl1 + echo_r * feedback;
+  );
   wpos += 1;
   wpos >= buf_size ? wpos = 0;
 

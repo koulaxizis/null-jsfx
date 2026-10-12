@@ -1,0 +1,173 @@
+desc:NULL Resonance Suppressor
+author: Christos Koulaxizis
+tags: resonance suppressor dynamic eq spectral harshness tame fft mixing mastering
+//category: Advanced
+//NULL JSFX v2.0 • https://nulljsfx.tech • MIT License
+
+slider1:6<0,24,0.1>Depth (dB)
+slider2:50<0,100,1>Sharpness (%)
+slider3:50<0,100,1>Selectivity (%)
+slider4:10<1,200,1:log>Attack (ms)
+slider5:120<10,1000,1:log>Release (ms)
+slider6:100<20,2000,1:log>Low Freq (Hz)
+slider7:18000<1000,20000,1:log>High Freq (Hz)
+slider8:0<0,1,1{Soft,Hard}>Mode
+slider9:0<0,1,1{Off,On}>Delta
+slider10:100<0,100,1>Mix (%)
+
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
+
+@init
+  // Dynamic resonance suppression: finds the frequencies that stick out of the sound at each
+  // moment and turns down just those. Every 512 samples the last 2048 of both channels go
+  // through one complex FFT (left real, right imaginary) with a sqrt-Hann window. Each bin's
+  // level (the mean power of both channels, in dB) is compared with the spectral envelope, a
+  // moving average of the levels over a log-frequency window (2 octaves wide at Sharpness 0,
+  // 1/8 octave at 100: the sharper, the narrower the peaks it goes after). What sticks out by
+  // more than the Selectivity threshold (2 to 12 dB) is turned down: Soft at 2:1 with a 6 dB
+  // knee, easing into Depth; Hard by all of the excess, up to Depth. The reduction moves with
+  // Attack/Release per frame, is smoothed across neighbouring bins and fades out over half an
+  // octave outside Low/High Freq. The frame is resynthesised with the same window and
+  // overlap-added. Delta plays only what is removed. Latency: 2047 samples (reported to REAPER).
+  N = 2048; H = N / 4; NB = N / 2 + 1;
+  buf = 0;                      // FFT buffer, 2N, does not cross a 65536 boundary
+  win = 2 * N;                  // sqrt-Hann window, N
+  in_l = win + N; in_r = in_l + N;
+  out_l = in_r + N; out_r = out_l + N;
+  lev = out_r + N;              // bin levels in dB, NB
+  cs = lev + NB;                // running sums of the levels, NB + 1
+  gr = cs + NB + 1;             // reduction per bin in dB, NB
+  lo = gr + NB; hi = lo + NB;   // envelope window per bin
+  wgt = hi + NB;                // Low/High range weight per bin
+  freembuf(wgt + NB);
+  memset(0, 0, wgt + NB);
+  k = 0;
+  loop(NB, lev[k] = -120; k += 1);
+  i = 0;
+  loop(N, win[i] = sin($pi * i / N); i += 1);
+  ipos = 0; opos = 0; cnt = 0;
+  pdc_delay = N - 1;
+  pdc_bot_ch = 0;
+  pdc_top_ch = 2;
+
+  function frame() local(i, k, p, re, im, re2, im2, pw, nrm, e, x, r, g, sc)
+  (
+    // both channels in one complex FFT, oldest sample first
+    i = 0;
+    loop(N,
+      p = (ipos + i) % N;
+      buf[2 * i] = in_l[p] * win[i];
+      buf[2 * i + 1] = in_r[p] * win[i];
+      i += 1;
+    );
+    fft(buf, N);
+    fft_permute(buf, N);
+    // bin k's level: (|Z_k|^2 + |Z_N-k|^2) / 4 is the mean power of the two channels
+    nrm = $pi * $pi / (4 * N * N);
+    k = 0;
+    loop(NB,
+      p = k == 0 ? 0 : N - k;
+      re = buf[2 * k]; im = buf[2 * k + 1]; re2 = buf[2 * p]; im2 = buf[2 * p + 1];
+      pw = (re * re + im * im + re2 * re2 + im2 * im2) * nrm;
+      lev[k] = 10 * log10(pw + 0.000000000001);
+      k += 1;
+    );
+    cs[0] = 0;
+    k = 0;
+    loop(NB, cs[k + 1] = cs[k] + lev[k]; k += 1);
+    // excess over the envelope and the threshold -> reduction, with attack/release
+    k = 0;
+    loop(NB,
+      e = (cs[hi[k] + 1] - cs[lo[k]]) / (hi[k] - lo[k] + 1);
+      x = lev[k] - e - thr;
+      r = 0;
+      x > 0 && depth > 0 ? (
+        hard ? (
+          r = min(depth, x);
+        ) : (
+          r = x < 6 ? x * x / 24 : 0.5 * (x - 3);
+          r = depth * (1 - exp(-r / depth));
+        );
+      );
+      r *= wgt[k];
+      g = gr[k];
+      gr[k] = g + (r > g ? att : rel) * (r - g);
+      k += 1;
+    );
+    // smoothed across neighbouring bins, as a gain on bin k and its mirror N - k
+    k = 0;
+    loop(NB,
+      g = 0.25 * gr[max(0, k - 1)] + 0.5 * gr[k] + 0.25 * gr[min(NB - 1, k + 1)];
+      g = 10 ^ (-g / 20);
+      buf[2 * k] *= g;
+      buf[2 * k + 1] *= g;
+      k > 0 && k < N / 2 ? (
+        buf[2 * (N - k)] *= g;
+        buf[2 * (N - k) + 1] *= g;
+      );
+      k += 1;
+    );
+    fft_ipermute(buf, N);
+    ifft(buf, N);
+    // sqrt-Hann twice at 4x overlap sums to 2; ifft() leaves the factor N
+    sc = 1 / (2 * N);
+    i = 0;
+    loop(N,
+      p = (opos + i) % N;
+      out_l[p] += buf[2 * i] * win[i] * sc;
+      out_r[p] += buf[2 * i + 1] * win[i] * sc;
+      i += 1;
+    );
+  );
+
+@slider
+  depth = slider1;
+  thr = 2 + slider3 / 100 * 10;
+  att = 1 - exp(-H / (srate * slider4 / 1000));
+  rel = 1 - exp(-H / (srate * slider5 / 1000));
+  hard = slider8;
+  delta = slider9;
+  mix = slider10 / 100;
+  // the envelope window: 2 octaves wide at Sharpness 0 down to 1/8 octave at 100
+  wr = 2 ^ (2 * (2 ^ (-4 * slider2 / 100)) / 2);
+  k = 0;
+  loop(NB,
+    lo[k] = max(0, min(k - 3, floor(k / wr)));
+    hi[k] = min(NB - 1, max(k + 3, ceil(k * wr)));
+    // the range: full from Low to High, fading out over half an octave outside it
+    f = k * srate / N;
+    w = 0;
+    k > 0 ? (
+      w = max(0, min(1, 1 + 2 * log(f / slider6) / log(2)));
+      w *= max(0, min(1, 1 - 2 * log(f / slider7) / log(2)));
+    );
+    wgt[k] = w;
+    k += 1;
+  );
+
+@sample
+  in_l[ipos] = spl0;
+  in_r[ipos] = spl1;
+  ipos += 1; ipos >= N ? ipos = 0;
+  cnt += 1;
+  cnt >= H ? (
+    cnt = 0;
+    frame();
+  );
+  w_l = out_l[opos]; out_l[opos] = 0;
+  w_r = out_r[opos]; out_r[opos] = 0;
+  opos += 1; opos >= N ? opos = 0;
+  // the dry signal, delayed to line up: the oldest sample in the input ring
+  d_l = in_l[ipos];
+  d_r = in_r[ipos];
+  y_l = d_l * (1 - mix) + w_l * mix;
+  y_r = d_r * (1 - mix) + w_r * mix;
+  delta ? (
+    y_l = d_l - y_l;
+    y_r = d_r - y_r;
+  );
+  spl0 = y_l;
+  spl1 = y_r;

@@ -4,8 +4,8 @@
  * SPDX-License-Identifier: MIT
  *
  * Port of DATA/Effects/null_jsfx/saturation.jsfx, computed in double like EEL2: the input is
- * driven (1 + 3 x Drive) into one of six shapers (Tape, Tube, Overdrive, Fuzz, Bitcrush,
- * Waveshaper), the wet signal gets a tilt EQ around 800 Hz (Tone, +-12 dB), then a dry/wet mix.
+ * driven (1 + 3 x Drive) into one of seven shapers (Tape, Tube, Overdrive, Fuzz, Bitcrush,
+ * Waveshaper, Fold), the wet signal gets a tilt EQ around 800 Hz (Tone, +-12 dB), then a dry/wet mix.
  */
 
 #pragma once
@@ -15,7 +15,7 @@
 
 namespace nullsaturation {
 
-// the shaper for mode 0..5 with drive 0..1 (in = already driven input), as in @sample
+// the shaper for mode 0..6 with drive 0..1 (in = already driven input), as in @sample
 inline double shape(double in, int mode, double drive) noexcept
 {
     double wet;
@@ -54,7 +54,7 @@ inline double shape(double in, int mode, double drive) noexcept
         const double quants = std::pow(2.0, bits) - 1.0;
         wet = std::floor(in * quants + 0.5) / quants;
     }
-    else
+    else if (mode == 5)
     {
         wet = in;
         if (wet > 1.0)
@@ -66,6 +66,8 @@ inline double shape(double in, int mode, double drive) noexcept
         if (wet < -1.0)
             wet = -2.0 - wet;
     }
+    else // Fold: sine wavefolder, Drive adds folds (1x to 2x on top of the drive)
+        wet = std::sin(in * (1.0 + drive) * 3.141592653589793 / 2.0);
     return wet;
 }
 

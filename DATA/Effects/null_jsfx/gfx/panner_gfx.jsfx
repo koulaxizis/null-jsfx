@@ -1,0 +1,216 @@
+desc:NULL Panner GFX
+author: Christos Koulaxizis
+tags: pan panner panning balance binaural itd ild haas stereo placement width gui
+//category: Essentials
+//NULL JSFX v2.0 • https://nulljsfx.tech • MIT License
+
+import null_gfx.jsfx-inc
+
+slider1:0<-100,100,1>-Pan
+slider2:1<0,2,1{Balance,Natural,Haas}>-Mode
+slider3:100<0,200,1>-Width (%)
+slider4:12<1,30,0.1>-Haas Delay (ms)
+slider5:0<-24,12,0.1>-Output (dB)
+
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
+
+@init
+  // NULL Panner (../panner.jsfx) with its own interface: same audio code, plus @gfx.
+  // Places a source in the stereo field. The input is split into mid and side (Width scales
+  // the side); the mid is what gets placed, the side keeps the source's own stereo image.
+  //   Balance: plain L/R balance, the far channel fades out (sine law, unity at the centre).
+  //   Natural: a head model. The far ear hears the mid later (interaural time difference,
+  //            Woodworth's formula, up to ~0.66 ms, fractional delay) and duller (a first-order
+  //            high shelf down to -8 dB above ~1.8 kHz, the head shadow); the levels follow a
+  //            constant-power law that keeps the far ear at -7 dB at the extremes.
+  //   Haas:    the far ear hears the mid up to Haas Delay later (precedence effect).
+  // Every gain, delay and shelf glides over ~20 ms, so moving Pan or Mode never clicks.
+  buf_size = 8192;             // mid delay line: 30 ms + ITD at up to 192 kHz
+  buf = 0;
+  memset(buf, 0, buf_size);
+  freembuf(buf_size);
+  wpos = 0;
+  sm_k = 1 - exp(-1 / (0.02 * srate));
+  hs_c = 1 - exp(-2 * $pi * 1800 / srate);
+  lp_l = lp_r = 0;
+  sm_first = 1;
+
+  // the mid delayed by d samples (linear interpolation; d = 0 is the current sample)
+  function rd(d) local(rp, i, fr, i2)
+  (
+    rp = wpos - d;
+    rp < 0 ? rp += buf_size;
+    i = floor(rp);
+    fr = rp - i;
+    i2 = i + 1;
+    i2 >= buf_size ? i2 = 0;
+    buf[i] + (buf[i2] - buf[i]) * fr;
+  );
+
+  // one-pole glide of v to t, snapped when it is there
+  function glide(v, t) ( v += sm_k * (t - v); abs(t - v) < 0.000000000001 ? t : v; );
+  gfx_ext_retina = 1;
+  // display only: vectorscope taps of the output
+  ng_tap_init(4000000, 2048);
+
+  // display only: dB text for a gain ("-INF" for silence)
+  function pn_db(g) ( g > 0.00001 ? sprintf(#pn_d, "%+.1f dB", 20 * log10(g)) : strcpy(#pn_d, "-INF"); );
+
+  function update()
+  (
+    pan = slider1 / 100;
+    pan_a = abs(pan);
+    mode = slider2;
+    wid = slider3 / 100;
+    out_g = 10 ^ (slider5 / 20);
+    mode == 0 ? (
+      pan_th = (pan + 1) * $pi / 4;
+      t_gl = min(1, sqrt(2) * cos(pan_th));
+      t_gr = min(1, sqrt(2) * sin(pan_th));
+      t_sl = t_gl;
+      t_sr = t_gr;
+      t_dl = t_dr = 0;
+      t_hl = t_hr = 1;
+    ) : mode == 1 ? (
+      pan_th = (1 + 0.6 * pan) * $pi / 4;
+      t_gl = sqrt(2) * cos(pan_th);
+      t_gr = sqrt(2) * sin(pan_th);
+      t_sl = t_sr = 1 - 0.5 * pan_a;
+      // Woodworth: ITD = r / c * (angle + sin(angle)), head radius 8.75 cm, angle up to 90 degrees
+      pan_itd = 0.0875 / 343 * (pan_a * $pi / 2 + sin(pan_a * $pi / 2)) * srate;
+      t_dl = pan > 0 ? pan_itd : 0;
+      t_dr = pan < 0 ? pan_itd : 0;
+      pan_sh = 10 ^ (-8 * pan_a / 20);
+      t_hl = pan > 0 ? pan_sh : 1;
+      t_hr = pan < 0 ? pan_sh : 1;
+    ) : (
+      t_gl = pan > 0 ? 1 - 0.3 * pan_a : 1;
+      t_gr = pan < 0 ? 1 - 0.3 * pan_a : 1;
+      t_sl = t_sr = 1 - 0.5 * pan_a;
+      pan_hd = pan_a * slider4 * srate / 1000;
+      t_dl = pan > 0 ? pan_hd : 0;
+      t_dr = pan < 0 ? pan_hd : 0;
+      t_hl = t_hr = 1;
+    );
+    t_gl *= out_g; t_gr *= out_g;
+    t_sl *= out_g; t_sr *= out_g;
+    sm_first ? (
+      gl = t_gl; gr = t_gr; sl = t_sl; sr = t_sr;
+      dl = t_dl; dr = t_dr; hl = t_hl; hr = t_hr;
+      sm_first = 0;
+    );
+  );
+
+@slider
+  update();
+
+@sample
+  mid = (spl0 + spl1) * 0.5;
+  side = (spl0 - spl1) * 0.5 * wid;
+  buf[wpos] = mid;
+
+  gl = glide(gl, t_gl); gr = glide(gr, t_gr);
+  sl = glide(sl, t_sl); sr = glide(sr, t_sr);
+  dl = glide(dl, t_dl); dr = glide(dr, t_dr);
+  hl = glide(hl, t_hl); hr = glide(hr, t_hr);
+
+  ml = rd(dl);
+  mr = rd(dr);
+  // head shadow: first-order high shelf, the part above ~1.8 kHz scaled by hl / hr
+  lp_l += hs_c * (ml - lp_l);
+  lp_r += hs_c * (mr - lp_r);
+  abs(lp_l) < 0.000000000000001 ? lp_l = 0;
+  abs(lp_r) < 0.000000000000001 ? lp_r = 0;
+  ml += (hl - 1) * (ml - lp_l);
+  mr += (hr - 1) * (mr - lp_r);
+  wpos += 1;
+  wpos >= buf_size ? wpos = 0;
+
+  spl0 = ml * gl + side * sl;
+  spl1 = mr * gr - side * sr;
+
+  // display only (reads the output, never changes it)
+  ng_tap(spl0, spl1);
+
+@gfx 480 304
+  ng_knobs_begin("PANNER", "ESSENTIALS", 480, 130, 1, 0);
+
+  // display, left: the stage seen from above, the listener at the bottom and the source on the
+  // arc at Pan, its stereo spread lit along the arc; right: vectorscope of the output
+  pn_cx = X(177); pn_cy = Y(170); pn_r = 92 * ng_s;
+  ng_col(NG_BORDER, 1);
+  ng_arc(pn_cx, pn_cy, pn_r, -$pi / 2, $pi / 2, max(1, ng_s));
+  ng_col(NG_BORDER, 0.6);
+  ng_arc(pn_cx, pn_cy, pn_r * 0.55, -$pi / 2, $pi / 2, max(1, ng_s));
+  pn_i = -2;
+  loop(5,
+    pn_a = pn_i * $pi / 4;
+    pn_i == 0 ? ng_col(0x45433f, 1) : ng_col(NG_BORDER, 0.6);
+    gfx_line(pn_cx + sin(pn_a) * 18 * ng_s, pn_cy - cos(pn_a) * 18 * ng_s, pn_cx + sin(pn_a) * pn_r, pn_cy - cos(pn_a) * pn_r, 1);
+    pn_i += 1;
+  );
+  ng_font(1, 7, 1);
+  ng_col(NG_MUTED, 1);
+  ng_txt("L", 177 - 92 - 10, 170, 1, 0);
+  ng_txt("R", 177 + 92 + 10, 170, 1, 0);
+  ng_txt("C", 177, 170 - 92 - 13, 1, 0);
+
+  // the source: its spread (Width, narrower towards the sides) and its position
+  pn_pa = pan * $pi / 2;
+  pn_sp = $pi / 8 * wid * (mode == 0 ? 1 : 1 - 0.5 * pan_a);
+  pn_a1 = max(-$pi / 2, pn_pa - pn_sp);
+  pn_a2 = min($pi / 2, pn_pa + pn_sp);
+  pn_a2 > pn_a1 ? (
+    ng_col(NG_ACCENT, 0.45);
+    ng_arc(pn_cx, pn_cy, pn_r, pn_a1, pn_a2, 5 * ng_s);
+  );
+  ng_col(NG_ACCENT, 0.18);
+  gfx_line(pn_cx, pn_cy, pn_cx + sin(pn_pa) * pn_r, pn_cy - cos(pn_pa) * pn_r, 1);
+  ng_col(NG_ACCENT, 1);
+  gfx_circle(pn_cx + sin(pn_pa) * pn_r, pn_cy - cos(pn_pa) * pn_r, 6 * ng_s, 1, 1);
+  ng_col(NG_CARD, 1);
+  gfx_circle(pn_cx + sin(pn_pa) * pn_r, pn_cy - cos(pn_pa) * pn_r, 2.5 * ng_s, 1, 1);
+
+  // the listener: head, nose and ears
+  ng_col(NG_MUTED, 1);
+  gfx_rect(pn_cx - 13 * ng_s, pn_cy - 3 * ng_s, 26 * ng_s, 6 * ng_s);
+  gfx_triangle(pn_cx - 3 * ng_s, pn_cy - 9 * ng_s, pn_cx + 3 * ng_s, pn_cy - 9 * ng_s, pn_cx, pn_cy - 14 * ng_s);
+  gfx_circle(pn_cx, pn_cy, 10 * ng_s, 1, 1);
+  ng_col(NG_LOGO_BG, 1);
+  gfx_circle(pn_cx, pn_cy, 8.5 * ng_s, 1, 1);
+
+  // readouts for the mode
+  ng_font(1, 7, 1);
+  ng_col(NG_MUTED, 1);
+  ng_txt(mode == 0 ? "BALANCE" : mode == 1 ? "NATURAL" : "HAAS", 28, 70, 0, 1.2);
+  ng_font(3, 8.5, 0);
+  ng_col(NG_TEXT, 1);
+  mode == 0 ? (
+    pn_db(t_gl / out_g); sprintf(#pn_t, "L  %s", #pn_d); ng_txt(#pn_t, 28, 85, 0, 0);
+    pn_db(t_gr / out_g); sprintf(#pn_t, "R  %s", #pn_d); ng_txt(#pn_t, 28, 98, 0, 0);
+  ) : mode == 1 ? (
+    sprintf(#pn_t, "ITD  %.2f ms", max(t_dl, t_dr) / srate * 1000); ng_txt(#pn_t, 28, 85, 0, 0);
+    sprintf(#pn_t, "ILD  %.1f dB", abs(20 * log10(t_gl / t_gr))); ng_txt(#pn_t, 28, 98, 0, 0);
+  ) : (
+    sprintf(#pn_t, "DELAY  %.1f ms", max(t_dl, t_dr) / srate * 1000); ng_txt(#pn_t, 28, 85, 0, 0);
+    pn_db(min(t_gl, t_gr) / out_g); sprintf(#pn_t, "FAR  %s", #pn_d); ng_txt(#pn_t, 28, 98, 0, 0);
+  );
+
+  ng_plot(346, 66, 106, 106);
+  ng_vector(2);
+
+  ng_row(5);
+  slider1 == 0 ? strcpy(#v1, "C") : slider1 < 0 ? sprintf(#v1, "L %d", -slider1) : sprintf(#v1, "R %d", slider1);
+  ng_knob_ctl(1, "PAN", #v1, -100, 100, 0, 1, 1) ? update();
+  ng_select_ctl(2, "MODE", "BALANCE|NATURAL|HAAS", 0) ? update();
+  sprintf(#v3, "%d%%", slider3);
+  ng_knob_ctl(3, "WIDTH", #v3, 0, 200, 100, 1, 0) ? update();
+  sprintf(#v4, "%.1f ms", slider4);
+  ng_knob_ctl(4, "HAAS", #v4, 1, 30, 12, 0.1, 0) ? update();
+  sprintf(#v5, "%+.1f dB", slider5);
+  ng_knob_ctl(5, "OUTPUT", #v5, -24, 12, 0, 0.1, 0) ? update();
+
+  ng_end();
