@@ -1,0 +1,170 @@
+desc:NULL Transient Shaper GFX
+author: Christos Koulaxizis
+tags: transient attack sustain punch envelope dynamics shaping gui
+//category: Essentials
+//NULL JSFX v2.0 • https://nulljsfx.tech • MIT License
+
+import null_gfx.jsfx-inc
+
+slider1:0<-20,20,0.1>-Attack (dB)
+slider2:0<-20,20,0.1>-Sustain (dB)
+slider3:100<0,100,1>-Mix (%)
+
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
+
+@init
+  // NULL Transient Shaper (../transient_shaper.jsfx) with its own interface: same audio code, plus @gfx.
+  fast_env = 0;
+  slow_env = 0;
+  gain_lin_att = 1;
+  gain_lin_sus = 1;
+  gfx_ext_retina = 1;
+
+  // interface only: a 1.8 s history of the output level and the gain, one entry per
+  // 7 ms (260 entries, one per display pixel) in memory from 4000000, and peak meters
+  ts_buf = 4000000; ts_len = 260; ts_w = 0;
+  ts_chunk = max(1, floor(srate * 0.007));
+  ts_n = 0; ts_hl = 0; ts_hgh = 0; ts_hgl = 1000;
+  ts_i = 0;
+  loop(ts_len, ts_buf[ts_i * 2] = 0; ts_buf[ts_i * 2 + 1] = 1; ts_i += 1;);
+  ts_rel = exp(-1 / (0.3 * srate));
+  ts_in = ts_out = 0;
+  ts_hit = 0;
+
+  function update()
+  (
+    attack_db = slider1;
+    sustain_db = slider2;
+    mix_amt = slider3 / 100;
+  
+    attack_boost = exp(attack_db * 0.11512925464970228420);
+    sustain_boost = exp(sustain_db * 0.11512925464970228420);
+  
+    // Envelope time constants
+    fast_attack = 0.001;   // 1ms fast envelope attack
+    fast_release = 0.020;  // 20ms fast envelope release
+    slow_attack = 0.020;   // 20ms slow envelope attack
+    slow_release = 0.150;  // 150ms slow envelope release
+  
+    fa_coef = 1 - exp(-1 / (fast_attack * srate));
+    fr_coef = 1 - exp(-1 / (fast_release * srate));
+    sa_coef = 1 - exp(-1 / (slow_attack * srate));
+    sr_coef = 1 - exp(-1 / (slow_release * srate));
+  );
+
+  // history: output level as dim bars (-48..0 dB), the gain after Mix as the line (-20..+20 dB)
+  function ts_history() local(i, k, xx, yy, h)
+  (
+    ng_plot(56, 68, 260, 88);
+    ng_grid(8, 4, 0);
+    yy = floor(ng_lin_y(0, -20, 20)) + 0.5;
+    ng_col(0x45433f, 1);
+    gfx_line(ng_px, yy, ng_px + ng_pw, yy, 0);
+    ng_font(4, 8, 0);
+    ng_col(NG_MUTED, 1);
+    i = 0;
+    loop(5,
+      20 - 10 * i > 0 ? sprintf(#ts_l, "+%d", 20 - 10 * i) : sprintf(#ts_l, "%d", 20 - 10 * i);
+      ng_ptxt(#ts_l, ng_px - 6 * ng_s, ng_py + ng_ph * i / 4, 2);
+      i += 1;
+    );
+    ng_col(NG_ACCENT, 0.15);
+    i = 0;
+    loop(ts_len,
+      k = (ts_w + i) % ts_len;
+      h = ng_ph * ng_db_norm(ng_to_db(ts_buf[k * 2]), -48);
+      h > 0 ? gfx_rect(ng_px + i * ng_s, ng_py + ng_ph - h, ng_s, h);
+      i += 1;
+    );
+    ng_col(NG_ACCENT, 1);
+    i = 0;
+    loop(ts_len,
+      k = (ts_w + i) % ts_len;
+      xx = ng_px + (i + 0.5) * ng_s;
+      yy = ng_lin_y(ng_to_db(ts_buf[k * 2 + 1]), -20, 20);
+      i == 0 ? ng_line_start(xx, yy) : ng_line_to(xx, yy);
+      i += 1;
+    );
+  );
+
+@slider
+  update();
+
+@sample
+  // Detect signal level (max of both channels)
+  abs_l = spl0 < 0 ? -spl0 : spl0;
+  abs_r = spl1 < 0 ? -spl1 : spl1;
+  input_level = abs_l > abs_r ? abs_l : abs_r;
+  
+  // Fast envelope (catches transients)
+  input_level > fast_env ? (
+    fast_env = fast_env + fa_coef * (input_level - fast_env);
+  ) : (
+    fast_env = fast_env + fr_coef * (input_level - fast_env);
+  );
+  
+  // Slow envelope (catches sustain)
+  input_level > slow_env ? (
+    slow_env = slow_env + sa_coef * (input_level - slow_env);
+  ) : (
+    slow_env = slow_env + sr_coef * (input_level - slow_env);
+  );
+  
+  // Transient detection: difference between fast and slow envelopes
+  slow_env > 0.0001 ? (
+    transient_amount = (fast_env - slow_env) / slow_env;
+  ) : transient_amount = 0;
+  
+  transient_amount = transient_amount > 1 ? 1 : transient_amount;
+  transient_amount = transient_amount < 0 ? 0 : transient_amount;
+  
+  // Sustain amount: inverse of transient
+  sustain_amount = 1 - transient_amount;
+  
+  // Apply gains
+  total_gain = 1 + (attack_boost - 1) * transient_amount + (sustain_boost - 1) * sustain_amount;
+  
+  out_l = spl0 * total_gain;
+  out_r = spl1 * total_gain;
+  
+  spl0 = spl0 * (1 - mix_amt) + out_l * mix_amt;
+  spl1 = spl1 * (1 - mix_amt) + out_r * mix_amt;
+
+  // interface only: meters and history (read the audio state, never change it)
+  ts_in = input_level > ts_in ? input_level : ts_in * ts_rel;
+  ts_lv = max(abs(spl0), abs(spl1));
+  ts_out = ts_lv > ts_out ? ts_lv : ts_out * ts_rel;
+  ts_g = 1 - mix_amt + total_gain * mix_amt;
+  ts_hl = max(ts_hl, ts_lv);
+  ts_hgh = max(ts_hgh, ts_g);
+  ts_hgl = min(ts_hgl, ts_g);
+  (ts_n += 1) >= ts_chunk ? (
+    ts_buf[ts_w * 2] = ts_hl;
+    ts_buf[ts_w * 2 + 1] = ts_hgh * ts_hgl > 1 ? ts_hgh : ts_hgl;
+    ts_w = (ts_w + 1) % ts_len;
+    ts_n = 0; ts_hl = 0; ts_hgh = 0; ts_hgl = 1000;
+  );
+  ts_hit = transient_amount > ts_hit ? transient_amount : ts_hit * ts_rel;
+
+@gfx 480 294
+  ng_knobs_begin("TRANSIENT SHAPER", "ESSENTIALS", 480, 120, 1, 0);
+
+  // display, left: the last 1.8 s of output level (bars) and gain (line, the chunk's gain
+  // furthest from 0 dB); right: input, transient-detector and output meters
+  ts_history();
+  ng_meter(336, 82, 112, 10, "IN", ng_to_db(ts_in), -140, -48);
+  ng_meter(336, 106, 112, 10, "HIT", -48 + 48 * ts_hit, -140, -48);
+  ng_meter(336, 130, 112, 10, "OUT", ng_to_db(ts_out), -140, -48);
+
+  ng_row(3);
+  sprintf(#v1, "%+.1f dB", slider1);
+  ng_knob_ctl(1, "ATTACK", #v1, -20, 20, 0, 0.1, 1) ? update();
+  sprintf(#v2, "%+.1f dB", slider2);
+  ng_knob_ctl(2, "SUSTAIN", #v2, -20, 20, 0, 0.1, 1) ? update();
+  sprintf(#v3, "%d%%", slider3);
+  ng_knob_ctl(3, "MIX", #v3, 0, 100, 100, 1, 0) ? update();
+
+  ng_end();

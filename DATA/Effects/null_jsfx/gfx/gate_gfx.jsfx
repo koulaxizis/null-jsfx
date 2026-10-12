@@ -1,0 +1,183 @@
+desc:NULL Gate GFX
+author: Christos Koulaxizis
+tags: gate noise vocal floor reduce silence threshold mute sidechain gui
+//category: Essentials
+//NULL JSFX v2.0 • https://nulljsfx.tech • MIT License
+
+import null_gfx.jsfx-inc
+
+slider1:-40<-60,0,0.1>-Threshold (dB)
+slider2:10<1,100,1>-Attack (ms)
+slider3:200<50,1000,1>-Release (ms)
+slider4:0<0,500,1>-Sidechain HPF (Hz)
+slider5:-80<-80,0,0.1>-Range (dB)
+
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
+
+@init
+  // NULL Gate (../gate.jsfx) with its own interface: same audio code, plus @gfx.
+  pk_decay = exp(-1 / (0.0045 * srate)); // peak-envelope fall, 4.5 ms at any sample rate
+  threshold_db = -40;
+  attack_ms = 10;
+  release_ms = 200;
+  sc_hpf = 0;
+
+  threshold_lin = pow(10, threshold_db / 20);
+
+  attack_time = srate * attack_ms / 1000;
+  release_time = srate * release_ms / 1000;
+
+  at = attack_time > 1 ? attack_time : 1;
+  rt = release_time > 1 ? release_time : 1;
+
+  attack_coef = 1 - exp(-1 / at);
+  release_coef = 1 - exp(-1 / rt);
+
+  gate_level = 0;
+  env_peak_l = 0;
+  env_peak_r = 0;
+  sc_lpf_l = 0;
+  sc_lpf_r = 0;
+  sc_lpf_coef = 0;
+  gfx_ext_retina = 1;
+
+  // interface only: a 1.8 s history of the detector level and the gate gain, one entry per
+  // 7 ms (260 entries, one per display pixel) in memory from 4000000, and peak meters
+  gt_buf = 4000000; gt_len = 260; gt_w = 0;
+  gt_chunk = max(1, floor(srate * 0.007));
+  gt_n = 0; gt_dmax = 0; gt_gmin = 1;
+  gt_i = 0;
+  loop(gt_len, gt_buf[gt_i * 2] = 0; gt_buf[gt_i * 2 + 1] = 0; gt_i += 1;);
+  gt_rel = exp(-1 / (0.3 * srate));
+  gt_det = gt_out = 0;
+
+  function update()
+  (
+    threshold_db = slider1;
+    attack_ms = slider2;
+    release_ms = slider3;
+    sc_hpf = slider4;
+    // Range: gain when the gate is closed (-80 dB = fully closed, 0 dB = no gating)
+    range_lin = slider5 <= -80 ? 0 : 10 ^ (slider5 / 20);
+
+    threshold_lin = pow(10, threshold_db / 20);
+
+    attack_time = srate * attack_ms / 1000;
+    release_time = srate * release_ms / 1000;
+
+    at = attack_time > 1 ? attack_time : 1;
+    rt = release_time > 1 ? release_time : 1;
+
+    attack_coef = 1 - exp(-1 / at);
+    release_coef = 1 - exp(-1 / rt);
+
+    sc_hpf > 0 ? (
+      sc_lpf_coef = 1 - exp(-2 * 3.14159265358979 * sc_hpf / srate);
+    );
+  );
+
+  // history: detector level as dim bars, the gate gain as the line, both -60..0 dB, and the
+  // threshold as a faint line
+  function gt_history() local(i, k, xx, yy, h)
+  (
+    ng_plot(56, 68, 260, 88);
+    ng_grid(8, 3, 0);
+    ng_font(4, 8, 0);
+    ng_col(NG_MUTED, 1);
+    i = 0;
+    loop(4, sprintf(#gt_l, "%d", -20 * i); ng_ptxt(#gt_l, ng_px - 6 * ng_s, ng_py + ng_ph * i / 3, 2); i += 1;);
+    ng_col(NG_ACCENT, 0.15);
+    i = 0;
+    loop(gt_len,
+      k = (gt_w + i) % gt_len;
+      h = ng_ph * ng_db_norm(ng_to_db(gt_buf[k * 2]), -60);
+      h > 0 ? gfx_rect(ng_px + i * ng_s, ng_py + ng_ph - h, ng_s, h);
+      i += 1;
+    );
+    yy = floor(ng_lin_y(slider1, -60, 0)) + 0.5;
+    ng_col(NG_TEXT, 0.35);
+    gfx_line(ng_px, yy, ng_px + ng_pw, yy, 0);
+    ng_col(NG_ACCENT, 1);
+    i = 0;
+    loop(gt_len,
+      k = (gt_w + i) % gt_len;
+      xx = ng_px + (i + 0.5) * ng_s;
+      yy = ng_lin_y(ng_to_db(gt_buf[k * 2 + 1]), -60, 0);
+      i == 0 ? ng_line_start(xx, yy) : ng_line_to(xx, yy);
+      i += 1;
+    );
+  );
+
+@slider
+  update();
+
+@sample
+  sc_hpf > 0 ? (
+    sc_lpf_l = sc_lpf_l + sc_lpf_coef * (spl0 - sc_lpf_l);
+    sc_lpf_r = sc_lpf_r + sc_lpf_coef * (spl1 - sc_lpf_r);
+    input_l = spl0 - sc_lpf_l;
+    input_r = spl1 - sc_lpf_r;
+  ) : (
+    input_l = spl0;
+    input_r = spl1;
+  );
+
+  abs_l = input_l < 0 ? -input_l : input_l;
+  abs_r = input_r < 0 ? -input_r : input_r;
+
+  decay_l = env_peak_l * pk_decay;
+  decay_r = env_peak_r * pk_decay;
+  env_peak_l = abs_l > decay_l ? abs_l : decay_l;
+  env_peak_r = abs_r > decay_r ? abs_r : decay_r;
+
+  env_detected = env_peak_l > env_peak_r ? env_peak_l : env_peak_r;
+
+  env_detected > threshold_lin ? (
+    gate_level < 1 ? gate_level = gate_level + attack_coef * (1 - gate_level);
+  ) : (
+    gate_level > 0 ? gate_level = gate_level + release_coef * (0 - gate_level);
+  );
+
+  gate_gain = range_lin + (1 - range_lin) * gate_level;
+  spl0 = spl0 * gate_gain;
+  spl1 = spl1 * gate_gain;
+
+  // interface only: meters and history (reads the audio state, never changes it)
+  gt_det = env_detected > gt_det ? env_detected : gt_det * gt_rel;
+  gt_lv = max(abs(spl0), abs(spl1));
+  gt_out = gt_lv > gt_out ? gt_lv : gt_out * gt_rel;
+  gt_dmax = max(gt_dmax, env_detected);
+  gt_gmin = min(gt_gmin, gate_gain);
+  (gt_n += 1) >= gt_chunk ? (
+    gt_buf[gt_w * 2] = gt_dmax;
+    gt_buf[gt_w * 2 + 1] = gt_gmin;
+    gt_w = (gt_w + 1) % gt_len;
+    gt_n = 0; gt_dmax = 0; gt_gmin = 1;
+  );
+
+@gfx 480 294
+  ng_knobs_begin("GATE", "ESSENTIALS", 480, 120, 1, 0);
+
+  // display, left: the last 1.8 s of detector level (bars) and gate gain (line) with the
+  // threshold; right: detector, gain-reduction and output meters
+  gt_history();
+  ng_meter(336, 82, 112, 10, "IN", ng_to_db(gt_det), slider1, -60);
+  ng_gr_meter(336, 106, 112, 10, "GR", -20 * log10(max(gate_gain, 0.0000001)), 60);
+  ng_meter(336, 130, 112, 10, "OUT", ng_to_db(gt_out), -140, -60);
+
+  ng_row(5);
+  sprintf(#v1, "%.1f dB", slider1);
+  ng_knob_ctl(1, "THRESHOLD", #v1, -60, 0, -40, 0.1, 0) ? update();
+  sprintf(#v2, "%d ms", slider2);
+  ng_knob_ctl(2, "ATTACK", #v2, 1, 100, 10, 1, 0) ? update();
+  sprintf(#v3, "%d ms", slider3);
+  ng_knob_ctl(3, "RELEASE", #v3, 50, 1000, 200, 1, 0) ? update();
+  slider4 < 0.5 ? strcpy(#v4, "OFF") : sprintf(#v4, "%d Hz", slider4);
+  ng_knob_ctl(4, "SC HPF", #v4, 0, 500, 0, 1, 0) ? update();
+  slider5 <= -80 ? strcpy(#v5, "-INF dB") : sprintf(#v5, "%.1f dB", slider5);
+  ng_knob_ctl(5, "RANGE", #v5, -80, 0, -80, 0.1, 0) ? update();
+
+  ng_end();

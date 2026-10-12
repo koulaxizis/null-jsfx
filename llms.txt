@@ -36,22 +36,22 @@ One control, instant result. Turn it up until it sounds right.
 The everyday mixing and mastering toolbox.
 
 - Auto Pan: LFO Stereo Panner (also as GFX, VST3, CLAP)
-- Auto-Leveler: Automatic Gain Rider
-- Breath Control: Vocal Breath Reduction
+- Auto-Leveler: Automatic Gain Rider (also as GFX, VST3, CLAP)
+- Breath Control: Vocal Breath Reduction (also as GFX, VST3, CLAP)
 - Cabinet Simulator: Speaker Cabinet Simulation (also as GFX, VST3, CLAP)
 - Channel Utility: Gain, Phase & Routing (also as GFX, VST3, CLAP)
 - Chorus: Classic Delay Chorus (also as GFX, VST3, CLAP)
 - Click Repair: Click & Pop Removal (also as GFX, VST3, CLAP)
-- DeEsser: Split-Band Sibilance Control
+- DeEsser: Split-Band Sibilance Control (also as GFX, VST3, CLAP)
 - Delay: Stereo Echo & Slapback (also as GFX, VST3, CLAP)
 - Dynamic EQ: Four-Band Dynamic EQ (also as GFX, VST3, CLAP)
-- Dynamics: Compressor & Expander
-- Envelope Follower: Auto-Wah & Envelope Filter
+- Dynamics: Compressor & Expander (also as GFX, VST3, CLAP)
+- Envelope Follower: Auto-Wah & Envelope Filter (also as GFX, VST3, CLAP)
 - Filter: Resonant Multi-Mode Filter (also as GFX, VST3, CLAP)
 - Flanger: Jet Sweep Flanger (also as GFX, VST3, CLAP)
-- Gate: Noise Gate with Sidechain HPF
-- Limiter: Limiter, Clipper & Brickwall
-- Maximizer: Look-Ahead Loudness Maximizer
+- Gate: Noise Gate with Sidechain HPF (also as GFX, VST3, CLAP)
+- Limiter: Limiter, Clipper & Brickwall (also as GFX, VST3, CLAP)
+- Maximizer: Look-Ahead Loudness Maximizer (also as GFX, VST3, CLAP)
 - Mid/Side Matrix: M/S Encode & Decode (also as GFX, VST3, CLAP)
 - Multiband Comp: Four-Band Compressor (also as GFX, VST3, CLAP)
 - Noise Generator: White, Pink & Brown Noise (also as GFX, VST3, CLAP)
@@ -63,7 +63,7 @@ The everyday mixing and mastering toolbox.
 - Saturation: Six-Mode Saturation (also as GFX, VST3, CLAP)
 - Sidechain Ducker: Sidechain Ducking
 - Stereo Width: M/S Width with Mono Bass (also as GFX, VST3, CLAP)
-- Transient Shaper: Attack & Sustain Shaper
+- Transient Shaper: Attack & Sustain Shaper (also as GFX, VST3, CLAP)
 - Tremolo: Sine LFO Tremolo (also as GFX, VST3, CLAP)
 - Vibrato: Delay-Line Pitch Vibrato (also as GFX, VST3, CLAP)
 

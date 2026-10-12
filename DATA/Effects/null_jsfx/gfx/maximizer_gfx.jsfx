@@ -1,0 +1,173 @@
+desc:NULL Maximizer GFX
+author: Christos Koulaxizis
+tags: limiter maximizing loudness ceiling mastering peak protection gui
+//category: Essentials
+//NULL JSFX v2.0 • https://nulljsfx.tech • MIT License
+
+import null_gfx.jsfx-inc
+
+slider1:0<-12,12,0.1>-Input Gain (dB)
+slider2:-0.3<-3,-0.1,0.1>-Ceiling (dB)
+slider3:50<10,200,1>-Release (ms)
+slider4:2<0,5,1>-Lookahead (ms)
+slider5:0<-12,0,0.1>-Output Gain (dB)
+slider6:1<0,1,1{OFF,ON}>-Stereo Link
+
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
+
+@init
+  // NULL Maximizer (../maximizer.jsfx) with its own interface: same audio code, plus @gfx.
+  // Loudness maximizer: Input Gain pushes the mix into a look-ahead limiter that
+  // holds the peaks at Ceiling. Stereo Link uses one gain for both channels so the
+  // image does not shift; OFF limits each channel on its own.
+  max_look = ceil(srate * 0.006) + 2;
+  buf_l = 0;
+  buf_r = buf_l + max_look;
+  memset(buf_l, 0, 2 * max_look);
+  freembuf(buf_r + max_look);
+  wpos = 0;
+  hv_l = hv_r = 0;
+  hc_l = hc_r = 0;
+  g_l = g_r = 1;
+  pdc_bot_ch = 0;
+  pdc_top_ch = 2;
+
+  function detect(peak, hv*, hc*, g*) local(target)
+  (
+    peak >= hv ? (
+      hv = peak;
+      hc = look;
+    ) : hc > 0 ? (
+      hc -= 1;
+    ) : (
+      hv = max(peak, hv * rel);
+    );
+    target = hv > ceiling ? ceiling / hv : 1;
+    g = target < g ? g + (target - g) * att : target + (g - target) * rel;
+  );
+  gfx_ext_retina = 1;
+
+  // interface only: a 1.8 s history of the output level and the gain, one entry per
+  // 7 ms (260 entries, one per display pixel) in memory from 4000000, and peak meters
+  mx_buf = 4000000; mx_len = 260; mx_w = 0;
+  mx_chunk = max(1, floor(srate * 0.007));
+  mx_n = 0; mx_hl = 0; mx_hgh = 0; mx_hgl = 1000;
+  mx_i = 0;
+  loop(mx_len, mx_buf[mx_i * 2] = 0; mx_buf[mx_i * 2 + 1] = 1; mx_i += 1;);
+  mx_rel = exp(-1 / (0.3 * srate));
+  mx_in = mx_out = 0;
+
+  function update()
+  (
+    in_gain = 10 ^ (slider1 / 20);
+    ceiling = 10 ^ (slider2 / 20);
+    rel = exp(-1 / (slider3 * srate / 1000));
+    look = floor(slider4 * srate / 1000 + 0.5);
+    pdc_delay = look;
+    att = look < 1 ? 1 : 1 - exp(-5 / look);
+    // Output Gain is a trim (cut only), applied after the ceiling clamp, so the
+    // output can never exceed Ceiling; use Input Gain to make it louder.
+    out_gain = 10 ^ (min(slider5, 0) / 20);
+    link = slider6;
+  );
+
+  // history: output level as dim bars (-48..0 dB), the gain as the line (-24..0 dB)
+  function mx_history() local(i, k, xx, yy, h)
+  (
+    ng_plot(56, 68, 260, 88);
+    ng_grid(8, 4, 0);
+    ng_font(4, 8, 0);
+    ng_col(NG_MUTED, 1);
+    i = 0;
+    loop(5,
+      0 - 6 * i > 0 ? sprintf(#mx_l, "+%d", 0 - 6 * i) : sprintf(#mx_l, "%d", 0 - 6 * i);
+      ng_ptxt(#mx_l, ng_px - 6 * ng_s, ng_py + ng_ph * i / 4, 2);
+      i += 1;
+    );
+    ng_col(NG_ACCENT, 0.15);
+    i = 0;
+    loop(mx_len,
+      k = (mx_w + i) % mx_len;
+      h = ng_ph * ng_db_norm(ng_to_db(mx_buf[k * 2]), -48);
+      h > 0 ? gfx_rect(ng_px + i * ng_s, ng_py + ng_ph - h, ng_s, h);
+      i += 1;
+    );
+    ng_col(NG_ACCENT, 1);
+    i = 0;
+    loop(mx_len,
+      k = (mx_w + i) % mx_len;
+      xx = ng_px + (i + 0.5) * ng_s;
+      yy = ng_lin_y(ng_to_db(mx_buf[k * 2 + 1]), -24, 0);
+      i == 0 ? ng_line_start(xx, yy) : ng_line_to(xx, yy);
+      i += 1;
+    );
+  );
+
+@slider
+  update();
+
+@sample
+  mx_x = max(abs(spl0), abs(spl1)); // interface only
+  in_l = spl0 * in_gain;
+  in_r = spl1 * in_gain;
+  link ? (
+    detect(max(abs(in_l), abs(in_r)), hv_l, hc_l, g_l);
+    g_r = g_l;
+  ) : (
+    detect(abs(in_l), hv_l, hc_l, g_l);
+    detect(abs(in_r), hv_r, hc_r, g_r);
+  );
+
+  buf_l[wpos] = in_l;
+  buf_r[wpos] = in_r;
+  rpos = wpos - look;
+  rpos < 0 ? rpos += max_look;
+  wpos += 1;
+  wpos >= max_look ? wpos = 0;
+
+  spl0 = max(-ceiling, min(ceiling, buf_l[rpos] * g_l)) * out_gain;
+  spl1 = max(-ceiling, min(ceiling, buf_r[rpos] * g_r)) * out_gain;
+
+  // interface only: meters and history (read the audio state, never change it)
+  mx_in = mx_x > mx_in ? mx_x : mx_in * mx_rel;
+  mx_lv = max(abs(spl0), abs(spl1));
+  mx_out = mx_lv > mx_out ? mx_lv : mx_out * mx_rel;
+  mx_g = min(g_l, g_r);
+  mx_hl = max(mx_hl, mx_lv);
+  mx_hgh = max(mx_hgh, mx_g);
+  mx_hgl = min(mx_hgl, mx_g);
+  (mx_n += 1) >= mx_chunk ? (
+    mx_buf[mx_w * 2] = mx_hl;
+    mx_buf[mx_w * 2 + 1] = mx_hgh * mx_hgl > 1 ? mx_hgh : mx_hgl;
+    mx_w = (mx_w + 1) % mx_len;
+    mx_n = 0; mx_hl = 0; mx_hgh = 0; mx_hgl = 1000;
+  );
+
+@gfx 480 294
+  ng_knobs_begin("MAXIMIZER", "ESSENTIALS", 480, 120, 1, 0);
+
+  // display, left: the last 1.8 s of output level (bars) and gain (line, the lower channel
+  // when unlinked); right: input (limiting point marked), gain-reduction and output (the
+  // final ceiling marked) meters
+  mx_history();
+  ng_meter(336, 82, 112, 10, "IN", ng_to_db(mx_in), slider2 - slider1, -48);
+  ng_gr_meter(336, 106, 112, 10, "GR", -20 * log10(max(mx_g, 0.0000001)), 24);
+  ng_meter(336, 130, 112, 10, "OUT", ng_to_db(mx_out), slider2 + min(slider5, 0), -48);
+
+  ng_row(6);
+  sprintf(#v1, "%+.1f dB", slider1);
+  ng_knob_ctl(1, "INPUT", #v1, -12, 12, 0, 0.1, 1) ? update();
+  sprintf(#v2, "%.1f dB", slider2);
+  ng_knob_ctl(2, "CEILING", #v2, -3, -0.1, -0.3, 0.1, 0) ? update();
+  sprintf(#v3, "%d ms", slider3);
+  ng_knob_ctl(3, "RELEASE", #v3, 10, 200, 50, 1, 0) ? update();
+  sprintf(#v4, "%d ms", slider4);
+  ng_knob_ctl(4, "LOOKAHEAD", #v4, 0, 5, 2, 1, 0) ? update();
+  sprintf(#v5, "%.1f dB", slider5);
+  ng_knob_ctl(5, "OUTPUT", #v5, -12, 0, 0, 0.1, 0) ? update();
+  ng_select_ctl(6, "LINK", "OFF|ON", 0) ? update();
+
+  ng_end();

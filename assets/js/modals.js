@@ -272,7 +272,7 @@ const guides = {
     ],
     uses: ['Evening out dialogue and podcast levels', 'Riding inconsistent vocal takes', 'Smoothing level changes in live recordings', 'Pre-leveling before compression'],
     properties: 'Input → stereo RMS detection (~300 ms) → gain target (Target − level, limited by Max Boost/Cut, frozen below Gate) → smoothed at Speed → Output. Zero latency.',
-    formats: ['JSFX']
+    formats: ['JSFX', 'GFX', 'VST3', 'CLAP']
   },
   'breath-control': {
     title: 'BREATH CONTROL',
@@ -286,7 +286,7 @@ const guides = {
     ],
     uses: ['Turning down breaths between vocal phrases', 'Softening low-level noise in voice-over takes', 'Quick cleanup of podcast dialogue', 'Gentle alternative to a hard gate on vocals'],
     properties: 'Input → stereo-linked level detector (max of L/R, 1 ms rise / 30 ms fall) → compare with Threshold (3 dB hysteresis) → gain smoothed toward unity (Attack) or Range (Release) → applied to both channels → Output. No clipping; zero latency.',
-    formats: ['JSFX']
+    formats: ['JSFX', 'GFX', 'VST3', 'CLAP']
   },
   'cabinet-simulator': {
     title: 'CABINET SIMULATOR',
@@ -361,7 +361,7 @@ const guides = {
     ],
     uses: ['Taming harsh S, T and Ch sounds on vocals', 'Softening sibilant voice-over and podcast speech', 'Reducing hissy cymbal splash on overheads', 'Controlling brittle highs on bright acoustic guitar'],
     properties: 'Input → band-pass at Target (Q 2) → stereo-linked envelope follower (0.5 ms attack, 60 ms release) → band attenuation above a fixed −30 dB threshold, reaching full Reduction 12 dB above it → Output. Only the sibilant band is turned down; zero latency.',
-    formats: ['JSFX']
+    formats: ['JSFX', 'GFX', 'VST3', 'CLAP']
   },
   'delay': {
     title: 'DELAY',
@@ -423,7 +423,7 @@ const guides = {
     ],
     uses: ['General-purpose bus and track compression', 'Evening out vocal and bass levels', 'Downward expansion to reduce noise and bleed', 'Controlling dynamics on drums'],
     properties: 'Input → stereo-linked peak detection → gain computer (compress above / expand below Threshold, soft knee) → attack/release smoothing → Makeup → Output. Zero latency.',
-    formats: ['JSFX']
+    formats: ['JSFX', 'GFX', 'VST3', 'CLAP']
   },
   'envelope-follower': {
     title: 'ENVELOPE FOLLOWER',
@@ -442,7 +442,7 @@ const guides = {
     ],
     uses: ['Funk auto-wah on guitar and bass', 'Touch-sensitive synth filtering', 'Dynamic filter effects on drums', 'Envelope-driven volume swells and ducking'],
     properties: 'Input → stereo-linked envelope (−48 to 0 dB mapped to 0–1) → exponential cutoff sweep from Low Freq to High Freq → TPT state-variable filter (or VCA in Volume mode) → Dry/Wet Mix → Output. Zero latency.',
-    formats: ['JSFX']
+    formats: ['JSFX', 'GFX', 'VST3', 'CLAP']
   },
   'filter': {
     title: 'FILTER',
@@ -485,7 +485,7 @@ const guides = {
     ],
     uses: ['Removing noise between vocal phrases', 'Cutting bleed on tom and snare mics', 'Cleaning amp hiss between guitar parts', 'Tightening drum tails'],
     properties: 'Input → optional one-pole high-pass on the detector → stereo-linked peak envelope → open/close against Threshold with attack/release smoothing → closed gain set by Range → Output. Zero latency.',
-    formats: ['JSFX']
+    formats: ['JSFX', 'GFX', 'VST3', 'CLAP']
   },
   'limiter': {
     title: 'LIMITER',
@@ -500,7 +500,7 @@ const guides = {
     ],
     uses: ['Peak protection on the master bus', 'Transparent loudness gain in mastering', 'Soft clipping for drums and transient-heavy material', 'Catching stray peaks on individual tracks'],
     properties: 'Input → drive (Ceiling − Threshold) → Limiter/Brickwall: held peak detector + delayed signal + gain, followed by a safety clamp at Ceiling; Clipper: smooth knee from 70% of Ceiling → Output. Stereo-linked; latency equals Lookahead (0 in Clipper mode) and is reported for delay compensation.',
-    formats: ['JSFX']
+    formats: ['JSFX', 'GFX', 'VST3', 'CLAP']
   },
   'maximizer': {
     title: 'MAXIMIZER',
@@ -516,7 +516,7 @@ const guides = {
     ],
     uses: ['Final loudness stage in mastering', 'Raising stems and bounces to a target level', 'Peak control on buses', 'Dual-mono limiting for independent channels'],
     properties: 'Input Gain → held peak detector + look-ahead delay → gain reduction to Ceiling → clamp at Ceiling → Output Gain trim (≤ 0 dB) → Output. Latency equals Lookahead (0–5 ms), reported to REAPER for delay compensation.',
-    formats: ['JSFX']
+    formats: ['JSFX', 'GFX', 'VST3', 'CLAP']
   },
   'mid-side-matrix': {
     title: 'MID/SIDE MATRIX',
@@ -723,7 +723,7 @@ const guides = {
     ],
     uses: ['Adding punch to kicks and snares', 'Shortening room ring on drums', 'Bringing out pick attack on guitars', 'Softening harsh transients'],
     properties: 'Input → stereo-linked fast (1/20 ms) and slow (20/150 ms) envelopes → transient amount from their difference → gain blend of Attack and Sustain → Dry/Wet Mix → Output. Level-independent, no threshold; zero latency.',
-    formats: ['JSFX']
+    formats: ['JSFX', 'GFX', 'VST3', 'CLAP']
   },
   'tremolo': {
     title: 'TREMOLO',
