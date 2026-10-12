@@ -179,7 +179,8 @@ desc:NULL JSFX shared GFX library
     abs(ang - a0) > 0.001 ? ng_arc(kx, ky, tr, min(a0, ang), max(a0, ang), 4 * ng_s);
     bipolar ? (
       ng_col(NG_MUTED, 1);
-      gfx_line(kx, ky - tr - 5 * ng_s, kx, ky - tr - 8 * ng_s, 1);
+      // centre mark inside the track, clear of the label above the knob
+      gfx_line(kx, ky - tr + 3.5 * ng_s, kx, ky - tr + 6.5 * ng_s, 1);
     );
 
     // body: shadow, grey-gradient rim like the site icons, dark cap

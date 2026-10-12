@@ -205,8 +205,9 @@ protected:
         if (bipolar)
         {
             beginPath();
-            moveTo(x, y - tr - 5.0f);
-            lineTo(x, y - tr - 8.0f);
+            // centre mark inside the track, clear of the label above the knob
+            moveTo(x, y - tr + 3.5f);
+            lineTo(x, y - tr + 6.5f);
             strokeColor(col(theme::kMuted));
             strokeWidth(1.0f);
             stroke();
