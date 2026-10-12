@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Checks the web version of NULL JSFX:
 #   1. web/fx is up to date with DATA/ (node web/tools/build.js --check)
-#   2. runtime checks (node --test web/test/)
+#   2. runtime checks (node --test web/test/*.test.js)
 #   3. null test: every translated effect against the JSFX in ysfx, sample by sample
 # Builds ysfx (through tests/run.sh's settings) and web/test/render_ref.cpp once.
 # Usage: web/test/run.sh [plugin.jsfx ...]
@@ -26,5 +26,5 @@ if [ ! -x "$build/render_ref" ] || [ "$here/render_ref.cpp" -nt "$build/render_r
 fi
 
 node "$root/web/tools/build.js" --check
-node --test "$here/"
+node --test "$here"/*.test.js
 node "$here/nulltest.js" "$@"

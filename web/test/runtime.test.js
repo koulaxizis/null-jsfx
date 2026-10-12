@@ -1,6 +1,6 @@
 // Checks of the web runtime that the null test (ysfx vs JS) cannot cover: files handed over
 // by the page, the @gfx interface driving a slider, and memory edge cases.
-// Run: node --test web/test/
+// Run: node --test web/test/*.test.js
 "use strict";
 var test = require("node:test");
 var assert = require("node:assert");
