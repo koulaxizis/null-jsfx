@@ -1,0 +1,178 @@
+desc:NULL Spring Reverb GFX
+author: Christos Koulaxizis
+tags: spring reverb guitar amp vintage surf drip boing dub gui
+//category: Advanced
+//NULL JSFX v2.0 • https://nulljsfx.tech • MIT License
+
+import null_gfx.jsfx-inc
+
+slider1:2.5<0.5,8,0.1>-Decay (s)
+slider2:60<0,100,1>-Tension (%)
+slider3:4000<1000,8000,10>-Tone (Hz)
+slider4:40<0,100,1>-Drip (%)
+slider5:0<0,100,1>-Pre-Delay (ms)
+slider6:30<0,100,1>-Mix (%)
+
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
+
+@init
+  // NULL Spring Reverb (../spring_reverb.jsfx) with its own interface: same audio code, plus @gfx.
+  // Two-spring reverb tank as found in guitar amps. Each spring is a long chain of
+  // dispersive all-pass filters (high frequencies travel faster than low ones, which
+  // makes the characteristic "chirp" and "drip") inside a feedback delay loop. The
+  // left and right springs have different lengths. Tension sets how strong the chirp
+  // is, Drip boosts the splashy echo on transients, Tone sets how dark the tank is.
+  stages = 40;
+  max_line = ceil(srate * 0.08);
+  max_pre = ceil(srate * 0.1) + 2;
+  ap_l = 0; ap_r = ap_l + stages;
+  line_l = ap_r + stages; line_r = line_l + max_line;
+  pre = line_r + max_line;
+  freembuf(pre + max_pre);
+  memset(ap_l, 0, pre + max_pre);
+  wpos = 0; ppos = 0;
+  lp_l = lp_r = 0; hp_x = hp_y = 0;
+  len_l = floor(srate * 0.0437);
+  len_r = floor(srate * 0.0531);
+
+  // cascade of first-order all-pass filters (states in apb[0..stages-1])
+  function disperse(x, apb) local(i, y, s)
+  (
+    i = 0;
+    loop(stages,
+      s = apb[i];
+      y = s - a * x;
+      apb[i] = x + a * y;
+      x = y;
+      i += 1;
+    );
+    x;
+  );
+  gfx_ext_retina = 1;
+
+  function update()
+  (
+    // all-pass coefficient: more Tension = stronger dispersion
+    a = 0.35 + slider2 / 100 * 0.35;
+    g_l = 10 ^ (-3 * (len_l / srate + stages * 0.0001) / slider1);
+    g_r = 10 ^ (-3 * (len_r / srate + stages * 0.0001) / slider1);
+    g_l = min(g_l, 0.97); g_r = min(g_r, 0.97);
+    tone_c = exp(-2 * $pi * slider3 / srate);
+    drip = slider4 / 100;
+    pre_d = max(1, floor(slider5 * srate / 1000));
+    mix = slider6 / 100;
+    hp_c = exp(-2 * $pi * 120 / srate);
+  );
+
+@slider
+  update();
+
+@sample
+  x = (spl0 + spl1) * 0.5;
+  // springs do not carry deep bass
+  hp_y = hp_c * (hp_y + x - hp_x); hp_x = x;
+  pre[ppos] = hp_y;
+  pr = ppos - pre_d; pr < 0 ? pr += max_pre;
+  xin = pre[pr];
+  ppos += 1; ppos >= max_pre ? ppos = 0;
+
+  rp = wpos - len_l; rp < 0 ? rp += max_line;
+  fb_l = line_l[rp];
+  rp = wpos - len_r; rp < 0 ? rp += max_line;
+  fb_r = line_r[rp];
+
+  s_l = disperse(xin + fb_l * g_l, ap_l);
+  s_r = disperse(xin + fb_r * g_r, ap_r);
+  lp_l = (1 - tone_c) * s_l + tone_c * lp_l;
+  lp_r = (1 - tone_c) * s_r + tone_c * lp_r;
+  // drip: the unfiltered, chirpy part of the spring
+  o_l = lp_l + (s_l - lp_l) * drip * 0.7;
+  o_r = lp_r + (s_r - lp_r) * drip * 0.7;
+  line_l[wpos] = lp_l;
+  line_r[wpos] = lp_r;
+  wpos += 1; wpos >= max_line ? wpos = 0;
+
+  spl0 = spl0 * (1 - mix) + o_l * mix;
+  spl1 = spl1 * (1 - mix) + o_r * mix;
+
+@gfx 480 294
+  ng_knobs_begin("SPRING REVERB", "ADVANCED", 480, 120, 1, 0);
+
+  // display: the springs' dispersion, how long each frequency takes through the 40 all-pass
+  // stages (0 to 6 ms, log frequency): low notes arrive later, which makes the chirp. Tone dashed.
+  ng_plot(ng_vx + 26, ng_vy + 4, ng_vw - 30, ng_vh - 20);
+  sp_d = 10;
+  loop(4,
+    sp_m = 1;
+    loop(9,
+      sp_f = sp_m * sp_d;
+      sp_f >= 20 && sp_f <= 20000 ? (
+        sp_x = floor(ng_freq_x(sp_f)) + 0.5;
+        ng_col(NG_BORDER, sp_m == 1 ? 1 : 0.5);
+        gfx_line(sp_x, ng_py, sp_x, ng_py + ng_ph, 0);
+      );
+      sp_m += 1;
+    );
+    sp_d *= 10;
+  );
+  sp_k = 0;
+  loop(3,
+    sp_y = floor(ng_py + ng_ph * sp_k / 2) + 0.5;
+    ng_col(NG_BORDER, 0.6);
+    gfx_line(ng_px, sp_y, ng_px + ng_pw, sp_y, 0);
+    sp_k += 1;
+  );
+  ng_font(4, 8, 0);
+  ng_col(NG_MUTED, 1);
+  ng_ptxt("6 ms", ng_px - 6 * ng_s, ng_py, 2);
+  ng_ptxt("3 ms", ng_px - 6 * ng_s, ng_py + ng_ph / 2, 2);
+  ng_ptxt("0", ng_px - 6 * ng_s, ng_py + ng_ph, 2);
+  ng_ptxt("100", ng_freq_x(100), ng_py + ng_ph + 10 * ng_s, 1);
+  ng_ptxt("1k", ng_freq_x(1000), ng_py + ng_ph + 10 * ng_s, 1);
+  ng_ptxt("10k", ng_freq_x(10000), ng_py + ng_ph + 10 * ng_s, 1);
+  sp_x = floor(ng_freq_x(slider3)) + 0.5;
+  ng_col(NG_ACCENT, 0.5);
+  sp_y = ng_py;
+  while (
+    gfx_line(sp_x, sp_y, sp_x, min(sp_y + 3 * ng_s, ng_py + ng_ph), 0);
+    sp_y += 6 * ng_s;
+    sp_y < ng_py + ng_ph;
+  );
+  sp_a = 0.35 + slider2 / 100 * 0.35;
+  function sp_delay(i) local(w)
+  (
+    w = 2 * $pi * min(20 * 1000 ^ (i / ng_pw), 0.5 * srate) / srate;
+    ng_lin_y(40 * (1 - sp_a * sp_a) / (1 - 2 * sp_a * cos(w) + sp_a * sp_a) / srate * 1000, 0, 6);
+  );
+  ng_col(NG_ACCENT, 0.10);
+  sp_i = 0;
+  loop(floor(ng_pw) + 1,
+    gfx_line(ng_px + sp_i, ng_py + ng_ph, ng_px + sp_i, sp_delay(sp_i), 0);
+    sp_i += 1;
+  );
+  ng_col(NG_ACCENT, 1);
+  sp_i = 0;
+  loop(floor(ng_pw) + 1,
+    sp_y = sp_delay(sp_i);
+    sp_i == 0 ? ng_line_start(ng_px, sp_y) : ng_line_to(ng_px + sp_i, sp_y);
+    sp_i += 1;
+  );
+
+  ng_row(6);
+  sprintf(#v1, "%.1f s", slider1);
+  ng_knob_ctl(1, "DECAY", #v1, 0.5, 8, 2.5, 0.1, 0) ? update();
+  sprintf(#v2, "%d%%", slider2);
+  ng_knob_ctl(2, "TENSION", #v2, 0, 100, 60, 1, 0) ? update();
+  sprintf(#v3, "%.1f kHz", slider3 / 1000);
+  ng_knob_ctl(3, "TONE", #v3, 1000, 8000, 4000, 10, 0) ? update();
+  sprintf(#v4, "%d%%", slider4);
+  ng_knob_ctl(4, "DRIP", #v4, 0, 100, 40, 1, 0) ? update();
+  sprintf(#v5, "%d ms", slider5);
+  ng_knob_ctl(5, "PRE-DELAY", #v5, 0, 100, 0, 1, 0) ? update();
+  sprintf(#v6, "%d%%", slider6);
+  ng_knob_ctl(6, "MIX", #v6, 0, 100, 30, 1, 0) ? update();
+
+  ng_end();

@@ -1,0 +1,227 @@
+desc:NULL Vinyl Age GFX
+author: Christos Koulaxizis
+tags: vinyl lo-fi wow flutter crackle bitcrush degradation gui
+//category: Advanced
+//NULL JSFX v2.0 • https://nulljsfx.tech • MIT License
+
+import null_gfx.jsfx-inc
+
+slider1:30<0,100,1>-Wow (%)
+slider2:20<0,100,1>-Flutter (%)
+slider3:25<0,100,1>-Crackle (%)
+slider4:10<0,100,1>-Noise Level (%)
+slider5:12<4,16,1>-Bit Depth
+slider6:22050<2000,44100,100>-Sample Rate (Hz)
+slider7:8000<1000,20000,100>-Lowpass Freq (Hz)
+slider8:80<0,100,1>-Mix (%)
+
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
+
+@init
+// NULL Vinyl Age (../vinyl_age.jsfx) with its own interface: same audio code, plus @gfx.
+/* The wow/flutter delay line sits at a fixed 50 ms centre, so the dry signal is read
+   from the same buffer at exactly that delay: dry and wet stay time-aligned at any Mix.
+   The 50 ms is reported to the host as plug-in delay compensation. */
+buf_size = ceil(srate * 0.15);
+base_samps = floor(0.05 * srate);
+pdc_bot_ch = 0;
+pdc_top_ch = 2;
+pdc_delay = base_samps;
+buf_l = 0;
+buf_r = buf_size;
+freembuf(buf_r + buf_size);
+memset(buf_l, 0, 2 * buf_size);
+write_pos = 0;
+lp1_l = 0; lp2_l = 0;
+lp1_r = 0; lp2_r = 0;
+crackle_env = 0;
+crackle_cnt = 0;
+noise_seed_l = 12345;
+noise_seed_r = 67890;
+crackle_seed = 24680;
+wow_phase = 0;
+flutter_phase = 0;
+sr_cnt = 0;
+hold_l = 0;
+hold_r = 0;
+gfx_ext_retina = 1;
+
+function update()
+(
+  wow_amt = slider1 / 100;
+  flutter_amt = slider2 / 100;
+  crackle_amt = slider3 / 100;
+  noise_lvl = slider4 / 100;
+  bits = slider5 < 4 ? 4 : slider5;
+  sr_target = slider6;
+  lp_freq = slider7;
+  mix = slider8 / 100;
+
+  lp_coef = 1 - exp(-2 * $pi * lp_freq / srate);
+
+  sr_div = srate / sr_target;
+  sr_div = sr_div < 1 ? 1 : floor(sr_div);
+);
+
+@slider
+update();
+
+@sample
+in_l = spl0;
+in_r = spl1;
+
+/* ─── WOW (slow pitch drift ~0.5Hz) ─── */
+wow_phase += 2 * $pi * 0.5 / srate;
+wow_phase > 2*$pi ? wow_phase -= 2*$pi;
+wow_val = sin(wow_phase) * wow_amt;
+
+/* ─── FLUTTER (fast pitch wobble ~6Hz) ─── */
+flutter_phase += 2 * $pi * 6 / srate;
+flutter_phase > 2*$pi ? flutter_phase -= 2*$pi;
+flutter_val = sin(flutter_phase) * flutter_amt;
+
+/* Combined pitch modulation in ms */
+mod_ms = wow_val * 40 + flutter_val * 15;
+mod_ms = mod_ms < -50 ? -50 : (mod_ms > 50 ? 50 : mod_ms);
+
+/* Delay in samples (base 50ms + modulation) */
+delay_samps = base_samps + mod_ms * 0.001 * srate;
+delay_samps = delay_samps < 1 ? 1 : delay_samps;
+
+/* Read from delay buffer with linear interpolation */
+read_pos = write_pos - delay_samps;
+read_pos < 0 ? read_pos += buf_size;
+
+rp_int = floor(read_pos);
+rp_frac = read_pos - rp_int;
+rp_next = rp_int + 1;
+rp_next >= buf_size ? rp_next = 0;
+
+wet_l = buf_l[rp_int] * (1 - rp_frac) + buf_l[rp_next] * rp_frac;
+wet_r = buf_r[rp_int] * (1 - rp_frac) + buf_r[rp_next] * rp_frac;
+
+/* Dry signal delayed by the wet path's centre delay (phase-coherent mixing) */
+dp = write_pos - base_samps;
+dp < 0 ? dp += buf_size;
+dry_l = buf_l[dp];
+dry_r = buf_r[dp];
+
+/* Write current input to buffer */
+buf_l[write_pos] = in_l;
+buf_r[write_pos] = in_r;
+write_pos += 1;
+write_pos >= buf_size ? write_pos = 0;
+
+/* ─── BITCRUSH ─── */
+levels = pow(2, bits) - 1;
+wet_l = floor(wet_l * levels + 0.5) / levels;
+wet_r = floor(wet_r * levels + 0.5) / levels;
+
+/* ─── DOWNSAMPLE (hold) ─── */
+sr_cnt += 1;
+sr_cnt >= sr_div ? (
+  sr_cnt = 0;
+  hold_l = wet_l;
+  hold_r = wet_r;
+);
+wet_l = hold_l;
+wet_r = hold_r;
+
+/* ─── LOWPASS FILTER — 2-POLE CASCADE (12dB/oct) ─── */
+lp1_l += lp_coef * (wet_l - lp1_l);
+lp2_l += lp_coef * (lp1_l - lp2_l);
+wet_l = lp2_l;
+
+lp1_r += lp_coef * (wet_r - lp1_r);
+lp2_r += lp_coef * (lp1_r - lp2_r);
+wet_r = lp2_r;
+
+/* ─── VINYL CRACKLE ─── */
+crackle_cnt += 1;
+crackle_env *= 0.95;
+crackle_cnt > (srate / (5 + crackle_amt * 150)) && crackle_amt > 0 ? (
+  crackle_cnt = 0;
+  crackle_seed *= 16807; crackle_seed -= floor(crackle_seed / 2147483647) * 2147483647;
+  crackle_env = (crackle_seed / 1073741824 - 1) * crackle_amt * 0.5;
+);
+wet_l += crackle_env;
+wet_r += crackle_env;
+
+/* ─── BACKGROUND NOISE ─── */
+/* Park-Miller generators in exact double arithmetic, so the noise is the same on every CPU */
+noise_seed_l *= 16807; noise_seed_l -= floor(noise_seed_l / 2147483647) * 2147483647;
+noise_seed_r *= 16807; noise_seed_r -= floor(noise_seed_r / 2147483647) * 2147483647;
+noise_l = ((noise_seed_l / 2147483647) * 2 - 1) * noise_lvl * 0.05;
+noise_r = ((noise_seed_r / 2147483647) * 2 - 1) * noise_lvl * 0.05;
+wet_l += noise_l;
+wet_r += noise_r;
+
+/* ─── MIX & OUTPUT ─── */
+dry = 1 - mix;
+out_l = dry_l * dry + wet_l * mix;
+out_r = dry_r * dry + wet_r * mix;
+
+spl0 = out_l;
+spl1 = out_r;
+
+@gfx 480 380
+  function va_frac(x) ( x - floor(x); );
+
+  ng_knobs_begin("VINYL AGE", "ADVANCED", 480, 120, 2, 0);
+
+  // display: the wow + flutter pitch drift over 2 s, as the delay offset around the 50 ms centre
+  // (-50 to +50 ms), with the crackle clicks behind it
+  ng_plot(ng_vx + 26, ng_vy + 4, ng_vw - 30, ng_vh - 20);
+  ng_grid(4, 4, 1);
+  ng_font(4, 8, 0);
+  ng_col(NG_MUTED, 1);
+  ng_ptxt("+50", ng_px - 6 * ng_s, ng_py, 2);
+  ng_ptxt("0", ng_px - 6 * ng_s, ng_py + ng_ph / 2, 2);
+  ng_ptxt("-50", ng_px - 6 * ng_s, ng_py + ng_ph, 2);
+  va_i = 1;
+  loop(3, sprintf(#va_t, "%.1f s", va_i * 0.5); ng_ptxt(#va_t, ng_px + ng_pw * va_i / 4, ng_py + ng_ph + 10 * ng_s, 1); va_i += 1;);
+  slider3 > 0 ? (
+    ng_col(NG_MUTED, 0.6);
+    va_dt = 1 / (5 + slider3 / 100 * 150);
+    va_t = va_dt;
+    va_k = 0;
+    while (va_t < 2) (
+      va_x = floor(ng_lin_x(va_t, 0, 2)) + 0.5;
+      gfx_line(va_x, ng_py + ng_ph / 2, va_x, ng_py + ng_ph / 2 - (va_frac(va_k * 0.618034 + 0.2) * 2 - 1) * slider3 / 100 * ng_ph / 2, 0);
+      va_t += va_dt;
+      va_k += 1;
+    );
+  );
+  ng_col(NG_ACCENT, 1);
+  va_i = 0;
+  loop(floor(ng_pw) + 1,
+    va_t = va_i / ng_pw * 2;
+    va_m = sin(2 * $pi * 0.5 * va_t) * slider1 / 100 * 40 + sin(2 * $pi * 6 * va_t) * slider2 / 100 * 15;
+    va_y = ng_lin_y(va_m, -50, 50);
+    va_i == 0 ? ng_line_start(ng_px, va_y) : ng_line_to(ng_px + va_i, va_y);
+    va_i += 1;
+  );
+
+  ng_row(4);
+  sprintf(#v1, "%d%%", slider1);
+  ng_knob_ctl(1, "WOW", #v1, 0, 100, 30, 1, 0) ? update();
+  sprintf(#v2, "%d%%", slider2);
+  ng_knob_ctl(2, "FLUTTER", #v2, 0, 100, 20, 1, 0) ? update();
+  sprintf(#v3, "%d%%", slider3);
+  ng_knob_ctl(3, "CRACKLE", #v3, 0, 100, 25, 1, 0) ? update();
+  sprintf(#v4, "%d%%", slider4);
+  ng_knob_ctl(4, "NOISE", #v4, 0, 100, 10, 1, 0) ? update();
+  ng_row(4);
+  sprintf(#v5, "%d bit", slider5);
+  ng_knob_ctl(5, "BITS", #v5, 4, 16, 12, 1, 0) ? update();
+  sprintf(#v6, "%.1f kHz", slider6 / 1000);
+  ng_knob_ctl(6, "RATE", #v6, 2000, 44100, 22050, 100, 0) ? update();
+  sprintf(#v7, "%.1f kHz", slider7 / 1000);
+  ng_knob_ctl(7, "LOWPASS", #v7, 1000, 20000, 8000, 100, 0) ? update();
+  sprintf(#v8, "%d%%", slider8);
+  ng_knob_ctl(8, "MIX", #v8, 0, 100, 80, 1, 0) ? update();
+
+  ng_end();

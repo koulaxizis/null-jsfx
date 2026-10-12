@@ -1,0 +1,143 @@
+desc:NULL Harmonizer GFX
+author: Christos Koulaxizis
+tags: harmonizer harmony pitch shift voices interval thirds fifths octave backing vocals gui
+//category: Advanced
+//NULL JSFX v2.0 • https://nulljsfx.tech • MIT License
+
+import null_gfx.jsfx-inc
+
+slider1:4<-12,12,1>-Voice 1 Interval (semitones)
+slider2:7<-12,12,1>-Voice 2 Interval (semitones)
+slider3:-6<-48,0,0.5>-Voice 1 Level (dB)
+slider4:-6<-48,0,0.5>-Voice 2 Level (dB)
+slider5:8<0,30,0.5>-Detune (cents)
+slider6:15<0,80,1>-Delay (ms)
+slider7:70<0,100,1>-Spread (%)
+slider8:50<0,100,1>-Mix (%)
+
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
+
+@init
+  // NULL Harmonizer (../harmonizer.jsfx) with its own interface: same audio code, plus @gfx.
+  // Adds two pitch-shifted copies of the input at fixed intervals (e.g. +4 and +7 =
+  // a major chord). Each voice is slightly detuned and delayed so it sounds like a
+  // separate performer, and Spread pans voice 1 left and voice 2 right.
+  // Mix is an equal-power dry/wet crossfade: 0% = original only, 50% = original and
+  // harmony each at -3 dB (constant loudness), 100% = harmony voices only (for
+  // printing the harmony to its own track).
+  win = floor(srate * 0.05);
+  buf_size = ceil(srate * 0.2) + win;
+  buf = 0;
+  memset(buf, 0, buf_size);
+  freembuf(buf + buf_size);
+  wpos = 0;
+
+  function tap(d) local(rp, i, f, i2)
+  (
+    rp = wpos - d;
+    rp < 0 ? rp += buf_size;
+    i = floor(rp); f = rp - i;
+    i2 = i + 1; i2 >= buf_size ? i2 = 0;
+    buf[i] + (buf[i2] - buf[i]) * f;
+  );
+  // two-tap crossfading pitch shifter, state in this.ph
+  function voice(ratio, base) local(p2, g)
+  (
+    this.ph += (1 - ratio) / win;
+    this.ph >= 1 ? this.ph -= 1;
+    this.ph < 0 ? this.ph += 1;
+    p2 = this.ph + 0.5; p2 >= 1 ? p2 -= 1;
+    g = 0.5 - 0.5 * cos(2 * $pi * this.ph);
+    tap(base + 1 + this.ph * win) * g + tap(base + 1 + p2 * win) * (1 - g);
+  );
+  gfx_ext_retina = 1;
+
+  function update()
+  (
+    r1 = 2 ^ ((slider1 + slider5 / 100) / 12);
+    r2 = 2 ^ ((slider2 - slider5 / 100) / 12);
+    g1 = 10 ^ (slider3 / 20);
+    g2 = 10 ^ (slider4 / 20);
+    base1 = slider6 * srate / 1000;
+    base2 = slider6 * 1.37 * srate / 1000;
+    sp = slider7 / 100;
+    dry_g = cos(slider8 / 100 * $pi / 2);
+    wet_g = sin(slider8 / 100 * $pi / 2);
+  );
+
+@slider
+  update();
+
+@sample
+  buf[wpos] = (spl0 + spl1) * 0.5;
+  v1 = v1s.voice(r1, base1) * g1;
+  v2 = v2s.voice(r2, base2) * g2;
+  wpos += 1;
+  wpos >= buf_size ? wpos = 0;
+  // equal-power panning: Spread 0 = both centred, 100 = voice 1 left, voice 2 right
+  p1 = $pi / 4 * (1 - sp);
+  p2 = $pi / 2 - p1;
+  w_l = v1 * cos(p1) + v2 * cos(p2);
+  w_r = v1 * sin(p1) + v2 * sin(p2);
+  spl0 = spl0 * dry_g + w_l * wet_g;
+  spl1 = spl1 * dry_g + w_r * wet_g;
+
+@gfx 480 380
+  ng_knobs_begin("HARMONIZER", "ADVANCED", 480, 120, 2, 0);
+
+  // display: where the voices sit, pitch (-12 to +12 semitones, detune included) against stereo
+  // position (Spread); dot size follows the voice level, brightness the dry/wet Mix
+  ng_plot(ng_vx + 26, ng_vy + 4, ng_vw - 30, ng_vh - 20);
+  ng_grid(4, 4, 1);
+  ng_font(4, 8, 0);
+  ng_col(NG_MUTED, 1);
+  ng_ptxt("+12", ng_px - 6 * ng_s, ng_py, 2);
+  ng_ptxt("0", ng_px - 6 * ng_s, ng_py + ng_ph / 2, 2);
+  ng_ptxt("-12", ng_px - 6 * ng_s, ng_py + ng_ph, 2);
+  ng_ptxt("L", ng_px, ng_py + ng_ph + 10 * ng_s, 1);
+  ng_ptxt("C", ng_px + ng_pw / 2, ng_py + ng_ph + 10 * ng_s, 1);
+  ng_ptxt("R", ng_px + ng_pw, ng_py + ng_ph + 10 * ng_s, 1);
+  hm_cx = ng_px + ng_pw / 2;
+  hm_cy = ng_lin_y(0, -12, 12);
+  hm_x1 = ng_lin_x((1 - slider7 / 100) / 2, 0, 1);
+  hm_x2 = ng_lin_x(1 - (1 - slider7 / 100) / 2, 0, 1);
+  hm_y1 = ng_lin_y(slider1 + slider5 / 100, -12, 12);
+  hm_y2 = ng_lin_y(slider2 - slider5 / 100, -12, 12);
+  hm_r1 = (3 + 5 * (slider3 + 48) / 48) * ng_s;
+  hm_r2 = (3 + 5 * (slider4 + 48) / 48) * ng_s;
+  hm_wet = 0.35 + 0.65 * sin(slider8 / 100 * $pi / 2);
+  ng_col(NG_ACCENT, 0.35);
+  gfx_line(hm_cx, hm_cy, hm_x1, hm_y1, 1);
+  gfx_line(hm_cx, hm_cy, hm_x2, hm_y2, 1);
+  ng_col(NG_MUTED, 0.35 + 0.65 * cos(slider8 / 100 * $pi / 2));
+  gfx_circle(hm_cx, hm_cy, 4 * ng_s, 1, 1);
+  ng_col(NG_ACCENT, hm_wet);
+  gfx_circle(hm_x1, hm_y1, hm_r1, 1, 1);
+  gfx_circle(hm_x2, hm_y2, hm_r2, 1, 1);
+  ng_col(NG_TEXT, 1);
+  ng_ptxt("1", hm_x1 + hm_r1 + 4 * ng_s, hm_y1, 0);
+  ng_ptxt("2", hm_x2 + hm_r2 + 4 * ng_s, hm_y2, 0);
+
+  ng_row(4);
+  sprintf(#v1, "%+d st", slider1);
+  ng_knob_ctl(1, "VOICE 1", #v1, -12, 12, 4, 1, 1) ? update();
+  sprintf(#v2, "%+d st", slider2);
+  ng_knob_ctl(2, "VOICE 2", #v2, -12, 12, 7, 1, 1) ? update();
+  sprintf(#v3, "%.1f dB", slider3);
+  ng_knob_ctl(3, "LEVEL 1", #v3, -48, 0, -6, 0.5, 0) ? update();
+  sprintf(#v4, "%.1f dB", slider4);
+  ng_knob_ctl(4, "LEVEL 2", #v4, -48, 0, -6, 0.5, 0) ? update();
+  ng_row(4);
+  sprintf(#v5, "%.1f ct", slider5);
+  ng_knob_ctl(5, "DETUNE", #v5, 0, 30, 8, 0.5, 0) ? update();
+  sprintf(#v6, "%d ms", slider6);
+  ng_knob_ctl(6, "DELAY", #v6, 0, 80, 15, 1, 0) ? update();
+  sprintf(#v7, "%d%%", slider7);
+  ng_knob_ctl(7, "SPREAD", #v7, 0, 100, 70, 1, 0) ? update();
+  sprintf(#v8, "%d%%", slider8);
+  ng_knob_ctl(8, "MIX", #v8, 0, 100, 50, 1, 0) ? update();
+
+  ng_end();

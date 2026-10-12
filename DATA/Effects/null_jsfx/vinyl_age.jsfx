@@ -30,6 +30,7 @@ pdc_delay = base_samps;
 buf_l = 0;
 buf_r = buf_size;
 freembuf(buf_r + buf_size);
+memset(buf_l, 0, 2 * buf_size);
 write_pos = 0;
 lp1_l = 0; lp2_l = 0;
 lp1_r = 0; lp2_r = 0;
@@ -37,6 +38,7 @@ crackle_env = 0;
 crackle_cnt = 0;
 noise_seed_l = 12345;
 noise_seed_r = 67890;
+crackle_seed = 24680;
 wow_phase = 0;
 flutter_phase = 0;
 sr_cnt = 0;
@@ -133,16 +135,18 @@ crackle_cnt += 1;
 crackle_env *= 0.95;
 crackle_cnt > (srate / (5 + crackle_amt * 150)) && crackle_amt > 0 ? (
   crackle_cnt = 0;
-  crackle_env = (rand(2) - 1) * crackle_amt * 0.5;
+  crackle_seed *= 16807; crackle_seed -= floor(crackle_seed / 2147483647) * 2147483647;
+  crackle_env = (crackle_seed / 1073741824 - 1) * crackle_amt * 0.5;
 );
 wet_l += crackle_env;
 wet_r += crackle_env;
 
 /* ─── BACKGROUND NOISE ─── */
-noise_seed_l = (noise_seed_l * 1103515245 + 12345) & 0x7fffffff;
-noise_seed_r = (noise_seed_r * 1103515245 + 67890) & 0x7fffffff;
-noise_l = ((noise_seed_l / 0x7fffffff) * 2 - 1) * noise_lvl * 0.05;
-noise_r = ((noise_seed_r / 0x7fffffff) * 2 - 1) * noise_lvl * 0.05;
+/* Park-Miller generators in exact double arithmetic, so the noise is the same on every CPU */
+noise_seed_l *= 16807; noise_seed_l -= floor(noise_seed_l / 2147483647) * 2147483647;
+noise_seed_r *= 16807; noise_seed_r -= floor(noise_seed_r / 2147483647) * 2147483647;
+noise_l = ((noise_seed_l / 2147483647) * 2 - 1) * noise_lvl * 0.05;
+noise_r = ((noise_seed_r / 2147483647) * 2 - 1) * noise_lvl * 0.05;
 wet_l += noise_l;
 wet_r += noise_r;
 

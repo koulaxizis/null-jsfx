@@ -1,0 +1,186 @@
+desc:NULL Shimmer Reverb GFX
+author: Christos Koulaxizis
+tags: shimmer reverb octave pitch ambient pad ethereal cinematic gui
+//category: Advanced
+//NULL JSFX v2.0 • https://nulljsfx.tech • MIT License
+
+import null_gfx.jsfx-inc
+
+slider1:70<0,100,1>-Size (%)
+slider2:6<1,20,0.1>-Decay (s)
+slider3:50<0,100,1>-Shimmer (%)
+slider4:0<0,4,1{+12 (Octave),+7 (Fifth),+19 (Octave + Fifth),+24 (Two Octaves),-12 (Octave Down)}>-Pitch
+slider5:6000<1000,16000,10>-Damping (Hz)
+slider6:35<0,100,1>-Mix (%)
+
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
+
+@init
+  // NULL Shimmer Reverb (../shimmer_reverb.jsfx) with its own interface: same audio code, plus @gfx.
+  // A large, smooth reverb (4-line feedback delay network with a Hadamard mixing
+  // matrix) whose tail is fed through a pitch shifter and back into the network. Each
+  // round trip the tail climbs another interval, building the bright, organ-like
+  // "shimmer" cloud. Shimmer sets how much of the tail is pitched.
+  max_len = ceil(srate * 0.2);
+  win = floor(srate * 0.08);
+  d1 = 0; d2 = d1 + max_len; d3 = d2 + max_len; d4 = d3 + max_len;
+  ps = d4 + max_len;
+  ps_size = win + 4;
+  freembuf(ps + ps_size);
+  memset(d1, 0, ps + ps_size);
+  wpos = 0; ppos = 0; ph = 0;
+  f1 = f2 = f3 = f4 = 0;
+  shim = 0;
+
+  function line(buf, len) local(rp)
+  (
+    rp = wpos - len;
+    rp < 0 ? rp += max_len;
+    buf[rp];
+  );
+  function ps_tap(d) local(rp, i, f, i2)
+  (
+    rp = ppos - d; rp < 0 ? rp += ps_size;
+    i = floor(rp); f = rp - i;
+    i2 = i + 1; i2 >= ps_size ? i2 = 0;
+    ps[i] + (ps[i2] - ps[i]) * f;
+  );
+  gfx_ext_retina = 1;
+
+  function update()
+  (
+    sz = 0.4 + slider1 / 100 * 0.6;
+    // mutually prime-ish line lengths (ms)
+    l1 = floor(srate * 0.0731 * sz); l2 = floor(srate * 0.0857 * sz);
+    l3 = floor(srate * 0.0997 * sz); l4 = floor(srate * 0.1129 * sz);
+    avg = (l1 + l2 + l3 + l4) / 4 / srate;
+    g = 10 ^ (-3 * avg / slider2);
+    shimmer = slider3 / 100;
+    semis = slider4 == 0 ? 12 : slider4 == 1 ? 7 : slider4 == 2 ? 19 : slider4 == 3 ? 24 : -12;
+    ratio = 2 ^ (semis / 12);
+    ph_inc = (1 - ratio) / win;
+    damp = exp(-2 * $pi * slider5 / srate);
+    mix = slider6 / 100;
+  );
+
+@slider
+  update();
+
+@sample
+  x_l = spl0; x_r = spl1;
+  o1 = line(d1, l1); o2 = line(d2, l2); o3 = line(d3, l3); o4 = line(d4, l4);
+  // damping in the loop
+  f1 = (1 - damp) * o1 + damp * f1; f2 = (1 - damp) * o2 + damp * f2;
+  f3 = (1 - damp) * o3 + damp * f3; f4 = (1 - damp) * o4 + damp * f4;
+
+  // pitch-shift the tail (two crossfading taps)
+  ps[ppos] = (f1 + f2 + f3 + f4) * 0.25;
+  ph += ph_inc; ph >= 1 ? ph -= 1; ph < 0 ? ph += 1;
+  ph2 = ph + 0.5; ph2 >= 1 ? ph2 -= 1;
+  gw = 0.5 - 0.5 * cos(2 * $pi * ph);
+  shim = ps_tap(1 + ph * win) * gw + ps_tap(1 + ph2 * win) * (1 - gw);
+  ppos += 1; ppos >= ps_size ? ppos = 0;
+
+  // Hadamard mix (energy preserving), feedback gain g, shimmer replaces part of it
+  h1 = (f1 + f2 + f3 + f4) * 0.5; h2 = (f1 - f2 + f3 - f4) * 0.5;
+  h3 = (f1 + f2 - f3 - f4) * 0.5; h4 = (f1 - f2 - f3 + f4) * 0.5;
+  s = shim * shimmer;
+  k = g * (1 - shimmer * 0.5);
+  d1[wpos] = x_l + h1 * k + s * g;
+  d2[wpos] = x_r + h2 * k + s * g;
+  d3[wpos] = x_l + h3 * k;
+  d4[wpos] = x_r + h4 * k;
+  wpos += 1; wpos >= max_len ? wpos = 0;
+
+  w_l = (o1 + o3) * 0.35;
+  w_r = (o2 + o4) * 0.35;
+  spl0 = spl0 * (1 - mix) + w_l * mix;
+  spl1 = spl1 * (1 - mix) + w_r * mix;
+
+@gfx 480 294
+  // log-frequency grid (20 Hz to 20 kHz) with lines at 0, -24 and -48 dB, and labels
+  function sh_grid() local(d, m, f, xx, k, yy)
+  (
+    d = 10;
+    loop(4,
+      m = 1;
+      loop(9,
+        f = m * d;
+        f >= 20 && f <= 20000 ? (
+          xx = floor(ng_freq_x(f)) + 0.5;
+          ng_col(NG_BORDER, m == 1 ? 1 : 0.5);
+          gfx_line(xx, ng_py, xx, ng_py + ng_ph, 0);
+        );
+        m += 1;
+      );
+      d *= 10;
+    );
+    k = 0;
+    loop(3,
+      yy = floor(ng_py + ng_ph * k / 2) + 0.5;
+      ng_col(NG_BORDER, 0.6);
+      gfx_line(ng_px, yy, ng_px + ng_pw, yy, 0);
+      k += 1;
+    );
+    ng_font(4, 8, 0);
+    ng_col(NG_MUTED, 1);
+    ng_ptxt("0", ng_px - 6 * ng_s, ng_py, 2);
+    ng_ptxt("-24", ng_px - 6 * ng_s, ng_py + ng_ph / 2, 2);
+    ng_ptxt("-48", ng_px - 6 * ng_s, ng_py + ng_ph, 2);
+    ng_ptxt("100", ng_freq_x(100), ng_py + ng_ph + 10 * ng_s, 1);
+    ng_ptxt("1k", ng_freq_x(1000), ng_py + ng_ph + 10 * ng_s, 1);
+    ng_ptxt("10k", ng_freq_x(10000), ng_py + ng_ph + 10 * ng_s, 1);
+  );
+
+  ng_knobs_begin("SHIMMER REVERB", "ADVANCED", 480, 120, 1, 0);
+
+  // display: a 440 Hz note and the partials the shimmer loop stacks on it, one per trip through
+  // the pitch shifter, each Shimmer lower and darkened by the loop's damping (dashed), level in
+  // dB (0 to -48) over log frequency
+  ng_plot(ng_vx + 26, ng_vy + 4, ng_vw - 30, ng_vh - 20);
+  sh_grid();
+  sh_x = floor(ng_freq_x(slider5)) + 0.5;
+  ng_col(NG_ACCENT, 0.5);
+  sh_y = ng_py;
+  while (
+    gfx_line(sh_x, sh_y, sh_x, min(sh_y + 3 * ng_s, ng_py + ng_ph), 0);
+    sh_y += 6 * ng_s;
+    sh_y < ng_py + ng_ph;
+  );
+  sh_bw = max(2, 3 * ng_s);
+  ng_col(NG_MUTED, 1);
+  gfx_rect(ng_freq_x(440) - sh_bw / 2, ng_py, sh_bw, ng_ph);
+  sh_semis = slider4 == 0 ? 12 : slider4 == 1 ? 7 : slider4 == 2 ? 19 : slider4 == 3 ? 24 : -12;
+  sh_d = exp(-2 * $pi * slider5 / srate);
+  sh_f = 440;
+  sh_g = 1;
+  sh_k = 1;
+  ng_col(NG_ACCENT, 1);
+  while (
+    sh_f *= 2 ^ (sh_semis / 12);
+    sh_g *= slider3 / 100 * (1 - sh_d) / sqrt(1 - 2 * sh_d * cos(2 * $pi * min(sh_f, 0.5 * srate) / srate) + sh_d * sh_d);
+    sh_f >= 20 && sh_f <= 20000 && sh_g > 0.004 ? (
+      sh_y = ng_lin_y(20 * log10(sh_g), -48, 0);
+      gfx_rect(ng_freq_x(sh_f) - sh_bw / 2, sh_y, sh_bw, ng_py + ng_ph - sh_y);
+    );
+    sh_k += 1;
+    sh_k <= 12 && sh_f >= 20 && sh_f <= 20000 && sh_g > 0.004;
+  );
+
+  ng_row(6);
+  sprintf(#v1, "%d%%", slider1);
+  ng_knob_ctl(1, "SIZE", #v1, 0, 100, 70, 1, 0) ? update();
+  sprintf(#v2, "%.1f s", slider2);
+  ng_knob_ctl(2, "DECAY", #v2, 1, 20, 6, 0.1, 0) ? update();
+  sprintf(#v3, "%d%%", slider3);
+  ng_knob_ctl(3, "SHIMMER", #v3, 0, 100, 50, 1, 0) ? update();
+  ng_select_ctl(4, "PITCH", "+12|+7|+19|+24|-12", 0) ? update();
+  sprintf(#v5, "%.1f kHz", slider5 / 1000);
+  ng_knob_ctl(5, "DAMPING", #v5, 1000, 16000, 6000, 10, 0) ? update();
+  sprintf(#v6, "%d%%", slider6);
+  ng_knob_ctl(6, "MIX", #v6, 0, 100, 35, 1, 0) ? update();
+
+  ng_end();

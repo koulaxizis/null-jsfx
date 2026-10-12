@@ -853,7 +853,7 @@ const guides = {
     ],
     uses: ['Ambient clouds from vocals or guitar', 'Pitched, shimmering delay textures', 'Reverse grain swells', 'Evolving pads from short sources', 'Glitchy, scattered echoes'],
     properties: 'Signal chain: Input + Feedback → 3 s Delay Line → Grain Scheduler (up to 16 Hann-windowed grains, random timing, Spray, Reverse, Pan) → Level Normalisation → Mix → Output. Zero latency.',
-    formats: ['JSFX']
+    formats: ['JSFX', 'GFX', 'VST3', 'CLAP']
   },
   'harmonizer': {
     title: 'HARMONIZER',
@@ -871,7 +871,7 @@ const guides = {
     ],
     uses: ['Instant backing vocal harmonies', 'Thirds and fifths on lead lines', 'Octave doubling on guitars and synths', 'Wide stereo harmony beds'],
     properties: 'Signal chain: Input (summed to mono) → 2 Crossfading Delay-Line Pitch Shifters (50 ms window) → Detune + Delay → Equal-Power Spread → Equal-Power Dry/Wet Mix → Output. Fixed intervals (no key detection); Mix at 100% outputs only the harmony for printing to its own track; zero latency.',
-    formats: ['JSFX']
+    formats: ['JSFX', 'GFX', 'VST3', 'CLAP']
   },
   'kick-shaper': {
     title: 'KICK SHAPER',
@@ -996,7 +996,7 @@ const guides = {
     ],
     uses: ['Ethereal pads and ambient beds', 'Shimmering guitar swells', 'Cinematic tails on vocals and pianos', 'Octave-down dark ambience'],
     properties: 'Signal chain: Input → 4-Line Feedback Delay Network (Hadamard matrix) → Damping → Pitch Shifter (crossfading taps, 80 ms window) → Feedback into the network → Mix → Output. Each round trip the tail climbs another interval; zero latency.',
-    formats: ['JSFX']
+    formats: ['JSFX', 'GFX', 'VST3', 'CLAP']
   },
   'spectral-freeze': {
     title: 'SPECTRAL FREEZE',
@@ -1044,7 +1044,7 @@ const guides = {
     ],
     uses: ['Surf guitar and amp-style reverb', 'Dub drips and boings on snares', 'Vintage character on vocals', 'Lo-fi organ and keys ambience'],
     properties: 'Signal chain: Input (summed to mono) → 120 Hz Highpass → Pre-Delay → Two Springs (40-stage dispersive allpass chains in feedback loops, 43.7 / 53.1 ms) → Tone Lowpass + Drip → Mix → Output. Left and right springs differ in length for stereo; zero latency.',
-    formats: ['JSFX']
+    formats: ['JSFX', 'GFX', 'VST3', 'CLAP']
   },
   'sub-bloom': {
     title: 'SUB BLOOM',
@@ -1122,7 +1122,7 @@ const guides = {
     ],
     uses: ['Lo-fi hip-hop and chillout textures', 'Make samples sound like old records', 'Nostalgic, worn character on pianos and vocals', 'Degraded radio or memory effects'],
     properties: 'Signal chain: Input → Wow/Flutter Modulated Delay (50 ms centre) → Bitcrush → Downsample → 2-Pole Lowpass → Crackle → Noise → Mix → Output. The dry signal is delayed by the same 50 ms so any Mix setting blends in phase (no slapback); the 50 ms latency is reported to the host for delay compensation.',
-    formats: ['JSFX']
+    formats: ['JSFX', 'GFX', 'VST3', 'CLAP']
   },
   'vocoder': {
     title: 'VOCODER',
@@ -1159,7 +1159,7 @@ const guides = {
     ],
     uses: ['Warbly tape-style echoes', 'Dub delays that darken and distort as they repeat', 'Wide, wobbling stereo delays on guitars', 'Lo-fi textures on vocals and synths'],
     properties: 'Signal chain: Input → Modulated Delay Line → Filter → Saturation (tanh) → Feedback → Mix → Output. Right-channel LFO runs a quarter cycle behind the left for width; repeats degrade on each pass; max 1 s delay, zero latency.',
-    formats: ['JSFX']
+    formats: ['JSFX', 'GFX', 'VST3', 'CLAP']
   }
 };
 // END GUIDES

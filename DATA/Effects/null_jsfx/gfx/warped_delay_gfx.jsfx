@@ -1,0 +1,168 @@
+desc:NULL Warped Delay GFX
+author: Christos Koulaxizis
+tags: delay modulated feedback distortion filter warping gui
+//category: Advanced
+//NULL JSFX v2.0 • https://nulljsfx.tech • MIT License
+
+import null_gfx.jsfx-inc
+
+slider1:150<1,1000,1>-Time (ms)
+slider2:2<0.1,10,0.1>-Mod Rate (Hz)
+slider3:10<0,50,0.1>-Mod Depth (ms)
+slider4:40<0,99,1>-Feedback (%)
+slider5:30<0,100,1>-Distortion (%)
+slider6:0<0,3,1{Off,LP,HP,BP}>-Filter
+slider7:2000<100,20000,100>-Filter Freq (Hz)
+slider8:50<0,100,1>-Mix (%)
+
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
+
+@init
+  // NULL Warped Delay (../warped_delay.jsfx) with its own interface: same audio code, plus @gfx.
+  // Stereo delay whose time is wobbled by an LFO (tape-style warble); the repeats are
+  // filtered and saturated inside the feedback loop, so they degrade as they repeat.
+  // The right channel's LFO runs a quarter cycle behind the left for width.
+  buf_size = ceil(srate * 1.1);
+  buf_l = 0;
+  buf_r = buf_l + buf_size;
+  memset(buf_l, 0, 2 * buf_size);
+  freembuf(buf_r + buf_size);
+  wpos = 0;
+  phase = 0;
+
+  function tap(buf, delay) local(rp, i, fr, i2)
+  (
+    rp = wpos - delay;
+    rp < 0 ? rp += buf_size;
+    i = floor(rp);
+    fr = rp - i;
+    i2 = i + 1;
+    i2 >= buf_size ? i2 = 0;
+    buf[i] + (buf[i2] - buf[i]) * fr;
+  );
+
+  // biquad with its own state (this.x1 ...) so each channel filters independently
+  function biquad(x) local(y)
+  (
+    y = b0 * x + b1 * this.x1 + b2 * this.x2 - a1 * this.y1 - a2 * this.y2;
+    this.x2 = this.x1; this.x1 = x;
+    this.y2 = this.y1; this.y1 = y;
+    y;
+  );
+
+  function warm(x) local(d, d2)
+  (
+    d = x * (1 + dist_amt * 3);
+    d = max(-3, min(3, d));
+    d2 = d * d;
+    // tanh approximation, then back down so distortion does not change the level much
+    d * (27 + d2) / (27 + 9 * d2) / (1 + dist_amt);
+  );
+  gfx_ext_retina = 1;
+
+  function update()
+  (
+    del_ms = slider1;
+    mod_rate = slider2;
+    mod_depth = min(slider3, slider1 - 0.5);
+    feedback = slider4 / 100;
+    dist_amt = slider5 / 100;
+    filt_mode = slider6;
+    mix = slider8 / 100;
+
+    w = 2 * $pi * min(slider7, srate * 0.45) / srate;
+    cs = cos(w);
+    alpha = sin(w) / (2 * 0.707);
+    n = 1 / (1 + alpha);
+    filt_mode == 1 ? (
+      b0 = (1 - cs) * 0.5 * n; b1 = (1 - cs) * n; b2 = b0;
+    ) : filt_mode == 2 ? (
+      b0 = (1 + cs) * 0.5 * n; b1 = -(1 + cs) * n; b2 = b0;
+    ) : filt_mode == 3 ? (
+      b0 = alpha * n; b1 = 0; b2 = -alpha * n;
+    ) : (
+      b0 = 1; b1 = b2 = 0;
+    );
+    filt_mode == 0 ? (a1 = a2 = 0) : (a1 = -2 * cs * n; a2 = (1 - alpha) * n);
+  );
+
+@slider
+  update();
+
+@sample
+  phase += 2 * $pi * mod_rate / srate;
+  phase >= 2 * $pi ? phase -= 2 * $pi;
+  d_l = max(1, (del_ms + sin(phase) * mod_depth) * srate / 1000);
+  d_r = max(1, (del_ms + cos(phase) * mod_depth) * srate / 1000);
+
+  wet_l = fl.biquad(tap(buf_l, d_l));
+  wet_r = fr.biquad(tap(buf_r, d_r));
+  wet_l = warm(wet_l);
+  wet_r = warm(wet_r);
+
+  buf_l[wpos] = spl0 + wet_l * feedback;
+  buf_r[wpos] = spl1 + wet_r * feedback;
+  wpos += 1;
+  wpos >= buf_size ? wpos = 0;
+
+  spl0 = spl0 * (1 - mix) + wet_l * mix;
+  spl1 = spl1 * (1 - mix) + wet_r * mix;
+
+@gfx 480 380
+  ng_knobs_begin("WARPED DELAY", "ADVANCED", 480, 120, 2, 0);
+
+  // display: the delay-time warble over 1 s, as an offset from Time (-50 to +50 ms): left channel
+  // (sine) bright, right channel (a quarter cycle behind) dim
+  ng_plot(ng_vx + 26, ng_vy + 4, ng_vw - 30, ng_vh - 20);
+  ng_grid(4, 4, 1);
+  ng_font(4, 8, 0);
+  ng_col(NG_MUTED, 1);
+  ng_ptxt("+50", ng_px - 6 * ng_s, ng_py, 2);
+  ng_ptxt("0", ng_px - 6 * ng_s, ng_py + ng_ph / 2, 2);
+  ng_ptxt("-50", ng_px - 6 * ng_s, ng_py + ng_ph, 2);
+  wd_i = 1;
+  loop(3, sprintf(#wd_t, "%.2f s", wd_i * 0.25); ng_ptxt(#wd_t, ng_px + ng_pw * wd_i / 4, ng_py + ng_ph + 10 * ng_s, 1); wd_i += 1;);
+  wd_d = min(slider3, slider1 - 0.5);
+  ng_col(NG_MUTED, 0.8);
+  wd_i = 0;
+  loop(floor(ng_pw) + 1,
+    wd_y = ng_lin_y(cos(2 * $pi * slider2 * wd_i / ng_pw) * wd_d, -50, 50);
+    wd_i > 0 ? gfx_line(ng_px + wd_i - 1, wd_py, ng_px + wd_i, wd_y, 1);
+    wd_py = wd_y;
+    wd_i += 1;
+  );
+  ng_col(NG_ACCENT, 1);
+  wd_i = 0;
+  loop(floor(ng_pw) + 1,
+    wd_y = ng_lin_y(sin(2 * $pi * slider2 * wd_i / ng_pw) * wd_d, -50, 50);
+    wd_i == 0 ? ng_line_start(ng_px, wd_y) : ng_line_to(ng_px + wd_i, wd_y);
+    wd_i += 1;
+  );
+  ng_font(1, 7.5, 1);
+  ng_col(NG_ACCENT, 1);
+  ng_txt("L", ng_vx + 34, ng_vy + 12, 0, 0);
+  ng_col(NG_MUTED, 1);
+  ng_txt("R", ng_vx + 46, ng_vy + 12, 0, 0);
+
+  ng_row(4);
+  sprintf(#v1, "%d ms", slider1);
+  ng_knob_ctl(1, "TIME", #v1, 1, 1000, 150, 1, 0) ? update();
+  sprintf(#v2, "%.1f Hz", slider2);
+  ng_knob_ctl(2, "RATE", #v2, 0.1, 10, 2, 0.1, 0) ? update();
+  sprintf(#v3, "%.1f ms", slider3);
+  ng_knob_ctl(3, "DEPTH", #v3, 0, 50, 10, 0.1, 0) ? update();
+  sprintf(#v4, "%d%%", slider4);
+  ng_knob_ctl(4, "FEEDBACK", #v4, 0, 99, 40, 1, 0) ? update();
+  ng_row(4);
+  sprintf(#v5, "%d%%", slider5);
+  ng_knob_ctl(5, "DRIVE", #v5, 0, 100, 30, 1, 0) ? update();
+  ng_select_ctl(6, "FILTER", "OFF|LP|HP|BP", 0) ? update();
+  slider7 < 1000 ? sprintf(#v7, "%d Hz", slider7) : sprintf(#v7, "%.1f kHz", slider7 / 1000);
+  ng_knob_ctl(7, "FREQ", #v7, 100, 20000, 2000, 100, 0) ? update();
+  sprintf(#v8, "%d%%", slider8);
+  ng_knob_ctl(8, "MIX", #v8, 0, 100, 50, 1, 0) ? update();
+
+  ng_end();
