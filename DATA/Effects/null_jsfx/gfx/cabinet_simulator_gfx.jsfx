@@ -1,0 +1,159 @@
+desc:NULL Cabinet Simulator GFX
+author: Christos Koulaxizis
+tags: cabinet cab speaker guitar bass amp simulation di re-amp gui
+//category: Essentials
+//NULL JSFX v2.0 • https://nulljsfx.tech • MIT License
+
+import null_gfx.jsfx-inc
+
+slider1:2<0,4,1{1x12 Open Back,2x12 Combo,4x12 Closed Back,1x15 Bass,Small Radio}>-Cabinet
+slider2:30<0,100,1>-Mic Position (%)
+slider3:80<20,300,1>-Low Cut (Hz)
+slider4:100<0,100,1>-Mix (%)
+slider5:0<-12,12,0.1>-Output (dB)
+
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
+
+@init
+  // NULL Cabinet Simulator (../cabinet_simulator.jsfx) with its own interface: same audio code, plus @gfx.
+  // Turns a DI or amp-output signal into the sound of a miked speaker cabinet, without
+  // impulse files. Each cabinet is a set of filters: the low-end resonance of the box,
+  // the cone's mid character and presence peak, and the steep roll-off of the speaker.
+  // Mic Position: 0% = centre of the cone (bright), 100% = edge (darker, softer).
+
+  function biquad(type, freq, q, gain) local(w, c, s, al, A, a0)
+  (
+    w = 2 * $pi * min(freq, srate * 0.45) / srate; c = cos(w); s = sin(w);
+    al = s / (2 * q); A = 10 ^ (gain / 40);
+    type == 0 ? (       // high-pass
+      this.b0 = (1 + c) / 2; this.b1 = -(1 + c); this.b2 = this.b0; a0 = 1 + al; this.a1 = -2 * c; this.a2 = 1 - al;
+    ) : type == 1 ? (   // low-pass
+      this.b0 = (1 - c) / 2; this.b1 = 1 - c; this.b2 = this.b0; a0 = 1 + al; this.a1 = -2 * c; this.a2 = 1 - al;
+    ) : (               // peaking
+      this.b0 = 1 + al * A; this.b1 = -2 * c; this.b2 = 1 - al * A; a0 = 1 + al / A; this.a1 = -2 * c; this.a2 = 1 - al / A;
+    );
+    this.b0 /= a0; this.b1 /= a0; this.b2 /= a0; this.a1 /= a0; this.a2 /= a0;
+  );
+  function run(x) local(y)
+  (
+    y = this.b0 * x + this.b1 * this.x1 + this.b2 * this.x2 - this.a1 * this.y1 - this.a2 * this.y2;
+    this.x2 = this.x1; this.x1 = x; this.y2 = this.y1; this.y1 = y; y;
+  );
+  // the same coefficients go to both channels
+  function set_stage(type, freq, q, gain)
+  (
+    this.l.biquad(type, freq, q, gain);
+    this.r.biquad(type, freq, q, gain);
+  );
+
+  function update()
+  (
+    cab = slider1;
+    m = slider2 / 100;
+    // per cabinet: box resonance, low-mid, mid scoop, presence, roll-off frequency
+    cab == 0 ? (res = 110; res_g = 4;  lm = 400;  lm_g = 1;  sc = 900;  sc_g = -3; pr = 2500; pr_g = 5; lp = 5500; base_lc = 70);
+    cab == 1 ? (res = 100; res_g = 5;  lm = 350;  lm_g = 2;  sc = 800;  sc_g = -4; pr = 2200; pr_g = 4; lp = 5000; base_lc = 60);
+    cab == 2 ? (res = 85;  res_g = 7;  lm = 250;  lm_g = 2;  sc = 650;  sc_g = -6; pr = 2000; pr_g = 5; lp = 4500; base_lc = 50);
+    cab == 3 ? (res = 60;  res_g = 6;  lm = 200;  lm_g = 3;  sc = 600;  sc_g = -5; pr = 1500; pr_g = 3; lp = 3000; base_lc = 30);
+    cab == 4 ? (res = 300; res_g = 3;  lm = 800;  lm_g = 4;  sc = 1500; sc_g = -2; pr = 2500; pr_g = 6; lp = 3500; base_lc = 250);
+    lp *= 1 - 0.45 * m;
+    pr_g *= 1 - 0.7 * m;
+    lc = max(slider3, base_lc);
+    st1.set_stage(0, lc, 0.707, 0);
+    st2.set_stage(2, res, 1.2, res_g);
+    st3.set_stage(2, lm, 0.9, lm_g);
+    st4.set_stage(2, sc, 1.0, sc_g);
+    st5.set_stage(2, pr, 1.5, pr_g);
+    st6.set_stage(1, lp, 0.6, 0);
+    st7.set_stage(1, lp * 1.3, 0.9, 0);
+    mix = slider4 / 100;
+    out = 10 ^ (slider5 / 20);
+  );
+
+  // display: multiplies (cb_hr, cb_hi) by this biquad's response at w (radians per sample)
+  function cb_mul(w) local(c1, s1, c2, s2, nr, ni, dr, di, d2, hr, hi, tr)
+  (
+    c1 = cos(w); s1 = sin(w); c2 = cos(2 * w); s2 = sin(2 * w);
+    nr = this.b0 + this.b1 * c1 + this.b2 * c2; ni = -(this.b1 * s1 + this.b2 * s2);
+    dr = 1 + this.a1 * c1 + this.a2 * c2; di = -(this.a1 * s1 + this.a2 * s2);
+    d2 = max(dr * dr + di * di, 0.00000000000000000001);
+    hr = (nr * dr + ni * di) / d2; hi = (ni * dr - nr * di) / d2;
+    tr = cb_hr * hr - cb_hi * hi;
+    cb_hi = cb_hr * hi + cb_hi * hr;
+    cb_hr = tr;
+  );
+  // the whole plugin at f Hz in dB: the seven stages, blended with the dry signal, times Output
+  function cb_db(f) local(w)
+  (
+    w = 2 * $pi * min(f, srate * 0.4999) / srate;
+    cb_hr = 1; cb_hi = 0;
+    st1.l.cb_mul(w); st2.l.cb_mul(w); st3.l.cb_mul(w); st4.l.cb_mul(w);
+    st5.l.cb_mul(w); st6.l.cb_mul(w); st7.l.cb_mul(w);
+    cb_hr = (1 - mix) + mix * cb_hr; cb_hi = mix * cb_hi;
+    10 * log10(max(cb_hr * cb_hr + cb_hi * cb_hi, 0.00000000000000000001)) + 20 * log10(out);
+  );
+
+  gfx_ext_retina = 1;
+
+@slider
+  update();
+
+@sample
+  // left channel
+  y = st1.l.run(spl0); y = st2.l.run(y); y = st3.l.run(y); y = st4.l.run(y);
+  y = st5.l.run(y); y = st6.l.run(y); wl = st7.l.run(y);
+  // right channel
+  y = st1.r.run(spl1); y = st2.r.run(y); y = st3.r.run(y); y = st4.r.run(y);
+  y = st5.r.run(y); y = st6.r.run(y); wr = st7.r.run(y);
+  spl0 = (spl0 * (1 - mix) + wl * mix) * out;
+  spl1 = (spl1 * (1 - mix) + wr * mix) * out;
+
+@gfx 480 294
+  ng_knobs_begin("CABINET SIMULATOR", "ESSENTIALS", 480, 120, 1, 0);
+
+  // display: the cabinet's magnitude response with Mix and Output (-24..+24 dB), the low cut
+  // dashed, the cabinet's name at the top right
+  ng_plot(ng_vx + 26, ng_vy + 4, ng_vw - 30, ng_vh - 20);
+  ng_grid_freq(36);
+  cb_x = floor(ng_freq_x(lc)) + 0.5;
+  ng_col(NG_ACCENT, 0.5);
+  cb_y = ng_py;
+  while (
+    gfx_line(cb_x, cb_y, cb_x, min(cb_y + 3 * ng_s, ng_py + ng_ph), 0);
+    cb_y += 6 * ng_s;
+    cb_y < ng_py + ng_ph;
+  );
+  cb_zy = ng_lin_y(0, -24, 24);
+  ng_col(NG_ACCENT, 0.10);
+  cb_i = 0;
+  loop(floor(ng_pw) + 1,
+    gfx_line(ng_px + cb_i, cb_zy, ng_px + cb_i, ng_lin_y(cb_db(20 * 1000 ^ (cb_i / ng_pw)), -24, 24), 0);
+    cb_i += 1;
+  );
+  ng_col(NG_ACCENT, 1);
+  cb_i = 0;
+  loop(floor(ng_pw) + 1,
+    cb_y = ng_lin_y(cb_db(20 * 1000 ^ (cb_i / ng_pw)), -24, 24);
+    cb_i == 0 ? ng_line_start(ng_px, cb_y) : ng_line_to(ng_px + cb_i, cb_y);
+    cb_i += 1;
+  );
+  ng_font(4, 8, 0);
+  ng_col(NG_MUTED, 1);
+  ng_ptxt(slider1 == 0 ? "1x12 Open Back" : slider1 == 1 ? "2x12 Combo" : slider1 == 2 ? "4x12 Closed Back" :
+          slider1 == 3 ? "1x15 Bass" : "Small Radio", ng_px + ng_pw - 6 * ng_s, ng_py + 8 * ng_s, 2);
+
+  ng_row(5);
+  ng_select_ctl(1, "CABINET", "1X12|2X12|4X12|1X15|RADIO", 0) ? update();
+  sprintf(#cb_m, "%d%%", slider2);
+  ng_knob_ctl(2, "MIC POS", #cb_m, 0, 100, 30, 1, 0) ? update();
+  sprintf(#cb_l, "%d Hz", slider3);
+  ng_knob_ctl(3, "LOW CUT", #cb_l, 20, 300, 80, 1, 0) ? update();
+  sprintf(#cb_mx, "%d%%", slider4);
+  ng_knob_ctl(4, "MIX", #cb_mx, 0, 100, 100, 1, 0) ? update();
+  sprintf(#cb_o, "%+.1f dB", slider5);
+  ng_knob_ctl(5, "OUTPUT", #cb_o, -12, 12, 0, 0.1, 1) ? update();
+
+  ng_end();

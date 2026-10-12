@@ -301,7 +301,7 @@ const guides = {
     ],
     uses: ['Turning DI guitar or bass into a miked-cab tone', 'Taming fizz after amp sims and distortion', 'Lo-fi small-speaker effects', 'Quick re-amp tones without impulse files'],
     properties: 'Input → high-pass → box resonance, low-mid, mid scoop and presence peaking filters → two cascaded low-pass roll-off stages → Dry/Wet Mix → Output. Filter-based (no impulse responses), identical on both channels; zero latency.',
-    formats: ['JSFX']
+    formats: ['JSFX', 'GFX', 'VST3', 'CLAP']
   },
   'channel-utility': {
     title: 'CHANNEL UTILITY',
@@ -406,7 +406,7 @@ const guides = {
     ],
     uses: ['Taming resonances only when they ring out', 'Controlling boomy low notes on bass or vocals', 'Reducing harshness on loud passages only', 'Lifting a band only when it is played', 'Frequency-specific control on mixes'],
     properties: 'Input → four bell bands in series (each: band-pass detector → envelope → gain scaled by level over Threshold) → Makeup → Output. Below Threshold a band is neutral; detection is stereo-linked per band and there is no latency.',
-    formats: ['JSFX']
+    formats: ['JSFX', 'GFX', 'VST3', 'CLAP']
   },
   'dynamics': {
     title: 'DYNAMICS',
@@ -456,7 +456,7 @@ const guides = {
     ],
     uses: ['Taking the top end off harsh sources', 'Thinning out the low end with High Pass', 'Filter sweeps via automation', 'Telephone and radio tones with Band Pass', 'Cutting a single resonance with Notch'],
     properties: 'Input → 2-pole (12 dB/oct) state-variable filter (low-pass, high-pass, band-pass and notch from the same structure) → Gain → Output. Stable under fast automation; zero latency.',
-    formats: ['JSFX']
+    formats: ['JSFX', 'GFX', 'VST3', 'CLAP']
   },
   'flanger': {
     title: 'FLANGER',
@@ -610,7 +610,7 @@ const guides = {
     ],
     uses: ['Surgical cuts of problem frequencies', 'Broad tonal shaping with shelves', 'High-pass and low-pass cleanup', 'Finding resonances with band Solo', 'Mastering EQ'],
     properties: 'Input → five RBJ biquad bands in series (Low Shelf, High Shelf, Peaking, Low Pass, High Pass, Notch, Band Pass or All Pass per band) → Output. Solo replaces the soloed band with a band-pass and mutes the other bands\' processing; Gain only affects shelf and peaking types; zero latency.',
-    formats: ['JSFX']
+    formats: ['JSFX', 'GFX', 'VST3', 'CLAP']
   },
   'phaser': {
     title: 'PHASER',
