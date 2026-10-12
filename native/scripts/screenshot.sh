@@ -28,7 +28,7 @@ sleep 1
 jackd -n "shot$$" -d dummy -r 48000 >/dev/null 2>&1 & jack=$!
 export JACK_DEFAULT_SERVER="shot$$"
 sleep 1
-"$build/bin/null_jsfx_$plugin" >/dev/null 2>&1 & app=$!
+"$build/bin/null_jsfx_$plugin" >"${NULL_SHOT_LOG:-/dev/null}" 2>&1 & app=$!
 trap 'kill $app $jack $xvfb 2>/dev/null || true' EXIT
 for _ in $(seq 20); do
   win=$(xdotool search --pid "$app" 2>/dev/null | tail -1 || true)

@@ -19,7 +19,7 @@ desc:NULL JSFX shared GFX library
   NG_ICON_B  = 0xaaaaaa;  // icon gradient, top
   NG_LOGO_BG = 0x2d2d2d;  // logo tile
   NG_LOGO_ED = 0x4a4a4a;  // logo tile outline
-  NG_FONT    = "Segoe UI";
+  NG_FONT    = "Noto Sans";
 
   function ng_col(rgb, a)
   (
@@ -41,11 +41,17 @@ desc:NULL JSFX shared GFX library
   function X(v) ( ng_ox + v * ng_s; );
   function Y(v) ( ng_oy + v * ng_s; );
 
-  // font slot, size in design units, bold flag
-  function ng_font(slot, size, bold)
+  // font slot, size in design units (the em size), bold flag. The size is passed negative so
+  // that REAPER uses it as the em size on Windows too (positive means the cell height there,
+  // the em size on macOS/Linux); the VST3/CLAP versions draw the same em size.
+  // gfx_texth is then taken from the measured line height, since some hosts (ysfx) report 1 for
+  // a negative size.
+  function ng_font(slot, size, bold) local(w, h)
   (
-    bold ? gfx_setfont(slot, NG_FONT, max(7, floor(size * ng_s)), 'b')
-         : gfx_setfont(slot, NG_FONT, max(7, floor(size * ng_s)));
+    bold ? gfx_setfont(slot, NG_FONT, -max(7, floor(size * ng_s)), 'b')
+         : gfx_setfont(slot, NG_FONT, -max(7, floor(size * ng_s)));
+    gfx_measurestr("Hg", w, h);
+    gfx_texth = h;
   );
 
   // text at design (x, y), vertically centred; align 0 left, 1 centre, 2 right;

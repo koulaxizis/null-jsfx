@@ -14,6 +14,7 @@
 #include "DistrhoUI.hpp"
 #include "NullPlugin.hpp"
 #include "NullTheme.hpp"
+#include "NullFonts.h"
 
 #include <algorithm>
 #include <cmath>
@@ -37,7 +38,8 @@ public:
         setGeometryConstraints(uint(kWidth * sf), uint(kHeight * sf), true, false);
         if (sf != 1.0)
             setSize(uint(kWidth * sf), uint(kHeight * sf));
-        loadSharedResources();
+        createFontFromMemory("noto", kNotoSansRegular, sizeof(kNotoSansRegular), false);
+        createFontFromMemory("noto-bold", kNotoSansBold, sizeof(kNotoSansBold), false);
     }
 
 protected:
@@ -63,17 +65,23 @@ protected:
 #endif
     }
 
-    // text with letter spacing; bold is faked with a second pass shifted by a fraction of a pixel
+    // NanoVG sizes text by its line height (ascent + descent), REAPER's gfx_setfont in the GFX
+    // JSFX by the em size; Noto Sans has ascent + descent = 1.362 em
+    static constexpr float kNotoLineToEm = 1.362f;
+
+    // text with letter spacing, in Noto Sans (bold from the bold face, like the GFX 'b' flag)
     void label(float x, float y, int align, float size, float spacing, uint32_t rgb, const char* str, bool bold = false)
     {
-        fontSize(size);
+        if (bold)
+            fontFace("noto-bold");
+        fontSize(size * kNotoLineToEm);
         textLetterSpacing(spacing);
         textAlign(align | ALIGN_MIDDLE);
         fillColor(col(rgb));
         text(x, y, str, nullptr);
-        if (bold)
-            text(x + 0.35f, y, str, nullptr);
         textLetterSpacing(0.0f);
+        if (bold)
+            fontFace("noto");
     }
 
     void drawLogo(float x, float y, float size)
@@ -520,7 +528,7 @@ protected:
         fillColor(col(theme::kBackground));
         fill();
 
-        fontFace(NANOVG_DEJAVU_SANS_TTF);
+        fontFace("noto");
 
         drawHeader(fInfo.title, "ONE SLIDER");
         card(14.0f, 54.0f, 332.0f, 110.0f);
@@ -808,7 +816,7 @@ protected:
         fillColor(col(theme::kBackground));
         fill();
 
-        fontFace(NANOVG_DEJAVU_SANS_TTF);
+        fontFace("noto");
 
         drawHeader(fL.title, fL.category);
         card(14.0f, 54.0f, float(kWidth) - 28.0f, float(fL.display));
