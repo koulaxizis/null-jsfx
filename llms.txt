@@ -43,7 +43,7 @@ The everyday mixing and mastering toolbox.
 - Chorus: Classic Delay Chorus
 - Click Repair: Click & Pop Removal
 - DeEsser: Split-Band Sibilance Control
-- Delay: Stereo Echo & Slapback
+- Delay: Stereo Echo & Slapback (also as GFX, VST3, CLAP)
 - Dynamic EQ: Four-Band Dynamic EQ
 - Dynamics: Compressor & Expander
 - Envelope Follower: Auto-Wah & Envelope Filter

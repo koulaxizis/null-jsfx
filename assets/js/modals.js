@@ -376,7 +376,8 @@ const guides = {
     ],
     uses: ['Slapback on vocals and guitars', 'Tempo-synced rhythmic echoes', 'Long feedback trails for transitions', 'Short delays for depth and doubling'],
     properties: 'Input → stereo delay line (up to 2 s, or tempo-synced) with feedback → Dry/Wet Mix → Output. Left and right are delayed independently with no filtering in the feedback loop; zero latency.',
-    formats: ['JSFX']
+    formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
+    shot: 'assets/img/gfx/delay.png'
   },
   'dynamic-eq': {
     title: 'DYNAMIC EQ',
