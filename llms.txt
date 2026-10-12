@@ -41,7 +41,7 @@ The everyday mixing and mastering toolbox.
 - Cabinet Simulator: Speaker Cabinet Simulation
 - Channel Utility: Gain, Phase & Routing
 - Chorus: Classic Delay Chorus
-- Click Repair: Click & Pop Removal
+- Click Repair: Click & Pop Removal (also as GFX, VST3, CLAP)
 - DeEsser: Split-Band Sibilance Control
 - Delay: Stereo Echo & Slapback (also as GFX, VST3, CLAP)
 - Dynamic EQ: Four-Band Dynamic EQ
@@ -54,13 +54,13 @@ The everyday mixing and mastering toolbox.
 - Maximizer: Look-Ahead Loudness Maximizer
 - Mid/Side Matrix: M/S Encode & Decode
 - Multiband Comp: Four-Band Compressor
-- Noise Generator: White, Pink & Brown Noise
+- Noise Generator: White, Pink & Brown Noise (also as GFX, VST3, CLAP)
 - Parametric EQ: Five-Band Parametric EQ
 - Phaser: All-Pass Sweep Phaser
 - Pitch Shifter: Real-Time Pitch Shift
-- Reverb: Compact Stereo Algorithmic Reverb
+- Reverb: Compact Stereo Algorithmic Reverb (also as GFX, VST3, CLAP)
 - Ring Mod: Swept Ring Modulator
-- Saturation: Six-Mode Saturation
+- Saturation: Six-Mode Saturation (also as GFX, VST3, CLAP)
 - Sidechain Ducker: Sidechain Ducking
 - Stereo Width: M/S Width with Mono Bass
 - Transient Shaper: Attack & Sustain Shaper

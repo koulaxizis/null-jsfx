@@ -1,0 +1,131 @@
+desc:NULL Click Repair GFX
+author: Christos Koulaxizis
+tags: click repair audio restoration pop crackle vinyl denoise gui
+//category: Essentials
+//NULL JSFX v2.0 • https://nulljsfx.tech • MIT License
+
+import null_gfx.jsfx-inc
+
+slider1:50<0,100,1>-Threshold (%)
+slider2:10<1,50,1>-Window (Samples)
+
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
+
+@init
+  // NULL Click Repair (../click_repair.jsfx) with its own interface: same audio code, plus @gfx.
+  // Finds samples that jump far away from the recent signal (clicks, pops, digital
+  // spikes), marks Window samples from there as damaged, and redraws them as a straight
+  // line between the good samples on either side. The output is delayed by
+  // 2 x Window samples (reported to REAPER for delay compensation) so the repair can
+  // see the good sample after each click.
+  ring = 256;
+  buf_l = 0;
+  buf_r = buf_l + ring;
+  bad_l = buf_r + ring;
+  bad_r = bad_l + ring;
+  freembuf(bad_r + ring);
+  memset(buf_l, 0, 4 * ring);
+  pos = 0;
+  avg_l = avg_r = 0.01;
+  left_l = left_r = 0;
+  last_l = last_r = 0;
+  pdc_bot_ch = 0;
+  pdc_top_ch = 2;
+
+  function store(buf, bad, x, avg*, left*) local(d)
+  (
+    d = abs(x - buf[(pos - 1 + ring) % ring]);
+    left <= 0 && d > max(avg * ratio, 0.01) ? left = win;
+    left > 0 ? (bad[pos] = 1; left -= 1) : (bad[pos] = 0; avg = avg * 0.995 + d * 0.005);
+    buf[pos] = x;
+  );
+
+  function repaired(buf, bad, last*) local(o, j, n, y)
+  (
+    o = (pos - delay + ring) % ring;
+    bad[o] ? (
+      j = o;
+      n = 1;
+      while (j = (j + 1) % ring; n += 1; bad[j] && n < ring);
+      y = last + (buf[j] - last) / n;
+    ) : (
+      y = buf[o];
+    );
+    last = y;
+  );
+
+  gfx_ext_retina = 1;
+  // display: the unrepaired and the repaired signal (mid) of the output's moment, and a click count
+  ng_tap_init(4000000, 2048);
+  cr_clicks = 0;
+
+  function update()
+  (
+    win = max(1, min(50, floor(slider2)));
+    delay = 2 * win;
+    pdc_delay = delay;
+    // 0% = most sensitive (step 4x the average), 100% = least sensitive (step 30x)
+    ratio = 4 + slider1 / 100 * 26;
+  );
+
+  // waveform of one tap channel (0 = unrepaired, 1 = repaired) across the plot, min/max per pixel
+  function cr_scope(ch) local(i, j, k, n, per, v, mn, mx, xx)
+  (
+    n = floor(ng_pw);
+    per = max(1, floor(ng_tl / n));
+    i = 0;
+    loop(n,
+      mn = 1; mx = -1;
+      j = 0;
+      loop(per,
+        k = (ng_tw + i * per + j) % ng_tl;
+        v = ng_tb[k * 2 + ch];
+        mn = min(mn, v); mx = max(mx, v);
+        j += 1;
+      );
+      xx = ng_px + i;
+      gfx_line(xx, ng_py + ng_ph * (0.5 - min(1, mx) * 0.5), xx, ng_py + ng_ph * (0.5 - max(-1, mn) * 0.5), 0);
+      i += 1;
+    );
+  );
+
+@slider
+  update();
+
+@sample
+  store(buf_l, bad_l, spl0, avg_l, left_l);
+  store(buf_r, bad_r, spl1, avg_r, left_r);
+  cr_clicks += (bad_l[pos] && left_l == win - 1) + (bad_r[pos] && left_r == win - 1);
+  spl0 = repaired(buf_l, bad_l, last_l);
+  spl1 = repaired(buf_r, bad_r, last_r);
+  cr_o = (pos - delay + ring) % ring;
+  ng_tap((buf_l[cr_o] + buf_r[cr_o]) * 0.5, (spl0 + spl1) * 0.5);
+  pos = (pos + 1) % ring;
+
+@gfx 480 294
+  ng_knobs_begin("CLICK REPAIR", "ESSENTIALS", 480, 120, 1, 0);
+
+  // display: the last 2048 samples, unrepaired (muted) under repaired (accent), mid of L and R
+  ng_plot(ng_vx + 4, ng_vy + 4, ng_vw - 8, ng_vh - 8);
+  ng_grid(8, 2, 1);
+  ng_col(NG_MUTED, 0.8);
+  cr_scope(0);
+  ng_col(NG_ACCENT, 1);
+  cr_scope(1);
+  ng_font(4, 8, 0);
+  ng_col(NG_MUTED, 1);
+  sprintf(#cr_t, "CLICKS %d", cr_clicks);
+  ng_ptxt(#cr_t, ng_px + 6 * ng_s, ng_py + 9 * ng_s, 0);
+  sprintf(#cr_t, "LATENCY %d SAMPLES (%.2f ms)", delay, delay / srate * 1000);
+  ng_ptxt(#cr_t, ng_px + ng_pw - 6 * ng_s, ng_py + 9 * ng_s, 2);
+
+  ng_row(2);
+  sprintf(#v1, "%d%%", slider1);
+  ng_knob_ctl(1, "THRESHOLD", #v1, 0, 100, 50, 1, 0) ? update();
+  sprintf(#v2, "%d smp", slider2);
+  ng_knob_ctl(2, "WINDOW", #v2, 1, 50, 10, 1, 0) ? update();
+
+  ng_end();

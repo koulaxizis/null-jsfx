@@ -349,7 +349,7 @@ const guides = {
     ],
     uses: ['Removing clicks and pops from vinyl transfers', 'Fixing digital spikes and edit clicks', 'Cleaning mouth clicks on close-miked vocals', 'Restoring archival recordings'],
     properties: 'Input → step detector (sample jump vs running average) → mark Window samples as damaged → linear interpolation between the good samples on either side → Output. Latency of 2 × Window samples, reported to REAPER for delay compensation; each channel is repaired independently.',
-    formats: ['JSFX']
+    formats: ['JSFX', 'GFX', 'VST3', 'CLAP']
   },
   'deesser': {
     title: 'DEESSER',
@@ -575,7 +575,7 @@ const guides = {
     ],
     uses: ['Gain staging and monitor calibration', 'Testing filters and EQs', 'Sound design layers for risers and sweeps', 'Masking or ambience beds'],
     properties: 'Random generator → colour filter (Pink: multi-pole filter bank; Brown: leaky integrator) → Level → Stereo Width → Output. The input is replaced by the noise, not mixed with it.',
-    formats: ['JSFX']
+    formats: ['JSFX', 'GFX', 'VST3', 'CLAP']
   },
   'parametric-eq': {
     title: 'PARAMETRIC EQ',
@@ -652,7 +652,7 @@ const guides = {
     ],
     uses: ['Room and hall ambience on dry sources', 'Stereo space on vocals and instruments', 'Dark, damped tails for pads', 'Quick sketch reverb during writing'],
     properties: 'Input → mono sum → four damped feedback combs per side (right side slightly longer for a decorrelated stereo tail) → two series all-passes per side → Dry/Wet Mix → Output. Delay lengths and damping are scaled to the sample rate, so it sounds the same at 44.1, 48 or 96 kHz; zero latency.',
-    formats: ['JSFX']
+    formats: ['JSFX', 'GFX', 'VST3', 'CLAP']
   },
   'ring-mod': {
     title: 'RING MOD',
@@ -680,7 +680,7 @@ const guides = {
     ],
     uses: ['Warmth and density on buses', 'Fuzz and overdrive on guitars and bass', 'Bit-crushed lo-fi textures', 'Wavefolded synth tones'],
     properties: 'Input → Drive → selected curve → Tone tilt EQ (one-pole split at 800 Hz, ±Tone/2 dB on each side) on the wet signal → Dry/Wet Mix → Output. No oversampling; zero latency.',
-    formats: ['JSFX']
+    formats: ['JSFX', 'GFX', 'VST3', 'CLAP']
   },
   'sidechain-ducker': {
     title: 'SIDECHAIN DUCKER',

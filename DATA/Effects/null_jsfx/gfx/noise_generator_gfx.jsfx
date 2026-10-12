@@ -1,0 +1,147 @@
+desc:NULL Noise Generator GFX
+author: Christos Koulaxizis
+tags: noise generator pink white brown test tone calibration stereo gui
+//category: Essentials
+//NULL JSFX v2.0 • https://nulljsfx.tech • MIT License
+
+import null_gfx.jsfx-inc
+
+slider1:0<0,2,1{White,Pink,Brown}>-Type
+slider2:-24<-60,0,0.1>-Level (dB)
+slider3:100<0,100,1>-Stereo Width (%)
+
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
+
+@init
+  // NULL Noise Generator (../noise_generator.jsfx) with its own interface: same audio code, plus @gfx.
+  pb0_l=0; pb1_l=0; pb2_l=0; pb3_l=0; pb4_l=0; pb5_l=0; pb6_l=0;
+  pb0_r=0; pb1_r=0; pb2_r=0; pb3_r=0; pb4_r=0; pb5_r=0; pb6_r=0;
+  brn_l=0; brn_r=0;
+  // Park-Miller generator in exact double arithmetic (seed * 16807 < 2^53), so the noise is the
+  // same on every host and CPU; seed / 2^30 - 1 is uniform in (-1, 1) like rand() * 2 - 1
+  seed = 12345;
+
+  gfx_ext_retina = 1;
+
+  function update()
+  (
+    noise_type = slider1;
+    level_db = slider2;
+    stereo_width = slider3 / 100;
+    gain_lin = exp(level_db * 0.11512925464970228420);
+  );
+
+  // display: the spectrum's shape in dB at f Hz, pivoting on Level at 1 kHz
+  // (white flat, pink -3 dB per octave, brown -6 dB per octave)
+  function ns_db(f) ( level_db - noise_type * 3 * log(f / 1000) / log(2); );
+
+@slider
+  update();
+
+@sample
+  seed *= 16807; seed -= floor(seed / 2147483647) * 2147483647; rnd_l = seed / 1073741824 - 1;
+  seed *= 16807; seed -= floor(seed / 2147483647) * 2147483647; rnd_r = seed / 1073741824 - 1;
+  rnd_r = rnd_l * (1 - stereo_width) + rnd_r * stereo_width;
+
+  noise_type == 0 ? (
+    nse_l = rnd_l * gain_lin;
+    nse_r = rnd_r * gain_lin;
+  );
+
+  noise_type == 1 ? (
+    pb0_l = 0.99886 * pb0_l + rnd_l * 0.0555179;
+    pb1_l = 0.99332 * pb1_l + rnd_l * 0.0750759;
+    pb2_l = 0.96900 * pb2_l + rnd_l * 0.1538520;
+    pb3_l = 0.86600 * pb3_l + rnd_l * 0.3104856;
+    pb4_l = 0.55000 * pb4_l + rnd_l * 0.5329522;
+    pb5_l = 0.31300 * pb5_l + rnd_l * 0.5329522;
+    pb6_l = 0.11000 * pb6_l + rnd_l * 0.5329522;
+    nse_l = (pb0_l + pb1_l + pb2_l + pb3_l + pb4_l + pb5_l + pb6_l + rnd_l * 0.5362) * 0.11 * gain_lin;
+
+    pb0_r = 0.99886 * pb0_r + rnd_r * 0.0555179;
+    pb1_r = 0.99332 * pb1_r + rnd_r * 0.0750759;
+    pb2_r = 0.96900 * pb2_r + rnd_r * 0.1538520;
+    pb3_r = 0.86600 * pb3_r + rnd_r * 0.3104856;
+    pb4_r = 0.55000 * pb4_r + rnd_r * 0.5329522;
+    pb5_r = 0.31300 * pb5_r + rnd_r * 0.5329522;
+    pb6_r = 0.11000 * pb6_r + rnd_r * 0.5329522;
+    nse_r = (pb0_r + pb1_r + pb2_r + pb3_r + pb4_r + pb5_r + pb6_r + rnd_r * 0.5362) * 0.11 * gain_lin;
+  );
+
+  noise_type == 2 ? (
+    brn_l = brn_l + rnd_l * 0.02;
+    brn_l = brn_l * 0.997;
+    brn_l > 1 ? brn_l = 1 : (brn_l < -1 ? brn_l = -1);
+    nse_l = brn_l * gain_lin * 3.5;
+
+    brn_r = brn_r + rnd_r * 0.02;
+    brn_r = brn_r * 0.997;
+    brn_r > 1 ? brn_r = 1 : (brn_r < -1 ? brn_r = -1);
+    nse_r = brn_r * gain_lin * 3.5;
+  );
+
+  spl0 = nse_l;
+  spl1 = nse_r;
+
+@gfx 480 294
+  ng_knobs_begin("NOISE GENERATOR", "ESSENTIALS", 480, 120, 1, 0);
+
+  // display: the noise spectrum's slope over 20 Hz..20 kHz, level in dB (0 to -72)
+  ng_plot(ng_vx + 26, ng_vy + 4, ng_vw - 30, ng_vh - 20);
+  ns_d = 10;
+  loop(4,
+    ns_m = 1;
+    loop(9,
+      ns_f = ns_m * ns_d;
+      ns_f >= 20 && ns_f <= 20000 ? (
+        ns_x = floor(ng_freq_x(ns_f)) + 0.5;
+        ng_col(NG_BORDER, ns_m == 1 ? 1 : 0.5);
+        gfx_line(ns_x, ng_py, ns_x, ng_py + ng_ph, 0);
+      );
+      ns_m += 1;
+    );
+    ns_d *= 10;
+  );
+  ns_i = 0;
+  loop(4,
+    ns_y = floor(ng_py + ng_ph * ns_i / 3) + 0.5;
+    ng_col(NG_BORDER, 0.6);
+    gfx_line(ng_px, ns_y, ng_px + ng_pw, ns_y, 0);
+    ns_i += 1;
+  );
+  ng_font(4, 8, 0);
+  ng_col(NG_MUTED, 1);
+  ng_ptxt("0", ng_px - 6 * ng_s, ng_py, 2);
+  ng_ptxt("-24", ng_px - 6 * ng_s, ng_py + ng_ph / 3, 2);
+  ng_ptxt("-48", ng_px - 6 * ng_s, ng_py + ng_ph * 2 / 3, 2);
+  ng_ptxt("-72", ng_px - 6 * ng_s, ng_py + ng_ph, 2);
+  ng_ptxt("100", ng_freq_x(100), ng_py + ng_ph + 10 * ng_s, 1);
+  ng_ptxt("1k", ng_freq_x(1000), ng_py + ng_ph + 10 * ng_s, 1);
+  ng_ptxt("10k", ng_freq_x(10000), ng_py + ng_ph + 10 * ng_s, 1);
+  noise_type == 0 ? sprintf(#ns_t, "FLAT") : noise_type == 1 ? sprintf(#ns_t, "-3 dB / OCT") : sprintf(#ns_t, "-6 dB / OCT");
+  ng_ptxt(#ns_t, ng_px + ng_pw - 6 * ng_s, ng_py + 9 * ng_s, 2);
+  ng_col(NG_ACCENT, 0.10);
+  ns_i = 0;
+  loop(floor(ng_pw) + 1,
+    gfx_line(ng_px + ns_i, ng_lin_y(ns_db(20 * 1000 ^ (ns_i / ng_pw)), -72, 0), ng_px + ns_i, ng_py + ng_ph, 0);
+    ns_i += 1;
+  );
+  ng_col(NG_ACCENT, 1);
+  ns_i = 0;
+  loop(floor(ng_pw) + 1,
+    ns_y = ng_lin_y(ns_db(20 * 1000 ^ (ns_i / ng_pw)), -72, 0);
+    ns_i == 0 ? ng_line_start(ng_px, ns_y) : ng_line_to(ng_px + ns_i, ns_y);
+    ns_i += 1;
+  );
+
+  ng_row(3);
+  ng_select_ctl(1, "TYPE", "WHITE|PINK|BROWN", 0) ? update();
+  sprintf(#v2, "%.1f dB", slider2);
+  ng_knob_ctl(2, "LEVEL", #v2, -60, 0, -24, 0.1, 0) ? update();
+  sprintf(#v3, "%d%%", slider3);
+  ng_knob_ctl(3, "WIDTH", #v3, 0, 100, 100, 1, 0) ? update();
+
+  ng_end();

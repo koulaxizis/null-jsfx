@@ -17,6 +17,9 @@ out_pin:Right
   pb0_l=0; pb1_l=0; pb2_l=0; pb3_l=0; pb4_l=0; pb5_l=0; pb6_l=0;
   pb0_r=0; pb1_r=0; pb2_r=0; pb3_r=0; pb4_r=0; pb5_r=0; pb6_r=0;
   brn_l=0; brn_r=0;
+  // Park-Miller generator in exact double arithmetic (seed * 16807 < 2^53), so the noise is the
+  // same on every host and CPU; seed / 2^30 - 1 is uniform in (-1, 1) like rand() * 2 - 1
+  seed = 12345;
 
 @slider
   noise_type = slider1;
@@ -25,8 +28,8 @@ out_pin:Right
   gain_lin = exp(level_db * 0.11512925464970228420);
 
 @sample
-  rnd_l = rand() * 2 - 1;
-  rnd_r = rand() * 2 - 1;
+  seed *= 16807; seed -= floor(seed / 2147483647) * 2147483647; rnd_l = seed / 1073741824 - 1;
+  seed *= 16807; seed -= floor(seed / 2147483647) * 2147483647; rnd_r = seed / 1073741824 - 1;
   rnd_r = rnd_l * (1 - stereo_width) + rnd_r * stereo_width;
 
   noise_type == 0 ? (
