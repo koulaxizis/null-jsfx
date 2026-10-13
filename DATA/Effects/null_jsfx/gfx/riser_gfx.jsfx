@@ -2,7 +2,7 @@ desc:NULL Riser GFX
 author: Christos Koulaxizis
 tags: riser build-up tension sweep transition edm pre-drop noise gui
 //category: One Slider
-//NULL JSFX v2.0 • https://nulljsfx.tech • MIT License
+//NULL JSFX v2.1 • https://nulljsfx.tech • MIT License
 
 import null_gfx.jsfx-inc
 

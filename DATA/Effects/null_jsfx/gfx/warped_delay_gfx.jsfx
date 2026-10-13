@@ -2,7 +2,7 @@ desc:NULL Warped Delay GFX
 author: Christos Koulaxizis
 tags: delay modulated feedback distortion filter warping gui
 //category: Advanced
-//NULL JSFX v2.0 • https://nulljsfx.tech • MIT License
+//NULL JSFX v2.1 • https://nulljsfx.tech • MIT License
 
 import null_gfx.jsfx-inc
 

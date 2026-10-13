@@ -2,7 +2,7 @@ desc:NULL Sub Bloom
 author: Christos Koulaxizis
 tags: bass sub harmonic enhancement low frequency
 //category: Advanced
-//NULL JSFX v2.0 • https://nulljsfx.tech • MIT License
+//NULL JSFX v2.1 • https://nulljsfx.tech • MIT License
 
 slider1:100<50,300,1>Source Frequency (Hz)
 slider2:50<0,100,1>Sub Level (%)

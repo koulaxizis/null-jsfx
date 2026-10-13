@@ -2,7 +2,7 @@ desc:NULL Spread
 author: Christos Koulaxizis
 tags: stereo width spread decorrelation widener mono-compatible
 //category: One Slider
-//NULL JSFX v2.0 • https://nulljsfx.tech • MIT License
+//NULL JSFX v2.1 • https://nulljsfx.tech • MIT License
 
 slider1:50<0,100,1>Amount
 

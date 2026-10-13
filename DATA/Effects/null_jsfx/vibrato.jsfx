@@ -2,7 +2,7 @@ desc:NULL Vibrato
 author: Christos Koulaxizis
 tags: vibrato pitch modulation detune lfo warble
 //category: Essentials
-//NULL JSFX v2.0 • https://nulljsfx.tech • MIT License
+//NULL JSFX v2.1 • https://nulljsfx.tech • MIT License
 
 slider1:5<0.1,15,0.1>Rate (Hz)
 slider2:5<0,20,0.1>Depth (ms)

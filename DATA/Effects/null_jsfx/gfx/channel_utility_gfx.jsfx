@@ -2,7 +2,7 @@ desc:NULL Channel Utility GFX
 author: Christos Koulaxizis
 tags: gain phase polarity dc block solo mute balance mono utility trim pad stereo channel gui
 //category: Essentials
-//NULL JSFX v2.0 • https://nulljsfx.tech • MIT License
+//NULL JSFX v2.1 • https://nulljsfx.tech • MIT License
 
 import null_gfx.jsfx-inc
 

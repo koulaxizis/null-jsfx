@@ -2,7 +2,7 @@ desc:NULL Spectral Freeze
 author: Christos Koulaxizis
 tags: spectral freeze fft sustain drone infinite hold pad ambient
 //category: Advanced
-//NULL JSFX v2.0 • https://nulljsfx.tech • MIT License
+//NULL JSFX v2.1 • https://nulljsfx.tech • MIT License
 
 slider1:0<0,1,1{Off,Frozen}>Freeze
 slider2:300<10,3000,1>Fade (ms)
