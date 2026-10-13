@@ -63,6 +63,12 @@ Visit [nulljsfx.tech](https://nulljsfx.tech) for interactive guides and document
 
 **Christos Koulaxizis** — [koulaxizis.gr](https://koulaxizis.gr)
 
+## Free forever
+
+NULL JSFX is free and open source, and it stays that way: no plugin or feature that has been released for free will ever be moved behind a paywall, and there are no license keys, ads or nags in the plugins.
+
+If the plugins help you, you can [buy Christos a coffee on Ko-fi](https://ko-fi.com/koulaxizis) or [become a monthly supporter](https://ko-fi.com/koulaxizis/tiers). The same Ko-fi page supports all of his open-source projects ([noxpress](https://noxpress.tech), [orOS](https://github.com/koulaxizis/oros) and NULL JSFX).
+
 ## License
 
 MIT License, see [LICENSE.md](LICENSE.md).
