@@ -100,6 +100,27 @@ test("the wheel steps the slider by one", function () {
   assert.deepStrictEqual(got, [11]);
 });
 
+test("the preset box in the GFX header steps through and lists the factory presets", function () {
+  var FX = fx("tilt"), cv = fakeCanvas(), got = [];
+  var view = new GFX.View(FX, cv, { srate: 48000, sliders: { 1: 0 }, onSlider: function (i, v) { got.push(v); } });
+  function click(x, y) {
+    cv.fire("pointermove", { clientX: x, clientY: y, button: 0 });
+    cv.fire("pointerdown", { clientX: x, clientY: y, button: 0 }); view.draw();
+    cv.fire("pointerup", { clientX: x, clientY: y, button: 0 }); view.draw(); view.draw();
+  }
+  view.draw(); view.draw();
+  // the box spans design x 196..346, y 21..37 (360 x 240 design, scale 1); arrows 22 wide
+  click(335, 29);  // next: Default -> "Vintage Dark" (-70)
+  assert.strictEqual(view.fx.inst.getSlider(1), -70);
+  click(205, 29);  // previous: back to Default (0)
+  assert.strictEqual(view.fx.inst.getSlider(1), 0);
+  click(270, 29);  // the name opens the list; rows of 15 from y 44
+  click(250, 44 + 3 * 15 + 7);  // fourth preset, "Mastering Dark Nudge" (-15)
+  assert.strictEqual(view.fx.inst.getSlider(1), -15);
+  assert.deepStrictEqual(got, [-70, 0, -15]);
+  view.destroy();
+});
+
 test("freembuf(0) clears block 0 without detaching it", function () {
   var m = R.memory(), b0 = m.b[0];
   m.w(5, 3); m.w(70000, 4);
