@@ -27,6 +27,7 @@ INDEX = ROOT / "index.html"
 MODALS = ROOT / "assets/js/modals.js"
 README = ROOT / "README.md"
 LLMS = ROOT / "llms.txt"
+STUDIO_FX = ROOT / "web/fx/index.json"  # the effects orOS Studio runs (web version)
 CHAIN_TEXT = ROOT / "tools/site_chains.json"
 
 sys.dont_write_bytecode = True  # no __pycache__ in tools/
@@ -87,6 +88,7 @@ def formats(stem):
 def load():
     content = json.loads(CONTENT.read_text(encoding="utf-8"))
     plugins, errors = [], []
+    studio = {fx["id"] for fx in json.loads(STUDIO_FX.read_text(encoding="utf-8"))["effects"]}
     files = sorted(PLUGINS.glob("*.jsfx"))
     unlisted = [p.name for p in files if p.stem not in content]
     if unlisted:
@@ -110,6 +112,7 @@ def load():
             "sliders": [(n, r, d) for (n, r), d in zip(sliders, c["slider_desc"])],
             "formats": formats(stem),
             "shot": f"assets/img/gfx/{stem}.png" if (SHOTS / f"{stem}.png").exists() else None,
+            "studio": stem in studio,
             **{k: c[k] for k in ("card_desc", "keywords", "uses", "properties", "icon")},
         })
     for stem in sorted(set(content) - {p.stem for p in files}):
@@ -242,7 +245,8 @@ def guides_block(plugins):
     uses: [{uses}],
     properties: {js(p['properties'])},
     formats: [{", ".join(js(f) for f in p['formats'])}]""" + (f""",
-    shot: {js(p['shot'])}""" if p["shot"] else "") + """
+    shot: {js(p['shot'])}""" if p["shot"] else "") + (""",
+    studio: true""" if p["studio"] else "") + """
   },
 """)
     out[-1] = out[-1].rstrip(",\n") + "\n"
