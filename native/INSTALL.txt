@@ -7,6 +7,19 @@ Every plugin comes in up to three versions that sound the same:
   JSFX GFX    REAPER only, with its own interface ("NULL <Name> GFX")
   VST3, CLAP  any DAW, with the same interface ("<Name>" by NULL JSFX)
 
+The easy way: the installers
+    NULL-JSFX-Installer-Windows.exe, NULL-JSFX-Installer-Linux.sh and
+    NULL-JSFX-Installer-macOS.sh (on the release page) let you pick the formats,
+    the plugins (all, a group such as One Slider, or single ones) and the extras,
+    and put everything in the folders below for you.
+      Windows: run the .exe (it asks for administrator rights, because VST3
+               and CLAP live in C:\Program Files\Common Files). Remove it from
+               Settings > Apps.
+      Linux, macOS: in a terminal, bash NULL-JSFX-Installer-Linux.sh (or
+               -macOS.sh). It installs for your user only; --help lists the
+               options, --uninstall removes what it installed.
+    Or copy the files by hand as described below.
+
 JSFX (REAPER), from NULL-JSFX-JSFX.zip
     Copy the folder null_jsfx into REAPER's Effects folder (Options >
     Show REAPER resource path > Effects), then rescan in the FX browser. Keep
