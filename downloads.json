@@ -2,11 +2,23 @@
   "display": 50,
   "total": 52,
   "offset": 0,
-  "updated": "2026-10-10",
+  "updated": "2026-10-13",
   "assets": {
     "489296831": {
       "file": "1.0/null_jsfx.zip",
       "count": 52
+    },
+    "636150156": {
+      "file": "2.0/NULL-JSFX-JSFX.zip",
+      "count": 0
+    },
+    "636162226": {
+      "file": "2.0/NULL-JSFX-VST3-CLAP-Windows.zip",
+      "count": 0
+    },
+    "636190377": {
+      "file": "2.0/NULL-JSFX-VST3-CLAP-macOS.zip",
+      "count": 0
     }
   }
 }
