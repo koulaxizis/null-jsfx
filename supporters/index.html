@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Supporters — NULL JSFX</title>
+    <meta name="description" content="The people whose monthly support on Ko-fi keeps NULL JSFX, orOS and Noxpress free and open source.">
+    <meta name="author" content="Christos Koulaxizis">
+    <link rel="canonical" href="https://nulljsfx.tech/supporters/">
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Supporters — NULL JSFX">
+    <meta property="og:description" content="The people who keep NULL JSFX, orOS and Noxpress free.">
+    <meta property="og:url" content="https://nulljsfx.tech/supporters/">
+    <meta property="og:image" content="https://nulljsfx.tech/assets/img/social-preview.jpg">
+    <link rel="icon" type="image/svg+xml" href="../assets/img/favicon.svg">
+    <link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body>
+    <main class="supporters-page">
+        <header class="site-header">
+            <a href="../"><img src="../assets/img/logo.svg" alt="NULL JSFX" class="site-logo"></a>
+        </header>
+
+        <h1 class="supporters-title">Supporters</h1>
+        <p class="supporters-intro">
+            NULL JSFX, <a href="https://useoros.online" target="_blank" rel="noopener">orOS</a> and
+            <a href="https://noxpress.tech" target="_blank" rel="noopener">Noxpress</a> are free and open source, and they stay that way.
+            These people support them every month on Ko-fi. Thank you!
+        </p>
+
+        <div id="supporters-list" class="supporters-list" aria-live="polite">
+            <noscript><p class="supporters-empty">Turn on JavaScript to see the list.</p></noscript>
+        </div>
+
+        <div class="supporters-join">
+            <p>Backers and Patrons can have their name (or nickname) listed here. It's optional: just reply to the Ko-fi welcome message with the name you'd like shown.</p>
+            <a class="btn-download supporters-btn" href="https://ko-fi.com/koulaxizis/tiers" target="_blank" rel="noopener">Become a monthly supporter</a>
+            <p class="supporters-updated" id="supporters-updated"></p>
+        </div>
+    </main>
+
+    <footer class="site-footer">
+        <div class="footer-content">
+            <div class="footer-links">
+                <a href="../">NULL JSFX</a>
+                <span class="sep">&bull;</span>
+                <a href="https://ko-fi.com/koulaxizis" target="_blank" rel="noopener">Support on Ko-fi</a>
+                <span class="sep">&bull;</span>
+                <a href="https://github.com/koulaxizis/null-jsfx" target="_blank" rel="noopener">GitHub</a>
+            </div>
+        </div>
+    </footer>
+
+    <button id="theme-toggle" class="theme-toggle-floating" aria-label="Toggle color theme" title="Switch between light/dark theme">
+        <svg class="sun-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2 M12 21v2 M4.22 4.22l1.42 1.42 M18.36 18.36l1.42 1.42 M1 12h2 M21 12h2 M4.22 19.78l1.42-1.42 M18.36 5.64l1.42-1.42"/></svg>
+        <svg class="moon-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none;"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+    </button>
+
+    <script src="../assets/js/theme.js"></script>
+    <script src="../assets/js/supporters.js"></script>
+</body>
+</html>
