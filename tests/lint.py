@@ -7,7 +7,7 @@ Header (first lines of every file, in this order):
     author: Christos Koulaxizis
     tags: <lowercase keywords>
     //category: One Slider | Essentials | Advanced
-    //NULL JSFX v2.0 • https://nulljsfx.tech • MIT License
+    //NULL JSFX v2.1 • https://nulljsfx.tech • MIT License
 
 followed by a blank line, the sliders, a blank line and the four pins
 (in_pin:Left, in_pin:Right, out_pin:Left, out_pin:Right); sidechain plugins add
@@ -22,7 +22,7 @@ import sys
 from pathlib import Path
 
 AUTHOR = "author: Christos Koulaxizis"
-FOOTER = "//NULL JSFX v2.0 • https://nulljsfx.tech • MIT License"
+FOOTER = "//NULL JSFX v2.1 • https://nulljsfx.tech • MIT License"
 CATEGORIES = ("One Slider", "Essentials", "Advanced")
 PINS = ["in_pin:Left", "in_pin:Right", "out_pin:Left", "out_pin:Right"]
 SIDECHAIN_PINS = ["in_pin:Left", "in_pin:Right", "in_pin:Sidechain Left", "in_pin:Sidechain Right",

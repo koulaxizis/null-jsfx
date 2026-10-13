@@ -2,7 +2,7 @@ desc:NULL Limiter GFX
 author: Christos Koulaxizis
 tags: limiter ceiling clipper brickwall peak protection mastering gui
 //category: Essentials
-//NULL JSFX v2.0 • https://nulljsfx.tech • MIT License
+//NULL JSFX v2.1 • https://nulljsfx.tech • MIT License
 
 import null_gfx.jsfx-inc
 

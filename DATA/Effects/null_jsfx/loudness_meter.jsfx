@@ -2,7 +2,7 @@ desc:NULL Loudness Meter
 author: Christos Koulaxizis
 tags: loudness meter lufs lra true peak ebu r128 itu bs1770 metering analyzer mastering streaming
 //category: Advanced
-//NULL JSFX v2.0 • https://nulljsfx.tech • MIT License
+//NULL JSFX v2.1 • https://nulljsfx.tech • MIT License
 
 slider1:0<0,2,1{-14 LUFS,-16 LUFS,-23 LUFS}>Target
 slider2:0<0,1,1{EBU +9,EBU +18}>Scale
