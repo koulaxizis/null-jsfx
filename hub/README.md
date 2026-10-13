@@ -1,0 +1,54 @@
+# NULL JSFX Hub
+
+One place to install, update and remove the NULL JSFX plugins, in any format (JSFX, JSFX GFX,
+VST3, CLAP), on Windows, Linux and macOS. It reads what the latest GitHub release holds,
+shows every plugin with its screenshot and guide text, and tells which installed plugins have a
+newer version. Downloads come only from our GitHub releases.
+
+Free and MIT like the plugins: no account, no tracking. To look for a new release it downloads
+`NULL-JSFX-Catalog.json` from the latest release and sends nothing about the user.
+
+## How it works
+
+| Part | What |
+|---|---|
+| `tools/build_catalog.py` | Writes `NULL-JSFX-Catalog.json` for a release: plugins (from the .jsfx headers and `tools/site_content.json`), FX chains, extras, package names, release notes. CI attaches it to every release. |
+| `hub/core` | The engine, no window: fetches the catalog, finds what is installed (its own records in `hub-installed.json`, else the JSFX footer version or the installer's version), installs, updates and removes. |
+| `hub/app` | The Tauri 2 app: hands the engine to the page and reports progress. |
+| `hub/ui` | The page: plain HTML, CSS and JS, the plugins' dark palette with the silver accent. |
+
+Things worth knowing:
+
+- **Only what is needed is downloaded.** The VST3/CLAP packages are 200 to 470 MB, so the core
+  reads the zip's directory over HTTP range requests and fetches just the plugins asked for
+  (`package::RemoteZip`). When a request needs more than half the package (say, Install all), it
+  downloads the whole zip once and keeps it until the next release.
+- **Same folders as the installers** (`installer/`): REAPER's resource folder for JSFX and GFX,
+  `NULL JSFX` inside the VST3 and CLAP folders. On Windows those are in Program Files, so the Hub
+  runs the copy steps that need it in a second copy of itself with administrator rights
+  (`--apply-ops`, one UAC prompt per change). The folders can be changed in Settings.
+- **Versions.** A plugin counts as outdated when the release it came from is older than the
+  latest one. Plugins put there by the installers or by hand are found too.
+- **The GFX include** (`null_gfx.jsfx-inc`) comes with the first GFX version and goes with the
+  last.
+
+## Build and test
+
+Needs Rust (stable), Node 22, and on Linux `libwebkit2gtk-4.1-dev librsvg2-dev libxdo-dev`.
+
+```bash
+cd hub
+cargo test -p null_hub_core          # the engine, against a local release server
+npm ci && node tests/ui_test.cjs     # the page in Chromium against a stand-in
+tests/release_smoke.sh               # install/remove from the latest real release
+npx tauri dev                        # run the app
+npx tauri build                      # the installers for this OS
+```
+
+`cargo run -p null_hub_core --example hub_cli -- --root /tmp/x install tilt:all` does the same
+work without a window. `NULL_JSFX_HUB_DATA` and `NULL_JSFX_HUB_RELEASES` point the Hub at
+another data folder and another release server (tests use them).
+
+CI (`.github/workflows/hub.yml`) runs all of that on Windows, Linux and macOS, and on a release
+attaches `NULL-JSFX-Hub-Windows-Setup.exe`, `NULL-JSFX-Hub-Linux.AppImage`,
+`NULL-JSFX-Hub-Linux.deb`, `NULL-JSFX-Hub-macOS.dmg` and `NULL-JSFX-Catalog.json`.

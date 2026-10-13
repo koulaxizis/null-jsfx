@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>NULL JSFX Hub</title>
+  <link rel="stylesheet" href="hub.css">
+</head>
+<body>
+  <header class="top">
+    <div class="brand">
+      <svg class="mark" viewBox="0 0 80 80" aria-hidden="true">
+        <defs><linearGradient id="nG" x1="0%" y1="100%" x2="0%" y2="0%"><stop offset="0%" stop-color="#888"/><stop offset="100%" stop-color="#c4c4c4"/></linearGradient></defs>
+        <rect x="1" y="1" width="78" height="78" rx="14" fill="#2d2d2d" stroke="#4a4a4a"/>
+        <path d="M 24,20 L 24,60 L 56,20 L 56,60" stroke="url(#nG)" stroke-width="7" stroke-linejoin="round" stroke-linecap="round" fill="none"/>
+      </svg>
+      <div>
+        <div class="title">NULL JSFX <span>Hub</span></div>
+        <div class="slogan">AUDIO WITHOUT NOISE</div>
+      </div>
+    </div>
+    <div class="top-actions">
+      <span id="release" class="pill"></span>
+      <button id="refresh" class="ghost" title="Look for a new release">Check for updates</button>
+      <button id="update-all" class="primary" hidden>Update all</button>
+    </div>
+  </header>
+
+  <div class="layout">
+    <nav class="side" id="nav" aria-label="Sections">
+      <button data-view="all" class="active">All plugins <b id="n-all"></b></button>
+      <button data-view="installed">Installed <b id="n-installed"></b></button>
+      <button data-view="updates">Updates <b id="n-updates" class="hot"></b></button>
+      <div class="side-label">Groups</div>
+      <div id="nav-groups"></div>
+      <div class="side-label">Release</div>
+      <button data-view="news">What's new</button>
+      <button data-view="settings">Settings</button>
+      <div class="side-foot">
+        <a href="https://nulljsfx.tech" data-ext>nulljsfx.tech</a>
+        <a href="https://ko-fi.com/koulaxizis" data-ext>Support on Ko-fi</a>
+      </div>
+    </nav>
+
+    <main id="main">
+      <section id="view-plugins">
+        <div class="bar">
+          <input id="search" type="search" placeholder="Search plugins, e.g. eq, reverb, vocal" autocomplete="off">
+          <button id="bulk" class="ghost" hidden></button>
+        </div>
+        <p id="group-desc" class="muted"></p>
+        <div id="grid" class="grid"></div>
+        <p id="empty" class="empty" hidden></p>
+      </section>
+
+      <section id="view-news" hidden>
+        <h2 id="news-title"></h2>
+        <div id="news" class="notes"></div>
+      </section>
+
+      <section id="view-settings" hidden>
+        <h2>Settings</h2>
+        <div class="panel">
+          <h3>Formats</h3>
+          <p class="muted">What Install adds for a plugin. You can still pick formats one by one in a plugin's page.</p>
+          <div id="set-formats" class="checks"></div>
+        </div>
+        <div class="panel">
+          <h3>Folders</h3>
+          <p class="muted">The Hub puts the plugins where the NULL JSFX installers do. Change a folder for a portable REAPER or your own plugin folders.</p>
+          <label class="field">REAPER resource folder <span class="muted">(REAPER: Options &gt; Show REAPER resource path)</span><input id="set-reaper" spellcheck="false"></label>
+          <label class="field">VST3 folder <span class="muted">(plugins go into its NULL JSFX folder)</span><input id="set-vst3" spellcheck="false"></label>
+          <label class="field">CLAP folder <span class="muted">(plugins go into its NULL JSFX folder)</span><input id="set-clap" spellcheck="false"></label>
+          <button id="set-defaults" class="ghost">Use the usual folders</button>
+        </div>
+        <div class="panel">
+          <h3>Privacy</h3>
+          <p class="muted">To look for updates the Hub downloads the release list file from GitHub, where the plugins are released. It sends nothing about you or your computer: no account, no id, no list of what you installed.</p>
+        </div>
+        <div class="row">
+          <button id="set-save" class="primary">Save</button>
+          <span id="set-msg" class="muted"></span>
+        </div>
+        <div class="panel about">
+          <h3>About</h3>
+          <p>NULL JSFX Hub <span id="hub-version"></span>. Free and open source, MIT License.</p>
+          <p class="muted">Its own files: <code id="data-dir"></code></p>
+          <p><a href="https://github.com/koulaxizis/null-jsfx" data-ext>Source on GitHub</a> · <a href="https://nulljsfx.tech" data-ext>nulljsfx.tech</a></p>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div id="detail" class="detail" hidden>
+    <div class="detail-card" role="dialog" aria-modal="true" aria-labelledby="d-name">
+      <button class="close" id="d-close" aria-label="Close">&times;</button>
+      <div class="shot big" id="d-shot"></div>
+      <div class="detail-body">
+        <div class="muted" id="d-group"></div>
+        <h2 id="d-name"></h2>
+        <p id="d-tagline" class="tagline"></p>
+        <div class="formats-table" id="d-formats"></div>
+        <div class="row">
+          <button id="d-apply" class="primary" disabled>Apply</button>
+          <a id="d-guide" href="#" data-ext>Guide on nulljsfx.tech</a>
+        </div>
+        <h3>Controls</h3>
+        <dl id="d-sliders" class="sliders"></dl>
+        <h3>Good for</h3>
+        <ul id="d-uses"></ul>
+        <div id="d-presets-wrap"><h3>Factory presets</h3><p id="d-presets" class="muted"></p></div>
+        <h3>How it works</h3>
+        <p id="d-props" class="muted"></p>
+      </div>
+    </div>
+  </div>
+
+  <div id="progress" class="progress" hidden>
+    <div class="progress-text" id="progress-text"></div>
+    <div class="bar-track"><div class="bar-fill" id="progress-fill"></div></div>
+  </div>
+  <div id="toast" class="toast" hidden role="status"></div>
+
+  <script src="hub.js"></script>
+</body>
+</html>

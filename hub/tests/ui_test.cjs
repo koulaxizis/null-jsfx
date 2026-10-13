@@ -1,0 +1,164 @@
+// Tests the Hub's page (hub/ui) in a real browser, with a stand-in for the Rust side: the real
+// catalog from tools/build_catalog.py, a fake computer with Tilt's JSFX from an older release,
+// and every command the page sends recorded. Screenshots come from the repo's assets.
+// Usage: node tests/ui_test.cjs [screenshot dir]
+'use strict';
+const fs = require('fs');
+const path = require('path');
+const { execFileSync } = require('child_process');
+const { chromium } = require('playwright');
+
+const hub = path.resolve(__dirname, '..');
+const root = path.resolve(hub, '..');
+const shots = process.argv[2];
+
+const catalogFile = path.join(fs.mkdtempSync(path.join(require('os').tmpdir(), 'hub-')), 'catalog.json');
+execFileSync('python3', [path.join(root, 'tools/build_catalog.py'), '--version', '2.2', '--out', catalogFile]);
+const catalog = JSON.parse(fs.readFileSync(catalogFile, 'utf8'));
+catalog.notes = '## New\n- **NULL JSFX Hub**: install and update from one place\n- Faster `Delay`\n\nThanks for using NULL JSFX.';
+
+// --- the fake Rust side ----------------------------------------------------------------------
+
+function mock(catalog) {
+  const all = ['jsfx', 'gfx', 'vst3', 'clap'];
+  const state = {};
+  for (const p of catalog.plugins) state[p.id] = Object.fromEntries(p.formats.map((f) => [f, { installed: false, version: null, outdated: false }]));
+  state.tilt.jsfx = { installed: true, version: '2.1', outdated: true };
+  const settings = { targets: { reaper: '/home/me/.config/REAPER', vst3: '/home/me/.vst3', clap: '/home/me/.clap', fonts: '/home/me/.local/share/fonts' }, formats: all, check_updates: true, notify: true, autostart: false, notified: null, last_check: 0 };
+  const view = () => {
+    let installed = 0, outdated = 0;
+    for (const m of Object.values(state)) for (const s of Object.values(m)) { installed += s.installed; outdated += s.outdated; }
+    return JSON.parse(JSON.stringify({ catalog, state: { plugins: state, installed, outdated }, settings, os: 'Linux', hubVersion: '2.2.0', dataDir: '/home/me/.local/share/null-jsfx' }));
+  };
+  const listeners = {};
+  window.__calls = [];
+  window.__TAURI__ = {
+    core: {
+      async invoke(cmd, args) {
+        window.__calls.push([cmd, args ? JSON.parse(JSON.stringify(args)) : null]);
+        await new Promise((r) => setTimeout(r, 30));
+        if (cmd === 'hub_load' || cmd === 'hub_refresh') return view();
+        if (cmd === 'hub_default_targets') return settings.targets;
+        if (cmd === 'hub_save_settings') { Object.assign(settings, args.settings); return view(); }
+        if (cmd === 'hub_apply') {
+          (listeners['hub-progress'] || []).forEach((f) => f({ payload: { stage: 'download', text: 'NULL-JSFX-JSFX.zip', done: 1, total: 2 } }));
+          for (const [id, f] of args.request.install) state[id][f] = { installed: true, version: catalog.version, outdated: false };
+          for (const [id, f] of args.request.remove) state[id][f] = { installed: false, version: null, outdated: false };
+          return view();
+        }
+        throw new Error('unknown command ' + cmd);
+      },
+    },
+    event: { listen(name, fn) { (listeners[name] = listeners[name] || []).push(fn); return Promise.resolve(() => {}); } },
+    opener: { openUrl(u) { window.__calls.push(['open', u]); } },
+  };
+}
+
+// --- checks ----------------------------------------------------------------------------------
+
+let failed = 0;
+function check(cond, what) {
+  console.log(`${cond ? 'ok  ' : 'FAIL'} ${what}`);
+  if (!cond) failed++;
+}
+
+(async () => {
+  const browser = await chromium.launch();
+  const page = await browser.newPage({ viewport: { width: 1280, height: 820 } });
+  const errors = [];
+  page.on('pageerror', (e) => errors.push(String(e)));
+  await page.route('https://nulljsfx.tech/**', (route) => {
+    const file = path.join(root, new URL(route.request().url()).pathname);
+    if (fs.existsSync(file)) route.fulfill({ path: file });
+    else route.abort();
+  });
+  await page.addInitScript(mock, catalog);
+  await page.goto('file://' + path.join(hub, 'ui/index.html'));
+  await page.waitForSelector('.card');
+  const calls = () => page.evaluate(() => window.__calls);
+
+  check((await page.locator('.card').count()) === catalog.plugins.length, `${catalog.plugins.length} plugin cards`);
+  check((await page.textContent('#release')).includes('1 to update'), 'header shows one plugin to update');
+  check(await page.isVisible('#update-all'), 'Update all button shows');
+  check((await page.textContent('#n-updates')) === '1', 'Updates count in the menu');
+  check((await calls()).some(([c]) => c === 'hub_refresh'), 'checks for a new release on start');
+
+  await page.fill('#search', 'reverb');
+  const n = await page.locator('.card').count();
+  check(n > 0 && n < 10, `search "reverb" narrows to ${n}`);
+  await page.fill('#search', '');
+  await page.waitForTimeout(100);
+  if (shots) await page.screenshot({ path: path.join(shots, 'hub-plugins.png') });
+
+  // Install from a card: the formats from Settings (all four)
+  await page.click('.card[data-id="delay"] .card-foot button');
+  await page.waitForFunction(() => window.__calls.some(([c]) => c === 'hub_apply'));
+  await page.waitForSelector('#progress', { state: 'hidden' });
+  const apply = (await calls()).find(([c]) => c === 'hub_apply')[1].request;
+  check(JSON.stringify(apply.install) === JSON.stringify([['delay', 'jsfx'], ['delay', 'gfx'], ['delay', 'vst3'], ['delay', 'clap']]), 'Install on a card asks for all four formats');
+  check((await page.textContent('.card[data-id="delay"] .card-foot button')) === 'Installed', 'card then says Installed');
+  check((await page.locator('.card[data-id="delay"] .chip.on').count()) === 4, 'four format chips lit');
+
+  // the plugin page: update JSFX, add VST3
+  await page.click('.card[data-id="tilt"]');
+  await page.waitForSelector('#detail:not([hidden])');
+  check((await page.textContent('#d-name')) === 'Tilt', 'plugin page opens');
+  check((await page.locator('#d-sliders dt').count()) >= 1, 'plugin page lists the controls');
+  check((await page.textContent('#d-formats')).includes('update: 2.1 → 2.2'), 'shows the JSFX update from 2.1 to 2.2');
+  await page.check('#d-formats input[data-f="vst3"]');
+  check((await page.textContent('#d-apply')) === 'Install 1, update 1', 'Apply button says what will happen');
+  if (shots) await page.screenshot({ path: path.join(shots, 'hub-plugin-page.png') });
+  await page.click('#d-apply');
+  await page.waitForFunction(() => window.__calls.filter(([c]) => c === 'hub_apply').length === 2);
+  await page.waitForSelector('#progress', { state: 'hidden' });
+  const second = (await calls()).filter(([c]) => c === 'hub_apply')[1][1].request;
+  check(JSON.stringify(second) === JSON.stringify({ install: [['tilt', 'jsfx'], ['tilt', 'vst3']], remove: [] }), 'plugin page request: update JSFX, install VST3');
+  check(await page.isHidden('#update-all'), 'nothing left to update');
+
+  // removing from the plugin page
+  await page.uncheck('#d-formats input[data-f="vst3"]');
+  check((await page.textContent('#d-apply')) === 'Remove 1', 'unticking an installed format removes it');
+  await page.keyboard.press('Escape');
+
+  // Settings: drop CLAP
+  await page.click('#nav button[data-view="settings"]');
+  await page.uncheck('#set-formats input[value="clap"]');
+  await page.click('#set-save');
+  await page.waitForFunction(() => window.__calls.some(([c]) => c === 'hub_save_settings'));
+  const saved = (await calls()).find(([c]) => c === 'hub_save_settings')[1].settings;
+  check(JSON.stringify(saved.formats) === '["jsfx","gfx","vst3"]', 'Settings saves the default formats');
+  if (shots) await page.screenshot({ path: path.join(shots, 'hub-settings.png') });
+
+  // a group page and Install all shown
+  await page.click('#nav button[data-view="group:one-slider"]');
+  const os = catalog.plugins.filter((p) => p.group === 'one-slider').length;
+  check((await page.locator('.card').count()) === os, `One Slider shows its ${os} plugins`);
+  check((await page.textContent('#bulk')).includes(`Install all ${os - 1} shown`), 'offers to install the rest of the group');
+  await page.click('#bulk');
+  await page.waitForFunction(() => window.__calls.filter(([c]) => c === 'hub_apply').length === 3);
+  const bulk = (await calls()).filter(([c]) => c === 'hub_apply')[2][1].request;
+  check(bulk.install.length === (os - 1) * 3 && bulk.install.every(([, f]) => f !== 'clap'), 'group install uses the saved formats (no CLAP)');
+
+  // What's new
+  await page.click('#nav button[data-view="news"]');
+  check((await page.textContent('#news-title')).startsWith('Release 2.2'), "What's new shows the release");
+  check((await page.locator('#news li').count()) === 2, 'release notes render as a list');
+
+  // links open in the browser
+  await page.click('.side-foot a[href*="ko-fi"]');
+  check((await calls()).some(([c, u]) => c === 'open' && u.includes('ko-fi.com/koulaxizis')), 'Ko-fi link opens outside the Hub');
+
+  // the Hub's CSP allows no inline handlers: they would silently do nothing there
+  const src = fs.readFileSync(path.join(hub, 'ui/index.html'), 'utf8') + fs.readFileSync(path.join(hub, 'ui/hub.js'), 'utf8');
+  check(!/\son[a-z]+\s*=\s*["']/.test(src), 'no inline event handlers (blocked by the CSP)');
+  check(errors.length === 0, `no page errors ${errors.join('; ')}`);
+  await browser.close();
+  if (failed) {
+    console.log(`${failed} checks failed`);
+    process.exit(1);
+  }
+  console.log('all checks passed');
+})().catch((e) => {
+  console.error(e);
+  process.exit(1);
+});

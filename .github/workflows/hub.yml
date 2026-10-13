@@ -1,0 +1,166 @@
+name: NULL JSFX Hub
+
+# NULL JSFX Hub (hub/): the app that installs, updates and removes the plugins.
+#   core      its engine (hub/core) tested on Windows, macOS and Linux
+#   ui        its page (hub/ui) in a browser against a stand-in, and the catalog check
+#   smoke     install and remove from the latest real release, fetching only the parts needed
+#   build     the app for Windows (setup .exe), Linux (.AppImage, .deb) and macOS (.dmg)
+# When a GitHub release is published, the app and NULL-JSFX-Catalog.json (what the Hub reads to
+# know the release: tools/build_catalog.py) are attached to it. Run by hand with a release tag
+# to attach them to a release that already exists.
+
+on:
+  push:
+    paths: ["hub/**", "tools/build_catalog.py", "tools/build_site.py", "tools/site_content.json", "tools/site_chains.json", "tools/presets/**", "DATA/**", ".github/workflows/hub.yml"]
+  pull_request:
+    paths: ["hub/**", "tools/build_catalog.py", "tools/build_site.py", "tools/site_content.json", "tools/site_chains.json", "tools/presets/**", "DATA/**", ".github/workflows/hub.yml"]
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: "Attach the Hub and the catalog to this existing release (e.g. 2.2); empty = only build"
+        required: false
+        default: ""
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+env:
+  TAG: ${{ github.event.release.tag_name || inputs.release_tag }}
+
+jobs:
+  core:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-22.04, windows-2022, macos-14]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: hub
+      - run: cargo test -p null_hub_core
+        working-directory: hub
+
+  ui:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: python3 tools/build_catalog.py --check
+      - run: npm ci
+        working-directory: hub
+      - run: npx playwright install --with-deps chromium
+        working-directory: hub
+      - run: node tests/ui_test.cjs shots
+        working-directory: hub
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: hub-screenshots
+          path: hub/shots
+
+  smoke:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: hub
+      - run: hub/tests/release_smoke.sh
+
+  build:
+    needs: [core, ui]
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { os: windows-2022, name: Windows, args: "--bundles nsis" }
+          - { os: ubuntu-22.04, name: Linux, args: "--bundles appimage,deb" }
+          - { os: macos-14, name: macOS, args: "--bundles dmg --target universal-apple-darwin" }
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.name == 'macOS' && 'aarch64-apple-darwin,x86_64-apple-darwin' || '' }}
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: hub
+
+      - name: Linux deps
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev libxdo-dev libssl-dev patchelf file
+
+      - name: Build
+        working-directory: hub
+        env:
+          APPIMAGE_EXTRACT_AND_RUN: "1"
+        run: |
+          npm ci
+          npx tauri build ${{ matrix.args }} --ci
+
+      - name: Collect
+        run: |
+          mkdir -p out
+          b=hub/target/release/bundle
+          [ -d hub/target/universal-apple-darwin ] && b=hub/target/universal-apple-darwin/release/bundle
+          case "${{ matrix.name }}" in
+            Windows) cp "$b"/nsis/*-setup.exe out/NULL-JSFX-Hub-Windows-Setup.exe ;;
+            Linux)   cp "$b"/appimage/*.AppImage out/NULL-JSFX-Hub-Linux.AppImage
+                     cp "$b"/deb/*.deb out/NULL-JSFX-Hub-Linux.deb ;;
+            macOS)   cp "$b"/dmg/*.dmg out/NULL-JSFX-Hub-macOS.dmg ;;
+          esac
+          ls -la out
+
+      - name: Starts and quits (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get install -y xvfb
+          chmod +x out/NULL-JSFX-Hub-Linux.AppImage
+          export APPIMAGE_EXTRACT_AND_RUN=1 NULL_JSFX_HUB_DATA="$RUNNER_TEMP/hubdata"
+          xvfb-run -a out/NULL-JSFX-Hub-Linux.AppImage & pid=$!
+          sleep 15
+          kill -0 $pid || { echo "the Hub quit on its own"; exit 1; }
+          kill $pid || true
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: NULL-JSFX-Hub-${{ matrix.name }}
+          path: out/*
+
+      - name: Attach to the release
+        if: env.TAG != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "$TAG" out/* --clobber
+
+  catalog:
+    if: github.event_name == 'release' || inputs.release_tag != ''
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build and attach NULL-JSFX-Catalog.json
+        env:
+          GH_TOKEN: ${{ github.token }}
+          NOTES: ${{ github.event.release.body }}
+        run: |
+          if [ -z "$NOTES" ]; then NOTES="$(gh release view "$TAG" --json body --jq .body)"; fi
+          printf '%s\n' "$NOTES" > notes.md
+          date="$(gh release view "$TAG" --json publishedAt --jq '.publishedAt[:10]')"
+          python3 tools/build_catalog.py --version "$TAG" --notes notes.md --date "$date" --out NULL-JSFX-Catalog.json
+          gh release upload "$TAG" NULL-JSFX-Catalog.json --clobber
