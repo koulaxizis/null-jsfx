@@ -168,7 +168,7 @@ jobs:
           $setup = "build-installer\NULL-JSFX-Installer-Windows.exe"
           $reaper = "$env:RUNNER_TEMP\REAPER"
           # a preset the user saved on Tilt: it must stay, with ours added after it
-          $mine = "$reaper\presets\js-null_jsfx_tilt.jsfx.ini"
+          $mine = "$reaper\presets\js-null_jsfx_tilt_jsfx.ini"
           New-Item -ItemType Directory -Force "$reaper\presets" | Out-Null
           Set-Content $mine "[General]`r`nNbPresets=1`r`n`r`n[Preset0]`r`nData=31202D2074657374E5`r`nLen=8`r`nName=Mine`r`n"
           $p = Start-Process $setup -Wait -PassThru -ArgumentList '/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART',

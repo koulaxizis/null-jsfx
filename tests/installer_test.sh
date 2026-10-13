@@ -55,7 +55,7 @@ left=$(find "$h" -type f ! -path "$h/.cache/*" | wc -l | tr -d ' ')
 expect "all: files left after --uninstall" "$left" 0
 
 # presets the user saved stay, ours are added after them, and they stay after --uninstall
-h="$work/merge" ini="js-null_jsfx_tilt.jsfx.ini"
+h="$work/merge" ini="js-null_jsfx_tilt_jsfx.ini"
 mkdir -p "$h/$reaper/presets"
 printf '[General]\nNbPresets=1\n\n[Preset0]\nData=31202D2074657374E5\nLen=8\nName=Mine\n' > "$h/$reaper/presets/$ini"
 run merge --formats jsfx --plugins tilt --extras none --yes

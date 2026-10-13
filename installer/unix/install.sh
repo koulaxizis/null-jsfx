@@ -362,11 +362,11 @@ V="$tmp/native/VST3/NULL JSFX" C="$tmp/native/CLAP/NULL JSFX"
 for stem in $SELECTED; do
   if has "$FORMATS" jsfx; then
     put "$J/$stem.jsfx" "$E/$stem.jsfx"
-    presets "$tmp/jsfx/presets/js-null_jsfx_$stem.jsfx.ini" "$P/js-null_jsfx_$stem.jsfx.ini"
+    presets "$tmp/jsfx/presets/js-null_jsfx_${stem}_jsfx.ini" "$P/js-null_jsfx_${stem}_jsfx.ini"
   fi
   if has "$FORMATS" gfx; then
     put "$J/gfx/${stem}_gfx.jsfx" "$E/gfx/${stem}_gfx.jsfx"
-    presets "$tmp/jsfx/presets/js-null_jsfx_gfx_${stem}_gfx.jsfx.ini" "$P/js-null_jsfx_gfx_${stem}_gfx.jsfx.ini"
+    presets "$tmp/jsfx/presets/js-null_jsfx_gfx_${stem}_gfx_jsfx.ini" "$P/js-null_jsfx_gfx_${stem}_gfx_jsfx.ini"
   fi
   if has "$FORMATS" vst3; then put "$V/null_jsfx_$stem.vst3" "$VST3_DIR/NULL JSFX/null_jsfx_$stem.vst3"; fi
   if has "$FORMATS" clap; then put "$C/null_jsfx_$stem.clap" "$CLAP_DIR/NULL JSFX/null_jsfx_$stem.clap"; fi

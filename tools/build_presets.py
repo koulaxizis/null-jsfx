@@ -101,8 +101,9 @@ def rpl(desc, presets, files):
 
 
 def ini_name(effect):
-    """REAPER's user preset file for a JSFX, from its path under Effects (null_jsfx/tilt.jsfx)."""
-    return "js-" + re.sub(r"[/\\]", "_", effect) + ".ini"
+    """REAPER's user preset file for a JSFX, from its path under Effects: slashes and dots become
+    underscores (null_jsfx/gfx/delay_gfx.jsfx -> js-null_jsfx_gfx_delay_gfx_jsfx.ini)."""
+    return "js-" + re.sub(r"[/\\.]", "_", effect) + ".ini"
 
 
 def ini(presets, files):
