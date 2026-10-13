@@ -1,0 +1,166 @@
+desc:NULL Dynamics GFX
+author: Christos Koulaxizis
+tags: dynamics compressor expander gain reduction ratio threshold knee gui
+//category: Essentials
+//NULL JSFX v2.0 • https://nulljsfx.tech • MIT License
+
+import null_gfx.jsfx-inc
+
+slider1:0<0,1,1{Compressor,Expander}>-Mode
+slider2:-20<-60,0,1>-Threshold (dB)
+slider3:4<1,20,0.1>-Ratio
+slider4:6<0,20,1>-Knee (dB)
+slider5:10<0,200,1>-Attack (ms)
+slider6:100<0,1000,1>-Release (ms)
+slider7:0<0,20,1>-Makeup (dB)
+
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
+
+@init
+  // NULL Dynamics (../dynamics.jsfx) with its own interface: same audio code, plus @gfx.
+  gain_env = 1;
+  ln10 = 2.302585;
+  db_to_lin = ln10 / 20;
+  gfx_ext_retina = 1;
+  // interface only: input and output peak meters, 300 ms release
+  dy_rel = exp(-1 / (0.3 * srate));
+  dy_in = dy_out = 0;
+
+  function update()
+  (
+    mode = slider1;
+    threshold_db = slider2;
+    ratio = slider3;
+    knee_db = slider4;
+    attack_ms = slider5;
+    release_ms = slider6;
+    makeup_db = slider7;
+  
+    attack_ms > 0 ? (
+      attack_tc = 1 - exp(-1 / (attack_ms * srate / 1000));
+    ) : (
+      attack_tc = 1;
+    );
+  
+    release_ms > 0 ? (
+      release_tc = 1 - exp(-1 / (release_ms * srate / 1000));
+    ) : (
+      release_tc = 1;
+    );
+  );
+
+  // static curve in dB: output level for input level d (the gain computer plus makeup)
+  function dy_curve(d) local(x, r)
+  (
+    r = 0;
+    mode == 0 ? (
+      x = d - threshold_db;
+    ) : (
+      x = threshold_db - d;
+    );
+    x > 0 ? (
+      knee_db > 0 && x < knee_db ? r = (1 - 1/ratio) * x * x / (2 * knee_db) : r = (1 - 1/ratio) * (x - knee_db / 2);
+    );
+    d - r + makeup_db;
+  );
+
+@slider
+  update();
+
+@sample
+  input_abs = max(abs(spl0), abs(spl1));
+  input_abs < 0.000001 ? input_abs = 0.000001;
+  input_db = log(input_abs) / ln10 * 20;
+  
+  gr_target = 0;
+  
+  mode == 0 ? (
+    // COMPRESSOR: above threshold
+    excess = input_db - threshold_db;
+    excess > 0 ? (
+      knee_db > 0 && excess < knee_db ? (
+        // quadratic soft knee: the slope rises smoothly from 1 to 1/ratio
+        gr_target = (1 - 1/ratio) * excess * excess / (2 * knee_db);
+      ) : (
+        gr_target = (1 - 1/ratio) * (excess - knee_db / 2);
+      );
+    );
+  ) : (
+    // EXPANDER: below threshold
+    deficit = threshold_db - input_db;
+    deficit > 0 ? (
+      knee_db > 0 && deficit < knee_db ? (
+        gr_target = (1 - 1/ratio) * deficit * deficit / (2 * knee_db);
+      ) : (
+        gr_target = (1 - 1/ratio) * (deficit - knee_db / 2);
+      );
+    );
+  );
+  
+  gain_target = exp(-gr_target * db_to_lin);
+  
+  gain_target < gain_env ? (
+    gain_env = gain_env + (gain_target - gain_env) * attack_tc;
+  ) : (
+    gain_env = gain_env + (gain_target - gain_env) * release_tc;
+  );
+  
+  makeup_linear = exp(makeup_db * db_to_lin);
+  spl0 = spl0 * gain_env * makeup_linear;
+  spl1 = spl1 * gain_env * makeup_linear;
+
+  // interface only: meters (read the audio state, never change it)
+  dy_lv = max(abs(spl0), abs(spl1));
+  dy_out = dy_lv > dy_out ? dy_lv : dy_out * dy_rel;
+  dy_in = input_abs > dy_in ? input_abs : dy_in * dy_rel;
+
+@gfx 480 380
+  ng_knobs_begin("DYNAMICS", "ESSENTIALS", 480, 120, 2, 0);
+
+  // display, left: the static curve (input -60..0 dB across, output -60..0 dB up) with the
+  // input level as a dot; right: input, gain-reduction and output meters
+  ng_plot(64, 66, 92, 92);
+  ng_grid(4, 4, 0);
+  ng_font(4, 8, 0);
+  ng_col(NG_MUTED, 1);
+  dy_i = 0;
+  loop(3, sprintf(#dy_l, "%d", -30 * dy_i); ng_ptxt(#dy_l, ng_px - 6 * ng_s, ng_py + ng_ph * dy_i / 2, 2); dy_i += 1;);
+  ng_col(NG_ACCENT, 0.25);
+  gfx_line(ng_px, ng_py + ng_ph, ng_px + ng_pw, ng_py, 1);
+  ng_col(NG_ACCENT, 1);
+  dy_i = 0;
+  loop(93,
+    dy_yy = ng_lin_y(dy_curve(-60 + 60 * dy_i / 92), -60, 0);
+    dy_xx = ng_px + ng_pw * dy_i / 92;
+    dy_i == 0 ? ng_line_start(dy_xx, dy_yy) : ng_line_to(dy_xx, dy_yy);
+    dy_i += 1;
+  );
+  dy_db = ng_to_db(dy_in);
+  dy_db > -60 ? (
+    ng_col(NG_TEXT, 1);
+    gfx_circle(ng_lin_x(min(0, dy_db), -60, 0), ng_lin_y(dy_curve(min(0, dy_db)), -60, 0), 2.5 * ng_s, 1, 1);
+  );
+  ng_meter(180, 82, 268, 10, "IN", dy_db, slider2, -60);
+  ng_gr_meter(180, 106, 268, 10, "GR", -20 * log10(max(gain_env, 0.0000001)), 24);
+  ng_meter(180, 130, 268, 10, "OUT", ng_to_db(dy_out), -140, -60);
+
+  ng_row(4);
+  ng_select_ctl(1, "MODE", "COMP|EXPAND", 0) ? update();
+  sprintf(#v2, "%d dB", slider2);
+  ng_knob_ctl(2, "THRESHOLD", #v2, -60, 0, -20, 1, 0) ? update();
+  sprintf(#v3, "%.1f:1", slider3);
+  ng_knob_ctl(3, "RATIO", #v3, 1, 20, 4, 0.1, 0) ? update();
+  sprintf(#v4, "%d dB", slider4);
+  ng_knob_ctl(4, "KNEE", #v4, 0, 20, 6, 1, 0) ? update();
+  ng_row(3);
+  sprintf(#v5, "%d ms", slider5);
+  ng_knob_ctl(5, "ATTACK", #v5, 0, 200, 10, 1, 0) ? update();
+  sprintf(#v6, "%d ms", slider6);
+  ng_knob_ctl(6, "RELEASE", #v6, 0, 1000, 100, 1, 0) ? update();
+  sprintf(#v7, "+%d dB", slider7);
+  ng_knob_ctl(7, "MAKEUP", #v7, 0, 20, 0, 1, 0) ? update();
+
+  ng_end();

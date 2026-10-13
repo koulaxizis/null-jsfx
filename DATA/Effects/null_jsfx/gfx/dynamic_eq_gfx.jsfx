@@ -1,0 +1,206 @@
+desc:NULL Dynamic EQ GFX
+author: Christos Koulaxizis
+tags: dynamic eq equalizer parametric compressor expander essentials gui
+//category: Essentials
+//NULL JSFX v2.0 • https://nulljsfx.tech • MIT License
+
+import null_gfx.jsfx-inc
+
+slider1:200<20,1000,10>-B1 Freq (Hz)
+slider2:0<-12,12,0.5>-B1 Gain (dB)
+slider3:1<0.5,4,0.1>-B1 Q
+slider4:-12<-36,0,1>-B1 Threshold (dB)
+slider5:1000<200,4000,100>-B2 Freq (Hz)
+slider6:0<-12,12,0.5>-B2 Gain (dB)
+slider7:1<0.5,4,0.1>-B2 Q
+slider8:-12<-36,0,1>-B2 Threshold (dB)
+slider9:2000<500,8000,100>-B3 Freq (Hz)
+slider10:0<-12,12,0.5>-B3 Gain (dB)
+slider11:1<0.5,4,0.1>-B3 Q
+slider12:-12<-36,0,1>-B3 Threshold (dB)
+slider13:6000<2000,15000,500>-B4 Freq (Hz)
+slider14:0<-12,12,0.5>-B4 Gain (dB)
+slider15:1<0.5,4,0.1>-B4 Q
+slider16:-12<-36,0,1>-B4 Threshold (dB)
+slider17:1<0.1,10,0.1>-Attack (ms)
+slider18:100<1,500,1>-Release (ms)
+slider19:0<0,24,1>-Makeup (dB)
+
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
+
+@init
+  // NULL Dynamic EQ (../dynamic_eq.jsfx) with its own interface: same audio code, plus @gfx.
+  // Four bell bands that only act when their band gets loud. Each band measures its own
+  // frequency range; once that level passes Threshold, the band's Gain is applied,
+  // fading in fully at 12 dB over the threshold. Negative Gain tames resonances or
+  // harshness only when they happen; positive Gain lifts a band only when it is played.
+
+  // constant-peak band-pass (RBJ), coefficients this.b0 / this.a1 / this.a2
+  function setup(freq, q, gain, thresh)
+  (
+    w = 2 * $pi * min(freq, srate * 0.45) / srate;
+    al = sin(w) / (2 * q);
+    this.b0 = al / (1 + al);
+    this.a1 = -2 * cos(w) / (1 + al);
+    this.a2 = (1 - al) / (1 + al);
+    this.gain = gain;
+    this.thresh = thresh;
+  );
+
+  function bp_l(x) local(y)
+  (
+    y = this.b0 * (x - this.xl2) - this.a1 * this.yl1 - this.a2 * this.yl2;
+    this.xl2 = this.xl1; this.xl1 = x; this.yl2 = this.yl1; this.yl1 = y;
+    y;
+  );
+  function bp_r(x) local(y)
+  (
+    y = this.b0 * (x - this.xr2) - this.a1 * this.yr1 - this.a2 * this.yr2;
+    this.xr2 = this.xr1; this.xr1 = x; this.yr2 = this.yr1; this.yr1 = y;
+    y;
+  );
+
+  // adds (A - 1) x band to each channel, where A follows the band's level
+  function band(l*, r*) local(bl, br, lev, over, A)
+  (
+    bl = this.bp_l(l);
+    br = this.bp_r(r);
+    lev = max(abs(bl), abs(br));
+    this.env = lev > this.env ? att * this.env + (1 - att) * lev : rel * this.env + (1 - rel) * lev;
+    over = this.env > 0.00001 ? (20 * log10(this.env) - this.thresh) / 12 : 0;
+    over = max(0, min(1, over));
+    A = 10 ^ (this.gain * over / 20);
+    l += (A - 1) * bl;
+    r += (A - 1) * br;
+  );
+
+  function update()
+  (
+    e1.setup(slider1, slider3, slider2, slider4);
+    e2.setup(slider5, slider7, slider6, slider8);
+    e3.setup(slider9, slider11, slider10, slider12);
+    e4.setup(slider13, slider15, slider14, slider16);
+    att = exp(-1 / (slider17 * srate / 1000));
+    rel = exp(-1 / (slider18 * srate / 1000));
+    makeup = 10 ^ (slider19 / 20);
+  );
+
+  // display: how far band's gain is engaged now (0..1), as band() computes it from the envelope
+  function de_over() ( max(0, min(1, this.env > 0.00001 ? (20 * log10(this.env) - this.thresh) / 12 : 0)); );
+  // display: magnitude in dB of x + (A - 1) x band-pass at w (radians per sample), A from over
+  function de_db(w, over) local(A, c1, s1, c2, s2, nr, ni, dr, di, d2, hr, hi)
+  (
+    A = 10 ^ (this.gain * over / 20);
+    c1 = cos(w); s1 = sin(w); c2 = cos(2 * w); s2 = sin(2 * w);
+    nr = this.b0 * (1 - c2); ni = this.b0 * s2;
+    dr = 1 + this.a1 * c1 + this.a2 * c2; di = -(this.a1 * s1 + this.a2 * s2);
+    d2 = max(dr * dr + di * di, 0.00000000000000000001);
+    hr = 1 + (A - 1) * (nr * dr + ni * di) / d2;
+    hi = (A - 1) * (ni * dr - nr * di) / d2;
+    10 * log10(max(hr * hr + hi * hi, 0.00000000000000000001));
+  );
+  // the whole EQ at f Hz plus makeup; live = 1: gains as engaged now, live = 0: fully engaged
+  function de_total(f, live) local(w)
+  (
+    w = 2 * $pi * min(f, srate * 0.4999) / srate;
+    e1.de_db(w, live ? e1.de_over() : 1) + e2.de_db(w, live ? e2.de_over() : 1) +
+    e3.de_db(w, live ? e3.de_over() : 1) + e4.de_db(w, live ? e4.de_over() : 1) + slider19;
+  );
+  // value text for a frequency: Hz below 1 kHz, else kHz
+  function de_freq_txt(f) ( f >= 1000 ? sprintf(#de_v, "%.2f kHz", f / 1000) : sprintf(#de_v, "%d Hz", f); #de_v; );
+
+  // the value of slider i (1-based)
+  function de_slider(i)
+  (
+    i == 1 ? slider1 : i == 2 ? slider2 : i == 3 ? slider3 : i == 4 ? slider4 : i == 5 ? slider5 :
+    i == 6 ? slider6 : i == 7 ? slider7 : i == 8 ? slider8 : i == 9 ? slider9 :
+    i == 10 ? slider10 : i == 11 ? slider11 : i == 12 ? slider12 : i == 13 ? slider13 :
+    i == 14 ? slider14 : i == 15 ? slider15 : i == 16 ? slider16 : i == 17 ? slider17 :
+    i == 18 ? slider18 : slider19;
+  );
+
+  gfx_ext_retina = 1;
+
+@slider
+  update();
+
+@sample
+  l = spl0; r = spl1;
+  e1.band(l, r);
+  e2.band(l, r);
+  e3.band(l, r);
+  e4.band(l, r);
+  spl0 = l * makeup;
+  spl1 = r * makeup;
+
+@gfx 480 428
+  ng_knobs_begin("DYNAMIC EQ", "ESSENTIALS", 480, 140, 2, 1);
+
+  // display: the curve with every band fully engaged (muted) and the curve as the band levels
+  // engage it now (accent), makeup included (-16..+16 dB); the selected band dashed
+  ng_plot(ng_vx + 26, ng_vy + 4, ng_vw - 30, ng_vh - 20);
+  ng_grid_freq(24);
+  de_f = de_slider(1 + de_tab * 4);
+  de_x = floor(ng_freq_x(de_f)) + 0.5;
+  ng_col(NG_ACCENT, 0.5);
+  de_y = ng_py;
+  while (
+    gfx_line(de_x, de_y, de_x, min(de_y + 3 * ng_s, ng_py + ng_ph), 0);
+    de_y += 6 * ng_s;
+    de_y < ng_py + ng_ph;
+  );
+  ng_col(NG_MUTED, 0.8);
+  de_i = 0;
+  loop(floor(ng_pw) + 1,
+    de_y = ng_lin_y(de_total(20 * 1000 ^ (de_i / ng_pw), 0), -16, 16);
+    de_i == 0 ? (gfx_x = ng_px; gfx_y = de_y) : gfx_lineto(ng_px + de_i, de_y, 1);
+    de_i += 1;
+  );
+  de_zy = ng_lin_y(0, -16, 16);
+  ng_col(NG_ACCENT, 0.10);
+  de_i = 0;
+  loop(floor(ng_pw) + 1,
+    gfx_line(ng_px + de_i, de_zy, ng_px + de_i, ng_lin_y(de_total(20 * 1000 ^ (de_i / ng_pw), 1), -16, 16), 0);
+    de_i += 1;
+  );
+  ng_col(NG_ACCENT, 1);
+  de_i = 0;
+  loop(floor(ng_pw) + 1,
+    de_y = ng_lin_y(de_total(20 * 1000 ^ (de_i / ng_pw), 1), -16, 16);
+    de_i == 0 ? ng_line_start(ng_px, de_y) : ng_line_to(ng_px + de_i, de_y);
+    de_i += 1;
+  );
+  de_k = 0;
+  loop(4,
+    de_f = de_slider(1 + de_k * 4);
+    ng_col(NG_ACCENT, 1);
+    gfx_circle(ng_freq_x(de_f), ng_lin_y(de_total(de_f, 1), -16, 16), (de_k == de_tab ? 4 : 3) * ng_s, 1, 1);
+    de_k += 1;
+  );
+
+  de_tab = ng_tabs("BAND 1|BAND 2|BAND 3|BAND 4", de_tab);
+  de_b = de_tab * 4;
+  ng_row(4);
+  de_tab == 0 ? ng_knob_ctl(1, "FREQ", de_freq_txt(slider1), 20, 1000, 200, 10, 0) ? update();
+  de_tab == 1 ? ng_knob_ctl(5, "FREQ", de_freq_txt(slider5), 200, 4000, 1000, 100, 0) ? update();
+  de_tab == 2 ? ng_knob_ctl(9, "FREQ", de_freq_txt(slider9), 500, 8000, 2000, 100, 0) ? update();
+  de_tab == 3 ? ng_knob_ctl(13, "FREQ", de_freq_txt(slider13), 2000, 15000, 6000, 500, 0) ? update();
+  sprintf(#de_g, "%+.1f dB", de_slider(de_b + 2));
+  ng_knob_ctl(de_b + 2, "GAIN", #de_g, -12, 12, 0, 0.5, 1) ? update();
+  sprintf(#de_q, "%.1f", de_slider(de_b + 3));
+  ng_knob_ctl(de_b + 3, "Q", #de_q, 0.5, 4, 1, 0.1, 0) ? update();
+  sprintf(#de_t, "%d dB", de_slider(de_b + 4));
+  ng_knob_ctl(de_b + 4, "THRESHOLD", #de_t, -36, 0, -12, 1, 0) ? update();
+
+  ng_row(3);
+  sprintf(#de_a, "%.1f ms", slider17);
+  ng_knob_ctl(17, "ATTACK", #de_a, 0.1, 10, 1, 0.1, 0) ? update();
+  sprintf(#de_r, "%d ms", slider18);
+  ng_knob_ctl(18, "RELEASE", #de_r, 1, 500, 100, 1, 0) ? update();
+  sprintf(#de_m, "%d dB", slider19);
+  ng_knob_ctl(19, "MAKEUP", #de_m, 0, 24, 0, 1, 0) ? update();
+
+  ng_end();

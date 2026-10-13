@@ -1,0 +1,102 @@
+/*
+ * NULL JSFX - Dynamics (VST3/CLAP), interface
+ * Copyright (C) 2026 Christos Koulaxizis / NULL JSFX
+ * SPDX-License-Identifier: MIT
+ */
+
+#include "NullUI.hpp"
+#include "DynamicsDSP.hpp"
+#include "DynamicsSliders.hpp"
+
+START_NAMESPACE_DISTRHO
+
+static const NullKnobsUI::Control kControls[] = {
+    { 0, NullKnobsUI::kSelect, "MODE", 0, -1, false },
+    { 1, NullKnobsUI::kKnob, "THRESHOLD", 0, -1, false },
+    { 2, NullKnobsUI::kKnob, "RATIO", 0, -1, false },
+    { 3, NullKnobsUI::kKnob, "KNEE", 0, -1, false },
+    { 4, NullKnobsUI::kKnob, "ATTACK", 1, -1, false },
+    { 5, NullKnobsUI::kKnob, "RELEASE", 1, -1, false },
+    { 6, NullKnobsUI::kKnob, "MAKEUP", 1, -1, false },
+};
+
+class UIDynamics : public NullKnobsUI
+{
+public:
+    UIDynamics()
+        : NullKnobsUI({ "DYNAMICS", "ESSENTIALS", 480, 120, nullptr, 2, nulldynamics::kSliders, nulldynamics::kNumSliders,
+                        kControls, sizeof(kControls) / sizeof(kControls[0]), true }) {}
+
+protected:
+    // as in dynamics_gfx.jsfx: left, the static curve (input -60..0 dB across, output -60..0 dB
+    // up) with the input level as a dot; right, input, gain-reduction and output meters
+    void drawDisplay() override
+    {
+        setPlot(64.0f, 66.0f, 92.0f, 92.0f);
+        grid(4, 4, false);
+        char buf[8];
+        for (int i = 0; i < 3; ++i)
+        {
+            std::snprintf(buf, sizeof(buf), "%d", -30 * i);
+            label(fPX - 6.0f, fPY + fPH * float(i) / 2.0f, ALIGN_RIGHT, 8.0f, 0.0f, theme::kMuted, buf);
+        }
+        beginPath();
+        moveTo(fPX, fPY + fPH);
+        lineTo(fPX + fPW, fPY);
+        strokeColor(col(theme::kAccent, 0.25f));
+        strokeWidth(1.0f);
+        stroke();
+
+        nulldynamics::Params p;
+        p.expander = value(0) >= 0.5f;
+        p.thresholdDb = value(1);
+        p.ratio = value(2);
+        p.kneeDb = value(3);
+        p.makeupDb = value(6);
+        constexpr int n = 93;
+        float xs[n], ys[n];
+        for (int i = 0; i < n; ++i)
+        {
+            xs[i] = fPX + fPW * float(i) / float(n - 1);
+            ys[i] = linY(float(nulldynamics::curveDb(p, -60.0 + 60.0 * double(i) / double(n - 1))), -60.0f, 0.0f);
+        }
+        curve(xs, ys, n);
+
+        float in = 0.0f, out = 0.0f, gr = 0.0f;
+        if (nulljsfx::Taps* t = taps())
+        {
+            in = t->inLevel.load(std::memory_order_relaxed);
+            out = t->outLevel.load(std::memory_order_relaxed);
+            gr = t->gr.load(std::memory_order_relaxed);
+        }
+        const float db = nulljsfx::toDb(in);
+        if (db > -60.0f)
+        {
+            const double d = std::fmin(0.0, double(db));
+            beginPath();
+            circle(linX(float(d), -60.0f, 0.0f), linY(float(nulldynamics::curveDb(p, d)), -60.0f, 0.0f), 2.5f);
+            fillColor(col(theme::kText));
+            fill();
+        }
+        meter(180.0f, 82.0f, 268.0f, 10.0f, "IN", db, value(1), -60.0f);
+        grMeter(180.0f, 106.0f, 268.0f, 10.0f, "GR", gr, 24.0f);
+        meter(180.0f, 130.0f, 268.0f, 10.0f, "OUT", nulljsfx::toDb(out), -140.0f, -60.0f);
+    }
+
+    void formatValue(uint32_t param, float v, char* buf, size_t n) override
+    {
+        if (param == 2)
+            std::snprintf(buf, n, "%.1f:1", v);
+        else if (param == 6)
+            std::snprintf(buf, n, "+%d dB", int(std::lround(v)));
+        else
+            NullKnobsUI::formatValue(param, v, buf, n);
+    }
+};
+
+UI* createUI()
+{
+    return new UIDynamics();
+}
+
+END_NAMESPACE_DISTRHO

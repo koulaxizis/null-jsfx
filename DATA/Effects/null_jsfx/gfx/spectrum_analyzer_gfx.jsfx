@@ -1,0 +1,209 @@
+desc:NULL Spectrum Analyzer GFX
+author: Christos Koulaxizis
+tags: spectrum analyzer analyser fft frequency meter metering peak hold slope visual mixing mastering gui
+//category: Advanced
+//NULL JSFX v2.0 • https://nulljsfx.tech • MIT License
+
+import null_gfx.jsfx-inc
+
+slider1:2<0,4,1{1024,2048,4096,8192,16384}>-FFT Size
+slider2:4.5<0,6,0.5>-Slope (dB/oct)
+slider3:300<0,2000,10>-Release (ms)
+slider4:2<0,3,1{60 dB,80 dB,100 dB,120 dB}>-Range
+slider5:1<0,2,1{Off,2 s,Infinite}>-Peak Hold
+slider6:0<0,3,1{Mid,Left,Right,Side}>-Channel
+slider7:0<0,1,1{Stereo,Solo}>-Monitor
+
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
+
+@init
+  // NULL Spectrum Analyzer (../spectrum_analyzer.jsfx) with its own interface: same audio code, plus @gfx.
+  // FFT spectrum analyzer. The audio passes through untouched (Monitor Solo only plays the
+  // analysed channel on both sides). Every hop (25 ms, at most half a frame) the last N
+  // samples of the chosen channel get a Hann window and an FFT; each bin's power (0 dB = a
+  // full-scale sine) rises at once and falls with Release, and a second set holds the peaks.
+  // Slope tilts the display around 1 kHz; Range is the floor of the display below 0 dB.
+  // @gfx draws the spectrum from these bins.
+  sa_ring = 0;                 // input ring, 16384
+  sa_win = 16384;              // Hann window, N
+  sa_buf = 65536;              // FFT buffer, 2N, does not cross a 65536 boundary
+  sa_spec = 131072;            // smoothed power, N/2 + 1
+  sa_hold = 147456;            // held power
+  sa_holdt = 163840;           // hold countdown in frames
+  freembuf(sa_holdt + 8193);
+  memset(0, 0, sa_holdt + 8193);
+  sa_wp = 0;
+  sa_hc = 0;
+  sa_n = 0;
+  sa_hmode = -1;
+
+  function sa_frame() local(i, p, k, re, im, pw, s)
+  (
+    i = 0;
+    p = sa_wp - sa_n;
+    p < 0 ? p += 16384;
+    loop(sa_n,
+      sa_buf[2 * i] = sa_ring[p] * sa_win[i];
+      sa_buf[2 * i + 1] = 0;
+      p += 1;
+      p >= 16384 ? p = 0;
+      i += 1;
+    );
+    fft(sa_buf, sa_n);
+    fft_permute(sa_buf, sa_n);
+    k = 0;
+    loop(sa_n / 2 + 1,
+      re = sa_buf[2 * k];
+      im = sa_buf[2 * k + 1];
+      pw = (re * re + im * im) * sa_norm;
+      s = sa_spec[k];
+      s = pw > s ? pw : s * sa_rc + pw * (1 - sa_rc);
+      sa_spec[k] = s;
+      sa_hmode > 0 ? (
+        s >= sa_hold[k] ? (
+          sa_hold[k] = s;
+          sa_holdt[k] = sa_hframes;
+        ) : sa_hmode == 1 ? (
+          sa_holdt[k] > 0 ? (sa_holdt[k] -= 1) : (sa_hold[k] = s);
+        );
+      );
+      k += 1;
+    );
+  );
+  gfx_ext_retina = 1;
+
+  function update()
+  (
+    sa_nn = slider1 == 0 ? 1024 : slider1 == 1 ? 2048 : slider1 == 2 ? 4096 : slider1 == 3 ? 8192 : 16384;
+    sa_nn != sa_n || slider5 != sa_hmode ? (
+      sa_nn != sa_n ? (
+        sa_n = sa_nn;
+        sa_i = 0;
+        loop(sa_n, sa_win[sa_i] = 0.5 - 0.5 * cos(2 * $pi * sa_i / sa_n); sa_i += 1;);
+        memset(sa_spec, 0, 8193);
+      );
+      sa_hmode = slider5;
+      memset(sa_hold, 0, 8193);
+      memset(sa_holdt, 0, 8193);
+    );
+    sa_hop = min(sa_n / 2, floor(srate / 40 + 0.5));
+    sa_norm = 16 / (sa_n * sa_n);
+    sa_rc = slider3 > 0 ? exp(-sa_hop / (srate * slider3 / 1000)) : 0;
+    sa_hframes = ceil(2 * srate / sa_hop);
+    sa_chan = slider6;
+    sa_solo = slider7;
+  );
+
+@slider
+  update();
+
+@sample
+  sa_x = sa_chan == 0 ? (spl0 + spl1) * 0.5 : sa_chan == 1 ? spl0 : sa_chan == 2 ? spl1 : (spl0 - spl1) * 0.5;
+  sa_ring[sa_wp] = sa_x;
+  sa_wp += 1;
+  sa_wp >= 16384 ? sa_wp = 0;
+  sa_hc += 1;
+  sa_hc >= sa_hop ? (
+    sa_hc = 0;
+    sa_frame();
+  );
+  sa_solo ? (
+    spl0 = sa_x;
+    spl1 = sa_x;
+  );
+
+@gfx 640 540
+  ng_knobs_begin("SPECTRUM ANALYZER", "ADVANCED", 640, 280, 2, 0);
+
+  // spectrum: 20 Hz to 20 kHz (log), 0 dB down to -Range, Slope tilts around 1 kHz
+  sa_range = slider4 == 0 ? 60 : slider4 == 1 ? 80 : slider4 == 2 ? 100 : 120;
+  sa_dbs = sa_range <= 80 ? 10 : 20;
+  ng_plot(52, 66, 558, 242);
+  ng_font(4, 8, 0);
+  sa_d = 10;
+  loop(4,
+    sa_m = 1;
+    loop(9,
+      sa_f = sa_m * sa_d;
+      sa_f >= 20 && sa_f <= 20000 ? (
+        sa_gx = floor(ng_freq_x(sa_f)) + 0.5;
+        ng_col(NG_BORDER, sa_m == 1 ? 1 : 0.5);
+        gfx_line(sa_gx, ng_py, sa_gx, ng_py + ng_ph, 0);
+        sa_m == 1 || sa_m == 2 || sa_m == 5 ? (
+          ng_col(NG_MUTED, 1);
+          sa_f >= 1000 ? sprintf(#sa_t, "%dk", sa_f / 1000) : sprintf(#sa_t, "%d", sa_f);
+          ng_ptxt(#sa_t, sa_gx, ng_py + ng_ph + 10 * ng_s, sa_f == 20 ? 0 : sa_f == 20000 ? 2 : 1);
+        );
+      );
+      sa_m += 1;
+    );
+    sa_d *= 10;
+  );
+  sa_db = 0;
+  while (sa_db >= -sa_range) (
+    sa_gy = floor(ng_lin_y(sa_db, -sa_range, 0)) + 0.5;
+    ng_col(sa_db == 0 ? 0x45433f : NG_BORDER, sa_db == 0 ? 1 : 0.6);
+    gfx_line(ng_px, sa_gy, ng_px + ng_pw, sa_gy, 0);
+    ng_col(NG_MUTED, 1);
+    sprintf(#sa_t, "%d", sa_db);
+    ng_ptxt(#sa_t, ng_px - 5 * ng_s, sa_gy, 2);
+    sa_db -= sa_dbs;
+  );
+
+  // one point per design unit: the loudest bin under it, or the two nearest bins interpolated
+  sa_cols = 558;
+  sa_pass = slider5 > 0 ? 0 : 1;
+  while (sa_pass < 2) (
+    sa_src = sa_pass ? sa_spec : sa_hold;
+    sa_c = 0;
+    loop(sa_cols,
+      sa_f0 = 20 * 1000 ^ (sa_c / sa_cols);
+      sa_f1 = 20 * 1000 ^ ((sa_c + 1) / sa_cols);
+      sa_k0 = sa_f0 * sa_n / srate;
+      sa_k1 = min(sa_n / 2, sa_f1 * sa_n / srate);
+      sa_a = ceil(sa_k0);
+      sa_b = floor(sa_k1);
+      sa_a <= sa_b ? (
+        sa_p = 0;
+        while (sa_a <= sa_b) ( sa_p = max(sa_p, sa_src[sa_a]); sa_a += 1; );
+      ) : (
+        sa_kc = min(sa_n / 2 - 1, (sa_k0 + sa_k1) / 2);
+        sa_ci = floor(sa_kc);
+        sa_p = sa_src[sa_ci] + (sa_src[sa_ci + 1] - sa_src[sa_ci]) * (sa_kc - sa_ci);
+      );
+      sa_db = 10 * log10(sa_p + 0.00000000000000000001) + slider2 * log(sqrt(sa_f0 * sa_f1) / 1000) / log(2);
+      sa_cx = ng_px + ng_pw * (sa_c + 0.5) / sa_cols;
+      sa_y = ng_lin_y(sa_db, -sa_range, 0);
+      sa_pass ? (
+        ng_col(NG_ACCENT, 0.10);
+        sa_xl = floor(ng_px + ng_pw * sa_c / sa_cols);
+        sa_xr = floor(ng_px + ng_pw * (sa_c + 1) / sa_cols);
+        sa_y < ng_py + ng_ph ? gfx_rect(sa_xl, sa_y, sa_xr - sa_xl, ng_py + ng_ph - sa_y);
+        ng_col(NG_ACCENT, 1);
+        sa_c == 0 ? ng_line_start(sa_cx, sa_y) : ng_line_to(sa_cx, sa_y);
+      ) : (
+        ng_col(NG_MUTED, 0.8);
+        sa_c > 0 ? gfx_line(sa_lx, sa_ly, sa_cx, sa_y, 1);
+      );
+      sa_lx = sa_cx; sa_ly = sa_y;
+      sa_c += 1;
+    );
+    sa_pass += 1;
+  );
+
+  ng_row(4);
+  ng_select_ctl(1, "FFT SIZE", "1024|2048|4096|8192|16384", 0) ? update();
+  sprintf(#v2, "%.1f dB/oct", slider2);
+  ng_knob_ctl(2, "SLOPE", #v2, 0, 6, 4.5, 0.5, 0) ? update();
+  sprintf(#v3, "%d ms", slider3);
+  ng_knob_ctl(3, "RELEASE", #v3, 0, 2000, 300, 10, 0) ? update();
+  ng_select_ctl(4, "RANGE", "60 DB|80 DB|100 DB|120 DB", 0) ? update();
+  ng_row(3);
+  ng_select_ctl(5, "PEAK HOLD", "OFF|2 S|INFINITE", 0) ? update();
+  ng_select_ctl(6, "CHANNEL", "MID|LEFT|RIGHT|SIDE", 0) ? update();
+  ng_select_ctl(7, "MONITOR", "STEREO|SOLO", 0) ? update();
+
+  ng_end();

@@ -1,0 +1,167 @@
+desc:NULL Vocoder GFX
+author: Christos Koulaxizis
+tags: vocoder talkbox robot voice synth carrier modulator filterbank gui
+//category: Advanced
+//NULL JSFX v2.0 • https://nulljsfx.tech • MIT License
+
+import null_gfx.jsfx-inc
+
+slider1:1<0,3,1{Right Input,Saw,Pulse,Noise}>-Carrier
+slider2:110<40,880,0.1>-Carrier Pitch (Hz)
+slider3:0<-12,12,0.1>-Formant Shift (semitones)
+slider4:5<0.5,50,0.1>-Attack (ms)
+slider5:40<5,500,1>-Release (ms)
+slider6:20<0,100,1>-Sibilance (%)
+slider7:100<0,100,1>-Mix (%)
+slider8:0<-12,24,0.1>-Output (dB)
+slider9:60<0,100,1>-Stereo Width (%)
+
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
+
+@init
+  // NULL Vocoder (../vocoder.jsfx) with its own interface: same audio code, plus @gfx.
+  gfx_ext_retina = 1;
+  // 16-band channel vocoder. The modulator (your voice) is the LEFT input; the carrier
+  // is either the RIGHT input (route a synth there) or a built-in saw, pulse or noise
+  // oscillator at Carrier Pitch. The voice's level in each band is measured and imposed
+  // on the same band of the carrier, so the carrier "speaks". Formant Shift moves the
+  // carrier bands up or down for smaller/bigger voices; Sibilance lets the voice's
+  // highs (s, t, ch) through so words stay clear. Stereo Width spreads the bands:
+  // even bands lean left, odd bands lean right (equal power; 0% = mono centre,
+  // 100% = alternate bands hard left / hard right). The sibilance stays centred.
+  nb = 16;
+  // memory: 32 slots per band = modulator coefs [0..2], carrier coefs [3..5],
+  // modulator filter state [8..15], carrier filter state [16..23], envelope [24],
+  // left/right band gains [25..26]
+  freembuf(nb * 32);
+  memset(0, 0, nb * 32);
+  osc = 0;
+  sib_x = sib_y = 0;
+  // noise carrier: Park-Miller generator in exact double arithmetic (same on every CPU)
+  seed = 12345;
+
+  // band-pass coefficients for band i at centre f (stored in the band's block)
+  function set_bp(b, f) local(w, al, n)
+  (
+    w = 2 * $pi * min(f, srate * 0.45) / srate;
+    al = sin(w) / (2 * 6);
+    n = 1 / (1 + al);
+    b[0] = al * n; b[1] = -2 * cos(w) * n; b[2] = (1 - al) * n;
+  );
+  // two cascaded band-passes (steeper bands); state at s[0..3], s[4..7]
+  function bp2(b, s, x) local(y)
+  (
+    y = b[0] * (x - s[1]) - b[1] * s[2] - b[2] * s[3];
+    s[1] = s[0]; s[0] = x; s[3] = s[2]; s[2] = y;
+    x = y;
+    y = b[0] * (x - s[5]) - b[1] * s[6] - b[2] * s[7];
+    s[5] = s[4]; s[4] = x; s[7] = s[6]; s[6] = y;
+    y;
+  );
+
+  function update()
+  (
+    src = slider1;
+    inc = slider2 / srate;
+    shift = 2 ^ (slider3 / 12);
+    att = exp(-1 / (slider4 / 1000 * srate));
+    rel = exp(-1 / (slider5 / 1000 * srate));
+    sib = slider6 / 100;
+    width = slider9 / 100;
+    mix = slider7 / 100;
+    out = 10 ^ (slider8 / 20) * 30;
+    i = 0;
+    loop(nb,
+      f = 100 * (8000 / 100) ^ (i / (nb - 1));   // 100 Hz .. 8 kHz, log spaced
+      set_bp(i * 32, f);                           // modulator band
+      set_bp(i * 32 + 3, f * shift);               // carrier band
+      th = $pi / 4 * (1 + (i % 2 ? width : -width));
+      (i * 32)[25] = sqrt(2) * cos(th);             // left gain (1 at width 0)
+      (i * 32)[26] = sqrt(2) * sin(th);             // right gain
+      i += 1;
+    );
+    sib_c = exp(-2 * $pi * 6000 / srate);
+  );
+
+@slider
+  update();
+
+@sample
+  mod = spl0;
+  osc += inc; osc >= 1 ? osc -= 1;
+  car = src == 0 ? spl1 : src == 1 ? 2 * osc - 1 : src == 2 ? (osc < 0.5 ? 1 : -1) :
+        (seed *= 16807; seed -= floor(seed / 2147483647) * 2147483647; seed / 1073741824 - 1);
+
+  acc_l = acc_r = 0;
+  i = 0;
+  loop(nb,
+    b = i * 32;
+    m = bp2(b, b + 8, mod);
+    c = bp2(b + 3, b + 16, car);
+    lev = abs(m);
+    env = b[24];
+    env = lev > env ? att * env + (1 - att) * lev : rel * env + (1 - rel) * lev;
+    b[24] = env;
+    c *= env;
+    acc_l += c * b[25];
+    acc_r += c * b[26];
+    i += 1;
+  );
+  // let the voice's highest frequencies through for intelligibility
+  sib_y = sib_c * (sib_y + mod - sib_x); sib_x = mod;
+  wet_l = acc_l * out + sib_y * sib;
+  wet_r = acc_r * out + sib_y * sib;
+  spl0 = spl0 * (1 - mix) + wet_l * mix;
+  spl1 = spl1 * (1 - mix) + wet_r * mix;
+
+@gfx 480 380
+  ng_knobs_begin("VOCODER", "ADVANCED", 480, 120, 2, 0);
+
+  // display: the voice's level in each of the 16 bands (0 to -60 dB) at the band centres on a
+  // log-frequency axis; ticks at the bottom mark the carrier bands (moved by Formant Shift)
+  ng_plot(ng_vx + 26, ng_vy + 4, ng_vw - 30, ng_vh - 20);
+  ng_grid(1, 4, 0);
+  ng_font(4, 8, 0);
+  ng_col(NG_MUTED, 1);
+  ng_ptxt("0", ng_px - 6 * ng_s, ng_py, 2);
+  ng_ptxt("-30", ng_px - 6 * ng_s, ng_py + ng_ph / 2, 2);
+  ng_ptxt("-60", ng_px - 6 * ng_s, ng_py + ng_ph, 2);
+  ng_ptxt("100", ng_freq_x(100), ng_py + ng_ph + 10 * ng_s, 1);
+  ng_ptxt("1k", ng_freq_x(1000), ng_py + ng_ph + 10 * ng_s, 1);
+  ng_ptxt("8k", ng_freq_x(8000), ng_py + ng_ph + 10 * ng_s, 1);
+  vc_bw = max(2, 6 * ng_s);
+  vc_i = 0;
+  loop(nb,
+    vc_f = 100 * (8000 / 100) ^ (vc_i / (nb - 1));
+    vc_y = ng_lin_y(20 * log10(max((vc_i * 32)[24], 0.000001)), -60, 0);
+    ng_col(NG_ACCENT, 1);
+    vc_y < ng_py + ng_ph - 1 ? gfx_rect(ng_freq_x(vc_f) - vc_bw / 2, vc_y, vc_bw, ng_py + ng_ph - vc_y);
+    ng_col(NG_MUTED, 1);
+    gfx_line(ng_freq_x(vc_f * 2 ^ (slider3 / 12)), ng_py + ng_ph - 1, ng_freq_x(vc_f * 2 ^ (slider3 / 12)), ng_py + ng_ph - 7 * ng_s, 1);
+    vc_i += 1;
+  );
+
+  ng_row(6);
+  ng_select_ctl(1, "CARRIER", "RIGHT|SAW|PULSE|NOISE", 0) ? update();
+  sprintf(#v2, "%.1f Hz", slider2);
+  ng_knob_ctl(2, "PITCH", #v2, 40, 880, 110, 0.1, 0) ? update();
+  sprintf(#v3, "%.1f st", slider3);
+  ng_knob_ctl(3, "FORMANT", #v3, -12, 12, 0, 0.1, 1) ? update();
+  sprintf(#v4, "%.1f ms", slider4);
+  ng_knob_ctl(4, "ATTACK", #v4, 0.5, 50, 5, 0.1, 0) ? update();
+  sprintf(#v5, "%d ms", slider5);
+  ng_knob_ctl(5, "RELEASE", #v5, 5, 500, 40, 1, 0) ? update();
+  sprintf(#v6, "%d%%", slider6);
+  ng_knob_ctl(6, "SIBILANCE", #v6, 0, 100, 20, 1, 0) ? update();
+  ng_row(3);
+  sprintf(#v7, "%d%%", slider7);
+  ng_knob_ctl(7, "MIX", #v7, 0, 100, 100, 1, 0) ? update();
+  sprintf(#v8, "%.1f dB", slider8);
+  ng_knob_ctl(8, "OUTPUT", #v8, -12, 24, 0, 0.1, 0) ? update();
+  sprintf(#v9, "%d%%", slider9);
+  ng_knob_ctl(9, "WIDTH", #v9, 0, 100, 60, 1, 0) ? update();
+
+  ng_end();

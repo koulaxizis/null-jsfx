@@ -32,9 +32,17 @@ out_pin:Right
   memset(win, 0, out_r + N - win);
   i = 0;
   loop(N, win[i] = 0.5 - 0.5 * cos(2 * $pi * i / N); i += 1);
+  // Park-Miller generator in exact double arithmetic (0 < value < 1), so every CPU and the
+  // VST3/CLAP version get the same random phases
+  seed = 12345;
+  function pm_rand()
+  (
+    seed *= 16807; seed -= floor(seed / 2147483647) * 2147483647;
+    seed / 2147483647;
+  );
   // random starting phases, so the frozen frame never lines up into a click
   i = 0;
-  loop(NB, ph_l[i] = rand(2 * $pi); ph_r[i] = rand(2 * $pi); i += 1);
+  loop(NB, ph_l[i] = pm_rand() * 2 * $pi; ph_r[i] = pm_rand() * 2 * $pi; i += 1);
   ipos = 0; opos = 0; cnt = 0;
   frozen = 0; wet = 0; filled = 0;
 
@@ -62,7 +70,7 @@ out_pin:Right
   (
     i = 0;
     loop(NB,
-      p = phb[i] + 2 * $pi * i * H / N + smear * (rand(2) - 1) * $pi;
+      p = phb[i] + 2 * $pi * i * H / N + smear * (pm_rand() * 2 - 1) * $pi;
       p -= floor(p / (2 * $pi)) * 2 * $pi;
       phb[i] = p;
       m = magb[i];

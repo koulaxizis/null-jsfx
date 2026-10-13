@@ -1,0 +1,197 @@
+desc:NULL Trance Gate GFX
+author: Christos Koulaxizis
+tags: trance gate 16-step sequencer rhythmic pattern staccato tempo sync gui
+//category: Advanced
+//NULL JSFX v2.0 • https://nulljsfx.tech • MIT License
+
+import null_gfx.jsfx-inc
+
+slider1:1<0,1,1{Off,On}>-Step 1
+slider2:1<0,1,1{Off,On}>-Step 2
+slider3:0<0,1,1{Off,On}>-Step 3
+slider4:1<0,1,1{Off,On}>-Step 4
+slider5:1<0,1,1{Off,On}>-Step 5
+slider6:0<0,1,1{Off,On}>-Step 6
+slider7:0<0,1,1{Off,On}>-Step 7
+slider8:1<0,1,1{Off,On}>-Step 8
+slider9:1<0,1,1{Off,On}>-Step 9
+slider10:0<0,1,1{Off,On}>-Step 10
+slider11:0<0,1,1{Off,On}>-Step 11
+slider12:1<0,1,1{Off,On}>-Step 12
+slider13:1<0,1,1{Off,On}>-Step 13
+slider14:0<0,1,1{Off,On}>-Step 14
+slider15:0<0,1,1{Off,On}>-Step 15
+slider16:1<0,1,1{Off,On}>-Step 16
+slider17:0<0,1,1{Sync,Free}>-Rate Mode
+slider18:2<0,3,1{1/4,1/8,1/16,1/32}>-Step Length
+slider19:8<0.5,40,0.1>-Free Rate (Hz)
+slider20:5<1,100,1>-Attack (ms)
+slider21:40<10,500,1>-Release (ms)
+slider22:100<0,100,1>-Gate Depth (%)
+
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
+
+@init
+  // NULL Trance Gate (../trance_gate.jsfx) with its own interface: same audio code, plus @gfx.
+  // 16-step gate. Sync: one step = Step Length at the host tempo; while the transport
+  // plays, the step is taken from beat_position so the pattern stays locked to the bar
+  // grid (step 1 on every bar downbeat in 4/4). Stopped, it free-runs at the host tempo.
+  // Free: steps advance at Free Rate (steps per second), ignoring the host.
+  // Gate Depth sets how far the "off" steps duck: 0% = no gating, 100% = silence.
+  pat = 0;            // pattern, 16 slots
+  step_pos = 0;
+  gate_gain = 1;
+  gfx_ext_retina = 1;
+
+  function update()
+  (
+    pat[0] = slider1; pat[1] = slider2; pat[2] = slider3; pat[3] = slider4;
+    pat[4] = slider5; pat[5] = slider6; pat[6] = slider7; pat[7] = slider8;
+    pat[8] = slider9; pat[9] = slider10; pat[10] = slider11; pat[11] = slider12;
+    pat[12] = slider13; pat[13] = slider14; pat[14] = slider15; pat[15] = slider16;
+    free_mode = slider17;
+    steps_per_beat = 2 ^ slider18;           // 1/4 -> 1, 1/8 -> 2, 1/16 -> 4, 1/32 -> 8
+    free_rate = slider19;
+    attack_coef = 1 / max(1, srate * slider20 * 0.001);
+    release_coef = 1 / max(1, srate * slider21 * 0.001);
+    gate_depth = slider22 / 100;
+  );
+
+@slider
+  update();
+
+@block
+  bpm = tempo > 0 ? tempo : 120;
+  free_mode ? (
+    step_inc = free_rate / srate;
+  ) : (
+    step_inc = bpm / 60 * steps_per_beat / srate;
+    // lock to the host grid while playing
+    play_state & 1 ? step_pos = beat_position * steps_per_beat;
+  );
+
+@sample
+  step_pos += step_inc;
+  // keep the free-running counter small (the synced one is re-read every block)
+  step_pos >= 16 ? step_pos -= 16;
+  s = floor(step_pos);
+  cur_step = s - 16 * floor(s / 16);       // also correct for negative positions (pre-roll)
+  target = 1 - gate_depth * (1 - pat[cur_step]);
+
+  target > gate_gain ? (
+    gate_gain += attack_coef;
+    gate_gain > target ? gate_gain = target;
+  ) : (
+    gate_gain -= release_coef;
+    gate_gain < target ? gate_gain = target;
+  );
+
+  spl0 *= gate_gain;
+  spl1 *= gate_gain;
+
+@gfx 480 408
+  ng_knobs_begin("TRANCE GATE", "ADVANCED", 480, 120, 2, 1);
+
+  // display (pat[] holds the steps, see update()): the 16 steps (click one to switch it), the playing step marked below, and the
+  // gain over the pattern as Attack, Release and Depth shape it
+  ng_plot(ng_vx + 26, ng_vy + 4, ng_vw - 30, ng_vh - 20);
+  ng_font(4, 8, 0);
+  ng_col(NG_MUTED, 1);
+  ng_ptxt("100%", ng_px - 6 * ng_s, ng_py, 2);
+  ng_ptxt("50%", ng_px - 6 * ng_s, ng_py + ng_ph / 2, 2);
+  ng_ptxt("0", ng_px - 6 * ng_s, ng_py + ng_ph, 2);
+  tg_cw = ng_pw / 16;
+  tg_k = 0;
+  loop(16,
+    tg_x0 = ng_px + tg_k * tg_cw + ng_s;
+    tg_w = tg_cw - 2 * ng_s;
+    tg_on = pat[tg_k] >= 0.5;
+    tg_on ? ng_col(NG_ACCENT, tg_k == cur_step ? 0.40 : 0.22) : ng_col(tg_k == cur_step ? NG_BORDER : NG_BG, 1);
+    gfx_rect(tg_x0, ng_py, tg_w, ng_ph);
+    tg_k == cur_step ? (
+      ng_col(NG_TEXT, 1);
+      gfx_rect(tg_x0, ng_py + ng_ph + 2 * ng_s, tg_w, 2 * ng_s);
+    );
+    tg_k % 4 == 0 ? (
+      sprintf(#tg_n, "%d", tg_k + 1);
+      ng_col(NG_MUTED, 1);
+      ng_ptxt(#tg_n, tg_x0 + tg_w / 2, ng_py + ng_ph + 11 * ng_s, 1);
+    );
+    ng_click && mouse_x >= tg_x0 && mouse_x < tg_x0 + tg_w && mouse_y >= ng_py && mouse_y < ng_py + ng_ph ? (
+      ng_slider_set(tg_k + 1, tg_on ? 0 : 1) ? update();
+    );
+    tg_k += 1;
+  );
+
+  // gain envelope: two passes over the pattern (the first settles the ramps), the second drawn
+  tg_bpm = tempo > 0 ? tempo : 120;
+  tg_dep = slider22 / 100;
+  tg_st = slider17 ? 1 / slider19 : 60 / tg_bpm / (2 ^ slider18);
+  tg_up = tg_st * 1000 / slider20;
+  tg_dn = tg_st * 1000 / slider21;
+  tg_g = 1;
+  tg_pass = 0;
+  ng_col(NG_ACCENT, 1);
+  loop(2,
+    tg_k = 0;
+    loop(16,
+      tg_tg = 1 - tg_dep * (pat[tg_k] >= 0.5 ? 0 : 1);
+      tg_pass ? (
+        tg_k == 0 ? ng_line_start(ng_px, ng_lin_y(tg_g, 0, 1)) : ng_line_to(ng_px + ng_pw * tg_k / 16, ng_lin_y(tg_g, 0, 1));
+      );
+      tg_rate = tg_tg > tg_g ? tg_up : tg_dn;
+      tg_need = abs(tg_tg - tg_g) / tg_rate;
+      tg_need < 1 ? (
+        tg_pass ? ng_line_to(ng_px + ng_pw * (tg_k + tg_need) / 16, ng_lin_y(tg_tg, 0, 1));
+        tg_g = tg_tg;
+      ) : (
+        tg_g += (tg_tg > tg_g ? tg_rate : -tg_rate);
+      );
+      tg_k += 1;
+    );
+    tg_pass += 1;
+  );
+  ng_line_to(ng_px + ng_pw, ng_lin_y(tg_g, 0, 1));
+
+  tg_page = ng_tabs("GATE|STEPS 1-8|STEPS 9-16", tg_page);
+  tg_page == 0 ? (
+    ng_row(3);
+    ng_select_ctl(17, "MODE", "SYNC|FREE", 0) ? update();
+    ng_select_ctl(18, "NOTE", "1/4|1/8|1/16|1/32", 0) ? update();
+    sprintf(#v19, "%.1f Hz", slider19);
+    ng_knob_ctl(19, "FREE RATE", #v19, 0.5, 40, 8, 0.1, 0) ? update();
+    ng_row(3);
+    sprintf(#v20, "%d ms", slider20);
+    ng_knob_ctl(20, "ATTACK", #v20, 1, 100, 5, 1, 0) ? update();
+    sprintf(#v21, "%d ms", slider21);
+    ng_knob_ctl(21, "RELEASE", #v21, 10, 500, 40, 1, 0) ? update();
+    sprintf(#v22, "%d%%", slider22);
+    ng_knob_ctl(22, "DEPTH", #v22, 0, 100, 100, 1, 0) ? update();
+  ) : tg_page == 1 ? (
+    ng_row(4);
+    ng_select_ctl(1, "STEP 1", "OFF|ON", 0) ? update();
+    ng_select_ctl(2, "STEP 2", "OFF|ON", 0) ? update();
+    ng_select_ctl(3, "STEP 3", "OFF|ON", 0) ? update();
+    ng_select_ctl(4, "STEP 4", "OFF|ON", 0) ? update();
+    ng_row(4);
+    ng_select_ctl(5, "STEP 5", "OFF|ON", 0) ? update();
+    ng_select_ctl(6, "STEP 6", "OFF|ON", 0) ? update();
+    ng_select_ctl(7, "STEP 7", "OFF|ON", 0) ? update();
+    ng_select_ctl(8, "STEP 8", "OFF|ON", 0) ? update();
+  ) : (
+    ng_row(4);
+    ng_select_ctl(9, "STEP 9", "OFF|ON", 0) ? update();
+    ng_select_ctl(10, "STEP 10", "OFF|ON", 0) ? update();
+    ng_select_ctl(11, "STEP 11", "OFF|ON", 0) ? update();
+    ng_select_ctl(12, "STEP 12", "OFF|ON", 0) ? update();
+    ng_row(4);
+    ng_select_ctl(13, "STEP 13", "OFF|ON", 0) ? update();
+    ng_select_ctl(14, "STEP 14", "OFF|ON", 0) ? update();
+    ng_select_ctl(15, "STEP 15", "OFF|ON", 0) ? update();
+    ng_select_ctl(16, "STEP 16", "OFF|ON", 0) ? update();
+  );
+
+  ng_end();

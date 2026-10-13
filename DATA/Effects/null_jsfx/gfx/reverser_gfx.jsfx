@@ -1,0 +1,194 @@
+desc:NULL Reverser GFX
+author: Christos Koulaxizis
+tags: reverse buffer playback realtime backwards filter gui
+//category: Advanced
+//NULL JSFX v2.0 • https://nulljsfx.tech • MIT License
+
+import null_gfx.jsfx-inc
+
+slider1:2<1,10,0.1>-Buffer Length (s)
+slider2:0<0,3,1{Off,LP,BP,HP}>-Filter
+slider3:2000<100,20000,100>-Filter Freq (Hz)
+slider4:50<0,100,1>-Mix (%)
+
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
+
+@init
+// NULL Reverser (../reverser.jsfx) with its own interface: same audio code, plus @gfx.
+gfx_ext_retina = 1;
+max_buf = srate * 10;
+buf_l = 0;
+buf_r = max_buf;
+write_pos = 0;
+read_pos = 0;
+fa0 = 1; fa1 = 0; fa2 = 0;
+fb0 = 1; fb1 = 0; fb2 = 0;
+// filter state: separate for each channel (no left/right bleed)
+lx1 = 0; lx2 = 0; ly1 = 0; ly2 = 0;
+rx1 = 0; rx2 = 0; ry1 = 0; ry2 = 0;
+
+memset(buf_l, 0, 2 * max_buf);
+freembuf(buf_r + max_buf);
+
+function update()
+(
+  cur_buf_size = (srate * slider1) | 0;
+  cur_buf_size < 1 ? cur_buf_size = 1;
+  write_pos = write_pos % cur_buf_size;
+  read_pos = read_pos % cur_buf_size;
+  mix = slider4 / 100;
+
+  filt_mode = slider2;
+  filt_freq = slider3;
+
+  freq = filt_freq;
+  omega = 2 * $pi * freq / srate;
+  cs = cos(omega);
+  sn = sin(omega);
+  q = 0.707;
+  alpha = sn / (2 * q);
+
+  filt_mode == 1 ? (
+    b0 = (1 - cs) * 0.5;
+    b1 = 1 - cs;
+    b2 = (1 - cs) * 0.5;
+    a0 = 1 / (1 + alpha);
+    a1 = -2 * cs;
+    a2 = 1 - alpha;
+  );
+  filt_mode == 2 ? (
+    b0 = alpha;
+    b1 = 0;
+    b2 = -alpha;
+    a0 = 1 / (1 + alpha);
+    a1 = -2 * cs;
+    a2 = 1 - alpha;
+  );
+  filt_mode == 3 ? (
+    b0 = (1 + cs) * 0.5;
+    b1 = -(1 + cs);
+    b2 = (1 + cs) * 0.5;
+    a0 = 1 / (1 + alpha);
+    a1 = -2 * cs;
+    a2 = 1 - alpha;
+  );
+  filt_mode == 0 ? (
+    b0 = 1; b1 = 0; b2 = 0;
+    a0 = 1; a1 = 0; a2 = 0;
+  );
+
+  fa0 = a0;
+  fb0 = b0 * a0; fb1 = b1 * a0; fb2 = b2 * a0;
+  fa1 = a1; fa2 = a2;
+  // filter state is kept across slider moves (resetting it would click)
+);
+
+// display only: the wet filter's response in dB at f (0 dB when Off)
+function rv_db(f) local(w, c1, s1, c2, s2, nr, ni, dr, di)
+(
+  filt_mode > 0 ? (
+    w = 2 * $pi * min(f, srate * 0.499) / srate;
+    c1 = cos(w); s1 = sin(w); c2 = cos(2 * w); s2 = sin(2 * w);
+    nr = fb0 + fb1 * c1 + fb2 * c2; ni = -(fb1 * s1 + fb2 * s2);
+    dr = 1 + fa0 * fa1 * c1 + fa0 * fa2 * c2; di = -(fa0 * fa1 * s1 + fa0 * fa2 * s2);
+    10 * log10(max((nr * nr + ni * ni) / (dr * dr + di * di), 0.0000000001));
+  ) : 0;
+);
+
+@slider
+  update();
+
+@sample
+in_l = spl0;
+in_r = spl1;
+
+buf_l[write_pos] = in_l;
+buf_r[write_pos] = in_r;
+write_pos = (write_pos + 1) % cur_buf_size;
+
+wet_l = buf_l[read_pos];
+wet_r = buf_r[read_pos];
+read_pos -= 1;
+read_pos < 0 ? read_pos = cur_buf_size - 1;
+
+filt_mode > 0 ? (
+  filt_in_l = wet_l;
+  filt_out_l = fb0*filt_in_l + fb1*lx1 + fb2*lx2 - fa0*(fa1*ly1 + fa2*ly2);
+  lx2 = lx1; lx1 = filt_in_l;
+  ly2 = ly1; ly1 = filt_out_l;
+  wet_l = filt_out_l;
+  
+  filt_in_r = wet_r;
+  filt_out_r = fb0*filt_in_r + fb1*rx1 + fb2*rx2 - fa0*(fa1*ry1 + fa2*ry2);
+  rx2 = rx1; rx1 = filt_in_r;
+  ry2 = ry1; ry1 = filt_out_r;
+  wet_r = filt_out_r;
+);
+
+spl0 = in_l * (1 - mix) + wet_l * mix;
+spl1 = in_r * (1 - mix) + wet_r * mix;
+
+@gfx 480 294
+  ng_knobs_begin("REVERSER", "ADVANCED", 480, 120, 1, 0);
+
+  // display, left: the buffer, written forwards (solid head) while it plays backwards
+  // (dashed head); right: the response of the filter on the reversed signal
+  rv_bx = 34; rv_by = 84; rv_bw = 220; rv_bh = 40;
+  ng_font(4, 8, 0);
+  ng_col(NG_MUTED, 1);
+  ng_ptxt("BUFFER", X(rv_bx), Y(rv_by - 10), 0);
+  sprintf(#rv_t, "%.1f s", slider1);
+  ng_ptxt(#rv_t, X(rv_bx + rv_bw), Y(rv_by - 10), 2);
+  ng_col(NG_BG, 1);
+  gfx_rect(X(rv_bx), Y(rv_by), rv_bw * ng_s, rv_bh * ng_s);
+  rv_w = max(0, min(1, write_pos / cur_buf_size));
+  rv_r = max(0, min(1, read_pos / cur_buf_size));
+  ng_col(NG_ACCENT, 0.10);
+  gfx_rect(X(rv_bx), Y(rv_by), rv_bw * rv_w * ng_s, rv_bh * ng_s);
+  ng_col(NG_BORDER, 1);
+  gfx_rect(X(rv_bx), Y(rv_by), rv_bw * ng_s, rv_bh * ng_s, 0);
+  rv_x = floor(X(rv_bx + rv_bw * rv_w)) + 0.5;
+  ng_col(NG_ACCENT, 1);
+  gfx_line(rv_x, Y(rv_by), rv_x, Y(rv_by + rv_bh), 1);
+  gfx_line(rv_x + 1, Y(rv_by), rv_x + 1, Y(rv_by + rv_bh), 1);
+  rv_x = floor(X(rv_bx + rv_bw * rv_r)) + 0.5;
+  ng_col(NG_TEXT, 0.8);
+  rv_y = Y(rv_by);
+  while (
+    gfx_line(rv_x, rv_y, rv_x, min(rv_y + 3 * ng_s, Y(rv_by + rv_bh)), 0);
+    rv_y += 6 * ng_s;
+    rv_y < Y(rv_by + rv_bh);
+  );
+  ng_col(NG_ACCENT, 1);
+  gfx_rect(X(rv_bx), Y(rv_by + rv_bh + 14), 10 * ng_s, max(1, 2 * ng_s));
+  ng_col(NG_MUTED, 1);
+  ng_ptxt("WRITE", X(rv_bx + 14), Y(rv_by + rv_bh + 14), 0);
+  ng_col(NG_TEXT, 0.8);
+  gfx_rect(X(rv_bx + 60), Y(rv_by + rv_bh + 14), 3 * ng_s, max(1, 2 * ng_s));
+  gfx_rect(X(rv_bx + 66), Y(rv_by + rv_bh + 14), 3 * ng_s, max(1, 2 * ng_s));
+  ng_col(NG_MUTED, 1);
+  ng_ptxt("READ (REVERSED)", X(rv_bx + 74), Y(rv_by + rv_bh + 14), 0);
+
+  ng_plot(300, 70, 146, 76);
+  ng_grid_freq(24);
+  ng_col(NG_ACCENT, 1);
+  rv_i = 0;
+  loop(floor(ng_pw) + 1,
+    rv_y = ng_lin_y(rv_db(20 * 1000 ^ (rv_i / ng_pw)), -16, 16);
+    rv_i == 0 ? ng_line_start(ng_px, rv_y) : ng_line_to(ng_px + rv_i, rv_y);
+    rv_i += 1;
+  );
+
+  ng_row(4);
+  sprintf(#v1, "%.1f s", slider1);
+  ng_knob_ctl(1, "LENGTH", #v1, 1, 10, 2, 0.1, 0) ? update();
+  ng_select_ctl(2, "FILTER", "OFF|LP|BP|HP", 0) ? update();
+  slider3 >= 1000 ? sprintf(#v3, "%.1f kHz", slider3 / 1000) : sprintf(#v3, "%d Hz", slider3);
+  ng_knob_ctl(3, "FREQ", #v3, 100, 20000, 2000, 100, 0) ? update();
+  sprintf(#v4, "%d%%", slider4);
+  ng_knob_ctl(4, "MIX", #v4, 0, 100, 50, 1, 0) ? update();
+
+  ng_end();

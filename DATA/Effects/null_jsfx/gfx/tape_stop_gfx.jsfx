@@ -1,0 +1,152 @@
+desc:NULL Tape Stop GFX
+author: Christos Koulaxizis
+tags: tape stop start motor slowdown pitch ramp dj gui
+//category: Advanced
+//NULL JSFX v2.0 • https://nulljsfx.tech • MIT License
+
+import null_gfx.jsfx-inc
+
+slider1:0<0,1,1{Idle,Trigger}>-Trigger
+slider2:500<50,5000,10>-Stop Time (ms)
+slider3:500<50,5000,10>-Start Time (ms)
+
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
+
+@init
+  // NULL Tape Stop (../tape_stop.jsfx) with its own interface: same audio code, plus @gfx.
+  gfx_ext_retina = 1;
+  // Idle: the audio passes untouched. Trigger: playback slows to a stop over Stop Time,
+  // then spins back up over Start Time and fades back to the live signal.
+  buf_size = ceil(srate * 12);
+  buf_l = 0;
+  buf_r = buf_l + buf_size;
+  memset(buf_l, 0, 2 * buf_size);
+  freembuf(buf_r + buf_size);
+  write_pos = 0;
+  read_pos = 0;
+  rate = 1;
+  state = 0;
+  timer = 0;
+  wet = 0;
+  fade_step = 1 / (0.01 * srate);
+
+  function update()
+  (
+    stop_samples = max(1, srate * slider2 / 1000);
+    start_samples = max(1, srate * slider3 / 1000);
+    slider1 >= 1 && state == 0 ? (
+      state = 1;
+      timer = 0;
+      read_pos = write_pos - 1;
+      read_pos < 0 ? read_pos += buf_size;
+    );
+  );
+
+  // display only: the tape speed at x (0..1 across stop + start), as in @sample
+  function ts_rate(x) local(t)
+  (
+    t = x * (stop_samples + start_samples);
+    t < stop_samples ? (1 - t / stop_samples) ^ 2 : sqrt(min(1, (t - stop_samples) / start_samples));
+  );
+
+@slider
+  update();
+
+@sample
+  buf_l[write_pos] = spl0;
+  buf_r[write_pos] = spl1;
+  write_pos += 1;
+  write_pos >= buf_size ? write_pos = 0;
+
+  state == 1 ? (
+    // slowing down (curved like a real tape motor)
+    rate = 1 - timer / stop_samples;
+    rate = rate * rate;
+    timer += 1;
+    timer >= stop_samples ? (state = 2; timer = 0; rate = 0);
+  ) : state == 2 ? (
+    // spinning back up
+    rate = timer / start_samples;
+    rate = sqrt(rate);
+    timer += 1;
+    timer >= start_samples ? (
+      state = 0;
+      rate = 1;
+      slider1 = 0;
+      sliderchange(slider1);
+    );
+  );
+
+  // the wet signal fades in at the trigger and back out after the spin-up
+  wet = state > 0 ? min(1, wet + fade_step) : max(0, wet - fade_step);
+
+  wet > 0 ? (
+    read_pos += rate;
+    read_pos >= buf_size ? read_pos -= buf_size;
+    ri = floor(read_pos);
+    fr = read_pos - ri;
+    r2 = ri + 1;
+    r2 >= buf_size ? r2 = 0;
+    tape_l = buf_l[ri] + (buf_l[r2] - buf_l[ri]) * fr;
+    tape_r = buf_r[ri] + (buf_r[r2] - buf_r[ri]) * fr;
+    // tape output also dies away as the motor stops
+    lvl = min(1, rate * 8);
+    spl0 = spl0 * (1 - wet) + tape_l * lvl * wet;
+    spl1 = spl1 * (1 - wet) + tape_r * lvl * wet;
+  );
+
+@gfx 480 294
+  ng_knobs_begin("TAPE STOP", "ADVANCED", 480, 120, 1, 0);
+
+  // display: the tape speed over a trigger (slow-down over Stop Time, spin-up over Start
+  // Time) and, while it runs, where playback is
+  ng_plot(ng_vx + 26, ng_vy + 16, ng_vw - 30, ng_vh - 32);
+  ng_grid(4, 2, 0);
+  ng_font(4, 8, 0);
+  ng_col(NG_MUTED, 1);
+  ng_ptxt("1x", ng_px - 6 * ng_s, ng_py, 2);
+  ng_ptxt("0", ng_px - 6 * ng_s, ng_py + ng_ph, 2);
+  ts_b = ng_px + ng_pw * stop_samples / (stop_samples + start_samples);
+  ng_ptxt("STOP", (ng_px + ts_b) / 2, ng_py - 8 * ng_s, 1);
+  ng_ptxt("START", (ts_b + ng_px + ng_pw) / 2, ng_py - 8 * ng_s, 1);
+  ng_ptxt("0 s", ng_px, ng_py + ng_ph + 8 * ng_s, 1);
+  sprintf(#ts_t, "%.2f s", slider2 / 1000);
+  ng_ptxt(#ts_t, ts_b, ng_py + ng_ph + 8 * ng_s, 1);
+  sprintf(#ts_t, "%.2f s", (slider2 + slider3) / 1000);
+  ng_ptxt(#ts_t, ng_px + ng_pw, ng_py + ng_ph + 8 * ng_s, 1);
+  ts_x = floor(ts_b) + 0.5;
+  ng_col(NG_ACCENT, 0.3);
+  gfx_line(ts_x, ng_py, ts_x, ng_py + ng_ph, 0);
+  ng_col(NG_ACCENT, 0.10);
+  ts_i = 0;
+  loop(floor(ng_pw) + 1,
+    gfx_line(ng_px + ts_i, ng_py + ng_ph, ng_px + ts_i, ng_lin_y(ts_rate(ts_i / ng_pw), 0, 1), 0);
+    ts_i += 1;
+  );
+  ng_col(NG_ACCENT, 1);
+  ts_i = 0;
+  loop(floor(ng_pw) + 1,
+    ts_y = ng_lin_y(ts_rate(ts_i / ng_pw), 0, 1);
+    ts_i == 0 ? ng_line_start(ng_px, ts_y) : ng_line_to(ng_px + ts_i, ts_y);
+    ts_i += 1;
+  );
+  // playhead
+  state > 0 ? (
+    ts_p = (state == 1 ? timer : stop_samples + timer) / (stop_samples + start_samples);
+    ts_x = floor(ng_lin_x(min(1, ts_p), 0, 1)) + 0.5;
+    ng_col(NG_TEXT, 0.8);
+    gfx_line(ts_x, ng_py, ts_x, ng_py + ng_ph, 0);
+    gfx_circle(ts_x, ng_lin_y(ts_rate(min(1, ts_p)), 0, 1), 3 * ng_s, 1, 1);
+  );
+
+  ng_row(3);
+  ng_select_ctl(1, "TRIGGER", "IDLE|STOP", 0) ? update();
+  sprintf(#v2, "%d ms", slider2);
+  ng_knob_ctl(2, "STOP TIME", #v2, 50, 5000, 500, 10, 0) ? update();
+  sprintf(#v3, "%d ms", slider3);
+  ng_knob_ctl(3, "START TIME", #v3, 50, 5000, 500, 10, 0) ? update();
+
+  ng_end();

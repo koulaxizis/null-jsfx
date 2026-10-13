@@ -1,6 +1,6 @@
 # NULL JSFX
 
-> 73 professional audio effects for Cockos Reaper. Minimal design, maximum precision. Free and open source.
+> 75 professional audio effects for Cockos Reaper. Minimal design, maximum precision. Free and open source.
 
 ## Overview
 NULL JSFX is a suite of 73 audio effect plugins written in EEL2 for Cockos Reaper's JSFX platform. Organized into three categories: ONE SLIDER (single-control effects), ESSENTIALS (daily-use tools), and ADVANCED (specialized processing). The One Slider plugins also ship as GFX JSFX (own interface, REAPER) and as VST3/CLAP plugins for any DAW on Windows, macOS and Linux; every version sounds identical to the original JSFX.
@@ -35,63 +35,65 @@ One control, instant result. Turn it up until it sounds right.
 ### Essentials (31)
 The everyday mixing and mastering toolbox.
 
-- Auto Pan: LFO Stereo Panner
-- Auto-Leveler: Automatic Gain Rider
-- Breath Control: Vocal Breath Reduction
-- Cabinet Simulator: Speaker Cabinet Simulation
-- Channel Utility: Gain, Phase & Routing
-- Chorus: Classic Delay Chorus
-- Click Repair: Click & Pop Removal
-- DeEsser: Split-Band Sibilance Control
-- Delay: Stereo Echo & Slapback
-- Dynamic EQ: Four-Band Dynamic EQ
-- Dynamics: Compressor & Expander
-- Envelope Follower: Auto-Wah & Envelope Filter
-- Filter: Resonant Multi-Mode Filter
-- Flanger: Jet Sweep Flanger
-- Gate: Noise Gate with Sidechain HPF
-- Limiter: Limiter, Clipper & Brickwall
-- Maximizer: Look-Ahead Loudness Maximizer
-- Mid/Side Matrix: M/S Encode & Decode
-- Multiband Comp: Four-Band Compressor
-- Noise Generator: White, Pink & Brown Noise
-- Parametric EQ: Five-Band Parametric EQ
-- Phaser: All-Pass Sweep Phaser
-- Pitch Shifter: Real-Time Pitch Shift
-- Reverb: Compact Stereo Algorithmic Reverb
-- Ring Mod: Swept Ring Modulator
-- Saturation: Six-Mode Saturation
-- Sidechain Ducker: Sidechain Ducking
-- Stereo Width: M/S Width with Mono Bass
-- Transient Shaper: Attack & Sustain Shaper
-- Tremolo: Sine LFO Tremolo
-- Vibrato: Delay-Line Pitch Vibrato
+- Auto Pan: LFO Stereo Panner (also as GFX, VST3, CLAP)
+- Auto-Leveler: Automatic Gain Rider (also as GFX, VST3, CLAP)
+- Breath Control: Vocal Breath Reduction (also as GFX, VST3, CLAP)
+- Cabinet Simulator: Speaker Cabinet Simulation (also as GFX, VST3, CLAP)
+- Channel Utility: Gain, Phase & Routing (also as GFX, VST3, CLAP)
+- Chorus: Classic Delay Chorus (also as GFX, VST3, CLAP)
+- Click Repair: Click & Pop Removal (also as GFX, VST3, CLAP)
+- DeEsser: Split-Band Sibilance Control (also as GFX, VST3, CLAP)
+- Delay: Stereo Echo & Slapback (also as GFX, VST3, CLAP)
+- Dynamic EQ: Four-Band Dynamic EQ (also as GFX, VST3, CLAP)
+- Dynamics: Compressor & Expander (also as GFX, VST3, CLAP)
+- Envelope Follower: Auto-Wah & Envelope Filter (also as GFX, VST3, CLAP)
+- Filter: Resonant Multi-Mode Filter (also as GFX, VST3, CLAP)
+- Flanger: Jet Sweep Flanger (also as GFX, VST3, CLAP)
+- Gate: Noise Gate with Sidechain HPF (also as GFX, VST3, CLAP)
+- Limiter: Limiter, Clipper & Brickwall (also as GFX, VST3, CLAP)
+- Maximizer: Look-Ahead Loudness Maximizer (also as GFX, VST3, CLAP)
+- Mid/Side Matrix: M/S Encode & Decode (also as GFX, VST3, CLAP)
+- Multiband Comp: Four-Band Compressor (also as GFX, VST3, CLAP)
+- Noise Generator: White, Pink & Brown Noise (also as GFX, VST3, CLAP)
+- Parametric EQ: Five-Band Parametric EQ (also as GFX, VST3, CLAP)
+- Phaser: All-Pass Sweep Phaser (also as GFX, VST3, CLAP)
+- Pitch Shifter: Real-Time Pitch Shift (also as GFX, VST3, CLAP)
+- Reverb: Compact Stereo Algorithmic Reverb (also as GFX, VST3, CLAP)
+- Ring Mod: Swept Ring Modulator (also as GFX, VST3, CLAP)
+- Saturation: Six-Mode Saturation (also as GFX, VST3, CLAP)
+- Sidechain Ducker: Sidechain Ducking (also as GFX, VST3, CLAP)
+- Stereo Width: M/S Width with Mono Bass (also as GFX, VST3, CLAP)
+- Transient Shaper: Attack & Sustain Shaper (also as GFX, VST3, CLAP)
+- Tremolo: Sine LFO Tremolo (also as GFX, VST3, CLAP)
+- Vibrato: Delay-Line Pitch Vibrato (also as GFX, VST3, CLAP)
 
-### Advanced (22)
+### Advanced (24)
 Deeper sound design, creative effects and special processing.
 
-- Comb Filter: Resonant Delay Comb
-- Convolution: Impulse Response Reverb
-- Formant Filter: Vowel Formant Filter
-- Frequency Shifter: Bode Frequency Shifter
-- Glitch FX: Stutter & Glitch Engine
-- Granular Delay: Grain Cloud Delay
-- Harmonizer: Two-Voice Pitch Harmonizer
-- Kick Shaper: Kick Drum Sculptor
-- Ladder Filter: Moog-Style Ladder Filter
-- OTT: Multiband Upward/Downward Compressor
-- Reverser: Real-Time Reverse Buffer
-- Robotizer: FFT Robot Voice
-- Rotary Speaker: Leslie Rotary Simulation
-- Shimmer Reverb: Pitched Ambient Reverb
-- Spectral Freeze: FFT Spectrum Freeze
-- Spring Reverb: Vintage Spring Tank
-- Sub Bloom: Pitch-Tracking Subharmonic Generator
-- Tape Stop: Tape Stop & Spin-Up
-- Trance Gate: 16-Step Rhythmic Gate
-- Vinyl Age: Vintage Vinyl Degrader
-- Vocoder: 16-Band Channel Vocoder
-- Warped Delay: Modulated Degrading Delay
+- Comb Filter: Resonant Delay Comb (also as GFX, VST3, CLAP)
+- Convolution: Impulse Response Reverb (also as GFX, VST3, CLAP)
+- Formant Filter: Vowel Formant Filter (also as GFX, VST3, CLAP)
+- Frequency Shifter: Bode Frequency Shifter (also as GFX, VST3, CLAP)
+- Glitch FX: Stutter & Glitch Engine (also as GFX, VST3, CLAP)
+- Granular Delay: Grain Cloud Delay (also as GFX, VST3, CLAP)
+- Harmonizer: Two-Voice Pitch Harmonizer (also as GFX, VST3, CLAP)
+- Kick Shaper: Kick Drum Sculptor (also as GFX, VST3, CLAP)
+- Ladder Filter: Moog-Style Ladder Filter (also as GFX, VST3, CLAP)
+- Loudness Meter: EBU R128 LUFS and True Peak Meter (also as GFX, VST3, CLAP)
+- OTT: Multiband Upward/Downward Compressor (also as GFX, VST3, CLAP)
+- Reverser: Real-Time Reverse Buffer (also as GFX, VST3, CLAP)
+- Robotizer: FFT Robot Voice (also as GFX, VST3, CLAP)
+- Rotary Speaker: Leslie Rotary Simulation (also as GFX, VST3, CLAP)
+- Shimmer Reverb: Pitched Ambient Reverb (also as GFX, VST3, CLAP)
+- Spectral Freeze: FFT Spectrum Freeze (also as GFX, VST3, CLAP)
+- Spectrum Analyzer: FFT Spectrum Analyzer with Peak Hold (also as GFX, VST3, CLAP)
+- Spring Reverb: Vintage Spring Tank (also as GFX, VST3, CLAP)
+- Sub Bloom: Pitch-Tracking Subharmonic Generator (also as GFX, VST3, CLAP)
+- Tape Stop: Tape Stop & Spin-Up (also as GFX, VST3, CLAP)
+- Trance Gate: 16-Step Rhythmic Gate (also as GFX, VST3, CLAP)
+- Vinyl Age: Vintage Vinyl Degrader (also as GFX, VST3, CLAP)
+- Vocoder: 16-Band Channel Vocoder (also as GFX, VST3, CLAP)
+- Warped Delay: Modulated Degrading Delay (also as GFX, VST3, CLAP)
 <!-- END PLUGIN LIST -->
 
 ## Links

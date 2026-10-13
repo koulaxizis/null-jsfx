@@ -1,0 +1,147 @@
+desc:NULL DeEsser GFX
+author: Christos Koulaxizis
+tags: deess sibilance sibilants hiss vocal harshness frequency gui
+//category: Essentials
+//NULL JSFX v2.0 • https://nulljsfx.tech • MIT License
+
+import null_gfx.jsfx-inc
+
+slider1:6000<4000,10000,100>-Target (Hz)
+slider2:-6<-18,0,0.1>-Reduction (dB)
+
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
+
+@init
+  // NULL DeEsser (../deesser.jsfx) with its own interface: same audio code, plus @gfx.
+  // Split-band de-esser: a band-pass around Target isolates the sibilance, an envelope
+  // follower measures it, and only that band is turned down (by up to Reduction dB)
+  // when it gets loud, so the rest of the voice is untouched.
+  threshold = 10 ^ (-30 / 20);
+  att = exp(-1 / (0.0005 * srate));
+  rel = exp(-1 / (0.06 * srate));
+  env = 0;
+  x1l = x2l = y1l = y2l = 0;
+  x1r = x2r = y1r = y2r = 0;
+  gfx_ext_retina = 1;
+  // interface only: output peak meter, 300 ms release
+  ds_rel = exp(-1 / (0.3 * srate));
+  ds_out = 0;
+
+  function update()
+  (
+    w0 = 2 * $pi * min(slider1, srate * 0.45) / srate;
+    q = 2;
+    alpha = sin(w0) / (2 * q);
+    a0 = 1 + alpha;
+    b0 = alpha / a0;
+    b2 = -alpha / a0;
+    a1 = -2 * cos(w0) / a0;
+    a2 = (1 - alpha) / a0;
+    max_cut = 1 - 10 ^ (slider2 / 20);   // fraction of the band that may be removed
+  );
+
+  // response in dB at f of the output x - c * bandpass(x)
+  function ds_resp(f, c) local(w, nr, ni, dr, di, dd, br, bi, hr, hi)
+  (
+    w = 2 * $pi * f / srate;
+    nr = b0 + b2 * cos(2 * w); ni = -b2 * sin(2 * w);
+    dr = 1 + a1 * cos(w) + a2 * cos(2 * w); di = -(a1 * sin(w) + a2 * sin(2 * w));
+    dd = dr * dr + di * di;
+    br = (nr * dr + ni * di) / dd; bi = (ni * dr - nr * di) / dd;
+    hr = 1 - c * br; hi = -c * bi;
+    10 * log10(max(hr * hr + hi * hi, 0.0000000001));
+  );
+
+  // x for f on a 1 kHz .. 20 kHz log axis
+  function ds_x(f) ( ng_px + ng_pw * log(f / 1000) / log(20); );
+
+@slider
+  update();
+
+@sample
+  bl = b0 * spl0 + b2 * x2l - a1 * y1l - a2 * y2l;
+  x2l = x1l; x1l = spl0; y2l = y1l; y1l = bl;
+  br = b0 * spl1 + b2 * x2r - a1 * y1r - a2 * y2r;
+  x2r = x1r; x1r = spl1; y2r = y1r; y1r = br;
+
+  level = max(abs(bl), abs(br));
+  env = level > env ? att * env + (1 - att) * level : rel * env + (1 - rel) * level;
+
+  // 0 below threshold, rising to full reduction 12 dB above it
+  over = env > threshold ? min(log(env / threshold) / log(4), 1) : 0;
+  cut = over * max_cut;
+
+  spl0 -= bl * cut;
+  spl1 -= br * cut;
+
+  // interface only: output meter (reads the audio state, never changes it)
+  ds_lv = max(abs(spl0), abs(spl1));
+  ds_out = ds_lv > ds_out ? ds_lv : ds_out * ds_rel;
+
+@gfx 480 294
+  ng_knobs_begin("DEESSER", "ESSENTIALS", 480, 120, 1, 0);
+
+  // display, left: the response from 1 to 20 kHz (-21..+3 dB) at full Reduction (dim) and
+  // now (bright); right: sibilance-band level (threshold marked), band reduction, output
+  ng_plot(56, 66, 260, 78);
+  ds_d = 1000;
+  loop(2,
+    ds_m = 1;
+    loop(9,
+      ds_f = ds_m * ds_d;
+      ds_f <= 20000 ? (
+        ds_xx = floor(ds_x(ds_f)) + 0.5;
+        ng_col(NG_BORDER, ds_m == 1 ? 1 : 0.5);
+        gfx_line(ds_xx, ng_py, ds_xx, ng_py + ng_ph, 0);
+      );
+      ds_m += 1;
+    );
+    ds_d *= 10;
+  );
+  ng_font(4, 8, 0);
+  ds_i = 0;
+  loop(4,
+    ds_yy = floor(ng_lin_y(-6 * ds_i, -21, 3)) + 0.5;
+    ng_col(ds_i == 0 ? 0x45433f : NG_BORDER, ds_i == 0 ? 1 : 0.6);
+    gfx_line(ng_px, ds_yy, ng_px + ng_pw, ds_yy, 0);
+    ng_col(NG_MUTED, 1);
+    sprintf(#ds_l, "%d", -6 * ds_i);
+    ng_ptxt(#ds_l, ng_px - 6 * ng_s, ds_yy, 2);
+    ds_i += 1;
+  );
+  ng_ptxt("1k", ds_x(1000), ng_py + ng_ph + 10 * ng_s, 1);
+  ng_ptxt("2k", ds_x(2000), ng_py + ng_ph + 10 * ng_s, 1);
+  ng_ptxt("5k", ds_x(5000), ng_py + ng_ph + 10 * ng_s, 1);
+  ng_ptxt("10k", ds_x(10000), ng_py + ng_ph + 10 * ng_s, 1);
+  ng_ptxt("20k", ds_x(20000), ng_py + ng_ph + 10 * ng_s, 1);
+  ng_col(NG_ACCENT, 0.5);
+  ds_i = 0;
+  loop(131,
+    ds_xx = ng_px + ng_pw * ds_i / 130;
+    ds_yy = ng_lin_y(ds_resp(1000 * 20 ^ (ds_i / 130), max_cut), -21, 3);
+    ds_i > 0 ? gfx_line(ds_px, ds_py, ds_xx, ds_yy, 1);
+    ds_px = ds_xx; ds_py = ds_yy;
+    ds_i += 1;
+  );
+  ng_col(NG_ACCENT, 1);
+  ds_i = 0;
+  loop(131,
+    ds_xx = ng_px + ng_pw * ds_i / 130;
+    ds_yy = ng_lin_y(ds_resp(1000 * 20 ^ (ds_i / 130), cut), -21, 3);
+    ds_i == 0 ? ng_line_start(ds_xx, ds_yy) : ng_line_to(ds_xx, ds_yy);
+    ds_i += 1;
+  );
+  ng_meter(336, 82, 112, 10, "SIB", ng_to_db(env), -30, -60);
+  ng_gr_meter(336, 106, 112, 10, "GR", -20 * log10(max(1 - cut, 0.0000001)), 18);
+  ng_meter(336, 130, 112, 10, "OUT", ng_to_db(ds_out), -140, -60);
+
+  ng_row(2);
+  sprintf(#v1, "%.1f kHz", slider1 / 1000);
+  ng_knob_ctl(1, "FREQUENCY", #v1, 4000, 10000, 6000, 100, 0) ? update();
+  sprintf(#v2, "%.1f dB", slider2);
+  ng_knob_ctl(2, "REDUCTION", #v2, -18, 0, -6, 0.1, 0) ? update();
+
+  ng_end();

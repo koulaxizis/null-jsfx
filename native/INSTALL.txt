@@ -12,6 +12,10 @@ JSFX (REAPER), from NULL-JSFX-JSFX.zip
     Show REAPER resource path > Effects), then rescan in the FX browser. Keep
     the gfx folder inside it together: gfx/null_gfx.jsfx-inc holds the shared
     look of the GFX versions and is not an effect by itself.
+    Font: the GFX versions use Noto Sans (included in the fonts folder, free
+    under the SIL Open Font License). Install NotoSans-Regular.ttf and
+    NotoSans-Bold.ttf (double-click > Install) so they look exactly like the
+    VST3/CLAP versions; without it REAPER falls back to a system font.
 
 VST3 and CLAP (any DAW), from NULL-JSFX-VST3-CLAP-<your OS>.zip
     Copy the "NULL JSFX" folder from VST3 and from CLAP to:

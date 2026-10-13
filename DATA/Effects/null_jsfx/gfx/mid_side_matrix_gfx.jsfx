@@ -1,0 +1,111 @@
+desc:NULL Mid/Side Matrix GFX
+author: Christos Koulaxizis
+tags: mid side stereo matrix encode decode m/s processing gui
+//category: Essentials
+//NULL JSFX v2.0 • https://nulljsfx.tech • MIT License
+
+import null_gfx.jsfx-inc
+
+slider1:0<-6,6,0.1>-Mid Gain (dB)
+slider2:0<-6,6,0.1>-Side Gain (dB)
+slider3:1<0,1,1{Encode,Decode}>-Mode
+
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
+
+@init
+// NULL Mid/Side Matrix (../mid_side_matrix.jsfx) with its own interface: same audio code, plus @gfx.
+mid_gain = 1;
+side_gain = 1;
+gfx_ext_retina = 1;
+// display only: vectorscope taps of the input, peak followers of the two outputs
+ng_tap_init(4000000, 2048);
+msm_rel = exp(-1 / (0.3 * srate));
+msm_pl = msm_pr = 0;
+
+function update()
+(
+  mid_gain = exp(slider1 * 0.11512925464970228420);
+  side_gain = exp(slider2 * 0.11512925464970228420);
+  matrix_mode = slider3;
+);
+
+@slider
+update();
+
+@sample
+// display only (reads the input, never changes it)
+ng_tap(spl0, spl1);
+
+// 1. Read inputs
+in_l = spl0;
+in_r = spl1;
+
+// 2. Compute Encode outputs
+mid_enc = (in_l + in_r) * 0.707 * mid_gain;
+side_enc = (in_l - in_r) * 0.707 * side_gain;
+
+// 3. Compute Decode outputs  
+mid_dec = in_l * mid_gain;
+side_dec = in_r * side_gain;
+mid_sum = (mid_dec + side_dec) * 0.707;
+mid_diff = (mid_dec - side_dec) * 0.707;
+
+// 4. Calculate blend factors (mathematical NOT conditional!)
+// matrix_mode = 0 → blend_encode = 1, blend_decode = 0
+// matrix_mode = 1 → blend_encode = 0, blend_decode = 1
+blend_encode = 1 - matrix_mode;
+blend_decode = matrix_mode;
+
+// 5. Mix the two paths
+result_l = mid_enc * blend_encode + mid_sum * blend_decode;
+result_r = side_enc * blend_encode + mid_diff * blend_decode;
+
+// 6. Write output ONCE
+spl0 = result_l;
+spl1 = result_r;
+
+// display only (reads the output, never changes it)
+msm_a = abs(spl0);
+msm_pl = msm_a > msm_pl ? msm_a : msm_pl * msm_rel;
+msm_a = abs(spl1);
+msm_pr = msm_a > msm_pr ? msm_a : msm_pr * msm_rel;
+
+@gfx 480 294
+  ng_knobs_begin("MID/SIDE MATRIX", "ESSENTIALS", 480, 120, 1, 0);
+
+  // display, left: vectorscope of the input; right: the matrix with the current gains and
+  // the levels of the two outputs (mid and side when encoding, left and right when decoding)
+  ng_plot(32, 66, 96, 96);
+  ng_vector(2);
+  ng_font(4, 8, 0);
+  ng_col(NG_MUTED, 1);
+  ng_txt("INPUT", 80, 158, 1, 1);
+
+  ng_font(1, 7.5, 1);
+  ng_col(NG_MUTED, 1);
+  ng_txt(slider3 ? "DECODE  M/S TO L/R" : "ENCODE  L/R TO M/S", 160, 74, 0, 1.5);
+  ng_font(3, 9, 0);
+  ng_col(NG_TEXT, 1);
+  slider3 ? (
+    sprintf(#msm_f1, "OUT L  =  0.707 x (M x %.2f + S x %.2f)", mid_gain, side_gain);
+    sprintf(#msm_f2, "OUT R  =  0.707 x (M x %.2f - S x %.2f)", mid_gain, side_gain);
+  ) : (
+    sprintf(#msm_f1, "OUT L  =  0.707 x (L + R) x %.2f", mid_gain);
+    sprintf(#msm_f2, "OUT R  =  0.707 x (L - R) x %.2f", side_gain);
+  );
+  ng_txt(#msm_f1, 160, 94, 0, 0);
+  ng_txt(#msm_f2, 160, 110, 0, 0);
+  ng_meter(160, 128, 286, 8, slider3 ? "L" : "MID", ng_to_db(msm_pl), -140, -60);
+  ng_meter(160, 144, 286, 8, slider3 ? "R" : "SIDE", ng_to_db(msm_pr), -140, -60);
+
+  ng_row(3);
+  slider1 > 0 ? sprintf(#msm_v1, "+%.1f dB", slider1) : sprintf(#msm_v1, "%.1f dB", slider1);
+  ng_knob_ctl(1, "MID", #msm_v1, -6, 6, 0, 0.1, 1) ? update();
+  slider2 > 0 ? sprintf(#msm_v2, "+%.1f dB", slider2) : sprintf(#msm_v2, "%.1f dB", slider2);
+  ng_knob_ctl(2, "SIDE", #msm_v2, -6, 6, 0, 0.1, 1) ? update();
+  ng_select_ctl(3, "MODE", "ENCODE|DECODE", 0) ? update();
+
+  ng_end();

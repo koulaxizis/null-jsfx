@@ -1,0 +1,185 @@
+desc:NULL Pitch Shifter GFX
+author: Christos Koulaxizis
+tags: pitch shift detune harmonizer transposition semitone octave gui
+//category: Essentials
+//NULL JSFX v2.0 • https://nulljsfx.tech • MIT License
+
+import null_gfx.jsfx-inc
+
+slider1:0<-2,2,1>-Octave
+slider2:0<-12,12,1>-Semitones
+slider3:0<-50,50,0.1>-Fine (cents)
+slider4:50<0,100,1>-Mix (%)
+
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
+
+@init
+  // NULL Pitch Shifter (../pitch_shifter.jsfx) with its own interface: same audio code, plus @gfx.
+  // Two read taps sweep through a 60 ms delay line in opposite phase; a Hann crossfade
+  // hides each tap while it jumps back, so the pitch changes without clicks.
+  win = floor(srate * 0.06);
+  buf_size = win + 4;
+  buf_l = 0;
+  buf_r = buf_l + buf_size;
+  memset(buf_l, 0, 2 * buf_size);
+  freembuf(buf_r + buf_size);
+  wpos = 0;
+  ph = 0;
+  gfx_ext_retina = 1;
+
+  function read_tap(buf, delay) local(rp, i, fr, i2)
+  (
+    rp = wpos - delay;
+    rp < 0 ? rp += buf_size;
+    i = floor(rp);
+    fr = rp - i;
+    i2 = i + 1;
+    i2 >= buf_size ? i2 -= buf_size;
+    buf[i] + (buf[i2] - buf[i]) * fr;
+  );
+
+  function update()
+  (
+    octave = slider1;
+    semitones = slider2;
+    fine = slider3;
+    mix_amt = slider4 / 100;
+    total_shift = octave * 12 + semitones + fine / 100;
+    pitch_factor = pow(2, total_shift / 12);
+    ph_inc = (1 - pitch_factor) / win;
+  );
+
+  // ---- tap view: an info line over a plot of two sweeps of the read taps ----
+  // the delay (0 to 60 ms) of tap 1 (md_ch 0) or tap 2 (1) at u (0..1 = two sweeps), as a plot
+  // y; the taps move up the line when the pitch goes down, down it when the pitch goes up
+  function md_val(u) local(p)
+  (
+    p = ph_inc > 0 ? 2 * u - floor(2 * u) : ph_inc < 0 ? 1 - (2 * u - floor(2 * u)) : 0;
+    p >= 1 ? p -= 1;
+    md_ch ? (p += 0.5; p >= 1 ? p -= 1;);
+    ng_lin_y(p * 60, 0, 60);
+  );
+
+  function md_view(left, right)
+  (
+    ng_plot(ng_vx + 26, ng_vy + 14, ng_vw - 30, ng_vh - 30);
+    ng_grid(4, 4, 0);
+    ng_font(4, 8, 0);
+    ng_col(NG_MUTED, 1);
+    ng_ptxt(left, ng_px, Y(ng_vy + 4), 0);
+    ng_ptxt(right, ng_px + ng_pw, Y(ng_vy + 4), 2);
+  );
+
+  // labels at the top, middle and bottom of the plot
+  function md_ylabels(top, mid, bot)
+  (
+    ng_col(NG_MUTED, 1);
+    ng_ptxt(top, ng_px - 6 * ng_s, ng_py, 2);
+    ng_ptxt(mid, ng_px - 6 * ng_s, ng_py + ng_ph / 2, 2);
+    ng_ptxt(bot, ng_px - 6 * ng_s, ng_py + ng_ph, 2);
+  );
+
+  // times under the plot at 1/4, 1/2 and 3/4 of its width for a cycle of period seconds
+  function md_xlabels(period) local(i, t)
+  (
+    ng_col(NG_MUTED, 1);
+    i = 1;
+    loop(3,
+      t = period * i / 2;
+      t < 1 ? sprintf(#md_t, "%d ms", floor(t * 1000 + 0.5)) : sprintf(#md_t, "%.2f s", t);
+      ng_ptxt(#md_t, ng_px + ng_pw * i / 4, ng_py + ng_ph + 10 * ng_s, 1);
+      i += 1;
+    );
+  );
+
+  // md_val across the plot in colour rgb, shaded down to the bottom when fill = 1
+  function md_curve(rgb, fill) local(i)
+  (
+    fill ? (
+      ng_col(NG_ACCENT, 0.10);
+      i = 0;
+      loop(floor(ng_pw) + 1, gfx_line(ng_px + i, ng_py + ng_ph, ng_px + i, md_val(i / ng_pw), 0); i += 1;);
+    );
+    ng_col(rgb, 1);
+    i = 0;
+    loop(floor(ng_pw) + 1,
+      i == 0 ? ng_line_start(ng_px, md_val(0)) : ng_line_to(ng_px + i, md_val(i / ng_pw));
+      i += 1;
+    );
+  );
+
+  // dashed playhead at u (0..1) of the plot width
+  function md_playhead(u) local(x, y)
+  (
+    x = floor(ng_px + max(0, min(1, u)) * ng_pw) + 0.5;
+    ng_col(NG_ACCENT, 0.5);
+    y = ng_py;
+    while (
+      gfx_line(x, y, x, min(y + 3 * ng_s, ng_py + ng_ph), 0);
+      y += 6 * ng_s;
+      y < ng_py + ng_ph;
+    );
+  );
+
+@slider
+  update();
+
+@sample
+  buf_l[wpos] = spl0;
+  buf_r[wpos] = spl1;
+
+  ph += ph_inc;
+  ph >= 1 ? ph -= 1;
+  ph < 0 ? ph += 1;
+  ph2 = ph + 0.5;
+  ph2 >= 1 ? ph2 -= 1;
+
+  d1 = 1 + ph * win;
+  d2 = 1 + ph2 * win;
+  g1 = 0.5 - 0.5 * cos(2 * $pi * ph);
+  g2 = 1 - g1;
+
+  shifted_l = read_tap(buf_l, d1) * g1 + read_tap(buf_l, d2) * g2;
+  shifted_r = read_tap(buf_r, d1) * g1 + read_tap(buf_r, d2) * g2;
+
+  wpos += 1;
+  wpos >= buf_size ? wpos = 0;
+
+  spl0 = spl0 * (1 - mix_amt) + shifted_l * mix_amt;
+  spl1 = spl1 * (1 - mix_amt) + shifted_r * mix_amt;
+
+@gfx 480 294
+  ng_knobs_begin("PITCH SHIFTER", "ESSENTIALS", 480, 120, 1, 0);
+
+  // display: the delay of the two read taps over two sweeps (0 to 60 ms), tap 1 dashed
+  md_sh = slider1 * 12 + slider2 + slider3 / 100;
+  md_sh == 0 ? strcpy(#md_r, "NO SHIFT") :
+  sprintf(#md_r, md_sh > 0 ? "+%.2f ST, x%.3f" : "%.2f ST, x%.3f", md_sh, 2 ^ (md_sh / 12));
+  md_view("", #md_r);
+  ng_col(NG_ACCENT, 1);
+  ng_ptxt("TAP 1", ng_px, Y(ng_vy + 4), 0);
+  ng_col(NG_MUTED, 1);
+  ng_ptxt("TAP 2", ng_px + 34 * ng_s, Y(ng_vy + 4), 0);
+  ng_ptxt("(ms)", ng_px + 68 * ng_s, Y(ng_vy + 4), 0);
+  md_ylabels("60", "30", "0");
+  ph_inc != 0 ? md_xlabels(0.06 / abs(1 - 2 ^ (md_sh / 12)));
+  md_ch = 1;
+  md_curve(NG_MUTED, 0);
+  md_ch = 0;
+  md_curve(NG_ACCENT, 0);
+  ph_inc != 0 ? md_playhead(ph_inc > 0 ? ph / 2 : (1 - ph) / 2);
+
+  ng_row(4);
+  slider1 > 0 ? sprintf(#v1, "+%d oct", slider1) : sprintf(#v1, "%d oct", slider1);
+  ng_knob_ctl(1, "OCTAVE", #v1, -2, 2, 0, 1, 1) ? update();
+  slider2 > 0 ? sprintf(#v2, "+%d st", slider2) : sprintf(#v2, "%d st", slider2);
+  ng_knob_ctl(2, "SEMITONES", #v2, -12, 12, 0, 1, 1) ? update();
+  slider3 > 0 ? sprintf(#v3, "+%.1f ct", slider3) : sprintf(#v3, "%.1f ct", slider3);
+  ng_knob_ctl(3, "FINE", #v3, -50, 50, 0, 0.1, 1) ? update();
+  sprintf(#v4, "%d%%", slider4);
+  ng_knob_ctl(4, "MIX", #v4, 0, 100, 50, 1, 0) ? update();
+
+  ng_end();
