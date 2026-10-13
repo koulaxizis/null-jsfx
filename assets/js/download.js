@@ -1,5 +1,6 @@
 // Download modal: the Download button opens it (without JavaScript the button still leads to
-// the GitHub releases page). It suggests the VST3/CLAP package for the visitor's system.
+// the GitHub releases page). It suggests the installer and the VST3/CLAP package for the
+// visitor's system.
 // The first download of a visit shows a short support step (Ko-fi, newsletter) with
 // "Skip to download"; later downloads in the same visit start right away.
 (function () {
@@ -26,6 +27,10 @@
     document.getElementById('dl-os').textContent = os;
     document.getElementById('dl-native').href = base + file;
     document.getElementById('dl-native-file').textContent = file;
+    const installer = 'NULL-JSFX-Installer-' + os + (os === 'Windows' ? '.exe' : '.sh');
+    document.getElementById('dl-installer-os').textContent = os;
+    document.getElementById('dl-installer').href = base + installer;
+    document.getElementById('dl-installer-file').textContent = installer;
 
     function supportSeen() {
         try { return sessionStorage.getItem(SEEN_KEY) === '1'; } catch (e) { return false; }
