@@ -31,7 +31,7 @@ protected:
     const char* getMaker() const override    { return "NULL JSFX"; }
     const char* getHomePage() const override { return "https://nulljsfx.tech"; }
     const char* getLicense() const override  { return "MIT"; }
-    uint32_t getVersion() const override     { return d_version(2, 0, 0); }
+    uint32_t getVersion() const override     { return d_version(2, 1, 0); }
 
     static void fillParameter(Parameter& p, const SliderInfo& in)
     {
