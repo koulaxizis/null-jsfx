@@ -49,9 +49,10 @@ cmp -s "$h/$reaper/Effects/null_jsfx/tilt.jsfx" "$(dirname "$0")/../DATA/Effects
   fail "all: tilt.jsfx differs from DATA"
 
 HOME="$h" bash "$installer" --uninstall > /dev/null
-# fc-cache keeps its own cache in ~/.cache after the fonts are installed; that is not ours
-find "$h" -type f ! -path "$h/.cache/*" | sed "s|^$h/|left: |"
-left=$(find "$h" -type f ! -path "$h/.cache/*" | wc -l | tr -d ' ')
+# fc-cache keeps its own cache in ~/.cache and a .uuid in the fonts folder once fonts are
+# installed; those are fontconfig's, not ours
+find "$h" -type f ! -path "$h/.cache/*" ! -name .uuid | sed "s|^$h/|left: |"
+left=$(find "$h" -type f ! -path "$h/.cache/*" ! -name .uuid | wc -l | tr -d ' ')
 expect "all: files left after --uninstall" "$left" 0
 
 # presets the user saved stay, ours are added after them, and they stay after --uninstall
