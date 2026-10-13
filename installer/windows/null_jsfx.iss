@@ -72,6 +72,8 @@ FinishedLabel=NULL JSFX is installed. REAPER: open the FX browser and press F5 (
 var
   ReaperPage: TInputDirWizardPage;
   StudioLink: TNewStaticText;
+  SupportText: TNewStaticText;
+  SupportLink: TNewStaticText;
 
 function ReaperDir(Param: String): String;
 begin
@@ -91,6 +93,13 @@ begin
   ShellExecAsOriginalUser('open', 'https://useoros.online/studio/', '', '', SW_SHOWNORMAL, ewNoWait, Code);
 end;
 
+procedure KofiClick(Sender: TObject);
+var
+  Code: Integer;
+begin
+  ShellExecAsOriginalUser('open', 'https://ko-fi.com/koulaxizis', '', '', SW_SHOWNORMAL, ewNoWait, Code);
+end;
+
 procedure InitializeWizard;
 begin
   ReaperPage := CreateInputDirPage(wpSelectComponents, 'REAPER resource folder',
@@ -108,6 +117,20 @@ begin
   StudioLink.Font.Style := [fsUnderline];
   StudioLink.Font.Color := clHotLight;
   StudioLink.OnClick := @StudioClick;
+
+  SupportText := TNewStaticText.Create(WizardForm);
+  SupportText.Parent := WizardForm.FinishedPage;
+  SupportText.AutoSize := False;
+  SupportText.WordWrap := True;
+  SupportText.Caption := 'NULL JSFX is free and made by one person. If it helps your music, ' +
+    'a coffee keeps it going:';
+  SupportLink := TNewStaticText.Create(WizardForm);
+  SupportLink.Parent := WizardForm.FinishedPage;
+  SupportLink.Caption := 'Support NULL JSFX on Ko-fi';
+  SupportLink.Cursor := crHand;
+  SupportLink.Font.Style := [fsUnderline];
+  SupportLink.Font.Color := clHotLight;
+  SupportLink.OnClick := @KofiClick;
 end;
 
 function ShouldSkipPage(PageID: Integer): Boolean;
@@ -121,5 +144,11 @@ begin
   begin
     StudioLink.Left := WizardForm.FinishedLabel.Left;
     StudioLink.Top := WizardForm.FinishedLabel.Top + WizardForm.FinishedLabel.Height + ScaleY(16);
+    SupportText.Left := StudioLink.Left;
+    SupportText.Width := WizardForm.FinishedLabel.Width;
+    SupportText.Height := ScaleY(30);
+    SupportText.Top := StudioLink.Top + StudioLink.Height + ScaleY(20);
+    SupportLink.Left := StudioLink.Left;
+    SupportLink.Top := SupportText.Top + SupportText.Height + ScaleY(4);
   end;
 end;

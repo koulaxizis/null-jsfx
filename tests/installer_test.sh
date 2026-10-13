@@ -49,7 +49,9 @@ cmp -s "$h/$reaper/Effects/null_jsfx/tilt.jsfx" "$(dirname "$0")/../DATA/Effects
   fail "all: tilt.jsfx differs from DATA"
 
 HOME="$h" bash "$installer" --uninstall > /dev/null
-left=$(find "$h" -type f ! -name '*.log' | wc -l | tr -d ' ')
+# fc-cache keeps its own cache in ~/.cache after the fonts are installed; that is not ours
+find "$h" -type f ! -path "$h/.cache/*" | sed "s|^$h/|left: |"
+left=$(find "$h" -type f ! -path "$h/.cache/*" | wc -l | tr -d ' ')
 expect "all: files left after --uninstall" "$left" 0
 
 # a subset: CLAP only, One Slider plus Delay; chains need JSFX or GFX so none come

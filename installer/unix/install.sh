@@ -387,5 +387,8 @@ fi
 has "$EXTRAS" remote && say "Tablet remote: finish the steps in $DATA_DIR/Remote-INSTALL.txt (from step 4)."
 say "Remove it all later with: bash $(basename "$0") --uninstall"
 say "Try the effects in a browser too, as web plugins in orOS Studio: $STUDIO"
+say ""
+say "NULL JSFX is free and made by one person. If it helps your music, a coffee keeps it going:"
+say "  https://ko-fi.com/koulaxizis"
 exit 0
 __PAYLOAD_BELOW__
