@@ -2,7 +2,8 @@
 # e.g. with tests/run.sh at the repo root.
 #
 # Per plugin: compare_<name> runs DATA/Effects/null_jsfx/<name>.jsfx against the CLAP build,
-# gfx_<name> runs it against DATA/Effects/null_jsfx/gfx/<name>_gfx.jsfx. A plugin can pass
+# presets_<name> does the same with each factory preset (<name>.jsfx.rpl), gfx_<name> runs it
+# against DATA/Effects/null_jsfx/gfx/<name>_gfx.jsfx. A plugin can pass
 # extra arguments (e.g. --tol 1e-4) in plugins/<name>/compare_args.txt.
 
 set(YSFX_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/../../tests/.build/ysfx" CACHE PATH "ysfx source tree with build/libysfx.a")
@@ -69,6 +70,10 @@ foreach(_p ${NULL_BUILT_PLUGINS})
   endif()
   if(TARGET null_jsfx_${_p}-clap AND EXISTS "${_jsfx_dir}/${_p}.jsfx")
     add_test(NAME compare_${_p} COMMAND compare "${_jsfx_dir}/${_p}.jsfx" "${_bin}" ${_args})
+    # the factory presets (tools/build_presets.py): every preset sounds the same in the CLAP
+    if(EXISTS "${_jsfx_dir}/${_p}.jsfx.rpl")
+      add_test(NAME presets_${_p} COMMAND compare "${_jsfx_dir}/${_p}.jsfx" "${_bin}" ${_args} --rpl "${_jsfx_dir}/${_p}.jsfx.rpl")
+    endif()
   endif()
   if(EXISTS "${_jsfx_dir}/gfx/${_p}_gfx.jsfx")
     add_test(NAME gfx_${_p} COMMAND compare "${_jsfx_dir}/${_p}.jsfx" "${_jsfx_dir}/gfx/${_p}_gfx.jsfx" --tol 0)

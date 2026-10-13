@@ -1,0 +1,9 @@
+[
+  ["Amp Spring Subtle", {"Decay": 2, "Tension": 55, "Tone": 3500, "Drip": 30, "Pre-Delay": 0, "Mix": 20}],
+  ["Surf Guitar Drench", {"Decay": 3.5, "Tension": 75, "Tone": 4500, "Drip": 80, "Pre-Delay": 0, "Mix": 45}],
+  ["Dub Snare Drip", {"Decay": 4, "Tension": 80, "Tone": 5000, "Drip": 90, "Pre-Delay": 10, "Mix": 40}],
+  ["Vintage Vocal Spring", {"Decay": 1.8, "Tension": 45, "Tone": 3500, "Drip": 25, "Pre-Delay": 20, "Mix": 18}],
+  ["Lo-Fi Keys Tank", {"Decay": 2.5, "Tension": 50, "Tone": 2500, "Drip": 35, "Pre-Delay": 5, "Mix": 30}],
+  ["Short Dark Spring", {"Decay": 1, "Tension": 40, "Tone": 2000, "Drip": 15, "Mix": 25}],
+  ["Boing Sound Design", {"Decay": 3, "Tension": 90, "Tone": 6500, "Drip": 70, "Mix": 35}]
+]

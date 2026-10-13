@@ -1,0 +1,7 @@
+[
+  ["Drum Bus Warmth", {"Amount": 20}],
+  ["Bass Fatten", {"Amount": 30}],
+  ["Kick Weight", {"Amount": 40}],
+  ["Small Synth Body", {"Amount": 50}],
+  ["Thin Sample Fix", {"Amount": 65}]
+]

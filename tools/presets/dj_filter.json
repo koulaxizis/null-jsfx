@@ -1,0 +1,7 @@
+[
+  ["Low Cut Thin", {"Filter": 30}],
+  ["Telephone Highs", {"Filter": 60}],
+  ["Muffled Low Pass", {"Filter": -50}],
+  ["Next Room", {"Filter": -70}],
+  ["Sub Only", {"Filter": -90}]
+]

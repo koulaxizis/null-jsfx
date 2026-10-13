@@ -1,0 +1,8 @@
+[
+  ["Slow Pad Drift", {"Rate": 0.2, "Depth": 60, "Mix": 50}],
+  ["Ambience Motion", {"Rate": 0.5, "Depth": 40, "Mix": 30}],
+  ["Fast Keys Tremolo", {"Rate": 5, "Depth": 80, "Mix": 60}],
+  ["Quarter Note Pan", {"Tempo Sync": "ON", "Subdivision": "1/4", "Depth": 70, "Mix": 60}],
+  ["Eighth Note Guitar", {"Tempo Sync": "ON", "Subdivision": "1/8", "Depth": 60, "Mix": 50}],
+  ["Sixteenth Percussion", {"Tempo Sync": "ON", "Subdivision": "1/16", "Depth": 50, "Mix": 40}]
+]

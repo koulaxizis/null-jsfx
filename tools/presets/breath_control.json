@@ -1,0 +1,8 @@
+[
+  ["Gentle Vocal Breaths", {"Threshold": -42, "Attack": 5, "Release": 150, "Range": -6}],
+  ["Pop Vocal", {"Threshold": -38, "Attack": 3, "Release": 100, "Range": -10}],
+  ["Rap Vocal Tight", {"Threshold": -34, "Attack": 2, "Release": 60, "Range": -12}],
+  ["Podcast Dialogue", {"Threshold": -40, "Attack": 8, "Release": 200, "Range": -12}],
+  ["Voice Over Clean", {"Threshold": -45, "Attack": 5, "Release": 120, "Range": -15}],
+  ["Quiet Room Narration", {"Threshold": -50, "Attack": 5, "Release": 150, "Range": -18}]
+]

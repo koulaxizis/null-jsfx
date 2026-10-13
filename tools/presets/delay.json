@@ -1,0 +1,10 @@
+[
+  ["Vocal Slapback", {"Time": 110, "Feedback": 0, "Mix": 20, "High Cut": 8000}],
+  ["Short Double", {"Time": 25, "Feedback": 0, "Mix": 30}],
+  ["Quarter Note Echo", {"Tempo Sync": "ON", "Subdivision": "1/4", "Feedback": 30, "Mix": 20, "Low Cut": 150, "High Cut": 6000}],
+  ["Ping-Pong Eighths", {"Tempo Sync": "ON", "Subdivision": "1/8", "Mode": "Ping-Pong", "Feedback": 40, "Mix": 25, "Low Cut": 200, "High Cut": 8000}],
+  ["Sixteenth Rhythm", {"Tempo Sync": "ON", "Subdivision": "1/16", "Feedback": 25, "Mix": 20, "Low Cut": 300, "High Cut": 7000}],
+  ["Dark Tape Echo", {"Time": 375, "Feedback": 50, "Mix": 25, "Low Cut": 100, "High Cut": 3000, "Drive": 40}],
+  ["Dub Throw", {"Tempo Sync": "ON", "Subdivision": "1/4", "Feedback": 70, "Mix": 35, "Low Cut": 300, "High Cut": 2500, "Drive": 30}],
+  ["Ambient Long Trail", {"Time": 750, "Feedback": 65, "Mix": 25, "Low Cut": 250, "High Cut": 4000, "Drive": 15}]
+]

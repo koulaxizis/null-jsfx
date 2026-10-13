@@ -1,0 +1,9 @@
+[
+  ["Classic Robot Voice", {"Pitch": 110, "Metallic": 20}],
+  ["Deep Android", {"Pitch": 70, "Metallic": 40}],
+  ["Small Droid", {"Pitch": 260, "Metallic": 15}],
+  ["Flat Monotone", {"Pitch": 140, "Metallic": 0}],
+  ["Ring Mod Alien", {"Pitch": 100, "Metallic": 30, "Ring": 80}],
+  ["Metallic Drum Buzz", {"Pitch": 200, "Metallic": 70, "Mix": 50}],
+  ["Subtle Robot Blend", {"Pitch": 120, "Metallic": 25, "Mix": 40}]
+]

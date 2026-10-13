@@ -1,0 +1,10 @@
+[
+  ["Master Safety", {"Mode": "Limiter", "Threshold": 0, "Ceiling": -1.0, "Release": 200, "Lookahead": 2}],
+  ["Gentle Mix Bus", {"Mode": "Limiter", "Threshold": -2, "Ceiling": -0.3, "Release": 300, "Lookahead": 3}],
+  ["Mastering Loud", {"Mode": "Limiter", "Threshold": -6, "Ceiling": -1.0, "Release": 150, "Lookahead": 5}],
+  ["Track Peak Catcher", {"Mode": "Limiter", "Threshold": 0, "Ceiling": -3.0, "Release": 60, "Lookahead": 1}],
+  ["Drum Bus Clipper", {"Mode": "Clipper", "Threshold": -3, "Ceiling": -0.3}],
+  ["Snare Soft Clip", {"Mode": "Clipper", "Threshold": -5, "Ceiling": -1.0}],
+  ["Streaming Brickwall", {"Mode": "Brickwall", "Threshold": -3, "Ceiling": -1.0, "Release": 250, "Lookahead": 5}],
+  ["Broadcast Brickwall", {"Mode": "Brickwall", "Threshold": -4, "Ceiling": -2.0, "Release": 400, "Lookahead": 5}]
+]

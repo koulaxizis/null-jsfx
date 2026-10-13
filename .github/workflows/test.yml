@@ -17,6 +17,7 @@ jobs:
       - run: tests/run.sh
       - run: python3 tools/build_site.py --check
       - run: python3 tools/build_chains.py --check
+      - run: python3 tools/build_presets.py --check
 
   remote:
     # the tablet remote (remote/): page in a real browser + bridge script under a REAPER stand-in

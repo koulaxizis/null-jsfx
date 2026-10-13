@@ -1,0 +1,10 @@
+[
+  ["Ethereal Pad", {"Size": 90, "Decay": 10, "Shimmer": 60, "Pitch": "+12 (Octave)", "Damping": 7000, "Mix": 40}],
+  ["Guitar Swell Shimmer", {"Size": 75, "Decay": 7, "Shimmer": 45, "Pitch": "+12 (Octave)", "Damping": 6000, "Mix": 35}],
+  ["Cinematic Vocal Tail", {"Size": 80, "Decay": 5, "Shimmer": 25, "Pitch": "+12 (Octave)", "Damping": 5000, "Mix": 25}],
+  ["Piano Shimmer", {"Size": 60, "Decay": 4, "Shimmer": 20, "Pitch": "+12 (Octave)", "Damping": 7000, "Mix": 22}],
+  ["Fifth Halo", {"Size": 70, "Decay": 6, "Shimmer": 40, "Pitch": "+7 (Fifth)", "Damping": 5500, "Mix": 30}],
+  ["Organ Cloud", {"Size": 90, "Decay": 12, "Shimmer": 55, "Pitch": "+19 (Octave + Fifth)", "Damping": 6500, "Mix": 40}],
+  ["Crystal Two Octaves", {"Size": 65, "Decay": 5, "Shimmer": 30, "Pitch": "+24 (Two Octaves)", "Damping": 9000, "Mix": 25}],
+  ["Dark Octave Down", {"Size": 85, "Decay": 8, "Shimmer": 45, "Pitch": "-12 (Octave Down)", "Damping": 3000, "Mix": 35}]
+]

@@ -1,0 +1,10 @@
+[
+  ["Vocal Harshness", {"Depth": 5, "Sharpness": 60, "Selectivity": 50, "Attack": 5, "Release": 100, "Low Freq": 1000, "High Freq": 10000}],
+  ["Sibilance Control", {"Depth": 9, "Sharpness": 40, "Selectivity": 40, "Attack": 2, "Release": 60, "Low Freq": 2000, "High Freq": 12000}],
+  ["Mix Bus Smoothing", {"Depth": 3, "Sharpness": 40, "Selectivity": 60, "Attack": 20, "Release": 200, "Low Freq": 200, "High Freq": 16000, "Mix": 80}],
+  ["Guitar Fizz Tamer", {"Depth": 8, "Sharpness": 70, "Selectivity": 45, "Attack": 5, "Release": 80, "Low Freq": 2000, "High Freq": 12000}],
+  ["Boxy Low Mids", {"Depth": 6, "Sharpness": 50, "Selectivity": 50, "Attack": 15, "Release": 150, "Low Freq": 150, "High Freq": 1000}],
+  ["Piano Ring Control", {"Depth": 4, "Sharpness": 80, "Selectivity": 65, "Attack": 20, "Release": 250, "Low Freq": 200, "High Freq": 8000}],
+  ["Aggressive Hard Clean", {"Depth": 12, "Sharpness": 80, "Selectivity": 30, "Attack": 5, "Release": 100, "Mode": "Hard"}],
+  ["Delta Audition", {"Delta": "On"}]
+]

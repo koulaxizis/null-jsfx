@@ -1,0 +1,8 @@
+[
+  ["Vinyl Crackle", {"Threshold": 35, "Window": 8}],
+  ["Heavy Vinyl Pops", {"Threshold": 50, "Window": 30}],
+  ["Digital Spikes", {"Threshold": 70, "Window": 3}],
+  ["Edit Click Fix", {"Threshold": 60, "Window": 6}],
+  ["Mouth Clicks", {"Threshold": 45, "Window": 20}],
+  ["Archival Restore", {"Threshold": 25, "Window": 15}]
+]

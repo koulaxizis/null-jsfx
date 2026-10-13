@@ -1,0 +1,9 @@
+[
+  ["Male Vocal", {"Target": 5000, "Reduction": -6}],
+  ["Female Vocal", {"Target": 7000, "Reduction": -6}],
+  ["Podcast Speech", {"Target": 5500, "Reduction": -8}],
+  ["Gentle Sibilance", {"Target": 8000, "Reduction": -3}],
+  ["Harsh Sibilance", {"Target": 6500, "Reduction": -12}],
+  ["Cymbal Splash Tamer", {"Target": 9000, "Reduction": -6}],
+  ["Acoustic Guitar Glare", {"Target": 4500, "Reduction": -4}]
+]

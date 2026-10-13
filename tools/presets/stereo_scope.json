@@ -1,0 +1,8 @@
+[
+  ["Fast Response", {"Decay": 20, "Integration": 100}],
+  ["Slow Averaging", {"Decay": 80, "Integration": 2000}],
+  ["Quiet Source Zoom", {"Auto Gain": "Off", "Scope Gain": 12, "Decay": 60}],
+  ["Hot Master View", {"Auto Gain": "Off", "Scope Gain": -6, "Decay": 40}],
+  ["Mono Check", {"Monitor": "Mono"}],
+  ["Side Listen", {"Monitor": "Side"}]
+]

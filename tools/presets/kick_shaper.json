@@ -1,0 +1,9 @@
+[
+  ["Punchy Rock Kick", {"Attack Shape": 6, "Body Tone": 2, "Thump": 2, "Click": 3, "Decay": 300, "Output Gain": -2}],
+  ["Tight Dance Kick", {"Attack Shape": 4, "Body Tone": -2, "Thump": 3, "Click": 2, "Decay": 180, "Output Gain": -2}],
+  ["Boomy Kick Tamer", {"Attack Shape": 2, "Body Tone": -2, "Thump": -3, "Click": 1, "Decay": 120, "Output Gain": 1}],
+  ["Deep 808 Tail", {"Body Tone": 1, "Thump": 4, "Click": -2, "Decay": 500, "Output Gain": -3}],
+  ["Metal Beater Click", {"Attack Shape": 8, "Body Tone": -3, "Thump": 1, "Click": 6, "Decay": 200, "Output Gain": -3}],
+  ["Soft Vintage Kick", {"Attack Shape": -6, "Body Tone": 2, "Click": -3, "Decay": 350, "Output Gain": 1}],
+  ["Live Kick Bleed Cut", {"Attack Shape": 3, "Click": 1, "Decay": 80}]
+]

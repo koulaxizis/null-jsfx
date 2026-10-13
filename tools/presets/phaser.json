@@ -1,0 +1,9 @@
+[
+  ["Slow Pad Swirl", {"Rate": 0.2, "Stages": 6, "Mix": 40}],
+  ["Classic Guitar Phase", {"Rate": 0.8, "Stages": 4, "Mix": 50}],
+  ["Keys Gentle Motion", {"Rate": 0.4, "Stages": 2, "Mix": 30}],
+  ["Fast Wobble", {"Rate": 4.0, "Stages": 4, "Mix": 45}],
+  ["Deep Eight Stage", {"Rate": 0.3, "Stages": 8, "Mix": 60}],
+  ["Drum Bus Shimmer", {"Rate": 1.5, "Stages": 6, "Mix": 25}],
+  ["Psychedelic Vocal", {"Rate": 0.6, "Stages": 8, "Mix": 45}]
+]

@@ -1,0 +1,9 @@
+[
+  ["Slow Phase Drift", {"Shift": 0.3, "Stereo Offset": -0.6, "Feedback": 0, "Mix": 50}],
+  ["Detuned Stereo Wide", {"Shift": 3, "Stereo Offset": -6, "Mix": 30}],
+  ["Detuned Shimmer", {"Shift": 12, "Stereo Offset": -24, "Mix": 35}],
+  ["Metallic Bells", {"Shift": 180, "Mix": 70}],
+  ["Barber Pole Rise", {"Shift": 4, "Feedback": 70, "Mix": 50}],
+  ["Barber Pole Fall", {"Shift": -4, "Feedback": 70, "Mix": 50}],
+  ["Sci-Fi Radio", {"Shift": -350, "Stereo Offset": 40, "Feedback": 30, "Mix": 100}]
+]

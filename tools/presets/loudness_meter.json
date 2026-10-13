@@ -1,0 +1,8 @@
+[
+  ["Streaming Master", {"Target": "-14 LUFS", "Scale": "EBU +9", "History": "1 min", "Auto Reset": "On Play"}],
+  ["Broadcast R128", {"Target": "-23 LUFS", "Scale": "EBU +18", "History": "5 min", "Auto Reset": "On Play"}],
+  ["Podcast Episode", {"Target": "-16 LUFS", "Scale": "EBU +9", "History": "5 min", "Auto Reset": "On Play"}],
+  ["Quick Mix Check", {"Target": "-14 LUFS", "Scale": "EBU +9", "History": "10 s", "Auto Reset": "Off"}],
+  ["Long Form Monitor", {"Target": "-16 LUFS", "Scale": "EBU +18", "History": "5 min", "Auto Reset": "Off"}],
+  ["Mono Fold Check", {"Target": "-14 LUFS", "History": "30 s", "Monitor": "Mono"}]
+]

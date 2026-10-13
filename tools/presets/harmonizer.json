@@ -1,0 +1,9 @@
+[
+  ["Minor Harmony", {"Voice 1 Interval": 3, "Voice 2 Interval": 7}],
+  ["Power Fifths", {"Voice 1 Interval": 7, "Voice 2 Interval": -5, "Detune": 6, "Delay": 10, "Spread": 60, "Mix": 45}],
+  ["Octave Doubler", {"Voice 1 Interval": 12, "Voice 2 Interval": -12, "Voice 1 Level": -9, "Voice 2 Level": -9, "Detune": 5, "Delay": 10, "Spread": 50, "Mix": 40}],
+  ["Sub Octave Thickener", {"Voice 1 Interval": -12, "Voice 2 Interval": 0, "Voice 1 Level": -6, "Voice 2 Level": -12, "Detune": 12, "Delay": 12, "Spread": 40, "Mix": 40}],
+  ["Wide Vocal Double", {"Voice 1 Interval": 0, "Voice 2 Interval": 0, "Detune": 12, "Delay": 25, "Spread": 100, "Mix": 40}],
+  ["Low Harmony Pair", {"Voice 1 Interval": -5, "Voice 2 Interval": -9, "Voice 1 Level": -8, "Voice 2 Level": -8, "Mix": 45}],
+  ["Harmony Only Print", {"Voice 1 Interval": 4, "Voice 2 Interval": 7, "Mix": 100}]
+]

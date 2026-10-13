@@ -1,0 +1,8 @@
+[
+  ["Vocal Pause Cleanup", {"Threshold": -45, "Attack": 5, "Release": 250, "Sidechain HPF": 80, "Range": -20}],
+  ["Tight Kick", {"Threshold": -30, "Attack": 1, "Release": 80, "Range": -80}],
+  ["Snare Bleed Cut", {"Threshold": -28, "Attack": 1, "Release": 120, "Sidechain HPF": 150, "Range": -40}],
+  ["Tom Gate", {"Threshold": -32, "Attack": 1, "Release": 250, "Sidechain HPF": 80, "Range": -30}],
+  ["Guitar Amp Hiss", {"Threshold": -50, "Attack": 3, "Release": 150, "Range": -60}],
+  ["Gentle Noise Duck", {"Threshold": -55, "Attack": 10, "Release": 400, "Range": -10}]
+]

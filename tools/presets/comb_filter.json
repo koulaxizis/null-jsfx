@@ -1,0 +1,9 @@
+[
+  ["Hollow Pad Color", {"Frequency": 800, "Feedback": 0.4, "Mode": "Feed-Forward", "Gain": 2}],
+  ["Subtle Phasey Tone", {"Frequency": 2500, "Feedback": 0.3, "Mode": "Feed-Forward", "Gain": 1.5}],
+  ["Metallic Snare Ring", {"Frequency": 220, "Feedback": 0.85, "Mode": "Feed-Backward", "Gain": 4}],
+  ["Tuned Hat Shimmer", {"Frequency": 1760, "Feedback": 0.7, "Mode": "Feed-Backward", "Gain": 3}],
+  ["Karplus Pluck A2", {"Frequency": 110, "Feedback": 0.97, "Mode": "Feed-Backward", "Gain": 4}],
+  ["Tube Resonance", {"Frequency": 330, "Feedback": 0.6, "Mode": "Feed-Backward", "Gain": 3}],
+  ["Robotic Buzz", {"Frequency": 100, "Feedback": 0.9, "Mode": "Feed-Backward", "Gain": 4}]
+]

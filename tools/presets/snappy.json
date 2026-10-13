@@ -1,0 +1,7 @@
+[
+  ["Drum Bus Punch", {"Amount": 25}],
+  ["Pluck Bite", {"Amount": 35}],
+  ["Kick Click", {"Amount": 50}],
+  ["Snare Crack", {"Amount": 60}],
+  ["Room Tamer", {"Amount": 80}]
+]

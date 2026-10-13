@@ -134,6 +134,19 @@ ng_select_ctl(4, "SYNC", "OFF|ON", 0) ? update();
 96 kHz. Build with `cmake -S native -B native/build-x -DNULL_TESTS=ON -DNULL_PLUGINS="<name>"`
 and `ctest`, then compare `gfx_render` (at 2x the `@gfx` size) with `screenshot.sh <name> out.png ""`.
 
+## Factory presets (`tools/presets/<name>.json`)
+
+Every plugin's presets live in `tools/presets/<name>.json` as `[["Preset Name", {"Slider": value}], ...]`
+(slider names as in the `.jsfx` without the unit, enum sliders by option label, values on the
+slider's step; anything not given keeps the default; a "Default" preset comes first by itself).
+`tools/build_presets.py` writes from them `<name>.jsfx.rpl` and `gfx/<name>_gfx.jsfx.rpl` (REAPER's
+preset menu), the preset block at the end of `@init` of the GFX JSFX plus the `ng_presets()` call
+at the end of its `@gfx` (the selector in the header, `ng_pre_*` in `null_gfx.jsfx-inc`), and
+`plugins/<name>/FactoryPresets.hpp`, which `NullUI` picks up for the same selector in the VST3/CLAP.
+CI runs `build_presets.py --check`; `presets_<name>` renders every preset in the JSFX and the CLAP.
+A plugin UI that overrides `onMouse` calls `presetMouse(ev)` first, and one that draws over the
+base in `onNanoDisplay` calls `drawPresetMenu()` at the end.
+
 ## The Rack (`plugins/rack/`)
 
 "Rack" by NULL JSFX is a VST3/CLAP host for up to 8 NULL modules in series, like Kilohearts

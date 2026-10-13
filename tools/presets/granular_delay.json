@@ -1,0 +1,9 @@
+[
+  ["Ambient Cloud", {"Delay Time": 500, "Grain Size": 150, "Density": 30, "Spray": 60, "Feedback": 60, "Stereo Spread": 90, "Mix": 45}],
+  ["Octave Shimmer", {"Delay Time": 250, "Grain Size": 100, "Density": 25, "Pitch": 12, "Spray": 20, "Feedback": 50, "Mix": 35}],
+  ["Fifth Up Texture", {"Delay Time": 300, "Grain Size": 90, "Density": 20, "Pitch": 7, "Spray": 30, "Feedback": 45, "Mix": 35}],
+  ["Octave Down Rumble", {"Delay Time": 600, "Grain Size": 200, "Density": 15, "Pitch": -12, "Spray": 40, "Feedback": 40, "Mix": 30}],
+  ["Reverse Swells", {"Delay Time": 400, "Grain Size": 250, "Density": 12, "Spray": 20, "Reverse": 100, "Feedback": 45, "Mix": 40}],
+  ["Scattered Echoes", {"Delay Time": 350, "Grain Size": 40, "Density": 10, "Spray": 80, "Feedback": 30, "Stereo Spread": 100, "Mix": 35}],
+  ["Glitchy Grains", {"Delay Time": 120, "Grain Size": 20, "Density": 60, "Spray": 50, "Reverse": 30, "Feedback": 20, "Mix": 40}]
+]

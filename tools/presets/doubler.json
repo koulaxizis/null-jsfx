@@ -1,0 +1,7 @@
+[
+  ["Lead Line Width", {"Amount": 20}],
+  ["Vocal Double", {"Amount": 40}],
+  ["Backing Vocal Stack", {"Amount": 60}],
+  ["Wide Mono Guitar", {"Amount": 75}],
+  ["Synth Spread", {"Amount": 90}]
+]

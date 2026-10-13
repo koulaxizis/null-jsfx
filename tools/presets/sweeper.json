@@ -1,0 +1,7 @@
+[
+  ["Next Room Muffle", {"Amount": 20}],
+  ["Low Pass Breakdown", {"Amount": 30}],
+  ["Warm Roll Off", {"Amount": 40}],
+  ["Intro Thin Out", {"Amount": 70}],
+  ["High Pass Build", {"Amount": 85}]
+]

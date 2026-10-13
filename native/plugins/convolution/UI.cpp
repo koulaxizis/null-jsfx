@@ -83,7 +83,8 @@ protected:
         fill();
     }
 
-    // the base draws everything; then the IR FILE cell on top of its placeholder
+    // the base draws everything; then the IR FILE cell on top of its placeholder, and the preset
+    // list again over it
     void onNanoDisplay() override
     {
         NullKnobsUI::onNanoDisplay();
@@ -105,6 +106,7 @@ protected:
               fFileName.empty() ? "NONE" : fFileName.c_str(), true);
         drawArrow(cx - pw * 0.5f + 7.0f, ry + 44.0f, -1.0f);
         drawArrow(cx + pw * 0.5f - 7.0f, ry + 44.0f, 1.0f);
+        drawPresetMenu();
     }
 
     // previous (dir -1) or next (1) IR file, wrapping; the list is read again every time
@@ -162,6 +164,8 @@ protected:
 
     bool onMouse(const MouseEvent& ev) override
     {
+        if (presetMouse(ev))
+            return true;
         const float s = uiScale();
         const float x = float(ev.pos.getX()) / s, y = float(ev.pos.getY()) / s;
         if (ev.button == 1 && ev.press && inFileCell(x, y))
@@ -188,6 +192,8 @@ protected:
 
     bool onScroll(const ScrollEvent& ev) override
     {
+        if (presetOpen())
+            return true;
         const float s = uiScale();
         if (inFileCell(float(ev.pos.getX()) / s, float(ev.pos.getY()) / s))
         {

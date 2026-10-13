@@ -1,0 +1,9 @@
+[
+  ["Vocal Mud And Harsh", {"B1 Freq": 250, "B1 Gain": -4, "B1 Q": 1.5, "B1 Threshold": -24, "B3 Freq": 3000, "B3 Gain": -4, "B3 Q": 2, "B3 Threshold": -24, "Attack": 2, "Release": 120}],
+  ["Sibilance Tamer", {"B4 Freq": 7000, "B4 Gain": -6, "B4 Q": 2, "B4 Threshold": -30, "Attack": 0.5, "Release": 60}],
+  ["Bass Boom Control", {"B1 Freq": 80, "B1 Gain": -6, "B1 Q": 1.2, "B1 Threshold": -18, "Attack": 5, "Release": 150}],
+  ["Acoustic Body Control", {"B1 Freq": 180, "B1 Gain": -5, "B1 Q": 1.5, "B1 Threshold": -22, "B3 Freq": 2500, "B3 Gain": -2, "B3 Q": 1.5, "B3 Threshold": -26, "Attack": 3, "Release": 120}],
+  ["Piano Resonance Tamer", {"B2 Freq": 800, "B2 Gain": -3, "B2 Q": 3, "B2 Threshold": -24, "B3 Freq": 2000, "B3 Gain": -3, "B3 Q": 3, "B3 Threshold": -24, "Attack": 2, "Release": 150}],
+  ["Mix Bus Harshness", {"B3 Freq": 2500, "B3 Gain": -3, "B3 Q": 1, "B3 Threshold": -20, "B4 Freq": 7000, "B4 Gain": -2, "B4 Q": 1, "B4 Threshold": -24, "Attack": 1, "Release": 100}],
+  ["Drum Bus Punch Lift", {"B1 Freq": 60, "B1 Gain": 3, "B1 Q": 1, "B1 Threshold": -24, "B3 Freq": 3000, "B3 Gain": 2, "B3 Q": 1, "B3 Threshold": -24, "Attack": 3, "Release": 80}]
+]

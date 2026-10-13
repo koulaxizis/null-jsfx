@@ -41,6 +41,14 @@ Rack (any DAW), in the VST3 and CLAP folders
     chains above and a few that only the Rack can do (Multiband Distortion,
     Mid/Side EQ, Auto Filter and more). It installs with the other plugins.
 
+Presets
+    Every plugin has the same factory presets in all versions. JSFX: REAPER's
+    preset menu at the top of the FX window (they come from the .rpl file next
+    to each plugin; keep it there). GFX, VST3 and CLAP: the box at the top
+    right of the interface; the arrows step through the presets, a click on the
+    name opens the list. It shows CUSTOM once you change a control. Your own
+    presets are saved with your DAW's preset menu as usual.
+
 macOS (not officially supported): the builds are not code-signed. If macOS
 refuses to load them, run
     xattr -dr com.apple.quarantine <path to the .vst3/.clap>

@@ -1,0 +1,9 @@
+[
+  ["Vocal Vibrato", {"Rate": 5.5, "Depth": 1.5, "Mix": 100}],
+  ["Lead Synth Vibrato", {"Rate": 6, "Depth": 1, "Mix": 100}],
+  ["Tape Warble", {"Rate": 0.8, "Depth": 4, "Mix": 100}],
+  ["Slow Wow Drift", {"Rate": 0.3, "Depth": 10, "Mix": 100}],
+  ["Lo-Fi Wobble", {"Rate": 2.5, "Depth": 8, "Mix": 100}],
+  ["Chorus Detune", {"Rate": 1.2, "Depth": 6, "Mix": 50}],
+  ["Subtle Thickener", {"Rate": 0.5, "Depth": 3, "Mix": 30}]
+]

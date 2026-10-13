@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: MIT
  *
  * usage: compare <ref.jsfx> <other.clap|other.jsfx|module:id> [--tol 1e-5] [--values v1,v2,...]
+ *                [--rpl presets.jsfx.rpl]
  *
  * module:<id> (only in the module_compare build of this file) renders the Rack's module <id>
  * (plugins/rack/modules/<id>.hpp) instead of a plugin, set up the way the Rack drives it.
@@ -13,7 +14,9 @@
  * set before processing starts; the k-th slider the JSFX declares is the k-th CLAP parameter.
  * With one slider: min, max, default and the quartiles of its range (or --values). With more:
  * all defaults, then each slider at its min and at its max with the others at default, then
- * random settings (rounded to each slider's step). Every setting runs at 44.1 and 96 kHz.
+ * random settings (rounded to each slider's step). With --rpl: every preset of that REAPER
+ * preset library instead (the factory presets, tools/build_presets.py), also printing the output
+ * level against the input's. Every setting runs at 44.1 and 96 kHz.
  * Exit code 0 when every max diff <= tolerance.
  *
  * Sidechain plugins (a JSFX with more than two input pins, a CLAP with a second input port):
@@ -362,6 +365,75 @@ static bool renderModule(const std::string& id, double sr, const std::vector<dou
 
 // ------------------------------------------------------------------------------------------------
 
+// the presets of a REAPER preset library (.rpl) as written by tools/build_presets.py: per preset
+// its name and the value of every slider of sl ('-' in the library keeps the default)
+static bool readRpl(const char* path, const std::vector<Slider>& sl, std::vector<std::vector<double>>& sets,
+                    std::vector<std::string>& names)
+{
+    std::FILE* f = std::fopen(path, "rb");
+    if (!f) {
+        std::fprintf(stderr, "cannot open %s\n", path);
+        return false;
+    }
+    std::string text;
+    char buf[4096];
+    for (size_t n; (n = std::fread(buf, 1, sizeof(buf), f)) > 0;)
+        text.append(buf, n);
+    std::fclose(f);
+
+    auto decode = [](const std::string& b64) {
+        std::string out;
+        uint32_t acc = 0;
+        int bits = 0;
+        for (char c : b64) {
+            const char* tab = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+            const char* p = std::strchr(tab, c);
+            if (!p || !c)
+                continue;
+            acc = (acc << 6) | uint32_t(p - tab);
+            bits += 6;
+            if (bits >= 8) {
+                bits -= 8;
+                out.push_back(char((acc >> bits) & 0xff));
+            }
+        }
+        return out;
+    };
+
+    size_t pos = 0;
+    while ((pos = text.find("<PRESET `", pos)) != std::string::npos) {
+        const size_t q = text.find('`', pos + 9);
+        names.push_back(text.substr(pos + 9, q - pos - 9));
+        const size_t body = text.find('\n', q) + 1, end = text.find("\n  >", body);
+        std::string state = decode(text.substr(body, end - body));
+        state = state.substr(0, state.find('\0'));
+        std::vector<std::string> tok;
+        for (size_t a = 0; a < state.size() && state[a] != '"';) {
+            size_t b = state.find(' ', a);
+            if (b == std::string::npos)
+                b = state.size();
+            tok.push_back(state.substr(a, b - a));
+            a = b + 1;
+        }
+        std::vector<double> set;
+        for (const Slider& s : sl)
+            set.push_back(s.index < tok.size() && tok[s.index] != "-" ? std::atof(tok[s.index].c_str()) : s.def);
+        sets.push_back(set);
+        pos = end;
+    }
+    if (sets.empty())
+        std::fprintf(stderr, "no presets in %s\n", path);
+    return !sets.empty();
+}
+
+static double rmsDb(const std::vector<float>& l, const std::vector<float>& r)
+{
+    double e = 0.0;
+    for (size_t i = 0; i < l.size(); ++i)
+        e += double(l[i]) * l[i] + double(r[i]) * r[i];
+    return 10.0 * std::log10(std::max(e / double(2 * l.size()), 1e-20));
+}
+
 int main(int argc, char** argv)
 {
     if (argc < 3) {
@@ -372,9 +444,12 @@ int main(int argc, char** argv)
     const std::string other = argv[2];
     double tol = 1e-5;
     std::vector<double> values;
+    const char* rpl = nullptr;
     for (int i = 3; i + 1 < argc; i += 2) {
         if (!std::strcmp(argv[i], "--tol"))
             tol = std::atof(argv[i + 1]);
+        else if (!std::strcmp(argv[i], "--rpl"))
+            rpl = argv[i + 1];
         else if (!std::strcmp(argv[i], "--values")) {
             std::string v = argv[i + 1];
             for (size_t p = 0; p < v.size();) {
@@ -396,7 +471,10 @@ int main(int argc, char** argv)
     for (const Slider& s : sl)
         defs.push_back(s.def);
     char buf[160];
-    if (sl.size() == 1) {
+    if (rpl) {
+        if (!readRpl(rpl, sl, sets, labels))
+            return 1;
+    } else if (sl.size() == 1) {
         const Slider& r = sl[0];
         if (values.empty()) {
             values = { r.min, r.max, r.def, r.min + (r.max - r.min) * 0.25, r.min + (r.max - r.min) * 0.5,
@@ -469,7 +547,12 @@ int main(int argc, char** argv)
             size_t at = 0, ch = 0;
             const double d = maxDiff(a, b, &at, &ch);
             const bool pass = d <= tol && std::isfinite(d);
-            std::printf("%6.0f Hz  %-28s max |diff| = %.3g%s\n", sr, labels[i].c_str(), d,
+            std::string level;
+            if (rpl) {
+                std::snprintf(buf, sizeof(buf), "  level %+6.1f dB", rmsDb(a[0], a[numOuts > 1 ? 1 : 0]) - rmsDb(in.l, in.r));
+                level = buf;
+            }
+            std::printf("%6.0f Hz  %-28s max |diff| = %.3g%s%s\n", sr, labels[i].c_str(), d, level.c_str(),
                         pass ? "" : (" at sample " + std::to_string(at) + (numOuts > 2 ? " (output " + std::to_string(ch + 1) + ")" : "") + "  FAIL").c_str());
             if (!pass && sl.size() > 1) {
                 std::string vals;

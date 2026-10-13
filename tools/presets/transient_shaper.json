@@ -1,0 +1,9 @@
+[
+  ["Kick Punch", {"Attack": 6, "Sustain": -2}],
+  ["Snare Crack", {"Attack": 8, "Sustain": 0}],
+  ["Guitar Pick Attack", {"Attack": 4, "Sustain": -1}],
+  ["Tighten Drum Room", {"Attack": 0, "Sustain": -8}],
+  ["Fat Drum Sustain", {"Attack": 0, "Sustain": 4}],
+  ["Soften Harsh Attack", {"Attack": -6, "Sustain": 0}],
+  ["Parallel Drum Smack", {"Attack": 12, "Sustain": -4, "Mix": 50}]
+]

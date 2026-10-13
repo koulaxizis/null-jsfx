@@ -1,0 +1,10 @@
+[
+  ["Parallel Polish", {"Depth": 25, "Time": 120}],
+  ["Synth Detail", {"Depth": 60, "Downward": 80}],
+  ["Drum Loop Smash", {"Depth": 50, "Time": 60, "Upward": 70, "Output": -1}],
+  ["Vocal Thickener", {"Depth": 35, "Time": 150, "Upward": 80, "Downward": 60, "Low Gain": -2, "High Gain": 1}],
+  ["Upward Only Detail", {"Depth": 50, "Upward": 100, "Downward": 0, "Output": -2}],
+  ["Downward Only Tame", {"Depth": 60, "Upward": 0, "Downward": 100, "Output": -3}],
+  ["Bright Air Squash", {"Depth": 70, "Time": 80, "Low Gain": -2, "High Gain": 2, "Output": -1}],
+  ["Slow Pad Bloom", {"Depth": 50, "Time": 300, "Downward": 70}]
+]

@@ -449,6 +449,12 @@ def parse_sliders(path):
     """[(name, default, lo, hi, options or None)] for slider1..sliderN of a .jsfx (no gaps)."""
     sliders = []
     for line in path.read_text(encoding="utf-8").split("\n"):
+        f = re.match(r"slider(\d+):/[^:]*:[^:]*:(.*)", line)
+        if f:  # a file slider (e.g. Convolution's IR File): an index into a folder, 0 here
+            if int(f.group(1)) != len(sliders) + 1:
+                sys.exit(f"build_chains: {path.name}: slider{f.group(1)} is not consecutive")
+            sliders.append((f.group(2).lstrip("-").strip(), 0.0, 0.0, 0.0, None))
+            continue
         m = re.match(r"slider(\d+):([^<]*)<([^>]*)>(.*)", line)
         if not m:
             continue

@@ -1,0 +1,10 @@
+[
+  ["Gentle Master Glue", {"Low Threshold": -16, "Low Ratio": 2, "LowMid Threshold": -18, "LowMid Ratio": 1.5, "HighMid Threshold": -18, "HighMid Ratio": 1.5, "High Threshold": -20, "High Ratio": 1.5, "Attack": 20, "Release": 150, "Knee": 10, "Master Output": 1}],
+  ["Tight Low End", {"Crossover 1": 150, "Low Threshold": -20, "Low Ratio": 4, "Low Makeup": 2, "LowMid Mode": "Bypass", "HighMid Mode": "Bypass", "High Mode": "Bypass", "Attack": 10, "Release": 120, "Knee": 10}],
+  ["Low Mid Mud Control", {"Crossover 1": 200, "Crossover 2": 600, "LowMid Threshold": -24, "LowMid Ratio": 3, "Low Mode": "Bypass", "HighMid Mode": "Bypass", "High Mode": "Bypass", "Attack": 10, "Release": 120, "Knee": 10}],
+  ["Vocal Harshness Tamer", {"Crossover 2": 1500, "Crossover 3": 5000, "HighMid Threshold": -28, "HighMid Ratio": 4, "Low Mode": "Bypass", "LowMid Mode": "Bypass", "High Mode": "Bypass", "Attack": 2, "Release": 80, "Knee": 10}],
+  ["Vocal De-Esser Band", {"Crossover 3": 6000, "High Threshold": -30, "High Ratio": 6, "Low Mode": "Bypass", "LowMid Mode": "Bypass", "HighMid Mode": "Bypass", "Attack": 1, "Release": 60, "Knee": 5}],
+  ["Drum Bus Punch", {"Low Threshold": -22, "Low Ratio": 3, "Low Makeup": 2, "LowMid Threshold": -24, "LowMid Ratio": 2.5, "LowMid Makeup": 2, "HighMid Threshold": -24, "HighMid Ratio": 3, "HighMid Makeup": 2, "High Threshold": -26, "High Ratio": 2, "High Makeup": 1, "Attack": 30, "Release": 100, "Knee": 10}],
+  ["Bass Guitar Even", {"Crossover 1": 100, "Crossover 2": 700, "Low Threshold": -24, "Low Ratio": 4, "Low Makeup": 3, "LowMid Threshold": -24, "LowMid Ratio": 3, "LowMid Makeup": 2, "HighMid Mode": "Bypass", "High Mode": "Bypass", "Attack": 15, "Release": 150, "Knee": 10}],
+  ["Broadcast Dense", {"Low Threshold": -30, "Low Ratio": 4, "Low Makeup": 4, "LowMid Threshold": -30, "LowMid Ratio": 4, "LowMid Makeup": 4, "HighMid Threshold": -30, "HighMid Ratio": 4, "HighMid Makeup": 4, "High Threshold": -30, "High Ratio": 4, "High Makeup": 4, "Attack": 5, "Release": 200, "Knee": 20}]
+]

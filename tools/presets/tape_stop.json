@@ -1,0 +1,7 @@
+[
+  ["Stutter Spin", {"Stop Time": 100, "Start Time": 100}],
+  ["Quick Brake", {"Stop Time": 200, "Start Time": 300}],
+  ["Turntable Brake", {"Stop Time": 350, "Start Time": 150}],
+  ["Slow Wind Down", {"Stop Time": 2000, "Start Time": 1000}],
+  ["Long Dramatic Drop", {"Stop Time": 4000, "Start Time": 2000}]
+]
