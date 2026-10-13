@@ -1,0 +1,15 @@
+[workspace]
+resolver = "2"
+members = ["core", "app"]
+
+[workspace.package]
+version = "2.1.0"
+edition = "2021"
+license = "MIT"
+authors = ["Christos Koulaxizis"]
+
+[profile.release]
+opt-level = "s"
+lto = true
+codegen-units = 1
+strip = true

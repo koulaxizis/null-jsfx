@@ -1,0 +1,14 @@
+{
+  "name": "null-jsfx-hub",
+  "private": true,
+  "description": "NULL JSFX Hub build tools (the Tauri command line) and its window test (tests/ui_test.cjs)",
+  "license": "MIT",
+  "scripts": {
+    "tauri": "tauri",
+    "test": "node tests/ui_test.cjs"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "2.12.2",
+    "playwright": "1.56.1"
+  }
+}
