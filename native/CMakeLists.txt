@@ -22,6 +22,11 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
   set(CMAKE_BUILD_TYPE Release CACHE STRING "" FORCE)
 endif()
+# No fused multiply-add: the plugins must round like the JSFX (EEL2 never fuses). Apple Clang
+# fuses by default on arm64, which moved e.g. Grit's sample-hold step by one ulp.
+if(CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
+  add_compile_options(-ffp-contract=off)
+endif()
 
 option(NULL_UI    "Build the NanoVG GUI (needs X11/OpenGL dev headers on Linux)" ON)
 option(NULL_VST3  "Build VST3" ON)
