@@ -323,16 +323,50 @@ put() {  # put SRC DEST: copy a file or bundle and remember it for --uninstall
   installed=$((installed + 1))
 }
 
-J="$tmp/jsfx/null_jsfx" E="$REAPER_DIR/Effects/null_jsfx"
+# presets SRC DEST: REAPER user preset file (presets/js-*.ini). A new one is copied; an existing
+# one holds presets the user saved, so ours are added after them, skipping names already there.
+presets() {
+  [ -f "$1" ] || return 0
+  if [ ! -s "$2" ]; then
+    put "$1" "$2"
+    return 0
+  fi
+  awk -v countfile="$tmp/count" '
+    function flush() {
+      if (sec && name != "" && !(name in have)) {
+        printf "[Preset%d]\nData=%s\nLen=%s\nName=%s\n\n", n, data, len, name
+        have[name] = 1; n++
+      }
+      sec = 0
+    }
+    { sub(/\r$/, "") }
+    FNR == NR { if ($0 ~ /^Name=/) have[substr($0, 6)] = 1
+                if ($0 ~ /^NbPresets=/) n = substr($0, 11) + 0
+                next }
+    /^\[Preset[0-9]+\]$/ { flush(); sec = 1; data = ""; len = ""; name = ""; next }
+    sec && /^Data=/ { data = substr($0, 6) }
+    sec && /^Len=/ { len = substr($0, 5) }
+    sec && /^Name=/ { name = substr($0, 6) }
+    END { flush(); print n > countfile }
+  ' "$2" "$1" > "$tmp/added"
+  if [ -s "$tmp/added" ]; then
+    { sed "s/^NbPresets=.*/NbPresets=$(cat "$tmp/count")/" "$2"; echo; cat "$tmp/added"; } > "$tmp/merged"
+    cp "$tmp/merged" "$2"
+    merged=$((merged + 1))
+  fi
+}
+merged=0
+
+J="$tmp/jsfx/null_jsfx" E="$REAPER_DIR/Effects/null_jsfx" P="$REAPER_DIR/presets"
 V="$tmp/native/VST3/NULL JSFX" C="$tmp/native/CLAP/NULL JSFX"
 for stem in $SELECTED; do
   if has "$FORMATS" jsfx; then
     put "$J/$stem.jsfx" "$E/$stem.jsfx"
-    put "$J/$stem.jsfx.rpl" "$E/$stem.jsfx.rpl"
+    presets "$tmp/jsfx/presets/js-null_jsfx_$stem.jsfx.ini" "$P/js-null_jsfx_$stem.jsfx.ini"
   fi
   if has "$FORMATS" gfx; then
     put "$J/gfx/${stem}_gfx.jsfx" "$E/gfx/${stem}_gfx.jsfx"
-    put "$J/gfx/${stem}_gfx.jsfx.rpl" "$E/gfx/${stem}_gfx.jsfx.rpl"
+    presets "$tmp/jsfx/presets/js-null_jsfx_gfx_${stem}_gfx.jsfx.ini" "$P/js-null_jsfx_gfx_${stem}_gfx.jsfx.ini"
   fi
   if has "$FORMATS" vst3; then put "$V/null_jsfx_$stem.vst3" "$VST3_DIR/NULL JSFX/null_jsfx_$stem.vst3"; fi
   if has "$FORMATS" clap; then put "$C/null_jsfx_$stem.clap" "$CLAP_DIR/NULL JSFX/null_jsfx_$stem.clap"; fi
@@ -378,6 +412,7 @@ fi
 say ""
 if [ "$chains" -gt 0 ]; then say "Done: $installed files installed, $chains of them FX chains."
 else say "Done: $installed files installed."; fi
+if [ "$merged" -gt 0 ]; then say "Factory presets added next to your own in $merged preset files."; fi
 if [ "$needs_reaper" = 1 ]; then
   say "REAPER: open the FX browser and press F5 (or restart REAPER) to see them."
 fi

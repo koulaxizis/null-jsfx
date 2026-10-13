@@ -133,6 +133,63 @@ begin
   SupportLink.OnClick := @KofiClick;
 end;
 
+{ Adds the factory presets in Src (a REAPER user preset file, presets\js-*.ini) to Dst in REAPER's
+  presets folder. A missing Dst is simply copied; an existing one holds presets the user saved, so
+  ours go after them, and names that are already there are left alone. }
+procedure MergePresets(Src, Dst: String);
+var
+  N, M, I, J: Integer;
+  Name, Sec: String;
+  Found: Boolean;
+begin
+  if not FileExists(Dst) then
+  begin
+    ForceDirectories(ExtractFileDir(Dst));
+    FileCopy(Src, Dst, False);
+    exit;
+  end;
+  N := GetIniInt('General', 'NbPresets', 0, 0, 0, Dst);
+  M := GetIniInt('General', 'NbPresets', 0, 0, 0, Src);
+  for I := 0 to M - 1 do
+  begin
+    Sec := 'Preset' + IntToStr(I);
+    Name := GetIniString(Sec, 'Name', '', Src);
+    Found := False;
+    for J := 0 to N - 1 do
+      if GetIniString('Preset' + IntToStr(J), 'Name', '', Dst) = Name then
+        Found := True;
+    if not Found then
+    begin
+      SetIniString('Preset' + IntToStr(N), 'Data', GetIniString(Sec, 'Data', '', Src), Dst);
+      SetIniString('Preset' + IntToStr(N), 'Len', GetIniString(Sec, 'Len', '', Src), Dst);
+      SetIniString('Preset' + IntToStr(N), 'Name', Name, Dst);
+      N := N + 1;
+    end;
+  end;
+  SetIniInt('General', 'NbPresets', N, Dst);
+end;
+
+procedure CurStepChanged(CurStep: TSetupStep);
+var
+  Find: TFindRec;
+  Dir: String;
+begin
+  Dir := ExpandConstant('{app}\presets');
+  { only the preset files of the plugins picked this time }
+  if CurStep = ssInstall then
+    DelTree(Dir, True, True, True);
+  if (CurStep = ssPostInstall) and FindFirst(Dir + '\js-*.ini', Find) then
+  begin
+    try
+      repeat
+        MergePresets(Dir + '\' + Find.Name, ReaperDir('') + '\presets\' + Find.Name);
+      until not FindNext(Find);
+    finally
+      FindClose(Find);
+    end;
+  end;
+end;
+
 function ShouldSkipPage(PageID: Integer): Boolean;
 begin
   Result := (PageID = ReaperPage.ID) and not NeedsReaper;

@@ -107,6 +107,10 @@ jobs:
           out="NULL-JSFX-JSFX"
           mkdir -p "$out"
           cp -R DATA/Effects/null_jsfx "$out/"
+          # presets as REAPER user preset files (presets/js-*.ini) instead of the .rpl libraries,
+          # which REAPER only reads when imported by hand
+          find "$out/null_jsfx" -name '*.rpl' -delete
+          python3 tools/build_presets.py --ini "$out/presets"
           cp -R DATA/FXChains "$out/FXChains"
           mkdir -p "$out/fonts"
           cp native/common/fonts/* "$out/fonts/"
@@ -163,6 +167,10 @@ jobs:
         run: |
           $setup = "build-installer\NULL-JSFX-Installer-Windows.exe"
           $reaper = "$env:RUNNER_TEMP\REAPER"
+          # a preset the user saved on Tilt: it must stay, with ours added after it
+          $mine = "$reaper\presets\js-null_jsfx_tilt.jsfx.ini"
+          New-Item -ItemType Directory -Force "$reaper\presets" | Out-Null
+          Set-Content $mine "[General]`r`nNbPresets=1`r`n`r`n[Preset0]`r`nData=31202D2074657374E5`r`nLen=8`r`nName=Mine`r`n"
           $p = Start-Process $setup -Wait -PassThru -ArgumentList '/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART',
             '/COMPONENTS="fmt\jsfx,fmt\gfx,fmt\vst3,extra\chains,*fx\oneslider,fx\essentials\delay"', "/REAPERDIR=`"$reaper`"", "/LOG=`"$env:RUNNER_TEMP\setup.log`""
           if ($p.ExitCode -ne 0) { Get-Content "$env:RUNNER_TEMP\setup.log"; throw "setup exit code $($p.ExitCode)" }
@@ -178,6 +186,12 @@ jobs:
           if (-not (Test-Path "$fx\gfx\null_gfx.jsfx-inc")) { throw "null_gfx.jsfx-inc missing" }
           if (-not (Test-Path "$vst3\null_jsfx_delay.vst3\Contents")) { throw "VST3 bundle not copied whole" }
           if (Test-Path $clap) { throw "CLAP was not selected" }
+          $ini = (Get-ChildItem "$reaper\presets\js-null_jsfx_*.ini").Count
+          if ($ini -ne 44) { throw "expected 44 preset files (22 JSFX + 22 GFX), got $ini" }
+          $names = (Select-String -Path $mine -Pattern '^Name=(.*)$' | ForEach-Object { $_.Matches[0].Groups[1].Value })
+          $nb = (Select-String -Path $mine -Pattern '^NbPresets=(\d+)$').Matches[0].Groups[1].Value
+          "Tilt presets: $($names -join ', ') (NbPresets=$nb)"
+          if ($names[0] -ne 'Mine' -or $names[1] -ne 'Default' -or [int]$nb -ne $names.Count) { throw "presets not merged" }
           $u = Start-Process "$env:ProgramFiles\NULL JSFX\unins000.exe" -Wait -PassThru -ArgumentList '/VERYSILENT', '/SUPPRESSMSGBOXES'
           Start-Sleep -Seconds 3
           if ((Test-Path "$fx\tilt.jsfx") -or (Test-Path "$vst3\null_jsfx_tilt.vst3")) { throw "uninstall left plugins behind" }

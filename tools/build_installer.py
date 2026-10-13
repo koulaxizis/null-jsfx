@@ -11,7 +11,9 @@ the formats (JSFX, JSFX GFX, VST3, CLAP), the plugins (by group or one by one) a
 
 The plugin list (names, groups, which have GFX and VST3/CLAP) comes from the .jsfx headers and
 the packages themselves, and every FX chain lists the plugins it uses, so the installers add a
-chain only when its plugins are installed too. Nothing here is checked in: CI runs it per release.
+chain only when its plugins are installed too. The JSFX presets come as REAPER user preset files
+(presets/js-*.ini in the JSFX package, from tools/build_presets.py --ini); both installers add
+them to the user's own preset files instead of replacing them. Nothing here is checked in: CI runs it per release.
 
 Usage: build_installer.py --os Windows|Linux|macOS --jsfx <NULL-JSFX-JSFX dir>
                           --native <NULL-JSFX-VST3-CLAP-<OS> dir> --version <v> --out <dir>
@@ -32,6 +34,8 @@ GROUPS = [("One Slider", "oneslider", "one-slider"), ("Essentials", "essentials"
 CHAIN_JS = re.compile(r"^<JS null_jsfx/(?:gfx/)?(\w+?)(?:_gfx)?\.jsfx\b", re.M)
 
 sys.dont_write_bytecode = True
+sys.path.insert(0, str(ROOT / "tools"))
+from build_presets import ini_name  # noqa: E402
 
 
 def plugins(jsfx, native):
@@ -97,12 +101,13 @@ def windows(args, plugs, chain_list):
     G = E + "\\gfx"
     for stem, name, group, gfx, nat in plugs:
         c = f"fx\\{group_key(group, 1)}\\{stem}"
-        for ext in (".jsfx", ".jsfx.rpl"):
-            files.append(f"Source: {src(jsfx / 'null_jsfx' / (stem + ext))}; DestDir: {q(E)}; "
-                         f"Components: fmt\\jsfx and {c}; Flags: ignoreversion")
-            if gfx:
-                files.append(f"Source: {src(jsfx / 'null_jsfx/gfx' / (stem + '_gfx' + ext))}; DestDir: {q(G)}; "
-                             f"Components: fmt\\gfx and {c}; Flags: ignoreversion")
+        files.append(f"Source: {src(jsfx / 'null_jsfx' / (stem + '.jsfx'))}; DestDir: {q(E)}; "
+                     f"Components: fmt\\jsfx and {c}; Flags: ignoreversion")
+        files += preset_file(jsfx, f"null_jsfx/{stem}.jsfx", f"fmt\\jsfx and {c}")
+        if gfx:
+            files.append(f"Source: {src(jsfx / 'null_jsfx/gfx' / (stem + '_gfx.jsfx'))}; DestDir: {q(G)}; "
+                         f"Components: fmt\\gfx and {c}; Flags: ignoreversion")
+            files += preset_file(jsfx, f"null_jsfx/gfx/{stem}_gfx.jsfx", f"fmt\\gfx and {c}")
         if nat:
             files += native_files(native, f"null_jsfx_{stem}", f"({c})")
     files.append(f"Source: {src(jsfx / 'null_jsfx/gfx/null_gfx.jsfx-inc')}; DestDir: {q(G)}; "
@@ -127,6 +132,15 @@ def windows(args, plugs, chain_list):
     files.append(f"Source: {src(jsfx / 'INSTALL.txt')}; DestDir: \"{{app}}\"; Flags: ignoreversion")
     (out / "components.iss").write_text("\n".join(comp + [""] + files) + "\n", encoding="utf-8-sig")
     print(f"build_installer: {out / 'components.iss'}: {len(plugs)} plugins, {len(chain_list)} FX chains")
+
+
+def preset_file(jsfx, effect, when):
+    """The plugin's REAPER user preset file goes to {app}\\presets; the installer's code then adds
+    its presets to the one in REAPER's presets folder (see MergePresets in null_jsfx.iss)."""
+    path = jsfx / "presets" / ini_name(effect)
+    if not path.is_file():
+        sys.exit(f"build_installer: missing {path}")
+    return [f"Source: {q(path)}; DestDir: \"{{app}}\\presets\"; Components: {when}; Flags: ignoreversion"]
 
 
 def native_files(native, base, when):

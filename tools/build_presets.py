@@ -12,9 +12,14 @@ plugin also gets a first preset, "Default", with the default values. Written fro
   native/plugins/<plugin>/FactoryPresets.hpp       the list the VST3/CLAP interface offers
 File sliders (Convolution's IR File) are left out everywhere: a preset keeps the chosen file.
 
+With --ini <dir> it also writes the same presets as REAPER user preset files, <dir>/js-*.ini,
+which REAPER reads from the presets folder of its resource path without importing anything.
+The release packages and the installers carry those (not checked in).
+
 Usage: build_presets.py              write them
        build_presets.py --check      exit 1 if any of them is out of date (used by CI)
        build_presets.py --validate   only check tools/presets/*.json, write nothing
+       build_presets.py --ini <dir>  write the REAPER user preset files (js-*.ini) into <dir>
 """
 import base64
 import json
@@ -93,6 +98,39 @@ def rpl(desc, presets, files):
         lines += [f"    {b64[i:i + 128]}" for i in range(0, len(b64), 128)]
         lines.append("  >")
     return "\n".join(lines + [">", ""])
+
+
+def ini_name(effect):
+    """REAPER's user preset file for a JSFX, from its path under Effects (null_jsfx/tilt.jsfx)."""
+    return "js-" + re.sub(r"[/\\]", "_", effect) + ".ini"
+
+
+def ini(presets, files):
+    """REAPER user presets: per preset the JS state as text (64 slider values, '-' for unused or
+    kept, the name, quoted when it has a space), stored as hex with a checksum byte (sum of the
+    bytes) and its length without that byte."""
+    lines = ["[General]", f"NbPresets={len(presets)}", ""]
+    for i, (name, vals) in enumerate(presets):
+        cells = ["-" if j in files else fmt(v) for j, v in enumerate(vals)]
+        quoted = f'"{name}"' if " " in name else name
+        data = (" ".join(cells + ["-"] * (64 - len(vals))) + " " + quoted).encode()
+        lines += [f"[Preset{i}]", f"Data={(data + bytes([sum(data) % 256])).hex().upper()}",
+                  f"Len={len(data)}", f"Name={name}", ""]
+    return "\n".join(lines) + "\n"
+
+
+def write_ini(out):
+    out.mkdir(parents=True, exist_ok=True)
+    n = 0
+    for path in sorted(PLUGINS.glob("*.jsfx")):
+        stem, presets, skip = path.stem, load(path.stem), file_sliders(path.stem)
+        targets = [f"null_jsfx/{stem}.jsfx"]
+        if (PLUGINS / "gfx" / f"{stem}_gfx.jsfx").exists():
+            targets.append(f"null_jsfx/gfx/{stem}_gfx.jsfx")
+        for effect in targets:
+            (out / ini_name(effect)).write_bytes(ini(presets, skip).encode())
+            n += 1
+    print(f"build_presets: wrote {n} preset files to {out}")
 
 
 def cfloat(v):
@@ -204,6 +242,9 @@ def render():
 
 
 def main():
+    if "--ini" in sys.argv:
+        write_ini(Path(sys.argv[sys.argv.index("--ini") + 1]))
+        return
     files = render()
     if "--validate" in sys.argv:
         for p in sorted(SOURCE.glob("*.json")):

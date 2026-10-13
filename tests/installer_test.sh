@@ -36,7 +36,7 @@ run all --all --yes
 h="$work/all"
 expect "all: JSFX" "$(count "$h/$reaper/Effects/null_jsfx" '*.jsfx')" "$plugins"
 expect "all: GFX" "$(count "$h/$reaper/Effects/null_jsfx/gfx" '*_gfx.jsfx')" "$plugins"
-expect "all: presets" "$(count "$h/$reaper/Effects/null_jsfx" '*.jsfx.rpl')" "$plugins"
+expect "all: preset files (JSFX + GFX)" "$(count "$h/$reaper/presets" 'js-null_jsfx_*.ini')" "$((plugins * 2))"
 expect "all: VST3 (with Rack)" "$(count "$h/$vst3/NULL JSFX" '*.vst3')" "$((plugins + 1))"
 expect "all: CLAP (with Rack)" "$(count "$h/$clap/NULL JSFX" '*.clap')" "$((plugins + 1))"
 [ -f "$h/$reaper/Effects/null_jsfx/gfx/null_gfx.jsfx-inc" ] || fail "all: null_gfx.jsfx-inc missing"
@@ -53,6 +53,20 @@ HOME="$h" bash "$installer" --uninstall > /dev/null
 find "$h" -type f ! -path "$h/.cache/*" | sed "s|^$h/|left: |"
 left=$(find "$h" -type f ! -path "$h/.cache/*" | wc -l | tr -d ' ')
 expect "all: files left after --uninstall" "$left" 0
+
+# presets the user saved stay, ours are added after them, and they stay after --uninstall
+h="$work/merge" ini="js-null_jsfx_tilt.jsfx.ini"
+mkdir -p "$h/$reaper/presets"
+printf '[General]\nNbPresets=1\n\n[Preset0]\nData=31202D2074657374E5\nLen=8\nName=Mine\n' > "$h/$reaper/presets/$ini"
+run merge --formats jsfx --plugins tilt --extras none --yes
+names=$(grep '^Name=' "$h/$reaper/presets/$ini" | tr '\n' '|')
+case "$names" in "Name=Mine|Name=Default|"*) ;; *) fail "merge: got $names" ;; esac
+expect "merge: NbPresets" "$(sed -n 's/^NbPresets=//p' "$h/$reaper/presets/$ini")" "$(grep -c '^Name=' "$h/$reaper/presets/$ini")"
+run merge --formats jsfx --plugins tilt --extras none --yes
+expect "merge again: no duplicates" "$(grep '^Name=' "$h/$reaper/presets/$ini" | sort | uniq -d | wc -l | tr -d ' ')" 0
+HOME="$h" bash "$installer" --uninstall > /dev/null
+grep -q '^Name=Mine$' "$h/$reaper/presets/$ini" || fail "merge: --uninstall removed the user's presets"
+echo "ok   merge: the user's presets kept"
 
 # a subset: CLAP only, One Slider plus Delay; chains need JSFX or GFX so none come
 run some --formats clap --groups one-slider --plugins delay --extras chains,fonts --yes

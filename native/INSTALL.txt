@@ -55,11 +55,14 @@ Rack (any DAW), in the VST3 and CLAP folders
     Mid/Side EQ, Auto Filter and more). It installs with the other plugins.
 
 Presets
-    Every plugin has the same factory presets in all versions. JSFX: REAPER's
-    preset menu at the top of the FX window (they come from the .rpl file next
-    to each plugin; keep it there). GFX, VST3 and CLAP: the box at the top
-    right of the interface; the arrows step through the presets, a click on the
-    name opens the list. It shows CUSTOM once you change a control. Your own
+    Every plugin has the same factory presets in all versions. JSFX and GFX: copy the
+    files in the presets folder of NULL-JSFX-JSFX.zip (js-null_jsfx_*.ini) into
+    REAPER's presets folder (Options > Show REAPER resource path > presets),
+    then pick them from the preset menu at the top of the FX window. If a file
+    with the same name is already there, it holds presets you saved yourself:
+    keep it (the installers add ours to it). GFX, VST3 and CLAP: the box at the
+    top right of the interface; the arrows step through the presets, a click on
+    the name opens the list. It shows CUSTOM once you change a control. Your own
     presets are saved with your DAW's preset menu as usual.
 
 macOS (not officially supported): the builds are not code-signed. If macOS
