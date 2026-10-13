@@ -5,15 +5,25 @@ name: VST3 and CLAP
 #   NULL-JSFX-JSFX                 the JSFX (plain and GFX) and the tablet remote (Remote/),
 #                                  the same for every OS
 #   NULL-JSFX-VST3-CLAP-<OS>       the VST3 and CLAP versions for Windows, macOS or Linux
-# each with native/INSTALL.txt. When a GitHub release is published, they are attached to it as
-# zips with these names (the site's Download links use releases/latest/download/<name>.zip).
+# each with native/INSTALL.txt, and from those the installers where the user picks formats,
+# plugins and extras (tools/build_installer.py, installer/):
+#   NULL-JSFX-Installer-Windows.exe, NULL-JSFX-Installer-Linux.sh, NULL-JSFX-Installer-macOS.sh
+# each installed and checked here. When a GitHub release is published, they are attached to it,
+# the packages as zips with these names (the site's Download links use
+# releases/latest/download/<name>). Run the workflow by hand with a release tag to attach them
+# to a release that already exists.
 
 on:
   push:
-    paths: ["native/**", "DATA/**", "remote/**", "tests/**", ".github/workflows/native.yml"]
+    paths: ["native/**", "DATA/**", "remote/**", "tests/**", "installer/**", "tools/build_installer.py", ".github/workflows/native.yml"]
   pull_request:
-    paths: ["native/**", "DATA/**", "remote/**", "tests/**", ".github/workflows/native.yml"]
+    paths: ["native/**", "DATA/**", "remote/**", "tests/**", "installer/**", "tools/build_installer.py", ".github/workflows/native.yml"]
   workflow_dispatch:
+    inputs:
+      release_tag:
+        description: "Attach the packages and installers to this existing release (e.g. 2.1); empty = only build"
+        required: false
+        default: ""
   release:
     types: [published]
 
@@ -75,7 +85,7 @@ jobs:
           path: NULL-JSFX-VST3-CLAP-${{ matrix.name }}
 
       - name: Attach to the release
-        if: github.event_name == 'release'
+        if: github.event_name == 'release' || inputs.release_tag != ''
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -85,7 +95,7 @@ jobs:
           else
             zip -qry "$out.zip" "$out"
           fi
-          gh release upload "${{ github.event.release.tag_name }}" "$out.zip" --clobber
+          gh release upload "${{ github.event.release.tag_name || inputs.release_tag }}" "$out.zip" --clobber
 
   jsfx:
     runs-on: ubuntu-22.04
@@ -97,6 +107,10 @@ jobs:
           out="NULL-JSFX-JSFX"
           mkdir -p "$out"
           cp -R DATA/Effects/null_jsfx "$out/"
+          # presets as REAPER user preset files (presets/js-*.ini) instead of the .rpl libraries,
+          # which REAPER only reads when imported by hand
+          find "$out/null_jsfx" -name '*.rpl' -delete
+          python3 tools/build_presets.py --ini "$out/presets"
           cp -R DATA/FXChains "$out/FXChains"
           mkdir -p "$out/fonts"
           cp native/common/fonts/* "$out/fonts/"
@@ -110,9 +124,129 @@ jobs:
           path: NULL-JSFX-JSFX
 
       - name: Attach to the release
-        if: github.event_name == 'release'
+        if: github.event_name == 'release' || inputs.release_tag != ''
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           zip -qry NULL-JSFX-JSFX.zip NULL-JSFX-JSFX
-          gh release upload "${{ github.event.release.tag_name }}" NULL-JSFX-JSFX.zip --clobber
+          gh release upload "${{ github.event.release.tag_name || inputs.release_tag }}" NULL-JSFX-JSFX.zip --clobber
+
+  installer-windows:
+    needs: [build, jsfx]
+    runs-on: windows-2022
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: NULL-JSFX-JSFX
+          path: pkg/NULL-JSFX-JSFX
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: NULL-JSFX-VST3-CLAP-Windows
+          path: pkg/NULL-JSFX-VST3-CLAP-Windows
+
+      - name: Build
+        run: |
+          version="${{ github.event.release.tag_name || inputs.release_tag }}"
+          version="${version:-dev}"
+          python tools/build_installer.py --os Windows --jsfx pkg/NULL-JSFX-JSFX \
+            --native pkg/NULL-JSFX-VST3-CLAP-Windows --version "$version" --out build-installer
+          iscc="/c/Program Files (x86)/Inno Setup 6/ISCC.exe"
+          if [ ! -f "$iscc" ]; then
+            choco install innosetup -y --no-progress
+          fi
+          (cd build-installer && "$iscc" //Q "//DAppVersion=$version" null_jsfx.iss)
+
+      - name: Install, check and uninstall
+        shell: pwsh
+        run: |
+          $setup = "build-installer\NULL-JSFX-Installer-Windows.exe"
+          $reaper = "$env:RUNNER_TEMP\REAPER"
+          # a preset the user saved on Tilt: it must stay, with ours added after it
+          $mine = "$reaper\presets\js-null_jsfx_tilt_jsfx.ini"
+          New-Item -ItemType Directory -Force "$reaper\presets" | Out-Null
+          Set-Content $mine "[General]`r`nNbPresets=1`r`n`r`n[Preset0]`r`nData=31202D2074657374E5`r`nLen=8`r`nName=Mine`r`n"
+          $p = Start-Process $setup -Wait -PassThru -ArgumentList '/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART',
+            '/COMPONENTS="fmt\jsfx,fmt\gfx,fmt\vst3,extra\chains,*fx\oneslider,fx\essentials\delay"', "/REAPERDIR=`"$reaper`"", "/LOG=`"$env:RUNNER_TEMP\setup.log`""
+          if ($p.ExitCode -ne 0) { Get-Content "$env:RUNNER_TEMP\setup.log"; throw "setup exit code $($p.ExitCode)" }
+          $vst3 = "$env:CommonProgramFiles\VST3\NULL JSFX"
+          $clap = "$env:CommonProgramFiles\CLAP\NULL JSFX"
+          $fx = "$reaper\Effects\null_jsfx"
+          $jsfx = (Get-ChildItem "$fx\*.jsfx").Count
+          $gfx = (Get-ChildItem "$fx\gfx\*_gfx.jsfx").Count
+          $v = (Get-ChildItem "$vst3\*.vst3").Count
+          $chains = (Get-ChildItem "$reaper\FXChains\NULL JSFX\*.RfxChain" -ErrorAction SilentlyContinue).Count
+          "JSFX $jsfx, GFX $gfx, VST3 $v, chains $chains, CLAP present: $(Test-Path $clap)"
+          if ($jsfx -ne 22 -or $gfx -ne 22 -or $v -ne 22) { throw "expected 22 plugins (One Slider + Delay) in each format" }
+          if (-not (Test-Path "$fx\gfx\null_gfx.jsfx-inc")) { throw "null_gfx.jsfx-inc missing" }
+          if (-not (Test-Path "$vst3\null_jsfx_delay.vst3\Contents")) { throw "VST3 bundle not copied whole" }
+          if (Test-Path $clap) { throw "CLAP was not selected" }
+          $ini = (Get-ChildItem "$reaper\presets\js-null_jsfx_*.ini").Count
+          if ($ini -ne 44) { throw "expected 44 preset files (22 JSFX + 22 GFX), got $ini" }
+          $names = (Select-String -Path $mine -Pattern '^Name=(.*)$' | ForEach-Object { $_.Matches[0].Groups[1].Value })
+          $nb = (Select-String -Path $mine -Pattern '^NbPresets=(\d+)$').Matches[0].Groups[1].Value
+          "Tilt presets: $($names -join ', ') (NbPresets=$nb)"
+          if ($names[0] -ne 'Mine' -or $names[1] -ne 'Default' -or [int]$nb -ne $names.Count) { throw "presets not merged" }
+          $u = Start-Process "$env:ProgramFiles\NULL JSFX\unins000.exe" -Wait -PassThru -ArgumentList '/VERYSILENT', '/SUPPRESSMSGBOXES'
+          Start-Sleep -Seconds 3
+          if ((Test-Path "$fx\tilt.jsfx") -or (Test-Path "$vst3\null_jsfx_tilt.vst3")) { throw "uninstall left plugins behind" }
+          "installed and removed cleanly"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: NULL-JSFX-Installer-Windows
+          path: build-installer/NULL-JSFX-Installer-Windows.exe
+
+      - name: Attach to the release
+        if: github.event_name == 'release' || inputs.release_tag != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "${{ github.event.release.tag_name || inputs.release_tag }}" build-installer/NULL-JSFX-Installer-Windows.exe --clobber
+
+  installer-unix:
+    needs: [build, jsfx]
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { os: ubuntu-22.04, name: Linux }
+          - { os: macos-14, name: macOS }
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: NULL-JSFX-JSFX
+          path: pkg/NULL-JSFX-JSFX
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: NULL-JSFX-VST3-CLAP-${{ matrix.name }}
+          path: pkg/NULL-JSFX-VST3-CLAP-${{ matrix.name }}
+
+      - name: Build
+        run: |
+          version="${{ github.event.release.tag_name || inputs.release_tag }}"
+          python3 tools/build_installer.py --os ${{ matrix.name }} --jsfx pkg/NULL-JSFX-JSFX \
+            --native pkg/NULL-JSFX-VST3-CLAP-${{ matrix.name }} --version "${version:-dev}" --out build-installer
+
+      - name: Install, check and uninstall
+        # /bin/bash on macOS is bash 3.2, the one users have
+        run: /bin/bash tests/installer_test.sh build-installer/NULL-JSFX-Installer-${{ matrix.name }}.sh
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: NULL-JSFX-Installer-${{ matrix.name }}
+          path: build-installer/NULL-JSFX-Installer-${{ matrix.name }}.sh
+
+      - name: Attach to the release
+        if: github.event_name == 'release' || inputs.release_tag != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "${{ github.event.release.tag_name || inputs.release_tag }}" "build-installer/NULL-JSFX-Installer-${{ matrix.name }}.sh" --clobber

@@ -7,6 +7,19 @@ Every plugin comes in up to three versions that sound the same:
   JSFX GFX    REAPER only, with its own interface ("NULL <Name> GFX")
   VST3, CLAP  any DAW, with the same interface ("<Name>" by NULL JSFX)
 
+The easy way: the installers
+    NULL-JSFX-Installer-Windows.exe, NULL-JSFX-Installer-Linux.sh and
+    NULL-JSFX-Installer-macOS.sh (on the release page) let you pick the formats,
+    the plugins (all, a group such as One Slider, or single ones) and the extras,
+    and put everything in the folders below for you.
+      Windows: run the .exe (it asks for administrator rights, because VST3
+               and CLAP live in C:\Program Files\Common Files). Remove it from
+               Settings > Apps.
+      Linux, macOS: in a terminal, bash NULL-JSFX-Installer-Linux.sh (or
+               -macOS.sh). It installs for your user only; --help lists the
+               options, --uninstall removes what it installed.
+    Or copy the files by hand as described below.
+
 JSFX (REAPER), from NULL-JSFX-JSFX.zip
     Copy the folder null_jsfx into REAPER's Effects folder (Options >
     Show REAPER resource path > Effects), then rescan in the FX browser. Keep
@@ -42,11 +55,14 @@ Rack (any DAW), in the VST3 and CLAP folders
     Mid/Side EQ, Auto Filter and more). It installs with the other plugins.
 
 Presets
-    Every plugin has the same factory presets in all versions. JSFX: REAPER's
-    preset menu at the top of the FX window (they come from the .rpl file next
-    to each plugin; keep it there). GFX, VST3 and CLAP: the box at the top
-    right of the interface; the arrows step through the presets, a click on the
-    name opens the list. It shows CUSTOM once you change a control. Your own
+    Every plugin has the same factory presets in all versions. JSFX and GFX: copy the
+    files in the presets folder of NULL-JSFX-JSFX.zip (js-null_jsfx_*.ini) into
+    REAPER's presets folder (Options > Show REAPER resource path > presets),
+    then pick them from the preset menu at the top of the FX window. If a file
+    with the same name is already there, it holds presets you saved yourself:
+    keep it (the installers add ours to it). GFX, VST3 and CLAP: the box at the
+    top right of the interface; the arrows step through the presets, a click on
+    the name opens the list. It shows CUSTOM once you change a control. Your own
     presets are saved with your DAW's preset menu as usual.
 
 macOS (not officially supported): the builds are not code-signed. If macOS
