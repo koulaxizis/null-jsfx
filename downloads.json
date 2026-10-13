@@ -1,6 +1,6 @@
 {
   "display": 50,
-  "total": 52,
+  "total": 60,
   "offset": 0,
   "updated": "2026-10-13",
   "assets": {
@@ -10,18 +10,34 @@
     },
     "636150156": {
       "file": "2.0/NULL-JSFX-JSFX.zip",
-      "count": 0
+      "count": 2
     },
     "636162226": {
       "file": "2.0/NULL-JSFX-VST3-CLAP-Windows.zip",
-      "count": 0
+      "count": 2
     },
     "636190377": {
       "file": "2.0/NULL-JSFX-VST3-CLAP-macOS.zip",
-      "count": 0
+      "count": 2
     },
     "636195900": {
       "file": "2.0/NULL-JSFX-VST3-CLAP-Linux.zip",
+      "count": 2
+    },
+    "638417306": {
+      "file": "2.1/NULL-JSFX-JSFX.zip",
+      "count": 0
+    },
+    "638433279": {
+      "file": "2.1/NULL-JSFX-VST3-CLAP-Windows.zip",
+      "count": 0
+    },
+    "638476414": {
+      "file": "2.1/NULL-JSFX-VST3-CLAP-macOS.zip",
+      "count": 0
+    },
+    "638488962": {
+      "file": "2.1/NULL-JSFX-VST3-CLAP-Linux.zip",
       "count": 0
     }
   }
