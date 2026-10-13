@@ -1,0 +1,75 @@
+BYPASS 0 0
+<JS null_jsfx/gfx/phaser_gfx.jsfx ""
+  0.3 4 15 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+>
+FXID {748AD1D2-8D2D-5737-B42C-6185F267DC6B}
+<PROGRAMENV 0 0
+  PARAMBASE 0.040816
+  LFO 1
+  LFOWT 0.2 0
+  AUDIOCTL 0
+  AUDIOCTLWT 1 1
+  LFOSHAPE 4
+  LFOSYNC 0 0 0
+  LFOSPEED 0.124573 0
+>
+WAK 0 0
+BYPASS 0 0
+<JS null_jsfx/gfx/mid_side_matrix_gfx.jsfx ""
+  0 0 0 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+>
+FXID {07EB0B66-6388-5135-98FD-C39BF7E6CFA1}
+WAK 0 0
+BYPASS 0 0
+<JS null_jsfx/gfx/flanger_gfx.jsfx ""
+  0.2 3 30 15 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+>
+<JS_PINMAP
+  6AMAABwAAADoAwAAAgAAAAIAAAACAAAAAAAAAAIAAAAAAAAAHAAAAOgDAAACAAAAAgAAAAAAAAAAAAAAAgAAAAAAAAA=
+>
+FXID {338C69FE-452F-5EAA-969A-982DA328F72C}
+<PROGRAMENV 3 0
+  PARAMBASE 0.15
+  LFO 0
+  LFOWT 1 1
+  AUDIOCTL 0
+  AUDIOCTLWT 1 1
+  PLINK 1 0:-2 2 -0.15
+>
+<PROGRAMENV 1 0
+  PARAMBASE 0.105263
+  LFO 1
+  LFOWT 0.4 0
+  AUDIOCTL 0
+  AUDIOCTLWT 1 1
+  LFOSHAPE 5
+  LFOSYNC 0 0 0
+  LFOSPEED 0.124573 0
+>
+WAK 0 0
+BYPASS 0 0
+<JS null_jsfx/gfx/mid_side_matrix_gfx.jsfx ""
+  0 0 1 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+>
+FXID {BDA0DC9D-EEC2-54DB-A52D-E42A0436B9C8}
+WAK 0 0
+BYPASS 0 0
+<JS null_jsfx/gfx/chorus_gfx.jsfx ""
+  0.6 3 15 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+>
+FXID {00B9C8F5-2E06-5B66-89E9-A189DE26D17A}
+<PROGRAMENV 2 0
+  PARAMBASE 0.15
+  LFO 0
+  LFOWT 1 1
+  AUDIOCTL 0
+  AUDIOCTLWT 1 1
+  PLINK 1 0:-4 2 -0.15
+>
+WAK 0 0
+BYPASS 0 0
+<JS null_jsfx/gfx/auto_pan_gfx.jsfx ""
+  0.2 30 20 0 0 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+>
+FXID {BD3273DD-FE3A-5717-B098-4D6FC317383C}
+WAK 0 0

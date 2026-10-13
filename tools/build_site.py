@@ -31,7 +31,7 @@ CHAIN_TEXT = ROOT / "tools/site_chains.json"
 
 sys.dont_write_bytecode = True  # no __pycache__ in tools/
 sys.path.insert(0, str(ROOT / "tools"))
-from build_chains import CHAINS, RACK_PRESETS  # noqa: E402
+from build_chains import CHAINS, RACK_ONLY, RACK_PRESETS  # noqa: E402
 
 CATEGORIES = [
     ("One Slider", "one-slider", "One control, instant result. Turn it up until it sounds right."),
@@ -166,6 +166,8 @@ def chain_cards(plugins):
     # (name, [(plugin, tag)], what REAPER routing it uses) for the plain chains and the routing ones
     chains = [(c, [(stem, "") for stem, _ in fxs], []) for c, fxs in CHAINS]
     for c, _, slots, routes, _ in RACK_PRESETS:
+        if c in RACK_ONLY:
+            continue  # no REAPER chain
         uses = []
         if any(sl["band"] != "Full" or sl["channel"] != "Stereo" for sl in slots):
             uses.append("Pin routing")
@@ -206,7 +208,7 @@ def tabs_block(plugins):
     """Effects and FX Chains tabs: the effect categories and the chain cards."""
     return f"""            <div class="plugin-tabs" role="tablist">
                 <button type="button" class="plugin-tab active" role="tab" aria-selected="true" aria-controls="tab-effects" id="tab-btn-effects" data-tab="effects">Effects <span class="category-count">{len(plugins)}</span></button>
-                <button type="button" class="plugin-tab" role="tab" aria-selected="false" aria-controls="tab-chains" id="tab-btn-chains" data-tab="chains">FX Chains <span class="category-count">{len(CHAINS) + len(RACK_PRESETS)}</span></button>
+                <button type="button" class="plugin-tab" role="tab" aria-selected="false" aria-controls="tab-chains" id="tab-btn-chains" data-tab="chains">FX Chains <span class="category-count">{len(CHAINS) + len(RACK_PRESETS) - len(RACK_ONLY)}</span></button>
             </div>
             <div class="tab-panel" id="tab-effects" role="tabpanel" aria-labelledby="tab-btn-effects">
 {cards_block(plugins)}            </div>

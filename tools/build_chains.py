@@ -127,6 +127,12 @@ CHAINS = [
 # (Stereo, Mid, Side, Left, Right) and mix (%). A route is (source, slot number from 1, slider,
 # depth -1..1 of the slider's range); sources are macro1..macro8, lfo1, lfo2 and env. Globals are
 # the Rack's parameters by symbol (RackParams.hpp), enum ones by option label.
+# RACK_PRESETS that need what a REAPER chain cannot do (a slot's own mix, a macro on many
+# modules that REAPER would need a web of links for): Rack presets only, no .RfxChain
+RACK_ONLY = {"Beat Smasher", "Parallel Punch", "Bass Edge", "DJ Macro FX", "Octave Bloom",
+             "Dirty Reverb", "Glitch Band"}
+
+
 def slot(stem, values=None, band="Full", channel="Stereo", mix=100, on=True):
     return {"id": stem, "values": values or {}, "band": band, "channel": channel, "mix": mix, "on": on}
 
@@ -169,6 +175,273 @@ RACK_PRESETS = [
         slot("vinyl_age", {"Mix": 0}),
         slot("filter", {"Cutoff": 20000, "Resonance": 0.9, "Mode": "Low Pass"}),
     ], [("macro1", 1, "Grit Intensity", 0.6), ("macro1", 2, "Mix", 0.85), ("macro1", 3, "Cutoff", -0.45)], {}),
+    # ---- inspired by the chain logic of commercial all-in-one plugins (generic names; our own
+    # settings): research/multi-module-presets.md. The Rack's preset menu has three columns
+    # (Chain, Routing, Macro), so these use those: serial ones Chain, ones with bands, Mid/Side,
+    # an LFO or the envelope Routing, macro-only Rack presets Macro.
+    ("Six-Fader Vocal", "Chain", [
+        slot("parametric_eq", {"Low Freq": 120, "Low Type": "Low Shelf",
+                               "High Freq": 10000, "High Type": "High Shelf"}),
+        slot("dynamics", {"Mode": "Compressor", "Threshold": 0, "Ratio": 3, "Knee": 6, "Attack": 15,
+                          "Release": 120}),
+        slot("deesser", {"Target": 6500, "Reduction": -4}),
+        slot("doubler", {"Amount": 0}),
+        slot("delay", {"Tempo Sync": "ON", "Subdivision": "1/16", "Feedback": 20, "Mix": 0,
+                       "Low Cut": 200, "High Cut": 6000}),
+        slot("reverb", {"Room Size": 40, "Decay": 40, "Damping": 50, "Mix": 0}),
+    ], [("macro1", 1, "Low Gain", 0.25), ("macro2", 1, "High Gain", 0.25),
+        ("macro3", 2, "Threshold", -0.5), ("macro3", 2, "Makeup", 0.4),
+        ("macro4", 6, "Mix", 0.35), ("macro5", 5, "Mix", 0.35), ("macro6", 4, "Amount", 0.6)], {}),
+    ("Vocal Leveler", "Routing", [
+        slot("breath_control", {"Threshold": -45, "Range": -10}),
+        slot("auto_leveler", {"Target": -16, "Speed": 2000, "Max Boost": 6, "Max Cut": 6}),
+        slot("deesser", {"Target": 6500, "Reduction": -5}),
+        slot("resonance_suppressor", {"Depth": 4, "Low Freq": 1000, "High Freq": 5000}),
+        slot("dynamic_eq", {"B1 Freq": 300, "B1 Gain": -4, "B1 Q": 1.2, "B1 Threshold": -24}),
+        slot("brighter", {"Amount": 30}, band="High"),
+    ], [], {"xover_high": 6000}),
+    ("Harmony Stack", "Chain", [
+        slot("pitch_correction", {"Scale": "Major", "Retune Speed": 60, "Humanize": 30}),
+        slot("harmonizer", {"Voice 1 Interval": 4, "Voice 2 Interval": 7, "Voice 1 Level": -6,
+                            "Voice 2 Level": -8, "Mix": 25}),
+        slot("formant_shift", {"Formant Position": 54}),
+        slot("doubler", {"Amount": 20}),
+        slot("stereo_width", {"Width": 140, "Mix": 50}),
+        slot("reverb", {"Room Size": 60, "Decay": 55, "Damping": 40, "Mix": 20}),
+    ], [("macro1", 2, "Mix", 0.5), ("macro1", 4, "Amount", 0.5)], {}),
+    ("Robot Radio Voice", "Routing", [
+        slot("pitch_correction", {"Retune Speed": 0, "Humanize": 0}),
+        slot("robotizer", {"Pitch": 120, "Metallic": 30, "Mix": 70}),
+        slot("formant_filter", {"Vowel": "I", "Q": 8}),
+        slot("filter", {"Cutoff": 1000, "Resonance": 0.5, "Mode": "Band Pass"}),
+        slot("saturation", {"Drive": 60, "Mix": 100, "Mode": "Tube"}),
+        slot("spring_reverb", {"Mix": 15}),
+    ], [("lfo1", 3, "Vowel", 0.5)], {"lfo1_rate": 0.2, "lfo1_shape": "Sine"}),
+    ("VHS Tape", "Routing", [
+        slot("tape", {"Drive": 2, "Speed": "15 ips", "Head Bump": 2, "Wow": 0, "Flutter": 0, "Hiss": 0}),
+        slot("chorus_one", {"Chorus Amount": 0}),
+        slot("vibrato", {"Rate": 0.6, "Depth": 0, "Mix": 100}),
+        slot("grit", {"Grit Intensity": 0}),
+        slot("reverb", {"Room Size": 60, "Decay": 50, "Damping": 70, "Mix": 0}),
+        slot("filter", {"Cutoff": 10000, "Resonance": 0.7, "Mode": "Low Pass"}),
+    ], [("macro1", 1, "Drive", 0.5), ("macro2", 2, "Chorus Amount", 0.7), ("macro3", 5, "Mix", 0.4),
+        ("macro4", 3, "Depth", 0.15), ("macro5", 1, "Hiss", 0.3), ("macro6", 4, "Grit Intensity", 0.5),
+        ("lfo2", 3, "Rate", 0.03)], {"lfo2_rate": 0.3, "lfo2_shape": "Random"}),
+    ("Old Radio", "Routing", [
+        slot("mono_maker", {"Amount": 100}),
+        slot("filter", {"Cutoff": 300, "Resonance": 0.7, "Mode": "High Pass"}),
+        slot("filter", {"Cutoff": 4000, "Resonance": 0.7, "Mode": "Low Pass"}),
+        slot("saturation", {"Drive": 50, "Mix": 100, "Mode": "Tube"}),
+        slot("vinyl_age", {"Wow": 5, "Flutter": 5, "Crackle": 30, "Noise Level": 15, "Bit Depth": 16,
+                           "Sample Rate": 44100, "Lowpass Freq": 8000, "Mix": 60}),
+        slot("spring_reverb", {"Mix": 10}),
+    ], [("lfo2", 3, "Cutoff", 0.03)], {"lfo2_rate": 0.5, "lfo2_shape": "Random"}),
+    ("Sit-in-Mix", "Chain", [
+        slot("dynamics", {"Mode": "Compressor", "Threshold": -16, "Ratio": 2, "Knee": 6, "Attack": 30,
+                          "Release": 150, "Makeup": 2}),
+        slot("saturation", {"Drive": 15, "Mix": 50, "Mode": "Tape"}),
+        slot("tilt", {"Amount": 10}),
+        slot("channel_utility", {"Output Gain": 0}),
+    ], [("macro1", 1, "Threshold", -0.2), ("macro1", 2, "Drive", 0.3)], {}),
+    ("Mix Bus Finisher", "Routing", [
+        slot("filter", {"Cutoff": 25, "Resonance": 0.7, "Mode": "High Pass"}),
+        slot("dynamics", {"Mode": "Compressor", "Threshold": -18, "Ratio": 2, "Knee": 6, "Attack": 30,
+                          "Release": 200, "Makeup": 2}),
+        slot("multiband_compressor", {"Low Threshold": -16, "Low Ratio": 1.5, "LowMid Threshold": -16,
+                                      "LowMid Ratio": 1.5, "HighMid Threshold": -16, "HighMid Ratio": 1.5,
+                                      "High Threshold": -16, "High Ratio": 1.5, "Attack": 20,
+                                      "Release": 150, "Knee": 50}),
+        slot("parametric_eq", {"Low Freq": 60, "Low Gain": 1.5, "Low Type": "Low Shelf",
+                               "High Freq": 10000, "High Gain": 1.5, "High Type": "High Shelf"}),
+        slot("stereo_width", {"Width": 120}, band="High"),
+        slot("mono_maker", {"Amount": 100}, band="Low"),
+        slot("ott", {"Depth": 15}),
+        slot("limiter", {"Mode": "Limiter", "Threshold": -2, "Ceiling": -1}),
+    ], [("macro1", 2, "Threshold", -0.15), ("macro1", 7, "Depth", 0.4), ("macro2", 5, "Width", 0.2)],
+        {"xover_low": 120, "xover_high": 3000}),
+    ("Small Speaker Check", "Chain", [
+        slot("mono_maker", {"Amount": 100}),
+        slot("filter", {"Cutoff": 400, "Resonance": 0.7, "Mode": "High Pass"}),
+        slot("filter", {"Cutoff": 3500, "Resonance": 0.7, "Mode": "Low Pass"}),
+        slot("parametric_eq", {"Mid High Freq": 1000, "Mid High Gain": 4, "Mid High Q": 1}),
+        slot("saturation", {"Drive": 10, "Mix": 30, "Mode": "Tape"}),
+    ], [], {}),
+    ("Beat Smasher", "Macro", [
+        slot("parametric_eq", {"Low Freq": 80, "Low Type": "Low Shelf", "High Freq": 10000,
+                               "High Type": "High Shelf"}),
+        slot("exciter", {"Amount": 0}, band="High"),
+        slot("transient_shaper", {"Attack": 0, "Mix": 100}),
+        slot("sub_bloom", {"Source Frequency": 80, "Sub Level": 0, "Original Mix": 100}, band="Low"),
+        slot("grit", {"Grit Intensity": 0}),
+        slot("saturation", {"Drive": 10, "Mix": 100, "Mode": "Tape"}),
+        slot("dynamics", {"Mode": "Compressor", "Threshold": -12, "Ratio": 4, "Knee": 6, "Attack": 5,
+                          "Release": 80, "Makeup": 1}),
+        slot("limiter", {"Mode": "Limiter", "Ceiling": -1}),
+    ], [("macro1", 1, "Low Gain", 0.15), ("macro1", 1, "High Gain", 0.15), ("macro1", 2, "Amount", 0.5),
+        ("macro2", 3, "Attack", 0.2), ("macro2", 4, "Sub Level", 0.5), ("macro3", 5, "Grit Intensity", 0.7),
+        ("macro4", 6, "Drive", 0.5), ("macro4", 7, "Threshold", -0.25)],
+        {"xover_low": 120, "xover_high": 4000}),
+    ("Parallel Punch", "Macro", [
+        slot("transient_shaper", {"Attack": 2, "Mix": 100}),
+        slot("multiband_compressor", {"Low Threshold": -12, "Low Ratio": 2, "LowMid Threshold": -12,
+                                      "LowMid Ratio": 2, "HighMid Threshold": -12, "HighMid Ratio": 2,
+                                      "High Threshold": -12, "High Ratio": 2, "Attack": 20,
+                                      "Release": 120, "Knee": 50}),
+        slot("dynamics", {"Mode": "Compressor", "Threshold": -35, "Ratio": 10, "Knee": 0, "Attack": 1,
+                          "Release": 60, "Makeup": 12}, mix=35),
+        slot("saturation", {"Drive": 15, "Mix": 40, "Mode": "Tape"}),
+    ], [("macro1", 1, "Attack", 0.2), ("macro2", 2, "Low Threshold", -0.2),
+        ("macro2", 2, "LowMid Threshold", -0.2), ("macro2", 2, "HighMid Threshold", -0.2),
+        ("macro2", 2, "High Threshold", -0.2), ("macro3", 3, "Makeup", -0.3)], {}),
+    ("Kick Fertilizer", "Routing", [
+        slot("kick_shaper", {"Attack Shape": 3, "Thump": 3, "Click": 2, "Decay": 250}),
+        slot("sub_bloom", {"Source Frequency": 80, "Sub Level": 30, "Original Mix": 100}),
+        slot("noise_generator", {"Type": "White", "Level": -60}, band="High"),
+        slot("filter", {"Cutoff": 7000, "Resonance": 0.7, "Mode": "High Pass"}, band="High"),
+        slot("transient_shaper", {"Attack": 2, "Mix": 100}),
+        slot("limiter", {"Mode": "Limiter", "Ceiling": -1}),
+    ], [("env", 3, "Level", 0.6)], {"xover_high": 5000, "env_attack": 1, "env_release": 60, "env_gain": 12}),
+    ("Bass Edge", "Routing", [
+        slot("dynamics", {"Mode": "Compressor", "Threshold": -20, "Ratio": 4, "Knee": 6, "Attack": 10,
+                          "Release": 100, "Makeup": 3}),
+        slot("saturation", {"Drive": 30, "Mix": 100, "Mode": "Tube"}, band="Mid"),
+        slot("ring_mod", {"Carrier Freq": 200, "Mix": 10}, band="Mid"),
+        slot("formant_filter", {"Vowel": "O", "Q": 8}, band="Mid", mix=30),
+        slot("dynamic_eq", {"B1 Freq": 250, "B1 Gain": -4, "B1 Q": 1, "B1 Threshold": -24}),
+        slot("mono_maker", {"Amount": 100}, band="Low"),
+    ], [("macro1", 2, "Drive", 0.5), ("macro1", 3, "Mix", 0.3)], {"xover_low": 150, "xover_high": 4000}),
+    ("DJ Macro FX", "Macro", [
+        slot("dj_filter", {"Filter": 0}),
+        slot("flanger", {"Rate": 0.3, "Depth": 4, "Feedback": 50, "Mix": 0}),
+        slot("grit", {"Grit Intensity": 0}),
+        slot("gate", {"Threshold": -60, "Attack": 1, "Release": 50, "Range": -40}),
+        slot("delay", {"Tempo Sync": "ON", "Subdivision": "1/4", "Feedback": 40, "Mix": 0,
+                       "Mode": "Ping-Pong", "Low Cut": 200, "High Cut": 6000}),
+        slot("reverb", {"Room Size": 70, "Decay": 60, "Mix": 0}),
+        slot("limiter", {"Mode": "Limiter", "Ceiling": -1}),
+    ], [("macro1", 1, "Filter", 0.4), ("macro1", 2, "Mix", 0.4), ("macro1", 5, "Mix", 0.35),
+        ("macro1", 6, "Mix", 0.35), ("macro1", 4, "Threshold", 0.3), ("macro2", 3, "Grit Intensity", 0.7),
+        ("macro3", 1, "Filter", -0.4), ("lfo1", 4, "Threshold", 0.25)],
+        {"lfo1_sync": "1/8", "lfo1_shape": "Square"}),
+    ("Fragment Gate", "Routing", [
+        slot("trance_gate", {"Step Length": "1/16", "Gate Depth": 50}),
+        slot("filter", {"Cutoff": 600, "Resonance": 0.5, "Gain": 9, "Mode": "Band Pass"}),
+        slot("auto_pan", {"Depth": 50, "Mix": 50, "Tempo Sync": "ON", "Subdivision": "1/8"}),
+        slot("pitch_shifter", {"Semitones": 12, "Mix": 0}),
+        slot("delay", {"Tempo Sync": "ON", "Subdivision": "1/8", "Feedback": 30, "Mix": 25}),
+        slot("reverb", {"Room Size": 50, "Decay": 45, "Mix": 15}),
+    ], [("macro1", 1, "Gate Depth", 0.5), ("lfo1", 2, "Cutoff", 0.15), ("lfo2", 4, "Mix", 0.4)],
+        {"lfo1_sync": "1/16", "lfo1_shape": "Random", "lfo2_sync": "1/4", "lfo2_shape": "Random"}),
+    ("Stepped Autopan", "Routing", [
+        slot("pumper", {"Amount": 30}),
+        slot("auto_pan", {"Depth": 40, "Mix": 100, "Tempo Sync": "ON", "Subdivision": "1/8"}),
+        slot("filter", {"Cutoff": 500, "Resonance": 0.5, "Gain": 9, "Mode": "Band Pass"}),
+        slot("stereo_width", {"Width": 120}),
+    ], [("macro1", 1, "Amount", 0.5), ("macro1", 2, "Depth", 0.5), ("lfo1", 3, "Cutoff", 0.15)],
+        {"lfo1_sync": "1/2", "lfo1_shape": "Square"}),
+    ("Funk Rig", "Chain", [
+        slot("envelope_follower", {"Target": "Lowpass", "Sensitivity": 6, "Low Freq": 150,
+                                   "High Freq": 2000, "Resonance": 4, "Direction": "Up", "Mix": 100}),
+        slot("phaser", {"Rate": 0.5, "Stages": 6, "Mix": 0}),
+        slot("amp_simulator", {"Model": "Clean", "Gain": 6, "Bass": 5, "Mid": 6, "Treble": 6, "Output": -4}),
+        slot("cabinet_simulator", {"Cabinet": "2x12 Combo", "Mic Position": 30, "Low Cut": 80}),
+        slot("spring_reverb", {"Mix": 15}),
+    ], [("macro1", 1, "Mix", -0.8), ("macro1", 2, "Mix", 0.6)], {}),
+    ("Organ Rotary", "Chain", [
+        slot("saturation", {"Drive": 25, "Mix": 70, "Mode": "Tube"}),
+        slot("rotary_speaker", {"Speed": "Slow (Chorale)", "Acceleration": 100, "Drive": 20}),
+        slot("reverb", {"Room Size": 30, "Decay": 30, "Mix": 15}),
+    ], [("macro1", 2, "Speed", 0.5)], {}),
+    ("Octave Bloom", "Macro", [
+        slot("granular_delay", {"Delay Time": 250, "Pitch": 12, "Feedback": 30, "Mix": 0}),
+        slot("chorus", {"Rate": 0.8, "Depth": 3, "Mix": 0}),
+        slot("filter", {"Cutoff": 20, "Resonance": 0.7, "Mode": "High Pass"}),
+        slot("reverb", {"Room Size": 85, "Decay": 80, "Damping": 40, "Mix": 0}),
+    ], [("macro1", 1, "Mix", 0.35), ("macro1", 2, "Mix", 0.4), ("macro1", 3, "Cutoff", 0.33),
+        ("macro1", 4, "Mix", 0.4)], {}),
+    ("Dirty Reverb", "Routing", [
+        slot("reverb", {"Room Size": 80, "Decay": 70, "Damping": 30, "Mix": 100}),
+        slot("saturation", {"Drive": 40, "Mix": 100, "Mode": "Tube"}),
+        slot("filter", {"Cutoff": 6000, "Resonance": 0.7, "Mode": "Low Pass"}),
+        slot("dynamics", {"Mode": "Compressor", "Threshold": -24, "Ratio": 4, "Knee": 6, "Attack": 20,
+                          "Release": 200, "Makeup": 4}),
+    ], [("env", 2, "Drive", 0.4)], {"mix": 35, "env_attack": 5, "env_release": 200, "env_gain": 12}),
+    ("Broken Media", "Chain", [
+        slot("grit", {"Grit Intensity": 0}),
+        slot("glitch_fx", {"Rate": 2, "Stutter": "ON", "Reverse Chance": 20, "Reverse": "ON", "Mix": 0}),
+        slot("tape", {"Drive": 2, "Wow": 0, "Flutter": 0, "Hiss": 5}),
+        slot("vinyl_age", {"Crackle": 40, "Noise Level": 20, "Mix": 0}),
+        slot("dynamics", {"Mode": "Compressor", "Threshold": -18, "Ratio": 3, "Knee": 6, "Attack": 10,
+                          "Release": 120, "Makeup": 2}),
+    ], [("macro1", 1, "Grit Intensity", 0.6), ("macro1", 2, "Mix", 0.5), ("macro2", 3, "Wow", 0.5),
+        ("macro2", 3, "Flutter", 0.4), ("macro2", 4, "Mix", 0.7)], {}),
+    ("Mid/Side Drive", "Routing", [
+        slot("comb_filter", {"Frequency": 500, "Feedback": 0.2}),
+        slot("saturation", {"Drive": 35, "Mix": 100, "Mode": "Tube"}, channel="Mid"),
+        slot("crunch", {"Amount": 40}, channel="Side"),
+        slot("parametric_eq", {"Low Freq": 80, "Low Type": "High Pass", "Low Q": 0.7,
+                               "High Freq": 9000, "High Type": "Low Pass", "High Q": 0.7}),
+        slot("dynamics", {"Mode": "Compressor", "Threshold": -18, "Ratio": 3, "Knee": 6, "Attack": 10,
+                          "Release": 120, "Makeup": 2}),
+    ], [("lfo1", 1, "Frequency", 0.1), ("env", 3, "Amount", 0.3)],
+        {"lfo1_rate": 0.1, "lfo1_shape": "Triangle", "env_attack": 5, "env_release": 150, "env_gain": 12}),
+    ("Color Drive", "Routing", [
+        slot("parametric_eq", {"Mid High Freq": 1000, "Mid High Gain": 4, "Mid High Q": 0.8}),
+        slot("saturation", {"Drive": 25, "Mix": 100, "Mode": "Tube"}),
+        slot("crunch", {"Amount": 20}, band="High"),
+        slot("tilt", {"Amount": -10}),
+        slot("panner", {"Mode": "Haas", "Haas Delay": 5, "Output": -4}),
+    ], [("macro1", 1, "Mid High Freq", 1.0), ("macro2", 2, "Drive", 0.5)], {"xover_high": 3000}),
+    ("Tube Smash", "Chain", [
+        slot("dynamics", {"Mode": "Compressor", "Threshold": -24, "Ratio": 4, "Knee": 6, "Attack": 2,
+                          "Release": 80, "Makeup": 3}),
+        slot("saturation", {"Drive": 30, "Mix": 100, "Mode": "Tube"}),
+        slot("phatter", {"Amount": 0}),
+        slot("tilt", {"Amount": 0}),
+    ], [("macro1", 3, "Amount", 0.4), ("macro1", 4, "Amount", -0.1), ("macro2", 2, "Drive", 0.5)], {}),
+    ("Shift Mod", "Routing", [
+        slot("frequency_shifter", {"Shift": 5, "Mix": 50}, channel="Side"),
+        slot("ring_mod", {"Carrier Freq": 300, "Mix": 0}),
+        slot("filter", {"Cutoff": 700, "Resonance": 0.3, "Gain": 3, "Mode": "Band Pass"}),
+        slot("stereo_width", {"Width": 130}),
+    ], [("lfo1", 1, "Shift", 0.002), ("macro1", 2, "Mix", 0.6)], {"lfo1_rate": 0.1, "lfo1_shape": "Sine"}),
+    ("Triple Mod", "Routing", [
+        slot("phaser", {"Rate": 0.3, "Stages": 4, "Mix": 15}),
+        slot("flanger", {"Rate": 0.2, "Depth": 3, "Feedback": 30, "Mix": 15}, channel="Side"),
+        slot("chorus", {"Rate": 0.6, "Depth": 3, "Mix": 15}),
+        slot("auto_pan", {"Rate": 0.2, "Depth": 30, "Mix": 20}),
+    ], [("macro1", 1, "Mix", 0.45), ("macro1", 2, "Mix", 0.45), ("macro1", 3, "Mix", 0.45),
+        ("lfo1", 1, "Rate", 0.1), ("lfo2", 2, "Depth", 0.2)],
+        {"lfo1_rate": 0.05, "lfo1_shape": "Triangle", "lfo2_rate": 0.2, "lfo2_shape": "Random"}),
+    ("Glitch Band", "Macro", [
+        slot("glitch_fx", {"Rate": 4, "Stutter": "ON", "Reverse Chance": 30, "Reverse": "ON", "Mix": 0},
+             band="Mid"),
+        slot("reverser", {"Buffer Length": 1, "Mix": 0}, band="Mid"),
+        slot("tape_stop", {"Trigger": "Idle", "Stop Time": 500}, band="Mid"),
+        slot("volume_shaper", {"Shape": "Trance 1/8", "Rate": "1/8", "Depth": 0}),
+        slot("filter", {"Cutoff": 20000, "Resonance": 0.7, "Mode": "Low Pass"}, band="Mid"),
+    ], [("macro1", 1, "Mix", 0.8), ("macro1", 2, "Mix", 0.5), ("macro1", 4, "Depth", 0.6),
+        ("macro1", 5, "Cutoff", -0.3), ("macro2", 3, "Trigger", 1.0)], {"xover_low": 150, "xover_high": 16000}),
+    ("Distorted Throw", "Routing", [
+        slot("delay", {"Tempo Sync": "ON", "Subdivision": "1/4", "Feedback": 45, "Mix": 40,
+                       "Mode": "Ping-Pong", "Low Cut": 200, "High Cut": 8000, "Drive": 30}),
+        slot("saturation", {"Drive": 35, "Mix": 50, "Mode": "Tape"}),
+        slot("ladder_filter", {"Cutoff": 4000, "Resonance": 1.2, "Mode": "Lowpass"}),
+        slot("stereo_width", {"Width": 130}),
+    ], [("lfo1", 3, "Cutoff", 0.15)], {"lfo1_sync": "2/1", "lfo1_shape": "Sine"}),
+    ("Harshness Tamer", "Chain", [
+        slot("resonance_suppressor", {"Depth": 4, "Low Freq": 1000, "High Freq": 12000}),
+        slot("dynamic_eq", {"B3 Freq": 3500, "B3 Gain": -4, "B3 Q": 1, "B3 Threshold": -24}),
+        slot("deesser", {"Target": 8000, "Reduction": -4}),
+        slot("tilt", {"Amount": -5}),
+    ], [("macro1", 1, "Depth", 0.25), ("macro1", 2, "B3 Gain", -0.15)], {}),
+    ("Cosmic Space", "Routing", [
+        slot("comb_filter", {"Frequency": 400, "Feedback": 0.4, "Mode": "Feed-Backward", "Gain": 4}),
+        slot("granular_delay", {"Delay Time": 400, "Feedback": 40, "Spray": 50, "Mix": 30}),
+        slot("reverb", {"Room Size": 95, "Decay": 90, "Damping": 30, "Mix": 30}),
+        slot("spectral_freeze", {"Freeze": "Off", "Mix": 70}),
+        slot("filter", {"Cutoff": 150, "Resonance": 0.7, "Gain": 3, "Mode": "High Pass"}),
+    ], [("lfo1", 1, "Frequency", 0.05), ("macro1", 4, "Freeze", 1.0)], {"lfo1_rate": 0.05, "lfo1_shape": "Sine"}),
 ]
 
 
@@ -229,6 +502,8 @@ def render():
             files[OUT / folder / f"{chain}.RfxChain"] = "".join(
                 fx_block(chain, stem, values, kind == "gfx") for stem, values in fxs)
         for name, _, slots, routes, globs in RACK_PRESETS:
+            if name in RACK_ONLY:
+                continue
             files[OUT / folder / f"{name.replace('/', '-')}.RfxChain"] = reaper_preset(
                 name, slots, routes, globs, kind == "gfx")
     return files
@@ -278,10 +553,10 @@ BAND_CHANNEL = {"Low": 0, "Mid": 2, "High": 4}  # the first track channel of eac
 
 
 def reaper_preset(name, slots, routes, globs, gfx):
-    """A RACK_PRESETS entry as a REAPER chain. Band slots: Band Splitter (Split, 3 bands at the
-    Rack's crossovers), each band slot pinned to its band's channel pair (1/2 Low, 3/4 Mid, 5/6
-    High), Band Splitter (Merge). Mid/Side slots: Mid/Side Matrix (Encode), the slot reads and
-    writes only channel 1 (Mid) or 2 (Side), Mid/Side Matrix (Decode). Envelope routes become an
+    """A RACK_PRESETS entry as a REAPER chain. A run of band slots: Band Splitter (Split, 3 bands at
+    the Rack's crossovers), each slot pinned to its band's channel pair (1/2 Low, 3/4 Mid, 5/6
+    High), Band Splitter (Merge). A run of Mid/Side slots: Mid/Side Matrix (Encode), each slot
+    reads and writes only channel 1 (Mid) or 2 (Side), Mid/Side Matrix (Decode). Envelope routes become an
     audio control signal on the target slider, LFO routes a parameter LFO, and the routes of one
     macro become parameter links to the slider of the route with the largest depth, which then
     works as the macro."""
@@ -290,24 +565,25 @@ def reaper_preset(name, slots, routes, globs, gfx):
     g = {**defaults, **globs}
     for sl in slots:
         if sl["mix"] != 100 or not sl["on"] or sl["channel"] in ("Left", "Right"):
-            sys.exit(f"build_chains: {name}: no REAPER chain for slot mix, off slots or Left/Right")
-    banded = [sl["band"] != "Full" for sl in slots]
-    if any(banded) and not all(banded):
-        sys.exit(f"build_chains: {name}: a REAPER chain needs every slot on a band, or none")
-    ms = any(sl["channel"] in ("Mid", "Side") for sl in slots)
-    if ms and any(sl["channel"] == "Stereo" for sl in slots):
-        sys.exit(f"build_chains: {name}: a REAPER chain needs every slot on Mid or Side, or none")
-    pre, post, nch = [], [], 2
-    if all(banded) and slots:
-        nch = 6
-        pre = [("band_splitter", {"Mode": "Split", "Bands": 3, "Crossover 1": g["xover_low"],
-                                  "Crossover 2": g["xover_high"]})]
-        post = [("band_splitter", {**pre[0][1], "Mode": "Merge"})]
-    elif ms:
-        pre = [("mid_side_matrix", {"Mode": "Encode"})]
-        post = [("mid_side_matrix", {"Mode": "Decode"})]
-    off = len(pre)  # chain position of slot 1
-
+            sys.exit(f"build_chains: {name}: no REAPER chain for slot mix, off slots or Left/Right "
+                     "(add it to RACK_ONLY)")
+        if sl["band"] != "Full" and sl["channel"] != "Stereo":
+            sys.exit(f"build_chains: {name}: no REAPER chain for a slot on both a band and a channel")
+    # runs of slots that share a routing: band slots go between one Band Splitter Split/Merge
+    # pair, Mid/Side slots between one Mid/Side Matrix Encode/Decode pair
+    kind = ["band" if sl["band"] != "Full" else "ms" if sl["channel"] != "Stereo" else "" for sl in slots]
+    split = {"Mode": "Split", "Bands": 3, "Crossover 1": g["xover_low"], "Crossover 2": g["xover_high"]}
+    wrap = {"band": (("band_splitter", split), ("band_splitter", {**split, "Mode": "Merge"})),
+            "ms": (("mid_side_matrix", {"Mode": "Encode"}), ("mid_side_matrix", {"Mode": "Decode"}))}
+    items, pos = [], {}  # chain items (stem, values, slot index or None); chain position of each slot
+    for k, sl in enumerate(slots):
+        if kind[k] and (k == 0 or kind[k - 1] != kind[k]):
+            items.append((*wrap[kind[k]][0], None))
+        pos[k] = len(items)
+        items.append((sl["id"], sl["values"], k))
+        if kind[k] and (k == len(slots) - 1 or kind[k + 1] != kind[k]):
+            items.append((*wrap[kind[k]][1], None))
+    nch = 6 if "band" in kind else 2
     # modulation per slot: {slot index: [PROGRAMENV blocks]}
     mods = {}
     macros = {}
@@ -338,24 +614,24 @@ def reaper_preset(name, slots, routes, globs, gfx):
             mbase = normalized(slots[mk]["id"], mi, slider_value(name, slots[mk], mi))
             scale = depth / mdepth
             lines = ["LFO 0", "LFOWT 1 1", "AUDIOCTL 0", "AUDIOCTLWT 1 1",
-                     f"PLINK {fmt(round(scale, 6))} {off + mk}:{mk - k} {mi} {fmt(round(-scale * mbase, 6))}"]
+                     f"PLINK {fmt(round(scale, 6))} {pos[mk]}:{pos[mk] - pos[k]} {mi} {fmt(round(-scale * mbase, 6))}"]
         mods.setdefault(k, []).append(programenv(i, base, lines))
 
-    blocks = [fx_block(name, stem, values, gfx, seed=f"#{n}") for n, (stem, values) in enumerate(pre)]
-    for k, sl in enumerate(slots):
+    blocks = []
+    for n, (stem, values, k) in enumerate(items):
         pins = ""
-        nin, nout = pin_counts(sl["id"])
-        if sl["band"] in BAND_CHANNEL and BAND_CHANNEL[sl["band"]]:
-            c = BAND_CHANNEL[sl["band"]]
-            m = [1 << c, 1 << (c + 1)]
-            pins = pinmap(nch, m + [0] * (nin - 2), m + [0] * (nout - 2))
-        elif sl["channel"] in ("Mid", "Side"):
-            c = 1 if sl["channel"] == "Mid" else 2
-            pins = pinmap(nch, [c, c] + [0] * (nin - 2),
-                          ([c, 0] if c == 1 else [0, c]) + [0] * (nout - 2))
-        blocks.append(fx_block(name, sl["id"], sl["values"], gfx, seed=f"#{off + k}", pins=pins,
-                               mods="".join(mods.get(k, []))))
-    blocks += [fx_block(name, stem, values, gfx, seed=f"#{off + len(slots) + n}") for n, (stem, values) in enumerate(post)]
+        if k is not None:
+            sl = slots[k]
+            nin, nout = pin_counts(stem)
+            if BAND_CHANNEL.get(sl["band"]):
+                c = BAND_CHANNEL[sl["band"]]
+                m = [1 << c, 1 << (c + 1)]
+                pins = pinmap(nch, m + [0] * (nin - 2), m + [0] * (nout - 2))
+            elif sl["channel"] in ("Mid", "Side"):
+                c = 1 if sl["channel"] == "Mid" else 2
+                pins = pinmap(nch, [c, c] + [0] * (nin - 2), ([c, 0] if c == 1 else [0, c]) + [0] * (nout - 2))
+        blocks.append(fx_block(name, stem, values, gfx, seed=f"#{n}", pins=pins,
+                               mods="".join(mods.get(k, [])) if k is not None else ""))
     return (f"REQUIRED_CHANNELS {nch}\n" if nch > 2 else "") + "".join(blocks)
 
 
@@ -481,14 +757,14 @@ def main():
         if stale:
             sys.exit("build_chains: out of date (run tools/build_chains.py): "
                      + " ".join(str(p.relative_to(ROOT)) for p in stale))
-        print(f"build_chains: up to date for all {len(CHAINS) + len(RACK_PRESETS)} chains and the Rack presets")
+        print(f"build_chains: up to date for all {len(CHAINS) + len(RACK_PRESETS) - len(RACK_ONLY)} chains and the Rack presets")
         return
     for p in existing - set(files):  # chain files only (the glob never sees RackPresets.hpp)
         p.unlink()
     for p, text in files.items():
         p.parent.mkdir(parents=True, exist_ok=True)
         p.write_text(text, encoding="utf-8", newline="\n")
-    print(f"build_chains: wrote {len(files) - 1} files ({len(CHAINS) + len(RACK_PRESETS)} chains, plain and GFX) and RackPresets.hpp")
+    print(f"build_chains: wrote {len(files) - 1} files ({len(CHAINS) + len(RACK_PRESETS) - len(RACK_ONLY)} chains, plain and GFX) and RackPresets.hpp")
 
 
 if __name__ == "__main__":

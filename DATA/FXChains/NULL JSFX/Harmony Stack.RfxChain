@@ -1,0 +1,44 @@
+BYPASS 0 0
+<JS null_jsfx/pitch_correction.jsfx ""
+  0 1 60 30 0 50 100 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+>
+FXID {68BC82FC-DF22-5C6C-AB34-CEEB7E9BB5FF}
+WAK 0 0
+BYPASS 0 0
+<JS null_jsfx/harmonizer.jsfx ""
+  4 7 -6 -8 8 15 70 25 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+>
+FXID {AC4E0054-B552-54A9-B394-64A9278692D4}
+WAK 0 0
+BYPASS 0 0
+<JS null_jsfx/formant_shift.jsfx ""
+  54 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+>
+FXID {D85FA39A-927D-5186-8624-D4B371403DF0}
+WAK 0 0
+BYPASS 0 0
+<JS null_jsfx/doubler.jsfx ""
+  20 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+>
+FXID {DB2A703E-6C91-53E2-92E4-28EA535DDFA4}
+<PROGRAMENV 0 0
+  PARAMBASE 0.2
+  LFO 0
+  LFOWT 1 1
+  AUDIOCTL 0
+  AUDIOCTLWT 1 1
+  PLINK 1 1:-2 7 -0.25
+>
+WAK 0 0
+BYPASS 0 0
+<JS null_jsfx/stereo_width.jsfx ""
+  140 50 0 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+>
+FXID {3A6A45D2-6BB2-5556-B559-B44FF0A318DB}
+WAK 0 0
+BYPASS 0 0
+<JS null_jsfx/reverb.jsfx ""
+  60 55 40 20 0 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+>
+FXID {73AE4188-6D60-52B6-8398-D2318890A3B5}
+WAK 0 0

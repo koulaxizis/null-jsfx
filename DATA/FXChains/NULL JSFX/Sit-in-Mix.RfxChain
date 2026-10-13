@@ -1,0 +1,32 @@
+BYPASS 0 0
+<JS null_jsfx/dynamics.jsfx ""
+  0 -16 2 6 30 150 2 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+>
+FXID {DE50173D-4B07-5082-81D5-55A9E618FAAC}
+<PROGRAMENV 1 0
+  PARAMBASE 0.733333
+  LFO 0
+  LFOWT 1 1
+  AUDIOCTL 0
+  AUDIOCTLWT 1 1
+  PLINK -0.666667 1:1 0 0.1
+>
+WAK 0 0
+BYPASS 0 0
+<JS null_jsfx/saturation.jsfx ""
+  15 0 50 0 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+>
+FXID {611F199A-4B8F-5752-950D-169AD5F22ADA}
+WAK 0 0
+BYPASS 0 0
+<JS null_jsfx/tilt.jsfx ""
+  10 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+>
+FXID {5D76FD43-17B5-5F98-A1B1-84BCA046929E}
+WAK 0 0
+BYPASS 0 0
+<JS null_jsfx/channel_utility.jsfx ""
+  0 0 0 0 20 100 0 0 0 0 0 0 0 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+>
+FXID {0ECE351B-17E5-5B16-9602-D50568EB43B8}
+WAK 0 0

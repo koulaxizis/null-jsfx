@@ -1,0 +1,75 @@
+BYPASS 0 0
+<JS null_jsfx/phaser.jsfx ""
+  0.3 4 15 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+>
+FXID {19373303-1D3B-5D03-9452-B2D6E3E6D290}
+<PROGRAMENV 0 0
+  PARAMBASE 0.040816
+  LFO 1
+  LFOWT 0.2 0
+  AUDIOCTL 0
+  AUDIOCTLWT 1 1
+  LFOSHAPE 4
+  LFOSYNC 0 0 0
+  LFOSPEED 0.124573 0
+>
+WAK 0 0
+BYPASS 0 0
+<JS null_jsfx/mid_side_matrix.jsfx ""
+  0 0 0 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+>
+FXID {CEF81B7A-3CC4-5640-980F-C0844B5F73B6}
+WAK 0 0
+BYPASS 0 0
+<JS null_jsfx/flanger.jsfx ""
+  0.2 3 30 15 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+>
+<JS_PINMAP
+  6AMAABwAAADoAwAAAgAAAAIAAAACAAAAAAAAAAIAAAAAAAAAHAAAAOgDAAACAAAAAgAAAAAAAAAAAAAAAgAAAAAAAAA=
+>
+FXID {81F402F4-21B5-5D3B-A0E9-077845E9A8AD}
+<PROGRAMENV 3 0
+  PARAMBASE 0.15
+  LFO 0
+  LFOWT 1 1
+  AUDIOCTL 0
+  AUDIOCTLWT 1 1
+  PLINK 1 0:-2 2 -0.15
+>
+<PROGRAMENV 1 0
+  PARAMBASE 0.105263
+  LFO 1
+  LFOWT 0.4 0
+  AUDIOCTL 0
+  AUDIOCTLWT 1 1
+  LFOSHAPE 5
+  LFOSYNC 0 0 0
+  LFOSPEED 0.124573 0
+>
+WAK 0 0
+BYPASS 0 0
+<JS null_jsfx/mid_side_matrix.jsfx ""
+  0 0 1 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+>
+FXID {B9DCBFE8-2B21-59EF-ACC9-446C7C353331}
+WAK 0 0
+BYPASS 0 0
+<JS null_jsfx/chorus.jsfx ""
+  0.6 3 15 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+>
+FXID {93B4D9C3-C60C-5A3D-AD01-94D2EB47E9EE}
+<PROGRAMENV 2 0
+  PARAMBASE 0.15
+  LFO 0
+  LFOWT 1 1
+  AUDIOCTL 0
+  AUDIOCTLWT 1 1
+  PLINK 1 0:-4 2 -0.15
+>
+WAK 0 0
+BYPASS 0 0
+<JS null_jsfx/auto_pan.jsfx ""
+  0.2 30 20 0 0 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+>
+FXID {1722E9E4-6828-59DB-8187-839D87B0F751}
+WAK 0 0
