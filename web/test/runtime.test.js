@@ -40,14 +40,15 @@ test("Convolution reads an IR file handed over by the page", function () {
   var y = run(e, x, n), d = e.pdc();
   assert.strictEqual(d, 1024);
   assert.strictEqual(read, 4800, "the whole IR was read");
-  // NULL Convolution 2.0 (main) has a silent wet path in REAPER too (a local p hides the
-  // global P); the fix comes with the 2.0 GFX update. Once there, wet = input delayed.
+  // wet = input delayed, apart from the 20 Hz low cut and 20 kHz high cut that stay in the
+  // wet path (about 1% of white noise's energy)
   var peak = 0;
   for (var j = 0; j < n; j++) peak = Math.max(peak, Math.abs(y[0][j]));
-  if (peak > 0) {
+  assert.ok(peak > 0, "the wet path is not silent");
+  {
     var err = 0, ref = 0;
     for (var i = sr / 10; i < n; i++) { var t = x[0][i - d]; err += (y[0][i] - t) * (y[0][i] - t); ref += t * t; }
-    assert.ok(err / ref < 0.01, "wet = input delayed (relative error " + (err / ref) + ")");
+    assert.ok(err / ref < 0.03, "wet = input delayed (relative error " + (err / ref) + ")");
   }
 });
 
