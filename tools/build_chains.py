@@ -10,14 +10,19 @@ ranges and options are checked against the .jsfx headers, so a chain can never p
 slider that does not exist or hold a value out of range.
 
 The Rack (the VST3/CLAP host of the suite's modules) gets every chain as a preset with the same
-modules and settings, plus the RACK_PRESETS that use what REAPER chains cannot: per-slot bands
-and channels, LFOs, the envelope and macros. Slider names resolve to indices here, from the
+modules and settings, plus the RACK_PRESETS that use per-slot bands and channels, LFOs, the
+envelope and macros. Those become REAPER chains too, built with REAPER's own routing: bands
+through Band Splitter and pin mapping, Mid/Side through Mid/Side Matrix, the LFO and the
+envelope as parameter modulation, macros as parameter links (see reaper_preset). Slider names resolve to indices here, from the
 .jsfx headers (the modules keep the JSFX slider order), so RackPresets.hpp only holds numbers.
 
 Usage: build_chains.py           write the chains and RackPresets.hpp
        build_chains.py --check   exit 1 if any of them is out of date (used by CI)
 """
+import base64
+import math
 import re
+import struct
 import sys
 import uuid
 from pathlib import Path
@@ -193,7 +198,9 @@ def fmt(v):
     return str(int(v)) if v == int(v) else repr(round(v, 6))
 
 
-def fx_block(chain, stem, values, gfx):
+def fx_block(chain, stem, values, gfx, seed="", pins="", mods=""):
+    """One plugin of a chain: optional JS_PINMAP (pins) and PROGRAMENV blocks (mods) go in the
+    places REAPER writes them. seed tells apart two copies of one plugin in a chain."""
     sliders = parse_sliders(PLUGINS / f"{stem}.jsfx")
     vals = [s[1] for s in sliders]
     for key, v in values.items():
@@ -211,8 +218,8 @@ def fx_block(chain, stem, values, gfx):
         vals[i] = v
     line = " ".join([fmt(v) for v in vals] + ["-"] * (64 - len(vals)))
     path = f"null_jsfx/gfx/{stem}_gfx.jsfx" if gfx else f"null_jsfx/{stem}.jsfx"
-    guid = str(uuid.uuid5(uuid.NAMESPACE_URL, f"https://nulljsfx.tech/chains/{chain}/{path}")).upper()
-    return f'BYPASS 0 0\n<JS {path} ""\n  {line}\n>\nFXID {{{guid}}}\nWAK 0 0\n'
+    guid = str(uuid.uuid5(uuid.NAMESPACE_URL, f"https://nulljsfx.tech/chains/{chain}/{path}{seed}")).upper()
+    return f'BYPASS 0 0\n<JS {path} ""\n  {line}\n>\n{pins}FXID {{{guid}}}\n{mods}WAK 0 0\n'
 
 
 def render():
@@ -221,7 +228,135 @@ def render():
         for chain, fxs in CHAINS:
             files[OUT / folder / f"{chain}.RfxChain"] = "".join(
                 fx_block(chain, stem, values, kind == "gfx") for stem, values in fxs)
+        for name, _, slots, routes, globs in RACK_PRESETS:
+            files[OUT / folder / f"{name.replace('/', '-')}.RfxChain"] = reaper_preset(
+                name, slots, routes, globs, kind == "gfx")
     return files
+
+
+def pin_counts(stem):
+    text = (PLUGINS / f"{stem}.jsfx").read_text(encoding="utf-8")
+    return len(re.findall(r"^in_pin:", text, re.M)) or 2, len(re.findall(r"^out_pin:", text, re.M)) or 2
+
+
+def pinmap(nch, ins, outs):
+    """A JS_PINMAP block: for the input pins, then the output pins, the track channels each pin
+    is connected to, as a 64-bit mask per pin (1 = channel 1). Layout as REAPER writes it: 1000,
+    then per direction its byte size, 1000, the track channel count, the pin count and the masks."""
+    data = struct.pack("<I", 1000)
+    for masks in (ins, outs):
+        data += struct.pack("<4I", 12 + 8 * len(masks), 1000, nch, len(masks))
+        data += b"".join(struct.pack("<Q", m) for m in masks)
+    b64 = base64.b64encode(data).decode()
+    return "<JS_PINMAP\n" + "".join(f"  {b64[i:i + 128]}\n" for i in range(0, len(b64), 128)) + ">\n"
+
+
+def normalized(stem, index, v):
+    """A slider value as REAPER's 0..1 parameter value (log sliders on their log scale)."""
+    _, _, lo, hi, _ = parse_sliders(PLUGINS / f"{stem}.jsfx")[index]
+    if index in log_sliders(PLUGINS / f"{stem}.jsfx"):
+        return math.log(v / lo) / math.log(hi / lo)
+    return (v - lo) / (hi - lo)
+
+
+def slider_value(where, sl, index):
+    """The value a slot sets on slider `index`, or the slider's default."""
+    for i, v, _ in resolve(where, sl["id"], sl["values"]):
+        if i == index:
+            return v
+    return parse_sliders(PLUGINS / f"{sl['id']}.jsfx")[index][1]
+
+
+def programenv(index, base, lines):
+    """A parameter modulation block for slider `index` (from 0), around baseline `base` (0..1)."""
+    body = [f"PARAMBASE {fmt(round(base, 6))}"] + lines
+    return f"<PROGRAMENV {index} 0\n" + "".join(f"  {b}\n" for b in body) + ">\n"
+
+
+LFO_SHAPES = {"Sine": 0, "Square": 1, "Saw Down": 2, "Saw Up": 3, "Triangle": 4, "Random": 5}
+BAND_CHANNEL = {"Low": 0, "Mid": 2, "High": 4}  # the first track channel of each Band Splitter band
+
+
+def reaper_preset(name, slots, routes, globs, gfx):
+    """A RACK_PRESETS entry as a REAPER chain. Band slots: Band Splitter (Split, 3 bands at the
+    Rack's crossovers), each band slot pinned to its band's channel pair (1/2 Low, 3/4 Mid, 5/6
+    High), Band Splitter (Merge). Mid/Side slots: Mid/Side Matrix (Encode), the slot reads and
+    writes only channel 1 (Mid) or 2 (Side), Mid/Side Matrix (Decode). Envelope routes become an
+    audio control signal on the target slider, LFO routes a parameter LFO, and the routes of one
+    macro become parameter links to the slider of the route with the largest depth, which then
+    works as the macro."""
+    defaults = {"xover_low": 200, "xover_high": 2500, "env_attack": 10, "env_release": 150, "env_gain": 6,
+                "lfo1_shape": "Sine", "lfo2_shape": "Sine"}
+    g = {**defaults, **globs}
+    for sl in slots:
+        if sl["mix"] != 100 or not sl["on"] or sl["channel"] in ("Left", "Right"):
+            sys.exit(f"build_chains: {name}: no REAPER chain for slot mix, off slots or Left/Right")
+    banded = [sl["band"] != "Full" for sl in slots]
+    if any(banded) and not all(banded):
+        sys.exit(f"build_chains: {name}: a REAPER chain needs every slot on a band, or none")
+    ms = any(sl["channel"] in ("Mid", "Side") for sl in slots)
+    if ms and any(sl["channel"] == "Stereo" for sl in slots):
+        sys.exit(f"build_chains: {name}: a REAPER chain needs every slot on Mid or Side, or none")
+    pre, post, nch = [], [], 2
+    if all(banded) and slots:
+        nch = 6
+        pre = [("band_splitter", {"Mode": "Split", "Bands": 3, "Crossover 1": g["xover_low"],
+                                  "Crossover 2": g["xover_high"]})]
+        post = [("band_splitter", {**pre[0][1], "Mode": "Merge"})]
+    elif ms:
+        pre = [("mid_side_matrix", {"Mode": "Encode"})]
+        post = [("mid_side_matrix", {"Mode": "Decode"})]
+    off = len(pre)  # chain position of slot 1
+
+    # modulation per slot: {slot index: [PROGRAMENV blocks]}
+    mods = {}
+    macros = {}
+    for src, sn, key, depth in routes:
+        if src.startswith("macro"):
+            macros.setdefault(src, []).append((sn - 1, key, depth))
+    for src, sn, key, depth in routes:
+        k = sn - 1
+        stem = slots[k]["id"]
+        i = slider_index(name, stem, key)
+        base = normalized(stem, i, slider_value(name, slots[k], i))
+        sign = 1 if depth > 0 else -1
+        if src == "env":
+            hi = -g["env_gain"]
+            lines = ["LFO 0", "LFOWT 1 1", "AUDIOCTL 1", f"AUDIOCTLWT {fmt(abs(depth))} {sign}",
+                     "CHAN 0", "STEREO 1", f"RMS {fmt(g['env_attack'])} {fmt(g['env_release'])}",
+                     f"DBLO {fmt(max(-60, hi - 36))}", f"DBHI {fmt(hi)}", "X2 0.5", "Y2 0.5"]
+        elif src.startswith("lfo"):
+            # REAPER's own default speed: the Rack's rate or sync has no checked REAPER equivalent
+            lines = ["LFO 1", f"LFOWT {fmt(min(1, 2 * abs(depth)))} 0", "AUDIOCTL 0", "AUDIOCTLWT 1 1",
+                     f"LFOSHAPE {LFO_SHAPES[g[src + '_shape']]}", "LFOSYNC 0 0 0", "LFOSPEED 0.124573 0"]
+        else:
+            group = macros[src]
+            mk, mkey, mdepth = max(group, key=lambda r: abs(r[2]))
+            if (mk, mkey) == (k, key):
+                continue  # the macro itself: its own slider
+            mi = slider_index(name, slots[mk]["id"], mkey)
+            mbase = normalized(slots[mk]["id"], mi, slider_value(name, slots[mk], mi))
+            scale = depth / mdepth
+            lines = ["LFO 0", "LFOWT 1 1", "AUDIOCTL 0", "AUDIOCTLWT 1 1",
+                     f"PLINK {fmt(round(scale, 6))} {off + mk}:{mk - k} {mi} {fmt(round(-scale * mbase, 6))}"]
+        mods.setdefault(k, []).append(programenv(i, base, lines))
+
+    blocks = [fx_block(name, stem, values, gfx, seed=f"#{n}") for n, (stem, values) in enumerate(pre)]
+    for k, sl in enumerate(slots):
+        pins = ""
+        nin, nout = pin_counts(sl["id"])
+        if sl["band"] in BAND_CHANNEL and BAND_CHANNEL[sl["band"]]:
+            c = BAND_CHANNEL[sl["band"]]
+            m = [1 << c, 1 << (c + 1)]
+            pins = pinmap(nch, m + [0] * (nin - 2), m + [0] * (nout - 2))
+        elif sl["channel"] in ("Mid", "Side"):
+            c = 1 if sl["channel"] == "Mid" else 2
+            pins = pinmap(nch, [c, c] + [0] * (nin - 2),
+                          ([c, 0] if c == 1 else [0, c]) + [0] * (nout - 2))
+        blocks.append(fx_block(name, sl["id"], sl["values"], gfx, seed=f"#{off + k}", pins=pins,
+                               mods="".join(mods.get(k, []))))
+    blocks += [fx_block(name, stem, values, gfx, seed=f"#{off + len(slots) + n}") for n, (stem, values) in enumerate(post)]
+    return (f"REQUIRED_CHANNELS {nch}\n" if nch > 2 else "") + "".join(blocks)
 
 
 def resolve(where, stem, values):
@@ -346,14 +481,14 @@ def main():
         if stale:
             sys.exit("build_chains: out of date (run tools/build_chains.py): "
                      + " ".join(str(p.relative_to(ROOT)) for p in stale))
-        print(f"build_chains: up to date for all {len(CHAINS)} chains and the Rack presets")
+        print(f"build_chains: up to date for all {len(CHAINS) + len(RACK_PRESETS)} chains and the Rack presets")
         return
     for p in existing - set(files):  # chain files only (the glob never sees RackPresets.hpp)
         p.unlink()
     for p, text in files.items():
         p.parent.mkdir(parents=True, exist_ok=True)
         p.write_text(text, encoding="utf-8", newline="\n")
-    print(f"build_chains: wrote {len(files) - 1} files ({len(CHAINS)} chains, plain and GFX) and RackPresets.hpp")
+    print(f"build_chains: wrote {len(files) - 1} files ({len(CHAINS) + len(RACK_PRESETS)} chains, plain and GFX) and RackPresets.hpp")
 
 
 if __name__ == "__main__":

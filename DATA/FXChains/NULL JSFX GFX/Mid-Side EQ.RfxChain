@@ -1,0 +1,30 @@
+BYPASS 0 0
+<JS null_jsfx/gfx/mid_side_matrix_gfx.jsfx ""
+  0 0 0 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+>
+FXID {D6523FC5-042F-5EAA-8029-01B24BCB79B0}
+WAK 0 0
+BYPASS 0 0
+<JS null_jsfx/gfx/parametric_eq_gfx.jsfx ""
+  120 2 1 0 0 400 -2 1 2 0 2500 1.5 0.8 2 0 10000 0 1 2 0 15000 0 1 2 0 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+>
+<JS_PINMAP
+  6AMAABwAAADoAwAAAgAAAAIAAAABAAAAAAAAAAEAAAAAAAAAHAAAAOgDAAACAAAAAgAAAAEAAAAAAAAAAAAAAAAAAAA=
+>
+FXID {1D67DA51-473F-5F7C-A976-3164DBBA2556}
+WAK 0 0
+BYPASS 0 0
+<JS null_jsfx/gfx/parametric_eq_gfx.jsfx ""
+  150 0 0.7 4 0 548 0 1 2 0 2236 0 1 2 0 8000 3 1 1 0 15000 0 1 2 0 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+>
+<JS_PINMAP
+  6AMAABwAAADoAwAAAgAAAAIAAAACAAAAAAAAAAIAAAAAAAAAHAAAAOgDAAACAAAAAgAAAAAAAAAAAAAAAgAAAAAAAAA=
+>
+FXID {153101D5-B72D-51A1-8ADD-9E14B7754936}
+WAK 0 0
+BYPASS 0 0
+<JS null_jsfx/gfx/mid_side_matrix_gfx.jsfx ""
+  0 0 1 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+>
+FXID {D959F5BC-58AF-5EF6-B66C-2FC68F83CC6E}
+WAK 0 0

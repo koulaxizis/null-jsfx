@@ -2,7 +2,9 @@
 // For every chain given on the command line: load each <JS ...> plugin from DATA/Effects with the
 // slider values stored in the chain, run test audio through the plugins in series at 44.1 and
 // 96 kHz, and report errors (missing plugin, compile failure, NaN/Inf, blow-ups, silence) plus the
-// level change from input to output.
+// level change from input to output. Routing works as in REAPER: REQUIRED_CHANNELS sets the track
+// channels and a plugin's JS_PINMAP the channels each pin reads or writes (a channel no output pin
+// writes passes through). Parameter modulation (PROGRAMENV) stays at its baseline, the slider value.
 // Exit code is the number of chains that failed.
 #include "ysfx.h"
 #include <cmath>
@@ -13,19 +15,75 @@
 #include <string>
 #include <vector>
 
-struct Fx { std::string path; std::vector<std::string> values; };
+struct Fx {
+    std::string path;
+    std::vector<std::string> values;
+    std::vector<uint64_t> in_masks, out_masks;  // per pin, the track channels (bit 0 = channel 1)
+};
 
-static std::vector<Fx> parse_chain(const std::string &file, std::string &err)
+static std::string base64_decode(const std::string &s)
+{
+    static const std::string abc = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+    std::string out;
+    uint32_t acc = 0;
+    int bits = 0;
+    for (char c : s) {
+        size_t v = abc.find(c);
+        if (v == std::string::npos) continue;  // padding, spaces
+        acc = (acc << 6) | uint32_t(v);
+        bits += 6;
+        if (bits >= 8) { bits -= 8; out += char((acc >> bits) & 0xff); }
+    }
+    return out;
+}
+
+// JS_PINMAP as REAPER writes it: 1000, then for the inputs and the outputs: byte size, 1000,
+// track channels, pin count and a 64-bit channel mask per pin
+static bool parse_pinmap(const std::string &data, Fx &fx)
+{
+    auto u32 = [&](size_t at) { uint32_t v = 0; for (int i = 3; i >= 0; --i) v = (v << 8) | uint8_t(data[at + i]); return v; };
+    if (data.size() < 4 || u32(0) != 1000) return false;
+    size_t at = 4;
+    for (std::vector<uint64_t> *masks : {&fx.in_masks, &fx.out_masks}) {
+        if (at + 16 > data.size()) return false;
+        uint32_t pins = u32(at + 12);
+        at += 16;
+        if (at + 8 * size_t(pins) > data.size()) return false;
+        for (uint32_t p = 0; p < pins; ++p, at += 8) masks->push_back(uint64_t(u32(at)) | (uint64_t(u32(at + 4)) << 32));
+    }
+    return true;
+}
+
+static std::vector<Fx> parse_chain(const std::string &file, uint32_t &channels, std::string &err)
 {
     std::ifstream in(file);
     std::vector<Fx> fxs;
-    std::string line;
-    bool want_values = false;
+    std::string line, pinmap;
+    bool want_values = false, in_pinmap = false;
+    int skip = 0;  // depth inside a block that holds no plugin (PROGRAMENV)
+    channels = 2;
     while (std::getline(in, line)) {
         std::istringstream ls(line);
         std::string tok;
         ls >> tok;
-        if (tok == "<JS") {
+        if (in_pinmap) {
+            if (tok == ">") {
+                in_pinmap = false;
+                if (fxs.empty() || !parse_pinmap(base64_decode(pinmap), fxs.back())) err = "bad JS_PINMAP";
+            } else {
+                pinmap += tok;
+            }
+        } else if (skip) {
+            if (tok == ">") --skip;
+            else if (tok.size() > 1 && tok[0] == '<') ++skip;
+        } else if (tok == "REQUIRED_CHANNELS") {
+            ls >> channels;
+        } else if (tok == "<JS_PINMAP") {
+            in_pinmap = true;
+            pinmap.clear();
+        } else if (tok == "<PROGRAMENV") {
+            skip = 1;
+        } else if (tok == "<JS") {
             Fx fx;
             ls >> fx.path;
             fxs.push_back(fx);
@@ -48,7 +106,9 @@ static void silent(intptr_t, ysfx_log_level, const char *) {}
 static int test_chain(const std::string &file, const std::string &effects)
 {
     std::string err;
-    std::vector<Fx> chain = parse_chain(file, err);
+    uint32_t nch = 2;
+    std::vector<Fx> chain = parse_chain(file, nch, err);
+    if (nch < 2 || nch > 64) err = "REQUIRED_CHANNELS out of range";
     std::string name = file.substr(file.find_last_of('/') + 1);
     if (!err.empty()) { printf("FAIL %s\n    error: %s\n", name.c_str(), err.c_str()); return 1; }
     std::string report;
@@ -80,7 +140,8 @@ static int test_chain(const std::string &file, const std::string &effects)
         }
         // 4 s of music-like stereo: a chord with noise, gated on and off for the dynamics plugins
         const uint32_t block = 256;
-        std::vector<double> l(block), r(block), sc(block, 0.0);
+        std::vector<std::vector<double>> ch(nch, std::vector<double>(block));
+        std::vector<double> &l = ch[0], &r = ch[1];
         ysfx_time_info_t ti = {120.0, ysfx_playback_playing, 0, 0, {4, 4}};
         std::mt19937 rng(7);
         std::uniform_real_distribution<double> noise(-1, 1);
@@ -89,6 +150,7 @@ static int test_chain(const std::string &file, const std::string &effects)
         uint64_t n = 0, total = (uint64_t)(sr * 4);
         while (n < total) {
             double inblk = 0;
+            for (uint32_t c = 2; c < nch; ++c) std::fill(ch[c].begin(), ch[c].end(), 0.0);
             for (uint32_t i = 0; i < block; ++i) {
                 double t = (n + i) / sr, env = std::fmod(t, 0.5) < 0.3 ? 1.0 : 0.15;
                 l[i] = 0.2 * env * (std::sin(2 * M_PI * 110 * t) + 0.6 * std::sin(2 * M_PI * 277 * t) + 0.2 * noise(rng));
@@ -98,14 +160,34 @@ static int test_chain(const std::string &file, const std::string &effects)
             if (n > sr) in2 += inblk;  // skip the first second (latency, settling)
             ti.time_position = n / sr;
             ti.beat_position = ti.time_position * 2;
-            for (ysfx_t *fx : fxs) {
-                std::vector<double> ol(block), orr(block);
-                const double *ins[4] = {l.data(), r.data(), sc.data(), sc.data()};
-                double *outs[2] = {ol.data(), orr.data()};
+            for (size_t k = 0; k < fxs.size(); ++k) {
+                ysfx_t *fx = fxs[k];
+                const Fx &f = chain[k];
+                uint32_t nin = ysfx_get_num_inputs(fx), nout = ysfx_get_num_outputs(fx);
+                // pins without a pin map read and write the track channel of the same number
+                auto in_mask = [&](uint32_t p) { return p < f.in_masks.size() ? f.in_masks[p] : (p < nch ? 1ull << p : 0); };
+                auto out_mask = [&](uint32_t p) { return p < f.out_masks.size() ? f.out_masks[p] : (p < nch ? 1ull << p : 0); };
+                std::vector<std::vector<double>> pin_in(nin, std::vector<double>(block, 0.0)), pin_out(nout, std::vector<double>(block));
+                std::vector<const double *> ins(nin);
+                std::vector<double *> outs(nout);
+                for (uint32_t p = 0; p < nin; ++p) {
+                    for (uint32_t c = 0; c < nch; ++c)
+                        if (in_mask(p) >> c & 1)
+                            for (uint32_t i = 0; i < block; ++i) pin_in[p][i] += ch[c][i];
+                    ins[p] = pin_in[p].data();
+                }
+                for (uint32_t p = 0; p < nout; ++p) outs[p] = pin_out[p].data();
                 ysfx_set_time_info(fx, &ti);
-                ysfx_process_double(fx, ins, outs, ysfx_get_num_inputs(fx) > 2 ? 4 : 2, 2, block);
-                l.swap(ol);
-                r.swap(orr);
+                ysfx_process_double(fx, ins.data(), outs.data(), nin, nout, block);
+                for (uint32_t c = 0; c < nch; ++c) {
+                    bool written = false;
+                    for (uint32_t p = 0; p < nout; ++p) {
+                        if (!(out_mask(p) >> c & 1)) continue;
+                        if (!written) std::fill(ch[c].begin(), ch[c].end(), 0.0);
+                        written = true;
+                        for (uint32_t i = 0; i < block; ++i) ch[c][i] += pin_out[p][i];
+                    }
+                }
             }
             for (uint32_t i = 0; i < block; ++i) {
                 if (!std::isfinite(l[i]) || !std::isfinite(r[i])) { nonfinite = true; continue; }

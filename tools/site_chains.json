@@ -11,5 +11,13 @@
   "Bass Amp": "Bass amp, 1x15 cabinet and steady compression for DI bass.",
   "Vocal Chain": "Gate, breath control, de-essing, compression, EQ, doubling and reverb in the usual order.",
   "Dialogue Cleanup": "Removes hum and noise, tames sibilance, evens out the level and catches peaks.",
-  "Mastering Chain": "Clean-up EQ, multiband compression, width, a maximizer and a loudness meter."
+  "Mastering Chain": "Clean-up EQ, multiband compression, width, a maximizer and a loudness meter.",
+  "Multiband Distortion": "Three saturation stages on the lows, mids and highs, each with its own character.",
+  "Multiband Width": "Mono lows, a wider midrange and the widest highs, split by Band Splitter.",
+  "Dynamic Width": "The stereo image opens up as the music gets louder.",
+  "Mid/Side EQ": "One EQ for the center and another for the sides.",
+  "Auto Filter": "A resonant low-pass swept by an LFO.",
+  "Ducked Delay": "A ping-pong delay that steps back while you play and blooms in the gaps.",
+  "Build-Up": "One control raises the riser, the filter sweep and the pumping together for an EDM build-up.",
+  "Lo-Fi Fader": "One control fades in grit and worn vinyl while closing the low-pass."
 }

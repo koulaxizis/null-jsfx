@@ -1150,6 +1150,14 @@ html, body {
     padding: 3px 8px;
 }
 
+.chain-step small {
+    font-size: 9px;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-left: 3px;
+}
+
 button.chain-step {
     cursor: pointer;
 }

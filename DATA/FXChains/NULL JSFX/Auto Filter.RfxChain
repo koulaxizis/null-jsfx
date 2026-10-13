@@ -1,0 +1,16 @@
+BYPASS 0 0
+<JS null_jsfx/filter.jsfx ""
+  1200 3 0 0 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+>
+FXID {1BBD1F24-EF90-5BF4-9772-718B55977587}
+<PROGRAMENV 0 0
+  PARAMBASE 0.592717
+  LFO 1
+  LFOWT 0.6 0
+  AUDIOCTL 0
+  AUDIOCTLWT 1 1
+  LFOSHAPE 0
+  LFOSYNC 0 0 0
+  LFOSPEED 0.124573 0
+>
+WAK 0 0
