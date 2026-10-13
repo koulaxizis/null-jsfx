@@ -1066,6 +1066,115 @@ html, body {
     box-shadow: 0 6px 16px var(--shadow);
 }
 
+/* Effects / FX Chains tabs */
+.plugin-tabs {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin-bottom: 28px;
+}
+
+.plugin-tab {
+    font: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 8px 18px;
+    cursor: pointer;
+    transition: color 0.2s, border-color 0.2s, background-color 0.2s;
+}
+
+.plugin-tab:hover {
+    color: var(--text);
+}
+
+.plugin-tab.active {
+    color: var(--text);
+    background: var(--card-bg);
+    border-color: var(--muted);
+}
+
+.plugin-tab .category-count {
+    margin-left: 4px;
+}
+
+.chains-desc {
+    text-align: center;
+    max-width: 640px;
+    margin: 0 auto 24px;
+}
+
+.chain-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 20px;
+}
+
+.chain-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 20px 18px;
+    display: flex;
+    flex-direction: column;
+}
+
+.chain-card h3 {
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    color: var(--text);
+    margin-bottom: 4px;
+}
+
+.chain-steps {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    margin-top: 14px;
+}
+
+.chain-step {
+    font: inherit;
+    font-size: 11px;
+    color: var(--text);
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 3px 8px;
+}
+
+button.chain-step {
+    cursor: pointer;
+}
+
+button.chain-step:hover {
+    border-color: var(--muted);
+}
+
+.chain-arrow {
+    font-size: 11px;
+    color: var(--muted);
+}
+
+.chain-card .plugin-formats {
+    justify-content: flex-start;
+    margin-top: auto;
+    padding-top: 14px;
+}
+
+@media (max-width: 768px) {
+    .chain-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
 /* Responsive */
 @media (max-width: 768px) {
     .plugin-grid {

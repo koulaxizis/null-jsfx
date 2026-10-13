@@ -1,0 +1,15 @@
+{
+  "Tube EQ": "A broad musical EQ curve into warm tube saturation, like a vintage tube equalizer.",
+  "Reverse Reverb": "A big reverb played backwards, so sounds swell in before they hit.",
+  "Lo-Fi": "Grit, worn vinyl and a dark low-pass for a dusty, sampled sound.",
+  "Cassette": "Tape saturation, wow, flutter and hiss with a gentle top-end roll-off.",
+  "Lo-Fi Echo": "A filtered, driven delay into grit, like an old tape echo.",
+  "Bass Enhancer": "Adds a sub octave and warmth, then keeps the low end mono.",
+  "Drum Bus": "Punchier transients, tape warmth and glue compression for a drum group.",
+  "Ensemble": "Chorus, doubling and spread for a wide, lush stereo image.",
+  "Guitar Amp": "Gate, crunchy amp, 4x12 cabinet and a touch of room for DI guitar.",
+  "Bass Amp": "Bass amp, 1x15 cabinet and steady compression for DI bass.",
+  "Vocal Chain": "Gate, breath control, de-essing, compression, EQ, doubling and reverb in the usual order.",
+  "Dialogue Cleanup": "Removes hum and noise, tames sibilance, evens out the level and catches peaks.",
+  "Mastering Chain": "Clean-up EQ, multiband compression, width, a maximizer and a loudness meter."
+}
