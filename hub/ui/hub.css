@@ -164,3 +164,12 @@ input[type="checkbox"] { accent-color: var(--accent); width: 15px; height: 15px;
 .chip.new { color: #151413; background: var(--warn); border-color: var(--warn); font-weight: 600; }
 .banner { background: var(--card-hi); border: 1px solid var(--accent-dim); border-radius: 8px; padding: 10px 14px; margin-bottom: 14px; display: flex; gap: 14px; align-items: center; }
 .banner[hidden] { display: none; }
+.extras { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 14px; margin-top: 18px; }
+.extra { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; display: flex; flex-direction: column; gap: 6px; }
+.extra-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.extra-name { font-weight: 600; letter-spacing: 0.5px; }
+.extra p { color: var(--muted); font-size: 13px; flex: 1; }
+.extra .st { font-size: 12px; color: var(--muted); }
+.extra .st.old { color: var(--warn); }
+.extra-actions { display: flex; gap: 8px; }
+.extra-actions button { padding: 3px 12px; font-size: 12px; }

@@ -22,6 +22,10 @@ function esc(s) {
 }
 
 function plugins() { return V?.catalog?.plugins ?? []; }
+/** the effects; the Rack (group "extras") is listed under Extras */
+function effects() { return plugins().filter((p) => p.group !== "extras"); }
+function extraSt(id) { return V.state.extras?.[id] ?? {}; }
+function outdatedExtras() { return Object.entries(V.state.extras ?? {}).filter(([, s]) => s.outdated).map(([id]) => id); }
 function st(id) { return V.state.plugins[id] ?? {}; }
 function installedFormats(id) { return Object.entries(st(id)).filter(([, s]) => s.installed).map(([f]) => f); }
 function outdatedFormats(id) { return Object.entries(st(id)).filter(([, s]) => s.outdated).map(([f]) => f); }
@@ -106,15 +110,16 @@ function installReq(list) {
   return { install: list.flatMap((p) => wanted(p).map((f) => [p.id, f])), remove: [] };
 }
 
-function updateReq(list) {
-  return { install: list.flatMap((p) => outdatedFormats(p.id).map((f) => [p.id, f])), remove: [] };
+function updateReq(list, extras = []) {
+  return { install: list.flatMap((p) => outdatedFormats(p.id).map((f) => [p.id, f])), remove: [], extras, extras_remove: [] };
 }
 
 // --- rendering -------------------------------------------------------------------------------
 
 function shown() {
   const q = $("search").value.trim().toLowerCase();
-  return plugins().filter((p) => {
+  return (view === "extras" || view === "installed" || view === "updates" ? plugins() : effects()).filter((p) => {
+    if (view === "extras" && p.group !== "extras") return false;
     if (view === "installed" && !isInstalled(p.id)) return false;
     if (view === "updates" && !outdatedFormats(p.id).length) return false;
     if (view === "new" && !isNew(p.id)) return false;
@@ -152,10 +157,13 @@ function render() {
   if (!V) return;
   const cat = V.catalog;
   const s = V.state;
-  $("n-all").textContent = plugins().length || "";
+  $("n-all").textContent = effects().length || "";
+  const extrasOn = Object.values(s.extras ?? {}).filter((x) => x.installed).length + plugins().filter((p) => p.group === "extras" && isInstalled(p.id)).length;
+  $("n-extras").textContent = extrasOn || "";
   $("n-installed").textContent = Object.keys(s.plugins).filter(isInstalled).length || "";
-  const upd = plugins().filter((p) => outdatedFormats(p.id).length).length;
-  $("n-updates").textContent = upd || "";
+  const updPlugins = plugins().filter((p) => outdatedFormats(p.id).length).length;
+  const upd = updPlugins + outdatedExtras().length;
+  $("n-updates").textContent = updPlugins || "";
   const fresh = plugins().filter((p) => isNew(p.id)).length;
   $("nav-new").hidden = !fresh;
   $("n-new").textContent = fresh || "";
@@ -180,7 +188,8 @@ function render() {
   $("view-plugins").hidden = false;
 
   const group = view.startsWith("group:") ? cat?.groups.find((g) => g.id === view.slice(6)) : null;
-  $("group-desc").textContent = group ? group.desc : view === "updates" ? "Plugins with a newer version in the latest release." : view === "new" ? `Plugins added in release ${cat?.version}.` : "";
+  renderExtras();
+  $("group-desc").textContent = view === "extras" ? "The Rack for any DAW, and the extras for REAPER. They follow your plugins: an FX chain is added once all its plugins are installed." : group ? group.desc : view === "updates" ? "Plugins with a newer version in the latest release." : view === "new" ? `Plugins added in release ${cat?.version}.` : "";
   const list = shown();
   const notInstalled = list.filter((p) => !isInstalled(p.id));
   const bulk = $("bulk");
@@ -213,6 +222,28 @@ function render() {
   empty.textContent = !cat
     ? "The Hub could not reach GitHub yet. Connect to the internet and click Check for updates."
     : view === "installed" ? "No NULL JSFX plugins installed yet." : view === "updates" ? "Everything is up to date." : "No plugin matches that search.";
+}
+
+function renderExtras() {
+  const box = $("extras");
+  box.hidden = view !== "extras" || !V.catalog;
+  if (box.hidden) return;
+  box.innerHTML = (V.catalog.extras || [])
+    .map((x) => {
+      const s = extraSt(x.id);
+      const status = s.outdated ? `update: ${s.version ? `${esc(s.version)} → ` : ""}${esc(V.catalog.version)}` : s.installed ? `on${s.version ? ` · ${esc(s.version)}` : ""}` : "off";
+      const buttons = s.installed
+        ? `${s.outdated ? `<button data-extra="${x.id}" data-do="add">Update</button>` : ""}<button class="ghost" data-extra="${x.id}" data-do="remove">Turn off</button>`
+        : `<button data-extra="${x.id}" data-do="add">Turn on</button>`;
+      const steps = x.id === "remote" && s.installed ? `<button class="ghost" data-steps>Setup steps in REAPER</button>` : "";
+      return `<div class="extra" data-id="${x.id}">
+        <div class="extra-head"><span class="extra-name">${esc(x.name)}</span><span class="st ${s.outdated ? "old" : ""}">${status}</span></div>
+        <p>${esc(x.desc)}</p>
+        <div class="extra-actions">${buttons}${steps}</div>
+      </div>`;
+    })
+    .join("");
+  box.querySelectorAll("button").forEach((b) => (b.disabled = busy));
 }
 
 function inline(s) {
@@ -354,6 +385,19 @@ document.addEventListener("click", (e) => {
     else openDetail(p.id);
     return;
   }
+  if (e.target.closest("button[data-steps]")) {
+    const sep = V.os === "Windows" ? "\\" : "/";
+    T.opener.revealItemInDir(`${V.dataDir}${sep}Remote-INSTALL.txt`);
+    return;
+  }
+  const ex = e.target.closest("button[data-extra]");
+  if (ex) {
+    const x = V.catalog.extras.find((y) => y.id === ex.dataset.extra);
+    const add = ex.dataset.do === "add";
+    const note = add && x.id === "remote" ? " Finish with the setup steps in REAPER (button below)." : "";
+    run({ install: [], remove: [], extras: add ? [x.id] : [], extras_remove: add ? [] : [x.id] }, `${x.name}: ${add ? "on" : "off"}.${note}`);
+    return;
+  }
   const card = e.target.closest(".card");
   if (card) openDetail(card.dataset.id);
 });
@@ -377,7 +421,7 @@ $("search").addEventListener("input", render);
 $("refresh").onclick = () => refresh(false);
 $("update-all").onclick = () => {
   const list = plugins().filter((p) => outdatedFormats(p.id).length);
-  run(updateReq(list), `Updated ${list.length} plugins to release ${V.catalog.version}`);
+  run(updateReq(list, outdatedExtras()), `Updated to release ${V.catalog.version}`);
 };
 $("set-save").onclick = saveSettings;
 $("set-defaults").onclick = async () => {

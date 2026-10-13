@@ -24,11 +24,14 @@ function mock(catalog) {
   const state = {};
   for (const p of catalog.plugins) state[p.id] = Object.fromEntries(p.formats.map((f) => [f, { installed: false, version: null, outdated: false }]));
   state.tilt.jsfx = { installed: true, version: '2.1', outdated: true };
+  const extras = Object.fromEntries(catalog.extras.map((x) => [x.id, { installed: false, version: null, outdated: false }]));
+  extras.chains = { installed: true, version: null, outdated: true }; // from the installer
   const settings = { targets: { reaper: '/home/me/.config/REAPER', vst3: '/home/me/.vst3', clap: '/home/me/.clap', fonts: '/home/me/.local/share/fonts' }, formats: all, check_updates: true, notify: true, autostart: false, new_ids: ['tape'], notified: null, last_check: 0 };
   const view = () => {
     let installed = 0, outdated = 0;
     for (const m of Object.values(state)) for (const s of Object.values(m)) { installed += s.installed; outdated += s.outdated; }
-    return JSON.parse(JSON.stringify({ catalog, state: { plugins: state, installed, outdated }, settings, os: 'Linux', hubVersion: '2.1.0', hubUpdate: ['2.2', 'https://github.com/koulaxizis/null-jsfx/releases/latest/download/NULL-JSFX-Hub-Linux.AppImage'], dataDir: '/home/me/.local/share/null-jsfx' }));
+    for (const s of Object.values(extras)) outdated += s.outdated;
+    return JSON.parse(JSON.stringify({ catalog, state: { plugins: state, extras, installed, outdated }, settings, os: 'Linux', hubVersion: '2.1.0', hubUpdate: ['2.2', 'https://github.com/koulaxizis/null-jsfx/releases/latest/download/NULL-JSFX-Hub-Linux.AppImage'], dataDir: '/home/me/.local/share/null-jsfx' }));
   };
   const listeners = {};
   window.__calls = [];
@@ -44,13 +47,15 @@ function mock(catalog) {
           (listeners['hub-progress'] || []).forEach((f) => f({ payload: { stage: 'download', text: 'NULL-JSFX-JSFX.zip', done: 1, total: 2 } }));
           for (const [id, f] of args.request.install) state[id][f] = { installed: true, version: catalog.version, outdated: false };
           for (const [id, f] of args.request.remove) state[id][f] = { installed: false, version: null, outdated: false };
+          for (const id of args.request.extras || []) extras[id] = { installed: true, version: catalog.version, outdated: false };
+          for (const id of args.request.extras_remove || []) extras[id] = { installed: false, version: null, outdated: false };
           return view();
         }
         throw new Error('unknown command ' + cmd);
       },
     },
     event: { listen(name, fn) { (listeners[name] = listeners[name] || []).push(fn); return Promise.resolve(() => {}); } },
-    opener: { openUrl(u) { window.__calls.push(['open', u]); } },
+    opener: { openUrl(u) { window.__calls.push(['open', u]); }, revealItemInDir(p) { window.__calls.push(['reveal', p]); } },
   };
 }
 
@@ -77,10 +82,11 @@ function check(cond, what) {
   await page.waitForSelector('.card');
   const calls = () => page.evaluate(() => window.__calls);
 
-  check((await page.locator('.card').count()) === catalog.plugins.length, `${catalog.plugins.length} plugin cards`);
-  check((await page.textContent('#release')).includes('1 to update'), 'header shows one plugin to update');
+  const effects = catalog.plugins.filter((p) => p.group !== 'extras').length;
+  check((await page.locator('.card').count()) === effects, `${effects} plugin cards (the Rack is under Extras)`);
+  check((await page.textContent('#release')).includes('2 to update'), 'header shows Tilt and the FX chains to update');
   check(await page.isVisible('#update-all'), 'Update all button shows');
-  check((await page.textContent('#n-updates')) === '1', 'Updates count in the menu');
+  check((await page.textContent('#n-updates')) === '1', 'Updates count in the menu (plugins)');
   check((await calls()).some(([c]) => c === 'hub_refresh'), 'checks for a new release on start');
 
   check(await page.isVisible('#nav-new'), 'New in this release shows in the menu');
@@ -117,7 +123,7 @@ function check(cond, what) {
   await page.waitForSelector('#progress', { state: 'hidden' });
   const second = (await calls()).filter(([c]) => c === 'hub_apply')[1][1].request;
   check(JSON.stringify(second) === JSON.stringify({ install: [['tilt', 'jsfx'], ['tilt', 'vst3']], remove: [] }), 'plugin page request: update JSFX, install VST3');
-  check(await page.isHidden('#update-all'), 'nothing left to update');
+  check((await page.textContent('#update-all')) === 'Update all (1)', 'the FX chains are left to update');
 
   // removing from the plugin page
   await page.uncheck('#d-formats input[data-f="vst3"]');
@@ -144,6 +150,26 @@ function check(cond, what) {
   await page.waitForFunction(() => window.__calls.filter(([c]) => c === 'hub_apply').length === 3);
   const bulk = (await calls()).filter(([c]) => c === 'hub_apply')[2][1].request;
   check(bulk.install.length === (os - 1) * 3 && bulk.install.every(([, f]) => f !== 'clap'), 'group install uses the saved formats (no CLAP)');
+
+  // Extras: the Rack card and the extras
+  await page.click('#nav button[data-view="extras"]');
+  check((await page.locator('.card').count()) === 1 && (await page.textContent('.card .card-name')) === 'Rack', 'Extras lists the Rack');
+  check((await page.locator('.extra').count()) === catalog.extras.length, `Extras lists the ${catalog.extras.length} extras`);
+  check((await page.textContent('.extra[data-id="chains"] .st')).startsWith('update'), 'FX chains from the installer show an update');
+  await page.click('.extra[data-id="remote"] button[data-do="add"]');
+  await page.waitForFunction(() => window.__calls.filter(([c]) => c === 'hub_apply').length === 4);
+  const ex = (await calls()).filter(([c]) => c === 'hub_apply')[3][1].request;
+  check(JSON.stringify(ex.extras) === '["remote"]', 'Turn on asks for the tablet remote');
+  await page.waitForSelector('#progress', { state: 'hidden' });
+  check((await page.textContent('.extra[data-id="remote"] .st')).startsWith('on'), 'the remote shows as on');
+  if (shots) await page.screenshot({ path: path.join(shots, 'hub-extras.png') });
+  await page.click('button[data-steps]');
+  check((await calls()).some(([c, p]) => c === 'reveal' && p.endsWith('/Remote-INSTALL.txt')), 'the remote setup steps open');
+  await page.click('#update-all');
+  await page.waitForFunction(() => window.__calls.filter(([c]) => c === 'hub_apply').length === 5);
+  const ua = (await calls()).filter(([c]) => c === 'hub_apply')[4][1].request;
+  check(JSON.stringify(ua.extras) === '["chains"]', 'Update all includes the extras');
+  await page.waitForSelector('#progress', { state: 'hidden' });
 
   // What's new
   await page.click('#nav button[data-view="news"]');
