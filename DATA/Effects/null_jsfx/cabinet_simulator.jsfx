@@ -2,7 +2,7 @@ desc:NULL Cabinet Simulator
 author: Christos Koulaxizis
 tags: cabinet cab speaker guitar bass amp simulation di re-amp
 //category: Essentials
-//NULL JSFX v2.1 • https://nulljsfx.tech • MIT License
+//NULL JSFX v2.2 • https://nulljsfx.tech • MIT License
 
 slider1:2<0,4,1{1x12 Open Back,2x12 Combo,4x12 Closed Back,1x15 Bass,Small Radio}>Cabinet
 slider2:30<0,100,1>Mic Position (%)

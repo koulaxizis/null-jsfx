@@ -2,7 +2,7 @@ desc:NULL Ladder Filter
 author: Christos Koulaxizis
 tags: filter ladder moog 24db lowpass highpass resonance drive analog
 //category: Advanced
-//NULL JSFX v2.1 • https://nulljsfx.tech • MIT License
+//NULL JSFX v2.2 • https://nulljsfx.tech • MIT License
 
 slider1:1000<20,20000,1:log>Cutoff (Hz)
 slider2:0.5<0,4,0.1>Resonance

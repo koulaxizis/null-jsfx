@@ -2,7 +2,7 @@ desc:NULL Vocoder
 author: Christos Koulaxizis
 tags: vocoder talkbox robot voice synth carrier modulator filterbank
 //category: Advanced
-//NULL JSFX v2.1 • https://nulljsfx.tech • MIT License
+//NULL JSFX v2.2 • https://nulljsfx.tech • MIT License
 
 slider1:1<0,3,1{Right Input,Saw,Pulse,Noise}>Carrier
 slider2:110<40,880,0.1>Carrier Pitch (Hz)

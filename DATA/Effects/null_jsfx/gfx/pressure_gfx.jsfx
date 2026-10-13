@@ -2,7 +2,7 @@ desc:NULL Pressure GFX
 author: Christos Koulaxizis
 tags: compressor dynamics leveling glue squash gui
 //category: One Slider
-//NULL JSFX v2.1 • https://nulljsfx.tech • MIT License
+//NULL JSFX v2.2 • https://nulljsfx.tech • MIT License
 
 import null_gfx.jsfx-inc
 
