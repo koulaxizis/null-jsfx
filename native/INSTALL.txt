@@ -34,6 +34,13 @@ VST3 and CLAP (any DAW), from NULL-JSFX-VST3-CLAP-<your OS>.zip
       Linux:   ~/.vst3   and   ~/.clap
     then rescan plugins in your DAW.
 
+Rack (any DAW), in the VST3 and CLAP folders
+    "Rack" by NULL JSFX chains up to 8 NULL JSFX effects in one plugin, with
+    band splitting (Low/Mid/High), Mid/Side or Left/Right processing per slot,
+    8 macros, 2 LFOs and an envelope follower. Its presets include the FX
+    chains above and a few that only the Rack can do (Multiband Distortion,
+    Mid/Side EQ, Auto Filter and more). It installs with the other plugins.
+
 macOS (not officially supported): the builds are not code-signed. If macOS
 refuses to load them, run
     xattr -dr com.apple.quarantine <path to the .vst3/.clap>

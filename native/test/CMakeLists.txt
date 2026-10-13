@@ -37,6 +37,22 @@ if(NULL_RACK_MODULES)
     endif()
     add_test(NAME module_${_id} COMMAND module_compare "${_jsfx_dir}/${_id}.jsfx" "module:${_id}" ${_args})
   endforeach()
+
+  # rack_test: the Rack's engine (plugins/rack/RackEngine.hpp) with the same modules: presets,
+  # bit-exactness, bands, channels, modulation. A build limited by NULL_MODULES skips the presets
+  # whose modules it lacks; a full build fails on them.
+  add_executable(rack_test "${CMAKE_CURRENT_SOURCE_DIR}/../plugins/rack/test/rack_test.cpp")
+  target_include_directories(rack_test PRIVATE "${dpf_SOURCE_DIR}/distrho/src" "${dpf_SOURCE_DIR}/distrho"
+    "${CMAKE_CURRENT_SOURCE_DIR}/module_info" "${CMAKE_CURRENT_SOURCE_DIR}/../common"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../plugins/rack" "${CMAKE_BINARY_DIR}/generated")
+  target_link_libraries(rack_test PRIVATE pthread)
+  if(NOT NULL_MODULES)
+    target_compile_definitions(rack_test PRIVATE RACK_FULL_BUILD=1)
+  endif()
+  if(APPLE)
+    set_target_properties(rack_test PROPERTIES OSX_ARCHITECTURES "${CMAKE_HOST_SYSTEM_PROCESSOR}")
+  endif()
+  add_test(NAME rack_test COMMAND rack_test)
 endif()
 
 foreach(_p ${NULL_BUILT_PLUGINS})
