@@ -1,0 +1,10 @@
+[
+  ["Transparent Master", {"Input Gain": 3, "Ceiling": -1.0, "Release": 100, "Lookahead": 5}],
+  ["Loud Master", {"Input Gain": 6, "Ceiling": -1.0, "Release": 60, "Lookahead": 5}],
+  ["Punchy Dance Master", {"Input Gain": 7, "Ceiling": -0.5, "Release": 30, "Lookahead": 2}],
+  ["Acoustic Gentle", {"Input Gain": 2, "Ceiling": -1.0, "Release": 200, "Lookahead": 5}],
+  ["Bus Peak Control", {"Input Gain": 0, "Ceiling": -1.0, "Release": 80, "Lookahead": 3}],
+  ["Stem Level Up", {"Input Gain": 4, "Ceiling": -0.3, "Release": 50, "Lookahead": 2, "Stereo Link": "OFF"}],
+  ["CD Master 16 Bit", {"Input Gain": 4, "Ceiling": -0.3, "Release": 80, "Lookahead": 5, "Dither": "16-BIT", "Noise Shaping": "ON"}],
+  ["Bounce 24 Bit", {"Input Gain": 3, "Ceiling": -1.0, "Release": 80, "Lookahead": 5, "Dither": "24-BIT"}]
+]

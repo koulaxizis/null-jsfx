@@ -1,0 +1,9 @@
+[
+  ["Clean Guitar Shimmer", {"Rate": 0.8, "Depth": 3, "Mix": 40}],
+  ["Lush Pad", {"Rate": 0.3, "Depth": 6, "Mix": 50}],
+  ["Subtle Synth Detune", {"Rate": 0.5, "Depth": 1.5, "Mix": 30}],
+  ["Backing Vocal Double", {"Rate": 1.2, "Depth": 2.5, "Mix": 30}],
+  ["Bass Thickener", {"Rate": 0.7, "Depth": 2, "Mix": 35}],
+  ["Keys Wide Wash", {"Rate": 1.5, "Depth": 4, "Mix": 45}],
+  ["Vibrato Warble", {"Rate": 6, "Depth": 2, "Mix": 100}]
+]

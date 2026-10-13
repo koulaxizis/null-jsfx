@@ -1,0 +1,375 @@
+desc:NULL Noise Reduction GFX
+author: Christos Koulaxizis
+tags: noise reduction denoise hiss hum room tone spectral subtraction restoration fft gui
+//category: Advanced
+//NULL JSFX v2.0 • https://nulljsfx.tech • MIT License
+
+import null_gfx.jsfx-inc
+
+slider1:0<0,1,1{Off,On}>-Learn
+slider2:0<0,1,1{Off,On}>-Auto
+slider3:18<0,60,1>-Reduction (dB)
+slider4:3<-10,20,0.5>-Threshold (dB)
+slider5:50<0,100,1>-Smoothing (%)
+slider6:10<0,100,1>-Attack (ms)
+slider7:150<10,1000,1>-Release (ms)
+slider8:0<0,1,1{Output,Removed noise}>-Listen
+slider9:100<0,100,1>-Mix (%)
+
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
+
+@init
+  // NULL Noise Reduction (../noise_reduction.jsfx) with its own interface: same audio code, plus @gfx.
+  gfx_ext_retina = 1;
+  // Stationary noise reducer for hiss, room tone and hum beds (2048-point FFT, Hann
+  // analysis and synthesis windows, 4x overlap). Each bin's level is compared with a noise
+  // estimate: with Learn On the magnitudes of both channels are averaged per bin into a
+  // noise profile (play a noise-only passage, then switch Learn Off); with Auto On the
+  // noise floor is tracked continuously with minimum statistics (the lowest smoothed power
+  // of the last 2.4-3 s, bias corrected; tones held longer than that count as noise).
+  // The gain is Wiener-like, 1 - (noise x Threshold)^2 / power, never below the floor set
+  // by Reduction; the power is smoothed over time and across frequency (Smoothing) against
+  // musical noise. The gain opens with Attack when a bin rises above the noise and falls
+  // back with Release. One gain for both channels keeps the stereo image. Listen Removed
+  // noise plays what is taken away. The profile stays in memory while the plugin runs
+  // (also across playback starts); it is not saved with the project, so after a reload
+  // learn again or use Auto. Latency: 2047 samples (reported to REAPER).
+  N = 2048; H = N / 4; NB = N / 2 + 1;
+  U = 4;                             // auto: sub-windows of the minimum search
+  fft_l = 0; fft_r = 2 * N;          // 2N slots each, neither crosses a 65536 boundary
+  win = 4 * N;
+  in_l = win + N; in_r = in_l + N;
+  out_l = in_r + N; out_r = out_l + N;
+  pw = out_r + N;                    // smoothed power per bin
+  gs = pw + NB;                      // gain per bin after attack/release
+  gt = gs + NB;                      // power smoothed across frequency, then raw gain
+  ap = gt + NB;                      // auto: smoothed power
+  am = ap + NB;                      // auto: minimum of the current sub-window
+  as = am + NB;                      // auto: minima of the last U sub-windows
+  nz = as + U * NB;                  // noise magnitude in use (display)
+  dsp = nz + NB;                     // spectrum (display)
+  psum = dsp + NB;                   // learnt profile: summed magnitudes
+  freembuf(psum + NB);
+  memset(win, 0, psum - win);
+  // the profile survives @init (playback start); only a new sample rate clears it
+  prof_sr != srate ? (memset(psum, 0, NB); lcount = 0; learning = 0; prof_sr = srate);
+  i = 0;
+  loop(N, win[i] = 0.5 - 0.5 * cos(2 * $pi * i / N); i += 1);
+  i = 0;
+  loop(NB, gs[i] = 1; am[i] = 1000000000000000000000000000000; i += 1);
+  i = 0;
+  loop(U * NB, as[i] = 1000000000000000000000000000000; i += 1);
+  // overlap-added squared Hann windows at 4x sum to 1.5; ifft() does not divide by N
+  oscale = 2 / (3 * N);
+  aa = exp(-H / (0.05 * srate));     // auto: 50 ms power smoothing
+  V = max(1, floor(0.6 * srate / H + 0.5)); // auto: frames per sub-window (0.6 s)
+  // auto: the minimum of the smoothed power, times this, matches the mean magnitude^2 of
+  // steady noise (the learnt profile); measured from 44.1 to 192 kHz
+  abias = 2 * (srate / 48000) ^ (-0.28);
+  ipos = 0; opos = 0; cnt = 0; filled = 0;
+  afc = 0; aslot = 0; astarted = 0;
+  pdc_delay = N - 1;
+  pdc_bot_ch = 0;
+  pdc_top_ch = 2;
+
+  // analyse the last N samples, estimate the noise, compute and smooth the gains, apply
+  // them to both channels and overlap-add the result
+  function nr_frame() local(i, k, p, w, rl, il, rr, ir, x, x2, m, j, nk, t, g, s, ready)
+  (
+    i = 0;
+    loop(N,
+      p = (ipos + i) % N;
+      w = win[i];
+      fft_l[2 * i] = in_l[p] * w; fft_l[2 * i + 1] = 0;
+      fft_r[2 * i] = in_r[p] * w; fft_r[2 * i + 1] = 0;
+      i += 1;
+    );
+    fft(fft_l, N); fft_permute(fft_l, N);
+    fft(fft_r, N); fft_permute(fft_r, N);
+    ready = filled >= N;
+    // Learn switched on: start a new profile
+    learn && !learning ? (memset(psum, 0, NB); lcount = 0);
+    learning = learn;
+
+    k = 0;
+    loop(NB,
+      rl = fft_l[2 * k]; il = fft_l[2 * k + 1];
+      rr = fft_r[2 * k]; ir = fft_r[2 * k + 1];
+      x = (sqrt(rl * rl + il * il) + sqrt(rr * rr + ir * ir)) * 0.5;
+      x2 = x * x;
+      pw[k] = pw[k] * ts + x2 * (1 - ts);
+      ready ? (
+        learning ? psum[k] += x;
+        ap[k] = astarted ? ap[k] * aa + x2 * (1 - aa) : x2;
+        am[k] = min(am[k], ap[k]);
+      );
+      dsp[k] = x > dsp[k] ? x : dsp[k] * 0.7 + x * 0.3;
+      k += 1;
+    );
+    ready ? (
+      learning ? lcount += 1;
+      astarted = 1;
+      afc += 1;
+      afc >= V ? (
+        afc = 0;
+        memcpy(as + aslot * NB, am, NB);
+        aslot = (aslot + 1) % U;
+        memcpy(am, ap, NB);
+      );
+    );
+
+    // the power smoothed across frequency too: one-pole forward, then backward (zero phase);
+    // random noise peaks spread below the threshold, strong partials stay above it
+    t = pw[0];
+    k = 0;
+    loop(NB, t = t * fsm + pw[k] * (1 - fsm); gt[k] = t; k += 1);
+    k = NB - 1;
+    t = gt[k];
+    loop(NB, t = t * fsm + gt[k] * (1 - fsm); gt[k] = t; k -= 1);
+
+    // noise estimate and the raw Wiener-like gain, floored
+    k = 0;
+    loop(NB,
+      auto_on ? (
+        m = am[k];
+        j = 0;
+        loop(U, m = min(m, as[j * NB + k]); j += 1);
+        nk = m < 1000000000000000000000000000000 ? sqrt(m * abias) : 0;
+      ) : (
+        nk = lcount > 0 ? psum[k] / lcount : 0;
+      );
+      nz[k] = nk;
+      t = nk * thr;
+      t *= t;
+      g = t > 0 ? (gt[k] > t ? 1 - t / gt[k] : 0) : 1;
+      gt[k] = max(gfloor, g);
+      k += 1;
+    );
+    // attack (gain opening) and release (gain closing) per bin, then apply
+    k = 0;
+    loop(NB,
+      g = gt[k];
+      s = gs[k];
+      s = g > s ? s * ga + g * (1 - ga) : s * gr + g * (1 - gr);
+      gs[k] = s;
+      g = listen ? 1 - s : s;
+      fft_l[2 * k] *= g; fft_l[2 * k + 1] *= g;
+      fft_r[2 * k] *= g; fft_r[2 * k + 1] *= g;
+      k > 0 && k < N / 2 ? (
+        fft_l[2 * (N - k)] *= g; fft_l[2 * (N - k) + 1] *= g;
+        fft_r[2 * (N - k)] *= g; fft_r[2 * (N - k) + 1] *= g;
+      );
+      k += 1;
+    );
+    fft_ipermute(fft_l, N); ifft(fft_l, N);
+    fft_ipermute(fft_r, N); ifft(fft_r, N);
+    i = 0;
+    loop(N,
+      p = (opos + i) % N;
+      w = win[i] * oscale;
+      out_l[p] += fft_l[2 * i] * w;
+      out_r[p] += fft_r[2 * i] * w;
+      i += 1;
+    );
+  );
+
+  function update()
+  (
+    learn = slider1;
+    auto_on = slider2;
+    gfloor = 10 ^ (-slider3 / 20);
+    thr = 10 ^ (slider4 / 20);
+    ts = slider5 / 100 * 0.85;         // temporal smoothing of the power, per frame
+    fsm = slider5 / 100 * 0.8;         // smoothing across frequency
+    ga = slider6 > 0 ? exp(-H / (slider6 / 1000 * srate)) : 0;
+    gr = exp(-H / (slider7 / 1000 * srate));
+    listen = slider8;
+    mix = slider9 / 100;
+  );
+
+  // ---- factory presets: generated by tools/build_presets.py, do not edit ----
+  ng_pre_n = 8;
+
+  function ng_preset_load(p)
+  (
+    p == 0 ? ( ng_slider_set(1, 0); ng_slider_set(2, 0); ng_slider_set(3, 18); ng_slider_set(4, 3); ng_slider_set(5, 50); ng_slider_set(6, 10); ng_slider_set(7, 150); ng_slider_set(8, 0); ng_slider_set(9, 100); );
+    p == 1 ? ( ng_slider_set(1, 0); ng_slider_set(2, 1); ng_slider_set(3, 9); ng_slider_set(4, 3); ng_slider_set(5, 60); ng_slider_set(6, 10); ng_slider_set(7, 200); ng_slider_set(8, 0); ng_slider_set(9, 100); );
+    p == 2 ? ( ng_slider_set(1, 0); ng_slider_set(2, 1); ng_slider_set(3, 15); ng_slider_set(4, 4); ng_slider_set(5, 50); ng_slider_set(6, 5); ng_slider_set(7, 120); ng_slider_set(8, 0); ng_slider_set(9, 100); );
+    p == 3 ? ( ng_slider_set(1, 0); ng_slider_set(2, 1); ng_slider_set(3, 20); ng_slider_set(4, 5); ng_slider_set(5, 30); ng_slider_set(6, 10); ng_slider_set(7, 200); ng_slider_set(8, 0); ng_slider_set(9, 100); );
+    p == 4 ? ( ng_slider_set(1, 0); ng_slider_set(2, 0); ng_slider_set(3, 6); ng_slider_set(4, 2); ng_slider_set(5, 70); ng_slider_set(6, 15); ng_slider_set(7, 300); ng_slider_set(8, 0); ng_slider_set(9, 100); );
+    p == 5 ? ( ng_slider_set(1, 0); ng_slider_set(2, 0); ng_slider_set(3, 18); ng_slider_set(4, 4); ng_slider_set(5, 40); ng_slider_set(6, 2); ng_slider_set(7, 80); ng_slider_set(8, 0); ng_slider_set(9, 100); );
+    p == 6 ? ( ng_slider_set(1, 0); ng_slider_set(2, 0); ng_slider_set(3, 30); ng_slider_set(4, 6); ng_slider_set(5, 70); ng_slider_set(6, 5); ng_slider_set(7, 250); ng_slider_set(8, 0); ng_slider_set(9, 100); );
+    p == 7 ? ( ng_slider_set(1, 0); ng_slider_set(2, 1); ng_slider_set(3, 18); ng_slider_set(4, 3); ng_slider_set(5, 50); ng_slider_set(6, 10); ng_slider_set(7, 150); ng_slider_set(8, 1); ng_slider_set(9, 100); );
+  );
+
+  // the first preset every slider matches, or -1
+  function ng_preset_match() local(m)
+  (
+    m = -1;
+    m < 0 && ng_pre_eq(slider1, 0) && ng_pre_eq(slider2, 0) && ng_pre_eq(slider3, 18) && ng_pre_eq(slider4, 3) && ng_pre_eq(slider5, 50) && ng_pre_eq(slider6, 10) && ng_pre_eq(slider7, 150) && ng_pre_eq(slider8, 0) && ng_pre_eq(slider9, 100) ? m = 0;
+    m < 0 && ng_pre_eq(slider1, 0) && ng_pre_eq(slider2, 1) && ng_pre_eq(slider3, 9) && ng_pre_eq(slider4, 3) && ng_pre_eq(slider5, 60) && ng_pre_eq(slider6, 10) && ng_pre_eq(slider7, 200) && ng_pre_eq(slider8, 0) && ng_pre_eq(slider9, 100) ? m = 1;
+    m < 0 && ng_pre_eq(slider1, 0) && ng_pre_eq(slider2, 1) && ng_pre_eq(slider3, 15) && ng_pre_eq(slider4, 4) && ng_pre_eq(slider5, 50) && ng_pre_eq(slider6, 5) && ng_pre_eq(slider7, 120) && ng_pre_eq(slider8, 0) && ng_pre_eq(slider9, 100) ? m = 2;
+    m < 0 && ng_pre_eq(slider1, 0) && ng_pre_eq(slider2, 1) && ng_pre_eq(slider3, 20) && ng_pre_eq(slider4, 5) && ng_pre_eq(slider5, 30) && ng_pre_eq(slider6, 10) && ng_pre_eq(slider7, 200) && ng_pre_eq(slider8, 0) && ng_pre_eq(slider9, 100) ? m = 3;
+    m < 0 && ng_pre_eq(slider1, 0) && ng_pre_eq(slider2, 0) && ng_pre_eq(slider3, 6) && ng_pre_eq(slider4, 2) && ng_pre_eq(slider5, 70) && ng_pre_eq(slider6, 15) && ng_pre_eq(slider7, 300) && ng_pre_eq(slider8, 0) && ng_pre_eq(slider9, 100) ? m = 4;
+    m < 0 && ng_pre_eq(slider1, 0) && ng_pre_eq(slider2, 0) && ng_pre_eq(slider3, 18) && ng_pre_eq(slider4, 4) && ng_pre_eq(slider5, 40) && ng_pre_eq(slider6, 2) && ng_pre_eq(slider7, 80) && ng_pre_eq(slider8, 0) && ng_pre_eq(slider9, 100) ? m = 5;
+    m < 0 && ng_pre_eq(slider1, 0) && ng_pre_eq(slider2, 0) && ng_pre_eq(slider3, 30) && ng_pre_eq(slider4, 6) && ng_pre_eq(slider5, 70) && ng_pre_eq(slider6, 5) && ng_pre_eq(slider7, 250) && ng_pre_eq(slider8, 0) && ng_pre_eq(slider9, 100) ? m = 6;
+    m < 0 && ng_pre_eq(slider1, 0) && ng_pre_eq(slider2, 1) && ng_pre_eq(slider3, 18) && ng_pre_eq(slider4, 3) && ng_pre_eq(slider5, 50) && ng_pre_eq(slider6, 10) && ng_pre_eq(slider7, 150) && ng_pre_eq(slider8, 1) && ng_pre_eq(slider9, 100) ? m = 7;
+    m;
+  );
+
+  function ng_preset_name(p) local(s)
+  (
+    s = "";
+    p == 0 ? s = "Default";
+    p == 1 ? s = "Gentle Hiss Auto";
+    p == 2 ? s = "Dialogue Room Tone";
+    p == 3 ? s = "Hum Bed Reducer";
+    p == 4 ? s = "Music Hiss Subtle";
+    p == 5 ? s = "Fast Speech Profile";
+    p == 6 ? s = "Heavy Noise Cleanup";
+    p == 7 ? s = "Listen Removed Noise";
+    s;
+  );
+
+  function ng_presets() local(i)
+  (
+    ng_pre_req >= 0 ? ( ng_preset_load(ng_pre_req); update(); ng_pre_req = -1; );
+    ng_pre_cur = ng_preset_match();
+    ng_pre_open ? (
+      ng_pre_menu_begin();
+      i = 0;
+      loop(ng_pre_n, ng_pre_item(i, ng_preset_name(i)); i += 1;);
+      ng_pre_menu_end();
+    );
+    strcpy(#ng_pre_name, ng_pre_cur >= 0 ? ng_preset_name(ng_pre_cur) : "CUSTOM");
+  );
+  // ---- end of factory presets ----
+
+@slider
+  update();
+
+@sample
+  in_l[ipos] = spl0;
+  in_r[ipos] = spl1;
+  ipos += 1; ipos >= N ? ipos = 0;
+  filled < N ? filled += 1;
+
+  cnt += 1;
+  cnt >= H ? (
+    cnt = 0;
+    nr_frame();
+  );
+
+  w_l = out_l[opos]; out_l[opos] = 0;
+  w_r = out_r[opos]; out_r[opos] = 0;
+  opos += 1; opos >= N ? opos = 0;
+
+  // the dry signal, delayed by N - 1 like the processed one
+  dry_l = in_l[ipos];
+  dry_r = in_r[ipos];
+  spl0 = dry_l * (1 - mix) + w_l * mix;
+  spl1 = dry_r * (1 - mix) + w_r * mix;
+
+@gfx 480 410
+  ng_knobs_begin("NOISE REDUCTION", "ADVANCED", 480, 150, 2, 0);
+
+  // display: the input spectrum (grey area), the noise estimate in use (thin bright line) and
+  // the gain per bin (silver, hanging from 0 dB: the reduction curve), on a log-frequency axis;
+  // 0 dB = a full-scale sine, down to -96 dB
+  ng_plot(ng_vx + 26, ng_vy + 14, ng_vw - 30, ng_vh - 30);
+  ng_grid(1, 4, 0);
+  nr_d = 100;
+  loop(3,
+    nr_gx = floor(ng_freq_x(nr_d)) + 0.5;
+    ng_col(NG_BORDER, 0.6);
+    gfx_line(nr_gx, ng_py, nr_gx, ng_py + ng_ph, 0);
+    nr_d *= 10;
+  );
+  ng_font(4, 8, 0);
+  ng_col(NG_MUTED, 1);
+  ng_ptxt("0", ng_px - 6 * ng_s, ng_py, 2);
+  ng_ptxt("-48", ng_px - 6 * ng_s, ng_py + ng_ph / 2, 2);
+  ng_ptxt("-96", ng_px - 6 * ng_s, ng_py + ng_ph, 2);
+  ng_ptxt("100", ng_freq_x(100), ng_py + ng_ph + 10 * ng_s, 1);
+  ng_ptxt("1k", ng_freq_x(1000), ng_py + ng_ph + 10 * ng_s, 1);
+  ng_ptxt("10k", ng_freq_x(10000), ng_py + ng_ph + 10 * ng_s, 1);
+  // status on the left, legend on the right, above the plot
+  auto_on ? strcpy(#nr_t, "AUTO") :
+    learning ? sprintf(#nr_t, "LEARNING %.1f S", lcount * H / srate) :
+    lcount > 0 ? sprintf(#nr_t, "PROFILE %.1f S", lcount * H / srate) :
+    strcpy(#nr_t, "NO PROFILE: LEARN OR AUTO");
+  ng_col(learning ? NG_TEXT : NG_MUTED, 1);
+  ng_ptxt(#nr_t, ng_px, Y(ng_vy + 4), 0);
+  ng_col(NG_ACCENT, 1);
+  ng_ptxt("REDUCTION", ng_px + ng_pw, Y(ng_vy + 4), 2);
+  nr_w = nr_h = 0;
+  gfx_measurestr("REDUCTION", nr_w, nr_h);
+  nr_x = ng_px + ng_pw - nr_w - 12 * ng_s;
+  ng_col(NG_TEXT, 1);
+  ng_ptxt("NOISE", nr_x, Y(ng_vy + 4), 2);
+  gfx_measurestr("NOISE", nr_w, nr_h);
+  nr_x -= nr_w + 12 * ng_s;
+  ng_col(NG_MUTED, 1);
+  ng_ptxt("SPECTRUM", nr_x, Y(ng_vy + 4), 2);
+
+  // three passes over 201 columns: the loudest bin under each column (spectrum, noise) or
+  // the lowest gain
+  nr_pass = 0;
+  loop(3,
+    nr_src = nr_pass == 0 ? dsp : nr_pass == 1 ? nz : gs;
+    nr_j = 0;
+    loop(201,
+      nr_b0 = min(NB - 1, floor(20 * 1000 ^ (nr_j / 200) * N / srate));
+      nr_b1 = max(nr_b0, min(NB - 1, floor(20 * 1000 ^ ((nr_j + 1) / 200) * N / srate)));
+      nr_m = nr_src[nr_b0];
+      nr_b = nr_b0 + 1;
+      loop(nr_b1 - nr_b0, nr_m = nr_pass == 2 ? min(nr_m, nr_src[nr_b]) : max(nr_m, nr_src[nr_b]); nr_b += 1;);
+      nr_db = nr_pass == 2 ? 20 * log10(max(nr_m, 0.0000001)) : 20 * log10(max(nr_m / (N / 4), 0.0000001));
+      nr_y = ng_lin_y(nr_db, -96, 0);
+      nr_x = ng_px + ng_pw * nr_j / 200;
+      nr_pass == 0 ? (
+        ng_col(NG_MUTED, 0.18);
+        nr_x1 = floor(ng_px + ng_pw * (nr_j + 1) / 200);
+        nr_j < 200 && nr_y < ng_py + ng_ph ? gfx_rect(floor(nr_x), nr_y, max(1, nr_x1 - floor(nr_x)), ng_py + ng_ph - nr_y);
+        ng_col(NG_MUTED, 0.8);
+        nr_j > 0 ? gfx_line(nr_lx, nr_ly, nr_x, nr_y, 1);
+      ) : nr_pass == 1 ? (
+        ng_col(NG_TEXT, 0.9);
+        nr_j > 0 && (auto_on || lcount > 0) ? gfx_line(nr_lx, nr_ly, nr_x, nr_y, 1);
+      ) : (
+        ng_col(NG_ACCENT, 0.12);
+        nr_x1 = floor(ng_px + ng_pw * (nr_j + 1) / 200);
+        nr_j < 200 && nr_y > ng_py ? gfx_rect(floor(nr_x), ng_py, max(1, nr_x1 - floor(nr_x)), nr_y - ng_py);
+        ng_col(NG_ACCENT, 1);
+        nr_j == 0 ? ng_line_start(nr_x, nr_y) : ng_line_to(nr_x, nr_y);
+      );
+      nr_lx = nr_x; nr_ly = nr_y;
+      nr_j += 1;
+    );
+    nr_pass += 1;
+  );
+
+  ng_row(6);
+  ng_select_ctl(1, "LEARN", "OFF|ON", 0) ? update();
+  ng_select_ctl(2, "AUTO", "OFF|ON", 0) ? update();
+  sprintf(#v3, "%d dB", slider3);
+  ng_knob_ctl(3, "REDUCTION", #v3, 0, 60, 18, 1, 0) ? update();
+  sprintf(#v4, "%.1f dB", slider4);
+  ng_knob_ctl(4, "THRESHOLD", #v4, -10, 20, 3, 0.5, 0) ? update();
+  sprintf(#v5, "%d%%", slider5);
+  ng_knob_ctl(5, "SMOOTHING", #v5, 0, 100, 50, 1, 0) ? update();
+  sprintf(#v9, "%d%%", slider9);
+  ng_knob_ctl(9, "MIX", #v9, 0, 100, 100, 1, 0) ? update();
+  ng_row(3);
+  sprintf(#v6, "%d ms", slider6);
+  ng_knob_ctl(6, "ATTACK", #v6, 0, 100, 10, 1, 0) ? update();
+  sprintf(#v7, "%d ms", slider7);
+  ng_knob_ctl(7, "RELEASE", #v7, 10, 1000, 150, 1, 0) ? update();
+  ng_select_ctl(8, "LISTEN", "OUTPUT|REMOVED", 0) ? update();
+
+  ng_end();
+
+  ng_presets(); // the preset list (generated by tools/build_presets.py)

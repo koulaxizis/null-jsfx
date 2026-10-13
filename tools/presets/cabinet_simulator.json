@@ -1,0 +1,9 @@
+[
+  ["Clean Combo", {"Cabinet": "2x12 Combo", "Mic Position": 20, "Low Cut": 80}],
+  ["Bright Open Back", {"Cabinet": "1x12 Open Back", "Mic Position": 10, "Low Cut": 80}],
+  ["Rock Rhythm Stack", {"Cabinet": "4x12 Closed Back", "Mic Position": 30, "Low Cut": 90, "Output": -1}],
+  ["Dark Lead Edge Mic", {"Cabinet": "4x12 Closed Back", "Mic Position": 70, "Low Cut": 100, "Output": -1}],
+  ["Fuzz Tamer", {"Cabinet": "2x12 Combo", "Mic Position": 60, "Low Cut": 100}],
+  ["Bass DI Cab Blend", {"Cabinet": "1x15 Bass", "Mic Position": 40, "Low Cut": 40, "Mix": 50}],
+  ["Small Radio Lo-Fi", {"Cabinet": "Small Radio", "Mic Position": 20, "Low Cut": 250, "Output": 2}]
+]

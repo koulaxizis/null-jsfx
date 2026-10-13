@@ -1,0 +1,7 @@
+[
+  ["Vintage Dark", {"Amount": -70}],
+  ["Darken Harsh Take", {"Amount": -40}],
+  ["Mastering Dark Nudge", {"Amount": -15}],
+  ["Mastering Bright Nudge", {"Amount": 15}],
+  ["Brighten Dull Stem", {"Amount": 40}]
+]

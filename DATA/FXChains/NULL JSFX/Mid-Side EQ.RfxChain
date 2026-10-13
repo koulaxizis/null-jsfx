@@ -1,0 +1,30 @@
+BYPASS 0 0
+<JS null_jsfx/mid_side_matrix.jsfx ""
+  0 0 0 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+>
+FXID {007F328C-75D3-5B3A-B224-A0B46D050D32}
+WAK 0 0
+BYPASS 0 0
+<JS null_jsfx/parametric_eq.jsfx ""
+  120 2 1 0 0 400 -2 1 2 0 2500 1.5 0.8 2 0 10000 0 1 2 0 15000 0 1 2 0 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+>
+<JS_PINMAP
+  6AMAABwAAADoAwAAAgAAAAIAAAABAAAAAAAAAAEAAAAAAAAAHAAAAOgDAAACAAAAAgAAAAEAAAAAAAAAAAAAAAAAAAA=
+>
+FXID {13CF7264-3666-5296-B2A4-B78493B57B7A}
+WAK 0 0
+BYPASS 0 0
+<JS null_jsfx/parametric_eq.jsfx ""
+  150 0 0.7 4 0 548 0 1 2 0 2236 0 1 2 0 8000 3 1 1 0 15000 0 1 2 0 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+>
+<JS_PINMAP
+  6AMAABwAAADoAwAAAgAAAAIAAAACAAAAAAAAAAIAAAAAAAAAHAAAAOgDAAACAAAAAgAAAAAAAAAAAAAAAgAAAAAAAAA=
+>
+FXID {A68F8E50-577A-5D8C-B934-97424138FD0A}
+WAK 0 0
+BYPASS 0 0
+<JS null_jsfx/mid_side_matrix.jsfx ""
+  0 0 1 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+>
+FXID {CEDCEBB3-A184-5EA3-8E81-74197D7A8487}
+WAK 0 0

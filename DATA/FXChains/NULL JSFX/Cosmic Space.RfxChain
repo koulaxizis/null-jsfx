@@ -1,0 +1,40 @@
+BYPASS 0 0
+<JS null_jsfx/comb_filter.jsfx ""
+  400 0.4 1 4 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+>
+FXID {DE5EB87E-2D04-5ED3-932C-9F5E4F9CFF15}
+<PROGRAMENV 0 0
+  PARAMBASE 0.433677
+  LFO 1
+  LFOWT 0.1 0
+  AUDIOCTL 0
+  AUDIOCTLWT 1 1
+  LFOSHAPE 0
+  LFOSYNC 0 0 0
+  LFOSPEED 0.124573 0
+>
+WAK 0 0
+BYPASS 0 0
+<JS null_jsfx/granular_delay.jsfx ""
+  400 80 20 0 50 0 40 70 30 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+>
+FXID {8033DB26-D961-5761-B81B-9C1FB3C81699}
+WAK 0 0
+BYPASS 0 0
+<JS null_jsfx/reverb.jsfx ""
+  95 90 30 30 0 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+>
+FXID {7D954B87-2493-5DEF-88C7-737FE39DECCA}
+WAK 0 0
+BYPASS 0 0
+<JS null_jsfx/spectral_freeze.jsfx ""
+  0 300 40 0 70 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+>
+FXID {7A3752CD-AA91-5AE1-B732-3C3438A8231D}
+WAK 0 0
+BYPASS 0 0
+<JS null_jsfx/filter.jsfx ""
+  150 0.7 3 1 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+>
+FXID {7CDB2E66-3A46-53AF-811C-B8D2C16FAE7C}
+WAK 0 0

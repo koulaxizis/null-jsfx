@@ -1,0 +1,8 @@
+[
+  ["Two Band Low End", {"Bands": 2, "Crossover 1": 120}],
+  ["Three Band Mix", {"Bands": 3, "Crossover 1": 200, "Crossover 2": 3000}],
+  ["Drum Bus Three Band", {"Bands": 3, "Crossover 1": 100, "Crossover 2": 4000}],
+  ["Vocal Sibilance Band", {"Bands": 3, "Crossover 1": 300, "Crossover 2": 5000}],
+  ["Four Band Mastering", {"Bands": 4, "Crossover 1": 100, "Crossover 2": 1000, "Crossover 3": 6000}],
+  ["Merge Bands", {"Mode": "Merge"}]
+]

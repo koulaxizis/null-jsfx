@@ -16,13 +16,15 @@ static const NullKnobsUI::Control kControls[] = {
     { 3, NullKnobsUI::kKnob, "LOOKAHEAD", 0, -1, false },
     { 4, NullKnobsUI::kKnob, "OUTPUT", 0, -1, false },
     { 5, NullKnobsUI::kSelect, "LINK", 0, -1, false },
+    { 6, NullKnobsUI::kSelect, "DITHER", 1, -1, false },
+    { 7, NullKnobsUI::kSelect, "SHAPING", 1, -1, false },
 };
 
 class UIMaximizer : public NullKnobsUI
 {
 public:
     UIMaximizer()
-        : NullKnobsUI({ "MAXIMIZER", "ESSENTIALS", 480, 120, nullptr, 1, nullmaximizer::kSliders, nullmaximizer::kNumSliders,
+        : NullKnobsUI({ "MAXIMIZER", "ESSENTIALS", 480, 120, nullptr, 2, nullmaximizer::kUiSliders, nullmaximizer::kNumSliders,
                         kControls, sizeof(kControls) / sizeof(kControls[0]), true }) {}
 
 protected:
@@ -80,6 +82,13 @@ protected:
         meter(336.0f, 82.0f, 112.0f, 10.0f, "IN", nulljsfx::toDb(in), value(1) - value(0), -48.0f);
         grMeter(336.0f, 106.0f, 112.0f, 10.0f, "GR", gr, 24.0f);
         meter(336.0f, 130.0f, 112.0f, 10.0f, "OUT", nulljsfx::toDb(out), value(1) + std::fmin(value(4), 0.0f), -48.0f);
+        const int dither = int(std::lround(value(6)));
+        if (dither != 0)
+        {
+            const bool ns = value(7) >= 0.5f;
+            label(448.0f, 152.0f, ALIGN_RIGHT, 8.0f, 0.0f, theme::kMuted,
+                  dither == 1 ? (ns ? "16-BIT TPDF + NS" : "16-BIT TPDF") : (ns ? "24-BIT TPDF + NS" : "24-BIT TPDF"));
+        }
     }
 
     void formatValue(uint32_t param, float v, char* buf, size_t n) override

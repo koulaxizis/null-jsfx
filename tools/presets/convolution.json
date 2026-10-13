@@ -1,0 +1,10 @@
+[
+  ["Vocal Plate", {"Source": "Plate", "Pre-Delay": 30, "Low Cut": 200, "High Cut": 9000, "Mix": 20}],
+  ["Drum Room", {"Source": "Small Room", "Low Cut": 150, "High Cut": 10000, "Mix": 20}],
+  ["Large Live Room", {"Source": "Large Room", "Pre-Delay": 10, "Low Cut": 100, "High Cut": 11000, "Mix": 25}],
+  ["Concert Hall Strings", {"Source": "Hall", "Pre-Delay": 20, "Low Cut": 80, "High Cut": 10000, "Mix": 30}],
+  ["Short Vocal Ambience", {"Source": "Large Room", "Length": 40, "Pre-Delay": 15, "Low Cut": 250, "High Cut": 8000, "Mix": 15}],
+  ["Snare Plate", {"Source": "Plate", "Length": 60, "Pre-Delay": 5, "Low Cut": 300, "High Cut": 12000, "Mix": 25}],
+  ["Piano Hall", {"Source": "Hall", "Length": 80, "Pre-Delay": 15, "Low Cut": 60, "High Cut": 9000, "Mix": 22}],
+  ["Cathedral Wash", {"Source": "Cathedral", "Pre-Delay": 40, "Low Cut": 120, "High Cut": 7000, "Mix": 40}]
+]

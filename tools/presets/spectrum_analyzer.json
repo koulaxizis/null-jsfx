@@ -1,0 +1,10 @@
+[
+  ["Mix Overview", {"FFT Size": "4096", "Range": "80 dB", "Release": 300, "Peak Hold": "2 s"}],
+  ["Low End Detail", {"FFT Size": "16384", "Range": "80 dB", "Release": 500, "Peak Hold": "2 s"}],
+  ["Fast Transients", {"FFT Size": "1024", "Range": "80 dB", "Release": 100, "Peak Hold": "Off"}],
+  ["Resonance Hunting", {"FFT Size": "8192", "Slope": 3, "Release": 800, "Range": "100 dB", "Peak Hold": "Infinite"}],
+  ["Reference Compare", {"FFT Size": "8192", "Release": 1000, "Range": "80 dB", "Peak Hold": "Off"}],
+  ["Flat Test Signal", {"FFT Size": "8192", "Slope": 0, "Release": 0, "Range": "120 dB", "Peak Hold": "Infinite"}],
+  ["Side Channel Check", {"Channel": "Side", "Range": "100 dB", "Peak Hold": "2 s"}],
+  ["Side Solo Listen", {"Channel": "Side", "Monitor": "Solo"}]
+]

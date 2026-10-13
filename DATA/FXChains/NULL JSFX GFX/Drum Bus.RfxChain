@@ -1,0 +1,18 @@
+BYPASS 0 0
+<JS null_jsfx/gfx/transient_shaper_gfx.jsfx ""
+  4 -2 100 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+>
+FXID {5B862443-510B-51FE-8A09-B60D92EEE3BD}
+WAK 0 0
+BYPASS 0 0
+<JS null_jsfx/gfx/saturation_gfx.jsfx ""
+  25 0 50 0 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+>
+FXID {BEF7DE8E-D95F-5CE2-BC9D-85FE2DB3030C}
+WAK 0 0
+BYPASS 0 0
+<JS null_jsfx/gfx/dynamics_gfx.jsfx ""
+  0 -18 2.5 6 30 150 2 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+>
+FXID {975947A0-F458-5EC4-9C6E-7DEB689F4D76}
+WAK 0 0

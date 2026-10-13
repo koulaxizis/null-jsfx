@@ -1,0 +1,8 @@
+[
+  ["Metallic Bells", {"Rate": 0.1, "Carrier Freq": 800, "Depth": 0, "Mix": 60}],
+  ["Robot Voice", {"Rate": 0.1, "Carrier Freq": 110, "Depth": 0, "Mix": 70}],
+  ["Sci Fi Sweep", {"Rate": 0.5, "Carrier Freq": 600, "Depth": 80, "Mix": 60}],
+  ["Drum Clang", {"Rate": 3, "Carrier Freq": 1200, "Depth": 20, "Mix": 40}],
+  ["Subtle Shimmer", {"Rate": 0.3, "Carrier Freq": 2000, "Depth": 10, "Mix": 15}],
+  ["Alien Warble", {"Rate": 8, "Carrier Freq": 400, "Depth": 60, "Mix": 70}]
+]

@@ -1,0 +1,2 @@
+--tol 3.1e-5
+# why: 16-bit dither rounds to steps of 1/32768. The float parameter values move the limiter by about 1e-8, which now and then puts one sample on the next step, a 1 LSB = 3.05e-5 difference. With float-exact settings the dithered output matches exactly.

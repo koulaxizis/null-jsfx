@@ -124,6 +124,7 @@ desc:NULL JSFX shared GFX library
   (
     ng_dw = dw;
     ng_dh = dh;
+    ng_pre_h = dh;
     ng_s = min(gfx_w / dw, gfx_h / dh);
     ng_ox = floor((gfx_w - dw * ng_s) / 2);
     ng_oy = floor((gfx_h - dh * ng_s) / 2);
@@ -132,6 +133,10 @@ desc:NULL JSFX shared GFX library
     ng_lmb = mouse_cap & 1;
     ng_click = ng_lmb && !ng_prev_lmb;
     ng_now = time_precise();
+    // while the preset list is open it takes the clicks and the wheel
+    ng_pre_click = ng_click;
+    ng_pre_was = ng_pre_open;
+    ng_pre_open ? ( ng_click = 0; mouse_wheel = 0; );
   );
 
   // end a frame: remember the mouse button for click detection
@@ -141,7 +146,89 @@ desc:NULL JSFX shared GFX library
     mouse_wheel = 0;
   );
 
-  // header: logo, "NULL JSFX" above the plugin name, category on the right, divider below
+  // small chevron at design (x, y) pointing left (dir -1) or right (1)
+  function ng_arrow(x, y, dir)
+  (
+    gfx_line(X(x - dir * 1.5), Y(y - 3), X(x + dir * 1.5), Y(y), 1);
+    gfx_line(X(x + dir * 1.5), Y(y), X(x - dir * 1.5), Y(y + 3), 1);
+  );
+
+  // ---- factory presets ------------------------------------------------------------------
+  // tools/build_presets.py writes into every GFX plugin, at the end of @init, ng_preset_load(p),
+  // ng_preset_match(), ng_preset_name(p) and ng_presets() (setting ng_pre_n), and a call of
+  // ng_presets() at the end of @gfx. The header then shows the preset selector in place of the
+  // category: the arrows step through the presets, a click on the name opens the list. The
+  // name is the preset the sliders match, or CUSTOM. The C++ twin is in NullUI (presets).
+  ng_pre_n = 0; ng_pre_cur = -1; ng_pre_open = 0; ng_pre_req = -1;
+  NG_PRE_W = 150; NG_PRE_ROW = 15;
+
+  // a slider value matches a preset value (to 1e-4, relative above 1)
+  function ng_pre_eq(a, b) ( abs(a - b) <= 0.0001 * max(1, abs(b)); );
+
+  function ng_pre_box(x0) local(y0, hover)
+  (
+    ng_pre_x = x0; y0 = 21;
+    hover = mouse_x >= X(x0) && mouse_x < X(x0 + NG_PRE_W) && mouse_y >= Y(y0) && mouse_y < Y(y0 + 16);
+    ng_col(NG_BG, 1);
+    gfx_roundrect(X(x0), Y(y0), NG_PRE_W * ng_s, 16 * ng_s, 4 * ng_s, 1);
+    gfx_rect(X(x0) + 1, Y(y0) + 1, NG_PRE_W * ng_s - 1, 16 * ng_s - 1);
+    ng_col(hover || ng_pre_open ? 0x45433f : NG_BORDER, 1);
+    gfx_roundrect(X(x0), Y(y0), NG_PRE_W * ng_s, 16 * ng_s, 4 * ng_s, 1);
+    ng_font(1, 7.5, 1);
+    ng_col(ng_pre_cur >= 0 ? NG_TEXT : NG_MUTED, 1);
+    ng_txt(#ng_pre_name, x0 + NG_PRE_W / 2, y0 + 8, 1, 0.3);
+    ng_col(NG_MUTED, 1);
+    ng_arrow(x0 + 7, y0 + 8, -1);
+    ng_arrow(x0 + NG_PRE_W - 7, y0 + 8, 1);
+    hover && ng_click ? (
+      mouse_x < X(x0 + 22) ? ng_pre_req = ng_pre_cur < 0 ? ng_pre_n - 1 : (ng_pre_cur + ng_pre_n - 1) % ng_pre_n
+      : mouse_x >= X(x0 + NG_PRE_W - 22) ? ng_pre_req = (ng_pre_cur + 1) % ng_pre_n
+      : ng_pre_open = 1;
+      ng_click = 0;
+    );
+  );
+
+  // the open list, under the selector: one column, or more when it would not fit the height
+  function ng_pre_menu_begin() local(x0)
+  (
+    ng_pre_rows = max(1, min(ng_pre_n, floor((ng_pre_h - 54) / NG_PRE_ROW)));
+    ng_pre_cols = ceil(ng_pre_n / ng_pre_rows);
+    x0 = ng_pre_x - (ng_pre_cols - 1) * NG_PRE_W;
+    ng_pre_mx = x0;
+    ng_col(NG_CARD, 1);
+    gfx_roundrect(X(x0), Y(40), ng_pre_cols * NG_PRE_W * ng_s, (ng_pre_rows * NG_PRE_ROW + 8) * ng_s, 4 * ng_s, 1);
+    gfx_rect(X(x0) + 1, Y(40) + 1, ng_pre_cols * NG_PRE_W * ng_s - 1, (ng_pre_rows * NG_PRE_ROW + 8) * ng_s - 1);
+    ng_col(0x45433f, 1);
+    gfx_roundrect(X(x0), Y(40), ng_pre_cols * NG_PRE_W * ng_s, (ng_pre_rows * NG_PRE_ROW + 8) * ng_s, 4 * ng_s, 1);
+  );
+
+  function ng_pre_item(i, name) local(x, y, hover)
+  (
+    x = ng_pre_mx + floor(i / ng_pre_rows) * NG_PRE_W;
+    y = 44 + (i % ng_pre_rows) * NG_PRE_ROW;
+    hover = mouse_x >= X(x) && mouse_x < X(x + NG_PRE_W) && mouse_y >= Y(y) && mouse_y < Y(y + NG_PRE_ROW);
+    hover ? (
+      ng_col(0x2d2b28, 1);
+      gfx_rect(X(x + 2), Y(y), (NG_PRE_W - 4) * ng_s, NG_PRE_ROW * ng_s);
+    );
+    ng_font(1, 7.5, 1);
+    ng_col(i == ng_pre_cur || hover ? NG_TEXT : NG_MUTED, 1);
+    ng_txt(name, x + 12, y + NG_PRE_ROW / 2, 0, 0.3);
+    i == ng_pre_cur ? (
+      ng_col(NG_ACCENT, 1);
+      gfx_rect(X(x + 4), Y(y + NG_PRE_ROW / 2 - 1.5), 3 * ng_s, 3 * ng_s);
+    );
+    hover && ng_pre_was && ng_pre_click ? ng_pre_req = i;
+  );
+
+  // a click anywhere closes the list (on an item it also loads that preset)
+  function ng_pre_menu_end()
+  (
+    ng_pre_was && ng_pre_click ? ng_pre_open = 0;
+  );
+
+  // header: logo, "NULL JSFX" above the plugin name, category (or the preset selector) on the
+  // right, divider below
   function ng_header(name, category)
   (
     ng_logo(14, 10, 24);
@@ -154,9 +241,11 @@ desc:NULL JSFX shared GFX library
     ng_font(1, 7, 1);
     ng_col(NG_SLOGAN, 1);
     ng_txt("AUDIO WITHOUT NOISE", ng_dw - 14, 15, 2, 2);
-    ng_font(1, 8, 1);
-    ng_col(NG_MUTED, 1);
-    ng_txt(category, ng_dw - 14, 29, 2, 2);
+    ng_pre_n > 0 ? ng_pre_box(ng_dw - 14 - NG_PRE_W) : (
+      ng_font(1, 8, 1);
+      ng_col(NG_MUTED, 1);
+      ng_txt(category, ng_dw - 14, 29, 2, 2);
+    );
     ng_col(NG_BORDER, 1);
     gfx_line(X(0), Y(44), X(ng_dw), Y(44), 0);
   );
@@ -452,13 +541,6 @@ desc:NULL JSFX shared GFX library
     ng_txt(value, cx, ry + 77, 1, 0);
     nt = ng_input(ng_ctl_id, hover, tcur, 0, 1, log(def / lo) / lr, 0.01, 200, 0);
     nt != tcur ? ng_slider_set(idx, max(lo, min(hi, floor((lo * exp(nt * lr) - lo) / step + 0.5) * step + lo))) : 0;
-  );
-
-  // small chevron at design (x, y) pointing left (dir -1) or right (1)
-  function ng_arrow(x, y, dir)
-  (
-    gfx_line(X(x - dir * 1.5), Y(y - 3), X(x + dir * 1.5), Y(y), 1);
-    gfx_line(X(x + dir * 1.5), Y(y), X(x - dir * 1.5), Y(y + 3), 1);
   );
 
   // selector cell for an enum slider idx whose values run lo, lo+1, ...; options "A|B|C".

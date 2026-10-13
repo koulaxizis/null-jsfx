@@ -41,7 +41,7 @@ protected:
     const char* getMaker() const override    { return "NULL JSFX"; }
     const char* getHomePage() const override { return "https://nulljsfx.tech"; }
     const char* getLicense() const override  { return "MIT"; }
-    uint32_t getVersion() const override     { return d_version(2, 0, 0); }
+    uint32_t getVersion() const override     { return d_version(2, 1, 0); }
 
     virtual void valueChanged(uint32_t index, float v) = 0;
 

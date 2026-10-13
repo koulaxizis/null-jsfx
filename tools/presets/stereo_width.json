@@ -1,0 +1,9 @@
+[
+  ["Mono Check", {"Width": 0}],
+  ["Gentle Widen", {"Width": 115}],
+  ["Wide Pads", {"Width": 150}],
+  ["Narrow Overheads", {"Width": 70}],
+  ["Master Mono Lows", {"Width": 100, "Crossover": 120}],
+  ["Mono Bass Wide Top", {"Width": 130, "Crossover": 150}],
+  ["Extra Wide Synths", {"Width": 180, "Crossover": 250}]
+]

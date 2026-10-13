@@ -1,0 +1,10 @@
+[
+  ["Small Vocal Room", {"Room Size": 35, "Decay": 30, "Damping": 40, "Mix": 18}],
+  ["Tight Ambience", {"Room Size": 20, "Decay": 15, "Damping": 50, "Mix": 12}],
+  ["Drum Room", {"Room Size": 50, "Decay": 35, "Damping": 30, "Mix": 20}],
+  ["Bright Vocal Space", {"Room Size": 60, "Decay": 55, "Damping": 5, "Mix": 22}],
+  ["Snare Splash", {"Room Size": 70, "Decay": 60, "Damping": 20, "Mix": 18}],
+  ["Large Hall", {"Room Size": 100, "Decay": 80, "Damping": 35, "Mix": 25}],
+  ["Dark Pad Wash", {"Room Size": 90, "Decay": 92, "Damping": 80, "Mix": 40}],
+  ["Send Return Full Wet", {"Room Size": 80, "Decay": 70, "Damping": 40, "Mix": 100}]
+]

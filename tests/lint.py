@@ -11,7 +11,9 @@ Header (first lines of every file, in this order):
 
 followed by a blank line, the sliders, a blank line and the four pins
 (in_pin:Left, in_pin:Right, out_pin:Left, out_pin:Right); sidechain plugins add
-in_pin:Sidechain Left and in_pin:Sidechain Right after the two main inputs.
+in_pin:Sidechain Left and in_pin:Sidechain Right after the two main inputs. Multiband routing
+plugins (Band Splitter) use eight pins each way instead: in_pin:Left, in_pin:Right, then
+in_pin:Band 2 Left ... in_pin:Band 4 Right, and out_pin:Band 1 Left ... out_pin:Band 4 Right.
 
 Usage: lint.py file.jsfx [...]   Exit status 1 if any file has an error.
 """
@@ -25,6 +27,10 @@ CATEGORIES = ("One Slider", "Essentials", "Advanced")
 PINS = ["in_pin:Left", "in_pin:Right", "out_pin:Left", "out_pin:Right"]
 SIDECHAIN_PINS = ["in_pin:Left", "in_pin:Right", "in_pin:Sidechain Left", "in_pin:Sidechain Right",
                   "out_pin:Left", "out_pin:Right"]
+# eight channels each way: a stereo input (or band 1) plus bands 2-4 in, four stereo bands out
+BAND_PINS = (["in_pin:Left", "in_pin:Right"]
+             + [f"in_pin:Band {b} {s}" for b in (2, 3, 4) for s in ("Left", "Right")]
+             + [f"out_pin:Band {b} {s}" for b in (1, 2, 3, 4) for s in ("Left", "Right")])
 
 # EEL2 built-ins and keywords that may be read without being assigned first.
 BUILTINS = set("""
@@ -77,9 +83,10 @@ def check(path):
     if category in ("Essentials", "Advanced") and len(sliders) == 1:
         errors.append(f"{category} plugin has only one slider; should it be One Slider?")
     pins = [l.strip() for l in header if l.startswith(("in_pin:", "out_pin:"))]
-    if pins not in (PINS, SIDECHAIN_PINS):
+    if pins not in (PINS, SIDECHAIN_PINS, BAND_PINS):
         errors.append("pins must be in_pin:Left, in_pin:Right, out_pin:Left, out_pin:Right "
-                      "(plus in_pin:Sidechain Left/Right after the main inputs for sidechain plugins)")
+                      "(plus in_pin:Sidechain Left/Right after the main inputs for sidechain plugins, "
+                      "or the eight-channel band layout, see the docstring)")
 
     # --- code ---
     code = strip_comments("\n".join(lines[header_end:]))

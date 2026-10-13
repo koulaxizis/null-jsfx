@@ -1,0 +1,20 @@
+BYPASS 0 0
+<JS null_jsfx/stereo_width.jsfx ""
+  90 100 0 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+>
+FXID {7143D536-1E5A-5BD5-A74B-4E9DD00286DC}
+<PROGRAMENV 0 0
+  PARAMBASE 0.45
+  LFO 0
+  LFOWT 1 1
+  AUDIOCTL 1
+  AUDIOCTLWT 0.45 1
+  CHAN 0
+  STEREO 1
+  RMS 5 250
+  DBLO -48
+  DBHI -12
+  X2 0.5
+  Y2 0.5
+>
+WAK 0 0

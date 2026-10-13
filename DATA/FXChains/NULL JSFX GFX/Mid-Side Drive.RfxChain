@@ -1,0 +1,72 @@
+BYPASS 0 0
+<JS null_jsfx/gfx/comb_filter_gfx.jsfx ""
+  500 0.2 0 0 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+>
+FXID {619ACBD4-A579-57E0-B83C-61C78AE326C2}
+<PROGRAMENV 0 0
+  PARAMBASE 0.46598
+  LFO 1
+  LFOWT 0.2 0
+  AUDIOCTL 0
+  AUDIOCTLWT 1 1
+  LFOSHAPE 4
+  LFOSYNC 0 0 0
+  LFOSPEED 0.124573 0
+>
+WAK 0 0
+BYPASS 0 0
+<JS null_jsfx/gfx/mid_side_matrix_gfx.jsfx ""
+  0 0 0 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+>
+FXID {F62063F6-7149-574C-BF00-83BD38400766}
+WAK 0 0
+BYPASS 0 0
+<JS null_jsfx/gfx/saturation_gfx.jsfx ""
+  35 0 100 1 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+>
+<JS_PINMAP
+  6AMAABwAAADoAwAAAgAAAAIAAAABAAAAAAAAAAEAAAAAAAAAHAAAAOgDAAACAAAAAgAAAAEAAAAAAAAAAAAAAAAAAAA=
+>
+FXID {116AE38F-848F-5342-98EF-F990F6F43D49}
+WAK 0 0
+BYPASS 0 0
+<JS null_jsfx/gfx/crunch_gfx.jsfx ""
+  40 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+>
+<JS_PINMAP
+  6AMAABwAAADoAwAAAgAAAAIAAAACAAAAAAAAAAIAAAAAAAAAHAAAAOgDAAACAAAAAgAAAAAAAAAAAAAAAgAAAAAAAAA=
+>
+FXID {7544933E-6A98-58B4-861B-EA214EF73EDA}
+<PROGRAMENV 0 0
+  PARAMBASE 0.4
+  LFO 0
+  LFOWT 1 1
+  AUDIOCTL 1
+  AUDIOCTLWT 0.3 1
+  CHAN 0
+  STEREO 1
+  RMS 5 150
+  DBLO -48
+  DBHI -12
+  X2 0.5
+  Y2 0.5
+>
+WAK 0 0
+BYPASS 0 0
+<JS null_jsfx/gfx/mid_side_matrix_gfx.jsfx ""
+  0 0 1 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+>
+FXID {E85739EA-B8C9-569A-A267-6F45EE4840C5}
+WAK 0 0
+BYPASS 0 0
+<JS null_jsfx/gfx/parametric_eq_gfx.jsfx ""
+  80 0 0.7 4 0 548 0 1 2 0 2236 0 1 2 0 9000 0 0.7 3 0 15000 0 1 2 0 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+>
+FXID {65329780-E6F2-5FC2-9014-78489A182D15}
+WAK 0 0
+BYPASS 0 0
+<JS null_jsfx/gfx/dynamics_gfx.jsfx ""
+  0 -18 3 6 10 120 2 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+>
+FXID {9644DC6C-7F86-5688-9968-5C1A60E0501B}
+WAK 0 0

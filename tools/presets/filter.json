@@ -1,0 +1,9 @@
+[
+  ["Rumble Cut", {"Mode": "High Pass", "Cutoff": 80, "Resonance": 0.7}],
+  ["Vocal Clean Up", {"Mode": "High Pass", "Cutoff": 120, "Resonance": 0.7}],
+  ["Warm Top Roll-Off", {"Mode": "Low Pass", "Cutoff": 8000, "Resonance": 0.7}],
+  ["Next Room Muffle", {"Mode": "Low Pass", "Cutoff": 400, "Resonance": 0.7}],
+  ["Telephone Voice", {"Mode": "Band Pass", "Cutoff": 1200, "Resonance": 1.2, "Gain": 3}],
+  ["Resonant Sweep Start", {"Mode": "Low Pass", "Cutoff": 600, "Resonance": 5, "Gain": -4}],
+  ["Resonance Notch", {"Mode": "Notch", "Cutoff": 1000, "Resonance": 8}]
+]

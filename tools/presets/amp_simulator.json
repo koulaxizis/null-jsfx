@@ -1,0 +1,10 @@
+[
+  ["Sparkling Clean", {"Model": "Clean", "Gain": 3.5, "Bass": 4.5, "Mid": 4, "Treble": 6.5, "Presence": 6, "Bright": "On", "Sag": 20}],
+  ["Warm Jazz Clean", {"Model": "Clean", "Gain": 3, "Bass": 6, "Mid": 5.5, "Treble": 3.5, "Presence": 3.5, "Sag": 25}],
+  ["Blues Edge", {"Model": "Crunch", "Gain": 3.5, "Bass": 5, "Mid": 6.5, "Treble": 5.5, "Presence": 5, "Sag": 45}],
+  ["Classic Rock Crunch", {"Model": "Crunch", "Gain": 6.5, "Bass": 5, "Mid": 6, "Treble": 6, "Presence": 6, "Master": 6, "Sag": 30}],
+  ["Tight Metal Rhythm", {"Model": "Lead", "Gain": 7, "Bass": 6, "Mid": 3.5, "Treble": 6.5, "Presence": 6.5, "Sag": 10}],
+  ["Singing Lead", {"Model": "Lead", "Gain": 8, "Bass": 5, "Mid": 7, "Treble": 5, "Presence": 5.5, "Sag": 40}],
+  ["Round Bass", {"Model": "Bass", "Gain": 3, "Bass": 6.5, "Mid": 4.5, "Treble": 4.5, "Presence": 4, "Sag": 35}],
+  ["Growling Bass", {"Model": "Bass", "Gain": 7, "Bass": 5.5, "Mid": 6.5, "Treble": 6, "Presence": 6, "Sag": 25}]
+]

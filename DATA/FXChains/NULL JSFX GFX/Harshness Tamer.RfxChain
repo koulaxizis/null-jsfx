@@ -1,0 +1,32 @@
+BYPASS 0 0
+<JS null_jsfx/gfx/resonance_suppressor_gfx.jsfx ""
+  4 50 50 10 120 1000 12000 0 0 100 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+>
+FXID {1A54964A-D162-58EB-A13F-3DCA86FA5364}
+WAK 0 0
+BYPASS 0 0
+<JS null_jsfx/gfx/dynamic_eq_gfx.jsfx ""
+  200 0 1 -12 1000 0 1 -12 3500 -4 1 -24 6000 0 1 -12 1 100 0 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+>
+FXID {B9FECA0F-BA1A-594B-8CA6-99A8E4FD2228}
+<PROGRAMENV 9 0
+  PARAMBASE 0.333333
+  LFO 0
+  LFOWT 1 1
+  AUDIOCTL 0
+  AUDIOCTLWT 1 1
+  PLINK -0.6 0:-1 0 0.1
+>
+WAK 0 0
+BYPASS 0 0
+<JS null_jsfx/gfx/deesser_gfx.jsfx ""
+  8000 -4 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+>
+FXID {F24DA9E3-820D-5012-B95F-720EDDC666B2}
+WAK 0 0
+BYPASS 0 0
+<JS null_jsfx/gfx/tilt_gfx.jsfx ""
+  -5 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+>
+FXID {EFB3AE3C-9827-5E2E-BD6C-78DF6AA11E25}
+WAK 0 0

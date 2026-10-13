@@ -6,13 +6,15 @@
 
 #pragma once
 
-#include "NullPlugin.hpp"
+#include "NullSliders.hpp"
 
 namespace nullmaximizer {
 
 static const char* const kLinkOptions[] = { "OFF", "ON" };
+static const char* const kDitherOptions[] = { "OFF", "16-BIT", "24-BIT" };
+static const char* const kDitherShort[] = { "OFF", "16 BIT", "24 BIT" };
 
-// slider1..slider6 of maximizer.jsfx, in order
+// slider1..slider8 of maximizer.jsfx, in order
 static const DISTRHO::SliderInfo kSliders[] = {
     { "Input Gain", "input", -12.0f, 12.0f, 0.0f, "dB", 0.1f },
     { "Ceiling", "ceiling", -3.0f, -0.1f, -0.3f, "dB", 0.1f },
@@ -20,7 +22,16 @@ static const DISTRHO::SliderInfo kSliders[] = {
     { "Lookahead", "lookahead", 0.0f, 5.0f, 2.0f, "ms", 1.0f },
     { "Output Gain", "output", -12.0f, 0.0f, 0.0f, "dB", 0.1f },
     { "Stereo Link", "link", 0.0f, 1.0f, 1.0f, "", 1.0f, kLinkOptions },
+    { "Dither", "dither", 0.0f, 2.0f, 0.0f, "", 1.0f, kDitherOptions },
+    { "Noise Shaping", "shaping", 0.0f, 1.0f, 0.0f, "", 1.0f, kLinkOptions },
 };
 static constexpr uint32_t kNumSliders = sizeof(kSliders) / sizeof(kSliders[0]);
+
+// the same sliders with the selector's short dither names, for the interface
+static const DISTRHO::SliderInfo kUiSliders[] = {
+    kSliders[0], kSliders[1], kSliders[2], kSliders[3], kSliders[4], kSliders[5],
+    { "Dither", "dither", 0.0f, 2.0f, 0.0f, "", 1.0f, kDitherShort },
+    kSliders[7],
+};
 
 } // namespace nullmaximizer

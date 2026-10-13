@@ -1,0 +1,10 @@
+[
+  ["Gentle Bus Pump", {"Shape": "Pump", "Rate": "1/4", "Depth": 35, "Smooth": 5}],
+  ["Hard Dance Pump", {"Shape": "Pump Hard", "Rate": "1/4", "Depth": 100, "Smooth": 2}],
+  ["Half Time Pump", {"Shape": "Half-time Pump", "Rate": "1/4", "Depth": 80}],
+  ["Trance Gate Eighths", {"Shape": "Trance 1/8", "Rate": "1/4", "Depth": 100, "Smooth": 3}],
+  ["Sixteenth Gate", {"Shape": "Gate 1/16", "Rate": "1/4", "Depth": 100, "Smooth": 2}],
+  ["Sine Eighth Tremolo", {"Shape": "Sine", "Rate": "1/8", "Depth": 50, "Smooth": 0}],
+  ["Bar Long Swell", {"Shape": "Saw Up", "Rate": "1/1", "Depth": 100, "Smooth": 5}],
+  ["Stutter Fill", {"Shape": "Stutter", "Rate": "1/2", "Depth": 100, "Smooth": 1}]
+]

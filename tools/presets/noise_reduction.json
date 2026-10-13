@@ -1,0 +1,9 @@
+[
+  ["Gentle Hiss Auto", {"Auto": "On", "Reduction": 9, "Threshold": 3, "Smoothing": 60, "Attack": 10, "Release": 200}],
+  ["Dialogue Room Tone", {"Auto": "On", "Reduction": 15, "Threshold": 4, "Smoothing": 50, "Attack": 5, "Release": 120}],
+  ["Hum Bed Reducer", {"Auto": "On", "Reduction": 20, "Threshold": 5, "Smoothing": 30, "Attack": 10, "Release": 200}],
+  ["Music Hiss Subtle", {"Auto": "Off", "Reduction": 6, "Threshold": 2, "Smoothing": 70, "Attack": 15, "Release": 300}],
+  ["Fast Speech Profile", {"Auto": "Off", "Reduction": 18, "Threshold": 4, "Smoothing": 40, "Attack": 2, "Release": 80}],
+  ["Heavy Noise Cleanup", {"Auto": "Off", "Reduction": 30, "Threshold": 6, "Smoothing": 70, "Attack": 5, "Release": 250}],
+  ["Listen Removed Noise", {"Auto": "On", "Listen": "Removed noise"}]
+]

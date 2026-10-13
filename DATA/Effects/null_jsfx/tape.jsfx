@@ -1,0 +1,182 @@
+desc:NULL Tape
+author: Christos Koulaxizis
+tags: tape saturation analog warmth head bump wow flutter hiss machine
+//category: Essentials
+//NULL JSFX v2.0 • https://nulljsfx.tech • MIT License
+
+slider1:3<0,24,0.1>Drive (dB)
+slider2:1<0,2,1{7.5 ips,15 ips,30 ips}>Speed
+slider3:3<0,9,0.1>Head Bump (dB)
+slider4:10<0,100,1>Wow (%)
+slider5:10<0,100,1>Flutter (%)
+slider6:10<0,100,1>Hiss (%)
+slider7:0<-12,12,0.1>Output (dB)
+slider8:100<0,100,1>Mix (%)
+
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
+
+@init
+  // A tape machine in one line: the transport (wow and flutter as a modulated fractional delay
+  // around a fixed 3 ms centre, cubic interpolation), the record path (pre-emphasis, Drive into
+  // an asymmetric soft saturation with a little memory of its own error, so rising and falling
+  // edges bend differently like a hysteresis loop, then the matching de-emphasis) and the
+  // playback head (a low cut and the head bump that move with Speed, hiss, and the high-frequency
+  // loss of the tape speed). Drive is level-matched at -12 dBFS, so it adds colour, not volume.
+  // The dry signal is read from the same line at exactly the 3 ms centre (plug-in delay
+  // compensation), so dry and wet stay aligned at any Mix.
+  buf_size = 1024;
+  while (buf_size < ceil(0.008 * srate)) ( buf_size *= 2; );
+  base = floor(0.003 * srate);
+  pdc_bot_ch = 0;
+  pdc_top_ch = 2;
+  pdc_delay = base;
+  buf_l = 0;
+  buf_r = buf_size;
+  freembuf(buf_r + buf_size);
+  memset(buf_l, 0, 2 * buf_size);
+  wpos = 0;
+  wow_p1 = 0; wow_p2 = 0.3; flt_p1 = 0; flt_p2 = 0.6;
+  seed_l = 13579;
+  seed_r = 97531;
+  sat_b = 0.1;                      // bias of the curve: even harmonics
+  sat_a = 0.2;                      // memory of the saturator's own error
+  sat_u_l = sat_y_l = sat_u_r = sat_y_r = 0;
+
+  function soft(v) ( v / sqrt(1 + v * v); );
+  function sat_curve(v) ( soft(v + sat_b) - soft(sat_b); );
+
+  // 4-point cubic (Hermite) read at pos (fractional samples behind wpos) from line b
+  function tap(b, pos) local(rp, i, fr, xm1, x0, x1, x2, c1, c2, c3)
+  (
+    rp = wpos - pos;
+    rp < 0 ? rp += buf_size;
+    i = floor(rp);
+    fr = rp - i;
+    xm1 = b[(i - 1) & (buf_size - 1)];
+    x0 = b[i];
+    x1 = b[(i + 1) & (buf_size - 1)];
+    x2 = b[(i + 2) & (buf_size - 1)];
+    c1 = 0.5 * (x1 - xm1);
+    c2 = xm1 - 2.5 * x0 + 2 * x1 - 0.5 * x2;
+    c3 = 0.5 * (x2 - xm1) + 1.5 * (x0 - x1);
+    ((c3 * fr + c2) * fr + c1) * fr + x0;
+  );
+
+  // RBJ biquads (normalised), transposed direct form II
+  function bq_lp(f, q) local(w, al) instance(b0, b1, b2, a1, a2)
+  (
+    w = 2 * $pi * min(f, 0.45 * srate) / srate; al = sin(w) / (2 * q);
+    b0 = (1 - cos(w)) / 2 / (1 + al); b1 = (1 - cos(w)) / (1 + al); b2 = b0;
+    a1 = -2 * cos(w) / (1 + al); a2 = (1 - al) / (1 + al);
+  );
+  function bq_hp(f, q) local(w, al) instance(b0, b1, b2, a1, a2)
+  (
+    w = 2 * $pi * f / srate; al = sin(w) / (2 * q);
+    b0 = (1 + cos(w)) / 2 / (1 + al); b1 = -(1 + cos(w)) / (1 + al); b2 = b0;
+    a1 = -2 * cos(w) / (1 + al); a2 = (1 - al) / (1 + al);
+  );
+  function bq_peak(f, q, db) local(w, al, A) instance(b0, b1, b2, a1, a2)
+  (
+    w = 2 * $pi * f / srate; al = sin(w) / (2 * q); A = 10 ^ (db / 40);
+    b0 = (1 + al * A) / (1 + al / A); b1 = -2 * cos(w) / (1 + al / A); b2 = (1 - al * A) / (1 + al / A);
+    a1 = b1; a2 = (1 - al / A) / (1 + al / A);
+  );
+  function bq(x) local(y) instance(b0, b1, b2, a1, a2, z1, z2)
+  (
+    y = b0 * x + z1;
+    z1 = b1 * x - a1 * y + z2;
+    z2 = b2 * x - a2 * y;
+    abs(z1) < 0.000000000000000000001 ? z1 = 0;
+    abs(z2) < 0.000000000000000000001 ? z2 = 0;
+    y;
+  );
+
+  // one-pole high shelf (+6 dB above fc) and its exact inverse: the tape (pre/de-)emphasis
+  function emph_set(fc) local(wc, k, g)
+  (
+    g = 2;
+    wc = 2 * $pi * fc;
+    k = wc / tan($pi * fc / srate);
+    em_b0 = (g * k + wc) / (k + wc);
+    em_b1 = (wc - g * k) / (k + wc);
+    em_a1 = (wc - k) / (k + wc);
+  );
+  function pre(x) local(y) instance(x1, y1)
+  (
+    y = em_b0 * x + em_b1 * x1 - em_a1 * y1;
+    x1 = x; y1 = y;
+    abs(y1) < 0.000000000000000000001 ? y1 = 0;
+    y;
+  );
+  function de(x) local(y) instance(x1, y1)
+  (
+    y = (x + em_a1 * x1 - em_b1 * y1) / em_b0;
+    x1 = x; y1 = y;
+    abs(y1) < 0.000000000000000000001 ? y1 = 0;
+    y;
+  );
+
+@slider
+  drive = 10 ^ (slider1 / 20);
+  speed = slider2;
+  bump_db = slider3;
+  wow = slider4 / 100;
+  flutter = slider5 / 100;
+  hiss = slider6 / 100 * 0.02;
+  out_gain = 10 ^ (slider7 / 20);
+  mix = slider8 / 100;
+
+  // Speed: head bump frequency, high-frequency loss and emphasis corner scale with the tape
+  bump_f = speed == 0 ? 45 : speed == 1 ? 70 : 110;
+  hf_f = speed == 0 ? 9000 : speed == 1 ? 15000 : 22000;
+  emph_set(speed == 0 ? 2500 : speed == 1 ? 3500 : 5000);
+  hp_l.bq_hp(bump_f * 0.4, 0.6); hp_r.bq_hp(bump_f * 0.4, 0.6);
+  pk_l.bq_peak(bump_f, 1, bump_db); pk_r.bq_peak(bump_f, 1, bump_db);
+  lp_l.bq_lp(hf_f, 0.6); lp_r.bq_lp(hf_f, 0.6);
+
+  // level match at -12 dBFS (0.25): quiet signals keep their level at 0 dB Drive, and a
+  // -12 dBFS tone keeps its level at any Drive
+  sat_comp = sat_curve(0.25) / sat_curve(0.25 * drive) / ((1 + sat_b * sat_b) ^ -1.5);
+
+  wow_depth = wow * 0.002 * srate / 1.31;       // up to 2 ms
+  flt_depth = flutter * 0.0001 * srate / 1.4;   // up to 0.1 ms
+
+@sample
+  // transport: two slow and two fast sines (one tape, so both channels move together)
+  wow_p1 += 0.55 / srate; wow_p1 >= 1 ? wow_p1 -= 1;
+  wow_p2 += 1.37 / srate; wow_p2 >= 1 ? wow_p2 -= 1;
+  flt_p1 += 6.9 / srate; flt_p1 >= 1 ? flt_p1 -= 1;
+  flt_p2 += 11.3 / srate; flt_p2 >= 1 ? flt_p2 -= 1;
+  dly = base + wow_depth * (sin(2 * $pi * wow_p1) + 0.31 * sin(2 * $pi * wow_p2))
+             + flt_depth * (sin(2 * $pi * flt_p1) + 0.4 * sin(2 * $pi * flt_p2));
+  x_l = tap(buf_l, dly);
+  x_r = tap(buf_r, dly);
+  dry_l = buf_l[(wpos - base) & (buf_size - 1)];
+  dry_r = buf_r[(wpos - base) & (buf_size - 1)];
+  buf_l[wpos] = spl0;
+  buf_r[wpos] = spl1;
+  wpos = (wpos + 1) & (buf_size - 1);
+
+  // record: pre-emphasis, Drive into the saturation with memory, de-emphasis
+  u_l = pre_l.pre(x_l) * drive;
+  u_r = pre_r.pre(x_r) * drive;
+  y_l = sat_curve(u_l + sat_a * (sat_y_l - sat_u_l));
+  y_r = sat_curve(u_r + sat_a * (sat_y_r - sat_u_r));
+  sat_u_l = u_l; sat_y_l = y_l;
+  sat_u_r = u_r; sat_y_r = y_r;
+  w_l = de_l.de(y_l * sat_comp);
+  w_r = de_r.de(y_r * sat_comp);
+
+  // playback: low cut and head bump, hiss (exact Park-Miller), high-frequency loss
+  w_l = pk_l.bq(hp_l.bq(w_l));
+  w_r = pk_r.bq(hp_r.bq(w_r));
+  seed_l *= 16807; seed_l -= floor(seed_l / 2147483647) * 2147483647;
+  seed_r *= 16807; seed_r -= floor(seed_r / 2147483647) * 2147483647;
+  w_l = lp_l.bq(w_l + (seed_l / 1073741824 - 1) * hiss);
+  w_r = lp_r.bq(w_r + (seed_r / 1073741824 - 1) * hiss);
+
+  spl0 = (dry_l * (1 - mix) + w_l * mix) * out_gain;
+  spl1 = (dry_r * (1 - mix) + w_r * mix) * out_gain;

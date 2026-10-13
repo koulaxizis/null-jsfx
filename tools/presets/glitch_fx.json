@@ -1,0 +1,10 @@
+[
+  ["Beat Repeat", {"Rate": 2, "Stutter Length": 16, "Stutter": "ON", "Mix": 70}],
+  ["Gated Stutter", {"Rate": 4, "Stutter Length": 32, "Stutter": "ON", "Gate": "ON", "Gate Depth": 80, "Mix": 60}],
+  ["Reverse Glitch", {"Rate": 2, "Stutter Length": 8, "Stutter": "ON", "Reverse": "ON", "Reverse Chance": 50, "Mix": 60}],
+  ["Tape Stop Hits", {"Rate": 1, "Stutter Length": 4, "Stutter": "ON", "Tape Stop": "ON", "Tape Stop Time": 400, "Mix": 70}],
+  ["Granular Buzz", {"Rate": 8, "Stutter Length": 16, "Stutter": "ON", "Granular": "ON", "Grain Size": 40, "Mix": 50}],
+  ["Live Reverse Chunks", {"Rate": 2, "Stutter Length": 4, "Stutter": "OFF", "Reverse": "ON", "Reverse Chance": 40, "Mix": 100}],
+  ["Granular Vocal Haze", {"Stutter": "OFF", "Granular": "ON", "Grain Size": 120, "Mix": 50}],
+  ["Chopped Pad Gate", {"Stutter Length": 16, "Stutter": "OFF", "Gate": "ON", "Gate Depth": 100, "Mix": 100}]
+]

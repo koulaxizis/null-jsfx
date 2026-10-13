@@ -1,0 +1,7 @@
+[
+  ["Mix Bus Gentle", {"Amount": 15}],
+  ["Bus Glue", {"Amount": 30}],
+  ["Vocal Leveler", {"Amount": 40}],
+  ["Bass Even", {"Amount": 50}],
+  ["Room Mic Squash", {"Amount": 85}]
+]

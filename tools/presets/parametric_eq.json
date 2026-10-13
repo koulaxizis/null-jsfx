@@ -1,0 +1,9 @@
+[
+  ["Vocal Clarity", {"Low Freq": 80, "Low Q": 0.7, "Low Type": "High Pass", "Low Mid Freq": 350, "Low Mid Gain": -2, "Low Mid Q": 1.2, "Mid High Freq": 3000, "Mid High Gain": 2, "Mid High Q": 1.0, "High Freq": 10000, "High Gain": 2, "High Q": 0.7, "High Type": "High Shelf"}],
+  ["Kick Punch", {"Low Freq": 60, "Low Gain": 3, "Low Q": 1.2, "Low Mid Freq": 400, "Low Mid Gain": -4, "Low Mid Q": 1.5, "Mid High Freq": 3500, "Mid High Gain": 3, "Mid High Q": 1.4}],
+  ["Snare Body And Snap", {"Low Freq": 200, "Low Gain": 2, "Low Q": 1.2, "Low Mid Freq": 800, "Low Mid Gain": -3, "Low Mid Q": 4.0, "Mid High Freq": 4000, "Mid High Gain": 2.5, "Mid High Q": 1.0, "High Freq": 10000, "High Gain": 1.5, "High Q": 0.7, "High Type": "High Shelf"}],
+  ["Acoustic Guitar", {"Low Freq": 90, "Low Q": 0.7, "Low Type": "High Pass", "Low Mid Freq": 300, "Low Mid Gain": -3, "Low Mid Q": 1.0, "Mid High Freq": 2500, "Mid High Gain": 1.5, "Mid High Q": 1.0, "High Freq": 12000, "High Gain": 2, "High Q": 0.7, "High Type": "High Shelf"}],
+  ["Bass Guitar Definition", {"Low Freq": 80, "Low Gain": 2, "Low Q": 1.0, "Low Mid Freq": 500, "Low Mid Gain": -2, "Low Mid Q": 1.2, "Mid High Freq": 1200, "Mid High Gain": 2.5, "Mid High Q": 1.2, "High Freq": 6000, "High Q": 0.7, "High Type": "Low Pass"}],
+  ["Mix Bus Air", {"Low Freq": 25, "Low Q": 0.7, "Low Type": "High Pass", "Low Mid Freq": 300, "Low Mid Gain": -1, "Low Mid Q": 0.8, "High Freq": 12000, "High Gain": 1.5, "High Q": 0.7, "High Type": "High Shelf"}],
+  ["Telephone Voice", {"Low Freq": 300, "Low Q": 0.7, "Low Type": "High Pass", "Low Mid Freq": 1000, "Low Mid Gain": 3, "Low Mid Q": 0.8, "Mid High Freq": 3400, "Mid High Q": 0.7, "Mid High Type": "Low Pass", "High Freq": 5000, "High Q": 0.7, "High Type": "Low Pass"}]
+]

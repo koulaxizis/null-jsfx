@@ -6,6 +6,9 @@
  * Port of DATA/Effects/null_jsfx/delay.jsfx, computed in double like EEL2: a stereo delay line
  * (up to 2.1 s) with feedback (up to 95%) and a dry/wet mix. With Tempo Sync the time is a
  * 1/4, 1/8, 1/16 or 1/32 note at the host tempo, re-read every block as the JSFX's @block does.
+ * Mode Ping-Pong feeds the mono input to the left line and cross-feeds the lines. Inside the
+ * feedback loop each repeat passes a one-pole Low Cut and High Cut (off at 20 Hz / 20 kHz) and a
+ * soft saturation (Drive, off at 0%).
  */
 
 #pragma once
@@ -25,6 +28,13 @@ inline double delayMs(double timeMs, bool sync, int subdivision, double tempo) n
     return timeMs;
 }
 
+// soft saturation: a tanh-like curve, slope 1 at 0, flat at |x| = 3 (the JSFX's dl_sat)
+inline double sat(double x) noexcept
+{
+    x = std::max(-3.0, std::min(3.0, x));
+    return x * (27.0 + x * x) / (27.0 + 9.0 * x * x);
+}
+
 class DelayProcessor {
 public:
     // @init: buffers for 2.1 s, cleared
@@ -36,17 +46,26 @@ public:
         fR.assign(size_t(fSize), 0.0);
         fW = 0;
         fDelay = 1;
+        fLcL = fLcR = fHcL = fHcR = 0.0;
         updateTime();
     }
 
     // @slider
-    void setParams(double timeMs, double feedbackPct, double mixPct, bool sync, int subdivision)
+    void setParams(double timeMs, double feedbackPct, double mixPct, bool sync, int subdivision, bool pingPong,
+                   double lowCutHz, double highCutHz, double drivePct)
     {
         fTimeMs = timeMs;
         fSubdivision = subdivision;
         fFeedback = feedbackPct / 100.0 * 0.95;
         fMix = mixPct / 100.0;
         fSync = sync;
+        fPing = pingPong;
+        fLcOn = lowCutHz > 20.0;
+        fLcA = 1.0 - std::exp(-2.0 * 3.141592653589793 * lowCutHz / fSr);
+        fHcOn = highCutHz < 20000.0;
+        fHcA = 1.0 - std::exp(-2.0 * 3.141592653589793 * highCutHz / fSr);
+        fDrvOn = drivePct > 0.0;
+        fDrvG = 1.0 + drivePct / 100.0 * 3.0;
         updateTime();
     }
 
@@ -65,9 +84,44 @@ public:
             int r = fW - fDelay;
             if (r < 0)
                 r += fSize;
-            const double el = fL[size_t(r)], er = fR[size_t(r)];
-            fL[size_t(fW)] = xl + el * fFeedback;
-            fR[size_t(fW)] = xr + er * fFeedback;
+            double el = fL[size_t(r)], er = fR[size_t(r)];
+            // inside the feedback loop: every repeat passes the filters and the drive again
+            if (fLcOn)
+            {
+                fLcL += fLcA * (el - fLcL);
+                el -= fLcL;
+                fLcR += fLcA * (er - fLcR);
+                er -= fLcR;
+            }
+            else
+                fLcL = fLcR = 0.0;
+            if (fHcOn)
+            {
+                fHcL += fHcA * (el - fHcL);
+                el = fHcL;
+                fHcR += fHcA * (er - fHcR);
+                er = fHcR;
+            }
+            else
+            {
+                fHcL = el;
+                fHcR = er;
+            }
+            if (fDrvOn)
+            {
+                el = sat(el * fDrvG) / fDrvG;
+                er = sat(er * fDrvG) / fDrvG;
+            }
+            if (fPing)
+            {
+                fL[size_t(fW)] = (xl + xr) * 0.5 + er * fFeedback;
+                fR[size_t(fW)] = el * fFeedback;
+            }
+            else
+            {
+                fL[size_t(fW)] = xl + el * fFeedback;
+                fR[size_t(fW)] = xr + er * fFeedback;
+            }
             if (++fW >= fSize)
                 fW = 0;
             outL[i] = static_cast<T>(xl * (1.0 - fMix) + el * fMix);
@@ -88,7 +142,8 @@ private:
     std::vector<double> fL, fR;
     int fSize = 1, fW = 0, fDelay = 1, fSubdivision = 0;
     double fTimeMs = 250.0, fDelayMs = 250.0, fFeedback = 0.0, fMix = 0.3;
-    bool fSync = false;
+    double fLcA = 0.0, fHcA = 0.0, fDrvG = 1.0, fLcL = 0.0, fLcR = 0.0, fHcL = 0.0, fHcR = 0.0;
+    bool fSync = false, fPing = false, fLcOn = false, fHcOn = false, fDrvOn = false;
 };
 
 } // namespace nulldelay

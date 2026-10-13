@@ -1,0 +1,267 @@
+desc:NULL Volume Shaper GFX
+author: Christos Koulaxizis
+tags: volume shaper lfo envelope sidechain pump duck gate trance tempo sync rhythm gui
+//category: Essentials
+//NULL JSFX v2.0 • https://nulljsfx.tech • MIT License
+
+import null_gfx.jsfx-inc
+
+slider1:0<0,9,1{Pump,Pump Hard,Saw Down,Saw Up,Gate 1/16,Trance 1/8,Sine,Triangle,Half-time Pump,Stutter}>-Shape
+slider2:2<0,6,1{1/1,1/2,1/4,1/8,1/16,1/4T,1/8T}>-Rate
+slider3:80<0,100,1>-Depth (%)
+slider4:3<0,30,1>-Smooth (ms)
+slider5:0<0,100,1>-Phase (%)
+slider6:100<0,100,1>-Mix (%)
+
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
+
+@init
+  // NULL Volume Shaper (../volume_shaper.jsfx) with its own interface: same audio code, plus @gfx.
+  // Tempo-synced volume envelope (LFO Tool / Dodge style): a preset shape repeats once per
+  // Rate note at the host tempo and sets the level, 1 = full level and 0 = Depth's dip.
+  // While the transport plays, the cycle is taken from beat_position at every block so the
+  // shape stays locked to the grid (a cycle starts on every beat at 1/4); stopped, it
+  // free-runs at the host tempo. Half-time Pump spans two Rate notes.
+  // Smooth is a one-pole lowpass on the gain (no clicks at the gates' edges); Phase moves
+  // the shape later in the cycle; Mix blends the shaped and the dry signal.
+  // The shapes are breakpoints (x, y, curve of the segment to the next point) over one cycle:
+  // curve 0 linear, 1 ease-in (t^2), 2 ease-out (1-(1-t)^2), 3 ease-out cubic, 4 cosine S.
+  SHAPES = 0;           // 10 shapes x 64 slots; slot 63 holds the point count
+  function vs_begin(s) ( vs_base = SHAPES + s * 64; vs_n = 0; );
+  function vs_pt(x, y, c)
+  (
+    vs_base[vs_n * 3] = x; vs_base[vs_n * 3 + 1] = y; vs_base[vs_n * 3 + 2] = c;
+    vs_n += 1;
+    vs_base[63] = vs_n;
+  );
+
+  // the level of shape s at cycle position p (0..1)
+  function vs_eval(s, p) local(b, n, i, x0, x1, y0, y1, c, t, u)
+  (
+    b = SHAPES + s * 64;
+    n = b[63];
+    i = 0;
+    while (i < n - 2 && p >= b[(i + 1) * 3]) ( i += 1; );
+    x0 = b[i * 3]; y0 = b[i * 3 + 1]; c = b[i * 3 + 2];
+    x1 = b[i * 3 + 3]; y1 = b[i * 3 + 4];
+    t = x1 > x0 ? (p - x0) / (x1 - x0) : 1;
+    u = 1 - t;
+    t = c == 1 ? t * t : c == 2 ? 1 - u * u : c == 3 ? 1 - u * u * u : c == 4 ? 0.5 - 0.5 * cos($pi * t) : t;
+    y0 + (y1 - y0) * t;
+  );
+
+  // Pump: ducked on the beat, a fast swell back, a short fade into the next beat
+  vs_begin(0); vs_pt(0, 0, 3); vs_pt(0.5, 1, 0); vs_pt(0.97, 1, 0); vs_pt(1, 0, 0);
+  // Pump Hard: held down for 10% of the cycle, then a late, steep rise
+  vs_begin(1); vs_pt(0, 0, 0); vs_pt(0.1, 0, 1); vs_pt(0.45, 1, 0); vs_pt(0.97, 1, 0); vs_pt(1, 0, 0);
+  // Saw Down and Saw Up (with a short ramp back so the reset does not click)
+  vs_begin(2); vs_pt(0, 1, 0); vs_pt(0.97, 0, 0); vs_pt(1, 1, 0);
+  vs_begin(3); vs_pt(0, 0, 0); vs_pt(0.97, 1, 0); vs_pt(1, 0, 0);
+  // Gate 1/16: four gates per cycle (sixteenths at 1/4), open for half of each
+  vs_begin(4);
+  vs_k = 0;
+  loop(4,
+    vs_pt(vs_k / 4, 1, 0); vs_pt(vs_k / 4 + 0.125, 1, 0);
+    vs_pt(vs_k / 4 + 0.125, 0, 0); vs_pt(vs_k / 4 + 0.25, 0, 0);
+    vs_k += 1;
+  );
+  // Trance 1/8: two gates per cycle (eighths at 1/4), held then falling fast
+  vs_begin(5);
+  vs_pt(0, 1, 0); vs_pt(0.28, 1, 3); vs_pt(0.46, 0, 0); vs_pt(0.5, 0, 0);
+  vs_pt(0.5, 1, 0); vs_pt(0.78, 1, 3); vs_pt(0.96, 0, 0); vs_pt(1, 0, 0);
+  // Sine and Triangle, lowest on the beat
+  vs_begin(6); vs_pt(0, 0, 4); vs_pt(0.5, 1, 4); vs_pt(1, 0, 0);
+  vs_begin(7); vs_pt(0, 0, 0); vs_pt(0.5, 1, 0); vs_pt(1, 0, 0);
+  // Half-time Pump: the Pump curve over two Rate notes (see @block)
+  vs_begin(8); vs_pt(0, 0, 3); vs_pt(0.5, 1, 0); vs_pt(0.97, 1, 0); vs_pt(1, 0, 0);
+  // Stutter: open for the first half, then four quick chops
+  vs_begin(9);
+  vs_pt(0, 1, 0);
+  vs_k = 0;
+  loop(4,
+    vs_pt(0.5 + vs_k / 8 + 0.0625, 1, 0); vs_pt(0.5 + vs_k / 8 + 0.0625, 0, 0);
+    vs_pt(0.5 + vs_k / 8 + 0.125, 0, 0);
+    vs_k < 3 ? vs_pt(0.5 + vs_k / 8 + 0.125, 1, 0);
+    vs_k += 1;
+  );
+
+  pos = 0;
+  g = 1;
+  gfx_ext_retina = 1;
+
+  function update()
+  (
+    shape = floor(slider1 + 0.5);
+    rate = floor(slider2 + 0.5);
+    // the cycle in beats: 1/1 = 4, 1/2 = 2, 1/4 = 1, ... triplets 2/3 and 1/3; Half-time x2
+    cyc = rate == 0 ? 4 : rate == 1 ? 2 : rate == 2 ? 1 : rate == 3 ? 0.5 : rate == 4 ? 0.25 : rate == 5 ? 2 / 3 : 1 / 3;
+    shape == 8 ? cyc *= 2;
+    depth = slider3 / 100;
+    sm = slider4 > 0 ? exp(-1 / (srate * slider4 * 0.001)) : 0;
+    phase = slider5 / 100;
+    mix = slider6 / 100;
+  );
+
+  // a text at pixel (x, y), vertically centred; align 0 left, 1 centre, 2 right
+  function vsh_lbl(str, x, y, align) local(w, h)
+  (
+    gfx_measurestr(str, w, h);
+    gfx_x = align == 1 ? x - w / 2 : (align == 2 ? x - w : x);
+    gfx_y = y - gfx_texth / 2;
+    gfx_drawstr(str);
+  );
+
+  // the gain the shape gives at cycle position x (Depth and Phase applied, before Smooth)
+  function vsh_gain(x) local(q)
+  (
+    q = x + slider5 / 100;
+    q >= 1 ? q -= 1;
+    1 - slider3 / 100 * (1 - vs_eval(floor(slider1 + 0.5), q));
+  );
+
+  // ---- factory presets: generated by tools/build_presets.py, do not edit ----
+  ng_pre_n = 9;
+
+  function ng_preset_load(p)
+  (
+    p == 0 ? ( ng_slider_set(1, 0); ng_slider_set(2, 2); ng_slider_set(3, 80); ng_slider_set(4, 3); ng_slider_set(5, 0); ng_slider_set(6, 100); );
+    p == 1 ? ( ng_slider_set(1, 0); ng_slider_set(2, 2); ng_slider_set(3, 35); ng_slider_set(4, 5); ng_slider_set(5, 0); ng_slider_set(6, 100); );
+    p == 2 ? ( ng_slider_set(1, 1); ng_slider_set(2, 2); ng_slider_set(3, 100); ng_slider_set(4, 2); ng_slider_set(5, 0); ng_slider_set(6, 100); );
+    p == 3 ? ( ng_slider_set(1, 8); ng_slider_set(2, 2); ng_slider_set(3, 80); ng_slider_set(4, 3); ng_slider_set(5, 0); ng_slider_set(6, 100); );
+    p == 4 ? ( ng_slider_set(1, 5); ng_slider_set(2, 2); ng_slider_set(3, 100); ng_slider_set(4, 3); ng_slider_set(5, 0); ng_slider_set(6, 100); );
+    p == 5 ? ( ng_slider_set(1, 4); ng_slider_set(2, 2); ng_slider_set(3, 100); ng_slider_set(4, 2); ng_slider_set(5, 0); ng_slider_set(6, 100); );
+    p == 6 ? ( ng_slider_set(1, 6); ng_slider_set(2, 3); ng_slider_set(3, 50); ng_slider_set(4, 0); ng_slider_set(5, 0); ng_slider_set(6, 100); );
+    p == 7 ? ( ng_slider_set(1, 3); ng_slider_set(2, 0); ng_slider_set(3, 100); ng_slider_set(4, 5); ng_slider_set(5, 0); ng_slider_set(6, 100); );
+    p == 8 ? ( ng_slider_set(1, 9); ng_slider_set(2, 1); ng_slider_set(3, 100); ng_slider_set(4, 1); ng_slider_set(5, 0); ng_slider_set(6, 100); );
+  );
+
+  // the first preset every slider matches, or -1
+  function ng_preset_match() local(m)
+  (
+    m = -1;
+    m < 0 && ng_pre_eq(slider1, 0) && ng_pre_eq(slider2, 2) && ng_pre_eq(slider3, 80) && ng_pre_eq(slider4, 3) && ng_pre_eq(slider5, 0) && ng_pre_eq(slider6, 100) ? m = 0;
+    m < 0 && ng_pre_eq(slider1, 0) && ng_pre_eq(slider2, 2) && ng_pre_eq(slider3, 35) && ng_pre_eq(slider4, 5) && ng_pre_eq(slider5, 0) && ng_pre_eq(slider6, 100) ? m = 1;
+    m < 0 && ng_pre_eq(slider1, 1) && ng_pre_eq(slider2, 2) && ng_pre_eq(slider3, 100) && ng_pre_eq(slider4, 2) && ng_pre_eq(slider5, 0) && ng_pre_eq(slider6, 100) ? m = 2;
+    m < 0 && ng_pre_eq(slider1, 8) && ng_pre_eq(slider2, 2) && ng_pre_eq(slider3, 80) && ng_pre_eq(slider4, 3) && ng_pre_eq(slider5, 0) && ng_pre_eq(slider6, 100) ? m = 3;
+    m < 0 && ng_pre_eq(slider1, 5) && ng_pre_eq(slider2, 2) && ng_pre_eq(slider3, 100) && ng_pre_eq(slider4, 3) && ng_pre_eq(slider5, 0) && ng_pre_eq(slider6, 100) ? m = 4;
+    m < 0 && ng_pre_eq(slider1, 4) && ng_pre_eq(slider2, 2) && ng_pre_eq(slider3, 100) && ng_pre_eq(slider4, 2) && ng_pre_eq(slider5, 0) && ng_pre_eq(slider6, 100) ? m = 5;
+    m < 0 && ng_pre_eq(slider1, 6) && ng_pre_eq(slider2, 3) && ng_pre_eq(slider3, 50) && ng_pre_eq(slider4, 0) && ng_pre_eq(slider5, 0) && ng_pre_eq(slider6, 100) ? m = 6;
+    m < 0 && ng_pre_eq(slider1, 3) && ng_pre_eq(slider2, 0) && ng_pre_eq(slider3, 100) && ng_pre_eq(slider4, 5) && ng_pre_eq(slider5, 0) && ng_pre_eq(slider6, 100) ? m = 7;
+    m < 0 && ng_pre_eq(slider1, 9) && ng_pre_eq(slider2, 1) && ng_pre_eq(slider3, 100) && ng_pre_eq(slider4, 1) && ng_pre_eq(slider5, 0) && ng_pre_eq(slider6, 100) ? m = 8;
+    m;
+  );
+
+  function ng_preset_name(p) local(s)
+  (
+    s = "";
+    p == 0 ? s = "Default";
+    p == 1 ? s = "Gentle Bus Pump";
+    p == 2 ? s = "Hard Dance Pump";
+    p == 3 ? s = "Half Time Pump";
+    p == 4 ? s = "Trance Gate Eighths";
+    p == 5 ? s = "Sixteenth Gate";
+    p == 6 ? s = "Sine Eighth Tremolo";
+    p == 7 ? s = "Bar Long Swell";
+    p == 8 ? s = "Stutter Fill";
+    s;
+  );
+
+  function ng_presets() local(i)
+  (
+    ng_pre_req >= 0 ? ( ng_preset_load(ng_pre_req); update(); ng_pre_req = -1; );
+    ng_pre_cur = ng_preset_match();
+    ng_pre_open ? (
+      ng_pre_menu_begin();
+      i = 0;
+      loop(ng_pre_n, ng_pre_item(i, ng_preset_name(i)); i += 1;);
+      ng_pre_menu_end();
+    );
+    strcpy(#ng_pre_name, ng_pre_cur >= 0 ? ng_preset_name(ng_pre_cur) : "CUSTOM");
+  );
+  // ---- end of factory presets ----
+
+@slider
+  update();
+
+@block
+  bpm = tempo > 0 ? tempo : 120;
+  inc = bpm / 60 / cyc / srate;
+  // lock to the host grid while playing
+  play_state & 1 ? pos = beat_position / cyc - floor(beat_position / cyc);
+
+@sample
+  pos += inc;
+  pos >= 1 ? pos -= 1;
+  p = pos + phase;
+  p >= 1 ? p -= 1;
+  target = 1 - depth * (1 - vs_eval(shape, p));
+  g = target + sm * (g - target);
+  m = 1 - mix + mix * g;
+  spl0 *= m;
+  spl1 *= m;
+
+@gfx 480 294
+  ng_knobs_begin("VOLUME SHAPER", "ESSENTIALS", 480, 120, 1, 0);
+
+  // display: the gain over one cycle (0 to 100%), the playhead dashed with a dot at the
+  // current gain; below, the cycle length and the current gain in dB
+  ng_plot(ng_vx + 26, ng_vy + 4, ng_vw - 30, ng_vh - 20);
+  ng_grid(8, 4, 0);
+  ng_font(4, 8, 0);
+  ng_col(NG_MUTED, 1);
+  vsh_lbl("100%", ng_px - 6 * ng_s, floor(ng_py) + 0.5, 2);
+  vsh_lbl("50%", ng_px - 6 * ng_s, floor(ng_py + ng_ph / 2) + 0.5, 2);
+  vsh_lbl("0", ng_px - 6 * ng_s, floor(ng_py + ng_ph) + 0.5, 2);
+  vsh_r = floor(slider2 + 0.5);
+  vsh_r == 0 ? strcpy(#vsh_n, "1/1") : vsh_r == 1 ? strcpy(#vsh_n, "1/2") : vsh_r == 2 ? strcpy(#vsh_n, "1/4") :
+    vsh_r == 3 ? strcpy(#vsh_n, "1/8") : vsh_r == 4 ? strcpy(#vsh_n, "1/16") : vsh_r == 5 ? strcpy(#vsh_n, "1/4T") : strcpy(#vsh_n, "1/8T");
+  floor(slider1 + 0.5) == 8 ? sprintf(#vsh_c, "ONE CYCLE = 2 x %s", #vsh_n) : sprintf(#vsh_c, "ONE CYCLE = %s", #vsh_n);
+  vsh_lbl(#vsh_c, ng_px, ng_py + ng_ph + 11 * ng_s, 0);
+  vsh_db = 20 * log10(max(g * mix + 1 - mix, 0.0000001));
+  vsh_db < -60 ? strcpy(#vsh_g, "GAIN -INF dB") : sprintf(#vsh_g, "GAIN %.1f dB", vsh_db);
+  vsh_lbl(#vsh_g, ng_px + ng_pw, ng_py + ng_ph + 11 * ng_s, 2);
+
+  ng_col(NG_ACCENT, 0.10);
+  vsh_i = 0;
+  loop(floor(ng_pw) + 1,
+    gfx_line(ng_px + vsh_i, ng_py + ng_ph, ng_px + vsh_i, ng_lin_y(vsh_gain(vsh_i / ng_pw * 0.999999), 0, 1), 0);
+    vsh_i += 1;
+  );
+  ng_col(NG_ACCENT, 1);
+  vsh_i = 0;
+  loop(floor(ng_pw) + 1,
+    vsh_y = ng_lin_y(vsh_gain(vsh_i / ng_pw * 0.999999), 0, 1);
+    vsh_i == 0 ? ng_line_start(ng_px, vsh_y) : ng_line_to(ng_px + vsh_i, vsh_y);
+    vsh_i += 1;
+  );
+
+  // playhead and the current (smoothed) gain
+  vsh_x = floor(ng_px + pos * ng_pw) + 0.5;
+  ng_col(NG_ACCENT, 0.5);
+  vsh_y = ng_py;
+  while(
+    gfx_line(vsh_x, vsh_y, vsh_x, min(vsh_y + 3 * ng_s, ng_py + ng_ph), 0);
+    vsh_y += 6 * ng_s;
+    vsh_y < ng_py + ng_ph;
+  );
+  ng_col(NG_TEXT, 1);
+  gfx_circle(vsh_x, ng_lin_y(g, 0, 1), 3 * ng_s, 1, 1);
+
+  ng_row(6);
+  ng_select_ctl(1, "SHAPE", "PUMP|PUMP HD|SAW DN|SAW UP|GATE|TRANCE|SINE|TRIANGLE|HALFTIME|STUTTER", 0) ? update();
+  ng_select_ctl(2, "RATE", "1/1|1/2|1/4|1/8|1/16|1/4T|1/8T", 0) ? update();
+  sprintf(#v3, "%d%%", slider3);
+  ng_knob_ctl(3, "DEPTH", #v3, 0, 100, 80, 1, 0) ? update();
+  sprintf(#v4, "%d ms", slider4);
+  ng_knob_ctl(4, "SMOOTH", #v4, 0, 30, 3, 1, 0) ? update();
+  sprintf(#v5, "%d%%", slider5);
+  ng_knob_ctl(5, "PHASE", #v5, 0, 100, 0, 1, 0) ? update();
+  sprintf(#v6, "%d%%", slider6);
+  ng_knob_ctl(6, "MIX", #v6, 0, 100, 100, 1, 0) ? update();
+
+  ng_end();
+
+  ng_presets(); // the preset list (generated by tools/build_presets.py)

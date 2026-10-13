@@ -1,0 +1,7 @@
+[
+  ["Master Width", {"Amount": 20}],
+  ["Vocal Bus Open", {"Amount": 30}],
+  ["Guitar Widen", {"Amount": 55}],
+  ["Wide Pad", {"Amount": 75}],
+  ["Mono Synth Spread", {"Amount": 90}]
+]

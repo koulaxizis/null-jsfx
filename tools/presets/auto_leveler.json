@@ -1,0 +1,8 @@
+[
+  ["Podcast Dialogue", {"Target": -20, "Speed": 1500, "Max Boost": 10, "Max Cut": 10, "Gate": -50}],
+  ["Vocal Rider", {"Target": -18, "Speed": 600, "Max Boost": 6, "Max Cut": 6, "Gate": -45}],
+  ["Live Recording", {"Target": -20, "Speed": 3000, "Max Boost": 9, "Max Cut": 9, "Gate": -55}],
+  ["Broadcast Speech", {"Target": -16, "Speed": 800, "Max Boost": 12, "Max Cut": 12, "Gate": -45}],
+  ["Field Interview", {"Target": -20, "Speed": 400, "Max Boost": 15, "Max Cut": 12, "Gate": -40}],
+  ["Gentle Mix Bus", {"Target": -14, "Speed": 5000, "Max Boost": 3, "Max Cut": 3, "Gate": -60}]
+]

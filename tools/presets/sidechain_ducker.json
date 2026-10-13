@@ -1,0 +1,8 @@
+[
+  ["Kick Ducks Bass", {"Threshold": -24, "Depth": -10, "Attack": 1, "Hold": 20, "Release": 120}],
+  ["Dance Pad Pump", {"Threshold": -24, "Depth": -20, "Attack": 1, "Hold": 0, "Release": 250}],
+  ["Lead Vocal Space", {"Threshold": -30, "Depth": -4, "Attack": 10, "Hold": 100, "Release": 300}],
+  ["Voice Over Duck", {"Threshold": -36, "Depth": -12, "Attack": 20, "Hold": 300, "Release": 800}],
+  ["Podcast Music Bed", {"Threshold": -40, "Depth": -18, "Attack": 50, "Hold": 500, "Release": 1500}],
+  ["Kick Click Keyed", {"Threshold": -30, "Depth": -8, "Attack": 0.5, "Hold": 10, "Release": 100, "Key High Pass": 150}]
+]

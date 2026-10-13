@@ -1,0 +1,10 @@
+[
+  ["Bus Warmth", {"Mode": "Tape", "Drive": 15, "Tone": 0, "Mix": 40}],
+  ["Vocal Tube Glow", {"Mode": "Tube", "Drive": 20, "Tone": 1, "Mix": 35}],
+  ["Bass Grit", {"Mode": "Overdrive", "Drive": 40, "Tone": -2, "Mix": 35}],
+  ["Drum Crunch", {"Mode": "Overdrive", "Drive": 60, "Tone": 2, "Mix": 30}],
+  ["Guitar Fuzz", {"Mode": "Fuzz", "Drive": 50, "Tone": -4, "Mix": 50}],
+  ["Lo-Fi Bitcrush", {"Mode": "Bitcrush", "Drive": 60, "Tone": -3, "Mix": 50}],
+  ["Synth Wavefolder", {"Mode": "Fold", "Drive": 50, "Tone": 0, "Mix": 60}],
+  ["Hard Fold Lead", {"Mode": "Waveshaper", "Drive": 70, "Tone": -2, "Mix": 40}]
+]

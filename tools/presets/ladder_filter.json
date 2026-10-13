@@ -1,0 +1,9 @@
+[
+  ["Warm Bass Lowpass", {"Cutoff": 600, "Resonance": 0.8, "Drive": 25, "Mode": "Lowpass"}],
+  ["Acid Squelch", {"Cutoff": 800, "Resonance": 3.2, "Drive": 40, "Mode": "Lowpass", "Gain": -3}],
+  ["Dark Drum Bus", {"Cutoff": 4000, "Resonance": 0.3, "Drive": 35, "Mode": "Lowpass"}],
+  ["Digital Tamer", {"Cutoff": 9000, "Resonance": 0.2, "Drive": 10, "Mode": "Lowpass"}],
+  ["Filter Build Start", {"Cutoff": 300, "Resonance": 1.8, "Drive": 20, "Mode": "Lowpass"}],
+  ["Resonant HP Sweep", {"Cutoff": 400, "Resonance": 2.5, "Mode": "Highpass", "Gain": -2}],
+  ["Thin Out Highpass", {"Cutoff": 150, "Resonance": 0.5, "Mode": "Highpass"}]
+]

@@ -1,0 +1,7 @@
+[
+  ["Vintage Amp Trem", {"Rate": 5.5, "Depth": 60, "Mix": 100}],
+  ["Surf Guitar", {"Rate": 7, "Depth": 80, "Mix": 100}],
+  ["Slow Pulse Pad", {"Rate": 1.5, "Depth": 50, "Mix": 100}],
+  ["Subtle Keys Shimmer", {"Rate": 4, "Depth": 30, "Mix": 100}],
+  ["Choppy Fast Trem", {"Rate": 12, "Depth": 100, "Mix": 100}]
+]

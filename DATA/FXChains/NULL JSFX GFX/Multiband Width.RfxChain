@@ -1,0 +1,37 @@
+REQUIRED_CHANNELS 6
+BYPASS 0 0
+<JS null_jsfx/gfx/band_splitter_gfx.jsfx ""
+  0 3 180 4000 7000 0 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+>
+FXID {E007AC49-EB85-58CD-A49F-A214ED2012AB}
+WAK 0 0
+BYPASS 0 0
+<JS null_jsfx/gfx/mono_maker_gfx.jsfx ""
+  100 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+>
+FXID {9FAB1ACF-82D8-54FD-B784-2223DEBE3403}
+WAK 0 0
+BYPASS 0 0
+<JS null_jsfx/gfx/stereo_width_gfx.jsfx ""
+  125 100 0 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+>
+<JS_PINMAP
+  6AMAABwAAADoAwAABgAAAAIAAAAEAAAAAAAAAAgAAAAAAAAAHAAAAOgDAAAGAAAAAgAAAAQAAAAAAAAACAAAAAAAAAA=
+>
+FXID {D2C1AA22-275D-502A-ADC6-96E4678F4BC2}
+WAK 0 0
+BYPASS 0 0
+<JS null_jsfx/gfx/stereo_width_gfx.jsfx ""
+  160 100 0 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+>
+<JS_PINMAP
+  6AMAABwAAADoAwAABgAAAAIAAAAQAAAAAAAAACAAAAAAAAAAHAAAAOgDAAAGAAAAAgAAABAAAAAAAAAAIAAAAAAAAAA=
+>
+FXID {FF896AC8-A440-5B60-88EA-A565ECCB4F81}
+WAK 0 0
+BYPASS 0 0
+<JS null_jsfx/gfx/band_splitter_gfx.jsfx ""
+  1 3 180 4000 7000 0 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+>
+FXID {D9EAE3AE-64A3-5CCF-8B66-D5DD410600D5}
+WAK 0 0

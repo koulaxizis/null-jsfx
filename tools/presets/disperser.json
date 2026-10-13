@@ -1,0 +1,8 @@
+[
+  ["Kick Punch Focus", {"Frequency": 80, "Amount": 8, "Pinch": 60}],
+  ["Bass Phase Smear", {"Frequency": 120, "Amount": 16, "Pinch": 40}],
+  ["Laser Snare", {"Frequency": 1500, "Amount": 32, "Pinch": 70}],
+  ["Synth Zap", {"Frequency": 3000, "Amount": 48, "Pinch": 80, "Mode": "Stereo"}],
+  ["Soft Transients", {"Frequency": 2000, "Amount": 6, "Pinch": 30}],
+  ["Stereo Width Smear", {"Frequency": 800, "Amount": 24, "Pinch": 30, "Mode": "Stereo"}]
+]

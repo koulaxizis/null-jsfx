@@ -1,0 +1,95 @@
+desc:NULL DJ Filter
+author: Christos Koulaxizis
+tags: filter dj lowpass highpass sweep resonance performance
+//category: One Slider
+//NULL JSFX v2.0 • https://nulljsfx.tech • MIT License
+
+slider1:0<-100,100,1>Filter
+
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
+
+@init
+  // One-knob DJ filter. Left of centre a 24 dB/oct low-pass sweeps down from 20 kHz to
+  // 60 Hz; right of centre a 24 dB/oct high-pass sweeps up from 20 Hz to 10 kHz. The centre
+  // is the dry signal, bit for bit. A resonance bump grows with the amount. The position
+  // glides (20 ms) so moves and automation do not zipper, and the first 5% of the travel
+  // fades the filter in, so the filter appears smoothly out of the dry signal.
+  ks = 1 - exp(-1 / (0.02 * srate));
+  snap = 1;
+  l_lp1.ic1 = l_lp1.ic2 = l_lp2.ic1 = l_lp2.ic2 = 0;
+  r_lp1.ic1 = r_lp1.ic2 = r_lp2.ic1 = r_lp2.ic2 = 0;
+  l_hp1.ic1 = l_hp1.ic2 = l_hp2.ic1 = l_hp2.ic2 = 0;
+  r_hp1.ic1 = r_hp1.ic2 = r_hp2.ic1 = r_hp2.ic2 = 0;
+
+  // TPT state-variable filter stage (state in this.ic1 / this.ic2); lp = 1 low-pass, 0 high-pass
+  function svf(x, a1, a2, a3, k, lp) local(v1, v2, v3)
+  (
+    v3 = x - this.ic2;
+    v1 = a1 * this.ic1 + a2 * v3;
+    v2 = this.ic2 + a2 * this.ic1 + a3 * v3;
+    this.ic1 = 2 * v1 - this.ic1;
+    this.ic2 = 2 * v2 - this.ic2;
+    lp ? v2 : x - k * v1 - v2;
+  );
+
+  // coefficients of one stage for g = tan(pi fc / srate) and q, into this.a1 .. this.k
+  function stage(g, q)
+  (
+    this.k = 1 / q;
+    this.a1 = 1 / (1 + g * (g + this.k));
+    this.a2 = g * this.a1;
+    this.a3 = g * this.a2;
+  );
+
+  // filters for the current position pos (-1..1): two stages each, Butterworth (Q 0.54 and
+  // 1.31) at rest, the second stage's Q rising with the amount for the resonance bump
+  function coefs() local(d, g)
+  (
+    d = max(0, -pos);
+    g = tan($pi * min(20000 * (60 / 20000) ^ d, srate * 0.45) / srate);
+    lp1.stage(g, 0.5412);
+    lp2.stage(g, 1.3066 + 2.5 * d);
+    d = max(0, pos);
+    g = tan($pi * min(20 * (10000 / 20) ^ d, srate * 0.45) / srate);
+    hp1.stage(g, 0.5412);
+    hp2.stage(g, 1.3066 + 2.5 * d);
+    mix = min(1, abs(pos) * 20);
+  );
+
+  // flushes a stage's state once it decays below -300 dB (no denormals in silence)
+  function flush()
+  (
+    abs(this.ic1) < 0.000000000000001 ? this.ic1 = 0;
+    abs(this.ic2) < 0.000000000000001 ? this.ic2 = 0;
+  );
+
+@slider
+  tgt = slider1 / 100;
+  snap ? (
+    pos = tgt;
+    coefs();
+    snap = 0;
+  );
+
+@block
+  l_lp1.flush(); l_lp2.flush(); r_lp1.flush(); r_lp2.flush();
+  l_hp1.flush(); l_hp2.flush(); r_hp1.flush(); r_hp2.flush();
+
+@sample
+  pos !== tgt ? (
+    pos += (tgt - pos) * ks;
+    abs(tgt - pos) < 0.0001 ? pos = tgt;
+    coefs();
+  );
+  // both chains always run, so neither starts from a stale state when the knob crosses 0
+  lo_l = l_lp2.svf(l_lp1.svf(spl0, lp1.a1, lp1.a2, lp1.a3, lp1.k, 1), lp2.a1, lp2.a2, lp2.a3, lp2.k, 1);
+  lo_r = r_lp2.svf(r_lp1.svf(spl1, lp1.a1, lp1.a2, lp1.a3, lp1.k, 1), lp2.a1, lp2.a2, lp2.a3, lp2.k, 1);
+  hi_l = l_hp2.svf(l_hp1.svf(spl0, hp1.a1, hp1.a2, hp1.a3, hp1.k, 0), hp2.a1, hp2.a2, hp2.a3, hp2.k, 0);
+  hi_r = r_hp2.svf(r_hp1.svf(spl1, hp1.a1, hp1.a2, hp1.a3, hp1.k, 0), hp2.a1, hp2.a2, hp2.a3, hp2.k, 0);
+  mix > 0 ? (
+    spl0 += ((pos < 0 ? lo_l : hi_l) - spl0) * mix;
+    spl1 += ((pos < 0 ? lo_r : hi_r) - spl1) * mix;
+  );

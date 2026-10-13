@@ -1,0 +1,7 @@
+[
+  ["Talking Synth Ah", {"Vowel": "A", "Q": 8, "Gain": 2}],
+  ["Bright Eh Guitar", {"Vowel": "E", "Q": 9, "Gain": 2}],
+  ["Nasal Ee Lead", {"Vowel": "I", "Q": 14, "Gain": 4}],
+  ["Vocal Drum Oh", {"Vowel": "O", "Q": 12, "Gain": 3}],
+  ["Hollow Oo Pad", {"Vowel": "U", "Q": 6, "Gain": 1}]
+]

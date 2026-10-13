@@ -1,0 +1,72 @@
+BYPASS 0 0
+<JS null_jsfx/comb_filter.jsfx ""
+  500 0.2 0 0 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+>
+FXID {05C54E1F-3C73-58FA-8BBD-2C20B5A82EC9}
+<PROGRAMENV 0 0
+  PARAMBASE 0.46598
+  LFO 1
+  LFOWT 0.2 0
+  AUDIOCTL 0
+  AUDIOCTLWT 1 1
+  LFOSHAPE 4
+  LFOSYNC 0 0 0
+  LFOSPEED 0.124573 0
+>
+WAK 0 0
+BYPASS 0 0
+<JS null_jsfx/mid_side_matrix.jsfx ""
+  0 0 0 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+>
+FXID {57E1B229-1626-5BE1-9304-F5A4299560A0}
+WAK 0 0
+BYPASS 0 0
+<JS null_jsfx/saturation.jsfx ""
+  35 0 100 1 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+>
+<JS_PINMAP
+  6AMAABwAAADoAwAAAgAAAAIAAAABAAAAAAAAAAEAAAAAAAAAHAAAAOgDAAACAAAAAgAAAAEAAAAAAAAAAAAAAAAAAAA=
+>
+FXID {FE3C929D-9286-5C5A-9306-B5EB0F338F9A}
+WAK 0 0
+BYPASS 0 0
+<JS null_jsfx/crunch.jsfx ""
+  40 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+>
+<JS_PINMAP
+  6AMAABwAAADoAwAAAgAAAAIAAAACAAAAAAAAAAIAAAAAAAAAHAAAAOgDAAACAAAAAgAAAAAAAAAAAAAAAgAAAAAAAAA=
+>
+FXID {187EEE9B-76B5-5F95-B603-13648C16DCE9}
+<PROGRAMENV 0 0
+  PARAMBASE 0.4
+  LFO 0
+  LFOWT 1 1
+  AUDIOCTL 1
+  AUDIOCTLWT 0.3 1
+  CHAN 0
+  STEREO 1
+  RMS 5 150
+  DBLO -48
+  DBHI -12
+  X2 0.5
+  Y2 0.5
+>
+WAK 0 0
+BYPASS 0 0
+<JS null_jsfx/mid_side_matrix.jsfx ""
+  0 0 1 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+>
+FXID {FC668DF9-FCE1-5490-8DB7-4EAB80C74B79}
+WAK 0 0
+BYPASS 0 0
+<JS null_jsfx/parametric_eq.jsfx ""
+  80 0 0.7 4 0 548 0 1 2 0 2236 0 1 2 0 9000 0 0.7 3 0 15000 0 1 2 0 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+>
+FXID {E5505DAB-B9A6-5D8E-B135-4FAC75D7A89A}
+WAK 0 0
+BYPASS 0 0
+<JS null_jsfx/dynamics.jsfx ""
+  0 -18 3 6 10 120 2 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+>
+FXID {F24EC0CB-64EE-5154-9FC7-B6C6C42A3ABF}
+WAK 0 0

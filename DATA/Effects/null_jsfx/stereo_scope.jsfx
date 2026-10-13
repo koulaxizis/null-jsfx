@@ -1,0 +1,51 @@
+desc:NULL Stereo Scope
+author: Christos Koulaxizis
+tags: stereo scope goniometer vectorscope lissajous correlation phase balance width meter analyzer metering
+//category: Advanced
+//NULL JSFX v2.0 • https://nulljsfx.tech • MIT License
+
+slider1:0<-12,24,0.5>Scope Gain (dB)
+slider2:1<0,1,1{Off,On}>Auto Gain
+slider3:50<0,100,1>Decay (%)
+slider4:300<50,3000,10:log>Integration (ms)
+slider5:0<0,2,1{Stereo,Mono,Side}>Monitor
+
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
+
+@init
+  // Stereo image meter. The audio passes through untouched (bit-exact); Monitor Mono or Side
+  // only fold it for listening. The measurement integrates the energies of L and R and their
+  // product with a one-pole of time constant Integration:
+  //   correlation = <LR> / sqrt(<LL><RR>)     (+1 mono, 0 unrelated, -1 out of phase)
+  //   balance     = <RR> vs <LL> in dB
+  //   width       = side level / mid level    (0% mono, 100% as much side as mid)
+  // The interface draws a goniometer (Lissajous, L/R rotated 45 degrees so mid is up) with
+  // persistence, the meters and a correlation history.
+  sc_ll = sc_rr = sc_lr = 0;
+
+@slider
+  sc_k = 1 - exp(-1 / (slider4 / 1000 * srate));
+  sc_mon = slider5;
+
+@sample
+  sc_dl = spl0;
+  sc_dr = spl1;
+  sc_ll += sc_k * (sc_dl * sc_dl - sc_ll);
+  sc_rr += sc_k * (sc_dr * sc_dr - sc_rr);
+  sc_lr += sc_k * (sc_dl * sc_dr - sc_lr);
+  abs(sc_ll) < 0.000000000000000000001 ? sc_ll = 0;
+  abs(sc_rr) < 0.000000000000000000001 ? sc_rr = 0;
+  abs(sc_lr) < 0.000000000000000000001 ? sc_lr = 0;
+
+  sc_mon == 1 ? (
+    sc_o = (spl0 + spl1) * 0.5;
+    spl0 = sc_o;
+    spl1 = sc_o;
+  ) : sc_mon == 2 ? (
+    sc_o = (spl0 - spl1) * 0.5;
+    spl0 = sc_o;
+    spl1 = sc_o;
+  );

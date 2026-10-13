@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
-"""Generates the plugin cards in index.html, the info-modal guides in assets/js/modals.js
+"""Generates the plugin cards and the FX chain cards (two tabs) in index.html, the info-modal guides in assets/js/modals.js
 and the plugin lists in README.md and llms.txt.
 
 Names, categories and slider ranges come straight from the .jsfx headers, so the site can
 never drift from the plugins. Everything a header can't tell (tagline, slider explanations,
 uses, properties, icon) lives in tools/site_content.json, keyed by file name without .jsfx.
+The FX chains come from tools/build_chains.py, with one line of text each in
+tools/site_chains.json.
 
 Usage: build_site.py           rewrite the generated blocks
        build_site.py --check   exit 1 if the site is out of date (used by CI)
@@ -25,6 +27,11 @@ INDEX = ROOT / "index.html"
 MODALS = ROOT / "assets/js/modals.js"
 README = ROOT / "README.md"
 LLMS = ROOT / "llms.txt"
+CHAIN_TEXT = ROOT / "tools/site_chains.json"
+
+sys.dont_write_bytecode = True  # no __pycache__ in tools/
+sys.path.insert(0, str(ROOT / "tools"))
+from build_chains import CHAINS, RACK_ONLY, RACK_PRESETS  # noqa: E402
 
 CATEGORIES = [
     ("One Slider", "one-slider", "One control, instant result. Turn it up until it sounds right."),
@@ -152,6 +159,67 @@ def cards_block(plugins):
     return "".join(out)
 
 
+def chain_cards(plugins):
+    """The FX chain cards; a step links to its plugin's guide when the plugin is on the site."""
+    e = html.escape
+    text = json.loads(CHAIN_TEXT.read_text(encoding="utf-8"))
+    # (name, [(plugin, tag)], what REAPER routing it uses) for the plain chains and the routing ones
+    chains = [(c, [(stem, "") for stem, _ in fxs], []) for c, fxs in CHAINS]
+    for c, _, slots, routes, _ in RACK_PRESETS:
+        if c in RACK_ONLY:
+            continue  # no REAPER chain
+        uses = []
+        if any(sl["band"] != "Full" or sl["channel"] != "Stereo" for sl in slots):
+            uses.append("Pin routing")
+        if routes:
+            uses.append("Modulation")
+        steps = [(sl["id"], sl["band"] if sl["band"] != "Full" else sl["channel"] if sl["channel"] != "Stereo" else "")
+                 for sl in slots]
+        chains.append((c, steps, uses))
+    names = [c for c, _, _ in chains]
+    if sorted(text) != sorted(names):
+        sys.exit(f"build_site: {CHAIN_TEXT.name} must have one entry per chain in build_chains.py: "
+                 f"missing {sorted(set(names) - set(text))}, extra {sorted(set(text) - set(names))}")
+    on_site = {p["stem"]: p for p in plugins}
+    out = []
+    for chain, steps_in, uses in sorted(chains, key=lambda c: c[0].lower()):
+        steps = []
+        for stem, tag in steps_in:
+            label = on_site[stem]["name"] if stem in on_site else \
+                (PLUGINS / f"{stem}.jsfx").read_text(encoding="utf-8").split("\n", 1)[0][len("desc:NULL "):]
+            label = e(label) + (f' <small>{e(tag)}</small>' if tag else "")
+            if stem in on_site:
+                steps.append(f"""<button type="button" class="chain-step" onclick="openGuide('{on_site[stem]['key']}')">{label}</button>""")
+            else:
+                steps.append(f"""<span class="chain-step">{label}</span>""")
+        arrow = '<span class="chain-arrow" aria-hidden="true">&#8594;</span>'
+        tags = "".join(f"<span>{t}</span>" for t in ["JSFX", "GFX"] + [u.upper() for u in uses])
+        out.append(f"""                <article class="chain-card">
+                    <h3>{e(chain.upper())}</h3>
+                    <p class="plugin-desc">{e(text[chain])}</p>
+                    <div class="chain-steps">{arrow.join(steps)}</div>
+                    <div class="plugin-formats">{tags}</div>
+                </article>
+""")
+    return "".join(out)
+
+
+def tabs_block(plugins):
+    """Effects and FX Chains tabs: the effect categories and the chain cards."""
+    return f"""            <div class="plugin-tabs" role="tablist">
+                <button type="button" class="plugin-tab active" role="tab" aria-selected="true" aria-controls="tab-effects" id="tab-btn-effects" data-tab="effects">Effects <span class="category-count">{len(plugins)}</span></button>
+                <button type="button" class="plugin-tab" role="tab" aria-selected="false" aria-controls="tab-chains" id="tab-btn-chains" data-tab="chains">FX Chains <span class="category-count">{len(CHAINS) + len(RACK_PRESETS) - len(RACK_ONLY)}</span></button>
+            </div>
+            <div class="tab-panel" id="tab-effects" role="tabpanel" aria-labelledby="tab-btn-effects">
+{cards_block(plugins)}            </div>
+            <div class="tab-panel" id="tab-chains" role="tabpanel" aria-labelledby="tab-btn-chains" hidden>
+                <p class="category-desc chains-desc">Ready-made REAPER FX chains of NULL JSFX plugins, in the JSFX download (<code>FXChains</code> folder, see <code>INSTALL.txt</code>). Load one with FX &#8594; Add FX chain; every plugin stays fully editable. Chains marked pin routing split the sound into bands or into mid and side; modulation ones move a control with an LFO, the input level or another control. Click a plugin for its guide.</p>
+                <div class="chain-grid">
+{chain_cards(plugins)}                </div>
+            </div>
+"""
+
+
 def js(s):
     return "'" + s.replace("\\", "\\\\").replace("'", "\\'") + "'"
 
@@ -206,7 +274,7 @@ def main(check):
     counts = {t: sum(p["category"] == t for p in plugins) for t, _, _ in CATEGORIES}
     marker = "generated by tools/build_site.py"
     targets = [
-        (INDEX, "<!-- BEGIN PLUGINS: " + marker + " -->", "            <!-- END PLUGINS -->", cards_block(plugins)),
+        (INDEX, "<!-- BEGIN PLUGINS: " + marker + " -->", "            <!-- END PLUGINS -->", tabs_block(plugins)),
         (MODALS, "// BEGIN GUIDES: " + marker, "// END GUIDES", guides_block(plugins)),
         (README, "<!-- BEGIN PLUGIN LIST: " + marker + " -->", "<!-- END PLUGIN LIST -->", list_block(plugins, False)),
         (LLMS, "<!-- BEGIN PLUGIN LIST: " + marker + " -->", "<!-- END PLUGIN LIST -->", list_block(plugins, True)),

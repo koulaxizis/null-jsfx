@@ -1,0 +1,8 @@
+[
+  ["Encode To Mid Side", {"Mode": "Encode"}],
+  ["Decode Subtle Widen", {"Mode": "Decode", "Side Gain": 2}],
+  ["Decode Wide Mix", {"Mode": "Decode", "Mid Gain": -1, "Side Gain": 4}],
+  ["Decode Center Focus", {"Mode": "Decode", "Mid Gain": 2, "Side Gain": -3}],
+  ["MS Mic Wide Decode", {"Mode": "Decode", "Mid Gain": -1.5, "Side Gain": 6}],
+  ["MS Mic Narrow Decode", {"Mode": "Decode", "Side Gain": -6}]
+]

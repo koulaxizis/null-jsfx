@@ -1,0 +1,46 @@
+BYPASS 0 0
+<JS null_jsfx/tape.jsfx ""
+  2 1 2 0 0 0 0 100 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+>
+FXID {16E101C3-F113-5C16-9195-F9A9F37E80D1}
+WAK 0 0
+BYPASS 0 0
+<JS null_jsfx/chorus_one.jsfx ""
+  0 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+>
+FXID {E6E01B88-72BD-5DED-9325-3712EA67998E}
+WAK 0 0
+BYPASS 0 0
+<JS null_jsfx/vibrato.jsfx ""
+  0.6 0 100 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+>
+FXID {2DD2CEE6-6A1E-548F-96BD-61BEEDC5BE98}
+<PROGRAMENV 0 0
+  PARAMBASE 0.033557
+  LFO 1
+  LFOWT 0.06 0
+  AUDIOCTL 0
+  AUDIOCTLWT 1 1
+  LFOSHAPE 5
+  LFOSYNC 0 0 0
+  LFOSPEED 0.124573 0
+>
+WAK 0 0
+BYPASS 0 0
+<JS null_jsfx/grit.jsfx ""
+  0 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+>
+FXID {1E9B43A7-69EE-57F3-ABDA-9C6E88805D3B}
+WAK 0 0
+BYPASS 0 0
+<JS null_jsfx/reverb.jsfx ""
+  60 50 70 0 0 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+>
+FXID {0F51F007-ED00-59C3-85BD-60BABD64E05D}
+WAK 0 0
+BYPASS 0 0
+<JS null_jsfx/filter.jsfx ""
+  10000 0.7 0 0 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+>
+FXID {AD3DD874-FB1E-5F1A-B09D-BF41F56136F9}
+WAK 0 0

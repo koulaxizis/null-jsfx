@@ -1,0 +1,110 @@
+desc:NULL Octaver
+author: Christos Koulaxizis
+tags: octave octaver octave divider sub octave bass guitar analog flip-flop synth
+//category: Essentials
+//NULL JSFX v2.0 • https://nulljsfx.tech • MIT License
+
+slider1:100<0,100,1>Dry (%)
+slider2:70<0,100,1>Oct -1 (%)
+slider3:35<0,100,1>Oct -2 (%)
+slider4:0<0,100,1>Up (%)
+slider5:900<100,5000,1:log>Tone (Hz)
+slider6:300<60,1000,1:log>Tracking (Hz)
+
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
+
+@init
+  // Analog-style octave divider (the OC-2 idea) for monophonic bass and guitar, zero latency:
+  //   the input (mono sum, DC removed) is low-passed at Tracking (two one-poles) so only the
+  //   fundamental crosses zero; a Schmitt trigger (hysteresis 20% of its peak) clocks a
+  //   flip-flop that toggles on every rising crossing (half the frequency, -1 octave), which
+  //   clocks a second flip-flop (-2 octaves). The square waves follow the input's envelope.
+  //   Up: the tracked signal full-wave rectified (twice the frequency), normalised, DC removed
+  //   and also following the envelope.
+  // The voices are mixed, low-passed at Tone (two one-poles, round) and added to the dry signal.
+  dc_r = 1 - 2 * $pi * 20 / srate;
+  up_r = 1 - 2 * $pi * 30 / srate;
+  env_a = 1 - exp(-1 / (0.001 * srate));
+  env_r = 1 - exp(-1 / (0.06 * srate));
+  env_s = 1 - exp(-1 / (0.008 * srate));
+  trk_rel = exp(-1 / (0.1 * srate));
+  sm_k = 1 - exp(-1 / (0.01 * srate));
+  dc_x1 = dc_y = 0;
+  env1 = env = 0;
+  t1 = t2 = tenv = 0;
+  sch = -1;
+  ff1 = ff2 = 1;
+  up_x1 = up_y = 0;
+  lp1 = lp2 = 0;
+  sm_first = 1;
+
+  // one-pole glide of v to t, snapped when it is there
+  function glide(v, t) ( v += sm_k * (t - v); abs(t - v) < 0.000000000001 ? t : v; );
+
+@slider
+  t_gd = slider1 / 100;
+  t_g1 = slider2 / 100 * 0.7;
+  t_g2 = slider3 / 100 * 0.7;
+  t_gu = slider4 / 100;
+  tone_k = 1 - exp(-2 * $pi * slider5 / srate);
+  trk_k = 1 - exp(-2 * $pi * slider6 / srate);
+  sm_first ? (
+    gd = t_gd; g1 = t_g1; g2 = t_g2; gu = t_gu;
+    sm_first = 0;
+  );
+
+@sample
+  in_x = (spl0 + spl1) * 0.5;
+  dc_y = in_x - dc_x1 + dc_r * dc_y;
+  dc_x1 = in_x;
+
+  // envelope the voices follow: 1 ms attack, 60 ms release, 8 ms smoothing
+  env_x = abs(dc_y);
+  env1 += (env_x > env1 ? env_a : env_r) * (env_x - env1);
+  env += env_s * (env1 - env);
+
+  // tracking filter, its peak, and the Schmitt trigger clocking the flip-flops
+  t1 += trk_k * (dc_y - t1);
+  t2 += trk_k * (t1 - t2);
+  trk_x = abs(t2);
+  tenv = trk_x > tenv ? trk_x : tenv * trk_rel;
+  hyst = tenv * 0.2 + 0.00001;
+  sch > 0 ? (
+    t2 < -hyst ? sch = -1;
+  ) : (
+    t2 > hyst ? (
+      sch = 1;
+      ff1 = -ff1;
+      ff1 > 0 ? ff2 = -ff2;
+    );
+  );
+
+  // up: rectified tracked signal, normalised to its peak, DC removed
+  up_x = trk_x / max(tenv, 0.00001);
+  up_y = up_x - up_x1 + up_r * up_y;
+  up_x1 = up_x;
+
+  gd = glide(gd, t_gd); g1 = glide(g1, t_g1);
+  g2 = glide(g2, t_g2); gu = glide(gu, t_gu);
+  sq1 = ff1 * env;
+  sq2 = ff2 * env;
+  upv = 2 * up_y * env;
+  vox = g1 * sq1 + g2 * sq2 + gu * upv;
+  lp1 += tone_k * (vox - lp1);
+  lp2 += tone_k * (lp1 - lp2);
+
+  abs(env1) < 0.000000000000001 ? env1 = 0;
+  abs(env) < 0.000000000000001 ? env = 0;
+  abs(t1) < 0.000000000000001 ? t1 = 0;
+  abs(t2) < 0.000000000000001 ? t2 = 0;
+  abs(dc_y) < 0.000000000000001 ? dc_y = 0;
+  abs(lp1) < 0.000000000000001 ? lp1 = 0;
+  abs(lp2) < 0.000000000000001 ? lp2 = 0;
+  abs(tenv) < 0.000000000000001 ? tenv = 0;
+  abs(up_y) < 0.000000000000001 ? up_y = 0;
+
+  spl0 = spl0 * gd + lp2;
+  spl1 = spl1 * gd + lp2;

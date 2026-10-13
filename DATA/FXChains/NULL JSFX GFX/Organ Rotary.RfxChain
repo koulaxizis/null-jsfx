@@ -1,0 +1,18 @@
+BYPASS 0 0
+<JS null_jsfx/gfx/saturation_gfx.jsfx ""
+  25 0 70 1 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+>
+FXID {9420A8FE-21B8-5B34-A9CF-F0DC403C1E50}
+WAK 0 0
+BYPASS 0 0
+<JS null_jsfx/gfx/rotary_speaker_gfx.jsfx ""
+  0 100 50 20 80 100 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+>
+FXID {A586A121-1BA4-5B5F-A706-B43B97221511}
+WAK 0 0
+BYPASS 0 0
+<JS null_jsfx/gfx/reverb_gfx.jsfx ""
+  30 30 30 15 0 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+>
+FXID {51C94637-409B-5909-B2FA-891CFBC89B66}
+WAK 0 0

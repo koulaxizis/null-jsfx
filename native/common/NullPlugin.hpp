@@ -13,18 +13,10 @@
 #pragma once
 
 #include "DistrhoPlugin.hpp"
+#include "NullSliders.hpp"
 #include "NullTaps.hpp"
 
 START_NAMESPACE_DISTRHO
-
-struct SliderInfo {
-    const char* name;   // e.g. "Amount"
-    const char* symbol; // e.g. "amount"
-    float min, max, def;
-    const char* unit;   // e.g. "%" or ""
-    float step = 0;     // the JSFX slider step; 1 or more makes an integer parameter
-    const char* const* options = nullptr; // enum labels for min, min+1, ... max (JSFX {A,B,C})
-};
 
 // the Taps (meters, scopes) and the metadata every NULL JSFX plugin shares
 class NullPluginBase : public Plugin
@@ -39,7 +31,7 @@ protected:
     const char* getMaker() const override    { return "NULL JSFX"; }
     const char* getHomePage() const override { return "https://nulljsfx.tech"; }
     const char* getLicense() const override  { return "MIT"; }
-    uint32_t getVersion() const override     { return d_version(2, 0, 0); }
+    uint32_t getVersion() const override     { return d_version(2, 1, 0); }
 
     static void fillParameter(Parameter& p, const SliderInfo& in)
     {

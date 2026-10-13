@@ -1,0 +1,46 @@
+BYPASS 0 0
+<JS null_jsfx/gfx/pitch_correction_gfx.jsfx ""
+  0 0 0 0 0 50 100 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+>
+FXID {42648BBC-B16A-5050-9EAA-780ADBB26EC4}
+WAK 0 0
+BYPASS 0 0
+<JS null_jsfx/gfx/robotizer_gfx.jsfx ""
+  120 30 0 70 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+>
+FXID {9E030F08-C1F5-50C8-8970-3F0C86855B61}
+WAK 0 0
+BYPASS 0 0
+<JS null_jsfx/gfx/formant_filter_gfx.jsfx ""
+  2 0 8 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+>
+FXID {8F0F8A41-0BB2-5973-8B3B-E5BB2782148B}
+<PROGRAMENV 0 0
+  PARAMBASE 0.5
+  LFO 1
+  LFOWT 1 0
+  AUDIOCTL 0
+  AUDIOCTLWT 1 1
+  LFOSHAPE 0
+  LFOSYNC 0 0 0
+  LFOSPEED 0.124573 0
+>
+WAK 0 0
+BYPASS 0 0
+<JS null_jsfx/gfx/filter_gfx.jsfx ""
+  1000 0.5 0 2 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+>
+FXID {D78AA040-6B8A-585C-9F47-7F18BB9F2FA6}
+WAK 0 0
+BYPASS 0 0
+<JS null_jsfx/gfx/saturation_gfx.jsfx ""
+  60 0 100 1 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+>
+FXID {8DD191AB-DBE7-5DA0-9B26-48FF98A3B2D2}
+WAK 0 0
+BYPASS 0 0
+<JS null_jsfx/gfx/spring_reverb_gfx.jsfx ""
+  2.5 60 4000 40 0 15 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+>
+FXID {4CF160CD-CAEA-5E7A-AE32-F0A5C66E6451}
+WAK 0 0

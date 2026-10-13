@@ -24,7 +24,7 @@ protected:
     const char* getLabel() const override { return "Delay"; }
     const char* getDescription() const override
     {
-        return "Stereo echo and slapback: time (or a tempo-synced note), feedback and mix.";
+        return "Stereo or ping-pong echo: time (or a tempo-synced note), feedback and mix, with low cut, high cut and drive in the feedback loop.";
     }
     int64_t getUniqueId() const override { return d_cconst('N', 'D', 'l', 'y'); }
 
@@ -53,7 +53,8 @@ protected:
 private:
     void update()
     {
-        fDsp.setParams(value(0), value(1), value(2), value(3) >= 0.5f, int(std::lround(value(4))));
+        fDsp.setParams(value(0), value(1), value(2), value(3) >= 0.5f, int(std::lround(value(4))), value(5) >= 0.5f,
+                       value(6), value(7), value(8));
     }
 
     nulldelay::DelayProcessor fDsp;

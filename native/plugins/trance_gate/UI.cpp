@@ -109,6 +109,8 @@ protected:
     // a click on a step in the display switches it
     bool onMouse(const MouseEvent& ev) override
     {
+        if (presetMouse(ev))
+            return true;
         if (ev.button == 1 && ev.press)
         {
             const float s = uiScale();

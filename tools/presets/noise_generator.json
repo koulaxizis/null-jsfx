@@ -1,0 +1,8 @@
+[
+  ["Pink Mono Calibration", {"Type": "Pink", "Level": -20, "Stereo Width": 0}],
+  ["Pink Stereo Reference", {"Type": "Pink", "Level": -18, "Stereo Width": 100}],
+  ["White Filter Test", {"Type": "White", "Level": -24, "Stereo Width": 0}],
+  ["White Riser Layer", {"Type": "White", "Level": -18, "Stereo Width": 100}],
+  ["Brown Rumble Bed", {"Type": "Brown", "Level": -30, "Stereo Width": 80}],
+  ["Soft Room Tone", {"Type": "Pink", "Level": -48, "Stereo Width": 100}]
+]

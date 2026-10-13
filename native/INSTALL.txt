@@ -17,6 +17,14 @@ JSFX (REAPER), from NULL-JSFX-JSFX.zip
     NotoSans-Bold.ttf (double-click > Install) so they look exactly like the
     VST3/CLAP versions; without it REAPER falls back to a system font.
 
+FX chains (REAPER), from NULL-JSFX-JSFX.zip
+    Ready-made chains of NULL JSFX plugins (Vocal Chain, Mastering Chain, Guitar
+    Amp, Lo-Fi and more). Copy the two folders inside FXChains ("NULL JSFX" with
+    the plain JSFX, "NULL JSFX GFX" with the GFX versions) into REAPER's
+    FXChains folder (Options > Show REAPER resource path > FXChains). They need
+    the null_jsfx folder installed as above. In REAPER: FX window > FX >
+    Add FX chain, or the FX Chains folder of the FX browser.
+
 VST3 and CLAP (any DAW), from NULL-JSFX-VST3-CLAP-<your OS>.zip
     Copy the "NULL JSFX" folder from VST3 and from CLAP to:
       Windows: C:\Program Files\Common Files\VST3
@@ -25,6 +33,21 @@ VST3 and CLAP (any DAW), from NULL-JSFX-VST3-CLAP-<your OS>.zip
                ~/Library/Audio/Plug-Ins/CLAP
       Linux:   ~/.vst3   and   ~/.clap
     then rescan plugins in your DAW.
+
+Rack (any DAW), in the VST3 and CLAP folders
+    "Rack" by NULL JSFX chains up to 8 NULL JSFX effects in one plugin, with
+    band splitting (Low/Mid/High), Mid/Side or Left/Right processing per slot,
+    8 macros, 2 LFOs and an envelope follower. Its presets include the FX
+    chains above and a few that only the Rack can do (Multiband Distortion,
+    Mid/Side EQ, Auto Filter and more). It installs with the other plugins.
+
+Presets
+    Every plugin has the same factory presets in all versions. JSFX: REAPER's
+    preset menu at the top of the FX window (they come from the .rpl file next
+    to each plugin; keep it there). GFX, VST3 and CLAP: the box at the top
+    right of the interface; the arrows step through the presets, a click on the
+    name opens the list. It shows CUSTOM once you change a control. Your own
+    presets are saved with your DAW's preset menu as usual.
 
 macOS (not officially supported): the builds are not code-signed. If macOS
 refuses to load them, run

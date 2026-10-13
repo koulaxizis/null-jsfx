@@ -31,7 +31,7 @@ protected:
     const char* getLabel() const override { return "Maximizer"; }
     const char* getDescription() const override
     {
-        return "Loudness maximizer: Input Gain into a look-ahead limiter that holds the peaks at Ceiling, with stereo link and an output trim.";
+        return "Loudness maximizer: Input Gain into a look-ahead limiter that holds the peaks at Ceiling, with stereo link, an output trim and TPDF dither with optional noise shaping.";
     }
     int64_t getUniqueId() const override { return d_cconst('N', '1', 'm', 'x'); }
 
@@ -96,7 +96,8 @@ private:
 
     void update()
     {
-        fDsp.setParams(value(0), value(1), value(2), value(3), value(4), value(5) >= 0.5f);
+        fDsp.setParams(value(0), value(1), value(2), value(3), value(4), value(5) >= 0.5f,
+                       int(std::lround(value(6))), value(7) >= 0.5f);
         setLatency(uint32_t(fDsp.latency())); // pdc_delay = look
     }
 

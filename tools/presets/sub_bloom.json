@@ -1,0 +1,9 @@
+[
+  ["Kick Sub Boost", {"Source Frequency": 80, "Sub Level": 40, "Sub Octave": "-1 Octave", "Original Mix": 100, "Output": -2}],
+  ["Bass Octave Down", {"Source Frequency": 150, "Sub Level": 60, "Sub Octave": "-1 Octave", "Original Mix": 80, "Output": -2}],
+  ["DI Bass Fattener", {"Source Frequency": 180, "Sub Level": 45, "Sub Octave": "-1 Octave", "Original Mix": 90, "Output": -1}],
+  ["Small Speaker Lift", {"Source Frequency": 120, "Sub Level": 30, "Sub Octave": "-1 Octave", "Original Mix": 100, "Output": -1}],
+  ["Deep Synth Bass", {"Source Frequency": 200, "Sub Level": 55, "Sub Octave": "Both", "Original Mix": 75, "Output": -2}],
+  ["Cinematic Rumble", {"Source Frequency": 120, "Sub Level": 70, "Sub Octave": "-2 Octaves", "Original Mix": 70, "Output": -2}],
+  ["Sub Only Layer", {"Source Frequency": 100, "Sub Level": 80, "Sub Octave": "-1 Octave", "Original Mix": 0, "Output": 0}]
+]

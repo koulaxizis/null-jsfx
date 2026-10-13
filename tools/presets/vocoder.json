@@ -1,0 +1,10 @@
+[
+  ["Synth Voice Low", {"Carrier": "Saw", "Carrier Pitch": 82.4, "Attack": 3, "Release": 30, "Sibilance": 25}],
+  ["Talking Synth Sidechain", {"Carrier": "Right Input", "Attack": 3, "Release": 35, "Sibilance": 30}],
+  ["Whisper Noise", {"Carrier": "Noise", "Attack": 5, "Release": 60, "Sibilance": 40, "Stereo Width": 80}],
+  ["Pulse Choir", {"Carrier": "Pulse", "Carrier Pitch": 220, "Formant Shift": 2, "Release": 80, "Stereo Width": 100}],
+  ["Deep Monster Voice", {"Carrier": "Saw", "Carrier Pitch": 55, "Formant Shift": -5, "Release": 50, "Sibilance": 10}],
+  ["Chipmunk Robot", {"Carrier": "Pulse", "Carrier Pitch": 440, "Formant Shift": 6, "Sibilance": 30, "Output": -9}],
+  ["Drum Rhythm Synth", {"Carrier": "Saw", "Carrier Pitch": 110, "Attack": 1, "Release": 20, "Sibilance": 10}],
+  ["Smooth Pad Vocoder", {"Carrier": "Saw", "Carrier Pitch": 130.8, "Attack": 15, "Release": 150, "Sibilance": 15, "Stereo Width": 90}]
+]

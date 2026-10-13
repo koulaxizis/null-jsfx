@@ -1,0 +1,10 @@
+[
+  ["Octave Up Double", {"Octave": 1, "Mix": 40}],
+  ["Octave Down Thick", {"Octave": -1, "Mix": 40}],
+  ["Fifth Above Harmony", {"Semitones": 7, "Mix": 35}],
+  ["Fourth Below Harmony", {"Semitones": -5, "Mix": 35}],
+  ["Minor Third Harmony", {"Semitones": 3, "Mix": 30}],
+  ["Vocal Thickener", {"Fine": 12, "Mix": 30}],
+  ["Full Octave Down", {"Octave": -1, "Mix": 100}],
+  ["Full Octave Up", {"Octave": 1, "Mix": 100}]
+]

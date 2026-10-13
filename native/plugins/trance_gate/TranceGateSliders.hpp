@@ -6,7 +6,7 @@
 
 #pragma once
 
-#include "NullPlugin.hpp"
+#include "NullSliders.hpp"
 #include "TranceGateDSP.hpp"
 
 #include <cmath>

@@ -1,0 +1,10 @@
+[
+  ["Natural Half Left", {"Pan": -50, "Mode": "Natural"}],
+  ["Natural Half Right", {"Pan": 50, "Mode": "Natural"}],
+  ["Hard Left Balance", {"Pan": -100, "Mode": "Balance"}],
+  ["Hard Right Balance", {"Pan": 100, "Mode": "Balance"}],
+  ["Haas Guitar Left", {"Pan": -70, "Mode": "Haas", "Haas Delay": 15}],
+  ["Haas Guitar Right", {"Pan": 70, "Mode": "Haas", "Haas Delay": 15}],
+  ["Narrow Stereo Keys", {"Pan": -25, "Mode": "Natural", "Width": 60}],
+  ["Mono Fold Center", {"Pan": 0, "Mode": "Natural", "Width": 0}]
+]

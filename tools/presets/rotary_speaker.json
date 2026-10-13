@@ -1,0 +1,9 @@
+[
+  ["Organ Chorale", {"Speed": "Slow (Chorale)", "Drive": 25}],
+  ["Organ Fast Tremolo", {"Speed": "Fast (Tremolo)", "Drive": 30}],
+  ["Gritty Rock Organ", {"Speed": "Fast (Tremolo)", "Drive": 70}],
+  ["Slow Ramp Transitions", {"Speed": "Slow (Chorale)", "Acceleration": 300, "Drive": 25}],
+  ["Guitar Swirl", {"Speed": "Slow (Chorale)", "Horn/Drum Balance": 60, "Drive": 10, "Width": 100, "Mix": 70}],
+  ["Keys Gentle Spin", {"Speed": "Slow (Chorale)", "Horn/Drum Balance": 55, "Drive": 15, "Width": 90, "Mix": 80}],
+  ["Vocal Movement", {"Speed": "Slow (Chorale)", "Drive": 0, "Width": 100, "Mix": 40}]
+]

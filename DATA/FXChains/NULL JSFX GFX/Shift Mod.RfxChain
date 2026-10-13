@@ -1,0 +1,49 @@
+BYPASS 0 0
+<JS null_jsfx/gfx/mid_side_matrix_gfx.jsfx ""
+  0 0 0 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+>
+FXID {2FFDC762-0E91-5386-955A-85CBE5F1787C}
+WAK 0 0
+BYPASS 0 0
+<JS null_jsfx/gfx/frequency_shifter_gfx.jsfx ""
+  5 0 0 50 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+>
+<JS_PINMAP
+  6AMAABwAAADoAwAAAgAAAAIAAAACAAAAAAAAAAIAAAAAAAAAHAAAAOgDAAACAAAAAgAAAAAAAAAAAAAAAgAAAAAAAAA=
+>
+FXID {C79925B6-ED5E-5EE8-9E32-D711160C84BF}
+<PROGRAMENV 0 0
+  PARAMBASE 0.50125
+  LFO 1
+  LFOWT 0.004 0
+  AUDIOCTL 0
+  AUDIOCTLWT 1 1
+  LFOSHAPE 0
+  LFOSYNC 0 0 0
+  LFOSPEED 0.124573 0
+>
+WAK 0 0
+BYPASS 0 0
+<JS null_jsfx/gfx/mid_side_matrix_gfx.jsfx ""
+  0 0 1 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+>
+FXID {A262A222-FA43-5CEC-9A4D-649BBE7013C4}
+WAK 0 0
+BYPASS 0 0
+<JS null_jsfx/gfx/ring_mod_gfx.jsfx ""
+  5 300 50 0 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+>
+FXID {544BB71C-D42D-5E14-AC56-7D3A31CD65A2}
+WAK 0 0
+BYPASS 0 0
+<JS null_jsfx/gfx/filter_gfx.jsfx ""
+  700 0.3 3 2 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+>
+FXID {9900C738-1240-5637-BC2A-D08037DAD875}
+WAK 0 0
+BYPASS 0 0
+<JS null_jsfx/gfx/stereo_width_gfx.jsfx ""
+  130 100 0 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+>
+FXID {750F7A67-CC24-57DC-8F40-1F12D02DCBB3}
+WAK 0 0

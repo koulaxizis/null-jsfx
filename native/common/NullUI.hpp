@@ -21,6 +21,14 @@
 #include <cstdio>
 #include <cstring>
 
+// the plugin's factory presets (written by tools/build_presets.py into the plugin's folder)
+#if __has_include("FactoryPresets.hpp")
+#include "FactoryPresets.hpp"
+#define NULL_UI_PRESETS 1
+#else
+#define NULL_UI_PRESETS 0
+#endif
+
 START_NAMESPACE_DISTRHO
 
 class NullUI : public UI
@@ -113,7 +121,10 @@ protected:
         label(46.0f, 15.0f, ALIGN_LEFT, 8.5f, 2.5f, theme::kMuted, "NULL JSFX", true);
         label(46.0f, 28.0f, ALIGN_LEFT, 15.0f, 2.0f, theme::kText, name, true);
         label(kWidth - 14.0f, 15.0f, ALIGN_RIGHT, 7.5f, 2.0f, theme::kSlogan, "AUDIO WITHOUT NOISE", true);
-        label(kWidth - 14.0f, 29.0f, ALIGN_RIGHT, 8.5f, 2.0f, theme::kMuted, category, true);
+        if (numPresets() > 0)
+            drawPresetBox();
+        else
+            label(kWidth - 14.0f, 29.0f, ALIGN_RIGHT, 8.5f, 2.0f, theme::kMuted, category, true);
 
         beginPath();
         moveTo(0, 44.5f);
@@ -121,6 +132,207 @@ protected:
         strokeColor(col(theme::kBorder));
         strokeWidth(1.0f);
         stroke();
+    }
+
+    // ---- factory presets ---------------------------------------------------------------------
+    // The twin of the GFX selector (ng_pre_* in null_gfx.jsfx-inc): a box in the header in place
+    // of the category, the arrows step through the presets, a click on the name opens the list.
+    // The name is the preset every parameter matches, or CUSTOM. A preset is applied as one
+    // host edit per changed parameter, so the host records it like moving the controls.
+    // Subclasses give access to their values with presetGet / presetSet, draw the list last
+    // (drawPresetMenu) and pass the mouse to presetMouse / presetMotion first.
+
+    static constexpr float kPresetW = 150.0f, kPresetY = 21.0f, kPresetH = 16.0f, kPresetRow = 15.0f;
+
+    virtual float presetGet(uint32_t) const { return 0.0f; }
+    virtual void presetSet(uint32_t, float) {}
+
+    static uint32_t numPresets()
+    {
+#if NULL_UI_PRESETS
+        return nullpresets::kNumPresets;
+#else
+        return 0;
+#endif
+    }
+
+    static const char* presetName(int p)
+    {
+#if NULL_UI_PRESETS
+        return nullpresets::kPresets[p].name;
+#else
+        (void)p;
+        return "";
+#endif
+    }
+
+    // the first preset every parameter matches (to 1e-4, relative above 1), or -1
+    int presetMatch() const
+    {
+#if NULL_UI_PRESETS
+        for (uint32_t p = 0; p < nullpresets::kNumPresets; ++p)
+        {
+            bool same = true;
+            for (uint32_t i = 0; i < nullpresets::kNumValues && same; ++i)
+            {
+                const float v = nullpresets::kPresets[p].values[i];
+                same = std::fabs(presetGet(i) - v) <= 1e-4f * std::max(1.0f, std::fabs(v));
+            }
+            if (same)
+                return int(p);
+        }
+#endif
+        return -1;
+    }
+
+    void presetLoad(int p)
+    {
+#if NULL_UI_PRESETS
+        if (p < 0 || p >= int(nullpresets::kNumPresets))
+            return;
+        for (uint32_t i = 0; i < nullpresets::kNumValues; ++i)
+        {
+            const float v = nullpresets::kPresets[p].values[i];
+            if (presetGet(i) == v)
+                continue;
+            editParameter(i, true);
+            presetSet(i, v);
+            editParameter(i, false);
+        }
+#else
+        (void)p;
+#endif
+        repaint();
+    }
+
+    float presetX() const { return float(kWidth) - 14.0f - kPresetW; }
+    int presetRows() const
+    {
+        return std::max(1, std::min(int(numPresets()), int((float(kHeight) - 54.0f) / kPresetRow)));
+    }
+    int presetCols() const { return (int(numPresets()) + presetRows() - 1) / presetRows(); }
+    float presetMenuX() const { return presetX() - float(presetCols() - 1) * kPresetW; }
+
+    bool inPresetBox(float x, float y) const
+    {
+        return x >= presetX() && x < presetX() + kPresetW && y >= kPresetY && y < kPresetY + kPresetH;
+    }
+
+    int presetItemAt(float x, float y) const
+    {
+        const float x0 = presetMenuX();
+        if (x < x0 || y < 44.0f)
+            return -1;
+        const int col = int((x - x0) / kPresetW), row = int((y - 44.0f) / kPresetRow);
+        if (col >= presetCols() || row >= presetRows())
+            return -1;
+        const int i = col * presetRows() + row;
+        return i < int(numPresets()) ? i : -1;
+    }
+
+    void drawPresetBox()
+    {
+        const float x0 = presetX(), y0 = kPresetY;
+        beginPath();
+        roundedRect(x0 + 0.5f, y0 + 0.5f, kPresetW - 1.0f, kPresetH - 1.0f, 4.0f);
+        fillColor(col(theme::kBackground));
+        fill();
+        strokeColor(col(fPresetHoverBox || fPresetOpen ? theme::kTrackHover : theme::kBorder));
+        strokeWidth(1.0f);
+        stroke();
+        const int cur = presetMatch();
+        label(x0 + kPresetW * 0.5f, y0 + 8.0f, ALIGN_CENTER, 7.5f, 0.3f, cur >= 0 ? theme::kText : theme::kMuted,
+              cur >= 0 ? presetName(cur) : "CUSTOM", true);
+        drawArrow(x0 + 7.0f, y0 + 8.0f, -1.0f);
+        drawArrow(x0 + kPresetW - 7.0f, y0 + 8.0f, 1.0f);
+    }
+
+    // the open list, under the selector; call it after everything else
+    void drawPresetMenu()
+    {
+        if (!fPresetOpen)
+            return;
+        const int n = int(numPresets()), rows = presetRows(), cols = presetCols(), cur = presetMatch();
+        const float x0 = presetMenuX();
+        beginPath();
+        roundedRect(x0 + 0.5f, 40.5f, float(cols) * kPresetW - 1.0f, float(rows) * kPresetRow + 7.0f, 4.0f);
+        fillColor(col(theme::kCard));
+        fill();
+        strokeColor(col(theme::kTrackHover));
+        strokeWidth(1.0f);
+        stroke();
+        for (int i = 0; i < n; ++i)
+        {
+            const float x = x0 + float(i / rows) * kPresetW, y = 44.0f + float(i % rows) * kPresetRow;
+            if (i == fPresetHover)
+            {
+                beginPath();
+                rect(x + 2.0f, y, kPresetW - 4.0f, kPresetRow);
+                fillColor(col(0x2d2b28));
+                fill();
+            }
+            label(x + 12.0f, y + kPresetRow * 0.5f, ALIGN_LEFT, 7.5f, 0.3f,
+                  i == cur || i == fPresetHover ? theme::kText : theme::kMuted, presetName(i), true);
+            if (i == cur)
+            {
+                beginPath();
+                rect(x + 4.0f, y + kPresetRow * 0.5f - 1.5f, 3.0f, 3.0f);
+                fillColor(col(theme::kAccent));
+                fill();
+            }
+        }
+    }
+
+    bool presetOpen() const { return fPresetOpen; }
+
+    // a press on the selector or while the list is open; true when it took the event
+    bool presetMouse(const MouseEvent& ev)
+    {
+        if (numPresets() == 0 || !ev.press)
+            return false;
+        const float s = uiScale();
+        const float x = float(ev.pos.getX()) / s, y = float(ev.pos.getY()) / s;
+        if (fPresetOpen)
+        {
+            // a click anywhere closes the list; on an item it also loads that preset
+            fPresetOpen = false;
+            if (ev.button == 1)
+                presetLoad(presetItemAt(x, y));
+            repaint();
+            return true;
+        }
+        if (ev.button != 1 || !inPresetBox(x, y))
+            return false;
+        const int n = int(numPresets()), cur = presetMatch();
+        if (x < presetX() + 22.0f)
+            presetLoad(cur < 0 ? n - 1 : (cur + n - 1) % n);
+        else if (x >= presetX() + kPresetW - 22.0f)
+            presetLoad((cur + 1) % n);
+        else
+        {
+            fPresetOpen = true;
+            fPresetHover = -1;
+            repaint();
+        }
+        return true;
+    }
+
+    // hover over the selector and the list; true while the list is open (it takes the motion)
+    bool presetMotion(const MotionEvent& ev)
+    {
+        if (numPresets() == 0)
+            return false;
+        const float s = uiScale();
+        const float x = float(ev.pos.getX()) / s, y = float(ev.pos.getY()) / s;
+        const bool box = inPresetBox(x, y);
+        const int item = fPresetOpen ? presetItemAt(x, y) : -1;
+        if (box != fPresetHoverBox || item != fPresetHover)
+        {
+            fPresetHoverBox = box;
+            fPresetHover = item;
+            repaint();
+        }
+        return fPresetOpen;
     }
 
     void card(float x, float y, float w, float h)
@@ -468,6 +680,10 @@ protected:
         fillColor(col(theme::kAccent, 0.35f));
         fill();
     }
+
+private:
+    bool fPresetOpen = false, fPresetHoverBox = false;
+    int fPresetHover = -1;
 };
 
 // ------------------------------------------------------------------------------------------------
@@ -535,6 +751,14 @@ protected:
         card(14.0f, 54.0f, 332.0f, 110.0f);
         drawDisplay();
         drawSliderCard();
+        drawPresetMenu();
+    }
+
+    float presetGet(uint32_t index) const override { return index == 0 ? fValue : 0.0f; }
+    void presetSet(uint32_t index, float v) override
+    {
+        if (index == 0)
+            setFromUI(v);
     }
 
     void drawSliderCard()
@@ -580,6 +804,8 @@ protected:
 
     bool onMouse(const MouseEvent& ev) override
     {
+        if (presetMouse(ev))
+            return true;
         if (ev.button != 1)
             return false;
         const float s = uiScale();
@@ -617,6 +843,8 @@ protected:
 
     bool onMotion(const MotionEvent& ev) override
     {
+        if (presetMotion(ev))
+            return true;
         const float s = uiScale();
         const float x = float(ev.pos.getX()) / s, y = float(ev.pos.getY()) / s;
         const bool hover = inSlider(x, y);
@@ -640,6 +868,8 @@ protected:
 
     bool onScroll(const ScrollEvent& ev) override
     {
+        if (presetOpen())
+            return true;
         const float s = uiScale();
         if (!inSlider(float(ev.pos.getX()) / s, float(ev.pos.getY()) / s))
             return false;
@@ -878,6 +1108,14 @@ protected:
                 drawArrow(cx + pw * 0.5f - 7.0f, ry + 44.0f, 1.0f);
             }
         }
+        drawPresetMenu();
+    }
+
+    float presetGet(uint32_t param) const override { return value(param); }
+    void presetSet(uint32_t param, float v) override
+    {
+        if (param < fL.numSliders && param < kMax)
+            setFromUI(param, v);
     }
 
     void drawTabs(float ty)
@@ -959,6 +1197,8 @@ protected:
 
     bool onMouse(const MouseEvent& ev) override
     {
+        if (presetMouse(ev))
+            return true;
         if (ev.button != 1)
             return false;
         const float s = uiScale();
@@ -1011,6 +1251,8 @@ protected:
 
     bool onMotion(const MotionEvent& ev) override
     {
+        if (presetMotion(ev))
+            return true;
         const float s = uiScale();
         const float x = float(ev.pos.getX()) / s, y = float(ev.pos.getY()) / s;
         const int h = controlAt(x, y), ht = tabAt(x, y);
@@ -1036,6 +1278,8 @@ protected:
 
     bool onScroll(const ScrollEvent& ev) override
     {
+        if (presetOpen())
+            return true;
         const float s = uiScale();
         const int i = controlAt(float(ev.pos.getX()) / s, float(ev.pos.getY()) / s);
         if (i < 0)

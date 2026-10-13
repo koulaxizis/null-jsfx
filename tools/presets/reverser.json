@@ -1,0 +1,9 @@
+[
+  ["Short Reverse Chops", {"Buffer Length": 1, "Filter": "Off", "Mix": 50}],
+  ["Backwards Swell", {"Buffer Length": 4, "Filter": "Off", "Mix": 40}],
+  ["Dark Reverse Bed", {"Buffer Length": 6, "Filter": "LP", "Filter Freq": 1200, "Mix": 30}],
+  ["Airy Reverse Layer", {"Buffer Length": 3, "Filter": "HP", "Filter Freq": 3000, "Mix": 30}],
+  ["Telephone Reverse", {"Buffer Length": 2, "Filter": "BP", "Filter Freq": 1500, "Mix": 50}],
+  ["Long Ambient Reverse", {"Buffer Length": 10, "Filter": "LP", "Filter Freq": 4000, "Mix": 35}],
+  ["Reverse Only", {"Buffer Length": 2, "Filter": "Off", "Mix": 100}]
+]

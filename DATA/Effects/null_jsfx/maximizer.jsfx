@@ -1,6 +1,6 @@
 desc:NULL Maximizer
 author: Christos Koulaxizis
-tags: limiter maximizing loudness ceiling mastering peak protection
+tags: limiter maximizing loudness ceiling mastering peak protection dither
 //category: Essentials
 //NULL JSFX v2.0 • https://nulljsfx.tech • MIT License
 
@@ -10,6 +10,8 @@ slider3:50<10,200,1>Release (ms)
 slider4:2<0,5,1>Lookahead (ms)
 slider5:0<-12,0,0.1>Output Gain (dB)
 slider6:1<0,1,1{OFF,ON}>Stereo Link
+slider7:0<0,2,1{OFF,16-BIT,24-BIT}>Dither
+slider8:0<0,1,1{OFF,ON}>Noise Shaping
 
 in_pin:Left
 in_pin:Right
@@ -19,7 +21,8 @@ out_pin:Right
 @init
   // Loudness maximizer: Input Gain pushes the mix into a look-ahead limiter that
   // holds the peaks at Ceiling. Stereo Link uses one gain for both channels so the
-  // image does not shift; OFF limits each channel on its own.
+  // image does not shift; OFF limits each channel on its own. Dither, last in the chain,
+  // quantises to 16 or 24 bits with TPDF noise, optionally noise-shaped.
   max_look = ceil(srate * 0.006) + 2;
   buf_l = 0;
   buf_r = buf_l + max_look;
@@ -29,6 +32,8 @@ out_pin:Right
   hv_l = hv_r = 0;
   hc_l = hc_r = 0;
   g_l = g_r = 1;
+  seed = 12345;
+  dt_el = dt_er = 0;
   pdc_bot_ch = 0;
   pdc_top_ch = 2;
 
@@ -57,6 +62,9 @@ out_pin:Right
   // output can never exceed Ceiling; use Input Gain to make it louder.
   out_gain = 10 ^ (min(slider5, 0) / 20);
   link = slider6;
+  dith = slider7;
+  dt_q = slider7 == 1 ? 32768 : 8388608;
+  nshape = slider8;
 
 @sample
   in_l = spl0 * in_gain;
@@ -78,3 +86,20 @@ out_pin:Right
 
   spl0 = max(-ceiling, min(ceiling, buf_l[rpos] * g_l)) * out_gain;
   spl1 = max(-ceiling, min(ceiling, buf_r[rpos] * g_r)) * out_gain;
+
+  dith ? (
+    // TPDF dither: half the sum of two uniform values in -1..1 (exact Park-Miller steps, as in
+    // riser.jsfx) is triangular noise of +-1 LSB, added before rounding to the bit depth.
+    // Noise Shaping subtracts the last error first (first order, 1 - z^-1): the noise moves
+    // up the spectrum, away from where the ear is most sensitive.
+    seed *= 16807; seed -= floor(seed / 2147483647) * 2147483647; dt_n1 = seed / 1073741824 - 1;
+    seed *= 16807; seed -= floor(seed / 2147483647) * 2147483647; dt_n2 = seed / 1073741824 - 1;
+    dt_v = nshape ? spl0 - dt_el : spl0;
+    spl0 = floor(dt_v * dt_q + (dt_n1 + dt_n2) * 0.5 + 0.5) / dt_q;
+    dt_el = nshape ? spl0 - dt_v : 0;
+    seed *= 16807; seed -= floor(seed / 2147483647) * 2147483647; dt_n1 = seed / 1073741824 - 1;
+    seed *= 16807; seed -= floor(seed / 2147483647) * 2147483647; dt_n2 = seed / 1073741824 - 1;
+    dt_v = nshape ? spl1 - dt_er : spl1;
+    spl1 = floor(dt_v * dt_q + (dt_n1 + dt_n2) * 0.5 + 0.5) / dt_q;
+    dt_er = nshape ? spl1 - dt_v : 0;
+  );

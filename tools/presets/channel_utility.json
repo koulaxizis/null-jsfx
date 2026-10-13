@@ -1,0 +1,10 @@
+[
+  ["Pad Hot Input", {"Input Pad": "-6"}],
+  ["Invert Both Polarity", {"Phase Left": "Inverted", "Phase Right": "Inverted"}],
+  ["Invert Left Only", {"Phase Left": "Inverted"}],
+  ["Mono Check", {"Mono Check": "Mono"}],
+  ["Listen Left Only", {"Solo L": "On"}],
+  ["Listen Right Only", {"Solo R": "On"}],
+  ["Low Rumble Trim", {"DC Block Freq": 40}],
+  ["Safety Clip", {"Hard Limit": "On"}]
+]

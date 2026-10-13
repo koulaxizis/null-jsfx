@@ -1,0 +1,44 @@
+BYPASS 0 0
+<JS null_jsfx/gfx/parametric_eq_gfx.jsfx ""
+  120 0 1 0 0 548 0 1 2 0 2236 0 1 2 0 10000 0 1 1 0 15000 0 1 2 0 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+>
+FXID {96A39FC5-EA1C-519C-9E02-1F231E42136E}
+WAK 0 0
+BYPASS 0 0
+<JS null_jsfx/gfx/dynamics_gfx.jsfx ""
+  0 0 3 6 15 120 0 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+>
+FXID {116825B3-5394-5EBC-9D7C-A50A13FFD963}
+<PROGRAMENV 6 0
+  PARAMBASE 0
+  LFO 0
+  LFOWT 1 1
+  AUDIOCTL 0
+  AUDIOCTLWT 1 1
+  PLINK -0.8 1:0 1 0.8
+>
+WAK 0 0
+BYPASS 0 0
+<JS null_jsfx/gfx/deesser_gfx.jsfx ""
+  6500 -4 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+>
+FXID {E92F26BB-5896-5EB2-9100-B04AA3727E9D}
+WAK 0 0
+BYPASS 0 0
+<JS null_jsfx/gfx/doubler_gfx.jsfx ""
+  0 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+>
+FXID {F5BB6C8B-8046-50BD-ADED-2B4FA1D67B94}
+WAK 0 0
+BYPASS 0 0
+<JS null_jsfx/gfx/delay_gfx.jsfx ""
+  250 20 0 1 2 0 200 6000 0 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+>
+FXID {77B2D5BD-DB75-5D71-BA02-89ACB941847E}
+WAK 0 0
+BYPASS 0 0
+<JS null_jsfx/gfx/reverb_gfx.jsfx ""
+  40 40 50 0 0 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+>
+FXID {FFA9E490-2A96-572D-9F66-C4108E72BDB9}
+WAK 0 0

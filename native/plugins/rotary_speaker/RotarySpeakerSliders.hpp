@@ -6,7 +6,7 @@
 
 #pragma once
 
-#include "NullPlugin.hpp"
+#include "NullSliders.hpp"
 #include "RotarySpeakerDSP.hpp"
 
 #include <cmath>

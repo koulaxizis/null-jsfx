@@ -1,0 +1,34 @@
+BYPASS 0 0
+<JS null_jsfx/gfx/grit_gfx.jsfx ""
+  0 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+>
+FXID {6E7BC46E-7098-5DCE-B25D-FB3E04A2D36E}
+<PROGRAMENV 0 0
+  PARAMBASE 0
+  LFO 0
+  LFOWT 1 1
+  AUDIOCTL 0
+  AUDIOCTLWT 1 1
+  PLINK 0.705882 1:1 7 0
+>
+WAK 0 0
+BYPASS 0 0
+<JS null_jsfx/gfx/vinyl_age_gfx.jsfx ""
+  30 20 25 10 12 22050 8000 0 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+>
+FXID {E9EE558D-B876-5E3D-B1AD-42B3C689F5AA}
+WAK 0 0
+BYPASS 0 0
+<JS null_jsfx/gfx/filter_gfx.jsfx ""
+  20000 0.9 0 0 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+>
+FXID {3A2C388B-1DB4-5E5C-AA53-C76925FE1262}
+<PROGRAMENV 0 0
+  PARAMBASE 1
+  LFO 0
+  LFOWT 1 1
+  AUDIOCTL 0
+  AUDIOCTLWT 1 1
+  PLINK -0.529412 1:-1 7 0
+>
+WAK 0 0

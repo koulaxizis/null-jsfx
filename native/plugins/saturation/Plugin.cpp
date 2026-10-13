@@ -24,7 +24,7 @@ protected:
     const char* getLabel() const override { return "Saturation"; }
     const char* getDescription() const override
     {
-        return "Six flavours of saturation (tape, tube, overdrive, fuzz, bitcrush, wavefolder) with tone and mix.";
+        return "Seven flavours of saturation (tape, tube, overdrive, fuzz, bitcrush, waveshaper, sine wavefolder) with tone and mix.";
     }
     int64_t getUniqueId() const override { return d_cconst('N', '5', 'S', 'a'); }
 

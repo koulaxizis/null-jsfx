@@ -1,0 +1,7 @@
+[
+  ["Smooth Drone", {"Fade": 800, "Smear": 90}],
+  ["Tonal Snapshot", {"Fade": 50, "Smear": 0}],
+  ["Quick Transition Hold", {"Fade": 150, "Smear": 40}],
+  ["Ambient Layer", {"Fade": 1500, "Smear": 70, "Level": -6, "Mix": 50}],
+  ["Slow Swell Pad", {"Fade": 3000, "Smear": 60, "Level": -3}]
+]

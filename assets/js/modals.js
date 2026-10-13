@@ -38,6 +38,18 @@ const guides = {
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
     shot: 'assets/img/gfx/crunch.png'
   },
+  'dj-filter': {
+    title: 'DJ FILTER',
+    subtitle: 'One-Knob DJ Sweep Filter',
+    category: 'One Slider',
+    sliders: [
+      { name: 'Filter', range: '−100 to +100', desc: 'Left of centre a 24 dB/oct low-pass sweeps down from 20 kHz to 60 Hz; right of centre a high-pass sweeps up from 20 Hz to 10 kHz; 0 is the dry signal, bit for bit' }
+    ],
+    uses: ['DJ-style filter sweeps for transitions and breakdowns', 'Build tension by slowly opening a high-pass before a drop', 'Muffle a loop or whole mix for a \'next room\' effect', 'Automate a single knob for filter rises and falls', 'Quickly thin out or darken a bus during arrangement'],
+    properties: 'Signal chain: Input → two cascaded TPT state-variable stages (24 dB/oct low-pass and high-pass, both always running) → crossfade with the dry signal over the first 5% of travel → Output. A resonance bump grows with the amount; the knob glides over 20 ms so moves and automation do not zipper. Exactly transparent at 0; stereo, zero latency.',
+    formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
+    shot: 'assets/img/gfx/dj_filter.png'
+  },
   'doubler': {
     title: 'DOUBLER',
     subtitle: 'Automatic Double Tracking',
@@ -276,6 +288,23 @@ const guides = {
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
     shot: 'assets/img/gfx/auto_leveler.png'
   },
+  'band-splitter': {
+    title: 'BAND SPLITTER',
+    subtitle: 'Multiband Crossover Router',
+    category: 'Essentials',
+    sliders: [
+      { name: 'Mode', range: 'Split / Merge', desc: 'Split: the input on channels 1/2 is divided into bands on channels 1-8; Merge: channels 1-8 are summed back into 1/2' },
+      { name: 'Bands', range: '2 to 4', desc: 'Number of bands (2, 3 or 4): band 1 on channels 1/2, band 2 on 3/4, band 3 on 5/6, band 4 on 7/8' },
+      { name: 'Crossover 1', range: '30 to 1000 Hz', desc: 'Frequency between band 1 and band 2' },
+      { name: 'Crossover 2', range: '200 to 6000 Hz', desc: 'Frequency between band 2 and band 3 (kept at least 1.5x Crossover 1)' },
+      { name: 'Crossover 3', range: '1000 to 16000 Hz', desc: 'Frequency between band 3 and band 4 (kept at least 1.5x Crossover 2)' },
+      { name: 'Listen', range: 'Off / Band 1 / Band 2 / Band 3 / Band 4', desc: 'Puts one band on channels 1/2 to hear it on its own (Split mode)' }
+    ],
+    uses: ['Multiband processing with any plugin: a saturator only on the lows, a de-esser only on the highs', 'Multiband stereo widening with a mono low end', 'Parallel band chains in one track, merged back with a second instance', 'Auditioning crossover points before setting up a multiband chain'],
+    properties: 'Signal chain (Split): Input → Linkwitz-Riley 4th-order crossover cascade (24 dB/oct, TPT state-variable filters) → allpass phase compensation on the lower bands → bands on channel pairs 1/2, 3/4, 5/6, 7/8. The bands sum to a flat (allpass) response. Merge sums the four channel pairs into 1/2 and silences 3-8. Set the track to 8 channels and route each band\'s plugins to its pins. Zero latency.',
+    formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
+    shot: 'assets/img/gfx/band_splitter.png'
+  },
   'breath-control': {
     title: 'BREATH CONTROL',
     subtitle: 'Vocal Breath Reduction',
@@ -358,6 +387,23 @@ const guides = {
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
     shot: 'assets/img/gfx/click_repair.png'
   },
+  'de-hum': {
+    title: 'DE-HUM',
+    subtitle: 'Mains Hum Notch Remover',
+    category: 'Essentials',
+    sliders: [
+      { name: 'Frequency', range: '50 Hz / 60 Hz', desc: 'Mains frequency of the hum: 50 Hz (Europe, most of the world) or 60 Hz (Americas, parts of Asia)' },
+      { name: 'Harmonics', range: '1 to 8', desc: 'Number of notches: the fundamental and its multiples (1 = fundamental only, 8 = up to the 8th harmonic)' },
+      { name: 'Q', range: '5 to 100', desc: 'Notch width as Q: bandwidth = frequency / Q, so higher values cut narrower and leave more of the music' },
+      { name: 'Depth', range: '0 to 60 dB', desc: 'How deep each notch cuts, from 0 (off) to 60 dB' },
+      { name: 'Fine', range: '−2 to +2 Hz', desc: 'Fine tune of the mains frequency in Hz (±2), for hum that sits slightly off 50/60 Hz; the harmonics follow' },
+      { name: 'Low Cut', range: 'Off / 20 Hz / 30 Hz / 40 Hz', desc: 'Optional 24 dB/oct high-pass below the hum (20, 30 or 40 Hz) to clear rumble' }
+    ],
+    uses: ['Remove ground-loop hum from guitar, bass and DI recordings', 'Clean buzz from field recordings, interviews and podcasts', 'Repair old tapes and vinyl transfers with mains hum', 'Tidy hum on vintage synths and noisy amp recordings', 'Clear subsonic rumble along with the hum'],
+    properties: 'Signal chain: Input → optional Low Cut (two TPT high-pass stages, 24 dB/oct) → up to 8 notch biquads at h × (50/60 Hz + Fine) → Output. Each notch has the poles of a band of width f/Q and cuts by exactly Depth at its centre; stereo, zero latency.',
+    formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
+    shot: 'assets/img/gfx/de_hum.png'
+  },
   'deesser': {
     title: 'DEESSER',
     subtitle: 'Split-Band Sibilance Control',
@@ -373,19 +419,39 @@ const guides = {
   },
   'delay': {
     title: 'DELAY',
-    subtitle: 'Stereo Echo & Slapback',
+    subtitle: 'Stereo & Ping-Pong Echo',
     category: 'Essentials',
     sliders: [
       { name: 'Time', range: '0 to 2000 ms', desc: 'Delay time in free mode.' },
       { name: 'Feedback', range: '0 to 100%', desc: 'Amount of the echo fed back into the delay line, capped internally at 95%.' },
       { name: 'Mix', range: '0 to 100%', desc: 'Blend between dry signal and echoes.' },
       { name: 'Tempo Sync', range: 'OFF / ON', desc: 'Locks the delay time to the project tempo.' },
-      { name: 'Subdivision', range: '1/4 / 1/8 / 1/16 / 1/32', desc: 'Synced delay length: 1/4 = one beat, down to 1/32.' }
+      { name: 'Subdivision', range: '1/4 / 1/8 / 1/16 / 1/32', desc: 'Synced delay length: 1/4 = one beat, down to 1/32.' },
+      { name: 'Mode', range: 'Stereo / Ping-Pong', desc: 'Stereo keeps left and right on their own delay lines; Ping-Pong sends the mono sum into the left line and cross-feeds the lines, so the echoes alternate left and right.' },
+      { name: 'Low Cut', range: '20 to 2000 Hz', desc: 'One-pole high-pass inside the feedback loop: each repeat loses more low end. 20 Hz is off.' },
+      { name: 'High Cut', range: '1000 to 20000 Hz', desc: 'One-pole low-pass inside the feedback loop: each repeat gets darker, like tape or a bucket-brigade delay. 20 kHz is off.' },
+      { name: 'Drive', range: '0 to 100%', desc: 'Soft saturation inside the feedback loop: repeats get rounder and compress as they build up. 0% is off.' }
     ],
-    uses: ['Slapback on vocals and guitars', 'Tempo-synced rhythmic echoes', 'Long feedback trails for transitions', 'Short delays for depth and doubling'],
-    properties: 'Input → stereo delay line (up to 2 s, or tempo-synced) with feedback → Dry/Wet Mix → Output. Left and right are delayed independently with no filtering in the feedback loop; zero latency.',
+    uses: ['Slapback on vocals and guitars', 'Tempo-synced rhythmic echoes', 'Ping-pong echoes that bounce across the stereo field', 'Dark, saturated tape-style trails for transitions'],
+    properties: 'Input → delay line (up to 2 s, or tempo-synced; Stereo: left and right independent, Ping-Pong: mono sum into the left line, lines cross-fed) → Low Cut → High Cut → Drive on every repeat inside the feedback loop → Dry/Wet Mix → Output. At their defaults the filters and drive are bypassed; zero latency.',
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
     shot: 'assets/img/gfx/delay.png'
+  },
+  'disperser': {
+    title: 'DISPERSER',
+    subtitle: 'All-Pass Phase Dispersion',
+    category: 'Essentials',
+    sliders: [
+      { name: 'Frequency', range: '20 to 20000 Hz', desc: 'Centre frequency of the all-pass filters; frequencies around it are delayed the most' },
+      { name: 'Amount', range: '0 to 64', desc: 'Number of all-pass stages (0 to 64); more stages give a longer, more dramatic chirp' },
+      { name: 'Pinch', range: '0 to 100%', desc: 'Q of the all-passes: low spreads the delay over a wide band, high concentrates it in a narrow, laser-like band' },
+      { name: 'Mix', range: '0 to 100%', desc: 'Balance between the dry and the dispersed signal; partial mixes add phasey, comb-like colour' },
+      { name: 'Mode', range: 'Mono / Stereo', desc: 'Mono runs both channels at Frequency; Stereo moves left down and right up a quarter octave for width' }
+    ],
+    uses: ['Tighten and focus kicks by shifting their low-end phase', 'Turn snares and claps into laser \'pew\' zaps', 'Add chirpy, dispersive movement to transients and plucks', 'Sound design for sci-fi, glitch and bass music', 'Widen sounds with the Stereo offset'],
+    properties: 'Signal chain: Input → up to 64 identical 2nd-order TPT state-variable all-pass filters per channel → dry/wet Mix → Output. Magnitude stays flat; only the phase and group delay change. Frequency, Pinch, Mix and Mode glide over 20 ms; zero latency.',
+    formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
+    shot: 'assets/img/gfx/disperser.png'
   },
   'dynamic-eq': {
     title: 'DYNAMIC EQ',
@@ -527,10 +593,12 @@ const guides = {
       { name: 'Release', range: '10 to 200 ms', desc: 'How fast the gain recovers after a peak.' },
       { name: 'Lookahead', range: '0 to 5 ms', desc: 'How far ahead peaks are detected.' },
       { name: 'Output Gain', range: '−12 to 0 dB', desc: 'Trim after limiting (cut only, −12 to 0 dB), so the output never exceeds Ceiling; use Input Gain to make it louder.' },
-      { name: 'Stereo Link', range: 'OFF / ON', desc: 'ON uses one gain for both channels to keep the image stable; OFF limits each channel independently.' }
+      { name: 'Stereo Link', range: 'OFF / ON', desc: 'ON uses one gain for both channels to keep the image stable; OFF limits each channel independently.' },
+      { name: 'Dither', range: 'OFF / 16-BIT / 24-BIT', desc: 'Last in the chain: OFF, or TPDF dither and rounding to 16-bit (CD) or 24-bit; use it only when the output goes straight to a file of that bit depth.' },
+      { name: 'Noise Shaping', range: 'OFF / ON', desc: 'ON feeds the rounding error back (first order), moving the dither noise up the spectrum where the ear is less sensitive. Works only with Dither on.' }
     ],
-    uses: ['Final loudness stage in mastering', 'Raising stems and bounces to a target level', 'Peak control on buses', 'Dual-mono limiting for independent channels'],
-    properties: 'Input Gain → held peak detector + look-ahead delay → gain reduction to Ceiling → clamp at Ceiling → Output Gain trim (≤ 0 dB) → Output. Latency equals Lookahead (0–5 ms), reported to REAPER for delay compensation.',
+    uses: ['Final loudness stage in mastering', 'Raising stems and bounces to a target level', 'Peak control on buses', 'Dithered 16-bit masters for CD'],
+    properties: 'Input Gain → held peak detector + look-ahead delay → gain reduction to Ceiling → clamp at Ceiling → Output Gain trim (≤ 0 dB) → optional TPDF dither and rounding to 16 or 24 bits, with optional first-order noise shaping → Output. Latency equals Lookahead (0–5 ms), reported to REAPER for delay compensation.',
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
     shot: 'assets/img/gfx/maximizer.png'
   },
@@ -595,6 +663,39 @@ const guides = {
     properties: 'Random generator → colour filter (Pink: multi-pole filter bank; Brown: leaky integrator) → Level → Stereo Width → Output. The input is replaced by the noise, not mixed with it.',
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
     shot: 'assets/img/gfx/noise_generator.png'
+  },
+  'octaver': {
+    title: 'OCTAVER',
+    subtitle: 'Analog Octave Divider',
+    category: 'Essentials',
+    sliders: [
+      { name: 'Dry', range: '0 to 100%', desc: 'Level of the original signal.' },
+      { name: 'Oct -1', range: '0 to 100%', desc: 'Level of the voice one octave below the input (square wave from a flip-flop, following the input envelope).' },
+      { name: 'Oct -2', range: '0 to 100%', desc: 'Level of the voice two octaves below the input.' },
+      { name: 'Up', range: '0 to 100%', desc: 'Level of the voice one octave above (full-wave rectified input).' },
+      { name: 'Tone', range: '100 to 5000 Hz', desc: 'Low-pass on the octave voices: lower is rounder and more synth-bass-like.' },
+      { name: 'Tracking', range: '60 to 1000 Hz', desc: 'Low-pass ahead of the pitch tracking: set it just above the fundamental of the part for stable tracking.' }
+    ],
+    uses: ['Fattening bass lines with a sub octave', 'Synth-bass tones from bass or guitar', 'OC-2 style octave-down guitar leads', 'Octave-up fuzz textures'],
+    properties: 'Mono sum → DC blocker → Tracking low-pass (2 × one-pole) → Schmitt trigger (20% hysteresis) → flip-flop (-1 oct) → flip-flop (-2 oct); squares × input envelope; Up = rectified tracked signal; voices → Tone low-pass (2 × one-pole) → added to the dry signal. Monophonic sources. Zero latency.',
+    formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
+    shot: 'assets/img/gfx/octaver.png'
+  },
+  'panner': {
+    title: 'PANNER',
+    subtitle: 'Natural Stereo Placement',
+    category: 'Essentials',
+    sliders: [
+      { name: 'Pan', range: '−100 to +100', desc: 'Position of the source from hard left (-100) through centre (0) to hard right (100).' },
+      { name: 'Mode', range: 'Balance / Natural / Haas', desc: 'Balance: plain L/R balance. Natural: a head model with interaural delay, level difference and head-shadow filtering on the far ear. Haas: the far ear hears the source later (precedence effect).' },
+      { name: 'Width', range: '0 to 200%', desc: 'Stereo width of the source itself: 0% = mono, 100% = unchanged, 200% = twice as wide.' },
+      { name: 'Haas Delay', range: '1 to 30 ms', desc: 'Delay of the far ear in Haas mode at full pan (scaled by the pan amount).' },
+      { name: 'Output', range: '−24 to +12 dB', desc: 'Output level.' }
+    ],
+    uses: ['Placing mono instruments naturally in a mix, without the hole-in-the-middle of plain panning', 'Positioning stereo sources while keeping their own image', 'Haas-style wide placement of guitars and synths', 'Headphone-friendly panning'],
+    properties: 'Input → Mid/Side (Side × Width) → Mid placed per ear: fractional delay (Woodworth ITD up to ~0.66 ms, or Haas Delay) → first-order high-shelf head shadow (to -8 dB above ~1.8 kHz) → constant-power gains; Side added back → Output. All changes glide over 20 ms. Zero latency.',
+    formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
+    shot: 'assets/img/gfx/panner.png'
   },
   'parametric-eq': {
     title: 'PARAMETRIC EQ',
@@ -694,16 +795,16 @@ const guides = {
   },
   'saturation': {
     title: 'SATURATION',
-    subtitle: 'Six-Mode Saturation',
+    subtitle: 'Seven-Mode Saturation',
     category: 'Essentials',
     sliders: [
-      { name: 'Drive', range: '0 to 100%', desc: 'Input gain into the saturation stage (up to 4x); in Bitcrush mode it also lowers the bit depth from 8 to 2 bits.' },
+      { name: 'Drive', range: '0 to 100%', desc: 'Input gain into the saturation stage (up to 4x); in Bitcrush mode it also lowers the bit depth from 8 to 2 bits, in Fold mode it also adds folds.' },
       { name: 'Tone', range: '−12 to +12 dB', desc: 'Tilt EQ on the saturated signal around 800 Hz: negative values darken (lows up, highs down), positive values brighten; 0 dB is flat.' },
       { name: 'Mix', range: '0 to 100%', desc: 'Blend between dry and saturated signal.' },
-      { name: 'Mode', range: 'Tape / Tube / Overdrive / Fuzz / Bitcrush / Waveshaper', desc: 'Saturation curve: Tape, Tube, Overdrive, Fuzz, Bitcrush or Waveshaper (wavefolding).' }
+      { name: 'Mode', range: 'Tape / Tube / Overdrive / Fuzz / Bitcrush / Waveshaper / Fold', desc: 'Saturation curve: Tape, Tube, Overdrive, Fuzz, Bitcrush, Waveshaper (hard wavefolding) or Fold (sine wavefolder; Drive sets the fold depth).' }
     ],
     uses: ['Warmth and density on buses', 'Fuzz and overdrive on guitars and bass', 'Bit-crushed lo-fi textures', 'Wavefolded synth tones'],
-    properties: 'Input → Drive → selected curve → Tone tilt EQ (one-pole split at 800 Hz, ±Tone/2 dB on each side) on the wet signal → Dry/Wet Mix → Output. No oversampling; zero latency.',
+    properties: 'Input → Drive → selected curve (Fold: a sine wavefolder whose depth grows with Drive) → Tone tilt EQ (one-pole split at 800 Hz, ±Tone/2 dB on each side) on the wet signal → Dry/Wet Mix → Output. No oversampling; zero latency.',
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
     shot: 'assets/img/gfx/saturation.png'
   },
@@ -738,6 +839,25 @@ const guides = {
     properties: 'Input → Mid/Side split → optional one-pole crossover (lows mono, highs widened) → Side × Width → L/R → Dry/Wet Mix → Output. Zero latency.',
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
     shot: 'assets/img/gfx/stereo_width.png'
+  },
+  'tape': {
+    title: 'TAPE',
+    subtitle: 'Analog Tape Machine',
+    category: 'Essentials',
+    sliders: [
+      { name: 'Drive', range: '0 to 24 dB', desc: 'Input level into the tape saturation (level-matched at -12 dBFS, so it adds colour rather than volume)' },
+      { name: 'Speed', range: '7.5 ips / 15 ips / 30 ips', desc: 'Tape speed: sets the head bump frequency (45 / 70 / 110 Hz), the high-frequency loss and the emphasis corner' },
+      { name: 'Head Bump', range: '0 to 9 dB', desc: 'Height of the low-frequency head bump' },
+      { name: 'Wow', range: '0 to 100%', desc: 'Slow pitch drift of the transport (up to 2 ms delay modulation)' },
+      { name: 'Flutter', range: '0 to 100%', desc: 'Fast pitch wobble of the transport (up to 0.1 ms delay modulation)' },
+      { name: 'Hiss', range: '0 to 100%', desc: 'Tape hiss level, shaped by the tape speed' },
+      { name: 'Output', range: '−12 to +12 dB', desc: 'Output level' },
+      { name: 'Mix', range: '0 to 100%', desc: 'Dry/wet blend (the dry signal is delayed to stay aligned with the wet path)' }
+    ],
+    uses: ['Glue and warmth on the mix bus', 'Rounder low end and softer transients on drums and bass', 'Lo-fi, cassette-like wobble with Wow and Flutter turned up', 'Subtle analog colour on vocals and acoustic tracks'],
+    properties: 'Signal chain: Input → Wow/Flutter Modulated Delay (3 ms centre, cubic interpolation) → Pre-Emphasis → Drive → Asymmetric Saturation with memory (hysteresis-like) → De-Emphasis → Low Cut + Head Bump → Hiss → High-Frequency Loss → Mix → Output. The hiss is an exact Park-Miller generator. The dry signal is delayed by the same 3 ms, and the 3 ms latency is reported to the host for delay compensation.',
+    formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
+    shot: 'assets/img/gfx/tape.png'
   },
   'transient-shaper': {
     title: 'TRANSIENT SHAPER',
@@ -781,8 +901,47 @@ const guides = {
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
     shot: 'assets/img/gfx/vibrato.png'
   },
+  'volume-shaper': {
+    title: 'VOLUME SHAPER',
+    subtitle: 'Tempo-Synced Volume Envelope',
+    category: 'Essentials',
+    sliders: [
+      { name: 'Shape', range: 'Pump / Pump Hard / Saw Down / Saw Up / Gate 1/16 / Trance 1/8 / Sine / Triangle / Half-time Pump / Stutter', desc: 'The volume curve: Pump, Pump Hard, Saw Down, Saw Up, Gate 1/16, Trance 1/8, Sine, Triangle, Half-time Pump or Stutter' },
+      { name: 'Rate', range: '1/1 / 1/2 / 1/4 / 1/8 / 1/16 / 1/4T / 1/8T', desc: 'Length of one cycle of the shape at the host tempo (1/1 to 1/16, plus 1/4 and 1/8 triplets)' },
+      { name: 'Depth', range: '0 to 100%', desc: 'How far the shape turns the level down (0% = no effect, 100% = silence at the bottom of the curve)' },
+      { name: 'Smooth', range: '0 to 30 ms', desc: 'Smoothing of the volume changes, to keep gates and jumps free of clicks' },
+      { name: 'Phase', range: '0 to 100%', desc: 'Moves the shape later in the cycle' },
+      { name: 'Mix', range: '0 to 100%', desc: 'Blend between the shaped and the dry signal' }
+    ],
+    uses: ['Sidechain-style pumping without a kick or a sidechain route', 'Trance gates and stutters on pads, chords and vocals', 'Rhythmic tremolo with saw, sine or triangle shapes', 'Ducking a bass under the kick on every beat'],
+    properties: 'Signal chain: Input → Gain × (1 − Depth × (1 − Shape)) → One-pole Smoothing → Dry/Wet Mix → Output. The shapes are breakpoint curves over one cycle; the cycle follows the host tempo and, while the transport plays, is read from the song position so it stays locked to the grid; stopped, it free-runs at the host tempo. Half-time Pump spans two Rate notes. Stereo-linked, zero latency.',
+    formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
+    shot: 'assets/img/gfx/volume_shaper.png'
+  },
 
   // ─── ADVANCED ───
+  'amp-simulator': {
+    title: 'AMP SIMULATOR',
+    subtitle: 'Guitar & Bass Amp, No Cabinet',
+    category: 'Advanced',
+    sliders: [
+      { name: 'Model', range: 'Clean / Crunch / Lead / Bass', desc: 'Amp voicing: Clean (2 stages, Fender stack), Crunch (3 stages, Marshall stack), Lead (4 stages, tight lows) or Bass (2 stages, deep stack).' },
+      { name: 'Gain', range: '0 to 10', desc: 'Preamp drive into the first tube stage; the range depends on the model (up to +46 dB on Lead).' },
+      { name: 'Bass', range: '0 to 10', desc: 'Tone stack bass control (audio taper). Bass, Mid and Treble interact like a real passive tone stack.' },
+      { name: 'Mid', range: '0 to 10', desc: 'Tone stack mid control; low values give the classic mid scoop.' },
+      { name: 'Treble', range: '0 to 10', desc: 'Tone stack treble control.' },
+      { name: 'Presence', range: '0 to 10', desc: 'Power amp presence: a high shelf at 3 kHz from -8 to +8 dB.' },
+      { name: 'Master', range: '0 to 10', desc: 'Power amp drive and volume: higher values push the push-pull stage into saturation.' },
+      { name: 'Bright', range: 'Off / On', desc: 'Bright switch: a treble boost before the preamp that is strongest at low Gain, like a bright cap.' },
+      { name: 'Sag', range: '0 to 100%', desc: 'Power supply sag: the power amp\'s drive drops as the level rises, for a softer, compressed feel.' },
+      { name: 'Oversampling', range: '2x / 4x', desc: '2x or 4x oversampling of the nonlinear stages (polyphase IIR half-band filters, no latency).' },
+      { name: 'Output', range: '−24 to +12 dB', desc: 'Final output level.' }
+    ],
+    uses: ['Turning DI guitar into a clean, crunch or lead amp tone (add Cabinet Simulator after it)', 'Bass amp grit and growl on DI bass', 'Re-amping recorded DI tracks', 'Driving synths, drums or vocals through a tube amp character'],
+    properties: 'Input → tight high-pass → Bright shelf → 2x/4x oversampling: 2–4 asymmetric inverting triode stages, each with coupling-cap high-pass and Miller low-pass → passive Fender/Marshall tone stack (Yeh\'s third-order model) → power amp resonance and Presence → push-pull soft clipper with supply sag → downsampling → DC blocker → Output. No cabinet; zero latency.',
+    formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
+    shot: 'assets/img/gfx/amp_simulator.png'
+  },
   'comb-filter': {
     title: 'COMB FILTER',
     subtitle: 'Resonant Delay Comb',
@@ -960,6 +1119,26 @@ const guides = {
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
     shot: 'assets/img/gfx/loudness_meter.png'
   },
+  'noise-reduction': {
+    title: 'NOISE REDUCTION',
+    subtitle: 'Spectral Noise Reducer',
+    category: 'Advanced',
+    sliders: [
+      { name: 'Learn', range: 'Off / On', desc: 'While On, averages the noise per frequency into a profile: play a noise-only passage, then switch Off' },
+      { name: 'Auto', range: 'Off / On', desc: 'Tracks the noise floor continuously (minimum statistics) instead of a learnt profile' },
+      { name: 'Reduction', range: '0 to 60 dB', desc: 'Maximum attenuation of the noise (the gain floor)' },
+      { name: 'Threshold', range: '−10 to +20 dB', desc: 'How far above the noise estimate a sound must rise to pass untouched' },
+      { name: 'Smoothing', range: '0 to 100%', desc: 'Smoothing over time and across frequency against musical noise artefacts' },
+      { name: 'Attack', range: '0 to 100 ms', desc: 'How fast the gain opens when a sound rises above the noise' },
+      { name: 'Release', range: '10 to 1000 ms', desc: 'How fast the gain closes back to the floor' },
+      { name: 'Listen', range: 'Output / Removed noise', desc: 'Hear the cleaned output or only the removed noise' },
+      { name: 'Mix', range: '0 to 100%', desc: 'Dry/wet blend' }
+    ],
+    uses: ['Remove tape and preamp hiss', 'Clean room tone and air-conditioning rumble from dialogue', 'Tame a hum or buzz bed under guitars', 'Lower the noise floor of field and home recordings'],
+    properties: 'Signal chain: Input → 2048-Point FFT (4× overlap, Hann) → Noise Estimate (Learnt Profile or Auto Minimum Statistics) → Wiener-Like Gain with Floor → Time + Frequency Smoothing → Attack/Release → IFFT Overlap-Add → Mix → Output. One gain for both channels; latency 2047 samples (reported). The learnt profile lives in memory and is not saved with the project: learn again after a reload, or use Auto.',
+    formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
+    shot: 'assets/img/gfx/noise_reduction.png'
+  },
   'ott': {
     title: 'OTT',
     subtitle: 'Multiband Upward/Downward Compressor',
@@ -978,6 +1157,63 @@ const guides = {
     properties: 'Signal chain: Input → 3-Band Linkwitz-Riley Split (88 Hz, 2.5 kHz) → Per-Band Downward (66:1 above −33 dB) + Upward (4:1 below −41 dB, up to +24 dB) → Band Gains → Make-up → Depth Mix → Output → Soft Safety Clip. Linked stereo detection per band, zero latency.',
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
     shot: 'assets/img/gfx/ott.png'
+  },
+  'pitch-correction': {
+    title: 'PITCH CORRECTION',
+    subtitle: 'Auto-Tune Style Vocal Pitch Correction',
+    category: 'Advanced',
+    sliders: [
+      { name: 'Key', range: 'C / C# / D / D# / E / F / F# / G / G# / A / A# / B', desc: 'Key (root note) of the scale the voice is tuned to' },
+      { name: 'Scale', range: 'Chromatic / Major / Minor / Harmonic Minor / Pentatonic Major / Pentatonic Minor / Blues / Dorian / Mixolydian', desc: 'Scale of allowed notes: Chromatic, Major, Minor, Harmonic Minor, Pentatonic Major/Minor, Blues, Dorian or Mixolydian' },
+      { name: 'Retune Speed', range: '0 to 400 ms', desc: 'How fast the pitch glides to the target note: 0 ms = hard, stepped “robot” tuning; higher = gentler, more natural' },
+      { name: 'Humanize', range: '0 to 100%', desc: 'Share of the singer\'s own fast pitch movement (vibrato) kept around the corrected note' },
+      { name: 'Transpose', range: '−12 to +12 semitones', desc: 'Extra pitch shift in semitones, applied after the correction (formants stay in place)' },
+      { name: 'Sensitivity', range: '0 to 100%', desc: 'Pitch detection threshold: higher counts more of the signal as pitched (breathy voices), lower ignores noisy parts' },
+      { name: 'Mix', range: '0 to 100%', desc: 'Dry/wet blend (the dry signal is delayed to stay in time)' }
+    ],
+    uses: ['Transparent tuning of lead and backing vocals', 'Hard-tune “T-Pain” robot vocal effect (Retune 0 ms)', 'Forcing a vocal or monophonic instrument onto a key and scale', 'Formant-preserving transposition of a sung line'],
+    properties: 'Signal chain: Input → mono 50 Hz high-pass + 1.2 kHz 4th-order low-pass, decimated to ~11 kHz → YIN pitch tracker (70 Hz to 1 kHz, new estimate every ~6 ms, Sensitivity = threshold) → nearest Key/Scale note with hysteresis → Retune glide + Humanize (vibrato kept) → TD-PSOLA shifter (peak-aligned pitch marks, two-period Hann grains, formants preserved; stereo kept) → Dry/Wet Mix → Output. Monophonic sources only; unvoiced sounds pass with the transpose only; latency about 39 ms, reported to the host (PDC).',
+    formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
+    shot: 'assets/img/gfx/pitch_correction.png'
+  },
+  'resonance-suppressor': {
+    title: 'RESONANCE SUPPRESSOR',
+    subtitle: 'Dynamic Resonance Suppression',
+    category: 'Advanced',
+    sliders: [
+      { name: 'Depth', range: '0 to 24 dB', desc: 'Maximum reduction per frequency.' },
+      { name: 'Sharpness', range: '0 to 100%', desc: 'How narrow the peaks it targets are: the spectral envelope is averaged over 2 octaves at 0% down to 1/8 octave at 100%.' },
+      { name: 'Selectivity', range: '0 to 100%', desc: 'How far a frequency must rise above the envelope before it is reduced (2 to 12 dB).' },
+      { name: 'Attack', range: '1 to 200 ms', desc: 'How fast the reduction grabs, per FFT frame.' },
+      { name: 'Release', range: '10 to 1000 ms', desc: 'How fast the reduction lets go.' },
+      { name: 'Low Freq', range: '20 to 2000 Hz', desc: 'Lowest frequency processed (fades out over half an octave below).' },
+      { name: 'High Freq', range: '1000 to 20000 Hz', desc: 'Highest frequency processed (fades out over half an octave above).' },
+      { name: 'Mode', range: 'Soft / Hard', desc: 'Soft: 2:1 with a 6 dB knee, easing into Depth. Hard: removes all of the excess, up to Depth.' },
+      { name: 'Delta', range: 'Off / On', desc: 'Plays only what is removed, to hear what the plugin takes out.' },
+      { name: 'Mix', range: '0 to 100%', desc: 'Blend between the (latency-aligned) dry and processed signal.' }
+    ],
+    uses: ['Taming harsh resonances in vocals, guitars and cymbals', 'Smoothing ringing room modes and boxy recordings', 'Gentle de-harshing on buses and masters', 'Finding problem frequencies with Delta'],
+    properties: 'STFT with 2048-point FFT, 75% overlap and sqrt-Hann windows; both channels in one complex FFT, linked detection on their mean power. Each bin\'s level is compared with a log-frequency moving average of the spectrum; the excess over the Selectivity threshold sets the reduction (Soft or Hard), smoothed per frame (Attack/Release) and across neighbouring bins, limited to Low–High Freq. Perfect reconstruction when nothing is reduced. Latency: 2047 samples (reported to the host).',
+    formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
+    shot: 'assets/img/gfx/resonance_suppressor.png'
+  },
+  'resonator': {
+    title: 'RESONATOR',
+    subtitle: 'Tuned String Resonator',
+    category: 'Advanced',
+    sliders: [
+      { name: 'Root Note', range: 'C / C# / D / D# / E / F / F# / G / G# / A / A# / B', desc: 'Root note of the chord (C to B)' },
+      { name: 'Octave', range: '1 to 6', desc: 'Octave of the root note (1 to 6; C3 = 130.8 Hz)' },
+      { name: 'Chord', range: 'Unison / Octaves / Fifth / Major / Minor / Sus4 / Maj7 / Min7', desc: 'Chord the resonators are tuned to: Unison, Octaves, Fifth, Major, Minor, Sus4, Maj7 or Min7' },
+      { name: 'Decay', range: '0.1 to 10 s', desc: 'Ring time of the fundamental (time to fall by 60 dB)' },
+      { name: 'Brightness', range: '0 to 100%', desc: 'How long the upper harmonics ring compared with the fundamental (low = dark, damped strings; high = bright, metallic)' },
+      { name: 'Spread', range: '0 to 100%', desc: 'Stereo detune: left strings down, right strings up, by up to 15 cents' },
+      { name: 'Mix', range: '0 to 100%', desc: 'Dry/wet blend' }
+    ],
+    uses: ['Turn drums and percussion into tuned, pitched hits', 'Sympathetic-string shimmer on vocals, guitars and pads', 'Make noise, rain or field recordings sing in the key of the song', 'Drones and ambient beds from any source'],
+    properties: 'Signal chain: Input → 20 Hz High-Pass → up to 4 Karplus-Strong string loops per channel (one per chord note) → DC Blocker → Soft Ceiling → Mix → Output. Each loop is a delay line, a first-order allpass for the fractional part of the period and a linear-phase 3-tap low-pass, so every harmonic is exactly in tune. The loop gain sets the decay of the fundamental and stays below 1, the input to each loop is scaled for unity noise power, and the wet sum has a soft ceiling at 0 dBFS, so it can ring but never run away. No latency.',
+    formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
+    shot: 'assets/img/gfx/resonator.png'
   },
   'reverser': {
     title: 'REVERSER',
@@ -1093,6 +1329,22 @@ const guides = {
     properties: 'Signal chain: Input (summed to mono) → 120 Hz Highpass → Pre-Delay → Two Springs (40-stage dispersive allpass chains in feedback loops, 43.7 / 53.1 ms) → Tone Lowpass + Drip → Mix → Output. Left and right springs differ in length for stereo; zero latency.',
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
     shot: 'assets/img/gfx/spring_reverb.png'
+  },
+  'stereo-scope': {
+    title: 'STEREO SCOPE',
+    subtitle: 'Goniometer & Correlation Meter',
+    category: 'Advanced',
+    sliders: [
+      { name: 'Scope Gain', range: '−12 to +24 dB', desc: 'Display gain of the goniometer when Auto Gain is off.' },
+      { name: 'Auto Gain', range: 'Off / On', desc: 'Scales the goniometer to the signal level automatically.' },
+      { name: 'Decay', range: '0 to 100%', desc: 'Persistence: how much recent history the goniometer shows, newest samples brightest.' },
+      { name: 'Integration', range: '50 to 3000 ms', desc: 'Time constant of the correlation, balance and width measurement.' },
+      { name: 'Monitor', range: 'Stereo / Mono / Side', desc: 'Listen to the stereo signal, its mono sum or its side signal (the meter always reads the input).' }
+    ],
+    uses: ['Checking mono compatibility and phase problems', 'Judging stereo width and balance while mixing and mastering', 'Spotting out-of-phase or swapped channels', 'Comparing the image of references'],
+    properties: 'Pass-through (bit-exact in Stereo monitor mode). Integrated <LL>, <RR>, <LR> (one-pole, Integration time) → correlation (-1..+1), balance (dB) and width (side/mid level). Goniometer of the last 8192 samples (L/R rotated 45°), 5 s correlation history, L/R peak meters. Zero latency.',
+    formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
+    shot: 'assets/img/gfx/stereo_scope.png'
   },
   'sub-bloom': {
     title: 'SUB BLOOM',

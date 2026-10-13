@@ -1,0 +1,10 @@
+[
+  ["Clean Mastering Tape", {"Drive": 2, "Speed": "30 ips", "Head Bump": 1.5, "Wow": 0, "Flutter": 2, "Hiss": 0}],
+  ["Warm Mix Bus", {"Drive": 6, "Speed": "15 ips", "Head Bump": 3, "Wow": 5, "Flutter": 5, "Hiss": 5}],
+  ["Vocal Tape Sheen", {"Drive": 4, "Speed": "30 ips", "Head Bump": 0, "Wow": 3, "Flutter": 3, "Hiss": 0}],
+  ["Drum Tape Squash", {"Drive": 14, "Speed": "15 ips", "Head Bump": 4, "Wow": 0, "Flutter": 5, "Hiss": 0, "Output": -1}],
+  ["Bass Thickener", {"Drive": 8, "Speed": "7.5 ips", "Head Bump": 6, "Wow": 0, "Flutter": 3, "Hiss": 0, "Output": -1.5}],
+  ["Cassette Lo-Fi", {"Drive": 9, "Speed": "7.5 ips", "Head Bump": 4, "Wow": 45, "Flutter": 35, "Hiss": 40}],
+  ["Worn Tape Warble", {"Drive": 6, "Speed": "7.5 ips", "Head Bump": 3, "Wow": 80, "Flutter": 20, "Hiss": 25}],
+  ["Parallel Tape Color", {"Drive": 18, "Speed": "15 ips", "Head Bump": 3, "Wow": 0, "Flutter": 0, "Hiss": 0, "Mix": 40}]
+]

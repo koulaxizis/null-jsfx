@@ -1,0 +1,30 @@
+BYPASS 0 0
+<JS null_jsfx/gfx/parametric_eq_gfx.jsfx ""
+  30 0 0.7 4 0 548 0 1 2 0 2236 0 1 2 0 12000 1 1 1 0 15000 0 1 2 0 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+>
+FXID {63F5C4AE-5D53-5386-B804-3FE830BFA313}
+WAK 0 0
+BYPASS 0 0
+<JS null_jsfx/gfx/multiband_compressor_gfx.jsfx ""
+  120 1000 6000 -18 2 0 0 -18 1.5 0 0 -18 1.5 0 0 -18 2 0 0 20 150 50 0 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+>
+FXID {3820879A-7BF4-5A26-ADE0-D9BBD4F01EB3}
+WAK 0 0
+BYPASS 0 0
+<JS null_jsfx/gfx/stereo_width_gfx.jsfx ""
+  110 100 150 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+>
+FXID {9EEFC805-619B-5F15-8112-D9985E97B2A8}
+WAK 0 0
+BYPASS 0 0
+<JS null_jsfx/gfx/maximizer_gfx.jsfx ""
+  3 -1 80 2 0 1 0 0 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+>
+FXID {0C92A2D4-E6BC-5B32-8436-0B5246E781AA}
+WAK 0 0
+BYPASS 0 0
+<JS null_jsfx/gfx/loudness_meter_gfx.jsfx ""
+  0 0 1 0 0 0 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+>
+FXID {F8EBABBD-5CCC-58D8-AFBC-95328FC534D1}
+WAK 0 0

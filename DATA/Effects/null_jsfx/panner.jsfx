@@ -1,0 +1,119 @@
+desc:NULL Panner
+author: Christos Koulaxizis
+tags: pan panner panning balance binaural itd ild haas stereo placement width
+//category: Essentials
+//NULL JSFX v2.0 • https://nulljsfx.tech • MIT License
+
+slider1:0<-100,100,1>Pan
+slider2:1<0,2,1{Balance,Natural,Haas}>Mode
+slider3:100<0,200,1>Width (%)
+slider4:12<1,30,0.1>Haas Delay (ms)
+slider5:0<-24,12,0.1>Output (dB)
+
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
+
+@init
+  // Places a source in the stereo field. The input is split into mid and side (Width scales
+  // the side); the mid is what gets placed, the side keeps the source's own stereo image.
+  //   Balance: plain L/R balance, the far channel fades out (sine law, unity at the centre).
+  //   Natural: a head model. The far ear hears the mid later (interaural time difference,
+  //            Woodworth's formula, up to ~0.66 ms, fractional delay) and duller (a first-order
+  //            high shelf down to -8 dB above ~1.8 kHz, the head shadow); the levels follow a
+  //            constant-power law that keeps the far ear at -7 dB at the extremes.
+  //   Haas:    the far ear hears the mid up to Haas Delay later (precedence effect).
+  // Every gain, delay and shelf glides over ~20 ms, so moving Pan or Mode never clicks.
+  buf_size = 8192;             // mid delay line: 30 ms + ITD at up to 192 kHz
+  buf = 0;
+  memset(buf, 0, buf_size);
+  freembuf(buf_size);
+  wpos = 0;
+  sm_k = 1 - exp(-1 / (0.02 * srate));
+  hs_c = 1 - exp(-2 * $pi * 1800 / srate);
+  lp_l = lp_r = 0;
+  sm_first = 1;
+
+  // the mid delayed by d samples (linear interpolation; d = 0 is the current sample)
+  function rd(d) local(rp, i, fr, i2)
+  (
+    rp = wpos - d;
+    rp < 0 ? rp += buf_size;
+    i = floor(rp);
+    fr = rp - i;
+    i2 = i + 1;
+    i2 >= buf_size ? i2 = 0;
+    buf[i] + (buf[i2] - buf[i]) * fr;
+  );
+
+  // one-pole glide of v to t, snapped when it is there
+  function glide(v, t) ( v += sm_k * (t - v); abs(t - v) < 0.000000000001 ? t : v; );
+
+@slider
+  pan = slider1 / 100;
+  pan_a = abs(pan);
+  mode = slider2;
+  wid = slider3 / 100;
+  out_g = 10 ^ (slider5 / 20);
+  mode == 0 ? (
+    pan_th = (pan + 1) * $pi / 4;
+    t_gl = min(1, sqrt(2) * cos(pan_th));
+    t_gr = min(1, sqrt(2) * sin(pan_th));
+    t_sl = t_gl;
+    t_sr = t_gr;
+    t_dl = t_dr = 0;
+    t_hl = t_hr = 1;
+  ) : mode == 1 ? (
+    pan_th = (1 + 0.6 * pan) * $pi / 4;
+    t_gl = sqrt(2) * cos(pan_th);
+    t_gr = sqrt(2) * sin(pan_th);
+    t_sl = t_sr = 1 - 0.5 * pan_a;
+    // Woodworth: ITD = r / c * (angle + sin(angle)), head radius 8.75 cm, angle up to 90 degrees
+    pan_itd = 0.0875 / 343 * (pan_a * $pi / 2 + sin(pan_a * $pi / 2)) * srate;
+    t_dl = pan > 0 ? pan_itd : 0;
+    t_dr = pan < 0 ? pan_itd : 0;
+    pan_sh = 10 ^ (-8 * pan_a / 20);
+    t_hl = pan > 0 ? pan_sh : 1;
+    t_hr = pan < 0 ? pan_sh : 1;
+  ) : (
+    t_gl = pan > 0 ? 1 - 0.3 * pan_a : 1;
+    t_gr = pan < 0 ? 1 - 0.3 * pan_a : 1;
+    t_sl = t_sr = 1 - 0.5 * pan_a;
+    pan_hd = pan_a * slider4 * srate / 1000;
+    t_dl = pan > 0 ? pan_hd : 0;
+    t_dr = pan < 0 ? pan_hd : 0;
+    t_hl = t_hr = 1;
+  );
+  t_gl *= out_g; t_gr *= out_g;
+  t_sl *= out_g; t_sr *= out_g;
+  sm_first ? (
+    gl = t_gl; gr = t_gr; sl = t_sl; sr = t_sr;
+    dl = t_dl; dr = t_dr; hl = t_hl; hr = t_hr;
+    sm_first = 0;
+  );
+
+@sample
+  mid = (spl0 + spl1) * 0.5;
+  side = (spl0 - spl1) * 0.5 * wid;
+  buf[wpos] = mid;
+
+  gl = glide(gl, t_gl); gr = glide(gr, t_gr);
+  sl = glide(sl, t_sl); sr = glide(sr, t_sr);
+  dl = glide(dl, t_dl); dr = glide(dr, t_dr);
+  hl = glide(hl, t_hl); hr = glide(hr, t_hr);
+
+  ml = rd(dl);
+  mr = rd(dr);
+  // head shadow: first-order high shelf, the part above ~1.8 kHz scaled by hl / hr
+  lp_l += hs_c * (ml - lp_l);
+  lp_r += hs_c * (mr - lp_r);
+  abs(lp_l) < 0.000000000000001 ? lp_l = 0;
+  abs(lp_r) < 0.000000000000001 ? lp_r = 0;
+  ml += (hl - 1) * (ml - lp_l);
+  mr += (hr - 1) * (mr - lp_r);
+  wpos += 1;
+  wpos >= buf_size ? wpos = 0;
+
+  spl0 = ml * gl + side * sl;
+  spl1 = mr * gr - side * sr;

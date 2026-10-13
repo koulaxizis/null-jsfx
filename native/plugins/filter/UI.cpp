@@ -43,10 +43,13 @@ protected:
         fillColor(col(theme::kCard));
         fill();
         drawKnob(cx, ry + 44.0f, 14.0f, fDragging ? fNorm : toNorm(value(0)), false, fDragging || fHover);
+        drawPresetMenu(); // again, over the knob
     }
 
     bool onMouse(const MouseEvent& ev) override
     {
+        if (presetMouse(ev))
+            return true;
         const float s = uiScale();
         const float x = float(ev.pos.getX()) / s, y = float(ev.pos.getY()) / s;
         if (ev.button == 1 && ev.press && controlAt(x, y) == 0)
@@ -99,6 +102,8 @@ protected:
 
     bool onScroll(const ScrollEvent& ev) override
     {
+        if (presetOpen())
+            return true;
         const float s = uiScale();
         if (controlAt(float(ev.pos.getX()) / s, float(ev.pos.getY()) / s) == 0)
         {

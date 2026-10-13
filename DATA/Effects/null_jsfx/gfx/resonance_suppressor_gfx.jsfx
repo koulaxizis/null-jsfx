@@ -1,0 +1,387 @@
+desc:NULL Resonance Suppressor GFX
+author: Christos Koulaxizis
+tags: resonance suppressor dynamic eq spectral harshness tame fft mixing mastering gui
+//category: Advanced
+//NULL JSFX v2.0 • https://nulljsfx.tech • MIT License
+
+import null_gfx.jsfx-inc
+
+slider1:6<0,24,0.1>-Depth (dB)
+slider2:50<0,100,1>-Sharpness (%)
+slider3:50<0,100,1>-Selectivity (%)
+slider4:10<1,200,1:log>-Attack (ms)
+slider5:120<10,1000,1:log>-Release (ms)
+slider6:100<20,2000,1:log>-Low Freq (Hz)
+slider7:18000<1000,20000,1:log>-High Freq (Hz)
+slider8:0<0,1,1{Soft,Hard}>-Mode
+slider9:0<0,1,1{Off,On}>-Delta
+slider10:100<0,100,1>-Mix (%)
+
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
+
+@init
+  // NULL Resonance Suppressor (../resonance_suppressor.jsfx) with its own interface: same audio code, plus @gfx.
+  // Dynamic resonance suppression: finds the frequencies that stick out of the sound at each
+  // moment and turns down just those. Every 512 samples the last 2048 of both channels go
+  // through one complex FFT (left real, right imaginary) with a sqrt-Hann window. Each bin's
+  // level (the mean power of both channels, in dB) is compared with the spectral envelope, a
+  // moving average of the levels over a log-frequency window (2 octaves wide at Sharpness 0,
+  // 1/8 octave at 100: the sharper, the narrower the peaks it goes after). What sticks out by
+  // more than the Selectivity threshold (2 to 12 dB) is turned down: Soft at 2:1 with a 6 dB
+  // knee, easing into Depth; Hard by all of the excess, up to Depth. The reduction moves with
+  // Attack/Release per frame, is smoothed across neighbouring bins and fades out over half an
+  // octave outside Low/High Freq. The frame is resynthesised with the same window and
+  // overlap-added. Delta plays only what is removed. Latency: 2047 samples (reported to REAPER).
+  N = 2048; H = N / 4; NB = N / 2 + 1;
+  buf = 0;                      // FFT buffer, 2N, does not cross a 65536 boundary
+  win = 2 * N;                  // sqrt-Hann window, N
+  in_l = win + N; in_r = in_l + N;
+  out_l = in_r + N; out_r = out_l + N;
+  lev = out_r + N;              // bin levels in dB, NB
+  cs = lev + NB;                // running sums of the levels, NB + 1
+  gr = cs + NB + 1;             // reduction per bin in dB, NB
+  lo = gr + NB; hi = lo + NB;   // envelope window per bin
+  wgt = hi + NB;                // Low/High range weight per bin
+  freembuf(wgt + NB);
+  memset(0, 0, wgt + NB);
+  k = 0;
+  loop(NB, lev[k] = -120; k += 1);
+  i = 0;
+  loop(N, win[i] = sin($pi * i / N); i += 1);
+  ipos = 0; opos = 0; cnt = 0;
+  pdc_delay = N - 1;
+  pdc_bot_ch = 0;
+  pdc_top_ch = 2;
+
+  function frame() local(i, k, p, re, im, re2, im2, pw, nrm, e, x, r, g, sc)
+  (
+    // both channels in one complex FFT, oldest sample first
+    i = 0;
+    loop(N,
+      p = (ipos + i) % N;
+      buf[2 * i] = in_l[p] * win[i];
+      buf[2 * i + 1] = in_r[p] * win[i];
+      i += 1;
+    );
+    fft(buf, N);
+    fft_permute(buf, N);
+    // bin k's level: (|Z_k|^2 + |Z_N-k|^2) / 4 is the mean power of the two channels
+    nrm = $pi * $pi / (4 * N * N);
+    k = 0;
+    loop(NB,
+      p = k == 0 ? 0 : N - k;
+      re = buf[2 * k]; im = buf[2 * k + 1]; re2 = buf[2 * p]; im2 = buf[2 * p + 1];
+      pw = (re * re + im * im + re2 * re2 + im2 * im2) * nrm;
+      lev[k] = 10 * log10(pw + 0.000000000001);
+      k += 1;
+    );
+    cs[0] = 0;
+    k = 0;
+    loop(NB, cs[k + 1] = cs[k] + lev[k]; k += 1);
+    // excess over the envelope and the threshold -> reduction, with attack/release
+    k = 0;
+    loop(NB,
+      e = (cs[hi[k] + 1] - cs[lo[k]]) / (hi[k] - lo[k] + 1);
+      x = lev[k] - e - thr;
+      r = 0;
+      x > 0 && depth > 0 ? (
+        hard ? (
+          r = min(depth, x);
+        ) : (
+          r = x < 6 ? x * x / 24 : 0.5 * (x - 3);
+          r = depth * (1 - exp(-r / depth));
+        );
+      );
+      r *= wgt[k];
+      g = gr[k];
+      gr[k] = g + (r > g ? att : rel) * (r - g);
+      k += 1;
+    );
+    // smoothed across neighbouring bins, as a gain on bin k and its mirror N - k
+    k = 0;
+    loop(NB,
+      g = 0.25 * gr[max(0, k - 1)] + 0.5 * gr[k] + 0.25 * gr[min(NB - 1, k + 1)];
+      g = 10 ^ (-g / 20);
+      buf[2 * k] *= g;
+      buf[2 * k + 1] *= g;
+      k > 0 && k < N / 2 ? (
+        buf[2 * (N - k)] *= g;
+        buf[2 * (N - k) + 1] *= g;
+      );
+      k += 1;
+    );
+    fft_ipermute(buf, N);
+    ifft(buf, N);
+    // sqrt-Hann twice at 4x overlap sums to 2; ifft() leaves the factor N
+    sc = 1 / (2 * N);
+    i = 0;
+    loop(N,
+      p = (opos + i) % N;
+      out_l[p] += buf[2 * i] * win[i] * sc;
+      out_r[p] += buf[2 * i + 1] * win[i] * sc;
+      i += 1;
+    );
+  );
+
+  function update()
+  (
+    depth = slider1;
+    thr = 2 + slider3 / 100 * 10;
+    att = 1 - exp(-H / (srate * slider4 / 1000));
+    rel = 1 - exp(-H / (srate * slider5 / 1000));
+    hard = slider8;
+    delta = slider9;
+    mix = slider10 / 100;
+    // the envelope window: 2 octaves wide at Sharpness 0 down to 1/8 octave at 100
+    wr = 2 ^ (2 * (2 ^ (-4 * slider2 / 100)) / 2);
+    k = 0;
+    loop(NB,
+      lo[k] = max(0, min(k - 3, floor(k / wr)));
+      hi[k] = min(NB - 1, max(k + 3, ceil(k * wr)));
+      // the range: full from Low to High, fading out over half an octave outside it
+      f = k * srate / N;
+      w = 0;
+      k > 0 ? (
+        w = max(0, min(1, 1 + 2 * log(f / slider6) / log(2)));
+        w *= max(0, min(1, 1 - 2 * log(f / slider7) / log(2)));
+      );
+      wgt[k] = w;
+      k += 1;
+    );
+  );
+
+  // display: the levels as drawn, rising fast and falling slowly (dB), memory far above the audio
+  rs_disp = 100000;
+  rs_k = 0;
+  loop(NB, rs_disp[rs_k] = -120; rs_k += 1);
+  // display: the largest value of arr over the bins under design column c of cols (f 20..20 kHz),
+  // or the two nearest bins interpolated where a column holds none
+  function rs_col(arr, c, cols) local(f0, f1, k0, k1, a, b, v, kc, ci)
+  (
+    f0 = 20 * 1000 ^ (c / cols);
+    f1 = 20 * 1000 ^ ((c + 1) / cols);
+    k0 = f0 * N / srate;
+    k1 = min(N / 2, f1 * N / srate);
+    a = ceil(k0);
+    b = floor(k1);
+    a <= b ? (
+      v = arr[a];
+      while (a < b) ( a += 1; v = max(v, arr[a]); );
+    ) : (
+      kc = min(N / 2 - 1, (k0 + k1) / 2);
+      ci = floor(kc);
+      v = arr[ci] + (arr[ci + 1] - arr[ci]) * (kc - ci);
+    );
+    v;
+  );
+  gfx_ext_retina = 1;
+
+  // ---- factory presets: generated by tools/build_presets.py, do not edit ----
+  ng_pre_n = 9;
+
+  function ng_preset_load(p)
+  (
+    p == 0 ? ( ng_slider_set(1, 6); ng_slider_set(2, 50); ng_slider_set(3, 50); ng_slider_set(4, 10); ng_slider_set(5, 120); ng_slider_set(6, 100); ng_slider_set(7, 18000); ng_slider_set(8, 0); ng_slider_set(9, 0); ng_slider_set(10, 100); );
+    p == 1 ? ( ng_slider_set(1, 5); ng_slider_set(2, 60); ng_slider_set(3, 50); ng_slider_set(4, 5); ng_slider_set(5, 100); ng_slider_set(6, 1000); ng_slider_set(7, 10000); ng_slider_set(8, 0); ng_slider_set(9, 0); ng_slider_set(10, 100); );
+    p == 2 ? ( ng_slider_set(1, 9); ng_slider_set(2, 40); ng_slider_set(3, 40); ng_slider_set(4, 2); ng_slider_set(5, 60); ng_slider_set(6, 2000); ng_slider_set(7, 12000); ng_slider_set(8, 0); ng_slider_set(9, 0); ng_slider_set(10, 100); );
+    p == 3 ? ( ng_slider_set(1, 3); ng_slider_set(2, 40); ng_slider_set(3, 60); ng_slider_set(4, 20); ng_slider_set(5, 200); ng_slider_set(6, 200); ng_slider_set(7, 16000); ng_slider_set(8, 0); ng_slider_set(9, 0); ng_slider_set(10, 80); );
+    p == 4 ? ( ng_slider_set(1, 8); ng_slider_set(2, 70); ng_slider_set(3, 45); ng_slider_set(4, 5); ng_slider_set(5, 80); ng_slider_set(6, 2000); ng_slider_set(7, 12000); ng_slider_set(8, 0); ng_slider_set(9, 0); ng_slider_set(10, 100); );
+    p == 5 ? ( ng_slider_set(1, 6); ng_slider_set(2, 50); ng_slider_set(3, 50); ng_slider_set(4, 15); ng_slider_set(5, 150); ng_slider_set(6, 150); ng_slider_set(7, 1000); ng_slider_set(8, 0); ng_slider_set(9, 0); ng_slider_set(10, 100); );
+    p == 6 ? ( ng_slider_set(1, 4); ng_slider_set(2, 80); ng_slider_set(3, 65); ng_slider_set(4, 20); ng_slider_set(5, 250); ng_slider_set(6, 200); ng_slider_set(7, 8000); ng_slider_set(8, 0); ng_slider_set(9, 0); ng_slider_set(10, 100); );
+    p == 7 ? ( ng_slider_set(1, 12); ng_slider_set(2, 80); ng_slider_set(3, 30); ng_slider_set(4, 5); ng_slider_set(5, 100); ng_slider_set(6, 100); ng_slider_set(7, 18000); ng_slider_set(8, 1); ng_slider_set(9, 0); ng_slider_set(10, 100); );
+    p == 8 ? ( ng_slider_set(1, 6); ng_slider_set(2, 50); ng_slider_set(3, 50); ng_slider_set(4, 10); ng_slider_set(5, 120); ng_slider_set(6, 100); ng_slider_set(7, 18000); ng_slider_set(8, 0); ng_slider_set(9, 1); ng_slider_set(10, 100); );
+  );
+
+  // the first preset every slider matches, or -1
+  function ng_preset_match() local(m)
+  (
+    m = -1;
+    m < 0 && ng_pre_eq(slider1, 6) && ng_pre_eq(slider2, 50) && ng_pre_eq(slider3, 50) && ng_pre_eq(slider4, 10) && ng_pre_eq(slider5, 120) && ng_pre_eq(slider6, 100) && ng_pre_eq(slider7, 18000) && ng_pre_eq(slider8, 0) && ng_pre_eq(slider9, 0) && ng_pre_eq(slider10, 100) ? m = 0;
+    m < 0 && ng_pre_eq(slider1, 5) && ng_pre_eq(slider2, 60) && ng_pre_eq(slider3, 50) && ng_pre_eq(slider4, 5) && ng_pre_eq(slider5, 100) && ng_pre_eq(slider6, 1000) && ng_pre_eq(slider7, 10000) && ng_pre_eq(slider8, 0) && ng_pre_eq(slider9, 0) && ng_pre_eq(slider10, 100) ? m = 1;
+    m < 0 && ng_pre_eq(slider1, 9) && ng_pre_eq(slider2, 40) && ng_pre_eq(slider3, 40) && ng_pre_eq(slider4, 2) && ng_pre_eq(slider5, 60) && ng_pre_eq(slider6, 2000) && ng_pre_eq(slider7, 12000) && ng_pre_eq(slider8, 0) && ng_pre_eq(slider9, 0) && ng_pre_eq(slider10, 100) ? m = 2;
+    m < 0 && ng_pre_eq(slider1, 3) && ng_pre_eq(slider2, 40) && ng_pre_eq(slider3, 60) && ng_pre_eq(slider4, 20) && ng_pre_eq(slider5, 200) && ng_pre_eq(slider6, 200) && ng_pre_eq(slider7, 16000) && ng_pre_eq(slider8, 0) && ng_pre_eq(slider9, 0) && ng_pre_eq(slider10, 80) ? m = 3;
+    m < 0 && ng_pre_eq(slider1, 8) && ng_pre_eq(slider2, 70) && ng_pre_eq(slider3, 45) && ng_pre_eq(slider4, 5) && ng_pre_eq(slider5, 80) && ng_pre_eq(slider6, 2000) && ng_pre_eq(slider7, 12000) && ng_pre_eq(slider8, 0) && ng_pre_eq(slider9, 0) && ng_pre_eq(slider10, 100) ? m = 4;
+    m < 0 && ng_pre_eq(slider1, 6) && ng_pre_eq(slider2, 50) && ng_pre_eq(slider3, 50) && ng_pre_eq(slider4, 15) && ng_pre_eq(slider5, 150) && ng_pre_eq(slider6, 150) && ng_pre_eq(slider7, 1000) && ng_pre_eq(slider8, 0) && ng_pre_eq(slider9, 0) && ng_pre_eq(slider10, 100) ? m = 5;
+    m < 0 && ng_pre_eq(slider1, 4) && ng_pre_eq(slider2, 80) && ng_pre_eq(slider3, 65) && ng_pre_eq(slider4, 20) && ng_pre_eq(slider5, 250) && ng_pre_eq(slider6, 200) && ng_pre_eq(slider7, 8000) && ng_pre_eq(slider8, 0) && ng_pre_eq(slider9, 0) && ng_pre_eq(slider10, 100) ? m = 6;
+    m < 0 && ng_pre_eq(slider1, 12) && ng_pre_eq(slider2, 80) && ng_pre_eq(slider3, 30) && ng_pre_eq(slider4, 5) && ng_pre_eq(slider5, 100) && ng_pre_eq(slider6, 100) && ng_pre_eq(slider7, 18000) && ng_pre_eq(slider8, 1) && ng_pre_eq(slider9, 0) && ng_pre_eq(slider10, 100) ? m = 7;
+    m < 0 && ng_pre_eq(slider1, 6) && ng_pre_eq(slider2, 50) && ng_pre_eq(slider3, 50) && ng_pre_eq(slider4, 10) && ng_pre_eq(slider5, 120) && ng_pre_eq(slider6, 100) && ng_pre_eq(slider7, 18000) && ng_pre_eq(slider8, 0) && ng_pre_eq(slider9, 1) && ng_pre_eq(slider10, 100) ? m = 8;
+    m;
+  );
+
+  function ng_preset_name(p) local(s)
+  (
+    s = "";
+    p == 0 ? s = "Default";
+    p == 1 ? s = "Vocal Harshness";
+    p == 2 ? s = "Sibilance Control";
+    p == 3 ? s = "Mix Bus Smoothing";
+    p == 4 ? s = "Guitar Fizz Tamer";
+    p == 5 ? s = "Boxy Low Mids";
+    p == 6 ? s = "Piano Ring Control";
+    p == 7 ? s = "Aggressive Hard Clean";
+    p == 8 ? s = "Delta Audition";
+    s;
+  );
+
+  function ng_presets() local(i)
+  (
+    ng_pre_req >= 0 ? ( ng_preset_load(ng_pre_req); update(); ng_pre_req = -1; );
+    ng_pre_cur = ng_preset_match();
+    ng_pre_open ? (
+      ng_pre_menu_begin();
+      i = 0;
+      loop(ng_pre_n, ng_pre_item(i, ng_preset_name(i)); i += 1;);
+      ng_pre_menu_end();
+    );
+    strcpy(#ng_pre_name, ng_pre_cur >= 0 ? ng_preset_name(ng_pre_cur) : "CUSTOM");
+  );
+  // ---- end of factory presets ----
+
+@slider
+  update();
+
+@sample
+  in_l[ipos] = spl0;
+  in_r[ipos] = spl1;
+  ipos += 1; ipos >= N ? ipos = 0;
+  cnt += 1;
+  cnt >= H ? (
+    cnt = 0;
+    frame();
+  );
+  w_l = out_l[opos]; out_l[opos] = 0;
+  w_r = out_r[opos]; out_r[opos] = 0;
+  opos += 1; opos >= N ? opos = 0;
+  // the dry signal, delayed to line up: the oldest sample in the input ring
+  d_l = in_l[ipos];
+  d_r = in_r[ipos];
+  y_l = d_l * (1 - mix) + w_l * mix;
+  y_r = d_r * (1 - mix) + w_r * mix;
+  delta ? (
+    y_l = d_l - y_l;
+    y_r = d_r - y_r;
+  );
+  spl0 = y_l;
+  spl1 = y_r;
+
+@gfx 480 420
+  ng_knobs_begin("RESONANCE SUPPRESSOR", "ADVANCED", 480, 160, 2, 0);
+
+  // display: the live spectrum (muted, 0 to -96 dB, left scale) with the reduction per frequency
+  // hanging from the top (accent, 0 to 12 dB, right scale); Low/High Freq dashed, the most
+  // reduction at the top right
+  ng_plot(ng_vx + 26, ng_vy + 4, ng_vw - 52, ng_vh - 20);
+  ng_font(4, 8, 0);
+  rs_d = 10;
+  loop(4,
+    rs_m = 1;
+    loop(9,
+      rs_f = rs_m * rs_d;
+      rs_f >= 20 && rs_f <= 20000 ? (
+        rs_x = floor(ng_freq_x(rs_f)) + 0.5;
+        ng_col(NG_BORDER, rs_m == 1 ? 1 : 0.5);
+        gfx_line(rs_x, ng_py, rs_x, ng_py + ng_ph, 0);
+      );
+      rs_m += 1;
+    );
+    rs_d *= 10;
+  );
+  rs_i = 0;
+  loop(5,
+    rs_y = floor(ng_py + ng_ph * rs_i / 4) + 0.5;
+    ng_col(NG_BORDER, 0.6);
+    gfx_line(ng_px, rs_y, ng_px + ng_pw, rs_y, 0);
+    ng_col(NG_MUTED, 1);
+    sprintf(#rs_t, "%d", -24 * rs_i);
+    ng_ptxt(#rs_t, ng_px - 6 * ng_s, rs_y, 2);
+    rs_i > 0 && rs_i < 4 ? (
+      ng_col(NG_ACCENT, 1);
+      sprintf(#rs_t, "-%d", 3 * rs_i);
+      ng_ptxt(#rs_t, ng_px + ng_pw + 6 * ng_s, rs_y, 0);
+    );
+    rs_i += 1;
+  );
+  ng_col(NG_MUTED, 1);
+  ng_ptxt("100", ng_freq_x(100), ng_py + ng_ph + 10 * ng_s, 1);
+  ng_ptxt("1k", ng_freq_x(1000), ng_py + ng_ph + 10 * ng_s, 1);
+  ng_ptxt("10k", ng_freq_x(10000), ng_py + ng_ph + 10 * ng_s, 1);
+  rs_lx = floor(ng_freq_x(slider6)) + 0.5;
+  rs_hx = floor(ng_freq_x(slider7)) + 0.5;
+  ng_col(NG_ACCENT, 0.5);
+  rs_y = ng_py;
+  while (
+    gfx_line(rs_lx, rs_y, rs_lx, min(rs_y + 3 * ng_s, ng_py + ng_ph), 0);
+    gfx_line(rs_hx, rs_y, rs_hx, min(rs_y + 3 * ng_s, ng_py + ng_ph), 0);
+    rs_y += 6 * ng_s;
+    rs_y < ng_py + ng_ph;
+  );
+
+  // the levels for the display: up at once, down by 20% of the way per frame
+  rs_k = 0;
+  loop(NB,
+    rs_disp[rs_k] += (lev[rs_k] - rs_disp[rs_k]) * (lev[rs_k] > rs_disp[rs_k] ? 1 : 0.2);
+    rs_k += 1;
+  );
+  rs_cols = 380;
+  rs_c = 0;
+  loop(rs_cols,
+    rs_x = ng_px + ng_pw * (rs_c + 0.5) / rs_cols;
+    rs_xl = floor(ng_px + ng_pw * rs_c / rs_cols);
+    rs_xr = floor(ng_px + ng_pw * (rs_c + 1) / rs_cols);
+    rs_y = ng_lin_y(rs_col(rs_disp, rs_c, rs_cols), -96, 0);
+    ng_col(NG_MUTED, 0.15);
+    rs_y < ng_py + ng_ph ? gfx_rect(rs_xl, rs_y, rs_xr - rs_xl, ng_py + ng_ph - rs_y);
+    ng_col(NG_MUTED, 0.8);
+    rs_c > 0 ? gfx_line(rs_px, rs_py, rs_x, rs_y, 1);
+    rs_px = rs_x; rs_py = rs_y;
+    rs_c += 1;
+  );
+  rs_c = 0;
+  loop(rs_cols,
+    rs_x = ng_px + ng_pw * (rs_c + 0.5) / rs_cols;
+    rs_xl = floor(ng_px + ng_pw * rs_c / rs_cols);
+    rs_xr = floor(ng_px + ng_pw * (rs_c + 1) / rs_cols);
+    rs_y = ng_py + ng_ph * min(1, rs_col(gr, rs_c, rs_cols) / 12);
+    ng_col(NG_ACCENT, 0.15);
+    rs_y > ng_py ? gfx_rect(rs_xl, ng_py, rs_xr - rs_xl, rs_y - ng_py);
+    ng_col(NG_ACCENT, 1);
+    rs_c == 0 ? ng_line_start(rs_x, rs_y) : ng_line_to(rs_x, rs_y);
+    rs_c += 1;
+  );
+  rs_max = 0;
+  rs_k = 1;
+  loop(NB - 1, rs_max = max(rs_max, gr[rs_k]); rs_k += 1);
+  ng_font(4, 8, 0);
+  ng_col(NG_MUTED, 1);
+  sprintf(#rs_t, "MAX GR %.1f dB", rs_max);
+  ng_ptxt(#rs_t, ng_px + ng_pw - 6 * ng_s, ng_py + 8 * ng_s, 2);
+  slider9 ? ng_ptxt("DELTA", ng_px + 6 * ng_s, ng_py + 8 * ng_s, 0);
+
+  ng_row(5);
+  sprintf(#v1, "%.1f dB", slider1);
+  ng_knob_ctl(1, "DEPTH", #v1, 0, 24, 6, 0.1, 0) ? update();
+  sprintf(#v2, "%d%%", slider2);
+  ng_knob_ctl(2, "SHARPNESS", #v2, 0, 100, 50, 1, 0) ? update();
+  sprintf(#v3, "%d%%", slider3);
+  ng_knob_ctl(3, "SELECTIVITY", #v3, 0, 100, 50, 1, 0) ? update();
+  sprintf(#v4, "%d ms", slider4);
+  ng_knob_ctl_log(4, "ATTACK", #v4, 1, 200, 10, 1) ? update();
+  sprintf(#v5, "%d ms", slider5);
+  ng_knob_ctl_log(5, "RELEASE", #v5, 10, 1000, 120, 1) ? update();
+
+  ng_row(5);
+  slider6 >= 1000 ? sprintf(#v6, "%.2f kHz", slider6 / 1000) : sprintf(#v6, "%d Hz", slider6);
+  ng_knob_ctl_log(6, "LOW", #v6, 20, 2000, 100, 1) ? update();
+  sprintf(#v7, "%.1f kHz", slider7 / 1000);
+  ng_knob_ctl_log(7, "HIGH", #v7, 1000, 20000, 18000, 1) ? update();
+  ng_select_ctl(8, "MODE", "SOFT|HARD", 0) ? update();
+  ng_select_ctl(9, "DELTA", "OFF|ON", 0) ? update();
+  sprintf(#v10, "%d%%", slider10);
+  ng_knob_ctl(10, "MIX", #v10, 0, 100, 100, 1, 0) ? update();
+
+  ng_end();
+
+  ng_presets(); // the preset list (generated by tools/build_presets.py)

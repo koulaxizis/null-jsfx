@@ -1,0 +1,7 @@
+[
+  ["Octave Down", {"Amount": -100}],
+  ["Slow Motion Tape", {"Amount": -50}],
+  ["Grain Smear Texture", {"Amount": -30}],
+  ["Fifth Up", {"Amount": 58}],
+  ["Octave Up", {"Amount": 100}]
+]
