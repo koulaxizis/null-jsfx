@@ -42,7 +42,14 @@ if [ -d "$work/data/cache/$tag" ]; then
   echo "the whole package was downloaded; only parts were needed" >&2
   exit 1
 fi
-"$cli" --root "$work/root" remove tilt:all delay:all | tee "$work/out.txt"
+# the extras: Filter's FX chain comes with Filter, factory presets land in REAPER's presets
+"$cli" --root "$work/root" install filter:jsfx rack:vst3 extra:chains extra:presets | tee "$work/out.txt"
+grep -q "extra chains" "$work/out.txt"
+test -f "$work/root/REAPER/FXChains/NULL JSFX/Auto Filter.RfxChain"
+test -f "$work/root/REAPER/presets/js-null_jsfx_filter_jsfx.ini"
+test -d "$work/root/VST3/NULL JSFX/null_jsfx_rack.vst3/Contents"
+"$cli" --root "$work/root" remove tilt:all delay:all filter:all rack:all extra:chains | tee "$work/out.txt"
+test ! -e "$work/root/REAPER/FXChains/NULL JSFX"
 grep -q "0 installed" "$work/out.txt"
 test ! -e "$work/root/VST3/NULL JSFX"
 echo "release smoke test: ok ($tag)"

@@ -1,6 +1,6 @@
 //! The Hub without a window, for CI and for trying it out:
 //!   hub_cli [--root DIR] scan
-//!   hub_cli [--root DIR] install tilt:vst3 delay:all ...
+//!   hub_cli [--root DIR] install tilt:vst3 delay:all extra:chains ...
 //!   hub_cli [--root DIR] remove tilt:all
 //!   hub_cli [--root DIR] update
 //! --root puts REAPER, VST3, CLAP and fonts under DIR instead of the usual folders.
@@ -12,7 +12,7 @@ use std::process::exit;
 
 fn items(args: &[String]) -> Vec<(String, Format)> {
     let mut out = Vec::new();
-    for a in args {
+    for a in args.iter().filter(|a| !a.starts_with("extra:")) {
         let (id, f) = a.split_once(':').unwrap_or((a, "all"));
         if f == "all" {
             out.extend(Format::ALL.iter().map(|f| (id.to_string(), *f)));
@@ -21,6 +21,10 @@ fn items(args: &[String]) -> Vec<(String, Format)> {
         }
     }
     out
+}
+
+fn extras(args: &[String]) -> Vec<String> {
+    args.iter().filter_map(|a| a.strip_prefix("extra:")).map(str::to_string).collect()
 }
 
 fn fail(msg: &str) -> ! {
@@ -44,6 +48,7 @@ fn main() {
         "install" => {
             // a plugin without that format is skipped, so "id:all" works for every plugin
             req.install = items(&args[1..]).into_iter().filter(|(id, f)| catalog.plugin(id).is_none_or(|p| p.formats.contains(f))).collect();
+            req.extras = extras(&args[1..]);
         }
         "remove" => {
             let state = hub.scan(&catalog);
@@ -51,16 +56,18 @@ fn main() {
                 .into_iter()
                 .filter(|(id, f)| state.plugins.get(id).and_then(|m| m.get(f)).is_some_and(|s| s.installed))
                 .collect();
+            req.extras_remove = extras(&args[1..]);
         }
         "update" => {
             let state = hub.scan(&catalog);
             for (id, m) in &state.plugins {
                 req.install.extend(m.iter().filter(|(_, s)| s.outdated).map(|(f, _)| (id.clone(), *f)));
             }
+            req.extras = state.extras.iter().filter(|(_, s)| s.outdated).map(|(id, _)| id.clone()).collect();
         }
         _ => fail("scan | install ID:FORMAT... | remove ID:FORMAT... | update"),
     }
-    if !req.install.is_empty() || !req.remove.is_empty() {
+    if !req.install.is_empty() || !req.remove.is_empty() || !req.extras.is_empty() || !req.extras_remove.is_empty() {
         let mut last = "";
         hub.apply(&catalog, &req, &mut |p| {
             if p.stage != last {
@@ -72,6 +79,9 @@ fn main() {
     }
     let state = hub.scan(&catalog);
     println!("release {}: {} installed, {} to update", catalog.version, state.installed, state.outdated);
+    for (id, s) in state.extras.iter().filter(|(_, s)| s.installed) {
+        println!("  extra {id}{}", if s.outdated { "*" } else { "" });
+    }
     for (id, m) in &state.plugins {
         let list: Vec<String> = m
             .iter()

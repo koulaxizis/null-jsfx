@@ -3,6 +3,7 @@
 //! release packages on GitHub only. The window (hub/app) and the tests drive it through `Hub`.
 
 pub mod catalog;
+pub mod extras;
 pub mod fileops;
 pub mod package;
 pub mod paths;
@@ -14,7 +15,7 @@ use fileops::Op;
 use package::{Package, RemoteZip, Source};
 use serde::{Deserialize, Serialize};
 use std::cmp::Ordering;
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 use std::fs;
 use std::path::{Path, PathBuf};
 
@@ -82,6 +83,8 @@ pub struct ItemState {
 pub struct State {
     /// plugin id -> format -> state
     pub plugins: BTreeMap<String, BTreeMap<Format, ItemState>>,
+    /// extra id (chains, presets, remote, fonts) -> state
+    pub extras: BTreeMap<String, ItemState>,
     pub installed: usize,
     pub outdated: usize,
 }
@@ -93,6 +96,11 @@ pub struct Request {
     pub install: Vec<(String, Format)>,
     #[serde(default)]
     pub remove: Vec<(String, Format)>,
+    /// extras to add or bring up to date
+    #[serde(default)]
+    pub extras: Vec<String>,
+    #[serde(default)]
+    pub extras_remove: Vec<String>,
 }
 
 #[derive(Clone, Debug, Serialize)]
@@ -215,6 +223,26 @@ impl Hub {
             }
             state.plugins.insert(p.id.clone(), formats);
         }
+        for id in extras::ALL {
+            let mut s = ItemState::default();
+            if let Some(r) = self.manifest.items.get(&format!("extra/{id}")) {
+                s.installed = true;
+                s.version = Some(r.version.clone());
+            } else {
+                // put there by an installer
+                s.installed = match id {
+                    extras::CHAINS => t.reaper.join("FXChains/NULL JSFX").is_dir() || t.reaper.join("FXChains/NULL JSFX GFX").is_dir(),
+                    extras::REMOTE => extras::remote_files(t).iter().all(|(d, _)| d.exists()),
+                    extras::FONTS => extras::font_files(t).iter().all(|(d, _)| d.exists()),
+                    _ => false,
+                };
+            }
+            if s.installed {
+                s.outdated = s.version.as_deref().is_none_or(|v| compare_versions(v, &catalog.version) == Ordering::Less);
+                state.outdated += s.outdated as usize;
+            }
+            state.extras.insert(id.to_string(), s);
+        }
         state
     }
 
@@ -228,6 +256,13 @@ impl Hub {
             }
         }
 
+        for id in req.extras.iter().chain(&req.extras_remove) {
+            if !extras::ALL.contains(&id.as_str()) {
+                return Err(format!("unknown extra {id}"));
+            }
+        }
+        let plan = self.plan_extras(catalog, req);
+
         // the packages, downloaded once per release
         let cache = self.data.join("cache").join(sanitize(&catalog.version));
         let mut jsfx = None;
@@ -237,6 +272,9 @@ impl Hub {
                 req.install.iter().filter(|(_, f)| f.is_native() == native).map(|(id, f)| paths::plugin_paths(&t, id, *f).1).collect();
             if !native && req.install.iter().any(|(_, f)| *f == Format::Gfx) {
                 v.push(paths::gfx_include(&t).1);
+            }
+            if !native {
+                v.extend(plan.copies.iter().chain(&plan.merges).map(|(_, src)| src.clone()));
             }
             v
         };
@@ -277,6 +315,31 @@ impl Hub {
             let (dest, src) = paths::gfx_include(&t);
             stage(&mut ops, &staging, jsfx.as_mut().unwrap(), &src, dest, req.install.len())?;
         }
+        let mut n = req.install.len() + 1;
+        for (dest, src) in &plan.copies {
+            n += 1;
+            stage(&mut ops, &staging, jsfx.as_mut().unwrap(), src, dest.clone(), n)?;
+        }
+        for (dest, src) in &plan.merges {
+            n += 1;
+            let tmp = staging.join(n.to_string()).join(dest.file_name().unwrap_or_default());
+            if !jsfx.as_mut().unwrap().extract(src, &tmp)? {
+                continue; // a plugin without factory presets
+            }
+            let ours = fs::read_to_string(&tmp).map_err(|e| e.to_string())?;
+            let merged = match fs::read_to_string(dest) {
+                Ok(theirs) if !theirs.trim().is_empty() => extras::merge_presets(&theirs, &ours),
+                _ => ours,
+            };
+            fs::write(&tmp, merged).map_err(|e| e.to_string())?;
+            ops.push(Op::Copy { from: tmp, to: dest.clone() });
+        }
+        for path in &plan.removes {
+            // an emptied NULL JSFX chain folder goes too; REAPER's own folders stay
+            let chains = t.reaper.join("FXChains");
+            let keep = if path.starts_with(&chains) { chains } else { path.parent().map(Path::to_path_buf).unwrap_or_default() };
+            ops.push(Op::Remove { path: path.clone(), keep: Some(keep) });
+        }
         for (id, f) in &req.remove {
             let (dest, _) = paths::plugin_paths(&t, id, *f);
             let keep = match f {
@@ -308,6 +371,20 @@ impl Hub {
             })
             .collect();
         self.record(catalog, req, &failed_paths);
+        for (id, paths) in &plan.records {
+            match paths {
+                Some(p) => {
+                    self.manifest.items.insert(format!("extra/{id}"), Record { version: catalog.version.clone(), paths: p.clone() });
+                }
+                None => {
+                    self.manifest.items.remove(&format!("extra/{id}"));
+                }
+            }
+        }
+        let _ = self.save_manifest();
+        if plan.fonts_changed {
+            fonts_changed(&t, req.extras_remove.iter().any(|e| e == extras::FONTS));
+        }
 
         // the GFX include goes with the last GFX version
         let state = self.scan(catalog);
@@ -325,6 +402,81 @@ impl Hub {
         }
         progress(Progress { stage: "done", text: "Done".into(), done: 1, total: 1 });
         Ok(state)
+    }
+
+    /// What the extras need for this request: FX chains follow the plugins (a chain comes when
+    /// all its plugins are in, and goes when one of them goes), factory presets come with each
+    /// JSFX/GFX that is installed while they are on.
+    fn plan_extras(&self, catalog: &Catalog, req: &Request) -> ExtrasPlan {
+        let t = &self.settings.targets;
+        let state = self.scan(catalog);
+        let mut after: BTreeSet<(String, Format)> = state
+            .plugins
+            .iter()
+            .flat_map(|(id, m)| m.iter().filter(|(_, s)| s.installed).map(move |(f, _)| (id.clone(), *f)))
+            .collect();
+        after.extend(req.install.iter().cloned());
+        for r in &req.remove {
+            after.remove(r);
+        }
+        let on = |id: &str| {
+            !req.extras_remove.iter().any(|e| e == id)
+                && (req.extras.iter().any(|e| e == id) || state.extras.get(id).is_some_and(|s| s.installed))
+        };
+        let asked = |id: &str| req.extras.iter().any(|e| e == id);
+        let recorded = |id: &str| self.manifest.items.get(&format!("extra/{id}")).map(|r| r.paths.clone()).unwrap_or_default();
+        let mut plan = ExtrasPlan::default();
+
+        // FX chains
+        let had = recorded(extras::CHAINS);
+        if on(extras::CHAINS) {
+            let want = extras::chain_files(t, catalog, &after);
+            for (dest, src) in &want {
+                if asked(extras::CHAINS) || !dest.exists() {
+                    plan.copies.push((dest.clone(), src.clone()));
+                }
+            }
+            let keep: BTreeSet<&PathBuf> = want.iter().map(|(d, _)| d).collect();
+            plan.removes.extend(had.iter().filter(|p| !keep.contains(p)).cloned());
+            if asked(extras::CHAINS) || !had.is_empty() || state.extras[extras::CHAINS].installed {
+                plan.records.push((extras::CHAINS.into(), Some(want.into_iter().map(|(d, _)| d).collect())));
+            }
+        } else if req.extras_remove.iter().any(|e| e == extras::CHAINS) {
+            plan.removes.extend(had);
+            plan.records.push((extras::CHAINS.into(), None));
+        }
+
+        // factory presets: added to the user's preset files, never taken out of them
+        if on(extras::PRESETS) {
+            let targets: Vec<(String, Format)> =
+                if asked(extras::PRESETS) { after.iter().cloned().collect() } else { req.install.clone() };
+            for (id, f) in targets {
+                plan.merges.extend(extras::preset_file(t, &id, f));
+            }
+            if asked(extras::PRESETS) {
+                plan.records.push((extras::PRESETS.into(), Some(Vec::new())));
+            }
+        } else if req.extras_remove.iter().any(|e| e == extras::PRESETS) {
+            plan.records.push((extras::PRESETS.into(), None));
+        }
+
+        // the tablet remote and the font: their files, in or out
+        for (id, files) in [(extras::REMOTE, extras::remote_files(t)), (extras::FONTS, extras::font_files(t))] {
+            if asked(id) {
+                plan.copies.extend(files.iter().cloned());
+                plan.records.push((id.into(), Some(files.into_iter().map(|(d, _)| d).collect())));
+                plan.fonts_changed |= id == extras::FONTS;
+                if id == extras::REMOTE {
+                    // the steps left to do in REAPER
+                    plan.copies.push((self.data.join("Remote-INSTALL.txt"), "Remote/INSTALL.txt".into()));
+                }
+            } else if req.extras_remove.iter().any(|e| e == id) {
+                plan.removes.extend(files.into_iter().map(|(d, _)| d));
+                plan.records.push((id.into(), None));
+                plan.fonts_changed |= id == extras::FONTS;
+            }
+        }
+        plan
     }
 
     /// Notes in hub-installed.json what is now in place (skipping the paths that failed).
@@ -387,6 +539,45 @@ impl Hub {
 /// The newer Hub in the catalog, if this one is older.
 pub fn hub_update(catalog: &Catalog) -> Option<String> {
     (compare_versions(&catalog.hub.version, env!("CARGO_PKG_VERSION")) == Ordering::Greater).then(|| catalog.hub.version.clone())
+}
+
+#[derive(Default)]
+struct ExtrasPlan {
+    /// (place, path in the JSFX package)
+    copies: Vec<(PathBuf, String)>,
+    /// REAPER preset files to merge ours into: (place, path in the JSFX package)
+    merges: Vec<(PathBuf, String)>,
+    removes: Vec<PathBuf>,
+    /// extra id -> Some(the files it now has) or None (no longer installed)
+    records: Vec<(String, Option<Vec<PathBuf>>)>,
+    fonts_changed: bool,
+}
+
+/// Tells the system about the Noto Sans files that came or went: the user font list on Windows,
+/// the font cache on Linux. macOS picks them up by itself.
+fn fonts_changed(t: &Targets, removed: bool) {
+    #[cfg(windows)]
+    {
+        use std::os::windows::process::CommandExt;
+        let key = r"HKCU\Software\Microsoft\Windows NT\CurrentVersion\Fonts";
+        for (file, face) in [("NotoSans-Regular.ttf", "Noto Sans (TrueType)"), ("NotoSans-Bold.ttf", "Noto Sans Bold (TrueType)")] {
+            let path = t.fonts.join(file);
+            let mut cmd = std::process::Command::new("reg");
+            if removed {
+                cmd.args(["delete", key, "/v", face, "/f"]);
+            } else {
+                cmd.args(["add", key, "/v", face, "/t", "REG_SZ", "/d", &path.to_string_lossy(), "/f"]);
+            }
+            let _ = cmd.creation_flags(0x0800_0000).status();
+        }
+    }
+    #[cfg(target_os = "linux")]
+    {
+        let _ = removed;
+        let _ = std::process::Command::new("fc-cache").arg("-f").arg(&t.fonts).status();
+    }
+    #[cfg(target_os = "macos")]
+    let _ = (t, removed);
 }
 
 fn sanitize(v: &str) -> String {

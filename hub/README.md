@@ -31,6 +31,14 @@ Things worth knowing:
   latest one. Plugins put there by the installers or by hand are found too.
 - **The GFX include** (`null_gfx.jsfx-inc`) comes with the first GFX version and goes with the
   last.
+- **Extras** (`core/src/extras.rs`). FX chains follow the plugins: a chain comes once all its plugins
+  are installed in that format and goes when one of them goes. Factory presets are added after the
+  user's own in REAPER's preset files and are never taken out. The tablet remote and the Noto Sans
+  font come and go as files; the font is registered for the user on Windows. The Rack is a plugin
+  in the catalog with only VST3 and CLAP.
+- **Tray and notifications** (opt-in: "Start with the computer" in Settings). The Hub starts hidden
+  with `--hidden`, stays in the tray, looks for a new release once a day, and shows one system
+  notification per release when there are updates, new plugins or a new Hub (`Hub::notice`).
 
 ## Build and test
 

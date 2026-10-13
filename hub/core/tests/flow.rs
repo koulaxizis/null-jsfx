@@ -134,6 +134,92 @@ fn install_update_remove() {
     for ranges in [false, true] {
         round(ranges);
     }
+    extras_round();
+}
+
+/// FX chains follow the plugins, presets merge into the user's own, remote and fonts come and go.
+fn extras_round() {
+    let files: Files = Default::default();
+    let os = null_hub_core::paths::os_name();
+    let catalog = format!(
+        r#"{{"schema":1,"version":"3.0","repo":"x/y","packages":{{"jsfx":"NULL-JSFX-JSFX.zip","native":{{"{os}":"N.zip"}}}},"hub":{{"version":"1.0"}},
+        "plugins":[{{"id":"tilt","name":"Tilt","group":"one-slider","formats":["jsfx","gfx"]}},{{"id":"delay","name":"Delay","group":"essentials","formats":["jsfx","gfx"]}}],
+        "chains":[{{"name":"Duo","file":"Duo.RfxChain","plugins":["delay","tilt"],"folders":{{"jsfx":"NULL JSFX","gfx":"NULL JSFX GFX"}}}},
+                  {{"name":"Solo","file":"Solo.RfxChain","plugins":["tilt"],"folders":{{"jsfx":"NULL JSFX","gfx":"NULL JSFX GFX"}}}}]}}"#
+    );
+    let ini = "[General]\nNbPresets=1\n\n[Preset0]\nData=AA\nLen=1\nName=Factory\n\n";
+    let j = make_zip(
+        "NULL-JSFX-JSFX",
+        &[
+            ("null_jsfx/tilt.jsfx", &jsfx("Tilt", "3.0")),
+            ("null_jsfx/delay.jsfx", &jsfx("Delay", "3.0")),
+            ("null_jsfx/gfx/tilt_gfx.jsfx", &jsfx("Tilt GFX", "3.0")),
+            ("null_jsfx/gfx/delay_gfx.jsfx", &jsfx("Delay GFX", "3.0")),
+            ("null_jsfx/gfx/null_gfx.jsfx-inc", "//"),
+            ("FXChains/NULL JSFX/Duo.RfxChain", "duo"),
+            ("FXChains/NULL JSFX/Solo.RfxChain", "solo"),
+            ("FXChains/NULL JSFX GFX/Duo.RfxChain", "duo gfx"),
+            ("FXChains/NULL JSFX GFX/Solo.RfxChain", "solo gfx"),
+            ("presets/js-null_jsfx_tilt_jsfx.ini", ini),
+            ("presets/js-null_jsfx_delay_jsfx.ini", ini),
+            ("Remote/reaper_www_root/null_jsfx.html", "page"),
+            ("Remote/Scripts/null_jsfx_remote_bridge.lua", "bridge"),
+            ("Remote/INSTALL.txt", "steps"),
+            ("fonts/NotoSans-Regular.ttf", "font"),
+            ("fonts/NotoSans-Bold.ttf", "font"),
+        ],
+        false,
+    );
+    {
+        let mut f = files.lock().unwrap();
+        f.insert("/latest/download/NULL-JSFX-Catalog.json".into(), catalog.into_bytes());
+        f.insert("/download/3.0/NULL-JSFX-JSFX.zip".into(), j);
+    }
+    std::env::set_var("NULL_JSFX_HUB_RELEASES", serve(files, true));
+    let tmp = tempfile::tempdir().unwrap();
+    let root = tmp.path();
+    let mut h = hub(root);
+    let cat = h.fetch_catalog().unwrap();
+    let r = root.join("REAPER");
+    // the user's own Tilt preset
+    fs::create_dir_all(r.join("presets")).unwrap();
+    fs::write(r.join("presets/js-null_jsfx_tilt_jsfx.ini"), "[General]\nNbPresets=1\n\n[Preset0]\nData=BB\nLen=1\nName=Mine\n").unwrap();
+
+    let req = Request {
+        install: vec![("tilt".into(), Format::Jsfx)],
+        extras: vec!["chains".into(), "presets".into(), "remote".into(), "fonts".into()],
+        ..Default::default()
+    };
+    let s = h.apply(&cat, &req, &mut |_| {}).unwrap();
+    assert!(r.join("FXChains/NULL JSFX/Solo.RfxChain").is_file(), "Solo needs only Tilt");
+    assert!(!r.join("FXChains/NULL JSFX/Duo.RfxChain").exists(), "Duo needs Delay too");
+    assert!(!r.join("FXChains/NULL JSFX GFX").exists(), "no GFX plugins, no GFX chains");
+    let mine = fs::read_to_string(r.join("presets/js-null_jsfx_tilt_jsfx.ini")).unwrap();
+    let names: Vec<&str> = mine.lines().filter_map(|l| l.strip_prefix("Name=")).collect();
+    assert_eq!(names, ["Mine", "Factory"], "{mine}");
+    assert!(r.join("reaper_www_root/null_jsfx.html").is_file() && r.join("Scripts/null_jsfx_remote_bridge.lua").is_file());
+    assert!(root.join("data/Remote-INSTALL.txt").is_file());
+    assert!(root.join("fonts/NotoSans-Bold.ttf").is_file());
+    assert!(["chains", "presets", "remote", "fonts"].iter().all(|e| s.extras[*e].installed && !s.extras[*e].outdated));
+
+    // Delay comes: Duo comes along, and Delay gets its presets
+    h.apply(&cat, &Request { install: vec![("delay".into(), Format::Jsfx)], ..Default::default() }, &mut |_| {}).unwrap();
+    assert!(r.join("FXChains/NULL JSFX/Duo.RfxChain").is_file());
+    assert!(r.join("presets/js-null_jsfx_delay_jsfx.ini").is_file());
+    // Tilt goes: both chains go, the folder too
+    h.apply(&cat, &Request { remove: vec![("tilt".into(), Format::Jsfx)], ..Default::default() }, &mut |_| {}).unwrap();
+    assert!(!r.join("FXChains/NULL JSFX").exists());
+    // remote and fonts off
+    let s = h
+        .apply(&cat, &Request { extras_remove: vec!["remote".into(), "fonts".into(), "chains".into()], ..Default::default() }, &mut |_| {})
+        .unwrap();
+    assert!(!r.join("reaper_www_root/null_jsfx.html").exists() && r.join("reaper_www_root").exists(), "REAPER's own folder stays");
+    assert!(!root.join("fonts/NotoSans-Bold.ttf").exists());
+    assert!(!s.extras["remote"].installed && !s.extras["fonts"].installed && !s.extras["chains"].installed);
+    assert!(s.extras["presets"].installed);
+    // with chains off, a new plugin brings no chain
+    h.apply(&cat, &Request { install: vec![("tilt".into(), Format::Jsfx)], ..Default::default() }, &mut |_| {}).unwrap();
+    assert!(!r.join("FXChains").join("NULL JSFX").exists());
 }
 
 fn round(ranges: bool) {
@@ -165,7 +251,7 @@ fn round(ranges: bool) {
             ("tilt".into(), Format::Clap),
             ("delay".into(), Format::Jsfx),
         ],
-        remove: vec![],
+        ..Default::default()
     };
     let s = h.apply(&cat, &req, &mut |p| steps.push(p.stage)).unwrap();
     assert!(steps.contains(&"download") && steps.last() == Some(&"done"));
@@ -200,7 +286,7 @@ fn round(ranges: bool) {
         .iter()
         .flat_map(|(id, m)| m.iter().filter(|(_, st)| st.outdated).map(move |(f, _)| (id.clone(), *f)))
         .collect();
-    let s = h.apply(&cat, &Request { install: all, remove: vec![] }, &mut |_| {}).unwrap();
+    let s = h.apply(&cat, &Request { install: all, remove: vec![], ..Default::default() }, &mut |_| {}).unwrap();
     assert_eq!((s.installed, s.outdated), (5, 0));
     assert_eq!(fs::read_to_string(&bundle).unwrap(), "2.2");
     let cached: Vec<_> = fs::read_dir(root.join("data/cache")).map(|d| d.flatten().map(|e| e.file_name()).collect()).unwrap_or_default();
@@ -212,7 +298,7 @@ fn round(ranges: bool) {
 
     // removing the last GFX version takes the include along; empty folders go too
     let rm: Vec<(String, Format)> = Format::ALL.iter().map(|f| ("tilt".to_string(), *f)).collect();
-    let s = h.apply(&cat, &Request { install: vec![], remove: rm }, &mut |_| {}).unwrap();
+    let s = h.apply(&cat, &Request { install: vec![], remove: rm, ..Default::default() }, &mut |_| {}).unwrap();
     assert_eq!(s.installed, 1);
     assert!(!r.join("gfx").exists(), "gfx folder with the include must go with the last GFX plugin");
     assert!(!root.join("VST3/NULL JSFX").exists() && root.join("VST3").exists());
@@ -224,7 +310,7 @@ fn unknown_plugin_is_refused() {
     let tmp = tempfile::tempdir().unwrap();
     let mut h = hub(tmp.path());
     let cat = Catalog::parse(r#"{"schema":1,"version":"2.1","repo":"x","packages":{"jsfx":"a.zip","native":{}},"hub":{"version":"2.1"},"plugins":[]}"#).unwrap();
-    let err = h.apply(&cat, &Request { install: vec![("nope".into(), Format::Jsfx)], remove: vec![] }, &mut |_| {}).unwrap_err();
+    let err = h.apply(&cat, &Request { install: vec![("nope".into(), Format::Jsfx)], remove: vec![], ..Default::default() }, &mut |_| {}).unwrap_err();
     assert!(err.contains("not in this release"));
     let _: PathBuf = h.data.clone();
 }

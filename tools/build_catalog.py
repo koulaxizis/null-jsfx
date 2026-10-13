@@ -22,6 +22,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 sys.dont_write_bytecode = True
 sys.path.insert(0, str(ROOT / "tools"))
+from build_chains import RACK_PRESETS, CHAINS as CHAIN_LIST  # noqa: E402
 from build_site import CATEGORIES, load  # noqa: E402
 
 SITE = "https://nulljsfx.tech/"
@@ -44,9 +45,7 @@ EXTRAS = [
     {"id": "chains", "name": "FX chains", "formats": ["jsfx", "gfx"],
      "desc": "Ready-made REAPER FX chains of NULL JSFX plugins. A chain is added when all its plugins are installed."},
     {"id": "presets", "name": "Factory presets", "formats": ["jsfx", "gfx"],
-     "desc": "The factory presets in REAPER's preset menu of each JSFX, added next to your own presets."},
-    {"id": "rack", "name": "Rack", "formats": ["vst3", "clap"],
-     "desc": "Up to 8 NULL JSFX effects in one VST3/CLAP, with LFOs, an envelope, macros and 52 presets."},
+     "desc": "The factory presets in REAPER's preset menu of each JSFX and GFX version, added after your own presets (turning this off leaves them there)."},
     {"id": "remote", "name": "Tablet remote", "formats": ["jsfx", "gfx"],
      "desc": "Control REAPER's mixer and the NULL JSFX plugins from a tablet. Needs a few steps in REAPER after."},
     {"id": "fonts", "name": "Noto Sans font", "formats": ["gfx"],
@@ -77,6 +76,26 @@ def plugins():
     return out
 
 
+def rack():
+    """The Rack: the suite's host for any DAW (VST3/CLAP only), listed with the plugins."""
+    return {
+        "id": "rack",
+        "name": "Rack",
+        "group": "extras",
+        "tagline": "Up to 8 NULL JSFX Effects in One Plugin",
+        "keywords": "rack host chain modules multiband mid side lfo envelope macros presets",
+        "uses": ["Building whole chains in DAWs without JSFX", "Multiband and mid/side processing per module",
+                 "Movement with two LFOs, an envelope follower and eight macros"],
+        "properties": "Hosts up to 8 NULL JSFX modules in series, each on the full band or one of three bands, "
+                      "in stereo, mid or side, with its own mix. VST3 and CLAP.",
+        "sliders": [],
+        "formats": ["vst3", "clap"],
+        "shot": SITE + "assets/img/hub/rack.png",
+        "guide": SITE,
+        "presets": [c[0] for c in CHAIN_LIST] + [p[0] for p in RACK_PRESETS],
+    }
+
+
 def chains(stems):
     text = json.loads(CHAIN_TEXT.read_text(encoding="utf-8"))
     by_name = {}
@@ -95,6 +114,8 @@ def chains(stems):
 
 def catalog(version, notes, date):
     plugs = plugins()
+    if any(p["id"] == "rack" for p in plugs):
+        sys.exit("build_catalog: a plugin is called rack, like the Rack")
     return {
         "schema": SCHEMA,
         "version": version,
@@ -106,7 +127,9 @@ def catalog(version, notes, date):
                      "native": {os: f"NULL-JSFX-VST3-CLAP-{os}.zip" for os in OSES}},
         "hub": {"version": version, "assets": HUB_ASSETS},
         "groups": [{"id": key, "name": title, "desc": desc} for title, key, desc in CATEGORIES],
-        "plugins": plugs,
+        # the Rack is in "plugins" with group "extras"; the Hub lists it with these
+
+        "plugins": plugs + [rack()],
         "chains": chains({p["id"] for p in plugs}),
         "extras": EXTRAS,
     }
@@ -120,7 +143,7 @@ def check(cat):
     for p in cat["plugins"]:
         if not re.fullmatch(r"[a-z0-9_]+", p["id"]):
             errors.append(f"{p['id']}: id must be [a-z0-9_]")
-        if not p["formats"] or p["formats"][0] != "jsfx":
+        if not p["formats"] or (p["group"] != "extras" and p["formats"][0] != "jsfx"):
             errors.append(f"{p['id']}: formats must start with jsfx")
     if not cat["chains"]:
         errors.append("no FX chains")
