@@ -17,6 +17,14 @@ JSFX (REAPER), from NULL-JSFX-JSFX.zip
     NotoSans-Bold.ttf (double-click > Install) so they look exactly like the
     VST3/CLAP versions; without it REAPER falls back to a system font.
 
+FX chains (REAPER), from NULL-JSFX-JSFX.zip
+    Ready-made chains of NULL JSFX plugins (Vocal Chain, Mastering Chain, Guitar
+    Amp, Lo-Fi and more). Copy the two folders inside FXChains ("NULL JSFX" with
+    the plain JSFX, "NULL JSFX GFX" with the GFX versions) into REAPER's
+    FXChains folder (Options > Show REAPER resource path > FXChains). They need
+    the null_jsfx folder installed as above. In REAPER: FX window > FX >
+    Add FX chain, or the FX Chains folder of the FX browser.
+
 VST3 and CLAP (any DAW), from NULL-JSFX-VST3-CLAP-<your OS>.zip
     Copy the "NULL JSFX" folder from VST3 and from CLAP to:
       Windows: C:\Program Files\Common Files\VST3

@@ -1,0 +1,42 @@
+BYPASS 0 0
+<JS null_jsfx/gate.jsfx ""
+  -50 5 200 0 -20 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+>
+FXID {9FA1DC1E-6727-5B42-A4CF-C6ADDC144388}
+WAK 0 0
+BYPASS 0 0
+<JS null_jsfx/breath_control.jsfx ""
+  -40 5 120 -10 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+>
+FXID {97C7D3EF-4D14-5B08-908F-1EE5DA342D19}
+WAK 0 0
+BYPASS 0 0
+<JS null_jsfx/deesser.jsfx ""
+  6500 -6 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+>
+FXID {602EB78E-BC07-5A70-BB90-A88267C5D9C5}
+WAK 0 0
+BYPASS 0 0
+<JS null_jsfx/dynamics.jsfx ""
+  0 -22 3 6 5 120 7 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+>
+FXID {A6DEC2B2-B780-57ED-876E-4B9C02F98EE1}
+WAK 0 0
+BYPASS 0 0
+<JS null_jsfx/parametric_eq.jsfx ""
+  80 0 0.7 4 0 350 -2 1 2 0 3000 1.5 1 2 0 12000 2 1 1 0 15000 0 1 2 0 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+>
+FXID {055CB9BC-155E-5A2C-AF0D-8C0CFF00DEEC}
+WAK 0 0
+BYPASS 0 0
+<JS null_jsfx/doubler.jsfx ""
+  25 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+>
+FXID {3A01AC30-D878-5B0B-BD44-285E01C66C0D}
+WAK 0 0
+BYPASS 0 0
+<JS null_jsfx/reverb.jsfx ""
+  50 45 40 15 0 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+>
+FXID {B8646BB5-CBA9-5BCE-9ABD-BE3B4AB95465}
+WAK 0 0

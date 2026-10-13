@@ -1,0 +1,30 @@
+BYPASS 0 0
+<JS null_jsfx/gfx/de_hum_gfx.jsfx ""
+  0 4 30 30 0 3 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+>
+FXID {AAD0389D-4ADC-5FD7-B605-B9C3A7320AA9}
+WAK 0 0
+BYPASS 0 0
+<JS null_jsfx/gfx/noise_reduction_gfx.jsfx ""
+  0 1 12 3 50 10 150 0 100 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+>
+FXID {C84CD872-6B60-5CB6-8CBC-7FE223777EC4}
+WAK 0 0
+BYPASS 0 0
+<JS null_jsfx/gfx/deesser_gfx.jsfx ""
+  6000 -4 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+>
+FXID {FD5753B3-2E76-59CE-86B0-806EE7F3ED1E}
+WAK 0 0
+BYPASS 0 0
+<JS null_jsfx/gfx/auto_leveler_gfx.jsfx ""
+  -18 1000 9 9 -50 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+>
+FXID {C3DB2EC1-FC36-50EB-B3AF-4EEE350A22FC}
+WAK 0 0
+BYPASS 0 0
+<JS null_jsfx/gfx/limiter_gfx.jsfx ""
+  0 0 -1 200 2 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+>
+FXID {D03EDEFD-FEC5-5F21-BAF5-D3E1D756C4FE}
+WAK 0 0

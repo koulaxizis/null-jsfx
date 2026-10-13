@@ -1,0 +1,18 @@
+BYPASS 0 0
+<JS null_jsfx/gfx/chorus_gfx.jsfx ""
+  0.8 4 40 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+>
+FXID {E8F59867-B491-59F3-8C97-B7C2AAD0CAC5}
+WAK 0 0
+BYPASS 0 0
+<JS null_jsfx/gfx/doubler_gfx.jsfx ""
+  40 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+>
+FXID {C85D7E5C-5A5D-53F1-8739-694660B4A895}
+WAK 0 0
+BYPASS 0 0
+<JS null_jsfx/gfx/spread_gfx.jsfx ""
+  50 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+>
+FXID {39C499C2-E907-53D0-B4E0-BCA5A771D97E}
+WAK 0 0

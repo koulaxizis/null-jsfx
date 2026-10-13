@@ -96,6 +96,7 @@ jobs:
           out="NULL-JSFX-JSFX"
           mkdir -p "$out"
           cp -R DATA/Effects/null_jsfx "$out/"
+          cp -R DATA/FXChains "$out/FXChains"
           mkdir -p "$out/fonts"
           cp native/common/fonts/* "$out/fonts/"
           cp native/INSTALL.txt "$out/"
