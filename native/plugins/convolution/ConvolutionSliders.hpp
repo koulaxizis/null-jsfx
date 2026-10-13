@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "NullPlugin.hpp"
+#include "NullSliders.hpp"
 
 namespace nullconv {
 

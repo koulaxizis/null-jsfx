@@ -3,7 +3,10 @@
  * JSFX) with the same signal and slider values, and reports the largest sample difference.
  * SPDX-License-Identifier: MIT
  *
- * usage: compare <ref.jsfx> <other.clap|other.jsfx> [--tol 1e-5] [--values v1,v2,...]
+ * usage: compare <ref.jsfx> <other.clap|other.jsfx|module:id> [--tol 1e-5] [--values v1,v2,...]
+ *
+ * module:<id> (only in the module_compare build of this file) renders the Rack's module <id>
+ * (plugins/rack/modules/<id>.hpp) instead of a plugin, set up the way the Rack drives it.
  *
  * The signal is 3 s of stereo music-like material (kick, bass, chord, hats, plus noise) whose
  * level steps between -30 and 0 dBFS so dynamics processors move. The sliders / parameters are
@@ -321,6 +324,43 @@ static bool renderClap(const char* path, double sr, const std::vector<double>& v
 }
 
 // ------------------------------------------------------------------------------------------------
+// a Rack module, linked in (module_compare only)
+
+#ifdef NULL_MODULE_TEST
+#include "NullModules.hpp"
+
+static bool renderModule(const std::string& id, double sr, const std::vector<double>& values, const Stereo& in,
+                         Channels& out)
+{
+    const nulljsfx::ModuleDesc* desc = nullptr;
+    for (uint32_t i = 0; i < nullrack::kNumModules; ++i)
+        if (id == nullrack::kModules[i]->id)
+            desc = nullrack::kModules[i];
+    if (!desc) {
+        std::fprintf(stderr, "no Rack module named %s\n", id.c_str());
+        return false;
+    }
+    if (desc->numSliders != values.size()) {
+        std::fprintf(stderr, "module %s has %u sliders, the JSFX %zu (without file sliders)\n", id.c_str(), desc->numSliders, values.size());
+        return false;
+    }
+    nulljsfx::Module* m = desc->create();
+    // like the CLAP test: parameters (as float) first, then the sample rate (activate)
+    for (uint32_t k = 0; k < values.size(); ++k)
+        m->setValue(k, float(values[k]));
+    m->setSampleRate(sr);
+    const nulljsfx::ModuleTime time; // no transport, like the CLAP test host
+    const uint32_t frames = uint32_t(in.l.size());
+    for (uint32_t pos = 0; pos < frames; pos += kBlock) {
+        const uint32_t n = std::min(kBlock, frames - pos);
+        m->process(in.l.data() + pos, in.r.data() + pos, out[0].data() + pos, out[1].data() + pos, n, time);
+    }
+    delete m;
+    return true;
+}
+#endif
+
+// ------------------------------------------------------------------------------------------------
 
 int main(int argc, char** argv)
 {
@@ -414,8 +454,16 @@ int main(int argc, char** argv)
                     params.push_back(sets[i][k]);
             if (!renderJsfx(ref, sr, sl, sets[i], in, sc, a))
                 return 1;
-            if (isJsfx ? !renderJsfx(other.c_str(), sr, sl, sets[i], in, sc, b)
-                       : !renderClap(other.c_str(), sr, params, in, sc, b, first))
+            bool rendered;
+            if (isJsfx)
+                rendered = renderJsfx(other.c_str(), sr, sl, sets[i], in, sc, b);
+#ifdef NULL_MODULE_TEST
+            else if (other.compare(0, 7, "module:") == 0)
+                rendered = renderModule(other.substr(7), sr, params, in, b);
+#endif
+            else
+                rendered = renderClap(other.c_str(), sr, params, in, sc, b, first);
+            if (!rendered)
                 return 1;
             first = false;
             size_t at = 0, ch = 0;
