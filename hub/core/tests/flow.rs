@@ -181,9 +181,20 @@ fn round(ranges: bool) {
 
     // a new release: everything shows as outdated, then updates in place
     publish(&files, "2.2");
+    files.lock().unwrap().entry("/latest/download/NULL-JSFX-Catalog.json".into()).and_modify(|c| {
+        let text = String::from_utf8(c.clone()).unwrap().replace(
+            r#"{"id":"delay""#,
+            r#"{"id":"reverb","name":"Reverb","group":"essentials","formats":["jsfx"]},{"id":"delay""#,
+        );
+        *c = text.into_bytes();
+    });
     let cat = h.fetch_catalog().unwrap();
+    assert_eq!(h.settings.new_ids, vec!["reverb".to_string()], "the new release's new plugins");
     let s = h.scan(&cat);
     assert_eq!((s.installed, s.outdated), (5, 5));
+    let note = h.notice(&cat, &s).unwrap();
+    assert!(note.starts_with("NULL JSFX 2.2 is out: 2 installed plugins to update, new: Reverb"), "{note}");
+    assert_eq!(h.notice(&cat, &s), None, "one notification per release");
     let all: Vec<(String, Format)> = s
         .plugins
         .iter()

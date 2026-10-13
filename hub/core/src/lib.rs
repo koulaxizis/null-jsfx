@@ -44,8 +44,10 @@ pub struct Settings {
     pub check_updates: bool,
     /// show a system notification when one is out
     pub notify: bool,
-    /// start with the computer, in the tray
+    /// start with the computer and stay in the tray when the window is closed
     pub autostart: bool,
+    /// the plugins that are new in the latest release (shown with a NEW mark)
+    pub new_ids: Vec<String>,
     /// the release a notification was already shown for
     pub notified: Option<String>,
     /// when the catalog was last fetched (seconds since 1970)
@@ -60,6 +62,7 @@ impl Default for Settings {
             check_updates: true,
             notify: true,
             autostart: false,
+            new_ids: Vec::new(),
             notified: None,
             last_check: 0,
         }
@@ -143,11 +146,47 @@ impl Hub {
     pub fn fetch_catalog(&mut self) -> Result<Catalog, String> {
         let text = package::fetch_text(&package::catalog_url())?;
         let catalog = Catalog::parse(&text)?;
+        // what the new release adds, against the one known so far
+        if let Some(old) = self.cached_catalog() {
+            if old.version != catalog.version {
+                self.settings.new_ids =
+                    catalog.plugins.iter().filter(|p| old.plugin(&p.id).is_none()).map(|p| p.id.clone()).collect();
+            }
+        }
         fs::create_dir_all(&self.data).map_err(|e| e.to_string())?;
         fs::write(self.data.join("catalog.json"), &text).map_err(|e| e.to_string())?;
         self.settings.last_check = now();
         let _ = self.save_settings();
         Ok(catalog)
+    }
+
+    /// The text of the system notification for this release, once per release and only when
+    /// there is something for the user (updates, new plugins or a new Hub). Marks it as shown.
+    pub fn notice(&mut self, catalog: &Catalog, state: &State) -> Option<String> {
+        if !self.settings.notify || self.settings.notified.as_deref() == Some(catalog.version.as_str()) {
+            return None;
+        }
+        let mut parts = Vec::new();
+        let plugins = state.plugins.iter().filter(|(_, m)| m.values().any(|s| s.outdated)).count();
+        if plugins > 0 {
+            parts.push(format!("{plugins} installed plugin{} to update", if plugins == 1 { "" } else { "s" }));
+        }
+        let names: Vec<&str> =
+            self.settings.new_ids.iter().filter_map(|id| catalog.plugin(id)).map(|p| p.name.as_str()).collect();
+        match names.len() {
+            0 => {}
+            1..=3 => parts.push(format!("new: {}", names.join(", "))),
+            n => parts.push(format!("{n} new plugins")),
+        }
+        if hub_update(catalog).is_some() {
+            parts.push("a new NULL JSFX Hub".into());
+        }
+        self.settings.notified = Some(catalog.version.clone());
+        let _ = self.save_settings();
+        if parts.is_empty() {
+            return None;
+        }
+        Some(format!("NULL JSFX {} is out: {}.", catalog.version, parts.join(", ")))
     }
 
     /// What is installed, per plugin and format, from our records and the folders themselves
@@ -343,6 +382,11 @@ impl Hub {
             }
         }
     }
+}
+
+/// The newer Hub in the catalog, if this one is older.
+pub fn hub_update(catalog: &Catalog) -> Option<String> {
+    (compare_versions(&catalog.hub.version, env!("CARGO_PKG_VERSION")) == Ordering::Greater).then(|| catalog.hub.version.clone())
 }
 
 fn sanitize(v: &str) -> String {
