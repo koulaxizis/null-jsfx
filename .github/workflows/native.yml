@@ -2,16 +2,17 @@ name: VST3 and CLAP
 
 # Builds the VST3/CLAP plugins (native/) for Windows, macOS and Linux, checks on Linux and macOS
 # that each one sounds identical to its JSFX, and uploads these packages:
-#   NULL-JSFX-JSFX                 the JSFX (plain and GFX), the same for every OS
+#   NULL-JSFX-JSFX                 the JSFX (plain and GFX) and the tablet remote (Remote/),
+#                                  the same for every OS
 #   NULL-JSFX-VST3-CLAP-<OS>       the VST3 and CLAP versions for Windows, macOS or Linux
 # each with native/INSTALL.txt. When a GitHub release is published, they are attached to it as
 # zips with these names (the site's Download links use releases/latest/download/<name>.zip).
 
 on:
   push:
-    paths: ["native/**", "DATA/**", "tests/**", ".github/workflows/native.yml"]
+    paths: ["native/**", "DATA/**", "remote/**", "tests/**", ".github/workflows/native.yml"]
   pull_request:
-    paths: ["native/**", "DATA/**", "tests/**", ".github/workflows/native.yml"]
+    paths: ["native/**", "DATA/**", "remote/**", "tests/**", ".github/workflows/native.yml"]
   workflow_dispatch:
   release:
     types: [published]
@@ -100,6 +101,8 @@ jobs:
           mkdir -p "$out/fonts"
           cp native/common/fonts/* "$out/fonts/"
           cp native/INSTALL.txt "$out/"
+          mkdir -p "$out/Remote"
+          cp -R remote/reaper_www_root remote/Scripts remote/INSTALL.txt "$out/Remote/"
 
       - uses: actions/upload-artifact@v4
         with:

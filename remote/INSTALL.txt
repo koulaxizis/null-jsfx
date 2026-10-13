@@ -1,0 +1,47 @@
+NULL JSFX Remote: REAPER's mixer and the NULL JSFX plugins on a tablet
+=======================================================================
+
+A page for any tablet or phone browser, served by REAPER itself over your local network:
+mixer (volume, pan, mute, solo, record arm, meters), transport, and the FX chain of every
+track, where the NULL JSFX plugins (JSFX, GFX, VST3 and CLAP) get their own knobs and
+sliders and any other plugin gets a list of its parameters. You can also add, move,
+bypass and remove FX. Nothing to install on the tablet.
+
+Needs a recent REAPER (6.37 or newer).
+
+Install (once)
+    1. In REAPER: Options > Show REAPER resource path in explorer/finder.
+    2. Copy reaper_www_root/null_jsfx.html into the reaper_www_root folder there
+       (create the folder if it is missing).
+    3. Copy Scripts/null_jsfx_remote_bridge.lua into the Scripts folder there.
+    4. Options > Preferences > Control/OSC/web > Add > Web browser interface:
+         Default interface: null_jsfx.html
+         Port: 8080 (or any free port)
+         Username/password: optional, recommended on shared networks
+       OK. REAPER shows the address of the page (e.g. http://192.168.1.20:8080).
+       Allow REAPER through the firewall on private networks if Windows asks.
+    5. Actions > Show action list > New action > Load ReaScript... and choose
+       null_jsfx_remote_bridge.lua.
+
+Every session
+    Run "Script: null_jsfx_remote_bridge.lua" from the action list (or a toolbar button)
+    so the tablet can reach the FX. The mixer works without it.
+    To start it together with REAPER, add this line to Scripts/__startup.lua (create the
+    file if it is missing):
+        dofile(reaper.GetResourcePath() .. "/Scripts/null_jsfx_remote_bridge.lua")
+
+On the tablet
+    Connect to the same network as the computer and open the address from step 4.
+    "Add to Home Screen" makes it open full screen, like an app.
+    A second tablet at the same time: add ?slot=2 to the address (up to 4).
+
+Using it
+    Drag faders, knobs and sliders (they move relative to your finger, so touching one
+    never makes it jump). Double-tap resets: 0 dB, centre pan, or the plugin's default.
+    FX on a strip opens that track's chain. The power button bypasses an FX; Show on PC
+    opens its window on the computer; the arrows move it; Remove asks for a second tap.
+    + Add NULL plugin adds any NULL JSFX plugin in the format you choose.
+
+Not covered
+    Sends and routing, automation modes, take FX, input/monitoring FX. File choosers
+    (the Convolution IR file) are picked on the computer.
