@@ -1,0 +1,27 @@
+name: Web version
+
+# Checks web/ (the JavaScript version of NULL JSFX for browsers): the translated effects in
+# web/fx match DATA/, the runtime tests pass, and every effect sounds the same as its JSFX in
+# ysfx (null test, largest difference below -120 dB). See web/README.md.
+
+on:
+  push:
+    paths: ["web/**", "DATA/**", ".github/workflows/web.yml"]
+  pull_request:
+    paths: ["web/**", "DATA/**", ".github/workflows/web.yml"]
+  workflow_dispatch:
+
+jobs:
+  web:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: actions/cache@v4
+        with:
+          path: tests/.build/ysfx
+          key: ysfx-${{ hashFiles('tests/run.sh') }}
+      - run: sudo apt-get install -y nasm
+      - run: web/test/run.sh
