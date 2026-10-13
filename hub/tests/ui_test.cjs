@@ -24,11 +24,11 @@ function mock(catalog) {
   const state = {};
   for (const p of catalog.plugins) state[p.id] = Object.fromEntries(p.formats.map((f) => [f, { installed: false, version: null, outdated: false }]));
   state.tilt.jsfx = { installed: true, version: '2.1', outdated: true };
-  const settings = { targets: { reaper: '/home/me/.config/REAPER', vst3: '/home/me/.vst3', clap: '/home/me/.clap', fonts: '/home/me/.local/share/fonts' }, formats: all, check_updates: true, notify: true, autostart: false, notified: null, last_check: 0 };
+  const settings = { targets: { reaper: '/home/me/.config/REAPER', vst3: '/home/me/.vst3', clap: '/home/me/.clap', fonts: '/home/me/.local/share/fonts' }, formats: all, check_updates: true, notify: true, autostart: false, new_ids: ['tape'], notified: null, last_check: 0 };
   const view = () => {
     let installed = 0, outdated = 0;
     for (const m of Object.values(state)) for (const s of Object.values(m)) { installed += s.installed; outdated += s.outdated; }
-    return JSON.parse(JSON.stringify({ catalog, state: { plugins: state, installed, outdated }, settings, os: 'Linux', hubVersion: '2.2.0', dataDir: '/home/me/.local/share/null-jsfx' }));
+    return JSON.parse(JSON.stringify({ catalog, state: { plugins: state, installed, outdated }, settings, os: 'Linux', hubVersion: '2.1.0', hubUpdate: ['2.2', 'https://github.com/koulaxizis/null-jsfx/releases/latest/download/NULL-JSFX-Hub-Linux.AppImage'], dataDir: '/home/me/.local/share/null-jsfx' }));
   };
   const listeners = {};
   window.__calls = [];
@@ -83,6 +83,10 @@ function check(cond, what) {
   check((await page.textContent('#n-updates')) === '1', 'Updates count in the menu');
   check((await calls()).some(([c]) => c === 'hub_refresh'), 'checks for a new release on start');
 
+  check(await page.isVisible('#nav-new'), 'New in this release shows in the menu');
+  check((await page.locator('.card[data-id="tape"] .chip.new').count()) === 1, 'a new plugin carries a NEW mark');
+  check((await page.textContent('#hub-update')).includes('A new NULL JSFX Hub (2.2)'), 'a newer Hub is announced');
+
   await page.fill('#search', 'reverb');
   const n = await page.locator('.card').count();
   check(n > 0 && n < 10, `search "reverb" narrows to ${n}`);
@@ -123,10 +127,12 @@ function check(cond, what) {
   // Settings: drop CLAP
   await page.click('#nav button[data-view="settings"]');
   await page.uncheck('#set-formats input[value="clap"]');
+  await page.check('#set-autostart');
   await page.click('#set-save');
   await page.waitForFunction(() => window.__calls.some(([c]) => c === 'hub_save_settings'));
   const saved = (await calls()).find(([c]) => c === 'hub_save_settings')[1].settings;
   check(JSON.stringify(saved.formats) === '["jsfx","gfx","vst3"]', 'Settings saves the default formats');
+  check(saved.autostart === true && saved.notify === true && saved.check_updates === true, 'Settings saves start with the computer and notifications');
   if (shots) await page.screenshot({ path: path.join(shots, 'hub-settings.png') });
 
   // a group page and Install all shown
@@ -144,7 +150,9 @@ function check(cond, what) {
   check((await page.textContent('#news-title')).startsWith('Release 2.2'), "What's new shows the release");
   check((await page.locator('#news li').count()) === 2, 'release notes render as a list');
 
-  // links open in the browser
+  // the Hub download link and the others open in the browser
+  await page.click('#hub-update a');
+  check((await calls()).some(([c, u]) => c === 'open' && u.endsWith('NULL-JSFX-Hub-Linux.AppImage')), 'the new Hub link opens the download');
   await page.click('.side-foot a[href*="ko-fi"]');
   check((await calls()).some(([c, u]) => c === 'open' && u.includes('ko-fi.com/koulaxizis')), 'Ko-fi link opens outside the Hub');
 

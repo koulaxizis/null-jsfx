@@ -26,6 +26,7 @@ function st(id) { return V.state.plugins[id] ?? {}; }
 function installedFormats(id) { return Object.entries(st(id)).filter(([, s]) => s.installed).map(([f]) => f); }
 function outdatedFormats(id) { return Object.entries(st(id)).filter(([, s]) => s.outdated).map(([f]) => f); }
 function isInstalled(id) { return installedFormats(id).length > 0; }
+function isNew(id) { return (V.settings.new_ids || []).includes(id); }
 
 // --- talking to Rust -----------------------------------------------------------------------
 
@@ -116,6 +117,7 @@ function shown() {
   return plugins().filter((p) => {
     if (view === "installed" && !isInstalled(p.id)) return false;
     if (view === "updates" && !outdatedFormats(p.id).length) return false;
+    if (view === "new" && !isNew(p.id)) return false;
     if (view.startsWith("group:") && p.group !== view.slice(6)) return false;
     if (!q) return true;
     return q.split(/\s+/).every((w) => `${p.name} ${p.tagline} ${p.keywords}`.toLowerCase().includes(w));
@@ -130,7 +132,7 @@ function shotHtml(p, big) {
 
 function chips(p) {
   const s = st(p.id);
-  return FORMATS.filter(([f]) => p.formats.includes(f))
+  return (isNew(p.id) ? '<span class="chip new" title="New in this release">NEW</span>' : "") + FORMATS.filter(([f]) => p.formats.includes(f))
     .map(([f, label]) => {
       const x = s[f] || {};
       const cls = x.outdated ? "chip old" : x.installed ? "chip on" : "chip";
@@ -154,6 +156,12 @@ function render() {
   $("n-installed").textContent = Object.keys(s.plugins).filter(isInstalled).length || "";
   const upd = plugins().filter((p) => outdatedFormats(p.id).length).length;
   $("n-updates").textContent = upd || "";
+  const fresh = plugins().filter((p) => isNew(p.id)).length;
+  $("nav-new").hidden = !fresh;
+  $("n-new").textContent = fresh || "";
+  const hu = $("hub-update");
+  hu.hidden = !V.hubUpdate;
+  if (V.hubUpdate) hu.innerHTML = `<span>A new NULL JSFX Hub (${esc(V.hubUpdate[0])}) is out.</span><a href="${esc(V.hubUpdate[1])}" data-ext>Download it</a>`;
   $("release").textContent = cat ? (upd ? `Release ${cat.version} · ${upd} to update` : `Release ${cat.version} · up to date`) : "Offline";
   $("release").classList.toggle("hot", upd > 0);
   const ua = $("update-all");
@@ -172,7 +180,7 @@ function render() {
   $("view-plugins").hidden = false;
 
   const group = view.startsWith("group:") ? cat?.groups.find((g) => g.id === view.slice(6)) : null;
-  $("group-desc").textContent = group ? group.desc : view === "updates" ? "Plugins with a newer version in the latest release." : "";
+  $("group-desc").textContent = group ? group.desc : view === "updates" ? "Plugins with a newer version in the latest release." : view === "new" ? `Plugins added in release ${cat?.version}.` : "";
   const list = shown();
   const notInstalled = list.filter((p) => !isInstalled(p.id));
   const bulk = $("bulk");
@@ -235,6 +243,9 @@ function renderSettings() {
   $("set-formats").innerHTML = FORMATS.map(
     ([f, label, desc]) => `<label><input type="checkbox" value="${f}" ${s.formats.includes(f) ? "checked" : ""}> ${label} <span class="muted">(${desc})</span></label>`
   ).join("");
+  $("set-check").checked = s.check_updates;
+  $("set-notify").checked = s.notify;
+  $("set-autostart").checked = s.autostart;
   $("set-reaper").value = s.targets.reaper;
   $("set-vst3").value = s.targets.vst3;
   $("set-clap").value = s.targets.clap;
@@ -247,6 +258,9 @@ async function saveSettings() {
   const settings = {
     ...V.settings,
     formats: [...document.querySelectorAll("#set-formats input:checked")].map((i) => i.value),
+    check_updates: $("set-check").checked,
+    notify: $("set-notify").checked,
+    autostart: $("set-autostart").checked,
     targets: { ...V.settings.targets, reaper: $("set-reaper").value.trim(), vst3: $("set-vst3").value.trim(), clap: $("set-clap").value.trim() },
   };
   if (!settings.formats.length) return ($("set-msg").textContent = "Pick at least one format.");
@@ -375,6 +389,12 @@ $("set-defaults").onclick = async () => {
 
 (async () => {
   T.event.listen("hub-progress", (e) => onProgress(e.payload));
+  // the daily check ran in the background
+  T.event.listen("hub-changed", async () => {
+    if (busy) return;
+    V = await invoke("hub_load");
+    render();
+  });
   V = await invoke("hub_load");
   render();
   refresh(true);

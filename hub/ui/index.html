@@ -31,6 +31,7 @@
       <button data-view="all" class="active">All plugins <b id="n-all"></b></button>
       <button data-view="installed">Installed <b id="n-installed"></b></button>
       <button data-view="updates">Updates <b id="n-updates" class="hot"></b></button>
+      <button data-view="new" id="nav-new" hidden>New in this release <b id="n-new"></b></button>
       <div class="side-label">Groups</div>
       <div id="nav-groups"></div>
       <div class="side-label">Release</div>
@@ -43,6 +44,7 @@
     </nav>
 
     <main id="main">
+      <div id="hub-update" class="banner" hidden></div>
       <section id="view-plugins">
         <div class="bar">
           <input id="search" type="search" placeholder="Search plugins, e.g. eq, reverb, vocal" autocomplete="off">
@@ -64,6 +66,14 @@
           <h3>Formats</h3>
           <p class="muted">What Install adds for a plugin. You can still pick formats one by one in a plugin's page.</p>
           <div id="set-formats" class="checks"></div>
+        </div>
+        <div class="panel">
+          <h3>Updates</h3>
+          <div class="checks col">
+            <label><input type="checkbox" id="set-check"> Look for a new release once a day</label>
+            <label><input type="checkbox" id="set-notify"> Show a notification when there are updates or new plugins (once per release)</label>
+            <label><input type="checkbox" id="set-autostart"> Start with the computer and stay in the tray <span class="muted">(closing the window keeps the Hub there; Quit from the tray icon)</span></label>
+          </div>
         </div>
         <div class="panel">
           <h3>Folders</h3>
