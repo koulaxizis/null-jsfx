@@ -1302,3 +1302,25 @@ a.download-option:hover {
     border: 1px solid var(--border);
     border-radius: 6px;
 }
+
+.free-forever {
+    font-size: 12px;
+    color: var(--muted);
+    max-width: 34em;
+    margin: 14px auto 0;
+    text-align: center;
+}
+
+.free-forever strong {
+    color: var(--text);
+    font-weight: 600;
+}
+
+.free-forever a {
+    color: var(--muted);
+    text-decoration: underline;
+}
+
+.free-forever a:hover {
+    color: var(--text);
+}
