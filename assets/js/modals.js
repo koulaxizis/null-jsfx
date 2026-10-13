@@ -12,7 +12,8 @@ const guides = {
     uses: ['Open up dull vocals', 'Add air to acoustic guitars', 'Brighten dark overheads', 'Quick top-end lift on a bus', 'Restore highs on muffled recordings'],
     properties: 'Input → 6 kHz one-pole high-pass split → highs boosted (0 to +9 dB) and added back → Output. Zero latency, stereo channels processed independently.',
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
-    shot: 'assets/img/gfx/brighter.png'
+    shot: 'assets/img/gfx/brighter.png',
+    studio: true
   },
   'chorus-one': {
     title: 'CHORUS ONE',
@@ -24,7 +25,8 @@ const guides = {
     uses: ['Thicken clean guitars', 'Widen synth pads', 'Add movement to electric piano', 'Subtle stereo shimmer on backing vocals', 'Lush 80s-style chorus at high settings'],
     properties: 'Input → L/R modulated delay lines (triangle LFO, opposite polarity per side) with feedback → dry/wet blend → Output. The single slider drives rate, depth, base delay, feedback (0–0.15) and mix (max 85% wet); zero latency.',
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
-    shot: 'assets/img/gfx/chorus_one.png'
+    shot: 'assets/img/gfx/chorus_one.png',
+    studio: true
   },
   'crunch': {
     title: 'CRUNCH',
@@ -36,7 +38,8 @@ const guides = {
     uses: ['Aggressive drum bus dirt', 'Gritty bass layers', 'Distorted vocal effects', 'Edge on synth leads', 'Lo-fi parallel crunch'],
     properties: 'Input → drive (1–20x) → variable-knee clipper (knee 2 to 10, soft to near-hard) → 9 kHz one-pole low-pass to tame fizz → level compensation → dry/crunch crossfade by Amount → Output. Zero latency, no oversampling; 0 is a clean pass-through.',
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
-    shot: 'assets/img/gfx/crunch.png'
+    shot: 'assets/img/gfx/crunch.png',
+    studio: true
   },
   'dj-filter': {
     title: 'DJ FILTER',
@@ -48,7 +51,8 @@ const guides = {
     uses: ['DJ-style filter sweeps for transitions and breakdowns', 'Build tension by slowly opening a high-pass before a drop', 'Muffle a loop or whole mix for a \'next room\' effect', 'Automate a single knob for filter rises and falls', 'Quickly thin out or darken a bus during arrangement'],
     properties: 'Signal chain: Input → two cascaded TPT state-variable stages (24 dB/oct low-pass and high-pass, both always running) → crossfade with the dry signal over the first 5% of travel → Output. A resonance bump grows with the amount; the knob glides over 20 ms so moves and automation do not zipper. Exactly transparent at 0; stereo, zero latency.',
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
-    shot: 'assets/img/gfx/dj_filter.png'
+    shot: 'assets/img/gfx/dj_filter.png',
+    studio: true
   },
   'doubler': {
     title: 'DOUBLER',
@@ -60,7 +64,8 @@ const guides = {
     uses: ['Fake a double-tracked vocal', 'Widen mono guitar parts', 'Thicken backing vocals', 'Stereo spread for mono synths', 'Subtle width on lead lines'],
     properties: 'Input → mono sum → two delayed taps with slow independent drift (0.13 Hz / 0.21 Hz) → one double added left, one right → level compensation → Output. Original stays centred; zero latency.',
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
-    shot: 'assets/img/gfx/doubler.png'
+    shot: 'assets/img/gfx/doubler.png',
+    studio: true
   },
   'driver': {
     title: 'DRIVER',
@@ -72,7 +77,8 @@ const guides = {
     uses: ['Warm up thin vocals', 'Glue on the drum bus', 'Tube-like weight on bass', 'Even-harmonic colour on synths', 'Push a mix bus into soft saturation'],
     properties: 'Input → drive (1–12x) with bias (0 to 0.25) → tanh curve (bias offset removed, even plus odd harmonics) → DC blocker → level compensation → dry/drive crossfade by Amount → Output. Zero latency, no oversampling; 0 is a clean pass-through.',
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
-    shot: 'assets/img/gfx/driver.png'
+    shot: 'assets/img/gfx/driver.png',
+    studio: true
   },
   'exciter': {
     title: 'EXCITER',
@@ -84,7 +90,8 @@ const guides = {
     uses: ['Add sparkle to vocals without harsh EQ', 'Bring dull cymbals forward', 'Presence on acoustic guitar', 'Air on a mix bus', 'Revive old or lo-fi recordings'],
     properties: 'Input → 3 kHz 12 dB/oct high-pass → drive → asymmetric soft clip (odd + even harmonics) → second 3 kHz high-pass → blended onto the dry signal → Output. Blend is drive-compensated; zero latency.',
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
-    shot: 'assets/img/gfx/exciter.png'
+    shot: 'assets/img/gfx/exciter.png',
+    studio: true
   },
   'formant-shift': {
     title: 'FORMANT SHIFT',
@@ -96,7 +103,8 @@ const guides = {
     uses: ['Gender-bend vocal character', 'Make backing vocals sound like a different singer', 'Creative vowel colouring on synths', 'Robotic or cartoon voice effects', 'Subtle vocal timbre change'],
     properties: 'Input → three parallel band-pass resonators (base 300 / 850 / 2250 Hz, Q 2.5) scaled by the shift factor → weighted sum blended with dry → Output. Not a pitch shifter: only the resonant colour moves; zero latency.',
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
-    shot: 'assets/img/gfx/formant_shift.png'
+    shot: 'assets/img/gfx/formant_shift.png',
+    studio: true
   },
   'grit': {
     title: 'GRIT',
@@ -108,7 +116,8 @@ const guides = {
     uses: ['Lo-fi drum textures', '8-bit / chiptune character', 'Digital grit on synths', 'Degraded radio-style effects', 'Parallel crunch on percussion'],
     properties: 'Input → sample-and-hold decimation (hold 1–8 samples) → bit-depth quantisation (16 to 3 bits) → crossfade with dry by the same amount → Output. Zero latency, no anti-aliasing (aliasing is intended).',
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
-    shot: 'assets/img/gfx/grit.png'
+    shot: 'assets/img/gfx/grit.png',
+    studio: true
   },
   'louder': {
     title: 'LOUDER',
@@ -120,7 +129,8 @@ const guides = {
     uses: ['Quick loudness on a mix or stem', 'Makeup gain after quiet processing', 'Boost low-level recordings without clipping', 'Final ceiling on a bounce', 'Push a bus louder while catching peaks'],
     properties: 'Input → gain (0 to +12 dB) → stereo-linked look-ahead peak limiter (2 ms look-ahead with gain hold, 80 ms release, -0.3 dBFS ceiling) → safety clip at the ceiling → Output. 2 ms latency, reported to REAPER for compensation; at 0 only peaks above the ceiling are touched.',
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
-    shot: 'assets/img/gfx/louder.png'
+    shot: 'assets/img/gfx/louder.png',
+    studio: true
   },
   'mono-maker': {
     title: 'MONO MAKER',
@@ -132,7 +142,8 @@ const guides = {
     uses: ['Centre the bass on mix and master buses', 'Fix wide, phasey low end from stereo synths', 'Vinyl-safe low frequencies', 'Tighten kick and bass in stereo samples', 'Keep highs wide while lows stay mono'],
     properties: 'Input → M/S split → side signal through a 4th-order low-pass (two Butterworth stages) → low side removed from L/R → Output. Mid and high side content are untouched; zero latency.',
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
-    shot: 'assets/img/gfx/mono_maker.png'
+    shot: 'assets/img/gfx/mono_maker.png',
+    studio: true
   },
   'phatter': {
     title: 'PHATTER',
@@ -144,7 +155,8 @@ const guides = {
     uses: ['Add weight to thin kicks', 'Fatten bass lines', 'Warmth on a drum bus', 'Body for small-sounding synths', 'Quick low-end fix on samples'],
     properties: 'Input → 200 Hz one-pole low-pass → low band boosted (0 to +12 dB) and added back → Output. No limiting, so watch headroom at high settings; zero latency.',
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
-    shot: 'assets/img/gfx/phatter.png'
+    shot: 'assets/img/gfx/phatter.png',
+    studio: true
   },
   'pressure': {
     title: 'PRESSURE',
@@ -156,7 +168,8 @@ const guides = {
     uses: ['Glue a bus with one control', 'Even out vocals quickly', 'Level bass guitar', 'Squash drum room mics', 'Gentle mix bus control at low settings'],
     properties: 'Input → stereo-linked RMS-style detector (5 ms) → gain computer (threshold 0 to -30 dB, ratio 1:1 to 6:1) → 10 ms attack, 150 ms release smoothing → automatic makeup (half the gain reduction at threshold, up to about +12.5 dB) → Output. Zero latency; 0 is a clean pass-through.',
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
-    shot: 'assets/img/gfx/pressure.png'
+    shot: 'assets/img/gfx/pressure.png',
+    studio: true
   },
   'pumper': {
     title: 'PUMPER',
@@ -168,7 +181,8 @@ const guides = {
     uses: ['Fake sidechain pumping on pads', 'EDM-style breathing on a synth bus', 'Rhythmic movement on sustained chords', 'Groove on reverb returns', 'Quick ducking effect without routing'],
     properties: 'Input → gain from a quarter-note envelope locked to the project tempo (fast fade down over 2% of the beat, smooth S-curve release over 60%) → Output. Follows the beat position during playback and free-runs at the project tempo when stopped; zero latency.',
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
-    shot: 'assets/img/gfx/pumper.png'
+    shot: 'assets/img/gfx/pumper.png',
+    studio: true
   },
   'riser': {
     title: 'RISER',
@@ -180,7 +194,8 @@ const guides = {
     uses: ['EDM and pop build-ups before a drop', 'Transitions between song sections', 'Turning any loop into a riser', 'Tension under a vocal pickup'],
     properties: 'Input → resonant 12 dB/oct high-pass (exponential sweep) + band-passed noise tracking the filter → Mid/Side widening → cross-fed diffuse wash → Output. Every move is smoothed over 30 ms so automation never zips; zero latency.',
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
-    shot: 'assets/img/gfx/riser.png'
+    shot: 'assets/img/gfx/riser.png',
+    studio: true
   },
   'snappy': {
     title: 'SNAPPY',
@@ -192,7 +207,8 @@ const guides = {
     uses: ['Add snap to snares and kicks', 'Sharpen percussion loops', 'Punch on a drum bus', 'Bite on plucked instruments', 'Tighten roomy drum recordings'],
     properties: 'Input → stereo-linked level → fast (1 ms) and slow (25 ms) attack envelopes, 80 ms release → transient amount from their difference → gain between -3 and +9 dB scaled by Amount → Output. Zero latency, no look-ahead.',
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
-    shot: 'assets/img/gfx/snappy.png'
+    shot: 'assets/img/gfx/snappy.png',
+    studio: true
   },
   'spread': {
     title: 'SPREAD',
@@ -204,7 +220,8 @@ const guides = {
     uses: ['Widen mono synths and guitars', 'Open up a vocal bus', 'Mono-safe width on the master', 'Spread pads and ambiences', 'Keep bass centred while widening the top'],
     properties: 'Input → mid signal → 250 Hz one-pole high-pass → two delay taps (11.3 ms × 0.6 + 17.9 ms × 0.4) → added to L, subtracted from R → Output. Cancels completely in mono; low end stays centred; zero latency.',
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
-    shot: 'assets/img/gfx/spread.png'
+    shot: 'assets/img/gfx/spread.png',
+    studio: true
   },
   'stretch': {
     title: 'STRETCH',
@@ -216,7 +233,8 @@ const guides = {
     uses: ['Slowed-down, tape-stretched vocal textures', 'Octave-down sound design', 'Chipmunk or octave-up effects', 'Granular pad texture', 'Transitions and risers'],
     properties: 'Input → circular buffer → two crossfading grains (Hann windows, half a cycle apart) read at 2^Amount speed → dry/wet blend → Output. Pitch changes but length does not; grain length scales from 25 to 240 ms.',
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
-    shot: 'assets/img/gfx/stretch.png'
+    shot: 'assets/img/gfx/stretch.png',
+    studio: true
   },
   'sweeper': {
     title: 'SWEEPER',
@@ -228,7 +246,8 @@ const guides = {
     uses: ['Build-ups and breakdowns', 'DJ-style transitions', 'Filter automation on loops', 'Thin out a part for an intro', 'Muffled "next room" effect'],
     properties: 'Input → TPT state-variable filter (low-pass below 50, high-pass above, Q 0.707 to 2.2) → Output. Exact bypass at 50, stereo channels processed independently, zero latency.',
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
-    shot: 'assets/img/gfx/sweeper.png'
+    shot: 'assets/img/gfx/sweeper.png',
+    studio: true
   },
   'tilt': {
     title: 'TILT',
@@ -240,7 +259,8 @@ const guides = {
     uses: ['Quick tonal balance on a mix bus', 'Darken harsh recordings', 'Brighten dull stems', 'Match the tone of two takes', 'Mastering tonal nudges'],
     properties: 'Input → 700 Hz one-pole split → low band × opposite gain of high band (±6 dB) → summed → Output. Zero latency, stereo channels processed independently.',
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
-    shot: 'assets/img/gfx/tilt.png'
+    shot: 'assets/img/gfx/tilt.png',
+    studio: true
   },
   'wetter': {
     title: 'WETTER',
@@ -252,7 +272,8 @@ const guides = {
     uses: ['Quick sense of space on dry sources', 'Room ambience on drums', 'Sit vocals back in the mix', 'Larger, longer tails at high settings', 'Fast ambience sketches'],
     properties: 'Input → mono sum → Freeverb-style network per channel: four damped feedback combs (damping 0.35) → two allpass diffusers; right channel uses slightly longer delays for width → mixed with dry → Output. Delay lengths scale with sample rate; zero latency.',
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
-    shot: 'assets/img/gfx/wetter.png'
+    shot: 'assets/img/gfx/wetter.png',
+    studio: true
   },
 
   // ─── ESSENTIALS ───
@@ -270,7 +291,8 @@ const guides = {
     uses: ['Moving pads and synth beds', 'Rhythmic tempo-synced panning on guitars or keys', 'Subtle stereo motion on ambience returns', 'Ping-pong style movement on percussion loops'],
     properties: 'Input → Sine LFO (free or tempo-synced) → opposite gain curves on L and R → Dry/Wet Mix → Output. Each channel keeps its own content (no channel crossfeed) and the effect has zero latency.',
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
-    shot: 'assets/img/gfx/auto_pan.png'
+    shot: 'assets/img/gfx/auto_pan.png',
+    studio: true
   },
   'auto-leveler': {
     title: 'AUTO-LEVELER',
@@ -286,7 +308,8 @@ const guides = {
     uses: ['Evening out dialogue and podcast levels', 'Riding inconsistent vocal takes', 'Smoothing level changes in live recordings', 'Pre-leveling before compression'],
     properties: 'Input → stereo RMS detection (~300 ms) → gain target (Target − level, limited by Max Boost/Cut, frozen below Gate) → smoothed at Speed → Output. Zero latency.',
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
-    shot: 'assets/img/gfx/auto_leveler.png'
+    shot: 'assets/img/gfx/auto_leveler.png',
+    studio: true
   },
   'band-splitter': {
     title: 'BAND SPLITTER',
@@ -303,7 +326,8 @@ const guides = {
     uses: ['Multiband processing with any plugin: a saturator only on the lows, a de-esser only on the highs', 'Multiband stereo widening with a mono low end', 'Parallel band chains in one track, merged back with a second instance', 'Auditioning crossover points before setting up a multiband chain'],
     properties: 'Signal chain (Split): Input → Linkwitz-Riley 4th-order crossover cascade (24 dB/oct, TPT state-variable filters) → allpass phase compensation on the lower bands → bands on channel pairs 1/2, 3/4, 5/6, 7/8. The bands sum to a flat (allpass) response. Merge sums the four channel pairs into 1/2 and silences 3-8. Set the track to 8 channels and route each band\'s plugins to its pins. Zero latency.',
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
-    shot: 'assets/img/gfx/band_splitter.png'
+    shot: 'assets/img/gfx/band_splitter.png',
+    studio: true
   },
   'breath-control': {
     title: 'BREATH CONTROL',
@@ -318,7 +342,8 @@ const guides = {
     uses: ['Turning down breaths between vocal phrases', 'Softening low-level noise in voice-over takes', 'Quick cleanup of podcast dialogue', 'Gentle alternative to a hard gate on vocals'],
     properties: 'Input → stereo-linked level detector (max of L/R, 1 ms rise / 30 ms fall) → compare with Threshold (3 dB hysteresis) → gain smoothed toward unity (Attack) or Range (Release) → applied to both channels → Output. No clipping; zero latency.',
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
-    shot: 'assets/img/gfx/breath_control.png'
+    shot: 'assets/img/gfx/breath_control.png',
+    studio: true
   },
   'cabinet-simulator': {
     title: 'CABINET SIMULATOR',
@@ -334,7 +359,8 @@ const guides = {
     uses: ['Turning DI guitar or bass into a miked-cab tone', 'Taming fizz after amp sims and distortion', 'Lo-fi small-speaker effects', 'Quick re-amp tones without impulse files'],
     properties: 'Input → high-pass → box resonance, low-mid, mid scoop and presence peaking filters → two cascaded low-pass roll-off stages → Dry/Wet Mix → Output. Filter-based (no impulse responses), identical on both channels; zero latency.',
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
-    shot: 'assets/img/gfx/cabinet_simulator.png'
+    shot: 'assets/img/gfx/cabinet_simulator.png',
+    studio: true
   },
   'channel-utility': {
     title: 'CHANNEL UTILITY',
@@ -358,7 +384,8 @@ const guides = {
     uses: ['Gain staging at the start of a chain', 'Fixing polarity problems on multi-mic recordings', 'Removing DC offset from recordings', 'Checking mono compatibility and each side individually', 'Correcting left/right level imbalance'],
     properties: 'Input → Pad + Input Gain → Polarity L/R → DC Block (one-pole high-pass) → Balance L/R → Solo L/R → Mono Check → Output Gain → Hard Limit (±0.99) → Output. Zero latency.',
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
-    shot: 'assets/img/gfx/channel_utility.png'
+    shot: 'assets/img/gfx/channel_utility.png',
+    studio: true
   },
   'chorus': {
     title: 'CHORUS',
@@ -372,7 +399,8 @@ const guides = {
     uses: ['Thickening clean guitars', 'Widening the feel of pads and keys', 'Adding movement to backing vocals', 'Subtle detune on synth leads'],
     properties: 'Input → delay line swept by a sine LFO between 5 ms and 5 ms + Depth → linear (fractional) interpolation → Dry/Wet Mix → Output. One LFO drives both channels, there is no feedback, and no latency.',
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
-    shot: 'assets/img/gfx/chorus.png'
+    shot: 'assets/img/gfx/chorus.png',
+    studio: true
   },
   'click-repair': {
     title: 'CLICK REPAIR',
@@ -385,7 +413,8 @@ const guides = {
     uses: ['Removing clicks and pops from vinyl transfers', 'Fixing digital spikes and edit clicks', 'Cleaning mouth clicks on close-miked vocals', 'Restoring archival recordings'],
     properties: 'Input → step detector (sample jump vs running average) → mark Window samples as damaged → linear interpolation between the good samples on either side → Output. Latency of 2 × Window samples, reported to REAPER for delay compensation; each channel is repaired independently.',
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
-    shot: 'assets/img/gfx/click_repair.png'
+    shot: 'assets/img/gfx/click_repair.png',
+    studio: true
   },
   'de-hum': {
     title: 'DE-HUM',
@@ -402,7 +431,8 @@ const guides = {
     uses: ['Remove ground-loop hum from guitar, bass and DI recordings', 'Clean buzz from field recordings, interviews and podcasts', 'Repair old tapes and vinyl transfers with mains hum', 'Tidy hum on vintage synths and noisy amp recordings', 'Clear subsonic rumble along with the hum'],
     properties: 'Signal chain: Input → optional Low Cut (two TPT high-pass stages, 24 dB/oct) → up to 8 notch biquads at h × (50/60 Hz + Fine) → Output. Each notch has the poles of a band of width f/Q and cuts by exactly Depth at its centre; stereo, zero latency.',
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
-    shot: 'assets/img/gfx/de_hum.png'
+    shot: 'assets/img/gfx/de_hum.png',
+    studio: true
   },
   'deesser': {
     title: 'DEESSER',
@@ -415,7 +445,8 @@ const guides = {
     uses: ['Taming harsh S, T and Ch sounds on vocals', 'Softening sibilant voice-over and podcast speech', 'Reducing hissy cymbal splash on overheads', 'Controlling brittle highs on bright acoustic guitar'],
     properties: 'Input → band-pass at Target (Q 2) → stereo-linked envelope follower (0.5 ms attack, 60 ms release) → band attenuation above a fixed −30 dB threshold, reaching full Reduction 12 dB above it → Output. Only the sibilant band is turned down; zero latency.',
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
-    shot: 'assets/img/gfx/deesser.png'
+    shot: 'assets/img/gfx/deesser.png',
+    studio: true
   },
   'delay': {
     title: 'DELAY',
@@ -435,7 +466,8 @@ const guides = {
     uses: ['Slapback on vocals and guitars', 'Tempo-synced rhythmic echoes', 'Ping-pong echoes that bounce across the stereo field', 'Dark, saturated tape-style trails for transitions'],
     properties: 'Input → delay line (up to 2 s, or tempo-synced; Stereo: left and right independent, Ping-Pong: mono sum into the left line, lines cross-fed) → Low Cut → High Cut → Drive on every repeat inside the feedback loop → Dry/Wet Mix → Output. At their defaults the filters and drive are bypassed; zero latency.',
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
-    shot: 'assets/img/gfx/delay.png'
+    shot: 'assets/img/gfx/delay.png',
+    studio: true
   },
   'disperser': {
     title: 'DISPERSER',
@@ -451,7 +483,8 @@ const guides = {
     uses: ['Tighten and focus kicks by shifting their low-end phase', 'Turn snares and claps into laser \'pew\' zaps', 'Add chirpy, dispersive movement to transients and plucks', 'Sound design for sci-fi, glitch and bass music', 'Widen sounds with the Stereo offset'],
     properties: 'Signal chain: Input → up to 64 identical 2nd-order TPT state-variable all-pass filters per channel → dry/wet Mix → Output. Magnitude stays flat; only the phase and group delay change. Frequency, Pinch, Mix and Mode glide over 20 ms; zero latency.',
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
-    shot: 'assets/img/gfx/disperser.png'
+    shot: 'assets/img/gfx/disperser.png',
+    studio: true
   },
   'dynamic-eq': {
     title: 'DYNAMIC EQ',
@@ -481,7 +514,8 @@ const guides = {
     uses: ['Taming resonances only when they ring out', 'Controlling boomy low notes on bass or vocals', 'Reducing harshness on loud passages only', 'Lifting a band only when it is played', 'Frequency-specific control on mixes'],
     properties: 'Input → four bell bands in series (each: band-pass detector → envelope → gain scaled by level over Threshold) → Makeup → Output. Below Threshold a band is neutral; detection is stereo-linked per band and there is no latency.',
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
-    shot: 'assets/img/gfx/dynamic_eq.png'
+    shot: 'assets/img/gfx/dynamic_eq.png',
+    studio: true
   },
   'dynamics': {
     title: 'DYNAMICS',
@@ -499,7 +533,8 @@ const guides = {
     uses: ['General-purpose bus and track compression', 'Evening out vocal and bass levels', 'Downward expansion to reduce noise and bleed', 'Controlling dynamics on drums'],
     properties: 'Input → stereo-linked peak detection → gain computer (compress above / expand below Threshold, soft knee) → attack/release smoothing → Makeup → Output. Zero latency.',
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
-    shot: 'assets/img/gfx/dynamics.png'
+    shot: 'assets/img/gfx/dynamics.png',
+    studio: true
   },
   'envelope-follower': {
     title: 'ENVELOPE FOLLOWER',
@@ -519,7 +554,8 @@ const guides = {
     uses: ['Funk auto-wah on guitar and bass', 'Touch-sensitive synth filtering', 'Dynamic filter effects on drums', 'Envelope-driven volume swells and ducking'],
     properties: 'Input → stereo-linked envelope (−48 to 0 dB mapped to 0–1) → exponential cutoff sweep from Low Freq to High Freq → TPT state-variable filter (or VCA in Volume mode) → Dry/Wet Mix → Output. Zero latency.',
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
-    shot: 'assets/img/gfx/envelope_follower.png'
+    shot: 'assets/img/gfx/envelope_follower.png',
+    studio: true
   },
   'filter': {
     title: 'FILTER',
@@ -534,7 +570,8 @@ const guides = {
     uses: ['Taking the top end off harsh sources', 'Thinning out the low end with High Pass', 'Filter sweeps via automation', 'Telephone and radio tones with Band Pass', 'Cutting a single resonance with Notch'],
     properties: 'Input → 2-pole (12 dB/oct) state-variable filter (low-pass, high-pass, band-pass and notch from the same structure) → Gain → Output. Stable under fast automation; zero latency.',
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
-    shot: 'assets/img/gfx/filter.png'
+    shot: 'assets/img/gfx/filter.png',
+    studio: true
   },
   'flanger': {
     title: 'FLANGER',
@@ -549,7 +586,8 @@ const guides = {
     uses: ['Jet-plane sweeps on drums and cymbals', 'Movement on guitars and synths', 'Psychedelic effects on vocals', 'Build-ups and transitions'],
     properties: 'Input → short modulated delay (0.5 ms to 0.5 ms + Depth) with feedback → linear interpolation → Dry/Wet Mix → Output. One LFO drives both channels; zero latency.',
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
-    shot: 'assets/img/gfx/flanger.png'
+    shot: 'assets/img/gfx/flanger.png',
+    studio: true
   },
   'gate': {
     title: 'GATE',
@@ -565,7 +603,8 @@ const guides = {
     uses: ['Removing noise between vocal phrases', 'Cutting bleed on tom and snare mics', 'Cleaning amp hiss between guitar parts', 'Tightening drum tails'],
     properties: 'Input → optional one-pole high-pass on the detector → stereo-linked peak envelope → open/close against Threshold with attack/release smoothing → closed gain set by Range → Output. Zero latency.',
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
-    shot: 'assets/img/gfx/gate.png'
+    shot: 'assets/img/gfx/gate.png',
+    studio: true
   },
   'limiter': {
     title: 'LIMITER',
@@ -581,7 +620,8 @@ const guides = {
     uses: ['Peak protection on the master bus', 'Transparent loudness gain in mastering', 'Soft clipping for drums and transient-heavy material', 'Catching stray peaks on individual tracks'],
     properties: 'Input → drive (Ceiling − Threshold) → Limiter/Brickwall: held peak detector + delayed signal + gain, followed by a safety clamp at Ceiling; Clipper: smooth knee from 70% of Ceiling → Output. Stereo-linked; latency equals Lookahead (0 in Clipper mode) and is reported for delay compensation.',
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
-    shot: 'assets/img/gfx/limiter.png'
+    shot: 'assets/img/gfx/limiter.png',
+    studio: true
   },
   'maximizer': {
     title: 'MAXIMIZER',
@@ -600,7 +640,8 @@ const guides = {
     uses: ['Final loudness stage in mastering', 'Raising stems and bounces to a target level', 'Peak control on buses', 'Dithered 16-bit masters for CD'],
     properties: 'Input Gain → held peak detector + look-ahead delay → gain reduction to Ceiling → clamp at Ceiling → Output Gain trim (≤ 0 dB) → optional TPDF dither and rounding to 16 or 24 bits, with optional first-order noise shaping → Output. Latency equals Lookahead (0–5 ms), reported to REAPER for delay compensation.',
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
-    shot: 'assets/img/gfx/maximizer.png'
+    shot: 'assets/img/gfx/maximizer.png',
+    studio: true
   },
   'mid-side-matrix': {
     title: 'MID/SIDE MATRIX',
@@ -614,7 +655,8 @@ const guides = {
     uses: ['Mid/side processing with other plugins between an encoder and decoder', 'Adjusting the balance of centre and sides', 'Recording and decoding M/S microphone setups', 'Inspecting the mid and side content separately'],
     properties: 'Encode: L/R → Mid = (L+R)×0.707, Side = (L−R)×0.707 → Mid on left, Side on right. Decode: Mid (left) / Side (right) → gains → L/R. Encode followed by Decode is unity gain; zero latency.',
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
-    shot: 'assets/img/gfx/mid_side_matrix.png'
+    shot: 'assets/img/gfx/mid_side_matrix.png',
+    studio: true
   },
   'multiband-compressor': {
     title: 'MULTIBAND COMP',
@@ -648,7 +690,8 @@ const guides = {
     uses: ['Mastering bus dynamics', 'Controlling a boomy low end without dulling the top', 'Taming harsh upper mids on vocals or guitars', 'Per-band level balancing with Solo to audition each band', 'Broadcast-style density'],
     properties: 'Input → complementary crossovers (four cascaded one-pole low-passes, subtracted from the remainder) → 4 bands, each with stereo-linked peak compression, knee and makeup → Mute/Solo/Bypass → Sum → Master Output → Output. The bands sum back to the original signal with compression off; zero latency.',
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
-    shot: 'assets/img/gfx/multiband_compressor.png'
+    shot: 'assets/img/gfx/multiband_compressor.png',
+    studio: true
   },
   'noise-generator': {
     title: 'NOISE GENERATOR',
@@ -662,7 +705,8 @@ const guides = {
     uses: ['Gain staging and monitor calibration', 'Testing filters and EQs', 'Sound design layers for risers and sweeps', 'Masking or ambience beds'],
     properties: 'Random generator → colour filter (Pink: multi-pole filter bank; Brown: leaky integrator) → Level → Stereo Width → Output. The input is replaced by the noise, not mixed with it.',
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
-    shot: 'assets/img/gfx/noise_generator.png'
+    shot: 'assets/img/gfx/noise_generator.png',
+    studio: true
   },
   'octaver': {
     title: 'OCTAVER',
@@ -679,7 +723,8 @@ const guides = {
     uses: ['Fattening bass lines with a sub octave', 'Synth-bass tones from bass or guitar', 'OC-2 style octave-down guitar leads', 'Octave-up fuzz textures'],
     properties: 'Mono sum → DC blocker → Tracking low-pass (2 × one-pole) → Schmitt trigger (20% hysteresis) → flip-flop (-1 oct) → flip-flop (-2 oct); squares × input envelope; Up = rectified tracked signal; voices → Tone low-pass (2 × one-pole) → added to the dry signal. Monophonic sources. Zero latency.',
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
-    shot: 'assets/img/gfx/octaver.png'
+    shot: 'assets/img/gfx/octaver.png',
+    studio: true
   },
   'panner': {
     title: 'PANNER',
@@ -695,7 +740,8 @@ const guides = {
     uses: ['Placing mono instruments naturally in a mix, without the hole-in-the-middle of plain panning', 'Positioning stereo sources while keeping their own image', 'Haas-style wide placement of guitars and synths', 'Headphone-friendly panning'],
     properties: 'Input → Mid/Side (Side × Width) → Mid placed per ear: fractional delay (Woodworth ITD up to ~0.66 ms, or Haas Delay) → first-order high-shelf head shadow (to -8 dB above ~1.8 kHz) → constant-power gains; Side added back → Output. All changes glide over 20 ms. Zero latency.',
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
-    shot: 'assets/img/gfx/panner.png'
+    shot: 'assets/img/gfx/panner.png',
+    studio: true
   },
   'parametric-eq': {
     title: 'PARAMETRIC EQ',
@@ -731,7 +777,8 @@ const guides = {
     uses: ['Surgical cuts of problem frequencies', 'Broad tonal shaping with shelves', 'High-pass and low-pass cleanup', 'Finding resonances with band Solo', 'Mastering EQ'],
     properties: 'Input → five RBJ biquad bands in series (Low Shelf, High Shelf, Peaking, Low Pass, High Pass, Notch, Band Pass or All Pass per band) → Output. Solo replaces the soloed band with a band-pass and mutes the other bands\' processing; Gain only affects shelf and peaking types; zero latency.',
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
-    shot: 'assets/img/gfx/parametric_eq.png'
+    shot: 'assets/img/gfx/parametric_eq.png',
+    studio: true
   },
   'phaser': {
     title: 'PHASER',
@@ -745,7 +792,8 @@ const guides = {
     uses: ['Swirling movement on guitars and keys', 'Vintage phasing on synths', 'Subtle motion on pads', 'Psychedelic effects on drums and vocals'],
     properties: 'Input → 1–8 first-order all-pass stages swept by a sine LFO (roughly 440–1600 Hz range) with fixed 30% feedback → added to the dry signal by Mix → Output. One LFO drives both channels; zero latency.',
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
-    shot: 'assets/img/gfx/phaser.png'
+    shot: 'assets/img/gfx/phaser.png',
+    studio: true
   },
   'pitch-shifter': {
     title: 'PITCH SHIFTER',
@@ -760,7 +808,8 @@ const guides = {
     uses: ['Octave doubling', 'Simple parallel harmonies', 'Detune and thickening with Fine', 'Creative sound design'],
     properties: 'Input → 60 ms delay line read by two taps in opposite phase with Hann crossfades → Dry/Wet Mix → Output. Total shift = Octave × 12 + Semitones + Fine/100 semitones; the window-based method adds some smearing on transients.',
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
-    shot: 'assets/img/gfx/pitch_shifter.png'
+    shot: 'assets/img/gfx/pitch_shifter.png',
+    studio: true
   },
   'reverb': {
     title: 'REVERB',
@@ -776,7 +825,8 @@ const guides = {
     uses: ['Room and hall ambience on dry sources', 'Stereo space on vocals and instruments', 'Dark, damped tails for pads', 'Quick sketch reverb during writing'],
     properties: 'Input → mono sum → four damped feedback combs per side (right side slightly longer for a decorrelated stereo tail) → two series all-passes per side → Dry/Wet Mix → Output. Delay lengths and damping are scaled to the sample rate, so it sounds the same at 44.1, 48 or 96 kHz; zero latency.',
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
-    shot: 'assets/img/gfx/reverb.png'
+    shot: 'assets/img/gfx/reverb.png',
+    studio: true
   },
   'ring-mod': {
     title: 'RING MOD',
@@ -791,7 +841,8 @@ const guides = {
     uses: ['Metallic, bell-like tones', 'Robotic vocal textures', 'Sci-fi sound design', 'Inharmonic drum and percussion effects'],
     properties: 'Input → multiplied by a sine carrier whose frequency is swept by an LFO (Carrier × 2^(Depth × LFO)) → Dry/Wet Mix → Output. Zero latency.',
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
-    shot: 'assets/img/gfx/ring_mod.png'
+    shot: 'assets/img/gfx/ring_mod.png',
+    studio: true
   },
   'saturation': {
     title: 'SATURATION',
@@ -806,7 +857,8 @@ const guides = {
     uses: ['Warmth and density on buses', 'Fuzz and overdrive on guitars and bass', 'Bit-crushed lo-fi textures', 'Wavefolded synth tones'],
     properties: 'Input → Drive → selected curve (Fold: a sine wavefolder whose depth grows with Drive) → Tone tilt EQ (one-pole split at 800 Hz, ±Tone/2 dB on each side) on the wet signal → Dry/Wet Mix → Output. No oversampling; zero latency.',
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
-    shot: 'assets/img/gfx/saturation.png'
+    shot: 'assets/img/gfx/saturation.png',
+    studio: true
   },
   'sidechain-ducker': {
     title: 'SIDECHAIN DUCKER',
@@ -824,7 +876,8 @@ const guides = {
     uses: ['Kick ducking the bass for a clean low end', 'Music ducking under voice-over or podcast speech', 'Pumping pads and synths from a kick', 'Making room for a lead vocal'],
     properties: 'Key (sidechain channels 3/4 or main input) → optional high-pass → peak detector → threshold with hold → attack/release gain smoothing → stereo-linked gain on the main signal. Zero latency. In REAPER, send the key track to channels 3/4 of this track.',
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
-    shot: 'assets/img/gfx/sidechain_ducker.png'
+    shot: 'assets/img/gfx/sidechain_ducker.png',
+    studio: true
   },
   'stereo-width': {
     title: 'STEREO WIDTH',
@@ -838,7 +891,8 @@ const guides = {
     uses: ['Widening pads, synths and backing vocals', 'Keeping bass and kick mono while widening the top', 'Narrowing overly wide sources', 'Mastering stereo adjustments'],
     properties: 'Input → Mid/Side split → optional one-pole crossover (lows mono, highs widened) → Side × Width → L/R → Dry/Wet Mix → Output. Zero latency.',
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
-    shot: 'assets/img/gfx/stereo_width.png'
+    shot: 'assets/img/gfx/stereo_width.png',
+    studio: true
   },
   'tape': {
     title: 'TAPE',
@@ -857,7 +911,8 @@ const guides = {
     uses: ['Glue and warmth on the mix bus', 'Rounder low end and softer transients on drums and bass', 'Lo-fi, cassette-like wobble with Wow and Flutter turned up', 'Subtle analog colour on vocals and acoustic tracks'],
     properties: 'Signal chain: Input → Wow/Flutter Modulated Delay (3 ms centre, cubic interpolation) → Pre-Emphasis → Drive → Asymmetric Saturation with memory (hysteresis-like) → De-Emphasis → Low Cut + Head Bump → Hiss → High-Frequency Loss → Mix → Output. The hiss is an exact Park-Miller generator. The dry signal is delayed by the same 3 ms, and the 3 ms latency is reported to the host for delay compensation.',
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
-    shot: 'assets/img/gfx/tape.png'
+    shot: 'assets/img/gfx/tape.png',
+    studio: true
   },
   'transient-shaper': {
     title: 'TRANSIENT SHAPER',
@@ -871,7 +926,8 @@ const guides = {
     uses: ['Adding punch to kicks and snares', 'Shortening room ring on drums', 'Bringing out pick attack on guitars', 'Softening harsh transients'],
     properties: 'Input → stereo-linked fast (1/20 ms) and slow (20/150 ms) envelopes → transient amount from their difference → gain blend of Attack and Sustain → Dry/Wet Mix → Output. Level-independent, no threshold; zero latency.',
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
-    shot: 'assets/img/gfx/transient_shaper.png'
+    shot: 'assets/img/gfx/transient_shaper.png',
+    studio: true
   },
   'tremolo': {
     title: 'TREMOLO',
@@ -885,7 +941,8 @@ const guides = {
     uses: ['Vintage amp tremolo on guitars', 'Pulsing pads and keys', 'Rhythmic movement on sustained notes', 'Choppy effects at high rates'],
     properties: 'Input → gain of 1 − Depth × (0.5 − 0.5 × sine LFO), always between 0 and 1 → Dry/Wet Mix → Output. Same modulation on both channels; zero latency.',
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
-    shot: 'assets/img/gfx/tremolo.png'
+    shot: 'assets/img/gfx/tremolo.png',
+    studio: true
   },
   'vibrato': {
     title: 'VIBRATO',
@@ -899,7 +956,8 @@ const guides = {
     uses: ['Vibrato on vocals and leads', 'Tape-style warble', 'Chorus-like detune at partial mix', 'Lo-fi wobble effects'],
     properties: 'Input → modulated delay line (0.1 ms to 0.1 ms + Depth) with linear interpolation → Dry/Wet Mix → Output. One LFO drives both channels; zero latency.',
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
-    shot: 'assets/img/gfx/vibrato.png'
+    shot: 'assets/img/gfx/vibrato.png',
+    studio: true
   },
   'volume-shaper': {
     title: 'VOLUME SHAPER',
@@ -916,7 +974,8 @@ const guides = {
     uses: ['Sidechain-style pumping without a kick or a sidechain route', 'Trance gates and stutters on pads, chords and vocals', 'Rhythmic tremolo with saw, sine or triangle shapes', 'Ducking a bass under the kick on every beat'],
     properties: 'Signal chain: Input → Gain × (1 − Depth × (1 − Shape)) → One-pole Smoothing → Dry/Wet Mix → Output. The shapes are breakpoint curves over one cycle; the cycle follows the host tempo and, while the transport plays, is read from the song position so it stays locked to the grid; stopped, it free-runs at the host tempo. Half-time Pump spans two Rate notes. Stereo-linked, zero latency.',
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
-    shot: 'assets/img/gfx/volume_shaper.png'
+    shot: 'assets/img/gfx/volume_shaper.png',
+    studio: true
   },
 
   // ─── ADVANCED ───
@@ -940,7 +999,8 @@ const guides = {
     uses: ['Turning DI guitar into a clean, crunch or lead amp tone (add Cabinet Simulator after it)', 'Bass amp grit and growl on DI bass', 'Re-amping recorded DI tracks', 'Driving synths, drums or vocals through a tube amp character'],
     properties: 'Input → tight high-pass → Bright shelf → 2x/4x oversampling: 2–4 asymmetric inverting triode stages, each with coupling-cap high-pass and Miller low-pass → passive Fender/Marshall tone stack (Yeh\'s third-order model) → power amp resonance and Presence → push-pull soft clipper with supply sag → downsampling → DC blocker → Output. No cabinet; zero latency.',
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
-    shot: 'assets/img/gfx/amp_simulator.png'
+    shot: 'assets/img/gfx/amp_simulator.png',
+    studio: true
   },
   'comb-filter': {
     title: 'COMB FILTER',
@@ -955,7 +1015,8 @@ const guides = {
     uses: ['Add metallic, pitched resonance to drums and percussion', 'Tune noise or hats to a musical note', 'Create Karplus-style plucked ringing with Feed-Backward', 'Hollow, flanger-like coloration on pads', 'Sound design for robotic or tube-like textures'],
     properties: 'Signal chain: Input → Delay (1 period of Frequency, interpolated) → Feed-Forward or Feed-Backward sum → Level Compensation → Gain → Output. Output is normalised by 1/(1+fb) or (1−fb) so high Feedback does not blow up; stereo channels processed independently, zero latency.',
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
-    shot: 'assets/img/gfx/comb_filter.png'
+    shot: 'assets/img/gfx/comb_filter.png',
+    studio: true
   },
   'convolution': {
     title: 'CONVOLUTION',
@@ -974,7 +1035,8 @@ const guides = {
     uses: ['Realistic rooms, halls and plates', 'Load your own IRs of spaces or devices', 'Guitar cabinet IRs via IR File', 'Short ambience on drums and vocals', 'Cathedral-scale tails'],
     properties: 'Signal chain: Input → Uniformly Partitioned FFT Convolution (1024-sample blocks) → Low Cut → High Cut → Mix → Output. Latency 1024 samples (reported to REAPER); custom IRs are WAV files placed in REAPER’s Data/null_jsfx_ir folder, resampled, level-normalised and limited to 3 s, stereo IRs per channel.',
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
-    shot: 'assets/img/gfx/convolution.png'
+    shot: 'assets/img/gfx/convolution.png',
+    studio: true
   },
   'formant-filter': {
     title: 'FORMANT FILTER',
@@ -988,7 +1050,8 @@ const guides = {
     uses: ['Make synths and pads “talk” with vowel colours', 'Add vocal character to drums, noise or guitar', 'Automate Vowel for talking-filter sweeps', 'Sound design for creatures and robotic voices'],
     properties: 'Signal chain: Input → 3 parallel RBJ Band-Pass Filters (F1, F2, F3 per vowel, e.g. A = 730 / 1090 / 2440 Hz) → Sum ×3 → Gain → Output. Stereo channels processed independently. Filter state is never reset and the formants glide (~15 ms) to a new vowel, so Vowel, Gain and Q can be automated without clicks.',
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
-    shot: 'assets/img/gfx/formant_filter.png'
+    shot: 'assets/img/gfx/formant_filter.png',
+    studio: true
   },
   'frequency-shifter': {
     title: 'FREQUENCY SHIFTER',
@@ -1003,7 +1066,8 @@ const guides = {
     uses: ['Subtle phasing and beating with small shifts', 'Metallic, bell-like inharmonic tones', 'Barber-pole rising or falling effects with Feedback', 'Stereo widening via Stereo Offset', 'Sci-fi sound design'],
     properties: 'Signal chain: Input → Hilbert Transform (two 4-stage allpass chains) → Quadrature Oscillator Mix → Feedback (DC-blocked, soft-limited) → Mix → Output. Shifts by a fixed Hz amount rather than a ratio, so harmonics become inharmonic; zero latency.',
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
-    shot: 'assets/img/gfx/frequency_shifter.png'
+    shot: 'assets/img/gfx/frequency_shifter.png',
+    studio: true
   },
   'glitch-fx': {
     title: 'GLITCH FX',
@@ -1028,7 +1092,8 @@ const guides = {
     uses: ['Beat-repeat and stutter fills on drums', 'Random reverse and tape-stop transitions', 'Granular buzz and freeze textures on vocals', 'Chopped, gated rhythmic effects on pads', 'Live performance glitching via automation'],
     properties: 'Signal chain: Input → 4 s Ring Buffer → Event Clock (Rate) → Slice Loop (Stutter / Granular grain, Reverse, Pitch, Tape Stop) or, with Stutter off, live processing (reversed chunks, two overlapping Hann grains, varispeed pitch / tape stop) → Gate → Mix → Output. Every effect works on its own; slice length follows host tempo; loop seams get 3 ms fades; zero latency.',
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
-    shot: 'assets/img/gfx/glitch_fx.png'
+    shot: 'assets/img/gfx/glitch_fx.png',
+    studio: true
   },
   'granular-delay': {
     title: 'GRANULAR DELAY',
@@ -1048,7 +1113,8 @@ const guides = {
     uses: ['Ambient clouds from vocals or guitar', 'Pitched, shimmering delay textures', 'Reverse grain swells', 'Evolving pads from short sources', 'Glitchy, scattered echoes'],
     properties: 'Signal chain: Input + Feedback → 3 s Delay Line → Grain Scheduler (up to 16 Hann-windowed grains, random timing, Spray, Reverse, Pan) → Level Normalisation → Mix → Output. Zero latency.',
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
-    shot: 'assets/img/gfx/granular_delay.png'
+    shot: 'assets/img/gfx/granular_delay.png',
+    studio: true
   },
   'harmonizer': {
     title: 'HARMONIZER',
@@ -1067,7 +1133,8 @@ const guides = {
     uses: ['Instant backing vocal harmonies', 'Thirds and fifths on lead lines', 'Octave doubling on guitars and synths', 'Wide stereo harmony beds'],
     properties: 'Signal chain: Input (summed to mono) → 2 Crossfading Delay-Line Pitch Shifters (50 ms window) → Detune + Delay → Equal-Power Spread → Equal-Power Dry/Wet Mix → Output. Fixed intervals (no key detection); Mix at 100% outputs only the harmony for printing to its own track; zero latency.',
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
-    shot: 'assets/img/gfx/harmonizer.png'
+    shot: 'assets/img/gfx/harmonizer.png',
+    studio: true
   },
   'kick-shaper': {
     title: 'KICK SHAPER',
@@ -1084,7 +1151,8 @@ const guides = {
     uses: ['Add punch and beater click to kick drums', 'Tighten boomy kicks by shortening the tail', 'Fatten thin kicks with extra thump and body', 'Shape sampled 808s and electronic kicks', 'Reduce bleed between hits on live kick tracks'],
     properties: 'Signal chain: Input → Thump (55 Hz) → Body (120 Hz) → Click (4 kHz) bell EQs → Transient Shaper (fast/slow envelope) → Hit-Triggered Decay (starts after 20 ms) → Output Gain → Output. Linked stereo detection, zero latency.',
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
-    shot: 'assets/img/gfx/kick_shaper.png'
+    shot: 'assets/img/gfx/kick_shaper.png',
+    studio: true
   },
   'ladder-filter': {
     title: 'LADDER FILTER',
@@ -1100,7 +1168,8 @@ const guides = {
     uses: ['Classic resonant synth filter sweeps', 'Warm, driven lowpass on drums and bass', 'Automated filter build-ups', 'Highpass sweeps with resonant peak', 'Taming harsh digital sources with analog character'],
     properties: 'Signal chain: Input → Drive → 4-Pole Zero-Delay-Feedback Ladder (24 dB/oct, tanh saturation in the loop) → LP / HP Output → Gain → Output. Stable and in tune up to 20 kHz at full resonance; stereo channels independent, zero latency.',
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
-    shot: 'assets/img/gfx/ladder_filter.png'
+    shot: 'assets/img/gfx/ladder_filter.png',
+    studio: true
   },
   'loudness-meter': {
     title: 'LOUDNESS METER',
@@ -1117,7 +1186,8 @@ const guides = {
     uses: ['Hitting streaming loudness targets when mastering', 'Checking broadcast deliveries against EBU R128 (-23 LUFS, -1 dBTP)', 'Keeping podcast episodes at a consistent loudness', 'Watching true-peak overs before encoding to lossy formats'],
     properties: 'Input → ITU-R BS.1770-4 K-weighting (high shelf + high pass) → 100 ms energy blocks → Momentary (400 ms), Short-term (3 s), Integrated (gated at −70 LUFS and −10 LU), Loudness Range (EBU Tech 3342, 10th to 95th percentile, gated at −70 LUFS and −20 LU), sample peak and 4x oversampled true peak. Audio passes through unchanged (Monitor Mono is a listening aid). Zero latency. The plain JSFX only measures; the GFX, VST3 and CLAP versions show the readouts and a loudness history graph.',
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
-    shot: 'assets/img/gfx/loudness_meter.png'
+    shot: 'assets/img/gfx/loudness_meter.png',
+    studio: true
   },
   'noise-reduction': {
     title: 'NOISE REDUCTION',
@@ -1137,7 +1207,8 @@ const guides = {
     uses: ['Remove tape and preamp hiss', 'Clean room tone and air-conditioning rumble from dialogue', 'Tame a hum or buzz bed under guitars', 'Lower the noise floor of field and home recordings'],
     properties: 'Signal chain: Input → 2048-Point FFT (4× overlap, Hann) → Noise Estimate (Learnt Profile or Auto Minimum Statistics) → Wiener-Like Gain with Floor → Time + Frequency Smoothing → Attack/Release → IFFT Overlap-Add → Mix → Output. One gain for both channels; latency 2047 samples (reported). The learnt profile lives in memory and is not saved with the project: learn again after a reload, or use Auto.',
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
-    shot: 'assets/img/gfx/noise_reduction.png'
+    shot: 'assets/img/gfx/noise_reduction.png',
+    studio: true
   },
   'ott': {
     title: 'OTT',
@@ -1156,7 +1227,8 @@ const guides = {
     uses: ['Aggressive, dense EDM sound design', 'Bring out detail and tails in synths', 'Make drums and loops hit harder', 'Thicken vocals and effects for impact', 'Parallel squash with low Depth'],
     properties: 'Signal chain: Input → 3-Band Linkwitz-Riley Split (88 Hz, 2.5 kHz) → Per-Band Downward (66:1 above −33 dB) + Upward (4:1 below −41 dB, up to +24 dB) → Band Gains → Make-up → Depth Mix → Output → Soft Safety Clip. Linked stereo detection per band, zero latency.',
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
-    shot: 'assets/img/gfx/ott.png'
+    shot: 'assets/img/gfx/ott.png',
+    studio: true
   },
   'pitch-correction': {
     title: 'PITCH CORRECTION',
@@ -1174,7 +1246,8 @@ const guides = {
     uses: ['Transparent tuning of lead and backing vocals', 'Hard-tune “T-Pain” robot vocal effect (Retune 0 ms)', 'Forcing a vocal or monophonic instrument onto a key and scale', 'Formant-preserving transposition of a sung line'],
     properties: 'Signal chain: Input → mono 50 Hz high-pass + 1.2 kHz 4th-order low-pass, decimated to ~11 kHz → YIN pitch tracker (70 Hz to 1 kHz, new estimate every ~6 ms, Sensitivity = threshold) → nearest Key/Scale note with hysteresis → Retune glide + Humanize (vibrato kept) → TD-PSOLA shifter (peak-aligned pitch marks, two-period Hann grains, formants preserved; stereo kept) → Dry/Wet Mix → Output. Monophonic sources only; unvoiced sounds pass with the transpose only; latency about 39 ms, reported to the host (PDC).',
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
-    shot: 'assets/img/gfx/pitch_correction.png'
+    shot: 'assets/img/gfx/pitch_correction.png',
+    studio: true
   },
   'resonance-suppressor': {
     title: 'RESONANCE SUPPRESSOR',
@@ -1195,7 +1268,8 @@ const guides = {
     uses: ['Taming harsh resonances in vocals, guitars and cymbals', 'Smoothing ringing room modes and boxy recordings', 'Gentle de-harshing on buses and masters', 'Finding problem frequencies with Delta'],
     properties: 'STFT with 2048-point FFT, 75% overlap and sqrt-Hann windows; both channels in one complex FFT, linked detection on their mean power. Each bin\'s level is compared with a log-frequency moving average of the spectrum; the excess over the Selectivity threshold sets the reduction (Soft or Hard), smoothed per frame (Attack/Release) and across neighbouring bins, limited to Low–High Freq. Perfect reconstruction when nothing is reduced. Latency: 2047 samples (reported to the host).',
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
-    shot: 'assets/img/gfx/resonance_suppressor.png'
+    shot: 'assets/img/gfx/resonance_suppressor.png',
+    studio: true
   },
   'resonator': {
     title: 'RESONATOR',
@@ -1213,7 +1287,8 @@ const guides = {
     uses: ['Turn drums and percussion into tuned, pitched hits', 'Sympathetic-string shimmer on vocals, guitars and pads', 'Make noise, rain or field recordings sing in the key of the song', 'Drones and ambient beds from any source'],
     properties: 'Signal chain: Input → 20 Hz High-Pass → up to 4 Karplus-Strong string loops per channel (one per chord note) → DC Blocker → Soft Ceiling → Mix → Output. Each loop is a delay line, a first-order allpass for the fractional part of the period and a linear-phase 3-tap low-pass, so every harmonic is exactly in tune. The loop gain sets the decay of the fundamental and stays below 1, the input to each loop is scaled for unity noise power, and the wet sum has a soft ceiling at 0 dBFS, so it can ring but never run away. No latency.',
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
-    shot: 'assets/img/gfx/resonator.png'
+    shot: 'assets/img/gfx/resonator.png',
+    studio: true
   },
   'reverser': {
     title: 'REVERSER',
@@ -1228,7 +1303,8 @@ const guides = {
     uses: ['Backwards textures from live input', 'Reverse swells on vocals and guitars', 'Filtered reverse ambience under a mix', 'Experimental sound design'],
     properties: 'Signal chain: Input → Circular Buffer (1–10 s) → Backwards Read → Optional RBJ Filter (Q 0.707, independent state per channel) → Mix → Output. The read head runs in reverse while the write head moves forward, so the reversed audio is continuous rather than chunked; filter changes do not reset the filter (no clicks); zero latency.',
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
-    shot: 'assets/img/gfx/reverser.png'
+    shot: 'assets/img/gfx/reverser.png',
+    studio: true
   },
   'robotizer': {
     title: 'ROBOTIZER',
@@ -1243,7 +1319,8 @@ const guides = {
     uses: ['Robot and android voices', 'Monotone sci-fi dialogue', 'Dalek-style ring-modulated speech', 'Buzzing, pitched textures from drums or noise'],
     properties: 'Signal chain: Input → 1024-Point FFT every Pitch period → Phase Zeroing → IFFT Overlap-Add → Comb Resonance → Ring Mod → Mix → Output. Latency 1024 samples (reported to REAPER, dry path aligned); stereo channels processed independently.',
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
-    shot: 'assets/img/gfx/robotizer.png'
+    shot: 'assets/img/gfx/robotizer.png',
+    studio: true
   },
   'rotary-speaker': {
     title: 'ROTARY SPEAKER',
@@ -1260,7 +1337,8 @@ const guides = {
     uses: ['Classic organ rotary sound', 'Swirling guitar and electric piano', 'Speed-ramp transitions via automation', 'Stereo movement on pads and vocals'],
     properties: 'Signal chain: Input (summed to mono) → Drive → 800 Hz Crossover → Horn (0.8/6.7 Hz) + Drum (0.7/5.8 Hz) with AM and Doppler → Two Virtual Mics → Mix → Output. Rotors ramp with inertia (horn ~0.7 s, drum ~3 s, scaled by Acceleration); zero latency.',
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
-    shot: 'assets/img/gfx/rotary_speaker.png'
+    shot: 'assets/img/gfx/rotary_speaker.png',
+    studio: true
   },
   'shimmer-reverb': {
     title: 'SHIMMER REVERB',
@@ -1277,7 +1355,8 @@ const guides = {
     uses: ['Ethereal pads and ambient beds', 'Shimmering guitar swells', 'Cinematic tails on vocals and pianos', 'Octave-down dark ambience'],
     properties: 'Signal chain: Input → 4-Line Feedback Delay Network (Hadamard matrix) → Damping → Pitch Shifter (crossfading taps, 80 ms window) → Feedback into the network → Mix → Output. Each round trip the tail climbs another interval; zero latency.',
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
-    shot: 'assets/img/gfx/shimmer_reverb.png'
+    shot: 'assets/img/gfx/shimmer_reverb.png',
+    studio: true
   },
   'spectral-freeze': {
     title: 'SPECTRAL FREEZE',
@@ -1293,7 +1372,8 @@ const guides = {
     uses: ['Infinite sustain on chords and notes', 'Drones and pads from any sound', 'Freeze reverb tails for transitions', 'Ambient layers under a mix'],
     properties: 'Signal chain: Input → 2048-Point FFT (4× overlap) → Magnitude Snapshot on Freeze → Phase Advance + Smear → IFFT Overlap-Add → Level → Mix → Output. Freezes only after a full 2048-sample window; stereo channels independent.',
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
-    shot: 'assets/img/gfx/spectral_freeze.png'
+    shot: 'assets/img/gfx/spectral_freeze.png',
+    studio: true
   },
   'spectrum-analyzer': {
     title: 'SPECTRUM ANALYZER',
@@ -1311,7 +1391,8 @@ const guides = {
     uses: ['Spotting resonances and build-ups while mixing', 'Comparing the tonal balance of a mix with a reference', 'Checking low-end content and sub-bass on small speakers', 'Inspecting the side signal for stereo problems'],
     properties: 'Chosen channel → Hann window → FFT (1024 to 16384 points) every 25 ms → per-bin power, instant rise and adjustable release, optional peak hold → log-frequency display 20 Hz to 20 kHz with slope around 1 kHz. Audio passes through unchanged (Monitor Solo is a listening aid). Zero latency. The plain JSFX only analyses; the GFX, VST3 and CLAP versions draw the spectrum.',
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
-    shot: 'assets/img/gfx/spectrum_analyzer.png'
+    shot: 'assets/img/gfx/spectrum_analyzer.png',
+    studio: true
   },
   'spring-reverb': {
     title: 'SPRING REVERB',
@@ -1328,7 +1409,8 @@ const guides = {
     uses: ['Surf guitar and amp-style reverb', 'Dub drips and boings on snares', 'Vintage character on vocals', 'Lo-fi organ and keys ambience'],
     properties: 'Signal chain: Input (summed to mono) → 120 Hz Highpass → Pre-Delay → Two Springs (40-stage dispersive allpass chains in feedback loops, 43.7 / 53.1 ms) → Tone Lowpass + Drip → Mix → Output. Left and right springs differ in length for stereo; zero latency.',
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
-    shot: 'assets/img/gfx/spring_reverb.png'
+    shot: 'assets/img/gfx/spring_reverb.png',
+    studio: true
   },
   'stereo-scope': {
     title: 'STEREO SCOPE',
@@ -1344,7 +1426,8 @@ const guides = {
     uses: ['Checking mono compatibility and phase problems', 'Judging stereo width and balance while mixing and mastering', 'Spotting out-of-phase or swapped channels', 'Comparing the image of references'],
     properties: 'Pass-through (bit-exact in Stereo monitor mode). Integrated <LL>, <RR>, <LR> (one-pole, Integration time) → correlation (-1..+1), balance (dB) and width (side/mid level). Goniometer of the last 8192 samples (L/R rotated 45°), 5 s correlation history, L/R peak meters. Zero latency.',
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
-    shot: 'assets/img/gfx/stereo_scope.png'
+    shot: 'assets/img/gfx/stereo_scope.png',
+    studio: true
   },
   'sub-bloom': {
     title: 'SUB BLOOM',
@@ -1360,7 +1443,8 @@ const guides = {
     uses: ['Add a sub octave that follows bass lines and kick pitch', 'Reinforce thin low end on small-speaker mixes', 'Deepen synth and DI bass with an octave-down layer', 'Cinematic rumble on hits and drones'],
     properties: 'Signal chain (per channel): Input → Band-Limit (HP at Source/4, 24 dB/oct LP at Source) → Zero-Crossing Tracker with Hysteresis → Flip-Flop Dividers (÷2, ÷4) × Band Envelope → 24 dB/oct Low-Pass → Sub Level + Original × Mix → Output Gain → Output. The sub follows the pitch of the played note and its level follows the bass band\'s dynamics; silence or no bass in the band produces no sub. Zero latency.',
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
-    shot: 'assets/img/gfx/sub_bloom.png'
+    shot: 'assets/img/gfx/sub_bloom.png',
+    studio: true
   },
   'tape-stop': {
     title: 'TAPE STOP',
@@ -1374,7 +1458,8 @@ const guides = {
     uses: ['Tape-stop transitions at the end of sections', 'DJ-style turntable brakes', 'Dramatic drops and breakdowns', 'Automated spin-down effects on vocals or full mixes'],
     properties: 'Signal chain: Input → 12 s Buffer → Varispeed Read (quadratic slow-down, square-root spin-up) → 10 ms Crossfade → Output. Audio passes untouched while Idle; the tape output also fades as the motor stops; zero latency.',
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
-    shot: 'assets/img/gfx/tape_stop.png'
+    shot: 'assets/img/gfx/tape_stop.png',
+    studio: true
   },
   'trance-gate': {
     title: 'TRANCE GATE',
@@ -1407,7 +1492,8 @@ const guides = {
     uses: ['Classic trance-gated pads and supersaws', 'Rhythmic chopping of sustained chords', 'Stutter-like patterns on vocals', 'Turning drones into sequenced rhythms'],
     properties: 'Signal chain: Input → 16-Step Sequencer → Linear Attack/Release Gain Ramp × Depth → Output. In Sync mode the step clock follows the host tempo and, while the transport plays, is read from the song position so step 1 lands on every bar; when stopped it free-runs at the host tempo. Free mode runs at a fixed rate in steps per second. Stereo-linked, zero latency.',
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
-    shot: 'assets/img/gfx/trance_gate.png'
+    shot: 'assets/img/gfx/trance_gate.png',
+    studio: true
   },
   'vinyl-age': {
     title: 'VINYL AGE',
@@ -1426,7 +1512,8 @@ const guides = {
     uses: ['Lo-fi hip-hop and chillout textures', 'Make samples sound like old records', 'Nostalgic, worn character on pianos and vocals', 'Degraded radio or memory effects'],
     properties: 'Signal chain: Input → Wow/Flutter Modulated Delay (50 ms centre) → Bitcrush → Downsample → 2-Pole Lowpass → Crackle → Noise → Mix → Output. The dry signal is delayed by the same 50 ms so any Mix setting blends in phase (no slapback); the 50 ms latency is reported to the host for delay compensation.',
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
-    shot: 'assets/img/gfx/vinyl_age.png'
+    shot: 'assets/img/gfx/vinyl_age.png',
+    studio: true
   },
   'vocoder': {
     title: 'VOCODER',
@@ -1446,7 +1533,8 @@ const guides = {
     uses: ['Classic robot / synth-voice vocals', 'Talking synths with a sidechained carrier', 'Whispered noise-vocoded textures', 'Rhythmic vocoding of drums'],
     properties: 'Signal chain: Left Input (modulator) → 16 Band-Pass Bands (100 Hz–8 kHz, log spaced) → Envelope Followers × Carrier Bands → Alternating L/R Band Panning (Stereo Width) → Sum + Centred Sibilance → Mix → Output. Modulator is the left channel; Carrier Pitch applies to the Saw and Pulse carriers only; zero latency.',
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
-    shot: 'assets/img/gfx/vocoder.png'
+    shot: 'assets/img/gfx/vocoder.png',
+    studio: true
   },
   'warped-delay': {
     title: 'WARPED DELAY',
@@ -1465,7 +1553,8 @@ const guides = {
     uses: ['Warbly tape-style echoes', 'Dub delays that darken and distort as they repeat', 'Wide, wobbling stereo delays on guitars', 'Lo-fi textures on vocals and synths'],
     properties: 'Signal chain: Input → Modulated Delay Line → Filter → Saturation (tanh) → Feedback → Mix → Output. Right-channel LFO runs a quarter cycle behind the left for width; repeats degrade on each pass; max 1 s delay, zero latency.',
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
-    shot: 'assets/img/gfx/warped_delay.png'
+    shot: 'assets/img/gfx/warped_delay.png',
+    studio: true
   }
 };
 // END GUIDES
@@ -1511,6 +1600,13 @@ function openGuide(pluginId) {
     html += '<li><span class="format-tag">' + f + '</span>' + formatNames[f] + '</li>';
   });
   html += '</ul></div>';
+
+  if (guide.studio) {
+    html += '<div class="guide-section"><h4>Try it</h4><a class="try-studio guide-studio" href="https://useoros.online/studio/" target="_blank" rel="noopener">'
+      + '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8" fill="currentColor"/></svg>'
+      + '<span class="try-studio-text"><b>Try it on orOS Studio</b><small>Add it to a track in your browser, with its own interface. Nothing to install.</small></span>'
+      + '<svg class="try-studio-arrow" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M7 17 17 7"/><path d="M8 7h9v9"/></svg></a></div>';
+  }
 
   html += '</div>';
 
