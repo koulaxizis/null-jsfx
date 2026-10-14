@@ -17,50 +17,7 @@ execFileSync('python3', [path.join(root, 'tools/build_catalog.py'), '--version',
 const catalog = JSON.parse(fs.readFileSync(catalogFile, 'utf8'));
 catalog.notes = '## New\n- **NULL JSFX Hub**: install and update from one place\n- Faster `Delay`\n\nThanks for using NULL JSFX.';
 
-// --- the fake Rust side ----------------------------------------------------------------------
-
-function mock(catalog) {
-  const all = ['jsfx', 'gfx', 'vst3', 'clap'];
-  const state = {};
-  for (const p of catalog.plugins) state[p.id] = Object.fromEntries(p.formats.map((f) => [f, { installed: false, version: null, outdated: false }]));
-  state.tilt.jsfx = { installed: true, version: '2.1', outdated: true };
-  const extras = Object.fromEntries(catalog.extras.map((x) => [x.id, { installed: false, version: null, outdated: false }]));
-  extras.chains = { installed: true, version: null, outdated: true }; // from the installer
-  const settings = { targets: { reaper: '/home/me/.config/REAPER', vst3: '/home/me/.vst3', clap: '/home/me/.clap', fonts: '/home/me/.local/share/fonts' }, formats: all, check_updates: true, notify: true, autostart: false, new_ids: ['tape'], notified: null, last_check: 0 };
-  const view = () => {
-    let installed = 0, outdated = 0;
-    for (const m of Object.values(state)) for (const s of Object.values(m)) { installed += s.installed; outdated += s.outdated; }
-    for (const s of Object.values(extras)) outdated += s.outdated;
-    return JSON.parse(JSON.stringify({ catalog, state: { plugins: state, extras, installed, outdated }, settings, os: 'Linux', hubVersion: '2.1.0', hubUpdate: ['2.2', 'https://github.com/koulaxizis/null-jsfx/releases/latest/download/NULL-JSFX-Hub-Linux.AppImage'], dataDir: '/home/me/.local/share/null-jsfx' }));
-  };
-  const listeners = {};
-  window.__calls = [];
-  window.__TAURI__ = {
-    core: {
-      async invoke(cmd, args) {
-        window.__calls.push([cmd, args ? JSON.parse(JSON.stringify(args)) : null]);
-        await new Promise((r) => setTimeout(r, 30));
-        if (cmd === 'hub_load' || cmd === 'hub_refresh') return view();
-        if (cmd === 'hub_default_targets') return settings.targets;
-        if (cmd === 'hub_hosts') return window.__hosts || [];
-        if (cmd === 'hub_verify') return window.__broken || [];
-        if (cmd === 'hub_self_update') return '/home/me/.local/share/null-jsfx/hub-update/2.2/NULL-JSFX-Hub-Linux.AppImage';
-        if (cmd === 'hub_save_settings') { Object.assign(settings, args.settings); return view(); }
-        if (cmd === 'hub_apply') {
-          (listeners['hub-progress'] || []).forEach((f) => f({ payload: { stage: 'download', text: 'NULL-JSFX-JSFX.zip', done: 1, total: 2 } }));
-          for (const [id, f] of args.request.install) state[id][f] = { installed: true, version: catalog.version, outdated: false };
-          for (const [id, f] of args.request.remove) state[id][f] = { installed: false, version: null, outdated: false };
-          for (const id of args.request.extras || []) extras[id] = { installed: true, version: catalog.version, outdated: false };
-          for (const id of args.request.extras_remove || []) extras[id] = { installed: false, version: null, outdated: false };
-          return view();
-        }
-        throw new Error('unknown command ' + cmd);
-      },
-    },
-    event: { listen(name, fn) { (listeners[name] = listeners[name] || []).push(fn); return Promise.resolve(() => {}); } },
-    opener: { openUrl(u) { window.__calls.push(['open', u]); }, revealItemInDir(p) { window.__calls.push(['reveal', p]); } },
-  };
-}
+const { mock } = require('./mock.cjs');
 
 // --- checks ----------------------------------------------------------------------------------
 
@@ -117,6 +74,7 @@ function check(cond, what) {
   await page.click('.card[data-id="tilt"]');
   await page.waitForSelector('#detail:not([hidden])');
   check((await page.textContent('#d-name')) === 'Tilt', 'plugin page opens');
+  check((await page.getAttribute('#d-shot video', 'src')) === 'https://nulljsfx.tech/assets/video/tilt.mp4', 'plugin page shows the presentation video');
   check((await page.locator('#d-sliders dt').count()) >= 1, 'plugin page lists the controls');
   check((await page.textContent('#d-formats')).includes('update: 2.1 → 2.2'), 'shows the JSFX update from 2.1 to 2.2');
   await page.check('#d-formats input[data-f="vst3"]');

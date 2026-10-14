@@ -84,6 +84,7 @@ def plugins():
             "sliders": [{"name": n, "range": r, "desc": d} for n, r, d in p["sliders"]],
             "formats": fmts,
             "shot": SITE + p["shot"] if p["shot"] else None,
+            "video": SITE + p["video"] if p["video"] else None,
             "guide": f"{SITE}#{p['key']}",
             "presets": [name for name, _ in json.loads(presets.read_text(encoding="utf-8"))] if presets.exists() else [],
             "demo": {"url": f"{SITE}assets/audio/demos/{stem}.mp3", "preset": demo[stem]} if stem in demo else None,
@@ -106,6 +107,7 @@ def rack():
         "sliders": [],
         "formats": ["vst3", "clap"],
         "shot": SITE + "assets/img/hub/rack.png",
+        "video": SITE + "assets/video/rack.mp4" if (ROOT / "assets/video/rack.mp4").exists() else None,
         "guide": SITE,
         "presets": [c[0] for c in CHAIN_LIST] + [p[0] for p in RACK_PRESETS],
     }
