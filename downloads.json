@@ -1,6 +1,6 @@
 {
-  "display": 100,
-  "total": 192,
+  "display": 250,
+  "total": 271,
   "offset": 0,
   "updated": "2026-10-14",
   "assets": {
@@ -54,15 +54,15 @@
     },
     "639422904": {
       "file": "2.2/NULL-JSFX-Catalog.json",
-      "count": 1
+      "count": 5
     },
     "639423208": {
       "file": "2.2/NULL-JSFX-JSFX.zip",
-      "count": 1
+      "count": 48
     },
     "639432088": {
       "file": "2.2/NULL-JSFX-Hub-Windows-Setup.exe",
-      "count": 0
+      "count": 1
     },
     "639434069": {
       "file": "2.2/NULL-JSFX-Hub-Linux.AppImage",
@@ -78,11 +78,11 @@
     },
     "639437923": {
       "file": "2.2/NULL-JSFX-VST3-CLAP-Windows.zip",
-      "count": 0
+      "count": 1
     },
     "639482506": {
       "file": "2.2/NULL-JSFX-VST3-CLAP-Linux.zip",
-      "count": 0
+      "count": 26
     },
     "639491320": {
       "file": "2.2/NULL-JSFX-VST3-CLAP-macOS.zip",
