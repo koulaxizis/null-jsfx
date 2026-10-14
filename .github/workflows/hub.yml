@@ -4,6 +4,7 @@ name: NULL JSFX Hub
 #   core      its engine (hub/core) tested on Windows, macOS and Linux
 #   ui        its page (hub/ui) in a browser against a stand-in, and the catalog check
 #   smoke     install and remove from the latest real release, fetching only the parts needed
+#             (skipped when a release is published, before its packages are attached)
 #   build     the app for Windows (setup .exe), Linux (.AppImage, .deb) and macOS (.dmg)
 # When a GitHub release is published, the app and NULL-JSFX-Catalog.json (what the Hub reads to
 # know the release: tools/build_catalog.py) are attached to it. Run by hand with a release tag
@@ -66,6 +67,8 @@ jobs:
           path: hub/shots
 
   smoke:
+    # not on a release: its packages are still being attached (native.yml) when this starts
+    if: github.event_name != 'release'
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
