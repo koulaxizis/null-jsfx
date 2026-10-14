@@ -73,7 +73,13 @@ fn main() {
             }
             req.extras = state.extras.iter().filter(|(_, s)| s.outdated).map(|(id, _)| id.clone()).collect();
         }
-        _ => fail("scan | install ID:FORMAT... | remove ID:FORMAT... | remove everything | update"),
+        "repair" => {
+            req.install = hub.verify(&catalog, &mut |_| {}).unwrap_or_else(|e| fail(&e));
+            for (id, f) in &req.install {
+                println!("  damaged: {id}:{}", f.key());
+            }
+        }
+        _ => fail("scan | install ID:FORMAT... | remove ID:FORMAT... | remove everything | update | repair"),
     }
     if !req.install.is_empty() || !req.remove.is_empty() || !req.extras.is_empty() || !req.extras_remove.is_empty() {
         let mut last = "";

@@ -178,6 +178,19 @@ impl Package {
         Ok(true)
     }
 
+    /// The files of `path` (a file or a bundle folder): (path inside it, CRC-32, size).
+    pub fn files(&mut self, path: &str) -> Vec<(String, u32, u64)> {
+        let prefix = format!("{path}/");
+        let list: Vec<(String, usize)> =
+            self.names.iter().filter(|(k, _)| *k == path || k.starts_with(&prefix)).map(|(k, i)| (k.clone(), *i)).collect();
+        list.into_iter()
+            .filter_map(|(name, i)| {
+                let e = self.zip.by_index_raw(i).ok()?;
+                (!e.is_dir()).then(|| (name[path.len()..].trim_start_matches('/').to_string(), e.crc32(), e.size()))
+            })
+            .collect()
+    }
+
     pub fn read_text(&mut self, path: &str) -> Option<String> {
         let i = *self.names.get(path)?;
         let mut s = String::new();
@@ -330,6 +343,11 @@ impl RemoteZip {
         self.under(path).map(|(_, e)| e.comp + 30 + 256).sum()
     }
 
+    /// Like `Package::files`, from the zip's directory alone.
+    pub fn files(&self, path: &str) -> Vec<(String, u32, u64)> {
+        self.under(path).filter(|(_, e)| !e.dir).map(|(k, e)| (k[path.len()..].trim_start_matches('/').to_string(), e.crc, e.size)).collect()
+    }
+
     /// Like `Package::extract`, downloading only this file or folder.
     pub fn extract(&self, path: &str, dest: &Path) -> Result<bool, String> {
         let list: Vec<(String, RemoteEntry)> = self.under(path).map(|(k, e)| (k.clone(), e.clone())).collect();
@@ -398,4 +416,30 @@ impl Source {
             Source::Remote(r) => r.extract(path, dest),
         }
     }
+
+    /// The files of `path` with their CRC-32 and size, as the release has them.
+    pub fn files(&mut self, path: &str) -> Vec<(String, u32, u64)> {
+        match self {
+            Source::Local(p) => p.files(path),
+            Source::Remote(r) => r.files(path),
+        }
+    }
+}
+
+/// True when the file at `path` has this size and CRC-32.
+pub fn file_matches(path: &Path, crc: u32, size: u64) -> bool {
+    if fs::metadata(path).map(|m| !m.is_file() || m.len() != size).unwrap_or(true) {
+        return false;
+    }
+    let Ok(mut file) = File::open(path) else { return false };
+    let mut sum = flate2::Crc::new();
+    let mut buf = vec![0u8; 1 << 16];
+    loop {
+        match file.read(&mut buf) {
+            Ok(0) => break,
+            Ok(n) => sum.update(&buf[..n]),
+            Err(_) => return false,
+        }
+    }
+    sum.sum() == crc
 }

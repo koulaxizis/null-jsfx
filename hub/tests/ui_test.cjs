@@ -42,6 +42,9 @@ function mock(catalog) {
         await new Promise((r) => setTimeout(r, 30));
         if (cmd === 'hub_load' || cmd === 'hub_refresh') return view();
         if (cmd === 'hub_default_targets') return settings.targets;
+        if (cmd === 'hub_hosts') return window.__hosts || [];
+        if (cmd === 'hub_verify') return window.__broken || [];
+        if (cmd === 'hub_self_update') return '/home/me/.local/share/null-jsfx/hub-update/2.2/NULL-JSFX-Hub-Linux.AppImage';
         if (cmd === 'hub_save_settings') { Object.assign(settings, args.settings); return view(); }
         if (cmd === 'hub_apply') {
           (listeners['hub-progress'] || []).forEach((f) => f({ payload: { stage: 'download', text: 'NULL-JSFX-JSFX.zip', done: 1, total: 2 } }));
@@ -229,13 +232,47 @@ function check(cond, what) {
   check(JSON.stringify(all.extras_remove.sort()) === '["chains","remote"]', 'and the extras that are on');
   check((await page.textContent('#n-installed')) === '' && (await page.isDisabled('#remove-all')), 'nothing is left installed');
 
+  // a running DAW: asked to close it before VST3/CLAP files change; Cancel does nothing
+  await page.evaluate(() => (window.__hosts = ['REAPER']));
+  await page.click('#nav button[data-view="all"]');
+  await page.click('.card[data-id="delay"] .card-foot button');
+  await page.waitForSelector('#confirm:not([hidden])');
+  check((await page.textContent('#c-title')) === 'Close REAPER first?', 'a running DAW is named before installing VST3/CLAP');
+  if (shots) await page.screenshot({ path: path.join(shots, 'hub-daw.png') });
+  await page.click('#c-cancel');
+  check((await applies()).length === 9, 'Cancel installs nothing');
+  await page.click('.card[data-id="delay"] .card-foot button');
+  await page.waitForSelector('#confirm:not([hidden])');
+  await page.click('#c-ok');
+  const daw = await nextApply(10);
+  check(daw.install.length === 4 && daw.install.every(([id]) => id === 'delay'), 'Continue installs anyway');
+  await page.evaluate(() => (window.__hosts = []));
+
+  // check and repair: all fine, then one damaged plugin file
+  await page.click('#nav button[data-view="settings"]');
+  await page.click('#verify');
+  await page.waitForFunction(() => document.getElementById('toast').textContent.includes('match'));
+  check((await page.textContent('#toast')).startsWith('All 4 plugin files match release 2.2'), 'check says everything matches');
+  await page.evaluate(() => (window.__broken = [['delay', 'vst3']]));
+  await page.click('#verify');
+  await page.waitForSelector('#confirm:not([hidden])');
+  check((await page.textContent('#c-title')) === 'Repair 1 plugin file?' && (await page.textContent('#c-text')).includes('Delay VST3'), 'check lists what to repair');
+  await page.click('#c-ok');
+  const fix = await nextApply(11);
+  check(JSON.stringify(fix) === JSON.stringify({ install: [['delay', 'vst3']], remove: [] }), 'Repair installs the damaged file again');
+
+  // the Hub updates itself; when it can't put the file in place it shows where it is
+  await page.click('#hub-self');
+  await page.waitForFunction(() => window.__calls.some(([c, p]) => c === 'reveal' && String(p).endsWith('.AppImage')));
+  check((await calls()).some(([c]) => c === 'hub_self_update'), 'Update the Hub downloads it in the Hub, and shows the file when it has to be opened by hand');
+
   // What's new
   await page.click('#nav button[data-view="news"]');
   check((await page.textContent('#news-title')).startsWith('Release 2.2'), "What's new shows the release");
   check((await page.locator('#news li').count()) === 2, 'release notes render as a list');
 
   // the Hub download link and the others open in the browser
-  await page.click('#hub-update a');
+  await page.click('#hub-update a[data-ext]');
   check((await calls()).some(([c, u]) => c === 'open' && u.endsWith('NULL-JSFX-Hub-Linux.AppImage')), 'the new Hub link opens the download');
   await page.click('.side-foot a[href*="ko-fi"]');
   check((await calls()).some(([c, u]) => c === 'open' && u.includes('ko-fi.com/koulaxizis')), 'Ko-fi link opens outside the Hub');
