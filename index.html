@@ -60,7 +60,7 @@
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                     <span class="btn-text">Download</span>
                     <div class="download-meta">
-                        <span><b id="release-version">v2.2</b></span>
+                        <span><b id="release-version">v2.3</b></span>
                         <span class="release-new" id="release-new" hidden>NEW</span>
                         <span class="sep">&bull;</span>
                         <span id="last-update">Released: 13/10/26</span>
@@ -109,7 +109,7 @@
             <div class="modal-content modal-download">
                 <button class="modal-close" onclick="closeDownload()">&times;</button>
                 <div class="changelog-header">
-                    <h3>Download NULL JSFX v2.2</h3>
+                    <h3>Download NULL JSFX v2.3</h3>
                     <p class="changelog-date">Free and open source. Pick what you need.</p>
                 </div>
                 <div class="download-support" id="download-support" hidden>
@@ -149,9 +149,10 @@
                     </p>
                     <p class="download-other">Installers:
                         <a href="https://github.com/koulaxizis/null-jsfx/releases/latest/download/NULL-JSFX-Installer-Windows.exe">Windows</a> &bull;
-                        <a href="https://github.com/koulaxizis/null-jsfx/releases/latest/download/NULL-JSFX-Installer-macOS.sh">macOS</a> &bull;
+                        <a href="https://github.com/koulaxizis/null-jsfx/releases/latest/download/NULL-JSFX-Installer-macOS.pkg">macOS</a> &bull;
                         <a href="https://github.com/koulaxizis/null-jsfx/releases/latest/download/NULL-JSFX-Installer-Linux.sh">Linux</a>
-                        (Linux and macOS: run it in a terminal with <code>bash</code>)
+                        (Linux: make it executable and double-click it; macOS from a terminal:
+                        <a href="https://github.com/koulaxizis/null-jsfx/releases/latest/download/NULL-JSFX-Installer-macOS.sh">.sh</a>)
                     </p>
                     <p class="download-other">VST3 &amp; CLAP zips:
                         <a href="https://github.com/koulaxizis/null-jsfx/releases/latest/download/NULL-JSFX-VST3-CLAP-Windows.zip">Windows</a> &bull;
@@ -169,12 +170,30 @@
             <div class="modal-content modal-changelog">
                 <button class="modal-close" onclick="closeChangelog()">&times;</button>
                 <div class="changelog-header">
-                    <h3>Release Notes v2.2</h3>
+                    <h3>Release Notes v2.3</h3>
                     <p class="changelog-date">October 2026</p>
                 </div>
                 <div class="changelog-body">
                     <div class="changelog-section">
-                        <h4 class="changelog-title">NULL JSFX HUB</h4>
+                        <h4 class="changelog-title">2.3: NULL JSFX HUB</h4>
+                        <ul>
+                            <li><strong>LISTEN</strong>: a short demo of every plugin on its page, with and without it</li>
+                            <li><strong>CHECK AND REPAIR</strong>: finds damaged or changed plugin files and puts them right</li>
+                            <li><strong>ROLL BACK</strong> a plugin to the release before, and update it again whenever you like</li>
+                            <li><strong>ANOTHER COMPUTER</strong>: save the list of what you installed and install the same there in one go</li>
+                            <li>Updates itself in one click, warns you when a DAW is open before it changes the plugins, and speaks Greek too</li>
+                        </ul>
+                    </div>
+                    <div class="changelog-section">
+                        <h4 class="changelog-title">2.3: INSTALLERS</h4>
+                        <ul>
+                            <li><strong>MACOS</strong>: a .pkg installer; under Customize you pick the formats, the plugin groups and the extras, and it needs no password</li>
+                            <li><strong>LINUX</strong>: double-click the installer and it asks in windows</li>
+                            <li>The plugins sound exactly as in 2.2</li>
+                        </ul>
+                    </div>
+                    <div class="changelog-section">
+                        <h4 class="changelog-title">2.2: NULL JSFX HUB</h4>
                         <ul>
                             <li>A free app for Windows, Linux and macOS that installs, updates and removes the plugins in any format (JSFX, GFX, VST3, CLAP), one by one, by group or all at once</li>
                             <li>Screenshots, descriptions and factory presets of every plugin; FX chains, presets, the tablet remote and the font as extras</li>

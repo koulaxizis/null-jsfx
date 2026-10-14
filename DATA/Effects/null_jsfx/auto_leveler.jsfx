@@ -2,7 +2,7 @@ desc:NULL Auto-Leveler
 author: Christos Koulaxizis
 tags: auto leveler gain riding loudness level agc volume dialogue podcast
 //category: Essentials
-//NULL JSFX v2.2 • https://nulljsfx.tech • MIT License
+//NULL JSFX v2.3 • https://nulljsfx.tech • MIT License
 
 slider1:-18<-36,-6,0.5>Target (dB)
 slider2:1000<100,5000,10>Speed (ms)

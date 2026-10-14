@@ -2,7 +2,7 @@ desc:NULL Dynamic EQ GFX
 author: Christos Koulaxizis
 tags: dynamic eq equalizer parametric compressor expander essentials gui
 //category: Essentials
-//NULL JSFX v2.2 • https://nulljsfx.tech • MIT License
+//NULL JSFX v2.3 • https://nulljsfx.tech • MIT License
 
 import null_gfx.jsfx-inc
 

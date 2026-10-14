@@ -2,7 +2,7 @@ desc:NULL Spectrum Analyzer
 author: Christos Koulaxizis
 tags: spectrum analyzer analyser fft frequency meter metering peak hold slope visual mixing mastering
 //category: Advanced
-//NULL JSFX v2.2 • https://nulljsfx.tech • MIT License
+//NULL JSFX v2.3 • https://nulljsfx.tech • MIT License
 
 slider1:2<0,4,1{1024,2048,4096,8192,16384}>FFT Size
 slider2:4.5<0,6,0.5>Slope (dB/oct)
