@@ -300,6 +300,17 @@ fn round(ranges: bool) {
     let cached: Vec<_> = fs::read_dir(root.join("data/cache")).map(|d| d.flatten().map(|e| e.file_name()).collect()).unwrap_or_default();
     assert!(cached.len() <= 1 && cached.iter().all(|n| n == "2.2"), "only the current release stays cached: {cached:?}");
 
+    // check and repair: everything matches; then a damaged bundle file and an edited GFX show up
+    assert_eq!(h.verify(&cat, &mut |_| {}).unwrap(), vec![]);
+    fs::write(&bundle, "2.X").unwrap();
+    fs::write(r.join("gfx/tilt_gfx.jsfx"), jsfx("Tilt GFX", "2.2") + "changed").unwrap();
+    let broken = h.verify(&cat, &mut |_| {}).unwrap();
+    assert_eq!(broken, vec![("tilt".to_string(), Format::Gfx), ("tilt".to_string(), Format::Vst3)]);
+    let s = h.apply(&cat, &Request { install: broken, ..Default::default() }, &mut |_| {}).unwrap();
+    assert_eq!((s.installed, s.outdated), (5, 0));
+    assert_eq!(fs::read_to_string(&bundle).unwrap(), "2.2");
+    assert_eq!(h.verify(&cat, &mut |_| {}).unwrap(), vec![], "repaired");
+
     // the records survive a restart
     let h2 = hub(root);
     assert_eq!(h2.scan(&cat).plugins["tilt"][&Format::Vst3].version.as_deref(), Some("2.2"));

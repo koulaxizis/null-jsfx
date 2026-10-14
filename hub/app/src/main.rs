@@ -4,7 +4,9 @@
 // looks for a new release once a day.
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-use null_hub_core::{hub_update, paths, Catalog, Hub, Request, Settings, State, Targets};
+mod selfupdate;
+
+use null_hub_core::{hosts, hub_update, paths, Catalog, Format, Hub, Request, Settings, State, Targets};
 use serde::Serialize;
 use std::sync::Mutex;
 use std::time::Duration;
@@ -117,6 +119,56 @@ async fn hub_apply(handle: AppHandle, request: Request) -> Result<View, String> 
     .map_err(|e| e.to_string())?
 }
 
+/// The DAWs running now, to ask the user to close them before VST3/CLAP files change.
+#[tauri::command]
+async fn hub_hosts() -> Vec<&'static str> {
+    tauri::async_runtime::spawn_blocking(hosts::running).await.unwrap_or_default()
+}
+
+/// The installed plugins whose files differ from the release ("Check and repair").
+#[tauri::command]
+async fn hub_verify(handle: AppHandle) -> Result<Vec<(String, Format)>, String> {
+    tauri::async_runtime::spawn_blocking(move || {
+        let app = handle.state::<App>();
+        let _busy = app.work.lock().unwrap();
+        let catalog = app.catalog.lock().unwrap().clone().ok_or("No catalog yet: connect to the internet and refresh.")?;
+        let hub = app.hub.lock().unwrap();
+        hub.verify(&catalog, &mut |p| {
+            let _ = handle.emit("hub-progress", &p);
+        })
+    })
+    .await
+    .map_err(|e| e.to_string())?
+}
+
+/// Downloads and installs the newer Hub, then quits so it can start. Returns the downloaded
+/// file instead when it has to be opened by hand.
+#[tauri::command]
+async fn hub_self_update(handle: AppHandle) -> Result<Option<String>, String> {
+    let done = tauri::async_runtime::spawn_blocking({
+        let handle = handle.clone();
+        move || {
+            let app = handle.state::<App>();
+            let _busy = app.work.lock().unwrap();
+            let catalog = app.catalog.lock().unwrap().clone().ok_or("No catalog yet: connect to the internet and refresh.")?;
+            hub_update(&catalog).ok_or("This NULL JSFX Hub is the latest.")?;
+            let data = app.hub.lock().unwrap().data.clone();
+            selfupdate::run(&catalog, &data, &mut |p| {
+                let _ = handle.emit("hub-progress", &p);
+            })
+        }
+    })
+    .await
+    .map_err(|e| e.to_string())??;
+    match done {
+        selfupdate::Done::Restart => {
+            handle.exit(0);
+            Ok(None)
+        }
+        selfupdate::Done::Open(path) => Ok(Some(paths::display(&path))),
+    }
+}
+
 #[tauri::command]
 fn hub_save_settings(handle: AppHandle, settings: Settings) -> Result<View, String> {
     let app = handle.state::<App>();
@@ -175,7 +227,16 @@ fn main() {
         .plugin(tauri_plugin_notification::init())
         .plugin(tauri_plugin_autostart::init(MacosLauncher::LaunchAgent, Some(vec![HIDDEN])))
         .manage(App { hub: Mutex::new(hub), catalog: Mutex::new(catalog), work: Mutex::new(()) })
-        .invoke_handler(tauri::generate_handler![hub_load, hub_refresh, hub_apply, hub_save_settings, hub_default_targets])
+        .invoke_handler(tauri::generate_handler![
+            hub_load,
+            hub_refresh,
+            hub_apply,
+            hub_hosts,
+            hub_verify,
+            hub_self_update,
+            hub_save_settings,
+            hub_default_targets
+        ])
         .setup(move |app| {
             let handle = app.handle().clone();
             let open = MenuItem::with_id(app, "open", "Open NULL JSFX Hub", true, None::<&str>)?;

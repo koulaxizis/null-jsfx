@@ -34,8 +34,23 @@ function isNew(id) { return (V.settings.new_ids || []).includes(id); }
 
 // --- talking to Rust -----------------------------------------------------------------------
 
-async function run(request, doneText) {
+/** VST3/CLAP files change: a running DAW keeps them (Windows can't replace them at all) */
+function touchesNative(request) {
+  return [...(request.install || []), ...(request.remove || [])].some(([, f]) => f === "vst3" || f === "clap");
+}
+
+async function run(request, doneText, checked) {
   if (busy) return;
+  if (!checked && touchesNative(request)) {
+    let hosts = [];
+    try { hosts = await invoke("hub_hosts"); } catch (_) { /* can't tell: go ahead */ }
+    if (hosts.length) {
+      const names = hosts.join(" and ");
+      return ask(`Close ${names} first?`,
+        `${names} ${hosts.length === 1 ? "is" : "are"} running. A DAW keeps the VST3 and CLAP plugins it has loaded${V.os === "Windows" ? ", and Windows does not let them be replaced or removed until it closes" : " and picks up the new files only after a restart"}. Save your projects, close ${names}, then continue.`,
+        "Continue", () => run(request, doneText, true), true);
+    }
+  }
   busy = true;
   render();
   showProgress("Starting", -1);
@@ -82,6 +97,8 @@ function onProgress(p) {
     showProgress(`Downloading ${p.text}: ${mb(p.done)}${p.total ? ` of ${mb(p.total)}` : ""} MB`, p.total ? p.done / p.total : -1);
   } else if (p.stage === "unpack") {
     showProgress(`Unpacking ${p.text}`, p.total ? p.done / p.total : -1);
+  } else if (p.stage === "verify") {
+    showProgress(`Checking ${p.text}`, p.total ? p.done / p.total : -1);
   } else if (p.stage === "elevate") {
     showProgress("Windows asks for permission to write to the VST3/CLAP folders", -1);
   } else {
@@ -185,7 +202,7 @@ function render() {
   $("n-new").textContent = fresh || "";
   const hu = $("hub-update");
   hu.hidden = !V.hubUpdate;
-  if (V.hubUpdate) hu.innerHTML = `<span>A new NULL JSFX Hub (${esc(V.hubUpdate[0])}) is out.</span><a href="${esc(V.hubUpdate[1])}" data-ext>Download it</a>`;
+  if (V.hubUpdate) hu.innerHTML = `<span>A new NULL JSFX Hub (${esc(V.hubUpdate[0])}) is out.</span><button id="hub-self" class="primary" ${busy ? "disabled" : ""}>Update the Hub</button><a href="${esc(V.hubUpdate[1])}" data-ext>or download it</a>`;
   $("release").textContent = cat ? (upd ? `Release ${cat.version} · ${upd} to update` : `Release ${cat.version} · up to date`) : "Offline";
   $("release").classList.toggle("hot", upd > 0);
   const ua = $("update-all");
@@ -265,10 +282,11 @@ async function togglePick(f) {
 // --- removing --------------------------------------------------------------------------------
 
 let confirmAction = null;
-function ask(title, text, okText, action) {
+function ask(title, text, okText, action, plain) {
   $("c-title").textContent = title;
   $("c-text").textContent = text;
   $("c-ok").textContent = okText;
+  $("c-ok").classList.toggle("danger", !plain);
   confirmAction = action;
   $("confirm").hidden = false;
   $("c-cancel").focus();
@@ -290,6 +308,53 @@ function confirmRemoveAll() {
   const req = { ...removeReq(list), extras: [], extras_remove: extras };
   ask("Remove everything?", `Removes all ${plural(list.length, "NULL JSFX plugin", "NULL JSFX plugins")} in every format (${plural(req.remove.length, "file", "files")}) and the extras: FX chains, the tablet remote, the font and the factory presets you did not change. Your own presets and REAPER's settings stay. The Hub itself stays, to install them again later.`,
     "Remove everything", () => run(req, "Removed everything from NULL JSFX"));
+}
+
+// --- the Hub itself, and checking the installed files ------------------------------------------
+
+async function selfUpdate() {
+  if (busy) return;
+  busy = true;
+  render();
+  showProgress("Downloading the new NULL JSFX Hub", -1);
+  try {
+    const manual = await invoke("hub_self_update");
+    if (manual) {
+      toast("The new Hub is downloaded. Open the file shown to install it.");
+      T.opener.revealItemInDir(manual);
+    } else {
+      showProgress("Starting the new NULL JSFX Hub", -1);
+      return; // this Hub quits now
+    }
+  } catch (e) {
+    toast(`${e} You can still download it with the link.`, true);
+  }
+  busy = false;
+  $("progress").hidden = true;
+  render();
+}
+
+async function verify() {
+  if (busy) return;
+  busy = true;
+  render();
+  showProgress("Checking the installed files", -1);
+  let broken = null;
+  try {
+    broken = await invoke("hub_verify");
+  } catch (e) {
+    toast(String(e), true);
+  }
+  busy = false;
+  $("progress").hidden = true;
+  render();
+  if (!broken) return;
+  const n = Object.values(V.state.plugins).reduce((a, m) => a + Object.values(m).filter((x) => x.installed && !x.outdated).length, 0);
+  if (!broken.length) return toast(n ? `All ${plural(n, "plugin file", "plugin files")} match release ${V.catalog.version}.` : "Nothing up to date to check yet.");
+  const names = broken.map(([id, f]) => `${plugins().find((p) => p.id === id)?.name ?? id} ${label(f)}`);
+  ask(`Repair ${plural(broken.length, "plugin file", "plugin files")}?`,
+    `These differ from release ${V.catalog.version} (damaged, changed or with files missing): ${names.join(", ")}. Repair puts the release's files back.`,
+    "Repair", () => run({ install: broken, remove: [] }, `Repaired ${plural(broken.length, "plugin file", "plugin files")}`), true);
 }
 
 function renderExtras() {
@@ -349,6 +414,7 @@ function renderSettings() {
   $("set-vst3").value = s.targets.vst3;
   $("set-clap").value = s.targets.clap;
   const n = plugins().filter((p) => isInstalled(p.id)).length;
+  $("verify").disabled = busy || !V.catalog;
   $("remove-all").disabled = busy || (!n && !Object.values(V.state.extras ?? {}).some((x) => x.installed));
   $("remove-all-n").textContent = n ? `${plural(n, "plugin", "plugins")} installed now.` : "No plugins installed now.";
   $("hub-version").textContent = V.hubVersion;
@@ -442,6 +508,7 @@ document.addEventListener("click", (e) => {
     T.opener.openUrl(ext.href);
     return;
   }
+  if (e.target.closest("#hub-self")) return selfUpdate();
   const nav = e.target.closest("#nav button[data-view]");
   if (nav) {
     view = nav.dataset.view;
@@ -502,6 +569,7 @@ $("c-cancel").onclick = closeConfirm;
 $("confirm").addEventListener("click", (e) => { if (e.target.id === "confirm") closeConfirm(); });
 $("c-ok").onclick = () => { const go = confirmAction; closeConfirm(); if (go) go(); };
 $("remove-all").onclick = confirmRemoveAll;
+$("verify").onclick = verify;
 $("search").addEventListener("input", render);
 $("refresh").onclick = () => refresh(false);
 $("update-all").onclick = () => {

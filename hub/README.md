@@ -42,6 +42,15 @@ Things worth knowing:
   everything, extras included. Each asks first. The format toggles above the list ("Install as")
   are Settings > Formats: bulk install adds the picked formats that a shown plugin is missing,
   so a whole group can get its VST3 version after its JSFX one.
+- **A running DAW** (`core/src/hosts.rs`). Before VST3/CLAP files change, the page asks the user
+  to close the DAWs it finds running (REAPER, Live, FL Studio, Bitwig, Cubase and others): Windows
+  can't replace a loaded plugin file, and the others load the new one only after a restart.
+- **Check and repair** (`Hub::verify`, Settings). Compares every installed plugin file that is
+  at the current release with the CRC-32 and size in the release zip's directory (read over range
+  requests, no download), and reinstalls the plugins that differ.
+- **Updating the Hub** (`app/src/selfupdate.rs`). "Update the Hub" downloads this system's Hub
+  from the release and puts it in place: the Windows setup in passive mode, the macOS app copied
+  out of the disk image, the AppImage replaced. A Hub installed from the .deb shows the file.
 - **Tray and notifications** (opt-in: "Start with the computer" in Settings). The Hub starts hidden
   with `--hidden`, stays in the tray, looks for a new release once a day, and shows one system
   notification per release when there are updates, new plugins or a new Hub (`Hub::notice`).

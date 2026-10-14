@@ -5,6 +5,7 @@
 pub mod catalog;
 pub mod extras;
 pub mod fileops;
+pub mod hosts;
 pub mod package;
 pub mod paths;
 
@@ -415,10 +416,54 @@ impl Hub {
         }
         if !other.is_empty() {
             let text: Vec<String> = other.iter().map(|f| f.error.clone()).collect();
-            return Err(format!("Some steps failed: {}", text.join("; ")));
+            let running = hosts::running();
+            let hint = if running.is_empty() { String::new() } else { format!(" Close {} and try again.", running.join(", ")) };
+            return Err(format!("Some steps failed: {}.{hint}", text.join("; ")));
         }
         progress(Progress { stage: "done", text: "Done".into(), done: 1, total: 1 });
         Ok(state)
+    }
+
+    /// The installed plugins whose files differ from the release: damaged, changed or missing.
+    /// Only those already at the catalog's release are checked (older ones show as updates);
+    /// installing them again repairs them. Reads the package lists from the cache or, when
+    /// there is none, just the zip directories over range requests.
+    pub fn verify(&self, catalog: &Catalog, progress: &mut dyn FnMut(Progress)) -> Result<Vec<(String, Format)>, String> {
+        let t = &self.settings.targets;
+        let items: Vec<(String, Format)> = self
+            .scan(catalog)
+            .plugins
+            .into_iter()
+            .flat_map(|(id, m)| m.into_iter().filter(|(_, s)| s.installed && !s.outdated).map(move |(f, _)| (id.clone(), f)))
+            .collect();
+        let cache = self.data.join("cache").join(sanitize(&catalog.version));
+        let (mut jsfx, mut native) = (None, None);
+        let mut broken = Vec::new();
+        for (n, (id, f)) in items.iter().enumerate() {
+            let name = &catalog.plugin(id).unwrap().name;
+            progress(Progress { stage: "verify", text: format!("{name} {}", f.key().to_uppercase()), done: n as u64, total: items.len() as u64 });
+            let slot = if f.is_native() { &mut native } else { &mut jsfx };
+            if slot.is_none() {
+                let file = if f.is_native() {
+                    let os = paths::os_name();
+                    catalog.packages.native.get(os).ok_or_else(|| format!("This release has no VST3/CLAP package for {os}"))?
+                } else {
+                    &catalog.packages.jsfx
+                };
+                *slot = Some(self.package(catalog, file, &[], &cache, progress)?);
+            }
+            let (dest, src) = paths::plugin_paths(t, id, *f);
+            let files = slot.as_mut().unwrap().files(&src);
+            let ok = files.iter().all(|(rel, crc, size)| {
+                let path = if rel.is_empty() { dest.clone() } else { dest.join(rel) };
+                package::file_matches(&path, *crc, *size)
+            });
+            if !files.is_empty() && !ok {
+                broken.push((id.clone(), *f));
+            }
+        }
+        progress(Progress { stage: "done", text: "Done".into(), done: 1, total: 1 });
+        Ok(broken)
     }
 
     /// What the extras need for this request: FX chains follow the plugins (a chain comes when

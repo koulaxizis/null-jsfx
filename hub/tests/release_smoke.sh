@@ -42,6 +42,15 @@ if [ -d "$work/data/cache/$tag" ]; then
   echo "the whole package was downloaded; only parts were needed" >&2
   exit 1
 fi
+# check and repair: a damaged VST3 file is found from the zip's directory and put back
+"$cli" --root "$work/root" repair | tee "$work/out.txt"
+if grep -q "damaged" "$work/out.txt"; then exit 1; fi
+so=$(find "$work/root/VST3/NULL JSFX/null_jsfx_delay.vst3/Contents" -type f | head -n 1)
+printf 'x' >> "$so"
+"$cli" --root "$work/root" repair | tee "$work/out.txt"
+grep -q "damaged: delay:vst3" "$work/out.txt"
+"$cli" --root "$work/root" repair | tee "$work/out.txt"
+if grep -q "damaged" "$work/out.txt"; then exit 1; fi
 # the extras: Filter's FX chain comes with Filter, factory presets land in REAPER's presets
 "$cli" --root "$work/root" install filter:jsfx rack:vst3 extra:chains extra:presets | tee "$work/out.txt"
 grep -q "extra chains" "$work/out.txt"
@@ -55,6 +64,6 @@ test ! -e "$work/root/REAPER/presets/js-null_jsfx_filter_jsfx.ini"   # only fact
 test ! -e "$work/root/REAPER/FXChains/NULL JSFX"
 test -z "$(ls -A "$work/root/REAPER/presets")"
 grep -q "0 installed" "$work/out.txt"
-! grep -q "  extra" "$work/out.txt"
+if grep -q "  extra" "$work/out.txt"; then exit 1; fi  # (a "!" line would not stop set -e)
 test ! -e "$work/root/VST3/NULL JSFX"
 echo "release smoke test: ok ($tag)"
