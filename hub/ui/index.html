@@ -21,26 +21,26 @@
     </div>
     <div class="top-actions">
       <span id="release" class="pill"></span>
-      <button id="refresh" class="ghost" title="Look for a new release">Check for updates</button>
-      <button id="update-all" class="primary" hidden>Update all</button>
+      <button id="refresh" class="ghost" title="Look for a new release" data-t data-t-title>Check for updates</button>
+      <button id="update-all" class="primary" hidden></button>
     </div>
   </header>
 
   <div class="layout">
-    <nav class="side" id="nav" aria-label="Sections">
-      <button data-view="all" class="active">All plugins <b id="n-all"></b></button>
-      <button data-view="installed">Installed <b id="n-installed"></b></button>
-      <button data-view="updates">Updates <b id="n-updates" class="hot"></b></button>
-      <button data-view="new" id="nav-new" hidden>New in this release <b id="n-new"></b></button>
-      <div class="side-label">Groups</div>
+    <nav class="side" id="nav" aria-label="Sections" data-t-aria>
+      <button data-view="all" class="active"><span data-t>All plugins</span> <b id="n-all"></b></button>
+      <button data-view="installed"><span data-t>Installed</span> <b id="n-installed"></b></button>
+      <button data-view="updates"><span data-t>Updates</span> <b id="n-updates" class="hot"></b></button>
+      <button data-view="new" id="nav-new" hidden><span data-t>New in this release</span> <b id="n-new"></b></button>
+      <div class="side-label" data-t>Groups</div>
       <div id="nav-groups"></div>
-      <button data-view="extras">Extras <b id="n-extras"></b></button>
-      <div class="side-label">Release</div>
-      <button data-view="news">What's new</button>
-      <button data-view="settings">Settings</button>
+      <button data-view="extras"><span data-t>Extras</span> <b id="n-extras"></b></button>
+      <div class="side-label" data-t>Release</div>
+      <button data-view="news" data-t>What's new</button>
+      <button data-view="settings" data-t>Settings</button>
       <div class="side-foot">
         <a href="https://nulljsfx.tech" data-ext>nulljsfx.tech</a>
-        <a href="https://ko-fi.com/koulaxizis" data-ext>Support on Ko-fi</a>
+        <a href="https://ko-fi.com/koulaxizis" data-ext data-t>Support on Ko-fi</a>
       </div>
     </nav>
 
@@ -48,8 +48,8 @@
       <div id="hub-update" class="banner" hidden></div>
       <section id="view-plugins">
         <div class="bar">
-          <input id="search" type="search" placeholder="Search plugins, e.g. eq, reverb, vocal" autocomplete="off">
-          <div id="pick" class="pick" role="group" aria-label="Formats to install"></div>
+          <input id="search" type="search" placeholder="Search plugins, e.g. eq, reverb, vocal" autocomplete="off" data-t-placeholder>
+          <div id="pick" class="pick" role="group" aria-label="Formats to install" data-t-aria></div>
           <button id="bulk" class="ghost" hidden></button>
           <button id="bulk-remove" class="ghost danger" hidden></button>
         </div>
@@ -65,60 +65,67 @@
       </section>
 
       <section id="view-settings" hidden>
-        <h2>Settings</h2>
+        <h2 data-t>Settings</h2>
         <div class="panel">
-          <h3>Formats</h3>
-          <p class="muted">What Install adds for a plugin (the same toggles as above the plugin list). You can still pick formats one by one in a plugin's page.</p>
+          <h3 data-t>Language</h3>
+          <select id="set-lang" aria-label="Language" data-t-aria>
+            <option value="en">English</option>
+            <option value="el">Ελληνικά</option>
+          </select>
+        </div>
+        <div class="panel">
+          <h3 data-t>Formats</h3>
+          <p class="muted" data-t>What Install adds for a plugin (the same toggles as above the plugin list). You can still pick formats one by one in a plugin's page.</p>
           <div id="set-formats" class="checks"></div>
         </div>
         <div class="panel">
-          <h3>Updates</h3>
+          <h3 data-t>Updates</h3>
           <div class="checks col">
-            <label><input type="checkbox" id="set-check"> Look for a new release once a day</label>
-            <label><input type="checkbox" id="set-notify"> Show a notification when there are updates or new plugins (once per release)</label>
-            <label><input type="checkbox" id="set-autostart"> Start with the computer and stay in the tray <span class="muted">(closing the window keeps the Hub there; Quit from the tray icon)</span></label>
+            <label><input type="checkbox" id="set-check"> <span data-t>Look for a new release once a day</span></label>
+            <label><input type="checkbox" id="set-notify"> <span data-t>Show a notification when there are updates or new plugins (once per release)</span></label>
+            <label><input type="checkbox" id="set-autostart"> <span data-t>Start with the computer and stay in the tray</span> <span class="muted" data-t>(closing the window keeps the Hub there; Quit from the tray icon)</span></label>
           </div>
         </div>
         <div class="panel">
-          <h3>Folders</h3>
-          <p class="muted">The Hub puts the plugins where the NULL JSFX installers do. Change a folder for a portable REAPER or your own plugin folders.</p>
-          <label class="field">REAPER resource folder <span class="muted">(REAPER: Options &gt; Show REAPER resource path)</span><input id="set-reaper" spellcheck="false"></label>
-          <label class="field">VST3 folder <span class="muted">(plugins go into its NULL JSFX folder)</span><input id="set-vst3" spellcheck="false"></label>
-          <label class="field">CLAP folder <span class="muted">(plugins go into its NULL JSFX folder)</span><input id="set-clap" spellcheck="false"></label>
-          <button id="set-defaults" class="ghost">Use the usual folders</button>
+          <h3 data-t>Folders</h3>
+          <p class="muted" data-t>The Hub puts the plugins where the NULL JSFX installers do. Change a folder for a portable REAPER or your own plugin folders.</p>
+          <label class="field"><span data-t>REAPER resource folder</span> <span class="muted" data-t>(REAPER: Options &gt; Show REAPER resource path)</span><input id="set-reaper" spellcheck="false"></label>
+          <label class="field"><span data-t>VST3 folder</span> <span class="muted" data-t>(plugins go into its NULL JSFX folder)</span><input id="set-vst3" spellcheck="false"></label>
+          <label class="field"><span data-t>CLAP folder</span> <span class="muted" data-t>(plugins go into its NULL JSFX folder)</span><input id="set-clap" spellcheck="false"></label>
+          <button id="set-defaults" class="ghost" data-t>Use the usual folders</button>
         </div>
         <div class="panel">
-          <h3>Privacy</h3>
-          <p class="muted">To look for updates the Hub downloads the release list file from GitHub, where the plugins are released. It sends nothing about you or your computer: no account, no id, no list of what you installed.</p>
+          <h3 data-t>Privacy</h3>
+          <p class="muted" data-t>To look for updates the Hub downloads the release list file from GitHub, where the plugins are released. It sends nothing about you or your computer: no account, no id, no list of what you installed.</p>
         </div>
         <div class="row">
-          <button id="set-save" class="primary">Save</button>
+          <button id="set-save" class="primary" data-t>Save</button>
           <span id="set-msg" class="muted"></span>
         </div>
         <div class="panel">
-          <h3>Another computer</h3>
-          <p class="muted">Save the list of what is installed here (plugins, formats and extras) to a small file, then open it in the Hub on the other computer to install the same. It holds no folders and nothing about this computer.</p>
+          <h3 data-t>Another computer</h3>
+          <p class="muted" data-t>Save the list of what is installed here (plugins, formats and extras) to a small file, then open it in the Hub on the other computer to install the same. It holds no folders and nothing about this computer.</p>
           <div class="row">
-            <button id="export" class="ghost">Save the list</button>
-            <button id="import" class="ghost">Install from a list</button>
+            <button id="export" class="ghost" data-t>Save the list</button>
+            <button id="import" class="ghost" data-t>Install from a list</button>
             <input type="file" id="import-file" accept=".json,application/json" hidden>
           </div>
         </div>
         <div class="panel">
-          <h3>Check and repair</h3>
-          <p class="muted">Compares the installed plugin files with the release, file by file, and puts back the ones that are damaged, changed or missing. It reads the release's file list from GitHub and downloads only what needs repair.</p>
-          <button id="verify" class="ghost">Check installed files</button>
+          <h3 data-t>Check and repair</h3>
+          <p class="muted" data-t>Compares the installed plugin files with the release, file by file, and puts back the ones that are damaged, changed or missing. It reads the release's file list from GitHub and downloads only what needs repair.</p>
+          <button id="verify" class="ghost" data-t>Check installed files</button>
         </div>
         <div class="panel">
-          <h3>Uninstall</h3>
-          <p class="muted">Takes every NULL JSFX plugin off this computer, in every format, with the FX chains, the tablet remote, the font and the factory presets you did not change. <span id="remove-all-n"></span> To remove the Hub too, uninstall it like any other app afterwards.</p>
-          <button id="remove-all" class="ghost danger">Remove everything</button>
+          <h3 data-t>Uninstall</h3>
+          <p class="muted"><span data-t>Takes every NULL JSFX plugin off this computer, in every format, with the FX chains, the tablet remote, the font and the factory presets you did not change.</span> <span id="remove-all-n"></span> <span data-t>To remove the Hub too, uninstall it like any other app afterwards.</span></p>
+          <button id="remove-all" class="ghost danger" data-t>Remove everything</button>
         </div>
         <div class="panel about">
-          <h3>About</h3>
-          <p>NULL JSFX Hub <span id="hub-version"></span>. Free and open source, MIT License.</p>
-          <p class="muted">Its own files: <code id="data-dir"></code></p>
-          <p><a href="https://github.com/koulaxizis/null-jsfx" data-ext>Source on GitHub</a> · <a href="https://nulljsfx.tech" data-ext>nulljsfx.tech</a></p>
+          <h3 data-t>About</h3>
+          <p>NULL JSFX Hub <span id="hub-version"></span>. <span data-t>Free and open source, MIT License.</span></p>
+          <p class="muted"><span data-t>Its own files:</span> <code id="data-dir"></code></p>
+          <p><a href="https://github.com/koulaxizis/null-jsfx" data-ext data-t>Source on GitHub</a> · <a href="https://nulljsfx.tech" data-ext>nulljsfx.tech</a></p>
         </div>
       </section>
     </main>
@@ -126,7 +133,7 @@
 
   <div id="detail" class="detail" hidden>
     <div class="detail-card" role="dialog" aria-modal="true" aria-labelledby="d-name">
-      <button class="close" id="d-close" aria-label="Close">&times;</button>
+      <button class="close" id="d-close" aria-label="Close" data-t-aria>&times;</button>
       <div class="shot big" id="d-shot"></div>
       <div class="detail-body">
         <div class="muted" id="d-group"></div>
@@ -134,28 +141,28 @@
         <p id="d-tagline" class="tagline"></p>
         <div class="formats-table" id="d-formats"></div>
         <div class="row">
-          <button id="d-apply" class="primary" disabled>Apply</button>
-          <button id="d-remove" class="ghost danger" hidden>Remove all formats</button>
+          <button id="d-apply" class="primary" disabled data-t>Apply</button>
+          <button id="d-remove" class="ghost danger" hidden data-t>Remove all formats</button>
           <button id="d-rollback" class="ghost" hidden></button>
-          <a id="d-guide" href="#" data-ext>Guide on nulljsfx.tech</a>
+          <a id="d-guide" href="#" data-ext data-t>Guide on nulljsfx.tech</a>
         </div>
         <div id="d-demo" hidden>
-          <h3>Listen</h3>
+          <h3 data-t>Listen</h3>
           <div class="ab">
-            <button id="d-play" class="primary">Play</button>
-            <span class="pick" role="group" aria-label="What to hear">
+            <button id="d-play" class="primary" data-t>Play</button>
+            <span class="pick" role="group" aria-label="What to hear" data-t-aria>
               <button id="d-wet" class="chip-btn on" aria-pressed="true"></button>
-              <button id="d-dry" class="chip-btn" aria-pressed="false">Dry</button>
+              <button id="d-dry" class="chip-btn" aria-pressed="false" data-t>Dry</button>
             </span>
             <span id="d-demo-note" class="muted"></span>
           </div>
         </div>
-        <h3>Controls</h3>
+        <h3 data-t>Controls</h3>
         <dl id="d-sliders" class="sliders"></dl>
-        <h3>Good for</h3>
+        <h3 data-t>Good for</h3>
         <ul id="d-uses"></ul>
-        <div id="d-presets-wrap"><h3>Factory presets</h3><p id="d-presets" class="muted"></p></div>
-        <h3>How it works</h3>
+        <div id="d-presets-wrap"><h3 data-t>Factory presets</h3><p id="d-presets" class="muted"></p></div>
+        <h3 data-t>How it works</h3>
         <p id="d-props" class="muted"></p>
       </div>
     </div>
@@ -166,7 +173,7 @@
       <h2 id="c-title"></h2>
       <p id="c-text" class="muted"></p>
       <div class="row">
-        <button id="c-cancel" class="ghost">Cancel</button>
+        <button id="c-cancel" class="ghost" data-t>Cancel</button>
         <button id="c-ok" class="primary danger"></button>
       </div>
     </div>
@@ -178,6 +185,7 @@
   </div>
   <div id="toast" class="toast" hidden role="status"></div>
 
+  <script src="i18n.js"></script>
   <script src="hub.js"></script>
 </body>
 </html>

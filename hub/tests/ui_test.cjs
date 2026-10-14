@@ -27,7 +27,7 @@ function mock(catalog) {
   state.tilt.jsfx = { installed: true, version: '2.1', outdated: true };
   const extras = Object.fromEntries(catalog.extras.map((x) => [x.id, { installed: false, version: null, outdated: false }]));
   extras.chains = { installed: true, version: null, outdated: true }; // from the installer
-  const settings = { targets: { reaper: '/home/me/.config/REAPER', vst3: '/home/me/.vst3', clap: '/home/me/.clap', fonts: '/home/me/.local/share/fonts' }, formats: all, check_updates: true, notify: true, autostart: false, new_ids: ['tape'], notified: null, last_check: 0 };
+  const settings = { targets: { reaper: '/home/me/.config/REAPER', vst3: '/home/me/.vst3', clap: '/home/me/.clap', fonts: '/home/me/.local/share/fonts' }, formats: all, check_updates: true, notify: true, autostart: false, new_ids: ['tape'], notified: null, last_check: 0, held: [], language: '' };
   const view = () => {
     let installed = 0, outdated = 0;
     for (const m of Object.values(state)) for (const s of Object.values(m)) { installed += s.installed; outdated += s.outdated; }
@@ -153,8 +153,8 @@ function check(cond, what) {
   await page.uncheck('#set-formats input[value="clap"]');
   await page.check('#set-autostart');
   await page.click('#set-save');
-  await page.waitForFunction(() => window.__calls.some(([c]) => c === 'hub_save_settings'));
-  const saved = (await calls()).find(([c]) => c === 'hub_save_settings')[1].settings;
+  await page.waitForFunction(() => window.__calls.some(([c, a]) => c === 'hub_save_settings' && a.settings.autostart));
+  const saved = (await calls()).filter(([c]) => c === 'hub_save_settings').at(-1)[1].settings;
   check(JSON.stringify(saved.formats) === '["jsfx","gfx","vst3"]', 'Settings saves the default formats');
   check(saved.autostart === true && saved.notify === true && saved.check_updates === true, 'Settings saves start with the computer and notifications');
   if (shots) await page.screenshot({ path: path.join(shots, 'hub-settings.png') });
@@ -311,6 +311,46 @@ function check(cond, what) {
   await page.click('#c-ok');
   const imp = await nextApply(14);
   check(JSON.stringify(imp.install) === '[["tilt","jsfx"],["tilt","clap"]]' && JSON.stringify(imp.extras) === '["fonts"]', 'installs the missing plugin files and extras from the list');
+
+  // Greek: every part of the page, with nothing left untranslated
+  check((await calls()).some(([c, a]) => c === 'hub_save_settings' && a.settings.language === 'en'), 'the first start saves the computer\'s language (English here)');
+  await page.click('#nav button[data-view="settings"]');
+  await page.selectOption('#set-lang', 'el');
+  await page.waitForFunction(() => document.querySelector('#nav button[data-view="settings"]').textContent === 'Ρυθμίσεις');
+  check((await calls()).some(([c, a]) => c === 'hub_save_settings' && a.settings.language === 'el'), 'the language is saved');
+  check((await page.textContent('#view-settings h2')) === 'Ρυθμίσεις' && (await page.textContent('#verify')) === 'Έλεγχος εγκατεστημένων αρχείων', 'Settings in Greek');
+  check((await page.getAttribute('#search', 'placeholder')).startsWith('Αναζήτηση'), 'the search box in Greek');
+  for (const v of ['all', 'installed', 'extras', 'group:one-slider', 'news', 'settings']) await page.click(`#nav button[data-view="${v}"]`);
+  await page.click('#nav button[data-view="all"]');
+  check((await page.textContent('.card[data-id="amp_simulator"] .card-foot button')) === 'Εγκατάσταση', 'card buttons in Greek');
+  await page.click('.card[data-id="tilt"]');
+  check((await page.textContent('#d-play')) === 'Αναπαραγωγή', 'the plugin page in Greek');
+  if (shots) await page.screenshot({ path: path.join(shots, 'hub-greek.png') });
+  await page.click('#d-rollback');
+  await page.click('#c-cancel');
+  await page.keyboard.press('Escape');
+  await page.click('.card[data-id="delay"] button[data-act="remove"]');
+  await page.click('#c-cancel');
+  const missingEl = await page.evaluate(() => [...TR_MISSING]);
+  check(missingEl.length === 0, `every text shown has its Greek ${missingEl.join(' | ')}`);
+  // and every text the code can show, read from the sources
+  const vm = require('vm');
+  const ctx = {};
+  vm.runInNewContext(fs.readFileSync(path.join(hub, 'ui/i18n.js'), 'utf8') + ';this.EL = EL;', ctx);
+  const js = fs.readFileSync(path.join(hub, 'ui/hub.js'), 'utf8');
+  const html = fs.readFileSync(path.join(hub, 'ui/index.html'), 'utf8');
+  const keys = new Set();
+  for (const m of js.matchAll(/\btr\(\s*(?:[^()"'`]*\?\s*)?(["'])((?:(?!\1)[^\\]|\\.)*)\1(?:\s*:\s*(?:[^()"'`]*\?\s*)?(["'])((?:(?!\3)[^\\]|\\.)*)\3)*/g)) {
+    keys.add(m[2]);
+    if (m[4]) keys.add(m[4]);
+  }
+  for (const m of js.matchAll(/plural\([^,]+,\s*"([^"]+)",\s*"([^"]+)"\)/g)) { keys.add(m[1]); keys.add(m[2]); }
+  for (const m of html.matchAll(/<(\w+)[^>]*\sdata-t(?=[\s>])[^>]*>([^<]*)</g)) keys.add(m[2].replace(/\s+/g, ' ').trim().replace(/&gt;/g, '>').replace(/&amp;/g, '&'));
+  keys.delete('');
+  const noGreek = [...keys].filter((k) => !(k in ctx.EL));
+  check(keys.size > 100 && noGreek.length === 0, `all ${keys.size} texts in the sources have their Greek ${noGreek.join(' | ')}`);
+  await page.click('#nav button[data-view="settings"]');
+  await page.selectOption('#set-lang', 'en');
 
   // What's new
   await page.click('#nav button[data-view="news"]');

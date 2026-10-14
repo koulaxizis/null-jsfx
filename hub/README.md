@@ -59,6 +59,10 @@ Things worth knowing:
 - **Another computer** (Settings). "Save the list" writes `NULL-JSFX-Selection.json` (`Selection`:
   plugins with their formats, and the extras; no folders) to Downloads; "Install from a list" on
   the other computer installs what is missing there.
+- **Languages** (`ui/i18n.js`): English and Greek. The English text is the key and `EL` holds
+  its Greek; the first start follows the computer's language, Settings > Language changes it.
+  The tray menu and the notifications follow it too (`Settings::language`). Plugin texts come
+  from the catalog in English, like the site. `ui_test.cjs` fails on any text without Greek.
 - **Updating the Hub** (`app/src/selfupdate.rs`). "Update the Hub" downloads this system's Hub
   from the release and puts it in place: the Windows setup in passive mode, the macOS app copied
   out of the disk image, the AppImage replaced. A Hub installed from the .deb shows the file.
