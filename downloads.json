@@ -87,6 +87,18 @@
     "639491320": {
       "file": "2.2/NULL-JSFX-VST3-CLAP-macOS.zip",
       "count": 0
+    },
+    "639495207": {
+      "file": "2.2/NULL-JSFX-Installer-Linux.sh",
+      "count": 0
+    },
+    "639495343": {
+      "file": "2.2/NULL-JSFX-Installer-Windows.exe",
+      "count": 0
+    },
+    "639502739": {
+      "file": "2.2/NULL-JSFX-Installer-macOS.sh",
+      "count": 0
     }
   }
 }
