@@ -2242,6 +2242,7 @@ dependencies = [
 name = "null-jsfx-hub"
 version = "2.2.0"
 dependencies = [
+ "dirs 6.0.0",
  "null_hub_core",
  "serde",
  "serde_json",

@@ -96,6 +96,15 @@
           <span id="set-msg" class="muted"></span>
         </div>
         <div class="panel">
+          <h3>Another computer</h3>
+          <p class="muted">Save the list of what is installed here (plugins, formats and extras) to a small file, then open it in the Hub on the other computer to install the same. It holds no folders and nothing about this computer.</p>
+          <div class="row">
+            <button id="export" class="ghost">Save the list</button>
+            <button id="import" class="ghost">Install from a list</button>
+            <input type="file" id="import-file" accept=".json,application/json" hidden>
+          </div>
+        </div>
+        <div class="panel">
           <h3>Check and repair</h3>
           <p class="muted">Compares the installed plugin files with the release, file by file, and puts back the ones that are damaged, changed or missing. It reads the release's file list from GitHub and downloads only what needs repair.</p>
           <button id="verify" class="ghost">Check installed files</button>
@@ -127,6 +136,7 @@
         <div class="row">
           <button id="d-apply" class="primary" disabled>Apply</button>
           <button id="d-remove" class="ghost danger" hidden>Remove all formats</button>
+          <button id="d-rollback" class="ghost" hidden></button>
           <a id="d-guide" href="#" data-ext>Guide on nulljsfx.tech</a>
         </div>
         <div id="d-demo" hidden>

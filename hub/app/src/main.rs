@@ -169,6 +169,14 @@ async fn hub_self_update(handle: AppHandle) -> Result<Option<String>, String> {
     }
 }
 
+/// Saves what is installed to NULL-JSFX-Selection.json in Downloads (or home) and returns it.
+#[tauri::command]
+fn hub_export(app: tauri::State<App>) -> Result<String, String> {
+    let catalog = app.catalog.lock().unwrap().clone().ok_or("No catalog yet: connect to the internet and refresh.")?;
+    let dir = dirs::download_dir().or_else(dirs::home_dir).ok_or("No Downloads folder")?;
+    app.hub.lock().unwrap().export_selection(&catalog, &dir).map(|p| paths::display(&p))
+}
+
 #[tauri::command]
 fn hub_save_settings(handle: AppHandle, settings: Settings) -> Result<View, String> {
     let app = handle.state::<App>();
@@ -234,6 +242,7 @@ fn main() {
             hub_hosts,
             hub_verify,
             hub_self_update,
+            hub_export,
             hub_save_settings,
             hub_default_targets
         ])
