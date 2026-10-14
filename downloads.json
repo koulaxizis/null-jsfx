@@ -1,6 +1,6 @@
 {
-  "display": 250,
-  "total": 271,
+  "display": 500,
+  "total": 508,
   "offset": 0,
   "updated": "2026-10-14",
   "assets": {
@@ -26,7 +26,7 @@
     },
     "638417306": {
       "file": "2.1/NULL-JSFX-JSFX.zip",
-      "count": 63
+      "count": 75
     },
     "638433279": {
       "file": "2.1/NULL-JSFX-VST3-CLAP-Windows.zip",
@@ -38,7 +38,7 @@
     },
     "638488962": {
       "file": "2.1/NULL-JSFX-VST3-CLAP-Linux.zip",
-      "count": 52
+      "count": 64
     },
     "638492930": {
       "file": "2.1/NULL-JSFX-Installer-Linux.sh",
@@ -54,11 +54,11 @@
     },
     "639422904": {
       "file": "2.2/NULL-JSFX-Catalog.json",
-      "count": 5
+      "count": 7
     },
     "639423208": {
       "file": "2.2/NULL-JSFX-JSFX.zip",
-      "count": 48
+      "count": 168
     },
     "639432088": {
       "file": "2.2/NULL-JSFX-Hub-Windows-Setup.exe",
@@ -82,7 +82,7 @@
     },
     "639482506": {
       "file": "2.2/NULL-JSFX-VST3-CLAP-Linux.zip",
-      "count": 26
+      "count": 117
     },
     "639491320": {
       "file": "2.2/NULL-JSFX-VST3-CLAP-macOS.zip",
