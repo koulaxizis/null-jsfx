@@ -15,6 +15,7 @@ const shots = process.argv[2];
 const catalogFile = path.join(fs.mkdtempSync(path.join(require('os').tmpdir(), 'hub-')), 'catalog.json');
 execFileSync('python3', [path.join(root, 'tools/build_catalog.py'), '--version', '2.2', '--out', catalogFile]);
 const catalog = JSON.parse(fs.readFileSync(catalogFile, 'utf8'));
+catalog.previous = ['2.1'];
 catalog.notes = '## New\n- **NULL JSFX Hub**: install and update from one place\n- Faster `Delay`\n\nThanks for using NULL JSFX.';
 
 const { mock } = require('./mock.cjs');
@@ -108,8 +109,8 @@ function check(cond, what) {
   await page.uncheck('#set-formats input[value="clap"]');
   await page.check('#set-autostart');
   await page.click('#set-save');
-  await page.waitForFunction(() => window.__calls.some(([c]) => c === 'hub_save_settings'));
-  const saved = (await calls()).find(([c]) => c === 'hub_save_settings')[1].settings;
+  await page.waitForFunction(() => window.__calls.some(([c, a]) => c === 'hub_save_settings' && a.settings.autostart));
+  const saved = (await calls()).filter(([c]) => c === 'hub_save_settings').at(-1)[1].settings;
   check(JSON.stringify(saved.formats) === '["jsfx","gfx","vst3"]', 'Settings saves the default formats');
   check(saved.autostart === true && saved.notify === true && saved.check_updates === true, 'Settings saves start with the computer and notifications');
   if (shots) await page.screenshot({ path: path.join(shots, 'hub-settings.png') });
@@ -234,6 +235,78 @@ function check(cond, what) {
   await page.click('#hub-self');
   await page.waitForFunction(() => window.__calls.some(([c, p]) => c === 'reveal' && String(p).endsWith('.AppImage')));
   check((await calls()).some(([c]) => c === 'hub_self_update'), 'Update the Hub downloads it in the Hub, and shows the file when it has to be opened by hand');
+
+  // roll Delay back to the release before, then update it again
+  await page.click('#nav button[data-view="all"]');
+  await page.click('.card[data-id="delay"]');
+  check((await page.textContent('#d-rollback')) === 'Roll back to 2.1', 'the plugin page offers the release before');
+  await page.click('#d-rollback');
+  check((await page.textContent('#c-title')) === 'Roll Delay back to 2.1?', 'roll back asks first');
+  await page.click('#c-ok');
+  const back = await nextApply(12);
+  check(back.from === '2.1' && back.install.length === 4 && back.install.every(([id]) => id === 'delay'), 'roll back installs every format of Delay from 2.1');
+  check((await page.textContent('#d-formats')).includes('kept at 2.1'), 'the plugin page says it is kept at 2.1');
+  check((await page.textContent('#d-rollback')) === 'Update to 2.2', 'and offers to update it again');
+  await page.click('#d-rollback');
+  const fwd = await nextApply(13);
+  check(!fwd.from && fwd.install.length === 4, 'Update installs the latest again');
+  await page.keyboard.press('Escape');
+
+  // the list for another computer: save it, then install from one
+  await page.click('#nav button[data-view="settings"]');
+  await page.click('#export');
+  await page.waitForFunction(() => window.__calls.some(([c, p]) => c === 'reveal' && String(p).endsWith('Selection.json')));
+  check((await calls()).some(([c]) => c === 'hub_export'), 'Save the list writes the file and shows it');
+  await page.setInputFiles('#import-file', { name: 'bad.json', mimeType: 'application/json', buffer: Buffer.from('{"x":1}') });
+  await page.waitForFunction(() => document.getElementById('toast').textContent.includes('not a NULL JSFX list'));
+  check(true, 'a file that is not a list is refused');
+  const list = { kind: 'null-jsfx-selection', release: '2.2', plugins: { tilt: ['jsfx', 'clap'], delay: ['jsfx'], nope: ['jsfx'] }, extras: ['fonts'] };
+  await page.setInputFiles('#import-file', { name: 'NULL-JSFX-Selection.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(list)) });
+  await page.waitForSelector('#confirm:not([hidden])');
+  check((await page.textContent('#c-title')) === 'Install 1 plugin from the list?', 'the list asks for what is missing here');
+  await page.click('#c-ok');
+  const imp = await nextApply(14);
+  check(JSON.stringify(imp.install) === '[["tilt","jsfx"],["tilt","clap"]]' && JSON.stringify(imp.extras) === '["fonts"]', 'installs the missing plugin files and extras from the list');
+
+  // Greek: every part of the page, with nothing left untranslated
+  check((await calls()).some(([c, a]) => c === 'hub_save_settings' && a.settings.language === 'en'), 'the first start saves the computer\'s language (English here)');
+  await page.click('#nav button[data-view="settings"]');
+  await page.selectOption('#set-lang', 'el');
+  await page.waitForFunction(() => document.querySelector('#nav button[data-view="settings"]').textContent === 'Ρυθμίσεις');
+  check((await calls()).some(([c, a]) => c === 'hub_save_settings' && a.settings.language === 'el'), 'the language is saved');
+  check((await page.textContent('#view-settings h2')) === 'Ρυθμίσεις' && (await page.textContent('#verify')) === 'Έλεγχος εγκατεστημένων αρχείων', 'Settings in Greek');
+  check((await page.getAttribute('#search', 'placeholder')).startsWith('Αναζήτηση'), 'the search box in Greek');
+  for (const v of ['all', 'installed', 'extras', 'group:one-slider', 'news', 'settings']) await page.click(`#nav button[data-view="${v}"]`);
+  await page.click('#nav button[data-view="all"]');
+  check((await page.textContent('.card[data-id="amp_simulator"] .card-foot button')) === 'Εγκατάσταση', 'card buttons in Greek');
+  await page.click('.card[data-id="tilt"]');
+  check((await page.textContent('#d-play')) === 'Αναπαραγωγή', 'the plugin page in Greek');
+  if (shots) await page.screenshot({ path: path.join(shots, 'hub-greek.png') });
+  await page.click('#d-rollback');
+  await page.click('#c-cancel');
+  await page.keyboard.press('Escape');
+  await page.click('.card[data-id="delay"] button[data-act="remove"]');
+  await page.click('#c-cancel');
+  const missingEl = await page.evaluate(() => [...TR_MISSING]);
+  check(missingEl.length === 0, `every text shown has its Greek ${missingEl.join(' | ')}`);
+  // and every text the code can show, read from the sources
+  const vm = require('vm');
+  const ctx = {};
+  vm.runInNewContext(fs.readFileSync(path.join(hub, 'ui/i18n.js'), 'utf8') + ';this.EL = EL;', ctx);
+  const js = fs.readFileSync(path.join(hub, 'ui/hub.js'), 'utf8');
+  const html = fs.readFileSync(path.join(hub, 'ui/index.html'), 'utf8');
+  const keys = new Set();
+  for (const m of js.matchAll(/\btr\(\s*(?:[^()"'`]*\?\s*)?(["'])((?:(?!\1)[^\\]|\\.)*)\1(?:\s*:\s*(?:[^()"'`]*\?\s*)?(["'])((?:(?!\3)[^\\]|\\.)*)\3)*/g)) {
+    keys.add(m[2]);
+    if (m[4]) keys.add(m[4]);
+  }
+  for (const m of js.matchAll(/plural\([^,]+,\s*"([^"]+)",\s*"([^"]+)"\)/g)) { keys.add(m[1]); keys.add(m[2]); }
+  for (const m of html.matchAll(/<(\w+)[^>]*\sdata-t(?=[\s>])[^>]*>([^<]*)</g)) keys.add(m[2].replace(/\s+/g, ' ').trim().replace(/&gt;/g, '>').replace(/&amp;/g, '&'));
+  keys.delete('');
+  const noGreek = [...keys].filter((k) => !(k in ctx.EL));
+  check(keys.size > 100 && noGreek.length === 0, `all ${keys.size} texts in the sources have their Greek ${noGreek.join(' | ')}`);
+  await page.click('#nav button[data-view="settings"]');
+  await page.selectOption('#set-lang', 'en');
 
   // What's new
   await page.click('#nav button[data-view="news"]');

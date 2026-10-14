@@ -2,7 +2,7 @@ desc:NULL Pitch Correction GFX
 author: Christos Koulaxizis
 tags: pitch correction auto tune autotune vocal tuning key scale retune hard tune psola gui
 //category: Advanced
-//NULL JSFX v2.2 • https://nulljsfx.tech • MIT License
+//NULL JSFX v2.3 • https://nulljsfx.tech • MIT License
 
 import null_gfx.jsfx-inc
 

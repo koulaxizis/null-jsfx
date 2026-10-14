@@ -2,7 +2,7 @@ desc:NULL Maximizer GFX
 author: Christos Koulaxizis
 tags: limiter maximizing loudness ceiling mastering peak protection dither gui
 //category: Essentials
-//NULL JSFX v2.2 • https://nulljsfx.tech • MIT License
+//NULL JSFX v2.3 • https://nulljsfx.tech • MIT License
 
 import null_gfx.jsfx-inc
 

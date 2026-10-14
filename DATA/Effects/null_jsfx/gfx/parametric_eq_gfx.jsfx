@@ -2,7 +2,7 @@ desc:NULL Parametric EQ GFX
 author: Christos Koulaxizis
 tags: equalizer parametric eq 5-band shelving filter mixing mastering gui
 //category: Essentials
-//NULL JSFX v2.2 • https://nulljsfx.tech • MIT License
+//NULL JSFX v2.3 • https://nulljsfx.tech • MIT License
 
 import null_gfx.jsfx-inc
 

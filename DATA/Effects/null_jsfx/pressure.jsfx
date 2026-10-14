@@ -2,7 +2,7 @@ desc:NULL Pressure
 author: Christos Koulaxizis
 tags: compressor dynamics leveling glue squash
 //category: One Slider
-//NULL JSFX v2.2 • https://nulljsfx.tech • MIT License
+//NULL JSFX v2.3 • https://nulljsfx.tech • MIT License
 
 slider1:50<0,100,1>Amount
 

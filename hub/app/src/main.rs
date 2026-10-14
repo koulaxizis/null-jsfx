@@ -75,11 +75,50 @@ fn check(handle: &AppHandle) -> Result<(), String> {
     };
     let visible = handle.get_webview_window("main").and_then(|w| w.is_visible().ok()).unwrap_or(false);
     if let (Some(text), false) = (note, visible) {
-        let _ = handle.notification().builder().title("NULL JSFX Hub").body(format!("{text} Open the Hub from the tray to update.")).show();
+        let more = words(handle).open_to_update;
+        let _ = handle.notification().builder().title("NULL JSFX Hub").body(format!("{text} {more}")).show();
     }
     let _ = handle.emit("hub-changed", ());
     update_tray(handle);
     Ok(())
+}
+
+/// The few words the window does not show: the tray and the notifications.
+struct Words {
+    open: &'static str,
+    check: &'static str,
+    quit: &'static str,
+    updates: &'static str,
+    open_to_update: &'static str,
+}
+
+fn words(handle: &AppHandle) -> Words {
+    let el = handle.state::<App>().hub.lock().map(|h| h.settings.language == "el").unwrap_or(false);
+    if el {
+        Words {
+            open: "Άνοιγμα του NULL JSFX Hub",
+            check: "Έλεγχος για ενημερώσεις",
+            quit: "Έξοδος",
+            updates: "ενημερώσεις",
+            open_to_update: "Άνοιξε το Hub από την περιοχή ειδοποιήσεων για ενημέρωση.",
+        }
+    } else {
+        Words {
+            open: "Open NULL JSFX Hub",
+            check: "Check for updates",
+            quit: "Quit",
+            updates: "updates",
+            open_to_update: "Open the Hub from the tray to update.",
+        }
+    }
+}
+
+fn tray_menu(handle: &AppHandle) -> tauri::Result<Menu<tauri::Wry>> {
+    let w = words(handle);
+    let open = MenuItem::with_id(handle, "open", w.open, true, None::<&str>)?;
+    let look = MenuItem::with_id(handle, "check", w.check, true, None::<&str>)?;
+    let quit = MenuItem::with_id(handle, "quit", w.quit, true, None::<&str>)?;
+    Menu::with_items(handle, &[&open, &look, &quit])
 }
 
 /// What the Hub knew last time (works offline).
@@ -169,14 +208,30 @@ async fn hub_self_update(handle: AppHandle) -> Result<Option<String>, String> {
     }
 }
 
+/// Saves what is installed to NULL-JSFX-Selection.json in Downloads (or home) and returns it.
+#[tauri::command]
+fn hub_export(app: tauri::State<App>) -> Result<String, String> {
+    let catalog = app.catalog.lock().unwrap().clone().ok_or("No catalog yet: connect to the internet and refresh.")?;
+    let dir = dirs::download_dir().or_else(dirs::home_dir).ok_or("No Downloads folder")?;
+    app.hub.lock().unwrap().export_selection(&catalog, &dir).map(|p| paths::display(&p))
+}
+
 #[tauri::command]
 fn hub_save_settings(handle: AppHandle, settings: Settings) -> Result<View, String> {
     let app = handle.state::<App>();
     let autostart = settings.autostart;
-    {
+    let relabel = {
         let mut hub = app.hub.lock().unwrap();
+        let relabel = hub.settings.language != settings.language;
         hub.settings = settings;
         hub.save_settings()?;
+        relabel
+    };
+    if relabel {
+        if let (Some(tray), Ok(menu)) = (handle.tray_by_id("hub"), tray_menu(&handle)) {
+            let _ = tray.set_menu(Some(menu));
+        }
+        update_tray(&handle);
     }
     let launcher = handle.autolaunch();
     let now = launcher.is_enabled().unwrap_or(false);
@@ -205,7 +260,7 @@ fn update_tray(handle: &AppHandle) {
     let app = handle.state::<App>();
     let n = app.catalog.lock().unwrap().as_ref().map(|c| app.hub.lock().unwrap().scan(c).outdated).unwrap_or(0);
     if let Some(tray) = handle.tray_by_id("hub") {
-        let tip = if n > 0 { format!("NULL JSFX Hub: {n} updates") } else { "NULL JSFX Hub".to_string() };
+        let tip = if n > 0 { format!("NULL JSFX Hub: {n} {}", words(handle).updates) } else { "NULL JSFX Hub".to_string() };
         let _ = tray.set_tooltip(Some(tip));
     }
 }
@@ -234,15 +289,13 @@ fn main() {
             hub_hosts,
             hub_verify,
             hub_self_update,
+            hub_export,
             hub_save_settings,
             hub_default_targets
         ])
         .setup(move |app| {
             let handle = app.handle().clone();
-            let open = MenuItem::with_id(app, "open", "Open NULL JSFX Hub", true, None::<&str>)?;
-            let look = MenuItem::with_id(app, "check", "Check for updates", true, None::<&str>)?;
-            let quit = MenuItem::with_id(app, "quit", "Quit", true, None::<&str>)?;
-            let menu = Menu::with_items(app, &[&open, &look, &quit])?;
+            let menu = tray_menu(&handle)?;
             TrayIconBuilder::with_id("hub")
                 .icon(app.default_window_icon().cloned().expect("app icon"))
                 .tooltip("NULL JSFX Hub")

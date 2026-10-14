@@ -11,7 +11,7 @@ function mock(catalog) {
   state.tilt.jsfx = { installed: true, version: '2.1', outdated: true };
   const extras = Object.fromEntries(catalog.extras.map((x) => [x.id, { installed: false, version: null, outdated: false }]));
   extras.chains = { installed: true, version: null, outdated: true }; // from the installer
-  const settings = { targets: { reaper: '/home/me/.config/REAPER', vst3: '/home/me/.vst3', clap: '/home/me/.clap', fonts: '/home/me/.local/share/fonts' }, formats: all, check_updates: true, notify: true, autostart: false, new_ids: ['tape'], notified: null, last_check: 0 };
+  const settings = { targets: { reaper: '/home/me/.config/REAPER', vst3: '/home/me/.vst3', clap: '/home/me/.clap', fonts: '/home/me/.local/share/fonts' }, formats: all, check_updates: true, notify: true, autostart: false, new_ids: ['tape'], notified: null, last_check: 0, held: [], language: '' };
   const view = () => {
     let installed = 0, outdated = 0;
     for (const m of Object.values(state)) for (const s of Object.values(m)) { installed += s.installed; outdated += s.outdated; }
@@ -28,6 +28,7 @@ function mock(catalog) {
         if (cmd === 'hub_load' || cmd === 'hub_refresh') return view();
         if (cmd === 'hub_default_targets') return settings.targets;
         if (cmd === 'hub_hosts') return window.__hosts || [];
+        if (cmd === 'hub_export') return '/home/me/Downloads/NULL-JSFX-Selection.json';
         if (cmd === 'hub_verify') return window.__broken || [];
         if (cmd === 'hub_self_update') return '/home/me/.local/share/null-jsfx/hub-update/2.2/NULL-JSFX-Hub-Linux.AppImage';
         if (cmd === 'hub_save_settings') { Object.assign(settings, args.settings); return view(); }
@@ -36,7 +37,8 @@ function mock(catalog) {
           progress(0, 24e6);
           // the Hub video (tools/video/hub_tour.cjs) sets __applyMs so the progress can be seen
           for (let i = 1; i <= 10 && catalog.__applyMs; i++) { await new Promise((r) => setTimeout(r, catalog.__applyMs / 10)); progress(i * 2.4e6, 24e6); }
-          for (const [id, f] of args.request.install) state[id][f] = { installed: true, version: catalog.version, outdated: false };
+          const from = args.request.from;
+          for (const [id, f] of args.request.install) state[id][f] = { installed: true, version: from || catalog.version, outdated: false, held: !!from };
           for (const [id, f] of args.request.remove) state[id][f] = { installed: false, version: null, outdated: false };
           for (const id of args.request.extras || []) extras[id] = { installed: true, version: catalog.version, outdated: false };
           for (const id of args.request.extras_remove || []) extras[id] = { installed: false, version: null, outdated: false };

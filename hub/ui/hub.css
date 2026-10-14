@@ -71,7 +71,7 @@ button.ghost { background: transparent; }
 }
 .side button {
   text-align: left; background: transparent; border: 0; border-radius: 6px; padding: 7px 10px;
-  display: flex; justify-content: space-between; color: var(--muted);
+  display: flex; justify-content: space-between; gap: 8px; color: var(--muted);
 }
 .side button:hover { color: var(--text); background: var(--card); }
 .side button.active { color: var(--text); background: var(--card-hi); }
@@ -128,7 +128,8 @@ main { flex: 1; overflow-y: auto; padding: 18px 22px 80px; }
 .formats-table .st { font-size: 12px; color: var(--muted); text-align: right; }
 .formats-table .st.old { color: var(--warn); }
 .formats-table .desc { font-size: 12px; color: var(--muted); }
-.row { display: flex; align-items: center; gap: 14px; margin: 8px 0; }
+.row { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; margin: 8px 0; }
+.row button { white-space: nowrap; }
 .sliders { display: grid; grid-template-columns: max-content 1fr; gap: 4px 14px; font-size: 13px; }
 .sliders dt { color: var(--text); }
 .sliders dd { color: var(--muted); }
@@ -195,3 +196,4 @@ button.primary.danger:hover:not(:disabled) { background: #eb9285; }
 /* the plugin page's demo: one player, switching between the plugin and the dry music */
 .ab { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
 .ab #d-play { min-width: 76px; }
+select { font: inherit; font-size: 13px; color: var(--text); background: var(--bg2); border: 1px solid var(--border); border-radius: 6px; padding: 6px 10px; }

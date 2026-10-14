@@ -2,7 +2,7 @@ desc:NULL Transient Shaper
 author: Christos Koulaxizis
 tags: transient attack sustain punch envelope dynamics shaping
 //category: Essentials
-//NULL JSFX v2.2 • https://nulljsfx.tech • MIT License
+//NULL JSFX v2.3 • https://nulljsfx.tech • MIT License
 
 slider1:0<-20,20,0.1>Attack (dB)
 slider2:0<-20,20,0.1>Sustain (dB)

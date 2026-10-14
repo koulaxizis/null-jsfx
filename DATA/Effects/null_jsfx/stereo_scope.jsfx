@@ -2,7 +2,7 @@ desc:NULL Stereo Scope
 author: Christos Koulaxizis
 tags: stereo scope goniometer vectorscope lissajous correlation phase balance width meter analyzer metering
 //category: Advanced
-//NULL JSFX v2.2 • https://nulljsfx.tech • MIT License
+//NULL JSFX v2.3 • https://nulljsfx.tech • MIT License
 
 slider1:0<-12,24,0.5>Scope Gain (dB)
 slider2:1<0,1,1{Off,On}>Auto Gain

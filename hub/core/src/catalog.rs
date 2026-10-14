@@ -138,6 +138,9 @@ pub struct Catalog {
     pub site: String,
     pub packages: Packages,
     pub hub: HubInfo,
+    /// earlier releases with the same packages, newest first (to roll a plugin back)
+    #[serde(default)]
+    pub previous: Vec<String>,
     /// the music of the demos without any plugin
     #[serde(default)]
     pub demo_dry: Option<String>,

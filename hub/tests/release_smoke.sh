@@ -51,6 +51,17 @@ printf 'x' >> "$so"
 grep -q "damaged: delay:vst3" "$work/out.txt"
 "$cli" --root "$work/root" repair | tee "$work/out.txt"
 if grep -q "damaged" "$work/out.txt"; then exit 1; fi
+# roll back to the release before (when there is one): held there, then up to date again
+prev=$(python3 -c 'import json,sys; p=json.load(open(sys.argv[1]))["previous"]; print(p[0] if p else "")' "$work/catalog.json")
+if [ -n "$prev" ]; then
+  "$cli" --root "$work/root" rollback tilt:jsfx delay:vst3 | tee "$work/out.txt"
+  grep -q "tilt: jsfx@$prev " "$work/out.txt"
+  grep -q "delay: vst3@$prev" "$work/out.txt"
+  grep -q "0 to update" "$work/out.txt"
+  grep -q "NULL JSFX v$prev" "$work/root/REAPER/Effects/null_jsfx/tilt.jsfx"
+  "$cli" --root "$work/root" install tilt:jsfx delay:vst3 | tee "$work/out.txt"
+  grep -q "tilt: jsfx@$tag " "$work/out.txt"
+fi
 # the extras: Filter's FX chain comes with Filter, factory presets land in REAPER's presets
 "$cli" --root "$work/root" install filter:jsfx rack:vst3 extra:chains extra:presets | tee "$work/out.txt"
 grep -q "extra chains" "$work/out.txt"

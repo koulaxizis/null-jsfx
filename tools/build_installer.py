@@ -8,6 +8,11 @@ the formats (JSFX, JSFX GFX, VST3, CLAP), the plugins (by group or one by one) a
                  NULL-JSFX-Installer-Windows.exe.
   Linux, macOS   writes NULL-JSFX-Installer-<OS>.sh: installer/unix/install.sh with the plugin
                  list filled in and both packages appended as a .tar.gz.
+  macOS          also writes NULL-JSFX-Installer-macOS.pkg (pkgbuild and productbuild, so only on
+                 a Mac): one part per format and group plus the extras, picked under Customize,
+                 installed into the user's home (no password); installer/macos/postinstall adds
+                 the presets and FX chains, installer/macos/uninstall.command removes it all.
+                 --pkg-root DIR stops before pkgbuild and leaves the parts in DIR (for tests).
 
 The plugin list (names, groups, which have GFX and VST3/CLAP) comes from the .jsfx headers and
 the packages themselves, and every FX chain lists the plugins it uses, so the installers add a
@@ -19,10 +24,13 @@ Usage: build_installer.py --os Windows|Linux|macOS --jsfx <NULL-JSFX-JSFX dir>
                           --native <NULL-JSFX-VST3-CLAP-<OS> dir> --version <v> --out <dir>
 """
 import argparse
+import html
 import io
 import os
+import plistlib
 import re
 import shutil
+import subprocess
 import sys
 import tarfile
 from pathlib import Path
@@ -188,6 +196,203 @@ def clean(info):
     return info
 
 
+# --- macOS (.pkg) ------------------------------------------------------------------------------
+
+PKG_ID = "tech.nulljsfx.pkg"
+REAPER_REL = "Library/Application Support/REAPER"
+DATA_REL = "Library/Application Support/NULL JSFX"
+FORMAT_TITLES = [("jsfx", "JSFX for REAPER"), ("gfx", "JSFX with the NULL look (GFX)"), ("vst3", "VST3"), ("clap", "CLAP")]
+
+
+class Part:
+    """One component package: its files under a root that stands for the user's home."""
+
+    def __init__(self, base, key, title, about, on=True):
+        self.key, self.title, self.about, self.on = key, title, about, on
+        self.root = base / "roots" / key
+        self.files = []
+
+    def put(self, src, rel):
+        dest = self.root / rel
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        if src.is_dir():
+            shutil.copytree(src, dest, dirs_exist_ok=True)
+        else:
+            shutil.copy2(src, dest)
+        self.files.append(rel)
+
+    def stage(self, src, rel):
+        """For the postinstall script: copied to the staging folder, not noted for removal."""
+        dest = self.root / DATA_REL / "staging" / rel
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(src, dest)
+
+    def finish(self):
+        receipt = self.root / DATA_REL / "receipts" / f"{self.key}.txt"
+        receipt.parent.mkdir(parents=True, exist_ok=True)
+        receipt.write_text("".join(f"{f}\n" for f in sorted(set(self.files))), encoding="utf-8")
+
+
+def pkg_parts(args, plugs, chain_list, base):
+    """[(choice group title or None, [Part])] in install order (the FX chains last)."""
+    jsfx, native = args.jsfx.resolve(), args.native.resolve()
+    tree = []
+    for fmt, ftitle in FORMAT_TITLES:
+        parts = []
+        for gtitle, _, gkey in GROUPS:
+            members = [p for p in plugs if p[2] == gtitle and (fmt in ("jsfx", "gfx") or p[4]) and (fmt != "gfx" or p[3])]
+            if not members:
+                continue
+            part = Part(base, f"{fmt}.{gkey}", f"{gtitle} ({len(members)})",
+                        f"{ftitle}: " + ", ".join(p[1] for p in members))
+            for stem, *_ in members:
+                if fmt == "jsfx":
+                    part.put(jsfx / "null_jsfx" / f"{stem}.jsfx", f"{REAPER_REL}/Effects/null_jsfx/{stem}.jsfx")
+                    effect = f"null_jsfx/{stem}.jsfx"
+                elif fmt == "gfx":
+                    part.put(jsfx / "null_jsfx/gfx" / f"{stem}_gfx.jsfx", f"{REAPER_REL}/Effects/null_jsfx/gfx/{stem}_gfx.jsfx")
+                    effect = f"null_jsfx/gfx/{stem}_gfx.jsfx"
+                else:
+                    name = f"null_jsfx_{stem}.{fmt}"
+                    part.put(native / fmt.upper() / "NULL JSFX" / name, f"Library/Audio/Plug-Ins/{fmt.upper()}/NULL JSFX/{name}")
+                    continue
+                ini = jsfx / "presets" / ini_name(effect)
+                if not ini.is_file():
+                    sys.exit(f"build_installer: missing {ini}")
+                part.stage(ini, f"presets/{ini.name}")
+            if fmt == "gfx":
+                part.put(jsfx / "null_jsfx/gfx/null_gfx.jsfx-inc", f"{REAPER_REL}/Effects/null_jsfx/gfx/null_gfx.jsfx-inc")
+            parts.append(part)
+        if fmt in ("vst3", "clap"):
+            part = Part(base, f"{fmt}.rack", "Rack", "Several NULL JSFX plugins in one, in any order")
+            name = f"null_jsfx_rack.{fmt}"
+            part.put(native / fmt.upper() / "NULL JSFX" / name, f"Library/Audio/Plug-Ins/{fmt.upper()}/NULL JSFX/{name}")
+            parts.append(part)
+        tree.append((ftitle, parts))
+    extras = []
+    part = Part(base, "remote", "Tablet remote for REAPER", "Control the NULL JSFX plugins from a tablet or phone", on=False)
+    part.put(jsfx / "Remote/reaper_www_root/null_jsfx.html", f"{REAPER_REL}/reaper_www_root/null_jsfx.html")
+    part.put(jsfx / "Remote/Scripts/null_jsfx_remote_bridge.lua", f"{REAPER_REL}/Scripts/null_jsfx_remote_bridge.lua")
+    part.put(jsfx / "Remote/INSTALL.txt", f"{DATA_REL}/Remote-INSTALL.txt")
+    extras.append(part)
+    part = Part(base, "fonts", "Noto Sans", "The font of the NULL look, for the GFX versions")
+    for font in ("NotoSans-Regular.ttf", "NotoSans-Bold.ttf"):
+        part.put(jsfx / "fonts" / font, f"Library/Fonts/{font}")
+    part.put(jsfx / "fonts/OFL.txt", f"{DATA_REL}/NotoSans-OFL.txt")
+    extras.append(part)
+    # the chains go in last: postinstall adds only those whose plugins are installed by then
+    part = Part(base, "chains", "REAPER FX chains", "Ready chains of NULL JSFX plugins, for the JSFX versions you install")
+    for folder, name, _ in chain_list:
+        part.stage(jsfx / "FXChains" / folder / name, f"chains/{folder}/{name}")
+    lines = "".join(f"{folder}|{name}|{' '.join(uses)}\n" for folder, name, uses in chain_list)
+    (part.root / DATA_REL / "staging/chains/chains.txt").write_text(lines, encoding="utf-8")
+    extras.append(part)
+    tree.append(("Extras", extras))
+    core = Part(base, "base", "NULL JSFX", "")
+    core.put(jsfx / "INSTALL.txt", f"{DATA_REL}/INSTALL.txt")
+    core.put(ROOT / "installer/macos/uninstall.command", f"{DATA_REL}/Uninstall NULL JSFX.command")
+    os.chmod(core.root / DATA_REL / "Uninstall NULL JSFX.command", 0o755)
+    tree.insert(0, (None, [core]))
+    for _, parts in tree:
+        for part in parts:
+            part.finish()
+    return tree
+
+
+def distribution(tree, version):
+    e = lambda s: html.escape(s, quote=True)  # noqa: E731
+    gid = lambda title: "group." + re.sub(r"[^a-z0-9]+", "-", title.lower()).strip("-")  # noqa: E731
+    parts = [p for _, ps in tree for p in ps]
+    out = ['<?xml version="1.0" encoding="utf-8"?>', '<installer-gui-script minSpecVersion="2">',
+           f"  <title>NULL JSFX {e(version)}</title>",
+           '  <welcome file="welcome.html" mime-type="text/html"/>',
+           '  <license file="LICENSE.txt"/>',
+           '  <conclusion file="conclusion.html" mime-type="text/html"/>',
+           '  <options customize="always" require-scripts="false" hostArchitectures="arm64,x86_64"/>',
+           '  <domains enable_anywhere="false" enable_currentUserHome="true" enable_localSystem="false"/>',
+           "  <choices-outline>"]
+    for title, ps in tree:
+        if title is None:
+            out += [f'    <line choice="{p.key}"/>' for p in ps]
+            continue
+        out.append(f'    <line choice="{gid(title)}">')
+        out += [f'      <line choice="{p.key}"/>' for p in ps]
+        out.append("    </line>")
+    out.append("  </choices-outline>")
+    for title, ps in tree:
+        if title is not None:
+            out.append(f'  <choice id="{gid(title)}" title="{e(title)}"/>')
+        for p in ps:
+            hidden = ' visible="false" enabled="false"' if title is None else ""
+            off = "" if p.on else ' start_selected="false"'
+            out.append(f'  <choice id="{p.key}" title="{e(p.title)}" description="{e(p.about)}"{hidden}{off}>')
+            out.append(f'    <pkg-ref id="{PKG_ID}.{p.key}"/>')
+            out.append("  </choice>")
+    for p in parts:
+        out.append(f'  <pkg-ref id="{PKG_ID}.{p.key}" version="{e(version)}" onConclusion="none">{p.key}.pkg</pkg-ref>')
+    out.append("</installer-gui-script>")
+    return "\n".join(out) + "\n"
+
+
+def pkg_resources(res, version):
+    res.mkdir(parents=True, exist_ok=True)
+    shutil.copy(ROOT / "LICENSE.md", res / "LICENSE.txt")
+    style = "<style>body{font-family:-apple-system,Helvetica,sans-serif;font-size:13px;line-height:1.5}</style>"
+    (res / "welcome.html").write_text(
+        f"<html><head>{style}</head><body><h2>NULL JSFX {html.escape(version)}</h2>"
+        "<p>Free and open source audio plugins (MIT). Under <b>Customize</b> you pick the formats "
+        "(JSFX for REAPER, JSFX with the NULL look, VST3, CLAP), the groups of plugins and the extras.</p>"
+        "<p>Everything goes into your own Library folder, so no password is needed: REAPER's "
+        "resource folder, Library/Audio/Plug-Ins/VST3 and CLAP. For one plugin at a time, and for "
+        "updates, use the NULL JSFX Hub from <a href=\"https://nulljsfx.tech\">nulljsfx.tech</a>.</p>"
+        "</body></html>\n", encoding="utf-8")
+    (res / "conclusion.html").write_text(
+        f"<html><head>{style}</head><body><h2>Done</h2>"
+        "<p>Restart REAPER or your DAW, or rescan its plugins, to see NULL JSFX.</p>"
+        "<p>To remove it later, open Library/Application Support/NULL JSFX in your home folder and "
+        "double-click <b>Uninstall NULL JSFX.command</b>.</p>"
+        "<p>NULL JSFX is free and stays free. If it helps your music, you can support it on "
+        "<a href=\"https://ko-fi.com/koulaxizis\">Ko-fi</a>.</p></body></html>\n", encoding="utf-8")
+
+
+def macos_pkg(args, plugs, chain_list):
+    base = (args.pkg_root or args.out / "pkg-build").resolve()
+    shutil.rmtree(base, ignore_errors=True)
+    tree = pkg_parts(args, plugs, chain_list, base)
+    (base / "Distribution.xml").write_text(distribution(tree, args.version), encoding="utf-8")
+    pkg_resources(base / "resources", args.version)
+    scripts = base / "scripts"
+    scripts.mkdir()
+    shutil.copy(ROOT / "installer/macos/postinstall", scripts / "postinstall")
+    os.chmod(scripts / "postinstall", 0o755)
+    count = sum(len(ps) for _, ps in tree)
+    if args.pkg_root:
+        print(f"build_installer: {base}: {count} parts (no pkgbuild)")
+        return
+    if not shutil.which("pkgbuild"):
+        sys.exit("build_installer: the .pkg needs pkgbuild and productbuild (macOS)")
+    comps = base / "components"
+    comps.mkdir()
+    version = re.sub(r"[^0-9.]", "", args.version) or "0"
+    for _, ps in tree:
+        for p in ps:
+            plist = base / f"{p.key}.plist"
+            subprocess.run(["pkgbuild", "--analyze", "--root", p.root, plist], check=True, capture_output=True)
+            bundles = plistlib.loads(plist.read_bytes())
+            # in place, always: a relocatable bundle would go wherever the system finds one like it
+            for b in bundles:
+                b["BundleIsRelocatable"] = False
+                b["BundleOverwriteAction"] = "upgrade"
+            plist.write_bytes(plistlib.dumps(bundles))
+            subprocess.run(["pkgbuild", "--root", p.root, "--component-plist", plist, "--identifier", f"{PKG_ID}.{p.key}",
+                            "--version", version, "--install-location", "/", "--scripts", scripts,
+                            comps / f"{p.key}.pkg"], check=True)
+    out = args.out / "NULL-JSFX-Installer-macOS.pkg"
+    subprocess.run(["productbuild", "--distribution", base / "Distribution.xml", "--resources", base / "resources",
+                    "--package-path", comps, out], check=True)
+    print(f"build_installer: {out}: {len(plugs)} plugins, {count} parts, {out.stat().st_size // 1024} KB")
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     ap.add_argument("--os", required=True, choices=["Windows", "Linux", "macOS"])
@@ -195,6 +400,7 @@ def main():
     ap.add_argument("--native", required=True, type=Path)
     ap.add_argument("--version", default="dev")
     ap.add_argument("--out", required=True, type=Path)
+    ap.add_argument("--pkg-root", type=Path, help="macOS: write the .pkg parts here and stop before pkgbuild")
     args = ap.parse_args()
     plugs, chain_list = plugins(args.jsfx, args.native), chains(args.jsfx)
     stems = {p[0] for p in plugs}
@@ -203,6 +409,8 @@ def main():
         if missing:
             sys.exit(f"build_installer: {folder}/{name} uses unknown plugins: {' '.join(sorted(missing))}")
     (windows if args.os == "Windows" else unix)(args, plugs, chain_list)
+    if args.os == "macOS":
+        macos_pkg(args, plugs, chain_list)
 
 
 if __name__ == "__main__":

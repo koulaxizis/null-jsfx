@@ -83,9 +83,10 @@ fn jsfx(name: &str, v: &str) -> String {
 
 fn publish(files: &Files, v: &str) {
     let os = null_hub_core::paths::os_name();
+    let previous = if v == "2.2" { r#"["2.1"]"# } else { "[]" };
     let catalog = format!(
         r#"{{"schema":1,"version":"{v}","repo":"x/y","packages":{{"jsfx":"NULL-JSFX-JSFX.zip","native":{{"{os}":"NULL-JSFX-VST3-CLAP-{os}.zip"}}}},
-        "hub":{{"version":"{v}"}},
+        "hub":{{"version":"{v}"}},"previous":{previous},
         "plugins":[
           {{"id":"tilt","name":"Tilt","group":"one-slider","formats":["jsfx","gfx","vst3","clap"]}},
           {{"id":"delay","name":"Delay","group":"essentials","formats":["jsfx","gfx","vst3","clap"]}}]}}"#
@@ -289,6 +290,11 @@ fn round(ranges: bool) {
     let note = h.notice(&cat, &s).unwrap();
     assert!(note.starts_with("NULL JSFX 2.2 is out: 2 installed plugins to update, new: Reverb"), "{note}");
     assert_eq!(h.notice(&cat, &s), None, "one notification per release");
+    h.settings.notified = None;
+    h.settings.language = "el".into();
+    let note = h.notice(&cat, &s).unwrap();
+    assert!(note.starts_with("Βγήκε το NULL JSFX 2.2: 2 εγκατεστημένα plugins για ενημέρωση, νέα: Reverb"), "{note}");
+    h.settings.language = String::new();
     let all: Vec<(String, Format)> = s
         .plugins
         .iter()
@@ -310,6 +316,31 @@ fn round(ranges: bool) {
     assert_eq!((s.installed, s.outdated), (5, 0));
     assert_eq!(fs::read_to_string(&bundle).unwrap(), "2.2");
     assert_eq!(h.verify(&cat, &mut |_| {}).unwrap(), vec![], "repaired");
+
+    // roll Tilt's VST3 back to 2.1: kept there, not offered as an update, not "damaged"
+    let back = Request { install: vec![("tilt".into(), Format::Vst3)], from: Some("2.1".into()), ..Default::default() };
+    let s = h.apply(&cat, &back, &mut |_| {}).unwrap();
+    assert_eq!(fs::read_to_string(&bundle).unwrap(), "2.1");
+    let v = &s.plugins["tilt"][&Format::Vst3];
+    assert!(v.held && !v.outdated && v.version.as_deref() == Some("2.1"), "{v:?}");
+    assert_eq!(s.outdated, 0);
+    assert_eq!(h.verify(&cat, &mut |_| {}).unwrap(), vec![]);
+    let wrong = Request { install: vec![("tilt".into(), Format::Vst3)], from: Some("1.0".into()), ..Default::default() };
+    assert!(h.apply(&cat, &wrong, &mut |_| {}).is_err(), "only the catalog's earlier releases");
+    let reverb = Request { install: vec![("reverb".into(), Format::Jsfx)], from: Some("2.1".into()), ..Default::default() };
+    assert!(h.apply(&cat, &reverb, &mut |_| {}).unwrap_err().contains("not in release 2.1"));
+    assert!(hub(root).settings.held.contains("tilt/vst3"), "the hold is saved");
+    // installing it the usual way brings it up to date and lets go of the hold
+    let s = h.apply(&cat, &Request { install: vec![("tilt".into(), Format::Vst3)], ..Default::default() }, &mut |_| {}).unwrap();
+    assert_eq!(fs::read_to_string(&bundle).unwrap(), "2.2");
+    assert!(!s.plugins["tilt"][&Format::Vst3].held && h.settings.held.is_empty());
+
+    // the selection for another computer: what is installed, per plugin
+    let file = h.export_selection(&cat, &root.join("out")).unwrap();
+    let sel: null_hub_core::Selection = serde_json::from_slice(&fs::read(file).unwrap()).unwrap();
+    assert_eq!(sel.kind, "null-jsfx-selection");
+    assert_eq!(sel.plugins["tilt"], Format::ALL.to_vec());
+    assert_eq!(sel.plugins["delay"], vec![Format::Jsfx]);
 
     // the records survive a restart
     let h2 = hub(root);

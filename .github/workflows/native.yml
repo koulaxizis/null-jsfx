@@ -7,7 +7,8 @@ name: VST3 and CLAP
 #   NULL-JSFX-VST3-CLAP-<OS>       the VST3 and CLAP versions for Windows, macOS or Linux
 # each with native/INSTALL.txt, and from those the installers where the user picks formats,
 # plugins and extras (tools/build_installer.py, installer/):
-#   NULL-JSFX-Installer-Windows.exe, NULL-JSFX-Installer-Linux.sh, NULL-JSFX-Installer-macOS.sh
+#   NULL-JSFX-Installer-Windows.exe, NULL-JSFX-Installer-Linux.sh, NULL-JSFX-Installer-macOS.pkg,
+#   NULL-JSFX-Installer-macOS.sh
 # each installed and checked here. When a GitHub release is published, they are attached to it,
 # the packages as zips with these names (the site's Download links use
 # releases/latest/download/<name>). Run the workflow by hand with a release tag to attach them
@@ -240,13 +241,17 @@ jobs:
         # /bin/bash on macOS is bash 3.2, the one users have
         run: /bin/bash tests/installer_test.sh build-installer/NULL-JSFX-Installer-${{ matrix.name }}.sh
 
+      - name: Install, check and uninstall the .pkg
+        if: matrix.name == 'macOS'
+        run: /bin/bash tests/pkg_test.sh build-installer/pkg-build build-installer/NULL-JSFX-Installer-macOS.pkg
+
       - uses: actions/upload-artifact@v4
         with:
           name: NULL-JSFX-Installer-${{ matrix.name }}
-          path: build-installer/NULL-JSFX-Installer-${{ matrix.name }}.sh
+          path: build-installer/NULL-JSFX-Installer-${{ matrix.name }}.*
 
       - name: Attach to the release
         if: github.event_name == 'release' || inputs.release_tag != ''
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release upload "${{ github.event.release.tag_name || inputs.release_tag }}" "build-installer/NULL-JSFX-Installer-${{ matrix.name }}.sh" --clobber
+        run: gh release upload "${{ github.event.release.tag_name || inputs.release_tag }}" build-installer/NULL-JSFX-Installer-${{ matrix.name }}.* --clobber

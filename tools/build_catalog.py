@@ -16,6 +16,7 @@ import argparse
 import datetime
 import json
 import re
+import subprocess
 import sys
 from pathlib import Path
 
@@ -51,6 +52,29 @@ EXTRAS = [
     {"id": "fonts", "name": "Noto Sans font", "formats": ["gfx"],
      "desc": "The font of the GFX versions, for their exact look."},
 ]
+
+
+# the first release whose packages the Hub can install from (rolling a plugin back)
+FIRST_PACKAGED = "2.1"
+
+
+def vkey(v):
+    return tuple(int(x) for x in v.split("."))
+
+
+def previous(version):
+    """The earlier releases a plugin can be rolled back to, newest first (from the repo's tags;
+    none when they can't be read, which only hides the roll back)."""
+    try:
+        out = subprocess.run(["git", "ls-remote", "--tags", "--refs", f"https://github.com/{REPO}.git"],
+                             capture_output=True, text=True, timeout=60, check=True).stdout
+    except (OSError, subprocess.SubprocessError):
+        return []
+    tags = {line.rsplit("/", 1)[-1] for line in out.splitlines()}
+    known = [t for t in tags if re.fullmatch(r"\d+(\.\d+)*", t) and vkey(t) >= vkey(FIRST_PACKAGED)]
+    if re.fullmatch(r"\d+(\.\d+)*", version):
+        known = [t for t in known if vkey(t) < vkey(version)]
+    return sorted(known, key=vkey, reverse=True)
 
 
 DEMOS = ROOT / "assets/audio/demos"
@@ -143,6 +167,8 @@ def catalog(version, notes, date):
         "packages": {"jsfx": "NULL-JSFX-JSFX.zip",
                      "native": {os: f"NULL-JSFX-VST3-CLAP-{os}.zip" for os in OSES}},
         "hub": {"version": version, "assets": HUB_ASSETS},
+        # earlier releases with the same packages, newest first: a plugin can go back to one
+        "previous": previous(version),
         # the music of the plugin demos without any plugin
         "demo_dry": f"{SITE}assets/audio/demos/dry.mp3" if demos() else None,
         "groups": [{"id": key, "name": title, "desc": desc} for title, key, desc in CATEGORIES],
