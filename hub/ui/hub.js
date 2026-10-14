@@ -169,6 +169,8 @@ function shown() {
 }
 
 function shotHtml(p, big) {
+  // the plugin page plays the presentation video, with its poster until it starts
+  if (big && p.video) return `<video src="${esc(p.video)}" poster="${esc(p.video.replace(/\.mp4$/, ".jpg"))}" controls playsinline preload="none"></video>`;
   return p.shot
     ? `<img src="${esc(p.shot)}" alt="" ${big ? "" : 'loading="lazy"'}>`
     : "NULL";
@@ -505,6 +507,7 @@ function stopDemo() {
   demo.wet.pause();
   demo.dry.pause();
   $("d-play").textContent = tr("Play");
+  $("d-shot").querySelector("video")?.pause();
 }
 function setDemo(p) {
   stopDemo();
@@ -535,6 +538,7 @@ function pickDemo(which) {
 function playDemo() {
   const a = demo[demo.on];
   if (!a.paused) return stopDemo();
+  $("d-shot").querySelector("video")?.pause();
   a.play().then(() => ($("d-play").textContent = tr("Stop"))).catch(() => { $("d-demo-note").textContent = tr("The demo needs the internet."); });
 }
 
@@ -547,6 +551,8 @@ function openDetail(id) {
   $("d-name").textContent = p.name;
   $("d-tagline").textContent = p.tagline;
   $("d-shot").innerHTML = shotHtml(p, true);
+  // the video and the demo never play over each other
+  $("d-shot").querySelector("video")?.addEventListener("play", () => { demo.wet.pause(); demo.dry.pause(); $("d-play").textContent = tr("Play"); });
   $("d-guide").href = p.guide || "https://nulljsfx.tech";
   const s = st(id);
   $("d-formats").innerHTML = FORMATS.filter(([f]) => p.formats.includes(f))

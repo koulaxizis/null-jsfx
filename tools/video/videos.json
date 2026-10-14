@@ -1,0 +1,19 @@
+{
+  "amp_simulator": {"sweep": ["Gain", 1, 9]},
+  "band_splitter": {"sweep": ["Crossover 1", 60, 900]},
+  "channel_utility": {"sweep": null},
+  "click_repair": {"input": "clicks"},
+  "de_hum": {"input": "hum", "sweep": null},
+  "delay": {"presets": ["Vocal Slapback", "Ping-Pong Eighths", "Dub Throw"], "sweep": ["Time", 80, 600], "sweep_base": "Dark Tape Echo"},
+  "envelope_follower": {"sweep": ["Sensitivity", -12, 18]},
+  "loudness_meter": {"sweep": null},
+  "maximizer": {"sweep": ["Input Gain", 0, 10]},
+  "mid_side_matrix": {"sweep": ["Side Gain", -6, 6]},
+  "multiband_compressor": {"sweep": ["LowMid Threshold", -5, -45]},
+  "noise_reduction": {"input": "noise"},
+  "sidechain_ducker": {"input": "sidechain"},
+  "spectral_freeze": {"pulse": ["Freeze", 4, 2], "sweep": null},
+  "spectrum_analyzer": {"sweep": null},
+  "stereo_scope": {"sweep": null},
+  "tape_stop": {"pulse": ["Trigger", 4, 2], "sweep": null}
+}

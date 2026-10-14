@@ -22,6 +22,7 @@ PLUGINS = ROOT / "DATA/Effects/null_jsfx"
 GFX = PLUGINS / "gfx"
 NATIVE = ROOT / "native/plugins"
 SHOTS = ROOT / "assets/img/gfx"  # GFX interface screenshots, made by tools/render_gfx_shots.sh
+VIDEOS = ROOT / "assets/video"  # presentation videos and their posters, made by tools/video/make_videos.py
 CONTENT = ROOT / "tools/site_content.json"
 INDEX = ROOT / "index.html"
 MODALS = ROOT / "assets/js/modals.js"
@@ -112,6 +113,7 @@ def load():
             "sliders": [(n, r, d) for (n, r), d in zip(sliders, c["slider_desc"])],
             "formats": formats(stem),
             "shot": f"assets/img/gfx/{stem}.png" if (SHOTS / f"{stem}.png").exists() else None,
+            "video": f"assets/video/{stem}.mp4" if (VIDEOS / f"{stem}.mp4").exists() else None,
             "studio": stem in studio,
             **{k: c[k] for k in ("card_desc", "keywords", "uses", "properties", "icon")},
         })
@@ -245,7 +247,8 @@ def guides_block(plugins):
     uses: [{uses}],
     properties: {js(p['properties'])},
     formats: [{", ".join(js(f) for f in p['formats'])}]""" + (f""",
-    shot: {js(p['shot'])}""" if p["shot"] else "") + (""",
+    shot: {js(p['shot'])}""" if p["shot"] else "") + (f""",
+    video: {js(p['video'])}""" if p["video"] else "") + (""",
     studio: true""" if p["studio"] else "") + """
   },
 """)

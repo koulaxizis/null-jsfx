@@ -1424,6 +1424,11 @@ a.download-option:hover {
     border-radius: 6px;
 }
 
+.guide-video {
+    aspect-ratio: 16 / 9;
+    background: #1b1a18;
+}
+
 /* Supporters page */
 .supporters-title {
     text-align: center;

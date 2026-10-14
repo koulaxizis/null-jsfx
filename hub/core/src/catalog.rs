@@ -64,6 +64,9 @@ pub struct Plugin {
     pub formats: Vec<Format>,
     #[serde(default)]
     pub shot: Option<String>,
+    /// the presentation video (an MP4 on the site, its poster next to it as .jpg)
+    #[serde(default)]
+    pub video: Option<String>,
     #[serde(default)]
     pub guide: Option<String>,
     #[serde(default)]
