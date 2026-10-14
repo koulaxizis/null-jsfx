@@ -143,6 +143,14 @@
     "640403794": {
       "file": "2.3/NULL-JSFX-Installer-Linux.sh",
       "count": 0
+    },
+    "640414213": {
+      "file": "2.3/NULL-JSFX-Installer-macOS.pkg",
+      "count": 0
+    },
+    "640414214": {
+      "file": "2.3/NULL-JSFX-Installer-macOS.sh",
+      "count": 0
     }
   }
 }
