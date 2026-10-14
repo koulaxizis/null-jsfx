@@ -3,7 +3,8 @@
 # the plugins (all, by group or one by one) and the extras, and it copies them where REAPER and
 # your DAW look for them. The packages ride along at the end of this file.
 #
-#   bash NULL-JSFX-Installer-@@OS@@.sh               asks what to install
+#   bash NULL-JSFX-Installer-@@OS@@.sh               asks what to install (opened from the file
+#                                                    manager it asks in windows: zenity or kdialog)
 #   bash NULL-JSFX-Installer-@@OS@@.sh --help        all options (installing without questions too)
 #   bash NULL-JSFX-Installer-@@OS@@.sh --uninstall   removes what it installed
 #
@@ -47,7 +48,12 @@ formats_set=0 plugins_set=0 extras_set=0 reaper_set=0
 yes=0 uninstall=0 force=0
 
 say() { printf '%s\n' "$*"; }
-die() { printf 'NULL JSFX installer: %s\n' "$*" >&2; exit 1; }
+gui=''
+die() {
+  printf 'NULL JSFX installer: %s\n' "$*" >&2
+  if [ -n "$gui" ]; then dialog error "$*"; fi
+  exit 1
+}
 has() { case " $1 " in *" $2 "*) return 0 ;; esac; return 1; }
 lower() { printf '%s' "$1" | tr 'A-Z_,' 'a-z- '; }
 
@@ -145,8 +151,43 @@ fi
 # --- questions -----------------------------------------------------------------------------
 interactive=0
 if [ "$yes" = 0 ] && [ -t 0 ]; then interactive=1; fi
+
+# opened from the file manager (no terminal): ask in windows, or else open a terminal
+if [ "$yes" = 0 ] && [ "$interactive" = 0 ] && [ "$formats_set$plugins_set$extras_set" != 111 ] &&
+   { [ -n "${DISPLAY:-}" ] || [ -n "${WAYLAND_DISPLAY:-}" ]; }; then
+  if command -v zenity >/dev/null 2>&1; then gui=zenity
+  elif command -v kdialog >/dev/null 2>&1; then gui=kdialog
+  elif [ -z "${NULL_JSFX_TERMINAL:-}" ]; then
+    export NULL_JSFX_TERMINAL=1
+    for t in x-terminal-emulator gnome-terminal konsole xfce4-terminal xterm; do
+      command -v "$t" >/dev/null 2>&1 || continue
+      case "$t" in gnome-terminal) exec "$t" -- bash "$0" "$@" ;; *) exec "$t" -e bash "$0" "$@" ;; esac
+    done
+  fi
+fi
+if [ -n "$gui" ]; then interactive=1; fi
 [ "$yes" = 1 ] || [ "$interactive" = 1 ] || [ "$formats_set$plugins_set$extras_set" = 111 ] ||
   die "no terminal to ask in: give --yes or the choices (see --help)"
+
+# dialog KIND TEXT [DEFAULT]: info, error, question (yes = exit 0) or entry (prints the answer)
+dialog() {
+  kind="$1" text="$2" title="NULL JSFX $VERSION"
+  if [ "$gui" = kdialog ]; then
+    case "$kind" in
+      info) kdialog --title "$title" --msgbox "$text" ;;
+      error) kdialog --title "$title" --error "$text" ;;
+      question) kdialog --title "$title" --yesno "$text" ;;
+      entry) kdialog --title "$title" --inputbox "$text" "$3" ;;
+    esac
+  else
+    case "$kind" in
+      info) zenity --info --title="$title" --no-markup --width=560 --text="$text" ;;
+      error) zenity --error --title="$title" --no-markup --width=480 --text="$text" ;;
+      question) zenity --question --title="$title" --no-markup --width=480 --ok-label=Install --cancel-label=Cancel --text="$text" ;;
+      entry) zenity --entry --title="$title" --width=560 --text="$text" --entry-text="$3" ;;
+    esac
+  fi
+}
 
 use_whiptail=0
 if [ "$interactive" = 1 ] && command -v whiptail >/dev/null 2>&1 && [ -n "${TERM:-}" ] && [ "${TERM:-}" != dumb ]; then
@@ -156,6 +197,26 @@ fi
 # checklist TITLE TEXT DEFAULT_ON key label [key label...]: prints the chosen keys
 checklist() {
   title="$1" text="$2" on="$3"; shift 3
+  if [ -n "$gui" ]; then
+    args=() n=0
+    while [ $# -gt 0 ]; do
+      state=off; if has "$on" "$1" || [ "$on" = all ]; then state=on; fi
+      if [ "$gui" = kdialog ]; then args+=("$1" "$2" "$state")
+      elif [ "$state" = on ]; then args+=(TRUE "$1" "$2")
+      else args+=(FALSE "$1" "$2"); fi
+      n=$((n + 1)); shift 2
+    done
+    rows=$n; [ $rows -gt 14 ] && rows=14
+    if [ "$gui" = kdialog ]; then
+      out="$(kdialog --title "NULL JSFX $VERSION: $title" --separate-output --checklist "$text" "${args[@]}")" || die "cancelled"
+    else
+      out="$(zenity --list --checklist --title="NULL JSFX $VERSION: $title" --text="$text" --width=600 \
+        --height=$((rows * 32 + 180)) --column="" --column=key --column="$title" --hide-column=2 --print-column=2 \
+        --separator=' ' "${args[@]}")" || die "cancelled"
+    fi
+    printf '%s ' $(printf '%s' "$out" | tr -d '"')
+    return 0
+  fi
   if [ "$use_whiptail" = 1 ]; then
     n=0
     args=()
@@ -201,14 +262,14 @@ checklist() {
   done
 }
 
-if [ "$interactive" = 1 ]; then
+if [ "$interactive" = 1 ] && [ -z "$gui" ]; then
   say "NULL JSFX $VERSION for $TARGET_OS: free audio plugins, AUDIO WITHOUT NOISE."
   say "Want to try them first? They also run in your browser as web plugins in orOS Studio: $STUDIO"
 fi
 
 if [ "$formats_set" = 0 ]; then
   if [ "$interactive" = 1 ]; then
-    FORMATS="$(checklist "Formats" "Which versions of the plugins?" all \
+    FORMATS="$(checklist "Formats" "NULL JSFX $VERSION: free audio plugins. Which versions of the plugins?" all \
       jsfx "JSFX: REAPER, with REAPER's own sliders" \
       gfx "JSFX GFX: REAPER, with the NULL JSFX interface" \
       vst3 "VST3: any DAW" \
@@ -282,8 +343,12 @@ needs_reaper=0
 if has "$FORMATS" jsfx || has "$FORMATS" gfx || has "$EXTRAS" remote; then needs_reaper=1; fi
 if [ "$needs_reaper" = 1 ] && [ "$interactive" = 1 ] && [ "$reaper_set" = 0 ]; then
   if [ -d "$REAPER_DIR" ]; then note="found"; else note="not found yet; it is made when REAPER first runs"; fi
-  printf '\nREAPER resource folder (%s)\n[%s]\nEnter keeps it, or type another path (portable REAPER): ' "$note" "$REAPER_DIR" >&2
-  read -r answer || answer=''
+  if [ -n "$gui" ]; then
+    answer="$(dialog entry "REAPER resource folder ($note). Keep it, or type another path (portable REAPER):" "$REAPER_DIR")" || die "cancelled"
+  else
+    printf '\nREAPER resource folder (%s)\n[%s]\nEnter keeps it, or type another path (portable REAPER): ' "$note" "$REAPER_DIR" >&2
+    read -r answer || answer=''
+  fi
   [ -n "$answer" ] && REAPER_DIR="$answer"
 fi
 
@@ -293,12 +358,22 @@ for f in $FORMATS; do
   case "$f" in jsfx) n=JSFX ;; gfx) n='JSFX GFX' ;; vst3) n=VST3 ;; clap) n=CLAP ;; esac
   fmt_names="${fmt_names:+$fmt_names, }$n"
 done
+plan="Installing $count plugins as ${fmt_names:-nothing}${EXTRAS:+, with:$(printf ' %s' $EXTRAS)}"
+[ "$needs_reaper" = 1 ] && plan="$plan
+  REAPER: $REAPER_DIR"
+has "$FORMATS" vst3 && plan="$plan
+  VST3:   $VST3_DIR/NULL JSFX"
+has "$FORMATS" clap && plan="$plan
+  CLAP:   $CLAP_DIR/NULL JSFX"
+if [ -n "$gui" ]; then
+  dialog question "$plan" || { say "Nothing installed."; exit 0; }
+  # what the installer says from here goes in the last window
+  report="$(mktemp "${TMPDIR:-/tmp}/null-jsfx-report.XXXXXX")"
+  exec 4>&1 > "$report"
+fi
 say ""
-say "Installing $count plugins as ${fmt_names:-nothing}${EXTRAS:+, with:$(printf ' %s' $EXTRAS)}"
-[ "$needs_reaper" = 1 ] && say "  REAPER: $REAPER_DIR"
-has "$FORMATS" vst3 && say "  VST3:   $VST3_DIR/NULL JSFX"
-has "$FORMATS" clap && say "  CLAP:   $CLAP_DIR/NULL JSFX"
-if [ "$interactive" = 1 ]; then
+say "$plan"
+if [ "$interactive" = 1 ] && [ -z "$gui" ]; then
   printf 'Go ahead? [Y/n] ' >&2
   read -r answer || answer=''
   case "$answer" in [nN]*) say "Nothing installed."; exit 0 ;; esac
@@ -425,5 +500,13 @@ say "Try the effects in a browser too, as web plugins in orOS Studio: $STUDIO"
 say ""
 say "NULL JSFX is free and made by one person. If it helps your music, a coffee keeps it going:"
 say "  https://ko-fi.com/koulaxizis"
+if [ -n "$gui" ]; then
+  exec 1>&4
+  dialog info "$(sed '1,/^$/d' "$report" | sed '/^$/d')" || true
+  rm -f "$report"
+elif [ -n "${NULL_JSFX_TERMINAL:-}" ]; then
+  printf '\nPress Enter to close. ' >&2
+  read -r _ || true
+fi
 exit 0
 __PAYLOAD_BELOW__

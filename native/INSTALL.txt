@@ -8,16 +8,26 @@ Every plugin comes in up to three versions that sound the same:
   VST3, CLAP  any DAW, with the same interface ("<Name>" by NULL JSFX)
 
 The easy way: the installers
-    NULL-JSFX-Installer-Windows.exe, NULL-JSFX-Installer-Linux.sh and
-    NULL-JSFX-Installer-macOS.sh (on the release page) let you pick the formats,
+    NULL-JSFX-Installer-Windows.exe, NULL-JSFX-Installer-macOS.pkg and
+    NULL-JSFX-Installer-Linux.sh (on the release page) let you pick the formats,
     the plugins (all, a group such as One Slider, or single ones) and the extras,
     and put everything in the folders below for you.
       Windows: run the .exe (it asks for administrator rights, because VST3
                and CLAP live in C:\Program Files\Common Files). Remove it from
                Settings > Apps.
-      Linux, macOS: in a terminal, bash NULL-JSFX-Installer-Linux.sh (or
-               -macOS.sh). It installs for your user only; --help lists the
-               options, --uninstall removes what it installed.
+      macOS:   open the .pkg (it is not signed: the first time, right-click it >
+               Open). Customize picks the formats, the groups and the extras;
+               it installs for your user only, no password. To remove it, run
+               "Uninstall NULL JSFX.command" in ~/Library/Application Support/
+               NULL JSFX. It expects REAPER's resource folder in the usual place;
+               for a portable REAPER use NULL-JSFX-Installer-macOS.sh below.
+      Linux:   make the .sh executable (file manager: Properties > Permissions,
+               or chmod +x) and double-click it: it asks in windows (zenity or
+               kdialog), or opens a terminal. Or in a terminal:
+               bash NULL-JSFX-Installer-Linux.sh. It installs for your user only.
+      The .sh (Linux, and NULL-JSFX-Installer-macOS.sh for a terminal on a Mac)
+               also picks single plugins and another REAPER folder; --help
+               lists the options, --uninstall removes what it installed.
     Or copy the files by hand as described below.
 
 JSFX (REAPER), from NULL-JSFX-JSFX.zip

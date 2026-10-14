@@ -27,7 +27,7 @@ Each [release](https://github.com/koulaxizis/null-jsfx/releases) has:
 | File | What |
 |------|------|
 | `NULL-JSFX-Hub-Windows-Setup.exe` / `-macOS.dmg` / `-Linux.AppImage` / `-Linux.deb` | [NULL JSFX Hub](hub/README.md): installs, updates and removes the plugins in any format, with FX chains, presets and extras, and tells you when a new version is out |
-| `NULL-JSFX-Installer-Windows.exe` / `-macOS.sh` / `-Linux.sh` | one-off installer with a format, plugin and extras picker |
+| `NULL-JSFX-Installer-Windows.exe` / `-macOS.pkg` / `-Linux.sh` (also `-macOS.sh` for a terminal) | one-off installer with a format, plugin and extras picker; the Linux one asks in windows when double-clicked |
 | `NULL-JSFX-JSFX.zip` | all JSFX plugins and their GFX versions, for every OS |
 | `NULL-JSFX-VST3-CLAP-Windows.zip` / `-macOS.zip` / `-Linux.zip` | the VST3 and CLAP versions |
 
