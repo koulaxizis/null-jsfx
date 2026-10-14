@@ -206,9 +206,11 @@ fn extras_round() {
     h.apply(&cat, &Request { install: vec![("delay".into(), Format::Jsfx)], ..Default::default() }, &mut |_| {}).unwrap();
     assert!(r.join("FXChains/NULL JSFX/Duo.RfxChain").is_file());
     assert!(r.join("presets/js-null_jsfx_delay_jsfx.ini").is_file());
-    // Tilt goes: both chains go, the folder too
+    // Tilt goes: both chains go, the folder too, and its factory preset; the user's stays
     h.apply(&cat, &Request { remove: vec![("tilt".into(), Format::Jsfx)], ..Default::default() }, &mut |_| {}).unwrap();
     assert!(!r.join("FXChains/NULL JSFX").exists());
+    let names = |f: &str| fs::read_to_string(r.join("presets").join(f)).map(|t| t.lines().filter_map(|l| l.strip_prefix("Name=").map(str::to_string)).collect::<Vec<_>>());
+    assert_eq!(names("js-null_jsfx_tilt_jsfx.ini").unwrap(), ["Mine"]);
     // remote and fonts off
     let s = h
         .apply(&cat, &Request { extras_remove: vec!["remote".into(), "fonts".into(), "chains".into()], ..Default::default() }, &mut |_| {})
@@ -220,6 +222,12 @@ fn extras_round() {
     // with chains off, a new plugin brings no chain
     h.apply(&cat, &Request { install: vec![("tilt".into(), Format::Jsfx)], ..Default::default() }, &mut |_| {}).unwrap();
     assert!(!r.join("FXChains").join("NULL JSFX").exists());
+    assert_eq!(names("js-null_jsfx_tilt_jsfx.ini").unwrap(), ["Mine", "Factory"], "presets still on: Tilt's comes back");
+    // presets off: ours go, the user's stay, a file with only ours goes
+    let s = h.apply(&cat, &Request { extras_remove: vec!["presets".into()], ..Default::default() }, &mut |_| {}).unwrap();
+    assert_eq!(names("js-null_jsfx_tilt_jsfx.ini").unwrap(), ["Mine"]);
+    assert!(!r.join("presets/js-null_jsfx_delay_jsfx.ini").exists());
+    assert!(!s.extras["presets"].installed);
 }
 
 fn round(ranges: bool) {

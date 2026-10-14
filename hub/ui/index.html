@@ -49,7 +49,9 @@
       <section id="view-plugins">
         <div class="bar">
           <input id="search" type="search" placeholder="Search plugins, e.g. eq, reverb, vocal" autocomplete="off">
+          <div id="pick" class="pick" role="group" aria-label="Formats to install"></div>
           <button id="bulk" class="ghost" hidden></button>
+          <button id="bulk-remove" class="ghost danger" hidden></button>
         </div>
         <p id="group-desc" class="muted"></p>
         <div id="grid" class="grid"></div>
@@ -66,7 +68,7 @@
         <h2>Settings</h2>
         <div class="panel">
           <h3>Formats</h3>
-          <p class="muted">What Install adds for a plugin. You can still pick formats one by one in a plugin's page.</p>
+          <p class="muted">What Install adds for a plugin (the same toggles as above the plugin list). You can still pick formats one by one in a plugin's page.</p>
           <div id="set-formats" class="checks"></div>
         </div>
         <div class="panel">
@@ -93,6 +95,11 @@
           <button id="set-save" class="primary">Save</button>
           <span id="set-msg" class="muted"></span>
         </div>
+        <div class="panel">
+          <h3>Uninstall</h3>
+          <p class="muted">Takes every NULL JSFX plugin off this computer, in every format, with the FX chains, the tablet remote, the font and the factory presets you did not change. <span id="remove-all-n"></span> To remove the Hub too, uninstall it like any other app afterwards.</p>
+          <button id="remove-all" class="ghost danger">Remove everything</button>
+        </div>
         <div class="panel about">
           <h3>About</h3>
           <p>NULL JSFX Hub <span id="hub-version"></span>. Free and open source, MIT License.</p>
@@ -114,6 +121,7 @@
         <div class="formats-table" id="d-formats"></div>
         <div class="row">
           <button id="d-apply" class="primary" disabled>Apply</button>
+          <button id="d-remove" class="ghost danger" hidden>Remove all formats</button>
           <a id="d-guide" href="#" data-ext>Guide on nulljsfx.tech</a>
         </div>
         <h3>Controls</h3>
@@ -123,6 +131,17 @@
         <div id="d-presets-wrap"><h3>Factory presets</h3><p id="d-presets" class="muted"></p></div>
         <h3>How it works</h3>
         <p id="d-props" class="muted"></p>
+      </div>
+    </div>
+  </div>
+
+  <div id="confirm" class="detail confirm" hidden>
+    <div class="confirm-card" role="alertdialog" aria-modal="true" aria-labelledby="c-title" aria-describedby="c-text">
+      <h2 id="c-title"></h2>
+      <p id="c-text" class="muted"></p>
+      <div class="row">
+        <button id="c-cancel" class="ghost">Cancel</button>
+        <button id="c-ok" class="primary danger"></button>
       </div>
     </div>
   </div>

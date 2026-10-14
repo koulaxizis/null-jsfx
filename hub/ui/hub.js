@@ -106,9 +106,22 @@ function wanted(p) {
   return pick.length ? pick : p.formats.slice(0, 1);
 }
 
-function installReq(list) {
-  return { install: list.flatMap((p) => wanted(p).map((f) => [p.id, f])), remove: [] };
+/** the formats picked in the bar (Settings) that this plugin has but are not installed yet */
+function missing(p) {
+  return wanted(p).filter((f) => !st(p.id)[f]?.installed);
 }
+
+function installReq(list) {
+  return { install: list.flatMap((p) => missing(p).map((f) => [p.id, f])), remove: [] };
+}
+
+/** every format of these plugins that is installed */
+function removeReq(list) {
+  return { install: [], remove: list.flatMap((p) => installedFormats(p.id).map((f) => [p.id, f])) };
+}
+
+function label(f) { return FORMATS.find(([k]) => k === f)?.[1] ?? f; }
+function plural(n, one, many) { return `${n} ${n === 1 ? one : many}`; }
 
 function updateReq(list, extras = []) {
   return { install: list.flatMap((p) => outdatedFormats(p.id).map((f) => [p.id, f])), remove: [], extras, extras_remove: [] };
@@ -148,9 +161,12 @@ function chips(p) {
 }
 
 function cardButton(p) {
-  if (outdatedFormats(p.id).length) return `<button data-act="update" data-id="${p.id}">Update</button>`;
-  if (isInstalled(p.id)) return `<button class="done" data-act="open" data-id="${p.id}">Installed</button>`;
-  return `<button data-act="install" data-id="${p.id}">Install</button>`;
+  const remove = isInstalled(p.id) ? `<button class="ghost mini" data-act="remove" data-id="${p.id}" title="Remove ${esc(p.name)} (every installed format)" aria-label="Remove ${esc(p.name)}">&times;</button>` : "";
+  if (outdatedFormats(p.id).length) return `${remove}<button data-act="update" data-id="${p.id}">Update</button>`;
+  const add = missing(p);
+  if (add.length && isInstalled(p.id)) return `${remove}<button data-act="install" data-id="${p.id}" title="Install the ${add.map(label).join(" and ")} version">+ ${add.map(label).join(" ")}</button>`;
+  if (add.length) return `<button data-act="install" data-id="${p.id}">Install</button>`;
+  return `${remove}<button class="done" data-act="open" data-id="${p.id}">Installed</button>`;
 }
 
 function render() {
@@ -191,18 +207,23 @@ function render() {
   renderExtras();
   $("group-desc").textContent = view === "extras" ? "The Rack for any DAW, and the extras for REAPER. They follow your plugins: an FX chain is added once all its plugins are installed." : group ? group.desc : view === "updates" ? "Plugins with a newer version in the latest release." : view === "new" ? `Plugins added in release ${cat?.version}.` : "";
   const list = shown();
-  const notInstalled = list.filter((p) => !isInstalled(p.id));
+  renderPick();
+  // bulk install: every shown plugin that misses one of the formats picked in the bar
+  const toAdd = list.filter((p) => missing(p).length);
+  const nAdd = toAdd.reduce((n, p) => n + missing(p).length, 0);
   const bulk = $("bulk");
-  if (view === "updates" && list.length) {
-    bulk.hidden = true;
-  } else if (notInstalled.length > 1) {
-    bulk.hidden = false;
-    bulk.textContent = `Install all ${notInstalled.length} shown`;
-    bulk.onclick = () => run(installReq(notInstalled), `Installed ${notInstalled.length} plugins`);
-  } else {
-    bulk.hidden = true;
-  }
+  bulk.hidden = view === "updates" || toAdd.length < 2;
+  bulk.textContent = `Install ${plural(toAdd.length, "plugin", "plugins")} (${plural(nAdd, "file", "files")})`;
+  bulk.title = "Installs the formats picked on the left in every plugin shown that does not have them yet";
+  bulk.onclick = () => run(installReq(toAdd), `Installed ${plural(nAdd, "plugin file", "plugin files")}`);
   bulk.disabled = busy;
+  // bulk remove: every shown plugin that is installed, in all its formats
+  const toRemove = list.filter((p) => isInstalled(p.id));
+  const bulkRm = $("bulk-remove");
+  bulkRm.hidden = toRemove.length < 2 || (view === "all" && !$("search").value.trim());
+  bulkRm.textContent = `Remove ${plural(toRemove.length, "plugin", "plugins")}`;
+  bulkRm.onclick = () => confirmRemove(toRemove);
+  bulkRm.disabled = busy;
 
   $("grid").innerHTML = list
     .map(
@@ -211,7 +232,7 @@ function render() {
         <div class="card-body">
           <div class="card-name">${esc(p.name)}</div>
           <div class="card-tag">${esc(p.tagline)}</div>
-          <div class="card-foot"><div class="chips">${chips(p)}</div>${cardButton(p)}</div>
+          <div class="card-foot"><div class="chips">${chips(p)}</div><span class="acts">${cardButton(p)}</span></div>
         </div>
       </article>`
     )
@@ -222,6 +243,53 @@ function render() {
   empty.textContent = !cat
     ? "The Hub could not reach GitHub yet. Connect to the internet and click Check for updates."
     : view === "installed" ? "No NULL JSFX plugins installed yet." : view === "updates" ? "Everything is up to date." : "No plugin matches that search.";
+}
+
+/** the format toggles in the bar: the same list as Settings > Formats */
+function renderPick() {
+  $("pick").innerHTML = '<span class="muted">Install as</span>' + FORMATS.map(([f, label, desc]) =>
+    `<button class="chip-btn ${V.settings.formats.includes(f) ? "on" : ""}" data-pick="${f}" title="${label}: ${desc}" aria-pressed="${V.settings.formats.includes(f)}">${label}</button>`).join("");
+}
+
+async function togglePick(f) {
+  const formats = V.settings.formats.includes(f) ? V.settings.formats.filter((x) => x !== f) : FORMATS.map(([k]) => k).filter((k) => k === f || V.settings.formats.includes(k));
+  if (!formats.length) return toast("Pick at least one format.", true);
+  try {
+    V = await invoke("hub_save_settings", { settings: { ...V.settings, formats } });
+  } catch (e) {
+    toast(String(e), true);
+  }
+  render();
+}
+
+// --- removing --------------------------------------------------------------------------------
+
+let confirmAction = null;
+function ask(title, text, okText, action) {
+  $("c-title").textContent = title;
+  $("c-text").textContent = text;
+  $("c-ok").textContent = okText;
+  confirmAction = action;
+  $("confirm").hidden = false;
+  $("c-cancel").focus();
+}
+function closeConfirm() { $("confirm").hidden = true; confirmAction = null; }
+
+function confirmRemove(list) {
+  const req = removeReq(list);
+  const what = list.length === 1 ? list[0].name : plural(list.length, "plugin", "plugins");
+  const fmts = [...new Set(req.remove.map(([, f]) => label(f)))].join(", ");
+  ask(`Remove ${what}?`, `Removes ${plural(req.remove.length, "file", "files")} (${fmts}). FX chains that use ${list.length === 1 ? "it" : "them"} go too, and so do their factory presets you did not change. Your own presets stay. Projects that use ${list.length === 1 ? "it" : "them"} will show ${list.length === 1 ? "it" : "them"} as missing.`,
+    "Remove", () => run(req, `Removed ${what}`));
+}
+
+function confirmRemoveAll() {
+  const list = plugins().filter((p) => isInstalled(p.id));
+  const extras = Object.entries(V.state.extras ?? {}).filter(([, s]) => s.installed).map(([id]) => id);
+  if (!list.length && !extras.length) return toast("Nothing from NULL JSFX is installed.");
+  const req = { ...removeReq(list), extras: [], extras_remove: extras };
+  ask("Remove everything?", `Removes all ${plural(list.length, "NULL JSFX plugin", "NULL JSFX plugins")} in every format (${plural(req.remove.length, "file", "files")}) and the extras: FX chains, the tablet remote, the font and the factory presets you did not change. Your own presets and REAPER's settings stay. The Hub itself stays, to install them again later.`,
+    "Remove everything", () => run(req, "Removed everything from NULL JSFX"));
 }
 
 function renderExtras() {
@@ -280,6 +348,9 @@ function renderSettings() {
   $("set-reaper").value = s.targets.reaper;
   $("set-vst3").value = s.targets.vst3;
   $("set-clap").value = s.targets.clap;
+  const n = plugins().filter((p) => isInstalled(p.id)).length;
+  $("remove-all").disabled = busy || (!n && !Object.values(V.state.extras ?? {}).some((x) => x.installed));
+  $("remove-all-n").textContent = n ? `${plural(n, "plugin", "plugins")} installed now.` : "No plugins installed now.";
   $("hub-version").textContent = V.hubVersion;
   $("data-dir").textContent = V.dataDir;
   $("set-msg").textContent = "";
@@ -330,6 +401,8 @@ function openDetail(id) {
   $("d-presets-wrap").hidden = !(p.presets || []).length;
   $("d-presets").textContent = (p.presets || []).join(" · ");
   $("d-props").textContent = p.properties || "";
+  $("d-remove").hidden = !isInstalled(id);
+  $("d-remove").disabled = busy;
   updateApply();
   $("detail").hidden = false;
 }
@@ -382,7 +455,13 @@ document.addEventListener("click", (e) => {
     const p = plugins().find((x) => x.id === act.dataset.id);
     if (act.dataset.act === "install") run(installReq([p]), `${p.name} installed`);
     else if (act.dataset.act === "update") run(updateReq([p]), `${p.name} updated`);
+    else if (act.dataset.act === "remove") confirmRemove([p]);
     else openDetail(p.id);
+    return;
+  }
+  const pick = e.target.closest("button[data-pick]");
+  if (pick) {
+    if (!busy) togglePick(pick.dataset.pick);
     return;
   }
   if (e.target.closest("button[data-steps]")) {
@@ -407,6 +486,7 @@ document.addEventListener("error", (e) => {
   if (e.target.tagName === "IMG" && e.target.parentNode) e.target.replaceWith(document.createTextNode("NULL"));
 }, true);
 document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape" && !$("confirm").hidden) return closeConfirm();
   if (e.key === "Escape" && !$("detail").hidden) $("detail").hidden = true, (detailId = null);
   if (e.key === "Enter" && e.target.classList?.contains("card")) openDetail(e.target.dataset.id);
 });
@@ -417,6 +497,11 @@ $("d-apply").onclick = () => {
   const p = plugins().find((x) => x.id === detailId);
   run(detailRequest(), `${p.name}: done`);
 };
+$("d-remove").onclick = () => confirmRemove([plugins().find((x) => x.id === detailId)]);
+$("c-cancel").onclick = closeConfirm;
+$("confirm").addEventListener("click", (e) => { if (e.target.id === "confirm") closeConfirm(); });
+$("c-ok").onclick = () => { const go = confirmAction; closeConfirm(); if (go) go(); };
+$("remove-all").onclick = confirmRemoveAll;
 $("search").addEventListener("input", render);
 $("refresh").onclick = () => refresh(false);
 $("update-all").onclick = () => {

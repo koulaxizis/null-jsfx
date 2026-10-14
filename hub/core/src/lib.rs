@@ -274,7 +274,7 @@ impl Hub {
                 v.push(paths::gfx_include(&t).1);
             }
             if !native {
-                v.extend(plan.copies.iter().chain(&plan.merges).map(|(_, src)| src.clone()));
+                v.extend(plan.copies.iter().chain(&plan.merges).chain(&plan.unmerges).map(|(_, src)| src.clone()));
             }
             v
         };
@@ -333,6 +333,23 @@ impl Hub {
             };
             fs::write(&tmp, merged).map_err(|e| e.to_string())?;
             ops.push(Op::Copy { from: tmp, to: dest.clone() });
+        }
+        for (dest, src) in &plan.unmerges {
+            n += 1;
+            let tmp = staging.join(n.to_string()).join(dest.file_name().unwrap_or_default());
+            let Ok(theirs) = fs::read_to_string(dest) else { continue };
+            if !jsfx.as_mut().unwrap().extract(src, &tmp)? {
+                continue;
+            }
+            let ours = fs::read_to_string(&tmp).map_err(|e| e.to_string())?;
+            match extras::unmerge_presets(&theirs, &ours) {
+                Some(left) if left == theirs => {}
+                Some(left) => {
+                    fs::write(&tmp, left).map_err(|e| e.to_string())?;
+                    ops.push(Op::Copy { from: tmp, to: dest.clone() });
+                }
+                None => ops.push(Op::Remove { path: dest.clone(), keep: dest.parent().map(Path::to_path_buf) }),
+            }
         }
         for path in &plan.removes {
             // an emptied NULL JSFX chain folder goes too; REAPER's own folders stay
@@ -446,7 +463,8 @@ impl Hub {
             plan.records.push((extras::CHAINS.into(), None));
         }
 
-        // factory presets: added to the user's preset files, never taken out of them
+        // factory presets: added after the user's own presets; taken back out (only those the
+        // user left unchanged) when they are turned off or their plugin goes
         if on(extras::PRESETS) {
             let targets: Vec<(String, Format)> =
                 if asked(extras::PRESETS) { after.iter().cloned().collect() } else { req.install.clone() };
@@ -457,7 +475,17 @@ impl Hub {
                 plan.records.push((extras::PRESETS.into(), Some(Vec::new())));
             }
         } else if req.extras_remove.iter().any(|e| e == extras::PRESETS) {
+            for p in &catalog.plugins {
+                for f in [Format::Jsfx, Format::Gfx] {
+                    plan.unmerges.extend(extras::preset_file(t, &p.id, f).filter(|(d, _)| d.is_file()));
+                }
+            }
             plan.records.push((extras::PRESETS.into(), None));
+        }
+        if !req.extras_remove.iter().any(|e| e == extras::PRESETS) {
+            for (id, f) in &req.remove {
+                plan.unmerges.extend(extras::preset_file(t, id, *f).filter(|(d, _)| d.is_file()));
+            }
         }
 
         // the tablet remote and the font: their files, in or out
@@ -547,6 +575,8 @@ struct ExtrasPlan {
     copies: Vec<(PathBuf, String)>,
     /// REAPER preset files to merge ours into: (place, path in the JSFX package)
     merges: Vec<(PathBuf, String)>,
+    /// REAPER preset files to take our unchanged presets out of: (place, path in the JSFX package)
+    unmerges: Vec<(PathBuf, String)>,
     removes: Vec<PathBuf>,
     /// extra id -> Some(the files it now has) or None (no longer installed)
     records: Vec<(String, Option<Vec<PathBuf>>)>,

@@ -2,6 +2,7 @@
 //!   hub_cli [--root DIR] scan
 //!   hub_cli [--root DIR] install tilt:vst3 delay:all extra:chains ...
 //!   hub_cli [--root DIR] remove tilt:all
+//!   hub_cli [--root DIR] remove everything
 //!   hub_cli [--root DIR] update
 //! --root puts REAPER, VST3, CLAP and fonts under DIR instead of the usual folders.
 //! NULL_JSFX_HUB_DATA and NULL_JSFX_HUB_RELEASES work as in the Hub.
@@ -50,6 +51,13 @@ fn main() {
             req.install = items(&args[1..]).into_iter().filter(|(id, f)| catalog.plugin(id).is_none_or(|p| p.formats.contains(f))).collect();
             req.extras = extras(&args[1..]);
         }
+        "remove" if args.get(1).map(String::as_str) == Some("everything") => {
+            let state = hub.scan(&catalog);
+            for (id, m) in &state.plugins {
+                req.remove.extend(m.iter().filter(|(_, s)| s.installed).map(|(f, _)| (id.clone(), *f)));
+            }
+            req.extras_remove = state.extras.iter().filter(|(_, s)| s.installed).map(|(id, _)| id.clone()).collect();
+        }
         "remove" => {
             let state = hub.scan(&catalog);
             req.remove = items(&args[1..])
@@ -65,7 +73,7 @@ fn main() {
             }
             req.extras = state.extras.iter().filter(|(_, s)| s.outdated).map(|(id, _)| id.clone()).collect();
         }
-        _ => fail("scan | install ID:FORMAT... | remove ID:FORMAT... | update"),
+        _ => fail("scan | install ID:FORMAT... | remove ID:FORMAT... | remove everything | update"),
     }
     if !req.install.is_empty() || !req.remove.is_empty() || !req.extras.is_empty() || !req.extras_remove.is_empty() {
         let mut last = "";

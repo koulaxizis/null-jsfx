@@ -106,7 +106,8 @@ function check(cond, what) {
   await page.waitForSelector('#progress', { state: 'hidden' });
   const apply = (await calls()).find(([c]) => c === 'hub_apply')[1].request;
   check(JSON.stringify(apply.install) === JSON.stringify([['delay', 'jsfx'], ['delay', 'gfx'], ['delay', 'vst3'], ['delay', 'clap']]), 'Install on a card asks for all four formats');
-  check((await page.textContent('.card[data-id="delay"] .card-foot button')) === 'Installed', 'card then says Installed');
+  check((await page.textContent('.card[data-id="delay"] .card-foot button:last-child')) === 'Installed', 'card then says Installed');
+  check((await page.locator('.card[data-id="delay"] button[data-act="remove"]').count()) === 1, 'an installed card has a remove button');
   check((await page.locator('.card[data-id="delay"] .chip.on').count()) === 4, 'four format chips lit');
 
   // the plugin page: update JSFX, add VST3
@@ -145,11 +146,15 @@ function check(cond, what) {
   await page.click('#nav button[data-view="group:one-slider"]');
   const os = catalog.plugins.filter((p) => p.group === 'one-slider').length;
   check((await page.locator('.card').count()) === os, `One Slider shows its ${os} plugins`);
-  check((await page.textContent('#bulk')).includes(`Install all ${os - 1} shown`), 'offers to install the rest of the group');
+  check((await page.locator('#pick .chip-btn.on').count()) === 3, 'the format toggles above the list follow Settings');
+  check((await page.textContent('.card[data-id="tilt"] button[data-act="install"]')) === '+ GFX', 'Tilt (JSFX and VST3 installed) offers the missing GFX');
+  check((await page.textContent('#bulk')) === `Install ${os} plugins (${(os - 1) * 3 + 1} files)`, 'bulk install counts plugins that miss a picked format, installed ones too');
   await page.click('#bulk');
   await page.waitForFunction(() => window.__calls.filter(([c]) => c === 'hub_apply').length === 3);
   const bulk = (await calls()).filter(([c]) => c === 'hub_apply')[2][1].request;
-  check(bulk.install.length === (os - 1) * 3 && bulk.install.every(([, f]) => f !== 'clap'), 'group install uses the saved formats (no CLAP)');
+  check(bulk.install.length === (os - 1) * 3 + 1 && bulk.install.every(([, f]) => f !== 'clap'), 'group install uses the saved formats (no CLAP)');
+  check(bulk.install.some(([id, f]) => id === 'tilt' && f === 'gfx') && !bulk.install.some(([id, f]) => id === 'tilt' && f === 'jsfx'), 'bulk install adds only the missing formats of an installed plugin');
+  await page.waitForSelector('#progress', { state: 'hidden' });
 
   // Extras: the Rack card and the extras
   await page.click('#nav button[data-view="extras"]');
@@ -170,6 +175,59 @@ function check(cond, what) {
   const ua = (await calls()).filter(([c]) => c === 'hub_apply')[4][1].request;
   check(JSON.stringify(ua.extras) === '["chains"]', 'Update all includes the extras');
   await page.waitForSelector('#progress', { state: 'hidden' });
+
+  const applies = async () => (await calls()).filter(([c]) => c === 'hub_apply').map(([, a]) => a.request);
+  const nextApply = async (n) => { await page.waitForFunction((n) => window.__calls.filter(([c]) => c === 'hub_apply').length === n, n); await page.waitForSelector('#progress', { state: 'hidden' }); return (await applies())[n - 1]; };
+
+  // the format toggles: CLAP back on, then a whole group in another format
+  await page.click('#nav button[data-view="group:one-slider"]');
+  await page.click('#pick button[data-pick="clap"]');
+  await page.waitForFunction(() => document.querySelectorAll('#pick .chip-btn.on').length === 4);
+  check((await page.locator('#pick .chip-btn.on').count()) === 4, 'CLAP toggled on above the list');
+  check((await page.textContent('#bulk')) === `Install ${os} plugins (${os} files)`, 'the whole group can now get its CLAP version at once');
+  await page.click('#bulk');
+  const clap = await nextApply(6);
+  check(clap.install.length === os && clap.install.every(([, f]) => f === 'clap'), 'bulk install of one more format: only CLAP');
+  if (shots) await page.screenshot({ path: path.join(shots, 'hub-group.png') });
+
+  // removing one plugin from its card, with a question first
+  await page.click('#nav button[data-view="all"]');
+  await page.click('.card[data-id="delay"] button[data-act="remove"]');
+  check(await page.isVisible('#confirm'), 'Remove asks first');
+  check((await page.textContent('#c-title')) === 'Remove Delay?', 'the question names the plugin');
+  if (shots) await page.screenshot({ path: path.join(shots, 'hub-remove.png') });
+  await page.click('#c-ok');
+  const rmDelay = await nextApply(7);
+  check(JSON.stringify(rmDelay) === JSON.stringify({ install: [], remove: [['delay', 'jsfx'], ['delay', 'gfx'], ['delay', 'vst3'], ['delay', 'clap']] }), 'card Remove takes out every format of Delay');
+  check((await page.textContent('.card[data-id="delay"] .card-foot button')) === 'Install', 'Delay can be installed again');
+
+  // removing from the plugin page
+  await page.click('.card[data-id="tilt"]');
+  check(await page.isVisible('#d-remove'), 'the plugin page has Remove all formats');
+  await page.click('#d-remove');
+  await page.click('#c-ok');
+  const rmTilt = await nextApply(8);
+  check(rmTilt.remove.length === 4 && rmTilt.remove.every(([id]) => id === 'tilt'), 'plugin page removes every installed format of Tilt');
+  await page.keyboard.press('Escape');
+
+  // Installed: remove all shown, cancelled
+  await page.click('#nav button[data-view="installed"]');
+  const shownInstalled = await page.locator('.card').count();
+  check((await page.textContent('#bulk-remove')) === `Remove ${shownInstalled} plugins`, 'Installed offers to remove all shown');
+  await page.click('#bulk-remove');
+  await page.click('#c-cancel');
+  check(!(await page.isVisible('#confirm')) && (await applies()).length === 8, 'Cancel removes nothing');
+
+  // Settings: remove everything
+  await page.click('#nav button[data-view="settings"]');
+  check((await page.textContent('#remove-all-n')).includes(`${shownInstalled} plugins installed`), 'Settings says how many plugins are installed');
+  await page.click('#remove-all');
+  check((await page.textContent('#c-title')) === 'Remove everything?', 'Remove everything asks first');
+  await page.click('#c-ok');
+  const all = await nextApply(9);
+  check(all.install.length === 0 && new Set(all.remove.map(([id]) => id)).size === shownInstalled, 'Remove everything takes out every installed plugin');
+  check(JSON.stringify(all.extras_remove.sort()) === '["chains","remote"]', 'and the extras that are on');
+  check((await page.textContent('#n-installed')) === '' && (await page.isDisabled('#remove-all')), 'nothing is left installed');
 
   // What's new
   await page.click('#nav button[data-view="news"]');

@@ -33,9 +33,15 @@ Things worth knowing:
   last.
 - **Extras** (`core/src/extras.rs`). FX chains follow the plugins: a chain comes once all its plugins
   are installed in that format and goes when one of them goes. Factory presets are added after the
-  user's own in REAPER's preset files and are never taken out. The tablet remote and the Noto Sans
+  user's own in REAPER's preset files; when they are turned off or their plugin goes, only the
+  factory presets the user left unchanged are taken out (`extras::unmerge_presets`). The tablet remote and the Noto Sans
   font come and go as files; the font is registered for the user on Windows. The Rack is a plugin
   in the catalog with only VST3 and CLAP.
+- **Removing.** A plugin's card (×) and its page remove it in every format; "Remove N plugins"
+  above the list removes all shown (a group, a search, Installed); Settings > Uninstall removes
+  everything, extras included. Each asks first. The format toggles above the list ("Install as")
+  are Settings > Formats: bulk install adds the picked formats that a shown plugin is missing,
+  so a whole group can get its VST3 version after its JSFX one.
 - **Tray and notifications** (opt-in: "Start with the computer" in Settings). The Hub starts hidden
   with `--hidden`, stays in the tray, looks for a new release once a day, and shows one system
   notification per release when there are updates, new plugins or a new Hub (`Hub::notice`).
