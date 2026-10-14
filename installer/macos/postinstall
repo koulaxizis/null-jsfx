@@ -1,0 +1,78 @@
+#!/bin/bash
+# NULL JSFX macOS installer (.pkg): runs after each part it installs. A part brings its factory
+# presets and FX chains to a staging folder; this adds the presets after the user's own (a new
+# preset file is noted for removing later), and puts in only the FX chains whose plugins are all
+# installed. Made into the .pkg by tools/build_installer.py.
+set -u
+
+# the home the parts went to (Installer gives it as DSTROOT; "Install for me only")
+base=''
+for d in "${DSTROOT:-}" "${2:-}" "$HOME"; do
+  if [ -n "$d" ] && [ -d "$d/Library/Application Support/NULL JSFX/staging" ]; then base="$d"; break; fi
+done
+[ -n "$base" ] || exit 0
+A="$base/Library/Application Support"
+N="$A/NULL JSFX"
+S="$N/staging"
+R="$A/REAPER"
+mkdir -p "$N/receipts"
+note() { printf '%s\n' "${1#"$base"/}" >> "$N/receipts/$2.txt"; }
+
+# presets: a new file is copied, an existing one gets ours after the user's, names not repeated
+for f in "$S"/presets/*.ini; do
+  [ -f "$f" ] || continue
+  dest="$R/presets/$(basename "$f")"
+  mkdir -p "$R/presets"
+  if [ ! -s "$dest" ]; then
+    cp "$f" "$dest"
+    note "$dest" presets
+    continue
+  fi
+  awk -v countfile="$S/count" '
+    function flush() {
+      if (sec && name != "" && !(name in have)) {
+        printf "[Preset%d]\nData=%s\nLen=%s\nName=%s\n\n", n, data, len, name
+        have[name] = 1; n++
+      }
+      sec = 0
+    }
+    { sub(/\r$/, "") }
+    FNR == NR { if ($0 ~ /^Name=/) have[substr($0, 6)] = 1
+                if ($0 ~ /^NbPresets=/) n = substr($0, 11) + 0
+                next }
+    /^\[Preset[0-9]+\]$/ { flush(); sec = 1; data = ""; len = ""; name = ""; next }
+    sec && /^Data=/ { data = substr($0, 6) }
+    sec && /^Len=/ { len = substr($0, 5) }
+    sec && /^Name=/ { name = substr($0, 6) }
+    END { flush(); print n > countfile }
+  ' "$dest" "$f" > "$S/added"
+  if [ -s "$S/added" ]; then
+    { sed "s/^NbPresets=.*/NbPresets=$(cat "$S/count")/" "$dest"; echo; cat "$S/added"; } > "$S/merged"
+    cp "$S/merged" "$dest"
+  fi
+done
+
+# FX chains: folder|file|plugins it uses; the JSFX chains need the JSFX versions, GFX the GFX ones
+if [ -f "$S/chains/chains.txt" ]; then
+  while IFS='|' read -r folder file uses; do
+    [ -n "$folder" ] || continue
+    ok=1
+    for u in $uses; do
+      case "$folder" in
+        *GFX) [ -f "$R/Effects/null_jsfx/gfx/${u}_gfx.jsfx" ] || ok=0 ;;
+        *) [ -f "$R/Effects/null_jsfx/$u.jsfx" ] || ok=0 ;;
+      esac
+    done
+    [ "$ok" = 1 ] || continue
+    mkdir -p "$R/FXChains/$folder"
+    cp "$S/chains/$folder/$file" "$R/FXChains/$folder/$file"
+    note "$R/FXChains/$folder/$file" chains
+  done < "$S/chains/chains.txt"
+fi
+
+rm -rf "$S"
+# run by root (some Macs): what this made belongs to the user
+if [ "$(id -u)" = 0 ] && [ "$(uname -s)" = Darwin ] && owner="$(stat -f %u "$base")" && [ "$owner" != 0 ]; then
+  chown -R "$owner" "$N" "$R/presets" "$R/FXChains" 2>/dev/null || true
+fi
+exit 0
