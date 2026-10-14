@@ -54,6 +54,8 @@ pub struct Settings {
     pub notified: Option<String>,
     /// when the catalog was last fetched (seconds since 1970)
     pub last_check: u64,
+    /// plugin/format kept at an earlier release on purpose (rolled back): not offered as updates
+    pub held: BTreeSet<String>,
 }
 
 impl Default for Settings {
@@ -67,6 +69,7 @@ impl Default for Settings {
             new_ids: Vec::new(),
             notified: None,
             last_check: 0,
+            held: BTreeSet::new(),
         }
     }
 }
@@ -78,6 +81,9 @@ pub struct ItemState {
     pub version: Option<String>,
     /// installed, but older than the catalog (or of unknown age)
     pub outdated: bool,
+    /// rolled back to an earlier release on purpose: kept there, not counted as an update
+    #[serde(default)]
+    pub held: bool,
 }
 
 #[derive(Clone, Debug, Default, Serialize, Deserialize)]
@@ -102,6 +108,9 @@ pub struct Request {
     pub extras: Vec<String>,
     #[serde(default)]
     pub extras_remove: Vec<String>,
+    /// install from this earlier release instead (one of the catalog's `previous`): roll back
+    #[serde(default)]
+    pub from: Option<String>,
 }
 
 #[derive(Clone, Debug, Serialize)]
@@ -217,6 +226,10 @@ impl Hub {
                         None => jsfx_version(&dest),
                     };
                     s.outdated = s.version.as_deref().is_none_or(|v| compare_versions(v, &catalog.version) == Ordering::Less);
+                    if s.outdated && self.settings.held.contains(&key(&p.id, f)) {
+                        s.outdated = false;
+                        s.held = true;
+                    }
                     state.installed += 1;
                     state.outdated += s.outdated as usize;
                 }
@@ -262,10 +275,19 @@ impl Hub {
                 return Err(format!("unknown extra {id}"));
             }
         }
-        let plan = self.plan_extras(catalog, req);
+        // rolling back: plugins only, from one of the earlier releases with the same packages
+        let release = match &req.from {
+            Some(v) if !catalog.previous.contains(v) => return Err(format!("Release {v} can't be installed from the Hub")),
+            Some(_) if !req.remove.is_empty() || !req.extras.is_empty() || !req.extras_remove.is_empty() => {
+                return Err("Rolling back takes plugins only".into())
+            }
+            Some(v) => v.clone(),
+            None => catalog.version.clone(),
+        };
+        let plan = if req.from.is_some() { ExtrasPlan::default() } else { self.plan_extras(catalog, req) };
 
         // the packages, downloaded once per release
-        let cache = self.data.join("cache").join(sanitize(&catalog.version));
+        let cache = self.data.join("cache").join(sanitize(&release));
         let mut jsfx = None;
         let mut native = None;
         let srcs = |native: bool| -> Vec<String> {
@@ -281,13 +303,13 @@ impl Hub {
         };
         let want = srcs(false);
         if !want.is_empty() {
-            jsfx = Some(self.package(catalog, &catalog.packages.jsfx, &want, &cache, progress)?);
+            jsfx = Some(self.package(&release, &catalog.packages.jsfx, &want, &cache, progress)?);
         }
         let want = srcs(true);
         if !want.is_empty() {
             let os = paths::os_name();
             let name = catalog.packages.native.get(os).ok_or_else(|| format!("This release has no VST3/CLAP package for {os}"))?;
-            native = Some(self.package(catalog, name, &want, &cache, progress)?);
+            native = Some(self.package(&release, name, &want, &cache, progress)?);
         }
         self.prune_cache(&cache);
 
@@ -295,14 +317,17 @@ impl Hub {
         let staging = self.data.join("staging");
         let _ = fs::remove_dir_all(&staging);
         let mut ops = Vec::new();
-        fn stage(ops: &mut Vec<Op>, staging: &Path, pkg: &mut Source, src: &str, dest: PathBuf, n: usize) -> Result<(), String> {
+        let stage = |ops: &mut Vec<Op>, pkg: &mut Source, src: &str, dest: PathBuf, n: usize| -> Result<(), String> {
             let tmp = staging.join(n.to_string()).join(dest.file_name().unwrap_or_default());
             if !pkg.extract(src, &tmp)? {
-                return Err(format!("{src} is missing from the release package"));
+                return Err(match &req.from {
+                    Some(v) => format!("{src} was not in release {v} yet"),
+                    None => format!("{src} is missing from the release package"),
+                });
             }
             ops.push(Op::Copy { from: tmp, to: dest });
             Ok(())
-        }
+        };
         let total = req.install.len() as u64;
         for (n, (id, f)) in req.install.iter().enumerate() {
             let name = &catalog.plugin(id).unwrap().name;
@@ -310,16 +335,16 @@ impl Hub {
             progress(Progress { stage: "unpack", text: format!("{verb} {name} {}", f.key().to_uppercase()), done: n as u64, total });
             let (dest, src) = paths::plugin_paths(&t, id, *f);
             let pkg = if f.is_native() { native.as_mut() } else { jsfx.as_mut() }.unwrap();
-            stage(&mut ops, &staging, pkg, &src, dest, n)?;
+            stage(&mut ops, pkg, &src, dest, n)?;
         }
         if req.install.iter().any(|(_, f)| *f == Format::Gfx) {
             let (dest, src) = paths::gfx_include(&t);
-            stage(&mut ops, &staging, jsfx.as_mut().unwrap(), &src, dest, req.install.len())?;
+            stage(&mut ops, jsfx.as_mut().unwrap(), &src, dest, req.install.len())?;
         }
         let mut n = req.install.len() + 1;
         for (dest, src) in &plan.copies {
             n += 1;
-            stage(&mut ops, &staging, jsfx.as_mut().unwrap(), src, dest.clone(), n)?;
+            stage(&mut ops, jsfx.as_mut().unwrap(), src, dest.clone(), n)?;
         }
         for (dest, src) in &plan.merges {
             n += 1;
@@ -388,7 +413,7 @@ impl Hub {
                 Op::Remove { path, .. } => path.clone(),
             })
             .collect();
-        self.record(catalog, req, &failed_paths);
+        self.record(&release, req, &failed_paths);
         for (id, paths) in &plan.records {
             match paths {
                 Some(p) => {
@@ -425,7 +450,8 @@ impl Hub {
     }
 
     /// The installed plugins whose files differ from the release: damaged, changed or missing.
-    /// Only those already at the catalog's release are checked (older ones show as updates);
+    /// Only those already at the catalog's release are checked (older ones show as updates, and
+    /// rolled back ones are at their own release);
     /// installing them again repairs them. Reads the package lists from the cache or, when
     /// there is none, just the zip directories over range requests.
     pub fn verify(&self, catalog: &Catalog, progress: &mut dyn FnMut(Progress)) -> Result<Vec<(String, Format)>, String> {
@@ -434,7 +460,7 @@ impl Hub {
             .scan(catalog)
             .plugins
             .into_iter()
-            .flat_map(|(id, m)| m.into_iter().filter(|(_, s)| s.installed && !s.outdated).map(move |(f, _)| (id.clone(), f)))
+            .flat_map(|(id, m)| m.into_iter().filter(|(_, s)| s.installed && !s.outdated && !s.held).map(move |(f, _)| (id.clone(), f)))
             .collect();
         let cache = self.data.join("cache").join(sanitize(&catalog.version));
         let (mut jsfx, mut native) = (None, None);
@@ -450,7 +476,7 @@ impl Hub {
                 } else {
                     &catalog.packages.jsfx
                 };
-                *slot = Some(self.package(catalog, file, &[], &cache, progress)?);
+                *slot = Some(self.package(&catalog.version, file, &[], &cache, progress)?);
             }
             let (dest, src) = paths::plugin_paths(t, id, *f);
             let files = slot.as_mut().unwrap().files(&src);
@@ -553,28 +579,39 @@ impl Hub {
     }
 
     /// Notes in hub-installed.json what is now in place (skipping the paths that failed).
-    fn record(&mut self, catalog: &Catalog, req: &Request, failed: &[PathBuf]) {
-        let t = &self.settings.targets;
+    /// Also keeps rolled back plugins held at their release, and lets go of the others.
+    fn record(&mut self, release: &str, req: &Request, failed: &[PathBuf]) {
+        let t = self.settings.targets.clone();
+        let held_before = self.settings.held.clone();
         for (id, f) in &req.install {
-            let (dest, _) = paths::plugin_paths(t, id, *f);
+            let (dest, _) = paths::plugin_paths(&t, id, *f);
             if dest.exists() && !failed.contains(&dest) {
-                self.manifest.items.insert(key(id, *f), Record { version: catalog.version.clone(), paths: vec![dest] });
+                self.manifest.items.insert(key(id, *f), Record { version: release.to_string(), paths: vec![dest] });
+                if req.from.is_some() {
+                    self.settings.held.insert(key(id, *f));
+                } else {
+                    self.settings.held.remove(&key(id, *f));
+                }
             }
         }
         for (id, f) in &req.remove {
-            let (dest, _) = paths::plugin_paths(t, id, *f);
+            let (dest, _) = paths::plugin_paths(&t, id, *f);
             if !dest.exists() {
                 self.manifest.items.remove(&key(id, *f));
+                self.settings.held.remove(&key(id, *f));
             }
         }
         let _ = self.save_manifest();
+        if self.settings.held != held_before {
+            let _ = self.save_settings();
+        }
     }
 
     /// A release package: the copy in the cache, or when the request needs only a small part of
     /// it, just those parts over range requests; otherwise the whole zip, kept for next time.
-    fn package(&self, catalog: &Catalog, name: &str, want: &[String], cache: &Path, progress: &mut dyn FnMut(Progress)) -> Result<Source, String> {
+    fn package(&self, release: &str, name: &str, want: &[String], cache: &Path, progress: &mut dyn FnMut(Progress)) -> Result<Source, String> {
         let dest = cache.join(name);
-        let url = package::asset_url(&catalog.version, name);
+        let url = package::asset_url(release, name);
         if !dest.is_file() {
             progress(Progress { stage: "download", text: name.to_string(), done: 0, total: 0 });
             if let Some(remote) = RemoteZip::open(&url)? {
@@ -606,6 +643,43 @@ impl Hub {
                 }
             }
         }
+    }
+}
+
+/// What is installed, to set up another computer the same way (Settings > Export): the plugins
+/// with their formats and the extras. No folders, nothing about the computer.
+#[derive(Clone, Debug, Default, Serialize, Deserialize, PartialEq)]
+pub struct Selection {
+    /// "null-jsfx-selection", so the Hub knows the file
+    pub kind: String,
+    pub release: String,
+    pub plugins: BTreeMap<String, Vec<Format>>,
+    pub extras: Vec<String>,
+}
+
+pub const SELECTION_KIND: &str = "null-jsfx-selection";
+
+impl Hub {
+    pub fn selection(&self, catalog: &Catalog) -> Selection {
+        let state = self.scan(catalog);
+        Selection {
+            kind: SELECTION_KIND.into(),
+            release: catalog.version.clone(),
+            plugins: state
+                .plugins
+                .into_iter()
+                .map(|(id, m)| (id, m.into_iter().filter(|(_, s)| s.installed).map(|(f, _)| f).collect::<Vec<_>>()))
+                .filter(|(_, f)| !f.is_empty())
+                .collect(),
+            extras: state.extras.into_iter().filter(|(_, s)| s.installed).map(|(id, _)| id).collect(),
+        }
+    }
+
+    /// Writes the selection to `dir`/NULL-JSFX-Selection.json and returns the file.
+    pub fn export_selection(&self, catalog: &Catalog, dir: &Path) -> Result<PathBuf, String> {
+        let path = dir.join("NULL-JSFX-Selection.json");
+        write_json(&path, &self.selection(catalog))?;
+        Ok(path)
     }
 }
 

@@ -52,6 +52,13 @@ Things worth knowing:
   presets, and the same mix dry, switching between them in step. They live on the site
   (`assets/audio/demos/`, made by `tools/render_demos.py` with the real JSFX in ysfx) and the
   catalog points to them; the page's CSP allows media from nulljsfx.tech only.
+- **Rolling back** (`Request::from`). A plugin's page can put it back to the release before
+  (the catalog's `previous`, from the repo's tags since 2.1, the first release with these
+  packages). It stays there, held in `Settings::held`, without update notices, until its page's
+  Update brings it forward again.
+- **Another computer** (Settings). "Save the list" writes `NULL-JSFX-Selection.json` (`Selection`:
+  plugins with their formats, and the extras; no folders) to Downloads; "Install from a list" on
+  the other computer installs what is missing there.
 - **Updating the Hub** (`app/src/selfupdate.rs`). "Update the Hub" downloads this system's Hub
   from the release and puts it in place: the Windows setup in passive mode, the macOS app copied
   out of the disk image, the AppImage replaced. A Hub installed from the .deb shows the file.

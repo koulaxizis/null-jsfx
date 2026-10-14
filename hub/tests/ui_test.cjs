@@ -15,6 +15,7 @@ const shots = process.argv[2];
 const catalogFile = path.join(fs.mkdtempSync(path.join(require('os').tmpdir(), 'hub-')), 'catalog.json');
 execFileSync('python3', [path.join(root, 'tools/build_catalog.py'), '--version', '2.2', '--out', catalogFile]);
 const catalog = JSON.parse(fs.readFileSync(catalogFile, 'utf8'));
+catalog.previous = ['2.1'];
 catalog.notes = '## New\n- **NULL JSFX Hub**: install and update from one place\n- Faster `Delay`\n\nThanks for using NULL JSFX.';
 
 // --- the fake Rust side ----------------------------------------------------------------------
@@ -43,12 +44,14 @@ function mock(catalog) {
         if (cmd === 'hub_load' || cmd === 'hub_refresh') return view();
         if (cmd === 'hub_default_targets') return settings.targets;
         if (cmd === 'hub_hosts') return window.__hosts || [];
+        if (cmd === 'hub_export') return '/home/me/Downloads/NULL-JSFX-Selection.json';
         if (cmd === 'hub_verify') return window.__broken || [];
         if (cmd === 'hub_self_update') return '/home/me/.local/share/null-jsfx/hub-update/2.2/NULL-JSFX-Hub-Linux.AppImage';
         if (cmd === 'hub_save_settings') { Object.assign(settings, args.settings); return view(); }
         if (cmd === 'hub_apply') {
           (listeners['hub-progress'] || []).forEach((f) => f({ payload: { stage: 'download', text: 'NULL-JSFX-JSFX.zip', done: 1, total: 2 } }));
-          for (const [id, f] of args.request.install) state[id][f] = { installed: true, version: catalog.version, outdated: false };
+          const from = args.request.from;
+          for (const [id, f] of args.request.install) state[id][f] = { installed: true, version: from || catalog.version, outdated: false, held: !!from };
           for (const [id, f] of args.request.remove) state[id][f] = { installed: false, version: null, outdated: false };
           for (const id of args.request.extras || []) extras[id] = { installed: true, version: catalog.version, outdated: false };
           for (const id of args.request.extras_remove || []) extras[id] = { installed: false, version: null, outdated: false };
@@ -276,6 +279,38 @@ function check(cond, what) {
   await page.click('#hub-self');
   await page.waitForFunction(() => window.__calls.some(([c, p]) => c === 'reveal' && String(p).endsWith('.AppImage')));
   check((await calls()).some(([c]) => c === 'hub_self_update'), 'Update the Hub downloads it in the Hub, and shows the file when it has to be opened by hand');
+
+  // roll Delay back to the release before, then update it again
+  await page.click('#nav button[data-view="all"]');
+  await page.click('.card[data-id="delay"]');
+  check((await page.textContent('#d-rollback')) === 'Roll back to 2.1', 'the plugin page offers the release before');
+  await page.click('#d-rollback');
+  check((await page.textContent('#c-title')) === 'Roll Delay back to 2.1?', 'roll back asks first');
+  await page.click('#c-ok');
+  const back = await nextApply(12);
+  check(back.from === '2.1' && back.install.length === 4 && back.install.every(([id]) => id === 'delay'), 'roll back installs every format of Delay from 2.1');
+  check((await page.textContent('#d-formats')).includes('kept at 2.1'), 'the plugin page says it is kept at 2.1');
+  check((await page.textContent('#d-rollback')) === 'Update to 2.2', 'and offers to update it again');
+  await page.click('#d-rollback');
+  const fwd = await nextApply(13);
+  check(!fwd.from && fwd.install.length === 4, 'Update installs the latest again');
+  await page.keyboard.press('Escape');
+
+  // the list for another computer: save it, then install from one
+  await page.click('#nav button[data-view="settings"]');
+  await page.click('#export');
+  await page.waitForFunction(() => window.__calls.some(([c, p]) => c === 'reveal' && String(p).endsWith('Selection.json')));
+  check((await calls()).some(([c]) => c === 'hub_export'), 'Save the list writes the file and shows it');
+  await page.setInputFiles('#import-file', { name: 'bad.json', mimeType: 'application/json', buffer: Buffer.from('{"x":1}') });
+  await page.waitForFunction(() => document.getElementById('toast').textContent.includes('not a NULL JSFX list'));
+  check(true, 'a file that is not a list is refused');
+  const list = { kind: 'null-jsfx-selection', release: '2.2', plugins: { tilt: ['jsfx', 'clap'], delay: ['jsfx'], nope: ['jsfx'] }, extras: ['fonts'] };
+  await page.setInputFiles('#import-file', { name: 'NULL-JSFX-Selection.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(list)) });
+  await page.waitForSelector('#confirm:not([hidden])');
+  check((await page.textContent('#c-title')) === 'Install 1 plugin from the list?', 'the list asks for what is missing here');
+  await page.click('#c-ok');
+  const imp = await nextApply(14);
+  check(JSON.stringify(imp.install) === '[["tilt","jsfx"],["tilt","clap"]]' && JSON.stringify(imp.extras) === '["fonts"]', 'installs the missing plugin files and extras from the list');
 
   // What's new
   await page.click('#nav button[data-view="news"]');

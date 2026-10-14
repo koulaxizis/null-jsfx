@@ -30,6 +30,9 @@ function st(id) { return V.state.plugins[id] ?? {}; }
 function installedFormats(id) { return Object.entries(st(id)).filter(([, s]) => s.installed).map(([f]) => f); }
 function outdatedFormats(id) { return Object.entries(st(id)).filter(([, s]) => s.outdated).map(([f]) => f); }
 function isInstalled(id) { return installedFormats(id).length > 0; }
+function heldFormats(id) { return Object.entries(st(id)).filter(([, s]) => s.held).map(([f]) => f); }
+/** installed at the latest release */
+function currentFormats(id) { return Object.entries(st(id)).filter(([, s]) => s.installed && !s.outdated && !s.held).map(([f]) => f); }
 function isNew(id) { return (V.settings.new_ids || []).includes(id); }
 
 // --- talking to Rust -----------------------------------------------------------------------
@@ -171,7 +174,7 @@ function chips(p) {
     .map(([f, label]) => {
       const x = s[f] || {};
       const cls = x.outdated ? "chip old" : x.installed ? "chip on" : "chip";
-      const title = x.outdated ? `${label}: update available` : x.installed ? `${label}: installed` : `${label}: not installed`;
+      const title = x.outdated ? `${label}: update available` : x.held ? `${label}: kept at ${x.version}` : x.installed ? `${label}: installed` : `${label}: not installed`;
       return `<span class="${cls}" title="${title}">${label}</span>`;
     })
     .join("");
@@ -357,6 +360,38 @@ async function verify() {
     "Repair", () => run({ install: broken, remove: [] }, `Repaired ${plural(broken.length, "plugin file", "plugin files")}`), true);
 }
 
+async function exportList() {
+  try {
+    const file = await invoke("hub_export");
+    toast(`Saved: ${file}`);
+    T.opener.revealItemInDir(file);
+  } catch (e) {
+    toast(String(e), true);
+  }
+}
+
+/** a list saved by "Save the list" on another computer: install what is missing from it */
+async function importList(file) {
+  let sel;
+  try {
+    sel = JSON.parse(await file.text());
+  } catch (_) { sel = null; }
+  if (sel?.kind !== "null-jsfx-selection") return toast("That file is not a NULL JSFX list (saved with Save the list).", true);
+  const install = [];
+  for (const [id, fmts] of Object.entries(sel.plugins || {})) {
+    const p = plugins().find((x) => x.id === id);
+    if (!p) continue;
+    for (const f of fmts) if (p.formats.includes(f) && !st(id)[f]?.installed) install.push([id, f]);
+  }
+  const extras = (sel.extras || []).filter((x) => V.catalog.extras.some((e) => e.id === x) && !extraSt(x).installed);
+  if (!install.length && !extras.length) return toast("Everything on that list is already installed.");
+  const n = new Set(install.map(([id]) => id)).size;
+  const names = extras.map((x) => V.catalog.extras.find((e) => e.id === x).name);
+  ask(`Install ${plural(n, "plugin", "plugins")} from the list?`,
+    `${plural(install.length, "plugin file", "plugin files")} that are not here yet${names.length ? `, and ${names.join(", ")}` : ""}, from release ${V.catalog.version}. What is installed here already stays as it is.`,
+    "Install", () => run({ install, remove: [], extras, extras_remove: [] }, `Installed ${plural(n, "plugin", "plugins")} from the list`), true);
+}
+
 function renderExtras() {
   const box = $("extras");
   box.hidden = view !== "extras" || !V.catalog;
@@ -415,6 +450,8 @@ function renderSettings() {
   $("set-clap").value = s.targets.clap;
   const n = plugins().filter((p) => isInstalled(p.id)).length;
   $("verify").disabled = busy || !V.catalog;
+  $("export").disabled = busy || !V.catalog;
+  $("import").disabled = busy || !V.catalog;
   $("remove-all").disabled = busy || (!n && !Object.values(V.state.extras ?? {}).some((x) => x.installed));
   $("remove-all-n").textContent = n ? `${plural(n, "plugin", "plugins")} installed now.` : "No plugins installed now.";
   $("hub-version").textContent = V.hubVersion;
@@ -502,7 +539,7 @@ function openDetail(id) {
   $("d-formats").innerHTML = FORMATS.filter(([f]) => p.formats.includes(f))
     .map(([f, label, desc]) => {
       const x = s[f] || {};
-      const status = x.outdated ? `update: ${x.version ? `${x.version} → ` : ""}${V.catalog.version}` : x.installed ? `installed ${x.version ?? ""}` : "not installed";
+      const status = x.outdated ? `update: ${x.version ? `${x.version} → ` : ""}${V.catalog.version}` : x.held ? `kept at ${x.version}` : x.installed ? `installed ${x.version ?? ""}` : "not installed";
       return `<label><input type="checkbox" data-f="${f}" ${x.installed ? "checked" : ""} ${busy ? "disabled" : ""}> ${label}</label>
         <span class="desc">${desc}</span><span class="st ${x.outdated ? "old" : ""}">${status}</span>`;
     })
@@ -515,6 +552,13 @@ function openDetail(id) {
   if (!$("detail").hidden && detailId === id && demo.wet.src === p.demo?.url) { /* re-render after Apply: keep playing */ } else setDemo(p);
   $("d-remove").hidden = !isInstalled(id);
   $("d-remove").disabled = busy;
+  // back to the release before, or forward again from there
+  const held = heldFormats(id), current = currentFormats(id), prev = V.catalog.previous?.[0];
+  const rb = $("d-rollback");
+  rb.hidden = !held.length && !(current.length && prev);
+  rb.disabled = busy;
+  rb.textContent = held.length ? `Update to ${V.catalog.version}` : `Roll back to ${prev}`;
+  rb.title = held.length ? `${held.map(label).join(", ")} kept at an earlier release` : `Install the ${prev} version of ${current.map(label).join(", ")} and keep it there`;
   updateApply();
   $("detail").hidden = false;
 }
@@ -613,12 +657,29 @@ $("d-apply").onclick = () => {
 $("d-play").onclick = playDemo;
 $("d-wet").onclick = () => pickDemo("wet");
 $("d-dry").onclick = () => pickDemo("dry");
+$("d-rollback").onclick = () => {
+  const p = plugins().find((x) => x.id === detailId);
+  const held = heldFormats(p.id);
+  if (held.length) return run({ install: held.map((f) => [p.id, f]), remove: [] }, `${p.name} is up to date again`);
+  const prev = V.catalog.previous[0];
+  const fmts = currentFormats(p.id);
+  ask(`Roll ${p.name} back to ${prev}?`,
+    `Installs the ${fmts.map(label).join(", ")} version${fmts.length > 1 ? "s" : ""} of ${p.name} from release ${prev}. It stays there, without update notices, until you click Update here. Projects keep their settings.`,
+    "Roll back", () => run({ install: fmts.map((f) => [p.id, f]), remove: [], from: prev }, `${p.name} is back at ${prev}`), true);
+};
 $("d-remove").onclick = () => confirmRemove([plugins().find((x) => x.id === detailId)]);
 $("c-cancel").onclick = closeConfirm;
 $("confirm").addEventListener("click", (e) => { if (e.target.id === "confirm") closeConfirm(); });
 $("c-ok").onclick = () => { const go = confirmAction; closeConfirm(); if (go) go(); };
 $("remove-all").onclick = confirmRemoveAll;
 $("verify").onclick = verify;
+$("export").onclick = exportList;
+$("import").onclick = () => $("import-file").click();
+$("import-file").addEventListener("change", (e) => {
+  const f = e.target.files[0];
+  e.target.value = "";
+  if (f) importList(f);
+});
 $("search").addEventListener("input", render);
 $("refresh").onclick = () => refresh(false);
 $("update-all").onclick = () => {
