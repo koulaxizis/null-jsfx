@@ -2,7 +2,7 @@ desc:NULL Noise Generator
 author: Christos Koulaxizis
 tags: noise generator pink white brown test tone calibration stereo
 //category: Essentials
-//NULL JSFX v2.1 • https://nulljsfx.tech • MIT License
+//NULL JSFX v2.2 • https://nulljsfx.tech • MIT License
 
 slider1:0<0,2,1{White,Pink,Brown}>Type
 slider2:-24<-60,0,0.1>Level (dB)

@@ -2,7 +2,7 @@ desc:NULL Envelope Follower
 author: Christos Koulaxizis
 tags: envelope follower auto wah filter dynamic modulation funk touch
 //category: Essentials
-//NULL JSFX v2.1 • https://nulljsfx.tech • MIT License
+//NULL JSFX v2.2 • https://nulljsfx.tech • MIT License
 
 slider1:0<0,3,1{Lowpass,Bandpass,Highpass,Volume}>Target
 slider2:5<0.1,100,0.1>Attack (ms)

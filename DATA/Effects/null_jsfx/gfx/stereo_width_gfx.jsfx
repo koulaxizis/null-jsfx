@@ -2,7 +2,7 @@ desc:NULL Stereo Width GFX
 author: Christos Koulaxizis
 tags: stereo width mid side widening narrowing spread image crossover gui
 //category: Essentials
-//NULL JSFX v2.1 • https://nulljsfx.tech • MIT License
+//NULL JSFX v2.2 • https://nulljsfx.tech • MIT License
 
 import null_gfx.jsfx-inc
 

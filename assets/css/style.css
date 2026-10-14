@@ -1262,6 +1262,10 @@ button.chain-step:hover {
     transition: border-color 0.15s ease;
 }
 
+.download-option-main {
+    border-color: var(--muted);
+}
+
 a.download-option:hover {
     border-color: var(--muted);
 }

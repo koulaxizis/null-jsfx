@@ -60,7 +60,7 @@
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                     <span class="btn-text">Download</span>
                     <div class="download-meta">
-                        <span><b id="release-version">v2.1</b></span>
+                        <span><b id="release-version">v2.2</b></span>
                         <span class="release-new" id="release-new" hidden>NEW</span>
                         <span class="sep">&bull;</span>
                         <span id="last-update">Released: 13/10/26</span>
@@ -109,7 +109,7 @@
             <div class="modal-content modal-download">
                 <button class="modal-close" onclick="closeDownload()">&times;</button>
                 <div class="changelog-header">
-                    <h3>Download NULL JSFX v2.1</h3>
+                    <h3>Download NULL JSFX v2.2</h3>
                     <p class="changelog-date">Free and open source. Pick what you need.</p>
                 </div>
                 <div class="download-support" id="download-support" hidden>
@@ -121,6 +121,16 @@
                     <a class="download-skip" id="download-skip" href="#">Skip to download &rarr;</a>
                 </div>
                 <div class="download-options">
+                    <a class="download-option download-option-main" id="dl-hub" href="https://github.com/koulaxizis/null-jsfx/releases/latest/download/NULL-JSFX-Hub-Windows-Setup.exe">
+                        <span class="download-option-title">NULL JSFX Hub for <span id="dl-hub-os">Windows</span></span>
+                        <span class="download-option-desc">The app that installs, updates and removes the plugins in any format, with screenshots, FX chains, presets and extras. It tells you when a new version is out.</span>
+                        <span class="download-option-file" id="dl-hub-file">NULL-JSFX-Hub-Windows-Setup.exe</span>
+                    </a>
+                    <a class="download-option" id="dl-installer" href="https://github.com/koulaxizis/null-jsfx/releases/latest/download/NULL-JSFX-Installer-Windows.exe">
+                        <span class="download-option-title">Installer for <span id="dl-installer-os">Windows</span></span>
+                        <span class="download-option-desc">A one-off install: pick the formats (JSFX, GFX, VST3, CLAP), the plugins (all, a group or single ones) and the extras, and it puts everything in place, presets included.</span>
+                        <span class="download-option-file" id="dl-installer-file">NULL-JSFX-Installer-Windows.exe</span>
+                    </a>
                     <a class="download-option" id="dl-jsfx" href="https://github.com/koulaxizis/null-jsfx/releases/latest/download/NULL-JSFX-JSFX.zip">
                         <span class="download-option-title">JSFX for REAPER</span>
                         <span class="download-option-desc">All 89 plugins, the GFX versions with their own interface and 44 ready-made FX chains. One package for Windows, macOS and Linux.</span>
@@ -131,7 +141,19 @@
                         <span class="download-option-desc">All 89 plugins for any DAW, with the same interface and the same sound, plus the Rack.</span>
                         <span class="download-option-file" id="dl-native-file">NULL-JSFX-VST3-CLAP-Windows.zip</span>
                     </a>
-                    <p class="download-other">Other systems:
+                    <p class="download-other">NULL JSFX Hub:
+                        <a href="https://github.com/koulaxizis/null-jsfx/releases/latest/download/NULL-JSFX-Hub-Windows-Setup.exe">Windows</a> &bull;
+                        <a href="https://github.com/koulaxizis/null-jsfx/releases/latest/download/NULL-JSFX-Hub-macOS.dmg">macOS</a> &bull;
+                        <a href="https://github.com/koulaxizis/null-jsfx/releases/latest/download/NULL-JSFX-Hub-Linux.AppImage">Linux AppImage</a> &bull;
+                        <a href="https://github.com/koulaxizis/null-jsfx/releases/latest/download/NULL-JSFX-Hub-Linux.deb">Linux .deb</a>
+                    </p>
+                    <p class="download-other">Installers:
+                        <a href="https://github.com/koulaxizis/null-jsfx/releases/latest/download/NULL-JSFX-Installer-Windows.exe">Windows</a> &bull;
+                        <a href="https://github.com/koulaxizis/null-jsfx/releases/latest/download/NULL-JSFX-Installer-macOS.sh">macOS</a> &bull;
+                        <a href="https://github.com/koulaxizis/null-jsfx/releases/latest/download/NULL-JSFX-Installer-Linux.sh">Linux</a>
+                        (Linux and macOS: run it in a terminal with <code>bash</code>)
+                    </p>
+                    <p class="download-other">VST3 &amp; CLAP zips:
                         <a href="https://github.com/koulaxizis/null-jsfx/releases/latest/download/NULL-JSFX-VST3-CLAP-Windows.zip">Windows</a> &bull;
                         <a href="https://github.com/koulaxizis/null-jsfx/releases/latest/download/NULL-JSFX-VST3-CLAP-macOS.zip">macOS</a> &bull;
                         <a href="https://github.com/koulaxizis/null-jsfx/releases/latest/download/NULL-JSFX-VST3-CLAP-Linux.zip">Linux</a>
@@ -147,12 +169,22 @@
             <div class="modal-content modal-changelog">
                 <button class="modal-close" onclick="closeChangelog()">&times;</button>
                 <div class="changelog-header">
-                    <h3>Release Notes v2.1</h3>
-                    <p class="changelog-date">October 13, 2026</p>
+                    <h3>Release Notes v2.2</h3>
+                    <p class="changelog-date">October 2026</p>
                 </div>
                 <div class="changelog-body">
                     <div class="changelog-section">
-                        <h4 class="changelog-title">14 NEW PLUGINS</h4>
+                        <h4 class="changelog-title">NULL JSFX HUB</h4>
+                        <ul>
+                            <li>A free app for Windows, Linux and macOS that installs, updates and removes the plugins in any format (JSFX, GFX, VST3, CLAP), one by one, by group or all at once</li>
+                            <li>Screenshots, descriptions and factory presets of every plugin; FX chains, presets, the tablet remote and the font as extras</li>
+                            <li>Downloads only what you pick, straight from our GitHub releases</li>
+                            <li>Optional: starts with the computer, stays in the tray and shows a notification when a new version or new plugins are out</li>
+                            <li>No account, no tracking</li>
+                        </ul>
+                    </div>
+                    <div class="changelog-section">
+                        <h4 class="changelog-title">2.1: 14 NEW PLUGINS</h4>
                         <ul>
                             <li><strong>ONE SLIDER</strong>: DJ Filter</li>
                             <li><strong>ESSENTIALS</strong>: Band Splitter, De-Hum, Disperser, Octaver, Panner, Tape, Volume Shaper</li>
@@ -161,20 +193,20 @@
                         </ul>
                     </div>
                     <div class="changelog-section">
-                        <h4 class="changelog-title">RACK AND FX CHAINS</h4>
+                        <h4 class="changelog-title">2.1: RACK AND FX CHAINS</h4>
                         <ul>
                             <li><strong>RACK</strong> (VST3 / CLAP): up to 8 NULL effects in one plugin, each on the full signal, a Low/Mid/High band, Mid, Side, Left or Right, with 8 macros, 2 LFOs and an envelope follower; 52 presets</li>
                             <li><strong>44 FX CHAINS</strong> for REAPER, from Vocal Chain and Mastering Chain to Multiband Distortion and Auto Filter, with pin routing and parameter modulation where they need it</li>
                         </ul>
                     </div>
                     <div class="changelog-section">
-                        <h4 class="changelog-title">PRESETS AND UPGRADES</h4>
+                        <h4 class="changelog-title">2.1: PRESETS AND UPGRADES</h4>
                         <ul>
                             <li>Factory presets for every plugin, the same in JSFX (REAPER's preset menu), GFX and VST3 / CLAP (the box at the top of the interface)</li>
                             <li><strong>DELAY</strong>: ping-pong mode, low cut, high cut and drive in the feedback</li>
                             <li><strong>SATURATION</strong>: Fold mode (wavefolder)</li>
                             <li><strong>MAXIMIZER</strong>: 16 / 24-bit dither with optional noise shaping</li>
-                            <li>Existing settings sound exactly as in 2.0</li>
+                            <li>Existing settings sound exactly as in 2.0; the plugins sound the same in 2.2</li>
                         </ul>
                     </div>
                 </div>
@@ -197,6 +229,7 @@
                         <span class="step-number">1</span>
                         <div class="step-content">
                             <h4>Install Effects</h4>
+                            <p class="install-note"><strong>Easiest:</strong> <strong>NULL JSFX Hub</strong> from the Download button installs, updates and removes the plugins in the formats you pick, with the FX chains, presets and extras, and tells you when a new version is out. The <strong>installer</strong> does a one-off install of the same. Both use the folders below. To do it by hand:</p>
                             <p>Download <strong>JSFX for REAPER</strong> and extract the <code>null_jsfx</code> folder to your Reaper Effects directory:</p>
                             <dl class="install-paths">
                                 <div class="install-os">
