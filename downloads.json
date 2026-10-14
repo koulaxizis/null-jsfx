@@ -1,6 +1,6 @@
 {
   "display": 500,
-  "total": 508,
+  "total": 524,
   "offset": 0,
   "updated": "2026-10-14",
   "assets": {
@@ -26,7 +26,7 @@
     },
     "638417306": {
       "file": "2.1/NULL-JSFX-JSFX.zip",
-      "count": 75
+      "count": 78
     },
     "638433279": {
       "file": "2.1/NULL-JSFX-VST3-CLAP-Windows.zip",
@@ -38,7 +38,7 @@
     },
     "638488962": {
       "file": "2.1/NULL-JSFX-VST3-CLAP-Linux.zip",
-      "count": 64
+      "count": 67
     },
     "638492930": {
       "file": "2.1/NULL-JSFX-Installer-Linux.sh",
@@ -58,7 +58,7 @@
     },
     "639423208": {
       "file": "2.2/NULL-JSFX-JSFX.zip",
-      "count": 168
+      "count": 172
     },
     "639432088": {
       "file": "2.2/NULL-JSFX-Hub-Windows-Setup.exe",
@@ -82,7 +82,7 @@
     },
     "639482506": {
       "file": "2.2/NULL-JSFX-VST3-CLAP-Linux.zip",
-      "count": 117
+      "count": 121
     },
     "639491320": {
       "file": "2.2/NULL-JSFX-VST3-CLAP-macOS.zip",
@@ -98,6 +98,50 @@
     },
     "639502739": {
       "file": "2.2/NULL-JSFX-Installer-macOS.sh",
+      "count": 0
+    },
+    "640323264": {
+      "file": "2.3/NULL-JSFX-JSFX.zip",
+      "count": 2
+    },
+    "640323744": {
+      "file": "2.3/NULL-JSFX-Catalog.json",
+      "count": 0
+    },
+    "640338627": {
+      "file": "2.3/NULL-JSFX-Hub-macOS.dmg",
+      "count": 0
+    },
+    "640339014": {
+      "file": "2.3/NULL-JSFX-Hub-Windows-Setup.exe",
+      "count": 0
+    },
+    "640339052": {
+      "file": "2.3/NULL-JSFX-Hub-Linux.deb",
+      "count": 0
+    },
+    "640339054": {
+      "file": "2.3/NULL-JSFX-Hub-Linux.AppImage",
+      "count": 0
+    },
+    "640340597": {
+      "file": "2.3/NULL-JSFX-VST3-CLAP-Windows.zip",
+      "count": 0
+    },
+    "640395352": {
+      "file": "2.3/NULL-JSFX-VST3-CLAP-Linux.zip",
+      "count": 0
+    },
+    "640396415": {
+      "file": "2.3/NULL-JSFX-VST3-CLAP-macOS.zip",
+      "count": 0
+    },
+    "640402347": {
+      "file": "2.3/NULL-JSFX-Installer-Windows.exe",
+      "count": 0
+    },
+    "640403794": {
+      "file": "2.3/NULL-JSFX-Installer-Linux.sh",
       "count": 0
     }
   }
