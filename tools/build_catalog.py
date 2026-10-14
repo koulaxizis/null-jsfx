@@ -45,7 +45,7 @@ EXTRAS = [
     {"id": "chains", "name": "FX chains", "formats": ["jsfx", "gfx"],
      "desc": "Ready-made REAPER FX chains of NULL JSFX plugins. A chain is added when all its plugins are installed."},
     {"id": "presets", "name": "Factory presets", "formats": ["jsfx", "gfx"],
-     "desc": "The factory presets in REAPER's preset menu of each JSFX and GFX version, added after your own presets (turning this off leaves them there)."},
+     "desc": "The factory presets in REAPER's preset menu of each JSFX and GFX version, added after your own presets. Turning this off takes out only the factory presets you did not change."},
     {"id": "remote", "name": "Tablet remote", "formats": ["jsfx", "gfx"],
      "desc": "Control REAPER's mixer and the NULL JSFX plugins from a tablet. Needs a few steps in REAPER after."},
     {"id": "fonts", "name": "Noto Sans font", "formats": ["gfx"],

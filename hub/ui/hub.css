@@ -173,3 +173,20 @@ input[type="checkbox"] { accent-color: var(--accent); width: 15px; height: 15px;
 .extra .st.old { color: var(--warn); }
 .extra-actions { display: flex; gap: 8px; }
 .extra-actions button { padding: 3px 12px; font-size: 12px; }
+
+/* format toggles above the list, removing */
+.bar { align-items: center; flex-wrap: wrap; }
+.pick { display: flex; align-items: center; gap: 4px; font-size: 12px; }
+.pick .muted { margin-right: 4px; }
+.chip-btn { font-size: 11px; padding: 3px 9px; border-radius: 4px; color: var(--muted); background: transparent; }
+.chip-btn.on { color: #151413; background: var(--accent); border-color: var(--accent); }
+.acts { display: flex; gap: 4px; flex: none; }
+.card-foot button.mini { padding: 3px 7px; color: var(--muted); }
+button.danger { color: var(--bad); }
+button.danger:hover:not(:disabled) { border-color: var(--bad); }
+button.primary.danger { background: var(--bad); border-color: var(--bad); color: #151413; }
+button.primary.danger:hover:not(:disabled) { background: #eb9285; }
+.confirm { justify-content: center; align-items: center; z-index: 20; }
+.confirm-card { width: min(440px, calc(100% - 32px)); background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 20px 22px 14px; }
+.confirm-card h2 { font-size: 17px; margin-bottom: 8px; }
+.confirm-card .row { justify-content: flex-end; margin-top: 16px; }
