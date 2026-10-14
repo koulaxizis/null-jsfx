@@ -2,7 +2,7 @@ desc:NULL Band Splitter
 author: Christos Koulaxizis
 tags: band splitter crossover multiband linkwitz-riley routing split merge utility
 //category: Essentials
-//NULL JSFX v2.2 • https://nulljsfx.tech • MIT License
+//NULL JSFX v2.3 • https://nulljsfx.tech • MIT License
 
 slider1:0<0,1,1{Split,Merge}>Mode
 slider2:3<2,4,1>Bands

@@ -2,7 +2,7 @@ desc:NULL Gate
 author: Christos Koulaxizis
 tags: gate noise vocal floor reduce silence threshold mute sidechain
 //category: Essentials
-//NULL JSFX v2.2 • https://nulljsfx.tech • MIT License
+//NULL JSFX v2.3 • https://nulljsfx.tech • MIT License
 
 slider1:-40<-60,0,0.1>Threshold (dB)
 slider2:10<1,100,1>Attack (ms)

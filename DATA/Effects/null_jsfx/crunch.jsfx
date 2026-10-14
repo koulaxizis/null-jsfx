@@ -2,7 +2,7 @@ desc:NULL Crunch
 author: Christos Koulaxizis
 tags: distortion grit crunch fuzz aggressive
 //category: One Slider
-//NULL JSFX v2.2 • https://nulljsfx.tech • MIT License
+//NULL JSFX v2.3 • https://nulljsfx.tech • MIT License
 
 slider1:50<0,100,1>Amount
 

@@ -2,7 +2,7 @@ desc:NULL Parametric EQ
 author: Christos Koulaxizis
 tags: equalizer parametric eq 5-band shelving filter mixing mastering
 //category: Essentials
-//NULL JSFX v2.2 • https://nulljsfx.tech • MIT License
+//NULL JSFX v2.3 • https://nulljsfx.tech • MIT License
 
 slider1:77<20,300,1>Low Freq (Hz)
 slider2:0<-18,18,0.1>Low Gain (dB)

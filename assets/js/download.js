@@ -27,7 +27,7 @@
     document.getElementById('dl-os').textContent = os;
     document.getElementById('dl-native').href = base + file;
     document.getElementById('dl-native-file').textContent = file;
-    const installer = 'NULL-JSFX-Installer-' + os + (os === 'Windows' ? '.exe' : '.sh');
+    const installer = 'NULL-JSFX-Installer-' + os + { Windows: '.exe', macOS: '.pkg', Linux: '.sh' }[os];
     document.getElementById('dl-installer-os').textContent = os;
     document.getElementById('dl-installer').href = base + installer;
     document.getElementById('dl-installer-file').textContent = installer;
