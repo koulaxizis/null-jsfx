@@ -48,6 +48,10 @@ Things worth knowing:
 - **Check and repair** (`Hub::verify`, Settings). Compares every installed plugin file that is
   at the current release with the CRC-32 and size in the release zip's directory (read over range
   requests, no download), and reinstalls the plugins that differ.
+- **Audio demos.** A plugin's page plays a short mix through the plugin with one of its factory
+  presets, and the same mix dry, switching between them in step. They live on the site
+  (`assets/audio/demos/`, made by `tools/render_demos.py` with the real JSFX in ysfx) and the
+  catalog points to them; the page's CSP allows media from nulljsfx.tech only.
 - **Updating the Hub** (`app/src/selfupdate.rs`). "Update the Hub" downloads this system's Hub
   from the release and puts it in place: the Windows setup in passive mode, the macOS app copied
   out of the disk image, the AppImage replaced. A Hub installed from the .deb shows the file.

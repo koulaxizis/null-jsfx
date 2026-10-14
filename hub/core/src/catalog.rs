@@ -68,6 +68,15 @@ pub struct Plugin {
     pub guide: Option<String>,
     #[serde(default)]
     pub presets: Vec<String>,
+    /// a short demo on the site: the music through this plugin with one of its presets
+    #[serde(default)]
+    pub demo: Option<Demo>,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct Demo {
+    pub url: String,
+    pub preset: String,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -126,6 +135,9 @@ pub struct Catalog {
     pub site: String,
     pub packages: Packages,
     pub hub: HubInfo,
+    /// the music of the demos without any plugin
+    #[serde(default)]
+    pub demo_dry: Option<String>,
     #[serde(default)]
     pub groups: Vec<Group>,
     pub plugins: Vec<Plugin>,

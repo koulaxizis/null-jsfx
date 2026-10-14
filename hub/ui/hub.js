@@ -443,6 +443,51 @@ async function saveSettings() {
 
 // --- plugin page -----------------------------------------------------------------------------
 
+// the demo: the music through the plugin and the same music dry, in step, so switching between
+// them while it plays compares the two at the same moment
+const demo = { wet: new Audio(), dry: new Audio(), on: "wet" };
+for (const a of [demo.wet, demo.dry]) {
+  a.preload = "none";
+  a.loop = true;
+  a.addEventListener("error", () => { if (a.src && !$("detail").hidden) { $("d-demo-note").textContent = "The demo needs the internet."; stopDemo(); } });
+}
+function stopDemo() {
+  demo.wet.pause();
+  demo.dry.pause();
+  $("d-play").textContent = "Play";
+}
+function setDemo(p) {
+  stopDemo();
+  const d = p.demo;
+  $("d-demo").hidden = !d || !V.catalog.demo_dry;
+  if ($("d-demo").hidden) return;
+  if (demo.wet.src !== d.url) {
+    demo.wet.src = d.url;
+    demo.dry.src = V.catalog.demo_dry;
+    demo.wet.currentTime = demo.dry.currentTime = 0;
+  }
+  pickDemo("wet");
+  $("d-wet").textContent = p.name;
+  $("d-demo-note").textContent = `Preset "${d.preset}", on a short mix`;
+}
+function pickDemo(which) {
+  const from = demo[demo.on], to = demo[which];
+  demo.on = which;
+  $("d-wet").classList.toggle("on", which === "wet");
+  $("d-dry").classList.toggle("on", which === "dry");
+  $("d-wet").setAttribute("aria-pressed", which === "wet");
+  $("d-dry").setAttribute("aria-pressed", which === "dry");
+  if (from === to || from.paused) return;
+  to.currentTime = from.currentTime;
+  to.play().catch(() => {});
+  from.pause();
+}
+function playDemo() {
+  const a = demo[demo.on];
+  if (!a.paused) return stopDemo();
+  a.play().then(() => ($("d-play").textContent = "Stop")).catch(() => { $("d-demo-note").textContent = "The demo needs the internet."; });
+}
+
 function openDetail(id) {
   const p = plugins().find((x) => x.id === id);
   if (!p) return;
@@ -467,6 +512,7 @@ function openDetail(id) {
   $("d-presets-wrap").hidden = !(p.presets || []).length;
   $("d-presets").textContent = (p.presets || []).join(" · ");
   $("d-props").textContent = p.properties || "";
+  if (!$("detail").hidden && detailId === id && demo.wet.src === p.demo?.url) { /* re-render after Apply: keep playing */ } else setDemo(p);
   $("d-remove").hidden = !isInstalled(id);
   $("d-remove").disabled = busy;
   updateApply();
@@ -554,16 +600,19 @@ document.addEventListener("error", (e) => {
 }, true);
 document.addEventListener("keydown", (e) => {
   if (e.key === "Escape" && !$("confirm").hidden) return closeConfirm();
-  if (e.key === "Escape" && !$("detail").hidden) $("detail").hidden = true, (detailId = null);
+  if (e.key === "Escape" && !$("detail").hidden) $("detail").hidden = true, (detailId = null), stopDemo();
   if (e.key === "Enter" && e.target.classList?.contains("card")) openDetail(e.target.dataset.id);
 });
-$("d-close").onclick = () => (($("detail").hidden = true), (detailId = null));
+$("d-close").onclick = () => (($("detail").hidden = true), (detailId = null), stopDemo());
 $("detail").addEventListener("click", (e) => { if (e.target.id === "detail") $("d-close").onclick(); });
 $("d-formats").addEventListener("change", updateApply);
 $("d-apply").onclick = () => {
   const p = plugins().find((x) => x.id === detailId);
   run(detailRequest(), `${p.name}: done`);
 };
+$("d-play").onclick = playDemo;
+$("d-wet").onclick = () => pickDemo("wet");
+$("d-dry").onclick = () => pickDemo("dry");
 $("d-remove").onclick = () => confirmRemove([plugins().find((x) => x.id === detailId)]);
 $("c-cancel").onclick = closeConfirm;
 $("confirm").addEventListener("click", (e) => { if (e.target.id === "confirm") closeConfirm(); });
