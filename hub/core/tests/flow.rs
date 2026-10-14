@@ -290,6 +290,11 @@ fn round(ranges: bool) {
     let note = h.notice(&cat, &s).unwrap();
     assert!(note.starts_with("NULL JSFX 2.2 is out: 2 installed plugins to update, new: Reverb"), "{note}");
     assert_eq!(h.notice(&cat, &s), None, "one notification per release");
+    h.settings.notified = None;
+    h.settings.language = "el".into();
+    let note = h.notice(&cat, &s).unwrap();
+    assert!(note.starts_with("Βγήκε το NULL JSFX 2.2: 2 εγκατεστημένα plugins για ενημέρωση, νέα: Reverb"), "{note}");
+    h.settings.language = String::new();
     let all: Vec<(String, Format)> = s
         .plugins
         .iter()

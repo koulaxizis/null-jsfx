@@ -56,6 +56,8 @@ pub struct Settings {
     pub last_check: u64,
     /// plugin/format kept at an earlier release on purpose (rolled back): not offered as updates
     pub held: BTreeSet<String>,
+    /// "en" or "el" (the page sets it from the computer's language on the first start)
+    pub language: String,
 }
 
 impl Default for Settings {
@@ -70,6 +72,7 @@ impl Default for Settings {
             notified: None,
             last_check: 0,
             held: BTreeSet::new(),
+            language: String::new(),
         }
     }
 }
@@ -184,27 +187,36 @@ impl Hub {
         if !self.settings.notify || self.settings.notified.as_deref() == Some(catalog.version.as_str()) {
             return None;
         }
+        let el = self.settings.language == "el";
         let mut parts = Vec::new();
         let plugins = state.plugins.iter().filter(|(_, m)| m.values().any(|s| s.outdated)).count();
         if plugins > 0 {
-            parts.push(format!("{plugins} installed plugin{} to update", if plugins == 1 { "" } else { "s" }));
+            parts.push(match (el, plugins) {
+                (true, 1) => "1 εγκατεστημένο plugin για ενημέρωση".to_string(),
+                (true, n) => format!("{n} εγκατεστημένα plugins για ενημέρωση"),
+                (false, n) => format!("{n} installed plugin{} to update", if n == 1 { "" } else { "s" }),
+            });
         }
         let names: Vec<&str> =
             self.settings.new_ids.iter().filter_map(|id| catalog.plugin(id)).map(|p| p.name.as_str()).collect();
         match names.len() {
             0 => {}
-            1..=3 => parts.push(format!("new: {}", names.join(", "))),
-            n => parts.push(format!("{n} new plugins")),
+            1..=3 => parts.push(format!("{}: {}", if el { "νέα" } else { "new" }, names.join(", "))),
+            n => parts.push(if el { format!("{n} νέα plugins") } else { format!("{n} new plugins") }),
         }
         if hub_update(catalog).is_some() {
-            parts.push("a new NULL JSFX Hub".into());
+            parts.push(if el { "νέο NULL JSFX Hub" } else { "a new NULL JSFX Hub" }.into());
         }
         self.settings.notified = Some(catalog.version.clone());
         let _ = self.save_settings();
         if parts.is_empty() {
             return None;
         }
-        Some(format!("NULL JSFX {} is out: {}.", catalog.version, parts.join(", ")))
+        Some(if el {
+            format!("Βγήκε το NULL JSFX {}: {}.", catalog.version, parts.join(", "))
+        } else {
+            format!("NULL JSFX {} is out: {}.", catalog.version, parts.join(", "))
+        })
     }
 
     /// What is installed, per plugin and format, from our records and the folders themselves
