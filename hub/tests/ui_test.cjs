@@ -129,10 +129,21 @@ function check(cond, what) {
   check(JSON.stringify(second) === JSON.stringify({ install: [['tilt', 'jsfx'], ['tilt', 'vst3']], remove: [] }), 'plugin page request: update JSFX, install VST3');
   check((await page.textContent('#update-all')) === 'Update all (1)', 'the FX chains are left to update');
 
+  // the demo: the plugin and the dry music, switched while playing
+  check(await page.isVisible('#d-demo'), 'the plugin page has a demo');
+  check((await page.textContent('#d-wet')) === 'Tilt' && (await page.textContent('#d-demo-note')).includes('Preset "'), 'the demo names the plugin and its preset');
+  await page.click('#d-play');
+  await page.waitForFunction(() => document.getElementById('d-play').textContent === 'Stop', null, { timeout: 10000 }).catch(() => {});
+  check((await page.textContent('#d-play')) === 'Stop', 'the demo plays');
+  await page.click('#d-dry');
+  check(await page.evaluate(() => document.getElementById('d-dry').classList.contains('on')), 'Dry switches to the music without the plugin');
+  if (shots) await page.screenshot({ path: path.join(shots, 'hub-demo.png') });
+
   // removing from the plugin page
   await page.uncheck('#d-formats input[data-f="vst3"]');
   check((await page.textContent('#d-apply')) === 'Remove 1', 'unticking an installed format removes it');
   await page.keyboard.press('Escape');
+  check((await page.textContent('#d-play')) === 'Play', 'closing the plugin page stops the demo');
 
   // Settings: drop CLAP
   await page.click('#nav button[data-view="settings"]');

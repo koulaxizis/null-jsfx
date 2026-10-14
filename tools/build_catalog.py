@@ -53,8 +53,22 @@ EXTRAS = [
 ]
 
 
+DEMOS = ROOT / "assets/audio/demos"
+
+
+def demos():
+    """{plugin: preset} of the audio demos made by tools/render_demos.py."""
+    index = DEMOS / "demos.json"
+    found = json.loads(index.read_text(encoding="utf-8")) if index.exists() else {}
+    missing = [stem for stem in found if not (DEMOS / f"{stem}.mp3").is_file()]
+    if missing or (found and not (DEMOS / "dry.mp3").is_file()):
+        sys.exit(f"build_catalog: audio demos missing: {' '.join(missing) or 'dry.mp3'} (tools/render_demos.py)")
+    return found
+
+
 def plugins():
     out = []
+    demo = demos()
     for p in load():
         stem = p["stem"]
         presets = PRESETS / f"{stem}.json"
@@ -72,6 +86,7 @@ def plugins():
             "shot": SITE + p["shot"] if p["shot"] else None,
             "guide": f"{SITE}#{p['key']}",
             "presets": [name for name, _ in json.loads(presets.read_text(encoding="utf-8"))] if presets.exists() else [],
+            "demo": {"url": f"{SITE}assets/audio/demos/{stem}.mp3", "preset": demo[stem]} if stem in demo else None,
         })
     return out
 
@@ -126,6 +141,8 @@ def catalog(version, notes, date):
         "packages": {"jsfx": "NULL-JSFX-JSFX.zip",
                      "native": {os: f"NULL-JSFX-VST3-CLAP-{os}.zip" for os in OSES}},
         "hub": {"version": version, "assets": HUB_ASSETS},
+        # the music of the plugin demos without any plugin
+        "demo_dry": f"{SITE}assets/audio/demos/dry.mp3" if demos() else None,
         "groups": [{"id": key, "name": title, "desc": desc} for title, key, desc in CATEGORIES],
         # the Rack is in "plugins" with group "extras"; the Hub lists it with these
 
