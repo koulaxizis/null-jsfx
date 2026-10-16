@@ -176,7 +176,7 @@ fn extras_round() {
         f.insert("/latest/download/NULL-JSFX-Catalog.json".into(), catalog.into_bytes());
         f.insert("/download/3.0/NULL-JSFX-JSFX.zip".into(), j);
     }
-    std::env::set_var("NULL_JSFX_HUB_RELEASES", serve(files, true));
+    std::env::set_var("NULL_JSFX_HUB_RELEASES", serve(files.clone(), true));
     let tmp = tempfile::tempdir().unwrap();
     let root = tmp.path();
     let mut h = hub(root);
@@ -207,8 +207,14 @@ fn extras_round() {
     h.apply(&cat, &Request { install: vec![("delay".into(), Format::Jsfx)], ..Default::default() }, &mut |_| {}).unwrap();
     assert!(r.join("FXChains/NULL JSFX/Duo.RfxChain").is_file());
     assert!(r.join("presets/js-null_jsfx_delay_jsfx.ini").is_file());
-    // Tilt goes: both chains go, the folder too, and its factory preset; the user's stays
-    h.apply(&cat, &Request { remove: vec![("tilt".into(), Format::Jsfx)], ..Default::default() }, &mut |_| {}).unwrap();
+    // Tilt goes: both chains go, the folder too, and its factory preset; the user's stays.
+    // Removing downloads nothing: the package is gone and the kept copy of the presets is enough.
+    let pkg = files.lock().unwrap().remove("/download/3.0/NULL-JSFX-JSFX.zip").unwrap();
+    let mut downloads = 0;
+    h.apply(&cat, &Request { remove: vec![("tilt".into(), Format::Jsfx)], ..Default::default() }, &mut |p| downloads += (p.stage == "download") as u32)
+        .unwrap();
+    assert_eq!(downloads, 0, "removing must not download");
+    files.lock().unwrap().insert("/download/3.0/NULL-JSFX-JSFX.zip".into(), pkg);
     assert!(!r.join("FXChains/NULL JSFX").exists());
     let names = |f: &str| fs::read_to_string(r.join("presets").join(f)).map(|t| t.lines().filter_map(|l| l.strip_prefix("Name=").map(str::to_string)).collect::<Vec<_>>());
     assert_eq!(names("js-null_jsfx_tilt_jsfx.ini").unwrap(), ["Mine"]);
@@ -229,6 +235,48 @@ fn extras_round() {
     assert_eq!(names("js-null_jsfx_tilt_jsfx.ini").unwrap(), ["Mine"]);
     assert!(!r.join("presets/js-null_jsfx_delay_jsfx.ini").exists());
     assert!(!s.extras["presets"].installed);
+
+    // presets merged before their copies were kept (an older Hub), and no package to read them
+    // from: the plugin still goes, its presets file stays as it is
+    h.apply(&cat, &Request { extras: vec!["presets".into()], ..Default::default() }, &mut |_| {}).unwrap();
+    fs::remove_dir_all(root.join("data/factory-presets")).unwrap();
+    let _ = fs::remove_dir_all(root.join("data/cache"));
+    files.lock().unwrap().clear();
+    let s = h.apply(&cat, &Request { remove: vec![("tilt".into(), Format::Jsfx)], ..Default::default() }, &mut |_| {}).unwrap();
+    assert!(!s.plugins["tilt"][&Format::Jsfx].installed);
+    assert_eq!(names("js-null_jsfx_tilt_jsfx.ini").unwrap(), ["Mine", "Factory"]);
+}
+
+/// Windows: a font file the system or REAPER holds open. Turning the font off says so in plain
+/// words, counts it as off, and the Hub removes the file once it is free.
+#[cfg(windows)]
+#[test]
+fn files_in_use_wait_for_later() {
+    use std::os::windows::fs::OpenOptionsExt;
+    let tmp = tempfile::tempdir().unwrap();
+    let root = tmp.path();
+    let mut h = hub(root);
+    let fonts = root.join("fonts");
+    fs::create_dir_all(&fonts).unwrap();
+    for f in ["NotoSans-Regular.ttf", "NotoSans-Bold.ttf"] {
+        fs::write(fonts.join(f), "font").unwrap();
+    }
+    let cat: Catalog = serde_json::from_str(
+        r#"{"schema":1,"version":"3.0","repo":"x/y","packages":{"jsfx":"J.zip","native":{}},"hub":{"version":"1.0"},"plugins":[]}"#,
+    )
+    .unwrap();
+    assert!(h.scan(&cat).extras["fonts"].installed, "put there by the installer");
+    let held = fs::OpenOptions::new().read(true).share_mode(1).open(fonts.join("NotoSans-Bold.ttf")).unwrap();
+    let e = h.apply(&cat, &Request { extras_remove: vec!["fonts".into()], ..Default::default() }, &mut |_| {}).unwrap_err();
+    assert_eq!(e, null_hub_core::IN_USE);
+    assert!(fonts.join("NotoSans-Bold.ttf").exists() && !fonts.join("NotoSans-Regular.ttf").exists());
+    assert!(!h.scan(&cat).extras["fonts"].installed, "counts as off while it waits");
+    assert_eq!(h.finish_pending(), 1, "still held");
+    drop(held);
+    // the next start finishes it
+    let h = hub(root);
+    assert_eq!(h.finish_pending(), 0);
+    assert!(!fonts.join("NotoSans-Bold.ttf").exists());
 }
 
 fn round(ranges: bool) {
@@ -363,4 +411,11 @@ fn unknown_plugin_is_refused() {
     let err = h.apply(&cat, &Request { install: vec![("nope".into(), Format::Jsfx)], remove: vec![], ..Default::default() }, &mut |_| {}).unwrap_err();
     assert!(err.contains("not in this release"));
     let _: PathBuf = h.data.clone();
+}
+
+/// The page shows the files-in-use message in Greek by its exact English text.
+#[test]
+fn in_use_message_has_its_greek() {
+    let i18n = fs::read_to_string(Path::new(env!("CARGO_MANIFEST_DIR")).join("../ui/i18n.js")).unwrap();
+    assert!(i18n.contains(&format!("{:?}:", null_hub_core::IN_USE)), "hub/ui/i18n.js needs the Greek of IN_USE");
 }

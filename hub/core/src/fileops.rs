@@ -19,6 +19,9 @@ pub enum Op {
 pub struct Failure {
     pub op: Op,
     pub denied: bool,
+    /// the file is open in another program (Windows: REAPER with the plugin loaded, or the
+    /// system holding a font), so it can be done once that lets go of it
+    pub busy: bool,
     pub error: String,
 }
 
@@ -27,15 +30,23 @@ pub fn apply(ops: &[Op]) -> Vec<Failure> {
     let mut out = Vec::new();
     for op in ops {
         if let Err(e) = apply_one(op) {
-            out.push(Failure { op: op.clone(), denied: e.kind() == io::ErrorKind::PermissionDenied, error: e.to_string() });
+            out.push(Failure { op: op.clone(), denied: e.kind() == io::ErrorKind::PermissionDenied, busy: in_use(&e), error: e.to_string() });
         }
     }
     out
 }
 
+/// Windows' "being used by another process" (sharing or lock violation).
+fn in_use(e: &io::Error) -> bool {
+    cfg!(windows) && matches!(e.raw_os_error(), Some(32 | 33))
+}
+
 fn apply_one(op: &Op) -> io::Result<()> {
     match op {
         Op::Copy { from, to } => {
+            if same_file(from, to) {
+                return Ok(()); // already there: an update that didn't change it, or a locked font
+            }
             if let Some(dir) = to.parent() {
                 fs::create_dir_all(dir)?;
             }
@@ -64,6 +75,16 @@ fn remove_any(path: &Path) -> io::Result<()> {
         Ok(_) => fs::remove_file(path),
         Err(e) if e.kind() == io::ErrorKind::NotFound => Ok(()),
         Err(e) => Err(e),
+    }
+}
+
+/// Both are files with the same bytes.
+fn same_file(a: &Path, b: &Path) -> bool {
+    match (fs::metadata(a), fs::metadata(b)) {
+        (Ok(x), Ok(y)) if x.is_file() && y.is_file() && x.len() == y.len() => {
+            matches!((fs::read(a), fs::read(b)), (Ok(p), Ok(q)) if p == q)
+        }
+        _ => false,
     }
 }
 
@@ -164,5 +185,32 @@ mod tests {
         assert!(apply(&[Op::Remove { path: dest.clone(), keep: Some(keep.clone()) }]).is_empty());
         assert!(!t.path().join("VST3/NULL JSFX").exists());
         assert!(keep.exists());
+    }
+
+    #[test]
+    fn copy_of_the_same_bytes_leaves_the_file_alone() {
+        let t = tempfile::tempdir().unwrap();
+        let (a, b) = (t.path().join("a.ttf"), t.path().join("b.ttf"));
+        fs::write(&a, "font").unwrap();
+        fs::write(&b, "font").unwrap();
+        let before = fs::metadata(&b).unwrap().modified().unwrap();
+        std::thread::sleep(std::time::Duration::from_millis(20));
+        assert!(apply(&[Op::Copy { from: a.clone(), to: b.clone() }]).is_empty());
+        assert_eq!(fs::metadata(&b).unwrap().modified().unwrap(), before, "not rewritten");
+    }
+
+    /// A file another program holds open: the step fails as busy, not as an error to show raw.
+    #[cfg(windows)]
+    #[test]
+    fn a_file_in_use_is_busy() {
+        use std::os::windows::fs::OpenOptionsExt;
+        let t = tempfile::tempdir().unwrap();
+        let f = t.path().join("NotoSans-Regular.ttf");
+        fs::write(&f, "font").unwrap();
+        let held = fs::OpenOptions::new().read(true).share_mode(1).open(&f).unwrap(); // FILE_SHARE_READ
+        let failed = apply(&[Op::Remove { path: f.clone(), keep: None }]);
+        assert!(failed.len() == 1 && failed[0].busy, "{:?}", failed.first().map(|x| &x.error));
+        drop(held);
+        assert!(apply(&[Op::Remove { path: f.clone(), keep: None }]).is_empty());
     }
 }

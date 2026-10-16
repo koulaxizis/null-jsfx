@@ -127,6 +127,8 @@ const EL = {
     "Τα Windows δεν αφήνουν να αντικατασταθούν ή να αφαιρεθούν τα VST3 και CLAP plugins που έχει φορτώσει ένα DAW πριν κλείσει.",
   "A DAW picks up new VST3 and CLAP files only after a restart.": "Ένα DAW βλέπει τα νέα αρχεία VST3 και CLAP μόνο μετά από επανεκκίνηση.",
   "Save your projects, close {names}, then continue.": "Αποθήκευσε τα projects σου, κλείσε το {names} και συνέχισε.",
+  "Some files are in use by another program, so they could not change yet. The Hub finishes this by itself the next time it starts. Close REAPER (for the Noto Sans font, sign out of Windows and back in), then open the Hub again.":
+    "Κάποια αρχεία χρησιμοποιούνται από άλλο πρόγραμμα και δεν άλλαξαν ακόμη. Το Hub θα το ολοκληρώσει μόνο του την επόμενη φορά που θα ξεκινήσει. Κλείσε το REAPER (για τη γραμματοσειρά Noto Sans, αποσυνδέσου από τα Windows και συνδέσου ξανά) και άνοιξε πάλι το Hub.",
   "Continue": "Συνέχεια",
 
   // removing

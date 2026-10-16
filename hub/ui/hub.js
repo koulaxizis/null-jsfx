@@ -64,7 +64,8 @@ async function run(request, doneText, checked) {
     V = await invoke("hub_apply", { request });
     toast(doneText);
   } catch (e) {
-    toast(String(e), true);
+    // the core's fixed messages (files in use) have their Greek; other errors stay as they come
+    toast(EL[String(e)] ? tr(String(e)) : String(e), true);
     try { V = await invoke("hub_load"); } catch (_) { /* keep the old view */ }
   } finally {
     busy = false;
