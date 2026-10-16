@@ -2,7 +2,7 @@ desc:NULL Robotizer
 author: Christos Koulaxizis
 tags: robot robotizer voice monotone sci-fi dalek metallic fft
 //category: Advanced
-//NULL JSFX v2.3 • https://nulljsfx.tech • MIT License
+//NULL JSFX v2.4 • https://nulljsfx.tech • MIT License
 
 slider1:120<50,400,1>Pitch (Hz)
 slider2:30<0,100,1>Metallic (%)

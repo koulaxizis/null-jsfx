@@ -2,7 +2,7 @@ desc:NULL Click Repair
 author: Christos Koulaxizis
 tags: click repair audio restoration pop crackle vinyl denoise
 //category: Essentials
-//NULL JSFX v2.3 • https://nulljsfx.tech • MIT License
+//NULL JSFX v2.4 • https://nulljsfx.tech • MIT License
 
 slider1:50<0,100,1>Threshold (%)
 slider2:10<1,50,1>Window (Samples)

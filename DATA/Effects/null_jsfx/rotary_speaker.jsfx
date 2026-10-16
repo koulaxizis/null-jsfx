@@ -2,7 +2,7 @@ desc:NULL Rotary Speaker
 author: Christos Koulaxizis
 tags: rotary leslie organ speaker doppler tremolo chorale horn drum
 //category: Advanced
-//NULL JSFX v2.3 • https://nulljsfx.tech • MIT License
+//NULL JSFX v2.4 • https://nulljsfx.tech • MIT License
 
 slider1:0<0,2,1{Slow (Chorale),Fast (Tremolo),Stop}>Speed
 slider2:100<10,400,1>Acceleration (%)

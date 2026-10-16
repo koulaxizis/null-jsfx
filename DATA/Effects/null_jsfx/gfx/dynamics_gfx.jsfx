@@ -2,7 +2,7 @@ desc:NULL Dynamics GFX
 author: Christos Koulaxizis
 tags: dynamics compressor expander gain reduction ratio threshold knee gui
 //category: Essentials
-//NULL JSFX v2.3 • https://nulljsfx.tech • MIT License
+//NULL JSFX v2.4 • https://nulljsfx.tech • MIT License
 
 import null_gfx.jsfx-inc
 

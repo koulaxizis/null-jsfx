@@ -116,5 +116,5 @@ Deeper sound design, creative effects and special processing.
 - Author: Christos Koulaxizis (https://koulaxizis.gr)
 - Platform: Cockos Reaper (JSFX/EEL2)
 - License: MIT
-- Version: 2.3
+- Version: 2.4
 - NULL JSFX Hub: app that installs, updates and removes the plugins (Windows, Linux, macOS), see hub/README.md
