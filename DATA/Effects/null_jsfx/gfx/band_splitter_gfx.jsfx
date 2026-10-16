@@ -2,7 +2,7 @@ desc:NULL Band Splitter GFX
 author: Christos Koulaxizis
 tags: band splitter crossover multiband linkwitz-riley routing split merge utility gui
 //category: Essentials
-//NULL JSFX v2.3 • https://nulljsfx.tech • MIT License
+//NULL JSFX v2.4 • https://nulljsfx.tech • MIT License
 
 import null_gfx.jsfx-inc
 

@@ -2,7 +2,7 @@ desc:NULL Resonance Suppressor
 author: Christos Koulaxizis
 tags: resonance suppressor dynamic eq spectral harshness tame fft mixing mastering
 //category: Advanced
-//NULL JSFX v2.3 • https://nulljsfx.tech • MIT License
+//NULL JSFX v2.4 • https://nulljsfx.tech • MIT License
 
 slider1:6<0,24,0.1>Depth (dB)
 slider2:50<0,100,1>Sharpness (%)

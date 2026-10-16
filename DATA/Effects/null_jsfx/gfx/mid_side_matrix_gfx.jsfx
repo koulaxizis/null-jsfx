@@ -2,7 +2,7 @@ desc:NULL Mid/Side Matrix GFX
 author: Christos Koulaxizis
 tags: mid side stereo matrix encode decode m/s processing gui
 //category: Essentials
-//NULL JSFX v2.3 • https://nulljsfx.tech • MIT License
+//NULL JSFX v2.4 • https://nulljsfx.tech • MIT License
 
 import null_gfx.jsfx-inc
 

@@ -2,7 +2,7 @@ desc:NULL Noise Generator GFX
 author: Christos Koulaxizis
 tags: noise generator pink white brown test tone calibration stereo gui
 //category: Essentials
-//NULL JSFX v2.3 • https://nulljsfx.tech • MIT License
+//NULL JSFX v2.4 • https://nulljsfx.tech • MIT License
 
 import null_gfx.jsfx-inc
 
