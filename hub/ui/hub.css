@@ -14,11 +14,16 @@
   color-scheme: dark;
 }
 
+/* Noto Sans from the Hub itself, under its own name: using the installed font would keep its
+   files open on Windows, and the Hub could not then update or remove them. */
+@font-face { font-family: "Hub Sans"; src: url("fonts/NotoSans-Regular.ttf") format("truetype"); font-weight: 400; }
+@font-face { font-family: "Hub Sans"; src: url("fonts/NotoSans-Bold.ttf") format("truetype"); font-weight: 700; }
+
 * { box-sizing: border-box; margin: 0; padding: 0; }
 [hidden] { display: none !important; }
 html, body { height: 100%; }
 body {
-  font-family: "Noto Sans", "Segoe UI", system-ui, sans-serif;
+  font-family: "Hub Sans", "Segoe UI", system-ui, sans-serif;
   background: var(--bg);
   color: var(--text);
   font-size: 14px;

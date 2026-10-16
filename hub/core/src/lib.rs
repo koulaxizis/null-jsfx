@@ -147,7 +147,87 @@ impl Hub {
     pub fn open(data: PathBuf) -> Hub {
         let settings = read_json(&data.join("hub-settings.json"));
         let manifest = read_json(&data.join("hub-installed.json"));
-        Hub { data, settings, manifest }
+        let hub = Hub { data, settings, manifest };
+        hub.finish_pending();
+        hub
+    }
+
+    /// Steps left for later because their files were in use (`apply`): the folder that keeps
+    /// them, with `ops.json` and the files still to copy.
+    fn pending_dir(&self) -> PathBuf {
+        self.data.join("pending")
+    }
+
+    fn pending(&self) -> Vec<Op> {
+        read_json(&self.pending_dir().join("ops.json"))
+    }
+
+    /// The files waiting to be removed: they count as gone already.
+    fn pending_removals(&self) -> BTreeSet<PathBuf> {
+        let mut out = BTreeSet::new();
+        for op in self.pending() {
+            match op {
+                Op::Remove { path, .. } => {
+                    out.insert(path);
+                }
+                Op::Copy { to, .. } => {
+                    out.remove(&to);
+                }
+            }
+        }
+        out
+    }
+
+    /// Keeps the steps that failed because a program held their files, to do once it lets go.
+    /// The files to copy move out of the staging folder, which is emptied after each change.
+    fn park(&self, ops: Vec<Op>) {
+        let dir = self.pending_dir();
+        let mut list = self.pending();
+        for op in ops {
+            let op = match op {
+                Op::Copy { from, to } => {
+                    let keep = dir.join(format!("{}-{}", now(), list.len())).join(from.file_name().unwrap_or_default());
+                    let moved = keep.parent().is_some_and(|d| fs::create_dir_all(d).is_ok()) && fs::rename(&from, &keep).is_ok();
+                    if !moved {
+                        continue;
+                    }
+                    Op::Copy { from: keep, to }
+                }
+                op => op,
+            };
+            list.push(op);
+        }
+        let _ = fs::create_dir_all(&dir);
+        let _ = write_json(&dir.join("ops.json"), &list);
+    }
+
+    /// Tries the steps left for later again (on every start and before every change) and returns
+    /// how many are still waiting.
+    pub fn finish_pending(&self) -> usize {
+        let list = self.pending();
+        if list.is_empty() {
+            return 0;
+        }
+        let fonts: Vec<PathBuf> = extras::font_files(&self.settings.targets).into_iter().map(|(d, _)| d).collect();
+        let touches_fonts = list.iter().any(|op| match op {
+            Op::Copy { to, .. } => fonts.contains(to),
+            Op::Remove { path, .. } => fonts.contains(path),
+        });
+        if touches_fonts {
+            fonts_release(&self.settings.targets);
+        }
+        let failed = fileops::apply(&list);
+        if touches_fonts {
+            fonts_changed(&self.settings.targets, !fonts.iter().all(|f| f.is_file()));
+        }
+        let left: Vec<Op> = list.into_iter().filter(|op| failed.iter().any(|f| &f.op == op)).collect();
+        let dir = self.pending_dir();
+        if left.is_empty() {
+            let _ = fs::remove_dir_all(&dir);
+        } else {
+            let _ = write_json(&dir.join("ops.json"), &left);
+        }
+        left.len()
     }
 
     pub fn save_settings(&self) -> Result<(), String> {
@@ -225,12 +305,14 @@ impl Hub {
         let t = &self.settings.targets;
         let mut installer = None;
         let mut state = State::default();
+        let parked = self.pending_removals();
+        let exists = |p: &Path| p.exists() && !parked.contains(p);
         for p in &catalog.plugins {
             let mut formats = BTreeMap::new();
             for &f in &p.formats {
                 let (dest, _) = paths::plugin_paths(t, &p.id, f);
                 let mut s = ItemState::default();
-                if dest.exists() {
+                if exists(&dest) {
                     s.installed = true;
                     s.version = match self.manifest.items.get(&key(&p.id, f)) {
                         Some(r) => Some(r.version.clone()),
@@ -258,8 +340,8 @@ impl Hub {
                 // put there by an installer
                 s.installed = match id {
                     extras::CHAINS => t.reaper.join("FXChains/NULL JSFX").is_dir() || t.reaper.join("FXChains/NULL JSFX GFX").is_dir(),
-                    extras::REMOTE => extras::remote_files(t).iter().all(|(d, _)| d.exists()),
-                    extras::FONTS => extras::font_files(t).iter().all(|(d, _)| d.exists()),
+                    extras::REMOTE => extras::remote_files(t).iter().all(|(d, _)| exists(d)),
+                    extras::FONTS => extras::font_files(t).iter().all(|(d, _)| exists(d)),
                     _ => false,
                 };
             }
@@ -275,6 +357,7 @@ impl Hub {
     /// Installs, updates and removes what `req` asks for.
     pub fn apply(&mut self, catalog: &Catalog, req: &Request, progress: &mut dyn FnMut(Progress)) -> Result<State, String> {
         let t = self.settings.targets.clone();
+        self.finish_pending();
         for (id, f) in req.install.iter().chain(&req.remove) {
             let p = catalog.plugin(id).ok_or_else(|| format!("{id} is not in this release"))?;
             if !p.formats.contains(f) {
@@ -296,7 +379,10 @@ impl Hub {
             Some(v) => v.clone(),
             None => catalog.version.clone(),
         };
-        let plan = if req.from.is_some() { ExtrasPlan::default() } else { self.plan_extras(catalog, req) };
+        let mut plan = if req.from.is_some() { ExtrasPlan::default() } else { self.plan_extras(catalog, req) };
+        // the factory presets that were added, kept to take them back out without the package
+        let kept = self.data.join("factory-presets");
+        let kept_copy = |dest: &Path| kept.join(dest.file_name().unwrap_or_default());
 
         // the packages, downloaded once per release
         let cache = self.data.join("cache").join(sanitize(&release));
@@ -309,15 +395,23 @@ impl Hub {
                 v.push(paths::gfx_include(&t).1);
             }
             if !native {
-                v.extend(plan.copies.iter().chain(&plan.merges).chain(&plan.unmerges).map(|(_, src)| src.clone()));
+                v.extend(plan.copies.iter().chain(&plan.merges).map(|(_, src)| src.clone()));
+                v.extend(plan.unmerges.iter().filter(|(d, _)| !kept_copy(d).is_file()).map(|(_, src)| src.clone()));
             }
             v
         };
-        let want = srcs(false);
+        let (want, want_native) = (srcs(false), srcs(true));
         if !want.is_empty() {
-            jsfx = Some(self.package(&release, &catalog.packages.jsfx, &want, &cache, progress)?);
+            // only presets to take out (plugins installed before their copies were kept): fetch
+            // them if we can, but a removal goes ahead without them, leaving the presets file
+            let only_unmerges = req.install.iter().all(|(_, f)| f.is_native()) && plan.copies.is_empty() && plan.merges.is_empty();
+            match self.package(&release, &catalog.packages.jsfx, &want, &cache, progress) {
+                Ok(p) => jsfx = Some(p),
+                Err(_) if only_unmerges => plan.unmerges.retain(|(d, _)| kept_copy(d).is_file()),
+                Err(e) => return Err(e),
+            }
         }
-        let want = srcs(true);
+        let want = want_native;
         if !want.is_empty() {
             let os = paths::os_name();
             let name = catalog.packages.native.get(os).ok_or_else(|| format!("This release has no VST3/CLAP package for {os}"))?;
@@ -365,6 +459,7 @@ impl Hub {
                 continue; // a plugin without factory presets
             }
             let ours = fs::read_to_string(&tmp).map_err(|e| e.to_string())?;
+            let _ = fs::create_dir_all(&kept).and_then(|_| fs::write(kept_copy(dest), &ours));
             let merged = match fs::read_to_string(dest) {
                 Ok(theirs) if !theirs.trim().is_empty() => extras::merge_presets(&theirs, &ours),
                 _ => ours,
@@ -376,13 +471,22 @@ impl Hub {
             n += 1;
             let tmp = staging.join(n.to_string()).join(dest.file_name().unwrap_or_default());
             let Ok(theirs) = fs::read_to_string(dest) else { continue };
-            if !jsfx.as_mut().unwrap().extract(src, &tmp)? {
-                continue;
-            }
-            let ours = fs::read_to_string(&tmp).map_err(|e| e.to_string())?;
+            let ours = match fs::read_to_string(kept_copy(dest)) {
+                Ok(ours) => ours,
+                Err(_) => {
+                    if !jsfx.as_mut().unwrap().extract(src, &tmp)? {
+                        continue;
+                    }
+                    fs::read_to_string(&tmp).map_err(|e| e.to_string())?
+                }
+            };
+            let _ = fs::remove_file(kept_copy(dest));
             match extras::unmerge_presets(&theirs, &ours) {
                 Some(left) if left == theirs => {}
                 Some(left) => {
+                    if let Some(d) = tmp.parent() {
+                        fs::create_dir_all(d).map_err(|e| e.to_string())?;
+                    }
                     fs::write(&tmp, left).map_err(|e| e.to_string())?;
                     ops.push(Op::Copy { from: tmp, to: dest.clone() });
                 }
@@ -406,7 +510,16 @@ impl Hub {
         }
 
         progress(Progress { stage: "copy", text: "Copying into place".into(), done: 0, total: ops.len() as u64 });
+        if plan.fonts_changed {
+            // Windows holds a registered font's files: let go of them first
+            fonts_release(&t);
+        }
         let failed = fileops::apply(&ops);
+        let (busy, failed): (Vec<_>, Vec<_>) = failed.into_iter().partition(|f| f.busy);
+        let parked = !busy.is_empty();
+        if parked {
+            self.park(busy.into_iter().map(|f| f.op).collect());
+        }
         let (denied, mut other): (Vec<_>, Vec<_>) = failed.into_iter().partition(|f| f.denied);
         let mut refused = None;
         if !denied.is_empty() {
@@ -456,6 +569,10 @@ impl Hub {
             let running = hosts::running();
             let hint = if running.is_empty() { String::new() } else { format!(" Close {} and try again.", running.join(", ")) };
             return Err(format!("Some steps failed: {}.{hint}", text.join("; ")));
+        }
+        if parked {
+            // the page shows this one in the user's language, so it stays word for word
+            return Err(IN_USE.into());
         }
         progress(Progress { stage: "done", text: "Done".into(), done: 1, total: 1 });
         Ok(state)
@@ -606,9 +723,10 @@ impl Hub {
                 }
             }
         }
+        let parked = self.pending_removals();
         for (id, f) in &req.remove {
             let (dest, _) = paths::plugin_paths(&t, id, *f);
-            if !dest.exists() {
+            if !dest.exists() || parked.contains(&dest) {
                 self.manifest.items.remove(&key(id, *f));
                 self.settings.held.remove(&key(id, *f));
             }
@@ -714,6 +832,62 @@ struct ExtrasPlan {
     fonts_changed: bool,
 }
 
+/// What `apply` returns when some files were in use and their steps wait for the next start.
+pub const IN_USE: &str = "Some files are in use by another program, so they could not change yet. \
+The Hub finishes this by itself the next time it starts. Close REAPER (for the Noto Sans font, \
+sign out of Windows and back in), then open the Hub again.";
+
+#[cfg(windows)]
+const FONT_FACES: [(&str, &str); 2] = [("NotoSans-Regular.ttf", "Noto Sans (TrueType)"), ("NotoSans-Bold.ttf", "Noto Sans Bold (TrueType)")];
+
+#[cfg(windows)]
+mod winfont {
+    #[link(name = "gdi32")]
+    extern "system" {
+        pub fn AddFontResourceW(file: *const u16) -> i32;
+        pub fn RemoveFontResourceW(file: *const u16) -> i32;
+    }
+    #[link(name = "user32")]
+    extern "system" {
+        pub fn SendMessageTimeoutW(hwnd: isize, msg: u32, wparam: usize, lparam: isize, flags: u32, timeout: u32, result: *mut usize) -> isize;
+    }
+
+    pub fn wide(p: &std::path::Path) -> Vec<u16> {
+        use std::os::windows::ffi::OsStrExt;
+        p.as_os_str().encode_wide().chain(Some(0)).collect()
+    }
+
+    /// WM_FONTCHANGE to every window, so programs see the font list changed.
+    pub fn broadcast() {
+        let mut r = 0;
+        unsafe { SendMessageTimeoutW(0xffff, 0x001D, 0, 0, 0x0002, 1000, &mut r) };
+    }
+}
+
+/// Windows keeps the files of a registered font open from sign-in on, so before they are
+/// replaced or removed the Hub takes the font out of the session and the user's font list.
+/// `fonts_changed` puts it back when the files stay.
+fn fonts_release(t: &Targets) {
+    #[cfg(windows)]
+    {
+        use std::os::windows::process::CommandExt;
+        let key = r"HKCU\Software\Microsoft\Windows NT\CurrentVersion\Fonts";
+        for (file, face) in FONT_FACES {
+            let w = winfont::wide(&t.fonts.join(file));
+            // once per time it was added
+            for _ in 0..8 {
+                if unsafe { winfont::RemoveFontResourceW(w.as_ptr()) } == 0 {
+                    break;
+                }
+            }
+            let _ = std::process::Command::new("reg").args(["delete", key, "/v", face, "/f"]).creation_flags(0x0800_0000).status();
+        }
+        winfont::broadcast();
+    }
+    #[cfg(not(windows))]
+    let _ = t;
+}
+
 /// Tells the system about the Noto Sans files that came or went: the user font list on Windows,
 /// the font cache on Linux. macOS picks them up by itself.
 fn fonts_changed(t: &Targets, removed: bool) {
@@ -721,16 +895,19 @@ fn fonts_changed(t: &Targets, removed: bool) {
     {
         use std::os::windows::process::CommandExt;
         let key = r"HKCU\Software\Microsoft\Windows NT\CurrentVersion\Fonts";
-        for (file, face) in [("NotoSans-Regular.ttf", "Noto Sans (TrueType)"), ("NotoSans-Bold.ttf", "Noto Sans Bold (TrueType)")] {
+        for (file, face) in FONT_FACES {
             let path = t.fonts.join(file);
-            let mut cmd = std::process::Command::new("reg");
-            if removed {
-                cmd.args(["delete", key, "/v", face, "/f"]);
+            if removed || !path.is_file() {
+                let _ = std::process::Command::new("reg").args(["delete", key, "/v", face, "/f"]).creation_flags(0x0800_0000).status();
             } else {
-                cmd.args(["add", key, "/v", face, "/t", "REG_SZ", "/d", &path.to_string_lossy(), "/f"]);
+                let _ = std::process::Command::new("reg")
+                    .args(["add", key, "/v", face, "/t", "REG_SZ", "/d", &path.to_string_lossy(), "/f"])
+                    .creation_flags(0x0800_0000)
+                    .status();
+                unsafe { winfont::AddFontResourceW(winfont::wide(&path).as_ptr()) };
             }
-            let _ = cmd.creation_flags(0x0800_0000).status();
         }
+        winfont::broadcast();
     }
     #[cfg(target_os = "linux")]
     {
