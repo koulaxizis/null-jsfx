@@ -1,0 +1,17 @@
+[
+  ["808 Classic", {"Pattern": "Electro", "Kick Decay": 80, "Kick Tone": 0, "Snare Tone": 40, "Closed Hat Tone": 0, "Open Hat Tone": 0, "Cowbell Level": -3}],
+  ["909 Punch", {"Pattern": "Techno", "Kick Decay": 40, "Kick Tone": 100, "Snare Tone": 75, "Closed Hat Tone": 70, "Open Hat Tone": 70, "Rim Tone": 0, "Drive": 20}],
+  ["House Groove", {"Pattern": "House", "Swing": 58, "Kick Tone": 70, "Clap Tone": 60, "Open Hat Decay": 40}],
+  ["Minimal Techno", {"Pattern": "Techno", "Swing": 54, "Kick Decay": 30, "Kick Tone": 80, "Rim Tone": 100, "Rim Tune": 3, "Cymbal Tone": 0, "Cymbal Level": -6}],
+  ["Boom Bap Dusty", {"Pattern": "Boom Bap", "Swing": 62, "Grit": 55, "Drive": 15, "Kick Decay": 35, "Kick Tone": 60, "Snare Tune": -2, "Snare Tone": 60}],
+  ["Lo-Fi Crunch", {"Pattern": "Boom Bap", "Swing": 64, "Grit": 85, "Drive": 40, "Volume": -3, "Snare Decay": 35, "Closed Hat Level": -6}],
+  ["Electro Funk", {"Pattern": "Electro", "Swing": 56, "Kick Decay": 65, "Kick Tone": 20, "Cowbell Tone": 60, "Clap Decay": 30}],
+  ["Breaks", {"Pattern": "Breakbeat", "Swing": 54, "Grit": 25, "Snare Tone": 65, "Snare Decay": 60, "Cymbal Tone": 80}],
+  ["Trap 808", {"Pattern": "Trap", "Kick Decay": 100, "Kick Tone": 10, "Kick Tune": -3, "Snare Tone": 80, "Clap Tone": 70, "Closed Hat Decay": 25, "Closed Hat Tone": 40}],
+  ["Disco Night", {"Pattern": "Disco", "Kick Tone": 60, "Open Hat Decay": 35, "Open Hat Tone": 60, "Low Tom Tone": 60, "High Tom Tone": 60}],
+  ["Linn Pop", {"Pattern": "Synth Pop", "Kick Tone": 60, "Snare Decay": 70, "Snare Tone": 60, "Clap Tone": 80, "Cymbal Tone": 90, "Cymbal Decay": 70}],
+  ["Simmons Toms", {"Pattern": "Disco", "Low Tom Tone": 100, "High Tom Tone": 100, "Low Tom Decay": 70, "High Tom Decay": 70, "Low Tom Level": 3, "High Tom Level": 3}],
+  ["Dembow", {"Pattern": "Dembow", "Rim Tone": 30, "Snare Tone": 70, "Kick Tone": 60}],
+  ["Bossa Clave", {"Pattern": "Bossa", "Rim Tone": 100, "Closed Hat Level": -10, "Kick Tone": 20, "Kick Decay": 30, "Low Tom Tone": 0}],
+  ["MIDI Kit", {"Pattern": "Off"}]
+]

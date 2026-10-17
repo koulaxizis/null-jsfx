@@ -6,7 +6,7 @@ Header (first lines of every file, in this order):
     desc:NULL <Name>
     author: Christos Koulaxizis
     tags: <lowercase keywords>
-    //category: One Slider | Essentials | Advanced
+    //category: One Slider | Essentials | Advanced | Instruments
     //NULL JSFX v2.4 • https://nulljsfx.tech • MIT License
 
 followed by a blank line, the sliders, a blank line and the four pins
@@ -14,6 +14,7 @@ followed by a blank line, the sliders, a blank line and the four pins
 in_pin:Sidechain Left and in_pin:Sidechain Right after the two main inputs. Multiband routing
 plugins (Band Splitter) use eight pins each way instead: in_pin:Left, in_pin:Right, then
 in_pin:Band 2 Left ... in_pin:Band 4 Right, and out_pin:Band 1 Left ... out_pin:Band 4 Right.
+Instruments make their own sound and take no audio: in_pin:none, out_pin:Left, out_pin:Right.
 
 Usage: lint.py file.jsfx [...]   Exit status 1 if any file has an error.
 """
@@ -23,10 +24,11 @@ from pathlib import Path
 
 AUTHOR = "author: Christos Koulaxizis"
 FOOTER = "//NULL JSFX v2.4 • https://nulljsfx.tech • MIT License"
-CATEGORIES = ("One Slider", "Essentials", "Advanced")
+CATEGORIES = ("One Slider", "Essentials", "Advanced", "Instruments")
 PINS = ["in_pin:Left", "in_pin:Right", "out_pin:Left", "out_pin:Right"]
 SIDECHAIN_PINS = ["in_pin:Left", "in_pin:Right", "in_pin:Sidechain Left", "in_pin:Sidechain Right",
                   "out_pin:Left", "out_pin:Right"]
+INSTRUMENT_PINS = ["in_pin:none", "out_pin:Left", "out_pin:Right"]
 # eight channels each way: a stereo input (or band 1) plus bands 2-4 in, four stereo bands out
 BAND_PINS = (["in_pin:Left", "in_pin:Right"]
              + [f"in_pin:Band {b} {s}" for b in (2, 3, 4) for s in ("Left", "Right")]
@@ -42,6 +44,7 @@ pdc_delay pdc_bot_ch pdc_top_ch ext_noinit ext_tail_size ext_nodenorm slider_aut
 gfx_r gfx_g gfx_b gfx_a gfx_x gfx_y gfx_w gfx_h gfx_texth gfx_set gfx_rect gfx_line gfx_lineto gfx_circle gfx_arc
 gfx_drawstr gfx_drawnumber gfx_measurestr gfx_setfont gfx_roundrect gfx_triangle gfx_getchar gfx_clienttoscreen
 mouse_x mouse_y mouse_cap mouse_wheel gfx_ext_retina time_precise sprintf strcpy strlen strcpy_substr
+midirecv midisend str_getchar
 """.split())
 
 
@@ -80,10 +83,12 @@ def check(path):
             errors.append(f"slider label style must be 'Name (unit)': {name!r}")
     if category == "One Slider" and len(sliders) != 1:
         errors.append(f"One Slider plugin has {len(sliders)} sliders")
-    if category in ("Essentials", "Advanced") and len(sliders) == 1:
+    if category in ("Essentials", "Advanced", "Instruments") and len(sliders) == 1:
         errors.append(f"{category} plugin has only one slider; should it be One Slider?")
     pins = [l.strip() for l in header if l.startswith(("in_pin:", "out_pin:"))]
-    if pins not in (PINS, SIDECHAIN_PINS, BAND_PINS):
+    if category == "Instruments" and pins != INSTRUMENT_PINS:
+        errors.append("instrument pins must be in_pin:none, out_pin:Left, out_pin:Right")
+    elif category != "Instruments" and pins not in (PINS, SIDECHAIN_PINS, BAND_PINS):
         errors.append("pins must be in_pin:Left, in_pin:Right, out_pin:Left, out_pin:Right "
                       "(plus in_pin:Sidechain Left/Right after the main inputs for sidechain plugins, "
                       "or the eight-channel band layout, see the docstring)")
