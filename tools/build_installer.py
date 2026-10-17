@@ -38,7 +38,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 BS = "\\"
 GROUPS = [("One Slider", "oneslider", "one-slider"), ("Essentials", "essentials", "essentials"),
-          ("Advanced", "advanced", "advanced")]
+          ("Advanced", "advanced", "advanced"), ("Instruments", "instruments", "instruments")]
 CHAIN_JS = re.compile(r"^<JS null_jsfx/(?:gfx/)?(\w+?)(?:_gfx)?\.jsfx\b", re.M)
 
 sys.dont_write_bytecode = True

@@ -22,8 +22,8 @@ START_NAMESPACE_DISTRHO
 class NullPluginBase : public Plugin
 {
 public:
-    explicit NullPluginBase(uint32_t parameters)
-        : Plugin(parameters, 0, 0) {}
+    explicit NullPluginBase(uint32_t parameters, uint32_t states = 0)
+        : Plugin(parameters, 0, states) {}
 
     nulljsfx::Taps taps;
 
@@ -95,12 +95,13 @@ private:
     float fValue;
 };
 
-// one parameter per JSFX slider; infos must outlive the plugin (a static array)
+// one parameter per JSFX slider; infos must outlive the plugin (a static array); states for
+// plugins that keep more than their sliders (the Drum Machine's User pattern)
 class NullMultiPlugin : public NullPluginBase
 {
 public:
-    NullMultiPlugin(const SliderInfo* infos, uint32_t count)
-        : NullPluginBase(count), fInfos(infos), fCount(count)
+    NullMultiPlugin(const SliderInfo* infos, uint32_t count, uint32_t states = 0)
+        : NullPluginBase(count, states), fInfos(infos), fCount(count)
     {
         for (uint32_t i = 0; i < count && i < kMaxParams; ++i)
             fValues[i] = infos[i].def;

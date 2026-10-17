@@ -20,7 +20,7 @@ GFX = PLUGINS / "gfx"
 NATIVE = ROOT / "native/plugins"
 PAGE = ROOT / "remote/reaper_www_root/null_jsfx.html"
 BEGIN, END = "/* BEGIN GENERATED PLUGINS (tools/build_remote.py) */", "/* END GENERATED PLUGINS */"
-CATEGORIES = {"One Slider": "one", "Essentials": "ess", "Advanced": "adv"}
+CATEGORIES = {"One Slider": "one", "Essentials": "ess", "Advanced": "adv", "Instruments": "ins"}
 
 
 def num(v):

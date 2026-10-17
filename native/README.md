@@ -134,6 +134,23 @@ ng_select_ctl(4, "SYNC", "OFF|ON", 0) ? update();
 96 kHz. Build with `cmake -S native -B native/build-x -DNULL_TESTS=ON -DNULL_PLUGINS="<name>"`
 and `ctest`, then compare `gfx_render` (at 2x the `@gfx` size) with `screenshot.sh <name> out.png ""`.
 
+## Adding an instrument (`drum_machine` is the model)
+
+An instrument is a JSFX with `//category: Instruments`, `in_pin:none` and stereo `out_pin`s that
+plays from MIDI (`midirecv` in `@block`, queued and played at its offset in `@sample`) and,
+where it has a sequencer, from the transport (`play_state`, `beat_position`, `tempo`). REAPER
+re-runs `@init` at every transport start, so state the user edits (a pattern) is guarded by a
+flag and kept with `@serialize`. The lint accepts the category, the pins and the MIDI builtins;
+`jsfx_test` sends instruments a GM note every 1/8 s; the web build and orOS leave them out.
+
+The VST3/CLAP sets `DISTRHO_PLUGIN_IS_SYNTH`, `WANT_MIDI_INPUT`, `WANT_TIMEPOS` and, for edited
+data, `WANT_STATE` (`NullMultiPlugin(sliders, count, states)`, the state as text). `run()` turns
+the transport into a beat position like the JSFX and calls `reset()` on a play start, as REAPER
+re-runs `@init`. The UI reads live values from `NullTaps::aux[]`/`extra` and asks the DSP for
+one-off actions (a preview) through `NullTaps::request`. `compare_<name>` detects an instrument
+by its pins and plays notes into both builds with the transport running at 120 bpm. An
+instrument gets no Rack module.
+
 ## Factory presets (`tools/presets/<name>.json`)
 
 Every plugin's presets live in `tools/presets/<name>.json` as `[["Preset Name", {"Slider": value}], ...]`

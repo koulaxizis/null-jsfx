@@ -23,6 +23,11 @@ struct Taps {
     // level values in linear amplitude (meters convert with toDb); gr in dB (positive = reduction)
     std::atomic<float> inLevel { 0.0f }, outLevel { 0.0f }, gr { 0.0f }, extra { 0.0f };
 
+    // more values for a display (the Drum Machine: hits per voice), and a request the
+    // interface makes of the DSP (the Drum Machine: play a voice), 0 when none
+    std::atomic<float> aux[16] = {};
+    std::atomic<int> request { 0 };
+
     // stereo ring buffer of the latest samples
     float scopeL[kScopeLen] = {}, scopeR[kScopeLen] = {};
     std::atomic<uint32_t> scopePos { 0 };
