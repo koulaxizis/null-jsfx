@@ -138,3 +138,97 @@ test("memory reads and writes outside the 8M slots share one scratch slot", func
   assert.strictEqual(m.r(-5), 7);
   assert.strictEqual(m.r(9e6), 7);
 });
+
+// ---- instruments: MIDI, transport, @serialize, the interface's shared state ----------------
+
+// runs an instrument like the worklet does: events from a Sched, block by block
+function play(e, sched, sr, n, t0) {
+  var out = [new Float64Array(n), new Float64Array(n)], BLK = 128, T = { playing: false, position: 0 };
+  for (var o = 0; o < n; o += BLK) {
+    var c = Math.min(BLK, n - o), due = sched.block(t0 + o / sr, c, sr);
+    if (due.time) T = { playing: due.time.playing, position: due.time.position };
+    e.setTime({ tempo: 120, playing: T.playing, position: T.position, beat: T.position * 2 });
+    e.process([], [out[0].subarray(o, o + c), out[1].subarray(o, o + c)], c, 0, due.midi);
+    if (T.playing) T.position += c / sr;
+  }
+  return out;
+}
+function firstSound(y) { for (var i = 0; i < y[0].length; i++) if (y[0][i] !== 0 || y[1][i] !== 0) return i; return -1; }
+
+test("Sched hands MIDI and transport changes over at their samples", function () {
+  var s = new HOST.Sched(), sr = 48000;
+  s.addMidi([[1.0 + 300 / sr, 0x90, 36, 100], [0.5, 0x90, 38, 90], [1.0 + 10 / sr, 0x80, 36, 0]]);
+  s.addTime({ at: 1.0 + 64 / sr, playing: true, position: 2 });
+  var b = s.block(1.0, 128, sr);
+  assert.deepStrictEqual(b.midi, [[0, 0x90, 38, 90], [10, 0x80, 36, 0]], "late events play at the first sample, in time order");
+  assert.ok(Math.abs(b.time.position - (2 - 64 / sr)) < 1e-12, "the position is moved back to the block's start");
+  assert.strictEqual(b.time.playing, true);
+  b = s.block(1.0 + 128 / sr, 128, sr);
+  assert.strictEqual(b.midi, null);
+  b = s.block(1.0 + 256 / sr, 128, sr);
+  assert.deepStrictEqual(b.midi, [[44, 0x90, 36, 100]]);
+});
+
+test("Drum Machine: a MIDI note sounds from its sample on, the pattern starts with the transport", function () {
+  var FX = fx("drum_machine"), sr = 48000, s = new HOST.Sched();
+  assert.ok(FX.usesMidi && FX.serialize && FX.inPins.length === 0);
+  // Pattern Off: only MIDI
+  var e = new HOST.Effect(FX, R, { srate: sr, blockSize: 128, sliders: { 1: 0 } });
+  s.addMidi([[300 / sr, 0x99, 36, 127]]);
+  var y = play(e, s, sr, 4800, 0);
+  assert.strictEqual(firstSound(y), 300, "the kick starts at the note's sample");
+  // House (the default) plays the kick on step 1 when the transport starts there
+  e = new HOST.Effect(FX, R, { srate: sr, blockSize: 128 });
+  s = new HOST.Sched();
+  s.addTime({ at: 1000 / sr, playing: true, position: 0 });
+  y = play(e, s, sr, 9600, 0);
+  assert.strictEqual(firstSound(y), 1000, "step 1 at the transport start");
+});
+
+test("Drum Machine: the User pattern goes through @serialize", function () {
+  var FX = fx("drum_machine"), sr = 48000;
+  var a = new HOST.Effect(FX, R, { srate: sr });
+  var st = a.getState();
+  assert.strictEqual(st.length, 171, "version, then 170 values");
+  assert.deepStrictEqual(st.slice(1, 17), [1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0], "the basic beat's kick");
+  st[1 + 3] = 2;                 // an accent on kick step 4
+  st[1 + 160] = 12;              // kick length 12
+  var b = new HOST.Effect(FX, R, { srate: sr });
+  b.setState(st);
+  assert.strictEqual(b.inst.mem.r(3), 2);
+  assert.strictEqual(b.inst.mem.r(160), 12);
+  // @init again (transport start) keeps it, as in REAPER
+  b.init();
+  assert.deepStrictEqual(b.getState(), st);
+});
+
+test("Drum Machine interface: a step edit is state to save, a name click a voice to hear", function () {
+  globalThis.NULLRT = R; globalThis.NULLFXHost = HOST;
+  var FX = fx("drum_machine"), cv = fakeCanvas(), got = [];
+  cv.clientWidth = 640; cv.clientHeight = 494;
+  var view = new GFX.View(FX, cv, { srate: 48000, onSlider: function (i, v) { got.push([i, v]); } });
+  function click(x, y) {
+    cv.fire("pointermove", { clientX: x, clientY: y, button: 0 });
+    cv.fire("pointerdown", { clientX: x, clientY: y, button: 0 }); view.draw();
+    cv.fire("pointerup", { clientX: x, clientY: y, button: 0 }); view.draw();
+  }
+  view.draw();
+  assert.strictEqual(view.takeState(), null, "nothing changed yet");
+  click(171, 89);                // kick, step 3 (cell x 112 + 2 * 27, row y 82)
+  assert.deepStrictEqual(got[got.length - 1], [1, 1], "an edit of a factory pattern switches to User");
+  var st = view.takeState();
+  assert.ok(st, "the edit is state to save");
+  assert.strictEqual(st[1 + 2], 1, "a hit on kick step 3");
+  assert.strictEqual(st[1 + 4], 1, "the rest is a copy of House");
+  assert.strictEqual(view.takeState(), null, "taken once");
+  click(50, 106);                // the SNARE name
+  assert.deepStrictEqual(view.takePokes(), { dm_preview: 2 });
+  assert.strictEqual(view.takePokes(), null, "taken once");
+  // flash: what the audio hit since the last peek lights the name, zeros leave the page's value
+  view.setLive({ live: new Float64Array(FX.live.length), flash: [{ base: view.fx.inst.getVar("hit"), data: Float64Array.from([0, 0, 0.7, 0, 0, 0, 0, 0, 0, 0]) }] });
+  assert.strictEqual(view.fx.inst.mem.r(5052), 0.7);
+  view.setState(st.map(function (v, i) { return i === 1 ? 0 : v; }));
+  assert.strictEqual(view.fx.inst.mem.r(0), 0, "a saved state shows");
+  assert.strictEqual(view.takeState(), null, "and is not state to save again");
+  view.destroy();
+});
