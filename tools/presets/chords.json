@@ -1,0 +1,17 @@
+[
+  ["Seventh Chords", {"Chord Type": "7th"}],
+  ["Lush Ninths", {"Chord Type": "9th", "Voicing": "Open", "Velocity Curve": -20}],
+  ["Neo Soul Drop 2", {"Chord Type": "7th", "Inversion": "1st", "Voicing": "Drop 2", "Strum": 12, "Velocity Curve": -30}],
+  ["Wide Pad", {"Voicing": "Wide"}],
+  ["Guitar Strum Down", {"Voicing": "Open", "Strum": 30, "Strum Direction": "Down", "Velocity Curve": 20}],
+  ["Alternating Strum", {"Chord Type": "7th", "Voicing": "Open", "Strum": 25, "Strum Direction": "Alternate"}],
+  ["Harp Roll", {"Chord Type": "9th", "Voicing": "Wide", "Strum": 90}],
+  ["Power Chords", {"Chord Type": "Power", "Octave": -1, "Velocity Curve": 40}],
+  ["Sus2 Shimmer", {"Chord Type": "Sus2", "Voicing": "Open", "Octave": 1, "Strum": 20}],
+  ["Pop Progression", {"Mode": "Progression", "Progression": "I-V-vi-IV"}],
+  ["Doo-Wop Ballad", {"Mode": "Progression", "Progression": "I-vi-IV-V", "Chord Type": "7th", "Strum": 15}],
+  ["Jazz ii-V-I", {"Mode": "Progression", "Progression": "ii-V-I", "Chord Type": "9th", "Voicing": "Drop 2"}],
+  ["Canon Roll", {"Mode": "Progression", "Progression": "Canon", "Voicing": "Open", "Strum": 120}],
+  ["Epic Minor", {"Mode": "Progression", "Progression": "i-VI-III-VII", "Key": "A", "Voicing": "Wide", "Velocity Curve": 30}],
+  ["Spanish Cadence", {"Mode": "Progression", "Progression": "i-VII-VI-V", "Key": "A", "Strum": 40, "Strum Direction": "Down"}]
+]

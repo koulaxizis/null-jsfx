@@ -265,5 +265,137 @@
     ],
     "properties": "Delay line per channel with whole-sample exact reads and 4-point Catmull-Rom interpolation for fractions; per-channel polarity; Rotation by two first-order all-pass filters, each turning half the angle at Focus (less below it, more above). Right to Left needs no latency: a negative delay delays the left channel instead. Track to Sidechain delays the track by ceil(10 ms) + 1 samples less the delay and reports that as latency, so the track can also move ahead of the reference; the reference is only listened to (Mono Sum) and metered. The GFX and VST3/CLAP interfaces show the phase difference across frequency, the total delay, the latency and the correlation of the two signals (full band and below 150 Hz). In REAPER, send the reference to channels 3/4 of the track.",
     "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-phase-align\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><path d=\"M 6,32 C 12,14 20,14 26,32 C 32,50 40,50 46,32 C 50,20 54,18 58,22\" fill=\"none\" stroke=\"url(#icon-phase-align)\" stroke-width=\"2.5\" stroke-linecap=\"round\"/><path d=\"M 12,32 C 18,14 26,14 32,32 C 38,50 46,50 52,32\" fill=\"none\" stroke=\"url(#icon-phase-align)\" stroke-width=\"1.5\" stroke-linecap=\"round\" opacity=\"0.45\"/><path d=\"M 14,56 L 26,56 M 22,52 L 26,56 L 22,60\" fill=\"none\" stroke=\"url(#icon-phase-align)\" stroke-width=\"1.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\" opacity=\"0.6\"/></svg>"
+  },
+  "chords": {
+    "card_desc": "One-Key Chords & Progressions (MIDI)",
+    "keywords": "midi chords chord generator one finger triad seventh ninth sus2 sus4 power chord inversion voicing drop 2 strum progression key scale diatonic songwriting",
+    "slider_desc": [
+      "Chord plays a chord on every key; Progression lets the white keys from C play the steps of the chosen chord progression.",
+      "The key the chords (or the progression) are in.",
+      "The scale the chords are built from in Chord mode (major, minor, harmonic or melodic minor and the modes); a key outside it plays the chord of the scale note below. Progression mode uses the progression's own major or minor.",
+      "What every key plays: a triad, a 7th or 9th chord stacked in the scale, a sus2 or sus4 chord, or a power chord (root, fifth, octave).",
+      "Moves the lowest notes of the chord up an octave: root position, first, second or third inversion.",
+      "Spreads the chord: Close keeps it within an octave, Drop 2 drops the second-highest note an octave, Open lifts every other note, Wide also drops the bass an octave.",
+      "Moves every chord up or down by octaves (-2 to +2).",
+      "Plays the notes of each chord one after another, this far apart (0 to 200 ms), like a strummed guitar or a harp; notes not yet played when the key is released are skipped.",
+      "The order of the strum: upward, downward, or alternating with every chord.",
+      "Shapes the velocity of the chord notes: positive values play soft touches louder, negative values make them softer (0% passes it unchanged).",
+      "The chord progression of Progression mode: C, D, E, F, G, A and B play its steps in turn (I-V-vi-IV, I-vi-IV-V, vi-IV-I-V, I-IV-vi-V, ii-V-I, Pachelbel's Canon, i-VI-III-VII, i-VII-VI-V and i-iv-V-i)."
+    ],
+    "uses": [
+      "Play full chords with one finger on any MIDI instrument, always in key",
+      "Sketch songs fast: the white keys play a whole progression in any key",
+      "Rich 7th and 9th voicings with Drop 2 or Open for keys and pads",
+      "Strummed guitar-like chords or harp rolls from a single key",
+      "Power chords for rock and synth leads"
+    ],
+    "properties": "A MIDI effect: MIDI in, MIDI out, the audio passes through untouched (place it before an instrument). Chords are stacked in thirds inside the scale (sus2/sus4 swap the third for the second or fourth), then inverted, voiced, moved by octaves and kept within 0 to 127. Every note-on sent is remembered with the key that made it, so the key's release always ends exactly those notes, whatever was changed meanwhile; strum notes still waiting are dropped; a note two keys share sounds until both are released; all notes off (CC 120/123) releases every key of its channel. Pitch bend, controllers and sustain pass through; poly pressure goes to every note of the key's chord. Sample-accurate and the same in the JSFX, the GFX version and the VST3/CLAP.",
+    "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-chords\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><rect x=\"8\" y=\"10\" width=\"48\" height=\"44\" rx=\"3\" fill=\"none\" stroke=\"url(#icon-chords)\" stroke-width=\"2\"/><path d=\"M 18,10 L 18,54 M 28,10 L 28,54 M 38,10 L 38,54 M 46,10 L 46,54\" stroke=\"url(#icon-chords)\" stroke-width=\"1.5\" opacity=\"0.6\"/><rect x=\"15\" y=\"10\" width=\"6\" height=\"24\" fill=\"url(#icon-chords)\"/><rect x=\"25\" y=\"10\" width=\"6\" height=\"24\" fill=\"url(#icon-chords)\" opacity=\"0.45\"/><rect x=\"43\" y=\"10\" width=\"6\" height=\"24\" fill=\"url(#icon-chords)\" opacity=\"0.45\"/><circle cx=\"13\" cy=\"47\" r=\"3\" fill=\"url(#icon-chords)\"/><circle cx=\"33\" cy=\"47\" r=\"3\" fill=\"url(#icon-chords)\"/><circle cx=\"51\" cy=\"47\" r=\"3\" fill=\"url(#icon-chords)\"/></svg>"
+  },
+  "scale": {
+    "card_desc": "Force MIDI Notes to Key & Scale (MIDI)",
+    "keywords": "midi scale quantize snap key force to scale white keys transpose octave filter wrong notes pentatonic blues modes dorian harmonic minor",
+    "slider_desc": [
+      "The key of the scale.",
+      "The scale every note is fitted to: major, natural, harmonic or melodic minor, the modes (Dorian to Locrian), major or minor pentatonic, or blues.",
+      "How a note outside the scale is fixed: moved to the Nearest scale note (ties go down), always Up or always Down, dropped (Filter), or White Keys, where C, D, E, F, G, A and B play the scale's degrees from the key and the black keys are silent.",
+      "Moves the incoming notes by semitones before they are fitted to the scale, so the result stays in key (in White Keys mode it moves what the keys play).",
+      "Moves the result up or down by octaves (-3 to +3)."
+    ],
+    "uses": [
+      "Never hit a wrong note: every key snaps into the song's key",
+      "Play any scale on the white keys alone, in any key",
+      "Clean up MIDI from a controller or a pitch-to-MIDI converter",
+      "Drop out-of-key notes from generated or recorded parts",
+      "Quick transposition and octave shifts that stay in key"
+    ],
+    "properties": "A MIDI effect: MIDI in, MIDI out, the audio passes through untouched (place it before an instrument). Every note is mapped once, when it starts; its note-off always ends the very note that was sent, even when the settings change while it is held, and a note two keys share sounds until both are released. All notes off (CC 120/123) releases every key of its channel; pitch bend, controllers, sustain and pressure pass through (poly pressure follows the mapped note). Sample-accurate and the same in the JSFX, the GFX version and the VST3/CLAP.",
+    "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-scale\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><path d=\"M 8,50 L 18,50 L 18,42 L 28,42 L 28,34 L 36,34 L 36,26 L 46,26 L 46,18 L 56,18\" fill=\"none\" stroke=\"url(#icon-scale)\" stroke-width=\"2.5\" stroke-linejoin=\"round\"/><circle cx=\"23\" cy=\"46\" r=\"2.5\" fill=\"url(#icon-scale)\" opacity=\"0.5\"/><path d=\"M 23,46 L 23,42\" stroke=\"url(#icon-scale)\" stroke-width=\"1.5\" opacity=\"0.5\"/><circle cx=\"41\" cy=\"30\" r=\"2.5\" fill=\"url(#icon-scale)\" opacity=\"0.5\"/><path d=\"M 41,30 L 41,26\" stroke=\"url(#icon-scale)\" stroke-width=\"1.5\" opacity=\"0.5\"/></svg>"
+  },
+  "arpeggiator": {
+    "card_desc": "Tempo-Synced Arpeggiator with Velocity Lane (MIDI)",
+    "keywords": "midi arpeggiator arp arpeggio sequencer pattern up down up-down random played chord octaves latch gate swing velocity lane accent tempo sync synth trance",
+    "slider_desc": [
+      "The length of each step, locked to the tempo: 1/4 to 1/32 notes, with dotted (D) and triplet (T) values.",
+      "The order the held notes play in: Up, Down, Up-Down, Down-Up, in the order they were played, Random, or Chord (all notes on every step).",
+      "How many octaves the pattern climbs through (1 to 4): the held notes, then the same notes an octave up, and so on.",
+      "How long each note sounds, as a share of its step (5 to 200%): short values give staccato plucks, 100% is legato, above 100% the notes overlap.",
+      "Moves every second step later (0 to 100%) for a shuffle feel; 100% is a full triplet swing.",
+      "On: the arpeggio keeps playing after you let go of the keys, until you play a new chord. Off: it stops when the last key is released.",
+      "How many steps of the velocity lane are used (1 to 16) before it repeats, for accent patterns that cross the bar line.",
+      "The start of the Random pattern's sequence (1 to 9999): the same seed always plays the same random order, from every transport start.",
+      "Step 1 of the velocity lane: each note on this step plays at the played velocity times this value (0 to 100%); 0% makes the step a rest.",
+      "Step 2 of the velocity lane (0 to 100% of the played velocity, 0% = a rest); drag over the bars in the display to draw the lane.",
+      "Step 3 of the velocity lane (0 to 100% of the played velocity, 0% = a rest); drag over the bars in the display to draw the lane.",
+      "Step 4 of the velocity lane (0 to 100% of the played velocity, 0% = a rest); drag over the bars in the display to draw the lane.",
+      "Step 5 of the velocity lane (0 to 100% of the played velocity, 0% = a rest); drag over the bars in the display to draw the lane.",
+      "Step 6 of the velocity lane (0 to 100% of the played velocity, 0% = a rest); drag over the bars in the display to draw the lane.",
+      "Step 7 of the velocity lane (0 to 100% of the played velocity, 0% = a rest); drag over the bars in the display to draw the lane.",
+      "Step 8 of the velocity lane (0 to 100% of the played velocity, 0% = a rest); drag over the bars in the display to draw the lane.",
+      "Step 9 of the velocity lane (0 to 100% of the played velocity, 0% = a rest); drag over the bars in the display to draw the lane.",
+      "Step 10 of the velocity lane (0 to 100% of the played velocity, 0% = a rest); drag over the bars in the display to draw the lane.",
+      "Step 11 of the velocity lane (0 to 100% of the played velocity, 0% = a rest); drag over the bars in the display to draw the lane.",
+      "Step 12 of the velocity lane (0 to 100% of the played velocity, 0% = a rest); drag over the bars in the display to draw the lane.",
+      "Step 13 of the velocity lane (0 to 100% of the played velocity, 0% = a rest); drag over the bars in the display to draw the lane.",
+      "Step 14 of the velocity lane (0 to 100% of the played velocity, 0% = a rest); drag over the bars in the display to draw the lane.",
+      "Step 15 of the velocity lane (0 to 100% of the played velocity, 0% = a rest); drag over the bars in the display to draw the lane.",
+      "Step 16 of the velocity lane (0 to 100% of the played velocity, 0% = a rest); drag over the bars in the display to draw the lane."
+    ],
+    "uses": [
+      "Turn held chords into synced synth arpeggios for trance, synthwave and pop",
+      "Accent and rest patterns from the 16-step velocity lane",
+      "Latch a chord and play over it with both hands free",
+      "Repeatable random melodies from a seed",
+      "Rhythmic chord stabs with the Chord pattern and a short gate"
+    ],
+    "properties": "A MIDI effect: MIDI in, MIDI out, the audio passes through untouched (place it before an instrument). Steps fall on a grid locked to the host's beat position while it plays (a held chord starts on the next step); while it is stopped the arpeggio runs at the tempo from the first key. The sequence is the held notes by pitch (or as played) over the octaves; each step plays one note, or every note for Chord, for Gate % of the step, with the played velocity times the step's lane value. Every note sent is ended: releasing the last key (without Latch), all notes off (CC 120/123) and the transport stopping end the arpeggio's notes at once; a pitch played twice in a row starts again cleanly. Controllers, pitch bend and other messages pass through. The Random pattern uses an exact Park-Miller sequence from Seed. Sample-accurate and the same in the JSFX, the GFX version and the VST3/CLAP.",
+    "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-arpeggiator\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><path d=\"M 8,54 L 56,54\" stroke=\"url(#icon-arpeggiator)\" stroke-width=\"1.5\" opacity=\"0.5\"/><rect x=\"9\" y=\"40\" width=\"8\" height=\"5\" rx=\"1\" fill=\"url(#icon-arpeggiator)\"/><rect x=\"19\" y=\"32\" width=\"8\" height=\"5\" rx=\"1\" fill=\"url(#icon-arpeggiator)\"/><rect x=\"29\" y=\"24\" width=\"8\" height=\"5\" rx=\"1\" fill=\"url(#icon-arpeggiator)\"/><rect x=\"39\" y=\"16\" width=\"8\" height=\"5\" rx=\"1\" fill=\"url(#icon-arpeggiator)\"/><rect x=\"49\" y=\"24\" width=\"8\" height=\"5\" rx=\"1\" fill=\"url(#icon-arpeggiator)\" opacity=\"0.6\"/><path d=\"M 13,40 L 23,32 L 33,24 L 43,16 L 53,24\" fill=\"none\" stroke=\"url(#icon-arpeggiator)\" stroke-width=\"1\" stroke-dasharray=\"2 2\" opacity=\"0.6\"/></svg>"
+  },
+  "humanize": {
+    "card_desc": "Random Timing, Velocity & Groove for MIDI",
+    "keywords": "midi humanize humanizer random timing velocity groove swing shuffle 8ths 16ths laid back push feel drums keys quantize seed",
+    "slider_desc": [
+      "How far each note may move in time (0 to 30 ms), at random, earlier or later; the plugin reports this as latency so the moves can go both ways.",
+      "How much each note's velocity may change at random (0 to 50% of its velocity), up or down.",
+      "A groove applied on top of the random moves: Straight (none), Swing 8ths or Swing 16ths (the off-beat notes later), Laid Back (every note later) or Push (every note earlier).",
+      "How strong the groove is (0 to 100%): for the swings 100% is a full triplet shuffle, for Laid Back and Push 100% is 25 ms.",
+      "The start of the random sequence (1 to 9999): the same seed gives the same moves on every playback, since it starts again at each transport start."
+    ],
+    "uses": [
+      "Loosen up quantized drum programming so it sounds played",
+      "Give step-sequenced keys and pads natural velocity variation",
+      "Add swing to straight MIDI parts without editing them",
+      "A laid-back or pushing feel for a whole part",
+      "Repeatable humanization: the same seed sounds the same on every playback"
+    ],
+    "properties": "A MIDI effect: MIDI in, MIDI out, the audio passes through untouched (place it before an instrument). A MIDI effect cannot send a note before it arrives, so everything goes out a fixed latency later (Timing plus Push's move), reported for delay compensation; each note-on then moves by a random amount within ±Timing plus the groove's shift at its place in the beat (the host's beat while it plays, a beat at the tempo while it is stopped). A note-off follows the groove at its own place and never comes before its note-on; a pitch two notes share starts again cleanly; all notes off releases the channel's notes first; other messages keep their place, the latency later. The random numbers are an exact Park-Miller sequence from Seed, started again at every transport start. Sample-accurate and the same in the JSFX, the GFX version and the VST3/CLAP.",
+    "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-humanize\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><path d=\"M 12,10 L 12,54 M 24,10 L 24,54 M 36,10 L 36,54 M 48,10 L 48,54\" stroke=\"url(#icon-humanize)\" stroke-width=\"1\" stroke-dasharray=\"2 3\" opacity=\"0.5\"/><circle cx=\"14\" cy=\"22\" r=\"4\" fill=\"url(#icon-humanize)\"/><circle cx=\"23\" cy=\"38\" r=\"3.2\" fill=\"url(#icon-humanize)\" opacity=\"0.8\"/><circle cx=\"39\" cy=\"18\" r=\"4.4\" fill=\"url(#icon-humanize)\"/><circle cx=\"50\" cy=\"42\" r=\"3\" fill=\"url(#icon-humanize)\" opacity=\"0.7\"/><path d=\"M 8,50 Q 20,44 32,50 T 56,50\" fill=\"none\" stroke=\"url(#icon-humanize)\" stroke-width=\"2\" stroke-linecap=\"round\"/></svg>"
+  },
+  "riff": {
+    "card_desc": "Seeded Riff & Melody Generator (MIDI)",
+    "keywords": "midi riff generator melody generator pattern step sequencer random seed tempo sync arpeggio bassline lead hook key scale pentatonic blues rhythm lock accent",
+    "slider_desc": [
+      "The key the riff is in.",
+      "The scale the riff's notes come from (major, minor, harmonic or melodic minor, the modes, major or minor pentatonic, blues); the key you hold starts the riff on the scale note at or below it.",
+      "Picks the riff (1 to 999): every seed is a different pattern, and the same seed always plays the same riff, in REAPER and in every DAW.",
+      "How many of the steps play a note (0 to 100%); the first step always plays, the others are rests when they miss.",
+      "The length of the pattern in steps (4 to 32) before it repeats; more steps add to the end of the same riff.",
+      "The step length, synced to the tempo: 1/8, 1/16 or 1/32 notes, or their triplets.",
+      "How far the riff climbs above the key you hold: 1 to 3 octaves of the scale.",
+      "How long each note lasts as a share of its step (10 to 100%): short values play staccato, 100% plays legato.",
+      "Keeps a rhythm while Seed rolls new notes: 0 is Off (the rhythm follows Seed); any other value plays the rhythm of that seed (the LOCK RHYTHM switch in the display sets it to the current seed).",
+      "How much the step velocities vary below the velocity of the key you hold (0% plays every step at it).",
+      "The share of steps that are accented, played well above the others (0 to 100%).",
+      "How often a step plays a new note instead of repeating the note one beat earlier (0% repeats a one-beat motif, 100% is all new notes)."
+    ],
+    "uses": [
+      "Hold one key and get basslines, leads or hooks that are always in key",
+      "Roll through seeds to find a riff, then lock its rhythm and change only the notes",
+      "Tempo-synced arpeggio-like runs and triplet rolls from a single held key",
+      "Transpose a riff live: the key you hold is its root, the last key pressed leads",
+      "Feed any synth or sampler with endless, repeatable melodic ideas"
+    ],
+    "properties": "A MIDI effect: MIDI in, MIDI out, the audio passes through untouched (place it before an instrument). The pattern comes from two separate Park-Miller random streams seeded by Seed: one for the rhythm (which steps play, their velocity and accents), one for the pitches (root jumps, steps and skips, motif repeats), so it is fully deterministic and Rhythm Lock can keep one while the other changes. While the host plays, the steps sit on its beat grid (the step is the beat position divided by the rate, modulo Steps); stopped, the riff starts with the key and runs at the host's tempo. One note sounds at a time and every note-on gets its note-off; releasing every key, all notes off (CC 120/123) or the transport stopping ends the riff. Pitch bend, controllers and sustain pass through; poly pressure of the leading key goes to the note sounding. Sample-accurate and the same in the JSFX, the GFX version and the VST3/CLAP.",
+    "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-riff\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><rect x=\"8\" y=\"10\" width=\"48\" height=\"44\" rx=\"3\" fill=\"none\" stroke=\"url(#icon-riff)\" stroke-width=\"2\"/><path d=\"M 20,10 L 20,54 M 32,10 L 32,54 M 44,10 L 44,54\" stroke=\"url(#icon-riff)\" stroke-width=\"1\" opacity=\"0.35\"/><rect x=\"11\" y=\"44\" width=\"7\" height=\"5\" fill=\"url(#icon-riff)\"/><rect x=\"17\" y=\"30\" width=\"7\" height=\"5\" fill=\"url(#icon-riff)\" opacity=\"0.6\"/><rect x=\"23\" y=\"44\" width=\"7\" height=\"5\" fill=\"url(#icon-riff)\" opacity=\"0.6\"/><rect x=\"33\" y=\"22\" width=\"7\" height=\"5\" fill=\"url(#icon-riff)\"/><rect x=\"39\" y=\"36\" width=\"7\" height=\"5\" fill=\"url(#icon-riff)\" opacity=\"0.6\"/><rect x=\"47\" y=\"16\" width=\"7\" height=\"5\" fill=\"url(#icon-riff)\"/></svg>"
   }
 }

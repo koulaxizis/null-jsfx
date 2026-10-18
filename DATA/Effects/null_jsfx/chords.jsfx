@@ -1,0 +1,330 @@
+desc:NULL Chords
+author: Christos Koulaxizis
+tags: midi chords chord generator one finger triad seventh ninth sus power inversion voicing strum progression key scale diatonic
+//category: MIDI
+//NULL JSFX v2.4 • https://nulljsfx.tech • MIT License
+
+slider1:0<0,1,1{Chord,Progression}>Mode
+slider2:0<0,11,1{C,C#,D,D#,E,F,F#,G,G#,A,A#,B}>Key
+slider3:0<0,8,1{Major,Minor,Harmonic Minor,Melodic Minor,Dorian,Phrygian,Lydian,Mixolydian,Locrian}>Scale
+slider4:0<0,5,1{Triad,7th,9th,Sus2,Sus4,Power}>Chord Type
+slider5:0<0,3,1{Root,1st,2nd,3rd}>Inversion
+slider6:0<0,3,1{Close,Drop 2,Open,Wide}>Voicing
+slider7:0<-2,2,1>Octave
+slider8:0<0,200,1>Strum (ms)
+slider9:0<0,2,1{Up,Down,Alternate}>Strum Direction
+slider10:0<-100,100,1>Velocity Curve (%)
+slider11:0<0,8,1{I-V-vi-IV,I-vi-IV-V,vi-IV-I-V,I-IV-vi-V,ii-V-I,Canon,i-VI-III-VII,i-VII-VI-V,i-iv-V-i}>Progression
+
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
+
+@init
+  // A MIDI effect: every key plays a chord of the chosen key and scale (Chord mode), or every
+  // white key from C plays the next step of a progression (Progression mode). The audio passes
+  // through untouched. Every note-on that goes out is remembered with the key that made it, so
+  // the key's note-off always ends exactly those notes; strummed notes still waiting when the
+  // key is released are never sent. A pitch two keys share stays on until both are released.
+  ext_noinit = 1;
+  ACT = 0;       // per input channel * 128 + note: 1 while the key is held
+  SN = 2048;     // how many notes the key sounds
+  SO = 4096;     // the notes (8 per key)
+  SON = 20480;   // when each of them starts (in samples since the start)
+  CNT = 36864;   // per output channel * 128 + note: how many keys hold it
+  Q = 38912;     // the queue of outgoing messages: time, status, data 1, data 2, key (5 each)
+  QMAX = 1024;
+  SCL = 44100;   // scales: 8 per scale, [0] = size, then the semitones
+  PRG = 44200;   // progressions: 20 per progression, [0] = steps, then degree and scale per step
+  CT = 44400;    // a chord being built (see cd_build)
+  memset(0, 0, 44500);
+  qn = 0;
+  bpos = 0;
+  alt_dir = 0;
+  last_note = -1;
+
+  function cd_scl(s, a, b, c, d, e, f, g)
+  (
+    SCL[s * 8] = 7;
+    SCL[s * 8 + 1] = a; SCL[s * 8 + 2] = b; SCL[s * 8 + 3] = c; SCL[s * 8 + 4] = d;
+    SCL[s * 8 + 5] = e; SCL[s * 8 + 6] = f; SCL[s * 8 + 7] = g;
+  );
+  cd_scl(0, 0, 2, 4, 5, 7, 9, 11);  // Major
+  cd_scl(1, 0, 2, 3, 5, 7, 8, 10);  // Minor (natural)
+  cd_scl(2, 0, 2, 3, 5, 7, 8, 11);  // Harmonic Minor
+  cd_scl(3, 0, 2, 3, 5, 7, 9, 11);  // Melodic Minor
+  cd_scl(4, 0, 2, 3, 5, 7, 9, 10);  // Dorian
+  cd_scl(5, 0, 1, 3, 5, 7, 8, 10);  // Phrygian
+  cd_scl(6, 0, 2, 4, 6, 7, 9, 11);  // Lydian
+  cd_scl(7, 0, 2, 4, 5, 7, 9, 10);  // Mixolydian
+  cd_scl(8, 0, 1, 3, 5, 6, 8, 10);  // Locrian
+
+  // a progression step: degree (0 = I) in a scale (0 major, 1 minor, 2 harmonic minor for a major V)
+  function cd_step(p, k, d, s)
+  (
+    PRG[p * 20 + 1 + 2 * k] = d;
+    PRG[p * 20 + 2 + 2 * k] = s;
+    PRG[p * 20] = max(PRG[p * 20], k + 1);
+  );
+  function cd_prog4(p, d1, d2, d3, d4, s)
+  (
+    cd_step(p, 0, d1, s); cd_step(p, 1, d2, s); cd_step(p, 2, d3, s); cd_step(p, 3, d4, s);
+  );
+  cd_prog4(0, 0, 4, 5, 3, 0);  // I-V-vi-IV
+  cd_prog4(1, 0, 5, 3, 4, 0);  // I-vi-IV-V
+  cd_prog4(2, 5, 3, 0, 4, 0);  // vi-IV-I-V
+  cd_prog4(3, 0, 3, 5, 4, 0);  // I-IV-vi-V
+  cd_step(4, 0, 1, 0); cd_step(4, 1, 4, 0); cd_step(4, 2, 0, 0);  // ii-V-I
+  cd_prog4(5, 0, 4, 5, 2, 0);  // Canon: I-V-vi-iii-IV-I-IV-V
+  cd_step(5, 4, 3, 0); cd_step(5, 5, 0, 0); cd_step(5, 6, 3, 0); cd_step(5, 7, 4, 0);
+  cd_prog4(6, 0, 5, 2, 6, 1);  // i-VI-III-VII
+  cd_prog4(7, 0, 6, 5, 4, 1);  // i-VII-VI-V, the V major
+  cd_step(7, 3, 4, 2);
+  cd_prog4(8, 0, 3, 4, 0, 1);  // i-iv-V-i, the V major
+  cd_step(8, 2, 4, 2);
+
+  // semitones of degree j (0 = the tonic, 7 = the tonic an octave up) of scale s
+  function cd_semi(s, j) local(m)
+  (
+    m = SCL[s * 8];
+    SCL[s * 8 + 1 + j % m] + 12 * floor(j / m);
+  );
+
+  function cd_sort(o, n) local(i, j, t)
+  (
+    i = 1;
+    loop(n - 1,
+      t = o[i];
+      j = i - 1;
+      while (j >= 0 && o[j] > t) ( o[j + 1] = o[j]; j -= 1; );
+      o[j + 1] = t;
+      i += 1;
+    );
+  );
+
+  // The chord input note n plays, into o: o[0..7] the notes (ascending), o[8] how many (0 =
+  // none), o[9] the root note, o[10] its degree (0..6), o[11] the scale, o[12..15] the root
+  // position intervals of the third, fifth, seventh and ninth (for the name in the display).
+  function cd_build(n, o) local(pc, d, s, root, w, k, m, i, j, c, sd, iv)
+  (
+    o[8] = 0;
+    d = -1;
+    mode == 0 ? (
+      // the scale note at or below the key
+      s = scale;
+      pc = (n - key + 120) % 12;
+      d = 6;
+      while (d > 0 && SCL[s * 8 + 1 + d] > pc) ( d -= 1; );
+      root = n - pc + SCL[s * 8 + 1 + d];
+    ) : (
+      // the white keys from C play the steps, over and over
+      pc = n % 12;
+      w = pc == 0 ? 0 : pc == 2 ? 1 : pc == 4 ? 2 : pc == 5 ? 3 : pc == 7 ? 4 : pc == 9 ? 5 : pc == 11 ? 6 : -1;
+      w >= 0 ? (
+        k = w % PRG[prog * 20];
+        d = PRG[prog * 20 + 1 + 2 * k];
+        s = PRG[prog * 20 + 2 + 2 * k];
+        root = n - pc + key + SCL[s * 8 + 1 + d];
+      );
+    );
+    d >= 0 ? (
+      o[9] = root; o[10] = d; o[11] = s;
+      sd = SCL[s * 8 + 1 + d];
+      ctype == 5 ? (
+        // power chord: root, fifth, octave
+        o[0] = root; o[1] = root + cd_semi(s, d + 4) - sd; o[2] = root + 12;
+        c = 3;
+        o[12] = 0; o[13] = o[1] - root; o[14] = 0; o[15] = 0;
+      ) : (
+        // stacked thirds (sus: the second or the fourth for the third)
+        c = ctype == 1 ? 4 : ctype == 2 ? 5 : 3;
+        k = 0;
+        loop(c,
+          iv = k == 1 && ctype == 3 ? 1 : k == 1 && ctype == 4 ? 3 : 2 * k;
+          o[k] = root + cd_semi(s, d + iv) - sd;
+          k += 1;
+        );
+        o[12] = o[1] - root; o[13] = o[2] - root;
+        o[14] = c > 3 ? o[3] - root : 0;
+        o[15] = c > 4 ? o[4] - root - 12 : 0;
+      );
+      // inversion: the lowest notes up an octave
+      loop(inv % c, o[0] += 12; cd_sort(o, c););
+      // voicing
+      voicing == 1 && c >= 3 ? ( o[c - 2] -= 12; cd_sort(o, c); );
+      voicing >= 2 ? (
+        i = 1;
+        while (i < c) ( o[i] += 12; i += 2; );
+        cd_sort(o, c);
+        voicing == 3 ? o[0] -= 12;
+      );
+      // octave, then the notes MIDI has, each once
+      j = 0;
+      i = 0;
+      loop(c,
+        m = o[i] + 12 * octv;
+        m >= 0 && m <= 127 && (j == 0 || m != o[j - 1]) ? ( o[j] = m; j += 1; );
+        i += 1;
+      );
+      o[8] = j;
+    );
+  );
+
+  function cd_vel(v)
+  (
+    max(1, min(127, floor(127 * (v / 127) ^ vexp + 0.5)));
+  );
+
+  // queue a message at time t (after every one already queued for t or earlier)
+  function cd_put(t, a, b, c, s) local(i, k)
+  (
+    qn < QMAX ? (
+      i = qn;
+      while (i > 0 && Q[(i - 1) * 5] > t) (
+        k = 0;
+        loop(5, Q[i * 5 + k] = Q[(i - 1) * 5 + k]; k += 1;);
+        i -= 1;
+      );
+      Q[i * 5] = t; Q[i * 5 + 1] = a; Q[i * 5 + 2] = b; Q[i * 5 + 3] = c; Q[i * 5 + 4] = s;
+      qn += 1;
+    );
+  );
+
+  // take back the note-on of note p that key s still has waiting
+  function cd_drop(s, p) local(i, f, k)
+  (
+    f = -1;
+    i = 0;
+    while (f < 0 && i < qn) (
+      Q[i * 5 + 4] == s && Q[i * 5 + 2] == p && (Q[i * 5 + 1] & 0xF0) == 0x90 ? f = i;
+      i += 1;
+    );
+    f >= 0 ? (
+      i = f;
+      loop(qn - 1 - f,
+        k = 0;
+        loop(5, Q[i * 5 + k] = Q[(i + 1) * 5 + k]; k += 1;);
+        i += 1;
+      );
+      qn -= 1;
+    );
+  );
+
+  // key s released at time t: note-offs for what it sounds, its strummed notes still waiting dropped
+  function cd_release(t, s, v) local(i, p)
+  (
+    i = 0;
+    loop(SN[s],
+      p = SO[s * 8 + i];
+      SON[s * 8 + i] <= t ? cd_put(t, 0x80 | floor(s / 128), p, v, s) : cd_drop(s, p);
+      i += 1;
+    );
+    ACT[s] = 0;
+    SN[s] = 0;
+  );
+
+  function cd_note_on(t, ch, n, v) local(s, c, i, k, vo, dn)
+  (
+    s = ch * 128 + n;
+    ACT[s] ? cd_release(t, s, 0);
+    cd_build(n, CT);
+    c = CT[8];
+    ACT[s] = 1;
+    SN[s] = c;
+    c > 0 ? (
+      last_note = n;
+      vo = cd_vel(v);
+      dn = sdir == 1 || (sdir == 2 && alt_dir);
+      sdir == 2 ? alt_dir = 1 - alt_dir;
+      i = 0;
+      loop(c,
+        k = dn ? c - 1 - i : i;
+        SO[s * 8 + i] = CT[k];
+        SON[s * 8 + i] = t + i * st_samp;
+        cd_put(t + i * st_samp, 0x90 | ch, CT[k], vo, s);
+        i += 1;
+      );
+    );
+  );
+
+  // one incoming message at time t
+  function cd_in(t, a, b, c) local(st, ch, s, i)
+  (
+    st = a & 0xF0;
+    ch = a & 0x0F;
+    s = ch * 128 + b;
+    st == 0x90 && c > 0 ? (
+      cd_note_on(t, ch, b, c);
+    ) : st == 0x80 || st == 0x90 ? (
+      ACT[s] ? cd_release(t, s, st == 0x80 ? c : 0);
+    ) : st == 0xA0 ? (
+      // poly pressure goes to every note the key sounds
+      i = 0;
+      loop(SN[s],
+        SON[s * 8 + i] <= t ? cd_put(t, a, SO[s * 8 + i], c, -1);
+        i += 1;
+      );
+    ) : st == 0xB0 && (b == 120 || b == 123) ? (
+      // all notes off: release every key of the channel first
+      i = 0;
+      loop(128, ACT[ch * 128 + i] ? cd_release(t, ch * 128 + i, 0); i += 1;);
+      cd_put(t, a, b, c, -1);
+    ) : (
+      cd_put(t, a, b, c, -1);
+    );
+  );
+
+  // send one queued message; a note shared by several keys starts again and ends with the last
+  function cd_emit(ofs, a, b, c) local(st, k)
+  (
+    st = a & 0xF0;
+    k = (a & 0x0F) * 128 + b;
+    st == 0x90 ? (
+      CNT[k] > 0 ? midisend(ofs, 0x80 | (a & 0x0F), b, 0);
+      midisend(ofs, a, b, c);
+      CNT[k] += 1;
+    ) : st == 0x80 ? (
+      CNT[k] > 0 ? (
+        CNT[k] -= 1;
+        CNT[k] == 0 ? midisend(ofs, a, b, c);
+      );
+    ) : (
+      midisend(ofs, a, b, c);
+    );
+  );
+
+@slider
+  mode = slider1;
+  key = slider2;
+  scale = slider3;
+  ctype = slider4;
+  inv = slider5;
+  voicing = slider6;
+  octv = slider7;
+  sdir = slider9;
+  vexp = 2 ^ (-slider10 / 50);
+  prog = slider11;
+
+@block
+  st_samp = floor(slider8 * srate / 1000 + 0.5);
+  while (midirecv(m_ofs, m_1, m_2, m_3)) (
+    cd_in(bpos + m_ofs, m_1, m_2, m_3);
+  );
+  b_end = bpos + samplesblock;
+  q_i = 0;
+  while (q_i < qn && Q[q_i * 5] < b_end) (
+    cd_emit(Q[q_i * 5] - bpos, Q[q_i * 5 + 1], Q[q_i * 5 + 2], Q[q_i * 5 + 3]);
+    q_i += 1;
+  );
+  q_i > 0 ? (
+    q_j = 0;
+    loop((qn - q_i) * 5, Q[q_j] = Q[q_j + q_i * 5]; q_j += 1;);
+    qn -= q_i;
+  );
+  bpos = b_end;
+
+@sample
+  // the audio passes through
+  spl0 = spl0;
+  spl1 = spl1;

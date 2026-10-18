@@ -1,0 +1,17 @@
+[
+  ["Driving Bassline", {"Scale": "Minor", "Seed": 7, "Density": 90, "Note Length": 60, "Accent": 35, "Variation": 30}],
+  ["Sparse Groove", {"Scale": "Minor Pentatonic", "Seed": 21, "Density": 45, "Note Length": 70, "Velocity Range": 40}],
+  ["Acid Line", {"Scale": "Phrygian", "Seed": 303, "Density": 85, "Octave Range": 2, "Note Length": 50, "Accent": 45, "Variation": 60}],
+  ["Pentatonic Lead", {"Scale": "Major Pentatonic", "Seed": 42, "Density": 70, "Octave Range": 2, "Variation": 70}],
+  ["Blues Shuffle", {"Scale": "Blues", "Seed": 12, "Rate": "1/8T", "Steps": 12, "Density": 80, "Note Length": 90}],
+  ["Eighth Note Riff", {"Rate": "1/8", "Steps": 8, "Seed": 5, "Density": 85, "Note Length": 90, "Variation": 20}],
+  ["Fast Arp Run", {"Rate": "1/32", "Steps": 32, "Seed": 64, "Density": 100, "Octave Range": 3, "Note Length": 70, "Accent": 15, "Variation": 80}],
+  ["Triplet Rolls", {"Scale": "Dorian", "Rate": "1/16T", "Steps": 24, "Seed": 99, "Density": 75, "Octave Range": 2}],
+  ["Dorian Funk", {"Scale": "Dorian", "Seed": 133, "Density": 65, "Note Length": 40, "Velocity Range": 50, "Accent": 40}],
+  ["Minor Hook", {"Scale": "Harmonic Minor", "Seed": 77, "Steps": 8, "Density": 80, "Variation": 0}],
+  ["Wide Melody", {"Scale": "Lydian", "Seed": 250, "Steps": 32, "Density": 60, "Octave Range": 3, "Note Length": 100, "Variation": 90}],
+  ["Staccato Pulse", {"Scale": "Mixolydian", "Seed": 8, "Density": 95, "Note Length": 20, "Velocity Range": 20, "Accent": 50}],
+  ["Steady Repeat", {"Seed": 3, "Steps": 16, "Density": 75, "Variation": 0, "Velocity Range": 0, "Accent": 0}],
+  ["Locked Groove", {"Scale": "Minor", "Seed": 58, "Rhythm Lock": 11, "Density": 70, "Accent": 30}],
+  ["Ambient Drift", {"Scale": "Major Pentatonic", "Rate": "1/8", "Steps": 16, "Seed": 500, "Density": 40, "Octave Range": 3, "Note Length": 100, "Velocity Range": 60, "Accent": 0, "Variation": 100}]
+]

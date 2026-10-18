@@ -23,9 +23,10 @@ R='Library/Application Support/REAPER'
 N='Library/Application Support/NULL JSFX'
 V='Library/Audio/Plug-Ins/VST3/NULL JSFX'
 C='Library/Audio/Plug-Ins/CLAP/NULL JSFX'
-ALL='base jsfx.one-slider jsfx.essentials jsfx.advanced jsfx.instruments gfx.one-slider gfx.essentials
-     gfx.advanced gfx.instruments vst3.one-slider vst3.essentials vst3.advanced vst3.instruments vst3.rack
-     clap.one-slider clap.essentials clap.advanced clap.instruments clap.rack remote fonts chains'
+ALL='base jsfx.one-slider jsfx.essentials jsfx.advanced jsfx.instruments jsfx.midi gfx.one-slider
+     gfx.essentials gfx.advanced gfx.instruments gfx.midi vst3.one-slider vst3.essentials vst3.advanced
+     vst3.instruments vst3.midi vst3.rack clap.one-slider clap.essentials clap.advanced clap.instruments
+     clap.midi clap.rack remote fonts chains'
 plugins=$(cat "$parts"/roots/jsfx.*/"$R"/Effects/null_jsfx/*.jsfx | grep -c '^desc:')
 natives=$(find "$parts"/roots/vst3.*/"$V" -maxdepth 1 -name 'null_jsfx_*.vst3' ! -name '*rack*' | wc -l | tr -d ' ')
 echo "package: $plugins plugins, $natives with VST3/CLAP"

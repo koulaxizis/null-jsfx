@@ -6,7 +6,7 @@ Header (first lines of every file, in this order):
     desc:NULL <Name>
     author: Christos Koulaxizis
     tags: <lowercase keywords>
-    //category: One Slider | Essentials | Advanced | Instruments
+    //category: One Slider | Essentials | Advanced | Instruments | MIDI
     //NULL JSFX v2.4 • https://nulljsfx.tech • MIT License
 
 followed by a blank line, the sliders, a blank line and the four pins
@@ -15,6 +15,7 @@ in_pin:Sidechain Left and in_pin:Sidechain Right after the two main inputs. Mult
 plugins (Band Splitter) use eight pins each way instead: in_pin:Left, in_pin:Right, then
 in_pin:Band 2 Left ... in_pin:Band 4 Right, and out_pin:Band 1 Left ... out_pin:Band 4 Right.
 Instruments make their own sound and take no audio: in_pin:none, out_pin:Left, out_pin:Right.
+MIDI effects (MIDI in, MIDI out) pass the audio through on the four standard pins.
 
 Usage: lint.py file.jsfx [...]   Exit status 1 if any file has an error.
 """
@@ -24,7 +25,7 @@ from pathlib import Path
 
 AUTHOR = "author: Christos Koulaxizis"
 FOOTER = "//NULL JSFX v2.4 • https://nulljsfx.tech • MIT License"
-CATEGORIES = ("One Slider", "Essentials", "Advanced", "Instruments")
+CATEGORIES = ("One Slider", "Essentials", "Advanced", "Instruments", "MIDI")
 PINS = ["in_pin:Left", "in_pin:Right", "out_pin:Left", "out_pin:Right"]
 SIDECHAIN_PINS = ["in_pin:Left", "in_pin:Right", "in_pin:Sidechain Left", "in_pin:Sidechain Right",
                   "out_pin:Left", "out_pin:Right"]
@@ -90,7 +91,7 @@ def check(path):
             errors.append(f"slider label style must be 'Name (unit)': {name!r}")
     if category == "One Slider" and len(sliders) != 1:
         errors.append(f"One Slider plugin has {len(sliders)} sliders")
-    if category in ("Essentials", "Advanced", "Instruments") and len(sliders) == 1:
+    if category in ("Essentials", "Advanced", "Instruments", "MIDI") and len(sliders) == 1:
         errors.append(f"{category} plugin has only one slider; should it be One Slider?")
     pins = [l.strip() for l in header if l.startswith(("in_pin:", "out_pin:"))]
     if category == "Instruments" and pins not in (INSTRUMENT_PINS, INSTRUMENT_GROUP_PINS):
@@ -130,6 +131,9 @@ def check(path):
     # Variables read but never assigned anywhere evaluate to 0 in EEL2 (e.g. 'sr' instead of 'srate').
     code_all = code + lib_code
     assigned = set(re.findall(r"\b([A-Za-z_]\w*)(?:\.\w+)*\s*(?:=|\+=|-=|\*=|/=|\|=|&=)(?!=)", code_all))
+    # midirecv(offset, msg1, msg2[, msg3]) writes its arguments
+    for args in re.findall(r"\bmidirecv\s*\(([^)]*)\)", code_all):
+        assigned |= {a.strip() for a in args.split(",") if re.fullmatch(r"[A-Za-z_]\w*", a.strip())}
     functions, params = set(), set()
     for name, args, extra in re.findall(r"function\s+([\w.]+)\s*\(([^)]*)\)\s*(?:(?:local|instance|static|global)\s*\(([^)]*)\))?", code_all):
         functions.add(name.split(".")[-1])

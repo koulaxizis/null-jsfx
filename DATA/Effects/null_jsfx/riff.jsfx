@@ -1,0 +1,293 @@
+desc:NULL Riff
+author: Christos Koulaxizis
+tags: midi riff generator melody pattern sequencer step random seed tempo sync key scale bassline lead hold
+//category: MIDI
+//NULL JSFX v2.4 • https://nulljsfx.tech • MIT License
+
+slider1:0<0,11,1{C,C#,D,D#,E,F,F#,G,G#,A,A#,B}>Key
+slider2:0<0,11,1{Major,Minor,Harmonic Minor,Melodic Minor,Dorian,Phrygian,Lydian,Mixolydian,Locrian,Major Pentatonic,Minor Pentatonic,Blues}>Scale
+slider3:1<1,999,1>Seed
+slider4:75<0,100,1>Density (%)
+slider5:16<4,32,1>Steps
+slider6:1<0,5,1{1/8,1/16,1/32,1/8T,1/16T,1/32T}>Rate
+slider7:1<1,3,1>Octave Range
+slider8:80<10,100,1>Note Length (%)
+slider9:0<0,999,1>Rhythm Lock
+slider10:30<0,100,1>Velocity Range (%)
+slider11:25<0,100,1>Accent (%)
+slider12:50<0,100,1>Variation (%)
+
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
+
+@init
+  // A MIDI effect: holding a key plays a riff, a pattern of Steps steps generated from Seed, in
+  // the chosen key and scale, starting from the held key (the scale note at or below it). The
+  // last key pressed leads; releasing it goes back to the one held before, releasing every key
+  // stops the riff. While the host plays, the steps sit on its beat grid; stopped, the riff
+  // starts with the key and runs at the host's tempo. Two Park-Miller streams make the pattern:
+  // one the rhythm (which steps play, their velocity and accents), one the pitches, so Rhythm
+  // Lock (a seed for the rhythm alone, 0 = Off) keeps the rhythm while Seed rolls new notes. One
+  // note sounds at a time and every note-on gets its note-off; the transport stopping or all
+  // notes off ends it. The audio passes through untouched.
+  ext_noinit = 1;
+  STK = 0;      // the keys held, in the order pressed: input channel * 128 + note
+  STV = 128;    // their velocities
+  KMAX = 128;
+  PON = 256;    // the pattern, 32 steps: 1 when the step plays
+  PDG = 288;    // its scale degree above the root (0 = the root)
+  PVR = 320;    // its velocity draw (0..1)
+  PAC = 352;    // 1 when accented
+  SCL = 400;    // scales: 8 per scale, [0] = size, then the semitones
+  memset(0, 0, 500);
+  stn = 0;          // keys held
+  run = 0;          // 1 while the riff plays
+  cur_note = -1;    // the note sounding (-1 = none), its channel and when it ends
+  cur_ch = 0;
+  cur_off = 0;
+  cur_step = -1;    // the step playing (for the display)
+  bpos = 0;         // samples since @init
+  was_play = 0;
+  nk = 0;           // the next step: its count (the step is nk modulo Steps), its exact time
+  nst = 0;
+  last_k = -1000000000;
+  NEVER = 2 ^ 60;   // a time that never comes
+
+  function rf_scl(s, n, a, b, c, d, e, f, g)
+  (
+    SCL[s * 8] = n;
+    SCL[s * 8 + 1] = a; SCL[s * 8 + 2] = b; SCL[s * 8 + 3] = c; SCL[s * 8 + 4] = d;
+    SCL[s * 8 + 5] = e; SCL[s * 8 + 6] = f; SCL[s * 8 + 7] = g;
+  );
+  rf_scl(0, 7, 0, 2, 4, 5, 7, 9, 11);   // Major
+  rf_scl(1, 7, 0, 2, 3, 5, 7, 8, 10);   // Minor (natural)
+  rf_scl(2, 7, 0, 2, 3, 5, 7, 8, 11);   // Harmonic Minor
+  rf_scl(3, 7, 0, 2, 3, 5, 7, 9, 11);   // Melodic Minor
+  rf_scl(4, 7, 0, 2, 3, 5, 7, 9, 10);   // Dorian
+  rf_scl(5, 7, 0, 1, 3, 5, 7, 8, 10);   // Phrygian
+  rf_scl(6, 7, 0, 2, 4, 6, 7, 9, 11);   // Lydian
+  rf_scl(7, 7, 0, 2, 4, 5, 7, 9, 10);   // Mixolydian
+  rf_scl(8, 7, 0, 1, 3, 5, 6, 8, 10);   // Locrian
+  rf_scl(9, 5, 0, 2, 4, 7, 9, 0, 0);    // Major Pentatonic
+  rf_scl(10, 5, 0, 3, 5, 7, 10, 0, 0);  // Minor Pentatonic
+  rf_scl(11, 6, 0, 3, 5, 6, 7, 10, 0);  // Blues
+
+  // semitones of degree j (0 = the tonic) of scale s, over the octaves
+  function rf_semi(s, j) local(m, o)
+  (
+    m = SCL[s * 8];
+    o = floor(j / m);
+    SCL[s * 8 + 1 + j - o * m] + 12 * o;
+  );
+
+  // the two Park-Miller streams in exact doubles: rhythm and pitch, each in [0, 1)
+  function rf_rr() ( rs *= 16807; rs -= floor(rs / 2147483647) * 2147483647; rs / 2147483648; );
+  function rf_pr() ( ps *= 16807; ps -= floor(ps / 2147483647) * 2147483647; ps / 2147483648; );
+
+  // the pattern: always 32 steps (Steps plays the first ones, so more steps add to the end)
+  function rf_gen() local(i, g, v, a, p1, p2, p3, p4, m, sz, top, d, prev)
+  (
+    rs = (lock > 0 ? lock : seed) * 7919 + 13;
+    ps = seed * 104729 + 71;
+    loop(4, rf_rr(); rf_pr(););
+    sz = SCL[scale * 8];
+    top = sz * octs;
+    m = rate >= 3 ? 3 : 4;   // a motif: a beat of steps (three in the triplet rates)
+    prev = 0;
+    i = 0;
+    loop(32,
+      g = rf_rr(); v = rf_rr(); a = rf_rr();
+      PON[i] = i == 0 || g < dens;
+      PVR[i] = v;
+      PAC[i] = a < acc;
+      p1 = rf_pr(); p2 = rf_pr(); p3 = rf_pr(); p4 = rf_pr();
+      i == 0 ? (
+        d = 0;
+      ) : i >= m && p1 >= vari ? (
+        // the note of the motif before
+        d = PDG[i - m];
+      ) : p2 < 0.3 ? (
+        // the root, in one of the octaves
+        d = sz * floor(p3 * (octs + 1));
+      ) : p2 < 0.7 ? (
+        // a step or a skip from the note before, turned back at the ends
+        d = prev + (p3 < 0.5 ? -1 : 1) * (1 + floor(p4 * 2));
+        d < 0 ? d = -d;
+        d > top ? d = 2 * top - d;
+        d = max(0, min(top, d));
+      ) : (
+        // any note of the range
+        d = floor(p3 * (top + 1));
+      );
+      PDG[i] = min(top, d);
+      prev = PDG[i];
+      i += 1;
+    );
+  );
+
+  // the note degree g above the root plays when key n leads: the root is the scale note at or below n
+  function rf_note(n, g) local(s, pc, d)
+  (
+    s = scale;
+    pc = (n - key + 120) % 12;
+    d = SCL[s * 8] - 1;
+    while (d > 0 && SCL[s * 8 + 1 + d] > pc) ( d -= 1; );
+    n - pc + rf_semi(s, d + g);
+  );
+
+  function rf_vel(v0, i) local(x)
+  (
+    x = v0 * (1 - vrng * PVR[i]);
+    PAC[i] ? x += (127 - x) * 0.6;
+    max(1, min(127, floor(x + 0.5)));
+  );
+
+  // the note sounding ends at time t
+  function rf_off(t)
+  (
+    cur_note >= 0 ? (
+      midisend(t - bpos, 0x80 | cur_ch, cur_note, 0);
+      cur_note = -1;
+    );
+  );
+
+  function rf_stop(t)
+  (
+    rf_off(t);
+    stn = 0;
+    run = 0;
+    cur_step = -1;
+  );
+
+  // the next step, at time t (ex: its exact time)
+  function rf_step(t, ex) local(i, s, n)
+  (
+    i = nk - steps * floor(nk / steps);
+    run ? (
+      cur_step = i;
+      rf_off(t);
+      PON[i] ? (
+        s = STK[stn - 1];
+        n = rf_note(s & 127, PDG[i]);
+        n >= 0 && n <= 127 ? (
+          cur_ch = floor(s / 128);
+          cur_note = n;
+          midisend(t - bpos, 0x90 | cur_ch, n, rf_vel(STV[stn - 1], i));
+          cur_off = max(t + 1, floor(ex + sl * nlen + 0.001));
+        );
+      );
+    );
+    last_k = nk;
+    nk += 1;
+    nst = play ? bpos + (nk * sb - b0) * spb : nst + sl;
+  );
+
+  // everything the riff does before time tend, in time order (a note-off before a step at the same time);
+  // a step lands on the sample its exact time falls in (0.001 more, so a host's beat position a hair
+  // short of a grid line still lands on it)
+  function rf_adv(tend) local(to, ts, go)
+  (
+    go = 1;
+    while (go) (
+      to = cur_note >= 0 ? cur_off : NEVER;
+      ts = (play || run) ? max(bpos, floor(nst + 0.001)) : NEVER;
+      to <= ts && to < tend ? (
+        rf_off(to);
+      ) : ts < tend ? (
+        rf_step(ts, nst);
+      ) : (
+        go = 0;
+      );
+    );
+  );
+
+  // take key s off the list of keys held
+  function rf_del(s) local(i, f)
+  (
+    f = -1;
+    i = 0;
+    while (f < 0 && i < stn) ( STK[i] == s ? f = i; i += 1; );
+    f >= 0 ? (
+      i = f;
+      loop(stn - 1 - f, STK[i] = STK[i + 1]; STV[i] = STV[i + 1]; i += 1;);
+      stn -= 1;
+    );
+  );
+
+  // one incoming message at time t
+  function rf_in(t, a, b, c) local(st, ch, s, i)
+  (
+    st = a & 0xF0;
+    ch = a & 0x0F;
+    s = ch * 128 + b;
+    st == 0x90 && c > 0 ? (
+      rf_del(s);
+      stn < KMAX ? ( STK[stn] = s; STV[stn] = c; stn += 1; );
+      !run ? (
+        run = 1;
+        // stopped: the riff starts now, from its first step
+        !play ? ( nk = 0; nst = t; );
+      );
+    ) : st == 0x80 || st == 0x90 ? (
+      rf_del(s);
+      stn == 0 && run ? ( rf_off(t); run = 0; cur_step = -1; );
+    ) : st == 0xA0 ? (
+      // poly pressure of the leading key goes to the note sounding
+      stn > 0 && cur_note >= 0 ? (
+        STK[stn - 1] == s ? midisend(t - bpos, 0xA0 | cur_ch, cur_note, c);
+      );
+    ) : st == 0xB0 && (b == 120 || b == 123) ? (
+      // all notes off: the channel's keys are released, its note ends
+      i = 0;
+      while (i < stn) ( floor(STK[i] / 128) == ch ? rf_del(STK[i]) : i += 1; );
+      cur_note >= 0 && cur_ch == ch ? rf_off(t);
+      stn == 0 && run ? ( rf_off(t); run = 0; cur_step = -1; );
+      midisend(t - bpos, a, b, c);
+    ) : (
+      midisend(t - bpos, a, b, c);
+    );
+  );
+
+@slider
+  key = slider1;
+  scale = slider2;
+  seed = slider3;
+  dens = slider4 / 100;
+  steps = slider5;
+  rate = slider6;
+  octs = slider7;
+  nlen = slider8 / 100;
+  lock = slider9;
+  vrng = slider10 / 100;
+  acc = slider11 / 100;
+  vari = slider12 / 100;
+  rf_gen();
+
+@block
+  spb = srate * 60 / max(tempo, 1);
+  sb = rate == 0 ? 0.5 : rate == 1 ? 0.25 : rate == 2 ? 0.125 : rate == 3 ? 1 / 3 : rate == 4 ? 1 / 6 : 1 / 12;
+  sl = sb * spb;
+  play = play_state & 1;
+  // the transport stopping ends the riff; while it plays, the steps follow its beat
+  !play && was_play ? rf_stop(bpos);
+  play && !was_play ? last_k = -1000000000;
+  was_play = play;
+  play ? (
+    b0 = beat_position;
+    nk = ceil(b0 / sb - 0.000001);
+    nk == last_k ? nk += 1;
+    nst = bpos + (nk * sb - b0) * spb;
+  );
+  while (midirecv(m_ofs, m_1, m_2, m_3)) (
+    rf_adv(bpos + m_ofs);
+    rf_in(bpos + m_ofs, m_1, m_2, m_3);
+  );
+  rf_adv(bpos + samplesblock);
+  bpos += samplesblock;
+
+@sample
+  // the audio passes through
+  spl0 = spl0;
+  spl1 = spl1;
