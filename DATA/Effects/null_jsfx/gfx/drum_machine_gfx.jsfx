@@ -2,7 +2,7 @@ desc:NULL Drum Machine GFX
 author: Christos Koulaxizis
 tags: instrument drum machine drums beat sequencer synth 808 909 kick snare hats midi probability generator multi-out gui
 //category: Instruments
-//NULL JSFX v2.4 • https://nulljsfx.tech • MIT License
+//NULL JSFX v2.5 • https://nulljsfx.tech • MIT License
 
 import null_gfx.jsfx-inc
 

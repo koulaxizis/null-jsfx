@@ -2,7 +2,7 @@ desc:NULL Draw EQ GFX
 author: Christos Koulaxizis
 tags: equalizer eq draw drawable curve graphic 10-band smooth tone shaping mixing mastering gui
 //category: Essentials
-//NULL JSFX v2.4 • https://nulljsfx.tech • MIT License
+//NULL JSFX v2.5 • https://nulljsfx.tech • MIT License
 
 import null_gfx.jsfx-inc
 

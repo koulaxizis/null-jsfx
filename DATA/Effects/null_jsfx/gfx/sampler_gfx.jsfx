@@ -2,7 +2,7 @@ desc:NULL Sampler GFX
 author: Christos Koulaxizis
 tags: instrument sampler sample player one-shot chromatic wav flac loop adsr filter polyphonic midi gui
 //category: Instruments
-//NULL JSFX v2.4 • https://nulljsfx.tech • MIT License
+//NULL JSFX v2.5 • https://nulljsfx.tech • MIT License
 
 import null_gfx.jsfx-inc
 

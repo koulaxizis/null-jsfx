@@ -2,7 +2,7 @@ desc:NULL Dynamics
 author: Christos Koulaxizis
 tags: dynamics compressor expander gain reduction ratio threshold knee sidechain parallel bus fet opto upward
 //category: Essentials
-//NULL JSFX v2.4 • https://nulljsfx.tech • MIT License
+//NULL JSFX v2.5 • https://nulljsfx.tech • MIT License
 
 slider1:0<0,1,1{Compressor,Expander}>Mode
 slider2:-20<-60,0,1>Threshold (dB)

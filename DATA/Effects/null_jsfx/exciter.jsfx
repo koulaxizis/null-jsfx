@@ -2,7 +2,7 @@ desc:NULL Exciter
 author: Christos Koulaxizis
 tags: exciter enhancer harmonics brightness presence air saturation
 //category: One Slider
-//NULL JSFX v2.4 • https://nulljsfx.tech • MIT License
+//NULL JSFX v2.5 • https://nulljsfx.tech • MIT License
 
 slider1:30<0,100,1>Amount
 

@@ -2,7 +2,7 @@ desc:NULL Harmonizer
 author: Christos Koulaxizis
 tags: harmonizer harmony pitch shift voices interval thirds fifths octave backing vocals scale diatonic key midi formant psola
 //category: Advanced
-//NULL JSFX v2.4 • https://nulljsfx.tech • MIT License
+//NULL JSFX v2.5 • https://nulljsfx.tech • MIT License
 
 slider1:4<-12,12,1>Voice 1 Interval (semitones)
 slider2:7<-12,12,1>Voice 2 Interval (semitones)

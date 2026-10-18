@@ -2,7 +2,7 @@ desc:NULL Vocoder GFX
 author: Christos Koulaxizis
 tags: vocoder talkbox robot voice synth carrier modulator filterbank gui
 //category: Advanced
-//NULL JSFX v2.4 • https://nulljsfx.tech • MIT License
+//NULL JSFX v2.5 • https://nulljsfx.tech • MIT License
 
 import null_gfx.jsfx-inc
 

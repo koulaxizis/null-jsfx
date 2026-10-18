@@ -2,7 +2,7 @@ desc:NULL OTT
 author: Christos Koulaxizis
 tags: ott multiband upward downward compression edm loud aggressive
 //category: Advanced
-//NULL JSFX v2.4 • https://nulljsfx.tech • MIT License
+//NULL JSFX v2.5 • https://nulljsfx.tech • MIT License
 
 slider1:100<0,100,1>Depth (%)
 slider2:100<0,400,1>Time (%)

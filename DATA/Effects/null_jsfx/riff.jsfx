@@ -2,7 +2,7 @@ desc:NULL Riff
 author: Christos Koulaxizis
 tags: midi riff generator melody pattern sequencer step random seed tempo sync key scale bassline lead hold
 //category: MIDI
-//NULL JSFX v2.4 • https://nulljsfx.tech • MIT License
+//NULL JSFX v2.5 • https://nulljsfx.tech • MIT License
 
 slider1:0<0,11,1{C,C#,D,D#,E,F,F#,G,G#,A,A#,B}>Key
 slider2:0<0,11,1{Major,Minor,Harmonic Minor,Melodic Minor,Dorian,Phrygian,Lydian,Mixolydian,Locrian,Major Pentatonic,Minor Pentatonic,Blues}>Scale

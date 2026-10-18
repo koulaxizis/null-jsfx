@@ -2,7 +2,7 @@ desc:NULL Organ
 author: Christos Koulaxizis
 tags: instrument organ tonewheel drawbar percussion key click vibrato chorus rotary speaker drive gospel jazz rock midi
 //category: Instruments
-//NULL JSFX v2.4 • https://nulljsfx.tech • MIT License
+//NULL JSFX v2.5 • https://nulljsfx.tech • MIT License
 
 slider1:8<0,8,1>Drawbar 16'
 slider2:8<0,8,1>Drawbar 5 1/3'

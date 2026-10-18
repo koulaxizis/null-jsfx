@@ -2,7 +2,7 @@ desc:NULL Chorus One GFX
 author: Christos Koulaxizis
 tags: chorus thickening detune stereo lfo width gui
 //category: One Slider
-//NULL JSFX v2.4 • https://nulljsfx.tech • MIT License
+//NULL JSFX v2.5 • https://nulljsfx.tech • MIT License
 
 import null_gfx.jsfx-inc
 
