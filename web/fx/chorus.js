@@ -997,6 +997,8 @@ f29_ng_row(3);
 f37_ng_end();
 f38_ng_presets();
 },
+  serialize: function () {
+},
   getSlider: IO.getSlider, setSlider: IO.setSlider,
   setHost: function (k, v) { switch (k) { case "srate": V[19] = v; break; case "samplesblock": V[215] = v; break; case "num_ch": V[216] = v; break; case "tempo": V[50] = v; break; case "play_state": V[52] = v; break; case "play_position": V[217] = v; break; case "beat_position": V[53] = v; break; case "ts_num": V[218] = v; break; case "ts_denom": V[219] = v; break; case "pdc_delay": V[220] = v; break; case "pdc_bot_ch": V[221] = v; break; case "pdc_top_ch": V[222] = v; break; case "trigger": V[224] = v; break; } },
   getHost: function (k) { switch (k) { case "srate": return V[19]; case "samplesblock": return V[215]; case "num_ch": return V[216]; case "tempo": return V[50]; case "play_state": return V[52]; case "play_position": return V[217]; case "beat_position": return V[53]; case "ts_num": return V[218]; case "ts_denom": return V[219]; case "pdc_delay": return V[220]; case "pdc_bot_ch": return V[221]; case "pdc_top_ch": return V[222]; case "trigger": return V[224]; } return 0; },
@@ -1005,7 +1007,8 @@ f38_ng_presets();
   getLive: function (out) { out[0] = V[24]; out[1] = V[34]; return out; },
   setLive: function (a) { V[24] = a[0]; V[34] = a[1]; },
   mem: MEM, str: S,
-  getVar: function (name) { var k = FX.vars.indexOf(String(name).toLowerCase()); return k < 0 ? 0 : V[k]; }
+  getVar: function (name) { var k = FX.vars.indexOf(String(name).toLowerCase()); return k < 0 ? 0 : V[k]; },
+  setVar: function (name, v) { var k = FX.vars.indexOf(String(name).toLowerCase()); if (k >= 0) V[k] = v; }
 };
 if (G.bind) G.bind(V, {"gfx_r":84,"gfx_g":85,"gfx_b":86,"gfx_a":87,"gfx_x":112,"gfx_y":113,"gfx_w":79,"gfx_h":80,"gfx_texth":105,"gfx_ext_retina":27,"gfx_mode":230,"gfx_clear":231,"mouse_x":117,"mouse_y":118,"mouse_cap":88,"mouse_wheel":95}, S);
 return inst;

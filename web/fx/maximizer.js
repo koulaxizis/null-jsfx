@@ -1358,6 +1358,8 @@ S.sprintf(90013, 10043, (V[174] / 1000));
 f59_ng_end();
 f60_ng_presets();
 },
+  serialize: function () {
+},
   getSlider: IO.getSlider, setSlider: IO.setSlider,
   setHost: function (k, v) { switch (k) { case "srate": V[19] = v; break; case "samplesblock": V[365] = v; break; case "num_ch": V[366] = v; break; case "tempo": V[367] = v; break; case "play_state": V[368] = v; break; case "play_position": V[369] = v; break; case "beat_position": V[370] = v; break; case "ts_num": V[371] = v; break; case "ts_denom": V[372] = v; break; case "pdc_delay": V[147] = v; break; case "pdc_bot_ch": V[97] = v; break; case "pdc_top_ch": V[98] = v; break; case "trigger": V[374] = v; break; } },
   getHost: function (k) { switch (k) { case "srate": return V[19]; case "samplesblock": return V[365]; case "num_ch": return V[366]; case "tempo": return V[367]; case "play_state": return V[368]; case "play_position": return V[369]; case "beat_position": return V[370]; case "ts_num": return V[371]; case "ts_denom": return V[372]; case "pdc_delay": return V[147]; case "pdc_bot_ch": return V[97]; case "pdc_top_ch": return V[98]; case "trigger": return V[374]; } return 0; },
@@ -1366,7 +1368,8 @@ f60_ng_presets();
   getLive: function (out) { out[0] = V[229]; out[1] = V[111]; out[2] = V[138]; out[3] = V[110]; out[4] = V[102]; return out; },
   setLive: function (a) { V[229] = a[0]; V[111] = a[1]; V[138] = a[2]; V[110] = a[3]; V[102] = a[4]; },
   mem: MEM, str: S,
-  getVar: function (name) { var k = FX.vars.indexOf(String(name).toLowerCase()); return k < 0 ? 0 : V[k]; }
+  getVar: function (name) { var k = FX.vars.indexOf(String(name).toLowerCase()); return k < 0 ? 0 : V[k]; },
+  setVar: function (name, v) { var k = FX.vars.indexOf(String(name).toLowerCase()); if (k >= 0) V[k] = v; }
 };
 if (G.bind) G.bind(V, {"gfx_r":244,"gfx_g":245,"gfx_b":246,"gfx_a":247,"gfx_x":272,"gfx_y":273,"gfx_w":239,"gfx_h":240,"gfx_texth":265,"gfx_ext_retina":99,"gfx_mode":380,"gfx_clear":381,"mouse_x":277,"mouse_y":278,"mouse_cap":248,"mouse_wheel":255}, S);
 return inst;

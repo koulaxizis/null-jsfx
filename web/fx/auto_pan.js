@@ -860,6 +860,8 @@ S.sprintf(90008, 10018, V[37]);
 f34_ng_end();
 f35_ng_presets();
 },
+  serialize: function () {
+},
   getSlider: IO.getSlider, setSlider: IO.setSlider,
   setHost: function (k, v) { switch (k) { case "srate": V[21] = v; break; case "samplesblock": V[184] = v; break; case "num_ch": V[185] = v; break; case "tempo": V[40] = v; break; case "play_state": V[186] = v; break; case "play_position": V[187] = v; break; case "beat_position": V[188] = v; break; case "ts_num": V[189] = v; break; case "ts_denom": V[190] = v; break; case "pdc_delay": V[191] = v; break; case "pdc_bot_ch": V[192] = v; break; case "pdc_top_ch": V[193] = v; break; case "trigger": V[195] = v; break; } },
   getHost: function (k) { switch (k) { case "srate": return V[21]; case "samplesblock": return V[184]; case "num_ch": return V[185]; case "tempo": return V[40]; case "play_state": return V[186]; case "play_position": return V[187]; case "beat_position": return V[188]; case "ts_num": return V[189]; case "ts_denom": return V[190]; case "pdc_delay": return V[191]; case "pdc_bot_ch": return V[192]; case "pdc_top_ch": return V[193]; case "trigger": return V[195]; } return 0; },
@@ -868,7 +870,8 @@ f35_ng_presets();
   getLive: function (out) { out[0] = V[25]; out[1] = V[20]; out[2] = V[19]; out[3] = V[22]; return out; },
   setLive: function (a) { V[25] = a[0]; V[20] = a[1]; V[19] = a[2]; V[22] = a[3]; },
   mem: MEM, str: S,
-  getVar: function (name) { var k = FX.vars.indexOf(String(name).toLowerCase()); return k < 0 ? 0 : V[k]; }
+  getVar: function (name) { var k = FX.vars.indexOf(String(name).toLowerCase()); return k < 0 ? 0 : V[k]; },
+  setVar: function (name, v) { var k = FX.vars.indexOf(String(name).toLowerCase()); if (k >= 0) V[k] = v; }
 };
 if (G.bind) G.bind(V, {"gfx_r":63,"gfx_g":64,"gfx_b":65,"gfx_a":66,"gfx_x":91,"gfx_y":92,"gfx_w":58,"gfx_h":59,"gfx_texth":84,"gfx_ext_retina":27,"gfx_mode":201,"gfx_clear":202,"mouse_x":96,"mouse_y":97,"mouse_cap":67,"mouse_wheel":74}, S);
 return inst;

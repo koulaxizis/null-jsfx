@@ -1239,6 +1239,8 @@ t72 = (R.t(f39_ng_knob_ctl(12, 10043, 90018, 0, 100, 0, 1, 0)) ? f8_update() : 0
 f46_ng_end();
 f47_ng_presets();
 },
+  serialize: function () {
+},
   getSlider: IO.getSlider, setSlider: IO.setSlider,
   setHost: function (k, v) { switch (k) { case "srate": V[19] = v; break; case "samplesblock": V[269] = v; break; case "num_ch": V[270] = v; break; case "tempo": V[92] = v; break; case "play_state": V[271] = v; break; case "play_position": V[272] = v; break; case "beat_position": V[273] = v; break; case "ts_num": V[274] = v; break; case "ts_denom": V[275] = v; break; case "pdc_delay": V[276] = v; break; case "pdc_bot_ch": V[277] = v; break; case "pdc_top_ch": V[278] = v; break; case "trigger": V[280] = v; break; } },
   getHost: function (k) { switch (k) { case "srate": return V[19]; case "samplesblock": return V[269]; case "num_ch": return V[270]; case "tempo": return V[92]; case "play_state": return V[271]; case "play_position": return V[272]; case "beat_position": return V[273]; case "ts_num": return V[274]; case "ts_denom": return V[275]; case "pdc_delay": return V[276]; case "pdc_bot_ch": return V[277]; case "pdc_top_ch": return V[278]; case "trigger": return V[280]; } return 0; },
@@ -1247,7 +1249,8 @@ f47_ng_presets();
   getLive: function (out) { out[0] = V[94]; return out; },
   setLive: function (a) { V[94] = a[0]; },
   mem: MEM, str: S,
-  getVar: function (name) { var k = FX.vars.indexOf(String(name).toLowerCase()); return k < 0 ? 0 : V[k]; }
+  getVar: function (name) { var k = FX.vars.indexOf(String(name).toLowerCase()); return k < 0 ? 0 : V[k]; },
+  setVar: function (name, v) { var k = FX.vars.indexOf(String(name).toLowerCase()); if (k >= 0) V[k] = v; }
 };
 if (G.bind) G.bind(V, {"gfx_r":134,"gfx_g":135,"gfx_b":136,"gfx_a":137,"gfx_x":162,"gfx_y":163,"gfx_w":129,"gfx_h":130,"gfx_texth":155,"gfx_ext_retina":59,"gfx_mode":286,"gfx_clear":287,"mouse_x":167,"mouse_y":168,"mouse_cap":138,"mouse_wheel":145}, S);
 return inst;

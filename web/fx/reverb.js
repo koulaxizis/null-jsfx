@@ -1418,6 +1418,8 @@ S.sprintf(90014, 10018, V[127]);
 f64_ng_end();
 f65_ng_presets();
 },
+  serialize: function () {
+},
   getSlider: IO.getSlider, setSlider: IO.setSlider,
   setHost: function (k, v) { switch (k) { case "srate": V[19] = v; break; case "samplesblock": V[356] = v; break; case "num_ch": V[357] = v; break; case "tempo": V[358] = v; break; case "play_state": V[359] = v; break; case "play_position": V[360] = v; break; case "beat_position": V[361] = v; break; case "ts_num": V[362] = v; break; case "ts_denom": V[363] = v; break; case "pdc_delay": V[364] = v; break; case "pdc_bot_ch": V[365] = v; break; case "pdc_top_ch": V[366] = v; break; case "trigger": V[368] = v; break; } },
   getHost: function (k) { switch (k) { case "srate": return V[19]; case "samplesblock": return V[356]; case "num_ch": return V[357]; case "tempo": return V[358]; case "play_state": return V[359]; case "play_position": return V[360]; case "beat_position": return V[361]; case "ts_num": return V[362]; case "ts_denom": return V[363]; case "pdc_delay": return V[364]; case "pdc_bot_ch": return V[365]; case "pdc_top_ch": return V[366]; case "trigger": return V[368]; } return 0; },
@@ -1426,7 +1428,8 @@ f65_ng_presets();
   getLive: function (out) { out[0] = V[57]; out[1] = V[56]; out[2] = V[55]; out[3] = V[54]; out[4] = V[53]; out[5] = V[52]; out[6] = V[51]; out[7] = V[50]; out[8] = V[49]; out[9] = V[48]; out[10] = V[47]; out[11] = V[46]; return out; },
   setLive: function (a) { V[57] = a[0]; V[56] = a[1]; V[55] = a[2]; V[54] = a[3]; V[53] = a[4]; V[52] = a[5]; V[51] = a[6]; V[50] = a[7]; V[49] = a[8]; V[48] = a[9]; V[47] = a[10]; V[46] = a[11]; },
   mem: MEM, str: S,
-  getVar: function (name) { var k = FX.vars.indexOf(String(name).toLowerCase()); return k < 0 ? 0 : V[k]; }
+  getVar: function (name) { var k = FX.vars.indexOf(String(name).toLowerCase()); return k < 0 ? 0 : V[k]; },
+  setVar: function (name, v) { var k = FX.vars.indexOf(String(name).toLowerCase()); if (k >= 0) V[k] = v; }
 };
 if (G.bind) G.bind(V, {"gfx_r":229,"gfx_g":230,"gfx_b":231,"gfx_a":232,"gfx_x":257,"gfx_y":258,"gfx_w":224,"gfx_h":225,"gfx_texth":250,"gfx_ext_retina":89,"gfx_mode":374,"gfx_clear":375,"mouse_x":262,"mouse_y":263,"mouse_cap":233,"mouse_wheel":240}, S);
 return inst;

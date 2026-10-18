@@ -915,6 +915,8 @@ S.sprintf(90010, 10025, V[47]);
 f23_ng_end();
 f24_ng_presets();
 },
+  serialize: function () {
+},
   getSlider: IO.getSlider, setSlider: IO.setSlider,
   setHost: function (k, v) { switch (k) { case "srate": V[19] = v; break; case "samplesblock": V[201] = v; break; case "num_ch": V[202] = v; break; case "tempo": V[60] = v; break; case "play_state": V[65] = v; break; case "play_position": V[203] = v; break; case "beat_position": V[66] = v; break; case "ts_num": V[204] = v; break; case "ts_denom": V[205] = v; break; case "pdc_delay": V[206] = v; break; case "pdc_bot_ch": V[207] = v; break; case "pdc_top_ch": V[208] = v; break; case "trigger": V[210] = v; break; } },
   getHost: function (k) { switch (k) { case "srate": return V[19]; case "samplesblock": return V[201]; case "num_ch": return V[202]; case "tempo": return V[60]; case "play_state": return V[65]; case "play_position": return V[203]; case "beat_position": return V[66]; case "ts_num": return V[204]; case "ts_denom": return V[205]; case "pdc_delay": return V[206]; case "pdc_bot_ch": return V[207]; case "pdc_top_ch": return V[208]; case "trigger": return V[210]; } return 0; },
@@ -923,7 +925,8 @@ f24_ng_presets();
   getLive: function (out) { out[0] = V[63]; out[1] = V[38]; out[2] = V[51]; out[3] = V[35]; out[4] = V[64]; return out; },
   setLive: function (a) { V[63] = a[0]; V[38] = a[1]; V[51] = a[2]; V[35] = a[3]; V[64] = a[4]; },
   mem: MEM, str: S,
-  getVar: function (name) { var k = FX.vars.indexOf(String(name).toLowerCase()); return k < 0 ? 0 : V[k]; }
+  getVar: function (name) { var k = FX.vars.indexOf(String(name).toLowerCase()); return k < 0 ? 0 : V[k]; },
+  setVar: function (name, v) { var k = FX.vars.indexOf(String(name).toLowerCase()); if (k >= 0) V[k] = v; }
 };
 if (G.bind) G.bind(V, {"gfx_r":97,"gfx_g":98,"gfx_b":99,"gfx_a":100,"gfx_x":125,"gfx_y":126,"gfx_w":92,"gfx_h":93,"gfx_texth":118,"gfx_ext_retina":40,"gfx_mode":216,"gfx_clear":217,"mouse_x":130,"mouse_y":131,"mouse_cap":101,"mouse_wheel":108}, S);
 return inst;

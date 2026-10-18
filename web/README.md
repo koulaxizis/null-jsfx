@@ -59,8 +59,22 @@ the same Mersenne Twister and seed, `^` as power, and the operator precedence of
 grammar. Nothing is evaluated at runtime: effects are translated ahead of time into static
 files.
 
-Not supported yet: keyboard input in `@gfx` (`gfx_getchar`), `gfx_showmenu`, images
-(`gfx_blit` and friends), MIDI, and `@serialize` (sliders are saved by the host).
+## Instruments, MIDI and saved state
+
+Instruments (no audio inputs, such as `drum_machine`) are listed under `instruments` in
+`fx/index.json`. `midirecv`/`midisend` work: send events with `chain.midi([[time, msg1, msg2,
+msg3], ...])` (times in seconds on the audio clock; `chain.midiClear()` drops the ones not
+played yet; `chain.setTimeAt(time, transport)` moves the transport at an exact sample), or pass `midi` and `times` in `processorOptions` for an offline render.
+The null test plays the same MIDI into ysfx and JavaScript.
+
+`@serialize` runs too: `effect.getState()` returns the values the effect writes (a plain
+array), `effect.setState(state)` reads them back, and `chain.setState(uid, state)` does it
+in the worklet. A GFX view that edits state (the drum pattern) hands changes over with
+`view.takeState()`; values the page sends to the audio (`pokes`) and short flags the audio
+sends back (`flash`) are listed per effect in `tools/build.js`.
+
+Not supported yet: keyboard input in `@gfx` (`gfx_getchar`), `gfx_showmenu` and images
+(`gfx_blit` and friends).
 
 ## Check
 

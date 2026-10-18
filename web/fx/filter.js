@@ -1085,6 +1085,8 @@ t48 = (R.t(f26_ng_knob_ctl_log(12, 10044, 90017, 10, 2000, 150, 1)) ? f0_update(
 f33_ng_end();
 f34_ng_presets();
 },
+  serialize: function () {
+},
   getSlider: IO.getSlider, setSlider: IO.setSlider,
   setHost: function (k, v) { switch (k) { case "srate": V[35] = v; break; case "samplesblock": V[240] = v; break; case "num_ch": V[241] = v; break; case "tempo": V[69] = v; break; case "play_state": V[71] = v; break; case "play_position": V[242] = v; break; case "beat_position": V[72] = v; break; case "ts_num": V[243] = v; break; case "ts_denom": V[244] = v; break; case "pdc_delay": V[245] = v; break; case "pdc_bot_ch": V[246] = v; break; case "pdc_top_ch": V[247] = v; break; case "trigger": V[249] = v; break; } },
   getHost: function (k) { switch (k) { case "srate": return V[35]; case "samplesblock": return V[240]; case "num_ch": return V[241]; case "tempo": return V[69]; case "play_state": return V[71]; case "play_position": return V[242]; case "beat_position": return V[72]; case "ts_num": return V[243]; case "ts_denom": return V[244]; case "pdc_delay": return V[245]; case "pdc_bot_ch": return V[246]; case "pdc_top_ch": return V[247]; case "trigger": return V[249]; } return 0; },
@@ -1093,7 +1095,8 @@ f34_ng_presets();
   getLive: function (out) { out[0] = V[46]; out[1] = V[50]; out[2] = V[29]; out[3] = V[78]; out[4] = V[45]; out[5] = V[23]; out[6] = V[25]; out[7] = V[24]; out[8] = V[26]; return out; },
   setLive: function (a) { V[46] = a[0]; V[50] = a[1]; V[29] = a[2]; V[78] = a[3]; V[45] = a[4]; V[23] = a[5]; V[25] = a[6]; V[24] = a[7]; V[26] = a[8]; },
   mem: MEM, str: S,
-  getVar: function (name) { var k = FX.vars.indexOf(String(name).toLowerCase()); return k < 0 ? 0 : V[k]; }
+  getVar: function (name) { var k = FX.vars.indexOf(String(name).toLowerCase()); return k < 0 ? 0 : V[k]; },
+  setVar: function (name, v) { var k = FX.vars.indexOf(String(name).toLowerCase()); if (k >= 0) V[k] = v; }
 };
 if (G.bind) G.bind(V, {"gfx_r":95,"gfx_g":96,"gfx_b":97,"gfx_a":98,"gfx_x":123,"gfx_y":124,"gfx_w":90,"gfx_h":91,"gfx_texth":116,"gfx_ext_retina":30,"gfx_mode":255,"gfx_clear":256,"mouse_x":128,"mouse_y":129,"mouse_cap":99,"mouse_wheel":106}, S);
 return inst;

@@ -1142,6 +1142,8 @@ S.sprintf(90015, 10031, V[145]);
 f44_ng_end();
 f45_ng_presets();
 },
+  serialize: function () {
+},
   getSlider: IO.getSlider, setSlider: IO.setSlider,
   setHost: function (k, v) { switch (k) { case "srate": V[20] = v; break; case "samplesblock": V[336] = v; break; case "num_ch": V[337] = v; break; case "tempo": V[153] = v; break; case "play_state": V[338] = v; break; case "play_position": V[339] = v; break; case "beat_position": V[340] = v; break; case "ts_num": V[341] = v; break; case "ts_denom": V[342] = v; break; case "pdc_delay": V[343] = v; break; case "pdc_bot_ch": V[344] = v; break; case "pdc_top_ch": V[345] = v; break; case "trigger": V[347] = v; break; } },
   getHost: function (k) { switch (k) { case "srate": return V[20]; case "samplesblock": return V[336]; case "num_ch": return V[337]; case "tempo": return V[153]; case "play_state": return V[338]; case "play_position": return V[339]; case "beat_position": return V[340]; case "ts_num": return V[341]; case "ts_denom": return V[342]; case "pdc_delay": return V[343]; case "pdc_bot_ch": return V[344]; case "pdc_top_ch": return V[345]; case "trigger": return V[347]; } return 0; },
@@ -1150,7 +1152,8 @@ f45_ng_presets();
   getLive: function (out) { out[0] = V[154]; out[1] = V[71]; out[2] = V[70]; out[3] = V[69]; out[4] = V[68]; out[5] = V[31]; return out; },
   setLive: function (a) { V[154] = a[0]; V[71] = a[1]; V[70] = a[2]; V[69] = a[3]; V[68] = a[4]; V[31] = a[5]; },
   mem: MEM, str: S,
-  getVar: function (name) { var k = FX.vars.indexOf(String(name).toLowerCase()); return k < 0 ? 0 : V[k]; }
+  getVar: function (name) { var k = FX.vars.indexOf(String(name).toLowerCase()); return k < 0 ? 0 : V[k]; },
+  setVar: function (name, v) { var k = FX.vars.indexOf(String(name).toLowerCase()); if (k >= 0) V[k] = v; }
 };
 if (G.bind) G.bind(V, {"gfx_r":202,"gfx_g":203,"gfx_b":204,"gfx_a":205,"gfx_x":230,"gfx_y":231,"gfx_w":197,"gfx_h":198,"gfx_texth":223,"gfx_ext_retina":87,"gfx_mode":353,"gfx_clear":354,"mouse_x":235,"mouse_y":236,"mouse_cap":206,"mouse_wheel":213}, S);
 return inst;
