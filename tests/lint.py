@@ -74,6 +74,11 @@ def check(path):
     if len(lines) < 5 or lines[4] != FOOTER:
         errors.append(f"line 5 must be {FOOTER!r}")
 
+    sections = [l.split()[0] for l in lines if l.startswith("@")]
+    for sec in sorted(set(sections)):
+        if sections.count(sec) > 1:
+            errors.append(f"{sec} appears {sections.count(sec)} times; a section must appear once")
+
     header_end = next((i for i, l in enumerate(lines) if l.startswith("@")), len(lines))
     header = lines[:header_end]
     sliders = [l for l in header if re.match(r"slider\d+:", l)]

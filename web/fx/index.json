@@ -335,7 +335,7 @@
    "ins": 8,
    "outs": 8,
    "sliders": 6,
-   "bytes": 58157
+   "bytes": 58244
   },
   {
    "id": "breath_control",
@@ -1049,7 +1049,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 12,
-   "bytes": 73856
+   "bytes": 72842
   },
   {
    "id": "kick_shaper",
@@ -1401,7 +1401,7 @@
    "ins": 0,
    "outs": 8,
    "sliders": 63,
-   "bytes": 183118
+   "bytes": 183205
   }
  ]
 }

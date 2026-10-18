@@ -436,21 +436,6 @@ out_pin:Right
   si = 0;
 
 @sample
-  mq_n = 0;
-  while (midirecv(m_ofs, m_1, m_2, m_3)) (
-    midisend(m_ofs, m_1, m_2, m_3);
-    mq_n < 256 ? (
-      evq[mq_n * 4] = m_ofs;
-      evq[mq_n * 4 + 1] = m_1;
-      evq[mq_n * 4 + 2] = m_2;
-      evq[mq_n * 4 + 3] = m_3;
-      mq_n += 1;
-    );
-  );
-  mq_i = 0;
-  si = 0;
-
-@sample
   // MIDI notes due now: held / released, all notes off
   while (mq_i < mq_n && evq[mq_i * 4] <= si) (
     m_st = evq[mq_i * 4 + 1] & 0xF0;

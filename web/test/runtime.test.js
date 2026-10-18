@@ -205,7 +205,7 @@ test("Drum Machine: the User pattern goes through @serialize", function () {
 test("Drum Machine interface: a step edit is state to save, a name click a voice to hear", function () {
   globalThis.NULLRT = R; globalThis.NULLFXHost = HOST;
   var FX = fx("drum_machine"), cv = fakeCanvas(), got = [];
-  cv.clientWidth = 640; cv.clientHeight = 494;
+  cv.clientWidth = 640; cv.clientHeight = 580;
   var view = new GFX.View(FX, cv, { srate: 48000, onSlider: function (i, v) { got.push([i, v]); } });
   function click(x, y) {
     cv.fire("pointermove", { clientX: x, clientY: y, button: 0 });

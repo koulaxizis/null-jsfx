@@ -947,6 +947,7 @@ f0_update();
   // I: input channels (arrays), O: output channels; nin: how many inputs carry signal
   sample: function (I, O, n, nin) {
 var i;
+if (O.length < 8) { O = O.slice(); while (O.length < 8) O.push(new Float64Array(n)); }
 var t81, t82, t83, t84;
 for (i = 0; i < n; i++) {
 V[86] = (0 < nin ? I[0][i] : 0); V[90] = (1 < nin ? I[1][i] : 0); V[87] = (2 < nin ? I[2][i] : 0); V[91] = (3 < nin ? I[3][i] : 0); V[88] = (4 < nin ? I[4][i] : 0); V[92] = (5 < nin ? I[5][i] : 0); V[89] = (6 < nin ? I[6][i] : 0); V[93] = (7 < nin ? I[7][i] : 0);
