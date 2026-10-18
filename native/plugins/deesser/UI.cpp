@@ -13,13 +13,18 @@ START_NAMESPACE_DISTRHO
 static const NullKnobsUI::Control kControls[] = {
     { 0, NullKnobsUI::kKnob, "FREQUENCY", 0, -1, false },
     { 1, NullKnobsUI::kKnob, "REDUCTION", 0, -1, false },
+    { 5, NullKnobsUI::kKnob, "RANGE", 0, -1, false },
+    { 2, NullKnobsUI::kSelect, "MODE", 0, -1, false },
+    { 3, NullKnobsUI::kSelect, "DETECTION", 1, -1, false },
+    { 4, NullKnobsUI::kKnob, "THRESHOLD", 1, -1, false },
+    { 6, NullKnobsUI::kSelect, "LISTEN", 1, -1, false },
 };
 
 class UIDeEsser : public NullKnobsUI
 {
 public:
     UIDeEsser()
-        : NullKnobsUI({ "DEESSER", "ESSENTIALS", 480, 120, nullptr, 1, nulldeesser::kSliders, nulldeesser::kNumSliders,
+        : NullKnobsUI({ "DEESSER", "ESSENTIALS", 480, 120, nullptr, 2, nulldeesser::kSliders, nulldeesser::kNumSliders,
                         kControls, sizeof(kControls) / sizeof(kControls[0]), true }) {}
 
 protected:
@@ -37,7 +42,8 @@ protected:
     }
 
     // as in deesser_gfx.jsfx: left, the response from 1 to 20 kHz (-21..+3 dB) at full Reduction
-    // (dim) and now (bright); right, sibilance-band level (threshold marked), band reduction, output
+    // capped by Range (dim) and now (bright), flat in Wide mode; right, the mode (and Listen),
+    // sibilance-band level (threshold marked), reduction, output
     void drawDisplay() override
     {
         setPlot(56.0f, 66.0f, 260.0f, 78.0f);
@@ -63,7 +69,13 @@ protected:
 
         const double sr = getSampleRate() > 0.0 ? getSampleRate() : 48000.0;
         const nulldeesser::Coefs c = nulldeesser::bandpass(value(0), sr);
-        const double maxCut = 1.0 - std::pow(10.0, value(1) / 20.0);
+        const bool wide = value(2) >= 0.5f;
+        double maxCut = 1.0 - std::pow(10.0, value(1) / 20.0);
+        if (value(5) > value(1))
+            maxCut = std::min(maxCut, 1.0 - std::pow(10.0, value(5) / 20.0));
+        const auto resp = [&](double f, double cut) {
+            return wide ? 20.0 * std::log10(std::max(1.0 - cut, 0.00001)) : nulldeesser::responseDb(c, f, sr, cut);
+        };
         nulljsfx::Taps* t = taps();
         const double cut = t ? t->extra.load(std::memory_order_relaxed) : 0.0;
         constexpr int n = 131;
@@ -72,7 +84,7 @@ protected:
         {
             const double f = 1000.0 * std::pow(20.0, double(i) / double(n - 1));
             xs[i] = fPX + fPW * float(i) / float(n - 1);
-            ys[i] = linY(float(nulldeesser::responseDb(c, f, sr, maxCut)), -21.0f, 3.0f);
+            ys[i] = linY(float(resp(f, maxCut)), -21.0f, 3.0f);
         }
         beginPath();
         moveTo(xs[0], ys[0]);
@@ -84,7 +96,7 @@ protected:
         for (int i = 0; i < n; ++i)
         {
             const double f = 1000.0 * std::pow(20.0, double(i) / double(n - 1));
-            ys[i] = linY(float(nulldeesser::responseDb(c, f, sr, cut)), -21.0f, 3.0f);
+            ys[i] = linY(float(resp(f, cut)), -21.0f, 3.0f);
         }
         curve(xs, ys, n);
 
@@ -94,7 +106,11 @@ protected:
             env = t->inLevel.load(std::memory_order_relaxed);
             out = t->outLevel.load(std::memory_order_relaxed);
         }
-        meter(336.0f, 82.0f, 112.0f, 10.0f, "SIB", nulljsfx::toDb(env), -30.0f, -60.0f);
+        label(336.0f, 66.0f, ALIGN_LEFT, 7.5f, 1.0f, theme::kAccent, wide ? "WIDE" : "SPLIT", true);
+        if (value(6) >= 0.5f)
+            label(448.0f, 66.0f, ALIGN_RIGHT, 7.5f, 1.0f, theme::kMuted, "LISTEN", true);
+        const float thr = value(3) >= 0.5f ? value(4) : -30.0f;
+        meter(336.0f, 82.0f, 112.0f, 10.0f, "SIB", nulljsfx::toDb(env), thr, -60.0f);
         grMeter(336.0f, 106.0f, 112.0f, 10.0f, "GR", float(-20.0 * std::log10(std::fmax(1.0 - cut, 0.0000001))), 18.0f);
         meter(336.0f, 130.0f, 112.0f, 10.0f, "OUT", nulljsfx::toDb(out), -140.0f, -60.0f);
     }
@@ -103,8 +119,12 @@ protected:
     {
         if (param == 0)
             std::snprintf(buf, n, "%.1f kHz", v / 1000.0f);
-        else
+        else if (param == 5 && v <= -18.0f)
+            std::snprintf(buf, n, "FULL");
+        else if (param == 1 || param == 4 || param == 5)
             std::snprintf(buf, n, "%.1f dB", v);
+        else
+            NullKnobsUI::formatValue(param, v, buf, n);
     }
 };
 

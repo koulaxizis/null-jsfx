@@ -9,7 +9,8 @@
  * triode stages (each followed by a coupling-cap high-pass and a Miller-cap low-pass), a
  * Fender/Marshall-style passive tone stack (D. Yeh's third-order model, bilinear transform),
  * the power amp's resonance and Presence filters, a push-pull soft clipper with supply sag, and
- * a DC blocker. No cabinet: put the Cabinet Simulator after it.
+ * a DC blocker, and a noise gate keyed from the input (off at -90 dB). No cabinet: put the
+ * Cabinet Simulator after it.
  */
 
 #pragma once
@@ -27,7 +28,7 @@ static const double kCoefA[8] = { 0.040633460924193, 0.150505129022675, 0.300757
                                   0.609524314896188, 0.738503841118857, 0.849223810392066, 0.949742783705000 };
 static const double kCoefB[4] = { 0.070765948976184, 0.257853078513453, 0.513167574748793, 0.817317354417137 };
 
-static const char* const kModelNames[] = { "Clean", "Crunch", "Lead", "Bass" };
+static const char* const kModelNames[] = { "Clean", "Crunch", "Lead", "Bass", "Jazz Clean", "British", "Modern High Gain", "Fuzz" };
 
 // the JSFX's tri(): a triode-like asymmetric curve, soft towards +1, harder towards -0.5
 inline double tri(double x) noexcept
@@ -102,13 +103,46 @@ struct Setup {
             C1 = 0.47; C2 = 22; C3 = 22; R1 = 220; R2 = 1000; R3 = 22; R4 = 33;
             mk = 5; resF = 85; resG = 4; paBase = 0.8; trim = -2;
         }
-        else
+        else if (model == 3)
         {
             ns = 2; gmin = -6; gmax = 28; g[1] = 2.5;
             b[0] = 0.05; b[1] = 0.25;
             tight = 15; hp[0] = 15; hp[1] = 20; lp[0] = 9000; lp[1] = 6000;
             C1 = 0.33; C2 = 47; C3 = 33; R1 = 250; R2 = 1000; R3 = 25; R4 = 47;
             mk = 6; resF = 60; resG = 2; paBase = 0.7; trim = 2;
+        }
+        else if (model == 4) // Jazz Clean
+        {
+            ns = 2; gmin = -18; gmax = 10; g[1] = 1.2;
+            b[0] = 0.03; b[1] = 0.1;
+            tight = 25; hp[0] = 15; hp[1] = 25; lp[0] = 9000; lp[1] = 6500;
+            C1 = 0.18; C2 = 22; C3 = 22; R1 = 250; R2 = 1000; R3 = 25; R4 = 100;
+            mk = 7; resF = 90; resG = 1.5; paBase = 1.1; trim = 5;
+        }
+        else if (model == 5) // British
+        {
+            ns = 3; gmin = -3; gmax = 30; g[1] = 2.5; g[2] = 2;
+            b[0] = 0.15; b[1] = 0.25; b[2] = 0.35;
+            tight = 40; hp[0] = 20; hp[1] = 50; hp[2] = 30; lp[0] = 14000; lp[1] = 11000; lp[2] = 9000;
+            C1 = 0.5; C2 = 22; C3 = 22; R1 = 220; R2 = 1000; R3 = 25; R4 = 47;
+            mk = 5; resF = 75; resG = 2; paBase = 1.4; trim = -1;
+        }
+        else if (model == 6) // Modern High Gain
+        {
+            ns = 4; gmin = 10; gmax = 52; g[1] = 5; g[2] = 3.5; g[3] = 2.5;
+            b[0] = 0.08; b[1] = 0.15; b[2] = 0.2; b[3] = 0.25;
+            tight = 150; hp[0] = 80; hp[1] = 180; hp[2] = 120; hp[3] = 60;
+            lp[0] = 9000; lp[1] = 7500; lp[2] = 6500; lp[3] = 6000;
+            C1 = 0.5; C2 = 22; C3 = 47; R1 = 220; R2 = 1000; R3 = 10; R4 = 33;
+            mk = 6; resF = 80; resG = 5; paBase = 0.7; trim = -1.5;
+        }
+        else // Fuzz
+        {
+            ns = 2; gmin = 12; gmax = 54; g[1] = 6;
+            b[0] = 0.5; b[1] = 0.6;
+            tight = 15; hp[0] = 10; hp[1] = 15; lp[0] = 7000; lp[1] = 5000;
+            C1 = 0.47; C2 = 47; C3 = 47; R1 = 100; R2 = 1000; R3 = 10; R4 = 22;
+            mk = 8; resF = 70; resG = 3; paBase = 0.9; trim = -3;
         }
         preDb = gmin + (gmax - gmin) * gain / 10;
         g[0] = std::pow(10.0, preDb / 20);
@@ -197,15 +231,26 @@ public:
         apply();
     }
 
-    void reset() { std::memset(fSt, 0, sizeof(fSt)); }
+    void reset()
+    {
+        std::memset(fSt, 0, sizeof(fSt));
+        fGtEnv = 0; fGtG = 1; fGtOpen = 1; fGtCnt = 0;
+    }
 
     // @slider
     void setParams(int model, double gain, double bass, double mid, double treble, double presence, double master,
-                   bool bright, double sagPct, bool os4, double outDb)
+                   bool bright, double sagPct, bool os4, double outDb, double gateDb = -90.0)
     {
         fModel = model; fGain = gain; fBass = bass; fMid = mid; fTreble = treble; fPres = presence;
         fMaster = master; fBright = bright; fSag = sagPct; fOs4 = os4; fOut = outDb;
         apply();
+        // noise gate (-90 dB = off): 50 ms key release, 1 ms open, 80 ms close, 30 ms hold
+        fGateOn = gateDb > -90.0;
+        fGtTh = std::pow(10.0, gateDb / 20.0);
+        fGtRel = std::exp(-1.0 / (0.05 * fSr));
+        fGtGa = 1.0 - std::exp(-1.0 / (0.001 * fSr));
+        fGtGr = 1.0 - std::exp(-1.0 / (0.08 * fSr));
+        fGtHold = std::floor(0.03 * fSr);
     }
 
     const Setup& setup() const noexcept { return fS; }
@@ -216,8 +261,33 @@ public:
         for (uint32_t n = 0; n < frames; ++n)
         {
             const double xl = inL[n], xr = inR[n];
-            outL[n] = static_cast<T>(chan(xl, fSt[0]));
-            outR[n] = static_cast<T>(chan(xr, fSt[1]));
+            if (fGateOn)
+            {
+                // noise gate key: the input peak, held and released over 50 ms
+                const double x = std::max(std::fabs(xl), std::fabs(xr));
+                fGtEnv = std::max(x, fGtEnv * fGtRel);
+                if (fGtEnv > fGtTh)
+                {
+                    fGtOpen = 1;
+                    fGtCnt = fGtHold;
+                }
+                else if (fGtEnv < fGtTh * 0.5)
+                {
+                    if (fGtCnt > 0)
+                        fGtCnt -= 1;
+                    else
+                        fGtOpen = 0;
+                }
+                fGtG += (fGtOpen != 0 ? fGtGa : fGtGr) * (fGtOpen - fGtG);
+            }
+            double yl = chan(xl, fSt[0]), yr = chan(xr, fSt[1]);
+            if (fGateOn)
+            {
+                yl *= fGtG;
+                yr *= fGtG;
+            }
+            outL[n] = static_cast<T>(yl);
+            outR[n] = static_cast<T>(yr);
         }
     }
 
@@ -326,7 +396,7 @@ private:
     {
         const int os = fOs4 ? 4 : 2;
         if (os != fS.os)
-            reset(); // a new oversampling factor starts from clear filters, as the JSFX does
+            std::memset(fSt, 0, sizeof(fSt)); // a new oversampling factor starts from clear filters, as the JSFX does
         fS.compute(fModel, fGain, fBass, fMid, fTreble, fPres, fMaster, fBright, fSag, fOs4, fOut, fSr);
     }
 
@@ -337,6 +407,9 @@ private:
     Setup fS;
     double fSt[2][kSize] = {};
     double fE = 0, fO = 0;
+    bool fGateOn = false;
+    double fGtTh = 0, fGtRel = 0, fGtGa = 0, fGtGr = 0, fGtHold = 0;
+    double fGtEnv = 0, fGtG = 1, fGtOpen = 1, fGtCnt = 0;
 };
 
 } // namespace nullamp

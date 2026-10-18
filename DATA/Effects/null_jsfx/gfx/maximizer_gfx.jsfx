@@ -1,6 +1,6 @@
 desc:NULL Maximizer GFX
 author: Christos Koulaxizis
-tags: limiter maximizing loudness ceiling mastering peak protection dither gui
+tags: limiter maximizing loudness ceiling mastering peak protection dither multiband saturation lufs gui
 //category: Essentials
 //NULL JSFX v2.4 • https://nulljsfx.tech • MIT License
 
@@ -14,6 +14,10 @@ slider5:0<-12,0,0.1>-Output Gain (dB)
 slider6:1<0,1,1{OFF,ON}>-Stereo Link
 slider7:0<0,2,1{OFF,16-BIT,24-BIT}>-Dither
 slider8:0<0,1,1{OFF,ON}>-Noise Shaping
+slider9:0<0,2,1{CLEAN,PUNCHY,WARM}>-Character
+slider10:0<0,1,1{OFF,ON}>-Multiband
+slider11:150<50,500,10>-Low Crossover (Hz)
+slider12:4000<1000,12000,100>-High Crossover (Hz)
 
 in_pin:Left
 in_pin:Right
@@ -26,11 +30,36 @@ out_pin:Right
   // holds the peaks at Ceiling. Stereo Link uses one gain for both channels so the
   // image does not shift; OFF limits each channel on its own. Dither, last in the chain,
   // quantises to 16 or 24 bits with TPDF noise, optionally noise-shaped.
+  // Character shapes the signal before the limiter: CLEAN leaves it alone, PUNCHY rounds
+  // off only the peaks above Ceiling (a soft clip that tops out 6 dB higher, so the limiter
+  // pumps less on transients), WARM saturates the whole signal gently (x / sqrt(1 + (x/2c)^2):
+  // 1 dB softer at Ceiling, odd harmonics that grow with the level). Multiband splits the signal
+  // at Low / High Crossover (4th-order Linkwitz-Riley, the bands sum flat) into three bands,
+  // each limited at Ceiling on its own and a quarter linked (in dB) to the band that reduces
+  // most, so a loud bass no longer pumps the highs; the look-ahead limiter then holds the sum
+  // of the bands at Ceiling.
   max_look = ceil(srate * 0.006) + 2;
   buf_l = 0;
   buf_r = buf_l + max_look;
   memset(buf_l, 0, 2 * max_look);
   freembuf(buf_r + max_look);
+  // Multiband: the mid and high bands' delay lines (the low band uses buf_l / buf_r)
+  buf_ml = buf_r + max_look;
+  buf_mr = buf_ml + max_look;
+  buf_hl = buf_mr + max_look;
+  buf_hr = buf_hl + max_look;
+  memset(buf_ml, 0, 4 * max_look);
+  freembuf(buf_hr + max_look);
+  lo_hv_l = lo_hv_r = mi_hv_l = mi_hv_r = hi_hv_l = hi_hv_r = 0;
+  lo_hc_l = lo_hc_r = mi_hc_l = mi_hc_r = hi_hc_l = hi_hc_r = 0;
+  lo_g_l = lo_g_r = mi_g_l = mi_g_r = hi_g_l = hi_g_r = 1;
+  lo_e_l = lo_e_r = mi_e_l = mi_e_r = hi_e_l = hi_e_r = 1;
+  l1a_l.z1 = l1a_l.z2 = l1b_l.z1 = l1b_l.z2 = h1a_l.z1 = h1a_l.z2 = h1b_l.z1 = h1b_l.z2 = 0;
+  l2a_l.z1 = l2a_l.z2 = l2b_l.z1 = l2b_l.z2 = h2a_l.z1 = h2a_l.z2 = h2b_l.z1 = h2b_l.z2 = 0;
+  ap2_l.z1 = ap2_l.z2 = 0;
+  l1a_r.z1 = l1a_r.z2 = l1b_r.z1 = l1b_r.z2 = h1a_r.z1 = h1a_r.z2 = h1b_r.z1 = h1b_r.z2 = 0;
+  l2a_r.z1 = l2a_r.z2 = l2b_r.z1 = l2b_r.z2 = h2a_r.z1 = h2a_r.z2 = h2b_r.z1 = h2b_r.z2 = 0;
+  ap2_r.z1 = ap2_r.z2 = 0;
   wpos = 0;
   hv_l = hv_r = 0;
   hc_l = hc_r = 0;
@@ -53,6 +82,30 @@ out_pin:Right
     target = hv > ceiling ? ceiling / hv : 1;
     g = target < g ? g + (target - g) * att : target + (g - target) * rel;
   );
+
+  // biquad, transposed direct form II
+  function bq(x, b0, b1, b2, a1, a2) instance(z1, z2) local(y)
+  (
+    y = b0 * x + z1;
+    z1 = b1 * x - a1 * y + z2;
+    z2 = b2 * x - a2 * y;
+    y;
+  );
+
+  // Character: PUNCHY (1) soft-clips above Ceiling, WARM (2) saturates gently
+  function shape(x) local(a, u)
+  (
+    character == 1 ? (
+      a = abs(x);
+      a > ceiling ? (
+        u = (a - ceiling) / ceiling;
+        x = sign(x) * (ceiling + ceiling * u / (1 + u));
+      );
+    ) : (
+      x = x / sqrt(1 + x * x * warm_k);
+    );
+    x;
+  );
   gfx_ext_retina = 1;
 
   // interface only: a 1.8 s history of the output level and the gain, one entry per
@@ -64,6 +117,30 @@ out_pin:Right
   loop(mx_len, mx_buf[mx_i * 2] = 0; mx_buf[mx_i * 2 + 1] = 1; mx_i += 1;);
   mx_rel = exp(-1 / (0.3 * srate));
   mx_in = mx_out = 0;
+
+  // interface only: short-term loudness of the output (BS.1770 K-weighting as in
+  // loudness_meter.jsfx, the last 3 s in 30 blocks of 100 ms, from memory 4001000)
+  mx_lb = 4001000;
+  memset(mx_lb, 0, 30);
+  mx_k = tan($pi * 1681.974450955533 / srate);
+  mx_vh = 10 ^ (3.999843853973347 / 20);
+  mx_vb = mx_vh ^ 0.4996667741545416;
+  mx_q = 0.7071752369554196;
+  mx_a0 = 1 + mx_k / mx_q + mx_k * mx_k;
+  mx_kb0 = (mx_vh + mx_vb * mx_k / mx_q + mx_k * mx_k) / mx_a0;
+  mx_kb1 = 2 * (mx_k * mx_k - mx_vh) / mx_a0;
+  mx_kb2 = (mx_vh - mx_vb * mx_k / mx_q + mx_k * mx_k) / mx_a0;
+  mx_ka1 = 2 * (mx_k * mx_k - 1) / mx_a0;
+  mx_ka2 = (1 - mx_k / mx_q + mx_k * mx_k) / mx_a0;
+  mx_k = tan($pi * 38.13547087602444 / srate);
+  mx_q = 0.5003270373238773;
+  mx_c0 = 1 + mx_k / mx_q + mx_k * mx_k;
+  mx_kc1 = 2 * (mx_k * mx_k - 1) / mx_c0;
+  mx_kc2 = (1 - mx_k / mx_q + mx_k * mx_k) / mx_c0;
+  mx_z1l = mx_z2l = mx_z3l = mx_z4l = mx_z1r = mx_z2r = mx_z3r = mx_z4r = 0;
+  mx_nsb = floor(srate * 0.1 + 0.5);
+  mx_acc = mx_cnt = mx_sbw = 0;
+  mx_lufs = -200;
 
   function update()
   (
@@ -80,6 +157,31 @@ out_pin:Right
     dith = slider7;
     dt_q = slider7 == 1 ? 32768 : 8388608;
     nshape = slider8;
+    character = slider9;
+    warm_k = 1 / (4 * ceiling * ceiling);
+    mb = slider10;
+    // Linkwitz-Riley crossovers: two Butterworth sections each (RBJ, Q = 0.7071), and an
+    // all-pass at the high crossover on the low band so the three bands sum flat
+    mb_w = 2 * $pi * min(slider11, srate * 0.45) / srate;
+    mb_cs = cos(mb_w);
+    mb_al = sin(mb_w) / (2 * sqrt(0.5));
+    mb_a0 = 1 + mb_al;
+    x1_lb0 = (1 - mb_cs) / 2 / mb_a0;
+    x1_lb1 = (1 - mb_cs) / mb_a0;
+    x1_hb0 = (1 + mb_cs) / 2 / mb_a0;
+    x1_hb1 = -(1 + mb_cs) / mb_a0;
+    x1_a1 = -2 * mb_cs / mb_a0;
+    x1_a2 = (1 - mb_al) / mb_a0;
+    mb_w = 2 * $pi * min(slider12, srate * 0.45) / srate;
+    mb_cs = cos(mb_w);
+    mb_al = sin(mb_w) / (2 * sqrt(0.5));
+    mb_a0 = 1 + mb_al;
+    x2_lb0 = (1 - mb_cs) / 2 / mb_a0;
+    x2_lb1 = (1 - mb_cs) / mb_a0;
+    x2_hb0 = (1 + mb_cs) / 2 / mb_a0;
+    x2_hb1 = -(1 + mb_cs) / mb_a0;
+    x2_a1 = -2 * mb_cs / mb_a0;
+    x2_a2 = (1 - mb_al) / mb_a0;
   );
 
   // history: output level as dim bars (-48..0 dB), the gain as the line (-24..0 dB)
@@ -115,34 +217,44 @@ out_pin:Right
   );
 
   // ---- factory presets: generated by tools/build_presets.py, do not edit ----
-  ng_pre_n = 9;
+  ng_pre_n = 14;
 
   function ng_preset_load(p)
   (
-    p == 0 ? ( ng_slider_set(1, 0); ng_slider_set(2, -0.3); ng_slider_set(3, 50); ng_slider_set(4, 2); ng_slider_set(5, 0); ng_slider_set(6, 1); ng_slider_set(7, 0); ng_slider_set(8, 0); );
-    p == 1 ? ( ng_slider_set(1, 3); ng_slider_set(2, -1); ng_slider_set(3, 100); ng_slider_set(4, 5); ng_slider_set(5, 0); ng_slider_set(6, 1); ng_slider_set(7, 0); ng_slider_set(8, 0); );
-    p == 2 ? ( ng_slider_set(1, 6); ng_slider_set(2, -1); ng_slider_set(3, 60); ng_slider_set(4, 5); ng_slider_set(5, 0); ng_slider_set(6, 1); ng_slider_set(7, 0); ng_slider_set(8, 0); );
-    p == 3 ? ( ng_slider_set(1, 7); ng_slider_set(2, -0.5); ng_slider_set(3, 30); ng_slider_set(4, 2); ng_slider_set(5, 0); ng_slider_set(6, 1); ng_slider_set(7, 0); ng_slider_set(8, 0); );
-    p == 4 ? ( ng_slider_set(1, 2); ng_slider_set(2, -1); ng_slider_set(3, 200); ng_slider_set(4, 5); ng_slider_set(5, 0); ng_slider_set(6, 1); ng_slider_set(7, 0); ng_slider_set(8, 0); );
-    p == 5 ? ( ng_slider_set(1, 0); ng_slider_set(2, -1); ng_slider_set(3, 80); ng_slider_set(4, 3); ng_slider_set(5, 0); ng_slider_set(6, 1); ng_slider_set(7, 0); ng_slider_set(8, 0); );
-    p == 6 ? ( ng_slider_set(1, 4); ng_slider_set(2, -0.3); ng_slider_set(3, 50); ng_slider_set(4, 2); ng_slider_set(5, 0); ng_slider_set(6, 0); ng_slider_set(7, 0); ng_slider_set(8, 0); );
-    p == 7 ? ( ng_slider_set(1, 4); ng_slider_set(2, -0.3); ng_slider_set(3, 80); ng_slider_set(4, 5); ng_slider_set(5, 0); ng_slider_set(6, 1); ng_slider_set(7, 1); ng_slider_set(8, 1); );
-    p == 8 ? ( ng_slider_set(1, 3); ng_slider_set(2, -1); ng_slider_set(3, 80); ng_slider_set(4, 5); ng_slider_set(5, 0); ng_slider_set(6, 1); ng_slider_set(7, 2); ng_slider_set(8, 0); );
+    p == 0 ? ( ng_slider_set(1, 0); ng_slider_set(2, -0.3); ng_slider_set(3, 50); ng_slider_set(4, 2); ng_slider_set(5, 0); ng_slider_set(6, 1); ng_slider_set(7, 0); ng_slider_set(8, 0); ng_slider_set(9, 0); ng_slider_set(10, 0); ng_slider_set(11, 150); ng_slider_set(12, 4000); );
+    p == 1 ? ( ng_slider_set(1, 3); ng_slider_set(2, -1); ng_slider_set(3, 100); ng_slider_set(4, 5); ng_slider_set(5, 0); ng_slider_set(6, 1); ng_slider_set(7, 0); ng_slider_set(8, 0); ng_slider_set(9, 0); ng_slider_set(10, 0); ng_slider_set(11, 150); ng_slider_set(12, 4000); );
+    p == 2 ? ( ng_slider_set(1, 6); ng_slider_set(2, -1); ng_slider_set(3, 60); ng_slider_set(4, 5); ng_slider_set(5, 0); ng_slider_set(6, 1); ng_slider_set(7, 0); ng_slider_set(8, 0); ng_slider_set(9, 0); ng_slider_set(10, 0); ng_slider_set(11, 150); ng_slider_set(12, 4000); );
+    p == 3 ? ( ng_slider_set(1, 7); ng_slider_set(2, -0.5); ng_slider_set(3, 30); ng_slider_set(4, 2); ng_slider_set(5, 0); ng_slider_set(6, 1); ng_slider_set(7, 0); ng_slider_set(8, 0); ng_slider_set(9, 0); ng_slider_set(10, 0); ng_slider_set(11, 150); ng_slider_set(12, 4000); );
+    p == 4 ? ( ng_slider_set(1, 2); ng_slider_set(2, -1); ng_slider_set(3, 200); ng_slider_set(4, 5); ng_slider_set(5, 0); ng_slider_set(6, 1); ng_slider_set(7, 0); ng_slider_set(8, 0); ng_slider_set(9, 0); ng_slider_set(10, 0); ng_slider_set(11, 150); ng_slider_set(12, 4000); );
+    p == 5 ? ( ng_slider_set(1, 0); ng_slider_set(2, -1); ng_slider_set(3, 80); ng_slider_set(4, 3); ng_slider_set(5, 0); ng_slider_set(6, 1); ng_slider_set(7, 0); ng_slider_set(8, 0); ng_slider_set(9, 0); ng_slider_set(10, 0); ng_slider_set(11, 150); ng_slider_set(12, 4000); );
+    p == 6 ? ( ng_slider_set(1, 4); ng_slider_set(2, -0.3); ng_slider_set(3, 50); ng_slider_set(4, 2); ng_slider_set(5, 0); ng_slider_set(6, 0); ng_slider_set(7, 0); ng_slider_set(8, 0); ng_slider_set(9, 0); ng_slider_set(10, 0); ng_slider_set(11, 150); ng_slider_set(12, 4000); );
+    p == 7 ? ( ng_slider_set(1, 4); ng_slider_set(2, -0.3); ng_slider_set(3, 80); ng_slider_set(4, 5); ng_slider_set(5, 0); ng_slider_set(6, 1); ng_slider_set(7, 1); ng_slider_set(8, 1); ng_slider_set(9, 0); ng_slider_set(10, 0); ng_slider_set(11, 150); ng_slider_set(12, 4000); );
+    p == 8 ? ( ng_slider_set(1, 3); ng_slider_set(2, -1); ng_slider_set(3, 80); ng_slider_set(4, 5); ng_slider_set(5, 0); ng_slider_set(6, 1); ng_slider_set(7, 2); ng_slider_set(8, 0); ng_slider_set(9, 0); ng_slider_set(10, 0); ng_slider_set(11, 150); ng_slider_set(12, 4000); );
+    p == 9 ? ( ng_slider_set(1, 7); ng_slider_set(2, -1); ng_slider_set(3, 60); ng_slider_set(4, 5); ng_slider_set(5, 0); ng_slider_set(6, 1); ng_slider_set(7, 0); ng_slider_set(8, 0); ng_slider_set(9, 1); ng_slider_set(10, 0); ng_slider_set(11, 150); ng_slider_set(12, 4000); );
+    p == 10 ? ( ng_slider_set(1, 4); ng_slider_set(2, -1); ng_slider_set(3, 100); ng_slider_set(4, 5); ng_slider_set(5, 0); ng_slider_set(6, 1); ng_slider_set(7, 0); ng_slider_set(8, 0); ng_slider_set(9, 2); ng_slider_set(10, 0); ng_slider_set(11, 150); ng_slider_set(12, 4000); );
+    p == 11 ? ( ng_slider_set(1, 5); ng_slider_set(2, -1); ng_slider_set(3, 80); ng_slider_set(4, 5); ng_slider_set(5, 0); ng_slider_set(6, 1); ng_slider_set(7, 0); ng_slider_set(8, 0); ng_slider_set(9, 0); ng_slider_set(10, 1); ng_slider_set(11, 150); ng_slider_set(12, 4000); );
+    p == 12 ? ( ng_slider_set(1, 6); ng_slider_set(2, -1); ng_slider_set(3, 100); ng_slider_set(4, 5); ng_slider_set(5, 0); ng_slider_set(6, 1); ng_slider_set(7, 0); ng_slider_set(8, 0); ng_slider_set(9, 0); ng_slider_set(10, 1); ng_slider_set(11, 120); ng_slider_set(12, 5000); );
+    p == 13 ? ( ng_slider_set(1, 8); ng_slider_set(2, -0.5); ng_slider_set(3, 40); ng_slider_set(4, 3); ng_slider_set(5, 0); ng_slider_set(6, 1); ng_slider_set(7, 0); ng_slider_set(8, 0); ng_slider_set(9, 1); ng_slider_set(10, 1); ng_slider_set(11, 150); ng_slider_set(12, 4000); );
   );
 
   // the first preset every slider matches, or -1
   function ng_preset_match() local(m)
   (
     m = -1;
-    m < 0 && ng_pre_eq(slider1, 0) && ng_pre_eq(slider2, -0.3) && ng_pre_eq(slider3, 50) && ng_pre_eq(slider4, 2) && ng_pre_eq(slider5, 0) && ng_pre_eq(slider6, 1) && ng_pre_eq(slider7, 0) && ng_pre_eq(slider8, 0) ? m = 0;
-    m < 0 && ng_pre_eq(slider1, 3) && ng_pre_eq(slider2, -1) && ng_pre_eq(slider3, 100) && ng_pre_eq(slider4, 5) && ng_pre_eq(slider5, 0) && ng_pre_eq(slider6, 1) && ng_pre_eq(slider7, 0) && ng_pre_eq(slider8, 0) ? m = 1;
-    m < 0 && ng_pre_eq(slider1, 6) && ng_pre_eq(slider2, -1) && ng_pre_eq(slider3, 60) && ng_pre_eq(slider4, 5) && ng_pre_eq(slider5, 0) && ng_pre_eq(slider6, 1) && ng_pre_eq(slider7, 0) && ng_pre_eq(slider8, 0) ? m = 2;
-    m < 0 && ng_pre_eq(slider1, 7) && ng_pre_eq(slider2, -0.5) && ng_pre_eq(slider3, 30) && ng_pre_eq(slider4, 2) && ng_pre_eq(slider5, 0) && ng_pre_eq(slider6, 1) && ng_pre_eq(slider7, 0) && ng_pre_eq(slider8, 0) ? m = 3;
-    m < 0 && ng_pre_eq(slider1, 2) && ng_pre_eq(slider2, -1) && ng_pre_eq(slider3, 200) && ng_pre_eq(slider4, 5) && ng_pre_eq(slider5, 0) && ng_pre_eq(slider6, 1) && ng_pre_eq(slider7, 0) && ng_pre_eq(slider8, 0) ? m = 4;
-    m < 0 && ng_pre_eq(slider1, 0) && ng_pre_eq(slider2, -1) && ng_pre_eq(slider3, 80) && ng_pre_eq(slider4, 3) && ng_pre_eq(slider5, 0) && ng_pre_eq(slider6, 1) && ng_pre_eq(slider7, 0) && ng_pre_eq(slider8, 0) ? m = 5;
-    m < 0 && ng_pre_eq(slider1, 4) && ng_pre_eq(slider2, -0.3) && ng_pre_eq(slider3, 50) && ng_pre_eq(slider4, 2) && ng_pre_eq(slider5, 0) && ng_pre_eq(slider6, 0) && ng_pre_eq(slider7, 0) && ng_pre_eq(slider8, 0) ? m = 6;
-    m < 0 && ng_pre_eq(slider1, 4) && ng_pre_eq(slider2, -0.3) && ng_pre_eq(slider3, 80) && ng_pre_eq(slider4, 5) && ng_pre_eq(slider5, 0) && ng_pre_eq(slider6, 1) && ng_pre_eq(slider7, 1) && ng_pre_eq(slider8, 1) ? m = 7;
-    m < 0 && ng_pre_eq(slider1, 3) && ng_pre_eq(slider2, -1) && ng_pre_eq(slider3, 80) && ng_pre_eq(slider4, 5) && ng_pre_eq(slider5, 0) && ng_pre_eq(slider6, 1) && ng_pre_eq(slider7, 2) && ng_pre_eq(slider8, 0) ? m = 8;
+    m < 0 && ng_pre_eq(slider1, 0) && ng_pre_eq(slider2, -0.3) && ng_pre_eq(slider3, 50) && ng_pre_eq(slider4, 2) && ng_pre_eq(slider5, 0) && ng_pre_eq(slider6, 1) && ng_pre_eq(slider7, 0) && ng_pre_eq(slider8, 0) && ng_pre_eq(slider9, 0) && ng_pre_eq(slider10, 0) && ng_pre_eq(slider11, 150) && ng_pre_eq(slider12, 4000) ? m = 0;
+    m < 0 && ng_pre_eq(slider1, 3) && ng_pre_eq(slider2, -1) && ng_pre_eq(slider3, 100) && ng_pre_eq(slider4, 5) && ng_pre_eq(slider5, 0) && ng_pre_eq(slider6, 1) && ng_pre_eq(slider7, 0) && ng_pre_eq(slider8, 0) && ng_pre_eq(slider9, 0) && ng_pre_eq(slider10, 0) && ng_pre_eq(slider11, 150) && ng_pre_eq(slider12, 4000) ? m = 1;
+    m < 0 && ng_pre_eq(slider1, 6) && ng_pre_eq(slider2, -1) && ng_pre_eq(slider3, 60) && ng_pre_eq(slider4, 5) && ng_pre_eq(slider5, 0) && ng_pre_eq(slider6, 1) && ng_pre_eq(slider7, 0) && ng_pre_eq(slider8, 0) && ng_pre_eq(slider9, 0) && ng_pre_eq(slider10, 0) && ng_pre_eq(slider11, 150) && ng_pre_eq(slider12, 4000) ? m = 2;
+    m < 0 && ng_pre_eq(slider1, 7) && ng_pre_eq(slider2, -0.5) && ng_pre_eq(slider3, 30) && ng_pre_eq(slider4, 2) && ng_pre_eq(slider5, 0) && ng_pre_eq(slider6, 1) && ng_pre_eq(slider7, 0) && ng_pre_eq(slider8, 0) && ng_pre_eq(slider9, 0) && ng_pre_eq(slider10, 0) && ng_pre_eq(slider11, 150) && ng_pre_eq(slider12, 4000) ? m = 3;
+    m < 0 && ng_pre_eq(slider1, 2) && ng_pre_eq(slider2, -1) && ng_pre_eq(slider3, 200) && ng_pre_eq(slider4, 5) && ng_pre_eq(slider5, 0) && ng_pre_eq(slider6, 1) && ng_pre_eq(slider7, 0) && ng_pre_eq(slider8, 0) && ng_pre_eq(slider9, 0) && ng_pre_eq(slider10, 0) && ng_pre_eq(slider11, 150) && ng_pre_eq(slider12, 4000) ? m = 4;
+    m < 0 && ng_pre_eq(slider1, 0) && ng_pre_eq(slider2, -1) && ng_pre_eq(slider3, 80) && ng_pre_eq(slider4, 3) && ng_pre_eq(slider5, 0) && ng_pre_eq(slider6, 1) && ng_pre_eq(slider7, 0) && ng_pre_eq(slider8, 0) && ng_pre_eq(slider9, 0) && ng_pre_eq(slider10, 0) && ng_pre_eq(slider11, 150) && ng_pre_eq(slider12, 4000) ? m = 5;
+    m < 0 && ng_pre_eq(slider1, 4) && ng_pre_eq(slider2, -0.3) && ng_pre_eq(slider3, 50) && ng_pre_eq(slider4, 2) && ng_pre_eq(slider5, 0) && ng_pre_eq(slider6, 0) && ng_pre_eq(slider7, 0) && ng_pre_eq(slider8, 0) && ng_pre_eq(slider9, 0) && ng_pre_eq(slider10, 0) && ng_pre_eq(slider11, 150) && ng_pre_eq(slider12, 4000) ? m = 6;
+    m < 0 && ng_pre_eq(slider1, 4) && ng_pre_eq(slider2, -0.3) && ng_pre_eq(slider3, 80) && ng_pre_eq(slider4, 5) && ng_pre_eq(slider5, 0) && ng_pre_eq(slider6, 1) && ng_pre_eq(slider7, 1) && ng_pre_eq(slider8, 1) && ng_pre_eq(slider9, 0) && ng_pre_eq(slider10, 0) && ng_pre_eq(slider11, 150) && ng_pre_eq(slider12, 4000) ? m = 7;
+    m < 0 && ng_pre_eq(slider1, 3) && ng_pre_eq(slider2, -1) && ng_pre_eq(slider3, 80) && ng_pre_eq(slider4, 5) && ng_pre_eq(slider5, 0) && ng_pre_eq(slider6, 1) && ng_pre_eq(slider7, 2) && ng_pre_eq(slider8, 0) && ng_pre_eq(slider9, 0) && ng_pre_eq(slider10, 0) && ng_pre_eq(slider11, 150) && ng_pre_eq(slider12, 4000) ? m = 8;
+    m < 0 && ng_pre_eq(slider1, 7) && ng_pre_eq(slider2, -1) && ng_pre_eq(slider3, 60) && ng_pre_eq(slider4, 5) && ng_pre_eq(slider5, 0) && ng_pre_eq(slider6, 1) && ng_pre_eq(slider7, 0) && ng_pre_eq(slider8, 0) && ng_pre_eq(slider9, 1) && ng_pre_eq(slider10, 0) && ng_pre_eq(slider11, 150) && ng_pre_eq(slider12, 4000) ? m = 9;
+    m < 0 && ng_pre_eq(slider1, 4) && ng_pre_eq(slider2, -1) && ng_pre_eq(slider3, 100) && ng_pre_eq(slider4, 5) && ng_pre_eq(slider5, 0) && ng_pre_eq(slider6, 1) && ng_pre_eq(slider7, 0) && ng_pre_eq(slider8, 0) && ng_pre_eq(slider9, 2) && ng_pre_eq(slider10, 0) && ng_pre_eq(slider11, 150) && ng_pre_eq(slider12, 4000) ? m = 10;
+    m < 0 && ng_pre_eq(slider1, 5) && ng_pre_eq(slider2, -1) && ng_pre_eq(slider3, 80) && ng_pre_eq(slider4, 5) && ng_pre_eq(slider5, 0) && ng_pre_eq(slider6, 1) && ng_pre_eq(slider7, 0) && ng_pre_eq(slider8, 0) && ng_pre_eq(slider9, 0) && ng_pre_eq(slider10, 1) && ng_pre_eq(slider11, 150) && ng_pre_eq(slider12, 4000) ? m = 11;
+    m < 0 && ng_pre_eq(slider1, 6) && ng_pre_eq(slider2, -1) && ng_pre_eq(slider3, 100) && ng_pre_eq(slider4, 5) && ng_pre_eq(slider5, 0) && ng_pre_eq(slider6, 1) && ng_pre_eq(slider7, 0) && ng_pre_eq(slider8, 0) && ng_pre_eq(slider9, 0) && ng_pre_eq(slider10, 1) && ng_pre_eq(slider11, 120) && ng_pre_eq(slider12, 5000) ? m = 12;
+    m < 0 && ng_pre_eq(slider1, 8) && ng_pre_eq(slider2, -0.5) && ng_pre_eq(slider3, 40) && ng_pre_eq(slider4, 3) && ng_pre_eq(slider5, 0) && ng_pre_eq(slider6, 1) && ng_pre_eq(slider7, 0) && ng_pre_eq(slider8, 0) && ng_pre_eq(slider9, 1) && ng_pre_eq(slider10, 1) && ng_pre_eq(slider11, 150) && ng_pre_eq(slider12, 4000) ? m = 13;
     m;
   );
 
@@ -158,6 +270,11 @@ out_pin:Right
     p == 6 ? s = "Stem Level Up";
     p == 7 ? s = "CD Master 16 Bit";
     p == 8 ? s = "Bounce 24 Bit";
+    p == 9 ? s = "Punchy Loud Master";
+    p == 10 ? s = "Warm Master";
+    p == 11 ? s = "Multiband Master";
+    p == 12 ? s = "Bass Heavy Multiband";
+    p == 13 ? s = "Punchy Multiband Club";
     s;
   );
 
@@ -182,23 +299,86 @@ out_pin:Right
   mx_x = max(abs(spl0), abs(spl1)); // interface only
   in_l = spl0 * in_gain;
   in_r = spl1 * in_gain;
-  link ? (
-    detect(max(abs(in_l), abs(in_r)), hv_l, hc_l, g_l);
-    g_r = g_l;
-  ) : (
-    detect(abs(in_l), hv_l, hc_l, g_l);
-    detect(abs(in_r), hv_r, hc_r, g_r);
+  character ? (
+    in_l = shape(in_l);
+    in_r = shape(in_r);
   );
+  mb ? (
+    // three bands: low (with the all-pass), mid, high
+    lo_l = ap2_l.bq(l1b_l.bq(l1a_l.bq(in_l, x1_lb0, x1_lb1, x1_lb0, x1_a1, x1_a2), x1_lb0, x1_lb1, x1_lb0, x1_a1, x1_a2),
+                    x2_a2, x2_a1, 1, x2_a1, x2_a2);
+    mb_t = h1b_l.bq(h1a_l.bq(in_l, x1_hb0, x1_hb1, x1_hb0, x1_a1, x1_a2), x1_hb0, x1_hb1, x1_hb0, x1_a1, x1_a2);
+    mi_l = l2b_l.bq(l2a_l.bq(mb_t, x2_lb0, x2_lb1, x2_lb0, x2_a1, x2_a2), x2_lb0, x2_lb1, x2_lb0, x2_a1, x2_a2);
+    hi_l = h2b_l.bq(h2a_l.bq(mb_t, x2_hb0, x2_hb1, x2_hb0, x2_a1, x2_a2), x2_hb0, x2_hb1, x2_hb0, x2_a1, x2_a2);
+    lo_r = ap2_r.bq(l1b_r.bq(l1a_r.bq(in_r, x1_lb0, x1_lb1, x1_lb0, x1_a1, x1_a2), x1_lb0, x1_lb1, x1_lb0, x1_a1, x1_a2),
+                    x2_a2, x2_a1, 1, x2_a1, x2_a2);
+    mb_t = h1b_r.bq(h1a_r.bq(in_r, x1_hb0, x1_hb1, x1_hb0, x1_a1, x1_a2), x1_hb0, x1_hb1, x1_hb0, x1_a1, x1_a2);
+    mi_r = l2b_r.bq(l2a_r.bq(mb_t, x2_lb0, x2_lb1, x2_lb0, x2_a1, x2_a2), x2_lb0, x2_lb1, x2_lb0, x2_a1, x2_a2);
+    hi_r = h2b_r.bq(h2a_r.bq(mb_t, x2_hb0, x2_hb1, x2_hb0, x2_a1, x2_a2), x2_hb0, x2_hb1, x2_hb0, x2_a1, x2_a2);
+    // each band's own limiter at Ceiling, then a quarter linked (in dB) to the lowest band gain
+    link ? (
+      detect(max(abs(lo_l), abs(lo_r)), lo_hv_l, lo_hc_l, lo_g_l);
+      detect(max(abs(mi_l), abs(mi_r)), mi_hv_l, mi_hc_l, mi_g_l);
+      detect(max(abs(hi_l), abs(hi_r)), hi_hv_l, hi_hc_l, hi_g_l);
+      lo_g_r = lo_g_l;
+      mi_g_r = mi_g_l;
+      hi_g_r = hi_g_l;
+    ) : (
+      detect(abs(lo_l), lo_hv_l, lo_hc_l, lo_g_l);
+      detect(abs(mi_l), mi_hv_l, mi_hc_l, mi_g_l);
+      detect(abs(hi_l), hi_hv_l, hi_hc_l, hi_g_l);
+      detect(abs(lo_r), lo_hv_r, lo_hc_r, lo_g_r);
+      detect(abs(mi_r), mi_hv_r, mi_hc_r, mi_g_r);
+      detect(abs(hi_r), hi_hv_r, hi_hc_r, hi_g_r);
+    );
+    mb_m = (min(lo_g_l, min(mi_g_l, hi_g_l)) ^ 0.25);
+    lo_e_l = (lo_g_l ^ 0.75) * mb_m;
+    mi_e_l = (mi_g_l ^ 0.75) * mb_m;
+    hi_e_l = (hi_g_l ^ 0.75) * mb_m;
+    mb_m = (min(lo_g_r, min(mi_g_r, hi_g_r)) ^ 0.25);
+    lo_e_r = (lo_g_r ^ 0.75) * mb_m;
+    mi_e_r = (mi_g_r ^ 0.75) * mb_m;
+    hi_e_r = (hi_g_r ^ 0.75) * mb_m;
+    // the look-ahead limiter on the sum the bands will make
+    mb_sl = lo_l * lo_e_l + mi_l * mi_e_l + hi_l * hi_e_l;
+    mb_sr = lo_r * lo_e_r + mi_r * mi_e_r + hi_r * hi_e_r;
+    link ? (
+      detect(max(abs(mb_sl), abs(mb_sr)), hv_l, hc_l, g_l);
+      g_r = g_l;
+    ) : (
+      detect(abs(mb_sl), hv_l, hc_l, g_l);
+      detect(abs(mb_sr), hv_r, hc_r, g_r);
+    );
+    buf_l[wpos] = lo_l;
+    buf_r[wpos] = lo_r;
+    buf_ml[wpos] = mi_l;
+    buf_mr[wpos] = mi_r;
+    buf_hl[wpos] = hi_l;
+    buf_hr[wpos] = hi_r;
+  ) : (
+    link ? (
+      detect(max(abs(in_l), abs(in_r)), hv_l, hc_l, g_l);
+      g_r = g_l;
+    ) : (
+      detect(abs(in_l), hv_l, hc_l, g_l);
+      detect(abs(in_r), hv_r, hc_r, g_r);
+    );
 
-  buf_l[wpos] = in_l;
-  buf_r[wpos] = in_r;
+    buf_l[wpos] = in_l;
+    buf_r[wpos] = in_r;
+  );
   rpos = wpos - look;
   rpos < 0 ? rpos += max_look;
   wpos += 1;
   wpos >= max_look ? wpos = 0;
 
-  spl0 = max(-ceiling, min(ceiling, buf_l[rpos] * g_l)) * out_gain;
-  spl1 = max(-ceiling, min(ceiling, buf_r[rpos] * g_r)) * out_gain;
+  mb ? (
+    spl0 = max(-ceiling, min(ceiling, (buf_l[rpos] * lo_e_l + buf_ml[rpos] * mi_e_l + buf_hl[rpos] * hi_e_l) * g_l)) * out_gain;
+    spl1 = max(-ceiling, min(ceiling, (buf_r[rpos] * lo_e_r + buf_mr[rpos] * mi_e_r + buf_hr[rpos] * hi_e_r) * g_r)) * out_gain;
+  ) : (
+    spl0 = max(-ceiling, min(ceiling, buf_l[rpos] * g_l)) * out_gain;
+    spl1 = max(-ceiling, min(ceiling, buf_r[rpos] * g_r)) * out_gain;
+  );
 
   dith ? (
     // TPDF dither: half the sum of two uniform values in -1..1 (exact Park-Miller steps, as in
@@ -222,6 +402,7 @@ out_pin:Right
   mx_lv = max(abs(spl0), abs(spl1));
   mx_out = mx_lv > mx_out ? mx_lv : mx_out * mx_rel;
   mx_g = min(g_l, g_r);
+  mb ? mx_g *= min(min(min(lo_e_l, mi_e_l), min(hi_e_l, lo_e_r)), min(mi_e_r, hi_e_r));
   mx_hl = max(mx_hl, mx_lv);
   mx_hgh = max(mx_hgh, mx_g);
   mx_hgl = min(mx_hgl, mx_g);
@@ -230,6 +411,29 @@ out_pin:Right
     mx_buf[mx_w * 2 + 1] = mx_hgh * mx_hgl > 1 ? mx_hgh : mx_hgl;
     mx_w = (mx_w + 1) % mx_len;
     mx_n = 0; mx_hl = 0; mx_hgh = 0; mx_hgl = 1000;
+  );
+  mx_y = mx_kb0 * spl0 + mx_z1l;
+  mx_z1l = mx_kb1 * spl0 - mx_ka1 * mx_y + mx_z2l;
+  mx_z2l = mx_kb2 * spl0 - mx_ka2 * mx_y;
+  mx_kl = mx_y + mx_z3l;
+  mx_z3l = -2 * mx_y - mx_kc1 * mx_kl + mx_z4l;
+  mx_z4l = mx_y - mx_kc2 * mx_kl;
+  mx_y = mx_kb0 * spl1 + mx_z1r;
+  mx_z1r = mx_kb1 * spl1 - mx_ka1 * mx_y + mx_z2r;
+  mx_z2r = mx_kb2 * spl1 - mx_ka2 * mx_y;
+  mx_kr = mx_y + mx_z3r;
+  mx_z3r = -2 * mx_y - mx_kc1 * mx_kr + mx_z4r;
+  mx_z4r = mx_y - mx_kc2 * mx_kr;
+  mx_acc += mx_kl * mx_kl + mx_kr * mx_kr;
+  (mx_cnt += 1) >= mx_nsb ? (
+    mx_lb[mx_sbw] = mx_acc;
+    mx_sbw = (mx_sbw + 1) % 30;
+    mx_acc = mx_cnt = 0;
+    mx_st = 0;
+    mx_i = 0;
+    loop(30, mx_st += mx_lb[mx_i]; mx_i += 1;);
+    mx_st /= 30 * mx_nsb;
+    mx_lufs = mx_st > 0 ? -0.691 + 10 * log10(mx_st) : -200;
   );
 
 @gfx 480 380
@@ -242,11 +446,20 @@ out_pin:Right
   ng_meter(336, 82, 112, 10, "IN", ng_to_db(mx_in), slider2 - slider1, -48);
   ng_gr_meter(336, 106, 112, 10, "GR", -20 * log10(max(mx_g, 0.0000001)), 24);
   ng_meter(336, 130, 112, 10, "OUT", ng_to_db(mx_out), slider2 + min(slider5, 0), -48);
-  slider7 ? (
-    ng_font(4, 8, 0);
-    ng_col(NG_MUTED, 1);
-    ng_ptxt(slider7 == 1 ? (slider8 ? "16-BIT TPDF + NS" : "16-BIT TPDF") : (slider8 ? "24-BIT TPDF + NS" : "24-BIT TPDF"), X(448), Y(152), 2);
-  );
+  // short-term loudness of the output (3 s, K-weighted), and what Character / Multiband do
+  ng_font(1, 7, 1);
+  ng_col(NG_MUTED, 1);
+  ng_txt("SHORT-TERM", 336, 68, 0, 1);
+  mx_lufs > -70 ? sprintf(#mx_s, "%.1f LUFS", mx_lufs) : strcpy(#mx_s, "-- LUFS");
+  ng_col(NG_ACCENT, 1);
+  ng_txt(#mx_s, 448, 68, 2, 1);
+  sprintf(#mx_a, "%s%s%s", slider9 == 1 ? "PUNCHY" : slider9 == 2 ? "WARM" : "",
+    slider9 && slider10 ? " / " : "", slider10 ? "3-BAND" : "");
+  strcpy(#mx_c, #mx_a);
+  slider7 ? sprintf(#mx_c, "%s%s%s%s", #mx_a, strlen(#mx_a) ? " / " : "", slider7 == 1 ? "16-BIT" : "24-BIT", slider8 ? " NS" : " TPDF");
+  ng_font(4, 8, 0);
+  ng_col(NG_MUTED, 1);
+  ng_ptxt(#mx_c, X(448), Y(152), 2);
 
   ng_row(6);
   sprintf(#v1, "%+.1f dB", slider1);
@@ -260,9 +473,15 @@ out_pin:Right
   sprintf(#v5, "%.1f dB", slider5);
   ng_knob_ctl(5, "OUTPUT", #v5, -12, 0, 0, 0.1, 0) ? update();
   ng_select_ctl(6, "LINK", "OFF|ON", 0) ? update();
-  ng_row(2);
+  ng_row(6);
   ng_select_ctl(7, "DITHER", "OFF|16 BIT|24 BIT", 0) ? update();
   ng_select_ctl(8, "SHAPING", "OFF|ON", 0) ? update();
+  ng_select_ctl(9, "CHARACTER", "CLEAN|PUNCHY|WARM", 0) ? update();
+  ng_select_ctl(10, "MULTIBAND", "OFF|ON", 0) ? update();
+  sprintf(#v11, "%d Hz", slider11);
+  ng_knob_ctl(11, "LOW X", #v11, 50, 500, 150, 10, 0) ? update();
+  sprintf(#v12, "%.1f kHz", slider12 / 1000);
+  ng_knob_ctl(12, "HIGH X", #v12, 1000, 12000, 4000, 100, 0) ? update();
 
   ng_end();
 

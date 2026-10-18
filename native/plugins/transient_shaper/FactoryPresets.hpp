@@ -8,20 +8,26 @@ namespace nullpresets {
 
 struct FactoryPreset {
     const char* name;
-    float values[3];
+    float values[8];
 };
 
 static const FactoryPreset kPresets[] = {
-    { "Default", { 0.0f, 0.0f, 100.0f } },
-    { "Kick Punch", { 6.0f, -2.0f, 100.0f } },
-    { "Snare Crack", { 8.0f, 0.0f, 100.0f } },
-    { "Guitar Pick Attack", { 4.0f, -1.0f, 100.0f } },
-    { "Tighten Drum Room", { 0.0f, -8.0f, 100.0f } },
-    { "Fat Drum Sustain", { 0.0f, 4.0f, 100.0f } },
-    { "Soften Harsh Attack", { -6.0f, 0.0f, 100.0f } },
-    { "Parallel Drum Smack", { 12.0f, -4.0f, 50.0f } },
+    { "Default", { 0.0f, 0.0f, 100.0f, 1.0f, 20.0f, 20000.0f, 0.0f, 0.0f } },
+    { "Kick Punch", { 6.0f, -2.0f, 100.0f, 1.0f, 20.0f, 20000.0f, 0.0f, 0.0f } },
+    { "Snare Crack", { 8.0f, 0.0f, 100.0f, 1.0f, 20.0f, 20000.0f, 0.0f, 0.0f } },
+    { "Guitar Pick Attack", { 4.0f, -1.0f, 100.0f, 1.0f, 20.0f, 20000.0f, 0.0f, 0.0f } },
+    { "Tighten Drum Room", { 0.0f, -8.0f, 100.0f, 1.0f, 20.0f, 20000.0f, 0.0f, 0.0f } },
+    { "Fat Drum Sustain", { 0.0f, 4.0f, 100.0f, 1.0f, 20.0f, 20000.0f, 0.0f, 0.0f } },
+    { "Soften Harsh Attack", { -6.0f, 0.0f, 100.0f, 1.0f, 20.0f, 20000.0f, 0.0f, 0.0f } },
+    { "Parallel Drum Smack", { 12.0f, -4.0f, 50.0f, 1.0f, 20.0f, 20000.0f, 0.0f, 0.0f } },
+    { "Snappy Snare", { 10.0f, -3.0f, 100.0f, 0.0f, 150.0f, 8000.0f, 0.0f, 0.0f } },
+    { "Kick Focus", { 8.0f, -4.0f, 100.0f, 1.0f, 20.0f, 150.0f, 0.0f, 0.0f } },
+    { "Soften Attack", { -8.0f, 2.0f, 100.0f, 2.0f, 20.0f, 20000.0f, 0.0f, 0.0f } },
+    { "Hat Tamer", { -6.0f, 0.0f, 100.0f, 0.0f, 5000.0f, 20000.0f, 0.0f, 0.0f } },
+    { "Room Tail Cut", { 0.0f, -10.0f, 100.0f, 2.0f, 20.0f, 20000.0f, 0.0f, 0.0f } },
+    { "Drum Bus Punch Clip", { 6.0f, -1.0f, 100.0f, 1.0f, 20.0f, 20000.0f, 1.0f, 2.0f } },
 };
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
-static constexpr uint32_t kNumValues = 3;
+static constexpr uint32_t kNumValues = 8;
 
 } // namespace nullpresets

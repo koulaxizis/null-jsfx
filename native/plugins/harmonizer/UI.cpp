@@ -14,10 +14,14 @@ static const NullKnobsUI::Control kControls[] = {
     { 1, NullKnobsUI::kKnob, "VOICE 2", 0, -1, true },
     { 2, NullKnobsUI::kKnob, "LEVEL 1", 0, -1, false },
     { 3, NullKnobsUI::kKnob, "LEVEL 2", 0, -1, false },
+    { 8, NullKnobsUI::kSelect, "MODE", 0, -1, false },
+    { 9, NullKnobsUI::kSelect, "KEY", 0, -1, false },
     { 4, NullKnobsUI::kKnob, "DETUNE", 1, -1, false },
     { 5, NullKnobsUI::kKnob, "DELAY", 1, -1, false },
     { 6, NullKnobsUI::kKnob, "SPREAD", 1, -1, false },
     { 7, NullKnobsUI::kKnob, "MIX", 1, -1, false },
+    { 10, NullKnobsUI::kSelect, "SCALE", 1, -1, false },
+    { 11, NullKnobsUI::kSelect, "FORMANT", 1, -1, false },
 };
 
 class UIHarmonizer : public NullKnobsUI
@@ -25,7 +29,7 @@ class UIHarmonizer : public NullKnobsUI
 public:
     UIHarmonizer()
         : NullKnobsUI({ "HARMONIZER", "ADVANCED", 480, 120, nullptr, 2, nullharmonizer::kSliders, nullharmonizer::kNumSliders,
-                        kControls, sizeof(kControls) / sizeof(kControls[0]), false }) {}
+                        kControls, sizeof(kControls) / sizeof(kControls[0]), true }) {}
 
 protected:
     void dot(float x, float y, float r, uint32_t rgb, float alpha)
@@ -36,8 +40,26 @@ protected:
         fill();
     }
 
+    // a voice's number, faded with its level (label() at an alpha)
+    void labelA(float x, float y, const char* str, float alpha)
+    {
+        fontSize(8.0f * kNotoLineToEm);
+        textAlign(ALIGN_LEFT | ALIGN_MIDDLE);
+        fillColor(col(theme::kText, alpha));
+        text(x, y, str, nullptr);
+    }
+
+    // name of MIDI note k with its octave (60 = C4)
+    static void noteName(int k, char* buf, size_t n)
+    {
+        const int p = k - 12 * int(std::floor(k / 12.0));
+        std::snprintf(buf, n, "%s%d", nullharmonizer::kKeyOptions[p], int(std::floor(k / 12.0)) - 1);
+    }
+
     // as in harmonizer_gfx.jsfx: the voices' pitch (-12 to +12 semitones, detune included)
-    // against stereo position; dot size follows the level, brightness the dry/wet Mix
+    // against stereo position; dot size follows the level, brightness the dry/wet Mix. Modes
+    // Scale and MIDI show the intervals they sing now, the key or the held notes, and the note
+    // sung, and Formant Preserve
     void drawDisplay() override
     {
         setPlot(fVX + 26.0f, fVY + 4.0f, fVW - 30.0f, fVH - 20.0f);
@@ -52,8 +74,69 @@ protected:
         const float sp = value(6) / 100.0f, det = value(4) / 100.0f, mix = value(7) / 100.0f;
         const float cx = fPX + fPW * 0.5f, cy = linY(0.0f, -12.0f, 12.0f);
         const float x1 = linX((1.0f - sp) * 0.5f, 0.0f, 1.0f), x2 = linX(1.0f - (1.0f - sp) * 0.5f, 0.0f, 1.0f);
-        const float y1 = linY(value(0) + det, -12.0f, 12.0f), y2 = linY(value(1) - det, -12.0f, 12.0f);
+        float i1 = value(0) + det, i2 = value(1) - det, a1 = 1.0f, a2 = 1.0f, cur = 0.0f, n1 = 0.0f, n2 = 0.0f;
+        bool pitched = false;
+        nulljsfx::Taps* t = taps();
+        if (t && t->aux[8].load(std::memory_order_relaxed) > 0.5f)
+        {
+            i1 = t->aux[0].load(std::memory_order_relaxed);
+            i2 = t->aux[1].load(std::memory_order_relaxed);
+            a1 = t->aux[2].load(std::memory_order_relaxed);
+            a2 = t->aux[3].load(std::memory_order_relaxed);
+        }
+        if (t)
+        {
+            cur = t->aux[4].load(std::memory_order_relaxed);
+            pitched = t->aux[5].load(std::memory_order_relaxed) > 0.5f;
+            n1 = t->aux[6].load(std::memory_order_relaxed);
+            n2 = t->aux[7].load(std::memory_order_relaxed);
+        }
+        const float y1 = linY(clampf(i1, -12.0f, 12.0f), -12.0f, 12.0f), y2 = linY(clampf(i2, -12.0f, 12.0f), -12.0f, 12.0f);
         const float r1 = 3.0f + 5.0f * (value(2) + 48.0f) / 48.0f, r2 = 3.0f + 5.0f * (value(3) + 48.0f) / 48.0f;
+
+        // the mode, bottom left under the dots: the key and the note sung (Scale), the held
+        // notes (MIDI); Formant Preserve
+        static const char* const kScaleNames[] = { "MAJOR", "MINOR", "DORIAN", "MIXOLYDIAN", "HARMONIC MINOR",
+                                                   "PENTATONIC MAJOR", "PENTATONIC MINOR" };
+        const int mode = int(std::lround(value(8)));
+        char buf[64], a[16], b[16];
+        if (mode == 1)
+        {
+            const int key = std::max(0, std::min(11, int(std::lround(value(9)))));
+            const int sc = std::max(0, std::min(6, int(std::lround(value(10)))));
+            if (pitched && cur > 0.5f)
+            {
+                noteName(int(std::lround(cur)) - 1, a, sizeof(a));
+                std::snprintf(buf, sizeof(buf), "%s %s  SUNG %s", nullharmonizer::kKeyOptions[key], kScaleNames[sc], a);
+            }
+            else
+                std::snprintf(buf, sizeof(buf), "%s %s  SUNG --", nullharmonizer::kKeyOptions[key], kScaleNames[sc]);
+        }
+        else if (mode == 2)
+        {
+            if (n1 > 0.5f)
+            {
+                noteName(int(std::lround(n1)) - 1, a, sizeof(a));
+                if (n2 > 0.5f)
+                {
+                    noteName(int(std::lround(n2)) - 1, b, sizeof(b));
+                    std::snprintf(buf, sizeof(buf), "MIDI  %s  %s", a, b);
+                }
+                else
+                    std::snprintf(buf, sizeof(buf), "MIDI  %s", a);
+            }
+            else
+                std::snprintf(buf, sizeof(buf), "MIDI  HOLD NOTES");
+        }
+        else
+            buf[0] = '\0';
+        if (value(11) >= 0.5f)
+        {
+            char m[64];
+            std::snprintf(m, sizeof(m), mode > 0 ? "%s  FORMANT" : "%sFORMANT", buf);
+            std::snprintf(buf, sizeof(buf), "%s", m);
+        }
+        label(fPX + 6.0f, fPY + fPH - 8.0f, ALIGN_LEFT, 8.0f, 0.0f, theme::kText, buf);
 
         beginPath();
         moveTo(cx, cy);
@@ -65,16 +148,22 @@ protected:
         stroke();
         dot(cx, cy, 4.0f, theme::kMuted, 0.35f + 0.65f * std::cos(mix * float(M_PI) / 2.0f));
         const float wet = 0.35f + 0.65f * std::sin(mix * float(M_PI) / 2.0f);
-        dot(x1, y1, r1, theme::kAccent, wet);
-        dot(x2, y2, r2, theme::kAccent, wet);
-        label(x1 + r1 + 4.0f, y1, ALIGN_LEFT, 8.0f, 0.0f, theme::kText, "1");
-        label(x2 + r2 + 4.0f, y2, ALIGN_LEFT, 8.0f, 0.0f, theme::kText, "2");
+        dot(x1, y1, r1, theme::kAccent, wet * a1);
+        dot(x2, y2, r2, theme::kAccent, wet * a2);
+        labelA(x1 + r1 + 4.0f, y1, "1", a1);
+        labelA(x2 + r2 + 4.0f, y2, "2", a2);
     }
 
     void formatValue(uint32_t param, float v, char* buf, size_t n) override
     {
         if (param <= 1)
-            std::snprintf(buf, n, "%+d st", int(std::lround(v)));
+        {
+            const int mode = int(std::lround(value(8)));
+            if (mode == 2)
+                std::snprintf(buf, n, "MIDI");
+            else
+                std::snprintf(buf, n, mode == 1 ? "%+d deg" : "%+d st", int(std::lround(v)));
+        }
         else if (param <= 3)
             std::snprintf(buf, n, "%.1f dB", v);
         else if (param == 4)

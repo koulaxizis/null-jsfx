@@ -8,21 +8,25 @@ namespace nullpresets {
 
 struct FactoryPreset {
     const char* name;
-    float values[8];
+    float values[10];
 };
 
 static const FactoryPreset kPresets[] = {
-    { "Default", { 3.0f, 1.0f, 3.0f, 10.0f, 10.0f, 10.0f, 0.0f, 100.0f } },
-    { "Clean Mastering Tape", { 2.0f, 2.0f, 1.5f, 0.0f, 2.0f, 0.0f, 0.0f, 100.0f } },
-    { "Warm Mix Bus", { 6.0f, 1.0f, 3.0f, 5.0f, 5.0f, 5.0f, 0.0f, 100.0f } },
-    { "Vocal Tape Sheen", { 4.0f, 2.0f, 0.0f, 3.0f, 3.0f, 0.0f, 0.0f, 100.0f } },
-    { "Drum Tape Squash", { 14.0f, 1.0f, 4.0f, 0.0f, 5.0f, 0.0f, -1.0f, 100.0f } },
-    { "Bass Thickener", { 8.0f, 0.0f, 6.0f, 0.0f, 3.0f, 0.0f, -1.5f, 100.0f } },
-    { "Cassette Lo-Fi", { 9.0f, 0.0f, 4.0f, 45.0f, 35.0f, 40.0f, 0.0f, 100.0f } },
-    { "Worn Tape Warble", { 6.0f, 0.0f, 3.0f, 80.0f, 20.0f, 25.0f, 0.0f, 100.0f } },
-    { "Parallel Tape Color", { 18.0f, 1.0f, 3.0f, 0.0f, 0.0f, 0.0f, 0.0f, 40.0f } },
+    { "Default", { 3.0f, 1.0f, 3.0f, 10.0f, 10.0f, 10.0f, 0.0f, 100.0f, 0.0f, 0.0f } },
+    { "Clean Mastering Tape", { 2.0f, 2.0f, 1.5f, 0.0f, 2.0f, 0.0f, 0.0f, 100.0f, 0.0f, 0.0f } },
+    { "Warm Mix Bus", { 6.0f, 1.0f, 3.0f, 5.0f, 5.0f, 5.0f, 0.0f, 100.0f, 0.0f, 0.0f } },
+    { "Vocal Tape Sheen", { 4.0f, 2.0f, 0.0f, 3.0f, 3.0f, 0.0f, 0.0f, 100.0f, 0.0f, 0.0f } },
+    { "Drum Tape Squash", { 14.0f, 1.0f, 4.0f, 0.0f, 5.0f, 0.0f, -1.0f, 100.0f, 0.0f, 0.0f } },
+    { "Bass Thickener", { 8.0f, 0.0f, 6.0f, 0.0f, 3.0f, 0.0f, -1.5f, 100.0f, 0.0f, 0.0f } },
+    { "Cassette Lo-Fi", { 9.0f, 0.0f, 4.0f, 45.0f, 35.0f, 40.0f, 0.0f, 100.0f, 0.0f, 0.0f } },
+    { "Worn Tape Warble", { 6.0f, 0.0f, 3.0f, 80.0f, 20.0f, 25.0f, 0.0f, 100.0f, 0.0f, 0.0f } },
+    { "Parallel Tape Color", { 18.0f, 1.0f, 3.0f, 0.0f, 0.0f, 0.0f, 0.0f, 40.0f, 0.0f, 0.0f } },
+    { "Cassette Type II", { 7.0f, 0.0f, 3.0f, 20.0f, 25.0f, 30.0f, 0.0f, 100.0f, 2.0f, 0.0f } },
+    { "Chrome With NR", { 6.0f, 0.0f, 2.5f, 12.0f, 15.0f, 35.0f, 0.0f, 100.0f, 2.0f, 1.0f } },
+    { "Ferric Demo Tape", { 10.0f, 0.0f, 4.0f, 35.0f, 30.0f, 35.0f, 0.0f, 100.0f, 1.0f, 0.0f } },
+    { "Metal Cassette Master", { 5.0f, 1.0f, 2.0f, 4.0f, 6.0f, 15.0f, 0.0f, 100.0f, 3.0f, 1.0f } },
 };
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
-static constexpr uint32_t kNumValues = 8;
+static constexpr uint32_t kNumValues = 10;
 
 } // namespace nullpresets

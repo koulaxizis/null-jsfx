@@ -6,5 +6,9 @@
   ["Sixteenth Gate", {"Shape": "Gate 1/16", "Rate": "1/4", "Depth": 100, "Smooth": 2}],
   ["Sine Eighth Tremolo", {"Shape": "Sine", "Rate": "1/8", "Depth": 50, "Smooth": 0}],
   ["Bar Long Swell", {"Shape": "Saw Up", "Rate": "1/1", "Depth": 100, "Smooth": 5}],
-  ["Stutter Fill", {"Shape": "Stutter", "Rate": "1/2", "Depth": 100, "Smooth": 1}]
+  ["Stutter Fill", {"Shape": "Stutter", "Rate": "1/2", "Depth": 100, "Smooth": 1}],
+  ["Kick Retrigger Duck", {"Shape": "Pump", "Rate": "1/4", "Depth": 90, "Smooth": 3, "Trigger": "Sidechain", "Threshold": -24}],
+  ["Sidechain Hard Duck", {"Shape": "Pump Hard", "Rate": "1/8", "Depth": 100, "Smooth": 2, "Trigger": "Sidechain", "Threshold": -18}],
+  ["MIDI Note Duck", {"Shape": "Pump", "Rate": "1/4", "Depth": 85, "Smooth": 3, "Trigger": "MIDI"}],
+  ["MIDI Swell In", {"Shape": "Saw Up", "Rate": "1/2", "Depth": 100, "Smooth": 5, "Trigger": "MIDI"}]
 ]

@@ -5,7 +5,10 @@
  *
  * Port of DATA/Effects/null_jsfx/deesser.jsfx, computed in double like EEL2: a band-pass
  * (Q 2) around Target isolates the sibilance, an envelope follower (0.5 ms / 60 ms) measures it
- * and only that band is turned down, from -30 dB up to full Reduction 12 dB above.
+ * and only that band is turned down, from -30 dB up to full Reduction 12 dB above. Mode Wide
+ * turns the whole signal down instead; Threshold Mode Manual uses Threshold (dB) in place of the
+ * fixed -30 dB; Range caps the reduction (only when it is above Reduction); Listen outputs only
+ * what is removed.
  */
 
 #pragma once
@@ -49,6 +52,7 @@ public:
     {
         fSr = sr;
         fThreshold = std::pow(10.0, -30.0 / 20.0);
+        fThrAuto = fThreshold;
         fAtt = std::exp(-1.0 / (0.0005 * sr));
         fRel = std::exp(-1.0 / (0.06 * sr));
         fEnv = 0.0;
@@ -58,11 +62,22 @@ public:
     }
 
     // @slider
-    void setParams(double freq, double reductionDb)
+    void setParams(double freq, double reductionDb, bool wide = false, bool manual = false, double thresholdDb = -30.0,
+                   double rangeDb = -18.0, bool listen = false)
     {
         fC = bandpass(freq, fSr);
         fMaxCut = 1.0 - std::pow(10.0, reductionDb / 20.0);
+        fWide = wide;
+        fThreshold = manual ? std::pow(10.0, thresholdDb / 20.0) : fThrAuto;
+        fRangeOn = rangeDb > reductionDb; // a Range below Reduction never limits
+        fRangeCut = 1.0 - std::pow(10.0, rangeDb / 20.0);
+        fListen = listen;
     }
+
+    // the cut the band (or, Wide, the signal) gets at most: Reduction, capped by Range
+    double maxCut() const noexcept { return fRangeOn ? std::min(fMaxCut, fRangeCut) : fMaxCut; }
+    bool wide() const noexcept { return fWide; }
+    double threshold() const noexcept { return fThreshold; }
 
     // @sample
     void processSample(double& l, double& r) noexcept
@@ -76,14 +91,37 @@ public:
         fEnv = level > fEnv ? fAtt * fEnv + (1.0 - fAtt) * level : fRel * fEnv + (1.0 - fRel) * level;
         const double over = fEnv > fThreshold ? std::min(std::log(fEnv / fThreshold) / std::log(4.0), 1.0) : 0.0;
         fCut = over * fMaxCut;
-        l -= bl * fCut;
-        r -= br * fCut;
+        if (fRangeOn)
+            fCut = std::min(fCut, fRangeCut);
+        double rl, rr;
+        if (fWide)
+        {
+            rl = l * fCut;
+            rr = r * fCut;
+        }
+        else
+        {
+            rl = bl * fCut;
+            rr = br * fCut;
+        }
+        if (fListen)
+        {
+            l = rl;
+            r = rr;
+        }
+        else
+        {
+            l -= rl;
+            r -= rr;
+        }
     }
 
     double envelope() const noexcept { return fEnv; }
     double cut() const noexcept { return fCut; }
 
 private:
+    bool fWide = false, fRangeOn = false, fListen = false;
+    double fThrAuto = 0.0, fRangeCut = 0.0;
     double fSr = 48000.0, fThreshold = 0.0, fAtt = 0.0, fRel = 0.0, fEnv = 0.0, fMaxCut = 0.0, fCut = 0.0;
     Coefs fC { 0.0, 0.0, 0.0, 0.0 };
     double fX1l = 0, fX2l = 0, fY1l = 0, fY2l = 0, fX1r = 0, fX2r = 0, fY1r = 0, fY2r = 0;

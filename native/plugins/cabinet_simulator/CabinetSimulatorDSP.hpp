@@ -5,7 +5,8 @@
  *
  * Port of DATA/Effects/null_jsfx/cabinet_simulator.jsfx, computed in double like EEL2: each
  * cabinet is seven biquads (low cut, box resonance, low-mid, mid scoop, presence and a double
- * roll-off); Mic Position darkens the roll-off and softens the presence peak.
+ * roll-off); Mic Position darkens the roll-off and softens the presence peak. Mic Blend fades to
+ * a second mic at Mic 2 Position: its own presence and roll-off after the shared first four stages.
  */
 
 #pragma once
@@ -54,9 +55,11 @@ struct Biquad {
 // the JSFX's @slider: the seven stages for the settings, plus the mix, gain and low cut
 struct Setup {
     Biquad st[kStages];
-    double mix = 1, out = 1, lowCut = 80;
+    Biquad mic2[3]; // the second mic's presence and roll-off (stages 5..7)
+    double mix = 1, out = 1, lowCut = 80, blend = 0;
 
-    void compute(int cab, double micPct, double lowCutHz, double mixPct, double outDb, double sr) noexcept
+    void compute(int cab, double micPct, double lowCutHz, double mixPct, double outDb, double sr,
+                 double mic2Pct = 70, double blendPct = 0) noexcept
     {
         const double m = micPct / 100.0;
         // per cabinet: box resonance, low-mid, mid scoop, presence, roll-off frequency
@@ -67,8 +70,16 @@ struct Setup {
         case 1: res = 100; res_g = 5; lm = 350; lm_g = 2; sc = 800;  sc_g = -4; pr = 2200; pr_g = 4; lp = 5000; base_lc = 60; break;
         case 2: break;
         case 3: res = 60;  res_g = 6; lm = 200; lm_g = 3; sc = 600;  sc_g = -5; pr = 1500; pr_g = 3; lp = 3000; base_lc = 30; break;
-        default: res = 300; res_g = 3; lm = 800; lm_g = 4; sc = 1500; sc_g = -2; pr = 2500; pr_g = 6; lp = 3500; base_lc = 250; break;
+        case 4: res = 300; res_g = 3; lm = 800; lm_g = 4; sc = 1500; sc_g = -2; pr = 2500; pr_g = 6; lp = 3500; base_lc = 250; break;
+        case 5: res = 130; res_g = 3; lm = 500; lm_g = 2; sc = 1100; sc_g = -2; pr = 3000; pr_g = 6; lp = 6000; base_lc = 90; break;
+        case 6: res = 75;  res_g = 5; lm = 280; lm_g = 2; sc = 700;  sc_g = -3; pr = 1800; pr_g = 4; lp = 4500; base_lc = 40; break;
+        default: res = 95; res_g = 6; lm = 320; lm_g = 3; sc = 900;  sc_g = -2; pr = 2400; pr_g = 4; lp = 5000; base_lc = 55; break;
         }
+        // the second mic: the same cabinet at Mic 2 Position
+        const double m2 = mic2Pct / 100.0;
+        const double lpB = lp * (1 - 0.45 * m2);
+        const double prGB = pr_g * (1 - 0.7 * m2);
+        blend = blendPct / 100.0;
         lp *= 1 - 0.45 * m;
         pr_g *= 1 - 0.7 * m;
         lowCut = std::max(lowCutHz, base_lc);
@@ -79,6 +90,9 @@ struct Setup {
         st[4].design(2, pr, 1.5, pr_g, sr);
         st[5].design(1, lp, 0.6, 0, sr);
         st[6].design(1, lp * 1.3, 0.9, 0, sr);
+        mic2[0].design(2, pr, 1.5, prGB, sr);
+        mic2[1].design(1, lpB, 0.6, 0, sr);
+        mic2[2].design(1, lpB * 1.3, 0.9, 0, sr);
         mix = mixPct / 100.0;
         out = std::pow(10.0, outDb / 20.0);
     }
@@ -87,9 +101,18 @@ struct Setup {
     double responseDb(double f, double sr) const noexcept
     {
         const double w = 2.0 * M_PI * std::min(f, sr * 0.4999) / sr;
-        std::complex<double> h = 1.0;
-        for (const Biquad& b : st)
-            h *= b.response(w);
+        std::complex<double> h = 1.0, h1 = 1.0, h2 = 1.0;
+        for (int i = 0; i < 4; ++i)
+            h *= st[i].response(w);
+        for (int i = 4; i < kStages; ++i)
+            h1 *= st[i].response(w);
+        if (blend > 0)
+        {
+            for (const Biquad& b : mic2)
+                h2 *= b.response(w);
+            h1 = h1 * (1 - blend) + h2 * blend;
+        }
+        h *= h1;
         h = (1.0 - mix) + mix * h;
         return 10.0 * std::log10(std::max(std::norm(h), 1e-20)) + 20.0 * std::log10(out);
     }
@@ -98,11 +121,17 @@ struct Setup {
 class CabinetSimulatorProcessor {
 public:
     void setSampleRate(double sr) { fSr = sr; apply(); }
-    void reset() { std::fill(&fZ[0][0][0], &fZ[0][0][0] + 2 * kStages * 4, 0.0); }
+    void reset()
+    {
+        std::fill(&fZ[0][0][0], &fZ[0][0][0] + 2 * kStages * 4, 0.0);
+        std::fill(&fZ2[0][0][0], &fZ2[0][0][0] + 2 * 3 * 4, 0.0);
+    }
 
-    void setParams(int cab, double micPct, double lowCutHz, double mixPct, double outDb)
+    void setParams(int cab, double micPct, double lowCutHz, double mixPct, double outDb, double mic2Pct = 70,
+                   double blendPct = 0)
     {
         fCab = cab; fMic = micPct; fLowCut = lowCutHz; fMix = mixPct; fOut = outDb;
+        fMic2 = mic2Pct; fBlend = blendPct;
         apply();
     }
 
@@ -112,32 +141,46 @@ public:
         for (uint32_t n = 0; n < frames; ++n)
         {
             const double xl = inL[n], xr = inR[n];
-            const double wl = chain(xl, fZ[0]), wr = chain(xr, fZ[1]);
+            const double wl = chain(xl, fZ[0], fZ2[0]), wr = chain(xr, fZ[1], fZ2[1]);
             outL[n] = static_cast<T>((xl * (1 - fS.mix) + wl * fS.mix) * fS.out);
             outR[n] = static_cast<T>((xr * (1 - fS.mix) + wr * fS.mix) * fS.out);
         }
     }
 
 private:
-    double chain(double y, double (*z)[4]) const noexcept
+    static double run(const Biquad& k, double* s, double y) noexcept
     {
-        for (int i = 0; i < kStages; ++i)
+        // s: x1 x2 y1 y2
+        const double o = k.b0 * y + k.b1 * s[0] + k.b2 * s[1] - k.a1 * s[2] - k.a2 * s[3];
+        s[1] = s[0]; s[0] = y; s[3] = s[2]; s[2] = o;
+        return o;
+    }
+
+    double chain(double y, double (*z)[4], double (*z2)[4]) const noexcept
+    {
+        for (int i = 0; i < 4; ++i)
+            y = run(fS.st[i], z[i], y);
+        double yb = 0;
+        if (fS.blend > 0)
         {
-            const Biquad& k = fS.st[i];
-            double* s = z[i]; // x1 x2 y1 y2
-            const double o = k.b0 * y + k.b1 * s[0] + k.b2 * s[1] - k.a1 * s[2] - k.a2 * s[3];
-            s[1] = s[0]; s[0] = y; s[3] = s[2]; s[2] = o;
-            y = o;
+            yb = run(fS.mic2[0], z2[0], y);
+            yb = run(fS.mic2[1], z2[1], yb);
+            yb = run(fS.mic2[2], z2[2], yb);
         }
+        for (int i = 4; i < kStages; ++i)
+            y = run(fS.st[i], z[i], y);
+        if (fS.blend > 0)
+            y = y * (1 - fS.blend) + yb * fS.blend;
         return y;
     }
 
-    void apply() { fS.compute(fCab, fMic, fLowCut, fMix, fOut, fSr); }
+    void apply() { fS.compute(fCab, fMic, fLowCut, fMix, fOut, fSr, fMic2, fBlend); }
 
-    double fSr = 48000.0, fMic = 30, fLowCut = 80, fMix = 100, fOut = 0;
+    double fSr = 48000.0, fMic = 30, fLowCut = 80, fMix = 100, fOut = 0, fMic2 = 70, fBlend = 0;
     int fCab = 2;
     Setup fS;
     double fZ[2][kStages][4] = {};
+    double fZ2[2][3][4] = {};
 };
 
 } // namespace nullcab

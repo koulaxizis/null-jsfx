@@ -12,13 +12,13 @@
 
 namespace nullamp {
 
-static const char* const kModelOptions[] = { "CLEAN", "CRUNCH", "LEAD", "BASS" };
+static const char* const kModelOptions[] = { "CLEAN", "CRUNCH", "LEAD", "BASS", "JAZZ", "BRITISH", "MODERN", "FUZZ" };
 static const char* const kBrightOptions[] = { "OFF", "ON" };
 static const char* const kOsOptions[] = { "2X", "4X" };
 
-// slider1..slider11 of amp_simulator.jsfx, in order
+// slider1..slider12 of amp_simulator.jsfx, in order
 static const DISTRHO::SliderInfo kSliders[] = {
-    { "Model", "model", 0.0f, 3.0f, 1.0f, "", 1.0f, kModelOptions },
+    { "Model", "model", 0.0f, 7.0f, 1.0f, "", 1.0f, kModelOptions },
     { "Gain", "gain", 0.0f, 10.0f, 5.0f, "", 0.1f },
     { "Bass", "bass", 0.0f, 10.0f, 5.0f, "", 0.1f },
     { "Mid", "mid", 0.0f, 10.0f, 5.0f, "", 0.1f },
@@ -29,6 +29,7 @@ static const DISTRHO::SliderInfo kSliders[] = {
     { "Sag", "sag", 0.0f, 100.0f, 30.0f, "%", 1.0f },
     { "Oversampling", "oversampling", 0.0f, 1.0f, 1.0f, "", 1.0f, kOsOptions },
     { "Output", "output", -24.0f, 12.0f, 0.0f, "dB", 0.1f },
+    { "Noise Gate", "noise_gate", -90.0f, -20.0f, -90.0f, "dB", 0.1f },
 };
 static constexpr uint32_t kNumSliders = sizeof(kSliders) / sizeof(kSliders[0]);
 

@@ -299,15 +299,15 @@
    "id": "auto_pan",
    "name": "Auto Pan",
    "category": "Essentials",
-   "tags": "autopan pan modulation lfo movement stereo width tempo sync gui",
+   "tags": "autopan pan modulation lfo movement stereo width tempo sync step pattern gui",
    "gfx": [
     480,
-    294
+    380
    ],
    "ins": 2,
    "outs": 2,
-   "sliders": 5,
-   "bytes": 34498
+   "sliders": 7,
+   "bytes": 42449
   },
   {
    "id": "auto_leveler",
@@ -335,7 +335,7 @@
    "ins": 8,
    "outs": 8,
    "sliders": 6,
-   "bytes": 58157
+   "bytes": 58244
   },
   {
    "id": "breath_control",
@@ -358,12 +358,12 @@
    "tags": "cabinet cab speaker guitar bass amp simulation di re-amp gui",
    "gfx": [
     480,
-    294
+    380
    ],
    "ins": 2,
    "outs": 2,
-   "sliders": 5,
-   "bytes": 65021
+   "sliders": 7,
+   "bytes": 85100
   },
   {
    "id": "channel_utility",
@@ -453,15 +453,15 @@
    "id": "deesser",
    "name": "DeEsser",
    "category": "Essentials",
-   "tags": "deess sibilance sibilants hiss vocal harshness frequency gui",
+   "tags": "deess sibilance sibilants hiss vocal harshness frequency wideband listen gui",
    "gfx": [
     480,
-    294
+    380
    ],
    "ins": 2,
    "outs": 2,
-   "sliders": 2,
-   "bytes": 31676
+   "sliders": 7,
+   "bytes": 43921
   },
   {
    "id": "delay",
@@ -492,6 +492,20 @@
    "bytes": 40217
   },
   {
+   "id": "draw_eq",
+   "name": "Draw EQ",
+   "category": "Essentials",
+   "tags": "equalizer eq draw drawable curve graphic 10-band smooth tone shaping mixing mastering gui",
+   "gfx": [
+    480,
+    394
+   ],
+   "ins": 2,
+   "outs": 2,
+   "sliders": 13,
+   "bytes": 73494
+  },
+  {
    "id": "dynamic_eq",
    "name": "Dynamic EQ",
    "category": "Essentials",
@@ -509,7 +523,7 @@
    "id": "dynamics",
    "name": "Dynamics",
    "category": "Essentials",
-   "tags": "dynamics compressor expander gain reduction ratio threshold knee sidechain parallel bus fet opto gui",
+   "tags": "dynamics compressor expander gain reduction ratio threshold knee sidechain parallel bus fet opto upward gui",
    "gfx": [
     480,
     380
@@ -517,7 +531,7 @@
    "ins": 4,
    "outs": 2,
    "sliders": 11,
-   "bytes": 54405
+   "bytes": 57859
   },
   {
    "id": "envelope_follower",
@@ -537,15 +551,15 @@
    "id": "filter",
    "name": "Filter",
    "category": "Essentials",
-   "tags": "filter lowpass resonance q cutoff svf tpt gui",
+   "tags": "filter lowpass resonance q cutoff svf tpt 24 db drive lfo envelope auto-wah wobble tempo sync gui",
    "gfx": [
     480,
-    294
+    322
    ],
    "ins": 2,
    "outs": 2,
-   "sliders": 4,
-   "bytes": 34611
+   "sliders": 12,
+   "bytes": 55934
   },
   {
    "id": "flanger",
@@ -565,15 +579,15 @@
    "id": "gate",
    "name": "Gate",
    "category": "Essentials",
-   "tags": "gate noise vocal floor reduce silence threshold mute sidechain gui",
+   "tags": "gate noise vocal floor reduce silence threshold mute sidechain hold lookahead ducking gui",
    "gfx": [
     480,
-    294
+    380
    ],
-   "ins": 2,
+   "ins": 4,
    "outs": 2,
-   "sliders": 5,
-   "bytes": 35285
+   "sliders": 10,
+   "bytes": 51287
   },
   {
    "id": "limiter",
@@ -593,15 +607,15 @@
    "id": "maximizer",
    "name": "Maximizer",
    "category": "Essentials",
-   "tags": "limiter maximizing loudness ceiling mastering peak protection dither gui",
+   "tags": "limiter maximizing loudness ceiling mastering peak protection dither multiband saturation lufs gui",
    "gfx": [
     480,
     380
    ],
    "ins": 2,
    "outs": 2,
-   "sliders": 8,
-   "bytes": 43636
+   "sliders": 12,
+   "bytes": 71825
   },
   {
    "id": "mid_side_matrix",
@@ -635,15 +649,15 @@
    "id": "noise_generator",
    "name": "Noise Generator",
    "category": "Essentials",
-   "tags": "noise generator pink white brown test tone calibration stereo gui",
+   "tags": "noise generator pink white brown test tone calibration stereo filter envelope follower ducking layer gui",
    "gfx": [
     480,
-    294
+    380
    ],
    "ins": 2,
    "outs": 2,
-   "sliders": 3,
-   "bytes": 33121
+   "sliders": 8,
+   "bytes": 46135
   },
   {
    "id": "octaver",
@@ -685,7 +699,21 @@
    "ins": 2,
    "outs": 2,
    "sliders": 25,
-   "bytes": 77093
+   "bytes": 83451
+  },
+  {
+   "id": "phase_align",
+   "name": "Phase Align",
+   "category": "Essentials",
+   "tags": "phase alignment align polarity invert delay time all-pass rotation correlation sidechain multi-mic drums bass di mixing utility gui",
+   "gfx": [
+    480,
+    440
+   ],
+   "ins": 4,
+   "outs": 2,
+   "sliders": 8,
+   "bytes": 49811
   },
   {
    "id": "phaser",
@@ -747,15 +775,15 @@
    "id": "saturation",
    "name": "Saturation",
    "category": "Essentials",
-   "tags": "saturation distortion tape tube overdrive fuzz bitcrush waveshaper wavefolder drive gui",
+   "tags": "saturation distortion tape tube overdrive fuzz bitcrush waveshaper wavefolder drive oversampling emphasis gui",
    "gfx": [
     480,
-    294
+    380
    ],
    "ins": 2,
    "outs": 2,
-   "sliders": 4,
-   "bytes": 37358
+   "sliders": 8,
+   "bytes": 59773
   },
   {
    "id": "shaper",
@@ -810,8 +838,8 @@
    ],
    "ins": 2,
    "outs": 2,
-   "sliders": 8,
-   "bytes": 51472
+   "sliders": 10,
+   "bytes": 60227
   },
   {
    "id": "tape_echo",
@@ -831,15 +859,15 @@
    "id": "transient_shaper",
    "name": "Transient Shaper",
    "category": "Essentials",
-   "tags": "transient attack sustain punch envelope dynamics shaping gui",
+   "tags": "transient attack sustain punch envelope dynamics shaping focus band clip gui",
    "gfx": [
     480,
-    294
+    380
    ],
    "ins": 2,
    "outs": 2,
-   "sliders": 3,
-   "bytes": 33249
+   "sliders": 8,
+   "bytes": 50445
   },
   {
    "id": "tremolo",
@@ -873,15 +901,15 @@
    "id": "volume_shaper",
    "name": "Volume Shaper",
    "category": "Essentials",
-   "tags": "volume shaper lfo envelope sidechain pump duck gate trance tempo sync rhythm gui",
+   "tags": "volume shaper lfo envelope sidechain pump duck gate trance tempo sync rhythm midi trigger one-shot gui",
    "gfx": [
     480,
-    294
+    380
    ],
-   "ins": 2,
+   "ins": 4,
    "outs": 2,
-   "sliders": 6,
-   "bytes": 40325
+   "sliders": 8,
+   "bytes": 48644
   },
   {
    "id": "wah",
@@ -908,8 +936,8 @@
    ],
    "ins": 2,
    "outs": 2,
-   "sliders": 11,
-   "bytes": 69603
+   "sliders": 12,
+   "bytes": 79467
   },
   {
    "id": "comb_filter",
@@ -971,15 +999,15 @@
    "id": "glitch_fx",
    "name": "Glitch FX",
    "category": "Advanced",
-   "tags": "glitch stutter pitch tape-stop reverse granular freeze random creative gui",
+   "tags": "glitch stutter pitch tape-stop reverse granular freeze random creative midi trigger gui",
    "gfx": [
     480,
     408
    ],
    "ins": 2,
    "outs": 2,
-   "sliders": 14,
-   "bytes": 50127
+   "sliders": 15,
+   "bytes": 61601
   },
   {
    "id": "granular_delay",
@@ -1013,15 +1041,15 @@
    "id": "harmonizer",
    "name": "Harmonizer",
    "category": "Advanced",
-   "tags": "harmonizer harmony pitch shift voices interval thirds fifths octave backing vocals gui",
+   "tags": "harmonizer harmony pitch shift voices interval thirds fifths octave backing vocals scale diatonic key midi formant psola gui",
    "gfx": [
     480,
     380
    ],
    "ins": 2,
    "outs": 2,
-   "sliders": 8,
-   "bytes": 35673
+   "sliders": 12,
+   "bytes": 72842
   },
   {
    "id": "kick_shaper",
@@ -1097,15 +1125,15 @@
    "id": "pitch_correction",
    "name": "Pitch Correction",
    "category": "Advanced",
-   "tags": "pitch correction auto tune autotune vocal tuning key scale retune hard tune psola gui",
+   "tags": "pitch correction auto tune autotune vocal tuning key scale retune hard tune psola midi vibrato gui",
    "gfx": [
     480,
     410
    ],
    "ins": 2,
    "outs": 2,
-   "sliders": 7,
-   "bytes": 56379
+   "sliders": 10,
+   "bytes": 67033
   },
   {
    "id": "resonance_suppressor",
@@ -1307,15 +1335,15 @@
    "id": "trance_gate",
    "name": "Trance Gate",
    "category": "Advanced",
-   "tags": "trance gate 16-step sequencer rhythmic pattern staccato tempo sync gui",
+   "tags": "trance gate 16-step sequencer rhythmic pattern staccato tempo sync probability random gui",
    "gfx": [
     480,
     408
    ],
    "ins": 2,
    "outs": 2,
-   "sliders": 22,
-   "bytes": 54249
+   "sliders": 24,
+   "bytes": 67729
   },
   {
    "id": "vinyl_age",
@@ -1328,8 +1356,8 @@
    ],
    "ins": 2,
    "outs": 2,
-   "sliders": 8,
-   "bytes": 37823
+   "sliders": 11,
+   "bytes": 59093
   },
   {
    "id": "vocoder",
@@ -1365,15 +1393,15 @@
    "id": "drum_machine",
    "name": "Drum Machine",
    "category": "Instruments",
-   "tags": "instrument drum machine drums beat sequencer synth 808 909 kick snare hats midi gui",
+   "tags": "instrument drum machine drums beat sequencer synth 808 909 kick snare hats midi probability generator multi-out gui",
    "gfx": [
     640,
-    494
+    580
    ],
    "ins": 0,
-   "outs": 2,
-   "sliders": 56,
-   "bytes": 154428
+   "outs": 8,
+   "sliders": 63,
+   "bytes": 183205
   }
  ]
 }

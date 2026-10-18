@@ -13,11 +13,14 @@ START_NAMESPACE_DISTRHO
 static const NullKnobsUI::Control kControls[] = {
     { 0, NullKnobsUI::kKnob, "WOW", 0, -1, false },
     { 1, NullKnobsUI::kKnob, "FLUTTER", 0, -1, false },
+    { 8, NullKnobsUI::kSelect, "RPM", 0, -1, false },
     { 2, NullKnobsUI::kKnob, "CRACKLE", 0, -1, false },
+    { 9, NullKnobsUI::kKnob, "SCRATCHES", 0, -1, false },
     { 3, NullKnobsUI::kKnob, "NOISE", 0, -1, false },
     { 4, NullKnobsUI::kKnob, "BITS", 1, -1, false },
     { 5, NullKnobsUI::kKnob, "RATE", 1, -1, false },
     { 6, NullKnobsUI::kKnob, "LOWPASS", 1, -1, false },
+    { 10, NullKnobsUI::kSelect, "MONO", 1, -1, false },
     { 7, NullKnobsUI::kKnob, "MIX", 1, -1, false },
 };
 
@@ -61,13 +64,16 @@ protected:
             strokeWidth(1.0f);
             stroke();
         }
+        const int rpm = std::max(0, std::min(2, int(std::lround(value(8)))));
+        static const char* const kRpmText[] = { "33 RPM", "45 RPM", "78 RPM" };
+        label(fPX + fPW - 6.0f, fPY + 8.0f, ALIGN_RIGHT, 8.0f, 0.0f, theme::kMuted, kRpmText[rpm]);
         constexpr int n = 400;
         float xs[n], ys[n];
         for (int i = 0; i < n; ++i)
         {
             const double t = 2.0 * double(i) / double(n - 1);
             xs[i] = fPX + fPW * float(t * 0.5);
-            ys[i] = linY(float(nullvinyl::modulationMs(t, value(0), value(1))), -50.0f, 50.0f);
+            ys[i] = linY(float(nullvinyl::modulationMs(t, value(0), value(1), rpm)), -50.0f, 50.0f);
         }
         curve(xs, ys, n);
     }

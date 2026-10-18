@@ -1,6 +1,6 @@
 desc:NULL Pitch Correction
 author: Christos Koulaxizis
-tags: pitch correction auto tune autotune vocal tuning key scale retune hard tune psola
+tags: pitch correction auto tune autotune vocal tuning key scale retune hard tune psola midi vibrato
 //category: Advanced
 //NULL JSFX v2.4 • https://nulljsfx.tech • MIT License
 
@@ -11,6 +11,9 @@ slider4:20<0,100,1>Humanize (%)
 slider5:0<-12,12,1>Transpose (semitones)
 slider6:50<0,100,1>Sensitivity (%)
 slider7:100<0,100,1>Mix (%)
+slider8:0<0,1,1{Scale,MIDI}>Target
+slider9:5<0,10,0.1>Vibrato Rate (Hz)
+slider10:0<0,100,1>Vibrato Depth (cents)
 
 in_pin:Left
 in_pin:Right
@@ -30,6 +33,10 @@ out_pin:Right
   // its formants. Unvoiced sounds pass with the transpose only. Latency: about 39 ms
   // (the pitch frame plus 1.5 periods of 70 Hz), reported to REAPER; the dry signal is
   // delayed to match.
+  // Target MIDI tunes to the latest held MIDI note instead of the scale (with no note held it
+  // falls back to Key + Scale); every MIDI message passes through. Vibrato adds a sine
+  // vibrato of Vibrato Depth cents at Vibrato Rate to the corrected voice; it fades in over
+  // about 0.25 s on every new note (off at Depth 0).
   dec = max(1, floor(srate / 11025 + 0.5));
   fa = srate / dec;
   tmax = ceil(fa / 70);
@@ -80,6 +87,15 @@ out_pin:Right
   per = per_a = t_uv; am_last = 0; mk = 0; s_next = 0;
   voiced = 0; was_v = 0; uvc = hold_n + 1;
   tf = tmax; det = 0; ms = 0; tgt = 60; sh = sh_a = 0; sh_t = 0;
+  // MIDI: when each note 0..127 was pressed (0 = not held), this block's events
+  held = lpb + bs;
+  evq = held + 128;
+  memset(held, 0, 128);
+  freembuf(evq + 1024);
+  stamp = 0; m_note = -1;
+  m_ofs = m_1 = m_2 = m_3 = 0;
+  vib_ph = 0; vib_env = 0; vib = 0;
+  vib_k = 1 - exp(-1 / (srate * 0.25));
 
   // YIN on the last 2 * tmax decimated samples: sets voiced and tf (period, decimated samples)
   function analyze() local(i, j, k, t, s, d, e, a, b, c, den, tau)
@@ -141,6 +157,10 @@ out_pin:Right
         pc = kk - 12 * floor(kk / 12);
         (((smask >> pc) & 1) && abs(tgt - det) < bd + 0.4) ? best = tgt;
       );
+      // Target MIDI: the latest held note
+      midi_on && m_note >= 0 ? best = m_note;
+      // a new note starts the vibrato from nothing
+      (!was_v || best != tgt) ? vib_env = 0;
       (!was_v || best != tgt) ? (ms = det) : (ms += (det - ms) * hum_c);
       tgt = best;
       sh_t = tgt - det - hum * (ms - det);
@@ -181,7 +201,7 @@ out_pin:Right
   // adds the grain for synthesis mark s; returns the output period (next mark distance)
   function place(s) local(t1, h, k, a, c, cnt, d, fr, i0, i1, i, ri, si, s2, w)
   (
-    t1 = per_i / 2 ^ ((sh_i + transp) / 12);
+    t1 = vib_d > 0 ? per_i / 2 ^ (((sh_i + transp) + vib) / 12) : per_i / 2 ^ ((sh_i + transp) / 12);
     h = min(max(per_i, t1), hm);
     // the analysis mark nearest to s, walking back from the newest
     k = mk; c = amk[k]; cnt = 0;
@@ -232,8 +252,57 @@ out_pin:Right
   transp = slider5;
   thr = 0.05 + (0.3 * slider6) / 100;
   mix = slider7 / 100;
+  midi_on = slider8 >= 0.5;
+  vib_w = ((2 * $pi) * slider9) / srate;
+  vib_d = slider10 / 100;
+
+@block
+  // MIDI: every message passes through; notes are applied at their offsets in @sample
+  mq_n = 0;
+  while (midirecv(m_ofs, m_1, m_2, m_3)) (
+    midisend(m_ofs, m_1, m_2, m_3);
+    mq_n < 256 ? (
+      evq[mq_n * 4] = m_ofs;
+      evq[mq_n * 4 + 1] = m_1;
+      evq[mq_n * 4 + 2] = m_2;
+      evq[mq_n * 4 + 3] = m_3;
+      mq_n += 1;
+    );
+  );
+  mq_i = 0;
+  si = 0;
 
 @sample
+  // MIDI notes due now: held / released, all notes off; the latest held note is m_note
+  while (mq_i < mq_n && evq[mq_i * 4] <= si) (
+    m_st = evq[mq_i * 4 + 1] & 0xF0;
+    m_n = evq[mq_i * 4 + 2];
+    m_st == 0x90 && evq[mq_i * 4 + 3] > 0 ? (
+      stamp += 1;
+      held[m_n] = stamp;
+    ) : m_st == 0x80 || m_st == 0x90 ? (
+      held[m_n] = 0;
+    ) : m_st == 0xB0 && (m_n == 120 || m_n == 123) ? (
+      memset(held, 0, 128);
+    );
+    m_note = -1;
+    m_b = 0;
+    m_k = 0;
+    loop(128,
+      held[m_k] > m_b ? ( m_b = held[m_k]; m_note = m_k; );
+      m_k += 1;
+    );
+    mq_i += 1;
+  );
+  si += 1;
+  // vibrato, faded in while a voiced note is corrected
+  vib_d > 0 ? (
+    vib_ph += vib_w;
+    vib_ph >= 2 * $pi ? vib_ph -= 2 * $pi;
+    vib_env += (was_v - vib_env) * vib_k;
+    vib = (vib_d * vib_env) * sin(vib_ph);
+  );
+
   // pitch tracking on a band-limited mono copy, decimated
   ax = (spl0 + spl1) * 0.5;
   hp_y = hp_c * ((hp_y + ax) - hp_x);

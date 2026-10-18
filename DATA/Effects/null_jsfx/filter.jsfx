@@ -1,6 +1,6 @@
 desc:NULL Filter
 author: Christos Koulaxizis
-tags: filter lowpass resonance q cutoff svf tpt
+tags: filter lowpass resonance q cutoff svf tpt 24 db drive lfo envelope auto-wah wobble tempo sync
 //category: Essentials
 //NULL JSFX v2.4 • https://nulljsfx.tech • MIT License
 
@@ -8,6 +8,14 @@ slider1:1000<20,20000,1:log>Cutoff (Hz)
 slider2:1<0.1,10,0.1>Resonance
 slider3:0<-12,12,0.1>Gain (dB)
 slider4:0<0,3,1{Low Pass,High Pass,Band Pass,Notch}>Mode
+slider5:0<0,1,1{12 dB,24 dB}>Slope
+slider6:0<0,100,1>Drive (%)
+slider7:1<0.05,20,0.01:log>LFO Rate (Hz)
+slider8:0<0,9,1{Off,1/1,1/2,1/4,1/8,1/16,1/4T,1/8T,1/4D,1/8D}>LFO Sync
+slider9:0<0,4,0.1>LFO Depth (oct)
+slider10:0<-4,4,0.1>Envelope Depth (oct)
+slider11:10<1,200,1>Env Attack (ms)
+slider12:150<10,2000,1:log>Env Release (ms)
 
 in_pin:Left
 in_pin:Right
@@ -17,6 +25,24 @@ out_pin:Right
 @init
   ic1_l = 0; ic2_l = 0;
   ic1_r = 0; ic2_r = 0;
+  // Slope 24 dB adds a second SVF stage (same mode, Butterworth Q 0.707) after the first;
+  // 12 dB is the single stage. Drive soft-saturates the input before the filter (skipped at
+  // 0). The cutoff moves by LFO Depth octaves on a sine LFO (LFO Rate in Hz, or a note value
+  // at the host tempo with LFO Sync; locked to the beat while the transport plays) and by
+  // Envelope Depth octaves with the input level (a peak follower with Env Attack and Env
+  // Release; full depth at 0 dBFS). Both depths at 0 leave the cutoff fixed.
+  ic3_l = 0; ic4_l = 0;
+  ic3_r = 0; ic4_r = 0;
+  lfo_ph = 0;
+  lfo_inc = 0;
+  env = 0;
+
+  // soft saturation: a tanh-like curve, slope 1 at 0, flat at |x| = 3
+  function flt_sat(x)
+  (
+    x = max(-3, min(3, x));
+    x * (27 + x * x) / (27 + 9 * x * x);
+  );
 
 @slider
   fc = slider1;
@@ -31,20 +57,90 @@ out_pin:Right
   gain_lin = exp(slider3 * 0.11513);
   mode = slider4;
 
+  // the coefficients the filter runs with (moved per sample by the LFO and the envelope)
+  gm = g;
+  dm = denom;
+  slope24 = slider5;
+  R2 = 1.4142135623730951; // s^2 + R2 s + 1: Q 0.707
+  dm2 = 1 / (1 + R2 * g + g2);
+  slope24 ? 0 : ( ic3_l = ic4_l = ic3_r = ic4_r = 0; );
+  drv_on = slider6 > 0;
+  drv_g = 1 + slider6 * 0.07;
+  drv_c = 1 / sqrt(drv_g);
+  lfo_dep = slider9;
+  lfo_sync = slider8;
+  lfo_bpc = lfo_sync == 1 ? 4 : lfo_sync == 2 ? 2 : lfo_sync == 3 ? 1 : lfo_sync == 4 ? 0.5 :
+            lfo_sync == 5 ? 0.25 : lfo_sync == 6 ? 2 / 3 : lfo_sync == 7 ? 1 / 3 : lfo_sync == 8 ? 1.5 : 0.75;
+  env_dep = slider10;
+  env_on = env_dep != 0;
+  !env_on ? env = 0;
+  env_a = 1 - exp(-1 / (slider11 * 0.001 * srate));
+  env_r = 1 - exp(-1 / (slider12 * 0.001 * srate));
+  mod_on = lfo_dep > 0 || env_on;
+  fmax = min(20000, srate * 0.45);
+
+@block
+  lfo_sync > 0 ? (
+    lfo_bpm = tempo > 0 ? tempo : 120;
+    lfo_inc = lfo_bpm / (lfo_bpc * srate * 60);
+    // lock to the host grid while playing
+    play_state & 1 ? ( lfo_ph = beat_position / lfo_bpc; lfo_ph -= floor(lfo_ph); );
+  ) : (
+    lfo_inc = slider7 / srate;
+  );
+
 @sample
+  mod_on ? (
+    lfo_v = sin(2 * $pi * lfo_ph);
+    lfo_ph += lfo_inc;
+    lfo_ph >= 1 ? lfo_ph -= 1;
+    env_on ? (
+      env_x = max(abs(spl0), abs(spl1));
+      env += (env_x > env ? env_a : env_r) * (env_x - env);
+    );
+    fm = max(20, min(fmax, fc * 2 ^ (lfo_dep * lfo_v + env_dep * min(1, sqrt(env)))));
+    gm = tan($pi * fm / srate);
+    dm = 1 / (1 + R * gm + gm * gm);
+    dm2 = 1 / (1 + R2 * gm + gm * gm);
+  );
+  x_l = spl0;
+  x_r = spl1;
+  drv_on ? (
+    x_l = flt_sat(x_l * drv_g) * drv_c;
+    x_r = flt_sat(x_r * drv_g) * drv_c;
+  );
+
   // Left channel
-  v3 = (spl0 - ic2_l - (R + g) * ic1_l) * denom;
-  v1 = g * v3 + ic1_l;
-  v2 = g * v1 + ic2_l;
+  v3 = (x_l - ic2_l - (R + gm) * ic1_l) * dm;
+  v1 = gm * v3 + ic1_l;
+  v2 = gm * v1 + ic2_l;
   ic1_l = v1;
   ic2_l = v2;
   // v3 = high-pass, v1 = band-pass, v2 = low-pass; input = v3 + R*v1 + v2
-  spl0 = (mode == 0 ? v2 : mode == 1 ? v3 : mode == 2 ? R * v1 : v3 + v2) * gain_lin;
+  y = mode == 0 ? v2 : mode == 1 ? v3 : mode == 2 ? R * v1 : v3 + v2;
+  slope24 ? (
+    v3 = (y - ic4_l - (R2 + gm) * ic3_l) * dm2;
+    v1 = gm * v3 + ic3_l;
+    v2 = gm * v1 + ic4_l;
+    ic3_l = v1;
+    ic4_l = v2;
+    y = mode == 0 ? v2 : mode == 1 ? v3 : mode == 2 ? R2 * v1 : v3 + v2;
+  );
+  spl0 = y * gain_lin;
   
   // Right channel
-  v3 = (spl1 - ic2_r - (R + g) * ic1_r) * denom;
-  v1 = g * v3 + ic1_r;
-  v2 = g * v1 + ic2_r;
+  v3 = (x_r - ic2_r - (R + gm) * ic1_r) * dm;
+  v1 = gm * v3 + ic1_r;
+  v2 = gm * v1 + ic2_r;
   ic1_r = v1;
   ic2_r = v2;
-  spl1 = (mode == 0 ? v2 : mode == 1 ? v3 : mode == 2 ? R * v1 : v3 + v2) * gain_lin;
+  y = mode == 0 ? v2 : mode == 1 ? v3 : mode == 2 ? R * v1 : v3 + v2;
+  slope24 ? (
+    v3 = (y - ic4_r - (R2 + gm) * ic3_r) * dm2;
+    v1 = gm * v3 + ic3_r;
+    v2 = gm * v1 + ic4_r;
+    ic3_r = v1;
+    ic4_r = v2;
+    y = mode == 0 ? v2 : mode == 1 ? v3 : mode == 2 ? R2 * v1 : v3 + v2;
+  );
+  spl1 = y * gain_lin;

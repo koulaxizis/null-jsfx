@@ -10,7 +10,12 @@
 
 namespace nullharmonizer {
 
-// slider1..slider8 of harmonizer.jsfx, in order
+static const char* const kModeOptions[] = { "SEMI", "SCALE", "MIDI" };
+static const char* const kKeyOptions[] = { "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B" };
+static const char* const kScaleOptions[] = { "MAJOR", "MINOR", "DORIAN", "MIXOLYD", "HARM MIN", "PENT MAJ", "PENT MIN" };
+static const char* const kOffOn[] = { "OFF", "ON" };
+
+// slider1..slider12 of harmonizer.jsfx, in order
 static const DISTRHO::SliderInfo kSliders[] = {
     { "Voice 1 Interval", "interval1", -12.0f, 12.0f, 4.0f, "st", 1.0f },
     { "Voice 2 Interval", "interval2", -12.0f, 12.0f, 7.0f, "st", 1.0f },
@@ -20,6 +25,10 @@ static const DISTRHO::SliderInfo kSliders[] = {
     { "Delay", "delay", 0.0f, 80.0f, 15.0f, "ms", 1.0f },
     { "Spread", "spread", 0.0f, 100.0f, 70.0f, "%", 1.0f },
     { "Mix", "mix", 0.0f, 100.0f, 50.0f, "%", 1.0f },
+    { "Mode", "mode", 0.0f, 2.0f, 0.0f, "", 1.0f, kModeOptions },
+    { "Key", "key", 0.0f, 11.0f, 0.0f, "", 1.0f, kKeyOptions },
+    { "Scale", "scale", 0.0f, 6.0f, 0.0f, "", 1.0f, kScaleOptions },
+    { "Formant Preserve", "formant", 0.0f, 1.0f, 0.0f, "", 1.0f, kOffOn },
 };
 static constexpr uint32_t kNumSliders = sizeof(kSliders) / sizeof(kSliders[0]);
 

@@ -10,6 +10,8 @@
 #include "../../transient_shaper/TransientShaperDSP.hpp"
 #include "../../transient_shaper/TransientShaperSliders.hpp"
 
+#include <cmath>
+
 namespace nullrack {
 namespace transient_shaper {
 
@@ -50,7 +52,7 @@ public:
 private:
     void update()
     {
-        fDsp.setParams(fV[0], fV[1], fV[2]);
+        fDsp.setParams(fV[0], fV[1], fV[2], int(std::lround(fV[3])), fV[4], fV[5], fV[6] >= 0.5f, fV[7]);
     }
 
     nulltransient::TransientProcessor fDsp;

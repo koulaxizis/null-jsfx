@@ -38,7 +38,8 @@ public:
     void process(const float* inL, const float* inR, float* outL, float* outR, uint32_t frames,
                  const nulljsfx::ModuleTime& time) override
     {
-        // as Plugin.cpp: the host tempo when it reports one, else 120
+        // as Plugin.cpp: the host tempo when it reports one, else 120; the Rack has no MIDI, so
+        // Trigger MIDI holds no note and passes the dry signal
         const double tempo = time.valid && time.tempo > 0.0 ? time.tempo : 120.0;
         fDsp.process(inL, inR, outL, outR, frames, tempo);
     }

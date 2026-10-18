@@ -12,6 +12,8 @@ slider5:10<0,100,1>Flutter (%)
 slider6:10<0,100,1>Hiss (%)
 slider7:0<-12,12,0.1>Output (dB)
 slider8:100<0,100,1>Mix (%)
+slider9:0<0,3,1{Classic,Type I,Type II,Type IV}>Tape Type
+slider10:0<0,1,1{Off,On}>Noise Reduction
 
 in_pin:Left
 in_pin:Right
@@ -27,6 +29,12 @@ out_pin:Right
   // loss of the tape speed). Drive is level-matched at -12 dBFS, so it adds colour, not volume.
   // The dry signal is read from the same line at exactly the 3 ms centre (plug-in delay
   // compensation), so dry and wet stay aligned at any Mix.
+  // Tape Type: Classic is the open-reel voice above; Type I (ferric), Type II (chrome) and Type IV
+  // (metal) are cassette formulations: from I to IV the curve gets cleaner and more symmetric,
+  // the emphasis lighter (more high-frequency headroom), the top end longer and the hiss lower
+  // and brighter. Noise Reduction is a one-band compander: quiet highs are boosted up to 10 dB
+  // before the tape and cut again after it, so the hiss drops, but loud highs let it through
+  // (the "breathing" of cassette noise reduction).
   buf_size = 1024;
   while (buf_size < ceil(0.008 * srate)) ( buf_size *= 2; );
   base = floor(0.003 * srate);
@@ -44,6 +52,9 @@ out_pin:Right
   sat_b = 0.1;                      // bias of the curve: even harmonics
   sat_a = 0.2;                      // memory of the saturator's own error
   sat_u_l = sat_y_l = sat_u_r = sat_y_r = 0;
+  nz_l = nz_r = 0;
+  ex_l = eh_l = ee_l = dx_l = dh_l = de_l = 0;
+  ex_r = eh_r = ee_r = dx_r = dh_r = de_r = 0;
 
   function soft(v) ( v / sqrt(1 + v * v); );
   function sat_curve(v) ( soft(v + sat_b) - soft(sat_b); );
@@ -95,9 +106,8 @@ out_pin:Right
   );
 
   // one-pole high shelf (+6 dB above fc) and its exact inverse: the tape (pre/de-)emphasis
-  function emph_set(fc) local(wc, k, g)
+  function emph_set(fc, g) local(wc, k)
   (
-    g = 2;
     wc = 2 * $pi * fc;
     k = wc / tan($pi * fc / srate);
     em_b0 = (g * k + wc) / (k + wc);
@@ -126,13 +136,22 @@ out_pin:Right
   wow = slider4 / 100;
   flutter = slider5 / 100;
   hiss = slider6 / 100 * 0.02;
+  tape_type = slider9;
+  nr_on = slider10;
+  // per Tape Type: curve bias and memory, emphasis amount, top end, hiss level and colour
+  tape_type == 0 ? (sat_b = 0.1; sat_a = 0.2; em_g = 2) :
+  tape_type == 1 ? (sat_b = 0.14; sat_a = 0.25; em_g = 2.6; tt_hf = 0.8; tt_hiss = 1.25; nc_t = -0.6) :
+  tape_type == 2 ? (sat_b = 0.08; sat_a = 0.18; em_g = 1.7; tt_hf = 1.1; tt_hiss = 0.7; nc_t = 0.6) :
+  (sat_b = 0.05; sat_a = 0.15; em_g = 1.4; tt_hf = 1.2; tt_hiss = 0.55; nc_t = 0.3);
+  tape_type > 0 ? hiss *= tt_hiss;
   out_gain = 10 ^ (slider7 / 20);
   mix = slider8 / 100;
 
   // Speed: head bump frequency, high-frequency loss and emphasis corner scale with the tape
   bump_f = speed == 0 ? 45 : speed == 1 ? 70 : 110;
   hf_f = speed == 0 ? 9000 : speed == 1 ? 15000 : 22000;
-  emph_set(speed == 0 ? 2500 : speed == 1 ? 3500 : 5000);
+  tape_type > 0 ? hf_f *= tt_hf;
+  emph_set(speed == 0 ? 2500 : speed == 1 ? 3500 : 5000, em_g);
   hp_l.bq_hp(bump_f * 0.4, 0.6); hp_r.bq_hp(bump_f * 0.4, 0.6);
   pk_l.bq_peak(bump_f, 1, bump_db); pk_r.bq_peak(bump_f, 1, bump_db);
   lp_l.bq_lp(hf_f, 0.6); lp_r.bq_lp(hf_f, 0.6);
@@ -143,6 +162,13 @@ out_pin:Right
 
   wow_depth = wow * 0.002 * srate / 1.31;       // up to 2 ms
   flt_depth = flutter * 0.0001 * srate / 1.4;   // up to 0.1 ms
+
+  // hiss colour (one-pole split at 3 kHz) and the compander (1.5 kHz high band, 2 / 60 ms)
+  nc_a = 1 - exp(-2 * $pi * 3000 / srate);
+  nr_a = exp(-2 * $pi * 1500 / srate);
+  nr_at = 1 - exp(-1 / (0.002 * srate));
+  nr_rt = 1 - exp(-1 / (0.06 * srate));
+  nr_max = 10 ^ (10 / 20) - 1;
 
 @sample
   // transport: two slow and two fast sines (one tape, so both channels move together)
@@ -160,6 +186,18 @@ out_pin:Right
   buf_r[wpos] = spl1;
   wpos = (wpos + 1) & (buf_size - 1);
 
+  // noise reduction, encode: quiet highs boosted before the tape
+  nr_on ? (
+    nr_g = nr_max / (1 + ee_l * 50);
+    nr_h = nr_a * (eh_l + x_l - ex_l); ex_l = x_l; eh_l = nr_h;
+    x_l += nr_g * nr_h;
+    ee_l += (abs(nr_h) > ee_l ? nr_at : nr_rt) * (abs(nr_h) - ee_l);
+    nr_g = nr_max / (1 + ee_r * 50);
+    nr_h = nr_a * (eh_r + x_r - ex_r); ex_r = x_r; eh_r = nr_h;
+    x_r += nr_g * nr_h;
+    ee_r += (abs(nr_h) > ee_r ? nr_at : nr_rt) * (abs(nr_h) - ee_r);
+  );
+
   // record: pre-emphasis, Drive into the saturation with memory, de-emphasis
   u_l = pre_l.pre(x_l) * drive;
   u_r = pre_r.pre(x_r) * drive;
@@ -175,8 +213,30 @@ out_pin:Right
   w_r = pk_r.bq(hp_r.bq(w_r));
   seed_l *= 16807; seed_l -= floor(seed_l / 2147483647) * 2147483647;
   seed_r *= 16807; seed_r -= floor(seed_r / 2147483647) * 2147483647;
-  w_l = lp_l.bq(w_l + (seed_l / 1073741824 - 1) * hiss);
-  w_r = lp_r.bq(w_r + (seed_r / 1073741824 - 1) * hiss);
+  tape_type > 0 ? (
+    // the cassette types colour the hiss: darker (Type I) or brighter (Type II, IV)
+    n_l = (seed_l / 1073741824 - 1) * hiss;
+    n_r = (seed_r / 1073741824 - 1) * hiss;
+    nz_l += nc_a * (n_l - nz_l);
+    nz_r += nc_a * (n_r - nz_r);
+    w_l = lp_l.bq(w_l + n_l + nc_t * (n_l - nz_l));
+    w_r = lp_r.bq(w_r + n_r + nc_t * (n_r - nz_r));
+  ) : (
+    w_l = lp_l.bq(w_l + (seed_l / 1073741824 - 1) * hiss);
+    w_r = lp_r.bq(w_r + (seed_r / 1073741824 - 1) * hiss);
+  );
+
+  // noise reduction, decode: the exact inverse of the encoder at the decoder's own level
+  nr_on ? (
+    nr_g = nr_max / (1 + de_l * 50);
+    w_l = (w_l - nr_g * nr_a * (dh_l - dx_l)) / (1 + nr_g * nr_a);
+    nr_h = nr_a * (dh_l + w_l - dx_l); dx_l = w_l; dh_l = nr_h;
+    de_l += (abs(nr_h) > de_l ? nr_at : nr_rt) * (abs(nr_h) - de_l);
+    nr_g = nr_max / (1 + de_r * 50);
+    w_r = (w_r - nr_g * nr_a * (dh_r - dx_r)) / (1 + nr_g * nr_a);
+    nr_h = nr_a * (dh_r + w_r - dx_r); dx_r = w_r; dh_r = nr_h;
+    de_r += (abs(nr_h) > de_r ? nr_at : nr_rt) * (abs(nr_h) - de_r);
+  );
 
   spl0 = (dry_l * (1 - mix) + w_l * mix) * out_gain;
   spl1 = (dry_r * (1 - mix) + w_r * mix) * out_gain;

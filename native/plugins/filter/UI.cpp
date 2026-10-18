@@ -10,128 +10,72 @@
 
 START_NAMESPACE_DISTRHO
 
+// as filter_gfx.jsfx: tab FILTER (cutoff, resonance, gain, mode, slope, drive) and tab
+// MODULATION (LFO rate, sync, depth, envelope depth, attack, release)
 static const NullKnobsUI::Control kControls[] = {
-    { 0, NullKnobsUI::kKnob, "CUTOFF", 0, -1, false },
-    { 1, NullKnobsUI::kKnob, "RESONANCE", 0, -1, false },
-    { 2, NullKnobsUI::kKnob, "GAIN", 0, -1, true },
-    { 3, NullKnobsUI::kSelect, "MODE", 0, -1, false },
+    { 0, NullKnobsUI::kKnob, "CUTOFF", 0, 0, false, true },
+    { 1, NullKnobsUI::kKnob, "RESONANCE", 0, 0, false },
+    { 2, NullKnobsUI::kKnob, "GAIN", 0, 0, true },
+    { 3, NullKnobsUI::kSelect, "MODE", 0, 0, false },
+    { 4, NullKnobsUI::kSelect, "SLOPE", 0, 0, false },
+    { 5, NullKnobsUI::kKnob, "DRIVE", 0, 0, false },
+    { 6, NullKnobsUI::kKnob, "LFO RATE", 0, 1, false, true },
+    { 7, NullKnobsUI::kSelect, "LFO SYNC", 0, 1, false },
+    { 8, NullKnobsUI::kKnob, "LFO DEPTH", 0, 1, false },
+    { 9, NullKnobsUI::kKnob, "ENV DEPTH", 0, 1, true },
+    { 10, NullKnobsUI::kKnob, "ATTACK", 0, 1, false },
+    { 11, NullKnobsUI::kKnob, "RELEASE", 0, 1, false, true },
 };
 
 class UIFilter : public NullKnobsUI
 {
 public:
     UIFilter()
-        : NullKnobsUI({ "FILTER", "ESSENTIALS", 480, 120, nullptr, 1, nullfilter::kSliders, nullfilter::kNumSliders,
-                        kControls, sizeof(kControls) / sizeof(kControls[0]), false }) {}
+        : NullKnobsUI({ "FILTER", "ESSENTIALS", 480, 120, "FILTER|MODULATION", 1, nullfilter::kSliders, nullfilter::kNumSliders,
+                        kControls, sizeof(kControls) / sizeof(kControls[0]), true }) {}
 
 protected:
-    // ---- log taper for the Cutoff knob (control 0), as fl_knob_log in filter_gfx.jsfx ----------
-
-    static constexpr float kLo = 20.0f, kHi = 20000.0f, kDef = 1000.0f;
-    static float toNorm(float hz) { return std::log(hz / kLo) / std::log(kHi / kLo); }
-    static float fromNorm(float n) { return clampf(std::floor(kLo * std::exp(n * std::log(kHi / kLo)) + 0.5f), kLo, kHi); }
-
-    void onNanoDisplay() override
-    {
-        NullKnobsUI::onNanoDisplay();
-        // the base drew the Cutoff knob on a linear scale; paint over it with the log one
-        // (the base's scale(uiScale()) is still in effect)
-        float cx, ry;
-        cell(0, cx, ry);
-        beginPath();
-        rect(cx - 28.0f, ry + 17.0f, 56.0f, 54.0f);
-        fillColor(col(theme::kCard));
-        fill();
-        drawKnob(cx, ry + 44.0f, 14.0f, fDragging ? fNorm : toNorm(value(0)), false, fDragging || fHover);
-        drawPresetMenu(); // again, over the knob
-    }
-
-    bool onMouse(const MouseEvent& ev) override
-    {
-        if (presetMouse(ev))
-            return true;
-        const float s = uiScale();
-        const float x = float(ev.pos.getX()) / s, y = float(ev.pos.getY()) / s;
-        if (ev.button == 1 && ev.press && controlAt(x, y) == 0)
-        {
-            if (fLastClick != 0 && ev.time - fLastClick < 350)
-            {
-                fLastClick = 0;
-                setGesture(0, kDef);
-                return true;
-            }
-            fLastClick = ev.time;
-            fDragging = true;
-            fNorm = toNorm(value(0));
-            fX = x;
-            fY = y;
-            editParameter(0, true);
-            repaint();
-            return true;
-        }
-        if (ev.button == 1 && !ev.press && fDragging)
-        {
-            fDragging = false;
-            editParameter(0, false);
-            repaint();
-            return true;
-        }
-        return NullKnobsUI::onMouse(ev);
-    }
-
-    bool onMotion(const MotionEvent& ev) override
-    {
-        const float s = uiScale();
-        const float x = float(ev.pos.getX()) / s, y = float(ev.pos.getY()) / s;
-        const bool h = controlAt(x, y) == 0;
-        if (h != fHover)
-        {
-            fHover = h;
-            repaint();
-        }
-        if (!fDragging)
-            return NullKnobsUI::onMotion(ev);
-        const bool fine = (ev.mod & (kModifierControl | kModifierShift)) != 0;
-        fNorm = clampf(fNorm + ((x - fX) + (fY - y)) / 200.0f * (fine ? 0.1f : 1.0f), 0.0f, 1.0f);
-        fX = x;
-        fY = y;
-        setFromUI(0, fromNorm(fNorm));
-        repaint();
-        return true;
-    }
-
-    bool onScroll(const ScrollEvent& ev) override
-    {
-        if (presetOpen())
-            return true;
-        const float s = uiScale();
-        if (controlAt(float(ev.pos.getX()) / s, float(ev.pos.getY()) / s) == 0)
-        {
-            const float d = float(ev.delta.getY()) + float(ev.delta.getX());
-            if (d == 0.0f)
-                return false;
-            setGesture(0, fromNorm(clampf(toNorm(value(0)) + (d > 0.0f ? 0.01f : -0.01f), 0.0f, 1.0f)));
-            return true;
-        }
-        return NullKnobsUI::onScroll(ev);
-    }
-
-    // ---- display -------------------------------------------------------------------------------
-
-    // as in filter_gfx.jsfx: the filter's magnitude response with Gain (-24..+24 dB), cutoff dashed
+    // as in filter_gfx.jsfx: the filter's magnitude response with Gain (-24..+24 dB), cutoff dashed;
+    // with the LFO or the envelope on, the range they sweep dashed faintly and the response at
+    // the moving cutoff on top
     void drawDisplay() override
     {
         setPlot(fVX + 26.0f, fVY + 4.0f, fVW - 30.0f, fVH - 20.0f);
         gridFreq(36.0f);
-        dashedV(freqX(value(0)));
+        const float fc = value(0), lfo = value(8), env = value(9);
+        const bool modOn = lfo > 0.0f || std::fabs(env) >= 0.05f;
+        if (lfo > 0.0f)
+        {
+            dashedV(freqX(fc * std::pow(2.0f, -lfo)), 0.25f);
+            dashedV(freqX(fc * std::pow(2.0f, lfo)), 0.25f);
+        }
+        if (std::fabs(env) >= 0.05f)
+            dashedV(freqX(fc * std::pow(2.0f, env)), 0.25f);
+        dashedV(freqX(fc));
+
+        const int sync = int(std::lround(value(7)));
+        char a[24] = "", b[24] = "", line[64];
+        if (lfo > 0.0f)
+        {
+            if (sync > 0)
+                std::snprintf(a, sizeof(a), "LFO %s %.1f OCT", nullfilter::kSyncOptions[std::min(sync, 9)], double(lfo));
+            else
+                std::snprintf(a, sizeof(a), "LFO %.2f HZ %.1f OCT", double(value(6)), double(lfo));
+        }
+        if (std::fabs(env) >= 0.05f)
+            std::snprintf(b, sizeof(b), "ENV %+.1f OCT", double(env));
+        std::snprintf(line, sizeof(line), "%s%s%s%s", value(4) >= 0.5f ? "24 DB" : "12 DB", a[0] ? "  " : "", a, b[0] ? "  " : "");
+        std::strncat(line, b, sizeof(line) - std::strlen(line) - 1);
+        label(fPX + fPW - 6.0f, fPY + 9.0f, ALIGN_RIGHT, 8.0f, 0.0f, theme::kMuted, line);
 
         double sr = getSampleRate();
         if (!(sr > 0.0))
             sr = 48000.0;
-        nullfilter::Coefs k;
-        k.compute(value(0), value(1), value(2), int(std::lround(value(3))), sr);
         constexpr int n = 404;
         float xs[n], ys[n];
+        nullfilter::Coefs k;
+        k.compute(value(0), value(1), value(2), int(std::lround(value(3))), sr);
+        k.slope24 = value(4) >= 0.5f;
         for (int i = 0; i < n; ++i)
         {
             const double f = 20.0 * std::pow(1000.0, double(i) / double(n - 1));
@@ -139,6 +83,30 @@ protected:
             ys[i] = linY(float(k.magnitudeDb(f, sr)), -24.0f, 24.0f);
         }
         curve(xs, ys, n, linY(0.0f, -24.0f, 24.0f));
+
+        if (modOn)
+        {
+            float fm = fc;
+            if (nulljsfx::Taps* t = taps())
+                fm = t->extra.load(std::memory_order_relaxed);
+            if (!(fm >= 20.0f))
+                fm = fc;
+            k.compute(fm, value(1), value(2), int(std::lround(value(3))), sr);
+            k.slope24 = value(4) >= 0.5f;
+            beginPath();
+            for (int i = 0; i < n; ++i)
+            {
+                const double f = 20.0 * std::pow(1000.0, double(i) / double(n - 1));
+                const float y = linY(float(k.magnitudeDb(f, sr)), -24.0f, 24.0f);
+                if (i == 0)
+                    moveTo(xs[i], y);
+                else
+                    lineTo(xs[i], y);
+            }
+            strokeColor(col(theme::kText, 0.55f));
+            strokeWidth(1.0f);
+            stroke();
+        }
     }
 
     void formatValue(uint32_t param, float v, char* buf, size_t n) override
@@ -154,14 +122,22 @@ protected:
             std::snprintf(buf, n, "%.1f", double(v));
         else if (param == 2)
             std::snprintf(buf, n, "%+.1f dB", double(v));
+        else if (param == 6)
+            std::snprintf(buf, n, "%.2f Hz", double(v));
+        else if (param == 8)
+            std::snprintf(buf, n, "%.1f oct", double(v));
+        else if (param == 9)
+        {
+            if (std::fabs(v) < 0.05f)
+                std::snprintf(buf, n, "0.0 oct");
+            else
+                std::snprintf(buf, n, "%+.1f oct", double(v));
+        }
+        else if (param == 10 || param == 11)
+            std::snprintf(buf, n, "%d ms", int(std::lround(v)));
         else
             NullKnobsUI::formatValue(param, v, buf, n);
     }
-
-private:
-    bool fDragging = false, fHover = false;
-    float fNorm = 0.0f, fX = 0.0f, fY = 0.0f;
-    uint fLastClick = 0;
 };
 
 UI* createUI()

@@ -10,23 +10,28 @@
 
 START_NAMESPACE_DISTRHO
 
+// as saturation_gfx.jsfx: drive, tone, mix, mode / input, emphasis, oversampling, output
 static const NullKnobsUI::Control kControls[] = {
     { 0, NullKnobsUI::kKnob, "DRIVE", 0, -1, false },
     { 1, NullKnobsUI::kKnob, "TONE", 0, -1, true },
     { 2, NullKnobsUI::kKnob, "MIX", 0, -1, false },
     { 3, NullKnobsUI::kSelect, "MODE", 0, -1, false },
+    { 4, NullKnobsUI::kKnob, "INPUT", 1, -1, true },
+    { 7, NullKnobsUI::kKnob, "EMPHASIS", 1, -1, true },
+    { 6, NullKnobsUI::kSelect, "OVERSAMPLE", 1, -1, false },
+    { 5, NullKnobsUI::kKnob, "OUTPUT", 1, -1, false },
 };
 
 class UISaturation : public NullKnobsUI
 {
 public:
     UISaturation()
-        : NullKnobsUI({ "SATURATION", "ESSENTIALS", 480, 120, nullptr, 1, nullsaturation::kUiSliders,
+        : NullKnobsUI({ "SATURATION", "ESSENTIALS", 480, 120, nullptr, 2, nullsaturation::kUiSliders,
                         nullsaturation::kNumSliders, kControls, sizeof(kControls) / sizeof(kControls[0]), false }) {}
 
 protected:
     // as in saturation_gfx.jsfx: the transfer curve (input -1..+1 across, output -1..+1 up)
-    // after the dry/wet mix, Tone left out
+    // with Input, after the dry/wet mix and Output (held in the plot), Tone and Emphasis left out
     void drawDisplay() override
     {
         setPlot(fVX + 26.0f, fVY + 4.0f, fVW - 30.0f, fVH - 20.0f);
@@ -38,6 +43,12 @@ protected:
         char buf[32];
         std::snprintf(buf, sizeof(buf), "DRIVE %.1fx", 1.0 + value(0) / 100.0 * 3.0);
         label(fPX + fPW - 6.0f, fPY + 9.0f, ALIGN_RIGHT, 8.0f, 0.0f, theme::kMuted, buf);
+        const int os = int(std::lround(value(6)));
+        char em[24] = "", line[48];
+        if (std::fabs(value(7)) >= 0.05f)
+            std::snprintf(em, sizeof(em), "EMPH %+.1f dB", double(value(7)));
+        std::snprintf(line, sizeof(line), "%s%s%s", os == 1 ? "OS 2X" : os == 2 ? "OS 4X" : "", os > 0 && em[0] ? "  " : "", em);
+        label(fPX + fPW - 6.0f, fPY + 21.0f, ALIGN_RIGHT, 8.0f, 0.0f, theme::kMuted, line);
 
         beginPath();
         moveTo(fPX, fPY + fPH);
@@ -47,6 +58,7 @@ protected:
         stroke();
 
         const double drive = value(0) / 100.0, mix = value(2) / 100.0;
+        const double gin = std::pow(10.0, double(value(4)) / 20.0), gout = std::pow(10.0, double(value(5)) / 20.0);
         const int mode = int(std::lround(value(3)));
         const int n = std::max(2, int(fPW) + 1);
         float xs[512], ys[512];
@@ -54,7 +66,8 @@ protected:
         for (int i = 0; i < m; ++i)
         {
             const double x = -1.0 + 2.0 * double(i) / double(m - 1);
-            const double y = x * (1.0 - mix) + nullsaturation::shape(x * (1.0 + drive * 3.0), mode, drive) * mix;
+            double y = (x * (1.0 - mix) + nullsaturation::shape(x * gin * (1.0 + drive * 3.0), mode, drive) * mix) * gout;
+            y = std::max(-1.0, std::min(1.0, y));
             xs[i] = fPX + fPW * float(i) / float(m - 1);
             ys[i] = linY(float(y), -1.0f, 1.0f);
         }
@@ -63,7 +76,7 @@ protected:
 
     void formatValue(uint32_t param, float v, char* buf, size_t n) override
     {
-        if (param == 1)
+        if (param == 1 || param == 4 || param == 5 || param == 7)
         {
             if (std::fabs(v) < 0.05f)
                 std::snprintf(buf, n, "0.0 dB");

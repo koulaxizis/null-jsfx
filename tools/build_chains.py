@@ -764,6 +764,20 @@ def parse_sliders(path):
     return sliders
 
 
+def find_slider(path, key):
+    """The indexes of the sliders named key: the name without its unit, or the full label with it
+    ("Pitch Shift (semitones)") when two sliders share a name."""
+    hits = [i for i, sl in enumerate(parse_sliders(path)) if sl[0] == key]
+    if len(hits) > 1:
+        labels = [re.sub(r"^slider\d+:[^<]*<[^>]*>-?", "", l).strip()
+                  for l in path.read_text(encoding="utf-8").split("\n") if re.match(r"slider\d+:[^/]", l)]
+        hits = [i for i in hits if labels[i] == key] or hits
+    elif not hits:
+        hits = [i for i, l in enumerate(re.sub(r"^slider\d+:[^<]*<[^>]*>-?", "", l).strip()
+                for l in path.read_text(encoding="utf-8").split("\n") if re.match(r"slider\d+:[^/]", l)) if l == key]
+    return hits
+
+
 def module_index(stem, index):
     """A JSFX slider index (from 0) as the Rack module's value index: a module has no value for a
     file slider (Convolution's IR File), so the sliders after one move down."""
@@ -957,7 +971,7 @@ def resolve(where, stem, values):
     sliders = parse_sliders(PLUGINS / f"{stem}.jsfx")
     out = []
     for key, v in values.items():
-        hits = [i for i, s in enumerate(sliders) if s[0] == key]
+        hits = find_slider(PLUGINS / f"{stem}.jsfx", key)
         if len(hits) != 1:
             sys.exit(f"build_chains: {where}: {stem} has no slider named {key!r}")
         i = hits[0]
@@ -1085,7 +1099,7 @@ def render_rack():
 
 def slider_index(where, stem, key):
     """The index (from 0) of the slider named key in a plugin."""
-    hits = [i for i, sl in enumerate(parse_sliders(PLUGINS / f"{stem}.jsfx")) if sl[0] == key]
+    hits = find_slider(PLUGINS / f"{stem}.jsfx", key)
     if len(hits) != 1:
         sys.exit(f"build_chains: {where}: {stem} has no slider named {key!r}")
     return hits[0]

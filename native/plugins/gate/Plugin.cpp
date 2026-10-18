@@ -30,9 +30,25 @@ protected:
     const char* getLabel() const override { return "Gate"; }
     const char* getDescription() const override
     {
-        return "Noise gate: opens above Threshold and closes below it down to Range, with attack, release and a sidechain high-pass.";
+        return "Noise gate: opens above Threshold and closes below it down to Range, with attack, hold, release, "
+               "lookahead, a sidechain high- and low-pass, an external sidechain and a flip into a ducker.";
     }
     int64_t getUniqueId() const override { return d_cconst('N', '1', 'g', 't'); }
+
+    // inputs 1/2: the track (the main stereo bus, as before), inputs 3/4: a separate sidechain
+    // port (JSFX pins 3/4), as in plugins/sidechain_ducker
+    void initAudioPort(bool input, uint32_t index, AudioPort& port) override
+    {
+        if (input && index >= 2)
+        {
+            port.hints = kAudioPortIsSidechain;
+            port.name = index == 2 ? "Sidechain Left" : "Sidechain Right";
+            port.symbol = index == 2 ? "sidechain_left" : "sidechain_right";
+            return;
+        }
+        port.groupId = kPortGroupStereo;
+        NullMultiPlugin::initAudioPort(input, index, port);
+    }
 
     void valueChanged(uint32_t, float) override { update(); }
 
@@ -53,7 +69,7 @@ protected:
         for (uint32_t i = 0; i < frames; ++i)
         {
             double l = inputs[0][i], r = inputs[1][i];
-            fDsp.processSample(l, r);
+            fDsp.processSample(l, r, inputs[2][i], inputs[3][i]);
             outputs[0][i] = float(l);
             outputs[1][i] = float(r);
 
@@ -89,7 +105,9 @@ private:
 
     void update()
     {
-        fDsp.setParams(value(0), value(1), value(2), value(3), value(4));
+        fDsp.setParams(value(0), value(1), value(2), value(3), value(4), value(5), nullgate::onGrid(value(6)),
+                       value(7) >= 0.5f, value(8), value(9) >= 0.5f);
+        setLatency(uint32_t(fDsp.latency())); // the JSFX's pdc_delay (the lookahead)
     }
 
     nullgate::GateProcessor fDsp;

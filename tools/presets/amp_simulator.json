@@ -6,5 +6,10 @@
   ["Tight Metal Rhythm", {"Model": "Lead", "Gain": 7, "Bass": 6, "Mid": 3.5, "Treble": 6.5, "Presence": 6.5, "Sag": 10}],
   ["Singing Lead", {"Model": "Lead", "Gain": 8, "Bass": 5, "Mid": 7, "Treble": 5, "Presence": 5.5, "Sag": 40}],
   ["Round Bass", {"Model": "Bass", "Gain": 3, "Bass": 6.5, "Mid": 4.5, "Treble": 4.5, "Presence": 4, "Sag": 35}],
-  ["Growling Bass", {"Model": "Bass", "Gain": 7, "Bass": 5.5, "Mid": 6.5, "Treble": 6, "Presence": 6, "Sag": 25}]
+  ["Growling Bass", {"Model": "Bass", "Gain": 7, "Bass": 5.5, "Mid": 6.5, "Treble": 6, "Presence": 6, "Sag": 25}],
+  ["Jazz Box", {"Model": "Jazz Clean", "Gain": 4, "Bass": 6, "Mid": 5, "Treble": 3.5, "Presence": 4, "Sag": 20}],
+  ["British Crunch", {"Model": "British", "Gain": 6, "Bass": 5, "Mid": 7, "Treble": 6.5, "Presence": 6, "Master": 6.5, "Sag": 40}],
+  ["Modern Chug", {"Model": "Modern High Gain", "Gain": 7, "Bass": 6, "Mid": 3, "Treble": 6.5, "Presence": 6.5, "Sag": 10, "Noise Gate": -50}],
+  ["Vintage Fuzz", {"Model": "Fuzz", "Gain": 7, "Bass": 6, "Mid": 4, "Treble": 5.5, "Presence": 5, "Sag": 50}],
+  ["Gated Lead", {"Model": "Lead", "Gain": 8.5, "Bass": 5, "Mid": 6, "Treble": 5.5, "Presence": 6, "Sag": 20, "Noise Gate": -55}]
 ]

@@ -6,7 +6,8 @@
  * Reports the look-ahead as latency (the JSFX's pdc_delay). The display shows a 1.8 s history
  * as in maximizer_gfx.jsfx: one entry per 7 ms chunk, pushed into the Taps ring (scopeL = the
  * chunk's output peak, scopeR = its lowest gain, the lower channel when unlinked). inLevel / outLevel = input / output peak
- * meters, gr = the gain reduction now in dB.
+ * meters, gr = the gain reduction now in dB (Multiband: of the most reduced band), extra = the
+ * output's short-term loudness in LUFS (display only, as the GFX JSFX).
  */
 
 #include "NullPlugin.hpp"
@@ -31,7 +32,7 @@ protected:
     const char* getLabel() const override { return "Maximizer"; }
     const char* getDescription() const override
     {
-        return "Loudness maximizer: Input Gain into a look-ahead limiter that holds the peaks at Ceiling, with stereo link, an output trim and TPDF dither with optional noise shaping.";
+        return "Loudness maximizer: Input Gain into a look-ahead limiter that holds the peaks at Ceiling, with stereo link, an optional character stage and 3-band mode, an output trim and TPDF dither with optional noise shaping.";
     }
     int64_t getUniqueId() const override { return d_cconst('N', '1', 'm', 'x'); }
 
@@ -64,6 +65,7 @@ protected:
             g = fDsp.gain();
             fIn.process(float(x));
             fOut.process(float(lv));
+            fLoud.process(l, r);
             fHl = std::fmax(fHl, lv);
             fGh = std::fmax(fGh, g);
             fGl = std::fmin(fGl, g);
@@ -78,6 +80,7 @@ protected:
         }
         taps.inLevel.store(fIn.value, std::memory_order_relaxed);
         taps.outLevel.store(fOut.value, std::memory_order_relaxed);
+        taps.extra.store(float(fLoud.lufs()), std::memory_order_relaxed);
         taps.gr.store(float(-20.0 * std::log10(std::fmax(g, 0.0000001))), std::memory_order_relaxed);
     }
 
@@ -87,6 +90,7 @@ private:
         fDsp.setSampleRate(sr);
         fIn.setup(sr);
         fOut.setup(sr);
+        fLoud.setup(sr);
         fChunk = std::max<uint32_t>(1, uint32_t(std::floor(sr * 0.007)));
         fN = 0;
         fHl = 0.0;
@@ -97,12 +101,14 @@ private:
     void update()
     {
         fDsp.setParams(value(0), value(1), value(2), value(3), value(4), value(5) >= 0.5f,
-                       int(std::lround(value(6))), value(7) >= 0.5f);
+                       int(std::lround(value(6))), value(7) >= 0.5f, int(std::lround(value(8))), value(9) >= 0.5f,
+                       std::round(value(10)), std::round(value(11)));
         setLatency(uint32_t(fDsp.latency())); // pdc_delay = look
     }
 
     nullmaximizer::MaximizerProcessor fDsp;
     nulljsfx::PeakFollower fIn, fOut;
+    nullmaximizer::ShortTermLoudness fLoud;
     uint32_t fChunk = 1, fN = 0;
     double fHl = 0.0, fGh = 0.0, fGl = 1000.0;
 

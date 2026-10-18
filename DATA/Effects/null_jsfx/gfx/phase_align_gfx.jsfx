@@ -1,0 +1,365 @@
+desc:NULL Phase Align GFX
+author: Christos Koulaxizis
+tags: phase alignment align polarity invert delay time all-pass rotation correlation sidechain multi-mic drums bass di mixing utility gui
+//category: Essentials
+//NULL JSFX v2.4 • https://nulljsfx.tech • MIT License
+
+import null_gfx.jsfx-inc
+
+slider1:0<0,1,1{Right to Left,Track to Sidechain}>-Source
+slider2:0<-10,10,0.01>-Delay (ms)
+slider3:0<-1,1,0.01>-Fine (samples)
+slider4:0<0,1,1{Off,On}>-Invert Left
+slider5:0<0,1,1{Off,On}>-Invert Right
+slider6:0<0,360,1>-Rotation (deg)
+slider7:100<20,1000,1:log>-Focus (Hz)
+slider8:0<0,1,1{Normal,Mono Sum}>-Listen
+
+in_pin:Left
+in_pin:Right
+in_pin:Sidechain Left
+in_pin:Sidechain Right
+out_pin:Left
+out_pin:Right
+
+@init
+  // NULL Phase Align (../phase_align.jsfx) with its own interface: same audio code, plus @gfx.
+  // Lines up two sources that should play together (two mics on one drum, a bass DI and its
+  // amp, the two sides of a stereo pair) in time, polarity and phase.
+  // Source Right to Left: the right channel is moved against the left (the reference). Delay
+  // (ms) plus Fine (samples, fractional) sets how late the right channel plays: positive delays
+  // it, negative delays the left channel instead, so nothing needs latency.
+  // Source Track to Sidechain: the track (both channels) is moved against the reference on
+  // channels 3/4. To play earlier than the reference it is delayed by a fixed 10 ms (plus one
+  // sample) less the Delay, and that latency is reported (pdc_delay), so a negative Delay moves
+  // the track ahead in time.
+  // Fractional delays read a 4-point cubic (Catmull-Rom) interpolation; whole samples are exact.
+  // Invert Left / Right flip the polarity of either channel (of the track in Sidechain mode).
+  // Rotation turns the phase of the moved channel(s) with two first-order all-pass filters that
+  // shift it by exactly the set angle at Focus (less below, more above), for low end that a
+  // delay alone cannot line up; 0 and 360 bypass them. Listen Mono Sum plays the moved signal
+  // added to its reference (L+R, or track + sidechain, halved), so the best setting is where
+  // the sum is fullest. The GFX version shows the phase difference and the correlation.
+  RL = 0; RR = 16384;      // the moved channels, 16384 each
+  KL = 32768; KR = 49152;  // the sidechain (reference), 16384 each
+  memset(0, 0, 65536);
+  pa_wp = 0;
+  pa_lat = ceil(srate * 0.01) + 1;
+
+  // buf delayed by d samples (d >= 0): whole samples exact, fractions by Catmull-Rom
+  function pa_read(buf, d) local(n, f, ym1, y0, y1, y2, c1, c2, c3)
+  (
+    n = floor(d);
+    f = d - n;
+    y0 = buf[(pa_wp - n + 16384) & 16383];
+    f > 0 ? (
+      ym1 = n > 0 ? buf[(pa_wp - n + 16385) & 16383] : y0;
+      y1 = buf[(pa_wp - n + 16383) & 16383];
+      y2 = buf[(pa_wp - n + 16382) & 16383];
+      c1 = 0.5 * (y1 - ym1);
+      c2 = ym1 - 2.5 * y0 + 2 * y1 - 0.5 * y2;
+      c3 = 0.5 * (y2 - ym1) + 1.5 * (y0 - y1);
+      ((c3 * f + c2) * f + c1) * f + y0;
+    ) : y0;
+  );
+
+  // first-order all-pass with the coefficient pa_a
+  function pa_ap(x) local(y)
+  (
+    y = pa_a * x + this.x1 - pa_a * this.y1;
+    this.x1 = x;
+    this.y1 = y;
+    y;
+  );
+
+  function update()
+  (
+    pa_src = slider1 >= 0.5;
+    pa_d = slider2 * srate / 1000 + slider3;
+    pa_il = slider4 >= 0.5 ? -1 : 1;
+    pa_ir = slider5 >= 0.5 ? -1 : 1;
+    // each all-pass turns the phase by half the angle at Focus: -2 atan(tan(w / 2) / t) = -a / 2
+    pa_rot = slider6 > 0 && slider6 < 360;
+    pa_rot ? (
+      pa_t = tan($pi * slider7 / srate) / tan(slider6 * $pi / 720);
+      pa_a = (pa_t - 1) / (pa_t + 1);
+    );
+    pa_sum = slider8 >= 0.5;
+    pa_dl = max(0, -pa_d);
+    pa_dr = max(0, pa_d);
+    pa_dt = pa_lat + pa_d;
+    pdc_bot_ch = 0;
+    pdc_top_ch = 2;
+    pdc_delay = pa_src ? pa_lat : 0;
+  );
+
+  // ---- display only (never changes the audio) ----
+  // correlation of the moved signal with its reference (pa_ca, pa_cb): averages over 300 ms,
+  // full band and below 150 Hz (one-pole low-passes)
+  PG_K = 1 - exp(-1 / (0.3 * srate));
+  PG_LK = 1 - exp(-2 * $pi * 150 / srate);
+  pg_ab = pg_aa = pg_bb = pg_lab = pg_laa = pg_lbb = pg_la = pg_lb = 0;
+  function pg_corr(ab, aa, bb) local(p) ( p = aa * bb; p > 0.00000000000001 ? max(-1, min(1, ab / sqrt(p))) : 0; );
+
+  // the phase of the moved signal against its reference at f Hz, in degrees, wrapped to -180..180:
+  // the delay, the all-pass turn and the polarity (in Sidechain mode, of the left channel)
+  function pg_phase(f) local(p, t)
+  (
+    p = -360 * f * pa_d / srate;
+    pa_rot ? (
+      t = tan($pi * min(f, srate * 0.4999) / srate);
+      p -= 4 * atan(t / pa_t) * 180 / $pi;
+    );
+    (pa_src ? pa_il < 0 : pa_il != pa_ir) ? p += 180;
+    p - 360 * floor((p + 180) / 360);
+  );
+
+  // correlation bar: label, a -1..+1 bar filled from the centre, the value on the right
+  function pg_bar(x, y, w, label, c) local(bx, bw, cx)
+  (
+    ng_font(1, 7, 1);
+    ng_col(NG_MUTED, 1);
+    ng_txt(label, x, y + 4, 0, 1);
+    bx = x + 30; bw = w - 64;
+    cx = bx + bw / 2;
+    ng_col(NG_BORDER, 1);
+    gfx_rect(X(bx), Y(y), bw * ng_s, 8 * ng_s);
+    ng_col(NG_ACCENT, 1);
+    c > 0 ? gfx_rect(X(cx), Y(y), bw / 2 * c * ng_s, 8 * ng_s);
+    c < 0 ? gfx_rect(X(cx + bw / 2 * c), Y(y), -bw / 2 * c * ng_s, 8 * ng_s);
+    ng_col(NG_TEXT, 1);
+    gfx_rect(X(cx) - floor(ng_s / 2), Y(y - 2), max(1, ng_s), 12 * ng_s);
+    ng_font(3, 8.5, 0);
+    sprintf(#pg_v, "%+.2f", c);
+    ng_txt(#pg_v, x + w, y + 4, 2, 0);
+  );
+
+  gfx_ext_retina = 1;
+
+  // ---- factory presets: generated by tools/build_presets.py, do not edit ----
+  ng_pre_n = 15;
+
+  function ng_preset_load(p)
+  (
+    p == 0 ? ( ng_slider_set(1, 0); ng_slider_set(2, 0); ng_slider_set(3, 0); ng_slider_set(4, 0); ng_slider_set(5, 0); ng_slider_set(6, 0); ng_slider_set(7, 100); ng_slider_set(8, 0); );
+    p == 1 ? ( ng_slider_set(1, 0); ng_slider_set(2, 0); ng_slider_set(3, 0); ng_slider_set(4, 0); ng_slider_set(5, 1); ng_slider_set(6, 0); ng_slider_set(7, 100); ng_slider_set(8, 0); );
+    p == 2 ? ( ng_slider_set(1, 0); ng_slider_set(2, 0); ng_slider_set(3, 0); ng_slider_set(4, 1); ng_slider_set(5, 1); ng_slider_set(6, 0); ng_slider_set(7, 100); ng_slider_set(8, 0); );
+    p == 3 ? ( ng_slider_set(1, 0); ng_slider_set(2, 1); ng_slider_set(3, 0); ng_slider_set(4, 0); ng_slider_set(5, 0); ng_slider_set(6, 0); ng_slider_set(7, 100); ng_slider_set(8, 0); );
+    p == 4 ? ( ng_slider_set(1, 0); ng_slider_set(2, -1); ng_slider_set(3, 0); ng_slider_set(4, 0); ng_slider_set(5, 0); ng_slider_set(6, 0); ng_slider_set(7, 100); ng_slider_set(8, 0); );
+    p == 5 ? ( ng_slider_set(1, 0); ng_slider_set(2, 0); ng_slider_set(3, 0.5); ng_slider_set(4, 0); ng_slider_set(5, 0); ng_slider_set(6, 0); ng_slider_set(7, 100); ng_slider_set(8, 0); );
+    p == 6 ? ( ng_slider_set(1, 0); ng_slider_set(2, 0); ng_slider_set(3, 0); ng_slider_set(4, 0); ng_slider_set(5, 0); ng_slider_set(6, 90); ng_slider_set(7, 80); ng_slider_set(8, 0); );
+    p == 7 ? ( ng_slider_set(1, 0); ng_slider_set(2, 0); ng_slider_set(3, 0); ng_slider_set(4, 0); ng_slider_set(5, 0); ng_slider_set(6, 180); ng_slider_set(7, 60); ng_slider_set(8, 0); );
+    p == 8 ? ( ng_slider_set(1, 0); ng_slider_set(2, 0); ng_slider_set(3, 0); ng_slider_set(4, 0); ng_slider_set(5, 1); ng_slider_set(6, 0); ng_slider_set(7, 100); ng_slider_set(8, 1); );
+    p == 9 ? ( ng_slider_set(1, 0); ng_slider_set(2, 0); ng_slider_set(3, 0); ng_slider_set(4, 0); ng_slider_set(5, 0); ng_slider_set(6, 0); ng_slider_set(7, 100); ng_slider_set(8, 1); );
+    p == 10 ? ( ng_slider_set(1, 1); ng_slider_set(2, -0.5); ng_slider_set(3, 0); ng_slider_set(4, 1); ng_slider_set(5, 1); ng_slider_set(6, 0); ng_slider_set(7, 100); ng_slider_set(8, 1); );
+    p == 11 ? ( ng_slider_set(1, 1); ng_slider_set(2, 2); ng_slider_set(3, 0); ng_slider_set(4, 0); ng_slider_set(5, 0); ng_slider_set(6, 45); ng_slider_set(7, 90); ng_slider_set(8, 1); );
+    p == 12 ? ( ng_slider_set(1, 1); ng_slider_set(2, -6); ng_slider_set(3, 0); ng_slider_set(4, 0); ng_slider_set(5, 0); ng_slider_set(6, 0); ng_slider_set(7, 100); ng_slider_set(8, 0); );
+    p == 13 ? ( ng_slider_set(1, 1); ng_slider_set(2, 0); ng_slider_set(3, 0); ng_slider_set(4, 0); ng_slider_set(5, 0); ng_slider_set(6, 0); ng_slider_set(7, 100); ng_slider_set(8, 0); );
+    p == 14 ? ( ng_slider_set(1, 0); ng_slider_set(2, -10); ng_slider_set(3, 0); ng_slider_set(4, 0); ng_slider_set(5, 0); ng_slider_set(6, 0); ng_slider_set(7, 100); ng_slider_set(8, 0); );
+  );
+
+  // the first preset every slider matches, or -1
+  function ng_preset_match() local(m)
+  (
+    m = -1;
+    m < 0 && ng_pre_eq(slider1, 0) && ng_pre_eq(slider2, 0) && ng_pre_eq(slider3, 0) && ng_pre_eq(slider4, 0) && ng_pre_eq(slider5, 0) && ng_pre_eq(slider6, 0) && ng_pre_eq(slider7, 100) && ng_pre_eq(slider8, 0) ? m = 0;
+    m < 0 && ng_pre_eq(slider1, 0) && ng_pre_eq(slider2, 0) && ng_pre_eq(slider3, 0) && ng_pre_eq(slider4, 0) && ng_pre_eq(slider5, 1) && ng_pre_eq(slider6, 0) && ng_pre_eq(slider7, 100) && ng_pre_eq(slider8, 0) ? m = 1;
+    m < 0 && ng_pre_eq(slider1, 0) && ng_pre_eq(slider2, 0) && ng_pre_eq(slider3, 0) && ng_pre_eq(slider4, 1) && ng_pre_eq(slider5, 1) && ng_pre_eq(slider6, 0) && ng_pre_eq(slider7, 100) && ng_pre_eq(slider8, 0) ? m = 2;
+    m < 0 && ng_pre_eq(slider1, 0) && ng_pre_eq(slider2, 1) && ng_pre_eq(slider3, 0) && ng_pre_eq(slider4, 0) && ng_pre_eq(slider5, 0) && ng_pre_eq(slider6, 0) && ng_pre_eq(slider7, 100) && ng_pre_eq(slider8, 0) ? m = 3;
+    m < 0 && ng_pre_eq(slider1, 0) && ng_pre_eq(slider2, -1) && ng_pre_eq(slider3, 0) && ng_pre_eq(slider4, 0) && ng_pre_eq(slider5, 0) && ng_pre_eq(slider6, 0) && ng_pre_eq(slider7, 100) && ng_pre_eq(slider8, 0) ? m = 4;
+    m < 0 && ng_pre_eq(slider1, 0) && ng_pre_eq(slider2, 0) && ng_pre_eq(slider3, 0.5) && ng_pre_eq(slider4, 0) && ng_pre_eq(slider5, 0) && ng_pre_eq(slider6, 0) && ng_pre_eq(slider7, 100) && ng_pre_eq(slider8, 0) ? m = 5;
+    m < 0 && ng_pre_eq(slider1, 0) && ng_pre_eq(slider2, 0) && ng_pre_eq(slider3, 0) && ng_pre_eq(slider4, 0) && ng_pre_eq(slider5, 0) && ng_pre_eq(slider6, 90) && ng_pre_eq(slider7, 80) && ng_pre_eq(slider8, 0) ? m = 6;
+    m < 0 && ng_pre_eq(slider1, 0) && ng_pre_eq(slider2, 0) && ng_pre_eq(slider3, 0) && ng_pre_eq(slider4, 0) && ng_pre_eq(slider5, 0) && ng_pre_eq(slider6, 180) && ng_pre_eq(slider7, 60) && ng_pre_eq(slider8, 0) ? m = 7;
+    m < 0 && ng_pre_eq(slider1, 0) && ng_pre_eq(slider2, 0) && ng_pre_eq(slider3, 0) && ng_pre_eq(slider4, 0) && ng_pre_eq(slider5, 1) && ng_pre_eq(slider6, 0) && ng_pre_eq(slider7, 100) && ng_pre_eq(slider8, 1) ? m = 8;
+    m < 0 && ng_pre_eq(slider1, 0) && ng_pre_eq(slider2, 0) && ng_pre_eq(slider3, 0) && ng_pre_eq(slider4, 0) && ng_pre_eq(slider5, 0) && ng_pre_eq(slider6, 0) && ng_pre_eq(slider7, 100) && ng_pre_eq(slider8, 1) ? m = 9;
+    m < 0 && ng_pre_eq(slider1, 1) && ng_pre_eq(slider2, -0.5) && ng_pre_eq(slider3, 0) && ng_pre_eq(slider4, 1) && ng_pre_eq(slider5, 1) && ng_pre_eq(slider6, 0) && ng_pre_eq(slider7, 100) && ng_pre_eq(slider8, 1) ? m = 10;
+    m < 0 && ng_pre_eq(slider1, 1) && ng_pre_eq(slider2, 2) && ng_pre_eq(slider3, 0) && ng_pre_eq(slider4, 0) && ng_pre_eq(slider5, 0) && ng_pre_eq(slider6, 45) && ng_pre_eq(slider7, 90) && ng_pre_eq(slider8, 1) ? m = 11;
+    m < 0 && ng_pre_eq(slider1, 1) && ng_pre_eq(slider2, -6) && ng_pre_eq(slider3, 0) && ng_pre_eq(slider4, 0) && ng_pre_eq(slider5, 0) && ng_pre_eq(slider6, 0) && ng_pre_eq(slider7, 100) && ng_pre_eq(slider8, 0) ? m = 12;
+    m < 0 && ng_pre_eq(slider1, 1) && ng_pre_eq(slider2, 0) && ng_pre_eq(slider3, 0) && ng_pre_eq(slider4, 0) && ng_pre_eq(slider5, 0) && ng_pre_eq(slider6, 0) && ng_pre_eq(slider7, 100) && ng_pre_eq(slider8, 0) ? m = 13;
+    m < 0 && ng_pre_eq(slider1, 0) && ng_pre_eq(slider2, -10) && ng_pre_eq(slider3, 0) && ng_pre_eq(slider4, 0) && ng_pre_eq(slider5, 0) && ng_pre_eq(slider6, 0) && ng_pre_eq(slider7, 100) && ng_pre_eq(slider8, 0) ? m = 14;
+    m;
+  );
+
+  function ng_preset_name(p) local(s)
+  (
+    s = "";
+    p == 0 ? s = "Default";
+    p == 1 ? s = "Flip Right";
+    p == 2 ? s = "Flip Both";
+    p == 3 ? s = "Right Late 1 ms";
+    p == 4 ? s = "Right Early 1 ms";
+    p == 5 ? s = "Half Sample Nudge";
+    p == 6 ? s = "Low End Turn 90";
+    p == 7 ? s = "Low End Turn 180";
+    p == 8 ? s = "Kick In/Out Check";
+    p == 9 ? s = "Mono Sum Listen";
+    p == 10 ? s = "Snare Bottom Mic";
+    p == 11 ? s = "Bass DI to Amp";
+    p == 12 ? s = "Room Mic Pull";
+    p == 13 ? s = "Sidechain Reference";
+    p == 14 ? s = "Haas Undo 10 ms";
+    s;
+  );
+
+  function ng_presets() local(i)
+  (
+    ng_pre_req >= 0 ? ( ng_preset_load(ng_pre_req); update(); ng_pre_req = -1; );
+    ng_pre_cur = ng_preset_match();
+    ng_pre_open ? (
+      ng_pre_menu_begin();
+      i = 0;
+      loop(ng_pre_n, ng_pre_item(i, ng_preset_name(i)); i += 1;);
+      ng_pre_menu_end();
+    );
+    strcpy(#ng_pre_name, ng_pre_cur >= 0 ? ng_preset_name(ng_pre_cur) : "CUSTOM");
+  );
+  // ---- end of factory presets ----
+
+@slider
+  update();
+
+@sample
+  RL[pa_wp] = spl0 * pa_il;
+  RR[pa_wp] = spl1 * pa_ir;
+  KL[pa_wp] = spl2;
+  KR[pa_wp] = spl3;
+  !pa_src ? (
+    pa_l = pa_read(RL, pa_dl);
+    pa_r = pa_read(RR, pa_dr);
+    pa_rot ? (
+      pa_r = r1.pa_ap(pa_r);
+      pa_r = r2.pa_ap(pa_r);
+    );
+    // the moved signal and its reference (the GFX version's correlation meter reads them)
+    pa_ca = pa_r;
+    pa_cb = pa_l;
+    pa_sum ? (
+      pa_l = (pa_l + pa_r) * 0.5;
+      pa_r = pa_l;
+    );
+  ) : (
+    pa_l = pa_read(RL, pa_dt);
+    pa_r = pa_read(RR, pa_dt);
+    pa_rot ? (
+      pa_l = l1.pa_ap(pa_l);
+      pa_l = l2.pa_ap(pa_l);
+      pa_r = r1.pa_ap(pa_r);
+      pa_r = r2.pa_ap(pa_r);
+    );
+    pa_kl = KL[(pa_wp - pa_lat + 16384) & 16383];
+    pa_kr = KR[(pa_wp - pa_lat + 16384) & 16383];
+    pa_ca = (pa_l + pa_r) * 0.5;
+    pa_cb = (pa_kl + pa_kr) * 0.5;
+    pa_sum ? (
+      pa_l = (pa_l + pa_kl) * 0.5;
+      pa_r = (pa_r + pa_kr) * 0.5;
+    );
+  );
+  pa_wp = (pa_wp + 1) & 16383;
+  spl0 = pa_l;
+  spl1 = pa_r;
+  // display only: the correlation averages
+  pg_la += PG_LK * (pa_ca - pg_la);
+  pg_lb += PG_LK * (pa_cb - pg_lb);
+  pg_ab += PG_K * (pa_ca * pa_cb - pg_ab);
+  pg_aa += PG_K * (pa_ca * pa_ca - pg_aa);
+  pg_bb += PG_K * (pa_cb * pa_cb - pg_bb);
+  pg_lab += PG_K * (pg_la * pg_lb - pg_lab);
+  pg_laa += PG_K * (pg_la * pg_la - pg_laa);
+  pg_lbb += PG_K * (pg_lb * pg_lb - pg_lbb);
+
+@gfx 480 440
+  ng_knobs_begin("PHASE ALIGN", "ESSENTIALS", 480, 180, 2, 0);
+
+  // display, left: the phase of the moved signal against its reference (-180..+180 degrees,
+  // 20 Hz .. 20 kHz) with Focus marked while Rotation is on; right: the delay, the latency and
+  // the correlation of the two (full band and below 150 Hz: +1 = in phase, -1 = opposed)
+  ng_plot(58, 70, 252, 132);
+  pg_d = 10;
+  loop(4,
+    pg_m = 1;
+    loop(9,
+      pg_f = pg_m * pg_d;
+      pg_f >= 20 && pg_f <= 20000 ? (
+        pg_x = floor(ng_freq_x(pg_f)) + 0.5;
+        ng_col(NG_BORDER, pg_m == 1 ? 1 : 0.5);
+        gfx_line(pg_x, ng_py, pg_x, ng_py + ng_ph, 0);
+      );
+      pg_m += 1;
+    );
+    pg_d *= 10;
+  );
+  ng_font(4, 8, 0);
+  pg_a = -180;
+  loop(5,
+    pg_y = floor(ng_lin_y(pg_a, -180, 180)) + 0.5;
+    ng_col(pg_a == 0 ? 0x45433f : NG_BORDER, pg_a == 0 ? 1 : 0.6);
+    gfx_line(ng_px, pg_y, ng_px + ng_pw, pg_y, 0);
+    pg_a % 180 == 0 ? (
+      ng_col(NG_MUTED, 1);
+      pg_a > 0 ? sprintf(#pg_t, "+%d", pg_a) : sprintf(#pg_t, "%d", pg_a);
+      ng_ptxt(#pg_t, ng_px - 6 * ng_s, pg_y, 2);
+    );
+    pg_a += 90;
+  );
+  ng_col(NG_MUTED, 1);
+  ng_ptxt("100", ng_freq_x(100), ng_py + ng_ph + 11 * ng_s, 1);
+  ng_ptxt("1k", ng_freq_x(1000), ng_py + ng_ph + 11 * ng_s, 1);
+  ng_ptxt("10k", ng_freq_x(10000), ng_py + ng_ph + 11 * ng_s, 1);
+  pa_rot ? (
+    pg_x = floor(ng_freq_x(slider7)) + 0.5;
+    ng_col(NG_ACCENT, 0.5);
+    pg_y = ng_py;
+    while (
+      gfx_line(pg_x, pg_y, pg_x, min(pg_y + 3 * ng_s, ng_py + ng_ph), 0);
+      pg_y += 6 * ng_s;
+      pg_y < ng_py + ng_ph;
+    );
+  );
+  // the curve, broken where it wraps
+  ng_col(NG_ACCENT, 1);
+  pg_i = 0;
+  loop(floor(ng_pw) + 1,
+    pg_p = pg_phase(20 * 1000 ^ (pg_i / ng_pw));
+    pg_y = ng_lin_y(pg_p, -180, 180);
+    pg_i == 0 || abs(pg_p - pg_lp) > 180 ? ng_line_start(ng_px + pg_i, pg_y) : ng_line_to(ng_px + pg_i, pg_y);
+    pg_lp = pg_p;
+    pg_i += 1;
+  );
+
+  // right column
+  ng_font(1, 7, 1);
+  ng_col(NG_MUTED, 1);
+  ng_txt("TOTAL DELAY", 330, 76, 0, 1.5);
+  ng_txt("CORRELATION", 330, 150, 0, 1.5);
+  ng_font(1, 10, 1);
+  ng_col(NG_TEXT, 1);
+  sprintf(#pg_t, "%+.2f ms", pa_d * 1000 / srate);
+  ng_txt(#pg_t, 330, 92, 0, 0.5);
+  ng_font(4, 7.5, 0);
+  ng_col(NG_MUTED, 1);
+  sprintf(#pg_t, "%+.2f samples", pa_d);
+  ng_txt(#pg_t, 330, 108, 0, 0);
+  pa_src ? sprintf(#pg_t, "Latency %d samples", pa_lat) : strcpy(#pg_t, "No latency");
+  ng_txt(#pg_t, 330, 122, 0, 0);
+  pg_bar(330, 162, 120, "FULL", pg_corr(pg_ab, pg_aa, pg_bb));
+  pg_bar(330, 182, 120, "LOW", pg_corr(pg_lab, pg_laa, pg_lbb));
+
+  ng_row(4);
+  ng_select_ctl(1, "SOURCE", "R TO L|SIDECHAIN", 0) ? update();
+  ng_select_ctl(4, "INVERT L", "OFF|ON", 0) ? update();
+  ng_select_ctl(5, "INVERT R", "OFF|ON", 0) ? update();
+  ng_select_ctl(8, "LISTEN", "NORMAL|MONO SUM", 0) ? update();
+  ng_row(4);
+  sprintf(#v2, "%+.2f ms", slider2);
+  ng_knob_ctl(2, "DELAY", #v2, -10, 10, 0, 0.01, 1) ? update();
+  sprintf(#v3, "%+.2f smp", slider3);
+  ng_knob_ctl(3, "FINE", #v3, -1, 1, 0, 0.01, 1) ? update();
+  sprintf(#v6, "%d deg", slider6);
+  ng_knob_ctl(6, "ROTATION", #v6, 0, 360, 0, 1, 0) ? update();
+  sprintf(#v7, "%d Hz", slider7);
+  ng_knob_ctl_log(7, "FOCUS", #v7, 20, 1000, 100, 1) ? update();
+
+  ng_end();
+
+  ng_presets(); // the preset list (generated by tools/build_presets.py)

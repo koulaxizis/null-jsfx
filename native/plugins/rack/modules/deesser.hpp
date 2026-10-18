@@ -48,7 +48,7 @@ public:
     }
 
 private:
-    void update() { fDsp.setParams(fV[0], fV[1]); }
+    void update() { fDsp.setParams(fV[0], fV[1], fV[2] >= 0.5f, fV[3] >= 0.5f, fV[4], fV[5], fV[6] >= 0.5f); }
 
     nulldeesser::DeEsserProcessor fDsp;
     float fV[nulldeesser::kNumSliders];

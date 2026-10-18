@@ -25,7 +25,7 @@ protected:
     const char* getLabel() const override { return "CabinetSimulator"; }
     const char* getDescription() const override
     {
-        return "Miked speaker cabinet without impulse files: five cabinets, mic position, low cut, mix and output.";
+        return "Miked speaker cabinet without impulse files: eight cabinets, two blended mic positions, low cut, mix and output.";
     }
     int64_t getUniqueId() const override { return d_cconst('N', '2', 'C', 'B'); }
 
@@ -47,7 +47,7 @@ protected:
 private:
     void update()
     {
-        fDsp.setParams(int(std::lround(value(0))), value(1), value(2), value(3), value(4));
+        fDsp.setParams(int(std::lround(value(0))), value(1), value(2), value(3), value(4), value(5), value(6));
     }
 
     nullcab::CabinetSimulatorProcessor fDsp;

@@ -15,9 +15,11 @@ static const NullKnobsUI::Control kControls[] = {
     { 16, NullKnobsUI::kSelect, "MODE", 0, 0, false },
     { 17, NullKnobsUI::kSelect, "NOTE", 0, 0, false },
     { 18, NullKnobsUI::kKnob, "FREE RATE", 0, 0, false },
+    { 22, NullKnobsUI::kKnob, "PROBABILITY", 0, 0, false },
     { 19, NullKnobsUI::kKnob, "ATTACK", 1, 0, false },
     { 20, NullKnobsUI::kKnob, "RELEASE", 1, 0, false },
     { 21, NullKnobsUI::kKnob, "DEPTH", 1, 0, false },
+    { 23, NullKnobsUI::kKnob, "SEED", 1, 0, false },
     // STEPS 1-8 and STEPS 9-16 tabs, four per row
     { 0, NullKnobsUI::kSelect, "STEP 1", 0, 1, false },
     { 1, NullKnobsUI::kSelect, "STEP 2", 0, 1, false },
@@ -62,9 +64,11 @@ protected:
 
         int cur = -1;
         double bpm = 120.0;
+        bool kept = true;
         if (nulljsfx::Taps* t = taps())
         {
             cur = int(std::lround(t->extra.load(std::memory_order_relaxed)));
+            kept = t->aux[0].load(std::memory_order_relaxed) >= 0.5f;
             const float tp = t->gr.load(std::memory_order_relaxed);
             if (tp > 0.0f)
                 bpm = tp;
@@ -77,7 +81,8 @@ protected:
             const float x0 = fPX + float(k) * cw + 1.0f, w = cw - 2.0f;
             beginPath();
             rect(x0, fPY, w, fPH);
-            fillColor(p.steps[k] ? col(theme::kAccent, k == cur ? 0.40f : 0.22f)
+            // an "on" step that Probability skips this time is drawn as off while it plays
+            fillColor(p.steps[k] && (k != cur || p.probPct >= 100.0 || kept) ? col(theme::kAccent, k == cur ? 0.40f : 0.22f)
                                  : col(k == cur ? theme::kBorder : theme::kBackground));
             fill();
             if (k == cur)

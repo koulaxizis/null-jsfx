@@ -1,11 +1,16 @@
 desc:NULL DeEsser
 author: Christos Koulaxizis
-tags: deess sibilance sibilants hiss vocal harshness frequency
+tags: deess sibilance sibilants hiss vocal harshness frequency wideband listen
 //category: Essentials
 //NULL JSFX v2.4 • https://nulljsfx.tech • MIT License
 
 slider1:6000<4000,10000,100>Target (Hz)
 slider2:-6<-18,0,0.1>Reduction (dB)
+slider3:0<0,1,1{Split,Wide}>Mode
+slider4:0<0,1,1{Auto,Manual}>Threshold Mode
+slider5:-30<-60,0,0.1>Threshold (dB)
+slider6:-18<-18,0,0.1>Range (dB)
+slider7:0<0,1,1{Off,On}>Listen
 
 in_pin:Left
 in_pin:Right
@@ -15,8 +20,11 @@ out_pin:Right
 @init
   // Split-band de-esser: a band-pass around Target isolates the sibilance, an envelope
   // follower measures it, and only that band is turned down (by up to Reduction dB)
-  // when it gets loud, so the rest of the voice is untouched.
+  // when it gets loud, so the rest of the voice is untouched. Wide turns the whole signal down
+  // instead; Manual sets the threshold (Auto: -30 dB); Range caps the reduction; Listen plays
+  // only what is removed.
   threshold = 10 ^ (-30 / 20);
+  thr_auto = threshold;
   att = exp(-1 / (0.0005 * srate));
   rel = exp(-1 / (0.06 * srate));
   env = 0;
@@ -33,6 +41,11 @@ out_pin:Right
   a1 = -2 * cos(w0) / a0;
   a2 = (1 - alpha) / a0;
   max_cut = 1 - 10 ^ (slider2 / 20);   // fraction of the band that may be removed
+  wide = slider3 >= 0.5;
+  threshold = slider4 >= 0.5 ? 10 ^ (slider5 / 20) : thr_auto;
+  rng_on = slider6 > slider2;          // a Range below Reduction never limits
+  rng_cut = 1 - 10 ^ (slider6 / 20);
+  listen = slider7 >= 0.5;
 
 @sample
   bl = b0 * spl0 + b2 * x2l - a1 * y1l - a2 * y2l;
@@ -46,6 +59,19 @@ out_pin:Right
   // 0 below threshold, rising to full reduction 12 dB above it
   over = env > threshold ? min(log(env / threshold) / log(4), 1) : 0;
   cut = over * max_cut;
+  rng_on ? cut = min(cut, rng_cut);
 
-  spl0 -= bl * cut;
-  spl1 -= br * cut;
+  wide ? (
+    rm_l = spl0 * cut;
+    rm_r = spl1 * cut;
+  ) : (
+    rm_l = bl * cut;
+    rm_r = br * cut;
+  );
+  listen ? (
+    spl0 = rm_l;
+    spl1 = rm_r;
+  ) : (
+    spl0 -= rm_l;
+    spl1 -= rm_r;
+  );

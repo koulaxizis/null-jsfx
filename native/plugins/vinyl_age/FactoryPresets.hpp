@@ -8,20 +8,24 @@ namespace nullpresets {
 
 struct FactoryPreset {
     const char* name;
-    float values[8];
+    float values[11];
 };
 
 static const FactoryPreset kPresets[] = {
-    { "Default", { 30.0f, 20.0f, 25.0f, 10.0f, 12.0f, 22050.0f, 8000.0f, 80.0f } },
-    { "Subtle Warmth", { 8.0f, 5.0f, 10.0f, 4.0f, 16.0f, 44100.0f, 12000.0f, 50.0f } },
-    { "Lofi Hip Hop Keys", { 20.0f, 10.0f, 35.0f, 12.0f, 12.0f, 22000.0f, 6000.0f, 80.0f } },
-    { "Dusty Old Record", { 25.0f, 15.0f, 60.0f, 20.0f, 10.0f, 16000.0f, 5000.0f, 90.0f } },
-    { "Warped Tape Memory", { 70.0f, 40.0f, 10.0f, 15.0f, 12.0f, 22000.0f, 6000.0f, 85.0f } },
-    { "AM Radio", { 5.0f, 10.0f, 15.0f, 30.0f, 8.0f, 11000.0f, 3500.0f, 100.0f } },
-    { "Gramophone", { 35.0f, 25.0f, 80.0f, 25.0f, 8.0f, 8000.0f, 3000.0f, 100.0f } },
-    { "Crackle Only Layer", { 0.0f, 0.0f, 50.0f, 8.0f, 16.0f, 44100.0f, 20000.0f, 50.0f } },
+    { "Default", { 30.0f, 20.0f, 25.0f, 10.0f, 12.0f, 22050.0f, 8000.0f, 80.0f, 0.0f, 0.0f, 0.0f } },
+    { "Subtle Warmth", { 8.0f, 5.0f, 10.0f, 4.0f, 16.0f, 44100.0f, 12000.0f, 50.0f, 0.0f, 0.0f, 0.0f } },
+    { "Lofi Hip Hop Keys", { 20.0f, 10.0f, 35.0f, 12.0f, 12.0f, 22000.0f, 6000.0f, 80.0f, 0.0f, 0.0f, 0.0f } },
+    { "Dusty Old Record", { 25.0f, 15.0f, 60.0f, 20.0f, 10.0f, 16000.0f, 5000.0f, 90.0f, 0.0f, 0.0f, 0.0f } },
+    { "Warped Tape Memory", { 70.0f, 40.0f, 10.0f, 15.0f, 12.0f, 22000.0f, 6000.0f, 85.0f, 0.0f, 0.0f, 0.0f } },
+    { "AM Radio", { 5.0f, 10.0f, 15.0f, 30.0f, 8.0f, 11000.0f, 3500.0f, 100.0f, 0.0f, 0.0f, 0.0f } },
+    { "Gramophone", { 35.0f, 25.0f, 80.0f, 25.0f, 8.0f, 8000.0f, 3000.0f, 100.0f, 0.0f, 0.0f, 0.0f } },
+    { "Crackle Only Layer", { 0.0f, 0.0f, 50.0f, 8.0f, 16.0f, 44100.0f, 20000.0f, 50.0f, 0.0f, 0.0f, 0.0f } },
+    { "45 RPM Single", { 15.0f, 10.0f, 25.0f, 8.0f, 16.0f, 44100.0f, 12000.0f, 80.0f, 1.0f, 10.0f, 0.0f } },
+    { "78 Shellac", { 30.0f, 20.0f, 70.0f, 30.0f, 12.0f, 22000.0f, 6000.0f, 100.0f, 2.0f, 35.0f, 1.0f } },
+    { "Scratched Mono LP", { 20.0f, 10.0f, 35.0f, 12.0f, 14.0f, 32000.0f, 9000.0f, 90.0f, 0.0f, 60.0f, 1.0f } },
+    { "Worn Jukebox 45", { 40.0f, 25.0f, 50.0f, 15.0f, 12.0f, 22000.0f, 7000.0f, 90.0f, 1.0f, 45.0f, 0.0f } },
 };
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
-static constexpr uint32_t kNumValues = 8;
+static constexpr uint32_t kNumValues = 11;
 
 } // namespace nullpresets

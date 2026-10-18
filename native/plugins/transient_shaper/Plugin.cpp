@@ -31,7 +31,8 @@ protected:
     const char* getLabel() const override { return "Transient Shaper"; }
     const char* getDescription() const override
     {
-        return "Transient shaper: boosts or cuts the attack and the sustain of each hit, with a dry/wet mix.";
+        return "Transient shaper: boosts or cuts the attack and the sustain of each hit, with three detector speeds, a focus "
+               "band, a dry/wet mix, output gain and an output soft clip.";
     }
     int64_t getUniqueId() const override { return d_cconst('N', '1', 't', 's'); }
 
@@ -97,7 +98,8 @@ private:
 
     void update()
     {
-        fDsp.setParams(value(0), value(1), value(2));
+        fDsp.setParams(value(0), value(1), value(2), int(std::lround(value(3))), value(4), value(5), value(6) >= 0.5f,
+                       value(7));
     }
 
     nulltransient::TransientProcessor fDsp;

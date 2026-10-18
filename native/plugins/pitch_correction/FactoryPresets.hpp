@@ -8,21 +8,25 @@ namespace nullpresets {
 
 struct FactoryPreset {
     const char* name;
-    float values[7];
+    float values[10];
 };
 
 static const FactoryPreset kPresets[] = {
-    { "Default", { 0.0f, 0.0f, 20.0f, 20.0f, 0.0f, 50.0f, 100.0f } },
-    { "Natural Vocal Polish", { 0.0f, 0.0f, 60.0f, 50.0f, 0.0f, 50.0f, 100.0f } },
-    { "Slow Ballad Touch", { 0.0f, 0.0f, 120.0f, 60.0f, 0.0f, 50.0f, 100.0f } },
-    { "Pop Vocal C Major", { 0.0f, 1.0f, 35.0f, 35.0f, 0.0f, 50.0f, 100.0f } },
-    { "Hard Tune Effect", { 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 60.0f, 100.0f } },
-    { "Hard Tune A Minor", { 9.0f, 2.0f, 0.0f, 0.0f, 0.0f, 60.0f, 100.0f } },
-    { "Pentatonic Snap A", { 9.0f, 5.0f, 5.0f, 10.0f, 0.0f, 50.0f, 100.0f } },
-    { "Blues Lead E", { 4.0f, 6.0f, 30.0f, 40.0f, 0.0f, 50.0f, 100.0f } },
-    { "Octave Up Layer", { 0.0f, 0.0f, 40.0f, 40.0f, 12.0f, 50.0f, 50.0f } },
+    { "Default", { 0.0f, 0.0f, 20.0f, 20.0f, 0.0f, 50.0f, 100.0f, 0.0f, 5.0f, 0.0f } },
+    { "Natural Vocal Polish", { 0.0f, 0.0f, 60.0f, 50.0f, 0.0f, 50.0f, 100.0f, 0.0f, 5.0f, 0.0f } },
+    { "Slow Ballad Touch", { 0.0f, 0.0f, 120.0f, 60.0f, 0.0f, 50.0f, 100.0f, 0.0f, 5.0f, 0.0f } },
+    { "Pop Vocal C Major", { 0.0f, 1.0f, 35.0f, 35.0f, 0.0f, 50.0f, 100.0f, 0.0f, 5.0f, 0.0f } },
+    { "Hard Tune Effect", { 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 60.0f, 100.0f, 0.0f, 5.0f, 0.0f } },
+    { "Hard Tune A Minor", { 9.0f, 2.0f, 0.0f, 0.0f, 0.0f, 60.0f, 100.0f, 0.0f, 5.0f, 0.0f } },
+    { "Pentatonic Snap A", { 9.0f, 5.0f, 5.0f, 10.0f, 0.0f, 50.0f, 100.0f, 0.0f, 5.0f, 0.0f } },
+    { "Blues Lead E", { 4.0f, 6.0f, 30.0f, 40.0f, 0.0f, 50.0f, 100.0f, 0.0f, 5.0f, 0.0f } },
+    { "Octave Up Layer", { 0.0f, 0.0f, 40.0f, 40.0f, 12.0f, 50.0f, 50.0f, 0.0f, 5.0f, 0.0f } },
+    { "Robot Retune", { 0.0f, 4.0f, 0.0f, 0.0f, 0.0f, 70.0f, 100.0f, 0.0f, 5.0f, 0.0f } },
+    { "Natural Vibrato", { 0.0f, 1.0f, 50.0f, 0.0f, 0.0f, 50.0f, 100.0f, 0.0f, 5.5f, 30.0f } },
+    { "MIDI Hard Tune", { 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 60.0f, 100.0f, 1.0f, 5.0f, 0.0f } },
+    { "MIDI Melody Guide", { 0.0f, 0.0f, 40.0f, 30.0f, 0.0f, 50.0f, 100.0f, 1.0f, 5.0f, 20.0f } },
 };
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
-static constexpr uint32_t kNumValues = 7;
+static constexpr uint32_t kNumValues = 10;
 
 } // namespace nullpresets

@@ -29,6 +29,8 @@ PINS = ["in_pin:Left", "in_pin:Right", "out_pin:Left", "out_pin:Right"]
 SIDECHAIN_PINS = ["in_pin:Left", "in_pin:Right", "in_pin:Sidechain Left", "in_pin:Sidechain Right",
                   "out_pin:Left", "out_pin:Right"]
 INSTRUMENT_PINS = ["in_pin:none", "out_pin:Left", "out_pin:Right"]
+# a drum machine with group outputs: the main pair, then the snare, hats and perc pairs
+INSTRUMENT_GROUP_PINS = INSTRUMENT_PINS + [f"out_pin:{g} {s}" for g in ("Snare", "Hats", "Perc") for s in ("Left", "Right")]
 # eight channels each way: a stereo input (or band 1) plus bands 2-4 in, four stereo bands out
 BAND_PINS = (["in_pin:Left", "in_pin:Right"]
              + [f"in_pin:Band {b} {s}" for b in (2, 3, 4) for s in ("Left", "Right")]
@@ -72,6 +74,11 @@ def check(path):
     if len(lines) < 5 or lines[4] != FOOTER:
         errors.append(f"line 5 must be {FOOTER!r}")
 
+    sections = [l.split()[0] for l in lines if l.startswith("@")]
+    for sec in sorted(set(sections)):
+        if sections.count(sec) > 1:
+            errors.append(f"{sec} appears {sections.count(sec)} times; a section must appear once")
+
     header_end = next((i for i, l in enumerate(lines) if l.startswith("@")), len(lines))
     header = lines[:header_end]
     sliders = [l for l in header if re.match(r"slider\d+:", l)]
@@ -86,8 +93,9 @@ def check(path):
     if category in ("Essentials", "Advanced", "Instruments") and len(sliders) == 1:
         errors.append(f"{category} plugin has only one slider; should it be One Slider?")
     pins = [l.strip() for l in header if l.startswith(("in_pin:", "out_pin:"))]
-    if category == "Instruments" and pins != INSTRUMENT_PINS:
-        errors.append("instrument pins must be in_pin:none, out_pin:Left, out_pin:Right")
+    if category == "Instruments" and pins not in (INSTRUMENT_PINS, INSTRUMENT_GROUP_PINS):
+        errors.append("instrument pins must be in_pin:none, out_pin:Left, out_pin:Right "
+                      "(plus the Snare, Hats and Perc pairs for group outputs)")
     elif category != "Instruments" and pins not in (PINS, SIDECHAIN_PINS, BAND_PINS):
         errors.append("pins must be in_pin:Left, in_pin:Right, out_pin:Left, out_pin:Right "
                       "(plus in_pin:Sidechain Left/Right after the main inputs for sidechain plugins, "

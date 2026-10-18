@@ -17,7 +17,7 @@ static const char* const kOnOff[] = { "OFF", "ON" };
 static const char* const kModeOptions[] = { "SYNC", "FREE" };
 static const char* const kNoteOptions[] = { "1/4", "1/8", "1/16", "1/32" };
 
-// slider1..slider22 of trance_gate.jsfx, in order
+// slider1..slider24 of trance_gate.jsfx, in order (23 and 24 appended in 2.4)
 static const DISTRHO::SliderInfo kSliders[] = {
     { "Step 1", "step1", 0.0f, 1.0f, 1.0f, "", 1.0f, kOnOff },
     { "Step 2", "step2", 0.0f, 1.0f, 1.0f, "", 1.0f, kOnOff },
@@ -41,6 +41,8 @@ static const DISTRHO::SliderInfo kSliders[] = {
     { "Attack", "attack", 1.0f, 100.0f, 5.0f, "ms", 1.0f },
     { "Release", "release", 10.0f, 500.0f, 40.0f, "ms", 1.0f },
     { "Gate Depth", "depth", 0.0f, 100.0f, 100.0f, "%", 1.0f },
+    { "Probability", "probability", 0.0f, 100.0f, 100.0f, "%", 1.0f },
+    { "Seed", "seed", 0.0f, 999.0f, 0.0f, "", 1.0f },
 };
 static constexpr uint32_t kNumSliders = sizeof(kSliders) / sizeof(kSliders[0]);
 
@@ -60,6 +62,8 @@ inline Params paramsFrom(V value)
     p.attackMs = std::round(value(19));
     p.releaseMs = std::round(value(20));
     p.depthPct = std::round(value(21));
+    p.probPct = std::round(value(22));
+    p.seed = std::round(value(23));
     return p;
 }
 

@@ -1,6 +1,6 @@
 desc:NULL Dynamics
 author: Christos Koulaxizis
-tags: dynamics compressor expander gain reduction ratio threshold knee sidechain parallel bus fet opto
+tags: dynamics compressor expander gain reduction ratio threshold knee sidechain parallel bus fet opto upward
 //category: Essentials
 //NULL JSFX v2.4 • https://nulljsfx.tech • MIT License
 
@@ -11,7 +11,7 @@ slider4:6<0,20,1>Knee (dB)
 slider5:10<0,200,1>Attack (ms)
 slider6:100<0,1000,1>Release (ms)
 slider7:0<0,20,1>Makeup (dB)
-slider8:0<0,3,1{Clean,Bus,FET,Opto}>Style
+slider8:0<0,4,1{Clean,Bus,FET,Opto,Upward}>Style
 slider9:20<20,500,1:log>Sidechain HPF (Hz)
 slider10:100<0,100,1>Mix (%)
 slider11:0<0,1,1{Internal,External}>Sidechain
@@ -33,6 +33,11 @@ out_pin:Right
   // (bigger jumps react faster) and a two-stage release whose slow half gets slower the more
   // reduction there has been. Sidechain HPF filters the detector only (off at 20 Hz); Mix blends
   // the dry signal back in (parallel compression); External listens to pins 3/4.
+  // Upward = RMS detector (10 ms) that raises the level instead of lowering it: compressing, what
+  // is below Threshold comes up (upward compression; quiet parts louder), expanding, what is above
+  // it (upward expansion); at most 24 dB, and compressing, the lift fades out from 48 to 72 dB
+  // under Threshold so silence and the noise floor stay down. Attack = how fast the lift falls
+  // back when the level rises, Release = how fast it grows.
   gain_env = 1;
   ln10 = 2.302585;
   db_to_lin = ln10 / 20;
@@ -77,7 +82,7 @@ out_pin:Right
   style == 3 ? kn = max(knee_db, 10);
   fet_att = min(1, attack_tc * 4);
   opto_att = attack_tc * 0.5;
-  rms_tc = 1 - exp(-1 / ((style == 3 ? 10 : 5) * srate / 1000));
+  rms_tc = 1 - exp(-1 / ((style == 3 || style == 4 ? 10 : 5) * srate / 1000));
   bus_satt = 1 - exp(-1 / (250 * srate / 1000));
   bus_srel = 1 - exp(-1 / ((200 + 4 * release_ms) * srate / 1000));
   opto_srel = release_tc * 0.1;
@@ -116,7 +121,7 @@ out_pin:Right
   );
   input_abs = max(abs(det_l), abs(det_r));
   input_abs < 0.000001 ? input_abs = 0.000001;
-  (style == 1 || style == 3) ? (
+  (style == 1 || style == 3 || style == 4) ? (
     // crest-corrected RMS (a sine reads its peak)
     det_ms += (input_abs * input_abs - det_ms) * rms_tc;
     det_lv = sqrt(2 * det_ms);
@@ -151,6 +156,21 @@ out_pin:Right
       );
     );
   );
+  style == 4 ? (
+    // UPWARD: a lift (negative reduction) below Threshold (Compressor) or above it (Expander)
+    up_x = mode == 0 ? threshold_db - input_db : input_db - threshold_db;
+    up_t = 0;
+    up_x > 0 ? (
+      kn > 0 && up_x < kn ? (
+        up_t = slope * up_x * up_x / (2 * kn);
+      ) : (
+        up_t = slope * (up_x - kn / 2);
+      );
+      up_t = min(up_t, 24);
+      mode == 0 && up_x > 48 ? up_t *= max(0, 1 - (up_x - 48) / 24);
+    );
+    gr_target = -up_t;
+  );
   
   style == 0 ? (
     gain_target = exp(-gr_target * db_to_lin);
@@ -168,6 +188,8 @@ out_pin:Right
       gr_db = max(gr_f, gr_s);
     ) : style == 2 ? (
       gr_db += (gr_target - gr_db) * (gr_target > gr_db ? fet_att : release_tc);
+    ) : style == 4 ? (
+      gr_db += (gr_target - gr_db) * (gr_target > gr_db ? attack_tc : release_tc);
     ) : (
       gr_target > gr_o1 ? (
         gr_o1 += (gr_target - gr_o1) * min(1, opto_att * (1 + (gr_target - gr_o1) / 6));

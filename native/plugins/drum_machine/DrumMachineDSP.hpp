@@ -8,7 +8,8 @@
  * and MIDI notes on the General MIDI drum map. Comments name the JSFX variables.
  *
  * Call setSampleRate (the JSFX @init), setParams (@slider), then per block beginBlock (@block)
- * with the block's note-ons, and process.
+ * with the block's note-ons, and process. process writes eight outputs (the JSFX's pins): the
+ * main pair, then with Outputs Groups the snare, hats and perc pairs (silent with Outputs Main).
  */
 
 #pragma once
@@ -23,7 +24,8 @@
 namespace nulldrum {
 
 static constexpr double kPi = 3.141592653589793; // EEL2 $pi
-static constexpr int kNumSliders = 56;
+static constexpr int kNumSliders = 63;
+static constexpr int kNumOutputs = 8;
 static constexpr int kMaxNotes = 128;
 
 // state-variable filter (TPT), as svf_set / svf in the JSFX
@@ -156,9 +158,11 @@ public:
         fLastS = -1000;
         fSeed = 22222;
         grPh = 0; grHl = grHr = 0;
+        std::fill(grH, grH + kNumOutputs, 0.0);
+        prX = 0;
     }
 
-    // @slider, from the 56 slider values in order
+    // @slider, from the 63 slider values in order
     void setParams(const double* v)
     {
         std::copy(v, v + kNumSliders, fSl);
@@ -176,19 +180,38 @@ public:
         grQ = std::pow(2.0, 15 - 11 * fGrit);
         fVol = std::pow(10.0, s[6] / 20);
 
+        // Probability (accented steps always play), Seed, Generate, Kit, Outputs
+        fProb = s[57] / 100;
+        if (std::fabs(s[58] - prLast) >= 0.00001) // EEL2 != is fuzzy
+        {
+            prX = 0;
+            prLast = s[58];
+        }
+        fSeedV = std::max(1.0, std::floor(s[58] + 0.5));
+        fGenOn = s[59] >= 0.5;
+        if (fGenOn)
+            generate(fGen, fSeedV, s[60], s[61]);
+        fKit = std::max(0.0, std::min(double(kNumKits), std::floor(s[62] + 0.5)));
+        fOuts = s[63] >= 0.5;
+        // a slider value with the Kit's offset (Manual: the value itself)
+        const int kit = int(fKit);
+        auto kp = [s, kit](int n, int t, int j, double lo, double hi) {
+            return kit > 0 ? std::max(lo, std::min(hi, s[n] + kKits[kit - 1][t][j])) : s[n];
+        };
+
         double r, d, o;
-        panSet(0, s[7], s[11]);
-        kF0 = 48 * std::pow(2.0, s[8] / 12);
-        d = s[9] / 100; o = s[10] / 100;
+        panSet(0, kp(7, 0, 0, -40, 6), s[11]);
+        kF0 = 48 * std::pow(2.0, kp(8, 0, 1, -12, 12) / 12);
+        d = kp(9, 0, 2, 0, 100) / 100; o = kp(10, 0, 3, 0, 100) / 100;
         kSw = 1.5 + 4 * o;
         kPc = dcy(0.008 + 0.012 * (1 - o));
         kAc = dcy(0.06 + 1.4 * d * d);
         kCc = dcy(0.0015);
         kCl = 0.6 * o;
 
-        panSet(1, s[12], s[16]);
-        r = std::pow(2.0, s[13] / 12);
-        d = s[14] / 100; o = s[15] / 100;
+        panSet(1, kp(12, 1, 0, -40, 6), s[16]);
+        r = std::pow(2.0, kp(13, 1, 1, -12, 12) / 12);
+        d = kp(14, 1, 2, 0, 100) / 100; o = kp(15, 1, 3, 0, 100) / 100;
         sF1 = 185 * r; sF2 = 330 * r;
         sPc = dcy(0.012);
         sBc = dcy(0.02 + 0.12 * d);
@@ -196,57 +219,57 @@ public:
         sBg = 1 - 0.7 * o; sNg = 0.3 + 0.7 * o;
         sHp.set(1800 * r, 0.7, sr);
 
-        panSet(2, s[17], s[21]);
-        r = std::pow(2.0, s[18] / 12);
-        d = s[19] / 100; o = s[20] / 100;
+        panSet(2, kp(17, 2, 0, -40, 6), s[21]);
+        r = std::pow(2.0, kp(18, 2, 1, -12, 12) / 12);
+        d = kp(19, 2, 2, 0, 100) / 100; o = kp(20, 2, 3, 0, 100) / 100;
         cBp.set(1100 * r, 1.6, sr);
         cPer = std::floor(0.011 * sr);
         cBc = dcy(0.0045);
         cTc = dcy(0.05 + 0.05 * d + 0.5 * d * d);
         cTail = 0.25 + 0.75 * o;
 
-        panSet(3, s[22], s[26]);
-        r = std::pow(2.0, s[23] / 12);
-        d = s[24] / 100; o = s[25] / 100;
+        panSet(3, kp(22, 3, 0, -40, 6), s[26]);
+        r = std::pow(2.0, kp(23, 3, 1, -12, 12) / 12);
+        d = kp(24, 3, 2, 0, 100) / 100; o = kp(25, 3, 3, 0, 100) / 100;
         rD1 = 480 * r / sr; rD2 = 1650 * r / sr; rD3 = 2500 * r / sr;
         rC = dcy(0.006 + 0.06 * d);
         rM = o;
 
-        panSet(4, s[27], s[31]);
-        r = std::pow(2.0, s[28] / 12);
-        d = s[29] / 100;
-        hMx = s[30] / 100;
+        panSet(4, kp(27, 4, 0, -40, 6), s[31]);
+        r = std::pow(2.0, kp(28, 4, 1, -12, 12) / 12);
+        d = kp(29, 4, 2, 0, 100) / 100;
+        hMx = kp(30, 4, 3, 0, 100) / 100;
         hM.set(r, sr);
         hBp.set(9000 * r, 1.2, sr);
         hHp.set(6500 * r, 0.7, sr);
         hC = dcy(0.008 + 0.07 * d);
 
-        panSet(5, s[32], s[36]);
-        r = std::pow(2.0, s[33] / 12);
-        d = s[34] / 100;
-        oMx = s[35] / 100;
+        panSet(5, kp(32, 5, 0, -40, 6), s[36]);
+        r = std::pow(2.0, kp(33, 5, 1, -12, 12) / 12);
+        d = kp(34, 5, 2, 0, 100) / 100;
+        oMx = kp(35, 5, 3, 0, 100) / 100;
         oM.set(r, sr);
         oBp.set(9000 * r, 1.2, sr);
         oHp.set(6500 * r, 0.7, sr);
         oC = dcy(0.06 + 0.05 * d + 0.9 * d * d);
         oKc = dcy(0.004);
 
-        panSet(6, s[37], s[41]);
-        tomSet(lt, 95 * std::pow(2.0, s[38] / 12), s[39] / 100, s[40] / 100);
-        panSet(7, s[42], s[46]);
-        tomSet(ht, 165 * std::pow(2.0, s[43] / 12), s[44] / 100, s[45] / 100);
+        panSet(6, kp(37, 6, 0, -40, 6), s[41]);
+        tomSet(lt, 95 * std::pow(2.0, kp(38, 6, 1, -12, 12) / 12), kp(39, 6, 2, 0, 100) / 100, kp(40, 6, 3, 0, 100) / 100);
+        panSet(7, kp(42, 7, 0, -40, 6), s[46]);
+        tomSet(ht, 165 * std::pow(2.0, kp(43, 7, 1, -12, 12) / 12), kp(44, 7, 2, 0, 100) / 100, kp(45, 7, 3, 0, 100) / 100);
 
-        panSet(8, s[47], s[51]);
-        r = std::pow(2.0, s[48] / 12);
-        d = s[49] / 100; o = s[50] / 100;
+        panSet(8, kp(47, 8, 0, -40, 6), s[51]);
+        r = std::pow(2.0, kp(48, 8, 1, -12, 12) / 12);
+        d = kp(49, 8, 2, 0, 100) / 100; o = kp(50, 8, 3, 0, 100) / 100;
         bD1 = 540 * r / sr; bD2 = 800 * r / sr;
         bBp.set((600 + 1800 * o) * r, 2.5, sr);
         bC1 = dcy(0.012);
         bC2 = dcy(0.04 + 0.4 * d);
 
-        panSet(9, s[52], s[56]);
-        r = std::pow(2.0, s[53] / 12);
-        d = s[54] / 100; o = s[55] / 100;
+        panSet(9, kp(52, 9, 0, -40, 6), s[56]);
+        r = std::pow(2.0, kp(53, 9, 1, -12, 12) / 12);
+        d = kp(54, 9, 2, 0, 100) / 100; o = kp(55, 9, 3, 0, 100) / 100;
         yM.set(r * 1.18, sr);
         yBp.set((5000 + 4000 * o) * r, 0.8, sr);
         yHp.set(4000 * r, 0.7, sr);
@@ -267,7 +290,7 @@ public:
         fSeqOn = playing && fPat > 0;
         if (!fSeqOn)
             fLastS = -1000;
-        fPb = fPat <= 1 ? fUser : fFactory[int(fPat) - 2];
+        fPb = fGenOn && fPat > 0 ? fGen : fPat <= 1 ? fUser : fFactory[int(fPat) - 2];
         fInc = tempo / (60 * fSr);
         fB0 = beatPos;
         fFlamN = std::max(1.0, std::floor(0.018 * fSr));
@@ -309,8 +332,9 @@ public:
         else if (n == 49 || n == 51 || n == 52 || n == 55 || n == 57 || n == 59) trig(9, v);
     }
 
+    // outs: kNumOutputs channels
     template <typename T>
-    void process(T* outL, T* outR, uint32_t frames)
+    void process(T* const* outs, uint32_t frames)
     {
         const double sr = fSr;
         for (uint32_t i = 0; i < frames; ++i)
@@ -364,6 +388,7 @@ public:
                 if (kEnv < 0.000001) kOn = false;
                 y *= 0.45 * fVl[0]; outl += y * fVpl[0]; outr += y * fVpr[0];
             }
+            if (fOuts) { fGo[0] = outl; fGo[1] = outr; outl = outr = 0; }
 
             if (sOn)
             {
@@ -406,6 +431,7 @@ public:
                 if (rEnv < 0.000001) rOn = false;
                 y *= 0.24 * fVl[3]; outl += y * fVpl[3]; outr += y * fVpr[3];
             }
+            if (fOuts) { fGo[2] = outl; fGo[3] = outr; outl = outr = 0; }
 
             if (hOn)
             {
@@ -426,6 +452,7 @@ public:
                 if (oEnv < 0.000001) oOn = false;
                 y *= 0.68 * fVl[5]; outl += y * fVpl[5]; outr += y * fVpr[5];
             }
+            if (fOuts) { fGo[4] = outl; fGo[5] = outr; outl = outr = 0; }
 
             if (lt.on) { y = lt.run(nz, sr) * 0.38 * fVl[6]; outl += y * fVpl[6]; outr += y * fVpr[6]; }
             if (ht.on) { y = ht.run(nz, sr) * 0.38 * fVl[7]; outl += y * fVpl[7]; outr += y * fVpr[7]; }
@@ -440,6 +467,7 @@ public:
                 if (bE2 < 0.000001) bOn = false;
                 y *= 0.13 * fVl[8]; outl += y * fVpl[8]; outr += y * fVpr[8];
             }
+            if (fOuts) { fGo[6] = outl; fGo[7] = outr; outl = outr = 0; }
 
             if (yOn)
             {
@@ -449,6 +477,37 @@ public:
                 yEnv *= yC;
                 if (yEnv < 0.000001) yOn = false;
                 y *= 0.6 * fVl[9]; outl += y * fVpl[9]; outr += y * fVpr[9];
+            }
+            if (fOuts) { fGo[4] += outl; fGo[5] += outr; }
+
+            if (fOuts)
+            {
+                // Outputs Groups: each group through Drive, Grit and Volume on its own pair
+                bool grT = false;
+                if (fGrit > 0)
+                {
+                    grPh += grStep;
+                    grT = grPh >= 1;
+                    if (grT)
+                        grPh -= std::floor(grPh);
+                }
+                for (int c = 0; c < kNumOutputs; ++c)
+                {
+                    double u = fGo[c];
+                    if (fDrv > 0)
+                    {
+                        u = std::max(-3.0, std::min(3.0, u * fDrvG));
+                        u = u * (27 + u * u) / (27 + 9 * u * u) / (1 + fDrv);
+                    }
+                    if (fGrit > 0)
+                    {
+                        if (grT)
+                            grH[c] = std::floor(u * grQ + 0.5) / grQ;
+                        u = grH[c];
+                    }
+                    outs[c][i] = static_cast<T>(u * fVol);
+                }
+                continue;
             }
 
             // Drive: soft clipping of the whole kit
@@ -473,8 +532,10 @@ public:
                 outl = grHl; outr = grHr;
             }
 
-            outL[i] = static_cast<T>(outl * fVol);
-            outR[i] = static_cast<T>(outr * fVol);
+            outs[0][i] = static_cast<T>(outl * fVol);
+            outs[1][i] = static_cast<T>(outr * fVol);
+            for (int c = 2; c < kNumOutputs; ++c)
+                outs[c][i] = 0;
         }
     }
 
@@ -508,7 +569,20 @@ private:
         {
             const double len = std::max(1.0, fPb[kTracks * kSteps + t]);
             const double i = s - std::floor(s / len) * len;
-            const double v = fPb[t * kSteps + int(i)];
+            double v = fPb[t * kSteps + int(i)];
+            // Probability: an unaccented step plays when the draw is below it
+            if (v > 0 && fProb < 1 && v != 2)
+            {
+                if (prX == 0)
+                {
+                    prX = fSeedV;
+                    for (int k = 0; k < 3; ++k)
+                        prX = pm(prX);
+                }
+                prX = pm(prX);
+                if (prX / 2147483647 >= fProb)
+                    v = 0;
+            }
             if (v > 0)
             {
                 const double vel = v == 2 ? 1 : 1 - 0.5 * fAcc;
@@ -524,7 +598,11 @@ private:
     double fUser[kPatternSize];
     double fFactory[kNumFactory][kPatternSize];
 
+    double fGen[kPatternSize] = {}; // the generated pattern
+
     // @slider
+    double fProb = 1, fSeedV = 1, fKit = 0, prX = 0, prLast = 0;
+    bool fGenOn = false, fOuts = false;
     double fPat = 2, fSw = 0.5, fAcc = 0.5, fDrv = 0, fDrvG = 1, fGrit = 0, grStep = 1, grQ = 1, fVol = 1;
     double fVl[kTracks] = {}, fVpl[kTracks] = {}, fVpr[kTracks] = {};
 
@@ -537,6 +615,7 @@ private:
     double fPend[kTracks] = {}, fPVel[kTracks] = {};
     double fSeed = 22222;
     double grPh = 0, grHl = 0, grHr = 0;
+    double fGo[kNumOutputs] = {}, grH[kNumOutputs] = {};
 
     // voices (JSFX names without the underscore)
     bool kOn = false, sOn = false, cOn = false, rOn = false, hOn = false, oOn = false, bOn = false, yOn = false;

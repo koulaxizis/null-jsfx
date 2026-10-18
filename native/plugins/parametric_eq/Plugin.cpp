@@ -2,19 +2,21 @@
  * NULL JSFX - Parametric EQ (VST3/CLAP), DSP side
  * Copyright (C) 2026 Christos Koulaxizis / NULL JSFX
  * SPDX-License-Identifier: MIT
+ *
+ * For the display: the mono input and output go into the analyzer ring (EqAnalyzer.hpp); the
+ * audio is processed exactly as before.
  */
 
 #include "NullPlugin.hpp"
 #include "ParametricEqDSP.hpp"
-#include "ParametricEqSliders.hpp"
+#include "ParametricEqPlugin.hpp"
 
 START_NAMESPACE_DISTRHO
 
-class PluginParametricEq : public NullMultiPlugin
+class PluginParametricEq : public ParametricEqBase
 {
 public:
     PluginParametricEq()
-        : NullMultiPlugin(nullpeq::kSliders, nullpeq::kNumSliders)
     {
         fDsp.setSampleRate(getSampleRate());
         update();
@@ -35,13 +37,28 @@ protected:
     {
         fDsp.setSampleRate(getSampleRate());
         fDsp.reset();
+        analyzer.sampleRate.store(float(getSampleRate()), std::memory_order_relaxed);
     }
 
-    void sampleRateChanged(double newSampleRate) override { fDsp.setSampleRate(newSampleRate); }
+    void sampleRateChanged(double newSampleRate) override
+    {
+        fDsp.setSampleRate(newSampleRate);
+        analyzer.sampleRate.store(float(newSampleRate), std::memory_order_relaxed);
+    }
 
     void run(const float** inputs, float** outputs, uint32_t frames) override
     {
-        fDsp.process(inputs[0], inputs[1], outputs[0], outputs[1], frames);
+        // in chunks, so the input is kept for the spectrum when the host processes in place
+        float pre[256];
+        for (uint32_t pos = 0; pos < frames; pos += 256)
+        {
+            const uint32_t n = std::min<uint32_t>(256, frames - pos);
+            for (uint32_t i = 0; i < n; ++i)
+                pre[i] = (inputs[0][pos + i] + inputs[1][pos + i]) * 0.5f;
+            fDsp.process(inputs[0] + pos, inputs[1] + pos, outputs[0] + pos, outputs[1] + pos, n);
+            for (uint32_t i = 0; i < n; ++i)
+                analyzer.push(pre[i], (outputs[0][pos + i] + outputs[1][pos + i]) * 0.5f);
+        }
     }
 
 private:

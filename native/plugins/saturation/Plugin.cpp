@@ -24,7 +24,7 @@ protected:
     const char* getLabel() const override { return "Saturation"; }
     const char* getDescription() const override
     {
-        return "Seven flavours of saturation (tape, tube, overdrive, fuzz, bitcrush, waveshaper, sine wavefolder) with tone and mix.";
+        return "Seven flavours of saturation (tape, tube, overdrive, fuzz, bitcrush, waveshaper, sine wavefolder) with tone and mix, input and output gain, 2x/4x oversampling and pre/de-emphasis.";
     }
     int64_t getUniqueId() const override { return d_cconst('N', '5', 'S', 'a'); }
 
@@ -50,7 +50,17 @@ protected:
 private:
     void update()
     {
-        fDsp.setParams(value(0), value(1), value(2), int(std::lround(value(3))));
+        nullsaturation::Params p;
+        p.drive = value(0);
+        p.tone = value(1);
+        p.mix = value(2);
+        p.mode = int(std::lround(value(3)));
+        p.input = value(4);
+        p.output = value(5);
+        p.oversampling = int(std::lround(value(6)));
+        p.emphasis = value(7);
+        fDsp.setParams(p);
+        setLatency(uint32_t(fDsp.latency())); // pdc_delay
     }
 
     nullsaturation::SaturationProcessor fDsp;

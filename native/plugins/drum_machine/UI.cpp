@@ -6,7 +6,9 @@
  * As drum_machine_gfx.jsfx: the step grid in the display, a tab per voice with its five knobs,
  * and the kit's row. A click on a step cycles off, hit, accent, flam, roll; a right click
  * clears it; a click on a name selects the voice and plays it; the boxes on the right set
- * each track's length. An edit plays the User pattern (a factory one is copied first).
+ * each track's length. An edit plays the User pattern (a factory or generated one is copied
+ * first). The third row holds Probability, Seed, Generate, Density, Style and Outputs; Kit sits
+ * next to the voice's knobs on every tab.
  */
 
 #include "NullUI.hpp"
@@ -22,10 +24,12 @@ static const char* const kNames[] = { "KICK", "SNARE", "CLAP", "RIM", "CLOSED HA
 static const char* const kToneNames[] = { "PUNCH", "SNAPPY", "ROOM", "CLAVE", "NOISE",
                                           "NOISE", "SWEEP", "SWEEP", "BRIGHT", "CRASH" };
 
-// per voice: Level, Tune, Decay, Tone, Pan on the voice's tab; the kit's row on every tab
+// per voice: Level, Tune, Decay, Tone, Pan on the voice's tab, then Kit; the kit's rows on every tab
+static constexpr uint32_t kNumControls = nulldrum::kTracks * 5 + 1 + 6 + 6;
+
 static const NullKnobsUI::Control* controls()
 {
-    static NullKnobsUI::Control c[nulldrum::kTracks * 5 + 6];
+    static NullKnobsUI::Control c[kNumControls];
     int n = 0;
     for (int t = 0; t < nulldrum::kTracks; ++t)
     {
@@ -36,22 +40,33 @@ static const NullKnobsUI::Control* controls()
         c[n++] = { b + 3, NullKnobsUI::kKnob, kToneNames[t], 0, t, false };
         c[n++] = { b + 4, NullKnobsUI::kKnob, "PAN", 0, t, true };
     }
+    c[n++] = { 61, NullKnobsUI::kSelect, "KIT", 0, -1, false };
     c[n++] = { 0, NullKnobsUI::kSelect, "PATTERN", 1, -1, false };
     c[n++] = { 1, NullKnobsUI::kKnob, "SWING", 1, -1, false };
     c[n++] = { 2, NullKnobsUI::kKnob, "ACCENT", 1, -1, false };
     c[n++] = { 3, NullKnobsUI::kKnob, "DRIVE", 1, -1, false };
     c[n++] = { 4, NullKnobsUI::kKnob, "GRIT", 1, -1, false };
     c[n++] = { 5, NullKnobsUI::kKnob, "VOLUME", 1, -1, false };
+    c[n++] = { 56, NullKnobsUI::kKnob, "PROBABILITY", 2, -1, false };
+    c[n++] = { 57, NullKnobsUI::kKnob, "SEED", 2, -1, false };
+    c[n++] = { 58, NullKnobsUI::kSelect, "GENERATE", 2, -1, false };
+    c[n++] = { 59, NullKnobsUI::kKnob, "DENSITY", 2, -1, false };
+    c[n++] = { 60, NullKnobsUI::kSelect, "STYLE", 2, -1, false };
+    c[n++] = { 62, NullKnobsUI::kSelect, "OUTPUTS", 2, -1, false };
     return c;
 }
 
-// the sliders with the selector's upper-case pattern names
+// the sliders with the selectors' upper-case names
 static const SliderInfo* uiSliders()
 {
     static SliderInfo s[nulldrum::kNumParams];
     for (uint32_t i = 0; i < nulldrum::kNumParams; ++i)
         s[i] = nulldrum::kSliders[i];
     s[0].options = nulldrum::kPatternShort;
+    s[58].options = nulldrum::kGenerateShort;
+    s[60].options = nulldrum::kStyleShort;
+    s[61].options = nulldrum::kKitShort;
+    s[62].options = nulldrum::kOutputsShort;
     return s;
 }
 
@@ -60,7 +75,7 @@ class UIDrumMachine : public NullKnobsUI
 public:
     UIDrumMachine()
         : NullKnobsUI({ "DRUM MACHINE", "INSTRUMENTS", 640, 206, "KICK|SNARE|CLAP|RIM|C HAT|O HAT|LO TOM|HI TOM|BELL|CYMBAL",
-                        2, uiSliders(), nulldrum::kNumParams, controls(), nulldrum::kTracks * 5 + 6, true })
+                        3, uiSliders(), nulldrum::kNumParams, controls(), kNumControls, true })
     {
         nulldrum::defaultUser(fUser);
     }
@@ -72,11 +87,19 @@ protected:
     static float rowY(int t) { return 82.0f + float(t) * 17.0f; }
 
     int pattern() const { return int(std::lround(value(0))); }
+    bool generated() const { return value(58) >= 0.5f && pattern() > 0; }
 
-    // the pattern the grid shows: the User one (also when Off) or the factory one that plays
+    // the pattern the grid shows: the generated one, the User one (also when Off) or the factory
+    // one that plays
     const double* shown()
     {
         const int p = pattern();
+        if (generated())
+        {
+            // the plugin's parameters arrive as float: back on the JSFX's 1-steps
+            nulldrum::generate(fGen, std::round(double(value(57))), std::round(double(value(59))), std::round(double(value(60))));
+            return fGen;
+        }
         if (p <= 1)
             return fUser;
         if (fFactoryShown != p)
@@ -158,7 +181,7 @@ protected:
             dtext(cellX(i) + 12.5f, 71.0f, ALIGN_CENTER, 7.0f, 0.0f, beat ? theme::kText : theme::kMuted, beat ? 0.9f : 0.6f, buf, true);
         }
         dtext(591.0f, 71.0f, ALIGN_CENTER, 7.0f, 1.0f, theme::kMuted, 0.6f, "STEPS", true);
-        dtext(28.0f, 71.0f, ALIGN_LEFT, 7.0f, 1.0f, theme::kMuted, 0.6f, p == 0 ? "OFF: MIDI ONLY" : p == 1 ? "USER" : "FACTORY", true);
+        dtext(28.0f, 71.0f, ALIGN_LEFT, 7.0f, 1.0f, theme::kMuted, 0.6f, p == 0 ? "OFF: MIDI ONLY" : generated() ? "GENERATED" : p == 1 ? "USER" : "FACTORY", true);
 
         // the step that plays and each voice's hits, from the plugin
         double step = -1.0;
@@ -229,7 +252,7 @@ protected:
 
     void formatValue(uint32_t param, float v, char* buf, size_t n) override
     {
-        const int k = param >= 6 ? int(param - 6) % 5 : -1;
+        const int k = param >= 6 && param < 56 ? int(param - 6) % 5 : -1;
         if (param == 5)
             std::snprintf(buf, n, "%+.1f dB", v);
         else if (k == 0)
@@ -268,10 +291,19 @@ protected:
         repaint();
     }
 
-    // an edit plays the User pattern: from a factory pattern it starts as a copy of it
+    // an edit plays the User pattern: from a factory or generated pattern it starts as a copy of
+    // it (and Generate goes Off)
     void toUser()
     {
         const int p = pattern();
+        if (generated())
+        {
+            std::copy(fGen, fGen + nulldrum::kPatternSize, fUser);
+            setGesture(58, 0.0f);
+            if (p != 1)
+                setGesture(0, 1.0f);
+            return;
+        }
         if (p == 1)
             return;
         if (p >= 2)
@@ -363,6 +395,7 @@ protected:
 private:
     double fUser[nulldrum::kPatternSize];
     double fFactory[nulldrum::kPatternSize];
+    double fGen[nulldrum::kPatternSize] = {};
     int fFactoryShown = -1;
     float fHits[nulldrum::kTracks] = {}, fFlash[nulldrum::kTracks] = {};
     int fHoverKind = 0, fHoverT = 0, fHoverI = 0;

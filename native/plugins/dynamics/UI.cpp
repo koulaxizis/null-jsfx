@@ -85,8 +85,8 @@ protected:
             fill();
         }
         // status line: the style, plus what is switched on (detector high-pass, mix, external key)
-        static const char* const kStyles[] = { "CLEAN", "BUS", "FET", "OPTO" };
-        label(180.0f, 66.0f, ALIGN_LEFT, 7.5f, 1.0f, theme::kAccent, kStyles[std::min(3, std::max(0, p.style))], true);
+        static const char* const kStyles[] = { "CLEAN", "BUS", "FET", "OPTO", "UPWARD" };
+        label(180.0f, 66.0f, ALIGN_LEFT, 7.5f, 1.0f, theme::kAccent, kStyles[std::min(4, std::max(0, p.style))], true);
         char a[24] = "", b[24] = "", st[80];
         const bool ext = value(10) > 0.5f;
         if (value(8) > 20.0f)
@@ -96,7 +96,8 @@ protected:
         std::snprintf(st, sizeof(st), "%s%s%s", a, b, ext ? "   EXT KEY" : "");
         label(448.0f, 66.0f, ALIGN_RIGHT, 7.5f, 1.0f, theme::kMuted, st, true);
         meter(180.0f, 82.0f, 268.0f, 10.0f, ext ? "KEY" : "IN", db, value(1), -60.0f);
-        grMeter(180.0f, 106.0f, 268.0f, 10.0f, "GR", gr, 24.0f);
+        // Upward: the lift (gain above 1) on the same meter, as LIFT
+        grMeter(180.0f, 106.0f, 268.0f, 10.0f, p.style == nulldynamics::kUpward ? "LIFT" : "GR", std::fabs(gr), 24.0f);
         meter(180.0f, 130.0f, 268.0f, 10.0f, "OUT", nulljsfx::toDb(out), -140.0f, -60.0f);
     }
 

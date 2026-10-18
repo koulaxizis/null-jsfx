@@ -5,5 +5,11 @@
   ["Gentle Sibilance", {"Target": 8000, "Reduction": -3}],
   ["Harsh Sibilance", {"Target": 6500, "Reduction": -12}],
   ["Cymbal Splash Tamer", {"Target": 9000, "Reduction": -6}],
-  ["Acoustic Guitar Glare", {"Target": 4500, "Reduction": -4}]
+  ["Acoustic Guitar Glare", {"Target": 4500, "Reduction": -4}],
+  ["Gentle Vocal", {"Target": 6500, "Reduction": -8, "Range": -4}],
+  ["Harsh Cymbals", {"Target": 9500, "Reduction": -9, "Threshold Mode": "Manual", "Threshold": -36}],
+  ["Wide Vocal De-Ess", {"Target": 6000, "Reduction": -6, "Mode": "Wide"}],
+  ["Quiet Voice", {"Target": 6000, "Reduction": -6, "Threshold Mode": "Manual", "Threshold": -45}],
+  ["Broadcast Voice", {"Target": 5500, "Reduction": -10, "Threshold Mode": "Manual", "Threshold": -38, "Range": -6}],
+  ["Sibilance Listen", {"Target": 6500, "Reduction": -12, "Listen": "On"}]
 ]

@@ -7,13 +7,13 @@ FXID {5CEAC4E9-3997-5EEE-9FC6-85E69516A812}
 WAK 0 0
 BYPASS 0 0
 <JS null_jsfx/saturation.jsfx ""
-  40 -2 100 1 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  40 -2 100 1 0 0 0 0 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 >
 FXID {8714EC5F-96EC-5C72-8526-E79AFE4691A8}
 WAK 0 0
 BYPASS 0 0
 <JS null_jsfx/saturation.jsfx ""
-  35 0 80 2 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  35 0 80 2 0 0 0 0 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 >
 <JS_PINMAP
   6AMAABwAAADoAwAABgAAAAIAAAAEAAAAAAAAAAgAAAAAAAAAHAAAAOgDAAAGAAAAAgAAAAQAAAAAAAAACAAAAAAAAAA=
@@ -22,7 +22,7 @@ FXID {3B4CA608-3B4F-52E5-8A3F-B10603BE1FA0}
 WAK 0 0
 BYPASS 0 0
 <JS null_jsfx/saturation.jsfx ""
-  25 2 60 0 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  25 2 60 0 0 0 0 0 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 >
 <JS_PINMAP
   6AMAABwAAADoAwAABgAAAAIAAAAQAAAAAAAAACAAAAAAAAAAHAAAAOgDAAAGAAAAAgAAABAAAAAAAAAAIAAAAAAAAAA=

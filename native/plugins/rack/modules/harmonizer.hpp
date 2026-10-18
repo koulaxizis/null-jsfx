@@ -41,6 +41,7 @@ public:
     void process(const float* inL, const float* inR, float* outL, float* outR, uint32_t frames,
                  const nulljsfx::ModuleTime&) override
     {
+        // the Rack has no MIDI: Mode MIDI holds no note and its voices stay silent
         fDsp.process(inL, inR, outL, outR, frames);
     }
 

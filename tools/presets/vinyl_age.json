@@ -5,5 +5,9 @@
   ["Warped Tape Memory", {"Wow": 70, "Flutter": 40, "Crackle": 10, "Noise Level": 15, "Bit Depth": 12, "Sample Rate": 22000, "Lowpass Freq": 6000, "Mix": 85}],
   ["AM Radio", {"Wow": 5, "Flutter": 10, "Crackle": 15, "Noise Level": 30, "Bit Depth": 8, "Sample Rate": 11000, "Lowpass Freq": 3500, "Mix": 100}],
   ["Gramophone", {"Wow": 35, "Flutter": 25, "Crackle": 80, "Noise Level": 25, "Bit Depth": 8, "Sample Rate": 8000, "Lowpass Freq": 3000, "Mix": 100}],
-  ["Crackle Only Layer", {"Wow": 0, "Flutter": 0, "Crackle": 50, "Noise Level": 8, "Bit Depth": 16, "Sample Rate": 44100, "Lowpass Freq": 20000, "Mix": 50}]
+  ["Crackle Only Layer", {"Wow": 0, "Flutter": 0, "Crackle": 50, "Noise Level": 8, "Bit Depth": 16, "Sample Rate": 44100, "Lowpass Freq": 20000, "Mix": 50}],
+  ["45 RPM Single", {"Wow": 15, "Flutter": 10, "Crackle": 25, "Noise Level": 8, "Bit Depth": 16, "Sample Rate": 44100, "Lowpass Freq": 12000, "Mix": 80, "RPM": "45", "Scratches": 10}],
+  ["78 Shellac", {"Wow": 30, "Flutter": 20, "Crackle": 70, "Noise Level": 30, "Bit Depth": 12, "Sample Rate": 22000, "Lowpass Freq": 6000, "Mix": 100, "RPM": "78", "Scratches": 35, "Mono": "On"}],
+  ["Scratched Mono LP", {"Wow": 20, "Flutter": 10, "Crackle": 35, "Noise Level": 12, "Bit Depth": 14, "Sample Rate": 32000, "Lowpass Freq": 9000, "Mix": 90, "Scratches": 60, "Mono": "On"}],
+  ["Worn Jukebox 45", {"Wow": 40, "Flutter": 25, "Crackle": 50, "Noise Level": 15, "Bit Depth": 12, "Sample Rate": 22000, "Lowpass Freq": 7000, "Mix": 90, "RPM": "45", "Scratches": 45}]
 ]

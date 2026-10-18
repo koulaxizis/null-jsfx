@@ -54,7 +54,8 @@ public:
 private:
     void update()
     {
-        fDsp.setParams(fV[0], fV[1], fV[2], fV[3], fV[4], fV[5] >= 0.5f, int(std::lround(fV[6])), fV[7] >= 0.5f);
+        fDsp.setParams(fV[0], fV[1], fV[2], fV[3], fV[4], fV[5] >= 0.5f, int(std::lround(fV[6])), fV[7] >= 0.5f,
+                       int(std::lround(fV[8])), fV[9] >= 0.5f, std::round(fV[10]), std::round(fV[11]));
     }
 
     nullmaximizer::MaximizerProcessor fDsp;

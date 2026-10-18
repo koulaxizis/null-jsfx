@@ -6,5 +6,9 @@
   ["Hard Tune A Minor", {"Key": "A", "Scale": "Minor", "Retune Speed": 0, "Humanize": 0, "Sensitivity": 60}],
   ["Pentatonic Snap A", {"Key": "A", "Scale": "Pentatonic Minor", "Retune Speed": 5, "Humanize": 10}],
   ["Blues Lead E", {"Key": "E", "Scale": "Blues", "Retune Speed": 30, "Humanize": 40}],
-  ["Octave Up Layer", {"Scale": "Chromatic", "Retune Speed": 40, "Humanize": 40, "Transpose": 12, "Mix": 50}]
+  ["Octave Up Layer", {"Scale": "Chromatic", "Retune Speed": 40, "Humanize": 40, "Transpose": 12, "Mix": 50}],
+  ["Robot Retune", {"Key": "C", "Scale": "Pentatonic Major", "Retune Speed": 0, "Humanize": 0, "Sensitivity": 70}],
+  ["Natural Vibrato", {"Key": "C", "Scale": "Major", "Retune Speed": 50, "Humanize": 0, "Vibrato Rate": 5.5, "Vibrato Depth": 30}],
+  ["MIDI Hard Tune", {"Retune Speed": 0, "Humanize": 0, "Sensitivity": 60, "Target": "MIDI"}],
+  ["MIDI Melody Guide", {"Retune Speed": 40, "Humanize": 30, "Target": "MIDI", "Vibrato Rate": 5, "Vibrato Depth": 20}]
 ]

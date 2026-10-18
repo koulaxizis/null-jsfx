@@ -14,14 +14,17 @@ namespace nullautopan {
 
 static const char* const kSyncOptions[] = { "OFF", "ON" };
 static const char* const kNoteOptions[] = { "1/2", "1/4", "1/8", "1/16" };
+static const char* const kModeOptions[] = { "SINE", "2 STEPS", "4 STEPS", "8 STEPS", "L-C-R", "R-C-L" };
 
-// slider1..slider5 of auto_pan.jsfx, in order
+// slider1..slider7 of auto_pan.jsfx, in order (6 and 7 appended in 2.4)
 static const DISTRHO::SliderInfo kSliders[] = {
     { "Rate", "rate", 0.1f, 10.0f, 2.0f, "Hz", 0.1f },
     { "Depth", "depth", 0.0f, 100.0f, 50.0f, "%", 1.0f },
     { "Mix", "mix", 0.0f, 100.0f, 40.0f, "%", 1.0f },
     { "Tempo Sync", "sync", 0.0f, 1.0f, 0.0f, "", 1.0f, kSyncOptions },
     { "Subdivision", "subdivision", 0.0f, 3.0f, 0.0f, "", 1.0f, kNoteOptions },
+    { "Mode", "mode", 0.0f, 5.0f, 0.0f, "", 1.0f, kModeOptions },
+    { "Smoothing", "smoothing", 0.0f, 100.0f, 20.0f, "%", 1.0f },
 };
 static constexpr uint32_t kNumSliders = sizeof(kSliders) / sizeof(kSliders[0]);
 

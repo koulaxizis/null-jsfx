@@ -10,12 +10,22 @@
 
 namespace nulldrum {
 
-static const char* const kPatternOptions[] = { "Off", "User", "House", "Techno", "Boom Bap", "Electro", "Breakbeat", "Trap", "Disco", "Synth Pop", "Dembow", "Bossa" };
-static const char* const kPatternShort[] = { "OFF", "USER", "HOUSE", "TECHNO", "BOOM BAP", "ELECTRO", "BREAKBEAT", "TRAP", "DISCO", "SYNTH POP", "DEMBOW", "BOSSA" };
+static const char* const kPatternOptions[] = { "Off", "User", "House", "Techno", "Boom Bap", "Electro", "Breakbeat", "Trap", "Disco", "Synth Pop", "Dembow", "Bossa",
+                                                "Rock", "Funk", "UK Garage", "Jungle", "Afrobeat", "Reggae", "Footwork", "Industrial" };
+static const char* const kPatternShort[] = { "OFF", "USER", "HOUSE", "TECHNO", "BOOM BAP", "ELECTRO", "BREAKBEAT", "TRAP", "DISCO", "SYNTH POP", "DEMBOW", "BOSSA",
+                                              "ROCK", "FUNK", "UK GARAGE", "JUNGLE", "AFROBEAT", "REGGAE", "FOOTWORK", "INDUSTRIAL" };
+static const char* const kGenerateOptions[] = { "Off", "On" };
+static const char* const kGenerateShort[] = { "OFF", "ON" };
+static const char* const kStyleOptions[] = { "Four Floor", "Breakbeat", "Half Time", "Electro", "Latin", "Random" };
+static const char* const kStyleShort[] = { "FOUR FLOOR", "BREAKBEAT", "HALF TIME", "ELECTRO", "LATIN", "RANDOM" };
+static const char* const kKitOptions[] = { "Manual", "Deep Boom", "Punch Box", "Vintage", "Pop Studio", "Lo-Fi Dust", "Industrial", "Minimal", "Big Room" };
+static const char* const kKitShort[] = { "MANUAL", "DEEP BOOM", "PUNCH BOX", "VINTAGE", "POP STUDIO", "LO-FI DUST", "INDUSTRIAL", "MINIMAL", "BIG ROOM" };
+static const char* const kOutputsOptions[] = { "Main", "Groups" };
+static const char* const kOutputsShort[] = { "MAIN", "GROUPS" };
 
-// slider1..slider56 of drum_machine.jsfx, in order
+// slider1..slider63 of drum_machine.jsfx, in order
 static const DISTRHO::SliderInfo kSliders[] = {
-    { "Pattern", "pattern", 0.0f, 11.0f, 2.0f, "", 1.0f, kPatternOptions },
+    { "Pattern", "pattern", 0.0f, 19.0f, 2.0f, "", 1.0f, kPatternOptions },
     { "Swing", "swing", 50.0f, 75.0f, 50.0f, "%", 1.0f },
     { "Accent", "accent", 0.0f, 100.0f, 50.0f, "%", 1.0f },
     { "Drive", "drive", 0.0f, 100.0f, 0.0f, "%", 1.0f },
@@ -71,6 +81,13 @@ static const DISTRHO::SliderInfo kSliders[] = {
     { "Cymbal Decay", "cymbal_decay", 0.0f, 100.0f, 50.0f, "%", 1.0f },
     { "Cymbal Tone", "cymbal_tone", 0.0f, 100.0f, 50.0f, "%", 1.0f },
     { "Cymbal Pan", "cymbal_pan", -100.0f, 100.0f, 10.0f, "%", 1.0f },
+    { "Probability", "probability", 0.0f, 100.0f, 100.0f, "%", 1.0f },
+    { "Seed", "seed", 1.0f, 999.0f, 1.0f, "", 1.0f },
+    { "Generate", "generate", 0.0f, 1.0f, 0.0f, "", 1.0f, kGenerateOptions },
+    { "Density", "density", 0.0f, 100.0f, 50.0f, "%", 1.0f },
+    { "Style", "style", 0.0f, 5.0f, 0.0f, "", 1.0f, kStyleOptions },
+    { "Kit", "kit", 0.0f, 8.0f, 0.0f, "", 1.0f, kKitOptions },
+    { "Outputs", "outputs", 0.0f, 1.0f, 0.0f, "", 1.0f, kOutputsOptions },
 };
 static constexpr uint32_t kNumParams = sizeof(kSliders) / sizeof(kSliders[0]);
 

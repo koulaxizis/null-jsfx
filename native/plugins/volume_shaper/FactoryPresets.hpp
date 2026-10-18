@@ -8,21 +8,25 @@ namespace nullpresets {
 
 struct FactoryPreset {
     const char* name;
-    float values[6];
+    float values[8];
 };
 
 static const FactoryPreset kPresets[] = {
-    { "Default", { 0.0f, 2.0f, 80.0f, 3.0f, 0.0f, 100.0f } },
-    { "Gentle Bus Pump", { 0.0f, 2.0f, 35.0f, 5.0f, 0.0f, 100.0f } },
-    { "Hard Dance Pump", { 1.0f, 2.0f, 100.0f, 2.0f, 0.0f, 100.0f } },
-    { "Half Time Pump", { 8.0f, 2.0f, 80.0f, 3.0f, 0.0f, 100.0f } },
-    { "Trance Gate Eighths", { 5.0f, 2.0f, 100.0f, 3.0f, 0.0f, 100.0f } },
-    { "Sixteenth Gate", { 4.0f, 2.0f, 100.0f, 2.0f, 0.0f, 100.0f } },
-    { "Sine Eighth Tremolo", { 6.0f, 3.0f, 50.0f, 0.0f, 0.0f, 100.0f } },
-    { "Bar Long Swell", { 3.0f, 0.0f, 100.0f, 5.0f, 0.0f, 100.0f } },
-    { "Stutter Fill", { 9.0f, 1.0f, 100.0f, 1.0f, 0.0f, 100.0f } },
+    { "Default", { 0.0f, 2.0f, 80.0f, 3.0f, 0.0f, 100.0f, 0.0f, -20.0f } },
+    { "Gentle Bus Pump", { 0.0f, 2.0f, 35.0f, 5.0f, 0.0f, 100.0f, 0.0f, -20.0f } },
+    { "Hard Dance Pump", { 1.0f, 2.0f, 100.0f, 2.0f, 0.0f, 100.0f, 0.0f, -20.0f } },
+    { "Half Time Pump", { 8.0f, 2.0f, 80.0f, 3.0f, 0.0f, 100.0f, 0.0f, -20.0f } },
+    { "Trance Gate Eighths", { 5.0f, 2.0f, 100.0f, 3.0f, 0.0f, 100.0f, 0.0f, -20.0f } },
+    { "Sixteenth Gate", { 4.0f, 2.0f, 100.0f, 2.0f, 0.0f, 100.0f, 0.0f, -20.0f } },
+    { "Sine Eighth Tremolo", { 6.0f, 3.0f, 50.0f, 0.0f, 0.0f, 100.0f, 0.0f, -20.0f } },
+    { "Bar Long Swell", { 3.0f, 0.0f, 100.0f, 5.0f, 0.0f, 100.0f, 0.0f, -20.0f } },
+    { "Stutter Fill", { 9.0f, 1.0f, 100.0f, 1.0f, 0.0f, 100.0f, 0.0f, -20.0f } },
+    { "Kick Retrigger Duck", { 0.0f, 2.0f, 90.0f, 3.0f, 0.0f, 100.0f, 2.0f, -24.0f } },
+    { "Sidechain Hard Duck", { 1.0f, 3.0f, 100.0f, 2.0f, 0.0f, 100.0f, 2.0f, -18.0f } },
+    { "MIDI Note Duck", { 0.0f, 2.0f, 85.0f, 3.0f, 0.0f, 100.0f, 1.0f, -20.0f } },
+    { "MIDI Swell In", { 3.0f, 1.0f, 100.0f, 5.0f, 0.0f, 100.0f, 1.0f, -20.0f } },
 };
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
-static constexpr uint32_t kNumValues = 6;
+static constexpr uint32_t kNumValues = 8;
 
 } // namespace nullpresets

@@ -1087,7 +1087,10 @@ function emit(c, effect, bodies, io) {
   for (var b = ins; b < io.nSpl; b++) loadIns.push(spl[b] + " = 0;");
   for (var o = 0; o < outs; o++) storeOuts.push("O[" + o + "][i] = " + spl[o] + ";");
   L.push("  // I: input channels (arrays), O: output channels; nin: how many inputs carry signal");
-  L.push("  sample: function (I, O, n, nin) {\nvar i;\n" + tv("sample") + "for (i = 0; i < n; i++) {\n" + loadIns.join(" ") + "\n" + bodies.sample + storeOuts.join(" ") + "\n}\n},");
+  // a caller that takes fewer outputs than the pins (the main pair of a multi-out instrument)
+  // gets the rest written to scratch channels
+  var padOuts = outs > 2 ? "if (O.length < " + outs + ") { O = O.slice(); while (O.length < " + outs + ") O.push(new Float64Array(n)); }\n" : "";
+  L.push("  sample: function (I, O, n, nin) {\nvar i;\n" + padOuts + tv("sample") + "for (i = 0; i < n; i++) {\n" + loadIns.join(" ") + "\n" + bodies.sample + storeOuts.join(" ") + "\n}\n},");
   L.push("  gfx: function () {\n" + tv("gfx") + bodies.gfx + "},");
   L.push("  serialize: function () {\n" + tv("serialize") + bodies.serialize + "},");
   L.push("  getSlider: IO.getSlider, setSlider: IO.setSlider,");

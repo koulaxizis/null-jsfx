@@ -24,7 +24,7 @@ public:
     DynamicsModule()
     {
         for (uint32_t i = 0; i < nulldynamics::kNumSliders; ++i)
-            fV[i] = nulldynamics::kSliders[i].def;
+            fV[i] = nulldynamics::kRackSliders[i].def;
     }
 
     void setSampleRate(double sr) override
@@ -66,7 +66,8 @@ private:
 
 inline nulljsfx::Module* create() { return new DynamicsModule(); }
 
-static const nulljsfx::ModuleDesc kDesc = { "dynamics", "Dynamics", "Essentials", nulldynamics::kSliders,
+// kRackSliders: Style without UPWARD, so saved Rack slots keep their meaning (see DynamicsSliders.hpp)
+static const nulljsfx::ModuleDesc kDesc = { "dynamics", "Dynamics", "Essentials", nulldynamics::kRackSliders,
                                             nulldynamics::kNumSliders, create };
 
 } // namespace dynamics

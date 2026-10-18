@@ -24,7 +24,7 @@ protected:
     const char* getLabel() const override { return "NoiseGenerator"; }
     const char* getDescription() const override
     {
-        return "White, pink or brown noise at a set level, from mono to fully decorrelated stereo.";
+        return "White, pink or brown noise at a set level, from mono to fully decorrelated stereo, with low and high cut, input following, ducking, and replace or add.";
     }
     int64_t getUniqueId() const override { return d_cconst('N', '5', 'N', 'g'); }
 
@@ -42,15 +42,16 @@ protected:
         update();
     }
 
-    void run(const float**, float** outputs, uint32_t frames) override
+    void run(const float** inputs, float** outputs, uint32_t frames) override
     {
-        fDsp.process(outputs[0], outputs[1], frames);
+        fDsp.process(inputs[0], inputs[1], outputs[0], outputs[1], frames);
     }
 
 private:
     void update()
     {
-        fDsp.setParams(int(std::lround(value(0))), value(1), value(2));
+        fDsp.setParams(int(std::lround(value(0))), value(1), value(2), value(3), value(4), value(5), value(6),
+                       int(std::lround(value(7))));
     }
 
     nullnoise::NoiseProcessor fDsp;

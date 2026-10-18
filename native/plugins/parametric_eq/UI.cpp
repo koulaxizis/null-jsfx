@@ -6,7 +6,9 @@
 
 #include "NullUI.hpp"
 #include "ParametricEqDSP.hpp"
-#include "ParametricEqSliders.hpp"
+#include "ParametricEqPlugin.hpp"
+
+#include <chrono>
 
 START_NAMESPACE_DISTRHO
 
@@ -30,14 +32,102 @@ public:
     UIParametricEq()
         : NullKnobsUI({ "PARAMETRIC EQ", "ESSENTIALS", 480, 140, "LOW|LOW MID|MID HIGH|HIGH|ULTRA HIGH", 1,
                         nullpeq::kSliders, nullpeq::kNumSliders,
-                        kControls, sizeof(kControls) / sizeof(kControls[0]), false }) {}
+                        kControls, sizeof(kControls) / sizeof(kControls[0]), true }) {}
 
 protected:
+    const nulleqan::Tap* tap() const
+    {
+#if DISTRHO_PLUGIN_WANT_DIRECT_ACCESS
+        auto* p = static_cast<Plugin*>(getPluginInstancePointer());
+        return p ? &static_cast<ParametricEqBase*>(p)->analyzer : nullptr;
+#else
+        return nullptr;
+#endif
+    }
+
+    // the spectrum behind the curve (POST or PRE), as pe_spectrum in the GFX JSFX
+    void drawSpectrum()
+    {
+        const nulleqan::Tap* t = tap();
+        if (!t || fAnMode == 2)
+            return;
+        const double now = std::chrono::duration<double>(std::chrono::steady_clock::now().time_since_epoch()).count();
+        fAn.update(*t, fAnMode == 0, now);
+        constexpr int cols = 402;
+        static float xs[cols], ys[cols];
+        scissor(fPX, fPY, fPW, fPH);
+        beginPath();
+        moveTo(fPX, fPY + fPH);
+        for (int c = 0; c < cols; ++c)
+        {
+            const double f0 = 20.0 * std::pow(1000.0, double(c) / cols), f1 = 20.0 * std::pow(1000.0, double(c + 1) / cols);
+            xs[c] = fPX + fPW * (float(c) + 0.5f) / float(cols);
+            ys[c] = linY(float(fAn.bandDb(f0, f1)), -90.0f, 0.0f);
+            lineTo(xs[c], ys[c]);
+        }
+        lineTo(fPX + fPW, fPY + fPH);
+        closePath();
+        fillColor(col(theme::kMuted, 0.13f));
+        fill();
+        beginPath();
+        moveTo(xs[0], ys[0]);
+        for (int c = 1; c < cols; ++c)
+            lineTo(xs[c], ys[c]);
+        strokeColor(col(theme::kMuted, 0.45f));
+        strokeWidth(1.0f);
+        stroke();
+        resetScissor();
+    }
+
+    // the spectrum selector at the top right of the display (an interface setting): POST, PRE, OFF
+    float anX() const { return fVX + fVW - 62.0f; }
+    float anY() const { return fVY + 7.0f; }
+    bool inAnBox(float x, float y) const { return x >= anX() && x < anX() + 58.0f && y >= anY() && y < anY() + 14.0f; }
+
+    void drawAnBox()
+    {
+        beginPath();
+        roundedRect(anX() + 0.5f, anY() + 0.5f, 57.0f, 13.0f, 3.0f);
+        fillColor(col(theme::kBackground, 0.85f));
+        fill();
+        strokeColor(col(fAnHover ? theme::kTrackHover : theme::kBorder));
+        strokeWidth(1.0f);
+        stroke();
+        label(anX() + 29.0f, anY() + 7.0f, ALIGN_CENTER, 6.5f, 1.0f, fAnMode < 2 ? theme::kText : theme::kMuted,
+              fAnMode == 0 ? "FFT POST" : fAnMode == 1 ? "FFT PRE" : "FFT OFF", true);
+    }
+
+    bool onMouse(const MouseEvent& ev) override
+    {
+        const float s = uiScale();
+        const float x = float(ev.pos.getX()) / s, y = float(ev.pos.getY()) / s;
+        if (ev.button == 1 && ev.press && !presetOpen() && inAnBox(x, y))
+        {
+            fAnMode = (fAnMode + 1) % 3;
+            repaint();
+            return true;
+        }
+        return NullKnobsUI::onMouse(ev);
+    }
+
+    bool onMotion(const MotionEvent& ev) override
+    {
+        const float s = uiScale();
+        const bool h = !presetOpen() && inAnBox(float(ev.pos.getX()) / s, float(ev.pos.getY()) / s);
+        if (h != fAnHover)
+        {
+            fAnHover = h;
+            repaint();
+        }
+        return NullKnobsUI::onMotion(ev);
+    }
+
     // as in parametric_eq_gfx.jsfx: the response of the bands the audio runs (-24..+24 dB), the
     // selected band dashed, a dot per band (filled = selected, hollow = bypassed or not soloed)
     void drawDisplay() override
     {
         setPlot(fVX + 26.0f, fVY + 4.0f, fVW - 30.0f, fVH - 20.0f);
+        drawSpectrum();
         gridFreq(36.0f);
 
         double sr = getSampleRate();
@@ -86,6 +176,7 @@ protected:
                 stroke();
             }
         }
+        drawAnBox();
     }
 
     void formatValue(uint32_t param, float v, char* buf, size_t n) override
@@ -103,6 +194,11 @@ protected:
         default: NullKnobsUI::formatValue(param, v, buf, n); break;
         }
     }
+
+private:
+    nulleqan::Analyzer fAn;
+    int fAnMode = 0; // 0 = post, 1 = pre, 2 = off
+    bool fAnHover = false;
 };
 
 UI* createUI()

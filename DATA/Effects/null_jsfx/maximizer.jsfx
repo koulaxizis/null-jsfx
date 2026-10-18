@@ -1,6 +1,6 @@
 desc:NULL Maximizer
 author: Christos Koulaxizis
-tags: limiter maximizing loudness ceiling mastering peak protection dither
+tags: limiter maximizing loudness ceiling mastering peak protection dither multiband saturation lufs
 //category: Essentials
 //NULL JSFX v2.4 • https://nulljsfx.tech • MIT License
 
@@ -12,6 +12,10 @@ slider5:0<-12,0,0.1>Output Gain (dB)
 slider6:1<0,1,1{OFF,ON}>Stereo Link
 slider7:0<0,2,1{OFF,16-BIT,24-BIT}>Dither
 slider8:0<0,1,1{OFF,ON}>Noise Shaping
+slider9:0<0,2,1{CLEAN,PUNCHY,WARM}>Character
+slider10:0<0,1,1{OFF,ON}>Multiband
+slider11:150<50,500,10>Low Crossover (Hz)
+slider12:4000<1000,12000,100>High Crossover (Hz)
 
 in_pin:Left
 in_pin:Right
@@ -23,11 +27,36 @@ out_pin:Right
   // holds the peaks at Ceiling. Stereo Link uses one gain for both channels so the
   // image does not shift; OFF limits each channel on its own. Dither, last in the chain,
   // quantises to 16 or 24 bits with TPDF noise, optionally noise-shaped.
+  // Character shapes the signal before the limiter: CLEAN leaves it alone, PUNCHY rounds
+  // off only the peaks above Ceiling (a soft clip that tops out 6 dB higher, so the limiter
+  // pumps less on transients), WARM saturates the whole signal gently (x / sqrt(1 + (x/2c)^2):
+  // 1 dB softer at Ceiling, odd harmonics that grow with the level). Multiband splits the signal
+  // at Low / High Crossover (4th-order Linkwitz-Riley, the bands sum flat) into three bands,
+  // each limited at Ceiling on its own and a quarter linked (in dB) to the band that reduces
+  // most, so a loud bass no longer pumps the highs; the look-ahead limiter then holds the sum
+  // of the bands at Ceiling.
   max_look = ceil(srate * 0.006) + 2;
   buf_l = 0;
   buf_r = buf_l + max_look;
   memset(buf_l, 0, 2 * max_look);
   freembuf(buf_r + max_look);
+  // Multiband: the mid and high bands' delay lines (the low band uses buf_l / buf_r)
+  buf_ml = buf_r + max_look;
+  buf_mr = buf_ml + max_look;
+  buf_hl = buf_mr + max_look;
+  buf_hr = buf_hl + max_look;
+  memset(buf_ml, 0, 4 * max_look);
+  freembuf(buf_hr + max_look);
+  lo_hv_l = lo_hv_r = mi_hv_l = mi_hv_r = hi_hv_l = hi_hv_r = 0;
+  lo_hc_l = lo_hc_r = mi_hc_l = mi_hc_r = hi_hc_l = hi_hc_r = 0;
+  lo_g_l = lo_g_r = mi_g_l = mi_g_r = hi_g_l = hi_g_r = 1;
+  lo_e_l = lo_e_r = mi_e_l = mi_e_r = hi_e_l = hi_e_r = 1;
+  l1a_l.z1 = l1a_l.z2 = l1b_l.z1 = l1b_l.z2 = h1a_l.z1 = h1a_l.z2 = h1b_l.z1 = h1b_l.z2 = 0;
+  l2a_l.z1 = l2a_l.z2 = l2b_l.z1 = l2b_l.z2 = h2a_l.z1 = h2a_l.z2 = h2b_l.z1 = h2b_l.z2 = 0;
+  ap2_l.z1 = ap2_l.z2 = 0;
+  l1a_r.z1 = l1a_r.z2 = l1b_r.z1 = l1b_r.z2 = h1a_r.z1 = h1a_r.z2 = h1b_r.z1 = h1b_r.z2 = 0;
+  l2a_r.z1 = l2a_r.z2 = l2b_r.z1 = l2b_r.z2 = h2a_r.z1 = h2a_r.z2 = h2b_r.z1 = h2b_r.z2 = 0;
+  ap2_r.z1 = ap2_r.z2 = 0;
   wpos = 0;
   hv_l = hv_r = 0;
   hc_l = hc_r = 0;
@@ -51,6 +80,30 @@ out_pin:Right
     g = target < g ? g + (target - g) * att : target + (g - target) * rel;
   );
 
+  // biquad, transposed direct form II
+  function bq(x, b0, b1, b2, a1, a2) instance(z1, z2) local(y)
+  (
+    y = b0 * x + z1;
+    z1 = b1 * x - a1 * y + z2;
+    z2 = b2 * x - a2 * y;
+    y;
+  );
+
+  // Character: PUNCHY (1) soft-clips above Ceiling, WARM (2) saturates gently
+  function shape(x) local(a, u)
+  (
+    character == 1 ? (
+      a = abs(x);
+      a > ceiling ? (
+        u = (a - ceiling) / ceiling;
+        x = sign(x) * (ceiling + ceiling * u / (1 + u));
+      );
+    ) : (
+      x = x / sqrt(1 + x * x * warm_k);
+    );
+    x;
+  );
+
 @slider
   in_gain = 10 ^ (slider1 / 20);
   ceiling = 10 ^ (slider2 / 20);
@@ -65,27 +118,115 @@ out_pin:Right
   dith = slider7;
   dt_q = slider7 == 1 ? 32768 : 8388608;
   nshape = slider8;
+  character = slider9;
+  warm_k = 1 / (4 * ceiling * ceiling);
+  mb = slider10;
+  // Linkwitz-Riley crossovers: two Butterworth sections each (RBJ, Q = 0.7071), and an
+  // all-pass at the high crossover on the low band so the three bands sum flat
+  mb_w = 2 * $pi * min(slider11, srate * 0.45) / srate;
+  mb_cs = cos(mb_w);
+  mb_al = sin(mb_w) / (2 * sqrt(0.5));
+  mb_a0 = 1 + mb_al;
+  x1_lb0 = (1 - mb_cs) / 2 / mb_a0;
+  x1_lb1 = (1 - mb_cs) / mb_a0;
+  x1_hb0 = (1 + mb_cs) / 2 / mb_a0;
+  x1_hb1 = -(1 + mb_cs) / mb_a0;
+  x1_a1 = -2 * mb_cs / mb_a0;
+  x1_a2 = (1 - mb_al) / mb_a0;
+  mb_w = 2 * $pi * min(slider12, srate * 0.45) / srate;
+  mb_cs = cos(mb_w);
+  mb_al = sin(mb_w) / (2 * sqrt(0.5));
+  mb_a0 = 1 + mb_al;
+  x2_lb0 = (1 - mb_cs) / 2 / mb_a0;
+  x2_lb1 = (1 - mb_cs) / mb_a0;
+  x2_hb0 = (1 + mb_cs) / 2 / mb_a0;
+  x2_hb1 = -(1 + mb_cs) / mb_a0;
+  x2_a1 = -2 * mb_cs / mb_a0;
+  x2_a2 = (1 - mb_al) / mb_a0;
 
 @sample
   in_l = spl0 * in_gain;
   in_r = spl1 * in_gain;
-  link ? (
-    detect(max(abs(in_l), abs(in_r)), hv_l, hc_l, g_l);
-    g_r = g_l;
-  ) : (
-    detect(abs(in_l), hv_l, hc_l, g_l);
-    detect(abs(in_r), hv_r, hc_r, g_r);
+  character ? (
+    in_l = shape(in_l);
+    in_r = shape(in_r);
   );
+  mb ? (
+    // three bands: low (with the all-pass), mid, high
+    lo_l = ap2_l.bq(l1b_l.bq(l1a_l.bq(in_l, x1_lb0, x1_lb1, x1_lb0, x1_a1, x1_a2), x1_lb0, x1_lb1, x1_lb0, x1_a1, x1_a2),
+                    x2_a2, x2_a1, 1, x2_a1, x2_a2);
+    mb_t = h1b_l.bq(h1a_l.bq(in_l, x1_hb0, x1_hb1, x1_hb0, x1_a1, x1_a2), x1_hb0, x1_hb1, x1_hb0, x1_a1, x1_a2);
+    mi_l = l2b_l.bq(l2a_l.bq(mb_t, x2_lb0, x2_lb1, x2_lb0, x2_a1, x2_a2), x2_lb0, x2_lb1, x2_lb0, x2_a1, x2_a2);
+    hi_l = h2b_l.bq(h2a_l.bq(mb_t, x2_hb0, x2_hb1, x2_hb0, x2_a1, x2_a2), x2_hb0, x2_hb1, x2_hb0, x2_a1, x2_a2);
+    lo_r = ap2_r.bq(l1b_r.bq(l1a_r.bq(in_r, x1_lb0, x1_lb1, x1_lb0, x1_a1, x1_a2), x1_lb0, x1_lb1, x1_lb0, x1_a1, x1_a2),
+                    x2_a2, x2_a1, 1, x2_a1, x2_a2);
+    mb_t = h1b_r.bq(h1a_r.bq(in_r, x1_hb0, x1_hb1, x1_hb0, x1_a1, x1_a2), x1_hb0, x1_hb1, x1_hb0, x1_a1, x1_a2);
+    mi_r = l2b_r.bq(l2a_r.bq(mb_t, x2_lb0, x2_lb1, x2_lb0, x2_a1, x2_a2), x2_lb0, x2_lb1, x2_lb0, x2_a1, x2_a2);
+    hi_r = h2b_r.bq(h2a_r.bq(mb_t, x2_hb0, x2_hb1, x2_hb0, x2_a1, x2_a2), x2_hb0, x2_hb1, x2_hb0, x2_a1, x2_a2);
+    // each band's own limiter at Ceiling, then a quarter linked (in dB) to the lowest band gain
+    link ? (
+      detect(max(abs(lo_l), abs(lo_r)), lo_hv_l, lo_hc_l, lo_g_l);
+      detect(max(abs(mi_l), abs(mi_r)), mi_hv_l, mi_hc_l, mi_g_l);
+      detect(max(abs(hi_l), abs(hi_r)), hi_hv_l, hi_hc_l, hi_g_l);
+      lo_g_r = lo_g_l;
+      mi_g_r = mi_g_l;
+      hi_g_r = hi_g_l;
+    ) : (
+      detect(abs(lo_l), lo_hv_l, lo_hc_l, lo_g_l);
+      detect(abs(mi_l), mi_hv_l, mi_hc_l, mi_g_l);
+      detect(abs(hi_l), hi_hv_l, hi_hc_l, hi_g_l);
+      detect(abs(lo_r), lo_hv_r, lo_hc_r, lo_g_r);
+      detect(abs(mi_r), mi_hv_r, mi_hc_r, mi_g_r);
+      detect(abs(hi_r), hi_hv_r, hi_hc_r, hi_g_r);
+    );
+    mb_m = (min(lo_g_l, min(mi_g_l, hi_g_l)) ^ 0.25);
+    lo_e_l = (lo_g_l ^ 0.75) * mb_m;
+    mi_e_l = (mi_g_l ^ 0.75) * mb_m;
+    hi_e_l = (hi_g_l ^ 0.75) * mb_m;
+    mb_m = (min(lo_g_r, min(mi_g_r, hi_g_r)) ^ 0.25);
+    lo_e_r = (lo_g_r ^ 0.75) * mb_m;
+    mi_e_r = (mi_g_r ^ 0.75) * mb_m;
+    hi_e_r = (hi_g_r ^ 0.75) * mb_m;
+    // the look-ahead limiter on the sum the bands will make
+    mb_sl = lo_l * lo_e_l + mi_l * mi_e_l + hi_l * hi_e_l;
+    mb_sr = lo_r * lo_e_r + mi_r * mi_e_r + hi_r * hi_e_r;
+    link ? (
+      detect(max(abs(mb_sl), abs(mb_sr)), hv_l, hc_l, g_l);
+      g_r = g_l;
+    ) : (
+      detect(abs(mb_sl), hv_l, hc_l, g_l);
+      detect(abs(mb_sr), hv_r, hc_r, g_r);
+    );
+    buf_l[wpos] = lo_l;
+    buf_r[wpos] = lo_r;
+    buf_ml[wpos] = mi_l;
+    buf_mr[wpos] = mi_r;
+    buf_hl[wpos] = hi_l;
+    buf_hr[wpos] = hi_r;
+  ) : (
+    link ? (
+      detect(max(abs(in_l), abs(in_r)), hv_l, hc_l, g_l);
+      g_r = g_l;
+    ) : (
+      detect(abs(in_l), hv_l, hc_l, g_l);
+      detect(abs(in_r), hv_r, hc_r, g_r);
+    );
 
-  buf_l[wpos] = in_l;
-  buf_r[wpos] = in_r;
+    buf_l[wpos] = in_l;
+    buf_r[wpos] = in_r;
+  );
   rpos = wpos - look;
   rpos < 0 ? rpos += max_look;
   wpos += 1;
   wpos >= max_look ? wpos = 0;
 
-  spl0 = max(-ceiling, min(ceiling, buf_l[rpos] * g_l)) * out_gain;
-  spl1 = max(-ceiling, min(ceiling, buf_r[rpos] * g_r)) * out_gain;
+  mb ? (
+    spl0 = max(-ceiling, min(ceiling, (buf_l[rpos] * lo_e_l + buf_ml[rpos] * mi_e_l + buf_hl[rpos] * hi_e_l) * g_l)) * out_gain;
+    spl1 = max(-ceiling, min(ceiling, (buf_r[rpos] * lo_e_r + buf_mr[rpos] * mi_e_r + buf_hr[rpos] * hi_e_r) * g_r)) * out_gain;
+  ) : (
+    spl0 = max(-ceiling, min(ceiling, buf_l[rpos] * g_l)) * out_gain;
+    spl1 = max(-ceiling, min(ceiling, buf_r[rpos] * g_r)) * out_gain;
+  );
 
   dith ? (
     // TPDF dither: half the sum of two uniform values in -1..1 (exact Park-Miller steps, as in

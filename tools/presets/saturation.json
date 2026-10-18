@@ -6,5 +6,10 @@
   ["Guitar Fuzz", {"Mode": "Fuzz", "Drive": 50, "Tone": -4, "Mix": 50}],
   ["Lo-Fi Bitcrush", {"Mode": "Bitcrush", "Drive": 60, "Tone": -3, "Mix": 50}],
   ["Synth Wavefolder", {"Mode": "Fold", "Drive": 50, "Tone": 0, "Mix": 60}],
-  ["Hard Fold Lead", {"Mode": "Waveshaper", "Drive": 70, "Tone": -2, "Mix": 40}]
+  ["Hard Fold Lead", {"Mode": "Waveshaper", "Drive": 70, "Tone": -2, "Mix": 40}],
+  ["Tape Glue", {"Mode": "Tape", "Drive": 25, "Tone": 0, "Mix": 60, "Output": -1, "Oversampling": "2x"}],
+  ["Tube Push Highs", {"Mode": "Tube", "Drive": 35, "Tone": -1, "Mix": 50, "Emphasis": 6, "Output": -2, "Oversampling": "2x"}],
+  ["Fuzz Lows", {"Mode": "Fuzz", "Drive": 40, "Tone": -2, "Mix": 30, "Emphasis": -8, "Output": -4}],
+  ["Clean Drive 4x", {"Mode": "Overdrive", "Drive": 50, "Mix": 100, "Input": 3, "Output": -7, "Oversampling": "4x"}],
+  ["Bright Exciter", {"Mode": "Tube", "Drive": 20, "Mix": 25, "Emphasis": 10, "Oversampling": "2x"}]
 ]

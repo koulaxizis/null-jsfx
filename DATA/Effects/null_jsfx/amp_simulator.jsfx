@@ -4,7 +4,7 @@ tags: amp amplifier guitar bass preamp power amp tube valve distortion overdrive
 //category: Advanced
 //NULL JSFX v2.4 • https://nulljsfx.tech • MIT License
 
-slider1:1<0,3,1{Clean,Crunch,Lead,Bass}>Model
+slider1:1<0,7,1{Clean,Crunch,Lead,Bass,Jazz Clean,British,Modern High Gain,Fuzz}>Model
 slider2:5<0,10,0.1>Gain
 slider3:5<0,10,0.1>Bass
 slider4:5<0,10,0.1>Mid
@@ -15,6 +15,7 @@ slider8:0<0,1,1{Off,On}>Bright
 slider9:30<0,100,1>Sag (%)
 slider10:1<0,1,1{2x,4x}>Oversampling
 slider11:0<-24,12,0.1>Output (dB)
+slider12:-90<-90,-20,0.1>Noise Gate (dB)
 
 in_pin:Left
 in_pin:Right
@@ -32,6 +33,11 @@ out_pin:Right
   // step), so there is no latency.
   //   Clean: 2 stages, Fender stack. Crunch: 3 stages, Marshall stack.
   //   Lead: 4 stages, tight low end, Marshall stack. Bass: 2 stages, deep stack.
+  //   Jazz Clean: 2 low-gain stages, dark stack, lots of headroom. British: 3 looser, brighter
+  //   stages that crunch more in the power amp. Modern High Gain: 4 stages, very tight, scooped
+  //   stack. Fuzz: 2 hard-biased stages with a huge gain range, fat lows and a mid scoop.
+  // Noise Gate (-90 dB = off): keyed from the input (stereo linked), it closes the amp's output
+  // when the guitar falls below the threshold (6 dB hysteresis, 30 ms hold, 1 ms open, 80 ms close).
   ca = 0;          // half-band all-pass coefficients, first 2x step (8, -99 dB)
   cb = 8;          // second 2x step (4, -76 dB)
   rc = 16;         // power amp resonance biquad (b0 b1 b2 a1 a2)
@@ -44,6 +50,7 @@ out_pin:Right
   ca[4] = 0.609524314896188; ca[5] = 0.738503841118857; ca[6] = 0.849223810392066; ca[7] = 0.949742783705000;
   cb[0] = 0.070765948976184; cb[1] = 0.257853078513453; cb[2] = 0.513167574748793; cb[3] = 0.817317354417137;
   os = 0;
+  gt_env = 0; gt_g = 1; gt_open = 1; gt_cnt = 0;
 
   // triode-like asymmetric curve: soft towards +1, harder towards -0.5
   function tri(x) ( x > 0 ? 1 - exp(-x) : (exp(2 * x) - 1) * 0.5; );
@@ -189,12 +196,36 @@ out_pin:Right
     tight = 110; hp1 = 60; hp2 = 140; hp3 = 90; hp4 = 40; lp1 = 10000; lp2 = 8000; lp3 = 7000; lp4 = 6500;
     C1 = 0.47; C2 = 22; C3 = 22; R1 = 220; R2 = 1000; R3 = 22; R4 = 33;
     mk = 5; res_f = 85; res_g = 4; pa_base = 0.8; trim = -2;
-  ) : (
+  ) : model == 3 ? (
     ns = 2; gmin = -6; gmax = 28; g2 = 2.5; g3 = 0; g4 = 0;
     b1 = 0.05; b2 = 0.25; b3 = 0; b4 = 0;
     tight = 15; hp1 = 15; hp2 = 20; hp3 = 0; hp4 = 0; lp1 = 9000; lp2 = 6000; lp3 = 0; lp4 = 0;
     C1 = 0.33; C2 = 47; C3 = 33; R1 = 250; R2 = 1000; R3 = 25; R4 = 47;
     mk = 6; res_f = 60; res_g = 2; pa_base = 0.7; trim = 2;
+  ) : model == 4 ? (
+    ns = 2; gmin = -18; gmax = 10; g2 = 1.2; g3 = 0; g4 = 0;
+    b1 = 0.03; b2 = 0.1; b3 = 0; b4 = 0;
+    tight = 25; hp1 = 15; hp2 = 25; hp3 = 0; hp4 = 0; lp1 = 9000; lp2 = 6500; lp3 = 0; lp4 = 0;
+    C1 = 0.18; C2 = 22; C3 = 22; R1 = 250; R2 = 1000; R3 = 25; R4 = 100;
+    mk = 7; res_f = 90; res_g = 1.5; pa_base = 1.1; trim = 5;
+  ) : model == 5 ? (
+    ns = 3; gmin = -3; gmax = 30; g2 = 2.5; g3 = 2; g4 = 0;
+    b1 = 0.15; b2 = 0.25; b3 = 0.35; b4 = 0;
+    tight = 40; hp1 = 20; hp2 = 50; hp3 = 30; hp4 = 0; lp1 = 14000; lp2 = 11000; lp3 = 9000; lp4 = 0;
+    C1 = 0.5; C2 = 22; C3 = 22; R1 = 220; R2 = 1000; R3 = 25; R4 = 47;
+    mk = 5; res_f = 75; res_g = 2; pa_base = 1.4; trim = -1;
+  ) : model == 6 ? (
+    ns = 4; gmin = 10; gmax = 52; g2 = 5; g3 = 3.5; g4 = 2.5;
+    b1 = 0.08; b2 = 0.15; b3 = 0.2; b4 = 0.25;
+    tight = 150; hp1 = 80; hp2 = 180; hp3 = 120; hp4 = 60; lp1 = 9000; lp2 = 7500; lp3 = 6500; lp4 = 6000;
+    C1 = 0.5; C2 = 22; C3 = 47; R1 = 220; R2 = 1000; R3 = 10; R4 = 33;
+    mk = 6; res_f = 80; res_g = 5; pa_base = 0.7; trim = -1.5;
+  ) : (
+    ns = 2; gmin = 12; gmax = 54; g2 = 6; g3 = 0; g4 = 0;
+    b1 = 0.5; b2 = 0.6; b3 = 0; b4 = 0;
+    tight = 15; hp1 = 10; hp2 = 15; hp3 = 0; hp4 = 0; lp1 = 7000; lp2 = 5000; lp3 = 0; lp4 = 0;
+    C1 = 0.47; C2 = 47; C3 = 47; R1 = 100; R2 = 1000; R3 = 10; R4 = 22;
+    mk = 8; res_f = 70; res_g = 3; pa_base = 0.9; trim = -3;
   );
   pre_db = gmin + (gmax - gmin) * slider2 / 10;
   g1 = 10 ^ (pre_db / 20);
@@ -248,7 +279,21 @@ out_pin:Right
   sg_a = 1 - exp(-1 / (0.003 * fs_os));
   sg_r = 1 - exp(-1 / (0.12 * fs_os));
   out_g = 0.5 * 10 ^ ((trim + slider11) / 20);
+  gate_on = slider12 > -90;
+  gt_th = 10 ^ (slider12 / 20);
+  gt_rel = exp(-1 / (0.05 * srate));
+  gt_ga = 1 - exp(-1 / (0.001 * srate));
+  gt_gr = 1 - exp(-1 / (0.08 * srate));
+  gt_hold = floor(0.03 * srate);
 
 @sample
+  gate_on ? (
+    // noise gate key: the input peak, held and released over 50 ms
+    gt_x = max(abs(spl0), abs(spl1));
+    gt_env = max(gt_x, gt_env * gt_rel);
+    gt_env > gt_th ? (gt_open = 1; gt_cnt = gt_hold) : gt_env < gt_th * 0.5 ? (gt_cnt > 0 ? gt_cnt -= 1 : gt_open = 0);
+    gt_g += (gt_open ? gt_ga : gt_gr) * (gt_open - gt_g);
+  );
   spl0 = chan(spl0, st_l);
   spl1 = chan(spl1, st_r);
+  gate_on ? (spl0 *= gt_g; spl1 *= gt_g);

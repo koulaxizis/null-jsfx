@@ -4,11 +4,13 @@ tags: cabinet cab speaker guitar bass amp simulation di re-amp
 //category: Essentials
 //NULL JSFX v2.4 • https://nulljsfx.tech • MIT License
 
-slider1:2<0,4,1{1x12 Open Back,2x12 Combo,4x12 Closed Back,1x15 Bass,Small Radio}>Cabinet
+slider1:2<0,7,1{1x12 Open Back,2x12 Combo,4x12 Closed Back,1x15 Bass,Small Radio,1x10 Tweed,2x10 Bass,4x10 Vintage}>Cabinet
 slider2:30<0,100,1>Mic Position (%)
 slider3:80<20,300,1>Low Cut (Hz)
 slider4:100<0,100,1>Mix (%)
 slider5:0<-12,12,0.1>Output (dB)
+slider6:70<0,100,1>Mic 2 Position (%)
+slider7:0<0,100,1>Mic Blend (%)
 
 in_pin:Left
 in_pin:Right
@@ -20,6 +22,8 @@ out_pin:Right
   // impulse files. Each cabinet is a set of filters: the low-end resonance of the box,
   // the cone's mid character and presence peak, and the steep roll-off of the speaker.
   // Mic Position: 0% = centre of the cone (bright), 100% = edge (darker, softer).
+  // Mic Blend fades from that mic to a second one at Mic 2 Position (0% = only the first mic):
+  // both share the cabinet's box and cone filters, each has its own presence and roll-off.
 
   function biquad(type, freq, q, gain) local(w, c, s, al, A, a0)
   (
@@ -55,6 +59,14 @@ out_pin:Right
   cab == 2 ? (res = 85;  res_g = 7;  lm = 250;  lm_g = 2;  sc = 650;  sc_g = -6; pr = 2000; pr_g = 5; lp = 4500; base_lc = 50);
   cab == 3 ? (res = 60;  res_g = 6;  lm = 200;  lm_g = 3;  sc = 600;  sc_g = -5; pr = 1500; pr_g = 3; lp = 3000; base_lc = 30);
   cab == 4 ? (res = 300; res_g = 3;  lm = 800;  lm_g = 4;  sc = 1500; sc_g = -2; pr = 2500; pr_g = 6; lp = 3500; base_lc = 250);
+  cab == 5 ? (res = 130; res_g = 3;  lm = 500;  lm_g = 2;  sc = 1100; sc_g = -2; pr = 3000; pr_g = 6; lp = 6000; base_lc = 90);
+  cab == 6 ? (res = 75;  res_g = 5;  lm = 280;  lm_g = 2;  sc = 700;  sc_g = -3; pr = 1800; pr_g = 4; lp = 4500; base_lc = 40);
+  cab == 7 ? (res = 95;  res_g = 6;  lm = 320;  lm_g = 3;  sc = 900;  sc_g = -2; pr = 2400; pr_g = 4; lp = 5000; base_lc = 55);
+  // the second mic: the same cabinet at Mic 2 Position
+  m2 = slider6 / 100;
+  lp_b = lp * (1 - 0.45 * m2);
+  pr_gb = pr_g * (1 - 0.7 * m2);
+  blend = slider7 / 100;
   lp *= 1 - 0.45 * m;
   pr_g *= 1 - 0.7 * m;
   lc = max(slider3, base_lc);
@@ -65,15 +77,22 @@ out_pin:Right
   st5.set_stage(2, pr, 1.5, pr_g);
   st6.set_stage(1, lp, 0.6, 0);
   st7.set_stage(1, lp * 1.3, 0.9, 0);
+  st5b.set_stage(2, pr, 1.5, pr_gb);
+  st6b.set_stage(1, lp_b, 0.6, 0);
+  st7b.set_stage(1, lp_b * 1.3, 0.9, 0);
   mix = slider4 / 100;
   out = 10 ^ (slider5 / 20);
 
 @sample
   // left channel
   y = st1.l.run(spl0); y = st2.l.run(y); y = st3.l.run(y); y = st4.l.run(y);
+  blend > 0 ? (y_b = st5b.l.run(y); y_b = st6b.l.run(y_b); y_b = st7b.l.run(y_b));
   y = st5.l.run(y); y = st6.l.run(y); wl = st7.l.run(y);
+  blend > 0 ? wl = wl * (1 - blend) + y_b * blend;
   // right channel
   y = st1.r.run(spl1); y = st2.r.run(y); y = st3.r.run(y); y = st4.r.run(y);
+  blend > 0 ? (y_b = st5b.r.run(y); y_b = st6b.r.run(y_b); y_b = st7b.r.run(y_b));
   y = st5.r.run(y); y = st6.r.run(y); wr = st7.r.run(y);
+  blend > 0 ? wr = wr * (1 - blend) + y_b * blend;
   spl0 = (spl0 * (1 - mix) + wl * mix) * out;
   spl1 = (spl1 * (1 - mix) + wr * mix) * out;
