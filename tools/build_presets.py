@@ -20,6 +20,7 @@ Usage: build_presets.py              write them
        build_presets.py --check      exit 1 if any of them is out of date (used by CI)
        build_presets.py --validate   only check tools/presets/*.json, write nothing
        build_presets.py --ini <dir>  write the REAPER user preset files (js-*.ini) into <dir>
+       build_presets.py --only a,b   write (or --check) only these plugins
 """
 import base64
 import json
@@ -221,13 +222,15 @@ def gfx_source(path, block):
     return "\n".join(lines).rstrip("\n") + "\n"
 
 
-def render():
+def render(only=None):
     files = {}
     stems = sorted(p.stem for p in PLUGINS.glob("*.jsfx"))
     for f in SOURCE.glob("*.json"):
         if f.stem not in stems:
             sys.exit(f"build_presets: {f.name}: there is no {f.stem}.jsfx")
     for stem in stems:
+        if only and stem not in only:
+            continue
         presets = load(stem)
         skip = file_sliders(stem)
         desc = (PLUGINS / f"{stem}.jsfx").read_text(encoding="utf-8").split("\n", 1)[0][len("desc:"):].strip()
@@ -246,7 +249,8 @@ def main():
     if "--ini" in sys.argv:
         write_ini(Path(sys.argv[sys.argv.index("--ini") + 1]))
         return
-    files = render()
+    only = sys.argv[sys.argv.index("--only") + 1].split(",") if "--only" in sys.argv else None
+    files = render(only)
     if "--validate" in sys.argv:
         for p in sorted(SOURCE.glob("*.json")):
             print(f"{p.stem}: {', '.join(n for n, _ in load(p.stem)[1:])}")
