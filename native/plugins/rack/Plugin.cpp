@@ -6,7 +6,7 @@
  * SPDX-License-Identifier: MIT
  *
  * Parameters: RackParams.hpp (22 globals, then On/Mix/Band/Channel/Value 1-25 per slot, then,
- * appended in 2.2, the step sequencer, Lane Mix, Feedback, Feedback From/To and S1-S8 Lane).
+ * appended after 2.1, the step sequencer, Lane Mix, Feedback, Feedback From/To and S1-S8 Lane).
  * State: "slots" (8 module ids), "routes" and "preset" (RackParams.hpp). The module in a slot is
  * state, not a parameter: changing it allocates, which happens here, never on the audio thread.
  * A slot's lane is a parameter like its band and channel (appended, so 2.1 sessions load with

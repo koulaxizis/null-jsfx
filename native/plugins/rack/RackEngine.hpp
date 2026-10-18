@@ -12,12 +12,12 @@
  *
  * Modulation, every kChunk samples: Macro 1-8, two LFOs (free or tempo-synced; sine, triangle,
  * saw up/down, square, random S&H by an exact Park-Miller step), an envelope follower of the
- * rack input and (2.2) a 16-step sequencer (Steps 1..16, free in Hz or synced, Glide: a linear
+ * rack input and (added after 2.1) a 16-step sequencer (Steps 1..16, free in Hz or synced, Glide: a linear
  * ramp from the previous step over that share of each step), routed to slot values with depth
  * -1..1 of the value's range (log sliders in log space). A module's setValue is called only when
  * its effective (snapped) value changes.
  *
- * 2.2 additions, each off at its default so 2.1 sessions render bit for bit as before
+ * Added after 2.1, each off at its default so 2.1 sessions render bit for bit as before
  * (rack_test "identity" checks it against a copy of the 2.1 engine):
  * - Lanes: each slot is on lane A or B. With a slot on B, lane A and lane B each run the rack
  *   input through their own slots in order; the shorter lane is delayed to line up with the
@@ -920,7 +920,7 @@ private:
                 sp.set(f1, f2, fSampleRate);
     }
 
-    // two lanes and/or the feedback loop (2.2); x holds the input and gets the output. Returns
+    // two lanes and/or the feedback loop (added after 2.1); x holds the input and gets the output. Returns
     // the latency (the longer lane's).
     uint32_t processLanes(float* xl, float* xr, uint32_t n, const nulljsfx::ModuleTime& mt, bool laneB, float fb)
     {
@@ -1172,7 +1172,7 @@ private:
     std::atomic<int> fSeqStepOut { 0 };
     double fSeqPos = 0.0;
 
-    // 2.2: lanes, feedback, keys
+    // added after 2.1: lanes, feedback, keys
     DelayLine fAlignA, fAlignB;
     ChunkRing fKey, fFbRing;
     bool fLanesActive = false, fFbActive = false;

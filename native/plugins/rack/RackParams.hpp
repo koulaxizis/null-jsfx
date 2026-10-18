@@ -9,14 +9,14 @@
  * maps them to the module's slider (log sliders in log space, snapped to the slider's step, enums
  * to integers).
  *
- * Appended in Rack 2.2 (never insert before them: hosts store parameters by index), 254..285:
+ * Appended after Rack 2.1 (never insert before them: hosts store parameters by index), 254..285:
  * the step sequencer (Steps, Rate, Sync, Glide, Step 1..16), Lane Mix, Feedback, Feedback From,
  * Feedback To, then S1..S8 Lane (A or B). At their defaults the rack sounds exactly as 2.1: no
  * slot on lane B, feedback 0, and the sequencer moves nothing without a route.
  *
  * State (strings): "slots" = 8 module ids separated by ',' (empty = empty slot), "routes" =
  * "source>slot.value:depth" separated by ';' (slot and value from 1, e.g. "lfo1>2.1:-0.25";
- * sources: kSourceSymbols, "seq" since 2.2), "preset" = the name of the preset the rack was
+ * sources: kSourceSymbols, "seq" added after 2.1), "preset" = the name of the preset the rack was
  * loaded from.
  */
 
@@ -85,7 +85,7 @@ enum SlotParam { kSlotOn = 0, kSlotMix, kSlotBand, kSlotChannel, kSlotValue1, kS
 
 static constexpr uint32_t kSeqSteps = 16;
 
-// appended in 2.2, after every 2.1 parameter
+// appended after every 2.1 parameter
 enum ExtParam : uint32_t {
     kExtFirst = kNumGlobals + kSlots * kSlotParams, // 254
     kSeqLength = kExtFirst, kSeqRate, kSeqSync, kSeqGlide,
@@ -149,7 +149,7 @@ static const ParamInfo kExtInfos[] = {
     { { "Seq Glide", "seq_glide", 0.0f, 100.0f, 0.0f, "%", 0.0f }, false },
     { { "Seq Step", "seq_step", 0.0f, 1.0f, 0.0f, "", 0.0f }, false },     // x16, numbered
     { { "Lane Mix", "lane_mix", 0.0f, 100.0f, 50.0f, "%", 0.0f }, false },
-    { { "Feedback", "feedback", 0.0f, kMaxFeedback, 0.0f, "%", 0.0f }, false },
+    { { "Feedback", "feedback", 0.0f, kMaxFeedback, 0.0f, "%", 1.0f }, false },
     { { "Feedback From", "fb_from", 1.0f, 8.0f, 1.0f, "", 1.0f }, false },
     { { "Feedback To", "fb_to", 1.0f, 8.0f, 8.0f, "", 1.0f }, false },
     { { "Lane", "lane", 0.0f, 1.0f, 0.0f, "", 1.0f, kLaneOptions }, false }, // x8, per slot
@@ -235,7 +235,7 @@ inline int globalFromSymbol(const char* sym)
     return -1;
 }
 
-// true for the per-slot parameters: On, Mix, Band, Channel, the values and (2.2) the lane
+// true for the per-slot parameters: On, Mix, Band, Channel, the values and (added after 2.1) the lane
 inline bool isSlotParam(uint32_t index, uint32_t* slot = nullptr)
 {
     if (index >= kNumGlobals && index < kExtFirst)
@@ -396,7 +396,7 @@ struct PresetSlot {
     uint8_t band, channel;
     float mix;
     bool on;
-    uint8_t lane; // 2.2: 0 = A (the generator leaves it out), 1 = B
+    uint8_t lane; // added after 2.1: 0 = A (the generator leaves it out), 1 = B
 };
 
 struct PresetRoute {

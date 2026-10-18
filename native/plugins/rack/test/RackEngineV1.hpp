@@ -1,7 +1,7 @@
 /*
  * NULL JSFX - Rack: the engine of Rack 2.1, kept unchanged (only the namespace, the source count
  * and the globals lookup below differ) as the reference for rack_test's "identity" test: with
- * the 2.2 features at their defaults, RackEngine must render every factory preset bit for bit
+ * the features added since at their defaults, RackEngine must render every factory preset bit for bit
  * like this one. Do not edit the processing code.
  * Copyright (C) 2026 Christos Koulaxizis / NULL JSFX
  * SPDX-License-Identifier: MIT
