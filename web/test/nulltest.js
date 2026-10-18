@@ -2,6 +2,7 @@
 // Usage: node web/test/nulltest.js [plugin.jsfx ...]   (needs tests/run.sh to have built ysfx)
 // For each effect: defaults, every slider at min and at max, and seeded random settings,
 // at 44.1 and 96 kHz. Passes when the largest difference stays below 1e-6 (-120 dB).
+// Instruments (and anything else that reads MIDI) also get the same MIDI notes in both.
 "use strict";
 var fs = require("fs"), path = require("path"), os = require("os");
 var cp = require("child_process");
@@ -43,7 +44,7 @@ function signal(sr, frames, nin) {
   for (var c = 0; c < nin; c++) ch.push(new Float64Array(frames));
   for (var i = 0; i < frames; i++) {
     var t = i / sr, env = (t % 0.5) < 0.25 ? 1 : 0.3;
-    ch[0][i] = 0.25 * env * (Math.sin(2 * Math.PI * 220 * t) + 0.3 * rnd());
+    if (nin > 0) ch[0][i] = 0.25 * env * (Math.sin(2 * Math.PI * 220 * t) + 0.3 * rnd());
     if (nin > 1) ch[1][i] = 0.25 * env * (Math.sin(2 * Math.PI * 330 * t) + 0.3 * rnd());
     var tk = t % 0.25, sc = 0.8 * Math.exp(-tk * 20) * Math.sin(2 * Math.PI * 60 * tk);
     for (var c2 = 2; c2 < nin; c2++) ch[c2][i] = sc;
@@ -69,7 +70,19 @@ function presets(FX) {
 }
 function fromEach(list, f) { var o = {}; list.forEach(function (s) { o[s.i] = f(s); }); return o; }
 
-function runJs(FX, sr, ins, frames, sliders) {
+// MIDI for the instruments: General MIDI drum notes (and some others) at uneven times, with
+// changing velocities, a few note-offs and a note-on with velocity 0; [frame, status, d1, d2]
+function midiEvents(sr, frames) {
+  var notes = [36, 38, 39, 37, 42, 46, 41, 47, 56, 49, 35, 40, 44, 43, 50, 51, 60, 45, 48, 57];
+  var out = [], k = 0;
+  for (var at = Math.floor(0.013 * sr); at < frames; at += Math.floor((0.05 + 0.04 * (k % 5)) * sr), k++) {
+    var n = notes[k % notes.length];
+    out.push([at, k % 7 === 3 ? 0x80 : 0x90 | (k % 3), n, k % 11 === 5 ? 0 : 20 + (k * 37) % 108]);
+  }
+  return out;
+}
+
+function runJs(FX, sr, ins, frames, sliders, midi) {
   R.random = MT();
   var fx = new HOST.Effect(FX, R, { srate: sr, blockSize: BLOCK, sliders: sliders, playing: true /* ysfx starts with play_state 1 */ });
   var nout = FX.outPins.length;
@@ -78,18 +91,24 @@ function runJs(FX, sr, ins, frames, sliders) {
   for (var n = 0; n < frames; n += BLOCK) {
     var len = Math.min(BLOCK, frames - n);
     fx.setTime({ tempo: 120, playing: true, position: n / sr, beat: n / sr * 2, num: 4, denom: 4 });
-    fx.process(ins.map(function (a) { return a.subarray(n, n + len); }), outs.map(function (a) { return a.subarray(n, n + len); }), len, ins.length);
+    var ev = (midi || []).filter(function (e) { return e[0] >= n && e[0] < n + len; }).map(function (e) { return [e[0] - n, e[1], e[2], e[3]]; });
+    fx.process(ins.map(function (a) { return a.subarray(n, n + len); }), outs.map(function (a) { return a.subarray(n, n + len); }), len, ins.length, ev);
   }
   return { outs: outs, pdc: fx.pdc() };
 }
 
-function runRef(file, sr, ins, frames, sliders, tmp) {
+function runRef(file, sr, ins, frames, sliders, tmp, midi) {
   var inFile = path.join(tmp, "in.f64"), outFile = path.join(tmp, "out.f64");
   var buf = Buffer.alloc(ins.length * frames * 8);
   ins.forEach(function (a, c) { Buffer.from(a.buffer, a.byteOffset, a.byteLength).copy(buf, c * frames * 8); });
   fs.writeFileSync(inFile, buf);
   var args = [file, String(sr), String(BLOCK), String(frames), inFile, outFile];
   Object.keys(sliders).forEach(function (k) { args.push(k + "=" + sliders[k]); });
+  if (midi) {
+    var midiFile = path.join(tmp, "midi.txt");
+    fs.writeFileSync(midiFile, midi.map(function (e) { return e.join(" "); }).join("\n") + "\n");
+    args.push("midi=" + midiFile);
+  }
   var res = cp.execFileSync(refBin, args).toString().trim().split(" ");
   var nout = +res[1], raw = fs.readFileSync(outFile), outs = [];
   for (var c = 0; c < nout; c++) {
@@ -105,9 +124,7 @@ function main() {
   if (!files.length) {
     var dir = path.join(root, "DATA/Effects/null_jsfx");
     files = fs.readdirSync(dir).filter(function (f) { return /\.jsfx$/.test(f); }).map(function (f) { return path.join(dir, f); })
-      .concat(fs.readdirSync(path.join(dir, "gfx")).filter(function (f) { return /\.jsfx$/.test(f); }).map(function (f) { return path.join(dir, "gfx", f); }))
-      // the web version has the effects only, not the instruments (web/tools/build.js)
-      .filter(function (f) { return !/^\/\/category: Instruments$/m.test(fs.readFileSync(f, "utf8")); });
+      .concat(fs.readdirSync(path.join(dir, "gfx")).filter(function (f) { return /\.jsfx$/.test(f); }).map(function (f) { return path.join(dir, "gfx", f); }));
   }
   if (!fs.existsSync(refBin)) { console.error("build the reference renderer first: web/test/run.sh"); process.exit(2); }
   var tmp = fs.mkdtempSync(path.join(os.tmpdir(), "nulltest-"));
@@ -121,9 +138,9 @@ function main() {
       var nin = FX.inPins.length;
       [44100, 96000].forEach(function (sr) {
         var frames = Math.floor(sr * SECONDS);
-        var ins = signal(sr, frames, nin);
+        var ins = signal(sr, frames, nin), midi = FX.usesMidi ? midiEvents(sr, frames) : null;
         presets(FX).forEach(function (p) {
-          var js = runJs(FX, sr, ins, frames, p.v), ref = runRef(file, sr, ins, frames, p.v, tmp);
+          var js = runJs(FX, sr, ins, frames, p.v, midi), ref = runRef(file, sr, ins, frames, p.v, tmp, midi);
           if (Math.abs(js.pdc - ref.pdc) > 1e-9) { err = err || ("pdc " + js.pdc + " vs " + ref.pdc + " (" + p.name + " @" + sr + ")"); }
           ref.outs.forEach(function (a, c) {
             var b = js.outs[c];

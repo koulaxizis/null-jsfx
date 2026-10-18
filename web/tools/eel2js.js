@@ -384,6 +384,7 @@ function Compiler(effect, opts) {
   this.temps = [];
   this.usesRand = false;
   this.usesFile = false;
+  this.usesMidi = false;
   this.usedBuiltins = {};
 }
 
@@ -914,8 +915,24 @@ BUILTINS.file_text = fixed(1, "0");
 // __denormal_likely(x) etc. are hints only
 BUILTINS.__denormal_likely = fixed(1, "$1");
 BUILTINS.__denormal_unlikely = fixed(1, "$1");
-BUILTINS.midirecv = fixed(-1, "0");
-BUILTINS.midisend = fixed(-1, "0");
+// MIDI: the host queues the block's events (offset in the block, status, data 1, data 2);
+// midirecv takes the next one. The 3-parameter forms pack the data bytes as msg2 + msg3 * 256.
+BUILTINS.midirecv = function (args, scope) {
+  if (args.length !== 3 && args.length !== 4) throw new Error("midirecv() needs 3 or 4 parameters");
+  this.usesMidi = true;
+  var self = this, t = args.map(function (a) { return varTarget(self, a, scope); });
+  var set = args.length === 4
+    ? t[0] + " = H.mo, " + t[1] + " = H.m1, " + t[2] + " = H.m2, " + t[3] + " = H.m3"
+    : t[0] + " = H.mo, " + t[1] + " = H.m1, " + t[2] + " = H.m2 + H.m3 * 256";
+  return ex([], "(H.midiRecv() ? (" + set + ", 1) : 0)", false);
+};
+BUILTINS.midisend = function (args, scope) {
+  if (args.length !== 3 && args.length !== 4) throw new Error("midisend() needs 3 or 4 parameters");
+  this.usesMidi = true;
+  var s = plainArgs(this, args, scope);
+  return ex(s.pre, args.length === 4 ? "H.midiSend(" + s.vals.join(", ") + ")"
+    : "H.midiSend(" + s.vals[0] + ", " + s.vals[1] + ", " + s.vals[2] + " % 256, Math.floor(" + s.vals[2] + " / 256))", false);
+};
 
 // ---------------------------------------------------------------- effect ---------------
 
@@ -923,7 +940,7 @@ function idOf(file) { return path.basename(file).replace(/\.jsfx(-inc)?$/, ""); 
 
 function collectCode(effect) {
   // imported files' sections run first (functions from imports are defined before use)
-  var out = { init: [], slider: [], block: [], sample: [], gfx: [] };
+  var out = { init: [], slider: [], block: [], sample: [], gfx: [], serialize: [] };
   function walk(e) {
     e.imported.forEach(walk);
     Object.keys(out).forEach(function (k) {
@@ -942,7 +959,7 @@ function translate(file, opts) {
   var code = collectCode(effect);
   var uid = 0;
   var compiled = {};
-  ["init", "slider", "block", "sample", "gfx"].forEach(function (sec) {
+  ["init", "slider", "block", "sample", "gfx", "serialize"].forEach(function (sec) {
     var parts = code[sec];
     var nodes = [];
     parts.forEach(function (chunk) {
@@ -959,7 +976,7 @@ function translate(file, opts) {
   // needs a function defined before its first use, which holds for working JSFX.
   var scope = { ns: "", fn: null, locals: {}, params: {}, refs: {}, instance: {}, globals: {} };
   var bodies = {};
-  ["init", "slider", "block", "sample", "gfx"].forEach(function (sec) {
+  ["init", "slider", "block", "sample", "gfx", "serialize"].forEach(function (sec) {
     bodies[sec] = compiled[sec].map(function (x) { return c.stmts(x.node, scope); }).join("");
     bodies[sec + "Temps"] = c.temps; c.temps = [];
   });
@@ -968,7 +985,7 @@ function translate(file, opts) {
   var nIn = hdr.inPins.length, nOut = hdr.outPins.length, nSpl = Math.max(nIn, nOut, 2);
   for (var k = 0; k < Math.max(nSpl, 2); k++) c.useVar("spl" + k);
   RESERVED_HOST.forEach(function (h) { c.useVar(h); });
-  return emit(c, effect, bodies, { nIn: nIn, nOut: nOut, nSpl: nSpl, id: opts.id || idOf(file) });
+  return emit(c, effect, bodies, { nIn: nIn, nOut: nOut, nSpl: nSpl, id: opts.id || idOf(file), share: opts.share });
 }
 
 // vars @gfx reads that the audio code writes: the page gets them from the audio thread
@@ -989,6 +1006,9 @@ function liveVars(c, bodies) {
   return Object.keys(reads).filter(function (v) { return writesDsp[v]; }).sort();
 }
 
+// whether the effect has an EEL2 variable of this (lower case) name
+function hasVar(c, name) { return Object.keys(c.vars).some(function (js) { return c.vars[js] === name; }); }
+
 function emit(c, effect, bodies, io) {
   var hdr = effect.header;
   var id = io.id;
@@ -1005,6 +1025,18 @@ function emit(c, effect, bodies, io) {
     sliders: sliders, inPins: hdr.inPins, outPins: hdr.outPins, gfx: hdr.gfx,
     usesRand: c.usesRand, usesFile: c.usesFile
   };
+  // instruments (no audio input, played by MIDI) and plugins that save state of their own
+  if (c.usesMidi) meta.usesMidi = true;
+  if (bodies.serialize.trim()) meta.serialize = true;
+  // state @gfx and the audio share in REAPER, which a host running them apart passes over
+  // (opts.share, from tools/build.js): pokes = variables @gfx sets and the audio takes and
+  // clears; flash = memory the audio writes and @gfx reads and fades ([variable, length])
+  if (io.share && hdr.gfx) {
+    (io.share.pokes || []).forEach(function (v) { if (!hasVar(c, v)) throw new Error(id + ": no variable " + v); });
+    (io.share.flash || []).forEach(function (f) { if (!hasVar(c, f[0])) throw new Error(id + ": no variable " + f[0]); });
+    if (io.share.pokes && io.share.pokes.length) meta.pokes = io.share.pokes.slice();
+    if (io.share.flash && io.share.flash.length) meta.flash = io.share.flash.map(function (f) { return [f[0], f[1]]; });
+  }
   var live = hdr.gfx ? liveVars(c, bodies) : [];
   var L = [];
   L.push("// Generated by web/tools/eel2js.js from " + path.basename(effect.file) + ". Do not edit: run `node web/tools/build.js`.");
@@ -1057,6 +1089,7 @@ function emit(c, effect, bodies, io) {
   L.push("  // I: input channels (arrays), O: output channels; nin: how many inputs carry signal");
   L.push("  sample: function (I, O, n, nin) {\nvar i;\n" + tv("sample") + "for (i = 0; i < n; i++) {\n" + loadIns.join(" ") + "\n" + bodies.sample + storeOuts.join(" ") + "\n}\n},");
   L.push("  gfx: function () {\n" + tv("gfx") + bodies.gfx + "},");
+  L.push("  serialize: function () {\n" + tv("serialize") + bodies.serialize + "},");
   L.push("  getSlider: IO.getSlider, setSlider: IO.setSlider,");
   L.push("  setHost: function (k, v) { switch (k) { " + Object.keys(host).map(function (k2) { return "case \"" + k2 + "\": " + host[k2] + " = v; break;"; }).join(" ") + " } },");
   L.push("  getHost: function (k) { switch (k) { " + Object.keys(host).map(function (k2) { return "case \"" + k2 + "\": return " + host[k2] + ";"; }).join(" ") + " } return 0; },");
@@ -1065,7 +1098,8 @@ function emit(c, effect, bodies, io) {
   L.push("  getLive: function (out) { " + live.map(function (v, j) { return "out[" + j + "] = " + v + ";"; }).join(" ") + " return out; },");
   L.push("  setLive: function (a) { " + live.map(function (v, j) { return v + " = a[" + j + "];"; }).join(" ") + " },");
   L.push("  mem: MEM, str: S,");
-  L.push("  getVar: function (name) { var k = FX.vars.indexOf(String(name).toLowerCase()); return k < 0 ? 0 : V[k]; }");
+  L.push("  getVar: function (name) { var k = FX.vars.indexOf(String(name).toLowerCase()); return k < 0 ? 0 : V[k]; },");
+  L.push("  setVar: function (name, v) { var k = FX.vars.indexOf(String(name).toLowerCase()); if (k >= 0) V[k] = v; }");
   L.push("};");
   var bindAt = L.length;
   L.push("");

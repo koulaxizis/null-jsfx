@@ -866,6 +866,8 @@ t28 = (R.t(f20_ng_select_ctl(13, 10023, 10034, 0)) ? f0_update() : 0);
 f26_ng_end();
 f27_ng_presets();
 },
+  serialize: function () {
+},
   getSlider: IO.getSlider, setSlider: IO.setSlider,
   setHost: function (k, v) { switch (k) { case "srate": V[27] = v; break; case "samplesblock": V[190] = v; break; case "num_ch": V[191] = v; break; case "tempo": V[192] = v; break; case "play_state": V[193] = v; break; case "play_position": V[194] = v; break; case "beat_position": V[195] = v; break; case "ts_num": V[196] = v; break; case "ts_denom": V[197] = v; break; case "pdc_delay": V[198] = v; break; case "pdc_bot_ch": V[199] = v; break; case "pdc_top_ch": V[200] = v; break; case "trigger": V[202] = v; break; } },
   getHost: function (k) { switch (k) { case "srate": return V[27]; case "samplesblock": return V[190]; case "num_ch": return V[191]; case "tempo": return V[192]; case "play_state": return V[193]; case "play_position": return V[194]; case "beat_position": return V[195]; case "ts_num": return V[196]; case "ts_denom": return V[197]; case "pdc_delay": return V[198]; case "pdc_bot_ch": return V[199]; case "pdc_top_ch": return V[200]; case "trigger": return V[202]; } return 0; },
@@ -874,7 +876,8 @@ f27_ng_presets();
   getLive: function (out) { out[0] = V[34]; out[1] = V[33]; out[2] = V[32]; out[3] = V[31]; out[4] = V[45]; return out; },
   setLive: function (a) { V[34] = a[0]; V[33] = a[1]; V[32] = a[2]; V[31] = a[3]; V[45] = a[4]; },
   mem: MEM, str: S,
-  getVar: function (name) { var k = FX.vars.indexOf(String(name).toLowerCase()); return k < 0 ? 0 : V[k]; }
+  getVar: function (name) { var k = FX.vars.indexOf(String(name).toLowerCase()); return k < 0 ? 0 : V[k]; },
+  setVar: function (name, v) { var k = FX.vars.indexOf(String(name).toLowerCase()); if (k >= 0) V[k] = v; }
 };
 if (G.bind) G.bind(V, {"gfx_r":78,"gfx_g":79,"gfx_b":80,"gfx_a":81,"gfx_x":106,"gfx_y":107,"gfx_w":73,"gfx_h":74,"gfx_texth":99,"gfx_ext_retina":29,"gfx_mode":208,"gfx_clear":209,"mouse_x":111,"mouse_y":112,"mouse_cap":82,"mouse_wheel":89}, S);
 return inst;
