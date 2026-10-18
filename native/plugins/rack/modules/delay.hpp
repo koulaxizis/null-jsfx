@@ -49,7 +49,7 @@ private:
     void update()
     {
         fDsp.setParams(fV[0], fV[1], fV[2], fV[3] >= 0.5f, int(std::lround(fV[4])), fV[5] >= 0.5f,
-                       fV[6], fV[7], fV[8]);
+                       fV[6], fV[7], fV[8], fV[9], fV[10], fV[11], fV[12] >= 0.5f);
     }
 
     nulldelay::DelayProcessor fDsp;

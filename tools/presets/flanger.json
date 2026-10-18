@@ -4,5 +4,12 @@
   ["Metallic Resonance", {"Rate": 0.1, "Depth": 2, "Feedback": 85, "Mix": 50}],
   ["Vocal Psychedelia", {"Rate": 0.6, "Depth": 5, "Feedback": 50, "Mix": 40}],
   ["Fast Warble", {"Rate": 3, "Depth": 2, "Feedback": 40, "Mix": 40}],
-  ["Build-Up Swoosh", {"Rate": 0.1, "Depth": 15, "Feedback": 60, "Mix": 50}]
+  ["Build-Up Swoosh", {"Rate": 0.1, "Depth": 15, "Feedback": 60, "Mix": 50}],
+  ["Jet Flange", {"Rate": 0.1, "Depth": 10, "Feedback": 80, "Mix": 50, "Manual": 0.3}],
+  ["Thru-Zero Jet", {"Rate": 0.1, "Depth": 6, "Feedback": 20, "Mix": 50, "Thru Zero": "On"}],
+  ["Thru-Zero Gentle", {"Rate": 0.2, "Depth": 3, "Feedback": 0, "Mix": 50, "Thru Zero": "On"}],
+  ["Synced Sweep", {"Depth": 6, "Feedback": 60, "Mix": 50, "Tempo Sync": "1/1", "Stereo Phase": 90}],
+  ["Synced Eighths", {"Depth": 2, "Feedback": 50, "Mix": 40, "Tempo Sync": "1/8", "Stereo Phase": 90}],
+  ["Metallic", {"Rate": 0.2, "Depth": 1, "Feedback": 95, "Mix": 50, "Manual": 1.5}],
+  ["Wide Stereo Flange", {"Rate": 0.3, "Depth": 5, "Feedback": 50, "Mix": 45, "Stereo Phase": 180}]
 ]

@@ -24,7 +24,7 @@ protected:
     const char* getLabel() const override { return "Reverb"; }
     const char* getDescription() const override
     {
-        return "Stereo room-to-hall reverb: room size, decay, high-frequency damping and mix.";
+        return "Stereo room, plate and hall reverb: size, decay, damping, mix, pre-delay, low and high cut, width, modulation and freeze.";
     }
     int64_t getUniqueId() const override { return d_cconst('N', '5', 'R', 'v'); }
 
@@ -50,7 +50,8 @@ protected:
 private:
     void update()
     {
-        fDsp.setParams(value(0), value(1), value(2), value(3), value(4) > 0.0f);
+        fDsp.setParams(value(0), value(1), value(2), value(3), value(4) > 0.0f, value(5), value(6), value(7), value(8),
+                       value(9), value(10) > 0.0f, int(std::lround(value(11))));
     }
 
     nullreverb::ReverbProcessor fDsp;

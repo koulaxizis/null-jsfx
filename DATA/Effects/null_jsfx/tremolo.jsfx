@@ -1,12 +1,16 @@
 desc:NULL Tremolo
 author: Christos Koulaxizis
-tags: tremolo amplitude modulation lfo rhythmic pulsing
+tags: tremolo amplitude modulation lfo rhythmic pulsing harmonic auto-pan tempo sync
 //category: Essentials
 //NULL JSFX v2.4 • https://nulljsfx.tech • MIT License
 
 slider1:5<0.1,20,0.1>Rate (Hz)
 slider2:50<0,100,1>Depth (%)
 slider3:40<0,100,1>Mix (%)
+slider4:0<0,4,1{Sine,Triangle,Square,Saw Up,Saw Down}>Shape
+slider5:0<0,11,1{Off,1/1,1/2,1/4,1/8,1/16,1/32,1/4T,1/8T,1/16T,1/4D,1/8D}>Tempo Sync
+slider6:0<0,180,1>Stereo Phase (deg)
+slider7:0<0,1,1{Classic,Harmonic}>Mode
 
 in_pin:Left
 in_pin:Right
@@ -14,23 +18,93 @@ out_pin:Left
 out_pin:Right
 
 @init
+  // Shape: every LFO starts at 0 rising and peaks a quarter cycle in, like the sine.
+  // Square is a hard-clipped sine whose edges take about 2 ms (no clicks), the saws turn
+  // around over about 2 ms too. Tempo Sync: one LFO cycle per note value at the host
+  // tempo; while the transport plays the phase is taken from beat_position so the LFO
+  // stays locked to the beat grid. Stereo Phase delays the right channel's LFO (180 =
+  // auto-pan). Harmonic: a 12 dB/oct crossover at 800 Hz splits each channel, the lows
+  // follow the LFO and the highs the inverted LFO (vintage harmonic tremolo).
   phase = 0;
+  xo_l1 = xo_l2 = xo_r1 = xo_r2 = 0;
+
+  // the LFO (-1..1) of the current Shape at phase ph (radians)
+  function tr_lfo(ph) local(u)
+  (
+    shape == 1 ? (
+      u = ph / 6.28318530717958;
+      u -= floor(u);
+      u < 0.25 ? 4 * u : (u < 0.75 ? 2 - 4 * u : 4 * u - 4);
+    ) : (
+      shape == 2 ? (
+        max(-1, min(1, sin(ph) * sq_g));
+      ) : (
+        u = ph / 6.28318530717958 + 0.5;
+        u -= floor(u);
+        u = u < 1 - saw_w ? -1 + 2 * u / (1 - saw_w) : 1 - 2 * (u - (1 - saw_w)) / saw_w;
+        shape == 4 ? -u : u;
+      );
+    );
+  );
+
+  // edge smoothing for the current rate: Square's clip gain, the saws' turn-around (cycles)
+  function tr_edges() local(hz)
+  (
+    hz = phase_inc * srate / 6.28318530717958;
+    sq_g = max(1, 1 / max(0.000001, 6.28318530717958 * hz * 0.002));
+    saw_w = max(0.0001, min(0.5, hz * 0.002));
+  );
 
 @slider
   rate = slider1;
   depth_pct = slider2 / 100;
   mix_amt = slider3 / 100;
   phase_inc = 6.28318530717958 * rate / srate;
+  shape = slider4;
+  sync = slider5;
+  // beats per LFO cycle of each Tempo Sync note
+  sync_beats = 1;
+  sync == 1 ? sync_beats = 4;     sync == 2 ? sync_beats = 2;      sync == 3 ? sync_beats = 1;
+  sync == 4 ? sync_beats = 0.5;   sync == 5 ? sync_beats = 0.25;   sync == 6 ? sync_beats = 0.125;
+  sync == 7 ? sync_beats = 2 / 3; sync == 8 ? sync_beats = 1 / 3;  sync == 9 ? sync_beats = 1 / 6;
+  sync == 10 ? sync_beats = 1.5;  sync == 11 ? sync_beats = 0.75;
+  st_on = slider6 > 0;
+  st_off = slider6 / 360 * 6.28318530717958;
+  harm = slider7 > 0;
+  xo_a = 1 - exp(-6.28318530717958 * 800 / srate);
+  tr_edges();
+
+@block
+  sync ? (
+    bpm = tempo > 0 ? tempo : 120;
+    phase_inc = 6.28318530717958 * (bpm / 60 / sync_beats) / srate;
+    play_state & 1 ? (
+      ph_b = beat_position / sync_beats;
+      phase = 6.28318530717958 * (ph_b - floor(ph_b));
+    );
+    tr_edges();
+  );
 
 @sample
   phase >= 6.28318530717958 ? (phase = phase - 6.28318530717958;);
-  lfo = sin(phase);
+  lfo = shape ? tr_lfo(phase) : sin(phase);
+  st_on ? ( lfo_r = shape ? tr_lfo(phase + st_off) : sin(phase + st_off); );
   phase = phase + phase_inc;
   
   // Gain stays within 0..1: full level at the LFO peak, 1 - Depth at the trough
   amplitude = 1 - depth_pct * (0.5 - 0.5 * lfo);
-  proc_l = spl0 * amplitude;
-  proc_r = spl1 * amplitude;
+  amp_r = st_on ? 1 - depth_pct * (0.5 - 0.5 * lfo_r) : amplitude;
+  harm ? (
+    // crossover: two one-pole low-passes, the highs are what is left
+    xo_l1 += xo_a * (spl0 - xo_l1); xo_l2 += xo_a * (xo_l1 - xo_l2);
+    xo_r1 += xo_a * (spl1 - xo_r1); xo_r2 += xo_a * (xo_r1 - xo_r2);
+    proc_l = xo_l2 * amplitude + (spl0 - xo_l2) * (1 - depth_pct * (0.5 + 0.5 * lfo));
+    proc_r = xo_r2 * amp_r + (spl1 - xo_r2) * (1 - depth_pct * (0.5 + 0.5 * (st_on ? lfo_r : lfo)));
+  ) : (
+    xo_l1 = xo_l2 = xo_r1 = xo_r2 = 0;
+    proc_l = spl0 * amplitude;
+    proc_r = spl1 * amp_r;
+  );
   
   out_l = spl0 * (1 - mix_amt) + proc_l * mix_amt;
   out_r = spl1 * (1 - mix_amt) + proc_r * mix_amt;

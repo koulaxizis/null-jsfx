@@ -2,6 +2,10 @@
  * NULL JSFX - Dynamics as a Rack module: drives nulldynamics::DynamicsProcessor as plugins/dynamics/Plugin.cpp does
  * Copyright (C) 2026 Christos Koulaxizis / NULL JSFX
  * SPDX-License-Identifier: MIT
+ *
+ * The Rack's modules are stereo, so this one has no sidechain input: the detector always listens
+ * to the slot's own signal and Sidechain = External acts like Internal (the JSFX's External with
+ * the track on pins 3/4).
  */
 
 #pragma once
@@ -43,7 +47,7 @@ public:
         for (uint32_t i = 0; i < frames; ++i)
         {
             double l = inL[i], r = inR[i];
-            fDsp.processSample(l, r);
+            fDsp.processSample(l, r); // no sidechain in the Rack (see the top)
             outL[i] = float(l);
             outR[i] = float(r);
         }
@@ -52,7 +56,8 @@ public:
 private:
     void update()
     {
-        fDsp.setParams(int(std::lround(fV[0])), fV[1], fV[2], fV[3], fV[4], fV[5], fV[6]);
+        fDsp.setParams(int(std::lround(fV[0])), fV[1], fV[2], fV[3], fV[4], fV[5], fV[6], int(std::lround(fV[7])), fV[8],
+                       fV[9], false); // External: no sidechain bus in the Rack, treated as Internal
     }
 
     nulldynamics::DynamicsProcessor fDsp;

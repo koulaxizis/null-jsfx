@@ -6,5 +6,10 @@
   ["Drum Smash", {"Threshold": -24, "Ratio": 8, "Knee": 3, "Attack": 1, "Release": 60, "Makeup": 6}],
   ["Peak Catcher", {"Threshold": -6, "Ratio": 20, "Knee": 0, "Attack": 0, "Release": 50, "Makeup": 0}],
   ["Noise Expander", {"Mode": "Expander", "Threshold": -45, "Ratio": 2, "Knee": 6, "Attack": 1, "Release": 150, "Makeup": 0}],
-  ["Drum Bleed Expander", {"Mode": "Expander", "Threshold": -30, "Ratio": 4, "Knee": 3, "Attack": 1, "Release": 100, "Makeup": 0}]
+  ["Drum Bleed Expander", {"Mode": "Expander", "Threshold": -30, "Ratio": 4, "Knee": 3, "Attack": 1, "Release": 100, "Makeup": 0}],
+  ["Bus Glue", {"Style": "Bus", "Threshold": -18, "Ratio": 2, "Knee": 6, "Attack": 30, "Release": 200, "Makeup": 2, "Sidechain HPF": 100}],
+  ["FET Vocal", {"Style": "FET", "Threshold": -24, "Ratio": 4, "Knee": 2, "Attack": 4, "Release": 80, "Makeup": 6, "Sidechain HPF": 80}],
+  ["Opto Bass", {"Style": "Opto", "Threshold": -22, "Ratio": 4, "Knee": 10, "Attack": 15, "Release": 300, "Makeup": 5}],
+  ["Parallel Smash", {"Style": "FET", "Threshold": -36, "Ratio": 20, "Knee": 0, "Attack": 1, "Release": 60, "Makeup": 12, "Mix": 40}],
+  ["Kick Ducking", {"Sidechain": "External", "Threshold": -30, "Ratio": 8, "Knee": 3, "Attack": 1, "Release": 120, "Makeup": 0}]
 ]

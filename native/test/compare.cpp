@@ -603,7 +603,9 @@ int main(int argc, char** argv)
             for (size_t k = 0; k < sl.size(); ++k)
                 if (!sl[k].path)
                     params.push_back(sets[i][k]);
-            if (!renderJsfx(ref, sr, sl, sets[i], in, sc, a))
+            // a Rack module has no sidechain bus: its JSFX hears the track on pins 3/4 as well
+            const bool toModule = other.compare(0, 7, "module:") == 0;
+            if (!renderJsfx(ref, sr, sl, sets[i], in, toModule ? in : sc, a))
                 return 1;
             bool rendered;
             if (isJsfx)

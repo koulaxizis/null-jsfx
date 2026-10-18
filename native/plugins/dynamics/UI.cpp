@@ -15,9 +15,13 @@ static const NullKnobsUI::Control kControls[] = {
     { 1, NullKnobsUI::kKnob, "THRESHOLD", 0, -1, false },
     { 2, NullKnobsUI::kKnob, "RATIO", 0, -1, false },
     { 3, NullKnobsUI::kKnob, "KNEE", 0, -1, false },
-    { 4, NullKnobsUI::kKnob, "ATTACK", 1, -1, false },
-    { 5, NullKnobsUI::kKnob, "RELEASE", 1, -1, false },
+    { 4, NullKnobsUI::kKnob, "ATTACK", 0, -1, false },
+    { 5, NullKnobsUI::kKnob, "RELEASE", 0, -1, false },
+    { 7, NullKnobsUI::kSelect, "STYLE", 1, -1, false },
     { 6, NullKnobsUI::kKnob, "MAKEUP", 1, -1, false },
+    { 9, NullKnobsUI::kKnob, "MIX", 1, -1, false },
+    { 8, NullKnobsUI::kKnob, "SC HPF", 1, -1, false, true },
+    { 10, NullKnobsUI::kSelect, "SIDECHAIN", 1, -1, false },
 };
 
 class UIDynamics : public NullKnobsUI
@@ -53,6 +57,8 @@ protected:
         p.ratio = value(2);
         p.kneeDb = value(3);
         p.makeupDb = value(6);
+        p.style = int(std::lround(value(7)));
+        nulldynamics::computeStyle(p);
         constexpr int n = 93;
         float xs[n], ys[n];
         for (int i = 0; i < n; ++i)
@@ -78,7 +84,18 @@ protected:
             fillColor(col(theme::kText));
             fill();
         }
-        meter(180.0f, 82.0f, 268.0f, 10.0f, "IN", db, value(1), -60.0f);
+        // status line: the style, plus what is switched on (detector high-pass, mix, external key)
+        static const char* const kStyles[] = { "CLEAN", "BUS", "FET", "OPTO" };
+        label(180.0f, 66.0f, ALIGN_LEFT, 7.5f, 1.0f, theme::kAccent, kStyles[std::min(3, std::max(0, p.style))], true);
+        char a[24] = "", b[24] = "", st[80];
+        const bool ext = value(10) > 0.5f;
+        if (value(8) > 20.0f)
+            std::snprintf(a, sizeof(a), "   HPF %d HZ", int(std::lround(value(8))));
+        if (value(9) < 100.0f)
+            std::snprintf(b, sizeof(b), "   MIX %d%%", int(std::lround(value(9))));
+        std::snprintf(st, sizeof(st), "%s%s%s", a, b, ext ? "   EXT KEY" : "");
+        label(448.0f, 66.0f, ALIGN_RIGHT, 7.5f, 1.0f, theme::kMuted, st, true);
+        meter(180.0f, 82.0f, 268.0f, 10.0f, ext ? "KEY" : "IN", db, value(1), -60.0f);
         grMeter(180.0f, 106.0f, 268.0f, 10.0f, "GR", gr, 24.0f);
         meter(180.0f, 130.0f, 268.0f, 10.0f, "OUT", nulljsfx::toDb(out), -140.0f, -60.0f);
     }
@@ -89,6 +106,8 @@ protected:
             std::snprintf(buf, n, "%.1f:1", v);
         else if (param == 6)
             std::snprintf(buf, n, "+%d dB", int(std::lround(v)));
+        else if (param == 8 && v <= 20.0f)
+            std::snprintf(buf, n, "OFF");
         else
             NullKnobsUI::formatValue(param, v, buf, n);
     }

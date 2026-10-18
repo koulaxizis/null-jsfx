@@ -169,7 +169,13 @@
     "slider_desc": [
       "Speed of the sine LFO modulating the delay time.",
       "Sweep of the delay time; the delay moves between 5 ms and 5 ms + Depth, so it never runs out of range.",
-      "Blend between dry signal and modulated delay."
+      "Blend between dry signal and modulated delay.",
+      "Number of chorus voices in Classic mode (1 to 4); their LFOs are spread evenly in phase for a thicker ensemble.",
+      "Shifts the right channel's LFOs against the left (up to half the voice spacing) for a wider stereo image; in Dimension mode it widens the two taps from half to full width.",
+      "Amount of the wet signal fed back into the delay lines for a more resonant, flanger-like chorus. 0% is off.",
+      "Locks one LFO cycle to a note value at the project tempo (straight, triplet or dotted), following the song position while playing. Off uses Rate.",
+      "One-pole low-pass on the wet signal for a darker, vintage chorus. 20 kHz is off.",
+      "Classic is the multi-voice sine chorus; Dimension sweeps two short delays in opposite phase with a slow triangle, for a wide, mono-safe sound with very little pitch wobble."
     ],
     "uses": [
       "Thickening clean guitars",
@@ -315,11 +321,15 @@
       "Amount of the echo fed back into the delay line, capped internally at 95%.",
       "Blend between dry signal and echoes.",
       "Locks the delay time to the project tempo.",
-      "Synced delay length: 1/4 = one beat, down to 1/32.",
+      "Synced delay length: 1/4 = one beat; straight notes from 1/1 to 1/32 plus dotted (D) and triplet (T) values.",
       "Stereo keeps left and right on their own delay lines; Ping-Pong sends the mono sum into the left line and cross-feeds the lines, so the echoes alternate left and right.",
       "One-pole high-pass inside the feedback loop: each repeat loses more low end. 20 Hz is off.",
       "One-pole low-pass inside the feedback loop: each repeat gets darker, like tape or a bucket-brigade delay. 20 kHz is off.",
-      "Soft saturation inside the feedback loop: repeats get rounder and compress as they build up. 0% is off."
+      "Soft saturation inside the feedback loop: repeats get rounder and compress as they build up. 0% is off.",
+      "Tape-like wow: two slow sine LFOs gently move the delay time by up to 4 ms, so the echoes waver in pitch. 0% is off.",
+      "A chain of short all-pass filters inside the feedback loop that smears every repeat a little more, turning the echoes into a reverb-like wash. 0% is off.",
+      "Pushes the echoes down while the dry input is loud (10 ms attack, 250 ms release), so they bloom in the gaps between phrases. 0% is off.",
+      "Holds the current echoes and repeats them forever: no new input enters the loop, feedback is 100% and the filters and drive are bypassed so the loop neither fades nor builds up."
     ],
     "uses": [
       "Slapback on vocals and guitars",
@@ -442,7 +452,11 @@
       "Width of the soft transition above (or below) the threshold.",
       "How fast gain reduction is applied (0 = instant).",
       "How fast gain recovers (0 = instant).",
-      "Gain added after processing."
+      "Gain added after processing.",
+      "Character of the detector: Clean is the transparent original, Bus a smooth glue compressor with auto release, FET a fast and aggressive one with a little harmonic colour, Opto a slow, program-dependent one.",
+      "High-pass filter on the detector only, so low end does not drive the gain reduction (20 Hz = off).",
+      "Blend of compressed and dry signal for parallel compression (100% = fully compressed).",
+      "Internal listens to the track itself; External listens to input channels 3/4 (sidechain key)."
     ],
     "uses": [
       "General-purpose bus and track compression",
@@ -516,9 +530,13 @@
     "keywords": "flanger flanging jet sweep comb filter modulation feedback",
     "slider_desc": [
       "Speed of the sine LFO.",
-      "Sweep range of the delay, from 0.5 ms up to 0.5 ms + Depth.",
+      "Sweep range of the delay, from Manual up to Manual + Depth.",
       "Amount of delayed signal fed back for a stronger, more resonant comb (capped internally at 70%).",
-      "Blend between dry signal and flanged signal."
+      "Blend between dry signal and flanged signal.",
+      "Shortest delay of the sweep (its starting point); the delay moves from Manual up to Manual + Depth. 0.5 ms is the classic setting.",
+      "Locks one LFO cycle to a note value at the project tempo (straight, triplet or dotted), following the song position while playing. Off uses Rate.",
+      "Offsets the right channel's LFO against the left, from 0 (mono sweep) to 180 degrees (opposite sweeps for a wide stereo flange).",
+      "Through-zero flanging: the dry signal is delayed by the middle of the sweep and the swept signal is inverted, so the sweep passes through the dry signal and cancels it, like the tape jet effect. Adds latency equal to that delay while on."
     ],
     "uses": [
       "Jet-plane sweeps on drums and cymbals",
@@ -1028,7 +1046,12 @@
     "slider_desc": [
       "Speed of the sine LFO sweeping the all-pass filters.",
       "Number of all-pass stages; more stages create more notches.",
-      "Amount of phased signal added to the dry signal."
+      "Amount of phased signal added to the dry signal.",
+      "Width of the sweep around Center; 57% is the classic sweep from 440 Hz to 1.6 kHz.",
+      "Amount of the phased signal fed back into the all-pass chain: higher values sharpen the peaks, negative values move them between the notches. Above 30% the wet level is trimmed to keep the peaks in check.",
+      "Middle frequency of the sweep (1020 Hz by default, log scale from 200 Hz to 5 kHz).",
+      "Offset between the left and right LFOs: 0 deg sweeps both channels together, 180 deg sweeps them in opposite directions for a wide stereo swirl.",
+      "Locks one LFO cycle to a note value at the project tempo (and to the bar while the transport plays), replacing Rate. Off uses Rate."
     ],
     "uses": [
       "Swirling movement on guitars and keys",
@@ -1179,7 +1202,14 @@
       "Comb feedback; higher values give a longer tail (roughly 0.4 s to 4 s at default size).",
       "High-frequency absorption in the tail: 0% is bright, higher values make the tail progressively darker (low-pass from 16 kHz down to 1.2 kHz).",
       "Blend between dry signal and reverb.",
-      "Passes the input unprocessed when set to 1."
+      "Passes the input unprocessed when set to 1.",
+      "Delays the signal feeding the reverb (0–250 ms) so the tail starts after the dry sound; the dry signal is not delayed.",
+      "12 dB/oct high-pass on the reverb only, to keep the tail out of the low end; off at 20 Hz.",
+      "12 dB/oct low-pass on the reverb only, for a darker, less splashy tail; off at 20 kHz.",
+      "Stereo width of the reverb (mid/side): 0% is mono, 100% unchanged, 200% extra wide.",
+      "Slow, gentle movement of the internal delay lengths that smears metallic ringing and gives the tail a chorused shimmer; 0% is off.",
+      "Holds the current tail forever: the loop stops losing level and no new input enters, for pads and drones.",
+      "Classic is the original room algorithm; Plate adds dense input diffusion and a brighter tail; Hall adds the diffusion with longer, wider delays for a bigger, smoother space."
     ],
     "uses": [
       "Room and hall ambience on dry sources",
@@ -1629,9 +1659,13 @@
     "card_desc": "Sine LFO Tremolo",
     "keywords": "tremolo amplitude modulation volume lfo pulse rhythmic",
     "slider_desc": [
-      "Speed of the sine LFO.",
+      "Speed of the LFO (when Tempo Sync is Off).",
       "Modulation amount; the gain dips from full level down to 1 − Depth, so 100% goes fully silent at the trough without flipping polarity.",
-      "Blend between dry and modulated signal."
+      "Blend between dry and modulated signal.",
+      "LFO waveform: Sine, Triangle, Square (edges softened to avoid clicks), Saw Up or Saw Down.",
+      "Locks the LFO to the host tempo at the chosen note value (straight, triplet or dotted) and to the beat grid while playing; Off uses Rate.",
+      "Offsets the right channel's LFO; 180 degrees turns the tremolo into an auto-pan.",
+      "Classic modulates the whole signal; Harmonic splits it at about 800 Hz and moves lows and highs in opposite phase, like a vintage harmonic tremolo."
     ],
     "uses": [
       "Vintage amp tremolo on guitars",

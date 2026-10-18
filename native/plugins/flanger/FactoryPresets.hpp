@@ -8,19 +8,26 @@ namespace nullpresets {
 
 struct FactoryPreset {
     const char* name;
-    float values[4];
+    float values[8];
 };
 
 static const FactoryPreset kPresets[] = {
-    { "Default", { 0.3f, 5.0f, 50.0f, 40.0f } },
-    { "Jet Sweep Drums", { 0.2f, 8.0f, 70.0f, 50.0f } },
-    { "Subtle Guitar Flange", { 0.4f, 3.0f, 30.0f, 35.0f } },
-    { "Metallic Resonance", { 0.1f, 2.0f, 85.0f, 50.0f } },
-    { "Vocal Psychedelia", { 0.6f, 5.0f, 50.0f, 40.0f } },
-    { "Fast Warble", { 3.0f, 2.0f, 40.0f, 40.0f } },
-    { "Build-Up Swoosh", { 0.1f, 15.0f, 60.0f, 50.0f } },
+    { "Default", { 0.3f, 5.0f, 50.0f, 40.0f, 0.5f, 0.0f, 0.0f, 0.0f } },
+    { "Jet Sweep Drums", { 0.2f, 8.0f, 70.0f, 50.0f, 0.5f, 0.0f, 0.0f, 0.0f } },
+    { "Subtle Guitar Flange", { 0.4f, 3.0f, 30.0f, 35.0f, 0.5f, 0.0f, 0.0f, 0.0f } },
+    { "Metallic Resonance", { 0.1f, 2.0f, 85.0f, 50.0f, 0.5f, 0.0f, 0.0f, 0.0f } },
+    { "Vocal Psychedelia", { 0.6f, 5.0f, 50.0f, 40.0f, 0.5f, 0.0f, 0.0f, 0.0f } },
+    { "Fast Warble", { 3.0f, 2.0f, 40.0f, 40.0f, 0.5f, 0.0f, 0.0f, 0.0f } },
+    { "Build-Up Swoosh", { 0.1f, 15.0f, 60.0f, 50.0f, 0.5f, 0.0f, 0.0f, 0.0f } },
+    { "Jet Flange", { 0.1f, 10.0f, 80.0f, 50.0f, 0.3f, 0.0f, 0.0f, 0.0f } },
+    { "Thru-Zero Jet", { 0.1f, 6.0f, 20.0f, 50.0f, 0.5f, 0.0f, 0.0f, 1.0f } },
+    { "Thru-Zero Gentle", { 0.2f, 3.0f, 0.0f, 50.0f, 0.5f, 0.0f, 0.0f, 1.0f } },
+    { "Synced Sweep", { 0.3f, 6.0f, 60.0f, 50.0f, 0.5f, 1.0f, 90.0f, 0.0f } },
+    { "Synced Eighths", { 0.3f, 2.0f, 50.0f, 40.0f, 0.5f, 4.0f, 90.0f, 0.0f } },
+    { "Metallic", { 0.2f, 1.0f, 95.0f, 50.0f, 1.5f, 0.0f, 0.0f, 0.0f } },
+    { "Wide Stereo Flange", { 0.3f, 5.0f, 50.0f, 45.0f, 0.5f, 0.0f, 180.0f, 0.0f } },
 };
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
-static constexpr uint32_t kNumValues = 4;
+static constexpr uint32_t kNumValues = 8;
 
 } // namespace nullpresets

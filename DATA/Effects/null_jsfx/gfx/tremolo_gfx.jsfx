@@ -1,6 +1,6 @@
 desc:NULL Tremolo GFX
 author: Christos Koulaxizis
-tags: tremolo amplitude modulation lfo rhythmic pulsing gui
+tags: tremolo amplitude modulation lfo rhythmic pulsing harmonic auto-pan tempo sync gui
 //category: Essentials
 //NULL JSFX v2.4 • https://nulljsfx.tech • MIT License
 
@@ -9,6 +9,10 @@ import null_gfx.jsfx-inc
 slider1:5<0.1,20,0.1>-Rate (Hz)
 slider2:50<0,100,1>-Depth (%)
 slider3:40<0,100,1>-Mix (%)
+slider4:0<0,4,1{Sine,Triangle,Square,Saw Up,Saw Down}>-Shape
+slider5:0<0,11,1{Off,1/1,1/2,1/4,1/8,1/16,1/32,1/4T,1/8T,1/16T,1/4D,1/8D}>-Tempo Sync
+slider6:0<0,180,1>-Stereo Phase (deg)
+slider7:0<0,1,1{Classic,Harmonic}>-Mode
 
 in_pin:Left
 in_pin:Right
@@ -17,7 +21,43 @@ out_pin:Right
 
 @init
   // NULL Tremolo (../tremolo.jsfx) with its own interface: same audio code, plus @gfx.
+  // Shape: every LFO starts at 0 rising and peaks a quarter cycle in, like the sine.
+  // Square is a hard-clipped sine whose edges take about 2 ms (no clicks), the saws turn
+  // around over about 2 ms too. Tempo Sync: one LFO cycle per note value at the host
+  // tempo; while the transport plays the phase is taken from beat_position so the LFO
+  // stays locked to the beat grid. Stereo Phase delays the right channel's LFO (180 =
+  // auto-pan). Harmonic: a 12 dB/oct crossover at 800 Hz splits each channel, the lows
+  // follow the LFO and the highs the inverted LFO (vintage harmonic tremolo).
   phase = 0;
+  xo_l1 = xo_l2 = xo_r1 = xo_r2 = 0;
+
+  // the LFO (-1..1) of the current Shape at phase ph (radians)
+  function tr_lfo(ph) local(u)
+  (
+    shape == 1 ? (
+      u = ph / 6.28318530717958;
+      u -= floor(u);
+      u < 0.25 ? 4 * u : (u < 0.75 ? 2 - 4 * u : 4 * u - 4);
+    ) : (
+      shape == 2 ? (
+        max(-1, min(1, sin(ph) * sq_g));
+      ) : (
+        u = ph / 6.28318530717958 + 0.5;
+        u -= floor(u);
+        u = u < 1 - saw_w ? -1 + 2 * u / (1 - saw_w) : 1 - 2 * (u - (1 - saw_w)) / saw_w;
+        shape == 4 ? -u : u;
+      );
+    );
+  );
+
+  // edge smoothing for the current rate: Square's clip gain, the saws' turn-around (cycles)
+  function tr_edges() local(hz)
+  (
+    hz = phase_inc * srate / 6.28318530717958;
+    sq_g = max(1, 1 / max(0.000001, 6.28318530717958 * hz * 0.002));
+    saw_w = max(0.0001, min(0.5, hz * 0.002));
+  );
+
   gfx_ext_retina = 1;
 
   function update()
@@ -26,13 +66,30 @@ out_pin:Right
     depth_pct = slider2 / 100;
     mix_amt = slider3 / 100;
     phase_inc = 6.28318530717958 * rate / srate;
+    shape = slider4;
+    sync = slider5;
+    // beats per LFO cycle of each Tempo Sync note
+    sync_beats = 1;
+    sync == 1 ? sync_beats = 4;     sync == 2 ? sync_beats = 2;      sync == 3 ? sync_beats = 1;
+    sync == 4 ? sync_beats = 0.5;   sync == 5 ? sync_beats = 0.25;   sync == 6 ? sync_beats = 0.125;
+    sync == 7 ? sync_beats = 2 / 3; sync == 8 ? sync_beats = 1 / 3;  sync == 9 ? sync_beats = 1 / 6;
+    sync == 10 ? sync_beats = 1.5;  sync == 11 ? sync_beats = 0.75;
+    st_on = slider6 > 0;
+    st_off = slider6 / 360 * 6.28318530717958;
+    harm = slider7 > 0;
+    xo_a = 1 - exp(-6.28318530717958 * 800 / srate);
+    tr_edges();
   );
 
-  // ---- modulation view: an info line over a plot of two LFO cycles ----
-  // the output level (0 to 100%, dry and wet together) at u (0..1 = two cycles), as a plot y
-  function md_val(u)
+  // ---- modulation view: an info line over a plot of one LFO cycle ----
+  // the output level (0 to 100%, dry and wet together) at u (0..1 = one cycle) as a plot y:
+  // the right channel's LFO when right, the highs (inverted LFO) when hi
+  function md_val(u, right, hi) local(ph, l)
   (
-    ng_lin_y(1 - slider3 / 100 * slider2 / 100 * (0.5 - 0.5 * sin(4 * $pi * u)), 0, 1);
+    ph = 6.28318530717958 * u + (right ? st_off : 0);
+    l = shape ? tr_lfo(ph) : sin(ph);
+    hi ? l = -l;
+    ng_lin_y(1 - slider3 / 100 * slider2 / 100 * (0.5 - 0.5 * l), 0, 1);
   );
 
   function md_view(left, right)
@@ -60,7 +117,7 @@ out_pin:Right
     ng_col(NG_MUTED, 1);
     i = 1;
     loop(3,
-      t = period * i / 2;
+      t = period * i / 4;
       t < 1 ? sprintf(#md_t, "%d ms", floor(t * 1000 + 0.5)) : sprintf(#md_t, "%.2f s", t);
       ng_ptxt(#md_t, ng_px + ng_pw * i / 4, ng_py + ng_ph + 10 * ng_s, 1);
       i += 1;
@@ -68,17 +125,17 @@ out_pin:Right
   );
 
   // md_val across the plot in colour rgb, shaded down to the bottom when fill = 1
-  function md_curve(rgb, fill) local(i)
+  function md_curve(rgb, fill, right, hi) local(i)
   (
     fill ? (
       ng_col(NG_ACCENT, 0.10);
       i = 0;
-      loop(floor(ng_pw) + 1, gfx_line(ng_px + i, ng_py + ng_ph, ng_px + i, md_val(i / ng_pw), 0); i += 1;);
+      loop(floor(ng_pw) + 1, gfx_line(ng_px + i, ng_py + ng_ph, ng_px + i, md_val(i / ng_pw, right, hi), 0); i += 1;);
     );
     ng_col(rgb, 1);
     i = 0;
     loop(floor(ng_pw) + 1,
-      i == 0 ? ng_line_start(ng_px, md_val(0)) : ng_line_to(ng_px + i, md_val(i / ng_pw));
+      i == 0 ? ng_line_start(ng_px, md_val(0, right, hi)) : ng_line_to(ng_px + i, md_val(i / ng_pw, right, hi));
       i += 1;
     );
   );
@@ -97,28 +154,44 @@ out_pin:Right
   );
 
   // ---- factory presets: generated by tools/build_presets.py, do not edit ----
-  ng_pre_n = 6;
+  ng_pre_n = 14;
 
   function ng_preset_load(p)
   (
-    p == 0 ? ( ng_slider_set(1, 5); ng_slider_set(2, 50); ng_slider_set(3, 40); );
-    p == 1 ? ( ng_slider_set(1, 5.5); ng_slider_set(2, 60); ng_slider_set(3, 100); );
-    p == 2 ? ( ng_slider_set(1, 7); ng_slider_set(2, 80); ng_slider_set(3, 100); );
-    p == 3 ? ( ng_slider_set(1, 1.5); ng_slider_set(2, 50); ng_slider_set(3, 100); );
-    p == 4 ? ( ng_slider_set(1, 4); ng_slider_set(2, 30); ng_slider_set(3, 100); );
-    p == 5 ? ( ng_slider_set(1, 12); ng_slider_set(2, 100); ng_slider_set(3, 100); );
+    p == 0 ? ( ng_slider_set(1, 5); ng_slider_set(2, 50); ng_slider_set(3, 40); ng_slider_set(4, 0); ng_slider_set(5, 0); ng_slider_set(6, 0); ng_slider_set(7, 0); );
+    p == 1 ? ( ng_slider_set(1, 5.5); ng_slider_set(2, 60); ng_slider_set(3, 100); ng_slider_set(4, 0); ng_slider_set(5, 0); ng_slider_set(6, 0); ng_slider_set(7, 0); );
+    p == 2 ? ( ng_slider_set(1, 7); ng_slider_set(2, 80); ng_slider_set(3, 100); ng_slider_set(4, 0); ng_slider_set(5, 0); ng_slider_set(6, 0); ng_slider_set(7, 0); );
+    p == 3 ? ( ng_slider_set(1, 1.5); ng_slider_set(2, 50); ng_slider_set(3, 100); ng_slider_set(4, 0); ng_slider_set(5, 0); ng_slider_set(6, 0); ng_slider_set(7, 0); );
+    p == 4 ? ( ng_slider_set(1, 4); ng_slider_set(2, 30); ng_slider_set(3, 100); ng_slider_set(4, 0); ng_slider_set(5, 0); ng_slider_set(6, 0); ng_slider_set(7, 0); );
+    p == 5 ? ( ng_slider_set(1, 12); ng_slider_set(2, 100); ng_slider_set(3, 100); ng_slider_set(4, 0); ng_slider_set(5, 0); ng_slider_set(6, 0); ng_slider_set(7, 0); );
+    p == 6 ? ( ng_slider_set(1, 5); ng_slider_set(2, 70); ng_slider_set(3, 100); ng_slider_set(4, 0); ng_slider_set(5, 0); ng_slider_set(6, 0); ng_slider_set(7, 1); );
+    p == 7 ? ( ng_slider_set(1, 7.5); ng_slider_set(2, 90); ng_slider_set(3, 100); ng_slider_set(4, 1); ng_slider_set(5, 0); ng_slider_set(6, 0); ng_slider_set(7, 0); );
+    p == 8 ? ( ng_slider_set(1, 5); ng_slider_set(2, 100); ng_slider_set(3, 100); ng_slider_set(4, 2); ng_slider_set(5, 5); ng_slider_set(6, 0); ng_slider_set(7, 0); );
+    p == 9 ? ( ng_slider_set(1, 0.5); ng_slider_set(2, 100); ng_slider_set(3, 100); ng_slider_set(4, 0); ng_slider_set(5, 0); ng_slider_set(6, 180); ng_slider_set(7, 0); );
+    p == 10 ? ( ng_slider_set(1, 5); ng_slider_set(2, 100); ng_slider_set(3, 100); ng_slider_set(4, 0); ng_slider_set(5, 3); ng_slider_set(6, 180); ng_slider_set(7, 0); );
+    p == 11 ? ( ng_slider_set(1, 5); ng_slider_set(2, 90); ng_slider_set(3, 100); ng_slider_set(4, 3); ng_slider_set(5, 4); ng_slider_set(6, 0); ng_slider_set(7, 0); );
+    p == 12 ? ( ng_slider_set(1, 5); ng_slider_set(2, 80); ng_slider_set(3, 100); ng_slider_set(4, 1); ng_slider_set(5, 8); ng_slider_set(6, 0); ng_slider_set(7, 0); );
+    p == 13 ? ( ng_slider_set(1, 3.5); ng_slider_set(2, 60); ng_slider_set(3, 100); ng_slider_set(4, 0); ng_slider_set(5, 0); ng_slider_set(6, 90); ng_slider_set(7, 1); );
   );
 
   // the first preset every slider matches, or -1
   function ng_preset_match() local(m)
   (
     m = -1;
-    m < 0 && ng_pre_eq(slider1, 5) && ng_pre_eq(slider2, 50) && ng_pre_eq(slider3, 40) ? m = 0;
-    m < 0 && ng_pre_eq(slider1, 5.5) && ng_pre_eq(slider2, 60) && ng_pre_eq(slider3, 100) ? m = 1;
-    m < 0 && ng_pre_eq(slider1, 7) && ng_pre_eq(slider2, 80) && ng_pre_eq(slider3, 100) ? m = 2;
-    m < 0 && ng_pre_eq(slider1, 1.5) && ng_pre_eq(slider2, 50) && ng_pre_eq(slider3, 100) ? m = 3;
-    m < 0 && ng_pre_eq(slider1, 4) && ng_pre_eq(slider2, 30) && ng_pre_eq(slider3, 100) ? m = 4;
-    m < 0 && ng_pre_eq(slider1, 12) && ng_pre_eq(slider2, 100) && ng_pre_eq(slider3, 100) ? m = 5;
+    m < 0 && ng_pre_eq(slider1, 5) && ng_pre_eq(slider2, 50) && ng_pre_eq(slider3, 40) && ng_pre_eq(slider4, 0) && ng_pre_eq(slider5, 0) && ng_pre_eq(slider6, 0) && ng_pre_eq(slider7, 0) ? m = 0;
+    m < 0 && ng_pre_eq(slider1, 5.5) && ng_pre_eq(slider2, 60) && ng_pre_eq(slider3, 100) && ng_pre_eq(slider4, 0) && ng_pre_eq(slider5, 0) && ng_pre_eq(slider6, 0) && ng_pre_eq(slider7, 0) ? m = 1;
+    m < 0 && ng_pre_eq(slider1, 7) && ng_pre_eq(slider2, 80) && ng_pre_eq(slider3, 100) && ng_pre_eq(slider4, 0) && ng_pre_eq(slider5, 0) && ng_pre_eq(slider6, 0) && ng_pre_eq(slider7, 0) ? m = 2;
+    m < 0 && ng_pre_eq(slider1, 1.5) && ng_pre_eq(slider2, 50) && ng_pre_eq(slider3, 100) && ng_pre_eq(slider4, 0) && ng_pre_eq(slider5, 0) && ng_pre_eq(slider6, 0) && ng_pre_eq(slider7, 0) ? m = 3;
+    m < 0 && ng_pre_eq(slider1, 4) && ng_pre_eq(slider2, 30) && ng_pre_eq(slider3, 100) && ng_pre_eq(slider4, 0) && ng_pre_eq(slider5, 0) && ng_pre_eq(slider6, 0) && ng_pre_eq(slider7, 0) ? m = 4;
+    m < 0 && ng_pre_eq(slider1, 12) && ng_pre_eq(slider2, 100) && ng_pre_eq(slider3, 100) && ng_pre_eq(slider4, 0) && ng_pre_eq(slider5, 0) && ng_pre_eq(slider6, 0) && ng_pre_eq(slider7, 0) ? m = 5;
+    m < 0 && ng_pre_eq(slider1, 5) && ng_pre_eq(slider2, 70) && ng_pre_eq(slider3, 100) && ng_pre_eq(slider4, 0) && ng_pre_eq(slider5, 0) && ng_pre_eq(slider6, 0) && ng_pre_eq(slider7, 1) ? m = 6;
+    m < 0 && ng_pre_eq(slider1, 7.5) && ng_pre_eq(slider2, 90) && ng_pre_eq(slider3, 100) && ng_pre_eq(slider4, 1) && ng_pre_eq(slider5, 0) && ng_pre_eq(slider6, 0) && ng_pre_eq(slider7, 0) ? m = 7;
+    m < 0 && ng_pre_eq(slider1, 5) && ng_pre_eq(slider2, 100) && ng_pre_eq(slider3, 100) && ng_pre_eq(slider4, 2) && ng_pre_eq(slider5, 5) && ng_pre_eq(slider6, 0) && ng_pre_eq(slider7, 0) ? m = 8;
+    m < 0 && ng_pre_eq(slider1, 0.5) && ng_pre_eq(slider2, 100) && ng_pre_eq(slider3, 100) && ng_pre_eq(slider4, 0) && ng_pre_eq(slider5, 0) && ng_pre_eq(slider6, 180) && ng_pre_eq(slider7, 0) ? m = 9;
+    m < 0 && ng_pre_eq(slider1, 5) && ng_pre_eq(slider2, 100) && ng_pre_eq(slider3, 100) && ng_pre_eq(slider4, 0) && ng_pre_eq(slider5, 3) && ng_pre_eq(slider6, 180) && ng_pre_eq(slider7, 0) ? m = 10;
+    m < 0 && ng_pre_eq(slider1, 5) && ng_pre_eq(slider2, 90) && ng_pre_eq(slider3, 100) && ng_pre_eq(slider4, 3) && ng_pre_eq(slider5, 4) && ng_pre_eq(slider6, 0) && ng_pre_eq(slider7, 0) ? m = 11;
+    m < 0 && ng_pre_eq(slider1, 5) && ng_pre_eq(slider2, 80) && ng_pre_eq(slider3, 100) && ng_pre_eq(slider4, 1) && ng_pre_eq(slider5, 8) && ng_pre_eq(slider6, 0) && ng_pre_eq(slider7, 0) ? m = 12;
+    m < 0 && ng_pre_eq(slider1, 3.5) && ng_pre_eq(slider2, 60) && ng_pre_eq(slider3, 100) && ng_pre_eq(slider4, 0) && ng_pre_eq(slider5, 0) && ng_pre_eq(slider6, 90) && ng_pre_eq(slider7, 1) ? m = 13;
     m;
   );
 
@@ -131,6 +204,14 @@ out_pin:Right
     p == 3 ? s = "Slow Pulse Pad";
     p == 4 ? s = "Subtle Keys Shimmer";
     p == 5 ? s = "Choppy Fast Trem";
+    p == 6 ? s = "Harmonic Trem";
+    p == 7 ? s = "Surf Trem";
+    p == 8 ? s = "Synced Chop";
+    p == 9 ? s = "Slow Pan";
+    p == 10 ? s = "Synced Auto-Pan";
+    p == 11 ? s = "Saw Pump Eighths";
+    p == 12 ? s = "Triplet Pulse";
+    p == 13 ? s = "Wide Harmonic Swirl";
     s;
   );
 
@@ -151,15 +232,37 @@ out_pin:Right
 @slider
   update();
 
+@block
+  sync ? (
+    bpm = tempo > 0 ? tempo : 120;
+    phase_inc = 6.28318530717958 * (bpm / 60 / sync_beats) / srate;
+    play_state & 1 ? (
+      ph_b = beat_position / sync_beats;
+      phase = 6.28318530717958 * (ph_b - floor(ph_b));
+    );
+    tr_edges();
+  );
+
 @sample
   phase >= 6.28318530717958 ? (phase = phase - 6.28318530717958;);
-  lfo = sin(phase);
+  lfo = shape ? tr_lfo(phase) : sin(phase);
+  st_on ? ( lfo_r = shape ? tr_lfo(phase + st_off) : sin(phase + st_off); );
   phase = phase + phase_inc;
   
   // Gain stays within 0..1: full level at the LFO peak, 1 - Depth at the trough
   amplitude = 1 - depth_pct * (0.5 - 0.5 * lfo);
-  proc_l = spl0 * amplitude;
-  proc_r = spl1 * amplitude;
+  amp_r = st_on ? 1 - depth_pct * (0.5 - 0.5 * lfo_r) : amplitude;
+  harm ? (
+    // crossover: two one-pole low-passes, the highs are what is left
+    xo_l1 += xo_a * (spl0 - xo_l1); xo_l2 += xo_a * (xo_l1 - xo_l2);
+    xo_r1 += xo_a * (spl1 - xo_r1); xo_r2 += xo_a * (xo_r1 - xo_r2);
+    proc_l = xo_l2 * amplitude + (spl0 - xo_l2) * (1 - depth_pct * (0.5 + 0.5 * lfo));
+    proc_r = xo_r2 * amp_r + (spl1 - xo_r2) * (1 - depth_pct * (0.5 + 0.5 * (st_on ? lfo_r : lfo)));
+  ) : (
+    xo_l1 = xo_l2 = xo_r1 = xo_r2 = 0;
+    proc_l = spl0 * amplitude;
+    proc_r = spl1 * amp_r;
+  );
   
   out_l = spl0 * (1 - mix_amt) + proc_l * mix_amt;
   out_r = spl1 * (1 - mix_amt) + proc_r * mix_amt;
@@ -167,25 +270,35 @@ out_pin:Right
   spl0 = out_l;
   spl1 = out_r;
 
-@gfx 480 294
-  ng_knobs_begin("TREMOLO", "ESSENTIALS", 480, 120, 1, 0);
+@gfx 480 380
+  ng_knobs_begin("TREMOLO", "ESSENTIALS", 480, 120, 2, 0);
 
-  // display: the output level over two LFO cycles (0 to 100%), the LFO position dashed
+  // display: the output level over one LFO cycle (0 to 100%), the LFO position dashed; the
+  // right channel (Stereo Phase) or, in Harmonic, the highs as a second, muted curve
+  md_hz = phase_inc * srate / 6.28318530717958;
   md_dip = slider2 * slider3 / 10000;
-  md_dip >= 1 ? strcpy(#md_r, "DIPS TO SILENCE") : md_dip > 0 ? sprintf(#md_r, "DIPS TO %.1f dB", ng_to_db(1 - md_dip)) : strcpy(#md_r, "NO DIP");
-  md_view("LEVEL", #md_r);
+  md_dip >= 1 ? strcpy(#md_r, "DIPS TO SILENCE") : (md_dip > 0 ? sprintf(#md_r, "DIPS TO %.1f dB", ng_to_db(1 - md_dip)) : strcpy(#md_r, "NO DIP"));
+  st_on ? strcpy(#md_l, harm ? "LOWS   LEFT / RIGHT" : "LEFT / RIGHT") : strcpy(#md_l, harm ? "LOWS / HIGHS" : "LEVEL");
+  md_view(#md_l, #md_r);
   md_ylabels("100%", "50%", "0%");
-  md_xlabels(1 / slider1);
-  md_curve(NG_ACCENT, 1);
-  md_playhead(phase / 6.28318530717958 / 2);
+  md_xlabels(1 / max(0.001, md_hz));
+  st_on || harm ? md_curve(NG_MUTED, 0, st_on, !st_on);
+  md_curve(NG_ACCENT, 1, 0, 0);
+  md_playhead(phase / 6.28318530717958);
 
-  ng_row(3);
-  sprintf(#v1, "%.1f Hz", slider1);
+  ng_row(4);
+  sprintf(#v1, "%.1f Hz", sync ? md_hz : slider1);
   ng_knob_ctl(1, "RATE", #v1, 0.1, 20, 5, 0.1, 0) ? update();
   sprintf(#v2, "%d%%", slider2);
   ng_knob_ctl(2, "DEPTH", #v2, 0, 100, 50, 1, 0) ? update();
   sprintf(#v3, "%d%%", slider3);
   ng_knob_ctl(3, "MIX", #v3, 0, 100, 40, 1, 0) ? update();
+  ng_select_ctl(4, "SHAPE", "SINE|TRI|SQUARE|SAW UP|SAW DN", 0) ? update();
+  ng_row(3);
+  ng_select_ctl(5, "SYNC", "OFF|1/1|1/2|1/4|1/8|1/16|1/32|1/4T|1/8T|1/16T|1/4D|1/8D", 0) ? update();
+  sprintf(#v6, "%d deg", slider6);
+  ng_knob_ctl(6, "PHASE", #v6, 0, 180, 0, 1, 0) ? update();
+  ng_select_ctl(7, "MODE", "CLASSIC|HARM", 0) ? update();
 
   ng_end();
 

@@ -1,6 +1,6 @@
 desc:NULL Dynamics
 author: Christos Koulaxizis
-tags: dynamics compressor expander gain reduction ratio threshold knee
+tags: dynamics compressor expander gain reduction ratio threshold knee sidechain parallel bus fet opto
 //category: Essentials
 //NULL JSFX v2.4 • https://nulljsfx.tech • MIT License
 
@@ -11,16 +11,34 @@ slider4:6<0,20,1>Knee (dB)
 slider5:10<0,200,1>Attack (ms)
 slider6:100<0,1000,1>Release (ms)
 slider7:0<0,20,1>Makeup (dB)
+slider8:0<0,3,1{Clean,Bus,FET,Opto}>Style
+slider9:20<20,500,1:log>Sidechain HPF (Hz)
+slider10:100<0,100,1>Mix (%)
+slider11:0<0,1,1{Internal,External}>Sidechain
 
 in_pin:Left
 in_pin:Right
+in_pin:Sidechain Left
+in_pin:Sidechain Right
 out_pin:Left
 out_pin:Right
 
 @init
+  // Style: Clean = peak detector, gain smoothed with Attack / Release (the original plugin).
+  // Bus = crest-corrected RMS detector that partly listens to its own gain reduction (half
+  // feedback, slope compensated so the static curve stays where the display draws it), a little
+  // extra knee and an auto release: a slow second envelope holds the reduction after sustained
+  // compression. FET = peak detector, attack 4x faster, half the knee, and odd-harmonic colour
+  // that grows with the gain reduction. Opto = RMS detector, wide knee, program-dependent attack
+  // (bigger jumps react faster) and a two-stage release whose slow half gets slower the more
+  // reduction there has been. Sidechain HPF filters the detector only (off at 20 Hz); Mix blends
+  // the dry signal back in (parallel compression); External listens to pins 3/4.
   gain_env = 1;
   ln10 = 2.302585;
   db_to_lin = ln10 / 20;
+  gr_db = gr_f = gr_s = gr_o1 = gr_o2 = gr_mem = 0;
+  det_ms = 0;
+  hp_l1 = hp_l2 = hp_r1 = hp_r2 = 0;
 
 @slider
   mode = slider1;
@@ -30,6 +48,11 @@ out_pin:Right
   attack_ms = slider5;
   release_ms = slider6;
   makeup_db = slider7;
+  style = slider8;
+  hpf_on = slider9 > 20;
+  mix_on = slider10 < 100;
+  mix_amt = slider10 / 100;
+  sc_ext = slider11 > 0.5;
   
   attack_ms > 0 ? (
     attack_tc = 1 - exp(-1 / (attack_ms * srate / 1000));
@@ -43,10 +66,66 @@ out_pin:Right
     release_tc = 1;
   );
 
+  // gain computer: slope (1 - 1/ratio) and knee, per style
+  slope = 1 - 1/ratio;
+  kn = knee_db;
+  style == 1 ? (
+    kn = knee_db + 4;
+    mode == 0 ? slope = slope / (1 - 0.5 * slope); // half feedback: steady state = the curve
+  );
+  style == 2 ? kn = knee_db * 0.5;
+  style == 3 ? kn = max(knee_db, 10);
+  fet_att = min(1, attack_tc * 4);
+  opto_att = attack_tc * 0.5;
+  rms_tc = 1 - exp(-1 / ((style == 3 ? 10 : 5) * srate / 1000));
+  bus_satt = 1 - exp(-1 / (250 * srate / 1000));
+  bus_srel = 1 - exp(-1 / ((200 + 4 * release_ms) * srate / 1000));
+  opto_srel = release_tc * 0.1;
+  mem_tc = 1 - exp(-1 / srate);
+
+  // detector high-pass: 12 dB/oct (RBJ biquad, Q = 0.7071)
+  hpf_on ? (
+    hp_w = 2 * $pi * slider9 / srate;
+    hp_cs = cos(hp_w);
+    hp_al = sin(hp_w) / (2 * sqrt(0.5));
+    hp_a0 = 1 + hp_al;
+    hp_b0 = (1 + hp_cs) / 2 / hp_a0;
+    hp_b1 = -(1 + hp_cs) / hp_a0;
+    hp_a1 = -2 * hp_cs / hp_a0;
+    hp_a2 = (1 - hp_al) / hp_a0;
+  );
+
 @sample
-  input_abs = max(abs(spl0), abs(spl1));
+  // detector input: the track, or pins 3/4 (External)
+  sc_ext ? (
+    det_l = spl2;
+    det_r = spl3;
+  ) : (
+    det_l = spl0;
+    det_r = spl1;
+  );
+  hpf_on ? (
+    hp_y = hp_b0 * det_l + hp_l1;
+    hp_l1 = hp_b1 * det_l - hp_a1 * hp_y + hp_l2;
+    hp_l2 = hp_b0 * det_l - hp_a2 * hp_y;
+    det_l = hp_y;
+    hp_y = hp_b0 * det_r + hp_r1;
+    hp_r1 = hp_b1 * det_r - hp_a1 * hp_y + hp_r2;
+    hp_r2 = hp_b0 * det_r - hp_a2 * hp_y;
+    det_r = hp_y;
+  );
+  input_abs = max(abs(det_l), abs(det_r));
   input_abs < 0.000001 ? input_abs = 0.000001;
-  input_db = log(input_abs) / ln10 * 20;
+  (style == 1 || style == 3) ? (
+    // crest-corrected RMS (a sine reads its peak)
+    det_ms += (input_abs * input_abs - det_ms) * rms_tc;
+    det_lv = sqrt(2 * det_ms);
+    det_lv < 0.000001 ? det_lv = 0.000001;
+    input_db = log(det_lv) / ln10 * 20;
+    style == 1 && mode == 0 ? input_db -= 0.5 * gr_db;
+  ) : (
+    input_db = log(input_abs) / ln10 * 20;
+  );
   
   gr_target = 0;
   
@@ -54,33 +133,87 @@ out_pin:Right
     // COMPRESSOR: above threshold
     excess = input_db - threshold_db;
     excess > 0 ? (
-      knee_db > 0 && excess < knee_db ? (
+      kn > 0 && excess < kn ? (
         // quadratic soft knee: the slope rises smoothly from 1 to 1/ratio
-        gr_target = (1 - 1/ratio) * excess * excess / (2 * knee_db);
+        gr_target = slope * excess * excess / (2 * kn);
       ) : (
-        gr_target = (1 - 1/ratio) * (excess - knee_db / 2);
+        gr_target = slope * (excess - kn / 2);
       );
     );
   ) : (
     // EXPANDER: below threshold
     deficit = threshold_db - input_db;
     deficit > 0 ? (
-      knee_db > 0 && deficit < knee_db ? (
-        gr_target = (1 - 1/ratio) * deficit * deficit / (2 * knee_db);
+      kn > 0 && deficit < kn ? (
+        gr_target = slope * deficit * deficit / (2 * kn);
       ) : (
-        gr_target = (1 - 1/ratio) * (deficit - knee_db / 2);
+        gr_target = slope * (deficit - kn / 2);
       );
     );
   );
   
-  gain_target = exp(-gr_target * db_to_lin);
-  
-  gain_target < gain_env ? (
-    gain_env = gain_env + (gain_target - gain_env) * attack_tc;
+  style == 0 ? (
+    gain_target = exp(-gr_target * db_to_lin);
+    
+    gain_target < gain_env ? (
+      gain_env = gain_env + (gain_target - gain_env) * attack_tc;
+    ) : (
+      gain_env = gain_env + (gain_target - gain_env) * release_tc;
+    );
   ) : (
-    gain_env = gain_env + (gain_target - gain_env) * release_tc;
+    // the other styles smooth the gain reduction in dB
+    style == 1 ? (
+      gr_f += (gr_target - gr_f) * (gr_target > gr_f ? attack_tc : release_tc);
+      gr_s += (gr_f - gr_s) * (gr_f > gr_s ? bus_satt : bus_srel);
+      gr_db = max(gr_f, gr_s);
+    ) : style == 2 ? (
+      gr_db += (gr_target - gr_db) * (gr_target > gr_db ? fet_att : release_tc);
+    ) : (
+      gr_target > gr_o1 ? (
+        gr_o1 += (gr_target - gr_o1) * min(1, opto_att * (1 + (gr_target - gr_o1) / 6));
+      ) : (
+        gr_o1 += (gr_target - gr_o1) * release_tc;
+      );
+      gr_target > gr_o2 ? (
+        gr_o2 += (gr_target - gr_o2) * min(1, opto_att * (1 + (gr_target - gr_o2) / 6));
+      ) : (
+        gr_o2 += (gr_target - gr_o2) * opto_srel / (1 + gr_mem / 6);
+      );
+      gr_db = 0.5 * (gr_o1 + gr_o2);
+      gr_mem += (gr_db - gr_mem) * mem_tc;
+    );
+    gain_env = exp(-gr_db * db_to_lin);
   );
   
   makeup_linear = exp(makeup_db * db_to_lin);
-  spl0 = spl0 * gain_env * makeup_linear;
-  spl1 = spl1 * gain_env * makeup_linear;
+  mix_on ? (
+    dry_l = spl0;
+    dry_r = spl1;
+  );
+  style == 2 ? (
+    // FET colour: a cubic curve (6 dB of headroom, linear above) on the compressed signal,
+    // odd harmonics only, from 3 dB of reduction, full at 18 dB
+    fet_amt = 0.5 * min(1, max(0, gr_db - 3) / 15);
+    fet_x = spl0 * gain_env * 2;
+    abs(fet_x) < 1 ? (
+      fet_x -= fet_amt * fet_x * fet_x * fet_x / 3;
+    ) : (
+      fet_x = sign(fet_x) * (1 - fet_amt / 3) + (fet_x - sign(fet_x)) * (1 - fet_amt);
+    );
+    spl0 = fet_x * 0.5 * makeup_linear;
+    fet_x = spl1 * gain_env * 2;
+    abs(fet_x) < 1 ? (
+      fet_x -= fet_amt * fet_x * fet_x * fet_x / 3;
+    ) : (
+      fet_x = sign(fet_x) * (1 - fet_amt / 3) + (fet_x - sign(fet_x)) * (1 - fet_amt);
+    );
+    spl1 = fet_x * 0.5 * makeup_linear;
+  ) : (
+    spl0 = spl0 * gain_env * makeup_linear;
+    spl1 = spl1 * gain_env * makeup_linear;
+  );
+  mix_on ? (
+    // parallel compression: the dry signal under the compressed one
+    spl0 = dry_l + (spl0 - dry_l) * mix_amt;
+    spl1 = dry_r + (spl1 - dry_r) * mix_amt;
+  );

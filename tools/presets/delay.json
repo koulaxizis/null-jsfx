@@ -6,5 +6,12 @@
   ["Sixteenth Rhythm", {"Tempo Sync": "ON", "Subdivision": "1/16", "Feedback": 25, "Mix": 20, "Low Cut": 300, "High Cut": 7000}],
   ["Dark Tape Echo", {"Time": 375, "Feedback": 50, "Mix": 25, "Low Cut": 100, "High Cut": 3000, "Drive": 40}],
   ["Dub Throw", {"Tempo Sync": "ON", "Subdivision": "1/4", "Feedback": 70, "Mix": 35, "Low Cut": 300, "High Cut": 2500, "Drive": 30}],
-  ["Ambient Long Trail", {"Time": 750, "Feedback": 65, "Mix": 25, "Low Cut": 250, "High Cut": 4000, "Drive": 15}]
+  ["Ambient Long Trail", {"Time": 750, "Feedback": 65, "Mix": 25, "Low Cut": 250, "High Cut": 4000, "Drive": 15}],
+  ["Dotted Eighth", {"Tempo Sync": "ON", "Subdivision": "1/8D", "Feedback": 35, "Mix": 25, "Low Cut": 150, "High Cut": 7000}],
+  ["Half-Note Wash", {"Tempo Sync": "ON", "Subdivision": "1/2", "Feedback": 60, "Mix": 30, "Low Cut": 200, "High Cut": 5000, "Modulation": 25, "Diffusion": 70}],
+  ["Triplet Bounce", {"Tempo Sync": "ON", "Subdivision": "1/8T", "Mode": "Ping-Pong", "Feedback": 45, "Mix": 25, "Low Cut": 250, "High Cut": 8000}],
+  ["Diffused Echo", {"Time": 420, "Feedback": 55, "Mix": 30, "Low Cut": 150, "High Cut": 6000, "Diffusion": 60}],
+  ["Ducked Vocal Throw", {"Tempo Sync": "ON", "Subdivision": "1/4", "Feedback": 45, "Mix": 40, "Low Cut": 300, "High Cut": 5000, "Ducking": 70}],
+  ["Wobbly Tape", {"Time": 330, "Feedback": 45, "Mix": 25, "Low Cut": 120, "High Cut": 3500, "Drive": 30, "Modulation": 60}],
+  ["Frozen Loop", {"Tempo Sync": "ON", "Subdivision": "1/1", "Feedback": 50, "Mix": 50, "Freeze": "On"}]
 ]

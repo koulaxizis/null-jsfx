@@ -5,5 +5,13 @@
   ["Fast Wobble", {"Rate": 4.0, "Stages": 4, "Mix": 45}],
   ["Deep Eight Stage", {"Rate": 0.3, "Stages": 8, "Mix": 60}],
   ["Drum Bus Shimmer", {"Rate": 1.5, "Stages": 6, "Mix": 25}],
-  ["Psychedelic Vocal", {"Rate": 0.6, "Stages": 8, "Mix": 45}]
+  ["Psychedelic Vocal", {"Rate": 0.6, "Stages": 8, "Mix": 45}],
+  ["Slow Phase Pad", {"Rate": 0.1, "Stages": 6, "Mix": 45, "Depth": 80, "Feedback": 40, "Center": 800, "Stereo Phase": 90}],
+  ["Jet Phase", {"Rate": 0.2, "Stages": 8, "Mix": 60, "Depth": 95, "Feedback": 80, "Center": 1500}],
+  ["Synced Swirl", {"Stages": 4, "Mix": 45, "Depth": 70, "Feedback": 50, "Stereo Phase": 60, "Tempo Sync": "1/2"}],
+  ["Deep Feedback", {"Rate": 0.3, "Stages": 8, "Mix": 55, "Depth": 75, "Feedback": 90, "Center": 700}],
+  ["Negative Resonance", {"Rate": 0.5, "Stages": 6, "Mix": 50, "Depth": 60, "Feedback": -75, "Center": 1200}],
+  ["Wide Stereo Phase", {"Rate": 0.4, "Stages": 4, "Mix": 40, "Stereo Phase": 180}],
+  ["Quarter Note Pulse", {"Stages": 6, "Mix": 50, "Depth": 85, "Feedback": 60, "Tempo Sync": "1/4"}],
+  ["Low Growl", {"Rate": 0.8, "Stages": 4, "Mix": 50, "Depth": 70, "Feedback": 70, "Center": 300}]
 ]

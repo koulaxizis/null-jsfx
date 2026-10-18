@@ -24,7 +24,7 @@ protected:
     const char* getLabel() const override { return "Phaser"; }
     const char* getDescription() const override
     {
-        return "Phaser: 1 to 8 allpass stages swept by a sine LFO between 440 Hz and 1.6 kHz; rate, stages and mix.";
+        return "Phaser: 1 to 8 allpass stages swept by a sine LFO around a centre frequency; rate (or tempo sync), stages, mix, depth, feedback, centre and stereo phase.";
     }
     int64_t getUniqueId() const override { return d_cconst('N', '4', 'p', 'h'); }
 
@@ -44,15 +44,26 @@ protected:
 
     void run(const float** inputs, float** outputs, uint32_t frames) override
     {
-        fDsp.process(inputs[0], inputs[1], outputs[0], outputs[1], frames);
+        // the host transport like pumper: tempo (else 120) and, while playing, the beat position
+        const TimePosition& tp = getTimePosition();
+        const double tempo = tp.bbt.beatsPerMinute > 0.0 ? tp.bbt.beatsPerMinute : 120.0;
+        double beatPos = 0.0;
+        if (tp.playing)
+        {
+            if (tp.bbt.valid && tp.bbt.ticksPerBeat > 0.0)
+                beatPos = (tp.bbt.bar - 1) * double(tp.bbt.beatsPerBar) + (tp.bbt.beat - 1) +
+                          tp.bbt.tick / tp.bbt.ticksPerBeat;
+            else
+                beatPos = double(tp.frame) / getSampleRate() * tempo / 60.0;
+        }
+        fDsp.process(inputs[0], inputs[1], outputs[0], outputs[1], frames, tempo, tp.playing, beatPos);
         taps.extra.store(float(fDsp.phase()), std::memory_order_relaxed);
     }
 
 private:
     void update()
     {
-        using nullphaser::onGrid;
-        fDsp.setParams(onGrid(value(0), 0.1, 5.0, 0.1), value(1), value(2));
+        nullphaser::applyParams(fDsp, [this](uint32_t i) { return value(i); });
     }
 
     nullphaser::PhaserProcessor fDsp;

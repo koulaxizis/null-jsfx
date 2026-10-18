@@ -8,18 +8,26 @@ namespace nullpresets {
 
 struct FactoryPreset {
     const char* name;
-    float values[3];
+    float values[7];
 };
 
 static const FactoryPreset kPresets[] = {
-    { "Default", { 5.0f, 50.0f, 40.0f } },
-    { "Vintage Amp Trem", { 5.5f, 60.0f, 100.0f } },
-    { "Surf Guitar", { 7.0f, 80.0f, 100.0f } },
-    { "Slow Pulse Pad", { 1.5f, 50.0f, 100.0f } },
-    { "Subtle Keys Shimmer", { 4.0f, 30.0f, 100.0f } },
-    { "Choppy Fast Trem", { 12.0f, 100.0f, 100.0f } },
+    { "Default", { 5.0f, 50.0f, 40.0f, 0.0f, 0.0f, 0.0f, 0.0f } },
+    { "Vintage Amp Trem", { 5.5f, 60.0f, 100.0f, 0.0f, 0.0f, 0.0f, 0.0f } },
+    { "Surf Guitar", { 7.0f, 80.0f, 100.0f, 0.0f, 0.0f, 0.0f, 0.0f } },
+    { "Slow Pulse Pad", { 1.5f, 50.0f, 100.0f, 0.0f, 0.0f, 0.0f, 0.0f } },
+    { "Subtle Keys Shimmer", { 4.0f, 30.0f, 100.0f, 0.0f, 0.0f, 0.0f, 0.0f } },
+    { "Choppy Fast Trem", { 12.0f, 100.0f, 100.0f, 0.0f, 0.0f, 0.0f, 0.0f } },
+    { "Harmonic Trem", { 5.0f, 70.0f, 100.0f, 0.0f, 0.0f, 0.0f, 1.0f } },
+    { "Surf Trem", { 7.5f, 90.0f, 100.0f, 1.0f, 0.0f, 0.0f, 0.0f } },
+    { "Synced Chop", { 5.0f, 100.0f, 100.0f, 2.0f, 5.0f, 0.0f, 0.0f } },
+    { "Slow Pan", { 0.5f, 100.0f, 100.0f, 0.0f, 0.0f, 180.0f, 0.0f } },
+    { "Synced Auto-Pan", { 5.0f, 100.0f, 100.0f, 0.0f, 3.0f, 180.0f, 0.0f } },
+    { "Saw Pump Eighths", { 5.0f, 90.0f, 100.0f, 3.0f, 4.0f, 0.0f, 0.0f } },
+    { "Triplet Pulse", { 5.0f, 80.0f, 100.0f, 1.0f, 8.0f, 0.0f, 0.0f } },
+    { "Wide Harmonic Swirl", { 3.5f, 60.0f, 100.0f, 0.0f, 0.0f, 90.0f, 1.0f } },
 };
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
-static constexpr uint32_t kNumValues = 3;
+static constexpr uint32_t kNumValues = 7;
 
 } // namespace nullpresets

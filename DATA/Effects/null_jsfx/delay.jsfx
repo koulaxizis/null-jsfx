@@ -1,6 +1,6 @@
 desc:NULL Delay
 author: Christos Koulaxizis
-tags: delay echo slapback feedback pre-delay timing sync tempo
+tags: delay echo slapback feedback pre-delay timing sync tempo tape modulation diffusion ducking freeze dotted triplet
 //category: Essentials
 //NULL JSFX v2.4 • https://nulljsfx.tech • MIT License
 
@@ -8,11 +8,15 @@ slider1:250<0,2000,1>Time (ms)
 slider2:0<0,100,1>Feedback (%)
 slider3:30<0,100,1>Mix (%)
 slider4:0<0,1,1{OFF,ON}>Tempo Sync
-slider5:0<0,3,1{1/4,1/8,1/16,1/32}>Subdivision
+slider5:0<0,11,1{1/4,1/8,1/16,1/32,1/2,1/1,1/4D,1/8D,1/16D,1/4T,1/8T,1/16T}>Subdivision
 slider6:0<0,1,1{Stereo,Ping-Pong}>Mode
 slider7:20<20,2000,1:log>Low Cut (Hz)
 slider8:20000<1000,20000,1:log>High Cut (Hz)
 slider9:0<0,100,1>Drive (%)
+slider10:0<0,100,1>Modulation (%)
+slider11:0<0,100,1>Diffusion (%)
+slider12:0<0,100,1>Ducking (%)
+slider13:0<0,1,1{Off,On}>Freeze
 
 in_pin:Left
 in_pin:Right
@@ -20,17 +24,25 @@ out_pin:Left
 out_pin:Right
 
 @init
-  buf_size = ceil(srate * 2.1);
+  // 6.1 s per channel: a whole note (1/1) down to 40 bpm (6 s); slower tempos are clamped
+  buf_size = ceil(srate * 6.1);
   buf_l = 0;
   buf_r = buf_l + buf_size;
-  memset(buf_l, 0, 2 * buf_size);
-  freembuf(buf_r + buf_size);
+  // diffusion: 4 all-passes per channel (up to 4.63 ms each) after the delay lines
+  ap_size = ceil(srate * 0.005) + 1;
+  ap_base = buf_r + buf_size;
+  memset(buf_l, 0, 2 * buf_size + 8 * ap_size);
+  freembuf(ap_base + 8 * ap_size);
   wpos = 0;
   delay_samples = 1;
   // feedback-path filters (one-pole, per channel); off at their end stops (Low Cut 20 Hz,
   // High Cut 20 kHz), Drive off at 0%, so the defaults are the plain delay
   lc_l = lc_r = 0;
   hc_l = hc_r = 0;
+  // Modulation, Diffusion, Ducking and Freeze are skipped at their defaults (0, 0, 0, Off)
+  md_p1 = md_p2 = 0;
+  dk_env = 0;
+  diff_was = 0;
 
   // soft saturation: a tanh-like curve, slope 1 at 0, flat at |x| = 3
   function dl_sat(x)
@@ -39,10 +51,32 @@ out_pin:Right
     x * (27 + x * x) / (27 + 9 * x * x);
   );
 
+  // Schroeder all-pass of len samples at buf: (z^-len - g) / (1 - g z^-len)
+  function dl_ap_init(b, n) instance(buf, len, p) ( buf = b; len = n; p = 0; );
+  function dl_ap(x, g) instance(buf, len, p) local(d, y)
+  (
+    d = buf[p];
+    y = d - g * x;
+    buf[p] = x + g * y;
+    p += 1;
+    p >= len ? p = 0;
+    y;
+  );
+  apl1.dl_ap_init(ap_base, floor(srate * 0.00113));
+  apl2.dl_ap_init(ap_base + ap_size, floor(srate * 0.00187));
+  apl3.dl_ap_init(ap_base + 2 * ap_size, floor(srate * 0.00307));
+  apl4.dl_ap_init(ap_base + 3 * ap_size, floor(srate * 0.00441));
+  apr1.dl_ap_init(ap_base + 4 * ap_size, floor(srate * 0.00129));
+  apr2.dl_ap_init(ap_base + 5 * ap_size, floor(srate * 0.00203));
+  apr3.dl_ap_init(ap_base + 6 * ap_size, floor(srate * 0.00323));
+  apr4.dl_ap_init(ap_base + 7 * ap_size, floor(srate * 0.00463));
+
   function update_time()
   (
     tempo_sync && tempo > 0 ? (
-      delay_ms = 60000 / tempo * (slider5 == 0 ? 1 : slider5 == 1 ? 0.5 : slider5 == 2 ? 0.25 : 0.125);
+      delay_ms = 60000 / tempo * (slider5 == 0 ? 1 : slider5 == 1 ? 0.5 : slider5 == 2 ? 0.25 : slider5 == 3 ? 0.125 :
+                                  slider5 == 4 ? 2 : slider5 == 5 ? 4 : slider5 == 6 ? 1.5 : slider5 == 7 ? 0.75 :
+                                  slider5 == 8 ? 0.375 : slider5 == 9 ? 2 / 3 : slider5 == 10 ? 1 / 3 : 1 / 6);
     ) : (
       delay_ms = slider1;
     );
@@ -61,45 +95,106 @@ out_pin:Right
   hc_a = 1 - exp(-2 * $pi * slider8 / srate);
   drv_on = slider9 > 0;
   drv_g = 1 + slider9 / 100 * 3;
+  // wow: two slow sines (0.5 and 1.3 Hz) push the read point back by up to 4 ms
+  mod_on = slider10 > 0;
+  md_dep = slider10 / 100 * 0.002 * srate;
+  md_i1 = 0.5 / srate;
+  md_i2 = 1.3 / srate;
+  diff_on = slider11 > 0;
+  diff_g = slider11 / 100 * 0.75;
+  diff_on && !diff_was ? memset(ap_base, 0, 8 * ap_size);
+  diff_was = diff_on;
+  duck_on = slider12 > 0;
+  duck_amt = slider12 / 100;
+  dk_att = 1 - exp(-1 / (0.01 * srate));
+  dk_rel = 1 - exp(-1 / (0.25 * srate));
+  frz = slider13;
   update_time();
 
 @block
   tempo_sync ? update_time();
 
 @sample
-  rpos = wpos - delay_samples;
-  rpos < 0 ? rpos += buf_size;
-  echo_l = buf_l[rpos];
-  echo_r = buf_r[rpos];
-
-  // inside the feedback loop: every repeat passes the filters and the drive again
-  lc_on ? (
-    lc_l += lc_a * (echo_l - lc_l); echo_l -= lc_l;
-    lc_r += lc_a * (echo_r - lc_r); echo_r -= lc_r;
+  mod_on && !frz ? (
+    // tape wow: a fractional read point, linearly interpolated
+    md_p1 += md_i1;
+    md_p1 >= 1 ? md_p1 -= 1;
+    md_p2 += md_i2;
+    md_p2 >= 1 ? md_p2 -= 1;
+    md_off = delay_samples + md_dep * (1 + 0.75 * sin(2 * $pi * md_p1) + 0.25 * sin(2 * $pi * md_p2));
+    md_off = min(buf_size - 2, md_off);
+    rf = wpos - md_off;
+    rf < 0 ? rf += buf_size;
+    ri = floor(rf);
+    rfr = rf - ri;
+    ri >= buf_size ? ri -= buf_size;
+    ri2 = ri + 1;
+    ri2 >= buf_size ? ri2 = 0;
+    echo_l = buf_l[ri] + (buf_l[ri2] - buf_l[ri]) * rfr;
+    echo_r = buf_r[ri] + (buf_r[ri2] - buf_r[ri]) * rfr;
   ) : (
+    rpos = wpos - delay_samples;
+    rpos < 0 ? rpos += buf_size;
+    echo_l = buf_l[rpos];
+    echo_r = buf_r[rpos];
+  );
+
+  // diffusion: the all-pass chain smears every repeat a little more
+  diff_on && !frz ? (
+    echo_l = apl4.dl_ap(apl3.dl_ap(apl2.dl_ap(apl1.dl_ap(echo_l, diff_g), diff_g), diff_g), diff_g);
+    echo_r = apr4.dl_ap(apr3.dl_ap(apr2.dl_ap(apr1.dl_ap(echo_r, diff_g), diff_g), diff_g), diff_g);
+  );
+
+  frz ? (
+    // frozen: the loop repeats unchanged, filters and drive bypassed
     lc_l = lc_r = 0;
-  );
-  hc_on ? (
-    hc_l += hc_a * (echo_l - hc_l); echo_l = hc_l;
-    hc_r += hc_a * (echo_r - hc_r); echo_r = hc_r;
-  ) : (
     hc_l = echo_l; hc_r = echo_r;
-  );
-  drv_on ? (
-    echo_l = dl_sat(echo_l * drv_g) / drv_g;
-    echo_r = dl_sat(echo_r * drv_g) / drv_g;
-  );
-
-  ping ? (
-    // ping-pong: the mono input enters the left line, the lines feed each other
-    buf_l[wpos] = (spl0 + spl1) * 0.5 + echo_r * feedback;
-    buf_r[wpos] = echo_l * feedback;
+    ping ? (
+      buf_l[wpos] = echo_r;
+      buf_r[wpos] = echo_l;
+    ) : (
+      buf_l[wpos] = echo_l;
+      buf_r[wpos] = echo_r;
+    );
   ) : (
-    buf_l[wpos] = spl0 + echo_l * feedback;
-    buf_r[wpos] = spl1 + echo_r * feedback;
+    // inside the feedback loop: every repeat passes the filters and the drive again
+    lc_on ? (
+      lc_l += lc_a * (echo_l - lc_l); echo_l -= lc_l;
+      lc_r += lc_a * (echo_r - lc_r); echo_r -= lc_r;
+    ) : (
+      lc_l = lc_r = 0;
+    );
+    hc_on ? (
+      hc_l += hc_a * (echo_l - hc_l); echo_l = hc_l;
+      hc_r += hc_a * (echo_r - hc_r); echo_r = hc_r;
+    ) : (
+      hc_l = echo_l; hc_r = echo_r;
+    );
+    drv_on ? (
+      echo_l = dl_sat(echo_l * drv_g) / drv_g;
+      echo_r = dl_sat(echo_r * drv_g) / drv_g;
+    );
+
+    ping ? (
+      // ping-pong: the mono input enters the left line, the lines feed each other
+      buf_l[wpos] = (spl0 + spl1) * 0.5 + echo_r * feedback;
+      buf_r[wpos] = echo_l * feedback;
+    ) : (
+      buf_l[wpos] = spl0 + echo_l * feedback;
+      buf_r[wpos] = spl1 + echo_r * feedback;
+    );
   );
   wpos += 1;
   wpos >= buf_size ? wpos = 0;
 
-  spl0 = spl0 * (1 - mix_amt) + echo_l * mix_amt;
-  spl1 = spl1 * (1 - mix_amt) + echo_r * mix_amt;
+  duck_on ? (
+    // ducking: the echoes dip while the dry input is loud (10 ms attack, 250 ms release)
+    dk_x = max(abs(spl0), abs(spl1));
+    dk_env += (dk_x > dk_env ? dk_att : dk_rel) * (dk_x - dk_env);
+    dk_g = 1 - duck_amt * min(1, dk_env * 4);
+    spl0 = spl0 * (1 - mix_amt) + echo_l * dk_g * mix_amt;
+    spl1 = spl1 * (1 - mix_amt) + echo_r * dk_g * mix_amt;
+  ) : (
+    spl0 = spl0 * (1 - mix_amt) + echo_l * mix_amt;
+    spl1 = spl1 * (1 - mix_amt) + echo_r * mix_amt;
+  );
