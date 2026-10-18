@@ -3,8 +3,10 @@
 // and slider settings, and report errors (compile failure, NaN/Inf, blow-ups, silence).
 // Instruments (no input pins) also get MIDI notes over the General MIDI drum map, and the host
 // transport plays at 120 bpm as for every plugin. MIDI effects (//category: MIDI) get notes with
-// their note-offs instead: their audio must pass through unchanged, they must send MIDI, and every
-// note they start must be ended again (note-offs match note-ons).
+// their note-offs instead: their audio must pass through unchanged (or delayed by the latency
+// they report), they must send MIDI, and every
+// note they start must be ended again (note-offs match note-ons) by the end, after an all notes
+// off on both channels in the last block, as a host sends at stop.
 // Exit code is the number of plugins that failed.
 #include "ysfx.h"
 #include <cmath>
@@ -83,6 +85,7 @@ static Render render(ysfx_t *fx, double sr, double seconds, int signal, bool mid
     // MIDI effects: a note every 1/8 s (pitches 48..83, two channels), ended 1/16 s later; what
     // they send is counted per channel and note (+1 a note-on, -1 a note-off)
     std::vector<int> held(16 * 128, 0);
+    std::vector<double> histL, histR; // a MIDI effect's input so far (for its latency)
     Render res;
     double acc[2] = {0, 0}, dacc = 0;
     uint64_t n = 0, total = (uint64_t)(sr * seconds);
@@ -125,6 +128,15 @@ static Render render(ysfx_t *fx, double sr, double seconds, int signal, bool mid
                 ysfx_send_midi(fx, &ev);
                 ++m;
             }
+            // the last block: all notes off on both channels, as a host sends at stop (a latched
+            // arpeggio or a note still waiting must end too)
+            if (n + block >= total) {
+                static const uint8_t off[2][3] = {{0xB0, 123, 0}, {0xB1, 123, 0}};
+                for (int c = 0; c < 2; ++c) {
+                    ysfx_midi_event_t ev = {0, 0, 3, off[c]};
+                    ysfx_send_midi(fx, &ev);
+                }
+            }
         }
         ysfx_process_double(fx, ins, outs, nin, 2, block);
         ysfx_midi_event_t me;
@@ -135,13 +147,19 @@ static Render render(ysfx_t *fx, double sr, double seconds, int signal, bool mid
             if (st == 0x90 && me.data[2] > 0) held[key] += 1;
             else if (st == 0x80 || st == 0x90) { held[key] -= 1; if (held[key] < 0) res.unbalanced += 1; }
         }
+        // a MIDI effect's audio may pass through delayed by its reported latency (pdc_delay),
+        // in line with its MIDI: it is compared with the input that much earlier
+        if (midifx) { histL.insert(histL.end(), inL.begin(), inL.end()); histR.insert(histR.end(), inR.begin(), inR.end()); }
+        const uint64_t pdc = midifx ? (uint64_t)std::max(0.0, (double)ysfx_get_pdc_delay(fx)) : 0;
         for (uint32_t i = 0; i < block; ++i) {
             double o[2] = {outL[i], outR[i]};
             for (int c = 0; c < 2; ++c) {
                 if (!std::isfinite(o[c])) { res.nonfinite = true; continue; }
                 res.peak = std::fmax(res.peak, std::fabs(o[c]));
                 acc[c] += o[c] * o[c];
-                double d = o[c] - (c ? inR[i] : inL[i]);
+                const uint64_t at = n + i;
+                const double ref = !midifx ? (c ? inR[i] : inL[i]) : at < pdc ? 0.0 : (c ? histR[at - pdc] : histL[at - pdc]);
+                double d = o[c] - ref;
                 dacc += d * d;
             }
         }

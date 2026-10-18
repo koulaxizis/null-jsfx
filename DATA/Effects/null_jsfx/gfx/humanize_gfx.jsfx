@@ -1,0 +1,403 @@
+desc:NULL Humanize GFX
+author: Christos Koulaxizis
+tags: midi humanize humanizer random timing velocity groove swing shuffle laid back push feel quantize gui
+//category: MIDI
+//NULL JSFX v2.4 • https://nulljsfx.tech • MIT License
+
+import null_gfx.jsfx-inc
+
+slider1:10<0,30,1>-Timing (ms)
+slider2:10<0,50,1>-Velocity (%)
+slider3:0<0,4,1{Straight,Swing 8ths,Swing 16ths,Laid Back,Push}>-Groove
+slider4:50<0,100,1>-Groove Amount (%)
+slider5:1<1,9999,1>-Seed
+
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
+
+@init
+  // A MIDI effect: every note-on moves by a random amount (up to Timing earlier or later) plus
+  // the groove's shift at its place in the beat (Swing moves the off-beat 8ths or 16ths later,
+  // Laid Back moves every note later, Push earlier), and its velocity changes by up to Velocity
+  // %. A MIDI effect can only delay, so everything goes out a fixed latency later (the largest
+  // early move), reported for delay compensation; the audio passes through delayed by the same
+  // latency, so it stays in line with the MIDI. The random numbers are an exact Park-Miller
+  // sequence from Seed, started again at every transport start, so a playback is the same each
+  // time. A note-off follows the groove at its own place, never before its note-on; other
+  // messages keep their place (the latency later).
+  ext_noinit = 1;
+  ACT = 0;       // per input channel * 128 + note: 1 while the key is held
+  ONT = 2048;    // per key: when its note-on goes out
+  CNT = 4096;    // per output channel * 128 + note: how many keys hold it
+  HR = 6144;     // the last 16 notes, for the display: beat in, beat out, velocity in, out
+  Q = 6208;      // the queue of outgoing messages: time, status, data 1, data 2 (4 each)
+  QMAX = 2048;
+  DL = Q + QMAX * 4;  // the audio delay (the latency): left, right per sample
+  DN = floor(srate * 0.06) + 2;
+  memset(0, 0, DL + DN * 2);
+  dw = 0;        // where the next sample goes
+  qn = 0;        // messages queued
+  bpos = 0;      // samples since the start
+  fb = 0;        // the free-running beat (transport stopped) at the block start
+  was_play = 0;
+  pm = 1;
+  pm_seed = -1;
+  hr_i = 0;      // the next display slot
+  hr_n = 0;      // notes in the display
+
+  function hu_put(t, a, b, c) local(i)
+  (
+    qn < QMAX ? (
+      i = qn;
+      while (i > 0 && Q[(i - 1) * 4] > t) (
+        Q[i * 4] = Q[(i - 1) * 4];
+        Q[i * 4 + 1] = Q[(i - 1) * 4 + 1];
+        Q[i * 4 + 2] = Q[(i - 1) * 4 + 2];
+        Q[i * 4 + 3] = Q[(i - 1) * 4 + 3];
+        i -= 1;
+      );
+      Q[i * 4] = t; Q[i * 4 + 1] = a; Q[i * 4 + 2] = b; Q[i * 4 + 3] = c;
+      qn += 1;
+    );
+  );
+
+  // Park-Miller in exact double arithmetic: 0..1
+  function hu_pm()
+  (
+    pm *= 16807;
+    pm -= floor(pm / 2147483647) * 2147483647;
+    pm / 2147483647;
+  );
+
+  // the groove's shift (samples) of a message at offset ofs
+  function hu_groove(ofs) local(p, b, x, r, y)
+  (
+    grv == 1 || grv == 2 ? (
+      // Swing: the second 8th (16th) of each pair later, 100 % = a triplet shuffle
+      p = grv == 1 ? 1 : 0.5;
+      b = (b0 + ofs * bps) / p;
+      x = b - floor(b);
+      r = 0.5 + ga / 6;
+      // (one * or / per expression: EEL2 reorders a chain of them, the native port does not)
+      y = x < 0.5 ? x * 2 : (x - 0.5) * 2;
+      y = x < 0.5 ? y * r : r + y * (1 - r);
+      y = (y - x) * p;
+      y / bps;
+    ) : grv == 3 ? gs : grv == 4 ? -ps : 0;
+  );
+
+  // when a note-off of key s at offset ofs goes out: on the groove, never before its note-on
+  function hu_off_t(ofs, s) ( max(bpos + ofs + max(0, floor(lat + hu_groove(ofs) + 0.5)), ONT[s]); );
+
+  function hu_off(ofs, ch, n, v) local(s)
+  (
+    s = ch * 128 + n;
+    ACT[s] ? (
+      hu_put(hu_off_t(ofs, s), 0x80 | ch, n, v);
+      ACT[s] = 0;
+    );
+  );
+
+  function hu_on(ofs, ch, n, v) local(s, u, w, d, vo)
+  (
+    s = ch * 128 + n;
+    ACT[s] ? hu_off(ofs, ch, n, 0);
+    u = hu_pm();
+    w = hu_pm();
+    d = max(0, floor(lat + (2 * u - 1) * ts + hu_groove(ofs) + 0.5));
+    vo = max(1, min(127, floor(v * (1 + va * (2 * w - 1)) + 0.5)));
+    ACT[s] = 1;
+    ONT[s] = bpos + ofs + d;
+    hu_put(bpos + ofs + d, 0x90 | ch, n, vo);
+    // for the display
+    HR[hr_i * 4] = b0 + ofs * bps;
+    HR[hr_i * 4 + 1] = b0 + (ofs + d) * bps;
+    HR[hr_i * 4 + 2] = v;
+    HR[hr_i * 4 + 3] = vo;
+    hr_i = (hr_i + 1) % 16;
+    hr_n = min(16, hr_n + 1);
+  );
+
+  // one incoming message at offset ofs
+  function hu_in(ofs, a, b, c) local(st, ch, s, i)
+  (
+    st = a & 0xF0;
+    ch = a & 0x0F;
+    s = ch * 128 + b;
+    st == 0x90 && c > 0 ? (
+      hu_on(ofs, ch, b, c);
+    ) : st == 0x80 || st == 0x90 ? (
+      hu_off(ofs, ch, b, st == 0x80 ? c : 0);
+    ) : st == 0xA0 ? (
+      // poly pressure never before its note
+      hu_put(ACT[s] ? max(bpos + ofs + lat, ONT[s]) : bpos + ofs + lat, a, b, c);
+    ) : st == 0xB0 && (b == 120 || b == 123) ? (
+      // all notes off: the channel's keys are released first
+      i = 0;
+      loop(128, ACT[ch * 128 + i] ? hu_off(ofs, ch, i, 0); i += 1;);
+      hu_put(bpos + ofs + lat, a, b, c);
+    ) : (
+      hu_put(bpos + ofs + lat, a, b, c);
+    );
+  );
+
+  // send one queued message; a pitch two keys share starts again and ends with the last
+  function hu_emit(ofs, a, b, c) local(st, k)
+  (
+    st = a & 0xF0;
+    k = (a & 0x0F) * 128 + b;
+    st == 0x90 ? (
+      CNT[k] > 0 ? midisend(ofs, 0x80 | (a & 0x0F), b, 0);
+      midisend(ofs, a, b, c);
+      CNT[k] += 1;
+    ) : st == 0x80 ? (
+      CNT[k] > 0 ? (
+        CNT[k] -= 1;
+        CNT[k] == 0 ? midisend(ofs, a, b, c);
+      );
+    ) : (
+      midisend(ofs, a, b, c);
+    );
+  );
+
+  gfx_ext_retina = 1;
+  function update()
+  (
+    tm = slider1;
+    va = slider2 / 100;
+    grv = slider3;
+    ga = slider4 / 100;
+    seed_v = slider5;
+  );
+
+  // ---- the display ---------------------------------------------------------------------------
+  // the groove's shift (beats) of a note at beat b, as hu_groove
+  function g_shift(b) local(p, x, r, y)
+  (
+    grv == 1 || grv == 2 ? (
+      p = grv == 1 ? 1 : 0.5;
+      x = b / p - floor(b / p);
+      r = 0.5 + ga / 6;
+      y = x < 0.5 ? x * 2 * r : r + (x - 0.5) * 2 * (1 - r);
+      (y - x) * p;
+    ) : grv == 3 ? 25 * ga / 1000 * g_tempo / 60 : grv == 4 ? -25 * ga / 1000 * g_tempo / 60 : 0;
+  );
+
+  // ---- factory presets: generated by tools/build_presets.py, do not edit ----
+  ng_pre_n = 16;
+
+  function ng_preset_load(p)
+  (
+    p == 0 ? ( ng_slider_set(1, 10); ng_slider_set(2, 10); ng_slider_set(3, 0); ng_slider_set(4, 50); ng_slider_set(5, 1); );
+    p == 1 ? ( ng_slider_set(1, 5); ng_slider_set(2, 5); ng_slider_set(3, 0); ng_slider_set(4, 50); ng_slider_set(5, 1); );
+    p == 2 ? ( ng_slider_set(1, 15); ng_slider_set(2, 20); ng_slider_set(3, 0); ng_slider_set(4, 50); ng_slider_set(5, 1); );
+    p == 3 ? ( ng_slider_set(1, 30); ng_slider_set(2, 35); ng_slider_set(3, 0); ng_slider_set(4, 50); ng_slider_set(5, 1); );
+    p == 4 ? ( ng_slider_set(1, 0); ng_slider_set(2, 25); ng_slider_set(3, 0); ng_slider_set(4, 50); ng_slider_set(5, 1); );
+    p == 5 ? ( ng_slider_set(1, 12); ng_slider_set(2, 0); ng_slider_set(3, 0); ng_slider_set(4, 50); ng_slider_set(5, 1); );
+    p == 6 ? ( ng_slider_set(1, 5); ng_slider_set(2, 10); ng_slider_set(3, 1); ng_slider_set(4, 30); ng_slider_set(5, 1); );
+    p == 7 ? ( ng_slider_set(1, 6); ng_slider_set(2, 10); ng_slider_set(3, 1); ng_slider_set(4, 80); ng_slider_set(5, 1); );
+    p == 8 ? ( ng_slider_set(1, 4); ng_slider_set(2, 8); ng_slider_set(3, 1); ng_slider_set(4, 100); ng_slider_set(5, 1); );
+    p == 9 ? ( ng_slider_set(1, 5); ng_slider_set(2, 10); ng_slider_set(3, 2); ng_slider_set(4, 35); ng_slider_set(5, 1); );
+    p == 10 ? ( ng_slider_set(1, 8); ng_slider_set(2, 15); ng_slider_set(3, 2); ng_slider_set(4, 60); ng_slider_set(5, 1); );
+    p == 11 ? ( ng_slider_set(1, 8); ng_slider_set(2, 12); ng_slider_set(3, 1); ng_slider_set(4, 40); ng_slider_set(5, 1); );
+    p == 12 ? ( ng_slider_set(1, 10); ng_slider_set(2, 10); ng_slider_set(3, 3); ng_slider_set(4, 60); ng_slider_set(5, 1); );
+    p == 13 ? ( ng_slider_set(1, 12); ng_slider_set(2, 15); ng_slider_set(3, 3); ng_slider_set(4, 100); ng_slider_set(5, 1); );
+    p == 14 ? ( ng_slider_set(1, 10); ng_slider_set(2, 10); ng_slider_set(3, 4); ng_slider_set(4, 60); ng_slider_set(5, 1); );
+    p == 15 ? ( ng_slider_set(1, 5); ng_slider_set(2, 10); ng_slider_set(3, 4); ng_slider_set(4, 100); ng_slider_set(5, 1); );
+  );
+
+  // the first preset every slider matches, or -1
+  function ng_preset_match() local(m)
+  (
+    m = -1;
+    m < 0 && ng_pre_eq(slider1, 10) && ng_pre_eq(slider2, 10) && ng_pre_eq(slider3, 0) && ng_pre_eq(slider4, 50) && ng_pre_eq(slider5, 1) ? m = 0;
+    m < 0 && ng_pre_eq(slider1, 5) && ng_pre_eq(slider2, 5) && ng_pre_eq(slider3, 0) && ng_pre_eq(slider4, 50) && ng_pre_eq(slider5, 1) ? m = 1;
+    m < 0 && ng_pre_eq(slider1, 15) && ng_pre_eq(slider2, 20) && ng_pre_eq(slider3, 0) && ng_pre_eq(slider4, 50) && ng_pre_eq(slider5, 1) ? m = 2;
+    m < 0 && ng_pre_eq(slider1, 30) && ng_pre_eq(slider2, 35) && ng_pre_eq(slider3, 0) && ng_pre_eq(slider4, 50) && ng_pre_eq(slider5, 1) ? m = 3;
+    m < 0 && ng_pre_eq(slider1, 0) && ng_pre_eq(slider2, 25) && ng_pre_eq(slider3, 0) && ng_pre_eq(slider4, 50) && ng_pre_eq(slider5, 1) ? m = 4;
+    m < 0 && ng_pre_eq(slider1, 12) && ng_pre_eq(slider2, 0) && ng_pre_eq(slider3, 0) && ng_pre_eq(slider4, 50) && ng_pre_eq(slider5, 1) ? m = 5;
+    m < 0 && ng_pre_eq(slider1, 5) && ng_pre_eq(slider2, 10) && ng_pre_eq(slider3, 1) && ng_pre_eq(slider4, 30) && ng_pre_eq(slider5, 1) ? m = 6;
+    m < 0 && ng_pre_eq(slider1, 6) && ng_pre_eq(slider2, 10) && ng_pre_eq(slider3, 1) && ng_pre_eq(slider4, 80) && ng_pre_eq(slider5, 1) ? m = 7;
+    m < 0 && ng_pre_eq(slider1, 4) && ng_pre_eq(slider2, 8) && ng_pre_eq(slider3, 1) && ng_pre_eq(slider4, 100) && ng_pre_eq(slider5, 1) ? m = 8;
+    m < 0 && ng_pre_eq(slider1, 5) && ng_pre_eq(slider2, 10) && ng_pre_eq(slider3, 2) && ng_pre_eq(slider4, 35) && ng_pre_eq(slider5, 1) ? m = 9;
+    m < 0 && ng_pre_eq(slider1, 8) && ng_pre_eq(slider2, 15) && ng_pre_eq(slider3, 2) && ng_pre_eq(slider4, 60) && ng_pre_eq(slider5, 1) ? m = 10;
+    m < 0 && ng_pre_eq(slider1, 8) && ng_pre_eq(slider2, 12) && ng_pre_eq(slider3, 1) && ng_pre_eq(slider4, 40) && ng_pre_eq(slider5, 1) ? m = 11;
+    m < 0 && ng_pre_eq(slider1, 10) && ng_pre_eq(slider2, 10) && ng_pre_eq(slider3, 3) && ng_pre_eq(slider4, 60) && ng_pre_eq(slider5, 1) ? m = 12;
+    m < 0 && ng_pre_eq(slider1, 12) && ng_pre_eq(slider2, 15) && ng_pre_eq(slider3, 3) && ng_pre_eq(slider4, 100) && ng_pre_eq(slider5, 1) ? m = 13;
+    m < 0 && ng_pre_eq(slider1, 10) && ng_pre_eq(slider2, 10) && ng_pre_eq(slider3, 4) && ng_pre_eq(slider4, 60) && ng_pre_eq(slider5, 1) ? m = 14;
+    m < 0 && ng_pre_eq(slider1, 5) && ng_pre_eq(slider2, 10) && ng_pre_eq(slider3, 4) && ng_pre_eq(slider4, 100) && ng_pre_eq(slider5, 1) ? m = 15;
+    m;
+  );
+
+  function ng_preset_name(p) local(s)
+  (
+    s = "";
+    p == 0 ? s = "Default";
+    p == 1 ? s = "Subtle Feel";
+    p == 2 ? s = "Loose Drummer";
+    p == 3 ? s = "Sloppy Take";
+    p == 4 ? s = "Velocity Only";
+    p == 5 ? s = "Timing Only";
+    p == 6 ? s = "Light Swing 8ths";
+    p == 7 ? s = "Hard Swing 8ths";
+    p == 8 ? s = "Triplet Shuffle";
+    p == 9 ? s = "Light Swing 16ths";
+    p == 10 ? s = "Head Nod 16ths";
+    p == 11 ? s = "Gentle Swing Keys";
+    p == 12 ? s = "Laid Back Groove";
+    p == 13 ? s = "Lazy Keys";
+    p == 14 ? s = "Pushing Ahead";
+    p == 15 ? s = "Urgent Push";
+    s;
+  );
+
+  function ng_presets() local(i)
+  (
+    ng_pre_req >= 0 ? ( ng_preset_load(ng_pre_req); update(); ng_pre_req = -1; );
+    ng_pre_cur = ng_preset_match();
+    ng_pre_open ? (
+      ng_pre_menu_begin();
+      i = 0;
+      loop(ng_pre_n, ng_pre_item(i, ng_preset_name(i)); i += 1;);
+      ng_pre_menu_end();
+    );
+    strcpy(#ng_pre_name, ng_pre_cur >= 0 ? ng_preset_name(ng_pre_cur) : "CUSTOM");
+  );
+  // ---- end of factory presets ----
+
+@slider
+  update();
+
+@block
+  playing = play_state & 1;
+  bps = 60 * srate;
+  bps = max(1, tempo) / bps;
+  (playing && !was_play) || seed_v != pm_seed ? ( pm_seed = seed_v; pm = 12345 + seed_v * 7919; );
+  was_play = playing;
+  // in samples: the random range, Laid Back's and Push's moves, the latency (the largest early move)
+  ts = tm * srate;
+  ts /= 1000;
+  gs = 25 * ga;
+  gs *= srate;
+  gs /= 1000;
+  ps = grv == 4 ? gs : 0;
+  lat = floor(ts + ps + 0.5);
+  pdc_delay = lat;
+  pdc_bot_ch = 0;
+  pdc_top_ch = 2;
+  pdc_midi = 1;
+  b0 = playing ? beat_position : fb;
+
+  while (midirecv(m_ofs, m_1, m_2, m_3)) (
+    hu_in(m_ofs, m_1, m_2, m_3);
+  );
+
+  b_end = bpos + samplesblock;
+  q_i = 0;
+  while (q_i < qn && Q[q_i * 4] < b_end) (
+    hu_emit(Q[q_i * 4] - bpos, Q[q_i * 4 + 1], Q[q_i * 4 + 2], Q[q_i * 4 + 3]);
+    q_i += 1;
+  );
+  q_i > 0 ? (
+    q_j = 0;
+    loop((qn - q_i) * 4, Q[q_j] = Q[q_j + q_i * 4]; q_j += 1;);
+    qn -= q_i;
+  );
+  fb = b0 + samplesblock * bps;
+  bpos = b_end;
+
+@sample
+  // the audio passes through, delayed by the latency like the MIDI
+  DL[dw * 2] = spl0;
+  DL[dw * 2 + 1] = spl1;
+  dr = dw - lat;
+  dr < 0 ? dr += DN;
+  spl0 = DL[dr * 2];
+  spl1 = DL[dr * 2 + 1];
+  dw += 1;
+  dw >= DN ? dw = 0;
+
+@gfx 480 324
+  ng_knobs_begin("HUMANIZE", "MIDI", 480, 150, 1, 0);
+
+  // display: the latency and the settings; one bar of 16ths with the groove's template (the
+  // straight 16ths above, where they go below, the random range around them) and the last 16
+  // notes (where they came in, where they go out, by velocity, the newest brightest); the last
+  // note's move and velocity change
+  g_tempo = tempo > 0 ? tempo : 120;
+  sprintf(#g_l, "LATENCY %.1f MS", lat / srate * 1000);
+  sprintf(#g_r, "%s %d%%   +/-%d MS   +/-%d%% VEL",
+    grv == 0 ? "STRAIGHT" : grv == 1 ? "SWING 8THS" : grv == 2 ? "SWING 16THS" : grv == 3 ? "LAID BACK" : "PUSH",
+    slider4, slider1, slider2);
+  ng_font(1, 7.5, 1);
+  ng_col(NG_MUTED, 1);
+  ng_txt(#g_l, 24, 70, 0, 1.2);
+  ng_txt(#g_r, 456, 70, 2, 1.2);
+
+  // the bar: beats and 16ths
+  g_j = 0;
+  loop(17,
+    g_x = 30 + g_j * 26.25;
+    ng_col(g_j % 4 == 0 ? NG_BORDER : 0x2a2927, 1);
+    gfx_rect(X(g_x), Y(80), max(1, ng_s), 96 * ng_s);
+    g_j += 1;
+  );
+  // the template: straight 16th -> grooved, with the random range
+  g_rb = slider1 / 1000 * g_tempo / 60;
+  g_j = 0;
+  loop(16,
+    g_b = g_j / 4;
+    g_g = g_b + g_shift(g_b);
+    g_xs = 30 + g_b * 105;
+    g_xg = 30 + g_g * 105;
+    ng_col(NG_ACCENT, 0.18);
+    gfx_rect(X(g_xg - g_rb * 105), Y(90), max(1, 2 * g_rb * 105 * ng_s), 6 * ng_s);
+    ng_col(NG_MUTED, 1);
+    gfx_line(X(g_xs), Y(84), X(g_xg), Y(90));
+    gfx_circle(X(g_xs), Y(83), 1.5 * ng_s, 1, 1);
+    ng_col(NG_ACCENT, 1);
+    gfx_rect(X(g_xg - 0.75), Y(89), max(1, 1.5 * ng_s), 8 * ng_s);
+    g_j += 1;
+  );
+  // the last notes, oldest first
+  g_k = 0;
+  loop(hr_n,
+    g_i = (hr_i - hr_n + g_k + 32) % 16;
+    g_bar = 4 * floor(HR[g_i * 4] / 4);
+    g_xi = 30 + min(4.2, HR[g_i * 4] - g_bar) * 105;
+    g_xo = 30 + min(4.2, HR[g_i * 4 + 1] - g_bar) * 105;
+    g_yi = 172 - HR[g_i * 4 + 2] / 127 * 66;
+    g_yo = 172 - HR[g_i * 4 + 3] / 127 * 66;
+    g_a = 0.3 + 0.7 * (g_k + 1) / hr_n;
+    ng_col(NG_MUTED, g_a);
+    gfx_line(X(g_xi), Y(g_yi), X(g_xo), Y(g_yo));
+    gfx_circle(X(g_xi), Y(g_yi), 2 * ng_s, 0, 1);
+    ng_col(NG_ACCENT, g_a);
+    gfx_circle(X(g_xo), Y(g_yo), 2.5 * ng_s, 1, 1);
+    g_k += 1;
+  );
+  hr_n > 0 ? (
+    g_i = (hr_i + 15) % 16;
+    g_ms = (HR[g_i * 4 + 1] - HR[g_i * 4]) * 60000 / g_tempo - lat / srate * 1000;
+    sprintf(#g_b2, "LAST NOTE  %s%.1f MS   VELOCITY %d TO %d", g_ms >= 0 ? "+" : "", g_ms, HR[g_i * 4 + 2], HR[g_i * 4 + 3]);
+  ) : strcpy(#g_b2, "PLAY SOME NOTES");
+  ng_font(1, 7.5, 1);
+  ng_col(NG_MUTED, 1);
+  ng_txt(#g_b2, 24, 187, 0, 1.2);
+
+  ng_row(5);
+  sprintf(#v1, "%d ms", slider1);
+  ng_knob_ctl(1, "TIMING", #v1, 0, 30, 10, 1, 0) ? update();
+  sprintf(#v2, "%d%%", slider2);
+  ng_knob_ctl(2, "VELOCITY", #v2, 0, 50, 10, 1, 0) ? update();
+  ng_select_ctl(3, "GROOVE", "NONE|SWING 8|SWING 16|LAZY|PUSH", 0) ? update();
+  sprintf(#v4, "%d%%", slider4);
+  ng_knob_ctl(4, "AMOUNT", #v4, 0, 100, 50, 1, 0) ? update();
+  sprintf(#v5, "%d", slider5);
+  ng_knob_ctl(5, "SEED", #v5, 1, 9999, 1, 1, 0) ? update();
+
+  ng_end();
+
+  ng_presets(); // the preset list (generated by tools/build_presets.py)

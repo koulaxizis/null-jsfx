@@ -1,0 +1,217 @@
+desc:NULL Humanize
+author: Christos Koulaxizis
+tags: midi humanize humanizer random timing velocity groove swing shuffle laid back push feel quantize
+//category: MIDI
+//NULL JSFX v2.4 • https://nulljsfx.tech • MIT License
+
+slider1:10<0,30,1>Timing (ms)
+slider2:10<0,50,1>Velocity (%)
+slider3:0<0,4,1{Straight,Swing 8ths,Swing 16ths,Laid Back,Push}>Groove
+slider4:50<0,100,1>Groove Amount (%)
+slider5:1<1,9999,1>Seed
+
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
+
+@init
+  // A MIDI effect: every note-on moves by a random amount (up to Timing earlier or later) plus
+  // the groove's shift at its place in the beat (Swing moves the off-beat 8ths or 16ths later,
+  // Laid Back moves every note later, Push earlier), and its velocity changes by up to Velocity
+  // %. A MIDI effect can only delay, so everything goes out a fixed latency later (the largest
+  // early move), reported for delay compensation; the audio passes through delayed by the same
+  // latency, so it stays in line with the MIDI. The random numbers are an exact Park-Miller
+  // sequence from Seed, started again at every transport start, so a playback is the same each
+  // time. A note-off follows the groove at its own place, never before its note-on; other
+  // messages keep their place (the latency later).
+  ext_noinit = 1;
+  ACT = 0;       // per input channel * 128 + note: 1 while the key is held
+  ONT = 2048;    // per key: when its note-on goes out
+  CNT = 4096;    // per output channel * 128 + note: how many keys hold it
+  HR = 6144;     // the last 16 notes, for the display: beat in, beat out, velocity in, out
+  Q = 6208;      // the queue of outgoing messages: time, status, data 1, data 2 (4 each)
+  QMAX = 2048;
+  DL = Q + QMAX * 4;  // the audio delay (the latency): left, right per sample
+  DN = floor(srate * 0.06) + 2;
+  memset(0, 0, DL + DN * 2);
+  dw = 0;        // where the next sample goes
+  qn = 0;        // messages queued
+  bpos = 0;      // samples since the start
+  fb = 0;        // the free-running beat (transport stopped) at the block start
+  was_play = 0;
+  pm = 1;
+  pm_seed = -1;
+  hr_i = 0;      // the next display slot
+  hr_n = 0;      // notes in the display
+
+  function hu_put(t, a, b, c) local(i)
+  (
+    qn < QMAX ? (
+      i = qn;
+      while (i > 0 && Q[(i - 1) * 4] > t) (
+        Q[i * 4] = Q[(i - 1) * 4];
+        Q[i * 4 + 1] = Q[(i - 1) * 4 + 1];
+        Q[i * 4 + 2] = Q[(i - 1) * 4 + 2];
+        Q[i * 4 + 3] = Q[(i - 1) * 4 + 3];
+        i -= 1;
+      );
+      Q[i * 4] = t; Q[i * 4 + 1] = a; Q[i * 4 + 2] = b; Q[i * 4 + 3] = c;
+      qn += 1;
+    );
+  );
+
+  // Park-Miller in exact double arithmetic: 0..1
+  function hu_pm()
+  (
+    pm *= 16807;
+    pm -= floor(pm / 2147483647) * 2147483647;
+    pm / 2147483647;
+  );
+
+  // the groove's shift (samples) of a message at offset ofs
+  function hu_groove(ofs) local(p, b, x, r, y)
+  (
+    grv == 1 || grv == 2 ? (
+      // Swing: the second 8th (16th) of each pair later, 100 % = a triplet shuffle
+      p = grv == 1 ? 1 : 0.5;
+      b = (b0 + ofs * bps) / p;
+      x = b - floor(b);
+      r = 0.5 + ga / 6;
+      // (one * or / per expression: EEL2 reorders a chain of them, the native port does not)
+      y = x < 0.5 ? x * 2 : (x - 0.5) * 2;
+      y = x < 0.5 ? y * r : r + y * (1 - r);
+      y = (y - x) * p;
+      y / bps;
+    ) : grv == 3 ? gs : grv == 4 ? -ps : 0;
+  );
+
+  // when a note-off of key s at offset ofs goes out: on the groove, never before its note-on
+  function hu_off_t(ofs, s) ( max(bpos + ofs + max(0, floor(lat + hu_groove(ofs) + 0.5)), ONT[s]); );
+
+  function hu_off(ofs, ch, n, v) local(s)
+  (
+    s = ch * 128 + n;
+    ACT[s] ? (
+      hu_put(hu_off_t(ofs, s), 0x80 | ch, n, v);
+      ACT[s] = 0;
+    );
+  );
+
+  function hu_on(ofs, ch, n, v) local(s, u, w, d, vo)
+  (
+    s = ch * 128 + n;
+    ACT[s] ? hu_off(ofs, ch, n, 0);
+    u = hu_pm();
+    w = hu_pm();
+    d = max(0, floor(lat + (2 * u - 1) * ts + hu_groove(ofs) + 0.5));
+    vo = max(1, min(127, floor(v * (1 + va * (2 * w - 1)) + 0.5)));
+    ACT[s] = 1;
+    ONT[s] = bpos + ofs + d;
+    hu_put(bpos + ofs + d, 0x90 | ch, n, vo);
+    // for the display
+    HR[hr_i * 4] = b0 + ofs * bps;
+    HR[hr_i * 4 + 1] = b0 + (ofs + d) * bps;
+    HR[hr_i * 4 + 2] = v;
+    HR[hr_i * 4 + 3] = vo;
+    hr_i = (hr_i + 1) % 16;
+    hr_n = min(16, hr_n + 1);
+  );
+
+  // one incoming message at offset ofs
+  function hu_in(ofs, a, b, c) local(st, ch, s, i)
+  (
+    st = a & 0xF0;
+    ch = a & 0x0F;
+    s = ch * 128 + b;
+    st == 0x90 && c > 0 ? (
+      hu_on(ofs, ch, b, c);
+    ) : st == 0x80 || st == 0x90 ? (
+      hu_off(ofs, ch, b, st == 0x80 ? c : 0);
+    ) : st == 0xA0 ? (
+      // poly pressure never before its note
+      hu_put(ACT[s] ? max(bpos + ofs + lat, ONT[s]) : bpos + ofs + lat, a, b, c);
+    ) : st == 0xB0 && (b == 120 || b == 123) ? (
+      // all notes off: the channel's keys are released first
+      i = 0;
+      loop(128, ACT[ch * 128 + i] ? hu_off(ofs, ch, i, 0); i += 1;);
+      hu_put(bpos + ofs + lat, a, b, c);
+    ) : (
+      hu_put(bpos + ofs + lat, a, b, c);
+    );
+  );
+
+  // send one queued message; a pitch two keys share starts again and ends with the last
+  function hu_emit(ofs, a, b, c) local(st, k)
+  (
+    st = a & 0xF0;
+    k = (a & 0x0F) * 128 + b;
+    st == 0x90 ? (
+      CNT[k] > 0 ? midisend(ofs, 0x80 | (a & 0x0F), b, 0);
+      midisend(ofs, a, b, c);
+      CNT[k] += 1;
+    ) : st == 0x80 ? (
+      CNT[k] > 0 ? (
+        CNT[k] -= 1;
+        CNT[k] == 0 ? midisend(ofs, a, b, c);
+      );
+    ) : (
+      midisend(ofs, a, b, c);
+    );
+  );
+
+@slider
+  tm = slider1;
+  va = slider2 / 100;
+  grv = slider3;
+  ga = slider4 / 100;
+  seed_v = slider5;
+
+@block
+  playing = play_state & 1;
+  bps = 60 * srate;
+  bps = max(1, tempo) / bps;
+  (playing && !was_play) || seed_v != pm_seed ? ( pm_seed = seed_v; pm = 12345 + seed_v * 7919; );
+  was_play = playing;
+  // in samples: the random range, Laid Back's and Push's moves, the latency (the largest early move)
+  ts = tm * srate;
+  ts /= 1000;
+  gs = 25 * ga;
+  gs *= srate;
+  gs /= 1000;
+  ps = grv == 4 ? gs : 0;
+  lat = floor(ts + ps + 0.5);
+  pdc_delay = lat;
+  pdc_bot_ch = 0;
+  pdc_top_ch = 2;
+  pdc_midi = 1;
+  b0 = playing ? beat_position : fb;
+
+  while (midirecv(m_ofs, m_1, m_2, m_3)) (
+    hu_in(m_ofs, m_1, m_2, m_3);
+  );
+
+  b_end = bpos + samplesblock;
+  q_i = 0;
+  while (q_i < qn && Q[q_i * 4] < b_end) (
+    hu_emit(Q[q_i * 4] - bpos, Q[q_i * 4 + 1], Q[q_i * 4 + 2], Q[q_i * 4 + 3]);
+    q_i += 1;
+  );
+  q_i > 0 ? (
+    q_j = 0;
+    loop((qn - q_i) * 4, Q[q_j] = Q[q_j + q_i * 4]; q_j += 1;);
+    qn -= q_i;
+  );
+  fb = b0 + samplesblock * bps;
+  bpos = b_end;
+
+@sample
+  // the audio passes through, delayed by the latency like the MIDI
+  DL[dw * 2] = spl0;
+  DL[dw * 2 + 1] = spl1;
+  dr = dw - lat;
+  dr < 0 ? dr += DN;
+  spl0 = DL[dr * 2];
+  spl1 = DL[dr * 2 + 1];
+  dw += 1;
+  dw >= DN ? dw = 0;

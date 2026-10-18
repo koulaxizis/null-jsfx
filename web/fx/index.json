@@ -1406,6 +1406,20 @@
  ],
  "midi": [
   {
+   "id": "arpeggiator",
+   "name": "Arpeggiator",
+   "category": "MIDI",
+   "tags": "midi arpeggiator arp arpeggio sequencer pattern up down random chord latch gate swing velocity tempo sync gui",
+   "gfx": [
+    480,
+    430
+   ],
+   "ins": 2,
+   "outs": 2,
+   "sliders": 24,
+   "bytes": 95450
+  },
+  {
    "id": "chords",
    "name": "Chords",
    "category": "MIDI",
@@ -1418,6 +1432,34 @@
    "outs": 2,
    "sliders": 11,
    "bytes": 83895
+  },
+  {
+   "id": "humanize",
+   "name": "Humanize",
+   "category": "MIDI",
+   "tags": "midi humanize humanizer random timing velocity groove swing shuffle laid back push feel quantize gui",
+   "gfx": [
+    480,
+    324
+   ],
+   "ins": 2,
+   "outs": 2,
+   "sliders": 5,
+   "bytes": 50235
+  },
+  {
+   "id": "riff",
+   "name": "Riff",
+   "category": "MIDI",
+   "tags": "midi riff generator melody pattern sequencer step random seed tempo sync key scale bassline lead hold gui",
+   "gfx": [
+    480,
+    420
+   ],
+   "ins": 2,
+   "outs": 2,
+   "sliders": 12,
+   "bytes": 63619
   },
   {
    "id": "scale",

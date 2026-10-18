@@ -1,0 +1,17 @@
+[
+  ["Subtle Feel", {"Timing": 5, "Velocity": 5}],
+  ["Loose Drummer", {"Timing": 15, "Velocity": 20}],
+  ["Sloppy Take", {"Timing": 30, "Velocity": 35}],
+  ["Velocity Only", {"Timing": 0, "Velocity": 25}],
+  ["Timing Only", {"Timing": 12, "Velocity": 0}],
+  ["Light Swing 8ths", {"Groove": "Swing 8ths", "Groove Amount": 30, "Timing": 5}],
+  ["Hard Swing 8ths", {"Groove": "Swing 8ths", "Groove Amount": 80, "Timing": 6}],
+  ["Triplet Shuffle", {"Groove": "Swing 8ths", "Groove Amount": 100, "Timing": 4, "Velocity": 8}],
+  ["Light Swing 16ths", {"Groove": "Swing 16ths", "Groove Amount": 35, "Timing": 5}],
+  ["Head Nod 16ths", {"Groove": "Swing 16ths", "Groove Amount": 60, "Timing": 8, "Velocity": 15}],
+  ["Gentle Swing Keys", {"Groove": "Swing 8ths", "Groove Amount": 40, "Timing": 8, "Velocity": 12}],
+  ["Laid Back Groove", {"Groove": "Laid Back", "Groove Amount": 60}],
+  ["Lazy Keys", {"Groove": "Laid Back", "Groove Amount": 100, "Timing": 12, "Velocity": 15}],
+  ["Pushing Ahead", {"Groove": "Push", "Groove Amount": 60}],
+  ["Urgent Push", {"Groove": "Push", "Groove Amount": 100, "Timing": 5}]
+]

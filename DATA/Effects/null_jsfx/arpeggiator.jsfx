@@ -1,0 +1,404 @@
+desc:NULL Arpeggiator
+author: Christos Koulaxizis
+tags: midi arpeggiator arp arpeggio sequencer pattern up down random chord latch gate swing velocity tempo sync
+//category: MIDI
+//NULL JSFX v2.4 • https://nulljsfx.tech • MIT License
+
+slider1:6<0,9,1{1/4,1/4D,1/4T,1/8,1/8D,1/8T,1/16,1/16D,1/16T,1/32}>Rate
+slider2:0<0,6,1{Up,Down,Up-Down,Down-Up,Played,Random,Chord}>Pattern
+slider3:1<1,4,1>Octaves
+slider4:50<5,200,1>Gate (%)
+slider5:0<0,100,1>Swing (%)
+slider6:0<0,1,1{Off,On}>Latch
+slider7:16<1,16,1>Steps
+slider8:1<1,9999,1>Seed
+slider9:100<0,100,1>Step 1 (%)
+slider10:100<0,100,1>Step 2 (%)
+slider11:100<0,100,1>Step 3 (%)
+slider12:100<0,100,1>Step 4 (%)
+slider13:100<0,100,1>Step 5 (%)
+slider14:100<0,100,1>Step 6 (%)
+slider15:100<0,100,1>Step 7 (%)
+slider16:100<0,100,1>Step 8 (%)
+slider17:100<0,100,1>Step 9 (%)
+slider18:100<0,100,1>Step 10 (%)
+slider19:100<0,100,1>Step 11 (%)
+slider20:100<0,100,1>Step 12 (%)
+slider21:100<0,100,1>Step 13 (%)
+slider22:100<0,100,1>Step 14 (%)
+slider23:100<0,100,1>Step 15 (%)
+slider24:100<0,100,1>Step 16 (%)
+
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
+
+@init
+  // A MIDI effect: the held keys (or, with Latch, the last chord played) are played one after
+  // another on a grid of steps (Rate) that follows the host's beat while it plays and runs at
+  // its tempo while it is stopped. Every step plays one note of the sequence (the keys over the
+  // octaves, in the pattern's order) or, for Chord, all of them, for Gate % of the step, with
+  // the played velocity times the step's value in the velocity lane (0 % = a rest). The audio
+  // passes through untouched. Every note sent is ended: releasing the last key (without Latch),
+  // all notes off (CC 120/123) and the transport stopping end the arp's notes at once.
+  ext_noinit = 1;
+  ACT = 0;       // per input channel * 128 + note: 1 while the key is held
+  LN = 2048;     // the notes the arp plays (held or latched), as played: note,
+  LC = 2112;     //   channel
+  LV = 2176;     //   and velocity (64 at most)
+  SQN = 2240;    // the sequence of a step (the notes over the octaves): note, channel, velocity
+  SQC = 2496;
+  SQV = 2752;
+  CNT = 3008;    // per output channel * 128 + note: how many arp notes hold it
+  LANE = 5056;   // the velocity lane (16 steps, %)
+  Q = 5120;      // the queue of outgoing messages: time, status, data 1, data 2 (4 each)
+  QMAX = 2048;
+  memset(0, 0, Q + QMAX * 4);
+  qn = 0;        // messages queued
+  bpos = 0;      // samples since the start
+  fb = 0;        // the free-running beat (transport stopped) at the block start
+  nl = 0;        // notes in the arp
+  phys = 0;      // keys held
+  run = 0;       // the arp is playing
+  next_k = 0;    // the next step on the grid
+  ai = 0;        // steps played since the arp started
+  was_play = 0;
+  pm = 1;
+  pm_seed = -1;
+  cur_step = -1;
+
+  // queue a message at time t (after every one already queued for t or earlier)
+  function ar_put(t, a, b, c) local(i)
+  (
+    qn < QMAX ? (
+      i = qn;
+      while (i > 0 && Q[(i - 1) * 4] > t) (
+        Q[i * 4] = Q[(i - 1) * 4];
+        Q[i * 4 + 1] = Q[(i - 1) * 4 + 1];
+        Q[i * 4 + 2] = Q[(i - 1) * 4 + 2];
+        Q[i * 4 + 3] = Q[(i - 1) * 4 + 3];
+        i -= 1;
+      );
+      Q[i * 4] = t; Q[i * 4 + 1] = a; Q[i * 4 + 2] = b; Q[i * 4 + 3] = c;
+      qn += 1;
+    );
+  );
+
+  // the arp's note-offs still waiting (on channel ch, -1 = every channel) move to time t
+  function ar_end(t, ch) local(i, j, a, x0, x1, x2, x3)
+  (
+    i = 0;
+    loop(qn,
+      a = Q[i * 4 + 1];
+      (a & 0xF0) == 0x80 && Q[i * 4] > t && (ch < 0 || (a & 0x0F) == ch) ? (
+        x0 = t; x1 = a; x2 = Q[i * 4 + 2]; x3 = Q[i * 4 + 3];
+        j = i;
+        while (j > 0 && Q[(j - 1) * 4] > t) (
+          Q[j * 4] = Q[(j - 1) * 4];
+          Q[j * 4 + 1] = Q[(j - 1) * 4 + 1];
+          Q[j * 4 + 2] = Q[(j - 1) * 4 + 2];
+          Q[j * 4 + 3] = Q[(j - 1) * 4 + 3];
+          j -= 1;
+        );
+        Q[j * 4] = x0; Q[j * 4 + 1] = x1; Q[j * 4 + 2] = x2; Q[j * 4 + 3] = x3;
+      );
+      i += 1;
+    );
+  );
+
+  function ar_find(ch, n) local(i, f)
+  (
+    f = -1;
+    i = 0;
+    while (f < 0 && i < nl) (
+      LN[i] == n && LC[i] == ch ? f = i;
+      i += 1;
+    );
+    f;
+  );
+
+  function ar_remove(i) local(j)
+  (
+    j = i;
+    loop(nl - 1 - i, LN[j] = LN[j + 1]; LC[j] = LC[j + 1]; LV[j] = LV[j + 1]; j += 1;);
+    nl -= 1;
+  );
+
+  // release everything of channel ch (-1 = every channel) at time t: the arp's notes end, the
+  // held and latched keys are forgotten
+  function ar_cut(t, ch) local(i)
+  (
+    ar_end(t, ch);
+    i = 0;
+    while (i < nl) ( ch < 0 || LC[i] == ch ? ar_remove(i) : i += 1; );
+    i = ch < 0 ? 0 : ch * 128;
+    loop(ch < 0 ? 2048 : 128, ACT[i] ? ( ACT[i] = 0; phys -= 1; ); i += 1;);
+    nl == 0 ? run = 0;
+  );
+
+  // Park-Miller in exact double arithmetic: 0..1
+  function ar_pm()
+  (
+    pm *= 16807;
+    pm -= floor(pm / 2147483647) * 2147483647;
+    pm / 2147483647;
+  );
+
+  // the beat where step k starts (the odd steps moved later by Swing)
+  function ar_g(k) ( k * sl + (k - 2 * floor(k / 2)) * swsh; );
+
+  // the first step at or after beat b
+  function ar_first(b) local(k)
+  (
+    k = floor((b - 0.000001) / sl);
+    ar_g(k) >= b - 0.000001 ? k : k + 1;
+  );
+
+  // the sample offset of step k in this block
+  function ar_ofs(k) ( max(0, ceil((ar_g(k) - b0) / bps - 0.000001)); );
+
+  // the sequence: the notes by pitch (Played: as played), then the octaves above
+  function ar_build() local(i, j, o, n, c, v, key)
+  (
+    i = 0;
+    loop(nl,
+      n = LN[i]; c = LC[i]; v = LV[i];
+      j = i;
+      pat != 4 ? (
+        key = n * 16 + c;
+        while (j > 0 && SQN[j - 1] * 16 + SQC[j - 1] > key) (
+          SQN[j] = SQN[j - 1]; SQC[j] = SQC[j - 1]; SQV[j] = SQV[j - 1];
+          j -= 1;
+        );
+      );
+      SQN[j] = n; SQC[j] = c; SQV[j] = v;
+      i += 1;
+    );
+    sq_n = nl;
+    o = 1;
+    loop(oct - 1,
+      i = 0;
+      loop(nl,
+        SQN[i] + 12 * o <= 127 ? (
+          SQN[sq_n] = SQN[i] + 12 * o; SQC[sq_n] = SQC[i]; SQV[sq_n] = SQV[i];
+          sq_n += 1;
+        );
+        i += 1;
+      );
+      o += 1;
+    );
+  );
+
+  function ar_note(t, ch, n, v, lw, gl) local(vo)
+  (
+    vo = v * lw;
+    vo = max(1, min(127, floor(vo / 100 + 0.5)));
+    qn + 2 <= QMAX ? (
+      ar_put(t, 0x90 | ch, n, vo);
+      ar_put(t + gl, 0x80 | ch, n, 0);
+    );
+  );
+
+  // step k at time t
+  function ar_step(t, k) local(lw, gl, i, j, m, n, d)
+  (
+    ar_build();
+    lw = LANE[k - steps * floor(k / steps)];
+    // (one operation per statement: EEL2 reorders a chain of * and /, the native port does not)
+    gl = gf * (ar_g(k + 1) - ar_g(k));
+    gl = max(1, floor(gl / bps + 0.5));
+    n = sq_n;
+    n > 0 ? (
+      pat == 6 ? (
+        // Chord: every note at once (an octave copy of a held note plays once)
+        lw > 0 ? (
+          i = 0;
+          loop(n,
+            d = 0;
+            j = 0;
+            loop(i, SQN[j] == SQN[i] && SQC[j] == SQC[i] ? d = 1; j += 1;);
+            !d ? ar_note(t, SQC[i], SQN[i], SQV[i], lw, gl);
+            i += 1;
+          );
+        );
+      ) : (
+        pat == 5 ? (
+          j = floor(ar_pm() * n);
+        ) : (
+          m = n > 1 && (pat == 2 || pat == 3) ? 2 * n - 2 : n;
+          j = ai % m;
+          pat == 1 ? (
+            j = n - 1 - j;
+          ) : pat == 2 ? (
+            j >= n ? j = 2 * n - 2 - j;
+          ) : pat == 3 ? (
+            j = j < n ? n - 1 - j : j - n + 1;
+          );
+        );
+        lw > 0 ? ar_note(t, SQC[j], SQN[j], SQV[j], lw, gl);
+      );
+    );
+    ai += 1;
+    cur_step = k - steps * floor(k / steps);
+  );
+
+  // the steps due before offset lim
+  function ar_steps(lim) local(so)
+  (
+    so = run ? ar_ofs(next_k) : lim;
+    while (run && so < lim) (
+      ar_step(bpos + so, next_k);
+      next_k += 1;
+      so = ar_ofs(next_k);
+    );
+  );
+
+  // the arp starts at offset ofs: on the host's next step, or (stopped) right away
+  function ar_start(ofs)
+  (
+    run = 1;
+    ai = 0;
+    playing ? (
+      next_k = ar_first(b0 + ofs * bps);
+    ) : (
+      b0 = -ofs * bps;
+      next_k = 0;
+    );
+  );
+
+  function ar_on(ofs, ch, n, v) local(s)
+  (
+    s = ch * 128 + n;
+    // with Latch, the first key after all were released starts a new chord
+    latch && phys == 0 && nl > 0 ? ( nl = 0; ai = 0; );
+    !ACT[s] ? ( ACT[s] = 1; phys += 1; );
+    s = ar_find(ch, n);
+    s >= 0 ? (
+      LV[s] = v;
+    ) : nl < 64 ? (
+      LN[nl] = n; LC[nl] = ch; LV[nl] = v;
+      nl += 1;
+    );
+    !run && nl > 0 ? ar_start(ofs);
+  );
+
+  function ar_off(ofs, ch, n) local(s, i)
+  (
+    s = ch * 128 + n;
+    ACT[s] ? (
+      ACT[s] = 0;
+      phys -= 1;
+      !latch ? (
+        i = ar_find(ch, n);
+        i >= 0 ? ar_remove(i);
+        // the last key released: the arp stops and its notes end
+        nl == 0 && run ? ( run = 0; ar_end(bpos + ofs, -1); );
+      );
+    );
+  );
+
+  // one incoming message at offset ofs
+  function ar_in(ofs, a, b, c) local(st)
+  (
+    st = a & 0xF0;
+    st == 0x90 && c > 0 ? (
+      ar_on(ofs, a & 0x0F, b, c);
+    ) : st == 0x80 || st == 0x90 ? (
+      ar_off(ofs, a & 0x0F, b);
+    ) : st == 0xB0 && (b == 120 || b == 123) ? (
+      ar_cut(bpos + ofs, a & 0x0F);
+      ar_put(bpos + ofs, a, b, c);
+    ) : (
+      ar_put(bpos + ofs, a, b, c);
+    );
+  );
+
+  // send one queued message; a pitch two arp notes share starts again and ends with the last
+  function ar_emit(ofs, a, b, c) local(st, k)
+  (
+    st = a & 0xF0;
+    k = (a & 0x0F) * 128 + b;
+    st == 0x90 ? (
+      CNT[k] > 0 ? midisend(ofs, 0x80 | (a & 0x0F), b, 0);
+      midisend(ofs, a, b, c);
+      CNT[k] += 1;
+    ) : st == 0x80 ? (
+      CNT[k] > 0 ? (
+        CNT[k] -= 1;
+        CNT[k] == 0 ? midisend(ofs, a, b, c);
+      );
+    ) : (
+      midisend(ofs, a, b, c);
+    );
+  );
+
+@slider
+  rate = slider1;
+  pat = slider2;
+  oct = slider3;
+  gate = slider4;
+  gf = gate / 100;
+  swing = slider5;
+  latch = slider6;
+  steps = slider7;
+  seed_v = slider8;
+  LANE[0] = slider9; LANE[1] = slider10; LANE[2] = slider11; LANE[3] = slider12;
+  LANE[4] = slider13; LANE[5] = slider14; LANE[6] = slider15; LANE[7] = slider16;
+  LANE[8] = slider17; LANE[9] = slider18; LANE[10] = slider19; LANE[11] = slider20;
+  LANE[12] = slider21; LANE[13] = slider22; LANE[14] = slider23; LANE[15] = slider24;
+  // the step in beats: 1/4, dotted, triplet, 1/8 ... 1/32
+  sl = rate == 0 ? 1 : rate == 1 ? 1.5 : rate == 2 ? 2 / 3 : rate == 3 ? 0.5 : rate == 4 ? 0.75 :
+       rate == 5 ? 1 / 3 : rate == 6 ? 0.25 : rate == 7 ? 0.375 : rate == 8 ? 1 / 6 : 0.125;
+  // Swing 100 % moves every second step a third of a step later (a triplet shuffle)
+  swsh = swing / 100;
+  swsh *= sl;
+  swsh /= 3;
+
+@block
+  playing = play_state & 1;
+  bps = 60 * srate;
+  bps = max(1, tempo) / bps;
+  // the random pattern starts from the seed again when it changes and at every transport start
+  (playing && !was_play) || seed_v != pm_seed ? ( pm_seed = seed_v; pm = 12345 + seed_v * 7919; );
+  // the transport stopped: release everything
+  was_play && !playing ? ar_cut(bpos, -1);
+  b0 = playing ? beat_position : fb;
+  // Latch turned off: the keys no longer held leave the arp
+  !latch ? (
+    ar_i = 0;
+    while (ar_i < nl) ( ACT[LC[ar_i] * 128 + LN[ar_i]] ? ar_i += 1 : ar_remove(ar_i); );
+    nl == 0 && run ? ( run = 0; ar_end(bpos, -1); );
+  );
+  // on the grid: the host's step at a transport start, after a jump or a new Rate
+  run ? (
+    ar_kb = ar_first(b0);
+    (playing && !was_play) || next_k < ar_kb - 1 || next_k > ar_kb + 1 ? next_k = ar_kb;
+  );
+  was_play = playing;
+
+  while (midirecv(m_ofs, m_1, m_2, m_3)) (
+    ar_steps(m_ofs);
+    ar_in(m_ofs, m_1, m_2, m_3);
+  );
+  ar_steps(samplesblock);
+  !run ? cur_step = -1;
+
+  b_end = bpos + samplesblock;
+  q_i = 0;
+  while (q_i < qn && Q[q_i * 4] < b_end) (
+    ar_emit(Q[q_i * 4] - bpos, Q[q_i * 4 + 1], Q[q_i * 4 + 2], Q[q_i * 4 + 3]);
+    q_i += 1;
+  );
+  q_i > 0 ? (
+    q_j = 0;
+    loop((qn - q_i) * 4, Q[q_j] = Q[q_j + q_i * 4]; q_j += 1;);
+    qn -= q_i;
+  );
+  fb = b0 + samplesblock * bps;
+  bpos = b_end;
+
+@sample
+  // the audio passes through
+  spl0 = spl0;
+  spl1 = spl1;
