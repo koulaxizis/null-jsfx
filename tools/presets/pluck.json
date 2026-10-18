@@ -1,0 +1,17 @@
+[
+  ["Nylon Fingerpick", {"Model": "Nylon Guitar", "Pick Position": 25, "Brightness": 40}],
+  ["Nylon Strum", {"Model": "Nylon Guitar", "Strum": "Down-Up", "Strum Rate": "Eighths", "Strum Spread": 18}],
+  ["Steel Picking", {"Model": "Steel Guitar", "Pick Position": 12, "Brightness": 60}],
+  ["Steel Folk Strum", {"Model": "Steel Guitar", "Strum": "Folk", "Strum Rate": "Eighths", "Strum Spread": 22, "Volume": -2}],
+  ["Funk Sixteenths", {"Model": "Steel Guitar", "Decay": 40, "Release": 60, "Brightness": 65, "Strum": "Down-Up", "Strum Rate": "Sixteenths", "Strum Spread": 8}],
+  ["Reggae Skank", {"Model": "Steel Guitar", "Decay": 30, "Release": 60, "Brightness": 65, "Strum": "Offbeat", "Strum Rate": "Eighths", "Strum Spread": 6}],
+  ["Muted Pluck", {"Model": "Muted Guitar"}],
+  ["Harp", {"Model": "Harp", "Width": 80}],
+  ["Harp Rolls", {"Model": "Harp", "Width": 80, "Strum": "Up", "Strum Rate": "Quarters", "Strum Spread": 60}],
+  ["Koto", {"Model": "Koto"}],
+  ["Pipa", {"Model": "Pipa", "Pick Position": 10}],
+  ["Banjo", {"Model": "Banjo"}],
+  ["Banjo Roll", {"Model": "Banjo", "Strum": "Down", "Strum Rate": "Sixteenths", "Strum Spread": 40}],
+  ["Dulcimer", {"Model": "Dulcimer", "Width": 70}],
+  ["Cascade", {"Model": "Steel Guitar", "Brightness": 80, "Width": 90, "Strum": "Up", "Strum Rate": "Sixteenths", "Strum Spread": 30, "Volume": -2}]
+]

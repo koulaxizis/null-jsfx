@@ -1,0 +1,17 @@
+[
+  ["Sub Bass", {"Oscillator": "Sub", "Sub Level": 40, "Punch": 20, "Drive": 0, "Cutoff": 400, "Env Amount": 10, "Sustain": 100, "Release": 120}],
+  ["Reese", {"Oscillator": "Saw", "Detune": 25, "Sub Level": 50, "Drive": 25, "Cutoff": 700, "Resonance": 10, "Env Amount": 20, "Attack": 5, "Sustain": 100, "Release": 200}],
+  ["808 Boom", {"Oscillator": "808", "Sub Level": 0, "Punch": 50, "Drive": 30, "Cutoff": 3000, "Env Amount": 0, "Decay": 1800, "Sustain": 0, "Release": 300, "Glide Mode": "Always", "Glide": 80}],
+  ["808 Distorted", {"Oscillator": "808", "Sub Level": 0, "Punch": 70, "Drive": 75, "Cutoff": 5000, "Env Amount": 0, "Decay": 2500, "Sustain": 0, "Release": 250, "Glide Mode": "Always", "Glide": 120, "Volume": -2}],
+  ["Acid", {"Oscillator": "Saw", "Sub Level": 0, "Drive": 40, "Cutoff": 300, "Resonance": 80, "Env Amount": 80, "Filter Decay": 180, "Sustain": 100, "Release": 30, "Glide": 60, "Velocity": 80, "Phrase": "Acid"}],
+  ["Funk Finger", {"Oscillator": "Saw", "Sub Level": 40, "Punch": 50, "Cutoff": 600, "Env Amount": 50, "Filter Decay": 120, "Decay": 350, "Sustain": 40, "Release": 40, "Glide": 0, "Velocity": 80, "Phrase": "Funk"}],
+  ["Square Pluck", {"Oscillator": "Square", "Sub Level": 20, "Cutoff": 1200, "Resonance": 30, "Env Amount": 60, "Filter Decay": 150, "Decay": 300, "Sustain": 20, "Release": 60}],
+  ["Disco Octaves", {"Oscillator": "Saw", "Cutoff": 1000, "Resonance": 25, "Env Amount": 50, "Filter Decay": 120, "Sustain": 60, "Release": 40, "Glide": 0, "Phrase": "Octaves"}],
+  ["Trap Glide", {"Oscillator": "808", "Sub Level": 0, "Punch": 60, "Drive": 40, "Cutoff": 4000, "Env Amount": 0, "Decay": 3000, "Sustain": 50, "Release": 200, "Glide": 120, "Phrase": "Trap"}],
+  ["Rock Gallop", {"Oscillator": "Saw", "Sub Level": 20, "Punch": 40, "Drive": 50, "Cutoff": 1500, "Env Amount": 30, "Sustain": 80, "Release": 40, "Glide": 0, "Phrase": "Gallop"}],
+  ["Offbeat House", {"Oscillator": "Saw", "Sub Level": 30, "Cutoff": 800, "Resonance": 35, "Env Amount": 60, "Filter Decay": 200, "Decay": 250, "Sustain": 30, "Release": 60, "Phrase": "Offbeat"}],
+  ["Tresillo Pop", {"Oscillator": "Sub", "Punch": 40, "Decay": 600, "Sustain": 50, "Release": 100, "Phrase": "Tresillo"}],
+  ["Eighths Driver", {"Oscillator": "Saw", "Drive": 30, "Cutoff": 1100, "Env Amount": 30, "Sustain": 80, "Release": 50, "Phrase": "Eighths"}],
+  ["Soft Square", {"Oscillator": "Square", "Sub Level": 30, "Punch": 0, "Drive": 0, "Cutoff": 500, "Env Amount": 10, "Attack": 30, "Sustain": 100, "Release": 300}],
+  ["Growl", {"Oscillator": "Saw", "Octave": -1, "Detune": 12, "Sub Level": 20, "Drive": 80, "Cutoff": 1500, "Resonance": 50, "Env Amount": 40, "Sustain": 90, "Volume": -2}]
+]

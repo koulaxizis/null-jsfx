@@ -1,0 +1,363 @@
+desc:NULL Bass
+author: Christos Koulaxizis
+tags: instrument bass synth bass 808 sub saw square mono glide portamento acid filter drive phrase player key switch midi
+//category: Instruments
+//NULL JSFX v2.4 • https://nulljsfx.tech • MIT License
+
+slider1:1<0,3,1{Sub,Saw,Square,808}>Oscillator
+slider2:0<-2,2,1>Octave
+slider3:0<0,50,1>Detune (cents)
+slider4:30<0,100,1>Sub Level (%)
+slider5:30<0,100,1>Punch (%)
+slider6:10<0,100,1>Drive (%)
+slider7:900<30,12000,1:log>Cutoff (Hz)
+slider8:20<0,100,1>Resonance (%)
+slider9:40<-100,100,1>Env Amount (%)
+slider10:250<5,3000,1:log>Filter Decay (ms)
+slider11:2<1,2000,1:log>Attack (ms)
+slider12:400<5,5000,1:log>Decay (ms)
+slider13:70<0,100,1>Sustain (%)
+slider14:80<5,5000,1:log>Release (ms)
+slider15:0<0,1,1{Legato,Always}>Glide Mode
+slider16:30<0,1000,1>Glide (ms)
+slider17:50<0,100,1>Velocity (%)
+slider18:0<0,8,1{Off,Eighths,Octaves,Offbeat,Gallop,Funk,Acid,Tresillo,Trap}>Phrase
+slider19:0<-24,12,0.1>Volume (dB)
+
+in_pin:none
+out_pin:Left
+out_pin:Right
+
+@init
+  // A monophonic synth bass (no samples): one oscillator (Sub: a sine with a little second
+  // harmonic, Saw and Square: band-limited with PolyBLEP, 808: a sine that drops in pitch at
+  // every new note), an optional detuned twin (Detune), a sine one octave below (Sub Level),
+  // a 24 dB low-pass (two state-variable stages) with its own decaying envelope, Drive (soft
+  // clipping after the filter), an ADSR and Punch, a short boost at every new note (in 808
+  // mode also the depth of the pitch drop). Last-note priority: a key pressed while another is
+  // held glides to its pitch without a new attack (Glide Mode Legato), or every note glides
+  // from the last pitch and starts again (Always); releasing a key goes back to the key still
+  // held. Pitch bend: +-2 semitones.
+  //
+  // Phrase player: the keys below C2 (MIDI note 36) choose a phrase (C1 = 24 Off, C#1 to G#1
+  // = phrases 1 to 8, the Phrase slider sets it too). While a phrase is chosen and a key from
+  // C2 up is held, the bass plays the phrase in 16ths at the host's tempo (on the host's beat
+  // while it plays, from the first key while it is stopped), on the last key held as root.
+  // Phrase steps: '.' rest, '-' tie, else an interval: r root, o octave, f fifth, l fifth
+  // below, d octave below, m minor third, q fourth, s minor seventh, n second; a = accent,
+  // s = slide (the note before holds and glides into it).
+  //
+  // Memory: 0.. the MIDI of the block (4 per message), 2048.. the keys held (last = newest),
+  // 2100.. the phrase steps (16 per phrase), 2300.. accents, 2500.. slides, 2700.. gates.
+  ext_noinit = 1;
+  ext_tail_size = -1;
+  MQ = 0; HS = 2048; PN = 2100; PA = 2300; PS = 2500; PG = 2700;
+
+  function ival(c)
+  (
+    c == 'r' ? 0 : c == 'o' ? 12 : c == 'f' ? 7 : c == 'l' ? -5 : c == 'd' ? -12 :
+    c == 'm' ? 3 : c == 'q' ? 5 : c == 's' ? 10 : c == 'n' ? 2 : c == '-' ? -200 : -100;
+  );
+  function phr_set(k, notes, mods, gate) local(i, m)
+  (
+    i = 0;
+    loop(16,
+      m = str_getchar(mods, i);
+      PN[k * 16 + i] = ival(str_getchar(notes, i));
+      PA[k * 16 + i] = m == 'a' ? 1 : 0;
+      PS[k * 16 + i] = m == 's' ? 1 : 0;
+      i += 1;
+    );
+    PG[k] = gate;
+  );
+  phr_set(1, "r.r.r.r.r.r.r.r.", "a...a...a...a...", 0.7);  // Eighths
+  phr_set(2, "r.o.r.o.r.o.r.o.", "a.......a.......", 0.55); // Octaves
+  phr_set(3, "..r...r...r...r.", "................", 0.6);  // Offbeat
+  phr_set(4, "r.rrr.rrr.rrr.rr", "a...a...a...a...", 0.65); // Gallop
+  phr_set(5, "r..ro..rr.s.f.o.", "a...a.......a...", 0.45); // Funk
+  phr_set(6, "rror.rfr.ormo.sr", "a.s..as..a.s..as", 0.5);  // Acid
+  phr_set(7, "r..r..r.r..f..o.", "a..a..a.a..a..a.", 0.6);  // Tresillo
+  phr_set(8, "r-------..r-o---", "a.........a.s...", 0.95); // Trap
+
+  // band-limited square and saw corrections (PolyBLEP) at phase p with phase step dt
+  function blep(t, dt)
+  (
+    t < dt ? ( t /= dt; t + t - t * t - 1; ) :
+    t > 1 - dt ? ( t = (t - 1) / dt; t * t + t + t + 1; ) : 0;
+  );
+  function square(p, dt) local(q)
+  (
+    q = p + 0.5;
+    q -= floor(q);
+    (p < 0.5 ? 1 : -1) + blep(p, dt) - blep(q, dt);
+  );
+  function osc_wave(p, dt)
+  (
+    osc == 0 ? sin(2 * $pi * p) + 0.2 * sin(4 * $pi * p) :
+    osc == 1 ? 2 * p - 1 - blep(p, dt) :
+    osc == 2 ? square(p, dt) :
+    sin(2 * $pi * p);
+  );
+
+  // ---- the voice ------------------------------------------------------------------------------
+  // a note: retrig starts the envelopes again (from where they are), glide moves the pitch at
+  // rate gc (else it jumps)
+  function v_note(n, vel, retrig, glide, gc)
+  (
+    v_has && glide ? v_gc = gc : ( v_cur = n; v_gc = 1; );
+    v_tgt = n;
+    v_has = 1;
+    retrig || v_stage == 0 || v_stage == 3 ? (
+      v_env < 0.001 ? ( v_ph = 0; v_ph2 = 0.37; v_phs = 0; );
+      v_stage = 1; v_fe = 1; v_pkt = 1; v_pe = 1;
+      v_vg = 1 - vs * (1 - vel);
+    );
+    v_gate = 1;
+  );
+  function v_release()
+  (
+    v_gate = 0;
+    v_stage > 0 ? v_stage = 3;
+  );
+
+  // ---- the keys held (a stack, the newest last) --------------------------------------------------
+  function hs_remove(n) local(i)
+  (
+    i = 0;
+    while (i < hn && HS[i] != n) ( i += 1; );
+    i < hn ? (
+      while (i < hn - 1) ( HS[i] = HS[i + 1]; i += 1; );
+      hn -= 1;
+    );
+  );
+  function hs_push(n) local(i)
+  (
+    hs_remove(n);
+    hn >= 32 ? (
+      i = 0;
+      while (i < 31) ( HS[i] = HS[i + 1]; i += 1; );
+      hn = 31;
+    );
+    HS[hn] = n;
+    hn += 1;
+  );
+
+  // ---- the phrase player ------------------------------------------------------------------------
+  // step s (16ths from the bar's start) of the phrase: a rest releases, a tie holds, a note plays
+  // until its gate (or into the next note when that one slides); ph_rel is in 16ths
+  function ph_step(s) local(i, b, iv, t, j, hold)
+  (
+    i = s - floor(s / 16) * 16;
+    b = ph_sel * 16 + i;
+    iv = PN[b];
+    iv == -100 ? (
+      ph_on ? ( ph_on = 0; v_release(); );
+    ) : iv != -200 ? (
+      t = 0;
+      j = i + 1;
+      while (j < 16 && PN[ph_sel * 16 + j] == -200) ( t += 1; j += 1; );
+      hold = j < 16 && PS[ph_sel * 16 + j] > 0 && PN[ph_sel * 16 + j] > -100;
+      ph_rel = hold ? s + 1 + t + 4 : s + (1 + t) * PG[ph_sel];
+      ph_ival = iv;
+      PS[b] > 0 && ph_on ? v_note(ph_root + iv, 0, 0, 1, sl_c)
+                         : v_note(ph_root + iv, ph_vel * (PA[b] > 0 ? 1 : 0.78), 1, gmode, gl_c);
+      ph_on = 1;
+    );
+  );
+  // choose a phrase (0 = Off): a note playing stops, the keys still held start again
+  function ph_set(k)
+  (
+    k != ph_sel ? (
+      ph_sel = k;
+      ph_on = 0;
+      ph_s = -1000;
+      v_release();
+      hn > 0 ? (
+        k == 0 ? ( v_key = HS[hn - 1]; v_note(v_key, lk_vel, 1, 0, 1); )
+               : ( ph_root = HS[hn - 1]; ph_vel = lk_vel; ph_clock = 0; );
+      );
+    );
+  );
+
+  // ---- MIDI ------------------------------------------------------------------------------------
+  function key_on(n, v) local(was, legato)
+  (
+    n < 36 ? (
+      n >= 24 && n <= 32 ? ph_set(n - 24);
+    ) : (
+      was = hn;
+      hs_push(n);
+      lk_vel = v;
+      ph_sel > 0 ? (
+        ph_root = n;
+        ph_vel = v;
+        was == 0 ? (
+          ph_s = -1000;
+          ph_clock = 0;
+        ) : ph_on ? (
+          v_tgt = n + ph_ival;
+          v_gc = gl_c;
+        );
+      ) : (
+        legato = was > 0 && v_gate;
+        v_key = n;
+        gmode ? v_note(n, v, 1, 1, gl_c) : v_note(n, v, !legato, legato, gl_c);
+      );
+    );
+  );
+  function key_off(n)
+  (
+    n >= 36 ? (
+      hs_remove(n);
+      ph_sel > 0 ? (
+        hn == 0 ? (
+          ph_on ? v_release();
+          ph_on = 0;
+          ph_s = -1000;
+        ) : (
+          ph_root = HS[hn - 1];
+          ph_on ? ( v_tgt = ph_root + ph_ival; v_gc = gl_c; );
+        );
+      ) : n == v_key ? (
+        hn > 0 ? ( v_key = HS[hn - 1]; v_note(v_key, lk_vel, 0, 1, gl_c); ) : v_release();
+      );
+    );
+  );
+  function midi_ev(st, d1, d2) local(t)
+  (
+    t = st & 0xF0;
+    t == 0x90 && d2 > 0 ? key_on(d1, d2 / 127) :
+    t == 0x80 || t == 0x90 ? key_off(d1) :
+    t == 0xB0 && (d1 == 123 || d1 == 120) ? ( hn = 0; ph_on = 0; ph_s = -1000; v_release(); ) :
+    t == 0xE0 ? bend = (d2 * 128 + d1 - 8192) / 8192 * 2;
+  );
+
+  v_stage = 0; v_env = 0; v_gate = 0; v_has = 0; v_cur = v_tgt = 48; v_gc = 1;
+  v_ph = v_ph2 = v_phs = 0; v_fe = v_pk = v_pkt = v_pe = 0; v_vg = 1; v_key = -1;
+  f1s1 = f1s2 = f2s1 = f2s2 = 0;
+  hn = 0; bend = 0; lk_vel = 0.8;
+  ph_sel = 0; ph_last = -1; ph_s = -1000; ph_on = 0; ph_clock = 0; ph_root = 48; ph_vel = 0.8;
+  ph_ival = 0; ph_rel = 0;
+  bs_req = 0;
+  m_ofs = m_1 = m_2 = m_3 = 0;
+
+@slider
+  osc = floor(slider1 + 0.5);
+  oct = floor(slider2 + 0.5);
+  det_on = slider3 > 0;
+  det_r = 2 ^ (slider3 / 1200);
+  sub_l = slider4 / 100;
+  punch = slider5 / 100;
+  drop = 3 + 21 * punch;
+  drv = slider6 / 100;
+  drv_g = 1 + 8 * drv;
+  drv_n = 1 / (1 + 0.6 * drv);
+  cut = slider7;
+  res = slider8 / 100;
+  k1 = 1 / 0.541;
+  k2 = 1 / (0.707 + 9 * res * res);
+  env_oct = slider9 / 100 * 6;
+  fdc = exp(-3 / (slider10 / 1000 * srate));
+  a_inc = 1 / (slider11 / 1000 * srate);
+  d_c = exp(-3 / (slider12 / 1000 * srate));
+  sus = slider13 / 100;
+  r_c = exp(-3 / (slider14 / 1000 * srate));
+  gmode = slider15 >= 0.5;
+  gl = slider16;
+  gl_c = gl > 0 ? 1 - exp(-3 / (gl / 1000 * srate)) : 1;
+  sl_c = 1 - exp(-3 / (max(gl, 60) / 1000 * srate));
+  vs = slider17 / 100;
+  vol = 10 ^ (slider19 / 20);
+  pk_c = exp(-1 / (0.02 * srate));
+  pa_c = 1 - exp(-1 / (0.0015 * srate));
+  pe_c = exp(-1 / (0.035 * srate));
+  // the Phrase slider when it moves (a key below C2 chooses one too)
+  slider18 != ph_last ? ( ph_last = slider18; ph_set(max(0, min(8, floor(slider18 + 0.5)))); );
+
+@block
+  // the MIDI of this block, played at its offsets in @sample
+  mq_n = 0;
+  while (midirecv(m_ofs, m_1, m_2, m_3)) (
+    mq_n < 512 ? (
+      MQ[mq_n * 4] = m_ofs;
+      MQ[mq_n * 4 + 1] = m_1;
+      MQ[mq_n * 4 + 2] = m_2;
+      MQ[mq_n * 4 + 3] = m_3;
+      mq_n += 1;
+    );
+  );
+  mq_i = 0;
+  playing = play_state & 1;
+  b_inc = tempo / (60 * srate);
+  b_0 = beat_position;
+  si = 0;
+  // a phrase chosen in the interface (GFX version)
+  bs_req > 0 ? ( ph_set(bs_req - 1); bs_req = 0; );
+
+@sample
+  while (mq_i < mq_n && MQ[mq_i * 4] <= si) (
+    midi_ev(MQ[mq_i * 4 + 1], MQ[mq_i * 4 + 2], MQ[mq_i * 4 + 3]);
+    mq_i += 1;
+  );
+
+  // the phrase: a step plays when the position enters it (on the first key, also when the key
+  // comes in the first half of the step)
+  ph_sel > 0 && hn > 0 ? (
+    bb = playing ? b_0 + si * b_inc : ph_clock;
+    ph_clock = bb + b_inc;
+    s = floor(bb * 4 + 0.000001);
+    s != ph_s ? (
+      ph_s > -1000 || bb * 4 - s < 0.5 ? ph_step(s);
+      ph_s = s;
+    );
+    ph_on && bb * 4 + 0.000001 >= ph_rel ? ( ph_on = 0; v_release(); );
+  );
+  si += 1;
+
+  out = 0;
+  v_stage > 0 ? (
+    // pitch: glide, octave, bend and the 808 drop
+    v_cur += (v_tgt - v_cur) * v_gc;
+    p = v_cur + oct * 12 + bend + (osc == 3 ? drop * v_pe : 0);
+    dt = min(0.45, 440 * 2 ^ ((p - 69) / 12) / srate);
+    v_ph += dt; v_ph -= floor(v_ph);
+    y = osc_wave(v_ph, dt);
+    det_on ? (
+      dt2 = min(0.45, dt * det_r);
+      v_ph2 += dt2; v_ph2 -= floor(v_ph2);
+      y = (y + osc_wave(v_ph2, dt2)) * 0.6;
+    );
+    v_phs += dt * 0.5; v_phs -= floor(v_phs);
+    y += sub_l * sin(2 * $pi * v_phs);
+
+    // 24 dB low-pass: two state-variable stages, the second one resonant
+    fc = max(20, min(0.45 * srate, cut * 2 ^ (env_oct * v_fe * v_vg)));
+    g = tan($pi * fc / srate);
+    a1 = 1 / (1 + g * (g + k1)); a2 = g * a1; a3 = g * a2;
+    v3 = y - f1s2; v1 = a1 * f1s1 + a2 * v3; v2 = f1s2 + a2 * f1s1 + a3 * v3;
+    f1s1 = 2 * v1 - f1s1; f1s2 = 2 * v2 - f1s2;
+    a1 = 1 / (1 + g * (g + k2)); a2 = g * a1; a3 = g * a2;
+    v3 = v2 - f2s2; v1 = a1 * f2s1 + a2 * v3; v2 = f2s2 + a2 * f2s1 + a3 * v3;
+    f2s1 = 2 * v1 - f2s1; f2s2 = 2 * v2 - f2s2;
+    y = v2;
+
+    // Drive: soft clipping
+    drv > 0 ? ( u = max(-3, min(3, y * drv_g)); y = u * (27 + u * u) / (27 + 9 * u * u) * drv_n; );
+
+    // amplitude: ADSR, velocity and Punch (a boost that rises in 1.5 ms and falls in 20 ms)
+    v_pk += (v_pkt - v_pk) * pa_c;
+    out = y * v_env * v_vg * (1 + 2 * punch * v_pk) * 0.42;
+    v_pkt *= pk_c; v_fe *= fdc; v_pe *= pe_c;
+    v_stage == 1 ? (
+      v_env += a_inc;
+      v_env >= 1 ? ( v_env = 1; v_stage = 2; );
+    ) : v_stage == 2 ? (
+      v_env = sus + (v_env - sus) * d_c;
+      sus <= 0 && v_env < 0.00001 ? ( v_env = 0; v_stage = 0; );
+    ) : (
+      v_env *= r_c;
+      v_env < 0.00001 ? ( v_env = 0; v_stage = 0; );
+    );
+  );
+  spl0 = out * vol;
+  spl1 = spl0;

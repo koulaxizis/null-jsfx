@@ -1,0 +1,17 @@
+[
+  ["Salsa Night", {"Groove": "Salsa", "Room": 20, "Humanize": 15}],
+  ["Bossa Lounge", {"Groove": "Bossa", "Swing": 54, "Room": 30, "Room Size": 60, "Tumba Decay": 65, "Shaker Level": -3}],
+  ["Samba Street", {"Groove": "Samba", "Accent": 65, "Room": 10, "Tambourine Level": -2}],
+  ["Cumbia Party", {"Groove": "Cumbia", "Swing": 52, "Guiro Level": 2, "Room": 18}],
+  ["Afro Bell 12-8", {"Groove": "Afro Bell", "Room": 25, "Cowbell Tune": -2, "Humanize": 20}],
+  ["Afrobeat Band", {"Groove": "Afrobeat", "Swing": 55, "Humanize": 25, "Room": 20}],
+  ["Reggaeton Perc", {"Groove": "Reggaeton", "Accent": 40, "Room": 8, "Conga Decay": 35}],
+  ["Pop Shaker", {"Groove": "Pop", "Swing": 56, "Shaker Level": 2, "Room": 22}],
+  ["Key Grooves", {"Groove Play": "Keys", "Room": 20}],
+  ["MIDI Kit", {"Groove": "Off"}],
+  ["Dry Studio", {"Room": 0, "Conga Decay": 40, "Tumba Decay": 40}],
+  ["Big Room", {"Room": 45, "Room Size": 90, "Volume": -2}],
+  ["Tuned Up", {"Conga Tune": 3, "Tumba Tune": 3, "Bongo Hi Tune": 2, "Bongo Lo Tune": 2, "Cowbell Tune": 2, "Claves Tune": 2}],
+  ["Deep Drums", {"Conga Tune": -3, "Tumba Tune": -4, "Bongo Hi Tune": -2, "Bongo Lo Tune": -2, "Conga Decay": 70, "Tumba Decay": 75}],
+  ["Loose Feel", {"Humanize": 45, "Swing": 58, "Accent": 70}]
+]

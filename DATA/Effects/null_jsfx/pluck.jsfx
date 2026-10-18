@@ -1,0 +1,532 @@
+desc:NULL Pluck
+author: Christos Koulaxizis
+tags: instrument pluck plucked string karplus strong guitar nylon steel harp koto pipa lute banjo dulcimer strum strummer chord rhythm body midi
+//category: Instruments
+//NULL JSFX v2.4 • https://nulljsfx.tech • MIT License
+
+slider1:0<0,7,1{Nylon Guitar,Steel Guitar,Harp,Koto,Pipa,Banjo,Muted Guitar,Dulcimer}>Model
+slider2:18<5,50,1>Pick Position (%)
+slider3:50<0,100,1>Brightness (%)
+slider4:100<10,300,1>Decay (%)
+slider5:150<10,2000,1:log>Release (ms)
+slider6:50<0,100,1>Body (%)
+slider7:50<0,100,1>Width (%)
+slider8:60<0,100,1>Velocity (%)
+slider9:0<0,5,1{Off,Down,Up,Down-Up,Folk,Offbeat}>Strum
+slider10:1<0,3,1{Quarters,Eighths,Sixteenths,Eighth Triplets}>Strum Rate
+slider11:20<0,100,1>Strum Spread (ms)
+slider12:0<-24,12,0.1>Volume (dB)
+
+in_pin:none
+out_pin:Left
+out_pin:Right
+
+@init
+  // Plucked strings (no samples), 12 voices. Every note is a Karplus-Strong string: a delay
+  // line one period long (the read interpolated, its length corrected for the loop filter so
+  // the string is in tune) with a one-pole low-pass and a loop gain set from the decay time at
+  // the pitch. The pluck is low-passed noise mixed with the triangle of a string pulled at Pick
+  // Position, combed at that position (a pluck near the bridge is thin, at the middle hollow),
+  // its brightness from Brightness and the velocity. Koto, Pipa and Banjo start a little sharp
+  // and settle (the string's tension), and the sum goes through the model's body (three
+  // resonances, Body = how much) and a DC blocker. Width spreads the strings by pitch and
+  // detunes the right channel's body. A note played again lets go of the string that still
+  // sounds (40 ms) and takes a new voice; a 13th takes the oldest voice (released ones first)
+  // after a 2 ms fade. Keys up fade over Release; the sustain pedal (CC 64) holds them.
+  // Strum: the keys held (or held by the pedal) are strummed on the host's beat (or at its
+  // tempo while stopped, from the first key) at Strum Rate: Down (low to high), Up, Down-Up
+  // and Folk (whose up strums hit the top four strings), and Offbeat; Strum Spread is the
+  // time from one string to the next, the beat's strums are louder. All notes off (CC 123/120)
+  // stops everything.
+  //
+  // Memory: 0.. the MIDI of the block (4 per message), 2048.. keys down, 2176.. keys held
+  // (with the pedal), 2304.. per-voice values, 3072.. the models, 3584.. the strum patterns,
+  // 8192.. the strings' delay lines, then the plucks.
+  ext_noinit = 1;
+  ext_tail_size = -1;
+  NV = 12;
+  MQ = 0;
+  KD = 2048; HL = 2176;
+  v_note = 2304; v_gate = 2320; v_env = 2336; v_rel = 2352; v_pend = 2368; v_pvel = 2384;
+  v_age = 2400; v_fast = 2416; v_w = 2432; v_d0 = 2448; v_tw = 2464; v_twk = 2480;
+  v_lp = 2496; v_b = 2512; v_g = 2528; v_ek = 2544; v_en = 2560; v_pp = 2576; v_amp = 2592;
+  v_gl = 2608; v_gr = 2624; v_pk = 2640;
+  MT = 3072;
+  PT = 3584;
+  SB = 8192;
+  tpi = 2 * $pi;
+
+  // the models, 24 values each: decay (s at C3), decay factor per octave, loop low-pass,
+  // pluck brightness (Hz), the start sharp (cents) and how fast it settles (s), three body
+  // resonances (Hz, Q, level), the triangle's share of the pluck, level
+  function mrow(a, b, c, d, e, f)
+  (
+    MT[mw] = a; MT[mw + 1] = b; MT[mw + 2] = c; MT[mw + 3] = d; MT[mw + 4] = e; MT[mw + 5] = f;
+    mw += 6;
+  );
+  function mbody(a, b, c, d, e, f, g, h, i)
+  (
+    MT[mw] = a; MT[mw + 1] = b; MT[mw + 2] = c; MT[mw + 3] = d; MT[mw + 4] = e; MT[mw + 5] = f;
+    MT[mw + 6] = g; MT[mw + 7] = h; MT[mw + 8] = i;
+    mw += 9;
+  );
+  function mend(a, b)
+  (
+    MT[mw] = a; MT[mw + 1] = b;
+    mw += 9;
+  );
+  mw = 0;
+  // Nylon Guitar
+  mrow(3.5, 0.75, 0.35, 2500, 0, 0.05); mbody(100, 2, 1, 200, 3, 0.6, 400, 3, 0.3); mend(0.6, 1.25);
+  // Steel Guitar
+  mrow(5, 0.75, 0.18, 5000, 3, 0.03); mbody(110, 2, 0.8, 230, 3, 0.5, 2600, 2, 0.3); mend(0.4, 0.8);
+  // Harp
+  mrow(7, 0.7, 0.3, 1800, 0, 0.05); mbody(90, 1.5, 1, 180, 2, 0.5, 360, 2, 0.3); mend(0.8, 0.85);
+  // Koto
+  mrow(3, 0.75, 0.15, 6000, 25, 0.08); mbody(160, 3, 0.8, 450, 3, 0.6, 1400, 3, 0.3); mend(0.3, 0.75);
+  // Pipa
+  mrow(2, 0.7, 0.12, 7000, 18, 0.05); mbody(250, 3, 0.9, 700, 3, 0.6, 2000, 3, 0.3); mend(0.3, 0.7);
+  // Banjo
+  mrow(1.5, 0.8, 0.1, 8000, 6, 0.02); mbody(350, 4, 1.2, 1100, 4, 0.7, 3000, 3, 0.4); mend(0.2, 0.6);
+  // Muted Guitar
+  mrow(0.25, 0.9, 0.5, 1500, 0, 0.05); mbody(110, 2, 1, 220, 3, 0.6, 440, 3, 0.3); mend(0.7, 1.4);
+  // Dulcimer
+  mrow(6, 0.75, 0.12, 6000, 2, 0.02); mbody(200, 2, 0.6, 600, 3, 0.5, 1800, 3, 0.3); mend(0.1, 0.6);
+
+  // the strum patterns, 8 steps (0 rest, 1 down, 2 up): Down, Up, Down-Up, Folk, Offbeat
+  function prow(a, b, c, d, e, f, g, h)
+  (
+    PT[pw] = a; PT[pw + 1] = b; PT[pw + 2] = c; PT[pw + 3] = d;
+    PT[pw + 4] = e; PT[pw + 5] = f; PT[pw + 6] = g; PT[pw + 7] = h;
+    pw += 8;
+  );
+  pw = 8;
+  prow(1, 1, 1, 1, 1, 1, 1, 1);
+  prow(2, 2, 2, 2, 2, 2, 2, 2);
+  prow(1, 2, 1, 2, 1, 2, 1, 2);
+  prow(1, 0, 1, 2, 0, 2, 1, 2);
+  prow(0, 1, 0, 1, 0, 1, 0, 1);
+
+  function v_start(v, n, vel) local(f, d0, d, w0, b, t, tt, pd, hlp, hm, fr, g, vn, gv, fc, c, nn, ebp, z, s, k, pos, tri, e, p)
+  (
+    v_note[v] = n; v_pend[v] = -1;
+    v_gate[v] = HL[n] > 0 ? 1 : 0;
+    v_env[v] = 0; v_rel[v] = 1; v_fast[v] = 0;
+    age += 1;
+    v_age[v] = age;
+    f = 440 * 2 ^ ((n - 69) / 12);
+    f = max(30, min(srate / 8, f));
+    d0 = srate / f;
+    w0 = tpi * f;
+    w0 /= srate;
+    // the loop filter's phase delay and gain at the pitch, the read's gain
+    b = lpb_e;
+    t = b * sin(w0);
+    tt = 1 - b * cos(w0);
+    pd = atan2(t, tt) / w0;
+    hlp = (1 - b) / sqrt(t * t + tt * tt);
+    d = d0 - pd;
+    fr = d - floor(d);
+    t = 2 * fr;
+    t *= 1 - fr;
+    t *= cos(w0);
+    hm = sqrt((1 - fr) * (1 - fr) + fr * fr + t);
+    v_d0[v] = d;
+    // the loop gain for the decay time at this pitch
+    t = m_t60 * dsc;
+    t *= m_kt ^ ((n - 48) / 12);
+    tt = t * f;
+    g = exp(-6.907755 / tt);
+    t = hlp * hm;
+    g = min(0.9999, g / t);
+    v_g[v] = g;
+    v_b[v] = b;
+    v_lp[v] = 0;
+    vn = vel / 127;
+    gv = vn * vn;
+    gv = 1 - vs + vs * gv;
+    gv *= m_gain;
+    v_tw[v] = 1;
+    v_twk[v] = tw_k * (0.5 + vn);
+    memset(SB + v * lb, 0, lb);
+    v_w[v] = 0;
+    // the pluck: low-passed noise and the triangle, without DC
+    fc = exb_e * (0.5 + vn);
+    t = tpi * min(0.45 * srate, fc);
+    c = exp(-t / srate);
+    nn = max(2, floor(d0 + 0.5));
+    ebp = EB + v * lb;
+    z = 0; s = 0; k = 0;
+    loop(nn,
+      seed *= 16807; seed -= floor(seed / 2147483647) * 2147483647;
+      z = (1 - c) * (seed / 1073741824 - 1) + c * z;
+      pos = (k + 0.5) / nn;
+      tri = pos < pp ? pos / pp : (1 - pos) / (1 - pp);
+      e = 2 * z;
+      e *= 1 - tri_m;
+      e += tri_m * tri;
+      ebp[k] = e;
+      s += e;
+      k += 1;
+    );
+    s /= nn;
+    k = 0;
+    loop(nn, ebp[k] -= s; k += 1;);
+    v_ek[v] = 0;
+    v_en[v] = nn;
+    v_pp[v] = max(1, floor(pp * nn + 0.5));
+    v_amp[v] = gv;
+    v_pk[v] = 0;
+    p = max(-1, min(1, (n - 60) / 24));
+    p *= wid;
+    v_gl[v] = 1 - p;
+    v_gr[v] = 1 + p;
+  );
+
+  // a string plucked: the same note still sounding lets go (fast), a free voice, else the
+  // oldest released one, else the oldest after a fade
+  function pluck(n, vel) local(v, f, ba)
+  (
+    f = -1;
+    v = 0;
+    loop(NV,
+      v_pend[v] == n ? ( f = v; v_pvel[v] = vel; );
+      v += 1;
+    );
+    f < 0 ? (
+      v = 0;
+      loop(NV, v_pend[v] < 0 && v_note[v] == n && v_fast[v] == 0 ? ( v_gate[v] = 0; v_fast[v] = 1; ); v += 1;);
+      v = 0;
+      loop(NV, f < 0 && v_note[v] < 0 ? f = v; v += 1;);
+      f < 0 ? (
+        ba = 0;
+        v = 0;
+        loop(NV,
+          v_gate[v] == 0 && v_pend[v] < 0 && (f < 0 || v_age[v] < ba) ? ( f = v; ba = v_age[v]; );
+          v += 1;
+        );
+      );
+      f < 0 ? (
+        v = 0;
+        loop(NV,
+          f < 0 || v_age[v] < ba ? ( f = v; ba = v_age[v]; );
+          v += 1;
+        );
+      );
+      v_note[f] < 0 ? v_start(f, n, vel) : (
+        v_gate[f] = 0;
+        v_pend[f] = n;
+        v_pvel[f] = vel;
+        age += 1;
+        v_age[f] = age;
+      );
+    );
+  );
+
+  function count_held() local(k)
+  (
+    nheld = 0;
+    k = 0;
+    loop(128, nheld += HL[k] > 0; k += 1;);
+  );
+  function release(n) local(v)
+  (
+    v = 0;
+    loop(NV, v_pend[v] < 0 && v_note[v] == n ? v_gate[v] = 0; v += 1;);
+  );
+  function note_on(n, vel)
+  (
+    nheld == 0 ? st_clock = 0;
+    KD[n] = 1;
+    HL[n] = 1;
+    count_held();
+    last_vel = vel;
+    st_mode == 0 ? pluck(n, vel);
+  );
+  function note_off(n)
+  (
+    KD[n] = 0;
+    !sus ? (
+      HL[n] = 0;
+      release(n);
+      count_held();
+    );
+  );
+  function sus_off() local(k)
+  (
+    sus = 0;
+    k = 0;
+    loop(128,
+      KD[k] == 0 && HL[k] > 0 ? ( HL[k] = 0; release(k); );
+      k += 1;
+    );
+    count_held();
+  );
+  function all_off() local(v)
+  (
+    memset(KD, 0, 128);
+    memset(HL, 0, 128);
+    nheld = 0;
+    sus = 0;
+    st_on = 0;
+    v = 0;
+    loop(NV, v_gate[v] = 0; v += 1;);
+  );
+  function midi_ev(st, d1, d2) local(t)
+  (
+    t = st & 0xF0;
+    t == 0x90 && d2 > 0 ? note_on(d1, d2) :
+    t == 0x80 || t == 0x90 ? note_off(d1) :
+    t == 0xB0 ? (
+      d1 == 64 ? ( d2 >= 64 ? sus = 1 : sus ? sus_off(); ) :
+      d1 == 123 || d1 == 120 ? all_off();
+    );
+  );
+
+  // a strum step: the pattern's stroke, louder on the beat
+  function st_step(s) local(k, c, a)
+  (
+    k = s - floor(s / 8) * 8;
+    c = PT[st_mode * 8 + k];
+    c > 0 ? (
+      st_dir = c == 1 ? 1 : -1;
+      st_max = c == 2 && (st_mode == 3 || st_mode == 4) ? 4 : 128;
+      a = s - floor(s / spb) * spb;
+      a = a == 0 ? 1 : 0.85;
+      c == 2 ? a *= 0.8;
+      st_vel = last_vel * a;
+      st_t0 = sc;
+      st_i = 0;
+      st_on = 1;
+    );
+  );
+  // the next string of the strum: the st_i-th key held from the low (down) or high (up) end
+  function st_next() local(k, j, n)
+  (
+    n = -1;
+    st_i < st_max ? (
+      j = 0;
+      k = st_dir > 0 ? 0 : 127;
+      loop(128,
+        n < 0 && HL[k] > 0 ? ( j == st_i ? n = k : j += 1; );
+        k += st_dir;
+      );
+    );
+    n >= 0 ? (
+      pluck(n, st_vel * (1 - 0.04 * st_i));
+      st_i += 1;
+    ) : st_on = 0;
+  );
+
+  // a filter state that has died away is zero (no denormals)
+  function flush(x) ( abs(x) < 0.000000000000001 ? 0 : x; );
+  // a band-pass of the body (state-variable)
+  function bp_set(f, q) local(g)
+  (
+    g = tan($pi * min(0.45 * srate, f) / srate);
+    bp_k = 1 / q;
+    bp_a1 = 1 / (1 + g * (g + bp_k));
+    bp_a2 = g * bp_a1;
+    bp_a3 = g * bp_a2;
+  );
+
+  v = 0;
+  loop(NV, v_note[v] = -1; v_gate[v] = 0; v_env[v] = 0; v_pend[v] = -1; v += 1;);
+  memset(KD, 0, 128);
+  memset(HL, 0, 128);
+  nheld = 0; sus = 0; age = 0; last_vel = 100;
+  seed = 4711;
+  lb = ceil(srate / 30) + 8;
+  EB = SB + NV * lb;
+  memset(SB, 0, 2 * NV * lb);
+  st_s = -1000; st_clock = 0; st_on = 0; sc = 0;
+  bl_s1 = bl_s2 = bl_s3 = br_s1 = br_s2 = br_s3 = 0;
+  bl_t1 = bl_t2 = bl_t3 = br_t1 = br_t2 = br_t3 = 0;
+  dc_xl = dc_yl = dc_xr = dc_yr = 0;
+  m_ofs = m_1 = m_2 = m_3 = 0;
+
+@slider
+  model = max(0, min(7, floor(slider1 + 0.5)));
+  mb = MT + model * 24;
+  m_t60 = mb[0]; m_kt = mb[1]; m_lpb = mb[2]; m_exb = mb[3]; m_tw = mb[4]; m_twt = mb[5];
+  tri_m = mb[15]; m_gain = mb[16];
+  pp = slider2 / 100;
+  lpb_e = min(0.9, m_lpb * 2 ^ ((50 - slider3) / 30));
+  exb_e = m_exb * 2 ^ ((slider3 - 50) / 25);
+  dsc = slider4 / 100;
+  r_c = exp(-6.907755 / (slider5 * 0.001 * srate));
+  rf_c = exp(-6.907755 / (0.04 * srate));
+  bm = slider6 / 100;
+  wid = 0.006 * slider7;
+  vs = slider8 / 100;
+  st_mode = floor(slider9 + 0.5);
+  st_rate = floor(slider10 + 0.5);
+  spb = st_rate == 0 ? 1 : st_rate == 1 ? 2 : st_rate == 2 ? 4 : 3;
+  t = slider11 * 0.001;
+  spread_s = floor(t * srate + 0.5);
+  vol = 10 ^ (slider12 / 20);
+  tw_k = 1 - 2 ^ (-m_tw / 1200);
+  twc = exp(-1 / (m_twt * srate));
+  a_inc = 1 / (0.0005 * srate);
+  s_inc = 1 / (0.002 * srate);
+  pkc = exp(-1 / (0.03 * srate));
+  t = tpi * 20;
+  dc_r = 1 - t / srate;
+  // the body: three band-passes per side, the right one detuned by Width
+  t = 1 + 0.0006 * slider7;
+  bp_set(mb[6], mb[7]); bl_k1 = bp_k * mb[8]; bl_a11 = bp_a1; bl_a21 = bp_a2; bl_a31 = bp_a3;
+  bp_set(mb[9], mb[10]); bl_k2 = bp_k * mb[11]; bl_a12 = bp_a1; bl_a22 = bp_a2; bl_a32 = bp_a3;
+  bp_set(mb[12], mb[13]); bl_k3 = bp_k * mb[14]; bl_a13 = bp_a1; bl_a23 = bp_a2; bl_a33 = bp_a3;
+  bp_set(mb[6] * t, mb[7]); br_k1 = bp_k * mb[8]; br_a11 = bp_a1; br_a21 = bp_a2; br_a31 = bp_a3;
+  bp_set(mb[9] * t, mb[10]); br_k2 = bp_k * mb[11]; br_a12 = bp_a1; br_a22 = bp_a2; br_a32 = bp_a3;
+  bp_set(mb[12] * t, mb[13]); br_k3 = bp_k * mb[14]; br_a13 = bp_a1; br_a23 = bp_a2; br_a33 = bp_a3;
+  b_dry = 1 - 0.5 * bm;
+  b_wet = 1.5 * bm;
+
+@block
+  // the MIDI of this block, played at its offsets in @sample
+  mq_n = 0;
+  while (midirecv(m_ofs, m_1, m_2, m_3)) (
+    mq_n < 512 ? (
+      MQ[mq_n * 4] = m_ofs;
+      MQ[mq_n * 4 + 1] = m_1;
+      MQ[mq_n * 4 + 2] = m_2;
+      MQ[mq_n * 4 + 3] = m_3;
+      mq_n += 1;
+    );
+  );
+  mq_i = 0;
+  playing = play_state & 1;
+  b_inc = tempo / (60 * srate);
+  b_0 = beat_position;
+  si = 0;
+
+@sample
+  while (mq_i < mq_n && MQ[mq_i * 4] <= si) (
+    midi_ev(MQ[mq_i * 4 + 1], MQ[mq_i * 4 + 2], MQ[mq_i * 4 + 3]);
+    mq_i += 1;
+  );
+
+  // the strum: a step plays when the position enters it (on the first key, also when the key
+  // comes in the first half of the step), its strings Strum Spread apart
+  st_mode > 0 ? (
+    nheld > 0 ? (
+      bb = playing ? b_0 + si * b_inc : st_clock;
+      st_clock = bb + b_inc;
+      t = bb * spb;
+      s = floor(t + 0.000001);
+      s != st_s ? (
+        st_s > -1000 || t - s < 0.5 ? st_step(s);
+        st_s = s;
+      );
+    ) : (
+      st_s = -1000;
+      st_on = 0;
+    );
+    while (st_on && sc >= st_t0 + st_i * spread_s) ( st_next(); );
+  );
+  si += 1;
+  sc += 1;
+
+  // the strings
+  sl = 0; sr = 0;
+  v = 0;
+  loop(NV,
+    v_note[v] >= 0 ? (
+      tw = v_tw[v];
+      t = v_twk[v] * tw;
+      d = v_d0[v] * (1 - t);
+      v_tw[v] = tw * twc;
+      v_tw[v] < 0.000001 ? v_tw[v] = 0;
+      sbuf = SB + v * lb;
+      w = v_w[v];
+      rp = w - d;
+      rp < 0 ? rp += lb;
+      i = floor(rp); fr = rp - i;
+      i2 = i + 1; i2 >= lb ? i2 = 0;
+      x = sbuf[i] + (sbuf[i2] - sbuf[i]) * fr;
+      b = v_b[v];
+      lp = (1 - b) * x + b * v_lp[v];
+      v_lp[v] = lp;
+      sv = lp * v_g[v];
+      k = v_ek[v];
+      k < v_en[v] ? (
+        ebuf = EB + v * lb;
+        ex = ebuf[k];
+        k >= v_pp[v] ? ex -= ebuf[k - v_pp[v]];
+        sv += ex * v_amp[v];
+        v_ek[v] = k + 1;
+      );
+      sbuf[w] = sv;
+      w += 1;
+      w >= lb ? w = 0;
+      v_w[v] = w;
+      pk = max(abs(sv), v_pk[v] * pkc);
+      v_pk[v] = pk;
+      e = v_env[v];
+      v_pend[v] >= 0 ? e = max(0, e - s_inc) : e = min(1, e + a_inc);
+      v_env[v] = e;
+      q = v_rel[v];
+      v_gate[v] <= 0 ? ( q *= v_fast[v] > 0 ? rf_c : r_c; v_rel[v] = q; );
+      y = sv * e;
+      y *= q;
+      sl += y * v_gl[v];
+      sr += y * v_gr[v];
+      v_pend[v] >= 0 ? (
+        e <= 0 ? v_start(v, v_pend[v], v_pvel[v]);
+      ) : (
+        q < 0.0001 || (v_ek[v] >= v_en[v] && pk < 0.00002) ? v_note[v] = -1;
+      );
+    );
+    v += 1;
+  );
+
+  // the body: three resonances per side (state-variable band-passes)
+  x = sl;
+  t = x - bl_t1;
+  u = bl_a11 * bl_s1 + bl_a21 * t;
+  u2 = bl_t1 + bl_a21 * bl_s1 + bl_a31 * t;
+  bl_s1 = flush(2 * u - bl_s1);
+  bl_t1 = flush(2 * u2 - bl_t1);
+  y = bl_k1 * u;
+  t = x - bl_t2;
+  u = bl_a12 * bl_s2 + bl_a22 * t;
+  u2 = bl_t2 + bl_a22 * bl_s2 + bl_a32 * t;
+  bl_s2 = flush(2 * u - bl_s2);
+  bl_t2 = flush(2 * u2 - bl_t2);
+  y += bl_k2 * u;
+  t = x - bl_t3;
+  u = bl_a13 * bl_s3 + bl_a23 * t;
+  u2 = bl_t3 + bl_a23 * bl_s3 + bl_a33 * t;
+  bl_s3 = flush(2 * u - bl_s3);
+  bl_t3 = flush(2 * u2 - bl_t3);
+  y += bl_k3 * u;
+  l = x * b_dry + y * b_wet;
+  x = sr;
+  t = x - br_t1;
+  u = br_a11 * br_s1 + br_a21 * t;
+  u2 = br_t1 + br_a21 * br_s1 + br_a31 * t;
+  br_s1 = flush(2 * u - br_s1);
+  br_t1 = flush(2 * u2 - br_t1);
+  y = br_k1 * u;
+  t = x - br_t2;
+  u = br_a12 * br_s2 + br_a22 * t;
+  u2 = br_t2 + br_a22 * br_s2 + br_a32 * t;
+  br_s2 = flush(2 * u - br_s2);
+  br_t2 = flush(2 * u2 - br_t2);
+  y += br_k2 * u;
+  t = x - br_t3;
+  u = br_a13 * br_s3 + br_a23 * t;
+  u2 = br_t3 + br_a23 * br_s3 + br_a33 * t;
+  br_s3 = flush(2 * u - br_s3);
+  br_t3 = flush(2 * u2 - br_t3);
+  y += br_k3 * u;
+  r = x * b_dry + y * b_wet;
+
+  // DC blocker, level
+  y = l - dc_xl + dc_r * dc_yl; dc_xl = l; dc_yl = flush(y); l = y;
+  y = r - dc_xr + dc_r * dc_yr; dc_xr = r; dc_yr = flush(y); r = y;
+  l *= 0.35;
+  r *= 0.35;
+  spl0 = l * vol;
+  spl1 = r * vol;

@@ -1,0 +1,647 @@
+desc:NULL Synth
+author: Christos Koulaxizis
+tags: instrument synth synthesizer polyphonic virtual analog wavetable pad lead keys bass strings bells unison chorus delay reverb midi
+//category: Instruments
+//NULL JSFX v2.4 • https://nulljsfx.tech • MIT License
+
+slider1:0<0,1,1{Analog,Wavetable}>Engine
+slider2:0<0,3,1{Saw,Square,Triangle,Sine}>Osc 1 Wave
+slider3:0<0,3,1{Saw,Square,Triangle,Sine}>Osc 2 Wave
+slider4:0<-24,24,1>Osc 2 Semi (st)
+slider5:7<-50,50,1>Osc 2 Detune (ct)
+slider6:50<0,100,1>Osc Mix (%)
+slider7:0<0,100,1>Sub (%)
+slider8:0<0,100,1>Noise (%)
+slider9:0<0,7,1{Basic,Pulse,Organ,Vocal,Glass,Sync,Fold,Digital}>Table
+slider10:0<0,100,1>Position (%)
+slider11:0<0,2,1{Low Pass,Band Pass,High Pass}>Filter Mode
+slider12:1<0,1,1{12 dB,24 dB}>Slope
+slider13:2500<20,20000,1:log>Cutoff (Hz)
+slider14:20<0,100,1>Resonance (%)
+slider15:30<-100,100,1>Filter Env (%)
+slider16:50<0,100,1>Key Track (%)
+slider17:5<1,10000,1:log>Filter Attack (ms)
+slider18:600<1,10000,1:log>Filter Decay (ms)
+slider19:30<0,100,1>Filter Sustain (%)
+slider20:400<1,10000,1:log>Filter Release (ms)
+slider21:5<1,10000,1:log>Attack (ms)
+slider22:600<1,10000,1:log>Decay (ms)
+slider23:70<0,100,1>Sustain (%)
+slider24:300<1,10000,1:log>Release (ms)
+slider25:0<0,4,1{Sine,Triangle,Square,Saw,Random}>LFO Shape
+slider26:5<0.05,20,0.01:log>LFO Rate (Hz)
+slider27:0<0,9,1{Off,1/1,1/2,1/4,1/8,1/16,1/4T,1/8T,1/4D,1/8D}>LFO Sync
+slider28:0<0,12,0.01>LFO Pitch (st)
+slider29:0<0,4,0.1>LFO Filter (oct)
+slider30:0<0,100,1>LFO Position (%)
+slider31:0<0,2000,1>Glide (ms)
+slider32:0<0,2,1{Poly,Mono,Legato}>Voice Mode
+slider33:1<1,4,1>Unison
+slider34:30<0,100,1>Spread (%)
+slider35:0<0,100,1>Character (%)
+slider36:20<0,100,1>Chorus Mix (%)
+slider37:0<0,100,1>Delay Mix (%)
+slider38:3<0,7,1{1/16,1/8T,1/8,1/8D,1/4T,1/4,1/4D,1/2}>Delay Time
+slider39:35<0,90,1>Delay Feedback (%)
+slider40:15<0,100,1>Reverb Mix (%)
+slider41:50<0,100,1>Reverb Size (%)
+slider42:50<0,100,1>Velocity (%)
+slider43:2<0,24,1>Bend Range (st)
+slider44:0<-3,3,1>Octave
+slider45:0<-24,12,0.1>Volume (dB)
+
+in_pin:none
+out_pin:Left
+out_pin:Right
+
+@init
+  // A polyphonic synthesizer (8 voices) with two engines, no samples:
+  //   - Analog: two oscillators (band-limited saw and square, triangle, sine), Osc 2 tuned by
+  //     Semi and Detune, Osc Mix between them, plus a sine one octave below (Sub) and noise
+  //   - Wavetable: both oscillators read one of eight tables made here by synthesis (each eight
+  //     frames, band-limited per octave with the FFT); Position morphs through the frames
+  // then one resonant filter per voice (12 or 24 dB, low, band or high pass) with its own
+  // envelope, Key Track and Velocity, an amp envelope, a global LFO (to pitch, filter and
+  // Position; free or synced to the host tempo), Glide, Poly / Mono / Legato, Unison (1-4
+  // detuned and spread across the stereo field), and Character, a macro that adds drive before
+  // the filter, an octave of brightness and wider detune. After the voices: Chorus, a synced
+  // ping-pong Delay and a Reverb. MIDI: notes (any channel), sustain pedal, mod wheel (adds
+  // vibrato), pitch bend (Bend Range) and all notes off.
+  //
+  // Memory: 1000.. the MIDI queue of the block, 2100.. unison tuning and pans, 2200.. voice
+  // info for the allocator, 3000.. held keys (mono), 2500.. per-voice phases and filter
+  // states, 30000/33000 FFT work, 100000.. the tables (8 tables x 8 frames x 8 octave
+  // levels x 1024), 700000.. the chorus, delay and reverb lines.
+  ext_noinit = 1;
+  ext_tail_size = -1;
+  NV = 8;
+  MQ = 1000;
+  UD = 2100; UPL = 2110; UPR = 2120;
+  VI = 2200;
+  KEYS = 3000;
+  VM = 2500;
+  WS = 30000; WB = 33000;
+  WT = 100000;
+  FXM = 700000;
+
+  // ---- wavetables (made once; they do not depend on the sample rate) -----------------------
+  // a frame's spectrum (natural bin order) in WS, then per octave level L the bins above
+  // 512 / 2^L harmonics are removed and the inverse FFT gives the level's 1024 samples;
+  // every frame is scaled to a peak of 1 at level 0
+  function wt_store(tb, fr) local(lv, h, k, n, pk, sc, base)
+  (
+    pk = 0;
+    lv = 0;
+    loop(8,
+      h = min(511, floor(512 / 2 ^ lv));
+      memcpy(WB, WS, 2048);
+      WB[0] = 0; WB[1] = 0;
+      k = h + 1;
+      loop(1023 - 2 * h, WB[2 * k] = 0; WB[2 * k + 1] = 0; k += 1; );
+      fft_ipermute(WB, 1024);
+      ifft(WB, 1024);
+      base = WT + ((tb * 8 + fr) * 8 + lv) * 1024;
+      n = 0;
+      loop(1024, base[n] = WB[2 * n]; n += 1; );
+      lv == 0 ? ( n = 0; loop(1024, pk = max(pk, abs(base[n])); n += 1; ); );
+      lv += 1;
+    );
+    sc = pk > 0 ? 1 / pk : 0;
+    base = WT + (tb * 8 + fr) * 8192;
+    n = 0;
+    loop(8192, base[n] *= sc; n += 1; );
+  );
+
+  // the time-domain tables: one cycle at phase t (0..1) for frame position k (0..1)
+  function wt_tri(t) ( t < 0.25 ? 4 * t : t < 0.75 ? 2 - 4 * t : 4 * t - 4; );
+  function wt_shape(tb, k, t) local(s, i, a, x, y, g, q)
+  (
+    tb == 0 ? (
+      // Basic: sine, triangle, saw, square
+      s = k * 3; i = min(2, floor(s)); a = s - i;
+      x = i == 0 ? sin(2 * $pi * t) : i == 1 ? wt_tri(t) : 2 * (t + 0.5 - floor(t + 0.5)) - 1;
+      y = i == 0 ? wt_tri(t) : i == 1 ? 2 * (t + 0.5 - floor(t + 0.5)) - 1 : (t < 0.5 ? 1 : -1);
+      x + (y - x) * a;
+    ) : tb == 1 ? (
+      // Pulse: width 50 % down to 5 %
+      t < 0.5 - 0.45 * k ? 1 : -1;
+    ) : tb == 5 ? (
+      // Sync: a saw restarted by the cycle, its own rate 1 to 4.5 times higher
+      x = t * (1 + 3.5 * k);
+      2 * (x - floor(x)) - 1;
+    ) : tb == 6 ? (
+      // Fold: a sine driven harder into a sine folder
+      g = 1 + 5 * k;
+      sin($pi * 0.5 * g * sin(2 * $pi * t));
+    ) : (
+      // Digital: a sine with fewer and fewer levels, blended toward a stepped saw
+      q = floor(2 ^ (5 - 4 * k) + 0.5);
+      x = floor(sin(2 * $pi * t) * q + 0.5) / q;
+      y = floor((2 * t - 1) * q + 0.5) / q;
+      x + (y - x) * k * 0.5;
+    );
+  );
+
+  // the additive tables: the amplitude of harmonic h for frame position k
+  function wt_harm(tb, k, h) local(j, a, f, f1, f2, v, c)
+  (
+    tb == 2 ? (
+      // Organ: drawbar harmonics 1, 2, 3, 4, 6, 8, 10, 12, 16 come in one after another
+      j = h == 1 ? 0 : h == 2 ? 1 : h == 3 ? 2 : h == 4 ? 3 : h == 6 ? 4 : h == 8 ? 5 : h == 10 ? 6 : h == 12 ? 7 : h == 16 ? 8 : -1;
+      j < 0 ? 0 : max(0, min(1, k * 7 + 2 - j)) / (1 + 0.3 * j);
+    ) : tb == 3 ? (
+      // Vocal: a bright harmonic series through two formants that move through the vowels
+      // a, e, i, o, u (harmonics of a 110 Hz voice)
+      v = k * 4; j = min(3, floor(v)); a = v - j;
+      f1 = j == 0 ? 800 + (400 - 800) * a : j == 1 ? 400 + (270 - 400) * a : j == 2 ? 270 + (450 - 270) * a : 450 + (325 - 450) * a;
+      f2 = j == 0 ? 1150 + (1700 - 1150) * a : j == 1 ? 1700 + (2300 - 1700) * a : j == 2 ? 2300 + (800 - 2300) * a : 800 + (700 - 800) * a;
+      f = h * 110;
+      (0.04 + exp(-sqr((f - f1) / 90)) + 0.6 * exp(-sqr((f - f2) / 130))) / sqrt(h);
+    ) : (
+      // Glass: sparse high partials (h = 1, 3, 6, 10, 15, ...) whose weight moves up the series
+      c = 0; j = 0;
+      while (j < 24 && c < h) ( j += 1; c = j * (j + 1) / 2; );
+      j <= 1 && h == 1 ? 1 : c == h ? exp(-sqr((j - 1 - 10 * k) / (2 + 2 * k))) * 0.8 : 0;
+    );
+  );
+
+  function wt_make() local(tb, fr, k, n, h, a)
+  (
+    tb = 0;
+    loop(8,
+      fr = 0;
+      loop(8,
+        k = fr / 7;
+        tb == 2 || tb == 3 || tb == 4 ? (
+          memset(WS, 0, 2048);
+          h = 1;
+          loop(511,
+            a = wt_harm(tb, k, h);
+            WS[2 * h + 1] = -a;
+            WS[2 * (1024 - h) + 1] = a;
+            h += 1;
+          );
+        ) : (
+          n = 0;
+          loop(1024, WB[2 * n] = wt_shape(tb, k, n / 1024); WB[2 * n + 1] = 0; n += 1; );
+          fft(WB, 1024);
+          fft_permute(WB, 1024);
+          memcpy(WS, WB, 2048);
+        );
+        wt_store(tb, fr);
+        fr += 1;
+      );
+      tb += 1;
+    );
+  );
+  !wt_ready ? ( wt_make(); wt_ready = 1; );
+
+  // ---- building blocks ----------------------------------------------------------------------
+  function blep(t, dt)
+  (
+    t < dt ? ( t /= dt; t + t - t * t - 1; ) :
+    t > 1 - dt ? ( t = (t - 1) / dt; t * t + t + t + 1; ) : 0;
+  );
+  // the Analog waves at phase p with phase step dt: saw, square (PolyBLEP), triangle, sine
+  function osc(w, p, dt) local(q)
+  (
+    w == 0 ? 2 * p - 1 - blep(p, dt) :
+    w == 1 ? ( q = p + 0.5; q -= floor(q); (p < 0.5 ? 1 : -1) + blep(p, dt) - blep(q, dt); ) :
+    w == 2 ? ( p < 0.5 ? 4 * p - 1 : 3 - 4 * p; ) :
+    sin(2 * $pi * p);
+  );
+  // a table read at phase p from octave level lv: two frames around Position, each linear
+  function wt_read(p, lv) local(x, i0, i1, fi, b, a, c)
+  (
+    x = p * 1024; i0 = floor(x); fi = x - i0; i1 = (i0 + 1) & 1023;
+    b = wt_b + lv * 1024;
+    a = b[i0] + (b[i1] - b[i0]) * fi;
+    b += 8192;
+    c = b[i0] + (b[i1] - b[i0]) * fi;
+    a + (c - a) * wt_f;
+  );
+  // the octave level for frequency f: the highest harmonic stays under 0.45 * srate
+  function wt_level(f) local(r)
+  (
+    r = f * 512 / (0.45 * srate);
+    r <= 1 ? 0 : min(7, ceil(log(r) * 1.4426950408889634));
+  );
+  // soft clip (as the Drum Machine's Drive)
+  function sat(x) local(u)
+  (
+    u = max(-3, min(3, x));
+    u * (27 + u * u) / (27 + 9 * u * u);
+  );
+  // one state-variable filter stage (TPT) on the states s[0], s[1]; out 0 LP, 1 BP (unity
+  // peak), 2 HP
+  function svf_tick(x, s, a1, a2, a3, k, mode) local(v1, v2, v3)
+  (
+    v3 = x - s[1];
+    v1 = a1 * s[0] + a2 * v3;
+    v2 = s[1] + a2 * s[0] + a3 * v3;
+    s[0] = 2 * v1 - s[0];
+    s[1] = 2 * v2 - s[1];
+    mode == 0 ? v2 : mode == 1 ? v1 * k : x - k * v1 - v2;
+  );
+
+  // ---- voices (v0 .. v7): this.st amp stage (0 off, 1 attack, 2 decay/sustain, 4 release),
+  // this.ae / this.fe the amp and filter envelopes, this.fs the filter stage, this.gate the key,
+  // this.sus held by the pedal, this.pc / this.pt pitch now and target, this.m its memory:
+  // [0..3] Osc 1 phases, [4..7] Osc 2 phases, [8] sub phase, [10..17] filter states
+  function vinit(i) ( this.m = VM + i * 20; this.st = 0; this.ae = 0; this.fe = 0; this.fs = 0; this.gate = 0; this.sus = 0; this.note = -1; this.ord = 0; );
+  function vinfo(i) ( VI[i * 4] = this.st; VI[i * 4 + 1] = this.note; VI[i * 4 + 2] = this.ord; VI[i * 4 + 3] = this.gate; );
+
+  // start (or take over) a note: a silent voice starts from fresh phases, a sounding one keeps
+  // its phases and envelope levels so nothing clicks; glide from glide_from when >= 0
+  function vstart(n, v, glide_from) local(m, k)
+  (
+    m = this.m;
+    this.st == 0 ? (
+      k = 0;
+      loop(4, m[k] = k * 0.23; m[4 + k] = k * 0.31 + 0.11; k += 1; );
+      m[8] = 0;
+      memset(m + 10, 0, 8);
+      this.ae = 0; this.fe = 0;
+    );
+    this.note = n;
+    this.pt = n + oct;
+    this.pc = glide_from >= 0 && glide_on ? glide_from : this.pt;
+    this.vg = 1 - vs + vs * v;
+    this.gate = 1; this.sus = 0;
+    this.st = 1; this.fs = 1;
+    ord_n += 1; this.ord = ord_n;
+  );
+  // a new pitch without a new attack (legato)
+  function vmove(n, glide)
+  (
+    this.note = n;
+    this.pt = n + oct;
+    !glide || !glide_on ? this.pc = this.pt;
+  );
+  function vrelease() ( this.st > 0 ? ( this.st = 4; this.fs = 4; ); this.gate = 0; this.sus = 0; );
+  function voff(n) ( this.gate && this.note == n ? ( sus_on ? ( this.gate = 0; this.sus = 1; ) : this.vrelease(); ); );
+  function vpedal() ( this.sus ? this.vrelease(); );
+
+  function vproc() local(m, f1, f2, dt1, dt2, l1, l2, k, d, p, q, s, sl, sr, x, fc, g, a1, a2, a3, a1b, a2b, a3b, kk, e)
+  (
+    this.st > 0 ? (
+      m = this.m;
+      // envelopes
+      this.st == 1 ? ( this.ae += a_inc; this.ae >= 1 ? ( this.ae = 1; this.st = 2; ); ) :
+      this.st == 2 ? ( this.ae = a_sus + (this.ae - a_sus) * a_dc; a_sus <= 0 && this.ae < 0.00001 ? ( this.ae = 0; this.st = 0; ); ) :
+      ( this.ae *= a_rc; this.ae < 0.00001 ? ( this.ae = 0; this.st = 0; ); );
+      this.fs == 1 ? ( this.fe += f_inc; this.fe >= 1 ? ( this.fe = 1; this.fs = 2; ); ) :
+      this.fs == 2 ? this.fe = f_sus + (this.fe - f_sus) * f_dc :
+      this.fe *= f_rc;
+
+      // pitch: glide, bend, vibrato
+      this.pc += (this.pt - this.pc) * gl_c;
+      f1 = 440 * 2 ^ ((this.pc + pmod - 69) / 12);
+      f2 = f1 * o2r;
+      engine ? ( l1 = wt_level(f1); l2 = wt_level(f2); );
+
+      // oscillators, per unison voice
+      sl = sr = 0;
+      k = 0;
+      loop(nuni,
+        d = UD[k];
+        dt1 = min(0.45, f1 * d / srate);
+        dt2 = min(0.45, f2 * d / srate);
+        p = m[k]; q = m[4 + k];
+        s = engine ? m1 * wt_read(p, l1) + m2 * wt_read(q, l2) : m1 * osc(w1, p, dt1) + m2 * osc(w2, q, dt2);
+        p += dt1; m[k] = p - floor(p);
+        q += dt2; m[4 + k] = q - floor(q);
+        sl += s * UPL[k]; sr += s * UPR[k];
+        k += 1;
+      );
+      // sub (a sine one octave below Osc 1) and noise
+      x = sub_a * sin(2 * $pi * m[8]) + noise_a * nz;
+      m[8] += min(0.45, f1 * 0.5 / srate); m[8] -= floor(m[8]);
+      sl = sl * ug + x;
+      sr = sr * ug + x;
+
+      // Character drive, then the filter
+      char_a > 0 ? ( sl += char_a * (sat(sl * char_g) - sl); sr += char_a * (sat(sr * char_g) - sr); );
+      fc = cutoff * 2 ^ (fenv_o * this.fe * this.vg + kt * (this.pt - 60) / 12 + lfo_f * lfo_v + char_a);
+      fc = max(20, min(0.45 * srate, fc));
+      g = tan($pi * fc / srate);
+      kk = 1 / q_main;
+      a1 = 1 / (1 + g * (g + kk)); a2 = g * a1; a3 = g * a2;
+      slope ? (
+        a1b = 1 / (1 + g * (g + 1 / 0.54)); a2b = g * a1b; a3b = g * a2b;
+        sl = svf_tick(sl, m + 10, a1b, a2b, a3b, 1 / 0.54, fmode);
+        sl = svf_tick(sl, m + 12, a1, a2, a3, kk, fmode);
+        nuni > 1 ? (
+          sr = svf_tick(sr, m + 14, a1b, a2b, a3b, 1 / 0.54, fmode);
+          sr = svf_tick(sr, m + 16, a1, a2, a3, kk, fmode);
+        ) : sr = sl;
+      ) : (
+        sl = svf_tick(sl, m + 10, a1, a2, a3, kk, fmode);
+        nuni > 1 ? sr = svf_tick(sr, m + 14, a1, a2, a3, kk, fmode) : sr = sl;
+      );
+
+      e = this.ae * this.vg * 0.25;
+      outl += sl * e;
+      outr += sr * e;
+    );
+  );
+
+  // note on: Poly takes a free voice (the same key, then a silent one, then the oldest
+  // releasing one, then the oldest); Mono and Legato play voice 0 with a list of held keys
+  function note_on(n, v) local(i, best, bo, gf)
+  (
+    key_n += 1;
+    KEYS[n] = key_n;
+    vmode == 0 ? (
+      v0.vinfo(0); v1.vinfo(1); v2.vinfo(2); v3.vinfo(3); v4.vinfo(4); v5.vinfo(5); v6.vinfo(6); v7.vinfo(7);
+      best = -1;
+      // the same key still sounding, a silent voice, the oldest releasing one, the oldest
+      i = 0; loop(NV, best < 0 && VI[i * 4] > 0 && VI[i * 4 + 1] == n ? best = i; i += 1; );
+      i = 0; loop(NV, best < 0 && VI[i * 4] == 0 ? best = i; i += 1; );
+      best < 0 ? (
+        bo = -1;
+        i = 0; loop(NV, VI[i * 4] == 4 && (bo < 0 || VI[i * 4 + 2] < bo) ? ( bo = VI[i * 4 + 2]; best = i; ); i += 1; );
+      );
+      best < 0 ? (
+        best = 0; bo = VI[2];
+        i = 1; loop(NV - 1, VI[i * 4 + 2] < bo ? ( bo = VI[i * 4 + 2]; best = i; ); i += 1; );
+      );
+      gf = last_p;
+      best == 0 ? v0.vstart(n, v, gf) : best == 1 ? v1.vstart(n, v, gf) : best == 2 ? v2.vstart(n, v, gf) : best == 3 ? v3.vstart(n, v, gf) :
+      best == 4 ? v4.vstart(n, v, gf) : best == 5 ? v5.vstart(n, v, gf) : best == 6 ? v6.vstart(n, v, gf) : v7.vstart(n, v, gf);
+    ) : (
+      // Mono: every note starts the envelopes again and glides; Legato: a note played while
+      // another is held only moves the pitch (and glides), a detached one starts fresh
+      vmode == 2 && v0.gate && v0.st > 0 ? v0.vmove(n, 1) : v0.vstart(n, v, v0.st > 0 ? v0.pc : last_p);
+    );
+    last_p = n + oct;
+  );
+
+  function note_off(n) local(i, best, bo)
+  (
+    KEYS[n] = 0;
+    vmode == 0 ? (
+      v0.voff(n); v1.voff(n); v2.voff(n); v3.voff(n); v4.voff(n); v5.voff(n); v6.voff(n); v7.voff(n);
+    ) : v0.gate && v0.note == n ? (
+      // back to the latest key still held, else release
+      best = -1; bo = 0;
+      i = 0; loop(128, KEYS[i] > bo ? ( bo = KEYS[i]; best = i; ); i += 1; );
+      best >= 0 ? v0.vmove(best, 1) : v0.voff(n);
+    );
+  );
+
+  function all_off()
+  (
+    memset(KEYS, 0, 128);
+    sus_on = 0;
+    v0.vrelease(); v1.vrelease(); v2.vrelease(); v3.vrelease(); v4.vrelease(); v5.vrelease(); v6.vrelease(); v7.vrelease();
+  );
+
+  function midi_in(st, d1, d2) local(c)
+  (
+    c = st & 0xF0;
+    c == 0x90 && d2 > 0 ? note_on(d1, d2 / 127) :
+    c == 0x80 || c == 0x90 ? note_off(d1) :
+    c == 0xB0 ? (
+      d1 == 64 ? (
+        sus_on = d2 >= 64;
+        !sus_on ? ( v0.vpedal(); v1.vpedal(); v2.vpedal(); v3.vpedal(); v4.vpedal(); v5.vpedal(); v6.vpedal(); v7.vpedal(); );
+      ) :
+      d1 == 1 ? mwheel = d2 / 127 :
+      d1 == 120 || d1 == 123 ? all_off();
+    ) :
+    c == 0xE0 ? bend = (d2 * 128 + d1 - 8192) / 8192;
+  );
+
+  // ---- effects --------------------------------------------------------------------------------
+  CHN = 16384;
+  CHL = FXM; CHR = CHL + CHN;
+  DLN = ceil(3 * srate) + 2;
+  DLL = CHR + CHN; DLR = DLL + DLN;
+  RVN = ceil(0.07 * srate) + 2;
+  RVB = DLR + DLN;
+  RVS = 2400; RVP = 2410; RVG = 2420; RVL = 2430; RVT = 2440; RVY = 2450;
+  // the reverb's eight lines (ms)
+  RVL[0] = floor(31.3 * srate / 1000); RVL[1] = floor(37.9 * srate / 1000);
+  RVL[2] = floor(41.1 * srate / 1000); RVL[3] = floor(43.7 * srate / 1000);
+  RVL[4] = floor(47.9 * srate / 1000); RVL[5] = floor(53.3 * srate / 1000);
+  RVL[6] = floor(59.1 * srate / 1000); RVL[7] = floor(67.7 * srate / 1000);
+
+  function fx_clear()
+  (
+    memset(CHL, 0, 2 * CHN); ch_w = 0;
+    memset(DLL, 0, 2 * DLN); dl_w = 0; dl_ll = dl_lr = 0;
+    memset(RVB, 0, 8 * RVN); memset(RVS, 0, 8); memset(RVP, 0, 8);
+  );
+
+  // everything silent
+  v0.vinit(0); v1.vinit(1); v2.vinit(2); v3.vinit(3); v4.vinit(4); v5.vinit(5); v6.vinit(6); v7.vinit(7);
+  memset(KEYS, 0, 128);
+  memset(VM, 0, NV * 20);
+  fx_clear();
+  ch_on = dl_on = rv_on = 0;
+  ord_n = 0; key_n = 0;
+  last_p = -1;
+  sus_on = 0; mwheel = 0; bend = 0;
+  lfo_ph = 0; lfo_v = 0; lfo_s = 0; lfo_r = 0; lfo_x = 4321;
+  ch_ph = 0;
+  seed = 22222;
+  m_ofs = m_1 = m_2 = m_3 = 0;
+
+@slider
+  engine = slider1 >= 0.5;
+  w1 = floor(slider2 + 0.5);
+  w2 = floor(slider3 + 0.5);
+  char_a = slider35 / 100;
+  char_g = 1 + 4 * char_a;
+  o2r = 2 ^ ((slider4 + (slider5 + 8 * char_a) / 100) / 12);
+  m2 = slider6 / 100; m1 = 1 - m2;
+  sub_a = slider7 / 100 * 0.8;
+  noise_a = slider8 / 100 * 0.5;
+  tbl = floor(slider9 + 0.5);
+  wt_pos = slider10 / 100;
+  fmode = floor(slider11 + 0.5);
+  slope = slider12 >= 0.5;
+  cutoff = slider13;
+  res = slider14 / 100;
+  q_main = slope ? 1.31 + 10.7 * res * res : 0.707 + 11.3 * res * res;
+  fenv_o = slider15 / 100 * 6;
+  kt = slider16 / 100;
+  f_inc = 1000 / (slider17 * srate);
+  f_dc = exp(-4.6 * 1000 / (slider18 * srate));
+  f_sus = slider19 / 100;
+  f_rc = exp(-4.6 * 1000 / (slider20 * srate));
+  a_inc = 1000 / (slider21 * srate);
+  a_dc = exp(-4.6 * 1000 / (slider22 * srate));
+  a_sus = slider23 / 100;
+  a_rc = exp(-4.6 * 1000 / (slider24 * srate));
+  lfo_shape = floor(slider25 + 0.5);
+  lfo_sync = floor(slider27 + 0.5);
+  lfo_bpc = lfo_sync == 1 ? 4 : lfo_sync == 2 ? 2 : lfo_sync == 3 ? 1 : lfo_sync == 4 ? 0.5 :
+            lfo_sync == 5 ? 0.25 : lfo_sync == 6 ? 2 / 3 : lfo_sync == 7 ? 1 / 3 : lfo_sync == 8 ? 1.5 : 0.75;
+  lfo_p = slider28;
+  lfo_f = slider29;
+  lfo_w = slider30 / 100;
+  glide_on = slider31 > 0;
+  gl_c = glide_on ? 1 - exp(-2.3 * 1000 / (slider31 * srate)) : 1;
+  vmode = floor(slider32 + 0.5);
+  nuni = max(1, min(4, floor(slider33 + 0.5)));
+  spread = slider34 / 100;
+  ug = 1 / sqrt(nuni);
+  k = 0;
+  loop(4,
+    u = nuni > 1 ? 2 * k / (nuni - 1) - 1 : 0;
+    UD[k] = 2 ^ ((25 * spread + 10 * char_a) * u / 1200);
+    UPL[k] = sqrt(2) * cos((spread * u + 1) * $pi / 4);
+    UPR[k] = sqrt(2) * sin((spread * u + 1) * $pi / 4);
+    k += 1;
+  );
+  ch_mix = slider36 / 100;
+  dl_mix = slider37 / 100;
+  dl_sel = floor(slider38 + 0.5);
+  dl_beats = dl_sel == 0 ? 0.25 : dl_sel == 1 ? 1 / 3 : dl_sel == 2 ? 0.5 : dl_sel == 3 ? 0.75 :
+             dl_sel == 4 ? 2 / 3 : dl_sel == 5 ? 1 : dl_sel == 6 ? 1.5 : 2;
+  dl_fb = slider39 / 100;
+  rv_mix = slider40 / 100;
+  rv_size = slider41 / 100;
+  rv_t60 = 0.3 + 7.7 * rv_size * rv_size;
+  rv_dc = 1 - exp(-2 * $pi * (10000 - 6000 * rv_size) / srate);
+  k = 0;
+  loop(8, RVG[k] = 10 ^ (-3 * RVL[k] / (srate * rv_t60)); k += 1; );
+  vs = slider42 / 100;
+  bend_r = slider43;
+  oct = 12 * floor(slider44 + 0.5);
+  vol = 10 ^ (slider45 / 20);
+  // an effect that comes back on starts from silence
+  ch_mix > 0 && !ch_on ? memset(CHL, 0, 2 * CHN);
+  dl_mix > 0 && !dl_on ? ( memset(DLL, 0, 2 * DLN); dl_ll = dl_lr = 0; );
+  rv_mix > 0 && !rv_on ? ( memset(RVB, 0, 8 * RVN); memset(RVS, 0, 8); );
+  ch_on = ch_mix > 0; dl_on = dl_mix > 0; rv_on = rv_mix > 0;
+
+@block
+  // MIDI of this block, played at its offsets in @sample
+  mq_n = 0;
+  while (midirecv(m_ofs, m_1, m_2, m_3)) (
+    mq_n < 256 ? (
+      MQ[mq_n * 4] = m_ofs;
+      MQ[mq_n * 4 + 1] = m_1;
+      MQ[mq_n * 4 + 2] = m_2;
+      MQ[mq_n * 4 + 3] = m_3;
+      mq_n += 1;
+    );
+  );
+  mq_i = 0;
+  si = 0;
+
+  // the LFO: Rate in Hz, or a note value at the host tempo (locked to the beat while it plays)
+  bpm = tempo > 0 ? tempo : 120;
+  lfo_sync > 0 ? (
+    lfo_inc = bpm / (lfo_bpc * srate * 60);
+    // (a hair past the beat, so a host position a rounding error short of a cycle's start
+    // does not land just before it)
+    play_state & 1 ? ( lfo_ph = beat_position / lfo_bpc + 0.000000001; lfo_ph -= floor(lfo_ph); );
+  ) : lfo_inc = slider26 / srate;
+  lfo_sm = 1 - exp(-1000 / (2 * srate));
+  dl_len = max(1, min(DLN - 2, floor(dl_beats * 60 / bpm * srate)));
+  ch_inc = 0.45 / srate;
+
+@sample
+  while (mq_i < mq_n && MQ[mq_i * 4] <= si) (
+    midi_in(MQ[mq_i * 4 + 1], MQ[mq_i * 4 + 2], MQ[mq_i * 4 + 3]);
+    mq_i += 1;
+  );
+  si += 1;
+
+  // white noise (Park-Miller)
+  seed *= 16807; seed -= floor(seed / 2147483647) * 2147483647;
+  nz = seed / 1073741824 - 1;
+
+  // the LFO, smoothed over 2 ms; Random holds a new Park-Miller value each cycle
+  lfo_ph += lfo_inc;
+  lfo_ph >= 1 ? (
+    lfo_ph -= floor(lfo_ph);
+    lfo_x *= 16807; lfo_x -= floor(lfo_x / 2147483647) * 2147483647;
+    lfo_r = lfo_x / 1073741824 - 1;
+  );
+  lfo_raw = lfo_shape == 0 ? sin(2 * $pi * lfo_ph) : lfo_shape == 1 ? 1 - 4 * abs(lfo_ph - 0.5) :
+            lfo_shape == 2 ? (lfo_ph < 0.5 ? 1 : -1) : lfo_shape == 3 ? 1 - 2 * lfo_ph : lfo_r;
+  lfo_s += (lfo_raw - lfo_s) * lfo_sm;
+  lfo_v = lfo_s;
+  pmod = bend * bend_r + lfo_v * (lfo_p + 0.5 * mwheel);
+
+  // the table frames around Position (+ LFO)
+  engine ? (
+    wt_x = max(0, min(1, wt_pos + lfo_w * lfo_v)) * 7;
+    wt_i = min(6, floor(wt_x));
+    wt_f = wt_x - wt_i;
+    wt_b = WT + (tbl * 8 + wt_i) * 8192;
+  );
+
+  outl = outr = 0;
+  v0.vproc(); v1.vproc(); v2.vproc(); v3.vproc(); v4.vproc(); v5.vproc(); v6.vproc(); v7.vproc();
+
+  // Chorus: two delay lines (12 ms +- 3 ms) moved by a slow sine in quadrature
+  ch_on ? (
+    ch_ph += ch_inc; ch_ph -= floor(ch_ph);
+    CHL[ch_w] = outl; CHR[ch_w] = outr;
+    ch_d = (0.012 + 0.003 * sin(2 * $pi * ch_ph)) * srate;
+    ch_r = ch_w - ch_d; ch_r < 0 ? ch_r += CHN;
+    ch_i = floor(ch_r); ch_fr = ch_r - ch_i; ch_j = ch_i + 1; ch_j >= CHN ? ch_j -= CHN;
+    ch_yl = CHL[ch_i] + (CHL[ch_j] - CHL[ch_i]) * ch_fr;
+    ch_d = (0.012 + 0.003 * cos(2 * $pi * ch_ph)) * srate;
+    ch_r = ch_w - ch_d; ch_r < 0 ? ch_r += CHN;
+    ch_i = floor(ch_r); ch_fr = ch_r - ch_i; ch_j = ch_i + 1; ch_j >= CHN ? ch_j -= CHN;
+    ch_yr = CHR[ch_i] + (CHR[ch_j] - CHR[ch_i]) * ch_fr;
+    ch_w += 1; ch_w >= CHN ? ch_w = 0;
+    outl = outl * (1 - 0.5 * ch_mix) + ch_yr * 0.5 * ch_mix;
+    outr = outr * (1 - 0.5 * ch_mix) + ch_yl * 0.5 * ch_mix;
+  );
+
+  // Delay: ping-pong at a note value of the host tempo, the repeats darkened
+  dl_on ? (
+    dl_r = dl_w - dl_len; dl_r < 0 ? dl_r += DLN;
+    dl_yl = DLL[dl_r]; dl_yr = DLR[dl_r];
+    dl_ll += (dl_yl - dl_ll) * 0.35;
+    dl_lr += (dl_yr - dl_lr) * 0.35;
+    DLL[dl_w] = (outl + outr) * 0.5 + dl_lr * dl_fb;
+    DLR[dl_w] = dl_ll * dl_fb;
+    dl_w += 1; dl_w >= DLN ? dl_w = 0;
+    outl += dl_yl * dl_mix;
+    outr += dl_yr * dl_mix;
+  );
+
+  // Reverb: eight delay lines through a Hadamard matrix, each damped and decaying by Size
+  rv_on ? (
+    k = 0;
+    loop(8,
+      rv_p = RVB + k * RVN + RVP[k];
+      RVS[k] += (rv_p[0] - RVS[k]) * rv_dc;
+      RVT[k] = RVS[k] * RVG[k];
+      RVY[k] = RVT[k];
+      k += 1;
+    );
+    rv_a = RVT[0] + RVT[1]; rv_b = RVT[0] - RVT[1]; RVT[0] = rv_a; RVT[1] = rv_b;
+    rv_a = RVT[2] + RVT[3]; rv_b = RVT[2] - RVT[3]; RVT[2] = rv_a; RVT[3] = rv_b;
+    rv_a = RVT[4] + RVT[5]; rv_b = RVT[4] - RVT[5]; RVT[4] = rv_a; RVT[5] = rv_b;
+    rv_a = RVT[6] + RVT[7]; rv_b = RVT[6] - RVT[7]; RVT[6] = rv_a; RVT[7] = rv_b;
+    rv_a = RVT[0] + RVT[2]; rv_b = RVT[0] - RVT[2]; RVT[0] = rv_a; RVT[2] = rv_b;
+    rv_a = RVT[1] + RVT[3]; rv_b = RVT[1] - RVT[3]; RVT[1] = rv_a; RVT[3] = rv_b;
+    rv_a = RVT[4] + RVT[6]; rv_b = RVT[4] - RVT[6]; RVT[4] = rv_a; RVT[6] = rv_b;
+    rv_a = RVT[5] + RVT[7]; rv_b = RVT[5] - RVT[7]; RVT[5] = rv_a; RVT[7] = rv_b;
+    rv_a = RVT[0] + RVT[4]; rv_b = RVT[0] - RVT[4]; RVT[0] = rv_a; RVT[4] = rv_b;
+    rv_a = RVT[1] + RVT[5]; rv_b = RVT[1] - RVT[5]; RVT[1] = rv_a; RVT[5] = rv_b;
+    rv_a = RVT[2] + RVT[6]; rv_b = RVT[2] - RVT[6]; RVT[2] = rv_a; RVT[6] = rv_b;
+    rv_a = RVT[3] + RVT[7]; rv_b = RVT[3] - RVT[7]; RVT[3] = rv_a; RVT[7] = rv_b;
+    k = 0;
+    loop(8,
+      rv_p = RVB + k * RVN + RVP[k];
+      rv_p[0] = RVT[k] * 0.35355339059327373 + (k & 1 ? outr : outl) * 0.3;
+      RVP[k] += 1; RVP[k] >= RVL[k] ? RVP[k] = 0;
+      k += 1;
+    );
+    outl += (RVY[0] + RVY[2] + RVY[4] + RVY[6]) * 0.5 * rv_mix;
+    outr += (RVY[1] + RVY[3] + RVY[5] + RVY[7]) * 0.5 * rv_mix;
+  );
+
+  spl0 = outl * vol;
+  spl1 = outr * vol;
