@@ -1,0 +1,64 @@
+REQUIRED_CHANNELS 6
+BYPASS 0 0
+<JS null_jsfx/gfx/band_splitter_gfx.jsfx ""
+  0 3 120 6000 7000 0 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+>
+FXID {7AC7ADEC-9243-5B95-A6B8-4417D2E5C122}
+WAK 0 0
+BYPASS 0 0
+<JS null_jsfx/gfx/mono_maker_gfx.jsfx ""
+  100 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+>
+FXID {FD58D5AA-6F91-58D9-8C8C-6656E2D1CC2E}
+WAK 0 0
+BYPASS 0 0
+<JS null_jsfx/gfx/saturation_gfx.jsfx ""
+  45 0 80 1 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+>
+<JS_PINMAP
+  6AMAABwAAADoAwAABgAAAAIAAAAEAAAAAAAAAAgAAAAAAAAAHAAAAOgDAAAGAAAAAgAAAAQAAAAAAAAACAAAAAAAAAA=
+>
+FXID {AB151E33-D09B-59F9-9768-A77B7BB499E3}
+WAK 0 0
+BYPASS 0 0
+<JS null_jsfx/gfx/chorus_gfx.jsfx ""
+  0.3 6 50 3 80 0 0 20000 0 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+>
+<JS_PINMAP
+  6AMAABwAAADoAwAABgAAAAIAAAAEAAAAAAAAAAgAAAAAAAAAHAAAAOgDAAAGAAAAAgAAAAQAAAAAAAAACAAAAAAAAAA=
+>
+FXID {C6F3879A-9B12-59D7-B2DF-6860B9ECDEEB}
+<PROGRAMENV 2 0
+  PARAMBASE 0.5
+  LFO 0
+  LFOWT 1 1
+  AUDIOCTL 0
+  AUDIOCTLWT 1 1
+  PLINK 0.75 2:-1 0 -0.3375
+>
+WAK 0 0
+BYPASS 0 0
+<JS null_jsfx/gfx/phaser_gfx.jsfx ""
+  0.2 6 40 60 40 1020 0 0 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+>
+<JS_PINMAP
+  6AMAABwAAADoAwAABgAAAAIAAAAEAAAAAAAAAAgAAAAAAAAAHAAAAOgDAAAGAAAAAgAAAAQAAAAAAAAACAAAAAAAAAA=
+>
+FXID {554965EF-BC45-5019-89C6-46E7ABC6CC2A}
+<PROGRAMENV 5 0
+  PARAMBASE 0.506152
+  LFO 1
+  LFOWT 0.4 0
+  AUDIOCTL 0
+  AUDIOCTLWT 1 1
+  LFOSHAPE 0
+  LFOSYNC 0 0 0
+  LFOSPEED 0.124573 0
+>
+WAK 0 0
+BYPASS 0 0
+<JS null_jsfx/gfx/band_splitter_gfx.jsfx ""
+  1 3 120 6000 7000 0 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+>
+FXID {44D8770F-65D0-5430-BC68-D34C76D40080}
+WAK 0 0

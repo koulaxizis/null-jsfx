@@ -206,7 +206,10 @@ Each slot has On, Mix, Band (Full, Low, Mid, High on the rack's two crossovers),
   `RACK_PRESETS` entry can put slots on `lane="B"`, set the globals `lane_mix`, `feedback`,
   `fb_from`, `fb_to`, `seq_steps`, `seq_rate`, `seq_sync`, `seq_glide` and `seq` (a list of up
   to 16 step values) and route from `seq`; a preset that uses lanes, the loop or the sequencer
-  gets no .RfxChain (Rack only, like `RACK_ONLY`).
+  gets no .RfxChain (Rack only, like `RACK_ONLY`). A plugin that is not a Rack module (Loudness
+  Meter) can be a slot: the REAPER chain keeps it, the Rack preset leaves it out. Macro 1 of
+  the multi-module presets is the amount of the effect and Macro 2 a second character control
+  (named in `tools/site_chains.json`); a REAPER chain holds one route per slider.
 - `test/rack_test.cpp` (`rack_test`): every preset renders, a single slot is bit-exact with
   its module, band splits sum flat, channel routing leaves the other side untouched, modulation,
   lanes line up, the loop repeats and decays, the sequencer steps, the ducker's key lines up.

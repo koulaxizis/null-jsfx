@@ -1,0 +1,126 @@
+desc:NULL Half Speed
+author: Christos Koulaxizis
+tags: half speed halftime half-time slow down octave down tempo sync time stretch granular pitch creative
+//category: Advanced
+//NULL JSFX v2.4 • https://nulljsfx.tech • MIT License
+
+slider1:2<0,3,1{1/4,1/2,1 Bar,2 Bars}>Length
+slider2:0<0,2,1{1/2,1/4,2/3}>Speed
+slider3:0<0,1,1{Off,On}>Pitch Keep
+slider4:20000<1000,20000,1:log>Tone (Hz)
+slider5:100<0,100,1>Mix (%)
+slider6:0<0,3,1>Sync Offset (beats)
+
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
+
+@init
+  // Real-time halftime. A cycle lasts Length / Speed (two Lengths at 1/2): from its start the
+  // input is recorded into the buffer while it is played back from the cycle's start at Speed,
+  // so the first Length of every cycle fills the whole cycle (an octave down at 1/2). With
+  // Pitch Keep the buffer is read by two overlapping Hann grains (40 ms) that move through it at
+  // Speed but play at the original pitch, so only the tempo changes. While the transport plays,
+  // the cycle is locked to the song position (bar 1 + Sync Offset beats); stopped, it free-runs
+  // at the host tempo. A new cycle crossfades from the old playback over 5 ms. Tone is a
+  // one-pole high cut on the slowed signal (off at 20 kHz). Tempo is clamped to 40..300 bpm.
+  xf = max(1, floor(0.005 * srate));          // seam crossfade
+  gl = 2 * max(8, floor(0.02 * srate));       // grain length (even, ~40 ms)
+  margin = ceil(0.1 * srate);                 // recorded past the Length, for the seam and grains
+  bsize = ceil(srate * 12) + margin;          // 2 bars at 40 bpm, plus the margin
+  buf_l = 0;
+  buf_r = bsize;
+  memset(buf_l, 0, 2 * bsize);
+  n = 0;               // sample within the cycle
+  old_rd = 0;          // read point of the previous cycle during the crossfade
+  xc = xf;             // crossfade counter (xf = idle)
+  g1 = 0; g2 = gl / 2; // grain clocks
+  s1 = s2 = 0;         // grain start points in the buffer
+  lp_l = lp_r = 0;
+
+  function rd(buf, p) local(i, f, i2)
+  (
+    i = min(bsize - 1, floor(p));
+    f = p - i;
+    i2 = min(bsize - 1, i + 1);
+    buf[i] + (buf[i2] - buf[i]) * f;
+  );
+
+  // start a new cycle at sample m, crossfading from where the old one would read now
+  function seam(m)
+  (
+    old_rd = speed * n;
+    xc = 0;
+    n = m;
+  );
+
+@slider
+  len_beats = slider1 == 0 ? 1 : slider1 == 1 ? 2 : slider1 == 2 ? 4 : 8;
+  speed = slider2 == 0 ? 0.5 : slider2 == 1 ? 0.25 : 2 / 3;
+  cyc_beats = len_beats / speed;
+  keep = slider3;
+  hc_on = slider4 < 20000;
+  hc_a = 1 - exp(-2 * $pi * slider4 / srate);
+  mix = slider5 / 100;
+  offset = slider6;
+
+@block
+  bpm = tempo > 0 ? tempo : 120;
+  bpm = min(300, max(40, bpm));
+  spb = srate * 60 / bpm;
+  ls = len_beats * spb;
+  clen = cyc_beats * spb;
+  wlim = min(bsize - 1, floor(ls) + margin);
+  play_state & 1 ? (
+    // lock the cycle to the song position; small drift is corrected, a jump starts a new cycle
+    hs_pos = beat_position - offset;
+    hs_within = hs_pos - cyc_beats * floor(hs_pos / cyc_beats);
+    nt = floor(hs_within * spb + 0.5);
+    d = nt - n;
+    d > clen / 2 ? (d -= clen) : (d < -clen / 2 ? d += clen);
+    abs(d) > 2 ? seam(nt) : (abs(nt - n) <= 2 ? n = nt);
+  );
+
+@sample
+  n >= clen ? seam(0);
+  n < wlim ? (
+    buf_l[n] = spl0;
+    buf_r[n] = spl1;
+  );
+  keep ? (
+    // two Hann grains half a grain apart, each starting where the slowed read point is now
+    g1 == 0 ? s1 = speed * n;
+    g2 == 0 ? s2 = speed * n;
+    w1 = 0.5 - 0.5 * cos(2 * $pi * g1 / gl);
+    w2 = 0.5 - 0.5 * cos(2 * $pi * g2 / gl);
+    wl = rd(buf_l, s1 + g1) * w1 + rd(buf_l, s2 + g2) * w2;
+    wr = rd(buf_r, s1 + g1) * w1 + rd(buf_r, s2 + g2) * w2;
+    g1 += 1;
+    g1 >= gl ? g1 = 0;
+    g2 += 1;
+    g2 >= gl ? g2 = 0;
+  ) : (
+    rp = speed * n;
+    wl = rd(buf_l, rp);
+    wr = rd(buf_r, rp);
+  );
+  xc < xf ? (
+    // the seam: the previous cycle keeps playing and fades out
+    keep ? xc = xf : (
+      xk = (xc + 1) / (xf + 1);
+      wl = wl * xk + rd(buf_l, old_rd) * (1 - xk);
+      wr = wr * xk + rd(buf_r, old_rd) * (1 - xk);
+      old_rd += speed;
+      xc += 1;
+    );
+  );
+  hc_on ? (
+    lp_l += hc_a * (wl - lp_l);
+    lp_r += hc_a * (wr - lp_r);
+    wl = lp_l;
+    wr = lp_r;
+  );
+  spl0 = spl0 * (1 - mix) + wl * mix;
+  spl1 = spl1 * (1 - mix) + wr * mix;
+  n += 1;

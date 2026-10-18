@@ -1,0 +1,64 @@
+BYPASS 0 0
+<JS null_jsfx/chorus_one.jsfx ""
+  15 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+>
+FXID {ED899CB1-0CDE-5C65-BC0D-DD799854B3CB}
+WAK 0 0
+BYPASS 0 0
+<JS null_jsfx/tape.jsfx ""
+  4 1 3 10 10 5 2 100 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+>
+FXID {8759DF30-07C8-5719-8EA5-6A4B4DADC3C6}
+<PROGRAMENV 4 0
+  PARAMBASE 0.1
+  LFO 0
+  LFOWT 1 1
+  AUDIOCTL 0
+  AUDIOCTLWT 1 1
+  PLINK 0.75 1:0 3 -0.075
+>
+<PROGRAMENV 5 0
+  PARAMBASE 0.05
+  LFO 0
+  LFOWT 1 1
+  AUDIOCTL 0
+  AUDIOCTLWT 1 1
+  PLINK 0.5 1:0 3 -0.05
+>
+WAK 0 0
+BYPASS 0 0
+<JS null_jsfx/delay.jsfx ""
+  250 30 15 1 7 1 250 4500 20 0 0 0 0 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+>
+FXID {F11A87E8-9639-55FB-9972-FEE508967576}
+<PROGRAMENV 2 0
+  PARAMBASE 0.15
+  LFO 0
+  LFOWT 1 1
+  AUDIOCTL 0
+  AUDIOCTLWT 1 1
+  PLINK 0.666667 0:-2 0 -0.1
+>
+<PROGRAMENV 7 0
+  PARAMBASE 0.502073
+  LFO 0
+  LFOWT 1 1
+  AUDIOCTL 0
+  AUDIOCTLWT 1 1
+  PLINK -0.75 1:-1 3 0.075
+>
+WAK 0 0
+BYPASS 0 0
+<JS null_jsfx/reverb.jsfx ""
+  50 45 60 12 0 0 20 20000 100 0 0 0 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+>
+FXID {194ADC2E-E411-53BD-8FFA-F61B7BAD6868}
+<PROGRAMENV 3 0
+  PARAMBASE 0.12
+  LFO 0
+  LFOWT 1 1
+  AUDIOCTL 0
+  AUDIOCTLWT 1 1
+  PLINK 0.5 0:-3 0 -0.075
+>
+WAK 0 0

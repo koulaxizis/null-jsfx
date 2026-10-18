@@ -1,0 +1,8 @@
+[
+  ["Light Shuffle", {"Pattern": "Shuffle", "Variation": 25, "Repeat Chance": 10}],
+  ["Breakbeat Chop", {"Pattern": "Shuffle", "Variation": 70, "Seed": 3, "Reverse Chance": 10, "Repeat Chance": 30}],
+  ["Reverse Pairs", {"Pattern": "Reverse Pairs", "Variation": 50, "Repeat Chance": 0}],
+  ["Stutter Fills", {"Pattern": "Stutter", "Variation": 40, "Slices": "32", "Repeat Chance": 20}],
+  ["Chaos (Seed 7)", {"Pattern": "Random", "Variation": 100, "Seed": 7, "Reverse Chance": 30, "Repeat Chance": 40}],
+  ["Choppy Gate", {"Pattern": "Straight", "Repeat Chance": 15, "Gate": 50}]
+]

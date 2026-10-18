@@ -1,0 +1,10 @@
+[
+  ["Stutter Build", {"Step 9": "Repeat", "Step 13": "Repeat", "Step 14": "Repeat", "Step 15": "Repeat", "Step 16": "Repeat", "Repeat Size": "1/32"}],
+  ["Half-Time Break", {"Step 1": "Pitch Down", "Step 2": "Pitch Down", "Step 3": "Pitch Down", "Step 4": "Pitch Down", "Step 5": "Pitch Down", "Step 6": "Pitch Down", "Step 7": "Pitch Down", "Step 8": "Tape Stop", "Step 9": "Pitch Down", "Step 10": "Pitch Down", "Step 11": "Pitch Down", "Step 12": "Pitch Down", "Step 13": "Pitch Down", "Step 14": "Pitch Down", "Step 15": "Pitch Down", "Step 16": "Tape Stop", "Pitch": 12, "Step Length": "1/8"}],
+  ["Glitch Groove", {"Step 2": "Repeat", "Step 5": "Reverse", "Step 8": "Crush", "Step 10": "Gate", "Step 11": "Repeat", "Step 14": "Pitch Up", "Step 16": "Tape Stop", "Swing": 20, "Repeat Size": "1/64", "Crush": 50}],
+  ["Tape Stop Ends", {"Step 16": "Tape Stop", "Step Length": "1/8"}],
+  ["Filter Steps", {"Step 3": "Filter", "Step 4": "Filter", "Step 7": "Filter", "Step 8": "Filter", "Step 11": "Filter", "Step 12": "Filter", "Step 14": "Filter", "Step 15": "Filter", "Step 16": "Filter", "Filter": 600, "Swing": 30}],
+  ["Reverse Swells", {"Step 4": "Reverse", "Step 8": "Reverse", "Step 12": "Reverse", "Step 15": "Reverse", "Step 16": "Reverse", "Step Length": "1/8"}],
+  ["Crush Fills", {"Step 4": "Crush", "Step 11": "Crush", "Step 13": "Crush", "Step 14": "Crush", "Step 15": "Crush", "Step 16": "Crush", "Crush": 75}],
+  ["Live MIDI Pads", {"MIDI Trigger": "On", "Repeat Size": "1/32", "Filter": 1000, "Step Length": "1/8"}]
+]

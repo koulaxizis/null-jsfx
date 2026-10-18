@@ -1,0 +1,329 @@
+desc:NULL Slicer GFX
+author: Christos Koulaxizis
+tags: slicer slice beat repeat rearrange shuffle stutter reverse backspin chop remix loop tempo sync glitch creative gui
+//category: Advanced
+//NULL JSFX v2.4 • https://nulljsfx.tech • MIT License
+
+import null_gfx.jsfx-inc
+
+slider1:1<0,5,1{Straight,Shuffle,Reverse Pairs,Stutter,Backspin,Random}>-Pattern
+slider2:50<0,100,1>-Variation (%)
+slider3:1<1,999,1>-Seed
+slider4:1<0,2,1{8,16,32}>-Slices
+slider5:0<0,100,1>-Reverse Chance (%)
+slider6:25<0,100,1>-Repeat Chance (%)
+slider7:100<0,100,1>-Gate (%)
+slider8:100<0,100,1>-Mix (%)
+
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
+
+@init
+  // NULL Slicer (../slicer.jsfx) with its own interface: same audio code, plus @gfx.
+  // Real-time loop remixer. Every bar (4 beats) of input is recorded into one of two bar
+  // buffers while the other one, the previous bar, is played back cut into Slices equal
+  // slices in a new order, so the output runs one bar behind. The order comes from Pattern:
+  // Shuffle swaps the picked slices among themselves, Reverse Pairs plays picked pairs of
+  // slices backwards as one piece, Stutter repeats the slice before, Backspin rewinds the audio
+  // with a speeding-up tape spin, Random plays any slice. Variation is the chance that a slice
+  // is picked; then each slice may be reversed (Reverse Chance) or retriggered, playing its
+  // first half twice (Repeat Chance). All choices come from Seed (a Park-Miller generator) and
+  // stay the same every bar. Until the first whole bar is recorded the input passes through.
+  // Gate shortens every slice; each cut gets 2.5 ms fades, slices that continue the audio
+  // seamlessly are not faded. While the transport plays the bar is locked to
+  // the song position; stopped, it free-runs at the host tempo. Tempo is clamped to 40..300 bpm.
+  fd = max(1, floor(0.0025 * srate));         // fade length
+  bmax = ceil(srate * 6) + 4;                 // one bar at 40 bpm
+  pa = 4 * bmax;                              // pattern arrays after the two stereo bar buffers
+  src = pa; rv = pa + 32; rp = pa + 64; bs = pa + 96; fi = pa + 128; fo = pa + 160;
+  ua = pa + 192; up = pa + 224; ur = pa + 256; uq = pa + 288; lst = pa + 320; prm = pa + 352;
+  memset(0, 0, pa + 384);
+  freembuf(pa + 384);
+  n = 0;       // sample within the bar
+  cur = 0;     // bar buffer being recorded (the other one plays)
+  jf = 1;      // fade-in after a jump of the song position
+  full = 0;    // a whole bar has been recorded (until then the input passes through)
+  fl = 0;      // crossfade from the input to the slices once it has
+
+  // random value in [0, x): a Park-Miller generator in exact double arithmetic, so it gives
+  // the same sequence on every CPU (and in the VST3/CLAP build)
+  function prand(x)
+  (
+    seed *= 16807; seed -= floor(seed / 2147483647) * 2147483647;
+    seed / 2147483648 * x;
+  );
+
+  function rd(base, p) local(i, f)
+  (
+    i = floor(p);
+    f = p - i;
+    base[i] + (base[i + 1] - base[i]) * f;
+  );
+
+  gfx_ext_retina = 1;
+
+  function update()
+  (
+    pat = slider1;
+    ns = slider4 == 0 ? 8 : slider4 == 1 ? 16 : 32;
+    gate = slider7 / 100;
+    mix = slider8 / 100;
+    // the dice, four per slice in a fixed order
+    seed = slider3 * 7919 + 13;
+    loop(4, prand(1));
+    j = 0;
+    loop(ns,
+      ua[j] = prand(100); up[j] = prand(1); ur[j] = prand(100); uq[j] = prand(100);
+      src[j] = j; rv[j] = 0; rp[j] = 0; bs[j] = 0;
+      j += 1;
+    );
+    pat == 1 ? (
+      // shuffle the picked slices among themselves (Fisher-Yates)
+      m = 0; j = 0;
+      loop(ns, ua[j] < slider2 ? (lst[m] = j; prm[m] = j; m += 1;); j += 1;);
+      i = m - 1;
+      while (i >= 1) (
+        k = floor(up[lst[i]] * (i + 1));
+        t = prm[i]; prm[i] = prm[k]; prm[k] = t;
+        i -= 1;
+      );
+      i = 0;
+      loop(m, src[lst[i]] = prm[i]; i += 1;);
+    );
+    pat == 2 ? (
+      // picked pairs play backwards as one piece
+      j = 0;
+      loop(ns / 2,
+        ua[j] < slider2 ? (src[j] = j + 1; src[j + 1] = j; rv[j] = 1; rv[j + 1] = 1;);
+        j += 2;
+      );
+    );
+    pat == 3 ? (
+      j = 1;
+      loop(ns - 1, ua[j] < slider2 ? src[j] = src[j - 1]; j += 1;);
+    );
+    pat == 4 ? (
+      j = 1;
+      loop(ns - 1, ua[j] < slider2 ? bs[j] = 1; j += 1;);
+    );
+    pat == 5 ? (
+      j = 0;
+      loop(ns, ua[j] < slider2 ? src[j] = floor(up[j] * ns); j += 1;);
+    );
+    j = 0;
+    loop(ns,
+      bs[j] ? (rv[j] = 0;) : (
+        ur[j] < slider5 ? rv[j] = 1;
+        rp[j] = uq[j] < slider6;
+      );
+      j += 1;
+    );
+    // fades only where the audio does not simply continue from the slice before
+    j = 0;
+    loop(ns,
+      k = j == 0 ? ns - 1 : j - 1;
+      c = gate >= 1 && !bs[j] && !bs[k] && !rp[j] && !rp[k] && (
+        (!rv[j] && !rv[k] && src[j] == src[k] + 1 - (j == 0 ? ns : 0)) ||
+        (j > 0 && rv[j] && rv[k] && src[j] == src[k] - 1));
+      fi[j] = !c;
+      fo[k] = !c;
+      j += 1;
+    );
+  );
+
+  // ---- factory presets: generated by tools/build_presets.py, do not edit ----
+  ng_pre_n = 7;
+
+  function ng_preset_load(p)
+  (
+    p == 0 ? ( ng_slider_set(1, 1); ng_slider_set(2, 50); ng_slider_set(3, 1); ng_slider_set(4, 1); ng_slider_set(5, 0); ng_slider_set(6, 25); ng_slider_set(7, 100); ng_slider_set(8, 100); );
+    p == 1 ? ( ng_slider_set(1, 1); ng_slider_set(2, 25); ng_slider_set(3, 1); ng_slider_set(4, 1); ng_slider_set(5, 0); ng_slider_set(6, 10); ng_slider_set(7, 100); ng_slider_set(8, 100); );
+    p == 2 ? ( ng_slider_set(1, 1); ng_slider_set(2, 70); ng_slider_set(3, 3); ng_slider_set(4, 1); ng_slider_set(5, 10); ng_slider_set(6, 30); ng_slider_set(7, 100); ng_slider_set(8, 100); );
+    p == 3 ? ( ng_slider_set(1, 2); ng_slider_set(2, 50); ng_slider_set(3, 1); ng_slider_set(4, 1); ng_slider_set(5, 0); ng_slider_set(6, 0); ng_slider_set(7, 100); ng_slider_set(8, 100); );
+    p == 4 ? ( ng_slider_set(1, 3); ng_slider_set(2, 40); ng_slider_set(3, 1); ng_slider_set(4, 2); ng_slider_set(5, 0); ng_slider_set(6, 20); ng_slider_set(7, 100); ng_slider_set(8, 100); );
+    p == 5 ? ( ng_slider_set(1, 5); ng_slider_set(2, 100); ng_slider_set(3, 7); ng_slider_set(4, 1); ng_slider_set(5, 30); ng_slider_set(6, 40); ng_slider_set(7, 100); ng_slider_set(8, 100); );
+    p == 6 ? ( ng_slider_set(1, 0); ng_slider_set(2, 50); ng_slider_set(3, 1); ng_slider_set(4, 1); ng_slider_set(5, 0); ng_slider_set(6, 15); ng_slider_set(7, 50); ng_slider_set(8, 100); );
+  );
+
+  // the first preset every slider matches, or -1
+  function ng_preset_match() local(m)
+  (
+    m = -1;
+    m < 0 && ng_pre_eq(slider1, 1) && ng_pre_eq(slider2, 50) && ng_pre_eq(slider3, 1) && ng_pre_eq(slider4, 1) && ng_pre_eq(slider5, 0) && ng_pre_eq(slider6, 25) && ng_pre_eq(slider7, 100) && ng_pre_eq(slider8, 100) ? m = 0;
+    m < 0 && ng_pre_eq(slider1, 1) && ng_pre_eq(slider2, 25) && ng_pre_eq(slider3, 1) && ng_pre_eq(slider4, 1) && ng_pre_eq(slider5, 0) && ng_pre_eq(slider6, 10) && ng_pre_eq(slider7, 100) && ng_pre_eq(slider8, 100) ? m = 1;
+    m < 0 && ng_pre_eq(slider1, 1) && ng_pre_eq(slider2, 70) && ng_pre_eq(slider3, 3) && ng_pre_eq(slider4, 1) && ng_pre_eq(slider5, 10) && ng_pre_eq(slider6, 30) && ng_pre_eq(slider7, 100) && ng_pre_eq(slider8, 100) ? m = 2;
+    m < 0 && ng_pre_eq(slider1, 2) && ng_pre_eq(slider2, 50) && ng_pre_eq(slider3, 1) && ng_pre_eq(slider4, 1) && ng_pre_eq(slider5, 0) && ng_pre_eq(slider6, 0) && ng_pre_eq(slider7, 100) && ng_pre_eq(slider8, 100) ? m = 3;
+    m < 0 && ng_pre_eq(slider1, 3) && ng_pre_eq(slider2, 40) && ng_pre_eq(slider3, 1) && ng_pre_eq(slider4, 2) && ng_pre_eq(slider5, 0) && ng_pre_eq(slider6, 20) && ng_pre_eq(slider7, 100) && ng_pre_eq(slider8, 100) ? m = 4;
+    m < 0 && ng_pre_eq(slider1, 5) && ng_pre_eq(slider2, 100) && ng_pre_eq(slider3, 7) && ng_pre_eq(slider4, 1) && ng_pre_eq(slider5, 30) && ng_pre_eq(slider6, 40) && ng_pre_eq(slider7, 100) && ng_pre_eq(slider8, 100) ? m = 5;
+    m < 0 && ng_pre_eq(slider1, 0) && ng_pre_eq(slider2, 50) && ng_pre_eq(slider3, 1) && ng_pre_eq(slider4, 1) && ng_pre_eq(slider5, 0) && ng_pre_eq(slider6, 15) && ng_pre_eq(slider7, 50) && ng_pre_eq(slider8, 100) ? m = 6;
+    m;
+  );
+
+  function ng_preset_name(p) local(s)
+  (
+    s = "";
+    p == 0 ? s = "Default";
+    p == 1 ? s = "Light Shuffle";
+    p == 2 ? s = "Breakbeat Chop";
+    p == 3 ? s = "Reverse Pairs";
+    p == 4 ? s = "Stutter Fills";
+    p == 5 ? s = "Chaos (Seed 7)";
+    p == 6 ? s = "Choppy Gate";
+    s;
+  );
+
+  function ng_presets() local(i)
+  (
+    ng_pre_req >= 0 ? ( ng_preset_load(ng_pre_req); update(); ng_pre_req = -1; );
+    ng_pre_cur = ng_preset_match();
+    ng_pre_open ? (
+      ng_pre_menu_begin();
+      i = 0;
+      loop(ng_pre_n, ng_pre_item(i, ng_preset_name(i)); i += 1;);
+      ng_pre_menu_end();
+    );
+    strcpy(#ng_pre_name, ng_pre_cur >= 0 ? ng_preset_name(ng_pre_cur) : "CUSTOM");
+  );
+  // ---- end of factory presets ----
+
+@slider
+  update();
+
+@block
+  bpm = tempo > 0 ? tempo : 120;
+  bpm = min(300, max(40, bpm));
+  spb = srate * 60 / bpm;
+  bl = 4 * spb;
+  sl = bl / ns;
+  play_state & 1 ? (
+    // lock the bar to the song position; small drift is corrected, a jump fades in again
+    sc_bar = floor(beat_position / 4);
+    nt = floor((beat_position - 4 * sc_bar) * spb + 0.5);
+    ct = sc_bar - 2 * floor(sc_bar / 2);
+    at = ct * bl + nt;
+    a = cur * bl + n;
+    d = at - a;
+    d > bl ? (d -= 2 * bl) : (d < -bl ? d += 2 * bl);
+    abs(d) > 2 ? (
+      n = nt; cur = ct; jf = 0;
+    ) : (
+      abs(at - a) <= 2 ? (n = nt; cur = ct;);
+    );
+  );
+
+@sample
+  n >= bl ? (n = 0; cur = 1 - cur; full = 1;);
+  wb = cur * 2 * bmax;
+  n < bmax - 2 ? (
+    wb[n] = spl0;
+    wb[bmax + n] = spl1;
+  );
+  // the slice playing now, read from the previous bar
+  j = min(ns - 1, floor(n / sl));
+  o = n - j * sl;
+  ae = gate * sl;
+  bs[j] ? (
+    // backspin: rewind from the slice start, speeding up from 1x to 3x
+    p = j * sl - (o + o * o / sl);
+    env = min(min(1, o / fd), (ae - o) / fd);
+  ) : rp[j] ? (
+    // repeat: the first half of the slice twice
+    h = sl / 2;
+    o < h ? (
+      oo = o;
+      env = min(fi[j] ? o / fd : 1, (min(h, ae) - o) / fd);
+    ) : (
+      oo = o - h;
+      env = min((o - h) / fd, (ae - o) / fd);
+    );
+    p = rv[j] ? src[j] * sl + sl - 1 - oo : src[j] * sl + oo;
+  ) : (
+    p = rv[j] ? src[j] * sl + sl - 1 - o : src[j] * sl + o;
+    env = min(fi[j] ? o / fd : 1, fo[j] || gate < 1 ? (ae - o) / fd : 1);
+  );
+  env = max(0, min(1, env)) * jf;
+  jf < 1 ? jf = min(1, jf + 1 / fd);
+  p = max(0, min(bmax - 2, p));
+  rb = (1 - cur) * 2 * bmax;
+  wl = rd(rb, p) * env;
+  wr = rd(rb + bmax, p) * env;
+  fl < 1 ? (
+    full ? fl = min(1, fl + 1 / fd);
+    wl = wl * fl + spl0 * (1 - fl);
+    wr = wr * fl + spl1 * (1 - fl);
+  );
+  spl0 = spl0 * (1 - mix) + wl * mix;
+  spl1 = spl1 * (1 - mix) + wr * mix;
+  n += 1;
+
+@gfx 480 380
+  ng_knobs_begin("SLICER", "ADVANCED", 480, 120, 2, 0);
+
+  // display: the slices of the bar in playing order, each with the number of the slice of the
+  // previous bar it plays (brighter when changed) and its marks (< reversed, x2 repeated,
+  // << backspin); the filled part is the Gate; the playhead runs across the bar
+  sc_bl = max(1, bl);
+  sc_cw = 420 / ns;
+  sc_cur = min(ns - 1, floor(n / max(1, sl)));
+  ng_font(4, 8, 0);
+  ng_col(NG_MUTED, 1);
+  strcpy(#sc_a, slider1 == 0 ? "STRAIGHT" : slider1 == 1 ? "SHUFFLE" : slider1 == 2 ? "REVERSE PAIRS" :
+                slider1 == 3 ? "STUTTER" : slider1 == 4 ? "BACKSPIN" : "RANDOM");
+  slider1 == 0 ? sprintf(#sc_s, "%s  SEED %d", #sc_a, slider3) : sprintf(#sc_s, "%s %d%%  SEED %d", #sc_a, slider2, slider3);
+  ng_txt(#sc_s, 30, 70, 0, 0);
+  full ? sprintf(#sc_s, "PREVIOUS BAR  %d SLICES", ns) : sprintf(#sc_s, "RECORDING FIRST BAR  %d SLICES", ns);
+  ng_txt(#sc_s, 450, 70, 2, 0);
+  sc_j = 0;
+  loop(ns,
+    sc_x = 30 + sc_j * sc_cw;
+    ng_col(sc_j == sc_cur ? NG_BORDER : NG_BG, 1);
+    gfx_rect(X(sc_x + 1), Y(80), (sc_cw - 2) * ng_s, 50 * ng_s);
+    ng_col(NG_ACCENT, sc_j == sc_cur ? 0.34 : 0.16);
+    gfx_rect(X(sc_x + 1), Y(80), (sc_cw - 2) * gate * ng_s, 50 * ng_s);
+    sc_ch = src[sc_j] != sc_j || rv[sc_j] || rp[sc_j] || bs[sc_j];
+    ng_font(4, ns > 16 ? 7 : 8, sc_ch);
+    ng_col(sc_ch ? NG_TEXT : NG_MUTED, 1);
+    bs[sc_j] ? strcpy(#sc_s, "-") : sprintf(#sc_s, "%d", src[sc_j] + 1);
+    ng_txt(#sc_s, sc_x + sc_cw / 2, 98, 1, 0);
+    ng_font(4, 7, 0);
+    bs[sc_j] || rv[sc_j] ? ng_txt(bs[sc_j] ? "<<" : "<", sc_x + sc_cw / 2, 113, 1, 0);
+    rp[sc_j] ? ng_txt("x2", sc_x + sc_cw / 2, 123, 1, 0);
+    sc_j += 1;
+  );
+  ng_col(NG_TEXT, 1);
+  gfx_rect(floor(X(30 + 420 * min(1, n / sc_bl))), Y(78), max(1, ng_s), 54 * ng_s);
+  // beats under the bar, legend
+  ng_font(4, 8, 0);
+  ng_col(NG_MUTED, 1);
+  sc_j = 0;
+  loop(4,
+    sprintf(#sc_s, "%d", sc_j + 1);
+    ng_txt(#sc_s, 31 + sc_j * 105, 141, 0, 0);
+    sc_j += 1;
+  );
+  ng_txt("<  REVERSED    x2  REPEATED    <<  BACKSPIN", 30, 156, 0, 0);
+  sprintf(#sc_s, "GATE %d%%", slider7);
+  ng_txt(#sc_s, 450, 156, 2, 0);
+
+  ng_row(4);
+  ng_select_ctl(1, "PATTERN", "STRAIGHT|SHUFFLE|PAIRS|STUTTER|BACKSPIN|RANDOM", 0) ? update();
+  sprintf(#v2, "%d%%", slider2);
+  ng_knob_ctl(2, "VARIATION", #v2, 0, 100, 50, 1, 0) ? update();
+  sprintf(#v3, "%d", slider3);
+  ng_knob_ctl(3, "SEED", #v3, 1, 999, 1, 1, 0) ? update();
+  ng_select_ctl(4, "SLICES", "8|16|32", 0) ? update();
+  ng_row(4);
+  sprintf(#v5, "%d%%", slider5);
+  ng_knob_ctl(5, "REVERSE", #v5, 0, 100, 0, 1, 0) ? update();
+  sprintf(#v6, "%d%%", slider6);
+  ng_knob_ctl(6, "REPEAT", #v6, 0, 100, 25, 1, 0) ? update();
+  sprintf(#v7, "%d%%", slider7);
+  ng_knob_ctl(7, "GATE", #v7, 0, 100, 100, 1, 0) ? update();
+  sprintf(#v8, "%d%%", slider8);
+  ng_knob_ctl(8, "MIX", #v8, 0, 100, 100, 1, 0) ? update();
+
+  ng_end();
+
+  ng_presets(); // the preset list (generated by tools/build_presets.py)

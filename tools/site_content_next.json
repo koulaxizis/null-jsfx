@@ -39,5 +39,180 @@
     ],
     "properties": "Signal chain: Linkwitz-Riley 24 dB/oct crossover at Frequency (sums back flat) → detector on both channels: fast low- and high-band envelopes (1 ms / 30 ms) and a slow low-band average (200 ms); when the low band rises above both by more than the threshold it is cut by twice the excess, up to Max Reduction (1 ms attack, Release) → bands summed. Both bands run 5 ms late (look-ahead) so the onset is caught; that latency is reported for delay compensation. Only the low band is ever changed.",
     "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-deplosive\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><path d=\"M 6,32 L 14,32 Q 18,32 20,10 Q 23,54 27,32 L 58,32\" fill=\"none\" stroke=\"url(#icon-deplosive)\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" opacity=\"0.35\"/><path d=\"M 6,32 L 14,32 Q 18,32 20,24 Q 23,40 27,32 L 30,32 Q 32,26 34,32 Q 36,38 38,32 Q 40,27 42,32 Q 44,37 46,32 Q 48,28 50,32 L 58,32\" fill=\"none\" stroke=\"url(#icon-deplosive)\" stroke-width=\"2.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><text x=\"20\" y=\"54\" font-family=\"'Segoe UI'\" font-size=\"11\" fill=\"url(#icon-deplosive)\" text-anchor=\"middle\">P</text></svg>"
+  },
+  "step_fx": {
+    "card_desc": "16-Step Effect Sequencer",
+    "keywords": "step fx effect sequencer 16 step glitch stutter beat repeat reverse filter gate tape stop pitch bitcrush crush swing tempo sync midi trigger performance",
+    "slider_desc": [
+      "Effect on step 1: Off (dry), Repeat, Reverse, Filter, Gate, Tape Stop, Pitch Down, Pitch Up or Crush",
+      "Effect on step 2 (same choices as Step 1)",
+      "Effect on step 3 (same choices as Step 1)",
+      "Effect on step 4 (same choices as Step 1)",
+      "Effect on step 5 (same choices as Step 1)",
+      "Effect on step 6 (same choices as Step 1)",
+      "Effect on step 7 (same choices as Step 1)",
+      "Effect on step 8 (same choices as Step 1)",
+      "Effect on step 9 (same choices as Step 1)",
+      "Effect on step 10 (same choices as Step 1)",
+      "Effect on step 11 (same choices as Step 1)",
+      "Effect on step 12 (same choices as Step 1)",
+      "Effect on step 13 (same choices as Step 1)",
+      "Effect on step 14 (same choices as Step 1)",
+      "Effect on step 15 (same choices as Step 1)",
+      "Effect on step 16 (same choices as Step 1)",
+      "Note value of one step at the host tempo: 1/8, 1/16, 1/32 or the triplets 1/8T and 1/16T; while the transport plays the steps lock to the bar grid, stopped they free-run at the tempo (120 BPM without one).",
+      "Length of the sequence (1 to 16 steps); the steps past it are skipped and the pattern loops sooner.",
+      "Delays every second step for a shuffle feel (0% = straight, 50% = triplet shuffle, 75% = dotted).",
+      "Slice length the Repeat steps loop (the first slice of the step plays, then repeats) and the rate the Gate steps chop at.",
+      "Cutoff of the resonant low-pass on Filter steps (200 Hz to 8 kHz); it glides down on entry and opens back up on exit.",
+      "Amount of the Crush steps: bit depth from 16 down to 4 bits and sample-rate reduction down to 1/16.",
+      "Interval of the Pitch Down and Pitch Up steps (1 to 12 semitones).",
+      "Blend of the processed and the dry signal.",
+      "On: the sequencer stops and held MIDI notes choose the effect instead (C3 Repeat, C#3 Reverse, D3 Filter, D#3 Gate, E3 Tape Stop, F3 Pitch Down, F#3 Pitch Up, G3 Crush); all MIDI passes through."
+    ],
+    "uses": [
+      "Stutter and repeat builds into a drop",
+      "Glitchy drum grooves with reverse, crush and pitch hits",
+      "Tape stops and reversed swells at the end of a phrase",
+      "Rhythmic filter chops on pads and loops",
+      "Playing effects live from MIDI pads with MIDI Trigger"
+    ],
+    "properties": "Signal chain: Input → 4 s history buffer → 16-step sequencer (or held MIDI notes C3 to G3) → two crossfading effect voices (Repeat, Reverse, Gate, Tape Stop, Pitch Down/Up via a 60 ms two-tap delay-line shifter) → resonant TPT state-variable low-pass (Filter steps, 15 ms cutoff glide) → bit and sample-rate reduction (Crush steps) → Dry/Wet Mix → Output. The step clock follows the host tempo and, while the transport plays, is read from the song position; stopped it free-runs at the tempo (120 BPM without one). Every change of effect crossfades over 4 ms, so steps switch without clicks. Fully deterministic, zero latency; MIDI passes through.",
+    "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-stepfx\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><g fill=\"none\" stroke=\"url(#icon-stepfx)\" stroke-width=\"1.5\" opacity=\"0.35\"><rect x=\"6\" y=\"14\" width=\"11\" height=\"15\" rx=\"2\"/><rect x=\"20\" y=\"14\" width=\"11\" height=\"15\" rx=\"2\"/><rect x=\"34\" y=\"14\" width=\"11\" height=\"15\" rx=\"2\"/><rect x=\"48\" y=\"14\" width=\"11\" height=\"15\" rx=\"2\"/><rect x=\"6\" y=\"35\" width=\"11\" height=\"15\" rx=\"2\"/><rect x=\"20\" y=\"35\" width=\"11\" height=\"15\" rx=\"2\"/><rect x=\"34\" y=\"35\" width=\"11\" height=\"15\" rx=\"2\"/><rect x=\"48\" y=\"35\" width=\"11\" height=\"15\" rx=\"2\"/></g><g fill=\"url(#icon-stepfx)\"><rect x=\"20\" y=\"14\" width=\"11\" height=\"15\" rx=\"2\"/><rect x=\"48\" y=\"14\" width=\"11\" height=\"15\" rx=\"2\"/><rect x=\"34\" y=\"35\" width=\"11\" height=\"15\" rx=\"2\"/></g><path d=\"M 6,55 L 17,55\" stroke=\"url(#icon-stepfx)\" stroke-width=\"2.5\" stroke-linecap=\"round\"/></svg>"
+  },
+  "tape_echo": {
+    "card_desc": "Multi-Head Tape Echo with Spring",
+    "keywords": "tape echo space echo multi-head delay repeat dub reggae spring reverb wow flutter saturation self-oscillation runaway vintage analog tempo sync freeze",
+    "slider_desc": [
+      "Time between the record head and playback head 1 (50 to 1000 ms); heads 2 and 3 sit at twice and three times this distance. A change glides like a tape motor, so the echoes bend in pitch.",
+      "Locks head 1 to a note at the project tempo (straight, dotted or triplet); heads 2 and 3 follow at 2x and 3x. Off uses Repeat Time.",
+      "The classic 12-position selector: which playback heads you hear and feed back (1, 2, 3 and their combinations), the R positions add the spring reverb, and R alone is the reverb without echoes.",
+      "Feedback of the active heads into one shared loop; 100% is unity loop gain in every mode, above it the echo runs away into self-oscillation that the tape saturation keeps bounded.",
+      "Low shelf at 250 Hz on the echoes (-12 to +12 dB).",
+      "High shelf at 2.5 kHz on the echoes (-12 to +12 dB).",
+      "Tape wow (two slow sines, up to 2.5 ms) and flutter (two fast sines, up to 0.15 ms) moving every head together, so the repeats waver in pitch.",
+      "Tape drive inside the feedback loop: 0% only rounds very loud repeats, higher values squash and colour every repeat with asymmetric (even) harmonics.",
+      "Level of the spring reverb, heard in the R positions of the Heads selector; it is fed with the input and the echoes.",
+      "Blend between the dry signal and the echoes (plus the spring).",
+      "Stops recording and loops what is on the tape (the length of the longest active head) forever, without fading or building up."
+    ],
+    "uses": [
+      "Dub and reggae echoes that build and run away under your hand",
+      "Rhythmic multi-head patterns from one repeat time",
+      "Slapback with tape colour on vocals and guitars",
+      "Spring-drenched surf and ambient washes in the R modes",
+      "Warbly lo-fi delays with heavy wow, flutter and saturation"
+    ],
+    "properties": "Signal chain: Input + loop → stereo tape (record head) → playback heads at 1x, 2x, 3x the repeat time (4-point Hermite reads, wow/flutter on all heads, the time glides over ~0.12 s) → heads of the selected mode summed → feedback loop: ÷ number of heads → 12 dB/oct low-pass at 4.5 kHz → asymmetric soft saturation (slope 1 at 0, bounded) → 90 Hz one-pole low cut → × Intensity back onto the tape. Echo output: heads ÷ √(number of heads) → Bass (low shelf 250 Hz) → Treble (high shelf 2.5 kHz) → + spring tank in the R modes (two dispersive 40-stage all-pass springs, 2.2 s decay, fed with input and echoes) → Dry/Wet Mix. Tape length 6.75 s (3 × a dotted quarter at 40 bpm); zero latency.",
+    "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-tape_echo\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><rect x=\"6\" y=\"14\" width=\"52\" height=\"22\" rx=\"11\" stroke=\"url(#icon-tape_echo)\" stroke-width=\"2\" fill=\"none\"/><rect x=\"14\" y=\"32\" width=\"6\" height=\"8\" rx=\"1\" fill=\"url(#icon-tape_echo)\"/><rect x=\"26\" y=\"32\" width=\"6\" height=\"8\" rx=\"1\" fill=\"url(#icon-tape_echo)\"/><rect x=\"36\" y=\"32\" width=\"6\" height=\"8\" rx=\"1\" fill=\"url(#icon-tape_echo)\"/><rect x=\"46\" y=\"32\" width=\"6\" height=\"8\" rx=\"1\" fill=\"url(#icon-tape_echo)\"/><path d=\"M 17,48 L 17,56 M 29,50 L 29,56 M 39,52 L 39,56 M 49,54 L 49,56\" stroke=\"url(#icon-tape_echo)\" stroke-width=\"2\" stroke-linecap=\"round\" opacity=\"0.7\"/></svg>"
+  },
+  "wah": {
+    "card_desc": "Wah Pedal, Auto-Wah & LFO Wah",
+    "keywords": "wah wah-wah pedal auto-wah autowah envelope filter quack funk guitar bass keys clavinet lfo sweep vocal formant talk band-pass resonant tempo sync",
+    "slider_desc": [
+      "Pedal position from heel (0%) to toe (100%) in Manual mode, smoothed over 15 ms; automate it or map a MIDI CC to it.",
+      "Manual: the Pedal slider moves the filter. Auto: an envelope follower moves it with your playing dynamics. LFO: a smooth sweep at Rate or in time with the project.",
+      "Classic: the inductor wah's narrow peak from about 400 Hz to 2.2 kHz. Vocal: two formant peaks that move together like a vowel changing. Wide: a broader sweep from 200 Hz to 3.5 kHz.",
+      "Sharpness and height of the peak: more Resonance gives a narrower, louder, more vocal quack.",
+      "Auto mode: how loud you must play to reach the toe, from 0 dBFS at 0% down to -42 dBFS at 100% (the pedal moves over the 30 dB below that).",
+      "Auto mode: how fast the envelope follower opens the filter (1 to 100 ms).",
+      "Auto mode: how fast the filter falls back after a note (20 to 1000 ms).",
+      "LFO mode: sweeps per second when Tempo Sync is off (0.1 to 10 Hz).",
+      "LFO mode: one full sweep per note at the project tempo (1/1 to 1/16), locked to the bar while the transport plays.",
+      "Blend between the dry signal and the wah.",
+      "Level after the wah (-12 to +12 dB) to match the bypassed level."
+    ],
+    "uses": [
+      "Classic wah on guitar, automated or played from a MIDI expression pedal",
+      "Funky auto-wah (envelope filter) on clean guitar, bass and clavinet",
+      "Tempo-synced wah rhythms on chords and synths",
+      "Talking vowel sweeps with the Vocal model",
+      "A fixed half-cocked pedal for a nasal lead tone"
+    ],
+    "properties": "Signal chain: pedal position (Manual: smoothed slider; Auto: peak envelope follower with Attack/Release mapped over 30 dB below the Sensitivity level; LFO: raised cosine at Rate or one cycle per note, beat-locked while playing) → exponential frequency curve per model → TPT state-variable band-pass (Q 2-10 Classic, 3-10 Vocal with a second formant at 0.7 level, 1.2-6.2 Wide), normalised to 0 dB peak and lifted by +3.5 to +9.5 dB with Resonance → Dry/Wet Mix → Output. The filter is modulated every sample; zero latency.",
+    "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-wah\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><path d=\"M 6,48 Q 22,46 26,30 Q 28,18 30,30 Q 34,46 58,48\" fill=\"none\" stroke=\"url(#icon-wah)\" stroke-width=\"2.5\" stroke-linecap=\"round\"/><path d=\"M 6,50 Q 30,48 36,32 Q 38,22 40,32 Q 44,48 58,50\" fill=\"none\" stroke=\"url(#icon-wah)\" stroke-width=\"1.5\" stroke-linecap=\"round\" opacity=\"0.45\"/><path d=\"M 22,12 L 42,12\" stroke=\"url(#icon-wah)\" stroke-width=\"2\" stroke-linecap=\"round\"/><path d=\"M 36,8 L 42,12 L 36,16\" fill=\"none\" stroke=\"url(#icon-wah)\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/></svg>"
+  },
+  "half_speed": {
+    "card_desc": "Real-Time Halftime & Slow-Down",
+    "keywords": "half speed halftime half-time slow down octave down tempo sync bar grid time stretch granular pitch keep drop transition creative dubstep trap",
+    "slider_desc": [
+      "How much input is captured per cycle: a 1/4 or 1/2 note, 1 Bar or 2 Bars at the host tempo.",
+      "Playback speed of the captured audio: 1/2 is classic halftime (an octave down), 1/4 a quarter speed (two octaves down), 2/3 a lazier drag; one cycle lasts Length / Speed.",
+      "Off slows the audio like a tape (lower pitch); On uses overlapping 40 ms grains so only the tempo halves and the pitch stays the same.",
+      "High cut on the slowed signal (1 to 20 kHz) to tame the dull or grainy top end; 20 kHz is off.",
+      "Blend of slowed and dry signal.",
+      "Shifts the cycle start by 0 to 3 beats from the bar line while the transport plays."
+    ],
+    "uses": [
+      "Instant halftime drops and breakdowns on drums or full mixes",
+      "Octave-down slowed-tape textures on vocals and synths",
+      "Quarter-speed drones and pads from any loop",
+      "Pitch-kept halftime grooves that stay in key",
+      "Transitions that drag the beat before the next section"
+    ],
+    "properties": "Signal chain: Input → cycle buffer (one cycle = Length / Speed; the first Length of each cycle is recorded) → read from the cycle start at Speed (linear interpolation) or, with Pitch Keep, two Hann grains of ~40 ms half a grain apart that follow the slowed read point at the original pitch → 5 ms crossfade at every new cycle → one-pole high cut (Tone) → Mix with the dry signal → Output. While the transport plays, the cycle is locked to the song position (bar line + Sync Offset); stopped, it free-runs at the host tempo (40 to 300 bpm). No latency is reported: the slowed output is a musical effect, not a delay to compensate.",
+    "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-halfspeed\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><path d=\"M 6,22 Q 9,10 12,22 T 18,22 Q 21,10 24,22 T 30,22\" fill=\"none\" stroke=\"url(#icon-halfspeed)\" stroke-width=\"2\" stroke-linecap=\"round\" opacity=\"0.4\"/><path d=\"M 6,44 Q 12,28 18,44 T 30,44 Q 36,28 42,44 T 54,44\" fill=\"none\" stroke=\"url(#icon-halfspeed)\" stroke-width=\"2.5\" stroke-linecap=\"round\"/><path d=\"M 36,20 L 56,20 M 50,15 L 56,20 L 50,25\" fill=\"none\" stroke=\"url(#icon-halfspeed)\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/></svg>"
+  },
+  "slicer": {
+    "card_desc": "Tempo-Synced Loop Slicer & Remixer",
+    "keywords": "slicer beat slicer slice rearrange shuffle stutter reverse backspin random beat repeat chop remix loop glitch breakbeat tempo sync bar grid",
+    "slider_desc": [
+      "How the previous bar's slices are rearranged: Straight keeps the order, Shuffle swaps the picked slices among themselves, Reverse Pairs plays picked pairs backwards as one piece, Stutter repeats the slice before, Backspin rewinds the audio like a turntable, Random plays any slice.",
+      "Chance that each slice is picked by the Pattern (0% = the bar plays in order, 100% = every slice is changed).",
+      "Number that sets every random choice (1 to 999): the same Seed always gives the same pattern, and it stays the same every bar.",
+      "How many equal slices the bar is cut into: 8 (eighth notes), 16 (sixteenths) or 32.",
+      "Chance that a slice plays backwards.",
+      "Chance that a slice is retriggered, playing its first half twice.",
+      "Length of each slice (100% = full); lower values cut every slice short with a fade for a choppy, gated feel.",
+      "Blend of sliced and dry signal."
+    ],
+    "uses": [
+      "Live breakbeat-style rearrangements of drum loops",
+      "Stutter and repeat fills at the end of a phrase",
+      "Reversed and backspun variations of vocals and synth lines",
+      "Choppy gated rhythms from pads and chords",
+      "Repeatable random remixes: change the Seed until one grooves"
+    ],
+    "properties": "Signal chain: Input → two bar buffers (4 beats at the host tempo, one recording while the other plays) → previous bar cut into 8/16/32 slices → slice order and per-slice reverse, repeat (first half twice) and backspin from Pattern, Variation and the chances, all drawn from a Park-Miller generator seeded by Seed → Gate shortens each slice → 2.5 ms fades at every cut (slices that continue the audio seamlessly are not faded) → Mix with the dry signal → Output. The output runs one bar behind (a musical delay, not reported as latency); until the first bar is recorded the input passes through. While the transport plays the bar is locked to the song position; stopped, it free-runs at the host tempo (40 to 300 bpm, 4/4).",
+    "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-slicer\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><rect x=\"6\" y=\"20\" width=\"11\" height=\"24\" rx=\"2\" fill=\"none\" stroke=\"url(#icon-slicer)\" stroke-width=\"2\"/><rect x=\"20\" y=\"20\" width=\"11\" height=\"24\" rx=\"2\" fill=\"url(#icon-slicer)\" opacity=\"0.35\"/><rect x=\"34\" y=\"20\" width=\"11\" height=\"24\" rx=\"2\" fill=\"none\" stroke=\"url(#icon-slicer)\" stroke-width=\"2\"/><rect x=\"48\" y=\"20\" width=\"11\" height=\"24\" rx=\"2\" fill=\"url(#icon-slicer)\" opacity=\"0.35\"/><path d=\"M 11.5,14 C 11.5,6 39.5,6 39.5,14 M 36,11 L 39.5,14 L 43,11\" fill=\"none\" stroke=\"url(#icon-slicer)\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/></svg>"
+  },
+  "shaper": {
+    "card_desc": "Waveshaper with a Drawable Curve",
+    "keywords": "shaper waveshaper waveshaping distortion saturation transfer curve drawable custom curve wavefolder fold sine fuzz tube bit steps even harmonics bias oversampling",
+    "slider_desc": [
+      "Picks the transfer curve: Soft, Hard, Tube, Fold, Sine, Steps and Asym are built in, Custom uses the eight points below (in the GFX and VST3/CLAP interfaces, picking a shape copies its points and dragging one switches to Custom).",
+      "Gain into the curve (0 to 36 dB): the harder you drive, the further up the curve the signal reaches and the more harmonics it makes.",
+      "Adds a DC offset before the curve (-50 to +50%) so the two halves of the wave hit different parts of it, for even harmonics; the offset is removed again after the curve.",
+      "Symmetric mirrors the curve for the negative half of the wave; Asymmetric gives the negative half a fixed, gentler curve instead, for even harmonics (the Asym shape always does this).",
+      "Runs the curve at 2x or 4x the sample rate so the harmonics it creates do not fold back as aliasing (Off = no latency, more grit).",
+      "A low-pass filter after the curve (1 to 20 kHz, off at 20 kHz) to tame the fizz of heavy settings.",
+      "Blend of shaped and dry signal (the dry path is delayed to match), for parallel distortion.",
+      "Level after the mix (-24 to +12 dB).",
+      "Input position of curve point 1 (0 to 1 of full scale; 0 leaves the point unused), read when Shape is Custom.",
+      "Output of curve point 1 (-1 to +1) for that input; values below the previous points fold the wave back.",
+      "Input position of curve point 2 (0 to 1 of full scale; 0 leaves the point unused), read when Shape is Custom.",
+      "Output of curve point 2 (-1 to +1) for that input; values below the previous points fold the wave back.",
+      "Input position of curve point 3 (0 to 1 of full scale; 0 leaves the point unused), read when Shape is Custom.",
+      "Output of curve point 3 (-1 to +1) for that input; values below the previous points fold the wave back.",
+      "Input position of curve point 4 (0 to 1 of full scale; 0 leaves the point unused), read when Shape is Custom.",
+      "Output of curve point 4 (-1 to +1) for that input; values below the previous points fold the wave back.",
+      "Input position of curve point 5 (0 to 1 of full scale; 0 leaves the point unused), read when Shape is Custom.",
+      "Output of curve point 5 (-1 to +1) for that input; values below the previous points fold the wave back.",
+      "Input position of curve point 6 (0 to 1 of full scale; 0 leaves the point unused), read when Shape is Custom.",
+      "Output of curve point 6 (-1 to +1) for that input; values below the previous points fold the wave back.",
+      "Input position of curve point 7 (0 to 1 of full scale; 0 leaves the point unused), read when Shape is Custom.",
+      "Output of curve point 7 (-1 to +1) for that input; values below the previous points fold the wave back.",
+      "Input position of curve point 8 (0 to 1 of full scale; 0 leaves the point unused), read when Shape is Custom.",
+      "Output of curve point 8 (-1 to +1) for that input; values below the previous points fold the wave back."
+    ],
+    "uses": [
+      "Draw your own distortion curve and hear it change as you drag the points",
+      "Warm up bass, synths or drums with soft tube-like saturation and a little bias",
+      "Fold basslines and leads into rich, metallic overtones",
+      "Add even harmonics with the asymmetric curve for a fuller, rounder tone",
+      "Parallel distortion with Mix, tamed by the Tone low-pass"
+    ],
+    "properties": "Signal chain: Drive gain → optional oversampling (1 or 2 linear-phase halfband FIR stages, 63/23 taps, as in Clipper) → Bias offset → the transfer curve: (0, 0) plus up to 8 points joined by monotone cubic (PCHIP) segments, sampled into a 1024-step table read with linear interpolation, flat after the last point and above full scale, mirrored for negative input (or a fixed gentler curve in Asymmetric) → back down → 10 Hz DC blocker → Tone (12 dB/oct low-pass, off at 20 kHz) → Mix with the delayed dry signal → Output. Latency 0 / 31 / 37 samples (Off / 2x / 4x), reported for delay compensation.",
+    "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-shaper\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><path d=\"M 8,56 L 56,8\" fill=\"none\" stroke=\"url(#icon-shaper)\" stroke-width=\"1.5\" stroke-linecap=\"round\" opacity=\"0.35\"/><path d=\"M 8,54 C 20,52 26,44 32,32 C 38,20 44,12 56,10\" fill=\"none\" stroke=\"url(#icon-shaper)\" stroke-width=\"2.5\" stroke-linecap=\"round\"/><circle cx=\"20\" cy=\"49\" r=\"3\" fill=\"none\" stroke=\"url(#icon-shaper)\" stroke-width=\"2\"/><circle cx=\"32\" cy=\"32\" r=\"3\" fill=\"none\" stroke=\"url(#icon-shaper)\" stroke-width=\"2\"/><circle cx=\"44\" cy=\"15\" r=\"3\" fill=\"none\" stroke=\"url(#icon-shaper)\" stroke-width=\"2\"/></svg>"
   }
 }

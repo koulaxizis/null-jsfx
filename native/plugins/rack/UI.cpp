@@ -1594,12 +1594,29 @@ protected:
         dim();
         static const char* const cats[] = { "Chain", "Routing", "Macro" };
         static const char* const titles[] = { "CHAINS", "ROUTING", "MACROS" };
-        const float x = 24.0f, y = 100.0f, w = 560.0f, itemH = 19.0f;
+        const float x = 24.0f, y = 100.0f, itemH = 19.0f, head = 66.0f, minColW = 150.0f, maxColW = 178.0f;
         int counts[3] = {};
         for (uint32_t i = 0; i < kNumPresets; ++i)
             for (int c = 0; c < 3; ++c)
                 counts[c] += std::strcmp(kPresets[i].category, cats[c]) == 0;
-        const float h = 74.0f + float(std::max(counts[0], std::max(counts[1], counts[2]))) * itemH;
+        // as few rows as fit: a group takes as many columns as it needs, the columns stay at least
+        // minColW wide while the window has room (beyond that they narrow and the names clip)
+        const float room = float(kWidth) - x - 24.0f - 24.0f;
+        const int maxRows = std::max(1, int((float(kHeight) - 16.0f - y - head) / itemH));
+        int rows = 1, cols[3] = { 1, 1, 1 }, totalCols = 3;
+        for (rows = 1; rows <= maxRows; ++rows)
+        {
+            totalCols = 0;
+            for (int c = 0; c < 3; ++c)
+            {
+                cols[c] = std::max(1, (counts[c] + rows - 1) / rows);
+                totalCols += cols[c];
+            }
+            if (float(totalCols) * minColW <= room || rows == maxRows)
+                break;
+        }
+        const float colW = std::min(maxColW, room / float(totalCols));
+        const float w = 24.0f + colW * float(totalCols), h = head + 8.0f + float(rows) * itemH;
         beginPath();
         roundedRect(x + 0.5f, y + 4.0f, w - 1.0f, h - 1.0f, 8.0f);
         fillColor(Color(0, 0, 0, 0.4f));
@@ -1610,16 +1627,24 @@ protected:
         // Init on its own line
         presetItem(x + 12.0f, y + 10.0f, 170.0f, itemH, 0, cur == 0);
         label(x + w - 16.0f, y + 20.0f, ALIGN_RIGHT, 6.5f, 1.2f, theme::kSlogan, "ALSO IN THE HOST'S PRESET MENU", true);
-        const float colW = (w - 24.0f) / 3.0f;
+        float cx = x + 12.0f;
+        char buf[16];
         for (int c = 0; c < 3; ++c)
         {
-            const float cx = x + 12.0f + float(c) * colW;
+            const float gw = colW * float(cols[c]);
             label(cx + 6.0f, y + 44.0f, ALIGN_LEFT, 7.5f, 2.0f, theme::kMuted, titles[c], true);
-            hline(cx, cx + colW - 8.0f, y + 52.0f, theme::kBorder);
+            std::snprintf(buf, sizeof(buf), "%d", counts[c]);
+            label(cx + gw - 12.0f, y + 44.0f, ALIGN_RIGHT, 7.0f, 1.0f, theme::kSlogan, buf, true);
+            hline(cx, cx + gw - 8.0f, y + 52.0f, theme::kBorder);
             int k = 0;
             for (uint32_t i = 0; i < kNumPresets; ++i)
                 if (std::strcmp(kPresets[i].category, cats[c]) == 0)
-                    presetItem(cx, y + 58.0f + float(k++) * itemH, colW - 8.0f, itemH, int(i), int(i) == cur);
+                {
+                    presetItem(cx + colW * float(k / rows), y + 58.0f + float(k % rows) * itemH, colW - 8.0f, itemH, int(i),
+                               int(i) == cur);
+                    ++k;
+                }
+            cx += gw;
         }
     }
 
@@ -1628,7 +1653,8 @@ protected:
         const bool lit = hovered(kHitPresetPick, i);
         if (cur || lit)
             panel(x, y, w, h - 1.0f, cur ? kSelFill : theme::kBackground, theme::kTrackHover, 3.0f);
-        label(x + 7.0f, y + h * 0.5f, ALIGN_LEFT, 8.5f, 0.2f, cur || lit ? theme::kText : 0xc8c8c8, kPresets[i].name);
+        clipLabel(x + 7.0f, y + h * 0.5f, ALIGN_LEFT, 8.5f, 0.2f, cur || lit ? theme::kText : 0xc8c8c8, kPresets[i].name,
+                  w - 12.0f, false);
         addHit(x, y, w, h - 1.0f, kHitPresetPick, i);
     }
 

@@ -1,0 +1,40 @@
+BYPASS 0 0
+<JS null_jsfx/dynamics.jsfx ""
+  0 -22 3 10 20 300 5 3 20 100 0 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+>
+FXID {932A6015-7F8F-579B-94F0-76374F5EF18D}
+WAK 0 0
+BYPASS 0 0
+<JS null_jsfx/exciter.jsfx ""
+  25 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+>
+FXID {73EB3A82-89D6-595E-B955-060A9687389D}
+WAK 0 0
+BYPASS 0 0
+<JS null_jsfx/delay.jsfx ""
+  250 30 15 1 0 1 300 6000 0 0 30 40 0 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+>
+FXID {D5B56EA9-DFCB-517B-B078-48ED0E2C22C4}
+<PROGRAMENV 2 0
+  PARAMBASE 0.15
+  LFO 0
+  LFOWT 1 1
+  AUDIOCTL 0
+  AUDIOCTLWT 1 1
+  PLINK 0.8 3:1 5 -0.16
+>
+WAK 0 0
+BYPASS 0 0
+<JS null_jsfx/shimmer_reverb.jsfx ""
+  75 5 25 0 7000 20 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+>
+FXID {865E1CBD-24D5-5920-85AA-58F17AEC03D8}
+<PROGRAMENV 2 0
+  PARAMBASE 0.25
+  LFO 0
+  LFOWT 1 1
+  AUDIOCTL 0
+  AUDIOCTLWT 1 1
+  PLINK 0.8 1:-2 0 -0.2
+>
+WAK 0 0

@@ -1,0 +1,443 @@
+desc:NULL Tape Echo GFX
+author: Christos Koulaxizis
+tags: tape echo delay space multi-head repeat dub reggae spring reverb wow flutter saturation self-oscillation vintage sync freeze gui
+//category: Essentials
+//NULL JSFX v2.4 • https://nulljsfx.tech • MIT License
+
+import null_gfx.jsfx-inc
+
+slider1:300<50,1000,1>-Repeat Time (ms)
+slider2:0<0,7,1{Off,1/4,1/8,1/16,1/4D,1/8D,1/4T,1/8T}>-Tempo Sync
+slider3:3<0,11,1{1,2,3,1+2,1+3,2+3,1+2+3,1+R,1+2+R,2+3+R,1+2+3+R,R}>-Heads
+slider4:40<0,110,1>-Intensity (%)
+slider5:0<-12,12,0.1>-Bass (dB)
+slider6:0<-12,12,0.1>-Treble (dB)
+slider7:25<0,100,1>-Wow/Flutter (%)
+slider8:30<0,100,1>-Saturation (%)
+slider9:0<0,100,1>-Spring (%)
+slider10:35<0,100,1>-Mix (%)
+slider11:0<0,1,1{Off,On}>-Freeze
+
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
+
+@init
+  // NULL Tape Echo (../tape_echo.jsfx) with its own interface: same audio code, plus @gfx.
+  // A multi-head tape echo. One tape loop per channel is written by the record head and read
+  // by three playback heads at 1x, 2x and 3x the Repeat Time (or the synced note). The heads
+  // the Heads selector picks are summed into ONE feedback loop: worn-tape band limit (12 dB/oct
+  // high cut at 4.5 kHz), tape saturation (slope 1 at 0, so it bends only loud repeats and keeps
+  // a self-oscillating loop bounded), a 90 Hz low cut, then Intensity back onto the tape.
+  // Wow and flutter move all heads together (one tape); a time change glides like a motor.
+  // The echoes get the Bass and Treble shelves; in the R modes a spring tank (as
+  // spring_reverb.jsfx) is fed with the input and the echoes and added at the Spring level.
+  // Freeze stops recording and loops what is on the tape (the longest active head's length).
+
+  // tape: a power of two that holds 3 x a dotted quarter at 40 bpm (6.75 s), the wow swing
+  // and the interpolation
+  buf_size = 1024;
+  while (buf_size < ceil(srate * 6.8) + 16) ( buf_size *= 2; );
+  buf_mask = buf_size - 1;
+  buf_l = 0;
+  buf_r = buf_size;
+  // spring tank: 40 all-pass stages and a loop line per spring
+  sp_stages = 40;
+  sp_max = ceil(srate * 0.08);
+  sp_apl = 2 * buf_size;
+  sp_apr = sp_apl + sp_stages;
+  sp_ll = sp_apr + sp_stages;
+  sp_lr = sp_ll + sp_max;
+  memset(0, 0, sp_lr + sp_max);
+  freembuf(sp_lr + sp_max);
+  wpos = 0;
+  sp_w = 0;
+
+  d_max = floor(srate * 2.25);        // the longest 1x head: a dotted quarter at 40 bpm
+  d_min = floor(srate * 0.02);
+  d_t = d_s = floor(srate * 0.3);
+  d_first = 1;                        // the first block sets the motor at speed (no glide)
+  ds_c = 1 - exp(-1 / (0.12 * srate)); // motor inertia: a time change glides (pitch sweep)
+  wf_p1 = 0; wf_p2 = 0.3; wf_p3 = 0; wf_p4 = 0.6;
+  wf_i1 = 0.55 / srate; wf_i2 = 1.37 / srate; wf_i3 = 6.9 / srate; wf_i4 = 11.3 / srate;
+  lc_a = 1 - exp(-2 * $pi * 90 / srate);
+  lc_l = lc_r = 0;
+  hc_l.z1 = hc_l.z2 = hc_r.z1 = hc_r.z2 = 0;
+  bs_l.z1 = bs_l.z2 = bs_r.z1 = bs_r.z2 = 0;
+  tr_l.z1 = tr_l.z2 = tr_r.z1 = tr_r.z2 = 0;
+  sp_len_l = floor(srate * 0.0437);
+  sp_len_r = floor(srate * 0.0531);
+  sp_a = 0.56;
+  sp_gl = min(0.97, 10 ^ (-3 * (sp_len_l / srate + sp_stages * 0.0001) / 2.2));
+  sp_gr = min(0.97, 10 ^ (-3 * (sp_len_r / srate + sp_stages * 0.0001) / 2.2));
+  sp_tc = exp(-2 * $pi * 3500 / srate);
+  sp_hc = exp(-2 * $pi * 120 / srate);
+  sp_hx = sp_hy = sp_lpl = sp_lpr = 0;
+  rv_was = 0;
+
+  // RBJ biquads (normalised), transposed direct form II
+  function te_lp(f, q) local(w, al) instance(b0, b1, b2, a1, a2)
+  (
+    w = 2 * $pi * f / srate; al = sin(w) / (2 * q);
+    b0 = (1 - cos(w)) / 2 / (1 + al); b1 = (1 - cos(w)) / (1 + al); b2 = b0;
+    a1 = -2 * cos(w) / (1 + al); a2 = (1 - al) / (1 + al);
+  );
+  function te_shelf(f, db, high) local(w, cs, A, sa, a0) instance(b0, b1, b2, a1, a2)
+  (
+    w = 2 * $pi * f / srate; cs = cos(w); A = 10 ^ (db / 40);
+    sa = 2 * sqrt(A) * sin(w) / 2 * sqrt(2);
+    high ? (
+      a0 = (A + 1) - (A - 1) * cs + sa;
+      b0 = A * ((A + 1) + (A - 1) * cs + sa) / a0;
+      b1 = -2 * A * ((A - 1) + (A + 1) * cs) / a0;
+      b2 = A * ((A + 1) + (A - 1) * cs - sa) / a0;
+      a1 = 2 * ((A - 1) - (A + 1) * cs) / a0;
+      a2 = ((A + 1) - (A - 1) * cs - sa) / a0;
+    ) : (
+      a0 = (A + 1) + (A - 1) * cs + sa;
+      b0 = A * ((A + 1) - (A - 1) * cs + sa) / a0;
+      b1 = 2 * A * ((A - 1) - (A + 1) * cs) / a0;
+      b2 = A * ((A + 1) - (A - 1) * cs - sa) / a0;
+      a1 = -2 * ((A - 1) + (A + 1) * cs) / a0;
+      a2 = ((A + 1) + (A - 1) * cs - sa) / a0;
+    );
+  );
+  function te_bq(x) local(y) instance(b0, b1, b2, a1, a2, z1, z2)
+  (
+    y = b0 * x + z1;
+    z1 = b1 * x - a1 * y + z2;
+    z2 = b2 * x - a2 * y;
+    abs(z1) < 0.000000000000000000001 ? z1 = 0;
+    abs(z2) < 0.000000000000000000001 ? z2 = 0;
+    y;
+  );
+  hc_l.te_lp(4500, 0.707);
+  hc_r.te_lp(4500, 0.707);
+
+  // 4-point cubic (Hermite) read at pos (fractional samples behind wpos) from tape b
+  function te_tap(b, pos) local(rp, i, fr, xm1, x0, x1, x2, c1, c2, c3)
+  (
+    rp = wpos - pos;
+    rp < 0 ? rp += buf_size;
+    i = floor(rp);
+    fr = rp - i;
+    xm1 = b[(i - 1) & buf_mask];
+    x0 = b[i];
+    x1 = b[(i + 1) & buf_mask];
+    x2 = b[(i + 2) & buf_mask];
+    c1 = 0.5 * (x1 - xm1);
+    c2 = xm1 - 2.5 * x0 + 2 * x1 - 0.5 * x2;
+    c3 = 0.5 * (x2 - xm1) + 1.5 * (x0 - x1);
+    ((c3 * fr + c2) * fr + c1) * fr + x0;
+  );
+
+  // tape saturation: an asymmetric soft curve, slope 1 at 0, bounded at about 1 / sat_g
+  function te_soft(v) ( v / sqrt(1 + v * v); );
+  function te_sat(x) ( (te_soft(x * sat_g + sat_b) - te_soft(sat_b)) * sat_comp; );
+
+  // the spring's dispersive all-pass chain (states in apb[0..sp_stages-1])
+  function te_disperse(x, apb) local(i, y, s)
+  (
+    i = 0;
+    loop(sp_stages,
+      s = apb[i];
+      y = s - sp_a * x;
+      apb[i] = x + sp_a * y;
+      x = y;
+      i += 1;
+    );
+    x;
+  );
+
+  // the 1x head time: Repeat Time, or the note at the host tempo; slower tempos are clamped
+  function te_time()
+  (
+    slider2 >= 0.5 && tempo > 0 ? (
+      rt_ms = 60000 / tempo * (slider2 < 1.5 ? 1 : slider2 < 2.5 ? 0.5 : slider2 < 3.5 ? 0.25 : slider2 < 4.5 ? 1.5 :
+                               slider2 < 5.5 ? 0.75 : slider2 < 6.5 ? 2 / 3 : 1 / 3);
+    ) : (
+      rt_ms = slider1;
+    );
+    d_t = max(d_min, min(d_max, rt_ms * srate / 1000));
+    f_loop = floor(h_max * d_t + 0.5);
+  );
+
+  function update()
+  (
+    // heads (bits 1, 2, 4) and the spring (bit 8) of the 12 modes
+    hm = slider3 < 0.5 ? 1 : slider3 < 1.5 ? 2 : slider3 < 2.5 ? 4 : slider3 < 3.5 ? 3 : slider3 < 4.5 ? 5 :
+         slider3 < 5.5 ? 6 : slider3 < 6.5 ? 7 : slider3 < 7.5 ? 9 : slider3 < 8.5 ? 11 : slider3 < 9.5 ? 14 :
+         slider3 < 10.5 ? 15 : 8;
+    h_n = (hm & 1) + ((hm & 2) ? 1 : 0) + ((hm & 4) ? 1 : 0);
+    h_max = (hm & 4) ? 3 : (hm & 2) ? 2 : 1;
+    // the heads share the loop: Intensity 100% is unity loop gain in every mode
+    fb_n = h_n > 0 ? 1 / h_n : 0;
+    w_g = h_n > 0 ? 1 / sqrt(h_n) : 0;
+    inten = slider4 / 100;
+    bs_l.te_shelf(250, slider5, 0); bs_r.te_shelf(250, slider5, 0);
+    tr_l.te_shelf(2500, slider6, 1); tr_r.te_shelf(2500, slider6, 1);
+    wf_dw = slider7 / 100 * 0.0025 * srate / 1.31;     // wow: up to 2.5 ms
+    wf_df = slider7 / 100 * 0.00015 * srate / 1.4;     // flutter: up to 0.15 ms
+    sat_g = 0.5 + slider8 / 100 * 3.5;
+    sat_b = slider8 / 100 * 0.15;
+    sat_comp = (1 + sat_b * sat_b) ^ 1.5 / sat_g;
+    sp_lvl = slider9 / 100;
+    rv_on = (hm & 8) && slider9 > 0;
+    rv_on && !rv_was ? (
+      memset(sp_apl, 0, 2 * sp_stages + 2 * sp_max);
+      sp_hx = sp_hy = sp_lpl = sp_lpr = 0;
+      sp_w = 0;
+    );
+    rv_was = rv_on;
+    mix = slider10 / 100;
+    frz = slider11 >= 0.5;
+    te_time();
+  );
+
+  gfx_ext_retina = 1;
+
+  // ---- factory presets: generated by tools/build_presets.py, do not edit ----
+  ng_pre_n = 8;
+
+  function ng_preset_load(p)
+  (
+    p == 0 ? ( ng_slider_set(1, 300); ng_slider_set(2, 0); ng_slider_set(3, 3); ng_slider_set(4, 40); ng_slider_set(5, 0); ng_slider_set(6, 0); ng_slider_set(7, 25); ng_slider_set(8, 30); ng_slider_set(9, 0); ng_slider_set(10, 35); ng_slider_set(11, 0); );
+    p == 1 ? ( ng_slider_set(1, 420); ng_slider_set(2, 0); ng_slider_set(3, 4); ng_slider_set(4, 72); ng_slider_set(5, -3); ng_slider_set(6, -2); ng_slider_set(7, 30); ng_slider_set(8, 45); ng_slider_set(9, 0); ng_slider_set(10, 40); ng_slider_set(11, 0); );
+    p == 2 ? ( ng_slider_set(1, 110); ng_slider_set(2, 0); ng_slider_set(3, 0); ng_slider_set(4, 8); ng_slider_set(5, 0); ng_slider_set(6, -1.5); ng_slider_set(7, 15); ng_slider_set(8, 35); ng_slider_set(9, 0); ng_slider_set(10, 30); ng_slider_set(11, 0); );
+    p == 3 ? ( ng_slider_set(1, 520); ng_slider_set(2, 0); ng_slider_set(3, 10); ng_slider_set(4, 78); ng_slider_set(5, -4); ng_slider_set(6, -3); ng_slider_set(7, 40); ng_slider_set(8, 40); ng_slider_set(9, 55); ng_slider_set(10, 45); ng_slider_set(11, 0); );
+    p == 4 ? ( ng_slider_set(1, 260); ng_slider_set(2, 0); ng_slider_set(3, 0); ng_slider_set(4, 108); ng_slider_set(5, 0); ng_slider_set(6, 0); ng_slider_set(7, 35); ng_slider_set(8, 70); ng_slider_set(9, 0); ng_slider_set(10, 50); ng_slider_set(11, 0); );
+    p == 5 ? ( ng_slider_set(1, 340); ng_slider_set(2, 0); ng_slider_set(3, 3); ng_slider_set(4, 55); ng_slider_set(5, -6); ng_slider_set(6, -9); ng_slider_set(7, 85); ng_slider_set(8, 80); ng_slider_set(9, 0); ng_slider_set(10, 40); ng_slider_set(11, 0); );
+    p == 6 ? ( ng_slider_set(1, 300); ng_slider_set(2, 2); ng_slider_set(3, 3); ng_slider_set(4, 45); ng_slider_set(5, 0); ng_slider_set(6, 0); ng_slider_set(7, 12); ng_slider_set(8, 25); ng_slider_set(9, 0); ng_slider_set(10, 30); ng_slider_set(11, 0); );
+    p == 7 ? ( ng_slider_set(1, 280); ng_slider_set(2, 0); ng_slider_set(3, 8); ng_slider_set(4, 45); ng_slider_set(5, 0); ng_slider_set(6, -2); ng_slider_set(7, 25); ng_slider_set(8, 35); ng_slider_set(9, 60); ng_slider_set(10, 38); ng_slider_set(11, 0); );
+  );
+
+  // the first preset every slider matches, or -1
+  function ng_preset_match() local(m)
+  (
+    m = -1;
+    m < 0 && ng_pre_eq(slider1, 300) && ng_pre_eq(slider2, 0) && ng_pre_eq(slider3, 3) && ng_pre_eq(slider4, 40) && ng_pre_eq(slider5, 0) && ng_pre_eq(slider6, 0) && ng_pre_eq(slider7, 25) && ng_pre_eq(slider8, 30) && ng_pre_eq(slider9, 0) && ng_pre_eq(slider10, 35) && ng_pre_eq(slider11, 0) ? m = 0;
+    m < 0 && ng_pre_eq(slider1, 420) && ng_pre_eq(slider2, 0) && ng_pre_eq(slider3, 4) && ng_pre_eq(slider4, 72) && ng_pre_eq(slider5, -3) && ng_pre_eq(slider6, -2) && ng_pre_eq(slider7, 30) && ng_pre_eq(slider8, 45) && ng_pre_eq(slider9, 0) && ng_pre_eq(slider10, 40) && ng_pre_eq(slider11, 0) ? m = 1;
+    m < 0 && ng_pre_eq(slider1, 110) && ng_pre_eq(slider2, 0) && ng_pre_eq(slider3, 0) && ng_pre_eq(slider4, 8) && ng_pre_eq(slider5, 0) && ng_pre_eq(slider6, -1.5) && ng_pre_eq(slider7, 15) && ng_pre_eq(slider8, 35) && ng_pre_eq(slider9, 0) && ng_pre_eq(slider10, 30) && ng_pre_eq(slider11, 0) ? m = 2;
+    m < 0 && ng_pre_eq(slider1, 520) && ng_pre_eq(slider2, 0) && ng_pre_eq(slider3, 10) && ng_pre_eq(slider4, 78) && ng_pre_eq(slider5, -4) && ng_pre_eq(slider6, -3) && ng_pre_eq(slider7, 40) && ng_pre_eq(slider8, 40) && ng_pre_eq(slider9, 55) && ng_pre_eq(slider10, 45) && ng_pre_eq(slider11, 0) ? m = 3;
+    m < 0 && ng_pre_eq(slider1, 260) && ng_pre_eq(slider2, 0) && ng_pre_eq(slider3, 0) && ng_pre_eq(slider4, 108) && ng_pre_eq(slider5, 0) && ng_pre_eq(slider6, 0) && ng_pre_eq(slider7, 35) && ng_pre_eq(slider8, 70) && ng_pre_eq(slider9, 0) && ng_pre_eq(slider10, 50) && ng_pre_eq(slider11, 0) ? m = 4;
+    m < 0 && ng_pre_eq(slider1, 340) && ng_pre_eq(slider2, 0) && ng_pre_eq(slider3, 3) && ng_pre_eq(slider4, 55) && ng_pre_eq(slider5, -6) && ng_pre_eq(slider6, -9) && ng_pre_eq(slider7, 85) && ng_pre_eq(slider8, 80) && ng_pre_eq(slider9, 0) && ng_pre_eq(slider10, 40) && ng_pre_eq(slider11, 0) ? m = 5;
+    m < 0 && ng_pre_eq(slider1, 300) && ng_pre_eq(slider2, 2) && ng_pre_eq(slider3, 3) && ng_pre_eq(slider4, 45) && ng_pre_eq(slider5, 0) && ng_pre_eq(slider6, 0) && ng_pre_eq(slider7, 12) && ng_pre_eq(slider8, 25) && ng_pre_eq(slider9, 0) && ng_pre_eq(slider10, 30) && ng_pre_eq(slider11, 0) ? m = 6;
+    m < 0 && ng_pre_eq(slider1, 280) && ng_pre_eq(slider2, 0) && ng_pre_eq(slider3, 8) && ng_pre_eq(slider4, 45) && ng_pre_eq(slider5, 0) && ng_pre_eq(slider6, -2) && ng_pre_eq(slider7, 25) && ng_pre_eq(slider8, 35) && ng_pre_eq(slider9, 60) && ng_pre_eq(slider10, 38) && ng_pre_eq(slider11, 0) ? m = 7;
+    m;
+  );
+
+  function ng_preset_name(p) local(s)
+  (
+    s = "";
+    p == 0 ? s = "Default";
+    p == 1 ? s = "Dub Echo";
+    p == 2 ? s = "Slapback Head";
+    p == 3 ? s = "Space Wash";
+    p == 4 ? s = "Runaway Oscillation";
+    p == 5 ? s = "Lo-Fi Tape Echo";
+    p == 6 ? s = "Synced Eighths";
+    p == 7 ? s = "Spring Echo";
+    s;
+  );
+
+  function ng_presets() local(i)
+  (
+    ng_pre_req >= 0 ? ( ng_preset_load(ng_pre_req); update(); ng_pre_req = -1; );
+    ng_pre_cur = ng_preset_match();
+    ng_pre_open ? (
+      ng_pre_menu_begin();
+      i = 0;
+      loop(ng_pre_n, ng_pre_item(i, ng_preset_name(i)); i += 1;);
+      ng_pre_menu_end();
+    );
+    strcpy(#ng_pre_name, ng_pre_cur >= 0 ? ng_preset_name(ng_pre_cur) : "CUSTOM");
+  );
+  // ---- end of factory presets ----
+
+@slider
+  update();
+
+@block
+  te_time();
+  d_first ? ( d_s = d_t; d_first = 0; );
+
+@sample
+  // the motor follows the time, wow and flutter move the whole tape
+  d_s += ds_c * (d_t - d_s);
+  wf_p1 += wf_i1; wf_p1 >= 1 ? wf_p1 -= 1;
+  wf_p2 += wf_i2; wf_p2 >= 1 ? wf_p2 -= 1;
+  wf_p3 += wf_i3; wf_p3 >= 1 ? wf_p3 -= 1;
+  wf_p4 += wf_i4; wf_p4 >= 1 ? wf_p4 -= 1;
+  wf_m = wf_dw * (sin(2 * $pi * wf_p1) + 0.31 * sin(2 * $pi * wf_p2))
+       + wf_df * (sin(2 * $pi * wf_p3) + 0.4 * sin(2 * $pi * wf_p4));
+
+  // playback heads
+  hs_l = hs_r = 0;
+  (hm & 1) ? ( hd = d_s + wf_m; hs_l += te_tap(buf_l, hd); hs_r += te_tap(buf_r, hd); );
+  (hm & 2) ? ( hd = 2 * d_s + wf_m; hs_l += te_tap(buf_l, hd); hs_r += te_tap(buf_r, hd); );
+  (hm & 4) ? ( hd = 3 * d_s + wf_m; hs_l += te_tap(buf_l, hd); hs_r += te_tap(buf_r, hd); );
+
+  // the feedback loop: band limit, saturation, low cut
+  e_l = te_sat(hc_l.te_bq(hs_l * fb_n));
+  e_r = te_sat(hc_r.te_bq(hs_r * fb_n));
+  lc_l += lc_a * (e_l - lc_l); e_l -= lc_l;
+  lc_r += lc_a * (e_r - lc_r); e_r -= lc_r;
+
+  // record head (Freeze: no input, the tape loops unchanged)
+  frz ? (
+    buf_l[wpos] = buf_l[(wpos - f_loop) & buf_mask];
+    buf_r[wpos] = buf_r[(wpos - f_loop) & buf_mask];
+  ) : (
+    buf_l[wpos] = spl0 + e_l * inten;
+    buf_r[wpos] = spl1 + e_r * inten;
+  );
+  wpos = (wpos + 1) & buf_mask;
+
+  // the echoes with their tone
+  w_l = tr_l.te_bq(bs_l.te_bq(hs_l * w_g));
+  w_r = tr_r.te_bq(bs_r.te_bq(hs_r * w_g));
+
+  rv_on ? (
+    // spring tank fed with the input and the echoes
+    sp_x = (spl0 + spl1) * 0.5 + (w_l + w_r) * 0.5;
+    sp_hy = sp_hc * (sp_hy + sp_x - sp_hx); sp_hx = sp_x;
+    sp_rp = sp_w - sp_len_l; sp_rp < 0 ? sp_rp += sp_max;
+    sp_fl = sp_ll[sp_rp];
+    sp_rp = sp_w - sp_len_r; sp_rp < 0 ? sp_rp += sp_max;
+    sp_fr = sp_lr[sp_rp];
+    sp_sl = te_disperse(sp_hy + sp_fl * sp_gl, sp_apl);
+    sp_sr = te_disperse(sp_hy + sp_fr * sp_gr, sp_apr);
+    sp_lpl = (1 - sp_tc) * sp_sl + sp_tc * sp_lpl;
+    sp_lpr = (1 - sp_tc) * sp_sr + sp_tc * sp_lpr;
+    sp_ll[sp_w] = sp_lpl;
+    sp_lr[sp_w] = sp_lpr;
+    sp_w += 1; sp_w >= sp_max ? sp_w = 0;
+    w_l += (sp_lpl + (sp_sl - sp_lpl) * 0.28) * sp_lvl;
+    w_r += (sp_lpr + (sp_sr - sp_lpr) * 0.28) * sp_lvl;
+  );
+
+  spl0 = spl0 * (1 - mix) + w_l * mix;
+  spl1 = spl1 * (1 - mix) + w_r * mix;
+
+@gfx 480 380
+  ng_knobs_begin("TAPE ECHO", "ESSENTIALS", 480, 120, 2, 0);
+
+  // display: the tape above (record head at 0, playback heads 1-3 at 1x, 2x, 3x the repeat
+  // time, lit when active; the mode and what colours it named on its right) and the repeats of
+  // an impulse below (level in dB, 0 to -48), the dry signal at 0
+  tg_ms = rt_ms;
+  tg_win = 6 * tg_ms <= 2500 ? 2500 : 6 * tg_ms <= 5000 ? 5000 : 6 * tg_ms <= 10000 ? 10000 : 15000;
+  ng_plot(ng_vx + 26, ng_vy + 22, ng_vw - 30, ng_vh - 38);
+  ng_grid(5, 4, 0);
+  ng_font(4, 8, 0);
+  ng_col(NG_MUTED, 1);
+  ng_ptxt("0", ng_px - 6 * ng_s, ng_py, 2);
+  ng_ptxt("-24", ng_px - 6 * ng_s, ng_py + ng_ph / 2, 2);
+  ng_ptxt("-48", ng_px - 6 * ng_s, ng_py + ng_ph, 2);
+  tg_i = 1;
+  loop(4, sprintf(#tg_t, "%.1f s", tg_i * tg_win / 5000); ng_ptxt(#tg_t, ng_px + ng_pw * tg_i / 5, ng_py + ng_ph + 10 * ng_s, 1); tg_i += 1;);
+  tg_pos = max(0, min(11, floor(slider3 + 0.5)));
+  strcpy(#tg_a, tg_pos == 0 ? "1" : tg_pos == 1 ? "2" : tg_pos == 2 ? "3" : tg_pos == 3 ? "1+2" : tg_pos == 4 ? "1+3" :
+                tg_pos == 5 ? "2+3" : tg_pos == 6 ? "1+2+3" : tg_pos == 7 ? "1+R" : tg_pos == 8 ? "1+2+R" :
+                tg_pos == 9 ? "2+3+R" : tg_pos == 10 ? "1+2+3+R" : "R");
+  strcpy(#tg_b, slider11 ? "  FREEZE" : slider4 > 100 ? "  RUNAWAY" : "");
+  (hm & 8) && slider9 > 0 ? sprintf(#tg_c, "  SPRING %d%%", slider9) : strcpy(#tg_c, "");
+  sprintf(#tg_s, "%s%s%s", #tg_a, #tg_b, #tg_c);
+  ng_ptxt(#tg_s, ng_px + ng_pw, Y(ng_vy + 10), 2);
+
+  // the tape and its heads
+  tg_ty = Y(ng_vy + 10);
+  ng_col(NG_BORDER, 1);
+  gfx_line(ng_px, floor(tg_ty) + 0.5, ng_px + ng_pw * 0.52, floor(tg_ty) + 0.5, 0);
+  function tg_head(x, y, w, on) local(x0, y0, ww, hh)
+  (
+    x0 = floor(x - w * ng_s / 2); y0 = floor(y - 5.5 * ng_s);
+    ww = floor(w * ng_s); hh = floor(11 * ng_s);
+    ng_col(on ? NG_ACCENT : NG_CARD, 1);
+    gfx_roundrect(x0, y0, ww, hh, 2 * ng_s, 1);
+    gfx_rect(x0 + 1, y0 + 1, ww - 1, hh - 1);
+    ng_col(on ? NG_ACCENT : NG_BORDER, 1);
+    gfx_roundrect(x0, y0, ww, hh, 2 * ng_s, 1);
+    ng_font(1, 7, 1);
+    ng_col(on ? NG_CARD : NG_MUTED, 1);
+  );
+  tg_head(ng_px + 9 * ng_s, tg_ty, 18, 1);
+  ng_ptxt("REC", ng_px + 9 * ng_s, tg_ty, 1);
+  tg_k = 1;
+  loop(3,
+    tg_x = ng_lin_x(tg_k * tg_ms, 0, tg_win);
+    tg_x <= ng_px + ng_pw - 6 * ng_s ? (
+      tg_on = (hm & (tg_k == 1 ? 1 : tg_k == 2 ? 2 : 4)) ? 1 : 0;
+      tg_on ? (
+        tg_xx = floor(tg_x) + 0.5;
+        ng_col(NG_ACCENT, 0.35);
+        tg_y = ng_py;
+        while (
+          gfx_line(tg_xx, tg_y, tg_xx, min(tg_y + 3 * ng_s, ng_py + ng_ph), 0);
+          tg_y += 6 * ng_s;
+          tg_y < ng_py + ng_ph;
+        );
+      );
+      tg_head(tg_x, tg_ty, 12, tg_on);
+      sprintf(#tg_t, "%d", tg_k);
+      ng_ptxt(#tg_t, tg_x, tg_ty, 1);
+    );
+    tg_k += 1;
+  );
+
+  // the repeats of an impulse (the loop's filters and saturation left out): the tape at 1, 2
+  // and 3 repeats back (t1..t3), each repeat the sum of the active heads
+  ng_font(4, 8, 0);
+  tg_bw = max(2, 3 * ng_s);
+  slider10 < 100 ? (
+    ng_col(NG_MUTED, 1);
+    tg_y = ng_lin_y(20 * log10(1 - slider10 / 100), -48, 0);
+    gfx_rect(ng_px, tg_y, tg_bw, ng_py + ng_ph - tg_y);
+  );
+  slider10 > 0 && tg_ms > 0 ? (
+    tg_h1 = (hm & 1) ? 1 : 0; tg_h2 = (hm & 2) ? 1 : 0; tg_h3 = (hm & 4) ? 1 : 0;
+    tg_n = tg_h1 + tg_h2 + tg_h3;
+    tg_c = tg_n > 0 ? (slider11 ? 1 : slider4 / 100) / tg_n : 0;
+    tg_wg = tg_n > 0 ? 1 / sqrt(tg_n) : 0;
+    tg_t1 = 1; tg_t2 = tg_t3 = 0;
+    tg_j = 1;
+    ng_col(NG_ACCENT, 1);
+    while (tg_j <= 64 && tg_j * tg_ms <= tg_win) (
+      tg_sum = tg_h1 * tg_t1 + tg_h2 * tg_t2 + tg_h3 * tg_t3;
+      tg_g = slider10 / 100 * tg_wg * tg_sum;
+      tg_g > 0.004 ? (
+        tg_x = ng_lin_x(tg_j * tg_ms, 0, tg_win);
+        tg_y = ng_lin_y(20 * log10(tg_g), -48, 0);
+        gfx_rect(tg_x - tg_bw / 2, tg_y, tg_bw, ng_py + ng_ph - tg_y);
+      );
+      tg_t3 = tg_t2; tg_t2 = tg_t1; tg_t1 = tg_c * tg_sum;
+      tg_j += 1;
+    );
+  );
+
+  ng_row(6);
+  slider2 ? sprintf(#v1, "%d ms", floor(rt_ms + 0.5)) : sprintf(#v1, "%d ms", slider1);
+  ng_knob_ctl(1, "TIME", #v1, 50, 1000, 300, 1, 0) ? update();
+  sprintf(#v4, "%d%%", slider4);
+  ng_knob_ctl(4, "INTENSITY", #v4, 0, 110, 40, 1, 0) ? update();
+  sprintf(#v10, "%d%%", slider10);
+  ng_knob_ctl(10, "MIX", #v10, 0, 100, 35, 1, 0) ? update();
+  ng_select_ctl(3, "HEADS", "1|2|3|1+2|1+3|2+3|1+2+3|1+R|1+2+R|2+3+R|1+2+3+R|R", 0) ? update();
+  ng_select_ctl(2, "SYNC", "OFF|1/4|1/8|1/16|1/4D|1/8D|1/4T|1/8T", 0) ? update();
+  ng_select_ctl(11, "FREEZE", "OFF|ON", 0) ? update();
+  ng_row(5);
+  sprintf(#v8, "%d%%", slider8);
+  ng_knob_ctl(8, "SATURATION", #v8, 0, 100, 30, 1, 0) ? update();
+  slider5 > 0 ? sprintf(#v5, "+%.1f dB", slider5) : sprintf(#v5, "%.1f dB", slider5);
+  ng_knob_ctl(5, "BASS", #v5, -12, 12, 0, 0.1, 1) ? update();
+  slider6 > 0 ? sprintf(#v6, "+%.1f dB", slider6) : sprintf(#v6, "%.1f dB", slider6);
+  ng_knob_ctl(6, "TREBLE", #v6, -12, 12, 0, 0.1, 1) ? update();
+  sprintf(#v7, "%d%%", slider7);
+  ng_knob_ctl(7, "WOW/FLUTTER", #v7, 0, 100, 25, 1, 0) ? update();
+  sprintf(#v9, "%d%%", slider9);
+  ng_knob_ctl(9, "SPRING", #v9, 0, 100, 0, 1, 0) ? update();
+
+  ng_end();
+
+  ng_presets(); // the preset list (generated by tools/build_presets.py)

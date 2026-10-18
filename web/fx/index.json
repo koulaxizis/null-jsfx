@@ -758,6 +758,20 @@
    "bytes": 37219
   },
   {
+   "id": "shaper",
+   "name": "Shaper",
+   "category": "Essentials",
+   "tags": "shaper waveshaper waveshaping distortion saturation fold wavefolder transfer curve drawable oversampling harmonics gui",
+   "gfx": [
+    480,
+    460
+   ],
+   "ins": 2,
+   "outs": 2,
+   "sliders": 24,
+   "bytes": 86035
+  },
+  {
    "id": "sidechain_ducker",
    "name": "Sidechain Ducker",
    "category": "Essentials",
@@ -798,6 +812,20 @@
    "outs": 2,
    "sliders": 8,
    "bytes": 51333
+  },
+  {
+   "id": "tape_echo",
+   "name": "Tape Echo",
+   "category": "Essentials",
+   "tags": "tape echo delay space multi-head repeat dub reggae spring reverb wow flutter saturation self-oscillation vintage sync freeze gui",
+   "gfx": [
+    480,
+    380
+   ],
+   "ins": 2,
+   "outs": 2,
+   "sliders": 11,
+   "bytes": 61126
   },
   {
    "id": "transient_shaper",
@@ -854,6 +882,20 @@
    "outs": 2,
    "sliders": 6,
    "bytes": 40186
+  },
+  {
+   "id": "wah",
+   "name": "Wah",
+   "category": "Essentials",
+   "tags": "wah wah-wah pedal auto-wah envelope filter lfo funk guitar quack vocal formant band-pass sweep tempo sync gui",
+   "gfx": [
+    480,
+    380
+   ],
+   "ins": 2,
+   "outs": 2,
+   "sliders": 11,
+   "bytes": 45457
   },
   {
    "id": "amp_simulator",
@@ -952,6 +994,20 @@
    "outs": 2,
    "sliders": 9,
    "bytes": 39657
+  },
+  {
+   "id": "half_speed",
+   "name": "Half Speed",
+   "category": "Advanced",
+   "tags": "half speed halftime half-time slow down octave down tempo sync time stretch granular pitch creative gui",
+   "gfx": [
+    480,
+    294
+   ],
+   "ins": 2,
+   "outs": 2,
+   "sliders": 6,
+   "bytes": 38141
   },
   {
    "id": "harmonizer",
@@ -1136,6 +1192,20 @@
    "bytes": 39200
   },
   {
+   "id": "slicer",
+   "name": "Slicer",
+   "category": "Advanced",
+   "tags": "slicer slice beat repeat rearrange shuffle stutter reverse backspin chop remix loop tempo sync glitch creative gui",
+   "gfx": [
+    480,
+    380
+   ],
+   "ins": 2,
+   "outs": 2,
+   "sliders": 8,
+   "bytes": 49532
+  },
+  {
    "id": "spectral_freeze",
    "name": "Spectral Freeze",
    "category": "Advanced",
@@ -1176,6 +1246,20 @@
    "outs": 2,
    "sliders": 6,
    "bytes": 34435
+  },
+  {
+   "id": "step_fx",
+   "name": "Step FX",
+   "category": "Advanced",
+   "tags": "step fx 16-step sequencer glitch stutter repeat reverse filter gate tape stop pitch crush tempo sync midi creative gui",
+   "gfx": [
+    480,
+    390
+   ],
+   "ins": 2,
+   "outs": 2,
+   "sliders": 25,
+   "bytes": 72206
   },
   {
    "id": "stereo_scope",

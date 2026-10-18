@@ -1,0 +1,194 @@
+desc:NULL Slicer
+author: Christos Koulaxizis
+tags: slicer slice beat repeat rearrange shuffle stutter reverse backspin chop remix loop tempo sync glitch creative
+//category: Advanced
+//NULL JSFX v2.4 • https://nulljsfx.tech • MIT License
+
+slider1:1<0,5,1{Straight,Shuffle,Reverse Pairs,Stutter,Backspin,Random}>Pattern
+slider2:50<0,100,1>Variation (%)
+slider3:1<1,999,1>Seed
+slider4:1<0,2,1{8,16,32}>Slices
+slider5:0<0,100,1>Reverse Chance (%)
+slider6:25<0,100,1>Repeat Chance (%)
+slider7:100<0,100,1>Gate (%)
+slider8:100<0,100,1>Mix (%)
+
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
+
+@init
+  // Real-time loop remixer. Every bar (4 beats) of input is recorded into one of two bar
+  // buffers while the other one, the previous bar, is played back cut into Slices equal
+  // slices in a new order, so the output runs one bar behind. The order comes from Pattern:
+  // Shuffle swaps the picked slices among themselves, Reverse Pairs plays picked pairs of
+  // slices backwards as one piece, Stutter repeats the slice before, Backspin rewinds the audio
+  // with a speeding-up tape spin, Random plays any slice. Variation is the chance that a slice
+  // is picked; then each slice may be reversed (Reverse Chance) or retriggered, playing its
+  // first half twice (Repeat Chance). All choices come from Seed (a Park-Miller generator) and
+  // stay the same every bar. Until the first whole bar is recorded the input passes through.
+  // Gate shortens every slice; each cut gets 2.5 ms fades, slices that continue the audio
+  // seamlessly are not faded. While the transport plays the bar is locked to
+  // the song position; stopped, it free-runs at the host tempo. Tempo is clamped to 40..300 bpm.
+  fd = max(1, floor(0.0025 * srate));         // fade length
+  bmax = ceil(srate * 6) + 4;                 // one bar at 40 bpm
+  pa = 4 * bmax;                              // pattern arrays after the two stereo bar buffers
+  src = pa; rv = pa + 32; rp = pa + 64; bs = pa + 96; fi = pa + 128; fo = pa + 160;
+  ua = pa + 192; up = pa + 224; ur = pa + 256; uq = pa + 288; lst = pa + 320; prm = pa + 352;
+  memset(0, 0, pa + 384);
+  freembuf(pa + 384);
+  n = 0;       // sample within the bar
+  cur = 0;     // bar buffer being recorded (the other one plays)
+  jf = 1;      // fade-in after a jump of the song position
+  full = 0;    // a whole bar has been recorded (until then the input passes through)
+  fl = 0;      // crossfade from the input to the slices once it has
+
+  // random value in [0, x): a Park-Miller generator in exact double arithmetic, so it gives
+  // the same sequence on every CPU (and in the VST3/CLAP build)
+  function prand(x)
+  (
+    seed *= 16807; seed -= floor(seed / 2147483647) * 2147483647;
+    seed / 2147483648 * x;
+  );
+
+  function rd(base, p) local(i, f)
+  (
+    i = floor(p);
+    f = p - i;
+    base[i] + (base[i + 1] - base[i]) * f;
+  );
+
+@slider
+  pat = slider1;
+  ns = slider4 == 0 ? 8 : slider4 == 1 ? 16 : 32;
+  gate = slider7 / 100;
+  mix = slider8 / 100;
+  // the dice, four per slice in a fixed order
+  seed = slider3 * 7919 + 13;
+  loop(4, prand(1));
+  j = 0;
+  loop(ns,
+    ua[j] = prand(100); up[j] = prand(1); ur[j] = prand(100); uq[j] = prand(100);
+    src[j] = j; rv[j] = 0; rp[j] = 0; bs[j] = 0;
+    j += 1;
+  );
+  pat == 1 ? (
+    // shuffle the picked slices among themselves (Fisher-Yates)
+    m = 0; j = 0;
+    loop(ns, ua[j] < slider2 ? (lst[m] = j; prm[m] = j; m += 1;); j += 1;);
+    i = m - 1;
+    while (i >= 1) (
+      k = floor(up[lst[i]] * (i + 1));
+      t = prm[i]; prm[i] = prm[k]; prm[k] = t;
+      i -= 1;
+    );
+    i = 0;
+    loop(m, src[lst[i]] = prm[i]; i += 1;);
+  );
+  pat == 2 ? (
+    // picked pairs play backwards as one piece
+    j = 0;
+    loop(ns / 2,
+      ua[j] < slider2 ? (src[j] = j + 1; src[j + 1] = j; rv[j] = 1; rv[j + 1] = 1;);
+      j += 2;
+    );
+  );
+  pat == 3 ? (
+    j = 1;
+    loop(ns - 1, ua[j] < slider2 ? src[j] = src[j - 1]; j += 1;);
+  );
+  pat == 4 ? (
+    j = 1;
+    loop(ns - 1, ua[j] < slider2 ? bs[j] = 1; j += 1;);
+  );
+  pat == 5 ? (
+    j = 0;
+    loop(ns, ua[j] < slider2 ? src[j] = floor(up[j] * ns); j += 1;);
+  );
+  j = 0;
+  loop(ns,
+    bs[j] ? (rv[j] = 0;) : (
+      ur[j] < slider5 ? rv[j] = 1;
+      rp[j] = uq[j] < slider6;
+    );
+    j += 1;
+  );
+  // fades only where the audio does not simply continue from the slice before
+  j = 0;
+  loop(ns,
+    k = j == 0 ? ns - 1 : j - 1;
+    c = gate >= 1 && !bs[j] && !bs[k] && !rp[j] && !rp[k] && (
+      (!rv[j] && !rv[k] && src[j] == src[k] + 1 - (j == 0 ? ns : 0)) ||
+      (j > 0 && rv[j] && rv[k] && src[j] == src[k] - 1));
+    fi[j] = !c;
+    fo[k] = !c;
+    j += 1;
+  );
+
+@block
+  bpm = tempo > 0 ? tempo : 120;
+  bpm = min(300, max(40, bpm));
+  spb = srate * 60 / bpm;
+  bl = 4 * spb;
+  sl = bl / ns;
+  play_state & 1 ? (
+    // lock the bar to the song position; small drift is corrected, a jump fades in again
+    sc_bar = floor(beat_position / 4);
+    nt = floor((beat_position - 4 * sc_bar) * spb + 0.5);
+    ct = sc_bar - 2 * floor(sc_bar / 2);
+    at = ct * bl + nt;
+    a = cur * bl + n;
+    d = at - a;
+    d > bl ? (d -= 2 * bl) : (d < -bl ? d += 2 * bl);
+    abs(d) > 2 ? (
+      n = nt; cur = ct; jf = 0;
+    ) : (
+      abs(at - a) <= 2 ? (n = nt; cur = ct;);
+    );
+  );
+
+@sample
+  n >= bl ? (n = 0; cur = 1 - cur; full = 1;);
+  wb = cur * 2 * bmax;
+  n < bmax - 2 ? (
+    wb[n] = spl0;
+    wb[bmax + n] = spl1;
+  );
+  // the slice playing now, read from the previous bar
+  j = min(ns - 1, floor(n / sl));
+  o = n - j * sl;
+  ae = gate * sl;
+  bs[j] ? (
+    // backspin: rewind from the slice start, speeding up from 1x to 3x
+    p = j * sl - (o + o * o / sl);
+    env = min(min(1, o / fd), (ae - o) / fd);
+  ) : rp[j] ? (
+    // repeat: the first half of the slice twice
+    h = sl / 2;
+    o < h ? (
+      oo = o;
+      env = min(fi[j] ? o / fd : 1, (min(h, ae) - o) / fd);
+    ) : (
+      oo = o - h;
+      env = min((o - h) / fd, (ae - o) / fd);
+    );
+    p = rv[j] ? src[j] * sl + sl - 1 - oo : src[j] * sl + oo;
+  ) : (
+    p = rv[j] ? src[j] * sl + sl - 1 - o : src[j] * sl + o;
+    env = min(fi[j] ? o / fd : 1, fo[j] || gate < 1 ? (ae - o) / fd : 1);
+  );
+  env = max(0, min(1, env)) * jf;
+  jf < 1 ? jf = min(1, jf + 1 / fd);
+  p = max(0, min(bmax - 2, p));
+  rb = (1 - cur) * 2 * bmax;
+  wl = rd(rb, p) * env;
+  wr = rd(rb + bmax, p) * env;
+  fl < 1 ? (
+    full ? fl = min(1, fl + 1 / fd);
+    wl = wl * fl + spl0 * (1 - fl);
+    wr = wr * fl + spl1 * (1 - fl);
+  );
+  spl0 = spl0 * (1 - mix) + wl * mix;
+  spl1 = spl1 * (1 - mix) + wr * mix;
+  n += 1;

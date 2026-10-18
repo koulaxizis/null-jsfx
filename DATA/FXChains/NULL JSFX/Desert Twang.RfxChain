@@ -1,0 +1,54 @@
+BYPASS 0 0
+<JS null_jsfx/tremolo.jsfx ""
+  4.5 45 60 0 0 0 1 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+>
+FXID {05DE380D-FD27-5D29-AD66-421EC3124221}
+WAK 0 0
+BYPASS 0 0
+<JS null_jsfx/amp_simulator.jsfx ""
+  0 3 4 5 7 6 5 1 30 1 5 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+>
+FXID {C65FBD66-F682-5325-9F17-F59124FA989D}
+<PROGRAMENV 6 0
+  PARAMBASE 0.5
+  LFO 0
+  LFOWT 1 1
+  AUDIOCTL 0
+  AUDIOCTLWT 1 1
+  PLINK -0.5 1:0 1 0.15
+>
+WAK 0 0
+BYPASS 0 0
+<JS null_jsfx/cabinet_simulator.jsfx ""
+  0 35 80 100 0 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+>
+FXID {55BCA4CC-320C-5212-A8F3-BD598E435A32}
+WAK 0 0
+BYPASS 0 0
+<JS null_jsfx/spring_reverb.jsfx ""
+  2.5 60 4000 50 0 25 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+>
+FXID {8AAEB71F-FFFD-5625-A522-7DFEBF6D9B26}
+<PROGRAMENV 5 0
+  PARAMBASE 0.25
+  LFO 0
+  LFOWT 1 1
+  AUDIOCTL 0
+  AUDIOCTLWT 1 1
+  PLINK 0.5 0:-3 1 -0.225
+>
+WAK 0 0
+BYPASS 0 0
+<JS null_jsfx/delay.jsfx ""
+  330 25 18 0 0 0 200 5000 0 15 0 0 0 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+>
+FXID {3C761B5F-F2A8-5E6E-B748-FB908154E06E}
+<PROGRAMENV 2 0
+  PARAMBASE 0.18
+  LFO 0
+  LFOWT 1 1
+  AUDIOCTL 0
+  AUDIOCTLWT 1 1
+  PLINK 0.5 0:-4 1 -0.225
+>
+WAK 0 0

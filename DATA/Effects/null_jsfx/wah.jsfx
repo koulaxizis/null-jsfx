@@ -1,0 +1,122 @@
+desc:NULL Wah
+author: Christos Koulaxizis
+tags: wah wah-wah pedal auto-wah envelope filter lfo funk guitar quack vocal formant band-pass sweep tempo sync
+//category: Essentials
+//NULL JSFX v2.4 • https://nulljsfx.tech • MIT License
+
+slider1:50<0,100,1>Pedal (%)
+slider2:0<0,2,1{Manual,Auto,LFO}>Mode
+slider3:0<0,2,1{Classic,Vocal,Wide}>Model
+slider4:60<0,100,1>Resonance (%)
+slider5:50<0,100,1>Sensitivity (%)
+slider6:10<1,100,1>Attack (ms)
+slider7:150<20,1000,1>Release (ms)
+slider8:2<0.1,10,0.1>Rate (Hz)
+slider9:0<0,5,1{Off,1/1,1/2,1/4,1/8,1/16}>Tempo Sync
+slider10:100<0,100,1>Mix (%)
+slider11:0<-12,12,0.1>Output (dB)
+
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
+
+@init
+  // A wah pedal: a resonant band-pass (TPT state-variable filter, normalised to 0 dB at its
+  // peak, then lifted by the resonance) swept by the pedal on an exponential curve.
+  // Classic: 400 Hz to 2.2 kHz, high Q. Vocal: two formant peaks (300-800 Hz and 900 Hz-2.4 kHz)
+  // that move together like a vowel. Wide: 200 Hz to 3.5 kHz, broader.
+  // Mode Manual: the Pedal slider (smoothed over 15 ms, for automation or a MIDI CC).
+  // Auto: an envelope follower moves the pedal; at Sensitivity 0% the toe is reached at 0 dBFS,
+  // at 100% at -42 dBFS, over a 30 dB range. LFO: a raised cosine at Rate, or one cycle per
+  // note at the host tempo, locked to the beat position while the transport plays.
+  // In Auto and LFO the Pedal slider is not used.
+  ps = 0.5;
+  ps_first = 1;
+  env = 0;
+  lfo_p = 0;
+  fa_l.ic1 = fa_l.ic2 = fa_r.ic1 = fa_r.ic2 = 0;
+  fb_l.ic1 = fb_l.ic2 = fb_r.ic1 = fb_r.ic2 = 0;
+  ps_c = 1 - exp(-1 / (0.015 * srate));
+
+  // TPT state-variable band-pass: returns the band-pass output v1 for coefficients
+  // (a1, a2, a3) of the filter set g
+  function wh_bp(x, a1, a2, a3) local(v1, v2, v3)
+  (
+    v3 = x - this.ic2;
+    v1 = a1 * this.ic1 + a2 * v3;
+    v2 = this.ic2 + a2 * this.ic1 + a3 * v3;
+    this.ic1 = 2 * v1 - this.ic1;
+    this.ic2 = 2 * v2 - this.ic2;
+    v1;
+  );
+
+@slider
+  pedal = slider1 / 100;
+  mode = floor(slider2 + 0.5);
+  model = floor(slider3 + 0.5);
+  res = slider4 / 100;
+  // Auto: the level (dBFS) that puts the pedal at the toe
+  top_db = -slider5 / 100 * 42;
+  att_c = 1 - exp(-1 / (slider6 * 0.001 * srate));
+  rel_c = 1 - exp(-1 / (slider7 * 0.001 * srate));
+  rate = slider8;
+  sync = floor(slider9 + 0.5);
+  // beats per LFO cycle: 1/1 = 4, 1/2 = 2, 1/4 = 1, 1/8 = 0.5, 1/16 = 0.25
+  bpc = sync == 1 ? 4 : sync == 2 ? 2 : sync == 3 ? 1 : sync == 4 ? 0.5 : 0.25;
+  mix = slider10 / 100;
+  out_g = 10 ^ (slider11 / 20);
+  // filter Q and peak lift by model
+  q1 = model == 0 ? 2 + res * 8 : model == 1 ? 3 + res * 7 : 1.2 + res * 5;
+  q2 = q1 * 1.3;
+  k1 = 1 / q1;
+  k2 = 1 / q2;
+  pk = 1.5 + 1.5 * res;
+
+@block
+  // the first block sets the pedal without a glide
+  ps_first ? ( ps = pedal; ps_first = 0; );
+  bpm = tempo > 0 ? tempo : 120;
+  sync > 0 ? (
+    lfo_i = bpm / 60 / bpc / srate;
+    // lock to the host grid while playing
+    play_state & 1 ? lfo_p = beat_position / bpc - floor(beat_position / bpc);
+  ) : (
+    lfo_i = rate / srate;
+  );
+
+@sample
+  // the pedal position
+  mode == 0 ? (
+    ps += ps_c * (pedal - ps);
+  ) : mode == 1 ? (
+    ex = max(abs(spl0), abs(spl1));
+    env += (ex > env ? att_c : rel_c) * (ex - env);
+    edb = env > 0.000000001 ? 20 * log10(env) : -180;
+    ps = min(1, max(0, (edb - top_db + 30) / 30));
+  ) : (
+    lfo_p += lfo_i;
+    lfo_p >= 1 ? lfo_p -= 1;
+    ps = 0.5 - 0.5 * cos(2 * $pi * lfo_p);
+  );
+
+  // the filter(s) at that position
+  f1 = model == 0 ? 400 * 5.5 ^ ps : model == 1 ? 300 * (800 / 300) ^ ps : 200 * 17.5 ^ ps;
+  g = tan($pi * f1 / srate);
+  c1 = 1 / (1 + g * (g + k1));
+  c2 = g * c1;
+  c3 = g * c2;
+  w_l = fa_l.wh_bp(spl0, c1, c2, c3) * k1;
+  w_r = fa_r.wh_bp(spl1, c1, c2, c3) * k1;
+  model == 1 ? (
+    f2 = 900 * (2400 / 900) ^ ps;
+    g = tan($pi * f2 / srate);
+    c1 = 1 / (1 + g * (g + k2));
+    c2 = g * c1;
+    c3 = g * c2;
+    w_l += fb_l.wh_bp(spl0, c1, c2, c3) * k2 * 0.7;
+    w_r += fb_r.wh_bp(spl1, c1, c2, c3) * k2 * 0.7;
+  );
+
+  spl0 = (spl0 * (1 - mix) + w_l * pk * mix) * out_g;
+  spl1 = (spl1 * (1 - mix) + w_r * pk * mix) * out_g;

@@ -1,0 +1,11 @@
+[
+  ["Warm Tube", {"Shape": "Tube", "Drive": 9, "Bias": 10, "Tone": 12000, "Output": -6}],
+  ["Hard Edge", {"Shape": "Hard", "Drive": 12, "Oversampling": "4x", "Output": -8}],
+  ["Folded Bass", {"Shape": "Fold", "Drive": 4, "Tone": 6000, "Mix": 80, "Output": -6}],
+  ["Sine Fuzz", {"Shape": "Sine", "Drive": 18, "Tone": 9000, "Output": -12}],
+  ["Bit Steps", {"Shape": "Steps", "Drive": 3, "Oversampling": "Off", "Output": -2}],
+  ["Even Harmonics", {"Shape": "Asym", "Drive": 8, "Bias": 15, "Mix": 70, "Output": -5}],
+  ["Custom S-Curve", {"Shape": "Custom", "Drive": 6, "Output": -4,
+    "P1 X": 0.2, "P1 Y": 0.08, "P2 X": 0.4, "P2 Y": 0.35, "P3 X": 0.6, "P3 Y": 0.75,
+    "P4 X": 0.8, "P4 Y": 0.93, "P5 X": 1, "P5 Y": 0.98, "P6 X": 0, "P6 Y": 0}]
+]

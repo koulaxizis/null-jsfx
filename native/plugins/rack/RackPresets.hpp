@@ -1798,37 +1798,41 @@ static const PresetGlobal kP51Globals[] = {
 };
 
 static const PresetValue kP52S0[] = {
-    { 0, 3.0f, "Attack" },
-};
-static const PresetValue kP52S1[] = {
     { 1, -36.0f, "Threshold" },
     { 2, 12.0f, "Ratio" },
     { 3, 2.0f, "Knee" },
     { 4, 1.0f, "Attack" },
     { 5, 60.0f, "Release" },
     { 6, 14.0f, "Makeup" },
+    { 7, 2.0f, "Style" },
 };
-static const PresetValue kP52S2[] = {
-    { 0, 45.0f, "Drive" },
+static const PresetValue kP52S1[] = {
+    { 0, 40.0f, "Drive" },
     { 2, 100.0f, "Mix" },
     { 3, 1.0f, "Mode" },
 };
+static const PresetValue kP52S2[] = {
+    { 0, 30.0f, "Depth" },
+    { 7, -3.0f, "Output" },
+};
 static const PresetValue kP52S3[] = {
-    { 0, 9000.0f, "Cutoff" },
+    { 0, 10000.0f, "Cutoff" },
     { 1, 0.7f, "Resonance" },
     { 3, 0.0f, "Mode" },
 };
 static const PresetSlot kP52Slots[] = {
-    { "transient_shaper", kP52S0, 1, 0, 0, 100.0f, true },
-    { "dynamics", kP52S1, 6, 0, 0, 100.0f, true, 1 },
-    { "saturation", kP52S2, 3, 0, 0, 100.0f, true, 1 },
+    { "dynamics", kP52S0, 7, 0, 0, 100.0f, true, 1 },
+    { "saturation", kP52S1, 3, 0, 0, 100.0f, true, 1 },
+    { "ott", kP52S2, 2, 0, 0, 100.0f, true, 1 },
     { "filter", kP52S3, 3, 0, 0, 100.0f, true, 1 },
 };
 static const PresetRoute kP52Routes[] = {
-    { "macro1", 1, 1, -0.3f, "Threshold" },
+    { "macro1", 0, 1, -0.2f, "Threshold" },
+    { "macro2", 1, 0, 0.4f, "Drive" },
+    { "macro2", 2, 0, 0.4f, "Depth" },
 };
 static const PresetGlobal kP52Globals[] = {
-    { "lane_mix", 40.0f, nullptr },
+    { "lane_mix", 35.0f, nullptr },
 };
 
 static const PresetValue kP53S0[] = {
@@ -1839,6 +1843,7 @@ static const PresetValue kP53S0[] = {
     { 5, 1.0f, "Mode" },
     { 6, 150.0f, "Low Cut" },
     { 7, 7000.0f, "High Cut" },
+    { 9, 20.0f, "Modulation" },
 };
 static const PresetValue kP53S1[] = {
     { 0, 0.3f, "Rate" },
@@ -1846,45 +1851,80 @@ static const PresetValue kP53S1[] = {
     { 2, 50.0f, "Mix" },
 };
 static const PresetValue kP53S2[] = {
+    { 1, 12.0f, "Semitones" },
+    { 3, 0.0f, "Mix" },
+};
+static const PresetValue kP53S3[] = {
     { 0, 2500.0f, "Cutoff" },
     { 1, 1.5f, "Resonance" },
     { 3, 0.0f, "Mode" },
 };
+static const PresetValue kP53S4[] = {
+    { 0, 70.0f, "Room Size" },
+    { 1, 60.0f, "Decay" },
+    { 2, 40.0f, "Damping" },
+    { 3, 20.0f, "Mix" },
+};
 static const PresetSlot kP53Slots[] = {
-    { "delay", kP53S0, 7, 0, 0, 100.0f, true },
+    { "delay", kP53S0, 8, 0, 0, 100.0f, true },
     { "phaser", kP53S1, 3, 0, 0, 100.0f, true },
-    { "ladder_filter", kP53S2, 3, 0, 0, 100.0f, true },
+    { "pitch_shifter", kP53S2, 2, 0, 0, 100.0f, true },
+    { "ladder_filter", kP53S3, 3, 0, 0, 100.0f, true },
+    { "reverb", kP53S4, 4, 0, 0, 100.0f, true },
 };
 static const PresetRoute kP53Routes[] = {
-    { "lfo1", 2, 0, 0.25f, "Cutoff" },
-    { "macro1", 2, 1, 0.4f, "Resonance" },
+    { "lfo1", 3, 0, 0.25f, "Cutoff" },
+    { "macro1", 4, 3, 0.3f, "Mix" },
+    { "macro1", 1, 3, 0.3f, "Depth" },
+    { "macro2", 2, 3, 0.4f, "Mix" },
+    { "macro2", 1, 4, 0.3f, "Feedback" },
 };
 static const PresetGlobal kP53Globals[] = {
     { "feedback", 60.0f, nullptr },
     { "fb_from", 1.0f, nullptr },
-    { "fb_to", 3.0f, nullptr },
+    { "fb_to", 4.0f, nullptr },
     { "mix", 45.0f, nullptr },
     { "lfo1_rate", 0.15f, nullptr },
 };
 
 static const PresetValue kP54S0[] = {
+    { 0, 0.0f, "Shape" },
+    { 1, 3.0f, "Rate" },
+    { 2, 30.0f, "Depth" },
+    { 3, 3.0f, "Smooth" },
+};
+static const PresetValue kP54S1[] = {
     { 0, 500.0f, "Cutoff" },
     { 1, 2.0f, "Resonance" },
     { 2, 20.0f, "Drive" },
     { 3, 0.0f, "Mode" },
 };
-static const PresetValue kP54S1[] = {
+static const PresetValue kP54S2[] = {
     { 0, 20.0f, "Drive" },
     { 2, 40.0f, "Mix" },
     { 3, 0.0f, "Mode" },
 };
+static const PresetValue kP54S3[] = {
+    { 3, 1.0f, "Tempo Sync" },
+    { 4, 7.0f, "Subdivision" },
+    { 1, 30.0f, "Feedback" },
+    { 2, 15.0f, "Mix" },
+    { 5, 1.0f, "Mode" },
+    { 6, 300.0f, "Low Cut" },
+    { 7, 6000.0f, "High Cut" },
+};
 static const PresetSlot kP54Slots[] = {
-    { "ladder_filter", kP54S0, 4, 0, 0, 100.0f, true },
-    { "saturation", kP54S1, 3, 0, 0, 100.0f, true },
+    { "volume_shaper", kP54S0, 4, 0, 0, 100.0f, true },
+    { "ladder_filter", kP54S1, 4, 0, 0, 100.0f, true },
+    { "saturation", kP54S2, 3, 0, 0, 100.0f, true },
+    { "delay", kP54S3, 7, 0, 0, 100.0f, true },
 };
 static const PresetRoute kP54Routes[] = {
-    { "seq", 0, 0, 0.5f, "Cutoff" },
-    { "seq", 1, 0, 0.3f, "Drive" },
+    { "seq", 1, 0, 0.5f, "Cutoff" },
+    { "seq", 2, 0, 0.3f, "Drive" },
+    { "macro1", 0, 2, 0.5f, "Depth" },
+    { "macro1", 3, 2, 0.2f, "Mix" },
+    { "macro2", 0, 0, 0.55f, "Shape" },
 };
 static const PresetGlobal kP54Globals[] = {
     { "seq_steps", 16.0f, nullptr },
@@ -1906,6 +1946,1153 @@ static const PresetGlobal kP54Globals[] = {
     { "seq_step14", 0.4f, nullptr },
     { "seq_step15", 0.6f, nullptr },
     { "seq_step16", 0.0f, nullptr },
+};
+
+static const PresetValue kP55S0[] = {
+    { 0, 20.0f, "Amount" },
+};
+static const PresetValue kP55S1[] = {
+    { 0, 90.0f, "Source Frequency" },
+    { 1, 15.0f, "Sub Level" },
+    { 2, 0.0f, "Sub Octave" },
+    { 3, 100.0f, "Original Mix" },
+};
+static const PresetValue kP55S2[] = {
+    { 0, 120.0f, "Width" },
+    { 2, 150.0f, "Crossover" },
+};
+static const PresetValue kP55S3[] = {
+    { 0, 20.0f, "Amount" },
+};
+static const PresetSlot kP55Slots[] = {
+    { "exciter", kP55S0, 1, 0, 0, 100.0f, true },
+    { "sub_bloom", kP55S1, 4, 0, 0, 100.0f, true },
+    { "stereo_width", kP55S2, 2, 0, 0, 100.0f, true },
+    { "louder", kP55S3, 1, 0, 0, 100.0f, true },
+};
+static const PresetRoute kP55Routes[] = {
+    { "macro1", 3, 0, 0.3f, "Amount" },
+    { "macro1", 1, 1, 0.3f, "Sub Level" },
+    { "macro1", 2, 0, 0.2f, "Width" },
+    { "macro2", 0, 0, 0.5f, "Amount" },
+};
+
+static const PresetValue kP56S0[] = {
+    { 0, 0.6f, "Rate" },
+    { 1, 4.0f, "Depth" },
+    { 2, 25.0f, "Mix" },
+    { 3, 3.0f, "Voices" },
+    { 4, 60.0f, "Stereo Spread" },
+};
+static const PresetValue kP56S1[] = {
+    { 0, 3000.0f, "Cutoff" },
+    { 1, 1.5f, "Resonance" },
+    { 2, 4.0f, "Gain" },
+    { 3, 0.0f, "Mode" },
+};
+static const PresetValue kP56S2[] = {
+    { 1, 30.0f, "Depth" },
+    { 2, 40.0f, "Mix" },
+    { 3, 1.0f, "Tempo Sync" },
+    { 4, 1.0f, "Subdivision" },
+};
+static const PresetValue kP56S3[] = {
+    { 0, 70.0f, "Size" },
+    { 1, 5.0f, "Decay" },
+    { 2, 35.0f, "Shimmer" },
+    { 5, 20.0f, "Mix" },
+};
+static const PresetSlot kP56Slots[] = {
+    { "chorus", kP56S0, 5, 0, 0, 100.0f, true },
+    { "filter", kP56S1, 4, 0, 0, 100.0f, true },
+    { "auto_pan", kP56S2, 4, 0, 0, 100.0f, true },
+    { "shimmer_reverb", kP56S3, 4, 0, 0, 100.0f, true },
+};
+static const PresetRoute kP56Routes[] = {
+    { "lfo1", 1, 0, 0.25f, "Cutoff" },
+    { "macro1", 3, 5, 0.25f, "Mix" },
+    { "macro1", 0, 2, 0.2f, "Mix" },
+    { "macro1", 2, 1, 0.4f, "Depth" },
+    { "macro2", 2, 4, 0.67f, "Subdivision" },
+    { "macro2", 0, 0, 0.15f, "Rate" },
+};
+static const PresetGlobal kP56Globals[] = {
+    { "lfo1_sync", 0.0f, "1/1" },
+    { "lfo1_shape", 0.0f, "Sine" },
+};
+
+static const PresetValue kP57S0[] = {
+    { 0, 15.0f, "Chorus Amount" },
+};
+static const PresetValue kP57S1[] = {
+    { 0, 4.0f, "Drive" },
+    { 1, 1.0f, "Speed" },
+    { 2, 3.0f, "Head Bump" },
+    { 3, 10.0f, "Wow" },
+    { 4, 10.0f, "Flutter" },
+    { 5, 5.0f, "Hiss" },
+    { 6, 2.0f, "Output" },
+};
+static const PresetValue kP57S2[] = {
+    { 3, 1.0f, "Tempo Sync" },
+    { 4, 7.0f, "Subdivision" },
+    { 1, 30.0f, "Feedback" },
+    { 2, 15.0f, "Mix" },
+    { 5, 1.0f, "Mode" },
+    { 6, 250.0f, "Low Cut" },
+    { 7, 4500.0f, "High Cut" },
+    { 8, 20.0f, "Drive" },
+};
+static const PresetValue kP57S3[] = {
+    { 0, 50.0f, "Room Size" },
+    { 1, 45.0f, "Decay" },
+    { 2, 60.0f, "Damping" },
+    { 3, 12.0f, "Mix" },
+};
+static const PresetSlot kP57Slots[] = {
+    { "chorus_one", kP57S0, 1, 0, 0, 100.0f, true },
+    { "tape", kP57S1, 7, 0, 0, 100.0f, true },
+    { "delay", kP57S2, 8, 0, 0, 100.0f, true },
+    { "reverb", kP57S3, 4, 0, 0, 100.0f, true },
+};
+static const PresetRoute kP57Routes[] = {
+    { "macro1", 2, 2, 0.2f, "Mix" },
+    { "macro1", 3, 3, 0.15f, "Mix" },
+    { "macro1", 0, 0, 0.3f, "Chorus Amount" },
+    { "macro2", 1, 3, 0.4f, "Wow" },
+    { "macro2", 1, 4, 0.3f, "Flutter" },
+    { "macro2", 1, 5, 0.2f, "Hiss" },
+    { "macro2", 2, 7, -0.3f, "High Cut" },
+};
+
+static const PresetValue kP58S0[] = {
+    { 0, 120.0f, "Delay Time" },
+    { 1, 40.0f, "Grain Size" },
+    { 2, 30.0f, "Density" },
+    { 4, 30.0f, "Spray" },
+    { 6, 30.0f, "Feedback" },
+    { 8, 20.0f, "Mix" },
+};
+static const PresetValue kP58S1[] = {
+    { 0, 1.0f, "Buffer Length" },
+    { 3, 8.0f, "Mix" },
+};
+static const PresetValue kP58S2[] = {
+    { 0, 4.0f, "Rate" },
+    { 1, 16.0f, "Stutter Length" },
+    { 2, 1.0f, "Stutter" },
+    { 7, 15.0f, "Reverse Chance" },
+    { 8, 1.0f, "Reverse" },
+    { 13, 8.0f, "Mix" },
+};
+static const PresetSlot kP58Slots[] = {
+    { "granular_delay", kP58S0, 6, 0, 0, 100.0f, true },
+    { "reverser", kP58S1, 2, 0, 0, 100.0f, true },
+    { "glitch_fx", kP58S2, 6, 0, 0, 100.0f, true },
+};
+static const PresetRoute kP58Routes[] = {
+    { "macro1", 0, 8, 0.3f, "Mix" },
+    { "macro1", 1, 3, 0.2f, "Mix" },
+    { "macro1", 2, 13, 0.3f, "Mix" },
+    { "macro2", 0, 4, 0.5f, "Spray" },
+    { "macro2", 2, 7, 0.5f, "Reverse Chance" },
+    { "macro2", 2, 0, 0.3f, "Rate" },
+};
+
+static const PresetValue kP59S0[] = {
+    { 0, 4.5f, "Rate" },
+    { 1, 45.0f, "Depth" },
+    { 2, 60.0f, "Mix" },
+    { 6, 1.0f, "Mode" },
+};
+static const PresetValue kP59S1[] = {
+    { 0, 0.0f, "Model" },
+    { 1, 3.0f, "Gain" },
+    { 2, 4.0f, "Bass" },
+    { 3, 5.0f, "Mid" },
+    { 4, 7.0f, "Treble" },
+    { 5, 6.0f, "Presence" },
+    { 7, 1.0f, "Bright" },
+    { 10, 5.0f, "Output" },
+};
+static const PresetValue kP59S2[] = {
+    { 0, 0.0f, "Cabinet" },
+    { 1, 35.0f, "Mic Position" },
+    { 2, 80.0f, "Low Cut" },
+};
+static const PresetValue kP59S3[] = {
+    { 0, 2.5f, "Decay" },
+    { 1, 60.0f, "Tension" },
+    { 3, 50.0f, "Drip" },
+    { 5, 25.0f, "Mix" },
+};
+static const PresetValue kP59S4[] = {
+    { 0, 330.0f, "Time" },
+    { 1, 25.0f, "Feedback" },
+    { 2, 18.0f, "Mix" },
+    { 6, 200.0f, "Low Cut" },
+    { 7, 5000.0f, "High Cut" },
+    { 9, 15.0f, "Modulation" },
+};
+static const PresetSlot kP59Slots[] = {
+    { "tremolo", kP59S0, 4, 0, 0, 100.0f, true },
+    { "amp_simulator", kP59S1, 8, 0, 0, 100.0f, true },
+    { "cabinet_simulator", kP59S2, 3, 0, 0, 100.0f, true },
+    { "spring_reverb", kP59S3, 4, 0, 0, 100.0f, true },
+    { "delay", kP59S4, 6, 0, 0, 100.0f, true },
+};
+static const PresetRoute kP59Routes[] = {
+    { "macro1", 3, 5, 0.2f, "Mix" },
+    { "macro1", 4, 2, 0.2f, "Mix" },
+    { "macro1", 0, 1, 0.4f, "Depth" },
+    { "macro2", 1, 1, 0.4f, "Gain" },
+    { "macro2", 1, 6, -0.2f, "Master" },
+};
+
+static const PresetValue kP60S0[] = {
+    { 0, 30.0f, "Drive" },
+    { 1, -2.0f, "Tone" },
+    { 2, 40.0f, "Mix" },
+    { 3, 3.0f, "Mode" },
+};
+static const PresetValue kP60S1[] = {
+    { 0, 0.5f, "Rate" },
+    { 1, 5.0f, "Depth" },
+    { 2, 40.0f, "Mix" },
+    { 3, 3.0f, "Voices" },
+    { 4, 80.0f, "Stereo Spread" },
+};
+static const PresetValue kP60S2[] = {
+    { 0, 85.0f, "Room Size" },
+    { 1, 80.0f, "Decay" },
+    { 2, 50.0f, "Damping" },
+    { 3, 35.0f, "Mix" },
+    { 5, 30.0f, "Pre-Delay" },
+    { 8, 150.0f, "Width" },
+    { 9, 30.0f, "Modulation" },
+    { 11, 2.0f, "Character" },
+};
+static const PresetValue kP60S3[] = {
+    { 0, 0.0f, "Freeze" },
+    { 2, 60.0f, "Smear" },
+    { 4, 100.0f, "Mix" },
+};
+static const PresetValue kP60S4[] = {
+    { 11, -4.0f, "Output Gain" },
+};
+static const PresetSlot kP60Slots[] = {
+    { "saturation", kP60S0, 4, 0, 0, 100.0f, true },
+    { "chorus", kP60S1, 5, 0, 0, 100.0f, true },
+    { "reverb", kP60S2, 8, 0, 0, 100.0f, true },
+    { "spectral_freeze", kP60S3, 3, 0, 0, 100.0f, true },
+    { "channel_utility", kP60S4, 1, 0, 0, 100.0f, true },
+};
+static const PresetRoute kP60Routes[] = {
+    { "macro1", 0, 0, 0.4f, "Drive" },
+    { "macro1", 2, 3, 0.3f, "Mix" },
+    { "macro1", 1, 2, 0.3f, "Mix" },
+    { "macro2", 2, 1, 0.2f, "Decay" },
+    { "macro2", 2, 0, 0.1f, "Room Size" },
+    { "macro2", 2, 5, 0.2f, "Pre-Delay" },
+};
+
+static const PresetValue kP61S0[] = {
+    { 0, 80.0f, "Room Size" },
+    { 1, 70.0f, "Decay" },
+    { 2, 30.0f, "Damping" },
+    { 3, 22.0f, "Mix" },
+    { 9, 40.0f, "Modulation" },
+};
+static const PresetValue kP61S1[] = {
+    { 0, 1.0f, "Octave" },
+    { 3, 10.0f, "Mix" },
+};
+static const PresetValue kP61S2[] = {
+    { 1, 300.0f, "Carrier Freq" },
+    { 2, 50.0f, "Depth" },
+    { 3, 8.0f, "Mix" },
+};
+static const PresetSlot kP61Slots[] = {
+    { "reverb", kP61S0, 5, 0, 0, 100.0f, true },
+    { "pitch_shifter", kP61S1, 2, 0, 0, 100.0f, true },
+    { "ring_mod", kP61S2, 3, 0, 0, 100.0f, true },
+};
+static const PresetRoute kP61Routes[] = {
+    { "lfo1", 2, 1, 0.1f, "Carrier Freq" },
+    { "macro1", 0, 3, 0.35f, "Mix" },
+    { "macro1", 0, 1, 0.2f, "Decay" },
+    { "macro2", 1, 3, 0.3f, "Mix" },
+    { "macro2", 2, 3, 0.25f, "Mix" },
+};
+static const PresetGlobal kP61Globals[] = {
+    { "lfo1_rate", 0.15f, nullptr },
+    { "lfo1_shape", 0.0f, "Triangle" },
+};
+
+static const PresetValue kP62S0[] = {
+    { 0, 1.0f, "Type" },
+    { 1, -40.0f, "Level" },
+};
+static const PresetValue kP62S1[] = {
+    { 0, 1500.0f, "Cutoff" },
+    { 1, 1.0f, "Resonance" },
+    { 3, 2.0f, "Mode" },
+};
+static const PresetValue kP62S2[] = {
+    { 0, 70.0f, "Room Size" },
+    { 1, 60.0f, "Decay" },
+    { 2, 40.0f, "Damping" },
+    { 3, 50.0f, "Mix" },
+};
+static const PresetSlot kP62Slots[] = {
+    { "noise_generator", kP62S0, 2, 0, 0, 100.0f, true, 1 },
+    { "filter", kP62S1, 3, 0, 0, 100.0f, true, 1 },
+    { "reverb", kP62S2, 4, 0, 0, 100.0f, true, 1 },
+};
+static const PresetRoute kP62Routes[] = {
+    { "env", 0, 1, 0.5f, "Level" },
+    { "macro1", 0, 1, 0.2f, "Level" },
+    { "macro2", 1, 0, 0.4f, "Cutoff" },
+};
+static const PresetGlobal kP62Globals[] = {
+    { "lane_mix", 12.0f, nullptr },
+    { "env_attack", 2.0f, nullptr },
+    { "env_release", 120.0f, nullptr },
+    { "env_gain", 12.0f, nullptr },
+};
+
+static const PresetValue kP63S0[] = {
+    { 0, 50.0f, "Sensitivity" },
+    { 2, 12.0f, "Max Reduction" },
+};
+static const PresetValue kP63S1[] = {
+    { 0, 6500.0f, "Target" },
+    { 1, -5.0f, "Reduction" },
+};
+static const PresetValue kP63S2[] = {
+    { 1, -20.0f, "Threshold" },
+    { 2, 3.0f, "Ratio" },
+    { 3, 6.0f, "Knee" },
+    { 4, 8.0f, "Attack" },
+    { 5, 120.0f, "Release" },
+    { 6, 5.0f, "Makeup" },
+};
+static const PresetValue kP63S3[] = {
+    { 0, 90.0f, "Low Freq" },
+    { 3, 4.0f, "Low Type" },
+    { 2, 0.7f, "Low Q" },
+    { 5, 300.0f, "Low Mid Freq" },
+    { 6, -2.0f, "Low Mid Gain" },
+    { 7, 1.0f, "Low Mid Q" },
+    { 10, 3500.0f, "Mid High Freq" },
+    { 11, 1.5f, "Mid High Gain" },
+    { 12, 0.8f, "Mid High Q" },
+    { 15, 11000.0f, "High Freq" },
+    { 16, 3.0f, "High Gain" },
+    { 18, 1.0f, "High Type" },
+};
+static const PresetValue kP63S4[] = {
+    { 0, 20.0f, "Amount" },
+};
+static const PresetValue kP63S5[] = {
+    { 0, 45.0f, "Room Size" },
+    { 1, 45.0f, "Decay" },
+    { 2, 45.0f, "Damping" },
+    { 3, 15.0f, "Mix" },
+    { 5, 30.0f, "Pre-Delay" },
+    { 6, 200.0f, "Low Cut" },
+    { 11, 1.0f, "Character" },
+};
+static const PresetSlot kP63Slots[] = {
+    { "de_plosive", kP63S0, 2, 0, 0, 100.0f, true },
+    { "deesser", kP63S1, 2, 0, 0, 100.0f, true },
+    { "dynamics", kP63S2, 6, 0, 0, 100.0f, true },
+    { "parametric_eq", kP63S3, 12, 0, 0, 100.0f, true },
+    { "doubler", kP63S4, 1, 0, 0, 100.0f, true },
+    { "reverb", kP63S5, 7, 0, 0, 100.0f, true },
+};
+static const PresetRoute kP63Routes[] = {
+    { "macro1", 2, 1, -0.15f, "Threshold" },
+    { "macro1", 2, 6, 0.15f, "Makeup" },
+    { "macro2", 4, 0, 0.4f, "Amount" },
+    { "macro2", 5, 3, 0.2f, "Mix" },
+};
+
+static const PresetValue kP64S0[] = {
+    { 0, -50.0f, "Threshold" },
+    { 1, 2.0f, "Attack" },
+    { 2, 150.0f, "Release" },
+    { 4, -20.0f, "Range" },
+};
+static const PresetValue kP64S1[] = {
+    { 1, -24.0f, "Threshold" },
+    { 2, 6.0f, "Ratio" },
+    { 3, 3.0f, "Knee" },
+    { 4, 3.0f, "Attack" },
+    { 5, 60.0f, "Release" },
+    { 6, 8.0f, "Makeup" },
+    { 7, 2.0f, "Style" },
+};
+static const PresetValue kP64S2[] = {
+    { 0, 20.0f, "Drive" },
+    { 2, 40.0f, "Mix" },
+    { 3, 1.0f, "Mode" },
+};
+static const PresetValue kP64S3[] = {
+    { 0, 7000.0f, "Target" },
+    { 1, -6.0f, "Reduction" },
+};
+static const PresetValue kP64S4[] = {
+    { 3, 1.0f, "Tempo Sync" },
+    { 4, 1.0f, "Subdivision" },
+    { 1, 15.0f, "Feedback" },
+    { 2, 10.0f, "Mix" },
+    { 6, 300.0f, "Low Cut" },
+    { 7, 5000.0f, "High Cut" },
+    { 11, 50.0f, "Ducking" },
+};
+static const PresetSlot kP64Slots[] = {
+    { "gate", kP64S0, 4, 0, 0, 100.0f, true },
+    { "dynamics", kP64S1, 7, 0, 0, 100.0f, true },
+    { "saturation", kP64S2, 3, 0, 0, 100.0f, true },
+    { "deesser", kP64S3, 2, 0, 0, 100.0f, true },
+    { "delay", kP64S4, 7, 0, 0, 100.0f, true },
+};
+static const PresetRoute kP64Routes[] = {
+    { "macro1", 1, 1, -0.15f, "Threshold" },
+    { "macro1", 1, 6, 0.1f, "Makeup" },
+    { "macro2", 4, 2, 0.3f, "Mix" },
+    { "macro2", 4, 1, 0.25f, "Feedback" },
+};
+
+static const PresetValue kP65S0[] = {
+    { 1, -22.0f, "Threshold" },
+    { 2, 3.0f, "Ratio" },
+    { 3, 10.0f, "Knee" },
+    { 4, 20.0f, "Attack" },
+    { 5, 300.0f, "Release" },
+    { 6, 5.0f, "Makeup" },
+    { 7, 3.0f, "Style" },
+};
+static const PresetValue kP65S1[] = {
+    { 0, 25.0f, "Amount" },
+};
+static const PresetValue kP65S2[] = {
+    { 3, 1.0f, "Tempo Sync" },
+    { 4, 0.0f, "Subdivision" },
+    { 1, 30.0f, "Feedback" },
+    { 2, 15.0f, "Mix" },
+    { 5, 1.0f, "Mode" },
+    { 6, 300.0f, "Low Cut" },
+    { 7, 6000.0f, "High Cut" },
+    { 10, 30.0f, "Diffusion" },
+    { 11, 40.0f, "Ducking" },
+};
+static const PresetValue kP65S3[] = {
+    { 0, 75.0f, "Size" },
+    { 1, 5.0f, "Decay" },
+    { 2, 25.0f, "Shimmer" },
+    { 4, 7000.0f, "Damping" },
+    { 5, 20.0f, "Mix" },
+};
+static const PresetSlot kP65Slots[] = {
+    { "dynamics", kP65S0, 7, 0, 0, 100.0f, true },
+    { "exciter", kP65S1, 1, 0, 0, 100.0f, true },
+    { "delay", kP65S2, 9, 0, 0, 100.0f, true },
+    { "shimmer_reverb", kP65S3, 5, 0, 0, 100.0f, true },
+};
+static const PresetRoute kP65Routes[] = {
+    { "macro1", 3, 5, 0.25f, "Mix" },
+    { "macro1", 2, 2, 0.2f, "Mix" },
+    { "macro2", 1, 0, 0.5f, "Amount" },
+    { "macro2", 3, 2, 0.4f, "Shimmer" },
+};
+
+static const PresetValue kP66S0[] = {
+    { 0, 7.0f, "Voice 1 Interval" },
+    { 1, -12.0f, "Voice 2 Interval" },
+    { 2, -3.0f, "Voice 1 Level" },
+    { 3, -6.0f, "Voice 2 Level" },
+    { 4, 15.0f, "Detune" },
+    { 5, 20.0f, "Delay" },
+    { 6, 90.0f, "Spread" },
+    { 7, 30.0f, "Mix" },
+};
+static const PresetValue kP66S1[] = {
+    { 0, 45.0f, "Formant Position" },
+};
+static const PresetValue kP66S2[] = {
+    { 0, 0.4f, "Rate" },
+    { 1, 5.0f, "Depth" },
+    { 2, 20.0f, "Mix" },
+    { 3, 4.0f, "Voices" },
+    { 4, 100.0f, "Stereo Spread" },
+    { 8, 1.0f, "Mode" },
+};
+static const PresetValue kP66S3[] = {
+    { 0, 85.0f, "Size" },
+    { 1, 8.0f, "Decay" },
+    { 2, 40.0f, "Shimmer" },
+    { 4, 6000.0f, "Damping" },
+    { 5, 20.0f, "Mix" },
+};
+static const PresetSlot kP66Slots[] = {
+    { "harmonizer", kP66S0, 8, 0, 0, 100.0f, true },
+    { "formant_shift", kP66S1, 1, 0, 0, 100.0f, true },
+    { "chorus", kP66S2, 6, 0, 0, 100.0f, true },
+    { "shimmer_reverb", kP66S3, 5, 0, 0, 100.0f, true },
+};
+static const PresetRoute kP66Routes[] = {
+    { "macro1", 0, 7, 0.3f, "Mix" },
+    { "macro1", 3, 5, 0.2f, "Mix" },
+    { "macro2", 1, 0, -0.2f, "Formant Position" },
+};
+
+static const PresetValue kP67S0[] = {
+    { 1, 1.0f, "Auto" },
+    { 2, 10.0f, "Reduction" },
+    { 3, 3.0f, "Threshold" },
+};
+static const PresetValue kP67S1[] = {
+    { 0, 0.0f, "Frequency" },
+    { 1, 4.0f, "Harmonics" },
+    { 3, 30.0f, "Depth" },
+    { 5, 3.0f, "Low Cut" },
+};
+static const PresetValue kP67S2[] = {
+    { 0, 50.0f, "Sensitivity" },
+    { 2, 15.0f, "Max Reduction" },
+};
+static const PresetValue kP67S3[] = {
+    { 0, 6000.0f, "Target" },
+    { 1, -5.0f, "Reduction" },
+};
+static const PresetValue kP67S4[] = {
+    { 0, -17.0f, "Target" },
+    { 1, 1000.0f, "Speed" },
+    { 2, 12.0f, "Max Boost" },
+    { 3, 9.0f, "Max Cut" },
+};
+static const PresetValue kP67S5[] = {
+    { 0, 0.0f, "Mode" },
+    { 1, -2.0f, "Threshold" },
+    { 2, -1.0f, "Ceiling" },
+};
+static const PresetSlot kP67Slots[] = {
+    { "noise_reduction", kP67S0, 3, 0, 0, 100.0f, true },
+    { "de_hum", kP67S1, 4, 0, 0, 100.0f, true },
+    { "de_plosive", kP67S2, 2, 0, 0, 100.0f, true },
+    { "deesser", kP67S3, 2, 0, 0, 100.0f, true },
+    { "auto_leveler", kP67S4, 4, 0, 0, 100.0f, true },
+    { "limiter", kP67S5, 3, 0, 0, 100.0f, true },
+};
+static const PresetRoute kP67Routes[] = {
+    { "macro1", 0, 2, 0.2f, "Reduction" },
+    { "macro1", 3, 1, -0.2f, "Reduction" },
+    { "macro2", 4, 0, 0.15f, "Target" },
+};
+
+static const PresetValue kP68S0[] = {
+    { 0, 5.0f, "Attack" },
+    { 1, -1.0f, "Sustain" },
+};
+static const PresetValue kP68S1[] = {
+    { 0, 200.0f, "Low Freq" },
+    { 1, 2.0f, "Low Gain" },
+    { 2, 1.2f, "Low Q" },
+    { 3, 2.0f, "Low Type" },
+    { 5, 450.0f, "Low Mid Freq" },
+    { 6, -2.5f, "Low Mid Gain" },
+    { 7, 1.5f, "Low Mid Q" },
+    { 10, 4000.0f, "Mid High Freq" },
+    { 11, 2.5f, "Mid High Gain" },
+    { 12, 0.8f, "Mid High Q" },
+    { 15, 10000.0f, "High Freq" },
+    { 16, 2.0f, "High Gain" },
+    { 18, 1.0f, "High Type" },
+};
+static const PresetValue kP68S2[] = {
+    { 0, 25.0f, "Drive" },
+    { 2, 50.0f, "Mix" },
+    { 3, 0.0f, "Mode" },
+};
+static const PresetValue kP68S3[] = {
+    { 0, 25.0f, "Room Size" },
+    { 1, 30.0f, "Decay" },
+    { 2, 40.0f, "Damping" },
+    { 3, 15.0f, "Mix" },
+    { 5, 10.0f, "Pre-Delay" },
+};
+static const PresetSlot kP68Slots[] = {
+    { "transient_shaper", kP68S0, 2, 0, 0, 100.0f, true },
+    { "parametric_eq", kP68S1, 13, 0, 0, 100.0f, true },
+    { "saturation", kP68S2, 3, 0, 0, 100.0f, true },
+    { "reverb", kP68S3, 5, 0, 0, 100.0f, true },
+};
+static const PresetRoute kP68Routes[] = {
+    { "macro1", 0, 0, 0.15f, "Attack" },
+    { "macro1", 2, 0, 0.3f, "Drive" },
+    { "macro2", 3, 3, 0.25f, "Mix" },
+    { "macro2", 3, 1, 0.2f, "Decay" },
+};
+
+static const PresetValue kP69S0[] = {
+    { 0, 300.0f, "Cutoff" },
+    { 1, 0.7f, "Resonance" },
+    { 3, 1.0f, "Mode" },
+};
+static const PresetValue kP69S1[] = {
+    { 0, 30.0f, "Amount" },
+};
+static const PresetValue kP69S2[] = {
+    { 0, 2.0f, "Attack" },
+    { 1, -4.0f, "Sustain" },
+};
+static const PresetValue kP69S3[] = {
+    { 0, 130.0f, "Width" },
+    { 2, 300.0f, "Crossover" },
+};
+static const PresetSlot kP69Slots[] = {
+    { "filter", kP69S0, 3, 0, 0, 100.0f, true },
+    { "exciter", kP69S1, 1, 0, 0, 100.0f, true },
+    { "transient_shaper", kP69S2, 2, 0, 0, 100.0f, true },
+    { "stereo_width", kP69S3, 2, 0, 0, 100.0f, true },
+};
+static const PresetRoute kP69Routes[] = {
+    { "macro1", 1, 0, 0.4f, "Amount" },
+    { "macro1", 2, 1, -0.15f, "Sustain" },
+    { "macro2", 3, 0, 0.25f, "Width" },
+};
+
+static const PresetValue kP70S0[] = {
+    { 0, 80.0f, "Source Frequency" },
+    { 1, 20.0f, "Sub Level" },
+    { 2, 0.0f, "Sub Octave" },
+    { 3, 100.0f, "Original Mix" },
+};
+static const PresetValue kP70S1[] = {
+    { 0, 30.0f, "Drive" },
+    { 2, 60.0f, "Mix" },
+    { 3, 1.0f, "Mode" },
+};
+static const PresetValue kP70S2[] = {
+    { 0, 2.0f, "Input" },
+    { 1, -1.0f, "Ceiling" },
+    { 2, 30.0f, "Knee" },
+    { 3, 2.0f, "Oversampling" },
+    { 5, -3.0f, "Output" },
+};
+static const PresetValue kP70S3[] = {
+    { 0, 60.0f, "Amount" },
+};
+static const PresetSlot kP70Slots[] = {
+    { "sub_bloom", kP70S0, 4, 0, 0, 100.0f, true },
+    { "saturation", kP70S1, 3, 0, 0, 100.0f, true },
+    { "clipper", kP70S2, 5, 0, 0, 100.0f, true },
+    { "mono_maker", kP70S3, 1, 0, 0, 100.0f, true },
+};
+static const PresetRoute kP70Routes[] = {
+    { "macro1", 1, 0, 0.4f, "Drive" },
+    { "macro1", 2, 0, 0.15f, "Input" },
+    { "macro1", 2, 5, -0.12f, "Output" },
+    { "macro2", 0, 1, 0.4f, "Sub Level" },
+};
+
+static const PresetValue kP71S0[] = {
+    { 0, 100.0f, "Amount" },
+};
+static const PresetValue kP71S1[] = {
+    { 0, 45.0f, "Drive" },
+    { 2, 80.0f, "Mix" },
+    { 3, 1.0f, "Mode" },
+};
+static const PresetValue kP71S2[] = {
+    { 0, 0.3f, "Rate" },
+    { 1, 6.0f, "Depth" },
+    { 2, 50.0f, "Mix" },
+    { 3, 3.0f, "Voices" },
+    { 4, 80.0f, "Stereo Spread" },
+};
+static const PresetValue kP71S3[] = {
+    { 0, 0.2f, "Rate" },
+    { 1, 6.0f, "Stages" },
+    { 2, 40.0f, "Mix" },
+    { 3, 60.0f, "Depth" },
+    { 4, 40.0f, "Feedback" },
+};
+static const PresetSlot kP71Slots[] = {
+    { "mono_maker", kP71S0, 1, 1, 0, 100.0f, true },
+    { "saturation", kP71S1, 3, 2, 0, 100.0f, true },
+    { "chorus", kP71S2, 5, 2, 0, 100.0f, true },
+    { "phaser", kP71S3, 5, 2, 0, 100.0f, true },
+};
+static const PresetRoute kP71Routes[] = {
+    { "lfo1", 3, 5, 0.2f, "Center" },
+    { "macro1", 1, 0, 0.4f, "Drive" },
+    { "macro1", 2, 2, 0.3f, "Mix" },
+    { "macro2", 3, 2, 0.4f, "Mix" },
+};
+static const PresetGlobal kP71Globals[] = {
+    { "xover_low", 120.0f, nullptr },
+    { "xover_high", 6000.0f, nullptr },
+    { "lfo1_sync", 0.0f, "2/1" },
+};
+
+static const PresetValue kP72S0[] = {
+    { 0, 100.0f, "Amount" },
+};
+static const PresetValue kP72S1[] = {
+    { 0, 100.0f, "B1 Freq" },
+    { 1, -4.0f, "B1 Gain" },
+    { 2, 1.2f, "B1 Q" },
+    { 3, -20.0f, "B1 Threshold" },
+};
+static const PresetValue kP72S2[] = {
+    { 0, 70.0f, "Source Frequency" },
+    { 1, 15.0f, "Sub Level" },
+    { 3, 100.0f, "Original Mix" },
+};
+static const PresetSlot kP72Slots[] = {
+    { "mono_maker", kP72S0, 1, 1, 0, 100.0f, true },
+    { "dynamic_eq", kP72S1, 4, 1, 0, 100.0f, true },
+    { "sub_bloom", kP72S2, 3, 1, 0, 100.0f, true },
+};
+static const PresetRoute kP72Routes[] = {
+    { "macro1", 1, 1, -0.25f, "B1 Gain" },
+    { "macro2", 2, 1, 0.4f, "Sub Level" },
+};
+static const PresetGlobal kP72Globals[] = {
+    { "xover_low", 150.0f, nullptr },
+};
+
+static const PresetValue kP73S0[] = {
+    { 0, -12.0f, "Attack" },
+    { 1, 3.0f, "Sustain" },
+};
+static const PresetValue kP73S1[] = {
+    { 3, 1.0f, "Tempo Sync" },
+    { 4, 6.0f, "Subdivision" },
+    { 1, 45.0f, "Feedback" },
+    { 2, 25.0f, "Mix" },
+    { 5, 1.0f, "Mode" },
+    { 6, 250.0f, "Low Cut" },
+    { 7, 5000.0f, "High Cut" },
+    { 9, 25.0f, "Modulation" },
+    { 10, 40.0f, "Diffusion" },
+};
+static const PresetValue kP73S2[] = {
+    { 0, 85.0f, "Size" },
+    { 1, 8.0f, "Decay" },
+    { 2, 45.0f, "Shimmer" },
+    { 5, 30.0f, "Mix" },
+};
+static const PresetSlot kP73Slots[] = {
+    { "transient_shaper", kP73S0, 2, 0, 0, 100.0f, true },
+    { "delay", kP73S1, 9, 0, 0, 100.0f, true },
+    { "shimmer_reverb", kP73S2, 4, 0, 0, 100.0f, true },
+};
+static const PresetRoute kP73Routes[] = {
+    { "macro1", 1, 2, 0.2f, "Mix" },
+    { "macro1", 2, 5, 0.2f, "Mix" },
+    { "macro2", 0, 0, -0.2f, "Attack" },
+};
+
+static const PresetValue kP74S0[] = {
+    { 1, 1.0f, "Mode" },
+    { 2, 0.0f, "Model" },
+    { 3, 60.0f, "Resonance" },
+    { 4, 50.0f, "Sensitivity" },
+    { 10, 8.0f, "Output" },
+};
+static const PresetValue kP74S1[] = {
+    { 0, 1.0f, "Model" },
+    { 1, 5.0f, "Gain" },
+    { 2, 5.0f, "Bass" },
+    { 3, 6.0f, "Mid" },
+    { 4, 6.0f, "Treble" },
+    { 5, 5.0f, "Presence" },
+    { 10, -1.0f, "Output" },
+};
+static const PresetValue kP74S2[] = {
+    { 0, 1.0f, "Cabinet" },
+    { 1, 30.0f, "Mic Position" },
+    { 2, 80.0f, "Low Cut" },
+};
+static const PresetValue kP74S3[] = {
+    { 5, 15.0f, "Mix" },
+};
+static const PresetSlot kP74Slots[] = {
+    { "wah", kP74S0, 5, 0, 0, 100.0f, true },
+    { "amp_simulator", kP74S1, 7, 0, 0, 100.0f, true },
+    { "cabinet_simulator", kP74S2, 3, 0, 0, 100.0f, true },
+    { "spring_reverb", kP74S3, 1, 0, 0, 100.0f, true },
+};
+static const PresetRoute kP74Routes[] = {
+    { "macro1", 0, 4, 0.4f, "Sensitivity" },
+    { "macro1", 0, 3, 0.3f, "Resonance" },
+    { "macro2", 1, 1, 0.3f, "Gain" },
+};
+
+static const PresetValue kP75S0[] = {
+    { 1, 6.0f, "Depth" },
+    { 2, 70.0f, "Feedback" },
+    { 3, 50.0f, "Mix" },
+    { 4, 1.0f, "Manual" },
+    { 5, 6.0f, "Tempo Sync" },
+    { 6, 90.0f, "Stereo Phase" },
+};
+static const PresetValue kP75S1[] = {
+    { 0, 25.0f, "Drive" },
+    { 2, 50.0f, "Mix" },
+    { 3, 0.0f, "Mode" },
+};
+static const PresetSlot kP75Slots[] = {
+    { "flanger", kP75S0, 6, 0, 0, 100.0f, true },
+    { "saturation", kP75S1, 3, 0, 0, 100.0f, true },
+};
+static const PresetRoute kP75Routes[] = {
+    { "macro1", 0, 3, 0.3f, "Mix" },
+    { "macro1", 0, 2, 0.2f, "Feedback" },
+    { "macro2", 0, 4, 0.3f, "Manual" },
+};
+
+static const PresetValue kP76S0[] = {
+    { 0, 85.0f, "Room Size" },
+    { 1, 75.0f, "Decay" },
+    { 2, 40.0f, "Damping" },
+    { 3, 25.0f, "Mix" },
+    { 5, 40.0f, "Pre-Delay" },
+    { 8, 130.0f, "Width" },
+    { 9, 25.0f, "Modulation" },
+    { 11, 2.0f, "Character" },
+};
+static const PresetValue kP76S1[] = {
+    { 0, 12000.0f, "Cutoff" },
+    { 1, 0.7f, "Resonance" },
+    { 3, 0.0f, "Mode" },
+};
+static const PresetSlot kP76Slots[] = {
+    { "reverb", kP76S0, 8, 0, 0, 100.0f, true },
+    { "filter", kP76S1, 3, 0, 0, 100.0f, true },
+};
+static const PresetRoute kP76Routes[] = {
+    { "macro1", 0, 3, 0.4f, "Mix" },
+    { "macro2", 0, 10, 1.0f, "Freeze" },
+};
+
+static const PresetValue kP77S0[] = {
+    { 0, 5.0f, "Amount" },
+};
+static const PresetValue kP77S1[] = {
+    { 3, -16.0f, "Low Threshold" },
+    { 4, 2.0f, "Low Ratio" },
+    { 7, -16.0f, "LowMid Threshold" },
+    { 8, 1.5f, "LowMid Ratio" },
+    { 11, -16.0f, "HighMid Threshold" },
+    { 12, 1.5f, "HighMid Ratio" },
+    { 15, -16.0f, "High Threshold" },
+    { 16, 2.0f, "High Ratio" },
+    { 19, 20.0f, "Attack" },
+    { 20, 150.0f, "Release" },
+    { 21, 50.0f, "Knee" },
+};
+static const PresetValue kP77S2[] = {
+    { 0, 1.0f, "Input" },
+    { 1, -0.5f, "Ceiling" },
+    { 2, 40.0f, "Knee" },
+    { 3, 2.0f, "Oversampling" },
+};
+static const PresetValue kP77S3[] = {
+    { 0, 2.0f, "Input Gain" },
+    { 1, -1.0f, "Ceiling" },
+    { 2, 80.0f, "Release" },
+};
+static const PresetSlot kP77Slots[] = {
+    { "tilt", kP77S0, 1, 0, 0, 100.0f, true },
+    { "multiband_compressor", kP77S1, 11, 0, 0, 100.0f, true },
+    { "clipper", kP77S2, 4, 0, 0, 100.0f, true },
+    { "maximizer", kP77S3, 3, 0, 0, 100.0f, true },
+};
+static const PresetRoute kP77Routes[] = {
+    { "macro1", 3, 0, 0.25f, "Input Gain" },
+    { "macro1", 2, 0, 0.1f, "Input" },
+    { "macro2", 0, 0, 0.1f, "Amount" },
+};
+
+static const PresetValue kP78S0[] = {
+    { 0, -55.0f, "Threshold" },
+    { 1, 2.0f, "Attack" },
+    { 2, 150.0f, "Release" },
+    { 4, -30.0f, "Range" },
+};
+static const PresetValue kP78S1[] = {
+    { 0, 60.0f, "Low Freq" },
+    { 3, 4.0f, "Low Type" },
+    { 2, 0.7f, "Low Q" },
+    { 5, 400.0f, "Low Mid Freq" },
+    { 6, -1.5f, "Low Mid Gain" },
+    { 7, 1.0f, "Low Mid Q" },
+    { 10, 3000.0f, "Mid High Freq" },
+    { 11, 1.0f, "Mid High Gain" },
+    { 12, 1.0f, "Mid High Q" },
+    { 15, 12000.0f, "High Freq" },
+    { 16, 1.5f, "High Gain" },
+    { 18, 1.0f, "High Type" },
+};
+static const PresetValue kP78S2[] = {
+    { 1, -18.0f, "Threshold" },
+    { 2, 3.0f, "Ratio" },
+    { 3, 6.0f, "Knee" },
+    { 4, 10.0f, "Attack" },
+    { 5, 120.0f, "Release" },
+    { 6, 3.0f, "Makeup" },
+    { 7, 1.0f, "Style" },
+};
+static const PresetValue kP78S3[] = {
+    { 0, 6500.0f, "Target" },
+    { 1, -4.0f, "Reduction" },
+};
+static const PresetValue kP78S4[] = {
+    { 0, 15.0f, "Drive" },
+    { 2, 40.0f, "Mix" },
+    { 3, 0.0f, "Mode" },
+};
+static const PresetSlot kP78Slots[] = {
+    { "gate", kP78S0, 4, 0, 0, 100.0f, true },
+    { "parametric_eq", kP78S1, 12, 0, 0, 100.0f, true },
+    { "dynamics", kP78S2, 7, 0, 0, 100.0f, true },
+    { "deesser", kP78S3, 2, 0, 0, 100.0f, true },
+    { "saturation", kP78S4, 3, 0, 0, 100.0f, true },
+};
+static const PresetRoute kP78Routes[] = {
+    { "macro1", 2, 1, -0.15f, "Threshold" },
+    { "macro1", 2, 6, 0.15f, "Makeup" },
+    { "macro2", 4, 0, 0.4f, "Drive" },
+};
+
+static const PresetValue kP79S0[] = {
+    { 0, 60.0f, "Low Freq" },
+    { 1, 4.0f, "Low Gain" },
+    { 2, 0.6f, "Low Q" },
+    { 3, 0.0f, "Low Type" },
+    { 5, 300.0f, "Low Mid Freq" },
+    { 6, -1.5f, "Low Mid Gain" },
+    { 7, 0.7f, "Low Mid Q" },
+    { 15, 12000.0f, "High Freq" },
+    { 16, 3.0f, "High Gain" },
+    { 17, 0.5f, "High Q" },
+    { 20, 20000.0f, "Ultra High Freq" },
+    { 21, -2.0f, "Ultra High Gain" },
+    { 23, 1.0f, "Ultra High Type" },
+};
+static const PresetValue kP79S1[] = {
+    { 0, 20.0f, "Drive" },
+    { 2, 50.0f, "Mix" },
+    { 3, 1.0f, "Mode" },
+};
+static const PresetSlot kP79Slots[] = {
+    { "parametric_eq", kP79S0, 13, 0, 0, 100.0f, true },
+    { "saturation", kP79S1, 3, 0, 0, 100.0f, true },
+};
+static const PresetRoute kP79Routes[] = {
+    { "macro1", 0, 1, 0.1f, "Low Gain" },
+    { "macro1", 0, 16, 0.08f, "High Gain" },
+    { "macro2", 1, 0, 0.4f, "Drive" },
+};
+
+static const PresetValue kP80S0[] = {
+    { 0, 60.0f, "Room Size" },
+    { 1, 55.0f, "Decay" },
+    { 2, 50.0f, "Damping" },
+    { 3, 25.0f, "Mix" },
+    { 5, 80.0f, "Pre-Delay" },
+    { 6, 300.0f, "Low Cut" },
+    { 7, 9000.0f, "High Cut" },
+    { 8, 120.0f, "Width" },
+    { 11, 1.0f, "Character" },
+};
+static const PresetValue kP80S1[] = {
+    { 0, 15.0f, "Drive" },
+    { 2, 40.0f, "Mix" },
+    { 3, 0.0f, "Mode" },
+};
+static const PresetSlot kP80Slots[] = {
+    { "reverb", kP80S0, 9, 0, 0, 100.0f, true },
+    { "saturation", kP80S1, 3, 0, 0, 100.0f, true },
+};
+static const PresetRoute kP80Routes[] = {
+    { "macro1", 0, 3, 0.3f, "Mix" },
+    { "macro2", 0, 1, 0.25f, "Decay" },
+};
+
+static const PresetValue kP81S0[] = {
+    { 0, 100.0f, "Dry" },
+    { 1, 30.0f, "Oct -1" },
+    { 2, 0.0f, "Oct -2" },
+    { 3, 0.0f, "Up" },
+    { 4, 400.0f, "Tone" },
+    { 5, 150.0f, "Tracking" },
+};
+static const PresetValue kP81S1[] = {
+    { 0, 80.0f, "Source Frequency" },
+    { 1, 15.0f, "Sub Level" },
+    { 3, 100.0f, "Original Mix" },
+};
+static const PresetValue kP81S2[] = {
+    { 0, 100.0f, "Amount" },
+};
+static const PresetSlot kP81Slots[] = {
+    { "octaver", kP81S0, 6, 1, 0, 100.0f, true },
+    { "sub_bloom", kP81S1, 3, 1, 0, 100.0f, true },
+    { "mono_maker", kP81S2, 1, 1, 0, 100.0f, true },
+};
+static const PresetRoute kP81Routes[] = {
+    { "macro1", 0, 1, 0.4f, "Oct -1" },
+    { "macro1", 1, 1, 0.3f, "Sub Level" },
+    { "macro2", 0, 2, 0.4f, "Oct -2" },
+};
+static const PresetGlobal kP81Globals[] = {
+    { "xover_low", 120.0f, nullptr },
+};
+
+static const PresetValue kP82S0[] = {
+    { 0, 400.0f, "Cutoff" },
+    { 1, 3.0f, "Resonance" },
+    { 3, 0.0f, "Mode" },
+};
+static const PresetSlot kP82Slots[] = {
+    { "filter", kP82S0, 3, 0, 0, 100.0f, true },
+};
+static const PresetRoute kP82Routes[] = {
+    { "seq", 0, 0, 0.5f, "Cutoff" },
+    { "macro1", 0, 1, 0.3f, "Resonance" },
+    { "macro2", 0, 0, 0.15f, "Cutoff" },
+};
+static const PresetGlobal kP82Globals[] = {
+    { "seq_steps", 16.0f, nullptr },
+    { "seq_sync", 0.0f, "1/16" },
+    { "seq_glide", 10.0f, nullptr },
+    { "seq_step1", 0.9f, nullptr },
+    { "seq_step2", 0.1f, nullptr },
+    { "seq_step3", 0.5f, nullptr },
+    { "seq_step4", 0.1f, nullptr },
+    { "seq_step5", 0.7f, nullptr },
+    { "seq_step6", 0.1f, nullptr },
+    { "seq_step7", 0.3f, nullptr },
+    { "seq_step8", 1.0f, nullptr },
+    { "seq_step9", 0.2f, nullptr },
+    { "seq_step10", 0.6f, nullptr },
+    { "seq_step11", 0.1f, nullptr },
+    { "seq_step12", 0.8f, nullptr },
+    { "seq_step13", 0.4f, nullptr },
+    { "seq_step14", 0.1f, nullptr },
+    { "seq_step15", 0.6f, nullptr },
+    { "seq_step16", 0.3f, nullptr },
+};
+
+static const PresetValue kP83S0[] = {
+    { 0, 3.0f, "Attack" },
+    { 1, 1.0f, "Sustain" },
+};
+static const PresetValue kP83S1[] = {
+    { 0, 20.0f, "Amount" },
+};
+static const PresetValue kP83S2[] = {
+    { 0, 115.0f, "Width" },
+    { 2, 150.0f, "Crossover" },
+};
+static const PresetValue kP83S3[] = {
+    { 0, 1.0f, "Input" },
+    { 1, -1.0f, "Ceiling" },
+    { 2, 30.0f, "Knee" },
+    { 3, 2.0f, "Oversampling" },
+};
+static const PresetSlot kP83Slots[] = {
+    { "transient_shaper", kP83S0, 2, 0, 0, 100.0f, true },
+    { "exciter", kP83S1, 1, 0, 0, 100.0f, true },
+    { "stereo_width", kP83S2, 2, 0, 0, 100.0f, true },
+    { "clipper", kP83S3, 4, 0, 0, 100.0f, true },
+};
+static const PresetRoute kP83Routes[] = {
+    { "macro1", 0, 0, 0.1f, "Attack" },
+    { "macro1", 1, 0, 0.3f, "Amount" },
+    { "macro1", 3, 0, 0.15f, "Input" },
+    { "macro1", 3, 5, -0.12f, "Output" },
+    { "macro2", 2, 0, 0.25f, "Width" },
+};
+
+static const PresetValue kP84S0[] = {
+    { 0, 0.0f, "Step 1" },
+    { 1, 0.0f, "Step 2" },
+    { 2, 0.0f, "Step 3" },
+    { 3, 0.0f, "Step 4" },
+    { 4, 0.0f, "Step 5" },
+    { 5, 0.0f, "Step 6" },
+    { 6, 0.0f, "Step 7" },
+    { 7, 0.0f, "Step 8" },
+    { 8, 1.0f, "Step 9" },
+    { 9, 1.0f, "Step 10" },
+    { 10, 1.0f, "Step 11" },
+    { 11, 1.0f, "Step 12" },
+    { 12, 1.0f, "Step 13" },
+    { 13, 1.0f, "Step 14" },
+    { 14, 1.0f, "Step 15" },
+    { 15, 1.0f, "Step 16" },
+    { 16, 1.0f, "Step Length" },
+    { 19, 0.0f, "Repeat Size" },
+    { 23, 0.0f, "Mix" },
+};
+static const PresetValue kP84S1[] = {
+    { 0, 20.0f, "Cutoff" },
+    { 1, 1.2f, "Resonance" },
+    { 3, 1.0f, "Mode" },
+};
+static const PresetValue kP84S2[] = {
+    { 0, 70.0f, "Room Size" },
+    { 1, 60.0f, "Decay" },
+    { 3, 0.0f, "Mix" },
+};
+static const PresetSlot kP84Slots[] = {
+    { "step_fx", kP84S0, 19, 0, 0, 100.0f, true },
+    { "filter", kP84S1, 3, 0, 0, 100.0f, true },
+    { "reverb", kP84S2, 3, 0, 0, 100.0f, true },
+};
+static const PresetRoute kP84Routes[] = {
+    { "macro1", 0, 23, 1.0f, "Mix" },
+    { "macro1", 1, 0, 0.45f, "Cutoff" },
+    { "macro1", 2, 3, 0.3f, "Mix" },
+    { "macro2", 0, 19, 1.0f, "Repeat Size" },
+};
+
+static const PresetValue kP85S0[] = {
+    { 1, 4.0f, "Tempo Sync" },
+    { 2, 4.0f, "Heads" },
+    { 3, 55.0f, "Intensity" },
+    { 4, -3.0f, "Bass" },
+    { 5, -4.0f, "Treble" },
+    { 7, 40.0f, "Saturation" },
+    { 8, 30.0f, "Spring" },
+    { 9, 25.0f, "Mix" },
+};
+static const PresetValue kP85S1[] = {
+    { 0, 60.0f, "Cutoff" },
+    { 1, 0.7f, "Resonance" },
+    { 2, 2.0f, "Gain" },
+    { 3, 1.0f, "Mode" },
+};
+static const PresetValue kP85S2[] = {
+    { 0, 3.0f, "Decay" },
+    { 5, 12.0f, "Mix" },
+};
+static const PresetSlot kP85Slots[] = {
+    { "tape_echo", kP85S0, 8, 0, 0, 100.0f, true },
+    { "filter", kP85S1, 4, 0, 0, 100.0f, true },
+    { "spring_reverb", kP85S2, 2, 0, 0, 100.0f, true },
+};
+static const PresetRoute kP85Routes[] = {
+    { "macro1", 0, 9, 0.3f, "Mix" },
+    { "macro1", 0, 3, 0.25f, "Intensity" },
+    { "macro2", 0, 6, 0.4f, "Wow/Flutter" },
 };
 
 static const Preset kPresets[] = {
@@ -1961,9 +3148,40 @@ static const Preset kPresets[] = {
     { "Distorted Throw", "Routing", kP49Slots, 4, kP49Routes, 1, kP49Globals, 2 },
     { "Harshness Tamer", "Chain", kP50Slots, 4, kP50Routes, 2, nullptr, 0 },
     { "Cosmic Space", "Routing", kP51Slots, 5, kP51Routes, 2, kP51Globals, 2 },
-    { "Parallel Drum Smash", "Routing", kP52Slots, 4, kP52Routes, 1, kP52Globals, 1 },
-    { "Psychedelic Echo", "Routing", kP53Slots, 3, kP53Routes, 2, kP53Globals, 5 },
-    { "Rhythm Engine", "Routing", kP54Slots, 2, kP54Routes, 2, kP54Globals, 19 },
+    { "Parallel Drum Smash", "Routing", kP52Slots, 4, kP52Routes, 3, kP52Globals, 1 },
+    { "Psychedelic Echo", "Routing", kP53Slots, 5, kP53Routes, 5, kP53Globals, 5 },
+    { "Rhythm Engine", "Routing", kP54Slots, 4, kP54Routes, 5, kP54Globals, 19 },
+    { "Wide Lift", "Chain", kP55Slots, 4, kP55Routes, 4, nullptr, 0 },
+    { "Motion Pad", "Routing", kP56Slots, 4, kP56Routes, 6, kP56Globals, 2 },
+    { "Retro Bus", "Chain", kP57Slots, 4, kP57Routes, 7, nullptr, 0 },
+    { "Micro Grains", "Chain", kP58Slots, 3, kP58Routes, 6, nullptr, 0 },
+    { "Desert Twang", "Chain", kP59Slots, 5, kP59Routes, 5, nullptr, 0 },
+    { "Wall of Sound", "Chain", kP60Slots, 5, kP60Routes, 6, nullptr, 0 },
+    { "Mutant Space", "Routing", kP61Slots, 3, kP61Routes, 5, kP61Globals, 2 },
+    { "Noise Layer", "Routing", kP62Slots, 3, kP62Routes, 3, kP62Globals, 4 },
+    { "Pop Vocal", "Chain", kP63Slots, 6, kP63Routes, 4, nullptr, 0 },
+    { "Rap Vocal Upfront", "Chain", kP64Slots, 5, kP64Routes, 4, nullptr, 0 },
+    { "Airy Ballad", "Chain", kP65Slots, 4, kP65Routes, 4, nullptr, 0 },
+    { "Choir Pad Vocal", "Chain", kP66Slots, 4, kP66Routes, 3, nullptr, 0 },
+    { "Podcast Ready", "Chain", kP67Slots, 6, kP67Routes, 3, nullptr, 0 },
+    { "Snare Crack", "Chain", kP68Slots, 4, kP68Routes, 4, nullptr, 0 },
+    { "Hat Shine", "Chain", kP69Slots, 4, kP69Routes, 3, nullptr, 0 },
+    { "808 Glue", "Chain", kP70Slots, 4, kP70Routes, 4, nullptr, 0 },
+    { "Reese Bass", "Routing", kP71Slots, 4, kP71Routes, 4, kP71Globals, 3 },
+    { "Low End Focus", "Routing", kP72Slots, 3, kP72Routes, 2, kP72Globals, 1 },
+    { "Ambient Guitar", "Chain", kP73Slots, 3, kP73Routes, 3, nullptr, 0 },
+    { "Classic Wah Rig", "Chain", kP74Slots, 4, kP74Routes, 3, nullptr, 0 },
+    { "Jet Flange", "Chain", kP75Slots, 2, kP75Routes, 3, nullptr, 0 },
+    { "Frozen Hall", "Chain", kP76Slots, 2, kP76Routes, 2, nullptr, 0 },
+    { "Loud Master", "Chain", kP77Slots, 4, kP77Routes, 3, nullptr, 0 },
+    { "Channel Strip", "Chain", kP78Slots, 5, kP78Routes, 3, nullptr, 0 },
+    { "Pultec Lift", "Chain", kP79Slots, 2, kP79Routes, 3, nullptr, 0 },
+    { "Abbey Chamber", "Chain", kP80Slots, 2, kP80Routes, 2, nullptr, 0 },
+    { "Sub Harmonics", "Routing", kP81Slots, 3, kP81Routes, 3, kP81Globals, 1 },
+    { "Stepped Filter", "Routing", kP82Slots, 1, kP82Routes, 3, kP82Globals, 19 },
+    { "Pusher", "Chain", kP83Slots, 4, kP83Routes, 5, nullptr, 0 },
+    { "Stutter Build", "Macro", kP84Slots, 3, kP84Routes, 4, nullptr, 0 },
+    { "Dub Echo Bus", "Chain", kP85Slots, 3, kP85Routes, 3, nullptr, 0 },
 };
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 
@@ -1983,6 +3201,7 @@ static const LogSlider kLogSliders[] = {
     { "envelope_follower", 4 },
     { "envelope_follower", 5 },
     { "filter", 0 },
+    { "half_speed", 3 },
     { "ladder_filter", 0 },
     { "octaver", 4 },
     { "octaver", 5 },
@@ -1994,6 +3213,8 @@ static const LogSlider kLogSliders[] = {
     { "resonator", 3 },
     { "reverb", 6 },
     { "reverb", 7 },
+    { "shaper", 5 },
+    { "step_fx", 20 },
     { "stereo_scope", 3 },
 };
 static constexpr uint32_t kNumLogSliders = sizeof(kLogSliders) / sizeof(kLogSliders[0]);

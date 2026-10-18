@@ -1,0 +1,638 @@
+desc:NULL Shaper GFX
+author: Christos Koulaxizis
+tags: shaper waveshaper waveshaping distortion saturation fold wavefolder transfer curve drawable oversampling harmonics gui
+//category: Essentials
+//NULL JSFX v2.4 • https://nulljsfx.tech • MIT License
+
+import null_gfx.jsfx-inc
+
+slider1:1<0,7,1{Custom,Soft,Hard,Tube,Fold,Sine,Steps,Asym}>-Shape
+slider2:6<0,36,0.1>-Drive (dB)
+slider3:0<-50,50,1>-Bias (%)
+slider4:0<0,1,1{Symmetric,Asymmetric}>-Symmetry
+slider5:1<0,2,1{Off,2x,4x}>-Oversampling
+slider6:20000<1000,20000,1:log>-Tone (Hz)
+slider7:100<0,100,1>-Mix (%)
+slider8:-6<-24,12,0.1>-Output (dB)
+slider9:0.1<0,1,0.001>-P1 X
+slider10:0.205<-1,1,0.001>-P1 Y
+slider11:0.25<0,1,0.001>-P2 X
+slider12:0.479<-1,1,0.001>-P2 Y
+slider13:0.4<0,1,0.001>-P3 X
+slider14:0.689<-1,1,0.001>-P3 Y
+slider15:0.6<0,1,0.001>-P4 X
+slider16:0.865<-1,1,0.001>-P4 Y
+slider17:0.8<0,1,0.001>-P5 X
+slider18:0.956<-1,1,0.001>-P5 Y
+slider19:1<0,1,0.001>-P6 X
+slider20:1<-1,1,0.001>-P6 Y
+slider21:0<0,1,0.001>-P7 X
+slider22:0<-1,1,0.001>-P7 Y
+slider23:0<0,1,0.001>-P8 X
+slider24:0<-1,1,0.001>-P8 Y
+
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
+
+@init
+  // NULL Shaper (../shaper.jsfx) with its own interface: same audio code, plus @gfx.
+  // Waveshaper with a drawable transfer curve. Drive (gain) and Bias (a DC offset, for even
+  // harmonics) go into the curve, which runs at 1, 2 or 4 times the sample rate (Oversampling,
+  // the halfband FIR stages of NULL Clipper: 63 and 23 taps) so its harmonics do not fold back
+  // as aliasing. After it: a DC blocker (10 Hz) that removes the offset again, Tone (a 12 dB/oct
+  // low-pass, off at 20 kHz), Mix with the dry input (delayed to match) and Output.
+  // The curve: output for an input magnitude 0..1 (above 1 it holds the value at 1), through
+  // (0, 0) and up to 8 points (P1..P8: X 0..1, Y -1..1; a point with X = 0 is unused), sorted by
+  // X and joined by monotone cubic (PCHIP) segments; flat after the last point. It is sampled
+  // into a 1024-step table read with linear interpolation. Symmetric mirrors it for negative
+  // input; Asymmetric gives negative input a fixed gentler curve instead (Shape Asym always
+  // does). Shape Custom uses the P sliders, every other Shape its built-in points (the GFX and
+  // VST3/CLAP interfaces copy those into the P sliders when you pick a Shape, so editing starts
+  // from it).
+  // Latency (reported to the host): 0, 31 or 37 samples for Off, 2x and 4x.
+  E1 = 0;  D1 = 32;  // stage 1 (63 taps): 32 even-phase taps, x2 for the upsampler
+  E2 = 64; D2 = 76;  // stage 2 (23 taps): 12
+  PX = 1000;         // the P sliders: x, y pairs
+  SPTS = 1100;        // built-in points: 16 values per Shape
+  XS = 1300; YS = 1320; MS = 1340; DS = 1360; // sorted points, tangents, secants
+  TP = 2000;         // table of the curve (1025 values)
+  TN = 3100;         // table of the negative curve in Asymmetric
+  TLEN = 1024;
+
+  // modified Bessel function I0 (series), for the Kaiser window
+  function bessel_i0(x) local(s, t, k, q)
+  (
+    s = 1; t = 1; k = 1;
+    loop(40,
+      q = x / (2 * k);
+      t *= q * q;
+      s += t;
+      k += 1;
+    );
+    s;
+  );
+
+  // the n = (taps + 1) / 2 nonzero side taps of a halfband lowpass (Kaiser beta), normalised
+  // so they sum to 0.5 (the centre tap is 0.5): e = 2 h for the upsampler, d = h for the
+  // downsampler
+  function hb_design(e, d, taps, beta) local(c, i, dd, a, sg, r, w, s)
+  (
+    c = (taps - 1) / 2;
+    s = 0;
+    i = 0;
+    loop((taps + 1) / 2,
+      dd = 2 * i - c;
+      a = abs(dd);
+      sg = ((a - 1) / 2) % 2 ? -1 : 1;
+      r = 2 * dd / (taps - 1);
+      w = bessel_i0(beta * sqrt(max(0, 1 - r * r))) / bessel_i0(beta);
+      d[i] = sg / ($pi * a) * w;
+      s += d[i];
+      i += 1;
+    );
+    i = 0;
+    loop((taps + 1) / 2,
+      d[i] = 0.5 * d[i] / s;
+      e[i] = 2 * d[i];
+      i += 1;
+    );
+  );
+
+  hb_design(E1, D1, 63, 7.5);
+  hb_design(E2, D2, 23, 8);
+
+  // 2x upsampler, polyphase: one input sample in, hb_o0 (even) and hb_o1 (odd) out.
+  // s[0] = write position, s[1 ..] = the last n inputs, stored twice
+  function hb_up(x, s, e, n, m) local(p, q, acc, i)
+  (
+    p = s[0];
+    p = p > 0 ? p - 1 : n - 1;
+    s[0] = p;
+    q = s + 1 + p;
+    q[0] = x;
+    q[n] = x;
+    acc = 0;
+    i = 0;
+    loop(n, acc += e[i] * q[i]; i += 1;);
+    hb_o0 = acc;
+    hb_o1 = q[m];
+  );
+
+  // 2x downsampler, polyphase: an even and an odd sample in, one sample out.
+  // s[0] = write position, s[1] = position in the odd delay, s[2 ..] = the last n even
+  // samples stored twice, then m + 1 odd samples
+  function hb_down(v0, v1, s, d, n, m) local(p, q, acc, i, o)
+  (
+    p = s[0];
+    p = p > 0 ? p - 1 : n - 1;
+    s[0] = p;
+    q = s + 2 + p;
+    q[0] = v0;
+    q[n] = v0;
+    acc = 0;
+    i = 0;
+    loop(n, acc += d[i] * q[i]; i += 1;);
+    o = s + 2 + 2 * n + s[1];
+    acc += 0.5 * o[0];
+    o[0] = v1;
+    s[1] = s[1] < m ? s[1] + 1 : 0;
+    acc;
+  );
+
+  // per channel: filter states, the sample arrays of each rate, the pad and dry delays
+  function ch_init(b)
+  (
+    this.u1 = b;              // 1 + 64
+    this.u2 = b + 65;         // 1 + 24
+    this.d1 = b + 107;        // 2 + 64 + 16
+    this.d2 = b + 189;        // 2 + 24 + 6
+    this.a0 = b + 243;        // 1
+    this.a1 = b + 244;        // 2
+    this.a2 = b + 246;        // 4
+    this.pd = b + 258;        // 8
+    this.dr = b + 266;        // 64
+  );
+  chl.ch_init(128);
+  chr.ch_init(512);
+
+  // built-in points of the Shapes (1 Soft .. 7 Asym): point i of Shape s
+  function shp_pt(s, i, x, y) ( SPTS[s * 16 + i * 2] = x; SPTS[s * 16 + i * 2 + 1] = y; );
+  memset(SPTS, 0, 128);
+  shp_pt(1, 0, 0.1, 0.205); shp_pt(1, 1, 0.25, 0.479); shp_pt(1, 2, 0.4, 0.689);
+  shp_pt(1, 3, 0.6, 0.865); shp_pt(1, 4, 0.8, 0.956); shp_pt(1, 5, 1, 1);
+  shp_pt(2, 0, 0.4, 0.5); shp_pt(2, 1, 0.72, 0.9); shp_pt(2, 2, 0.8, 0.98);
+  shp_pt(2, 3, 0.85, 1); shp_pt(2, 4, 1, 1);
+  shp_pt(3, 0, 0.05, 0.1); shp_pt(3, 1, 0.2, 0.33); shp_pt(3, 2, 0.4, 0.56);
+  shp_pt(3, 3, 0.65, 0.75); shp_pt(3, 4, 1, 0.9);
+  shp_pt(4, 0, 0.25, 0.9); shp_pt(4, 1, 0.5, -0.3); shp_pt(4, 2, 0.75, 0.7);
+  shp_pt(4, 3, 1, -0.5);
+  shp_pt(5, 0, 0.167, 0.707); shp_pt(5, 1, 0.333, 1); shp_pt(5, 2, 0.5, 0.707);
+  shp_pt(5, 3, 0.667, 0); shp_pt(5, 4, 0.833, -0.707); shp_pt(5, 5, 1, -1);
+  shp_pt(6, 0, 0.18, 0.04); shp_pt(6, 1, 0.26, 0.33); shp_pt(6, 2, 0.43, 0.36);
+  shp_pt(6, 3, 0.51, 0.65); shp_pt(6, 4, 0.68, 0.68); shp_pt(6, 5, 0.76, 0.97);
+  shp_pt(6, 6, 1, 1);
+  shp_pt(7, 0, 0.1, 0.25); shp_pt(7, 1, 0.3, 0.62); shp_pt(7, 2, 0.6, 0.9);
+  shp_pt(7, 3, 1, 1);
+  // the negative half in Asymmetric (Shape slot 0, which Custom never reads)
+  shp_pt(0, 0, 0.2, 0.16); shp_pt(0, 1, 0.5, 0.34); shp_pt(0, 2, 1, 0.46);
+
+  // the table dst (TLEN + 1 values over input 0..1) from 8 points src (x, y pairs; x = 0 unused):
+  // (0, 0) plus the used points sorted by x (equal x: the first one counts), monotone cubic
+  // Hermite segments (PCHIP tangents: weighted harmonic mean of the secants, 0 at an extremum;
+  // the end tangents are the end secants), flat after the last point
+  function lut_build(src, dst) local(n, i, k, x, y, m, h0, h1, w1, w2, j, u, h, t, t2, t3)
+  (
+    XS[0] = 0; YS[0] = 0;
+    n = 1;
+    i = 0;
+    loop(8,
+      x = src[2 * i];
+      y = src[2 * i + 1];
+      x > 0 ? (
+        k = n;
+        while (k > 1 && XS[k - 1] > x) (
+          XS[k] = XS[k - 1];
+          YS[k] = YS[k - 1];
+          k -= 1;
+        );
+        XS[k] = x;
+        YS[k] = y;
+        n += 1;
+      );
+      i += 1;
+    );
+    m = 1;
+    i = 1;
+    loop(n - 1,
+      XS[i] > XS[m - 1] ? (
+        XS[m] = XS[i];
+        YS[m] = YS[i];
+        m += 1;
+      );
+      i += 1;
+    );
+    n = m;
+    n < 2 ? ( XS[1] = 1; YS[1] = 1; n = 2; );
+    k = 0;
+    loop(n - 1,
+      DS[k] = (YS[k + 1] - YS[k]) / (XS[k + 1] - XS[k]);
+      k += 1;
+    );
+    MS[0] = DS[0];
+    MS[n - 1] = DS[n - 2];
+    k = 1;
+    loop(n - 2,
+      DS[k - 1] * DS[k] > 0 ? (
+        h0 = XS[k] - XS[k - 1];
+        h1 = XS[k + 1] - XS[k];
+        w1 = 2 * h1 + h0;
+        w2 = h1 + 2 * h0;
+        MS[k] = (w1 + w2) / (w1 / DS[k - 1] + w2 / DS[k]);
+      ) : (
+        MS[k] = 0;
+      );
+      k += 1;
+    );
+    j = 0;
+    k = 0;
+    loop(TLEN + 1,
+      u = k / TLEN;
+      while (j < n - 2 && u > XS[j + 1]) ( j += 1; );
+      u >= XS[n - 1] ? (
+        dst[k] = YS[n - 1];
+      ) : (
+        h = XS[j + 1] - XS[j];
+        t = (u - XS[j]) / h;
+        t2 = t * t;
+        t3 = t2 * t;
+        dst[k] = (2 * t3 - 3 * t2 + 1) * YS[j] + (t3 - 2 * t2 + t) * h * MS[j]
+                 + (3 * t2 - 2 * t3) * YS[j + 1] + (t3 - t2) * h * MS[j + 1];
+      );
+      k += 1;
+    );
+  );
+
+  // the curve at input v: the table read with linear interpolation, mirrored (or the
+  // negative table in Asymmetric) below 0
+  function shape(v) local(a, p, i, f, tb)
+  (
+    a = min(abs(v), 1);
+    p = a * TLEN;
+    i = min(floor(p), TLEN - 1);
+    f = p - i;
+    tb = v < 0 && asym ? TN : TP;
+    a = tb[i] + (tb[i + 1] - tb[i]) * f;
+    v < 0 ? -a : a;
+  );
+
+  lut_build(SPTS, TN);
+  freembuf(4200);
+
+  os_prev = -1;
+  pw = 0;
+  dw = 0;
+  dc_r = exp(-2 * $pi * 10 / srate);
+  dcx_l = dcy_l = dcx_r = dcy_r = 0;
+  lx1_l = lx2_l = ly1_l = ly2_l = 0;
+  lx1_r = lx2_r = ly1_r = ly2_r = 0;
+  pdc_bot_ch = 0;
+  pdc_top_ch = 2;
+
+  function update()
+  (
+    shp = floor(slider1 + 0.5);
+    gin = 10 ^ (slider2 / 20);
+    bias = slider3 / 100;
+    asym = slider4 > 0.5 || shp > 6.5;
+    os = slider5;
+    mix = slider7 / 100;
+    gout = 10 ^ (slider8 / 20);
+    PX[0] = slider9; PX[1] = slider10; PX[2] = slider11; PX[3] = slider12;
+    PX[4] = slider13; PX[5] = slider14; PX[6] = slider15; PX[7] = slider16;
+    PX[8] = slider17; PX[9] = slider18; PX[10] = slider19; PX[11] = slider20;
+    PX[12] = slider21; PX[13] = slider22; PX[14] = slider23; PX[15] = slider24;
+    lut_build(shp < 0.5 ? PX : SPTS + shp * 16, TP);
+    // Tone: RBJ low-pass, Q 0.7071, below 0.45 x the sample rate
+    tone_on = slider6 < 20000;
+    tw0 = 2 * $pi * min(slider6, 0.45 * srate) / srate;
+    tcw = cos(tw0);
+    tal = sin(tw0) / (2 * 0.7071067811865476);
+    ta0 = 1 + tal;
+    tb0 = (1 - tcw) / 2 / ta0;
+    tb1 = (1 - tcw) / ta0;
+    ta1 = -2 * tcw / ta0;
+    ta2 = (1 - tal) / ta0;
+    os < 0.5 ? ( osf = 1; lat = 0; pad = 0; ) :
+    os < 1.5 ? ( osf = 2; lat = 31; pad = 0; ) :
+               ( osf = 4; lat = 37; pad = 2; );
+    pdc_delay = lat;
+    // a new rate starts every filter and delay from silence
+    osf != os_prev ? (
+      memset(128, 0, 768);
+      pw = 0;
+      dw = 0;
+      os_prev = osf;
+    );
+    tl = osf > 2 ? chl.a2 : osf > 1 ? chl.a1 : chl.a0;
+    tr = osf > 2 ? chr.a2 : osf > 1 ? chr.a1 : chr.a0;
+  );
+
+  // interface only: the Shape's built-in points into the P sliders
+  function sh_load(s) local(i)
+  (
+    i = 0;
+    loop(16, ng_slider_set(9 + i, SPTS[s * 16 + i]); i += 1;);
+  );
+
+  // interface only: before a point edit, switch to Custom starting from the current Shape
+  // (Asym keeps its negative half through Symmetry Asymmetric)
+  function sh_custom()
+  (
+    slider1 > 0.5 ? (
+      sh_load(floor(slider1 + 0.5));
+      slider1 > 6.5 ? ng_slider_set(4, 1);
+      ng_slider_set(1, 0);
+      update();
+    );
+  );
+
+  // interface only: a point coordinate on the 0.001 grid, at least lo, at most 1
+  function sh_snap(v, lo) ( max(lo, min(1, floor(v * 1000 + 0.5) / 1000)); );
+
+  function sh_name(s)
+  (
+    strcpy(#sh_nm, s < 0.5 ? "CUSTOM" : s < 1.5 ? "SOFT" : s < 2.5 ? "HARD" : s < 3.5 ? "TUBE" :
+                   s < 4.5 ? "FOLD" : s < 5.5 ? "SINE" : s < 6.5 ? "STEPS" : "ASYM");
+  );
+
+  gfx_ext_retina = 1;
+  // interface only: curve input (after Drive and Bias) and output peaks
+  sh_rel = exp(-1 / (0.3 * srate));
+  sh_in = sh_out = 0;
+  sh_drag = 0;
+
+  // ---- factory presets: generated by tools/build_presets.py, do not edit ----
+  ng_pre_n = 8;
+
+  function ng_preset_load(p)
+  (
+    p == 0 ? ( ng_slider_set(1, 1); ng_slider_set(2, 6); ng_slider_set(3, 0); ng_slider_set(4, 0); ng_slider_set(5, 1); ng_slider_set(6, 20000); ng_slider_set(7, 100); ng_slider_set(8, -6); ng_slider_set(9, 0.1); ng_slider_set(10, 0.205); ng_slider_set(11, 0.25); ng_slider_set(12, 0.479); ng_slider_set(13, 0.4); ng_slider_set(14, 0.689); ng_slider_set(15, 0.6); ng_slider_set(16, 0.865); ng_slider_set(17, 0.8); ng_slider_set(18, 0.956); ng_slider_set(19, 1); ng_slider_set(20, 1); ng_slider_set(21, 0); ng_slider_set(22, 0); ng_slider_set(23, 0); ng_slider_set(24, 0); );
+    p == 1 ? ( ng_slider_set(1, 3); ng_slider_set(2, 9); ng_slider_set(3, 10); ng_slider_set(4, 0); ng_slider_set(5, 1); ng_slider_set(6, 12000); ng_slider_set(7, 100); ng_slider_set(8, -6); ng_slider_set(9, 0.1); ng_slider_set(10, 0.205); ng_slider_set(11, 0.25); ng_slider_set(12, 0.479); ng_slider_set(13, 0.4); ng_slider_set(14, 0.689); ng_slider_set(15, 0.6); ng_slider_set(16, 0.865); ng_slider_set(17, 0.8); ng_slider_set(18, 0.956); ng_slider_set(19, 1); ng_slider_set(20, 1); ng_slider_set(21, 0); ng_slider_set(22, 0); ng_slider_set(23, 0); ng_slider_set(24, 0); );
+    p == 2 ? ( ng_slider_set(1, 2); ng_slider_set(2, 12); ng_slider_set(3, 0); ng_slider_set(4, 0); ng_slider_set(5, 2); ng_slider_set(6, 20000); ng_slider_set(7, 100); ng_slider_set(8, -8); ng_slider_set(9, 0.1); ng_slider_set(10, 0.205); ng_slider_set(11, 0.25); ng_slider_set(12, 0.479); ng_slider_set(13, 0.4); ng_slider_set(14, 0.689); ng_slider_set(15, 0.6); ng_slider_set(16, 0.865); ng_slider_set(17, 0.8); ng_slider_set(18, 0.956); ng_slider_set(19, 1); ng_slider_set(20, 1); ng_slider_set(21, 0); ng_slider_set(22, 0); ng_slider_set(23, 0); ng_slider_set(24, 0); );
+    p == 3 ? ( ng_slider_set(1, 4); ng_slider_set(2, 4); ng_slider_set(3, 0); ng_slider_set(4, 0); ng_slider_set(5, 1); ng_slider_set(6, 6000); ng_slider_set(7, 80); ng_slider_set(8, -6); ng_slider_set(9, 0.1); ng_slider_set(10, 0.205); ng_slider_set(11, 0.25); ng_slider_set(12, 0.479); ng_slider_set(13, 0.4); ng_slider_set(14, 0.689); ng_slider_set(15, 0.6); ng_slider_set(16, 0.865); ng_slider_set(17, 0.8); ng_slider_set(18, 0.956); ng_slider_set(19, 1); ng_slider_set(20, 1); ng_slider_set(21, 0); ng_slider_set(22, 0); ng_slider_set(23, 0); ng_slider_set(24, 0); );
+    p == 4 ? ( ng_slider_set(1, 5); ng_slider_set(2, 18); ng_slider_set(3, 0); ng_slider_set(4, 0); ng_slider_set(5, 1); ng_slider_set(6, 9000); ng_slider_set(7, 100); ng_slider_set(8, -12); ng_slider_set(9, 0.1); ng_slider_set(10, 0.205); ng_slider_set(11, 0.25); ng_slider_set(12, 0.479); ng_slider_set(13, 0.4); ng_slider_set(14, 0.689); ng_slider_set(15, 0.6); ng_slider_set(16, 0.865); ng_slider_set(17, 0.8); ng_slider_set(18, 0.956); ng_slider_set(19, 1); ng_slider_set(20, 1); ng_slider_set(21, 0); ng_slider_set(22, 0); ng_slider_set(23, 0); ng_slider_set(24, 0); );
+    p == 5 ? ( ng_slider_set(1, 6); ng_slider_set(2, 3); ng_slider_set(3, 0); ng_slider_set(4, 0); ng_slider_set(5, 0); ng_slider_set(6, 20000); ng_slider_set(7, 100); ng_slider_set(8, -2); ng_slider_set(9, 0.1); ng_slider_set(10, 0.205); ng_slider_set(11, 0.25); ng_slider_set(12, 0.479); ng_slider_set(13, 0.4); ng_slider_set(14, 0.689); ng_slider_set(15, 0.6); ng_slider_set(16, 0.865); ng_slider_set(17, 0.8); ng_slider_set(18, 0.956); ng_slider_set(19, 1); ng_slider_set(20, 1); ng_slider_set(21, 0); ng_slider_set(22, 0); ng_slider_set(23, 0); ng_slider_set(24, 0); );
+    p == 6 ? ( ng_slider_set(1, 7); ng_slider_set(2, 8); ng_slider_set(3, 15); ng_slider_set(4, 0); ng_slider_set(5, 1); ng_slider_set(6, 20000); ng_slider_set(7, 70); ng_slider_set(8, -5); ng_slider_set(9, 0.1); ng_slider_set(10, 0.205); ng_slider_set(11, 0.25); ng_slider_set(12, 0.479); ng_slider_set(13, 0.4); ng_slider_set(14, 0.689); ng_slider_set(15, 0.6); ng_slider_set(16, 0.865); ng_slider_set(17, 0.8); ng_slider_set(18, 0.956); ng_slider_set(19, 1); ng_slider_set(20, 1); ng_slider_set(21, 0); ng_slider_set(22, 0); ng_slider_set(23, 0); ng_slider_set(24, 0); );
+    p == 7 ? ( ng_slider_set(1, 0); ng_slider_set(2, 6); ng_slider_set(3, 0); ng_slider_set(4, 0); ng_slider_set(5, 1); ng_slider_set(6, 20000); ng_slider_set(7, 100); ng_slider_set(8, -4); ng_slider_set(9, 0.2); ng_slider_set(10, 0.08); ng_slider_set(11, 0.4); ng_slider_set(12, 0.35); ng_slider_set(13, 0.6); ng_slider_set(14, 0.75); ng_slider_set(15, 0.8); ng_slider_set(16, 0.93); ng_slider_set(17, 1); ng_slider_set(18, 0.98); ng_slider_set(19, 0); ng_slider_set(20, 0); ng_slider_set(21, 0); ng_slider_set(22, 0); ng_slider_set(23, 0); ng_slider_set(24, 0); );
+  );
+
+  // the first preset every slider matches, or -1
+  function ng_preset_match() local(m)
+  (
+    m = -1;
+    m < 0 && ng_pre_eq(slider1, 1) && ng_pre_eq(slider2, 6) && ng_pre_eq(slider3, 0) && ng_pre_eq(slider4, 0) && ng_pre_eq(slider5, 1) && ng_pre_eq(slider6, 20000) && ng_pre_eq(slider7, 100) && ng_pre_eq(slider8, -6) && ng_pre_eq(slider9, 0.1) && ng_pre_eq(slider10, 0.205) && ng_pre_eq(slider11, 0.25) && ng_pre_eq(slider12, 0.479) && ng_pre_eq(slider13, 0.4) && ng_pre_eq(slider14, 0.689) && ng_pre_eq(slider15, 0.6) && ng_pre_eq(slider16, 0.865) && ng_pre_eq(slider17, 0.8) && ng_pre_eq(slider18, 0.956) && ng_pre_eq(slider19, 1) && ng_pre_eq(slider20, 1) && ng_pre_eq(slider21, 0) && ng_pre_eq(slider22, 0) && ng_pre_eq(slider23, 0) && ng_pre_eq(slider24, 0) ? m = 0;
+    m < 0 && ng_pre_eq(slider1, 3) && ng_pre_eq(slider2, 9) && ng_pre_eq(slider3, 10) && ng_pre_eq(slider4, 0) && ng_pre_eq(slider5, 1) && ng_pre_eq(slider6, 12000) && ng_pre_eq(slider7, 100) && ng_pre_eq(slider8, -6) && ng_pre_eq(slider9, 0.1) && ng_pre_eq(slider10, 0.205) && ng_pre_eq(slider11, 0.25) && ng_pre_eq(slider12, 0.479) && ng_pre_eq(slider13, 0.4) && ng_pre_eq(slider14, 0.689) && ng_pre_eq(slider15, 0.6) && ng_pre_eq(slider16, 0.865) && ng_pre_eq(slider17, 0.8) && ng_pre_eq(slider18, 0.956) && ng_pre_eq(slider19, 1) && ng_pre_eq(slider20, 1) && ng_pre_eq(slider21, 0) && ng_pre_eq(slider22, 0) && ng_pre_eq(slider23, 0) && ng_pre_eq(slider24, 0) ? m = 1;
+    m < 0 && ng_pre_eq(slider1, 2) && ng_pre_eq(slider2, 12) && ng_pre_eq(slider3, 0) && ng_pre_eq(slider4, 0) && ng_pre_eq(slider5, 2) && ng_pre_eq(slider6, 20000) && ng_pre_eq(slider7, 100) && ng_pre_eq(slider8, -8) && ng_pre_eq(slider9, 0.1) && ng_pre_eq(slider10, 0.205) && ng_pre_eq(slider11, 0.25) && ng_pre_eq(slider12, 0.479) && ng_pre_eq(slider13, 0.4) && ng_pre_eq(slider14, 0.689) && ng_pre_eq(slider15, 0.6) && ng_pre_eq(slider16, 0.865) && ng_pre_eq(slider17, 0.8) && ng_pre_eq(slider18, 0.956) && ng_pre_eq(slider19, 1) && ng_pre_eq(slider20, 1) && ng_pre_eq(slider21, 0) && ng_pre_eq(slider22, 0) && ng_pre_eq(slider23, 0) && ng_pre_eq(slider24, 0) ? m = 2;
+    m < 0 && ng_pre_eq(slider1, 4) && ng_pre_eq(slider2, 4) && ng_pre_eq(slider3, 0) && ng_pre_eq(slider4, 0) && ng_pre_eq(slider5, 1) && ng_pre_eq(slider6, 6000) && ng_pre_eq(slider7, 80) && ng_pre_eq(slider8, -6) && ng_pre_eq(slider9, 0.1) && ng_pre_eq(slider10, 0.205) && ng_pre_eq(slider11, 0.25) && ng_pre_eq(slider12, 0.479) && ng_pre_eq(slider13, 0.4) && ng_pre_eq(slider14, 0.689) && ng_pre_eq(slider15, 0.6) && ng_pre_eq(slider16, 0.865) && ng_pre_eq(slider17, 0.8) && ng_pre_eq(slider18, 0.956) && ng_pre_eq(slider19, 1) && ng_pre_eq(slider20, 1) && ng_pre_eq(slider21, 0) && ng_pre_eq(slider22, 0) && ng_pre_eq(slider23, 0) && ng_pre_eq(slider24, 0) ? m = 3;
+    m < 0 && ng_pre_eq(slider1, 5) && ng_pre_eq(slider2, 18) && ng_pre_eq(slider3, 0) && ng_pre_eq(slider4, 0) && ng_pre_eq(slider5, 1) && ng_pre_eq(slider6, 9000) && ng_pre_eq(slider7, 100) && ng_pre_eq(slider8, -12) && ng_pre_eq(slider9, 0.1) && ng_pre_eq(slider10, 0.205) && ng_pre_eq(slider11, 0.25) && ng_pre_eq(slider12, 0.479) && ng_pre_eq(slider13, 0.4) && ng_pre_eq(slider14, 0.689) && ng_pre_eq(slider15, 0.6) && ng_pre_eq(slider16, 0.865) && ng_pre_eq(slider17, 0.8) && ng_pre_eq(slider18, 0.956) && ng_pre_eq(slider19, 1) && ng_pre_eq(slider20, 1) && ng_pre_eq(slider21, 0) && ng_pre_eq(slider22, 0) && ng_pre_eq(slider23, 0) && ng_pre_eq(slider24, 0) ? m = 4;
+    m < 0 && ng_pre_eq(slider1, 6) && ng_pre_eq(slider2, 3) && ng_pre_eq(slider3, 0) && ng_pre_eq(slider4, 0) && ng_pre_eq(slider5, 0) && ng_pre_eq(slider6, 20000) && ng_pre_eq(slider7, 100) && ng_pre_eq(slider8, -2) && ng_pre_eq(slider9, 0.1) && ng_pre_eq(slider10, 0.205) && ng_pre_eq(slider11, 0.25) && ng_pre_eq(slider12, 0.479) && ng_pre_eq(slider13, 0.4) && ng_pre_eq(slider14, 0.689) && ng_pre_eq(slider15, 0.6) && ng_pre_eq(slider16, 0.865) && ng_pre_eq(slider17, 0.8) && ng_pre_eq(slider18, 0.956) && ng_pre_eq(slider19, 1) && ng_pre_eq(slider20, 1) && ng_pre_eq(slider21, 0) && ng_pre_eq(slider22, 0) && ng_pre_eq(slider23, 0) && ng_pre_eq(slider24, 0) ? m = 5;
+    m < 0 && ng_pre_eq(slider1, 7) && ng_pre_eq(slider2, 8) && ng_pre_eq(slider3, 15) && ng_pre_eq(slider4, 0) && ng_pre_eq(slider5, 1) && ng_pre_eq(slider6, 20000) && ng_pre_eq(slider7, 70) && ng_pre_eq(slider8, -5) && ng_pre_eq(slider9, 0.1) && ng_pre_eq(slider10, 0.205) && ng_pre_eq(slider11, 0.25) && ng_pre_eq(slider12, 0.479) && ng_pre_eq(slider13, 0.4) && ng_pre_eq(slider14, 0.689) && ng_pre_eq(slider15, 0.6) && ng_pre_eq(slider16, 0.865) && ng_pre_eq(slider17, 0.8) && ng_pre_eq(slider18, 0.956) && ng_pre_eq(slider19, 1) && ng_pre_eq(slider20, 1) && ng_pre_eq(slider21, 0) && ng_pre_eq(slider22, 0) && ng_pre_eq(slider23, 0) && ng_pre_eq(slider24, 0) ? m = 6;
+    m < 0 && ng_pre_eq(slider1, 0) && ng_pre_eq(slider2, 6) && ng_pre_eq(slider3, 0) && ng_pre_eq(slider4, 0) && ng_pre_eq(slider5, 1) && ng_pre_eq(slider6, 20000) && ng_pre_eq(slider7, 100) && ng_pre_eq(slider8, -4) && ng_pre_eq(slider9, 0.2) && ng_pre_eq(slider10, 0.08) && ng_pre_eq(slider11, 0.4) && ng_pre_eq(slider12, 0.35) && ng_pre_eq(slider13, 0.6) && ng_pre_eq(slider14, 0.75) && ng_pre_eq(slider15, 0.8) && ng_pre_eq(slider16, 0.93) && ng_pre_eq(slider17, 1) && ng_pre_eq(slider18, 0.98) && ng_pre_eq(slider19, 0) && ng_pre_eq(slider20, 0) && ng_pre_eq(slider21, 0) && ng_pre_eq(slider22, 0) && ng_pre_eq(slider23, 0) && ng_pre_eq(slider24, 0) ? m = 7;
+    m;
+  );
+
+  function ng_preset_name(p) local(s)
+  (
+    s = "";
+    p == 0 ? s = "Default";
+    p == 1 ? s = "Warm Tube";
+    p == 2 ? s = "Hard Edge";
+    p == 3 ? s = "Folded Bass";
+    p == 4 ? s = "Sine Fuzz";
+    p == 5 ? s = "Bit Steps";
+    p == 6 ? s = "Even Harmonics";
+    p == 7 ? s = "Custom S-Curve";
+    s;
+  );
+
+  function ng_presets() local(i)
+  (
+    ng_pre_req >= 0 ? ( ng_preset_load(ng_pre_req); update(); ng_pre_req = -1; );
+    ng_pre_cur = ng_preset_match();
+    ng_pre_open ? (
+      ng_pre_menu_begin();
+      i = 0;
+      loop(ng_pre_n, ng_pre_item(i, ng_preset_name(i)); i += 1;);
+      ng_pre_menu_end();
+    );
+    strcpy(#ng_pre_name, ng_pre_cur >= 0 ? ng_preset_name(ng_pre_cur) : "CUSTOM");
+  );
+  // ---- end of factory presets ----
+
+@slider
+  update();
+
+@sample
+  xl = spl0 * gin;
+  xr = spl1 * gin;
+
+  // up to the shaper's rate
+  osf > 1 ? (
+    hb_up(xl, chl.u1, E1, 32, 15); chl.a1[0] = hb_o0; chl.a1[1] = hb_o1;
+    hb_up(xr, chr.u1, E1, 32, 15); chr.a1[0] = hb_o0; chr.a1[1] = hb_o1;
+    osf > 2 ? (
+      i = 0;
+      loop(2,
+        hb_up(chl.a1[i], chl.u2, E2, 12, 5); chl.a2[2 * i] = hb_o0; chl.a2[2 * i + 1] = hb_o1;
+        hb_up(chr.a1[i], chr.u2, E2, 12, 5); chr.a2[2 * i] = hb_o0; chr.a2[2 * i + 1] = hb_o1;
+        i += 1;
+      );
+    );
+  ) : (
+    tl[0] = xl;
+    tr[0] = xr;
+  );
+
+  // pad delay (whole latency in samples), Bias and the curve, at the top rate
+  i = 0;
+  loop(osf,
+    cxl = tl[i];
+    cxr = tr[i];
+    pad > 0 ? (
+      chl.pd[pw] = cxl;
+      chr.pd[pw] = cxr;
+      j = (pw - pad + 8) % 8;
+      cxl = chl.pd[j];
+      cxr = chr.pd[j];
+      pw = (pw + 1) % 8;
+    );
+    tl[i] = shape(cxl + bias);
+    tr[i] = shape(cxr + bias);
+    i += 1;
+  );
+
+  // back down to the sample rate
+  osf > 1 ? (
+    osf > 2 ? (
+      i = 0;
+      loop(2,
+        chl.a1[i] = hb_down(chl.a2[2 * i], chl.a2[2 * i + 1], chl.d2, D2, 12, 5);
+        chr.a1[i] = hb_down(chr.a2[2 * i], chr.a2[2 * i + 1], chr.d2, D2, 12, 5);
+        i += 1;
+      );
+    );
+    yl = hb_down(chl.a1[0], chl.a1[1], chl.d1, D1, 32, 15);
+    yr = hb_down(chr.a1[0], chr.a1[1], chr.d1, D1, 32, 15);
+  ) : (
+    yl = tl[0];
+    yr = tr[0];
+  );
+
+  // DC blocker (removes the Bias offset and the curve's own DC)
+  dcy_l = yl - dcx_l + dc_r * dcy_l; dcx_l = yl; yl = dcy_l;
+  dcy_r = yr - dcx_r + dc_r * dcy_r; dcx_r = yr; yr = dcy_r;
+
+  // Tone
+  tone_on ? (
+    ty = tb0 * yl + tb1 * lx1_l + tb0 * lx2_l - ta1 * ly1_l - ta2 * ly2_l;
+    lx2_l = lx1_l; lx1_l = yl; ly2_l = ly1_l; ly1_l = ty; yl = ty;
+    ty = tb0 * yr + tb1 * lx1_r + tb0 * lx2_r - ta1 * ly1_r - ta2 * ly2_r;
+    lx2_r = lx1_r; lx1_r = yr; ly2_r = ly1_r; ly1_r = ty; yr = ty;
+  );
+
+  // dry signal delayed by the latency, mix, output
+  chl.dr[dw] = spl0;
+  chr.dr[dw] = spl1;
+  j = (dw - lat + 64) % 64;
+  dry_l = chl.dr[j];
+  dry_r = chr.dr[j];
+  dw = (dw + 1) % 64;
+  spl0 = (dry_l * (1 - mix) + yl * mix) * gout;
+  spl1 = (dry_r * (1 - mix) + yr * mix) * gout;
+
+  // interface only: meters (read the audio state, never change it)
+  sh_x = max(abs(xl + bias), abs(xr + bias));
+  sh_in = sh_x > sh_in ? sh_x : sh_in * sh_rel;
+  sh_x = max(abs(spl0), abs(spl1));
+  sh_out = sh_x > sh_out ? sh_x : sh_out * sh_rel;
+
+@gfx 480 460
+  ng_knobs_begin("SHAPER", "ESSENTIALS", 480, 200, 2, 0);
+
+  // display, left: the transfer curve (curve input -1..+1 across, output -1..+1 up) with the
+  // points of the positive half as handles (drag them; double-click a point to remove it or an
+  // empty spot to add one; editing switches Shape to Custom, starting from the current shape)
+  // and the input peak marked; right: shape, point count, hints and IN / OUT meters
+  ng_plot(52, 68, 300, 172);
+  ng_grid(4, 4, 1);
+  ng_font(4, 8, 0);
+  ng_col(NG_MUTED, 1);
+  ng_ptxt("+1", ng_px - 6 * ng_s, ng_py, 2);
+  ng_ptxt("0", ng_px - 6 * ng_s, ng_py + ng_ph / 2, 2);
+  ng_ptxt("-1", ng_px - 6 * ng_s, ng_py + ng_ph, 2);
+  ng_col(NG_ACCENT, 0.25);
+  gfx_line(ng_px, ng_py + ng_ph, ng_px + ng_pw, ng_py, 1);
+  sh_pk = min(1, sh_in);
+  sh_pk > 0.001 ? (
+    ng_col(NG_ACCENT, 0.3);
+    gfx_line(ng_lin_x(sh_pk, -1, 1), ng_py, ng_lin_x(sh_pk, -1, 1), ng_py + ng_ph, 0);
+    gfx_line(ng_lin_x(-sh_pk, -1, 1), ng_py, ng_lin_x(-sh_pk, -1, 1), ng_py + ng_ph, 0);
+  );
+  ng_col(NG_ACCENT, 1);
+  sh_i = 0;
+  loop(301,
+    sh_xx = ng_px + ng_pw * sh_i / 300;
+    sh_yy = ng_lin_y(shape(-1 + 2 * sh_i / 300), -1, 1);
+    sh_i == 0 ? ng_line_start(sh_xx, sh_yy) : ng_line_to(sh_xx, sh_yy);
+    sh_i += 1;
+  );
+
+  // the handles: the P sliders for Custom, else the Shape's built-in points
+  sh_src = shp < 0.5 ? PX : SPTS + shp * 16;
+  sh_mx = (mouse_x - ng_ox) / ng_s;
+  sh_my = (mouse_y - ng_oy) / ng_s;
+  sh_n = 0;
+  sh_hit = -1;
+  sh_best = 7;
+  sh_i = 0;
+  loop(8,
+    sh_src[2 * sh_i] > 0 ? (
+      sh_n += 1;
+      sh_d = sqrt(sqr(sh_mx - (52 + 150 + 150 * sh_src[2 * sh_i])) + sqr(sh_my - (68 + 86 - 86 * sh_src[2 * sh_i + 1])));
+      sh_d < sh_best ? ( sh_best = sh_d; sh_hit = sh_i; );
+    );
+    sh_i += 1;
+  );
+  ng_col(NG_TEXT, 1);
+  gfx_circle(ng_lin_x(0, -1, 1), ng_lin_y(0, -1, 1), 2 * ng_s, 1);
+  sh_i = 0;
+  loop(8,
+    sh_src[2 * sh_i] > 0 ? (
+      sh_xx = ng_lin_x(sh_src[2 * sh_i], -1, 1);
+      sh_yy = ng_lin_y(sh_src[2 * sh_i + 1], -1, 1);
+      ng_col(sh_drag == sh_i + 1 ? NG_ACCENT : NG_CARD, 1);
+      gfx_circle(sh_xx, sh_yy, 4 * ng_s, 1);
+      ng_col(sh_drag == sh_i + 1 || sh_hit == sh_i ? NG_TEXT : NG_ACCENT, 1);
+      gfx_circle(sh_xx, sh_yy, 4 * ng_s, 0);
+    );
+    sh_i += 1;
+  );
+
+  // mouse: in the plot (6 units around it)
+  sh_inside = sh_mx >= 46 && sh_mx <= 358 && sh_my >= 62 && sh_my <= 246;
+  ng_click && sh_inside ? (
+    ng_now - sh_last < 0.3 && sh_last_hit == sh_hit ? (
+      sh_hit >= 0 ? (
+        sh_n > 1 ? (
+          sh_custom();
+          ng_slider_set(9 + 2 * sh_hit, 0);
+          ng_slider_set(10 + 2 * sh_hit, 0);
+          update();
+        );
+      ) : sh_mx > 202 && sh_n < 8 ? (
+        sh_custom();
+        sh_k = -1;
+        sh_i = 0;
+        loop(8, sh_k < 0 && !(PX[2 * sh_i] > 0) ? sh_k = sh_i; sh_i += 1;);
+        ng_slider_set(9 + 2 * sh_k, sh_snap((sh_mx - 202) / 150, 0.001));
+        ng_slider_set(10 + 2 * sh_k, sh_snap((154 - sh_my) / 86, -1));
+        update();
+      );
+      sh_last = 0;
+      sh_drag = 0;
+    ) : (
+      sh_hit >= 0 ? ( sh_custom(); sh_drag = sh_hit + 1; );
+      sh_last = ng_now;
+      sh_last_hit = sh_hit;
+    );
+  );
+  !ng_lmb ? sh_drag = 0;
+  sh_drag > 0 ? (
+    sh_k = sh_drag - 1;
+    (ng_slider_set(7 + 2 * sh_drag, sh_snap((sh_mx - 202) / 150, 0.001)) +
+     ng_slider_set(8 + 2 * sh_drag, sh_snap((154 - sh_my) / 86, -1))) ? update();
+  );
+
+  // right column
+  ng_font(1, 7, 1);
+  ng_col(NG_MUTED, 1);
+  ng_txt("SHAPE", 368, 76, 0, 1.5);
+  ng_txt("POINTS", 368, 112, 0, 1.5);
+  ng_font(1, 10, 1);
+  ng_col(NG_TEXT, 1);
+  sh_name(shp);
+  ng_txt(#sh_nm, 368, 91, 0, 0.5);
+  sprintf(#sh_pts, "%d / 8", sh_n);
+  ng_txt(#sh_pts, 368, 127, 0, 0.5);
+  ng_font(4, 7, 0);
+  ng_col(NG_MUTED, 1);
+  ng_txt("Drag a point to edit.", 368, 150, 0, 0);
+  ng_txt("Double-click: add or", 368, 162, 0, 0);
+  ng_txt("remove a point.", 368, 174, 0, 0);
+  ng_meter(368, 204, 80, 8, "IN", ng_to_db(sh_in), -140, -48);
+  ng_meter(368, 222, 80, 8, "OUT", ng_to_db(sh_out), -140, -48);
+
+  ng_row(4);
+  ng_select_ctl(1, "SHAPE", "CUSTOM|SOFT|HARD|TUBE|FOLD|SINE|STEPS|ASYM", 0) ? (
+    slider1 > 0.5 ? ( sh_load(floor(slider1 + 0.5)); );
+    update();
+  );
+  sprintf(#v2, "%.1f dB", slider2);
+  ng_knob_ctl(2, "DRIVE", #v2, 0, 36, 6, 0.1, 0) ? update();
+  slider3 == 0 ? sprintf(#v3, "0%%") : sprintf(#v3, "%+d%%", slider3);
+  ng_knob_ctl(3, "BIAS", #v3, -50, 50, 0, 1, 1) ? update();
+  slider6 >= 20000 ? strcpy(#v6, "OFF") : sprintf(#v6, "%.1f kHz", slider6 / 1000);
+  ng_knob_ctl_log(6, "TONE", #v6, 1000, 20000, 20000, 1) ? update();
+  ng_row(4);
+  ng_select_ctl(4, "SYMMETRY", "SYM|ASYM", 0) ? update();
+  ng_select_ctl(5, "OVERSAMPLE", "OFF|2X|4X", 0) ? update();
+  sprintf(#v7, "%d%%", slider7);
+  ng_knob_ctl(7, "MIX", #v7, 0, 100, 100, 1, 0) ? update();
+  abs(slider8) < 0.05 ? sprintf(#v8, "0.0 dB") : sprintf(#v8, "%+.1f dB", slider8);
+  ng_knob_ctl(8, "OUTPUT", #v8, -24, 12, -6, 0.1, 0) ? update();
+
+  ng_end();
+
+  ng_presets(); // the preset list (generated by tools/build_presets.py)

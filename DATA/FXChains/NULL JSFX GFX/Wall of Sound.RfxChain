@@ -1,0 +1,62 @@
+BYPASS 0 0
+<JS null_jsfx/gfx/saturation_gfx.jsfx ""
+  30 -2 40 3 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+>
+FXID {FB7C8452-74CC-580A-B908-515440435F0F}
+WAK 0 0
+BYPASS 0 0
+<JS null_jsfx/gfx/chorus_gfx.jsfx ""
+  0.5 5 40 3 80 0 0 20000 0 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+>
+FXID {62714FD6-FFA3-522E-A117-2D2650F4A3A1}
+<PROGRAMENV 2 0
+  PARAMBASE 0.4
+  LFO 0
+  LFOWT 1 1
+  AUDIOCTL 0
+  AUDIOCTLWT 1 1
+  PLINK 0.75 0:-1 0 -0.225
+>
+WAK 0 0
+BYPASS 0 0
+<JS null_jsfx/gfx/reverb_gfx.jsfx ""
+  85 80 50 35 0 30 20 20000 150 30 0 2 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+>
+FXID {1D9C39F2-0DF2-529C-95FC-380FFD37F53E}
+<PROGRAMENV 3 0
+  PARAMBASE 0.35
+  LFO 0
+  LFOWT 1 1
+  AUDIOCTL 0
+  AUDIOCTLWT 1 1
+  PLINK 0.75 0:-2 0 -0.225
+>
+<PROGRAMENV 0 0
+  PARAMBASE 0.833333
+  LFO 0
+  LFOWT 1 1
+  AUDIOCTL 0
+  AUDIOCTLWT 1 1
+  PLINK 0.5 2:0 1 -0.4
+>
+<PROGRAMENV 5 0
+  PARAMBASE 0.12
+  LFO 0
+  LFOWT 1 1
+  AUDIOCTL 0
+  AUDIOCTLWT 1 1
+  PLINK 1 2:0 1 -0.8
+>
+WAK 0 0
+BYPASS 0 0
+<JS null_jsfx/gfx/spectral_freeze_gfx.jsfx ""
+  0 300 60 0 100 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+>
+FXID {9F10340A-278D-5F22-8BA4-AF7F1C39D1DD}
+WAK 0 0
+BYPASS 0 0
+<JS null_jsfx/gfx/channel_utility_gfx.jsfx ""
+  0 0 0 0 20 100 0 0 0 0 0 -4 0 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+>
+FXID {2EC2F02B-47FD-575B-86DF-B8C39D6E2720}
+WAK 0 0
