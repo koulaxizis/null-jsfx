@@ -8,8 +8,17 @@ is: title, the loop bypassed, up to three factory presets with a quick before/af
 of the main control, end card. tools/video/videos.json can change a plugin's script:
   "presets": [names]          which factory presets (default: first, middle and last)
   "sweep": [slider, from, to] the control to turn (null: none), "sweep_base": preset to turn it on
-  "input": hum|noise|clicks|sidechain  what goes in (default: the loop)
+  "input": hum|noise|clicks|plosives|sidechain  what goes in (default: the loop)
   "pulse": [slider, every, on] switch a 0/1 slider on for `on` seconds every `every` seconds
+  "midi": pattern             the MIDI an instrument or a MIDI effect gets (see PATTERNS; null:
+                              none, for an instrument that plays its own groove with the host)
+  "play": [instrument, preset] a MIDI effect: the NULL instrument that plays its notes
+  "input_label": text         the caption of what goes in (default: the loop, or the MIDI pattern)
+
+Instruments (category Instruments) have no input: the video plays a MIDI pattern into them
+(or lets their groove run with the host), shows their output and a roll of the notes played,
+and skips the before/after. MIDI effects get the pattern too; an instrument plays what goes
+in (before) and what comes out (after), and a roll shows both sets of notes.
 
 Two files per plugin:
   assets/video/<plugin>.mp4      1280x720 H.264 for the site and the Hub (small, faststart)
@@ -104,6 +113,13 @@ def make_input(kind, loop):
         hiss = rng.standard_normal((n, 2))
         hiss = np.diff(np.vstack([np.zeros((1, 2)), hiss]), axis=0) * 0.5 + hiss * 0.3
         x = x * 0.8 + hiss * 0.012
+    elif kind == "plosives":  # P and B pops: low thumps a close mic picks up
+        t = np.arange(int(0.12 * SR)) / SR
+        pop = np.sin(2 * np.pi * np.cumsum(55 + 90 * np.exp(-t / 0.015)) / SR) * \
+            (1 - np.exp(-t / 0.003)) * np.exp(-t / 0.035) * 0.55
+        for i in range(int(1.3 * SR), n - len(pop), int(2.1 * SR)):
+            i += int(rng.integers(0, SR // 2))
+            x[i:i + len(pop)] += pop[:, None] * np.array([1.0, 0.85])
     elif kind == "clicks":
         for i in rng.integers(0, n - 40, 70):
             x[i:i + 3] += rng.choice([-1, 1]) * np.array([0.5, -0.35, 0.15])[:, None]
@@ -112,6 +128,113 @@ def make_input(kind, loop):
         main = loop * 0.9
         return np.column_stack([main, k, k]), main
     return x, x
+
+
+# ---------------------------------------------------------------- MIDI patterns
+
+BEAT = SR // 2  # 120 BPM, like the loop and the host time gfx_video reports
+# A minor progression, one bar each: Am, F, C, G (chord, bass note)
+PROG = [([57, 60, 64], 45), ([53, 57, 60], 41), ([55, 60, 64], 48), ([55, 59, 62], 43)]
+MELODY = [  # (beat in bar, length, note) for the four bars
+    [(0, 1.5, 76), (1.5, 0.5, 74), (2, 1, 72), (3, 1, 71)],
+    [(0, 1.5, 72), (1.5, 0.5, 69), (2, 2, 72)],
+    [(0, 1, 67), (1, 1, 72), (2, 1.5, 76), (3.5, 0.5, 74)],
+    [(0, 3, 74), (3, 1, 71)],
+]
+WRONG = [  # a line with notes from outside any one scale, for Scale
+    [(0, 1, 69), (1, 0.5, 70), (1.5, 0.5, 72), (2, 1, 73), (3, 0.5, 71), (3.5, 0.5, 68)],
+    [(0, 0.5, 66), (0.5, 0.5, 64), (1, 1, 63), (2, 1, 61), (3, 1, 57)],
+    [(0, 0.5, 60), (0.5, 0.5, 62), (1, 0.5, 63), (1.5, 0.5, 65), (2, 1, 66), (3, 1, 68)],
+    [(0, 1.5, 70), (1.5, 0.5, 69), (2, 2, 64)],
+]
+PATTERNS = {  # name: what the video says is played
+    "chords": "Held chords: Am, F, C, G",
+    "pad": "Held chords over a bass note",
+    "keys": "Chords, a bass note and a melody",
+    "song": "Held chords and a melody",
+    "bass": "A bass line: A, F, C, G",
+    "roots": "One key per bar: A, F, C, G",
+    "riff": "A held key: C, then G",
+    "wrong": "A melody with notes out of key",
+    "drums": "A straight drum beat (GM notes)",
+}
+
+
+def midi_pattern(name, seconds):
+    """[(sample, status, data1, data2)] of a pattern, looped for the whole video."""
+    ev = []
+
+    def note(beat, length, pitch, vel):
+        ev.append((int(round(beat * BEAT)), 0x90, pitch, vel))
+        ev.append((int(round((beat + length) * BEAT)), 0x80, pitch, 0))
+
+    bars = int(seconds * 2 / 4) + 2
+    for bar in range(bars):
+        b = bar * 4
+        chord, root = PROG[bar % 4]
+        if name in ("chords", "pad", "song"):
+            for n in chord:
+                note(b, 4, n, 80)
+            if name != "chords":
+                note(b, 4, root, 76)
+            if name == "song":
+                for at, ln, n in MELODY[bar % 4]:
+                    note(b + at, ln * 0.95, n, 92)
+        elif name == "keys":
+            note(b, 4, root, 70)
+            for at, ln, v in ((0, 1.25, 80), (1.5, 0.5, 62), (2.5, 1.4, 74)):
+                for n in chord:
+                    note(b + at, ln, n, v)
+            for at, ln, n in MELODY[bar % 4]:
+                note(b + at, ln * 0.95, n + 12 if n < 72 else n, 92)
+        elif name == "bass":
+            r = [45, 41, 36, 43][bar % 4]
+            for at, ln, dn, v in ((0, 0.7, 0, 110), (0.75, 0.2, 0, 70), (1.5, 0.45, 0, 95), (2.5, 0.2, 12, 85),
+                                  (3, 0.45, 0, 100), (3.5, 0.4, 7, 90)):
+                note(b + at, ln, r + dn, v)
+        elif name == "roots":
+            note(b, 4, [57, 53, 60, 55][bar % 4], 96)
+        elif name == "riff":
+            note(b, 4, 48 if bar % 4 < 2 else 43, 100)
+        elif name == "wrong":
+            for at, ln, n in WRONG[bar % 4]:
+                note(b + at, ln * 0.9, n, 90)
+        elif name == "drums":
+            for step in range(16):
+                at = b + step / 4
+                if step in (0, 8) or (step == 10 and bar % 2):
+                    note(at, 0.2, 36, 110)
+                if step in (4, 12):
+                    note(at, 0.2, 38, 105)
+                note(at, 0.1, 42, (96, 50, 72, 50)[step % 4])
+        else:
+            raise ValueError(f"unknown MIDI pattern {name}")
+    end = int(seconds * SR)
+    # note-offs before note-ons at the same sample, so a repeated key starts cleanly
+    return sorted([e for e in ev if e[0] < end], key=lambda e: (e[0], e[1] != 0x80, e[2]))
+
+
+def write_midi(events, path):
+    Path(path).write_text("".join(f"{a} {b} {c} {d}\n" for a, b, c, d in events))
+
+
+def read_midi(path):
+    return [tuple(int(x) for x in line.split()) for line in Path(path).read_text().split("\n") if line.strip()]
+
+
+def note_spans(events):
+    """[(start s, end s, note, velocity)] from note on/off events."""
+    held, out = {}, []
+    for pos, st, d1, d2 in events:
+        kind, ch = st & 0xF0, st & 0x0F
+        if kind == 0x90 and d2 > 0:
+            held.setdefault((ch, d1), []).append((pos, d2))
+        elif kind in (0x80, 0x90):
+            if held.get((ch, d1)):
+                p0, v = held[(ch, d1)].pop(0)
+                out.append((p0 / SR, pos / SR, d1, v))
+    out += [(p0 / SR, 1e9, n, v) for (ch, n), lst in held.items() for p0, v in lst]
+    return out
 
 
 # ---------------------------------------------------------------- script
@@ -127,6 +250,7 @@ def plugin_info(stem):
         "sliders": parse_sliders(PLUGINS / f"{stem}.jsfx"),
         "units": units(stem),
         "presets": build_presets.load(stem),
+        "mode": {"Instruments": "instrument", "MIDI": "midi"}.get(head[3].split(": ", 1)[1], "fx"),
     }
 
 
@@ -134,8 +258,11 @@ def units(stem):
     """The unit in brackets at the end of each slider label, "" without one."""
     text = (PLUGINS / f"{stem}.jsfx").read_text(encoding="utf-8")
     out = []
-    for m in re.finditer(r"^slider\d+:[^>\n]*>(.*)$", text, re.M):
-        u = re.search(r"\(([^)]*)\)\s*$", m.group(1))
+    for m in re.finditer(r"^slider\d+:(.*)$", text, re.M):
+        if ">" not in m.group(1):  # a file slider (/folder:default:Label): no unit
+            out.append("")
+            continue
+        u = re.search(r"\(([^)]*)\)\s*$", m.group(1).split(">", 1)[1])
         out.append(u.group(1) if u else "")
     return out
 
@@ -177,11 +304,16 @@ def build_script(info, cfg):
         chosen = [rest[i] for i in sorted({0, len(rest) // 2, len(rest) - 1})] if rest else []
     if not chosen:
         chosen = [presets[0]]
-    seg = [(3.0, "title", "", chosen[0][1], True, None),
-           (4.0, "before", "The loop, untouched", chosen[0][1], True, None)]
+    if info["mode"] == "instrument":  # nothing to compare with: the presets play from the start
+        seg = [(3.0, "title", "", chosen[0][1], False, None)]
+    else:
+        before = cfg.get("input_label", "The loop, untouched" if info["mode"] == "fx" else
+                         PATTERNS.get(cfg.get("midi"), "The notes going in"))
+        seg = [(3.0, "title", "", chosen[0][1], True, None),
+               (4.0, "before", before, chosen[0][1], True, None)]
     for k, (name, vals) in enumerate(chosen):
         seg.append((6.0 if k else 6.5, "preset", name, vals, False, None))
-        if k == 0:
+        if k == 0 and info["mode"] != "instrument":
             seg.append((2.0, "ab", name, vals, True, None))
             seg.append((2.5, "ab", name, vals, False, None))
     sw = pick_sweep(info, cfg)
@@ -362,24 +494,42 @@ def stage(info, gw, gh):
         d.text((rx, 262 + j * 36), line, font=font(False, 26), fill=SILVER)
     sp = (rx, 600, rw, 200)
     lv = (rx, 830, rw, 150)
-    for (x0, y0, w0, h0), lab in ((sp, "SPECTRUM"), (lv, "LEVEL")):
+    # what the two panels show: effects compare the spectrum and level before and after; MIDI
+    # effects show the notes in and out, instruments their output and the notes they get
+    mode = info["mode"]
+    kinds = {"fx": ("spectrum", "level"), "midi": ("notes", "level"),
+             "instrument": ("spectrum", "notes" if info.get("midi") else "level")}[mode]
+    for (x0, y0, w0, h0), kind in zip((sp, lv), kinds):
         d.rounded_rectangle([x0, y0 - 30, x0 + w0, y0 + h0], radius=10, fill=(24, 24, 23), outline=BORDER, width=1)
-        d.text((x0 + 14, y0 - 24), lab, font=font(True, 14), fill=MUTED)
+        d.text((x0 + 14, y0 - 24), kind.upper(), font=font(True, 14), fill=MUTED)
         lx = x0 + w0 - 14
-        for name, col in reversed([("BEFORE", (110, 110, 108)), ("AFTER", SILVER)]):
+        legend = [("BEFORE", (110, 110, 108)), ("AFTER", SILVER)]
+        if kind == "notes":
+            legend = [("IN", (110, 110, 108)), ("OUT", SILVER)] if mode == "midi" else [("MIDI IN", SILVER)]
+        elif mode == "instrument":
+            legend = [("OUTPUT", SILVER)]
+        for name, col in reversed(legend):
             lx -= d.textlength(name, font=font(False, 14))
             d.text((lx, y0 - 24), name, font=font(False, 14), fill=col)
             lx -= 22
             d.rounded_rectangle([lx, y0 - 18, lx + 14, y0 - 12], radius=3, fill=col)
             lx -= 14
-    for hz, lab in ((100, "100"), (1000, "1k"), (10000, "10k")):
+    for hz, lab in ((100, "100"), (1000, "1k"), (10000, "10k")) if kinds[0] == "spectrum" else ():
         xx = sp[0] + sp[2] * math.log(hz / SR_HZ[0]) / math.log(SR_HZ[1] / SR_HZ[0])
         d.line([xx, sp[1] + 4, xx, sp[1] + sp[3] - 4], fill=(40, 40, 40), width=1)
         d.text((xx + 4, sp[1] + sp[3] - 22), lab, font=font(False, 13), fill=DIM)
+    if mode != "fx":  # what plays: the pattern into an instrument, the instrument after a MIDI effect
+        x = rx if mode == "instrument" else rx + 340
+        d.text((x, 368), "PLAYED BY" if mode == "midi" else "PLAYING", font=font(True, 14), fill=MUTED)
+        line = info.get("played_by") or ""
+        f = font(False, 22)
+        while d.textlength(line, font=f) > rx + rw - x and f.size > 14:
+            f = font(False, f.size - 1)
+        d.text((x, 388), line, font=f, fill=SILVER)
     umask = Image.new("L", (uw, uh), 0)
     ImageDraw.Draw(umask).rounded_rectangle([0, 0, uw - 1, uh - 1], radius=12, fill=255)
     return {"base": np.asarray(bg).copy(), "mask": umask, "box": (ux, uy, uw, uh), "sp": sp, "lv": lv,
-            "rpos": (rx, rw)}
+            "rpos": (rx, rw), "kinds": kinds, "mode": mode}
 
 
 def film(stem, info, script, st, ui_at, dry, wet, ctl, audio, hq_dir, title, end):
@@ -414,7 +564,7 @@ def film(stem, info, script, st, ui_at, dry, wet, ctl, audio, hq_dir, title, end
             arr = title
             if t > starts[1] - 0.5:
                 a = (t - (starts[1] - 0.5)) / 0.5
-                arr = (title * (1 - a) + draw(script[1], 0, f, t, end_s, True) * a).astype(np.uint8)
+                arr = (title * (1 - a) + draw(script[1], 0, f, t, end_s, script[1][4]) * a).astype(np.uint8)
         elif kind == "end":
             arr = end
             if p * dur < 0.5:
@@ -474,15 +624,26 @@ def render(stem, hq_dir, tool, loop):
         ctl[f] = v
         byp[f] = 1.0 if bypass else 0.0
 
+    mode = info["mode"]
     with tempfile.TemporaryDirectory() as tmp:
         tmp = Path(tmp)
-        ins, before = make_input(cfg.get("input", "loop"), loop)
+        midi_args, events = [], []
+        if mode == "fx":
+            ins, before = make_input(cfg.get("input", "loop"), loop)
+        else:  # instruments and MIDI effects: silence in, the MIDI pattern as what is played
+            ins = before = np.zeros((SR, 2))
+            if cfg.get("midi"):
+                events = midi_pattern(cfg["midi"], total + 1)
+                write_midi(events, tmp / "midi_in.txt")
+                midi_args = ["-m", str(tmp / "midi_in.txt")]
         n_in = ins.shape[1]
         ins.astype(np.float32).tofile(tmp / "in.f32")
         ctl.tofile(tmp / "ctl.f32")
         plugin = GFX / f"{stem}_gfx.jsfx"
-        r = subprocess.run([tool, str(plugin), str(tmp / "in.f32"), str(n_in), str(tmp / "ctl.f32"), str(nsl),
-                            str(FPS), str(tmp / "out.f32")], capture_output=True, text=True)
+        out_args = ["-M", str(tmp / "midi_out.txt")] if mode == "midi" else []
+        r = subprocess.run([tool] + midi_args + out_args + [str(plugin), str(tmp / "in.f32"), str(n_in),
+                           str(tmp / "ctl.f32"), str(nsl), str(FPS), str(tmp / "out.f32")],
+                           capture_output=True, text=True)
         if r.returncode:
             raise RuntimeError(f"{stem}: gfx_video failed: {r.stderr}")
         pins = int(r.stderr.strip().split("\n")[-1])
@@ -494,6 +655,17 @@ def render(stem, hq_dir, tool, loop):
         else:
             wet = wet_all[:, 0:2]
         dry = np.vstack([before] * (n // len(before) + 1))[:n]
+        if mode == "midi":  # the instrument plays the notes going in (before) and coming out (after)
+            out_events = read_midi(tmp / "midi_out.txt")
+            inst, preset = cfg["play"]
+            dry = play_instrument(tool, inst, preset, tmp / "midi_in.txt", nframes, n, tmp)
+            wet = play_instrument(tool, inst, preset, tmp / "midi_out.txt", nframes, n, tmp)
+            info["played_by"] = f"{plugin_info(inst)['name']} · {preset}"
+            info["notes"] = (note_spans(events), note_spans(out_events))
+        elif mode == "instrument":
+            info["played_by"] = PATTERNS[cfg["midi"]] if cfg.get("midi") else "Its own groove, in time with the host"
+            info["notes"] = (note_spans(events), [])
+        info["midi"] = cfg.get("midi")
 
         # dry/wet by bypass, 25 ms crossfades
         g = np.repeat(1 - byp, SR // FPS)[:n]
@@ -510,13 +682,35 @@ def render(stem, hq_dir, tool, loop):
         gw, gh = [int(v) for v in next(l for l in plugin.read_text(encoding="utf-8").split("\n")
                                        if l.startswith("@gfx")).split()[1:3]]
         st = stage(info, gw, gh)
+        if "notes" in info:
+            st["notes_in"], st["notes_out"] = info["notes"]
+            ns = [x[2] for x in st["notes_in"] + st["notes_out"]] or [60]
+            lo, hi = min(ns) - 1, max(ns) + 1
+            while hi - lo < 14:
+                lo, hi = lo - 1, hi + 1
+            st["note_range"] = (lo, hi)
         uw, uh = st["box"][2], st["box"][3]
-        gfxp = subprocess.Popen([tool, str(plugin), str(tmp / "in.f32"), str(n_in), str(tmp / "ctl.f32"), str(nsl),
+        gfxp = subprocess.Popen([tool] + midi_args + [str(plugin), str(tmp / "in.f32"), str(n_in), str(tmp / "ctl.f32"), str(nsl),
                                  str(FPS), str(tmp / "x.f32"), str(uw), str(uh)], stdout=subprocess.PIPE)
         film(stem, info, script, st, lambda f: np.frombuffer(gfxp.stdout.read(uw * uh * 3), np.uint8).reshape(uh, uw, 3),
              dry, wet, ctl, tmp / "mix.f32", hq_dir, title_card(info), end_card(info))
         gfxp.wait()
     return stem, total
+
+
+def play_instrument(tool, stem, preset, midi, nframes, n, tmp):
+    """The stereo output of a NULL instrument at one of its factory presets playing a MIDI file,
+    n samples long (a MIDI effect's video: what its notes sound like)."""
+    vals = next(v for name, v in build_presets.load(stem) if name == preset)
+    np.tile(np.asarray(vals, np.float32), (nframes, 1)).tofile(tmp / "inst_ctl.f32")
+    r = subprocess.run([tool, "-m", str(midi), str(GFX / f"{stem}_gfx.jsfx"), str(tmp / "in.f32"), "2",
+                        str(tmp / "inst_ctl.f32"), str(len(vals)), str(FPS), str(tmp / "inst.f32")],
+                       capture_output=True, text=True)
+    if r.returncode:
+        raise RuntimeError(f"{stem}: gfx_video failed: {r.stderr}")
+    pins = int(r.stderr.strip().split("\n")[-1])
+    out = np.fromfile(tmp / "inst.f32", np.float32).reshape(-1, pins)[:, 0:2].astype(np.float64)
+    return out[:n] if len(out) >= n else np.vstack([out, np.zeros((n - len(out), 2))])
 
 
 def frame(st, ui, info, seg, p, vals, spec_b, spec_a, dry, wet, end_s, t, total):
@@ -541,8 +735,9 @@ def frame(st, ui, info, seg, p, vals, spec_b, spec_a, dry, wet, end_s, t, total)
                             radius=30, fill=(20, 20, 20), outline=BORDER, width=2)
         d.text((ux + uw / 2 - tw / 2, uy + uh / 2 - 21), s, font=f, fill=SILVER)
     rx, rw = rpos
-    pill(d, rx, 370, "BEFORE", bypass)
-    pill(d, rx + 166, 370, "AFTER", not bypass)
+    if st["mode"] != "instrument":
+        pill(d, rx, 370, "BEFORE", bypass)
+        pill(d, rx + 166, 370, "AFTER", not bypass)
     # caption
     if isinstance(label, tuple):
         top, big = label
@@ -566,8 +761,22 @@ def frame(st, ui, info, seg, p, vals, spec_b, spec_a, dry, wet, end_s, t, total)
         y = 536
         d.rounded_rectangle([rx, y, rx + rw, y + 8], radius=4, fill=(45, 45, 45))
         d.rounded_rectangle([rx, y, rx + max(8, rw * q), y + 8], radius=4, fill=SILVER)
-    # spectrum
-    x0, y0, w0, h0 = sp
+    show_before = st["mode"] != "instrument"
+    for rect, kind in zip((sp, lv), st["kinds"]):
+        if kind == "spectrum":
+            draw_spectrum(d, rect, spec_b, spec_a, show_before)
+        elif kind == "level":
+            draw_level(d, rect, dry, wet, end_s, hist_n, hop, show_before)
+        else:
+            draw_notes(d, rect, st, end_s / SR, bypass)
+    # progress
+    d.rounded_rectangle([64, H - 30, W - 64, H - 26], radius=2, fill=(40, 40, 40))
+    d.rounded_rectangle([64, H - 30, 64 + (W - 128) * t / total, H - 26], radius=2, fill=(120, 120, 120))
+    return im
+
+
+def draw_spectrum(d, rect, spec_b, spec_a, show_before):
+    x0, y0, w0, h0 = rect
 
     def curve(spec):
         lo_db, hi_db = -80, 0
@@ -575,32 +784,63 @@ def frame(st, ui, info, seg, p, vals, spec_b, spec_a, dry, wet, end_s, t, total)
         xs = x0 + 2 + np.linspace(0, w0 - 4, len(spec))
         return list(zip(xs, ys))
 
-    pb = curve(spec_b)
-    d.polygon(pb + [(x0 + w0 - 1, y0 + h0 - 2), (x0 + 1, y0 + h0 - 2)], fill=(44, 44, 43))
-    d.line(pb, fill=(110, 110, 108), width=2, joint="curve")
+    if show_before:
+        pb = curve(spec_b)
+        d.polygon(pb + [(x0 + w0 - 1, y0 + h0 - 2), (x0 + 1, y0 + h0 - 2)], fill=(44, 44, 43))
+        d.line(pb, fill=(110, 110, 108), width=2, joint="curve")
+    else:
+        pa = curve(spec_a)
+        d.polygon(pa + [(x0 + w0 - 1, y0 + h0 - 2), (x0 + 1, y0 + h0 - 2)], fill=(44, 44, 43))
     d.line(curve(spec_a), fill=SILVER, width=3, joint="curve")
-    # level history
-    x0, y0, w0, h0 = lv
+
+
+def draw_level(d, rect, dry, wet, end_s, cols, hop, show_before):
+    """The level history: 5 s of peaks, before as a grey area, after as silver lines."""
+    x0, y0, w0, h0 = rect
     mid = y0 + h0 / 2
-    cols = hist_n
     ends = end_s - np.arange(cols)[::-1] * hop
+
     def peaks(x):
         out = np.zeros(cols)
         for j, e in enumerate(ends):
             if e > hop:
                 out[j] = np.abs(x[e - hop:e]).max()
         return np.clip(out / 0.8, 0, 1) ** 0.6
-    pbk, pak = peaks(dry), peaks(wet)
+    pak = peaks(wet)
+    pbk = peaks(dry) if show_before else pak
     xs = x0 + 8 + np.arange(cols) * (w0 - 16) / (cols - 1)
     top_b = [(x, mid - v * (h0 / 2 - 8)) for x, v in zip(xs, pbk)]
     bot_b = [(x, mid + v * (h0 / 2 - 8)) for x, v in zip(xs[::-1], pbk[::-1])]
-    d.polygon(top_b + bot_b, fill=(52, 52, 52))
+    d.polygon(top_b + bot_b, fill=(52, 52, 52) if show_before else (44, 44, 43))
     d.line([(x, mid - v * (h0 / 2 - 8)) for x, v in zip(xs, pak)], fill=SILVER, width=2)
     d.line([(x, mid + v * (h0 / 2 - 8)) for x, v in zip(xs, pak)], fill=SILVER, width=2)
-    # progress
-    d.rounded_rectangle([64, H - 30, W - 64, H - 26], radius=2, fill=(40, 40, 40))
-    d.rounded_rectangle([64, H - 30, 64 + (W - 128) * t / total, H - 26], radius=2, fill=(120, 120, 120))
-    return im
+
+
+def draw_notes(d, rect, st, now, bypass, span=4.0):
+    """A piano roll of the last `span` seconds, now at the right edge: the notes going in (grey;
+    silver for an instrument or a bypassed MIDI effect) and, for a MIDI effect, the notes coming
+    out (silver) over them."""
+    x0, y0, w0, h0 = rect
+    lo, hi = st["note_range"]
+    row = (h0 - 16) / (hi - lo + 1)
+    xl, xr = x0 + 8, x0 + w0 - 8
+
+    def bars(notes, fill, lit):
+        for t0, t1, n, v in notes:
+            if t1 < now - span or t0 > now:
+                continue
+            a = xl + (xr - xl) * max(0.0, 1 - (now - t0) / span)
+            b = xl + (xr - xl) * (1 - (now - min(t1, now)) / span)
+            y = y0 + 8 + (hi - n) * row
+            on = t0 <= now < t1
+            d.rounded_rectangle([a, y + 1, max(a + 3, b), y + max(3, row - 1)], radius=min(3, row / 3),
+                                fill=lit if on else fill)
+
+    if st["mode"] == "midi" and not bypass:
+        bars(st["notes_in"], (84, 84, 82), (120, 120, 118))
+        bars(st["notes_out"], SILVER, TEXT)
+    else:
+        bars(st["notes_in"], SILVER, TEXT)
 
 
 def title_card(info):

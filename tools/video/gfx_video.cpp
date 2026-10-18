@@ -1,14 +1,18 @@
 // Runs a GFX JSFX over an audio file with per-frame slider automation, for the plugin videos.
-// Usage: gfx_video plugin.jsfx in.f32 n_in control.f32 n_ctl fps out.f32 [width height]
+// Usage: gfx_video [-m midi_in.txt] [-M midi_out.txt] plugin.jsfx in.f32 n_in control.f32 n_ctl fps out.f32 [width height]
 //   in.f32       interleaved float32 input, n_in channels, 48 kHz
 //   control.f32  float32 per video frame: n_ctl slider values (slider1 first)
 //   out.f32      interleaved float32 output, every output pin of the plugin
 //   width height also renders @gfx once per frame and writes the frames to stdout (RGB24)
+//   -m           MIDI to play into the plugin (instruments, MIDI effects): one event per line,
+//                "sample status data1 data2", sorted by sample
+//   -M           writes the MIDI the plugin sends (MIDI effects) in the same format
 // The audio is processed in 256-sample blocks at 120 BPM (the loop's tempo); a frame's
 // slider values apply from its first sample. Build: build.sh (next to this file).
 #include "ysfx.h"
 #include <cstdio>
 #include <cstdlib>
+#include <cstring>
 #include <vector>
 
 static std::vector<float> read_f32(const char *path)
@@ -28,12 +32,39 @@ static void reporter(intptr_t, ysfx_log_level level, const char *msg)
     if (level == ysfx_log_error) fprintf(stderr, "%s: %s\n", ysfx_log_level_string(level), msg);
 }
 
+struct midi_ev {
+    size_t pos;
+    uint8_t b[3];
+};
+
+static std::vector<midi_ev> read_midi(const char *path)
+{
+    std::vector<midi_ev> v;
+    FILE *f = fopen(path, "r");
+    if (!f) { fprintf(stderr, "cannot open %s\n", path); exit(1); }
+    unsigned long long pos;
+    unsigned a, b, c;
+    while (fscanf(f, "%llu %u %u %u", &pos, &a, &b, &c) == 4) v.push_back({(size_t)pos, {(uint8_t)a, (uint8_t)b, (uint8_t)c}});
+    fclose(f);
+    return v;
+}
+
 int main(int argc, char **argv)
 {
+    const char *midi_in = nullptr, *midi_out = nullptr;
+    while (argc > 2 && (!strcmp(argv[1], "-m") || !strcmp(argv[1], "-M"))) {
+        (argv[1][1] == 'm' ? midi_in : midi_out) = argv[2];
+        argv += 2;
+        argc -= 2;
+    }
     if (argc < 8) {
-        fprintf(stderr, "usage: %s plugin.jsfx in.f32 n_in control.f32 n_ctl fps out.f32 [width height]\n", argv[0]);
+        fprintf(stderr, "usage: %s [-m midi_in.txt] [-M midi_out.txt] plugin.jsfx in.f32 n_in control.f32 n_ctl fps out.f32 [width height]\n", argv[0]);
         return 2;
     }
+    const std::vector<midi_ev> mev = midi_in ? read_midi(midi_in) : std::vector<midi_ev>();
+    size_t mi = 0;
+    FILE *mout = midi_out ? fopen(midi_out, "w") : nullptr;
+    if (midi_out && !mout) { fprintf(stderr, "cannot write %s\n", midi_out); return 1; }
     const double sr = 48000;
     const uint32_t nin = (uint32_t)atoi(argv[3]), nctl = (uint32_t)atoi(argv[5]);
     const double fps = atof(argv[6]);
@@ -98,7 +129,18 @@ int main(int argc, char **argv)
             ti.time_position = pos / sr;
             ti.beat_position = ti.time_position * 2.0;
             ysfx_set_time_info(fx, &ti);
+            for (; mi < mev.size() && mev[mi].pos < pos + blk; ++mi) {
+                const uint8_t st = mev[mi].b[0] & 0xF0;
+                const ysfx_midi_event_t e = {0, (uint32_t)(mev[mi].pos < pos ? 0 : mev[mi].pos - pos),
+                                             (uint32_t)(st == 0xC0 || st == 0xD0 ? 2 : 3), mev[mi].b};
+                ysfx_send_midi(fx, &e);
+            }
             ysfx_process_float(fx, ip.data(), op.data(), pins_in, pins_out, blk);
+            ysfx_midi_event_t e;
+            while (ysfx_receive_midi(fx, &e))
+                if (mout && e.size >= 1)
+                    fprintf(mout, "%zu %u %u %u\n", pos + e.offset, e.data[0], e.size > 1 ? e.data[1] : 0,
+                            e.size > 2 ? e.data[2] : 0);
             for (uint32_t c = 0; c < pins_out; ++c)
                 for (uint32_t i = 0; i < blk; ++i) out[(pos + i) * pins_out + c] = ob[c][i];
             pos += blk;
@@ -119,6 +161,7 @@ int main(int argc, char **argv)
         fclose(f);
         fprintf(stderr, "%u\n", pins_out);
     }
+    if (mout) fclose(mout);
     ysfx_free(fx);
     return 0;
 }
