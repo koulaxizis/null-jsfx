@@ -105,7 +105,9 @@ function main() {
   if (!files.length) {
     var dir = path.join(root, "DATA/Effects/null_jsfx");
     files = fs.readdirSync(dir).filter(function (f) { return /\.jsfx$/.test(f); }).map(function (f) { return path.join(dir, f); })
-      .concat(fs.readdirSync(path.join(dir, "gfx")).filter(function (f) { return /\.jsfx$/.test(f); }).map(function (f) { return path.join(dir, "gfx", f); }));
+      .concat(fs.readdirSync(path.join(dir, "gfx")).filter(function (f) { return /\.jsfx$/.test(f); }).map(function (f) { return path.join(dir, "gfx", f); }))
+      // the web version has the effects only, not the instruments (web/tools/build.js)
+      .filter(function (f) { return !/^\/\/category: Instruments$/m.test(fs.readFileSync(f, "utf8")); });
   }
   if (!fs.existsSync(refBin)) { console.error("build the reference renderer first: web/test/run.sh"); process.exit(2); }
   var tmp = fs.mkdtempSync(path.join(os.tmpdir(), "nulltest-"));

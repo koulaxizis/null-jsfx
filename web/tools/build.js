@@ -2,7 +2,8 @@
 // Usage: node web/tools/build.js          (write)
 //        node web/tools/build.js --check  (fail if web/fx is out of date; CI runs this)
 // The plain JSFX is the sound; when a GFX version exists (DATA/Effects/null_jsfx/gfx/<id>_gfx.jsfx)
-// its @gfx section and layout come along in the same file.
+// its @gfx section and layout come along in the same file. Instruments (category Instruments: no
+// audio input, played by MIDI) are not effects and stay out.
 "use strict";
 var fs = require("fs"), path = require("path");
 var T = require("./eel2js.js");
@@ -14,9 +15,13 @@ var check = process.argv.indexOf("--check") >= 0;
 
 var CATEGORY_ORDER = ["One Slider", "Essentials", "Advanced"];
 
+// the effects: every plugin but the instruments
+function isEffect(file) { return !/^\/\/category: Instruments$/m.test(fs.readFileSync(file, "utf8")); }
+
 function build() {
   var files = {};
-  var ids = fs.readdirSync(src).filter(function (f) { return /\.jsfx$/.test(f); }).map(function (f) { return f.replace(/\.jsfx$/, ""); }).sort();
+  var ids = fs.readdirSync(src).filter(function (f) { return /\.jsfx$/.test(f); }).map(function (f) { return f.replace(/\.jsfx$/, ""); })
+    .filter(function (id) { return isEffect(path.join(src, id + ".jsfx")); }).sort();
   var index = [];
   ids.forEach(function (id) {
     var gfxFile = path.join(src, "gfx", id + "_gfx.jsfx");

@@ -976,6 +976,11 @@ protected:
 
     float value(uint32_t param) const { return param < kMax ? fValues[param] : 0.0f; }
     int page() const { return fPage; }
+    void setPage(int p)
+    {
+        fPage = std::max(0, std::min(fNumTabs - 1, p));
+        repaint();
+    }
 
     float fVX = 0, fVY = 0, fVW = 0, fVH = 0;
 

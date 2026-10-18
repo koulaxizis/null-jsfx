@@ -22,7 +22,7 @@ PLUGINS='@@PLUGINS@@'
 # folder|file|plugins it uses
 CHAINS='@@CHAINS@@'
 
-GROUP_KEYS='one-slider essentials advanced'
+GROUP_KEYS='one-slider essentials advanced instruments'
 FORMAT_KEYS='jsfx gfx vst3 clap'
 EXTRA_KEYS='chains rack remote fonts'
 
@@ -65,7 +65,7 @@ Without options it asks what to install. With any of these it asks only about th
 and with --yes it asks nothing (everything not given is installed in full).
 
   --formats LIST    jsfx, gfx, vst3, clap or all       e.g. --formats vst3,clap
-  --groups LIST     one-slider, essentials, advanced or all
+  --groups LIST     one-slider, essentials, advanced, instruments or all
   --plugins LIST    single plugins, e.g. --plugins tilt,delay,parametric-eq (see --list)
   --extras LIST     chains (REAPER FX chains), rack (Rack VST3/CLAP), remote (tablet
                     remote for REAPER), fonts (Noto Sans for the GFX look), all or none
@@ -96,7 +96,7 @@ list_plugins() {
 }
 
 group_title() {
-  case "$1" in one-slider) say "One Slider" ;; essentials) say "Essentials" ;; advanced) say "Advanced" ;; esac
+  case "$1" in one-slider) say "One Slider" ;; essentials) say "Essentials" ;; advanced) say "Advanced" ;; instruments) say "Instruments" ;; esac
 }
 group_count() { plugin_rows | awk -F'|' -v g="$1" '$3 == g' | wc -l | tr -d ' '; }
 
@@ -285,6 +285,7 @@ if [ "$plugins_set" = 0 ]; then
       one-slider "One Slider ($(group_count one-slider)): one control, instant result" \
       essentials "Essentials ($(group_count essentials)): the everyday mixing toolbox" \
       advanced "Advanced ($(group_count advanced)): sound design and special processing" \
+      instruments "Instruments ($(group_count instruments)): play them from MIDI or their sequencer" \
       pick "Pick single plugins")"
     if has "$GROUPS_SEL" pick; then
       on=''
@@ -308,7 +309,7 @@ fi
 # the selected plugins, by stem
 SELECTED=''
 has "$GROUPS_SEL" all && GROUPS_SEL="$GROUP_KEYS"
-for g in $GROUPS_SEL; do has "$GROUP_KEYS" "$g" || die "unknown group: $g (one-slider, essentials, advanced)"; done
+for g in $GROUPS_SEL; do has "$GROUP_KEYS" "$g" || die "unknown group: $g (one-slider, essentials, advanced, instruments)"; done
 has "$PICKS" all && GROUPS_SEL="$GROUP_KEYS" PICKS=''
 known=''
 while IFS='|' read -r stem name group gfx native; do

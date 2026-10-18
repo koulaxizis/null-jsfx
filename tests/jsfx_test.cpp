@@ -1,6 +1,8 @@
 // Render test for NULL JSFX plugins, built on ysfx (the EEL2/JSFX engine used by REAPER-compatible hosts).
 // For every .jsfx given on the command line: compile, then render test audio at several sample rates
 // and slider settings, and report errors (compile failure, NaN/Inf, blow-ups, silence).
+// Instruments (no input pins) also get MIDI notes over the General MIDI drum map, and the host
+// transport plays at 120 bpm as for every plugin.
 // Exit code is the number of plugins that failed.
 #include "ysfx.h"
 #include <cmath>
@@ -59,6 +61,11 @@ static Render render(ysfx_t *fx, double sr, double seconds, int signal)
     const double *ins[4] = {inL.data(), inR.data(), sc.data(), sc.data()};
     double *outs[2] = {outL.data(), outR.data()};
     ysfx_time_info_t ti = {120.0, ysfx_playback_playing, 0, 0, {4, 4}};
+    // instruments: a note every 1/8 s, cycling through the GM drum map with varied velocities
+    const bool instrument = ysfx_get_num_inputs(fx) == 0;
+    static const uint8_t notes[] = {36, 42, 38, 46, 39, 37, 41, 47, 56, 49, 35, 44, 40, 45, 48, 51};
+    const uint64_t every = (uint64_t)(sr / 8);
+    uint8_t msgs[64][3];
     Render res;
     double acc[2] = {0, 0}, dacc = 0;
     uint64_t n = 0, total = (uint64_t)(sr * seconds);
@@ -78,6 +85,16 @@ static Render render(ysfx_t *fx, double sr, double seconds, int signal)
         ti.time_position = n / sr;
         ti.beat_position = ti.time_position * 2;
         ysfx_set_time_info(fx, &ti);
+        if (instrument) {
+            int m = 0;
+            for (uint64_t k = (n + every - 1) / every; k * every < n + block && m < 64; ++k, ++m) {
+                msgs[m][0] = 0x99;
+                msgs[m][1] = notes[k % 16];
+                msgs[m][2] = (uint8_t)(40 + (k * 37) % 88);
+                ysfx_midi_event_t ev = {0, (uint32_t)(k * every - n), 3, msgs[m]};
+                ysfx_send_midi(fx, &ev);
+            }
+        }
         ysfx_process_double(fx, ins, outs, nin, 2, block);
         for (uint32_t i = 0; i < block; ++i) {
             double o[2] = {outL[i], outR[i]};
@@ -138,7 +155,7 @@ static Result test_plugin(const char *path)
             if (r.peak > 100) { res.fail = true; res.errors.push_back(std::string("output blows up, peak ") + fmt(r.peak) + " (" + where + ")"); }
             if (preset == DEFAULTS && r.rms[0] < 1e-6 && r.rms[1] < 1e-6) { res.fail = true; res.errors.push_back(std::string("silent output (") + where + ")"); }
             else if (preset == DEFAULTS && (r.rms[0] < 1e-6 || r.rms[1] < 1e-6)) res.warnings.push_back(std::string("one channel silent (") + where + ")");
-            if (preset == DEFAULTS && sr == 48000) {
+            if (preset == DEFAULTS && sr == 48000 && ysfx_get_num_inputs(fx) > 0) {
                 // channel separation: feed one side only and look at the other side
                 ysfx_init(fx);
                 Render lo = render(fx, sr, 1.0, 1);

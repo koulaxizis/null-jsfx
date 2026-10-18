@@ -26,6 +26,10 @@
  *
  * Every output pin the reference JSFX declares is compared (two for most plugins, eight for the
  * Band Splitter); the CLAP's output ports are numbered across like the pins.
+ *
+ * Instruments (a JSFX without input pins) get no audio but MIDI notes on the General MIDI drum
+ * map (one every 1/8 s, varied velocities) and a playing transport at 120 bpm in 4/4 from beat 0,
+ * so their sequencer runs too; the CLAP gets the same notes and transport.
  */
 
 #include <ysfx.h>
@@ -34,6 +38,7 @@
 #include <clap/ext/audio-ports.h>
 #include <clap/events.h>
 #include <clap/ext/params.h>
+#include <clap/fixedpoint.h>
 #include <clap/plugin-factory.h>
 #include <clap/plugin.h>
 #include <clap/process.h>
@@ -108,6 +113,18 @@ static double maxDiff(const Channels& a, const Channels& b, size_t* where, size_
     return m;
 }
 
+// the notes an instrument gets: (sample, note, velocity)
+struct TestNote { uint32_t at; uint8_t note, vel; };
+static std::vector<TestNote> testNotes(double sr, uint32_t frames)
+{
+    static const uint8_t notes[] = { 36, 42, 38, 46, 39, 37, 41, 47, 56, 49, 35, 44, 40, 45, 48, 51 };
+    std::vector<TestNote> out;
+    const uint32_t every = uint32_t(sr / 8);
+    for (uint32_t k = 0; k * every < frames; ++k)
+        out.push_back({ k * every, notes[k % 16], uint8_t(40 + (k * 37) % 88) });
+    return out;
+}
+
 static bool endsWith(const std::string& s, const char* suf)
 {
     const size_t n = std::strlen(suf);
@@ -133,12 +150,15 @@ static ysfx_t* loadJsfx(const char* path)
     return fx;
 }
 
+static bool g_instrument = false; // the reference JSFX has no input pins
+
 static bool sliders(const char* path, std::vector<Slider>& out, uint32_t* numOutputs)
 {
     ysfx_t* fx = loadJsfx(path);
     if (!fx)
         return false;
     *numOutputs = std::max<uint32_t>(2, ysfx_get_num_outputs(fx));
+    g_instrument = ysfx_get_num_inputs(fx) == 0;
     for (uint32_t i = 0; i < ysfx_max_sliders; ++i) {
         if (!ysfx_slider_exists(fx, i))
             continue;
@@ -172,8 +192,21 @@ static bool renderJsfx(const char* path, double sr, const std::vector<Slider>& s
         ysfx_slider_set_value(fx, sl[k].index, values[k]);
     const uint32_t frames = uint32_t(in.l.size());
     const uint32_t numIns = ysfx_get_num_inputs(fx) > 2 ? 4 : 2; // pins 3/4: the sidechain
+    const std::vector<TestNote> notes = g_instrument ? testNotes(sr, frames) : std::vector<TestNote>();
+    size_t next = 0;
     for (uint32_t pos = 0; pos < frames; pos += kBlock) {
         const uint32_t n = std::min(kBlock, frames - pos);
+        if (g_instrument) {
+            ti.playback_state = ysfx_playback_playing;
+            ti.time_position = pos / sr;
+            ti.beat_position = pos / sr * 2.0;
+            ysfx_set_time_info(fx, &ti);
+            for (; next < notes.size() && notes[next].at < pos + n; ++next) {
+                const uint8_t msg[3] = { 0x99, notes[next].note, notes[next].vel };
+                ysfx_midi_event_t ev { 0, notes[next].at - pos, 3, msg };
+                ysfx_send_midi(fx, &ev);
+            }
+        }
         const float* ins[4] = { in.l.data() + pos, in.r.data() + pos, sc.l.data() + pos, sc.r.data() + pos };
         std::vector<float*> outs(out.size());
         for (size_t c = 0; c < out.size(); ++c)
@@ -203,6 +236,15 @@ struct EventList {
         return &static_cast<EventList*>(l->ctx)->events[i].header;
     }
     static bool push(const clap_output_events_t*, const clap_event_header_t*) { return true; }
+};
+
+struct MidiList {
+    std::vector<clap_event_midi_t> events;
+    static uint32_t size(const clap_input_events_t* l) { return uint32_t(static_cast<MidiList*>(l->ctx)->events.size()); }
+    static const clap_event_header_t* get(const clap_input_events_t* l, uint32_t i)
+    {
+        return &static_cast<MidiList*>(l->ctx)->events[i].header;
+    }
 };
 
 static bool renderClap(const char* path, double sr, const std::vector<double>& values, const Stereo& in,
@@ -289,8 +331,38 @@ static bool renderClap(const char* path, double sr, const std::vector<double>& v
     std::vector<clap_audio_buffer_t> ibs(inChannels.size());
 
     const uint32_t frames = uint32_t(in.l.size());
+    const std::vector<TestNote> notes = g_instrument ? testNotes(sr, frames) : std::vector<TestNote>();
+    size_t next = 0;
+    MidiList midi;
+    clap_input_events_t midiEv { &midi, MidiList::size, MidiList::get };
+    clap_event_transport_t transport {};
     for (uint32_t pos = 0; pos < frames; pos += kBlock) {
         const uint32_t n = std::min(kBlock, frames - pos);
+        midi.events.clear();
+        for (; next < notes.size() && notes[next].at < pos + n; ++next) {
+            clap_event_midi_t me {};
+            me.header.size = sizeof(me);
+            me.header.time = notes[next].at - pos;
+            me.header.space_id = CLAP_CORE_EVENT_SPACE_ID;
+            me.header.type = CLAP_EVENT_MIDI;
+            me.port_index = 0;
+            me.data[0] = 0x99;
+            me.data[1] = notes[next].note;
+            me.data[2] = notes[next].vel;
+            midi.events.push_back(me);
+        }
+        if (g_instrument) {
+            transport.header.size = sizeof(transport);
+            transport.header.space_id = CLAP_CORE_EVENT_SPACE_ID;
+            transport.header.type = CLAP_EVENT_TRANSPORT;
+            transport.flags = CLAP_TRANSPORT_HAS_TEMPO | CLAP_TRANSPORT_HAS_BEATS_TIMELINE | CLAP_TRANSPORT_HAS_SECONDS_TIMELINE
+                            | CLAP_TRANSPORT_HAS_TIME_SIGNATURE | CLAP_TRANSPORT_IS_PLAYING;
+            transport.song_pos_beats = clap_beattime(std::llround(pos / sr * 2.0 * double(CLAP_BEATTIME_FACTOR)));
+            transport.song_pos_seconds = clap_sectime(std::llround(pos / sr * double(CLAP_SECTIME_FACTOR)));
+            transport.tempo = 120.0;
+            transport.tsig_num = 4;
+            transport.tsig_denom = 4;
+        }
         float* srcs[4] = { const_cast<float*>(in.l.data()) + pos, const_cast<float*>(in.r.data()) + pos,
                            const_cast<float*>(sc.l.data()) + pos, const_cast<float*>(sc.r.data()) + pos };
         for (uint32_t c = 0; c < totalIns; ++c)
@@ -312,7 +384,8 @@ static bool renderClap(const char* path, double sr, const std::vector<double>& v
         proc.frames_count = n;
         proc.audio_inputs = ibs.data(); proc.audio_inputs_count = uint32_t(ibs.size());
         proc.audio_outputs = obs.data(); proc.audio_outputs_count = uint32_t(obs.size());
-        proc.in_events = &inEv; proc.out_events = &outEv;
+        proc.in_events = g_instrument ? &midiEv : &inEv; proc.out_events = &outEv;
+        proc.transport = g_instrument ? &transport : nullptr;
         if (plugin->process(plugin, &proc) == CLAP_PROCESS_ERROR) {
             std::fprintf(stderr, "process error\n");
             return false;
