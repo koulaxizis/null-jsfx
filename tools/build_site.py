@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generates the plugin cards and the FX chain cards (two tabs) in index.html, the info-modal guides in assets/js/modals.js
+"""Generates the plugin cards and the FX chain cards (Effects, Instruments, MIDI and FX Chains tabs) in index.html, the info-modal guides in assets/js/modals.js
 and the plugin lists in README.md and llms.txt.
 
 Names, categories and slider ranges come straight from the .jsfx headers, so the site can
@@ -150,9 +150,9 @@ def card(p):
 """
 
 
-def cards_block(plugins):
+def cards_block(plugins, cats):
     out = []
-    for title, slug, desc in CATEGORIES:
+    for title, slug, desc in (c for c in CATEGORIES if c[0] in cats):
         group = [p for p in plugins if p["category"] == title]
         out.append(f"""            <div class="plugin-category" id="{slug}">
                 <h3 class="category-title">{title} <span class="category-count">{len(group)}</span></h3>
@@ -215,16 +215,29 @@ def chain_cards(plugins):
     return "".join(out)
 
 
+TABS = [  # (tab id, label, categories in it); the FX Chains tab comes last
+    ("effects", "Effects", ["One Slider", "Essentials", "Advanced"]),
+    ("instruments", "Instruments", ["Instruments"]),
+    ("midi", "MIDI", ["MIDI"]),
+]
+
+
 def tabs_block(plugins):
-    """Plugins and FX Chains tabs: the plugin categories and the chain cards."""
+    """Effects, Instruments, MIDI and FX Chains tabs: the plugin categories and the chain cards."""
     chains = chain_cards(plugins)
+    buttons, panels = [], []
+    for i, (tab, label, cats) in enumerate(TABS):
+        n = sum(p["category"] in cats for p in plugins)
+        on = i == 0
+        buttons.append(f"""                <button type="button" class="plugin-tab{' active' if on else ''}" role="tab" aria-selected="{'true' if on else 'false'}" aria-controls="tab-{tab}" id="tab-btn-{tab}" data-tab="{tab}">{label} <span class="category-count">{n}</span></button>
+""")
+        panels.append(f"""            <div class="tab-panel tab-plugins" id="tab-{tab}" role="tabpanel" aria-labelledby="tab-btn-{tab}"{'' if on else ' hidden'}>
+{cards_block(plugins, cats)}            </div>
+""")
     return f"""            <div class="plugin-tabs" role="tablist">
-                <button type="button" class="plugin-tab active" role="tab" aria-selected="true" aria-controls="tab-effects" id="tab-btn-effects" data-tab="effects">Plugins <span class="category-count">{len(plugins)}</span></button>
-                <button type="button" class="plugin-tab" role="tab" aria-selected="false" aria-controls="tab-chains" id="tab-btn-chains" data-tab="chains">FX Chains <span class="category-count">{chains.count("<article")}</span></button>
+{"".join(buttons)}                <button type="button" class="plugin-tab" role="tab" aria-selected="false" aria-controls="tab-chains" id="tab-btn-chains" data-tab="chains">FX Chains <span class="category-count">{chains.count("<article")}</span></button>
             </div>
-            <div class="tab-panel" id="tab-effects" role="tabpanel" aria-labelledby="tab-btn-effects">
-{cards_block(plugins)}            </div>
-            <div class="tab-panel" id="tab-chains" role="tabpanel" aria-labelledby="tab-btn-chains" hidden>
+{"".join(panels)}            <div class="tab-panel" id="tab-chains" role="tabpanel" aria-labelledby="tab-btn-chains" hidden>
                 <p class="category-desc chains-desc">Ready-made REAPER FX chains of NULL JSFX plugins, in the JSFX download (<code>FXChains</code> folder, see <code>INSTALL.txt</code>). Load one with FX &#8594; Add FX chain; every plugin stays fully editable. Chains marked pin routing split the sound into bands or into mid and side; modulation ones move a control with an LFO, the input level or another control. Click a plugin for its guide.</p>
                 <div class="chain-grid">
 {chains}                </div>
