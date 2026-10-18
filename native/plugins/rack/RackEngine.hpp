@@ -11,9 +11,24 @@
  * passes, delayed by its latency).
  *
  * Modulation, every kChunk samples: Macro 1-8, two LFOs (free or tempo-synced; sine, triangle,
- * saw up/down, square, random S&H by an exact Park-Miller step) and an envelope follower of the
- * rack input, routed to slot values with depth -1..1 of the value's range (log sliders in log
- * space). A module's setValue is called only when its effective (snapped) value changes.
+ * saw up/down, square, random S&H by an exact Park-Miller step), an envelope follower of the
+ * rack input and (added after 2.1) a 16-step sequencer (Steps 1..16, free in Hz or synced, Glide: a linear
+ * ramp from the previous step over that share of each step), routed to slot values with depth
+ * -1..1 of the value's range (log sliders in log space). A module's setValue is called only when
+ * its effective (snapped) value changes.
+ *
+ * Added after 2.1, each off at its default so 2.1 sessions render bit for bit as before
+ * (rack_test "identity" checks it against a copy of the 2.1 engine):
+ * - Lanes: each slot is on lane A or B. With a slot on B, lane A and lane B each run the rack
+ *   input through their own slots in order; the shorter lane is delayed to line up with the
+ *   longer one (the rack reports the longer lane's latency) and Lane Mix blends them (0 = A,
+ *   100 = B). With no slot on B, the rack is the single serial chain of 2.1, whatever Lane Mix.
+ * - Feedback: the output of slot To is fed back into the input of slot From (From > To are
+ *   swapped) with a delay of kChunk samples (the processing block, whatever the host's block
+ *   size), through a DC blocker, a 40 Hz low cut, a 12 kHz high cut and a tanh soft clip.
+ *   At 0 the loop is not computed.
+ * - Keyed modules (RackKeyed.hpp, Sidechain Ducker) get the rack input as their key, delayed by
+ *   the latency of the slots before them in their lane.
  *
  * Threads: parameters are atomics (any thread). Module changes, routes and the sample rate are
  * set off the audio thread: the new module is created and prepared there, then swapped in under
@@ -25,6 +40,7 @@
 #pragma once
 
 #include "NullModule.hpp"
+#include "RackKeyed.hpp"
 #include "RackParams.hpp"
 #include "RackPresets.hpp"
 
@@ -81,6 +97,13 @@ struct DelayLine {
         std::fill(r.begin(), r.end(), 0.0f);
     }
     uint32_t maxDelay() const { return mask; }
+    // clears the last `frames` samples written (what delays up to frames - 1 read next)
+    void clearRecent(uint32_t frames)
+    {
+        frames = std::min(frames, mask + 1);
+        for (uint32_t i = 1; i <= frames; ++i)
+            l[(pos - i) & mask] = r[(pos - i) & mask] = 0.0f;
+    }
     // writes x, returns the sample written d samples ago (d = 0: x itself)
     inline void process(float xl, float xr, uint32_t d, float& yl, float& yr)
     {
@@ -91,6 +114,45 @@ struct DelayLine {
         yr = r[k];
         pos = (pos + 1) & mask;
     }
+};
+
+// stereo ring written a chunk at a time: read() taps it relative to the chunk being written
+// (d = 0: the chunk's own samples, once written), advance() moves on to the next chunk
+struct ChunkRing {
+    std::vector<float> l, r;
+    uint32_t mask = 0, pos = 0;
+
+    void allocate(uint32_t frames) // frames: a power of two
+    {
+        l.assign(frames, 0.0f);
+        r.assign(frames, 0.0f);
+        mask = frames - 1;
+        pos = 0;
+    }
+    void clear()
+    {
+        std::fill(l.begin(), l.end(), 0.0f);
+        std::fill(r.begin(), r.end(), 0.0f);
+    }
+    uint32_t maxDelay(uint32_t chunk) const { return mask + 1 - chunk; }
+    void write(const float* xl, const float* xr, uint32_t n)
+    {
+        for (uint32_t i = 0; i < n; ++i)
+        {
+            l[(pos + i) & mask] = xl[i];
+            r[(pos + i) & mask] = xr[i];
+        }
+    }
+    void read(uint32_t d, uint32_t n, float* ol, float* orr) const
+    {
+        for (uint32_t i = 0; i < n; ++i)
+        {
+            const uint32_t k = (pos + i - d) & mask;
+            ol[i] = l[k];
+            orr[i] = r[k];
+        }
+    }
+    void advance(uint32_t n) { pos = (pos + n) & mask; }
 };
 
 // RBJ biquad, transposed direct form II in double
@@ -190,6 +252,10 @@ public:
                 e.store(0.0f, std::memory_order_relaxed);
         }
         fRackDry.allocate(kRackDelay);
+        fAlignA.allocate(kRackDelay);
+        fAlignB.allocate(kRackDelay);
+        fKey.allocate(kRackDelay);
+        fFbRing.allocate(2 * kChunk);
         for (auto& v : fSourceValue)
             v.store(0.0f, std::memory_order_relaxed);
         setSampleRate(44100.0);
@@ -241,6 +307,16 @@ public:
         fEnv = 0.0;
         fLfoPhase[0] = fLfoPhase[1] = 0.0;
         fLfoCycle[0] = fLfoCycle[1] = -1;
+        fSeqPos = 0.0;
+        fAlignA.clear();
+        fAlignB.clear();
+        fKey.clear();
+        fFbRing.clear();
+        fLanesActive = fFbActive = false;
+        // the feedback loop's filters: DC blocker (10 Hz), low cut (40 Hz), high cut (12 kHz)
+        fFbDc = std::exp(-2.0 * M_PI * 10.0 / sr);
+        fFbLc = std::exp(-2.0 * M_PI * 40.0 / sr);
+        fFbHc = std::exp(-2.0 * M_PI * std::min(12000.0, 0.45 * sr) / sr);
         fLock.unlock();
     }
     double sampleRate() const { return fSampleRate; }
@@ -308,6 +384,7 @@ public:
             std::memcpy(moved[j].applied, fSlot[j].applied, sizeof(moved[j].applied));
             for (uint32_t p = 0; p < kSlotParams; ++p)
                 moved[j].params[p] = param(slotParam(j, p));
+            moved[j].lane = param(laneParam(j));
         }
         for (uint32_t i = 0; i < kSlots; ++i)
         {
@@ -322,6 +399,7 @@ public:
                 {
                     for (uint32_t p = 0; p < kSlotParams; ++p)
                         setParam(slotParam(i, p), m.params[p]);
+                    setParam(laneParam(i), m.lane);
                     resetSlotAudio(s);
                 }
             }
@@ -343,6 +421,7 @@ public:
             }
             for (uint32_t v = 0; v < kValues; ++v)
                 s.log[v] = s.desc && v < s.desc->numSliders && isLogSlider(s.desc->id, v);
+            s.keyed = dynamic_cast<KeyedModule*>(s.mod.get());
         }
         for (uint32_t j = 0; j < kSlots; ++j)
             old[j] = std::move(moved[j].mod); // the instances nobody took
@@ -431,6 +510,7 @@ public:
             out.params[slotParam(i, kSlotMix)] = ps.mix;
             out.params[slotParam(i, kSlotBand)] = float(ps.band);
             out.params[slotParam(i, kSlotChannel)] = float(ps.channel);
+            out.params[laneParam(i)] = ps.lane ? float(kLaneB) : float(kLaneA);
             for (uint32_t v = 0; v < d->numSliders && v < kValues; ++v)
                 out.params[valueParam(i, v)] = plainToValue(d->sliders[v], isLogSlider(d->id, v), d->sliders[v].def);
             for (uint32_t k = 0; k < ps.numValues; ++k)
@@ -457,7 +537,8 @@ public:
                 continue;
             }
             float v = g.value;
-            const DISTRHO::SliderInfo& in = kGlobals[gi].s;
+            char gn[32], gs[32];
+            const DISTRHO::SliderInfo in = paramInfo(uint32_t(gi), gn, sizeof(gn), gs, sizeof(gs));
             if (g.option)
             {
                 int found = -1;
@@ -529,6 +610,8 @@ public:
         return src >= 0 && src < kNumSources ? fSourceValue[src].load(std::memory_order_relaxed) : 0.0f;
     }
     float lfoPhase(int i) const { return fLfoPhaseOut[i & 1].load(std::memory_order_relaxed); }
+    // the step the sequencer is on (0..15)
+    int seqStep() const { return fSeqStepOut.load(std::memory_order_relaxed); }
     float inputPeak() const { return fInPeak.load(std::memory_order_relaxed); }
     float outputPeak() const { return fOutPeak.load(std::memory_order_relaxed); }
 
@@ -581,6 +664,7 @@ private:
         Split3 split[2];
         std::atomic<float> eff[kValues];
         std::atomic<uint32_t> latency { 0 };
+        KeyedModule* keyed = nullptr; // mod, when it takes a key
     };
 
     struct Moved {
@@ -588,6 +672,7 @@ private:
         const nulljsfx::ModuleDesc* desc = nullptr;
         float applied[kValues] = {};
         float params[kSlotParams] = {};
+        float lane = 0.0f;
     };
 
     void resetSlotAudio(Slot& s)
@@ -682,6 +767,35 @@ private:
         const double g = std::pow(10.0, double(param(kEnvGain)) / 20.0);
         fSrc[kSrcEnv] = float(std::min(1.0, fEnv * g));
 
+        // step sequencer: the position in steps, from the host's beat when synced and playing,
+        // else running at Rate (or the synced note at the host tempo while stopped)
+        {
+            const int steps = std::max(1, std::min(int(kSeqSteps), int(std::lround(param(kSeqLength)))));
+            const int sync = int(std::lround(param(kSeqSync)));
+            const double beats = sync > 0 && sync < 16 ? kSyncBeats[sync] : 0.0; // per step
+            const bool locked = beats > 0.0 && t.playing && t.valid;
+            double pos = locked ? t.beat / beats : fSeqPos;
+            pos = std::fmod(pos, double(steps));
+            if (pos < 0.0)
+                pos += double(steps);
+            int k = int(std::floor(pos));
+            if (k >= steps)
+                k = steps - 1;
+            const double frac = pos - double(k);
+            const double cur = clamp01(param(kSeqStep1 + uint32_t(k)));
+            const double prev = clamp01(param(kSeqStep1 + uint32_t((k + steps - 1) % steps)));
+            const double glide = std::min(1.0, std::max(0.0, double(param(kSeqGlide)) / 100.0));
+            fSrc[kSrcSeq] = float(glide > 0.0 && frac < glide ? prev + (cur - prev) * frac / glide : cur);
+            fSeqStepOut.store(k, std::memory_order_relaxed);
+            if (locked)
+                fSeqPos = pos;
+            else
+            {
+                const double rate = beats > 0.0 ? tempo / 60.0 / beats : double(param(kSeqRate)); // steps/s
+                fSeqPos = std::fmod(pos + rate * double(n) / fSampleRate, double(steps));
+            }
+        }
+
         for (int s = 0; s < kNumSources; ++s)
             fSourceValue[s].store(fSrc[s], std::memory_order_relaxed);
     }
@@ -743,10 +857,29 @@ private:
         mt.playing = t.playing;
         mt.valid = t.valid;
 
-        uint32_t total = 0;
+        // the key of keyed modules: the rack input after the input gain
+        fKey.write(xl, xr, n);
+
+        bool laneB = false;
         for (uint32_t s = 0; s < kSlots; ++s)
-            if (fSlot[s].desc)
-                total += processSlot(s, xl, xr, n, mt);
+            laneB = laneB || (fSlot[s].desc && param(laneParam(s)) >= 0.5f);
+        const float fb = std::min(std::max(param(kFeedback), 0.0f), kMaxFeedback) / 100.0f;
+
+        uint32_t total = 0;
+        if (!laneB && !(fb > 0.0f))
+        {
+            // one serial chain, exactly as in 2.1
+            fLanesActive = fFbActive = false;
+            for (uint32_t s = 0; s < kSlots; ++s)
+                if (fSlot[s].desc)
+                {
+                    const uint32_t lat = processSlot(s, xl, xr, n, mt, total);
+                    total += lat;
+                }
+        }
+        else
+            total = processLanes(xl, xr, n, mt, laneB, fb);
+        fKey.advance(n);
 
         // the rack's mix against its input delayed by the whole chain's latency, then the output gain
         const uint32_t d = std::min(total, fRackDry.maxDelay());
@@ -787,8 +920,111 @@ private:
                 sp.set(f1, f2, fSampleRate);
     }
 
-    // runs slot s on x in place; returns its latency
-    uint32_t processSlot(uint32_t s, float* xl, float* xr, uint32_t n, const nulljsfx::ModuleTime& mt)
+    // two lanes and/or the feedback loop (added after 2.1); x holds the input and gets the output. Returns
+    // the latency (the longer lane's).
+    uint32_t processLanes(float* xl, float* xr, uint32_t n, const nulljsfx::ModuleTime& mt, bool laneB, float fb)
+    {
+        float* yl = fLaneL;
+        float* yr = fLaneR;
+        if (laneB)
+        {
+            std::memcpy(yl, xl, n * sizeof(float));
+            std::memcpy(yr, xr, n * sizeof(float));
+        }
+
+        // feedback: what left slot `to` kChunk samples ago, through the loop's filters and soft clip
+        const bool fbOn = fb > 0.0f;
+        int from = int(std::lround(param(kFbFrom))) - 1, to = int(std::lround(param(kFbTo))) - 1;
+        from = std::max(0, std::min(int(kSlots) - 1, from));
+        to = std::max(0, std::min(int(kSlots) - 1, to));
+        if (from > to)
+            std::swap(from, to);
+        if (fbOn)
+        {
+            if (!fFbActive)
+            {
+                fFbRing.clear();
+                std::memset(fFbState, 0, sizeof(fFbState));
+                fFbActive = true;
+            }
+            fFbRing.read(kChunk, n, fFbL, fFbR);
+            float* ch[2] = { fFbL, fFbR };
+            for (int c = 0; c < 2; ++c)
+            {
+                double* st = fFbState[c]; // dc x1, dc y1, low cut x1, low cut y1, high cut y1
+                for (uint32_t i = 0; i < n; ++i)
+                {
+                    const double x = ch[c][i];
+                    const double dc = x - st[0] + fFbDc * st[1];
+                    st[0] = x;
+                    st[1] = dc;
+                    const double lc = fFbLc * (st[3] + dc - st[2]);
+                    st[2] = dc;
+                    st[3] = lc;
+                    st[4] = (1.0 - fFbHc) * lc + fFbHc * st[4];
+                    ch[c][i] = float(std::tanh(double(fb) * st[4]));
+                }
+                for (int k = 0; k < 5; ++k)
+                    if (std::fabs(st[k]) < 1e-30)
+                        st[k] = 0.0;
+            }
+        }
+        else
+            fFbActive = false;
+
+        uint32_t latA = 0, latB = 0;
+        for (uint32_t s = 0; s < kSlots; ++s)
+        {
+            const bool b = laneB && param(laneParam(s)) >= 0.5f;
+            float* bl = b ? yl : xl;
+            float* br = b ? yr : xr;
+            uint32_t& lat = b ? latB : latA;
+            if (fbOn && int(s) == from)
+                for (uint32_t i = 0; i < n; ++i)
+                {
+                    bl[i] += fFbL[i];
+                    br[i] += fFbR[i];
+                }
+            if (fSlot[s].desc)
+            {
+                const uint32_t l = processSlot(s, bl, br, n, mt, lat);
+                lat += l;
+            }
+            if (fbOn && int(s) == to)
+                fFbRing.write(bl, br, n);
+        }
+        if (fbOn)
+            fFbRing.advance(n);
+        if (!laneB)
+        {
+            fLanesActive = false;
+            return latA;
+        }
+
+        // line the lanes up (delay the shorter one) and blend them
+        const uint32_t total = std::max(latA, latB);
+        const uint32_t dA = std::min(total - latA, fAlignA.maxDelay()), dB = std::min(total - latB, fAlignB.maxDelay());
+        if (!fLanesActive)
+        {
+            fAlignA.clearRecent(dA + 1);
+            fAlignB.clearRecent(dB + 1);
+            fLanesActive = true;
+        }
+        const float m = clamp01(param(kLaneMix) / 100.0f);
+        for (uint32_t i = 0; i < n; ++i)
+        {
+            float al, ar, bl, br;
+            fAlignA.process(xl[i], xr[i], dA, al, ar);
+            fAlignB.process(yl[i], yr[i], dB, bl, br);
+            xl[i] = al * (1.0f - m) + bl * m;
+            xr[i] = ar * (1.0f - m) + br * m;
+        }
+        return total;
+    }
+
+    // runs slot s on x in place; returns its latency. keyDelay: the latency of the slots before
+    // it in its lane (what a keyed module's key is delayed by)
+    uint32_t processSlot(uint32_t s, float* xl, float* xr, uint32_t n, const nulljsfx::ModuleTime& mt, uint32_t keyDelay)
     {
         Slot& sl = fSlot[s];
         const bool on = param(slotParam(s, kSlotOn)) >= 0.5f;
@@ -860,7 +1096,14 @@ private:
         float* ol = fOL;
         float* orr = fOR;
         if (on)
+        {
+            if (sl.keyed)
+            {
+                fKey.read(std::min(keyDelay, fKey.maxDelay(kChunk)), n, fKL, fKR);
+                sl.keyed->setKey(fKL, fKR);
+            }
             sl.mod->process(cl, cr, ol, orr, n, mt);
+        }
 
         for (uint32_t i = 0; i < n; ++i)
         {
@@ -926,6 +1169,16 @@ private:
 
     std::atomic<float> fSourceValue[kNumSources];
     std::atomic<float> fLfoPhaseOut[2] { { 0.0f }, { 0.0f } };
+    std::atomic<int> fSeqStepOut { 0 };
+    double fSeqPos = 0.0;
+
+    // added after 2.1: lanes, feedback, keys
+    DelayLine fAlignA, fAlignB;
+    ChunkRing fKey, fFbRing;
+    bool fLanesActive = false, fFbActive = false;
+    double fFbDc = 0.0, fFbLc = 0.0, fFbHc = 0.0;
+    double fFbState[2][5] = {};
+    float fLaneL[kChunk], fLaneR[kChunk], fFbL[kChunk], fFbR[kChunk], fKL[kChunk], fKR[kChunk];
     std::atomic<float> fInPeak { 0.0f }, fOutPeak { 0.0f };
     std::atomic<uint32_t> fLatency { 0 };
     std::atomic<uint32_t> fVersion { 0 };

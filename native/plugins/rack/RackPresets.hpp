@@ -1797,6 +1797,117 @@ static const PresetGlobal kP51Globals[] = {
     { "lfo1_shape", 0.0f, "Sine" },
 };
 
+static const PresetValue kP52S0[] = {
+    { 0, 3.0f, "Attack" },
+};
+static const PresetValue kP52S1[] = {
+    { 1, -36.0f, "Threshold" },
+    { 2, 12.0f, "Ratio" },
+    { 3, 2.0f, "Knee" },
+    { 4, 1.0f, "Attack" },
+    { 5, 60.0f, "Release" },
+    { 6, 14.0f, "Makeup" },
+};
+static const PresetValue kP52S2[] = {
+    { 0, 45.0f, "Drive" },
+    { 2, 100.0f, "Mix" },
+    { 3, 1.0f, "Mode" },
+};
+static const PresetValue kP52S3[] = {
+    { 0, 9000.0f, "Cutoff" },
+    { 1, 0.7f, "Resonance" },
+    { 3, 0.0f, "Mode" },
+};
+static const PresetSlot kP52Slots[] = {
+    { "transient_shaper", kP52S0, 1, 0, 0, 100.0f, true },
+    { "dynamics", kP52S1, 6, 0, 0, 100.0f, true, 1 },
+    { "saturation", kP52S2, 3, 0, 0, 100.0f, true, 1 },
+    { "filter", kP52S3, 3, 0, 0, 100.0f, true, 1 },
+};
+static const PresetRoute kP52Routes[] = {
+    { "macro1", 1, 1, -0.3f, "Threshold" },
+};
+static const PresetGlobal kP52Globals[] = {
+    { "lane_mix", 40.0f, nullptr },
+};
+
+static const PresetValue kP53S0[] = {
+    { 3, 1.0f, "Tempo Sync" },
+    { 4, 0.0f, "Subdivision" },
+    { 1, 0.0f, "Feedback" },
+    { 2, 100.0f, "Mix" },
+    { 5, 1.0f, "Mode" },
+    { 6, 150.0f, "Low Cut" },
+    { 7, 7000.0f, "High Cut" },
+};
+static const PresetValue kP53S1[] = {
+    { 0, 0.3f, "Rate" },
+    { 1, 6.0f, "Stages" },
+    { 2, 50.0f, "Mix" },
+};
+static const PresetValue kP53S2[] = {
+    { 0, 2500.0f, "Cutoff" },
+    { 1, 1.5f, "Resonance" },
+    { 3, 0.0f, "Mode" },
+};
+static const PresetSlot kP53Slots[] = {
+    { "delay", kP53S0, 7, 0, 0, 100.0f, true },
+    { "phaser", kP53S1, 3, 0, 0, 100.0f, true },
+    { "ladder_filter", kP53S2, 3, 0, 0, 100.0f, true },
+};
+static const PresetRoute kP53Routes[] = {
+    { "lfo1", 2, 0, 0.25f, "Cutoff" },
+    { "macro1", 2, 1, 0.4f, "Resonance" },
+};
+static const PresetGlobal kP53Globals[] = {
+    { "feedback", 60.0f, nullptr },
+    { "fb_from", 1.0f, nullptr },
+    { "fb_to", 3.0f, nullptr },
+    { "mix", 45.0f, nullptr },
+    { "lfo1_rate", 0.15f, nullptr },
+};
+
+static const PresetValue kP54S0[] = {
+    { 0, 500.0f, "Cutoff" },
+    { 1, 2.0f, "Resonance" },
+    { 2, 20.0f, "Drive" },
+    { 3, 0.0f, "Mode" },
+};
+static const PresetValue kP54S1[] = {
+    { 0, 20.0f, "Drive" },
+    { 2, 40.0f, "Mix" },
+    { 3, 0.0f, "Mode" },
+};
+static const PresetSlot kP54Slots[] = {
+    { "ladder_filter", kP54S0, 4, 0, 0, 100.0f, true },
+    { "saturation", kP54S1, 3, 0, 0, 100.0f, true },
+};
+static const PresetRoute kP54Routes[] = {
+    { "seq", 0, 0, 0.5f, "Cutoff" },
+    { "seq", 1, 0, 0.3f, "Drive" },
+};
+static const PresetGlobal kP54Globals[] = {
+    { "seq_steps", 16.0f, nullptr },
+    { "seq_sync", 0.0f, "1/16" },
+    { "seq_glide", 20.0f, nullptr },
+    { "seq_step1", 1.0f, nullptr },
+    { "seq_step2", 0.2f, nullptr },
+    { "seq_step3", 0.6f, nullptr },
+    { "seq_step4", 0.1f, nullptr },
+    { "seq_step5", 0.9f, nullptr },
+    { "seq_step6", 0.3f, nullptr },
+    { "seq_step7", 0.5f, nullptr },
+    { "seq_step8", 0.2f, nullptr },
+    { "seq_step9", 1.0f, nullptr },
+    { "seq_step10", 0.1f, nullptr },
+    { "seq_step11", 0.7f, nullptr },
+    { "seq_step12", 0.2f, nullptr },
+    { "seq_step13", 0.8f, nullptr },
+    { "seq_step14", 0.4f, nullptr },
+    { "seq_step15", 0.6f, nullptr },
+    { "seq_step16", 0.0f, nullptr },
+};
+
 static const Preset kPresets[] = {
     { "Init", "Init", nullptr, 0, nullptr, 0, nullptr, 0 },
     { "Tube EQ", "Chain", kP1Slots, 2, nullptr, 0, nullptr, 0 },
@@ -1850,6 +1961,9 @@ static const Preset kPresets[] = {
     { "Distorted Throw", "Routing", kP49Slots, 4, kP49Routes, 1, kP49Globals, 2 },
     { "Harshness Tamer", "Chain", kP50Slots, 4, kP50Routes, 2, nullptr, 0 },
     { "Cosmic Space", "Routing", kP51Slots, 5, kP51Routes, 2, kP51Globals, 2 },
+    { "Parallel Drum Smash", "Routing", kP52Slots, 4, kP52Routes, 1, kP52Globals, 1 },
+    { "Psychedelic Echo", "Routing", kP53Slots, 3, kP53Routes, 2, kP53Globals, 5 },
+    { "Rhythm Engine", "Routing", kP54Slots, 2, kP54Routes, 2, kP54Globals, 19 },
 };
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 
