@@ -1198,6 +1198,8 @@ S.sprintf(90006, 10021, V[97]);
 f29_ng_end();
 f30_ng_presets();
 },
+  serialize: function () {
+},
   getSlider: IO.getSlider, setSlider: IO.setSlider,
   setHost: function (k, v) { switch (k) { case "srate": V[58] = v; break; case "samplesblock": V[286] = v; break; case "num_ch": V[287] = v; break; case "tempo": V[288] = v; break; case "play_state": V[289] = v; break; case "play_position": V[290] = v; break; case "beat_position": V[291] = v; break; case "ts_num": V[292] = v; break; case "ts_denom": V[293] = v; break; case "pdc_delay": V[294] = v; break; case "pdc_bot_ch": V[295] = v; break; case "pdc_top_ch": V[296] = v; break; case "trigger": V[298] = v; break; } },
   getHost: function (k) { switch (k) { case "srate": return V[58]; case "samplesblock": return V[286]; case "num_ch": return V[287]; case "tempo": return V[288]; case "play_state": return V[289]; case "play_position": return V[290]; case "beat_position": return V[291]; case "ts_num": return V[292]; case "ts_denom": return V[293]; case "pdc_delay": return V[294]; case "pdc_bot_ch": return V[295]; case "pdc_top_ch": return V[296]; case "trigger": return V[298]; } return 0; },
@@ -1206,7 +1208,8 @@ f30_ng_presets();
   getLive: function (out) { out[0] = V[146]; out[1] = V[49]; out[2] = V[48]; out[3] = V[47]; out[4] = V[46]; return out; },
   setLive: function (a) { V[146] = a[0]; V[49] = a[1]; V[48] = a[2]; V[47] = a[3]; V[46] = a[4]; },
   mem: MEM, str: S,
-  getVar: function (name) { var k = FX.vars.indexOf(String(name).toLowerCase()); return k < 0 ? 0 : V[k]; }
+  getVar: function (name) { var k = FX.vars.indexOf(String(name).toLowerCase()); return k < 0 ? 0 : V[k]; },
+  setVar: function (name, v) { var k = FX.vars.indexOf(String(name).toLowerCase()); if (k >= 0) V[k] = v; }
 };
 if (G.bind) G.bind(V, {"gfx_r":157,"gfx_g":158,"gfx_b":159,"gfx_a":160,"gfx_x":185,"gfx_y":186,"gfx_w":152,"gfx_h":153,"gfx_texth":178,"gfx_ext_retina":50,"gfx_mode":304,"gfx_clear":305,"mouse_x":190,"mouse_y":191,"mouse_cap":161,"mouse_wheel":168}, S);
 return inst;
