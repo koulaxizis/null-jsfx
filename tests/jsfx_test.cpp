@@ -2,12 +2,15 @@
 // For every .jsfx given on the command line: compile, then render test audio at several sample rates
 // and slider settings, and report errors (compile failure, NaN/Inf, blow-ups, silence).
 // Instruments (no input pins) also get MIDI notes over the General MIDI drum map, and the host
-// transport plays at 120 bpm as for every plugin.
+// transport plays at 120 bpm as for every plugin. MIDI effects (//category: MIDI) get notes with
+// their note-offs instead: their audio must pass through unchanged, they must send MIDI, and every
+// note they start must be ended again (note-offs match note-ons).
 // Exit code is the number of plugins that failed.
 #include "ysfx.h"
 #include <cmath>
 #include <cstdio>
 #include <cstdlib>
+#include <cstring>
 #include <string>
 #include <vector>
 #include <random>
@@ -50,9 +53,20 @@ static void apply_preset(ysfx_t *fx, Preset p, std::mt19937 &rng)
 }
 
 // Renders `seconds` of a stereo test signal; returns output peak and RMS per channel.
-struct Render { double peak = 0, rms[2] = {0, 0}, diff = 0; bool nonfinite = false; };
+struct Render { double peak = 0, rms[2] = {0, 0}, diff = 0; bool nonfinite = false; size_t midiSent = 0; int unbalanced = 0; };
 
-static Render render(ysfx_t *fx, double sr, double seconds, int signal)
+static bool is_midi_effect(const char *path)
+{
+    FILE *f = fopen(path, "rb");
+    char line[256];
+    bool yes = false;
+    for (int i = 0; f && i < 6 && fgets(line, sizeof line, f); ++i)
+        if (!strncmp(line, "//category: MIDI", 16)) yes = true;
+    if (f) fclose(f);
+    return yes;
+}
+
+static Render render(ysfx_t *fx, double sr, double seconds, int signal, bool midifx = false)
 {
     const uint32_t block = 256;
     std::vector<double> inL(block), inR(block), outL(block), outR(block), sc(block);
@@ -66,6 +80,9 @@ static Render render(ysfx_t *fx, double sr, double seconds, int signal)
     static const uint8_t notes[] = {36, 42, 38, 46, 39, 37, 41, 47, 56, 49, 35, 44, 40, 45, 48, 51};
     const uint64_t every = (uint64_t)(sr / 8);
     uint8_t msgs[64][3];
+    // MIDI effects: a note every 1/8 s (pitches 48..83, two channels), ended 1/16 s later; what
+    // they send is counted per channel and note (+1 a note-on, -1 a note-off)
+    std::vector<int> held(16 * 128, 0);
     Render res;
     double acc[2] = {0, 0}, dacc = 0;
     uint64_t n = 0, total = (uint64_t)(sr * seconds);
@@ -95,7 +112,29 @@ static Render render(ysfx_t *fx, double sr, double seconds, int signal)
                 ysfx_send_midi(fx, &ev);
             }
         }
+        if (midifx) {
+            int m = 0;
+            for (uint64_t k = n / (every / 2); k * (every / 2) < n + block && m < 64; ++k) {
+                const uint64_t at = k * (every / 2), on = k / 2;
+                if (at < n || at + every / 2 >= total + every / 2) continue;
+                if (k % 2 == 0 && on * every + every / 2 >= total) continue; // no room for its note-off
+                msgs[m][0] = (uint8_t)((k % 2 ? 0x80 : 0x90) | (on % 3 == 2 ? 1 : 0));
+                msgs[m][1] = (uint8_t)(48 + (on * 7) % 36);
+                msgs[m][2] = (uint8_t)(k % 2 ? 0 : 30 + (on * 37) % 97);
+                ysfx_midi_event_t ev = {0, (uint32_t)(at - n), 3, msgs[m]};
+                ysfx_send_midi(fx, &ev);
+                ++m;
+            }
+        }
         ysfx_process_double(fx, ins, outs, nin, 2, block);
+        ysfx_midi_event_t me;
+        while (ysfx_receive_midi(fx, &me)) {
+            ++res.midiSent;
+            if (me.size < 3) continue;
+            const int st = me.data[0] & 0xF0, key = (me.data[0] & 0x0F) * 128 + me.data[1];
+            if (st == 0x90 && me.data[2] > 0) held[key] += 1;
+            else if (st == 0x80 || st == 0x90) { held[key] -= 1; if (held[key] < 0) res.unbalanced += 1; }
+        }
         for (uint32_t i = 0; i < block; ++i) {
             double o[2] = {outL[i], outR[i]};
             for (int c = 0; c < 2; ++c) {
@@ -108,6 +147,7 @@ static Render render(ysfx_t *fx, double sr, double seconds, int signal)
         }
         n += block;
     }
+    for (int h : held) res.unbalanced += h != 0;
     res.rms[0] = std::sqrt(acc[0] / n);
     res.rms[1] = std::sqrt(acc[1] / n);
     res.diff = std::sqrt(dacc / (2 * n));
@@ -127,6 +167,7 @@ static Result test_plugin(const char *path)
     static const double rates[] = {44100, 48000, 96000};
     static const char *pname[] = {"defaults", "min", "max", "random"};
     bool changes_sound = false;
+    const bool midifx = is_midi_effect(path);
     for (double sr : rates) {
         std::mt19937 rng(42);
         for (int p = DEFAULTS; p <= RANDOM + 2; ++p) {
@@ -149,8 +190,14 @@ static Result test_plugin(const char *path)
             apply_preset(fx, preset, rng);
             char where[96];
             snprintf(where, sizeof where, "%s @ %.0f Hz", pname[preset], sr);
-            Render r = render(fx, sr, 2.0, 0);
+            Render r = render(fx, sr, 2.0, 0, midifx);
             if (r.diff > 1e-4) changes_sound = true;
+            if (midifx) {
+                // a MIDI effect: the audio passes through, MIDI goes out, every note started is ended
+                if (r.diff != 0) { res.fail = true; res.errors.push_back(std::string("a MIDI effect changes the audio (") + where + ")"); }
+                if (preset == DEFAULTS && r.midiSent == 0) { res.fail = true; res.errors.push_back(std::string("a MIDI effect sends no MIDI (") + where + ")"); }
+                if (r.unbalanced) { res.fail = true; res.errors.push_back(std::string("note-offs do not match note-ons: ") + std::to_string(r.unbalanced) + " notes (" + where + ")"); }
+            }
             if (r.nonfinite) { res.fail = true; res.errors.push_back(std::string("NaN/Inf output (") + where + ")"); }
             if (r.peak > 100) { res.fail = true; res.errors.push_back(std::string("output blows up, peak ") + fmt(r.peak) + " (" + where + ")"); }
             if (preset == DEFAULTS && r.rms[0] < 1e-6 && r.rms[1] < 1e-6) { res.fail = true; res.errors.push_back(std::string("silent output (") + where + ")"); }
@@ -168,7 +215,7 @@ static Result test_plugin(const char *path)
             ysfx_free(fx);
         }
     }
-    if (!changes_sound) { res.fail = true; res.errors.push_back("output always equals input: the plugin has no effect"); }
+    if (!changes_sound && !midifx) { res.fail = true; res.errors.push_back("output always equals input: the plugin has no effect"); }
     return res;
 }
 

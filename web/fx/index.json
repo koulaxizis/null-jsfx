@@ -1403,5 +1403,35 @@
    "sliders": 63,
    "bytes": 183205
   }
+ ],
+ "midi": [
+  {
+   "id": "chords",
+   "name": "Chords",
+   "category": "MIDI",
+   "tags": "midi chords chord generator one finger triad seventh ninth sus power inversion voicing strum progression key scale diatonic gui",
+   "gfx": [
+    480,
+    400
+   ],
+   "ins": 2,
+   "outs": 2,
+   "sliders": 11,
+   "bytes": 83895
+  },
+  {
+   "id": "scale",
+   "name": "Scale",
+   "category": "MIDI",
+   "tags": "midi scale quantize snap key force to scale white keys transpose octave filter diatonic pentatonic blues gui",
+   "gfx": [
+    480,
+    314
+   ],
+   "ins": 2,
+   "outs": 2,
+   "sliders": 5,
+   "bytes": 59484
+  }
  ]
 }

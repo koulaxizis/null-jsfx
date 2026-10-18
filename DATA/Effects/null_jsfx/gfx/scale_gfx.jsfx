@@ -1,0 +1,479 @@
+desc:NULL Scale GFX
+author: Christos Koulaxizis
+tags: midi scale quantize snap key force to scale white keys transpose octave filter diatonic pentatonic blues gui
+//category: MIDI
+//NULL JSFX v2.4 • https://nulljsfx.tech • MIT License
+
+import null_gfx.jsfx-inc
+
+slider1:0<0,11,1{C,C#,D,D#,E,F,F#,G,G#,A,A#,B}>-Key
+slider2:0<0,11,1{Major,Minor,Harmonic Minor,Melodic Minor,Dorian,Phrygian,Lydian,Mixolydian,Locrian,Major Pentatonic,Minor Pentatonic,Blues}>-Scale
+slider3:0<0,4,1{Nearest,Up,Down,White Keys,Filter}>-Mode
+slider4:0<-12,12,1>-Transpose (st)
+slider5:0<-3,3,1>-Octave
+
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
+
+@init
+  // A MIDI effect: every note (moved by Transpose first) is moved into the chosen key and scale
+  // (to the nearest scale note, the one above or the one below), or dropped when it is not in the
+  // scale (Filter); in White Keys mode the white keys from C play the scale's degrees from the key
+  // (then moved by Transpose) and the black keys are silent. The audio passes through untouched. Every note-on that goes out is remembered with
+  // the key that made it, so the key's note-off always ends exactly that note, even when the
+  // settings change while it is held; a pitch two keys share stays on until both are released.
+  ext_noinit = 1;
+  ACT = 0;       // per input channel * 128 + note: 1 while the key is held
+  SN = 2048;     // how many notes the key sounds (0 or 1)
+  SO = 4096;     // the note (8 per key, as in Chords)
+  SON = 20480;   // when it starts (in samples since the start)
+  CNT = 36864;   // per output channel * 128 + note: how many keys hold it
+  Q = 38912;     // the queue of outgoing messages: time, status, data 1, data 2, key (5 each)
+  QMAX = 1024;
+  SCL = 44100;   // scales: 8 per scale, [0] = size, then the semitones
+  MSK = 44200;   // per scale 12: 1 for the semitones (from the key) in the scale
+  memset(0, 0, 44400);
+  qn = 0;
+  bpos = 0;
+  last_note = -1;
+  last_out = -1;
+
+  function sc_scl(s, n, a, b, c, d, e, f, g) local(i)
+  (
+    SCL[s * 8] = n;
+    SCL[s * 8 + 1] = a; SCL[s * 8 + 2] = b; SCL[s * 8 + 3] = c; SCL[s * 8 + 4] = d;
+    SCL[s * 8 + 5] = e; SCL[s * 8 + 6] = f; SCL[s * 8 + 7] = g;
+    i = 0;
+    loop(n, MSK[s * 12 + SCL[s * 8 + 1 + i]] = 1; i += 1;);
+  );
+  sc_scl(0, 7, 0, 2, 4, 5, 7, 9, 11);   // Major
+  sc_scl(1, 7, 0, 2, 3, 5, 7, 8, 10);   // Minor (natural)
+  sc_scl(2, 7, 0, 2, 3, 5, 7, 8, 11);   // Harmonic Minor
+  sc_scl(3, 7, 0, 2, 3, 5, 7, 9, 11);   // Melodic Minor
+  sc_scl(4, 7, 0, 2, 3, 5, 7, 9, 10);   // Dorian
+  sc_scl(5, 7, 0, 1, 3, 5, 7, 8, 10);   // Phrygian
+  sc_scl(6, 7, 0, 2, 4, 6, 7, 9, 11);   // Lydian
+  sc_scl(7, 7, 0, 2, 4, 5, 7, 9, 10);   // Mixolydian
+  sc_scl(8, 7, 0, 1, 3, 5, 6, 8, 10);   // Locrian
+  sc_scl(9, 5, 0, 2, 4, 7, 9, 0, 0);    // Major Pentatonic
+  sc_scl(10, 5, 0, 3, 5, 7, 10, 0, 0);  // Minor Pentatonic
+  sc_scl(11, 6, 0, 3, 5, 6, 7, 10, 0);  // Blues
+
+  // the note input note n plays, or -1 for none
+  function sc_map(n) local(t, oc, pc, w, m, dd, du, r, ok)
+  (
+    t = n + transp;
+    ok = 0;
+    smode == 3 ? (
+      // white keys: C D E F G A B play degrees 1 to 7 from the key (past the top: the next
+      // octave), then Transpose moves what they play
+      oc = floor(n / 12);
+      pc = n - 12 * oc;
+      w = pc == 0 ? 0 : pc == 2 ? 1 : pc == 4 ? 2 : pc == 5 ? 3 : pc == 7 ? 4 : pc == 9 ? 5 : pc == 11 ? 6 : -1;
+      m = SCL[scale * 8];
+      w >= 0 ? (
+        r = 12 * oc + key + SCL[scale * 8 + 1 + w % m] + 12 * floor(w / m) + transp;
+        ok = 1;
+      );
+    ) : (
+      pc = (t - key + 120) % 12;
+      MSK[scale * 12 + pc] ? (
+        r = t;
+        ok = 1;
+      ) : smode != 4 ? (
+        // the distance to the scale note below and above (ties go down)
+        dd = 1;
+        while (!MSK[scale * 12 + (pc - dd + 12) % 12]) ( dd += 1; );
+        du = 1;
+        while (!MSK[scale * 12 + (pc + du) % 12]) ( du += 1; );
+        r = smode == 1 ? t + du : smode == 2 ? t - dd : dd <= du ? t - dd : t + du;
+        ok = 1;
+      );
+    );
+    ok ? (
+      r += 12 * octv;
+      r < 0 || r > 127 ? ok = 0;
+    );
+    ok ? r : -1;
+  );
+
+  // queue a message at time t (after every one already queued for t or earlier)
+  function sc_put(t, a, b, c, s) local(i, k)
+  (
+    qn < QMAX ? (
+      i = qn;
+      while (i > 0 && Q[(i - 1) * 5] > t) (
+        k = 0;
+        loop(5, Q[i * 5 + k] = Q[(i - 1) * 5 + k]; k += 1;);
+        i -= 1;
+      );
+      Q[i * 5] = t; Q[i * 5 + 1] = a; Q[i * 5 + 2] = b; Q[i * 5 + 3] = c; Q[i * 5 + 4] = s;
+      qn += 1;
+    );
+  );
+
+  // take back the note-on of note p that key s still has waiting
+  function sc_drop(s, p) local(i, f, k)
+  (
+    f = -1;
+    i = 0;
+    while (f < 0 && i < qn) (
+      Q[i * 5 + 4] == s && Q[i * 5 + 2] == p && (Q[i * 5 + 1] & 0xF0) == 0x90 ? f = i;
+      i += 1;
+    );
+    f >= 0 ? (
+      i = f;
+      loop(qn - 1 - f,
+        k = 0;
+        loop(5, Q[i * 5 + k] = Q[(i + 1) * 5 + k]; k += 1;);
+        i += 1;
+      );
+      qn -= 1;
+    );
+  );
+
+  // key s released at time t: note-offs for what it sounds, its strummed notes still waiting dropped
+  function sc_release(t, s, v) local(i, p)
+  (
+    i = 0;
+    loop(SN[s],
+      p = SO[s * 8 + i];
+      SON[s * 8 + i] <= t ? sc_put(t, 0x80 | floor(s / 128), p, v, s) : sc_drop(s, p);
+      i += 1;
+    );
+    ACT[s] = 0;
+    SN[s] = 0;
+  );
+
+  function sc_note_on(t, ch, n, v) local(s, m)
+  (
+    s = ch * 128 + n;
+    ACT[s] ? sc_release(t, s, 0);
+    m = sc_map(n);
+    ACT[s] = 1;
+    SN[s] = m >= 0;
+    last_note = n;
+    last_out = m;
+    m >= 0 ? (
+      SO[s * 8] = m;
+      SON[s * 8] = t;
+      sc_put(t, 0x90 | ch, m, v, s);
+    );
+  );
+
+  // one incoming message at time t
+  function sc_in(t, a, b, c) local(st, ch, s, i)
+  (
+    st = a & 0xF0;
+    ch = a & 0x0F;
+    s = ch * 128 + b;
+    st == 0x90 && c > 0 ? (
+      sc_note_on(t, ch, b, c);
+    ) : st == 0x80 || st == 0x90 ? (
+      ACT[s] ? sc_release(t, s, st == 0x80 ? c : 0);
+    ) : st == 0xA0 ? (
+      // poly pressure goes to every note the key sounds
+      i = 0;
+      loop(SN[s],
+        SON[s * 8 + i] <= t ? sc_put(t, a, SO[s * 8 + i], c, -1);
+        i += 1;
+      );
+    ) : st == 0xB0 && (b == 120 || b == 123) ? (
+      // all notes off: release every key of the channel first
+      i = 0;
+      loop(128, ACT[ch * 128 + i] ? sc_release(t, ch * 128 + i, 0); i += 1;);
+      sc_put(t, a, b, c, -1);
+    ) : (
+      sc_put(t, a, b, c, -1);
+    );
+  );
+
+  // send one queued message; a note shared by several keys starts again and ends with the last
+  function sc_emit(ofs, a, b, c) local(st, k)
+  (
+    st = a & 0xF0;
+    k = (a & 0x0F) * 128 + b;
+    st == 0x90 ? (
+      CNT[k] > 0 ? midisend(ofs, 0x80 | (a & 0x0F), b, 0);
+      midisend(ofs, a, b, c);
+      CNT[k] += 1;
+    ) : st == 0x80 ? (
+      CNT[k] > 0 ? (
+        CNT[k] -= 1;
+        CNT[k] == 0 ? midisend(ofs, a, b, c);
+      );
+    ) : (
+      midisend(ofs, a, b, c);
+    );
+  );
+
+  gfx_ext_retina = 1;
+  function update()
+  (
+    key = slider1;
+    scale = slider2;
+    smode = slider3;
+    transp = slider4;
+    octv = slider5;
+  );
+
+  // ---- the display (memory past what the audio uses) -----------------------------------------
+  GK = 45100;   // per note: 1 while it sounds (any channel)
+  GH = 45300;   // per note: 1 while its key is held (any channel)
+  GP = 45500;   // per note: 1 in the chord shown (none here)
+  GL = 45900;   // per note: the degree a white key plays (White Keys), 0 = none
+  GS = 45700;   // per semitone from the key: 1 in the scale shown
+
+  function kb_white(pc) ( pc == 0 || pc == 2 || pc == 4 || pc == 5 || pc == 7 || pc == 9 || pc == 11; );
+
+  function kb_scan() local(n, ch)
+  (
+    n = 0;
+    loop(128,
+      GK[n] = 0;
+      GH[n] = 0;
+      ch = 0;
+      loop(16, CNT[ch * 128 + n] > 0 ? GK[n] = 1; ACT[ch * 128 + n] ? GH[n] = 1; ch += 1;);
+      n += 1;
+    );
+  );
+
+  // a keyboard from note lo to hi in design units: scale notes tinted, the tonic underlined,
+  // sounding notes silver, held keys marked on top, the chord shown dotted
+  function kb_draw(x, y, w, h, lo, hi, tonic) local(n, nw, ww, i, xx, pc, bw, bh, in)
+  (
+    nw = 0;
+    n = lo;
+    loop(hi - lo + 1, kb_white(n % 12) ? nw += 1; n += 1;);
+    ww = w / nw;
+    bw = ww * 0.62;
+    bh = h * 0.6;
+    i = 0;
+    n = lo;
+    loop(hi - lo + 1,
+      pc = n % 12;
+      kb_white(pc) ? (
+        xx = x + i * ww;
+        in = GS[(pc - tonic + 12) % 12];
+        GK[n] ? ng_col(NG_ACCENT, 1) : ng_col(in ? 0x55534f : 0x2d2b28, 1);
+        gfx_rect(X(xx + 0.5), Y(y), (ww - 1) * ng_s, h * ng_s);
+        pc == tonic ? ( ng_col(GK[n] ? NG_BG : NG_MUTED, 1); gfx_rect(X(xx + 2.5), Y(y + h - 4), (ww - 5) * ng_s, 2 * ng_s); );
+        GL[n] ? ( ng_font(1, 7, 1); ng_col(GK[n] ? NG_BG : NG_TEXT, 1); sprintf(#kb_l, "%d", GL[n]); ng_txt(#kb_l, xx + ww / 2, y + h - 13, 1, 0); );
+        GP[n] ? ( ng_col(GK[n] ? NG_BG : NG_ACCENT, 1); gfx_circle(X(xx + ww / 2), Y(y + h - 13), 2.6 * ng_s, 1, 1); );
+        GH[n] ? ( ng_col(GK[n] ? NG_BG : NG_TEXT, 1); gfx_rect(X(xx + 2.5), Y(y + 2), (ww - 5) * ng_s, 3 * ng_s); );
+        i += 1;
+      );
+      n += 1;
+    );
+    i = 0;
+    n = lo;
+    loop(hi - lo + 1,
+      pc = n % 12;
+      kb_white(pc) ? i += 1 : (
+        xx = x + i * ww - bw / 2;
+        in = GS[(pc - tonic + 12) % 12];
+        ng_col(NG_CARD, 1);
+        gfx_rect(X(xx - 1), Y(y), (bw + 2) * ng_s, (bh + 1) * ng_s);
+        GK[n] ? ng_col(NG_ACCENT, 1) : ng_col(in ? 0x3e3c39 : 0x131211, 1);
+        gfx_rect(X(xx), Y(y), bw * ng_s, bh * ng_s);
+        pc == tonic ? ( ng_col(GK[n] ? NG_BG : NG_MUTED, 1); gfx_rect(X(xx + 1.5), Y(y + bh - 4), (bw - 3) * ng_s, 2 * ng_s); );
+        GP[n] ? ( ng_col(GK[n] ? NG_BG : NG_ACCENT, 1); gfx_circle(X(xx + bw / 2), Y(y + bh - 11), 2.2 * ng_s, 1, 1); );
+        GH[n] ? ( ng_col(GK[n] ? NG_BG : NG_TEXT, 1); gfx_rect(X(xx + 1.5), Y(y + 2), (bw - 3) * ng_s, 3 * ng_s); );
+      );
+      n += 1;
+    );
+  );
+
+  function kb_name(pc) ( pc == 0 ? "C" : pc == 1 ? "C#" : pc == 2 ? "D" : pc == 3 ? "D#" : pc == 4 ? "E" : pc == 5 ? "F" :
+                         pc == 6 ? "F#" : pc == 7 ? "G" : pc == 8 ? "G#" : pc == 9 ? "A" : pc == 10 ? "A#" : "B"; );
+
+  function sc_scale_name(s) ( s == 0 ? "MAJOR" : s == 1 ? "MINOR" : s == 2 ? "HARMONIC MINOR" : s == 3 ? "MELODIC MINOR" :
+                              s == 4 ? "DORIAN" : s == 5 ? "PHRYGIAN" : s == 6 ? "LYDIAN" : s == 7 ? "MIXOLYDIAN" : s == 8 ? "LOCRIAN" :
+                              s == 9 ? "MAJOR PENTATONIC" : s == 10 ? "MINOR PENTATONIC" : "BLUES"; );
+
+  // a note with its octave (C4 = 60)
+  function sc_note(dst, n) ( sprintf(dst, "%s%d", kb_name(n % 12), floor(n / 12) - 1); );
+
+  // ---- factory presets: generated by tools/build_presets.py, do not edit ----
+  ng_pre_n = 16;
+
+  function ng_preset_load(p)
+  (
+    p == 0 ? ( ng_slider_set(1, 0); ng_slider_set(2, 0); ng_slider_set(3, 0); ng_slider_set(4, 0); ng_slider_set(5, 0); );
+    p == 1 ? ( ng_slider_set(1, 9); ng_slider_set(2, 1); ng_slider_set(3, 0); ng_slider_set(4, 0); ng_slider_set(5, 0); );
+    p == 2 ? ( ng_slider_set(1, 0); ng_slider_set(2, 9); ng_slider_set(3, 0); ng_slider_set(4, 0); ng_slider_set(5, 0); );
+    p == 3 ? ( ng_slider_set(1, 9); ng_slider_set(2, 10); ng_slider_set(3, 0); ng_slider_set(4, 0); ng_slider_set(5, 0); );
+    p == 4 ? ( ng_slider_set(1, 4); ng_slider_set(2, 11); ng_slider_set(3, 0); ng_slider_set(4, 0); ng_slider_set(5, 0); );
+    p == 5 ? ( ng_slider_set(1, 4); ng_slider_set(2, 2); ng_slider_set(3, 0); ng_slider_set(4, 0); ng_slider_set(5, 0); );
+    p == 6 ? ( ng_slider_set(1, 2); ng_slider_set(2, 4); ng_slider_set(3, 0); ng_slider_set(4, 0); ng_slider_set(5, 0); );
+    p == 7 ? ( ng_slider_set(1, 4); ng_slider_set(2, 5); ng_slider_set(3, 0); ng_slider_set(4, 0); ng_slider_set(5, 0); );
+    p == 8 ? ( ng_slider_set(1, 5); ng_slider_set(2, 6); ng_slider_set(3, 0); ng_slider_set(4, 0); ng_slider_set(5, 0); );
+    p == 9 ? ( ng_slider_set(1, 7); ng_slider_set(2, 7); ng_slider_set(3, 0); ng_slider_set(4, 0); ng_slider_set(5, 0); );
+    p == 10 ? ( ng_slider_set(1, 0); ng_slider_set(2, 0); ng_slider_set(3, 1); ng_slider_set(4, 0); ng_slider_set(5, 0); );
+    p == 11 ? ( ng_slider_set(1, 0); ng_slider_set(2, 0); ng_slider_set(3, 2); ng_slider_set(4, 0); ng_slider_set(5, 0); );
+    p == 12 ? ( ng_slider_set(1, 0); ng_slider_set(2, 0); ng_slider_set(3, 4); ng_slider_set(4, 0); ng_slider_set(5, 0); );
+    p == 13 ? ( ng_slider_set(1, 6); ng_slider_set(2, 0); ng_slider_set(3, 3); ng_slider_set(4, 0); ng_slider_set(5, 0); );
+    p == 14 ? ( ng_slider_set(1, 3); ng_slider_set(2, 1); ng_slider_set(3, 3); ng_slider_set(4, 0); ng_slider_set(5, 0); );
+    p == 15 ? ( ng_slider_set(1, 0); ng_slider_set(2, 0); ng_slider_set(3, 0); ng_slider_set(4, 0); ng_slider_set(5, -1); );
+  );
+
+  // the first preset every slider matches, or -1
+  function ng_preset_match() local(m)
+  (
+    m = -1;
+    m < 0 && ng_pre_eq(slider1, 0) && ng_pre_eq(slider2, 0) && ng_pre_eq(slider3, 0) && ng_pre_eq(slider4, 0) && ng_pre_eq(slider5, 0) ? m = 0;
+    m < 0 && ng_pre_eq(slider1, 9) && ng_pre_eq(slider2, 1) && ng_pre_eq(slider3, 0) && ng_pre_eq(slider4, 0) && ng_pre_eq(slider5, 0) ? m = 1;
+    m < 0 && ng_pre_eq(slider1, 0) && ng_pre_eq(slider2, 9) && ng_pre_eq(slider3, 0) && ng_pre_eq(slider4, 0) && ng_pre_eq(slider5, 0) ? m = 2;
+    m < 0 && ng_pre_eq(slider1, 9) && ng_pre_eq(slider2, 10) && ng_pre_eq(slider3, 0) && ng_pre_eq(slider4, 0) && ng_pre_eq(slider5, 0) ? m = 3;
+    m < 0 && ng_pre_eq(slider1, 4) && ng_pre_eq(slider2, 11) && ng_pre_eq(slider3, 0) && ng_pre_eq(slider4, 0) && ng_pre_eq(slider5, 0) ? m = 4;
+    m < 0 && ng_pre_eq(slider1, 4) && ng_pre_eq(slider2, 2) && ng_pre_eq(slider3, 0) && ng_pre_eq(slider4, 0) && ng_pre_eq(slider5, 0) ? m = 5;
+    m < 0 && ng_pre_eq(slider1, 2) && ng_pre_eq(slider2, 4) && ng_pre_eq(slider3, 0) && ng_pre_eq(slider4, 0) && ng_pre_eq(slider5, 0) ? m = 6;
+    m < 0 && ng_pre_eq(slider1, 4) && ng_pre_eq(slider2, 5) && ng_pre_eq(slider3, 0) && ng_pre_eq(slider4, 0) && ng_pre_eq(slider5, 0) ? m = 7;
+    m < 0 && ng_pre_eq(slider1, 5) && ng_pre_eq(slider2, 6) && ng_pre_eq(slider3, 0) && ng_pre_eq(slider4, 0) && ng_pre_eq(slider5, 0) ? m = 8;
+    m < 0 && ng_pre_eq(slider1, 7) && ng_pre_eq(slider2, 7) && ng_pre_eq(slider3, 0) && ng_pre_eq(slider4, 0) && ng_pre_eq(slider5, 0) ? m = 9;
+    m < 0 && ng_pre_eq(slider1, 0) && ng_pre_eq(slider2, 0) && ng_pre_eq(slider3, 1) && ng_pre_eq(slider4, 0) && ng_pre_eq(slider5, 0) ? m = 10;
+    m < 0 && ng_pre_eq(slider1, 0) && ng_pre_eq(slider2, 0) && ng_pre_eq(slider3, 2) && ng_pre_eq(slider4, 0) && ng_pre_eq(slider5, 0) ? m = 11;
+    m < 0 && ng_pre_eq(slider1, 0) && ng_pre_eq(slider2, 0) && ng_pre_eq(slider3, 4) && ng_pre_eq(slider4, 0) && ng_pre_eq(slider5, 0) ? m = 12;
+    m < 0 && ng_pre_eq(slider1, 6) && ng_pre_eq(slider2, 0) && ng_pre_eq(slider3, 3) && ng_pre_eq(slider4, 0) && ng_pre_eq(slider5, 0) ? m = 13;
+    m < 0 && ng_pre_eq(slider1, 3) && ng_pre_eq(slider2, 1) && ng_pre_eq(slider3, 3) && ng_pre_eq(slider4, 0) && ng_pre_eq(slider5, 0) ? m = 14;
+    m < 0 && ng_pre_eq(slider1, 0) && ng_pre_eq(slider2, 0) && ng_pre_eq(slider3, 0) && ng_pre_eq(slider4, 0) && ng_pre_eq(slider5, -1) ? m = 15;
+    m;
+  );
+
+  function ng_preset_name(p) local(s)
+  (
+    s = "";
+    p == 0 ? s = "Default";
+    p == 1 ? s = "A Minor";
+    p == 2 ? s = "Major Pentatonic";
+    p == 3 ? s = "Minor Pentatonic Solo";
+    p == 4 ? s = "Blues Lead";
+    p == 5 ? s = "Harmonic Minor";
+    p == 6 ? s = "Dorian Groove";
+    p == 7 ? s = "Phrygian Dark";
+    p == 8 ? s = "Lydian Bright";
+    p == 9 ? s = "Mixolydian Rock";
+    p == 10 ? s = "Snap Up";
+    p == 11 ? s = "Snap Down";
+    p == 12 ? s = "Filter Wrong Notes";
+    p == 13 ? s = "White Keys F# Major";
+    p == 14 ? s = "White Keys D# Minor";
+    p == 15 ? s = "Bass Octave Down";
+    s;
+  );
+
+  function ng_presets() local(i)
+  (
+    ng_pre_req >= 0 ? ( ng_preset_load(ng_pre_req); update(); ng_pre_req = -1; );
+    ng_pre_cur = ng_preset_match();
+    ng_pre_open ? (
+      ng_pre_menu_begin();
+      i = 0;
+      loop(ng_pre_n, ng_pre_item(i, ng_preset_name(i)); i += 1;);
+      ng_pre_menu_end();
+    );
+    strcpy(#ng_pre_name, ng_pre_cur >= 0 ? ng_preset_name(ng_pre_cur) : "CUSTOM");
+  );
+  // ---- end of factory presets ----
+
+@slider
+  update();
+
+@block
+  while (midirecv(m_ofs, m_1, m_2, m_3)) (
+    sc_in(bpos + m_ofs, m_1, m_2, m_3);
+  );
+  b_end = bpos + samplesblock;
+  q_i = 0;
+  while (q_i < qn && Q[q_i * 5] < b_end) (
+    sc_emit(Q[q_i * 5] - bpos, Q[q_i * 5 + 1], Q[q_i * 5 + 2], Q[q_i * 5 + 3]);
+    q_i += 1;
+  );
+  q_i > 0 ? (
+    q_j = 0;
+    loop((qn - q_i) * 5, Q[q_j] = Q[q_j + q_i * 5]; q_j += 1;);
+    qn -= q_i;
+  );
+  bpos = b_end;
+
+@sample
+  // the audio passes through
+  spl0 = spl0;
+  spl1 = spl1;
+
+@gfx 480 314
+  ng_knobs_begin("SCALE", "MIDI", 480, 140, 1, 0);
+
+  // display: the key and scale with its notes, the last key and the note it played, what the
+  // mode does, and a keyboard C2..C7: scale notes tinted, the tonic underlined, the notes
+  // sounding silver, the held keys marked on top; in White Keys mode each white key shows the
+  // degree it plays
+  kb_scan();
+  memset(GS, 0, 12);
+  memset(GL, 0, 128);
+  g_m = SCL[scale * 8];
+  g_i = 0;
+  loop(g_m, GS[SCL[scale * 8 + 1 + g_i]] = 1; g_i += 1;);
+  smode == 3 ? (
+    g_n = 36;
+    loop(61,
+      g_o = sc_map(g_n);
+      g_o >= 0 ? (
+        g_pc = (g_o - key + 120) % 12;
+        g_i = 0;
+        loop(g_m, SCL[scale * 8 + 1 + g_i] == g_pc ? GL[g_n] = g_i + 1; g_i += 1;);
+      );
+      g_n += 1;
+    );
+  );
+
+  sprintf(#g_t, "%s %s", kb_name(key), sc_scale_name(scale));
+  ng_font(5, 20, 1);
+  ng_col(NG_TEXT, 1);
+  ng_txt(#g_t, 30, 80, 0, 0.5);
+  strcpy(#g_l, "");
+  g_i = 0;
+  loop(g_m, sprintf(#g_l2, g_i ? "%s  %s" : "%s%s", #g_l, kb_name((key + SCL[scale * 8 + 1 + g_i]) % 12)); strcpy(#g_l, #g_l2); g_i += 1;);
+  ng_font(1, 8, 1);
+  ng_col(NG_MUTED, 1);
+  ng_txt(#g_l, 30, 103, 0, 1.2);
+
+  ng_font(1, 7.5, 1);
+  ng_col(NG_MUTED, 1);
+  ng_txt(last_note >= 0 ? "LAST NOTE" : "PLAY A KEY", 456, 68, 2, 1.5);
+  last_note >= 0 ? (
+    sc_note(#g_a, last_note);
+    last_out >= 0 ? sc_note(#g_b, last_out) : strcpy(#g_b, "-");
+    ng_font(5, 14, 1);
+    ng_col(NG_TEXT, 1);
+    ng_txt(#g_a, 392, 86, 2, 0.5);
+    ng_txt(#g_b, 420, 86, 0, 0.5);
+    ng_col(NG_MUTED, 1);
+    gfx_line(X(398), Y(86), X(413), Y(86), 1);
+    gfx_line(X(409), Y(82), X(413), Y(86), 1);
+    gfx_line(X(409), Y(90), X(413), Y(86), 1);
+  );
+  sprintf(#g_m, "%s", smode == 0 ? "NEAREST NOTE" : smode == 1 ? "NOTE ABOVE" : smode == 2 ? "NOTE BELOW" :
+                      smode == 3 ? "WHITE KEYS PLAY THE SCALE" : "OUT-OF-SCALE NOTES DROPPED");
+  transp != 0 ? sprintf(#g_m2, "%s  %s%d ST", #g_m, transp > 0 ? "+" : "", transp) : strcpy(#g_m2, #g_m);
+  octv != 0 ? sprintf(#g_m, "%s  OCT %s%d", #g_m2, octv > 0 ? "+" : "", octv) : strcpy(#g_m, #g_m2);
+  ng_font(1, 7.5, 1);
+  ng_col(NG_MUTED, 1);
+  ng_txt(#g_m, 456, 103, 2, 1.2);
+
+  kb_draw(24, 116, 432, 68, 36, 96, key);
+
+  ng_row(5);
+  ng_select_ctl(1, "KEY", "C|C#|D|D#|E|F|F#|G|G#|A|A#|B", 0) ? update();
+  ng_select_ctl(2, "SCALE", "MAJOR|MINOR|HARM|MELODIC|DORIAN|PHRYG|LYDIAN|MIXO|LOCRIAN|MAJ PEN|MIN PEN|BLUES", 0) ? update();
+  ng_select_ctl(3, "MODE", "NEAR|UP|DOWN|WHITE|FILTER", 0) ? update();
+  sprintf(#v4, slider4 > 0 ? "+%d st" : "%d st", slider4);
+  ng_knob_ctl(4, "TRANSPOSE", #v4, -12, 12, 0, 1, 1) ? update();
+  sprintf(#v5, slider5 > 0 ? "+%d" : "%d", slider5);
+  ng_knob_ctl(5, "OCTAVE", #v5, -3, 3, 0, 1, 1) ? update();
+
+  ng_end();
+
+  ng_presets(); // the preset list (generated by tools/build_presets.py)

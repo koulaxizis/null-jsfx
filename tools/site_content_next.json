@@ -265,5 +265,51 @@
     ],
     "properties": "Delay line per channel with whole-sample exact reads and 4-point Catmull-Rom interpolation for fractions; per-channel polarity; Rotation by two first-order all-pass filters, each turning half the angle at Focus (less below it, more above). Right to Left needs no latency: a negative delay delays the left channel instead. Track to Sidechain delays the track by ceil(10 ms) + 1 samples less the delay and reports that as latency, so the track can also move ahead of the reference; the reference is only listened to (Mono Sum) and metered. The GFX and VST3/CLAP interfaces show the phase difference across frequency, the total delay, the latency and the correlation of the two signals (full band and below 150 Hz). In REAPER, send the reference to channels 3/4 of the track.",
     "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-phase-align\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><path d=\"M 6,32 C 12,14 20,14 26,32 C 32,50 40,50 46,32 C 50,20 54,18 58,22\" fill=\"none\" stroke=\"url(#icon-phase-align)\" stroke-width=\"2.5\" stroke-linecap=\"round\"/><path d=\"M 12,32 C 18,14 26,14 32,32 C 38,50 46,50 52,32\" fill=\"none\" stroke=\"url(#icon-phase-align)\" stroke-width=\"1.5\" stroke-linecap=\"round\" opacity=\"0.45\"/><path d=\"M 14,56 L 26,56 M 22,52 L 26,56 L 22,60\" fill=\"none\" stroke=\"url(#icon-phase-align)\" stroke-width=\"1.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\" opacity=\"0.6\"/></svg>"
+  },
+  "chords": {
+    "card_desc": "One-Key Chords & Progressions (MIDI)",
+    "keywords": "midi chords chord generator one finger triad seventh ninth sus2 sus4 power chord inversion voicing drop 2 strum progression key scale diatonic songwriting",
+    "slider_desc": [
+      "Chord plays a chord on every key; Progression lets the white keys from C play the steps of the chosen chord progression.",
+      "The key the chords (or the progression) are in.",
+      "The scale the chords are built from in Chord mode (major, minor, harmonic or melodic minor and the modes); a key outside it plays the chord of the scale note below. Progression mode uses the progression's own major or minor.",
+      "What every key plays: a triad, a 7th or 9th chord stacked in the scale, a sus2 or sus4 chord, or a power chord (root, fifth, octave).",
+      "Moves the lowest notes of the chord up an octave: root position, first, second or third inversion.",
+      "Spreads the chord: Close keeps it within an octave, Drop 2 drops the second-highest note an octave, Open lifts every other note, Wide also drops the bass an octave.",
+      "Moves every chord up or down by octaves (-2 to +2).",
+      "Plays the notes of each chord one after another, this far apart (0 to 200 ms), like a strummed guitar or a harp; notes not yet played when the key is released are skipped.",
+      "The order of the strum: upward, downward, or alternating with every chord.",
+      "Shapes the velocity of the chord notes: positive values play soft touches louder, negative values make them softer (0% passes it unchanged).",
+      "The chord progression of Progression mode: C, D, E, F, G, A and B play its steps in turn (I-V-vi-IV, I-vi-IV-V, vi-IV-I-V, I-IV-vi-V, ii-V-I, Pachelbel's Canon, i-VI-III-VII, i-VII-VI-V and i-iv-V-i)."
+    ],
+    "uses": [
+      "Play full chords with one finger on any MIDI instrument, always in key",
+      "Sketch songs fast: the white keys play a whole progression in any key",
+      "Rich 7th and 9th voicings with Drop 2 or Open for keys and pads",
+      "Strummed guitar-like chords or harp rolls from a single key",
+      "Power chords for rock and synth leads"
+    ],
+    "properties": "A MIDI effect: MIDI in, MIDI out, the audio passes through untouched (place it before an instrument). Chords are stacked in thirds inside the scale (sus2/sus4 swap the third for the second or fourth), then inverted, voiced, moved by octaves and kept within 0 to 127. Every note-on sent is remembered with the key that made it, so the key's release always ends exactly those notes, whatever was changed meanwhile; strum notes still waiting are dropped; a note two keys share sounds until both are released; all notes off (CC 120/123) releases every key of its channel. Pitch bend, controllers and sustain pass through; poly pressure goes to every note of the key's chord. Sample-accurate and the same in the JSFX, the GFX version and the VST3/CLAP.",
+    "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-chords\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><rect x=\"8\" y=\"10\" width=\"48\" height=\"44\" rx=\"3\" fill=\"none\" stroke=\"url(#icon-chords)\" stroke-width=\"2\"/><path d=\"M 18,10 L 18,54 M 28,10 L 28,54 M 38,10 L 38,54 M 46,10 L 46,54\" stroke=\"url(#icon-chords)\" stroke-width=\"1.5\" opacity=\"0.6\"/><rect x=\"15\" y=\"10\" width=\"6\" height=\"24\" fill=\"url(#icon-chords)\"/><rect x=\"25\" y=\"10\" width=\"6\" height=\"24\" fill=\"url(#icon-chords)\" opacity=\"0.45\"/><rect x=\"43\" y=\"10\" width=\"6\" height=\"24\" fill=\"url(#icon-chords)\" opacity=\"0.45\"/><circle cx=\"13\" cy=\"47\" r=\"3\" fill=\"url(#icon-chords)\"/><circle cx=\"33\" cy=\"47\" r=\"3\" fill=\"url(#icon-chords)\"/><circle cx=\"51\" cy=\"47\" r=\"3\" fill=\"url(#icon-chords)\"/></svg>"
+  },
+  "scale": {
+    "card_desc": "Force MIDI Notes to Key & Scale (MIDI)",
+    "keywords": "midi scale quantize snap key force to scale white keys transpose octave filter wrong notes pentatonic blues modes dorian harmonic minor",
+    "slider_desc": [
+      "The key of the scale.",
+      "The scale every note is fitted to: major, natural, harmonic or melodic minor, the modes (Dorian to Locrian), major or minor pentatonic, or blues.",
+      "How a note outside the scale is fixed: moved to the Nearest scale note (ties go down), always Up or always Down, dropped (Filter), or White Keys, where C, D, E, F, G, A and B play the scale's degrees from the key and the black keys are silent.",
+      "Moves the incoming notes by semitones before they are fitted to the scale, so the result stays in key (in White Keys mode it moves what the keys play).",
+      "Moves the result up or down by octaves (-3 to +3)."
+    ],
+    "uses": [
+      "Never hit a wrong note: every key snaps into the song's key",
+      "Play any scale on the white keys alone, in any key",
+      "Clean up MIDI from a controller or a pitch-to-MIDI converter",
+      "Drop out-of-key notes from generated or recorded parts",
+      "Quick transposition and octave shifts that stay in key"
+    ],
+    "properties": "A MIDI effect: MIDI in, MIDI out, the audio passes through untouched (place it before an instrument). Every note is mapped once, when it starts; its note-off always ends the very note that was sent, even when the settings change while it is held, and a note two keys share sounds until both are released. All notes off (CC 120/123) releases every key of its channel; pitch bend, controllers, sustain and pressure pass through (poly pressure follows the mapped note). Sample-accurate and the same in the JSFX, the GFX version and the VST3/CLAP.",
+    "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-scale\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><path d=\"M 8,50 L 18,50 L 18,42 L 28,42 L 28,34 L 36,34 L 36,26 L 46,26 L 46,18 L 56,18\" fill=\"none\" stroke=\"url(#icon-scale)\" stroke-width=\"2.5\" stroke-linejoin=\"round\"/><circle cx=\"23\" cy=\"46\" r=\"2.5\" fill=\"url(#icon-scale)\" opacity=\"0.5\"/><path d=\"M 23,46 L 23,42\" stroke=\"url(#icon-scale)\" stroke-width=\"1.5\" opacity=\"0.5\"/><circle cx=\"41\" cy=\"30\" r=\"2.5\" fill=\"url(#icon-scale)\" opacity=\"0.5\"/><path d=\"M 41,30 L 41,26\" stroke=\"url(#icon-scale)\" stroke-width=\"1.5\" opacity=\"0.5\"/></svg>"
   }
 }

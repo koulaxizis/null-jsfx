@@ -1,0 +1,17 @@
+[
+  ["A Minor", {"Key": "A", "Scale": "Minor"}],
+  ["Major Pentatonic", {"Scale": "Major Pentatonic"}],
+  ["Minor Pentatonic Solo", {"Key": "A", "Scale": "Minor Pentatonic"}],
+  ["Blues Lead", {"Key": "E", "Scale": "Blues"}],
+  ["Harmonic Minor", {"Key": "E", "Scale": "Harmonic Minor"}],
+  ["Dorian Groove", {"Key": "D", "Scale": "Dorian"}],
+  ["Phrygian Dark", {"Key": "E", "Scale": "Phrygian"}],
+  ["Lydian Bright", {"Key": "F", "Scale": "Lydian"}],
+  ["Mixolydian Rock", {"Key": "G", "Scale": "Mixolydian"}],
+  ["Snap Up", {"Mode": "Up"}],
+  ["Snap Down", {"Mode": "Down"}],
+  ["Filter Wrong Notes", {"Mode": "Filter"}],
+  ["White Keys F# Major", {"Key": "F#", "Mode": "White Keys"}],
+  ["White Keys D# Minor", {"Key": "D#", "Scale": "Minor", "Mode": "White Keys"}],
+  ["Bass Octave Down", {"Octave": -1}]
+]

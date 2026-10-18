@@ -30,6 +30,11 @@
  * Instruments (a JSFX without input pins) get no audio but MIDI notes on the General MIDI drum
  * map (one every 1/8 s, varied velocities) and a playing transport at 120 bpm in 4/4 from beat 0,
  * so their sequencer runs too; the CLAP gets the same notes and transport.
+ *
+ * MIDI effects (a JSFX in //category: MIDI) get, besides the audio, a stream of MIDI on three
+ * channels (chords of overlapping notes, repeated note-ons, note-ons with velocity 0, poly and
+ * channel pressure, pitch bend, sustain, program changes and all notes off) and every message
+ * they send is compared too: the same messages, bytes and sample, in the same order.
  */
 
 #include <ysfx.h>
@@ -125,6 +130,60 @@ static std::vector<TestNote> testNotes(double sr, uint32_t frames)
     return out;
 }
 
+// the MIDI a MIDI effect gets: (sample, status, data 1, data 2), in time order
+struct MidiMsg { uint32_t at; uint8_t st, d1, d2; uint32_t size; };
+static std::vector<MidiMsg> testMidi(double sr, uint32_t frames)
+{
+    std::vector<MidiMsg> out;
+    uint32_t seed = 2024;
+    auto rnd = [&seed](uint32_t n) { seed = seed * 1664525u + 1013904223u; return (seed >> 8) % n; };
+    std::vector<std::pair<uint8_t, uint8_t>> held; // (channel, note)
+    bool allOff = false;
+    const uint32_t step = uint32_t(sr / 40);
+    for (uint32_t at = uint32_t(sr * 0.003); at < frames; at += step / 2 + rnd(step)) {
+        const uint8_t ch = uint8_t(rnd(10) < 7 ? 0 : rnd(2) ? 1 : 9);
+        const uint32_t kind = rnd(100);
+        if (at > frames * 9 / 10 && !allOff) {
+            allOff = true;
+            out.push_back({ at, 0xB0, 123, 0, 3 }); // all notes off near the end, then a few more notes
+            held.erase(std::remove_if(held.begin(), held.end(), [](const std::pair<uint8_t, uint8_t>& h) { return h.first == 0; }), held.end());
+        }
+        if (kind < 45 || held.empty()) {
+            const uint8_t note = uint8_t(24 + rnd(84));
+            const uint8_t vel = uint8_t(1 + rnd(127));
+            out.push_back({ at, uint8_t(0x90 | ch), note, vel, 3 });
+            held.push_back({ ch, note });
+            if (rnd(4) == 0) { // a second key at the same sample
+                const uint8_t n2 = uint8_t(24 + rnd(84));
+                out.push_back({ at, uint8_t(0x90 | ch), n2, uint8_t(1 + rnd(127)), 3 });
+                held.push_back({ ch, n2 });
+            }
+        } else if (kind < 80) {
+            const size_t k = rnd(uint32_t(held.size()));
+            const bool zero = rnd(3) == 0; // a note-on with velocity 0 ends it as well
+            out.push_back({ at, uint8_t((zero ? 0x90 : 0x80) | held[k].first), held[k].second, uint8_t(zero ? 0 : rnd(128)), 3 });
+            held.erase(held.begin() + long(k));
+        } else if (kind < 84) {
+            const size_t k = rnd(uint32_t(held.size()));
+            out.push_back({ at, uint8_t(0xA0 | held[k].first), held[k].second, uint8_t(rnd(128)), 3 });
+        } else if (kind < 88) {
+            out.push_back({ at, uint8_t(0xB0 | ch), 64, uint8_t(rnd(2) ? 127 : 0), 3 });
+        } else if (kind < 92) {
+            out.push_back({ at, uint8_t(0xE0 | ch), uint8_t(rnd(128)), uint8_t(rnd(128)), 3 });
+        } else if (kind < 95) {
+            out.push_back({ at, uint8_t(0xD0 | ch), uint8_t(rnd(128)), 0, 2 });
+        } else if (kind < 97) {
+            out.push_back({ at, uint8_t(0xC0 | ch), uint8_t(rnd(128)), 0, 2 });
+        } else {
+            const size_t k = rnd(uint32_t(held.size())); // the same key again, without a note-off
+            out.push_back({ at, uint8_t(0x90 | held[k].first), held[k].second, uint8_t(1 + rnd(127)), 3 });
+        }
+    }
+    return out;
+}
+
+static bool g_midifx = false; // the reference JSFX is a MIDI effect (//category: MIDI)
+
 static bool endsWith(const std::string& s, const char* suf)
 {
     const size_t n = std::strlen(suf);
@@ -159,6 +218,13 @@ static bool sliders(const char* path, std::vector<Slider>& out, uint32_t* numOut
         return false;
     *numOutputs = std::max<uint32_t>(2, ysfx_get_num_outputs(fx));
     g_instrument = ysfx_get_num_inputs(fx) == 0;
+    if (std::FILE* f = std::fopen(path, "rb")) {
+        char line[256];
+        for (int i = 0; i < 6 && std::fgets(line, sizeof(line), f); ++i)
+            if (!std::strncmp(line, "//category: MIDI", 16))
+                g_midifx = true;
+        std::fclose(f);
+    }
     for (uint32_t i = 0; i < ysfx_max_sliders; ++i) {
         if (!ysfx_slider_exists(fx, i))
             continue;
@@ -172,7 +238,7 @@ static bool sliders(const char* path, std::vector<Slider>& out, uint32_t* numOut
 }
 
 static bool renderJsfx(const char* path, double sr, const std::vector<Slider>& sl, const std::vector<double>& values,
-                       const Stereo& in, const Stereo& sc, Channels& out)
+                       const Stereo& in, const Stereo& sc, Channels& out, std::vector<MidiMsg>* midiOut = nullptr)
 {
     ysfx_t* fx = loadJsfx(path);
     if (!fx)
@@ -193,9 +259,15 @@ static bool renderJsfx(const char* path, double sr, const std::vector<Slider>& s
     const uint32_t frames = uint32_t(in.l.size());
     const uint32_t numIns = ysfx_get_num_inputs(fx) > 2 ? 4 : 2; // pins 3/4: the sidechain
     const std::vector<TestNote> notes = g_instrument ? testNotes(sr, frames) : std::vector<TestNote>();
-    size_t next = 0;
+    const std::vector<MidiMsg> fxMidi = g_midifx ? testMidi(sr, frames) : std::vector<MidiMsg>();
+    size_t next = 0, nextFx = 0;
     for (uint32_t pos = 0; pos < frames; pos += kBlock) {
         const uint32_t n = std::min(kBlock, frames - pos);
+        for (; nextFx < fxMidi.size() && fxMidi[nextFx].at < pos + n; ++nextFx) {
+            const uint8_t msg[3] = { fxMidi[nextFx].st, fxMidi[nextFx].d1, fxMidi[nextFx].d2 };
+            ysfx_midi_event_t ev { 0, fxMidi[nextFx].at - pos, fxMidi[nextFx].size, msg };
+            ysfx_send_midi(fx, &ev);
+        }
         if (g_instrument) {
             ti.playback_state = ysfx_playback_playing;
             ti.time_position = pos / sr;
@@ -212,6 +284,11 @@ static bool renderJsfx(const char* path, double sr, const std::vector<Slider>& s
         for (size_t c = 0; c < out.size(); ++c)
             outs[c] = out[c].data() + pos;
         ysfx_process_float(fx, ins, outs.data(), numIns, uint32_t(out.size()), n);
+        ysfx_midi_event_t me;
+        while (ysfx_receive_midi(fx, &me))
+            if (midiOut && me.size >= 1)
+                midiOut->push_back({ pos + me.offset, me.data[0], uint8_t(me.size > 1 ? me.data[1] : 0),
+                                     uint8_t(me.size > 2 ? me.data[2] : 0), me.size });
     }
     ysfx_free(fx);
     return true;
@@ -247,8 +324,28 @@ struct MidiList {
     }
 };
 
+// what a MIDI effect sends: every CLAP_EVENT_MIDI, at the block position + its time
+struct MidiCollector {
+    std::vector<MidiMsg>* out = nullptr;
+    uint32_t pos = 0;
+    bool ordered = true;
+    static bool push(const clap_output_events_t* l, const clap_event_header_t* h)
+    {
+        auto* self = static_cast<MidiCollector*>(l->ctx);
+        if (h->space_id == CLAP_CORE_EVENT_SPACE_ID && h->type == CLAP_EVENT_MIDI && self->out) {
+            const auto* e = reinterpret_cast<const clap_event_midi_t*>(h);
+            if (!self->out->empty() && self->out->back().at > self->pos + h->time)
+                self->ordered = false;
+            const uint8_t st = e->data[0];
+            const uint32_t sz = (st & 0xF0) == 0xC0 || (st & 0xF0) == 0xD0 ? 2 : 3;
+            self->out->push_back({ self->pos + h->time, st, e->data[1], uint8_t(sz > 2 ? e->data[2] : 0), sz });
+        }
+        return true;
+    }
+};
+
 static bool renderClap(const char* path, double sr, const std::vector<double>& values, const Stereo& in,
-                       const Stereo& sc, Channels& out, bool verbose)
+                       const Stereo& sc, Channels& out, bool verbose, std::vector<MidiMsg>* midiOut = nullptr)
 {
     void* lib = dlopen(path, RTLD_NOW | RTLD_LOCAL);
     if (!lib) {
@@ -332,9 +429,13 @@ static bool renderClap(const char* path, double sr, const std::vector<double>& v
 
     const uint32_t frames = uint32_t(in.l.size());
     const std::vector<TestNote> notes = g_instrument ? testNotes(sr, frames) : std::vector<TestNote>();
-    size_t next = 0;
+    const std::vector<MidiMsg> fxMidi = g_midifx ? testMidi(sr, frames) : std::vector<MidiMsg>();
+    size_t next = 0, nextFx = 0;
     MidiList midi;
     clap_input_events_t midiEv { &midi, MidiList::size, MidiList::get };
+    MidiCollector collect;
+    collect.out = midiOut;
+    clap_output_events_t midiOutEv { &collect, MidiCollector::push };
     clap_event_transport_t transport {};
     for (uint32_t pos = 0; pos < frames; pos += kBlock) {
         const uint32_t n = std::min(kBlock, frames - pos);
@@ -351,6 +452,19 @@ static bool renderClap(const char* path, double sr, const std::vector<double>& v
             me.data[2] = notes[next].vel;
             midi.events.push_back(me);
         }
+        for (; nextFx < fxMidi.size() && fxMidi[nextFx].at < pos + n; ++nextFx) {
+            clap_event_midi_t me {};
+            me.header.size = sizeof(me);
+            me.header.time = fxMidi[nextFx].at - pos;
+            me.header.space_id = CLAP_CORE_EVENT_SPACE_ID;
+            me.header.type = CLAP_EVENT_MIDI;
+            me.port_index = 0;
+            me.data[0] = fxMidi[nextFx].st;
+            me.data[1] = fxMidi[nextFx].d1;
+            me.data[2] = fxMidi[nextFx].d2;
+            midi.events.push_back(me);
+        }
+        collect.pos = pos;
         if (g_instrument) {
             transport.header.size = sizeof(transport);
             transport.header.space_id = CLAP_CORE_EVENT_SPACE_ID;
@@ -384,13 +498,15 @@ static bool renderClap(const char* path, double sr, const std::vector<double>& v
         proc.frames_count = n;
         proc.audio_inputs = ibs.data(); proc.audio_inputs_count = uint32_t(ibs.size());
         proc.audio_outputs = obs.data(); proc.audio_outputs_count = uint32_t(obs.size());
-        proc.in_events = g_instrument ? &midiEv : &inEv; proc.out_events = &outEv;
+        proc.in_events = g_instrument || g_midifx ? &midiEv : &inEv; proc.out_events = g_midifx ? &midiOutEv : &outEv;
         proc.transport = g_instrument ? &transport : nullptr;
         if (plugin->process(plugin, &proc) == CLAP_PROCESS_ERROR) {
             std::fprintf(stderr, "process error\n");
             return false;
         }
     }
+    if (!collect.ordered)
+        std::fprintf(stderr, "the CLAP sent MIDI out of time order\n");
     plugin->stop_processing(plugin);
     plugin->deactivate(plugin);
     plugin->destroy(plugin);
@@ -605,25 +721,44 @@ int main(int argc, char** argv)
                     params.push_back(sets[i][k]);
             // a Rack module has no sidechain bus: its JSFX hears the track on pins 3/4 as well
             const bool toModule = other.compare(0, 7, "module:") == 0;
-            if (!renderJsfx(ref, sr, sl, sets[i], in, toModule ? in : sc, a))
+            std::vector<MidiMsg> ma, mb;
+            if (!renderJsfx(ref, sr, sl, sets[i], in, toModule ? in : sc, a, &ma))
                 return 1;
             bool rendered;
             if (isJsfx)
-                rendered = renderJsfx(other.c_str(), sr, sl, sets[i], in, sc, b);
+                rendered = renderJsfx(other.c_str(), sr, sl, sets[i], in, sc, b, &mb);
 #ifdef NULL_MODULE_TEST
             else if (other.compare(0, 7, "module:") == 0)
                 rendered = renderModule(other.substr(7), sr, params, in, b);
 #endif
             else
-                rendered = renderClap(other.c_str(), sr, params, in, sc, b, first);
+                rendered = renderClap(other.c_str(), sr, params, in, sc, b, first, &mb);
             if (!rendered)
                 return 1;
             first = false;
             size_t at = 0, ch = 0;
             const double d = maxDiff(a, b, &at, &ch);
-            const bool pass = d <= tol && std::isfinite(d);
+            bool pass = d <= tol && std::isfinite(d);
             std::string level;
-            if (rpl) {
+            if (g_midifx) {
+                // the MIDI out: the same messages at the same samples, in the same order
+                size_t same = 0;
+                while (same < ma.size() && same < mb.size() && ma[same].at == mb[same].at && ma[same].st == mb[same].st
+                       && ma[same].d1 == mb[same].d1 && (ma[same].size < 3 || ma[same].d2 == mb[same].d2) && ma[same].size == mb[same].size)
+                    ++same;
+                const bool midiOk = same == ma.size() && same == mb.size() && !ma.empty();
+                std::snprintf(buf, sizeof(buf), "  midi %zu/%zu %s", ma.size(), mb.size(), midiOk ? "same" : "DIFFER");
+                level = buf;
+                if (!midiOk) {
+                    if (same < ma.size())
+                        std::printf("          first difference, message %zu: ref %u %02X %u %u", same, ma[same].at, ma[same].st, ma[same].d1, ma[same].d2);
+                    if (same < mb.size())
+                        std::printf("  other %u %02X %u %u", mb[same].at, mb[same].st, mb[same].d1, mb[same].d2);
+                    std::printf("\n");
+                }
+                pass = pass && midiOk;
+            }
+            if (rpl && !g_midifx) {
                 std::snprintf(buf, sizeof(buf), "  level %+6.1f dB", rmsDb(a[0], a[numOuts > 1 ? 1 : 0]) - rmsDb(in.l, in.r));
                 level = buf;
             }

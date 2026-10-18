@@ -151,6 +151,32 @@ one-off actions (a preview) through `NullTaps::request`. `compare_<name>` detect
 by its pins and plays notes into both builds with the transport running at 120 bpm. An
 instrument gets no Rack module.
 
+## Adding a MIDI effect (`chords` and `scale` are the models)
+
+A MIDI effect is a JSFX with `//category: MIDI` and the four standard pins: MIDI in, MIDI out,
+the audio passes through untouched (`spl0 = spl0;` so the lint sees an output). All its work is in
+`@block`: every message from `midirecv` gets an absolute time (samples since `@init` plus its
+offset), what it causes goes into a queue ordered by time (stable for equal times), and the
+messages due before the end of the block go out with `midisend` at their offsets. So a strum or a
+delay can reach past the block, and the result does not depend on the host's block size. Every
+note-on sent is remembered with the key (channel * 128 + note) that made it: the key's note-off
+ends exactly those notes (a strum note still waiting is dropped instead), a pitch two keys share
+starts again and ends with the last key, all notes off (CC 120/123) releases the channel's keys
+first; everything else passes through in order. `ext_noinit = 1` keeps notes in flight across a
+transport start. `native/common/NullMidiNotes.hpp` is that engine in C++ (the same steps as the
+JSFX's `cd_*`/`sc_*` functions), `NullMidiTaps.hpp` sends its output through DPF (SysEx, which a
+JSFX never sees, passes through at its frame) and puts the sounding notes and held keys into
+`Taps::aux[]` as bits, and `NullKeyboardUI.hpp` draws the display's keyboard and chips.
+
+The VST3/CLAP sets `DISTRHO_PLUGIN_WANT_MIDI_INPUT` and `_OUTPUT`, keeps 2 inputs and 2 outputs
+(hosts that only load effects into an effect slot accept it), VST3 category `Fx|Tools` and CLAP
+features `note-effect`, `utility`. `compare_<name>`, `presets_<name>` and `gfx_<name>` detect the
+category and send a stream of MIDI (overlapping notes on three channels, repeated note-ons,
+velocity-0 note-offs, pressure, pitch bend, sustain, program changes, all notes off) and compare
+every message sent, byte for byte and at the same sample, besides the audio; the web null test
+(`web/test/nulltest.js`) does the same against the translated JavaScript. The web build lists MIDI
+effects apart in `web/fx/index.json` (`"midi"`). A MIDI effect gets no Rack module.
+
 ## Factory presets (`tools/presets/<name>.json`)
 
 Every plugin's presets live in `tools/presets/<name>.json` as `[["Preset Name", {"Slider": value}], ...]`

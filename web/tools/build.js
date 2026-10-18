@@ -4,7 +4,8 @@
 // The plain JSFX is the sound; when a GFX version exists (DATA/Effects/null_jsfx/gfx/<id>_gfx.jsfx)
 // its @gfx section and layout come along in the same file. Instruments (category Instruments: no
 // audio input, played by MIDI) are translated the same way and listed apart in index.json
-// ("instruments"), so a host that only knows effects does not offer them as effects.
+// ("instruments"), so a host that only knows effects does not offer them as effects; so are the
+// MIDI effects (category MIDI: MIDI in, MIDI out, the audio passes through), listed as "midi".
 "use strict";
 var fs = require("fs"), path = require("path");
 var T = require("./eel2js.js");
@@ -24,18 +25,20 @@ var SHARE = {
 };
 
 function isInstrument(file) { return /^\/\/category: Instruments$/m.test(fs.readFileSync(file, "utf8")); }
+function isMidi(file) { return /^\/\/category: MIDI$/m.test(fs.readFileSync(file, "utf8")); }
 
 function build() {
   var files = {};
   var ids = fs.readdirSync(src).filter(function (f) { return /\.jsfx$/.test(f); }).map(function (f) { return f.replace(/\.jsfx$/, ""); }).sort();
-  var index = [], instruments = [];
+  var index = [], instruments = [], midi = [];
   ids.forEach(function (id) {
     var gfxFile = path.join(src, "gfx", id + "_gfx.jsfx");
     var hasGfx = fs.existsSync(gfxFile);
     // the GFX version carries the same audio code plus @gfx (CI checks both sound the same)
     var r = T.translate(hasGfx ? gfxFile : path.join(src, id + ".jsfx"), { id: id, share: SHARE[id] });
     files[id + ".js"] = r.code;
-    (isInstrument(path.join(src, id + ".jsfx")) ? instruments : index).push({
+    var plain = path.join(src, id + ".jsfx");
+    (isInstrument(plain) ? instruments : isMidi(plain) ? midi : index).push({
       id: id, name: r.meta.name, category: r.meta.category, tags: r.meta.tags,
       gfx: r.meta.gfx ? [r.meta.gfx.w, r.meta.gfx.h] : null,
       ins: r.meta.inPins.length, outs: r.meta.outPins.length,
@@ -48,7 +51,10 @@ function build() {
     return ca !== cb ? ca - cb : a.name.localeCompare(b.name);
   });
   instruments.sort(function (a, b) { return a.name.localeCompare(b.name); });
-  files["index.json"] = JSON.stringify({ version: "2.0", effects: index, instruments: instruments }, null, 1) + "\n";
+  midi.sort(function (a, b) { return a.name.localeCompare(b.name); });
+  var all = { version: "2.0", effects: index, instruments: instruments };
+  if (midi.length) all.midi = midi;
+  files["index.json"] = JSON.stringify(all, null, 1) + "\n";
   return files;
 }
 

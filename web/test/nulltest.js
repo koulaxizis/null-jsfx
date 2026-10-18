@@ -2,7 +2,10 @@
 // Usage: node web/test/nulltest.js [plugin.jsfx ...]   (needs tests/run.sh to have built ysfx)
 // For each effect: defaults, every slider at min and at max, and seeded random settings,
 // at 44.1 and 96 kHz. Passes when the largest difference stays below 1e-6 (-120 dB).
-// Instruments (and anything else that reads MIDI) also get the same MIDI notes in both.
+// Instruments (and anything else that reads MIDI) also get the same MIDI notes in both, and
+// what they send (midisend) must be the same messages at the same frames. MIDI effects
+// (category MIDI) get a richer stream: overlapping notes on three channels, repeated note-ons,
+// velocity-0 note-ons, pressure, pitch bend, sustain, program changes and all notes off.
 "use strict";
 var fs = require("fs"), path = require("path"), os = require("os");
 var cp = require("child_process");
@@ -82,19 +85,58 @@ function midiEvents(sr, frames) {
   return out;
 }
 
+// MIDI for the MIDI effects (as native/test/compare.cpp's testMidi); [frame, status, d1, d2]
+function midiFxEvents(sr, frames) {
+  var out = [], held = [], seed = 2024, allOff = false;
+  function rnd(n) { seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0; return (seed >>> 8) % n; }
+  var step = Math.floor(sr / 40);
+  for (var at = Math.floor(sr * 0.003); at < frames; at += Math.floor(step / 2) + rnd(step)) {
+    var ch = rnd(10) < 7 ? 0 : rnd(2) ? 1 : 9, kind = rnd(100), k;
+    if (at > frames * 9 / 10 && !allOff) {
+      allOff = true;
+      out.push([at, 0xB0, 123, 0]);
+      held = held.filter(function (h) { return h[0] !== 0; });
+    }
+    if (kind < 45 || !held.length) {
+      var note = 24 + rnd(84);
+      out.push([at, 0x90 | ch, note, 1 + rnd(127)]);
+      held.push([ch, note]);
+      if (rnd(4) === 0) { var n2 = 24 + rnd(84); out.push([at, 0x90 | ch, n2, 1 + rnd(127)]); held.push([ch, n2]); }
+    } else if (kind < 80) {
+      k = rnd(held.length);
+      var zero = rnd(3) === 0;
+      out.push([at, (zero ? 0x90 : 0x80) | held[k][0], held[k][1], zero ? 0 : rnd(128)]);
+      held.splice(k, 1);
+    } else if (kind < 84) { k = rnd(held.length); out.push([at, 0xA0 | held[k][0], held[k][1], rnd(128)]); }
+    else if (kind < 88) out.push([at, 0xB0 | ch, 64, rnd(2) ? 127 : 0]);
+    else if (kind < 92) out.push([at, 0xE0 | ch, rnd(128), rnd(128)]);
+    else if (kind < 95) out.push([at, 0xD0 | ch, rnd(128), 0]);
+    else if (kind < 97) out.push([at, 0xC0 | ch, rnd(128), 0]);
+    else { k = rnd(held.length); out.push([at, 0x90 | held[k][0], held[k][1], 1 + rnd(127)]); }
+  }
+  return out;
+}
+
+// a sent message as text, the second data byte left out for two-byte messages
+function midiText(e) {
+  var two = (e[1] & 0xF0) === 0xC0 || (e[1] & 0xF0) === 0xD0;
+  return e[0] + " " + e[1] + " " + e[2] + (two ? "" : " " + e[3]);
+}
+
 function runJs(FX, sr, ins, frames, sliders, midi) {
   R.random = MT();
   var fx = new HOST.Effect(FX, R, { srate: sr, blockSize: BLOCK, sliders: sliders, playing: true /* ysfx starts with play_state 1 */ });
   var nout = FX.outPins.length;
-  var outs = [];
+  var outs = [], sent = [];
   for (var c = 0; c < nout; c++) outs.push(new Float64Array(frames));
   for (var n = 0; n < frames; n += BLOCK) {
     var len = Math.min(BLOCK, frames - n);
     fx.setTime({ tempo: 120, playing: true, position: n / sr, beat: n / sr * 2, num: 4, denom: 4 });
     var ev = (midi || []).filter(function (e) { return e[0] >= n && e[0] < n + len; }).map(function (e) { return [e[0] - n, e[1], e[2], e[3]]; });
     fx.process(ins.map(function (a) { return a.subarray(n, n + len); }), outs.map(function (a) { return a.subarray(n, n + len); }), len, ins.length, ev);
+    (fx.midiOut || []).forEach(function (e) { sent.push(midiText([n + e[0], e[1], e[2], e[3]])); });
   }
-  return { outs: outs, pdc: fx.pdc() };
+  return { outs: outs, pdc: fx.pdc(), midi: sent };
 }
 
 function runRef(file, sr, ins, frames, sliders, tmp, midi) {
@@ -104,10 +146,11 @@ function runRef(file, sr, ins, frames, sliders, tmp, midi) {
   fs.writeFileSync(inFile, buf);
   var args = [file, String(sr), String(BLOCK), String(frames), inFile, outFile];
   Object.keys(sliders).forEach(function (k) { args.push(k + "=" + sliders[k]); });
+  var sentFile = path.join(tmp, "sent.txt");
   if (midi) {
     var midiFile = path.join(tmp, "midi.txt");
     fs.writeFileSync(midiFile, midi.map(function (e) { return e.join(" "); }).join("\n") + "\n");
-    args.push("midi=" + midiFile);
+    args.push("midi=" + midiFile, "midiout=" + sentFile);
   }
   var res = cp.execFileSync(refBin, args).toString().trim().split(" ");
   var nout = +res[1], raw = fs.readFileSync(outFile), outs = [];
@@ -116,7 +159,10 @@ function runRef(file, sr, ins, frames, sliders, tmp, midi) {
     for (var i = 0; i < frames; i++) a[i] = raw.readDoubleLE((c * frames + i) * 8);
     outs.push(a);
   }
-  return { outs: outs, pdc: +res[2] };
+  var sent = midi ? fs.readFileSync(sentFile, "utf8").split("\n").filter(Boolean).map(function (l) {
+    return midiText(l.split(" ").map(Number));
+  }) : [];
+  return { outs: outs, pdc: +res[2], midi: sent };
 }
 
 function main() {
@@ -138,10 +184,18 @@ function main() {
       var nin = FX.inPins.length;
       [44100, 96000].forEach(function (sr) {
         var frames = Math.floor(sr * SECONDS);
-        var ins = signal(sr, frames, nin), midi = FX.usesMidi ? midiEvents(sr, frames) : null;
+        var ins = signal(sr, frames, nin);
+        var midi = !FX.usesMidi ? null : FX.category === "MIDI" ? midiFxEvents(sr, frames) : midiEvents(sr, frames);
         presets(FX).forEach(function (p) {
           var js = runJs(FX, sr, ins, frames, p.v, midi), ref = runRef(file, sr, ins, frames, p.v, tmp, midi);
           if (Math.abs(js.pdc - ref.pdc) > 1e-9) { err = err || ("pdc " + js.pdc + " vs " + ref.pdc + " (" + p.name + " @" + sr + ")"); }
+          // the MIDI sent: the same messages at the same frames
+          for (var mi = 0; mi < Math.max(js.midi.length, ref.midi.length); mi++) {
+            if (js.midi[mi] !== ref.midi[mi]) {
+              err = err || ("MIDI sent differs at message " + mi + ": ref " + ref.midi[mi] + ", js " + js.midi[mi] + " (" + p.name + " @" + sr + ")");
+              break;
+            }
+          }
           ref.outs.forEach(function (a, c) {
             var b = js.outs[c];
             for (var i = 0; i < a.length; i++) {

@@ -2,8 +2,10 @@
 // builds) on a given input and writes the output, so web/test/nulltest.js can compare the
 // translated JavaScript sample by sample.
 // Usage: render_ref fx.jsfx srate block frames in.f64 out.f64 [N=value ...] [midi=events.txt]
+//                   [midiout=sent.txt]
 //   in.f64: num_inputs * frames doubles, one channel after another; out.f64 likewise.
 //   events.txt: one MIDI message per line, "frame status data1 data2", in time order.
+//   sent.txt: what the effect sends (midisend), the same way (data2 0 for two-byte messages).
 #include "ysfx.h"
 #include <cstdio>
 #include <cstdlib>
@@ -33,9 +35,11 @@ int main(int argc, char **argv)
     ysfx_set_block_size(fx, block);
     struct Ev { uint64_t at; uint8_t m[3]; };
     std::vector<Ev> midi;
+    const char *midiOutPath = nullptr;
     for (int a = 7; a < argc; ++a) {
         const char *eq = strchr(argv[a], '=');
         if (!eq) continue;
+        if (strncmp(argv[a], "midiout=", 8) == 0) { midiOutPath = eq + 1; continue; }
         if (strncmp(argv[a], "midi=", 5) == 0) {
             FILE *mf = fopen(eq + 1, "r");
             if (!mf) { fprintf(stderr, "bad midi file\n"); return 5; }
@@ -55,6 +59,7 @@ int main(int argc, char **argv)
     std::vector<double *> outs(nout);
     ysfx_time_info_t ti = {120.0, ysfx_playback_playing, 0, 0, {4, 4}};
     size_t next = 0;
+    FILE *mo = midiOutPath ? fopen(midiOutPath, "w") : nullptr;
     for (uint64_t n = 0; n < frames; n += block) {
         uint32_t len = (uint32_t)((frames - n) < block ? (frames - n) : block);
         for (uint32_t c = 0; c < nin; ++c) ins[c] = in.data() + (size_t)c * frames + n;
@@ -68,7 +73,13 @@ int main(int argc, char **argv)
             ++next;
         }
         ysfx_process_double(fx, ins.data(), outs.data(), nin, nout, len);
+        ysfx_midi_event_t me;
+        while (ysfx_receive_midi(fx, &me))
+            if (mo && me.size >= 1)
+                fprintf(mo, "%llu %u %u %u\n", (unsigned long long)(n + me.offset), me.data[0], me.size > 1 ? me.data[1] : 0,
+                        me.size > 2 ? me.data[2] : 0);
     }
+    if (mo) fclose(mo);
     f = fopen(argv[6], "wb");
     fwrite(out.data(), sizeof(double), out.size(), f);
     fclose(f);
