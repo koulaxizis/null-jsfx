@@ -769,7 +769,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 24,
-   "bytes": 86035
+   "bytes": 86174
   },
   {
    "id": "sidechain_ducker",
@@ -825,7 +825,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 11,
-   "bytes": 61126
+   "bytes": 61265
   },
   {
    "id": "transient_shaper",
@@ -895,7 +895,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 11,
-   "bytes": 45457
+   "bytes": 45596
   },
   {
    "id": "amp_simulator",
@@ -1007,7 +1007,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 6,
-   "bytes": 38141
+   "bytes": 38280
   },
   {
    "id": "harmonizer",
@@ -1203,7 +1203,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 8,
-   "bytes": 49532
+   "bytes": 49671
   },
   {
    "id": "spectral_freeze",
@@ -1259,7 +1259,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 25,
-   "bytes": 72206
+   "bytes": 72477
   },
   {
    "id": "stereo_scope",
