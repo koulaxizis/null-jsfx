@@ -7,6 +7,7 @@
  * audio is processed exactly as before.
  */
 
+#include "NullPlugin.hpp"
 #include "ParametricEqDSP.hpp"
 #include "ParametricEqPlugin.hpp"
 
