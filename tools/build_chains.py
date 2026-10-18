@@ -127,14 +127,38 @@ CHAINS = [
 # (Stereo, Mid, Side, Left, Right) and mix (%). A route is (source, slot number from 1, slider,
 # depth -1..1 of the slider's range); sources are macro1..macro8, lfo1, lfo2 and env. Globals are
 # the Rack's parameters by symbol (RackParams.hpp), enum ones by option label.
+# Rack-only features (presets that use them get no .RfxChain, like RACK_ONLY, without being listed):
+# - lane="B" on a slot: lanes A and B each run the input through their slots, blended by the
+#   global "lane_mix" (0 = A, 100 = B);
+# - the feedback loop: globals "feedback" (0..95 %), "fb_from" and "fb_to" (slot numbers from 1);
+# - the step sequencer: routes from source "seq"; globals "seq_steps" (1..16), "seq_sync" (an LFO
+#   sync label, "Off" = free at "seq_rate" Hz), "seq_glide" (%) and "seq" (up to 16 step values
+#   0..1, written as seq_step1..; the steps not given keep their defaults).
 # RACK_PRESETS that need what a REAPER chain cannot do (a slot's own mix, a macro on many
 # modules that REAPER would need a web of links for): Rack presets only, no .RfxChain
 RACK_ONLY = {"Beat Smasher", "Parallel Punch", "Bass Edge", "DJ Macro FX", "Octave Bloom",
              "Dirty Reverb", "Glitch Band"}
 
 
-def slot(stem, values=None, band="Full", channel="Stereo", mix=100, on=True):
-    return {"id": stem, "values": values or {}, "band": band, "channel": channel, "mix": mix, "on": on}
+def slot(stem, values=None, band="Full", channel="Stereo", mix=100, on=True, lane="A"):
+    return {"id": stem, "values": values or {}, "band": band, "channel": channel, "mix": mix, "on": on,
+            "lane": lane}
+
+
+def rack_features(slots, routes, globs):
+    """The Rack-only features a RACK_PRESETS entry uses (lanes, feedback, step sequencer)."""
+    used = []
+    if any(sl["lane"] != "A" for sl in slots):
+        used.append("lanes")
+    if globs.get("feedback", 0) > 0:
+        used.append("feedback")
+    if any(src == "seq" for src, *_ in routes):
+        used.append("step sequencer")
+    return used
+
+
+def rack_only(name, slots, routes, globs):
+    return name in RACK_ONLY or bool(rack_features(slots, routes, globs))
 
 
 RACK_PRESETS = [
@@ -442,6 +466,27 @@ RACK_PRESETS = [
         slot("spectral_freeze", {"Freeze": "Off", "Mix": 70}),
         slot("filter", {"Cutoff": 150, "Resonance": 0.7, "Gain": 3, "Mode": "High Pass"}),
     ], [("lfo1", 1, "Frequency", 0.05), ("macro1", 4, "Freeze", 1.0)], {"lfo1_rate": 0.05, "lfo1_shape": "Sine"}),
+    # ---- the Rack-only features: lanes, the feedback loop, the step sequencer
+    ("Parallel Drum Smash", "Routing", [
+        slot("transient_shaper", {"Attack": 3}),
+        slot("dynamics", {"Threshold": -36, "Ratio": 12, "Knee": 2, "Attack": 1, "Release": 60, "Makeup": 14},
+             lane="B"),
+        slot("saturation", {"Drive": 45, "Mix": 100, "Mode": "Tube"}, lane="B"),
+        slot("filter", {"Cutoff": 9000, "Resonance": 0.7, "Mode": "Low Pass"}, lane="B"),
+    ], [("macro1", 2, "Threshold", -0.3)], {"lane_mix": 40}),
+    ("Psychedelic Echo", "Routing", [
+        slot("delay", {"Tempo Sync": "ON", "Subdivision": "1/4", "Feedback": 0, "Mix": 100, "Mode": "Ping-Pong",
+                       "Low Cut": 150, "High Cut": 7000}),
+        slot("phaser", {"Rate": 0.3, "Stages": 6, "Mix": 50}),
+        slot("ladder_filter", {"Cutoff": 2500, "Resonance": 1.5, "Mode": "Lowpass"}),
+    ], [("lfo1", 3, "Cutoff", 0.25), ("macro1", 3, "Resonance", 0.4)],
+        {"feedback": 60, "fb_from": 1, "fb_to": 3, "mix": 45, "lfo1_rate": 0.15}),
+    ("Rhythm Engine", "Routing", [
+        slot("ladder_filter", {"Cutoff": 500, "Resonance": 2, "Drive": 20, "Mode": "Lowpass"}),
+        slot("saturation", {"Drive": 20, "Mix": 40, "Mode": "Tape"}),
+    ], [("seq", 1, "Cutoff", 0.5), ("seq", 2, "Drive", 0.3)],
+        {"seq_steps": 16, "seq_sync": "1/16", "seq_glide": 20,
+         "seq": [1, 0.2, 0.6, 0.1, 0.9, 0.3, 0.5, 0.2, 1, 0.1, 0.7, 0.2, 0.8, 0.4, 0.6, 0]}),
 ]
 
 
@@ -466,6 +511,16 @@ def parse_sliders(path):
         name = re.sub(r"\s*\([^)]*\)\s*$", "", label).strip()
         sliders.append((name, default, lo, hi, [o.strip() for o in opts.group(1).split(",")] if opts else None))
     return sliders
+
+
+def module_index(stem, index):
+    """A JSFX slider index (from 0) as the Rack module's value index: a module has no value for a
+    file slider (Convolution's IR File), so the sliders after one move down."""
+    text = (PLUGINS / f"{stem}.jsfx").read_text(encoding="utf-8")
+    files = [int(m.group(1)) - 1 for m in re.finditer(r"^slider(\d+):/", text, re.M)]
+    if index in files:
+        sys.exit(f"build_chains: {stem}: slider {index + 1} is a file slider, not a Rack value")
+    return index - sum(1 for f in files if f < index)
 
 
 def log_sliders(path):
@@ -508,7 +563,7 @@ def render():
             files[OUT / folder / f"{chain}.RfxChain"] = "".join(
                 fx_block(chain, stem, values, kind == "gfx") for stem, values in fxs)
         for name, _, slots, routes, globs in RACK_PRESETS:
-            if name in RACK_ONLY:
+            if rack_only(name, slots, routes, globs):
                 continue
             files[OUT / folder / f"{name.replace('/', '-')}.RfxChain"] = reaper_preset(
                 name, slots, routes, globs, kind == "gfx")
@@ -569,6 +624,8 @@ def reaper_preset(name, slots, routes, globs, gfx):
     defaults = {"xover_low": 200, "xover_high": 2500, "env_attack": 10, "env_release": 150, "env_gain": 6,
                 "lfo1_shape": "Sine", "lfo2_shape": "Sine"}
     g = {**defaults, **globs}
+    if rack_features(slots, routes, globs):
+        sys.exit(f"build_chains: {name}: no REAPER chain for {', '.join(rack_features(slots, routes, globs))}")
     for sl in slots:
         if sl["mix"] != 100 or not sl["on"] or sl["channel"] in ("Left", "Right"):
             sys.exit(f"build_chains: {name}: no REAPER chain for slot mix, off slots or Left/Right "
@@ -680,6 +737,7 @@ def cfloat(v):
 def render_rack():
     """RackPresets.hpp: Init, the CHAINS (modules the Rack has, in order) and RACK_PRESETS."""
     bands, channels = cpp_options("kBandOptions"), cpp_options("kChannelOptions")
+    lanes, sources = cpp_options("kLaneOptions"), cpp_options("kSourceSymbols")
     presets = [("Init", "Init", [], [], {})]
     for chain, fxs in CHAINS:
         # a chain plugin that is not a Rack module (a meter) has nothing to do in the Rack
@@ -700,13 +758,14 @@ def render_rack():
             if vals:
                 arr = f"kP{n}S{k}"
                 out.append(f"static const PresetValue {arr}[] = {{")
-                out += [f"    {{ {i}, {cfloat(v)}, {cstr(key)} }}," for i, v, key in vals]
+                out += [f"    {{ {module_index(sl['id'], i)}, {cfloat(v)}, {cstr(key)} }}," for i, v, key in vals]
                 out.append("};")
-            for what, opts in (("band", bands), ("channel", channels)):
+            for what, opts in (("band", bands), ("channel", channels), ("lane", lanes)):
                 if sl[what] not in opts:
                     sys.exit(f"build_chains: {name}: {what} {sl[what]!r} is not one of {opts}")
+            lane = f", {lanes.index(sl['lane'])}" if sl["lane"] != lanes[0] else ""  # lane A: left out
             srows.append(f"    {{ {cstr(sl['id'])}, {arr}, {len(vals)}, {bands.index(sl['band'])}, "
-                         f"{channels.index(sl['channel'])}, {cfloat(sl['mix'])}, {'true' if sl['on'] else 'false'} }},")
+                         f"{channels.index(sl['channel'])}, {cfloat(sl['mix'])}, {'true' if sl['on'] else 'false'}{lane} }},")
         sarr = rarr = garr = "nullptr"
         if srows:
             sarr = f"kP{n}Slots"
@@ -717,11 +776,18 @@ def render_rack():
             for src, sn, key, depth in routes:
                 if not 1 <= sn <= len(slots):
                     sys.exit(f"build_chains: {name}: route to slot {sn}, which is empty")
-                i = slider_index(name, slots[sn - 1]["id"], key)
+                i = module_index(slots[sn - 1]["id"], slider_index(name, slots[sn - 1]["id"], key))
                 if not -1 <= depth <= 1:
                     sys.exit(f"build_chains: {name}: depth {depth} is outside -1..1")
+                if src not in sources:
+                    sys.exit(f"build_chains: {name}: no modulation source {src!r} (one of {sources})")
                 out.append(f"    {{ {cstr(src)}, {sn - 1}, {i}, {cfloat(depth)}, {cstr(key)} }},")
             out.append("};")
+        globs = dict(globs)
+        steps = globs.pop("seq", [])
+        if len(steps) > 16 or any(not 0 <= v <= 1 for v in steps):
+            sys.exit(f"build_chains: {name}: seq takes up to 16 step values 0..1")
+        globs.update({f"seq_step{k + 1}": v for k, v in enumerate(steps)})
         if globs:
             garr = f"kP{n}Globals"
             out.append(f"static const PresetGlobal {garr}[] = {{")
@@ -740,7 +806,7 @@ def render_rack():
             "// move them in log space", "static const LogSlider kLogSliders[] = {"]
     for path in sorted(PLUGINS.glob("*.jsfx")):
         for i in log_sliders(path):
-            out.append(f"    {{ {cstr(path.stem)}, {i} }},")
+            out.append(f"    {{ {cstr(path.stem)}, {module_index(path.stem, i)} }},")
     out += ["};", "static constexpr uint32_t kNumLogSliders = sizeof(kLogSliders) / sizeof(kLogSliders[0]);", "",
             "} // namespace rack", ""]
     return "\n".join(out)
@@ -753,6 +819,12 @@ def slider_index(where, stem, key):
         sys.exit(f"build_chains: {where}: {stem} has no slider named {key!r}")
     return hits[0]
 
+def num_chains():
+    """How many REAPER chains there are: every chain, and the RACK_PRESETS that are not Rack-only."""
+    return len(CHAINS) + sum(1 for name, _, slots, routes, globs in RACK_PRESETS
+                             if not rack_only(name, slots, routes, globs))
+
+
 def main():
     files = render()
     files[RACK_PRESETS_H] = render_rack()
@@ -763,14 +835,14 @@ def main():
         if stale:
             sys.exit("build_chains: out of date (run tools/build_chains.py): "
                      + " ".join(str(p.relative_to(ROOT)) for p in stale))
-        print(f"build_chains: up to date for all {len(CHAINS) + len(RACK_PRESETS) - len(RACK_ONLY)} chains and the Rack presets")
+        print(f"build_chains: up to date for all {num_chains()} chains and the Rack presets")
         return
     for p in existing - set(files):  # chain files only (the glob never sees RackPresets.hpp)
         p.unlink()
     for p, text in files.items():
         p.parent.mkdir(parents=True, exist_ok=True)
         p.write_text(text, encoding="utf-8", newline="\n")
-    print(f"build_chains: wrote {len(files) - 1} files ({len(CHAINS) + len(RACK_PRESETS) - len(RACK_ONLY)} chains, plain and GFX) and RackPresets.hpp")
+    print(f"build_chains: wrote {len(files) - 1} files ({num_chains()} chains, plain and GFX) and RackPresets.hpp")
 
 
 if __name__ == "__main__":

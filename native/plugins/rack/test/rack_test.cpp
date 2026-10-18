@@ -13,10 +13,22 @@
  *   modulation  an LFO route moves its target; a macro at 0, or a route of depth 0, changes nothing
  *   threads     swapping modules and routes while audio runs
  *   state       routes and slots strings round-trip
+ *
+ * Added with the lanes, the feedback loop, the step sequencer and the keyed modules:
+ *   identity    every factory preset that uses none of them renders bit for bit like the 2.1
+ *               engine (test/RackEngineV1.hpp, a frozen copy), at 44.1 and 96 kHz, host blocks of
+ *               512 (transport playing, Macro 1 sweeping) and 300 (stopped), and again with the new
+ *               parameters moved to values that must not change anything (Lane Mix, Feedback
+ *               From/To, the sequencer, lane B on empty slots)
+ *   lanes       two lanes with different latencies line up (impulse), Lane Mix blends them
+ *   feedback    the loop repeats every kChunk samples and decays; 95 % on noise stays bounded
+ *   sequencer   the steps, Steps, sync to the host beat and Glide
+ *   keyed       Sidechain Ducker keys on the rack input delayed by the latency before it
  */
 
 #include "NullModules.hpp"
 #include "RackEngine.hpp"
+#include "RackEngineV1.hpp"
 
 #include <atomic>
 #include <cmath>
@@ -472,14 +484,28 @@ static void testThreads()
 
 static void testState()
 {
-    rack::Route r[3];
+    rack::Route r[4];
     r[0].source = rack::kSrcLfo1; r[0].slot = 1; r[0].value = 0; r[0].depth = -0.25f;
     r[1].source = rack::kSrcEnv; r[1].slot = 7; r[1].value = 24; r[1].depth = 1.0f;
     r[2].source = rack::kSrcMacro1 + 7; r[2].slot = 0; r[2].value = 3; r[2].depth = 0.5f;
-    const std::string s = rack::formatRoutes(r, 3);
+    r[3].source = rack::kSrcSeq; r[3].slot = 2; r[3].value = 0; r[3].depth = 0.75f;
+    const std::string s = rack::formatRoutes(r, 4);
     rack::Route back[rack::kMaxRoutes];
     const uint32_t n = rack::parseRoutes(s.c_str(), back);
-    CHECK(n == 3 && rack::formatRoutes(back, n) == s, "routes round trip: %s", s.c_str());
+    CHECK(n == 4 && rack::formatRoutes(back, n) == s, "routes round trip: %s", s.c_str());
+    // a 2.1 routes string means the same
+    CHECK(rack::parseRoutes("lfo1>2.1:-0.25;macro8>1.4:0.5", back) == 2 && back[0].source == rack::kSrcLfo1 &&
+          back[1].source == rack::kSrcMacro1 + 7 && back[1].value == 3, "2.1 routes string");
+    // the 2.1 parameters keep their indices and symbols; the new ones come after them
+    {
+        char nm[32], sy[32];
+        CHECK(rack::kExtFirst == 254 && std::string(rack::paramInfo(253, nm, 32, sy, 32).symbol) == "s8_v25" &&
+              std::string(rack::paramInfo(rack::kSeqStep1 + 15, nm, 32, sy, 32).symbol) == "seq_step16" &&
+              std::string(rack::paramInfo(rack::laneParam(7), nm, 32, sy, 32).symbol) == "s8_lane" &&
+              rack::kNumParams == 286, "parameter layout");
+        CHECK(rack::globalFromSymbol("feedback") == int(rack::kFeedback) && rack::globalFromSymbol("seq_step3") == int(rack::kSeqStep1 + 2) &&
+              rack::globalFromSymbol("env_gain") == int(rack::kEnvGain) && rack::globalFromSymbol("s1_lane") < 0, "global symbols");
+    }
     CHECK(rack::parseRoutes("bogus;lfo1>9.1:0.5;env>1.26:0.5;lfo2>1.1:x", back) == 0, "bad routes accepted");
     std::string ids[rack::kSlots] = { "tilt", "", "delay" };
     std::string ids2[rack::kSlots];
@@ -498,15 +524,356 @@ static void testState()
         e->setSlots(ids);
         e->setParam(rack::valueParam(0, 0), 0.8f);
         e->setParam(rack::valueParam(2, 1), 0.6f);
+        e->setParam(rack::laneParam(0), 1.0f);
         std::string swapped[rack::kSlots] = { "delay", "", "tilt" };
         e->setSlots(swapped);
         CHECK(e->param(rack::valueParam(2, 0)) == 0.8f && e->param(rack::valueParam(0, 1)) == 0.6f,
               "reorder lost the values");
+        CHECK(e->param(rack::laneParam(2)) == 1.0f && e->param(rack::laneParam(0)) == 0.0f, "reorder lost the lane");
         // a new module resets its values to the defaults
         e->setSlot(2, "delay");
         CHECK(std::fabs(e->plainValue(2, 0, e->param(rack::valueParam(2, 0))) - 250.0f) < 0.5f, "new module not at defaults");
         std::printf("  reorder keeps values, a new module starts at its defaults\n");
     }
+}
+
+// ---- identity: with the new features off, bit for bit the 2.1 engine -------------------------
+
+// renders with any engine (RackEngine or rack_v1::RackEngine); neutral() changes the new
+// parameters in ways that must not change the sound (RackEngine only)
+template <class Engine>
+static void renderAny(Engine& e, const Stereo& in, Stereo& out, uint32_t block, bool playing)
+{
+    typename Engine::Time t;
+    t.tempo = 120.0;
+    t.playing = playing;
+    t.valid = playing;
+    const size_t n = in.l.size();
+    out.l.assign(n, 0.0f);
+    out.r.assign(n, 0.0f);
+    for (size_t pos = 0; pos < n; pos += block)
+    {
+        const uint32_t k = uint32_t(std::min<size_t>(block, n - pos));
+        e.setParam(rack::kMacro1, 100.0f * float(pos) / float(n));
+        e.process(in.l.data() + pos, in.r.data() + pos, out.l.data() + pos, out.r.data() + pos, k, t);
+        if (t.playing)
+            t.beat += double(k) / e.sampleRate() * t.tempo / 60.0;
+    }
+}
+
+static void neutral(RackEngine& e, const RackEngine::PresetState& st)
+{
+    e.setParam(rack::kLaneMix, 100.0f);    // no slot on lane B: Lane Mix does nothing
+    e.setParam(rack::kFbFrom, 6.0f);       // feedback 0: the loop does nothing
+    e.setParam(rack::kFbTo, 2.0f);
+    e.setParam(rack::kSeqLength, 5.0f);    // no seq route: the sequencer moves nothing
+    e.setParam(rack::kSeqSync, 0.0f);
+    e.setParam(rack::kSeqRate, 13.0f);
+    e.setParam(rack::kSeqGlide, 70.0f);
+    e.setParam(rack::kSeqStep1 + 3, 0.9f);
+    for (uint32_t s = 0; s < rack::kSlots; ++s)
+        if (st.ids[s].empty())
+            e.setParam(rack::laneParam(s), 1.0f); // lane B on an empty slot: no lane B
+}
+
+static bool usesNewFeatures(const RackEngine::PresetState& st)
+{
+    if (st.params[rack::kFeedback] > 0.0f)
+        return true;
+    for (uint32_t s = 0; s < rack::kSlots; ++s)
+        if (!st.ids[s].empty() && st.params[rack::laneParam(s)] >= 0.5f)
+            return true;
+    for (uint32_t r = 0; r < st.numRoutes; ++r)
+        if (st.routes[r].source >= rack_v1::kNumSources)
+            return true;
+    return false;
+}
+
+static void testIdentity()
+{
+    auto mods = allModules(false);
+    uint32_t compared = 0, skipped = 0;
+    size_t samples = 0;
+    for (uint32_t p = 0; p < rack::kNumPresets; ++p)
+    {
+        const rack::Preset& pr = rack::kPresets[p];
+        std::unique_ptr<RackEngine> e(new RackEngine(mods.data(), uint32_t(mods.size())));
+        std::unique_ptr<RackEngine::PresetState> st(new RackEngine::PresetState());
+        bool have = true;
+        for (uint32_t s = 0; s < pr.numSlots; ++s)
+            have = have && e->find(pr.slots[s].id);
+        e->resolvePreset(pr, *st);
+        if (!have || usesNewFeatures(*st))
+        {
+            ++skipped;
+            continue;
+        }
+        size_t diffs = 0;
+        // pass: 0 = 44.1 kHz, blocks of 512, playing; 1 = 96 kHz, 512, playing; 2 = 44.1 kHz,
+        // 300, stopped; 3 = as 0 with the neutral changes
+        for (int pass = 0; pass < 4; ++pass)
+        {
+            const double sr = pass == 1 ? 96000.0 : 44100.0;
+            const uint32_t block = pass == 2 ? 300 : 512;
+            std::unique_ptr<rack_v1::RackEngine> v1(new rack_v1::RackEngine(mods.data(), uint32_t(mods.size())));
+            e.reset(new RackEngine(mods.data(), uint32_t(mods.size())));
+            v1->setSampleRate(sr);
+            e->setSampleRate(sr);
+            v1->loadPreset(pr);
+            e->loadPreset(pr);
+            if (pass == 3)
+                neutral(*e, *st);
+            const Stereo in = testSignal(sr, 3.0);
+            Stereo a, b;
+            renderAny(*v1, in, a, block, pass != 2);
+            renderAny(*e, in, b, block, pass != 2);
+            for (size_t i = 0; i < in.l.size(); ++i)
+                diffs += (a.l[i] != b.l[i]) + (a.r[i] != b.r[i]);
+            samples += 2 * in.l.size();
+            CHECK(e->latency() == v1->latency(), "%s: latency %u, 2.1 %u", pr.name, e->latency(), v1->latency());
+        }
+        CHECK(diffs == 0, "%s: %zu samples differ from the 2.1 engine", pr.name, diffs);
+        ++compared;
+    }
+    std::printf("  %u presets bit-identical to the 2.1 engine (%zu samples, 4 passes each); %u skipped "
+                "(they use the new features or modules not in this build)\n", compared, samples, skipped);
+#ifdef RACK_FULL_BUILD
+    CHECK(compared >= 52, "only %u presets compared", compared);
+#endif
+}
+
+// ---- lanes -----------------------------------------------------------------------------------
+
+static void testLanes()
+{
+    auto mods = allModules(true);
+    const double sr = 48000.0;
+    const size_t n = 4096;
+    Stereo in, out;
+    in.l.assign(n, 0.0f);
+    in.r.assign(n, 0.0f);
+    in.l[0] = 1.0f;
+    in.r[0] = 0.5f;
+    for (float mixB : { 0.0f, 50.0f, 100.0f })
+    {
+        std::unique_ptr<RackEngine> e(new RackEngine(mods.data(), uint32_t(mods.size())));
+        e->setSampleRate(sr);
+        std::string ids[rack::kSlots] = { "identity", "identity", "identity" };
+        e->setSlots(ids);
+        e->setParam(rack::valueParam(0, 0), 100.0f / 4000.0f); // lane A: 100 + 0 samples
+        e->setParam(rack::valueParam(1, 0), 333.0f / 4000.0f); // lane B: 333 + 50 samples
+        e->setParam(rack::valueParam(2, 0), 50.0f / 4000.0f);
+        e->setParam(rack::laneParam(1), 1.0f);
+        e->setParam(rack::laneParam(2), 1.0f);
+        e->setParam(rack::kLaneMix, mixB);
+        render(*e, in, out, 512);
+        // both lanes line up at the longer lane's 383 samples: A's part (1 - m) plus B's m
+        size_t bad = 0;
+        for (size_t i = 0; i < n; ++i)
+        {
+            const float wantL = i == 383 ? 1.0f : 0.0f, wantR = i == 383 ? 0.5f : 0.0f;
+            bad += std::fabs(out.l[i] - wantL) > 1e-6f || std::fabs(out.r[i] - wantR) > 1e-6f;
+        }
+        CHECK(e->latency() == 383, "lanes: latency %u, expected 383", e->latency());
+        CHECK(bad == 0, "lanes, mix %.0f: %zu samples off the aligned impulse", mixB, bad);
+        // lane B muted: only A's share is left
+        e->setParam(rack::valueParam(1, 1), 1.0f);
+        render(*e, in, out, 512);
+        CHECK(std::fabs(out.l[383] - (1.0f - mixB / 100.0f)) < 1e-6f, "lanes, mix %.0f, B muted: %.4f", mixB, out.l[383]);
+        std::printf("  lane A 100 smp, lane B 383 smp, Lane Mix %3.0f: aligned at 383, latency %u; B muted leaves %.2f\n",
+                    mixB, e->latency(), out.l[383]);
+    }
+}
+
+// ---- feedback --------------------------------------------------------------------------------
+
+static void testFeedback()
+{
+    auto mods = allModules(true);
+    const double sr = 48000.0;
+    {
+        std::unique_ptr<RackEngine> e(new RackEngine(mods.data(), uint32_t(mods.size())));
+        e->setSampleRate(sr);
+        e->setSlot(1, "identity");
+        e->setParam(rack::valueParam(1, 0), 200.0f / 4000.0f); // a 200-sample "delay"
+        e->setParam(rack::kFeedback, 50.0f);
+        e->setParam(rack::kFbFrom, 2.0f);
+        e->setParam(rack::kFbTo, 2.0f);
+        const size_t n = 8192;
+        Stereo in, out;
+        in.l.assign(n, 0.0f);
+        in.r.assign(n, 0.0f);
+        for (size_t i = 0; i < 64; ++i) // a short 1 kHz burst (the loop cuts DC and lows)
+            in.l[i] = in.r[i] = 0.5f * float(std::sin(2.0 * M_PI * 1000.0 * double(i) / sr));
+        render(*e, in, out, 512);
+        // repeats every 200 + kChunk samples, each quieter
+        double prev = 1e9;
+        bool decays = true;
+        for (int k = 0; k < 4; ++k)
+        {
+            double pk = 0.0;
+            const size_t at = 200 + size_t(k) * (200 + RackEngine::kChunk);
+            for (size_t i = at; i < at + 64; ++i)
+                pk = std::max(pk, double(std::fabs(out.l[i])));
+            CHECK(pk > 1e-3, "feedback: repeat %d missing (peak %.4f)", k, pk);
+            decays = decays && pk < prev;
+            prev = pk;
+            std::printf("  repeat %d at %4zu samples: peak %.4f\n", k, at, pk);
+        }
+        CHECK(decays, "feedback: the repeats do not decay");
+        // nothing between the repeats
+        double gap = 0.0;
+        for (size_t i = 300; i < 328; ++i)
+            gap = std::max(gap, double(std::fabs(out.l[i])));
+        CHECK(gap < 1e-6, "feedback: signal between the repeats (%.3g)", gap);
+    }
+    {
+        // 95 % around a chain with gain stays bounded
+        std::unique_ptr<RackEngine> e(new RackEngine(mods.data(), uint32_t(mods.size())));
+        if (e->find("saturation") && e->find("delay"))
+        {
+            e->setSampleRate(sr);
+            std::string ids[rack::kSlots] = { "delay", "saturation" };
+            e->setSlots(ids);
+            e->setParam(rack::valueParam(0, 2), 1.0f); // delay Mix 100
+            e->setParam(rack::valueParam(1, 0), 1.0f); // Drive 100
+            e->setParam(rack::kFeedback, 95.0f);
+            e->setParam(rack::kFbFrom, 1.0f);
+            e->setParam(rack::kFbTo, 2.0f);
+            const Stereo in = testSignal(sr, 4.0);
+            Stereo out;
+            render(*e, in, out, 333);
+            double pk = 0.0;
+            bool finite = true;
+            for (size_t i = 0; i < out.l.size(); ++i)
+            {
+                finite = finite && std::isfinite(out.l[i]) && std::isfinite(out.r[i]);
+                pk = std::max(pk, double(std::max(std::fabs(out.l[i]), std::fabs(out.r[i]))));
+            }
+            CHECK(finite && pk < 4.0, "feedback 95%%: peak %.2f%s", pk, finite ? "" : ", not finite");
+            std::printf("  feedback 95%% around delay + saturation (drive 100): peak %.2f\n", pk);
+        }
+    }
+}
+
+// ---- step sequencer --------------------------------------------------------------------------
+
+static void testSequencer()
+{
+    auto mods = allModules(true);
+    const double sr = 48000.0;
+    std::unique_ptr<RackEngine> e(new RackEngine(mods.data(), uint32_t(mods.size())));
+    e->setSampleRate(sr);
+    e->setSlot(0, "identity");
+    e->setParam(rack::valueParam(0, 0), 0.0f);
+    rack::Route r;
+    r.source = rack::kSrcSeq;
+    r.slot = 0;
+    r.value = 0;
+    r.depth = 1.0f;
+    e->setRoutes(&r, 1);
+    const float pattern[4] = { 0.0f, 1.0f, 0.25f, 0.75f };
+    for (int k = 0; k < 4; ++k)
+        e->setParam(rack::kSeqStep1 + uint32_t(k), pattern[k]);
+    e->setParam(rack::kSeqLength, 4.0f);
+    std::vector<float> l(RackEngine::kChunk, 0.0f), r2(RackEngine::kChunk, 0.0f), ol(RackEngine::kChunk), orr(RackEngine::kChunk);
+
+    // free at 37.5 steps/s = one step per 10 chunks of 128 samples at 48 kHz: the values in order
+    e->setParam(rack::kSeqSync, 0.0f);
+    e->setParam(rack::kSeqRate, 37.5f);
+    int k0 = -1, changes = 0;
+    bool valuesOk = true;
+    for (int c = 0; c < 2000; ++c)
+    {
+        e->process(l.data(), r2.data(), ol.data(), orr.data(), RackEngine::kChunk, {});
+        const int k = e->seqStep();
+        valuesOk = valuesOk && k < 4 && std::fabs(e->sourceValue(rack::kSrcSeq) - pattern[k]) < 1e-6f &&
+                   std::fabs(e->effective(0, 0) - pattern[k]) < 1e-6f;
+        if (k != k0)
+        {
+            CHECK(k0 < 0 || k == (k0 + 1) % 4, "sequencer: step %d after %d", k, k0);
+            k0 = k;
+            ++changes;
+        }
+    }
+    // 2000 chunks = 5.33 s at 37.5 steps/s: 200 steps
+    CHECK(valuesOk, "sequencer: the source is not the current step's value");
+    CHECK(changes >= 195 && changes <= 205, "sequencer: %d steps in 5.33 s at 37.5 steps/s", changes);
+    std::printf("  free 37.5 steps/s, 4 steps: %d steps in 5.33 s, values follow the pattern\n", changes);
+
+    // synced 1/16 at 120 bpm, playing: the step is the host's beat position
+    e->setParam(rack::kSeqSync, 7.0f); // 1/16 = 0.25 beat a step
+    bool syncOk = true;
+    for (double beat : { 0.0, 0.26, 0.5, 0.8, 1.0, 3.9, 17.3 })
+    {
+        RackEngine::Time t;
+        t.tempo = 120.0;
+        t.playing = t.valid = true;
+        t.beat = beat;
+        e->process(l.data(), r2.data(), ol.data(), orr.data(), RackEngine::kChunk, t);
+        const int want = int(std::floor(beat / 0.25)) % 4;
+        syncOk = syncOk && e->seqStep() == want;
+    }
+    CHECK(syncOk, "sequencer: synced steps do not follow the beat");
+    std::printf("  synced 1/16: the step follows the host beat: %s\n", syncOk ? "yes" : "NO");
+
+    // glide 100 %: values between the steps appear
+    e->setParam(rack::kSeqSync, 0.0f);
+    e->setParam(rack::kSeqRate, 4.0f);
+    e->setParam(rack::kSeqGlide, 100.0f);
+    int between = 0;
+    for (int c = 0; c < 400; ++c)
+    {
+        e->process(l.data(), r2.data(), ol.data(), orr.data(), RackEngine::kChunk, {});
+        const float v = e->sourceValue(rack::kSrcSeq);
+        bool onStep = false;
+        for (float p : pattern)
+            onStep = onStep || std::fabs(v - p) < 1e-4f;
+        between += !onStep;
+    }
+    CHECK(between > 200, "sequencer: glide 100%% gave only %d in-between values of 400", between);
+    std::printf("  glide 100%%: %d of 400 chunks between steps\n", between);
+}
+
+// ---- keyed modules ---------------------------------------------------------------------------
+
+static void testKeyed()
+{
+    auto mods = allModules(true);
+    std::unique_ptr<RackEngine> probe(new RackEngine(mods.data(), uint32_t(mods.size())));
+    if (!probe->find("sidechain_ducker"))
+    {
+        std::printf("  sidechain_ducker not in this build, skipped\n");
+        return;
+    }
+    // after a 333-sample delay, Key = SIDE (the rack input, delayed by the 333 samples before
+    // it) must duck exactly like Key = MAIN (the module's own input)
+    const double sr = 44100.0;
+    const Stereo in = testSignal(sr, 2.0);
+    Stereo out[2];
+    for (int k = 0; k < 2; ++k)
+    {
+        std::unique_ptr<RackEngine> e(new RackEngine(mods.data(), uint32_t(mods.size())));
+        e->setSampleRate(sr);
+        std::string ids[rack::kSlots] = { "identity", "sidechain_ducker" };
+        e->setSlots(ids);
+        e->setParam(rack::valueParam(0, 0), 333.0f / 4000.0f);
+        e->setParam(rack::valueParam(1, 5), k ? 1.0f : 0.0f); // Key: SIDE, MAIN
+        e->setParam(rack::valueParam(1, 0), 0.6f);            // Threshold -24 dB
+        render(*e, in, out[k], 512);
+    }
+    size_t diffs = 0;
+    double moved = 0.0;
+    for (size_t i = 0; i < in.l.size(); ++i)
+    {
+        diffs += (out[0].l[i] != out[1].l[i]) + (out[0].r[i] != out[1].r[i]);
+        if (i >= 333)
+            moved = std::max(moved, double(std::fabs(out[0].l[i] - in.l[i - 333])));
+    }
+    CHECK(diffs == 0, "keyed: Key SIDE after 333 samples of latency differs from Key MAIN in %zu samples", diffs);
+    CHECK(moved > 1e-3, "keyed: the ducker did not duck");
+    std::printf("  sidechain_ducker after 333 samples: key = rack input, aligned (%s), ducked by up to %.3f\n",
+                diffs ? "NO" : "bit-exact", moved);
 }
 
 int main()
@@ -516,6 +883,18 @@ int main()
     std::printf("exact\n");
     testExact("tilt", { { 0, 0.8f } });
     testExact("delay", { { 0, 0.2f }, { 1, 0.5f }, { 2, 1.0f }, { 5, 1.0f }, { 7, 0.6f }, { 8, 0.4f } });
+    testExact("sidechain_ducker", { { 0, 0.7f }, { 1, 0.2f }, { 6, 0.3f } });
+    testExact("convolution", { { 0, 0.25f }, { 1, 0.5f }, { 2, 0.1f } });
+    std::printf("identity\n");
+    testIdentity();
+    std::printf("lanes\n");
+    testLanes();
+    std::printf("feedback\n");
+    testFeedback();
+    std::printf("sequencer\n");
+    testSequencer();
+    std::printf("keyed\n");
+    testKeyed();
     std::printf("bands\n");
     testBands();
     std::printf("channels\n");

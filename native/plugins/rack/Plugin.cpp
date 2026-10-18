@@ -1,12 +1,16 @@
 /*
- * NULL JSFX - Rack (VST3/CLAP), DSP side: up to 8 NULL JSFX modules in series, with per-slot
- * bands and channels, macros, two LFOs and an envelope follower (RackEngine.hpp)
+ * NULL JSFX - Rack (VST3/CLAP), DSP side: up to 8 NULL JSFX modules in series or on two
+ * parallel lanes, with per-slot bands and channels, a feedback loop, macros, two LFOs, an
+ * envelope follower and a step sequencer (RackEngine.hpp)
  * Copyright (C) 2026 Christos Koulaxizis / NULL JSFX
  * SPDX-License-Identifier: MIT
  *
- * Parameters: RackParams.hpp (22 globals, then On/Mix/Band/Channel/Value 1-25 per slot).
+ * Parameters: RackParams.hpp (22 globals, then On/Mix/Band/Channel/Value 1-25 per slot, then,
+ * appended in 2.2, the step sequencer, Lane Mix, Feedback, Feedback From/To and S1-S8 Lane).
  * State: "slots" (8 module ids), "routes" and "preset" (RackParams.hpp). The module in a slot is
  * state, not a parameter: changing it allocates, which happens here, never on the audio thread.
+ * A slot's lane is a parameter like its band and channel (appended, so 2.1 sessions load with
+ * every slot on lane A).
  * Programs: the factory presets (RackPresets.hpp).
  */
 
@@ -28,7 +32,8 @@ protected:
     const char* getLabel() const override { return "Rack"; }
     const char* getDescription() const override
     {
-        return "Chains up to 8 NULL JSFX modules, each on a band or channel of its own, with macros, LFOs and an envelope to modulate them.";
+        return "Chains up to 8 NULL JSFX modules, in series or on two parallel lanes, each on a band or channel of its own, "
+               "with a feedback loop and macros, LFOs, an envelope and a step sequencer to modulate them.";
     }
     const char* getMaker() const override { return "NULL JSFX"; }
     const char* getHomePage() const override { return "https://nulljsfx.tech"; }
@@ -52,7 +57,8 @@ protected:
         p.ranges.def = in.def;
         if (in.step >= 1.0f)
             p.hints |= kParameterIsInteger;
-        if (index >= rack::kNumGlobals && (index - rack::kNumGlobals) % rack::kSlotParams == rack::kSlotOn)
+        if (index >= rack::kNumGlobals && index < rack::kExtFirst &&
+            (index - rack::kNumGlobals) % rack::kSlotParams == rack::kSlotOn)
             p.hints |= kParameterIsBoolean;
         if (in.options)
         {
