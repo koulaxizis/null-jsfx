@@ -2,7 +2,7 @@ desc:NULL Pluck
 author: Christos Koulaxizis
 tags: instrument pluck plucked string karplus strong guitar nylon steel harp koto pipa lute banjo dulcimer strum strummer chord rhythm body midi
 //category: Instruments
-//NULL JSFX v2.4 • https://nulljsfx.tech • MIT License
+//NULL JSFX v2.5 • https://nulljsfx.tech • MIT License
 
 slider1:0<0,7,1{Nylon Guitar,Steel Guitar,Harp,Koto,Pipa,Banjo,Muted Guitar,Dulcimer}>Model
 slider2:18<5,50,1>Pick Position (%)

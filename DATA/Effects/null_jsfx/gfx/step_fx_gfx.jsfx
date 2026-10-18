@@ -2,7 +2,7 @@ desc:NULL Step FX GFX
 author: Christos Koulaxizis
 tags: step fx 16-step sequencer glitch stutter repeat reverse filter gate tape stop pitch crush tempo sync midi creative gui
 //category: Advanced
-//NULL JSFX v2.4 • https://nulljsfx.tech • MIT License
+//NULL JSFX v2.5 • https://nulljsfx.tech • MIT License
 
 import null_gfx.jsfx-inc
 

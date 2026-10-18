@@ -5,7 +5,7 @@ videos the site's guides and the Hub's plugin page play. They are generated, not
 
 | Script | Makes |
 |---|---|
-| `make_videos.py [plugin ...]` | one per plugin: the GFX version plays `assets/audio/null-jsfx-loop.flac` live (`gfx_video.cpp`, ysfx), with its interface, a spectrum and a level history before (grey) and after (silver), three factory presets, a before/after and a sweep of the main control. `videos.json` changes a plugin's script. |
+| `make_videos.py [plugin ...]` | one per plugin: the GFX version plays `assets/audio/null-jsfx-loop.flac` live (`gfx_video.cpp`, ysfx), with its interface, a spectrum and a level history before (grey) and after (silver), three factory presets, a before/after and a sweep of the main control. Instruments get a MIDI pattern instead (chords, a bass line, a melody; drum grooves run with the host) and a roll of the notes; MIDI effects get one too, with a NULL instrument playing the notes before and after. `videos.json` changes a plugin's script. |
 | `make_rack_video.py` | the Rack: its JACK standalone filmed under Xvfb while `jack_loop.c` plays the loop through it and a script picks presets, opens modules and turns a macro |
 | `make_hub_video.py` | the Hub: `hub_tour.cjs` films its page in Chromium with the test stand-in (`hub/tests/mock.cjs`), the loop as a bed |
 

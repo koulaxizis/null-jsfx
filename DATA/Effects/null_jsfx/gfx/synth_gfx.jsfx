@@ -2,7 +2,7 @@ desc:NULL Synth GFX
 author: Christos Koulaxizis
 tags: instrument synth synthesizer polyphonic virtual analog wavetable pad lead keys bass strings bells unison chorus delay reverb midi gui
 //category: Instruments
-//NULL JSFX v2.4 • https://nulljsfx.tech • MIT License
+//NULL JSFX v2.5 • https://nulljsfx.tech • MIT License
 import null_gfx.jsfx-inc
 
 slider1:0<0,1,1{Analog,Wavetable}>-Engine

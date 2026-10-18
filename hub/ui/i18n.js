@@ -81,6 +81,10 @@ const EL = {
   "The everyday mixing and mastering toolbox.": "Η καθημερινή εργαλειοθήκη για μίξη και mastering.",
   "Advanced": "Προχωρημένα",
   "Deeper sound design, creative effects and special processing.": "Βαθύτερος σχεδιασμός ήχου, δημιουργικά εφέ και ειδική επεξεργασία.",
+  "Instruments": "Όργανα",
+  "Synths, keys, bass and drums. Play them from MIDI, no samples needed.": "Synths, πλήκτρα, μπάσα και ντραμς. Παίζονται από MIDI, χωρίς samples.",
+  "MIDI": "MIDI",
+  "Tools that change the notes before they reach an instrument.": "Εργαλεία που αλλάζουν τις νότες πριν φτάσουν σε ένα όργανο.",
   "FX chains": "Αλυσίδες FX",
   "Ready-made REAPER FX chains of NULL JSFX plugins. A chain is added when all its plugins are installed.":
     "Έτοιμες αλυσίδες FX του REAPER με NULL JSFX plugins. Μια αλυσίδα μπαίνει όταν εγκατασταθούν όλα τα plugins της.",

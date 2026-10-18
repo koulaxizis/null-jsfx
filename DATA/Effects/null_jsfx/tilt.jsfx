@@ -2,7 +2,7 @@ desc:NULL Tilt
 author: Christos Koulaxizis
 tags: eq tilt tone bass treble balance tonal
 //category: One Slider
-//NULL JSFX v2.4 • https://nulljsfx.tech • MIT License
+//NULL JSFX v2.5 • https://nulljsfx.tech • MIT License
 
 slider1:0<-100,100,1>Amount
 

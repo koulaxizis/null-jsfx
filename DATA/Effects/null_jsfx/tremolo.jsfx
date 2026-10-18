@@ -2,7 +2,7 @@ desc:NULL Tremolo
 author: Christos Koulaxizis
 tags: tremolo amplitude modulation lfo rhythmic pulsing harmonic auto-pan tempo sync
 //category: Essentials
-//NULL JSFX v2.4 • https://nulljsfx.tech • MIT License
+//NULL JSFX v2.5 • https://nulljsfx.tech • MIT License
 
 slider1:5<0.1,20,0.1>Rate (Hz)
 slider2:50<0,100,1>Depth (%)
