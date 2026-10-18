@@ -8,21 +8,26 @@ namespace nullpresets {
 
 struct FactoryPreset {
     const char* name;
-    float values[4];
+    float values[8];
 };
 
 static const FactoryPreset kPresets[] = {
-    { "Default", { 30.0f, 0.0f, 50.0f, 0.0f } },
-    { "Bus Warmth", { 15.0f, 0.0f, 40.0f, 0.0f } },
-    { "Vocal Tube Glow", { 20.0f, 1.0f, 35.0f, 1.0f } },
-    { "Bass Grit", { 40.0f, -2.0f, 35.0f, 2.0f } },
-    { "Drum Crunch", { 60.0f, 2.0f, 30.0f, 2.0f } },
-    { "Guitar Fuzz", { 50.0f, -4.0f, 50.0f, 3.0f } },
-    { "Lo-Fi Bitcrush", { 60.0f, -3.0f, 50.0f, 4.0f } },
-    { "Synth Wavefolder", { 50.0f, 0.0f, 60.0f, 6.0f } },
-    { "Hard Fold Lead", { 70.0f, -2.0f, 40.0f, 5.0f } },
+    { "Default", { 30.0f, 0.0f, 50.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f } },
+    { "Bus Warmth", { 15.0f, 0.0f, 40.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f } },
+    { "Vocal Tube Glow", { 20.0f, 1.0f, 35.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f } },
+    { "Bass Grit", { 40.0f, -2.0f, 35.0f, 2.0f, 0.0f, 0.0f, 0.0f, 0.0f } },
+    { "Drum Crunch", { 60.0f, 2.0f, 30.0f, 2.0f, 0.0f, 0.0f, 0.0f, 0.0f } },
+    { "Guitar Fuzz", { 50.0f, -4.0f, 50.0f, 3.0f, 0.0f, 0.0f, 0.0f, 0.0f } },
+    { "Lo-Fi Bitcrush", { 60.0f, -3.0f, 50.0f, 4.0f, 0.0f, 0.0f, 0.0f, 0.0f } },
+    { "Synth Wavefolder", { 50.0f, 0.0f, 60.0f, 6.0f, 0.0f, 0.0f, 0.0f, 0.0f } },
+    { "Hard Fold Lead", { 70.0f, -2.0f, 40.0f, 5.0f, 0.0f, 0.0f, 0.0f, 0.0f } },
+    { "Tape Glue", { 25.0f, 0.0f, 60.0f, 0.0f, 0.0f, -1.0f, 1.0f, 0.0f } },
+    { "Tube Push Highs", { 35.0f, -1.0f, 50.0f, 1.0f, 0.0f, -2.0f, 1.0f, 6.0f } },
+    { "Fuzz Lows", { 40.0f, -2.0f, 30.0f, 3.0f, 0.0f, -4.0f, 0.0f, -8.0f } },
+    { "Clean Drive 4x", { 50.0f, 0.0f, 100.0f, 2.0f, 3.0f, -7.0f, 2.0f, 0.0f } },
+    { "Bright Exciter", { 20.0f, 0.0f, 25.0f, 1.0f, 0.0f, 0.0f, 1.0f, 10.0f } },
 };
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
-static constexpr uint32_t kNumValues = 4;
+static constexpr uint32_t kNumValues = 8;
 
 } // namespace nullpresets

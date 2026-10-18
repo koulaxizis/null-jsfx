@@ -23,7 +23,9 @@
 #define DISTRHO_PLUGIN_IS_RT_SAFE    1
 #define DISTRHO_PLUGIN_IS_SYNTH      1
 #define DISTRHO_PLUGIN_NUM_INPUTS    0
-#define DISTRHO_PLUGIN_NUM_OUTPUTS   2
+// four stereo outputs (JSFX pins 1-8): the main mix, then with Outputs Groups the snare, hats
+// and perc pairs (the kick stays on the main pair)
+#define DISTRHO_PLUGIN_NUM_OUTPUTS   8
 #define DISTRHO_PLUGIN_WANT_MIDI_INPUT 1
 #define DISTRHO_PLUGIN_WANT_TIMEPOS  1
 #define DISTRHO_PLUGIN_WANT_LATENCY  0
@@ -32,7 +34,7 @@
 #define DISTRHO_UI_USE_NANOVG        1
 #define DISTRHO_UI_USER_RESIZABLE    1
 #define DISTRHO_UI_DEFAULT_WIDTH     640
-#define DISTRHO_UI_DEFAULT_HEIGHT    494
+#define DISTRHO_UI_DEFAULT_HEIGHT    580
 
 #define DISTRHO_PLUGIN_LV2_CATEGORY    "lv2:InstrumentPlugin"
 #define DISTRHO_PLUGIN_VST3_CATEGORIES "Instrument|Drum|Stereo"

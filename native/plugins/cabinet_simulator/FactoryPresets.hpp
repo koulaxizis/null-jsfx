@@ -8,20 +8,25 @@ namespace nullpresets {
 
 struct FactoryPreset {
     const char* name;
-    float values[5];
+    float values[7];
 };
 
 static const FactoryPreset kPresets[] = {
-    { "Default", { 2.0f, 30.0f, 80.0f, 100.0f, 0.0f } },
-    { "Clean Combo", { 1.0f, 20.0f, 80.0f, 100.0f, 0.0f } },
-    { "Bright Open Back", { 0.0f, 10.0f, 80.0f, 100.0f, 0.0f } },
-    { "Rock Rhythm Stack", { 2.0f, 30.0f, 90.0f, 100.0f, -1.0f } },
-    { "Dark Lead Edge Mic", { 2.0f, 70.0f, 100.0f, 100.0f, -1.0f } },
-    { "Fuzz Tamer", { 1.0f, 60.0f, 100.0f, 100.0f, 0.0f } },
-    { "Bass DI Cab Blend", { 3.0f, 40.0f, 40.0f, 50.0f, 0.0f } },
-    { "Small Radio Lo-Fi", { 4.0f, 20.0f, 250.0f, 100.0f, 2.0f } },
+    { "Default", { 2.0f, 30.0f, 80.0f, 100.0f, 0.0f, 70.0f, 0.0f } },
+    { "Clean Combo", { 1.0f, 20.0f, 80.0f, 100.0f, 0.0f, 70.0f, 0.0f } },
+    { "Bright Open Back", { 0.0f, 10.0f, 80.0f, 100.0f, 0.0f, 70.0f, 0.0f } },
+    { "Rock Rhythm Stack", { 2.0f, 30.0f, 90.0f, 100.0f, -1.0f, 70.0f, 0.0f } },
+    { "Dark Lead Edge Mic", { 2.0f, 70.0f, 100.0f, 100.0f, -1.0f, 70.0f, 0.0f } },
+    { "Fuzz Tamer", { 1.0f, 60.0f, 100.0f, 100.0f, 0.0f, 70.0f, 0.0f } },
+    { "Bass DI Cab Blend", { 3.0f, 40.0f, 40.0f, 50.0f, 0.0f, 70.0f, 0.0f } },
+    { "Small Radio Lo-Fi", { 4.0f, 20.0f, 250.0f, 100.0f, 2.0f, 70.0f, 0.0f } },
+    { "Tweed 1x10", { 5.0f, 25.0f, 100.0f, 100.0f, 0.0f, 70.0f, 0.0f } },
+    { "Double-Mic 4x12", { 2.0f, 15.0f, 90.0f, 100.0f, 0.0f, 75.0f, 40.0f } },
+    { "Bass 2x10 Growl", { 6.0f, 20.0f, 40.0f, 80.0f, 0.0f, 70.0f, 0.0f } },
+    { "Vintage 4x10 Blend", { 7.0f, 10.0f, 70.0f, 100.0f, 0.0f, 60.0f, 50.0f } },
+    { "Dark Edge Pair", { 1.0f, 50.0f, 80.0f, 100.0f, 0.0f, 100.0f, 60.0f } },
 };
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
-static constexpr uint32_t kNumValues = 5;
+static constexpr uint32_t kNumValues = 7;
 
 } // namespace nullpresets

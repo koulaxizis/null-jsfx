@@ -4,5 +4,11 @@
   ["Fast Keys Tremolo", {"Rate": 5, "Depth": 80, "Mix": 60}],
   ["Quarter Note Pan", {"Tempo Sync": "ON", "Subdivision": "1/4", "Depth": 70, "Mix": 60}],
   ["Eighth Note Guitar", {"Tempo Sync": "ON", "Subdivision": "1/8", "Depth": 60, "Mix": 50}],
-  ["Sixteenth Percussion", {"Tempo Sync": "ON", "Subdivision": "1/16", "Depth": 50, "Mix": 40}]
+  ["Sixteenth Percussion", {"Tempo Sync": "ON", "Subdivision": "1/16", "Depth": 50, "Mix": 40}],
+  ["Ping Pong Quarters", {"Mode": "2 STEPS", "Tempo Sync": "ON", "Subdivision": "1/4", "Depth": 100, "Mix": 100, "Smoothing": 10}],
+  ["Hard Ping Pong Eighths", {"Mode": "2 STEPS", "Tempo Sync": "ON", "Subdivision": "1/8", "Depth": 90, "Mix": 80, "Smoothing": 0}],
+  ["L-C-R Eighths", {"Mode": "L-C-R", "Tempo Sync": "ON", "Subdivision": "1/8", "Depth": 100, "Mix": 100, "Smoothing": 15}],
+  ["Stepped Sweep Sixteenths", {"Mode": "8 STEPS", "Tempo Sync": "ON", "Subdivision": "1/16", "Depth": 100, "Mix": 100, "Smoothing": 30}],
+  ["Four Step Bounce", {"Mode": "4 STEPS", "Tempo Sync": "ON", "Subdivision": "1/8", "Depth": 80, "Mix": 70, "Smoothing": 20}],
+  ["Slow Path Drift", {"Mode": "R-C-L", "Rate": 0.5, "Depth": 70, "Mix": 60, "Smoothing": 80}]
 ]

@@ -27,7 +27,8 @@ protected:
     const char* getLabel() const override { return "DeEsser"; }
     const char* getDescription() const override
     {
-        return "Split-band de-esser: only the band around Target is turned down, by up to Reduction, when the sibilance gets loud.";
+        return "De-esser: the band around Target (Split) or the whole signal (Wide) is turned down, by up to Reduction "
+               "capped by Range, when the sibilance passes an automatic or manual threshold; Listen plays what is removed.";
     }
     int64_t getUniqueId() const override { return d_cconst('N', '1', 'd', 's'); }
 
@@ -67,7 +68,7 @@ private:
         fOut.setup(sr);
     }
 
-    void update() { fDsp.setParams(value(0), value(1)); }
+    void update() { fDsp.setParams(value(0), value(1), value(2) >= 0.5f, value(3) >= 0.5f, value(4), value(5), value(6) >= 0.5f); }
 
     nulldeesser::DeEsserProcessor fDsp;
     nulljsfx::PeakFollower fOut;

@@ -8,19 +8,24 @@ namespace nullpresets {
 
 struct FactoryPreset {
     const char* name;
-    float values[3];
+    float values[8];
 };
 
 static const FactoryPreset kPresets[] = {
-    { "Default", { 0.0f, -24.0f, 100.0f } },
-    { "Pink Mono Calibration", { 1.0f, -20.0f, 0.0f } },
-    { "Pink Stereo Reference", { 1.0f, -18.0f, 100.0f } },
-    { "White Filter Test", { 0.0f, -24.0f, 0.0f } },
-    { "White Riser Layer", { 0.0f, -18.0f, 100.0f } },
-    { "Brown Rumble Bed", { 2.0f, -30.0f, 80.0f } },
-    { "Soft Room Tone", { 1.0f, -48.0f, 100.0f } },
+    { "Default", { 0.0f, -24.0f, 100.0f, 20.0f, 20000.0f, 0.0f, 0.0f, 0.0f } },
+    { "Pink Mono Calibration", { 1.0f, -20.0f, 0.0f, 20.0f, 20000.0f, 0.0f, 0.0f, 0.0f } },
+    { "Pink Stereo Reference", { 1.0f, -18.0f, 100.0f, 20.0f, 20000.0f, 0.0f, 0.0f, 0.0f } },
+    { "White Filter Test", { 0.0f, -24.0f, 0.0f, 20.0f, 20000.0f, 0.0f, 0.0f, 0.0f } },
+    { "White Riser Layer", { 0.0f, -18.0f, 100.0f, 20.0f, 20000.0f, 0.0f, 0.0f, 0.0f } },
+    { "Brown Rumble Bed", { 2.0f, -30.0f, 80.0f, 20.0f, 20000.0f, 0.0f, 0.0f, 0.0f } },
+    { "Soft Room Tone", { 1.0f, -48.0f, 100.0f, 20.0f, 20000.0f, 0.0f, 0.0f, 0.0f } },
+    { "Riser Noise", { 0.0f, -18.0f, 100.0f, 400.0f, 20000.0f, 0.0f, 0.0f, 1.0f } },
+    { "Snare Noise Layer", { 0.0f, -12.0f, 60.0f, 1500.0f, 12000.0f, 100.0f, 0.0f, 1.0f } },
+    { "Hiss Bed", { 1.0f, -42.0f, 100.0f, 2000.0f, 20000.0f, 0.0f, 60.0f, 1.0f } },
+    { "Vinyl Air", { 1.0f, -36.0f, 80.0f, 300.0f, 8000.0f, 0.0f, 0.0f, 1.0f } },
+    { "Breathing Texture", { 2.0f, -24.0f, 100.0f, 60.0f, 4000.0f, 70.0f, 0.0f, 1.0f } },
 };
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
-static constexpr uint32_t kNumValues = 3;
+static constexpr uint32_t kNumValues = 8;
 
 } // namespace nullpresets

@@ -66,7 +66,7 @@ private:
         using nullamp::snap;
         fDsp.setParams(int(std::lround(value(0))), snap(value(1), 0.0), snap(value(2), 0.0), snap(value(3), 0.0),
                        snap(value(4), 0.0), snap(value(5), 0.0), snap(value(6), 0.0), value(7) >= 0.5f, value(8),
-                       value(9) >= 0.5f, snap(value(10), -24.0));
+                       value(9) >= 0.5f, snap(value(10), -24.0), snap(value(11), -90.0));
     }
 
     nullamp::AmpSimulatorProcessor fDsp;

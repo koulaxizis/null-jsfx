@@ -4,5 +4,11 @@
   ["Snare Bleed Cut", {"Threshold": -28, "Attack": 1, "Release": 120, "Sidechain HPF": 150, "Range": -40}],
   ["Tom Gate", {"Threshold": -32, "Attack": 1, "Release": 250, "Sidechain HPF": 80, "Range": -30}],
   ["Guitar Amp Hiss", {"Threshold": -50, "Attack": 3, "Release": 150, "Range": -60}],
-  ["Gentle Noise Duck", {"Threshold": -55, "Attack": 10, "Release": 400, "Range": -10}]
+  ["Gentle Noise Duck", {"Threshold": -55, "Attack": 10, "Release": 400, "Range": -10}],
+  ["Tight Drums", {"Threshold": -30, "Attack": 1, "Hold": 30, "Release": 60, "Lookahead": 1, "Sidechain HPF": 60, "Range": -80}],
+  ["Snare Gate No Click", {"Threshold": -26, "Attack": 1, "Hold": 50, "Release": 120, "Lookahead": 2, "Sidechain HPF": 150, "Sidechain LPF": 8000, "Range": -40}],
+  ["Kick Ducking Pad", {"Threshold": -30, "Attack": 5, "Hold": 20, "Release": 250, "Sidechain": "External", "Sidechain LPF": 2000, "Range": -12, "Flip": "On"}],
+  ["Voice Over Ducker", {"Threshold": -40, "Attack": 20, "Hold": 300, "Release": 600, "Sidechain": "External", "Sidechain HPF": 100, "Range": -10, "Flip": "On"}],
+  ["Spoken Word Gate", {"Threshold": -48, "Attack": 2, "Hold": 150, "Release": 300, "Lookahead": 3, "Sidechain HPF": 100, "Range": -18}],
+  ["Kick Only Trigger", {"Threshold": -24, "Attack": 1, "Hold": 40, "Release": 100, "Sidechain LPF": 1000, "Range": -80}]
 ]

@@ -22,6 +22,7 @@ static const NullKnobsUI::Control kControls[] = {
     { 8, NullKnobsUI::kKnob, "SAG", 1, -1, false },
     { 9, NullKnobsUI::kSelect, "OVERSAMPLE", 1, -1, false },
     { 10, NullKnobsUI::kKnob, "OUTPUT", 1, -1, true },
+    { 11, NullKnobsUI::kKnob, "GATE", 1, -1, false },
 };
 
 class UIAmpSimulator : public NullKnobsUI
@@ -41,7 +42,7 @@ protected:
         if (!(sr > 0.0))
             sr = 48000.0;
         using nullamp::snap;
-        const int model = std::max(0, std::min(3, int(std::lround(value(0)))));
+        const int model = std::max(0, std::min(7, int(std::lround(value(0)))));
         nullamp::Setup s;
         s.compute(model, snap(value(1), 0.0), snap(value(2), 0.0), snap(value(3), 0.0), snap(value(4), 0.0),
                   snap(value(5), 0.0), snap(value(6), 0.0), value(7) >= 0.5f, value(8), value(9) >= 0.5f,
@@ -91,6 +92,14 @@ protected:
             std::snprintf(buf, n, "%.1f", double(v));
         else if (param == 10)
             std::snprintf(buf, n, "%+.1f dB", double(v));
+        else if (param == 11)
+        {
+            const double g = nullamp::snap(v, -90.0);
+            if (g > -90.0)
+                std::snprintf(buf, n, "%.1f dB", g);
+            else
+                std::snprintf(buf, n, "OFF");
+        }
         else
             NullKnobsUI::formatValue(param, v, buf, n);
     }

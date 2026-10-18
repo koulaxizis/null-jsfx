@@ -1,12 +1,17 @@
 desc:NULL Noise Generator
 author: Christos Koulaxizis
-tags: noise generator pink white brown test tone calibration stereo
+tags: noise generator pink white brown test tone calibration stereo filter envelope follower ducking layer
 //category: Essentials
 //NULL JSFX v2.4 • https://nulljsfx.tech • MIT License
 
 slider1:0<0,2,1{White,Pink,Brown}>Type
 slider2:-24<-60,0,0.1>Level (dB)
 slider3:100<0,100,1>Stereo Width (%)
+slider4:20<20,2000,1:log>Low Cut (Hz)
+slider5:20000<500,20000,1:log>High Cut (Hz)
+slider6:0<0,100,1>Follow Input (%)
+slider7:0<0,100,1>Ducking (%)
+slider8:0<0,1,1{Replace,Add}>Mix Mode
 
 in_pin:Left
 in_pin:Right
@@ -20,12 +25,37 @@ out_pin:Right
   // Park-Miller generator in exact double arithmetic (seed * 16807 < 2^53), so the noise is the
   // same on every host and CPU; seed / 2^30 - 1 is uniform in (-1, 1) like rand() * 2 - 1
   seed = 12345;
+  // Low Cut and High Cut are 12 dB/oct Butterworth filters (TPT state-variable) on the noise,
+  // off at their end stops (20 Hz, 20 kHz). Follow Input scales the noise by the input's
+  // envelope (a peak follower, 1 ms attack, 60 ms release; full level at 0 dBFS), so 100% makes
+  // the noise breathe with the track. Ducking pushes the noise down while the input is loud
+  // (10 ms attack, 250 ms release; full ducking from -12 dBFS). Mix Mode Replace outputs the
+  // noise alone (the input is only listened to), Add puts it on top of the input.
+  lc1_l = lc2_l = lc1_r = lc2_r = 0;
+  hc1_l = hc2_l = hc1_r = hc2_r = 0;
+  fo_env = 0;
+  dk_env = 0;
 
 @slider
   noise_type = slider1;
   level_db = slider2;
   stereo_width = slider3 / 100;
   gain_lin = exp(level_db * 0.11512925464970228420);
+  lc_on = slider4 > 20;
+  lc_g = tan($pi * slider4 / srate);
+  lc_d = 1 / (1 + 1.4142135623730951 * lc_g + lc_g * lc_g);
+  hc_on = slider5 < 20000;
+  hc_g = tan($pi * min(slider5, srate * 0.45) / srate);
+  hc_d = 1 / (1 + 1.4142135623730951 * hc_g + hc_g * hc_g);
+  fo_on = slider6 > 0;
+  fo_amt = slider6 / 100;
+  fo_att = 1 - exp(-1 / (0.001 * srate));
+  fo_rel = 1 - exp(-1 / (0.06 * srate));
+  dk_on = slider7 > 0;
+  dk_amt = slider7 / 100;
+  dk_att = 1 - exp(-1 / (0.01 * srate));
+  dk_rel = 1 - exp(-1 / (0.25 * srate));
+  add_mode = slider8;
 
 @sample
   seed *= 16807; seed -= floor(seed / 2147483647) * 2147483647; rnd_l = seed / 1073741824 - 1;
@@ -69,5 +99,40 @@ out_pin:Right
     nse_r = brn_r * gain_lin * 3.5;
   );
 
-  spl0 = nse_l;
-  spl1 = nse_r;
+  lc_on ? (
+    // high pass (Butterworth): v3 of the SVF
+    v3 = (nse_l - lc2_l - (1.4142135623730951 + lc_g) * lc1_l) * lc_d;
+    v1 = lc_g * v3 + lc1_l; v2 = lc_g * v1 + lc2_l; lc1_l = v1; lc2_l = v2; nse_l = v3;
+    v3 = (nse_r - lc2_r - (1.4142135623730951 + lc_g) * lc1_r) * lc_d;
+    v1 = lc_g * v3 + lc1_r; v2 = lc_g * v1 + lc2_r; lc1_r = v1; lc2_r = v2; nse_r = v3;
+  );
+  hc_on ? (
+    // low pass (Butterworth): v2 of the SVF
+    v3 = (nse_l - hc2_l - (1.4142135623730951 + hc_g) * hc1_l) * hc_d;
+    v1 = hc_g * v3 + hc1_l; v2 = hc_g * v1 + hc2_l; hc1_l = v1; hc2_l = v2; nse_l = v2;
+    v3 = (nse_r - hc2_r - (1.4142135623730951 + hc_g) * hc1_r) * hc_d;
+    v1 = hc_g * v3 + hc1_r; v2 = hc_g * v1 + hc2_r; hc1_r = v1; hc2_r = v2; nse_r = v2;
+  );
+  fo_on || dk_on ? (
+    in_pk = max(abs(spl0), abs(spl1));
+    fo_on ? (
+      fo_env += (in_pk > fo_env ? fo_att : fo_rel) * (in_pk - fo_env);
+      fo_g = 1 - fo_amt + fo_amt * min(1, fo_env);
+      nse_l *= fo_g;
+      nse_r *= fo_g;
+    );
+    dk_on ? (
+      dk_env += (in_pk > dk_env ? dk_att : dk_rel) * (in_pk - dk_env);
+      dk_g = 1 - dk_amt * min(1, dk_env * 4);
+      nse_l *= dk_g;
+      nse_r *= dk_g;
+    );
+  );
+
+  add_mode ? (
+    spl0 += nse_l;
+    spl1 += nse_r;
+  ) : (
+    spl0 = nse_l;
+    spl1 = nse_r;
+  );

@@ -43,10 +43,21 @@ public:
         fDsp.process(inL, inR, outL, outR, frames);
     }
 
+    uint32_t latency() const override { return uint32_t(fDsp.latency()); } // pdc_delay
+
 private:
     void update()
     {
-        fDsp.setParams(fV[0], fV[1], fV[2], int(std::lround(fV[3])));
+        nullsaturation::Params p;
+        p.drive = fV[0];
+        p.tone = fV[1];
+        p.mix = fV[2];
+        p.mode = int(std::lround(fV[3]));
+        p.input = fV[4];
+        p.output = fV[5];
+        p.oversampling = int(std::lround(fV[6]));
+        p.emphasis = fV[7];
+        fDsp.setParams(p);
     }
 
     nullsaturation::SaturationProcessor fDsp;

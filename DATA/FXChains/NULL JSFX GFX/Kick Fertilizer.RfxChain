@@ -19,7 +19,7 @@ FXID {5D8FB9B7-D302-5444-B55A-02B3FF5399D9}
 WAK 0 0
 BYPASS 0 0
 <JS null_jsfx/gfx/noise_generator_gfx.jsfx ""
-  0 -60 100 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  0 -60 100 20 20000 0 0 0 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 >
 <JS_PINMAP
   6AMAABwAAADoAwAABgAAAAIAAAAQAAAAAAAAACAAAAAAAAAAHAAAAOgDAAAGAAAAAgAAABAAAAAAAAAAIAAAAAAAAAA=
@@ -42,7 +42,7 @@ FXID {2472ACFB-7FFA-5E5C-A9B7-F8B6D52FE0A8}
 WAK 0 0
 BYPASS 0 0
 <JS null_jsfx/gfx/filter_gfx.jsfx ""
-  7000 0.7 0 1 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  7000 0.7 0 1 0 0 1 0 0 0 10 150 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 >
 <JS_PINMAP
   6AMAABwAAADoAwAABgAAAAIAAAAQAAAAAAAAACAAAAAAAAAAHAAAAOgDAAAGAAAAAgAAABAAAAAAAAAAIAAAAAAAAAA=
@@ -57,7 +57,7 @@ FXID {EEFA7617-EB56-59E3-A69B-53AAD57D603B}
 WAK 0 0
 BYPASS 0 0
 <JS null_jsfx/gfx/transient_shaper_gfx.jsfx ""
-  2 0 100 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  2 0 100 1 20 20000 0 0 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 >
 FXID {70F30997-0A23-5665-9B3E-C9DCCA721F47}
 WAK 0 0

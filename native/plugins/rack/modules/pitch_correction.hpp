@@ -56,8 +56,9 @@ public:
 private:
     void update()
     {
+        // the Rack has no MIDI: Target MIDI holds no note and tunes to Key + Scale
         fDsp.setParams(int(std::lround(fV[0])), int(std::lround(fV[1])), fV[2], fV[3], double(std::lround(fV[4])), fV[5],
-                       fV[6]);
+                       fV[6], fV[7] >= 0.5f, std::round(double(fV[8]) * 10.0) / 10.0, fV[9]);
     }
 
     nullpitchcorrection::PitchCorrectionProcessor fDsp;

@@ -8,19 +8,25 @@ namespace nullpresets {
 
 struct FactoryPreset {
     const char* name;
-    float values[5];
+    float values[7];
 };
 
 static const FactoryPreset kPresets[] = {
-    { "Default", { 2.0f, 50.0f, 40.0f, 0.0f, 0.0f } },
-    { "Slow Pad Drift", { 0.2f, 60.0f, 50.0f, 0.0f, 0.0f } },
-    { "Ambience Motion", { 0.5f, 40.0f, 30.0f, 0.0f, 0.0f } },
-    { "Fast Keys Tremolo", { 5.0f, 80.0f, 60.0f, 0.0f, 0.0f } },
-    { "Quarter Note Pan", { 2.0f, 70.0f, 60.0f, 1.0f, 1.0f } },
-    { "Eighth Note Guitar", { 2.0f, 60.0f, 50.0f, 1.0f, 2.0f } },
-    { "Sixteenth Percussion", { 2.0f, 50.0f, 40.0f, 1.0f, 3.0f } },
+    { "Default", { 2.0f, 50.0f, 40.0f, 0.0f, 0.0f, 0.0f, 20.0f } },
+    { "Slow Pad Drift", { 0.2f, 60.0f, 50.0f, 0.0f, 0.0f, 0.0f, 20.0f } },
+    { "Ambience Motion", { 0.5f, 40.0f, 30.0f, 0.0f, 0.0f, 0.0f, 20.0f } },
+    { "Fast Keys Tremolo", { 5.0f, 80.0f, 60.0f, 0.0f, 0.0f, 0.0f, 20.0f } },
+    { "Quarter Note Pan", { 2.0f, 70.0f, 60.0f, 1.0f, 1.0f, 0.0f, 20.0f } },
+    { "Eighth Note Guitar", { 2.0f, 60.0f, 50.0f, 1.0f, 2.0f, 0.0f, 20.0f } },
+    { "Sixteenth Percussion", { 2.0f, 50.0f, 40.0f, 1.0f, 3.0f, 0.0f, 20.0f } },
+    { "Ping Pong Quarters", { 2.0f, 100.0f, 100.0f, 1.0f, 1.0f, 1.0f, 10.0f } },
+    { "Hard Ping Pong Eighths", { 2.0f, 90.0f, 80.0f, 1.0f, 2.0f, 1.0f, 0.0f } },
+    { "L-C-R Eighths", { 2.0f, 100.0f, 100.0f, 1.0f, 2.0f, 4.0f, 15.0f } },
+    { "Stepped Sweep Sixteenths", { 2.0f, 100.0f, 100.0f, 1.0f, 3.0f, 3.0f, 30.0f } },
+    { "Four Step Bounce", { 2.0f, 80.0f, 70.0f, 1.0f, 2.0f, 2.0f, 20.0f } },
+    { "Slow Path Drift", { 0.5f, 70.0f, 60.0f, 0.0f, 0.0f, 5.0f, 80.0f } },
 };
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
-static constexpr uint32_t kNumValues = 5;
+static constexpr uint32_t kNumValues = 7;
 
 } // namespace nullpresets

@@ -16,13 +16,15 @@ static const NullKnobsUI::Control kControls[] = {
     { 2, NullKnobsUI::kKnob, "MIX", 0, -1, false },
     { 3, NullKnobsUI::kSelect, "SYNC", 0, -1, false },
     { 4, NullKnobsUI::kSelect, "NOTE", 0, -1, false },
+    { 5, NullKnobsUI::kSelect, "MODE", 1, -1, false },
+    { 6, NullKnobsUI::kKnob, "SMOOTHING", 1, -1, false },
 };
 
 class UIAutoPan : public NullKnobsUI
 {
 public:
     UIAutoPan()
-        : NullKnobsUI({ "AUTO PAN", "ESSENTIALS", 480, 120, nullptr, 1, nullautopan::kSliders, nullautopan::kNumSliders,
+        : NullKnobsUI({ "AUTO PAN", "ESSENTIALS", 480, 120, nullptr, 2, nullautopan::kSliders, nullautopan::kNumSliders,
                         kControls, sizeof(kControls) / sizeof(kControls[0]), true }) {}
 
 protected:
@@ -38,26 +40,50 @@ protected:
         return value(0);
     }
 
-    // as in auto_pan_gfx.jsfx: the left and right levels over two LFO cycles (0 to 100%), the
-    // LFO position dashed
+    // as in auto_pan_gfx.jsfx: the left and right levels over two LFO cycles (step modes: the
+    // whole pattern, one step per cycle) from 0 to 100%, the LFO position dashed
     void drawDisplay() override
     {
-        char buf[32];
+        char buf[40];
         const double r = rate();
-        std::snprintf(buf, sizeof(buf), "%.2f Hz", r);
+        const int mode = int(std::lround(value(5)));
+        const int n = nullautopan::stepCount(mode);
+        if (mode != 0)
+            std::snprintf(buf, sizeof(buf), "%d STEPS AT %.2f Hz", n, r);
+        else
+            std::snprintf(buf, sizeof(buf), "%.2f Hz", r);
         modView("", buf);
         label(fPX, fVY + 4.0f, ALIGN_LEFT, 8.0f, 0.0f, theme::kAccent, "LEFT");
         label(fPX + 34.0f, fVY + 4.0f, ALIGN_LEFT, 8.0f, 0.0f, theme::kMuted, "RIGHT");
         yLabels("100%", "50%", "0%");
         if (r > 0.0)
-            xLabels(1.0 / r);
+            xLabels(mode != 0 ? double(n) / 2.0 / r : 1.0 / r);
         const double depth = value(1) / 100.0, mix = value(2) / 100.0;
+        const double smooth = std::max(std::round(value(6)) / 100.0, 0.001 * r);
         for (int ch = 1; ch >= 0; --ch)
             modCurve([&](double u) {
-                const double lfo = std::sin(4.0 * M_PI * u);
+                double lfo;
+                if (mode != 0)
+                {
+                    const double p = std::min(u * n, n - 0.000001);
+                    const double k = std::floor(p);
+                    const double t = (p - k) / smooth;
+                    const double c = nullautopan::stepValue(mode, k);
+                    const double q = nullautopan::stepValue(mode, k > 0.0 ? k - 1.0 : double(n - 1));
+                    lfo = t < 1.0 ? q + (c - q) * (0.5 - 0.5 * std::cos(M_PI * t)) : c;
+                }
+                else
+                    lfo = std::sin(4.0 * M_PI * u);
                 return linY(float(1.0 - mix + mix * (0.5 + (ch ? -0.5 : 0.5) * depth * lfo)), 0.0f, 1.0f);
             }, ch ? theme::kMuted : theme::kAccent, ch == 0);
-        playhead(tapExtra() / 2.0);
+        if (mode != 0)
+        {
+            nulljsfx::Taps* t = taps();
+            const float step = t ? t->aux[0].load(std::memory_order_relaxed) : 0.0f;
+            playhead((double(step) + tapExtra()) / double(n));
+        }
+        else
+            playhead(tapExtra() / 2.0);
     }
 
     void formatValue(uint32_t param, float v, char* buf, size_t n) override

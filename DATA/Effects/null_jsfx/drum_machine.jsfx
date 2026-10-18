@@ -1,10 +1,10 @@
 desc:NULL Drum Machine
 author: Christos Koulaxizis
-tags: instrument drum machine drums beat sequencer synth 808 909 kick snare hats midi
+tags: instrument drum machine drums beat sequencer synth 808 909 kick snare hats midi probability generator multi-out
 //category: Instruments
 //NULL JSFX v2.4 • https://nulljsfx.tech • MIT License
 
-slider1:2<0,11,1{Off,User,House,Techno,Boom Bap,Electro,Breakbeat,Trap,Disco,Synth Pop,Dembow,Bossa}>Pattern
+slider1:2<0,19,1{Off,User,House,Techno,Boom Bap,Electro,Breakbeat,Trap,Disco,Synth Pop,Dembow,Bossa,Rock,Funk,UK Garage,Jungle,Afrobeat,Reggae,Footwork,Industrial}>Pattern
 slider2:50<50,75,1>Swing (%)
 slider3:50<0,100,1>Accent (%)
 slider4:0<0,100,1>Drive (%)
@@ -60,10 +60,23 @@ slider53:0<-12,12,0.1>Cymbal Tune (st)
 slider54:50<0,100,1>Cymbal Decay (%)
 slider55:50<0,100,1>Cymbal Tone (%)
 slider56:10<-100,100,1>Cymbal Pan (%)
+slider57:100<0,100,1>Probability (%)
+slider58:1<1,999,1>Seed
+slider59:0<0,1,1{Off,On}>Generate
+slider60:50<0,100,1>Density (%)
+slider61:0<0,5,1{Four Floor,Breakbeat,Half Time,Electro,Latin,Random}>Style
+slider62:0<0,8,1{Manual,Deep Boom,Punch Box,Vintage,Pop Studio,Lo-Fi Dust,Industrial,Minimal,Big Room}>Kit
+slider63:0<0,1,1{Main,Groups}>Outputs
 
 in_pin:none
 out_pin:Left
 out_pin:Right
+out_pin:Snare Left
+out_pin:Snare Right
+out_pin:Hats Left
+out_pin:Hats Right
+out_pin:Perc Left
+out_pin:Perc Right
 
 @init
   // A drum machine with ten synthesized voices (no samples) and a 16-step sequencer that
@@ -78,16 +91,23 @@ out_pin:Right
   //   - Simmons SDS-V: tom pitch sweeps (Tone); CR-78 / TR-606: the clave (Rim Tone)
   //   - Elektron / DrumBrute: a length of 1 to 16 steps per track (polyrhythm)
   // The sequencer plays the selected pattern while the host plays; "User" is the pattern drawn
-  // in the GFX version, saved with the project; "Off" leaves only MIDI.
+  // in the GFX version, saved with the project; "Off" leaves only MIDI. Probability skips
+  // unaccented steps (a Park-Miller draw from Seed), Generate plays a pattern made from Seed,
+  // Density and Style instead of the selected one, Kit moves every voice's Level, Tune, Decay
+  // and Tone by a set of offsets, and Outputs Groups puts the kick on pins 1/2, snare, clap and
+  // rim on 3/4, the hats and cymbal on 5/6, the toms and cowbell on 7/8. At their defaults
+  // (100 %, Off, Manual, Main) the kit sounds as before.
   //
-  // Memory: 0..169 the User pattern (10 tracks x 16 steps, then 10 lengths), 1000.. the factory
-  // patterns (170 each), 4000.. the MIDI notes of the block, 5000.. per-voice values.
+  // Memory: 0..169 the User pattern (10 tracks x 16 steps, then 10 lengths), 10000.. the
+  // factory patterns (170 each), 4000.. the MIDI notes of the block, 5000.. per-voice values,
+  // 9000.. the generated pattern, 9200.. the kits, 9600.. the group outputs, 9610.. their Grit.
   // Step values: 0 off, 1 hit, 2 accent, 3 flam, 4 roll.
   ext_tail_size = -1;
   NT = 10;
-  FACT = 1000;
+  FACT = 10000;
   MQ = 4000;
   VL = 5000; VPL = 5010; VPR = 5020; PEND = 5030; PVEL = 5040; HIT = 5050;
+  GEN = 9000; KITM = 9200; GO = 9600; GH = 9610;
   ser_ver = 1;
 
   // pattern k (0 = the User pattern, 1.. the factory ones): track t from a string of 16 steps
@@ -176,6 +196,189 @@ out_pin:Right
   pat_set(10, 3, "x..x..x...x.x...", 16);
   pat_set(10, 4, "xxXxxxXxxxXxxxXx", 16);
   pat_set(10, 6, "...........x....", 16);
+  pat_clear(11); // Rock
+  pat_set(11, 0, "X.....x.X.x.....", 16);
+  pat_set(11, 1, "....X.......X...", 16);
+  pat_set(11, 4, "x.x.x.x.x.x.x.x.", 16);
+  pat_set(11, 9, "X...............", 16);
+  pat_clear(12); // Funk: ghost notes on the snare
+  pat_set(12, 0, "X.x...x...x..x..", 16);
+  pat_set(12, 1, "....X..x.x.xX...", 16);
+  pat_set(12, 4, "xxXxxxXxxxXxxx.x", 16);
+  pat_set(12, 5, "..............x.", 16);
+  pat_clear(13); // UK Garage: two-step kick
+  pat_set(13, 0, "X.........x.....", 16);
+  pat_set(13, 1, "....X.......X...", 16);
+  pat_set(13, 3, "...x......x..x..", 16);
+  pat_set(13, 4, "..x...x...x...x.", 16);
+  pat_clear(14); // Jungle: a chopped break
+  pat_set(14, 0, "X.x.......X.....", 16);
+  pat_set(14, 1, "....X..x.x..X.r.", 16);
+  pat_set(14, 4, "x.xxx.x.x.xxx.x.", 16);
+  pat_set(14, 9, "X...............", 16);
+  pat_clear(15); // Afrobeat: the bell runs over 12 steps against the bar
+  pat_set(15, 0, "X.....x...X..x..", 16);
+  pat_set(15, 1, "....x.......x..x", 16);
+  pat_set(15, 4, "x.xxx.xxx.xxx.xx", 16);
+  pat_set(15, 6, ".............x..", 16);
+  pat_set(15, 8, "x.x.xx.x.x.x....", 12);
+  pat_clear(16); // Reggae: one drop
+  pat_set(16, 0, "........X.......", 16);
+  pat_set(16, 3, "........X.......", 16);
+  pat_set(16, 4, "x.x.x.x.x.x.x...", 16);
+  pat_set(16, 5, "..............x.", 16);
+  pat_clear(17); // Footwork: the rim every third step
+  pat_set(17, 0, "X..x..x...X..x..", 16);
+  pat_set(17, 2, "....x.......X...", 16);
+  pat_set(17, 3, "..x.............", 3);
+  pat_set(17, 4, "x.x.x.x.x.x.x.x.", 16);
+  pat_set(17, 6, "x..x..x..x..x...", 16);
+  pat_clear(18); // Industrial: the rim over 7 steps, the bell over 9
+  pat_set(18, 0, "X..xX...X..xX.x.", 16);
+  pat_set(18, 1, "....X.......X...", 16);
+  pat_set(18, 2, "....x.......x.x.", 16);
+  pat_set(18, 3, "x.x.xx..........", 7);
+  pat_set(18, 4, "xxxxxxxxxxxxxxxx", 16);
+  pat_set(18, 8, "..x..x..x.......", 9);
+  pat_set(18, 9, "X...............", 16);
+
+  // Kit: per kit k (1..8) and voice t, offsets added to the voice's Level (dB), Tune (st),
+  // Decay (%) and Tone (%) sliders, the result kept in the slider's range
+  function kit_set(k, t, lev, tune, dec, tone) local(b)
+  (
+    b = KITM + ((k - 1) * 10 + t) * 4;
+    b[0] = lev; b[1] = tune; b[2] = dec; b[3] = tone;
+  );
+  // Deep Boom
+  kit_set(1, 0, 0, -2, 40, -50); kit_set(1, 1, 0, 0, 0, -10); kit_set(1, 2, 0, 0, 0, 0); kit_set(1, 3, 0, 0, 0, 0); kit_set(1, 4, 0, 0, 0, -30);
+  kit_set(1, 5, 0, 0, 0, -30); kit_set(1, 6, 0, 0, 20, -30); kit_set(1, 7, 0, 0, 20, -30); kit_set(1, 8, 0, 0, 0, 0); kit_set(1, 9, 0, 0, 10, -20);
+  // Punch Box
+  kit_set(2, 0, 0, 0, -10, 50); kit_set(2, 1, 0, 1, 0, 25); kit_set(2, 2, 0, 0, -10, 10); kit_set(2, 3, 0, 0, 0, 0); kit_set(2, 4, 0, 0, -10, 40);
+  kit_set(2, 5, 0, 0, 0, 40); kit_set(2, 6, 0, 0, 0, 0); kit_set(2, 7, 0, 0, 0, 0); kit_set(2, 8, -3, 0, 0, 0); kit_set(2, 9, 0, 0, 0, 30);
+  // Vintage
+  kit_set(3, 0, -2, 3, -30, -40); kit_set(3, 1, -2, 2, -20, -20); kit_set(3, 2, -6, 0, -20, -20); kit_set(3, 3, 0, 0, -10, 100); kit_set(3, 4, -2, 0, -20, -30);
+  kit_set(3, 5, -3, 0, -20, -30); kit_set(3, 6, 0, 3, -20, -30); kit_set(3, 7, 0, 3, -20, -30); kit_set(3, 8, 0, 2, -10, -20); kit_set(3, 9, -6, 0, -20, -30);
+  // Pop Studio
+  kit_set(4, 0, 0, 0, 0, 10); kit_set(4, 1, 0, -1, 20, 10); kit_set(4, 2, 0, 0, 0, 30); kit_set(4, 3, -3, 0, 0, 0); kit_set(4, 4, 0, 0, 0, 20);
+  kit_set(4, 5, 0, 0, 0, 20); kit_set(4, 6, 0, 0, 10, 20); kit_set(4, 7, 0, 0, 10, 20); kit_set(4, 8, -6, 0, 0, 0); kit_set(4, 9, 0, 0, 20, 40);
+  // Lo-Fi Dust
+  kit_set(5, 0, 0, -1, -15, 10); kit_set(5, 1, 0, -2, -15, 10); kit_set(5, 2, -3, -1, -20, 0); kit_set(5, 3, -3, 0, 0, 0); kit_set(5, 4, -6, -2, -20, 20);
+  kit_set(5, 5, -6, -2, -20, 20); kit_set(5, 6, 0, 0, 0, 0); kit_set(5, 7, 0, 0, 0, 0); kit_set(5, 8, -6, 0, 0, 0); kit_set(5, 9, -9, -2, -20, 0);
+  // Industrial
+  kit_set(6, 0, 2, -1, -20, 50); kit_set(6, 1, 2, -3, 10, 50); kit_set(6, 2, 0, -2, 20, 50); kit_set(6, 3, 0, -3, 20, 0); kit_set(6, 4, 0, -3, 0, 70);
+  kit_set(6, 5, 0, -3, 0, 70); kit_set(6, 6, 0, -3, 30, 70); kit_set(6, 7, 0, -3, 30, 70); kit_set(6, 8, 0, -5, 20, 50); kit_set(6, 9, 0, -3, 30, 50);
+  // Minimal
+  kit_set(7, 0, 0, 1, -30, 30); kit_set(7, 1, -3, 3, -30, 20); kit_set(7, 2, -3, 2, -30, 0); kit_set(7, 3, 0, 2, -20, 50); kit_set(7, 4, 0, 2, -30, 50);
+  kit_set(7, 5, -3, 2, -30, 40); kit_set(7, 6, 0, 0, -20, 0); kit_set(7, 7, 0, 0, -20, 0); kit_set(7, 8, -6, 2, -20, 0); kit_set(7, 9, -6, 0, -30, 0);
+  // Big Room
+  kit_set(8, 0, 2, -2, 20, 30); kit_set(8, 1, 1, -2, 30, 30); kit_set(8, 2, 1, -1, 40, 40); kit_set(8, 3, 0, 0, 0, 0); kit_set(8, 4, 0, 0, 0, 30);
+  kit_set(8, 5, 0, 0, 20, 30); kit_set(8, 6, 2, -2, 40, 50); kit_set(8, 7, 2, -2, 40, 50); kit_set(8, 8, -3, 0, 0, 0); kit_set(8, 9, 1, 0, 40, 50);
+
+  // a slider value with the Kit's offset (Manual: the value itself)
+  function kp(v, t, j, lo, hi)
+  (
+    kit > 0 ? max(lo, min(hi, v + KITM[((kit - 1) * 10 + t) * 4 + j])) : v;
+  );
+
+  // one Park-Miller step (the same as the noise), for Probability and Generate
+  function pm(x)
+  (
+    x *= 16807;
+    x - floor(x / 2147483647) * 2147483647;
+  );
+
+  // Generate: per style s and voice t, the weight of each step (1..9, '.' never)
+  function gen_w(k)
+  (
+    k == 0 ? "9..29...9..29.3." : // Four Floor
+    k == 1 ? "....3.......3..." :
+    k == 2 ? "....8.......8..." :
+    k == 3 ? "..2...2...2..3.2" :
+    k == 4 ? "5353535353535353" :
+    k == 5 ? "..8...8...8...8." :
+    k == 6 ? "...............2" :
+    k == 7 ? "..............2." :
+    k == 8 ? "................" :
+    k == 9 ? "1..............." :
+    k == 10 ? "9.4.....27.4..2." : // Breakbeat
+    k == 11 ? "....9..3.3..9..3" :
+    k == 12 ? "................" :
+    k == 13 ? "..2.....2.....2." :
+    k == 14 ? "7.6.7.6.7.6.7.6." :
+    k == 15 ? "...........4...." :
+    k == 16 ? ".............3.." :
+    k == 17 ? "..............3." :
+    k == 18 ? "................" :
+    k == 19 ? "6..............." :
+    k == 20 ? "9......4..6....." : // Half Time
+    k == 21 ? "........9......." :
+    k == 22 ? "........6......." :
+    k == 23 ? "...2......2...2." :
+    k == 24 ? "6.6.6.5.6.6.5.5." :
+    k == 25 ? "..............3." :
+    k == 26 ? "................" :
+    k == 27 ? "................" :
+    k == 28 ? "................" :
+    k == 29 ? "3..............." :
+    k == 30 ? "9.....6...7..5.." : // Electro
+    k == 31 ? "....9.......9..." :
+    k == 32 ? "....7.......7..." :
+    k == 33 ? "................" :
+    k == 34 ? "8686868686868686" :
+    k == 35 ? "................" :
+    k == 36 ? "..........3....." :
+    k == 37 ? "............3..." :
+    k == 38 ? "..5..5....5..5.." :
+    k == 39 ? "................" :
+    k == 40 ? "9..69..69..69..6" : // Latin
+    k == 41 ? "................" :
+    k == 42 ? "................" :
+    k == 43 ? "8..8..8...8.8..." :
+    k == 44 ? "6666666666666666" :
+    k == 45 ? "................" :
+    k == 46 ? "......5.......5." :
+    k == 47 ? "...4.......4...." :
+    k == 48 ? "5.5.5.5.5.5.5.5." :
+    k == 49 ? "................" :
+    k == 50 ? "9.3.3.3.6.3.3.3." : // Random
+    k == 51 ? "2.2.7.2.2.2.7.2." :
+    k == 52 ? "1.1.3.1.1.1.3.1." :
+    k == 53 ? "2222222222222222" :
+    k == 54 ? "5555555555555555" :
+    k == 55 ? "1.2.1.2.1.2.1.2." :
+    k == 56 ? "1111111111111111" :
+    k == 57 ? "1111111111111111" :
+    k == 58 ? "1.1.1.1.1.1.1.1." :
+    k == 59 ? "3..............." :
+    "................";
+  );
+  // the generated pattern from Seed, Density and Style: two draws per step (hit, then
+  // accent, roll or flam), always the same count so a higher Density only adds hits
+  function gen_make() local(x, st, d, t, i, c, w, p, r1, r2, v, str)
+  (
+    st = max(0, min(5, floor(slider61 + 0.5)));
+    d = slider60 / 100;
+    x = seed_v * 7 + st * 1000 + 12345;
+    loop(4, x = pm(x));
+    t = 0;
+    loop(NT,
+      str = gen_w(st * 10 + t);
+      i = 0;
+      loop(16,
+        x = pm(x); r1 = x / 2147483647;
+        x = pm(x); r2 = x / 2147483647;
+        c = str_getchar(str, i);
+        w = c >= '1' && c <= '9' ? (c - '0') / 9 : 0;
+        p = min(1, w * 2 * d);
+        v = 0;
+        r1 < p ? ( v = w > 0.99 && r2 < 0.5 ? 2 : (t == 4 && r2 > 0.92 ? 4 : (t == 1 && r2 > 0.94 ? 3 : 1)); );
+        GEN[t * 16 + i] = v;
+        i += 1;
+      );
+      GEN[160 + t] = 16;
+      t += 1;
+    );
+  );
 
   // ---- building blocks ----------------------------------------------------------------------
   // state-variable filter (TPT): svf_set(cutoff, Q) then svf(x); lp, bp, hp are the outputs
@@ -309,6 +512,12 @@ out_pin:Right
       len = max(1, pb[160 + t]);
       i = s - floor(s / len) * len;
       v = pb[t * 16 + i];
+      // Probability: an unaccented step plays when the draw is below it
+      v > 0 && prob < 1 && v != 2 ? (
+        pr_x == 0 ? ( pr_x = seed_v; loop(3, pr_x = pm(pr_x)); );
+        pr_x = pm(pr_x);
+        pr_x / 2147483647 >= prob ? v = 0;
+      );
       v > 0 ? (
         vel = v == 2 ? 1 : 1 - 0.5 * acc;
         v == 3 ? ( trig(t, vel * 0.5); PEND[t] = flam_n; PVEL[t] = vel; ) :
@@ -326,6 +535,8 @@ out_pin:Right
   last_s = -1000;
   seed = 22222;
   gr_ph = 0; gr_hl = gr_hr = 0;
+  memset(GH, 0, 8);
+  pr_x = 0;
   dm_preview = 0;
   m_ofs = m_1 = m_2 = m_3 = 0;
 
@@ -344,10 +555,19 @@ out_pin:Right
   gr_q = 2 ^ (15 - 11 * grit);
   vol = 10 ^ (slider6 / 20);
 
+  // Probability (accented steps always play), Seed, Generate, Kit, Outputs
+  prob = slider57 / 100;
+  slider58 != pr_last ? ( pr_x = 0; pr_last = slider58; );
+  seed_v = max(1, floor(slider58 + 0.5));
+  gen_on = slider59 >= 0.5;
+  gen_on ? gen_make();
+  kit = max(0, min(8, floor(slider62 + 0.5)));
+  outs = slider63 >= 0.5;
+
   // Kick: 808 boom (Tone 0) to 909 punch (Tone 100): more click, faster and deeper sweep
-  pan_set(0, slider7, slider11);
-  k_f0 = 48 * 2 ^ (slider8 / 12);
-  d = slider9 / 100; o = slider10 / 100;
+  pan_set(0, kp(slider7, 0, 0, -40, 6), slider11);
+  k_f0 = 48 * 2 ^ (kp(slider8, 0, 1, -12, 12) / 12);
+  d = kp(slider9, 0, 2, 0, 100) / 100; o = kp(slider10, 0, 3, 0, 100) / 100;
   k_sw = 1.5 + 4 * o;
   k_pc = dcy(0.008 + 0.012 * (1 - o));
   k_ac = dcy(0.06 + 1.4 * d * d);
@@ -355,9 +575,9 @@ out_pin:Right
   k_cl = 0.6 * o;
 
   // Snare: two tones with a short pitch drop plus high-passed noise; Tone = Snappy
-  pan_set(1, slider12, slider16);
-  r = 2 ^ (slider13 / 12);
-  d = slider14 / 100; o = slider15 / 100;
+  pan_set(1, kp(slider12, 1, 0, -40, 6), slider16);
+  r = 2 ^ (kp(slider13, 1, 1, -12, 12) / 12);
+  d = kp(slider14, 1, 2, 0, 100) / 100; o = kp(slider15, 1, 3, 0, 100) / 100;
   s_f1 = 185 * r; s_f2 = 330 * r;
   s_pc = dcy(0.012);
   s_bc = dcy(0.02 + 0.12 * d);
@@ -366,9 +586,9 @@ out_pin:Right
   s_hp.svf_set(1800 * r, 0.7);
 
   // Clap: three bursts of band-passed noise 11 ms apart, then the tail; Tone = tail level
-  pan_set(2, slider17, slider21);
-  r = 2 ^ (slider18 / 12);
-  d = slider19 / 100; o = slider20 / 100;
+  pan_set(2, kp(slider17, 2, 0, -40, 6), slider21);
+  r = 2 ^ (kp(slider18, 2, 1, -12, 12) / 12);
+  d = kp(slider19, 2, 2, 0, 100) / 100; o = kp(slider20, 2, 3, 0, 100) / 100;
   c_bp.svf_set(1100 * r, 1.6);
   c_per = floor(0.011 * srate);
   c_bc = dcy(0.0045);
@@ -376,28 +596,28 @@ out_pin:Right
   c_tail = 0.25 + 0.75 * o;
 
   // Rim: 808 rimshot (two tones and a click) to clave (one high tone)
-  pan_set(3, slider22, slider26);
-  r = 2 ^ (slider23 / 12);
-  d = slider24 / 100; o = slider25 / 100;
+  pan_set(3, kp(slider22, 3, 0, -40, 6), slider26);
+  r = 2 ^ (kp(slider23, 3, 1, -12, 12) / 12);
+  d = kp(slider24, 3, 2, 0, 100) / 100; o = kp(slider25, 3, 3, 0, 100) / 100;
   r_d1 = 480 * r / srate; r_d2 = 1650 * r / srate; r_d3 = 2500 * r / srate;
   r_c = dcy(0.006 + 0.06 * d);
   r_m = o;
 
   // Closed and open hat: 808 metal (Tone 0) to 909-like noise (Tone 100), band-passed and
   // high-passed; the closed hat chokes the open one
-  pan_set(4, slider27, slider31);
-  r = 2 ^ (slider28 / 12);
-  d = slider29 / 100;
-  h_mx = slider30 / 100;
+  pan_set(4, kp(slider27, 4, 0, -40, 6), slider31);
+  r = 2 ^ (kp(slider28, 4, 1, -12, 12) / 12);
+  d = kp(slider29, 4, 2, 0, 100) / 100;
+  h_mx = kp(slider30, 4, 3, 0, 100) / 100;
   h_m.metal_set(r);
   h_bp.svf_set(9000 * r, 1.2);
   h_hp.svf_set(6500 * r, 0.7);
   h_c = dcy(0.008 + 0.07 * d);
 
-  pan_set(5, slider32, slider36);
-  r = 2 ^ (slider33 / 12);
-  d = slider34 / 100;
-  o_mx = slider35 / 100;
+  pan_set(5, kp(slider32, 5, 0, -40, 6), slider36);
+  r = 2 ^ (kp(slider33, 5, 1, -12, 12) / 12);
+  d = kp(slider34, 5, 2, 0, 100) / 100;
+  o_mx = kp(slider35, 5, 3, 0, 100) / 100;
   o_m.metal_set(r);
   o_bp.svf_set(9000 * r, 1.2);
   o_hp.svf_set(6500 * r, 0.7);
@@ -405,24 +625,24 @@ out_pin:Right
   o_kc = dcy(0.004);
 
   // Toms: Tone from a steady conga-like pitch to the Simmons sweep
-  pan_set(6, slider37, slider41);
-  lt.tom_set(95 * 2 ^ (slider38 / 12), slider39 / 100, slider40 / 100);
-  pan_set(7, slider42, slider46);
-  ht.tom_set(165 * 2 ^ (slider43 / 12), slider44 / 100, slider45 / 100);
+  pan_set(6, kp(slider37, 6, 0, -40, 6), slider41);
+  lt.tom_set(95 * 2 ^ (kp(slider38, 6, 1, -12, 12) / 12), kp(slider39, 6, 2, 0, 100) / 100, kp(slider40, 6, 3, 0, 100) / 100);
+  pan_set(7, kp(slider42, 7, 0, -40, 6), slider46);
+  ht.tom_set(165 * 2 ^ (kp(slider43, 7, 1, -12, 12) / 12), kp(slider44, 7, 2, 0, 100) / 100, kp(slider45, 7, 3, 0, 100) / 100);
 
   // Cowbell: two squares (540 and 800 Hz) through a band-pass; Tone = brightness
-  pan_set(8, slider47, slider51);
-  r = 2 ^ (slider48 / 12);
-  d = slider49 / 100; o = slider50 / 100;
+  pan_set(8, kp(slider47, 8, 0, -40, 6), slider51);
+  r = 2 ^ (kp(slider48, 8, 1, -12, 12) / 12);
+  d = kp(slider49, 8, 2, 0, 100) / 100; o = kp(slider50, 8, 3, 0, 100) / 100;
   b_d1 = 540 * r / srate; b_d2 = 800 * r / srate;
   b_bp.svf_set((600 + 1800 * o) * r, 2.5);
   b_c1 = dcy(0.012);
   b_c2 = dcy(0.04 + 0.4 * d);
 
   // Cymbal: metal plus noise, ride (Tone 0) to crash (Tone 100)
-  pan_set(9, slider52, slider56);
-  r = 2 ^ (slider53 / 12);
-  d = slider54 / 100; o = slider55 / 100;
+  pan_set(9, kp(slider52, 9, 0, -40, 6), slider56);
+  r = 2 ^ (kp(slider53, 9, 1, -12, 12) / 12);
+  d = kp(slider54, 9, 2, 0, 100) / 100; o = kp(slider55, 9, 3, 0, 100) / 100;
   y_m.metal_set(r * 1.18);
   y_bp.svf_set((5000 + 4000 * o) * r, 0.8);
   y_hp.svf_set(4000 * r, 0.7);
@@ -445,7 +665,7 @@ out_pin:Right
   // the sequencer runs while the host plays; the pattern is the User one (memory 0) or a factory one
   seq_on = (play_state & 1) && pat > 0;
   !seq_on ? last_s = -1000;
-  pb = pat <= 1 ? 0 : FACT + (pat - 2) * 170;
+  pb = gen_on && pat > 0 ? GEN : pat <= 1 ? 0 : FACT + (pat - 2) * 170;
   b_inc = tempo / (60 * srate);
   b_0 = beat_position;
   flam_n = max(1, floor(0.018 * srate));
@@ -500,6 +720,7 @@ out_pin:Right
     k_env < 0.000001 ? k_on = 0;
     y *= 0.45 * VL[0]; outl += y * VPL[0]; outr += y * VPR[0];
   );
+  outs ? ( GO[0] = outl; GO[1] = outr; outl = outr = 0; );
 
   s_on ? (
     s_ph1 += s_f1 * (1 + 0.6 * s_pe) / srate; s_ph1 -= floor(s_ph1);
@@ -535,6 +756,7 @@ out_pin:Right
     r_env < 0.000001 ? r_on = 0;
     y *= 0.24 * VL[3]; outl += y * VPL[3]; outr += y * VPR[3];
   );
+  outs ? ( GO[2] = outl; GO[3] = outr; outl = outr = 0; );
 
   h_on ? (
     h_bp.svf((1 - h_mx) * h_m.metal() + h_mx * nz);
@@ -553,6 +775,7 @@ out_pin:Right
     o_env < 0.000001 ? o_on = 0;
     y *= 0.68 * VL[5]; outl += y * VPL[5]; outr += y * VPR[5];
   );
+  outs ? ( GO[4] = outl; GO[5] = outr; outl = outr = 0; );
 
   lt.on ? ( y = lt.tom(nz) * 0.38 * VL[6]; outl += y * VPL[6]; outr += y * VPR[6]; );
   ht.on ? ( y = ht.tom(nz) * 0.38 * VL[7]; outl += y * VPL[7]; outr += y * VPR[7]; );
@@ -566,6 +789,7 @@ out_pin:Right
     b_e2 < 0.000001 ? b_on = 0;
     y *= 0.13 * VL[8]; outl += y * VPL[8]; outr += y * VPR[8];
   );
+  outs ? ( GO[6] = outl; GO[7] = outr; outl = outr = 0; );
 
   y_on ? (
     y_bp.svf((1 - y_mx) * y_m.metal() + y_mx * nz);
@@ -575,23 +799,40 @@ out_pin:Right
     y_env < 0.000001 ? y_on = 0;
     y *= 0.6 * VL[9]; outl += y * VPL[9]; outr += y * VPR[9];
   );
+  outs ? ( GO[4] += outl; GO[5] += outr; );
 
-  // Drive: soft clipping of the whole kit
-  drv > 0 ? (
-    u = max(-3, min(3, outl * drv_g)); outl = u * (27 + u * u) / (27 + 9 * u * u) / (1 + drv);
-    u = max(-3, min(3, outr * drv_g)); outr = u * (27 + u * u) / (27 + 9 * u * u) / (1 + drv);
-  );
-
-  // Grit: sample-and-hold at a lower rate (48 kHz down to 8 kHz) and fewer bits (15 down to 4)
-  grit > 0 ? (
-    gr_ph += gr_step;
-    gr_ph >= 1 ? (
-      gr_ph -= floor(gr_ph);
-      gr_hl = floor(outl * gr_q + 0.5) / gr_q;
-      gr_hr = floor(outr * gr_q + 0.5) / gr_q;
+  outs ? (
+    // Outputs Groups: each group through Drive, Grit and Volume on its own pair of pins
+    grit > 0 ? ( gr_ph += gr_step; gr_t = gr_ph >= 1; gr_t ? gr_ph -= floor(gr_ph); );
+    gi = 0;
+    loop(8,
+      u = GO[gi];
+      drv > 0 ? ( u = max(-3, min(3, u * drv_g)); u = u * (27 + u * u) / (27 + 9 * u * u) / (1 + drv); );
+      grit > 0 ? ( gr_t ? GH[gi] = floor(u * gr_q + 0.5) / gr_q; u = GH[gi]; );
+      GO[gi] = u * vol;
+      gi += 1;
     );
-    outl = gr_hl; outr = gr_hr;
-  );
+    spl0 = GO[0]; spl1 = GO[1]; spl2 = GO[2]; spl3 = GO[3];
+    spl4 = GO[4]; spl5 = GO[5]; spl6 = GO[6]; spl7 = GO[7];
+  ) : (
+    // Drive: soft clipping of the whole kit
+    drv > 0 ? (
+      u = max(-3, min(3, outl * drv_g)); outl = u * (27 + u * u) / (27 + 9 * u * u) / (1 + drv);
+      u = max(-3, min(3, outr * drv_g)); outr = u * (27 + u * u) / (27 + 9 * u * u) / (1 + drv);
+    );
 
-  spl0 = outl * vol;
-  spl1 = outr * vol;
+    // Grit: sample-and-hold at a lower rate (48 kHz down to 8 kHz) and fewer bits (15 down to 4)
+    grit > 0 ? (
+      gr_ph += gr_step;
+      gr_ph >= 1 ? (
+        gr_ph -= floor(gr_ph);
+        gr_hl = floor(outl * gr_q + 0.5) / gr_q;
+        gr_hr = floor(outr * gr_q + 0.5) / gr_q;
+      );
+      outl = gr_hl; outr = gr_hr;
+    );
+
+    spl0 = outl * vol;
+    spl1 = outr * vol;
+    spl2 = spl3 = spl4 = spl5 = spl6 = spl7 = 0;
+  );

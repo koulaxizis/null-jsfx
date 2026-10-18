@@ -12,6 +12,9 @@ slider5:12<4,16,1>Bit Depth
 slider6:22050<2000,44100,100>Sample Rate (Hz)
 slider7:8000<1000,20000,100>Lowpass Freq (Hz)
 slider8:80<0,100,1>Mix (%)
+slider9:0<0,2,1{33,45,78}>RPM
+slider10:0<0,100,1>Scratches (%)
+slider11:0<0,1,1{Off,On}>Mono
 
 in_pin:Left
 in_pin:Right
@@ -21,7 +24,10 @@ out_pin:Right
 @init
 /* The wow/flutter delay line sits at a fixed 50 ms centre, so the dry signal is read
    from the same buffer at exactly that delay: dry and wet stay time-aligned at any Mix.
-   The 50 ms is reported to the host as plug-in delay compensation. */
+   The 50 ms is reported to the host as plug-in delay compensation.
+   RPM: the wow follows the turntable speed (0.5 Hz at 33, 45/33 and 78/33 times that at 45 and 78);
+   78 also gives the narrow band of a shellac disc. Scratches are sparse, louder clicks (a sharp
+   tick and a softer thump) at random intervals; Mono folds the record path to mono. */
 buf_size = ceil(srate * 0.15);
 base_samps = floor(0.05 * srate);
 pdc_bot_ch = 0;
@@ -44,6 +50,29 @@ flutter_phase = 0;
 sr_cnt = 0;
 hold_l = 0;
 hold_r = 0;
+scratch_seed = 86420;
+sc_cnt = 0;
+sc_next = floor(0.5 * srate);
+sc_e1 = sc_e2 = 0;
+sc_gl = sc_gr = 1;
+
+/* RBJ biquads for the shellac band: type 0 high-pass, 1 low-pass, 2 peaking */
+function sh_set(type, f, q, db) local(w, cs, al, A, a0) instance(b0, b1, b2, a1, a2)
+(
+  w = 2 * $pi * f / srate; cs = cos(w); al = sin(w) / (2 * q); A = 10 ^ (db / 40);
+  type == 0 ? (b0 = (1 + cs) / 2; b1 = -(1 + cs); b2 = b0; a0 = 1 + al; a1 = -2 * cs; a2 = 1 - al) :
+  type == 1 ? (b0 = (1 - cs) / 2; b1 = 1 - cs; b2 = b0; a0 = 1 + al; a1 = -2 * cs; a2 = 1 - al) :
+  (b0 = 1 + al * A; b1 = -2 * cs; b2 = 1 - al * A; a0 = 1 + al / A; a1 = -2 * cs; a2 = 1 - al / A);
+  b0 /= a0; b1 /= a0; b2 /= a0; a1 /= a0; a2 /= a0;
+);
+function sh_bq(x) local(y) instance(b0, b1, b2, a1, a2, x1, x2, y1, y2)
+(
+  y = b0 * x + b1 * x1 + b2 * x2 - a1 * y1 - a2 * y2;
+  x2 = x1; x1 = x; y2 = y1; y1 = y;
+  y;
+);
+function sh_clr() instance(x1, x2, y1, y2) ( x1 = x2 = y1 = y2 = 0; );
+shh_l.sh_clr(); shh_r.sh_clr(); shl_l.sh_clr(); shl_r.sh_clr(); shp_l.sh_clr(); shp_r.sh_clr();
 
 @slider
 wow_amt = slider1 / 100;
@@ -60,12 +89,24 @@ lp_coef = 1 - exp(-2 * $pi * lp_freq / srate);
 sr_div = srate / sr_target;
 sr_div = sr_div < 1 ? 1 : floor(sr_div);
 
+rpm = slider9;
+wow_hz = rpm == 1 ? 0.675 : 1.17;
+rpm == 2 ? (
+  shh_l.sh_set(0, 300, 0.7, 0); shh_r.sh_set(0, 300, 0.7, 0);
+  shl_l.sh_set(1, 4500, 0.7, 0); shl_r.sh_set(1, 4500, 0.7, 0);
+  shp_l.sh_set(2, 1500, 0.8, 4); shp_r.sh_set(2, 1500, 0.8, 4);
+);
+scratch = slider10;
+mono = slider11;
+sc_d1 = exp(-1 / (0.0002 * srate));
+sc_d2 = exp(-1 / (0.004 * srate));
+
 @sample
 in_l = spl0;
 in_r = spl1;
 
 /* ─── WOW (slow pitch drift ~0.5Hz) ─── */
-wow_phase += 2 * $pi * 0.5 / srate;
+rpm == 0 ? (wow_phase += 2 * $pi * 0.5 / srate) : (wow_phase += 2 * $pi * wow_hz / srate);
 wow_phase > 2*$pi ? wow_phase -= 2*$pi;
 wow_val = sin(wow_phase) * wow_amt;
 
@@ -130,6 +171,12 @@ lp1_r += lp_coef * (wet_r - lp1_r);
 lp2_r += lp_coef * (lp1_r - lp2_r);
 wet_r = lp2_r;
 
+/* ─── SHELLAC BAND (78 RPM) ─── */
+rpm == 2 ? (
+  wet_l = shp_l.sh_bq(shl_l.sh_bq(shh_l.sh_bq(wet_l)));
+  wet_r = shp_r.sh_bq(shl_r.sh_bq(shh_r.sh_bq(wet_r)));
+);
+
 /* ─── VINYL CRACKLE ─── */
 crackle_cnt += 1;
 crackle_env *= 0.95;
@@ -149,6 +196,38 @@ noise_l = ((noise_seed_l / 2147483647) * 2 - 1) * noise_lvl * 0.05;
 noise_r = ((noise_seed_r / 2147483647) * 2 - 1) * noise_lvl * 0.05;
 wet_l += noise_l;
 wet_r += noise_r;
+
+/* ─── SCRATCHES (own Park-Miller generator) ─── */
+scratch > 0 ? (
+  sc_cnt += 1;
+  sc_cnt >= sc_next ? (
+    sc_cnt = 0;
+    scratch_seed *= 16807; scratch_seed -= floor(scratch_seed / 2147483647) * 2147483647;
+    sc_r1 = scratch_seed / 2147483648;
+    scratch_seed *= 16807; scratch_seed -= floor(scratch_seed / 2147483647) * 2147483647;
+    sc_r2 = scratch_seed / 2147483648;
+    scratch_seed *= 16807; scratch_seed -= floor(scratch_seed / 2147483647) * 2147483647;
+    sc_r3 = scratch_seed / 2147483648;
+    /* the next one in 0.25..2.5 s at 0 %, about four times as often at 100 % */
+    sc_next = floor(srate * (25 + 225 * sc_r1) / (30 + scratch));
+    sc_e1 = (0.4 + 0.6 * sc_r2) * scratch / 110;
+    sc_r3 < 0.5 ? sc_e1 = -sc_e1;
+    sc_e2 = sc_e1 * 0.3;
+    sc_gl = 0.7 + 0.6 * sc_r3;
+    sc_gr = 1.3 - 0.6 * sc_r3;
+  );
+  sc_v = sc_e1 - sc_e2;
+  sc_e1 *= sc_d1;
+  sc_e2 *= sc_d2;
+  wet_l += sc_v * sc_gl;
+  wet_r += sc_v * sc_gr;
+);
+
+/* ─── MONO ─── */
+mono ? (
+  wet_l = (wet_l + wet_r) * 0.5;
+  wet_r = wet_l;
+);
 
 /* ─── MIX & OUTPUT ─── */
 dry = 1 - mix;

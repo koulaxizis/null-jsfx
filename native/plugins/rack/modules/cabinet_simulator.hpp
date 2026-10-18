@@ -45,7 +45,7 @@ public:
     }
 
 private:
-    void update() { fDsp.setParams(int(std::lround(fV[0])), fV[1], fV[2], fV[3], fV[4]); }
+    void update() { fDsp.setParams(int(std::lround(fV[0])), fV[1], fV[2], fV[3], fV[4], fV[5], fV[6]); }
 
     nullcab::CabinetSimulatorProcessor fDsp;
     float fV[nullcab::kNumSliders];

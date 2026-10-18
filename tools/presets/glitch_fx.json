@@ -6,5 +6,8 @@
   ["Granular Buzz", {"Rate": 8, "Stutter Length": 16, "Stutter": "ON", "Granular": "ON", "Grain Size": 40, "Mix": 50}],
   ["Live Reverse Chunks", {"Rate": 2, "Stutter Length": 4, "Stutter": "OFF", "Reverse": "ON", "Reverse Chance": 40, "Mix": 100}],
   ["Granular Vocal Haze", {"Stutter": "OFF", "Granular": "ON", "Grain Size": 120, "Mix": 50}],
-  ["Chopped Pad Gate", {"Stutter Length": 16, "Stutter": "OFF", "Gate": "ON", "Gate Depth": 100, "Mix": 100}]
+  ["Chopped Pad Gate", {"Stutter Length": 16, "Stutter": "OFF", "Gate": "ON", "Gate Depth": 100, "Mix": 100}],
+  ["MIDI Stutter Pads", {"Trigger": "MIDI", "Pitch Shift (semitones)": 12, "Stutter Length": 16, "Gate Depth": 100, "Tape Stop Time": 400, "Grain Size": 80, "Mix": 100}],
+  ["MIDI Glitch Kit", {"Trigger": "MIDI", "Pitch Shift (semitones)": 7, "Stutter Length": 32, "Gate Depth": 80, "Tape Stop Time": 250, "Grain Size": 40, "Mix": 100}],
+  ["MIDI Slow Tape Drops", {"Trigger": "MIDI", "Pitch Shift (semitones)": -12, "Stutter Length": 4, "Gate Depth": 60, "Tape Stop Time": 900, "Grain Size": 200, "Mix": 100}]
 ]

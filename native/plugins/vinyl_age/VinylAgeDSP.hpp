@@ -6,8 +6,10 @@
  * Port of DATA/Effects/null_jsfx/vinyl_age.jsfx, computed in double like EEL2: wow (0.5 Hz)
  * and flutter (6 Hz) modulate a delay around a fixed 50 ms centre (the dry path reads the same
  * line at exactly 50 ms, reported as latency), then bitcrush, sample-and-hold downsampling, a
- * 12 dB/oct low-pass, crackle and background noise. The random numbers are the JSFX's exact
- * Park-Miller generators. Both lines sit in one block like the JSFX's memory.
+ * 12 dB/oct low-pass, crackle and background noise. RPM sets the wow rate (0.5 Hz at 33) and, at
+ * 78, a shellac band; Scratches adds sparse louder clicks; Mono folds the record path to mono. The
+ * random numbers are the JSFX's exact Park-Miller generators. Both lines sit in one block like the
+ * JSFX's memory.
  */
 
 #pragma once
@@ -25,10 +27,35 @@ inline double parkMiller(double seed) noexcept
     return seed - std::floor(seed / 2147483647.0) * 2147483647.0;
 }
 
+// the wow rate (Hz) for the RPM option: 33, 45, 78
+inline double wowHz(int rpm) noexcept { return rpm == 0 ? 0.5 : rpm == 1 ? 0.675 : 1.17; }
+
+// RBJ biquad (direct form I) for the shellac band
+struct Biquad {
+    double b0 = 1, b1 = 0, b2 = 0, a1 = 0, a2 = 0, x1 = 0, x2 = 0, y1 = 0, y2 = 0;
+    // type 0 high-pass, 1 low-pass, 2 peaking; keeps the state
+    void set(int type, double f, double q, double db, double sr) noexcept
+    {
+        const double w = 2.0 * M_PI * f / sr, cs = std::cos(w), al = std::sin(w) / (2.0 * q);
+        const double A = std::pow(10.0, db / 40.0);
+        double a0;
+        if (type == 0) { b0 = (1 + cs) / 2; b1 = -(1 + cs); b2 = b0; a0 = 1 + al; a1 = -2 * cs; a2 = 1 - al; }
+        else if (type == 1) { b0 = (1 - cs) / 2; b1 = 1 - cs; b2 = b0; a0 = 1 + al; a1 = -2 * cs; a2 = 1 - al; }
+        else { b0 = 1 + al * A; b1 = -2 * cs; b2 = 1 - al * A; a0 = 1 + al / A; a1 = -2 * cs; a2 = 1 - al / A; }
+        b0 /= a0; b1 /= a0; b2 /= a0; a1 /= a0; a2 /= a0;
+    }
+    double tick(double x) noexcept
+    {
+        const double y = b0 * x + b1 * x1 + b2 * x2 - a1 * y1 - a2 * y2;
+        x2 = x1; x1 = x; y2 = y1; y1 = y;
+        return y;
+    }
+};
+
 // the wow + flutter delay offset in ms at time t (s) of the LFOs (for the display)
-inline double modulationMs(double t, double wowPct, double flutterPct) noexcept
+inline double modulationMs(double t, double wowPct, double flutterPct, int rpm = 0) noexcept
 {
-    const double m = std::sin(2.0 * M_PI * 0.5 * t) * wowPct / 100.0 * 40.0 + std::sin(2.0 * M_PI * 6.0 * t) * flutterPct / 100.0 * 15.0;
+    const double m = std::sin(2.0 * M_PI * wowHz(rpm) * t) * wowPct / 100.0 * 40.0 + std::sin(2.0 * M_PI * 6.0 * t) * flutterPct / 100.0 * 15.0;
     return std::max(-50.0, std::min(50.0, m));
 }
 
@@ -54,6 +81,13 @@ public:
         fWowPh = fFlutterPh = 0.0;
         fSrCnt = 0.0;
         fHoldL = fHoldR = 0.0;
+        fSeedS = 86420.0;
+        fScCnt = 0.0;
+        fScNext = std::floor(0.5 * sr);
+        fScE1 = fScE2 = 0.0;
+        fScGl = fScGr = 1.0;
+        for (Biquad& b : fSh)
+            b = Biquad();
     }
 
     // @slider; s[0..7] = slider1..slider8
@@ -68,6 +102,23 @@ public:
         fLpCoef = 1.0 - std::exp(-2.0 * M_PI * s[6] / fSr);
         const double d = fSr / s[5];
         fSrDiv = d < 1.0 ? 1.0 : std::floor(d);
+
+        fRpm = int(s[8]);
+        fWowHz = fRpm == 1 ? 0.675 : 1.17;
+        if (fRpm == 2)
+        {
+            // shellac: high-pass 300 Hz, low-pass 4.5 kHz, a 1.5 kHz bump (L: 0..2, R: 3..5)
+            for (int c = 0; c < 2; ++c)
+            {
+                fSh[3 * c].set(0, 300.0, 0.7, 0.0, fSr);
+                fSh[3 * c + 1].set(1, 4500.0, 0.7, 0.0, fSr);
+                fSh[3 * c + 2].set(2, 1500.0, 0.8, 4.0, fSr);
+            }
+        }
+        fScratch = s[9];
+        fMono = s[10] >= 0.5;
+        fScD1 = std::exp(-1.0 / (0.0002 * fSr));
+        fScD2 = std::exp(-1.0 / (0.004 * fSr));
     }
 
     template <typename T>
@@ -80,7 +131,10 @@ public:
         {
             const double inl = inL[n], inr = inR[n];
 
-            fWowPh += 2.0 * M_PI * 0.5 / fSr;
+            if (fRpm == 0)
+                fWowPh += 2.0 * M_PI * 0.5 / fSr;
+            else
+                fWowPh += 2.0 * M_PI * fWowHz / fSr;
             if (fWowPh > 2.0 * M_PI)
                 fWowPh -= 2.0 * M_PI;
             const double wowVal = std::sin(fWowPh) * fWow;
@@ -138,6 +192,13 @@ public:
             fLp2R += fLpCoef * (fLp1R - fLp2R);
             wr = fLp2R;
 
+            // shellac band (78 RPM)
+            if (fRpm == 2)
+            {
+                wl = fSh[2].tick(fSh[1].tick(fSh[0].tick(wl)));
+                wr = fSh[5].tick(fSh[4].tick(fSh[3].tick(wr)));
+            }
+
             // crackle
             fCrackleCnt += 1.0;
             fCrackleEnv *= 0.95;
@@ -156,6 +217,40 @@ public:
             wl += ((fSeedL / 2147483647.0) * 2.0 - 1.0) * fNoise * 0.05;
             wr += ((fSeedR / 2147483647.0) * 2.0 - 1.0) * fNoise * 0.05;
 
+            // scratches (own Park-Miller generator)
+            if (fScratch > 0.0)
+            {
+                fScCnt += 1.0;
+                if (fScCnt >= fScNext)
+                {
+                    fScCnt = 0.0;
+                    fSeedS = parkMiller(fSeedS);
+                    const double r1 = fSeedS / 2147483648.0;
+                    fSeedS = parkMiller(fSeedS);
+                    const double r2 = fSeedS / 2147483648.0;
+                    fSeedS = parkMiller(fSeedS);
+                    const double r3 = fSeedS / 2147483648.0;
+                    fScNext = std::floor(fSr * (25.0 + 225.0 * r1) / (30.0 + fScratch));
+                    fScE1 = (0.4 + 0.6 * r2) * fScratch / 110.0;
+                    if (r3 < 0.5)
+                        fScE1 = -fScE1;
+                    fScE2 = fScE1 * 0.3;
+                    fScGl = 0.7 + 0.6 * r3;
+                    fScGr = 1.3 - 0.6 * r3;
+                }
+                const double v = fScE1 - fScE2;
+                fScE1 *= fScD1;
+                fScE2 *= fScD2;
+                wl += v * fScGl;
+                wr += v * fScGr;
+            }
+
+            if (fMono)
+            {
+                wl = (wl + wr) * 0.5;
+                wr = wl;
+            }
+
             const double dry = 1.0 - fMix;
             outL[n] = static_cast<T>(dryL * dry + wl * fMix);
             outR[n] = static_cast<T>(dryR * dry + wr * fMix);
@@ -171,6 +266,11 @@ private:
     double fWowPh = 0.0, fFlutterPh = 0.0, fSrCnt = 0.0, fHoldL = 0.0, fHoldR = 0.0;
     double fWow = 0.0, fFlutter = 0.0, fCrackle = 0.0, fNoise = 0.0, fBits = 12.0, fMix = 0.0;
     double fLpCoef = 0.0, fSrDiv = 1.0;
+    int fRpm = 0;
+    bool fMono = false;
+    double fWowHz = 0.5, fScratch = 0.0, fScD1 = 0.0, fScD2 = 0.0;
+    double fSeedS = 86420.0, fScCnt = 0.0, fScNext = 0.0, fScE1 = 0.0, fScE2 = 0.0, fScGl = 1.0, fScGr = 1.0;
+    Biquad fSh[6];
 };
 
 } // namespace nullvinyl

@@ -8,19 +8,25 @@ namespace nullpresets {
 
 struct FactoryPreset {
     const char* name;
-    float values[5];
+    float values[10];
 };
 
 static const FactoryPreset kPresets[] = {
-    { "Default", { -40.0f, 10.0f, 200.0f, 0.0f, -80.0f } },
-    { "Vocal Pause Cleanup", { -45.0f, 5.0f, 250.0f, 80.0f, -20.0f } },
-    { "Tight Kick", { -30.0f, 1.0f, 80.0f, 0.0f, -80.0f } },
-    { "Snare Bleed Cut", { -28.0f, 1.0f, 120.0f, 150.0f, -40.0f } },
-    { "Tom Gate", { -32.0f, 1.0f, 250.0f, 80.0f, -30.0f } },
-    { "Guitar Amp Hiss", { -50.0f, 3.0f, 150.0f, 0.0f, -60.0f } },
-    { "Gentle Noise Duck", { -55.0f, 10.0f, 400.0f, 0.0f, -10.0f } },
+    { "Default", { -40.0f, 10.0f, 200.0f, 0.0f, -80.0f, 0.0f, 0.0f, 0.0f, 20000.0f, 0.0f } },
+    { "Vocal Pause Cleanup", { -45.0f, 5.0f, 250.0f, 80.0f, -20.0f, 0.0f, 0.0f, 0.0f, 20000.0f, 0.0f } },
+    { "Tight Kick", { -30.0f, 1.0f, 80.0f, 0.0f, -80.0f, 0.0f, 0.0f, 0.0f, 20000.0f, 0.0f } },
+    { "Snare Bleed Cut", { -28.0f, 1.0f, 120.0f, 150.0f, -40.0f, 0.0f, 0.0f, 0.0f, 20000.0f, 0.0f } },
+    { "Tom Gate", { -32.0f, 1.0f, 250.0f, 80.0f, -30.0f, 0.0f, 0.0f, 0.0f, 20000.0f, 0.0f } },
+    { "Guitar Amp Hiss", { -50.0f, 3.0f, 150.0f, 0.0f, -60.0f, 0.0f, 0.0f, 0.0f, 20000.0f, 0.0f } },
+    { "Gentle Noise Duck", { -55.0f, 10.0f, 400.0f, 0.0f, -10.0f, 0.0f, 0.0f, 0.0f, 20000.0f, 0.0f } },
+    { "Tight Drums", { -30.0f, 1.0f, 60.0f, 60.0f, -80.0f, 30.0f, 1.0f, 0.0f, 20000.0f, 0.0f } },
+    { "Snare Gate No Click", { -26.0f, 1.0f, 120.0f, 150.0f, -40.0f, 50.0f, 2.0f, 0.0f, 8000.0f, 0.0f } },
+    { "Kick Ducking Pad", { -30.0f, 5.0f, 250.0f, 0.0f, -12.0f, 20.0f, 0.0f, 1.0f, 2000.0f, 1.0f } },
+    { "Voice Over Ducker", { -40.0f, 20.0f, 600.0f, 100.0f, -10.0f, 300.0f, 0.0f, 1.0f, 20000.0f, 1.0f } },
+    { "Spoken Word Gate", { -48.0f, 2.0f, 300.0f, 100.0f, -18.0f, 150.0f, 3.0f, 0.0f, 20000.0f, 0.0f } },
+    { "Kick Only Trigger", { -24.0f, 1.0f, 100.0f, 0.0f, -80.0f, 40.0f, 0.0f, 0.0f, 1000.0f, 0.0f } },
 };
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
-static constexpr uint32_t kNumValues = 5;
+static constexpr uint32_t kNumValues = 10;
 
 } // namespace nullpresets

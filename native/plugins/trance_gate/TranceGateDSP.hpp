@@ -8,6 +8,9 @@
  * while the transport plays (re-read every block, as the JSFX's @block does), free-running
  * at the tempo when stopped. Free: Free Rate steps per second. The gain ramps linearly
  * toward 1 (on steps) or 1 - Depth (off steps) over Attack / Release.
+ * Probability and Seed (appended in 2.4): below 100 % an "on" step opens the gate only when the
+ * Park-Miller value for its position (seed + 1) * 16807^(step + 8) mod 2^31 - 1, computed exactly
+ * in doubles as the JSFX does, is under Probability. At 100 % the original code runs.
  */
 
 #pragma once
@@ -23,7 +26,38 @@ struct Params {
     int stepLength = 2;    // 0..3: 1/4, 1/8, 1/16, 1/32
     double freeRate = 8.0; // steps per second
     double attackMs = 5.0, releaseMs = 40.0, depthPct = 100.0;
+    double probPct = 100.0, seed = 0.0;
 };
+
+// (x * y) mod 2147483647, exact in doubles (y split into 16-bit halves), as the JSFX's pm_mul
+inline double pmMul(double x, double y) noexcept
+{
+    const double hi = std::floor(y / 65536.0);
+    double r = x * hi;
+    r -= std::floor(r / 2147483647.0) * 2147483647.0;
+    r = r * 65536.0 + x * (y - hi * 65536.0);
+    r -= std::floor(r / 2147483647.0) * 2147483647.0;
+    if (r < 0.0)
+        r += 2147483647.0;
+    if (r >= 2147483647.0)
+        r -= 2147483647.0;
+    return r;
+}
+
+// the Park-Miller value (0..1) for step i of seed sd, as the JSFX's pm_step
+inline double pmStep(double i, double sd) noexcept
+{
+    double e = i - std::floor(i / 2147483646.0) * 2147483646.0 + 8.0;
+    double b = 16807.0, p = sd + 1.0;
+    while (e > 0.0)
+    {
+        if (e - std::floor(e / 2.0) * 2.0 > 0.0)
+            p = pmMul(p, b);
+        b = pmMul(b, b);
+        e = std::floor(e / 2.0);
+    }
+    return p / 2147483647.0;
+}
 
 // The display (trance_gate_gfx.jsfx draws the same): the gain over the 16 steps as the
 // attack / release ramps shape it, as a polyline of up to 3 points per step. step = the
@@ -68,6 +102,8 @@ public:
         fStepPos = 0.0;
         fGain = 1.0;
         fCur = 0;
+        fRndPos = 0.0;
+        fRndKeep = 1.0;
         updateParams();
     }
 
@@ -79,6 +115,7 @@ public:
     }
 
     int currentStep() const noexcept { return fCur; }
+    bool stepKept() const noexcept { return fProb >= 1.0 || fRndKeep != 0.0; } // Probability let this step play
 
     template <typename T>
     void process(const T* inL, const T* inR, T* outL, T* outR, uint32_t frames, double tempo, bool playing,
@@ -92,17 +129,35 @@ public:
         {
             fStepInc = bpm / 60.0 * fStepsPerBeat / fSr;
             if (playing)
+            {
                 fStepPos = beatPos * fStepsPerBeat;
+                fRndPos = fStepPos;
+            }
         }
         for (uint32_t i = 0; i < frames; ++i)
         {
             fStepPos += fStepInc;
+            fRndPos += fStepInc;
             if (fStepPos >= 16.0)
                 fStepPos -= 16.0;
             const double s = std::floor(fStepPos);
             const double cur = s - 16.0 * std::floor(s / 16.0);
             fCur = int(cur + 0.0001);
-            const double target = 1.0 - fDepth * (1.0 - (fP.steps[fCur & 15] ? 1.0 : 0.0));
+            const double on = fP.steps[fCur & 15] ? 1.0 : 0.0;
+            double target;
+            if (fProb < 1.0)
+            {
+                // Probability: a new draw whenever the step changes
+                const double ri = std::floor(fRndPos);
+                if (std::fabs(ri - fRndLast) >= 0.00001) // EEL2 != is fuzzy
+                {
+                    fRndLast = ri;
+                    fRndKeep = pmStep(ri, fP.seed) < fProb ? 1.0 : 0.0;
+                }
+                target = 1.0 - fDepth * (1.0 - on * fRndKeep);
+            }
+            else
+                target = 1.0 - fDepth * (1.0 - on);
             if (target > fGain)
             {
                 fGain += fAttack;
@@ -127,11 +182,14 @@ private:
         fAttack = 1.0 / std::fmax(1.0, fSr * fP.attackMs * 0.001);
         fRelease = 1.0 / std::fmax(1.0, fSr * fP.releaseMs * 0.001);
         fDepth = fP.depthPct / 100.0;
+        fProb = fP.probPct / 100.0;
+        fRndLast = -0.5;
     }
 
     Params fP;
     double fSr = 48000.0, fStepPos = 0.0, fStepInc = 0.0, fGain = 1.0;
     double fStepsPerBeat = 4.0, fAttack = 0.0, fRelease = 0.0, fDepth = 1.0;
+    double fRndPos = 0.0, fRndLast = -0.5, fRndKeep = 1.0, fProb = 1.0;
     int fCur = 0;
 };
 

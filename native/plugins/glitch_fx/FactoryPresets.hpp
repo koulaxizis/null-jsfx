@@ -8,21 +8,24 @@ namespace nullpresets {
 
 struct FactoryPreset {
     const char* name;
-    float values[14];
+    float values[15];
 };
 
 static const FactoryPreset kPresets[] = {
-    { "Default", { 4.0f, 8.0f, 1.0f, 30.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 300.0f, 0.0f, 200.0f, 0.0f, 50.0f } },
-    { "Beat Repeat", { 2.0f, 16.0f, 1.0f, 30.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 300.0f, 0.0f, 200.0f, 0.0f, 70.0f } },
-    { "Gated Stutter", { 4.0f, 32.0f, 1.0f, 80.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 300.0f, 0.0f, 200.0f, 0.0f, 60.0f } },
-    { "Reverse Glitch", { 2.0f, 8.0f, 1.0f, 30.0f, 0.0f, 0.0f, 0.0f, 50.0f, 1.0f, 300.0f, 0.0f, 200.0f, 0.0f, 60.0f } },
-    { "Tape Stop Hits", { 1.0f, 4.0f, 1.0f, 30.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 400.0f, 1.0f, 200.0f, 0.0f, 70.0f } },
-    { "Granular Buzz", { 8.0f, 16.0f, 1.0f, 30.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 300.0f, 0.0f, 40.0f, 1.0f, 50.0f } },
-    { "Live Reverse Chunks", { 2.0f, 4.0f, 0.0f, 30.0f, 0.0f, 0.0f, 0.0f, 40.0f, 1.0f, 300.0f, 0.0f, 200.0f, 0.0f, 100.0f } },
-    { "Granular Vocal Haze", { 4.0f, 8.0f, 0.0f, 30.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 300.0f, 0.0f, 120.0f, 1.0f, 50.0f } },
-    { "Chopped Pad Gate", { 4.0f, 16.0f, 0.0f, 100.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 300.0f, 0.0f, 200.0f, 0.0f, 100.0f } },
+    { "Default", { 4.0f, 8.0f, 1.0f, 30.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 300.0f, 0.0f, 200.0f, 0.0f, 50.0f, 0.0f } },
+    { "Beat Repeat", { 2.0f, 16.0f, 1.0f, 30.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 300.0f, 0.0f, 200.0f, 0.0f, 70.0f, 0.0f } },
+    { "Gated Stutter", { 4.0f, 32.0f, 1.0f, 80.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 300.0f, 0.0f, 200.0f, 0.0f, 60.0f, 0.0f } },
+    { "Reverse Glitch", { 2.0f, 8.0f, 1.0f, 30.0f, 0.0f, 0.0f, 0.0f, 50.0f, 1.0f, 300.0f, 0.0f, 200.0f, 0.0f, 60.0f, 0.0f } },
+    { "Tape Stop Hits", { 1.0f, 4.0f, 1.0f, 30.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 400.0f, 1.0f, 200.0f, 0.0f, 70.0f, 0.0f } },
+    { "Granular Buzz", { 8.0f, 16.0f, 1.0f, 30.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 300.0f, 0.0f, 40.0f, 1.0f, 50.0f, 0.0f } },
+    { "Live Reverse Chunks", { 2.0f, 4.0f, 0.0f, 30.0f, 0.0f, 0.0f, 0.0f, 40.0f, 1.0f, 300.0f, 0.0f, 200.0f, 0.0f, 100.0f, 0.0f } },
+    { "Granular Vocal Haze", { 4.0f, 8.0f, 0.0f, 30.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 300.0f, 0.0f, 120.0f, 1.0f, 50.0f, 0.0f } },
+    { "Chopped Pad Gate", { 4.0f, 16.0f, 0.0f, 100.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 300.0f, 0.0f, 200.0f, 0.0f, 100.0f, 0.0f } },
+    { "MIDI Stutter Pads", { 4.0f, 16.0f, 1.0f, 100.0f, 0.0f, 12.0f, 0.0f, 0.0f, 0.0f, 400.0f, 0.0f, 80.0f, 0.0f, 100.0f, 1.0f } },
+    { "MIDI Glitch Kit", { 4.0f, 32.0f, 1.0f, 80.0f, 0.0f, 7.0f, 0.0f, 0.0f, 0.0f, 250.0f, 0.0f, 40.0f, 0.0f, 100.0f, 1.0f } },
+    { "MIDI Slow Tape Drops", { 4.0f, 4.0f, 1.0f, 60.0f, 0.0f, -12.0f, 0.0f, 0.0f, 0.0f, 900.0f, 0.0f, 200.0f, 0.0f, 100.0f, 1.0f } },
 };
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
-static constexpr uint32_t kNumValues = 14;
+static constexpr uint32_t kNumValues = 15;
 
 } // namespace nullpresets

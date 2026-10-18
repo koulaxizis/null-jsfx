@@ -1,6 +1,6 @@
 desc:NULL Trance Gate
 author: Christos Koulaxizis
-tags: trance gate 16-step sequencer rhythmic pattern staccato tempo sync
+tags: trance gate 16-step sequencer rhythmic pattern staccato tempo sync probability random
 //category: Advanced
 //NULL JSFX v2.4 • https://nulljsfx.tech • MIT License
 
@@ -26,6 +26,8 @@ slider19:8<0.5,40,0.1>Free Rate (Hz)
 slider20:5<1,100,1>Attack (ms)
 slider21:40<10,500,1>Release (ms)
 slider22:100<0,100,1>Gate Depth (%)
+slider23:100<0,100,1>Probability (%)
+slider24:0<0,999,1>Seed
 
 in_pin:Left
 in_pin:Right
@@ -38,9 +40,42 @@ out_pin:Right
   // grid (step 1 on every bar downbeat in 4/4). Stopped, it free-runs at the host tempo.
   // Free: steps advance at Free Rate (steps per second), ignoring the host.
   // Gate Depth sets how far the "off" steps duck: 0% = no gating, 100% = silence.
+  // Probability: the chance that an "on" step opens the gate; below 100% each step draws a
+  // number from Seed and its position (exact Park-Miller in doubles, skipped ahead to the step,
+  // so the same song position always makes the same choice and the native plugin matches).
   pat = 0;            // pattern, 16 slots
   step_pos = 0;
   gate_gain = 1;
+  rnd_pos = 0;        // the step position, never wrapped (Probability)
+  rnd_last = -0.5;    // the step the last draw was for
+  rnd_keep = 1;
+
+  // (x * y) mod 2147483647, exact in doubles: y split into 16-bit halves
+  function pm_mul(x, y) local(hi, r)
+  (
+    hi = floor(y / 65536);
+    r = x * hi;
+    r -= floor(r / 2147483647) * 2147483647;
+    r = r * 65536 + x * (y - hi * 65536);
+    r -= floor(r / 2147483647) * 2147483647;
+    r < 0 ? r += 2147483647;
+    r >= 2147483647 ? r -= 2147483647;
+    r;
+  );
+
+  // the Park-Miller value for step i of seed sd (0..1): (sd + 1) * 16807^(i + 8) mod 2^31 - 1
+  function pm_step(i, sd) local(e, b, p)
+  (
+    e = i - floor(i / 2147483646) * 2147483646 + 8;
+    b = 16807;
+    p = sd + 1;
+    while (e > 0) (
+      e - floor(e / 2) * 2 > 0 ? p = pm_mul(p, b);
+      b = pm_mul(b, b);
+      e = floor(e / 2);
+    );
+    p / 2147483647;
+  );
 
 @slider
   pat[0] = slider1; pat[1] = slider2; pat[2] = slider3; pat[3] = slider4;
@@ -53,6 +88,9 @@ out_pin:Right
   attack_coef = 1 / max(1, srate * slider20 * 0.001);
   release_coef = 1 / max(1, srate * slider21 * 0.001);
   gate_depth = slider22 / 100;
+  prob = slider23 / 100;
+  rnd_seed = slider24;
+  rnd_last = -0.5;
 
 @block
   bpm = tempo > 0 ? tempo : 120;
@@ -61,16 +99,30 @@ out_pin:Right
   ) : (
     step_inc = bpm / 60 * steps_per_beat / srate;
     // lock to the host grid while playing
-    play_state & 1 ? step_pos = beat_position * steps_per_beat;
+    play_state & 1 ? (
+      step_pos = beat_position * steps_per_beat;
+      rnd_pos = step_pos;
+    );
   );
 
 @sample
   step_pos += step_inc;
+  rnd_pos += step_inc;
   // keep the free-running counter small (the synced one is re-read every block)
   step_pos >= 16 ? step_pos -= 16;
   s = floor(step_pos);
   cur_step = s - 16 * floor(s / 16);       // also correct for negative positions (pre-roll)
-  target = 1 - gate_depth * (1 - pat[cur_step]);
+  prob < 1 ? (
+    // Probability: a new draw whenever the step changes
+    rnd_i = floor(rnd_pos);
+    rnd_i != rnd_last ? (
+      rnd_last = rnd_i;
+      rnd_keep = pm_step(rnd_i, rnd_seed) < prob;
+    );
+    target = 1 - gate_depth * (1 - pat[cur_step] * rnd_keep);
+  ) : (
+    target = 1 - gate_depth * (1 - pat[cur_step]);
+  );
 
   target > gate_gain ? (
     gate_gain += attack_coef;

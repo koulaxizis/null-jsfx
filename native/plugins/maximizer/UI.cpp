@@ -7,6 +7,8 @@
 #include "NullUI.hpp"
 #include "MaximizerSliders.hpp"
 
+#include <string>
+
 START_NAMESPACE_DISTRHO
 
 static const NullKnobsUI::Control kControls[] = {
@@ -18,6 +20,10 @@ static const NullKnobsUI::Control kControls[] = {
     { 5, NullKnobsUI::kSelect, "LINK", 0, -1, false },
     { 6, NullKnobsUI::kSelect, "DITHER", 1, -1, false },
     { 7, NullKnobsUI::kSelect, "SHAPING", 1, -1, false },
+    { 8, NullKnobsUI::kSelect, "CHARACTER", 1, -1, false },
+    { 9, NullKnobsUI::kSelect, "MULTIBAND", 1, -1, false },
+    { 10, NullKnobsUI::kKnob, "LOW X", 1, -1, false },
+    { 11, NullKnobsUI::kKnob, "HIGH X", 1, -1, false },
 };
 
 class UIMaximizer : public NullKnobsUI
@@ -82,13 +88,30 @@ protected:
         meter(336.0f, 82.0f, 112.0f, 10.0f, "IN", nulljsfx::toDb(in), value(1) - value(0), -48.0f);
         grMeter(336.0f, 106.0f, 112.0f, 10.0f, "GR", gr, 24.0f);
         meter(336.0f, 130.0f, 112.0f, 10.0f, "OUT", nulljsfx::toDb(out), value(1) + std::fmin(value(4), 0.0f), -48.0f);
+        // short-term loudness of the output (3 s, K-weighted), and what Character / Multiband do
+        const float lufs = taps() ? taps()->extra.load(std::memory_order_relaxed) : -200.0f;
+        char buf[48];
+        label(336.0f, 68.0f, ALIGN_LEFT, 7.5f, 1.0f, theme::kMuted, "SHORT-TERM", true);
+        if (lufs > -70.0f)
+            std::snprintf(buf, sizeof(buf), "%.1f LUFS", double(lufs));
+        else
+            std::snprintf(buf, sizeof(buf), "-- LUFS");
+        label(448.0f, 68.0f, ALIGN_RIGHT, 7.5f, 1.0f, theme::kAccent, buf, true);
+        const int character = int(std::lround(value(8)));
+        const bool mb = value(9) >= 0.5f;
+        std::string st = character == 1 ? "PUNCHY" : character == 2 ? "WARM" : "";
+        if (mb)
+            st += character != 0 ? " / 3-BAND" : "3-BAND";
         const int dither = int(std::lround(value(6)));
         if (dither != 0)
         {
-            const bool ns = value(7) >= 0.5f;
-            label(448.0f, 152.0f, ALIGN_RIGHT, 8.0f, 0.0f, theme::kMuted,
-                  dither == 1 ? (ns ? "16-BIT TPDF + NS" : "16-BIT TPDF") : (ns ? "24-BIT TPDF + NS" : "24-BIT TPDF"));
+            if (!st.empty())
+                st += " / ";
+            st += dither == 1 ? "16-BIT" : "24-BIT";
+            st += value(7) >= 0.5f ? " NS" : " TPDF";
         }
+        if (!st.empty())
+            label(448.0f, 152.0f, ALIGN_RIGHT, 8.0f, 0.0f, theme::kMuted, st.c_str());
     }
 
     void formatValue(uint32_t param, float v, char* buf, size_t n) override
@@ -97,6 +120,10 @@ protected:
             std::snprintf(buf, n, "%+.1f dB", v);
         else if (param == 1 || param == 4)
             std::snprintf(buf, n, "%.1f dB", v);
+        else if (param == 10)
+            std::snprintf(buf, n, "%d Hz", int(std::lround(v)));
+        else if (param == 11)
+            std::snprintf(buf, n, "%.1f kHz", std::round(v) / 1000.0);
         else
             NullKnobsUI::formatValue(param, v, buf, n);
     }

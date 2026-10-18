@@ -11,6 +11,8 @@
  * input period apart on the same peak of every cycle, synthesis marks one output period
  * apart, each adding the Hann-windowed two-period grain of the nearest analysis mark.
  * Latency: the pitch frame plus 1.5 periods of 70 Hz (about 39 ms), as the JSFX's pdc_delay.
+ * Target MIDI tunes to the latest held MIDI note (midi(), called before the sample at the
+ * event's frame); Vibrato adds a sine of Vibrato Depth cents, faded in on every new note.
  */
 
 #pragma once
@@ -71,11 +73,38 @@ public:
         fPer = fPerA = fTuv; fAmLast = 0.0; fMk = 0; fSNext = 0.0;
         fVoiced = false; fWasV = false; fUvc = fHoldN + 1.0;
         fTf = fTmax; fDet = 0.0; fMs = 0.0; fTgt = 60.0; fSh = fShA = 0.0; fShT = 0.0;
+        std::fill(std::begin(fHeld), std::end(fHeld), 0.0);
+        fStamp = 0.0; fMNote = -1;
+        fVibPh = 0.0; fVibEnv = 0.0; fVib = 0.0;
+        fVibK = 1.0 - std::exp(-1.0 / (sr * 0.25));
+    }
+
+    // a MIDI message due now (the JSFX's @sample queue): notes held / released, all notes off
+    void midi(uint8_t status, uint8_t d1, uint8_t d2) noexcept
+    {
+        const int st = status & 0xF0, n = d1 & 0x7F;
+        if (st == 0x90 && d2 > 0)
+        {
+            fStamp += 1.0;
+            fHeld[n] = fStamp;
+        }
+        else if (st == 0x80 || st == 0x90)
+            fHeld[n] = 0.0;
+        else if (st == 0xB0 && (n == 120 || n == 123))
+            std::fill(std::begin(fHeld), std::end(fHeld), 0.0);
+        fMNote = -1;
+        double b = 0.0;
+        for (int k = 0; k < 128; ++k)
+            if (fHeld[k] > b)
+            {
+                b = fHeld[k];
+                fMNote = k;
+            }
     }
 
     // @slider (Key, Scale and Transpose are whole numbers; the rest are the slider values)
     void setParams(int key, int scale, double retuneMs, double humanizePct, double transpose, double sensitivityPct,
-                   double mixPct)
+                   double mixPct, bool targetMidi = false, double vibRateHz = 5.0, double vibDepthCents = 0.0)
     {
         static constexpr int kMasks[] = { 4095, 2741, 1453, 2477, 661, 1193, 1257, 1709, 1717 };
         fKey = double(key);
@@ -86,6 +115,9 @@ public:
         fTransp = transpose;
         fThr = 0.05 + 0.3 * sensitivityPct / 100.0;
         fMix = mixPct / 100.0;
+        fMidiOn = targetMidi;
+        fVibW = 2.0 * kPi * vibRateHz / fSr;
+        fVibD = vibDepthCents / 100.0;
     }
 
     uint32_t latency() const noexcept { return uint32_t(fLat); }
@@ -96,10 +128,22 @@ public:
     double target() const noexcept { return fTgt; }
     double shift() const noexcept { return fSh; }
     double totalShift() const noexcept { return fSh + fTransp; }
+    // the held MIDI note Target MIDI tunes to now, or -1 (none, or Target Scale)
+    int midiNote() const noexcept { return fMidiOn ? fMNote : -1; }
 
     // @sample
     void processSample(double& l, double& r)
     {
+        // vibrato, faded in while a voiced note is corrected
+        if (fVibD > 0.0)
+        {
+            fVibPh += fVibW;
+            if (fVibPh >= 2.0 * kPi)
+                fVibPh -= 2.0 * kPi;
+            fVibEnv += ((fWasV ? 1.0 : 0.0) - fVibEnv) * fVibK;
+            fVib = fVibD * fVibEnv * std::sin(fVibPh);
+        }
+
         // pitch tracking on a band-limited mono copy, decimated
         const double ax = (l + r) * 0.5;
         fHpY = fHpC * (fHpY + ax - fHpX);
@@ -270,6 +314,12 @@ private:
                 if (inScale(pc) && std::fabs(fTgt - fDet) < bd + 0.4)
                     best = fTgt;
             }
+            // Target MIDI: the latest held note
+            if (fMidiOn && fMNote >= 0)
+                best = double(fMNote);
+            // a new note starts the vibrato from nothing
+            if (!fWasV || best != fTgt)
+                fVibEnv = 0.0;
             if (!fWasV || best != fTgt)
                 fMs = fDet;
             else
@@ -327,7 +377,8 @@ private:
     // adds the grain for synthesis mark s; returns the output period (next mark distance)
     double place(double s)
     {
-        const double t1 = fPerI / std::pow(2.0, (fShI + fTransp) / 12.0);
+        const double t1 = fVibD > 0.0 ? fPerI / std::pow(2.0, (fShI + fTransp + fVib) / 12.0)
+                                      : fPerI / std::pow(2.0, (fShI + fTransp) / 12.0);
         const double h = std::min(std::max(fPerI, t1), fHm);
         // the analysis mark nearest to s, walking back from the newest
         int k = fMk;
@@ -399,6 +450,10 @@ private:
     double fUvc = 0.0, fTf = 0.0, fDet = 0.0, fMs = 0.0, fTgt = 60.0, fSh = 0.0, fShA = 0.0, fShI = 0.0, fShT = 0.0;
     double fKey = 0.0, fRk = 1.0, fHum = 0.0, fHumC = 0.0, fTransp = 0.0, fThr = 0.2, fMix = 1.0;
     int fMask = 4095;
+    double fHeld[128] = {}, fStamp = 0.0;
+    int fMNote = -1;
+    bool fMidiOn = false;
+    double fVibW = 0.0, fVibD = 0.0, fVibK = 0.0, fVibPh = 0.0, fVibEnv = 0.0, fVib = 0.0;
 };
 
 } // namespace nullpitchcorrection

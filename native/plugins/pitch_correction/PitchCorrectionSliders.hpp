@@ -13,8 +13,9 @@ namespace nullpitchcorrection {
 static const char* const kKeyOptions[] = { "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B" };
 static const char* const kScaleOptions[] = { "CHROM", "MAJOR", "MINOR", "HARM MIN", "PENTA MAJ",
                                              "PENTA MIN", "BLUES", "DORIAN", "MIXOLYD" };
+static const char* const kTargetOptions[] = { "SCALE", "MIDI" };
 
-// slider1..slider7 of pitch_correction.jsfx, in order
+// slider1..slider10 of pitch_correction.jsfx, in order
 static const DISTRHO::SliderInfo kSliders[] = {
     { "Key", "key", 0.0f, 11.0f, 0.0f, "", 1.0f, kKeyOptions },
     { "Scale", "scale", 0.0f, 8.0f, 0.0f, "", 1.0f, kScaleOptions },
@@ -23,6 +24,9 @@ static const DISTRHO::SliderInfo kSliders[] = {
     { "Transpose", "transpose", -12.0f, 12.0f, 0.0f, "st", 1.0f },
     { "Sensitivity", "sensitivity", 0.0f, 100.0f, 50.0f, "%", 1.0f },
     { "Mix", "mix", 0.0f, 100.0f, 100.0f, "%", 1.0f },
+    { "Target", "target", 0.0f, 1.0f, 0.0f, "", 1.0f, kTargetOptions },
+    { "Vibrato Rate", "vibrato_rate", 0.0f, 10.0f, 5.0f, "Hz", 0.1f },
+    { "Vibrato Depth", "vibrato_depth", 0.0f, 100.0f, 0.0f, "ct", 1.0f },
 };
 static constexpr uint32_t kNumSliders = sizeof(kSliders) / sizeof(kSliders[0]);
 

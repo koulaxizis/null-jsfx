@@ -2,18 +2,22 @@
  * NULL JSFX - VolumeShaper as a Rack module: drives nullvolshaper::VolumeShaperProcessor as plugins/volume_shaper/Plugin.cpp does
  * Copyright (C) 2026 Christos Koulaxizis / NULL JSFX
  * SPDX-License-Identifier: MIT
+ *
+ * The Rack has no MIDI: Trigger MIDI waits at full level. Trigger Sidechain listens to the key
+ * the Rack gives a KeyedModule (the dry rack input), or without one to the module's own input.
  */
 
 #pragma once
 
 #include "NullModule.hpp"
+#include "../RackKeyed.hpp"
 #include "../../volume_shaper/VolumeShaperDSP.hpp"
 #include "../../volume_shaper/VolumeShaperSliders.hpp"
 
 namespace nullrack {
 namespace volume_shaper {
 
-class VolumeShaperModule final : public nulljsfx::Module {
+class VolumeShaperModule final : public nulljsfx::Module, public rack::KeyedModule {
 public:
     VolumeShaperModule()
     {
@@ -36,13 +40,21 @@ public:
         update();
     }
 
+    void setKey(const float* keyL, const float* keyR) override
+    {
+        fKeyL = keyL;
+        fKeyR = keyR;
+    }
+
     void process(const float* inL, const float* inR, float* outL, float* outR, uint32_t frames,
                  const nulljsfx::ModuleTime& time) override
     {
         // as Plugin.cpp: the host tempo when it reports one, else 120; the beat position only while playing
         const double tempo = time.valid && time.tempo > 0.0 ? time.tempo : 120.0;
         const double beatPos = time.playing ? time.beat : 0.0;
-        fDsp.process(inL, inR, outL, outR, frames, time.playing, beatPos, tempo);
+        fDsp.process(inL, inR, outL, outR, frames, time.playing, beatPos, tempo, fKeyL ? fKeyL : inL,
+                     fKeyR ? fKeyR : inR);
+        fKeyL = fKeyR = nullptr;
     }
 
 private:
@@ -53,6 +65,8 @@ private:
 
     nullvolshaper::VolumeShaperProcessor fDsp;
     float fV[nullvolshaper::kNumSliders];
+    const float* fKeyL = nullptr;
+    const float* fKeyR = nullptr;
 };
 
 inline nulljsfx::Module* create() { return new VolumeShaperModule(); }

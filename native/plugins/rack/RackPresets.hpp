@@ -3201,10 +3201,16 @@ static const LogSlider kLogSliders[] = {
     { "envelope_follower", 4 },
     { "envelope_follower", 5 },
     { "filter", 0 },
+    { "filter", 6 },
+    { "filter", 11 },
+    { "gate", 8 },
     { "half_speed", 3 },
     { "ladder_filter", 0 },
+    { "noise_generator", 3 },
+    { "noise_generator", 4 },
     { "octaver", 4 },
     { "octaver", 5 },
+    { "phase_align", 6 },
     { "phaser", 5 },
     { "resonance_suppressor", 3 },
     { "resonance_suppressor", 4 },
@@ -3216,6 +3222,8 @@ static const LogSlider kLogSliders[] = {
     { "shaper", 5 },
     { "step_fx", 20 },
     { "stereo_scope", 3 },
+    { "transient_shaper", 4 },
+    { "transient_shaper", 5 },
 };
 static constexpr uint32_t kNumLogSliders = sizeof(kLogSliders) / sizeof(kLogSliders[0]);
 

@@ -1,0 +1,16 @@
+[
+  ["Flip Right", {"Invert Right": "On"}],
+  ["Flip Both", {"Invert Left": "On", "Invert Right": "On"}],
+  ["Right Late 1 ms", {"Delay": 1}],
+  ["Right Early 1 ms", {"Delay": -1}],
+  ["Half Sample Nudge", {"Fine": 0.5}],
+  ["Low End Turn 90", {"Rotation": 90, "Focus": 80}],
+  ["Low End Turn 180", {"Rotation": 180, "Focus": 60}],
+  ["Kick In/Out Check", {"Invert Right": "On", "Listen": "Mono Sum"}],
+  ["Mono Sum Listen", {"Listen": "Mono Sum"}],
+  ["Snare Bottom Mic", {"Source": "Track to Sidechain", "Invert Left": "On", "Invert Right": "On", "Delay": -0.5, "Listen": "Mono Sum"}],
+  ["Bass DI to Amp", {"Source": "Track to Sidechain", "Delay": 2, "Rotation": 45, "Focus": 90, "Listen": "Mono Sum"}],
+  ["Room Mic Pull", {"Source": "Track to Sidechain", "Delay": -6}],
+  ["Sidechain Reference", {"Source": "Track to Sidechain"}],
+  ["Haas Undo 10 ms", {"Delay": -10}]
+]

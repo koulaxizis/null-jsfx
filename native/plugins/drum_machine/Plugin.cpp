@@ -5,7 +5,7 @@
  *
  * The parameters are the JSFX sliders; the User pattern (the JSFX's @serialize) is the state
  * "pattern", 170 numbers separated by spaces (DrumMachinePatterns.hpp), which the interface
- * sets when the grid is edited.
+ * sets when the grid is edited. Eight outputs in four stereo port groups, like the JSFX's pins.
  */
 
 #include "NullPlugin.hpp"
@@ -62,6 +62,28 @@ protected:
         return "Ten synthesized drum voices (808, 909 and more) with a 16-step sequencer that follows the host, played by MIDI too.";
     }
     int64_t getUniqueId() const override { return d_cconst('N', 'D', 'r', 'm'); }
+
+    // four stereo port groups, like the JSFX pins: the main mix (or the kick with Outputs
+    // Groups), then snare, hats and perc
+    void initAudioPort(bool input, uint32_t index, AudioPort& port) override
+    {
+        static const char* const kSide[] = { "Left", "Right" };
+        static const char* const kGroup[] = { "Main", "Snare", "Hats", "Perc" };
+        if (input)
+            return NullMultiPlugin::initAudioPort(input, index, port);
+        const uint32_t g = index / 2;
+        port.groupId = g;
+        port.name = g == 0 ? String(kSide[index % 2]) : String(kGroup[g]) + " " + kSide[index % 2];
+        port.symbol = String("out") + String(int(index + 1));
+    }
+
+    void initPortGroup(uint32_t groupId, PortGroup& group) override
+    {
+        static const char* const kGroup[] = { "Main", "Snare", "Hats", "Perc" };
+        static const char* const kSym[] = { "main", "snare", "hats", "perc" };
+        group.name = kGroup[groupId % 4];
+        group.symbol = kSym[groupId % 4];
+    }
 
     void valueChanged(uint32_t, float) override { update(); }
 
@@ -130,7 +152,7 @@ protected:
         fDsp.beginBlock(fNotes, n, tp.playing, tempo, beatPos);
         if (const int req = taps.request.exchange(0))
             fDsp.trig(req - 1, 1.0);
-        fDsp.process(outputs[0], outputs[1], frames);
+        fDsp.process(outputs, frames);
 
         taps.extra.store(float(fDsp.step), std::memory_order_relaxed);
         for (int t = 0; t < nulldrum::kTracks; ++t)

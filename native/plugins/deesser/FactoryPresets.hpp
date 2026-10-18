@@ -8,20 +8,26 @@ namespace nullpresets {
 
 struct FactoryPreset {
     const char* name;
-    float values[2];
+    float values[7];
 };
 
 static const FactoryPreset kPresets[] = {
-    { "Default", { 6000.0f, -6.0f } },
-    { "Male Vocal", { 5000.0f, -6.0f } },
-    { "Female Vocal", { 7000.0f, -6.0f } },
-    { "Podcast Speech", { 5500.0f, -8.0f } },
-    { "Gentle Sibilance", { 8000.0f, -3.0f } },
-    { "Harsh Sibilance", { 6500.0f, -12.0f } },
-    { "Cymbal Splash Tamer", { 9000.0f, -6.0f } },
-    { "Acoustic Guitar Glare", { 4500.0f, -4.0f } },
+    { "Default", { 6000.0f, -6.0f, 0.0f, 0.0f, -30.0f, -18.0f, 0.0f } },
+    { "Male Vocal", { 5000.0f, -6.0f, 0.0f, 0.0f, -30.0f, -18.0f, 0.0f } },
+    { "Female Vocal", { 7000.0f, -6.0f, 0.0f, 0.0f, -30.0f, -18.0f, 0.0f } },
+    { "Podcast Speech", { 5500.0f, -8.0f, 0.0f, 0.0f, -30.0f, -18.0f, 0.0f } },
+    { "Gentle Sibilance", { 8000.0f, -3.0f, 0.0f, 0.0f, -30.0f, -18.0f, 0.0f } },
+    { "Harsh Sibilance", { 6500.0f, -12.0f, 0.0f, 0.0f, -30.0f, -18.0f, 0.0f } },
+    { "Cymbal Splash Tamer", { 9000.0f, -6.0f, 0.0f, 0.0f, -30.0f, -18.0f, 0.0f } },
+    { "Acoustic Guitar Glare", { 4500.0f, -4.0f, 0.0f, 0.0f, -30.0f, -18.0f, 0.0f } },
+    { "Gentle Vocal", { 6500.0f, -8.0f, 0.0f, 0.0f, -30.0f, -4.0f, 0.0f } },
+    { "Harsh Cymbals", { 9500.0f, -9.0f, 0.0f, 1.0f, -36.0f, -18.0f, 0.0f } },
+    { "Wide Vocal De-Ess", { 6000.0f, -6.0f, 1.0f, 0.0f, -30.0f, -18.0f, 0.0f } },
+    { "Quiet Voice", { 6000.0f, -6.0f, 0.0f, 1.0f, -45.0f, -18.0f, 0.0f } },
+    { "Broadcast Voice", { 5500.0f, -10.0f, 0.0f, 1.0f, -38.0f, -6.0f, 0.0f } },
+    { "Sibilance Listen", { 6500.0f, -12.0f, 0.0f, 0.0f, -30.0f, -18.0f, 1.0f } },
 };
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
-static constexpr uint32_t kNumValues = 2;
+static constexpr uint32_t kNumValues = 7;
 
 } // namespace nullpresets

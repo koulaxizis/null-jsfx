@@ -10,7 +10,10 @@
 
 namespace nullvinyl {
 
-// slider1..slider8 of vinyl_age.jsfx, in order
+static const char* const kRpmOptions[] = { "33", "45", "78" };
+static const char* const kMonoOptions[] = { "OFF", "ON" };
+
+// slider1..slider11 of vinyl_age.jsfx, in order
 static const DISTRHO::SliderInfo kSliders[] = {
     { "Wow", "wow", 0.0f, 100.0f, 30.0f, "%", 1.0f },
     { "Flutter", "flutter", 0.0f, 100.0f, 20.0f, "%", 1.0f },
@@ -20,6 +23,9 @@ static const DISTRHO::SliderInfo kSliders[] = {
     { "Sample Rate", "rate", 2000.0f, 44100.0f, 22050.0f, "Hz", 100.0f },
     { "Lowpass Freq", "lowpass", 1000.0f, 20000.0f, 8000.0f, "Hz", 100.0f },
     { "Mix", "mix", 0.0f, 100.0f, 80.0f, "%", 1.0f },
+    { "RPM", "rpm", 0.0f, 2.0f, 0.0f, "", 1.0f, kRpmOptions },
+    { "Scratches", "scratches", 0.0f, 100.0f, 0.0f, "%", 1.0f },
+    { "Mono", "mono", 0.0f, 1.0f, 0.0f, "", 1.0f, kMonoOptions },
 };
 static constexpr uint32_t kNumSliders = sizeof(kSliders) / sizeof(kSliders[0]);
 

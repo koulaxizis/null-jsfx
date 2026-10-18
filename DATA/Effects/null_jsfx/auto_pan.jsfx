@@ -1,6 +1,6 @@
 desc:NULL Auto Pan
 author: Christos Koulaxizis
-tags: autopan pan modulation lfo movement stereo width tempo sync
+tags: autopan pan modulation lfo movement stereo width tempo sync step pattern
 //category: Essentials
 //NULL JSFX v2.4 • https://nulljsfx.tech • MIT License
 
@@ -9,6 +9,8 @@ slider2:50<0,100,1>Depth (%)
 slider3:40<0,100,1>Mix (%)
 slider4:0<0,1,1{OFF,ON}>Tempo Sync
 slider5:0<0,3,1{1/2,1/4,1/8,1/16}>Subdivision
+slider6:0<0,5,1{SINE,2 STEPS,4 STEPS,8 STEPS,L-C-R,R-C-L}>Mode
+slider7:20<0,100,1>Smoothing (%)
 
 in_pin:Left
 in_pin:Right
@@ -21,12 +23,32 @@ out_pin:Right
   phase_inc = 6.28318530717958 * calc_rate / srate;
   tempo_sync = 0;
   mult = 0.5;
+  // Mode: SINE moves the level with a sine LFO (the original plugin). The step modes jump between
+  // pan positions instead, one step per LFO cycle (Rate, or one Subdivision note with Tempo Sync):
+  // 2 STEPS = L R, 4 STEPS = L C R C, 8 STEPS = a stepped sweep L to R and back, L-C-R and
+  // R-C-L = three-step paths. Smoothing glides into each step over that share of it (raised
+  // cosine, at least 1 ms so steps never click).
+  ap_step = 0;
+  ap_n = 2;
+
+  // pan position of step k in step mode m (+1 = left, -1 = right, as the LFO)
+  function ap_val(m, k)
+  (
+    m == 1 ? (k == 0 ? 1 : -1) :
+    m == 2 ? (k == 0 ? 1 : k == 2 ? -1 : 0) :
+    m == 3 ? (k <= 4 ? 1 - k * 0.5 : -1 + (k - 4) * 0.5) :
+    m == 4 ? 1 - k : k - 1;
+  );
 
 @slider
   depth_pct = slider2 / 100;
   mix_amt = slider3 / 100;
   tempo_sync = slider4;
   subdivision = slider5;
+  pmode = slider6;
+  smooth = slider7 / 100;
+  ap_n = pmode == 1 ? 2 : pmode == 2 ? 4 : pmode == 3 ? 8 : 3;
+  ap_step >= ap_n ? ap_step = 0;
   
   subdivision == 0 ? mult = 0.5;
   subdivision == 1 ? mult = 1;
@@ -45,8 +67,22 @@ out_pin:Right
   );
 
 @sample
-  phase >= 6.28318530717958 ? phase = phase - 6.28318530717958;
-  lfo = sin(phase);
+  phase >= 6.28318530717958 ? (
+    phase = phase - 6.28318530717958;
+    ap_step += 1;
+    ap_step >= ap_n ? ap_step = 0;
+  );
+  pmode ? (
+    // step mode: glide from the last step's position over the first Smoothing share of the step
+    ap_t = phase / 6.28318530717958 / max(smooth, 0.001 * calc_rate);
+    ap_c = ap_val(pmode, ap_step);
+    lfo = ap_t < 1 ? (
+      ap_p = ap_val(pmode, ap_step > 0 ? ap_step - 1 : ap_n - 1);
+      ap_p + (ap_c - ap_p) * (0.5 - 0.5 * cos($pi * ap_t));
+    ) : ap_c;
+  ) : (
+    lfo = sin(phase);
+  );
   phase = phase + phase_inc;
   
   left_gain = 0.5 + 0.5 * depth_pct * lfo;

@@ -4,5 +4,10 @@
   ["White Filter Test", {"Type": "White", "Level": -24, "Stereo Width": 0}],
   ["White Riser Layer", {"Type": "White", "Level": -18, "Stereo Width": 100}],
   ["Brown Rumble Bed", {"Type": "Brown", "Level": -30, "Stereo Width": 80}],
-  ["Soft Room Tone", {"Type": "Pink", "Level": -48, "Stereo Width": 100}]
+  ["Soft Room Tone", {"Type": "Pink", "Level": -48, "Stereo Width": 100}],
+  ["Riser Noise", {"Type": "White", "Level": -18, "Stereo Width": 100, "Low Cut": 400, "Mix Mode": "Add"}],
+  ["Snare Noise Layer", {"Type": "White", "Level": -12, "Stereo Width": 60, "Low Cut": 1500, "High Cut": 12000, "Follow Input": 100, "Mix Mode": "Add"}],
+  ["Hiss Bed", {"Type": "Pink", "Level": -42, "Stereo Width": 100, "Low Cut": 2000, "Ducking": 60, "Mix Mode": "Add"}],
+  ["Vinyl Air", {"Type": "Pink", "Level": -36, "Stereo Width": 80, "Low Cut": 300, "High Cut": 8000, "Mix Mode": "Add"}],
+  ["Breathing Texture", {"Type": "Brown", "Level": -24, "Stereo Width": 100, "Low Cut": 60, "High Cut": 4000, "Follow Input": 70, "Mix Mode": "Add"}]
 ]

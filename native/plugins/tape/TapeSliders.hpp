@@ -13,8 +13,10 @@
 namespace nulltape {
 
 static const char* const kSpeedOptions[] = { "7.5 IPS", "15 IPS", "30 IPS" };
+static const char* const kTypeOptions[] = { "CLASSIC", "TYPE I", "TYPE II", "TYPE IV" };
+static const char* const kNrOptions[] = { "OFF", "ON" };
 
-// slider1..slider8 of tape.jsfx, in order
+// slider1..slider10 of tape.jsfx, in order
 static const DISTRHO::SliderInfo kSliders[] = {
     { "Drive", "drive", 0.0f, 24.0f, 3.0f, "dB", 0.1f },
     { "Speed", "speed", 0.0f, 2.0f, 1.0f, "", 1.0f, kSpeedOptions },
@@ -24,6 +26,8 @@ static const DISTRHO::SliderInfo kSliders[] = {
     { "Hiss", "hiss", 0.0f, 100.0f, 10.0f, "%", 1.0f },
     { "Output", "output", -12.0f, 12.0f, 0.0f, "dB", 0.1f },
     { "Mix", "mix", 0.0f, 100.0f, 100.0f, "%", 1.0f },
+    { "Tape Type", "tape_type", 0.0f, 3.0f, 0.0f, "", 1.0f, kTypeOptions },
+    { "Noise Reduction", "noise_reduction", 0.0f, 1.0f, 0.0f, "", 1.0f, kNrOptions },
 };
 static constexpr uint32_t kNumSliders = sizeof(kSliders) / sizeof(kSliders[0]);
 
@@ -38,6 +42,8 @@ static const Range kRanges[] = {
     { 0.0, 100.0, 10.0, 1.0 },
     { -12.0, 12.0, 0.0, 0.1 },
     { 0.0, 100.0, 100.0, 1.0 },
+    { 0.0, 3.0, 0.0, 1.0 },
+    { 0.0, 1.0, 0.0, 1.0 },
 };
 
 // The host passes parameters as float, the JSFX keeps the slider in double. Rebuild that double:

@@ -13,13 +13,18 @@ static const NullKnobsUI::Control kControls[] = {
     { 0, NullKnobsUI::kKnob, "ATTACK", 0, -1, true },
     { 1, NullKnobsUI::kKnob, "SUSTAIN", 0, -1, true },
     { 2, NullKnobsUI::kKnob, "MIX", 0, -1, false },
+    { 3, NullKnobsUI::kSelect, "SPEED", 0, -1, false },
+    { 4, NullKnobsUI::kKnob, "FOCUS LOW", 1, -1, false, true },
+    { 5, NullKnobsUI::kKnob, "FOCUS HIGH", 1, -1, false, true },
+    { 7, NullKnobsUI::kKnob, "OUTPUT", 1, -1, true },
+    { 6, NullKnobsUI::kSelect, "CLIP", 1, -1, false },
 };
 
 class UITransientShaper : public NullKnobsUI
 {
 public:
     UITransientShaper()
-        : NullKnobsUI({ "TRANSIENT SHAPER", "ESSENTIALS", 480, 120, nullptr, 1, nulltransient::kSliders, nulltransient::kNumSliders,
+        : NullKnobsUI({ "TRANSIENT SHAPER", "ESSENTIALS", 480, 120, nullptr, 2, nulltransient::kSliders, nulltransient::kNumSliders,
                         kControls, sizeof(kControls) / sizeof(kControls[0]), true }) {}
 
 protected:
@@ -72,10 +77,16 @@ protected:
     }
 
     // as in transient_shaper_gfx.jsfx: left, the history (the chunk's gain furthest from 0 dB);
-    // right, input, transient-detector and output meters
+    // right, the speed and what is switched on, then input, transient-detector and output meters
     void drawDisplay() override
     {
         history();
+        const float sp = value(3);
+        label(336.0f, 66.0f, ALIGN_LEFT, 7.5f, 1.0f, theme::kAccent, sp < 0.5f ? "FAST" : sp > 1.5f ? "SLOW" : "MEDIUM", true);
+        const bool focus = value(4) > 20.0f || value(5) < 20000.0f, clip = value(6) >= 0.5f;
+        char st[32];
+        std::snprintf(st, sizeof(st), "%s%s%s", focus ? "FOCUS" : "", focus && clip ? "   " : "", clip ? "CLIP" : "");
+        label(448.0f, 66.0f, ALIGN_RIGHT, 7.5f, 1.0f, theme::kMuted, st, true);
         float in = 0.0f, out = 0.0f, hit = 0.0f;
         if (nulljsfx::Taps* t = taps())
         {
@@ -90,8 +101,17 @@ protected:
 
     void formatValue(uint32_t param, float v, char* buf, size_t n) override
     {
-        if (param < 2)
+        if (param < 2 || param == 7)
             std::snprintf(buf, n, "%+.1f dB", v);
+        else if ((param == 4 && v <= 20.0f) || (param == 5 && v >= 20000.0f))
+            std::snprintf(buf, n, "OFF");
+        else if (param == 4 || param == 5)
+        {
+            if (v >= 1000.0f)
+                std::snprintf(buf, n, "%.1f kHz", v / 1000.0f);
+            else
+                std::snprintf(buf, n, "%d Hz", int(std::lround(v)));
+        }
         else
             NullKnobsUI::formatValue(param, v, buf, n);
     }

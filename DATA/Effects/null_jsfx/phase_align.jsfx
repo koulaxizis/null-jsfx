@@ -1,0 +1,130 @@
+desc:NULL Phase Align
+author: Christos Koulaxizis
+tags: phase alignment align polarity invert delay time all-pass rotation correlation sidechain multi-mic drums bass di mixing utility
+//category: Essentials
+//NULL JSFX v2.4 • https://nulljsfx.tech • MIT License
+
+slider1:0<0,1,1{Right to Left,Track to Sidechain}>Source
+slider2:0<-10,10,0.01>Delay (ms)
+slider3:0<-1,1,0.01>Fine (samples)
+slider4:0<0,1,1{Off,On}>Invert Left
+slider5:0<0,1,1{Off,On}>Invert Right
+slider6:0<0,360,1>Rotation (deg)
+slider7:100<20,1000,1:log>Focus (Hz)
+slider8:0<0,1,1{Normal,Mono Sum}>Listen
+
+in_pin:Left
+in_pin:Right
+in_pin:Sidechain Left
+in_pin:Sidechain Right
+out_pin:Left
+out_pin:Right
+
+@init
+  // Lines up two sources that should play together (two mics on one drum, a bass DI and its
+  // amp, the two sides of a stereo pair) in time, polarity and phase.
+  // Source Right to Left: the right channel is moved against the left (the reference). Delay
+  // (ms) plus Fine (samples, fractional) sets how late the right channel plays: positive delays
+  // it, negative delays the left channel instead, so nothing needs latency.
+  // Source Track to Sidechain: the track (both channels) is moved against the reference on
+  // channels 3/4. To play earlier than the reference it is delayed by a fixed 10 ms (plus one
+  // sample) less the Delay, and that latency is reported (pdc_delay), so a negative Delay moves
+  // the track ahead in time.
+  // Fractional delays read a 4-point cubic (Catmull-Rom) interpolation; whole samples are exact.
+  // Invert Left / Right flip the polarity of either channel (of the track in Sidechain mode).
+  // Rotation turns the phase of the moved channel(s) with two first-order all-pass filters that
+  // shift it by exactly the set angle at Focus (less below, more above), for low end that a
+  // delay alone cannot line up; 0 and 360 bypass them. Listen Mono Sum plays the moved signal
+  // added to its reference (L+R, or track + sidechain, halved), so the best setting is where
+  // the sum is fullest. The GFX version shows the phase difference and the correlation.
+  RL = 0; RR = 16384;      // the moved channels, 16384 each
+  KL = 32768; KR = 49152;  // the sidechain (reference), 16384 each
+  memset(0, 0, 65536);
+  pa_wp = 0;
+  pa_lat = ceil(srate * 0.01) + 1;
+
+  // buf delayed by d samples (d >= 0): whole samples exact, fractions by Catmull-Rom
+  function pa_read(buf, d) local(n, f, ym1, y0, y1, y2, c1, c2, c3)
+  (
+    n = floor(d);
+    f = d - n;
+    y0 = buf[(pa_wp - n + 16384) & 16383];
+    f > 0 ? (
+      ym1 = n > 0 ? buf[(pa_wp - n + 16385) & 16383] : y0;
+      y1 = buf[(pa_wp - n + 16383) & 16383];
+      y2 = buf[(pa_wp - n + 16382) & 16383];
+      c1 = 0.5 * (y1 - ym1);
+      c2 = ym1 - 2.5 * y0 + 2 * y1 - 0.5 * y2;
+      c3 = 0.5 * (y2 - ym1) + 1.5 * (y0 - y1);
+      ((c3 * f + c2) * f + c1) * f + y0;
+    ) : y0;
+  );
+
+  // first-order all-pass with the coefficient pa_a
+  function pa_ap(x) local(y)
+  (
+    y = pa_a * x + this.x1 - pa_a * this.y1;
+    this.x1 = x;
+    this.y1 = y;
+    y;
+  );
+
+@slider
+  pa_src = slider1 >= 0.5;
+  pa_d = slider2 * srate / 1000 + slider3;
+  pa_il = slider4 >= 0.5 ? -1 : 1;
+  pa_ir = slider5 >= 0.5 ? -1 : 1;
+  // each all-pass turns the phase by half the angle at Focus: -2 atan(tan(w / 2) / t) = -a / 2
+  pa_rot = slider6 > 0 && slider6 < 360;
+  pa_rot ? (
+    pa_t = tan($pi * slider7 / srate) / tan(slider6 * $pi / 720);
+    pa_a = (pa_t - 1) / (pa_t + 1);
+  );
+  pa_sum = slider8 >= 0.5;
+  pa_dl = max(0, -pa_d);
+  pa_dr = max(0, pa_d);
+  pa_dt = pa_lat + pa_d;
+  pdc_bot_ch = 0;
+  pdc_top_ch = 2;
+  pdc_delay = pa_src ? pa_lat : 0;
+
+@sample
+  RL[pa_wp] = spl0 * pa_il;
+  RR[pa_wp] = spl1 * pa_ir;
+  KL[pa_wp] = spl2;
+  KR[pa_wp] = spl3;
+  !pa_src ? (
+    pa_l = pa_read(RL, pa_dl);
+    pa_r = pa_read(RR, pa_dr);
+    pa_rot ? (
+      pa_r = r1.pa_ap(pa_r);
+      pa_r = r2.pa_ap(pa_r);
+    );
+    // the moved signal and its reference (the GFX version's correlation meter reads them)
+    pa_ca = pa_r;
+    pa_cb = pa_l;
+    pa_sum ? (
+      pa_l = (pa_l + pa_r) * 0.5;
+      pa_r = pa_l;
+    );
+  ) : (
+    pa_l = pa_read(RL, pa_dt);
+    pa_r = pa_read(RR, pa_dt);
+    pa_rot ? (
+      pa_l = l1.pa_ap(pa_l);
+      pa_l = l2.pa_ap(pa_l);
+      pa_r = r1.pa_ap(pa_r);
+      pa_r = r2.pa_ap(pa_r);
+    );
+    pa_kl = KL[(pa_wp - pa_lat + 16384) & 16383];
+    pa_kr = KR[(pa_wp - pa_lat + 16384) & 16383];
+    pa_ca = (pa_l + pa_r) * 0.5;
+    pa_cb = (pa_kl + pa_kr) * 0.5;
+    pa_sum ? (
+      pa_l = (pa_l + pa_kl) * 0.5;
+      pa_r = (pa_r + pa_kr) * 0.5;
+    );
+  );
+  pa_wp = (pa_wp + 1) & 16383;
+  spl0 = pa_l;
+  spl1 = pa_r;

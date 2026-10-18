@@ -5,5 +5,11 @@
   ["Tighten Drum Room", {"Attack": 0, "Sustain": -8}],
   ["Fat Drum Sustain", {"Attack": 0, "Sustain": 4}],
   ["Soften Harsh Attack", {"Attack": -6, "Sustain": 0}],
-  ["Parallel Drum Smack", {"Attack": 12, "Sustain": -4, "Mix": 50}]
+  ["Parallel Drum Smack", {"Attack": 12, "Sustain": -4, "Mix": 50}],
+  ["Snappy Snare", {"Attack": 10, "Sustain": -3, "Speed": "Fast", "Focus Low": 150, "Focus High": 8000}],
+  ["Kick Focus", {"Attack": 8, "Sustain": -4, "Focus High": 150}],
+  ["Soften Attack", {"Attack": -8, "Sustain": 2, "Speed": "Slow"}],
+  ["Hat Tamer", {"Attack": -6, "Sustain": 0, "Speed": "Fast", "Focus Low": 5000}],
+  ["Room Tail Cut", {"Attack": 0, "Sustain": -10, "Speed": "Slow"}],
+  ["Drum Bus Punch Clip", {"Attack": 6, "Sustain": -1, "Output Clip": "On", "Output": 2}]
 ]

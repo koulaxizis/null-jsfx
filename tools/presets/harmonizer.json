@@ -5,5 +5,10 @@
   ["Sub Octave Thickener", {"Voice 1 Interval": -12, "Voice 2 Interval": 0, "Voice 1 Level": -6, "Voice 2 Level": -12, "Detune": 12, "Delay": 12, "Spread": 40, "Mix": 40}],
   ["Wide Vocal Double", {"Voice 1 Interval": 0, "Voice 2 Interval": 0, "Detune": 12, "Delay": 25, "Spread": 100, "Mix": 40}],
   ["Low Harmony Pair", {"Voice 1 Interval": -5, "Voice 2 Interval": -9, "Voice 1 Level": -8, "Voice 2 Level": -8, "Mix": 45}],
-  ["Harmony Only Print", {"Voice 1 Interval": 4, "Voice 2 Interval": 7, "Mix": 100}]
+  ["Harmony Only Print", {"Voice 1 Interval": 4, "Voice 2 Interval": 7, "Mix": 100}],
+  ["Thirds Above (C Major)", {"Voice 1 Interval": 2, "Voice 2 Interval": 4, "Mode": "Scale", "Key": "C", "Scale": "Major"}],
+  ["Thirds Below (A Minor)", {"Voice 1 Interval": -2, "Voice 2 Interval": -4, "Voice 1 Level": -7, "Voice 2 Level": -9, "Mode": "Scale", "Key": "A", "Scale": "Minor"}],
+  ["Natural Duet (G Major)", {"Voice 1 Interval": 2, "Voice 2 Interval": 0, "Voice 2 Level": -48, "Detune": 4, "Delay": 20, "Spread": 40, "Mode": "Scale", "Key": "G", "Scale": "Major", "Formant Preserve": "On"}],
+  ["MIDI Choir", {"Voice 1 Level": -4, "Voice 2 Level": -4, "Detune": 6, "Delay": 12, "Spread": 90, "Mix": 55, "Mode": "MIDI", "Formant Preserve": "On"}],
+  ["Formant Octave Up", {"Voice 1 Interval": 12, "Voice 2 Interval": 0, "Voice 1 Level": -6, "Voice 2 Level": -48, "Detune": 0, "Delay": 0, "Spread": 0, "Mix": 40, "Formant Preserve": "On"}]
 ]

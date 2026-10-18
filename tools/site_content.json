@@ -3,7 +3,7 @@
     "card_desc": "Guitar & Bass Amp, No Cabinet",
     "keywords": "amp simulator amplifier guitar bass preamp power amp tube valve distortion overdrive crunch lead clean tone stack fender marshall presence sag oversampling di reamp",
     "slider_desc": [
-      "Amp voicing: Clean (2 stages, Fender stack), Crunch (3 stages, Marshall stack), Lead (4 stages, tight lows) or Bass (2 stages, deep stack).",
+      "Amp voicing: Clean (2 stages, Fender stack), Crunch (3 stages, Marshall stack), Lead (4 stages, tight lows), Bass (2 stages, deep stack), Jazz Clean (dark, lots of headroom), British (looser, brighter crunch), Modern High Gain (4 tight stages, scooped) or Fuzz (hard-biased, huge gain).",
       "Preamp drive into the first tube stage; the range depends on the model (up to +46 dB on Lead).",
       "Tone stack bass control (audio taper). Bass, Mid and Treble interact like a real passive tone stack.",
       "Tone stack mid control; low values give the classic mid scoop.",
@@ -13,7 +13,8 @@
       "Bright switch: a treble boost before the preamp that is strongest at low Gain, like a bright cap.",
       "Power supply sag: the power amp's drive drops as the level rises, for a softer, compressed feel.",
       "2x or 4x oversampling of the nonlinear stages (polyphase IIR half-band filters, no latency).",
-      "Final output level."
+      "Final output level.",
+      "Noise gate keyed from the input: below the threshold the amp's output fades out (6 dB hysteresis, 30 ms hold); -90 dB turns it off."
     ],
     "uses": [
       "Turning DI guitar into a clean, crunch or lead amp tone (add Cabinet Simulator after it)",
@@ -51,7 +52,9 @@
       "How far the LFO pushes the signal between left and right; at 0% both sides sit at half level.",
       "Blend between the dry signal and the panned signal.",
       "Locks the LFO rate to the project tempo instead of the Rate slider.",
-      "LFO cycle length when synced: 1/2 = one sweep every two beats, up to 1/16 = four sweeps per beat."
+      "LFO cycle length when synced: 1/2 = one sweep every two beats, up to 1/16 = four sweeps per beat.",
+      "SINE sweeps smoothly; the step modes jump between pan positions once per LFO cycle: 2 STEPS (left, right), 4 STEPS (left, center, right, center), 8 STEPS (a stepped sweep) or the L-C-R and R-C-L paths.",
+      "In the step modes, how much of each step is spent gliding to the new position (0% = an instant, click-free jump)."
     ],
     "uses": [
       "Moving pads and synth beds",
@@ -120,11 +123,13 @@
     "card_desc": "Speaker Cabinet Simulation",
     "keywords": "cabinet simulator cab speaker guitar bass amp sim di reamp mic impulse free",
     "slider_desc": [
-      "Cabinet model: 1x12 Open Back, 2x12 Combo, 4x12 Closed Back, 1x15 Bass or Small Radio.",
+      "Cabinet model: 1x12 Open Back, 2x12 Combo, 4x12 Closed Back, 1x15 Bass, Small Radio, 1x10 Tweed, 2x10 Bass or 4x10 Vintage.",
       "0% = centre of the cone (brighter), 100% = edge (lower roll-off and softer presence).",
       "High-pass frequency; it never goes below the selected cabinet's own minimum (30–250 Hz).",
       "Blend between dry and cabinet signal.",
-      "Final output level."
+      "Final output level.",
+      "Position of a second microphone on the same cabinet, from the centre of the cone (0%, bright) to the edge (100%, darker).",
+      "Blend between the first and the second microphone: 0% is the first mic only, 100% the second mic only."
     ],
     "uses": [
       "Turning DI guitar or bass into a miked-cab tone",
@@ -302,7 +307,12 @@
     "keywords": "deesser de-esser de-ess sibilance sibilants esses hiss vocal harshness",
     "slider_desc": [
       "Centre frequency of the band-pass that isolates the sibilance.",
-      "Maximum cut applied to that band when sibilance gets loud."
+      "Maximum cut applied to that band when sibilance gets loud.",
+      "Split turns down only the sibilance band; Wide turns down the whole signal by the same amount.",
+      "Auto uses the built-in detection level; Manual uses the Threshold control instead.",
+      "Level of the sibilance band above which the reduction starts (Manual only).",
+      "Caps how far the signal is turned down, while Reduction sets how quickly it gets there (-18 dB = no cap).",
+      "Plays only what is being removed, to tune Target and the threshold by ear."
     ],
     "uses": [
       "Taming harsh S, T and Ch sounds on vocals",
@@ -453,7 +463,7 @@
       "How fast gain reduction is applied (0 = instant).",
       "How fast gain recovers (0 = instant).",
       "Gain added after processing.",
-      "Character of the detector: Clean is the transparent original, Bus a smooth glue compressor with auto release, FET a fast and aggressive one with a little harmonic colour, Opto a slow, program-dependent one.",
+      "Character of the detector: Clean is the transparent original, Bus a smooth glue compressor with auto release, FET a fast and aggressive one with a little harmonic colour, Opto a slow, program-dependent one, Upward raises quiet material below the threshold instead of turning loud parts down (up to 24 dB, leaving silence alone).",
       "High-pass filter on the detector only, so low end does not drive the gain reduction (20 Hz = off).",
       "Blend of compressed and dry signal for parallel compression (100% = fully compressed).",
       "Internal listens to the track itself; External listens to input channels 3/4 (sidechain key)."
@@ -513,7 +523,15 @@
       "Cutoff (or centre) frequency of the filter.",
       "Q of the filter; higher values add a resonant peak at the cutoff (narrower band in Band Pass and Notch).",
       "Output level after the filter.",
-      "Filter response: Low Pass, High Pass, Band Pass (unity peak) or Notch."
+      "Filter response: Low Pass, High Pass, Band Pass (unity peak) or Notch.",
+      "Filter steepness: 12 dB/oct (one state-variable stage) or 24 dB/oct (a second Butterworth stage in the same mode).",
+      "Soft saturation of the input before the filter, for a warmer, growlier sound; 0% is off.",
+      "Speed of the cutoff LFO in Hz when LFO Sync is off.",
+      "Locks the LFO to the host tempo as a note value (1/1 to 1/16, triplet or dotted); while the transport plays, the LFO follows the beat.",
+      "How far the LFO sweeps the cutoff up and down, in octaves; 0 turns it off.",
+      "How far the cutoff follows the input level, in octaves (positive opens it, negative closes it on loud parts) for auto-wah effects; 0 turns it off.",
+      "How fast the envelope follower reacts to rising input level.",
+      "How fast the envelope follower falls back when the input gets quieter."
     ],
     "uses": [
       "Taking the top end off harsh sources",
@@ -607,7 +625,12 @@
       "How fast the gate opens.",
       "How fast the gate closes once the signal drops.",
       "High-pass on the detector only, so low-end rumble or bleed does not open the gate (0 = off).",
-      "How far the gate turns the signal down when closed: −80 dB closes fully, higher values only duck it (0 dB = no gating)."
+      "How far the gate turns the signal down when closed: −80 dB closes fully, higher values only duck it (0 dB = no gating).",
+      "How long the gate stays open after the signal drops below the threshold, before the release starts.",
+      "Delays the audio so the gate opens just before each hit and keeps the attack intact (adds that much latency; 0 = off).",
+      "Internal listens to the track itself; External listens to input channels 3/4 (sidechain key).",
+      "Low-pass on the detector only, so hi-hats or cymbals do not open the gate (20 kHz = off).",
+      "Turns the gate into a ducker: the signal is turned down by Range while the detector is above the threshold."
     ],
     "uses": [
       "Removing noise between vocal phrases",
@@ -635,7 +658,8 @@
       "Enables tape stops, triggered on about 30% of events",
       "Length of the Hann-windowed grain looped instead of the full slice",
       "Loops a short windowed grain instead of the whole slice, or with Stutter off turns the live signal into overlapping grains",
-      "Dry/wet blend"
+      "Dry/wet blend",
+      "What plays the effects: Auto rolls them at Rate with the switches and chances, MIDI plays them while notes C3 to F3 are held (Stutter, Gate, Pitch Shift, Reverse, Tape Stop, Granular) with the velocity setting how much is mixed in"
     ],
     "uses": [
       "Beat-repeat and stutter fills on drums",
@@ -698,7 +722,11 @@
       "Opposite detune of the two voices for a natural, separate-performer feel",
       "Delay of the voices (voice 2 is delayed 1.37× longer)",
       "Pans voice 1 left and voice 2 right",
-      "Equal-power dry/wet: 0% = original only, 50% = both at −3 dB, 100% = harmony voices only"
+      "Equal-power dry/wet: 0% = original only, 50% = both at −3 dB, 100% = harmony voices only",
+      "How the voices find their notes: Semitones uses the fixed intervals, Scale turns the intervals into steps of the chosen key and scale above or below the note you sing (so harmonies stay in key), MIDI makes the voices sing the notes you hold on a MIDI keyboard",
+      "Key of the scale used in Scale mode",
+      "Scale used in Scale mode: Major, Minor, Dorian, Mixolydian, Harmonic Minor, Pentatonic Major or Pentatonic Minor",
+      "Shifts the voices with pitch-synchronous grains that keep the character of the vowels instead of the chipmunk effect (the voices come about 40 ms later)"
     ],
     "uses": [
       "Instant backing vocal harmonies",
@@ -816,7 +844,11 @@
       "Trim after limiting (cut only, −12 to 0 dB), so the output never exceeds Ceiling; use Input Gain to make it louder.",
       "ON uses one gain for both channels to keep the image stable; OFF limits each channel independently.",
       "Last in the chain: OFF, or TPDF dither and rounding to 16-bit (CD) or 24-bit; use it only when the output goes straight to a file of that bit depth.",
-      "ON feeds the rounding error back (first order), moving the dither noise up the spectrum where the ear is less sensitive. Works only with Dither on."
+      "ON feeds the rounding error back (first order), moving the dither noise up the spectrum where the ear is less sensitive. Works only with Dither on.",
+      "Shapes the signal before the limiter: CLEAN leaves it alone, PUNCHY soft-clips only the peaks above Ceiling so the limiter pumps less on transients, WARM saturates gently for a denser, rounder sound.",
+      "ON splits the signal into three bands that are limited on their own (a quarter linked), so a loud bass no longer pushes down the mids and highs; the look-ahead limiter then holds the sum at Ceiling.",
+      "Split point between the low and mid bands in Multiband mode.",
+      "Split point between the mid and high bands in Multiband mode."
     ],
     "uses": [
       "Final loudness stage in mastering",
@@ -904,7 +936,12 @@
     "slider_desc": [
       "Noise colour: White (flat), Pink (−3 dB/oct) or Brown (−6 dB/oct).",
       "Output level of the noise.",
-      "Correlation between channels: 0% = identical mono noise, 100% = fully independent left and right."
+      "Correlation between channels: 0% = identical mono noise, 100% = fully independent left and right.",
+      "High-pass filter on the noise (12 dB/oct); 20 Hz is off.",
+      "Low-pass filter on the noise (12 dB/oct); 20 kHz is off.",
+      "Makes the noise level follow the input's envelope, so it breathes with the track (100% = silent when the input is silent); 0% keeps it constant.",
+      "Pushes the noise down while the input is loud and lets it back up in the gaps; 0% is off.",
+      "Replace outputs the noise alone (the input is only used for Follow Input and Ducking), Add layers the noise on top of the input."
     ],
     "uses": [
       "Gain staging and monitor calibration",
@@ -1037,7 +1074,7 @@
       "Finding resonances with band Solo",
       "Mastering EQ"
     ],
-    "properties": "Input → five RBJ biquad bands in series (Low Shelf, High Shelf, Peaking, Low Pass, High Pass, Notch, Band Pass or All Pass per band) → Output. Solo replaces the soloed band with a band-pass and mutes the other bands' processing; Gain only affects shelf and peaking types; zero latency.",
+    "properties": "Input → five RBJ biquad bands in series (Low Shelf, High Shelf, Peaking, Low Pass, High Pass, Notch, Band Pass or All Pass per band) → Output. Solo replaces the soloed band with a band-pass and mutes the other bands' processing; Gain only affects shelf and peaking types; zero latency. The GFX and VST3/CLAP interfaces draw a real-time FFT spectrum (4096 points, Hann window, 300 ms fall) behind the EQ curve; the FFT POST / PRE / OFF selector in the display picks the output, the input or none (an interface setting, the audio is unchanged).",
     "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\">\n<defs><linearGradient id=\"icon-5bpeq\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs>\n<path d=\"M 4,44 L 60,44\" stroke=\"url(#icon-5bpeq)\" stroke-width=\"1\" fill=\"none\" stroke-dasharray=\"2,3\" opacity=\"0.3\"/>\n<path d=\"M 4,44 Q 9,36 14,44\" stroke=\"url(#icon-5bpeq)\" stroke-width=\"2.5\" fill=\"none\" stroke-linecap=\"round\"/>\n<path d=\"M 16,44 Q 21,28 26,44\" stroke=\"url(#icon-5bpeq)\" stroke-width=\"2.5\" fill=\"none\" stroke-linecap=\"round\"/>\n<path d=\"M 28,44 Q 33,18 38,44\" stroke=\"url(#icon-5bpeq)\" stroke-width=\"2.5\" fill=\"none\" stroke-linecap=\"round\"/>\n<path d=\"M 40,44 Q 45,26 50,44\" stroke=\"url(#icon-5bpeq)\" stroke-width=\"2.5\" fill=\"none\" stroke-linecap=\"round\"/>\n<path d=\"M 52,44 Q 56,34 60,44\" stroke=\"url(#icon-5bpeq)\" stroke-width=\"2.5\" fill=\"none\" stroke-linecap=\"round\"/>\n</svg>"
   },
   "phaser": {
@@ -1088,7 +1125,10 @@
       "Share of the singer's own fast pitch movement (vibrato) kept around the corrected note",
       "Extra pitch shift in semitones, applied after the correction (formants stay in place)",
       "Pitch detection threshold: higher counts more of the signal as pitched (breathy voices), lower ignores noisy parts",
-      "Dry/wet blend (the dry signal is delayed to stay in time)"
+      "Dry/wet blend (the dry signal is delayed to stay in time)",
+      "What the voice is tuned to: the nearest note of Key and Scale, or the latest held MIDI note (falling back to the scale when no note is held)",
+      "Speed of the added vibrato",
+      "Width of the added vibrato, which fades in on every new note (0 = off)"
     ],
     "uses": [
       "Transparent tuning of lead and backing vocals",
@@ -1316,7 +1356,11 @@
       "Input gain into the saturation stage (up to 4x); in Bitcrush mode it also lowers the bit depth from 8 to 2 bits, in Fold mode it also adds folds.",
       "Tilt EQ on the saturated signal around 800 Hz: negative values darken (lows up, highs down), positive values brighten; 0 dB is flat.",
       "Blend between dry and saturated signal.",
-      "Saturation curve: Tape, Tube, Overdrive, Fuzz, Bitcrush, Waveshaper (hard wavefolding) or Fold (sine wavefolder; Drive sets the fold depth)."
+      "Saturation curve: Tape, Tube, Overdrive, Fuzz, Bitcrush, Waveshaper (hard wavefolding) or Fold (sine wavefolder; Drive sets the fold depth).",
+      "Gain into the saturation stage before Drive, in dB; 0 dB is off.",
+      "Output level after the dry/wet mix, in dB; 0 dB is off.",
+      "Runs the saturation at 2x or 4x the sample rate (linear-phase halfband filters, 31 or 37 samples of latency) so its harmonics do not fold back as aliasing; Off adds no latency.",
+      "Tilt EQ around 800 Hz before the saturation and its exact inverse after it: positive values make the highs distort more, negative values the lows, while the clean tone stays the same; 0 dB is off."
     ],
     "uses": [
       "Warmth and density on buses",
@@ -1558,7 +1602,9 @@
       "Fast pitch wobble of the transport (up to 0.1 ms delay modulation)",
       "Tape hiss level, shaped by the tape speed",
       "Output level",
-      "Dry/wet blend (the dry signal is delayed to stay aligned with the wet path)"
+      "Dry/wet blend (the dry signal is delayed to stay aligned with the wet path)",
+      "Tape formulation: Classic (open reel), Type I (ferric, warm, more hiss), Type II (chrome, more high-frequency headroom, brighter and quieter hiss) or Type IV (metal, cleanest and most extended)",
+      "Cassette-style noise reduction: a compander that boosts quiet highs up to 10 dB before the tape and cuts them after it, lowering the hiss with a slight breathing on loud highs"
     ],
     "uses": [
       "Glue and warmth on the mix bus",
@@ -1627,7 +1673,9 @@
       "Steps per second in Free mode (8 Hz = 16ths at 120 BPM)",
       "Time for the gate to ramp open",
       "Time for the gate to ramp closed",
-      "How far closed steps are turned down (0% = no gating, 100% = silence)"
+      "How far closed steps are turned down (0% = no gating, 100% = silence)",
+      "Chance that an open step actually opens the gate (100% = always, as programmed); lower values thin the pattern out at random",
+      "Picks a different random variation; the same Seed always gives the same choices at the same song position"
     ],
     "uses": [
       "Classic trance-gated pads and supersaws",
@@ -1644,7 +1692,12 @@
     "slider_desc": [
       "Boost or cut applied to transients.",
       "Boost or cut applied to the sustain and body.",
-      "Blend between dry and shaped signal."
+      "Blend between dry and shaped signal.",
+      "How fast the detector reacts: Medium is the original timing, Fast catches shorter clicks, Slow treats longer hits as the attack.",
+      "Lower edge of the band the shaping acts on, so only that part of the signal is detected and shaped (20 Hz = off).",
+      "Upper edge of the band the shaping acts on, e.g. 150 Hz to shape only the kick (20 kHz = off).",
+      "Soft clip on the output that rounds off boosted transients before they reach 0 dBFS.",
+      "Output level after shaping (0 dB = unchanged)."
     ],
     "uses": [
       "Adding punch to kicks and snares",
@@ -1704,7 +1757,10 @@
       "Quantisation bit depth",
       "Sample-and-hold rate reduction",
       "Cutoff of the 12 dB/oct lowpass",
-      "Dry/wet blend (the dry signal is delayed to stay aligned with the wet path)"
+      "Dry/wet blend (the dry signal is delayed to stay aligned with the wet path)",
+      "Turntable speed: sets the wow rate (33 keeps the 0.5 Hz drift, 45 and 78 run it faster), and 78 adds the narrow-band tone of a shellac disc.",
+      "Sparse, louder clicks and pops (a sharp tick with a softer thump) at random intervals, separate from the Crackle.",
+      "Folds the processed record signal to mono, like an old mono pressing."
     ],
     "uses": [
       "Lo-fi hip-hop and chillout textures",
@@ -1747,7 +1803,9 @@
       "How far the shape turns the level down (0% = no effect, 100% = silence at the bottom of the curve)",
       "Smoothing of the volume changes, to keep gates and jumps free of clicks",
       "Moves the shape later in the cycle",
-      "Blend between the shaped and the dry signal"
+      "Blend between the shaped and the dry signal",
+      "What starts the shape: Tempo loops it on the host tempo, MIDI plays it once from the top on every note-on and Sidechain plays it once on every hit of the signal on inputs 3/4",
+      "Level the sidechain signal must rise above to start the shape in Sidechain mode"
     ],
     "uses": [
       "Sidechain-style pumping without a kick or a sidechain route",

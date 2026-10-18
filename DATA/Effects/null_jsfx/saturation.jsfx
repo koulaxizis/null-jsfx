@@ -1,6 +1,6 @@
 desc:NULL Saturation
 author: Christos Koulaxizis
-tags: saturation distortion tape tube overdrive fuzz bitcrush waveshaper wavefolder drive
+tags: saturation distortion tape tube overdrive fuzz bitcrush waveshaper wavefolder drive oversampling emphasis
 //category: Essentials
 //NULL JSFX v2.4 • https://nulljsfx.tech • MIT License
 
@@ -8,6 +8,10 @@ slider1:30<0,100,1>Drive (%)
 slider2:0<-12,12,0.1>Tone (dB)
 slider3:50<0,100,1>Mix (%)
 slider4:0<0,6,1{Tape,Tube,Overdrive,Fuzz,Bitcrush,Waveshaper,Fold}>Mode
+slider5:0<-12,12,0.1>Input (dB)
+slider6:0<-24,12,0.1>Output (dB)
+slider7:0<0,2,1{Off,2x,4x}>Oversampling
+slider8:0<-12,12,0.1>Emphasis (dB)
 
 in_pin:Left
 in_pin:Right
@@ -22,6 +26,179 @@ out_pin:Right
   tone_r = 0;
   tone_alpha = 1 - exp(-2 * 3.14159265358979 * 800 / srate);
 
+  // Input (dB) drives the shaper harder or softer, Output (dB) sets the level after the mix;
+  // both are skipped at 0 dB. Emphasis is a first-order tilt around 800 Hz before the shaper
+  // (highs up and lows down by Emphasis/2 dB, or the reverse) and its exact inverse after it,
+  // so the saturation bites the highs (or the lows) harder while the clean tone stays the
+  // same; skipped at 0 dB. Oversampling runs the shaper at 2x or 4x the sample rate through
+  // the linear-phase halfband FIR stages of NULL Clipper (63 and 23 taps) so its harmonics
+  // do not fold back as aliasing; the dry signal is delayed to match.
+  // Latency (reported to the host): 0, 31 or 37 samples for Off, 2x and 4x.
+  E1 = 0;  D1 = 32;  // stage 1 (63 taps): 32 even-phase taps, x2 for the upsampler
+  E2 = 64; D2 = 76;  // stage 2 (23 taps): 12
+
+  // modified Bessel function I0 (series), for the Kaiser window
+  function bessel_i0(x) local(s, t, k, q)
+  (
+    s = 1; t = 1; k = 1;
+    loop(40,
+      q = x / (2 * k);
+      t *= q * q;
+      s += t;
+      k += 1;
+    );
+    s;
+  );
+
+  // the n = (taps + 1) / 2 nonzero side taps of a halfband lowpass (Kaiser beta), normalised
+  // so they sum to 0.5 (the centre tap is 0.5): e = 2 h for the upsampler, d = h for the
+  // downsampler
+  function hb_design(e, d, taps, beta) local(c, i, dd, a, sg, r, w, s)
+  (
+    c = (taps - 1) / 2;
+    s = 0;
+    i = 0;
+    loop((taps + 1) / 2,
+      dd = 2 * i - c;
+      a = abs(dd);
+      sg = ((a - 1) / 2) % 2 ? -1 : 1;
+      r = 2 * dd / (taps - 1);
+      w = bessel_i0(beta * sqrt(max(0, 1 - r * r))) / bessel_i0(beta);
+      d[i] = sg / ($pi * a) * w;
+      s += d[i];
+      i += 1;
+    );
+    i = 0;
+    loop((taps + 1) / 2,
+      d[i] = 0.5 * d[i] / s;
+      e[i] = 2 * d[i];
+      i += 1;
+    );
+  );
+
+  hb_design(E1, D1, 63, 7.5);
+  hb_design(E2, D2, 23, 8);
+
+  // 2x upsampler, polyphase: one input sample in, hb_o0 (even) and hb_o1 (odd) out.
+  // s[0] = write position, s[1 ..] = the last n inputs, stored twice
+  function hb_up(x, s, e, n, m) local(p, q, acc, i)
+  (
+    p = s[0];
+    p = p > 0 ? p - 1 : n - 1;
+    s[0] = p;
+    q = s + 1 + p;
+    q[0] = x;
+    q[n] = x;
+    acc = 0;
+    i = 0;
+    loop(n, acc += e[i] * q[i]; i += 1;);
+    hb_o0 = acc;
+    hb_o1 = q[m];
+  );
+
+  // 2x downsampler, polyphase: an even and an odd sample in, one sample out.
+  // s[0] = write position, s[1] = position in the odd delay, s[2 ..] = the last n even
+  // samples stored twice, then m + 1 odd samples
+  function hb_down(v0, v1, s, d, n, m) local(p, q, acc, i, o)
+  (
+    p = s[0];
+    p = p > 0 ? p - 1 : n - 1;
+    s[0] = p;
+    q = s + 2 + p;
+    q[0] = v0;
+    q[n] = v0;
+    acc = 0;
+    i = 0;
+    loop(n, acc += d[i] * q[i]; i += 1;);
+    o = s + 2 + 2 * n + s[1];
+    acc += 0.5 * o[0];
+    o[0] = v1;
+    s[1] = s[1] < m ? s[1] + 1 : 0;
+    acc;
+  );
+
+  // per channel: filter states, the sample arrays of each rate, the pad and dry delays
+  function ch_init(b)
+  (
+    this.u1 = b;              // 1 + 64
+    this.u2 = b + 65;         // 1 + 24
+    this.d1 = b + 107;        // 2 + 64 + 16
+    this.d2 = b + 189;        // 2 + 24 + 6
+    this.a1 = b + 244;        // 2
+    this.a2 = b + 246;        // 4
+    this.pd = b + 258;        // 8
+    this.dr = b + 266;        // 64
+  );
+  chl.ch_init(128);
+  chr.ch_init(512);
+  freembuf(896);
+
+  // the shaper for one driven sample: mode sat_mode, drive 0..1
+  function sat_shape(x) local(a, y, bits, quants)
+  (
+    /* MODE 0 - TAPE: Soft clipping (αντί για tanh που δεν υποστηρίζεται) */
+    sat_mode == 0 ? (
+      // the curve x(1 - 0.3|x|) peaks at |x| = 1/0.6; hold it there instead of folding back
+      x = max(-1 / 0.6, min(1 / 0.6, x));
+      y = x * (1 - abs(x) * 0.3);
+    ) : (
+
+      /* MODE 1 - TUBE: Polynomial approximation */
+      sat_mode == 1 ? (
+        y = x - (x * x * x) / 3;
+        y > 1 ? y = 1 : (y < -1 ? y = -1);
+      ) : (
+
+        /* MODE 2 - OVERDRIVE */
+        sat_mode == 2 ? (
+          a = x < 0 ? -x : x;
+          a > 1 ? y = (x < 0 ? -1 : 1) : (y = x);
+          y > 0.5 ? y = 1 - (1 - y) * (1 - y);
+          y < -0.5 ? y = -1 + (1 + y) * (1 + y);
+        ) : (
+
+          /* MODE 3 - FUZZ */
+          sat_mode == 3 ? (
+            a = x < 0 ? -x : x;
+            a > 0.1 ? (x > 0 ? y = 1 : y = -1) : (y = 0);
+          ) : (
+
+            /* MODE 4 - BITCRUSH */
+            sat_mode == 4 ? (
+              bits = 8 - floor(drive * 6);
+              bits < 2 ? bits = 2;
+              quants = pow(2, bits) - 1;
+              y = floor(x * quants + 0.5) / quants;
+            ) : (
+
+              sat_mode == 5 ? (
+                /* MODE 5 - WAVESHAPER */
+                y = x;
+                y > 1 ? y = 2 - y;
+                y < -1 ? y = -2 - y;
+                y > 1 ? y = 2 - y;
+                y < -1 ? y = -2 - y;
+              ) : (
+
+                /* MODE 6 - FOLD: sine wavefolder, Drive adds folds (1x to 2x on top of the drive) */
+                y = sin(x * (1 + drive) * $pi / 2);
+              );
+            );
+          );
+        );
+      );
+    );
+    y;
+  );
+
+  em_xl = em_yl = em_xr = em_yr = 0;
+  de_xl = de_yl = de_xr = de_yr = 0;
+  os_prev = -1;
+  pw = 0;
+  dw = 0;
+  pdc_bot_ch = 0;
+  pdc_top_ch = 2;
+
 @slider
   drive = slider1 / 100;
   mix = slider3 / 100;
@@ -29,84 +206,113 @@ out_pin:Right
   tone_alpha = 1 - exp(-2 * 3.14159265358979 * 800 / srate);
   tone_hi = 10 ^ (slider2 / 40);
   tone_lo = 1 / tone_hi;
+  in_on = slider5 != 0;
+  gin = 10 ^ (slider5 / 20);
+  out_on = slider6 != 0;
+  gout = 10 ^ (slider6 / 20);
+  // Emphasis: H(s) = (hi s + lo w) / (s + w) at w = 2 pi 800 Hz (bilinear, prewarped), lo = 1 / hi
+  em_on = slider8 != 0;
+  em_hi = 10 ^ (slider8 / 40);
+  em_lo = 1 / em_hi;
+  em_t = tan($pi * 800 / srate);
+  em_b0 = em_hi + em_lo * em_t;
+  em_b1 = em_lo * em_t - em_hi;
+  em_a0 = 1 + em_t;
+  em_a1 = em_t - 1;
+  em_on ? 0 : ( em_xl = em_yl = em_xr = em_yr = 0; de_xl = de_yl = de_xr = de_yr = 0; );
+  os = slider7;
+  os < 0.5 ? ( osf = 1; lat = 0; pad = 0; ) :
+  os < 1.5 ? ( osf = 2; lat = 31; pad = 0; ) :
+             ( osf = 4; lat = 37; pad = 2; );
+  pdc_delay = lat;
+  // a new rate starts every filter and delay from silence
+  osf != os_prev ? (
+    memset(128, 0, 768);
+    pw = 0;
+    dw = 0;
+    os_prev = osf;
+  );
 
 @sample
   dry_l = spl0;
   dry_r = spl1;
-  
-  in_l = spl0 * (1 + drive * 3);
-  in_r = spl1 * (1 + drive * 3);
 
-  /* MODE 0 - TAPE: Soft clipping (αντί για tanh που δεν υποστηρίζεται) */
-  sat_mode == 0 ? (
-    // the curve x(1 - 0.3|x|) peaks at |x| = 1/0.6; hold it there instead of folding back
-    in_l = max(-1 / 0.6, min(1 / 0.6, in_l)); in_r = max(-1 / 0.6, min(1 / 0.6, in_r));
-    wet_l = in_l * (1 - abs(in_l) * 0.3);
-    wet_r = in_r * (1 - abs(in_r) * 0.3);
-  ) : (
-    
-    /* MODE 1 - TUBE: Polynomial approximation */
-    sat_mode == 1 ? (
-      wet_l = in_l - (in_l * in_l * in_l) / 3;
-      wet_r = in_r - (in_r * in_r * in_r) / 3;
-      wet_l > 1 ? wet_l = 1 : (wet_l < -1 ? wet_l = -1);
-      wet_r > 1 ? wet_r = 1 : (wet_r < -1 ? wet_r = -1);
-    ) : (
-      
-      /* MODE 2 - OVERDRIVE */
-      sat_mode == 2 ? (
-        a = in_l < 0 ? -in_l : in_l;
-        a > 1 ? wet_l = (in_l < 0 ? -1 : 1) : (wet_l = in_l);
-        wet_l > 0.5 ? wet_l = 1 - (1 - wet_l) * (1 - wet_l);
-        wet_l < -0.5 ? wet_l = -1 + (1 + wet_l) * (1 + wet_l);
-        
-        a = in_r < 0 ? -in_r : in_r;
-        a > 1 ? wet_r = (in_r < 0 ? -1 : 1) : (wet_r = in_r);
-        wet_r > 0.5 ? wet_r = 1 - (1 - wet_r) * (1 - wet_r);
-        wet_r < -0.5 ? wet_r = -1 + (1 + wet_r) * (1 + wet_r);
-      ) : (
-        
-        /* MODE 3 - FUZZ */
-        sat_mode == 3 ? (
-          a = in_l < 0 ? -in_l : in_l;
-          a > 0.1 ? (in_l > 0 ? wet_l = 1 : wet_l = -1) : (wet_l = 0);
-          
-          a = in_r < 0 ? -in_r : in_r;
-          a > 0.1 ? (in_r > 0 ? wet_r = 1 : wet_r = -1) : (wet_r = 0);
-        ) : (
-          
-          /* MODE 4 - BITCRUSH */
-          sat_mode == 4 ? (
-            bits = 8 - floor(drive * 6);
-            bits < 2 ? bits = 2;
-            quants = pow(2, bits) - 1;
-            wet_l = floor(in_l * quants + 0.5) / quants;
-            wet_r = floor(in_r * quants + 0.5) / quants;
-          ) : (
-            
-            sat_mode == 5 ? (
-              /* MODE 5 - WAVESHAPER */
-              wet_l = in_l;
-              wet_l > 1 ? wet_l = 2 - wet_l;
-              wet_l < -1 ? wet_l = -2 - wet_l;
-              wet_l > 1 ? wet_l = 2 - wet_l;
-              wet_l < -1 ? wet_l = -2 - wet_l;
-              
-              wet_r = in_r;
-              wet_r > 1 ? wet_r = 2 - wet_r;
-              wet_r < -1 ? wet_r = -2 - wet_r;
-              wet_r > 1 ? wet_r = 2 - wet_r;
-              wet_r < -1 ? wet_r = -2 - wet_r;
-            ) : (
-              
-              /* MODE 6 - FOLD: sine wavefolder, Drive adds folds (1x to 2x on top of the drive) */
-              wet_l = sin(in_l * (1 + drive) * $pi / 2);
-              wet_r = sin(in_r * (1 + drive) * $pi / 2);
-            );
-          );
-        );
+  in_l = spl0;
+  in_r = spl1;
+  in_on ? (
+    in_l *= gin;
+    in_r *= gin;
+  );
+  em_on ? (
+    // pre-emphasis: (b0 x + b1 x1 - a1 y1) / a0
+    em_v = (em_b0 * in_l + em_b1 * em_xl - em_a1 * em_yl) / em_a0;
+    em_xl = in_l; em_yl = em_v; in_l = em_v;
+    em_v = (em_b0 * in_r + em_b1 * em_xr - em_a1 * em_yr) / em_a0;
+    em_xr = in_r; em_yr = em_v; in_r = em_v;
+  );
+  in_l = in_l * (1 + drive * 3);
+  in_r = in_r * (1 + drive * 3);
+
+  osf > 1 ? (
+    // up to the shaper's rate
+    hb_up(in_l, chl.u1, E1, 32, 15); chl.a1[0] = hb_o0; chl.a1[1] = hb_o1;
+    hb_up(in_r, chr.u1, E1, 32, 15); chr.a1[0] = hb_o0; chr.a1[1] = hb_o1;
+    osf > 2 ? (
+      i = 0;
+      loop(2,
+        hb_up(chl.a1[i], chl.u2, E2, 12, 5); chl.a2[2 * i] = hb_o0; chl.a2[2 * i + 1] = hb_o1;
+        hb_up(chr.a1[i], chr.u2, E2, 12, 5); chr.a2[2 * i] = hb_o0; chr.a2[2 * i + 1] = hb_o1;
+        i += 1;
       );
     );
+    tl = osf > 2 ? chl.a2 : chl.a1;
+    tr = osf > 2 ? chr.a2 : chr.a1;
+    // pad delay (whole latency in samples) and the shaper, at the top rate
+    i = 0;
+    loop(osf,
+      cxl = tl[i];
+      cxr = tr[i];
+      pad > 0 ? (
+        chl.pd[pw] = cxl;
+        chr.pd[pw] = cxr;
+        j = (pw - pad + 8) % 8;
+        cxl = chl.pd[j];
+        cxr = chr.pd[j];
+        pw = (pw + 1) % 8;
+      );
+      tl[i] = sat_shape(cxl);
+      tr[i] = sat_shape(cxr);
+      i += 1;
+    );
+    // back down to the sample rate
+    osf > 2 ? (
+      i = 0;
+      loop(2,
+        chl.a1[i] = hb_down(chl.a2[2 * i], chl.a2[2 * i + 1], chl.d2, D2, 12, 5);
+        chr.a1[i] = hb_down(chr.a2[2 * i], chr.a2[2 * i + 1], chr.d2, D2, 12, 5);
+        i += 1;
+      );
+    );
+    wet_l = hb_down(chl.a1[0], chl.a1[1], chl.d1, D1, 32, 15);
+    wet_r = hb_down(chr.a1[0], chr.a1[1], chr.d1, D1, 32, 15);
+    // dry signal delayed by the latency
+    chl.dr[dw] = dry_l;
+    chr.dr[dw] = dry_r;
+    j = (dw - lat + 64) % 64;
+    dry_l = chl.dr[j];
+    dry_r = chr.dr[j];
+    dw = (dw + 1) % 64;
+  ) : (
+    wet_l = sat_shape(in_l);
+    wet_r = sat_shape(in_r);
+  );
+
+  em_on ? (
+    // de-emphasis, the exact inverse: (a0 y + a1 y1 - b1 x1) / b0
+    em_v = (em_a0 * wet_l + em_a1 * de_yl - em_b1 * de_xl) / em_b0;
+    de_yl = wet_l; de_xl = em_v; wet_l = em_v;
+    em_v = (em_a0 * wet_r + em_a1 * de_yr - em_b1 * de_xr) / em_b0;
+    de_yr = wet_r; de_xr = em_v; wet_r = em_v;
   );
 
   /* Tone: tilt EQ on the wet signal (low band + high band, opposite gains) */
@@ -118,3 +324,7 @@ out_pin:Right
   /* Dry/Wet mix */
   spl0 = dry_l * (1 - mix) + wet_l * mix;
   spl1 = dry_r * (1 - mix) + wet_r * mix;
+  out_on ? (
+    spl0 *= gout;
+    spl1 *= gout;
+  );

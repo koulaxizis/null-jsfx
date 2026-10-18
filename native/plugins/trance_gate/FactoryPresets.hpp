@@ -8,21 +8,26 @@ namespace nullpresets {
 
 struct FactoryPreset {
     const char* name;
-    float values[22];
+    float values[24];
 };
 
 static const FactoryPreset kPresets[] = {
-    { "Default", { 1.0f, 1.0f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 2.0f, 8.0f, 5.0f, 40.0f, 100.0f } },
-    { "Straight Sixteenths", { 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 2.0f, 8.0f, 2.0f, 30.0f, 100.0f } },
-    { "Dotted Gallop", { 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 2.0f, 8.0f, 3.0f, 50.0f, 100.0f } },
-    { "Quarter Pulse Gate", { 1.0f, 1.0f, 1.0f, 0.0f, 1.0f, 1.0f, 1.0f, 0.0f, 1.0f, 1.0f, 1.0f, 0.0f, 1.0f, 1.0f, 1.0f, 0.0f, 0.0f, 2.0f, 8.0f, 5.0f, 40.0f, 100.0f } },
-    { "Soft Pad Pulse", { 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 2.0f, 8.0f, 20.0f, 80.0f, 70.0f } },
-    { "Thirty Second Stutter", { 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 3.0f, 8.0f, 1.0f, 10.0f, 100.0f } },
-    { "Sparse Accent Hits", { 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 2.0f, 8.0f, 2.0f, 80.0f, 100.0f } },
-    { "Offbeat Chop", { 0.0f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f, 2.0f, 8.0f, 3.0f, 30.0f, 100.0f } },
-    { "Free Rate Flutter", { 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 2.0f, 12.0f, 3.0f, 25.0f, 60.0f } },
+    { "Default", { 1.0f, 1.0f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 2.0f, 8.0f, 5.0f, 40.0f, 100.0f, 100.0f, 0.0f } },
+    { "Straight Sixteenths", { 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 2.0f, 8.0f, 2.0f, 30.0f, 100.0f, 100.0f, 0.0f } },
+    { "Dotted Gallop", { 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 2.0f, 8.0f, 3.0f, 50.0f, 100.0f, 100.0f, 0.0f } },
+    { "Quarter Pulse Gate", { 1.0f, 1.0f, 1.0f, 0.0f, 1.0f, 1.0f, 1.0f, 0.0f, 1.0f, 1.0f, 1.0f, 0.0f, 1.0f, 1.0f, 1.0f, 0.0f, 0.0f, 2.0f, 8.0f, 5.0f, 40.0f, 100.0f, 100.0f, 0.0f } },
+    { "Soft Pad Pulse", { 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 2.0f, 8.0f, 20.0f, 80.0f, 70.0f, 100.0f, 0.0f } },
+    { "Thirty Second Stutter", { 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 3.0f, 8.0f, 1.0f, 10.0f, 100.0f, 100.0f, 0.0f } },
+    { "Sparse Accent Hits", { 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 2.0f, 8.0f, 2.0f, 80.0f, 100.0f, 100.0f, 0.0f } },
+    { "Offbeat Chop", { 0.0f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f, 2.0f, 8.0f, 3.0f, 30.0f, 100.0f, 100.0f, 0.0f } },
+    { "Free Rate Flutter", { 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 2.0f, 12.0f, 3.0f, 25.0f, 60.0f, 100.0f, 0.0f } },
+    { "Random Sixteenths", { 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f, 2.0f, 8.0f, 2.0f, 30.0f, 100.0f, 60.0f, 0.0f } },
+    { "Sparse Random Chop", { 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f, 2.0f, 8.0f, 1.0f, 20.0f, 100.0f, 35.0f, 17.0f } },
+    { "Humanized Pulse", { 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 2.0f, 8.0f, 3.0f, 40.0f, 100.0f, 85.0f, 5.0f } },
+    { "Glitchy Thirty Seconds", { 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f, 3.0f, 8.0f, 1.0f, 10.0f, 100.0f, 50.0f, 42.0f } },
+    { "Soft Random Pad", { 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f, 1.0f, 8.0f, 20.0f, 120.0f, 70.0f, 55.0f, 9.0f } },
 };
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
-static constexpr uint32_t kNumValues = 22;
+static constexpr uint32_t kNumValues = 24;
 
 } // namespace nullpresets

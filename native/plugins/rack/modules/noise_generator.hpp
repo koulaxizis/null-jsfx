@@ -40,16 +40,14 @@ public:
     void process(const float* inL, const float* inR, float* outL, float* outR, uint32_t frames,
                  const nulljsfx::ModuleTime&) override
     {
-        // as Plugin.cpp: the input is ignored, the noise is written to the outputs
-        (void)inL;
-        (void)inR;
-        fDsp.process(outL, outR, frames);
+        // as Plugin.cpp: the input feeds Follow Input, Ducking and Mix Mode Add
+        fDsp.process(inL, inR, outL, outR, frames);
     }
 
 private:
     void update()
     {
-        fDsp.setParams(int(std::lround(fV[0])), fV[1], fV[2]);
+        fDsp.setParams(int(std::lround(fV[0])), fV[1], fV[2], fV[3], fV[4], fV[5], fV[6], int(std::lround(fV[7])));
     }
 
     nullnoise::NoiseProcessor fDsp;

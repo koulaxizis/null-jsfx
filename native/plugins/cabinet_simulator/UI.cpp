@@ -13,16 +13,18 @@ START_NAMESPACE_DISTRHO
 static const NullKnobsUI::Control kControls[] = {
     { 0, NullKnobsUI::kSelect, "CABINET", 0, -1, false },
     { 1, NullKnobsUI::kKnob, "MIC POS", 0, -1, false },
-    { 2, NullKnobsUI::kKnob, "LOW CUT", 0, -1, false },
-    { 3, NullKnobsUI::kKnob, "MIX", 0, -1, false },
-    { 4, NullKnobsUI::kKnob, "OUTPUT", 0, -1, true },
+    { 5, NullKnobsUI::kKnob, "MIC 2 POS", 0, -1, false },
+    { 6, NullKnobsUI::kKnob, "MIC BLEND", 0, -1, false },
+    { 2, NullKnobsUI::kKnob, "LOW CUT", 1, -1, false },
+    { 3, NullKnobsUI::kKnob, "MIX", 1, -1, false },
+    { 4, NullKnobsUI::kKnob, "OUTPUT", 1, -1, true },
 };
 
 class UICabinetSimulator : public NullKnobsUI
 {
 public:
     UICabinetSimulator()
-        : NullKnobsUI({ "CABINET SIMULATOR", "ESSENTIALS", 480, 120, nullptr, 1, nullcab::kSliders, nullcab::kNumSliders,
+        : NullKnobsUI({ "CABINET SIMULATOR", "ESSENTIALS", 480, 120, nullptr, 2, nullcab::kSliders, nullcab::kNumSliders,
                         kControls, sizeof(kControls) / sizeof(kControls[0]), false }) {}
 
 protected:
@@ -36,9 +38,9 @@ protected:
         double sr = getSampleRate();
         if (!(sr > 0.0))
             sr = 48000.0;
-        const int cab = std::max(0, std::min(4, int(std::lround(value(0)))));
+        const int cab = std::max(0, std::min(7, int(std::lround(value(0)))));
         nullcab::Setup s;
-        s.compute(cab, value(1), value(2), value(3), value(4), sr);
+        s.compute(cab, value(1), value(2), value(3), value(4), sr, value(5), value(6));
         dashedV(freqX(float(s.lowCut)));
 
         constexpr int n = 404;

@@ -18,13 +18,14 @@ public:
     {
         fDsp.setSampleRate(getSampleRate());
         update();
+        taps.aux[0].store(1.0f, std::memory_order_relaxed);
     }
 
 protected:
     const char* getLabel() const override { return "TranceGate"; }
     const char* getDescription() const override
     {
-        return "16-step rhythmic gate locked to the host tempo (or free-running), with attack, release and depth.";
+        return "16-step rhythmic gate locked to the host tempo (or free-running), with attack, release, depth and a seeded per-step probability.";
     }
     int64_t getUniqueId() const override { return d_cconst('N', '7', 'T', 'g'); }
 
@@ -59,6 +60,7 @@ protected:
         // the current step for the display's playhead, and the tempo for the step duration
         taps.extra.store(float(fDsp.currentStep()), std::memory_order_relaxed);
         taps.gr.store(float(tempo), std::memory_order_relaxed);
+        taps.aux[0].store(fDsp.stepKept() ? 1.0f : 0.0f, std::memory_order_relaxed); // Probability let the step play
     }
 
 private:

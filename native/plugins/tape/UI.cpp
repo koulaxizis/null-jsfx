@@ -13,10 +13,12 @@ START_NAMESPACE_DISTRHO
 static const NullKnobsUI::Control kControls[] = {
     { 0, NullKnobsUI::kKnob, "DRIVE", 0, -1, false },
     { 1, NullKnobsUI::kSelect, "SPEED", 0, -1, false },
+    { 8, NullKnobsUI::kSelect, "TAPE TYPE", 0, -1, false },
     { 2, NullKnobsUI::kKnob, "BUMP", 0, -1, false },
     { 5, NullKnobsUI::kKnob, "HISS", 0, -1, false },
     { 3, NullKnobsUI::kKnob, "WOW", 1, -1, false },
     { 4, NullKnobsUI::kKnob, "FLUTTER", 1, -1, false },
+    { 9, NullKnobsUI::kSelect, "NOISE RED", 1, -1, false },
     { 6, NullKnobsUI::kKnob, "OUTPUT", 1, -1, true },
     { 7, NullKnobsUI::kKnob, "MIX", 1, -1, false },
 };
@@ -36,8 +38,10 @@ protected:
         double sr = getSampleRate();
         if (!(sr > 0.0))
             sr = 48000.0;
+        const int type = std::max(0, std::min(3, int(std::lround(value(8)))));
+        const double satB = nulltape::tapeType(type).satB;
         nulltape::Playback pb;
-        pb.set(sr, int(std::lround(value(1))), nulltape::sliderValue(2, value(2)));
+        pb.set(sr, int(std::lround(value(1))), nulltape::sliderValue(2, value(2)), type);
 
         setPlot(fVX + 26.0f, fVY + 4.0f, fVW - 126.0f, fVH - 20.0f);
         gridFreq(24.0f);
@@ -60,13 +64,13 @@ protected:
         stroke();
         label(fPX + fPW * 0.5f, fPY + fPH + 10.0f, ALIGN_CENTER, 8.0f, 0.0f, theme::kMuted, "TRANSFER");
         const double drive = std::pow(10.0, nulltape::sliderValue(0, value(0)) / 20.0);
-        const double comp = nulltape::satComp(drive);
+        const double comp = nulltape::satComp(drive, satB);
         const int m = std::min(512, int(fPW) + 1);
         for (int i = 0; i < m; ++i)
         {
             const double x = i / double(fPW) * 2.0 - 1.0;
             xs[i] = fPX + float(i);
-            ys[i] = linY(float(nulltape::satCurve(x * drive) * comp), -1.0f, 1.0f);
+            ys[i] = linY(float(nulltape::satCurve(x * drive, satB) * comp), -1.0f, 1.0f);
         }
         curve(xs, ys, m);
     }

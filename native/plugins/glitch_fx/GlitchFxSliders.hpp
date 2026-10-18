@@ -14,8 +14,9 @@
 namespace nullglitch {
 
 static const char* const kOnOff[] = { "OFF", "ON" };
+static const char* const kTriggerOptions[] = { "AUTO", "MIDI" };
 
-// slider1..slider14 of glitch_fx.jsfx, in order
+// slider1..slider15 of glitch_fx.jsfx, in order
 static const DISTRHO::SliderInfo kSliders[] = {
     { "Rate", "rate", 0.1f, 20.0f, 4.0f, "Hz", 0.1f },
     { "Stutter Length", "length", 1.0f, 64.0f, 8.0f, "", 1.0f },
@@ -31,6 +32,7 @@ static const DISTRHO::SliderInfo kSliders[] = {
     { "Grain Size", "grain_size", 10.0f, 500.0f, 200.0f, "ms", 10.0f },
     { "Granular", "granular", 0.0f, 1.0f, 0.0f, "", 1.0f, kOnOff },
     { "Mix", "mix", 0.0f, 100.0f, 50.0f, "%", 1.0f },
+    { "Trigger", "trigger", 0.0f, 1.0f, 0.0f, "", 1.0f, kTriggerOptions },
 };
 static constexpr uint32_t kNumSliders = sizeof(kSliders) / sizeof(kSliders[0]);
 
@@ -56,6 +58,7 @@ inline Params paramsFrom(V value)
     p.grainMs = std::round(value(11));
     p.granular = value(12) >= 0.5f;
     p.mixPct = std::round(value(13));
+    p.midi = value(14) >= 0.5f;
     return p;
 }
 

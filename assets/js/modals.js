@@ -307,7 +307,9 @@ const guides = {
       { name: 'Depth', range: '0 to 100%', desc: 'How far the LFO pushes the signal between left and right; at 0% both sides sit at half level.' },
       { name: 'Mix', range: '0 to 100%', desc: 'Blend between the dry signal and the panned signal.' },
       { name: 'Tempo Sync', range: 'OFF / ON', desc: 'Locks the LFO rate to the project tempo instead of the Rate slider.' },
-      { name: 'Subdivision', range: '1/2 / 1/4 / 1/8 / 1/16', desc: 'LFO cycle length when synced: 1/2 = one sweep every two beats, up to 1/16 = four sweeps per beat.' }
+      { name: 'Subdivision', range: '1/2 / 1/4 / 1/8 / 1/16', desc: 'LFO cycle length when synced: 1/2 = one sweep every two beats, up to 1/16 = four sweeps per beat.' },
+      { name: 'Mode', range: 'SINE / 2 STEPS / 4 STEPS / 8 STEPS / L-C-R / R-C-L', desc: 'SINE sweeps smoothly; the step modes jump between pan positions once per LFO cycle: 2 STEPS (left, right), 4 STEPS (left, center, right, center), 8 STEPS (a stepped sweep) or the L-C-R and R-C-L paths.' },
+      { name: 'Smoothing', range: '0 to 100%', desc: 'In the step modes, how much of each step is spent gliding to the new position (0% = an instant, click-free jump).' }
     ],
     uses: ['Moving pads and synth beds', 'Rhythmic tempo-synced panning on guitars or keys', 'Subtle stereo motion on ambience returns', 'Ping-pong style movement on percussion loops'],
     properties: 'Input → Sine LFO (free or tempo-synced) → opposite gain curves on L and R → Dry/Wet Mix → Output. Each channel keeps its own content (no channel crossfeed) and the effect has zero latency.',
@@ -375,11 +377,13 @@ const guides = {
     subtitle: 'Speaker Cabinet Simulation',
     category: 'Essentials',
     sliders: [
-      { name: 'Cabinet', range: '1x12 Open Back / 2x12 Combo / 4x12 Closed Back / 1x15 Bass / Small Radio', desc: 'Cabinet model: 1x12 Open Back, 2x12 Combo, 4x12 Closed Back, 1x15 Bass or Small Radio.' },
+      { name: 'Cabinet', range: '1x12 Open Back / 2x12 Combo / 4x12 Closed Back / 1x15 Bass / Small Radio / 1x10 Tweed / 2x10 Bass / 4x10 Vintage', desc: 'Cabinet model: 1x12 Open Back, 2x12 Combo, 4x12 Closed Back, 1x15 Bass, Small Radio, 1x10 Tweed, 2x10 Bass or 4x10 Vintage.' },
       { name: 'Mic Position', range: '0 to 100%', desc: '0% = centre of the cone (brighter), 100% = edge (lower roll-off and softer presence).' },
       { name: 'Low Cut', range: '20 to 300 Hz', desc: 'High-pass frequency; it never goes below the selected cabinet\'s own minimum (30–250 Hz).' },
       { name: 'Mix', range: '0 to 100%', desc: 'Blend between dry and cabinet signal.' },
-      { name: 'Output', range: '−12 to +12 dB', desc: 'Final output level.' }
+      { name: 'Output', range: '−12 to +12 dB', desc: 'Final output level.' },
+      { name: 'Mic 2 Position', range: '0 to 100%', desc: 'Position of a second microphone on the same cabinet, from the centre of the cone (0%, bright) to the edge (100%, darker).' },
+      { name: 'Mic Blend', range: '0 to 100%', desc: 'Blend between the first and the second microphone: 0% is the first mic only, 100% the second mic only.' }
     ],
     uses: ['Turning DI guitar or bass into a miked-cab tone', 'Taming fizz after amp sims and distortion', 'Lo-fi small-speaker effects', 'Quick re-amp tones without impulse files'],
     properties: 'Input → high-pass → box resonance, low-mid, mid scoop and presence peaking filters → two cascaded low-pass roll-off stages → Dry/Wet Mix → Output. Filter-based (no impulse responses), identical on both channels; zero latency.',
@@ -476,7 +480,12 @@ const guides = {
     category: 'Essentials',
     sliders: [
       { name: 'Target', range: '4000 to 10000 Hz', desc: 'Centre frequency of the band-pass that isolates the sibilance.' },
-      { name: 'Reduction', range: '−18 to 0 dB', desc: 'Maximum cut applied to that band when sibilance gets loud.' }
+      { name: 'Reduction', range: '−18 to 0 dB', desc: 'Maximum cut applied to that band when sibilance gets loud.' },
+      { name: 'Mode', range: 'Split / Wide', desc: 'Split turns down only the sibilance band; Wide turns down the whole signal by the same amount.' },
+      { name: 'Threshold Mode', range: 'Auto / Manual', desc: 'Auto uses the built-in detection level; Manual uses the Threshold control instead.' },
+      { name: 'Threshold', range: '−60 to 0 dB', desc: 'Level of the sibilance band above which the reduction starts (Manual only).' },
+      { name: 'Range', range: '−18 to 0 dB', desc: 'Caps how far the signal is turned down, while Reduction sets how quickly it gets there (-18 dB = no cap).' },
+      { name: 'Listen', range: 'Off / On', desc: 'Plays only what is being removed, to tune Target and the threshold by ear.' }
     ],
     uses: ['Taming harsh S, T and Ch sounds on vocals', 'Softening sibilant voice-over and podcast speech', 'Reducing hissy cymbal splash on overheads', 'Controlling brittle highs on bright acoustic guitar'],
     properties: 'Input → band-pass at Target (Q 2) → stereo-linked envelope follower (0.5 ms attack, 60 ms release) → band attenuation above a fixed −30 dB threshold, reaching full Reduction 12 dB above it → Output. Only the sibilant band is turned down; zero latency.',
@@ -573,7 +582,7 @@ const guides = {
       { name: 'Attack', range: '0 to 200 ms', desc: 'How fast gain reduction is applied (0 = instant).' },
       { name: 'Release', range: '0 to 1000 ms', desc: 'How fast gain recovers (0 = instant).' },
       { name: 'Makeup', range: '0 to 20 dB', desc: 'Gain added after processing.' },
-      { name: 'Style', range: 'Clean / Bus / FET / Opto', desc: 'Character of the detector: Clean is the transparent original, Bus a smooth glue compressor with auto release, FET a fast and aggressive one with a little harmonic colour, Opto a slow, program-dependent one.' },
+      { name: 'Style', range: 'Clean / Bus / FET / Opto / Upward', desc: 'Character of the detector: Clean is the transparent original, Bus a smooth glue compressor with auto release, FET a fast and aggressive one with a little harmonic colour, Opto a slow, program-dependent one, Upward raises quiet material below the threshold instead of turning loud parts down (up to 24 dB, leaving silence alone).' },
       { name: 'Sidechain HPF', range: '20 to 500 Hz', desc: 'High-pass filter on the detector only, so low end does not drive the gain reduction (20 Hz = off).' },
       { name: 'Mix', range: '0 to 100%', desc: 'Blend of compressed and dry signal for parallel compression (100% = fully compressed).' },
       { name: 'Sidechain', range: 'Internal / External', desc: 'Internal listens to the track itself; External listens to input channels 3/4 (sidechain key).' }
@@ -615,7 +624,15 @@ const guides = {
       { name: 'Cutoff', range: '20 to 20000 Hz', desc: 'Cutoff (or centre) frequency of the filter.' },
       { name: 'Resonance', range: '0.1 to 10', desc: 'Q of the filter; higher values add a resonant peak at the cutoff (narrower band in Band Pass and Notch).' },
       { name: 'Gain', range: '−12 to +12 dB', desc: 'Output level after the filter.' },
-      { name: 'Mode', range: 'Low Pass / High Pass / Band Pass / Notch', desc: 'Filter response: Low Pass, High Pass, Band Pass (unity peak) or Notch.' }
+      { name: 'Mode', range: 'Low Pass / High Pass / Band Pass / Notch', desc: 'Filter response: Low Pass, High Pass, Band Pass (unity peak) or Notch.' },
+      { name: 'Slope', range: '12 dB / 24 dB', desc: 'Filter steepness: 12 dB/oct (one state-variable stage) or 24 dB/oct (a second Butterworth stage in the same mode).' },
+      { name: 'Drive', range: '0 to 100%', desc: 'Soft saturation of the input before the filter, for a warmer, growlier sound; 0% is off.' },
+      { name: 'LFO Rate', range: '0.05 to 20 Hz', desc: 'Speed of the cutoff LFO in Hz when LFO Sync is off.' },
+      { name: 'LFO Sync', range: 'Off / 1/1 / 1/2 / 1/4 / 1/8 / 1/16 / 1/4T / 1/8T / 1/4D / 1/8D', desc: 'Locks the LFO to the host tempo as a note value (1/1 to 1/16, triplet or dotted); while the transport plays, the LFO follows the beat.' },
+      { name: 'LFO Depth', range: '0 to 4 oct', desc: 'How far the LFO sweeps the cutoff up and down, in octaves; 0 turns it off.' },
+      { name: 'Envelope Depth', range: '−4 to +4 oct', desc: 'How far the cutoff follows the input level, in octaves (positive opens it, negative closes it on loud parts) for auto-wah effects; 0 turns it off.' },
+      { name: 'Env Attack', range: '1 to 200 ms', desc: 'How fast the envelope follower reacts to rising input level.' },
+      { name: 'Env Release', range: '10 to 2000 ms', desc: 'How fast the envelope follower falls back when the input gets quieter.' }
     ],
     uses: ['Taking the top end off harsh sources', 'Thinning out the low end with High Pass', 'Filter sweeps via automation', 'Telephone and radio tones with Band Pass', 'Cutting a single resonance with Notch'],
     properties: 'Input → 2-pole (12 dB/oct) state-variable filter (low-pass, high-pass, band-pass and notch from the same structure) → Gain → Output. Stable under fast automation; zero latency.',
@@ -654,7 +671,12 @@ const guides = {
       { name: 'Attack', range: '1 to 100 ms', desc: 'How fast the gate opens.' },
       { name: 'Release', range: '50 to 1000 ms', desc: 'How fast the gate closes once the signal drops.' },
       { name: 'Sidechain HPF', range: '0 to 500 Hz', desc: 'High-pass on the detector only, so low-end rumble or bleed does not open the gate (0 = off).' },
-      { name: 'Range', range: '−80 to 0 dB', desc: 'How far the gate turns the signal down when closed: −80 dB closes fully, higher values only duck it (0 dB = no gating).' }
+      { name: 'Range', range: '−80 to 0 dB', desc: 'How far the gate turns the signal down when closed: −80 dB closes fully, higher values only duck it (0 dB = no gating).' },
+      { name: 'Hold', range: '0 to 500 ms', desc: 'How long the gate stays open after the signal drops below the threshold, before the release starts.' },
+      { name: 'Lookahead', range: '0 to 10 ms', desc: 'Delays the audio so the gate opens just before each hit and keeps the attack intact (adds that much latency; 0 = off).' },
+      { name: 'Sidechain', range: 'Internal / External', desc: 'Internal listens to the track itself; External listens to input channels 3/4 (sidechain key).' },
+      { name: 'Sidechain LPF', range: '1000 to 20000 Hz', desc: 'Low-pass on the detector only, so hi-hats or cymbals do not open the gate (20 kHz = off).' },
+      { name: 'Flip', range: 'Off / On', desc: 'Turns the gate into a ducker: the signal is turned down by Range while the detector is above the threshold.' }
     ],
     uses: ['Removing noise between vocal phrases', 'Cutting bleed on tom and snare mics', 'Cleaning amp hiss between guitar parts', 'Tightening drum tails'],
     properties: 'Input → optional one-pole high-pass on the detector → stereo-linked peak envelope → open/close against Threshold with attack/release smoothing → closed gain set by Range → Output. Zero latency.',
@@ -693,7 +715,11 @@ const guides = {
       { name: 'Output Gain', range: '−12 to 0 dB', desc: 'Trim after limiting (cut only, −12 to 0 dB), so the output never exceeds Ceiling; use Input Gain to make it louder.' },
       { name: 'Stereo Link', range: 'OFF / ON', desc: 'ON uses one gain for both channels to keep the image stable; OFF limits each channel independently.' },
       { name: 'Dither', range: 'OFF / 16-BIT / 24-BIT', desc: 'Last in the chain: OFF, or TPDF dither and rounding to 16-bit (CD) or 24-bit; use it only when the output goes straight to a file of that bit depth.' },
-      { name: 'Noise Shaping', range: 'OFF / ON', desc: 'ON feeds the rounding error back (first order), moving the dither noise up the spectrum where the ear is less sensitive. Works only with Dither on.' }
+      { name: 'Noise Shaping', range: 'OFF / ON', desc: 'ON feeds the rounding error back (first order), moving the dither noise up the spectrum where the ear is less sensitive. Works only with Dither on.' },
+      { name: 'Character', range: 'CLEAN / PUNCHY / WARM', desc: 'Shapes the signal before the limiter: CLEAN leaves it alone, PUNCHY soft-clips only the peaks above Ceiling so the limiter pumps less on transients, WARM saturates gently for a denser, rounder sound.' },
+      { name: 'Multiband', range: 'OFF / ON', desc: 'ON splits the signal into three bands that are limited on their own (a quarter linked), so a loud bass no longer pushes down the mids and highs; the look-ahead limiter then holds the sum at Ceiling.' },
+      { name: 'Low Crossover', range: '50 to 500 Hz', desc: 'Split point between the low and mid bands in Multiband mode.' },
+      { name: 'High Crossover', range: '1000 to 12000 Hz', desc: 'Split point between the mid and high bands in Multiband mode.' }
     ],
     uses: ['Final loudness stage in mastering', 'Raising stems and bounces to a target level', 'Peak control on buses', 'Dithered 16-bit masters for CD'],
     properties: 'Input Gain → held peak detector + look-ahead delay → gain reduction to Ceiling → clamp at Ceiling → Output Gain trim (≤ 0 dB) → optional TPDF dither and rounding to 16 or 24 bits, with optional first-order noise shaping → Output. Latency equals Lookahead (0–5 ms), reported to REAPER for delay compensation.',
@@ -761,7 +787,12 @@ const guides = {
     sliders: [
       { name: 'Type', range: 'White / Pink / Brown', desc: 'Noise colour: White (flat), Pink (−3 dB/oct) or Brown (−6 dB/oct).' },
       { name: 'Level', range: '−60 to 0 dB', desc: 'Output level of the noise.' },
-      { name: 'Stereo Width', range: '0 to 100%', desc: 'Correlation between channels: 0% = identical mono noise, 100% = fully independent left and right.' }
+      { name: 'Stereo Width', range: '0 to 100%', desc: 'Correlation between channels: 0% = identical mono noise, 100% = fully independent left and right.' },
+      { name: 'Low Cut', range: '20 to 2000 Hz', desc: 'High-pass filter on the noise (12 dB/oct); 20 Hz is off.' },
+      { name: 'High Cut', range: '500 to 20000 Hz', desc: 'Low-pass filter on the noise (12 dB/oct); 20 kHz is off.' },
+      { name: 'Follow Input', range: '0 to 100%', desc: 'Makes the noise level follow the input\'s envelope, so it breathes with the track (100% = silent when the input is silent); 0% keeps it constant.' },
+      { name: 'Ducking', range: '0 to 100%', desc: 'Pushes the noise down while the input is loud and lets it back up in the gaps; 0% is off.' },
+      { name: 'Mix Mode', range: 'Replace / Add', desc: 'Replace outputs the noise alone (the input is only used for Follow Input and Ducking), Add layers the noise on top of the input.' }
     ],
     uses: ['Gain staging and monitor calibration', 'Testing filters and EQs', 'Sound design layers for risers and sweeps', 'Masking or ambience beds'],
     properties: 'Random generator → colour filter (Pink: multi-pole filter bank; Brown: leaky integrator) → Level → Stereo Width → Output. The input is replaced by the noise, not mixed with it.',
@@ -839,7 +870,7 @@ const guides = {
       { name: 'Ultra High Mode', range: 'Active / Bypass / Solo', desc: 'Active, Bypass, or Solo (hear only this band\'s region).' }
     ],
     uses: ['Surgical cuts of problem frequencies', 'Broad tonal shaping with shelves', 'High-pass and low-pass cleanup', 'Finding resonances with band Solo', 'Mastering EQ'],
-    properties: 'Input → five RBJ biquad bands in series (Low Shelf, High Shelf, Peaking, Low Pass, High Pass, Notch, Band Pass or All Pass per band) → Output. Solo replaces the soloed band with a band-pass and mutes the other bands\' processing; Gain only affects shelf and peaking types; zero latency.',
+    properties: 'Input → five RBJ biquad bands in series (Low Shelf, High Shelf, Peaking, Low Pass, High Pass, Notch, Band Pass or All Pass per band) → Output. Solo replaces the soloed band with a band-pass and mutes the other bands\' processing; Gain only affects shelf and peaking types; zero latency. The GFX and VST3/CLAP interfaces draw a real-time FFT spectrum (4096 points, Hann window, 300 ms fall) behind the EQ curve; the FFT POST / PRE / OFF selector in the display picks the output, the input or none (an interface setting, the audio is unchanged).',
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
     shot: 'assets/img/gfx/parametric_eq.png',
     video: 'assets/video/parametric_eq.mp4',
@@ -933,7 +964,11 @@ const guides = {
       { name: 'Drive', range: '0 to 100%', desc: 'Input gain into the saturation stage (up to 4x); in Bitcrush mode it also lowers the bit depth from 8 to 2 bits, in Fold mode it also adds folds.' },
       { name: 'Tone', range: '−12 to +12 dB', desc: 'Tilt EQ on the saturated signal around 800 Hz: negative values darken (lows up, highs down), positive values brighten; 0 dB is flat.' },
       { name: 'Mix', range: '0 to 100%', desc: 'Blend between dry and saturated signal.' },
-      { name: 'Mode', range: 'Tape / Tube / Overdrive / Fuzz / Bitcrush / Waveshaper / Fold', desc: 'Saturation curve: Tape, Tube, Overdrive, Fuzz, Bitcrush, Waveshaper (hard wavefolding) or Fold (sine wavefolder; Drive sets the fold depth).' }
+      { name: 'Mode', range: 'Tape / Tube / Overdrive / Fuzz / Bitcrush / Waveshaper / Fold', desc: 'Saturation curve: Tape, Tube, Overdrive, Fuzz, Bitcrush, Waveshaper (hard wavefolding) or Fold (sine wavefolder; Drive sets the fold depth).' },
+      { name: 'Input', range: '−12 to +12 dB', desc: 'Gain into the saturation stage before Drive, in dB; 0 dB is off.' },
+      { name: 'Output', range: '−24 to +12 dB', desc: 'Output level after the dry/wet mix, in dB; 0 dB is off.' },
+      { name: 'Oversampling', range: 'Off / 2x / 4x', desc: 'Runs the saturation at 2x or 4x the sample rate (linear-phase halfband filters, 31 or 37 samples of latency) so its harmonics do not fold back as aliasing; Off adds no latency.' },
+      { name: 'Emphasis', range: '−12 to +12 dB', desc: 'Tilt EQ around 800 Hz before the saturation and its exact inverse after it: positive values make the highs distort more, negative values the lows, while the clean tone stays the same; 0 dB is off.' }
     ],
     uses: ['Warmth and density on buses', 'Fuzz and overdrive on guitars and bass', 'Bit-crushed lo-fi textures', 'Wavefolded synth tones'],
     properties: 'Input → Drive → selected curve (Fold: a sine wavefolder whose depth grows with Drive) → Tone tilt EQ (one-pole split at 800 Hz, ±Tone/2 dB on each side) on the wet signal → Dry/Wet Mix → Output. No oversampling; zero latency.',
@@ -990,7 +1025,9 @@ const guides = {
       { name: 'Flutter', range: '0 to 100%', desc: 'Fast pitch wobble of the transport (up to 0.1 ms delay modulation)' },
       { name: 'Hiss', range: '0 to 100%', desc: 'Tape hiss level, shaped by the tape speed' },
       { name: 'Output', range: '−12 to +12 dB', desc: 'Output level' },
-      { name: 'Mix', range: '0 to 100%', desc: 'Dry/wet blend (the dry signal is delayed to stay aligned with the wet path)' }
+      { name: 'Mix', range: '0 to 100%', desc: 'Dry/wet blend (the dry signal is delayed to stay aligned with the wet path)' },
+      { name: 'Tape Type', range: 'Classic / Type I / Type II / Type IV', desc: 'Tape formulation: Classic (open reel), Type I (ferric, warm, more hiss), Type II (chrome, more high-frequency headroom, brighter and quieter hiss) or Type IV (metal, cleanest and most extended)' },
+      { name: 'Noise Reduction', range: 'Off / On', desc: 'Cassette-style noise reduction: a compander that boosts quiet highs up to 10 dB before the tape and cuts them after it, lowering the hiss with a slight breathing on loud highs' }
     ],
     uses: ['Glue and warmth on the mix bus', 'Rounder low end and softer transients on drums and bass', 'Lo-fi, cassette-like wobble with Wow and Flutter turned up', 'Subtle analog colour on vocals and acoustic tracks'],
     properties: 'Signal chain: Input → Wow/Flutter Modulated Delay (3 ms centre, cubic interpolation) → Pre-Emphasis → Drive → Asymmetric Saturation with memory (hysteresis-like) → De-Emphasis → Low Cut + Head Bump → Hiss → High-Frequency Loss → Mix → Output. The hiss is an exact Park-Miller generator. The dry signal is delayed by the same 3 ms, and the 3 ms latency is reported to the host for delay compensation.',
@@ -1006,7 +1043,12 @@ const guides = {
     sliders: [
       { name: 'Attack', range: '−20 to +20 dB', desc: 'Boost or cut applied to transients.' },
       { name: 'Sustain', range: '−20 to +20 dB', desc: 'Boost or cut applied to the sustain and body.' },
-      { name: 'Mix', range: '0 to 100%', desc: 'Blend between dry and shaped signal.' }
+      { name: 'Mix', range: '0 to 100%', desc: 'Blend between dry and shaped signal.' },
+      { name: 'Speed', range: 'Fast / Medium / Slow', desc: 'How fast the detector reacts: Medium is the original timing, Fast catches shorter clicks, Slow treats longer hits as the attack.' },
+      { name: 'Focus Low', range: '20 to 20000 Hz', desc: 'Lower edge of the band the shaping acts on, so only that part of the signal is detected and shaped (20 Hz = off).' },
+      { name: 'Focus High', range: '20 to 20000 Hz', desc: 'Upper edge of the band the shaping acts on, e.g. 150 Hz to shape only the kick (20 kHz = off).' },
+      { name: 'Output Clip', range: 'Off / On', desc: 'Soft clip on the output that rounds off boosted transients before they reach 0 dBFS.' },
+      { name: 'Output', range: '−12 to +12 dB', desc: 'Output level after shaping (0 dB = unchanged).' }
     ],
     uses: ['Adding punch to kicks and snares', 'Shortening room ring on drums', 'Bringing out pick attack on guitars', 'Softening harsh transients'],
     properties: 'Input → stereo-linked fast (1/20 ms) and slow (20/150 ms) envelopes → transient amount from their difference → gain blend of Attack and Sustain → Dry/Wet Mix → Output. Level-independent, no threshold; zero latency.',
@@ -1061,7 +1103,9 @@ const guides = {
       { name: 'Depth', range: '0 to 100%', desc: 'How far the shape turns the level down (0% = no effect, 100% = silence at the bottom of the curve)' },
       { name: 'Smooth', range: '0 to 30 ms', desc: 'Smoothing of the volume changes, to keep gates and jumps free of clicks' },
       { name: 'Phase', range: '0 to 100%', desc: 'Moves the shape later in the cycle' },
-      { name: 'Mix', range: '0 to 100%', desc: 'Blend between the shaped and the dry signal' }
+      { name: 'Mix', range: '0 to 100%', desc: 'Blend between the shaped and the dry signal' },
+      { name: 'Trigger', range: 'Tempo / MIDI / Sidechain', desc: 'What starts the shape: Tempo loops it on the host tempo, MIDI plays it once from the top on every note-on and Sidechain plays it once on every hit of the signal on inputs 3/4' },
+      { name: 'Threshold', range: '−60 to 0 dB', desc: 'Level the sidechain signal must rise above to start the shape in Sidechain mode' }
     ],
     uses: ['Sidechain-style pumping without a kick or a sidechain route', 'Trance gates and stutters on pads, chords and vocals', 'Rhythmic tremolo with saw, sine or triangle shapes', 'Ducking a bass under the kick on every beat'],
     properties: 'Signal chain: Input → Gain × (1 − Depth × (1 − Shape)) → One-pole Smoothing → Dry/Wet Mix → Output. The shapes are breakpoint curves over one cycle; the cycle follows the host tempo and, while the transport plays, is read from the song position so it stays locked to the grid; stopped, it free-runs at the host tempo. Half-time Pump spans two Rate notes. Stereo-linked, zero latency.',
@@ -1077,7 +1121,7 @@ const guides = {
     subtitle: 'Guitar & Bass Amp, No Cabinet',
     category: 'Advanced',
     sliders: [
-      { name: 'Model', range: 'Clean / Crunch / Lead / Bass', desc: 'Amp voicing: Clean (2 stages, Fender stack), Crunch (3 stages, Marshall stack), Lead (4 stages, tight lows) or Bass (2 stages, deep stack).' },
+      { name: 'Model', range: 'Clean / Crunch / Lead / Bass / Jazz Clean / British / Modern High Gain / Fuzz', desc: 'Amp voicing: Clean (2 stages, Fender stack), Crunch (3 stages, Marshall stack), Lead (4 stages, tight lows), Bass (2 stages, deep stack), Jazz Clean (dark, lots of headroom), British (looser, brighter crunch), Modern High Gain (4 tight stages, scooped) or Fuzz (hard-biased, huge gain).' },
       { name: 'Gain', range: '0 to 10', desc: 'Preamp drive into the first tube stage; the range depends on the model (up to +46 dB on Lead).' },
       { name: 'Bass', range: '0 to 10', desc: 'Tone stack bass control (audio taper). Bass, Mid and Treble interact like a real passive tone stack.' },
       { name: 'Mid', range: '0 to 10', desc: 'Tone stack mid control; low values give the classic mid scoop.' },
@@ -1087,7 +1131,8 @@ const guides = {
       { name: 'Bright', range: 'Off / On', desc: 'Bright switch: a treble boost before the preamp that is strongest at low Gain, like a bright cap.' },
       { name: 'Sag', range: '0 to 100%', desc: 'Power supply sag: the power amp\'s drive drops as the level rises, for a softer, compressed feel.' },
       { name: 'Oversampling', range: '2x / 4x', desc: '2x or 4x oversampling of the nonlinear stages (polyphase IIR half-band filters, no latency).' },
-      { name: 'Output', range: '−24 to +12 dB', desc: 'Final output level.' }
+      { name: 'Output', range: '−24 to +12 dB', desc: 'Final output level.' },
+      { name: 'Noise Gate', range: '−90 to −20 dB', desc: 'Noise gate keyed from the input: below the threshold the amp\'s output fades out (6 dB hysteresis, 30 ms hold); -90 dB turns it off.' }
     ],
     uses: ['Turning DI guitar into a clean, crunch or lead amp tone (add Cabinet Simulator after it)', 'Bass amp grit and growl on DI bass', 'Re-amping recorded DI tracks', 'Driving synths, drums or vocals through a tube amp character'],
     properties: 'Input → tight high-pass → Bright shelf → 2x/4x oversampling: 2–4 asymmetric inverting triode stages, each with coupling-cap high-pass and Miller low-pass → passive Fender/Marshall tone stack (Yeh\'s third-order model) → power amp resonance and Presence → push-pull soft clipper with supply sag → downsampling → DC blocker → Output. No cabinet; zero latency.',
@@ -1185,7 +1230,8 @@ const guides = {
       { name: 'Tape Stop', range: 'OFF / ON', desc: 'Enables tape stops, triggered on about 30% of events' },
       { name: 'Grain Size', range: '10 to 500 ms', desc: 'Length of the Hann-windowed grain looped instead of the full slice' },
       { name: 'Granular', range: 'OFF / ON', desc: 'Loops a short windowed grain instead of the whole slice, or with Stutter off turns the live signal into overlapping grains' },
-      { name: 'Mix', range: '0 to 100%', desc: 'Dry/wet blend' }
+      { name: 'Mix', range: '0 to 100%', desc: 'Dry/wet blend' },
+      { name: 'Trigger', range: 'Auto / MIDI', desc: 'What plays the effects: Auto rolls them at Rate with the switches and chances, MIDI plays them while notes C3 to F3 are held (Stutter, Gate, Pitch Shift, Reverse, Tape Stop, Granular) with the velocity setting how much is mixed in' }
     ],
     uses: ['Beat-repeat and stutter fills on drums', 'Random reverse and tape-stop transitions', 'Granular buzz and freeze textures on vocals', 'Chopped, gated rhythmic effects on pads', 'Live performance glitching via automation'],
     properties: 'Signal chain: Input → 4 s Ring Buffer → Event Clock (Rate) → Slice Loop (Stutter / Granular grain, Reverse, Pitch, Tape Stop) or, with Stutter off, live processing (reversed chunks, two overlapping Hann grains, varispeed pitch / tape stop) → Gate → Mix → Output. Every effect works on its own; slice length follows host tempo; loop seams get 3 ms fades; zero latency.',
@@ -1228,7 +1274,11 @@ const guides = {
       { name: 'Detune', range: '0 to 30 cents', desc: 'Opposite detune of the two voices for a natural, separate-performer feel' },
       { name: 'Delay', range: '0 to 80 ms', desc: 'Delay of the voices (voice 2 is delayed 1.37× longer)' },
       { name: 'Spread', range: '0 to 100%', desc: 'Pans voice 1 left and voice 2 right' },
-      { name: 'Mix', range: '0 to 100%', desc: 'Equal-power dry/wet: 0% = original only, 50% = both at −3 dB, 100% = harmony voices only' }
+      { name: 'Mix', range: '0 to 100%', desc: 'Equal-power dry/wet: 0% = original only, 50% = both at −3 dB, 100% = harmony voices only' },
+      { name: 'Mode', range: 'Semitones / Scale / MIDI', desc: 'How the voices find their notes: Semitones uses the fixed intervals, Scale turns the intervals into steps of the chosen key and scale above or below the note you sing (so harmonies stay in key), MIDI makes the voices sing the notes you hold on a MIDI keyboard' },
+      { name: 'Key', range: 'C / C# / D / D# / E / F / F# / G / G# / A / A# / B', desc: 'Key of the scale used in Scale mode' },
+      { name: 'Scale', range: 'Major / Minor / Dorian / Mixolydian / Harmonic Minor / Pentatonic Major / Pentatonic Minor', desc: 'Scale used in Scale mode: Major, Minor, Dorian, Mixolydian, Harmonic Minor, Pentatonic Major or Pentatonic Minor' },
+      { name: 'Formant Preserve', range: 'Off / On', desc: 'Shifts the voices with pitch-synchronous grains that keep the character of the vowels instead of the chipmunk effect (the voices come about 40 ms later)' }
     ],
     uses: ['Instant backing vocal harmonies', 'Thirds and fifths on lead lines', 'Octave doubling on guitars and synths', 'Wide stereo harmony beds'],
     properties: 'Signal chain: Input (summed to mono) → 2 Crossfading Delay-Line Pitch Shifters (50 ms window) → Detune + Delay → Equal-Power Spread → Equal-Power Dry/Wet Mix → Output. Fixed intervals (no key detection); Mix at 100% outputs only the harmony for printing to its own track; zero latency.',
@@ -1347,7 +1397,10 @@ const guides = {
       { name: 'Humanize', range: '0 to 100%', desc: 'Share of the singer\'s own fast pitch movement (vibrato) kept around the corrected note' },
       { name: 'Transpose', range: '−12 to +12 semitones', desc: 'Extra pitch shift in semitones, applied after the correction (formants stay in place)' },
       { name: 'Sensitivity', range: '0 to 100%', desc: 'Pitch detection threshold: higher counts more of the signal as pitched (breathy voices), lower ignores noisy parts' },
-      { name: 'Mix', range: '0 to 100%', desc: 'Dry/wet blend (the dry signal is delayed to stay in time)' }
+      { name: 'Mix', range: '0 to 100%', desc: 'Dry/wet blend (the dry signal is delayed to stay in time)' },
+      { name: 'Target', range: 'Scale / MIDI', desc: 'What the voice is tuned to: the nearest note of Key and Scale, or the latest held MIDI note (falling back to the scale when no note is held)' },
+      { name: 'Vibrato Rate', range: '0 to 10 Hz', desc: 'Speed of the added vibrato' },
+      { name: 'Vibrato Depth', range: '0 to 100 cents', desc: 'Width of the added vibrato, which fades in on every new note (0 = off)' }
     ],
     uses: ['Transparent tuning of lead and backing vocals', 'Hard-tune “T-Pain” robot vocal effect (Retune 0 ms)', 'Forcing a vocal or monophonic instrument onto a key and scale', 'Formant-preserving transposition of a sung line'],
     properties: 'Signal chain: Input → mono 50 Hz high-pass + 1.2 kHz 4th-order low-pass, decimated to ~11 kHz → YIN pitch tracker (70 Hz to 1 kHz, new estimate every ~6 ms, Sensitivity = threshold) → nearest Key/Scale note with hysteresis → Retune glide + Humanize (vibrato kept) → TD-PSOLA shifter (peak-aligned pitch marks, two-period Hann grains, formants preserved; stereo kept) → Dry/Wet Mix → Output. Monophonic sources only; unvoiced sounds pass with the transpose only; latency about 39 ms, reported to the host (PDC).',
@@ -1606,7 +1659,9 @@ const guides = {
       { name: 'Free Rate', range: '0.5 to 40 Hz', desc: 'Steps per second in Free mode (8 Hz = 16ths at 120 BPM)' },
       { name: 'Attack', range: '1 to 100 ms', desc: 'Time for the gate to ramp open' },
       { name: 'Release', range: '10 to 500 ms', desc: 'Time for the gate to ramp closed' },
-      { name: 'Gate Depth', range: '0 to 100%', desc: 'How far closed steps are turned down (0% = no gating, 100% = silence)' }
+      { name: 'Gate Depth', range: '0 to 100%', desc: 'How far closed steps are turned down (0% = no gating, 100% = silence)' },
+      { name: 'Probability', range: '0 to 100%', desc: 'Chance that an open step actually opens the gate (100% = always, as programmed); lower values thin the pattern out at random' },
+      { name: 'Seed', range: '0 to 999', desc: 'Picks a different random variation; the same Seed always gives the same choices at the same song position' }
     ],
     uses: ['Classic trance-gated pads and supersaws', 'Rhythmic chopping of sustained chords', 'Stutter-like patterns on vocals', 'Turning drones into sequenced rhythms'],
     properties: 'Signal chain: Input → 16-Step Sequencer → Linear Attack/Release Gain Ramp × Depth → Output. In Sync mode the step clock follows the host tempo and, while the transport plays, is read from the song position so step 1 lands on every bar; when stopped it free-runs at the host tempo. Free mode runs at a fixed rate in steps per second. Stereo-linked, zero latency.',
@@ -1627,7 +1682,10 @@ const guides = {
       { name: 'Bit Depth', range: '4 to 16', desc: 'Quantisation bit depth' },
       { name: 'Sample Rate', range: '2000 to 44100 Hz', desc: 'Sample-and-hold rate reduction' },
       { name: 'Lowpass Freq', range: '1000 to 20000 Hz', desc: 'Cutoff of the 12 dB/oct lowpass' },
-      { name: 'Mix', range: '0 to 100%', desc: 'Dry/wet blend (the dry signal is delayed to stay aligned with the wet path)' }
+      { name: 'Mix', range: '0 to 100%', desc: 'Dry/wet blend (the dry signal is delayed to stay aligned with the wet path)' },
+      { name: 'RPM', range: '33 / 45 / 78', desc: 'Turntable speed: sets the wow rate (33 keeps the 0.5 Hz drift, 45 and 78 run it faster), and 78 adds the narrow-band tone of a shellac disc.' },
+      { name: 'Scratches', range: '0 to 100%', desc: 'Sparse, louder clicks and pops (a sharp tick with a softer thump) at random intervals, separate from the Crackle.' },
+      { name: 'Mono', range: 'Off / On', desc: 'Folds the processed record signal to mono, like an old mono pressing.' }
     ],
     uses: ['Lo-fi hip-hop and chillout textures', 'Make samples sound like old records', 'Nostalgic, worn character on pianos and vocals', 'Degraded radio or memory effects'],
     properties: 'Signal chain: Input → Wow/Flutter Modulated Delay (50 ms centre) → Bitcrush → Downsample → 2-Pole Lowpass → Crackle → Noise → Mix → Output. The dry signal is delayed by the same 50 ms so any Mix setting blends in phase (no slapback); the 50 ms latency is reported to the host for delay compensation.',

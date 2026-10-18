@@ -6,5 +6,10 @@
   ["Bus Peak Control", {"Input Gain": 0, "Ceiling": -1.0, "Release": 80, "Lookahead": 3}],
   ["Stem Level Up", {"Input Gain": 4, "Ceiling": -0.3, "Release": 50, "Lookahead": 2, "Stereo Link": "OFF"}],
   ["CD Master 16 Bit", {"Input Gain": 4, "Ceiling": -0.3, "Release": 80, "Lookahead": 5, "Dither": "16-BIT", "Noise Shaping": "ON"}],
-  ["Bounce 24 Bit", {"Input Gain": 3, "Ceiling": -1.0, "Release": 80, "Lookahead": 5, "Dither": "24-BIT"}]
+  ["Bounce 24 Bit", {"Input Gain": 3, "Ceiling": -1.0, "Release": 80, "Lookahead": 5, "Dither": "24-BIT"}],
+  ["Punchy Loud Master", {"Input Gain": 7, "Ceiling": -1.0, "Release": 60, "Lookahead": 5, "Character": "PUNCHY"}],
+  ["Warm Master", {"Input Gain": 4, "Ceiling": -1.0, "Release": 100, "Lookahead": 5, "Character": "WARM"}],
+  ["Multiband Master", {"Input Gain": 5, "Ceiling": -1.0, "Release": 80, "Lookahead": 5, "Multiband": "ON"}],
+  ["Bass Heavy Multiband", {"Input Gain": 6, "Ceiling": -1.0, "Release": 100, "Lookahead": 5, "Multiband": "ON", "Low Crossover": 120, "High Crossover": 5000}],
+  ["Punchy Multiband Club", {"Input Gain": 8, "Ceiling": -0.5, "Release": 40, "Lookahead": 3, "Character": "PUNCHY", "Multiband": "ON", "Low Crossover": 150, "High Crossover": 4000}]
 ]

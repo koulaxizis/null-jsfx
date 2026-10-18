@@ -10,6 +10,9 @@
  * ln10 is the JSFX's truncated 2.302585, kept for an exact match. Every operation follows the
  * JSFX in the same order, so at the defaults (Clean, HPF 20 Hz, Mix 100 %, Internal) the result
  * is the original plugin's.
+ * Upward (Style 4, appended in 2.4): an RMS detector (10 ms) and a lift instead of a reduction:
+ * compressing, below Threshold (upward compression), expanding, above it (upward expansion); at
+ * most 24 dB, and compressing it fades out from 48 to 72 dB under Threshold.
  */
 
 #pragma once
@@ -23,7 +26,7 @@ static constexpr double kLn10 = 2.302585;
 static constexpr double kDbToLin = kLn10 / 20.0;
 static constexpr double kPi = 3.141592653589793;
 
-enum Style { kClean = 0, kBus = 1, kFet = 2, kOpto = 3 };
+enum Style { kClean = 0, kBus = 1, kFet = 2, kOpto = 3, kUpward = 4 };
 
 struct Params {
     bool expander = false;
@@ -52,9 +55,29 @@ inline void computeStyle(Params& p) noexcept
         p.knee = std::max(p.kneeDb, 10.0);
 }
 
-// gain reduction in dB for a detector level in dB (the JSFX's gain computer)
+// Upward: the lift in dB (positive) for a detector level in dB, from the style's slope and knee
+inline double liftDb(const Params& p, double inputDb) noexcept
+{
+    const double x = !p.expander ? p.thresholdDb - inputDb : inputDb - p.thresholdDb;
+    double t = 0.0;
+    if (x > 0.0)
+    {
+        if (p.knee > 0.0 && x < p.knee)
+            t = p.slope * x * x / (2.0 * p.knee);
+        else
+            t = p.slope * (x - p.knee / 2.0);
+        t = std::min(t, 24.0);
+        if (!p.expander && x > 48.0)
+            t *= std::max(0.0, 1.0 - (x - 48.0) / 24.0);
+    }
+    return t;
+}
+
+// gain reduction in dB for a detector level in dB (the JSFX's gain computer; Upward: minus the lift)
 inline double grDb(const Params& p, double inputDb) noexcept
 {
+    if (p.style == kUpward)
+        return -liftDb(p, inputDb);
     const double x = p.expander ? p.thresholdDb - inputDb : inputDb - p.thresholdDb;
     if (x <= 0.0)
         return 0.0;
@@ -105,7 +128,7 @@ public:
         computeStyle(fP);
         fFetAtt = std::min(1.0, fAttack * 4.0);
         fOptoAtt = fAttack * 0.5;
-        fRmsTc = 1.0 - std::exp(-1.0 / ((style == kOpto ? 10.0 : 5.0) * fSr / 1000.0));
+        fRmsTc = 1.0 - std::exp(-1.0 / ((style == kOpto || style == kUpward ? 10.0 : 5.0) * fSr / 1000.0));
         fBusSatt = 1.0 - std::exp(-1.0 / (250.0 * fSr / 1000.0));
         fBusSrel = 1.0 - std::exp(-1.0 / ((200.0 + 4.0 * releaseMs) * fSr / 1000.0));
         fOptoSrel = fRelease * 0.1;
@@ -145,7 +168,7 @@ public:
         fInputAbs = in;
         const int style = fP.style;
         double inputDb;
-        if (style == kBus || style == kOpto)
+        if (style == kBus || style == kOpto || style == kUpward)
         {
             // crest-corrected RMS (a sine reads its peak)
             fDetMs = fDetMs + (in * in - fDetMs) * fRmsTc;
@@ -179,6 +202,8 @@ public:
             }
             else if (style == kFet)
                 fGr = fGr + (t - fGr) * (t > fGr ? fFetAtt : fRelease);
+            else if (style == kUpward)
+                fGr = fGr + (t - fGr) * (t > fGr ? fAttack : fRelease);
             else
             {
                 if (t > fGrO1)

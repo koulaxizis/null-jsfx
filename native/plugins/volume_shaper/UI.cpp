@@ -13,22 +13,24 @@ START_NAMESPACE_DISTRHO
 static const NullKnobsUI::Control kControls[] = {
     { 0, NullKnobsUI::kSelect, "SHAPE", 0, -1, false },
     { 1, NullKnobsUI::kSelect, "RATE", 0, -1, false },
-    { 2, NullKnobsUI::kKnob, "DEPTH", 0, -1, false },
-    { 3, NullKnobsUI::kKnob, "SMOOTH", 0, -1, false },
-    { 4, NullKnobsUI::kKnob, "PHASE", 0, -1, false },
-    { 5, NullKnobsUI::kKnob, "MIX", 0, -1, false },
+    { 6, NullKnobsUI::kSelect, "TRIGGER", 0, -1, false },
+    { 7, NullKnobsUI::kKnob, "THRESHOLD", 0, -1, false },
+    { 2, NullKnobsUI::kKnob, "DEPTH", 1, -1, false },
+    { 3, NullKnobsUI::kKnob, "SMOOTH", 1, -1, false },
+    { 4, NullKnobsUI::kKnob, "PHASE", 1, -1, false },
+    { 5, NullKnobsUI::kKnob, "MIX", 1, -1, false },
 };
 
 class UIVolumeShaper : public NullKnobsUI
 {
 public:
     UIVolumeShaper()
-        : NullKnobsUI({ "VOLUME SHAPER", "ESSENTIALS", 480, 120, nullptr, 1, nullvolshaper::kSliders,
+        : NullKnobsUI({ "VOLUME SHAPER", "ESSENTIALS", 480, 120, nullptr, 2, nullvolshaper::kSliders,
                         nullvolshaper::kNumSliders, kControls, sizeof(kControls) / sizeof(kControls[0]), true }) {}
 
 protected:
     // as in volume_shaper_gfx.jsfx: the gain over one cycle (0 to 100%), the playhead dashed
-    // with a dot at the current gain; below, the cycle length and the current gain in dB
+    // with a dot at the current gain; below, the cycle length (and trigger) and the gain in dB
     void drawDisplay() override
     {
         setPlot(fVX + 26.0f, fVY + 4.0f, fVW - 30.0f, fVH - 20.0f);
@@ -38,12 +40,18 @@ protected:
         label(fPX - 6.0f, std::floor(fPY + fPH) + 0.5f, ALIGN_RIGHT, 8.0f, 0.0f, theme::kMuted, "0");
 
         const nullvolshaper::Params p = nullvolshaper::paramsFrom([this](uint32_t i) { return value(i); });
-        char buf[40];
+        char buf[48], note[16];
         const int rate = std::max(0, std::min(6, p.rate));
         if (p.shape == nullvolshaper::kHalfTime)
-            std::snprintf(buf, sizeof(buf), "ONE CYCLE = 2 x %s", nullvolshaper::kRateOptions[rate]);
+            std::snprintf(note, sizeof(note), "2 x %s", nullvolshaper::kRateOptions[rate]);
         else
-            std::snprintf(buf, sizeof(buf), "ONE CYCLE = %s", nullvolshaper::kRateOptions[rate]);
+            std::snprintf(note, sizeof(note), "%s", nullvolshaper::kRateOptions[rate]);
+        if (p.trigger == nullvolshaper::kMidi)
+            std::snprintf(buf, sizeof(buf), "ONE SHOT = %s ON MIDI NOTES", note);
+        else if (p.trigger == nullvolshaper::kSidechain)
+            std::snprintf(buf, sizeof(buf), "ONE SHOT = %s ON KEY > %d dB", note, int(p.thresholdDb));
+        else
+            std::snprintf(buf, sizeof(buf), "ONE CYCLE = %s", note);
         label(fPX, fPY + fPH + 11.0f, ALIGN_LEFT, 8.0f, 0.0f, theme::kMuted, buf);
 
         float pos = 0.0f, g = 1.0f;
@@ -63,6 +71,8 @@ protected:
         // the curve: Depth and Phase applied, two points per design unit so the gates stay sharp
         const nullvolshaper::Shapes& sh = nullvolshaper::shapes();
         const double depth = p.depthPct / 100.0, phase = p.phasePct / 100.0;
+        // a one-shot (Trigger MIDI or Sidechain) stays at full level after its end
+        const double osEnd = p.trigger != nullvolshaper::kTempo ? nullvolshaper::oneShotEnd(p.shape) : 2.0;
         constexpr int kMaxN = 1024;
         const int n = std::min(kMaxN, int(fPW * 2.0f) + 1);
         float xs[kMaxN], ys[kMaxN];
@@ -72,7 +82,7 @@ protected:
             double q = x + phase;
             if (q >= 1.0)
                 q -= 1.0;
-            const double gain = 1.0 - depth * (1.0 - sh.eval(p.shape, q));
+            const double gain = x >= osEnd ? 1.0 : 1.0 - depth * (1.0 - sh.eval(p.shape, q));
             xs[i] = fPX + fPW * float(i) / float(n - 1);
             ys[i] = linY(float(gain), 0.0f, 1.0f);
         }

@@ -1,6 +1,6 @@
 desc:NULL Glitch FX
 author: Christos Koulaxizis
-tags: glitch stutter pitch tape-stop reverse granular freeze random creative
+tags: glitch stutter pitch tape-stop reverse granular freeze random creative midi trigger
 //category: Advanced
 //NULL JSFX v2.4 • https://nulljsfx.tech • MIT License
 
@@ -18,6 +18,7 @@ slider11:0<0,1,1{OFF,ON}>Tape Stop
 slider12:200<10,500,10>Grain Size (ms)
 slider13:0<0,1,1{OFF,ON}>Granular
 slider14:50<0,100,1>Mix (%)
+slider15:0<0,1,1{Auto,MIDI}>Trigger
 
 in_pin:Left
 in_pin:Right
@@ -36,11 +37,26 @@ out_pin:Right
   // picks, Granular turns the live signal into overlapping Hann grains taken from the
   // last moments of audio (two grains, half a grain apart), Pitch Shift and Tape Stop
   // change their playback speed, and Gate chops whatever comes out.
+  // Trigger MIDI plays the effects from held MIDI notes instead of the dice: C3, C#3, D3,
+  // D#3, E3 and F3 (60..65) hold Stutter, Gate, Pitch Shift, Reverse, Tape Stop and Granular
+  // (several at once combine, the switches and Rate are ignored), every note-on in that range
+  // starts a new event (a fresh slice, the tape stop from full speed), and the velocity of
+  // the latest note scales the Mix (a 5 ms fade); with no note held the dry signal passes.
+  // Every MIDI message passes through.
   buf_size = ceil(srate * 4);
   buf_l = 0;
   buf_r = buf_l + buf_size;
   memset(buf_l, 0, 2 * buf_size);
   freembuf(buf_r + buf_size);
+  // MIDI: when each effect note was pressed (0 = not held) and its velocity, this block's events
+  held = buf_r + buf_size;
+  hvel = held + 8;
+  evq = hvel + 8;
+  memset(held, 0, 16);
+  freembuf(evq + 1024);
+  stamp = 0; m_new = 0; m_tgt = 0; m_amt = 0;
+  m_ofs = m_1 = m_2 = m_3 = 0;
+  m_k = 1 - exp(-1 / (srate * 0.005));
   wpos = 0;
   ev_cnt = 1000000000;
   slice_start = 0;
@@ -80,17 +96,81 @@ out_pin:Right
   tape_len = max(1, srate * slider10 / 1000);
   grain_len = max(16, floor(srate * slider12 / 1000));
   mix = slider14 / 100;
+  trig_midi = slider15 >= 0.5;
+  pitch_m = 2 ^ (slider6 / 12);
+
+@block
+  // MIDI: every message passes through; notes are applied at their offsets in @sample
+  mq_n = 0;
+  while (midirecv(m_ofs, m_1, m_2, m_3)) (
+    midisend(m_ofs, m_1, m_2, m_3);
+    mq_n < 256 ? (
+      evq[mq_n * 4] = m_ofs;
+      evq[mq_n * 4 + 1] = m_1;
+      evq[mq_n * 4 + 2] = m_2;
+      evq[mq_n * 4 + 3] = m_3;
+      mq_n += 1;
+    );
+  );
+  mq_i = 0;
+  si = 0;
 
 @sample
+  // MIDI notes due now: C3..F3 held / released, all notes off
+  while (mq_i < mq_n && evq[mq_i * 4] <= si) (
+    m_st = evq[mq_i * 4 + 1] & 0xF0;
+    m_d = evq[mq_i * 4 + 2];
+    m_n = m_d - 60;
+    m_st == 0x90 && evq[mq_i * 4 + 3] > 0 && m_n >= 0 && m_n < 6 ? (
+      stamp += 1;
+      held[m_n] = stamp;
+      hvel[m_n] = evq[mq_i * 4 + 3];
+      m_new = 1;
+    ) : (m_st == 0x80 || m_st == 0x90) && m_n >= 0 && m_n < 6 ? (
+      held[m_n] = 0;
+    ) : m_st == 0xB0 && (m_d == 120 || m_d == 123) ? (
+      memset(held, 0, 8);
+    );
+    // the latest held note's velocity sets the amount
+    m_tgt = 0;
+    m_b = 0;
+    m_i = 0;
+    loop(6,
+      held[m_i] > m_b ? ( m_b = held[m_i]; m_tgt = hvel[m_i] / 127; );
+      m_i += 1;
+    );
+    mq_i += 1;
+  );
+  si += 1;
+  // the switches: the sliders, or under Trigger MIDI the held notes
+  trig_midi ? (
+    sw_st = held[0] > 0; sw_gate = held[1] > 0; sw_pitch = held[2] > 0;
+    sw_rev = held[3] > 0; sw_tape = held[4] > 0; sw_gran = held[5] > 0;
+    m_amt += (m_tgt - m_amt) * m_k;
+  ) : (
+    sw_st = slider3; sw_gate = slider5; sw_gran = slider13;
+  );
+
   buf_l[wpos] = spl0;
   buf_r[wpos] = spl1;
 
   bpm = tempo > 0 ? tempo : 120;
   slice_len = max(16, min(buf_size / 2, floor(srate * 240 / bpm / slider2)));
-  loop_len = slider13 ? min(grain_len, slice_len) : slice_len;
+  loop_len = sw_gran ? min(grain_len, slice_len) : slice_len;
 
   ev_cnt += 1;
-  ev_cnt >= ev_len ? (
+  trig_midi ? (
+    // a note-on starts a new event; Reverse and Tape Stop follow their notes
+    m_new ? (
+      m_new = 0;
+      ev_cnt = 0;
+      slice_start = wpos - slice_len;
+      read = 0;
+      rread = 0;
+    );
+    dir = sw_rev ? -1 : 1;
+    tape = sw_tape;
+  ) : ev_cnt >= ev_len ? (
     // new event: capture the latest slice and roll the dice
     ev_cnt = 0;
     slice_start = wpos - slice_len;
@@ -100,10 +180,10 @@ out_pin:Right
     tape = slider11 && prand(100) < 30;
   );
 
-  speed = pitch;
+  speed = trig_midi ? (sw_pitch ? pitch_m : 1) : pitch;
   tape ? speed *= max(0, 1 - ev_cnt / tape_len);
 
-  slider3 ? (
+  sw_st ? (
     read += speed;
     read >= loop_len ? read -= loop_len;
     pos = dir > 0 ? slice_start + read : slice_start + loop_len - 1 - read;
@@ -111,10 +191,10 @@ out_pin:Right
     wet_r = rd(buf_r, pos);
     // short fades at the loop seam (or a full Hann window for grains)
     ph = read / loop_len;
-    win = slider13 ? 0.5 - 0.5 * cos(2 * $pi * ph) : min(1, min(ph, 1 - ph) * loop_len / (0.003 * srate));
+    win = sw_gran ? 0.5 - 0.5 * cos(2 * $pi * ph) : min(1, min(ph, 1 - ph) * loop_len / (0.003 * srate));
     wet_l *= win;
     wet_r *= win;
-  ) : slider13 ? (
+  ) : sw_gran ? (
     // no stutter, granular: two overlapping grains read from the recent past
     gstep = 1 / grain_len;
     g1ph += gstep; g1ph >= 1 ? (g1ph -= 1; g1st = wpos - grain_len * (max(speed, 1) + 1) - prand(grain_len););
@@ -145,7 +225,7 @@ out_pin:Right
     wet_r = rd(buf_r, wpos - 1 - read);
   );
 
-  slider5 ? (
+  sw_gate ? (
     // gate: silence the second half of every stutter repetition
     (ev_cnt % max(16, slice_len / 2)) > slice_len / 4 ? (
       wet_l *= 1 - gate_depth;
@@ -156,5 +236,6 @@ out_pin:Right
   wpos += 1;
   wpos >= buf_size ? wpos = 0;
 
-  spl0 = spl0 * (1 - mix) + wet_l * mix;
-  spl1 = spl1 * (1 - mix) + wet_r * mix;
+  mx = trig_midi ? mix * m_amt : mix;
+  spl0 = spl0 * (1 - mx) + wet_l * mx;
+  spl1 = spl1 * (1 - mx) + wet_r * mx;

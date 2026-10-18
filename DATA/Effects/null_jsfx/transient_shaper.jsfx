@@ -1,12 +1,17 @@
 desc:NULL Transient Shaper
 author: Christos Koulaxizis
-tags: transient attack sustain punch envelope dynamics shaping
+tags: transient attack sustain punch envelope dynamics shaping focus band clip
 //category: Essentials
 //NULL JSFX v2.4 • https://nulljsfx.tech • MIT License
 
 slider1:0<-20,20,0.1>Attack (dB)
 slider2:0<-20,20,0.1>Sustain (dB)
 slider3:100<0,100,1>Mix (%)
+slider4:1<0,2,1{Fast,Medium,Slow}>Speed
+slider5:20<20,20000,1:log>Focus Low (Hz)
+slider6:20000<20,20000,1:log>Focus High (Hz)
+slider7:0<0,1,1{Off,On}>Output Clip
+slider8:0<-12,12,0.1>Output (dB)
 
 in_pin:Left
 in_pin:Right
@@ -18,6 +23,9 @@ out_pin:Right
   slow_env = 0;
   gain_lin_att = 1;
   gain_lin_sus = 1;
+  // Focus band filters (12 dB/oct high-pass at Focus Low, low-pass at Focus High), per channel
+  fc_hl1 = fc_hl2 = fc_hr1 = fc_hr2 = 0;
+  fc_ll1 = fc_ll2 = fc_lr1 = fc_lr2 = 0;
 
 @slider
   attack_db = slider1;
@@ -32,16 +40,82 @@ out_pin:Right
   fast_release = 0.020;  // 20ms fast envelope release
   slow_attack = 0.020;   // 20ms slow envelope attack
   slow_release = 0.150;  // 150ms slow envelope release
+  // Speed: Medium = the times above; Fast halves them, Slow doubles them
+  speed = floor(slider4 + 0.5);
+  speed == 0 ? (
+    fast_attack = 0.0005; fast_release = 0.010; slow_attack = 0.010; slow_release = 0.075;
+  );
+  speed == 2 ? (
+    fast_attack = 0.002; fast_release = 0.040; slow_attack = 0.040; slow_release = 0.300;
+  );
   
   fa_coef = 1 - exp(-1 / (fast_attack * srate));
   fr_coef = 1 - exp(-1 / (fast_release * srate));
   sa_coef = 1 - exp(-1 / (slow_attack * srate));
   sr_coef = 1 - exp(-1 / (slow_release * srate));
 
+  // Focus: detect and shape only the band between Focus Low and Focus High (the rest of the
+  // signal passes untouched); off at 20 Hz .. 20 kHz
+  fc_lo = slider5 > 20;
+  fc_hi = slider6 < 20000;
+  focus = fc_lo || fc_hi;
+  fc_lo ? (
+    fc_w = 2 * $pi * min(slider5, srate * 0.45) / srate;
+    fc_cs = cos(fc_w);
+    fc_al = sin(fc_w) / (2 * sqrt(0.5));
+    fc_a0 = 1 + fc_al;
+    fh_b0 = (1 + fc_cs) / 2 / fc_a0;
+    fh_b1 = -(1 + fc_cs) / fc_a0;
+    fh_a1 = -2 * fc_cs / fc_a0;
+    fh_a2 = (1 - fc_al) / fc_a0;
+  );
+  fc_hi ? (
+    fc_w = 2 * $pi * min(slider6, srate * 0.45) / srate;
+    fc_cs = cos(fc_w);
+    fc_al = sin(fc_w) / (2 * sqrt(0.5));
+    fc_a0 = 1 + fc_al;
+    fl_b0 = (1 - fc_cs) / 2 / fc_a0;
+    fl_b1 = (1 - fc_cs) / fc_a0;
+    fl_a1 = -2 * fc_cs / fc_a0;
+    fl_a2 = (1 - fc_al) / fc_a0;
+  );
+  // Output gain (skipped at 0 dB) and a soft clip on the output
+  out_on = slider8 != 0;
+  out_gain = exp(slider8 * 0.11512925464970228420);
+  clip_on = slider7 >= 0.5;
+
 @sample
-  // Detect signal level (max of both channels)
-  abs_l = spl0 < 0 ? -spl0 : spl0;
-  abs_r = spl1 < 0 ? -spl1 : spl1;
+  focus ? (
+    // the Focus band: high-pass, then low-pass (transposed direct form II biquads)
+    band_l = spl0;
+    band_r = spl1;
+    fc_lo ? (
+      fc_y = fh_b0 * band_l + fc_hl1;
+      fc_hl1 = fh_b1 * band_l - fh_a1 * fc_y + fc_hl2;
+      fc_hl2 = fh_b0 * band_l - fh_a2 * fc_y;
+      band_l = fc_y;
+      fc_y = fh_b0 * band_r + fc_hr1;
+      fc_hr1 = fh_b1 * band_r - fh_a1 * fc_y + fc_hr2;
+      fc_hr2 = fh_b0 * band_r - fh_a2 * fc_y;
+      band_r = fc_y;
+    );
+    fc_hi ? (
+      fc_y = fl_b0 * band_l + fc_ll1;
+      fc_ll1 = fl_b1 * band_l - fl_a1 * fc_y + fc_ll2;
+      fc_ll2 = fl_b0 * band_l - fl_a2 * fc_y;
+      band_l = fc_y;
+      fc_y = fl_b0 * band_r + fc_lr1;
+      fc_lr1 = fl_b1 * band_r - fl_a1 * fc_y + fc_lr2;
+      fc_lr2 = fl_b0 * band_r - fl_a2 * fc_y;
+      band_r = fc_y;
+    );
+    abs_l = band_l < 0 ? -band_l : band_l;
+    abs_r = band_r < 0 ? -band_r : band_r;
+  ) : (
+    // Detect signal level (max of both channels)
+    abs_l = spl0 < 0 ? -spl0 : spl0;
+    abs_r = spl1 < 0 ? -spl1 : spl1;
+  );
   input_level = abs_l > abs_r ? abs_l : abs_r;
   
   // Fast envelope (catches transients)
@@ -72,8 +146,32 @@ out_pin:Right
   // Apply gains
   total_gain = 1 + (attack_boost - 1) * transient_amount + (sustain_boost - 1) * sustain_amount;
   
-  out_l = spl0 * total_gain;
-  out_r = spl1 * total_gain;
+  focus ? (
+    // only the band takes the gain
+    out_l = spl0 + band_l * (total_gain - 1);
+    out_r = spl1 + band_r * (total_gain - 1);
+  ) : (
+    out_l = spl0 * total_gain;
+    out_r = spl1 * total_gain;
+  );
   
   spl0 = spl0 * (1 - mix_amt) + out_l * mix_amt;
   spl1 = spl1 * (1 - mix_amt) + out_r * mix_amt;
+
+  out_on ? (
+    spl0 *= out_gain;
+    spl1 *= out_gain;
+  );
+  clip_on ? (
+    // soft clip: linear up to 0.7, then bending smoothly towards 1.0
+    clip_a = abs(spl0);
+    clip_a > 0.7 ? (
+      clip_u = (clip_a - 0.7) * (1 / 0.3);
+      spl0 = sign(spl0) * (0.7 + 0.3 * clip_u / (1 + clip_u));
+    );
+    clip_a = abs(spl1);
+    clip_a > 0.7 ? (
+      clip_u = (clip_a - 0.7) * (1 / 0.3);
+      spl1 = sign(spl1) * (0.7 + 0.3 * clip_u / (1 + clip_u));
+    );
+  );

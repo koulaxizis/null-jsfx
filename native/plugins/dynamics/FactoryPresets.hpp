@@ -26,6 +26,8 @@ static const FactoryPreset kPresets[] = {
     { "Opto Bass", { 0.0f, -22.0f, 4.0f, 10.0f, 15.0f, 300.0f, 5.0f, 3.0f, 20.0f, 100.0f, 0.0f } },
     { "Parallel Smash", { 0.0f, -36.0f, 20.0f, 0.0f, 1.0f, 60.0f, 12.0f, 2.0f, 20.0f, 40.0f, 0.0f } },
     { "Kick Ducking", { 0.0f, -30.0f, 8.0f, 3.0f, 1.0f, 120.0f, 0.0f, 0.0f, 20.0f, 100.0f, 1.0f } },
+    { "Upward Detail Lift", { 0.0f, -35.0f, 2.0f, 10.0f, 20.0f, 300.0f, 0.0f, 4.0f, 20.0f, 100.0f, 0.0f } },
+    { "Upward Quiet Voice", { 0.0f, -28.0f, 3.0f, 6.0f, 10.0f, 200.0f, 0.0f, 4.0f, 80.0f, 100.0f, 0.0f } },
 };
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 11;

@@ -8,6 +8,8 @@
 #include "GlitchFxDSP.hpp"
 #include "GlitchFxSliders.hpp"
 
+#include <cstring>
+
 START_NAMESPACE_DISTRHO
 
 static const NullKnobsUI::Control kControls[] = {
@@ -27,6 +29,7 @@ static const NullKnobsUI::Control kControls[] = {
     { 7, NullKnobsUI::kKnob, "CHANCE", 0, 1, false },
     { 10, NullKnobsUI::kSelect, "TAPE STOP", 1, 1, false },
     { 9, NullKnobsUI::kKnob, "TAPE TIME", 1, 1, false },
+    { 14, NullKnobsUI::kSelect, "TRIGGER", 1, 1, false },
 };
 
 class UIGlitchFx : public NullKnobsUI
@@ -38,7 +41,8 @@ public:
 
 protected:
     // as in glitch_fx_gfx.jsfx: one second of the wet level (loop seams or grain windows and
-    // the gate), events dashed, the playhead inside the stutter loop as a thin line
+    // the gate), events dashed, the playhead inside the stutter loop as a thin line; under
+    // Trigger MIDI the effects the held notes play, from the note-on, and their names
     void drawDisplay() override
     {
         setPlot(fVX + 26.0f, fVY + 4.0f, fVW - 30.0f, fVH - 20.0f);
@@ -54,13 +58,24 @@ protected:
         }
 
         double bpm = 120.0;
+        int held = 0;
         if (nulljsfx::Taps* t = taps())
         {
             const float tp = t->extra.load(std::memory_order_relaxed);
             if (tp > 0.0f)
                 bpm = tp;
+            held = int(std::lround(t->aux[0].load(std::memory_order_relaxed)));
         }
-        const nullglitch::Params p = nullglitch::paramsFrom([this](uint32_t i) { return value(i); });
+        nullglitch::Params p = nullglitch::paramsFrom([this](uint32_t i) { return value(i); });
+        if (p.midi)
+        {
+            // one event at the note-on; the switches are the held notes
+            p.rate = 0.5;
+            p.stutter = (held & 1) != 0;
+            p.gate = (held & 2) != 0;
+            p.pitch = (held & 4) != 0;
+            p.granular = (held & 32) != 0;
+        }
 
         for (double t = 0.0; t < 1.0; t += 1.0 / p.rate)
             dashedV(linX(float(t), 0.0f, 1.0f));
@@ -89,6 +104,22 @@ protected:
         strokeWidth(1.0f);
         stroke();
         curve(xs, ys, std::min(n + 1, 512), fPY + fPH);
+
+        // Trigger MIDI: the held effects by name
+        if (p.midi)
+        {
+            static const char* const kNames[] = { "STUTTER", "GATE", "PITCH", "REVERSE", "TAPE STOP", "GRANULAR" };
+            char m[96] = "MIDI:";
+            for (int k = 0; k < 6; ++k)
+                if (held & (1 << k))
+                {
+                    std::strncat(m, " ", sizeof(m) - std::strlen(m) - 1);
+                    std::strncat(m, kNames[k], sizeof(m) - std::strlen(m) - 1);
+                }
+            if (!held)
+                std::snprintf(m, sizeof(m), "MIDI: HOLD C3 TO F3");
+            label(fPX + 6.0f, fPY + 8.0f, ALIGN_LEFT, 8.0f, 0.0f, theme::kText, m);
+        }
     }
 
     void formatValue(uint32_t param, float v, char* buf, size_t n) override

@@ -12,10 +12,13 @@ START_NAMESPACE_DISTRHO
 static const NullKnobsUI::Control kControls[] = {
     { 0, NullKnobsUI::kSelect, "KEY", 0, -1, false },
     { 1, NullKnobsUI::kSelect, "SCALE", 0, -1, false },
+    { 7, NullKnobsUI::kSelect, "TARGET", 0, -1, false },
     { 2, NullKnobsUI::kKnob, "RETUNE", 0, -1, false },
     { 3, NullKnobsUI::kKnob, "HUMANIZE", 0, -1, false },
     { 4, NullKnobsUI::kKnob, "TRANSPOSE", 1, -1, true },
     { 5, NullKnobsUI::kKnob, "SENSITIVITY", 1, -1, false },
+    { 8, NullKnobsUI::kKnob, "VIB RATE", 1, -1, false },
+    { 9, NullKnobsUI::kKnob, "VIB DEPTH", 1, -1, false },
     { 6, NullKnobsUI::kKnob, "MIX", 1, -1, false },
 };
 
@@ -76,12 +79,14 @@ protected:
         }
         bool voiced = false;
         float detNow = 0.0f, tgt = 60.0f, shift = 0.0f;
+        bool midiNote = false;
         if (t)
         {
             voiced = t->extra.load(std::memory_order_relaxed) > 0.5f;
             detNow = t->inLevel.load(std::memory_order_relaxed);
             tgt = t->outLevel.load(std::memory_order_relaxed);
             shift = t->gr.load(std::memory_order_relaxed);
+            midiNote = t->aux[0].load(std::memory_order_relaxed) > 0.5f;
         }
 
         const int c = cnt > 0 ? int(std::floor(sum / cnt + 0.5)) : 60;
@@ -132,7 +137,7 @@ protected:
         stroke();
         lineCap(BUTT);
 
-        label(408.0f, 74.0f, ALIGN_CENTER, 7.0f, 1.0f, theme::kMuted, "NOTE", true);
+        label(408.0f, 74.0f, ALIGN_CENTER, 7.0f, 1.0f, theme::kMuted, midiNote ? "MIDI NOTE" : "NOTE", true);
         if (voiced)
             noteName(int(std::lround(tgt)), buf, sizeof(buf));
         label(408.0f, 98.0f, ALIGN_CENTER, 22.0f, 0.0f, voiced ? theme::kText : theme::kMuted, voiced ? buf : "--", true);
@@ -178,6 +183,8 @@ protected:
             std::snprintf(buf, n, "HARD");
         else if (param == 4)
             std::snprintf(buf, n, "%+d st", int(std::lround(v)));
+        else if (param == 8)
+            std::snprintf(buf, n, "%.1f Hz", v);
         else
             NullKnobsUI::formatValue(param, v, buf, n);
     }
