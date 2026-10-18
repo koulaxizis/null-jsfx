@@ -339,10 +339,14 @@ private:
                 if (percOn)
                     y += percG * H[int(VKP[v])] * VPE[v];
                 VPE[v] *= pC;
+                if (VPE[v] < 0.000000000000001)
+                    VPE[v] = 0;
             }
             sum += y * VE[v];
             csum += VCE[v];
             VCE[v] *= cC;
+            if (VCE[v] < 0.000000000000001)
+                VCE[v] = 0;
             if (VG[v] > 0)
                 VE[v] = std::min(1.0, VE[v] + aInc);
             else
@@ -394,6 +398,11 @@ private:
         const double sr = fSr;
         lp1 = (1 - xc) * x + xc * lp1;
         lp2 = (1 - xc) * lp1 + xc * lp2;
+        // a filter state that has died away is zero (no denormals)
+        if (std::fabs(lp1) < 0.000000000000001)
+            lp1 = 0;
+        if (std::fabs(lp2) < 0.000000000000001)
+            lp2 = 0;
         hornF = hornC * hornF + (1 - hornC) * hornTarget;
         drumF = drumC * drumF + (1 - drumC) * drumTarget;
         hornPh += hornF / sr;

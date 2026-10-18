@@ -400,10 +400,12 @@ out_pin:Right
       VPK[v] > 0 ? (
         perc_on ? y += perc_g * H[VKP[v]] * VPE[v];
         VPE[v] *= p_c;
+        VPE[v] < 0.000000000000001 ? VPE[v] = 0;
       );
       sum += y * VE[v];
       csum += VCE[v];
       VCE[v] *= c_c;
+      VCE[v] < 0.000000000000001 ? VCE[v] = 0;
       VG[v] > 0 ? VE[v] = min(1, VE[v] + a_inc) : VE[v] = max(0, VE[v] - (VPEND[v] >= 0 ? s_inc : r_inc));
       VG[v] <= 0 && VE[v] <= 0 ? (
         VPEND[v] >= 0 ? v_start(v, VPEND[v], VPP[v]) : VN[v] = -1;
@@ -447,6 +449,8 @@ out_pin:Right
   // rotary speaker: lows to the drum, highs to the horn, both spinning with inertia
   lp1 = (1 - xc) * x + xc * lp1;
   lp2 = (1 - xc) * lp1 + xc * lp2;
+  abs(lp1) < 0.000000000000001 ? lp1 = 0;
+  abs(lp2) < 0.000000000000001 ? lp2 = 0;
   horn_f = horn_c * horn_f + (1 - horn_c) * horn_target;
   drum_f = drum_c * drum_f + (1 - drum_c) * drum_target;
   horn_ph += horn_f / srate; horn_ph >= 1 ? horn_ph -= 1;
