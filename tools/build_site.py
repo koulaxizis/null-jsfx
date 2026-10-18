@@ -33,7 +33,7 @@ CHAIN_TEXT = ROOT / "tools/site_chains.json"
 
 sys.dont_write_bytecode = True  # no __pycache__ in tools/
 sys.path.insert(0, str(ROOT / "tools"))
-from build_chains import CHAINS, RACK_ONLY, RACK_PRESETS  # noqa: E402
+from build_chains import CHAINS, RACK_PRESETS, rack_only  # noqa: E402
 
 CATEGORIES = [
     ("One Slider", "one-slider", "One control, instant result. Turn it up until it sounds right."),
@@ -170,8 +170,8 @@ def chain_cards(plugins):
     text = json.loads(CHAIN_TEXT.read_text(encoding="utf-8"))
     # (name, [(plugin, tag)], what REAPER routing it uses) for the plain chains and the routing ones
     chains = [(c, [(stem, "") for stem, _ in fxs], []) for c, fxs in CHAINS]
-    for c, _, slots, routes, _ in RACK_PRESETS:
-        if c in RACK_ONLY:
+    for c, _, slots, routes, globs in RACK_PRESETS:
+        if rack_only(c, slots, routes, globs):
             continue  # no REAPER chain
         uses = []
         if any(sl["band"] != "Full" or sl["channel"] != "Stereo" for sl in slots):
@@ -186,8 +186,12 @@ def chain_cards(plugins):
         sys.exit(f"build_site: {CHAIN_TEXT.name} must have one entry per chain in build_chains.py: "
                  f"missing {sorted(set(names) - set(text))}, extra {sorted(set(text) - set(names))}")
     on_site = {p["stem"]: p for p in plugins}
+    nxt = ROOT / "tools/site_content_next.json"
+    waiting = set(json.loads(nxt.read_text(encoding="utf-8"))) if nxt.exists() else set()
     out = []
     for chain, steps_in, uses in sorted(chains, key=lambda c: c[0].lower()):
+        if any(stem in waiting for stem, _ in steps_in):
+            continue  # a plugin of the chain still waits off the site (site_content_next.json): so does the chain
         steps = []
         for stem, tag in steps_in:
             label = on_site[stem]["name"] if stem in on_site else \
@@ -211,16 +215,17 @@ def chain_cards(plugins):
 
 def tabs_block(plugins):
     """Effects and FX Chains tabs: the effect categories and the chain cards."""
+    chains = chain_cards(plugins)
     return f"""            <div class="plugin-tabs" role="tablist">
                 <button type="button" class="plugin-tab active" role="tab" aria-selected="true" aria-controls="tab-effects" id="tab-btn-effects" data-tab="effects">Effects <span class="category-count">{len(plugins)}</span></button>
-                <button type="button" class="plugin-tab" role="tab" aria-selected="false" aria-controls="tab-chains" id="tab-btn-chains" data-tab="chains">FX Chains <span class="category-count">{len(CHAINS) + len(RACK_PRESETS) - len(RACK_ONLY)}</span></button>
+                <button type="button" class="plugin-tab" role="tab" aria-selected="false" aria-controls="tab-chains" id="tab-btn-chains" data-tab="chains">FX Chains <span class="category-count">{chains.count("<article")}</span></button>
             </div>
             <div class="tab-panel" id="tab-effects" role="tabpanel" aria-labelledby="tab-btn-effects">
 {cards_block(plugins)}            </div>
             <div class="tab-panel" id="tab-chains" role="tabpanel" aria-labelledby="tab-btn-chains" hidden>
                 <p class="category-desc chains-desc">Ready-made REAPER FX chains of NULL JSFX plugins, in the JSFX download (<code>FXChains</code> folder, see <code>INSTALL.txt</code>). Load one with FX &#8594; Add FX chain; every plugin stays fully editable. Chains marked pin routing split the sound into bands or into mid and side; modulation ones move a control with an LFO, the input level or another control. Click a plugin for its guide.</p>
                 <div class="chain-grid">
-{chain_cards(plugins)}                </div>
+{chains}                </div>
             </div>
 """
 

@@ -1,0 +1,322 @@
+desc:NULL Step FX
+author: Christos Koulaxizis
+tags: step fx 16-step sequencer glitch stutter repeat reverse filter gate tape stop pitch crush tempo sync midi creative
+//category: Advanced
+//NULL JSFX v2.4 • https://nulljsfx.tech • MIT License
+
+slider1:0<0,8,1{Off,Repeat,Reverse,Filter,Gate,Tape Stop,Pitch Down,Pitch Up,Crush}>Step 1
+slider2:0<0,8,1{Off,Repeat,Reverse,Filter,Gate,Tape Stop,Pitch Down,Pitch Up,Crush}>Step 2
+slider3:0<0,8,1{Off,Repeat,Reverse,Filter,Gate,Tape Stop,Pitch Down,Pitch Up,Crush}>Step 3
+slider4:0<0,8,1{Off,Repeat,Reverse,Filter,Gate,Tape Stop,Pitch Down,Pitch Up,Crush}>Step 4
+slider5:0<0,8,1{Off,Repeat,Reverse,Filter,Gate,Tape Stop,Pitch Down,Pitch Up,Crush}>Step 5
+slider6:0<0,8,1{Off,Repeat,Reverse,Filter,Gate,Tape Stop,Pitch Down,Pitch Up,Crush}>Step 6
+slider7:0<0,8,1{Off,Repeat,Reverse,Filter,Gate,Tape Stop,Pitch Down,Pitch Up,Crush}>Step 7
+slider8:0<0,8,1{Off,Repeat,Reverse,Filter,Gate,Tape Stop,Pitch Down,Pitch Up,Crush}>Step 8
+slider9:0<0,8,1{Off,Repeat,Reverse,Filter,Gate,Tape Stop,Pitch Down,Pitch Up,Crush}>Step 9
+slider10:0<0,8,1{Off,Repeat,Reverse,Filter,Gate,Tape Stop,Pitch Down,Pitch Up,Crush}>Step 10
+slider11:0<0,8,1{Off,Repeat,Reverse,Filter,Gate,Tape Stop,Pitch Down,Pitch Up,Crush}>Step 11
+slider12:0<0,8,1{Off,Repeat,Reverse,Filter,Gate,Tape Stop,Pitch Down,Pitch Up,Crush}>Step 12
+slider13:0<0,8,1{Off,Repeat,Reverse,Filter,Gate,Tape Stop,Pitch Down,Pitch Up,Crush}>Step 13
+slider14:0<0,8,1{Off,Repeat,Reverse,Filter,Gate,Tape Stop,Pitch Down,Pitch Up,Crush}>Step 14
+slider15:0<0,8,1{Off,Repeat,Reverse,Filter,Gate,Tape Stop,Pitch Down,Pitch Up,Crush}>Step 15
+slider16:0<0,8,1{Off,Repeat,Reverse,Filter,Gate,Tape Stop,Pitch Down,Pitch Up,Crush}>Step 16
+slider17:1<0,4,1{1/8,1/16,1/32,1/8T,1/16T}>Step Length
+slider18:16<1,16,1>Steps
+slider19:0<0,75,1>Swing (%)
+slider20:1<0,2,1{1/16,1/32,1/64}>Repeat Size
+slider21:800<200,8000,1:log>Filter (Hz)
+slider22:60<0,100,1>Crush (%)
+slider23:12<1,12,1>Pitch (semitones)
+slider24:100<0,100,1>Mix (%)
+slider25:0<0,1,1{Off,On}>MIDI Trigger
+
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
+
+@init
+  // A 16-step sequencer that plays one effect per step. One step = Step Length at the host
+  // tempo; while the transport plays, the step comes from beat_position so the pattern stays
+  // on the bar grid; stopped, it free-runs at the host tempo (120 bpm without one). Steps sets
+  // the sequence length, Swing delays every second step (50% = triplet shuffle, 75% = dotted).
+  // MIDI Trigger On ignores the sequencer: held notes C3..G3 (60..67) pick the effect (the
+  // latest held note wins) and every MIDI message passes through.
+  // The effects read a 4 s history of the input:
+  //   Repeat    the first Repeat Size slice of the step plays live, then loops to the step end
+  //   Reverse   plays the audio of the last step length backwards
+  //   Filter    a resonant low-pass whose cutoff glides down to Filter on entry, back up on exit
+  //   Gate      chops the step on and off at the Repeat Size
+  //   Tape Stop slows the audio to a halt over the step
+  //   Pitch     two crossfaded taps sweep a 60 ms delay line (Pitch semitones down or up)
+  //   Crush     bit and sample-rate reduction (Crush %)
+  // Every change of effect crossfades over 4 ms (two voices), Filter and Crush fade in and
+  // out after the voices, so nothing clicks. With every step Off the output is the input.
+  buf_size = ceil(srate * 4);
+  buf_l = 0;
+  buf_r = buf_l + buf_size;
+  pat = buf_r + buf_size;      // the 16 steps
+  evq = pat + 16;              // this block's MIDI notes: offset, status, note, velocity
+  held = evq + 1024;           // C3..G3: the order each held note was pressed in, 0 = up
+  memset(buf_l, 0, held + 8);
+  freembuf(held + 8);
+  wpos = 0;
+  step_pos = 0;
+  last_k = -1;
+  cur_e = 0;
+  cur_step = 0;
+  vc = 0;                      // the voice now playing (0 = va, 1 = vb); the other fades out
+  va.e = 0; va.vg = 1; va.el = 0;
+  vb.e = 0; vb.vg = 0; vb.el = 0;
+  stamp = 0;
+  midi_e = 0;
+  m_ofs = m_1 = m_2 = m_3 = 0;
+  fw = max(1, floor(0.002 * srate));      // seam fades inside an effect
+  xinc = 1 / max(1, floor(0.004 * srate)); // voice crossfade per sample
+  win = floor(srate * 0.06);              // pitch shifter window
+  f_top = min(16000, srate * 0.4);
+  f_lf = log(f_top);
+  f_a = 1 - exp(-1 / (0.015 * srate));
+  f_g = 0;
+  c_g = 0;
+  c_ph = 1;
+  c_hl = c_hr = 0;
+
+  // read a buffer at a (fractional) position, wrapping once
+  function rd(buf, p) local(i, f, i2)
+  (
+    p < 0 ? p += buf_size;
+    p >= buf_size ? p -= buf_size;
+    i = floor(p);
+    f = p - i;
+    i2 = i + 1;
+    i2 >= buf_size ? i2 = 0;
+    buf[i] + (buf[i2] - buf[i]) * f;
+  );
+
+  // the TPT state-variable low-pass (coefficients sv_a1..sv_a3 set per sample)
+  function svf_lp(x) instance(ic1, ic2) local(v1, v2, v3)
+  (
+    v3 = x - ic2;
+    v1 = sv_a1 * ic1 + sv_a2 * v3;
+    v2 = ic2 + sv_a2 * ic1 + sv_a3 * v3;
+    ic1 = 2 * v1 - ic1;
+    ic2 = 2 * v2 - ic2;
+    v2;
+  );
+
+  // a voice: effect code, samples since its start, its length (n), and the Repeat / Gate slice
+  function v_start(code, n, slice) instance(e, el, sn, sl, s0, acc, ph, gg)
+  (
+    e = code; el = 0; sn = n; sl = slice; s0 = wpos; acc = 0; ph = 0; gg = 1;
+  );
+
+  // one sample of a voice into vo_l / vo_r (il / ir = the input)
+  function v_run(il, ir) instance(e, el, sn, sl, s0, acc, ph, gg) local(m, w, pos, sp, ph2, d1, d2, g1, inc)
+  (
+    e == 1 ? (
+      // Repeat: the slice from the step start plays live, then loops; fades at the seam
+      m = el - sl * floor(el / sl);
+      w = min(1, (sl - m) / fw);
+      el >= sl ? w = min(w, (m + 1) / fw);
+      pos = s0 + m;
+      pos >= buf_size ? pos -= buf_size;
+      vo_l = buf_l[pos] * w;
+      vo_r = buf_r[pos] * w;
+    ) : e == 2 ? (
+      // Reverse: the last n samples backwards (a new chunk every n samples)
+      el >= sn ? ( s0 = wpos; el = 0; );
+      pos = s0 - 1 - el;
+      pos < 0 ? pos += buf_size;
+      w = min(1, min(el + 1, sn - el) / fw);
+      vo_l = buf_l[pos] * w;
+      vo_r = buf_r[pos] * w;
+    ) : e == 4 ? (
+      // Gate: open for the first half of every slice
+      m = el - sl * floor(el / sl);
+      m < sl / 2 ? gg = min(1, gg + 1 / fw) : gg = max(0, gg - 1 / fw);
+      vo_l = il * gg;
+      vo_r = ir * gg;
+    ) : e == 5 ? (
+      // Tape Stop: the speed falls from 1 to 0 over n samples, the level over the last quarter
+      sp = max(0, 1 - el / sn);
+      pos = s0 + acc;
+      acc += sp;
+      w = min(1, sp * 4);
+      vo_l = rd(buf_l, pos) * w;
+      vo_r = rd(buf_r, pos) * w;
+    ) : e == 6 || e == 7 ? (
+      // Pitch Down / Up: two taps half a window apart, Hann crossfaded
+      inc = e == 6 ? inc_dn : inc_up;
+      ph += inc;
+      ph >= 1 ? ph -= 1;
+      ph < 0 ? ph += 1;
+      ph2 = ph + 0.5;
+      ph2 >= 1 ? ph2 -= 1;
+      d1 = 1 + ph * win;
+      d2 = 1 + ph2 * win;
+      g1 = 0.5 - 0.5 * cos(2 * $pi * ph);
+      vo_l = rd(buf_l, wpos - d1) * g1 + rd(buf_l, wpos - d2) * (1 - g1);
+      vo_r = rd(buf_r, wpos - d1) * g1 + rd(buf_r, wpos - d2) * (1 - g1);
+    ) : (
+      // Off, Filter, Crush: the input (Filter and Crush act after the voices)
+      vo_l = il;
+      vo_r = ir;
+    );
+    el += 1;
+  );
+
+@slider
+  pat[0] = floor(slider1 + 0.5); pat[1] = floor(slider2 + 0.5); pat[2] = floor(slider3 + 0.5); pat[3] = floor(slider4 + 0.5);
+  pat[4] = floor(slider5 + 0.5); pat[5] = floor(slider6 + 0.5); pat[6] = floor(slider7 + 0.5); pat[7] = floor(slider8 + 0.5);
+  pat[8] = floor(slider9 + 0.5); pat[9] = floor(slider10 + 0.5); pat[10] = floor(slider11 + 0.5); pat[11] = floor(slider12 + 0.5);
+  pat[12] = floor(slider13 + 0.5); pat[13] = floor(slider14 + 0.5); pat[14] = floor(slider15 + 0.5); pat[15] = floor(slider16 + 0.5);
+  len_sel = floor(slider17 + 0.5);
+  // steps per beat: 1/8, 1/16, 1/32, 1/8T, 1/16T
+  spb = len_sel == 0 ? 2 : len_sel == 1 ? 4 : len_sel == 2 ? 8 : len_sel == 3 ? 3 : 6;
+  nsteps = max(1, min(16, floor(slider18 + 0.5)));
+  sw = slider19 / 150;                     // 2/3 of a step at 100%
+  rep_sel = floor(slider20 + 0.5);
+  rep_beats = rep_sel == 0 ? 0.25 : rep_sel == 1 ? 0.125 : 0.0625;
+  f_lc = log(slider21);
+  crush = slider22 / 100;
+  c_q = 2 ^ (1 - (16 - 12 * crush));      // quantiser step: 16 bits down to 4
+  c_inc = 1 / (1 + 15 * crush);            // sample-and-hold: every 1 to 16 samples
+  inc_dn = (1 - 2 ^ (-slider23 / 12)) / win;
+  inc_up = (1 - 2 ^ (slider23 / 12)) / win;
+  mix = slider24 / 100;
+  midi_on = slider25 >= 0.5;
+
+@block
+  bpm = tempo > 0 ? tempo : 120;
+  step_inc = bpm / 60 * spb / srate;
+  step_n = srate * 60 / bpm / spb;                                // samples per step
+  slice_n = max(16, floor(srate * 60 / bpm * rep_beats));
+  // lock to the host grid while playing
+  play_state & 1 ? step_pos = beat_position * spb;
+
+  // MIDI: every message passes through; notes are applied at their offsets in @sample
+  mq_n = 0;
+  while (midirecv(m_ofs, m_1, m_2, m_3)) (
+    midisend(m_ofs, m_1, m_2, m_3);
+    mq_n < 256 ? (
+      evq[mq_n * 4] = m_ofs;
+      evq[mq_n * 4 + 1] = m_1;
+      evq[mq_n * 4 + 2] = m_2;
+      evq[mq_n * 4 + 3] = m_3;
+      mq_n += 1;
+    );
+  );
+  mq_i = 0;
+  si = 0;
+
+@sample
+  in_l = spl0;
+  in_r = spl1;
+  buf_l[wpos] = in_l;
+  buf_r[wpos] = in_r;
+
+  // MIDI notes due now: C3..G3 held / released, all notes off
+  while (mq_i < mq_n && evq[mq_i * 4] <= si) (
+    m_st = evq[mq_i * 4 + 1] & 0xF0;
+    m_n = evq[mq_i * 4 + 2];
+    m_v = evq[mq_i * 4 + 3];
+    m_st == 0x90 && m_v > 0 && m_n >= 60 && m_n <= 67 ? (
+      stamp += 1;
+      held[m_n - 60] = stamp;
+    ) : (m_st == 0x80 || m_st == 0x90) && m_n >= 60 && m_n <= 67 ? (
+      held[m_n - 60] = 0;
+    ) : m_st == 0xB0 && (m_n == 120 || m_n == 123) ? (
+      memset(held, 0, 8);
+    );
+    // the latest held note picks the effect
+    midi_e = 0;
+    m_b = 0;
+    m_k = 0;
+    loop(8,
+      held[m_k] > m_b ? ( m_b = held[m_k]; midi_e = m_k + 1; );
+      m_k += 1;
+    );
+    mq_i += 1;
+  );
+  si += 1;
+
+  // the step: swing pairs (the even step lasts 1 + sw steps, the odd one 1 - sw)
+  step_pos += step_inc;
+  w_len = 2 * nsteps;
+  step_pos >= w_len ? step_pos -= w_len;
+  pw = step_pos - w_len * floor(step_pos / w_len);
+  pr = floor(pw / 2);
+  pq = pw - 2 * pr;
+  pq < 1 + sw ? (
+    k = 2 * pr;
+    seg = step_n * (1 + sw);
+  ) : (
+    k = 2 * pr + 1;
+    seg = step_n * (1 - sw);
+  );
+  midi_on ? (
+    ce = midi_e;
+    cur_step = -1;
+    seg = step_n;
+    do_trig = ce != cur_e;
+  ) : (
+    cur_step = k - nsteps * floor(k / nsteps);
+    ce = pat[cur_step];
+    // Repeat, Reverse, Gate and Tape Stop start again on every step
+    do_trig = ce != cur_e || (k != last_k && (ce == 1 || ce == 2 || ce == 4 || ce == 5));
+  );
+  last_k = k;
+
+  do_trig ? (
+    seg = max(16, min(floor(buf_size / 2), floor(seg)));
+    vc = 1 - vc;
+    vc == 0 ? ( va.v_start(ce, seg, slice_n); va.vg = 0; ) : ( vb.v_start(ce, seg, slice_n); vb.vg = 0; );
+    cur_e = ce;
+  );
+
+  // the two voices, crossfaded
+  va.vg = vc == 0 ? min(1, va.vg + xinc) : max(0, va.vg - xinc);
+  vb.vg = vc == 1 ? min(1, vb.vg + xinc) : max(0, vb.vg - xinc);
+  wet_l = 0;
+  wet_r = 0;
+  va.vg > 0 ? ( va.v_run(in_l, in_r); wet_l += vo_l * va.vg; wet_r += vo_r * va.vg; );
+  vb.vg > 0 ? ( vb.v_run(in_l, in_r); wet_l += vo_l * vb.vg; wet_r += vo_r * vb.vg; );
+
+  // Filter: fades in over 4 ms and out over 32 ms while the cutoff glides (15 ms)
+  cur_e == 3 ? f_g = min(1, f_g + xinc) : f_g = max(0, f_g - xinc / 8);
+  f_g > 0 ? (
+    f_lf += ((cur_e == 3 ? f_lc : log(f_top)) - f_lf) * f_a;
+    sv_g = tan($pi * exp(f_lf) / srate);
+    sv_a1 = 1 / (1 + sv_g * (sv_g + 0.3));
+    sv_a2 = sv_g * sv_a1;
+    sv_a3 = sv_g * sv_a2;
+    f_yl = fl.svf_lp(wet_l);
+    f_yr = fr.svf_lp(wet_r);
+    wet_l += (f_yl - wet_l) * f_g;
+    wet_r += (f_yr - wet_r) * f_g;
+  ) : (
+    f_lf = log(f_top);
+    fl.ic1 = fl.ic2 = fr.ic1 = fr.ic2 = 0;
+  );
+
+  // Crush: fades in and out over 4 ms
+  cur_e == 8 ? c_g = min(1, c_g + xinc) : c_g = max(0, c_g - xinc);
+  c_g > 0 ? (
+    c_ph += c_inc;
+    c_ph >= 1 ? (
+      c_ph -= 1;
+      c_hl = floor(wet_l / c_q + 0.5) * c_q;
+      c_hr = floor(wet_r / c_q + 0.5) * c_q;
+    );
+    wet_l += (c_hl - wet_l) * c_g;
+    wet_r += (c_hr - wet_r) * c_g;
+  ) : (
+    c_ph = 1;
+  );
+
+  wpos += 1;
+  wpos >= buf_size ? wpos = 0;
+
+  spl0 = in_l * (1 - mix) + wet_l * mix;
+  spl1 = in_r * (1 - mix) + wet_r * mix;

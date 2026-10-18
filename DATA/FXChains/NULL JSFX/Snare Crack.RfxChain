@@ -1,0 +1,40 @@
+BYPASS 0 0
+<JS null_jsfx/transient_shaper.jsfx ""
+  5 -1 100 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+>
+FXID {D8775B53-4D0B-59F0-8348-44D0413687FB}
+<PROGRAMENV 0 0
+  PARAMBASE 0.625
+  LFO 0
+  LFOWT 1 1
+  AUDIOCTL 0
+  AUDIOCTLWT 1 1
+  PLINK 0.5 2:2 0 -0.125
+>
+WAK 0 0
+BYPASS 0 0
+<JS null_jsfx/parametric_eq.jsfx ""
+  200 2 1.2 2 0 450 -2.5 1.5 2 0 4000 2.5 0.8 2 0 10000 2 1 1 0 15000 0 1 2 0 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+>
+FXID {E02665A4-3F8B-538E-931C-A5FB8C564967}
+WAK 0 0
+BYPASS 0 0
+<JS null_jsfx/saturation.jsfx ""
+  25 0 50 0 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+>
+FXID {B2285367-999E-5077-845B-1037667E557A}
+WAK 0 0
+BYPASS 0 0
+<JS null_jsfx/reverb.jsfx ""
+  25 30 40 15 0 10 20 20000 100 0 0 0 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+>
+FXID {FA1003E8-CCC6-5B73-9D63-A4E2F696519D}
+<PROGRAMENV 1 0
+  PARAMBASE 0.3
+  LFO 0
+  LFOWT 1 1
+  AUDIOCTL 0
+  AUDIOCTLWT 1 1
+  PLINK 0.8 3:0 3 -0.12
+>
+WAK 0 0

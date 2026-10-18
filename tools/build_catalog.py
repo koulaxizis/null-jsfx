@@ -143,6 +143,8 @@ def chains(stems):
     for path in sorted(CHAINS_DIR.glob("*/*.RfxChain")):
         uses = sorted(set(CHAIN_JS.findall(path.read_text(encoding="utf-8", errors="replace"))))
         unknown = set(uses) - stems
+        if uses and unknown and all((ROOT / "DATA/Effects/null_jsfx" / f"{u}.jsfx").exists() for u in unknown):
+            continue  # a plugin of the chain still waits off the site (site_content_next.json): so does the chain
         if not uses or unknown:
             sys.exit(f"build_catalog: {path}: plugins not in the catalog: {' '.join(sorted(unknown)) or 'none found'}")
         c = by_name.setdefault(path.stem, {"name": path.stem, "file": path.name, "desc": text.get(path.stem, ""),

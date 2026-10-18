@@ -1,0 +1,31 @@
+REQUIRED_CHANNELS 6
+BYPASS 0 0
+<JS null_jsfx/gfx/band_splitter_gfx.jsfx ""
+  0 3 150 2500 7000 0 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+>
+FXID {198F8E21-0B98-582E-9C1C-3E6D015C77A8}
+WAK 0 0
+BYPASS 0 0
+<JS null_jsfx/gfx/mono_maker_gfx.jsfx ""
+  100 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+>
+FXID {A6491084-24A9-501D-B18A-9AA70BF4A894}
+WAK 0 0
+BYPASS 0 0
+<JS null_jsfx/gfx/dynamic_eq_gfx.jsfx ""
+  100 -4 1.2 -20 1000 0 1 -12 2000 0 1 -12 6000 0 1 -12 1 100 0 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+>
+FXID {78E23664-2506-50CB-AD24-F073F1E0AF21}
+WAK 0 0
+BYPASS 0 0
+<JS null_jsfx/gfx/sub_bloom_gfx.jsfx ""
+  70 15 0 100 0 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+>
+FXID {B6AAB5FD-815F-57D8-B36B-87E88F8CF37B}
+WAK 0 0
+BYPASS 0 0
+<JS null_jsfx/gfx/band_splitter_gfx.jsfx ""
+  1 3 150 2500 7000 0 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+>
+FXID {1DD3064E-A544-5FB1-805D-CECD41691FA2}
+WAK 0 0

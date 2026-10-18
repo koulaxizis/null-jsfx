@@ -1,0 +1,64 @@
+REQUIRED_CHANNELS 6
+BYPASS 0 0
+<JS null_jsfx/band_splitter.jsfx ""
+  0 3 120 6000 7000 0 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+>
+FXID {9537610F-D56A-52ED-93D4-CD0FFA598A9C}
+WAK 0 0
+BYPASS 0 0
+<JS null_jsfx/mono_maker.jsfx ""
+  100 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+>
+FXID {D464C9D3-ABDA-5C19-BF92-2495B974A55B}
+WAK 0 0
+BYPASS 0 0
+<JS null_jsfx/saturation.jsfx ""
+  45 0 80 1 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+>
+<JS_PINMAP
+  6AMAABwAAADoAwAABgAAAAIAAAAEAAAAAAAAAAgAAAAAAAAAHAAAAOgDAAAGAAAAAgAAAAQAAAAAAAAACAAAAAAAAAA=
+>
+FXID {D9728E4F-3F03-50B0-94C8-DCC88BDFF9B5}
+WAK 0 0
+BYPASS 0 0
+<JS null_jsfx/chorus.jsfx ""
+  0.3 6 50 3 80 0 0 20000 0 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+>
+<JS_PINMAP
+  6AMAABwAAADoAwAABgAAAAIAAAAEAAAAAAAAAAgAAAAAAAAAHAAAAOgDAAAGAAAAAgAAAAQAAAAAAAAACAAAAAAAAAA=
+>
+FXID {41C192B1-A5FE-53F8-BF94-0035E7FA2D9C}
+<PROGRAMENV 2 0
+  PARAMBASE 0.5
+  LFO 0
+  LFOWT 1 1
+  AUDIOCTL 0
+  AUDIOCTLWT 1 1
+  PLINK 0.75 2:-1 0 -0.3375
+>
+WAK 0 0
+BYPASS 0 0
+<JS null_jsfx/phaser.jsfx ""
+  0.2 6 40 60 40 1020 0 0 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+>
+<JS_PINMAP
+  6AMAABwAAADoAwAABgAAAAIAAAAEAAAAAAAAAAgAAAAAAAAAHAAAAOgDAAAGAAAAAgAAAAQAAAAAAAAACAAAAAAAAAA=
+>
+FXID {8ECA725F-EB45-5198-B7CC-9ECEE4BE8AD2}
+<PROGRAMENV 5 0
+  PARAMBASE 0.506152
+  LFO 1
+  LFOWT 0.4 0
+  AUDIOCTL 0
+  AUDIOCTLWT 1 1
+  LFOSHAPE 0
+  LFOSYNC 0 0 0
+  LFOSPEED 0.124573 0
+>
+WAK 0 0
+BYPASS 0 0
+<JS null_jsfx/band_splitter.jsfx ""
+  1 3 120 6000 7000 0 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+>
+FXID {2DCEC064-D270-5020-A56F-F7B4BC5D466E}
+WAK 0 0

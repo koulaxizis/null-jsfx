@@ -3,10 +3,12 @@
  * Copyright (C) 2026 Christos Koulaxizis / NULL JSFX
  * SPDX-License-Identifier: MIT
  *
- * 960 x 600 design units, resizable. Header; top bar (preset, meters, crossovers, input, output,
- * mix); the chain (8 slots) on the left; the selected module's controls (built from its
- * SliderInfo: knobs for numbers, selectors for enums, rows of 6, pages past 3 rows) or the
- * modulation routes on the right; macros, LFO 1, LFO 2 and the envelope along the bottom.
+ * 960 x 680 design units, resizable. Header; top bar (preset, meters, crossovers, input, output,
+ * mix); the chain (8 slots) on the left, with the feedback loop's range drawn beside it; the
+ * selected module's controls (built from its SliderInfo: knobs for numbers, selectors for enums,
+ * rows of 6, pages past 3 rows; lane, band, channel and mix in its header) or the modulation
+ * routes on the right; macros, LFO 1, LFO 2 and the envelope along the bottom, then the step
+ * sequencer (16 bars to draw on) and the lanes and feedback loop below them.
  * The module chooser and the preset list open over the window.
  *
  * Slots, routes and the preset name are plugin state (setState); everything else is a
@@ -54,6 +56,7 @@ enum HitKind {
     kHitRouteDelete, // a: route
     kHitModuleView,  // back to the module
     kHitPopupBack,   // the panel of a popup (swallows clicks)
+    kHitSeqBars,     // the step sequencer's bars (click / drag to draw)
 };
 
 struct Hit {
@@ -68,7 +71,7 @@ class UIRack : public NullUI
 {
 public:
     UIRack()
-        : NullUI(960, 600)
+        : NullUI(960, 680)
     {
         fHits.reserve(512);
         for (uint32_t i = 0; i < kNumParams; ++i)
@@ -143,7 +146,7 @@ protected:
 
     bool isSlotValue(uint32_t p, uint32_t* slot = nullptr, uint32_t* v = nullptr) const
     {
-        if (p < kNumGlobals)
+        if (p < kNumGlobals || p >= kExtFirst)
             return false;
         const uint32_t k = p - kNumGlobals;
         if (k % kSlotParams < kSlotValue1)
@@ -379,12 +382,13 @@ protected:
             order[i] = order[i - 1];
         order[b] = int(a);
         std::string ids[kSlots];
-        float vals[kSlots][kSlotParams];
+        float vals[kSlots][kSlotParams], lanes[kSlots];
         for (uint32_t i = 0; i < kSlots; ++i)
         {
             ids[i] = fIds[order[i]];
             for (uint32_t p = 0; p < kSlotParams; ++p)
                 vals[i][p] = fParam[slotParam(uint32_t(order[i]), p)];
+            lanes[i] = fParam[laneParam(uint32_t(order[i]))];
         }
         for (uint32_t i = 0; i < kSlots; ++i)
             fIds[i] = ids[i];
@@ -392,11 +396,15 @@ protected:
         // the engine moved the instances with their parameters; the host learns them here
         for (uint32_t i = 0; i < kSlots; ++i)
             if (order[i] != int(i))
+            {
                 for (uint32_t p = 0; p < kSlotParams; ++p)
                 {
                     fParam[slotParam(i, p)] = -1.0f;
                     setParamGesture(slotParam(i, p), vals[i][p]);
                 }
+                fParam[laneParam(i)] = -1.0f;
+                setParamGesture(laneParam(i), lanes[i]);
+            }
         int where[kSlots];
         for (int i = 0; i < int(kSlots); ++i)
             where[order[i]] = i;
@@ -404,6 +412,13 @@ protected:
             fRoutes[i].slot = where[fRoutes[i].slot];
         if (fNumRoutes)
             sendRoutes();
+        // the feedback loop's ends follow their slots
+        for (uint32_t p : { uint32_t(kFbFrom), uint32_t(kFbTo) })
+        {
+            const int s = std::max(0, std::min(int(kSlots) - 1, int(std::lround(fParam[p])) - 1));
+            if (where[s] != s)
+                setParamGesture(p, float(where[s] + 1));
+        }
         if (fSel == int(a))
             fSel = int(b);
         else
@@ -454,6 +469,26 @@ protected:
             }
         fPage = 0;
         fRouteScroll = 0;
+    }
+
+    // ---- lanes and the feedback loop ---------------------------------------------------------
+
+    // a slot with a module on lane B: the rack runs two lanes
+    bool anyLaneB() const
+    {
+        for (uint32_t i = 0; i < kSlots; ++i)
+            if (!fIds[i].empty() && fParam[laneParam(i)] >= 0.5f)
+                return true;
+        return false;
+    }
+
+    // the loop's slots (0-based, from <= to), as the engine reads them
+    void fbRange(int& from, int& to) const
+    {
+        from = std::max(0, std::min(int(kSlots) - 1, int(std::lround(fParam[kFbFrom])) - 1));
+        to = std::max(0, std::min(int(kSlots) - 1, int(std::lround(fParam[kFbTo])) - 1));
+        if (from > to)
+            std::swap(from, to);
     }
 
     // ---- routes ------------------------------------------------------------------------------
@@ -716,6 +751,8 @@ protected:
         drawLfo(0, 446.0f);
         drawLfo(1, 614.0f);
         drawEnvelope();
+        drawSeq();
+        drawLanesLoop();
 
         if (fPopup == kPopupModules)
             drawModulePicker();
@@ -802,6 +839,32 @@ protected:
         for (uint32_t i = 0; i < kSlots; ++i)
             drawSlotRow(i, kRowY0 + float(i) * kRowH);
 
+        // the feedback loop: a bracket left of the rows, from the output of To back to From
+        if (fParam[kFeedback] > 0.0f)
+        {
+            int from, to;
+            fbRange(from, to);
+            const float h = kRowH - 4.0f, x = kRowX - 4.5f;
+            const float y0 = kRowY0 + float(from) * kRowH + h * 0.5f, y1 = kRowY0 + float(to) * kRowH + h * 0.5f;
+            beginPath();
+            moveTo(kRowX, y1);
+            lineTo(x, y1);
+            lineTo(x, y0);
+            lineTo(kRowX, y0);
+            strokeColor(col(theme::kAccent, 0.85f));
+            strokeWidth(1.5f);
+            lineJoin(ROUND);
+            stroke();
+            // arrowhead into From
+            beginPath();
+            moveTo(kRowX + 0.5f, y0);
+            lineTo(kRowX - 3.0f, y0 - 2.5f);
+            lineTo(kRowX - 3.0f, y0 + 2.5f);
+            closePath();
+            fillColor(col(theme::kAccent));
+            fill();
+        }
+
         if (fSlotDrag >= 0 && fSlotDragging)
         {
             // where the dragged slot will land
@@ -865,6 +928,8 @@ protected:
         const int band = int(std::lround(fParam[slotParam(i, kSlotBand)]));
         const int chan = int(std::lround(fParam[slotParam(i, kSlotChannel)]));
         float tx = kRowX + 32.0f;
+        if (anyLaneB())
+            tx = tag(tx, cy + 7.0f, fParam[laneParam(i)] >= 0.5f ? "LANE B" : "LANE A");
         if (band > 0 || chan > 0)
         {
             if (band > 0)
@@ -982,16 +1047,18 @@ protected:
         char name[48];
         upper(d->name, name, sizeof(name));
         const bool nameLit = hovered(kHitAddModule, int(s));
-        fitLabel(kPanX + 14.0f, 145.0f, ALIGN_LEFT, 13.0f, 1.5f, theme::kText, name, 250.0f);
-        const float nw = std::min(250.0f, textWidth(name, 13.0f, 1.5f, true));
+        fitLabel(kPanX + 14.0f, 145.0f, ALIGN_LEFT, 13.0f, 1.5f, theme::kText, name, 176.0f);
+        const float nw = std::min(176.0f, textWidth(name, 13.0f, 1.5f, true));
         // the name opens the chooser
         chevron(kPanX + 14.0f + nw + 9.0f, 146.0f, 1.0f, nameLit ? theme::kText : theme::kMuted);
         addHit(kPanX + 10.0f, 120.0f, nw + 24.0f, 36.0f, kHitAddModule, int(s));
 
-        label(kPanX + 306.0f, hy, ALIGN_RIGHT, 7.0f, 1.2f, theme::kMuted, "BAND", true);
-        selector(kPanX + 354.0f, hy, 86.0f, slotParam(s, kSlotBand));
-        label(kPanX + 484.0f, hy, ALIGN_RIGHT, 7.0f, 1.2f, theme::kMuted, "CHANNEL", true);
-        selector(kPanX + 532.0f, hy, 86.0f, slotParam(s, kSlotChannel));
+        label(kPanX + 240.0f, hy, ALIGN_RIGHT, 7.0f, 1.2f, theme::kMuted, "LANE", true);
+        selector(kPanX + 268.0f, hy, 48.0f, laneParam(s));
+        label(kPanX + 336.0f, hy, ALIGN_RIGHT, 7.0f, 1.2f, theme::kMuted, "BAND", true);
+        selector(kPanX + 382.0f, hy, 82.0f, slotParam(s, kSlotBand));
+        label(kPanX + 490.0f, hy, ALIGN_RIGHT, 7.0f, 1.2f, theme::kMuted, "CHANNEL", true);
+        selector(kPanX + 536.0f, hy, 82.0f, slotParam(s, kSlotChannel));
         compactKnob(kPanX + 580.0f, hy, slotParam(s, kSlotMix), "MIX", 70.0f);
         hline(kPanX + 10.0f, kPanX + kPanW - 10.0f, 158.0f, theme::kBorder);
 
@@ -1051,7 +1118,7 @@ protected:
         }
         if (rows < 3)
             label(kPanX + kPanW * 0.5f, kPanY + kPanH - 11.0f, ALIGN_CENTER, 6.5f, 1.2f, theme::kSlogan,
-              "DOUBLE-CLICK RESETS  \xc2\xb7  CTRL OR SHIFT DRAGS FINE  \xc2\xb7  MOD ROUTES MACROS, LFOS AND THE ENVELOPE", true);
+              "DOUBLE-CLICK RESETS  \xc2\xb7  CTRL OR SHIFT DRAGS FINE  \xc2\xb7  MOD ROUTES MACROS, LFOS, THE ENVELOPE AND THE STEP SEQ", true);
     }
 
     // ---- modulation routes -------------------------------------------------------------------
@@ -1079,7 +1146,7 @@ protected:
         {
             label(kPanX + kPanW * 0.5f, 270.0f, ALIGN_CENTER, 8.5f, 2.0f, theme::kMuted, "NO ROUTES", true);
             label(kPanX + kPanW * 0.5f, 290.0f, ALIGN_CENTER, 7.5f, 0.5f, theme::kSlogan,
-                  "+ ROUTE sends a macro, an LFO or the envelope to any value of any slot.");
+                  "+ ROUTE sends a macro, an LFO, the envelope or the step sequencer to any value of any slot.");
             return;
         }
         const float rowH = 26.0f, y0 = 180.0f;
@@ -1330,6 +1397,122 @@ protected:
         knobCell(x + 6.0f + cw * 2.5f, y + 54.0f, kEnvGain, "GAIN", 11.0f, cw, 6.0f, 40.0f, 72.0f);
     }
 
+    // ---- second strip: step sequencer, lanes and the feedback loop ---------------------------
+
+    static constexpr float kRow2Y = 594.0f, kRow2H = 72.0f;
+    static constexpr float kBarsX = 104.0f, kBarsY = kRow2Y + 8.0f, kBarsW = 296.0f, kBarsH = 56.0f;
+
+    void drawSeq()
+    {
+        const float x = 14.0f, y = kRow2Y, w = 600.0f;
+        card(x, y, w, kRow2H);
+        label(x + 12.0f, y + 15.0f, ALIGN_LEFT, 8.5f, 2.0f, theme::kMuted, "STEP SEQ", true);
+        RackEngine* e = engine();
+        char buf[32];
+        const int nr = routesFrom(kSrcSeq);
+        if (nr)
+            std::snprintf(buf, sizeof(buf), "%d ROUTE%s", nr, nr > 1 ? "S" : "");
+        else
+            std::snprintf(buf, sizeof(buf), "NO ROUTES");
+        label(x + 12.0f, y + 31.0f, ALIGN_LEFT, 6.5f, 1.2f, nr ? theme::kMuted : theme::kSlogan, buf, true);
+        const int steps = std::max(1, std::min(int(kSeqSteps), int(std::lround(fParam[kSeqLength]))));
+        const int cur = e ? e->seqStep() : 0;
+        miniBar(x + 12.0f, y + 46.0f, 72.0f, e ? e->sourceValue(kSrcSeq) : 0.0f);
+        std::snprintf(buf, sizeof(buf), "STEP %d / %d", std::min(cur, steps - 1) + 1, steps);
+        label(x + 12.0f, y + 59.0f, ALIGN_LEFT, 6.5f, 1.0f, theme::kMuted, buf, true);
+
+        // the bars: drawn and edited with the mouse
+        const bool lit = hovered(kHitSeqBars, 0) || fSeqDraw;
+        panel(kBarsX, kBarsY, kBarsW, kBarsH, theme::kBackground, lit ? theme::kTrackHover : theme::kBorder);
+        const float sw = (kBarsW - 8.0f) / float(kSeqSteps), inner = kBarsH - 8.0f;
+        for (uint32_t k = 0; k < kSeqSteps; ++k)
+        {
+            const float bx = kBarsX + 4.0f + float(k) * sw + 1.5f, bw = sw - 3.0f;
+            const float v = clampf(fParam[kSeqStep1 + k], 0.0f, 1.0f);
+            const bool active = int(k) < steps, now = active && int(k) == cur && e;
+            // the slot's track, then the value
+            beginPath();
+            rect(bx, kBarsY + 4.0f, bw, inner);
+            fillColor(col(theme::kCard, active ? 1.0f : 0.4f));
+            fill();
+            if (v > 0.002f)
+            {
+                beginPath();
+                rect(bx, kBarsY + 4.0f + inner * (1.0f - v), bw, inner * v);
+                fillColor(col(now ? theme::kText : theme::kAccent, active ? (now ? 0.95f : 0.7f) : 0.18f));
+                fill();
+            }
+            if (k % 4 == 0 && k) // beat groups
+                vline(bx - 2.0f, kBarsY + 4.0f, kBarsY + kBarsH - 4.0f);
+        }
+        addHit(kBarsX, kBarsY, kBarsW, kBarsH, kHitSeqBars, 0);
+
+        // Steps, Rate (the note when synced), Glide, Sync
+        const float top = y + 6.0f;
+        knobCell(432.0f, top, kSeqLength, "STEPS", 9.0f, 46.0f, 6.0f, 30.0f, 54.0f);
+        const int sync = int(std::lround(fParam[kSeqSync]));
+        const bool synced = sync > 0 && sync < 16;
+        knobCell(478.0f, top, kSeqRate, "RATE", 9.0f, 46.0f, 6.0f, 30.0f, 54.0f, synced, synced ? kSyncOptions[sync] : nullptr);
+        knobCell(524.0f, top, kSeqGlide, "GLIDE", 9.0f, 46.0f, 6.0f, 30.0f, 54.0f);
+        label(574.0f, y + 15.0f, ALIGN_CENTER, 7.0f, 1.2f, theme::kMuted, "SYNC", true);
+        selector(574.0f, y + 38.0f, 66.0f, kSeqSync, nullptr, 19.0f);
+    }
+
+    // sets the step under x (and y) while drawing on the bars
+    void drawStep(float x, float y)
+    {
+        const float sw = (kBarsW - 8.0f) / float(kSeqSteps), inner = kBarsH - 8.0f;
+        const int k = int(std::floor((x - kBarsX - 4.0f) / sw));
+        if (k < 0 || k >= int(kSeqSteps))
+            return;
+        const float v = clampf(1.0f - (y - kBarsY - 4.0f) / inner, 0.0f, 1.0f);
+        const float q = std::round(v * 100.0f) / 100.0f;
+        if (q != fParam[kSeqStep1 + uint32_t(k)])
+        {
+            setParamGesture(kSeqStep1 + uint32_t(k), q);
+            fSeqEdited = true;
+        }
+    }
+
+    void drawLanesLoop()
+    {
+        const float x = 622.0f, y = kRow2Y, w = 324.0f;
+        card(x, y, w, kRow2H);
+        char buf[32];
+
+        // lanes: how many slots run on lane B, and the blend
+        int onB = 0;
+        for (uint32_t i = 0; i < kSlots; ++i)
+            onB += !fIds[i].empty() && fParam[laneParam(i)] >= 0.5f;
+        label(x + 12.0f, y + 15.0f, ALIGN_LEFT, 8.5f, 2.0f, theme::kMuted, "LANES", true);
+        if (onB)
+            std::snprintf(buf, sizeof(buf), "%d ON B", onB);
+        else
+            std::snprintf(buf, sizeof(buf), "ONE LANE");
+        label(x + 12.0f, y + 31.0f, ALIGN_LEFT, 6.5f, 1.2f, onB ? theme::kMuted : theme::kSlogan, buf, true);
+        // Lane Mix as how much of lane B is heard
+        char mixText[24];
+        std::snprintf(mixText, sizeof(mixText), "%d%% B", int(std::lround(fParam[kLaneMix])));
+        knobCell(x + 90.0f, y + 6.0f, kLaneMix, "LANE MIX", 9.0f, 56.0f, 6.0f, 30.0f, 54.0f, onB == 0, mixText);
+        vline(x + 126.0f, y + 10.0f, y + kRow2H - 10.0f);
+
+        // the feedback loop
+        const bool fbOn = fParam[kFeedback] > 0.0f;
+        int from, to;
+        fbRange(from, to);
+        label(x + 138.0f, y + 15.0f, ALIGN_LEFT, 8.5f, 2.0f, theme::kMuted, "LOOP", true);
+        if (fbOn)
+            std::snprintf(buf, sizeof(buf), from == to ? "SLOT %d" : "SLOTS %d-%d", from + 1, to + 1);
+        else
+            std::snprintf(buf, sizeof(buf), "OFF");
+        fitLabel(x + 138.0f, y + 31.0f, ALIGN_LEFT, 6.5f, 1.2f, fbOn ? theme::kMuted : theme::kSlogan, buf, 36.0f);
+        knobCell(x + 206.0f, y + 6.0f, kFeedback, "FEEDBACK", 9.0f, 50.0f, 6.0f, 30.0f, 54.0f);
+        std::snprintf(buf, sizeof(buf), "FROM %d", int(std::lround(fParam[kFbFrom])));
+        selector(x + 274.0f, y + 22.0f, 84.0f, kFbFrom, buf, 19.0f);
+        std::snprintf(buf, sizeof(buf), "TO %d", int(std::lround(fParam[kFbTo])));
+        selector(x + 274.0f, y + 50.0f, 84.0f, kFbTo, buf, 19.0f);
+    }
+
     // ---- popups ------------------------------------------------------------------------------
 
     void dim()
@@ -1411,12 +1594,29 @@ protected:
         dim();
         static const char* const cats[] = { "Chain", "Routing", "Macro" };
         static const char* const titles[] = { "CHAINS", "ROUTING", "MACROS" };
-        const float x = 24.0f, y = 100.0f, w = 560.0f, itemH = 19.0f;
+        const float x = 24.0f, y = 100.0f, itemH = 19.0f, head = 66.0f, minColW = 150.0f, maxColW = 178.0f;
         int counts[3] = {};
         for (uint32_t i = 0; i < kNumPresets; ++i)
             for (int c = 0; c < 3; ++c)
                 counts[c] += std::strcmp(kPresets[i].category, cats[c]) == 0;
-        const float h = 74.0f + float(counts[0]) * itemH;
+        // as few rows as fit: a group takes as many columns as it needs, the columns stay at least
+        // minColW wide while the window has room (beyond that they narrow and the names clip)
+        const float room = float(kWidth) - x - 24.0f - 24.0f;
+        const int maxRows = std::max(1, int((float(kHeight) - 16.0f - y - head) / itemH));
+        int rows = 1, cols[3] = { 1, 1, 1 }, totalCols = 3;
+        for (rows = 1; rows <= maxRows; ++rows)
+        {
+            totalCols = 0;
+            for (int c = 0; c < 3; ++c)
+            {
+                cols[c] = std::max(1, (counts[c] + rows - 1) / rows);
+                totalCols += cols[c];
+            }
+            if (float(totalCols) * minColW <= room || rows == maxRows)
+                break;
+        }
+        const float colW = std::min(maxColW, room / float(totalCols));
+        const float w = 24.0f + colW * float(totalCols), h = head + 8.0f + float(rows) * itemH;
         beginPath();
         roundedRect(x + 0.5f, y + 4.0f, w - 1.0f, h - 1.0f, 8.0f);
         fillColor(Color(0, 0, 0, 0.4f));
@@ -1427,16 +1627,24 @@ protected:
         // Init on its own line
         presetItem(x + 12.0f, y + 10.0f, 170.0f, itemH, 0, cur == 0);
         label(x + w - 16.0f, y + 20.0f, ALIGN_RIGHT, 6.5f, 1.2f, theme::kSlogan, "ALSO IN THE HOST'S PRESET MENU", true);
-        const float colW = (w - 24.0f) / 3.0f;
+        float cx = x + 12.0f;
+        char buf[16];
         for (int c = 0; c < 3; ++c)
         {
-            const float cx = x + 12.0f + float(c) * colW;
+            const float gw = colW * float(cols[c]);
             label(cx + 6.0f, y + 44.0f, ALIGN_LEFT, 7.5f, 2.0f, theme::kMuted, titles[c], true);
-            hline(cx, cx + colW - 8.0f, y + 52.0f, theme::kBorder);
+            std::snprintf(buf, sizeof(buf), "%d", counts[c]);
+            label(cx + gw - 12.0f, y + 44.0f, ALIGN_RIGHT, 7.0f, 1.0f, theme::kSlogan, buf, true);
+            hline(cx, cx + gw - 8.0f, y + 52.0f, theme::kBorder);
             int k = 0;
             for (uint32_t i = 0; i < kNumPresets; ++i)
                 if (std::strcmp(kPresets[i].category, cats[c]) == 0)
-                    presetItem(cx, y + 58.0f + float(k++) * itemH, colW - 8.0f, itemH, int(i), int(i) == cur);
+                {
+                    presetItem(cx + colW * float(k / rows), y + 58.0f + float(k % rows) * itemH, colW - 8.0f, itemH, int(i),
+                               int(i) == cur);
+                    ++k;
+                }
+            cx += gw;
         }
     }
 
@@ -1445,7 +1653,8 @@ protected:
         const bool lit = hovered(kHitPresetPick, i);
         if (cur || lit)
             panel(x, y, w, h - 1.0f, cur ? kSelFill : theme::kBackground, theme::kTrackHover, 3.0f);
-        label(x + 7.0f, y + h * 0.5f, ALIGN_LEFT, 8.5f, 0.2f, cur || lit ? theme::kText : 0xc8c8c8, kPresets[i].name);
+        clipLabel(x + 7.0f, y + h * 0.5f, ALIGN_LEFT, 8.5f, 0.2f, cur || lit ? theme::kText : 0xc8c8c8, kPresets[i].name,
+                  w - 12.0f, false);
         addHit(x, y, w, h - 1.0f, kHitPresetPick, i);
     }
 
@@ -1477,6 +1686,13 @@ protected:
             {
                 fDragRoute = -1;
                 markEdited();
+            }
+            if (fSeqDraw)
+            {
+                fSeqDraw = false;
+                if (fSeqEdited)
+                    markEdited();
+                fSeqEdited = false;
             }
             if (fSlotDrag >= 0)
             {
@@ -1621,6 +1837,11 @@ protected:
         case kHitRouteDelete:
             deleteRoute(h.a);
             break;
+        case kHitSeqBars:
+            fSeqDraw = true;
+            fSeqEdited = false;
+            drawStep(x, y);
+            break;
         default:
             return false;
         }
@@ -1692,6 +1913,11 @@ protected:
             repaint();
             return true;
         }
+        if (fSeqDraw)
+        {
+            drawStep(clampf(x, kBarsX + 4.0f, kBarsX + kBarsW - 4.01f), y);
+            return true;
+        }
         if (fSlotDrag >= 0)
         {
             fSlotDragY = y;
@@ -1723,6 +1949,18 @@ protected:
             if (h.kind == kHitSelect)
             {
                 stepParam(uint32_t(h.a), dir, false);
+                return true;
+            }
+            if (h.kind == kHitSeqBars)
+            {
+                // the step under the mouse, in 5 % steps
+                const int k = int(std::floor((x - kBarsX - 4.0f) / ((kBarsW - 8.0f) / float(kSeqSteps))));
+                if (k >= 0 && k < int(kSeqSteps))
+                {
+                    const uint32_t p = kSeqStep1 + uint32_t(k);
+                    setParamGesture(p, clampf(std::round((fParam[p] + float(dir) * 0.05f) * 100.0f) / 100.0f, 0.0f, 1.0f));
+                    markEdited();
+                }
                 return true;
             }
             if (h.kind == kHitRouteDepth)
@@ -1767,6 +2005,7 @@ private:
     float fDragX = 0.0f, fDragY = 0.0f, fDragPos = 0.0f;
     int fSlotDrag = -1;
     bool fSlotDragging = false;
+    bool fSeqDraw = false, fSeqEdited = false;
     float fSlotDragY0 = 0.0f, fSlotDragY = 0.0f;
     uint fLastClickTime = 0;
     int fLastClickKind = kHitNone, fLastClickA = 0;

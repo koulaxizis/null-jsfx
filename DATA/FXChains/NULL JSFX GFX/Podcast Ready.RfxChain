@@ -1,0 +1,50 @@
+BYPASS 0 0
+<JS null_jsfx/gfx/noise_reduction_gfx.jsfx ""
+  0 1 10 3 50 10 150 0 100 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+>
+FXID {20557C87-31D8-5CB9-B19E-DAED9239B048}
+WAK 0 0
+BYPASS 0 0
+<JS null_jsfx/gfx/de_hum_gfx.jsfx ""
+  0 4 30 30 0 3 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+>
+FXID {1EA72A42-6B79-5B9C-8C34-11AA69737B4E}
+WAK 0 0
+BYPASS 0 0
+<JS null_jsfx/gfx/de_plosive_gfx.jsfx ""
+  50 150 15 80 0 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+>
+FXID {339DD01E-9BAA-5C04-892B-C8CE6F4A1ADF}
+WAK 0 0
+BYPASS 0 0
+<JS null_jsfx/gfx/deesser_gfx.jsfx ""
+  6000 -5 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+>
+FXID {1E01844A-CBA2-574D-9DF6-6BF954A042D6}
+<PROGRAMENV 1 0
+  PARAMBASE 0.722222
+  LFO 0
+  LFOWT 1 1
+  AUDIOCTL 0
+  AUDIOCTLWT 1 1
+  PLINK -1 0:-3 2 0.166667
+>
+WAK 0 0
+BYPASS 0 0
+<JS null_jsfx/gfx/auto_leveler_gfx.jsfx ""
+  -17 1000 12 9 -50 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+>
+FXID {CD95DA5E-DEE7-5F18-A3B1-E5B13BC029B6}
+WAK 0 0
+BYPASS 0 0
+<JS null_jsfx/gfx/limiter_gfx.jsfx ""
+  0 -2 -1 200 2 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+>
+FXID {043F5625-13A6-5208-9E21-509C9672EB38}
+WAK 0 0
+BYPASS 0 0
+<JS null_jsfx/gfx/loudness_meter_gfx.jsfx ""
+  1 0 1 0 0 0 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+>
+FXID {15473A4B-F62E-5132-9A10-C16A739EC207}
+WAK 0 0

@@ -1,0 +1,8 @@
+[
+  ["Funk Rhythm", {"Mode": "Auto", "Model": "Classic", "Resonance": 70, "Sensitivity": 60, "Attack": 4, "Release": 90, "Mix": 100}],
+  ["Auto Quack", {"Mode": "Auto", "Model": "Classic", "Resonance": 85, "Sensitivity": 75, "Attack": 2, "Release": 60, "Output": 1.5}],
+  ["Synced Wah", {"Mode": "LFO", "Model": "Classic", "Resonance": 65, "Tempo Sync": "1/8"}],
+  ["Vocal Talk", {"Mode": "Auto", "Model": "Vocal", "Resonance": 70, "Sensitivity": 55, "Attack": 15, "Release": 200}],
+  ["Slow Sweep", {"Mode": "LFO", "Model": "Wide", "Resonance": 55, "Rate": 0.2, "Mix": 85}],
+  ["Half-Cocked", {"Pedal": 42, "Mode": "Manual", "Model": "Classic", "Resonance": 75, "Output": 2}]
+]

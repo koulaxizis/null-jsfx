@@ -1,0 +1,20 @@
+BYPASS 0 0
+<JS null_jsfx/gfx/flanger_gfx.jsfx ""
+  0.3 6 70 50 1 6 90 0 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+>
+FXID {3DCCC4FF-63B4-55A0-BA24-6E9DE0A423F1}
+<PROGRAMENV 2 0
+  PARAMBASE 0.7
+  LFO 0
+  LFOWT 1 1
+  AUDIOCTL 0
+  AUDIOCTLWT 1 1
+  PLINK 0.666667 0:0 3 -0.333333
+>
+WAK 0 0
+BYPASS 0 0
+<JS null_jsfx/gfx/saturation_gfx.jsfx ""
+  25 0 50 0 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+>
+FXID {BA5504F2-2242-5966-8604-E5B9E8DB19BE}
+WAK 0 0

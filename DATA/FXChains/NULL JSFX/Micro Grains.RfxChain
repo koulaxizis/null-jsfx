@@ -1,0 +1,50 @@
+BYPASS 0 0
+<JS null_jsfx/granular_delay.jsfx ""
+  120 40 30 0 30 0 30 70 20 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+>
+FXID {BE284FA8-00FC-5D74-9B39-AF470FB83226}
+WAK 0 0
+BYPASS 0 0
+<JS null_jsfx/reverser.jsfx ""
+  1 0 2000 8 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+>
+FXID {EA57D1C8-BA25-54F3-83EF-C0BBB2616542}
+<PROGRAMENV 3 0
+  PARAMBASE 0.08
+  LFO 0
+  LFOWT 1 1
+  AUDIOCTL 0
+  AUDIOCTLWT 1 1
+  PLINK 0.666667 0:-1 8 -0.133333
+>
+WAK 0 0
+BYPASS 0 0
+<JS null_jsfx/glitch_fx.jsfx ""
+  4 16 1 30 0 0 0 15 1 300 0 200 0 8 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+>
+FXID {C60264EF-1296-5B4A-9785-2208E37BE0D1}
+<PROGRAMENV 13 0
+  PARAMBASE 0.08
+  LFO 0
+  LFOWT 1 1
+  AUDIOCTL 0
+  AUDIOCTLWT 1 1
+  PLINK 1 0:-2 8 -0.2
+>
+<PROGRAMENV 7 0
+  PARAMBASE 0.15
+  LFO 0
+  LFOWT 1 1
+  AUDIOCTL 0
+  AUDIOCTLWT 1 1
+  PLINK 1 0:-2 4 -0.3
+>
+<PROGRAMENV 0 0
+  PARAMBASE 0.19598
+  LFO 0
+  LFOWT 1 1
+  AUDIOCTL 0
+  AUDIOCTLWT 1 1
+  PLINK 0.6 0:-2 4 -0.18
+>
+WAK 0 0

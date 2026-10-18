@@ -1,0 +1,7 @@
+[
+  ["Halftime Bar", {"Length": "1 Bar", "Speed": "1/2", "Tone": 14000}],
+  ["Halftime Beat", {"Length": "1/4", "Speed": "1/2"}],
+  ["Quarter Speed Drone", {"Length": "2 Bars", "Speed": "1/4", "Tone": 6000}],
+  ["Pitch-Kept Halftime", {"Length": "1 Bar", "Speed": "1/2", "Pitch Keep": "On"}],
+  ["Dark Halftime", {"Length": "1/2", "Speed": "1/2", "Tone": 2000}]
+]

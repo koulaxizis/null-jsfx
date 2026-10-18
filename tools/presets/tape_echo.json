@@ -1,0 +1,9 @@
+[
+  ["Dub Echo", {"Repeat Time": 420, "Heads": "1+3", "Intensity": 72, "Bass": -3, "Treble": -2, "Wow/Flutter": 30, "Saturation": 45, "Mix": 40}],
+  ["Slapback Head", {"Repeat Time": 110, "Heads": "1", "Intensity": 8, "Treble": -1.5, "Wow/Flutter": 15, "Saturation": 35, "Mix": 30}],
+  ["Space Wash", {"Repeat Time": 520, "Heads": "1+2+3+R", "Intensity": 78, "Bass": -4, "Treble": -3, "Wow/Flutter": 40, "Saturation": 40, "Spring": 55, "Mix": 45}],
+  ["Runaway Oscillation", {"Repeat Time": 260, "Heads": "1", "Intensity": 108, "Wow/Flutter": 35, "Saturation": 70, "Mix": 50}],
+  ["Lo-Fi Tape Echo", {"Repeat Time": 340, "Heads": "1+2", "Intensity": 55, "Bass": -6, "Treble": -9, "Wow/Flutter": 85, "Saturation": 80, "Mix": 40}],
+  ["Synced Eighths", {"Tempo Sync": "1/8", "Heads": "1+2", "Intensity": 45, "Wow/Flutter": 12, "Saturation": 25, "Mix": 30}],
+  ["Spring Echo", {"Repeat Time": 280, "Heads": "1+2+R", "Intensity": 45, "Treble": -2, "Wow/Flutter": 25, "Saturation": 35, "Spring": 60, "Mix": 38}]
+]
