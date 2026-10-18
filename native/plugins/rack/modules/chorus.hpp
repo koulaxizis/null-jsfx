@@ -36,16 +36,22 @@ public:
     }
 
     void process(const float* inL, const float* inR, float* outL, float* outR, uint32_t frames,
-                 const nulljsfx::ModuleTime&) override
+                 const nulljsfx::ModuleTime& time) override
     {
-        fDsp.process(inL, inR, outL, outR, frames);
+        // as Plugin.cpp: the host tempo when above 0, else 120; the beat position only while playing
+        const double tempo = time.tempo > 0.0 ? time.tempo : 120.0;
+        const double beatPos = time.playing ? time.beat : 0.0;
+        fDsp.process(inL, inR, outL, outR, frames, time.playing, beatPos, tempo);
     }
 
 private:
     void update()
     {
         using nullchorus::onGrid;
-        fDsp.setParams(onGrid(fV[0], 0.1, 20.0, 0.1), onGrid(fV[1], 0.0, 10.0, 0.1), fV[2]);
+        const int sync = int(std::lround(fV[6]));
+        fDsp.setParams(onGrid(fV[0], 0.1, 20.0, 0.1), onGrid(fV[1], 0.0, 10.0, 0.1), fV[2], std::round(fV[3]),
+                       std::round(fV[4]), std::round(fV[5]), sync, nullchorus::syncCycle(sync), std::round(fV[7]),
+                       fV[8] >= 0.5f);
     }
 
     nullchorus::ChorusProcessor fDsp;

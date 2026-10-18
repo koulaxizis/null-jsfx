@@ -6,5 +6,12 @@
   ["Snare Splash", {"Room Size": 70, "Decay": 60, "Damping": 20, "Mix": 18}],
   ["Large Hall", {"Room Size": 100, "Decay": 80, "Damping": 35, "Mix": 25}],
   ["Dark Pad Wash", {"Room Size": 90, "Decay": 92, "Damping": 80, "Mix": 40}],
-  ["Send Return Full Wet", {"Room Size": 80, "Decay": 70, "Damping": 40, "Mix": 100}]
+  ["Send Return Full Wet", {"Room Size": 80, "Decay": 70, "Damping": 40, "Mix": 100}],
+  ["Small Room", {"Room Size": 30, "Decay": 25, "Damping": 45, "Mix": 20, "Pre-Delay": 5, "Low Cut": 120, "Width": 90}],
+  ["Vocal Plate", {"Room Size": 55, "Decay": 55, "Damping": 15, "Mix": 22, "Pre-Delay": 40, "Low Cut": 150, "High Cut": 12000, "Width": 120, "Modulation": 15, "Character": "Plate"}],
+  ["Drum Chamber", {"Room Size": 60, "Decay": 45, "Damping": 35, "Mix": 22, "Pre-Delay": 10, "Low Cut": 200, "High Cut": 9000, "Width": 110, "Character": "Plate"}],
+  ["Big Hall", {"Room Size": 90, "Decay": 80, "Damping": 40, "Mix": 28, "Pre-Delay": 30, "Low Cut": 80, "Width": 140, "Modulation": 25, "Character": "Hall"}],
+  ["Modulated Space", {"Room Size": 75, "Decay": 70, "Damping": 45, "Mix": 30, "Pre-Delay": 20, "High Cut": 10000, "Width": 130, "Modulation": 70, "Character": "Hall"}],
+  ["Wide Ambience", {"Room Size": 40, "Decay": 30, "Damping": 20, "Mix": 15, "Pre-Delay": 15, "Low Cut": 250, "Width": 180}],
+  ["Frozen Pad", {"Room Size": 100, "Decay": 100, "Damping": 30, "Mix": 60, "Low Cut": 100, "Width": 150, "Modulation": 40, "Freeze": "On", "Character": "Hall"}]
 ]

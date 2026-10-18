@@ -421,7 +421,13 @@ const guides = {
     sliders: [
       { name: 'Rate', range: '0.1 to 20 Hz', desc: 'Speed of the sine LFO modulating the delay time.' },
       { name: 'Depth', range: '0 to 10 ms', desc: 'Sweep of the delay time; the delay moves between 5 ms and 5 ms + Depth, so it never runs out of range.' },
-      { name: 'Mix', range: '0 to 100%', desc: 'Blend between dry signal and modulated delay.' }
+      { name: 'Mix', range: '0 to 100%', desc: 'Blend between dry signal and modulated delay.' },
+      { name: 'Voices', range: '1 to 4', desc: 'Number of chorus voices in Classic mode (1 to 4); their LFOs are spread evenly in phase for a thicker ensemble.' },
+      { name: 'Stereo Spread', range: '0 to 100%', desc: 'Shifts the right channel\'s LFOs against the left (up to half the voice spacing) for a wider stereo image; in Dimension mode it widens the two taps from half to full width.' },
+      { name: 'Feedback', range: '0 to 90%', desc: 'Amount of the wet signal fed back into the delay lines for a more resonant, flanger-like chorus. 0% is off.' },
+      { name: 'Tempo Sync', range: 'Off / 1/1 / 1/2 / 1/4 / 1/8 / 1/16 / 2/1 / 4/1 / 1/4T / 1/8T / 1/4D / 1/8D', desc: 'Locks one LFO cycle to a note value at the project tempo (straight, triplet or dotted), following the song position while playing. Off uses Rate.' },
+      { name: 'High Cut', range: '1000 to 20000 Hz', desc: 'One-pole low-pass on the wet signal for a darker, vintage chorus. 20 kHz is off.' },
+      { name: 'Mode', range: 'Classic / Dimension', desc: 'Classic is the multi-voice sine chorus; Dimension sweeps two short delays in opposite phase with a slow triangle, for a wide, mono-safe sound with very little pitch wobble.' }
     ],
     uses: ['Thickening clean guitars', 'Widening the feel of pads and keys', 'Adding movement to backing vocals', 'Subtle detune on synth leads'],
     properties: 'Input → delay line swept by a sine LFO between 5 ms and 5 ms + Depth → linear (fractional) interpolation → Dry/Wet Mix → Output. One LFO drives both channels, there is no feedback, and no latency.',
@@ -488,11 +494,15 @@ const guides = {
       { name: 'Feedback', range: '0 to 100%', desc: 'Amount of the echo fed back into the delay line, capped internally at 95%.' },
       { name: 'Mix', range: '0 to 100%', desc: 'Blend between dry signal and echoes.' },
       { name: 'Tempo Sync', range: 'OFF / ON', desc: 'Locks the delay time to the project tempo.' },
-      { name: 'Subdivision', range: '1/4 / 1/8 / 1/16 / 1/32', desc: 'Synced delay length: 1/4 = one beat, down to 1/32.' },
+      { name: 'Subdivision', range: '1/4 / 1/8 / 1/16 / 1/32 / 1/2 / 1/1 / 1/4D / 1/8D / 1/16D / 1/4T / 1/8T / 1/16T', desc: 'Synced delay length: 1/4 = one beat; straight notes from 1/1 to 1/32 plus dotted (D) and triplet (T) values.' },
       { name: 'Mode', range: 'Stereo / Ping-Pong', desc: 'Stereo keeps left and right on their own delay lines; Ping-Pong sends the mono sum into the left line and cross-feeds the lines, so the echoes alternate left and right.' },
       { name: 'Low Cut', range: '20 to 2000 Hz', desc: 'One-pole high-pass inside the feedback loop: each repeat loses more low end. 20 Hz is off.' },
       { name: 'High Cut', range: '1000 to 20000 Hz', desc: 'One-pole low-pass inside the feedback loop: each repeat gets darker, like tape or a bucket-brigade delay. 20 kHz is off.' },
-      { name: 'Drive', range: '0 to 100%', desc: 'Soft saturation inside the feedback loop: repeats get rounder and compress as they build up. 0% is off.' }
+      { name: 'Drive', range: '0 to 100%', desc: 'Soft saturation inside the feedback loop: repeats get rounder and compress as they build up. 0% is off.' },
+      { name: 'Modulation', range: '0 to 100%', desc: 'Tape-like wow: two slow sine LFOs gently move the delay time by up to 4 ms, so the echoes waver in pitch. 0% is off.' },
+      { name: 'Diffusion', range: '0 to 100%', desc: 'A chain of short all-pass filters inside the feedback loop that smears every repeat a little more, turning the echoes into a reverb-like wash. 0% is off.' },
+      { name: 'Ducking', range: '0 to 100%', desc: 'Pushes the echoes down while the dry input is loud (10 ms attack, 250 ms release), so they bloom in the gaps between phrases. 0% is off.' },
+      { name: 'Freeze', range: 'Off / On', desc: 'Holds the current echoes and repeats them forever: no new input enters the loop, feedback is 100% and the filters and drive are bypassed so the loop neither fades nor builds up.' }
     ],
     uses: ['Slapback on vocals and guitars', 'Tempo-synced rhythmic echoes', 'Ping-pong echoes that bounce across the stereo field', 'Dark, saturated tape-style trails for transitions'],
     properties: 'Input → delay line (up to 2 s, or tempo-synced; Stereo: left and right independent, Ping-Pong: mono sum into the left line, lines cross-fed) → Low Cut → High Cut → Drive on every repeat inside the feedback loop → Dry/Wet Mix → Output. At their defaults the filters and drive are bypassed; zero latency.',
@@ -562,7 +572,11 @@ const guides = {
       { name: 'Knee', range: '0 to 20 dB', desc: 'Width of the soft transition above (or below) the threshold.' },
       { name: 'Attack', range: '0 to 200 ms', desc: 'How fast gain reduction is applied (0 = instant).' },
       { name: 'Release', range: '0 to 1000 ms', desc: 'How fast gain recovers (0 = instant).' },
-      { name: 'Makeup', range: '0 to 20 dB', desc: 'Gain added after processing.' }
+      { name: 'Makeup', range: '0 to 20 dB', desc: 'Gain added after processing.' },
+      { name: 'Style', range: 'Clean / Bus / FET / Opto', desc: 'Character of the detector: Clean is the transparent original, Bus a smooth glue compressor with auto release, FET a fast and aggressive one with a little harmonic colour, Opto a slow, program-dependent one.' },
+      { name: 'Sidechain HPF', range: '20 to 500 Hz', desc: 'High-pass filter on the detector only, so low end does not drive the gain reduction (20 Hz = off).' },
+      { name: 'Mix', range: '0 to 100%', desc: 'Blend of compressed and dry signal for parallel compression (100% = fully compressed).' },
+      { name: 'Sidechain', range: 'Internal / External', desc: 'Internal listens to the track itself; External listens to input channels 3/4 (sidechain key).' }
     ],
     uses: ['General-purpose bus and track compression', 'Evening out vocal and bass levels', 'Downward expansion to reduce noise and bleed', 'Controlling dynamics on drums'],
     properties: 'Input → stereo-linked peak detection → gain computer (compress above / expand below Threshold, soft knee) → attack/release smoothing → Makeup → Output. Zero latency.',
@@ -616,9 +630,13 @@ const guides = {
     category: 'Essentials',
     sliders: [
       { name: 'Rate', range: '0.1 to 5 Hz', desc: 'Speed of the sine LFO.' },
-      { name: 'Depth', range: '1 to 20 ms', desc: 'Sweep range of the delay, from 0.5 ms up to 0.5 ms + Depth.' },
+      { name: 'Depth', range: '1 to 20 ms', desc: 'Sweep range of the delay, from Manual up to Manual + Depth.' },
       { name: 'Feedback', range: '0 to 100%', desc: 'Amount of delayed signal fed back for a stronger, more resonant comb (capped internally at 70%).' },
-      { name: 'Mix', range: '0 to 100%', desc: 'Blend between dry signal and flanged signal.' }
+      { name: 'Mix', range: '0 to 100%', desc: 'Blend between dry signal and flanged signal.' },
+      { name: 'Manual', range: '0.1 to 10 ms', desc: 'Shortest delay of the sweep (its starting point); the delay moves from Manual up to Manual + Depth. 0.5 ms is the classic setting.' },
+      { name: 'Tempo Sync', range: 'Off / 1/1 / 1/2 / 1/4 / 1/8 / 1/16 / 2/1 / 4/1 / 1/4T / 1/8T / 1/4D / 1/8D', desc: 'Locks one LFO cycle to a note value at the project tempo (straight, triplet or dotted), following the song position while playing. Off uses Rate.' },
+      { name: 'Stereo Phase', range: '0 to 180 deg', desc: 'Offsets the right channel\'s LFO against the left, from 0 (mono sweep) to 180 degrees (opposite sweeps for a wide stereo flange).' },
+      { name: 'Thru Zero', range: 'Off / On', desc: 'Through-zero flanging: the dry signal is delayed by the middle of the sweep and the swept signal is inverted, so the sweep passes through the dry signal and cancels it, like the tape jet effect. Adds latency equal to that delay while on.' }
     ],
     uses: ['Jet-plane sweeps on drums and cymbals', 'Movement on guitars and synths', 'Psychedelic effects on vocals', 'Build-ups and transitions'],
     properties: 'Input → short modulated delay (0.5 ms to 0.5 ms + Depth) with feedback → linear interpolation → Dry/Wet Mix → Output. One LFO drives both channels; zero latency.',
@@ -834,7 +852,12 @@ const guides = {
     sliders: [
       { name: 'Rate', range: '0.1 to 5 Hz', desc: 'Speed of the sine LFO sweeping the all-pass filters.' },
       { name: 'Stages', range: '1 to 8', desc: 'Number of all-pass stages; more stages create more notches.' },
-      { name: 'Mix', range: '0 to 100%', desc: 'Amount of phased signal added to the dry signal.' }
+      { name: 'Mix', range: '0 to 100%', desc: 'Amount of phased signal added to the dry signal.' },
+      { name: 'Depth', range: '0 to 100%', desc: 'Width of the sweep around Center; 57% is the classic sweep from 440 Hz to 1.6 kHz.' },
+      { name: 'Feedback', range: '−95 to +95%', desc: 'Amount of the phased signal fed back into the all-pass chain: higher values sharpen the peaks, negative values move them between the notches. Above 30% the wet level is trimmed to keep the peaks in check.' },
+      { name: 'Center', range: '200 to 5000 Hz', desc: 'Middle frequency of the sweep (1020 Hz by default, log scale from 200 Hz to 5 kHz).' },
+      { name: 'Stereo Phase', range: '0 to 180 deg', desc: 'Offset between the left and right LFOs: 0 deg sweeps both channels together, 180 deg sweeps them in opposite directions for a wide stereo swirl.' },
+      { name: 'Tempo Sync', range: 'Off / 1/1 / 1/2 / 1/4 / 1/8 / 1/16 / 2/1 / 4/1 / 1/4T / 1/8T / 1/4D / 1/8D', desc: 'Locks one LFO cycle to a note value at the project tempo (and to the bar while the transport plays), replacing Rate. Off uses Rate.' }
     ],
     uses: ['Swirling movement on guitars and keys', 'Vintage phasing on synths', 'Subtle motion on pads', 'Psychedelic effects on drums and vocals'],
     properties: 'Input → 1–8 first-order all-pass stages swept by a sine LFO (roughly 440–1600 Hz range) with fixed 30% feedback → added to the dry signal by Mix → Output. One LFO drives both channels; zero latency.',
@@ -869,7 +892,14 @@ const guides = {
       { name: 'Decay', range: '0 to 100%', desc: 'Comb feedback; higher values give a longer tail (roughly 0.4 s to 4 s at default size).' },
       { name: 'Damping', range: '0 to 100%', desc: 'High-frequency absorption in the tail: 0% is bright, higher values make the tail progressively darker (low-pass from 16 kHz down to 1.2 kHz).' },
       { name: 'Mix', range: '0 to 100%', desc: 'Blend between dry signal and reverb.' },
-      { name: 'Bypass', range: '0 to 1', desc: 'Passes the input unprocessed when set to 1.' }
+      { name: 'Bypass', range: '0 to 1', desc: 'Passes the input unprocessed when set to 1.' },
+      { name: 'Pre-Delay', range: '0 to 250 ms', desc: 'Delays the signal feeding the reverb (0–250 ms) so the tail starts after the dry sound; the dry signal is not delayed.' },
+      { name: 'Low Cut', range: '20 to 1000 Hz', desc: '12 dB/oct high-pass on the reverb only, to keep the tail out of the low end; off at 20 Hz.' },
+      { name: 'High Cut', range: '1000 to 20000 Hz', desc: '12 dB/oct low-pass on the reverb only, for a darker, less splashy tail; off at 20 kHz.' },
+      { name: 'Width', range: '0 to 200%', desc: 'Stereo width of the reverb (mid/side): 0% is mono, 100% unchanged, 200% extra wide.' },
+      { name: 'Modulation', range: '0 to 100%', desc: 'Slow, gentle movement of the internal delay lengths that smears metallic ringing and gives the tail a chorused shimmer; 0% is off.' },
+      { name: 'Freeze', range: 'Off / On', desc: 'Holds the current tail forever: the loop stops losing level and no new input enters, for pads and drones.' },
+      { name: 'Character', range: 'Classic / Plate / Hall', desc: 'Classic is the original room algorithm; Plate adds dense input diffusion and a brighter tail; Hall adds the diffusion with longer, wider delays for a bigger, smoother space.' }
     ],
     uses: ['Room and hall ambience on dry sources', 'Stereo space on vocals and instruments', 'Dark, damped tails for pads', 'Quick sketch reverb during writing'],
     properties: 'Input → mono sum → four damped feedback combs per side (right side slightly longer for a decorrelated stereo tail) → two series all-passes per side → Dry/Wet Mix → Output. Delay lengths and damping are scaled to the sample rate, so it sounds the same at 44.1, 48 or 96 kHz; zero latency.',
@@ -990,9 +1020,13 @@ const guides = {
     subtitle: 'Sine LFO Tremolo',
     category: 'Essentials',
     sliders: [
-      { name: 'Rate', range: '0.1 to 20 Hz', desc: 'Speed of the sine LFO.' },
+      { name: 'Rate', range: '0.1 to 20 Hz', desc: 'Speed of the LFO (when Tempo Sync is Off).' },
       { name: 'Depth', range: '0 to 100%', desc: 'Modulation amount; the gain dips from full level down to 1 − Depth, so 100% goes fully silent at the trough without flipping polarity.' },
-      { name: 'Mix', range: '0 to 100%', desc: 'Blend between dry and modulated signal.' }
+      { name: 'Mix', range: '0 to 100%', desc: 'Blend between dry and modulated signal.' },
+      { name: 'Shape', range: 'Sine / Triangle / Square / Saw Up / Saw Down', desc: 'LFO waveform: Sine, Triangle, Square (edges softened to avoid clicks), Saw Up or Saw Down.' },
+      { name: 'Tempo Sync', range: 'Off / 1/1 / 1/2 / 1/4 / 1/8 / 1/16 / 1/32 / 1/4T / 1/8T / 1/16T / 1/4D / 1/8D', desc: 'Locks the LFO to the host tempo at the chosen note value (straight, triplet or dotted) and to the beat grid while playing; Off uses Rate.' },
+      { name: 'Stereo Phase', range: '0 to 180 deg', desc: 'Offsets the right channel\'s LFO; 180 degrees turns the tremolo into an auto-pan.' },
+      { name: 'Mode', range: 'Classic / Harmonic', desc: 'Classic modulates the whole signal; Harmonic splits it at about 800 Hz and moves lows and highs in opposite phase, like a vintage harmonic tremolo.' }
     ],
     uses: ['Vintage amp tremolo on guitars', 'Pulsing pads and keys', 'Rhythmic movement on sustained notes', 'Choppy effects at high rates'],
     properties: 'Input → gain of 1 − Depth × (0.5 − 0.5 × sine LFO), always between 0 and 1 → Dry/Wet Mix → Output. Same modulation on both channels; zero latency.',

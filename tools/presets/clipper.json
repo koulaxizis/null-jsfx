@@ -1,0 +1,12 @@
+[
+  ["Gentle Safety", {"Input": 0, "Ceiling": -0.3, "Knee": 30, "Oversampling": "4x"}],
+  ["Drum Bus Clip", {"Input": 4, "Ceiling": -1.0, "Knee": 10, "Oversampling": "4x"}],
+  ["Loud Master", {"Input": 6, "Ceiling": -0.3, "Knee": 20, "Oversampling": "8x", "Link": "Stereo"}],
+  ["808 Smash", {"Input": 12, "Ceiling": -3.0, "Knee": 0, "Oversampling": "2x", "Output": 2}],
+  ["Soft Saturate", {"Input": 6, "Ceiling": -6.0, "Knee": 100, "Mix": 60, "Output": 3}],
+  ["Snare Crack", {"Input": 8, "Ceiling": -2.0, "Knee": 15, "Oversampling": "4x"}],
+  ["Parallel Crush", {"Input": 18, "Ceiling": -6.0, "Knee": 0, "Mix": 35}],
+  ["Hard Ceiling", {"Input": 0, "Ceiling": -1.0, "Knee": 0, "Oversampling": "8x", "Link": "Stereo"}],
+  ["Bass Round", {"Input": 6, "Ceiling": -3.0, "Knee": 60, "Output": 2}],
+  ["Lo-Fi Aliased", {"Input": 10, "Ceiling": -4.0, "Knee": 0, "Oversampling": "Off", "Output": 3}]
+]

@@ -1,12 +1,17 @@
 desc:NULL Phaser
 author: Christos Koulaxizis
-tags: phaser modulation sweep notch moving filter allpass
+tags: phaser modulation sweep notch moving filter allpass feedback stereo tempo sync
 //category: Essentials
 //NULL JSFX v2.4 • https://nulljsfx.tech • MIT License
 
 slider1:0.5<0.1,5,0.1>Rate (Hz)
 slider2:4<1,8,1>Stages
 slider3:30<0,100,1>Mix (%)
+slider4:57<0,100,1>Depth (%)
+slider5:30<-95,95,1>Feedback (%)
+slider6:1020<200,5000,1:log>Center (Hz)
+slider7:0<0,180,1>Stereo Phase (deg)
+slider8:0<0,11,1{Off,1/1,1/2,1/4,1/8,1/16,2/1,4/1,1/4T,1/8T,1/4D,1/8D}>Tempo Sync
 
 in_pin:Left
 in_pin:Right
@@ -27,11 +32,34 @@ out_pin:Right
   stages = floor(slider2);
   mix_amt = slider3 / 100;
   lfo_inc = 2 * $pi * rate / srate;
-  d_min = 440 * 2 / srate;
-  d_max = 1600 * 2 / srate;
+  // the sweep: Center +- a half-width that grows with Depth; the defaults (57%, 1020 Hz)
+  // give 580 Hz, the classic 440 Hz to 1.6 kHz sweep
+  sw_hw = 580 * (slider6 / 1020) * (slider4 / 57);
+  d_min = (slider6 - sw_hw) * 2 / srate;
+  d_max = (slider6 + sw_hw) * 2 / srate;
   d_sc = abs(d_max - d_min) * 0.5;
   d_min = d_min < d_max ? d_min : d_max;
-  feedback = 0.3;
+  feedback = slider5 / 100;
+  // above 30% the wet level is pulled down so the feedback peaks stay near the 30% level
+  mix_w = abs(feedback) > 0.3 ? mix_amt * (1 - abs(feedback)) / 0.7 : mix_amt;
+  st_on = slider7 > 0;
+  st_off = slider7 / 180 * $pi;
+  // Tempo Sync: one LFO cycle in beats
+  sync_on = slider8 > 0;
+  sync_beats = slider8 == 1 ? 4 : slider8 == 2 ? 2 : slider8 == 3 ? 1 : slider8 == 4 ? 0.5 :
+               slider8 == 5 ? 0.25 : slider8 == 6 ? 8 : slider8 == 7 ? 16 : slider8 == 8 ? 2 / 3 :
+               slider8 == 9 ? 1 / 3 : slider8 == 10 ? 1.5 : 0.75;
+
+@block
+  // synced: the rate follows the host tempo, and while playing the phase is locked to
+  // beat_position at the start of every block
+  sync_on ? (
+    lfo_inc = 2 * $pi * (tempo > 0 ? tempo : 120) / 60 / sync_beats / srate;
+    play_state & 1 ? (
+      sync_ph = beat_position / sync_beats;
+      lfo_phase = 2 * $pi * (sync_ph - floor(sync_ph));
+    );
+  );
 
 @sample
   lfo_phase += lfo_inc;
@@ -39,6 +67,13 @@ out_pin:Right
   
   d = d_min + d_sc * (sin(lfo_phase) + 1);
   coef = (1 - d) / (1 + d);
+  st_on ? (
+    // the right channel's LFO runs Stereo Phase ahead
+    d_r = d_min + d_sc * (sin(lfo_phase + st_off) + 1);
+    coef_r = (1 - d_r) / (1 + d_r);
+  ) : (
+    coef_r = coef;
+  );
   
   // Left channel
   wet_l = spl0 + last_l * feedback;
@@ -53,19 +88,19 @@ out_pin:Right
   stages >= 8 ? (ly8 = coef * (ly8 + wet_l) - lx8;  lx8 = wet_l;  wet_l = ly8;);
   
   last_l = wet_l;
-  spl0 += wet_l * mix_amt;
+  spl0 += wet_l * mix_w;
   
   // Right channel
   wet_r = spl1 + last_r * feedback;
   
-  ry1 = coef * (ry1 + wet_r) - rx1;  rx1 = wet_r;  wet_r = ry1;
-  stages >= 2 ? (ry2 = coef * (ry2 + wet_r) - rx2;  rx2 = wet_r;  wet_r = ry2;);
-  stages >= 3 ? (ry3 = coef * (ry3 + wet_r) - rx3;  rx3 = wet_r;  wet_r = ry3;);
-  stages >= 4 ? (ry4 = coef * (ry4 + wet_r) - rx4;  rx4 = wet_r;  wet_r = ry4;);
-  stages >= 5 ? (ry5 = coef * (ry5 + wet_r) - rx5;  rx5 = wet_r;  wet_r = ry5;);
-  stages >= 6 ? (ry6 = coef * (ry6 + wet_r) - rx6;  rx6 = wet_r;  wet_r = ry6;);
-  stages >= 7 ? (ry7 = coef * (ry7 + wet_r) - rx7;  rx7 = wet_r;  wet_r = ry7;);
-  stages >= 8 ? (ry8 = coef * (ry8 + wet_r) - rx8;  rx8 = wet_r;  wet_r = ry8;);
+  ry1 = coef_r * (ry1 + wet_r) - rx1;  rx1 = wet_r;  wet_r = ry1;
+  stages >= 2 ? (ry2 = coef_r * (ry2 + wet_r) - rx2;  rx2 = wet_r;  wet_r = ry2;);
+  stages >= 3 ? (ry3 = coef_r * (ry3 + wet_r) - rx3;  rx3 = wet_r;  wet_r = ry3;);
+  stages >= 4 ? (ry4 = coef_r * (ry4 + wet_r) - rx4;  rx4 = wet_r;  wet_r = ry4;);
+  stages >= 5 ? (ry5 = coef_r * (ry5 + wet_r) - rx5;  rx5 = wet_r;  wet_r = ry5;);
+  stages >= 6 ? (ry6 = coef_r * (ry6 + wet_r) - rx6;  rx6 = wet_r;  wet_r = ry6;);
+  stages >= 7 ? (ry7 = coef_r * (ry7 + wet_r) - rx7;  rx7 = wet_r;  wet_r = ry7;);
+  stages >= 8 ? (ry8 = coef_r * (ry8 + wet_r) - rx8;  rx8 = wet_r;  wet_r = ry8;);
   
   last_r = wet_r;
-  spl1 += wet_r * mix_amt;
+  spl1 += wet_r * mix_w;

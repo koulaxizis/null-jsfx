@@ -22,7 +22,7 @@
 #define DISTRHO_PLUGIN_HAS_UI        1
 #endif
 #define DISTRHO_PLUGIN_IS_RT_SAFE    1
-#define DISTRHO_PLUGIN_NUM_INPUTS    2
+#define DISTRHO_PLUGIN_NUM_INPUTS    4 // 1/2 the track, 3/4 the sidechain (a separate port)
 #define DISTRHO_PLUGIN_NUM_OUTPUTS   2
 #define DISTRHO_PLUGIN_WANT_LATENCY  0
 #define DISTRHO_PLUGIN_WANT_STATE    0

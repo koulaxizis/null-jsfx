@@ -14,17 +14,39 @@ static const NullKnobsUI::Control kControls[] = {
     { 0, NullKnobsUI::kKnob, "RATE", 0, -1, false },
     { 1, NullKnobsUI::kKnob, "DEPTH", 0, -1, false },
     { 2, NullKnobsUI::kKnob, "MIX", 0, -1, false },
+    { 3, NullKnobsUI::kSelect, "SHAPE", 0, -1, false },
+    { 4, NullKnobsUI::kSelect, "SYNC", 1, -1, false },
+    { 5, NullKnobsUI::kKnob, "PHASE", 1, -1, false },
+    { 6, NullKnobsUI::kSelect, "MODE", 1, -1, false },
 };
 
 class UITremolo : public NullKnobsUI
 {
 public:
     UITremolo()
-        : NullKnobsUI({ "TREMOLO", "ESSENTIALS", 480, 120, nullptr, 1, nulltremolo::kSliders, nulltremolo::kNumSliders,
+        : NullKnobsUI({ "TREMOLO", "ESSENTIALS", 480, 120, nullptr, 2, nulltremolo::kUiSliders, nulltremolo::kNumSliders,
                         kControls, sizeof(kControls) / sizeof(kControls[0]), true }) {}
 
 protected:
-    // as in tremolo_gfx.jsfx: the output level over two LFO cycles (0 to 100%), the LFO position dashed
+    // the rate in use: the host's tempo when synced (from the plugin), else Rate
+    double rateNow() const
+    {
+        const int sync = int(std::lround(value(4)));
+        if (sync > 0)
+        {
+            if (nulljsfx::Taps* t = taps())
+            {
+                const float hz = t->gr.load(std::memory_order_relaxed);
+                if (hz > 0.0f)
+                    return hz;
+            }
+            return 120.0 / 60.0 / nulltremolo::syncBeats(sync);
+        }
+        return nulltremolo::onGrid(value(0), 0.1, 20.0, 0.1);
+    }
+
+    // as in tremolo_gfx.jsfx: the output level over one LFO cycle (0 to 100%), the LFO position
+    // dashed; the right channel (Stereo Phase) or, in Harmonic, the highs as a second, muted curve
     void drawDisplay() override
     {
         char buf[32];
@@ -35,20 +57,32 @@ protected:
             std::snprintf(buf, sizeof(buf), "DIPS TO %.1f dB", 20.0 * std::log10(1.0 - dip));
         else
             std::snprintf(buf, sizeof(buf), "NO DIP");
-        modView("LEVEL", buf);
+        const int shape = int(std::lround(value(3)));
+        const double deg = std::lround(value(5));
+        const bool st = deg > 0.0, harm = value(6) >= 0.5f;
+        const double off = deg / 360.0 * nulltremolo::kTwoPi;
+        const double hz = rateNow();
+        const nulltremolo::Edges e = nulltremolo::edgesFor(hz);
+        modView(st ? (harm ? "LOWS   LEFT / RIGHT" : "LEFT / RIGHT") : (harm ? "LOWS / HIGHS" : "LEVEL"), buf);
         yLabels("100%", "50%", "0%");
-        xLabels(1.0 / value(0));
-        modCurve([&](double u) {
-            return linY(float(nulltremolo::levelAt(depth, mix, std::sin(4.0 * M_PI * u))), 0.0f, 1.0f);
-        }, theme::kAccent, true);
-        playhead(tapExtra() / 2.0);
+        xLabels(1.0 / std::max(0.001, hz));
+        auto level = [&](double u, bool right, bool hi) {
+            double l = nulltremolo::lfoValue(shape, nulltremolo::kTwoPi * u + (right ? off : 0.0), e);
+            if (hi)
+                l = -l;
+            return linY(float(nulltremolo::levelAt(depth, mix, l)), 0.0f, 1.0f);
+        };
+        if (st || harm)
+            modCurve([&](double u) { return level(u, st, !st); }, theme::kMuted, false);
+        modCurve([&](double u) { return level(u, false, false); }, theme::kAccent, true);
+        playhead(tapExtra());
     }
 
     void formatValue(uint32_t param, float v, char* buf, size_t n) override
     {
         if (param == 0)
         {
-            std::snprintf(buf, n, "%.1f Hz", v);
+            std::snprintf(buf, n, "%.1f Hz", value(4) >= 0.5f ? rateNow() : double(v));
             return;
         }
         NullKnobsUI::formatValue(param, v, buf, n);
@@ -78,7 +112,7 @@ protected:
         char buf[24];
         for (int i = 1; i <= 3; ++i)
         {
-            const double t = period * i / 2.0;
+            const double t = period * i / 4.0;
             if (t < 1.0)
                 std::snprintf(buf, sizeof(buf), "%d ms", int(std::floor(t * 1000.0 + 0.5)));
             else

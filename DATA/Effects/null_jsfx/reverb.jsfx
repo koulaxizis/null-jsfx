@@ -1,6 +1,6 @@
 desc:NULL Reverb
 author: Christos Koulaxizis
-tags: reverb room space ambience hall plate decay
+tags: reverb room space ambience hall plate decay pre-delay freeze modulation
 //category: Essentials
 //NULL JSFX v2.4 • https://nulljsfx.tech • MIT License
 
@@ -9,6 +9,13 @@ slider2:50<0,100,1>Decay (%)
 slider3:30<0,100,1>Damping (%)
 slider4:30<0,100,1>Mix (%)
 slider5:0<0,1,1>Bypass
+slider6:0<0,250,1>Pre-Delay (ms)
+slider7:20<20,1000,1:log>Low Cut (Hz)
+slider8:20000<1000,20000,1:log>High Cut (Hz)
+slider9:100<0,200,1>Width (%)
+slider10:0<0,100,1>Modulation (%)
+slider11:0<0,1,1{Off,On}>Freeze
+slider12:0<0,2,1{Classic,Plate,Hall}>Character
 
 in_pin:Left
 in_pin:Right
@@ -22,18 +29,36 @@ out_pin:Right
   // srate/44100 so the room sounds the same at every sample rate.
   // Damping is a one-pole low-pass inside each comb's feedback loop: more Damping
   // absorbs more high frequencies, so the tail gets darker as it decays.
+  // Character: Classic is the plain algorithm; Plate and Hall first smear the input
+  // through four series all-passes (Dattorro-style diffusion lengths, scaled from
+  // 29761 Hz); Plate keeps the combs a little shorter and the loop brighter, Hall makes
+  // them 45% longer with a wider left/right spread. Every extra stage (pre-delay,
+  // diffusion, modulation, width, low/high cut) is skipped at its off setting, so the
+  // defaults are the plain reverb.
   sc = srate / 44100;
   spread = 23;
-  blen = ceil((1687 + spread) * sc) + 4;
-  // buffer and state memory: 8 combs, 4 all-passes
+  // sized for the largest case: Hall combs (x1.45, spread 47)
+  blen = ceil((1687 + 47) * 1.45 * sc) + 4;
+  // buffer and state memory: 8 combs, 4 all-passes, 4 diffusers, the pre-delay line
   cbl1 = 0;          cbl2 = cbl1 + blen; cbl3 = cbl2 + blen; cbl4 = cbl3 + blen;
   cbr1 = cbl4 + blen; cbr2 = cbr1 + blen; cbr3 = cbr2 + blen; cbr4 = cbr3 + blen;
   apl1 = cbr4 + blen; apl2 = apl1 + blen; apr1 = apl2 + blen; apr2 = apr1 + blen;
-  memset(0, 0, apr2 + blen);
-  freembuf(apr2 + blen);
+  dsc = srate / 29761;
+  dl1 = max(1, floor(142 * dsc)); dl2 = max(1, floor(107 * dsc));
+  dl3 = max(1, floor(379 * dsc)); dl4 = max(1, floor(277 * dsc));
+  dfb1 = apr2 + blen; dfb2 = dfb1 + dl1; dfb3 = dfb2 + dl2; dfb4 = dfb3 + dl3;
+  pd_size = ceil(0.25 * srate) + 2;
+  pd_buf = dfb4 + dl4;
+  memset(0, 0, pd_buf + pd_size);
+  freembuf(pd_buf + pd_size);
   wl1 = wl2 = wl3 = wl4 = wr1 = wr2 = wr3 = wr4 = 0;
   wal1 = wal2 = war1 = war2 = 0;
   fl1 = fl2 = fl3 = fl4 = fr1 = fr2 = fr3 = fr4 = 0;
+  dw1 = dw2 = dw3 = dw4 = 0;
+  pd_w = 0;
+  mod_a = mod_b = 0;
+  lc_x1l = lc_x2l = lc_y1l = lc_y2l = lc_x1r = lc_x2r = lc_y1r = lc_y2r = 0;
+  hc_x1l = hc_x2l = hc_y1l = hc_y2l = hc_x1r = hc_x2r = hc_y1r = hc_y2r = 0;
 
   function comb(buf, size, w*, f*, x) local(y)
   (
@@ -55,15 +80,74 @@ out_pin:Right
     y;
   );
 
+  // the line read m samples newer than its full length (fractional, linear interpolation)
+  function rv_tap(buf, size, w, m) local(p, i, j)
+  (
+    m = min(m, size - 2);
+    p = w + max(0, m);
+    p >= size ? p -= size;
+    i = floor(p);
+    j = i + 1;
+    j >= size ? j = 0;
+    buf[i] + (buf[j] - buf[i]) * (p - i);
+  );
+
+  // comb() and allpass() with a modulated delay: m samples shorter
+  function combm(buf, size, w*, f*, x, m) local(y)
+  (
+    y = rv_tap(buf, size, w, m);
+    f = y * damp_a + f * damp;
+    buf[w] = x + f * fb;
+    w += 1;
+    w >= size ? w = 0;
+    y;
+  );
+
+  function allpassm(buf, size, w*, x, m) local(b, y)
+  (
+    b = rv_tap(buf, size, w, m);
+    y = b - x;
+    buf[w] = x + b * 0.5;
+    w += 1;
+    w >= size ? w = 0;
+    y;
+  );
+
+  // input diffuser: Schroeder all-pass with gain g
+  function diffuse(buf, size, w*, g, x) local(d, v)
+  (
+    d = buf[w];
+    v = x - g * d;
+    buf[w] = v;
+    w += 1;
+    w >= size ? w = 0;
+    d + g * v;
+  );
+
+  // biquad (direct form I) with the coefficients b0..a2 given
+  function rv_bq(x, x1*, x2*, y1*, y2*, b0, b1, b2, a1, a2) local(y)
+  (
+    y = b0 * x + b1 * x1 + b2 * x2 - a1 * y1 - a2 * y2;
+    x2 = x1; x1 = x;
+    y2 = y1; y1 = y;
+    y;
+  );
+
 @slider
   room = 0.25 + 0.75 * (slider1 / 100);
   k = room * sc;
-  ll1 = max(1, floor(1557 * k)); lr1 = max(1, floor((1557 + spread) * k));
-  ll2 = max(1, floor(1617 * k)); lr2 = max(1, floor((1617 + spread) * k));
-  ll3 = max(1, floor(1491 * k)); lr3 = max(1, floor((1491 + spread) * k));
-  ll4 = max(1, floor(1687 * k)); lr4 = max(1, floor((1687 + spread) * k));
-  la1 = max(1, floor(556 * k));  lar1 = max(1, floor((556 + spread) * k));
-  la2 = max(1, floor(441 * k));  lar2 = max(1, floor((441 + spread) * k));
+  // Character: comb length scale, stereo spread, diffusion
+  chr = slider12;
+  cf = chr == 2 ? 1.45 : (chr == 1 ? 0.9 : 1);
+  sp = chr == 2 ? 47 : spread;
+  diff_on = chr > 0;
+  kc = k * cf;
+  ll1 = max(1, floor(1557 * kc)); lr1 = max(1, floor((1557 + sp) * kc));
+  ll2 = max(1, floor(1617 * kc)); lr2 = max(1, floor((1617 + sp) * kc));
+  ll3 = max(1, floor(1491 * kc)); lr3 = max(1, floor((1491 + sp) * kc));
+  ll4 = max(1, floor(1687 * kc)); lr4 = max(1, floor((1687 + sp) * kc));
+  la1 = max(1, floor(556 * k));  lar1 = max(1, floor((556 + sp) * k));
+  la2 = max(1, floor(441 * k));  lar2 = max(1, floor((441 + sp) * k));
   wl1 >= ll1 ? wl1 = 0; wl2 >= ll2 ? wl2 = 0; wl3 >= ll3 ? wl3 = 0; wl4 >= ll4 ? wl4 = 0;
   wr1 >= lr1 ? wr1 = 0; wr2 >= lr2 ? wr2 = 0; wr3 >= lr3 ? wr3 = 0; wr4 >= lr4 ? wr4 = 0;
   wal1 >= la1 ? wal1 = 0; wal2 >= la2 ? wal2 = 0;
@@ -72,22 +156,104 @@ out_pin:Right
   fb = 0.7 + 0.27 * (slider2 / 100);
   // Damping: cutoff of the in-loop low-pass, 16 kHz at 0% (bright) down to
   // 1.2 kHz at 100% (dark), defined in Hz so it is the same at every sample rate
+  // (Plate: twice the cutoff, a brighter tail)
   damp_fc = min(16000 * (1200 / 16000) ^ (slider3 / 100), 0.45 * srate);
+  chr == 1 ? damp_fc = min(damp_fc * 2, 0.45 * srate);
   damp = exp(-2 * 3.14159265358979 * damp_fc / srate);
   damp_a = 1 - damp;
+  // Freeze: lossless loop (feedback 1, no damping) and no new input
+  frz = slider11 > 0;
+  frz ? ( fb = 1; damp = 0; damp_a = 1; );
   mix = slider4 / 100;
+  // Pre-delay of the reverb's input
+  pd_on = slider6 > 0;
+  pd_len = max(1, min(pd_size - 1, floor(slider6 * srate / 1000 + 0.5)));
+  // Width of the wet signal (mid/side)
+  wd_on = slider9 != 100;
+  wd = slider9 / 100;
+  // Modulation: slow sines move the comb (up to 24 samples at 44.1 kHz) and all-pass
+  // (up to 12) delays
+  mod_on = slider10 > 0;
+  mod_c = slider10 / 100 * 24 * sc;
+  mod_p = slider10 / 100 * 12 * sc;
+  mod_ia = 2 * $pi * 0.73 / srate;
+  mod_ib = 2 * $pi * 1.13 / srate;
+  // Low Cut / High Cut on the wet signal: 12 dB/oct Butterworth biquads
+  lc_on = slider7 > 20;
+  lc_w = 2 * $pi * min(slider7, 0.45 * srate) / srate;
+  lc_al = sin(lc_w) / (2 * 0.7071067811865476);
+  lc_c = cos(lc_w);
+  lc_a0 = 1 + lc_al;
+  lc_b0 = (1 + lc_c) / 2 / lc_a0; lc_b1 = -(1 + lc_c) / lc_a0; lc_b2 = lc_b0;
+  lc_a1 = -2 * lc_c / lc_a0; lc_a2 = (1 - lc_al) / lc_a0;
+  hc_on = slider8 < 20000;
+  hc_w = 2 * $pi * min(slider8, 0.45 * srate) / srate;
+  hc_al = sin(hc_w) / (2 * 0.7071067811865476);
+  hc_c = cos(hc_w);
+  hc_a0 = 1 + hc_al;
+  hc_b0 = (1 - hc_c) / 2 / hc_a0; hc_b1 = (1 - hc_c) / hc_a0; hc_b2 = hc_b0;
+  hc_a1 = -2 * hc_c / hc_a0; hc_a2 = (1 - hc_al) / hc_a0;
 
 @sample
   orig_l = spl0;
   orig_r = spl1;
   x = (spl0 + spl1) * 0.015;
 
-  wet_l = comb(cbl1, ll1, wl1, fl1, x) + comb(cbl2, ll2, wl2, fl2, x)
-        + comb(cbl3, ll3, wl3, fl3, x) + comb(cbl4, ll4, wl4, fl4, x);
-  wet_r = comb(cbr1, lr1, wr1, fr1, x) + comb(cbr2, lr2, wr2, fr2, x)
-        + comb(cbr3, lr3, wr3, fr3, x) + comb(cbr4, lr4, wr4, fr4, x);
-  wet_l = allpass(apl2, la2, wal2, allpass(apl1, la1, wal1, wet_l));
-  wet_r = allpass(apr2, lar2, war2, allpass(apr1, lar1, war1, wet_r));
+  // pre-delay (the line is always written, read only when on)
+  pd_buf[pd_w] = x;
+  pd_on ? (
+    pd_r = pd_w - pd_len;
+    pd_r < 0 ? pd_r += pd_size;
+    x = pd_buf[pd_r];
+  );
+  pd_w += 1;
+  pd_w >= pd_size ? pd_w = 0;
+  diff_on ? (
+    x = diffuse(dfb1, dl1, dw1, 0.75, x);
+    x = diffuse(dfb2, dl2, dw2, 0.75, x);
+    x = diffuse(dfb3, dl3, dw3, 0.625, x);
+    x = diffuse(dfb4, dl4, dw4, 0.625, x);
+  );
+  frz ? x = 0;
+
+  mod_on ? (
+    mod_a += mod_ia; mod_a >= 2 * $pi ? mod_a -= 2 * $pi;
+    mod_b += mod_ib; mod_b >= 2 * $pi ? mod_b -= 2 * $pi;
+    ms_a = sin(mod_a); mc_a = cos(mod_a);
+    ms_b = sin(mod_b); mc_b = cos(mod_b);
+    wet_l = combm(cbl1, ll1, wl1, fl1, x, mod_c * (0.5 + 0.5 * ms_a)) + combm(cbl2, ll2, wl2, fl2, x, mod_c * (0.5 + 0.5 * mc_a))
+          + combm(cbl3, ll3, wl3, fl3, x, mod_c * (0.5 - 0.5 * ms_a)) + combm(cbl4, ll4, wl4, fl4, x, mod_c * (0.5 - 0.5 * mc_a));
+    wet_r = combm(cbr1, lr1, wr1, fr1, x, mod_c * (0.5 + 0.5 * mc_a)) + combm(cbr2, lr2, wr2, fr2, x, mod_c * (0.5 - 0.5 * ms_a))
+          + combm(cbr3, lr3, wr3, fr3, x, mod_c * (0.5 - 0.5 * mc_a)) + combm(cbr4, lr4, wr4, fr4, x, mod_c * (0.5 + 0.5 * ms_a));
+    wet_l = allpassm(apl2, la2, wal2, allpassm(apl1, la1, wal1, wet_l, mod_p * (0.5 + 0.5 * ms_b)), mod_p * (0.5 + 0.5 * mc_b));
+    wet_r = allpassm(apr2, lar2, war2, allpassm(apr1, lar1, war1, wet_r, mod_p * (0.5 - 0.5 * ms_b)), mod_p * (0.5 - 0.5 * mc_b));
+  ) : (
+    wet_l = comb(cbl1, ll1, wl1, fl1, x) + comb(cbl2, ll2, wl2, fl2, x)
+          + comb(cbl3, ll3, wl3, fl3, x) + comb(cbl4, ll4, wl4, fl4, x);
+    wet_r = comb(cbr1, lr1, wr1, fr1, x) + comb(cbr2, lr2, wr2, fr2, x)
+          + comb(cbr3, lr3, wr3, fr3, x) + comb(cbr4, lr4, wr4, fr4, x);
+    wet_l = allpass(apl2, la2, wal2, allpass(apl1, la1, wal1, wet_l));
+    wet_r = allpass(apr2, lar2, war2, allpass(apr1, lar1, war1, wet_r));
+  );
+
+  wd_on ? (
+    wd_m = (wet_l + wet_r) * 0.5;
+    wd_s = (wet_l - wet_r) * 0.5 * wd;
+    wet_l = wd_m + wd_s;
+    wet_r = wd_m - wd_s;
+  );
+  lc_on ? (
+    wet_l = rv_bq(wet_l, lc_x1l, lc_x2l, lc_y1l, lc_y2l, lc_b0, lc_b1, lc_b2, lc_a1, lc_a2);
+    wet_r = rv_bq(wet_r, lc_x1r, lc_x2r, lc_y1r, lc_y2r, lc_b0, lc_b1, lc_b2, lc_a1, lc_a2);
+  ) : (
+    lc_x1l = lc_x2l = lc_y1l = lc_y2l = lc_x1r = lc_x2r = lc_y1r = lc_y2r = 0;
+  );
+  hc_on ? (
+    wet_l = rv_bq(wet_l, hc_x1l, hc_x2l, hc_y1l, hc_y2l, hc_b0, hc_b1, hc_b2, hc_a1, hc_a2);
+    wet_r = rv_bq(wet_r, hc_x1r, hc_x2r, hc_y1r, hc_y2r, hc_b0, hc_b1, hc_b2, hc_a1, hc_a2);
+  ) : (
+    hc_x1l = hc_x2l = hc_y1l = hc_y2l = hc_x1r = hc_x2r = hc_y1r = hc_y2r = 0;
+  );
 
   out_l = orig_l * (1 - mix) + wet_l * 3 * mix;
   out_r = orig_r * (1 - mix) + wet_r * 3 * mix;

@@ -1,0 +1,11 @@
+[
+  ["Gentle", {"Sensitivity": 35, "Frequency": 120, "Max Reduction": 10, "Release": 100}],
+  ["Close Mic Vocal", {"Sensitivity": 60, "Frequency": 160, "Max Reduction": 18, "Release": 80}],
+  ["Spoken Word", {"Sensitivity": 55, "Frequency": 180, "Max Reduction": 20, "Release": 90}],
+  ["Aggressive", {"Sensitivity": 80, "Frequency": 220, "Max Reduction": 28, "Release": 120}],
+  ["Male Vocal", {"Sensitivity": 50, "Frequency": 130, "Max Reduction": 18, "Release": 80}],
+  ["Female Vocal", {"Sensitivity": 50, "Frequency": 200, "Max Reduction": 15, "Release": 70}],
+  ["Handheld Podcast", {"Sensitivity": 65, "Frequency": 170, "Max Reduction": 24, "Release": 100}],
+  ["Mic Bumps", {"Sensitivity": 70, "Frequency": 100, "Max Reduction": 30, "Release": 150}],
+  ["Listen Check", {"Listen": "On"}]
+]

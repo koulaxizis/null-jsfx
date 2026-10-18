@@ -8,20 +8,28 @@ namespace nullpresets {
 
 struct FactoryPreset {
     const char* name;
-    float values[3];
+    float values[8];
 };
 
 static const FactoryPreset kPresets[] = {
-    { "Default", { 0.5f, 4.0f, 30.0f } },
-    { "Slow Pad Swirl", { 0.2f, 6.0f, 40.0f } },
-    { "Classic Guitar Phase", { 0.8f, 4.0f, 50.0f } },
-    { "Keys Gentle Motion", { 0.4f, 2.0f, 30.0f } },
-    { "Fast Wobble", { 4.0f, 4.0f, 45.0f } },
-    { "Deep Eight Stage", { 0.3f, 8.0f, 60.0f } },
-    { "Drum Bus Shimmer", { 1.5f, 6.0f, 25.0f } },
-    { "Psychedelic Vocal", { 0.6f, 8.0f, 45.0f } },
+    { "Default", { 0.5f, 4.0f, 30.0f, 57.0f, 30.0f, 1020.0f, 0.0f, 0.0f } },
+    { "Slow Pad Swirl", { 0.2f, 6.0f, 40.0f, 57.0f, 30.0f, 1020.0f, 0.0f, 0.0f } },
+    { "Classic Guitar Phase", { 0.8f, 4.0f, 50.0f, 57.0f, 30.0f, 1020.0f, 0.0f, 0.0f } },
+    { "Keys Gentle Motion", { 0.4f, 2.0f, 30.0f, 57.0f, 30.0f, 1020.0f, 0.0f, 0.0f } },
+    { "Fast Wobble", { 4.0f, 4.0f, 45.0f, 57.0f, 30.0f, 1020.0f, 0.0f, 0.0f } },
+    { "Deep Eight Stage", { 0.3f, 8.0f, 60.0f, 57.0f, 30.0f, 1020.0f, 0.0f, 0.0f } },
+    { "Drum Bus Shimmer", { 1.5f, 6.0f, 25.0f, 57.0f, 30.0f, 1020.0f, 0.0f, 0.0f } },
+    { "Psychedelic Vocal", { 0.6f, 8.0f, 45.0f, 57.0f, 30.0f, 1020.0f, 0.0f, 0.0f } },
+    { "Slow Phase Pad", { 0.1f, 6.0f, 45.0f, 80.0f, 40.0f, 800.0f, 90.0f, 0.0f } },
+    { "Jet Phase", { 0.2f, 8.0f, 60.0f, 95.0f, 80.0f, 1500.0f, 0.0f, 0.0f } },
+    { "Synced Swirl", { 0.5f, 4.0f, 45.0f, 70.0f, 50.0f, 1020.0f, 60.0f, 2.0f } },
+    { "Deep Feedback", { 0.3f, 8.0f, 55.0f, 75.0f, 90.0f, 700.0f, 0.0f, 0.0f } },
+    { "Negative Resonance", { 0.5f, 6.0f, 50.0f, 60.0f, -75.0f, 1200.0f, 0.0f, 0.0f } },
+    { "Wide Stereo Phase", { 0.4f, 4.0f, 40.0f, 57.0f, 30.0f, 1020.0f, 180.0f, 0.0f } },
+    { "Quarter Note Pulse", { 0.5f, 6.0f, 50.0f, 85.0f, 60.0f, 1020.0f, 0.0f, 3.0f } },
+    { "Low Growl", { 0.8f, 4.0f, 50.0f, 70.0f, 70.0f, 300.0f, 0.0f, 0.0f } },
 };
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
-static constexpr uint32_t kNumValues = 3;
+static constexpr uint32_t kNumValues = 8;
 
 } // namespace nullpresets

@@ -1,0 +1,419 @@
+desc:NULL Clipper GFX
+author: Christos Koulaxizis
+tags: clipper clip soft clip hard clip saturation oversampling ceiling loudness peak drums mastering gui
+//category: Essentials
+//NULL JSFX v2.4 • https://nulljsfx.tech • MIT License
+
+import null_gfx.jsfx-inc
+
+slider1:0<-12,24,0.1>-Input (dB)
+slider2:-0.1<-24,0,0.1>-Ceiling (dB)
+slider3:0<0,100,1>-Knee (%)
+slider4:2<0,3,1{Off,2x,4x,8x}>-Oversampling
+slider5:100<0,100,1>-Mix (%)
+slider6:0<-24,12,0.1>-Output (dB)
+slider7:1<0,1,1{Stereo,Dual}>-Link
+
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
+
+@init
+  // NULL Clipper (../clipper.jsfx) with its own interface: same audio code, plus @gfx.
+  // Clips peaks at Ceiling. Input drives the signal into the clipper; Knee rounds the corner
+  // (0 = hard clip; above it the part of the wave over Ceiling x (1 - Knee) bends into the
+  // ceiling along a tanh curve, which never reaches it). Oversampling runs the clipper at 2, 4
+  // or 8 times the sample rate through linear-phase halfband FIR stages (Kaiser-windowed sinc:
+  // 63, 23 and 15 taps) so the harmonics it makes do not fold back as aliasing. Without
+  // oversampling no sample passes Ceiling; with it, the band-limited wave between the clipped
+  // points may peak a little above (no clamp after the filters, which would bring the
+  // aliasing back). Link Stereo applies the same gain to both channels, Dual clips each on
+  // its own. Mix blends the clipped signal with the dry input (delayed to match), Output sets
+  // the level after the mix.
+  // Latency (reported to the host): 0, 31, 37 or 39 samples for Off, 2x, 4x and 8x.
+  E1 = 0;  D1 = 32;  // stage 1 (63 taps): 32 even-phase taps, x2 for the upsampler
+  E2 = 64; D2 = 76;  // stage 2 (23 taps): 12
+  E3 = 88; D3 = 96;  // stage 3 (15 taps): 8
+
+  // modified Bessel function I0 (series), for the Kaiser window
+  function bessel_i0(x) local(s, t, k, q)
+  (
+    s = 1; t = 1; k = 1;
+    loop(40,
+      q = x / (2 * k);
+      t *= q * q;
+      s += t;
+      k += 1;
+    );
+    s;
+  );
+
+  // the n = (taps + 1) / 2 nonzero side taps of a halfband lowpass (Kaiser beta), normalised
+  // so they sum to 0.5 (the centre tap is 0.5): e = 2 h for the upsampler, d = h for the
+  // downsampler
+  function hb_design(e, d, taps, beta) local(c, i, dd, a, sg, r, w, s)
+  (
+    c = (taps - 1) / 2;
+    s = 0;
+    i = 0;
+    loop((taps + 1) / 2,
+      dd = 2 * i - c;
+      a = abs(dd);
+      sg = ((a - 1) / 2) % 2 ? -1 : 1;
+      r = 2 * dd / (taps - 1);
+      w = bessel_i0(beta * sqrt(max(0, 1 - r * r))) / bessel_i0(beta);
+      d[i] = sg / ($pi * a) * w;
+      s += d[i];
+      i += 1;
+    );
+    i = 0;
+    loop((taps + 1) / 2,
+      d[i] = 0.5 * d[i] / s;
+      e[i] = 2 * d[i];
+      i += 1;
+    );
+  );
+
+  hb_design(E1, D1, 63, 7.5);
+  hb_design(E2, D2, 23, 8);
+  hb_design(E3, D3, 15, 7.5);
+
+  // 2x upsampler, polyphase: one input sample in, hb_o0 (even) and hb_o1 (odd) out.
+  // s[0] = write position, s[1 ..] = the last n inputs, stored twice
+  function hb_up(x, s, e, n, m) local(p, q, acc, i)
+  (
+    p = s[0];
+    p = p > 0 ? p - 1 : n - 1;
+    s[0] = p;
+    q = s + 1 + p;
+    q[0] = x;
+    q[n] = x;
+    acc = 0;
+    i = 0;
+    loop(n, acc += e[i] * q[i]; i += 1;);
+    hb_o0 = acc;
+    hb_o1 = q[m];
+  );
+
+  // 2x downsampler, polyphase: an even and an odd sample in, one sample out.
+  // s[0] = write position, s[1] = position in the odd delay, s[2 ..] = the last n even
+  // samples stored twice, then m + 1 odd samples
+  function hb_down(v0, v1, s, d, n, m) local(p, q, acc, i, o)
+  (
+    p = s[0];
+    p = p > 0 ? p - 1 : n - 1;
+    s[0] = p;
+    q = s + 2 + p;
+    q[0] = v0;
+    q[n] = v0;
+    acc = 0;
+    i = 0;
+    loop(n, acc += d[i] * q[i]; i += 1;);
+    o = s + 2 + 2 * n + s[1];
+    acc += 0.5 * o[0];
+    o[0] = v1;
+    s[1] = s[1] < m ? s[1] + 1 : 0;
+    acc;
+  );
+
+  // per channel: filter states, the sample arrays of each rate, the pad and dry delays
+  function ch_init(b)
+  (
+    this.u1 = b;              // 1 + 64
+    this.u2 = b + 65;         // 1 + 24
+    this.u3 = b + 90;         // 1 + 16
+    this.d1 = b + 107;        // 2 + 64 + 16
+    this.d2 = b + 189;        // 2 + 24 + 6
+    this.d3 = b + 221;        // 2 + 16 + 4
+    this.a0 = b + 243;        // 1
+    this.a1 = b + 244;        // 2
+    this.a2 = b + 246;        // 4
+    this.a3 = b + 250;        // 8
+    this.pd = b + 258;        // 8
+    this.dr = b + 266;        // 64
+  );
+  chl.ch_init(128);
+  chr.ch_init(512);
+  freembuf(896);
+
+  // gain of the clipper's output for a magnitude a above the knee start kt
+  function clip_mag(a)
+  (
+    kw > 0 ? kt + kw * (1 - 2 / (exp(2 * ((a - kt) / kw)) + 1)) : cl;
+  );
+
+  os_prev = -1;
+  pw = 0;
+  dw = 0;
+  pdc_bot_ch = 0;
+  pdc_top_ch = 2;
+
+  function update()
+  (
+    gin = 10 ^ (slider1 / 20);
+    cl = 10 ^ (slider2 / 20);
+    kt = cl * (1 - slider3 / 100);
+    kw = cl - kt;
+    os = slider4;
+    mix = slider5 / 100;
+    gout = 10 ^ (slider6 / 20);
+    link = slider7;
+    os < 0.5 ? ( osf = 1; lat = 0; pad = 0; ) :
+    os < 1.5 ? ( osf = 2; lat = 31; pad = 0; ) :
+    os < 2.5 ? ( osf = 4; lat = 37; pad = 2; ) :
+               ( osf = 8; lat = 39; pad = 6; );
+    pdc_delay = lat;
+    // a new rate starts every filter and delay from silence
+    osf != os_prev ? (
+      memset(128, 0, 768);
+      pw = 0;
+      dw = 0;
+      os_prev = osf;
+    );
+    tl = osf > 4 ? chl.a3 : osf > 2 ? chl.a2 : osf > 1 ? chl.a1 : chl.a0;
+    tr = osf > 4 ? chr.a3 : osf > 2 ? chr.a2 : osf > 1 ? chr.a1 : chr.a0;
+  );
+
+  // display: the static curve at x (input -1..+1): clip of x * Input, mixed, times Output
+  function cp_curve(x) local(a, y)
+  (
+    y = x * gin;
+    a = abs(y);
+    a > kt ? y = sign(y) * clip_mag(a);
+    (x * (1 - mix) + y * mix) * gout;
+  );
+
+  gfx_ext_retina = 1;
+  // interface only: input (after Input), output and clip-gain meters
+  cm_rel = exp(-1 / (0.3 * srate));
+  cm_in = cm_out = 0;
+  cm_g = 1;
+
+  // ---- factory presets: generated by tools/build_presets.py, do not edit ----
+  ng_pre_n = 11;
+
+  function ng_preset_load(p)
+  (
+    p == 0 ? ( ng_slider_set(1, 0); ng_slider_set(2, -0.1); ng_slider_set(3, 0); ng_slider_set(4, 2); ng_slider_set(5, 100); ng_slider_set(6, 0); ng_slider_set(7, 1); );
+    p == 1 ? ( ng_slider_set(1, 0); ng_slider_set(2, -0.3); ng_slider_set(3, 30); ng_slider_set(4, 2); ng_slider_set(5, 100); ng_slider_set(6, 0); ng_slider_set(7, 1); );
+    p == 2 ? ( ng_slider_set(1, 4); ng_slider_set(2, -1); ng_slider_set(3, 10); ng_slider_set(4, 2); ng_slider_set(5, 100); ng_slider_set(6, 0); ng_slider_set(7, 1); );
+    p == 3 ? ( ng_slider_set(1, 6); ng_slider_set(2, -0.3); ng_slider_set(3, 20); ng_slider_set(4, 3); ng_slider_set(5, 100); ng_slider_set(6, 0); ng_slider_set(7, 0); );
+    p == 4 ? ( ng_slider_set(1, 12); ng_slider_set(2, -3); ng_slider_set(3, 0); ng_slider_set(4, 1); ng_slider_set(5, 100); ng_slider_set(6, 2); ng_slider_set(7, 1); );
+    p == 5 ? ( ng_slider_set(1, 6); ng_slider_set(2, -6); ng_slider_set(3, 100); ng_slider_set(4, 2); ng_slider_set(5, 60); ng_slider_set(6, 3); ng_slider_set(7, 1); );
+    p == 6 ? ( ng_slider_set(1, 8); ng_slider_set(2, -2); ng_slider_set(3, 15); ng_slider_set(4, 2); ng_slider_set(5, 100); ng_slider_set(6, 0); ng_slider_set(7, 1); );
+    p == 7 ? ( ng_slider_set(1, 18); ng_slider_set(2, -6); ng_slider_set(3, 0); ng_slider_set(4, 2); ng_slider_set(5, 35); ng_slider_set(6, 0); ng_slider_set(7, 1); );
+    p == 8 ? ( ng_slider_set(1, 0); ng_slider_set(2, -1); ng_slider_set(3, 0); ng_slider_set(4, 3); ng_slider_set(5, 100); ng_slider_set(6, 0); ng_slider_set(7, 0); );
+    p == 9 ? ( ng_slider_set(1, 6); ng_slider_set(2, -3); ng_slider_set(3, 60); ng_slider_set(4, 2); ng_slider_set(5, 100); ng_slider_set(6, 2); ng_slider_set(7, 1); );
+    p == 10 ? ( ng_slider_set(1, 10); ng_slider_set(2, -4); ng_slider_set(3, 0); ng_slider_set(4, 0); ng_slider_set(5, 100); ng_slider_set(6, 3); ng_slider_set(7, 1); );
+  );
+
+  // the first preset every slider matches, or -1
+  function ng_preset_match() local(m)
+  (
+    m = -1;
+    m < 0 && ng_pre_eq(slider1, 0) && ng_pre_eq(slider2, -0.1) && ng_pre_eq(slider3, 0) && ng_pre_eq(slider4, 2) && ng_pre_eq(slider5, 100) && ng_pre_eq(slider6, 0) && ng_pre_eq(slider7, 1) ? m = 0;
+    m < 0 && ng_pre_eq(slider1, 0) && ng_pre_eq(slider2, -0.3) && ng_pre_eq(slider3, 30) && ng_pre_eq(slider4, 2) && ng_pre_eq(slider5, 100) && ng_pre_eq(slider6, 0) && ng_pre_eq(slider7, 1) ? m = 1;
+    m < 0 && ng_pre_eq(slider1, 4) && ng_pre_eq(slider2, -1) && ng_pre_eq(slider3, 10) && ng_pre_eq(slider4, 2) && ng_pre_eq(slider5, 100) && ng_pre_eq(slider6, 0) && ng_pre_eq(slider7, 1) ? m = 2;
+    m < 0 && ng_pre_eq(slider1, 6) && ng_pre_eq(slider2, -0.3) && ng_pre_eq(slider3, 20) && ng_pre_eq(slider4, 3) && ng_pre_eq(slider5, 100) && ng_pre_eq(slider6, 0) && ng_pre_eq(slider7, 0) ? m = 3;
+    m < 0 && ng_pre_eq(slider1, 12) && ng_pre_eq(slider2, -3) && ng_pre_eq(slider3, 0) && ng_pre_eq(slider4, 1) && ng_pre_eq(slider5, 100) && ng_pre_eq(slider6, 2) && ng_pre_eq(slider7, 1) ? m = 4;
+    m < 0 && ng_pre_eq(slider1, 6) && ng_pre_eq(slider2, -6) && ng_pre_eq(slider3, 100) && ng_pre_eq(slider4, 2) && ng_pre_eq(slider5, 60) && ng_pre_eq(slider6, 3) && ng_pre_eq(slider7, 1) ? m = 5;
+    m < 0 && ng_pre_eq(slider1, 8) && ng_pre_eq(slider2, -2) && ng_pre_eq(slider3, 15) && ng_pre_eq(slider4, 2) && ng_pre_eq(slider5, 100) && ng_pre_eq(slider6, 0) && ng_pre_eq(slider7, 1) ? m = 6;
+    m < 0 && ng_pre_eq(slider1, 18) && ng_pre_eq(slider2, -6) && ng_pre_eq(slider3, 0) && ng_pre_eq(slider4, 2) && ng_pre_eq(slider5, 35) && ng_pre_eq(slider6, 0) && ng_pre_eq(slider7, 1) ? m = 7;
+    m < 0 && ng_pre_eq(slider1, 0) && ng_pre_eq(slider2, -1) && ng_pre_eq(slider3, 0) && ng_pre_eq(slider4, 3) && ng_pre_eq(slider5, 100) && ng_pre_eq(slider6, 0) && ng_pre_eq(slider7, 0) ? m = 8;
+    m < 0 && ng_pre_eq(slider1, 6) && ng_pre_eq(slider2, -3) && ng_pre_eq(slider3, 60) && ng_pre_eq(slider4, 2) && ng_pre_eq(slider5, 100) && ng_pre_eq(slider6, 2) && ng_pre_eq(slider7, 1) ? m = 9;
+    m < 0 && ng_pre_eq(slider1, 10) && ng_pre_eq(slider2, -4) && ng_pre_eq(slider3, 0) && ng_pre_eq(slider4, 0) && ng_pre_eq(slider5, 100) && ng_pre_eq(slider6, 3) && ng_pre_eq(slider7, 1) ? m = 10;
+    m;
+  );
+
+  function ng_preset_name(p) local(s)
+  (
+    s = "";
+    p == 0 ? s = "Default";
+    p == 1 ? s = "Gentle Safety";
+    p == 2 ? s = "Drum Bus Clip";
+    p == 3 ? s = "Loud Master";
+    p == 4 ? s = "808 Smash";
+    p == 5 ? s = "Soft Saturate";
+    p == 6 ? s = "Snare Crack";
+    p == 7 ? s = "Parallel Crush";
+    p == 8 ? s = "Hard Ceiling";
+    p == 9 ? s = "Bass Round";
+    p == 10 ? s = "Lo-Fi Aliased";
+    s;
+  );
+
+  function ng_presets() local(i)
+  (
+    ng_pre_req >= 0 ? ( ng_preset_load(ng_pre_req); update(); ng_pre_req = -1; );
+    ng_pre_cur = ng_preset_match();
+    ng_pre_open ? (
+      ng_pre_menu_begin();
+      i = 0;
+      loop(ng_pre_n, ng_pre_item(i, ng_preset_name(i)); i += 1;);
+      ng_pre_menu_end();
+    );
+    strcpy(#ng_pre_name, ng_pre_cur >= 0 ? ng_preset_name(ng_pre_cur) : "CUSTOM");
+  );
+  // ---- end of factory presets ----
+
+@slider
+  update();
+
+@sample
+  xl = spl0 * gin;
+  xr = spl1 * gin;
+
+  // up to the clipper's rate
+  osf > 1 ? (
+    hb_up(xl, chl.u1, E1, 32, 15); chl.a1[0] = hb_o0; chl.a1[1] = hb_o1;
+    hb_up(xr, chr.u1, E1, 32, 15); chr.a1[0] = hb_o0; chr.a1[1] = hb_o1;
+    osf > 2 ? (
+      i = 0;
+      loop(2,
+        hb_up(chl.a1[i], chl.u2, E2, 12, 5); chl.a2[2 * i] = hb_o0; chl.a2[2 * i + 1] = hb_o1;
+        hb_up(chr.a1[i], chr.u2, E2, 12, 5); chr.a2[2 * i] = hb_o0; chr.a2[2 * i + 1] = hb_o1;
+        i += 1;
+      );
+      osf > 4 ? (
+        i = 0;
+        loop(4,
+          hb_up(chl.a2[i], chl.u3, E3, 8, 3); chl.a3[2 * i] = hb_o0; chl.a3[2 * i + 1] = hb_o1;
+          hb_up(chr.a2[i], chr.u3, E3, 8, 3); chr.a3[2 * i] = hb_o0; chr.a3[2 * i + 1] = hb_o1;
+          i += 1;
+        );
+      );
+    );
+  ) : (
+    tl[0] = xl;
+    tr[0] = xr;
+  );
+
+  // pad delay (whole latency in samples) and the clipper, at the top rate
+  cg = 1;
+  i = 0;
+  loop(osf,
+    cxl = tl[i];
+    cxr = tr[i];
+    pad > 0 ? (
+      chl.pd[pw] = cxl;
+      chr.pd[pw] = cxr;
+      j = (pw - pad + 8) % 8;
+      cxl = chl.pd[j];
+      cxr = chr.pd[j];
+      pw = (pw + 1) % 8;
+    );
+    link < 0.5 ? (
+      a = max(abs(cxl), abs(cxr));
+      a > kt ? (
+        g = clip_mag(a) / a;
+        cxl *= g;
+        cxr *= g;
+        cg = min(cg, g);
+      );
+    ) : (
+      a = abs(cxl);
+      a > kt ? (
+        g = clip_mag(a) / a;
+        cxl *= g;
+        cg = min(cg, g);
+      );
+      a = abs(cxr);
+      a > kt ? (
+        g = clip_mag(a) / a;
+        cxr *= g;
+        cg = min(cg, g);
+      );
+    );
+    tl[i] = cxl;
+    tr[i] = cxr;
+    i += 1;
+  );
+
+  // back down to the sample rate
+  osf > 1 ? (
+    osf > 4 ? (
+      i = 0;
+      loop(4,
+        chl.a2[i] = hb_down(chl.a3[2 * i], chl.a3[2 * i + 1], chl.d3, D3, 8, 3);
+        chr.a2[i] = hb_down(chr.a3[2 * i], chr.a3[2 * i + 1], chr.d3, D3, 8, 3);
+        i += 1;
+      );
+    );
+    osf > 2 ? (
+      i = 0;
+      loop(2,
+        chl.a1[i] = hb_down(chl.a2[2 * i], chl.a2[2 * i + 1], chl.d2, D2, 12, 5);
+        chr.a1[i] = hb_down(chr.a2[2 * i], chr.a2[2 * i + 1], chr.d2, D2, 12, 5);
+        i += 1;
+      );
+    );
+    yl = hb_down(chl.a1[0], chl.a1[1], chl.d1, D1, 32, 15);
+    yr = hb_down(chr.a1[0], chr.a1[1], chr.d1, D1, 32, 15);
+  ) : (
+    yl = tl[0];
+    yr = tr[0];
+  );
+
+  // dry signal delayed by the latency, mix, output
+  chl.dr[dw] = spl0;
+  chr.dr[dw] = spl1;
+  j = (dw - lat + 64) % 64;
+  dry_l = chl.dr[j];
+  dry_r = chr.dr[j];
+  dw = (dw + 1) % 64;
+  spl0 = (dry_l * (1 - mix) + yl * mix) * gout;
+  spl1 = (dry_r * (1 - mix) + yr * mix) * gout;
+
+  // interface only: meters (read the audio state, never change it)
+  cm_x = max(abs(xl), abs(xr));
+  cm_in = cm_x > cm_in ? cm_x : cm_in * cm_rel;
+  cm_x = max(abs(spl0), abs(spl1));
+  cm_out = cm_x > cm_out ? cm_x : cm_out * cm_rel;
+  cm_g = cg < cm_g ? cg : 1 - (1 - cm_g) * cm_rel;
+
+@gfx 480 380
+  ng_knobs_begin("CLIPPER", "ESSENTIALS", 480, 120, 2, 0);
+
+  // display, left: the static curve (input -1..+1 across, output -1..+1 up) with Input,
+  // Ceiling, Knee, Mix and Output; right: input (after Input, Ceiling marked), clip gain
+  // reduction and output meters
+  ng_plot(64, 66, 92, 92);
+  ng_grid(4, 4, 1);
+  ng_font(4, 8, 0);
+  ng_col(NG_MUTED, 1);
+  ng_ptxt("+1", ng_px - 6 * ng_s, ng_py, 2);
+  ng_ptxt("0", ng_px - 6 * ng_s, ng_py + ng_ph / 2, 2);
+  ng_ptxt("-1", ng_px - 6 * ng_s, ng_py + ng_ph, 2);
+  ng_col(NG_ACCENT, 0.25);
+  gfx_line(ng_px, ng_py + ng_ph, ng_px + ng_pw, ng_py, 1);
+  ng_col(NG_ACCENT, 1);
+  cm_i = 0;
+  loop(93,
+    cm_yy = ng_lin_y(cp_curve(-1 + 2 * cm_i / 92), -1, 1);
+    cm_xx = ng_px + ng_pw * cm_i / 92;
+    cm_i == 0 ? ng_line_start(cm_xx, cm_yy) : ng_line_to(cm_xx, cm_yy);
+    cm_i += 1;
+  );
+  ng_meter(180, 82, 268, 10, "IN", ng_to_db(cm_in), slider2, -48);
+  ng_gr_meter(180, 106, 268, 10, "GR", -20 * log10(max(cm_g, 0.0000001)), 12);
+  ng_meter(180, 130, 268, 10, "OUT", ng_to_db(cm_out), slider2, -48);
+
+  ng_row(4);
+  abs(slider1) < 0.05 ? sprintf(#v1, "0.0 dB") : sprintf(#v1, "%+.1f dB", slider1);
+  ng_knob_ctl(1, "INPUT", #v1, -12, 24, 0, 0.1, 0) ? update();
+  sprintf(#v2, "%.1f dB", slider2);
+  ng_knob_ctl(2, "CEILING", #v2, -24, 0, -0.1, 0.1, 0) ? update();
+  sprintf(#v3, "%d%%", slider3);
+  ng_knob_ctl(3, "KNEE", #v3, 0, 100, 0, 1, 0) ? update();
+  sprintf(#v5, "%d%%", slider5);
+  ng_knob_ctl(5, "MIX", #v5, 0, 100, 100, 1, 0) ? update();
+  ng_row(3);
+  ng_select_ctl(4, "OVERSAMPLE", "OFF|2X|4X|8X", 0) ? update();
+  ng_select_ctl(7, "LINK", "STEREO|DUAL", 0) ? update();
+  abs(slider6) < 0.05 ? sprintf(#v6, "0.0 dB") : sprintf(#v6, "%+.1f dB", slider6);
+  ng_knob_ctl(6, "OUTPUT", #v6, -24, 12, 0, 0.1, 0) ? update();
+
+  ng_end();
+
+  ng_presets(); // the preset list (generated by tools/build_presets.py)

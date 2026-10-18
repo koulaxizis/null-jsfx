@@ -36,16 +36,17 @@ public:
     }
 
     void process(const float* inL, const float* inR, float* outL, float* outR, uint32_t frames,
-                 const nulljsfx::ModuleTime&) override
+                 const nulljsfx::ModuleTime& time) override
     {
-        fDsp.process(inL, inR, outL, outR, frames);
+        // as Plugin.cpp: the host tempo when above 0, else 120; the beat position only while playing
+        const double tempo = time.tempo > 0.0 ? time.tempo : 120.0;
+        fDsp.process(inL, inR, outL, outR, frames, tempo, time.playing, time.playing ? time.beat : 0.0);
     }
 
 private:
     void update()
     {
-        using nullphaser::onGrid;
-        fDsp.setParams(onGrid(fV[0], 0.1, 5.0, 0.1), fV[1], fV[2]);
+        nullphaser::applyParams(fDsp, [this](uint32_t i) { return fV[i]; });
     }
 
     nullphaser::PhaserProcessor fDsp;

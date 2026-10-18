@@ -8,21 +8,28 @@ namespace nullpresets {
 
 struct FactoryPreset {
     const char* name;
-    float values[5];
+    float values[12];
 };
 
 static const FactoryPreset kPresets[] = {
-    { "Default", { 50.0f, 50.0f, 30.0f, 30.0f, 0.0f } },
-    { "Small Vocal Room", { 35.0f, 30.0f, 40.0f, 18.0f, 0.0f } },
-    { "Tight Ambience", { 20.0f, 15.0f, 50.0f, 12.0f, 0.0f } },
-    { "Drum Room", { 50.0f, 35.0f, 30.0f, 20.0f, 0.0f } },
-    { "Bright Vocal Space", { 60.0f, 55.0f, 5.0f, 22.0f, 0.0f } },
-    { "Snare Splash", { 70.0f, 60.0f, 20.0f, 18.0f, 0.0f } },
-    { "Large Hall", { 100.0f, 80.0f, 35.0f, 25.0f, 0.0f } },
-    { "Dark Pad Wash", { 90.0f, 92.0f, 80.0f, 40.0f, 0.0f } },
-    { "Send Return Full Wet", { 80.0f, 70.0f, 40.0f, 100.0f, 0.0f } },
+    { "Default", { 50.0f, 50.0f, 30.0f, 30.0f, 0.0f, 0.0f, 20.0f, 20000.0f, 100.0f, 0.0f, 0.0f, 0.0f } },
+    { "Small Vocal Room", { 35.0f, 30.0f, 40.0f, 18.0f, 0.0f, 0.0f, 20.0f, 20000.0f, 100.0f, 0.0f, 0.0f, 0.0f } },
+    { "Tight Ambience", { 20.0f, 15.0f, 50.0f, 12.0f, 0.0f, 0.0f, 20.0f, 20000.0f, 100.0f, 0.0f, 0.0f, 0.0f } },
+    { "Drum Room", { 50.0f, 35.0f, 30.0f, 20.0f, 0.0f, 0.0f, 20.0f, 20000.0f, 100.0f, 0.0f, 0.0f, 0.0f } },
+    { "Bright Vocal Space", { 60.0f, 55.0f, 5.0f, 22.0f, 0.0f, 0.0f, 20.0f, 20000.0f, 100.0f, 0.0f, 0.0f, 0.0f } },
+    { "Snare Splash", { 70.0f, 60.0f, 20.0f, 18.0f, 0.0f, 0.0f, 20.0f, 20000.0f, 100.0f, 0.0f, 0.0f, 0.0f } },
+    { "Large Hall", { 100.0f, 80.0f, 35.0f, 25.0f, 0.0f, 0.0f, 20.0f, 20000.0f, 100.0f, 0.0f, 0.0f, 0.0f } },
+    { "Dark Pad Wash", { 90.0f, 92.0f, 80.0f, 40.0f, 0.0f, 0.0f, 20.0f, 20000.0f, 100.0f, 0.0f, 0.0f, 0.0f } },
+    { "Send Return Full Wet", { 80.0f, 70.0f, 40.0f, 100.0f, 0.0f, 0.0f, 20.0f, 20000.0f, 100.0f, 0.0f, 0.0f, 0.0f } },
+    { "Small Room", { 30.0f, 25.0f, 45.0f, 20.0f, 0.0f, 5.0f, 120.0f, 20000.0f, 90.0f, 0.0f, 0.0f, 0.0f } },
+    { "Vocal Plate", { 55.0f, 55.0f, 15.0f, 22.0f, 0.0f, 40.0f, 150.0f, 12000.0f, 120.0f, 15.0f, 0.0f, 1.0f } },
+    { "Drum Chamber", { 60.0f, 45.0f, 35.0f, 22.0f, 0.0f, 10.0f, 200.0f, 9000.0f, 110.0f, 0.0f, 0.0f, 1.0f } },
+    { "Big Hall", { 90.0f, 80.0f, 40.0f, 28.0f, 0.0f, 30.0f, 80.0f, 20000.0f, 140.0f, 25.0f, 0.0f, 2.0f } },
+    { "Modulated Space", { 75.0f, 70.0f, 45.0f, 30.0f, 0.0f, 20.0f, 20.0f, 10000.0f, 130.0f, 70.0f, 0.0f, 2.0f } },
+    { "Wide Ambience", { 40.0f, 30.0f, 20.0f, 15.0f, 0.0f, 15.0f, 250.0f, 20000.0f, 180.0f, 0.0f, 0.0f, 0.0f } },
+    { "Frozen Pad", { 100.0f, 100.0f, 30.0f, 60.0f, 0.0f, 0.0f, 100.0f, 20000.0f, 150.0f, 40.0f, 1.0f, 2.0f } },
 };
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
-static constexpr uint32_t kNumValues = 5;
+static constexpr uint32_t kNumValues = 12;
 
 } // namespace nullpresets

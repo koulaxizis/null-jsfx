@@ -24,7 +24,8 @@ protected:
     const char* getLabel() const override { return "Chorus"; }
     const char* getDescription() const override
     {
-        return "Stereo chorus: a sine LFO sweeps a 5 ms + depth delay line; rate, depth and mix.";
+        return "Stereo chorus: sine LFOs sweep up to 4 voices on a 5 ms + depth delay line, or a Dimension-style "
+               "pair; rate, depth, mix, spread, feedback, tempo sync and high cut.";
     }
     int64_t getUniqueId() const override { return d_cconst('N', '4', 'c', 'h'); }
 
@@ -44,15 +45,31 @@ protected:
 
     void run(const float** inputs, float** outputs, uint32_t frames) override
     {
-        fDsp.process(inputs[0], inputs[1], outputs[0], outputs[1], frames);
+        // as pumper: the host tempo when above 0, else 120; the beat position only while playing
+        const TimePosition& tp = getTimePosition();
+        const double tempo = tp.bbt.beatsPerMinute > 0.0 ? tp.bbt.beatsPerMinute : 120.0;
+        double beatPos = 0.0;
+        if (tp.playing)
+        {
+            if (tp.bbt.valid && tp.bbt.ticksPerBeat > 0.0)
+                beatPos = (tp.bbt.bar - 1) * double(tp.bbt.beatsPerBar) + (tp.bbt.beat - 1) +
+                          tp.bbt.tick / tp.bbt.ticksPerBeat;
+            else
+                beatPos = double(tp.frame) / getSampleRate() * tempo / 60.0;
+        }
+        fDsp.process(inputs[0], inputs[1], outputs[0], outputs[1], frames, tp.playing, beatPos, tempo);
         taps.extra.store(float(fDsp.phase()), std::memory_order_relaxed);
+        taps.aux[0].store(float(fDsp.rateHz()), std::memory_order_relaxed);
     }
 
 private:
     void update()
     {
         using nullchorus::onGrid;
-        fDsp.setParams(onGrid(value(0), 0.1, 20.0, 0.1), onGrid(value(1), 0.0, 10.0, 0.1), value(2));
+        const int sync = int(std::lround(value(6)));
+        fDsp.setParams(onGrid(value(0), 0.1, 20.0, 0.1), onGrid(value(1), 0.0, 10.0, 0.1), value(2),
+                       std::round(value(3)), std::round(value(4)), std::round(value(5)), sync,
+                       nullchorus::syncCycle(sync), std::round(value(7)), value(8) >= 0.5f);
     }
 
     nullchorus::ChorusProcessor fDsp;

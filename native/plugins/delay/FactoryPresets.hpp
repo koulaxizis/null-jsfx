@@ -8,21 +8,28 @@ namespace nullpresets {
 
 struct FactoryPreset {
     const char* name;
-    float values[9];
+    float values[13];
 };
 
 static const FactoryPreset kPresets[] = {
-    { "Default", { 250.0f, 0.0f, 30.0f, 0.0f, 0.0f, 0.0f, 20.0f, 20000.0f, 0.0f } },
-    { "Vocal Slapback", { 110.0f, 0.0f, 20.0f, 0.0f, 0.0f, 0.0f, 20.0f, 8000.0f, 0.0f } },
-    { "Short Double", { 25.0f, 0.0f, 30.0f, 0.0f, 0.0f, 0.0f, 20.0f, 20000.0f, 0.0f } },
-    { "Quarter Note Echo", { 250.0f, 30.0f, 20.0f, 1.0f, 0.0f, 0.0f, 150.0f, 6000.0f, 0.0f } },
-    { "Ping-Pong Eighths", { 250.0f, 40.0f, 25.0f, 1.0f, 1.0f, 1.0f, 200.0f, 8000.0f, 0.0f } },
-    { "Sixteenth Rhythm", { 250.0f, 25.0f, 20.0f, 1.0f, 2.0f, 0.0f, 300.0f, 7000.0f, 0.0f } },
-    { "Dark Tape Echo", { 375.0f, 50.0f, 25.0f, 0.0f, 0.0f, 0.0f, 100.0f, 3000.0f, 40.0f } },
-    { "Dub Throw", { 250.0f, 70.0f, 35.0f, 1.0f, 0.0f, 0.0f, 300.0f, 2500.0f, 30.0f } },
-    { "Ambient Long Trail", { 750.0f, 65.0f, 25.0f, 0.0f, 0.0f, 0.0f, 250.0f, 4000.0f, 15.0f } },
+    { "Default", { 250.0f, 0.0f, 30.0f, 0.0f, 0.0f, 0.0f, 20.0f, 20000.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f } },
+    { "Vocal Slapback", { 110.0f, 0.0f, 20.0f, 0.0f, 0.0f, 0.0f, 20.0f, 8000.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f } },
+    { "Short Double", { 25.0f, 0.0f, 30.0f, 0.0f, 0.0f, 0.0f, 20.0f, 20000.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f } },
+    { "Quarter Note Echo", { 250.0f, 30.0f, 20.0f, 1.0f, 0.0f, 0.0f, 150.0f, 6000.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f } },
+    { "Ping-Pong Eighths", { 250.0f, 40.0f, 25.0f, 1.0f, 1.0f, 1.0f, 200.0f, 8000.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f } },
+    { "Sixteenth Rhythm", { 250.0f, 25.0f, 20.0f, 1.0f, 2.0f, 0.0f, 300.0f, 7000.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f } },
+    { "Dark Tape Echo", { 375.0f, 50.0f, 25.0f, 0.0f, 0.0f, 0.0f, 100.0f, 3000.0f, 40.0f, 0.0f, 0.0f, 0.0f, 0.0f } },
+    { "Dub Throw", { 250.0f, 70.0f, 35.0f, 1.0f, 0.0f, 0.0f, 300.0f, 2500.0f, 30.0f, 0.0f, 0.0f, 0.0f, 0.0f } },
+    { "Ambient Long Trail", { 750.0f, 65.0f, 25.0f, 0.0f, 0.0f, 0.0f, 250.0f, 4000.0f, 15.0f, 0.0f, 0.0f, 0.0f, 0.0f } },
+    { "Dotted Eighth", { 250.0f, 35.0f, 25.0f, 1.0f, 7.0f, 0.0f, 150.0f, 7000.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f } },
+    { "Half-Note Wash", { 250.0f, 60.0f, 30.0f, 1.0f, 4.0f, 0.0f, 200.0f, 5000.0f, 0.0f, 25.0f, 70.0f, 0.0f, 0.0f } },
+    { "Triplet Bounce", { 250.0f, 45.0f, 25.0f, 1.0f, 10.0f, 1.0f, 250.0f, 8000.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f } },
+    { "Diffused Echo", { 420.0f, 55.0f, 30.0f, 0.0f, 0.0f, 0.0f, 150.0f, 6000.0f, 0.0f, 0.0f, 60.0f, 0.0f, 0.0f } },
+    { "Ducked Vocal Throw", { 250.0f, 45.0f, 40.0f, 1.0f, 0.0f, 0.0f, 300.0f, 5000.0f, 0.0f, 0.0f, 0.0f, 70.0f, 0.0f } },
+    { "Wobbly Tape", { 330.0f, 45.0f, 25.0f, 0.0f, 0.0f, 0.0f, 120.0f, 3500.0f, 30.0f, 60.0f, 0.0f, 0.0f, 0.0f } },
+    { "Frozen Loop", { 250.0f, 50.0f, 50.0f, 1.0f, 5.0f, 0.0f, 20.0f, 20000.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f } },
 };
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
-static constexpr uint32_t kNumValues = 9;
+static constexpr uint32_t kNumValues = 13;
 
 } // namespace nullpresets

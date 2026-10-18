@@ -1,6 +1,6 @@
 desc:NULL Flanger
 author: Christos Koulaxizis
-tags: flanger jet sweep modulation feedback comb filter
+tags: flanger jet sweep modulation feedback comb filter thru-zero tape tempo sync
 //category: Essentials
 //NULL JSFX v2.4 • https://nulljsfx.tech • MIT License
 
@@ -8,6 +8,10 @@ slider1:0.3<0.1,5,0.1>Rate (Hz)
 slider2:5<1,20,0.1>Depth (ms)
 slider3:50<0,100,1>Feedback (%)
 slider4:40<0,100,1>Mix (%)
+slider5:0.5<0.1,10,0.1>Manual (ms)
+slider6:0<0,11,1{Off,1/1,1/2,1/4,1/8,1/16,2/1,4/1,1/4T,1/8T,1/4D,1/8D}>Tempo Sync
+slider7:0<0,180,1>Stereo Phase (deg)
+slider8:0<0,1,1{Off,On}>Thru Zero
 
 in_pin:Left
 in_pin:Right
@@ -15,15 +19,32 @@ out_pin:Left
 out_pin:Right
 
 @init
+  // A sine LFO sweeps the delay from Manual up to Manual + Depth; Stereo Phase offsets the
+  // right channel's LFO. Tempo Sync sets one LFO cycle to a note at the host tempo, locked
+  // to beat_position while the transport plays. Thru Zero delays the dry path by the
+  // sweep's midpoint (whole samples, reported as latency) and mixes the swept path in
+  // opposite polarity, so the sweep passes through zero delay against the dry signal and
+  // cancels it there, like two tape machines. The defaults are the original flanger.
   buf_size = ceil(srate * 0.05);
   delay_l = 0;
   delay_r = delay_l + buf_size;
-  memset(delay_l, 0, 2 * buf_size);
-  freembuf(delay_r + buf_size);
+  dry_l = delay_r + buf_size;
+  dry_r = dry_l + buf_size;
+  memset(delay_l, 0, 4 * buf_size);
+  freembuf(dry_r + buf_size);
   wpos = 0;
   phase = 0;
   fb_l = 0;
   fb_r = 0;
+  pdc_bot_ch = 0;
+  pdc_top_ch = 2;
+
+  // the cycle in beats of Tempo Sync option s (1..11)
+  function fl_cycle(s)
+  (
+    s == 1 ? 4 : s == 2 ? 2 : s == 3 ? 1 : s == 4 ? 0.5 : s == 5 ? 0.25 : s == 6 ? 8 : s == 7 ? 16 :
+    s == 8 ? 2 / 3 : s == 9 ? 1 / 3 : s == 10 ? 1.5 : 0.75;
+  );
 
 @slider
   rate = slider1;
@@ -31,14 +52,30 @@ out_pin:Right
   fb_amt = slider3 / 100 * 0.7;
   mix_amt = slider4 / 100;
   phase_inc = 6.28318530717958 * rate / srate;
+  manual = slider5;
+  sync = floor(slider6 + 0.5);
+  cyc = fl_cycle(sync);
+  st_off = slider7 * $pi / 180;
+  tz = slider8 >= 0.5;
+  tz_delay = floor((manual + depth * 0.5) * srate / 1000 + 0.5);
+  pdc_delay = tz ? tz_delay : 0;
+
+@block
+  sync > 0 ? (
+    bpm = tempo > 0 ? tempo : 120;
+    phase_inc = 6.28318530717958 * bpm / 60 / cyc / srate;
+    // lock to the host grid while playing
+    play_state & 1 ? phase = 6.28318530717958 * (beat_position / cyc - floor(beat_position / cyc));
+  );
 
 @sample
   phase >= 6.28318530717958 ? (phase = phase - 6.28318530717958;);
+  fl_ph = phase;
   lfo = sin(phase);
   phase = phase + phase_inc;
   
-  // sweep between 0.5 ms and 0.5 ms + Depth
-  mod_delay = 0.5 + depth * 0.5 * (1 + lfo);
+  // sweep between Manual and Manual + Depth
+  mod_delay = manual + depth * 0.5 * (1 + lfo);
   delay_samples = mod_delay * srate / 1000;
   
   rpos = wpos - delay_samples;
@@ -50,6 +87,14 @@ out_pin:Right
   d2_l = delay_l[rpos_i >= buf_size - 1 ? 0 : rpos_i + 1];
   d_l = d1_l + (d2_l - d1_l) * rpos_f;
   
+  st_off > 0 ? (
+    // the right channel's own sweep
+    mod_delay = manual + depth * 0.5 * (1 + sin(fl_ph + st_off));
+    rpos = wpos - mod_delay * srate / 1000;
+    rpos = rpos < 0 ? rpos + buf_size : rpos;
+    rpos_i = floor(rpos);
+    rpos_f = rpos - rpos_i;
+  );
   d1_r = delay_r[rpos_i];
   d2_r = delay_r[rpos_i >= buf_size - 1 ? 0 : rpos_i + 1];
   d_r = d1_r + (d2_r - d1_r) * rpos_f;
@@ -60,6 +105,18 @@ out_pin:Right
   delay_r[wpos] = fb_in_r;
   fb_l = d_l;
   fb_r = d_r;
+  
+  // the dry signal, kept for Thru Zero
+  dry_l[wpos] = spl0;
+  dry_r[wpos] = spl1;
+  tz ? (
+    fl_rd = wpos - tz_delay;
+    fl_rd < 0 ? fl_rd += buf_size;
+    spl0 = dry_l[fl_rd];
+    spl1 = dry_r[fl_rd];
+    d_l = -d_l;
+    d_r = -d_r;
+  );
   
   wpos = wpos + 1;
   wpos = wpos >= buf_size ? 0 : wpos;

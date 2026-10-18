@@ -5,5 +5,12 @@
   ["Backing Vocal Double", {"Rate": 1.2, "Depth": 2.5, "Mix": 30}],
   ["Bass Thickener", {"Rate": 0.7, "Depth": 2, "Mix": 35}],
   ["Keys Wide Wash", {"Rate": 1.5, "Depth": 4, "Mix": 45}],
-  ["Vibrato Warble", {"Rate": 6, "Depth": 2, "Mix": 100}]
+  ["Vibrato Warble", {"Rate": 6, "Depth": 2, "Mix": 100}],
+  ["Juno Dimension", {"Rate": 0.5, "Depth": 2, "Mix": 50, "Stereo Spread": 60, "High Cut": 12000, "Mode": "Dimension"}],
+  ["Subtle Dimension", {"Rate": 0.3, "Depth": 1.2, "Mix": 35, "Mode": "Dimension"}],
+  ["Lush 4-Voice", {"Rate": 0.6, "Depth": 5, "Mix": 50, "Voices": 4, "Stereo Spread": 100}],
+  ["Wide Stereo Chorus", {"Rate": 0.8, "Depth": 3.5, "Mix": 45, "Voices": 2, "Stereo Spread": 100}],
+  ["Synced Shimmer", {"Depth": 2, "Mix": 40, "Voices": 2, "Stereo Spread": 80, "Feedback": 20, "Tempo Sync": "1/8"}],
+  ["Dark Ensemble", {"Rate": 0.4, "Depth": 6, "Mix": 55, "Voices": 3, "Stereo Spread": 70, "Feedback": 15, "High Cut": 3500}],
+  ["Resonant Chorus", {"Rate": 0.3, "Depth": 2.5, "Mix": 45, "Stereo Spread": 50, "Feedback": 60}]
 ]
