@@ -1,0 +1,17 @@
+[
+  ["Stereo Tine", {"Model": "Tine EP", "Tremolo Rate": 4.5, "Tremolo Depth": 40, "Tremolo Mode": "Stereo"}],
+  ["Bright Tine", {"Model": "Tine EP", "Tone": 75, "Bell": 70, "Drive": 20, "Velocity": 70}],
+  ["Mellow Tine", {"Model": "Tine EP", "Tone": 25, "Bell": 30, "Velocity": 70, "Chorus": 20}],
+  ["Reed Bark", {"Model": "Reed EP", "Tone": 65, "Drive": 35, "Tremolo Rate": 5.5, "Tremolo Depth": 30, "Tremolo Mode": "Mono", "Volume": -2}],
+  ["Soft Reed", {"Model": "Reed EP", "Tone": 35, "Chorus": 30}],
+  ["FM Ballad EP", {"Model": "FM EP", "Chorus": 45, "Release": 400}],
+  ["FM Glass EP", {"Model": "FM EP", "Tone": 75, "Bell": 80, "Chorus": 25}],
+  ["Music Box", {"Model": "Music Box", "Decay": 120, "Release": 1500, "Chorus": 20}],
+  ["Celesta", {"Model": "Celesta", "Release": 800}],
+  ["Dream Bells", {"Model": "Celesta", "Bell": 80, "Decay": 250, "Release": 2000, "Chorus": 60, "Volume": -2}],
+  ["Glockenspiel", {"Model": "Glockenspiel", "Release": 1200}],
+  ["Vibes Motor", {"Model": "Vibraphone", "Release": 400, "Tremolo Rate": 5.5, "Tremolo Depth": 45, "Tremolo Mode": "Mono"}],
+  ["Soft Vibes", {"Model": "Vibraphone", "Tone": 30, "Release": 1200, "Chorus": 15}],
+  ["Marimba", {"Model": "Marimba", "Tone": 45, "Release": 300}],
+  ["Kalimba", {"Model": "Kalimba", "Release": 600, "Chorus": 15}]
+]

@@ -1390,6 +1390,20 @@
  ],
  "instruments": [
   {
+   "id": "bass",
+   "name": "Bass",
+   "category": "Instruments",
+   "tags": "instrument bass synth bass 808 sub saw square mono glide portamento acid filter drive phrase player key switch midi gui",
+   "gfx": [
+    560,
+    502
+   ],
+   "ins": 0,
+   "outs": 2,
+   "sliders": 19,
+   "bytes": 81940
+  },
+  {
    "id": "drum_machine",
    "name": "Drum Machine",
    "category": "Instruments",
@@ -1402,6 +1416,104 @@
    "outs": 8,
    "sliders": 63,
    "bytes": 183205
+  },
+  {
+   "id": "fm",
+   "name": "FM",
+   "category": "Instruments",
+   "tags": "instrument synth synthesizer fm frequency modulation 4-operator polyphonic electric piano bells bass brass mallets pad midi gui",
+   "gfx": [
+    600,
+    438
+   ],
+   "ins": 0,
+   "outs": 2,
+   "sliders": 37,
+   "bytes": 227929
+  },
+  {
+   "id": "keys",
+   "name": "Keys",
+   "category": "Instruments",
+   "tags": "instrument keys electric piano ep tine reed fm music box celesta glockenspiel vibraphone marimba kalimba mallets bell tremolo autopan chorus drive midi gui",
+   "gfx": [
+    560,
+    416
+   ],
+   "ins": 0,
+   "outs": 2,
+   "sliders": 12,
+   "bytes": 86786
+  },
+  {
+   "id": "organ",
+   "name": "Organ",
+   "category": "Instruments",
+   "tags": "instrument organ tonewheel drawbar percussion key click vibrato chorus rotary speaker drive gospel jazz rock midi gui",
+   "gfx": [
+    560,
+    430
+   ],
+   "ins": 0,
+   "outs": 2,
+   "sliders": 20,
+   "bytes": 91155
+  },
+  {
+   "id": "percussion",
+   "name": "Percussion",
+   "category": "Instruments",
+   "tags": "instrument percussion latin hand drums conga bongo shaker tambourine cowbell claves guiro cabasa triangle groove synth midi gui",
+   "gfx": [
+    640,
+    494
+   ],
+   "ins": 0,
+   "outs": 2,
+   "sliders": 52,
+   "bytes": 160748
+  },
+  {
+   "id": "pluck",
+   "name": "Pluck",
+   "category": "Instruments",
+   "tags": "instrument pluck plucked string karplus strong guitar nylon steel harp koto pipa lute banjo dulcimer strum strummer chord rhythm body midi gui",
+   "gfx": [
+    560,
+    416
+   ],
+   "ins": 0,
+   "outs": 2,
+   "sliders": 12,
+   "bytes": 94132
+  },
+  {
+   "id": "sampler",
+   "name": "Sampler",
+   "category": "Instruments",
+   "tags": "instrument sampler sample player one-shot chromatic wav flac loop adsr filter polyphonic midi gui",
+   "gfx": [
+    640,
+    448
+   ],
+   "ins": 0,
+   "outs": 2,
+   "sliders": 21,
+   "bytes": 95603
+  },
+  {
+   "id": "synth",
+   "name": "Synth",
+   "category": "Instruments",
+   "tags": "instrument synth synthesizer polyphonic virtual analog wavetable pad lead keys bass strings bells unison chorus delay reverb midi gui",
+   "gfx": [
+    600,
+    438
+   ],
+   "ins": 0,
+   "outs": 2,
+   "sliders": 45,
+   "bytes": 219175
   }
  ],
  "midi": [

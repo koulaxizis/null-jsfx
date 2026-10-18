@@ -1,0 +1,340 @@
+desc:NULL FM
+author: Christos Koulaxizis
+tags: instrument synth synthesizer fm frequency modulation 4-operator polyphonic electric piano bells bass brass mallets pad midi
+//category: Instruments
+//NULL JSFX v2.4 • https://nulljsfx.tech • MIT License
+
+slider1:0<0,7,1{Stack,Dual Mod,Branch,Pair Stack,Two Pairs,Triple,One Pair,Additive}>Algorithm
+slider2:0<0,100,1>Feedback (%)
+slider3:1<0.5,16,0.01:log>Op 1 Ratio
+slider4:100<0,100,1>Op 1 Level (%)
+slider5:2<1,10000,1:log>Op 1 Attack (ms)
+slider6:1500<1,10000,1:log>Op 1 Decay (ms)
+slider7:50<0,100,1>Op 1 Sustain (%)
+slider8:400<1,10000,1:log>Op 1 Release (ms)
+slider9:50<0,100,1>Op 1 Velocity (%)
+slider10:1<0.5,16,0.01:log>Op 2 Ratio
+slider11:45<0,100,1>Op 2 Level (%)
+slider12:2<1,10000,1:log>Op 2 Attack (ms)
+slider13:800<1,10000,1:log>Op 2 Decay (ms)
+slider14:30<0,100,1>Op 2 Sustain (%)
+slider15:400<1,10000,1:log>Op 2 Release (ms)
+slider16:70<0,100,1>Op 2 Velocity (%)
+slider17:2<0.5,16,0.01:log>Op 3 Ratio
+slider18:0<0,100,1>Op 3 Level (%)
+slider19:2<1,10000,1:log>Op 3 Attack (ms)
+slider20:800<1,10000,1:log>Op 3 Decay (ms)
+slider21:30<0,100,1>Op 3 Sustain (%)
+slider22:400<1,10000,1:log>Op 3 Release (ms)
+slider23:50<0,100,1>Op 3 Velocity (%)
+slider24:1<0.5,16,0.01:log>Op 4 Ratio
+slider25:0<0,100,1>Op 4 Level (%)
+slider26:2<1,10000,1:log>Op 4 Attack (ms)
+slider27:800<1,10000,1:log>Op 4 Decay (ms)
+slider28:30<0,100,1>Op 4 Sustain (%)
+slider29:400<1,10000,1:log>Op 4 Release (ms)
+slider30:50<0,100,1>Op 4 Velocity (%)
+slider31:0<-100,100,1>Brightness (%)
+slider32:0<0,100,1>Chorus Mix (%)
+slider33:15<0,100,1>Reverb Mix (%)
+slider34:50<0,100,1>Reverb Size (%)
+slider35:0<-3,3,1>Octave
+slider36:2<0,24,1>Bend Range (st)
+slider37:0<-24,12,0.1>Volume (dB)
+
+in_pin:none
+out_pin:Left
+out_pin:Right
+
+@init
+  // A four-operator FM synthesizer (8 voices), no samples. Each operator is a sine at Ratio
+  // times the note's frequency with its own Level, ADSR envelope and Velocity sensitivity;
+  // Operator 4 can modulate itself (Feedback). The Algorithm decides who modulates whom
+  // (a > b: a modulates b; the carriers are heard):
+  //   Stack 4>3>2>1, Dual Mod 3+4>2>1, Branch 3>2>1 and 4>1, Pair Stack 4>3>1 and 2>1,
+  //   Two Pairs 2>1 and 4>3, Triple 4>1+2+3, One Pair 4>3 with 1 and 2, Additive 1+2+3+4.
+  // A modulator's Level sets its modulation index (up to 8 radians, square law), a carrier's
+  // its loudness. Brightness scales every modulator's index (x0.25 .. x2). After the voices:
+  // Chorus and Reverb. MIDI: notes (any channel), sustain pedal, mod wheel (vibrato), pitch
+  // bend (Bend Range) and all notes off.
+  //
+  // Memory: 1000.. the MIDI queue of the block, 2200.. voice info for the allocator, 2300..
+  // operator settings, 2360.. the algorithm's routing, 2500.. per-voice state, 700000.. the
+  // chorus and reverb lines.
+  ext_noinit = 1;
+  ext_tail_size = -1;
+  NV = 8;
+  MQ = 1000;
+  VI = 2200;
+  OPS = 2300;   // per operator k: [k*8] ratio, +1 index or level, +2 attack step, +3 decay,
+                // +4 sustain, +5 release, +6 velocity sensitivity
+  MM = 2360;    // MM[i * 4 + j]: operator j modulates operator i (0-based)
+  CR = 2380;    // CR[i]: operator i is heard
+  VM = 2500;
+  FXM = 700000;
+
+  // ---- voices (v0 .. v7): this.st 1 while any carrier sounds, this.gate the key, this.sus held by
+  // the pedal; this.m: [0..3] phases, [4..7] envelopes, [8..11] stages (0 off, 1 attack,
+  // 2 decay/sustain, 4 release), [12..15] velocity factors, [16..17] the feedback history
+  function vinit(i) ( this.m = VM + i * 20; this.st = 0; this.gate = 0; this.sus = 0; this.note = -1; this.ord = 0; );
+  function vinfo(i) ( VI[i * 4] = this.st; VI[i * 4 + 1] = this.note; VI[i * 4 + 2] = this.ord; VI[i * 4 + 3] = this.gate; );
+
+  function vstart(n, v) local(m, k, s)
+  (
+    m = this.m;
+    this.st == 0 ? memset(m, 0, 20);
+    k = 0;
+    loop(4,
+      s = OPS[k * 8 + 6];
+      m[12 + k] = 1 - s + s * v;
+      m[8 + k] = 1;
+      k += 1;
+    );
+    this.note = n;
+    this.pt = n + oct;
+    this.gate = 1; this.sus = 0;
+    this.st = 1;
+    ord_n += 1; this.ord = ord_n;
+  );
+  function vrelease() local(m)
+  (
+    m = this.m;
+    this.st > 0 ? ( m[8] = m[8] > 0 ? 4 : 0; m[9] = m[9] > 0 ? 4 : 0; m[10] = m[10] > 0 ? 4 : 0; m[11] = m[11] > 0 ? 4 : 0; );
+    this.gate = 0; this.sus = 0;
+  );
+  function voff(n) ( this.gate && this.note == n ? ( sus_on ? ( this.gate = 0; this.sus = 1; ) : this.vrelease(); ); );
+  function vpedal() ( this.sus ? this.vrelease(); );
+
+  // one operator's envelope (stage in m[8 + k], level in m[4 + k])
+  function op_env(m, k) local(o, e, st)
+  (
+    o = OPS + k * 8;
+    st = m[8 + k]; e = m[4 + k];
+    st == 1 ? ( e += o[2]; e >= 1 ? ( e = 1; st = 2; ); ) :
+    st == 2 ? ( e = o[4] + (e - o[4]) * o[3]; o[4] <= 0 && e < 0.00001 ? ( e = 0; st = 0; ); ) :
+    st == 4 ? ( e *= o[5]; e < 0.00001 ? ( e = 0; st = 0; ); );
+    m[8 + k] = st; m[4 + k] = e;
+    e * m[12 + k];
+  );
+
+  function vproc() local(m, f, e1, e2, e3, e4, y1, y2, y3, y4, on)
+  (
+    this.st > 0 ? (
+      m = this.m;
+      e4 = op_env(m, 3); e3 = op_env(m, 2); e2 = op_env(m, 1); e1 = op_env(m, 0);
+      f = 440 * 2 ^ ((this.pt + pmod - 69) / 12) / srate;
+      // operator 4 (with feedback), then 3, 2, 1, each modulated by those the algorithm routes
+      y4 = sin(2 * $pi * m[3] + fb_k * (m[16] + m[17])) * e4;
+      m[17] = m[16]; m[16] = y4 * 0.5;
+      y3 = sin(2 * $pi * m[2] + MM[11] * y4 * OPS[25]) * e3;
+      y2 = sin(2 * $pi * m[1] + MM[6] * y3 * OPS[17] + MM[7] * y4 * OPS[25]) * e2;
+      y1 = sin(2 * $pi * m[0] + MM[1] * y2 * OPS[9] + MM[2] * y3 * OPS[17] + MM[3] * y4 * OPS[25]) * e1;
+      m[0] += f * OPS[0]; m[0] -= floor(m[0]);
+      m[1] += f * OPS[8]; m[1] -= floor(m[1]);
+      m[2] += f * OPS[16]; m[2] -= floor(m[2]);
+      m[3] += f * OPS[24]; m[3] -= floor(m[3]);
+      outv += (CR[0] * y1 * OPS[1] + CR[1] * y2 * OPS[9] + CR[2] * y3 * OPS[17] + CR[3] * y4 * OPS[25]) * out_g;
+      // the voice ends when every carrier's envelope has
+      on = (CR[0] > 0 && m[8] > 0) || (CR[1] > 0 && m[9] > 0) || (CR[2] > 0 && m[10] > 0) || (CR[3] > 0 && m[11] > 0);
+      !on ? this.st = 0;
+    );
+  );
+
+  // note on: the same key still sounding, a silent voice, the oldest releasing one, the oldest
+  function note_on(n, v) local(i, best, bo)
+  (
+    v0.vinfo(0); v1.vinfo(1); v2.vinfo(2); v3.vinfo(3); v4.vinfo(4); v5.vinfo(5); v6.vinfo(6); v7.vinfo(7);
+    best = -1;
+    i = 0; loop(NV, best < 0 && VI[i * 4] > 0 && VI[i * 4 + 1] == n ? best = i; i += 1; );
+    i = 0; loop(NV, best < 0 && VI[i * 4] == 0 ? best = i; i += 1; );
+    best < 0 ? (
+      bo = -1;
+      i = 0; loop(NV, VI[i * 4] > 0 && VI[i * 4 + 3] == 0 && (bo < 0 || VI[i * 4 + 2] < bo) ? ( bo = VI[i * 4 + 2]; best = i; ); i += 1; );
+    );
+    best < 0 ? (
+      best = 0; bo = VI[2];
+      i = 1; loop(NV - 1, VI[i * 4 + 2] < bo ? ( bo = VI[i * 4 + 2]; best = i; ); i += 1; );
+    );
+    best == 0 ? v0.vstart(n, v) : best == 1 ? v1.vstart(n, v) : best == 2 ? v2.vstart(n, v) : best == 3 ? v3.vstart(n, v) :
+    best == 4 ? v4.vstart(n, v) : best == 5 ? v5.vstart(n, v) : best == 6 ? v6.vstart(n, v) : v7.vstart(n, v);
+  );
+  function note_off(n) ( v0.voff(n); v1.voff(n); v2.voff(n); v3.voff(n); v4.voff(n); v5.voff(n); v6.voff(n); v7.voff(n); );
+  function all_off()
+  (
+    sus_on = 0;
+    v0.vrelease(); v1.vrelease(); v2.vrelease(); v3.vrelease(); v4.vrelease(); v5.vrelease(); v6.vrelease(); v7.vrelease();
+  );
+
+  function midi_in(st, d1, d2) local(c)
+  (
+    c = st & 0xF0;
+    c == 0x90 && d2 > 0 ? note_on(d1, d2 / 127) :
+    c == 0x80 || c == 0x90 ? note_off(d1) :
+    c == 0xB0 ? (
+      d1 == 64 ? (
+        sus_on = d2 >= 64;
+        !sus_on ? ( v0.vpedal(); v1.vpedal(); v2.vpedal(); v3.vpedal(); v4.vpedal(); v5.vpedal(); v6.vpedal(); v7.vpedal(); );
+      ) :
+      d1 == 1 ? mwheel = d2 / 127 :
+      d1 == 120 || d1 == 123 ? all_off();
+    ) :
+    c == 0xE0 ? bend = (d2 * 128 + d1 - 8192) / 8192;
+  );
+
+  // ---- effects --------------------------------------------------------------------------------
+  // one operator's settings: a carrier's Level is its loudness, a modulator's its index
+  function op_set(k, ratio, level, att, dec, sus, rel, vel) local(o, lv)
+  (
+    o = OPS + k * 8;
+    o[0] = ratio;
+    lv = level / 100;
+    o[1] = CR[k] > 0 ? lv * lv : lv * lv * 8 * bright;
+    o[2] = 1000 / (att * srate);
+    o[3] = exp(-4.6 * 1000 / (dec * srate));
+    o[4] = sus / 100;
+    o[5] = exp(-4.6 * 1000 / (rel * srate));
+    o[6] = vel / 100;
+  );
+
+  CHN = 16384;
+  CHL = FXM; CHR = CHL + CHN;
+  RVN = ceil(0.07 * srate) + 2;
+  RVB = CHR + CHN;
+  RVS = 2400; RVP = 2410; RVG = 2420; RVL = 2430; RVT = 2440; RVY = 2450;
+  RVL[0] = floor(31.3 * srate / 1000); RVL[1] = floor(37.9 * srate / 1000);
+  RVL[2] = floor(41.1 * srate / 1000); RVL[3] = floor(43.7 * srate / 1000);
+  RVL[4] = floor(47.9 * srate / 1000); RVL[5] = floor(53.3 * srate / 1000);
+  RVL[6] = floor(59.1 * srate / 1000); RVL[7] = floor(67.7 * srate / 1000);
+
+  // everything silent
+  v0.vinit(0); v1.vinit(1); v2.vinit(2); v3.vinit(3); v4.vinit(4); v5.vinit(5); v6.vinit(6); v7.vinit(7);
+  memset(VM, 0, NV * 20);
+  memset(CHL, 0, 2 * CHN); ch_w = 0;
+  memset(RVB, 0, 8 * RVN); memset(RVS, 0, 8); memset(RVP, 0, 8);
+  ch_on = rv_on = 0;
+  ord_n = 0;
+  sus_on = 0; mwheel = 0; bend = 0;
+  vib_ph = 0; ch_ph = 0;
+  m_ofs = m_1 = m_2 = m_3 = 0;
+
+@slider
+  alg = floor(slider1 + 0.5);
+  fb_k = slider2 / 100 * 1.5;
+  bright = 2 ^ (slider31 / 100 * (slider31 < 0 ? 2 : 1));
+  // the routing: MM[i * 4 + j] = operator j+1 modulates operator i+1
+  memset(MM, 0, 16);
+  alg == 0 ? ( MM[11] = 1; MM[6] = 1; MM[1] = 1; ) :
+  alg == 1 ? ( MM[6] = 1; MM[7] = 1; MM[1] = 1; ) :
+  alg == 2 ? ( MM[6] = 1; MM[1] = 1; MM[3] = 1; ) :
+  alg == 3 ? ( MM[11] = 1; MM[2] = 1; MM[1] = 1; ) :
+  alg == 4 ? ( MM[1] = 1; MM[11] = 1; ) :
+  alg == 5 ? ( MM[3] = 1; MM[7] = 1; MM[11] = 1; ) :
+  alg == 6 ? ( MM[11] = 1; );
+  CR[0] = 1;
+  CR[1] = alg >= 5;
+  CR[2] = alg >= 4;
+  CR[3] = alg >= 7;
+  ncar = CR[0] + CR[1] + CR[2] + CR[3];
+  out_g = 0.25 / sqrt(ncar);
+  op_set(0, slider3, slider4, slider5, slider6, slider7, slider8, slider9);
+  op_set(1, slider10, slider11, slider12, slider13, slider14, slider15, slider16);
+  op_set(2, slider17, slider18, slider19, slider20, slider21, slider22, slider23);
+  op_set(3, slider24, slider25, slider26, slider27, slider28, slider29, slider30);
+  ch_mix = slider32 / 100;
+  rv_mix = slider33 / 100;
+  rv_size = slider34 / 100;
+  rv_t60 = 0.3 + 7.7 * rv_size * rv_size;
+  rv_dc = 1 - exp(-2 * $pi * (10000 - 6000 * rv_size) / srate);
+  k = 0;
+  loop(8, RVG[k] = 10 ^ (-3 * RVL[k] / (srate * rv_t60)); k += 1; );
+  oct = 12 * floor(slider35 + 0.5);
+  bend_r = slider36;
+  vol = 10 ^ (slider37 / 20);
+  ch_mix > 0 && !ch_on ? memset(CHL, 0, 2 * CHN);
+  rv_mix > 0 && !rv_on ? ( memset(RVB, 0, 8 * RVN); memset(RVS, 0, 8); );
+  ch_on = ch_mix > 0; rv_on = rv_mix > 0;
+
+@block
+  // MIDI of this block, played at its offsets in @sample
+  mq_n = 0;
+  while (midirecv(m_ofs, m_1, m_2, m_3)) (
+    mq_n < 256 ? (
+      MQ[mq_n * 4] = m_ofs;
+      MQ[mq_n * 4 + 1] = m_1;
+      MQ[mq_n * 4 + 2] = m_2;
+      MQ[mq_n * 4 + 3] = m_3;
+      mq_n += 1;
+    );
+  );
+  mq_i = 0;
+  si = 0;
+  vib_inc = 5.5 / srate;
+  ch_inc = 0.45 / srate;
+
+@sample
+  while (mq_i < mq_n && MQ[mq_i * 4] <= si) (
+    midi_in(MQ[mq_i * 4 + 1], MQ[mq_i * 4 + 2], MQ[mq_i * 4 + 3]);
+    mq_i += 1;
+  );
+  si += 1;
+
+  // pitch bend and the mod wheel's vibrato (5.5 Hz, up to half a semitone)
+  vib_ph += vib_inc; vib_ph -= floor(vib_ph);
+  pmod = bend * bend_r + 0.5 * mwheel * sin(2 * $pi * vib_ph);
+
+  outv = 0;
+  v0.vproc(); v1.vproc(); v2.vproc(); v3.vproc(); v4.vproc(); v5.vproc(); v6.vproc(); v7.vproc();
+  outl = outr = outv;
+
+  // Chorus: two delay lines (12 ms +- 3 ms) moved by a slow sine in quadrature
+  ch_on ? (
+    ch_ph += ch_inc; ch_ph -= floor(ch_ph);
+    CHL[ch_w] = outl; CHR[ch_w] = outr;
+    ch_d = (0.012 + 0.003 * sin(2 * $pi * ch_ph)) * srate;
+    ch_r = ch_w - ch_d; ch_r < 0 ? ch_r += CHN;
+    ch_i = floor(ch_r); ch_fr = ch_r - ch_i; ch_j = ch_i + 1; ch_j >= CHN ? ch_j -= CHN;
+    ch_yl = CHL[ch_i] + (CHL[ch_j] - CHL[ch_i]) * ch_fr;
+    ch_d = (0.012 + 0.003 * cos(2 * $pi * ch_ph)) * srate;
+    ch_r = ch_w - ch_d; ch_r < 0 ? ch_r += CHN;
+    ch_i = floor(ch_r); ch_fr = ch_r - ch_i; ch_j = ch_i + 1; ch_j >= CHN ? ch_j -= CHN;
+    ch_yr = CHR[ch_i] + (CHR[ch_j] - CHR[ch_i]) * ch_fr;
+    ch_w += 1; ch_w >= CHN ? ch_w = 0;
+    outl = outl * (1 - 0.5 * ch_mix) + ch_yr * 0.5 * ch_mix;
+    outr = outr * (1 - 0.5 * ch_mix) + ch_yl * 0.5 * ch_mix;
+  );
+
+  // Reverb: eight delay lines through a Hadamard matrix, each damped and decaying by Size
+  rv_on ? (
+    k = 0;
+    loop(8,
+      rv_p = RVB + k * RVN + RVP[k];
+      RVS[k] += (rv_p[0] - RVS[k]) * rv_dc;
+      RVT[k] = RVS[k] * RVG[k];
+      RVY[k] = RVT[k];
+      k += 1;
+    );
+    rv_a = RVT[0] + RVT[1]; rv_b = RVT[0] - RVT[1]; RVT[0] = rv_a; RVT[1] = rv_b;
+    rv_a = RVT[2] + RVT[3]; rv_b = RVT[2] - RVT[3]; RVT[2] = rv_a; RVT[3] = rv_b;
+    rv_a = RVT[4] + RVT[5]; rv_b = RVT[4] - RVT[5]; RVT[4] = rv_a; RVT[5] = rv_b;
+    rv_a = RVT[6] + RVT[7]; rv_b = RVT[6] - RVT[7]; RVT[6] = rv_a; RVT[7] = rv_b;
+    rv_a = RVT[0] + RVT[2]; rv_b = RVT[0] - RVT[2]; RVT[0] = rv_a; RVT[2] = rv_b;
+    rv_a = RVT[1] + RVT[3]; rv_b = RVT[1] - RVT[3]; RVT[1] = rv_a; RVT[3] = rv_b;
+    rv_a = RVT[4] + RVT[6]; rv_b = RVT[4] - RVT[6]; RVT[4] = rv_a; RVT[6] = rv_b;
+    rv_a = RVT[5] + RVT[7]; rv_b = RVT[5] - RVT[7]; RVT[5] = rv_a; RVT[7] = rv_b;
+    rv_a = RVT[0] + RVT[4]; rv_b = RVT[0] - RVT[4]; RVT[0] = rv_a; RVT[4] = rv_b;
+    rv_a = RVT[1] + RVT[5]; rv_b = RVT[1] - RVT[5]; RVT[1] = rv_a; RVT[5] = rv_b;
+    rv_a = RVT[2] + RVT[6]; rv_b = RVT[2] - RVT[6]; RVT[2] = rv_a; RVT[6] = rv_b;
+    rv_a = RVT[3] + RVT[7]; rv_b = RVT[3] - RVT[7]; RVT[3] = rv_a; RVT[7] = rv_b;
+    k = 0;
+    loop(8,
+      rv_p = RVB + k * RVN + RVP[k];
+      rv_p[0] = RVT[k] * 0.35355339059327373 + (k & 1 ? outr : outl) * 0.3;
+      RVP[k] += 1; RVP[k] >= RVL[k] ? RVP[k] = 0;
+      k += 1;
+    );
+    outl += (RVY[0] + RVY[2] + RVY[4] + RVY[6]) * 0.5 * rv_mix;
+    outr += (RVY[1] + RVY[3] + RVY[5] + RVY[7]) * 0.5 * rv_mix;
+  );
+
+  spl0 = outl * vol;
+  spl1 = outr * vol;

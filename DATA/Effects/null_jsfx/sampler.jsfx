@@ -1,0 +1,413 @@
+desc:NULL Sampler
+author: Christos Koulaxizis
+tags: instrument sampler sample player one-shot chromatic wav flac loop adsr filter polyphonic midi
+//category: Instruments
+//NULL JSFX v2.4 • https://nulljsfx.tech • MIT License
+
+slider1:/null_jsfx_samples:none:Sample File
+slider2:1<0,1,1{One-shot,Chromatic}>Mode
+slider3:60<0,127,1>Root Key
+slider4:0<-24,24,1>Transpose (st)
+slider5:0<-100,100,1>Fine (ct)
+slider6:1<1,5000,1:log>Attack (ms)
+slider7:800<1,5000,1:log>Decay (ms)
+slider8:100<0,100,1>Sustain (%)
+slider9:250<1,5000,1:log>Release (ms)
+slider10:20000<20,20000,1:log>Cutoff (Hz)
+slider11:0<0,100,1>Resonance (%)
+slider12:0<-100,100,1>Filter Env (%)
+slider13:300<1,5000,1:log>Filter Decay (ms)
+slider14:0<0,1,1{Off,On}>Loop
+slider15:0<0,100,0.1>Loop Start (%)
+slider16:100<0,100,0.1>Loop End (%)
+slider17:0<0,100,0.1>Start (%)
+slider18:0<0,1,1{Off,On}>Reverse
+slider19:100<0,100,1>Velocity (%)
+slider20:2<0,24,1>Bend Range (st)
+slider21:0<-24,12,0.1>Volume (dB)
+
+in_pin:none
+out_pin:Left
+out_pin:Right
+
+@init
+  // A sample player with 16 voices. Put .wav (or .flac) files in REAPER's Data/null_jsfx_samples
+  // folder and pick one with Sample File; without a file (or when it cannot be read) a built-in
+  // sound plays, a soft electric-piano tone at C4. Stereo files play in stereo (more channels:
+  // the first two), mono files on both sides. A file is kept up to 4,194,304 sample values
+  // (about 47 s mono or 23 s stereo at 44.1 kHz).
+  //   - Mode One-shot: every key plays the sample at its own pitch to the end (note-offs and
+  //     Loop are ignored, the envelope's attack, decay and sustain shape it); Chromatic: the
+  //     pitch follows the key from Root Key, the note sounds while the key (or the sustain
+  //     pedal) is held and then releases, Loop repeats Loop Start..Loop End while it sounds
+  //   - Start skips into the sample, Reverse plays it backwards (Start and the loop then count
+  //     from its end), Velocity sets how much the velocity changes the level
+  //   - a 12 dB/octave low-pass (Cutoff, Resonance) with its own envelope: Filter Env moves the
+  //     cutoff up to 6 octaves up or down at the note's start, back over Filter Decay
+  //   - pitch bend over Bend Range, sustain pedal (CC 64), all notes off (CC 123) and all
+  //     sound off (CC 120)
+  // The voices read the sample with 4-point Hermite interpolation. When all 16 voices sound,
+  // a new note takes the oldest released voice (else the oldest); what the old voice still
+  // played fades out over 2 ms, and so does the step at a loop's end, so nothing clicks.
+  //
+  // Memory: 4000.. the MIDI of the block, 6000.. the voices (32 values each), 8000.. the
+  // waveform the GFX version draws, 65536.. the sample (interleaved).
+  ext_noinit = 1;
+  ext_tail_size = -1;
+  NV = 16;
+  MQ = 4000;
+  VOX = 6000;
+  SBUF = 65536;
+  SMAX = 4194304;
+  // voice values: on, note, gain, position, rate, stage (1 attack, 2 decay/sustain, 3 release),
+  // envelope, filter envelope, filter states (L, R), age, key held, held by the pedal, loop
+  // declick (L, R), last output (L, R), filter update count, filter coefficients, in the loop,
+  // key offset (semitones)
+  V_ON = 0; V_NOTE = 1; V_GAIN = 2; V_POS = 3; V_RATE = 4; V_ST = 5; V_ENV = 6; V_FE = 7;
+  V_S1L = 8; V_S2L = 9; V_S1R = 10; V_S2R = 11; V_AGE = 12; V_HELD = 13; V_PED = 14;
+  V_TL = 15; V_TR = 16; V_LL = 17; V_LR = 18; V_FC = 19; V_A1 = 20; V_A2 = 21; V_A3 = 22;
+  V_IN = 24; V_KST = 25;
+
+  // the built-in sound at the current rate: a soft electric piano at C4 (mono, 1.5 s)
+  function make_builtin() local(i, d1, d2, d3, p1, p2, p3, e1, e2, e3, e4, c1, c2, c3, c4, n, y, a, fo, tp, s1, s2, s3, m, x)
+  (
+    nch = 1;
+    fsr = srate;
+    nfr = floor(1.5 * srate);
+    d1 = 261.6255653005986 / srate;
+    d2 = d1 * 2;
+    d3 = d1 * 3;
+    p1 = p2 = p3 = 0;
+    e1 = e2 = e3 = e4 = 1;
+    c1 = exp(-1 / (0.3 * srate)); c2 = exp(-1 / (0.35 * srate));
+    c3 = exp(-1 / (0.08 * srate)); c4 = exp(-1 / (0.2 * srate));
+    a = floor(0.002 * srate);
+    fo = floor(0.03 * srate);
+    tp = 2 * $pi;
+    i = 0;
+    loop(nfr,
+      // one product per statement, so the native version computes the same
+      s1 = tp * p1; s1 = sin(s1);
+      m = 1.3 * e3; m *= s1;
+      s2 = tp * p2; s2 = sin(s2 + m);
+      s3 = tp * p3; s3 = sin(s3);
+      s1 *= e1; s2 *= e2; s3 *= e4;
+      s1 *= 0.54; s2 *= 0.24; s3 *= 0.11;
+      y = s1 + s2 + s3;
+      i < a ? ( x = i / a; y *= x; );
+      n = nfr - i;
+      n < fo ? ( x = n / fo; y *= x; );
+      SBUF[i] = y;
+      p1 += d1; p1 -= floor(p1);
+      p2 += d2; p2 -= floor(p2);
+      p3 += d3; p3 -= floor(p3);
+      e1 *= c1; e2 *= c2; e3 *= c3; e4 *= c4;
+      i += 1;
+    );
+  );
+
+  // read the chosen file; the built-in sound when there is none
+  function load_sample() local(h, ch, rt, n)
+  (
+    file_ok = 0;
+    h = file_open(slider1);
+    h >= 0 ? (
+      ch = rt = 0;
+      file_riff(h, ch, rt);
+      ch > 0 && rt > 0 ? (
+        n = min(file_avail(h), SMAX - SMAX % ch);
+        n -= n % ch;
+        n >= 4 * ch ? (
+          file_mem(h, SBUF, n);
+          nch = ch;
+          fsr = rt;
+          nfr = n / ch;
+          file_ok = 1;
+        );
+      );
+      file_close(h);
+    );
+    !file_ok ? make_builtin();
+    smp_id += 1;
+  );
+
+  // sample value at frame i of channel c (the index kept in the sample)
+  function smp(i, c)
+  (
+    i = max(0, min(nfr - 1, i));
+    SBUF[i * nch + min(c, nch - 1)];
+  );
+  // 4-point Hermite at position q (0..nfr-1) of channel c
+  function herm(q, c) local(i, f, xm, x0, x1, x2, c1, c2, c3)
+  (
+    i = floor(q);
+    f = q - i;
+    xm = smp(i - 1, c); x0 = smp(i, c); x1 = smp(i + 1, c); x2 = smp(i + 2, c);
+    c1 = 0.5 * (x1 - xm);
+    c2 = xm - 2.5 * x0 + 2 * x1 - 0.5 * x2;
+    c3 = 0.5 * (x2 - xm) + 1.5 * (x0 - x1);
+    ((c3 * f + c2) * f + c1) * f + x0;
+  );
+  // the sample read at playing position p (forward, or from the end with Reverse)
+  function rd(p, c) ( herm(rev ? nfr - 1 - p : p, c); );
+
+  // a voice's rate from its key offset and the global pitch (Transpose, Fine, bend)
+  function set_rate(vb) local(r)
+  (
+    r = 2 ^ ((vb[V_KST] + g_st) / 12);
+    vb[V_RATE] = r * base_r;
+  );
+  function rates() local(i)
+  (
+    i = 0;
+    loop(NV, set_rate(VOX + i * 32); i += 1;);
+  );
+
+  // a voice stops at once: what it played last fades out (the steal tail)
+  function v_kill(vb)
+  (
+    vb[V_ON] ? ( tl += vb[V_LL]; tr += vb[V_LR]; );
+    vb[V_ON] = 0;
+  );
+  function kill_all() local(i) ( i = 0; loop(NV, v_kill(VOX + i * 32); i += 1;); );
+
+  function note_on(n, v) local(i, b, vb, ba, bv)
+  (
+    // a free voice, else the oldest released one, else the oldest
+    b = -1; i = 0;
+    loop(NV, b < 0 && !VOX[i * 32] ? b = i; i += 1;);
+    b < 0 ? (
+      ba = -1; i = 0;
+      loop(NV, vb = VOX + i * 32; vb[V_ST] == 3 && (ba < 0 || vb[V_AGE] < ba) ? ( ba = vb[V_AGE]; b = i; ); i += 1;);
+      b < 0 ? (
+        i = 0;
+        loop(NV, vb = VOX + i * 32; ba < 0 || vb[V_AGE] < ba ? ( ba = vb[V_AGE]; b = i; ); i += 1;);
+      );
+    );
+    vb = VOX + b * 32;
+    v_kill(vb);
+    age += 1;
+    p0 < nfr - 1 ? (
+      bv = vsens * v;
+      bv += 1 - vsens;
+      vb[V_ON] = 1; vb[V_NOTE] = n; vb[V_GAIN] = bv * 0.5;
+      vb[V_POS] = p0; vb[V_ST] = 1; vb[V_ENV] = 0; vb[V_FE] = 1;
+      vb[V_S1L] = vb[V_S2L] = vb[V_S1R] = vb[V_S2R] = 0;
+      vb[V_AGE] = age; vb[V_HELD] = 1; vb[V_PED] = 0;
+      vb[V_TL] = vb[V_TR] = 0; vb[V_LL] = vb[V_LR] = 0;
+      vb[V_FC] = 0;
+      vb[V_IN] = p0 < le;
+      vb[V_KST] = chrom ? n - root : 0;
+      set_rate(vb);
+    );
+  );
+  function note_off(n) local(i, vb)
+  (
+    i = 0;
+    loop(NV,
+      vb = VOX + i * 32;
+      vb[V_ON] && vb[V_HELD] && vb[V_NOTE] == n ? (
+        vb[V_HELD] = 0;
+        chrom ? ( ped ? vb[V_PED] = 1 : vb[V_ST] = 3; );
+      );
+      i += 1;
+    );
+  );
+  // the sustain pedal let go, or all notes off: the notes no key holds release
+  function release_free(all) local(i, vb)
+  (
+    i = 0;
+    loop(NV,
+      vb = VOX + i * 32;
+      vb[V_ON] && chrom && (vb[V_PED] || all) ? ( vb[V_PED] = 0; vb[V_HELD] = 0; vb[V_ST] = 3; );
+      i += 1;
+    );
+  );
+
+  // filter coefficients of a voice from its filter envelope
+  function v_filter(vb) local(fc, g)
+  (
+    fc = famt * vb[V_FE];
+    fc = 2 ^ fc;
+    fc *= cut;
+    fc = max(20, min(0.45 * srate, fc));
+    fc /= srate;
+    g = tan($pi * fc);
+    fc = g + fk;
+    fc *= g;
+    vb[V_A1] = 1 / (1 + fc);
+    vb[V_A2] = g * vb[V_A1];
+    vb[V_A3] = g * vb[V_A2];
+  );
+
+  memset(VOX, 0, NV * 32);
+  last_file = -1;
+  age = 0;
+  ped = 0;
+  bend = 0;
+  tl = tr = 0;
+  sm_preview = 0;
+  m_ofs = m_1 = m_2 = m_3 = 0;
+
+@slider
+  // a new file (or the first @slider after @init): read it, the voices stop
+  slider1 != last_file ? (
+    kill_all();
+    load_sample();
+    last_file = slider1;
+  );
+  chrom = slider2 >= 0.5;
+  root = slider3;
+  base_r = fsr / srate;
+  x = slider5 / 100;
+  y = bend * slider20;
+  g_st = slider4 + x + y;
+  x = slider6 / 1000;
+  x *= srate;
+  att_inc = 1 / max(1, x);
+  x = slider7 / 1000;
+  x *= srate;
+  dec_c = exp(-6.9 / max(1, x));
+  sus = slider8 / 100;
+  x = slider9 / 1000;
+  x *= srate;
+  rel_c = exp(-6.9 / max(1, x));
+  cut = slider10;
+  x = slider11 / 100;
+  x *= 1.334;
+  fk = 1.414 - x;
+  x = slider12 / 100;
+  famt = x * 6;
+  x = slider13 / 1000;
+  x *= srate;
+  fe_c = exp(-6.9 / max(1, x));
+  f_on = slider10 < 20000 || slider12 != 0;
+  // the loop (Chromatic only), at least 64 frames
+  x = slider15 / 100;
+  ls = floor(x * nfr);
+  x = slider16 / 100;
+  le = floor(x * nfr);
+  lp_on = chrom && slider14 >= 0.5 && le - ls >= 64;
+  !lp_on ? le = nfr + 1;
+  x = slider17 / 100;
+  p0 = x * (nfr - 1);
+  rev = slider18 >= 0.5;
+  vsens = slider19 / 100;
+  vol = 10 ^ (slider21 / 20);
+  fade_n = 0.003 * srate;
+  kt = exp(-1 / (0.002 * srate));
+  rates();
+
+@block
+  // MIDI of this block, played at its offsets in @sample
+  mq_n = 0;
+  while (midirecv(m_ofs, m_1, m_2, m_3)) (
+    mq_n < 256 ? (
+      MQ[mq_n * 4] = m_ofs;
+      MQ[mq_n * 4 + 1] = m_1;
+      MQ[mq_n * 4 + 2] = m_2;
+      MQ[mq_n * 4 + 3] = m_3;
+      mq_n += 1;
+    );
+  );
+  mq_i = 0;
+  si = 0;
+
+  // a note heard from the interface (GFX version): the root key, held for 0.4 s
+  sm_preview > 0 ? ( note_on(root, 0.8); sm_pv_left = floor(0.4 * srate); sm_pv_note = root; sm_preview = 0; );
+
+@sample
+  while (mq_i < mq_n && MQ[mq_i * 4] <= si) (
+    m_s = MQ[mq_i * 4 + 1] & 0xF0;
+    m_n = MQ[mq_i * 4 + 2];
+    m_v = MQ[mq_i * 4 + 3];
+    m_s == 0x90 && m_v > 0 ? note_on(m_n, m_v / 127) :
+    m_s == 0x80 || m_s == 0x90 ? note_off(m_n) :
+    m_s == 0xE0 ? (
+      bend = m_v * 128;
+      bend = (bend + m_n - 8192) / 8192;
+      x = slider5 / 100;
+      y = bend * slider20;
+      g_st = slider4 + x + y;
+      rates();
+    ) :
+    m_s == 0xB0 ? (
+      m_n == 64 ? ( ped = m_v >= 64; !ped ? release_free(0); ) :
+      m_n == 123 ? release_free(1) :
+      m_n == 120 ? kill_all();
+    );
+    mq_i += 1;
+  );
+  sm_pv_left > 0 ? ( sm_pv_left -= 1; sm_pv_left < 0.5 ? note_off(sm_pv_note); );
+  si += 1;
+
+  outl = outr = 0;
+  i = 0;
+  loop(NV,
+    vb = VOX + i * 32;
+    vb[V_ON] ? (
+      // the envelope: a linear attack, then towards Sustain, then the release
+      st = vb[V_ST];
+      e = vb[V_ENV];
+      st == 1 ? (
+        e += att_inc;
+        e >= 1 ? ( e = 1; vb[V_ST] = 2; );
+      ) : st == 2 ? (
+        e = sus + (e - sus) * dec_c;
+      ) : (
+        e *= rel_c;
+      );
+      vb[V_ENV] = e;
+
+      p = vb[V_POS];
+      xl = rd(p, 0) + vb[V_TL];
+      xr = rd(p, 1) + vb[V_TR];
+      vb[V_TL] *= kt; vb[V_TR] *= kt;
+      g = e * vb[V_GAIN];
+      // the last 3 ms of the sample fade out
+      !lp_on || !vb[V_IN] ? (
+        x = nfr - 1 - p;
+        x /= vb[V_RATE];
+        x < fade_n ? g *= x / fade_n;
+      );
+      xl *= g; xr *= g;
+
+      f_on ? (
+        vb[V_FC] <= 0 ? ( v_filter(vb); vb[V_FC] = 16; );
+        vb[V_FC] -= 1;
+        // two TPT state-variable low-passes (Q from Resonance)
+        v3 = xl - vb[V_S2L];
+        v1 = vb[V_A1] * vb[V_S1L] + vb[V_A2] * v3;
+        v2 = vb[V_S2L] + vb[V_A2] * vb[V_S1L] + vb[V_A3] * v3;
+        vb[V_S1L] = 2 * v1 - vb[V_S1L];
+        vb[V_S2L] = 2 * v2 - vb[V_S2L];
+        xl = v2;
+        v3 = xr - vb[V_S2R];
+        v1 = vb[V_A1] * vb[V_S1R] + vb[V_A2] * v3;
+        v2 = vb[V_S2R] + vb[V_A2] * vb[V_S1R] + vb[V_A3] * v3;
+        vb[V_S1R] = 2 * v1 - vb[V_S1R];
+        vb[V_S2R] = 2 * v2 - vb[V_S2R];
+        xr = v2;
+        vb[V_FE] *= fe_c;
+      );
+      vb[V_LL] = xl; vb[V_LR] = xr;
+      outl += xl; outr += xr;
+
+      // on to the next position; the loop jumps back, its step fading out (loop declick)
+      p += vb[V_RATE];
+      lp_on && vb[V_IN] && p >= le ? (
+        x = p - (le - ls);
+        vb[V_TL] += rd(p, 0) - rd(x, 0);
+        vb[V_TR] += rd(p, 1) - rd(x, 1);
+        p = x;
+      );
+      vb[V_POS] = p;
+      p >= nfr - 1 || (st == 3 && e < 0.0001) || (st == 2 && sus == 0 && e < 0.0001) ? vb[V_ON] = 0;
+    );
+    i += 1;
+  );
+
+  outl += tl; outr += tr;
+  tl *= kt; tr *= kt;
+  spl0 = outl * vol;
+  spl1 = outr * vol;

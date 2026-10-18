@@ -21,7 +21,9 @@ var CATEGORY_ORDER = ["One Slider", "Essentials", "Advanced"];
 // apart (the page draws, a worklet plays): variables @gfx sets for the audio to take (pokes),
 // and memory the audio writes for @gfx to fade (flash: [variable holding the address, length]).
 var SHARE = {
-  drum_machine: { pokes: ["dm_preview"], flash: [["hit", 10]] }
+  drum_machine: { pokes: ["dm_preview"], flash: [["hit", 10]] },
+  percussion: { pokes: ["pc_preview"], flash: [["hit", 11]] },
+  sampler: { pokes: ["sm_preview"] }
 };
 
 function isInstrument(file) { return /^\/\/category: Instruments$/m.test(fs.readFileSync(file, "utf8")); }

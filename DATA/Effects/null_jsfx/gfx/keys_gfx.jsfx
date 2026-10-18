@@ -1,0 +1,632 @@
+desc:NULL Keys GFX
+author: Christos Koulaxizis
+tags: instrument keys electric piano ep tine reed fm music box celesta glockenspiel vibraphone marimba kalimba mallets bell tremolo autopan chorus drive midi gui
+//category: Instruments
+//NULL JSFX v2.4 • https://nulljsfx.tech • MIT License
+
+import null_gfx.jsfx-inc
+
+slider1:0<0,8,1{Tine EP,Reed EP,FM EP,Music Box,Celesta,Glockenspiel,Vibraphone,Marimba,Kalimba}>-Model
+slider2:50<0,100,1>-Tone (%)
+slider3:50<0,100,1>-Bell (%)
+slider4:100<10,400,1>-Decay (%)
+slider5:250<10,3000,1:log>-Release (ms)
+slider6:60<0,100,1>-Velocity (%)
+slider7:4.5<0.5,12,0.1>-Tremolo Rate (Hz)
+slider8:0<0,100,1>-Tremolo Depth (%)
+slider9:1<0,1,1{Mono,Stereo}>-Tremolo Mode
+slider10:0<0,100,1>-Drive (%)
+slider11:0<0,100,1>-Chorus (%)
+slider12:0<-24,12,0.1>-Volume (dB)
+
+in_pin:none
+out_pin:Left
+out_pin:Right
+
+@init
+  // NULL Keys (../keys.jsfx) with its own interface: same audio code, plus @gfx.
+  // Electric pianos, music box and mallets (no samples), 16 voices. Every key is a two-operator
+  // FM tone (a carrier at the pitch, a modulator whose index falls after the strike, so the
+  // attack is brighter than the ring) with a fast and a slow decay, plus up to three modal
+  // partials (damped resonators at the model's overtone ratios: the tine's bell, the bars'
+  // 1:4:10, the comb tooth's 1:6.3:17.6) and a short mallet noise. Tone scales the FM index,
+  // the partials and the noise's brightness, Bell the partials, Decay every decay time; higher
+  // keys decay faster. Velocity sets the level and the brightness (Velocity = how much).
+  // Keys start with a 0.2-1.5 ms ramp and fade over Release (to -60 dB) when they come up
+  // (the sustain pedal, CC 64, holds them); a short tap still rings out over Release. The same key struck again takes a new voice and releases the
+  // old one; a 17th key takes the oldest voice (released ones first) after a 2 ms fade.
+  // The voices are spread a little by pitch, then Drive (a soft clip), the tremolo (Mono:
+  // level, Stereo: autopan) and a stereo chorus. All notes off (CC 123/120) releases every key.
+  //
+  // Memory: 0.. the MIDI of the block (4 per message), 2048.. keys down, 2304.. per-voice
+  // values, 3072.. the partials (3 per voice), 4096.. the models, 8192.. the chorus delay.
+  ext_noinit = 1;
+  ext_tail_size = -1;
+  NV = 16;
+  MQ = 0;
+  KD = 2048;
+  v_note = 2304; v_gate = 2320; v_env = 2336; v_pend = 2352; v_pvel = 2368; v_age = 2384;
+  v_pc = 2400; v_dc = 2416; v_pm = 2432; v_dm = 2448; v_ix = 2464; v_ixc = 2480;
+  v_a1 = 2496; v_a1c = 2512; v_a2 = 2528; v_a2c = 2544; v_nz = 2560; v_gl = 2576; v_gr = 2592; v_rel = 2608;
+  p_s1 = 3072; p_s2 = 3120; p_cf = 3168; p_df = 3216; p_e = 3264; p_r = 3312;
+  MT = 4096;
+  CB = 8192;
+  tpi = 2 * $pi;
+
+  // the models, 24 values each: modulator ratio, FM index, index decay (s), fast and slow
+  // decay (s at C4), share of the slow decay, decay factor per octave, three partials (ratio,
+  // level, decay in s), noise level, noise decay (s), attack (ms), noise brightness (Hz), level
+  function mrow(a, b, c, d, e, f, g)
+  (
+    MT[mw] = a; MT[mw + 1] = b; MT[mw + 2] = c; MT[mw + 3] = d; MT[mw + 4] = e;
+    MT[mw + 5] = f; MT[mw + 6] = g;
+    mw += 7;
+  );
+  function mrow2(a, b, c, d, e, f, g)
+  (
+    MT[mw] = a; MT[mw + 1] = b; MT[mw + 2] = c; MT[mw + 3] = d; MT[mw + 4] = e; MT[mw + 5] = f;
+    MT[mw + 6] = g;
+    mw += 10;
+  );
+  mw = 0;
+  // Tine EP
+  mrow(1, 1.6, 0.25, 0.7, 4.5, 0.55, 0.72); mrow(7.1, 0.1, 0.3, 13.4, 0.04, 0.1, 0); mrow2(0, 0, 0.04, 0.004, 1, 3000, 1.1);
+  // Reed EP
+  mrow(1, 2.6, 0.45, 0.5, 2.8, 0.5, 0.7); mrow(3, 0.06, 0.4, 5, 0.03, 0.25, 0); mrow2(0, 0, 0.03, 0.003, 1.5, 2500, 1);
+  // FM EP
+  mrow(1, 1.1, 0.8, 1, 3.5, 0.5, 0.75); mrow(14, 0.22, 0.06, 4, 0.04, 0.5, 0); mrow2(0, 0, 0, 0.003, 0.5, 4000, 1);
+  // Music Box
+  mrow(1, 0.3, 0.05, 0.9, 2.5, 0.7, 0.8); mrow(6.27, 0.3, 0.35, 17.55, 0.12, 0.08, 0); mrow2(0, 0, 0.06, 0.002, 0.3, 6000, 0.75);
+  // Celesta
+  mrow(1, 0.5, 0.08, 0.6, 2.2, 0.6, 0.8); mrow(2, 0.1, 0.5, 4, 0.12, 0.25, 8.9); mrow2(0.05, 0.06, 0.05, 0.003, 0.5, 5000, 0.85);
+  // Glockenspiel
+  mrow(1, 0.2, 0.03, 2.5, 5, 0.8, 0.85); mrow(2.76, 0.35, 1.2, 5.4, 0.25, 0.5, 8.93); mrow2(0.15, 0.2, 0.08, 0.002, 0.2, 8000, 0.7);
+  // Vibraphone
+  mrow(1, 0.3, 0.05, 1.5, 7, 0.8, 0.8); mrow(4, 0.25, 0.8, 10, 0.12, 0.25, 0); mrow2(0, 0, 0.07, 0.003, 0.5, 4000, 0.75);
+  // Marimba
+  mrow(1, 0.4, 0.03, 0.25, 1.2, 0.5, 0.65); mrow(4, 0.3, 0.08, 9.9, 0.12, 0.03, 0); mrow2(0, 0, 0.12, 0.003, 0.5, 2500, 0.8);
+  // Kalimba
+  mrow(1, 0.6, 0.04, 0.4, 2, 0.6, 0.75); mrow(5.9, 0.25, 0.12, 13.6, 0.08, 0.04, 0); mrow2(0, 0, 0.1, 0.002, 0.3, 3500, 0.85);
+
+  function v_start(v, n, vel) local(f, oc, kdec, vn, g, ix, t, r, a, w, rr, b, p)
+  (
+    v_note[v] = n; v_pend[v] = -1;
+    v_gate[v] = KD[n] > 0 || sus ? 1 : 0;
+    v_env[v] = 0;
+    v_rel[v] = 1;
+    age += 1;
+    v_age[v] = age;
+    f = 440 * 2 ^ ((n - 69) / 12);
+    oc = (n - 60) / 12;
+    kdec = m_kt ^ oc;
+    vn = vel / 127;
+    g = vn * vn;
+    g = 1 - vs + vs * g;
+    g *= m_gain;
+    v_pc[v] = 0; v_pm[v] = 0;
+    v_dc[v] = f / srate;
+    t = f * m_mr;
+    v_dm[v] = t / srate;
+    ix = m_mi * tone_k;
+    ix *= min(1.5, sqrt(261.63 / f));
+    t = vs * (vn - 0.6);
+    ix *= max(0.2, 1 + 1.5 * t);
+    v_ix[v] = ix;
+    v_ixc[v] = exp(-6.907755 / (m_mid * srate));
+    t = m_tf * dsc;
+    t *= kdec;
+    v_a1c[v] = exp(-6.907755 / (t * srate));
+    t = m_ts * dsc;
+    t *= kdec;
+    v_a2c[v] = exp(-6.907755 / (t * srate));
+    v_a1[v] = g * (1 - m_ks);
+    v_a2[v] = g * m_ks;
+    b = v * 3;
+    p = mb + 7;
+    loop(3,
+      r = p[0];
+      a = p[1] * bell_k;
+      a *= tone_p;
+      a *= g;
+      t = f * r;
+      r > 0 && a > 0 && t < 0.45 * srate ? (
+        w = tpi * t;
+        w /= srate;
+        t = p[2] * dsc;
+        t *= kdec;
+        rr = exp(-6.907755 / (t * srate));
+        t = 2 * rr;
+        p_cf[b] = t * cos(w);
+        p_df[b] = rr * rr;
+        p_s1[b] = 0;
+        t = a * sin(w);
+        p_s2[b] = -t / rr;
+        p_e[b] = a;
+        p_r[b] = rr;
+      ) : (
+        p_e[b] = 0; p_s1[b] = 0; p_s2[b] = 0;
+      );
+      b += 1;
+      p += 3;
+    );
+    t = 0.5 + vn;
+    v_nz[v] = m_nz * g;
+    v_nz[v] *= t;
+    p = max(-1, min(1, (n - 60) / 30));
+    v_gl[v] = 1 - 0.3 * p;
+    v_gr[v] = 1 + 0.3 * p;
+  );
+
+  function note_on(n, vel) local(v, f, ba)
+  (
+    KD[n] = 1;
+    f = -1;
+    v = 0;
+    loop(NV,
+      // the same key waiting for its voice: a new velocity only
+      v_pend[v] == n ? ( f = v; v_pvel[v] = vel; );
+      v += 1;
+    );
+    f < 0 ? (
+      // the same key still held or sustained lets go of its voice
+      v = 0;
+      loop(NV, v_pend[v] < 0 && v_note[v] == n ? v_gate[v] = 0; v += 1;);
+      // a free voice, else the oldest released one, else the oldest
+      v = 0;
+      loop(NV, f < 0 && v_note[v] < 0 ? f = v; v += 1;);
+      f < 0 ? (
+        ba = 0;
+        v = 0;
+        loop(NV,
+          v_gate[v] == 0 && v_pend[v] < 0 && (f < 0 || v_age[v] < ba) ? ( f = v; ba = v_age[v]; );
+          v += 1;
+        );
+      );
+      f < 0 ? (
+        v = 0;
+        loop(NV,
+          f < 0 || v_age[v] < ba ? ( f = v; ba = v_age[v]; );
+          v += 1;
+        );
+      );
+      v_note[f] < 0 ? v_start(f, n, vel) : (
+        // fade the old note out first
+        v_gate[f] = 0;
+        v_pend[f] = n;
+        v_pvel[f] = vel;
+        age += 1;
+        v_age[f] = age;
+      );
+    );
+  );
+  function note_off(n) local(v)
+  (
+    KD[n] = 0;
+    !sus ? (
+      v = 0;
+      loop(NV, v_pend[v] < 0 && v_note[v] == n ? v_gate[v] = 0; v += 1;);
+    );
+  );
+  function sus_off() local(v)
+  (
+    sus = 0;
+    v = 0;
+    loop(NV, v_pend[v] < 0 && v_note[v] >= 0 && KD[v_note[v]] == 0 ? v_gate[v] = 0; v += 1;);
+  );
+  function all_off() local(v)
+  (
+    memset(KD, 0, 128);
+    sus = 0;
+    v = 0;
+    loop(NV, v_gate[v] = 0; v += 1;);
+  );
+  function midi_ev(st, d1, d2) local(t)
+  (
+    t = st & 0xF0;
+    t == 0x90 && d2 > 0 ? note_on(d1, d2) :
+    t == 0x80 || t == 0x90 ? note_off(d1) :
+    t == 0xB0 ? (
+      d1 == 64 ? ( d2 >= 64 ? sus = 1 : sus ? sus_off(); ) :
+      d1 == 123 || d1 == 120 ? all_off();
+    );
+  );
+
+  v = 0;
+  loop(NV, v_note[v] = -1; v_gate[v] = 0; v_env[v] = 0; v_pend[v] = -1; v += 1;);
+  memset(KD, 0, 128);
+  sus = 0; age = 0;
+  seed = 31337; nzf = 0;
+  tr_ph = 0; ch_ph = 0;
+  cb_size = ceil(srate * 0.025) + 4;
+  memset(CB, 0, cb_size);
+  cb_w = 0;
+  m_ofs = m_1 = m_2 = m_3 = 0;
+
+  gfx_ext_retina = 1;
+
+  // the interface: a key sounding, white keys, a bar of the strike spectrum
+  function ky_snd(n) local(v, r) ( r = 0; v = 0; loop(NV, v_note[v] == n && v_pend[v] < 0 ? r = 1; v += 1;); r; );
+  function ky_white(pc) ( pc == 0 || pc == 2 || pc == 4 || pc == 5 || pc == 7 || pc == 9 || pc == 11; );
+  function ky_bar(r, db, a) local(xx, yy)
+  (
+    xx = ng_px + ng_pw * log(r / 0.5) / log(40);
+    yy = ng_lin_y(db, -48, 14);
+    ng_col(NG_ACCENT, a);
+    gfx_rect(xx - 1.5 * ng_s, yy, 3 * ng_s, ng_py + ng_ph - yy);
+  );
+
+  function update()
+  (
+    model = max(0, min(8, floor(slider1 + 0.5)));
+    mb = MT + model * 24;
+    m_mr = mb[0]; m_mi = mb[1]; m_mid = mb[2]; m_tf = mb[3]; m_ts = mb[4]; m_ks = mb[5]; m_kt = mb[6];
+    m_nz = mb[16]; m_nd = mb[17]; m_att = mb[18]; m_lp = mb[19]; m_gain = mb[20];
+    tone_k = 2 ^ ((slider2 - 50) / 25);
+    tone_p = 0.4 + 0.012 * slider2;
+    bell_k = slider3 / 50;
+    dsc = slider4 / 100;
+    r_c = exp(-6.907755 / (slider5 * 0.001 * srate));
+    vs = slider6 / 100;
+    tr_dt = slider7 / srate;
+    tdep = slider8 / 100;
+    tr_st = slider9 >= 0.5;
+    drv = slider10 / 100;
+    drive = 1 + 5 * drv;
+    drv_n = 1 / sqrt(drive);
+    chm = slider11 / 100;
+    ch_wet = 0.6 * chm;
+    ch_dry = 1 - 0.3 * chm;
+    ch_dt = 0.7 / srate;
+    ch_c = 0.007 * srate;
+    ch_d = 0.0025 * srate;
+    vol = 10 ^ (slider12 / 20);
+    a_inc = 1 / (m_att * 0.001 * srate);
+    s_inc = 1 / (0.002 * srate);
+    nzc = exp(-6.907755 / (m_nd * srate));
+    nzk = exp(-2 * $pi * min(0.45 * srate, m_lp * tone_k) / srate);
+  );
+
+  // ---- factory presets: generated by tools/build_presets.py, do not edit ----
+  ng_pre_n = 16;
+
+  function ng_preset_load(p)
+  (
+    p == 0 ? ( ng_slider_set(1, 0); ng_slider_set(2, 50); ng_slider_set(3, 50); ng_slider_set(4, 100); ng_slider_set(5, 250); ng_slider_set(6, 60); ng_slider_set(7, 4.5); ng_slider_set(8, 0); ng_slider_set(9, 1); ng_slider_set(10, 0); ng_slider_set(11, 0); ng_slider_set(12, 0); );
+    p == 1 ? ( ng_slider_set(1, 0); ng_slider_set(2, 50); ng_slider_set(3, 50); ng_slider_set(4, 100); ng_slider_set(5, 250); ng_slider_set(6, 60); ng_slider_set(7, 4.5); ng_slider_set(8, 40); ng_slider_set(9, 1); ng_slider_set(10, 0); ng_slider_set(11, 0); ng_slider_set(12, 0); );
+    p == 2 ? ( ng_slider_set(1, 0); ng_slider_set(2, 75); ng_slider_set(3, 70); ng_slider_set(4, 100); ng_slider_set(5, 250); ng_slider_set(6, 70); ng_slider_set(7, 4.5); ng_slider_set(8, 0); ng_slider_set(9, 1); ng_slider_set(10, 20); ng_slider_set(11, 0); ng_slider_set(12, 0); );
+    p == 3 ? ( ng_slider_set(1, 0); ng_slider_set(2, 25); ng_slider_set(3, 30); ng_slider_set(4, 100); ng_slider_set(5, 250); ng_slider_set(6, 70); ng_slider_set(7, 4.5); ng_slider_set(8, 0); ng_slider_set(9, 1); ng_slider_set(10, 0); ng_slider_set(11, 20); ng_slider_set(12, 0); );
+    p == 4 ? ( ng_slider_set(1, 1); ng_slider_set(2, 65); ng_slider_set(3, 50); ng_slider_set(4, 100); ng_slider_set(5, 250); ng_slider_set(6, 60); ng_slider_set(7, 5.5); ng_slider_set(8, 30); ng_slider_set(9, 0); ng_slider_set(10, 35); ng_slider_set(11, 0); ng_slider_set(12, -2); );
+    p == 5 ? ( ng_slider_set(1, 1); ng_slider_set(2, 35); ng_slider_set(3, 50); ng_slider_set(4, 100); ng_slider_set(5, 250); ng_slider_set(6, 60); ng_slider_set(7, 4.5); ng_slider_set(8, 0); ng_slider_set(9, 1); ng_slider_set(10, 0); ng_slider_set(11, 30); ng_slider_set(12, 0); );
+    p == 6 ? ( ng_slider_set(1, 2); ng_slider_set(2, 50); ng_slider_set(3, 50); ng_slider_set(4, 100); ng_slider_set(5, 400); ng_slider_set(6, 60); ng_slider_set(7, 4.5); ng_slider_set(8, 0); ng_slider_set(9, 1); ng_slider_set(10, 0); ng_slider_set(11, 45); ng_slider_set(12, 0); );
+    p == 7 ? ( ng_slider_set(1, 2); ng_slider_set(2, 75); ng_slider_set(3, 80); ng_slider_set(4, 100); ng_slider_set(5, 250); ng_slider_set(6, 60); ng_slider_set(7, 4.5); ng_slider_set(8, 0); ng_slider_set(9, 1); ng_slider_set(10, 0); ng_slider_set(11, 25); ng_slider_set(12, 0); );
+    p == 8 ? ( ng_slider_set(1, 3); ng_slider_set(2, 50); ng_slider_set(3, 50); ng_slider_set(4, 120); ng_slider_set(5, 1500); ng_slider_set(6, 60); ng_slider_set(7, 4.5); ng_slider_set(8, 0); ng_slider_set(9, 1); ng_slider_set(10, 0); ng_slider_set(11, 20); ng_slider_set(12, 0); );
+    p == 9 ? ( ng_slider_set(1, 4); ng_slider_set(2, 50); ng_slider_set(3, 50); ng_slider_set(4, 100); ng_slider_set(5, 800); ng_slider_set(6, 60); ng_slider_set(7, 4.5); ng_slider_set(8, 0); ng_slider_set(9, 1); ng_slider_set(10, 0); ng_slider_set(11, 0); ng_slider_set(12, 0); );
+    p == 10 ? ( ng_slider_set(1, 4); ng_slider_set(2, 50); ng_slider_set(3, 80); ng_slider_set(4, 250); ng_slider_set(5, 2000); ng_slider_set(6, 60); ng_slider_set(7, 4.5); ng_slider_set(8, 0); ng_slider_set(9, 1); ng_slider_set(10, 0); ng_slider_set(11, 60); ng_slider_set(12, -2); );
+    p == 11 ? ( ng_slider_set(1, 5); ng_slider_set(2, 50); ng_slider_set(3, 50); ng_slider_set(4, 100); ng_slider_set(5, 1200); ng_slider_set(6, 60); ng_slider_set(7, 4.5); ng_slider_set(8, 0); ng_slider_set(9, 1); ng_slider_set(10, 0); ng_slider_set(11, 0); ng_slider_set(12, 0); );
+    p == 12 ? ( ng_slider_set(1, 6); ng_slider_set(2, 50); ng_slider_set(3, 50); ng_slider_set(4, 100); ng_slider_set(5, 400); ng_slider_set(6, 60); ng_slider_set(7, 5.5); ng_slider_set(8, 45); ng_slider_set(9, 0); ng_slider_set(10, 0); ng_slider_set(11, 0); ng_slider_set(12, 0); );
+    p == 13 ? ( ng_slider_set(1, 6); ng_slider_set(2, 30); ng_slider_set(3, 50); ng_slider_set(4, 100); ng_slider_set(5, 1200); ng_slider_set(6, 60); ng_slider_set(7, 4.5); ng_slider_set(8, 0); ng_slider_set(9, 1); ng_slider_set(10, 0); ng_slider_set(11, 15); ng_slider_set(12, 0); );
+    p == 14 ? ( ng_slider_set(1, 7); ng_slider_set(2, 45); ng_slider_set(3, 50); ng_slider_set(4, 100); ng_slider_set(5, 300); ng_slider_set(6, 60); ng_slider_set(7, 4.5); ng_slider_set(8, 0); ng_slider_set(9, 1); ng_slider_set(10, 0); ng_slider_set(11, 0); ng_slider_set(12, 0); );
+    p == 15 ? ( ng_slider_set(1, 8); ng_slider_set(2, 50); ng_slider_set(3, 50); ng_slider_set(4, 100); ng_slider_set(5, 600); ng_slider_set(6, 60); ng_slider_set(7, 4.5); ng_slider_set(8, 0); ng_slider_set(9, 1); ng_slider_set(10, 0); ng_slider_set(11, 15); ng_slider_set(12, 0); );
+  );
+
+  // the first preset every slider matches, or -1
+  function ng_preset_match() local(m)
+  (
+    m = -1;
+    m < 0 && ng_pre_eq(slider1, 0) && ng_pre_eq(slider2, 50) && ng_pre_eq(slider3, 50) && ng_pre_eq(slider4, 100) && ng_pre_eq(slider5, 250) && ng_pre_eq(slider6, 60) && ng_pre_eq(slider7, 4.5) && ng_pre_eq(slider8, 0) && ng_pre_eq(slider9, 1) && ng_pre_eq(slider10, 0) && ng_pre_eq(slider11, 0) && ng_pre_eq(slider12, 0) ? m = 0;
+    m < 0 && ng_pre_eq(slider1, 0) && ng_pre_eq(slider2, 50) && ng_pre_eq(slider3, 50) && ng_pre_eq(slider4, 100) && ng_pre_eq(slider5, 250) && ng_pre_eq(slider6, 60) && ng_pre_eq(slider7, 4.5) && ng_pre_eq(slider8, 40) && ng_pre_eq(slider9, 1) && ng_pre_eq(slider10, 0) && ng_pre_eq(slider11, 0) && ng_pre_eq(slider12, 0) ? m = 1;
+    m < 0 && ng_pre_eq(slider1, 0) && ng_pre_eq(slider2, 75) && ng_pre_eq(slider3, 70) && ng_pre_eq(slider4, 100) && ng_pre_eq(slider5, 250) && ng_pre_eq(slider6, 70) && ng_pre_eq(slider7, 4.5) && ng_pre_eq(slider8, 0) && ng_pre_eq(slider9, 1) && ng_pre_eq(slider10, 20) && ng_pre_eq(slider11, 0) && ng_pre_eq(slider12, 0) ? m = 2;
+    m < 0 && ng_pre_eq(slider1, 0) && ng_pre_eq(slider2, 25) && ng_pre_eq(slider3, 30) && ng_pre_eq(slider4, 100) && ng_pre_eq(slider5, 250) && ng_pre_eq(slider6, 70) && ng_pre_eq(slider7, 4.5) && ng_pre_eq(slider8, 0) && ng_pre_eq(slider9, 1) && ng_pre_eq(slider10, 0) && ng_pre_eq(slider11, 20) && ng_pre_eq(slider12, 0) ? m = 3;
+    m < 0 && ng_pre_eq(slider1, 1) && ng_pre_eq(slider2, 65) && ng_pre_eq(slider3, 50) && ng_pre_eq(slider4, 100) && ng_pre_eq(slider5, 250) && ng_pre_eq(slider6, 60) && ng_pre_eq(slider7, 5.5) && ng_pre_eq(slider8, 30) && ng_pre_eq(slider9, 0) && ng_pre_eq(slider10, 35) && ng_pre_eq(slider11, 0) && ng_pre_eq(slider12, -2) ? m = 4;
+    m < 0 && ng_pre_eq(slider1, 1) && ng_pre_eq(slider2, 35) && ng_pre_eq(slider3, 50) && ng_pre_eq(slider4, 100) && ng_pre_eq(slider5, 250) && ng_pre_eq(slider6, 60) && ng_pre_eq(slider7, 4.5) && ng_pre_eq(slider8, 0) && ng_pre_eq(slider9, 1) && ng_pre_eq(slider10, 0) && ng_pre_eq(slider11, 30) && ng_pre_eq(slider12, 0) ? m = 5;
+    m < 0 && ng_pre_eq(slider1, 2) && ng_pre_eq(slider2, 50) && ng_pre_eq(slider3, 50) && ng_pre_eq(slider4, 100) && ng_pre_eq(slider5, 400) && ng_pre_eq(slider6, 60) && ng_pre_eq(slider7, 4.5) && ng_pre_eq(slider8, 0) && ng_pre_eq(slider9, 1) && ng_pre_eq(slider10, 0) && ng_pre_eq(slider11, 45) && ng_pre_eq(slider12, 0) ? m = 6;
+    m < 0 && ng_pre_eq(slider1, 2) && ng_pre_eq(slider2, 75) && ng_pre_eq(slider3, 80) && ng_pre_eq(slider4, 100) && ng_pre_eq(slider5, 250) && ng_pre_eq(slider6, 60) && ng_pre_eq(slider7, 4.5) && ng_pre_eq(slider8, 0) && ng_pre_eq(slider9, 1) && ng_pre_eq(slider10, 0) && ng_pre_eq(slider11, 25) && ng_pre_eq(slider12, 0) ? m = 7;
+    m < 0 && ng_pre_eq(slider1, 3) && ng_pre_eq(slider2, 50) && ng_pre_eq(slider3, 50) && ng_pre_eq(slider4, 120) && ng_pre_eq(slider5, 1500) && ng_pre_eq(slider6, 60) && ng_pre_eq(slider7, 4.5) && ng_pre_eq(slider8, 0) && ng_pre_eq(slider9, 1) && ng_pre_eq(slider10, 0) && ng_pre_eq(slider11, 20) && ng_pre_eq(slider12, 0) ? m = 8;
+    m < 0 && ng_pre_eq(slider1, 4) && ng_pre_eq(slider2, 50) && ng_pre_eq(slider3, 50) && ng_pre_eq(slider4, 100) && ng_pre_eq(slider5, 800) && ng_pre_eq(slider6, 60) && ng_pre_eq(slider7, 4.5) && ng_pre_eq(slider8, 0) && ng_pre_eq(slider9, 1) && ng_pre_eq(slider10, 0) && ng_pre_eq(slider11, 0) && ng_pre_eq(slider12, 0) ? m = 9;
+    m < 0 && ng_pre_eq(slider1, 4) && ng_pre_eq(slider2, 50) && ng_pre_eq(slider3, 80) && ng_pre_eq(slider4, 250) && ng_pre_eq(slider5, 2000) && ng_pre_eq(slider6, 60) && ng_pre_eq(slider7, 4.5) && ng_pre_eq(slider8, 0) && ng_pre_eq(slider9, 1) && ng_pre_eq(slider10, 0) && ng_pre_eq(slider11, 60) && ng_pre_eq(slider12, -2) ? m = 10;
+    m < 0 && ng_pre_eq(slider1, 5) && ng_pre_eq(slider2, 50) && ng_pre_eq(slider3, 50) && ng_pre_eq(slider4, 100) && ng_pre_eq(slider5, 1200) && ng_pre_eq(slider6, 60) && ng_pre_eq(slider7, 4.5) && ng_pre_eq(slider8, 0) && ng_pre_eq(slider9, 1) && ng_pre_eq(slider10, 0) && ng_pre_eq(slider11, 0) && ng_pre_eq(slider12, 0) ? m = 11;
+    m < 0 && ng_pre_eq(slider1, 6) && ng_pre_eq(slider2, 50) && ng_pre_eq(slider3, 50) && ng_pre_eq(slider4, 100) && ng_pre_eq(slider5, 400) && ng_pre_eq(slider6, 60) && ng_pre_eq(slider7, 5.5) && ng_pre_eq(slider8, 45) && ng_pre_eq(slider9, 0) && ng_pre_eq(slider10, 0) && ng_pre_eq(slider11, 0) && ng_pre_eq(slider12, 0) ? m = 12;
+    m < 0 && ng_pre_eq(slider1, 6) && ng_pre_eq(slider2, 30) && ng_pre_eq(slider3, 50) && ng_pre_eq(slider4, 100) && ng_pre_eq(slider5, 1200) && ng_pre_eq(slider6, 60) && ng_pre_eq(slider7, 4.5) && ng_pre_eq(slider8, 0) && ng_pre_eq(slider9, 1) && ng_pre_eq(slider10, 0) && ng_pre_eq(slider11, 15) && ng_pre_eq(slider12, 0) ? m = 13;
+    m < 0 && ng_pre_eq(slider1, 7) && ng_pre_eq(slider2, 45) && ng_pre_eq(slider3, 50) && ng_pre_eq(slider4, 100) && ng_pre_eq(slider5, 300) && ng_pre_eq(slider6, 60) && ng_pre_eq(slider7, 4.5) && ng_pre_eq(slider8, 0) && ng_pre_eq(slider9, 1) && ng_pre_eq(slider10, 0) && ng_pre_eq(slider11, 0) && ng_pre_eq(slider12, 0) ? m = 14;
+    m < 0 && ng_pre_eq(slider1, 8) && ng_pre_eq(slider2, 50) && ng_pre_eq(slider3, 50) && ng_pre_eq(slider4, 100) && ng_pre_eq(slider5, 600) && ng_pre_eq(slider6, 60) && ng_pre_eq(slider7, 4.5) && ng_pre_eq(slider8, 0) && ng_pre_eq(slider9, 1) && ng_pre_eq(slider10, 0) && ng_pre_eq(slider11, 15) && ng_pre_eq(slider12, 0) ? m = 15;
+    m;
+  );
+
+  function ng_preset_name(p) local(s)
+  (
+    s = "";
+    p == 0 ? s = "Default";
+    p == 1 ? s = "Stereo Tine";
+    p == 2 ? s = "Bright Tine";
+    p == 3 ? s = "Mellow Tine";
+    p == 4 ? s = "Reed Bark";
+    p == 5 ? s = "Soft Reed";
+    p == 6 ? s = "FM Ballad EP";
+    p == 7 ? s = "FM Glass EP";
+    p == 8 ? s = "Music Box";
+    p == 9 ? s = "Celesta";
+    p == 10 ? s = "Dream Bells";
+    p == 11 ? s = "Glockenspiel";
+    p == 12 ? s = "Vibes Motor";
+    p == 13 ? s = "Soft Vibes";
+    p == 14 ? s = "Marimba";
+    p == 15 ? s = "Kalimba";
+    s;
+  );
+
+  function ng_presets() local(i)
+  (
+    ng_pre_req >= 0 ? ( ng_preset_load(ng_pre_req); update(); ng_pre_req = -1; );
+    ng_pre_cur = ng_preset_match();
+    ng_pre_open ? (
+      ng_pre_menu_begin();
+      i = 0;
+      loop(ng_pre_n, ng_pre_item(i, ng_preset_name(i)); i += 1;);
+      ng_pre_menu_end();
+    );
+    strcpy(#ng_pre_name, ng_pre_cur >= 0 ? ng_preset_name(ng_pre_cur) : "CUSTOM");
+  );
+  // ---- end of factory presets ----
+
+@slider
+  update();
+
+@block
+  // the MIDI of this block, played at its offsets in @sample
+  mq_n = 0;
+  while (midirecv(m_ofs, m_1, m_2, m_3)) (
+    mq_n < 512 ? (
+      MQ[mq_n * 4] = m_ofs;
+      MQ[mq_n * 4 + 1] = m_1;
+      MQ[mq_n * 4 + 2] = m_2;
+      MQ[mq_n * 4 + 3] = m_3;
+      mq_n += 1;
+    );
+  );
+  mq_i = 0;
+  si = 0;
+
+@sample
+  while (mq_i < mq_n && MQ[mq_i * 4] <= si) (
+    midi_ev(MQ[mq_i * 4 + 1], MQ[mq_i * 4 + 2], MQ[mq_i * 4 + 3]);
+    mq_i += 1;
+  );
+  si += 1;
+
+  // the mallet noise (Park-Miller), low-passed by Tone
+  seed *= 16807; seed -= floor(seed / 2147483647) * 2147483647;
+  nz = seed / 1073741824 - 1;
+  nzf = (1 - nzk) * nz + nzk * nzf;
+
+  // the voices
+  sl = 0; sr = 0;
+  v = 0;
+  loop(NV,
+    v_note[v] >= 0 ? (
+      pc = v_pc[v] + v_dc[v];
+      pc -= floor(pc);
+      v_pc[v] = pc;
+      pm = v_pm[v] + v_dm[v];
+      pm -= floor(pm);
+      v_pm[v] = pm;
+      mo = v_ix[v] > 0 ? v_ix[v] * sin(tpi * pm) : 0;
+      amp = v_a1[v] + v_a2[v];
+      y = amp * sin(tpi * pc + mo);
+      v_ix[v] *= v_ixc[v];
+      v_ix[v] < 0.00001 ? v_ix[v] = 0;
+      v_a1[v] *= v_a1c[v];
+      v_a1[v] < 0.0000001 ? v_a1[v] = 0;
+      v_a2[v] *= v_a2c[v];
+      life = amp;
+      b = v * 3;
+      loop(3,
+        p_e[b] > 0 ? (
+          r = p_cf[b] * p_s1[b] - p_df[b] * p_s2[b];
+          p_s2[b] = p_s1[b];
+          p_s1[b] = r;
+          y += r;
+          life += p_e[b];
+          p_e[b] *= p_r[b];
+          p_e[b] < 0.000001 ? p_e[b] = 0;
+        );
+        b += 1;
+      );
+      y += v_nz[v] * nzf;
+      life += v_nz[v];
+      v_nz[v] *= nzc;
+      v_nz[v] < 0.0000001 ? v_nz[v] = 0;
+      e = v_env[v];
+      v_pend[v] >= 0 ? e = max(0, e - s_inc) : e = min(1, e + a_inc);
+      v_env[v] = e;
+      q = v_rel[v];
+      v_gate[v] <= 0 ? ( q *= r_c; v_rel[v] = q; );
+      y *= e;
+      y *= q;
+      sl += y * v_gl[v];
+      sr += y * v_gr[v];
+      v_pend[v] >= 0 ? (
+        e <= 0 ? v_start(v, v_pend[v], v_pvel[v]);
+      ) : (
+        q < 0.0001 || life < 0.00002 ? v_note[v] = -1;
+      );
+    );
+    v += 1;
+  );
+  l = sl * 0.25;
+  r = sr * 0.25;
+
+  // Drive: a soft clip
+  drv > 0 ? (
+    u = max(-3, min(3, l * drive));
+    t = u * u;
+    l = u * (27 + t);
+    l /= 27 + 9 * t;
+    l *= drv_n;
+    u = max(-3, min(3, r * drive));
+    t = u * u;
+    r = u * (27 + t);
+    r /= 27 + 9 * t;
+    r *= drv_n;
+  );
+
+  // tremolo: the level (Mono) or the side (Stereo, autopan)
+  tr_ph += tr_dt;
+  tr_ph -= floor(tr_ph);
+  tdep > 0 ? (
+    lf = 0.5 * sin(tpi * tr_ph);
+    tr_st ? (
+      l *= 1 - tdep * (0.5 + lf);
+      r *= 1 - tdep * (0.5 - lf);
+    ) : (
+      t = 1 - tdep * (0.5 + lf);
+      l *= t;
+      r *= t;
+    );
+  );
+
+  // chorus: two taps of one delay, swept in opposite directions
+  CB[cb_w] = 0.5 * (l + r);
+  ch_ph += ch_dt;
+  ch_ph -= floor(ch_ph);
+  chm > 0 ? (
+    lf = ch_d * sin(tpi * ch_ph);
+    rp = cb_w - (ch_c + lf);
+    rp < 0 ? rp += cb_size;
+    i = floor(rp); f = rp - i;
+    i2 = i + 1; i2 >= cb_size ? i2 = 0;
+    cl = CB[i] + (CB[i2] - CB[i]) * f;
+    rp = cb_w - (ch_c - lf);
+    rp < 0 ? rp += cb_size;
+    i = floor(rp); f = rp - i;
+    i2 = i + 1; i2 >= cb_size ? i2 = 0;
+    cr = CB[i] + (CB[i2] - CB[i]) * f;
+    l = l * ch_dry + cl * ch_wet;
+    r = r * ch_dry + cr * ch_wet;
+  );
+  cb_w += 1;
+  cb_w >= cb_size ? cb_w = 0;
+
+  spl0 = l * vol;
+  spl1 = r * vol;
+
+@gfx 560 416
+  ng_knobs_begin("KEYS", "INSTRUMENTS", 560, 156, 2, 0);
+
+  // display: the spectrum at the strike (the pitch, its FM harmonics and the model's partials,
+  // ratios 0.5 to 20), the decay at C4 over 3 s, the voices, the tremolo and the keys sounding
+  ng_plot(24, 66, 252, 70);
+  ng_grid(4, 3, 0);
+  ky_ix = m_mi * tone_k;
+  ky_a = 1;
+  ky_k = 1;
+  loop(8,
+    ky_db = 20 * log10(max(ky_a, 0.000001));
+    ky_db > -48 ? ky_bar(ky_k, ky_db, 0.55);
+    ky_a *= ky_ix / 2 / ky_k;
+    ky_k += 1;
+  );
+  ky_j = 0;
+  loop(3,
+    ky_r = mb[7 + ky_j * 3];
+    ky_l = mb[8 + ky_j * 3] * bell_k * tone_p;
+    ky_r > 0 && ky_l > 0.004 ? ky_bar(ky_r, 20 * log10(ky_l), 1);
+    ky_j += 1;
+  );
+  ng_font(1, 6.5, 1);
+  ng_col(NG_MUTED, 1);
+  ng_txt("STRIKE SPECTRUM", 30, 72, 0, 0.5);
+
+  ng_plot(284, 66, 252, 70);
+  ng_grid(6, 3, 0);
+  ng_col(NG_ACCENT, 1);
+  ky_t1 = m_tf * dsc;
+  ky_t2 = m_ts * dsc;
+  ky_i = 0;
+  loop(61,
+    ky_t = ky_i / 20;
+    ky_a = (1 - m_ks) * exp(-6.907755 * ky_t / ky_t1) + m_ks * exp(-6.907755 * ky_t / ky_t2);
+    ky_x = ng_lin_x(ky_t, 0, 3);
+    ky_y = ng_lin_y(20 * log10(max(ky_a, 0.000001)), -60, 0);
+    ky_i == 0 ? ng_line_start(ky_x, ky_y) : ng_line_to(ky_x, ky_y);
+    ky_i += 1;
+  );
+  ng_font(1, 6.5, 1);
+  ng_col(NG_MUTED, 1);
+  ng_txt("DECAY AT C4, 3 S", 530, 72, 2, 0.5);
+
+  // the voices and the tremolo
+  ky_n = 0;
+  ky_i = 0;
+  loop(NV, v_note[ky_i] >= 0 ? ky_n += 1; ky_i += 1;);
+  ng_font(1, 7, 1);
+  ng_col(NG_TEXT, 1);
+  sprintf(#ky_info, "VOICES %d / 16", ky_n);
+  ng_txt(#ky_info, 24, 146, 0, 1);
+  ng_col(NG_MUTED, 1);
+  slider8 > 0 ? sprintf(#ky_tr, "TREMOLO %.1f HZ %s %d%%", slider7, slider9 >= 0.5 ? "STEREO" : "MONO", slider8)
+              : strcpy(#ky_tr, "TREMOLO OFF");
+  ng_txt(#ky_tr, 536, 146, 2, 1);
+
+  // the keyboard from C2 to C7, the keys sounding lit
+  ky_ww = 512 / 36; ky_bw = ky_ww * 0.62; ky_bh = 44 * 0.6;
+  ky_i = 0; ky_nn = 36;
+  loop(61,
+    ky_pc = ky_nn - floor(ky_nn / 12) * 12;
+    ky_white(ky_pc) ? (
+      ky_x = 24 + ky_i * ky_ww;
+      ky_on = ky_snd(ky_nn);
+      ng_col(ky_on ? NG_ACCENT : 0x2d2b28, 1);
+      gfx_rect(X(ky_x + 0.5), Y(156), (ky_ww - 1) * ng_s, 44 * ng_s);
+      ky_pc == 0 ? (
+        ng_font(1, 6, 1);
+        ng_col(ky_on ? NG_BG : NG_MUTED, 1);
+        sprintf(#ky_c, "C%d", floor(ky_nn / 12) - 1);
+        ng_txt(#ky_c, ky_x + ky_ww / 2, 156 + 44 - 5, 1, 0);
+      );
+      ky_i += 1;
+    );
+    ky_nn += 1;
+  );
+  ky_i = 0; ky_nn = 36;
+  loop(61,
+    ky_pc = ky_nn - floor(ky_nn / 12) * 12;
+    ky_white(ky_pc) ? ky_i += 1 : (
+      ky_x = 24 + ky_i * ky_ww - ky_bw / 2;
+      ng_col(NG_CARD, 1);
+      gfx_rect(X(ky_x - 1), Y(156), (ky_bw + 2) * ng_s, (ky_bh + 1) * ng_s);
+      ng_col(ky_snd(ky_nn) ? NG_ACCENT : 0x131211, 1);
+      gfx_rect(X(ky_x), Y(156), ky_bw * ng_s, ky_bh * ng_s);
+    );
+    ky_nn += 1;
+  );
+
+  // controls
+  ng_row(6);
+  ng_select_ctl(1, "MODEL", "TINE EP|REED EP|FM EP|MUSIC BOX|CELESTA|GLOCKEN|VIBES|MARIMBA|KALIMBA", 0) ? update();
+  sprintf(#ky_v2, "%d%%", slider2);
+  ng_knob_ctl(2, "TONE", #ky_v2, 0, 100, 50, 1, 0) ? update();
+  sprintf(#ky_v3, "%d%%", slider3);
+  ng_knob_ctl(3, "BELL", #ky_v3, 0, 100, 50, 1, 0) ? update();
+  sprintf(#ky_v4, "%d%%", slider4);
+  ng_knob_ctl(4, "DECAY", #ky_v4, 10, 400, 100, 1, 0) ? update();
+  slider5 >= 1000 ? sprintf(#ky_v5, "%.2f s", slider5 / 1000) : sprintf(#ky_v5, "%d ms", slider5);
+  ng_knob_ctl_log(5, "RELEASE", #ky_v5, 10, 3000, 250, 1) ? update();
+  sprintf(#ky_v6, "%d%%", slider6);
+  ng_knob_ctl(6, "VELOCITY", #ky_v6, 0, 100, 60, 1, 0) ? update();
+
+  ng_row(6);
+  sprintf(#ky_v7, "%.1f Hz", slider7);
+  ng_knob_ctl(7, "TREM RATE", #ky_v7, 0.5, 12, 4.5, 0.1, 0) ? update();
+  sprintf(#ky_v8, "%d%%", slider8);
+  ng_knob_ctl(8, "TREM DEPTH", #ky_v8, 0, 100, 0, 1, 0) ? update();
+  ng_select_ctl(9, "TREMOLO", "MONO|STEREO", 0) ? update();
+  sprintf(#ky_v10, "%d%%", slider10);
+  ng_knob_ctl(10, "DRIVE", #ky_v10, 0, 100, 0, 1, 0) ? update();
+  sprintf(#ky_v11, "%d%%", slider11);
+  ng_knob_ctl(11, "CHORUS", #ky_v11, 0, 100, 0, 1, 0) ? update();
+  sprintf(#ky_v12, "%+.1f dB", slider12);
+  ng_knob_ctl(12, "VOLUME", #ky_v12, -24, 12, 0, 0.1, 0) ? update();
+
+  ng_end();
+
+  ng_presets(); // the preset list (generated by tools/build_presets.py)
