@@ -2614,14 +2614,14 @@
       "Pedal position from heel (0%) to toe (100%) in Manual mode, smoothed over 15 ms; automate it or map a MIDI CC to it.",
       "Manual: the Pedal slider moves the filter. Auto: an envelope follower moves it with your playing dynamics. LFO: a smooth sweep at Rate or in time with the project.",
       "Classic: the inductor wah's narrow peak from about 400 Hz to 2.2 kHz. Vocal: two formant peaks that move together like a vowel changing. Wide: a broader sweep from 200 Hz to 3.5 kHz.",
-      "Sharpness and height of the peak: more Resonance gives a narrower, louder, more vocal quack.",
+      "Sharpness of the peak: more Resonance gives a narrower, more vocal quack.",
       "Auto mode: how loud you must play to reach the toe, from 0 dBFS at 0% down to -42 dBFS at 100% (the pedal moves over the 30 dB below that).",
       "Auto mode: how fast the envelope follower opens the filter (1 to 100 ms).",
       "Auto mode: how fast the filter falls back after a note (20 to 1000 ms).",
       "LFO mode: sweeps per second when Tempo Sync is off (0.1 to 10 Hz).",
       "LFO mode: one full sweep per note at the project tempo (1/1 to 1/16), locked to the bar while the transport plays.",
       "Blend between the dry signal and the wah.",
-      "Level after the wah (-12 to +12 dB) to match the bypassed level."
+      "Level after the wah (-12 to +12 dB); the wah is already level-matched to its input, so 0 dB sits at the bypassed level."
     ],
     "uses": [
       "Classic wah on guitar, automated or played from a MIDI expression pedal",
@@ -2630,7 +2630,7 @@
       "Talking vowel sweeps with the Vocal model",
       "A fixed half-cocked pedal for a nasal lead tone"
     ],
-    "properties": "Signal chain: pedal position (Manual: smoothed slider; Auto: peak envelope follower with Attack/Release mapped over 30 dB below the Sensitivity level; LFO: raised cosine at Rate or one cycle per note, beat-locked while playing) → exponential frequency curve per model → TPT state-variable band-pass (Q 2-10 Classic, 3-10 Vocal with a second formant at 0.7 level, 1.2-6.2 Wide), normalised to 0 dB peak and lifted by +3.5 to +9.5 dB with Resonance → Dry/Wet Mix → Output. The filter is modulated every sample; zero latency.",
+    "properties": "Signal chain: pedal position (Manual: smoothed slider; Auto: peak envelope follower with Attack/Release mapped over 30 dB below the Sensitivity level; LFO: raised cosine at Rate or one cycle per note, beat-locked while playing) → exponential frequency curve per model → TPT state-variable band-pass (Q 2-10 Classic, 3-10 Vocal with a second formant at 0.7 level, 1.2-6.2 Wide), normalised to 0 dB peak and lifted by +3.5 to +9.5 dB with Resonance → level match to the input (powers smoothed over 1 s, gain -12 to +24 dB) → Dry/Wet Mix → Output. The filter is modulated every sample; zero latency.",
     "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-wah\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><path d=\"M 6,48 Q 22,46 26,30 Q 28,18 30,30 Q 34,46 58,48\" fill=\"none\" stroke=\"url(#icon-wah)\" stroke-width=\"2.5\" stroke-linecap=\"round\"/><path d=\"M 6,50 Q 30,48 36,32 Q 38,22 40,32 Q 44,48 58,50\" fill=\"none\" stroke=\"url(#icon-wah)\" stroke-width=\"1.5\" stroke-linecap=\"round\" opacity=\"0.45\"/><path d=\"M 22,12 L 42,12\" stroke=\"url(#icon-wah)\" stroke-width=\"2\" stroke-linecap=\"round\"/><path d=\"M 36,8 L 42,12 L 36,16\" fill=\"none\" stroke=\"url(#icon-wah)\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/></svg>"
   },
   "warped_delay": {

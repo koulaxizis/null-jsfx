@@ -2702,7 +2702,6 @@ static const PresetValue kP74S0[] = {
     { 2, 0.0f, "Model" },
     { 3, 60.0f, "Resonance" },
     { 4, 50.0f, "Sensitivity" },
-    { 10, 8.0f, "Output" },
 };
 static const PresetValue kP74S1[] = {
     { 0, 1.0f, "Model" },
@@ -2722,7 +2721,7 @@ static const PresetValue kP74S3[] = {
     { 5, 15.0f, "Mix" },
 };
 static const PresetSlot kP74Slots[] = {
-    { "wah", kP74S0, 5, 0, 0, 100.0f, true },
+    { "wah", kP74S0, 4, 0, 0, 100.0f, true },
     { "amp_simulator", kP74S1, 7, 0, 0, 100.0f, true },
     { "cabinet_simulator", kP74S2, 3, 0, 0, 100.0f, true },
     { "spring_reverb", kP74S3, 1, 0, 0, 100.0f, true },

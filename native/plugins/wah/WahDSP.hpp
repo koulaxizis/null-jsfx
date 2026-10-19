@@ -10,7 +10,8 @@
  * the Pedal slider smoothed over 15 ms (Manual), an envelope follower mapped over 30 dB below the
  * Sensitivity level (Auto), or a raised-cosine LFO at Rate or one cycle per note at the host
  * tempo, locked to the beat position while the transport plays (LFO, re-read every block as the
- * JSFX's @block does).
+ * JSFX's @block does). The wah is then level-matched to its input: both powers smoothed over 1 s,
+ * the gain held between -12 and +24 dB, so the pedal changes the tone and not the loudness.
  */
 
 #pragma once
@@ -87,6 +88,10 @@ public:
         fLfoP = 0.0;
         fAL = fAR = fBL = fBR = Svf();
         fPsC = 1.0 - std::exp(-1.0 / (0.015 * sr));
+        fLmC = 1.0 - std::exp(-1.0 / sr);
+        fLmI = fLmW = 0.0;
+        fLmD = std::pow(10.0, -20.0);
+        fLmE = std::pow(10.0, -10.0);
     }
 
     // @slider
@@ -170,13 +175,20 @@ public:
                 wl += fBL.run(xl, c1, c2, c3) * fK2 * 0.7;
                 wr += fBR.run(xr, c1, c2, c3) * fK2 * 0.7;
             }
-            outL[i] = static_cast<T>((xl * (1.0 - fMix) + wl * fPk * fMix) * fOutG);
-            outR[i] = static_cast<T>((xr * (1.0 - fMix) + wr * fPk * fMix) * fOutG);
+            // the level match (fLmD keeps the powers clear of denormals in silence)
+            wl *= fPk;
+            wr *= fPk;
+            fLmI += fLmC * (xl * xl + xr * xr + fLmD - fLmI);
+            fLmW += fLmC * (wl * wl + wr * wr + fLmD - fLmW);
+            const double lmG = std::min(16.0, std::max(0.25, std::sqrt((fLmI + fLmE) / (fLmW + fLmE))));
+            outL[i] = static_cast<T>((xl * (1.0 - fMix) + wl * lmG * fMix) * fOutG);
+            outR[i] = static_cast<T>((xr * (1.0 - fMix) + wr * lmG * fMix) * fOutG);
         }
     }
 
 private:
     double fSr = 48000.0, fPs = 0.5, fEnv = 0.0, fLfoP = 0.0, fLfoI = 0.0, fPsC = 0.0;
+    double fLmC = 0.0, fLmI = 0.0, fLmW = 0.0, fLmD = 1e-20, fLmE = 1e-10;
     bool fFirst = true;
     double fPedal = 0.5, fRes = 0.6, fTopDb = -21.0, fAttC = 0.0, fRelC = 0.0, fRate = 2.0, fBpc = 0.25;
     double fMix = 1.0, fOutG = 1.0, fQ1 = 6.8, fQ2 = 8.84, fK1 = 0.147, fK2 = 0.113, fPk = 2.4;
