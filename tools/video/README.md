@@ -9,8 +9,10 @@ videos the site's guides and the Hub's plugin page play. They are generated, not
 | `make_rack_video.py` | the Rack: its JACK standalone filmed under Xvfb while `jack_loop.c` plays the loop through it and a script picks presets, opens modules and turns a macro |
 | `make_hub_video.py` | the Hub: `hub_tour.cjs` films its page in Chromium with the test stand-in (`hub/tests/mock.cjs`), the loop as a bed |
 
-On main, `.github/workflows/media.yml` uploads the videos to the pre-release `media`; the site,
-the plugin pages and the Hub stream them from there (the site's own copy is the fallback).
+On main, `.github/workflows/media.yml` uploads the videos to the pre-release `media`; the site
+and the plugin pages stream them from there (the site's own copy is the fallback). The Hub keeps
+the site's copy: its CSP (`hub/app/tauri.conf.json`) allows media only from nulljsfx.tech, so the
+videos stay on Pages.
 
 Every script takes `--hq <dir>` to also write a 1920x1080 version at higher quality (for Ko-fi
 posts; not checked in). Run `tools/build_site.py` after adding a plugin's video. Audio is
