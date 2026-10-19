@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sampler by NULL JSFX: free instrument for REAPER, VST3 and CLAP</title>
+    <meta name="description" content="Sampler: Sample Player for WAV &amp; FLAC. Free and open source instrument for REAPER (JSFX) and any DAW (VST3, CLAP) on Windows, macOS and Linux.">
+    <link rel="canonical" href="https://nulljsfx.tech/plugins/sampler/">
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Sampler: Sample Player for WAV &amp; FLAC">
+    <meta property="og:description" content="Sampler: Sample Player for WAV &amp; FLAC. Free and open source instrument for REAPER (JSFX) and any DAW (VST3, CLAP) on Windows, macOS and Linux.">
+    <meta property="og:url" content="https://nulljsfx.tech/plugins/sampler/">
+    <meta property="og:image" content="https://nulljsfx.tech/assets/video/sampler.jpg">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Sampler: Sample Player for WAV &amp; FLAC">
+    <meta name="twitter:description" content="Sampler: Sample Player for WAV &amp; FLAC. Free and open source instrument for REAPER (JSFX) and any DAW (VST3, CLAP) on Windows, macOS and Linux.">
+    <meta name="twitter:image" content="https://nulljsfx.tech/assets/video/sampler.jpg">
+    <link rel="icon" type="image/svg+xml" href="/assets/img/favicon.svg">
+    <link rel="stylesheet" href="/assets/css/style.css">
+    <script type="application/ld+json">{"@context": "https://schema.org", "@type": "SoftwareApplication", "name": "NULL Sampler", "description": "Sample Player for WAV & FLAC", "url": "https://nulljsfx.tech/plugins/sampler/", "image": "https://nulljsfx.tech/assets/video/sampler.jpg", "applicationCategory": "MultimediaApplication", "applicationSubCategory": "Audio instrument", "operatingSystem": "Windows, macOS, Linux", "softwareVersion": "2.5", "license": "https://opensource.org/licenses/MIT", "offers": {"@type": "Offer", "price": "0", "priceCurrency": "EUR"}, "author": {"@type": "Person", "name": "Christos Koulaxizis"}, "isPartOf": {"@type": "SoftwareApplication", "name": "NULL JSFX", "url": "https://nulljsfx.tech/"}}</script>
+    <script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "NULL JSFX", "item": "https://nulljsfx.tech/"}, {"@type": "ListItem", "position": 2, "name": "Instruments", "item": "https://nulljsfx.tech/#instruments"}, {"@type": "ListItem", "position": 3, "name": "Sampler", "item": "https://nulljsfx.tech/plugins/sampler/"}]}</script>
+</head>
+<body class="plugin-page">
+    <main>
+        <nav class="page-crumbs" aria-label="Breadcrumb">
+            <a href="/" class="page-home"><img src="/assets/img/favicon.svg" alt="NULL JSFX" width="28" height="28"></a>
+            <a href="/">NULL JSFX</a> <span>/</span> <a href="/#instruments">Instruments</a> <span>/</span> <span>Sampler</span>
+        </nav>
+        <article class="page-plugin">
+            <header class="guide-header page-header">
+                <span class="guide-category">Instruments</span>
+                <h1>SAMPLER</h1>
+                <p>Sample Player for WAV &amp; FLAC</p>
+            </header>
+            <video class="guide-shot guide-video" poster="/assets/video/sampler.jpg" controls playsinline preload="none" width="1280" height="720" aria-label="Sampler presentation video"><source src="https://github.com/koulaxizis/null-jsfx/releases/download/media/sampler.mp4" type="video/mp4"><source src="/assets/video/sampler.mp4" type="video/mp4"></video>
+            <div class="page-actions">
+                <a class="featured-btn" href="/#download"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg><span>Download free</span></a>
+                <small>Part of NULL JSFX 2.5: 113 plugins, free and open source (MIT). Easiest with <a href="/#hub">NULL JSFX Hub</a>.</small>
+            </div>
+            <div class="guide-body">
+                <section class="guide-section">
+                    <h2>Controls</h2>
+                    <ul class="guide-sliders"><li><span class="slider-name">Sample File</span><span class="slider-desc">WAV file in REAPER/Data/null_jsfx_samples — The WAV or FLAC file to play, from REAPER&#x27;s Data/null_jsfx_samples folder; without a file a built-in soft electric-piano sound at C4 plays (the VST3/CLAP pick any file with their file browser).</span></li><li><span class="slider-name">Mode</span><span class="slider-desc">One-shot / Chromatic — One-shot plays every key at the sample&#x27;s own pitch to its end (note-offs and Loop are ignored); Chromatic transposes it from Root Key and plays while the key or the sustain pedal is held.</span></li><li><span class="slider-name">Root Key</span><span class="slider-desc">0 to 127 — The key at which the sample plays at its original pitch in Chromatic mode (0 to 127, C4 = 60).</span></li><li><span class="slider-name">Transpose</span><span class="slider-desc">−24 to +24 st — Transposes every note (-24 to +24 semitones).</span></li><li><span class="slider-name">Fine</span><span class="slider-desc">−100 to +100 ct — Fine tuning (-100 to +100 cents).</span></li><li><span class="slider-name">Attack</span><span class="slider-desc">1 to 5000 ms — Attack time of the level envelope (1 ms to 5 s).</span></li><li><span class="slider-name">Decay</span><span class="slider-desc">1 to 5000 ms — Decay time towards the Sustain level (1 ms to 5 s).</span></li><li><span class="slider-name">Sustain</span><span class="slider-desc">0 to 100% — Sustain level of the envelope (0 to 100%); at 0% a note ends after its decay.</span></li><li><span class="slider-name">Release</span><span class="slider-desc">1 to 5000 ms — Release time after the key (and the pedal) let go (1 ms to 5 s).</span></li><li><span class="slider-name">Cutoff</span><span class="slider-desc">20 to 20000 Hz — Cutoff of the 12 dB/octave low-pass filter (20 Hz to 20 kHz; at 20 kHz with no Filter Env the filter is off).</span></li><li><span class="slider-name">Resonance</span><span class="slider-desc">0 to 100% — Resonance of the filter at the cutoff (0 to 100%).</span></li><li><span class="slider-name">Filter Env</span><span class="slider-desc">−100 to +100% — How far the filter envelope moves the cutoff at the note&#x27;s start (-100 to +100%, up to 6 octaves up or down).</span></li><li><span class="slider-name">Filter Decay</span><span class="slider-desc">1 to 5000 ms — How long the filter envelope takes to come back (1 ms to 5 s).</span></li><li><span class="slider-name">Loop</span><span class="slider-desc">Off / On — Loop On repeats Loop Start..Loop End while a note sounds (Chromatic only); the step at the loop&#x27;s end is smoothed.</span></li><li><span class="slider-name">Loop Start</span><span class="slider-desc">0 to 100% — Where the loop starts, as a share of the sample (0 to 100%).</span></li><li><span class="slider-name">Loop End</span><span class="slider-desc">0 to 100% — Where the loop ends, as a share of the sample (0 to 100%).</span></li><li><span class="slider-name">Start</span><span class="slider-desc">0 to 100% — Skips into the sample: where every note starts (0 to 100%).</span></li><li><span class="slider-name">Reverse</span><span class="slider-desc">Off / On — Plays the sample backwards (Start and the loop then count from its end).</span></li><li><span class="slider-name">Velocity</span><span class="slider-desc">0 to 100% — How much the key velocity changes the level (0% plays every note the same).</span></li><li><span class="slider-name">Bend Range</span><span class="slider-desc">0 to 24 st — Pitch-bend range (0 to 24 semitones).</span></li><li><span class="slider-name">Volume</span><span class="slider-desc">−24 to +12 dB — The output level (-24 to +12 dB).</span></li></ul>
+                </section>
+                <section class="guide-section">
+                    <h2>Best uses</h2>
+                    <ul class="use-cases"><li>Play your own one-shots (hits, stabs, vocal chops) from a keyboard or pads</li><li>Turn a single recorded note into a playable chromatic instrument</li><li>Looped pads and drones from any sustained sample</li><li>Reverse swells and filtered textures from found sounds</li><li>Quick sketching with the built-in electric-piano sound</li></ul>
+                </section>
+                <section class="guide-section">
+                    <h2>Properties</h2>
+                    <p class="page-props">An instrument: MIDI in, stereo out, 16 voices (a 17th note takes the oldest released voice, else the oldest, with a 2 ms fade). Reads WAV and FLAC (mono, stereo; more channels play the first two) up to 4,194,304 sample values, at the file&#x27;s own rate with 4-point Hermite interpolation. Linear attack and exponential decay/release, a TPT state-variable low-pass per voice with its own decaying envelope, loop with a declick of the jump, 3 ms fade at the sample&#x27;s end, sustain pedal (CC 64), all notes off (CC 123), all sound off (CC 120), pitch bend. Without a file a deterministic built-in sound is generated, so it always makes sound.</p>
+                </section>
+                <section class="guide-section">
+                    <h2>Formats</h2>
+                    <ul class="guide-formats"><li><span class="format-tag">JSFX</span>JSFX for REAPER, with REAPER&#x27;s own sliders</li><li><span class="format-tag">GFX</span>JSFX GFX for REAPER, with its own interface</li><li><span class="format-tag">VST3</span>VST3 for any DAW</li><li><span class="format-tag">CLAP</span>CLAP for any DAW</li></ul>
+                </section>
+                <section class="guide-section">
+                    <h2>Factory presets</h2>
+                    <p class="page-list">One-Shot Hits · Plucked Keys · Staccato · Looped Sustain · Soft Pad · Reverse Swell · Dark Keys · Resonant Sweep · Lo-Fi Soft · Late Start · Octave Down · Octave Up · Wide Bend · Fixed Velocity</p>
+                </section>
+            </div>
+        </article>
+        <section class="page-related">
+            <h2 class="section-title">Goes well with</h2>
+            <div class="related-grid"><a class="related-card" href="/plugins/formant-filter/"><b>Formant Filter</b><small>Vowel Formant Filter</small></a><a class="related-card" href="/plugins/keys/"><b>Keys</b><small>Electric Piano, Music Box and Mallets</small></a><a class="related-card" href="/plugins/resonator/"><b>Resonator</b><small>Tuned String Resonator</small></a><a class="related-card" href="/plugins/spread/"><b>Spread</b><small>Mono-Safe Stereo Widener</small></a><a class="related-card" href="/plugins/wah/"><b>Wah</b><small>Wah Pedal, Auto-Wah &amp; LFO Wah</small></a><a class="related-card" href="/plugins/amp-simulator/"><b>Amp Simulator</b><small>Guitar &amp; Bass Amp, No Cabinet</small></a></div>
+            <p class="page-more"><a href="/#instruments">All 113 NULL JSFX plugins</a></p>
+        </section>
+    </main>
+    <footer class="site-footer">
+        <div class="footer-content">
+            Designed with &#9825; by <a href="https://koulaxizis.gr" target="_blank" rel="noopener">Christos Koulaxizis</a>.
+            <div class="footer-links">
+                <a href="https://ko-fi.com/koulaxizis" target="_blank" rel="noopener">Support on Ko-fi</a>
+                <span class="sep">&bull;</span>
+                <a href="https://github.com/koulaxizis/null-jsfx" target="_blank" rel="noopener">GitHub</a>
+                <span class="sep">&bull;</span>
+                <a href="/">nulljsfx.tech</a>
+            </div>
+        </div>
+    </footer>
+    <button id="theme-toggle" class="theme-toggle-floating" aria-label="Toggle color theme" title="Switch between light/dark theme">
+        <svg class="sun-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2 M12 21v2 M4.22 4.22l1.42 1.42 M18.36 18.36l1.42 1.42 M1 12h2 M21 12h2 M4.22 19.78l1.42-1.42 M18.36 5.64l1.42-1.42"/></svg>
+        <svg class="moon-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none;"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+    </button>
+    <script src="/assets/js/theme.js"></script>
+    <script src="/assets/js/demo.js"></script>
+</body>
+</html>

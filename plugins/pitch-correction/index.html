@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pitch Correction by NULL JSFX: free audio plugin for REAPER, VST3 and CLAP</title>
+    <meta name="description" content="Pitch Correction: Auto-Tune Style Vocal Pitch Correction. Free and open source audio plugin for REAPER (JSFX) and any DAW (VST3, CLAP) on Windows, macOS and Linux.">
+    <link rel="canonical" href="https://nulljsfx.tech/plugins/pitch-correction/">
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Pitch Correction: Auto-Tune Style Vocal Pitch Correction">
+    <meta property="og:description" content="Pitch Correction: Auto-Tune Style Vocal Pitch Correction. Free and open source audio plugin for REAPER (JSFX) and any DAW (VST3, CLAP) on Windows, macOS and Linux.">
+    <meta property="og:url" content="https://nulljsfx.tech/plugins/pitch-correction/">
+    <meta property="og:image" content="https://nulljsfx.tech/assets/video/pitch_correction.jpg">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Pitch Correction: Auto-Tune Style Vocal Pitch Correction">
+    <meta name="twitter:description" content="Pitch Correction: Auto-Tune Style Vocal Pitch Correction. Free and open source audio plugin for REAPER (JSFX) and any DAW (VST3, CLAP) on Windows, macOS and Linux.">
+    <meta name="twitter:image" content="https://nulljsfx.tech/assets/video/pitch_correction.jpg">
+    <link rel="icon" type="image/svg+xml" href="/assets/img/favicon.svg">
+    <link rel="stylesheet" href="/assets/css/style.css">
+    <script type="application/ld+json">{"@context": "https://schema.org", "@type": "SoftwareApplication", "name": "NULL Pitch Correction", "description": "Auto-Tune Style Vocal Pitch Correction", "url": "https://nulljsfx.tech/plugins/pitch-correction/", "image": "https://nulljsfx.tech/assets/video/pitch_correction.jpg", "applicationCategory": "MultimediaApplication", "applicationSubCategory": "Audio audio plugin", "operatingSystem": "Windows, macOS, Linux", "softwareVersion": "2.5", "license": "https://opensource.org/licenses/MIT", "offers": {"@type": "Offer", "price": "0", "priceCurrency": "EUR"}, "author": {"@type": "Person", "name": "Christos Koulaxizis"}, "isPartOf": {"@type": "SoftwareApplication", "name": "NULL JSFX", "url": "https://nulljsfx.tech/"}}</script>
+    <script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "NULL JSFX", "item": "https://nulljsfx.tech/"}, {"@type": "ListItem", "position": 2, "name": "Advanced", "item": "https://nulljsfx.tech/#effects"}, {"@type": "ListItem", "position": 3, "name": "Pitch Correction", "item": "https://nulljsfx.tech/plugins/pitch-correction/"}]}</script>
+</head>
+<body class="plugin-page">
+    <main>
+        <nav class="page-crumbs" aria-label="Breadcrumb">
+            <a href="/" class="page-home"><img src="/assets/img/favicon.svg" alt="NULL JSFX" width="28" height="28"></a>
+            <a href="/">NULL JSFX</a> <span>/</span> <a href="/">Effects</a> <span>/</span> <span>Pitch Correction</span>
+        </nav>
+        <article class="page-plugin">
+            <header class="guide-header page-header">
+                <span class="guide-category">Advanced</span>
+                <h1>PITCH CORRECTION</h1>
+                <p>Auto-Tune Style Vocal Pitch Correction</p>
+            </header>
+            <video class="guide-shot guide-video" poster="/assets/video/pitch_correction.jpg" controls playsinline preload="none" width="1280" height="720" aria-label="Pitch Correction presentation video"><source src="https://github.com/koulaxizis/null-jsfx/releases/download/media/pitch_correction.mp4" type="video/mp4"><source src="/assets/video/pitch_correction.mp4" type="video/mp4"></video>
+            <div class="page-actions">
+                <a class="featured-btn" href="/#download"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg><span>Download free</span></a>
+                <small>Part of NULL JSFX 2.5: 113 plugins, free and open source (MIT). Easiest with <a href="/#hub">NULL JSFX Hub</a>.</small>
+            </div>
+            <div class="guide-body">
+                <section class="guide-section">
+                    <h2>Listen</h2>
+                    <div class="demo demo-big" data-demo="pitch_correction"><button type="button" class="demo-play" aria-label="Listen: with and without the plugin" title="Listen"><svg class="i-play" width="12" height="12" viewBox="0 0 24 24" aria-hidden="true"><polygon points="6 4 20 12 6 20" fill="currentColor"/></svg><svg class="i-stop" width="12" height="12" viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="6" width="12" height="12" fill="currentColor"/></svg></button><button type="button" class="demo-ab" title="Switch between the plugin and the dry sound"><span class="on">ON</span><span class="off">BYPASS</span></button><span class="demo-note">The same music with the <b>Natural Vocal Polish</b> preset and without the plugin. Switch while it plays.</span></div>
+                </section>
+                <section class="guide-section">
+                    <h2>Controls</h2>
+                    <ul class="guide-sliders"><li><span class="slider-name">Key</span><span class="slider-desc">C / C# / D / D# / E / F / F# / G / G# / A / A# / B — Key (root note) of the scale the voice is tuned to</span></li><li><span class="slider-name">Scale</span><span class="slider-desc">Chromatic / Major / Minor / Harmonic Minor / Pentatonic Major / Pentatonic Minor / Blues / Dorian / Mixolydian — Scale of allowed notes: Chromatic, Major, Minor, Harmonic Minor, Pentatonic Major/Minor, Blues, Dorian or Mixolydian</span></li><li><span class="slider-name">Retune Speed</span><span class="slider-desc">0 to 400 ms — How fast the pitch glides to the target note: 0 ms = hard, stepped “robot” tuning; higher = gentler, more natural</span></li><li><span class="slider-name">Humanize</span><span class="slider-desc">0 to 100% — Share of the singer&#x27;s own fast pitch movement (vibrato) kept around the corrected note</span></li><li><span class="slider-name">Transpose</span><span class="slider-desc">−12 to +12 semitones — Extra pitch shift in semitones, applied after the correction (formants stay in place)</span></li><li><span class="slider-name">Sensitivity</span><span class="slider-desc">0 to 100% — Pitch detection threshold: higher counts more of the signal as pitched (breathy voices), lower ignores noisy parts</span></li><li><span class="slider-name">Mix</span><span class="slider-desc">0 to 100% — Dry/wet blend (the dry signal is delayed to stay in time)</span></li><li><span class="slider-name">Target</span><span class="slider-desc">Scale / MIDI — What the voice is tuned to: the nearest note of Key and Scale, or the latest held MIDI note (falling back to the scale when no note is held)</span></li><li><span class="slider-name">Vibrato Rate</span><span class="slider-desc">0 to 10 Hz — Speed of the added vibrato</span></li><li><span class="slider-name">Vibrato Depth</span><span class="slider-desc">0 to 100 cents — Width of the added vibrato, which fades in on every new note (0 = off)</span></li></ul>
+                </section>
+                <section class="guide-section">
+                    <h2>Best uses</h2>
+                    <ul class="use-cases"><li>Transparent tuning of lead and backing vocals</li><li>Hard-tune “T-Pain” robot vocal effect (Retune 0 ms)</li><li>Forcing a vocal or monophonic instrument onto a key and scale</li><li>Formant-preserving transposition of a sung line</li></ul>
+                </section>
+                <section class="guide-section">
+                    <h2>Properties</h2>
+                    <p class="page-props">Signal chain: Input → mono 50 Hz high-pass + 1.2 kHz 4th-order low-pass, decimated to ~11 kHz → YIN pitch tracker (70 Hz to 1 kHz, new estimate every ~6 ms, Sensitivity = threshold) → nearest Key/Scale note with hysteresis → Retune glide + Humanize (vibrato kept) → TD-PSOLA shifter (peak-aligned pitch marks, two-period Hann grains, formants preserved; stereo kept) → Dry/Wet Mix → Output. Monophonic sources only; unvoiced sounds pass with the transpose only; latency about 39 ms, reported to the host (PDC).</p>
+                </section>
+                <section class="guide-section">
+                    <h2>Formats</h2>
+                    <ul class="guide-formats"><li><span class="format-tag">JSFX</span>JSFX for REAPER, with REAPER&#x27;s own sliders</li><li><span class="format-tag">GFX</span>JSFX GFX for REAPER, with its own interface</li><li><span class="format-tag">VST3</span>VST3 for any DAW</li><li><span class="format-tag">CLAP</span>CLAP for any DAW</li></ul>
+                </section>
+                <section class="guide-section">
+                    <h2>Factory presets</h2>
+                    <p class="page-list">Natural Vocal Polish · Slow Ballad Touch · Pop Vocal C Major · Hard Tune Effect · Hard Tune A Minor · Pentatonic Snap A · Blues Lead E · Octave Up Layer · Robot Retune · Natural Vibrato · MIDI Hard Tune · MIDI Melody Guide</p>
+                </section>
+                <section class="guide-section">
+                    <h2>In the FX chains and Rack presets</h2>
+                    <p class="page-list">Harmony Stack · Robot Radio Voice</p>
+                    <p class="page-more"><a href="/#fx-chains">See every FX chain</a></p>
+                </section>
+                <section class="guide-section">
+                    <h2>Try it</h2>
+                    <a class="try-studio guide-studio" href="https://useoros.online/studio/" target="_blank" rel="noopener"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8" fill="currentColor"/></svg><span class="try-studio-text"><b>Try it on orOS Studio</b><small>Add it to a track in your browser, with its own interface. Nothing to install.</small></span></a>
+                </section>
+            </div>
+        </article>
+        <section class="page-related">
+            <h2 class="section-title">Goes well with</h2>
+            <div class="related-grid"><a class="related-card" href="/plugins/vocoder/"><b>Vocoder</b><small>16-Band Channel Vocoder</small></a><a class="related-card" href="/plugins/formant-filter/"><b>Formant Filter</b><small>Vowel Formant Filter</small></a><a class="related-card" href="/plugins/half-speed/"><b>Half Speed</b><small>Real-Time Halftime &amp; Slow-Down</small></a><a class="related-card" href="/plugins/harmonizer/"><b>Harmonizer</b><small>Two-Voice Pitch Harmonizer</small></a><a class="related-card" href="/plugins/resonator/"><b>Resonator</b><small>Tuned String Resonator</small></a><a class="related-card" href="/plugins/robotizer/"><b>Robotizer</b><small>FFT Robot Voice</small></a></div>
+            <p class="page-more"><a href="/">All 113 NULL JSFX plugins</a></p>
+        </section>
+    </main>
+    <footer class="site-footer">
+        <div class="footer-content">
+            Designed with &#9825; by <a href="https://koulaxizis.gr" target="_blank" rel="noopener">Christos Koulaxizis</a>.
+            <div class="footer-links">
+                <a href="https://ko-fi.com/koulaxizis" target="_blank" rel="noopener">Support on Ko-fi</a>
+                <span class="sep">&bull;</span>
+                <a href="https://github.com/koulaxizis/null-jsfx" target="_blank" rel="noopener">GitHub</a>
+                <span class="sep">&bull;</span>
+                <a href="/">nulljsfx.tech</a>
+            </div>
+        </div>
+    </footer>
+    <button id="theme-toggle" class="theme-toggle-floating" aria-label="Toggle color theme" title="Switch between light/dark theme">
+        <svg class="sun-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2 M12 21v2 M4.22 4.22l1.42 1.42 M18.36 18.36l1.42 1.42 M1 12h2 M21 12h2 M4.22 19.78l1.42-1.42 M18.36 5.64l1.42-1.42"/></svg>
+        <svg class="moon-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none;"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+    </button>
+    <script src="/assets/js/theme.js"></script>
+    <script src="/assets/js/demo.js"></script>
+</body>
+</html>

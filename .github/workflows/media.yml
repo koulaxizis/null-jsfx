@@ -1,0 +1,47 @@
+name: Media
+
+# Keeps the presentation videos (assets/video/*.mp4, made by tools/video) on a release called
+# "media", so the site, the plugin pages and the Hub stream them from GitHub's release storage
+# instead of GitHub Pages. It is a pre-release, so it never becomes the latest release; the
+# download counter (tools/count_downloads.py) and the Hub's rollback list only count version tags.
+# A push to main uploads the videos it changed; a manual run uploads all of them.
+
+on:
+  push:
+    branches: [main]
+    paths: ["assets/video/**", ".github/workflows/media.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: media
+  cancel-in-progress: false
+
+jobs:
+  upload:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+      - name: Upload the videos to the media release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          if ! gh release view media >/dev/null 2>&1; then
+            gh release create media --prerelease --title "Media (videos for the site)" \
+              --notes "The presentation videos the site, the plugin pages and NULL JSFX Hub play. Not a release of the plugins: get those from the latest release."
+            files=(assets/video/*.mp4)
+          elif [ "${{ github.event_name }}" = workflow_dispatch ] || ! git rev-parse -q --verify HEAD^ >/dev/null; then
+            files=(assets/video/*.mp4)
+          else
+            mapfile -t files < <(git diff --name-only --diff-filter=AM HEAD^ HEAD -- 'assets/video/*.mp4')
+          fi
+          echo "uploading ${#files[@]} videos"
+          # in batches, so one slow upload does not hold the whole list
+          for ((i = 0; i < ${#files[@]}; i += 20)); do
+            gh release upload media "${files[@]:i:20}" --clobber
+          done

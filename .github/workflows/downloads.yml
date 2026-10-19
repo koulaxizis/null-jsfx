@@ -35,7 +35,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          result="$(python3 tools/count_downloads.py downloads.json)"
+          result="$(python3 tools/count_downloads.py downloads.json --tags '^[0-9]')"
           echo "downloads.json: $result"
           if [ "$result" != changed ]; then
             exit 0

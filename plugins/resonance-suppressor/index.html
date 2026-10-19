@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resonance Suppressor by NULL JSFX: free audio plugin for REAPER, VST3 and CLAP</title>
+    <meta name="description" content="Resonance Suppressor: Dynamic Resonance Suppression. Free and open source audio plugin for REAPER (JSFX) and any DAW (VST3, CLAP) on Windows, macOS and Linux.">
+    <link rel="canonical" href="https://nulljsfx.tech/plugins/resonance-suppressor/">
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Resonance Suppressor: Dynamic Resonance Suppression">
+    <meta property="og:description" content="Resonance Suppressor: Dynamic Resonance Suppression. Free and open source audio plugin for REAPER (JSFX) and any DAW (VST3, CLAP) on Windows, macOS and Linux.">
+    <meta property="og:url" content="https://nulljsfx.tech/plugins/resonance-suppressor/">
+    <meta property="og:image" content="https://nulljsfx.tech/assets/video/resonance_suppressor.jpg">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Resonance Suppressor: Dynamic Resonance Suppression">
+    <meta name="twitter:description" content="Resonance Suppressor: Dynamic Resonance Suppression. Free and open source audio plugin for REAPER (JSFX) and any DAW (VST3, CLAP) on Windows, macOS and Linux.">
+    <meta name="twitter:image" content="https://nulljsfx.tech/assets/video/resonance_suppressor.jpg">
+    <link rel="icon" type="image/svg+xml" href="/assets/img/favicon.svg">
+    <link rel="stylesheet" href="/assets/css/style.css">
+    <script type="application/ld+json">{"@context": "https://schema.org", "@type": "SoftwareApplication", "name": "NULL Resonance Suppressor", "description": "Dynamic Resonance Suppression", "url": "https://nulljsfx.tech/plugins/resonance-suppressor/", "image": "https://nulljsfx.tech/assets/video/resonance_suppressor.jpg", "applicationCategory": "MultimediaApplication", "applicationSubCategory": "Audio audio plugin", "operatingSystem": "Windows, macOS, Linux", "softwareVersion": "2.5", "license": "https://opensource.org/licenses/MIT", "offers": {"@type": "Offer", "price": "0", "priceCurrency": "EUR"}, "author": {"@type": "Person", "name": "Christos Koulaxizis"}, "isPartOf": {"@type": "SoftwareApplication", "name": "NULL JSFX", "url": "https://nulljsfx.tech/"}}</script>
+    <script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "NULL JSFX", "item": "https://nulljsfx.tech/"}, {"@type": "ListItem", "position": 2, "name": "Advanced", "item": "https://nulljsfx.tech/#effects"}, {"@type": "ListItem", "position": 3, "name": "Resonance Suppressor", "item": "https://nulljsfx.tech/plugins/resonance-suppressor/"}]}</script>
+</head>
+<body class="plugin-page">
+    <main>
+        <nav class="page-crumbs" aria-label="Breadcrumb">
+            <a href="/" class="page-home"><img src="/assets/img/favicon.svg" alt="NULL JSFX" width="28" height="28"></a>
+            <a href="/">NULL JSFX</a> <span>/</span> <a href="/">Effects</a> <span>/</span> <span>Resonance Suppressor</span>
+        </nav>
+        <article class="page-plugin">
+            <header class="guide-header page-header">
+                <span class="guide-category">Advanced</span>
+                <h1>RESONANCE SUPPRESSOR</h1>
+                <p>Dynamic Resonance Suppression</p>
+            </header>
+            <video class="guide-shot guide-video" poster="/assets/video/resonance_suppressor.jpg" controls playsinline preload="none" width="1280" height="720" aria-label="Resonance Suppressor presentation video"><source src="https://github.com/koulaxizis/null-jsfx/releases/download/media/resonance_suppressor.mp4" type="video/mp4"><source src="/assets/video/resonance_suppressor.mp4" type="video/mp4"></video>
+            <div class="page-actions">
+                <a class="featured-btn" href="/#download"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg><span>Download free</span></a>
+                <small>Part of NULL JSFX 2.5: 113 plugins, free and open source (MIT). Easiest with <a href="/#hub">NULL JSFX Hub</a>.</small>
+            </div>
+            <div class="guide-body">
+                <section class="guide-section">
+                    <h2>Listen</h2>
+                    <div class="demo demo-big" data-demo="resonance_suppressor"><button type="button" class="demo-play" aria-label="Listen: with and without the plugin" title="Listen"><svg class="i-play" width="12" height="12" viewBox="0 0 24 24" aria-hidden="true"><polygon points="6 4 20 12 6 20" fill="currentColor"/></svg><svg class="i-stop" width="12" height="12" viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="6" width="12" height="12" fill="currentColor"/></svg></button><button type="button" class="demo-ab" title="Switch between the plugin and the dry sound"><span class="on">ON</span><span class="off">BYPASS</span></button><span class="demo-note">The same music with the <b>Vocal Harshness</b> preset and without the plugin. Switch while it plays.</span></div>
+                </section>
+                <section class="guide-section">
+                    <h2>Controls</h2>
+                    <ul class="guide-sliders"><li><span class="slider-name">Depth</span><span class="slider-desc">0 to 24 dB — Maximum reduction per frequency.</span></li><li><span class="slider-name">Sharpness</span><span class="slider-desc">0 to 100% — How narrow the peaks it targets are: the spectral envelope is averaged over 2 octaves at 0% down to 1/8 octave at 100%.</span></li><li><span class="slider-name">Selectivity</span><span class="slider-desc">0 to 100% — How far a frequency must rise above the envelope before it is reduced (2 to 12 dB).</span></li><li><span class="slider-name">Attack</span><span class="slider-desc">1 to 200 ms — How fast the reduction grabs, per FFT frame.</span></li><li><span class="slider-name">Release</span><span class="slider-desc">10 to 1000 ms — How fast the reduction lets go.</span></li><li><span class="slider-name">Low Freq</span><span class="slider-desc">20 to 2000 Hz — Lowest frequency processed (fades out over half an octave below).</span></li><li><span class="slider-name">High Freq</span><span class="slider-desc">1000 to 20000 Hz — Highest frequency processed (fades out over half an octave above).</span></li><li><span class="slider-name">Mode</span><span class="slider-desc">Soft / Hard — Soft: 2:1 with a 6 dB knee, easing into Depth. Hard: removes all of the excess, up to Depth.</span></li><li><span class="slider-name">Delta</span><span class="slider-desc">Off / On — Plays only what is removed, to hear what the plugin takes out.</span></li><li><span class="slider-name">Mix</span><span class="slider-desc">0 to 100% — Blend between the (latency-aligned) dry and processed signal.</span></li></ul>
+                </section>
+                <section class="guide-section">
+                    <h2>Best uses</h2>
+                    <ul class="use-cases"><li>Taming harsh resonances in vocals, guitars and cymbals</li><li>Smoothing ringing room modes and boxy recordings</li><li>Gentle de-harshing on buses and masters</li><li>Finding problem frequencies with Delta</li></ul>
+                </section>
+                <section class="guide-section">
+                    <h2>Properties</h2>
+                    <p class="page-props">STFT with 2048-point FFT, 75% overlap and sqrt-Hann windows; both channels in one complex FFT, linked detection on their mean power. Each bin&#x27;s level is compared with a log-frequency moving average of the spectrum; the excess over the Selectivity threshold sets the reduction (Soft or Hard), smoothed per frame (Attack/Release) and across neighbouring bins, limited to Low–High Freq. Perfect reconstruction when nothing is reduced. Latency: 2047 samples (reported to the host).</p>
+                </section>
+                <section class="guide-section">
+                    <h2>Formats</h2>
+                    <ul class="guide-formats"><li><span class="format-tag">JSFX</span>JSFX for REAPER, with REAPER&#x27;s own sliders</li><li><span class="format-tag">GFX</span>JSFX GFX for REAPER, with its own interface</li><li><span class="format-tag">VST3</span>VST3 for any DAW</li><li><span class="format-tag">CLAP</span>CLAP for any DAW</li></ul>
+                </section>
+                <section class="guide-section">
+                    <h2>Factory presets</h2>
+                    <p class="page-list">Vocal Harshness · Sibilance Control · Mix Bus Smoothing · Guitar Fizz Tamer · Boxy Low Mids · Piano Ring Control · Aggressive Hard Clean · Delta Audition</p>
+                </section>
+                <section class="guide-section">
+                    <h2>In the FX chains and Rack presets</h2>
+                    <p class="page-list">Harshness Tamer · Vocal Leveler</p>
+                    <p class="page-more"><a href="/#fx-chains">See every FX chain</a></p>
+                </section>
+                <section class="guide-section">
+                    <h2>Try it</h2>
+                    <a class="try-studio guide-studio" href="https://useoros.online/studio/" target="_blank" rel="noopener"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8" fill="currentColor"/></svg><span class="try-studio-text"><b>Try it on orOS Studio</b><small>Add it to a track in your browser, with its own interface. Nothing to install.</small></span></a>
+                </section>
+            </div>
+        </article>
+        <section class="page-related">
+            <h2 class="section-title">Goes well with</h2>
+            <div class="related-grid"><a class="related-card" href="/plugins/formant-filter/"><b>Formant Filter</b><small>Vowel Formant Filter</small></a><a class="related-card" href="/plugins/granular-delay/"><b>Granular Delay</b><small>Grain Cloud Delay</small></a><a class="related-card" href="/plugins/noise-reduction/"><b>Noise Reduction</b><small>Spectral Noise Reducer</small></a><a class="related-card" href="/plugins/resonator/"><b>Resonator</b><small>Tuned String Resonator</small></a><a class="related-card" href="/plugins/reverser/"><b>Reverser</b><small>Real-Time Reverse Buffer</small></a><a class="related-card" href="/plugins/spring-reverb/"><b>Spring Reverb</b><small>Vintage Spring Tank</small></a></div>
+            <p class="page-more"><a href="/">All 113 NULL JSFX plugins</a></p>
+        </section>
+    </main>
+    <footer class="site-footer">
+        <div class="footer-content">
+            Designed with &#9825; by <a href="https://koulaxizis.gr" target="_blank" rel="noopener">Christos Koulaxizis</a>.
+            <div class="footer-links">
+                <a href="https://ko-fi.com/koulaxizis" target="_blank" rel="noopener">Support on Ko-fi</a>
+                <span class="sep">&bull;</span>
+                <a href="https://github.com/koulaxizis/null-jsfx" target="_blank" rel="noopener">GitHub</a>
+                <span class="sep">&bull;</span>
+                <a href="/">nulljsfx.tech</a>
+            </div>
+        </div>
+    </footer>
+    <button id="theme-toggle" class="theme-toggle-floating" aria-label="Toggle color theme" title="Switch between light/dark theme">
+        <svg class="sun-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2 M12 21v2 M4.22 4.22l1.42 1.42 M18.36 18.36l1.42 1.42 M1 12h2 M21 12h2 M4.22 19.78l1.42-1.42 M18.36 5.64l1.42-1.42"/></svg>
+        <svg class="moon-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none;"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+    </button>
+    <script src="/assets/js/theme.js"></script>
+    <script src="/assets/js/demo.js"></script>
+</body>
+</html>

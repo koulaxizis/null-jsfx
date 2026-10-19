@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Draw EQ by NULL JSFX: free audio plugin for REAPER, VST3 and CLAP</title>
+    <meta name="description" content="Draw EQ: EQ You Draw with Ten Points. Free and open source audio plugin for REAPER (JSFX) and any DAW (VST3, CLAP) on Windows, macOS and Linux.">
+    <link rel="canonical" href="https://nulljsfx.tech/plugins/draw-eq/">
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Draw EQ: EQ You Draw with Ten Points">
+    <meta property="og:description" content="Draw EQ: EQ You Draw with Ten Points. Free and open source audio plugin for REAPER (JSFX) and any DAW (VST3, CLAP) on Windows, macOS and Linux.">
+    <meta property="og:url" content="https://nulljsfx.tech/plugins/draw-eq/">
+    <meta property="og:image" content="https://nulljsfx.tech/assets/video/draw_eq.jpg">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Draw EQ: EQ You Draw with Ten Points">
+    <meta name="twitter:description" content="Draw EQ: EQ You Draw with Ten Points. Free and open source audio plugin for REAPER (JSFX) and any DAW (VST3, CLAP) on Windows, macOS and Linux.">
+    <meta name="twitter:image" content="https://nulljsfx.tech/assets/video/draw_eq.jpg">
+    <link rel="icon" type="image/svg+xml" href="/assets/img/favicon.svg">
+    <link rel="stylesheet" href="/assets/css/style.css">
+    <script type="application/ld+json">{"@context": "https://schema.org", "@type": "SoftwareApplication", "name": "NULL Draw EQ", "description": "EQ You Draw with Ten Points", "url": "https://nulljsfx.tech/plugins/draw-eq/", "image": "https://nulljsfx.tech/assets/video/draw_eq.jpg", "applicationCategory": "MultimediaApplication", "applicationSubCategory": "Audio audio plugin", "operatingSystem": "Windows, macOS, Linux", "softwareVersion": "2.5", "license": "https://opensource.org/licenses/MIT", "offers": {"@type": "Offer", "price": "0", "priceCurrency": "EUR"}, "author": {"@type": "Person", "name": "Christos Koulaxizis"}, "isPartOf": {"@type": "SoftwareApplication", "name": "NULL JSFX", "url": "https://nulljsfx.tech/"}}</script>
+    <script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "NULL JSFX", "item": "https://nulljsfx.tech/"}, {"@type": "ListItem", "position": 2, "name": "Essentials", "item": "https://nulljsfx.tech/#effects"}, {"@type": "ListItem", "position": 3, "name": "Draw EQ", "item": "https://nulljsfx.tech/plugins/draw-eq/"}]}</script>
+</head>
+<body class="plugin-page">
+    <main>
+        <nav class="page-crumbs" aria-label="Breadcrumb">
+            <a href="/" class="page-home"><img src="/assets/img/favicon.svg" alt="NULL JSFX" width="28" height="28"></a>
+            <a href="/">NULL JSFX</a> <span>/</span> <a href="/">Effects</a> <span>/</span> <span>Draw EQ</span>
+        </nav>
+        <article class="page-plugin">
+            <header class="guide-header page-header">
+                <span class="guide-category">Essentials</span>
+                <h1>DRAW EQ</h1>
+                <p>EQ You Draw with Ten Points</p>
+            </header>
+            <video class="guide-shot guide-video" poster="/assets/video/draw_eq.jpg" controls playsinline preload="none" width="1280" height="720" aria-label="Draw EQ presentation video"><source src="https://github.com/koulaxizis/null-jsfx/releases/download/media/draw_eq.mp4" type="video/mp4"><source src="/assets/video/draw_eq.mp4" type="video/mp4"></video>
+            <div class="page-actions">
+                <a class="featured-btn" href="/#download"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg><span>Download free</span></a>
+                <small>Part of NULL JSFX 2.5: 113 plugins, free and open source (MIT). Easiest with <a href="/#hub">NULL JSFX Hub</a>.</small>
+            </div>
+            <div class="guide-body">
+                <section class="guide-section">
+                    <h2>Listen</h2>
+                    <div class="demo demo-big" data-demo="draw_eq"><button type="button" class="demo-play" aria-label="Listen: with and without the plugin" title="Listen"><svg class="i-play" width="12" height="12" viewBox="0 0 24 24" aria-hidden="true"><polygon points="6 4 20 12 6 20" fill="currentColor"/></svg><svg class="i-stop" width="12" height="12" viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="6" width="12" height="12" fill="currentColor"/></svg></button><button type="button" class="demo-ab" title="Switch between the plugin and the dry sound"><span class="on">ON</span><span class="off">BYPASS</span></button><span class="demo-note">The same music with the <b>Smile</b> preset and without the plugin. Switch while it plays.</span></div>
+                </section>
+                <section class="guide-section">
+                    <h2>Controls</h2>
+                    <ul class="guide-sliders"><li><span class="slider-name">31 Hz</span><span class="slider-desc">−18 to +18 dB — Gain at 31 Hz (-18 to +18 dB): the sub and deep low end; drag the first point in the curve.</span></li><li><span class="slider-name">63 Hz</span><span class="slider-desc">−18 to +18 dB — Gain at 63 Hz (-18 to +18 dB): kick and bass weight.</span></li><li><span class="slider-name">125 Hz</span><span class="slider-desc">−18 to +18 dB — Gain at 125 Hz (-18 to +18 dB): bass body and warmth.</span></li><li><span class="slider-name">250 Hz</span><span class="slider-desc">−18 to +18 dB — Gain at 250 Hz (-18 to +18 dB): low mids, where mud and boxiness build up.</span></li><li><span class="slider-name">500 Hz</span><span class="slider-desc">−18 to +18 dB — Gain at 500 Hz (-18 to +18 dB): body of voices, guitars and snares.</span></li><li><span class="slider-name">1 kHz</span><span class="slider-desc">−18 to +18 dB — Gain at 1 kHz (-18 to +18 dB): the centre of the midrange, nasal or honky when boosted.</span></li><li><span class="slider-name">2 kHz</span><span class="slider-desc">−18 to +18 dB — Gain at 2 kHz (-18 to +18 dB): presence and attack.</span></li><li><span class="slider-name">4 kHz</span><span class="slider-desc">−18 to +18 dB — Gain at 4 kHz (-18 to +18 dB): clarity and edge, harsh if pushed.</span></li><li><span class="slider-name">8 kHz</span><span class="slider-desc">−18 to +18 dB — Gain at 8 kHz (-18 to +18 dB): brilliance and sibilance.</span></li><li><span class="slider-name">16 kHz</span><span class="slider-desc">−18 to +18 dB — Gain at 16 kHz (-18 to +18 dB): air and sparkle (left out at sample rates below 36 kHz).</span></li><li><span class="slider-name">Smoothness</span><span class="slider-desc">0 to 100% — How smoothly the curve flows between the points (0 to 100%): low values give each point its own defined bump, high values blend them into broad, gentle slopes.</span></li><li><span class="slider-name">Output</span><span class="slider-desc">−18 to +18 dB — Level after the EQ (-18 to +18 dB), to match loudness after big boosts or cuts.</span></li><li><span class="slider-name">Mix</span><span class="slider-desc">0 to 100% — Blend of equalized and dry signal (0 to 100%), for subtle or parallel tone shaping.</span></li></ul>
+                </section>
+                <section class="guide-section">
+                    <h2>Best uses</h2>
+                    <ul class="use-cases"><li>Sketch a tone curve by dragging across the display instead of setting bands one by one</li><li>Gentle tilts and smiles on a mix bus or master</li><li>Carve mud and add air on vocals, guitars and pads</li><li>Telephone and old radio voices with steep cuts at both ends</li><li>Match a reference by drawing against the live spectrum behind the curve</li></ul>
+                </section>
+                <section class="guide-section">
+                    <h2>Properties</h2>
+                    <p class="page-props">Ten points at fixed octave-spaced frequencies (31.25 Hz to 16 kHz) set the gain the curve passes through. Each point drives an RBJ peaking filter; the ten gains are solved (Gaussian elimination on the filters&#x27; interaction, then two corrections with the true response) so the cascade passes through every point to within a fraction of a dB, and Smoothness sets the filters&#x27; Q from 1.5 to 0.6. Minimum-phase IIR, zero latency; with every point at 0 dB the filters are bypassed and the plugin is transparent. Mix with the dry signal, then Output. The GFX and VST3/CLAP interfaces draw the response over a live output spectrum: drag across the display to draw, double-click a point to reset it.</p>
+                </section>
+                <section class="guide-section">
+                    <h2>Formats</h2>
+                    <ul class="guide-formats"><li><span class="format-tag">JSFX</span>JSFX for REAPER, with REAPER&#x27;s own sliders</li><li><span class="format-tag">GFX</span>JSFX GFX for REAPER, with its own interface</li><li><span class="format-tag">VST3</span>VST3 for any DAW</li><li><span class="format-tag">CLAP</span>CLAP for any DAW</li></ul>
+                </section>
+                <section class="guide-section">
+                    <h2>Factory presets</h2>
+                    <p class="page-list">Smile · Warm Tilt · Bright Tilt · Air Lift · Low End Weight · Mud Cut · Vocal Presence · Telephone · Old Radio · Scooped Guitar · Kick Shape · Master Polish · Parallel Color · Dark Room</p>
+                </section>
+                <section class="guide-section">
+                    <h2>Try it</h2>
+                    <a class="try-studio guide-studio" href="https://useoros.online/studio/" target="_blank" rel="noopener"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8" fill="currentColor"/></svg><span class="try-studio-text"><b>Try it on orOS Studio</b><small>Add it to a track in your browser, with its own interface. Nothing to install.</small></span></a>
+                </section>
+            </div>
+        </article>
+        <section class="page-related">
+            <h2 class="section-title">Goes well with</h2>
+            <div class="related-grid"><a class="related-card" href="/plugins/clipper/"><b>Clipper</b><small>Oversampled Hard &amp; Soft Clipper</small></a><a class="related-card" href="/plugins/multiband-compressor/"><b>Multiband Comp</b><small>Four-Band Compressor</small></a><a class="related-card" href="/plugins/auto-leveler/"><b>Auto-Leveler</b><small>Automatic Gain Rider</small></a><a class="related-card" href="/plugins/band-splitter/"><b>Band Splitter</b><small>Multiband Crossover Router</small></a><a class="related-card" href="/plugins/cabinet-simulator/"><b>Cabinet Simulator</b><small>Speaker Cabinet Simulation</small></a><a class="related-card" href="/plugins/channel-utility/"><b>Channel Utility</b><small>Gain, Phase &amp; Routing</small></a></div>
+            <p class="page-more"><a href="/">All 113 NULL JSFX plugins</a></p>
+        </section>
+    </main>
+    <footer class="site-footer">
+        <div class="footer-content">
+            Designed with &#9825; by <a href="https://koulaxizis.gr" target="_blank" rel="noopener">Christos Koulaxizis</a>.
+            <div class="footer-links">
+                <a href="https://ko-fi.com/koulaxizis" target="_blank" rel="noopener">Support on Ko-fi</a>
+                <span class="sep">&bull;</span>
+                <a href="https://github.com/koulaxizis/null-jsfx" target="_blank" rel="noopener">GitHub</a>
+                <span class="sep">&bull;</span>
+                <a href="/">nulljsfx.tech</a>
+            </div>
+        </div>
+    </footer>
+    <button id="theme-toggle" class="theme-toggle-floating" aria-label="Toggle color theme" title="Switch between light/dark theme">
+        <svg class="sun-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2 M12 21v2 M4.22 4.22l1.42 1.42 M18.36 18.36l1.42 1.42 M1 12h2 M21 12h2 M4.22 19.78l1.42-1.42 M18.36 5.64l1.42-1.42"/></svg>
+        <svg class="moon-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none;"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+    </button>
+    <script src="/assets/js/theme.js"></script>
+    <script src="/assets/js/demo.js"></script>
+</body>
+</html>

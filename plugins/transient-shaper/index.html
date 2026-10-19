@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Transient Shaper by NULL JSFX: free audio plugin for REAPER, VST3 and CLAP</title>
+    <meta name="description" content="Transient Shaper: Attack &amp; Sustain Shaper. Free and open source audio plugin for REAPER (JSFX) and any DAW (VST3, CLAP) on Windows, macOS and Linux.">
+    <link rel="canonical" href="https://nulljsfx.tech/plugins/transient-shaper/">
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Transient Shaper: Attack &amp; Sustain Shaper">
+    <meta property="og:description" content="Transient Shaper: Attack &amp; Sustain Shaper. Free and open source audio plugin for REAPER (JSFX) and any DAW (VST3, CLAP) on Windows, macOS and Linux.">
+    <meta property="og:url" content="https://nulljsfx.tech/plugins/transient-shaper/">
+    <meta property="og:image" content="https://nulljsfx.tech/assets/video/transient_shaper.jpg">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Transient Shaper: Attack &amp; Sustain Shaper">
+    <meta name="twitter:description" content="Transient Shaper: Attack &amp; Sustain Shaper. Free and open source audio plugin for REAPER (JSFX) and any DAW (VST3, CLAP) on Windows, macOS and Linux.">
+    <meta name="twitter:image" content="https://nulljsfx.tech/assets/video/transient_shaper.jpg">
+    <link rel="icon" type="image/svg+xml" href="/assets/img/favicon.svg">
+    <link rel="stylesheet" href="/assets/css/style.css">
+    <script type="application/ld+json">{"@context": "https://schema.org", "@type": "SoftwareApplication", "name": "NULL Transient Shaper", "description": "Attack & Sustain Shaper", "url": "https://nulljsfx.tech/plugins/transient-shaper/", "image": "https://nulljsfx.tech/assets/video/transient_shaper.jpg", "applicationCategory": "MultimediaApplication", "applicationSubCategory": "Audio audio plugin", "operatingSystem": "Windows, macOS, Linux", "softwareVersion": "2.5", "license": "https://opensource.org/licenses/MIT", "offers": {"@type": "Offer", "price": "0", "priceCurrency": "EUR"}, "author": {"@type": "Person", "name": "Christos Koulaxizis"}, "isPartOf": {"@type": "SoftwareApplication", "name": "NULL JSFX", "url": "https://nulljsfx.tech/"}}</script>
+    <script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "NULL JSFX", "item": "https://nulljsfx.tech/"}, {"@type": "ListItem", "position": 2, "name": "Essentials", "item": "https://nulljsfx.tech/#effects"}, {"@type": "ListItem", "position": 3, "name": "Transient Shaper", "item": "https://nulljsfx.tech/plugins/transient-shaper/"}]}</script>
+</head>
+<body class="plugin-page">
+    <main>
+        <nav class="page-crumbs" aria-label="Breadcrumb">
+            <a href="/" class="page-home"><img src="/assets/img/favicon.svg" alt="NULL JSFX" width="28" height="28"></a>
+            <a href="/">NULL JSFX</a> <span>/</span> <a href="/">Effects</a> <span>/</span> <span>Transient Shaper</span>
+        </nav>
+        <article class="page-plugin">
+            <header class="guide-header page-header">
+                <span class="guide-category">Essentials</span>
+                <h1>TRANSIENT SHAPER</h1>
+                <p>Attack &amp; Sustain Shaper</p>
+            </header>
+            <video class="guide-shot guide-video" poster="/assets/video/transient_shaper.jpg" controls playsinline preload="none" width="1280" height="720" aria-label="Transient Shaper presentation video"><source src="https://github.com/koulaxizis/null-jsfx/releases/download/media/transient_shaper.mp4" type="video/mp4"><source src="/assets/video/transient_shaper.mp4" type="video/mp4"></video>
+            <div class="page-actions">
+                <a class="featured-btn" href="/#download"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg><span>Download free</span></a>
+                <small>Part of NULL JSFX 2.5: 113 plugins, free and open source (MIT). Easiest with <a href="/#hub">NULL JSFX Hub</a>.</small>
+            </div>
+            <div class="guide-body">
+                <section class="guide-section">
+                    <h2>Listen</h2>
+                    <div class="demo demo-big" data-demo="transient_shaper"><button type="button" class="demo-play" aria-label="Listen: with and without the plugin" title="Listen"><svg class="i-play" width="12" height="12" viewBox="0 0 24 24" aria-hidden="true"><polygon points="6 4 20 12 6 20" fill="currentColor"/></svg><svg class="i-stop" width="12" height="12" viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="6" width="12" height="12" fill="currentColor"/></svg></button><button type="button" class="demo-ab" title="Switch between the plugin and the dry sound"><span class="on">ON</span><span class="off">BYPASS</span></button><span class="demo-note">The same music with the <b>Kick Punch</b> preset and without the plugin. Switch while it plays.</span></div>
+                </section>
+                <section class="guide-section">
+                    <h2>Controls</h2>
+                    <ul class="guide-sliders"><li><span class="slider-name">Attack</span><span class="slider-desc">−20 to +20 dB — Boost or cut applied to transients.</span></li><li><span class="slider-name">Sustain</span><span class="slider-desc">−20 to +20 dB — Boost or cut applied to the sustain and body.</span></li><li><span class="slider-name">Mix</span><span class="slider-desc">0 to 100% — Blend between dry and shaped signal.</span></li><li><span class="slider-name">Speed</span><span class="slider-desc">Fast / Medium / Slow — How fast the detector reacts: Medium is the original timing, Fast catches shorter clicks, Slow treats longer hits as the attack.</span></li><li><span class="slider-name">Focus Low</span><span class="slider-desc">20 to 20000 Hz — Lower edge of the band the shaping acts on, so only that part of the signal is detected and shaped (20 Hz = off).</span></li><li><span class="slider-name">Focus High</span><span class="slider-desc">20 to 20000 Hz — Upper edge of the band the shaping acts on, e.g. 150 Hz to shape only the kick (20 kHz = off).</span></li><li><span class="slider-name">Output Clip</span><span class="slider-desc">Off / On — Soft clip on the output that rounds off boosted transients before they reach 0 dBFS.</span></li><li><span class="slider-name">Output</span><span class="slider-desc">−12 to +12 dB — Output level after shaping (0 dB = unchanged).</span></li></ul>
+                </section>
+                <section class="guide-section">
+                    <h2>Best uses</h2>
+                    <ul class="use-cases"><li>Adding punch to kicks and snares</li><li>Shortening room ring on drums</li><li>Bringing out pick attack on guitars</li><li>Softening harsh transients</li></ul>
+                </section>
+                <section class="guide-section">
+                    <h2>Properties</h2>
+                    <p class="page-props">Input → stereo-linked fast (1/20 ms) and slow (20/150 ms) envelopes → transient amount from their difference → gain blend of Attack and Sustain → Dry/Wet Mix → Output. Level-independent, no threshold; zero latency.</p>
+                </section>
+                <section class="guide-section">
+                    <h2>Formats</h2>
+                    <ul class="guide-formats"><li><span class="format-tag">JSFX</span>JSFX for REAPER, with REAPER&#x27;s own sliders</li><li><span class="format-tag">GFX</span>JSFX GFX for REAPER, with its own interface</li><li><span class="format-tag">VST3</span>VST3 for any DAW</li><li><span class="format-tag">CLAP</span>CLAP for any DAW</li></ul>
+                </section>
+                <section class="guide-section">
+                    <h2>Factory presets</h2>
+                    <p class="page-list">Kick Punch · Snare Crack · Guitar Pick Attack · Tighten Drum Room · Fat Drum Sustain · Soften Harsh Attack · Parallel Drum Smack · Snappy Snare · Kick Focus · Soften Attack · Hat Tamer · Room Tail Cut · Drum Bus Punch Clip</p>
+                </section>
+                <section class="guide-section">
+                    <h2>In the FX chains and Rack presets</h2>
+                    <p class="page-list">Ambient Guitar · Beat Smasher · Drum Bus · Hat Shine · Kick Fertilizer · Parallel Punch · Pusher · Snare Crack</p>
+                    <p class="page-more"><a href="/#fx-chains">See every FX chain</a></p>
+                </section>
+                <section class="guide-section">
+                    <h2>Try it</h2>
+                    <a class="try-studio guide-studio" href="https://useoros.online/studio/" target="_blank" rel="noopener"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8" fill="currentColor"/></svg><span class="try-studio-text"><b>Try it on orOS Studio</b><small>Add it to a track in your browser, with its own interface. Nothing to install.</small></span></a>
+                </section>
+            </div>
+        </article>
+        <section class="page-related">
+            <h2 class="section-title">Goes well with</h2>
+            <div class="related-grid"><a class="related-card" href="/plugins/disperser/"><b>Disperser</b><small>All-Pass Phase Dispersion</small></a><a class="related-card" href="/plugins/phase-align/"><b>Phase Align</b><small>Time, Polarity and Phase Alignment</small></a><a class="related-card" href="/plugins/chorus/"><b>Chorus</b><small>Classic Delay Chorus</small></a><a class="related-card" href="/plugins/clipper/"><b>Clipper</b><small>Oversampled Hard &amp; Soft Clipper</small></a><a class="related-card" href="/plugins/comb-filter/"><b>Comb Filter</b><small>Resonant Delay Comb</small></a><a class="related-card" href="/plugins/delay/"><b>Delay</b><small>Stereo &amp; Ping-Pong Echo</small></a></div>
+            <p class="page-more"><a href="/">All 113 NULL JSFX plugins</a></p>
+        </section>
+    </main>
+    <footer class="site-footer">
+        <div class="footer-content">
+            Designed with &#9825; by <a href="https://koulaxizis.gr" target="_blank" rel="noopener">Christos Koulaxizis</a>.
+            <div class="footer-links">
+                <a href="https://ko-fi.com/koulaxizis" target="_blank" rel="noopener">Support on Ko-fi</a>
+                <span class="sep">&bull;</span>
+                <a href="https://github.com/koulaxizis/null-jsfx" target="_blank" rel="noopener">GitHub</a>
+                <span class="sep">&bull;</span>
+                <a href="/">nulljsfx.tech</a>
+            </div>
+        </div>
+    </footer>
+    <button id="theme-toggle" class="theme-toggle-floating" aria-label="Toggle color theme" title="Switch between light/dark theme">
+        <svg class="sun-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2 M12 21v2 M4.22 4.22l1.42 1.42 M18.36 18.36l1.42 1.42 M1 12h2 M21 12h2 M4.22 19.78l1.42-1.42 M18.36 5.64l1.42-1.42"/></svg>
+        <svg class="moon-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none;"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+    </button>
+    <script src="/assets/js/theme.js"></script>
+    <script src="/assets/js/demo.js"></script>
+</body>
+</html>

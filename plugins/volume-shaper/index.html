@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Volume Shaper by NULL JSFX: free audio plugin for REAPER, VST3 and CLAP</title>
+    <meta name="description" content="Volume Shaper: Tempo-Synced Volume Envelope. Free and open source audio plugin for REAPER (JSFX) and any DAW (VST3, CLAP) on Windows, macOS and Linux.">
+    <link rel="canonical" href="https://nulljsfx.tech/plugins/volume-shaper/">
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Volume Shaper: Tempo-Synced Volume Envelope">
+    <meta property="og:description" content="Volume Shaper: Tempo-Synced Volume Envelope. Free and open source audio plugin for REAPER (JSFX) and any DAW (VST3, CLAP) on Windows, macOS and Linux.">
+    <meta property="og:url" content="https://nulljsfx.tech/plugins/volume-shaper/">
+    <meta property="og:image" content="https://nulljsfx.tech/assets/video/volume_shaper.jpg">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Volume Shaper: Tempo-Synced Volume Envelope">
+    <meta name="twitter:description" content="Volume Shaper: Tempo-Synced Volume Envelope. Free and open source audio plugin for REAPER (JSFX) and any DAW (VST3, CLAP) on Windows, macOS and Linux.">
+    <meta name="twitter:image" content="https://nulljsfx.tech/assets/video/volume_shaper.jpg">
+    <link rel="icon" type="image/svg+xml" href="/assets/img/favicon.svg">
+    <link rel="stylesheet" href="/assets/css/style.css">
+    <script type="application/ld+json">{"@context": "https://schema.org", "@type": "SoftwareApplication", "name": "NULL Volume Shaper", "description": "Tempo-Synced Volume Envelope", "url": "https://nulljsfx.tech/plugins/volume-shaper/", "image": "https://nulljsfx.tech/assets/video/volume_shaper.jpg", "applicationCategory": "MultimediaApplication", "applicationSubCategory": "Audio audio plugin", "operatingSystem": "Windows, macOS, Linux", "softwareVersion": "2.5", "license": "https://opensource.org/licenses/MIT", "offers": {"@type": "Offer", "price": "0", "priceCurrency": "EUR"}, "author": {"@type": "Person", "name": "Christos Koulaxizis"}, "isPartOf": {"@type": "SoftwareApplication", "name": "NULL JSFX", "url": "https://nulljsfx.tech/"}}</script>
+    <script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "NULL JSFX", "item": "https://nulljsfx.tech/"}, {"@type": "ListItem", "position": 2, "name": "Essentials", "item": "https://nulljsfx.tech/#effects"}, {"@type": "ListItem", "position": 3, "name": "Volume Shaper", "item": "https://nulljsfx.tech/plugins/volume-shaper/"}]}</script>
+</head>
+<body class="plugin-page">
+    <main>
+        <nav class="page-crumbs" aria-label="Breadcrumb">
+            <a href="/" class="page-home"><img src="/assets/img/favicon.svg" alt="NULL JSFX" width="28" height="28"></a>
+            <a href="/">NULL JSFX</a> <span>/</span> <a href="/">Effects</a> <span>/</span> <span>Volume Shaper</span>
+        </nav>
+        <article class="page-plugin">
+            <header class="guide-header page-header">
+                <span class="guide-category">Essentials</span>
+                <h1>VOLUME SHAPER</h1>
+                <p>Tempo-Synced Volume Envelope</p>
+            </header>
+            <video class="guide-shot guide-video" poster="/assets/video/volume_shaper.jpg" controls playsinline preload="none" width="1280" height="720" aria-label="Volume Shaper presentation video"><source src="https://github.com/koulaxizis/null-jsfx/releases/download/media/volume_shaper.mp4" type="video/mp4"><source src="/assets/video/volume_shaper.mp4" type="video/mp4"></video>
+            <div class="page-actions">
+                <a class="featured-btn" href="/#download"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg><span>Download free</span></a>
+                <small>Part of NULL JSFX 2.5: 113 plugins, free and open source (MIT). Easiest with <a href="/#hub">NULL JSFX Hub</a>.</small>
+            </div>
+            <div class="guide-body">
+                <section class="guide-section">
+                    <h2>Listen</h2>
+                    <div class="demo demo-big" data-demo="volume_shaper"><button type="button" class="demo-play" aria-label="Listen: with and without the plugin" title="Listen"><svg class="i-play" width="12" height="12" viewBox="0 0 24 24" aria-hidden="true"><polygon points="6 4 20 12 6 20" fill="currentColor"/></svg><svg class="i-stop" width="12" height="12" viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="6" width="12" height="12" fill="currentColor"/></svg></button><button type="button" class="demo-ab" title="Switch between the plugin and the dry sound"><span class="on">ON</span><span class="off">BYPASS</span></button><span class="demo-note">The same music with the <b>Hard Dance Pump</b> preset and without the plugin. Switch while it plays.</span></div>
+                </section>
+                <section class="guide-section">
+                    <h2>Controls</h2>
+                    <ul class="guide-sliders"><li><span class="slider-name">Shape</span><span class="slider-desc">Pump / Pump Hard / Saw Down / Saw Up / Gate 1/16 / Trance 1/8 / Sine / Triangle / Half-time Pump / Stutter — The volume curve: Pump, Pump Hard, Saw Down, Saw Up, Gate 1/16, Trance 1/8, Sine, Triangle, Half-time Pump or Stutter</span></li><li><span class="slider-name">Rate</span><span class="slider-desc">1/1 / 1/2 / 1/4 / 1/8 / 1/16 / 1/4T / 1/8T — Length of one cycle of the shape at the host tempo (1/1 to 1/16, plus 1/4 and 1/8 triplets)</span></li><li><span class="slider-name">Depth</span><span class="slider-desc">0 to 100% — How far the shape turns the level down (0% = no effect, 100% = silence at the bottom of the curve)</span></li><li><span class="slider-name">Smooth</span><span class="slider-desc">0 to 30 ms — Smoothing of the volume changes, to keep gates and jumps free of clicks</span></li><li><span class="slider-name">Phase</span><span class="slider-desc">0 to 100% — Moves the shape later in the cycle</span></li><li><span class="slider-name">Mix</span><span class="slider-desc">0 to 100% — Blend between the shaped and the dry signal</span></li><li><span class="slider-name">Trigger</span><span class="slider-desc">Tempo / MIDI / Sidechain — What starts the shape: Tempo loops it on the host tempo, MIDI plays it once from the top on every note-on and Sidechain plays it once on every hit of the signal on inputs 3/4</span></li><li><span class="slider-name">Threshold</span><span class="slider-desc">−60 to 0 dB — Level the sidechain signal must rise above to start the shape in Sidechain mode</span></li></ul>
+                </section>
+                <section class="guide-section">
+                    <h2>Best uses</h2>
+                    <ul class="use-cases"><li>Sidechain-style pumping without a kick or a sidechain route</li><li>Trance gates and stutters on pads, chords and vocals</li><li>Rhythmic tremolo with saw, sine or triangle shapes</li><li>Ducking a bass under the kick on every beat</li></ul>
+                </section>
+                <section class="guide-section">
+                    <h2>Properties</h2>
+                    <p class="page-props">Signal chain: Input → Gain × (1 − Depth × (1 − Shape)) → One-pole Smoothing → Dry/Wet Mix → Output. The shapes are breakpoint curves over one cycle; the cycle follows the host tempo and, while the transport plays, is read from the song position so it stays locked to the grid; stopped, it free-runs at the host tempo. Half-time Pump spans two Rate notes. Stereo-linked, zero latency.</p>
+                </section>
+                <section class="guide-section">
+                    <h2>Formats</h2>
+                    <ul class="guide-formats"><li><span class="format-tag">JSFX</span>JSFX for REAPER, with REAPER&#x27;s own sliders</li><li><span class="format-tag">GFX</span>JSFX GFX for REAPER, with its own interface</li><li><span class="format-tag">VST3</span>VST3 for any DAW</li><li><span class="format-tag">CLAP</span>CLAP for any DAW</li></ul>
+                </section>
+                <section class="guide-section">
+                    <h2>Factory presets</h2>
+                    <p class="page-list">Gentle Bus Pump · Hard Dance Pump · Half Time Pump · Trance Gate Eighths · Sixteenth Gate · Sine Eighth Tremolo · Bar Long Swell · Stutter Fill · Kick Retrigger Duck · Sidechain Hard Duck · MIDI Note Duck · MIDI Swell In</p>
+                </section>
+                <section class="guide-section">
+                    <h2>In the FX chains and Rack presets</h2>
+                    <p class="page-list">Glitch Band · Rhythm Engine</p>
+                    <p class="page-more"><a href="/#fx-chains">See every FX chain</a></p>
+                </section>
+                <section class="guide-section">
+                    <h2>Try it</h2>
+                    <a class="try-studio guide-studio" href="https://useoros.online/studio/" target="_blank" rel="noopener"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8" fill="currentColor"/></svg><span class="try-studio-text"><b>Try it on orOS Studio</b><small>Add it to a track in your browser, with its own interface. Nothing to install.</small></span></a>
+                </section>
+            </div>
+        </article>
+        <section class="page-related">
+            <h2 class="section-title">Goes well with</h2>
+            <div class="related-grid"><a class="related-card" href="/plugins/flanger/"><b>Flanger</b><small>Jet Sweep Flanger</small></a><a class="related-card" href="/plugins/half-speed/"><b>Half Speed</b><small>Real-Time Halftime &amp; Slow-Down</small></a><a class="related-card" href="/plugins/ring-mod/"><b>Ring Mod</b><small>Swept Ring Modulator</small></a><a class="related-card" href="/plugins/stereo-width/"><b>Stereo Width</b><small>M/S Width with Mono Bass</small></a><a class="related-card" href="/plugins/vibrato/"><b>Vibrato</b><small>Delay-Line Pitch Vibrato</small></a><a class="related-card" href="/plugins/wah/"><b>Wah</b><small>Wah Pedal, Auto-Wah &amp; LFO Wah</small></a></div>
+            <p class="page-more"><a href="/">All 113 NULL JSFX plugins</a></p>
+        </section>
+    </main>
+    <footer class="site-footer">
+        <div class="footer-content">
+            Designed with &#9825; by <a href="https://koulaxizis.gr" target="_blank" rel="noopener">Christos Koulaxizis</a>.
+            <div class="footer-links">
+                <a href="https://ko-fi.com/koulaxizis" target="_blank" rel="noopener">Support on Ko-fi</a>
+                <span class="sep">&bull;</span>
+                <a href="https://github.com/koulaxizis/null-jsfx" target="_blank" rel="noopener">GitHub</a>
+                <span class="sep">&bull;</span>
+                <a href="/">nulljsfx.tech</a>
+            </div>
+        </div>
+    </footer>
+    <button id="theme-toggle" class="theme-toggle-floating" aria-label="Toggle color theme" title="Switch between light/dark theme">
+        <svg class="sun-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2 M12 21v2 M4.22 4.22l1.42 1.42 M18.36 18.36l1.42 1.42 M1 12h2 M21 12h2 M4.22 19.78l1.42-1.42 M18.36 5.64l1.42-1.42"/></svg>
+        <svg class="moon-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none;"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+    </button>
+    <script src="/assets/js/theme.js"></script>
+    <script src="/assets/js/demo.js"></script>
+</body>
+</html>
