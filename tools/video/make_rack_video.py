@@ -28,21 +28,22 @@ import make_videos as mv  # noqa: E402
 from make_videos import FPS, SR  # noqa: E402
 
 ROOT = HERE.parent.parent
-UI_W, UI_H = 1440, 900  # the window, 1.5 x the 960 x 600 design
+UI_W, UI_H = 1440, 1020  # the window, 1.5 x the 960 x 680 design
 K = UI_W / 960
 
-# where things are in the 960 x 600 design (see native/plugins/rack/UI.cpp)
+# where things are in the 960 x 680 design (see native/plugins/rack/UI.cpp)
 PRESET_NAME = (118, 82)
 PRESET_ITEM = {  # in the open preset list
-    "Drum Bus": (70, 281), "Mastering Chain": (75, 395), "Multiband Distortion": (262, 167),
-    "Auto Filter": (242, 243), "Build-Up": (417, 167), "Cosmic Space": (248, 566),
+    "Drum Bus": (62, 281), "Mastering Chain": (75, 395), "Multiband Distortion": (439, 167),
+    "Auto Filter": (419, 243), "Build-Up": (770, 167), "Rhythm Engine": (605, 186),
+    "Parallel Drum Smash": (439, 585), "Psychedelic Echo": (608, 167), "Cosmic Space": (425, 566),
 }
 SLOT = lambda i: (150, 161 + 35 * (i - 1))  # noqa: E731
 MOD = (386, 459)
 MACRO1 = (47, 515)
 
 INFO = {"name": "Rack", "category": "VST3 · CLAP", "desc": "Eight NULL modules in one plugin, with modulation",
-        "sliders": [], "units": []}
+        "sliders": [], "units": [], "mode": "fx"}
 
 # (seconds, kind, caption or label, bypass, actions [(seconds into the segment, action, args)])
 SCRIPT = [
@@ -58,7 +59,12 @@ SCRIPT = [
     (8.0, "caption", ("AN LFO MOVES THE FILTER", "Auto Filter"), False, [(2.5, "click", MOD), (6.0, "click", MOD),
                                                                          (6.6, "preset", "Build-Up")]),
     (9.0, "caption", ("MACRO 1 DRIVES THREE MODULES", "Build-Up"), False, [(1.4, "drag", (MACRO1, -230, 5.0)),
-                                                                            (7.6, "preset", "Cosmic Space")]),
+                                                                            (7.6, "preset", "Rhythm Engine")]),
+    (7.0, "caption", ("A STEP SEQUENCER MOVES THE FILTER", "Rhythm Engine"), False,
+     [(5.6, "preset", "Parallel Drum Smash")]),
+    (7.0, "caption", ("LANE B RUNS IN PARALLEL", "Parallel Drum Smash"), False, [(5.6, "preset", "Psychedelic Echo")]),
+    (7.0, "caption", ("A FEEDBACK LOOP AROUND FOUR MODULES", "Psychedelic Echo"), False,
+     [(5.6, "preset", "Cosmic Space")]),
     (7.0, "caption", ("ROUTING PRESET", "Cosmic Space"), False, []),
     (4.5, "end", "", False, []),
 ]
