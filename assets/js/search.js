@@ -8,6 +8,8 @@
     if (!searchInput || !searchClear || !searchCount) return;
 
     let debounceTimer;
+    let activeTag = '';
+    const chips = document.querySelectorAll('.tag-chip');
 
     function normalizeText(text) {
         return text.toLowerCase().trim().replace(/\s+/g, ' ');
@@ -23,7 +25,8 @@
             const pluginDesc = card.querySelector('.plugin-desc')?.textContent || '';
 
             const combinedText = normalizeText(`${dataName} ${pluginName} ${pluginDesc}`);
-            const matches = combinedText.includes(normalizedQuery);
+            const tagged = !activeTag || (card.dataset.tags || '').split('|').includes(activeTag);
+            const matches = tagged && combinedText.includes(normalizedQuery);
             const isComingSoon = card.classList.contains('coming-soon');
 
             if (matches || isComingSoon) {
@@ -39,23 +42,33 @@
             group.classList.toggle('hidden', !group.querySelector('.plugin-card[data-name]:not(.hidden)'));
         });
 
-        if (query.trim() === '') {
+        if (query.trim() === '' && !activeTag) {
             searchCount.textContent = '';
         } else {
             searchCount.textContent = visibleCount > 0 ?
                 `${visibleCount} plugin${visibleCount !== 1 ? 's' : ''} found` :
                 'No plugins match your search';
         }
+        // tabs.js shows every plugin tab while a search or a use filter is on
+        document.dispatchEvent(new CustomEvent('plugin-filter', { detail: { active: query.trim() !== '' || activeTag !== '' } }));
     }
+
+    function setTag(tag) {
+        activeTag = tag;
+        chips.forEach(c => {
+            const on = c.dataset.tag === tag;
+            c.classList.toggle('active', on);
+            c.setAttribute('aria-pressed', on ? 'true' : 'false');
+        });
+        filterPlugins(searchInput.value);
+    }
+    chips.forEach(c => c.addEventListener('click', () => setTag(c.dataset.tag === activeTag ? '' : c.dataset.tag)));
+    window.setPluginTag = setTag;
 
     function clearSearch() {
         searchInput.value = '';
         searchClear.style.display = 'none';
-        searchCount.textContent = '';
-        pluginCards.forEach(card => {
-            card.classList.remove('hidden');
-        });
-        document.querySelectorAll('.plugin-category').forEach(group => group.classList.remove('hidden'));
+        filterPlugins('');
         searchInput.focus();
     }
 

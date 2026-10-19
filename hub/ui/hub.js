@@ -171,7 +171,7 @@ function shown() {
 
 function shotHtml(p, big) {
   // the plugin page plays the presentation video, with its poster until it starts
-  if (big && p.video) return `<video src="${esc(p.video)}" poster="${esc(p.video.replace(/\.mp4$/, ".jpg"))}" controls playsinline preload="none"></video>`;
+  if (big && p.video) return `<video src="${esc(p.video)}" poster="${esc(p.poster || p.video.replace(/\.mp4$/, ".jpg"))}" controls playsinline preload="none"></video>`;
   return p.shot
     ? `<img src="${esc(p.shot)}" alt="" ${big ? "" : 'loading="lazy"'}>`
     : "NULL";

@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Riff by NULL JSFX: free MIDI tool for REAPER, VST3 and CLAP</title>
+    <meta name="description" content="Riff: Seeded Riff &amp; Melody Generator (MIDI). Free and open source MIDI tool for REAPER (JSFX) and any DAW (VST3, CLAP) on Windows, macOS and Linux.">
+    <link rel="canonical" href="https://nulljsfx.tech/plugins/riff/">
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Riff: Seeded Riff &amp; Melody Generator (MIDI)">
+    <meta property="og:description" content="Riff: Seeded Riff &amp; Melody Generator (MIDI). Free and open source MIDI tool for REAPER (JSFX) and any DAW (VST3, CLAP) on Windows, macOS and Linux.">
+    <meta property="og:url" content="https://nulljsfx.tech/plugins/riff/">
+    <meta property="og:image" content="https://nulljsfx.tech/assets/video/riff.jpg">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Riff: Seeded Riff &amp; Melody Generator (MIDI)">
+    <meta name="twitter:description" content="Riff: Seeded Riff &amp; Melody Generator (MIDI). Free and open source MIDI tool for REAPER (JSFX) and any DAW (VST3, CLAP) on Windows, macOS and Linux.">
+    <meta name="twitter:image" content="https://nulljsfx.tech/assets/video/riff.jpg">
+    <link rel="icon" type="image/svg+xml" href="/assets/img/favicon.svg">
+    <link rel="stylesheet" href="/assets/css/style.css">
+    <script type="application/ld+json">{"@context": "https://schema.org", "@type": "SoftwareApplication", "name": "NULL Riff", "description": "Seeded Riff & Melody Generator (MIDI)", "url": "https://nulljsfx.tech/plugins/riff/", "image": "https://nulljsfx.tech/assets/video/riff.jpg", "applicationCategory": "MultimediaApplication", "applicationSubCategory": "Audio MIDI tool", "operatingSystem": "Windows, macOS, Linux", "softwareVersion": "2.5", "license": "https://opensource.org/licenses/MIT", "offers": {"@type": "Offer", "price": "0", "priceCurrency": "EUR"}, "author": {"@type": "Person", "name": "Christos Koulaxizis"}, "isPartOf": {"@type": "SoftwareApplication", "name": "NULL JSFX", "url": "https://nulljsfx.tech/"}}</script>
+    <script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "NULL JSFX", "item": "https://nulljsfx.tech/"}, {"@type": "ListItem", "position": 2, "name": "MIDI", "item": "https://nulljsfx.tech/#midi"}, {"@type": "ListItem", "position": 3, "name": "Riff", "item": "https://nulljsfx.tech/plugins/riff/"}]}</script>
+</head>
+<body class="plugin-page">
+    <main>
+        <nav class="page-crumbs" aria-label="Breadcrumb">
+            <a href="/" class="page-home"><img src="/assets/img/favicon.svg" alt="NULL JSFX" width="28" height="28"></a>
+            <a href="/">NULL JSFX</a> <span>/</span> <a href="/#midi">MIDI</a> <span>/</span> <span>Riff</span>
+        </nav>
+        <article class="page-plugin">
+            <header class="guide-header page-header">
+                <span class="guide-category">MIDI</span>
+                <h1>RIFF</h1>
+                <p>Seeded Riff &amp; Melody Generator (MIDI)</p>
+            </header>
+            <video class="guide-shot guide-video" poster="/assets/video/riff.jpg" controls playsinline preload="none" width="1280" height="720" aria-label="Riff presentation video"><source src="https://github.com/koulaxizis/null-jsfx/releases/download/media/riff.mp4" type="video/mp4"><source src="/assets/video/riff.mp4" type="video/mp4"></video>
+            <div class="page-actions">
+                <a class="featured-btn" href="/#download"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg><span>Download free</span></a>
+                <small>Part of NULL JSFX 2.5: 113 plugins, free and open source (MIT). Easiest with <a href="/#hub">NULL JSFX Hub</a>.</small>
+            </div>
+            <div class="guide-body">
+                <section class="guide-section">
+                    <h2>Controls</h2>
+                    <ul class="guide-sliders"><li><span class="slider-name">Key</span><span class="slider-desc">C / C# / D / D# / E / F / F# / G / G# / A / A# / B — The key the riff is in.</span></li><li><span class="slider-name">Scale</span><span class="slider-desc">Major / Minor / Harmonic Minor / Melodic Minor / Dorian / Phrygian / Lydian / Mixolydian / Locrian / Major Pentatonic / Minor Pentatonic / Blues — The scale the riff&#x27;s notes come from (major, minor, harmonic or melodic minor, the modes, major or minor pentatonic, blues); the key you hold starts the riff on the scale note at or below it.</span></li><li><span class="slider-name">Seed</span><span class="slider-desc">1 to 999 — Picks the riff (1 to 999): every seed is a different pattern, and the same seed always plays the same riff, in REAPER and in every DAW.</span></li><li><span class="slider-name">Density</span><span class="slider-desc">0 to 100% — How many of the steps play a note (0 to 100%); the first step always plays, the others are rests when they miss.</span></li><li><span class="slider-name">Steps</span><span class="slider-desc">4 to 32 — The length of the pattern in steps (4 to 32) before it repeats; more steps add to the end of the same riff.</span></li><li><span class="slider-name">Rate</span><span class="slider-desc">1/8 / 1/16 / 1/32 / 1/8T / 1/16T / 1/32T — The step length, synced to the tempo: 1/8, 1/16 or 1/32 notes, or their triplets.</span></li><li><span class="slider-name">Octave Range</span><span class="slider-desc">1 to 3 — How far the riff climbs above the key you hold: 1 to 3 octaves of the scale.</span></li><li><span class="slider-name">Note Length</span><span class="slider-desc">10 to 100% — How long each note lasts as a share of its step (10 to 100%): short values play staccato, 100% plays legato.</span></li><li><span class="slider-name">Rhythm Lock</span><span class="slider-desc">0 to 999 — Keeps a rhythm while Seed rolls new notes: 0 is Off (the rhythm follows Seed); any other value plays the rhythm of that seed (the LOCK RHYTHM switch in the display sets it to the current seed).</span></li><li><span class="slider-name">Velocity Range</span><span class="slider-desc">0 to 100% — How much the step velocities vary below the velocity of the key you hold (0% plays every step at it).</span></li><li><span class="slider-name">Accent</span><span class="slider-desc">0 to 100% — The share of steps that are accented, played well above the others (0 to 100%).</span></li><li><span class="slider-name">Variation</span><span class="slider-desc">0 to 100% — How often a step plays a new note instead of repeating the note one beat earlier (0% repeats a one-beat motif, 100% is all new notes).</span></li></ul>
+                </section>
+                <section class="guide-section">
+                    <h2>Best uses</h2>
+                    <ul class="use-cases"><li>Hold one key and get basslines, leads or hooks that are always in key</li><li>Roll through seeds to find a riff, then lock its rhythm and change only the notes</li><li>Tempo-synced arpeggio-like runs and triplet rolls from a single held key</li><li>Transpose a riff live: the key you hold is its root, the last key pressed leads</li><li>Feed any synth or sampler with endless, repeatable melodic ideas</li></ul>
+                </section>
+                <section class="guide-section">
+                    <h2>Properties</h2>
+                    <p class="page-props">A MIDI effect: MIDI in, MIDI out, the audio passes through untouched (place it before an instrument). The pattern comes from two separate Park-Miller random streams seeded by Seed: one for the rhythm (which steps play, their velocity and accents), one for the pitches (root jumps, steps and skips, motif repeats), so it is fully deterministic and Rhythm Lock can keep one while the other changes. While the host plays, the steps sit on its beat grid (the step is the beat position divided by the rate, modulo Steps); stopped, the riff starts with the key and runs at the host&#x27;s tempo. One note sounds at a time and every note-on gets its note-off; releasing every key, all notes off (CC 120/123) or the transport stopping ends the riff. Pitch bend, controllers and sustain pass through; poly pressure of the leading key goes to the note sounding. Sample-accurate and the same in the JSFX, the GFX version and the VST3/CLAP.</p>
+                </section>
+                <section class="guide-section">
+                    <h2>Formats</h2>
+                    <ul class="guide-formats"><li><span class="format-tag">JSFX</span>JSFX for REAPER, with REAPER&#x27;s own sliders</li><li><span class="format-tag">GFX</span>JSFX GFX for REAPER, with its own interface</li><li><span class="format-tag">VST3</span>VST3 for any DAW</li><li><span class="format-tag">CLAP</span>CLAP for any DAW</li></ul>
+                </section>
+                <section class="guide-section">
+                    <h2>Factory presets</h2>
+                    <p class="page-list">Driving Bassline · Sparse Groove · Acid Line · Pentatonic Lead · Blues Shuffle · Eighth Note Riff · Fast Arp Run · Triplet Rolls · Dorian Funk · Minor Hook · Wide Melody · Staccato Pulse · Steady Repeat · Locked Groove · Ambient Drift</p>
+                </section>
+            </div>
+        </article>
+        <section class="page-related">
+            <h2 class="section-title">Goes well with</h2>
+            <div class="related-grid"><a class="related-card" href="/plugins/amp-simulator/"><b>Amp Simulator</b><small>Guitar &amp; Bass Amp, No Cabinet</small></a><a class="related-card" href="/plugins/arpeggiator/"><b>Arpeggiator</b><small>Tempo-Synced Arpeggiator with Velocity Lane (MIDI)</small></a><a class="related-card" href="/plugins/bass/"><b>Bass</b><small>Synth Bass &amp; 808 with Phrase Player</small></a><a class="related-card" href="/plugins/chords/"><b>Chords</b><small>One-Key Chords &amp; Progressions (MIDI)</small></a><a class="related-card" href="/plugins/drum-machine/"><b>Drum Machine</b><small>Drum Synth with 16-Step Sequencer</small></a><a class="related-card" href="/plugins/envelope-follower/"><b>Envelope Follower</b><small>Auto-Wah &amp; Envelope Filter</small></a></div>
+            <p class="page-more"><a href="/#midi">All 113 NULL JSFX plugins</a></p>
+        </section>
+    </main>
+    <footer class="site-footer">
+        <div class="footer-content">
+            Designed with &#9825; by <a href="https://koulaxizis.gr" target="_blank" rel="noopener">Christos Koulaxizis</a>.
+            <div class="footer-links">
+                <a href="https://ko-fi.com/koulaxizis" target="_blank" rel="noopener">Support on Ko-fi</a>
+                <span class="sep">&bull;</span>
+                <a href="https://github.com/koulaxizis/null-jsfx" target="_blank" rel="noopener">GitHub</a>
+                <span class="sep">&bull;</span>
+                <a href="/">nulljsfx.tech</a>
+            </div>
+        </div>
+    </footer>
+    <button id="theme-toggle" class="theme-toggle-floating" aria-label="Toggle color theme" title="Switch between light/dark theme">
+        <svg class="sun-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2 M12 21v2 M4.22 4.22l1.42 1.42 M18.36 18.36l1.42 1.42 M1 12h2 M21 12h2 M4.22 19.78l1.42-1.42 M18.36 5.64l1.42-1.42"/></svg>
+        <svg class="moon-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none;"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+    </button>
+    <script src="/assets/js/theme.js"></script>
+    <script src="/assets/js/demo.js"></script>
+</body>
+</html>

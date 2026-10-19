@@ -24,7 +24,7 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.dont_write_bytecode = True
 sys.path.insert(0, str(ROOT / "tools"))
 from build_chains import RACK_PRESETS, CHAINS as CHAIN_LIST  # noqa: E402
-from build_site import CATEGORIES, load  # noqa: E402
+from build_site import CATEGORIES, MEDIA_VIDEOS, load  # noqa: E402
 
 SITE = "https://nulljsfx.tech/"
 REPO = "koulaxizis/null-jsfx"
@@ -108,7 +108,9 @@ def plugins():
             "sliders": [{"name": n, "range": r, "desc": d} for n, r, d in p["sliders"]],
             "formats": fmts,
             "shot": SITE + p["shot"] if p["shot"] else None,
-            "video": SITE + p["video"] if p["video"] else None,
+            # streamed from the "media" release (.github/workflows/media.yml); the poster stays on the site
+            "video": MEDIA_VIDEOS + Path(p["video"]).name if p["video"] else None,
+            "poster": SITE + p["video"][:-4] + ".jpg" if p["video"] else None,
             "guide": f"{SITE}#{p['key']}",
             "presets": [name for name, _ in json.loads(presets.read_text(encoding="utf-8"))] if presets.exists() else [],
             "demo": {"url": f"{SITE}assets/audio/demos/{stem}.mp3", "preset": demo[stem]} if stem in demo else None,
@@ -131,7 +133,8 @@ def rack():
         "sliders": [],
         "formats": ["vst3", "clap"],
         "shot": SITE + "assets/img/hub/rack.png",
-        "video": SITE + "assets/video/rack.mp4" if (ROOT / "assets/video/rack.mp4").exists() else None,
+        "video": MEDIA_VIDEOS + "rack.mp4" if (ROOT / "assets/video/rack.mp4").exists() else None,
+        "poster": SITE + "assets/video/rack.jpg" if (ROOT / "assets/video/rack.jpg").exists() else None,
         "guide": SITE,
         "presets": [c[0] for c in CHAIN_LIST] + [p[0] for p in RACK_PRESETS],
     }
