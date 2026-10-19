@@ -14,7 +14,9 @@ const guides = {
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
     shot: 'assets/img/gfx/brighter.png',
     video: 'assets/video/brighter.mp4',
-    studio: true
+    studio: true,
+    demo: 'brighter',
+    page: 'plugins/brighter/'
   },
   'chorus-one': {
     title: 'CHORUS ONE',
@@ -28,7 +30,9 @@ const guides = {
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
     shot: 'assets/img/gfx/chorus_one.png',
     video: 'assets/video/chorus_one.mp4',
-    studio: true
+    studio: true,
+    demo: 'chorus_one',
+    page: 'plugins/chorus-one/'
   },
   'crunch': {
     title: 'CRUNCH',
@@ -42,7 +46,9 @@ const guides = {
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
     shot: 'assets/img/gfx/crunch.png',
     video: 'assets/video/crunch.mp4',
-    studio: true
+    studio: true,
+    demo: 'crunch',
+    page: 'plugins/crunch/'
   },
   'dj-filter': {
     title: 'DJ FILTER',
@@ -56,7 +62,9 @@ const guides = {
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
     shot: 'assets/img/gfx/dj_filter.png',
     video: 'assets/video/dj_filter.mp4',
-    studio: true
+    studio: true,
+    demo: 'dj_filter',
+    page: 'plugins/dj-filter/'
   },
   'doubler': {
     title: 'DOUBLER',
@@ -70,7 +78,9 @@ const guides = {
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
     shot: 'assets/img/gfx/doubler.png',
     video: 'assets/video/doubler.mp4',
-    studio: true
+    studio: true,
+    demo: 'doubler',
+    page: 'plugins/doubler/'
   },
   'driver': {
     title: 'DRIVER',
@@ -84,7 +94,9 @@ const guides = {
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
     shot: 'assets/img/gfx/driver.png',
     video: 'assets/video/driver.mp4',
-    studio: true
+    studio: true,
+    demo: 'driver',
+    page: 'plugins/driver/'
   },
   'exciter': {
     title: 'EXCITER',
@@ -98,7 +110,9 @@ const guides = {
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
     shot: 'assets/img/gfx/exciter.png',
     video: 'assets/video/exciter.mp4',
-    studio: true
+    studio: true,
+    demo: 'exciter',
+    page: 'plugins/exciter/'
   },
   'formant-shift': {
     title: 'FORMANT SHIFT',
@@ -112,7 +126,9 @@ const guides = {
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
     shot: 'assets/img/gfx/formant_shift.png',
     video: 'assets/video/formant_shift.mp4',
-    studio: true
+    studio: true,
+    demo: 'formant_shift',
+    page: 'plugins/formant-shift/'
   },
   'grit': {
     title: 'GRIT',
@@ -126,7 +142,9 @@ const guides = {
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
     shot: 'assets/img/gfx/grit.png',
     video: 'assets/video/grit.mp4',
-    studio: true
+    studio: true,
+    demo: 'grit',
+    page: 'plugins/grit/'
   },
   'louder': {
     title: 'LOUDER',
@@ -140,7 +158,9 @@ const guides = {
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
     shot: 'assets/img/gfx/louder.png',
     video: 'assets/video/louder.mp4',
-    studio: true
+    studio: true,
+    demo: 'louder',
+    page: 'plugins/louder/'
   },
   'mono-maker': {
     title: 'MONO MAKER',
@@ -154,7 +174,8 @@ const guides = {
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
     shot: 'assets/img/gfx/mono_maker.png',
     video: 'assets/video/mono_maker.mp4',
-    studio: true
+    studio: true,
+    page: 'plugins/mono-maker/'
   },
   'phatter': {
     title: 'PHATTER',
@@ -168,7 +189,9 @@ const guides = {
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
     shot: 'assets/img/gfx/phatter.png',
     video: 'assets/video/phatter.mp4',
-    studio: true
+    studio: true,
+    demo: 'phatter',
+    page: 'plugins/phatter/'
   },
   'pressure': {
     title: 'PRESSURE',
@@ -182,7 +205,9 @@ const guides = {
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
     shot: 'assets/img/gfx/pressure.png',
     video: 'assets/video/pressure.mp4',
-    studio: true
+    studio: true,
+    demo: 'pressure',
+    page: 'plugins/pressure/'
   },
   'pumper': {
     title: 'PUMPER',
@@ -196,7 +221,9 @@ const guides = {
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
     shot: 'assets/img/gfx/pumper.png',
     video: 'assets/video/pumper.mp4',
-    studio: true
+    studio: true,
+    demo: 'pumper',
+    page: 'plugins/pumper/'
   },
   'riser': {
     title: 'RISER',
@@ -210,7 +237,9 @@ const guides = {
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
     shot: 'assets/img/gfx/riser.png',
     video: 'assets/video/riser.mp4',
-    studio: true
+    studio: true,
+    demo: 'riser',
+    page: 'plugins/riser/'
   },
   'snappy': {
     title: 'SNAPPY',
@@ -224,7 +253,9 @@ const guides = {
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
     shot: 'assets/img/gfx/snappy.png',
     video: 'assets/video/snappy.mp4',
-    studio: true
+    studio: true,
+    demo: 'snappy',
+    page: 'plugins/snappy/'
   },
   'spread': {
     title: 'SPREAD',
@@ -238,7 +269,9 @@ const guides = {
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
     shot: 'assets/img/gfx/spread.png',
     video: 'assets/video/spread.mp4',
-    studio: true
+    studio: true,
+    demo: 'spread',
+    page: 'plugins/spread/'
   },
   'stretch': {
     title: 'STRETCH',
@@ -252,7 +285,9 @@ const guides = {
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
     shot: 'assets/img/gfx/stretch.png',
     video: 'assets/video/stretch.mp4',
-    studio: true
+    studio: true,
+    demo: 'stretch',
+    page: 'plugins/stretch/'
   },
   'sweeper': {
     title: 'SWEEPER',
@@ -266,7 +301,9 @@ const guides = {
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
     shot: 'assets/img/gfx/sweeper.png',
     video: 'assets/video/sweeper.mp4',
-    studio: true
+    studio: true,
+    demo: 'sweeper',
+    page: 'plugins/sweeper/'
   },
   'tilt': {
     title: 'TILT',
@@ -280,7 +317,9 @@ const guides = {
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
     shot: 'assets/img/gfx/tilt.png',
     video: 'assets/video/tilt.mp4',
-    studio: true
+    studio: true,
+    demo: 'tilt',
+    page: 'plugins/tilt/'
   },
   'wetter': {
     title: 'WETTER',
@@ -294,7 +333,9 @@ const guides = {
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
     shot: 'assets/img/gfx/wetter.png',
     video: 'assets/video/wetter.mp4',
-    studio: true
+    studio: true,
+    demo: 'wetter',
+    page: 'plugins/wetter/'
   },
 
   // ─── ESSENTIALS ───
@@ -316,7 +357,9 @@ const guides = {
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
     shot: 'assets/img/gfx/auto_pan.png',
     video: 'assets/video/auto_pan.mp4',
-    studio: true
+    studio: true,
+    demo: 'auto_pan',
+    page: 'plugins/auto-pan/'
   },
   'auto-leveler': {
     title: 'AUTO-LEVELER',
@@ -334,7 +377,8 @@ const guides = {
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
     shot: 'assets/img/gfx/auto_leveler.png',
     video: 'assets/video/auto_leveler.mp4',
-    studio: true
+    studio: true,
+    page: 'plugins/auto-leveler/'
   },
   'band-splitter': {
     title: 'BAND SPLITTER',
@@ -353,7 +397,8 @@ const guides = {
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
     shot: 'assets/img/gfx/band_splitter.png',
     video: 'assets/video/band_splitter.mp4',
-    studio: true
+    studio: true,
+    page: 'plugins/band-splitter/'
   },
   'breath-control': {
     title: 'BREATH CONTROL',
@@ -370,7 +415,8 @@ const guides = {
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
     shot: 'assets/img/gfx/breath_control.png',
     video: 'assets/video/breath_control.mp4',
-    studio: true
+    studio: true,
+    page: 'plugins/breath-control/'
   },
   'cabinet-simulator': {
     title: 'CABINET SIMULATOR',
@@ -390,7 +436,9 @@ const guides = {
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
     shot: 'assets/img/gfx/cabinet_simulator.png',
     video: 'assets/video/cabinet_simulator.mp4',
-    studio: true
+    studio: true,
+    demo: 'cabinet_simulator',
+    page: 'plugins/cabinet-simulator/'
   },
   'channel-utility': {
     title: 'CHANNEL UTILITY',
@@ -416,7 +464,9 @@ const guides = {
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
     shot: 'assets/img/gfx/channel_utility.png',
     video: 'assets/video/channel_utility.mp4',
-    studio: true
+    studio: true,
+    demo: 'channel_utility',
+    page: 'plugins/channel-utility/'
   },
   'chorus': {
     title: 'CHORUS',
@@ -438,7 +488,9 @@ const guides = {
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
     shot: 'assets/img/gfx/chorus.png',
     video: 'assets/video/chorus.mp4',
-    studio: true
+    studio: true,
+    demo: 'chorus',
+    page: 'plugins/chorus/'
   },
   'click-repair': {
     title: 'CLICK REPAIR',
@@ -453,7 +505,9 @@ const guides = {
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
     shot: 'assets/img/gfx/click_repair.png',
     video: 'assets/video/click_repair.mp4',
-    studio: true
+    studio: true,
+    demo: 'click_repair',
+    page: 'plugins/click-repair/'
   },
   'clipper': {
     title: 'CLIPPER',
@@ -473,7 +527,9 @@ const guides = {
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
     shot: 'assets/img/gfx/clipper.png',
     video: 'assets/video/clipper.mp4',
-    studio: true
+    studio: true,
+    demo: 'clipper',
+    page: 'plugins/clipper/'
   },
   'de-hum': {
     title: 'DE-HUM',
@@ -492,7 +548,9 @@ const guides = {
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
     shot: 'assets/img/gfx/de_hum.png',
     video: 'assets/video/de_hum.mp4',
-    studio: true
+    studio: true,
+    demo: 'de_hum',
+    page: 'plugins/de-hum/'
   },
   'de-plosive': {
     title: 'DE-PLOSIVE',
@@ -510,7 +568,8 @@ const guides = {
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
     shot: 'assets/img/gfx/de_plosive.png',
     video: 'assets/video/de_plosive.mp4',
-    studio: true
+    studio: true,
+    page: 'plugins/de-plosive/'
   },
   'deesser': {
     title: 'DEESSER',
@@ -530,7 +589,8 @@ const guides = {
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
     shot: 'assets/img/gfx/deesser.png',
     video: 'assets/video/deesser.mp4',
-    studio: true
+    studio: true,
+    page: 'plugins/deesser/'
   },
   'delay': {
     title: 'DELAY',
@@ -556,7 +616,9 @@ const guides = {
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
     shot: 'assets/img/gfx/delay.png',
     video: 'assets/video/delay.mp4',
-    studio: true
+    studio: true,
+    demo: 'delay',
+    page: 'plugins/delay/'
   },
   'disperser': {
     title: 'DISPERSER',
@@ -574,7 +636,9 @@ const guides = {
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
     shot: 'assets/img/gfx/disperser.png',
     video: 'assets/video/disperser.mp4',
-    studio: true
+    studio: true,
+    demo: 'disperser',
+    page: 'plugins/disperser/'
   },
   'draw-eq': {
     title: 'DRAW EQ',
@@ -600,7 +664,9 @@ const guides = {
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
     shot: 'assets/img/gfx/draw_eq.png',
     video: 'assets/video/draw_eq.mp4',
-    studio: true
+    studio: true,
+    demo: 'draw_eq',
+    page: 'plugins/draw-eq/'
   },
   'dynamic-eq': {
     title: 'DYNAMIC EQ',
@@ -632,7 +698,8 @@ const guides = {
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
     shot: 'assets/img/gfx/dynamic_eq.png',
     video: 'assets/video/dynamic_eq.mp4',
-    studio: true
+    studio: true,
+    page: 'plugins/dynamic-eq/'
   },
   'dynamics': {
     title: 'DYNAMICS',
@@ -656,7 +723,9 @@ const guides = {
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
     shot: 'assets/img/gfx/dynamics.png',
     video: 'assets/video/dynamics.mp4',
-    studio: true
+    studio: true,
+    demo: 'dynamics',
+    page: 'plugins/dynamics/'
   },
   'envelope-follower': {
     title: 'ENVELOPE FOLLOWER',
@@ -678,7 +747,9 @@ const guides = {
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
     shot: 'assets/img/gfx/envelope_follower.png',
     video: 'assets/video/envelope_follower.mp4',
-    studio: true
+    studio: true,
+    demo: 'envelope_follower',
+    page: 'plugins/envelope-follower/'
   },
   'filter': {
     title: 'FILTER',
@@ -703,7 +774,9 @@ const guides = {
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
     shot: 'assets/img/gfx/filter.png',
     video: 'assets/video/filter.mp4',
-    studio: true
+    studio: true,
+    demo: 'filter',
+    page: 'plugins/filter/'
   },
   'flanger': {
     title: 'FLANGER',
@@ -724,7 +797,9 @@ const guides = {
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
     shot: 'assets/img/gfx/flanger.png',
     video: 'assets/video/flanger.mp4',
-    studio: true
+    studio: true,
+    demo: 'flanger',
+    page: 'plugins/flanger/'
   },
   'gate': {
     title: 'GATE',
@@ -747,7 +822,8 @@ const guides = {
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
     shot: 'assets/img/gfx/gate.png',
     video: 'assets/video/gate.mp4',
-    studio: true
+    studio: true,
+    page: 'plugins/gate/'
   },
   'limiter': {
     title: 'LIMITER',
@@ -765,7 +841,9 @@ const guides = {
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
     shot: 'assets/img/gfx/limiter.png',
     video: 'assets/video/limiter.mp4',
-    studio: true
+    studio: true,
+    demo: 'limiter',
+    page: 'plugins/limiter/'
   },
   'maximizer': {
     title: 'MAXIMIZER',
@@ -790,7 +868,9 @@ const guides = {
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
     shot: 'assets/img/gfx/maximizer.png',
     video: 'assets/video/maximizer.mp4',
-    studio: true
+    studio: true,
+    demo: 'maximizer',
+    page: 'plugins/maximizer/'
   },
   'mid-side-matrix': {
     title: 'MID/SIDE MATRIX',
@@ -806,7 +886,8 @@ const guides = {
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
     shot: 'assets/img/gfx/mid_side_matrix.png',
     video: 'assets/video/mid_side_matrix.mp4',
-    studio: true
+    studio: true,
+    page: 'plugins/mid-side-matrix/'
   },
   'multiband-compressor': {
     title: 'MULTIBAND COMP',
@@ -842,7 +923,9 @@ const guides = {
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
     shot: 'assets/img/gfx/multiband_compressor.png',
     video: 'assets/video/multiband_compressor.mp4',
-    studio: true
+    studio: true,
+    demo: 'multiband_compressor',
+    page: 'plugins/multiband-compressor/'
   },
   'noise-generator': {
     title: 'NOISE GENERATOR',
@@ -863,7 +946,8 @@ const guides = {
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
     shot: 'assets/img/gfx/noise_generator.png',
     video: 'assets/video/noise_generator.mp4',
-    studio: true
+    studio: true,
+    page: 'plugins/noise-generator/'
   },
   'octaver': {
     title: 'OCTAVER',
@@ -882,7 +966,9 @@ const guides = {
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
     shot: 'assets/img/gfx/octaver.png',
     video: 'assets/video/octaver.mp4',
-    studio: true
+    studio: true,
+    demo: 'octaver',
+    page: 'plugins/octaver/'
   },
   'panner': {
     title: 'PANNER',
@@ -900,7 +986,9 @@ const guides = {
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
     shot: 'assets/img/gfx/panner.png',
     video: 'assets/video/panner.mp4',
-    studio: true
+    studio: true,
+    demo: 'panner',
+    page: 'plugins/panner/'
   },
   'parametric-eq': {
     title: 'PARAMETRIC EQ',
@@ -938,7 +1026,9 @@ const guides = {
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
     shot: 'assets/img/gfx/parametric_eq.png',
     video: 'assets/video/parametric_eq.mp4',
-    studio: true
+    studio: true,
+    demo: 'parametric_eq',
+    page: 'plugins/parametric-eq/'
   },
   'phase-align': {
     title: 'PHASE ALIGN',
@@ -959,7 +1049,9 @@ const guides = {
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
     shot: 'assets/img/gfx/phase_align.png',
     video: 'assets/video/phase_align.mp4',
-    studio: true
+    studio: true,
+    demo: 'phase_align',
+    page: 'plugins/phase-align/'
   },
   'phaser': {
     title: 'PHASER',
@@ -980,7 +1072,9 @@ const guides = {
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
     shot: 'assets/img/gfx/phaser.png',
     video: 'assets/video/phaser.mp4',
-    studio: true
+    studio: true,
+    demo: 'phaser',
+    page: 'plugins/phaser/'
   },
   'pitch-shifter': {
     title: 'PITCH SHIFTER',
@@ -997,7 +1091,9 @@ const guides = {
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
     shot: 'assets/img/gfx/pitch_shifter.png',
     video: 'assets/video/pitch_shifter.mp4',
-    studio: true
+    studio: true,
+    demo: 'pitch_shifter',
+    page: 'plugins/pitch-shifter/'
   },
   'reverb': {
     title: 'REVERB',
@@ -1022,7 +1118,9 @@ const guides = {
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
     shot: 'assets/img/gfx/reverb.png',
     video: 'assets/video/reverb.mp4',
-    studio: true
+    studio: true,
+    demo: 'reverb',
+    page: 'plugins/reverb/'
   },
   'ring-mod': {
     title: 'RING MOD',
@@ -1039,7 +1137,9 @@ const guides = {
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
     shot: 'assets/img/gfx/ring_mod.png',
     video: 'assets/video/ring_mod.mp4',
-    studio: true
+    studio: true,
+    demo: 'ring_mod',
+    page: 'plugins/ring-mod/'
   },
   'saturation': {
     title: 'SATURATION',
@@ -1060,7 +1160,9 @@ const guides = {
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
     shot: 'assets/img/gfx/saturation.png',
     video: 'assets/video/saturation.mp4',
-    studio: true
+    studio: true,
+    demo: 'saturation',
+    page: 'plugins/saturation/'
   },
   'shaper': {
     title: 'SHAPER',
@@ -1097,7 +1199,9 @@ const guides = {
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
     shot: 'assets/img/gfx/shaper.png',
     video: 'assets/video/shaper.mp4',
-    studio: true
+    studio: true,
+    demo: 'shaper',
+    page: 'plugins/shaper/'
   },
   'sidechain-ducker': {
     title: 'SIDECHAIN DUCKER',
@@ -1117,7 +1221,9 @@ const guides = {
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
     shot: 'assets/img/gfx/sidechain_ducker.png',
     video: 'assets/video/sidechain_ducker.mp4',
-    studio: true
+    studio: true,
+    demo: 'sidechain_ducker',
+    page: 'plugins/sidechain-ducker/'
   },
   'stereo-width': {
     title: 'STEREO WIDTH',
@@ -1133,7 +1239,8 @@ const guides = {
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
     shot: 'assets/img/gfx/stereo_width.png',
     video: 'assets/video/stereo_width.mp4',
-    studio: true
+    studio: true,
+    page: 'plugins/stereo-width/'
   },
   'tape': {
     title: 'TAPE',
@@ -1156,7 +1263,9 @@ const guides = {
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
     shot: 'assets/img/gfx/tape.png',
     video: 'assets/video/tape.mp4',
-    studio: true
+    studio: true,
+    demo: 'tape',
+    page: 'plugins/tape/'
   },
   'tape-echo': {
     title: 'TAPE ECHO',
@@ -1180,7 +1289,9 @@ const guides = {
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
     shot: 'assets/img/gfx/tape_echo.png',
     video: 'assets/video/tape_echo.mp4',
-    studio: true
+    studio: true,
+    demo: 'tape_echo',
+    page: 'plugins/tape-echo/'
   },
   'transient-shaper': {
     title: 'TRANSIENT SHAPER',
@@ -1201,7 +1312,9 @@ const guides = {
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
     shot: 'assets/img/gfx/transient_shaper.png',
     video: 'assets/video/transient_shaper.mp4',
-    studio: true
+    studio: true,
+    demo: 'transient_shaper',
+    page: 'plugins/transient-shaper/'
   },
   'tremolo': {
     title: 'TREMOLO',
@@ -1221,7 +1334,9 @@ const guides = {
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
     shot: 'assets/img/gfx/tremolo.png',
     video: 'assets/video/tremolo.mp4',
-    studio: true
+    studio: true,
+    demo: 'tremolo',
+    page: 'plugins/tremolo/'
   },
   'vibrato': {
     title: 'VIBRATO',
@@ -1237,7 +1352,9 @@ const guides = {
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
     shot: 'assets/img/gfx/vibrato.png',
     video: 'assets/video/vibrato.mp4',
-    studio: true
+    studio: true,
+    demo: 'vibrato',
+    page: 'plugins/vibrato/'
   },
   'volume-shaper': {
     title: 'VOLUME SHAPER',
@@ -1258,7 +1375,9 @@ const guides = {
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
     shot: 'assets/img/gfx/volume_shaper.png',
     video: 'assets/video/volume_shaper.mp4',
-    studio: true
+    studio: true,
+    demo: 'volume_shaper',
+    page: 'plugins/volume-shaper/'
   },
   'wah': {
     title: 'WAH',
@@ -1282,7 +1401,9 @@ const guides = {
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
     shot: 'assets/img/gfx/wah.png',
     video: 'assets/video/wah.mp4',
-    studio: true
+    studio: true,
+    demo: 'wah',
+    page: 'plugins/wah/'
   },
 
   // ─── ADVANCED ───
@@ -1309,7 +1430,9 @@ const guides = {
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
     shot: 'assets/img/gfx/amp_simulator.png',
     video: 'assets/video/amp_simulator.mp4',
-    studio: true
+    studio: true,
+    demo: 'amp_simulator',
+    page: 'plugins/amp-simulator/'
   },
   'comb-filter': {
     title: 'COMB FILTER',
@@ -1326,7 +1449,9 @@ const guides = {
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
     shot: 'assets/img/gfx/comb_filter.png',
     video: 'assets/video/comb_filter.mp4',
-    studio: true
+    studio: true,
+    demo: 'comb_filter',
+    page: 'plugins/comb-filter/'
   },
   'convolution': {
     title: 'CONVOLUTION',
@@ -1347,7 +1472,9 @@ const guides = {
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
     shot: 'assets/img/gfx/convolution.png',
     video: 'assets/video/convolution.mp4',
-    studio: true
+    studio: true,
+    demo: 'convolution',
+    page: 'plugins/convolution/'
   },
   'formant-filter': {
     title: 'FORMANT FILTER',
@@ -1363,7 +1490,9 @@ const guides = {
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
     shot: 'assets/img/gfx/formant_filter.png',
     video: 'assets/video/formant_filter.mp4',
-    studio: true
+    studio: true,
+    demo: 'formant_filter',
+    page: 'plugins/formant-filter/'
   },
   'frequency-shifter': {
     title: 'FREQUENCY SHIFTER',
@@ -1380,7 +1509,9 @@ const guides = {
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
     shot: 'assets/img/gfx/frequency_shifter.png',
     video: 'assets/video/frequency_shifter.mp4',
-    studio: true
+    studio: true,
+    demo: 'frequency_shifter',
+    page: 'plugins/frequency-shifter/'
   },
   'glitch-fx': {
     title: 'GLITCH FX',
@@ -1408,7 +1539,9 @@ const guides = {
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
     shot: 'assets/img/gfx/glitch_fx.png',
     video: 'assets/video/glitch_fx.mp4',
-    studio: true
+    studio: true,
+    demo: 'glitch_fx',
+    page: 'plugins/glitch-fx/'
   },
   'granular-delay': {
     title: 'GRANULAR DELAY',
@@ -1430,7 +1563,9 @@ const guides = {
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
     shot: 'assets/img/gfx/granular_delay.png',
     video: 'assets/video/granular_delay.mp4',
-    studio: true
+    studio: true,
+    demo: 'granular_delay',
+    page: 'plugins/granular-delay/'
   },
   'half-speed': {
     title: 'HALF SPEED',
@@ -1449,7 +1584,9 @@ const guides = {
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
     shot: 'assets/img/gfx/half_speed.png',
     video: 'assets/video/half_speed.mp4',
-    studio: true
+    studio: true,
+    demo: 'half_speed',
+    page: 'plugins/half-speed/'
   },
   'harmonizer': {
     title: 'HARMONIZER',
@@ -1474,7 +1611,9 @@ const guides = {
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
     shot: 'assets/img/gfx/harmonizer.png',
     video: 'assets/video/harmonizer.mp4',
-    studio: true
+    studio: true,
+    demo: 'harmonizer',
+    page: 'plugins/harmonizer/'
   },
   'kick-shaper': {
     title: 'KICK SHAPER',
@@ -1493,7 +1632,9 @@ const guides = {
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
     shot: 'assets/img/gfx/kick_shaper.png',
     video: 'assets/video/kick_shaper.mp4',
-    studio: true
+    studio: true,
+    demo: 'kick_shaper',
+    page: 'plugins/kick-shaper/'
   },
   'ladder-filter': {
     title: 'LADDER FILTER',
@@ -1511,7 +1652,9 @@ const guides = {
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
     shot: 'assets/img/gfx/ladder_filter.png',
     video: 'assets/video/ladder_filter.mp4',
-    studio: true
+    studio: true,
+    demo: 'ladder_filter',
+    page: 'plugins/ladder-filter/'
   },
   'loudness-meter': {
     title: 'LOUDNESS METER',
@@ -1530,7 +1673,8 @@ const guides = {
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
     shot: 'assets/img/gfx/loudness_meter.png',
     video: 'assets/video/loudness_meter.mp4',
-    studio: true
+    studio: true,
+    page: 'plugins/loudness-meter/'
   },
   'noise-reduction': {
     title: 'NOISE REDUCTION',
@@ -1552,7 +1696,9 @@ const guides = {
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
     shot: 'assets/img/gfx/noise_reduction.png',
     video: 'assets/video/noise_reduction.mp4',
-    studio: true
+    studio: true,
+    demo: 'noise_reduction',
+    page: 'plugins/noise-reduction/'
   },
   'ott': {
     title: 'OTT',
@@ -1573,7 +1719,9 @@ const guides = {
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
     shot: 'assets/img/gfx/ott.png',
     video: 'assets/video/ott.mp4',
-    studio: true
+    studio: true,
+    demo: 'ott',
+    page: 'plugins/ott/'
   },
   'pitch-correction': {
     title: 'PITCH CORRECTION',
@@ -1596,7 +1744,9 @@ const guides = {
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
     shot: 'assets/img/gfx/pitch_correction.png',
     video: 'assets/video/pitch_correction.mp4',
-    studio: true
+    studio: true,
+    demo: 'pitch_correction',
+    page: 'plugins/pitch-correction/'
   },
   'resonance-suppressor': {
     title: 'RESONANCE SUPPRESSOR',
@@ -1619,7 +1769,9 @@ const guides = {
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
     shot: 'assets/img/gfx/resonance_suppressor.png',
     video: 'assets/video/resonance_suppressor.mp4',
-    studio: true
+    studio: true,
+    demo: 'resonance_suppressor',
+    page: 'plugins/resonance-suppressor/'
   },
   'resonator': {
     title: 'RESONATOR',
@@ -1639,7 +1791,9 @@ const guides = {
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
     shot: 'assets/img/gfx/resonator.png',
     video: 'assets/video/resonator.mp4',
-    studio: true
+    studio: true,
+    demo: 'resonator',
+    page: 'plugins/resonator/'
   },
   'reverser': {
     title: 'REVERSER',
@@ -1656,7 +1810,9 @@ const guides = {
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
     shot: 'assets/img/gfx/reverser.png',
     video: 'assets/video/reverser.mp4',
-    studio: true
+    studio: true,
+    demo: 'reverser',
+    page: 'plugins/reverser/'
   },
   'robotizer': {
     title: 'ROBOTIZER',
@@ -1673,7 +1829,9 @@ const guides = {
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
     shot: 'assets/img/gfx/robotizer.png',
     video: 'assets/video/robotizer.mp4',
-    studio: true
+    studio: true,
+    demo: 'robotizer',
+    page: 'plugins/robotizer/'
   },
   'rotary-speaker': {
     title: 'ROTARY SPEAKER',
@@ -1692,7 +1850,9 @@ const guides = {
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
     shot: 'assets/img/gfx/rotary_speaker.png',
     video: 'assets/video/rotary_speaker.mp4',
-    studio: true
+    studio: true,
+    demo: 'rotary_speaker',
+    page: 'plugins/rotary-speaker/'
   },
   'shimmer-reverb': {
     title: 'SHIMMER REVERB',
@@ -1711,7 +1871,9 @@ const guides = {
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
     shot: 'assets/img/gfx/shimmer_reverb.png',
     video: 'assets/video/shimmer_reverb.mp4',
-    studio: true
+    studio: true,
+    demo: 'shimmer_reverb',
+    page: 'plugins/shimmer-reverb/'
   },
   'slicer': {
     title: 'SLICER',
@@ -1732,7 +1894,9 @@ const guides = {
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
     shot: 'assets/img/gfx/slicer.png',
     video: 'assets/video/slicer.mp4',
-    studio: true
+    studio: true,
+    demo: 'slicer',
+    page: 'plugins/slicer/'
   },
   'spectral-freeze': {
     title: 'SPECTRAL FREEZE',
@@ -1750,7 +1914,9 @@ const guides = {
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
     shot: 'assets/img/gfx/spectral_freeze.png',
     video: 'assets/video/spectral_freeze.mp4',
-    studio: true
+    studio: true,
+    demo: 'spectral_freeze',
+    page: 'plugins/spectral-freeze/'
   },
   'spectrum-analyzer': {
     title: 'SPECTRUM ANALYZER',
@@ -1770,7 +1936,8 @@ const guides = {
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
     shot: 'assets/img/gfx/spectrum_analyzer.png',
     video: 'assets/video/spectrum_analyzer.mp4',
-    studio: true
+    studio: true,
+    page: 'plugins/spectrum-analyzer/'
   },
   'spring-reverb': {
     title: 'SPRING REVERB',
@@ -1789,7 +1956,9 @@ const guides = {
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
     shot: 'assets/img/gfx/spring_reverb.png',
     video: 'assets/video/spring_reverb.mp4',
-    studio: true
+    studio: true,
+    demo: 'spring_reverb',
+    page: 'plugins/spring-reverb/'
   },
   'step-fx': {
     title: 'STEP FX',
@@ -1827,7 +1996,9 @@ const guides = {
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
     shot: 'assets/img/gfx/step_fx.png',
     video: 'assets/video/step_fx.mp4',
-    studio: true
+    studio: true,
+    demo: 'step_fx',
+    page: 'plugins/step-fx/'
   },
   'stereo-scope': {
     title: 'STEREO SCOPE',
@@ -1845,7 +2016,8 @@ const guides = {
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
     shot: 'assets/img/gfx/stereo_scope.png',
     video: 'assets/video/stereo_scope.mp4',
-    studio: true
+    studio: true,
+    page: 'plugins/stereo-scope/'
   },
   'sub-bloom': {
     title: 'SUB BLOOM',
@@ -1863,7 +2035,9 @@ const guides = {
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
     shot: 'assets/img/gfx/sub_bloom.png',
     video: 'assets/video/sub_bloom.mp4',
-    studio: true
+    studio: true,
+    demo: 'sub_bloom',
+    page: 'plugins/sub-bloom/'
   },
   'tape-stop': {
     title: 'TAPE STOP',
@@ -1879,7 +2053,9 @@ const guides = {
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
     shot: 'assets/img/gfx/tape_stop.png',
     video: 'assets/video/tape_stop.mp4',
-    studio: true
+    studio: true,
+    demo: 'tape_stop',
+    page: 'plugins/tape-stop/'
   },
   'trance-gate': {
     title: 'TRANCE GATE',
@@ -1916,7 +2092,9 @@ const guides = {
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
     shot: 'assets/img/gfx/trance_gate.png',
     video: 'assets/video/trance_gate.mp4',
-    studio: true
+    studio: true,
+    demo: 'trance_gate',
+    page: 'plugins/trance-gate/'
   },
   'vinyl-age': {
     title: 'VINYL AGE',
@@ -1940,7 +2118,9 @@ const guides = {
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
     shot: 'assets/img/gfx/vinyl_age.png',
     video: 'assets/video/vinyl_age.mp4',
-    studio: true
+    studio: true,
+    demo: 'vinyl_age',
+    page: 'plugins/vinyl-age/'
   },
   'vocoder': {
     title: 'VOCODER',
@@ -1962,7 +2142,9 @@ const guides = {
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
     shot: 'assets/img/gfx/vocoder.png',
     video: 'assets/video/vocoder.mp4',
-    studio: true
+    studio: true,
+    demo: 'vocoder',
+    page: 'plugins/vocoder/'
   },
   'warped-delay': {
     title: 'WARPED DELAY',
@@ -1983,7 +2165,9 @@ const guides = {
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
     shot: 'assets/img/gfx/warped_delay.png',
     video: 'assets/video/warped_delay.mp4',
-    studio: true
+    studio: true,
+    demo: 'warped_delay',
+    page: 'plugins/warped-delay/'
   },
 
   // ─── INSTRUMENTS ───
@@ -2016,7 +2200,8 @@ const guides = {
     properties: 'An instrument: MIDI in, stereo out (the same signal on both sides), no samples. One monophonic voice with last-note priority: releasing a key goes back to a key still held. Saw and Square are band-limited (PolyBLEP); the low-pass is two state-variable stages (24 dB per octave), the second one resonant, with an exponential envelope; Drive is a soft clipper after the filter; the amplitude has an ADSR with linear attack and exponential decay and release, so notes start and stop without clicks. Pitch bend covers +-2 semitones. The phrase player follows the host\'s beat while it plays (from the first key while it is stopped), assumes 4/4 and restarts the bar every 16 steps; the keys from C1 to G#1 (MIDI notes 24 to 32) choose the phrase, the newest key held from C2 (36) up sets its root, and a new root while a note sounds retunes it. All notes off (CC 123/120) releases everything. Sample-accurate and the same in the JSFX, the GFX version and the VST3/CLAP.',
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
     shot: 'assets/img/gfx/bass.png',
-    video: 'assets/video/bass.mp4'
+    video: 'assets/video/bass.mp4',
+    page: 'plugins/bass/'
   },
   'drum-machine': {
     title: 'DRUM MACHINE',
@@ -2091,7 +2276,8 @@ const guides = {
     properties: 'An instrument: MIDI in, stereo out (or four stereo pairs with Outputs Groups), no samples. Ten synthesized voices after the classic drum machines: a sine kick with click and pitch sweep, a two-tone snare with noise, a three-burst clap, rim/clave, closed and open hats and a cymbal from six detuned squares (the closed hat chokes the open one), two toms with pitch sweep and a two-square cowbell. A 16-step sequencer locked to the host\'s beat while it plays: steps are hit, accent, flam or roll, each track has its own length (1 to 16 steps), with swing up to 75%. Probability and Generate draw from an exact Park-Miller sequence from Seed, so a pattern always comes back the same. General MIDI drum notes (36 kick, 38 snare, 39 clap, 37 rim, 42 closed hat, 46 open hat, toms, 56 cowbell, 49 cymbal) play the voices at any time, with velocity. Drive is a soft clipper and Grit a sample-and-hold with bit reduction on the whole kit. Sample-accurate and the same in the JSFX, the GFX version and the VST3/CLAP.',
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
     shot: 'assets/img/gfx/drum_machine.png',
-    video: 'assets/video/drum_machine.mp4'
+    video: 'assets/video/drum_machine.mp4',
+    page: 'plugins/drum-machine/'
   },
   'fm': {
     title: 'FM',
@@ -2140,7 +2326,8 @@ const guides = {
     properties: 'An instrument: MIDI in, stereo out, no samples, 8 voices (a new note takes a silent voice, then the oldest released one, then the oldest; a sounding voice keeps its envelopes and phases, so nothing clicks). Four sine operators per voice in phase modulation, each with a ratio, a linear-attack exponential ADSR and velocity sensitivity; a modulator\'s level is its index (square law, up to 8 radians), operator 4\'s feedback averages its last two outputs for stability. A voice ends when every carrier\'s envelope has. Sample-accurate MIDI with sustain pedal, mod wheel vibrato (5.5 Hz), pitch bend and all notes off, then chorus and an eight-line feedback delay network reverb. The same in the JSFX, the GFX version and the VST3/CLAP.',
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
     shot: 'assets/img/gfx/fm.png',
-    video: 'assets/video/fm.mp4'
+    video: 'assets/video/fm.mp4',
+    page: 'plugins/fm/'
   },
   'keys': {
     title: 'KEYS',
@@ -2164,7 +2351,8 @@ const guides = {
     properties: 'An instrument: MIDI in, stereo out, no samples, 16 voices (the same key struck again takes a new voice and releases the old one; a 17th key takes the oldest voice, released ones first, after a 2 ms fade). Each key is a two-operator FM tone whose index falls after the strike, with a fast and a slow decay, plus up to three modal partials (damped resonators at the model\'s overtone ratios) and a short mallet noise; higher keys decay faster. Keys start with a 0.2 to 1.5 ms ramp and fade over Release; the sustain pedal (CC 64) holds them, all notes off (CC 123/120) releases every key. The voices are spread a little by pitch, then pass the drive (a soft clipper), the tremolo (level or autopan) and a stereo chorus. Sample-accurate and the same in the JSFX, the GFX version and the VST3/CLAP.',
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
     shot: 'assets/img/gfx/keys.png',
-    video: 'assets/video/keys.mp4'
+    video: 'assets/video/keys.mp4',
+    page: 'plugins/keys/'
   },
   'organ': {
     title: 'ORGAN',
@@ -2196,7 +2384,8 @@ const guides = {
     properties: 'An instrument: MIDI in, stereo out, no samples, 16 voices (a 17th key takes the oldest voice, released ones first, after a 1.5 ms fade). Each key sums its nine drawbars as sines at the harmonics 1/2, 3/2, 1, 2, 3, 4, 5, 6 and 8 of its pitch, made from one sine and cosine per key; like tonewheels the harmonics fold back an octave above 5.9 kHz and below 32 Hz. Keys start and stop with 1.5 and 6 ms ramps; velocity does nothing, as on the original. The sum passes the vibrato scanner (a delay swept at 6.9 Hz), the preamp (a soft clipper) and the rotary speaker of NULL Rotary Speaker (an 800 Hz crossover, horn and drum with Doppler and tremolo, two microphones). CC 11 is expression (smoothed), the mod wheel (CC 1) at 64 and up switches the rotor speed, all notes off (CC 123/120) releases every key. Sample-accurate and the same in the JSFX, the GFX version and the VST3/CLAP.',
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
     shot: 'assets/img/gfx/organ.png',
-    video: 'assets/video/organ.mp4'
+    video: 'assets/video/organ.mp4',
+    page: 'plugins/organ/'
   },
   'percussion': {
     title: 'PERCUSSION',
@@ -2260,7 +2449,8 @@ const guides = {
     properties: 'An instrument: MIDI in, stereo out, no samples. Eleven synthesized voices: conga, tumba and bongos as tuned membranes (three inharmonic modes with a pitch drop and a noise band; open, muted and slap strokes), shaker, cabasa and tambourine as filtered noise bursts (with jingles), cowbell from two detuned squares, claves and triangle from resonant modes, guiro from rapid noise ticks. GM-like keys: C4/C#4 bongos, D4 conga mute, D#4 conga open, E4 tumba, F4/F#4 slaps, F#3 tambourine, G#3 cowbell, A4 cabasa, A#4/A#5 shaker, C#5/D5 guiro, D#5 claves, G#5/A5 triangle. Eight built-in grooves synced to the host (or held on C1..G1), with swing, accent and humanize from a deterministic generator; a small stereo room (combs and all-passes). Voices retrigger without clicks.',
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
     shot: 'assets/img/gfx/percussion.png',
-    video: 'assets/video/percussion.mp4'
+    video: 'assets/video/percussion.mp4',
+    page: 'plugins/percussion/'
   },
   'pluck': {
     title: 'PLUCK',
@@ -2284,7 +2474,8 @@ const guides = {
     properties: 'An instrument: MIDI in, stereo out, no samples, 12 voices (a note played again lets go of the string still sounding in 40 ms and takes a new voice; a 13th takes the oldest voice, released ones first, after a 2 ms fade). Each note is a Karplus-Strong string: a delay line one period long, read with interpolation and corrected for the loop filter so it is in tune, a one-pole low-pass and a loop gain from the decay time at the pitch. The pluck is low-passed noise and the triangle of a string pulled at Pick Position, combed at that position; Koto, Pipa and Banjo start slightly sharp and settle. The strings pass the model\'s body (three resonances) and a DC blocker. The strummer plays the keys held (or held by the sustain pedal, CC 64) at Strum Rate on the host\'s beat, low to high (down) or high to low (up), Strum Spread apart; up strums in Down-Up and Folk hit the top four strings, the beat\'s strums are louder. All notes off (CC 123/120) stops everything. Sample-accurate and the same in the JSFX, the GFX version and the VST3/CLAP.',
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
     shot: 'assets/img/gfx/pluck.png',
-    video: 'assets/video/pluck.mp4'
+    video: 'assets/video/pluck.mp4',
+    page: 'plugins/pluck/'
   },
   'sampler': {
     title: 'SAMPLER',
@@ -2317,7 +2508,8 @@ const guides = {
     properties: 'An instrument: MIDI in, stereo out, 16 voices (a 17th note takes the oldest released voice, else the oldest, with a 2 ms fade). Reads WAV and FLAC (mono, stereo; more channels play the first two) up to 4,194,304 sample values, at the file\'s own rate with 4-point Hermite interpolation. Linear attack and exponential decay/release, a TPT state-variable low-pass per voice with its own decaying envelope, loop with a declick of the jump, 3 ms fade at the sample\'s end, sustain pedal (CC 64), all notes off (CC 123), all sound off (CC 120), pitch bend. Without a file a deterministic built-in sound is generated, so it always makes sound.',
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
     shot: 'assets/img/gfx/sampler.png',
-    video: 'assets/video/sampler.mp4'
+    video: 'assets/video/sampler.mp4',
+    page: 'plugins/sampler/'
   },
   'synth': {
     title: 'SYNTH',
@@ -2374,7 +2566,8 @@ const guides = {
     properties: 'An instrument: MIDI in, stereo out, no samples, 8 voices (a new note takes a silent voice, then the oldest released one, then the oldest; a sounding voice keeps its envelope and phases, so nothing clicks). Analog: PolyBLEP saw and square, triangle, sine. Wavetable: eight tables of eight frames made at load by synthesis (additive or one cycle through the FFT), band-limited per octave and read with linear interpolation between samples and frames. Per voice: a state-variable filter (12 or 24 dB, low, band or high pass), linear-attack exponential ADSRs for amp and filter. A global LFO (smoothed over 2 ms), sample-accurate MIDI with sustain pedal, mod wheel vibrato, pitch bend and all notes off, then chorus, ping-pong delay and an eight-line feedback delay network reverb. Deterministic (Park-Miller noise) and the same in the JSFX, the GFX version and the VST3/CLAP.',
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
     shot: 'assets/img/gfx/synth.png',
-    video: 'assets/video/synth.mp4'
+    video: 'assets/video/synth.mp4',
+    page: 'plugins/synth/'
   },
 
   // ─── MIDI ───
@@ -2412,7 +2605,8 @@ const guides = {
     properties: 'A MIDI effect: MIDI in, MIDI out, the audio passes through untouched (place it before an instrument). Steps fall on a grid locked to the host\'s beat position while it plays (a held chord starts on the next step); while it is stopped the arpeggio runs at the tempo from the first key. The sequence is the held notes by pitch (or as played) over the octaves; each step plays one note, or every note for Chord, for Gate % of the step, with the played velocity times the step\'s lane value. Every note sent is ended: releasing the last key (without Latch), all notes off (CC 120/123) and the transport stopping end the arpeggio\'s notes at once; a pitch played twice in a row starts again cleanly. Controllers, pitch bend and other messages pass through. The Random pattern uses an exact Park-Miller sequence from Seed. Sample-accurate and the same in the JSFX, the GFX version and the VST3/CLAP.',
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
     shot: 'assets/img/gfx/arpeggiator.png',
-    video: 'assets/video/arpeggiator.mp4'
+    video: 'assets/video/arpeggiator.mp4',
+    page: 'plugins/arpeggiator/'
   },
   'chords': {
     title: 'CHORDS',
@@ -2435,7 +2629,8 @@ const guides = {
     properties: 'A MIDI effect: MIDI in, MIDI out, the audio passes through untouched (place it before an instrument). Chords are stacked in thirds inside the scale (sus2/sus4 swap the third for the second or fourth), then inverted, voiced, moved by octaves and kept within 0 to 127. Every note-on sent is remembered with the key that made it, so the key\'s release always ends exactly those notes, whatever was changed meanwhile; strum notes still waiting are dropped; a note two keys share sounds until both are released; all notes off (CC 120/123) releases every key of its channel. Pitch bend, controllers and sustain pass through; poly pressure goes to every note of the key\'s chord. Sample-accurate and the same in the JSFX, the GFX version and the VST3/CLAP.',
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
     shot: 'assets/img/gfx/chords.png',
-    video: 'assets/video/chords.mp4'
+    video: 'assets/video/chords.mp4',
+    page: 'plugins/chords/'
   },
   'humanize': {
     title: 'HUMANIZE',
@@ -2452,7 +2647,8 @@ const guides = {
     properties: 'A MIDI effect: MIDI in, MIDI out, the audio passes through untouched (place it before an instrument). A MIDI effect cannot send a note before it arrives, so everything goes out a fixed latency later (Timing plus Push\'s move), reported for delay compensation; each note-on then moves by a random amount within ±Timing plus the groove\'s shift at its place in the beat (the host\'s beat while it plays, a beat at the tempo while it is stopped). A note-off follows the groove at its own place and never comes before its note-on; a pitch two notes share starts again cleanly; all notes off releases the channel\'s notes first; other messages keep their place, the latency later. The random numbers are an exact Park-Miller sequence from Seed, started again at every transport start. Sample-accurate and the same in the JSFX, the GFX version and the VST3/CLAP.',
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
     shot: 'assets/img/gfx/humanize.png',
-    video: 'assets/video/humanize.mp4'
+    video: 'assets/video/humanize.mp4',
+    page: 'plugins/humanize/'
   },
   'riff': {
     title: 'RIFF',
@@ -2476,7 +2672,8 @@ const guides = {
     properties: 'A MIDI effect: MIDI in, MIDI out, the audio passes through untouched (place it before an instrument). The pattern comes from two separate Park-Miller random streams seeded by Seed: one for the rhythm (which steps play, their velocity and accents), one for the pitches (root jumps, steps and skips, motif repeats), so it is fully deterministic and Rhythm Lock can keep one while the other changes. While the host plays, the steps sit on its beat grid (the step is the beat position divided by the rate, modulo Steps); stopped, the riff starts with the key and runs at the host\'s tempo. One note sounds at a time and every note-on gets its note-off; releasing every key, all notes off (CC 120/123) or the transport stopping ends the riff. Pitch bend, controllers and sustain pass through; poly pressure of the leading key goes to the note sounding. Sample-accurate and the same in the JSFX, the GFX version and the VST3/CLAP.',
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
     shot: 'assets/img/gfx/riff.png',
-    video: 'assets/video/riff.mp4'
+    video: 'assets/video/riff.mp4',
+    page: 'plugins/riff/'
   },
   'scale': {
     title: 'SCALE',
@@ -2493,10 +2690,13 @@ const guides = {
     properties: 'A MIDI effect: MIDI in, MIDI out, the audio passes through untouched (place it before an instrument). Every note is mapped once, when it starts; its note-off always ends the very note that was sent, even when the settings change while it is held, and a note two keys share sounds until both are released. All notes off (CC 120/123) releases every key of its channel; pitch bend, controllers, sustain and pressure pass through (poly pressure follows the mapped note). Sample-accurate and the same in the JSFX, the GFX version and the VST3/CLAP.',
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
     shot: 'assets/img/gfx/scale.png',
-    video: 'assets/video/scale.mp4'
+    video: 'assets/video/scale.mp4',
+    page: 'plugins/scale/'
   }
 };
 // END GUIDES
+
+const MEDIA_VIDEOS = 'https://github.com/koulaxizis/null-jsfx/releases/download/media/';
 
 function openGuide(pluginId) {
   const guide = guides[pluginId];
@@ -2512,9 +2712,20 @@ function openGuide(pluginId) {
 
   if (guide.video) {
     // the presentation video: the plugin playing the demo loop, before and after (poster: a still of it)
-    html += '<video class="guide-shot guide-video" src="' + guide.video + '" poster="' + guide.video.replace(/\.mp4$/, '.jpg') + '" controls playsinline preload="none" width="1280" height="720" aria-label="' + guide.title + ' presentation video"></video>';
+    // streamed from the "media" release (.github/workflows/media.yml), with the site's copy as a fallback
+    html += '<video class="guide-shot guide-video" poster="' + guide.video.replace(/\.mp4$/, '.jpg') + '" controls playsinline preload="none" width="1280" height="720" aria-label="' + guide.title + ' presentation video">'
+      + '<source src="' + MEDIA_VIDEOS + guide.video.split('/').pop() + '" type="video/mp4"><source src="' + guide.video + '" type="video/mp4"></video>';
   } else if (guide.shot) {
     html += '<img class="guide-shot" src="' + guide.shot + '" alt="' + guide.title + ' GFX, VST3 and CLAP interface" width="720" height="480" loading="lazy">';
+  }
+
+  if (guide.demo) {
+    html += '<div class="guide-section"><h4>Listen</h4><div class="demo demo-big" data-demo="' + guide.demo + '">'
+      + '<button type="button" class="demo-play" aria-label="Listen: with and without the plugin" title="Listen">'
+      + '<svg class="i-play" width="12" height="12" viewBox="0 0 24 24" aria-hidden="true"><polygon points="6 4 20 12 6 20" fill="currentColor"/></svg>'
+      + '<svg class="i-stop" width="12" height="12" viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="6" width="12" height="12" fill="currentColor"/></svg></button>'
+      + '<button type="button" class="demo-ab" title="Switch between the plugin and the dry sound"><span class="on">ON</span><span class="off">BYPASS</span></button>'
+      + '<span class="demo-note">The same music with and without the plugin. Switch while it plays.</span></div></div>';
   }
 
   html += '<div class="guide-section"><h4>Controls</h4><ul class="guide-sliders">';
@@ -2550,16 +2761,45 @@ function openGuide(pluginId) {
       + '<svg class="try-studio-arrow" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M7 17 17 7"/><path d="M8 7h9v9"/></svg></a></div>';
   }
 
+  if (guide.page) {
+    html += '<div class="guide-section guide-page"><a href="' + guide.page + '">Open the full page &rarr;</a></div>';
+  }
+
   html += '</div>';
 
   modalBody.innerHTML = html;
   document.getElementById('guide-modal').classList.add('active');
+  // the address points at the open guide, so it can be shared (nulljsfx.tech/#delay)
+  if (location.hash !== '#' + pluginId) history.replaceState(null, '', '#' + pluginId);
 }
 
 function closeModal() {
+  const modal = document.getElementById('guide-modal');
+  if (!modal.classList.contains('active')) return;
   document.querySelectorAll('#modal-body video').forEach(function(v) { v.pause(); });
-  document.getElementById('guide-modal').classList.remove('active');
+  if (window.stopDemo) window.stopDemo();
+  modal.classList.remove('active');
+  if (guides[location.hash.slice(1)]) history.replaceState(null, '', location.pathname + location.search);
 }
+
+// #<plugin> in the address opens its guide
+function guideFromHash() {
+  const id = location.hash.slice(1);
+  if (guides[id]) openGuide(id);
+}
+window.addEventListener('hashchange', guideFromHash);
+guideFromHash();
+
+// a card's name links to the plugin's page (for search engines and new tabs); a plain click opens the guide
+document.addEventListener('click', function(e) {
+  const link = e.target.closest('.card-link');
+  if (!link) return;
+  if (e.ctrlKey || e.metaKey || e.shiftKey || e.button !== 0) {
+    e.stopPropagation();
+    return;
+  }
+  e.preventDefault();
+}, true);
 
 document.addEventListener('keydown', function(e) {
   if (e.key === 'Escape') {

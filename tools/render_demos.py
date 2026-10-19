@@ -38,7 +38,7 @@ START, LENGTH, PREROLL = 20.0, 10.0, 2.0  # seconds; the pre-roll fills delays a
 SKIP = {
     "loudness_meter", "spectrum_analyzer", "stereo_scope", "noise_generator", "band_splitter",
     "breath_control", "auto_leveler", "deesser", "dynamic_eq", "gate", "mono_maker", "stereo_width",
-    "mid_side_matrix",
+    "mid_side_matrix", "de_plosive",
 }
 # where the first preset is too subtle to hear on a full mix, or not meant for one
 DEMO = {
@@ -61,6 +61,7 @@ DEMO = {
     "spread": "Wide Pad",
     "volume_shaper": "Hard Dance Pump",
     "wetter": "Big Long Tail",
+    "wah": "Slow Sweep",
 }
 # slider moves during the demo (seconds into the excerpt, slider index from 0, value)
 MOVES = {

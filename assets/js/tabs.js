@@ -21,39 +21,33 @@
     }
 
     buttons.forEach(b => b.addEventListener('click', () => {
+        // a tab shows its own plugins: drop the search and the use filter
         const search = document.getElementById('plugin-search');
         if (search && search.value.trim()) {
             search.value = '';
             search.dispatchEvent(new Event('input'));
         }
+        if (window.setPluginTag) window.setPluginTag('');
         show(b.dataset.tab, true);
     }));
 
-    // searching looks through every plugin tab at once (search.js hides what does not match)
-    const search = document.getElementById('plugin-search');
-    if (search) {
-        let before = null;
-        search.addEventListener('input', () => {
-            if (search.value.trim()) {
-                if (before === null) before = current === 'chains' ? 'effects' : current;
-                buttons.forEach(b => {
-                    b.classList.remove('active');
-                    b.setAttribute('aria-selected', 'false');
-                });
-                document.querySelectorAll('.tab-panel').forEach(p => { p.hidden = !p.classList.contains('tab-plugins'); });
-            } else if (before !== null) {
-                show(before, false);
-                before = null;
-            }
-        });
-        // the clear button (and Escape) empty the box without an input event
-        const restore = () => { if (before !== null && !search.value.trim()) { show(before, false); before = null; } };
-        const clear = window.clearSearch;
-        if (clear) window.clearSearch = function() { clear(); restore(); };
-        const clearButton = document.querySelector('.search-clear');
-        if (clearButton) clearButton.addEventListener('click', restore);
-        search.addEventListener('keydown', e => { if (e.key === 'Escape') setTimeout(restore); });
-    }
+    // while a search or a use filter is on, every plugin tab shows at once (search.js hides what
+    // does not match); when both are off, the tab that was open comes back
+    let before = null;
+    document.addEventListener('plugin-filter', e => {
+        if (e.detail.active) {
+            if (before === null) before = current === 'chains' ? 'effects' : current;
+            buttons.forEach(b => {
+                b.classList.remove('active');
+                b.setAttribute('aria-selected', 'false');
+            });
+            document.querySelectorAll('.tab-panel').forEach(p => { p.hidden = !p.classList.contains('tab-plugins'); });
+        } else if (before !== null) {
+            const tab = before;
+            before = null;
+            show(tab, false);
+        }
+    });
 
     function fromHash() {
         const name = Object.keys(hashes).find(k => hashes[k] === location.hash);

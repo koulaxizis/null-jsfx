@@ -52,6 +52,12 @@
     window.openDownload = function () { showOptions(); modal.classList.add('active'); };
     window.closeDownload = function () { modal.classList.remove('active'); };
 
+    // #download in the address (the plugin pages link there) opens the window
+    if (location.hash === '#download') {
+        history.replaceState(null, '', location.pathname + location.search);
+        openDownload();
+    }
+
     button.addEventListener('click', function (e) {
         e.preventDefault();
         openDownload();
