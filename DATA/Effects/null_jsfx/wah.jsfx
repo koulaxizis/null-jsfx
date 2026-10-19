@@ -31,6 +31,9 @@ out_pin:Right
   // at 100% at -42 dBFS, over a 30 dB range. LFO: a raised cosine at Rate, or one cycle per
   // note at the host tempo, locked to the beat position while the transport plays.
   // In Auto and LFO the Pedal slider is not used.
+  // Level match: a narrow band-pass keeps only a small part of a full mix, so the wah is
+  // brought back to the level of its input (both powers smoothed over 1 s, the gain held
+  // between -12 and +24 dB): the pedal changes the tone, not the loudness.
   ps = 0.5;
   ps_first = 1;
   env = 0;
@@ -38,6 +41,10 @@ out_pin:Right
   fa_l.ic1 = fa_l.ic2 = fa_r.ic1 = fa_r.ic2 = 0;
   fb_l.ic1 = fb_l.ic2 = fb_r.ic1 = fb_r.ic2 = 0;
   ps_c = 1 - exp(-1 / (0.015 * srate));
+  lm_c = 1 - exp(-1 / srate);
+  lm_i = lm_w = 0;
+  lm_d = 10 ^ -20;
+  lm_e = 10 ^ -10;
 
   // TPT state-variable band-pass: returns the band-pass output v1 for coefficients
   // (a1, a2, a3) of the filter set g
@@ -118,5 +125,12 @@ out_pin:Right
     w_r += fb_r.wh_bp(spl1, c1, c2, c3) * k2 * 0.7;
   );
 
-  spl0 = (spl0 * (1 - mix) + w_l * pk * mix) * out_g;
-  spl1 = (spl1 * (1 - mix) + w_r * pk * mix) * out_g;
+  // the level match (lm_d keeps the powers clear of denormals in silence)
+  w_l *= pk;
+  w_r *= pk;
+  lm_i += lm_c * (spl0 * spl0 + spl1 * spl1 + lm_d - lm_i);
+  lm_w += lm_c * (w_l * w_l + w_r * w_r + lm_d - lm_w);
+  lm_g = min(16, max(0.25, sqrt((lm_i + lm_e) / (lm_w + lm_e))));
+
+  spl0 = (spl0 * (1 - mix) + w_l * lm_g * mix) * out_g;
+  spl1 = (spl1 * (1 - mix) + w_r * lm_g * mix) * out_g;

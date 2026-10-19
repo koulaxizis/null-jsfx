@@ -653,7 +653,7 @@ RACK_PRESETS = [
         slot("shimmer_reverb", {"Size": 85, "Decay": 8, "Shimmer": 45, "Mix": 30}),
     ], [("macro1", 2, "Mix", 0.2), ("macro1", 3, "Mix", 0.2), ("macro2", 1, "Attack", -0.2)], {}),
     ("Classic Wah Rig", "Chain", [
-        slot("wah", {"Mode": "Auto", "Model": "Classic", "Resonance": 60, "Sensitivity": 50, "Output": 8}),
+        slot("wah", {"Mode": "Auto", "Model": "Classic", "Resonance": 60, "Sensitivity": 50}),
         slot("amp_simulator", {"Model": "Crunch", "Gain": 5, "Bass": 5, "Mid": 6, "Treble": 6, "Presence": 5,
                                "Output": -1}),
         slot("cabinet_simulator", {"Cabinet": "2x12 Combo", "Mic Position": 30, "Low Cut": 80}),
