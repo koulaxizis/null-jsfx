@@ -1,6 +1,6 @@
 //! Updating the Hub itself from the latest release, without the browser: downloads this
 //! system's Hub file and puts it in place.
-//! Windows: runs the setup in its passive mode (progress bar only), then starts the new Hub.
+//! Windows: runs the setup in its passive mode (progress bar only), which starts the new Hub.
 //! macOS: copies the app out of the disk image over this one and starts it.
 //! Linux: replaces the AppImage; a Hub installed from the .deb opens the download instead.
 
@@ -10,7 +10,6 @@ use std::process::Command;
 
 /// What happened: the new Hub is starting (this one should quit), or the download is only
 /// ready to open by hand (the path).
-#[cfg_attr(windows, allow(dead_code))]
 pub enum Done {
     Restart,
     Open(PathBuf),
@@ -30,20 +29,14 @@ pub fn run(catalog: &Catalog, data: &Path, progress: &mut dyn FnMut(Progress)) -
 #[cfg(windows)]
 fn install(setup: &Path) -> Result<Done, String> {
     use std::os::windows::process::CommandExt;
-    let exe = std::env::current_exe().map_err(|e| e.to_string())?;
-    let q = |p: &Path| p.to_string_lossy().replace('\'', "''");
-    // waits for this Hub to quit, runs the setup (/P: passive, no questions), starts the new Hub
-    let script = format!(
-        "Start-Sleep -Seconds 2; Start-Process -FilePath '{}' -ArgumentList '/P' -Wait; Start-Process -FilePath '{}'",
-        q(setup),
-        q(&exe)
-    );
-    Command::new("powershell")
-        .args(["-NoProfile", "-NonInteractive", "-WindowStyle", "Hidden", "-Command", &script])
-        .creation_flags(0x0800_0000 | 0x0000_0008) // CREATE_NO_WINDOW | DETACHED_PROCESS
-        .spawn()
-        .map_err(|e| format!("Could not start the Hub setup: {e}"))?;
-    Ok(Done::Restart)
+    // The setup does it all, the way Tauri's own updater runs it: /P passive (progress bar only,
+    // no questions), closes this Hub if it is still running, installs, and /R starts the new Hub.
+    // (Waiting for this Hub to quit in a hidden PowerShell did not work: the setup never ran.)
+    match Command::new(setup).args(["/P", "/R"]).creation_flags(0x0000_0008).spawn() {
+        Ok(_) => Ok(Done::Restart),
+        // say, a Hub installed for all users, whose setup needs administrator rights
+        Err(_) => Ok(Done::Open(setup.to_path_buf())),
+    }
 }
 
 #[cfg(target_os = "macos")]

@@ -141,6 +141,32 @@ jobs:
           kill -0 $pid || { echo "the Hub quit on its own"; exit 1; }
           kill $pid || true
 
+      - name: Updates itself (Windows)
+        # what "Update the Hub" does (hub/app/src/selfupdate.rs): the released Hub is running, the
+        # new setup runs with /P /R; the new Hub must be installed and running afterwards
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          Invoke-WebRequest https://github.com/koulaxizis/null-jsfx/releases/latest/download/NULL-JSFX-Hub-Windows-Setup.exe -OutFile "$env:RUNNER_TEMP\released.exe"
+          Start-Process "$env:RUNNER_TEMP\released.exe" -ArgumentList '/S' -Wait
+          $exe = "$env:LOCALAPPDATA\NULL JSFX Hub\null-jsfx-hub.exe"
+          $env:NULL_JSFX_HUB_DATA = "$env:RUNNER_TEMP\hubdata"
+          Start-Process $exe
+          Start-Sleep 10
+          if (-not (Get-Process null-jsfx-hub -ErrorAction SilentlyContinue)) { throw "the released Hub did not start" }
+          Start-Process out\NULL-JSFX-Hub-Windows-Setup.exe -ArgumentList '/P', '/R'
+          $want = (Get-Item out\NULL-JSFX-Hub-Windows-Setup.exe).VersionInfo.ProductVersion
+          for ($i = 0; $i -lt 60; $i++) {
+            Start-Sleep 2
+            $p = Get-Process null-jsfx-hub -ErrorAction SilentlyContinue
+            if ($p -and (Get-Item $exe).VersionInfo.ProductVersion -eq $want -and -not (Get-Process | Where-Object Path -like "*NULL-JSFX-Hub-Windows-Setup.exe")) { break }
+          }
+          $got = (Get-Item $exe).VersionInfo.ProductVersion
+          "installed $got, want $want"
+          if ($got -ne $want) { throw "the setup did not update the Hub" }
+          if (-not (Get-Process null-jsfx-hub -ErrorAction SilentlyContinue)) { throw "the new Hub did not start" }
+          Stop-Process -Name null-jsfx-hub -Force
+
       - uses: actions/upload-artifact@v4
         with:
           name: NULL-JSFX-Hub-${{ matrix.name }}
