@@ -34,7 +34,7 @@ protected:
 
     void valueChanged(uint32_t, float) override { update(); }
 
-    void activate() override
+    void onActivate() override
     {
         fDsp.setSampleRate(getSampleRate());
         fDsp.setParams(fLast);
@@ -46,7 +46,7 @@ protected:
         update();
     }
 
-    void run(const float**, float** outputs, uint32_t frames, const MidiEvent* midi, uint32_t midiCount) override
+    void process(const float**, float** outputs, uint32_t frames, const MidiEvent* midi, uint32_t midiCount) override
     {
         uint32_t n = 0;
         for (uint32_t i = 0; i < midiCount && n < uint32_t(nullorgan::kMaxEvents); ++i)

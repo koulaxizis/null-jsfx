@@ -31,7 +31,7 @@ protected:
 
     void valueChanged(uint32_t, float) override { update(); }
 
-    void activate() override
+    void onActivate() override
     {
         fDsp.setSampleRate(getSampleRate());
         fDsp.reset();
@@ -39,7 +39,7 @@ protected:
 
     void sampleRateChanged(double newSampleRate) override { fDsp.setSampleRate(newSampleRate); }
 
-    void run(const float** inputs, float** outputs, uint32_t frames) override
+    void process(const float** inputs, float** outputs, uint32_t frames) override
     {
         fDsp.process(inputs[0], inputs[1], outputs[0], outputs[1], frames);
         // the four band envelopes for the display: inLevel, outLevel, gr, extra = band 1..4
