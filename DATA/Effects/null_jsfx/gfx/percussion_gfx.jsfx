@@ -679,6 +679,8 @@ out_pin:Right
   // MIDI of this block, played at its offsets in @sample
   mq_n = 0;
   while (midirecv(m_ofs, m_1, m_2, m_3)) (
+    // every message goes on to the next plugin too, so instruments can be layered
+    midisend(m_ofs, m_1, m_2, m_3);
     mq_n < 256 ? (
       MQ[mq_n * 4] = m_ofs;
       MQ[mq_n * 4 + 1] = m_1;
