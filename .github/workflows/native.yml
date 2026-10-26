@@ -269,9 +269,9 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - { os: ubuntu-22.04, name: Linux, exe: "",
+          - { os: ubuntu-22.04, name: Linux, exe: "", python: python3,
               pluginval_sha256: 2e23d311c8c2664457b11be8f6cf4ed29cfdc08765c71c43934a1ed3360f118f }
-          - { os: windows-2022, name: Windows, exe: ".exe",
+          - { os: windows-2022, name: Windows, exe: ".exe", python: python,
               pluginval_sha256: da158e918b60430c6a5223cd99cc2e746bda604e583258c400898caf4e95c523 }
     runs-on: ${{ matrix.os }}
     defaults:
@@ -283,6 +283,7 @@ jobs:
       PLUGINVAL_TAG: v2.0.0-beta3
       # clap-validator (free-audio, MIT): no release binaries, built from this commit
       CLAP_VALIDATOR_REV: b2f1d9b79b1d264a5747f46707d72b1aa40a02ef
+      PYTHON: ${{ matrix.python }}
     steps:
       - uses: actions/checkout@v4
 
@@ -297,7 +298,7 @@ jobs:
             "https://github.com/Tracktion/pluginval/releases/download/$PLUGINVAL_TAG/pluginval_${{ matrix.name }}.zip"
           echo "${{ matrix.pluginval_sha256 }}  pluginval.zip" | sha256sum -c -
           mkdir -p validators
-          ${{ runner.os == 'Windows' && 'python' || 'python3' }} -m zipfile -e pluginval.zip validators/
+          ${{ matrix.python }} -m zipfile -e pluginval.zip validators/
           chmod +x validators/pluginval${{ matrix.exe }}
           validators/pluginval${{ matrix.exe }} --version
           echo "PLUGINVAL=$PWD/validators/pluginval${{ matrix.exe }}" >> "$GITHUB_ENV"

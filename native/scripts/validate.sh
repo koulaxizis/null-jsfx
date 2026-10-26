@@ -13,8 +13,9 @@
 #   clap            clap-validator validate --only-failed --json per .clap (out of process),
 #                   the JSON and a log per plugin in <reports>/clap-validator/
 #
-# Every plugin is checked even when one fails. The list of failures is printed and, on GitHub
-# Actions, added to the job summary. Exit code 1 when any plugin fails.
+# Every plugin is checked even when one fails. The list of failures (for clap, also the failed
+# tests grouped by clap_report.py; $PYTHON, default python3) is printed and, on GitHub Actions,
+# added to the job summary. Exit code 1 when any plugin fails.
 set -uo pipefail
 
 if [ $# -ne 3 ]; then
@@ -64,6 +65,9 @@ done
 summary="### $kind: $(( ${#plugins[@]} - ${#failed[@]} ))/${#plugins[@]} passed"
 if [ ${#failed[@]} -gt 0 ]; then
   summary+=$'\n\nFailed: '"${failed[*]}"
+  if [ "$kind" = clap ]; then
+    summary+=$'\n\n'"$("${PYTHON:-python3}" "$(dirname "$0")/clap_report.py" "$out")"
+  fi
 fi
 echo "$summary"
 if [ -n "${GITHUB_STEP_SUMMARY:-}" ]; then
