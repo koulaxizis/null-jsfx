@@ -107,9 +107,9 @@ out_pin:Right
     ps = 0.5 - 0.5 * cos(2 * $pi * lfo_p);
   );
 
-  // the filter(s) at that position
+  // the filter(s) at that position (held below 0.45 x srate, for very low sample rates)
   f1 = model == 0 ? 400 * 5.5 ^ ps : model == 1 ? 300 * (800 / 300) ^ ps : 200 * 17.5 ^ ps;
-  g = tan($pi * f1 / srate);
+  g = tan($pi * min(f1, 0.45 * srate) / srate);
   c1 = 1 / (1 + g * (g + k1));
   c2 = g * c1;
   c3 = g * c2;
@@ -117,7 +117,7 @@ out_pin:Right
   w_r = fa_r.wh_bp(spl1, c1, c2, c3) * k1;
   model == 1 ? (
     f2 = 900 * (2400 / 900) ^ ps;
-    g = tan($pi * f2 / srate);
+    g = tan($pi * min(f2, 0.45 * srate) / srate);
     c1 = 1 / (1 + g * (g + k2));
     c2 = g * c1;
     c3 = g * c2;
