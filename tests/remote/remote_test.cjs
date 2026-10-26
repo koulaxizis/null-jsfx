@@ -170,6 +170,8 @@ const num = expr => parseFloat(q(expr));
   if (shots) await page.screenshot({ path: path.join(shots, 'remote-delay.png') });
   await page.locator('.fxitem .pwr').first().click();
   await until('bypass', () => q('tracks[1].fx[1].enabled') === 'false');
+  // the power button toggles from the last polled state, so wait for the list to show the bypass
+  await until('bypass shows', async () => !(await page.locator('.fxitem .pwr').first().getAttribute('class')).includes('on'));
   await page.locator('.fxitem .pwr').first().click();
   await until('enable', () => q('tracks[1].fx[1].enabled') === 'true');
   await page.click('text=Show on PC');
