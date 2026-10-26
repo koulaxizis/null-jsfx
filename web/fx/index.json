@@ -335,7 +335,7 @@
    "ins": 8,
    "outs": 8,
    "sliders": 6,
-   "bytes": 58244
+   "bytes": 58267
   },
   {
    "id": "breath_control",
@@ -839,7 +839,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 10,
-   "bytes": 60227
+   "bytes": 60364
   },
   {
    "id": "tape_echo",
@@ -853,7 +853,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 11,
-   "bytes": 61265
+   "bytes": 61403
   },
   {
    "id": "transient_shaper",
@@ -923,7 +923,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 11,
-   "bytes": 46166
+   "bytes": 46212
   },
   {
    "id": "amp_simulator",
@@ -937,7 +937,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 12,
-   "bytes": 79467
+   "bytes": 79513
   },
   {
    "id": "comb_filter",
