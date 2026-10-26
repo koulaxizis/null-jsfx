@@ -1,5 +1,5 @@
 desc:NULL JSFX shared GFX library
-//NULL JSFX v2.5 • https://nulljsfx.tech • MIT License
+//NULL JSFX v2.6 • https://nulljsfx.tech • MIT License
 //
 // Shared look for every "NULL X GFX" plugin: the nulljsfx.tech palette, header, cards,
 // knobs and text helpers. Import it with `import null_gfx.jsfx-inc` and draw in design

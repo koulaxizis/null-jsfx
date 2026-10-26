@@ -2,7 +2,7 @@ desc:NULL Keys GFX
 author: Christos Koulaxizis
 tags: instrument keys electric piano ep tine reed fm music box celesta glockenspiel vibraphone marimba kalimba mallets bell tremolo autopan chorus drive midi gui
 //category: Instruments
-//NULL JSFX v2.5 • https://nulljsfx.tech • MIT License
+//NULL JSFX v2.6 • https://nulljsfx.tech • MIT License
 
 import null_gfx.jsfx-inc
 

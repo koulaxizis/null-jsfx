@@ -2,7 +2,7 @@ desc:NULL Clipper GFX
 author: Christos Koulaxizis
 tags: clipper clip soft clip hard clip saturation oversampling ceiling loudness peak drums mastering gui
 //category: Essentials
-//NULL JSFX v2.5 • https://nulljsfx.tech • MIT License
+//NULL JSFX v2.6 • https://nulljsfx.tech • MIT License
 
 import null_gfx.jsfx-inc
 

@@ -2,7 +2,7 @@ desc:NULL Keys
 author: Christos Koulaxizis
 tags: instrument keys electric piano ep tine reed fm music box celesta glockenspiel vibraphone marimba kalimba mallets bell tremolo autopan chorus drive midi
 //category: Instruments
-//NULL JSFX v2.5 • https://nulljsfx.tech • MIT License
+//NULL JSFX v2.6 • https://nulljsfx.tech • MIT License
 
 slider1:0<0,8,1{Tine EP,Reed EP,FM EP,Music Box,Celesta,Glockenspiel,Vibraphone,Marimba,Kalimba}>Model
 slider2:50<0,100,1>Tone (%)

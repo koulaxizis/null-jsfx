@@ -2,7 +2,7 @@ desc:NULL Synth
 author: Christos Koulaxizis
 tags: instrument synth synthesizer polyphonic virtual analog wavetable pad lead keys bass strings bells unison chorus delay reverb midi
 //category: Instruments
-//NULL JSFX v2.5 • https://nulljsfx.tech • MIT License
+//NULL JSFX v2.6 • https://nulljsfx.tech • MIT License
 
 slider1:0<0,1,1{Analog,Wavetable}>Engine
 slider2:0<0,3,1{Saw,Square,Triangle,Sine}>Osc 1 Wave

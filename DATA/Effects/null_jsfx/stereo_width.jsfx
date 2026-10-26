@@ -2,7 +2,7 @@ desc:NULL Stereo Width
 author: Christos Koulaxizis
 tags: stereo width mid side widening narrowing spread image crossover
 //category: Essentials
-//NULL JSFX v2.5 • https://nulljsfx.tech • MIT License
+//NULL JSFX v2.6 • https://nulljsfx.tech • MIT License
 
 slider1:100<0,200,1>Width (%)
 slider2:100<0,100,1>Mix (%)

@@ -2,7 +2,7 @@ desc:NULL Kick Shaper
 author: Christos Koulaxizis
 tags: kick drum transient shaping punch body thump click decay
 //category: Advanced
-//NULL JSFX v2.5 • https://nulljsfx.tech • MIT License
+//NULL JSFX v2.6 • https://nulljsfx.tech • MIT License
 
 slider1:0<-20,20,0.1>Attack Shape (dB)
 slider2:0<-12,12,0.1>Body Tone (dB)

@@ -2,7 +2,7 @@ desc:NULL Shaper
 author: Christos Koulaxizis
 tags: shaper waveshaper waveshaping distortion saturation fold wavefolder transfer curve drawable oversampling harmonics
 //category: Essentials
-//NULL JSFX v2.5 • https://nulljsfx.tech • MIT License
+//NULL JSFX v2.6 • https://nulljsfx.tech • MIT License
 
 slider1:1<0,7,1{Custom,Soft,Hard,Tube,Fold,Sine,Steps,Asym}>Shape
 slider2:6<0,36,0.1>Drive (dB)

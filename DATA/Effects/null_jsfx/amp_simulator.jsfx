@@ -2,7 +2,7 @@ desc:NULL Amp Simulator
 author: Christos Koulaxizis
 tags: amp amplifier guitar bass preamp power amp tube valve distortion overdrive tone stack
 //category: Advanced
-//NULL JSFX v2.5 • https://nulljsfx.tech • MIT License
+//NULL JSFX v2.6 • https://nulljsfx.tech • MIT License
 
 slider1:1<0,7,1{Clean,Crunch,Lead,Bass,Jazz Clean,British,Modern High Gain,Fuzz}>Model
 slider2:5<0,10,0.1>Gain

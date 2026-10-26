@@ -2,7 +2,7 @@ desc:NULL Auto Pan GFX
 author: Christos Koulaxizis
 tags: autopan pan modulation lfo movement stereo width tempo sync step pattern gui
 //category: Essentials
-//NULL JSFX v2.5 • https://nulljsfx.tech • MIT License
+//NULL JSFX v2.6 • https://nulljsfx.tech • MIT License
 
 import null_gfx.jsfx-inc
 

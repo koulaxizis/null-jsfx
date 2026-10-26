@@ -2,7 +2,7 @@ desc:NULL Vibrato GFX
 author: Christos Koulaxizis
 tags: vibrato pitch modulation detune lfo warble gui
 //category: Essentials
-//NULL JSFX v2.5 • https://nulljsfx.tech • MIT License
+//NULL JSFX v2.6 • https://nulljsfx.tech • MIT License
 
 import null_gfx.jsfx-inc
 

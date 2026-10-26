@@ -2,7 +2,7 @@ desc:NULL Pitch Shifter
 author: Christos Koulaxizis
 tags: pitch shift detune harmonizer transposition semitone octave
 //category: Essentials
-//NULL JSFX v2.5 • https://nulljsfx.tech • MIT License
+//NULL JSFX v2.6 • https://nulljsfx.tech • MIT License
 
 slider1:0<-2,2,1>Octave
 slider2:0<-12,12,1>Semitones

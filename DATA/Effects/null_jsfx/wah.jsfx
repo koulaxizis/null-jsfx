@@ -2,7 +2,7 @@ desc:NULL Wah
 author: Christos Koulaxizis
 tags: wah wah-wah pedal auto-wah envelope filter lfo funk guitar quack vocal formant band-pass sweep tempo sync
 //category: Essentials
-//NULL JSFX v2.5 • https://nulljsfx.tech • MIT License
+//NULL JSFX v2.6 • https://nulljsfx.tech • MIT License
 
 slider1:50<0,100,1>Pedal (%)
 slider2:0<0,2,1{Manual,Auto,LFO}>Mode

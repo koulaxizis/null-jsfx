@@ -2,7 +2,7 @@ desc:NULL Filter GFX
 author: Christos Koulaxizis
 tags: filter lowpass resonance q cutoff svf tpt 24 db drive lfo envelope auto-wah wobble tempo sync gui
 //category: Essentials
-//NULL JSFX v2.5 • https://nulljsfx.tech • MIT License
+//NULL JSFX v2.6 • https://nulljsfx.tech • MIT License
 
 import null_gfx.jsfx-inc
 
