@@ -18,6 +18,8 @@ in_pin:Right
 out_pin:Left
 out_pin:Right
 
+options:maxmem=33554432
+
 @init
   // Convolution reverb: the input is convolved with an impulse response (IR), the
   // recorded "fingerprint" of a space or device, using uniformly partitioned FFT

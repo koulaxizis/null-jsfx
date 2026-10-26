@@ -475,7 +475,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 13,
-   "bytes": 66973
+   "bytes": 66997
   },
   {
    "id": "disperser",
@@ -853,7 +853,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 11,
-   "bytes": 61265
+   "bytes": 61280
   },
   {
    "id": "transient_shaper",
@@ -965,7 +965,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 8,
-   "bytes": 51863
+   "bytes": 51886
   },
   {
    "id": "formant_filter",
@@ -1035,7 +1035,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 6,
-   "bytes": 38280
+   "bytes": 38292
   },
   {
    "id": "harmonizer",
@@ -1175,7 +1175,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 4,
-   "bytes": 37537
+   "bytes": 37547
   },
   {
    "id": "robotizer",
@@ -1231,7 +1231,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 8,
-   "bytes": 49671
+   "bytes": 49706
   },
   {
    "id": "spectral_freeze",
@@ -1329,7 +1329,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 3,
-   "bytes": 33595
+   "bytes": 33605
   },
   {
    "id": "trance_gate",
