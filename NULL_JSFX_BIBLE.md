@@ -503,7 +503,9 @@ The recipes live in the READMEs. This Part says where they are and lists the ste
 | Presets | ctest `presets_<name>` | every factory preset renders the same in the JSFX and the CLAP |
 | Rack module | ctest `module_<id>` | each adapter matches its JSFX, like `compare_` |
 | Rack engine | ctest `rack_test` | every preset renders; a single slot is bit-exact with its module; band splits sum flat; channel routing; modulation; lanes line up; the loop decays; the sequencer steps; the ducker's key; bit-for-bit against `RackEngineV1.hpp` (R12) |
-| pluginval | `native.yml`, Linux | every VST3 at strictness 5 |
+| pluginval (blocking) | `native.yml` job `build`, Linux, pluginval v1.0.4 | every VST3 at strictness 5, in process |
+| pluginval 2 (report-only) | `native.yml` job `validate`, Windows + Linux, `native/scripts/validate.sh pluginval` | every VST3: `pluginval validate --strictness-level 5 --skip-gui-tests`, a JUnit report per plugin; pluginval `v2.0.0-beta3` pinned by tag and SHA-256 (GPLv3, CI only, never shipped) |
+| clap-validator (report-only) | `native.yml` job `validate`, Windows + Linux, `native/scripts/validate.sh clap` | every CLAP: `clap-validator validate --only-failed --json`, out of process; built from free-audio/clap-validator `b2f1d9b79b1d264a5747f46707d72b1aa40a02ef` (MIT), cached |
 | Web | `web/test/run.sh` | `build.js --check`, the runtime tests, and the null test against ysfx below 1e-6 (MIDI too) |
 | Hub engine | `cd hub && cargo test -p null_hub_core` | install, update, remove and repair against a local release server |
 | Hub page | `cd hub && node tests/ui_test.cjs` | the page in Chromium against `tests/mock.cjs`; fails on any UI text without Greek |
@@ -519,7 +521,7 @@ The ysfx engine is pinned at `8077347ccf4115567aed81400281dca57acbb0cc` (in `tes
 | Workflow | Trigger | Does |
 |---|---|---|
 | `test.yml` "Test plugins" | every push and PR | `tests/run.sh`; `build_site.py`, `build_chains.py` and `build_presets.py` with `--check`; job `remote`: `build_remote.py --check` + `remote_test.cjs` |
-| `native.yml` "VST3 and CLAP" | changes under `native/`, `DATA/`, `remote/`, `tests/`, `installer/` and `build_installer.py`; release published; manual with `release_tag` | builds on 3 OS (tests on Linux and macOS), pluginval, the JSFX package, the 4 installers each installed and checked; attaches them to the release |
+| `native.yml` "VST3 and CLAP" | changes under `native/`, `DATA/`, `remote/`, `tests/`, `installer/` and `build_installer.py`; release published; manual with `release_tag` | builds on 3 OS (tests on Linux and macOS), pluginval, the JSFX package, job `validate` (pluginval 2 and clap-validator on Windows and Linux, `continue-on-error`, reports in the artifact `NULL-JSFX-Validation-<OS>`), the 4 installers each installed and checked; attaches them to the release |
 | `hub.yml` "NULL JSFX Hub" | changes under `hub/`, the catalog and site inputs, `tools/presets/` and `DATA/`; release published; manual with `release_tag` | `core` tests on 3 OS, `ui` + `build_catalog.py --check`, `smoke` (not on release events), build of the 4 bundles, the Linux start test, the Windows self-update test; attaches the bundles and `NULL-JSFX-Catalog.json` |
 | `web.yml` "Web version" | changes under `web/` and `DATA/` | `web/test/run.sh` |
 | `media.yml` "Media" | push to main under `assets/video/`; manual | uploads the videos to the `media` pre-release |
@@ -611,6 +613,7 @@ Then run every test of Part V that the PR touches, merge it once CI is green, an
 
 Format: **date · topic** — the decision. (Who approved it, and the source.) Decisions made before this Bible came from the project's memory notes and the PRs, and were not re-checked one by one.
 
+- **2026-10-26 · Plugin validators in CI** — every native build is checked by pluginval 2 (each VST3) and clap-validator (each CLAP) on Windows and Linux, pinned (pluginval by tag and SHA-256, clap-validator by commit). They start report-only (`continue-on-error`); Christos makes them required once all plugins pass. pluginval is GPLv3 but only runs in CI, so the MIT licence is not affected. (Christos, after a security audit; PR #52.)
 - **2026-10-26 · Bible answers** — Christos, in the Bible thread:
   - Claude merges its own PRs once CI is green, in general and for this PR (it was "Christos merges, except where he says so").
   - The docs inconsistencies are fixed in a separate PR after the Bible.
@@ -663,6 +666,7 @@ Format: **date · topic** — the decision. (Who approved it, and the source.) D
 
 - **B1 Registry generator.** Part III was generated on 2026-10-26 by a one-off script (`/mnt/project-files/bible/registry.py` in the project files, which prints the tables; it reads the `.jsfx` headers, `@gfx` lines, `DistrhoPluginInfo.h` and the Rack `modules/`). Proposal: commit it as `tools/build_bible.py`, which rewrites the block between `<!-- BEGIN REGISTRY -->` and `<!-- END REGISTRY -->` and the CLAP exceptions, with `--check` in `test.yml`. It goes in the docs PR.
 - **B2** Generate the hand-written counts (plugin count in `index.html` `<title>` and meta, the Rack module and preset counts in the showcase) with `build_site.py`.
+- **B4 Validators.** (a) Make job `validate` required once every plugin passes, with Christos's approval. (b) Then drop the old pluginval v1.0.4 step in job `build`. (c) Move to pluginval `v2.0.0` when that tag exists (as of 2026-10-26 the newest is `v2.0.0-beta3`). Baseline of the first run (Linux, local, 2026-10-26): pluginval 114/114 pass; clap-validator 70/114 pass, failures in four groups: latency reported outside `activate` (19 plugins with `setLatency`), subnormal output samples (23), NaN/inf at a 1234.57 Hz sample rate (amp_simulator, band_splitter, tape, tape_echo, wah), and Rack parameter module names that are not UTF-8 plus `s8_lane` state not reproduced (rack). Each group has its own fix thread.
 - **B3 Drum Machine ideas** (deferred 2026-10-17): song mode and step probability. Multi-out and a Sampler exist now. [memory]
 
 ### VIII.C Open items waiting on someone
@@ -710,3 +714,10 @@ entry and the Bible delta.
 - **Files:** `NULL_JSFX_BIBLE.md` (new), `CLAUDE.md`.
 - **Tests:** none run: documentation only, no plugin, DSP or site file changed. Every fact was read from main `a231c1b` or the GitHub API on 2026-10-26. The registry, the totals and the CLAP exceptions were generated by script from the files.
 - **Next:** the docs PR (Part VIII A1–A4, B1), the new project-instructions text, and the updated `null-jsfx` skill.
+
+### 2026-10-26 — CI PR #52 — pluginval and clap-validator on every VST3/CLAP
+- **Changes:** new job `validate` in `native.yml` after `build`, on Windows and Linux, report-only (`continue-on-error: true`). It downloads the `NULL-JSFX-VST3-CLAP-<OS>` package, runs pluginval `v2.0.0-beta3` (pinned by tag and SHA-256) on every `.vst3` and clap-validator (built from commit `b2f1d9b`, cached) on every `.clap`, lists the failures in the job summary and uploads the reports as `NULL-JSFX-Validation-<OS>`. New `native/scripts/validate.sh` runs either validator over a package, locally too. Build, package, installer and release steps unchanged; the existing pluginval v1.0.4 step stays until the new job is required.
+- **Decisions:** Part VII, "Plugin validators in CI".
+- **Files:** `.github/workflows/native.yml`, `native/scripts/validate.sh` (new), `NULL_JSFX_BIBLE.md`.
+- **Tests:** run locally on Linux: `native/scripts/build.sh` (all 114 bundles), then `validate.sh pluginval` (114/114 pass) and `validate.sh clap` (70/114 pass; groups in Part VIII B4). CI on the PR runs both on Windows and Linux. No plugin, DSP or site file changed, so no sound check was needed.
+- **Next:** the fix threads of Part VIII B4, then Christos decides when `validate` becomes required.
