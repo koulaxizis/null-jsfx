@@ -613,7 +613,7 @@ Then run every test of Part V that the PR touches, merge it once CI is green, an
 
 Format: **date · topic** — the decision. (Who approved it, and the source.) Decisions made before this Bible came from the project's memory notes and the PRs, and were not re-checked one by one.
 
-- **2026-10-26 · Plugin validators in CI** — every native build is checked by pluginval 2 (each VST3) and clap-validator (each CLAP) on Windows and Linux, pinned (pluginval by tag and SHA-256, clap-validator by commit). They start report-only (`continue-on-error`); Christos makes them required once all plugins pass. pluginval is GPLv3 but only runs in CI, so the MIT licence is not affected. (Christos, after a security audit; PR #52.)
+- **2026-10-26 · Plugin validators in CI** — every native build is checked by pluginval 2 (each VST3) and clap-validator (each CLAP) on Windows and Linux, pinned (pluginval by tag and SHA-256, clap-validator by commit). They start report-only (`continue-on-error`); Christos makes them required once all plugins pass. pluginval is GPLv3 but only runs in CI, so the MIT licence is not affected. (Christos, after a security audit; PR #52.) His answers the same day: pluginval stays on `v2.0.0-beta3` until a `v2.0.0` tag exists; the old v1.0.4 step stays until `validate` is required, then it goes; no version step for this CI-only change.
 - **2026-10-26 · Bible answers** — Christos, in the Bible thread:
   - Claude merges its own PRs once CI is green, in general and for this PR (it was "Christos merges, except where he says so").
   - The docs inconsistencies are fixed in a separate PR after the Bible.
@@ -720,4 +720,5 @@ entry and the Bible delta.
 - **Decisions:** Part VII, "Plugin validators in CI".
 - **Files:** `.github/workflows/native.yml`, `native/scripts/validate.sh` (new), `NULL_JSFX_BIBLE.md`.
 - **Tests:** run locally on Linux: `native/scripts/build.sh` (all 114 bundles), then `validate.sh pluginval` (114/114 pass) and `validate.sh clap` (70/114 pass; groups in Part VIII B4). CI on the PR runs both on Windows and Linux. No plugin, DSP or site file changed, so no sound check was needed.
+- **Decisions:** no version step (CI only); pluginval `v2.0.0-beta3` until `v2.0.0`; the v1.0.4 step goes when `validate` is required (Christos, 2026-10-26).
 - **Next:** the fix threads of Part VIII B4, then Christos decides when `validate` becomes required.
