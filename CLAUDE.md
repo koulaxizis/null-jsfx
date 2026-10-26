@@ -52,7 +52,7 @@ Instructions for AI assistants working in this repository. The owner is Christos
   - `tests/remote/remote_test.cjs`
 
 ## Versions
-- The version appears in every `.jsfx` footer, in `FOOTER` in `tests/lint.py`, in the `Version:` line of `llms.txt` and on the site. Change them all together.
+- The version appears in every `.jsfx` footer, in `FOOTER` in `tests/lint.py`, in the `Version:` line of `llms.txt` and on the site. Change them all together. `tests/lint.py` fails if the `llms.txt` or `index.html` version differs from `FOOTER`.
 - Propose a small (patch) or a big step. The owner decides.
 - Publishing a GitHub release with a numeric tag (for example `2.6`) builds and attaches every package.
 
