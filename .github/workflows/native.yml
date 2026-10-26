@@ -11,7 +11,8 @@ name: VST3 and CLAP
 #   NULL-JSFX-Installer-macOS.sh
 # each installed and checked here. When a GitHub release is published, they are attached to it,
 # the packages as zips with these names (the site's Download links use
-# releases/latest/download/<name>). Run the workflow by hand with a release tag to attach them
+# releases/latest/download/<name>; each upload is retried, since the upload endpoint can answer
+# HTTP 500 for a while). Run the workflow by hand with a release tag to attach them
 # to a release that already exists.
 
 on:
@@ -96,7 +97,7 @@ jobs:
           else
             zip -qry "$out.zip" "$out"
           fi
-          gh release upload "${{ github.event.release.tag_name || inputs.release_tag }}" "$out.zip" --clobber
+          for i in 1 2 3 4 5; do gh release upload "${{ github.event.release.tag_name || inputs.release_tag }}" "$out.zip" --clobber && exit 0; sleep $((i * 30)); done; exit 1
 
   jsfx:
     runs-on: ubuntu-22.04
@@ -130,7 +131,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           zip -qry NULL-JSFX-JSFX.zip NULL-JSFX-JSFX
-          gh release upload "${{ github.event.release.tag_name || inputs.release_tag }}" NULL-JSFX-JSFX.zip --clobber
+          for i in 1 2 3 4 5; do gh release upload "${{ github.event.release.tag_name || inputs.release_tag }}" NULL-JSFX-JSFX.zip --clobber && exit 0; sleep $((i * 30)); done; exit 1
 
   installer-windows:
     needs: [build, jsfx]
@@ -207,7 +208,7 @@ jobs:
         if: github.event_name == 'release' || inputs.release_tag != ''
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release upload "${{ github.event.release.tag_name || inputs.release_tag }}" build-installer/NULL-JSFX-Installer-Windows.exe --clobber
+        run: for i in 1 2 3 4 5; do gh release upload "${{ github.event.release.tag_name || inputs.release_tag }}" build-installer/NULL-JSFX-Installer-Windows.exe --clobber && exit 0; sleep $((i * 30)); done; exit 1
 
   installer-unix:
     needs: [build, jsfx]
@@ -254,4 +255,4 @@ jobs:
         if: github.event_name == 'release' || inputs.release_tag != ''
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release upload "${{ github.event.release.tag_name || inputs.release_tag }}" build-installer/NULL-JSFX-Installer-${{ matrix.name }}.* --clobber
+        run: for i in 1 2 3 4 5; do gh release upload "${{ github.event.release.tag_name || inputs.release_tag }}" build-installer/NULL-JSFX-Installer-${{ matrix.name }}.* --clobber && exit 0; sleep $((i * 30)); done; exit 1
