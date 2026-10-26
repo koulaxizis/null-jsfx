@@ -12,6 +12,7 @@ name: NULL JSFX Hub
 
 on:
   push:
+    branches: [main]
     paths: ["hub/**", "tools/build_catalog.py", "tools/build_site.py", "tools/site_content.json", "tools/site_chains.json", "tools/presets/**", "DATA/**", ".github/workflows/hub.yml"]
   pull_request:
     paths: ["hub/**", "tools/build_catalog.py", "tools/build_site.py", "tools/site_content.json", "tools/site_chains.json", "tools/presets/**", "DATA/**", ".github/workflows/hub.yml"]
@@ -23,6 +24,14 @@ on:
         default: ""
   release:
     types: [published]
+
+# Pull requests run on every push to their branch; a newer push cancels the older run of the same
+# PR. Pushes run only on main, so a branch with a PR is not built twice. Runs on main, releases
+# and manual runs each get their own group, so they are never cancelled or queued (release
+# uploads always finish).
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.ref || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions:
   contents: write
