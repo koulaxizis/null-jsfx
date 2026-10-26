@@ -29,7 +29,9 @@
  *
  * Instruments (a JSFX without input pins) get no audio but MIDI notes on the General MIDI drum
  * map (one every 1/8 s, varied velocities) and a playing transport at 120 bpm in 4/4 from beat 0,
- * so their sequencer runs too; the CLAP gets the same notes and transport.
+ * so their sequencer runs too, merged in time order with the MIDI effects' stream below (note-offs,
+ * note-ons with velocity 0, the same key again, sustain, all notes off, pitch bend, pressure,
+ * program changes); the CLAP gets the same MIDI and transport.
  *
  * MIDI effects (a JSFX in //category: MIDI) get, besides the audio, a stream of MIDI on three
  * channels (chords of overlapping notes, repeated note-ons, note-ons with velocity 0, poly and
@@ -211,6 +213,23 @@ static ysfx_t* loadJsfx(const char* path)
 
 static bool g_instrument = false; // the reference JSFX has no input pins
 
+// the MIDI a plugin gets, in time order: a MIDI effect the stream above, an instrument its notes
+// and that stream (at the same sample, the note first)
+static std::vector<MidiMsg> testInput(double sr, uint32_t frames)
+{
+    if (g_midifx)
+        return testMidi(sr, frames);
+    std::vector<MidiMsg> out;
+    if (g_instrument) {
+        for (const TestNote& n : testNotes(sr, frames))
+            out.push_back({ n.at, 0x99, n.note, n.vel, 3 });
+        const std::vector<MidiMsg> more = testMidi(sr, frames);
+        out.insert(out.end(), more.begin(), more.end());
+        std::stable_sort(out.begin(), out.end(), [](const MidiMsg& a, const MidiMsg& b) { return a.at < b.at; });
+    }
+    return out;
+}
+
 static bool sliders(const char* path, std::vector<Slider>& out, uint32_t* numOutputs)
 {
     ysfx_t* fx = loadJsfx(path);
@@ -258,9 +277,8 @@ static bool renderJsfx(const char* path, double sr, const std::vector<Slider>& s
         ysfx_slider_set_value(fx, sl[k].index, values[k]);
     const uint32_t frames = uint32_t(in.l.size());
     const uint32_t numIns = ysfx_get_num_inputs(fx) > 2 ? 4 : 2; // pins 3/4: the sidechain
-    const std::vector<TestNote> notes = g_instrument ? testNotes(sr, frames) : std::vector<TestNote>();
-    const std::vector<MidiMsg> fxMidi = g_midifx ? testMidi(sr, frames) : std::vector<MidiMsg>();
-    size_t next = 0, nextFx = 0;
+    const std::vector<MidiMsg> fxMidi = testInput(sr, frames);
+    size_t nextFx = 0;
     for (uint32_t pos = 0; pos < frames; pos += kBlock) {
         const uint32_t n = std::min(kBlock, frames - pos);
         for (; nextFx < fxMidi.size() && fxMidi[nextFx].at < pos + n; ++nextFx) {
@@ -273,11 +291,6 @@ static bool renderJsfx(const char* path, double sr, const std::vector<Slider>& s
             ti.time_position = pos / sr;
             ti.beat_position = pos / sr * 2.0;
             ysfx_set_time_info(fx, &ti);
-            for (; next < notes.size() && notes[next].at < pos + n; ++next) {
-                const uint8_t msg[3] = { 0x99, notes[next].note, notes[next].vel };
-                ysfx_midi_event_t ev { 0, notes[next].at - pos, 3, msg };
-                ysfx_send_midi(fx, &ev);
-            }
         }
         const float* ins[4] = { in.l.data() + pos, in.r.data() + pos, sc.l.data() + pos, sc.r.data() + pos };
         std::vector<float*> outs(out.size());
@@ -428,9 +441,8 @@ static bool renderClap(const char* path, double sr, const std::vector<double>& v
     std::vector<clap_audio_buffer_t> ibs(inChannels.size());
 
     const uint32_t frames = uint32_t(in.l.size());
-    const std::vector<TestNote> notes = g_instrument ? testNotes(sr, frames) : std::vector<TestNote>();
-    const std::vector<MidiMsg> fxMidi = g_midifx ? testMidi(sr, frames) : std::vector<MidiMsg>();
-    size_t next = 0, nextFx = 0;
+    const std::vector<MidiMsg> fxMidi = testInput(sr, frames);
+    size_t nextFx = 0;
     MidiList midi;
     clap_input_events_t midiEv { &midi, MidiList::size, MidiList::get };
     MidiCollector collect;
@@ -440,18 +452,6 @@ static bool renderClap(const char* path, double sr, const std::vector<double>& v
     for (uint32_t pos = 0; pos < frames; pos += kBlock) {
         const uint32_t n = std::min(kBlock, frames - pos);
         midi.events.clear();
-        for (; next < notes.size() && notes[next].at < pos + n; ++next) {
-            clap_event_midi_t me {};
-            me.header.size = sizeof(me);
-            me.header.time = notes[next].at - pos;
-            me.header.space_id = CLAP_CORE_EVENT_SPACE_ID;
-            me.header.type = CLAP_EVENT_MIDI;
-            me.port_index = 0;
-            me.data[0] = 0x99;
-            me.data[1] = notes[next].note;
-            me.data[2] = notes[next].vel;
-            midi.events.push_back(me);
-        }
         for (; nextFx < fxMidi.size() && fxMidi[nextFx].at < pos + n; ++nextFx) {
             clap_event_midi_t me {};
             me.header.size = sizeof(me);
