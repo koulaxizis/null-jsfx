@@ -352,7 +352,7 @@ def pkg_resources(res, version):
         "<p>To remove it later, open Library/Application Support/NULL JSFX in your home folder and "
         "double-click <b>Uninstall NULL JSFX.command</b>.</p>"
         "<p>NULL JSFX is free and stays free. If it helps your music, you can support it on "
-        "<a href=\"https://ko-fi.com/koulaxizis\">Ko-fi</a>.</p></body></html>\n", encoding="utf-8")
+        "<a href=\"https://ko-fi.com/koulaxizis\">Ko-fi</a>, and follow it there for news of every new version.</p></body></html>\n", encoding="utf-8")
 
 
 def macos_pkg(args, plugs, chain_list):

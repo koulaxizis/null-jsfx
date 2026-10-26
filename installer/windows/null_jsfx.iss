@@ -123,10 +123,10 @@ begin
   SupportText.AutoSize := False;
   SupportText.WordWrap := True;
   SupportText.Caption := 'NULL JSFX is free and made by one person. If it helps your music, ' +
-    'a coffee keeps it going:';
+    'a coffee keeps it going. Follow it on Ko-fi for news of every new version:';
   SupportLink := TNewStaticText.Create(WizardForm);
   SupportLink.Parent := WizardForm.FinishedPage;
-  SupportLink.Caption := 'Support NULL JSFX on Ko-fi';
+  SupportLink.Caption := 'Support and follow NULL JSFX on Ko-fi';
   SupportLink.Cursor := crHand;
   SupportLink.Font.Style := [fsUnderline];
   SupportLink.Font.Color := clHotLight;
