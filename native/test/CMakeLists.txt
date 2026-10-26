@@ -79,3 +79,14 @@ foreach(_p ${NULL_BUILT_PLUGINS})
     add_test(NAME gfx_${_p} COMMAND compare "${_jsfx_dir}/${_p}.jsfx" "${_jsfx_dir}/gfx/${_p}_gfx.jsfx" --tol 0)
   endif()
 endforeach()
+
+# rt_test: realtime-safety checks of the DSP cores (plugins/*/<Name>DSP.hpp, no host): the lazy
+# buffer clear of Slicer and Half Speed against a full clear, and Convolution's staged IR build
+add_executable(rt_test rt_test.cpp)
+target_include_directories(rt_test PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/../common"
+  "${CMAKE_CURRENT_SOURCE_DIR}/../plugins/slicer" "${CMAKE_CURRENT_SOURCE_DIR}/../plugins/half_speed"
+  "${CMAKE_CURRENT_SOURCE_DIR}/../plugins/convolution")
+if(APPLE)
+  set_target_properties(rt_test PROPERTIES OSX_ARCHITECTURES "${CMAKE_HOST_SYSTEM_PROCESSOR}")
+endif()
+add_test(NAME rt_test COMMAND rt_test)
