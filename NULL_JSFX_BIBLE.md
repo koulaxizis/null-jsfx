@@ -511,6 +511,7 @@ The recipes live in the READMEs. This Part says where they are and lists the ste
 | Installers | `tests/installer_test.sh`, `tests/pkg_test.sh`, the Windows step in `native.yml` | install, check (counts, presets merged, the user's preset kept) and uninstall |
 | Remote | `node tests/remote/remote_test.cjs` | the page in Chromium plus the real bridge under `mock_reaper.lua` |
 | Generators | `build_site.py`, `build_chains.py`, `build_presets.py`, `build_remote.py`, `build_catalog.py` with `--check` | the generated files are up to date |
+| Stress | `tests/stress.sh [plugin.jsfx ...]` → `stress_test` | every plain JSFX (MIDI effects skipped): no NaN/Inf and no output above 1e4 under hard signals (+12 dBFS square with DC, sines near Nyquist, tone then silence, DC, every slider jumping every 50 ms) with default, min, max and random settings at 44.1 and 192 kHz; the same output at 384 kHz with and without `options:maxmem=32M` (nothing past REAPER's default 8M slots); the median cost of a slider change within one 256-sample block at 48 kHz (5.33 ms, noted above half) |
 
 The ysfx engine is pinned at `8077347ccf4115567aed81400281dca57acbb0cc` (in `tests/run.sh` and `web/test/run.sh`). Building the native tests: `native/scripts/build.sh --test [--plugins "a;b"]`, on Linux and macOS.
 
@@ -524,6 +525,7 @@ The ysfx engine is pinned at `8077347ccf4115567aed81400281dca57acbb0cc` (in `tes
 | `web.yml` "Web version" | changes under `web/` and `DATA/` | `web/test/run.sh` |
 | `media.yml` "Media" | push to main under `assets/video/`; manual | uploads the videos to the `media` pre-release |
 | `downloads.yml` "Count downloads" | daily at 03:00 UTC; after "VST3 and CLAP"; manual | `count_downloads.py`, then commits `downloads.json` to main if the shown figure changed |
+| `stress.yml` "Stress test" | daily at 02:30 UTC; manual; PRs that change a plain or GFX `.jsfx` or the test | `tests/stress.sh`: every plugin, or on a PR only the plain plugins it changes (all when the test changes) |
 
 `downloads.yml` pushes to main by itself, so a branch can be behind by a `downloads.json` commit: rebase or merge main before you push.
 
@@ -611,6 +613,7 @@ Then run every test of Part V that the PR touches, merge it once CI is green, an
 
 Format: **date · topic** — the decision. (Who approved it, and the source.) Decisions made before this Bible came from the project's memory notes and the PRs, and were not re-checked one by one.
 
+- **2026-10-26 · Audit proposals** — Christos approved all four proposals of the audit with the audio skills ("yes to all, as you propose and as you think best"). P3 and P4: a stress test in CI covering numerics, memory past 8M slots and slider-change cost (this thread's PR). P1: instruments pass their MIDI through, so instruments can be layered on one track. P2: `ext_noinit = 1` in effects with tails or state, so a JSFX no longer resets on Play/seek, as the native ports already don't; meters and analysers keep the reset. Claude chose the P2 option, as Christos left it to him. P1 and P2 each run in their own thread. (Christos, thread "Πλήρες audit plugins με τα νέα skills".)
 - **2026-10-26 · Bible answers** — Christos, in the Bible thread:
   - Claude merges its own PRs once CI is green, in general and for this PR (it was "Christos merges, except where he says so").
   - The docs inconsistencies are fixed in a separate PR after the Bible.
@@ -664,6 +667,9 @@ Format: **date · topic** — the decision. (Who approved it, and the source.) D
 - **B1 Registry generator.** Part III was generated on 2026-10-26 by a one-off script (`/mnt/project-files/bible/registry.py` in the project files, which prints the tables; it reads the `.jsfx` headers, `@gfx` lines, `DistrhoPluginInfo.h` and the Rack `modules/`). Proposal: commit it as `tools/build_bible.py`, which rewrites the block between `<!-- BEGIN REGISTRY -->` and `<!-- END REGISTRY -->` and the CLAP exceptions, with `--check` in `test.yml`. It goes in the docs PR.
 - **B2** Generate the hand-written counts (plugin count in `index.html` `<title>` and meta, the Rack module and preset counts in the showcase) with `build_site.py`.
 - **B3 Drum Machine ideas** (deferred 2026-10-17): song mode and step probability. Multi-out and a Sampler exist now. [memory]
+- **B4 Instruments pass MIDI through** (approved 2026-10-26, audit P1): JSFX/GFX `midisend` everything they receive, and VST3/CLAP get a MIDI output that echoes the input. Own thread.
+- **B5 `ext_noinit`** (approved 2026-10-26, audit P2): set it in the effects with tails or state, and keep the reset on Play for meters and analysers. Own thread.
+- **B6 Audit bugs of 2026-10-26** (fix threads open): 1) JSFX memory past 8M slots (Convolution from 176.4 kHz, Slicer and Tape Echo from 352.8 kHz); 2) audio-thread spikes (the Convolution IR rebuild, the Slicer/Half Speed reset on Play, `std::mutex` in Sampler/Convolution); 3) native parameters set from the UI/main thread, `getVersion()` stuck at 2.1.0, no guard on `kMaxParams`. Until 1 and 2 are merged, `tests/stress.sh` fails on Convolution, Slicer and Tape Echo.
 
 ### VIII.C Open items waiting on someone
 
@@ -710,3 +716,10 @@ entry and the Bible delta.
 - **Files:** `NULL_JSFX_BIBLE.md` (new), `CLAUDE.md`.
 - **Tests:** none run: documentation only, no plugin, DSP or site file changed. Every fact was read from main `a231c1b` or the GitHub API on 2026-10-26. The registry, the totals and the CLAP exceptions were generated by script from the files.
 - **Next:** the docs PR (Part VIII A1–A4, B1), the new project-instructions text, and the updated `null-jsfx` skill.
+
+### 2026-10-26 — tests — stress test in CI (audit P3, P4)
+- **Changes:** `tests/stress_test.cpp` and `tests/stress.sh` add three checks to the render test. Numerics: hard signals (+12 dBFS square with DC, sines near Nyquist, tone then silence, DC, sliders jumping every 50 ms) at 44.1 and 192 kHz, failing on NaN/Inf or an output above 1e4. Memory: the same output at 384 kHz with and without `options:maxmem=32M`. Slider cost: the median block after a slider change must fit in one 256-sample block at 48 kHz. The new workflow `stress.yml` runs it nightly and by hand on every plugin, and on PRs on the plugins they change.
+- **Decisions:** the audit proposals P1–P4 were approved (Part VII). P1 and P2 are in Part VIII B4/B5.
+- **Files:** `tests/stress_test.cpp`, `tests/stress.sh`, `.github/workflows/stress.yml` (new), `NULL_JSFX_BIBLE.md` (V.1, V.2, VII, VIII B4–B6, X).
+- **Tests:** `tests/stress.sh` was run locally on all 113 plugins. It fails exactly on the known audit bugs (Part VIII B6) and passes everything else. No plugin, DSP or site file changed.
+- **Next:** merge once the fix threads for audit bugs 1 and 2 are merged and this test passes on main.
