@@ -5,7 +5,7 @@
  *
  * The parameters are slider2..slider21 of the JSFX. The sample is the "sample" state, a file
  * path (the host saves it with the project): read off the audio thread when it is set, handed
- * to the DSP under a lock at the start of a block, like Convolution's IR file. An empty or
+ * to the DSP without a lock at the start of a block, like Convolution's IR file. An empty or
  * unreadable path plays the built-in sound, as the JSFX does without a file.
  */
 
@@ -13,9 +13,9 @@
 #include "SamplerShared.hpp"
 #include "SamplerRead.hpp"
 #include "SamplerSliders.hpp"
+#include "NullMailbox.hpp"
 
 #include <cstring>
-#include <mutex>
 #include <string>
 
 START_NAMESPACE_DISTRHO
@@ -55,43 +55,35 @@ protected:
         state.description = "WAV or FLAC file the sampler plays (none: the built-in sound)";
     }
 
-    // the sample file: read and converted off the audio thread, handed over to run() under the lock
+    // the sample file: read and converted off the audio thread, handed over to run() without a lock
     void setState(const char* key, const char* value) override
     {
         if (std::strcmp(key, "sample") != 0)
             return;
         nullsmp::SampleFile file;
         nullsmp::readSample(value, file, nullsmp::kMaxValues);
-        std::vector<double> data(file.data.begin(), file.data.end()); // file_mem's values
-        float ov[nullsmp::kOverview] = {};
-        const int nch = file.channels;
-        if (nch > 0 && data.size() >= size_t(4 * nch))
-            nullsmp::makeOverview(data.data(), nch, double(data.size() / size_t(nch)), ov);
-        const std::lock_guard<std::mutex> lock(fFileLock);
-        fPending.swap(data);
-        fPendingCh = nch;
-        fPendingRate = file.sampleRate;
-        std::memcpy(fPendingOv, ov, sizeof(ov));
-        ++fFileId;
+        Pending* p = new Pending();
+        p->data.assign(file.data.begin(), file.data.end()); // file_mem's values
+        p->channels = file.channels;
+        p->rate = file.sampleRate;
+        if (p->channels > 0 && p->data.size() >= size_t(4 * p->channels))
+            nullsmp::makeOverview(p->data.data(), p->channels, double(p->data.size() / size_t(p->channels)), p->ov);
+        fFiles.post(p);
     }
 
     void run(const float**, float** outputs, uint32_t frames, const MidiEvent* midi, uint32_t midiCount) override
     {
         // a new file: the JSFX's @slider after slider1 changed
-        if (fFileLock.try_lock())
+        if (Pending* p = fFiles.take())
         {
-            if (fFileId != fAppliedFileId)
-            {
-                fDsp.setSample(fPending, fPendingCh, fPendingRate); // the old data goes back to fPending
-                fAppliedFileId = fFileId;
-                if (fDsp.fileOk())
-                    std::memcpy(overview, fPendingOv, sizeof(overview));
-                else
-                    std::memcpy(overview, fBuiltinOv, sizeof(overview));
-                publish();
-                update();
-            }
-            fFileLock.unlock();
+            fDsp.setSample(p->data, p->channels, p->rate); // the old data goes back in p, freed off the audio thread
+            if (fDsp.fileOk())
+                std::memcpy(overview, p->ov, sizeof(overview));
+            else
+                std::memcpy(overview, fBuiltinOv, sizeof(overview));
+            fFiles.giveBack(p);
+            publish();
+            update();
         }
 
         uint32_t n = 0;
@@ -157,12 +149,14 @@ private:
     nullsmp::MidiEv fEvents[nullsmp::kMaxEvents];
     float fBuiltinOv[nullsmp::kOverview] = {};
 
-    std::mutex fFileLock;
-    std::vector<double> fPending;
-    int fPendingCh = 0;
-    double fPendingRate = 0.0;
-    float fPendingOv[nullsmp::kOverview] = {};
-    int fFileId = 0, fAppliedFileId = 0;
+    // a loaded sample on its way to run(): the file_mem values, its format and its waveform
+    struct Pending {
+        std::vector<double> data;
+        int channels = 0;
+        double rate = 0.0;
+        float ov[nullsmp::kOverview] = {};
+    };
+    nulljsfx::Mailbox<Pending> fFiles;
 
     DISTRHO_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(PluginSampler)
 };
