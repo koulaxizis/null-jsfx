@@ -2,7 +2,7 @@ desc:NULL Humanize
 author: Christos Koulaxizis
 tags: midi humanize humanizer random timing velocity groove swing shuffle laid back push feel quantize
 //category: MIDI
-//NULL JSFX v2.5 • https://nulljsfx.tech • MIT License
+//NULL JSFX v2.6 • https://nulljsfx.tech • MIT License
 
 slider1:10<0,30,1>Timing (ms)
 slider2:10<0,50,1>Velocity (%)

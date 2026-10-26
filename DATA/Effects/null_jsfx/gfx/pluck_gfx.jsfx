@@ -2,7 +2,7 @@ desc:NULL Pluck GFX
 author: Christos Koulaxizis
 tags: instrument pluck plucked string karplus strong guitar nylon steel harp koto pipa lute banjo dulcimer strum strummer chord rhythm body midi gui
 //category: Instruments
-//NULL JSFX v2.5 • https://nulljsfx.tech • MIT License
+//NULL JSFX v2.6 • https://nulljsfx.tech • MIT License
 
 import null_gfx.jsfx-inc
 

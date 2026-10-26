@@ -2,7 +2,7 @@ desc:NULL DJ Filter
 author: Christos Koulaxizis
 tags: filter dj lowpass highpass sweep resonance performance
 //category: One Slider
-//NULL JSFX v2.5 • https://nulljsfx.tech • MIT License
+//NULL JSFX v2.6 • https://nulljsfx.tech • MIT License
 
 slider1:0<-100,100,1>Filter
 

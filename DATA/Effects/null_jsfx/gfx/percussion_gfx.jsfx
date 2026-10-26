@@ -2,7 +2,7 @@ desc:NULL Percussion GFX
 author: Christos Koulaxizis
 tags: instrument percussion latin hand drums conga bongo shaker tambourine cowbell claves guiro cabasa triangle groove synth midi gui
 //category: Instruments
-//NULL JSFX v2.5 • https://nulljsfx.tech • MIT License
+//NULL JSFX v2.6 • https://nulljsfx.tech • MIT License
 
 import null_gfx.jsfx-inc
 

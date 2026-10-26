@@ -2,7 +2,7 @@ desc:NULL Disperser
 author: Christos Koulaxizis
 tags: allpass phase dispersion group delay transient laser zap chirp kick sound design
 //category: Essentials
-//NULL JSFX v2.5 • https://nulljsfx.tech • MIT License
+//NULL JSFX v2.6 • https://nulljsfx.tech • MIT License
 
 slider1:1000<20,20000,1:log>Frequency (Hz)
 slider2:16<0,64,1>Amount

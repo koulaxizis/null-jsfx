@@ -2,7 +2,7 @@ desc:NULL Driver GFX
 author: Christos Koulaxizis
 tags: saturation drive warmth tube tape overdrive gui
 //category: One Slider
-//NULL JSFX v2.5 • https://nulljsfx.tech • MIT License
+//NULL JSFX v2.6 • https://nulljsfx.tech • MIT License
 
 import null_gfx.jsfx-inc
 

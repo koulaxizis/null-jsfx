@@ -2,7 +2,7 @@ desc:NULL Phaser
 author: Christos Koulaxizis
 tags: phaser modulation sweep notch moving filter allpass feedback stereo tempo sync
 //category: Essentials
-//NULL JSFX v2.5 • https://nulljsfx.tech • MIT License
+//NULL JSFX v2.6 • https://nulljsfx.tech • MIT License
 
 slider1:0.5<0.1,5,0.1>Rate (Hz)
 slider2:4<1,8,1>Stages

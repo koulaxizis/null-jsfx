@@ -2,7 +2,7 @@ desc:NULL Octaver GFX
 author: Christos Koulaxizis
 tags: octave octaver octave divider sub octave bass guitar analog flip-flop synth gui
 //category: Essentials
-//NULL JSFX v2.5 • https://nulljsfx.tech • MIT License
+//NULL JSFX v2.6 • https://nulljsfx.tech • MIT License
 
 import null_gfx.jsfx-inc
 
