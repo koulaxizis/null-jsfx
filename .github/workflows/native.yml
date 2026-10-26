@@ -262,6 +262,7 @@ jobs:
     # each CLAP, on Windows and Linux. Report-only for now (continue-on-error): failures show as
     # warnings and in the job summary, the reports are uploaded as artifacts. Christos makes the
     # job required once every plugin passes.
+    name: validate (${{ matrix.name }})
     needs: build
     continue-on-error: true
     timeout-minutes: 120
@@ -269,7 +270,8 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - { os: ubuntu-22.04, name: Linux, exe: "", python: python3,
+          # 24.04: pluginval 2 needs glibc 2.38; the plugins built on 22.04 load there too
+          - { os: ubuntu-24.04, name: Linux, exe: "", python: python3,
               pluginval_sha256: 2e23d311c8c2664457b11be8f6cf4ed29cfdc08765c71c43934a1ed3360f118f }
           - { os: windows-2022, name: Windows, exe: ".exe", python: python,
               pluginval_sha256: da158e918b60430c6a5223cd99cc2e746bda604e583258c400898caf4e95c523 }
@@ -292,7 +294,15 @@ jobs:
           name: NULL-JSFX-VST3-CLAP-${{ matrix.name }}
           path: pkg
 
+      - name: Linux libraries (pluginval, plugins)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libasound2t64 libfreetype6 libfontconfig1 \
+            libgl1 libx11-6 libxcursor1 libxext6 libxrandr2 libdbus-1-3
+
       - name: pluginval
+        if: ${{ !cancelled() }}
         run: |
           curl -sSfL -o pluginval.zip \
             "https://github.com/Tracktion/pluginval/releases/download/$PLUGINVAL_TAG/pluginval_${{ matrix.name }}.zip"
@@ -304,11 +314,13 @@ jobs:
           echo "PLUGINVAL=$PWD/validators/pluginval${{ matrix.exe }}" >> "$GITHUB_ENV"
 
       - uses: actions/cache@v4
+        if: ${{ !cancelled() }}
         with:
           path: clap-validator
           key: clap-validator-${{ runner.os }}-${{ env.CLAP_VALIDATOR_REV }}
 
       - name: clap-validator
+        if: ${{ !cancelled() }}
         run: |
           if [ ! -x "clap-validator/bin/clap-validator${{ matrix.exe }}" ]; then
             cargo install --git https://github.com/free-audio/clap-validator \
@@ -317,6 +329,7 @@ jobs:
           echo "CLAP_VALIDATOR=$PWD/clap-validator/bin/clap-validator${{ matrix.exe }}" >> "$GITHUB_ENV"
 
       - name: Validate the VST3 plugins (pluginval)
+        if: ${{ !cancelled() }}
         run: native/scripts/validate.sh pluginval pkg reports
 
       - name: Validate the CLAP plugins (clap-validator)

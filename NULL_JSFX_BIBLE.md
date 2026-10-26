@@ -504,7 +504,7 @@ The recipes live in the READMEs. This Part says where they are and lists the ste
 | Rack module | ctest `module_<id>` | each adapter matches its JSFX, like `compare_` |
 | Rack engine | ctest `rack_test` | every preset renders; a single slot is bit-exact with its module; band splits sum flat; channel routing; modulation; lanes line up; the loop decays; the sequencer steps; the ducker's key; bit-for-bit against `RackEngineV1.hpp` (R12) |
 | pluginval (blocking) | `native.yml` job `build`, Linux, pluginval v1.0.4 | every VST3 at strictness 5, in process |
-| pluginval 2 (report-only) | `native.yml` job `validate`, Windows + Linux, `native/scripts/validate.sh pluginval` | every VST3: `pluginval validate --strictness-level 5 --skip-gui-tests`, a JUnit report per plugin; pluginval `v2.0.0-beta3` pinned by tag and SHA-256 (GPLv3, CI only, never shipped) |
+| pluginval 2 (report-only) | `native.yml` job `validate`, Windows + Linux (ubuntu-24.04: pluginval 2 needs glibc 2.38), `native/scripts/validate.sh pluginval` | every VST3: `pluginval validate --strictness-level 5 --skip-gui-tests`, a JUnit report per plugin; pluginval `v2.0.0-beta3` pinned by tag and SHA-256 (GPLv3, CI only, never shipped) |
 | clap-validator (report-only) | `native.yml` job `validate`, Windows + Linux, `native/scripts/validate.sh clap` | every CLAP: `clap-validator validate --only-failed --json`, out of process; built from free-audio/clap-validator `b2f1d9b79b1d264a5747f46707d72b1aa40a02ef` (MIT), cached |
 | Web | `web/test/run.sh` | `build.js --check`, the runtime tests, and the null test against ysfx below 1e-6 (MIDI too) |
 | Hub engine | `cd hub && cargo test -p null_hub_core` | install, update, remove and repair against a local release server |
