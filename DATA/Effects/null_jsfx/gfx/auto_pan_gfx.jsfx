@@ -20,6 +20,7 @@ out_pin:Left
 out_pin:Right
 
 @init
+  ext_noinit = 1;              // play and seek keep tails and state, as in the VST3/CLAP
   // NULL Auto Pan (../auto_pan.jsfx) with its own interface: same audio code, plus @gfx.
   phase = 0;
   calc_rate = 2;

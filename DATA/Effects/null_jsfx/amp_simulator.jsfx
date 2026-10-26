@@ -23,6 +23,7 @@ out_pin:Left
 out_pin:Right
 
 @init
+  ext_noinit = 1;              // play and seek keep tails and state, as in the VST3/CLAP
   // A guitar and bass amp without a cabinet (put the Cabinet Simulator after it). The input
   // gets a tight high-pass and the Bright shelf, then everything nonlinear runs 2x or 4x
   // oversampled: two to four asymmetric, inverting triode stages, each followed by a coupling

@@ -62,6 +62,7 @@ out_pin:Left
 out_pin:Right
 
 @init
+  ext_noinit = 1;              // play and seek keep tails and state, as in the VST3/CLAP
   // Hand percussion with eleven synthesized voices (no samples) and a groove player that
   // follows the host's tempo:
   //   - conga and tumba (low conga), bongo high and low: a membrane of three sine modes

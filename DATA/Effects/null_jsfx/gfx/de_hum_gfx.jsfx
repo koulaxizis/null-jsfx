@@ -19,6 +19,7 @@ out_pin:Left
 out_pin:Right
 
 @init
+  ext_noinit = 1;              // play and seek keep tails and state, as in the VST3/CLAP
   // NULL De-Hum (../de_hum.jsfx) with its own interface: same audio code, plus @gfx.
   // Removes mains hum: a cascade of narrow notches at the mains frequency (50 or 60 Hz, plus
   // Fine) and at its multiples, Harmonics notches in all (1 = the fundamental only). Q sets

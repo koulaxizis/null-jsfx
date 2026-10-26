@@ -139,6 +139,31 @@ test("memory reads and writes outside the 8M slots share one scratch slot", func
   assert.strictEqual(m.r(9e6), 7);
 });
 
+// ---- transport start: @init runs again only where the effect did not set ext_noinit ---------
+
+test("ext_noinit: a Delay tail goes on through Play, the Spectrum Analyzer starts fresh", function () {
+  var sr = 48000, n = sr / 2;
+  function tail(id, sliders) {
+    var e = new HOST.Effect(fx(id), R, { srate: sr, blockSize: 256, sliders: sliders });
+    var x = [new Float64Array(n), new Float64Array(n)];
+    x[0][0] = x[1][0] = 1;
+    e.setTime({ tempo: 120, playing: false });
+    run(e, x, 256);                          // the impulse goes in with the transport stopped
+    e.setTime({ tempo: 120, playing: true, position: 0, beat: 0 });
+    return { e: e, y: run(e, [x[0].subarray(256), x[1].subarray(256)], n - 256) };
+  }
+  // Delay at 250 ms, 100 % wet: the echo comes 250 ms after the impulse, after Play
+  var d = tail("delay", { 1: 250, 3: 100 }), peak = 0;
+  for (var i = 0; i < d.y[0].length; i++) peak = Math.max(peak, Math.abs(d.y[0][i]));
+  assert.ok(peak > 0.1, "the echo survives the transport start (peak " + peak + ")");
+  assert.strictEqual(d.e.inst.getHost("ext_noinit"), 1);
+  // the analyzer keeps REAPER's reset at Play: @init runs again on the next block
+  var e = new HOST.Effect(fx("spectrum_analyzer"), R, { srate: sr, blockSize: 256 });
+  e.setTime({ tempo: 120, playing: false });
+  e.setTime({ tempo: 120, playing: true });
+  assert.strictEqual(e.mustInit, true);
+});
+
 // ---- instruments: MIDI, transport, @serialize, the interface's shared state ----------------
 
 // runs an instrument like the worklet does: events from a Sched, block by block

@@ -15,6 +15,7 @@ out_pin:Left
 out_pin:Right
 
 @init
+  ext_noinit = 1;              // play and seek keep tails and state, as in the VST3/CLAP
   // Multiplies the input by a sine carrier (classic ring modulation: metallic, bell-like
   // tones). An LFO at Rate sweeps the carrier up and down by up to one octave (Depth).
   c_phase = 0;

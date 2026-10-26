@@ -23,6 +23,7 @@ out_pin:Left
 out_pin:Right
 
 @init
+  ext_noinit = 1;              // play and seek keep tails and state, as in the VST3/CLAP
   // NULL Phase Align (../phase_align.jsfx) with its own interface: same audio code, plus @gfx.
   // Lines up two sources that should play together (two mics on one drum, a bass DI and its
   // amp, the two sides of a stereo pair) in time, polarity and phase.

@@ -23,6 +23,7 @@ out_pin:Left
 out_pin:Right
 
 @init
+  ext_noinit = 1;              // play and seek keep tails and state, as in the VST3/CLAP
   // NULL Tape (../tape.jsfx) with its own interface: same audio code, plus @gfx.
   // A tape machine in one line: the transport (wow and flutter as a modulated fractional delay
   // around a fixed 3 ms centre, cubic interpolation), the record path (pre-emphasis, Drive into

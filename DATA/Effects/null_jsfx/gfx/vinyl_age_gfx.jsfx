@@ -24,6 +24,7 @@ out_pin:Left
 out_pin:Right
 
 @init
+  ext_noinit = 1;              // play and seek keep tails and state, as in the VST3/CLAP
 // NULL Vinyl Age (../vinyl_age.jsfx) with its own interface: same audio code, plus @gfx.
 /* The wow/flutter delay line sits at a fixed 50 ms centre, so the dry signal is read
    from the same buffer at exactly that delay: dry and wet stay time-aligned at any Mix.

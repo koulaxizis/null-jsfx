@@ -24,6 +24,7 @@ out_pin:Left
 out_pin:Right
 
 @init
+  ext_noinit = 1;              // play and seek keep tails and state, as in the VST3/CLAP
   // NULL Wah (../wah.jsfx) with its own interface: same audio code, plus @gfx.
   // A wah pedal: a resonant band-pass (TPT state-variable filter, normalised to 0 dB at its
   // peak, then lifted by the resonance) swept by the pedal on an exponential curve.

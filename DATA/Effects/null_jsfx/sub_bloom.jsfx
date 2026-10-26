@@ -16,6 +16,7 @@ out_pin:Left
 out_pin:Right
 
 @init
+  ext_noinit = 1;              // play and seek keep tails and state, as in the VST3/CLAP
   // Subharmonic synthesizer (per channel). The input is band-limited to the bass range
   // (high-pass at Source Frequency / 4, 24 dB/oct low-pass at Source Frequency), the
   // band's zero crossings (with hysteresis) clock a flip-flop that toggles once per input

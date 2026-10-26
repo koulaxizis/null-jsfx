@@ -19,6 +19,7 @@ out_pin:Left
 out_pin:Right
 
 @init
+  ext_noinit = 1;              // play and seek keep tails and state, as in the VST3/CLAP
   pb0_l=0; pb1_l=0; pb2_l=0; pb3_l=0; pb4_l=0; pb5_l=0; pb6_l=0;
   pb0_r=0; pb1_r=0; pb2_r=0; pb3_r=0; pb4_r=0; pb5_r=0; pb6_r=0;
   brn_l=0; brn_r=0;

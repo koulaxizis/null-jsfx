@@ -14,6 +14,7 @@ out_pin:Left
 out_pin:Right
 
 @init
+  ext_noinit = 1;              // play and seek keep tails and state, as in the VST3/CLAP
   // Idle: the audio passes untouched. Trigger: playback slows to a stop over Stop Time,
   // then spins back up over Start Time and fades back to the live signal.
   buf_size = ceil(srate * 12);

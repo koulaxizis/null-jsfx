@@ -26,6 +26,7 @@ out_pin:Left
 out_pin:Right
 
 @init
+  ext_noinit = 1;              // play and seek keep tails and state, as in the VST3/CLAP
   // NULL Dynamics (../dynamics.jsfx) with its own interface: same audio code, plus @gfx.
   // Style: Clean = peak detector, gain smoothed with Attack / Release (the original plugin).
   // Bus = crest-corrected RMS detector that partly listens to its own gain reduction (half

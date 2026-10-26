@@ -22,6 +22,7 @@ out_pin:Left
 out_pin:Right
 
 @init
+  ext_noinit = 1;              // play and seek keep tails and state, as in the VST3/CLAP
   // A multi-head tape echo. One tape loop per channel is written by the record head and read
   // by three playback heads at 1x, 2x and 3x the Repeat Time (or the synced note). The heads
   // the Heads selector picks are summed into ONE feedback loop: worn-tape band limit (12 dB/oct

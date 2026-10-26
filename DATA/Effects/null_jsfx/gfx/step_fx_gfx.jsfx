@@ -38,6 +38,7 @@ out_pin:Left
 out_pin:Right
 
 @init
+  ext_noinit = 1;              // play and seek keep tails and state, as in the VST3/CLAP
   // NULL Step FX (../step_fx.jsfx) with its own interface: same audio code, plus @gfx.
   // A 16-step sequencer that plays one effect per step. One step = Step Length at the host
   // tempo; while the transport plays, the step comes from beat_position so the pattern stays

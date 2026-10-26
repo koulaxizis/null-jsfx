@@ -21,6 +21,7 @@ out_pin:Left
 out_pin:Right
 
 @init
+  ext_noinit = 1;              // play and seek keep tails and state, as in the VST3/CLAP
   // NULL Convolution (../convolution.jsfx) with its own interface: same audio code, plus @gfx.
   gfx_ext_retina = 1;
   // Convolution reverb: the input is convolved with an impulse response (IR), the
