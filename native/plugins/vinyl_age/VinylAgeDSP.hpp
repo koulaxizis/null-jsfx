@@ -36,7 +36,7 @@ struct Biquad {
     // type 0 high-pass, 1 low-pass, 2 peaking; keeps the state
     void set(int type, double f, double q, double db, double sr) noexcept
     {
-        const double w = 2.0 * M_PI * f / sr, cs = std::cos(w), al = std::sin(w) / (2.0 * q);
+        const double w = 2.0 * M_PI * std::min(f, sr * 0.45) / sr, cs = std::cos(w), al = std::sin(w) / (2.0 * q);
         const double A = std::pow(10.0, db / 40.0);
         double a0;
         if (type == 0) { b0 = (1 + cs) / 2; b1 = -(1 + cs); b2 = b0; a0 = 1 + al; a1 = -2 * cs; a2 = 1 - al; }
