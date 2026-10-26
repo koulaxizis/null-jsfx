@@ -2,7 +2,7 @@
 
 113 professional audio plugins for Cockos Reaper. Pure EEL2 scripting, native sliders, zero dependencies. Free and open source.
 
-The One Slider plugins also come as **GFX** JSFX with their own interface and as **VST3 / CLAP** for any DAW (Windows, macOS, Linux). All versions of a plugin sound the same.
+Every plugin also comes as **GFX** JSFX with its own interface and as **VST3 / CLAP** for any DAW (Windows, macOS, Linux), and most effects also as a module of the **Rack**. All versions of a plugin sound the same.
 
 ## Plugins
 
