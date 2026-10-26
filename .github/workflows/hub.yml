@@ -141,13 +141,24 @@ jobs:
           kill -0 $pid || { echo "the Hub quit on its own"; exit 1; }
           kill $pid || true
 
+      - name: The released Hub (Windows)
+        # from the newest release other than $TAG that has one: when a release is published,
+        # "latest" is that release, and its Hub is the one being built here
+        if: runner.os == 'Windows'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          from="$(gh api "repos/$GITHUB_REPOSITORY/releases" --jq '[.[] | select((.prerelease | not) and .tag_name != env.TAG and any(.assets[]; .name == "NULL-JSFX-Hub-Windows-Setup.exe"))][0].tag_name // empty')"
+          [ -n "$from" ] || { echo "no earlier release has a Windows Hub"; exit 1; }
+          echo "updating from the Hub of release $from"
+          gh release download "$from" --repo "$GITHUB_REPOSITORY" --pattern NULL-JSFX-Hub-Windows-Setup.exe --output "$RUNNER_TEMP/released.exe"
+
       - name: Updates itself (Windows)
         # what "Update the Hub" does (hub/app/src/selfupdate.rs): the released Hub is running, the
         # new setup runs with /P /R; the new Hub must be installed and running afterwards
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
-          Invoke-WebRequest https://github.com/koulaxizis/null-jsfx/releases/latest/download/NULL-JSFX-Hub-Windows-Setup.exe -OutFile "$env:RUNNER_TEMP\released.exe"
           Start-Process "$env:RUNNER_TEMP\released.exe" -ArgumentList '/S' -Wait
           $exe = "$env:LOCALAPPDATA\NULL JSFX Hub\null-jsfx-hub.exe"
           $env:NULL_JSFX_HUB_DATA = "$env:RUNNER_TEMP\hubdata"
@@ -176,7 +187,8 @@ jobs:
         if: env.TAG != ''
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release upload "$TAG" out/* --clobber
+        # retried: the upload endpoint can answer HTTP 500 for a while (2.6 release)
+        run: for i in 1 2 3 4 5; do gh release upload "$TAG" out/* --clobber && exit 0; sleep $((i * 30)); done; exit 1
 
   catalog:
     if: github.event_name == 'release' || inputs.release_tag != ''
@@ -192,4 +204,4 @@ jobs:
           printf '%s\n' "$NOTES" > notes.md
           date="$(gh release view "$TAG" --json publishedAt --jq '.publishedAt[:10]')"
           python3 tools/build_catalog.py --version "$TAG" --notes notes.md --date "$date" --out NULL-JSFX-Catalog.json
-          gh release upload "$TAG" NULL-JSFX-Catalog.json --clobber
+          for i in 1 2 3 4 5; do gh release upload "$TAG" NULL-JSFX-Catalog.json --clobber && exit 0; sleep $((i * 30)); done; exit 1

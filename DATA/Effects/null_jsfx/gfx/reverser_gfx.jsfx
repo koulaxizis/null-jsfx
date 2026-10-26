@@ -46,7 +46,7 @@ function update()
   filt_mode = slider2;
   filt_freq = slider3;
 
-  freq = filt_freq;
+  freq = min(filt_freq, srate * 0.49); // below Nyquist at any sample rate
   omega = 2 * $pi * freq / srate;
   cs = cos(omega);
   sn = sin(omega);

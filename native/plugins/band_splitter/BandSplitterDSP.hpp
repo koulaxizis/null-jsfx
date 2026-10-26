@@ -12,6 +12,7 @@
 
 #pragma once
 
+#include <algorithm>
 #include <cmath>
 #include <cstdint>
 
@@ -19,12 +20,12 @@ namespace nullbandsplit {
 
 static const double kPi = 3.141592653589793;
 
-// Butterworth SVF coefficients (svf_coefs in the JSFX)
+// Butterworth SVF coefficients (svf_coefs in the JSFX), f held below 0.45 x sr
 struct Coefs {
     double a1 = 0.0, a2 = 0.0, a3 = 0.0;
     void set(double f, double sr) noexcept
     {
-        const double g = std::tan(kPi * f / sr);
+        const double g = std::tan(kPi * std::min(f, 0.45 * sr) / sr);
         a1 = 1.0 / (1.0 + g * (g + std::sqrt(2.0)));
         a2 = g * a1;
         a3 = g * a2;

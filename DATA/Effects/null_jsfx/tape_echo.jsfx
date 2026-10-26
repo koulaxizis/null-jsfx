@@ -75,16 +75,16 @@ options:maxmem=33554432
   sp_hx = sp_hy = sp_lpl = sp_lpr = 0;
   rv_was = 0;
 
-  // RBJ biquads (normalised), transposed direct form II
+  // RBJ biquads (normalised), transposed direct form II; f is held below 0.45 x srate
   function te_lp(f, q) local(w, al) instance(b0, b1, b2, a1, a2)
   (
-    w = 2 * $pi * f / srate; al = sin(w) / (2 * q);
+    w = 2 * $pi * min(f, 0.45 * srate) / srate; al = sin(w) / (2 * q);
     b0 = (1 - cos(w)) / 2 / (1 + al); b1 = (1 - cos(w)) / (1 + al); b2 = b0;
     a1 = -2 * cos(w) / (1 + al); a2 = (1 - al) / (1 + al);
   );
   function te_shelf(f, db, high) local(w, cs, A, sa, a0) instance(b0, b1, b2, a1, a2)
   (
-    w = 2 * $pi * f / srate; cs = cos(w); A = 10 ^ (db / 40);
+    w = 2 * $pi * min(f, 0.45 * srate) / srate; cs = cos(w); A = 10 ^ (db / 40);
     sa = 2 * sqrt(A) * sin(w) / 2 * sqrt(2);
     high ? (
       a0 = (A + 1) - (A - 1) * cs + sa;
