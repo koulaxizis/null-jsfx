@@ -52,17 +52,24 @@ if(MSVC)
   # MSVC ships only OpenGL 1.1 headers; NanoVG needs the GL 2.0 types from Khronos (MIT)
   include_directories(BEFORE "${CMAKE_CURRENT_SOURCE_DIR}/third_party/khronos")
 endif()
-# third_party/dpf/null-jsfx.patch, applied on top of the pinned commit (a local --dpf checkout
-# needs it applied by hand): the CLAP wrapper calls clap_host_latency::changed() only inside
-# activate(), as the CLAP spec requires, and no output sample is subnormal (clap-validator)
+# Every third_party/dpf/*.patch is applied on top of the pinned commit, in name order (a local --dpf
+# checkout needs them applied by hand). The reset first makes the step idempotent.
+#   null-jsfx.patch   the CLAP wrapper calls clap_host_latency::changed() only inside activate(), as
+#                     the CLAP spec requires, and no output sample is subnormal (clap-validator)
+#   state-load.patch  CLAP/VST3 state load: a string cut by a short stream read is not ended early
+file(GLOB _dpf_patches "${CMAKE_CURRENT_SOURCE_DIR}/third_party/dpf/*.patch")
+list(SORT _dpf_patches)
+set(_dpf_patch_command PATCH_COMMAND git reset -q --hard ${DPF_GIT_SHA})
+foreach(_dpf_patch IN LISTS _dpf_patches)
+  list(APPEND _dpf_patch_command COMMAND git apply "${_dpf_patch}")
+endforeach()
 FetchContent_Declare(dpf
   GIT_REPOSITORY https://github.com/DISTRHO/DPF.git
   GIT_TAG        ${DPF_GIT_SHA}
   GIT_SUBMODULES "dgl/src/pugl-upstream"
   GIT_SHALLOW    FALSE
   GIT_CONFIG     core.autocrlf=false
-  PATCH_COMMAND  git reset -q --hard ${DPF_GIT_SHA}
-         COMMAND git apply "${CMAKE_CURRENT_SOURCE_DIR}/third_party/dpf/null-jsfx.patch")
+  ${_dpf_patch_command})
 set(DPF_LIBRARIES OFF CACHE BOOL "" FORCE)
 set(DPF_EXAMPLES  OFF CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(dpf)
