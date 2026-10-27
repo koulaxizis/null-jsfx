@@ -14,6 +14,8 @@ in_pin:Right
 out_pin:Left
 out_pin:Right
 
+options:maxmem=33554432
+
 @init
 max_buf = srate * 10;
 buf_l = 0;

@@ -5,7 +5,7 @@
   "use strict";
 
   var CLOSE = 0.00001;
-  var MEM_MAX = 8388608;        // REAPER's default: 128 blocks of 65536 slots
+  var MEM_MAX = 8388608;        // REAPER's default: 128 blocks of 65536 slots (options:maxmem raises it)
   var BLOCK = 65536;
   var MIN_NORMAL = 2.2250738585072014e-308;
 
@@ -63,30 +63,31 @@
       var c = int32(n);
       return c < 1 ? 0 : c > 1048576 ? 1048576 : c;
     },
-    memory: function () { return new Memory(); },
+    memory: function (max) { return new Memory(max); },
     strings: function (literals) { return new Strings(literals); }
   };
 
   // ---------------------------------------------------------------- memory -----------
-  // Like EEL2: 128 blocks of 65536 slots, each allocated on first write, so an effect that
-  // keeps a buffer at index 4,000,000 does not cost 32 MB.
-  function Memory() {
+  // Like EEL2: 128 blocks of 65536 slots (up to 512 with options:maxmem), each allocated on
+  // first write, so an effect that keeps a buffer at index 4,000,000 does not cost 32 MB.
+  function Memory(max) {
+    this.max = max || MEM_MAX; // slots, a whole number of blocks (eel2js rounds options:maxmem like EEL2)
     this.b = [new Float64Array(BLOCK)]; // block 0 always exists: generated code reads it directly (M0)
     this.scratch = 0; // out-of-range reads and writes share this slot, as in EEL2
   }
   // read with the 0.00001 already added
   Memory.prototype.rc = function (x) {
-    if (x > -1 && x < MEM_MAX) { var i = x | 0, blk = this.b[i >> 16]; return blk ? blk[i & 65535] : 0; }
+    if (x > -1 && x < this.max) { var i = x | 0, blk = this.b[i >> 16]; return blk ? blk[i & 65535] : 0; }
     return this.scratch;
   };
   Memory.prototype.i = function (x) {
     x += CLOSE;
-    if (x > -1 && x < MEM_MAX) return x | 0;
+    if (x > -1 && x < this.max) return x | 0;
     return -1;
   };
   Memory.prototype.r = function (x) {
     x += CLOSE;
-    if (x > -1 && x < MEM_MAX) { var i = x | 0, blk = this.b[i >> 16]; return blk ? blk[i & 65535] : 0; }
+    if (x > -1 && x < this.max) { var i = x | 0, blk = this.b[i >> 16]; return blk ? blk[i & 65535] : 0; }
     return this.scratch;
   };
   Memory.prototype.g = function (i) {
@@ -115,8 +116,8 @@
   Memory.prototype.set = function (dest, value, len) {
     var d = int32(dest + 0.0001), n = int32(len + 0.0001); // EEL2 rounds these by +0.0001
     if (d < 0) { n += d; d = 0; }
-    if (d >= MEM_MAX) return dest;
-    if (d + n > MEM_MAX) n = MEM_MAX - d;
+    if (d >= this.max) return dest;
+    if (d + n > this.max) n = this.max - d;
     if (n < 1) return dest;
     this.each(d, n, value !== 0, function (blk, o, c) { if (blk) blk.fill(value, o, o + c); });
     return dest;
@@ -133,8 +134,8 @@
     var d = int32(dest + 0.0001), s = int32(src + 0.0001), n = int32(len + 0.0001);
     if (d < 0) { s -= d; n += d; d = 0; }
     if (s < 0) { d -= s; n += s; s = 0; }
-    if (d + n > MEM_MAX) n = MEM_MAX - d;
-    if (s + n > MEM_MAX) n = MEM_MAX - s;
+    if (d + n > this.max) n = this.max - d;
+    if (s + n > this.max) n = this.max - s;
     if (n <= 0 || d === s) return dest;
     this.write(d, this.read(s, n)); // memmove semantics
     return dest;
@@ -156,7 +157,7 @@
   // a writable view of len slots at offs inside one block (FFT); null when it would cross
   Memory.prototype.span = function (offs, len) {
     var d = int32(offs + 0.0001);
-    if (d < 0 || d + len > MEM_MAX || (d >> 16) !== ((d + len - 1) >> 16)) return null;
+    if (d < 0 || d + len > this.max || (d >> 16) !== ((d + len - 1) >> 16)) return null;
     return this.block(d >> 16).subarray(d & 65535, (d & 65535) + len);
   };
 

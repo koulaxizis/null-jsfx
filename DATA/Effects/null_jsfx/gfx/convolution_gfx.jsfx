@@ -20,6 +20,8 @@ in_pin:Right
 out_pin:Left
 out_pin:Right
 
+options:maxmem=33554432
+
 @init
   // NULL Convolution (../convolution.jsfx) with its own interface: same audio code, plus @gfx.
   gfx_ext_retina = 1;
