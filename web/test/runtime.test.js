@@ -139,6 +139,20 @@ test("memory reads and writes outside the 8M slots share one scratch slot", func
   assert.strictEqual(m.r(9e6), 7);
 });
 
+test("options:maxmem raises the memory to 32M slots, as in EEL2", function () {
+  var m = R.memory(33554432);
+  m.w(m.i(9e6), 5);
+  assert.strictEqual(m.r(9e6), 5);
+  assert.strictEqual(m.scratch, 0);
+  m.w(m.i(33554432), 6); // past the end: the scratch slot
+  assert.strictEqual(m.r(4e7), 6);
+  m.set(33554430, 1, 10); // clipped at the end
+  assert.strictEqual(m.r(33554431), 1);
+  // the translated effects ask for it from their header
+  assert.ok(/R\.memory\(33554432\)/.test(fx("slicer").create.toString()));
+  assert.ok(/R\.memory\(\)/.test(fx("tilt").create.toString()));
+});
+
 // ---- instruments: MIDI, transport, @serialize, the interface's shared state ----------------
 
 // runs an instrument like the worklet does: events from a Sched, block by block

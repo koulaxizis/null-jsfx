@@ -18,6 +18,8 @@ in_pin:Right
 out_pin:Left
 out_pin:Right
 
+options:maxmem=33554432
+
 @init
   // Real-time loop remixer. Every bar (4 beats) of input is recorded into one of two bar
   // buffers while the other one, the previous bar, is played back cut into Slices equal
