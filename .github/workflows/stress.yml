@@ -1,0 +1,45 @@
+name: Stress test
+
+# tests/stress.sh: numerics under hard signals, memory past REAPER's 8M slots at 384 kHz and
+# the cost of a slider change. Every night and by hand for every plugin; on a pull request only
+# for the plugins it changes (all of them when the test itself changes).
+on:
+  schedule:
+    - cron: "30 2 * * *"
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - "DATA/Effects/null_jsfx/**.jsfx"
+      - "tests/stress_test.cpp"
+      - "tests/stress.sh"
+      - ".github/workflows/stress.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  stress:
+    timeout-minutes: 60
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/cache@v4
+        with:
+          path: tests/.build/ysfx
+          key: ysfx-${{ hashFiles('tests/run.sh') }}
+      - run: sudo apt-get install -y nasm
+      - name: Plugins to test
+        id: pick
+        run: |
+          if [ "${{ github.event_name }}" != "pull_request" ]; then echo "files=" >> "$GITHUB_OUTPUT"; exit 0; fi
+          changed="$(git diff --name-only "${{ github.event.pull_request.base.sha }}" "${{ github.sha }}")"
+          if echo "$changed" | grep -qE '^(tests/stress_test\.cpp|tests/stress\.sh|\.github/workflows/stress\.yml)$'; then
+            echo "files=" >> "$GITHUB_OUTPUT"; exit 0
+          fi
+          # a GFX version shares its plugin's audio code: test the plain plugin
+          files="$(echo "$changed" | sed -nE -e 's#^DATA/Effects/null_jsfx/gfx/([a-z0-9_]+)_gfx\.jsfx$#DATA/Effects/null_jsfx/\1.jsfx#p' -e 's#^DATA/Effects/null_jsfx/([a-z0-9_]+)\.jsfx$#DATA/Effects/null_jsfx/\1.jsfx#p' | sort -u | while read -r f; do [ -f "$f" ] && echo "$f"; done | tr '\n' ' ')"
+          echo "files=${files:-none}" >> "$GITHUB_OUTPUT"
+      - if: steps.pick.outputs.files != 'none'
+        run: tests/stress.sh ${{ steps.pick.outputs.files }}
