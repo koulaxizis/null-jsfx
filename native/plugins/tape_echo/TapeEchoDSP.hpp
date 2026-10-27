@@ -61,13 +61,13 @@ inline void echoLevels(int mask, double intensity, bool freeze, int count, doubl
     }
 }
 
-// RBJ biquad, transposed direct form II with the JSFX's denormal flush
+// RBJ biquad, transposed direct form II with the JSFX's denormal flush; f is held below 0.45 x sr
 struct Biquad {
     double b0 = 1.0, b1 = 0.0, b2 = 0.0, a1 = 0.0, a2 = 0.0, z1 = 0.0, z2 = 0.0;
 
     void lowpass(double f, double q, double sr)
     {
-        const double w = 2.0 * kPi * f / sr, al = std::sin(w) / (2.0 * q);
+        const double w = 2.0 * kPi * std::min(f, 0.45 * sr) / sr, al = std::sin(w) / (2.0 * q);
         b0 = (1.0 - std::cos(w)) / 2.0 / (1.0 + al);
         b1 = (1.0 - std::cos(w)) / (1.0 + al);
         b2 = b0;
@@ -76,7 +76,7 @@ struct Biquad {
     }
     void shelf(double f, double db, bool high, double sr)
     {
-        const double w = 2.0 * kPi * f / sr, cs = std::cos(w), A = std::pow(10.0, db / 40.0);
+        const double w = 2.0 * kPi * std::min(f, 0.45 * sr) / sr, cs = std::cos(w), A = std::pow(10.0, db / 40.0);
         const double sa = 2.0 * std::sqrt(A) * std::sin(w) / 2.0 * std::sqrt(2.0);
         if (high)
         {

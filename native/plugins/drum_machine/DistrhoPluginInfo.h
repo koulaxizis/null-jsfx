@@ -27,6 +27,8 @@
 // and perc pairs (the kick stays on the main pair)
 #define DISTRHO_PLUGIN_NUM_OUTPUTS   8
 #define DISTRHO_PLUGIN_WANT_MIDI_INPUT 1
+// every MIDI message received goes out again (like the JSFX's midisend), so instruments can be layered
+#define DISTRHO_PLUGIN_WANT_MIDI_OUTPUT 1
 #define DISTRHO_PLUGIN_WANT_TIMEPOS  1
 #define DISTRHO_PLUGIN_WANT_LATENCY  0
 #define DISTRHO_PLUGIN_WANT_STATE    1

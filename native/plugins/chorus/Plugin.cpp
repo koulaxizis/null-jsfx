@@ -31,7 +31,7 @@ protected:
 
     void valueChanged(uint32_t, float) override { update(); }
 
-    void activate() override
+    void onActivate() override
     {
         fDsp.setSampleRate(getSampleRate());
         update();
@@ -43,7 +43,7 @@ protected:
         update();
     }
 
-    void run(const float** inputs, float** outputs, uint32_t frames) override
+    void process(const float** inputs, float** outputs, uint32_t frames) override
     {
         // as pumper: the host tempo when above 0, else 120; the beat position only while playing
         const TimePosition& tp = getTimePosition();

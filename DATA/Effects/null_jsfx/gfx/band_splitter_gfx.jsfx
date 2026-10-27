@@ -53,10 +53,10 @@ out_pin:Band 4 Right
     ic2 = 2 * v2 - ic2;
   );
 
-  // coefficients of a Butterworth SVF at f Hz into c[0..2]
+  // coefficients of a Butterworth SVF at f Hz (held below 0.45 x srate) into c[0..2]
   function svf_coefs(c, f) local(g)
   (
-    g = tan($pi * f / srate);
+    g = tan($pi * min(f, 0.45 * srate) / srate);
     c[0] = 1 / (1 + g * (g + K2));
     c[1] = g * c[0];
     c[2] = g * c[1];

@@ -33,7 +33,7 @@ protected:
 
     void valueChanged(uint32_t, float) override { setParams(); }
 
-    void activate() override { init(getSampleRate()); }
+    void onActivate() override { init(getSampleRate()); }
 
     void sampleRateChanged(double newSampleRate) override { init(newSampleRate); }
 
@@ -48,7 +48,7 @@ protected:
         fFiles.post(file);
     }
 
-    void run(const float** inputs, float** outputs, uint32_t frames) override
+    void process(const float** inputs, float** outputs, uint32_t frames) override
     {
         // the JSFX's @slider before the block: a new file, then a rebuild if anything changed
         if (nullconv::IrFile* file = fFiles.take())
