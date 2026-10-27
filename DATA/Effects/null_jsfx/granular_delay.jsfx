@@ -20,6 +20,7 @@ out_pin:Left
 out_pin:Right
 
 @init
+  ext_noinit = 1;              // play and seek keep tails and state, as in the VST3/CLAP
   // A delay that plays back in small grains. Density grains per second are started;
   // each one reads a short window (Grain Size) from Delay Time ago, randomly moved by
   // Spray, at the chosen Pitch, sometimes backwards (Reverse), panned randomly by

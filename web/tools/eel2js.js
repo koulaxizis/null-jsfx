@@ -1082,7 +1082,7 @@ function emit(c, effect, bodies, io) {
     "mouse_x", "mouse_y", "mouse_cap", "mouse_wheel"].forEach(function (v) { gvars[v] = c.useVar(v); });
   var host = {};
   ["srate", "samplesblock", "num_ch", "tempo", "play_state", "play_position", "beat_position", "ts_num", "ts_denom",
-    "pdc_delay", "pdc_bot_ch", "pdc_top_ch", "trigger"].forEach(function (v) { host[v] = c.useVar(v); });
+    "pdc_delay", "pdc_bot_ch", "pdc_top_ch", "trigger", "ext_noinit"].forEach(function (v) { host[v] = c.useVar(v); });
   function tv(sec) { var t = bodies[sec + "Temps"] || []; return t.length ? "var " + t.join(", ") + ";\n" : ""; }
   L.push("var inst = {");
   L.push("  FX: FX,");

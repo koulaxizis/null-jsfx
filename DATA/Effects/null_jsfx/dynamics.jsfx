@@ -24,6 +24,7 @@ out_pin:Left
 out_pin:Right
 
 @init
+  ext_noinit = 1;              // play and seek keep tails and state, as in the VST3/CLAP
   // Style: Clean = peak detector, gain smoothed with Attack / Release (the original plugin).
   // Bus = crest-corrected RMS detector that partly listens to its own gain reduction (half
   // feedback, slope compensated so the static curve stays where the display draws it), a little

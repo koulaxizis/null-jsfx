@@ -12,6 +12,7 @@ out_pin:Left
 out_pin:Right
 
 @init
+  ext_noinit = 1;              // play and seek keep tails and state, as in the VST3/CLAP
   // Harmonic exciter: the highs above ~3 kHz are split off, gently saturated to create
   // new upper harmonics, filtered again so only the fresh top end remains, and blended
   // back in. Adds presence and sparkle without simply turning up the treble.

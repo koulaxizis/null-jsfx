@@ -22,6 +22,7 @@ out_pin:Left
 out_pin:Right
 
 @init
+  ext_noinit = 1;              // play and seek keep tails and state, as in the VST3/CLAP
   // A wah pedal: a resonant band-pass (TPT state-variable filter, normalised to 0 dB at its
   // peak, then lifted by the resonance) swept by the pedal on an exponential curve.
   // Classic: 400 Hz to 2.2 kHz, high Q. Vocal: two formant peaks (300-800 Hz and 900 Hz-2.4 kHz)

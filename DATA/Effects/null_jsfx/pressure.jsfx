@@ -12,6 +12,7 @@ out_pin:Left
 out_pin:Right
 
 @init
+  ext_noinit = 1;              // play and seek keep tails and state, as in the VST3/CLAP
   // Bus glue: a stereo-linked RMS-style compressor whose threshold drops (0 to -30 dB) and
   // ratio rises (1:1 to 6:1) with Amount, with 10 ms attack, 150 ms release and automatic
   // makeup gain. At 0 it does nothing.

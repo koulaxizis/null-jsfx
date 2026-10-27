@@ -13,7 +13,7 @@ the web version always follows the JSFX in `DATA/`. The first user is the Studio
 | `tools/build.js` | Translates every effect into `fx/<id>.js` and writes `fx/index.json`. `--check` fails when `fx/` is out of date |
 | `fx/` | Generated effects (do not edit). Each registers `globalThis.NULLFX[id]` |
 | `runtime/eel-rt.js` | EEL2 runtime: maths with EEL2's rounding rules, the 8M-slot memory, strings, FFT in WDL's order |
-| `runtime/null-fx.js` | Runs one effect the way REAPER does (`@init` on load and at transport start, `@slider` on change, latency) |
+| `runtime/null-fx.js` | Runs one effect the way REAPER does (`@init` on load and at transport start unless `ext_noinit` is set, `@slider` on change, latency) |
 | `runtime/null-worklet.js` | AudioWorklet processor `null-fx-chain`: a chain of effects with bypass, sliders, tempo/transport and IR files |
 | `runtime/null-node.js` | Page side of the worklet: loads the files into an `AudioContext` and wraps the node |
 | `runtime/null-gfx.js` | Draws `@gfx` on a `<canvas>` like REAPER's LICE, and `View`: the interface of an effect with mouse and wheel |

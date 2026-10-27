@@ -23,6 +23,7 @@ out_pin:Left
 out_pin:Right
 
 @init
+  ext_noinit = 1;              // play and seek keep tails and state, as in the VST3/CLAP
   // NULL Pitch Correction (../pitch_correction.jsfx) with its own interface: same audio code,
   // plus @gfx.
   // Monophonic vocal tuning. The pitch is tracked with YIN on a mono, band-limited copy

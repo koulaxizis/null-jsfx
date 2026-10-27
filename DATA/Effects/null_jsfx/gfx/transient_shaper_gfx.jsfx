@@ -21,6 +21,7 @@ out_pin:Left
 out_pin:Right
 
 @init
+  ext_noinit = 1;              // play and seek keep tails and state, as in the VST3/CLAP
   // NULL Transient Shaper (../transient_shaper.jsfx) with its own interface: same audio code, plus @gfx.
   fast_env = 0;
   slow_env = 0;

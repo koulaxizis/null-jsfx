@@ -12,6 +12,7 @@ out_pin:Left
 out_pin:Right
 
 @init
+  ext_noinit = 1;              // play and seek keep tails and state, as in the VST3/CLAP
   // Granular "stretch" texture. Negative values drop the pitch (up to one octave) and
   // smear the sound with long overlapping grains, for a slowed-down, tape-stretched
   // feel; positive values raise the pitch with shorter, tighter grains. 0 is untouched.
