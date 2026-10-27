@@ -2,7 +2,7 @@ desc:NULL Downmix Check
 author: Christos Koulaxizis
 tags: surround downmix fold down check 5.1 7.1 7.1.4 atmos bed lo ro stereo mono solo itu bs775 monitoring post production
 //category: Advanced
-//NULL JSFX v2.6 • https://nulljsfx.tech • MIT License
+//NULL JSFX v2.7 • https://nulljsfx.tech • MIT License
 
 slider1:2<0,2,1{5.1,7.1,7.1.4}>Bed
 slider2:2<0,3,1{Bed,5.1,Stereo Lo/Ro,Mono}>Monitor

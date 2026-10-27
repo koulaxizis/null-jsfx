@@ -2,7 +2,7 @@ desc:NULL Auto Pan
 author: Christos Koulaxizis
 tags: autopan pan modulation lfo movement stereo width tempo sync step pattern
 //category: Essentials
-//NULL JSFX v2.6 • https://nulljsfx.tech • MIT License
+//NULL JSFX v2.7 • https://nulljsfx.tech • MIT License
 
 slider1:2<0.1,10,0.1>Rate (Hz)
 slider2:50<0,100,1>Depth (%)

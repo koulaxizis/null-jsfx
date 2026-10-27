@@ -2,7 +2,7 @@ desc:NULL Bass
 author: Christos Koulaxizis
 tags: instrument bass synth bass 808 sub saw square mono glide portamento acid filter drive phrase player key switch midi
 //category: Instruments
-//NULL JSFX v2.6 • https://nulljsfx.tech • MIT License
+//NULL JSFX v2.7 • https://nulljsfx.tech • MIT License
 
 slider1:1<0,3,1{Sub,Saw,Square,808}>Oscillator
 slider2:0<-2,2,1>Octave

@@ -2,7 +2,7 @@ desc:NULL Panner GFX
 author: Christos Koulaxizis
 tags: pan panner panning balance binaural itd ild haas stereo placement width gui
 //category: Essentials
-//NULL JSFX v2.6 • https://nulljsfx.tech • MIT License
+//NULL JSFX v2.7 • https://nulljsfx.tech • MIT License
 
 import null_gfx.jsfx-inc
 

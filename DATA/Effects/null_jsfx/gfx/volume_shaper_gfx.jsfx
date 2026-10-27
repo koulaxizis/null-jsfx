@@ -2,7 +2,7 @@ desc:NULL Volume Shaper GFX
 author: Christos Koulaxizis
 tags: volume shaper lfo envelope sidechain pump duck gate trance tempo sync rhythm midi trigger one-shot gui
 //category: Essentials
-//NULL JSFX v2.6 • https://nulljsfx.tech • MIT License
+//NULL JSFX v2.7 • https://nulljsfx.tech • MIT License
 
 import null_gfx.jsfx-inc
 

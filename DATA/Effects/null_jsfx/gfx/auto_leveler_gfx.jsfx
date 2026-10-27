@@ -2,7 +2,7 @@ desc:NULL Auto-Leveler GFX
 author: Christos Koulaxizis
 tags: auto leveler gain riding loudness level agc volume dialogue podcast gui
 //category: Essentials
-//NULL JSFX v2.6 • https://nulljsfx.tech • MIT License
+//NULL JSFX v2.7 • https://nulljsfx.tech • MIT License
 
 import null_gfx.jsfx-inc
 

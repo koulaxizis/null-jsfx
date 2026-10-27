@@ -2,7 +2,7 @@ desc:NULL Riff GFX
 author: Christos Koulaxizis
 tags: midi riff generator melody pattern sequencer step random seed tempo sync key scale bassline lead hold gui
 //category: MIDI
-//NULL JSFX v2.6 • https://nulljsfx.tech • MIT License
+//NULL JSFX v2.7 • https://nulljsfx.tech • MIT License
 
 import null_gfx.jsfx-inc
 

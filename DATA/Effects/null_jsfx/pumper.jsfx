@@ -2,7 +2,7 @@ desc:NULL Pumper
 author: Christos Koulaxizis
 tags: sidechain ducking pumping rhythm groove
 //category: One Slider
-//NULL JSFX v2.6 • https://nulljsfx.tech • MIT License
+//NULL JSFX v2.7 • https://nulljsfx.tech • MIT License
 
 slider1:50<0,100,1>Amount
 

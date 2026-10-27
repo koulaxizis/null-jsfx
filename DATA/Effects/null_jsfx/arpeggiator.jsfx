@@ -2,7 +2,7 @@ desc:NULL Arpeggiator
 author: Christos Koulaxizis
 tags: midi arpeggiator arp arpeggio sequencer pattern up down random chord latch gate swing velocity tempo sync
 //category: MIDI
-//NULL JSFX v2.6 • https://nulljsfx.tech • MIT License
+//NULL JSFX v2.7 • https://nulljsfx.tech • MIT License
 
 slider1:6<0,9,1{1/4,1/4D,1/4T,1/8,1/8D,1/8T,1/16,1/16D,1/16T,1/32}>Rate
 slider2:0<0,6,1{Up,Down,Up-Down,Down-Up,Played,Random,Chord}>Pattern

@@ -59,10 +59,10 @@
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                     <span class="btn-text">Download</span>
                     <div class="download-meta">
-                        <span><b id="release-version">v2.6</b></span>
+                        <span><b id="release-version">v2.7</b></span>
                         <span class="release-new" id="release-new" hidden>NEW</span>
                         <span class="sep">&bull;</span>
-                        <span id="last-update">Released: 26/10/26</span>
+                        <span id="last-update">Released: 28/10/26</span>
                     </div>
                 </div>
             </a>
@@ -157,7 +157,7 @@
             <div class="modal-content modal-download">
                 <button class="modal-close" onclick="closeDownload()">&times;</button>
                 <div class="changelog-header">
-                    <h3>Download NULL JSFX v2.6</h3>
+                    <h3>Download NULL JSFX v2.7</h3>
                     <p class="changelog-date">Free and open source. Pick what you need.</p>
                 </div>
                 <div class="download-support" id="download-support" hidden>
@@ -218,10 +218,32 @@
             <div class="modal-content modal-changelog">
                 <button class="modal-close" onclick="closeChangelog()">&times;</button>
                 <div class="changelog-header">
-                    <h3>Release Notes v2.6</h3>
+                    <h3>Release Notes v2.7</h3>
                     <p class="changelog-date">October 2026</p>
                 </div>
                 <div class="changelog-body">
+                    <div class="changelog-section">
+                        <h4 class="changelog-title">2.7: UPGRADES</h4>
+                        <ul>
+                            <li><strong>TRUE PEAK</strong>: Maximizer and Limiter can limit the true peak, not only the sample peak</li>
+                            <li><strong>DELTA</strong>: hear only what Maximizer, Limiter, Clipper, Dynamics, Multiband Comp and Dynamic EQ take away</li>
+                            <li><strong>MID/SIDE</strong>: Dynamics, Multiband Comp, Dynamic EQ and Saturation can work on the mid or the side alone</li>
+                            <li><strong>A/B AND UNDO</strong>: every interface with presets has undo, redo and two settings to compare</li>
+                            <li><strong>OVERSAMPLING</strong> in Tape and Ladder Filter; <strong>CRACKLE</strong> mode in Click Repair; <strong>SONG</strong> mode and Chance steps in Drum Machine</li>
+                            <li><strong>LV2</strong>: every plugin also comes as LV2 on Linux</li>
+                            <li>At their default settings the plugins sound exactly as in 2.6</li>
+                        </ul>
+                    </div>
+                    <div class="changelog-section">
+                        <h4 class="changelog-title">2.7: FIXES</h4>
+                        <ul>
+                            <li><strong>PLAY</strong>: reverb and delay tails and filter state go on when you press Play or move the cursor, as in the VST3 and CLAP</li>
+                            <li><strong>LOW SAMPLE RATES</strong>: no more silence or noise at very low or odd sample rates in Wah, Tape, Tape Echo, Band Splitter, Amp Simulator and other filters</li>
+                            <li><strong>AUDIO</strong>: no more dropouts when Convolution, Slicer, Half Speed or Sampler load or change; less memory at high sample rates</li>
+                            <li><strong>INSTRUMENTS</strong>: MIDI passes through all nine instruments to the next plugin</li>
+                            <li><strong>VST3 / CLAP</strong>: saved settings load correctly in every host, and the Rack's global controls have their right names</li>
+                        </ul>
+                    </div>
                     <div class="changelog-section">
                         <h4 class="changelog-title">2.6: FIXES</h4>
                         <ul>
