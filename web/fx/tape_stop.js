@@ -7,7 +7,7 @@ FX.strings = ["Noto Sans","Hg","NULL JSFX","AUDIO WITHOUT NOISE","TAPE STOP","AD
 FX.live = ["read_pos","slider1","state","timer","write_pos"];
 FX.vars = ["ng_bg","ng_bg2","ng_card","ng_border","ng_text","ng_muted","ng_slogan","ng_accent","ng_icon_a","ng_icon_b","ng_logo_bg","ng_logo_ed","ng_font","ng_pre_n","ng_pre_cur","ng_pre_open","ng_pre_req","ng_pre_w","ng_pre_row","ext_noinit","gfx_ext_retina","srate","buf_size","buf_l","buf_r","write_pos","read_pos","rate","state","timer","wet","fade_step","slider2","stop_samples","slider3","start_samples","slider1","spl0","spl1","ri","fr","r2","tape_l","tape_r","lvl","__l2.h","__l2.cy","ng_dw","ng_dh","ng_pre_h","gfx_w","gfx_h","ng_s","ng_ox","ng_oy","gfx_r","gfx_g","gfx_b","gfx_a","mouse_cap","ng_lmb","ng_prev_lmb","ng_click","ng_now","ng_pre_click","ng_pre_was","mouse_wheel","__l6.px","__l6.py","__l6.sz","__l6.k","__l6.n","__l6.th","__l6.i","__l10.w","__l10.h","gfx_texth","__l11.n","__l11.i","__l11.w","__l11.cw","__l11.chh","__l11.tr","gfx_x","gfx_y","__l12.y0","__l12.hover","ng_pre_x","mouse_x","mouse_y","ng_vx","ng_vy","ng_vw","ng_vh","ng_cw","ng_cy","ng_rowy","ng_ctl_id","ng_px","ng_py","ng_pw","ng_ph","__l16.i","__l16.xx","__l16.yy","__l17.w","__l17.h","ts_b","ts_x","ts_i","__l19.t","ts_y","ng_lx_","ng_ly_","ts_p","ng_cellx","__l24.cx","__l24.ry","__l24.n","__l24.i","__l24.p","__l24.q","__l24.cur","__l24.pw","__l24.hover","__l24.nv","__l25.changed","__l26.cx","__l26.ry","__l26.v","__l26.hover","__l26.nv","ng_drag","ng_drag_val","__l27.kx","__l27.ky","__l27.kr","__l27.tr","__l27.amax","__l27.ang","__l27.a0","__l27.hover","__l27.i","__l27.n","__l27.px1","__l27.py1","__l27.px2","__l27.py2","__l27.k","__l27.dx","__l27.dy","__l28.k","__l28.n","__l29.sens","__l29.nv","__l29.mv","ng_last_click","ng_last_id","ng_lx","ng_ly","__l31.i","__l33.m","__l35.x0","ng_pre_rows","ng_pre_cols","ng_pre_mx","__l36.x","__l36.y","__l36.hover","__l37.s","samplesblock","num_ch","tempo","play_state","play_position","beat_position","ts_num","ts_denom","pdc_delay","pdc_bot_ch","pdc_top_ch","pdc_midi","trigger","ext_nodenorm","ext_tail_size","ext_gr_meter","gfx_a2","gfx_mode","gfx_clear","gfx_dest","gfx_ext_flags","mouse_hwheel"];
 FX.create = function (R, H, G) {
-var MEM = R.memory(), M0 = MEM.b[0], S = R.strings(FX.strings), IO;
+var MEM = R.memory(33554432), M0 = MEM.b[0], S = R.strings(FX.strings), IO;
 var V = new Float64Array(192);
 function f0_update() {
 var t0;
@@ -604,9 +604,9 @@ var i;
 var t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12, t13;
 for (i = 0; i < n; i++) {
 V[37] = (0 < nin ? I[0][i] : 0); V[38] = (1 < nin ? I[1][i] : 0);
-t1 = (V[23] + V[25]) + 0.00001; t1 = t1 > -1 && t1 < 8388608 ? t1 | 0 : -1;
+t1 = (V[23] + V[25]) + 0.00001; t1 = t1 > -1 && t1 < 33554432 ? t1 | 0 : -1;
 (t1 >= 0 && t1 < 65536 ? (M0[t1] = V[37]) : MEM.w(t1, V[37]));
-t2 = (V[24] + V[25]) + 0.00001; t2 = t2 > -1 && t2 < 8388608 ? t2 | 0 : -1;
+t2 = (V[24] + V[25]) + 0.00001; t2 = t2 > -1 && t2 < 33554432 ? t2 | 0 : -1;
 (t2 >= 0 && t2 < 65536 ? (M0[t2] = V[38]) : MEM.w(t2, V[38]));
 (V[25] = V[25] + 1);
 (R.t(((V[25] >= V[22]) ? 1 : 0)) ? (V[25] = 0) : 0);

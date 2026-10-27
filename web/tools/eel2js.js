@@ -368,9 +368,18 @@ var MATH1 = { sin: "Math.sin", cos: "Math.cos", tan: "Math.tan", asin: "Math.asi
   sign: "R.sign", sqr: "R.sqr", invsqrt: "R.invsqrt", sqrt: "R.sqrt", rand: "R.rand" };
 var MATH2 = { atan2: "Math.atan2", pow: "R.pow", min: "R.min", max: "R.max" };
 
+// The effect's memory size in slots, as EEL2 sets it from options:maxmem: 8388608 by
+// default, rounded up to whole blocks of 65536 and at most 512 blocks (33554432).
+function memMax(options) {
+  var m = /(?:^|\s)maxmem=(\S+)/.exec(options || ""), n = m ? Math.floor(parseFloat(m[1])) || 0 : 0;
+  if (n <= 0) return 8388608;
+  return Math.min(Math.ceil(n / 65536), 512) * 65536;
+}
+
 function Compiler(effect, opts) {
   this.effect = effect;
   this.opts = opts || {};
+  this.memMax = memMax(effect.header.options);
   this.vars = {};         // js name -> true (closure variables, start at 0)
   this.varOrder = [];
   this.fnDefs = {};       // eel name -> def (latest wins, like EEL2's redefinition)
@@ -704,8 +713,8 @@ Compiler.prototype.assign = function (n, scope) {
     var idx = this.memIndex(target, scope);
     var s = this.seqArgs([idx, val]);
     var tI = this.newTmp();
-    // the index as EEL2 rounds it, or -1 (the shared scratch slot) when out of range (8388608 slots)
-    var pre2 = s.pre.concat([tI + " = " + s.vals[0] + " + 0.00001; " + tI + " = " + tI + " > -1 && " + tI + " < 8388608 ? " + tI + " | 0 : -1;\n"]);
+    // the index as EEL2 rounds it, or -1 (the shared scratch slot) when out of range (memMax slots)
+    var pre2 = s.pre.concat([tI + " = " + s.vals[0] + " + 0.00001; " + tI + " = " + tI + " > -1 && " + tI + " < " + this.memMax + " ? " + tI + " | 0 : -1;\n"]);
     var cur = "(" + tI + " >= 0 && " + tI + " < 65536 ? M0[" + tI + "] : MEM.g(" + tI + "))";
     var r2 = this.compound(op, cur, s.vals[1]);
     if (filter && op === "=") r2 = "R.d(" + r2 + ")";
@@ -1047,7 +1056,7 @@ function emit(c, effect, bodies, io) {
   L.push("FX.strings = " + JSON.stringify(c.strings) + ";");
   L.push("FX.live = " + JSON.stringify(live.map(function (v) { return c.vars[v]; })) + ";");
   L.push("FX.create = function (R, H, G) {");
-  L.push("var MEM = R.memory(), M0 = MEM.b[0], S = R.strings(FX.strings), IO;");
+  L.push("var MEM = R.memory(" + (c.memMax === 8388608 ? "" : c.memMax) + "), M0 = MEM.b[0], S = R.strings(FX.strings), IO;");
   // variables
   // every EEL2 variable is a slot in one Float64Array (V[k]): plain doubles, no number boxing
   var declAt = L.length;

@@ -16,6 +16,8 @@ in_pin:Right
 out_pin:Left
 out_pin:Right
 
+options:maxmem=33554432
+
 @init
   ext_noinit = 1;              // play and seek keep tails and state, as in the VST3/CLAP
 // NULL Reverser (../reverser.jsfx) with its own interface: same audio code, plus @gfx.
