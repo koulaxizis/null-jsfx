@@ -24,6 +24,13 @@ concurrency:
 
 jobs:
   count:
+    # after "VST3 and CLAP" only when that run attached packages to a release (published, or a
+    # manual run): PR and main runs add no assets
+    if: >-
+      github.event_name != 'workflow_run' ||
+      github.event.workflow_run.event == 'release' ||
+      github.event.workflow_run.event == 'workflow_dispatch'
+    timeout-minutes: 10
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
