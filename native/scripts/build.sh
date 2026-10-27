@@ -45,14 +45,15 @@ fi
 
 if [ "$tests" = ON ] && [ ! -f "$repo/tests/.build/ysfx/build/libysfx.a" ]; then
   echo "== building ysfx via tests/run.sh"
-  bash "$repo/tests/run.sh" >/dev/null || true
+  bash "$repo/tests/run.sh" --build-only
 fi
 
 cmake -S "$here" -B "$build" ${gen[@]+"${gen[@]}"} -DCMAKE_BUILD_TYPE=Release -DNULL_TESTS="$tests" ${extra[@]+"${extra[@]}"}
 cmake --build "$build" --config Release --parallel
 
 if [ "$tests" = ON ]; then
-  (cd "$build" && ctest --output-on-failure -C Release)
+  # the comparisons are independent processes that only read files: run them on every core
+  (cd "$build" && ctest --output-on-failure -C Release --parallel "$(getconf _NPROCESSORS_ONLN 2>/dev/null || echo 2)")
 fi
 
 dist="$here/dist"

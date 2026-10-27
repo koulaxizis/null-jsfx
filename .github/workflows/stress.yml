@@ -14,8 +14,12 @@ on:
       - "tests/stress.sh"
       - ".github/workflows/stress.yml"
 
+permissions:
+  contents: read
+
 jobs:
   stress:
+    timeout-minutes: 60
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
