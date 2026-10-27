@@ -38,7 +38,10 @@ protected:
     const char* getMaker() const override { return "NULL JSFX"; }
     const char* getHomePage() const override { return "https://nulljsfx.tech"; }
     const char* getLicense() const override { return "MIT"; }
-    uint32_t getVersion() const override { return d_version(2, 1, 0); }
+    uint32_t getVersion() const override
+    {
+        return d_version(NULL_JSFX_VERSION_MAJOR, NULL_JSFX_VERSION_MINOR, NULL_JSFX_VERSION_PATCH);
+    }
     int64_t getUniqueId() const override { return d_cconst('N', 'R', 'c', 'k'); }
 
     // ---- parameters --------------------------------------------------------------------------
