@@ -13,6 +13,9 @@
  * Upward (Style 4, appended in 2.4): an RMS detector (10 ms) and a lift instead of a reduction:
  * compressing, below Threshold (upward compression), expanding, above it (upward expansion); at
  * most 24 dB, and compressing it fades out from 48 to 72 dB under Threshold.
+ * Appended in 2.7: Channels (Mid / Side: only that half of the mid/side pair is processed, on
+ * both channels, and the other half is added back after) and Listen Delta (the input minus the
+ * processed signal before Makeup and Mix). At Stereo and Output nothing changes.
  */
 
 #pragma once
@@ -111,8 +114,11 @@ public:
 
     // @slider
     void setParams(int mode, double thresholdDb, double ratio, double kneeDb, double attackMs, double releaseMs,
-                   double makeupDb, int style = kClean, double hpfHz = 20.0, double mixPct = 100.0, bool external = false)
+                   double makeupDb, int style = kClean, double hpfHz = 20.0, double mixPct = 100.0, bool external = false,
+                   int channels = 0, bool delta = false)
     {
+        fMs = channels;
+        fDelta = delta;
         fP.expander = std::fabs(double(mode)) >= 0.00001; // EEL2: mode == 0 is fuzzy
         fP.thresholdDb = thresholdDb;
         fP.ratio = ratio;
@@ -150,6 +156,22 @@ public:
     // @sample: l/r the track (changed in place), scL/scR the sidechain (JSFX pins 3/4)
     void processSample(double& l, double& r, double scL = 0.0, double scR = 0.0) noexcept
     {
+        double other = 0.0;
+        if (fMs != 0)
+        {
+            const double m = (l + r) * 0.5;
+            const double s = (l - r) * 0.5;
+            if (fMs == 1)
+            {
+                l = r = m;
+                other = s;
+            }
+            else
+            {
+                l = r = s;
+                other = m;
+            }
+        }
         double detL = fExternal ? scL : l, detR = fExternal ? scR : r;
         if (fHpfOn)
         {
@@ -235,11 +257,33 @@ public:
             l = l * fGainEnv * makeup;
             r = r * fGainEnv * makeup;
         }
-        if (fMixOn)
+        if (fDelta)
+        {
+            l = dryL - l / makeup;
+            r = dryR - r / makeup;
+        }
+        else if (fMixOn)
         {
             // parallel compression: the dry signal under the compressed one
             l = dryL + (l - dryL) * fMix;
             r = dryR + (r - dryR) * fMix;
+        }
+        if (fMs != 0)
+        {
+            // back to left / right (Delta: the processed half alone)
+            if (fDelta)
+                other = 0.0;
+            const double x = l;
+            if (fMs == 1)
+            {
+                l = x + other;
+                r = x - other;
+            }
+            else
+            {
+                l = other + x;
+                r = other - x;
+            }
         }
     }
 
@@ -258,7 +302,8 @@ private:
 
     Params fP;
     double fSr = 48000.0, fAttack = 1.0, fRelease = 1.0, fGainEnv = 1.0, fInputAbs = 0.0;
-    bool fHpfOn = false, fMixOn = false, fExternal = false;
+    bool fHpfOn = false, fMixOn = false, fExternal = false, fDelta = false;
+    int fMs = 0;
     double fMix = 1.0, fFetAtt = 1.0, fOptoAtt = 0.5, fRmsTc = 1.0, fBusSatt = 1.0, fBusSrel = 1.0, fOptoSrel = 0.1,
            fMemTc = 1.0;
     double fB0 = 1.0, fB1 = 0.0, fA1 = 0.0, fA2 = 0.0;

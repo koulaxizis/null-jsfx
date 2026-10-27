@@ -15,6 +15,8 @@ slider8:0<0,4,1{Clean,Bus,FET,Opto,Upward}>Style
 slider9:20<20,500,1:log>Sidechain HPF (Hz)
 slider10:100<0,100,1>Mix (%)
 slider11:0<0,1,1{Internal,External}>Sidechain
+slider12:0<0,2,1{Stereo,Mid,Side}>Channels
+slider13:0<0,1,1{Output,Delta}>Listen
 
 in_pin:Left
 in_pin:Right
@@ -38,6 +40,9 @@ out_pin:Right
   // it (upward expansion); at most 24 dB, and compressing, the lift fades out from 48 to 72 dB
   // under Threshold so silence and the noise floor stay down. Attack = how fast the lift falls
   // back when the level rises, Release = how fast it grows.
+  // Appended in 2.7: Channels Mid / Side compresses only the mid or the side of the stereo pair
+  // (the detector hears that half, or the key), Listen Delta plays what the dynamics take away
+  // (or, Upward, add): the input minus the processed signal before Makeup and Mix.
   gain_env = 1;
   ln10 = 2.302585;
   db_to_lin = ln10 / 20;
@@ -58,6 +63,8 @@ out_pin:Right
   mix_on = slider10 < 100;
   mix_amt = slider10 / 100;
   sc_ext = slider11 > 0.5;
+  ms_mode = slider12;
+  listen_delta = slider13;
   
   attack_ms > 0 ? (
     attack_tc = 1 - exp(-1 / (attack_ms * srate / 1000));
@@ -101,6 +108,19 @@ out_pin:Right
   );
 
 @sample
+  // Channels Mid / Side: the chosen half of the mid/side pair goes through on both channels,
+  // the other waits and is added back after
+  ms_mode ? (
+    ms_m = (spl0 + spl1) * 0.5;
+    ms_s = (spl0 - spl1) * 0.5;
+    ms_mode == 1 ? (
+      spl0 = spl1 = ms_m;
+      ms_o = ms_s;
+    ) : (
+      spl0 = spl1 = ms_s;
+      ms_o = ms_m;
+    );
+  );
   // detector input: the track, or pins 3/4 (External)
   sc_ext ? (
     det_l = spl2;
@@ -208,7 +228,7 @@ out_pin:Right
   );
   
   makeup_linear = exp(makeup_db * db_to_lin);
-  mix_on ? (
+  mix_on || listen_delta ? (
     dry_l = spl0;
     dry_r = spl1;
   );
@@ -234,8 +254,25 @@ out_pin:Right
     spl0 = spl0 * gain_env * makeup_linear;
     spl1 = spl1 * gain_env * makeup_linear;
   );
-  mix_on ? (
+  listen_delta ? (
+    spl0 = dry_l - spl0 / makeup_linear;
+    spl1 = dry_r - spl1 / makeup_linear;
+  ) : mix_on ? (
     // parallel compression: the dry signal under the compressed one
     spl0 = dry_l + (spl0 - dry_l) * mix_amt;
     spl1 = dry_r + (spl1 - dry_r) * mix_amt;
+  );
+
+  ms_mode ? (
+    // back to left / right (Delta: the processed half alone)
+    listen_delta ? ms_o = 0;
+    ms_mode == 1 ? (
+      ms_x = spl0;
+      spl0 = ms_x + ms_o;
+      spl1 = ms_x - ms_o;
+    ) : (
+      ms_x = spl0;
+      spl0 = ms_o + ms_x;
+      spl1 = ms_o - ms_x;
+    );
   );

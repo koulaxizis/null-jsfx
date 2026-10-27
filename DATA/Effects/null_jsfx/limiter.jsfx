@@ -9,6 +9,8 @@ slider2:0<-30,0,0.1>Threshold (dB)
 slider3:-0.1<-6,-0.1,0.1>Ceiling (dB)
 slider4:200<0,1000,1>Release (ms)
 slider5:2<0,10,0.1>Lookahead (ms)
+slider6:0<0,1,1{Off,On}>True Peak
+slider7:0<0,1,1{Output,Delta}>Listen
 
 in_pin:Left
 in_pin:Right
@@ -20,7 +22,12 @@ out_pin:Right
   // Clipper:   soft clipper, no delay.
   // Brickwall: like Limiter but the gain drops instantly, so nothing passes the ceiling.
   // Threshold sets how hard the signal is pushed: the level at Threshold comes out at Ceiling.
-  max_look = ceil(srate * 0.011) + 2;
+  // True Peak (appended in 2.7, Limiter and Brickwall) feeds the detector the true peak instead
+  // of the sample peak: the BS.1770-4 Annex 2 interpolator (4x, as loudness_meter.jsfx) finds
+  // the peaks between the samples. It sees the signal 6 samples late, so the audio waits 6
+  // samples more (pdc_delay = Lookahead + 6). Listen Delta plays what is taken away: the driven
+  // input minus the output.
+  max_look = ceil(srate * 0.011) + 2 + 6;
   buf_l = 0;
   buf_r = buf_l + max_look;
   memset(buf_l, 0, 2 * max_look);
@@ -31,13 +38,61 @@ out_pin:Right
   gain = 1;
   pdc_bot_ch = 0;
   pdc_top_ch = 2;
+  // True Peak: the interpolator (4 phases x 12 taps) and the last 12 inputs per channel,
+  // mirrored 12 slots on so the taps read straight
+  tp_c = buf_r + max_look;
+  tp_xl = tp_c + 48;
+  tp_xr = tp_xl + 24;
+  memset(tp_xl, 0, 48);
+  freembuf(tp_xr + 24);
+  tp_i = 0;
+  loop(48,
+    tp_c[tp_i] =
+      tp_i ==  0 ?  0.0017089843750 : tp_i ==  1 ?  0.0109863281250 : tp_i ==  2 ? -0.0196533203125 :
+      tp_i ==  3 ?  0.0332031250000 : tp_i ==  4 ? -0.0594482421875 : tp_i ==  5 ?  0.1373291015625 :
+      tp_i ==  6 ?  0.9721679687500 : tp_i ==  7 ? -0.1022949218750 : tp_i ==  8 ?  0.0476074218750 :
+      tp_i ==  9 ? -0.0266113281250 : tp_i == 10 ?  0.0148925781250 : tp_i == 11 ? -0.0083007812500 :
+      tp_i == 12 ? -0.0291748046875 : tp_i == 13 ?  0.0292968750000 : tp_i == 14 ? -0.0517578125000 :
+      tp_i == 15 ?  0.0891113281250 : tp_i == 16 ? -0.1665039062500 : tp_i == 17 ?  0.4650878906250 :
+      tp_i == 18 ?  0.7797851562500 : tp_i == 19 ? -0.2003173828125 : tp_i == 20 ?  0.1015625000000 :
+      tp_i == 21 ? -0.0582275390625 : tp_i == 22 ?  0.0330810546875 : tp_i == 23 ? -0.0189208984375 :
+      tp_c[47 - tp_i];   // phases 2 and 3 are phases 1 and 0 reversed
+    tp_i += 1;
+  );
+  tp_w = 0;
+
+  // the true peak of the stereo pair, 6 samples late: the larger of the sample 6 back and the
+  // four interpolated values around it
+  function tpeak(xl, xr) local(pk, ph, al, ar, j)
+  (
+    tp_w -= 1;
+    tp_w < 0 ? tp_w = 11;
+    tp_xl[tp_w] = tp_xl[tp_w + 12] = xl;
+    tp_xr[tp_w] = tp_xr[tp_w + 12] = xr;
+    pk = max(abs(tp_xl[tp_w + 6]), abs(tp_xr[tp_w + 6]));
+    ph = 0;
+    loop(4,
+      al = ar = 0;
+      j = 0;
+      loop(12,
+        al += tp_c[ph + j] * tp_xl[tp_w + j];
+        ar += tp_c[ph + j] * tp_xr[tp_w + j];
+        j += 1;
+      );
+      pk = max(pk, max(abs(al), abs(ar)));
+      ph += 12;
+    );
+    pk;
+  );
 
 @slider
   mode = slider1;
   ceiling = 10 ^ (slider3 / 20);
   drive = 10 ^ ((slider3 - slider2) / 20);
   look = mode == 1 ? 0 : floor(slider5 * srate / 1000 + 0.5);
-  pdc_delay = look;
+  tpk = mode != 1 && slider6;
+  delta = slider7;
+  pdc_delay = look + (tpk ? 6 : 0);
   rel = exp(-1 / max(1, slider4 * srate / 1000));
   att = mode == 2 || look < 1 ? 1 : 1 - exp(-5 / look);
 
@@ -52,11 +107,16 @@ out_pin:Right
     a > knee ? in_l = sign(in_l) * (knee + (ceiling - knee) * (1 - exp(-(a - knee) / (ceiling - knee))));
     a = abs(in_r);
     a > knee ? in_r = sign(in_r) * (knee + (ceiling - knee) * (1 - exp(-(a - knee) / (ceiling - knee))));
-    spl0 = in_l;
-    spl1 = in_r;
+    delta ? (
+      spl0 = spl0 * drive - in_l;
+      spl1 = spl1 * drive - in_r;
+    ) : (
+      spl0 = in_l;
+      spl1 = in_r;
+    );
   ) : (
     // peak detector on the incoming (not yet delayed) signal, held for the look-ahead time
-    peak = max(abs(in_l), abs(in_r));
+    peak = tpk ? tpeak(in_l, in_r) : max(abs(in_l), abs(in_r));
     peak >= hold_val ? (
       hold_val = peak;
       hold_cnt = look;
@@ -70,11 +130,15 @@ out_pin:Right
 
     buf_l[wpos] = in_l;
     buf_r[wpos] = in_r;
-    rpos = wpos - look;
+    rpos = wpos - look - (tpk ? 6 : 0);
     rpos < 0 ? rpos += max_look;
     wpos += 1;
     wpos >= max_look ? wpos = 0;
 
     spl0 = max(-ceiling, min(ceiling, buf_l[rpos] * gain));
     spl1 = max(-ceiling, min(ceiling, buf_r[rpos] * gain));
+    delta ? (
+      spl0 = buf_l[rpos] - spl0;
+      spl1 = buf_r[rpos] - spl1;
+    );
   );

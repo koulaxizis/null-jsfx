@@ -97,8 +97,8 @@ private:
 
     void update()
     {
-        fDsp.setParams(int(std::lround(value(0))), value(1), value(2), value(3), value(4));
-        setLatency(uint32_t(fDsp.latency())); // pdc_delay = look
+        fDsp.setParams(int(std::lround(value(0))), value(1), value(2), value(3), value(4), value(5) >= 0.5f, value(6) >= 0.5f);
+        setLatency(uint32_t(fDsp.latency())); // pdc_delay = look (+ 6 with True Peak)
     }
 
     nulllimiter::LimiterProcessor fDsp;

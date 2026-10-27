@@ -332,7 +332,8 @@
       "Runs the clipper at 2x, 4x or 8x the sample rate so the harmonics it creates do not fold back as aliasing (Off = no latency, more grit).",
       "Blend of clipped and dry signal (the dry path is delayed to match), for parallel clipping.",
       "Level after the mix (-24 to +12 dB).",
-      "Stereo applies the same gain to both channels so the image stays put; Dual clips each channel on its own."
+      "Stereo applies the same gain to both channels so the image stays put; Dual clips each channel on its own.",
+      "Listen: Output plays the result; Delta plays only what the clipper takes away (the driven input minus the clipped signal), to hear exactly what is lost."
     ],
     "uses": [
       "Shave drum transients on a bus for more level without a limiter's pumping",
@@ -686,7 +687,9 @@
       "Level at which band 4 starts to act.",
       "How fast each band's detector reacts to rising level.",
       "How fast each band's detector recovers.",
-      "Output gain after all four bands."
+      "Output gain after all four bands.",
+      "Channels: Stereo works on the whole signal; Mid or Side processes only that half of the mid/side pair and leaves the other untouched.",
+      "Listen: Output plays the result; Delta plays only what the bands change (the input minus the result, before Makeup)."
     ],
     "uses": [
       "Taming resonances only when they ring out",
@@ -712,7 +715,9 @@
       "Character of the detector: Clean is the transparent original, Bus a smooth glue compressor with auto release, FET a fast and aggressive one with a little harmonic colour, Opto a slow, program-dependent one, Upward raises quiet material below the threshold instead of turning loud parts down (up to 24 dB, leaving silence alone).",
       "High-pass filter on the detector only, so low end does not drive the gain reduction (20 Hz = off).",
       "Blend of compressed and dry signal for parallel compression (100% = fully compressed).",
-      "Internal listens to the track itself; External listens to input channels 3/4 (sidechain key)."
+      "Internal listens to the track itself; External listens to input channels 3/4 (sidechain key).",
+      "Channels: Stereo works on the whole signal; Mid or Side processes only that half of the mid/side pair and leaves the other untouched. The detector hears that half too (or the external key).",
+      "Listen: Output plays the result; Delta plays only what the compressor takes away (or, Upward, adds), before Makeup and Mix."
     ],
     "uses": [
       "General-purpose bus and track compression",
@@ -1153,7 +1158,9 @@
       "Drive control: a signal at Threshold comes out at the Ceiling, so lower values push harder.",
       "Maximum output level.",
       "How fast the gain recovers after a peak.",
-      "How far ahead peaks are detected (ignored in Clipper mode)."
+      "How far ahead peaks are detected (ignored in Clipper mode).",
+      "True Peak: the limiter reacts to the peaks between the samples (4x, ITU-R BS.1770), so the output stays under Ceiling in dBTP as streaming services ask; adds 6 samples of latency. Limiter and Brickwall only.",
+      "Listen: Output plays the result; Delta plays only what the limiter or clipper takes away."
     ],
     "uses": [
       "Peak protection on the master bus",
@@ -1215,7 +1222,9 @@
       "Shapes the signal before the limiter: CLEAN leaves it alone, PUNCHY soft-clips only the peaks above Ceiling so the limiter pumps less on transients, WARM saturates gently for a denser, rounder sound.",
       "ON splits the signal into three bands that are limited on their own (a quarter linked), so a loud bass no longer pushes down the mids and highs; the look-ahead limiter then holds the sum at Ceiling.",
       "Split point between the low and mid bands in Multiband mode.",
-      "Split point between the mid and high bands in Multiband mode."
+      "Split point between the mid and high bands in Multiband mode.",
+      "True Peak: the limiter reacts to the peaks between the samples (4x, ITU-R BS.1770), so the output stays under Ceiling in dBTP (for example -1 dBTP for Spotify and Apple Music); adds 6 samples of latency.",
+      "Listen: Output plays the result; Delta plays only what the limiter takes away (undithered)."
     ],
     "uses": [
       "Final loudness stage in mastering",
@@ -1285,7 +1294,9 @@
       "How fast gain reduction is applied in all bands.",
       "How fast gain recovers in all bands.",
       "Width of the soft knee around each threshold (100% = ±60 dB).",
-      "Overall output gain after the bands are summed."
+      "Overall output gain after the bands are summed.",
+      "Channels: Stereo works on the whole signal; Mid or Side processes only that half of the mid/side pair and leaves the other untouched.",
+      "Listen: Output plays the result; Delta plays only what each band's compressor takes away, before Makeup and Master Output."
     ],
     "uses": [
       "Mastering bus dynamics",
@@ -1942,7 +1953,8 @@
       "Gain into the saturation stage before Drive, in dB; 0 dB is off.",
       "Output level after the dry/wet mix, in dB; 0 dB is off.",
       "Runs the saturation at 2x or 4x the sample rate (linear-phase halfband filters, 31 or 37 samples of latency) so its harmonics do not fold back as aliasing; Off adds no latency.",
-      "Tilt EQ around 800 Hz before the saturation and its exact inverse after it: positive values make the highs distort more, negative values the lows, while the clean tone stays the same; 0 dB is off."
+      "Tilt EQ around 800 Hz before the saturation and its exact inverse after it: positive values make the highs distort more, negative values the lows, while the clean tone stays the same; 0 dB is off.",
+      "Channels: Stereo works on the whole signal; Mid or Side processes only that half of the mid/side pair and leaves the other untouched."
     ],
     "uses": [
       "Warmth and density on buses",

@@ -61,6 +61,8 @@ private:
         p.releaseMs = std::round(fV[20]);
         p.kneePct = std::round(fV[21]);
         p.masterDb = std::round(fV[22]);
+        p.channels = int(std::lround(fV[23]));
+        p.delta = fV[24] >= 0.5f;
         fDsp.setParams(p);
     }
 

@@ -418,8 +418,8 @@
    ],
    "ins": 2,
    "outs": 2,
-   "sliders": 7,
-   "bytes": 56268
+   "sliders": 8,
+   "bytes": 57502
   },
   {
    "id": "de_hum",
@@ -516,8 +516,8 @@
    ],
    "ins": 2,
    "outs": 2,
-   "sliders": 19,
-   "bytes": 56707
+   "sliders": 21,
+   "bytes": 61761
   },
   {
    "id": "dynamics",
@@ -526,12 +526,12 @@
    "tags": "dynamics compressor expander gain reduction ratio threshold knee sidechain parallel bus fet opto upward gui",
    "gfx": [
     480,
-    380
+    408
    ],
    "ins": 4,
    "outs": 2,
-   "sliders": 11,
-   "bytes": 57859
+   "sliders": 13,
+   "bytes": 63716
   },
   {
    "id": "envelope_follower",
@@ -596,12 +596,12 @@
    "tags": "limiter ceiling clipper brickwall peak protection mastering gui",
    "gfx": [
     480,
-    294
+    380
    ],
    "ins": 2,
    "outs": 2,
-   "sliders": 5,
-   "bytes": 39359
+   "sliders": 7,
+   "bytes": 46886
   },
   {
    "id": "maximizer",
@@ -610,12 +610,12 @@
    "tags": "limiter maximizing loudness ceiling mastering peak protection dither multiband saturation lufs gui",
    "gfx": [
     480,
-    380
+    408
    ],
    "ins": 2,
    "outs": 2,
-   "sliders": 12,
-   "bytes": 71825
+   "sliders": 14,
+   "bytes": 83684
   },
   {
    "id": "mid_side_matrix",
@@ -642,8 +642,8 @@
    ],
    "ins": 2,
    "outs": 2,
-   "sliders": 23,
-   "bytes": 63444
+   "sliders": 25,
+   "bytes": 66800
   },
   {
    "id": "noise_generator",
@@ -782,8 +782,8 @@
    ],
    "ins": 2,
    "outs": 2,
-   "sliders": 8,
-   "bytes": 59796
+   "sliders": 9,
+   "bytes": 62138
   },
   {
    "id": "shaper",
