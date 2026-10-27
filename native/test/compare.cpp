@@ -31,8 +31,10 @@
  *
  * Instruments (a JSFX without input pins) get no audio but MIDI notes on the General MIDI drum
  * map (one every 1/8 s, varied velocities) and a playing transport at 120 bpm in 4/4 from beat 0,
- * so their sequencer runs too; the CLAP gets the same notes and transport. An instrument passes
- * every message on, and that MIDI is compared like a MIDI effect's.
+ * so their sequencer runs too, merged in time order with the MIDI effects' stream below (note-offs,
+ * note-ons with velocity 0, the same key again, sustain, all notes off, pitch bend, pressure,
+ * program changes); the CLAP gets the same MIDI and transport. An instrument passes every message
+ * on, and that MIDI is compared like a MIDI effect's.
  *
  * MIDI effects (a JSFX in //category: MIDI) get, besides the audio, a stream of MIDI on three
  * channels (chords of overlapping notes, repeated note-ons, note-ons with velocity 0, poly and
@@ -222,14 +224,19 @@ static ysfx_t* loadJsfx(const char* path)
 static bool g_instrument = false; // the reference JSFX has no input pins
 
 // the MIDI a plugin gets, in time order: a MIDI effect the stream above, an instrument its notes
+// and that stream (at the same sample, the note first)
 static std::vector<MidiMsg> testInput(double sr, uint32_t frames)
 {
     if (g_midifx)
         return testMidi(sr, frames);
     std::vector<MidiMsg> out;
-    if (g_instrument)
+    if (g_instrument) {
         for (const TestNote& n : testNotes(sr, frames))
             out.push_back({ n.at, 0x99, n.note, n.vel, 3 });
+        const std::vector<MidiMsg> more = testMidi(sr, frames);
+        out.insert(out.end(), more.begin(), more.end());
+        std::stable_sort(out.begin(), out.end(), [](const MidiMsg& a, const MidiMsg& b) { return a.at < b.at; });
+    }
     return out;
 }
 

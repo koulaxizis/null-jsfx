@@ -462,7 +462,8 @@ private:
                 const double s = std::floor(t + 0.000001);
                 if (s != stS)
                 {
-                    if (stS > -1000 || t - s < 0.5)
+                    // a key on the half itself waits, however the host rounds the beat
+                    if (stS > -1000 || t - s < 0.499999)
                         stStep(s);
                     stS = s;
                 }
