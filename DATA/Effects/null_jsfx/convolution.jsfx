@@ -18,6 +18,8 @@ in_pin:Right
 out_pin:Left
 out_pin:Right
 
+options:maxmem=33554432
+
 @init
   // Convolution reverb: the input is convolved with an impulse response (IR), the
   // recorded "fingerprint" of a space or device, using uniformly partitioned FFT
@@ -26,23 +28,33 @@ out_pin:Right
   // put .wav files in REAPER's Data/null_jsfx_ir folder, choose Source = IR File and
   // pick the file. Stereo IRs are used per channel, mono IRs for both. IRs are limited
   // to 3 seconds and level-normalised.
+  // A new IR (Source, file, Length or Pre-Delay changed) is built in small steps, one every
+  // 32 samples, while the current one keeps playing; when it is ready it takes over at the
+  // next block, crossfaded over that block, and the reverb tail carries on. Only the first IR
+  // after loading is built at once. This keeps the audio thread free of long pauses.
   B = 1024; M = 2 * B;               // block size, FFT size (complex points)
   FS = 2 * M;                        // slots per spectrum (aligned to 4096 -> no 65536 crossing)
   P_max = ceil(3 * srate / B);
   inb_l = 0; inb_r = M;              // last M input samples per channel (time domain)
   ola_l = 2 * M; ola_r = 3 * M;      // output of the current block per channel
   tmp = 4 * M; acc = tmp + FS;       // work buffers (one spectrum each)
-  outq_l = acc + FS; outq_r = outq_l + B;
+  acc_o = acc + 2 * FS;              // the old IR's output during a crossfade
   H_l = 65536; H_r = H_l + P_max * FS;
   X_l = H_r + P_max * FS; X_r = X_l + P_max * FS;
   ir_tmp = X_r + P_max * FS;         // raw IR before partitioning (2 channels)
   ir_len_max = P_max * B;
-  // after the two IR channels: room for 2 * ir_len_max interleaved file samples (3 s stereo)
-  freembuf(ir_tmp + 4 * ir_len_max + 16);
-  memset(0, 0, ir_tmp + 4 * ir_len_max + 16);
+  // after the two IR channels: room for 2 * ir_len_max interleaved file samples (3 s stereo),
+  // then the second set of IR partitions, the one a new IR is built into
+  G_l = ir_tmp + 4 * ir_len_max + 4096; G_r = G_l + P_max * FS;
+  freembuf(G_r + P_max * FS);
+  memset(0, 0, G_r + P_max * FS);
   P = 1; pos = 0; slot = 0;
   ir_len = 0;
-  last_src = -1;
+  ir_gen = 0;                        // IRs that took over so far (0: none yet)
+  st_file = -1;                      // the file read into the staging area
+  bst = 0;                           // build step: 0 idle, 1..7 building, 8 ready
+  bcnt = 0;
+  xf_on = 0;
   pdc_delay = B;
   pdc_bot_ch = 0;
   pdc_top_ch = 2;
@@ -50,8 +62,8 @@ out_pin:Right
   lcr1 = lcr2 = hcr1 = 0;
 
   // Park-Miller generator in exact double arithmetic (0 < value < 1): the generated IRs are
-  // the same on every CPU and in the VST3/CLAP version; build() restarts it, so an IR depends
-  // only on its settings
+  // the same on every CPU and in the VST3/CLAP version; every build restarts it, so an IR
+  // depends only on its settings
   seed = 12345;
   function pm_rand()
   (
@@ -59,163 +71,217 @@ out_pin:Right
     seed / 2147483647;
   );
 
-  // generated room: early reflections + exponentially decaying noise that darkens over time
-  function gen_ir(dst, len, t60, bright, er_ms, seed_off) local(n, t, env, c, lp, x, k)
+  // read the .wav chosen in the IR File slider into the staging area (interleaved, after the
+  // two IR channels); st_len = the length per channel after resampling (0 = failed)
+  function stage_file() local(h, nch, fsr, avail, n)
   (
-    memset(dst, 0, len);
-    lp = 0;
-    n = 0;
-    loop(len,
-      t = n / srate;
-      env = exp(-6.9 * t / t60);
-      c = exp(-2 * $pi * (300 + bright * exp(-t / (t60 * 0.35))) / srate);
-      x = pm_rand() * 2 - 1;
-      lp = (1 - c) * x + c * lp;
-      // short fade-in so the tail starts after the first reflections
-      dst[n] = lp * env * min(1, t / (er_ms / 1000));
-      n += 1;
-    );
-    // a handful of early reflections
-    k = 0;
-    loop(8,
-      n = floor((2 + pm_rand() * er_ms) * srate / 1000);
-      n < len ? dst[n] += (pm_rand() * 2 - 1) * 0.6 * exp(-k * 0.25);
-      k += 1;
-    );
-  );
-
-  // load a .wav chosen in the IR File slider; returns the length per channel (0 = failed)
-  function load_file() local(h, nch, fsr, avail, n, len, ratio, i, p, f, c)
-  (
-    len = 0;
+    st_len = 0;
+    st_file = slider2;
     h = file_open(slider2);
     h >= 0 ? (
       file_riff(h, nch, fsr);
       nch > 0 && fsr > 0 ? (
         avail = min(file_avail(h), ir_len_max * nch * 2);
         n = floor(avail / nch);
-        // read interleaved data after the two IR channel buffers, then resample
         file_mem(h, ir_tmp + 2 * ir_len_max, min(n * nch, 2 * ir_len_max));
-        n = floor(min(n * nch, 2 * ir_len_max) / nch);
-        ratio = fsr / srate;
-        len = min(ir_len_max, floor(n / ratio));
-        c = 0;
-        loop(2,
-          i = 0;
-          loop(len,
-            p = i * ratio;
-            f = p - floor(p);
-            p = floor(p);
-            ir_tmp[c * ir_len_max + i] =
-              ir_tmp[2 * ir_len_max + p * nch + min(c, nch - 1)] * (1 - f) +
-              ir_tmp[2 * ir_len_max + min(p + 1, n - 1) * nch + min(c, nch - 1)] * f;
-            i += 1;
-          );
-          c += 1;
-        );
+        st_n = floor(min(n * nch, 2 * ir_len_max) / nch);
+        st_nch = nch;
+        st_ratio = fsr / srate;
+        st_len = min(ir_len_max, floor(st_n / st_ratio));
       );
       file_close(h);
     );
-    len;
   );
 
-  // split one channel's IR into P partitions and FFT each one (EEL2 names ignore case, so the
-  // partition index is k: a local p would hide the global P and loop(P) would run 0 times)
-  function partition(src, H, len) local(k, i, e, g)
+  // start building the IR for the current settings
+  function build_start()
   (
-    e = 0;
-    i = 0;
-    loop(len, e += src[i] * src[i]; i += 1);
-    g = e > 0 ? 1 / sqrt(e) : 0;
-    k = 0;
-    loop(P,
-      memset(H + k * FS, 0, FS);
-      i = 0;
-      loop(B,
-        k * B + i < len ? H[k * FS + 2 * i] = src[k * B + i] * g;
-        i += 1;
+    b_src = src; b_file = slider2; b_len = slider3; b_pd = slider4;
+    b_d = floor(b_pd * srate / 1000);
+    seed = 12345;
+    b_c = 0; b_i = 0; b_lp = 0;
+    b_src == 5 ? (
+      b_n = st_len;
+      bst = 2;
+    ) : (
+      b_t60 = b_src == 0 ? 0.5 : b_src == 1 ? 1.2 : b_src == 2 ? 2.4 : b_src == 3 ? 1.8 : 3;
+      b_n = min(ir_len_max - b_d, floor(min(3, b_t60 * 1.2) * srate));
+      b_br = b_src == 3 ? 9000 : b_src == 4 ? 3500 : 6000;
+      b_er = b_src == 0 ? 8 : b_src == 3 ? 2 : 25;
+      bst = 1;
+    );
+  );
+
+  // one step of the build (bst: 1 room noise, 2 file resampling, 3 length, 4 pre-delay,
+  // 5 fade-out, 6 energy, 7 partitions + FFTs, 8 ready)
+  function build_step() local(dst, t, env, c, x, k, q, p, f, ch, e)
+  (
+    bst == 1 ? (
+      // generated room: exponentially decaying noise that darkens over time, 1024 samples a
+      // step, then a handful of early reflections; left channel, then right
+      dst = ir_tmp + b_c * ir_len_max;
+      loop(min(1024, b_n - b_i),
+        t = b_i / srate;
+        env = exp(-6.9 * t / b_t60);
+        c = exp(-2 * $pi * (300 + b_br * exp(-t / (b_t60 * 0.35))) / srate);
+        x = pm_rand() * 2 - 1;
+        b_lp = (1 - c) * x + c * b_lp;
+        // short fade-in so the tail starts after the first reflections
+        dst[b_i] = b_lp * env * min(1, t / (b_er / 1000));
+        b_i += 1;
       );
-      fft(H + k * FS, M);
+      b_i >= b_n ? (
+        k = 0;
+        loop(8,
+          q = floor((2 + pm_rand() * b_er) * srate / 1000);
+          q < b_n ? dst[q] += (pm_rand() * 2 - 1) * 0.6 * exp(-k * 0.25);
+          k += 1;
+        );
+        b_c == 0 ? (b_c = 1; b_i = 0; b_lp = 0;) : bst = 3;
+      );
+    ) : bst == 2 ? (
+      // the staged file, resampled linearly into both IR channels, 2048 samples a step
+      ch = min(b_c, st_nch - 1);
+      loop(min(2048, b_n - b_i),
+        p = b_i * st_ratio;
+        f = p - floor(p);
+        p = floor(p);
+        ir_tmp[b_c * ir_len_max + b_i] =
+          ir_tmp[2 * ir_len_max + p * st_nch + ch] * (1 - f) +
+          ir_tmp[2 * ir_len_max + min(p + 1, st_n - 1) * st_nch + ch] * f;
+        b_i += 1;
+      );
+      b_i >= b_n ? (b_c == 0 ? (b_c = 1; b_i = 0;) : bst = 3;);
+    ) : bst == 3 ? (
+      // Length trims the IR; Pre-Delay shifts it later in time
+      b_n = floor(b_n * b_len / 100);
+      b_d > 0 && b_n > 0 ? (
+        b_n = min(b_n, ir_len_max - b_d);
+        b_i = b_n - 1;
+        bst = 4;
+      ) : bst = 5;
+    ) : bst == 4 ? (
+      loop(min(8192, b_i + 1),
+        ir_tmp[b_i + b_d] = ir_tmp[b_i];
+        ir_tmp[ir_len_max + b_i + b_d] = ir_tmp[ir_len_max + b_i];
+        b_i -= 1;
+      );
+      b_i < 0 ? (
+        memset(ir_tmp, 0, b_d);
+        memset(ir_tmp + ir_len_max, 0, b_d);
+        b_n += b_d;
+        bst = 5;
+      );
+    ) : bst == 5 ? (
+      // fade out the last 50 ms so a trimmed IR does not end with a click
+      k = 0;
+      loop(min(b_n, floor(0.05 * srate)),
+        ir_tmp[b_n - 1 - k] *= k / (0.05 * srate);
+        ir_tmp[ir_len_max + b_n - 1 - k] *= k / (0.05 * srate);
+        k += 1;
+      );
+      b_P = max(1, min(P_max, ceil(b_n / B)));
+      b_c = 0; b_i = 0; b_e = 0;
+      b_n > 0 ? bst = 6 : (
+        memset(G_l, 0, b_P * FS);
+        memset(G_r, 0, b_P * FS);
+        bst = 8;
+      );
+    ) : bst == 6 ? (
+      // each channel is normalised to unit energy, summed 8192 samples a step
+      dst = ir_tmp + b_c * ir_len_max;
+      loop(min(8192, b_n - b_i), b_e += dst[b_i] * dst[b_i]; b_i += 1);
+      b_i >= b_n ? (
+        e = b_e > 0 ? 1 / sqrt(b_e) : 0;
+        b_c == 0 ? (b_g_l = e; b_c = 1; b_i = 0; b_e = 0;) : (b_g_r = e; b_c = 0; b_i = 0; bst = 7;);
+      );
+    ) : bst == 7 ? (
+      // split each channel into b_P partitions and FFT each one, two a step
+      loop(2,
+        bst == 7 ? (
+          dst = (b_c ? G_r : G_l) + b_i * FS;
+          memset(dst, 0, FS);
+          k = 0;
+          loop(B,
+            b_i * B + k < b_n ? dst[2 * k] = ir_tmp[b_c * ir_len_max + b_i * B + k] * (b_c ? b_g_r : b_g_l);
+            k += 1;
+          );
+          fft(dst, M);
+          b_i += 1;
+          b_i >= b_P ? (b_c == 0 ? (b_c = 1; b_i = 0;) : bst = 8;);
+        );
+      );
+    );
+  );
+
+  // the built IR takes over: the two partition sets swap, the old one stays for the crossfade
+  function build_apply() local(t)
+  (
+    t = H_l; H_l = G_l; G_l = t;
+    t = H_r; H_r = G_r; G_r = t;
+    P_o = P; P = b_P;
+    ir_len = b_n;
+    cur_src = b_src; cur_file = b_file; cur_len = b_len; cur_pd = b_pd;
+    ir_gen += 1;
+    bst = 0;
+  );
+
+  // the settings differ from the IR playing (or being built)
+  function wanted() ( src != cur_src || slider2 != cur_file || slider3 != cur_len || slider4 != cur_pd; );
+
+  // the sum over the partitions of one IR, back in the time domain in dst
+  function conv_sum(X, H, np, dst) local(k, s, i)
+  (
+    memset(dst, 0, FS);
+    k = 0;
+    loop(np,
+      s = slot - k; s < 0 ? s += P_max;
+      memcpy(tmp, X + s * FS, FS);
+      convolve_c(tmp, H + k * FS, M);
+      i = 0;
+      loop(FS, dst[i] += tmp[i]; i += 1);
       k += 1;
     );
+    ifft(dst, M);
   );
 
-  function build() local(len, t60, pd, i, src_len)
-  (
-    pd = floor(slider4 * srate / 1000);
-    seed = 12345;
-    src == 5 ? (
-      src_len = load_file();
-    ) : (
-      t60 = src == 0 ? 0.5 : src == 1 ? 1.2 : src == 2 ? 2.4 : src == 3 ? 1.8 : 3;
-      src_len = min(ir_len_max - pd, floor(min(3, t60 * 1.2) * srate));
-      gen_ir(ir_tmp, src_len, t60, src == 3 ? 9000 : src == 4 ? 3500 : 6000, src == 0 ? 8 : src == 3 ? 2 : 25, 0);
-      gen_ir(ir_tmp + ir_len_max, src_len, t60, src == 3 ? 9000 : src == 4 ? 3500 : 6000, src == 0 ? 8 : src == 3 ? 2 : 25, 1);
-    );
-    src_len = floor(src_len * slider3 / 100);
-    // pre-delay: shift the IR later in time
-    pd > 0 && src_len > 0 ? (
-      src_len = min(src_len, ir_len_max - pd);
-      i = src_len - 1;
-      loop(src_len,
-        ir_tmp[i + pd] = ir_tmp[i];
-        ir_tmp[ir_len_max + i + pd] = ir_tmp[ir_len_max + i];
-        i -= 1;
-      );
-      memset(ir_tmp, 0, pd);
-      memset(ir_tmp + ir_len_max, 0, pd);
-      src_len += pd;
-    );
-    // fade out the last 50 ms so a trimmed IR does not end with a click
-    i = 0;
-    loop(min(src_len, floor(0.05 * srate)),
-      ir_tmp[src_len - 1 - i] *= i / (0.05 * srate);
-      ir_tmp[ir_len_max + src_len - 1 - i] *= i / (0.05 * srate);
-      i += 1;
-    );
-    ir_len = src_len;
-    P = max(1, min(P_max, ceil(src_len / B)));
-    src_len > 0 ? (
-      partition(ir_tmp, H_l, src_len);
-      partition(ir_tmp + ir_len_max, H_r, src_len);
-    ) : (
-      memset(H_l, 0, P * FS);
-      memset(H_r, 0, P * FS);
-    );
-    memset(X_l, 0, P_max * FS * 2);
-  );
-
-  // one block of overlap-save convolution for one channel
-  function conv_block(inb, X, H, ola) local(k, s, i)
+  // one block of overlap-save convolution for one channel (the input spectra of the last P_max
+  // blocks stay in X, so a new IR carries the tail on); Ho = the old IR while crossfading
+  function conv_block(inb, X, H, Ho, ola) local(i, w)
   (
     // spectrum of the last M input samples goes into the delay line slot
     i = 0;
     loop(M, X[slot * FS + 2 * i] = inb[(pos + i) % M]; X[slot * FS + 2 * i + 1] = 0; i += 1);
     fft(X + slot * FS, M);
-    memset(acc, 0, FS);
-    k = 0;
-    loop(P,
-      s = slot - k; s < 0 ? s += P;
-      memcpy(tmp, X + s * FS, FS);
-      convolve_c(tmp, H + k * FS, M);
-      i = 0;
-      loop(FS, acc[i] += tmp[i]; i += 1);
-      k += 1;
-    );
-    ifft(acc, M);
+    conv_sum(X, H, P, acc);
     // overlap-save: the last B outputs are valid
-    i = 0;
-    loop(B, ola[i] = acc[2 * (B + i)] / M; i += 1);
+    xf_on ? (
+      conv_sum(X, Ho, P_o, acc_o);
+      i = 0;
+      loop(B,
+        w = (i + 1) / B;
+        ola[i] = acc_o[2 * (B + i)] / M * (1 - w) + acc[2 * (B + i)] / M * w;
+        i += 1;
+      );
+    ) : (
+      i = 0;
+      loop(B, ola[i] = acc[2 * (B + i)] / M; i += 1);
+    );
   );
 
 @slider
   src = slider1;
-  // rebuild the IR when the source, file, length or pre-delay changed (@init resets last_src)
-  src != last_src || slider2 != last_file || slider3 != last_len || slider4 != last_pd ? (
-    build();
-    slot = 0;
-    last_src = src; last_file = slider2; last_len = slider3; last_pd = slider4;
+  // a newly chosen file is read into the staging area at once (a build using it starts over)
+  slider2 != st_file ? (
+    stage_file();
+    bst > 0 && b_src == 5 ? build_start();
   );
+  // the first IR is built at once; later ones step by step, as the audio plays
+  ir_gen == 0 ? (
+    build_start();
+    while (bst < 8) ( build_step(); );
+    build_apply();
+  ) : bst == 0 && wanted() ? build_start();
   lc = exp(-2 * $pi * slider5 / srate);
   hc = exp(-2 * $pi * min(slider6, srate * 0.45) / srate);
   mix = slider7 / 100;
@@ -231,9 +297,18 @@ out_pin:Right
   dpos = pos - B - 1; dpos < 0 ? dpos += M;
   d_l = inb_l[dpos]; d_r = inb_r[dpos];
   bpos == B - 1 ? (
-    slot += 1; slot >= P ? slot = 0;
-    conv_block(inb_l, X_l, H_l, ola_l);
-    conv_block(inb_r, X_r, H_r, ola_r);
+    slot += 1; slot >= P_max ? slot = 0;
+    // a finished IR takes over here, crossfaded from the old one over this block
+    bst == 8 ? (build_apply(); xf_on = 1;);
+    conv_block(inb_l, X_l, H_l, G_l, ola_l);
+    conv_block(inb_r, X_r, H_r, G_r, ola_r);
+    xf_on = 0;
+    bst == 0 && wanted() ? build_start();
+  );
+  // one build step every 32 samples
+  bst > 0 && bst < 8 ? (
+    bcnt += 1;
+    bcnt >= 32 ? (bcnt = 0; build_step(););
   );
 
   // wet tone: one-pole low cut and high cut

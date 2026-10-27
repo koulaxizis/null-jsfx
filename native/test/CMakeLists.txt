@@ -93,3 +93,29 @@ foreach(_p ${NULL_BUILT_PLUGINS})
     add_test(NAME gfx_${_p} COMMAND compare "${_jsfx_dir}/${_p}.jsfx" "${_jsfx_dir}/gfx/${_p}_gfx.jsfx" --tol 0)
   endif()
 endforeach()
+
+# rt_test: realtime-safety checks of the DSP cores (plugins/*/<Name>DSP.hpp, no host): the lazy
+# buffer clear of Slicer and Half Speed against a full clear, and Convolution's staged IR build
+add_executable(rt_test rt_test.cpp)
+target_include_directories(rt_test PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/../common"
+  "${CMAKE_CURRENT_SOURCE_DIR}/../plugins/slicer" "${CMAKE_CURRENT_SOURCE_DIR}/../plugins/half_speed"
+  "${CMAKE_CURRENT_SOURCE_DIR}/../plugins/convolution")
+if(APPLE)
+  set_target_properties(rt_test PROPERTIES OSX_ARCHITECTURES "${CMAKE_HOST_SYSTEM_PROCESSOR}")
+endif()
+add_test(NAME rt_test COMMAND rt_test)
+
+# Convolution builds a new IR step by step while it plays: the same sliders changed mid-render
+# (--changes) must give the same output in the JSFX, the GFX JSFX, the CLAP and the Rack module
+if(TARGET null_jsfx_convolution-clap)
+  if(APPLE)
+    set(_conv_bin "${CMAKE_BINARY_DIR}/bin/null_jsfx_convolution.clap/Contents/MacOS/null_jsfx_convolution")
+  else()
+    set(_conv_bin "${CMAKE_BINARY_DIR}/bin/null_jsfx_convolution.clap")
+  endif()
+  add_test(NAME changes_convolution COMMAND compare "${_jsfx_dir}/convolution.jsfx" "${_conv_bin}" --changes 1)
+endif()
+add_test(NAME changes_gfx_convolution COMMAND compare "${_jsfx_dir}/convolution.jsfx" "${_jsfx_dir}/gfx/convolution_gfx.jsfx" --tol 0 --changes 1)
+if(NULL_RACK_MODULES AND "convolution" IN_LIST NULL_RACK_MODULES)
+  add_test(NAME changes_module_convolution COMMAND module_compare "${_jsfx_dir}/convolution.jsfx" "module:convolution" --changes 1)
+endif()
