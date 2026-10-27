@@ -404,8 +404,8 @@
    ],
    "ins": 2,
    "outs": 2,
-   "sliders": 2,
-   "bytes": 32036
+   "sliders": 3,
+   "bytes": 40049
   },
   {
    "id": "clipper",
@@ -420,6 +420,34 @@
    "outs": 2,
    "sliders": 8,
    "bytes": 57592
+  },
+  {
+   "id": "crossfeed",
+   "name": "Crossfeed",
+   "category": "Essentials",
+   "tags": "crossfeed headphones bs2b bauer speakers room head shadow itd monitoring mixing fatigue gui",
+   "gfx": [
+    480,
+    380
+   ],
+   "ins": 2,
+   "outs": 2,
+   "sliders": 7,
+   "bytes": 47359
+  },
+  {
+   "id": "de_clip",
+   "name": "De-Clip",
+   "category": "Essentials",
+   "tags": "de-clip declip clipping repair restoration reconstruct peaks overload distortion gui",
+   "gfx": [
+    480,
+    294
+   ],
+   "ins": 2,
+   "outs": 2,
+   "sliders": 4,
+   "bytes": 36415
   },
   {
    "id": "de_hum",
@@ -1388,6 +1416,20 @@
    "bytes": 67834
   },
   {
+   "id": "tuner",
+   "name": "Tuner",
+   "category": "Advanced",
+   "tags": "tuner chromatic strobe pitch guitar bass vocals intonation a4 baroque 432 meter analyzer gui",
+   "gfx": [
+    480,
+    334
+   ],
+   "ins": 2,
+   "outs": 2,
+   "sliders": 4,
+   "bytes": 40775
+  },
+  {
    "id": "vinyl_age",
    "name": "Vinyl Age",
    "category": "Advanced",
@@ -1414,6 +1456,20 @@
    "outs": 2,
    "sliders": 9,
    "bytes": 43502
+  },
+  {
+   "id": "vu_meter",
+   "name": "VU Meter",
+   "category": "Advanced",
+   "tags": "vu meter ppm k-system k-14 k-20 level metering analog needle ballistics gain staging analyzer gui",
+   "gfx": [
+    480,
+    334
+   ],
+   "ins": 2,
+   "outs": 2,
+   "sliders": 4,
+   "bytes": 38168
   },
   {
    "id": "warped_delay",

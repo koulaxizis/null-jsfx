@@ -12,6 +12,7 @@ START_NAMESPACE_DISTRHO
 static const NullKnobsUI::Control kControls[] = {
     { 0, NullKnobsUI::kKnob, "THRESHOLD", 0, -1, false },
     { 1, NullKnobsUI::kKnob, "WINDOW", 0, -1, false },
+    { 2, NullKnobsUI::kSelect, "MODE", 0, -1, false },
 };
 
 class UIClickRepair : public NullKnobsUI
@@ -38,7 +39,7 @@ protected:
         std::snprintf(buf, sizeof(buf), "CLICKS %d", t ? int(t->extra.load(std::memory_order_relaxed)) : 0);
         label(fPX + 6.0f, fPY + 9.0f, ALIGN_LEFT, 8.0f, 0.0f, theme::kMuted, buf);
         const double sr = getSampleRate() > 0.0 ? getSampleRate() : 44100.0;
-        const int delay = 2 * std::max(1, std::min(50, int(std::floor(value(1)))));
+        const int delay = 2 * std::max(1, std::min(50, int(std::floor(value(1))))) + (value(2) >= 0.5f ? 2 : 0);
         std::snprintf(buf, sizeof(buf), "LATENCY %d SAMPLES (%.2f ms)", delay, delay / sr * 1000.0);
         label(fPX + fPW - 6.0f, fPY + 9.0f, ALIGN_RIGHT, 8.0f, 0.0f, theme::kMuted, buf);
     }

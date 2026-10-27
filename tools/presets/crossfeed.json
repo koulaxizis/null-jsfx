@@ -1,0 +1,11 @@
+[
+  ["Chu Moy", {"Cutoff": 700, "Feed": 6}],
+  ["Jan Meier", {"Cutoff": 650, "Feed": 9.5}],
+  ["Subtle", {"Cutoff": 700, "Feed": 10}],
+  ["Strong", {"Cutoff": 800, "Feed": 3}],
+  ["Near-Field Speakers", {"Mode": "Speakers", "Angle": 30, "Room": 15}],
+  ["Wide Speakers", {"Mode": "Speakers", "Angle": 45, "Room": 25}],
+  ["Narrow Desk", {"Mode": "Speakers", "Angle": 20, "Room": 10}],
+  ["Control Room", {"Mode": "Speakers", "Angle": 30, "Room": 45}],
+  ["Dry Speakers", {"Mode": "Speakers", "Angle": 30, "Room": 0}]
+]

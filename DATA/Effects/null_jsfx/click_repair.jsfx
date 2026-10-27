@@ -6,6 +6,7 @@ tags: click repair audio restoration pop crackle vinyl denoise
 
 slider1:50<0,100,1>Threshold (%)
 slider2:10<1,50,1>Window (Samples)
+slider3:0<0,1,1{Click,Crackle}>Mode
 
 in_pin:Left
 in_pin:Right
@@ -29,42 +30,67 @@ out_pin:Right
   pos = 0;
   avg_l = avg_r = 0.01;
   left_l = left_r = 0;
-  last_l = last_r = 0;
+  last_l = last_r = last2_l = last2_r = 0;
   pdc_bot_ch = 0;
   pdc_top_ch = 2;
 
+  // Click: the step from the previous sample against its long average. Crackle (2.7): the
+  // second difference (x - 2 x[-1] + x[-2]), which hides the music's low end so many small
+  // ticks stand out, against a faster average, with a lower ratio. A tick reaches the second
+  // difference of the two samples after it as well, so the sample before a detection is
+  // marked too, and the two samples after the window neither detect nor feed the average
+  // (left counts on down to -2).
   function store(buf, bad, x, avg*, left*) local(d)
   (
-    d = abs(x - buf[(pos - 1 + ring) % ring]);
-    left <= 0 && d > max(avg * ratio, 0.01) ? left = win;
-    left > 0 ? (bad[pos] = 1; left -= 1) : (bad[pos] = 0; avg = avg * 0.995 + d * 0.005);
+    crackle ? (
+      d = abs(x - 2 * buf[(pos - 1 + ring) % ring] + buf[(pos - 2 + ring) % ring]);
+      left <= -2 && d > max(avg * ratio, 0.005) ? (left = win; bad[(pos - 1 + ring) % ring] = 1);
+      left > 0 ? (bad[pos] = 1; left -= 1) : (bad[pos] = 0; left > -2 ? left -= 1 : avg = avg * 0.98 + d * 0.02);
+    ) : (
+      d = abs(x - buf[(pos - 1 + ring) % ring]);
+      left <= 0 && d > max(avg * ratio, 0.01) ? left = win;
+      left > 0 ? (bad[pos] = 1; left -= 1) : (bad[pos] = 0; avg = avg * 0.995 + d * 0.005);
+    );
     buf[pos] = x;
   );
 
-  function repaired(buf, bad, last*) local(o, j, n, y)
+  // Click: a straight line from the last output to the next good sample. Crackle: a cubic
+  // through the last two outputs and the next two good samples (at -1, 0, n, n + 1; this one
+  // is at 1), which keeps the music's highs across the short gaps.
+  function repaired(buf, bad, last*, last2*) local(o, j, n, y, y2)
   (
     o = (pos - delay + ring) % ring;
     bad[o] ? (
       j = o;
       n = 1;
       while (j = (j + 1) % ring; n += 1; bad[j] && n < ring);
-      y = last + (buf[j] - last) / n;
+      crackle ? (
+        y2 = bad[(j + 1) % ring] ? buf[j] : buf[(j + 1) % ring];
+        y = (2 * (n - 1) * (n + 2) * last - n * (n - 1) * last2 + 2 * (n + 2) * buf[j] - 2 * (n - 1) * y2)
+            / ((n + 1) * (n + 2));
+      ) : (
+        y = last + (buf[j] - last) / n;
+      );
     ) : (
       y = buf[o];
     );
+    last2 = last;
     last = y;
   );
 
 @slider
   win = max(1, min(50, floor(slider2)));
-  delay = 2 * win;
+  crackle = slider3 >= 0.5;
+  // Crackle also marks the sample before a tick and reads one good sample further
+  delay = 2 * win + (crackle ? 2 : 0);
   pdc_delay = delay;
-  // 0% = most sensitive (step 4x the average), 100% = least sensitive (step 30x)
-  ratio = 4 + slider1 / 100 * 26;
+  // 0% = most sensitive (step 4x the average), 100% = least sensitive (step 30x);
+  // Crackle: 3x to 20x
+  ratio = crackle ? 3 + slider1 / 100 * 17 : 4 + slider1 / 100 * 26;
 
 @sample
   store(buf_l, bad_l, spl0, avg_l, left_l);
   store(buf_r, bad_r, spl1, avg_r, left_r);
-  spl0 = repaired(buf_l, bad_l, last_l);
-  spl1 = repaired(buf_r, bad_r, last_r);
+  spl0 = repaired(buf_l, bad_l, last_l, last2_l);
+  spl1 = repaired(buf_r, bad_r, last_r, last2_r);
   pos = (pos + 1) % ring;

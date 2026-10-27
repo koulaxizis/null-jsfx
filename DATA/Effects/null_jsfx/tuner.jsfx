@@ -1,0 +1,173 @@
+desc:NULL Tuner
+author: Christos Koulaxizis
+tags: tuner chromatic strobe pitch guitar bass vocals intonation a4 baroque 432 meter analyzer
+//category: Advanced
+//NULL JSFX v2.6 • https://nulljsfx.tech • MIT License
+
+slider1:440<415,466,1>Reference A4 (Hz)
+slider2:0<0,1,1{Needle,Strobe}>Display
+slider3:0<0,2,1{Stereo,Left,Right}>Input
+slider4:0<0,1,1{Thru,Mute}>Output
+
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
+
+@init
+  // Chromatic tuner. The input (both channels summed, or one of them) is low passed and taken
+  // down to 22 to 24 kHz (24 kHz and below: as it is), and about 47 times a second the YIN
+  // method finds its period in the last 1024 + up to 960 samples: the difference function
+  // from an FFT autocorrelation, its cumulative mean normalised form, the first dip below
+  // 0.15 (or the deepest below 0.35), refined by a parabola on the difference function there
+  // and again at 2, 4, 8 ... times that period. 25 Hz to about 4.5 kHz, quieter
+  // than -70 dBFS RMS counts as silence. A reading within 50 cents of the last one glides to it
+  // (on a log scale), anything else jumps; silence keeps the last note for half a second.
+  // The note and cents come from the frequency and Reference A4. The audio passes through
+  // (Output Mute silences it, for tuning on stage); the GFX version (gfx/tuner_gfx.jsfx) and
+  // the VST3/CLAP draw the needle or the strobe.
+  TN_X = 0;                    // decimated input ring (4096)
+  TN_A = 16384;                // FFT of the first 1024 samples (4096 complex)
+  TN_B = 24576;                // FFT of all of them
+  TN_D = 32768;                // cumulative mean normalised difference, by lag
+  TN_E = 34816;                // the difference itself, by lag
+  memset(0, 0, TN_E + 1100);
+  tn_dec = max(1, ceil(srate / 24000));
+  tn_fd = srate / tn_dec;
+  tn_tmax = min(1023, floor(tn_fd / 25));
+  tn_tmin = max(2, floor(tn_fd / 4500));
+  tn_n = 1024 + tn_tmax + 1;
+  // anti-alias: two Butterworth low passes at 0.42 x the decimated rate
+  tn_w = 2 * $pi * min(0.42 * tn_fd, 0.45 * srate) / srate;
+  tn_al = sin(tn_w) / (2 * sqrt(0.5));
+  tn_a0 = 1 + tn_al;
+  tn_b0 = (1 - cos(tn_w)) / 2 / tn_a0;
+  tn_b1 = (1 - cos(tn_w)) / tn_a0;
+  tn_a1 = -2 * cos(tn_w) / tn_a0;
+  tn_a2 = (1 - tn_al) / tn_a0;
+  tn_s1 = tn_s2 = tn_s3 = tn_s4 = 0;
+  tn_dc = 0;
+  tn_xw = 0;
+  tn_hop = 0;
+  tn_f = 0;
+  tn_hold = 0;
+  tn_hn = floor(0.5 * srate);
+
+  // YIN over the last tn_n decimated samples; the frequency in Hz, or 0 for none
+  function tn_yin() local(i, j, k, ar, ai, br, bi, e0, e, d, s, t, best, bv, p, dl, dr, dd)
+  (
+    memset(TN_A, 0, 8192);
+    memset(TN_B, 0, 8192);
+    i = 0;
+    loop(tn_n,
+      j = TN_X[(tn_xw - tn_n + i + 4096) % 4096];
+      i < 1024 ? TN_A[i * 2] = j;
+      TN_B[i * 2] = j;
+      i += 1;
+    );
+    e0 = 0;
+    i = 0;
+    loop(1024, e0 += sqr(TN_B[i * 2]); i += 1;);
+    e0 / 1024 > 0.0000001 ? (
+      fft(TN_A, 4096);
+      fft(TN_B, 4096);
+      i = 0;
+      loop(4096,
+        k = i * 2;
+        ar = TN_A[k]; ai = TN_A[k + 1];
+        br = TN_B[k]; bi = TN_B[k + 1];
+        TN_B[k] = ar * br + ai * bi;
+        TN_B[k + 1] = ar * bi - ai * br;
+        i += 1;
+      );
+      ifft(TN_B, 4096);
+      // difference d(t) = e0 + e(t) - 2 r(t), then d'(t) = d(t) t / sum d(1..t)
+      e = e0;
+      s = 0;
+      TN_D[0] = 1;
+      t = 1;
+      loop(tn_tmax + 1,
+        j = TN_X[(tn_xw - tn_n + t - 1 + 4096) % 4096];
+        k = TN_X[(tn_xw - tn_n + t - 1 + 1024 + 4096) % 4096];
+        e += k * k - j * j;
+        d = max(0, e0 + e - 2 * TN_B[t * 2] / 4096);
+        s += d;
+        TN_E[t] = d;
+        TN_D[t] = s > 0 ? d * t / s : 1;
+        t += 1;
+      );
+      best = 0;
+      t = tn_tmin;
+      while (t <= tn_tmax && !best) (
+        TN_D[t] < 0.15 ? (
+          while (t < tn_tmax && TN_D[t + 1] < TN_D[t]) ( t += 1; );
+          best = t;
+        );
+        t += 1;
+      );
+      !best ? (
+        bv = 0.35;
+        t = tn_tmin;
+        loop(tn_tmax - tn_tmin + 1,
+          TN_D[t] < bv ? ( bv = TN_D[t]; best = t; );
+          t += 1;
+        );
+      );
+      best ? (
+        dl = TN_E[best - 1];
+        dr = TN_E[best + 1];
+        dd = dl - 2 * TN_E[best] + dr;
+        p = best + (dd > 0 ? min(1, max(-1, (dl - dr) / (2 * dd))) : 0);
+        // refine on the dips at 2, 4, 8 ... periods while they fit: the same interpolation
+        // error, divided by the multiple
+        k = 2;
+        while (k * p < tn_tmax - 1) (
+          t = floor(k * p + 0.5);
+          while (t > 1 && TN_E[t - 1] < TN_E[t]) ( t -= 1; );
+          while (t < tn_tmax && TN_E[t + 1] < TN_E[t]) ( t += 1; );
+          abs(t - k * p) < max(1, p * 0.25) ? (
+            dl = TN_E[t - 1];
+            dr = TN_E[t + 1];
+            dd = dl - 2 * TN_E[t] + dr;
+            p = (t + (dd > 0 ? min(1, max(-1, (dl - dr) / (2 * dd))) : 0)) / k;
+          );
+          k *= 2;
+        );
+        tn_fd / p;
+      ) : 0;
+    ) : 0;
+  );
+
+@slider
+  tn_a4 = slider1;
+  tn_in = floor(slider3 + 0.5);
+  tn_mute = slider4 >= 0.5;
+
+@sample
+  tn_sx = tn_in == 1 ? spl0 : tn_in == 2 ? spl1 : (spl0 + spl1) * 0.5;
+  tn_y = tn_b0 * tn_sx + tn_s1;
+  tn_s1 = tn_b1 * tn_sx - tn_a1 * tn_y + tn_s2;
+  tn_s2 = tn_b0 * tn_sx - tn_a2 * tn_y;
+  tn_sx = tn_y;
+  tn_y = tn_b0 * tn_sx + tn_s3;
+  tn_s3 = tn_b1 * tn_sx - tn_a1 * tn_y + tn_s4;
+  tn_s4 = tn_b0 * tn_sx - tn_a2 * tn_y;
+  tn_dc += 1;
+  tn_dc >= tn_dec ? (
+    tn_dc = 0;
+    TN_X[tn_xw] = tn_y;
+    tn_xw = (tn_xw + 1) % 4096;
+    tn_hop += 1;
+    tn_hop >= 512 ? (
+      tn_hop = 0;
+      tn_v = tn_yin();
+      tn_v > 0 ? (
+        tn_f > 0 && abs(1200 * log(tn_v / tn_f) / log(2)) < 50 ? tn_f *= (tn_v / tn_f) ^ 0.35 : tn_f = tn_v;
+        tn_hold = tn_hn;
+      ) : (
+        tn_hold -= 512 * tn_dec;
+        tn_hold <= 0 ? ( tn_hold = 0; tn_f = 0; );
+      );
+    );
+  );
+  tn_mute ? spl0 = spl1 = 0;

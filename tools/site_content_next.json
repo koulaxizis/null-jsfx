@@ -107,5 +107,80 @@
     ],
     "properties": "Both inputs are K-weighted (ITU-R BS.1770) and measured as short-term loudness (the last 3 s, every 100 ms). With Level Match on, the reference's gain moves a tenth of the way to the difference every 100 ms (about a second to settle), within ±24 dB, and holds while either source is below -60 LUFS; Trim is added. Listen crossfades linearly over 10 ms. Monitor folds after the switch. The interfaces show both loudnesses, the reference's gain, each source's stereo correlation (averaged over about 3 s) and both spectra (each bin averaged over about a second, the reference at its played gain). No latency, no Rack module (it needs a second stereo input).",
     "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-reference\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><path d=\"M 6,32 L 58,32\" fill=\"none\" stroke=\"url(#icon-reference)\" stroke-width=\"1.5\" opacity=\"0.35\"/><path d=\"M 6,40 C 14,30 20,22 28,24 C 36,26 44,18 58,20\" fill=\"none\" stroke=\"url(#icon-reference)\" stroke-width=\"2.5\" stroke-linecap=\"round\"/><path d=\"M 6,46 C 14,38 20,30 28,34 C 36,38 44,28 58,30\" fill=\"none\" stroke=\"url(#icon-reference)\" stroke-width=\"2\" stroke-linecap=\"round\" opacity=\"0.5\"/><text x=\"12\" y=\"16\" font-family=\"sans-serif\" font-size=\"10\" font-weight=\"bold\" fill=\"url(#icon-reference)\">A</text><text x=\"46\" y=\"16\" font-family=\"sans-serif\" font-size=\"10\" font-weight=\"bold\" fill=\"url(#icon-reference)\">B</text></svg>"
+  },
+  "tuner": {
+    "card_desc": "Chromatic Tuner with Strobe",
+    "keywords": "tuner chromatic strobe needle pitch guitar bass vocals strings intonation a4 415 432 440 442 baroque orchestra stage mute",
+    "slider_desc": [
+      "The pitch of A4 the notes are named from, 415 to 466 Hz (440 standard, 415 baroque, 442 many orchestras).",
+      "Needle: a bar from -50 to +50 cents. Strobe: three bands that stand still in tune and move right when sharp, left when flat, faster the further off.",
+      "What is tuned: both channels summed, or only the left or right input.",
+      "Thru passes the audio; Mute silences it, for tuning on stage."
+    ],
+    "uses": [
+      "Tuning guitars, basses and synths in the session",
+      "Checking a singer's or a string player's intonation",
+      "Baroque (A415) and orchestral (A442) tuning",
+      "Silent tuning on stage with Mute"
+    ],
+    "properties": "YIN pitch detection: the input low passed and taken down to 22 to 24 kHz, analysed about 47 times a second over the last 1024 + up to 960 samples (FFT autocorrelation, cumulative mean normalised difference, first dip below 0.15), refined by parabolas on the difference function at 1, 2, 4, 8 ... periods; within 0.25 cent from 27 Hz to 4.2 kHz on test tones. 25 Hz to about 4.5 kHz; below -70 dBFS RMS counts as silence, and the last note holds for half a second. Readings within 50 cents glide. No latency, no Rack module.",
+    "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-tuner\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><path d=\"M 10,44 A 24,24 0 0 1 54,44\" fill=\"none\" stroke=\"url(#icon-tuner)\" stroke-width=\"2\" stroke-linecap=\"round\" opacity=\"0.5\"/><path d=\"M 32,46 L 36,22\" stroke=\"url(#icon-tuner)\" stroke-width=\"2.5\" stroke-linecap=\"round\"/><circle cx=\"32\" cy=\"46\" r=\"3\" fill=\"url(#icon-tuner)\"/><path d=\"M 32,18 L 32,24\" stroke=\"url(#icon-tuner)\" stroke-width=\"1.5\"/></svg>"
+  },
+  "vu_meter": {
+    "card_desc": "VU, PPM and K-System Meter",
+    "keywords": "vu meter ppm ebu k-system k-14 k-20 level meter needle analog ballistics gain staging -18 dbfs peak hold over mastering mixing",
+    "slider_desc": [
+      "VU (300 ms ballistics, average reading), PPM (EBU Type IIa peak programme meter), K-14 or K-20 (Katz RMS with the 0 mark at -14 or -20 dBFS).",
+      "The level that reads 0 in VU and PPM: a sine peaking at -24 to -8 dBFS (-18 is the EBU alignment level, -20 SMPTE).",
+      "How the held maximum (the silver mark) behaves: Off, held for 3 s, or held until you click the meters.",
+      "Monitor: Stereo, Mono (both channels summed) or Side (the difference only), after the meters."
+    ],
+    "uses": [
+      "Gain staging into analog-modelled plugins at -18 dBFS",
+      "Mixing to a VU like on a console",
+      "Broadcast peak levels with an EBU PPM",
+      "Mastering with the K-14 or K-20 system"
+    ],
+    "properties": "Per channel. VU: the rectified signal through a second-order low pass (damping 0.8: about 1.5 % overshoot, 99 % in 300 ms), sine-calibrated, on the classic -20 to +3 VU dial. PPM: a peak follower charging with a 5 ms time constant (about -4 dB on a 10 ms burst) and falling 24 dB in 2.8 s, -24 to +12 around the reference. K-14 / K-20: RMS over 300 ms, sine-calibrated. OVER lights for 1 s at 0 dBFS. The audio passes through (Monitor folds it after the meters). No latency, no Rack module.",
+    "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-vu_meter\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><rect x=\"8\" y=\"14\" width=\"48\" height=\"36\" rx=\"4\" fill=\"none\" stroke=\"url(#icon-vu_meter)\" stroke-width=\"2\" opacity=\"0.5\"/><path d=\"M 14,40 A 20,20 0 0 1 50,40\" fill=\"none\" stroke=\"url(#icon-vu_meter)\" stroke-width=\"1.5\"/><path d=\"M 42,32 L 46,30 M 45,36 L 49,35\" stroke=\"url(#icon-vu_meter)\" stroke-width=\"2\"/><path d=\"M 32,46 L 40,24\" stroke=\"url(#icon-vu_meter)\" stroke-width=\"2.5\" stroke-linecap=\"round\"/></svg>"
+  },
+  "crossfeed": {
+    "card_desc": "Headphone Crossfeed and Speaker Simulation",
+    "keywords": "crossfeed headphones bs2b bauer chu moy jan meier speakers room simulation head shadow itd binaural mixing on headphones fatigue",
+    "slider_desc": [
+      "Crossfeed: Bauer's headphone filter (bs2b). Speakers: two speakers in front of you, with head shadow, the time between the ears and a room.",
+      "Crossfeed: where the other side's signal starts to roll off (300 to 2000 Hz; 700 is the bs2b default, 650 Jan Meier).",
+      "Crossfeed: how far below the own side the other side arrives in the lows (1 to 15 dB; 4.5 bs2b default, 6 Chu Moy, 9.5 Jan Meier).",
+      "Speakers: how far each speaker is off centre (10 to 60 degrees; 30 is the usual stereo triangle).",
+      "Speakers: early reflections of a room (0 = none).",
+      "Blend of the dry and processed signal.",
+      "Output level (-12 to +12 dB)."
+    ],
+    "uses": [
+      "Mixing on headphones with less in-the-head fatigue",
+      "Checking the stereo image as it would sound on speakers",
+      "Long listening sessions on headphones",
+      "Hearing hard-panned parts as a speaker listener would"
+    ],
+    "properties": "Crossfeed: libbs2b's filter: the other side through a first-order low pass at Cutoff, Feed dB down in the lows; the own side through a matching high boost; a mono signal keeps its level in the lows and loses up to 2 dB in the highs. Speakers: Brown-Duda head-shadow filters for the near and the far ear (their high-frequency gains scaled so a mono signal keeps its level on average), Woodworth's interaural time on the far ear (0.26 ms at 30 degrees), each ear half of each; Room adds six early reflections per ear (4 to 22 ms, low passed at 5 kHz). Then Mix and Output. No latency.",
+    "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-crossfeed\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><path d=\"M 14,40 C 14,20 50,20 50,40\" fill=\"none\" stroke=\"url(#icon-crossfeed)\" stroke-width=\"2.5\" stroke-linecap=\"round\"/><rect x=\"8\" y=\"38\" width=\"10\" height=\"14\" rx=\"3\" fill=\"none\" stroke=\"url(#icon-crossfeed)\" stroke-width=\"2\"/><rect x=\"46\" y=\"38\" width=\"10\" height=\"14\" rx=\"3\" fill=\"none\" stroke=\"url(#icon-crossfeed)\" stroke-width=\"2\"/><path d=\"M 22,46 L 42,40 M 22,40 L 42,46\" stroke=\"url(#icon-crossfeed)\" stroke-width=\"1.5\" opacity=\"0.6\"/></svg>"
+  },
+  "de_clip": {
+    "card_desc": "Rebuild Clipped Peaks",
+    "keywords": "de-clip declip declipper clipping repair restoration overload distortion recorder interview dialogue peaks reconstruct audio repair",
+    "slider_desc": [
+      "The level at and above which samples count as clipped (-24 to 0 dB); set it just under where the waveform flattens.",
+      "How many samples in a row must sit at the clip level before they are rebuilt (2 to 8); higher leaves natural peaks alone.",
+      "Output level (-24 to +12 dB): the rebuilt peaks pass the clip level and often 0 dBFS, so turn down here or limit after.",
+      "Listen: Output plays the result; Delta plays only what was added back."
+    ],
+    "uses": [
+      "Rescuing clipped interview and dialogue recordings",
+      "Repairing a hard-clipped master or stem",
+      "Field recorder overloads",
+      "Restoring peaks before further processing"
+    ],
+    "properties": "Per channel. A run of at least Min Length samples in a row at or above Clip Level is redrawn with the cubic through the two good samples on either side of it, kept on the side of the clip level it was on and at most 12 dB above it. Runs up to 120 samples are rebuilt; longer ones stay as they are. 128 samples of latency, reported for delay compensation.",
+    "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-de_clip\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><path d=\"M 6,32 L 12,18 L 20,18 L 26,32 L 32,46 L 40,46 L 46,32\" fill=\"none\" stroke=\"url(#icon-de_clip)\" stroke-width=\"2\" stroke-linejoin=\"round\" opacity=\"0.45\"/><path d=\"M 6,32 C 10,18 12,10 16,10 C 20,10 22,18 26,32 C 30,46 32,54 36,54 C 40,54 42,46 46,32 C 50,18 52,10 56,10\" fill=\"none\" stroke=\"url(#icon-de_clip)\" stroke-width=\"2.5\" stroke-linecap=\"round\"/><path d=\"M 4,18 L 60,18 M 4,46 L 60,46\" stroke=\"url(#icon-de_clip)\" stroke-width=\"1\" stroke-dasharray=\"2 3\" opacity=\"0.6\"/></svg>"
   }
 }
