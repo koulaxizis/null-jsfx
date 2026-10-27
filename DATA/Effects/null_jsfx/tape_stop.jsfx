@@ -13,6 +13,8 @@ in_pin:Right
 out_pin:Left
 out_pin:Right
 
+options:maxmem=33554432
+
 @init
   // Idle: the audio passes untouched. Trigger: playback slows to a stop over Stop Time,
   // then spins back up over Start Time and fades back to the live signal.
