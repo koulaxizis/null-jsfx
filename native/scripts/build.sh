@@ -7,7 +7,8 @@
 #   scripts/build.sh --build-dir <dir>  build directory (default: native/build)
 #   scripts/build.sh --dpf <dir>        use a local DPF checkout instead of fetching the pinned SHA
 #
-# Output: <build>/bin/null_jsfx_<name>.vst3 and .clap, copied to native/dist/{VST3,CLAP}/NULL JSFX/.
+# Output: <build>/bin/null_jsfx_<name>.vst3 and .clap (and .lv2 on Linux), copied to
+# native/dist/{VST3,CLAP,LV2}/NULL JSFX/.
 set -euo pipefail
 
 here="$(cd "$(dirname "$0")/.." && pwd)"
@@ -60,4 +61,8 @@ rm -rf "$dist"
 mkdir -p "$dist/VST3/NULL JSFX" "$dist/CLAP/NULL JSFX"
 cp -R "$build"/bin/*.vst3 "$dist/VST3/NULL JSFX/"
 cp -R "$build"/bin/*.clap "$dist/CLAP/NULL JSFX/"
+if compgen -G "$build/bin/*.lv2" >/dev/null; then
+  mkdir -p "$dist/LV2/NULL JSFX"
+  cp -R "$build"/bin/*.lv2 "$dist/LV2/NULL JSFX/"
+fi
 echo "== done: $dist"

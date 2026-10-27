@@ -167,7 +167,9 @@ def catalog(version, notes, date):
         "repo": REPO,
         "site": SITE,
         "packages": {"jsfx": "NULL-JSFX-JSFX.zip",
-                     "native": {os: f"NULL-JSFX-VST3-CLAP-{os}.zip" for os in OSES}},
+                     "native": {os: f"NULL-JSFX-VST3-CLAP-{os}.zip" for os in OSES},
+                     # the Linux zip also holds LV2 (2.7 on); the Hub adds it to every VST3 plugin
+                     "lv2": ["Linux"]},
         "hub": {"version": version, "assets": HUB_ASSETS},
         # earlier releases with the same packages, newest first: a plugin can go back to one
         "previous": previous(version),

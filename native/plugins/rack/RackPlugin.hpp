@@ -8,6 +8,7 @@
 #pragma once
 
 #include "DistrhoPlugin.hpp"
+#include "NullBeatClock.hpp"
 #include "RackEngine.hpp"
 
 #include <atomic>
@@ -32,6 +33,7 @@ protected:
 
     std::unique_ptr<rack::RackEngine> fEngine;
     std::atomic<uint32_t> fStateVersion { 1 };
+    NullBeatClock fClock;
 };
 
 END_NAMESPACE_DISTRHO

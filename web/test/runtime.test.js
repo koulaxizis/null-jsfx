@@ -121,6 +121,63 @@ test("the preset box in the GFX header steps through and lists the factory prese
   view.destroy();
 });
 
+test("str_getchar / str_setchar keep doubles and unsigned shorts like EEL2", function () {
+  var S = new R.Strings([]), h = 90001;
+  S.put(h, "");
+  S.setchar(h, 0, 0.1, 100); S.setchar(h, 8, -1234.5678, 100);        // 'd'
+  S.setchar(h, 16, 300, 0x7573); S.setchar(h, 18, 70000, 0x7573);      // 'us' (70000 wraps)
+  assert.strictEqual(S.len(h), 20);
+  assert.strictEqual(S.getchar(h, 0, 100), 0.1);
+  assert.strictEqual(S.getchar(h, 8, 100), -1234.5678);
+  assert.strictEqual(S.getchar(h, 16, 0x7573), 300);
+  assert.strictEqual(S.getchar(h, 18, 0x7573), 70000 - 65536);
+  assert.strictEqual(S.getchar(h, 16, 0x73), 300);                    // 's', signed
+  S.setchar(h, 0, -1, 0x63);                                          // 'c' in place
+  assert.strictEqual(S.getchar(h, 0, 0x63), -1);
+  assert.strictEqual(S.getchar(h, 0), 255);
+  assert.strictEqual(S.getchar(h, 14, 100), 0, "a read past the end gives 0");
+});
+
+test("undo, redo and A/B in the GFX header", function () {
+  var FX = fx("tilt"), cv = fakeCanvas(), got = [];
+  var view = new GFX.View(FX, cv, { srate: 48000, sliders: { 1: 0 }, onSlider: function (i, v) { got.push(v); } });
+  function click(x, y) {
+    cv.fire("pointermove", { clientX: x, clientY: y, button: 0 });
+    cv.fire("pointerdown", { clientX: x, clientY: y, button: 0 }); view.draw();
+    cv.fire("pointerup", { clientX: x, clientY: y, button: 0 }); view.draw(); view.draw();
+  }
+  function wheel(d) {
+    cv.fire("pointermove", { clientX: 180, clientY: 210 });
+    cv.fire("wheel", { clientX: 180, clientY: 210, deltaY: d }); view.draw(); view.draw();
+  }
+  var sl = function () { return view.fx.inst.getSlider(1); };
+  view.draw(); view.draw();
+  // a drag is one step
+  cv.fire("pointerdown", { clientX: 180, clientY: 210, button: 0 }); view.draw();
+  cv.fire("pointermove", { clientX: 200, clientY: 210, button: 0 }); view.draw();
+  cv.fire("pointermove", { clientX: 240, clientY: 210, button: 0 }); view.draw();
+  cv.fire("pointerup", { clientX: 240, clientY: 210, button: 0 }); view.draw(); view.draw();
+  var v1 = sl();
+  assert.ok(v1 > 40, "dragged to " + v1);
+  // the buttons: undo 129..143, redo 145..159, A 165..179, B 181..195, copy 197..217, y 9.5..20.5
+  click(136, 15);
+  assert.strictEqual(sl(), 0, "undo");
+  click(152, 15);
+  assert.strictEqual(sl(), v1, "redo");
+  click(188, 15);                    // B starts as a copy of A
+  assert.strictEqual(sl(), v1);
+  wheel(-100);
+  assert.strictEqual(sl(), v1 + 1);
+  click(172, 15);                    // back to A
+  assert.strictEqual(sl(), v1);
+  click(188, 15);                    // and to B
+  assert.strictEqual(sl(), v1 + 1);
+  click(136, 15);                    // undo the switch to B
+  assert.strictEqual(sl(), v1);
+  assert.strictEqual(got[got.length - 1], v1, "the page heard every change");
+  view.destroy();
+});
+
 test("freembuf(0) clears block 0 without detaching it", function () {
   var m = R.memory(), b0 = m.b[0];
   m.w(5, 3); m.w(70000, 4);

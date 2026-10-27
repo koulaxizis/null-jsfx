@@ -14,10 +14,12 @@ pub enum Format {
     Gfx,
     Vst3,
     Clap,
+    /// LV2: Linux only, from the same native package (catalog `packages.lv2`)
+    Lv2,
 }
 
 impl Format {
-    pub const ALL: [Format; 4] = [Format::Jsfx, Format::Gfx, Format::Vst3, Format::Clap];
+    pub const ALL: [Format; 5] = [Format::Jsfx, Format::Gfx, Format::Vst3, Format::Clap, Format::Lv2];
 
     pub fn key(self) -> &'static str {
         match self {
@@ -25,6 +27,7 @@ impl Format {
             Format::Gfx => "gfx",
             Format::Vst3 => "vst3",
             Format::Clap => "clap",
+            Format::Lv2 => "lv2",
         }
     }
 
@@ -32,9 +35,14 @@ impl Format {
         Format::ALL.into_iter().find(|f| f.key() == key)
     }
 
-    /// JSFX and GFX live in REAPER; VST3 and CLAP come from the per-OS native package.
+    /// JSFX and GFX live in REAPER; VST3, CLAP and LV2 come from the per-OS native package.
     pub fn is_native(self) -> bool {
-        matches!(self, Format::Vst3 | Format::Clap)
+        matches!(self, Format::Vst3 | Format::Clap | Format::Lv2)
+    }
+
+    /// The formats offered on this computer: LV2 only on Linux.
+    pub fn here() -> Vec<Format> {
+        Format::ALL.into_iter().filter(|&f| f != Format::Lv2 || crate::paths::os_name() == "Linux").collect()
     }
 }
 
@@ -116,6 +124,10 @@ pub struct Packages {
     pub jsfx: String,
     /// OS name (Windows, Linux, macOS) -> zip with the VST3 and CLAP versions
     pub native: BTreeMap<String, String>,
+    /// the OS names whose native zip also holds an LV2 version of every VST3 plugin (2.7 on).
+    /// Plugins list only the formats every Hub knows, so older Hubs keep reading the catalog.
+    #[serde(default)]
+    pub lv2: Vec<String>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -162,7 +174,15 @@ impl Catalog {
                 "This catalog needs a newer NULL JSFX Hub (catalog layout {schema}, this Hub reads {SCHEMA}). Download the new Hub from nulljsfx.tech."
             ));
         }
-        serde_json::from_value(probe).map_err(|e| format!("catalog: {e}"))
+        let mut catalog: Catalog = serde_json::from_value(probe).map_err(|e| format!("catalog: {e}"))?;
+        if catalog.packages.lv2.iter().any(|os| os == crate::paths::os_name()) {
+            for p in &mut catalog.plugins {
+                if p.formats.contains(&Format::Vst3) && !p.formats.contains(&Format::Lv2) {
+                    p.formats.push(Format::Lv2);
+                }
+            }
+        }
+        Ok(catalog)
     }
 
     pub fn plugin(&self, id: &str) -> Option<&Plugin> {
@@ -205,5 +225,25 @@ mod tests {
     fn newer_schema_is_refused() {
         let err = Catalog::parse(r#"{"schema": 99}"#).unwrap_err();
         assert!(err.contains("newer NULL JSFX Hub"), "{err}");
+    }
+
+    #[test]
+    fn lv2_comes_with_vst3_on_the_listed_os() {
+        let text = |lv2: &str| {
+            format!(
+                r#"{{"schema": 1, "version": "2.7", "repo": "r", "packages": {{"jsfx": "j.zip", "native": {{}}, "lv2": {lv2}}},
+                "hub": {{"version": "2.7"}}, "plugins": [
+                {{"id": "tilt", "name": "Tilt", "group": "one-slider", "formats": ["jsfx", "gfx", "vst3", "clap"]}},
+                {{"id": "old", "name": "Old", "group": "advanced", "formats": ["jsfx"]}}]}}"#
+            )
+        };
+        let c = Catalog::parse(&text(&format!("[\"{}\"]", crate::paths::os_name()))).unwrap();
+        assert!(c.plugin("tilt").unwrap().formats.contains(&Format::Lv2));
+        assert!(!c.plugin("old").unwrap().formats.contains(&Format::Lv2));
+        let c = Catalog::parse(&text("[]")).unwrap();
+        assert!(!c.plugin("tilt").unwrap().formats.contains(&Format::Lv2));
+        // a catalog from before 2.7 has no "lv2" at all
+        let c = Catalog::parse(&text("[]").replace(r#", "lv2": []"#, "")).unwrap();
+        assert!(!c.plugin("tilt").unwrap().formats.contains(&Format::Lv2));
     }
 }

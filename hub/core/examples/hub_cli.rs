@@ -38,7 +38,7 @@ fn main() {
     let mut hub = Hub::open(paths::data_dir());
     if args.first().map(String::as_str) == Some("--root") {
         let root = PathBuf::from(args.get(1).cloned().unwrap_or_else(|| fail("--root DIR")));
-        hub.settings.targets = Targets { reaper: root.join("REAPER"), vst3: root.join("VST3"), clap: root.join("CLAP"), fonts: root.join("fonts") };
+        hub.settings.targets = Targets { reaper: root.join("REAPER"), vst3: root.join("VST3"), clap: root.join("CLAP"), lv2: root.join("LV2"), fonts: root.join("fonts") };
         args.drain(..2);
     }
     let cmd = args.first().cloned().unwrap_or_default();

@@ -1139,7 +1139,8 @@
       "Feedback around the ladder; high values approach self-oscillation (capped at 3.95)",
       "Input gain into the saturating ladder for analog growl (level-compensated)",
       "Lowpass or Highpass 24 dB/oct response",
-      "Output level"
+      "Output level",
+      "Runs the ladder at 2x or 4x the sample rate (linear-phase halfband filters, 31 or 37 samples of latency) so the saturation in its loop does not alias at high Drive and Resonance; Off adds no latency."
     ],
     "uses": [
       "Classic resonant synth filter sweeps",
@@ -1148,7 +1149,7 @@
       "Highpass sweeps with resonant peak",
       "Taming harsh digital sources with analog character"
     ],
-    "properties": "Signal chain: Input → Drive → 4-Pole Zero-Delay-Feedback Ladder (24 dB/oct, tanh saturation in the loop) → LP / HP Output → Gain → Output. Stable and in tune up to 20 kHz at full resonance; stereo channels independent, zero latency.",
+    "properties": "Signal chain: Input → Drive → 4-Pole Zero-Delay-Feedback Ladder (24 dB/oct, tanh saturation in the loop) → LP / HP Output → Gain → Output. Stable and in tune up to 20 kHz at full resonance; stereo channels independent, zero latency (Oversampling 2x / 4x runs the ladder at the higher rate and adds 31 / 37 samples).",
     "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-ladder\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><path d=\"M 16,16 L 16,48 M 24,16 L 24,32 M 32,16 L 32,40 M 40,16 L 40,36 M 48,16 L 48,44\" stroke=\"url(#icon-ladder)\" stroke-width=\"2\"/><circle cx=\"8\" cy=\"32\" r=\"6\" stroke=\"url(#icon-ladder)\" stroke-width=\"1.5\" fill=\"none\"/><circle cx=\"56\" cy=\"32\" r=\"6\" stroke=\"url(#icon-ladder)\" stroke-width=\"1.5\" fill=\"none\"/></svg>"
   },
   "limiter": {
@@ -2382,7 +2383,8 @@
       "Output level",
       "Dry/wet blend (the dry signal is delayed to stay aligned with the wet path)",
       "Tape formulation: Classic (open reel), Type I (ferric, warm, more hiss), Type II (chrome, more high-frequency headroom, brighter and quieter hiss) or Type IV (metal, cleanest and most extended)",
-      "Cassette-style noise reduction: a compander that boosts quiet highs up to 10 dB before the tape and cuts them after it, lowering the hiss with a slight breathing on loud highs"
+      "Cassette-style noise reduction: a compander that boosts quiet highs up to 10 dB before the tape and cuts them after it, lowering the hiss with a slight breathing on loud highs",
+      "Runs the saturation at 2x or 4x the sample rate (linear-phase halfband filters, 31 or 37 more samples of latency) so its harmonics do not fold back as aliasing; Off adds nothing."
     ],
     "uses": [
       "Glue and warmth on the mix bus",
@@ -2390,7 +2392,7 @@
       "Lo-fi, cassette-like wobble with Wow and Flutter turned up",
       "Subtle analog colour on vocals and acoustic tracks"
     ],
-    "properties": "Signal chain: Input → Wow/Flutter Modulated Delay (3 ms centre, cubic interpolation) → Pre-Emphasis → Drive → Asymmetric Saturation with memory (hysteresis-like) → De-Emphasis → Low Cut + Head Bump → Hiss → High-Frequency Loss → Mix → Output. The hiss is an exact Park-Miller generator. The dry signal is delayed by the same 3 ms, and the 3 ms latency is reported to the host for delay compensation.",
+    "properties": "Signal chain: Input → Wow/Flutter Modulated Delay (3 ms centre, cubic interpolation) → Pre-Emphasis → Drive → Asymmetric Saturation with memory (hysteresis-like) → De-Emphasis → Low Cut + Head Bump → Hiss → High-Frequency Loss → Mix → Output. The hiss is an exact Park-Miller generator. The dry signal is delayed by the same 3 ms, and the 3 ms latency is reported to the host for delay compensation. Oversampling (2x / 4x) runs the saturation stage at the higher rate and adds 31 / 37 samples.",
     "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-tape\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><rect x=\"8\" y=\"16\" width=\"48\" height=\"32\" rx=\"4\" stroke=\"url(#icon-tape)\" stroke-width=\"2\" fill=\"none\"/><circle cx=\"22\" cy=\"30\" r=\"6\" stroke=\"url(#icon-tape)\" stroke-width=\"2\" fill=\"none\"/><circle cx=\"42\" cy=\"30\" r=\"6\" stroke=\"url(#icon-tape)\" stroke-width=\"2\" fill=\"none\"/><circle cx=\"22\" cy=\"30\" r=\"1.5\" fill=\"#999999\"/><circle cx=\"42\" cy=\"30\" r=\"1.5\" fill=\"#999999\"/><path d=\"M 22,36 L 26,44 L 38,44 L 42,36\" stroke=\"url(#icon-tape)\" stroke-width=\"1.5\" fill=\"none\" opacity=\"0.6\"/></svg>"
   },
   "tape_echo": {
