@@ -828,6 +828,20 @@
    "bytes": 32034
   },
   {
+   "id": "studio_eq",
+   "name": "Studio EQ",
+   "category": "Essentials",
+   "tags": "equalizer eq parametric linear phase mid side mixing mastering essentials gui",
+   "gfx": [
+    480,
+    468
+   ],
+   "ins": 2,
+   "outs": 2,
+   "sliders": 51,
+   "bytes": 134397
+  },
+  {
    "id": "tape",
    "name": "Tape",
    "category": "Essentials",
@@ -1136,6 +1150,20 @@
    "bytes": 67033
   },
   {
+   "id": "reference",
+   "name": "Reference",
+   "category": "Advanced",
+   "tags": "reference track a/b compare level match loudness lufs mixing mastering meter analyzer gui",
+   "gfx": [
+    480,
+    334
+   ],
+   "ins": 4,
+   "outs": 2,
+   "sliders": 4,
+   "bytes": 42333
+  },
+  {
    "id": "resonance_suppressor",
    "name": "Resonance Suppressor",
    "category": "Advanced",
@@ -1232,6 +1260,20 @@
    "outs": 2,
    "sliders": 8,
    "bytes": 49671
+  },
+  {
+   "id": "spectral_ducker",
+   "name": "Spectral Ducker",
+   "category": "Advanced",
+   "tags": "sidechain spectral ducking ducker trackspacer vocal space mix eq advanced gui",
+   "gfx": [
+    480,
+    380
+   ],
+   "ins": 4,
+   "outs": 2,
+   "sliders": 10,
+   "bytes": 51010
   },
   {
    "id": "spectral_freeze",

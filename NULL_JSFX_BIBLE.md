@@ -112,15 +112,15 @@ Rule numbers are stable. A retired rule keeps its number, marked *retired*, and 
 |---|---|
 | R4 | Lines 1–5 are exactly: `desc:NULL <Name>`, `author: Christos Koulaxizis`, `tags: <lowercase keywords>`, `//category: <One Slider \| Essentials \| Advanced \| Instruments \| MIDI>`, and the footer `//NULL JSFX v<version> • https://nulljsfx.tech • MIT License`. Then come a blank line, the sliders, a blank line and the pins. |
 | R5 | Categories. A One Slider plugin has exactly one slider, and a plugin in any other category with one slider is rejected. Pins: the standard four; sidechain plugins add `in_pin:Sidechain Left/Right` after the main inputs; Band Splitter has the eight-channel band layout; instruments have `in_pin:none` and stereo outs (Drum Machine adds the Snare, Hats and Perc pairs), and send every MIDI message they receive on (`midisend` in `@block`; VST3/CLAP: `WANT_MIDI_OUTPUT` and echo), so instruments can be layered; MIDI effects use the four standard pins and pass the audio through. |
-| R6 | EEL2 code. Every `@section` appears once, and there is a `@sample` section that writes `spl0` and `spl1`. No variable is read without being assigned somewhere. Only real EEL2 functions are used. Imports must exist. Slider labels follow `Name (unit)`. There is no C syntax (`if`, braces, `return`, `else`, `int()`). |
+| R6 | EEL2 code. Every `@section` appears once, and there is a `@sample` section that writes `spl0` and `spl1`. No variable is read without being assigned somewhere. Only real EEL2 functions are used (`slider(i)` may read slider i by index, as Studio EQ does for its eight bands). Imports must exist. Slider labels follow `Name (unit)`. There is no C syntax (`if`, braces, `return`, `else`, `int()`). |
 | R25 | Every sample rate works. Each filter frequency (a `tan()`, an RBJ biquad, an SVF) is held below Nyquist: `min(f, 0.45 * srate)`, or `0.49 * srate` where 0.45 would move the sound at 44.1 kHz (Reverser, Parametric EQ). The native port holds it the same way. CI renders every plain JSFX at 8000, 22050, 1234.57 and 12345.68 Hz too (2026-10-26). |
 
 **GFX**
 
 | # | Rule |
 |---|---|
-| R7 | The audio code (`@init`, `@slider`, `@block`, `@sample`) is identical to the plain JSFX, checked with tolerance 0. Slider labels get a `-` prefix, the tags add `gui`, and `import null_gfx.jsfx-inc` follows the footer. `gfx_ext_retina = 1`. The `@slider` code moves into `function update()`. GFX code never calls `slider()` and uses `ng_slider_set`. Meters may read audio, but never change the output, and use their own variables and memory. |
-| R8 | The look. Dark theme only, with the nulljsfx.tech palette and a **silver accent `#c4c4c4`, never the site purple**: purple belongs to Noxpress. A header shows the logo, "NULL JSFX", the plugin name, the category and "AUDIO WITHOUT NOISE". One Slider plugins use a horizontal slider at `@gfx 360 240`. Other plugins use knobs and selectors in rows of 6, with tabs beyond 2 rows. They are 480 wide (height varies, 294–460), and instruments and meters are wider (Part III). Each display shows what the plugin does (a curve, meters or a scope). The window resizes. The font is Noto Sans everywhere. `null_gfx.jsfx-inc` stays in step with `native/common/NullUI.hpp` and `NullTheme.hpp`. |
+| R7 | The audio code (`@init`, `@slider`, `@block`, `@sample`) is identical to the plain JSFX, checked with tolerance 0. Slider labels get a `-` prefix, the tags add `gui`, and `import null_gfx.jsfx-inc` follows the footer. `gfx_ext_retina = 1`. The `@slider` code moves into `function update()`. GFX code never sets a slider through `slider()` and uses `ng_slider_set` (reading `slider(i)` is fine). Meters may read audio, but never change the output, and use their own variables and memory. |
+| R8 | The look. Dark theme only, with the nulljsfx.tech palette and a **silver accent `#c4c4c4`, never the site purple**: purple belongs to Noxpress. A header shows the logo, "NULL JSFX", the plugin name, the category and "AUDIO WITHOUT NOISE". One Slider plugins use a horizontal slider at `@gfx 360 240`. Other plugins use knobs and selectors in rows of 6, with tabs beyond 2 rows. They are 480 wide (height varies, 294–468), and instruments and meters are wider (Part III). Each display shows what the plugin does (a curve, meters or a scope). The window resizes. The font is Noto Sans everywhere. `null_gfx.jsfx-inc` stays in step with `native/common/NullUI.hpp` and `NullTheme.hpp`. |
 
 **Native VST3/CLAP**
 
@@ -135,7 +135,7 @@ Rule numbers are stable. A retired rule keeps its number, marked *retired*, and 
 |---|---|
 | R11 | Parameter indices are fixed forever, and new parameters are only appended. Today there are 22 globals, then 29 per slot × 8, then the appended block 254..285. |
 | R12 | Every new feature sounds like nothing at its default. State strings ("slots", "routes", "preset") never change meaning: new features add keys or sources. `test/RackEngineV1.hpp` is frozen, and every preset that does not use newer features renders bit for bit like it. |
-| R13 | Every new plugin gets a Rack module, except meters, MIDI effects, instruments and plugins that need buses other than a sidechain. Sidechain plugins derive from `rack::KeyedModule`. File sliders are not module values. |
+| R13 | Every new plugin gets a Rack module, except meters, MIDI effects, instruments, plugins that need buses other than a sidechain, and plugins with more than 25 sliders (a Rack slot holds 25 values, `kValues`). Sidechain plugins derive from `rack::KeyedModule`. File sliders are not module values. |
 
 **Generated content**
 
@@ -290,7 +290,7 @@ The data files are `site_content.json` (texts per plugin), `site_content_next.js
 
 ## Part III — Plugin registry
 
-Generated from the files on 2026-10-26 (main `a231c1b`) by the script in Part VIII, B1. Do not edit this table by hand (R24).
+Generated from the files on 2026-10-27 (branch `claude/project-thread-cdgav8`, Wave 1 of the studio plan) by the script in Part VIII, B1. Do not edit this table by hand (R24).
 
 The columns are read from these files:
 
@@ -303,20 +303,21 @@ The columns are read from these files:
 | GFX | the `@gfx` line of `gfx/<file>_gfx.jsfx`, which is also the native UI size |
 | Sliders | the number of JSFX sliders |
 
-Every plugin has all of these: a GFX version, a VST3/CLAP version, a site page, a presets file and a web build.
+Every plugin has all of these: a GFX version, a VST3/CLAP version, a site page, a presets file and a web build. The site page waits for launch (R18) for Studio EQ, Spectral Ducker and Reference.
 
 **Totals:**
-- 113 plugins: 21 One Slider, 45 Essentials, 33 Advanced, 9 Instruments, 5 MIDI.
-- 95 Rack modules.
+- 116 plugins: 21 One Slider, 46 Essentials, 35 Advanced, 9 Instruments, 5 MIDI.
+- 96 Rack modules.
 - 73 FX chains in each of the two chain folders.
-- 1,006 factory presets, Default included.
+- 1,145 factory presets, Default included.
 - 86 Rack presets, Init included.
 
 **Exceptions:**
 - **CLAP ids with a hyphen** (released, frozen by R3): `tech.nulljsfx.granular-delay`, `tech.nulljsfx.shimmer-reverb`, `tech.nulljsfx.spring-reverb`, `tech.nulljsfx.vinyl-age` and `tech.nulljsfx.warped-delay`. Every other plugin uses `tech.nulljsfx.<file>`.
 - **No Rack module** (R13):
-  - meters: Loudness Meter, Spectrum Analyzer, Stereo Scope;
+  - meters: Loudness Meter, Spectrum Analyzer, Stereo Scope, Reference (its second stereo input is the reference, not a key);
   - eight-channel buses: Band Splitter;
+  - more than 25 sliders: Studio EQ (51);
   - every Instrument and every MIDI effect.
 
 <!-- BEGIN REGISTRY: generated, see Part VIII B1 -->
@@ -346,7 +347,7 @@ Every plugin has all of these: a GFX version, a VST3/CLAP version, a site page, 
 | Tilt | `tilt` | `tilt` | `NTlt` | yes | 360x240 | 1 |
 | Wetter | `wetter` | `wetter` | `NWet` | yes | 360x240 | 1 |
 
-### Essentials (45)
+### Essentials (46)
 
 | Plugin | File | Site slug | Unique ID | Rack | GFX | Sliders |
 |---|---|---|---|---|---|---|
@@ -358,23 +359,23 @@ Every plugin has all of these: a GFX version, a VST3/CLAP version, a site page, 
 | Channel Utility | `channel_utility` | `channel-utility` | `N3cu` | yes | 480x408 | 13 |
 | Chorus | `chorus` | `chorus` | `N4ch` | yes | 480x380 | 9 |
 | Click Repair | `click_repair` | `click-repair` | `N5Cr` | yes | 480x294 | 2 |
-| Clipper | `clipper` | `clipper` | `NClp` | yes | 480x380 | 7 |
+| Clipper | `clipper` | `clipper` | `NClp` | yes | 480x380 | 8 |
 | De-Hum | `de_hum` | `de-hum` | `NDHm` | yes | 480x294 | 6 |
 | De-Plosive | `de_plosive` | `de-plosive` | `NDPl` | yes | 480x294 | 5 |
 | DeEsser | `deesser` | `deesser` | `N1ds` | yes | 480x380 | 7 |
 | Delay | `delay` | `delay` | `NDly` | yes | 480x408 | 13 |
 | Disperser | `disperser` | `disperser` | `NDsp` | yes | 480x294 | 5 |
 | Draw EQ | `draw_eq` | `draw-eq` | `NDeq` | yes | 480x394 | 13 |
-| Dynamic EQ | `dynamic_eq` | `dynamic-eq` | `N2DE` | yes | 480x428 | 19 |
-| Dynamics | `dynamics` | `dynamics` | `N1dy` | yes | 480x380 | 11 |
+| Dynamic EQ | `dynamic_eq` | `dynamic-eq` | `N2DE` | yes | 480x428 | 21 |
+| Dynamics | `dynamics` | `dynamics` | `N1dy` | yes | 480x408 | 13 |
 | Envelope Follower | `envelope_follower` | `envelope-follower` | `N1ef` | yes | 480x380 | 9 |
 | Filter | `filter` | `filter` | `N2FL` | yes | 480x322 | 12 |
 | Flanger | `flanger` | `flanger` | `N4fl` | yes | 480x380 | 8 |
 | Gate | `gate` | `gate` | `N1gt` | yes | 480x380 | 10 |
-| Limiter | `limiter` | `limiter` | `N1lm` | yes | 480x294 | 5 |
-| Maximizer | `maximizer` | `maximizer` | `N1mx` | yes | 480x380 | 12 |
+| Limiter | `limiter` | `limiter` | `N1lm` | yes | 480x380 | 7 |
+| Maximizer | `maximizer` | `maximizer` | `N1mx` | yes | 480x408 | 14 |
 | Mid/Side Matrix | `mid_side_matrix` | `mid-side-matrix` | `N3ms` | yes | 480x294 | 3 |
-| Multiband Comp | `multiband_compressor` | `multiband-compressor` | `N3mb` | yes | 480x408 | 23 |
+| Multiband Comp | `multiband_compressor` | `multiband-compressor` | `N3mb` | yes | 480x408 | 25 |
 | Noise Generator | `noise_generator` | `noise-generator` | `N5Ng` | yes | 480x380 | 8 |
 | Octaver | `octaver` | `octaver` | `NOct` | yes | 480x294 | 6 |
 | Panner | `panner` | `panner` | `NPan` | yes | 480x304 | 5 |
@@ -384,10 +385,11 @@ Every plugin has all of these: a GFX version, a VST3/CLAP version, a site page, 
 | Pitch Shifter | `pitch_shifter` | `pitch-shifter` | `N4ps` | yes | 480x294 | 4 |
 | Reverb | `reverb` | `reverb` | `N5Rv` | yes | 480x380 | 12 |
 | Ring Mod | `ring_mod` | `ring-mod` | `N4rm` | yes | 480x294 | 4 |
-| Saturation | `saturation` | `saturation` | `N5Sa` | yes | 480x380 | 8 |
+| Saturation | `saturation` | `saturation` | `N5Sa` | yes | 480x380 | 9 |
 | Shaper | `shaper` | `shaper` | `NShp` | yes | 480x460 | 24 |
 | Sidechain Ducker | `sidechain_ducker` | `sidechain-ducker` | `N9Sd` | yes | 480x380 | 7 |
 | Stereo Width | `stereo_width` | `stereo-width` | `N3sw` | yes | 480x294 | 3 |
+| Studio EQ | `studio_eq` | `studio-eq` | `NSEq` | no | 480x468 | 51 |
 | Tape | `tape` | `tape` | `NTap` | yes | 480x380 | 10 |
 | Tape Echo | `tape_echo` | `tape-echo` | `NTEc` | yes | 480x380 | 11 |
 | Transient Shaper | `transient_shaper` | `transient-shaper` | `N1ts` | yes | 480x380 | 8 |
@@ -396,7 +398,7 @@ Every plugin has all of these: a GFX version, a VST3/CLAP version, a site page, 
 | Volume Shaper | `volume_shaper` | `volume-shaper` | `NVSh` | yes | 480x380 | 8 |
 | Wah | `wah` | `wah` | `NWah` | yes | 480x380 | 11 |
 
-### Advanced (33)
+### Advanced (35)
 
 | Plugin | File | Site slug | Unique ID | Rack | GFX | Sliders |
 |---|---|---|---|---|---|---|
@@ -415,6 +417,7 @@ Every plugin has all of these: a GFX version, a VST3/CLAP version, a site page, 
 | Noise Reduction | `noise_reduction` | `noise-reduction` | `NNRd` | yes | 480x410 | 9 |
 | OTT | `ott` | `ott` | `N9Ot` | yes | 480x380 | 8 |
 | Pitch Correction | `pitch_correction` | `pitch-correction` | `NPCr` | yes | 480x410 | 10 |
+| Reference | `reference` | `reference` | `NRef` | no | 480x334 | 4 |
 | Resonance Suppressor | `resonance_suppressor` | `resonance-suppressor` | `NRSp` | yes | 480x420 | 10 |
 | Resonator | `resonator` | `resonator` | `NRes` | yes | 480x380 | 7 |
 | Reverser | `reverser` | `reverser` | `N6rv` | yes | 480x294 | 4 |
@@ -422,6 +425,7 @@ Every plugin has all of these: a GFX version, a VST3/CLAP version, a site page, 
 | Rotary Speaker | `rotary_speaker` | `rotary-speaker` | `N7Rs` | yes | 480x294 | 6 |
 | Shimmer Reverb | `shimmer_reverb` | `shimmer-reverb` | `N8Sh` | yes | 480x294 | 6 |
 | Slicer | `slicer` | `slicer` | `NSlc` | yes | 480x380 | 8 |
+| Spectral Ducker | `spectral_ducker` | `spectral-ducker` | `NSDk` | yes | 480x380 | 10 |
 | Spectral Freeze | `spectral_freeze` | `spectral-freeze` | `N9Sf` | yes | 480x294 | 5 |
 | Spectrum Analyzer | `spectrum_analyzer` | `spectrum-analyzer` | `N0Sa` | no | 640x540 | 7 |
 | Spring Reverb | `spring_reverb` | `spring-reverb` | `N8Sp` | yes | 480x294 | 6 |
@@ -617,6 +621,14 @@ Then run every test of Part V that the PR touches, merge it once CI is green, an
 
 Format: **date · topic** — the decision. (Who approved it, and the source.) Decisions made before this Bible came from the project's memory notes and the PRs, and were not re-checked one by one.
 
+- **2026-10-27 · Studio plan** — a gap analysis against FabFilter, iZotope, Waves, Soundtoys, Valhalla, UAD, NI, UJAM, Klevgrand and Kilohearts gave 19 proposals in 5 waves (project files `research/studio-gap-analysis-2026-10-27.md`). Christos approved all of them: one PR per wave, Claude merges each when CI is green and goes on to the end, 2.7 is the version step, and the new plugins stay off the site until he says "launch". (Christos, thread "Σουίτα στούντιο".)
+  - Wave 1: True Peak in Maximizer and Limiter; Listen Delta in Maximizer, Limiter, Clipper, Dynamics, Multiband Comp and Dynamic EQ (Resonance Suppressor already had it); Channels Stereo/Mid/Side in Dynamics, Saturation, Dynamic EQ and Multiband Comp; new Studio EQ, Spectral Ducker, Reference.
+  - Wave 2: Tuner, VU Meter, Crossfeed, De-Clip, Crackle mode in Click Repair. Wave 3: A/B and Undo/Redo in every interface, oversampling where measured aliasing needs it, LV2 builds. Wave 4: MIDI Utility, MIDI LFO, Drum Machine song mode and step probability (B3), SFZ in Sampler. Wave 5: surround beds (no Atmos objects).
+- **2026-10-27 · Wave 1 design choices** (left to Claude by "you produce, check, merge"):
+  - Studio EQ has 51 sliders, so no Rack module (R13 now names the 25-value limit). Linear Phase: 8192-tap FIRs, 1024-sample blocks, 5120 samples of latency; a 2x2 matrix per bin so mid/side and left/right bands combine exactly. Cuts are Butterworth; Q 0.71 is flat. Auto Gain counts only bell and shelf bands.
+  - Spectral Ducker: 32 bands, fourth-order key band passes, Q 3 bells at 0.43 of the amount each (they overlap), cut = the key's excess over Threshold up to Amount × 24 dB, gains every 16 samples; in the Rack the key is the dry input, like Sidechain Ducker.
+  - Reference: a meter with a second stereo input, so no Rack module; Level Match follows the short-term loudness difference over about a second, within ±24 dB.
+  - True Peak: the BS.1770-4 Annex 2 interpolator of Loudness Meter, with 6 samples more latency when on. Delta is "input minus output" before any output dither.
 - **2026-10-26 · Instrument MIDI passthrough** — all 9 instruments pass on every MIDI message they receive, in every format, so two instruments can be layered on one track. Audio unchanged. (Christos approved audit proposal P1.)
 - **2026-10-26 · Bible answers** — Christos, in the Bible thread:
   - Claude merges its own PRs once CI is green, in general and for this PR (it was "Christos merges, except where he says so").
@@ -670,7 +682,8 @@ Format: **date · topic** — the decision. (Who approved it, and the source.) D
 
 - **B1 Registry generator.** Part III was generated on 2026-10-26 by a one-off script (`/mnt/project-files/bible/registry.py` in the project files, which prints the tables; it reads the `.jsfx` headers, `@gfx` lines, `DistrhoPluginInfo.h` and the Rack `modules/`). Proposal: commit it as `tools/build_bible.py`, which rewrites the block between `<!-- BEGIN REGISTRY -->` and `<!-- END REGISTRY -->` and the CLAP exceptions, with `--check` in `test.yml`. It goes in the docs PR.
 - **B2** Generate the hand-written counts (plugin count in `index.html` `<title>` and meta, the Rack module and preset counts in the showcase) with `build_site.py`.
-- **B3 Drum Machine ideas** (deferred 2026-10-17): song mode and step probability. Multi-out and a Sampler exist now. [memory]
+- **B3 Drum Machine ideas** (deferred 2026-10-17): song mode and step probability. Multi-out and a Sampler exist now. [memory] Approved 2026-10-27 as Wave 4 of the studio plan.
+- **B5 Studio plan, waves 2–5** (approved 2026-10-27, Part VII): in progress, one PR per wave.
 - **B4 Very low and odd sample rates** (found 2026-10-26 with clap-validator's `process-varying-sample-rates`, which plays 8000 Hz to 768 kHz, 1234.57 Hz and 12345.68 Hz among them). Wah, Tape, Tape Echo, Band Splitter and Amp Simulator are fixed (Part X). A scan of every plain JSFX at those rates, with `tests/jsfx_test.cpp`'s settings, still blows up in Reverser (8000, 22050 and 12345.68 Hz, max/random), Vinyl Age (8000 Hz, max), Step FX (8000 Hz, random), Formant Filter, Saturation, Noise Generator and Phase Align (1234.57 Hz), and Arpeggiator leaves notes hanging at 1234.57 Hz: a separate fix thread. **Done 2026-10-26 (PR #58):** the seven are fixed (the Arpeggiator finding was the test's own MIDI order), and `test.yml` renders every plain JSFX at 8000, 22050, 1234.57 and 12345.68 Hz (R25). The convention is that every filter frequency is held below `0.45 * srate` (most plugins already did this).
 
 ### VIII.C Open items waiting on someone
@@ -772,3 +785,21 @@ entry and the Bible delta.
 - **Files:** `native/plugins/rack/Plugin.cpp`.
 - **Tests:** run on Linux: `native/scripts/build.sh --plugins rack`, then `clap-validator validate --only-failed` (rev `b2f1d9b`) on `null_jsfx_rack.clap`: before 4 failed (`param-set-events`, `state-reproducibility-basic`, `-binary`, `-buffered`), after 0 failed, 31 passed, 2 warnings (denormal slowdown 4.3x, random state bytes accepted). A small CLAP host dump confirmed `Input`/`input` … `S8 Lane`/`s8_lane`. `native/scripts/build.sh --test --plugins rack`: 96/96 ctest passed (`rack_test` and the 95 `module_` tests). pluginval on the Rack VST3 was not run locally.
 - **Next:** the two clap-validator warnings are left for PR #52's report.
+
+### 2026-10-27 — Wave 1 of the studio plan (2.7, not released yet) — True Peak, Delta, Mid/Side; Studio EQ, Spectral Ducker, Reference
+- **Changes (appended sliders, silent at their defaults, R11/R12/R17):**
+  - Maximizer: `True Peak` (slider13) and `Listen` Output/Delta (slider14). True Peak limits the 4x-interpolated peak (the BS.1770-4 Annex 2 filter of Loudness Meter, new `native/common/NullTruePeak.hpp`) and adds 6 samples of latency when on. Delta plays the buffered input times the output gain minus the output, undithered. The GFX moved to two tabs (LIMITER, BANDS / DITHER), 480x408.
+  - Limiter: `True Peak` (slider6, not in Clipper mode) and `Listen` (slider7); GFX 480x380.
+  - Clipper: `Listen` (slider8), Delta = what the clipping takes off.
+  - Dynamics: `Channels` Stereo/Mid/Side (slider12) and `Listen` (slider13); GFX tabs COMPRESSOR, KEY / CHANNELS, 480x408. The Rack module now passes the External flag through (its key is its own input); bit-identical for Stereo.
+  - Multiband Comp: `Channels` (slider24) and `Listen` (slider25); the module now has exactly 25 values.
+  - Dynamic EQ: `Channels` (slider20) and `Listen` (slider21). Saturation: `Channels` (slider9), with the other half delayed to match the oversampling.
+  - Mid or Side processes that half on both channels and adds the other half back unchanged; Delta is input minus output before any makeup or output gain.
+- **New plugins (off the site until "launch", R18; entries in `tools/site_content_next.json`):**
+  - **Studio EQ** (Essentials, `NSEq`, 51 sliders, 480x468, no Rack module): eight bands from 10 Hz to 30 kHz (bell, shelves, 6–96 dB/oct Butterworth cuts, notch, band pass), each on stereo, mid, side, left or right; Output, Auto Gain, Zero Latency or Linear Phase (5120 samples). The interfaces draw the curve over a live spectrum and the nodes can be dragged.
+  - **Spectral Ducker** (Advanced, sidechain, `NSDk`, 10 sliders, 480x380, keyed Rack module): 32 bands follow the key and cut the same bands of the track; Stereo/Mid/Side, Mix, Output, Delta.
+  - **Reference** (Advanced, reference on pins 3/4, `NRef`, 4 sliders, 480x334, no Rack module): A/B with a 10 ms crossfade, loudness-matched reference, Trim, mono/side monitor; the interfaces show both short-term loudnesses, the gain, both correlations and both spectra.
+- **Changes (shared code):** `NullSliders.hpp` gains `jsfxValue()` (a host float back to the JSFX's double, used by the three new plugins). `EqAnalyzer.hpp` can average instead of peak-hold (Reference). `tests/lint.py` knows `slider()` (R6 updated; R7 reworded: GFX never *sets* a slider through `slider()`). R8 heights now run to 468; R13 names the 25-value Rack limit; Part III regenerated; the factory preset total was stale (1,006) and is now counted from the `.rpl` files (1,145).
+- **Files:** `DATA/Effects/null_jsfx/{maximizer,limiter,clipper,dynamics,multiband_compressor,dynamic_eq,saturation,studio_eq,spectral_ducker,reference}.jsfx` and `gfx/`, `native/plugins/` (the seven ported plugins, three new folders, `rack/modules/{dynamics,multiband_compressor,dynamic_eq,saturation,clipper,maximizer,limiter,spectral_ducker}.hpp`), `native/common/{NullTruePeak,NullSliders}.hpp`, `native/plugins/parametric_eq/EqAnalyzer.hpp`, `tools/presets/{studio_eq,spectral_ducker,reference}.json`, `tools/site_content.json` (descriptions of the appended sliders), `tools/site_content_next.json`, `tests/lint.py`, `CLAUDE.md`, this Bible; regenerated: `.rpl`, `FactoryPresets.hpp`, GFX preset blocks, `web/fx/*`, `remote/`, `plugins/*/index.html`, `assets/js/modals.js`, FX chains, `RackPresets.hpp`.
+- **Tests (run on Linux):** `tests/run.sh` on every changed and new JSFX and GFX (0 failed; lint clean), the new ones also at 8000, 22050, 1234.57 and 12345.68 Hz; `native` built with `-DNULL_TESTS=ON` for the ten plugins: every `compare_`, `presets_`, `gfx_` and `module_` test of them passes, and `rack_test`; `web/test/run.sh` on the ten (largest diff 1.1e-12); `build_site.py`, `build_chains.py --check`, `build_presets.py`, `build_remote.py`, `build_catalog.py --check`, `node web/tools/build.js`. Measured with small programs on the native DSP: True Peak brings +0.87 dBTP (Maximizer) and +0.48 dBTP (Limiter) down to −0.99 dBTP at a −1 dB ceiling; Studio EQ zero-latency and linear-phase magnitudes agree within 0.35 dB at 50 Hz and 0.05 dB above, the cuts fall 7/12/18/24/36/48/72/96 dB one octave out, linear-phase latency is 5120 samples; Spectral Ducker with a 1 kHz key cuts the track's 1 kHz by 10 dB at Amount 50% and leaves 200 Hz within 0.15 dB. Not run here: the full native build of every plugin (CI does it), a real REAPER or DAW session.
+- **Next:** Wave 2 (Tuner, VU Meter, Crossfeed, De-Clip, Crackle).

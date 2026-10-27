@@ -1,0 +1,390 @@
+desc:NULL Studio EQ
+author: Christos Koulaxizis
+tags: equalizer eq parametric linear phase mid side mixing mastering essentials
+//category: Essentials
+//NULL JSFX v2.6 • https://nulljsfx.tech • MIT License
+
+slider1:0<0,7,1{Off,Bell,Low Shelf,High Shelf,Low Cut,High Cut,Notch,Band Pass}>Band 1 Type
+slider2:30<10,30000,1:log>Band 1 Freq (Hz)
+slider3:0<-30,30,0.1>Band 1 Gain (dB)
+slider4:0.71<0.1,18,0.01:log>Band 1 Q
+slider5:3<0,7,1{6 dB/oct,12 dB/oct,18 dB/oct,24 dB/oct,36 dB/oct,48 dB/oct,72 dB/oct,96 dB/oct}>Band 1 Slope
+slider6:0<0,4,1{Stereo,Mid,Side,Left,Right}>Band 1 Channels
+slider7:1<0,7,1{Off,Bell,Low Shelf,High Shelf,Low Cut,High Cut,Notch,Band Pass}>Band 2 Type
+slider8:100<10,30000,1:log>Band 2 Freq (Hz)
+slider9:0<-30,30,0.1>Band 2 Gain (dB)
+slider10:0.71<0.1,18,0.01:log>Band 2 Q
+slider11:3<0,7,1{6 dB/oct,12 dB/oct,18 dB/oct,24 dB/oct,36 dB/oct,48 dB/oct,72 dB/oct,96 dB/oct}>Band 2 Slope
+slider12:0<0,4,1{Stereo,Mid,Side,Left,Right}>Band 2 Channels
+slider13:1<0,7,1{Off,Bell,Low Shelf,High Shelf,Low Cut,High Cut,Notch,Band Pass}>Band 3 Type
+slider14:250<10,30000,1:log>Band 3 Freq (Hz)
+slider15:0<-30,30,0.1>Band 3 Gain (dB)
+slider16:0.71<0.1,18,0.01:log>Band 3 Q
+slider17:3<0,7,1{6 dB/oct,12 dB/oct,18 dB/oct,24 dB/oct,36 dB/oct,48 dB/oct,72 dB/oct,96 dB/oct}>Band 3 Slope
+slider18:0<0,4,1{Stereo,Mid,Side,Left,Right}>Band 3 Channels
+slider19:1<0,7,1{Off,Bell,Low Shelf,High Shelf,Low Cut,High Cut,Notch,Band Pass}>Band 4 Type
+slider20:600<10,30000,1:log>Band 4 Freq (Hz)
+slider21:0<-30,30,0.1>Band 4 Gain (dB)
+slider22:0.71<0.1,18,0.01:log>Band 4 Q
+slider23:3<0,7,1{6 dB/oct,12 dB/oct,18 dB/oct,24 dB/oct,36 dB/oct,48 dB/oct,72 dB/oct,96 dB/oct}>Band 4 Slope
+slider24:0<0,4,1{Stereo,Mid,Side,Left,Right}>Band 4 Channels
+slider25:1<0,7,1{Off,Bell,Low Shelf,High Shelf,Low Cut,High Cut,Notch,Band Pass}>Band 5 Type
+slider26:1500<10,30000,1:log>Band 5 Freq (Hz)
+slider27:0<-30,30,0.1>Band 5 Gain (dB)
+slider28:0.71<0.1,18,0.01:log>Band 5 Q
+slider29:3<0,7,1{6 dB/oct,12 dB/oct,18 dB/oct,24 dB/oct,36 dB/oct,48 dB/oct,72 dB/oct,96 dB/oct}>Band 5 Slope
+slider30:0<0,4,1{Stereo,Mid,Side,Left,Right}>Band 5 Channels
+slider31:1<0,7,1{Off,Bell,Low Shelf,High Shelf,Low Cut,High Cut,Notch,Band Pass}>Band 6 Type
+slider32:3500<10,30000,1:log>Band 6 Freq (Hz)
+slider33:0<-30,30,0.1>Band 6 Gain (dB)
+slider34:0.71<0.1,18,0.01:log>Band 6 Q
+slider35:3<0,7,1{6 dB/oct,12 dB/oct,18 dB/oct,24 dB/oct,36 dB/oct,48 dB/oct,72 dB/oct,96 dB/oct}>Band 6 Slope
+slider36:0<0,4,1{Stereo,Mid,Side,Left,Right}>Band 6 Channels
+slider37:1<0,7,1{Off,Bell,Low Shelf,High Shelf,Low Cut,High Cut,Notch,Band Pass}>Band 7 Type
+slider38:8000<10,30000,1:log>Band 7 Freq (Hz)
+slider39:0<-30,30,0.1>Band 7 Gain (dB)
+slider40:0.71<0.1,18,0.01:log>Band 7 Q
+slider41:3<0,7,1{6 dB/oct,12 dB/oct,18 dB/oct,24 dB/oct,36 dB/oct,48 dB/oct,72 dB/oct,96 dB/oct}>Band 7 Slope
+slider42:0<0,4,1{Stereo,Mid,Side,Left,Right}>Band 7 Channels
+slider43:0<0,7,1{Off,Bell,Low Shelf,High Shelf,Low Cut,High Cut,Notch,Band Pass}>Band 8 Type
+slider44:18000<10,30000,1:log>Band 8 Freq (Hz)
+slider45:0<-30,30,0.1>Band 8 Gain (dB)
+slider46:0.71<0.1,18,0.01:log>Band 8 Q
+slider47:3<0,7,1{6 dB/oct,12 dB/oct,18 dB/oct,24 dB/oct,36 dB/oct,48 dB/oct,72 dB/oct,96 dB/oct}>Band 8 Slope
+slider48:0<0,4,1{Stereo,Mid,Side,Left,Right}>Band 8 Channels
+slider49:0<-24,24,0.1>Output (dB)
+slider50:0<0,1,1{Off,On}>Auto Gain
+slider51:0<0,1,1{Zero Latency,Linear Phase}>Phase
+
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
+
+@init
+  // Studio EQ: eight free bands in series from 10 Hz to 30 kHz. A band is a bell, a low or
+  // high shelf, a low or high cut (6 to 96 dB/oct, Butterworth; Q 0.71 is flat, higher Q
+  // lifts the corner), a notch or a band pass, and works on both channels, the mid, the side,
+  // the left or the right. Auto Gain offsets the level change of the bell and shelf bands.
+  //
+  // Zero Latency runs the bands as biquad cascades (minimum phase). Linear Phase turns the
+  // same magnitude response into four 8192-tap FIRs (left to left, right to left, left to
+  // right, right to right, so mid/side and left/right bands combine exactly) and convolves
+  // in 1024-sample blocks with 16384-point FFTs; latency 5120 samples, reported to REAPER.
+
+  // memory (FFT buffers start on multiples of 32768, so none crosses a 65536 boundary)
+  SE_D = 0;          // FIR design, 8192 complex
+  SE_IL = 16384;     // block input L, R and block output L, R (1024 each)
+  SE_IR = 17408;
+  SE_OL = 18432;
+  SE_OR = 19456;
+  SE_BQ = 20480;     // 8 bands x 128: 8 sections x 5 coefficients, then 8 x (state L, state R)
+  SE_NS = 21504;     // sections per band (0 = off)
+  SE_CH = 21512;     // channels per band
+  SE_T = 32768;      // work buffer, 16384 complex
+  SE_HLL = 65536;    // filter spectra: out L from in L, out L from in R, out R from L, R from R
+  SE_HLR = 98304;
+  SE_HRL = 131072;
+  SE_HRR = 163840;
+  SE_XL = 196608;    // input block spectra
+  SE_XR = 229376;
+  SE_YL = 262144;    // output block spectra
+  SE_YR = 294912;
+  SE_AL = 327680;    // overlap-add rings, 16384 each
+  SE_AR = 344064;
+  SE_MLL = 360448;   // the 2x2 response per bin (4097 each)
+  SE_MLR = 368640;
+  SE_MRL = 376832;
+  SE_MRR = 385024;
+  memset(0, 0, 393216);
+
+  se_pos = 0;
+  se_ab = 0;
+  se_lin_last = -1;
+  pdc_bot_ch = 0;
+  pdc_top_ch = 2;
+
+  // the order of each slope (6 .. 96 dB/oct)
+  function se_order(i) ( i == 0 ? 1 : i == 1 ? 2 : i == 2 ? 3 : i == 3 ? 4 : i == 4 ? 6 : i == 5 ? 8 : i == 6 ? 12 : 16; );
+
+  // RBJ cookbook biquad into c[0..4] = b0 b1 b2 a1 a2; kind 0 low shelf, 1 high shelf, 2 bell,
+  // 3 low pass, 4 high pass, 5 notch, 6 band pass (0 dB peak)
+  function se_rbj(c, kind, w, gain, q) local(cs, sn, al, aa, sq, a0)
+  (
+    cs = cos(w); sn = sin(w);
+    al = sn / (2 * q);
+    aa = 10 ^ (gain / 40); sq = sqrt(aa);
+    kind == 0 ? (
+      c[0] = aa * ((aa + 1) - (aa - 1) * cs + 2 * sq * al);
+      c[1] = 2 * aa * ((aa - 1) - (aa + 1) * cs);
+      c[2] = aa * ((aa + 1) - (aa - 1) * cs - 2 * sq * al);
+      a0 = (aa + 1) + (aa - 1) * cs + 2 * sq * al;
+      c[3] = -2 * ((aa - 1) + (aa + 1) * cs);
+      c[4] = (aa + 1) + (aa - 1) * cs - 2 * sq * al;
+    ) : kind == 1 ? (
+      c[0] = aa * ((aa + 1) + (aa - 1) * cs + 2 * sq * al);
+      c[1] = -2 * aa * ((aa - 1) + (aa + 1) * cs);
+      c[2] = aa * ((aa + 1) + (aa - 1) * cs - 2 * sq * al);
+      a0 = (aa + 1) - (aa - 1) * cs + 2 * sq * al;
+      c[3] = 2 * ((aa - 1) - (aa + 1) * cs);
+      c[4] = (aa + 1) - (aa - 1) * cs - 2 * sq * al;
+    ) : kind == 2 ? (
+      c[0] = 1 + al * aa; c[1] = -2 * cs; c[2] = 1 - al * aa;
+      a0 = 1 + al / aa; c[3] = -2 * cs; c[4] = 1 - al / aa;
+    ) : kind == 3 ? (
+      c[0] = (1 - cs) / 2; c[1] = 1 - cs; c[2] = (1 - cs) / 2;
+      a0 = 1 + al; c[3] = -2 * cs; c[4] = 1 - al;
+    ) : kind == 4 ? (
+      c[0] = (1 + cs) / 2; c[1] = -(1 + cs); c[2] = (1 + cs) / 2;
+      a0 = 1 + al; c[3] = -2 * cs; c[4] = 1 - al;
+    ) : kind == 5 ? (
+      c[0] = 1; c[1] = -2 * cs; c[2] = 1;
+      a0 = 1 + al; c[3] = -2 * cs; c[4] = 1 - al;
+    ) : (
+      c[0] = al; c[1] = 0; c[2] = -al;
+      a0 = 1 + al; c[3] = -2 * cs; c[4] = 1 - al;
+    );
+    c[0] /= a0; c[1] /= a0; c[2] /= a0; c[3] /= a0; c[4] /= a0;
+  );
+
+  // first-order bilinear low pass (hp = 0) or high pass (hp = 1) into c[0..4]
+  function se_first(c, hp, w) local(k)
+  (
+    k = tan(w / 2);
+    c[0] = hp ? 1 / (k + 1) : k / (k + 1);
+    c[1] = hp ? -c[0] : c[0];
+    c[2] = 0;
+    c[3] = (k - 1) / (k + 1);
+    c[4] = 0;
+  );
+
+  // band b (0..7) from its six sliders: the sections and their count
+  function se_band(b) local(tp, f, g, q, n, w, c, k, ns, qk)
+  (
+    tp = slider(b * 6 + 1);
+    f = slider(b * 6 + 2);
+    g = slider(b * 6 + 3);
+    q = max(slider(b * 6 + 4), 0.1);
+    n = se_order(slider(b * 6 + 5));
+    SE_CH[b] = slider(b * 6 + 6);
+    w = 2 * $pi * min(f, srate * 0.49) / srate;
+    c = SE_BQ + b * 128;
+    ns = 0;
+    tp == 1 ? ( se_rbj(c, 2, w, g, q); ns = 1; )
+    : tp == 2 ? ( se_rbj(c, 0, w, g, q); ns = 1; )
+    : tp == 3 ? ( se_rbj(c, 1, w, g, q); ns = 1; )
+    : tp == 4 || tp == 5 ? (
+      // Butterworth: a first-order section for an odd order, then the pairs; the last pair
+      // (the highest Q) takes the Q knob as resonance, 0.71 = flat
+      n & 1 ? ( se_first(c, tp == 4, w); ns = 1; );
+      k = 1;
+      loop(floor(n / 2),
+        qk = n & 1 ? 1 / (2 * cos(k * $pi / n)) : 1 / (2 * cos((2 * k - 1) * $pi / (2 * n)));
+        k == floor(n / 2) ? qk *= q / 0.71;
+        se_rbj(c + ns * 5, tp == 4 ? 4 : 3, w, 0, qk);
+        ns += 1;
+        k += 1;
+      );
+    )
+    : tp == 6 ? ( se_rbj(c, 5, w, 0, q); ns = 1; )
+    : tp == 7 ? ( se_rbj(c, 6, w, 0, q); ns = 1; );
+    SE_NS[b] = ns;
+  );
+
+  // the power response (|H|^2) of band b at w radians per sample
+  function se_pow(b, w) local(c1, c2, c, k, p, nm, dn)
+  (
+    c1 = cos(w); c2 = cos(2 * w);
+    p = 1;
+    k = 0;
+    loop(SE_NS[b],
+      c = SE_BQ + b * 128 + k * 5;
+      nm = c[0] * c[0] + c[1] * c[1] + c[2] * c[2] + 2 * (c[0] * c[1] + c[1] * c[2]) * c1 + 2 * c[0] * c[2] * c2;
+      dn = 1 + c[3] * c[3] + c[4] * c[4] + 2 * (c[3] + c[3] * c[4]) * c1 + 2 * c[4] * c2;
+      p *= max(nm, 0) / max(dn, 0.00000000000000000001);
+      k += 1;
+    );
+    p;
+  );
+
+  // Auto Gain: minus the mean level change (64 points, 20 Hz - 20 kHz, log spaced) of the bell
+  // and shelf bands, weighted by what a centred sound gets: stereo and mid 1, left and right
+  // 0.5, side 0; within +-24 dB
+  function se_auto() local(b, i, tp, wt, sum, f)
+  (
+    sum = 0;
+    b = 0;
+    loop(8,
+      tp = slider(b * 6 + 1);
+      wt = SE_CH[b] == 0 || SE_CH[b] == 1 ? 1 : SE_CH[b] == 2 ? 0 : 0.5;
+      tp >= 1 && tp <= 3 && wt > 0 ? (
+        i = 0;
+        loop(64,
+          f = min(20 * 1000 ^ (i / 63), srate * 0.49);
+          sum += wt * 10 * log10(max(se_pow(b, 2 * $pi * f / srate), 0.00000000000000000001)) / 64;
+          i += 1;
+        );
+      );
+      b += 1;
+    );
+    max(-24, min(24, -sum));
+  );
+
+  // run x through the n sections at c with the state at s (4 per section, 8 apart)
+  function se_cas(x, c, s, n) local(y)
+  (
+    loop(n,
+      y = c[0] * x + c[1] * s[0] + c[2] * s[1] - c[3] * s[2] - c[4] * s[3];
+      s[1] = s[0]; s[0] = x; s[3] = s[2]; s[2] = y;
+      x = y;
+      c += 5; s += 8;
+    );
+    x;
+  );
+
+  // one response row (4097 bins) into the filter spectrum h: a zero-phase FIR from the inverse
+  // FFT, centred at tap 4096 with a Hann window, scaled for the 16384-point inverse FFT
+  function se_fir(m, h) local(k, n)
+  (
+    k = 0;
+    loop(4097,
+      SE_D[2 * k] = m[k]; SE_D[2 * k + 1] = 0;
+      k > 0 && k < 4096 ? ( SE_D[2 * (8192 - k)] = m[k]; SE_D[2 * (8192 - k) + 1] = 0; );
+      k += 1;
+    );
+    fft_ipermute(SE_D, 8192);
+    ifft(SE_D, 8192);
+    memset(SE_T, 0, 32768);
+    n = 0;
+    loop(8192,
+      SE_T[2 * n] = SE_D[2 * ((n + 4096) & 8191)] * (0.5 - 0.5 * cos(2 * $pi * n / 8192)) / 134217728;
+      n += 1;
+    );
+    fft(SE_T, 16384);
+    memcpy(h, SE_T, 32768);
+  );
+
+  // Linear Phase: the 2x2 response of all bands per bin (band 1 first), then the four FIRs
+  function se_design() local(b, k, h, p, q, ll, lr, rl, rr, bc)
+  (
+    k = 0;
+    loop(4097, SE_MLL[k] = 1; SE_MLR[k] = 0; SE_MRL[k] = 0; SE_MRR[k] = 1; k += 1;);
+    b = 0;
+    loop(8,
+      SE_NS[b] > 0 ? (
+        bc = SE_CH[b];
+        k = 0;
+        loop(4097,
+          h = sqrt(se_pow(b, 2 * $pi * k / 8192));
+          bc == 0 ? ( SE_MLL[k] *= h; SE_MLR[k] *= h; SE_MRL[k] *= h; SE_MRR[k] *= h; )
+          : bc == 3 ? ( SE_MLL[k] *= h; SE_MLR[k] *= h; )
+          : bc == 4 ? ( SE_MRL[k] *= h; SE_MRR[k] *= h; )
+          : (
+            // mid: 0.5 [h+1 h-1; h-1 h+1], side: 0.5 [1+h 1-h; 1-h 1+h], applied after the rest
+            p = bc == 1 ? (h + 1) * 0.5 : (1 + h) * 0.5;
+            q = bc == 1 ? (h - 1) * 0.5 : (1 - h) * 0.5;
+            ll = SE_MLL[k]; lr = SE_MLR[k]; rl = SE_MRL[k]; rr = SE_MRR[k];
+            SE_MLL[k] = p * ll + q * rl; SE_MLR[k] = p * lr + q * rr;
+            SE_MRL[k] = q * ll + p * rl; SE_MRR[k] = q * lr + p * rr;
+          );
+          k += 1;
+        );
+      );
+      b += 1;
+    );
+    se_fir(SE_MLL, SE_HLL);
+    se_fir(SE_MLR, SE_HLR);
+    se_fir(SE_MRL, SE_HRL);
+    se_fir(SE_MRR, SE_HRR);
+  );
+
+  // one 1024-sample block: spectra, the 2x2 filter, inverse FFTs, overlap-add
+  function se_block() local(i, j)
+  (
+    memset(SE_XL, 0, 65536);
+    i = 0;
+    loop(1024, SE_XL[2 * i] = SE_IL[i]; SE_XR[2 * i] = SE_IR[i]; i += 1;);
+    fft(SE_XL, 16384);
+    fft(SE_XR, 16384);
+    memcpy(SE_YL, SE_XL, 32768); convolve_c(SE_YL, SE_HLL, 16384);
+    memcpy(SE_T, SE_XR, 32768); convolve_c(SE_T, SE_HLR, 16384);
+    i = 0; loop(32768, SE_YL[i] += SE_T[i]; i += 1;);
+    memcpy(SE_YR, SE_XL, 32768); convolve_c(SE_YR, SE_HRL, 16384);
+    memcpy(SE_T, SE_XR, 32768); convolve_c(SE_T, SE_HRR, 16384);
+    i = 0; loop(32768, SE_YR[i] += SE_T[i]; i += 1;);
+    ifft(SE_YL, 16384);
+    ifft(SE_YR, 16384);
+    i = 0;
+    loop(9216,
+      j = (se_ab + i) & 16383;
+      SE_AL[j] += SE_YL[2 * i]; SE_AR[j] += SE_YR[2 * i];
+      i += 1;
+    );
+    i = 0;
+    loop(1024,
+      j = (se_ab + i) & 16383;
+      SE_OL[i] = SE_AL[j]; SE_OR[i] = SE_AR[j];
+      SE_AL[j] = 0; SE_AR[j] = 0;
+      i += 1;
+    );
+    se_ab = (se_ab + 1024) & 16383;
+  );
+
+  function update() local(i)
+  (
+    se_lin = slider51;
+    // switching between zero latency and linear phase starts both paths from silence
+    se_lin != se_lin_last ? (
+      memset(SE_IL, 0, 4096);
+      memset(SE_BQ, 0, 1024);
+      memset(SE_AL, 0, 32768);
+      se_pos = 0;
+      se_ab = 0;
+      se_lin_last = se_lin;
+    );
+    i = 0;
+    loop(8, se_band(i); i += 1;);
+    se_ag = slider50 ? se_auto() : 0;
+    se_gout = 10 ^ ((slider49 + se_ag) / 20);
+    se_lin ? se_design();
+    pdc_delay = se_lin ? 5120 : 0;
+  );
+
+@slider
+  update();
+
+@sample
+  se_lin ? (
+    SE_IL[se_pos] = spl0; SE_IR[se_pos] = spl1;
+    spl0 = SE_OL[se_pos] * se_gout;
+    spl1 = SE_OR[se_pos] * se_gout;
+    se_pos += 1;
+    se_pos >= 1024 ? ( se_block(); se_pos = 0; );
+  ) : (
+    se_l = spl0; se_r = spl1;
+    se_b = 0;
+    loop(8,
+      se_n = SE_NS[se_b];
+      se_n > 0 ? (
+        se_c = SE_BQ + se_b * 128;
+        se_h = SE_CH[se_b];
+        se_h == 0 ? (
+          se_l = se_cas(se_l, se_c, se_c + 64, se_n);
+          se_r = se_cas(se_r, se_c, se_c + 68, se_n);
+        ) : se_h == 3 ? (
+          se_l = se_cas(se_l, se_c, se_c + 64, se_n);
+        ) : se_h == 4 ? (
+          se_r = se_cas(se_r, se_c, se_c + 68, se_n);
+        ) : (
+          se_m = (se_l + se_r) * 0.5;
+          se_s = (se_l - se_r) * 0.5;
+          se_h == 1 ? se_m = se_cas(se_m, se_c, se_c + 64, se_n) : se_s = se_cas(se_s, se_c, se_c + 64, se_n);
+          se_l = se_m + se_s;
+          se_r = se_m - se_s;
+        );
+      );
+      se_b += 1;
+    );
+    spl0 = se_l * se_gout;
+    spl1 = se_r * se_gout;
+  );

@@ -1,0 +1,130 @@
+desc:NULL Reference
+author: Christos Koulaxizis
+tags: reference track a/b compare level match loudness lufs mixing mastering meter analyzer
+//category: Advanced
+//NULL JSFX v2.6 • https://nulljsfx.tech • MIT License
+
+slider1:0<0,1,1{Track,Reference}>Listen
+slider2:1<0,1,1{Off,On}>Level Match
+slider3:0<-12,12,0.1>Trim (dB)
+slider4:0<0,2,1{Stereo,Mono,Side}>Monitor
+
+in_pin:Left
+in_pin:Right
+in_pin:Sidechain Left
+in_pin:Sidechain Right
+out_pin:Left
+out_pin:Right
+
+@init
+  // Reference: compare the mix with a reference track. Put the reference on track channels 3/4
+  // (the sidechain pins: a send from the reference's track, or a second item on this track), switch Listen between Track and Reference.
+  // Level Match plays the reference at the mix's loudness: both are measured as BS.1770
+  // short-term loudness (K-weighted, the last 3 s, every 100 ms) and the reference's gain
+  // follows the difference (within +-24 dB, over about a second, held while either is under
+  // -60 LUFS). Trim adds to it. The switch crossfades over 10 ms. Monitor folds the output
+  // to mono or plays the side only. The interface shows both loudnesses, the match gain, the
+  // stereo correlation of each and their spectra.
+
+  // K-weighting at this sample rate (as Loudness Meter)
+  rf_k = tan($pi * 1681.974450955533 / srate);
+  rf_vh = 10 ^ (3.999843853973347 / 20);
+  rf_vb = rf_vh ^ 0.4996667741545416;
+  rf_q = 0.7071752369554196;
+  rf_a0 = 1 + rf_k / rf_q + rf_k * rf_k;
+  rf_b0 = (rf_vh + rf_vb * rf_k / rf_q + rf_k * rf_k) / rf_a0;
+  rf_b1 = 2 * (rf_k * rf_k - rf_vh) / rf_a0;
+  rf_b2 = (rf_vh - rf_vb * rf_k / rf_q + rf_k * rf_k) / rf_a0;
+  rf_a1 = 2 * (rf_k * rf_k - 1) / rf_a0;
+  rf_a2 = (1 - rf_k / rf_q + rf_k * rf_k) / rf_a0;
+  rf_k = tan($pi * 38.13547087602444 / srate);
+  rf_q = 0.5003270373238773;
+  rf_c0 = 1 + rf_k / rf_q + rf_k * rf_k;
+  rf_c1 = 2 * (rf_k * rf_k - 1) / rf_c0;
+  rf_c2 = (1 - rf_k / rf_q + rf_k * rf_k) / rf_c0;
+
+  RF_Z = 0;      // K-weighting state, 4 per channel: track L, R, reference L, R
+  RF_ET = 16;    // 100 ms energies of the track (ring of 30)
+  RF_ER = 46;    // and of the reference
+  memset(0, 0, 76);
+  rf_n = floor(srate * 0.1 + 0.5);
+  rf_cnt = 0;
+  rf_w = 0;
+  rf_acct = rf_accr = 0;
+  rf_lt = rf_lr = -200;  // short-term loudness, track and reference
+  rf_g = 0;              // the match gain (dB)
+  rf_xf = 0;             // 0 = track, 1 = reference
+  rf_xs = 1 / (0.01 * srate);
+  // stereo correlation, averaged over about 3 s (display)
+  rf_ca = exp(-1 / (3 * srate));
+  rf_tlr = rf_tll = rf_trr = rf_rlr = rf_rll = rf_rrr = 0;
+
+  // K-weight x with the state at z (transposed direct form II: shelf, then high pass)
+  function rf_kw(x, z) local(y, k)
+  (
+    y = rf_b0 * x + z[0];
+    z[0] = rf_b1 * x - rf_a1 * y + z[1];
+    z[1] = rf_b2 * x - rf_a2 * y;
+    k = y + z[2];
+    z[2] = -2 * y - rf_c1 * k + z[3];
+    z[3] = y - rf_c2 * k;
+    k;
+  );
+
+  function rf_db(p) ( p > 0 ? -0.691 + 10 * log10(p) : -200; );
+
+  // the reference's gain: the match (when on) plus Trim
+  function rf_gain() ( rf_gr = 10 ^ (((slider2 ? rf_g : 0) + slider3) / 20); );
+
+  // every 100 ms: both short-term loudnesses, the match gain
+  function rf_subblock() local(i, st, sr)
+  (
+    RF_ET[rf_w] = rf_acct;
+    RF_ER[rf_w] = rf_accr;
+    rf_acct = rf_accr = 0;
+    rf_w = (rf_w + 1) % 30;
+    st = sr = 0;
+    i = 0;
+    loop(30, st += RF_ET[i]; sr += RF_ER[i]; i += 1;);
+    rf_lt = rf_db(st / (30 * rf_n));
+    rf_lr = rf_db(sr / (30 * rf_n));
+    rf_lt > -60 && rf_lr > -60 ? rf_g += (max(-24, min(24, rf_lt - rf_lr)) - rf_g) * 0.1;
+    rf_gain();
+  );
+
+
+@slider
+  rf_listen = slider1;
+  rf_mon = slider4;
+  rf_gain();
+
+@sample
+  // measure both
+  rf_tl = rf_kw(spl0, RF_Z);
+  rf_tr = rf_kw(spl1, RF_Z + 4);
+  rf_rl = rf_kw(spl2, RF_Z + 8);
+  rf_rr = rf_kw(spl3, RF_Z + 12);
+  rf_acct += rf_tl * rf_tl + rf_tr * rf_tr;
+  rf_accr += rf_rl * rf_rl + rf_rr * rf_rr;
+  rf_cnt += 1;
+  rf_cnt >= rf_n ? ( rf_cnt = 0; rf_subblock(); );
+  rf_tlr = rf_ca * rf_tlr + (1 - rf_ca) * spl0 * spl1;
+  rf_tll = rf_ca * rf_tll + (1 - rf_ca) * spl0 * spl0;
+  rf_trr = rf_ca * rf_trr + (1 - rf_ca) * spl1 * spl1;
+  rf_rlr = rf_ca * rf_rlr + (1 - rf_ca) * spl2 * spl3;
+  rf_rll = rf_ca * rf_rll + (1 - rf_ca) * spl2 * spl2;
+  rf_rrr = rf_ca * rf_rrr + (1 - rf_ca) * spl3 * spl3;
+
+  // A/B with a 10 ms crossfade, then the monitor fold
+  rf_xf = rf_listen > rf_xf ? min(rf_listen, rf_xf + rf_xs) : max(rf_listen, rf_xf - rf_xs);
+  rf_ol = spl0 * (1 - rf_xf) + spl2 * rf_gr * rf_xf;
+  rf_or = spl1 * (1 - rf_xf) + spl3 * rf_gr * rf_xf;
+  rf_mon == 1 ? (
+    spl0 = spl1 = (rf_ol + rf_or) * 0.5;
+  ) : rf_mon == 2 ? (
+    spl0 = (rf_ol - rf_or) * 0.5;
+    spl1 = spl0;
+  ) : (
+    spl0 = rf_ol;
+    spl1 = rf_or;
+  );
