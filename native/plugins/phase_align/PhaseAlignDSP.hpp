@@ -48,7 +48,7 @@ struct Derived {
         rot = p.rotation > 0.0 && p.rotation < 360.0;
         if (rot)
         {
-            t = std::tan(kPi * p.focus / sr) / std::tan(p.rotation * kPi / 720.0);
+            t = std::tan(kPi * std::min(p.focus, sr * 0.45) / sr) / std::tan(p.rotation * kPi / 720.0);
             a = (t - 1.0) / (t + 1.0);
         }
         dl = std::max(0.0, -d);
