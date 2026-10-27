@@ -36,7 +36,7 @@ protected:
 
     void valueChanged(float v) override { fDsp.setAmount(v); }
 
-    void activate() override
+    void onActivate() override
     {
         setup(getSampleRate());
         fDsp.reset();
@@ -44,7 +44,7 @@ protected:
 
     void sampleRateChanged(double newSampleRate) override { setup(newSampleRate); }
 
-    void run(const float** inputs, float** outputs, uint32_t frames) override
+    void process(const float** inputs, float** outputs, uint32_t frames) override
     {
         const float* inL = inputs[0];
         const float* inR = inputs[1];

@@ -38,7 +38,7 @@ protected:
 
     void valueChanged(uint32_t, float) override { update(); }
 
-    void activate() override
+    void onActivate() override
     {
         setup(getSampleRate());
         update();
@@ -50,7 +50,7 @@ protected:
         update();
     }
 
-    void run(const float** inputs, float** outputs, uint32_t frames) override
+    void process(const float** inputs, float** outputs, uint32_t frames) override
     {
         double g = 1.0;
         for (uint32_t i = 0; i < frames; ++i)

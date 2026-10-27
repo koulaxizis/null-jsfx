@@ -29,11 +29,11 @@ protected:
 
     void valueChanged(uint32_t, float) override { update(); }
 
-    void activate() override { setup(getSampleRate()); }
+    void onActivate() override { setup(getSampleRate()); }
 
     void sampleRateChanged(double newSampleRate) override { setup(newSampleRate); }
 
-    void run(const float** inputs, float** outputs, uint32_t frames) override
+    void process(const float** inputs, float** outputs, uint32_t frames) override
     {
         // display: peak followers of the input (read before the outputs are written) and output,
         // in scopeL[0..3] (IN L, IN R, OUT L, OUT R) as in channel_utility_gfx.jsfx
