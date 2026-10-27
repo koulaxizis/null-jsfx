@@ -96,7 +96,9 @@ Look at both screenshots side by side: they should match.
 
 `plugins/delay` and `gfx/delay_gfx.jsfx` are the reference. The layout is a header, a display
 card (height `display`) and a controls card of rows of 6 cells: knobs for numeric sliders,
-selectors (pill with arrows) for enum sliders. More than 2 rows of controls go on tabs.
+selectors (pill with arrows) for enum sliders. More than 2 rows of controls go on tabs. The width
+is 480 and the height fits the display and the rows: the example below is one row without tabs
+(480x294, like Vibrato); Delay, with two rows on tabs, is 480x408. Instruments and meters are wider.
 
 ### 1. GFX JSFX: `DATA/Effects/null_jsfx/gfx/<name>_gfx.jsfx`
 
@@ -105,7 +107,7 @@ Copy `<name>.jsfx`, prefix every slider label with `-`, `import null_gfx.jsfx-in
 
 ```
 @gfx 480 294
-ng_knobs_begin("DELAY", "ESSENTIALS", 480, 120, 1, 0);    // name, category, width, display h, rows, tabs
+ng_knobs_begin("DELAY", "ESSENTIALS", 480, 120, 1, 0);    // name, category, width, display h, rows, tabs (delay_gfx: 2, 1)
 // draw the display in ng_vx, ng_vy, ng_vw, ng_vh
 ng_row(5);
 ng_knob_ctl(1, "TIME", #v, 0, 2000, 250, 1, 0) ? update(); // slider index, label, value text, range, default, step, bipolar
@@ -144,7 +146,8 @@ layered) and,
 where it has a sequencer, from the transport (`play_state`, `beat_position`, `tempo`). REAPER
 re-runs `@init` at every transport start, so state the user edits (a pattern) is guarded by a
 flag and kept with `@serialize`. The lint accepts the category, the pins and the MIDI builtins;
-`jsfx_test` sends instruments a GM note every 1/8 s; the web build and orOS leave them out.
+`jsfx_test` sends instruments a GM note every 1/8 s; the web build lists them under `instruments` in
+`web/fx/index.json`, and orOS Studio plays them on instrument tracks.
 
 The VST3/CLAP sets `DISTRHO_PLUGIN_IS_SYNTH`, `WANT_MIDI_INPUT`, `WANT_MIDI_OUTPUT` (`process()`
 first writes every incoming event back out with `writeMidiEvent`), `WANT_TIMEPOS` and, for edited
