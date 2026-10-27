@@ -1,0 +1,14 @@
+[
+  ["Mod Wheel Triangle 1 Bar", {"Shape": "Triangle", "Length": "1 Bar"}],
+  ["Filter Sweep 2 Bars", {"Shape": "Triangle", "Length": "2 Bars", "CC Number": 74}],
+  ["Volume Pump 1/4", {"Shape": "Saw Up", "CC Number": 7, "Min": 30}],
+  ["Pan Auto 1 Bar", {"CC Number": 10, "Length": "1 Bar", "Min": 20, "Max": 80}],
+  ["Expression Swell 4 Bars", {"Shape": "Triangle", "Length": "4 Bars", "CC Number": 11, "Min": 40}],
+  ["Gate 1/8", {"Shape": "Square", "Length": "1/8", "CC Number": 7}],
+  ["Sample and Hold 1/16", {"Shape": "Random", "Length": "1/16", "CC Number": 74}],
+  ["Smooth Random 1 Bar", {"Shape": "Smooth Random", "Length": "1 Bar", "CC Number": 74}],
+  ["Vibrato 5 Hz", {"Sync": "Free", "Rate": 5, "Destination": "Pitch Bend", "Min": 47, "Max": 53, "Retrigger": "On Note"}],
+  ["Slow Drift 0.1 Hz", {"Shape": "Smooth Random", "Sync": "Free", "Rate": 0.1, "Destination": "Pitch Bend", "Min": 48, "Max": 52}],
+  ["Pressure Tremolo 1/8T", {"Length": "1/8T", "Destination": "Channel Pressure"}],
+  ["Off-Beat Duck 1/4", {"Shape": "Saw Up", "Phase": 180, "CC Number": 11, "Min": 50}]
+]

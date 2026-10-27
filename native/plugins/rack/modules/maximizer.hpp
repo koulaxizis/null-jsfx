@@ -54,7 +54,9 @@ public:
 private:
     void update()
     {
-        fDsp.setParams(fV[0], fV[1], fV[2], fV[3], fV[4], fV[5] >= 0.5f, int(std::lround(fV[6])), fV[7] >= 0.5f,
+        using nullmaximizer::sliderValue;
+        fDsp.setParams(sliderValue(0, fV[0]), sliderValue(1, fV[1]), sliderValue(2, fV[2]), sliderValue(3, fV[3]),
+                       sliderValue(4, fV[4]), fV[5] >= 0.5f, int(std::lround(fV[6])), fV[7] >= 0.5f,
                        int(std::lround(fV[8])), fV[9] >= 0.5f, std::round(fV[10]), std::round(fV[11]), fV[12] >= 0.5f,
                        fV[13] >= 0.5f);
     }

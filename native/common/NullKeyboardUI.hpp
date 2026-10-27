@@ -1,6 +1,6 @@
 /*
- * NULL JSFX - the keyboard and the chips of the MIDI effects' displays (Chords, Scale): the
- * twins of kb_draw and the chip rows in chords_gfx.jsfx and scale_gfx.jsfx
+ * NULL JSFX - the keyboard and the chips of the MIDI effects' displays (Chords, Scale, MIDI
+ * Utility): the twins of kb_draw / mu_kb_draw and the chip rows in chords_gfx.jsfx and scale_gfx.jsfx
  * Copyright (C) 2026 Christos Koulaxizis / NULL JSFX
  * SPDX-License-Identifier: MIT
  */
@@ -23,6 +23,9 @@ protected:
     bool fInScale[12] = {};
     // per note: a label on the white key (Scale's White Keys mode), or nullptr
     const char* fKeyLabel[128] = {};
+    // per note: tinted instead of the scale (MIDI Utility's key range), when fTintRange is set
+    bool fInRange[128] = {};
+    bool fTintRange = false;
 
     static bool isWhite(int pc) { return pc == 0 || pc == 2 || pc == 4 || pc == 5 || pc == 7 || pc == 9 || pc == 11; }
 
@@ -68,7 +71,7 @@ protected:
             if (!isWhite(pc))
                 continue;
             const float xx = x + float(i) * ww;
-            const bool in = fInScale[(pc - tonic + 12) % 12], on = fSounding[n];
+            const bool in = fTintRange ? fInRange[n] : fInScale[(pc - tonic + 12) % 12], on = fSounding[n];
             box(xx + 0.5f, y, ww - 1.0f, h, on ? theme::kAccent : in ? 0x55534f : 0x2d2b28);
             if (pc == tonic)
                 box(xx + 2.5f, y + h - 4.0f, ww - 5.0f, 2.0f, on ? theme::kBackground : theme::kMuted);
@@ -90,7 +93,7 @@ protected:
                 continue;
             }
             const float xx = x + float(i) * ww - bw * 0.5f;
-            const bool in = fInScale[(pc - tonic + 12) % 12], on = fSounding[n];
+            const bool in = fTintRange ? fInRange[n] : fInScale[(pc - tonic + 12) % 12], on = fSounding[n];
             box(xx - 1.0f, y, bw + 2.0f, bh + 1.0f, theme::kCard);
             box(xx, y, bw, bh, on ? theme::kAccent : in ? 0x3e3c39 : 0x131211);
             if (pc == tonic)

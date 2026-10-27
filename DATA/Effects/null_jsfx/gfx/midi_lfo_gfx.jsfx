@@ -1,0 +1,339 @@
+desc:NULL MIDI LFO GFX
+author: Christos Koulaxizis
+tags: midi lfo modulation cc pitch bend channel pressure tempo sync sine triangle saw square random sample and hold automation gui
+//category: MIDI
+//NULL JSFX v2.6 • https://nulljsfx.tech • MIT License
+
+import null_gfx.jsfx-inc
+
+slider1:0<0,6,1{Sine,Triangle,Saw Up,Saw Down,Square,Random,Smooth Random}>-Shape
+slider2:1<0,1,1{Free,Tempo}>-Sync
+slider3:1<0.01,20,0.01:log>-Rate (Hz)
+slider4:5<0,15,1{8 Bars,4 Bars,2 Bars,1 Bar,1/2,1/4,1/8,1/16,1/32,1/2T,1/4T,1/8T,1/16T,1/2D,1/4D,1/8D}>-Length
+slider5:0<0,360,1>-Phase (deg)
+slider6:0<0,2,1{CC,Pitch Bend,Channel Pressure}>-Destination
+slider7:1<0,127,1>-CC Number
+slider8:1<1,16,1>-Channel
+slider9:0<0,100,1>-Min (%)
+slider10:100<0,100,1>-Max (%)
+slider11:0<0,1,1{Off,On Note}>-Retrigger
+slider12:1<1,999,1>-Seed
+
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
+
+@init
+  // A MIDI effect: an LFO that sends a controller (CC Number), pitch bend or channel pressure on
+  // Channel, swinging from Min to Max. Tempo: one cycle per Length, locked to the host's beat
+  // while it plays (Phase moves it), running at the host's tempo while it is stopped; Free: Rate
+  // in Hz. Random holds a new value each cycle, Smooth Random glides to it (an exact Park-Miller
+  // sequence from Seed). Every 64 samples the value is worked out and sent when it changed.
+  // Retrigger starts the cycle again at every note-on (free running only). Incoming MIDI passes
+  // through untouched, in time order with what the LFO sends. The audio passes through.
+  ext_noinit = 1;
+  EV = 0;        // the block's incoming messages: offset, status, data 1, data 2 (4 each)
+  EVMAX = 1024;
+  TICK = 64;
+  bpos = 0;
+  cur_t = 0;
+  ph = 0;
+  cyc = -1;
+  last_sent = -1;
+  seed_was = -1;
+  dest_was = -1;
+  r_prev = r_cur = 0;
+  out_u = 0.5;
+  out_p = 0;
+
+  // one Park-Miller step in exact doubles, a value in [-1, 1)
+  function lf_rnd() ( rs *= 16807; rs -= floor(rs / 2147483647) * 2147483647; rs / 2147483648 * 2 - 1; );
+  function lf_next() ( r_prev = r_cur; r_cur = lf_rnd(); );
+
+  // the wave at phase p (0..1), -1..1
+  function lf_wave(p)
+  (
+    shape == 0 ? sin(2 * $pi * p) :
+    shape == 1 ? (p < 0.25 ? 4 * p : p < 0.75 ? 2 - 4 * p : 4 * p - 4) :
+    shape == 2 ? 2 * p - 1 :
+    shape == 3 ? 1 - 2 * p :
+    shape == 4 ? (p < 0.5 ? 1 : -1) :
+    shape == 5 ? r_cur :
+    r_prev + (r_cur - r_prev) * (1 - cos($pi * p)) / 2;
+  );
+
+  // the cycle's phase at time t (samples since the start); a new cycle draws a new random value
+  function lf_phase(t) local(x, c)
+  (
+    sync && (play_state & 1) ? (
+      x = (beat_position + (t - bpos) * tempo / (60 * srate)) / len;
+      c = floor(x);
+      ph = x - c;
+      c != cyc ? ( cyc = c; lf_next(); );
+    ) : (
+      ph += (t - cur_t) * (sync ? tempo / (60 * srate * len) : rate / srate);
+      ph >= 1 ? ( ph -= floor(ph); cyc += 1; lf_next(); );
+    );
+    cur_t = t;
+    x = ph + phase0;
+    x - floor(x);
+  );
+
+  // the value at tick time t, sent at offset ofs when it changed
+  function lf_tick(t, ofs) local(p, v, o)
+  (
+    p = lf_phase(t);
+    out_p = p;
+    out_u = (lf_wave(p) + 1) / 2;
+    v = vmin + (vmax - vmin) * out_u;
+    dest == 1 ? (
+      o = floor(v * 16383 + 0.5);
+      o != last_sent ? midisend(ofs, 0xE0 | chan, o & 127, floor(o / 128));
+    ) : (
+      o = floor(v * 127 + 0.5);
+      o != last_sent ? (dest == 0 ? midisend(ofs, 0xB0 | chan, ccn, o) : midisend(ofs, 0xD0 | chan, o, 0));
+    );
+    last_sent = o;
+  );
+
+  // an incoming message at time t passes through; a note-on can start the cycle again
+  function lf_in(t, ofs, a, b, c)
+  (
+    retrig && (a & 0xF0) == 0x90 && c > 0 && !(sync && (play_state & 1)) ? (
+      lf_phase(t);
+      ph = 0;
+    );
+    midisend(ofs, a, b, c);
+  );
+
+  gfx_ext_retina = 1;
+  function update()
+  (
+    shape = slider1;
+    sync = slider2;
+    rate = slider3;
+    lsel = slider4;
+    len = lsel == 0 ? 32 : lsel == 1 ? 16 : lsel == 2 ? 8 : lsel == 3 ? 4 : lsel == 4 ? 2 : lsel == 5 ? 1 :
+          lsel == 6 ? 0.5 : lsel == 7 ? 0.25 : lsel == 8 ? 0.125 : lsel == 9 ? 4 / 3 : lsel == 10 ? 2 / 3 :
+          lsel == 11 ? 1 / 3 : lsel == 12 ? 1 / 6 : lsel == 13 ? 3 : lsel == 14 ? 1.5 : 0.75;
+    phase0 = slider5 / 360;
+    dest = slider6;
+    ccn = slider7;
+    chan = slider8 - 1;
+    vmin = slider9 / 100;
+    vmax = slider10 / 100;
+    retrig = slider11;
+    seed = slider12;
+    // a new Seed starts its sequence again
+    seed != seed_was ? (
+      rs = seed * 7919 + 13;
+      r_cur = lf_rnd();
+      lf_next();
+      seed_was = seed;
+    );
+    // a new destination is sent afresh
+    d_key = dest * 4096 + ccn * 16 + chan;
+    d_key != dest_was ? ( last_sent = -1; dest_was = d_key; );
+  );
+
+  // the Length's name, for the display
+  function lf_len_name(dst, i)
+  (
+    strcpy(dst, i == 0 ? "8 BARS" : i == 1 ? "4 BARS" : i == 2 ? "2 BARS" : i == 3 ? "1 BAR" : i == 4 ? "1/2" :
+                i == 5 ? "1/4" : i == 6 ? "1/8" : i == 7 ? "1/16" : i == 8 ? "1/32" : i == 9 ? "1/2T" :
+                i == 10 ? "1/4T" : i == 11 ? "1/8T" : i == 12 ? "1/16T" : i == 13 ? "1/2D" : i == 14 ? "1/4D" : "1/8D");
+  );
+
+  // ---- factory presets: generated by tools/build_presets.py, do not edit ----
+  ng_pre_n = 13;
+  strcpy(#ng_h_ix, "");
+  ng_hist_add(1); ng_hist_add(2); ng_hist_add(3); ng_hist_add(4); ng_hist_add(5); ng_hist_add(6); ng_hist_add(7); ng_hist_add(8); ng_hist_add(9); ng_hist_add(10); ng_hist_add(11); ng_hist_add(12);
+  ng_hist_init();
+
+  function ng_preset_load(p)
+  (
+    p == 0 ? ( ng_slider_set(1, 0); ng_slider_set(2, 1); ng_slider_set(3, 1); ng_slider_set(4, 5); ng_slider_set(5, 0); ng_slider_set(6, 0); ng_slider_set(7, 1); ng_slider_set(8, 1); ng_slider_set(9, 0); ng_slider_set(10, 100); ng_slider_set(11, 0); ng_slider_set(12, 1); );
+    p == 1 ? ( ng_slider_set(1, 1); ng_slider_set(2, 1); ng_slider_set(3, 1); ng_slider_set(4, 3); ng_slider_set(5, 0); ng_slider_set(6, 0); ng_slider_set(7, 1); ng_slider_set(8, 1); ng_slider_set(9, 0); ng_slider_set(10, 100); ng_slider_set(11, 0); ng_slider_set(12, 1); );
+    p == 2 ? ( ng_slider_set(1, 1); ng_slider_set(2, 1); ng_slider_set(3, 1); ng_slider_set(4, 2); ng_slider_set(5, 0); ng_slider_set(6, 0); ng_slider_set(7, 74); ng_slider_set(8, 1); ng_slider_set(9, 0); ng_slider_set(10, 100); ng_slider_set(11, 0); ng_slider_set(12, 1); );
+    p == 3 ? ( ng_slider_set(1, 2); ng_slider_set(2, 1); ng_slider_set(3, 1); ng_slider_set(4, 5); ng_slider_set(5, 0); ng_slider_set(6, 0); ng_slider_set(7, 7); ng_slider_set(8, 1); ng_slider_set(9, 30); ng_slider_set(10, 100); ng_slider_set(11, 0); ng_slider_set(12, 1); );
+    p == 4 ? ( ng_slider_set(1, 0); ng_slider_set(2, 1); ng_slider_set(3, 1); ng_slider_set(4, 3); ng_slider_set(5, 0); ng_slider_set(6, 0); ng_slider_set(7, 10); ng_slider_set(8, 1); ng_slider_set(9, 20); ng_slider_set(10, 80); ng_slider_set(11, 0); ng_slider_set(12, 1); );
+    p == 5 ? ( ng_slider_set(1, 1); ng_slider_set(2, 1); ng_slider_set(3, 1); ng_slider_set(4, 1); ng_slider_set(5, 0); ng_slider_set(6, 0); ng_slider_set(7, 11); ng_slider_set(8, 1); ng_slider_set(9, 40); ng_slider_set(10, 100); ng_slider_set(11, 0); ng_slider_set(12, 1); );
+    p == 6 ? ( ng_slider_set(1, 4); ng_slider_set(2, 1); ng_slider_set(3, 1); ng_slider_set(4, 6); ng_slider_set(5, 0); ng_slider_set(6, 0); ng_slider_set(7, 7); ng_slider_set(8, 1); ng_slider_set(9, 0); ng_slider_set(10, 100); ng_slider_set(11, 0); ng_slider_set(12, 1); );
+    p == 7 ? ( ng_slider_set(1, 5); ng_slider_set(2, 1); ng_slider_set(3, 1); ng_slider_set(4, 7); ng_slider_set(5, 0); ng_slider_set(6, 0); ng_slider_set(7, 74); ng_slider_set(8, 1); ng_slider_set(9, 0); ng_slider_set(10, 100); ng_slider_set(11, 0); ng_slider_set(12, 1); );
+    p == 8 ? ( ng_slider_set(1, 6); ng_slider_set(2, 1); ng_slider_set(3, 1); ng_slider_set(4, 3); ng_slider_set(5, 0); ng_slider_set(6, 0); ng_slider_set(7, 74); ng_slider_set(8, 1); ng_slider_set(9, 0); ng_slider_set(10, 100); ng_slider_set(11, 0); ng_slider_set(12, 1); );
+    p == 9 ? ( ng_slider_set(1, 0); ng_slider_set(2, 0); ng_slider_set(3, 5); ng_slider_set(4, 5); ng_slider_set(5, 0); ng_slider_set(6, 1); ng_slider_set(7, 1); ng_slider_set(8, 1); ng_slider_set(9, 47); ng_slider_set(10, 53); ng_slider_set(11, 1); ng_slider_set(12, 1); );
+    p == 10 ? ( ng_slider_set(1, 6); ng_slider_set(2, 0); ng_slider_set(3, 0.1); ng_slider_set(4, 5); ng_slider_set(5, 0); ng_slider_set(6, 1); ng_slider_set(7, 1); ng_slider_set(8, 1); ng_slider_set(9, 48); ng_slider_set(10, 52); ng_slider_set(11, 0); ng_slider_set(12, 1); );
+    p == 11 ? ( ng_slider_set(1, 0); ng_slider_set(2, 1); ng_slider_set(3, 1); ng_slider_set(4, 11); ng_slider_set(5, 0); ng_slider_set(6, 2); ng_slider_set(7, 1); ng_slider_set(8, 1); ng_slider_set(9, 0); ng_slider_set(10, 100); ng_slider_set(11, 0); ng_slider_set(12, 1); );
+    p == 12 ? ( ng_slider_set(1, 2); ng_slider_set(2, 1); ng_slider_set(3, 1); ng_slider_set(4, 5); ng_slider_set(5, 180); ng_slider_set(6, 0); ng_slider_set(7, 11); ng_slider_set(8, 1); ng_slider_set(9, 50); ng_slider_set(10, 100); ng_slider_set(11, 0); ng_slider_set(12, 1); );
+  );
+
+  // the first preset every slider matches, or -1
+  function ng_preset_match() local(m)
+  (
+    m = -1;
+    m < 0 && ng_pre_eq(slider1, 0) && ng_pre_eq(slider2, 1) && ng_pre_eq(slider3, 1) && ng_pre_eq(slider4, 5) && ng_pre_eq(slider5, 0) && ng_pre_eq(slider6, 0) && ng_pre_eq(slider7, 1) && ng_pre_eq(slider8, 1) && ng_pre_eq(slider9, 0) && ng_pre_eq(slider10, 100) && ng_pre_eq(slider11, 0) && ng_pre_eq(slider12, 1) ? m = 0;
+    m < 0 && ng_pre_eq(slider1, 1) && ng_pre_eq(slider2, 1) && ng_pre_eq(slider3, 1) && ng_pre_eq(slider4, 3) && ng_pre_eq(slider5, 0) && ng_pre_eq(slider6, 0) && ng_pre_eq(slider7, 1) && ng_pre_eq(slider8, 1) && ng_pre_eq(slider9, 0) && ng_pre_eq(slider10, 100) && ng_pre_eq(slider11, 0) && ng_pre_eq(slider12, 1) ? m = 1;
+    m < 0 && ng_pre_eq(slider1, 1) && ng_pre_eq(slider2, 1) && ng_pre_eq(slider3, 1) && ng_pre_eq(slider4, 2) && ng_pre_eq(slider5, 0) && ng_pre_eq(slider6, 0) && ng_pre_eq(slider7, 74) && ng_pre_eq(slider8, 1) && ng_pre_eq(slider9, 0) && ng_pre_eq(slider10, 100) && ng_pre_eq(slider11, 0) && ng_pre_eq(slider12, 1) ? m = 2;
+    m < 0 && ng_pre_eq(slider1, 2) && ng_pre_eq(slider2, 1) && ng_pre_eq(slider3, 1) && ng_pre_eq(slider4, 5) && ng_pre_eq(slider5, 0) && ng_pre_eq(slider6, 0) && ng_pre_eq(slider7, 7) && ng_pre_eq(slider8, 1) && ng_pre_eq(slider9, 30) && ng_pre_eq(slider10, 100) && ng_pre_eq(slider11, 0) && ng_pre_eq(slider12, 1) ? m = 3;
+    m < 0 && ng_pre_eq(slider1, 0) && ng_pre_eq(slider2, 1) && ng_pre_eq(slider3, 1) && ng_pre_eq(slider4, 3) && ng_pre_eq(slider5, 0) && ng_pre_eq(slider6, 0) && ng_pre_eq(slider7, 10) && ng_pre_eq(slider8, 1) && ng_pre_eq(slider9, 20) && ng_pre_eq(slider10, 80) && ng_pre_eq(slider11, 0) && ng_pre_eq(slider12, 1) ? m = 4;
+    m < 0 && ng_pre_eq(slider1, 1) && ng_pre_eq(slider2, 1) && ng_pre_eq(slider3, 1) && ng_pre_eq(slider4, 1) && ng_pre_eq(slider5, 0) && ng_pre_eq(slider6, 0) && ng_pre_eq(slider7, 11) && ng_pre_eq(slider8, 1) && ng_pre_eq(slider9, 40) && ng_pre_eq(slider10, 100) && ng_pre_eq(slider11, 0) && ng_pre_eq(slider12, 1) ? m = 5;
+    m < 0 && ng_pre_eq(slider1, 4) && ng_pre_eq(slider2, 1) && ng_pre_eq(slider3, 1) && ng_pre_eq(slider4, 6) && ng_pre_eq(slider5, 0) && ng_pre_eq(slider6, 0) && ng_pre_eq(slider7, 7) && ng_pre_eq(slider8, 1) && ng_pre_eq(slider9, 0) && ng_pre_eq(slider10, 100) && ng_pre_eq(slider11, 0) && ng_pre_eq(slider12, 1) ? m = 6;
+    m < 0 && ng_pre_eq(slider1, 5) && ng_pre_eq(slider2, 1) && ng_pre_eq(slider3, 1) && ng_pre_eq(slider4, 7) && ng_pre_eq(slider5, 0) && ng_pre_eq(slider6, 0) && ng_pre_eq(slider7, 74) && ng_pre_eq(slider8, 1) && ng_pre_eq(slider9, 0) && ng_pre_eq(slider10, 100) && ng_pre_eq(slider11, 0) && ng_pre_eq(slider12, 1) ? m = 7;
+    m < 0 && ng_pre_eq(slider1, 6) && ng_pre_eq(slider2, 1) && ng_pre_eq(slider3, 1) && ng_pre_eq(slider4, 3) && ng_pre_eq(slider5, 0) && ng_pre_eq(slider6, 0) && ng_pre_eq(slider7, 74) && ng_pre_eq(slider8, 1) && ng_pre_eq(slider9, 0) && ng_pre_eq(slider10, 100) && ng_pre_eq(slider11, 0) && ng_pre_eq(slider12, 1) ? m = 8;
+    m < 0 && ng_pre_eq(slider1, 0) && ng_pre_eq(slider2, 0) && ng_pre_eq(slider3, 5) && ng_pre_eq(slider4, 5) && ng_pre_eq(slider5, 0) && ng_pre_eq(slider6, 1) && ng_pre_eq(slider7, 1) && ng_pre_eq(slider8, 1) && ng_pre_eq(slider9, 47) && ng_pre_eq(slider10, 53) && ng_pre_eq(slider11, 1) && ng_pre_eq(slider12, 1) ? m = 9;
+    m < 0 && ng_pre_eq(slider1, 6) && ng_pre_eq(slider2, 0) && ng_pre_eq(slider3, 0.1) && ng_pre_eq(slider4, 5) && ng_pre_eq(slider5, 0) && ng_pre_eq(slider6, 1) && ng_pre_eq(slider7, 1) && ng_pre_eq(slider8, 1) && ng_pre_eq(slider9, 48) && ng_pre_eq(slider10, 52) && ng_pre_eq(slider11, 0) && ng_pre_eq(slider12, 1) ? m = 10;
+    m < 0 && ng_pre_eq(slider1, 0) && ng_pre_eq(slider2, 1) && ng_pre_eq(slider3, 1) && ng_pre_eq(slider4, 11) && ng_pre_eq(slider5, 0) && ng_pre_eq(slider6, 2) && ng_pre_eq(slider7, 1) && ng_pre_eq(slider8, 1) && ng_pre_eq(slider9, 0) && ng_pre_eq(slider10, 100) && ng_pre_eq(slider11, 0) && ng_pre_eq(slider12, 1) ? m = 11;
+    m < 0 && ng_pre_eq(slider1, 2) && ng_pre_eq(slider2, 1) && ng_pre_eq(slider3, 1) && ng_pre_eq(slider4, 5) && ng_pre_eq(slider5, 180) && ng_pre_eq(slider6, 0) && ng_pre_eq(slider7, 11) && ng_pre_eq(slider8, 1) && ng_pre_eq(slider9, 50) && ng_pre_eq(slider10, 100) && ng_pre_eq(slider11, 0) && ng_pre_eq(slider12, 1) ? m = 12;
+    m;
+  );
+
+  function ng_preset_name(p) local(s)
+  (
+    s = "";
+    p == 0 ? s = "Default";
+    p == 1 ? s = "Mod Wheel Triangle 1 Bar";
+    p == 2 ? s = "Filter Sweep 2 Bars";
+    p == 3 ? s = "Volume Pump 1/4";
+    p == 4 ? s = "Pan Auto 1 Bar";
+    p == 5 ? s = "Expression Swell 4 Bars";
+    p == 6 ? s = "Gate 1/8";
+    p == 7 ? s = "Sample and Hold 1/16";
+    p == 8 ? s = "Smooth Random 1 Bar";
+    p == 9 ? s = "Vibrato 5 Hz";
+    p == 10 ? s = "Slow Drift 0.1 Hz";
+    p == 11 ? s = "Pressure Tremolo 1/8T";
+    p == 12 ? s = "Off-Beat Duck 1/4";
+    s;
+  );
+
+  function ng_presets() local(i)
+  (
+    ng_pre_req >= 0 ? ( ng_preset_load(ng_pre_req); update(); ng_pre_req = -1; );
+    ng_hist() ? update();
+    ng_pre_cur = ng_preset_match();
+    ng_pre_open ? (
+      ng_pre_menu_begin();
+      i = 0;
+      loop(ng_pre_n, ng_pre_item(i, ng_preset_name(i)); i += 1;);
+      ng_pre_menu_end();
+    );
+    strcpy(#ng_pre_name, ng_pre_cur >= 0 ? ng_preset_name(ng_pre_cur) : "CUSTOM");
+  );
+  // ---- end of factory presets ----
+
+@slider
+  update();
+
+@block
+  ev_n = 0;
+  while (midirecv(m_ofs, m_1, m_2, m_3)) (
+    ev_n < EVMAX ? (
+      EV[ev_n * 4] = m_ofs; EV[ev_n * 4 + 1] = m_1; EV[ev_n * 4 + 2] = m_2; EV[ev_n * 4 + 3] = m_3;
+      ev_n += 1;
+    );
+  );
+  b_end = bpos + samplesblock;
+  t_next = ceil(bpos / TICK) * TICK;
+  ev_i = 0;
+  while (ev_i < ev_n || t_next < b_end) (
+    ev_i < ev_n && (t_next >= b_end || bpos + EV[ev_i * 4] <= t_next) ? (
+      lf_in(bpos + EV[ev_i * 4], EV[ev_i * 4], EV[ev_i * 4 + 1], EV[ev_i * 4 + 2], EV[ev_i * 4 + 3]);
+      ev_i += 1;
+    ) : (
+      lf_tick(t_next, t_next - bpos);
+      t_next += TICK;
+    );
+  );
+  bpos = b_end;
+
+@sample
+  // the audio passes through
+  spl0 = spl0;
+  spl1 = spl1;
+
+@gfx 480 342
+  ng_knobs_begin("MIDI LFO", "MIDI", 480, 140, 1, 1);
+
+  // one cycle of the wave from Min to Max, the phase now marked
+  ng_col(NG_BG, 1);
+  gfx_rect(X(24), Y(62), 280 * ng_s, 76 * ng_s);
+  ng_col(NG_BORDER, 1);
+  gfx_line(X(24), Y(138 - vmin * 76), X(304), Y(138 - vmin * 76), 1);
+  gfx_line(X(24), Y(138 - vmax * 76), X(304), Y(138 - vmax * 76), 1);
+  ng_col(NG_ACCENT, 1);
+  g_i = 0;
+  g_a = vmin + (vmax - vmin) * (lf_wave(0) + 1) / 2;
+  loop(140,
+    g_b = vmin + (vmax - vmin) * (lf_wave((g_i + 1) / 140) + 1) / 2;
+    gfx_line(X(24 + g_i * 2), Y(138 - g_a * 76), X(26 + g_i * 2), Y(138 - g_b * 76), 1);
+    g_a = g_b;
+    g_i += 1;
+  );
+  g_v = vmin + (vmax - vmin) * out_u;
+  ng_col(NG_MUTED, 1);
+  gfx_line(X(24 + out_p * 280), Y(62), X(24 + out_p * 280), Y(138), 1);
+  ng_col(NG_TEXT, 1);
+  gfx_circle(X(24 + out_p * 280), Y(138 - g_v * 76), 2.5 * ng_s, 1, 1);
+  ng_font(1, 7, 1);
+  ng_col(NG_MUTED, 1);
+  ng_txt("ONE CYCLE", 164, 145, 1, 1.2);
+
+  // the value sent, where it goes and how fast
+  ng_font(1, 7.5, 1);
+  ng_col(NG_MUTED, 1);
+  ng_txt("VALUE", 322, 68, 0, 1.5);
+  dest == 1 ? sprintf(#g_m, "%d", floor(g_v * 16383 + 0.5) - 8192) : sprintf(#g_m, "%d", floor(g_v * 127 + 0.5));
+  ng_font(5, 14, 1);
+  ng_col(NG_TEXT, 1);
+  ng_txt(#g_m, 322, 86, 0, 0.5);
+  dest == 0 ? sprintf(#g_m, "CC %d, CHANNEL %d", ccn, chan + 1) :
+  dest == 1 ? sprintf(#g_m, "PITCH BEND, CHANNEL %d", chan + 1) : sprintf(#g_m, "PRESSURE, CHANNEL %d", chan + 1);
+  ng_font(1, 7.5, 1);
+  ng_col(NG_MUTED, 1);
+  ng_txt(#g_m, 322, 103, 0, 1.2);
+  sync ? (
+    lf_len_name(#g_l, lsel);
+    sprintf(#g_m, (play_state & 1) ? "%s, ON THE BEAT" : "%s AT %d BPM", #g_l, floor(tempo + 0.5));
+  ) : sprintf(#g_m, "%.2f HZ", rate);
+  ng_txt(#g_m, 322, 118, 0, 1.2);
+
+  // the value on the Min..Max range
+  ng_col(NG_BG, 1);
+  gfx_rect(X(24), Y(150), 432 * ng_s, 36 * ng_s);
+  ng_col(NG_BORDER, 1);
+  gfx_rect(X(24 + min(vmin, vmax) * 432), Y(150), abs(vmax - vmin) * 432 * ng_s, 36 * ng_s);
+  ng_col(NG_ACCENT, 1);
+  gfx_rect(X(24), Y(178), g_v * 432 * ng_s, 8 * ng_s);
+  ng_col(NG_TEXT, 1);
+  gfx_line(X(24 + g_v * 432), Y(150), X(24 + g_v * 432), Y(185), 1);
+
+  lf_tab = ng_tabs("LFO|OUTPUT", lf_tab);
+  lf_tab == 0 ? (
+    ng_row(6);
+    ng_select_ctl(1, "SHAPE", "SINE|TRI|SAW UP|SAW DN|SQUARE|RANDOM|SMOOTH", 0) ? update();
+    ng_select_ctl(2, "SYNC", "FREE|TEMPO", 0) ? update();
+    sprintf(#v3, "%.2f Hz", slider3);
+    ng_knob_ctl_log(3, "RATE", #v3, 0.01, 20, 1, 0.01) ? update();
+    ng_select_ctl(4, "LENGTH", "8 BARS|4 BARS|2 BARS|1 BAR|1/2|1/4|1/8|1/16|1/32|1/2T|1/4T|1/8T|1/16T|1/2D|1/4D|1/8D", 0) ? update();
+    sprintf(#v5, "%d deg", slider5);
+    ng_knob_ctl(5, "PHASE", #v5, 0, 360, 0, 1, 0) ? update();
+    ng_select_ctl(11, "RETRIGGER", "OFF|NOTE", 0) ? update();
+  ) : (
+    ng_row(6);
+    ng_select_ctl(6, "DESTINATION", "CC|BEND|PRESSURE", 0) ? update();
+    sprintf(#v7, "%d", slider7);
+    ng_knob_ctl(7, "CC NUMBER", #v7, 0, 127, 1, 1, 0) ? update();
+    sprintf(#v8, "%d", slider8);
+    ng_knob_ctl(8, "CHANNEL", #v8, 1, 16, 1, 1, 0) ? update();
+    sprintf(#v9, "%d%%", slider9);
+    ng_knob_ctl(9, "MIN", #v9, 0, 100, 0, 1, 0) ? update();
+    sprintf(#v10, "%d%%", slider10);
+    ng_knob_ctl(10, "MAX", #v10, 0, 100, 100, 1, 0) ? update();
+    sprintf(#v12, "%d", slider12);
+    ng_knob_ctl(12, "SEED", #v12, 1, 999, 1, 1, 0) ? update();
+  );
+
+  ng_end();
+
+  ng_presets(); // the preset list (generated by tools/build_presets.py)

@@ -1,0 +1,16 @@
+[
+  ["Octave Up", {"Transpose": 12}],
+  ["Octave Down", {"Transpose": -12}],
+  ["Soft Touch", {"Velocity Curve": 50}],
+  ["Hard Touch", {"Velocity Curve": -50}],
+  ["Compressed Velocity", {"Velocity Min": 70, "Velocity Max": 110}],
+  ["Organ (Fixed 100)", {"Fixed Velocity": 100}],
+  ["Split: Bass (below C3)", {"Key High": 47}],
+  ["Split: Upper (C3 and up)", {"Key Low": 48}],
+  ["Layer: Loud Notes Only", {"Velocity Low": 96}],
+  ["Layer: Soft Notes Only", {"Velocity High": 95}],
+  ["To Channel 10 (Drums)", {"Channel": "10"}],
+  ["Notes Only", {"CC": "Block", "Pitch Bend": "Block", "Aftertouch": "Block", "Program Change": "Block"}],
+  ["No Program Changes", {"Program Change": "Block"}],
+  ["Inverted Velocity", {"Velocity Min": 127, "Velocity Max": 1}]
+]

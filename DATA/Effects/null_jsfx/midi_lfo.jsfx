@@ -1,0 +1,160 @@
+desc:NULL MIDI LFO
+author: Christos Koulaxizis
+tags: midi lfo modulation cc pitch bend channel pressure tempo sync sine triangle saw square random sample and hold automation
+//category: MIDI
+//NULL JSFX v2.6 • https://nulljsfx.tech • MIT License
+
+slider1:0<0,6,1{Sine,Triangle,Saw Up,Saw Down,Square,Random,Smooth Random}>Shape
+slider2:1<0,1,1{Free,Tempo}>Sync
+slider3:1<0.01,20,0.01:log>Rate (Hz)
+slider4:5<0,15,1{8 Bars,4 Bars,2 Bars,1 Bar,1/2,1/4,1/8,1/16,1/32,1/2T,1/4T,1/8T,1/16T,1/2D,1/4D,1/8D}>Length
+slider5:0<0,360,1>Phase (deg)
+slider6:0<0,2,1{CC,Pitch Bend,Channel Pressure}>Destination
+slider7:1<0,127,1>CC Number
+slider8:1<1,16,1>Channel
+slider9:0<0,100,1>Min (%)
+slider10:100<0,100,1>Max (%)
+slider11:0<0,1,1{Off,On Note}>Retrigger
+slider12:1<1,999,1>Seed
+
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
+
+@init
+  // A MIDI effect: an LFO that sends a controller (CC Number), pitch bend or channel pressure on
+  // Channel, swinging from Min to Max. Tempo: one cycle per Length, locked to the host's beat
+  // while it plays (Phase moves it), running at the host's tempo while it is stopped; Free: Rate
+  // in Hz. Random holds a new value each cycle, Smooth Random glides to it (an exact Park-Miller
+  // sequence from Seed). Every 64 samples the value is worked out and sent when it changed.
+  // Retrigger starts the cycle again at every note-on (free running only). Incoming MIDI passes
+  // through untouched, in time order with what the LFO sends. The audio passes through.
+  ext_noinit = 1;
+  EV = 0;        // the block's incoming messages: offset, status, data 1, data 2 (4 each)
+  EVMAX = 1024;
+  TICK = 64;
+  bpos = 0;
+  cur_t = 0;
+  ph = 0;
+  cyc = -1;
+  last_sent = -1;
+  seed_was = -1;
+  dest_was = -1;
+  r_prev = r_cur = 0;
+  out_u = 0.5;
+  out_p = 0;
+
+  // one Park-Miller step in exact doubles, a value in [-1, 1)
+  function lf_rnd() ( rs *= 16807; rs -= floor(rs / 2147483647) * 2147483647; rs / 2147483648 * 2 - 1; );
+  function lf_next() ( r_prev = r_cur; r_cur = lf_rnd(); );
+
+  // the wave at phase p (0..1), -1..1
+  function lf_wave(p)
+  (
+    shape == 0 ? sin(2 * $pi * p) :
+    shape == 1 ? (p < 0.25 ? 4 * p : p < 0.75 ? 2 - 4 * p : 4 * p - 4) :
+    shape == 2 ? 2 * p - 1 :
+    shape == 3 ? 1 - 2 * p :
+    shape == 4 ? (p < 0.5 ? 1 : -1) :
+    shape == 5 ? r_cur :
+    r_prev + (r_cur - r_prev) * (1 - cos($pi * p)) / 2;
+  );
+
+  // the cycle's phase at time t (samples since the start); a new cycle draws a new random value
+  function lf_phase(t) local(x, c)
+  (
+    sync && (play_state & 1) ? (
+      x = (beat_position + (t - bpos) * tempo / (60 * srate)) / len;
+      c = floor(x);
+      ph = x - c;
+      c != cyc ? ( cyc = c; lf_next(); );
+    ) : (
+      ph += (t - cur_t) * (sync ? tempo / (60 * srate * len) : rate / srate);
+      ph >= 1 ? ( ph -= floor(ph); cyc += 1; lf_next(); );
+    );
+    cur_t = t;
+    x = ph + phase0;
+    x - floor(x);
+  );
+
+  // the value at tick time t, sent at offset ofs when it changed
+  function lf_tick(t, ofs) local(p, v, o)
+  (
+    p = lf_phase(t);
+    out_p = p;
+    out_u = (lf_wave(p) + 1) / 2;
+    v = vmin + (vmax - vmin) * out_u;
+    dest == 1 ? (
+      o = floor(v * 16383 + 0.5);
+      o != last_sent ? midisend(ofs, 0xE0 | chan, o & 127, floor(o / 128));
+    ) : (
+      o = floor(v * 127 + 0.5);
+      o != last_sent ? (dest == 0 ? midisend(ofs, 0xB0 | chan, ccn, o) : midisend(ofs, 0xD0 | chan, o, 0));
+    );
+    last_sent = o;
+  );
+
+  // an incoming message at time t passes through; a note-on can start the cycle again
+  function lf_in(t, ofs, a, b, c)
+  (
+    retrig && (a & 0xF0) == 0x90 && c > 0 && !(sync && (play_state & 1)) ? (
+      lf_phase(t);
+      ph = 0;
+    );
+    midisend(ofs, a, b, c);
+  );
+
+@slider
+  shape = slider1;
+  sync = slider2;
+  rate = slider3;
+  lsel = slider4;
+  len = lsel == 0 ? 32 : lsel == 1 ? 16 : lsel == 2 ? 8 : lsel == 3 ? 4 : lsel == 4 ? 2 : lsel == 5 ? 1 :
+        lsel == 6 ? 0.5 : lsel == 7 ? 0.25 : lsel == 8 ? 0.125 : lsel == 9 ? 4 / 3 : lsel == 10 ? 2 / 3 :
+        lsel == 11 ? 1 / 3 : lsel == 12 ? 1 / 6 : lsel == 13 ? 3 : lsel == 14 ? 1.5 : 0.75;
+  phase0 = slider5 / 360;
+  dest = slider6;
+  ccn = slider7;
+  chan = slider8 - 1;
+  vmin = slider9 / 100;
+  vmax = slider10 / 100;
+  retrig = slider11;
+  seed = slider12;
+  // a new Seed starts its sequence again
+  seed != seed_was ? (
+    rs = seed * 7919 + 13;
+    r_cur = lf_rnd();
+    lf_next();
+    seed_was = seed;
+  );
+  // a new destination is sent afresh
+  d_key = dest * 4096 + ccn * 16 + chan;
+  d_key != dest_was ? ( last_sent = -1; dest_was = d_key; );
+
+@block
+  ev_n = 0;
+  while (midirecv(m_ofs, m_1, m_2, m_3)) (
+    ev_n < EVMAX ? (
+      EV[ev_n * 4] = m_ofs; EV[ev_n * 4 + 1] = m_1; EV[ev_n * 4 + 2] = m_2; EV[ev_n * 4 + 3] = m_3;
+      ev_n += 1;
+    );
+  );
+  b_end = bpos + samplesblock;
+  t_next = ceil(bpos / TICK) * TICK;
+  ev_i = 0;
+  while (ev_i < ev_n || t_next < b_end) (
+    ev_i < ev_n && (t_next >= b_end || bpos + EV[ev_i * 4] <= t_next) ? (
+      lf_in(bpos + EV[ev_i * 4], EV[ev_i * 4], EV[ev_i * 4 + 1], EV[ev_i * 4 + 2], EV[ev_i * 4 + 3]);
+      ev_i += 1;
+    ) : (
+      lf_tick(t_next, t_next - bpos);
+      t_next += TICK;
+    );
+  );
+  bpos = b_end;
+
+@sample
+  // the audio passes through
+  spl0 = spl0;
+  spl1 = spl1;

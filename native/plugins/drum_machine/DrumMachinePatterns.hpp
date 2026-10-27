@@ -294,6 +294,21 @@ static const char* const kStyles[kNumStyles][kTracks] = {
 // the User pattern a new instance starts with
 inline void defaultUser(double* b) { patFill(b, kUserRows, int(sizeof(kUserRows) / sizeof(kUserRows[0]))); }
 
+// the song (the JSFX's SONG and SBAR): 8 sections' patterns (0 End, 1 User, 2.. factory as the
+// Pattern slider), then their bars; it starts as three bars of House and one of Breakbeat
+static constexpr int kSongSections = 8;
+static constexpr int kSongSize = 2 * kSongSections;
+inline void defaultSong(double* b)
+{
+    for (int k = 0; k < kSongSections; ++k)
+    {
+        b[k] = 0;
+        b[kSongSections + k] = 4;
+    }
+    b[0] = 2; b[kSongSections] = 3;
+    b[1] = 6; b[kSongSections + 1] = 1;
+}
+
 // factory pattern k (1..kNumFactory: the Pattern slider's value minus 1)
 inline void factory(int k, double* b)
 {

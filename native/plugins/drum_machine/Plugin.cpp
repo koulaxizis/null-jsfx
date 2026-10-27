@@ -5,7 +5,8 @@
  *
  * The parameters are the JSFX sliders; the User pattern (the JSFX's @serialize) is the state
  * "pattern", 170 numbers separated by spaces (DrumMachinePatterns.hpp), which the interface
- * sets when the grid is edited. Eight outputs in four stereo port groups, like the JSFX's pins.
+ * sets when the grid is edited, and the song is the state "song", 16 numbers (the sections'
+ * patterns, then their bars), which it sets when the song is edited. Eight outputs in four stereo port groups, like the JSFX's pins.
  */
 
 #include "NullPlugin.hpp"
@@ -22,17 +23,17 @@ class PluginDrumMachine : public NullMultiPlugin
 {
 public:
     PluginDrumMachine()
-        : NullMultiPlugin(nulldrum::kSliders, nulldrum::kNumParams, 1)
+        : NullMultiPlugin(nulldrum::kSliders, nulldrum::kNumParams, 2)
     {
         fDsp.setSampleRate(getSampleRate());
         update();
     }
 
-    // the User pattern as text, and back (false when the text is not a pattern)
-    static String encode(const double* p)
+    // the User pattern (or the song) as text, and back (false when the text is not one)
+    static String encode(const double* p, int n = nulldrum::kPatternSize)
     {
         std::string s;
-        for (int i = 0; i < nulldrum::kPatternSize; ++i)
+        for (int i = 0; i < n; ++i)
         {
             s += i ? " " : "";
             s += std::to_string(int(p[i]));
@@ -49,7 +50,22 @@ public:
             if (end == c)
                 return false;
             const bool len = i >= nulldrum::kTracks * nulldrum::kSteps;
-            p[i] = double(len ? std::max(1L, std::min(16L, v)) : std::max(0L, std::min(4L, v)));
+            p[i] = double(len ? std::max(1L, std::min(16L, v)) : std::max(0L, std::min(5L, v)));
+            c = end;
+        }
+        return true;
+    }
+    static bool decodeSong(const char* text, double* p)
+    {
+        const char* c = text;
+        for (int i = 0; i < nulldrum::kSongSize; ++i)
+        {
+            char* end = nullptr;
+            const long v = std::strtol(c, &end, 10);
+            if (end == c)
+                return false;
+            const bool bars = i >= nulldrum::kSongSections;
+            p[i] = double(bars ? std::max(1L, std::min(16L, v)) : std::max(0L, std::min(19L, v)));
             c = end;
         }
         return true;
@@ -101,6 +117,15 @@ protected:
 
     void initState(uint32_t index, State& state) override
     {
+        if (index == 1)
+        {
+            double p[nulldrum::kSongSize];
+            nulldrum::defaultSong(p);
+            state.key = "song";
+            state.label = "Song";
+            state.defaultValue = encode(p, nulldrum::kSongSize);
+            return;
+        }
         if (index != 0)
             return;
         double p[nulldrum::kPatternSize];
@@ -112,6 +137,12 @@ protected:
 
     void setState(const char* key, const char* value) override
     {
+        if (std::strcmp(key, "song") == 0)
+        {
+            if (decodeSong(value, fPendingSong))
+                fPendingSongReady.store(true, std::memory_order_release);
+            return;
+        }
         if (std::strcmp(key, "pattern") != 0 || !decode(value, fPending))
             return;
         fPendingReady.store(true, std::memory_order_release);
@@ -126,6 +157,8 @@ protected:
 
         if (fPendingReady.exchange(false, std::memory_order_acquire))
             std::copy(fPending, fPending + nulldrum::kPatternSize, fDsp.user());
+        if (fPendingSongReady.exchange(false, std::memory_order_acquire))
+            std::copy(fPendingSong, fPendingSong + nulldrum::kSongSize, fDsp.song());
 
         const TimePosition& tp = getTimePosition();
         const double tempo = tp.bbt.valid && tp.bbt.beatsPerMinute > 0.0 ? tp.bbt.beatsPerMinute : 120.0;
@@ -162,6 +195,7 @@ protected:
         taps.extra.store(float(fDsp.step), std::memory_order_relaxed);
         for (int t = 0; t < nulldrum::kTracks; ++t)
             taps.aux[t].store(float(fDsp.hits[t]), std::memory_order_relaxed);
+        taps.aux[nulldrum::kTracks].store(float(fDsp.songK), std::memory_order_relaxed);
     }
 
 private:
@@ -184,6 +218,8 @@ private:
     nulldrum::Note fNotes[nulldrum::kMaxNotes];
     double fPending[nulldrum::kPatternSize] = {};
     std::atomic<bool> fPendingReady { false };
+    double fPendingSong[nulldrum::kSongSize] = {};
+    std::atomic<bool> fPendingSongReady { false };
     bool fWasPlaying = false;
 
     DISTRHO_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(PluginDrumMachine)
