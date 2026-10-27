@@ -42,4 +42,8 @@ static const DISTRHO::SliderInfo kUiSliders[] = {
     kSliders[7], kSliders[8], kSliders[9], kSliders[10], kSliders[11], kSliders[12], kSliders[13],
 };
 
+// the JSFX's double for a host float (NullSliders.hpp): Input Gain -2.3 is -2.3, not the float's
+// -2.2999999523, so the 16-bit dither rounds the same samples as the JSFX
+inline double sliderValue(uint32_t i, float v) noexcept { return DISTRHO::jsfxValue(kSliders[i], v); }
+
 } // namespace nullmaximizer

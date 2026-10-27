@@ -974,3 +974,8 @@ entry and the Bible delta.
 - **Fixes:** the LV2 check of Wave 3 (#72) in `native.yml` stopped at `import numpy`: the ubuntu-22.04 runner's Python has no numpy. The step now installs `python3-numpy` with `liblilv-0-0`.
 - **Files:** `.github/workflows/native.yml`, this entry.
 - **Tests:** the YAML parses; the step runs in the PR's Linux build.
+
+### 2026-10-27 — native Maximizer — host floats back to the JSFX's values
+- **Fixes:** with numpy in place the LV2 check ran and failed Maximizer by 3.05e-5 (one 16-bit step) at a random setting with 16-bit dither: hosts hand parameters over as float, so Input Gain -2.3 reached the DSP as -2.2999999523 and the dither rounded a few samples the other way than the JSFX. Maximizer (plugin and Rack module) now reads Input Gain, Ceiling, Release, Lookahead and Output Gain through `jsfxValue()` (`NullSliders.hpp`), as the 2.7 plugins do. In a host, the dithered output can now match the JSFX bit for bit.
+- **Files:** `native/plugins/maximizer/{MaximizerSliders.hpp,Plugin.cpp}`, `native/plugins/rack/modules/maximizer.hpp`, this entry.
+- **Tests (run on Linux):** the CI failure reproduced locally (the LV2 at the two settings CI drew: 3.05e-5 before, 0 after); `native/scripts/build.sh --test --plugins "maximizer;rack"`: 105 of 105 ctest pass (compare, presets, gfx, module, rack).
