@@ -44,7 +44,7 @@ public:
         fWidth = widthPct / 100.0;
         fGain = std::exp(levelDb * 0.11512925464970228420);
         fLcOn = lowCut > 20.0;
-        fLcG = std::tan(kPi * lowCut / fSr);
+        fLcG = std::tan(kPi * std::min(lowCut, fSr * 0.45) / fSr);
         fLcD = 1.0 / (1.0 + kSqrt2 * fLcG + fLcG * fLcG);
         fHcOn = highCut < 20000.0;
         fHcG = std::tan(kPi * std::min(highCut, fSr * 0.45) / fSr);

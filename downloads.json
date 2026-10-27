@@ -1,8 +1,8 @@
 {
   "display": 1000,
-  "total": 1003,
+  "total": 1117,
   "offset": 0,
-  "updated": "2026-10-26",
+  "updated": "2026-10-27",
   "assets": {
     "489296831": {
       "file": "1.0/null_jsfx.zip",
@@ -210,7 +210,7 @@
     },
     "654611766": {
       "file": "2.5/NULL-JSFX-JSFX.zip",
-      "count": 49
+      "count": 64
     },
     "654619983": {
       "file": "2.5/NULL-JSFX-Hub-Windows-Setup.exe",
@@ -238,7 +238,7 @@
     },
     "654721086": {
       "file": "2.5/NULL-JSFX-VST3-CLAP-Linux.zip",
-      "count": 42
+      "count": 57
     },
     "654724792": {
       "file": "2.5/NULL-JSFX-Installer-Windows.exe",
@@ -282,7 +282,7 @@
     },
     "679099254": {
       "file": "2.6/NULL-JSFX-JSFX.zip",
-      "count": 22
+      "count": 64
     },
     "679124526": {
       "file": "2.6/NULL-JSFX-VST3-CLAP-Windows.zip",
@@ -290,7 +290,7 @@
     },
     "679276461": {
       "file": "2.6/NULL-JSFX-VST3-CLAP-Linux.zip",
-      "count": 14
+      "count": 56
     },
     "679343346": {
       "file": "2.6/NULL-JSFX-VST3-CLAP-macOS.zip",
@@ -306,6 +306,26 @@
     },
     "679509036": {
       "file": "2.6/NULL-JSFX-Catalog.json",
+      "count": 0
+    },
+    "679884493": {
+      "file": "2.6/NULL-JSFX-Installer-macOS.sh",
+      "count": 0
+    },
+    "679884494": {
+      "file": "2.6/NULL-JSFX-Installer-macOS.pkg",
+      "count": 0
+    },
+    "679896336": {
+      "file": "2.6/NULL-JSFX-Hub-Windows-Setup.exe",
+      "count": 0
+    },
+    "679897017": {
+      "file": "2.6/NULL-JSFX-Hub-Linux.AppImage",
+      "count": 0
+    },
+    "679897018": {
+      "file": "2.6/NULL-JSFX-Hub-Linux.deb",
       "count": 0
     }
   }
