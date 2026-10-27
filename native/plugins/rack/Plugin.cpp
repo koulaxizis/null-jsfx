@@ -160,8 +160,9 @@ protected:
     void run(const float** inputs, float** outputs, uint32_t frames) override
     {
         // the transport as pumper's Plugin.cpp reads it: the BBT position when the host gives one,
-        // else the frame position at the tempo while playing, else 0
-        const TimePosition& tp = getTimePosition();
+        // else the frame position at the tempo while playing, else 0 (exact in LV2 too:
+        // common/NullBeatClock.hpp)
+        const TimePosition& tp = fClock.update(getTimePosition(), getSampleRate(), frames);
         rack::RackEngine::Time t;
         t.tempo = tp.bbt.beatsPerMinute > 0.0 ? tp.bbt.beatsPerMinute : 120.0;
         t.valid = tp.bbt.valid;

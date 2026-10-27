@@ -50,7 +50,11 @@ protected:
 private:
     double v(uint32_t i) const { return nullladder::sliderValue(i, value(i)); }
 
-    void update() { fDsp.setParams(v(0), v(1), v(2), int(std::lround(v(3))), v(4)); }
+    void update()
+    {
+        fDsp.setParams(v(0), v(1), v(2), int(std::lround(v(3))), v(4), int(std::lround(v(5))));
+        setLatency(uint32_t(fDsp.latency())); // pdc_delay
+    }
 
     nullladder::LadderProcessor fDsp;
 

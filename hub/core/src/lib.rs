@@ -64,7 +64,7 @@ impl Default for Settings {
     fn default() -> Self {
         Settings {
             targets: Targets::default(),
-            formats: Format::ALL.to_vec(),
+            formats: Format::here(),
             check_updates: true,
             notify: true,
             autostart: false,
@@ -505,6 +505,7 @@ impl Hub {
                 Format::Jsfx | Format::Gfx => t.reaper.join("Effects"),
                 Format::Vst3 => t.vst3.clone(),
                 Format::Clap => t.clap.clone(),
+                Format::Lv2 => t.lv2.clone(),
             };
             ops.push(Op::Remove { path: dest, keep: Some(keep) });
         }
