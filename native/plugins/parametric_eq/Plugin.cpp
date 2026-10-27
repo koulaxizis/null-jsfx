@@ -33,7 +33,7 @@ protected:
 
     void valueChanged(uint32_t, float) override { update(); }
 
-    void activate() override
+    void onActivate() override
     {
         fDsp.setSampleRate(getSampleRate());
         fDsp.reset();
@@ -46,7 +46,7 @@ protected:
         analyzer.sampleRate.store(float(newSampleRate), std::memory_order_relaxed);
     }
 
-    void run(const float** inputs, float** outputs, uint32_t frames) override
+    void process(const float** inputs, float** outputs, uint32_t frames) override
     {
         // in chunks, so the input is kept for the spectrum when the host processes in place
         float pre[256];

@@ -32,7 +32,7 @@ protected:
 
     void valueChanged(uint32_t, float) override { update(); }
 
-    void activate() override
+    void onActivate() override
     {
         fDsp.setSampleRate(getSampleRate());
         update();
@@ -48,7 +48,7 @@ protected:
         fOut.setup(newSampleRate);
     }
 
-    void run(const float** inputs, float** outputs, uint32_t frames) override
+    void process(const float** inputs, float** outputs, uint32_t frames) override
     {
         // the display's drive dot follows the input peak (read before the output overwrites it)
         for (uint32_t i = 0; i < frames; ++i)
