@@ -498,10 +498,11 @@ const guides = {
     category: 'Essentials',
     sliders: [
       { name: 'Threshold', range: '0 to 100%', desc: 'Detection sensitivity: 0% flags jumps 4x the running average step, 100% only flags jumps 30x larger.' },
-      { name: 'Window', range: '1 to 50 Samples', desc: 'Number of samples marked as damaged after each detected click and redrawn.' }
+      { name: 'Window', range: '1 to 50 Samples', desc: 'Number of samples marked as damaged after each detected click and redrawn.' },
+      { name: 'Mode', range: 'Click / Crackle', desc: 'Click finds single clicks and pops (a sample\'s jump against the slow running average); Crackle finds the dense small ticks of worn vinyl (the second difference, which hides the music\'s low end, against a faster average, 3x to 20x).' }
     ],
     uses: ['Removing clicks and pops from vinyl transfers', 'Fixing digital spikes and edit clicks', 'Cleaning mouth clicks on close-miked vocals', 'Restoring archival recordings'],
-    properties: 'Input → step detector (sample jump vs running average) → mark Window samples as damaged → linear interpolation between the good samples on either side → Output. Latency of 2 × Window samples, reported to REAPER for delay compensation; each channel is repaired independently.',
+    properties: 'Input → step detector (Click: sample jump vs running average; Crackle: second difference vs a faster average) → mark Window samples as damaged → linear interpolation between the good samples on either side → Output. Latency of 2 × Window samples, reported to REAPER for delay compensation; each channel is repaired independently.',
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
     shot: 'assets/img/gfx/click_repair.png',
     video: 'assets/video/click_repair.mp4',
