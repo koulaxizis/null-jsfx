@@ -113,6 +113,7 @@ Rule numbers are stable. A retired rule keeps its number, marked *retired*, and 
 | R4 | Lines 1–5 are exactly: `desc:NULL <Name>`, `author: Christos Koulaxizis`, `tags: <lowercase keywords>`, `//category: <One Slider \| Essentials \| Advanced \| Instruments \| MIDI>`, and the footer `//NULL JSFX v<version> • https://nulljsfx.tech • MIT License`. Then come a blank line, the sliders, a blank line and the pins. |
 | R5 | Categories. A One Slider plugin has exactly one slider, and a plugin in any other category with one slider is rejected. Pins: the standard four; sidechain plugins add `in_pin:Sidechain Left/Right` after the main inputs; Band Splitter has the eight-channel band layout; instruments have `in_pin:none` and stereo outs (Drum Machine adds the Snare, Hats and Perc pairs), and send every MIDI message they receive on (`midisend` in `@block`; VST3/CLAP: `WANT_MIDI_OUTPUT` and echo), so instruments can be layered; MIDI effects use the four standard pins and pass the audio through. |
 | R6 | EEL2 code. Every `@section` appears once, and there is a `@sample` section that writes `spl0` and `spl1`. No variable is read without being assigned somewhere. Only real EEL2 functions are used. Imports must exist. Slider labels follow `Name (unit)`. There is no C syntax (`if`, braces, `return`, `else`, `int()`). |
+| R25 | Every sample rate works. Each filter frequency (a `tan()`, an RBJ biquad, an SVF) is held below Nyquist: `min(f, 0.45 * srate)`, or `0.49 * srate` where 0.45 would move the sound at 44.1 kHz (Reverser, Parametric EQ). The native port holds it the same way. CI renders every plain JSFX at 8000, 22050, 1234.57 and 12345.68 Hz too (2026-10-26). |
 
 **GFX**
 
@@ -193,7 +194,7 @@ Each area has one short paragraph here. The details are in the README it links t
 
 - **Build:** one CMake project (`native/CMakeLists.txt`, project version = the suite version) that fetches DPF at a pinned commit. `native/scripts/build.sh` (`--test`, `--plugins "a;b"`, `--dpf DIR`) puts the output in `native/dist/{VST3,CLAP}/NULL JSFX/`. Bundles are named `null_jsfx_<name>.vst3`/`.clap`.
 - **`native/common/`:**
-  - `NullPlugin.hpp`: `NullOneSliderPlugin` and `NullMultiPlugin`.
+  - `NullPlugin.hpp`: `NullOneSliderPlugin` and `NullMultiPlugin` (at most 64 parameters). DPF calls `setParameterValue` from the host's main thread too (VST3 interface edits, VST3 and CLAP state loads), so it only stores the value (atomic) and marks it changed. The base owns DPF's `activate` and `run` (both `final`): it calls `valueChanged` for the changed parameters on the audio thread, then the plugin's `onActivate` / `process`. A plugin never overrides `run` or `activate` [PR, 2026-10-26]. `getVersion()` reports the CMake project version (`NULL_JSFX_VERSION_*`).
   - `NullUI.hpp`: `NullOneSliderUI` and `NullKnobsUI`, the twins of `null_gfx.jsfx-inc`.
   - `NullTheme.hpp`: the palette.
   - `NullTaps.hpp`: lock-free audio taps from the DSP to the UI.
@@ -496,7 +497,8 @@ The recipes live in the READMEs. This Part says where they are and lists the ste
 | Test | Command | Proves |
 |---|---|---|
 | Lint | `python3 tests/lint.py <files>` (inside `tests/run.sh`) | R4–R6 on every plain and GFX JSFX |
-| Render | `tests/run.sh` → `jsfx_test` | every plugin and GFX version compiles and renders at 44.1, 48 and 96 kHz with default, extreme and random settings, without NaN or blow-ups; instruments get a GM note every 1/8 s |
+| Render | `tests/run.sh` → `jsfx_test` | every plugin and GFX version compiles and renders at 44.1, 48 and 96 kHz with default, extreme and random settings, without NaN or blow-ups; instruments get a GM note every 1/8 s; MIDI effects get an all notes off at the last sample. `NULL_TEST_RATES=8000,22050,...` replaces the rates |
+| Odd rates | `NULL_TEST_RATES=8000,22050,1234.57,12345.68 tests/run.sh DATA/Effects/null_jsfx/*.jsfx` | R25: the same checks at very low and odd sample rates (the plain JSFX only: the GFX audio code is the same) |
 | Chains | `tests/run.sh` (no arguments) → `chain_test` | every `.RfxChain` loads and renders |
 | GFX = JSFX | ctest `gfx_<name>` | the audio code is identical, tolerance 0 |
 | Native = JSFX | ctest `compare_<name>` | the CLAP matches the JSFX within 1e-5 at 44.1 and 96 kHz: defaults, every slider at min and max, random sets; MIDI effects compare every message byte for byte at the same sample; instruments play notes with the transport at 120 bpm, and the MIDI they pass on is compared byte for byte at the same sample |
@@ -518,7 +520,7 @@ The ysfx engine is pinned at `8077347ccf4115567aed81400281dca57acbb0cc` (in `tes
 
 | Workflow | Trigger | Does |
 |---|---|---|
-| `test.yml` "Test plugins" | every push and PR | `tests/run.sh`; `build_site.py`, `build_chains.py` and `build_presets.py` with `--check`; job `remote`: `build_remote.py --check` + `remote_test.cjs` |
+| `test.yml` "Test plugins" | every push and PR | `tests/run.sh`; the odd-rates run (R25); `build_site.py`, `build_chains.py` and `build_presets.py` with `--check`; job `remote`: `build_remote.py --check` + `remote_test.cjs` |
 | `native.yml` "VST3 and CLAP" | changes under `native/`, `DATA/`, `remote/`, `tests/`, `installer/` and `build_installer.py`; release published; manual with `release_tag` | builds on 3 OS (tests on Linux and macOS), pluginval, the JSFX package, the 4 installers each installed and checked; attaches them to the release |
 | `hub.yml` "NULL JSFX Hub" | changes under `hub/`, the catalog and site inputs, `tools/presets/` and `DATA/`; release published; manual with `release_tag` | `core` tests on 3 OS, `ui` + `build_catalog.py --check`, `smoke` (not on release events), build of the 4 bundles, the Linux start test, the Windows self-update test; attaches the bundles and `NULL-JSFX-Catalog.json` |
 | `web.yml` "Web version" | changes under `web/` and `DATA/` | `web/test/run.sh` |
@@ -542,12 +544,14 @@ This list was checked against the 2.6 bump (`bc60d15`, PR #47) and its follow-up
 | `tests/lint.py` | `FOOTER` and the docstring example |
 | `web/tools/eel2js.js` | the footer line it writes, then `node web/tools/build.js` (regenerates `web/fx/*.js`) |
 | `remote/Scripts/null_jsfx_remote_bridge.lua`, `remote/reaper_www_root/null_jsfx.html` | the footer comment |
-| `native/CMakeLists.txt` | `project(... VERSION <v>.0 ...)` |
+| `native/CMakeLists.txt` | `project(... VERSION <v>.0 ...)`; every plugin's and the Rack's `getVersion()` derives from it (it was hard-coded 2.1.0 until 2026-10-26) |
 | `hub/Cargo.toml` | the workspace `version = "<v>.0"`, plus the `null-jsfx-hub` and `null_hub_core` entries in `hub/Cargo.lock` |
 | `hub/core/src/lib.rs` | the footer example in a doc comment |
 | `index.html` | `#release-version`, `#last-update` ("Released: dd/mm/yy"), "Download NULL JSFX v<v>", "Release Notes v<v>", and a new changelog section on top |
 | `llms.txt` | `- Version: <v>` (the last line) |
 | `plugins/<slug>/index.html`, `sitemap.xml` | regenerated by `tools/build_site.py` |
+
+`tests/lint.py` checks three of these against `FOOTER`: the `llms.txt` `- Version:` line, `#release-version` and "Download NULL JSFX v<v>" in `index.html` (since #49).
 
 Then run every test of Part V that the PR touches, merge it once CI is green, and only after that publish the release.
 
@@ -654,7 +658,7 @@ Format: **date · topic** — the decision. (Who approved it, and the source.) D
 
 | # | Where | What | Fix |
 |---|---|---|---|
-| A1 | `README.md`, line 5 | "The One Slider plugins also come as GFX … VST3 / CLAP", but all 113 do | reword |
+| A1 | `README.md`, line 5 | "The One Slider plugins also come as GFX … VST3 / CLAP", but all 113 do | closed by #49 |
 | A2 | `native/README.md`, instruments | "the web build and orOS leave them out", but `web/fx/index.json` has 9 instruments and orOS syncs them | reword |
 | A3 | `native/README.md`, knob layout | the example says `@gfx 480 294` next to "delay is the reference", but Delay is 480x408 and knob plugins run from 480x294 to 480x460 | reword the sizes |
 | A4 | `index.html`, Rack showcase | "72 presets", but `RackPresets.hpp` has 85 + Init | fix the number; in the long run, generate it |
@@ -667,7 +671,7 @@ Format: **date · topic** — the decision. (Who approved it, and the source.) D
 - **B1 Registry generator.** Part III was generated on 2026-10-26 by a one-off script (`/mnt/project-files/bible/registry.py` in the project files, which prints the tables; it reads the `.jsfx` headers, `@gfx` lines, `DistrhoPluginInfo.h` and the Rack `modules/`). Proposal: commit it as `tools/build_bible.py`, which rewrites the block between `<!-- BEGIN REGISTRY -->` and `<!-- END REGISTRY -->` and the CLAP exceptions, with `--check` in `test.yml`. It goes in the docs PR.
 - **B2** Generate the hand-written counts (plugin count in `index.html` `<title>` and meta, the Rack module and preset counts in the showcase) with `build_site.py`.
 - **B3 Drum Machine ideas** (deferred 2026-10-17): song mode and step probability. Multi-out and a Sampler exist now. [memory]
-- **B4 Very low and odd sample rates** (found 2026-10-26 with clap-validator's `process-varying-sample-rates`, which plays 8000 Hz to 768 kHz, 1234.57 Hz and 12345.68 Hz among them). Wah, Tape, Tape Echo, Band Splitter and Amp Simulator are fixed (Part X). A scan of every plain JSFX at those rates, with `tests/jsfx_test.cpp`'s settings, still blows up in Reverser (8000, 22050 and 12345.68 Hz, max/random), Vinyl Age (8000 Hz, max), Step FX (8000 Hz, random), Formant Filter, Saturation, Noise Generator and Phase Align (1234.57 Hz), and Arpeggiator leaves notes hanging at 1234.57 Hz: a separate fix thread. Proposal: once those pass, add 22050 and 8000 Hz (and maybe 1234.57 Hz) to the rates of `jsfx_test`, so CI keeps it that way. The convention is that every filter frequency is held below `0.45 * srate` (most plugins already did this).
+- **B4 Very low and odd sample rates** (found 2026-10-26 with clap-validator's `process-varying-sample-rates`, which plays 8000 Hz to 768 kHz, 1234.57 Hz and 12345.68 Hz among them). Wah, Tape, Tape Echo, Band Splitter and Amp Simulator are fixed (Part X). A scan of every plain JSFX at those rates, with `tests/jsfx_test.cpp`'s settings, still blows up in Reverser (8000, 22050 and 12345.68 Hz, max/random), Vinyl Age (8000 Hz, max), Step FX (8000 Hz, random), Formant Filter, Saturation, Noise Generator and Phase Align (1234.57 Hz), and Arpeggiator leaves notes hanging at 1234.57 Hz: a separate fix thread. **Done 2026-10-26 (PR #58):** the seven are fixed (the Arpeggiator finding was the test's own MIDI order), and `test.yml` renders every plain JSFX at 8000, 22050, 1234.57 and 12345.68 Hz (R25). The convention is that every filter frequency is held below `0.45 * srate` (most plugins already did this).
 
 ### VIII.C Open items waiting on someone
 
@@ -726,6 +730,33 @@ entry and the Bible delta.
 - **Changes:** `hub.yml` gets a step "The released Hub (Windows)" that downloads the Windows Hub from the newest non-prerelease other than `TAG` that has one; every `gh release upload` in `hub.yml` and `native.yml` retries 5 times with a growing pause. Part VI.2 items 5–7.
 - **Files:** `.github/workflows/hub.yml`, `.github/workflows/native.yml`, `NULL_JSFX_BIBLE.md`.
 - **Tests:** the jq filter was run locally against the live releases list (gives 2.5 with `TAG=2.6` and with an empty `TAG`); both workflows parse as YAML. The workflows themselves run in CI on this PR; then `native.yml` and `hub.yml` are run by hand with `release_tag=2.6`, and `hub/tests/release_smoke.sh 2.6` checks the result.
+
+### 2026-10-26 — DSP fix (no version change yet) — filters above Nyquist in seven more plugins; odd rates in CI
+- **Fixes:** a scan of every plain JSFX at 8000, 22050, 768000, 1234.57, 12345.68, 45678.9 and 123456.78 Hz (with `jsfx_test`'s settings) found filters set above the Nyquist frequency, which makes a `tan()` or an RBJ biquad unstable (output to 1e308 or NaN):
+  - Reverser: Filter Freq up to 20 kHz (at 22050, 12345.68 and 8000 Hz). Now `min(filt_freq, srate * 0.49)`: 0.49, not 0.45, so 19.9 and 20 kHz at 44.1 kHz stay as they were.
+  - Vinyl Age: the 78 RPM shellac band's 4.5 kHz low-pass (at 8000 Hz). `sh_set` holds f below `0.45 * srate`.
+  - Step FX: Filter up to 8 kHz (at 8000 Hz). The cutoff is held at `f_top` (`min(16000, srate * 0.4)`), the top the filter already glides from.
+  - Formant Filter: the formants up to 3010 Hz (at 1234.57 Hz). `bp_set` holds f below `0.45 * srate`.
+  - Saturation: the 800 Hz Emphasis tilt (at 1234.57 Hz). `min(800, srate * 0.45)`.
+  - Noise Generator: Low Cut up to 2 kHz (at 1234.57 Hz). `min(slider4, srate * 0.45)`, as High Cut already was.
+  - Phase Align: Focus up to 1 kHz (at 1234.57 Hz). `min(slider7, srate * 0.45)`.
+  - Arpeggiator was not at fault: `jsfx_test` sent the all notes off of its last block at offset 0 but after that block's notes, so out of time order (a host never does that), and at 1234.57 Hz a block is long enough to hold notes after it, which then hung (and, with Latch, a new chord after the stop). The all notes off now comes at the block's last sample, after its notes.
+- **Changes:** `jsfx_test` takes `NULL_TEST_RATES` (comma-separated, default 44.1/48/96 kHz) and prints odd rates in full. `test.yml` runs the plain JSFX at 8000, 22050, 1234.57 and 12345.68 Hz after the normal run (new rule R25). 768 kHz and the other odd rates found nothing more and are left out of CI for time.
+- **Files:** `DATA/Effects/null_jsfx/{reverser,vinyl_age,step_fx,formant_filter,saturation,noise_generator,phase_align}.jsfx` and their `gfx/*_gfx.jsfx`, `native/plugins/{reverser,vinyl_age,step_fx,formant_filter,saturation,noise_generator,phase_align}/*DSP.hpp` (the same `min()`; the Rack modules use these headers), `web/fx/*.js` and `web/fx/index.json` (regenerated), `tests/jsfx_test.cpp`, `tests/run.sh` (comment), `.github/workflows/test.yml`, this Bible (R25, Part V).
+- **Tests:** see the PR. At normal rates nothing changes: the seven plugins old against new at 44.1, 48, 88.2, 96 and 192 kHz, 12 slider sets each (defaults, min, max, 9 random), noise input, 1.5 s: bit-identical.
+
+### 2026-10-26 — tests, docs #49 — lint checks the release version outside the plugins; README line 5
+- **Changes:** `tests/lint.py` gains `check_versions()`: the `llms.txt` `- Version:` line, `#release-version` and "Download NULL JSFX v<v>" in `index.html` must match `FOOTER`, otherwise lint fails (so a stale `llms.txt` like the 2.4 fixed in #48 cannot come back). `README.md` line 5 says every plugin has GFX and VST3/CLAP versions (VIII.A A1). `CLAUDE.md` and Part VI.1 mention the check.
+- **Files:** `tests/lint.py`, `README.md`, `CLAUDE.md`, `NULL_JSFX_BIBLE.md`.
+- **Tests:** lint on all 226 plugin files: 0 errors; with `llms.txt` set back to 2.4 lint reports the mismatch and exits 1; `build_site.py --check` up to date. CI on the push run of the branch: Test plugins and VST3/CLAP (all three OSes, installers) green.
+
+### 2026-10-26 — native — Parameter thread safety, getVersion from the build, parameter limit
+- **Fixes:** DPF calls `setParameterValue` from the host's main thread as well as the audio thread: VST3 interface edits ("parameter-set"), VST3 `set_state` and CLAP `state_load`. `NullOneSliderPlugin`/`NullMultiPlugin` then ran `valueChanged` there, writing DSP state while `run()` could be processing (audit 2026-10-26, bug 3). Now `setParameterValue` stores the value in a `std::atomic<float>` and sets a bit in an atomic change mask; the base class owns DPF's `run` and `activate` (`final`) and calls `valueChanged` for every changed parameter, lowest index first, on the audio thread before the plugin's `process`, and before `onActivate` (so state restored while inactive is in place when the plugin activates, as before). Every plugin's `run`/`activate` is renamed `process`/`onActivate`; nothing else in them changed. Host automation already reached `setParameterValue` on the audio thread right before `run`, so its timing is unchanged.
+- **Fixes:** `getVersion()` was hard-coded to 2.1.0 in `NullPlugin.hpp`, `ConvolutionShared.hpp` and the Rack. It now comes from `project(... VERSION)` in `native/CMakeLists.txt` through `NULL_JSFX_VERSION_MAJOR/MINOR/PATCH` (Part VI.1 updated). Hosts now see 2.6.0.
+- **Fixes:** `NullMultiPlugin` had no guard for more than `kMaxParams` (64) sliders (Drum Machine has 63): a larger count wrote past `fValues`. The count is now clamped with a `DISTRHO_SAFE_ASSERT`, so the comparison test fails on the parameter count instead, and a `static_assert` ties `kMaxParams` to the 64-bit change mask.
+- **Changes:** `ConvolutionPluginBase` now derives from `NullMultiPlugin` (with one state) instead of repeating its parameter code. The Rack already kept its parameters in atomics and only changes its version.
+- **Files:** `native/common/NullPlugin.hpp`, `native/CMakeLists.txt`, `native/README.md`, `native/plugins/convolution/ConvolutionShared.hpp`, `native/plugins/rack/Plugin.cpp`, `native/plugins/*/Plugin.cpp` (113, signature lines only), this Bible (II.2, VI.1).
+- **Tests:** run on Linux (GCC 13, DPF at the pinned SHA): `tests/run.sh` (lint 0 errors of 226), `native/scripts/build.sh --test` (all 113 plugins + Rack, VST3 + CLAP + UI built; 435/435 ctest passed). Sound unchanged: main `a11973e` was built the same way and the `max |diff|` line of every one of the 321 `compare_*`, `presets_*` and `module_*` tests is identical before and after. Not run: a host-level thread race test (the race needs a host that edits or loads state while processing); the fix was checked by reading the DPF sources (`DistrhoPluginVST3.cpp` "parameter-set" and `set_state`, `DistrhoPluginCLAP.cpp` `stateLoad`).
 
 ### 2026-10-26 — Instruments (next patch) — MIDI passthrough in all 9 instruments
 - **Changes:** Bass, FM, Keys, Organ, Pluck, Synth, Percussion, Drum Machine and Sampler used to swallow their MIDI. The JSFX and GFX now `midisend` every message `midirecv` returns, at its offset, so a second instrument after them gets the same notes (layering). The VST3/CLAP set `DISTRHO_PLUGIN_WANT_MIDI_OUTPUT` and `run()` writes every incoming event back out (SysEx included, as REAPER passes it through the JSFX). The sound is unchanged.
