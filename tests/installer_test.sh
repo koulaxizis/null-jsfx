@@ -16,7 +16,7 @@ expect() { [ "$2" = "$3" ] || fail "$1: expected $3, got $2"; echo "ok   $1: $2"
 if [ "$(uname -s)" = Darwin ]; then
   reaper='Library/Application Support/REAPER' vst3='Library/Audio/Plug-Ins/VST3' clap='Library/Audio/Plug-Ins/CLAP'
 else
-  reaper='.config/REAPER' vst3='.vst3' clap='.clap'
+  reaper='.config/REAPER' vst3='.vst3' clap='.clap' lv2='.lv2'
 fi
 
 run() {  # run HOME-NAME ARGS...: the installer with no terminal, in its own scratch home
@@ -39,6 +39,10 @@ expect "all: GFX" "$(count "$h/$reaper/Effects/null_jsfx/gfx" '*_gfx.jsfx')" "$p
 expect "all: preset files (JSFX + GFX)" "$(count "$h/$reaper/presets" 'js-null_jsfx_*.ini')" "$((plugins * 2))"
 expect "all: VST3 (with Rack)" "$(count "$h/$vst3/NULL JSFX" '*.vst3')" "$((plugins + 1))"
 expect "all: CLAP (with Rack)" "$(count "$h/$clap/NULL JSFX" '*.clap')" "$((plugins + 1))"
+if [ -n "${lv2:-}" ]; then
+  expect "all: LV2 (with Rack)" "$(count "$h/$lv2/NULL JSFX" '*.lv2')" "$((plugins + 1))"
+  [ -f "$h/$lv2/NULL JSFX/null_jsfx_tilt.lv2/manifest.ttl" ] || fail "all: LV2 manifest missing"
+fi
 [ -f "$h/$reaper/Effects/null_jsfx/gfx/null_gfx.jsfx-inc" ] || fail "all: null_gfx.jsfx-inc missing"
 [ -f "$h/$reaper/reaper_www_root/null_jsfx.html" ] || fail "all: remote page missing"
 [ -f "$h/$reaper/Scripts/null_jsfx_remote_bridge.lua" ] || fail "all: remote bridge missing"
@@ -74,6 +78,7 @@ run some --formats clap --groups one-slider --plugins delay --extras chains,font
 h="$work/some"
 expect "some: CLAP" "$(count "$h/$clap/NULL JSFX" '*.clap')" "$((one + 1))"
 expect "some: VST3" "$(count "$h/$vst3/NULL JSFX" '*.vst3')" 0
+[ -n "${lv2:-}" ] && expect "some: LV2" "$(count "$h/$lv2/NULL JSFX" '*.lv2')" 0
 expect "some: JSFX" "$(count "$h/$reaper/Effects/null_jsfx" '*.jsfx')" 0
 expect "some: chains" "$(count "$h/$reaper/FXChains/NULL JSFX" '*.RfxChain')" 0
 [ -e "$h/$clap/NULL JSFX/null_jsfx_delay.clap" ] || fail "some: Delay missing"

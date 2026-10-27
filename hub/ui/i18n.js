@@ -63,6 +63,7 @@ const EL = {
   "REAPER, with REAPER's own sliders": "REAPER, με τα sliders του REAPER",
   "REAPER, with the NULL JSFX interface": "REAPER, με το περιβάλλον του NULL JSFX",
   "any DAW": "κάθε DAW",
+  "Ardour, Carla, Qtractor and other Linux hosts": "Ardour, Carla, Qtractor και άλλα προγράμματα στο Linux",
 
   // counting
   "plugin": "plugin",
@@ -190,6 +191,7 @@ const EL = {
   "(REAPER: Options > Show REAPER resource path)": "(REAPER: Options > Show REAPER resource path)",
   "VST3 folder": "Φάκελος VST3",
   "CLAP folder": "Φάκελος CLAP",
+  "LV2 folder": "Φάκελος LV2",
   "(plugins go into its NULL JSFX folder)": "(τα plugins μπαίνουν στον φάκελο NULL JSFX μέσα του)",
   "Use the usual folders": "Οι συνηθισμένοι φάκελοι",
   "Privacy": "Απόρρητο",

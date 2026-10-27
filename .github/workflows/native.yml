@@ -4,7 +4,7 @@ name: VST3 and CLAP
 # that each one sounds identical to its JSFX, and uploads these packages:
 #   NULL-JSFX-JSFX                 the JSFX (plain and GFX) and the tablet remote (Remote/),
 #                                  the same for every OS
-#   NULL-JSFX-VST3-CLAP-<OS>       the VST3 and CLAP versions for Windows, macOS or Linux
+#   NULL-JSFX-VST3-CLAP-<OS>       the VST3 and CLAP versions for Windows, macOS or Linux (Linux: also LV2)
 # each with native/INSTALL.txt, and from those the installers where the user picks formats,
 # plugins and extras (tools/build_installer.py, installer/):
 #   NULL-JSFX-Installer-Windows.exe, NULL-JSFX-Installer-Linux.sh, NULL-JSFX-Installer-macOS.pkg,
@@ -84,11 +84,20 @@ jobs:
             echo "::endgroup::"
           done
 
+      - name: Check the LV2 plugins against the JSFX (lilv)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get install -y liblilv-0-0
+          b=tests/.build
+          g++ -O2 -std=c++17 -I "$b/ysfx/include" web/test/render_ref.cpp "$b/ysfx/build/libysfx.a" -lpthread -ldl -o "$b/render_ref"
+          python3 native/test/lv2_test.py native/dist/LV2/"NULL JSFX"
+
       - name: Package
         run: |
           out="NULL-JSFX-VST3-CLAP-${{ matrix.name }}"
           mkdir -p "$out"
           cp -R native/dist/VST3 native/dist/CLAP "$out/"
+          if [ -d native/dist/LV2 ]; then cp -R native/dist/LV2 "$out/"; fi
           cp native/INSTALL.txt "$out/"
 
       - uses: actions/upload-artifact@v4
