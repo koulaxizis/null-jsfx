@@ -4,7 +4,7 @@
 >
 > - **Site:** https://nulljsfx.tech · **Repo:** github.com/koulaxizis/null-jsfx · **Author:** Christos Koulaxizis (koulaxizis.gr)
 > - **Slogan:** AUDIO WITHOUT NOISE
-> - **Bible version:** 1.1 (2026-10-26). The Bible has its own version: a patch step (1.0.1) for corrections, a minor step (1.1) for new rules or Parts. The suite's version is in Part VI.
+> - **Bible version:** 1.2 (2026-10-27). The Bible has its own version: a patch step (1.0.1) for corrections, a minor step (1.1) for new rules or Parts. The suite's version is in Part VI.
 > - **Suite state:** 2.6 (release published 2026-10-26 14:26 UTC), main at `a231c1b`.
 > - **Last full read of the repo:** 2026-10-26. These files were read for this edition: CLAUDE.md, README.md, native/README.md, web/README.md, hub/README.md, tools/video/README.md, llms.txt, tests/lint.py, tests/run.sh, web/test/run.sh, native/test/CMakeLists.txt, every `.github/workflows/*.yml`, the docstrings of every `tools/*.py`, the headers of `native/common/*.hpp`, and the reference plugins tilt, delay, drum_machine and chords in JSFX, GFX and VST3/CLAP, plus downloads.json and supporters.json.
 > - **Tags:** **[verified 2026-10-26]** means the fact was checked against the file or the GitHub API on that date. **[memory]** means it comes from the project's memory notes or from a thread, and was not re-checked against a file. **[PR #n]** means it comes from that pull request.
@@ -14,7 +14,7 @@
 | Part | Content |
 |---|---|
 | 0 | Working agreement and session start (read first) |
-| I | Mission, one sound four forms, free forever, rules R1–R24 |
+| I | Mission, one sound four forms, free forever, rules R1–R26 |
 | II | Architecture |
 | III | Plugin registry (generated from the files) |
 | IV | Recipes index |
@@ -188,6 +188,7 @@ Rule numbers are stable. A retired rule keeps its number, marked *retired*, and 
 |---|---|
 | R23 | Every delivery updates this Bible: a changelog entry in Part X, plus the delta in its own Part. Facts carry their source tag (header). |
 | R24 | Part III is generated from the files by `tools/build_bible.py` and never typed by hand. Run it after adding a plugin or changing its sliders, `@gfx` size, unique id or Rack module; CI runs `--check`. |
+| R26 | Part X stays in order: oldest first, and a new entry goes at the very end, never near the top or newest-first. `tests/bible_order.py` checks it in CI (`test.yml`) (2026-10-27). |
 
 ---
 
@@ -204,8 +205,7 @@ Each area has one short paragraph here. The details are in the README it links t
 
 ### II.2 `native/` — VST3 and CLAP (DPF)
 
-- **Build:** one CMake project (`native/CMakeLists.txt`, project version = the suite version) that fetches DPF at a pinned commit. `native/scripts/build.sh` (`--test`, `--plugins "a;b"`, `--dpf DIR`) puts the output in `native/dist/{VST3,CLAP}/NULL JSFX/`, and on Linux also `native/dist/LV2/NULL JSFX/` (`NULL_LV2`, on by default on Linux only; 2.7). Bundles are named `null_jsfx_<name>.vst3`/`.clap`/`.lv2`; the LV2 URI is the plugin's existing `DISTRHO_PLUGIN_URI` (R3).
-- **Build:** one CMake project (`native/CMakeLists.txt`, project version = the suite version) that fetches DPF at a pinned commit and applies `native/third_party/dpf/null-jsfx.patch` on top (CLAP latency is reported only inside `activate()`; subnormal output samples become 0; a local `--dpf` checkout needs the patch applied by hand). `native/scripts/build.sh` (`--test`, `--plugins "a;b"`, `--dpf DIR`) puts the output in `native/dist/{VST3,CLAP}/NULL JSFX/`. Bundles are named `null_jsfx_<name>.vst3`/`.clap`.
+- **Build:** one CMake project (`native/CMakeLists.txt`, project version = the suite version) that fetches DPF at a pinned commit and applies every `native/third_party/dpf/*.patch` on top, in name order (`null-jsfx.patch`: CLAP latency is reported only inside `activate()` and subnormal output samples become 0; `state-load.patch`: a state string cut by a short stream read is not ended early; a local `--dpf` checkout needs them applied by hand). `native/scripts/build.sh` (`--test`, `--plugins "a;b"`, `--dpf DIR`) puts the output in `native/dist/{VST3,CLAP}/NULL JSFX/`, and on Linux also `native/dist/LV2/NULL JSFX/` (`NULL_LV2`, on by default on Linux only; 2.7). Bundles are named `null_jsfx_<name>.vst3`/`.clap`/`.lv2`; the LV2 URI is the plugin's existing `DISTRHO_PLUGIN_URI` (R3).
 - **`native/common/`:**
   - `NullPlugin.hpp`: `NullOneSliderPlugin` and `NullMultiPlugin` (at most 64 parameters). DPF calls `setParameterValue` from the host's main thread too (VST3 interface edits, VST3 and CLAP state loads), so it only stores the value (atomic) and marks it changed. The base owns DPF's `activate` and `run` (both `final`): it calls `valueChanged` for the changed parameters on the audio thread, then the plugin's `onActivate` / `process`. A plugin never overrides `run` or `activate` [PR, 2026-10-26]. `getVersion()` reports the CMake project version (`NULL_JSFX_VERSION_*`).
   - `NullUI.hpp`: `NullOneSliderUI` and `NullKnobsUI`, the twins of `null_gfx.jsfx-inc`.
@@ -221,7 +221,7 @@ Each area has one short paragraph here. The details are in the README it links t
   - `fonts/`: Noto Sans, OFL.
 - **`native/plugins/<name>/`:** `DistrhoPluginInfo.h`, `<Name>DSP.hpp` (framework-free), `<Name>Sliders.hpp` (multi-slider plugins), `Plugin.cpp`, `UI.cpp`, `FactoryPresets.hpp` (generated), and optionally `compare_args.txt`.
 - **`native/plugins/rack/`:** the Rack, a host for up to 8 modules. It has lanes A/B, a feedback loop, 8 macros, 2 LFOs, an envelope follower and a 16-step sequencer, with up to 32 modulation routes. The engine is `RackEngine.hpp`, there is one adapter per plugin in `modules/<id>.hpp` (95 today), `RackPresets.hpp` is generated with 86 presets including Init, and the tests are in `test/`. There is no rack.jsfx.
-- **`native/test/`:** `compare.cpp` (the JSFX in ysfx against the CLAP build), `module_info`, `lv2_test.py` (every LV2 bundle through lilv against `render_ref`).
+- **`native/test/`:** `compare.cpp` (the JSFX in ysfx against the CLAP build), `state_test.cpp` (the CLAP state round trip), `module_info`, `lv2_test.py` (every LV2 bundle through lilv against `render_ref`).
 - Guide: [native/README.md](native/README.md).
 
 ### II.3 `web/` — the web runtime
@@ -532,6 +532,7 @@ The recipes live in the READMEs. This Part says where they are and lists the ste
 | Changes while playing | ctest `changes_convolution`, `changes_gfx_convolution`, `changes_module_convolution` (`compare --changes 1`) | the sliders jump to other settings at 1 s and 2 s; the CLAP, the GFX JSFX (tolerance 0) and the Rack module still match the JSFX |
 | Realtime safety | ctest `rt_test` | Slicer and Half Speed with the lazy clear render bit for bit like a full clear through transport starts, jumps and tempo changes |
 | Presets | ctest `presets_<name>` | every factory preset renders the same in the JSFX and the CLAP |
+| State | ctest `state_<name>` | random parameter values come back exactly after a save and a load through streams of 1 to 4096 bytes per call, with the stack filled with 0x00 and 0xfe first; the state saved again is the same bytes |
 | Rack module | ctest `module_<id>` | each adapter matches its JSFX, like `compare_` |
 | Rack engine | ctest `rack_test` | every preset renders; a single slot is bit-exact with its module; band splits sum flat; channel routing; modulation; lanes line up; the loop decays; the sequencer steps; the ducker's key; bit-for-bit against `RackEngineV1.hpp` (R12) |
 | pluginval | `native.yml`, Linux | every VST3 at strictness 5 |
@@ -545,6 +546,7 @@ The recipes live in the READMEs. This Part says where they are and lists the ste
 | Hub release smoke | `hub/tests/release_smoke.sh [tag]` | install and remove from the real latest release |
 | Installers | `tests/installer_test.sh`, `tests/pkg_test.sh`, the Windows step in `native.yml` | install, check (counts, presets merged, the user's preset kept) and uninstall |
 | Remote | `node tests/remote/remote_test.cjs` | the page in Chromium plus the real bridge under `mock_reaper.lua` |
+| Bible order | `python3 tests/bible_order.py` (in `test.yml`) | R26: every Part X entry has a date and the dates never go back |
 | Generators | `build_site.py`, `build_chains.py`, `build_presets.py`, `build_bible.py`, `build_remote.py`, `build_catalog.py` with `--check` | the generated files are up to date |
 | Stress | `tests/stress.sh [plugin.jsfx ...]` → `stress_test` | every plain JSFX (MIDI effects skipped): no NaN/Inf and no output above 1e4 under hard signals (+12 dBFS square with DC, sines near Nyquist, tone then silence, DC, every slider jumping every 50 ms) with default, min, max and random settings at 44.1 and 192 kHz; the same output at 384 kHz with and without `options:maxmem=32M` (nothing past REAPER's default 8M slots); the median cost of a slider change within one 256-sample block at 48 kHz (5.33 ms, noted above half) |
 
@@ -681,6 +683,7 @@ Format: **date · topic** — the decision. (Who approved it, and the source.) D
   - A/B and Undo/Redo live in the header of every interface with presets (GFX `null_gfx.jsfx-inc` and native `NullUI.hpp`, in step): undo, redo, A, B and a copy button left of the preset box. One undo step is one edit (a drag, a click, a preset load); up to 32 steps, 16 KB of history in GFX. The GFX keeps the history in strings, so it survives REAPER re-running `@init`. A/B and undo only move the sliders (with automation written), never the sound code.
   - Oversampling only where measured aliasing needs it: Tape and Ladder Filter got an appended `Oversampling` Off/2x/4x (Saturation's Kaiser halfband stages, latency 31 or 37 samples). Measured inharmonic energy: Ladder at Drive 100 from -25 dB (Off) to -55 (2x) and -110 (4x); Tape at Drive 24 from -12 to -23 and -35 dB. Amp Simulator, Clipper, Saturation and Shaper already oversample. Driver (-14.5 dB at Amount 100 on a 7.1 kHz tone) and Exciter (-19.4 dB) alias too, but they are One Slider plugins (one slider, R5), and always-on oversampling would change their released sound: left to Christos (Part VIII, B10).
   - LV2 is built on Linux only (where it is the native format), from the same DPF code. The Linux zip keeps its name `NULL-JSFX-VST3-CLAP-Linux.zip` (the Hub and the download page know that name) and gains `LV2/`. The Rack is built as LV2 too.
+- **2026-10-27 · DPF patches** — fixes to DPF itself go in `native/third_party/dpf/*.patch`, applied on the pinned commit by CMake, until upstream has them. (Claude, state-load fix; the latency patch of PR #57 uses the same folder.)
 - **2026-10-27 · Full audit** — the audit moves from the third Friday of each month to the 8th of every even month at 19:00 Athens time, from 2026-12-08, as a recurring scheduled task that does not reschedule itself. It adds the standing question on what is missing to compete with the big plugin companies, and the extended checklist in 0.5. (Christos, 2026-10-26 and 2026-10-27.)
 - **2026-10-26 · Memory export** — quarterly, on the 10th of January, April, July and October at 12:00 Athens time, covering what changed since the previous export (0.5). (Christos.)
 - **2026-10-26 · Audio-thread spikes** — Christos answered "yes to all" to the design (doc "Audio-thread spikes: design"): Convolution builds new IRs step by step in every form (JSFX, GFX, native, Rack, web); on an IR change the reverb tail carries on with a one-block crossfade instead of the old wet dropout (a deliberate sound change at the moment of a change, R17); the fix ships in a patch step, 2.6.1, with the other audit fixes. (Christos, thread "Διόρθωση καθυστερήσεων στο audio thread".)
@@ -762,7 +765,7 @@ Paste this as the first message of a new chat:
 ```
 Continuing NULL JSFX work (repo koulaxizis/null-jsfx, site nulljsfx.tech).
 NULL_JSFX_BIBLE.md is the SINGLE SOURCE OF TRUTH: read Part 0 (working
-agreement), Part I (rules R1-R24) and Part VIII (open items) before touching
+agreement), Part I (rules R1-R26) and Part VIII (open items) before touching
 anything. Work from the CURRENT files in the repo; never guess a file.
 Next task: <task>. Areas involved: <DATA / gfx / native / rack / web / hub /
 installer / remote / site / tools>.
@@ -776,7 +779,7 @@ entry and the Bible delta.
 ## Part X — Changelog
 
 **Format:**
-- The order is ascending: oldest first, and each new entry goes at the BOTTOM, in the same delivery as the change.
+- The order is ascending: oldest first, and each new entry goes at the BOTTOM, in the same delivery as the change (R26; `tests/bible_order.py` fails a PR whose dates go back).
 - The heading is `### YYYY-MM-DD — <area> <version or PR> — <title>`.
 - The bullets are **Changes**, **Fixes**, **Decisions**, **Files**, **Tests** and **Next**, as needed.
 - Code, files and keys go in backticks.
@@ -958,6 +961,18 @@ entry and the Bible delta.
 - **Files:** `DATA/Effects/null_jsfx/gfx/null_gfx.jsfx-inc` and every GFX file (regenerated preset blocks), `DATA/Effects/null_jsfx/{tape,ladder_filter}.jsfx`, `native/common/{NullUI,NullPlugin,NullBeatClock}.hpp`, `native/plugins/{tape,ladder_filter}/`, `native/plugins/rack/{Plugin.cpp,RackPlugin.hpp,modules/tape.hpp,modules/ladder_filter.hpp}`, `native/CMakeLists.txt`, `native/scripts/build.sh`, `native/INSTALL.txt`, `native/test/lv2_test.py` (new), `.github/workflows/native.yml`, `installer/unix/install.sh`, `tools/{build_presets,build_installer,build_catalog}.py`, `tools/site_content.json`, `hub/core/src/{catalog,paths,lib}.rs`, `hub/ui/{hub.js,index.html,i18n.js}`, `web/runtime/eel-rt.js`, `tests/{gfx_hist_test.jsfx,run.sh,installer_test.sh}`, `web/test/runtime.test.js`, `hub/tests/ui_test.cjs`, this Bible (Part III regenerated); regenerated: `web/fx/*`, FX chains with Tape, `plugins/{tape,ladder-filter}/index.html`, `assets/js/modals.js`.
 - **Tests (run on Linux):** `tests/run.sh` in full with `tests/gfx_hist_test.jsfx` (22 checks; a deliberately broken copy fails); `web/test/run.sh` in full (0 of 240 differ, runtime tests 12/12); a native build of every plugin with the new `NullUI` (0 errors); ctest `compare_`, `presets_`, `gfx_` and `module_` for Tape, Ladder Filter and Saturation with `rack_test`, and after the beat-clock change `compare_`, `presets_` and `gfx_` for Drum Machine, Tremolo, Arpeggiator, Bass, Tape and Ladder Filter, all pass; the LV2 build of all 120 plugins and the Rack, and `lv2_test.py` over the 120 with a JSFX: 0 failed (largest diff 2.5e-6, Studio EQ in linear phase; Grit at first differed by 8e-4 because the JSFX got the double samples, so the test now feeds both the same float samples); the Linux installer built from a mock package with every bundle and `tests/installer_test.sh` (LV2 121 with the Rack, uninstall leaves nothing); `cargo test -p null_hub_core` and `node tests/ui_test.cjs`. Measured aliasing (Part VII). Not run: the A/B and undo buttons by hand in REAPER or a DAW (the GFX logic is tested by script, the native one only built and read), LV2 in a real host (Ardour, Carla), the macOS and Windows builds (CI).
 - **Next:** Wave 4 (MIDI Utility, MIDI LFO, Drum Machine song mode and step probability, SFZ in Sampler).
+
+### 2026-10-27 — native (no version change) — CLAP and VST3 state load with short stream reads
+- **Fixes:** DPF's state parser (CLAP `stateLoad`, VST3 `setState`) reads the stream in pieces into a 512-byte buffer and puts a temporary `\0` at `buffer[read]` to cut each string. After the cut it tested `buffer[i] == '\0'` with `i == read` too, and there sat the byte left from an earlier read, or uninitialised stack. When that byte was `\0`, a key or value split across two reads was ended early: values came back wrong, keys and values swapped, or the load failed. Hosts that hand the state over in small reads hit it: clap-validator's `state-reproducibility-buffered` (17 bytes per read) failed on 10 CLAPs on Linux and about 70 on Windows, with a different parameter each time. `native/third_party/dpf/state-load.patch` tests `i < read && buffer[i] == '\0'`. Saved states keep their format and meaning: only the reading changed.
+- **Changes:** `native/CMakeLists.txt` applies every `native/third_party/dpf/*.patch` in name order after a reset to the pinned SHA, with `core.autocrlf=false`. `native.yml` also installs `python3-numpy` for the LV2 check from #72, which failed on main with "No module named numpy". New ctest `state_<name>` (`native/test/state_test.cpp`) for every plugin.
+- **Files:** `native/third_party/dpf/state-load.patch`, `native/third_party/dpf/.gitattributes`, `native/CMakeLists.txt`, `native/test/state_test.cpp`, `native/test/CMakeLists.txt`, `native/README.md`, this Bible (II.2, V.1, VII).
+- **Tests:** see the PR. Before the patch, `state_test` failed for all 11 CLAPs tried (Tilt too, which CI had not flagged); after it they pass. `state_rack` also needs the Rack's global parameter symbols (PR #53, above).
+
+### 2026-10-27 — Bible 1.2, tests — Part X order check (R26)
+- **Changes:** new rule R26: Part X stays oldest first, a new entry goes at the very end. `tests/bible_order.py` checks that every Part X entry has a date and that the dates never go back; `test.yml` runs it. The Map, the Part IX handoff and `CLAUDE.md` say R1–R26 (they still said R1–R24 although R25 existed). Part V.1 lists the check.
+- **Why:** the same problem in orOS (parallel PRs put their entries newest-first, 98 entries out of order) was fixed there with `tests/bible-order.test.js` and rule R40.
+- **Files:** `tests/bible_order.py` (new), `.github/workflows/test.yml`, `NULL_JSFX_BIBLE.md` (version 1.2, R26, V.1, X), `CLAUDE.md`.
+- **Tests:** the check passes on this Bible and fails (exit 1, with the two titles named) when an entry dated 2026-10-27 is moved above one dated 2026-10-26. Only dates are checked: Part X headings carry no single version scheme.
 
 ### 2026-10-27 — Wave 4 of the studio plan (2.7, not released yet) — MIDI Utility, MIDI LFO; Drum Machine song mode and Chance steps
 - **New plugins (off the site until "launch", R18; entries in `tools/site_content_next.json`):**

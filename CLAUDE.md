@@ -3,7 +3,7 @@
 Instructions for AI assistants working in this repository. The owner is Christos Koulaxizis.
 
 ## Read the Bible first
-`NULL_JSFX_BIBLE.md` is the single source of truth for this project and its changelog. At the start of every session read its Part 0 (working agreement), Part I (rules R1–R24) and Part VIII (open items) before you touch anything. Every delivery updates it: a changelog entry in Part X and the delta in its own Part.
+`NULL_JSFX_BIBLE.md` is the single source of truth for this project and its changelog. At the start of every session read its Part 0 (working agreement), Part I (rules R1–R26) and Part VIII (open items) before you touch anything. Every delivery updates it: a changelog entry in Part X and the delta in its own Part.
 
 Never guess the contents of a file. Read it from the repo, or ask for it.
 

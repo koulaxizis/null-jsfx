@@ -134,7 +134,8 @@ ng_select_ctl(4, "SYNC", "OFF|ON", 0) ? update();
 ### 3. Check
 
 `compare_<name>` sets every slider (defaults, each at min and max, random sets) at 44.1 and
-96 kHz. Build with `cmake -S native -B native/build-x -DNULL_TESTS=ON -DNULL_PLUGINS="<name>"`
+96 kHz, and `state_<name>` checks that the saved state comes back exactly through short stream
+reads and writes. Build with `cmake -S native -B native/build-x -DNULL_TESTS=ON -DNULL_PLUGINS="<name>"`
 and `ctest`, then compare `gfx_render` (at 2x the `@gfx` size) with `screenshot.sh <name> out.png ""`.
 
 ## Adding an instrument (`drum_machine` is the model)
@@ -260,6 +261,11 @@ native/scripts/build.sh --plugins "a;b" # only some plugins
 native/scripts/build.sh --dpf DIR       # offline: a local DPF checkout (with dgl/src/pugl-upstream)
 ```
 
+DPF is fetched at the pinned commit and every `third_party/dpf/*.patch` is applied on top, in name
+order. A local `--dpf` checkout needs them applied by hand (`git apply`). `state-load.patch`: the
+CLAP and VST3 state parser no longer ends a string early when the host hands the state over in
+short reads.
+
 Requirements: CMake 3.15+, a C++17 compiler, Git. Linux also needs `libgl1-mesa-dev libx11-dev
 libxcursor-dev libxext-dev libxrandr-dev libdbus-1-dev`; Windows needs Visual Studio 2022 and Git
 Bash. `.github/workflows/native.yml` builds all three OSes and uploads `NULL-JSFX-VST3-CLAP-<OS>`
@@ -267,8 +273,7 @@ Bash. `.github/workflows/native.yml` builds all three OSes and uploads `NULL-JSF
 release gets them as zips.
 
 DPF ([DISTRHO Plugin Framework](https://github.com/DISTRHO/DPF), ISC) is fetched at a pinned
-commit, and CMake applies `third_party/dpf/null-jsfx.patch` on top of it (a local `--dpf`
-checkout needs it applied by hand with `git apply`). The patch makes the CLAP wrapper call
+commit, with the patches above. `third_party/dpf/null-jsfx.patch` makes the CLAP wrapper call
 `clap_host_latency::changed()` only inside `activate()`, as the CLAP spec asks (a latency change
 while active requests a restart), and flushes subnormal output samples to zero in every format;
 both are checked by clap-validator. The font is Noto Sans (SIL OFL 1.1, `common/fonts/`),
