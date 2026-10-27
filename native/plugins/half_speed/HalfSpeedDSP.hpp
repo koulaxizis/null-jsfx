@@ -15,6 +15,8 @@
 
 #pragma once
 
+#include "NullLazyClear.hpp"
+
 #include <cmath>
 #include <cstdint>
 #include <vector>
@@ -37,23 +39,26 @@ class HalfSpeedProcessor {
 public:
     static constexpr int kBins = 128; // the display's waveform: peaks of 1/128 of the Length
 
-    // @init
+    // @init: the buffer is allocated here (cleared), never on the audio thread
     void setSampleRate(double sr)
     {
         fSr = sr;
-        reset();
-    }
-
-    // @init again (REAPER re-runs it when the transport starts)
-    void reset()
-    {
-        const double sr = fSr;
         fXf = std::fmax(1.0, std::floor(0.005 * sr));
         fGl = 2.0 * std::fmax(8.0, std::floor(0.02 * sr));
         fMargin = std::ceil(0.1 * sr);
         fBsize = std::ceil(sr * 12.0) + fMargin;
-        fL.assign(size_t(fBsize), 0.0);
-        fR.assign(size_t(fBsize), 0.0);
+        fL.allocate(size_t(fBsize));
+        fR.allocate(size_t(fBsize));
+        reset();
+    }
+
+    // @init again (REAPER re-runs it when the transport starts). The buffer reads as cleared at
+    // once but is cleared chunk by chunk as it is written (NullLazyClear.hpp), so a transport
+    // start costs no multi-millisecond clear on the audio thread.
+    void reset()
+    {
+        fL.clearAll();
+        fR.clearAll();
         fN = 0.0;
         fOldRd = 0.0;
         fXc = fXf;
@@ -115,8 +120,8 @@ public:
                 seam(0.0);
             if (fN < wlim)
             {
-                fL[size_t(fN)] = x0;
-                fR[size_t(fN)] = x1;
+                fL.set(size_t(fN), x0);
+                fR.set(size_t(fN), x1);
             }
             double wl, wr;
             if (fKeep)
@@ -176,7 +181,7 @@ public:
                     fOv[b] = 0.0;
                     fLb = b;
                 }
-                const double v = std::fmax(std::fabs(fL[size_t(i)]), std::fabs(fR[size_t(i)]));
+                const double v = std::fmax(std::fabs(fL.get(size_t(i))), std::fabs(fR.get(size_t(i))));
                 if (v > fOv[b])
                     fOv[b] = v;
             }
@@ -186,12 +191,13 @@ public:
 private:
     static constexpr double kPi = 3.141592653589793;
 
-    double rd(const std::vector<double>& b, double p) const
+    double rd(const nulljsfx::LazyClearBuffer& b, double p) const
     {
         const double i = std::fmin(fBsize - 1.0, std::floor(p));
         const double f = p - i;
         const double i2 = std::fmin(fBsize - 1.0, i + 1.0);
-        return b[size_t(i)] + (b[size_t(i2)] - b[size_t(i)]) * f;
+        const double v = b.get(size_t(i));
+        return v + (b.get(size_t(i2)) - v) * f;
     }
 
     void seam(double m)
@@ -216,7 +222,7 @@ private:
     Params fP;
     double fSr = 48000.0;
     double fXf = 1.0, fGl = 16.0, fMargin = 0.0, fBsize = 1.0;
-    std::vector<double> fL, fR;
+    nulljsfx::LazyClearBuffer fL, fR;
     double fN = 0.0, fOldRd = 0.0, fXc = 1.0, fG1 = 0.0, fG2 = 0.0, fS1 = 0.0, fS2 = 0.0;
     double fLpL = 0.0, fLpR = 0.0;
     double fLenBeats = 4.0, fSpeed = 0.5, fCycBeats = 8.0, fHcA = 0.0, fMix = 1.0, fOffset = 0.0;
