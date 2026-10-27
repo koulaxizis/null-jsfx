@@ -22,6 +22,7 @@ out_pin:Left
 out_pin:Right
 
 @init
+  ext_noinit = 1;              // play and seek keep tails and state, as in the VST3/CLAP
   // NULL Saturation (../saturation.jsfx) with its own interface: same audio code, plus @gfx.
   // Tone is a tilt EQ on the wet signal: a one-pole split at 800 Hz, with the
   // highs raised by Tone/2 dB and the lows lowered by Tone/2 dB (and the reverse

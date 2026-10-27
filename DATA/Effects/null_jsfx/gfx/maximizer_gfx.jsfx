@@ -27,6 +27,7 @@ out_pin:Left
 out_pin:Right
 
 @init
+  ext_noinit = 1;              // play and seek keep tails and state, as in the VST3/CLAP
   // NULL Maximizer (../maximizer.jsfx) with its own interface: same audio code, plus @gfx.
   // Loudness maximizer: Input Gain pushes the mix into a look-ahead limiter that
   // holds the peaks at Ceiling. Stereo Link uses one gain for both channels so the

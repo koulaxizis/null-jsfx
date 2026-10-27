@@ -23,6 +23,7 @@ out_pin:Left
 out_pin:Right
 
 @init
+  ext_noinit = 1;              // play and seek keep tails and state, as in the VST3/CLAP
   // Spectral Ducker: makes room for the key (a vocal, a lead) inside the track, band by band.
   // Route the key to track channels 3/4. A bank of 32 fourth-order band passes (30 Hz - 18 kHz,
   // about a third of an octave apart) follows the key's level in each band; where a band goes

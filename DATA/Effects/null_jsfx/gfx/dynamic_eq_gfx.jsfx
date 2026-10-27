@@ -34,6 +34,7 @@ out_pin:Left
 out_pin:Right
 
 @init
+  ext_noinit = 1;              // play and seek keep tails and state, as in the VST3/CLAP
   // NULL Dynamic EQ (../dynamic_eq.jsfx) with its own interface: same audio code, plus @gfx.
   // Four bell bands that only act when their band gets loud. Each band measures its own
   // frequency range; once that level passes Threshold, the band's Gain is applied,

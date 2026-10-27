@@ -26,6 +26,7 @@ out_pin:Left
 out_pin:Right
 
 @init
+  ext_noinit = 1;              // play and seek keep tails and state, as in the VST3/CLAP
   // NULL Draw EQ (../draw_eq.jsfx) with its own interface: same audio code, plus @gfx.
   // An EQ you draw: ten points at fixed octave-spaced frequencies (31.25 Hz .. 16 kHz), each
   // a gain of -18..+18 dB. The curve through them is a cascade of ten peaking filters, one per

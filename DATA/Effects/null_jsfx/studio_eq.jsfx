@@ -62,6 +62,7 @@ out_pin:Left
 out_pin:Right
 
 @init
+  ext_noinit = 1;              // play and seek keep tails and state, as in the VST3/CLAP
   // Studio EQ: eight free bands in series from 10 Hz to 30 kHz. A band is a bell, a low or
   // high shelf, a low or high cut (6 to 96 dB/oct, Butterworth; Q 0.71 is flat, higher Q
   // lifts the corner), a notch or a band pass, and works on both channels, the mid, the side,

@@ -12,6 +12,7 @@ out_pin:Left
 out_pin:Right
 
 @init
+  ext_noinit = 1;              // play and seek keep tails and state, as in the VST3/CLAP
   // Hard, gritty clipping: the signal is driven into a clipper whose knee gets harder as
   // Amount rises, then a gentle top-end roll-off takes the fizz off. Level compensated.
   // Amount fades from the untouched signal (0) to full crunch (100).

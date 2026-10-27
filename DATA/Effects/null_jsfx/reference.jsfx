@@ -17,6 +17,7 @@ out_pin:Left
 out_pin:Right
 
 @init
+  ext_noinit = 1;              // play and seek keep tails and state, as in the VST3/CLAP
   // Reference: compare the mix with a reference track. Put the reference on track channels 3/4
   // (the sidechain pins: a send from the reference's track, or a second item on this track), switch Listen between Track and Reference.
   // Level Match plays the reference at the mix's loudness: both are measured as BS.1770

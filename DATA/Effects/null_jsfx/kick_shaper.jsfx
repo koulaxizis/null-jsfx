@@ -17,6 +17,7 @@ out_pin:Left
 out_pin:Right
 
 @init
+  ext_noinit = 1;              // play and seek keep tails and state, as in the VST3/CLAP
   // Shapes a kick drum in four parts:
   //   Thump (bell at 55 Hz), Body (bell at 120 Hz), Click (bell at 4 kHz),
   //   Attack Shape: boosts or softens the first milliseconds of each hit,

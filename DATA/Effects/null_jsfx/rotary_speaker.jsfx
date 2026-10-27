@@ -17,6 +17,7 @@ out_pin:Left
 out_pin:Right
 
 @init
+  ext_noinit = 1;              // play and seek keep tails and state, as in the VST3/CLAP
   // Leslie-style rotary speaker. The signal is split at 800 Hz: the highs go to a
   // spinning horn, the lows to a spinning drum. Each rotor changes volume, tone and
   // pitch (Doppler) as it turns, and two virtual microphones, left and right, pick it

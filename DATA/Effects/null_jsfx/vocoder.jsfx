@@ -20,6 +20,7 @@ out_pin:Left
 out_pin:Right
 
 @init
+  ext_noinit = 1;              // play and seek keep tails and state, as in the VST3/CLAP
   // 16-band channel vocoder. The modulator (your voice) is the LEFT input; the carrier
   // is either the RIGHT input (route a synth there) or a built-in saw, pulse or noise
   // oscillator at Carrier Pitch. The voice's level in each band is measured and imposed

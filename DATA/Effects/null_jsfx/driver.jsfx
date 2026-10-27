@@ -12,6 +12,7 @@ out_pin:Left
 out_pin:Right
 
 @init
+  ext_noinit = 1;              // play and seek keep tails and state, as in the VST3/CLAP
   // Warm tube-style drive: the signal is pushed into a slightly asymmetric tanh curve
   // (even plus odd harmonics), the DC this creates is removed, and the level is
   // compensated. Amount fades from the untouched signal (0) to full drive (100).
