@@ -315,6 +315,18 @@
     "679884494": {
       "file": "2.6/NULL-JSFX-Installer-macOS.pkg",
       "count": 0
+    },
+    "679896336": {
+      "file": "2.6/NULL-JSFX-Hub-Windows-Setup.exe",
+      "count": 0
+    },
+    "679897017": {
+      "file": "2.6/NULL-JSFX-Hub-Linux.AppImage",
+      "count": 0
+    },
+    "679897018": {
+      "file": "2.6/NULL-JSFX-Hub-Linux.deb",
+      "count": 0
     }
   }
 }
