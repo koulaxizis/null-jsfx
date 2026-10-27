@@ -7,7 +7,7 @@ FX.strings = ["Noto Sans","Hg","NULL JSFX","AUDIO WITHOUT NOISE","HALF SPEED","A
 FX.live = ["clen","ls","n"];
 FX.vars = ["ng_bg","ng_bg2","ng_card","ng_border","ng_text","ng_muted","ng_slogan","ng_accent","ng_icon_a","ng_icon_b","ng_logo_bg","ng_logo_ed","ng_font","ng_pre_n","ng_pre_cur","ng_pre_open","ng_pre_req","ng_pre_w","ng_pre_row","srate","xf","gl","margin","bsize","buf_l","buf_r","n","old_rd","xc","g1","g2","s2","s1","lp_r","lp_l","hs_ov","hs_lb","gfx_ext_retina","slider1","len_beats","slider2","speed","cyc_beats","slider3","keep","slider4","hc_on","hc_a","slider5","mix","slider6","offset","tempo","bpm","spb","ls","clen","wlim","play_state","beat_position","hs_pos","hs_within","nt","d","spl0","spl1","w1","w2","__l3.i","__l3.f","__l3.i2","wl","wr","rp","xk","hs_i","hs_b","hs_v","__l4.h","__l4.cy","ng_dw","ng_dh","ng_pre_h","gfx_w","gfx_h","ng_s","ng_ox","ng_oy","gfx_r","gfx_g","gfx_b","gfx_a","mouse_cap","ng_lmb","ng_prev_lmb","ng_click","ng_now","ng_pre_click","ng_pre_was","mouse_wheel","__l8.px","__l8.py","__l8.sz","__l8.k","__l8.n","__l8.th","__l8.i","__l12.w","__l12.h","gfx_texth","__l13.n","__l13.i","__l13.w","__l13.cw","__l13.chh","__l13.tr","gfx_x","gfx_y","__l14.y0","__l14.hover","ng_pre_x","mouse_x","mouse_y","ng_vx","ng_vy","ng_vw","ng_vh","ng_cw","ng_cy","ng_rowy","ng_ctl_id","hs_ls","hs_cl","hs_w","hs_r","hs_k","hs_h","hs_y","hs_cb","ng_cellx","__l18.cx","__l18.ry","__l18.n","__l18.i","__l18.p","__l18.q","__l18.cur","__l18.pw","__l18.hover","__l18.nv","__l19.changed","__l20.cx","__l20.ry","__l20.lr","__l20.t","__l20.tcur","__l20.nt","__l20.hover","ng_drag","ng_drag_val","__l21.kx","__l21.ky","__l21.kr","__l21.tr","__l21.amax","__l21.ang","__l21.a0","__l21.hover","__l21.i","__l21.n","__l21.px1","__l21.py1","__l21.px2","__l21.py2","__l21.k","__l21.dx","__l21.dy","__l22.k","__l22.n","__l23.sens","__l23.nv","__l23.mv","ng_last_click","ng_last_id","ng_lx","ng_ly","__l24.cx","__l24.ry","__l24.v","__l24.hover","__l24.nv","__l26.i","__l28.m","__l30.x0","ng_pre_rows","ng_pre_cols","ng_pre_mx","__l31.x","__l31.y","__l31.hover","__l32.s","samplesblock","num_ch","play_position","ts_num","ts_denom","pdc_delay","pdc_bot_ch","pdc_top_ch","pdc_midi","trigger","ext_noinit","ext_nodenorm","ext_tail_size","ext_gr_meter","gfx_a2","gfx_mode","gfx_clear","gfx_dest","gfx_ext_flags","mouse_hwheel"];
 FX.create = function (R, H, G) {
-var MEM = R.memory(), M0 = MEM.b[0], S = R.strings(FX.strings), IO;
+var MEM = R.memory(33554432), M0 = MEM.b[0], S = R.strings(FX.strings), IO;
 var V = new Float64Array(221);
 function f0_update() {
 (V[39] = (R.t((R.eq(V[38], 0) ? 1 : 0)) ? 1 : (R.t((R.eq(V[38], 1) ? 1 : 0)) ? 2 : (R.t((R.eq(V[38], 2) ? 1 : 0)) ? 4 : 8))));
@@ -620,9 +620,9 @@ for (i = 0; i < n; i++) {
 V[64] = (0 < nin ? I[0][i] : 0); V[65] = (1 < nin ? I[1][i] : 0);
 (R.t(((V[26] >= V[56]) ? 1 : 0)) ? f1_seam(0) : 0);
 if (R.t(((V[26] < V[57]) ? 1 : 0))) {
-t1 = (V[24] + V[26]) + 0.00001; t1 = t1 > -1 && t1 < 8388608 ? t1 | 0 : -1;
+t1 = (V[24] + V[26]) + 0.00001; t1 = t1 > -1 && t1 < 33554432 ? t1 | 0 : -1;
 (t1 >= 0 && t1 < 65536 ? (M0[t1] = V[64]) : MEM.w(t1, V[64]));
-t2 = (V[25] + V[26]) + 0.00001; t2 = t2 > -1 && t2 < 8388608 ? t2 | 0 : -1;
+t2 = (V[25] + V[26]) + 0.00001; t2 = t2 > -1 && t2 < 33554432 ? t2 | 0 : -1;
 t3 = (t2 >= 0 && t2 < 65536 ? (M0[t2] = V[65]) : MEM.w(t2, V[65]));
 } else {
 t3 = 0;
@@ -672,7 +672,7 @@ t10 = 0;
 if (R.t(((V[75] < V[55]) ? 1 : 0))) {
 (V[76] = Math.floor((V[75] * (128 / V[55]))));
 if (R.t((R.eq(V[76], V[36]) ? 0 : 1))) {
-t11 = (V[35] + V[76]) + 0.00001; t11 = t11 > -1 && t11 < 8388608 ? t11 | 0 : -1;
+t11 = (V[35] + V[76]) + 0.00001; t11 = t11 > -1 && t11 < 33554432 ? t11 | 0 : -1;
 (t11 >= 0 && t11 < 65536 ? (M0[t11] = 0) : MEM.w(t11, 0));
 t12 = (V[36] = V[76]);
 } else {
@@ -680,7 +680,7 @@ t12 = 0;
 }
 (V[77] = R.max(Math.abs((t13 = (V[24] + V[75]) + 0.00001, t13 > -1 && t13 < 65536 ? M0[t13 | 0] : MEM.rc(t13))), Math.abs((t14 = (V[25] + V[75]) + 0.00001, t14 > -1 && t14 < 65536 ? M0[t14 | 0] : MEM.rc(t14)))));
 if (R.t(((V[77] > (t15 = (V[35] + V[76]) + 0.00001, t15 > -1 && t15 < 65536 ? M0[t15 | 0] : MEM.rc(t15))) ? 1 : 0))) {
-t16 = (V[35] + V[76]) + 0.00001; t16 = t16 > -1 && t16 < 8388608 ? t16 | 0 : -1;
+t16 = (V[35] + V[76]) + 0.00001; t16 = t16 > -1 && t16 < 33554432 ? t16 | 0 : -1;
 t17 = (t16 >= 0 && t16 < 65536 ? (M0[t16] = V[77]) : MEM.w(t16, V[77]));
 } else {
 t17 = 0;
