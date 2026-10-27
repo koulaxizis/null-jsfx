@@ -522,12 +522,14 @@ The ysfx engine is pinned at `8077347ccf4115567aed81400281dca57acbb0cc` (in `tes
 
 | Workflow | Trigger | Does |
 |---|---|---|
-| `test.yml` "Test plugins" | every push and PR | `tests/run.sh`; the odd-rates run (R25); `build_site.py`, `build_chains.py`, `build_presets.py` and `build_bible.py` with `--check`; job `remote`: `build_remote.py --check` + `remote_test.cjs` |
-| `native.yml` "VST3 and CLAP" | changes under `native/`, `DATA/`, `remote/`, `tests/`, `installer/` and `build_installer.py`; release published; manual with `release_tag` | builds on 3 OS (tests on Linux and macOS), pluginval, the JSFX package, the 4 installers each installed and checked; attaches them to the release |
-| `hub.yml` "NULL JSFX Hub" | changes under `hub/`, the catalog and site inputs, `tools/presets/` and `DATA/`; release published; manual with `release_tag` | `core` tests on 3 OS, `ui` + `build_catalog.py --check`, `smoke` (not on release events), build of the 4 bundles, the Linux start test, the Windows self-update test; attaches the bundles and `NULL-JSFX-Catalog.json` |
-| `web.yml` "Web version" | changes under `web/` and `DATA/` | `web/test/run.sh` |
+| `test.yml` "Test plugins" | every PR; push to main; manual | `tests/run.sh`; the odd-rates run (R25); `build_site.py`, `build_chains.py`, `build_presets.py` and `build_bible.py` with `--check`; job `remote`: `build_remote.py --check` + `remote_test.cjs` |
+| `native.yml` "VST3 and CLAP" | PRs and pushes to main that change `native/`, `DATA/`, `remote/`, `tests/`, `installer/` or `build_installer.py`; release published; manual with `release_tag` | builds on 3 OS (tests on Linux and macOS), pluginval, the JSFX package, the 4 installers each installed and checked; attaches them to the release |
+| `hub.yml` "NULL JSFX Hub" | PRs and pushes to main that change `hub/`, the catalog and site inputs, `tools/presets/` or `DATA/`; release published; manual with `release_tag` | `core` tests on 3 OS, `ui` + `build_catalog.py --check`, `smoke` (not on release events), build of the 4 bundles, the Linux start test, the Windows self-update test; attaches the bundles and `NULL-JSFX-Catalog.json` |
+| `web.yml` "Web version" | PRs and pushes to main that change `web/` or `DATA/`; manual | `web/test/run.sh` |
 | `media.yml` "Media" | push to main under `assets/video/`; manual | uploads the videos to the `media` pre-release |
 | `downloads.yml` "Count downloads" | daily at 03:00 UTC; after "VST3 and CLAP"; manual | `count_downloads.py`, then commits `downloads.json` to main if the shown figure changed |
+
+Pushes run these four workflows only on main, so a branch with a PR is built once, by its PR (until 2026-10-26 every branch push ran them a second time, and the macOS queue reached about 45 runs). A branch without a PR gets no CI: open the PR, or run the workflow by hand. Their `concurrency` group is per PR for pull requests, with `cancel-in-progress`, so a new push cancels the older run of that PR; every other run (main, release, manual) gets its own group from `run_id`, so it is never cancelled or queued behind another, and release uploads always finish.
 
 `downloads.yml` pushes to main by itself, so a branch can be behind by a `downloads.json` commit: rebase or merge main before you push.
 
@@ -775,6 +777,13 @@ entry and the Bible delta.
 - **Decisions:** none new.
 - **Files:** `tools/build_bible.py` (new), `.github/workflows/test.yml`, `README.md`, `native/README.md`, `index.html` (one line), `NULL_JSFX_BIBLE.md`.
 - **Tests:** `tools/build_bible.py --check` (up to date; the generated tables are identical to the 1.0 ones), `tools/build_site.py --check`, and CI on the PR.
+
+### 2026-10-26 — CI — One run per change, older PR runs cancelled
+- **Changes:** `test.yml`, `native.yml`, `hub.yml` and `web.yml` run on `push` only for main (their path filters stay), so a branch with a PR is no longer built twice, once for the push and once for the PR. Each gets a `concurrency` group: per PR for `pull_request` with `cancel-in-progress`, and `github.run_id` (a group of its own) for main, release and manual runs, so those are never cancelled or queued. `test.yml` also gets `workflow_dispatch`, for a branch without a PR. Build, test and release steps are unchanged.
+- **Why:** about 45 native and Hub runs were waiting for macOS runners, because every `claude/*` branch ran each workflow on push and on its PR, and merges stalled behind them.
+- **Decisions:** Christos approved the proposal on 2026-10-26 ("Ναι").
+- **Files:** `.github/workflows/test.yml`, `native.yml`, `hub.yml`, `web.yml`, `NULL_JSFX_BIBLE.md` (Part V.2, this entry).
+- **Tests:** the four files parse as YAML and the triggers and groups were checked by script; the `if:` conditions on `release` / `release_tag` were read and do not depend on push. The PR's own checks are the live test: only `pull_request` runs should appear for this branch.
 
 ### 2026-10-27 — native (no version change) — CLAP and VST3 state load with short stream reads
 - **Fixes:** DPF's state parser (CLAP `stateLoad`, VST3 `setState`) reads the stream in pieces into a 512-byte buffer and puts a temporary `\0` at `buffer[read]` to cut each string. After the cut it tested `buffer[i] == '\0'` with `i == read` too, and there sat the byte left from an earlier read, or uninitialised stack. When that byte was `\0`, a key or value split across two reads was ended early: values came back wrong, keys and values swapped, or the load failed. Hosts that hand the state over in small reads hit it: clap-validator's `state-reproducibility-buffered` (17 bytes per read) failed on 10 CLAPs on Linux and about 70 on Windows, with a different parameter each time. `native/third_party/dpf/state-load.patch` tests `i < read && buffer[i] == '\0'`. Saved states keep their format and meaning: only the reading changed.
