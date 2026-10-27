@@ -82,7 +82,7 @@ out_pin:Right
     // each all-pass turns the phase by half the angle at Focus: -2 atan(tan(w / 2) / t) = -a / 2
     pa_rot = slider6 > 0 && slider6 < 360;
     pa_rot ? (
-      pa_t = tan($pi * slider7 / srate) / tan(slider6 * $pi / 720);
+      pa_t = tan($pi * min(slider7, srate * 0.45) / srate) / tan(slider6 * $pi / 720);
       pa_a = (pa_t - 1) / (pa_t + 1);
     );
     pa_sum = slider8 >= 0.5;

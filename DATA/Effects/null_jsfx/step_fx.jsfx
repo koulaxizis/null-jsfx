@@ -179,7 +179,7 @@ out_pin:Right
   sw = slider19 / 150;                     // 2/3 of a step at 100%
   rep_sel = floor(slider20 + 0.5);
   rep_beats = rep_sel == 0 ? 0.25 : rep_sel == 1 ? 0.125 : 0.0625;
-  f_lc = log(slider21);
+  f_lc = log(min(slider21, f_top));   // below Nyquist at any sample rate
   crush = slider22 / 100;
   c_q = 2 ^ (1 - (16 - 12 * crush));      // quantiser step: 16 bits down to 4
   c_inc = 1 / (1 + 15 * crush);            // sample-and-hold: every 1 to 16 samples

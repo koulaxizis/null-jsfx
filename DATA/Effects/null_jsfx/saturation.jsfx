@@ -215,7 +215,7 @@ out_pin:Right
   em_on = slider8 != 0;
   em_hi = 10 ^ (slider8 / 40);
   em_lo = 1 / em_hi;
-  em_t = tan($pi * 800 / srate);
+  em_t = tan($pi * min(800, srate * 0.45) / srate);
   em_b0 = em_hi + em_lo * em_t;
   em_b1 = em_lo * em_t - em_hi;
   em_a0 = 1 + em_t;

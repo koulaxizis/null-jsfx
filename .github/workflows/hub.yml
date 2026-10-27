@@ -187,7 +187,8 @@ jobs:
         if: env.TAG != ''
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release upload "$TAG" out/* --clobber
+        # retried: the upload endpoint can answer HTTP 500 for a while (2.6 release)
+        run: for i in 1 2 3 4 5; do gh release upload "$TAG" out/* --clobber && exit 0; sleep $((i * 30)); done; exit 1
 
   catalog:
     if: github.event_name == 'release' || inputs.release_tag != ''
@@ -203,4 +204,4 @@ jobs:
           printf '%s\n' "$NOTES" > notes.md
           date="$(gh release view "$TAG" --json publishedAt --jq '.publishedAt[:10]')"
           python3 tools/build_catalog.py --version "$TAG" --notes notes.md --date "$date" --out NULL-JSFX-Catalog.json
-          gh release upload "$TAG" NULL-JSFX-Catalog.json --clobber
+          for i in 1 2 3 4 5; do gh release upload "$TAG" NULL-JSFX-Catalog.json --clobber && exit 0; sleep $((i * 30)); done; exit 1

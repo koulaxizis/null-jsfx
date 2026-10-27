@@ -150,10 +150,10 @@ out_pin:Right
     y * out_g;
   );
 
-  // RBJ peaking and high-shelf biquads into c
+  // RBJ peaking and high-shelf biquads into c; f is held below 0.45 x fs
   function set_peak(c, f, q, db, fs) local(A, w, cs, al, a0)
   (
-    A = 10 ^ (db / 40); w = 2 * $pi * f / fs;
+    A = 10 ^ (db / 40); w = 2 * $pi * min(f, 0.45 * fs) / fs;
     cs = cos(w); al = sin(w) / (2 * q);
     a0 = 1 + al / A;
     c[0] = (1 + al * A) / a0; c[1] = -2 * cs / a0; c[2] = (1 - al * A) / a0;
@@ -161,7 +161,7 @@ out_pin:Right
   );
   function set_shelf(c, f, db, fs) local(A, w, cs, al, sa, a0)
   (
-    A = 10 ^ (db / 40); w = 2 * $pi * f / fs;
+    A = 10 ^ (db / 40); w = 2 * $pi * min(f, 0.45 * fs) / fs;
     cs = cos(w); al = sin(w) / 2 * sqrt(2); sa = 2 * sqrt(A) * al;
     a0 = (A + 1) - (A - 1) * cs + sa;
     c[0] = A * ((A + 1) + (A - 1) * cs + sa) / a0;

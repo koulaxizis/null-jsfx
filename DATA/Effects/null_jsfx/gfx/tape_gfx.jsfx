@@ -80,7 +80,7 @@ out_pin:Right
     ((c3 * fr + c2) * fr + c1) * fr + x0;
   );
 
-  // RBJ biquads (normalised), transposed direct form II
+  // RBJ biquads (normalised), transposed direct form II; f is held below 0.45 x srate
   function bq_lp(f, q) local(w, al) instance(b0, b1, b2, a1, a2)
   (
     w = 2 * $pi * min(f, 0.45 * srate) / srate; al = sin(w) / (2 * q);
@@ -89,13 +89,13 @@ out_pin:Right
   );
   function bq_hp(f, q) local(w, al) instance(b0, b1, b2, a1, a2)
   (
-    w = 2 * $pi * f / srate; al = sin(w) / (2 * q);
+    w = 2 * $pi * min(f, 0.45 * srate) / srate; al = sin(w) / (2 * q);
     b0 = (1 + cos(w)) / 2 / (1 + al); b1 = -(1 + cos(w)) / (1 + al); b2 = b0;
     a1 = -2 * cos(w) / (1 + al); a2 = (1 - al) / (1 + al);
   );
   function bq_peak(f, q, db) local(w, al, A) instance(b0, b1, b2, a1, a2)
   (
-    w = 2 * $pi * f / srate; al = sin(w) / (2 * q); A = 10 ^ (db / 40);
+    w = 2 * $pi * min(f, 0.45 * srate) / srate; al = sin(w) / (2 * q); A = 10 ^ (db / 40);
     b0 = (1 + al * A) / (1 + al / A); b1 = -2 * cos(w) / (1 + al / A); b2 = (1 - al * A) / (1 + al / A);
     a1 = b1; a2 = (1 - al / A) / (1 + al / A);
   );
@@ -109,9 +109,11 @@ out_pin:Right
     y;
   );
 
-  // one-pole high shelf (+6 dB above fc) and its exact inverse: the tape (pre/de-)emphasis
+  // one-pole high shelf (+6 dB above fc, held below 0.45 x srate) and its exact inverse: the
+  // tape (pre/de-)emphasis
   function emph_set(fc, g) local(wc, k)
   (
+    fc = min(fc, 0.45 * srate);
     wc = 2 * $pi * fc;
     k = wc / tan($pi * fc / srate);
     em_b0 = (g * k + wc) / (k + wc);
