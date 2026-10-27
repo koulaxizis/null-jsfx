@@ -12,6 +12,7 @@ out_pin:Left
 out_pin:Right
 
 @init
+  ext_noinit = 1;              // play and seek keep tails and state, as in the VST3/CLAP
   // Loudness maximizer: up to +12 dB of gain into a 2 ms look-ahead peak limiter
   // (ceiling -0.3 dBFS, 80 ms release), so the track gets louder without clipping.
   // At 0 nothing happens below the ceiling.

@@ -26,6 +26,7 @@ struct Params {
     int oversampling = 2;  // 0 off, 1 = 2x, 2 = 4x, 3 = 8x
     double mix = 100.0, output = 0.0;
     int link = 1;          // 0 = Stereo, 1 = Dual
+    bool delta = false;    // Listen Delta (appended in 2.7): the driven input minus the clipped signal
 };
 
 // latency in samples for an Oversampling setting (the JSFX's pdc_delay)
@@ -185,6 +186,7 @@ public:
         fMix = p.mix / 100.0;
         fGout = std::pow(10.0, p.output / 20.0);
         fLink = p.link;
+        fDelta = p.delta;
         const int os = p.oversampling;
         fOsf = os <= 0 ? 1 : os == 1 ? 2 : os == 2 ? 4 : 8;
         fLat = latencyFor(os);
@@ -319,8 +321,16 @@ public:
         const int j = (fDw - fLat + 64) % 64;
         const double dryL = fL.dr[j], dryR = fR.dr[j];
         fDw = (fDw + 1) % 64;
-        l = (dryL * (1.0 - fMix) + yl * fMix) * fGout;
-        r = (dryR * (1.0 - fMix) + yr * fMix) * fGout;
+        if (fDelta)
+        {
+            l = (dryL * fGin - yl) * fGout;
+            r = (dryR * fGin - yr) * fGout;
+        }
+        else
+        {
+            l = (dryL * (1.0 - fMix) + yl * fMix) * fGout;
+            r = (dryR * (1.0 - fMix) + yr * fMix) * fGout;
+        }
     }
 
 private:
@@ -332,6 +342,7 @@ private:
     double fE1[32] = {}, fD1[32] = {}, fE2[12] = {}, fD2[12] = {}, fE3[8] = {}, fD3[8] = {};
     Channel fL, fR;
     double fGin = 1.0, fCl = 1.0, fKt = 1.0, fKw = 0.0, fMix = 1.0, fGout = 1.0, fCg = 1.0;
+    bool fDelta = false;
     int fLink = 1, fOsf = 1, fOsPrev = -1, fLat = 0, fPad = 0, fPw = 0, fDw = 0;
 };
 

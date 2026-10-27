@@ -11,26 +11,29 @@
 
 START_NAMESPACE_DISTRHO
 
+// LIMITER tab, then BANDS / DITHER, as in maximizer_gfx.jsfx
 static const NullKnobsUI::Control kControls[] = {
-    { 0, NullKnobsUI::kKnob, "INPUT", 0, -1, true },
-    { 1, NullKnobsUI::kKnob, "CEILING", 0, -1, false },
-    { 2, NullKnobsUI::kKnob, "RELEASE", 0, -1, false },
-    { 3, NullKnobsUI::kKnob, "LOOKAHEAD", 0, -1, false },
-    { 4, NullKnobsUI::kKnob, "OUTPUT", 0, -1, false },
-    { 5, NullKnobsUI::kSelect, "LINK", 0, -1, false },
-    { 6, NullKnobsUI::kSelect, "DITHER", 1, -1, false },
-    { 7, NullKnobsUI::kSelect, "SHAPING", 1, -1, false },
-    { 8, NullKnobsUI::kSelect, "CHARACTER", 1, -1, false },
-    { 9, NullKnobsUI::kSelect, "MULTIBAND", 1, -1, false },
-    { 10, NullKnobsUI::kKnob, "LOW X", 1, -1, false },
-    { 11, NullKnobsUI::kKnob, "HIGH X", 1, -1, false },
+    { 0, NullKnobsUI::kKnob, "INPUT", 0, 0, true },
+    { 1, NullKnobsUI::kKnob, "CEILING", 0, 0, false },
+    { 2, NullKnobsUI::kKnob, "RELEASE", 0, 0, false },
+    { 3, NullKnobsUI::kKnob, "LOOKAHEAD", 0, 0, false },
+    { 4, NullKnobsUI::kKnob, "OUTPUT", 0, 0, false },
+    { 5, NullKnobsUI::kSelect, "LINK", 0, 0, false },
+    { 12, NullKnobsUI::kSelect, "TRUE PEAK", 1, 0, false },
+    { 8, NullKnobsUI::kSelect, "CHARACTER", 1, 0, false },
+    { 13, NullKnobsUI::kSelect, "LISTEN", 1, 0, false },
+    { 9, NullKnobsUI::kSelect, "MULTIBAND", 0, 1, false },
+    { 10, NullKnobsUI::kKnob, "LOW X", 0, 1, false },
+    { 11, NullKnobsUI::kKnob, "HIGH X", 0, 1, false },
+    { 6, NullKnobsUI::kSelect, "DITHER", 1, 1, false },
+    { 7, NullKnobsUI::kSelect, "SHAPING", 1, 1, false },
 };
 
 class UIMaximizer : public NullKnobsUI
 {
 public:
     UIMaximizer()
-        : NullKnobsUI({ "MAXIMIZER", "ESSENTIALS", 480, 120, nullptr, 2, nullmaximizer::kUiSliders, nullmaximizer::kNumSliders,
+        : NullKnobsUI({ "MAXIMIZER", "ESSENTIALS", 480, 120, "LIMITER|BANDS / DITHER", 2, nullmaximizer::kUiSliders, nullmaximizer::kNumSliders,
                         kControls, sizeof(kControls) / sizeof(kControls[0]), true }) {}
 
 protected:
@@ -110,6 +113,10 @@ protected:
             st += dither == 1 ? "16-BIT" : "24-BIT";
             st += value(7) >= 0.5f ? " NS" : " TPDF";
         }
+        if (value(12) >= 0.5f)
+            st = st.empty() ? "TRUE PEAK" : "TRUE PEAK / " + st;
+        if (value(13) >= 0.5f)
+            st = st.empty() ? "DELTA" : "DELTA / " + st;
         if (!st.empty())
             label(448.0f, 152.0f, ALIGN_RIGHT, 8.0f, 0.0f, theme::kMuted, st.c_str());
     }

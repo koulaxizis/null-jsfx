@@ -21,6 +21,7 @@ out_pin:Right
 options:maxmem=33554432
 
 @init
+  ext_noinit = 1;              // play and seek keep tails and state, as in the VST3/CLAP
   // Convolution reverb: the input is convolved with an impulse response (IR), the
   // recorded "fingerprint" of a space or device, using uniformly partitioned FFT
   // convolution (1024-sample blocks; this latency is reported to REAPER).

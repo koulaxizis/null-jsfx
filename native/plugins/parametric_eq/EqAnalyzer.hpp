@@ -1,5 +1,6 @@
 /*
- * NULL JSFX - the spectrum behind the curve of the EQ interfaces (Parametric EQ, Draw EQ)
+ * NULL JSFX - the spectrum behind the curve of the EQ interfaces (Parametric EQ, Draw EQ, Studio EQ)
+ * and the spectra of Reference
  * Copyright (C) 2026 Christos Koulaxizis / NULL JSFX
  * SPDX-License-Identifier: MIT
  *
@@ -52,12 +53,13 @@ public:
         }
     }
 
-    // one frame from tap (post or pre) at time now (seconds)
-    void update(const Tap& tap, bool post, double now)
+    // one frame from tap (post or pre) at time now (seconds); average = true averages each bin
+    // over about a second instead (Reference)
+    void update(const Tap& tap, bool post, double now, bool average = false)
     {
         const double dt = fLast > 0.0 ? std::max(0.0, std::min(0.5, now - fLast)) : 0.0;
         fLast = now;
-        const double rc = std::exp(-dt / 0.3);
+        const double rc = std::exp(-dt / (average ? 1.0 : 0.3));
         fSr = tap.sampleRate.load(std::memory_order_relaxed);
         if (!(fSr > 0.0))
             fSr = 48000.0;
@@ -74,20 +76,26 @@ public:
         {
             const double pw = (fRe[k] * fRe[k] + fIm[k] * fIm[k]) * 16.0 / (double(kN) * kN);
             const double s = fSp[k];
-            fSp[k] = pw > s ? pw : s * rc + pw * (1.0 - rc);
+            fSp[k] = pw > s && !average ? pw : s * rc + pw * (1.0 - rc);
         }
     }
 
-    // the dB of the column from f0 to f1 Hz
-    double bandDb(double f0, double f1) const
+    // the dB of the column from f0 to f1 Hz; mean = true takes the mean of the bins under it
+    // instead of the loudest (Reference)
+    double bandDb(double f0, double f1, bool mean = false) const
     {
         const double k0 = f0 * kN / fSr, k1 = std::min(double(kN / 2), f1 * kN / fSr);
         int a = int(std::ceil(k0));
         const int b = int(std::floor(k1));
         double p = 0.0;
         if (a <= b)
+        {
+            const int n = b - a + 1;
             for (; a <= b; ++a)
-                p = std::max(p, fSp[a]);
+                p = mean ? p + fSp[a] : std::max(p, fSp[a]);
+            if (mean)
+                p /= n;
+        }
         else
         {
             const double kc = std::min(double(kN / 2 - 1), (k0 + k1) * 0.5);

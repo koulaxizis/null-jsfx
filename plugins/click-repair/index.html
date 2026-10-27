@@ -44,7 +44,7 @@
                 </section>
                 <section class="guide-section">
                     <h2>Controls</h2>
-                    <ul class="guide-sliders"><li><span class="slider-name">Threshold</span><span class="slider-desc">0 to 100% — Detection sensitivity: 0% flags jumps 4x the running average step, 100% only flags jumps 30x larger.</span></li><li><span class="slider-name">Window</span><span class="slider-desc">1 to 50 Samples — Number of samples marked as damaged after each detected click and redrawn.</span></li></ul>
+                    <ul class="guide-sliders"><li><span class="slider-name">Threshold</span><span class="slider-desc">0 to 100% — Detection sensitivity: 0% flags jumps 4x the running average step, 100% only flags jumps 30x larger.</span></li><li><span class="slider-name">Window</span><span class="slider-desc">1 to 50 Samples — Number of samples marked as damaged after each detected click and redrawn.</span></li><li><span class="slider-name">Mode</span><span class="slider-desc">Click / Crackle — Click finds single clicks and pops (a sample&#x27;s jump against the slow running average); Crackle finds the dense small ticks of worn vinyl (the second difference, which hides the music&#x27;s low end, against a faster average, 3x to 20x).</span></li></ul>
                 </section>
                 <section class="guide-section">
                     <h2>Best uses</h2>
@@ -52,7 +52,7 @@
                 </section>
                 <section class="guide-section">
                     <h2>Properties</h2>
-                    <p class="page-props">Input → step detector (sample jump vs running average) → mark Window samples as damaged → linear interpolation between the good samples on either side → Output. Latency of 2 × Window samples, reported to REAPER for delay compensation; each channel is repaired independently.</p>
+                    <p class="page-props">Input → step detector (Click: sample jump vs running average; Crackle: second difference vs a faster average) → mark Window samples as damaged → linear interpolation between the good samples on either side → Output. Latency of 2 × Window samples, reported to REAPER for delay compensation; each channel is repaired independently.</p>
                 </section>
                 <section class="guide-section">
                     <h2>Formats</h2>
@@ -60,7 +60,7 @@
                 </section>
                 <section class="guide-section">
                     <h2>Factory presets</h2>
-                    <p class="page-list">Vinyl Crackle · Heavy Vinyl Pops · Digital Spikes · Edit Click Fix · Mouth Clicks · Archival Restore</p>
+                    <p class="page-list">Vinyl Crackle · Heavy Vinyl Pops · Digital Spikes · Edit Click Fix · Mouth Clicks · Archival Restore · Worn Vinyl Crackle · Light Crackle</p>
                 </section>
                 <section class="guide-section">
                     <h2>Try it</h2>

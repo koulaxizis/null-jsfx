@@ -54,6 +54,8 @@ if(MSVC)
 endif()
 # Every third_party/dpf/*.patch is applied on top of the pinned commit, in name order (a local --dpf
 # checkout needs them applied by hand). The reset first makes the step idempotent.
+#   null-jsfx.patch   the CLAP wrapper calls clap_host_latency::changed() only inside activate(), as
+#                     the CLAP spec requires, and no output sample is subnormal (clap-validator)
 #   state-load.patch  CLAP/VST3 state load: a string cut by a short stream read is not ended early
 file(GLOB _dpf_patches "${CMAKE_CURRENT_SOURCE_DIR}/third_party/dpf/*.patch")
 list(SORT _dpf_patches)

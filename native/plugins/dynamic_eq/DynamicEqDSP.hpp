@@ -6,6 +6,9 @@
  * Port of DATA/Effects/null_jsfx/dynamic_eq.jsfx, computed in double like EEL2: four bell bands
  * in series that only act when their band gets loud. Each band measures its own constant-peak
  * band-pass; once that level passes Threshold the band's Gain is applied, fully at 12 dB over.
+ * Appended in 2.7: Channels (Mid / Side: only that half of the mid/side pair is equalised, on
+ * both channels, the other half is added back after) and Listen Delta (the input minus the
+ * result, before Makeup).
  */
 
 #pragma once
@@ -58,6 +61,8 @@ struct Params {
     double freq[kBands] = { 200, 1000, 2000, 6000 };
     double gain[kBands] = {}, q[kBands] = { 1, 1, 1, 1 }, thresh[kBands] = { -12, -12, -12, -12 };
     double attackMs = 1, releaseMs = 100, makeupDb = 0;
+    int channels = 0; // 0 stereo, 1 mid, 2 side
+    bool delta = false;
 };
 
 inline void setupBands(const Params& p, double sr, Band* bands) noexcept
@@ -90,7 +95,23 @@ public:
     {
         for (uint32_t n = 0; n < frames; ++n)
         {
-            double l = inL[n], r = inR[n];
+            double s0 = inL[n], s1 = inR[n], other = 0.0;
+            if (fP.channels != 0)
+            {
+                const double m = (s0 + s1) * 0.5;
+                const double sd = (s0 - s1) * 0.5;
+                if (fP.channels == 1)
+                {
+                    s0 = s1 = m;
+                    other = sd;
+                }
+                else
+                {
+                    s0 = s1 = sd;
+                    other = m;
+                }
+            }
+            double l = s0, r = s1;
             for (int i = 0; i < kBands; ++i)
             {
                 const Band& b = fB[i];
@@ -105,8 +126,35 @@ public:
                 l += (A - 1) * bl;
                 r += (A - 1) * br;
             }
-            outL[n] = static_cast<T>(l * fMakeup);
-            outR[n] = static_cast<T>(r * fMakeup);
+            if (fP.delta)
+            {
+                l = s0 - l;
+                r = s1 - r;
+            }
+            else
+            {
+                l = l * fMakeup;
+                r = r * fMakeup;
+            }
+            if (fP.channels != 0)
+            {
+                // back to left / right (Delta: the processed half alone)
+                if (fP.delta)
+                    other = 0.0;
+                const double x = l;
+                if (fP.channels == 1)
+                {
+                    l = x + other;
+                    r = x - other;
+                }
+                else
+                {
+                    l = other + x;
+                    r = other - x;
+                }
+            }
+            outL[n] = static_cast<T>(l);
+            outR[n] = static_cast<T>(r);
         }
     }
 

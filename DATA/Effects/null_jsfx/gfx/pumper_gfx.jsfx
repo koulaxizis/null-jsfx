@@ -14,6 +14,7 @@ out_pin:Left
 out_pin:Right
 
 @init
+  ext_noinit = 1;              // play and seek keep tails and state, as in the VST3/CLAP
   // NULL Pumper (../pumper.jsfx) with its own interface: same audio code, plus @gfx.
   // Sidechain-style pumping locked to the project tempo: the level ducks on every beat
   // and swells back over the beat, like a compressor keyed from a four-on-the-floor kick.

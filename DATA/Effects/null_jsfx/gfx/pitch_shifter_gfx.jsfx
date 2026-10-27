@@ -17,6 +17,7 @@ out_pin:Left
 out_pin:Right
 
 @init
+  ext_noinit = 1;              // play and seek keep tails and state, as in the VST3/CLAP
   // NULL Pitch Shifter (../pitch_shifter.jsfx) with its own interface: same audio code, plus @gfx.
   // Two read taps sweep through a 60 ms delay line in opposite phase; a Hann crossfade
   // hides each tap while it jumps back, so the pitch changes without clicks.

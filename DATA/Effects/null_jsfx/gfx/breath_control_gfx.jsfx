@@ -17,6 +17,7 @@ out_pin:Left
 out_pin:Right
 
 @init
+  ext_noinit = 1;              // play and seek keep tails and state, as in the VST3/CLAP
   // NULL Breath Control (../breath_control.jsfx) with its own interface: same audio code, plus @gfx.
   // Breath reducer: a stereo-linked level detector (max of L/R power, 1 ms rise and
   // 30 ms fall smoothing) is compared with Threshold. While the level stays below Threshold

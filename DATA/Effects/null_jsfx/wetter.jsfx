@@ -12,6 +12,7 @@ out_pin:Left
 out_pin:Right
 
 @init
+  ext_noinit = 1;              // play and seek keep tails and state, as in the VST3/CLAP
   // Instant room: a compact Freeverb-style reverb (four damped feedback combs and two
   // allpass diffusers per channel, right channel slightly longer for width).
   // Amount raises the wet level (up to 45%) and the room size together.
