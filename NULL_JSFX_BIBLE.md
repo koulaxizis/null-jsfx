@@ -64,7 +64,17 @@
 ### 0.5 Standing process rules
 
 - **Bugs.** Whenever any thread finds a bug, a separate fix thread is opened right away, without asking Christos first (2026-10-19). A thread asks the coordinator to start it.
-- **Monthly audit.** On the third Friday of each month at 19:00 Athens time, Claude runs a full audit of everything, skipping nothing: all formats, Rack, Hub, installers (exe, sh, pkg), zips, presets and chains, site, docs, CI, videos, remote, plus online research. Findings come as a numbered list in Greek, and Christos decides. If the usage limit is hit, the audit continues right after the reset. It runs in the thread "Μηνιαίος έλεγχος σουίτας", and each run schedules the next one (2026-10-24) [memory].
+- **Full audit.** On the 8th of every even month (December, February, April, June, August, October) at 19:00 Athens time, starting 2026-12-08, Claude runs a full audit of everything, skipping nothing: all formats, Rack, Hub, installers (exe, sh, pkg), zips, presets and chains, site, docs, CI, videos, remote, plus online research. Each audit also:
+  - compares with the previous audit: what was fixed, what is still open, which decisions are pending;
+  - actually runs the tests, the stress tests, the builds and the audio skills, rather than only reading the code;
+  - downloads the latest release and checks its zips and installers;
+  - checks the site's links, speed, SEO and mobile view;
+  - checks for new versions of DPF, the VST3 and CLAP SDKs, Tauri and REAPER;
+  - answers Christos's standing question: what could we add so NULL JSFX is fully competitive with the big plugin companies and covers every need of a home or pro studio for engineers and producers (it starts from the gap analysis of 2026-10-27 and does not repeat it);
+  - ends by asking whether the audit task itself can be improved further.
+
+  The full report is a Claude Doc, with a short summary in the thread "Μηνιαίος έλεγχος σουίτας". Findings come as a numbered list in Greek, and Christos decides. If the usage limit is hit, the audit continues right after the reset. It runs from a recurring scheduled task; a run does not schedule the next one (2026-10-26, 2026-10-27) [memory].
+- **Memory export.** Every quarter, on the 10th of January, April, July and October at 12:00 Athens time, Claude exports the project memory that changed since the previous export, with proposed text for the project Goal and Instructions, which Christos pastes. It runs from a recurring scheduled task, in the thread "Μηνιαία εξαγωγή μνήμης" (2026-10-26) [memory].
 - **Project instructions.** When a lasting decision is made, Claude proposes the text for the project instructions. Christos pastes it.
 
 ---
@@ -624,6 +634,8 @@ Then run every test of Part V that the PR touches, merge it once CI is green, an
 
 Format: **date · topic** — the decision. (Who approved it, and the source.) Decisions made before this Bible came from the project's memory notes and the PRs, and were not re-checked one by one.
 
+- **2026-10-27 · Full audit** — the audit moves from the third Friday of each month to the 8th of every even month at 19:00 Athens time, from 2026-12-08, as a recurring scheduled task that does not reschedule itself. It adds the standing question on what is missing to compete with the big plugin companies, and the extended checklist in 0.5. (Christos, 2026-10-26 and 2026-10-27.)
+- **2026-10-26 · Memory export** — quarterly, on the 10th of January, April, July and October at 12:00 Athens time, covering what changed since the previous export (0.5). (Christos.)
 - **2026-10-26 · Audio-thread spikes** — Christos answered "yes to all" to the design (doc "Audio-thread spikes: design"): Convolution builds new IRs step by step in every form (JSFX, GFX, native, Rack, web); on an IR change the reverb tail carries on with a one-block crossfade instead of the old wet dropout (a deliberate sound change at the moment of a change, R17); the fix ships in a patch step, 2.6.1, with the other audit fixes. (Christos, thread "Διόρθωση καθυστερήσεων στο audio thread".)
 - **2026-10-26 · Instrument MIDI passthrough** — all 9 instruments pass on every MIDI message they receive, in every format, so two instruments can be layered on one track. Audio unchanged. (Christos approved audit proposal P1.)
 - **2026-10-26 · Bible answers** — Christos, in the Bible thread:
@@ -794,3 +806,9 @@ entry and the Bible delta.
 - **Decisions:** Christos approved the proposal on 2026-10-26 ("Ναι").
 - **Files:** `.github/workflows/test.yml`, `native.yml`, `hub.yml`, `web.yml`, `NULL_JSFX_BIBLE.md` (Part V.2, this entry).
 - **Tests:** the four files parse as YAML and the triggers and groups were checked by script; the `if:` conditions on `release` / `release_tag` were read and do not depend on push. The PR's own checks are the live test: only `pull_request` runs should appear for this branch.
+
+### 2026-10-27 — Bible — routines in 0.5
+- **Fixes:** Part 0.5 still described the old monthly audit (third Friday, each run scheduling the next). It now gives the full audit on the 8th of every even month at 19:00 Athens time from 2026-12-08, run by a recurring scheduled task, with the standing competitiveness question and the extended checklist, and the quarterly memory export on the 10th of January, April, July and October at 12:00.
+- **Decisions:** Part VII, "Full audit" and "Memory export". No plugin, DSP or site file changed.
+- **Files:** `NULL_JSFX_BIBLE.md` (0.5, VII, this entry).
+- **Tests:** run locally: `tools/build_bible.py --check` (up to date), `tests/lint.py` (pass) and the Part X order check from PR #67 (pass). CI on the PR.
