@@ -23,6 +23,8 @@ in_pin:Right
 out_pin:Left
 out_pin:Right
 
+options:maxmem=33554432
+
 @init
   // NULL Tape Echo (../tape_echo.jsfx) with its own interface: same audio code, plus @gfx.
   // A multi-head tape echo. One tape loop per channel is written by the record head and read

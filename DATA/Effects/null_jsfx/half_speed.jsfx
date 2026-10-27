@@ -16,6 +16,8 @@ in_pin:Right
 out_pin:Left
 out_pin:Right
 
+options:maxmem=33554432
+
 @init
   // Real-time halftime. A cycle lasts Length / Speed (two Lengths at 1/2): from its start the
   // input is recorded into the buffer while it is played back from the cycle's start at Speed,
