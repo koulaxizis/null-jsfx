@@ -12,6 +12,7 @@ out_pin:Left
 out_pin:Right
 
 @init
+  ext_noinit = 1;              // play and seek keep tails and state, as in the VST3/CLAP
   // Tilts the whole spectrum around 700 Hz: positive values brighten (treble up, bass
   // down), negative values darken (bass up, treble down), up to 6 dB each way. The
   // centre (0) is flat.

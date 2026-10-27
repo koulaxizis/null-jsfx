@@ -16,6 +16,7 @@ out_pin:Left
 out_pin:Right
 
 @init
+  ext_noinit = 1;              // play and seek keep tails and state, as in the VST3/CLAP
   // Rides the gain like an engineer on a fader: the average (RMS) level is measured
   // over ~300 ms and the gain moves slowly, at Speed, toward whatever brings that level
   // to Target. Gain changes are limited to Max Boost / Max Cut, and when the signal

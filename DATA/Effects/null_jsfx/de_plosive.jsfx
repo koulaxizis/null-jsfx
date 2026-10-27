@@ -16,6 +16,7 @@ out_pin:Left
 out_pin:Right
 
 @init
+  ext_noinit = 1;              // play and seek keep tails and state, as in the VST3/CLAP
   // Removes the low-frequency bursts of P and B sounds. A Linkwitz-Riley crossover (24 dB/oct,
   // in phase, sums back flat) splits the signal at Frequency. A fast envelope of the low band
   // (1 ms attack, 30 ms release, both channels linked) is compared with the same envelope of

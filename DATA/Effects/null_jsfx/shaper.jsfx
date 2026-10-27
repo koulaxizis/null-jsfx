@@ -35,6 +35,7 @@ out_pin:Left
 out_pin:Right
 
 @init
+  ext_noinit = 1;              // play and seek keep tails and state, as in the VST3/CLAP
   // Waveshaper with a drawable transfer curve. Drive (gain) and Bias (a DC offset, for even
   // harmonics) go into the curve, which runs at 1, 2 or 4 times the sample rate (Oversampling,
   // the halfband FIR stages of NULL Clipper: 63 and 23 taps) so its harmonics do not fold back

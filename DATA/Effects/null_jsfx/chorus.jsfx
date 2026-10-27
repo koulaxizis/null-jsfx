@@ -20,6 +20,7 @@ out_pin:Left
 out_pin:Right
 
 @init
+  ext_noinit = 1;              // play and seek keep tails and state, as in the VST3/CLAP
   // Classic: Voices taps on one delay line per channel, their sine LFOs spread evenly in
   // phase; Stereo Spread shifts the right channel's LFOs by up to half the voice spacing.
   // Dimension: two taps (left and right line) swept in opposite phase by a triangle, so the

@@ -23,6 +23,7 @@ out_pin:Left
 out_pin:Right
 
 @init
+  ext_noinit = 1;              // play and seek keep tails and state, as in the VST3/CLAP
   // Stereo Schroeder/Freeverb-style reverb: the mono sum feeds four damped
   // feedback combs per side (the right side's delays are 23 samples longer at
   // 44.1 kHz), then two series all-passes per side. All lengths are scaled by

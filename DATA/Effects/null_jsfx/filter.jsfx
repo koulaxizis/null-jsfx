@@ -23,6 +23,7 @@ out_pin:Left
 out_pin:Right
 
 @init
+  ext_noinit = 1;              // play and seek keep tails and state, as in the VST3/CLAP
   ic1_l = 0; ic2_l = 0;
   ic1_r = 0; ic2_r = 0;
   // Slope 24 dB adds a second SVF stage (same mode, Butterworth Q 0.707) after the first;

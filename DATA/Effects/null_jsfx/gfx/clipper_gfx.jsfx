@@ -20,6 +20,7 @@ out_pin:Left
 out_pin:Right
 
 @init
+  ext_noinit = 1;              // play and seek keep tails and state, as in the VST3/CLAP
   // NULL Clipper (../clipper.jsfx) with its own interface: same audio code, plus @gfx.
   // Clips peaks at Ceiling. Input drives the signal into the clipper; Knee rounds the corner
   // (0 = hard clip; above it the part of the wave over Ceiling x (1 - Knee) bends into the

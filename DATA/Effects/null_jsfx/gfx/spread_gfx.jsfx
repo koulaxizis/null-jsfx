@@ -14,6 +14,7 @@ out_pin:Left
 out_pin:Right
 
 @init
+  ext_noinit = 1;              // play and seek keep tails and state, as in the VST3/CLAP
   // NULL Spread (../spread.jsfx) with its own interface: same audio code, plus @gfx.
   // Widens the stereo image while staying mono-compatible: a delayed, high-passed copy
   // of the mid signal is added to the left and subtracted from the right. When the mix

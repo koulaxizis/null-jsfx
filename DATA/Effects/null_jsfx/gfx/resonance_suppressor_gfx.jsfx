@@ -23,6 +23,7 @@ out_pin:Left
 out_pin:Right
 
 @init
+  ext_noinit = 1;              // play and seek keep tails and state, as in the VST3/CLAP
   // NULL Resonance Suppressor (../resonance_suppressor.jsfx) with its own interface: same audio code, plus @gfx.
   // Dynamic resonance suppression: finds the frequencies that stick out of the sound at each
   // moment and turns down just those. Every 512 samples the last 2048 of both channels go

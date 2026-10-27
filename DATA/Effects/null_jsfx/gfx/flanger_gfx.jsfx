@@ -21,6 +21,7 @@ out_pin:Left
 out_pin:Right
 
 @init
+  ext_noinit = 1;              // play and seek keep tails and state, as in the VST3/CLAP
   // NULL Flanger (../flanger.jsfx) with its own interface: same audio code, plus @gfx.
   // A sine LFO sweeps the delay from Manual up to Manual + Depth; Stereo Phase offsets the
   // right channel's LFO. Tempo Sync sets one LFO cycle to a note at the host tempo, locked

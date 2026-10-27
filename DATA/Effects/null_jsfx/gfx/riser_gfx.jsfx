@@ -14,6 +14,7 @@ out_pin:Left
 out_pin:Right
 
 @init
+  ext_noinit = 1;              // play and seek keep tails and state, as in the VST3/CLAP
   // NULL Riser (../riser.jsfx) with its own interface: same audio code, plus @gfx.
   // Build-up in one control: automate Intensity from 0 to 100 into a drop.
   //   - a resonant high-pass climbs from 20 Hz to 2.5 kHz (exponential, so the sweep sounds even),
