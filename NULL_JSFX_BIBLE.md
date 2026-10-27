@@ -192,7 +192,7 @@ Each area has one short paragraph here. The details are in the README it links t
 
 ### II.2 `native/` — VST3 and CLAP (DPF)
 
-- **Build:** one CMake project (`native/CMakeLists.txt`, project version = the suite version) that fetches DPF at a pinned commit. `native/scripts/build.sh` (`--test`, `--plugins "a;b"`, `--dpf DIR`) puts the output in `native/dist/{VST3,CLAP}/NULL JSFX/`. Bundles are named `null_jsfx_<name>.vst3`/`.clap`.
+- **Build:** one CMake project (`native/CMakeLists.txt`, project version = the suite version) that fetches DPF at a pinned commit and applies every `native/third_party/dpf/*.patch` on top, in name order (a local `--dpf` checkout needs them applied by hand). `native/scripts/build.sh` (`--test`, `--plugins "a;b"`, `--dpf DIR`) puts the output in `native/dist/{VST3,CLAP}/NULL JSFX/`. Bundles are named `null_jsfx_<name>.vst3`/`.clap`.
 - **`native/common/`:**
   - `NullPlugin.hpp`: `NullOneSliderPlugin` and `NullMultiPlugin`.
   - `NullUI.hpp`: `NullOneSliderUI` and `NullKnobsUI`, the twins of `null_gfx.jsfx-inc`.
@@ -205,7 +205,7 @@ Each area has one short paragraph here. The details are in the README it links t
   - `fonts/`: Noto Sans, OFL.
 - **`native/plugins/<name>/`:** `DistrhoPluginInfo.h`, `<Name>DSP.hpp` (framework-free), `<Name>Sliders.hpp` (multi-slider plugins), `Plugin.cpp`, `UI.cpp`, `FactoryPresets.hpp` (generated), and optionally `compare_args.txt`.
 - **`native/plugins/rack/`:** the Rack, a host for up to 8 modules. It has lanes A/B, a feedback loop, 8 macros, 2 LFOs, an envelope follower and a 16-step sequencer, with up to 32 modulation routes. The engine is `RackEngine.hpp`, there is one adapter per plugin in `modules/<id>.hpp` (95 today), `RackPresets.hpp` is generated with 86 presets including Init, and the tests are in `test/`. There is no rack.jsfx.
-- **`native/test/`:** `compare.cpp` (the JSFX in ysfx against the CLAP build), `module_info`.
+- **`native/test/`:** `compare.cpp` (the JSFX in ysfx against the CLAP build), `state_test.cpp` (the CLAP state round trip), `module_info`.
 - Guide: [native/README.md](native/README.md).
 
 ### II.3 `web/` — the web runtime
@@ -503,6 +503,7 @@ The recipes live in the READMEs. This Part says where they are and lists the ste
 | GFX = JSFX | ctest `gfx_<name>` | the audio code is identical, tolerance 0 |
 | Native = JSFX | ctest `compare_<name>` | the CLAP matches the JSFX within 1e-5 at 44.1 and 96 kHz: defaults, every slider at min and max, random sets; MIDI effects compare every message byte for byte at the same sample; instruments play notes with the transport at 120 bpm |
 | Presets | ctest `presets_<name>` | every factory preset renders the same in the JSFX and the CLAP |
+| State | ctest `state_<name>` | random parameter values come back exactly after a save and a load through streams of 1 to 4096 bytes per call, with the stack filled with 0x00 and 0xfe first; the state saved again is the same bytes |
 | Rack module | ctest `module_<id>` | each adapter matches its JSFX, like `compare_` |
 | Rack engine | ctest `rack_test` | every preset renders; a single slot is bit-exact with its module; band splits sum flat; channel routing; modulation; lanes line up; the loop decays; the sequencer steps; the ducker's key; bit-for-bit against `RackEngineV1.hpp` (R12) |
 | pluginval | `native.yml`, Linux | every VST3 at strictness 5 |
@@ -617,6 +618,7 @@ Then run every test of Part V that the PR touches, merge it once CI is green, an
 
 Format: **date · topic** — the decision. (Who approved it, and the source.) Decisions made before this Bible came from the project's memory notes and the PRs, and were not re-checked one by one.
 
+- **2026-10-27 · DPF patches** — fixes to DPF itself go in `native/third_party/dpf/*.patch`, applied on the pinned commit by CMake, until upstream has them. (Claude, state-load fix; the latency patch of PR #57 uses the same folder.)
 - **2026-10-26 · Bible answers** — Christos, in the Bible thread:
   - Claude merges its own PRs once CI is green, in general and for this PR (it was "Christos merges, except where he says so").
   - The docs inconsistencies are fixed in a separate PR after the Bible.
@@ -748,3 +750,9 @@ entry and the Bible delta.
 - **Changes:** `tests/lint.py` gains `check_versions()`: the `llms.txt` `- Version:` line, `#release-version` and "Download NULL JSFX v<v>" in `index.html` must match `FOOTER`, otherwise lint fails (so a stale `llms.txt` like the 2.4 fixed in #48 cannot come back). `README.md` line 5 says every plugin has GFX and VST3/CLAP versions (VIII.A A1). `CLAUDE.md` and Part VI.1 mention the check.
 - **Files:** `tests/lint.py`, `README.md`, `CLAUDE.md`, `NULL_JSFX_BIBLE.md`.
 - **Tests:** lint on all 226 plugin files: 0 errors; with `llms.txt` set back to 2.4 lint reports the mismatch and exits 1; `build_site.py --check` up to date. CI on the push run of the branch: Test plugins and VST3/CLAP (all three OSes, installers) green.
+
+### 2026-10-27 — native (no version change) — CLAP and VST3 state load with short stream reads
+- **Fixes:** DPF's state parser (CLAP `stateLoad`, VST3 `setState`) reads the stream in pieces into a 512-byte buffer and puts a temporary `\0` at `buffer[read]` to cut each string. After the cut it tested `buffer[i] == '\0'` with `i == read` too, and there sat the byte left from an earlier read, or uninitialised stack. When that byte was `\0`, a key or value split across two reads was ended early: values came back wrong, keys and values swapped, or the load failed. Hosts that hand the state over in small reads hit it: clap-validator's `state-reproducibility-buffered` (17 bytes per read) failed on 10 CLAPs on Linux and about 70 on Windows, with a different parameter each time. `native/third_party/dpf/state-load.patch` tests `i < read && buffer[i] == '\0'`. Saved states keep their format and meaning: only the reading changed.
+- **Changes:** `native/CMakeLists.txt` applies every `native/third_party/dpf/*.patch` in name order after a reset to the pinned SHA, with `core.autocrlf=false`. New ctest `state_<name>` (`native/test/state_test.cpp`) for every plugin.
+- **Files:** `native/third_party/dpf/state-load.patch`, `native/third_party/dpf/.gitattributes`, `native/CMakeLists.txt`, `native/test/state_test.cpp`, `native/test/CMakeLists.txt`, this Bible (II.2, V.1, VII).
+- **Tests:** see the PR. Before the patch, `state_test` failed for all 11 CLAPs tried (Tilt too, which CI had not flagged); after it they pass. `state_rack` also needs PR #53 (the Rack's global parameter symbols).

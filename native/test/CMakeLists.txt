@@ -3,7 +3,8 @@
 #
 # Per plugin: compare_<name> runs DATA/Effects/null_jsfx/<name>.jsfx against the CLAP build,
 # presets_<name> does the same with each factory preset (<name>.jsfx.rpl), gfx_<name> runs it
-# against DATA/Effects/null_jsfx/gfx/<name>_gfx.jsfx. A plugin can pass
+# against DATA/Effects/null_jsfx/gfx/<name>_gfx.jsfx, state_<name> checks its state round trip
+# (state_test.cpp, needs no ysfx). A plugin can pass
 # extra arguments (e.g. --tol 1e-4) in plugins/<name>/compare_args.txt.
 
 set(YSFX_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/../../tests/.build/ysfx" CACHE PATH "ysfx source tree with build/libysfx.a")
@@ -15,6 +16,15 @@ target_link_libraries(compare PRIVATE "${YSFX_ROOT}/build/libysfx.a" ${CMAKE_DL_
 if(APPLE)
   # ysfx is built for the host arch only; the plugins themselves stay universal.
   set_target_properties(compare PROPERTIES OSX_ARCHITECTURES "${CMAKE_HOST_SYSTEM_PROCESSOR}")
+endif()
+
+# state_test: state_<name> saves random parameter values and loads them back through streams that
+# move a few bytes per call (like clap-validator's state-reproducibility-buffered)
+add_executable(state_test state_test.cpp)
+target_include_directories(state_test PRIVATE "${dpf_SOURCE_DIR}/distrho/src")
+target_link_libraries(state_test PRIVATE ${CMAKE_DL_LIBS})
+if(APPLE)
+  set_target_properties(state_test PROPERTIES OSX_ARCHITECTURES "${CMAKE_HOST_SYSTEM_PROCESSOR}")
 endif()
 
 # module_compare: compare.cpp with the Rack's modules linked in; module_<id> checks each module
@@ -74,6 +84,10 @@ foreach(_p ${NULL_BUILT_PLUGINS})
     if(EXISTS "${_jsfx_dir}/${_p}.jsfx.rpl")
       add_test(NAME presets_${_p} COMMAND compare "${_jsfx_dir}/${_p}.jsfx" "${_bin}" ${_args} --rpl "${_jsfx_dir}/${_p}.jsfx.rpl")
     endif()
+  endif()
+  # the saved state comes back exactly, whatever size the host's stream reads and writes are
+  if(TARGET null_jsfx_${_p}-clap)
+    add_test(NAME state_${_p} COMMAND state_test "${_bin}")
   endif()
   if(EXISTS "${_jsfx_dir}/gfx/${_p}_gfx.jsfx")
     add_test(NAME gfx_${_p} COMMAND compare "${_jsfx_dir}/${_p}.jsfx" "${_jsfx_dir}/gfx/${_p}_gfx.jsfx" --tol 0)
