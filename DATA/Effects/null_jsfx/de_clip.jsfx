@@ -15,6 +15,7 @@ out_pin:Left
 out_pin:Right
 
 @init
+  ext_noinit = 1;              // play and seek keep tails and state, as in the VST3/CLAP
   // Rebuilds clipped peaks. A run of at least Min Length samples in a row at or above Clip
   // Level (one channel at a time) counts as clipped; it is redrawn with the cubic through the
   // two good samples on either side of it, kept on the side of the clip level it was on and

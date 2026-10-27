@@ -20,6 +20,7 @@ out_pin:Left
 out_pin:Right
 
 @init
+  ext_noinit = 1;              // play and seek keep tails and state, as in the VST3/CLAP
   // NULL Crossfeed (../crossfeed.jsfx) with its own interface: same audio code, plus @gfx.
   // Headphone monitoring that sounds less like the music sits inside the head.
   // Crossfeed: Bauer's stereophonic-to-binaural filter as libbs2b computes it. Each ear gets its

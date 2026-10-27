@@ -433,7 +433,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 7,
-   "bytes": 47359
+   "bytes": 47376
   },
   {
    "id": "de_clip",
@@ -447,7 +447,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 4,
-   "bytes": 36415
+   "bytes": 36435
   },
   {
    "id": "de_hum",
