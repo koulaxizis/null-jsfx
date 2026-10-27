@@ -20,6 +20,7 @@ static const NullKnobsUI::Control kControls[] = {
     { 7, NullKnobsUI::kKnob, "EMPHASIS", 1, -1, true },
     { 6, NullKnobsUI::kSelect, "OVERSAMPLE", 1, -1, false },
     { 5, NullKnobsUI::kKnob, "OUTPUT", 1, -1, false },
+    { 8, NullKnobsUI::kSelect, "CHANNELS", 1, -1, false },
 };
 
 class UISaturation : public NullKnobsUI

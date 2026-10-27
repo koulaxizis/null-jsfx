@@ -36,6 +36,7 @@ out_pin:Left
 out_pin:Right
 
 @init
+  ext_noinit = 1;              // play and seek keep tails and state, as in the VST3/CLAP
   // Five fully parametric bands in series. Each band can be any of eight RBJ filter
   // shapes. Mode: Bypass skips the band; Solo plays only what that band's frequency
   // and Q select (band-pass), to find problem frequencies.

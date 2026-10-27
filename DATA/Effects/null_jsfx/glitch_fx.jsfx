@@ -26,6 +26,7 @@ out_pin:Left
 out_pin:Right
 
 @init
+  ext_noinit = 1;              // play and seek keep tails and state, as in the VST3/CLAP
   // Every 1/Rate seconds a new "event" starts. At each event the plugin grabs the most
   // recent slice of audio (Stutter Length, in note values at the project tempo) and
   // loops it until the next event. On top of that loop, each switch adds a variation:

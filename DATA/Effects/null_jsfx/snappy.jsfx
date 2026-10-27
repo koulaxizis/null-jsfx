@@ -12,6 +12,7 @@ out_pin:Left
 out_pin:Right
 
 @init
+  ext_noinit = 1;              // play and seek keep tails and state, as in the VST3/CLAP
   // Transient punch: a fast envelope (1 ms attack) is compared with a slow one (25 ms
   // attack); where the fast one runs ahead there is a hit, and that part is boosted
   // (up to +9 dB) while the sustain is trimmed slightly (up to -3 dB). Stereo-linked.

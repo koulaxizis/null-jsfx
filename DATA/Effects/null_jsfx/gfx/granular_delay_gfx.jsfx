@@ -22,6 +22,7 @@ out_pin:Left
 out_pin:Right
 
 @init
+  ext_noinit = 1;              // play and seek keep tails and state, as in the VST3/CLAP
   // NULL Granular Delay (../granular_delay.jsfx) with its own interface: same audio code, plus @gfx.
   // A delay that plays back in small grains. Density grains per second are started;
   // each one reads a short window (Grain Size) from Delay Time ago, randomly moved by

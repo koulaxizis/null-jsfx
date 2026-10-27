@@ -102,8 +102,8 @@ private:
     {
         fDsp.setParams(value(0), value(1), value(2), value(3), value(4), value(5) >= 0.5f,
                        int(std::lround(value(6))), value(7) >= 0.5f, int(std::lround(value(8))), value(9) >= 0.5f,
-                       std::round(value(10)), std::round(value(11)));
-        setLatency(uint32_t(fDsp.latency())); // pdc_delay = look
+                       std::round(value(10)), std::round(value(11)), value(12) >= 0.5f, value(13) >= 0.5f);
+        setLatency(uint32_t(fDsp.latency())); // pdc_delay = look (+ 6 with True Peak)
     }
 
     nullmaximizer::MaximizerProcessor fDsp;

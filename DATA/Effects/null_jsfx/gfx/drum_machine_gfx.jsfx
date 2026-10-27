@@ -81,6 +81,7 @@ out_pin:Perc Left
 out_pin:Perc Right
 
 @init
+  ext_noinit = 1;              // play and seek keep tails and state, as in the VST3/CLAP
   // NULL Drum Machine (../drum_machine.jsfx) with its own interface: same audio code, plus @gfx.
   // A drum machine with ten synthesized voices (no samples) and a 16-step sequencer that
   // follows the host's tempo and transport. MIDI notes (General MIDI drum map) play the voices

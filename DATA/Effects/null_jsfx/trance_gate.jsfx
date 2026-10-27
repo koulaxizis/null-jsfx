@@ -35,6 +35,7 @@ out_pin:Left
 out_pin:Right
 
 @init
+  ext_noinit = 1;              // play and seek keep tails and state, as in the VST3/CLAP
   // 16-step gate. Sync: one step = Step Length at the host tempo; while the transport
   // plays, the step is taken from beat_position so the pattern stays locked to the bar
   // grid (step 1 on every bar downbeat in 4/4). Stopped, it free-runs at the host tempo.

@@ -8,26 +8,26 @@ namespace nullpresets {
 
 struct FactoryPreset {
     const char* name;
-    float values[12];
+    float values[14];
 };
 
 static const FactoryPreset kPresets[] = {
-    { "Default", { 0.0f, -0.3f, 50.0f, 2.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 150.0f, 4000.0f } },
-    { "Transparent Master", { 3.0f, -1.0f, 100.0f, 5.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 150.0f, 4000.0f } },
-    { "Loud Master", { 6.0f, -1.0f, 60.0f, 5.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 150.0f, 4000.0f } },
-    { "Punchy Dance Master", { 7.0f, -0.5f, 30.0f, 2.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 150.0f, 4000.0f } },
-    { "Acoustic Gentle", { 2.0f, -1.0f, 200.0f, 5.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 150.0f, 4000.0f } },
-    { "Bus Peak Control", { 0.0f, -1.0f, 80.0f, 3.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 150.0f, 4000.0f } },
-    { "Stem Level Up", { 4.0f, -0.3f, 50.0f, 2.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 150.0f, 4000.0f } },
-    { "CD Master 16 Bit", { 4.0f, -0.3f, 80.0f, 5.0f, 0.0f, 1.0f, 1.0f, 1.0f, 0.0f, 0.0f, 150.0f, 4000.0f } },
-    { "Bounce 24 Bit", { 3.0f, -1.0f, 80.0f, 5.0f, 0.0f, 1.0f, 2.0f, 0.0f, 0.0f, 0.0f, 150.0f, 4000.0f } },
-    { "Punchy Loud Master", { 7.0f, -1.0f, 60.0f, 5.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 150.0f, 4000.0f } },
-    { "Warm Master", { 4.0f, -1.0f, 100.0f, 5.0f, 0.0f, 1.0f, 0.0f, 0.0f, 2.0f, 0.0f, 150.0f, 4000.0f } },
-    { "Multiband Master", { 5.0f, -1.0f, 80.0f, 5.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f, 150.0f, 4000.0f } },
-    { "Bass Heavy Multiband", { 6.0f, -1.0f, 100.0f, 5.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f, 120.0f, 5000.0f } },
-    { "Punchy Multiband Club", { 8.0f, -0.5f, 40.0f, 3.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f, 150.0f, 4000.0f } },
+    { "Default", { 0.0f, -0.3f, 50.0f, 2.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 150.0f, 4000.0f, 0.0f, 0.0f } },
+    { "Transparent Master", { 3.0f, -1.0f, 100.0f, 5.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 150.0f, 4000.0f, 0.0f, 0.0f } },
+    { "Loud Master", { 6.0f, -1.0f, 60.0f, 5.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 150.0f, 4000.0f, 0.0f, 0.0f } },
+    { "Punchy Dance Master", { 7.0f, -0.5f, 30.0f, 2.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 150.0f, 4000.0f, 0.0f, 0.0f } },
+    { "Acoustic Gentle", { 2.0f, -1.0f, 200.0f, 5.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 150.0f, 4000.0f, 0.0f, 0.0f } },
+    { "Bus Peak Control", { 0.0f, -1.0f, 80.0f, 3.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 150.0f, 4000.0f, 0.0f, 0.0f } },
+    { "Stem Level Up", { 4.0f, -0.3f, 50.0f, 2.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 150.0f, 4000.0f, 0.0f, 0.0f } },
+    { "CD Master 16 Bit", { 4.0f, -0.3f, 80.0f, 5.0f, 0.0f, 1.0f, 1.0f, 1.0f, 0.0f, 0.0f, 150.0f, 4000.0f, 0.0f, 0.0f } },
+    { "Bounce 24 Bit", { 3.0f, -1.0f, 80.0f, 5.0f, 0.0f, 1.0f, 2.0f, 0.0f, 0.0f, 0.0f, 150.0f, 4000.0f, 0.0f, 0.0f } },
+    { "Punchy Loud Master", { 7.0f, -1.0f, 60.0f, 5.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 150.0f, 4000.0f, 0.0f, 0.0f } },
+    { "Warm Master", { 4.0f, -1.0f, 100.0f, 5.0f, 0.0f, 1.0f, 0.0f, 0.0f, 2.0f, 0.0f, 150.0f, 4000.0f, 0.0f, 0.0f } },
+    { "Multiband Master", { 5.0f, -1.0f, 80.0f, 5.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f, 150.0f, 4000.0f, 0.0f, 0.0f } },
+    { "Bass Heavy Multiband", { 6.0f, -1.0f, 100.0f, 5.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f, 120.0f, 5000.0f, 0.0f, 0.0f } },
+    { "Punchy Multiband Club", { 8.0f, -0.5f, 40.0f, 3.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f, 150.0f, 4000.0f, 0.0f, 0.0f } },
 };
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
-static constexpr uint32_t kNumValues = 12;
+static constexpr uint32_t kNumValues = 14;
 
 } // namespace nullpresets

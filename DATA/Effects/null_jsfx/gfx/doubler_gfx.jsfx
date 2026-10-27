@@ -14,6 +14,7 @@ out_pin:Left
 out_pin:Right
 
 @init
+  ext_noinit = 1;              // play and seek keep tails and state, as in the VST3/CLAP
   // NULL Doubler (../doubler.jsfx) with its own interface: same audio code, plus @gfx.
   // Automatic double tracking: two copies of the input, each delayed 12-30 ms with a
   // slow, slightly different pitch drift (a few cents), are placed left and right

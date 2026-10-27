@@ -1,1 +1,111 @@
-{}
+{
+  "studio_eq": {
+    "card_desc": "Eight-Band EQ with Mid/Side and Linear Phase",
+    "keywords": "studio eq equalizer parametric 8 band eight band bell shelf low cut high cut high pass low pass 96 db notch band pass mid side m/s left right linear phase auto gain spectrum analyzer mixing mastering",
+    "slider_desc": [
+      "Band 1 shape: Off, Bell, Low Shelf, High Shelf, Low Cut, High Cut, Notch or Band Pass.",
+      "Band 1 frequency (10 Hz to 30 kHz, log scale); drag the band's node across the display.",
+      "Band 1 gain (-30 to +30 dB) for a bell or shelf; drag the node up or down.",
+      "Band 1 Q (0.1 to 18): the width of a bell, notch or band pass, the steepness of a shelf; on a cut, the resonance at the corner (0.71 = flat Butterworth).",
+      "Band 1 slope for Low Cut and High Cut: 6, 12, 18, 24, 36, 48, 72 or 96 dB per octave.",
+      "What band 1 works on: both channels (Stereo), the Mid, the Side, only the Left or only the Right.",
+      "Band 2 shape: Off, Bell, Low Shelf, High Shelf, Low Cut, High Cut, Notch or Band Pass.",
+      "Band 2 frequency (10 Hz to 30 kHz, log scale); drag the band's node across the display.",
+      "Band 2 gain (-30 to +30 dB) for a bell or shelf; drag the node up or down.",
+      "Band 2 Q (0.1 to 18): the width of a bell, notch or band pass, the steepness of a shelf; on a cut, the resonance at the corner (0.71 = flat Butterworth).",
+      "Band 2 slope for Low Cut and High Cut: 6, 12, 18, 24, 36, 48, 72 or 96 dB per octave.",
+      "What band 2 works on: both channels (Stereo), the Mid, the Side, only the Left or only the Right.",
+      "Band 3 shape: Off, Bell, Low Shelf, High Shelf, Low Cut, High Cut, Notch or Band Pass.",
+      "Band 3 frequency (10 Hz to 30 kHz, log scale); drag the band's node across the display.",
+      "Band 3 gain (-30 to +30 dB) for a bell or shelf; drag the node up or down.",
+      "Band 3 Q (0.1 to 18): the width of a bell, notch or band pass, the steepness of a shelf; on a cut, the resonance at the corner (0.71 = flat Butterworth).",
+      "Band 3 slope for Low Cut and High Cut: 6, 12, 18, 24, 36, 48, 72 or 96 dB per octave.",
+      "What band 3 works on: both channels (Stereo), the Mid, the Side, only the Left or only the Right.",
+      "Band 4 shape: Off, Bell, Low Shelf, High Shelf, Low Cut, High Cut, Notch or Band Pass.",
+      "Band 4 frequency (10 Hz to 30 kHz, log scale); drag the band's node across the display.",
+      "Band 4 gain (-30 to +30 dB) for a bell or shelf; drag the node up or down.",
+      "Band 4 Q (0.1 to 18): the width of a bell, notch or band pass, the steepness of a shelf; on a cut, the resonance at the corner (0.71 = flat Butterworth).",
+      "Band 4 slope for Low Cut and High Cut: 6, 12, 18, 24, 36, 48, 72 or 96 dB per octave.",
+      "What band 4 works on: both channels (Stereo), the Mid, the Side, only the Left or only the Right.",
+      "Band 5 shape: Off, Bell, Low Shelf, High Shelf, Low Cut, High Cut, Notch or Band Pass.",
+      "Band 5 frequency (10 Hz to 30 kHz, log scale); drag the band's node across the display.",
+      "Band 5 gain (-30 to +30 dB) for a bell or shelf; drag the node up or down.",
+      "Band 5 Q (0.1 to 18): the width of a bell, notch or band pass, the steepness of a shelf; on a cut, the resonance at the corner (0.71 = flat Butterworth).",
+      "Band 5 slope for Low Cut and High Cut: 6, 12, 18, 24, 36, 48, 72 or 96 dB per octave.",
+      "What band 5 works on: both channels (Stereo), the Mid, the Side, only the Left or only the Right.",
+      "Band 6 shape: Off, Bell, Low Shelf, High Shelf, Low Cut, High Cut, Notch or Band Pass.",
+      "Band 6 frequency (10 Hz to 30 kHz, log scale); drag the band's node across the display.",
+      "Band 6 gain (-30 to +30 dB) for a bell or shelf; drag the node up or down.",
+      "Band 6 Q (0.1 to 18): the width of a bell, notch or band pass, the steepness of a shelf; on a cut, the resonance at the corner (0.71 = flat Butterworth).",
+      "Band 6 slope for Low Cut and High Cut: 6, 12, 18, 24, 36, 48, 72 or 96 dB per octave.",
+      "What band 6 works on: both channels (Stereo), the Mid, the Side, only the Left or only the Right.",
+      "Band 7 shape: Off, Bell, Low Shelf, High Shelf, Low Cut, High Cut, Notch or Band Pass.",
+      "Band 7 frequency (10 Hz to 30 kHz, log scale); drag the band's node across the display.",
+      "Band 7 gain (-30 to +30 dB) for a bell or shelf; drag the node up or down.",
+      "Band 7 Q (0.1 to 18): the width of a bell, notch or band pass, the steepness of a shelf; on a cut, the resonance at the corner (0.71 = flat Butterworth).",
+      "Band 7 slope for Low Cut and High Cut: 6, 12, 18, 24, 36, 48, 72 or 96 dB per octave.",
+      "What band 7 works on: both channels (Stereo), the Mid, the Side, only the Left or only the Right.",
+      "Band 8 shape: Off, Bell, Low Shelf, High Shelf, Low Cut, High Cut, Notch or Band Pass.",
+      "Band 8 frequency (10 Hz to 30 kHz, log scale); drag the band's node across the display.",
+      "Band 8 gain (-30 to +30 dB) for a bell or shelf; drag the node up or down.",
+      "Band 8 Q (0.1 to 18): the width of a bell, notch or band pass, the steepness of a shelf; on a cut, the resonance at the corner (0.71 = flat Butterworth).",
+      "Band 8 slope for Low Cut and High Cut: 6, 12, 18, 24, 36, 48, 72 or 96 dB per octave.",
+      "What band 8 works on: both channels (Stereo), the Mid, the Side, only the Left or only the Right.",
+      "Level after the EQ (-24 to +24 dB).",
+      "Auto Gain: offsets the average level change of the bell and shelf bands, so a brighter or fuller setting is not judged as better just for being louder.",
+      "Zero Latency runs the bands as minimum-phase filters; Linear Phase gives the same magnitude with no phase shift (5120 samples of latency, reported for delay compensation)."
+    ],
+    "uses": [
+      "Everyday corrective and tonal EQ on any track, with up to eight bands",
+      "Steep low and high cuts (up to 96 dB/oct) to clean up rumble and hiss",
+      "Mid/side EQ on the mix bus: mono the lows, open up the side highs",
+      "Linear-phase mastering EQ that keeps transients and stereo image intact",
+      "Fix a single side of a stereo recording with Left or Right bands"
+    ],
+    "properties": "Eight bands in series, each a bell, shelf (RBJ), notch, band pass, or a low or high cut built as a Butterworth cascade of 1 to 16 poles (6 to 96 dB/oct; Q 0.71 is flat, higher Q lifts the corner). Each band runs on stereo, mid, side, left or right. Zero Latency: biquad cascades, no latency. Linear Phase: the same magnitude response as a 2x2 matrix per frequency bin (so mid/side and left/right bands combine exactly), turned into four 8192-tap FIRs (Hann window) and run by 16384-point FFT convolution in 1024-sample blocks; latency 5120 samples, reported for delay compensation. Auto Gain: minus the mean level change of the bell and shelf bands over 64 log-spaced points from 20 Hz to 20 kHz (mid and stereo bands count fully, left and right half, side not), within ±24 dB. The GFX and VST3/CLAP interfaces draw the response over a live spectrum (post, pre or off); drag a node to set its frequency and gain.",
+    "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-studio-eq\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><path d=\"M 6,40 L 58,40\" fill=\"none\" stroke=\"url(#icon-studio-eq)\" stroke-width=\"1.5\" opacity=\"0.35\"/><path d=\"M 6,58 C 10,44 12,40 16,40 C 22,40 24,26 28,26 C 32,26 34,40 38,40 C 44,40 46,30 52,30 L 58,30\" fill=\"none\" stroke=\"url(#icon-studio-eq)\" stroke-width=\"2.5\" stroke-linecap=\"round\"/><circle cx=\"14\" cy=\"42\" r=\"3\" fill=\"none\" stroke=\"url(#icon-studio-eq)\" stroke-width=\"2\"/><circle cx=\"28\" cy=\"26\" r=\"3\" fill=\"none\" stroke=\"url(#icon-studio-eq)\" stroke-width=\"2\"/><circle cx=\"50\" cy=\"31\" r=\"3\" fill=\"none\" stroke=\"url(#icon-studio-eq)\" stroke-width=\"2\"/><path d=\"M 8,12 L 8,20 M 14,8 L 14,20 M 20,14 L 20,20\" fill=\"none\" stroke=\"url(#icon-studio-eq)\" stroke-width=\"2\" stroke-linecap=\"round\" opacity=\"0.5\"/></svg>"
+  },
+  "spectral_ducker": {
+    "card_desc": "Make Room for a Vocal, Band by Band",
+    "keywords": "spectral ducker sidechain ducking trackspacer vocal space carve mix masking frequency ducking dynamic eq kick bass voice over 32 band",
+    "slider_desc": [
+      "How deep the track can be cut in each band (0 to 100% = up to 24 dB).",
+      "Key level per band above which the track ducks (-60 to 0 dB); the dashed line in the display.",
+      "How fast the cut follows the key (0.1 to 100 ms).",
+      "How fast the track comes back when the key stops (10 to 1000 ms).",
+      "Bands below this frequency never duck (20 Hz to 5 kHz).",
+      "Bands above this frequency never duck (200 Hz to 20 kHz).",
+      "What ducks: both channels (Stereo), only the Mid, or only the Side, which keeps the centre intact and makes room at the edges.",
+      "Blend of ducked and dry track (0 to 100%).",
+      "Level after the ducker (-12 to +12 dB).",
+      "Output plays the ducked track; Delta plays only what is taken out, to hear exactly where the ducker works."
+    ],
+    "uses": [
+      "Carve space for a lead vocal in a busy instrumental or pad bus",
+      "Let the kick through the bass only where they overlap",
+      "Voice-over over music that stays full between the words",
+      "Duck a reverb or delay return by the dry signal it comes from",
+      "Side-only ducking to clear the edges for a centred vocal"
+    ],
+    "properties": "The key (track channels 3/4, summed to mono) runs through 32 fourth-order band passes, a third of an octave apart from 30 Hz to 18 kHz; each band's level follows with Attack and Release. Every 16 samples, where a band is above Threshold, its excess (up to Amount × 24 dB) sets the cut of a Q 3 bell on the same band of the track; the bells overlap, so each cuts 0.43 of its band's amount and together they cut about the amount. Bells at 0 dB pass the signal unchanged. Stereo, mid or side; Mix and Output; Listen Delta plays dry minus ducked. Zero latency. In the Rack, the key is the Rack's dry input.",
+    "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-spectral-ducker\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><path d=\"M 6,52 L 58,52\" fill=\"none\" stroke=\"url(#icon-spectral-ducker)\" stroke-width=\"1.5\" opacity=\"0.35\"/><path d=\"M 10,52 L 10,30 M 16,52 L 16,22 M 22,52 L 22,34 M 28,52 L 28,44 M 34,52 L 34,46 M 40,52 L 40,28 M 46,52 L 46,24 M 52,52 L 52,36\" fill=\"none\" stroke=\"url(#icon-spectral-ducker)\" stroke-width=\"3\" stroke-linecap=\"round\"/><path d=\"M 6,14 L 24,14 C 28,14 28,26 32,26 C 36,26 36,14 40,14 L 58,14\" fill=\"none\" stroke=\"url(#icon-spectral-ducker)\" stroke-width=\"2.5\" stroke-linecap=\"round\"/></svg>"
+  },
+  "reference": {
+    "card_desc": "A/B Your Mix Against a Reference",
+    "keywords": "reference track a/b compare comparison level match loudness matched lufs short-term mix mastering correlation spectrum mono check side",
+    "slider_desc": [
+      "What you hear: the Track (your mix, channels 1/2) or the Reference (channels 3/4); the switch crossfades over 10 ms.",
+      "Level Match: plays the reference at your mix's short-term loudness, so the comparison is about tone and balance, not volume.",
+      "Extra gain on the reference (-12 to +12 dB), on top of the match.",
+      "Monitor: Stereo, Mono (both channels summed) or Side (the difference only), for both sources."
+    ],
+    "uses": [
+      "A/B a mix against a commercial track at the same loudness",
+      "Check a master's tonal balance and width against a reference",
+      "Compare two versions of a mix routed to the same track",
+      "Mono and side checks of mix and reference with one switch"
+    ],
+    "properties": "Both inputs are K-weighted (ITU-R BS.1770) and measured as short-term loudness (the last 3 s, every 100 ms). With Level Match on, the reference's gain moves a tenth of the way to the difference every 100 ms (about a second to settle), within ±24 dB, and holds while either source is below -60 LUFS; Trim is added. Listen crossfades linearly over 10 ms. Monitor folds after the switch. The interfaces show both loudnesses, the reference's gain, each source's stereo correlation (averaged over about 3 s) and both spectra (each bin averaged over about a second, the reference at its played gain). No latency, no Rack module (it needs a second stereo input).",
+    "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-reference\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><path d=\"M 6,32 L 58,32\" fill=\"none\" stroke=\"url(#icon-reference)\" stroke-width=\"1.5\" opacity=\"0.35\"/><path d=\"M 6,40 C 14,30 20,22 28,24 C 36,26 44,18 58,20\" fill=\"none\" stroke=\"url(#icon-reference)\" stroke-width=\"2.5\" stroke-linecap=\"round\"/><path d=\"M 6,46 C 14,38 20,30 28,34 C 36,38 44,28 58,30\" fill=\"none\" stroke=\"url(#icon-reference)\" stroke-width=\"2\" stroke-linecap=\"round\" opacity=\"0.5\"/><text x=\"12\" y=\"16\" font-family=\"sans-serif\" font-size=\"10\" font-weight=\"bold\" fill=\"url(#icon-reference)\">A</text><text x=\"46\" y=\"16\" font-family=\"sans-serif\" font-size=\"10\" font-weight=\"bold\" fill=\"url(#icon-reference)\">B</text></svg>"
+  }
+}

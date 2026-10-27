@@ -13,6 +13,7 @@ out_pin:Left
 out_pin:Right
 
 @init
+  ext_noinit = 1;              // play and seek keep tails and state, as in the VST3/CLAP
   // Finds samples that jump far away from the recent signal (clicks, pops, digital
   // spikes), marks Window samples from there as damaged, and redraws them as a straight
   // line between the good samples on either side. The output is delayed by

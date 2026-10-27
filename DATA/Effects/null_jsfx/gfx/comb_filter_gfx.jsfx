@@ -17,6 +17,7 @@ out_pin:Left
 out_pin:Right
 
 @init
+  ext_noinit = 1;              // play and seek keep tails and state, as in the VST3/CLAP
   // NULL Comb Filter (../comb_filter.jsfx) with its own interface: same audio code, plus @gfx.
   // Adds a copy of the signal delayed by one period of Frequency, which puts peaks at
   // Frequency and its harmonics. Feed-Backward recirculates the delay for a ringing,

@@ -14,6 +14,7 @@ out_pin:Left
 out_pin:Right
 
 @init
+  ext_noinit = 1;              // play and seek keep tails and state, as in the VST3/CLAP
   // NULL Grit (../grit.jsfx) with its own interface: same audio code, plus @gfx.
   // Lo-fi grit: sample-rate reduction (hold every 1 to 8 samples) and bit reduction
   // (16 bits down to 3), crossfaded with the clean signal by the same amount.

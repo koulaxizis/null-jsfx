@@ -31,6 +31,7 @@ out_pin:Band 4 Left
 out_pin:Band 4 Right
 
 @init
+  ext_noinit = 1;              // play and seek keep tails and state, as in the VST3/CLAP
   // NULL Band Splitter (../band_splitter.jsfx) with its own interface: same audio code, plus @gfx.
   // Builds multiband chains from any plugin: Split puts the input (channels 1/2) through a
   // Linkwitz-Riley 4th-order (24 dB/oct) crossover into 2, 3 or 4 bands, band 1 (lowest) on

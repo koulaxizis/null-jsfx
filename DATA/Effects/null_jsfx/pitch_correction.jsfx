@@ -21,6 +21,7 @@ out_pin:Left
 out_pin:Right
 
 @init
+  ext_noinit = 1;              // play and seek keep tails and state, as in the VST3/CLAP
   // Monophonic vocal tuning. The pitch is tracked with YIN on a mono, band-limited copy
   // decimated to about 11 kHz (70 Hz to 1 kHz, a new estimate every 64 decimated samples);
   // Sensitivity sets the YIN threshold (higher = more of the signal counts as pitched).

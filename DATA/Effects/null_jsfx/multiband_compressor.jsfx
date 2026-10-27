@@ -27,6 +27,8 @@ slider20:10<0,200,1>Attack (ms)
 slider21:100<0,1000,1>Release (ms)
 slider22:0<0,100,1>Knee (%)
 slider23:0<0,12,1>Master Output (dB)
+slider24:0<0,2,1{Stereo,Mid,Side}>Channels
+slider25:0<0,1,1{Output,Delta}>Listen
 
 in_pin:Left
 in_pin:Right
@@ -34,6 +36,7 @@ out_pin:Left
 out_pin:Right
 
 @init
+  ext_noinit = 1;              // play and seek keep tails and state, as in the VST3/CLAP
   PI = 3.14159265358979;
   LN10 = 2.30258509299405;
   DB2LIN = LN10 / 20;
@@ -95,6 +98,8 @@ out_pin:Right
   hm_mk_lin = exp(hm_mk * DB2LIN);
   hi_mk_lin = exp(hi_mk * DB2LIN);
   master_lin = exp(master_db * DB2LIN);
+  ms_mode = slider24;
+  listen_delta = slider25;
 
   lo_rf = 1 - (1 / lo_ratio);
   lm_rf = 1 - (1 / lm_ratio);
@@ -104,6 +109,22 @@ out_pin:Right
   knee_w = knee_pct * 0.6;
 
 @sample
+  // Appended in 2.7: Channels Mid / Side compresses only the mid or the side of the stereo pair,
+  // Listen Delta plays what the compressors take away (each band minus its compressed self,
+  // before Makeup and Master Output; Mode still mutes, solos and bypasses).
+  // Channels Mid / Side: the chosen half of the mid/side pair goes through on both channels,
+  // the other waits and is added back after
+  ms_mode ? (
+    ms_m = (spl0 + spl1) * 0.5;
+    ms_s = (spl0 - spl1) * 0.5;
+    ms_mode == 1 ? (
+      spl0 = spl1 = ms_m;
+      ms_o = ms_s;
+    ) : (
+      spl0 = spl1 = ms_s;
+      ms_o = ms_m;
+    );
+  );
   // CROSSOVER 1: LP at xover1 → Low band
   x1_l1 = x1_l1 + alpha1 * (spl0 - x1_l1);
   x1_l2 = x1_l2 + alpha1 * (x1_l1 - x1_l2);
@@ -280,6 +301,16 @@ out_pin:Right
     hi_out_l = high_l * env_hi * hi_mk_lin;
     hi_out_r = high_r * env_hi * hi_mk_lin;
   );
+  listen_delta ? (
+    lo_out_l = lo_mode == 1 ? 0 : low_l - low_l * env_lo;
+    lo_out_r = lo_mode == 1 ? 0 : low_r - low_r * env_lo;
+    lm_out_l = lm_mode == 1 ? 0 : lowmid_l - lowmid_l * env_lm;
+    lm_out_r = lm_mode == 1 ? 0 : lowmid_r - lowmid_r * env_lm;
+    hm_out_l = hm_mode == 1 ? 0 : highmid_l - highmid_l * env_hm;
+    hm_out_r = hm_mode == 1 ? 0 : highmid_r - highmid_r * env_hm;
+    hi_out_l = hi_mode == 1 ? 0 : high_l - high_l * env_hi;
+    hi_out_r = hi_mode == 1 ? 0 : high_r - high_r * env_hi;
+  );
 
   // SOLO/MUTE/BYPASS + OUTPUT
   any_solo = (lo_mode == 3) || (lm_mode == 3) || (hm_mode == 3) || (hi_mode == 3);
@@ -300,5 +331,21 @@ out_pin:Right
     hi_mode == 2 ? (spl0 = spl0 - hi_out_l; spl1 = spl1 - hi_out_r;);
   );
 
-  spl0 = spl0 * master_lin;
-  spl1 = spl1 * master_lin;
+  listen_delta == 0 ? (
+    spl0 = spl0 * master_lin;
+    spl1 = spl1 * master_lin;
+  );
+
+  ms_mode ? (
+    // back to left / right (Delta: the processed half alone)
+    listen_delta ? ms_o = 0;
+    ms_mode == 1 ? (
+      ms_x = spl0;
+      spl0 = ms_x + ms_o;
+      spl1 = ms_x - ms_o;
+    ) : (
+      ms_x = spl0;
+      spl0 = ms_o + ms_x;
+      spl1 = ms_o - ms_x;
+    );
+  );

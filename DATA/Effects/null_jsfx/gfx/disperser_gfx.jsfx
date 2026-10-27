@@ -18,6 +18,7 @@ out_pin:Left
 out_pin:Right
 
 @init
+  ext_noinit = 1;              // play and seek keep tails and state, as in the VST3/CLAP
   // NULL Disperser (../disperser.jsfx) with its own interface: same audio code, plus @gfx.
   // Phase dispersion: a chain of Amount identical 2nd-order all-pass filters (up to 64) around
   // Frequency. The magnitude stays flat, but frequencies near Frequency are delayed more than
