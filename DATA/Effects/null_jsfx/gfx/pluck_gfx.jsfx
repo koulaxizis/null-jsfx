@@ -506,7 +506,8 @@ out_pin:Right
   );
 
   // the strum: a step plays when the position enters it (on the first key, also when the key
-  // comes in the first half of the step), its strings Strum Spread apart
+  // comes in the first half of the step; a key on the half itself waits, however the host
+  // rounds the beat), its strings Strum Spread apart
   st_mode > 0 ? (
     nheld > 0 ? (
       bb = playing ? b_0 + si * b_inc : st_clock;
@@ -514,7 +515,7 @@ out_pin:Right
       t = bb * spb;
       s = floor(t + 0.000001);
       s != st_s ? (
-        st_s > -1000 || t - s < 0.5 ? st_step(s);
+        st_s > -1000 || t - s < 0.499999 ? st_step(s);
         st_s = s;
       );
     ) : (
