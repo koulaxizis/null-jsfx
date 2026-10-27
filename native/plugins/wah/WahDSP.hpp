@@ -159,7 +159,7 @@ public:
             }
 
             const double f1 = centre1(fModel, fPs);
-            double g = std::tan(kPi * f1 / fSr);
+            double g = std::tan(kPi * std::min(f1, 0.45 * fSr) / fSr);
             double c1 = 1.0 / (1.0 + g * (g + fK1));
             double c2 = g * c1;
             double c3 = g * c2;
@@ -168,7 +168,7 @@ public:
             if (fModel == 1)
             {
                 const double f2 = centre2(fPs);
-                g = std::tan(kPi * f2 / fSr);
+                g = std::tan(kPi * std::min(f2, 0.45 * fSr) / fSr);
                 c1 = 1.0 / (1.0 + g * (g + fK2));
                 c2 = g * c1;
                 c3 = g * c2;

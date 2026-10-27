@@ -36,7 +36,7 @@ struct BandPass {
     // bp_set
     void set(double f, double q, double sr) noexcept
     {
-        const double w0 = 2 * kPI * (f / sr);
+        const double w0 = 2 * kPI * (std::min(f, sr * 0.45) / sr); // below Nyquist at any sample rate
         const double alpha = std::sin(w0) / (2 * q);
         const double a0inv = 1 / (1 + alpha);
         b0 = a0inv * alpha;
