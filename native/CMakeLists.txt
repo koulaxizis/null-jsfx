@@ -17,6 +17,11 @@ endif()
 
 project(null_jsfx_native VERSION 2.6.0 LANGUAGES C CXX)
 
+# getVersion() of every plugin reports this version (common/NullPlugin.hpp, plugins/rack/Plugin.cpp)
+add_compile_definitions(NULL_JSFX_VERSION_MAJOR=${PROJECT_VERSION_MAJOR}
+                        NULL_JSFX_VERSION_MINOR=${PROJECT_VERSION_MINOR}
+                        NULL_JSFX_VERSION_PATCH=${PROJECT_VERSION_PATCH})
+
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)

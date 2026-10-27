@@ -67,8 +67,9 @@ a horizontal slider card below. The look lives in two files that must stay in st
     largest sample rate the code supports; allocate in `setSampleRate`, never in `process`.
 - `Plugin.cpp`: derive from `NullOneSliderPlugin` (`common/NullPlugin.hpp`) with the slider's
   name, symbol, min, max, default and unit, exactly as in the JSFX. Implement `getLabel`,
-  `getDescription`, `getUniqueId`, `valueChanged`, `activate`, `sampleRateChanged` and `run`.
-  In `run`, also fill `taps` (`taps.push(l, r)`, `inLevel`, `outLevel`, `gr`) if the
+  `getDescription`, `getUniqueId`, `valueChanged`, `onActivate`, `sampleRateChanged` and
+  `process` (the base class owns DPF's `activate` and `run`: it applies the parameter changes
+  first, on the audio thread, so `valueChanged` never races `process`). In `process`, also fill `taps` (`taps.push(l, r)`, `inLevel`, `outLevel`, `gr`) if the
   display needs them.
 - `UI.cpp`: derive from `NullOneSliderUI` (`common/NullUI.hpp`) and draw the **same display**
   as the GFX JSFX in `drawDisplay()` with the matching helpers (`setPlot`, `gridFreq`,
@@ -144,7 +145,7 @@ flag and kept with `@serialize`. The lint accepts the category, the pins and the
 `jsfx_test` sends instruments a GM note every 1/8 s; the web build and orOS leave them out.
 
 The VST3/CLAP sets `DISTRHO_PLUGIN_IS_SYNTH`, `WANT_MIDI_INPUT`, `WANT_TIMEPOS` and, for edited
-data, `WANT_STATE` (`NullMultiPlugin(sliders, count, states)`, the state as text). `run()` turns
+data, `WANT_STATE` (`NullMultiPlugin(sliders, count, states)`, the state as text). `process()` turns
 the transport into a beat position like the JSFX and calls `reset()` on a play start, as REAPER
 re-runs `@init`. The UI reads live values from `NullTaps::aux[]`/`extra` and asks the DSP for
 one-off actions (a preview) through `NullTaps::request`. `compare_<name>` detects an instrument

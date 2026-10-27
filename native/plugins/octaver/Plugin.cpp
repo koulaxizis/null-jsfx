@@ -28,7 +28,7 @@ protected:
 
     void valueChanged(uint32_t, float) override { update(); }
 
-    void activate() override
+    void onActivate() override
     {
         reset(getSampleRate());
         update();
@@ -40,7 +40,7 @@ protected:
         update();
     }
 
-    void run(const float** inputs, float** outputs, uint32_t frames) override
+    void process(const float** inputs, float** outputs, uint32_t frames) override
     {
         // display only, as in octaver_gfx.jsfx: peak levels per voice and the input period
         // from the flip-flop (it toggles once per input cycle)

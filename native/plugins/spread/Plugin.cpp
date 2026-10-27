@@ -32,7 +32,7 @@ protected:
 
     void valueChanged(float v) override { fDsp.setAmount(v); }
 
-    void activate() override
+    void onActivate() override
     {
         fDsp.setSampleRate(getSampleRate());
         fDsp.reset();
@@ -47,7 +47,7 @@ protected:
         fSide.setup(newSampleRate);
     }
 
-    void run(const float** inputs, float** outputs, uint32_t frames) override
+    void process(const float** inputs, float** outputs, uint32_t frames) override
     {
         fDsp.process(inputs[0], inputs[1], outputs[0], outputs[1], frames);
         // display: vectorscope taps and mid/side peak followers of the output (as in spread_gfx.jsfx)

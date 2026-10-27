@@ -35,11 +35,11 @@ protected:
         }
     }
 
-    void activate() override { fDsp.setSampleRate(getSampleRate()); }
+    void onActivate() override { fDsp.setSampleRate(getSampleRate()); }
 
     void sampleRateChanged(double newSampleRate) override { fDsp.setSampleRate(newSampleRate); }
 
-    void run(const float** inputs, float** outputs, uint32_t frames) override
+    void process(const float** inputs, float** outputs, uint32_t frames) override
     {
         if (fResetPending.exchange(false, std::memory_order_relaxed))
             fDsp.reset();

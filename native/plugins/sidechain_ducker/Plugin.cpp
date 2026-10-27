@@ -44,7 +44,7 @@ protected:
 
     void valueChanged(uint32_t, float) override { update(); }
 
-    void activate() override
+    void onActivate() override
     {
         fDsp.setSampleRate(getSampleRate());
         update();
@@ -56,7 +56,7 @@ protected:
         update();
     }
 
-    void run(const float** inputs, float** outputs, uint32_t frames) override
+    void process(const float** inputs, float** outputs, uint32_t frames) override
     {
         fDsp.process(inputs[0], inputs[1], inputs[2], inputs[3], outputs[0], outputs[1], frames);
         taps.inLevel.store(float(fDsp.env()), std::memory_order_relaxed);
