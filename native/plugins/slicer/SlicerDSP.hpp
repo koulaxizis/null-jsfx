@@ -15,6 +15,8 @@
 
 #pragma once
 
+#include "NullLazyClear.hpp"
+
 #include <cmath>
 #include <cstdint>
 #include <vector>
@@ -137,22 +139,29 @@ inline Pattern makePattern(const Params& p)
 
 class SlicerProcessor {
 public:
-    // @init
+    // @init: the bar buffers are allocated here (cleared), never on the audio thread
     void setSampleRate(double sr)
     {
         fSr = sr;
-        reset();
-    }
-
-    // @init again (REAPER re-runs it when the transport starts)
-    void reset()
-    {
         fFd = std::fmax(1.0, std::floor(0.0025 * fSr));
         fBmax = std::ceil(fSr * 6.0) + 4.0;
         for (int c = 0; c < 2; ++c)
         {
-            fL[c].assign(size_t(fBmax), 0.0);
-            fR[c].assign(size_t(fBmax), 0.0);
+            fL[c].allocate(size_t(fBmax));
+            fR[c].allocate(size_t(fBmax));
+        }
+        reset();
+    }
+
+    // @init again (REAPER re-runs it when the transport starts). The bar buffers read as cleared
+    // at once but are cleared chunk by chunk as they are written (NullLazyClear.hpp), so a
+    // transport start costs no multi-millisecond clear on the audio thread.
+    void reset()
+    {
+        for (int c = 0; c < 2; ++c)
+        {
+            fL[c].clearAll();
+            fR[c].clearAll();
         }
         fN = 0.0;
         fCur = 0.0;
@@ -221,8 +230,8 @@ public:
             const int wc = fCur != 0.0 ? 1 : 0;
             if (fN < fBmax - 2.0)
             {
-                fL[wc][size_t(fN)] = x0;
-                fR[wc][size_t(fN)] = x1;
+                fL[wc].set(size_t(fN), x0);
+                fR[wc].set(size_t(fN), x1);
             }
             const double jd = std::fmin(ns - 1.0, std::floor(fN / sl));
             const int j = int(jd);
@@ -279,11 +288,12 @@ public:
     }
 
 private:
-    static double rd(const std::vector<double>& b, double p)
+    static double rd(const nulljsfx::LazyClearBuffer& b, double p)
     {
         const double i = std::floor(p);
         const double f = p - i;
-        return b[size_t(i)] + (b[size_t(i) + 1] - b[size_t(i)]) * f;
+        const double v = b.get(size_t(i));
+        return v + (b.get(size_t(i) + 1) - v) * f;
     }
 
     void updateParams()
@@ -296,7 +306,7 @@ private:
     Params fP;
     Pattern fPat;
     double fSr = 48000.0, fFd = 1.0, fBmax = 4.0, fBl = 1.0;
-    std::vector<double> fL[2], fR[2];
+    nulljsfx::LazyClearBuffer fL[2], fR[2];
     double fN = 0.0, fCur = 0.0, fJf = 1.0, fFull = 0.0, fFl = 0.0, fGate = 1.0, fMix = 1.0;
 };
 
