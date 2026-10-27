@@ -119,6 +119,11 @@ protected:
 
     void process(const float**, float** outputs, uint32_t frames, const MidiEvent* midi, uint32_t midiCount) override
     {
+        // the JSFX sends every message it receives on (midisend in @block); SysEx, which the
+        // JSFX never sees, passes through there as well
+        for (uint32_t i = 0; i < midiCount; ++i)
+            writeMidiEvent(midi[i]);
+
         if (fPendingReady.exchange(false, std::memory_order_acquire))
             std::copy(fPending, fPending + nulldrum::kPatternSize, fDsp.user());
 

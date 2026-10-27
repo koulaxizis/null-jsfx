@@ -31,7 +31,8 @@
  * map (one every 1/8 s, varied velocities) and a playing transport at 120 bpm in 4/4 from beat 0,
  * so their sequencer runs too, merged in time order with the MIDI effects' stream below (note-offs,
  * note-ons with velocity 0, the same key again, sustain, all notes off, pitch bend, pressure,
- * program changes); the CLAP gets the same MIDI and transport.
+ * program changes); the CLAP gets the same MIDI and transport. An instrument passes every message
+ * on, and that MIDI is compared like a MIDI effect's.
  *
  * MIDI effects (a JSFX in //category: MIDI) get, besides the audio, a stream of MIDI on three
  * channels (chords of overlapping notes, repeated note-ons, note-ons with velocity 0, poly and
@@ -498,7 +499,7 @@ static bool renderClap(const char* path, double sr, const std::vector<double>& v
         proc.frames_count = n;
         proc.audio_inputs = ibs.data(); proc.audio_inputs_count = uint32_t(ibs.size());
         proc.audio_outputs = obs.data(); proc.audio_outputs_count = uint32_t(obs.size());
-        proc.in_events = g_instrument || g_midifx ? &midiEv : &inEv; proc.out_events = g_midifx ? &midiOutEv : &outEv;
+        proc.in_events = g_instrument || g_midifx ? &midiEv : &inEv; proc.out_events = g_midifx || g_instrument ? &midiOutEv : &outEv;
         proc.transport = g_instrument ? &transport : nullptr;
         if (plugin->process(plugin, &proc) == CLAP_PROCESS_ERROR) {
             std::fprintf(stderr, "process error\n");
@@ -740,8 +741,9 @@ int main(int argc, char** argv)
             const double d = maxDiff(a, b, &at, &ch);
             bool pass = d <= tol && std::isfinite(d);
             std::string level;
-            if (g_midifx) {
-                // the MIDI out: the same messages at the same samples, in the same order
+            if (g_midifx || g_instrument) {
+                // the MIDI out (an instrument passes on what it gets): the same messages at the
+                // same samples, in the same order
                 size_t same = 0;
                 while (same < ma.size() && same < mb.size() && ma[same].at == mb[same].at && ma[same].st == mb[same].st
                        && ma[same].d1 == mb[same].d1 && (ma[same].size < 3 || ma[same].d2 == mb[same].d2) && ma[same].size == mb[same].size)
