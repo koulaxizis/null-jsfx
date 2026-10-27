@@ -21,6 +21,7 @@ out_pin:Left
 out_pin:Right
 
 @init
+  ext_noinit = 1;              // play and seek keep tails and state, as in the VST3/CLAP
   // Tempo-synced volume envelope (LFO Tool / Dodge style): a preset shape repeats once per
   // Rate note at the host tempo and sets the level, 1 = full level and 0 = Depth's dip.
   // While the transport plays, the cycle is taken from beat_position at every block so the

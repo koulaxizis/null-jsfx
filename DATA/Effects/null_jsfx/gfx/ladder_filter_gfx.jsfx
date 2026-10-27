@@ -11,6 +11,7 @@ slider2:0.5<0,4,0.1>-Resonance
 slider3:0<0,100,1>-Drive (%)
 slider4:0<0,1,1{Lowpass,Highpass}>-Mode
 slider5:0<-12,12,0.1>-Gain (dB)
+slider6:0<0,2,1{Off,2x,4x}>-Oversampling
 
 in_pin:Left
 in_pin:Right
@@ -18,11 +19,116 @@ out_pin:Left
 out_pin:Right
 
 @init
+  ext_noinit = 1;              // play and seek keep tails and state, as in the VST3/CLAP
   // NULL Ladder Filter (../ladder_filter.jsfx) with its own interface: same audio code, plus @gfx.
   gfx_ext_retina = 1;
   // Moog-style 4-pole (24 dB/oct) ladder filter, zero-delay-feedback design so it stays
   // stable and in tune up to 20 kHz and at full resonance. Drive saturates the input
-  // of the ladder for the classic growl.
+  // of the ladder for the classic growl. Oversampling (appended in 2.7) runs the ladder at 2x
+  // or 4x the sample rate through the halfband stages of NULL Saturation, so the saturator's
+  // harmonics do not fold back as aliasing; latency 0, 31 or 37 samples for Off, 2x and 4x.
+  E1 = 0;  D1 = 32;  // stage 1 (63 taps): 32 even-phase taps, x2 for the upsampler
+  E2 = 64; D2 = 76;  // stage 2 (23 taps): 12
+
+  // modified Bessel function I0 (series), for the Kaiser window
+  function bessel_i0(x) local(s, t, k, q)
+  (
+    s = 1; t = 1; k = 1;
+    loop(40,
+      q = x / (2 * k);
+      t *= q * q;
+      s += t;
+      k += 1;
+    );
+    s;
+  );
+
+  // the n = (taps + 1) / 2 nonzero side taps of a halfband lowpass (Kaiser beta), normalised
+  // so they sum to 0.5 (the centre tap is 0.5): e = 2 h for the upsampler, d = h for the
+  // downsampler
+  function hb_design(e, d, taps, beta) local(c, i, dd, a, sg, r, w, s)
+  (
+    c = (taps - 1) / 2;
+    s = 0;
+    i = 0;
+    loop((taps + 1) / 2,
+      dd = 2 * i - c;
+      a = abs(dd);
+      sg = ((a - 1) / 2) % 2 ? -1 : 1;
+      r = 2 * dd / (taps - 1);
+      w = bessel_i0(beta * sqrt(max(0, 1 - r * r))) / bessel_i0(beta);
+      d[i] = sg / ($pi * a) * w;
+      s += d[i];
+      i += 1;
+    );
+    i = 0;
+    loop((taps + 1) / 2,
+      d[i] = 0.5 * d[i] / s;
+      e[i] = 2 * d[i];
+      i += 1;
+    );
+  );
+
+  hb_design(E1, D1, 63, 7.5);
+  hb_design(E2, D2, 23, 8);
+
+  // 2x upsampler, polyphase: one input sample in, hb_o0 (even) and hb_o1 (odd) out.
+  // s[0] = write position, s[1 ..] = the last n inputs, stored twice
+  function hb_up(x, s, e, n, m) local(p, q, acc, i)
+  (
+    p = s[0];
+    p = p > 0 ? p - 1 : n - 1;
+    s[0] = p;
+    q = s + 1 + p;
+    q[0] = x;
+    q[n] = x;
+    acc = 0;
+    i = 0;
+    loop(n, acc += e[i] * q[i]; i += 1;);
+    hb_o0 = acc;
+    hb_o1 = q[m];
+  );
+
+  // 2x downsampler, polyphase: an even and an odd sample in, one sample out.
+  // s[0] = write position, s[1] = position in the odd delay, s[2 ..] = the last n even
+  // samples stored twice, then m + 1 odd samples
+  function hb_down(v0, v1, s, d, n, m) local(p, q, acc, i, o)
+  (
+    p = s[0];
+    p = p > 0 ? p - 1 : n - 1;
+    s[0] = p;
+    q = s + 2 + p;
+    q[0] = v0;
+    q[n] = v0;
+    acc = 0;
+    i = 0;
+    loop(n, acc += d[i] * q[i]; i += 1;);
+    o = s + 2 + 2 * n + s[1];
+    acc += 0.5 * o[0];
+    o[0] = v1;
+    s[1] = s[1] < m ? s[1] + 1 : 0;
+    acc;
+  );
+
+  // per channel: filter states, the sample arrays of each rate, the pad and dry delays
+  function ch_init(b)
+  (
+    this.u1 = b;              // 1 + 64
+    this.u2 = b + 65;         // 1 + 24
+    this.d1 = b + 107;        // 2 + 64 + 16
+    this.d2 = b + 189;        // 2 + 24 + 6
+    this.a1 = b + 244;        // 2
+    this.a2 = b + 246;        // 4
+    this.pd = b + 258;        // 8
+    this.dr = b + 266;        // 64
+  );
+  chl.ch_init(128);
+  chr.ch_init(512);
+  freembuf(896);
+  os_prev = -1;
+  pdc_bot_ch = 0;
+  pdc_top_ch = 2;
+
 
   // per-channel ladder; state lives in this.s1 .. this.s4
   function ladder(x) local(S, u, v, y1, y2, y3, y4)
@@ -39,14 +145,54 @@ out_pin:Right
     mode == 0 ? y4 : u - 4 * y1 + 6 * y2 - 4 * y3 + y4;
   );
 
+  // the ladder (this) at osf x the sample rate for one input sample x; c = the channel's
+  // oversampling buffers and its pad position c.pw
+  function ladder_os(x, c*) local(i, t, v)
+  (
+    hb_up(x, c.u1, E1, 32, 15); c.a1[0] = hb_o0; c.a1[1] = hb_o1;
+    osf > 2 ? (
+      i = 0;
+      loop(2,
+        hb_up(c.a1[i], c.u2, E2, 12, 5); c.a2[2 * i] = hb_o0; c.a2[2 * i + 1] = hb_o1;
+        i += 1;
+      );
+    );
+    t = osf > 2 ? c.a2 : c.a1;
+    i = 0;
+    loop(osf,
+      v = t[i];
+      pad > 0 ? (
+        c.pd[c.pw] = v;
+        v = c.pd[(c.pw - pad + 8) % 8];
+        c.pw = (c.pw + 1) % 8;
+      );
+      t[i] = this.ladder(v);
+      i += 1;
+    );
+    osf > 2 ? (
+      i = 0;
+      loop(2,
+        c.a1[i] = hb_down(c.a2[2 * i], c.a2[2 * i + 1], c.d2, D2, 12, 5);
+        i += 1;
+      );
+    );
+    hb_down(c.a1[0], c.a1[1], c.d1, D1, 32, 15);
+  );
+
   function update()
   (
     fc = min(slider1, srate * 0.45);
     // EEL2 names are case-insensitive: the warped frequency must not be called g, or G
     // overwrites it and b (the state weight of the zero-delay feedback solve) comes out wrong
     wg = tan($pi * fc / srate);
-    G = wg / (1 + wg);
-    b = 1 / (1 + wg);
+    os = slider6;
+    os < 0.5 ? ( osf = 1; lat = 0; pad = 0; ) :
+    os < 1.5 ? ( osf = 2; lat = 31; pad = 0; ) :
+               ( osf = 4; lat = 37; pad = 2; );
+    pdc_delay = lat;
+    lw = osf > 1 ? tan($pi * fc / (srate * osf)) : wg;
+    G = lw / (1 + lw);
+    b = 1 / (1 + lw);
     Gb = G * b; G2b = G * Gb; G3b = G * G2b;
     G4 = G * G * G * G;
     k = min(slider2, 3.95);
@@ -54,6 +200,13 @@ out_pin:Right
     mode = slider4;
     comp = 1 + 0.5 * k;
     out_gain = 10 ^ (slider5 / 20) / sqrt(drive);
+    // a new rate starts every filter and delay from silence
+    osf != os_prev ? (
+      memset(128, 0, 768);
+      L.s1 = L.s2 = L.s3 = L.s4 = R.s1 = R.s2 = R.s3 = R.s4 = 0;
+      chl.pw = chr.pw = 0;
+      os_prev = osf;
+    );
   );
 
   // display only: the small-signal response in dB at f (the linear ladder: four TPT one-poles
@@ -92,31 +245,34 @@ out_pin:Right
 
   // ---- factory presets: generated by tools/build_presets.py, do not edit ----
   ng_pre_n = 8;
+  strcpy(#ng_h_ix, "");
+  ng_hist_add(1); ng_hist_add(2); ng_hist_add(3); ng_hist_add(4); ng_hist_add(5); ng_hist_add(6);
+  ng_hist_init();
 
   function ng_preset_load(p)
   (
-    p == 0 ? ( ng_slider_set(1, 1000); ng_slider_set(2, 0.5); ng_slider_set(3, 0); ng_slider_set(4, 0); ng_slider_set(5, 0); );
-    p == 1 ? ( ng_slider_set(1, 600); ng_slider_set(2, 0.8); ng_slider_set(3, 25); ng_slider_set(4, 0); ng_slider_set(5, 0); );
-    p == 2 ? ( ng_slider_set(1, 800); ng_slider_set(2, 3.2); ng_slider_set(3, 40); ng_slider_set(4, 0); ng_slider_set(5, -3); );
-    p == 3 ? ( ng_slider_set(1, 4000); ng_slider_set(2, 0.3); ng_slider_set(3, 35); ng_slider_set(4, 0); ng_slider_set(5, 0); );
-    p == 4 ? ( ng_slider_set(1, 9000); ng_slider_set(2, 0.2); ng_slider_set(3, 10); ng_slider_set(4, 0); ng_slider_set(5, 0); );
-    p == 5 ? ( ng_slider_set(1, 300); ng_slider_set(2, 1.8); ng_slider_set(3, 20); ng_slider_set(4, 0); ng_slider_set(5, 0); );
-    p == 6 ? ( ng_slider_set(1, 400); ng_slider_set(2, 2.5); ng_slider_set(3, 0); ng_slider_set(4, 1); ng_slider_set(5, -2); );
-    p == 7 ? ( ng_slider_set(1, 150); ng_slider_set(2, 0.5); ng_slider_set(3, 0); ng_slider_set(4, 1); ng_slider_set(5, 0); );
+    p == 0 ? ( ng_slider_set(1, 1000); ng_slider_set(2, 0.5); ng_slider_set(3, 0); ng_slider_set(4, 0); ng_slider_set(5, 0); ng_slider_set(6, 0); );
+    p == 1 ? ( ng_slider_set(1, 600); ng_slider_set(2, 0.8); ng_slider_set(3, 25); ng_slider_set(4, 0); ng_slider_set(5, 0); ng_slider_set(6, 0); );
+    p == 2 ? ( ng_slider_set(1, 800); ng_slider_set(2, 3.2); ng_slider_set(3, 40); ng_slider_set(4, 0); ng_slider_set(5, -3); ng_slider_set(6, 0); );
+    p == 3 ? ( ng_slider_set(1, 4000); ng_slider_set(2, 0.3); ng_slider_set(3, 35); ng_slider_set(4, 0); ng_slider_set(5, 0); ng_slider_set(6, 0); );
+    p == 4 ? ( ng_slider_set(1, 9000); ng_slider_set(2, 0.2); ng_slider_set(3, 10); ng_slider_set(4, 0); ng_slider_set(5, 0); ng_slider_set(6, 0); );
+    p == 5 ? ( ng_slider_set(1, 300); ng_slider_set(2, 1.8); ng_slider_set(3, 20); ng_slider_set(4, 0); ng_slider_set(5, 0); ng_slider_set(6, 0); );
+    p == 6 ? ( ng_slider_set(1, 400); ng_slider_set(2, 2.5); ng_slider_set(3, 0); ng_slider_set(4, 1); ng_slider_set(5, -2); ng_slider_set(6, 0); );
+    p == 7 ? ( ng_slider_set(1, 150); ng_slider_set(2, 0.5); ng_slider_set(3, 0); ng_slider_set(4, 1); ng_slider_set(5, 0); ng_slider_set(6, 0); );
   );
 
   // the first preset every slider matches, or -1
   function ng_preset_match() local(m)
   (
     m = -1;
-    m < 0 && ng_pre_eq(slider1, 1000) && ng_pre_eq(slider2, 0.5) && ng_pre_eq(slider3, 0) && ng_pre_eq(slider4, 0) && ng_pre_eq(slider5, 0) ? m = 0;
-    m < 0 && ng_pre_eq(slider1, 600) && ng_pre_eq(slider2, 0.8) && ng_pre_eq(slider3, 25) && ng_pre_eq(slider4, 0) && ng_pre_eq(slider5, 0) ? m = 1;
-    m < 0 && ng_pre_eq(slider1, 800) && ng_pre_eq(slider2, 3.2) && ng_pre_eq(slider3, 40) && ng_pre_eq(slider4, 0) && ng_pre_eq(slider5, -3) ? m = 2;
-    m < 0 && ng_pre_eq(slider1, 4000) && ng_pre_eq(slider2, 0.3) && ng_pre_eq(slider3, 35) && ng_pre_eq(slider4, 0) && ng_pre_eq(slider5, 0) ? m = 3;
-    m < 0 && ng_pre_eq(slider1, 9000) && ng_pre_eq(slider2, 0.2) && ng_pre_eq(slider3, 10) && ng_pre_eq(slider4, 0) && ng_pre_eq(slider5, 0) ? m = 4;
-    m < 0 && ng_pre_eq(slider1, 300) && ng_pre_eq(slider2, 1.8) && ng_pre_eq(slider3, 20) && ng_pre_eq(slider4, 0) && ng_pre_eq(slider5, 0) ? m = 5;
-    m < 0 && ng_pre_eq(slider1, 400) && ng_pre_eq(slider2, 2.5) && ng_pre_eq(slider3, 0) && ng_pre_eq(slider4, 1) && ng_pre_eq(slider5, -2) ? m = 6;
-    m < 0 && ng_pre_eq(slider1, 150) && ng_pre_eq(slider2, 0.5) && ng_pre_eq(slider3, 0) && ng_pre_eq(slider4, 1) && ng_pre_eq(slider5, 0) ? m = 7;
+    m < 0 && ng_pre_eq(slider1, 1000) && ng_pre_eq(slider2, 0.5) && ng_pre_eq(slider3, 0) && ng_pre_eq(slider4, 0) && ng_pre_eq(slider5, 0) && ng_pre_eq(slider6, 0) ? m = 0;
+    m < 0 && ng_pre_eq(slider1, 600) && ng_pre_eq(slider2, 0.8) && ng_pre_eq(slider3, 25) && ng_pre_eq(slider4, 0) && ng_pre_eq(slider5, 0) && ng_pre_eq(slider6, 0) ? m = 1;
+    m < 0 && ng_pre_eq(slider1, 800) && ng_pre_eq(slider2, 3.2) && ng_pre_eq(slider3, 40) && ng_pre_eq(slider4, 0) && ng_pre_eq(slider5, -3) && ng_pre_eq(slider6, 0) ? m = 2;
+    m < 0 && ng_pre_eq(slider1, 4000) && ng_pre_eq(slider2, 0.3) && ng_pre_eq(slider3, 35) && ng_pre_eq(slider4, 0) && ng_pre_eq(slider5, 0) && ng_pre_eq(slider6, 0) ? m = 3;
+    m < 0 && ng_pre_eq(slider1, 9000) && ng_pre_eq(slider2, 0.2) && ng_pre_eq(slider3, 10) && ng_pre_eq(slider4, 0) && ng_pre_eq(slider5, 0) && ng_pre_eq(slider6, 0) ? m = 4;
+    m < 0 && ng_pre_eq(slider1, 300) && ng_pre_eq(slider2, 1.8) && ng_pre_eq(slider3, 20) && ng_pre_eq(slider4, 0) && ng_pre_eq(slider5, 0) && ng_pre_eq(slider6, 0) ? m = 5;
+    m < 0 && ng_pre_eq(slider1, 400) && ng_pre_eq(slider2, 2.5) && ng_pre_eq(slider3, 0) && ng_pre_eq(slider4, 1) && ng_pre_eq(slider5, -2) && ng_pre_eq(slider6, 0) ? m = 6;
+    m < 0 && ng_pre_eq(slider1, 150) && ng_pre_eq(slider2, 0.5) && ng_pre_eq(slider3, 0) && ng_pre_eq(slider4, 1) && ng_pre_eq(slider5, 0) && ng_pre_eq(slider6, 0) ? m = 7;
     m;
   );
 
@@ -137,6 +293,7 @@ out_pin:Right
   function ng_presets() local(i)
   (
     ng_pre_req >= 0 ? ( ng_preset_load(ng_pre_req); update(); ng_pre_req = -1; );
+    ng_hist() ? update();
     ng_pre_cur = ng_preset_match();
     ng_pre_open ? (
       ng_pre_menu_begin();
@@ -152,8 +309,13 @@ out_pin:Right
   update();
 
 @sample
-  spl0 = L.ladder(spl0 * drive) * out_gain;
-  spl1 = R.ladder(spl1 * drive) * out_gain;
+  osf > 1 ? (
+    spl0 = L.ladder_os(spl0 * drive, chl) * out_gain;
+    spl1 = R.ladder_os(spl1 * drive, chr) * out_gain;
+  ) : (
+    spl0 = L.ladder(spl0 * drive) * out_gain;
+    spl1 = R.ladder(spl1 * drive) * out_gain;
+  );
 
 @gfx 480 294
   ng_knobs_begin("LADDER FILTER", "ADVANCED", 480, 120, 1, 0);
@@ -180,7 +342,7 @@ out_pin:Right
     lf_i += 1;
   );
 
-  ng_row(5);
+  ng_row(6);
   slider1 >= 1000 ? sprintf(#v1, "%.2f kHz", slider1 / 1000) : sprintf(#v1, "%d Hz", slider1);
   ng_knob_ctl_log(1, "CUTOFF", #v1, 20, 20000, 1000, 1) ? update();
   sprintf(#v2, "%.1f", slider2);
@@ -190,6 +352,7 @@ out_pin:Right
   ng_select_ctl(4, "MODE", "LP|HP", 0) ? update();
   sprintf(#v5, "%+.1f dB", slider5);
   ng_knob_ctl(5, "GAIN", #v5, -12, 12, 0, 0.1, 1) ? update();
+  ng_select_ctl(6, "OVERSAMPLE", "OFF|2X|4X", 0) ? update();
 
   ng_end();
 

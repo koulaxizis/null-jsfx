@@ -120,6 +120,7 @@ function check(cond, what) {
   const os = catalog.plugins.filter((p) => p.group === 'one-slider').length;
   check((await page.locator('.card').count()) === os, `One Slider shows its ${os} plugins`);
   check((await page.locator('#pick .chip-btn.on').count()) === 3, 'the format toggles above the list follow Settings');
+  check((await page.locator('#pick button[data-pick="lv2"]').count()) === 1, 'LV2 is offered on Linux');
   check((await page.textContent('.card[data-id="tilt"] button[data-act="install"]')) === '+ GFX', 'Tilt (JSFX and VST3 installed) offers the missing GFX');
   check((await page.textContent('#bulk')) === `Install ${os} plugins (${(os - 1) * 3 + 1} files)`, 'bulk install counts plugins that miss a picked format, installed ones too');
   await page.click('#bulk');

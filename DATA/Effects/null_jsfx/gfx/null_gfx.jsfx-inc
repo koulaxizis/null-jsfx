@@ -227,8 +227,155 @@ desc:NULL JSFX shared GFX library
     ng_pre_was && ng_pre_click ? ng_pre_open = 0;
   );
 
+  // ---- A/B and undo/redo ----------------------------------------------------------------
+  // tools/build_presets.py also writes, at the end of @init, an empty #ng_h_ix, ng_hist_add(i)
+  // for every slider the presets set (not the file sliders) and ng_hist_init(), and
+  // ng_presets() calls ng_hist(). The header then shows undo, redo, A, B and a copy button
+  // left of the slogan. Every change through ng_slider_set / ng_set_slider is an edit: once
+  // the mouse button is up again (a whole drag is one step) the values from before it go on
+  // the undo list, and the redo list empties. A and B are two sets of values: a click on the
+  // other letter keeps the values in this one and loads that one (the first time it starts as
+  // a copy); A>B (B>A) copies this one into the other. Loading the other letter, undo and redo
+  // are steps like an edit. The lists are doubles in strings (#ng_h_*), so they take no plugin
+  // memory; nothing is saved with the project. Up to 32 steps (fewer when 32 would not fit in
+  // 16000 bytes). The C++ twin is in NullUI (history).
+  ng_h_n = 0; ng_h_req = 0; ng_h_pend = 0;
+
+  function ng_hist_add(i) ( str_setchar(#ng_h_ix, strlen(#ng_h_ix), i, 'us'); );
+  function ng_h_get(s, k) ( str_getchar(s, k * 8, 'd'); );
+  function ng_h_put(s, k, v) ( str_setchar(s, k * 8, v, 'd'); );
+  function ng_h_fill(s, n) ( strcpy(s, ""); loop(n, str_setchar(s, strlen(s), 0, 'd');); );
+
+  // the lists outlive a new @init when the strings do (same magic, count and length)
+  function ng_hist_init() local(n)
+  (
+    n = strlen(#ng_h_ix) / 2;
+    ng_h_d = max(1, min(32, floor(16000 / (8 * max(1, n)))));
+    ng_h_get(#ng_h_s, 0) != 20040 || ng_h_get(#ng_h_s, 1) != n || strlen(#ng_h_u) != ng_h_d * n * 8 ? (
+      ng_h_fill(#ng_h_s, 8);
+      ng_h_fill(#ng_h_v, 3 * n);
+      ng_h_fill(#ng_h_u, ng_h_d * n);
+      ng_h_fill(#ng_h_r, ng_h_d * n);
+      ng_h_put(#ng_h_s, 0, 20040);
+      ng_h_put(#ng_h_s, 1, n);
+    );
+    ng_h_uc = ng_h_get(#ng_h_s, 2); ng_h_up = ng_h_get(#ng_h_s, 3);
+    ng_h_rc = ng_h_get(#ng_h_s, 4); ng_h_rp = ng_h_get(#ng_h_s, 5);
+    ng_h_ab = ng_h_get(#ng_h_s, 6); ng_h_bh = ng_h_get(#ng_h_s, 7);
+    ng_h_n = n; ng_h_req = 0; ng_h_pend = 0;
+  );
+
+  function ng_h_save()
+  (
+    ng_h_put(#ng_h_s, 2, ng_h_uc); ng_h_put(#ng_h_s, 3, ng_h_up);
+    ng_h_put(#ng_h_s, 4, ng_h_rc); ng_h_put(#ng_h_s, 5, ng_h_rp);
+    ng_h_put(#ng_h_s, 6, ng_h_ab); ng_h_put(#ng_h_s, 7, ng_h_bh);
+  );
+
+  // the slider values into slot k of s (n doubles a slot), back from it, or compared with it
+  function ng_h_store(s, k) local(i)
+  ( i = 0; loop(ng_h_n, ng_h_put(s, k * ng_h_n + i, slider(str_getchar(#ng_h_ix, i * 2, 'us'))); i += 1;); );
+  function ng_h_load(s, k) local(i, j, v)
+  (
+    i = 0;
+    loop(ng_h_n,
+      j = str_getchar(#ng_h_ix, i * 2, 'us');
+      v = ng_h_get(s, k * ng_h_n + i);
+      v != slider(j) ? ( slider(j) = v; sliderchange(2 ^ (j - 1)); slider_automate(2 ^ (j - 1)); );
+      i += 1;
+    );
+  );
+  function ng_h_same(s, k) local(i, m)
+  ( m = 1; i = 0; loop(ng_h_n, ng_h_get(s, k * ng_h_n + i) != slider(str_getchar(#ng_h_ix, i * 2, 'us')) ? m = 0; i += 1;); m; );
+
+  // slot 0 of #ng_h_v (the values before) onto list s, or the top of list s into the sliders
+  function ng_h_push(s, c*, p*) local(i)
+  (
+    i = 0; loop(ng_h_n, ng_h_put(s, p * ng_h_n + i, ng_h_get(#ng_h_v, i)); i += 1;);
+    p = (p + 1) % ng_h_d;
+    c = min(c + 1, ng_h_d);
+  );
+  function ng_h_pop(s, c*, p*) ( p = (p + ng_h_d - 1) % ng_h_d; c -= 1; ng_h_load(s, p); );
+
+  // called by the slider setters before they change a value
+  function ng_h_touch() ( ng_h_n > 0 && !ng_h_pend ? ( ng_h_store(#ng_h_v, 0); ng_h_pend = 1; ); );
+
+  // end of a frame: ends an edit, runs a click on the buttons; 1 when it changed the sliders
+  function ng_hist() local(ch)
+  (
+    ch = 0;
+    ng_h_n > 0 ? (
+      ng_h_pend && !ng_lmb ? (
+        !ng_h_same(#ng_h_v, 0) ? ( ng_h_push(#ng_h_u, ng_h_uc, ng_h_up); ng_h_rc = 0; );
+        ng_h_pend = 0;
+      );
+      ng_h_req ? (
+        ng_h_store(#ng_h_v, 0);
+        ng_h_req == 1 && ng_h_uc > 0 ? (
+          ng_h_push(#ng_h_r, ng_h_rc, ng_h_rp); ng_h_pop(#ng_h_u, ng_h_uc, ng_h_up); ch = 1;
+        );
+        ng_h_req == 2 && ng_h_rc > 0 ? (
+          ng_h_push(#ng_h_u, ng_h_uc, ng_h_up); ng_h_pop(#ng_h_r, ng_h_rc, ng_h_rp); ch = 1;
+        );
+        (ng_h_req == 3 || ng_h_req == 4) && ng_h_req - 3 != ng_h_ab ? (
+          ng_h_store(#ng_h_v, 1 + ng_h_ab);
+          ng_h_ab = ng_h_req - 3;
+          ng_h_bh ? (
+            ng_h_load(#ng_h_v, 1 + ng_h_ab);
+            !ng_h_same(#ng_h_v, 0) ? ( ng_h_push(#ng_h_u, ng_h_uc, ng_h_up); ng_h_rc = 0; ch = 1; );
+          ) : ng_h_bh = 1;
+        );
+        ng_h_req == 5 ? ( ng_h_store(#ng_h_v, 2 - ng_h_ab); ng_h_bh = 1; );
+        ng_h_req = 0;
+        ng_h_pend = 0;
+      );
+      ng_h_save();
+    );
+    ch;
+  );
+
+  // one header button at design (x, 9.5), w wide; lit draws it in the accent; on: clickable.
+  // A click sets ng_h_req to req.
+  function ng_h_btn(x, w, lit, on, req) local(hover)
+  (
+    hover = on && mouse_x >= X(x) && mouse_x < X(x + w) && mouse_y >= Y(9.5) && mouse_y < Y(20.5);
+    ng_col(NG_BG, 1);
+    gfx_roundrect(X(x), Y(9.5), w * ng_s, 11 * ng_s, 3 * ng_s, 1);
+    gfx_rect(X(x) + 1, Y(9.5) + 1, w * ng_s - 1, 11 * ng_s - 1);
+    ng_col(lit ? NG_ACCENT : hover ? 0x45433f : NG_BORDER, 1);
+    gfx_roundrect(X(x), Y(9.5), w * ng_s, 11 * ng_s, 3 * ng_s, 1);
+    hover && ng_click ? ( ng_h_req = req; ng_click = 0; );
+    ng_col(!on ? NG_LOGO_ED : lit || hover ? NG_TEXT : NG_MUTED, 1);
+  );
+
+  // curved arrow for undo (dir -1, head on the left) and redo (1), centred at design (x, 15)
+  function ng_h_arrow(x, dir) local(cx)
+  (
+    cx = x - dir * 1;
+    gfx_arc(X(cx), Y(16), 3.2 * ng_s, dir < 0 ? 0 : $pi, dir < 0 ? $pi : 2 * $pi, 1);
+    gfx_line(X(cx), Y(12.8), X(cx - dir * 2.2), Y(11.2), 1);
+    gfx_line(X(cx), Y(12.8), X(cx - dir * 2.2), Y(14.4), 1);
+  );
+
+  // the buttons, right-aligned 143 units from the right edge of the design
+  function ng_h_bar() local(r)
+  (
+    r = ng_dw - 143;
+    ng_h_btn(r - 88, 14, 0, ng_h_uc > 0, 1);
+    ng_h_arrow(r - 81, -1);
+    ng_h_btn(r - 72, 14, 0, ng_h_rc > 0, 2);
+    ng_h_arrow(r - 65, 1);
+    ng_font(1, 6.5, 1);
+    ng_h_btn(r - 52, 14, ng_h_ab == 0, 1, 3);
+    ng_txt("A", r - 45, 15, 1, 0);
+    ng_h_btn(r - 36, 14, ng_h_ab == 1, 1, 4);
+    ng_txt("B", r - 29, 15, 1, 0);
+    ng_h_btn(r - 20, 20, 0, 1, 5);
+    ng_txt(ng_h_ab ? "B>A" : "A>B", r - 10, 15, 1, 0);
+  );
+
   // header: logo, "NULL JSFX" above the plugin name, category (or the preset selector) on the
-  // right, divider below
+  // right with the A/B and undo/redo buttons left of the slogan, divider below
   function ng_header(name, category)
   (
     ng_logo(14, 10, 24);
@@ -241,6 +388,7 @@ desc:NULL JSFX shared GFX library
     ng_font(1, 7, 1);
     ng_col(NG_SLOGAN, 1);
     ng_txt("AUDIO WITHOUT NOISE", ng_dw - 14, 15, 2, 2);
+    ng_h_n > 0 ? ng_h_bar();
     ng_pre_n > 0 ? ng_pre_box(ng_dw - 14 - NG_PRE_W) : (
       ng_font(1, 8, 1);
       ng_col(NG_MUTED, 1);
@@ -423,6 +571,7 @@ desc:NULL JSFX shared GFX library
     v = floor(v / step + 0.5) * step;
     changed = v != slider1;
     changed ? (
+      ng_h_touch();
       slider1 = v;
       sliderchange(slider1);
       slider_automate(slider1);
@@ -494,6 +643,7 @@ desc:NULL JSFX shared GFX library
   (
     changed = v != slider(idx);
     changed ? (
+      ng_h_touch();
       slider(idx) = v;
       sliderchange(2 ^ (idx - 1));
       slider_automate(2 ^ (idx - 1));

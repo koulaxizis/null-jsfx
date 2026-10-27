@@ -1,0 +1,7 @@
+[
+  ["Reference Matched", {"Listen": "Reference", "Level Match": "On"}],
+  ["Reference Raw", {"Listen": "Reference", "Level Match": "Off"}],
+  ["Mono Check", {"Monitor": "Mono"}],
+  ["Side Check", {"Monitor": "Side"}],
+  ["Reference Mono Check", {"Listen": "Reference", "Monitor": "Mono"}]
+]

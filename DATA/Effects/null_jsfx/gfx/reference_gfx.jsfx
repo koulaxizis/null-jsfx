@@ -1,0 +1,328 @@
+desc:NULL Reference GFX
+author: Christos Koulaxizis
+tags: reference track a/b compare level match loudness lufs mixing mastering meter analyzer gui
+//category: Advanced
+//NULL JSFX v2.6 • https://nulljsfx.tech • MIT License
+
+import null_gfx.jsfx-inc
+
+slider1:0<0,1,1{Track,Reference}>-Listen
+slider2:1<0,1,1{Off,On}>-Level Match
+slider3:0<-12,12,0.1>-Trim (dB)
+slider4:0<0,2,1{Stereo,Mono,Side}>-Monitor
+
+in_pin:Left
+in_pin:Right
+in_pin:Sidechain Left
+in_pin:Sidechain Right
+out_pin:Left
+out_pin:Right
+
+@init
+  ext_noinit = 1;              // play and seek keep tails and state, as in the VST3/CLAP
+  // NULL Reference (../reference.jsfx) with its own interface: same audio code, plus @gfx.
+  // Reference: compare the mix with a reference track. Put the reference on track channels 3/4
+  // (the sidechain pins: a send from the reference's track, or a second item on this track), switch Listen between Track and Reference.
+  // Level Match plays the reference at the mix's loudness: both are measured as BS.1770
+  // short-term loudness (K-weighted, the last 3 s, every 100 ms) and the reference's gain
+  // follows the difference (within +-24 dB, over about a second, held while either is under
+  // -60 LUFS). Trim adds to it. The switch crossfades over 10 ms. Monitor folds the output
+  // to mono or plays the side only. The interface shows both loudnesses, the match gain, the
+  // stereo correlation of each and their spectra.
+
+  // K-weighting at this sample rate (as Loudness Meter)
+  rf_k = tan($pi * 1681.974450955533 / srate);
+  rf_vh = 10 ^ (3.999843853973347 / 20);
+  rf_vb = rf_vh ^ 0.4996667741545416;
+  rf_q = 0.7071752369554196;
+  rf_a0 = 1 + rf_k / rf_q + rf_k * rf_k;
+  rf_b0 = (rf_vh + rf_vb * rf_k / rf_q + rf_k * rf_k) / rf_a0;
+  rf_b1 = 2 * (rf_k * rf_k - rf_vh) / rf_a0;
+  rf_b2 = (rf_vh - rf_vb * rf_k / rf_q + rf_k * rf_k) / rf_a0;
+  rf_a1 = 2 * (rf_k * rf_k - 1) / rf_a0;
+  rf_a2 = (1 - rf_k / rf_q + rf_k * rf_k) / rf_a0;
+  rf_k = tan($pi * 38.13547087602444 / srate);
+  rf_q = 0.5003270373238773;
+  rf_c0 = 1 + rf_k / rf_q + rf_k * rf_k;
+  rf_c1 = 2 * (rf_k * rf_k - 1) / rf_c0;
+  rf_c2 = (1 - rf_k / rf_q + rf_k * rf_k) / rf_c0;
+
+  RF_Z = 0;      // K-weighting state, 4 per channel: track L, R, reference L, R
+  RF_ET = 16;    // 100 ms energies of the track (ring of 30)
+  RF_ER = 46;    // and of the reference
+  memset(0, 0, 76);
+  rf_n = floor(srate * 0.1 + 0.5);
+  rf_cnt = 0;
+  rf_w = 0;
+  rf_acct = rf_accr = 0;
+  rf_lt = rf_lr = -200;  // short-term loudness, track and reference
+  rf_g = 0;              // the match gain (dB)
+  rf_xf = 0;             // 0 = track, 1 = reference
+  rf_xs = 1 / (0.01 * srate);
+  // stereo correlation, averaged over about 3 s (display)
+  rf_ca = exp(-1 / (3 * srate));
+  rf_tlr = rf_tll = rf_trr = rf_rlr = rf_rll = rf_rrr = 0;
+
+  // K-weight x with the state at z (transposed direct form II: shelf, then high pass)
+  function rf_kw(x, z) local(y, k)
+  (
+    y = rf_b0 * x + z[0];
+    z[0] = rf_b1 * x - rf_a1 * y + z[1];
+    z[1] = rf_b2 * x - rf_a2 * y;
+    k = y + z[2];
+    z[2] = -2 * y - rf_c1 * k + z[3];
+    z[3] = y - rf_c2 * k;
+    k;
+  );
+
+  function rf_db(p) ( p > 0 ? -0.691 + 10 * log10(p) : -200; );
+
+  // the reference's gain: the match (when on) plus Trim
+  function rf_gain() ( rf_gr = 10 ^ (((slider2 ? rf_g : 0) + slider3) / 20); );
+
+  // every 100 ms: both short-term loudnesses, the match gain
+  function rf_subblock() local(i, st, sr)
+  (
+    RF_ET[rf_w] = rf_acct;
+    RF_ER[rf_w] = rf_accr;
+    rf_acct = rf_accr = 0;
+    rf_w = (rf_w + 1) % 30;
+    st = sr = 0;
+    i = 0;
+    loop(30, st += RF_ET[i]; sr += RF_ER[i]; i += 1;);
+    rf_lt = rf_db(st / (30 * rf_n));
+    rf_lr = rf_db(sr / (30 * rf_n));
+    rf_lt > -60 && rf_lr > -60 ? rf_g += (max(-24, min(24, rf_lt - rf_lr)) - rf_g) * 0.1;
+    rf_gain();
+  );
+
+
+  // ---- display (never changes the audio) ----
+  // the spectra of both (the reference at its played gain): @sample writes the mono track and
+  // reference into two rings, @gfx takes the last 4096 samples of each, a Hann window and an
+  // FFT each frame, and averages each bin's power over about a second
+  RF_AT = 1024;     // 4096
+  RF_AR = 5120;     // 4096
+  RF_BUF = 16384;   // FFT buffer, 8192 (does not cross a 65536 boundary)
+  RF_WIN = 24576;   // Hann window, 4096
+  RF_SPT = 28672;   // averaged power, 2049 each
+  RF_SPR = 30736;
+  memset(RF_AT, 0, 31761);
+  rf_i = 0;
+  loop(4096, RF_WIN[rf_i] = 0.5 - 0.5 * cos(2 * $pi * rf_i / 4096); rf_i += 1;);
+  rf_wp = 0;
+  rf_an_last = 0;
+
+  function rf_analyze(ring, sp, rc) local(i, p, k, re, im)
+  (
+    p = rf_wp;
+    i = 0;
+    loop(4096,
+      RF_BUF[2 * i] = ring[p] * RF_WIN[i];
+      RF_BUF[2 * i + 1] = 0;
+      p = (p + 1) & 4095;
+      i += 1;
+    );
+    fft(RF_BUF, 4096);
+    fft_permute(RF_BUF, 4096);
+    k = 0;
+    loop(2049,
+      re = RF_BUF[2 * k];
+      im = RF_BUF[2 * k + 1];
+      sp[k] = sp[k] * rc + (re * re + im * im) * 16 / (4096 * 4096) * (1 - rc);
+      k += 1;
+    );
+  );
+
+  // the dB of the plot column from f0 to f1 Hz: the mean power of the bins under it (or the
+  // nearest two interpolated), tilted 4.5 dB/oct around 1 kHz
+  function rf_col_db(sp, f0, f1) local(k0, k1, a, b, p, n, kc, ci)
+  (
+    k0 = f0 * 4096 / srate;
+    k1 = min(2048, f1 * 4096 / srate);
+    a = ceil(k0);
+    b = floor(k1);
+    a <= b ? (
+      p = n = 0;
+      while (a <= b) ( p += sp[a]; n += 1; a += 1; );
+      p /= n;
+    ) : (
+      kc = min(2047, (k0 + k1) / 2);
+      ci = floor(kc);
+      p = sp[ci] + (sp[ci + 1] - sp[ci]) * (kc - ci);
+    );
+    10 * log10(p + 0.00000000000000000001) + 4.5 * log(sqrt(f0 * f1) / 1000) / log(2);
+  );
+
+  function rf_lufs_txt(l) ( l > -70 ? sprintf(#rf_v, "%.1f LUFS", l) : strcpy(#rf_v, "-INF"); #rf_v; );
+  function rf_corr(lr, ll, rr) ( ll * rr > 0 ? lr / sqrt(ll * rr) : 0; );
+
+  gfx_ext_retina = 1;
+
+  function update()
+  (
+    rf_listen = slider1;
+    rf_mon = slider4;
+    rf_gain();
+  );
+
+  // ---- factory presets: generated by tools/build_presets.py, do not edit ----
+  ng_pre_n = 6;
+  strcpy(#ng_h_ix, "");
+  ng_hist_add(1); ng_hist_add(2); ng_hist_add(3); ng_hist_add(4);
+  ng_hist_init();
+
+  function ng_preset_load(p)
+  (
+    p == 0 ? ( ng_slider_set(1, 0); ng_slider_set(2, 1); ng_slider_set(3, 0); ng_slider_set(4, 0); );
+    p == 1 ? ( ng_slider_set(1, 1); ng_slider_set(2, 1); ng_slider_set(3, 0); ng_slider_set(4, 0); );
+    p == 2 ? ( ng_slider_set(1, 1); ng_slider_set(2, 0); ng_slider_set(3, 0); ng_slider_set(4, 0); );
+    p == 3 ? ( ng_slider_set(1, 0); ng_slider_set(2, 1); ng_slider_set(3, 0); ng_slider_set(4, 1); );
+    p == 4 ? ( ng_slider_set(1, 0); ng_slider_set(2, 1); ng_slider_set(3, 0); ng_slider_set(4, 2); );
+    p == 5 ? ( ng_slider_set(1, 1); ng_slider_set(2, 1); ng_slider_set(3, 0); ng_slider_set(4, 1); );
+  );
+
+  // the first preset every slider matches, or -1
+  function ng_preset_match() local(m)
+  (
+    m = -1;
+    m < 0 && ng_pre_eq(slider1, 0) && ng_pre_eq(slider2, 1) && ng_pre_eq(slider3, 0) && ng_pre_eq(slider4, 0) ? m = 0;
+    m < 0 && ng_pre_eq(slider1, 1) && ng_pre_eq(slider2, 1) && ng_pre_eq(slider3, 0) && ng_pre_eq(slider4, 0) ? m = 1;
+    m < 0 && ng_pre_eq(slider1, 1) && ng_pre_eq(slider2, 0) && ng_pre_eq(slider3, 0) && ng_pre_eq(slider4, 0) ? m = 2;
+    m < 0 && ng_pre_eq(slider1, 0) && ng_pre_eq(slider2, 1) && ng_pre_eq(slider3, 0) && ng_pre_eq(slider4, 1) ? m = 3;
+    m < 0 && ng_pre_eq(slider1, 0) && ng_pre_eq(slider2, 1) && ng_pre_eq(slider3, 0) && ng_pre_eq(slider4, 2) ? m = 4;
+    m < 0 && ng_pre_eq(slider1, 1) && ng_pre_eq(slider2, 1) && ng_pre_eq(slider3, 0) && ng_pre_eq(slider4, 1) ? m = 5;
+    m;
+  );
+
+  function ng_preset_name(p) local(s)
+  (
+    s = "";
+    p == 0 ? s = "Default";
+    p == 1 ? s = "Reference Matched";
+    p == 2 ? s = "Reference Raw";
+    p == 3 ? s = "Mono Check";
+    p == 4 ? s = "Side Check";
+    p == 5 ? s = "Reference Mono Check";
+    s;
+  );
+
+  function ng_presets() local(i)
+  (
+    ng_pre_req >= 0 ? ( ng_preset_load(ng_pre_req); update(); ng_pre_req = -1; );
+    ng_hist() ? update();
+    ng_pre_cur = ng_preset_match();
+    ng_pre_open ? (
+      ng_pre_menu_begin();
+      i = 0;
+      loop(ng_pre_n, ng_pre_item(i, ng_preset_name(i)); i += 1;);
+      ng_pre_menu_end();
+    );
+    strcpy(#ng_pre_name, ng_pre_cur >= 0 ? ng_preset_name(ng_pre_cur) : "CUSTOM");
+  );
+  // ---- end of factory presets ----
+
+@slider
+  update();
+
+@sample
+  // display only: the mono track and the reference at its played gain
+  RF_AT[rf_wp] = (spl0 + spl1) * 0.5;
+  RF_AR[rf_wp] = (spl2 + spl3) * 0.5 * rf_gr;
+  rf_wp = (rf_wp + 1) & 4095;
+  // measure both
+  rf_tl = rf_kw(spl0, RF_Z);
+  rf_tr = rf_kw(spl1, RF_Z + 4);
+  rf_rl = rf_kw(spl2, RF_Z + 8);
+  rf_rr = rf_kw(spl3, RF_Z + 12);
+  rf_acct += rf_tl * rf_tl + rf_tr * rf_tr;
+  rf_accr += rf_rl * rf_rl + rf_rr * rf_rr;
+  rf_cnt += 1;
+  rf_cnt >= rf_n ? ( rf_cnt = 0; rf_subblock(); );
+  rf_tlr = rf_ca * rf_tlr + (1 - rf_ca) * spl0 * spl1;
+  rf_tll = rf_ca * rf_tll + (1 - rf_ca) * spl0 * spl0;
+  rf_trr = rf_ca * rf_trr + (1 - rf_ca) * spl1 * spl1;
+  rf_rlr = rf_ca * rf_rlr + (1 - rf_ca) * spl2 * spl3;
+  rf_rll = rf_ca * rf_rll + (1 - rf_ca) * spl2 * spl2;
+  rf_rrr = rf_ca * rf_rrr + (1 - rf_ca) * spl3 * spl3;
+
+  // A/B with a 10 ms crossfade, then the monitor fold
+  rf_xf = rf_listen > rf_xf ? min(rf_listen, rf_xf + rf_xs) : max(rf_listen, rf_xf - rf_xs);
+  rf_ol = spl0 * (1 - rf_xf) + spl2 * rf_gr * rf_xf;
+  rf_or = spl1 * (1 - rf_xf) + spl3 * rf_gr * rf_xf;
+  rf_mon == 1 ? (
+    spl0 = spl1 = (rf_ol + rf_or) * 0.5;
+  ) : rf_mon == 2 ? (
+    spl0 = (rf_ol - rf_or) * 0.5;
+    spl1 = spl0;
+  ) : (
+    spl0 = rf_ol;
+    spl1 = rf_or;
+  );
+
+@gfx 480 334
+  ng_knobs_begin("REFERENCE", "ADVANCED", 480, 160, 1, 0);
+
+  // display, left: the spectra (track filled, reference as a line); right: the numbers
+  ng_plot(ng_vx + 26, ng_vy + 4, 270, ng_vh - 20);
+  rf_dt = max(0, min(0.5, ng_now - rf_an_last));
+  rf_an_last = ng_now;
+  rf_rc = exp(-rf_dt / 1);
+  rf_analyze(RF_AT, RF_SPT, rf_rc);
+  rf_analyze(RF_AR, RF_SPR, rf_rc);
+  ng_grid_freq(36);
+  rf_cols = 270;
+  rf_c = 0;
+  loop(rf_cols,
+    rf_f0 = 20 * 1000 ^ (rf_c / rf_cols);
+    rf_f1 = 20 * 1000 ^ ((rf_c + 1) / rf_cols);
+    rf_x = ng_px + ng_pw * (rf_c + 0.5) / rf_cols;
+    rf_yt = ng_lin_y(rf_col_db(RF_SPT, rf_f0, rf_f1), -90, 0);
+    rf_yr = ng_lin_y(rf_col_db(RF_SPR, rf_f0, rf_f1), -90, 0);
+    ng_col(NG_MUTED, 0.25);
+    rf_yt < ng_py + ng_ph ? gfx_rect(floor(rf_x), rf_yt, max(1, ng_s), ng_py + ng_ph - rf_yt);
+    ng_col(NG_ACCENT, 1);
+    rf_c > 0 ? gfx_line(rf_lx, rf_ly, rf_x, rf_yr, 1);
+    rf_lx = rf_x;
+    rf_ly = rf_yr;
+    rf_c += 1;
+  );
+  ng_font(1, 6.5, 1);
+  ng_col(NG_MUTED, 1);
+  ng_txt("TRACK", ng_vx + 34, ng_vy + 12, 0, 1);
+  ng_col(NG_ACCENT, 1);
+  ng_txt("REFERENCE", ng_vx + 70, ng_vy + 12, 0, 1);
+
+  rf_tx = ng_vx + 318;
+  rf_ty = ng_vy + 18;
+  ng_font(1, 7.5, 1);
+  ng_col(slider1 ? NG_MUTED : NG_TEXT, 1);
+  ng_txt("TRACK", rf_tx, rf_ty, 0, 1);
+  ng_txt(rf_lufs_txt(rf_lt), rf_tx + 118, rf_ty, 2, 0.5);
+  ng_col(slider1 ? NG_TEXT : NG_MUTED, 1);
+  ng_txt("REFERENCE", rf_tx, rf_ty + 22, 0, 1);
+  ng_txt(rf_lufs_txt(rf_lr), rf_tx + 118, rf_ty + 22, 2, 0.5);
+  ng_col(NG_MUTED, 1);
+  ng_txt("GAIN", rf_tx, rf_ty + 44, 0, 1);
+  sprintf(#rf_gs, "%+.1f dB", 20 * log10(rf_gr));
+  ng_col(NG_ACCENT, 1);
+  ng_txt(#rf_gs, rf_tx + 118, rf_ty + 44, 2, 0.5);
+  ng_col(NG_MUTED, 1);
+  ng_txt("CORRELATION", rf_tx, rf_ty + 66, 0, 1);
+  sprintf(#rf_cs, "%.2f / %.2f", rf_corr(rf_tlr, rf_tll, rf_trr), rf_corr(rf_rlr, rf_rll, rf_rrr));
+  ng_col(NG_TEXT, 1);
+  ng_txt(#rf_cs, rf_tx + 118, rf_ty + 88, 2, 0.5);
+  ng_col(NG_MUTED, 1);
+  ng_font(1, 6.5, 1);
+  ng_txt("TRACK / REFERENCE", rf_tx, rf_ty + 88, 0, 1);
+
+  ng_row(4);
+  ng_select_ctl(1, "LISTEN", "TRACK|REFERENCE", 0) ? update();
+  ng_select_ctl(2, "LEVEL MATCH", "OFF|ON", 0) ? update();
+  sprintf(#rf_trim, "%+.1f dB", slider3);
+  ng_knob_ctl(3, "TRIM", #rf_trim, -12, 12, 0, 0.1, 1) ? update();
+  ng_select_ctl(4, "MONITOR", "STEREO|MONO|SIDE", 0) ? update();
+
+  ng_end();
+
+  ng_presets(); // the preset list (generated by tools/build_presets.py)

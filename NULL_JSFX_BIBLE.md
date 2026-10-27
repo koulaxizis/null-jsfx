@@ -64,7 +64,17 @@
 ### 0.5 Standing process rules
 
 - **Bugs.** Whenever any thread finds a bug, a separate fix thread is opened right away, without asking Christos first (2026-10-19). A thread asks the coordinator to start it.
-- **Monthly audit.** On the third Friday of each month at 19:00 Athens time, Claude runs a full audit of everything, skipping nothing: all formats, Rack, Hub, installers (exe, sh, pkg), zips, presets and chains, site, docs, CI, videos, remote, plus online research. Findings come as a numbered list in Greek, and Christos decides. If the usage limit is hit, the audit continues right after the reset. It runs in the thread "Μηνιαίος έλεγχος σουίτας", and each run schedules the next one (2026-10-24) [memory].
+- **Full audit.** On the 8th of every even month (December, February, April, June, August, October) at 19:00 Athens time, starting 2026-12-08, Claude runs a full audit of everything, skipping nothing: all formats, Rack, Hub, installers (exe, sh, pkg), zips, presets and chains, site, docs, CI, videos, remote, plus online research. Each audit also:
+  - compares with the previous audit: what was fixed, what is still open, which decisions are pending;
+  - actually runs the tests, the stress tests, the builds and the audio skills, rather than only reading the code;
+  - downloads the latest release and checks its zips and installers;
+  - checks the site's links, speed, SEO and mobile view;
+  - checks for new versions of DPF, the VST3 and CLAP SDKs, Tauri and REAPER;
+  - answers Christos's standing question: what could we add so NULL JSFX is fully competitive with the big plugin companies and covers every need of a home or pro studio for engineers and producers (it starts from the gap analysis of 2026-10-27 and does not repeat it);
+  - ends by asking whether the audit task itself can be improved further.
+
+  The full report is a Claude Doc, with a short summary in the thread "Μηνιαίος έλεγχος σουίτας". Findings come as a numbered list in Greek, and Christos decides. If the usage limit is hit, the audit continues right after the reset. It runs from a recurring scheduled task; a run does not schedule the next one (2026-10-26, 2026-10-27) [memory].
+- **Memory export.** Every quarter, on the 10th of January, April, July and October at 12:00 Athens time, Claude exports the project memory that changed since the previous export, with proposed text for the project Goal and Instructions, which Christos pastes. It runs from a recurring scheduled task, in the thread "Μηνιαία εξαγωγή μνήμης" (2026-10-26) [memory].
 - **Project instructions.** When a lasting decision is made, Claude proposes the text for the project instructions. Christos pastes it.
 
 ---
@@ -76,7 +86,7 @@
 NULL JSFX is a free MIT suite of audio plugins for REAPER, written in pure EEL2: effects, instruments and MIDI tools. The plain JSFX with REAPER's own sliders is the base. Every plugin also ships in these versions of the same suite (they are not separate products):
 
 - a **GFX JSFX** with its own interface;
-- **VST3 and CLAP** for any DAW (C++ with DPF) on Windows, Linux and macOS;
+- **VST3 and CLAP** for any DAW (C++ with DPF) on Windows, Linux and macOS, and **LV2** on Linux (since 2.7, from the same code);
 - most plugins also as a **Rack module**;
 - a **web version** generated from the EEL2, which runs in orOS Studio.
 
@@ -88,6 +98,7 @@ Around them are the **NULL JSFX Hub** app, the installers, the tablet remote, RE
 |---|---|
 | GFX vs plain JSFX | 0 |
 | VST3/CLAP and Rack module vs JSFX | 1e-5 |
+| LV2 vs JSFX (Linux) | 1e-5 |
 | Web vs JSFX | 1e-6 |
 
 **Free forever (rule 2026-10-13).** Whatever has been released for free stays free and MIT. There are no paywalls, licence keys, ads or nag messages. Support comes only through Ko-fi: one-time at https://ko-fi.com/koulaxizis, or monthly at https://ko-fi.com/koulaxizis/tiers. There is no GitHub Sponsors. News of new versions and plugins goes out on Ko-fi only (2026-10-26).
@@ -112,15 +123,15 @@ Rule numbers are stable. A retired rule keeps its number, marked *retired*, and 
 |---|---|
 | R4 | Lines 1–5 are exactly: `desc:NULL <Name>`, `author: Christos Koulaxizis`, `tags: <lowercase keywords>`, `//category: <One Slider \| Essentials \| Advanced \| Instruments \| MIDI>`, and the footer `//NULL JSFX v<version> • https://nulljsfx.tech • MIT License`. Then come a blank line, the sliders, a blank line and the pins. |
 | R5 | Categories. A One Slider plugin has exactly one slider, and a plugin in any other category with one slider is rejected. Pins: the standard four; sidechain plugins add `in_pin:Sidechain Left/Right` after the main inputs; Band Splitter has the eight-channel band layout; instruments have `in_pin:none` and stereo outs (Drum Machine adds the Snare, Hats and Perc pairs), and send every MIDI message they receive on (`midisend` in `@block`; VST3/CLAP: `WANT_MIDI_OUTPUT` and echo), so instruments can be layered; MIDI effects use the four standard pins and pass the audio through. |
-| R6 | EEL2 code. Every `@section` appears once, and there is a `@sample` section that writes `spl0` and `spl1`. No variable is read without being assigned somewhere. Only real EEL2 functions are used. Imports must exist. Slider labels follow `Name (unit)`. There is no C syntax (`if`, braces, `return`, `else`, `int()`). |
+| R6 | EEL2 code. Every `@section` appears once, and there is a `@sample` section that writes `spl0` and `spl1`. No variable is read without being assigned somewhere. Only real EEL2 functions are used (`slider(i)` may read slider i by index, as Studio EQ does for its eight bands). Imports must exist. Slider labels follow `Name (unit)`. There is no C syntax (`if`, braces, `return`, `else`, `int()`). |
 | R25 | Every sample rate works. Each filter frequency (a `tan()`, an RBJ biquad, an SVF) is held below Nyquist: `min(f, 0.45 * srate)`, or `0.49 * srate` where 0.45 would move the sound at 44.1 kHz (Reverser, Parametric EQ). The native port holds it the same way. CI renders every plain JSFX at 8000, 22050, 1234.57 and 12345.68 Hz too (2026-10-26). |
 
 **GFX**
 
 | # | Rule |
 |---|---|
-| R7 | The audio code (`@init`, `@slider`, `@block`, `@sample`) is identical to the plain JSFX, checked with tolerance 0. Slider labels get a `-` prefix, the tags add `gui`, and `import null_gfx.jsfx-inc` follows the footer. `gfx_ext_retina = 1`. The `@slider` code moves into `function update()`. GFX code never calls `slider()` and uses `ng_slider_set`. Meters may read audio, but never change the output, and use their own variables and memory. |
-| R8 | The look. Dark theme only, with the nulljsfx.tech palette and a **silver accent `#c4c4c4`, never the site purple**: purple belongs to Noxpress. A header shows the logo, "NULL JSFX", the plugin name, the category and "AUDIO WITHOUT NOISE". One Slider plugins use a horizontal slider at `@gfx 360 240`. Other plugins use knobs and selectors in rows of 6, with tabs beyond 2 rows. They are 480 wide (height varies, 294–460), and instruments and meters are wider (Part III). Each display shows what the plugin does (a curve, meters or a scope). The window resizes. The font is Noto Sans everywhere. `null_gfx.jsfx-inc` stays in step with `native/common/NullUI.hpp` and `NullTheme.hpp`. |
+| R7 | The audio code (`@init`, `@slider`, `@block`, `@sample`) is identical to the plain JSFX, checked with tolerance 0. Slider labels get a `-` prefix, the tags add `gui`, and `import null_gfx.jsfx-inc` follows the footer. `gfx_ext_retina = 1`. The `@slider` code moves into `function update()`. GFX code never sets a slider through `slider()` and uses `ng_slider_set` (reading `slider(i)` is fine). Meters may read audio, but never change the output, and use their own variables and memory. |
+| R8 | The look. Dark theme only, with the nulljsfx.tech palette and a **silver accent `#c4c4c4`, never the site purple**: purple belongs to Noxpress. A header shows the logo, "NULL JSFX", the plugin name, the category and "AUDIO WITHOUT NOISE". One Slider plugins use a horizontal slider at `@gfx 360 240`. Other plugins use knobs and selectors in rows of 6, with tabs beyond 2 rows. They are 480 wide (height varies, 294–468), and instruments and meters are wider (Part III). Each display shows what the plugin does (a curve, meters or a scope). The window resizes. The font is Noto Sans everywhere. `null_gfx.jsfx-inc` stays in step with `native/common/NullUI.hpp` and `NullTheme.hpp`. |
 
 **Native VST3/CLAP**
 
@@ -135,7 +146,7 @@ Rule numbers are stable. A retired rule keeps its number, marked *retired*, and 
 |---|---|
 | R11 | Parameter indices are fixed forever, and new parameters are only appended. Today there are 22 globals, then 29 per slot × 8, then the appended block 254..285. |
 | R12 | Every new feature sounds like nothing at its default. State strings ("slots", "routes", "preset") never change meaning: new features add keys or sources. `test/RackEngineV1.hpp` is frozen, and every preset that does not use newer features renders bit for bit like it. |
-| R13 | Every new plugin gets a Rack module, except meters, MIDI effects, instruments and plugins that need buses other than a sidechain. Sidechain plugins derive from `rack::KeyedModule`. File sliders are not module values. |
+| R13 | Every new plugin gets a Rack module, except meters, MIDI effects, instruments, plugins that need buses other than a sidechain, and plugins with more than 25 sliders (a Rack slot holds 25 values, `kValues`). Sidechain plugins derive from `rack::KeyedModule`. File sliders are not module values. |
 
 **Generated content**
 
@@ -190,15 +201,19 @@ Each area has one short paragraph here. The details are in the README it links t
 - `DATA/Effects/null_jsfx/<name>.jsfx`: 113 plain JSFX, each with its `<name>.jsfx.rpl` preset library (generated).
 - `DATA/Effects/null_jsfx/gfx/<name>_gfx.jsfx`: 113 GFX versions, plus `null_gfx.jsfx-inc` (the shared look: `ng_*` functions and `NG_*` colours) and their `.rpl` files.
 - `DATA/FXChains/NULL JSFX/` and `DATA/FXChains/NULL JSFX GFX/`: 73 REAPER FX chains each (generated by `tools/build_chains.py`).
+- **Memory.** REAPER gives a JSFX 8,388,608 memory slots (8M) unless the header asks for more with `options:maxmem=`, up to 33,554,432 (32M). Memory past the limit is silently lost, so a plugin whose buffers grow with the sample rate past 8M declares `options:maxmem=33554432` after its pins, in the plain and the GFX file alike. Blocks are allocated on first use, so the option costs nothing at normal rates. Today seven plugins declare it: Convolution, Delay, Half Speed, Reverser, Slicer, Tape Echo and Tape Stop (2026-10-26). The web runtime honours the same option (`memMax` in `web/tools/eel2js.js`).
 
 ### II.2 `native/` — VST3 and CLAP (DPF)
 
-- **Build:** one CMake project (`native/CMakeLists.txt`, project version = the suite version) that fetches DPF at a pinned commit. `native/scripts/build.sh` (`--test`, `--plugins "a;b"`, `--dpf DIR`) puts the output in `native/dist/{VST3,CLAP}/NULL JSFX/`. Bundles are named `null_jsfx_<name>.vst3`/`.clap`.
+- **Build:** one CMake project (`native/CMakeLists.txt`, project version = the suite version) that fetches DPF at a pinned commit and applies every `native/third_party/dpf/*.patch` on top, in name order (`null-jsfx.patch`: CLAP latency is reported only inside `activate()` and subnormal output samples become 0; `state-load.patch`: a state string cut by a short stream read is not ended early; a local `--dpf` checkout needs them applied by hand). `native/scripts/build.sh` (`--test`, `--plugins "a;b"`, `--dpf DIR`) puts the output in `native/dist/{VST3,CLAP}/NULL JSFX/`, and on Linux also `native/dist/LV2/NULL JSFX/` (`NULL_LV2`, on by default on Linux only; 2.7). Bundles are named `null_jsfx_<name>.vst3`/`.clap`/`.lv2`; the LV2 URI is the plugin's existing `DISTRHO_PLUGIN_URI` (R3).
 - **`native/common/`:**
   - `NullPlugin.hpp`: `NullOneSliderPlugin` and `NullMultiPlugin` (at most 64 parameters). DPF calls `setParameterValue` from the host's main thread too (VST3 interface edits, VST3 and CLAP state loads), so it only stores the value (atomic) and marks it changed. The base owns DPF's `activate` and `run` (both `final`): it calls `valueChanged` for the changed parameters on the audio thread, then the plugin's `onActivate` / `process`. A plugin never overrides `run` or `activate` [PR, 2026-10-26]. `getVersion()` reports the CMake project version (`NULL_JSFX_VERSION_*`).
   - `NullUI.hpp`: `NullOneSliderUI` and `NullKnobsUI`, the twins of `null_gfx.jsfx-inc`.
   - `NullTheme.hpp`: the palette.
+  - `NullBeatClock.hpp`: the host's beat position. In LV2 it counts on exactly from the frame between the host's `time:Position` events, because DPF advances bar/beat in float and a step drifted by a sample within a second. `NullPluginBase` and the Rack hand the plugins this position through `getTimePosition()`; VST3 and CLAP get the host's own (2.7).
   - `NullTaps.hpp`: lock-free audio taps from the DSP to the UI.
+  - `NullLazyClear.hpp`: a buffer that `reset()` marks as cleared in microseconds and that clears itself chunk by chunk on first write (Slicer, Half Speed).
+  - `NullMailbox.hpp`: hands a loaded file from `setState` to `run()` with two atomic pointers, no lock (Sampler, Convolution).
   - `NullSliders.hpp`: `SliderInfo`.
   - `NullModule.hpp`: the Rack module interface.
   - `NullMidiNotes.hpp`, `NullMidiTaps.hpp` and `NullKeyboardUI.hpp`: the MIDI effects.
@@ -206,7 +221,7 @@ Each area has one short paragraph here. The details are in the README it links t
   - `fonts/`: Noto Sans, OFL.
 - **`native/plugins/<name>/`:** `DistrhoPluginInfo.h`, `<Name>DSP.hpp` (framework-free), `<Name>Sliders.hpp` (multi-slider plugins), `Plugin.cpp`, `UI.cpp`, `FactoryPresets.hpp` (generated), and optionally `compare_args.txt`.
 - **`native/plugins/rack/`:** the Rack, a host for up to 8 modules. It has lanes A/B, a feedback loop, 8 macros, 2 LFOs, an envelope follower and a 16-step sequencer, with up to 32 modulation routes. The engine is `RackEngine.hpp`, there is one adapter per plugin in `modules/<id>.hpp` (95 today), `RackPresets.hpp` is generated with 86 presets including Init, and the tests are in `test/`. There is no rack.jsfx.
-- **`native/test/`:** `compare.cpp` (the JSFX in ysfx against the CLAP build), `module_info`.
+- **`native/test/`:** `compare.cpp` (the JSFX in ysfx against the CLAP build), `state_test.cpp` (the CLAP state round trip), `module_info`, `lv2_test.py` (every LV2 bundle through lilv against `render_ref`).
 - Guide: [native/README.md](native/README.md).
 
 ### II.3 `web/` — the web runtime
@@ -222,6 +237,7 @@ Each area has one short paragraph here. The details are in the README it links t
 - `hub/core` is the Rust engine with no window. `hub/app` is the Tauri app (`selfupdate.rs`, CSP in `tauri.conf.json` allowing media only from nulljsfx.tech). `hub/ui` is plain HTML, CSS and JS, with `i18n.js` in English and Greek.
 - It reads `NULL-JSFX-Catalog.json` from the latest release (written by `tools/build_catalog.py`), installs, updates and removes in any format, fetches only the needed zip entries with HTTP range requests, and offers check-and-repair, rollback, selection export/import, tray notifications and self-update.
 - Its version is the workspace version in `hub/Cargo.toml`.
+- LV2 (2.7): on Linux the Hub offers an LV2 format and folder (`~/.lv2`). The catalog's `packages.lv2` names the OS whose native zip holds an LV2 of every VST3 plugin, and the Hub adds `lv2` to those plugins itself; the plugins' `formats` keep only the keys every Hub knows, so a 2.6 Hub still reads a 2.7 catalog.
 - Guide: [hub/README.md](hub/README.md).
 
 ### II.5 `installer/` — one-off installers
@@ -235,7 +251,7 @@ Each area has one short paragraph here. The details are in the README it links t
 | macOS | `NULL-JSFX-Installer-macOS.sh` | `installer/unix/install.sh` |
 | macOS | `NULL-JSFX-Installer-macOS.pkg` | `installer/macos/` |
 
-The user picks formats, plugins and extras. FX chains are installed only when all their plugins are. Presets are merged into the user's REAPER `.ini` files, never replacing them. The end page carries a Ko-fi note.
+The user picks formats, plugins and extras (on Linux the formats include LV2 in `~/.lv2`, since 2.7). FX chains are installed only when all their plugins are. Presets are merged into the user's REAPER `.ini` files, never replacing them. The end page carries a Ko-fi note.
 
 ### II.6 `remote/` — tablet remote
 
@@ -305,22 +321,22 @@ The columns are read from these files:
 | GFX | the `@gfx` line of `gfx/<file>_gfx.jsfx`, which is also the native UI size |
 | Sliders | the number of JSFX sliders |
 
-Every plugin has all of these: a GFX version, a VST3/CLAP version, a site page, a presets file and a web build.
+Every plugin has all of these: a GFX version, a VST3/CLAP version, a site page, a presets file and a web build. The site page waits for launch (R18) for Studio EQ, Spectral Ducker, Reference, Tuner, VU Meter, Crossfeed and De-Clip.
 
 Why the exceptions exist: hosts store the CLAP id in sessions, so the released ids stay as they are (R3). Meters, MIDI effects and instruments get no module, and neither does Band Splitter, which needs eight-channel buses (R13).
 
 <!-- BEGIN REGISTRY: generated by tools/build_bible.py -->
 
 **Totals:**
-- 113 plugins: 21 One Slider, 45 Essentials, 33 Advanced, 9 Instruments, 5 MIDI.
-- 95 Rack modules.
+- 120 plugins: 21 One Slider, 48 Essentials, 37 Advanced, 9 Instruments, 5 MIDI.
+- 98 Rack modules.
 - 73 FX chains in `NULL JSFX` and 73 in `NULL JSFX GFX`.
-- 1,006 factory presets, Default included.
+- 1,057 factory presets, Default included.
 - 86 Rack presets, Init included.
 
 **Exceptions:**
 - **CLAP ids that differ from the file name** (released, frozen by R3): `tech.nulljsfx.granular-delay`, `tech.nulljsfx.shimmer-reverb`, `tech.nulljsfx.spring-reverb`, `tech.nulljsfx.vinyl-age`, `tech.nulljsfx.warped-delay`.
-- **No Rack module** (R13): Arpeggiator, Band Splitter, Bass, Chords, Drum Machine, FM, Humanize, Keys, Loudness Meter, Organ, Percussion, Pluck, Riff, Sampler, Scale, Spectrum Analyzer, Stereo Scope, Synth.
+- **No Rack module** (R13): Arpeggiator, Band Splitter, Bass, Chords, Drum Machine, FM, Humanize, Keys, Loudness Meter, Organ, Percussion, Pluck, Reference, Riff, Sampler, Scale, Spectrum Analyzer, Stereo Scope, Studio EQ, Synth, Tuner, VU Meter.
 
 ### One Slider (21)
 
@@ -348,7 +364,7 @@ Why the exceptions exist: hosts store the CLAP id in sessions, so the released i
 | Tilt | `tilt` | `tilt` | `NTlt` | yes | 360x240 | 1 |
 | Wetter | `wetter` | `wetter` | `NWet` | yes | 360x240 | 1 |
 
-### Essentials (45)
+### Essentials (48)
 
 | Plugin | File | Site slug | Unique ID | Rack | GFX | Sliders |
 |---|---|---|---|---|---|---|
@@ -359,24 +375,26 @@ Why the exceptions exist: hosts store the CLAP id in sessions, so the released i
 | Cabinet Simulator | `cabinet_simulator` | `cabinet-simulator` | `N2CB` | yes | 480x380 | 7 |
 | Channel Utility | `channel_utility` | `channel-utility` | `N3cu` | yes | 480x408 | 13 |
 | Chorus | `chorus` | `chorus` | `N4ch` | yes | 480x380 | 9 |
-| Click Repair | `click_repair` | `click-repair` | `N5Cr` | yes | 480x294 | 2 |
-| Clipper | `clipper` | `clipper` | `NClp` | yes | 480x380 | 7 |
+| Click Repair | `click_repair` | `click-repair` | `N5Cr` | yes | 480x294 | 3 |
+| Clipper | `clipper` | `clipper` | `NClp` | yes | 480x380 | 8 |
+| Crossfeed | `crossfeed` | `crossfeed` | `NXfd` | yes | 480x380 | 7 |
+| De-Clip | `de_clip` | `de-clip` | `NDcl` | yes | 480x294 | 4 |
 | De-Hum | `de_hum` | `de-hum` | `NDHm` | yes | 480x294 | 6 |
 | De-Plosive | `de_plosive` | `de-plosive` | `NDPl` | yes | 480x294 | 5 |
 | DeEsser | `deesser` | `deesser` | `N1ds` | yes | 480x380 | 7 |
 | Delay | `delay` | `delay` | `NDly` | yes | 480x408 | 13 |
 | Disperser | `disperser` | `disperser` | `NDsp` | yes | 480x294 | 5 |
 | Draw EQ | `draw_eq` | `draw-eq` | `NDeq` | yes | 480x394 | 13 |
-| Dynamic EQ | `dynamic_eq` | `dynamic-eq` | `N2DE` | yes | 480x428 | 19 |
-| Dynamics | `dynamics` | `dynamics` | `N1dy` | yes | 480x380 | 11 |
+| Dynamic EQ | `dynamic_eq` | `dynamic-eq` | `N2DE` | yes | 480x428 | 21 |
+| Dynamics | `dynamics` | `dynamics` | `N1dy` | yes | 480x408 | 13 |
 | Envelope Follower | `envelope_follower` | `envelope-follower` | `N1ef` | yes | 480x380 | 9 |
 | Filter | `filter` | `filter` | `N2FL` | yes | 480x322 | 12 |
 | Flanger | `flanger` | `flanger` | `N4fl` | yes | 480x380 | 8 |
 | Gate | `gate` | `gate` | `N1gt` | yes | 480x380 | 10 |
-| Limiter | `limiter` | `limiter` | `N1lm` | yes | 480x294 | 5 |
-| Maximizer | `maximizer` | `maximizer` | `N1mx` | yes | 480x380 | 12 |
+| Limiter | `limiter` | `limiter` | `N1lm` | yes | 480x380 | 7 |
+| Maximizer | `maximizer` | `maximizer` | `N1mx` | yes | 480x408 | 14 |
 | Mid/Side Matrix | `mid_side_matrix` | `mid-side-matrix` | `N3ms` | yes | 480x294 | 3 |
-| Multiband Comp | `multiband_compressor` | `multiband-compressor` | `N3mb` | yes | 480x408 | 23 |
+| Multiband Comp | `multiband_compressor` | `multiband-compressor` | `N3mb` | yes | 480x408 | 25 |
 | Noise Generator | `noise_generator` | `noise-generator` | `N5Ng` | yes | 480x380 | 8 |
 | Octaver | `octaver` | `octaver` | `NOct` | yes | 480x294 | 6 |
 | Panner | `panner` | `panner` | `NPan` | yes | 480x304 | 5 |
@@ -386,11 +404,12 @@ Why the exceptions exist: hosts store the CLAP id in sessions, so the released i
 | Pitch Shifter | `pitch_shifter` | `pitch-shifter` | `N4ps` | yes | 480x294 | 4 |
 | Reverb | `reverb` | `reverb` | `N5Rv` | yes | 480x380 | 12 |
 | Ring Mod | `ring_mod` | `ring-mod` | `N4rm` | yes | 480x294 | 4 |
-| Saturation | `saturation` | `saturation` | `N5Sa` | yes | 480x380 | 8 |
+| Saturation | `saturation` | `saturation` | `N5Sa` | yes | 480x380 | 9 |
 | Shaper | `shaper` | `shaper` | `NShp` | yes | 480x460 | 24 |
 | Sidechain Ducker | `sidechain_ducker` | `sidechain-ducker` | `N9Sd` | yes | 480x380 | 7 |
 | Stereo Width | `stereo_width` | `stereo-width` | `N3sw` | yes | 480x294 | 3 |
-| Tape | `tape` | `tape` | `NTap` | yes | 480x380 | 10 |
+| Studio EQ | `studio_eq` | `studio-eq` | `NSEq` | no | 480x468 | 51 |
+| Tape | `tape` | `tape` | `NTap` | yes | 480x380 | 11 |
 | Tape Echo | `tape_echo` | `tape-echo` | `NTEc` | yes | 480x380 | 11 |
 | Transient Shaper | `transient_shaper` | `transient-shaper` | `N1ts` | yes | 480x380 | 8 |
 | Tremolo | `tremolo` | `tremolo` | `N4tr` | yes | 480x380 | 7 |
@@ -398,7 +417,7 @@ Why the exceptions exist: hosts store the CLAP id in sessions, so the released i
 | Volume Shaper | `volume_shaper` | `volume-shaper` | `NVSh` | yes | 480x380 | 8 |
 | Wah | `wah` | `wah` | `NWah` | yes | 480x380 | 11 |
 
-### Advanced (33)
+### Advanced (37)
 
 | Plugin | File | Site slug | Unique ID | Rack | GFX | Sliders |
 |---|---|---|---|---|---|---|
@@ -412,11 +431,12 @@ Why the exceptions exist: hosts store the CLAP id in sessions, so the released i
 | Half Speed | `half_speed` | `half-speed` | `NHsp` | yes | 480x294 | 6 |
 | Harmonizer | `harmonizer` | `harmonizer` | `N8Hm` | yes | 480x380 | 12 |
 | Kick Shaper | `kick_shaper` | `kick-shaper` | `N7Ks` | yes | 480x294 | 6 |
-| Ladder Filter | `ladder_filter` | `ladder-filter` | `N6lf` | yes | 480x294 | 5 |
+| Ladder Filter | `ladder_filter` | `ladder-filter` | `N6lf` | yes | 480x294 | 6 |
 | Loudness Meter | `loudness_meter` | `loudness-meter` | `N0Lm` | no | 600x414 | 6 |
 | Noise Reduction | `noise_reduction` | `noise-reduction` | `NNRd` | yes | 480x410 | 9 |
 | OTT | `ott` | `ott` | `N9Ot` | yes | 480x380 | 8 |
 | Pitch Correction | `pitch_correction` | `pitch-correction` | `NPCr` | yes | 480x410 | 10 |
+| Reference | `reference` | `reference` | `NRef` | no | 480x334 | 4 |
 | Resonance Suppressor | `resonance_suppressor` | `resonance-suppressor` | `NRSp` | yes | 480x420 | 10 |
 | Resonator | `resonator` | `resonator` | `NRes` | yes | 480x380 | 7 |
 | Reverser | `reverser` | `reverser` | `N6rv` | yes | 480x294 | 4 |
@@ -424,6 +444,7 @@ Why the exceptions exist: hosts store the CLAP id in sessions, so the released i
 | Rotary Speaker | `rotary_speaker` | `rotary-speaker` | `N7Rs` | yes | 480x294 | 6 |
 | Shimmer Reverb | `shimmer_reverb` | `shimmer-reverb` | `N8Sh` | yes | 480x294 | 6 |
 | Slicer | `slicer` | `slicer` | `NSlc` | yes | 480x380 | 8 |
+| Spectral Ducker | `spectral_ducker` | `spectral-ducker` | `NSDk` | yes | 480x380 | 10 |
 | Spectral Freeze | `spectral_freeze` | `spectral-freeze` | `N9Sf` | yes | 480x294 | 5 |
 | Spectrum Analyzer | `spectrum_analyzer` | `spectrum-analyzer` | `N0Sa` | no | 640x540 | 7 |
 | Spring Reverb | `spring_reverb` | `spring-reverb` | `N8Sp` | yes | 480x294 | 6 |
@@ -432,8 +453,10 @@ Why the exceptions exist: hosts store the CLAP id in sessions, so the released i
 | Sub Bloom | `sub_bloom` | `sub-bloom` | `N6sb` | yes | 480x294 | 5 |
 | Tape Stop | `tape_stop` | `tape-stop` | `N6ts` | yes | 480x294 | 3 |
 | Trance Gate | `trance_gate` | `trance-gate` | `N7Tg` | yes | 480x408 | 24 |
+| Tuner | `tuner` | `tuner` | `NTun` | no | 480x334 | 4 |
 | Vinyl Age | `vinyl_age` | `vinyl-age` | `N8Va` | yes | 480x380 | 11 |
 | Vocoder | `vocoder` | `vocoder` | `N9Vc` | yes | 480x380 | 9 |
+| VU Meter | `vu_meter` | `vu-meter` | `NVUm` | no | 480x334 | 4 |
 | Warped Delay | `warped_delay` | `warped-delay` | `N8Wd` | yes | 480x380 | 8 |
 
 ### Instruments (9)
@@ -503,11 +526,18 @@ The recipes live in the READMEs. This Part says where they are and lists the ste
 | Odd rates | `NULL_TEST_RATES=8000,22050,1234.57,12345.68 tests/run.sh DATA/Effects/null_jsfx/*.jsfx` | R25: the same checks at very low and odd sample rates (the plain JSFX only: the GFX audio code is the same) |
 | Chains | `tests/run.sh` (no arguments) → `chain_test` | every `.RfxChain` loads and renders |
 | GFX = JSFX | ctest `gfx_<name>` | the audio code is identical, tolerance 0 |
-| Native = JSFX | ctest `compare_<name>` | the CLAP matches the JSFX within 1e-5 at 44.1 and 96 kHz: defaults, every slider at min and max, random sets; MIDI effects compare every message byte for byte at the same sample; instruments play notes with the transport at 120 bpm, and the MIDI they pass on is compared byte for byte at the same sample |
+| Native = JSFX | ctest `compare_<name>` | the CLAP matches the JSFX within 1e-5 at 44.1 and 96 kHz: defaults, every slider at min and max, random sets; MIDI effects compare every message byte for byte at the same sample; instruments play GM notes merged with the MIDI effects' stream (note-offs, velocity-0 note-ons, sustain, all notes off, pitch bend, pressure, program changes) with the transport at 120 bpm, and the MIDI they pass on is compared byte for byte at the same sample |
+| Changes while playing | ctest `changes_convolution`, `changes_gfx_convolution`, `changes_module_convolution` (`compare --changes 1`) | the sliders jump to other settings at 1 s and 2 s; the CLAP, the GFX JSFX (tolerance 0) and the Rack module still match the JSFX |
+| Realtime safety | ctest `rt_test` | Slicer and Half Speed with the lazy clear render bit for bit like a full clear through transport starts, jumps and tempo changes |
 | Presets | ctest `presets_<name>` | every factory preset renders the same in the JSFX and the CLAP |
+| State | ctest `state_<name>` | random parameter values come back exactly after a save and a load through streams of 1 to 4096 bytes per call, with the stack filled with 0x00 and 0xfe first; the state saved again is the same bytes |
 | Rack module | ctest `module_<id>` | each adapter matches its JSFX, like `compare_` |
 | Rack engine | ctest `rack_test` | every preset renders; a single slot is bit-exact with its module; band splits sum flat; channel routing; modulation; lanes line up; the loop decays; the sequencer steps; the ducker's key; bit-for-bit against `RackEngineV1.hpp` (R12) |
 | pluginval | `native.yml`, Linux | every VST3 at strictness 5 |
+| LV2 = JSFX | `python3 native/test/lv2_test.py native/dist/LV2/"NULL JSFX" [name ...]` (needs `liblilv-0-0` and `tests/.build/render_ref`); `native.yml`, Linux | every LV2 within 1e-5 of its JSFX at defaults and two random settings, with MIDI notes for plugins with an event input and the 120 BPM transport |
+| pluginval (blocking) | `native.yml` job `build`, Linux, pluginval v1.0.4 | every VST3 at strictness 5, in process |
+| pluginval 2 (report-only) | `native.yml` job `validate`, Windows + Linux (ubuntu-24.04: pluginval 2 needs glibc 2.38), `native/scripts/validate.sh pluginval` | every VST3: `pluginval validate --strictness-level 5 --skip-gui-tests`, a JUnit report per plugin; pluginval `v2.0.0-beta3` pinned by tag and SHA-256 (GPLv3, CI only, never shipped) |
+| clap-validator (report-only) | `native.yml` job `validate`, Windows + Linux, `native/scripts/validate.sh clap` | every CLAP: `clap-validator validate --only-failed --json`, out of process; built from free-audio/clap-validator `b2f1d9b79b1d264a5747f46707d72b1aa40a02ef` (MIT), cached |
 | Web | `web/test/run.sh` | `build.js --check`, the runtime tests, and the null test against ysfx below 1e-6 (MIDI too) |
 | Hub engine | `cd hub && cargo test -p null_hub_core` | install, update, remove and repair against a local release server |
 | Hub page | `cd hub && node tests/ui_test.cjs` | the page in Chromium against `tests/mock.cjs`; fails on any UI text without Greek |
@@ -516,6 +546,7 @@ The recipes live in the READMEs. This Part says where they are and lists the ste
 | Remote | `node tests/remote/remote_test.cjs` | the page in Chromium plus the real bridge under `mock_reaper.lua` |
 | Bible order | `python3 tests/bible_order.py` (in `test.yml`) | R26: every Part X entry has a date and the dates never go back |
 | Generators | `build_site.py`, `build_chains.py`, `build_presets.py`, `build_bible.py`, `build_remote.py`, `build_catalog.py` with `--check` | the generated files are up to date |
+| Stress | `tests/stress.sh [plugin.jsfx ...]` → `stress_test` | every plain JSFX (MIDI effects skipped): no NaN/Inf and no output above 1e4 under hard signals (+12 dBFS square with DC, sines near Nyquist, tone then silence, DC, every slider jumping every 50 ms) with default, min, max and random settings at 44.1 and 192 kHz; the same output at 384 kHz with and without `options:maxmem=32M` (nothing past REAPER's default 8M slots); the median cost of a slider change within one 256-sample block at 48 kHz (5.33 ms, noted above half) |
 
 The ysfx engine is pinned at `8077347ccf4115567aed81400281dca57acbb0cc` (in `tests/run.sh` and `web/test/run.sh`). Building the native tests: `native/scripts/build.sh --test [--plugins "a;b"]`, on Linux and macOS.
 
@@ -524,13 +555,16 @@ The ysfx engine is pinned at `8077347ccf4115567aed81400281dca57acbb0cc` (in `tes
 | Workflow | Trigger | Does |
 |---|---|---|
 | `test.yml` "Test plugins" | every PR; push to main; manual | `tests/run.sh`; the odd-rates run (R25); `build_site.py`, `build_chains.py`, `build_presets.py` and `build_bible.py` with `--check`; job `remote`: `build_remote.py --check` + `remote_test.cjs` |
-| `native.yml` "VST3 and CLAP" | PRs and pushes to main that change `native/`, `DATA/`, `remote/`, `tests/`, `installer/` or `build_installer.py`; release published; manual with `release_tag` | builds on 3 OS (tests on Linux and macOS), pluginval, the JSFX package, the 4 installers each installed and checked; attaches them to the release |
-| `hub.yml` "NULL JSFX Hub" | PRs and pushes to main that change `hub/`, the catalog and site inputs, `tools/presets/` or `DATA/`; release published; manual with `release_tag` | `core` tests on 3 OS, `ui` + `build_catalog.py --check`, `smoke` (not on release events), build of the 4 bundles, the Linux start test, the Windows self-update test; attaches the bundles and `NULL-JSFX-Catalog.json` |
+| `native.yml` "VST3 and CLAP" | PRs and pushes to main that change `native/`, `DATA/`, `remote/`, `tests/run.sh`, `tests/installer_test.sh`, `tests/pkg_test.sh`, `installer/` or `build_installer.py`; release published; manual with `release_tag` | builds on 3 OS (tests on Linux and macOS, run in parallel on every core), pluginval, the LV2 check (Linux), the JSFX package, job `validate` (pluginval 2 and clap-validator on Windows and Linux, `continue-on-error`, reports in the artifact `NULL-JSFX-Validation-<OS>`), the 4 installers each installed and checked; attaches them to the release |
+| `hub.yml` "NULL JSFX Hub" | PRs and pushes to main that change `hub/`, the catalog and site inputs, `tools/presets/` or `DATA/`; release published; manual with `release_tag` | `ui` + `build_catalog.py --check` and `smoke` (not on release events) on every run; `core` tests on 3 OS and the build of the 4 bundles (Linux start test, Windows self-update test) only when `hub/` or `hub.yml` changed (job `changes`), and always on releases and manual runs; attaches the bundles and `NULL-JSFX-Catalog.json` |
 | `web.yml` "Web version" | PRs and pushes to main that change `web/` or `DATA/`; manual | `web/test/run.sh` |
 | `media.yml` "Media" | push to main under `assets/video/`; manual | uploads the videos to the `media` pre-release |
-| `downloads.yml` "Count downloads" | daily at 03:00 UTC; after "VST3 and CLAP"; manual | `count_downloads.py`, then commits `downloads.json` to main if the shown figure changed |
+| `downloads.yml` "Count downloads" | daily at 03:00 UTC; after a "VST3 and CLAP" run for a release (published or manual); manual | `count_downloads.py`, then commits `downloads.json` to main if the shown figure changed |
+| `stress.yml` "Stress test" | daily at 02:30 UTC; manual; PRs that change a plain or GFX `.jsfx` or the test | `tests/stress.sh`: every plugin, or on a PR only the plain plugins it changes (all when the test changes) |
 
 Pushes run these four workflows only on main, so a branch with a PR is built once, by its PR (until 2026-10-26 every branch push ran them a second time, and the macOS queue reached about 45 runs). A branch without a PR gets no CI: open the PR, or run the workflow by hand. Their `concurrency` group is per PR for pull requests, with `cancel-in-progress`, so a new push cancels the older run of that PR; every other run (main, release, manual) gets its own group from `run_id`, so it is never cancelled or queued behind another, and release uploads always finish.
+
+Every job has a `timeout-minutes` (120 for the native build, 60 for the Hub build, 5–30 elsewhere), so a stuck job never holds a runner for GitHub's 6 hours. The token is `contents: read` by default; only the jobs that attach to a release (`native.yml` build, jsfx and installers, `hub.yml` build and catalog) and the workflows that push or upload (`downloads.yml`, `media.yml`) can write. Third-party actions are pinned to a commit SHA with the tag in a comment (`dtolnay/rust-toolchain`, `Swatinem/rust-cache`); the `actions/*` ones stay on their major tag. `native/scripts/build.sh --test` builds ysfx with `tests/run.sh --build-only` (until 2026-10-27 it ran the whole JSFX suite for that, about 5 minutes, output thrown away) and runs ctest on every core; `native.yml` caches `tests/.build/ysfx` per OS image.
 
 `downloads.yml` pushes to main by itself, so a branch can be behind by a `downloads.json` commit: rebase or merge main before you push.
 
@@ -622,7 +656,35 @@ Then run every test of Part V that the PR touches, merge it once CI is green, an
 
 Format: **date · topic** — the decision. (Who approved it, and the source.) Decisions made before this Bible came from the project's memory notes and the PRs, and were not re-checked one by one.
 
+- **2026-10-27 · CI speed and safety** — Christos: "apply what you think will really benefit us; you have a free hand" on the ci-check findings 1–10. Claude decided: done — parallel native tests (keeps the macOS comparison, which was finding 1's risky alternative), ysfx build without the whole JSFX suite and cached, narrower `tests/` filter, Hub engine and app builds only when the Hub changed, timeouts, read-only token by default, SHA pins for third-party actions, download counter only after release runs. Not done: per-OS installer dependencies (2: the macOS installer stays the critical path, so the run would not finish sooner, and it would rework `native.yml` under the held PR #52), ccache (5: compiling is about 6 of the 61 Linux minutes), npm and Playwright caches (9: about a minute per job). (Christos, thread "Βελτιστοποίηση CI workflows".)
+- **2026-10-27 · Studio plan** — a gap analysis against FabFilter, iZotope, Waves, Soundtoys, Valhalla, UAD, NI, UJAM, Klevgrand and Kilohearts gave 19 proposals in 5 waves (project files `research/studio-gap-analysis-2026-10-27.md`). Christos approved all of them: one PR per wave, Claude merges each when CI is green and goes on to the end, 2.7 is the version step, and the new plugins stay off the site until he says "launch". (Christos, thread "Σουίτα στούντιο".)
+  - Wave 1: True Peak in Maximizer and Limiter; Listen Delta in Maximizer, Limiter, Clipper, Dynamics, Multiband Comp and Dynamic EQ (Resonance Suppressor already had it); Channels Stereo/Mid/Side in Dynamics, Saturation, Dynamic EQ and Multiband Comp; new Studio EQ, Spectral Ducker, Reference.
+  - Wave 2: Tuner, VU Meter, Crossfeed, De-Clip, Crackle mode in Click Repair. Wave 3: A/B and Undo/Redo in every interface, oversampling where measured aliasing needs it, LV2 builds. Wave 4: MIDI Utility, MIDI LFO, Drum Machine song mode and step probability (B3), SFZ in Sampler. Wave 5: surround beds (no Atmos objects).
+- **2026-10-27 · Wave 1 design choices** (left to Claude by "you produce, check, merge"):
+  - Studio EQ has 51 sliders, so no Rack module (R13 now names the 25-value limit). Linear Phase: 8192-tap FIRs, 1024-sample blocks, 5120 samples of latency; a 2x2 matrix per bin so mid/side and left/right bands combine exactly. Cuts are Butterworth; Q 0.71 is flat. Auto Gain counts only bell and shelf bands.
+  - Spectral Ducker: 32 bands, fourth-order key band passes, Q 3 bells at 0.43 of the amount each (they overlap), cut = the key's excess over Threshold up to Amount × 24 dB, gains every 16 samples; in the Rack the key is the dry input, like Sidechain Ducker.
+  - Reference: a meter with a second stereo input, so no Rack module; Level Match follows the short-term loudness difference over about a second, within ±24 dB.
+  - True Peak: the BS.1770-4 Annex 2 interpolator of Loudness Meter, with 6 samples more latency when on. Delta is "input minus output" before any output dither.
+- **2026-10-27 · Wave 2 design choices** (left to Claude):
+  - Tuner and VU Meter are meters: audio passes through (Tuner can mute, VU Meter can fold to mono or side for listening), no Rack module, like Loudness Meter.
+  - Tuner: YIN on the input taken down to 22 to 24 kHz, 1024-sample window, lags up to 25 Hz, FFT autocorrelation (EEL2's `fft`), parabolic refinement on the difference function at 1, 2, 4, 8 ... periods; within 0.25 cent from 27 Hz to 4.2 kHz on test tones. A4 is 415 to 466 Hz in 1 Hz steps.
+  - VU Meter: VU per IEC 60268-17 (second-order, damping 0.8, 99 % in 300 ms), PPM as EBU Type IIa (5 ms charge, about -4 dB on a 10 ms burst, 24 dB in 2.8 s), K-14 / K-20 as 300 ms RMS. 0 VU / PPM 0 = a sine peaking at Reference dBFS (AES17 sine convention), -18 by default.
+  - Crossfeed: Crossfeed mode is libbs2b's filter exactly; Speakers mode is our own (Brown-Duda head shadow, Woodworth ITD, six early reflections), with the head-shadow high-frequency gains normalised so mono stays level on average.
+  - De-Clip: a cubic through two good samples on each side, per run of at least Min Length samples at or above Clip Level, clamped to at most +12 dB over it; 128 samples of look-ahead (runs up to 120 samples).
+  - Click Repair Crackle: an appended Mode slider (Click by default, so the old sound is kept): second-difference detection with a faster average and a two-sample hold-off, the sample before marked too, cubic repair; 2 samples more latency in Crackle.
+- **2026-10-27 · Wave 3 design choices** (left to Claude):
+  - A/B and Undo/Redo live in the header of every interface with presets (GFX `null_gfx.jsfx-inc` and native `NullUI.hpp`, in step): undo, redo, A, B and a copy button left of the preset box. One undo step is one edit (a drag, a click, a preset load); up to 32 steps, 16 KB of history in GFX. The GFX keeps the history in strings, so it survives REAPER re-running `@init`. A/B and undo only move the sliders (with automation written), never the sound code.
+  - Oversampling only where measured aliasing needs it: Tape and Ladder Filter got an appended `Oversampling` Off/2x/4x (Saturation's Kaiser halfband stages, latency 31 or 37 samples). Measured inharmonic energy: Ladder at Drive 100 from -25 dB (Off) to -55 (2x) and -110 (4x); Tape at Drive 24 from -12 to -23 and -35 dB. Amp Simulator, Clipper, Saturation and Shaper already oversample. Driver (-14.5 dB at Amount 100 on a 7.1 kHz tone) and Exciter (-19.4 dB) alias too, but they are One Slider plugins (one slider, R5), and always-on oversampling would change their released sound: left to Christos (Part VIII, B10).
+  - LV2 is built on Linux only (where it is the native format), from the same DPF code. The Linux zip keeps its name `NULL-JSFX-VST3-CLAP-Linux.zip` (the Hub and the download page know that name) and gains `LV2/`. The Rack is built as LV2 too.
+- **2026-10-27 · DPF patches** — fixes to DPF itself go in `native/third_party/dpf/*.patch`, applied on the pinned commit by CMake, until upstream has them. (Claude, state-load fix; the latency patch of PR #57 uses the same folder.)
+- **2026-10-27 · Full audit** — the audit moves from the third Friday of each month to the 8th of every even month at 19:00 Athens time, from 2026-12-08, as a recurring scheduled task that does not reschedule itself. It adds the standing question on what is missing to compete with the big plugin companies, and the extended checklist in 0.5. (Christos, 2026-10-26 and 2026-10-27.)
+- **2026-10-26 · Memory export** — quarterly, on the 10th of January, April, July and October at 12:00 Athens time, covering what changed since the previous export (0.5). (Christos.)
+- **2026-10-26 · Audio-thread spikes** — Christos answered "yes to all" to the design (doc "Audio-thread spikes: design"): Convolution builds new IRs step by step in every form (JSFX, GFX, native, Rack, web); on an IR change the reverb tail carries on with a one-block crossfade instead of the old wet dropout (a deliberate sound change at the moment of a change, R17); the fix ships in a patch step, 2.6.1, with the other audit fixes. (Christos, thread "Διόρθωση καθυστερήσεων στο audio thread".)
+- **2026-10-26 · ext_noinit (audit P2)** — REAPER re-runs `@init` at every Play and seek unless `@init` sets `ext_noinit = 1`; the VST3/CLAP and Rack never reset. 96 plugins now set `ext_noinit = 1`, so delay and reverb tails, filter and dynamics state, LFO phases and learnt profiles go on through Play, as in the native formats. Four keep the reset on purpose: **Slicer** and **Half Speed** (their bar buffers start at the bar; their cost at Play is handled in the thread on audio-thread spikes), **Spectrum Analyzer** and **Stereo Scope** (display only, a fresh hold and correlation at Play; the audio passes through either way). The 13 that already had it stay as they are (the instruments and MIDI effects except Drum Machine and Percussion, which now have it too, and Loudness Meter, which resets its own measurement at Play). A new plugin sets `ext_noinit = 1` unless it needs the reset, and says why. The web runtime now honours `ext_noinit` too. (Christos: "you decide", audit P2.)
 - **2026-10-26 · Instrument MIDI passthrough** — all 9 instruments pass on every MIDI message they receive, in every format, so two instruments can be layered on one track. Audio unchanged. (Christos approved audit proposal P1.)
+- **2026-10-26 · DPF patch** — the pinned DPF carries a small local patch, `native/third_party/dpf/null-jsfx.patch`, instead of 19 + 23 changes in the plugins: DPF's CLAP wrapper called `clap_host_latency::changed()` outside `activate()` (in `deactivate()`, parameter flushes and state loads), and the double DSP's decaying tails reached the host as subnormal floats. Both failed clap-validator (PR #52). Upstream DPF `main` and `develop` still have the latency code as of this date. (Claude, fix thread from PR #52's findings.)
+- **2026-10-26 · Audit proposals** — Christos approved all four proposals of the audit with the audio skills ("yes to all, as you propose and as you think best"). P3 and P4: a stress test in CI covering numerics, memory past 8M slots and slider-change cost (this thread's PR). P1: instruments pass their MIDI through, so instruments can be layered on one track. P2: `ext_noinit = 1` in effects with tails or state, so a JSFX no longer resets on Play/seek, as the native ports already don't; meters and analysers keep the reset. Claude chose the P2 option, as Christos left it to him. P1 and P2 each run in their own thread. (Christos, thread "Πλήρες audit plugins με τα νέα skills".)
+- **2026-10-26 · Plugin validators in CI** — every native build is checked by pluginval 2 (each VST3) and clap-validator (each CLAP) on Windows and Linux, pinned (pluginval by tag and SHA-256, clap-validator by commit). They start report-only (`continue-on-error`); Christos makes them required once all plugins pass. pluginval is GPLv3 but only runs in CI, so the MIT licence is not affected. (Christos, after a security audit; PR #52.) His answers the same day: pluginval stays on `v2.0.0-beta3` until a `v2.0.0` tag exists; the old v1.0.4 step stays until `validate` is required, then it goes; no version step for this CI-only change.
 - **2026-10-26 · Bible answers** — Christos, in the Bible thread:
   - Claude merges its own PRs once CI is green, in general and for this PR (it was "Christos merges, except where he says so").
   - The docs inconsistencies are fixed in a separate PR after the Bible.
@@ -666,8 +728,14 @@ None open. The ones found on 2026-10-26 (README.md said only One Slider had GFX/
 ### VIII.B Backlog (proposed or approved, not done)
 
 - **B2** Generate the hand-written counts (plugin count in `index.html` `<title>` and meta, the Rack module and preset counts in the showcase) with `build_site.py`.
-- **B3 Drum Machine ideas** (deferred 2026-10-17): song mode and step probability. Multi-out and a Sampler exist now. [memory]
+- **B7 Convolution's partition sum** runs all at once every 1024 samples (3.5–7 ms at 96 kHz with a 3 s IR, steady state, not a rebuild). Spreading it over the block would remove that spike but changes the summation order (differences around 1e-16, inside the native tolerance). Proposed, not approved.
+- **B3 Drum Machine ideas** (deferred 2026-10-17): song mode and step probability. Multi-out and a Sampler exist now. [memory] Approved 2026-10-27 as Wave 4 of the studio plan.
+- **B10 Studio plan, waves 2–5** (approved 2026-10-27, Part VII): in progress, one PR per wave. Waves 2 and 3 are done (Part X); waves 4–5 are next. At "launch": the site's download text names LV2 for Linux, and the native A/B and undo buttons get a look in a DAW (only built and read so far). Open question for Christos: oversampling for Driver and Exciter (Part VII, Wave 3).
 - **B4 Very low and odd sample rates** (found 2026-10-26 with clap-validator's `process-varying-sample-rates`, which plays 8000 Hz to 768 kHz, 1234.57 Hz and 12345.68 Hz among them). Wah, Tape, Tape Echo, Band Splitter and Amp Simulator are fixed (Part X). A scan of every plain JSFX at those rates, with `tests/jsfx_test.cpp`'s settings, still blows up in Reverser (8000, 22050 and 12345.68 Hz, max/random), Vinyl Age (8000 Hz, max), Step FX (8000 Hz, random), Formant Filter, Saturation, Noise Generator and Phase Align (1234.57 Hz), and Arpeggiator leaves notes hanging at 1234.57 Hz: a separate fix thread. **Done 2026-10-26 (PR #58):** the seven are fixed (the Arpeggiator finding was the test's own MIDI order), and `test.yml` renders every plain JSFX at 8000, 22050, 1234.57 and 12345.68 Hz (R25). The convention is that every filter frequency is held below `0.45 * srate` (most plugins already did this).
+- **B5 Convolution above 384 kHz.** At 705.6 and 768 kHz the 3-second IR buffers need more than REAPER's 32M slots, so `options:maxmem` cannot cover them: the wet signal is wrong there in the JSFX, GFX and web (the native port is fine). A fix changes the DSP at those rates (for example, cap the IR length so it fits) and waits for Christos's decision (2026-10-26).
+- **B6 Validators.** (a) Make job `validate` required once every plugin passes, with Christos's approval. (b) Then drop the old pluginval v1.0.4 step in job `build`. (c) Move to pluginval `v2.0.0` when that tag exists (as of 2026-10-26 the newest is `v2.0.0-beta3`). Baseline of the first run (Linux, local, 2026-10-26): pluginval 114/114 pass; clap-validator 70/114 pass, failures in four groups: latency reported outside `activate` (19 plugins with `setLatency`), subnormal output samples (23), NaN/inf at a 1234.57 Hz sample rate (amp_simulator, band_splitter, tape, tape_echo, wah), and Rack parameter module names that are not UTF-8 plus `s8_lane` state not reproduced (rack). Each group has its own fix thread; the NaN/inf group is fixed (B4), the Rack group by #53, and the latency and subnormal groups by the DPF patch (#57). CI on 2026-10-27 added a fifth group: `state-reproducibility-buffered`, parameter values not restored after a state load read in pieces (about 70 plugins on Windows, 7 on Linux), sent to a fix thread.
+- **B9 Audit bugs of 2026-10-26**: 1) JSFX memory past 8M slots (Convolution from 176.4 kHz, Slicer and Tape Echo from 352.8 kHz); 2) audio-thread spikes (the Convolution IR rebuild, the Slicer/Half Speed reset on Play, `std::mutex` in Sampler/Convolution); 3) native parameters set from the UI/main thread, `getVersion()` stuck at 2.1.0, no guard on `kMaxParams`. 1 and 2 are done (PRs #60 and #61, Part X) and `tests/stress.sh` passes on them; 3 has its own fix thread.
+- **B8 `ext_noinit`** (approved 2026-10-26, audit P2): set it in the effects with tails or state, and keep the reset on Play for meters and analysers. Own thread (PR #59).
 
 ### VIII.C Open items waiting on someone
 
@@ -717,6 +785,12 @@ entry and the Bible delta.
 - **Tests:** none run: documentation only, no plugin, DSP or site file changed. Every fact was read from main `a231c1b` or the GitHub API on 2026-10-26. The registry, the totals and the CLAP exceptions were generated by script from the files.
 - **Next:** the docs PR (Part VIII A1–A4, B1), the new project-instructions text, and the updated `null-jsfx` skill.
 
+### 2026-10-26 — native, JSFX 2.6.1 (PR pending) — audio-thread spikes: Convolution, Slicer, Half Speed, Sampler
+- **Fixes:** Convolution no longer rebuilds its IR at once on the audio thread when Source, IR File, Length or Pre-Delay changes (9–32 ms, and in the Rack every 128 samples under modulation): only the first IR after loading is built at once; later ones are built in small steps, one every 32 samples (about 0.27 s, at most about 0.2 ms per 128-sample block natively), into a second partition set while the old IR plays, and take over at the next block. The JSFX's slider-cost check (`tests/stress.sh`, PR #56) goes from 15 ms to passing. Slicer and Half Speed `reset()` (transport start) no longer clears seconds of buffer: 2.7 ms at 96 kHz becomes about 5 µs, with bit-identical output. Sampler and Convolution hand the loaded file to `run()` without `std::mutex`.
+- **Changes:** Convolution keeps the input history of the last 3 s across IR changes and crossfades old to new over one block, so the reverb tail carries on (Part VII). Steady-state output is bit for bit the old one (old vs new JSFX, tolerance 0, all compare settings). Each form runs the same steps at the same samples, so render, realtime and every form agree.
+- **Files:** `DATA/Effects/null_jsfx/convolution.jsfx`, `gfx/convolution_gfx.jsfx`, `web/fx/convolution.js` + `index.json` (generated), `native/plugins/convolution/{ConvolutionDSP.hpp,Plugin.cpp}`, `native/plugins/sampler/Plugin.cpp`, `native/plugins/{slicer/SlicerDSP.hpp,half_speed/HalfSpeedDSP.hpp}`, `native/common/{NullLazyClear.hpp,NullMailbox.hpp}` (new), `native/test/{compare.cpp,rt_test.cpp,CMakeLists.txt}`.
+- **Tests:** run: `tests/run.sh` on the four plugins and the GFX Convolution; `native/scripts/build.sh --test --plugins "convolution;sampler;slicer;half_speed;rack"` (109/109, incl. `rack_test` and `RackEngineV1`); the new `changes_*` tests and `rt_test`; `web/test/run.sh` on Convolution and Slicer; `tests/stress.sh`'s slider-cost check from PR #56 on the three plugins. Only read: the Sampler file handover was compiled and is covered by `compare_sampler`, but no file was loaded in a host.
+- **Next:** the memory-limit fix (`options:maxmem`) must count Convolution's second partition set (`2 × P_max × 4096` slots: 8.15 M slots in all at 96 kHz, 16.2 M at 192 kHz). B7.
 ### 2026-10-26 — DSP fix (no version change yet) — filters above Nyquist at very low sample rates
 - **Fixes:** clap-validator's `process-varying-sample-rates` (PR #52) gave NaN or ±inf at 1234.57 Hz in Wah, Tape, Tape Echo, Band Splitter and Amp Simulator. Their filters were set above the Nyquist frequency there (for example the Wah's 400 Hz–2.2 kHz sweep, Tape's 2.5–5 kHz emphasis, Tape Echo's 4.5 kHz lowpass and 2.5 kHz shelf, Band Splitter's 2 kHz crossover, Amp Simulator's 3 kHz presence shelf at 2x oversampling), and a tan() or an RBJ biquad past Nyquist is unstable. Every filter coefficient function in these five plugins now holds its frequency below `0.45 * srate` (`0.45 * fs` in Amp Simulator), the convention most of the suite already follows. At normal rates nothing changes: the highest affected frequency, 16 kHz, sits below 0.45 x 44.1 kHz, so `min()` returns the same value and the output is bit-identical.
 - **Files:** `DATA/Effects/null_jsfx/{wah,tape,tape_echo,band_splitter,amp_simulator}.jsfx` and their `gfx/*_gfx.jsfx` (same audio code), `native/plugins/{wah,tape,tape_echo,band_splitter,amp_simulator}/*DSP.hpp` (the same `min()` in the EEL2 order; the Rack modules use these headers), `web/fx/*.js` and `web/fx/index.json` regenerated by `node web/tools/build.js`.
@@ -784,6 +858,109 @@ entry and the Bible delta.
 - **Decisions:** Christos approved the proposal on 2026-10-26 ("Ναι").
 - **Files:** `.github/workflows/test.yml`, `native.yml`, `hub.yml`, `web.yml`, `NULL_JSFX_BIBLE.md` (Part V.2, this entry).
 - **Tests:** the four files parse as YAML and the triggers and groups were checked by script; the `if:` conditions on `release` / `release_tag` were read and do not depend on push. The PR's own checks are the live test: only `pull_request` runs should appear for this branch.
+
+### 2026-10-26 — JSFX 2.6.1 (fix) — memory limit at high sample rates
+- **Fixes:** seven plugins used more than REAPER's default 8M memory slots at high sample rates, so part of their buffers was lost and the wet signal was wrong in the JSFX and GFX (the native ports allocate what they need and were fine). Measured in ysfx with the memory raised to 32M, defaults, minimum and maximum settings: Convolution 10.7M at 176.4 kHz and 23.1M at 384 kHz before #61, and 14.9M and 32.4M (of the 33.5M maximum) with #61's second IR partition set, 8.2M at 96 kHz; Slicer, Half Speed and Tape Stop 9.2–9.3M, Tape Echo 8.5M at 384 kHz; Delay 9.4M and Reverser 15.4M at 768 kHz. Each now declares `options:maxmem=33554432` (REAPER's maximum) after its pins, plain and GFX. The audit had found the first three; the scan of all 226 files found the other four.
+- **Changes:** the web runtime now honours `options:maxmem` like EEL2 (`memMax` in `web/tools/eel2js.js`, `R.memory(max)` in `web/runtime/eel-rt.js`), so web = JSFX holds at these rates too. Effects without the option generate the same code as before.
+- **Files:** `DATA/Effects/null_jsfx/{convolution,delay,half_speed,reverser,slicer,tape_echo,tape_stop}.jsfx` and their `gfx/*_gfx.jsfx`; `web/tools/eel2js.js`, `web/runtime/eel-rt.js`, `web/test/runtime.test.js`; `web/fx/` regenerated (7 effects + `index.json`).
+- **Tests:** run: before/after renders of the 7 plugins (ysfx, 3 s, defaults/min/max/mid) are bit-identical at 44.1, 48, 96 and 192 kHz (Convolution: at 44.1–96 kHz) and differ only where the old version lost memory; `tests/run.sh` on the 14 files; `build_site.py`, `build_chains.py`, `build_presets.py`, `build_remote.py` and `build_catalog.py` with `--check`; `web/test/run.sh` (null test and runtime tests, one new). The CI memory check comes with the stress test of PR #56 (`tests/stress.sh`, 384 kHz).
+- **Next:** B5 (Convolution at 705.6/768 kHz) waits for Christos.
+
+### 2026-10-26 — CI PR #52 — pluginval and clap-validator on every VST3/CLAP
+- **Changes:** new job `validate` in `native.yml` after `build`, on Windows and Linux, report-only (`continue-on-error: true`). It downloads the `NULL-JSFX-VST3-CLAP-<OS>` package, runs pluginval `v2.0.0-beta3` (pinned by tag and SHA-256) on every `.vst3` and clap-validator (built from commit `b2f1d9b`, cached) on every `.clap`, lists the failures in the job summary and uploads the reports as `NULL-JSFX-Validation-<OS>`. New `native/scripts/validate.sh` runs either validator over a package, locally too; for clap-validator, `native/scripts/clap_report.py` groups the failed tests by test and message in the job summary. Build, package, installer and release steps unchanged; the existing pluginval v1.0.4 step stays until the new job is required.
+- **Decisions:** Part VII, "Plugin validators in CI".
+- **Files:** `.github/workflows/native.yml`, `native/scripts/validate.sh` and `native/scripts/clap_report.py` (new), `NULL_JSFX_BIBLE.md`.
+- **Tests:** run locally on Linux: `native/scripts/build.sh` (all 114 bundles), then `validate.sh pluginval` (114/114 pass) and `validate.sh clap` (70/114 pass; groups in Part VIII B6). CI on the PR runs both on Windows and Linux. No plugin, DSP or site file changed, so no sound check was needed.
+- **Decisions:** no version step (CI only); pluginval `v2.0.0-beta3` until `v2.0.0`; the v1.0.4 step goes when `validate` is required (Christos, 2026-10-26).
+- **Next:** the fix threads of Part VIII B6, then Christos decides when `validate` becomes required.
+
+### 2026-10-26 — tests — stress test in CI (audit P3, P4)
+- **Changes:** `tests/stress_test.cpp` and `tests/stress.sh` add three checks to the render test. Numerics: hard signals (+12 dBFS square with DC, sines near Nyquist, tone then silence, DC, sliders jumping every 50 ms) at 44.1 and 192 kHz, failing on NaN/Inf or an output above 1e4. Memory: the same output at 384 kHz with and without `options:maxmem=32M`. Slider cost: the median block after a slider change must fit in one 256-sample block at 48 kHz. The new workflow `stress.yml` runs it nightly and by hand on every plugin, and on PRs on the plugins they change.
+- **Decisions:** the audit proposals P1–P4 were approved (Part VII). P1 is done (Instruments MIDI passthrough, Part X); P2 is Part VIII B8.
+- **Files:** `tests/stress_test.cpp`, `tests/stress.sh`, `.github/workflows/stress.yml` (new), `NULL_JSFX_BIBLE.md` (V.1, V.2, VII, VIII B8 and B9, X).
+- **Tests:** `tests/stress.sh` was run locally on all 113 plugins. Before the fixes it failed exactly on the known audit bugs (Part VIII B9) and passed everything else; with #60 and #61 merged it passes on Convolution, Slicer and Tape Echo too, and the CI run on this PR covers all plugins. No plugin, DSP or site file changed.
+
+### 2026-10-26 — JSFX + web — keep tails and state at Play (`ext_noinit`)
+- **Changes:** `ext_noinit = 1;` added as the first line of `@init` in 96 plain JSFX and their 96 GFX versions (identical line, so GFX stays at tolerance 0). REAPER no longer re-runs `@init` at Play and seek for them, so tails and state carry on, as in the VST3/CLAP and Rack. Slicer, Half Speed, Spectrum Analyzer and Stereo Scope keep the reset (Part VII).
+- **Fixes:** the web runtime re-ran `@init` at every transport start even where the JSFX set `ext_noinit` (the 13 instruments, MIDI effects and Loudness Meter): `web/runtime/null-fx.js` `setTime` now checks it, and `web/tools/eel2js.js` exposes `ext_noinit` through `getHost`. `web/fx/*.js` regenerated.
+- **Decisions:** Part VII, "ext_noinit (audit P2)".
+- **Files:** `DATA/Effects/null_jsfx/*.jsfx` and `gfx/*_gfx.jsfx` (96 + 96), `web/runtime/null-fx.js`, `web/tools/eel2js.js`, `web/fx/*.js` (generated), `web/test/runtime.test.js` (new test: a Delay echo survives Play, the Spectrum Analyzer still re-inits; it fails without the runtime fix), `web/README.md`.
+- **Tests:** see the PR body for what ran. No DSP line changed: the offline renders never start the transport mid-render, so the sound of every test render is unchanged.
+
+### 2026-10-26 — native (no version change) — CLAP latency outside activate() and subnormal outputs
+- **Fixes:** clap-validator (PR #52) failed 19 CLAPs because DPF's CLAP wrapper called `clap_host_latency::changed()` outside `clap_plugin::activate()` (from `deactivate()`, parameter flushes and state loads), and 23 CLAPs because decaying tails left the double DSP as subnormal floats. `native/third_party/dpf/null-jsfx.patch`, applied by CMake on the pinned DPF: the CLAP wrapper reports a latency change only inside `activate()` and requests a restart when the latency changes while active; `PluginExporter::run` sets every output sample below `FLT_MIN` in magnitude to 0 (VST3 and CLAP alike). No plugin source and no DSP changed.
+- **Decisions:** a local DPF patch instead of per-plugin changes (Part VII).
+- **Files:** `native/third_party/dpf/null-jsfx.patch` (new), `native/third_party/dpf/.gitattributes` (new, keeps the patch LF on Windows), `native/CMakeLists.txt` (`PATCH_COMMAND`, `GIT_CONFIG core.autocrlf=false`), `native/README.md`, this Bible (Part II.2, Part VII).
+- **Tests:** run locally on Linux: `native/scripts/build.sh --test` (all ctest: compare, presets, gfx, module, rack), and clap-validator rev `b2f1d9b` on all 114 CLAPs: 0 latency and 0 subnormal failures (before: clipper and chorus_one reproduced both). Six CLAPs still failed for other reasons, fixed elsewhere: very low sample rate NaN/inf (#54, #58) and Rack state reproducibility (PR #53). Windows and macOS: CI only.
+- **Next:** the release with the other fixes (2.6.1, Christos publishes).
+
+### 2026-10-26 — Pluck 2.6.1 — native strummer matches the JSFX on a key at the half step
+- **Fixes:** with richer MIDI, the Pluck CLAP/VST3 differed from `pluck.jsfx` at 96 kHz on the preset "Harp Rolls" (max diff 0.338 from sample 264000). The cause: a first key that lands exactly on the half of a strum step (`t - s` = 0.5) plays that step only when it comes in the first half, and the native beat position (CLAP's fixed-point `song_pos_beats` through DPF's bar/beat/tick) came out a hair below 0.5 where the JSFX's came out at 0.5. Neither side was wrong in itself; the tie was decided by rounding. Now a key within 1e-6 of a step of the half waits for the next step in every form (`t - s < 0.499999`), like the step boundary already uses `floor(t + 0.000001)`.
+- **Sound:** the JSFX renders bit for bit as before with the test MIDI and every factory preset at 44.1 and 96 kHz (old vs new JSFX at tolerance 0); only a first key within about 0.5 µs of a half step can now wait where it played before.
+- **Tests:** `compare.cpp` gives instruments the GM notes merged in time order with the MIDI effects' `testMidi()` stream (note first at the same sample), through one `testInput()` in both renderers, the shape PR #62 also uses.
+- **Files:** `DATA/Effects/null_jsfx/pluck.jsfx`, `gfx/pluck_gfx.jsfx`, `native/plugins/pluck/PluckDSP.hpp`, `web/fx/pluck.js` and `web/fx/index.json` (generated), `native/test/compare.cpp`, this Bible (Part V.1).
+
+### 2026-10-27 — Wave 1 of the studio plan (2.7, not released yet) — True Peak, Delta, Mid/Side; Studio EQ, Spectral Ducker, Reference
+- **Changes (appended sliders, silent at their defaults, R11/R12/R17):**
+  - Maximizer: `True Peak` (slider13) and `Listen` Output/Delta (slider14). True Peak limits the 4x-interpolated peak (the BS.1770-4 Annex 2 filter of Loudness Meter, new `native/common/NullTruePeak.hpp`) and adds 6 samples of latency when on. Delta plays the buffered input times the output gain minus the output, undithered. The GFX moved to two tabs (LIMITER, BANDS / DITHER), 480x408.
+  - Limiter: `True Peak` (slider6, not in Clipper mode) and `Listen` (slider7); GFX 480x380.
+  - Clipper: `Listen` (slider8), Delta = what the clipping takes off.
+  - Dynamics: `Channels` Stereo/Mid/Side (slider12) and `Listen` (slider13); GFX tabs COMPRESSOR, KEY / CHANNELS, 480x408. The Rack module now passes the External flag through (its key is its own input); bit-identical for Stereo.
+  - Multiband Comp: `Channels` (slider24) and `Listen` (slider25); the module now has exactly 25 values.
+  - Dynamic EQ: `Channels` (slider20) and `Listen` (slider21). Saturation: `Channels` (slider9), with the other half delayed to match the oversampling.
+  - Mid or Side processes that half on both channels and adds the other half back unchanged; Delta is input minus output before any makeup or output gain.
+- **New plugins (off the site until "launch", R18; entries in `tools/site_content_next.json`):**
+  - **Studio EQ** (Essentials, `NSEq`, 51 sliders, 480x468, no Rack module): eight bands from 10 Hz to 30 kHz (bell, shelves, 6–96 dB/oct Butterworth cuts, notch, band pass), each on stereo, mid, side, left or right; Output, Auto Gain, Zero Latency or Linear Phase (5120 samples). The interfaces draw the curve over a live spectrum and the nodes can be dragged.
+  - **Spectral Ducker** (Advanced, sidechain, `NSDk`, 10 sliders, 480x380, keyed Rack module): 32 bands follow the key and cut the same bands of the track; Stereo/Mid/Side, Mix, Output, Delta.
+  - **Reference** (Advanced, reference on pins 3/4, `NRef`, 4 sliders, 480x334, no Rack module): A/B with a 10 ms crossfade, loudness-matched reference, Trim, mono/side monitor; the interfaces show both short-term loudnesses, the gain, both correlations and both spectra.
+- **Changes (shared code):** `NullSliders.hpp` gains `jsfxValue()` (a host float back to the JSFX's double, used by the three new plugins). `EqAnalyzer.hpp` can average instead of peak-hold (Reference). `tests/lint.py` knows `slider()` (R6 updated; R7 reworded: GFX never *sets* a slider through `slider()`). R8 heights now run to 468; R13 names the 25-value Rack limit; Part III regenerated; the factory preset total was stale (1,006) and is now counted from the `.rpl` files (1,145).
+- **Files:** `DATA/Effects/null_jsfx/{maximizer,limiter,clipper,dynamics,multiband_compressor,dynamic_eq,saturation,studio_eq,spectral_ducker,reference}.jsfx` and `gfx/`, `native/plugins/` (the seven ported plugins, three new folders, `rack/modules/{dynamics,multiband_compressor,dynamic_eq,saturation,clipper,maximizer,limiter,spectral_ducker}.hpp`), `native/common/{NullTruePeak,NullSliders}.hpp`, `native/plugins/parametric_eq/EqAnalyzer.hpp`, `tools/presets/{studio_eq,spectral_ducker,reference}.json`, `tools/site_content.json` (descriptions of the appended sliders), `tools/site_content_next.json`, `tests/lint.py`, `CLAUDE.md`, this Bible; regenerated: `.rpl`, `FactoryPresets.hpp`, GFX preset blocks, `web/fx/*`, `remote/`, `plugins/*/index.html`, `assets/js/modals.js`, FX chains, `RackPresets.hpp`.
+- **Tests (run on Linux):** `tests/run.sh` on every changed and new JSFX and GFX (0 failed; lint clean), the new ones also at 8000, 22050, 1234.57 and 12345.68 Hz; `native` built with `-DNULL_TESTS=ON` for the ten plugins: every `compare_`, `presets_`, `gfx_` and `module_` test of them passes, and `rack_test`; `web/test/run.sh` on the ten (largest diff 1.1e-12); `build_site.py`, `build_chains.py --check`, `build_presets.py`, `build_remote.py`, `build_catalog.py --check`, `node web/tools/build.js`. Measured with small programs on the native DSP: True Peak brings +0.87 dBTP (Maximizer) and +0.48 dBTP (Limiter) down to −0.99 dBTP at a −1 dB ceiling; Studio EQ zero-latency and linear-phase magnitudes agree within 0.35 dB at 50 Hz and 0.05 dB above, the cuts fall 7/12/18/24/36/48/72/96 dB one octave out, linear-phase latency is 5120 samples; Spectral Ducker with a 1 kHz key cuts the track's 1 kHz by 10 dB at Amount 50% and leaves 200 Hz within 0.15 dB. Not run here: the full native build of every plugin (CI does it), a real REAPER or DAW session.
+- **ext_noinit:** after #59, the three new plugins set `ext_noinit = 1` too (Studio EQ, Spectral Ducker and Reference keep their state through Play, as in the VST3/CLAP).
+- **Next:** Wave 2 (Tuner, VU Meter, Crossfeed, De-Clip, Crackle).
+
+### 2026-10-27 — Bible — routines in 0.5
+- **Fixes:** Part 0.5 still described the old monthly audit (third Friday, each run scheduling the next). It now gives the full audit on the 8th of every even month at 19:00 Athens time from 2026-12-08, run by a recurring scheduled task, with the standing competitiveness question and the extended checklist, and the quarterly memory export on the 10th of January, April, July and October at 12:00.
+- **Decisions:** Part VII, "Full audit" and "Memory export". No plugin, DSP or site file changed.
+- **Files:** `NULL_JSFX_BIBLE.md` (0.5, VII, this entry).
+- **Tests:** run locally: `tools/build_bible.py --check` (up to date), `tests/lint.py` (pass) and the Part X order check from PR #67 (pass). CI on the PR.
+### 2026-10-27 — Wave 2 of the studio plan (2.7, not released yet) — Tuner, VU Meter, Crossfeed, De-Clip; Crackle in Click Repair
+- **Changes (appended slider, silent at its default, R11/R12/R17):** Click Repair gets `Mode` Click/Crackle (slider3). Crackle detects on the second difference against a faster average (3x to 20x), marks the sample before each detection, holds off for two samples after the window, and redraws with a cubic through two outputs before and two good samples after; latency 2 x Window + 2. Two new presets (Worn Vinyl Crackle, Light Crackle). On a test of 600 small ticks over tones it removes 18 dB more of the error than Click mode, which leaves those ticks alone.
+- **New plugins (off the site until "launch", R18; entries in `tools/site_content_next.json`):**
+  - **Tuner** (Advanced, `NTun`, 4 sliders, 480x334, no Rack module): chromatic, needle or strobe, A4 415–466 Hz, input Stereo/Left/Right, Output Thru/Mute.
+  - **VU Meter** (Advanced, `NVUm`, 4 sliders, 480x334, no Rack module): two dials, VU / PPM / K-14 / K-20, Reference -24..-8 dBFS, Peak Hold Off/3 s/Hold (a click on the dials resets), OVER, Monitor Stereo/Mono/Side.
+  - **Crossfeed** (Essentials, `NXfd`, 7 sliders, 480x380, Rack module): bs2b crossfeed (Cutoff, Feed) or Speakers (Angle, Room), Mix, Output; the display draws what each ear gets from its own and the other side.
+  - **De-Clip** (Essentials, `NDcl`, 4 sliders, 480x294, Rack module): Clip Level, Min Length, Output, Listen Output/Delta; 128 samples of latency.
+- **Files:** `DATA/Effects/null_jsfx/{click_repair,tuner,vu_meter,crossfeed,de_clip}.jsfx` and `gfx/`, `native/plugins/{click_repair,tuner,vu_meter,crossfeed,de_clip}/`, `native/plugins/rack/modules/{click_repair,crossfeed,de_clip}.hpp`, `tools/presets/{click_repair,tuner,vu_meter,crossfeed,de_clip}.json`, `tools/site_content.json` (Click Repair's Mode), `tools/site_content_next.json`, this Bible (Part III regenerated: 120 plugins, 98 Rack modules, 1,177 factory presets); regenerated: `.rpl`, `FactoryPresets.hpp`, GFX preset blocks, `web/fx/*`, `remote/`, `plugins/click-repair/index.html`, `assets/js/modals.js`.
+- **Tests (run on Linux):** `tests/run.sh` on the five plugins and their GFX versions (0 failed, lint clean), also at 8000, 22050, 1234.57 and 12345.68 Hz; every GFX `@gfx` section compiled with ysfx; `native` built with `-DNULL_TESTS=ON` for the five: their `compare_`, `presets_`, `gfx_` and `module_` tests and `rack_test` pass; `web/test/run.sh` on the five (largest diff 1.1e-16); `build_presets.py`, `build_site.py`, `build_remote.py`, `build_chains.py --check`, `build_catalog.py --check`, `node web/tools/build.js`. Measured with ysfx on the JSFX: Tuner within 0.25 cent from 27.5 Hz to 4186 Hz at 22.05, 44.1, 48 and 96 kHz, also on a weak-fundamental decaying tone with noise, and silent on silence; VU Meter reads 0.0 VU for a sine at -18 dBFS, 99 % at 300 ms with 1.4 % overshoot, PPM -4.2 dB on a 10 ms burst, K-14 and K-20 read -4 and +2 for that sine; Crossfeed keeps a mono signal at 0 dB at 50 Hz in both modes and puts the other side 4.5 dB down in the lows in bs2b default; De-Clip lowers the error of hard-clipped tones from -17 to -36 dB (100 Hz) and from -9 to -18 dB (1 kHz, 6 dB over). Not run here: the full native build of every plugin (CI does it), the GFX and native interfaces on screen, a real REAPER or DAW session.
+- **ext_noinit (after #59):** Crossfeed, De-Clip and VU Meter set `ext_noinit = 1`, so their state goes on through Play as in the VST3/CLAP; Tuner is an analyser and keeps the reset (Part VIII B8).
+- **Next:** Wave 3 (A/B and Undo/Redo in every interface, oversampling where measured aliasing needs it, LV2).
+
+### 2026-10-27 — CI — Faster native tests, Hub builds only when the Hub changes, safer tokens
+- **Changes:** `native/scripts/build.sh` runs ctest on every core (`--parallel`, from `getconf _NPROCESSORS_ONLN`) and builds ysfx with the new `tests/run.sh --build-only` instead of running the whole JSFX suite with its output discarded. `native.yml` caches `tests/.build/ysfx` per OS image and no longer starts on every `tests/` change, only on `tests/run.sh`, `tests/installer_test.sh` and `tests/pkg_test.sh`. `hub.yml` has a new job `changes`: `core` (3 OS) and `build` (3 OS, macOS universal) run only when `hub/` or `hub.yml` changed, and always on releases and manual runs; `ui` and `smoke` still run for catalog inputs such as `DATA/`. `downloads.yml` runs after "VST3 and CLAP" only when that run was a release or a manual run. Every job has `timeout-minutes`. `native.yml`, `hub.yml` and `stress.yml` default to `contents: read`, with `write` only on the jobs that attach to a release. `dtolnay/rust-toolchain` and `Swatinem/rust-cache` are pinned to SHAs (`toolchain: stable` passed explicitly, as a SHA pin requires).
+- **Why:** a green native run took 2 h 48 min (run 40484889714): 61 min on Linux and 56 min on macOS were the comparisons running one at a time, about 5 min the needless JSFX suite, and each macOS job waited 52 min for a runner. Plugin PRs also built the Hub on 3 OS, macOS included, although they only change its catalog.
+- **Decisions:** Part VII, 2026-10-27 · CI speed and safety.
+- **Files:** `.github/workflows/native.yml`, `hub.yml`, `downloads.yml`, `test.yml`, `web.yml`, `media.yml`, `stress.yml`, `native/scripts/build.sh`, `tests/run.sh`, `NULL_JSFX_BIBLE.md` (Part V.2, VII, this entry).
+- **Tests:** in the container (4 cores, Linux), the full native build with `NULL_TESTS=ON`: 331 s; `ctest -j4`: 439 of 439 passed in 807 s, against 3,119 s of summed test time (the serial run CI did); `tests/run.sh`: all plugins and 146 chains pass in 310 s; `tests/run.sh --build-only` with ysfx present: 0 s. The six workflows parse as YAML. Not run here: the `changes` job and the new `if:` conditions, which this PR's own CI exercises (it changes `hub.yml`, so `core` and `build` must run; on a plugin-only PR they must be skipped).
+
+### 2026-10-27 — Wave 3 of the studio plan (2.7, not released yet) — A/B and Undo/Redo, oversampling in Tape and Ladder Filter, LV2 for Linux
+- **Changes:**
+  - **A/B and Undo/Redo** in the header of every GFX and native interface with presets: undo, redo, A, B and a copy button (`A>B` / `B>A`) left of the preset box. One step is one edit (a drag, a click, a preset load); up to 32 steps. GFX: `ng_hist*` in `null_gfx.jsfx-inc`; the history lives in strings, so REAPER re-running `@init` keeps it and no plugin memory is used; `build_presets.py` writes the tracked sliders (the ones the presets set) and the `ng_hist()` call into every GFX file. Native: `hist*` in `NullUI.hpp` (in step with the GFX, R8). A/B and undo write the sliders (and their automation) only, never the DSP.
+  - **Oversampling (appended slider, Off by default, R11/R12/R17):** Tape (slider11) and Ladder Filter (slider6), Off/2x/4x through Saturation's Kaiser halfband stages, latency 31 / 37 samples reported, in JSFX, GFX, VST3/CLAP and the Rack modules.
+  - **LV2 on Linux:** `NULL_LV2` in `native/CMakeLists.txt` (on by default on Linux); `build.sh` fills `dist/LV2/NULL JSFX/`; the Linux zip keeps its name and gains `LV2/`; `install.sh` adds the `lv2` format (`~/.lv2`, `--lv2-dir`); the Hub offers LV2 on Linux (`packages.lv2` in the catalog, Part II.4); `INSTALL.txt` says where it goes.
+  - Web runtime: typed `str_getchar` / `str_setchar` (`'d'`, `'us'`, ...) as in WDL, which the GFX history uses.
+- **Fixes:** LV2 tempo sync. DPF advances the LV2 bar/beat in float between the host's `time:Position` events, so Drum Machine steps (and every beat-locked plugin) drifted by a sample within a second; `NullBeatClock.hpp` counts on from the exact frame in LV2 (VST3 and CLAP unchanged).
+- **Decisions:** Part VII, "Wave 3 design choices". Driver and Exciter oversampling is a question for Christos (B10).
+- **Files:** `DATA/Effects/null_jsfx/gfx/null_gfx.jsfx-inc` and every GFX file (regenerated preset blocks), `DATA/Effects/null_jsfx/{tape,ladder_filter}.jsfx`, `native/common/{NullUI,NullPlugin,NullBeatClock}.hpp`, `native/plugins/{tape,ladder_filter}/`, `native/plugins/rack/{Plugin.cpp,RackPlugin.hpp,modules/tape.hpp,modules/ladder_filter.hpp}`, `native/CMakeLists.txt`, `native/scripts/build.sh`, `native/INSTALL.txt`, `native/test/lv2_test.py` (new), `.github/workflows/native.yml`, `installer/unix/install.sh`, `tools/{build_presets,build_installer,build_catalog}.py`, `tools/site_content.json`, `hub/core/src/{catalog,paths,lib}.rs`, `hub/ui/{hub.js,index.html,i18n.js}`, `web/runtime/eel-rt.js`, `tests/{gfx_hist_test.jsfx,run.sh,installer_test.sh}`, `web/test/runtime.test.js`, `hub/tests/ui_test.cjs`, this Bible (Part III regenerated); regenerated: `web/fx/*`, FX chains with Tape, `plugins/{tape,ladder-filter}/index.html`, `assets/js/modals.js`.
+- **Tests (run on Linux):** `tests/run.sh` in full with `tests/gfx_hist_test.jsfx` (22 checks; a deliberately broken copy fails); `web/test/run.sh` in full (0 of 240 differ, runtime tests 12/12); a native build of every plugin with the new `NullUI` (0 errors); ctest `compare_`, `presets_`, `gfx_` and `module_` for Tape, Ladder Filter and Saturation with `rack_test`, and after the beat-clock change `compare_`, `presets_` and `gfx_` for Drum Machine, Tremolo, Arpeggiator, Bass, Tape and Ladder Filter, all pass; the LV2 build of all 120 plugins and the Rack, and `lv2_test.py` over the 120 with a JSFX: 0 failed (largest diff 2.5e-6, Studio EQ in linear phase; Grit at first differed by 8e-4 because the JSFX got the double samples, so the test now feeds both the same float samples); the Linux installer built from a mock package with every bundle and `tests/installer_test.sh` (LV2 121 with the Rack, uninstall leaves nothing); `cargo test -p null_hub_core` and `node tests/ui_test.cjs`. Measured aliasing (Part VII). Not run: the A/B and undo buttons by hand in REAPER or a DAW (the GFX logic is tested by script, the native one only built and read), LV2 in a real host (Ardour, Carla), the macOS and Windows builds (CI).
+- **Next:** Wave 4 (MIDI Utility, MIDI LFO, Drum Machine song mode and step probability, SFZ in Sampler).
+
+
+### 2026-10-27 — native (no version change) — CLAP and VST3 state load with short stream reads
+- **Fixes:** DPF's state parser (CLAP `stateLoad`, VST3 `setState`) reads the stream in pieces into a 512-byte buffer and puts a temporary `\0` at `buffer[read]` to cut each string. After the cut it tested `buffer[i] == '\0'` with `i == read` too, and there sat the byte left from an earlier read, or uninitialised stack. When that byte was `\0`, a key or value split across two reads was ended early: values came back wrong, keys and values swapped, or the load failed. Hosts that hand the state over in small reads hit it: clap-validator's `state-reproducibility-buffered` (17 bytes per read) failed on 10 CLAPs on Linux and about 70 on Windows, with a different parameter each time. `native/third_party/dpf/state-load.patch` tests `i < read && buffer[i] == '\0'`. Saved states keep their format and meaning: only the reading changed.
+- **Changes:** `native/CMakeLists.txt` applies every `native/third_party/dpf/*.patch` in name order after a reset to the pinned SHA, with `core.autocrlf=false`. `native.yml` also installs `python3-numpy` for the LV2 check from #72, which failed on main with "No module named numpy". New ctest `state_<name>` (`native/test/state_test.cpp`) for every plugin.
+- **Files:** `native/third_party/dpf/state-load.patch`, `native/third_party/dpf/.gitattributes`, `native/CMakeLists.txt`, `native/test/state_test.cpp`, `native/test/CMakeLists.txt`, `native/README.md`, this Bible (II.2, V.1, VII).
+- **Tests:** see the PR. Before the patch, `state_test` failed for all 11 CLAPs tried (Tilt too, which CI had not flagged); after it they pass. `state_rack` also needs the Rack's global parameter symbols (PR #53, above).
 
 ### 2026-10-27 — Bible 1.2, tests — Part X order check (R26)
 - **Changes:** new rule R26: Part X stays oldest first, a new entry goes at the very end. `tests/bible_order.py` checks that every Part X entry has a date and that the dates never go back; `test.yml` runs it. The Map, the Part IX handoff and `CLAUDE.md` say R1–R26 (they still said R1–R24 although R25 existed). Part V.1 lists the check.

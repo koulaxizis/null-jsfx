@@ -12,6 +12,7 @@ out_pin:Left
 out_pin:Right
 
 @init
+  ext_noinit = 1;              // play and seek keep tails and state, as in the VST3/CLAP
   // Removes the side (L-R) content below a crossover, so the low end becomes mono
   // while everything above stays as wide as it was. Amount moves the crossover
   // from 0 (off) up to 400 Hz.

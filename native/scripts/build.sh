@@ -7,7 +7,8 @@
 #   scripts/build.sh --build-dir <dir>  build directory (default: native/build)
 #   scripts/build.sh --dpf <dir>        use a local DPF checkout instead of fetching the pinned SHA
 #
-# Output: <build>/bin/null_jsfx_<name>.vst3 and .clap, copied to native/dist/{VST3,CLAP}/NULL JSFX/.
+# Output: <build>/bin/null_jsfx_<name>.vst3 and .clap (and .lv2 on Linux), copied to
+# native/dist/{VST3,CLAP,LV2}/NULL JSFX/.
 set -euo pipefail
 
 here="$(cd "$(dirname "$0")/.." && pwd)"
@@ -44,14 +45,15 @@ fi
 
 if [ "$tests" = ON ] && [ ! -f "$repo/tests/.build/ysfx/build/libysfx.a" ]; then
   echo "== building ysfx via tests/run.sh"
-  bash "$repo/tests/run.sh" >/dev/null || true
+  bash "$repo/tests/run.sh" --build-only
 fi
 
 cmake -S "$here" -B "$build" ${gen[@]+"${gen[@]}"} -DCMAKE_BUILD_TYPE=Release -DNULL_TESTS="$tests" ${extra[@]+"${extra[@]}"}
 cmake --build "$build" --config Release --parallel
 
 if [ "$tests" = ON ]; then
-  (cd "$build" && ctest --output-on-failure -C Release)
+  # the comparisons are independent processes that only read files: run them on every core
+  (cd "$build" && ctest --output-on-failure -C Release --parallel "$(getconf _NPROCESSORS_ONLN 2>/dev/null || echo 2)")
 fi
 
 dist="$here/dist"
@@ -59,4 +61,8 @@ rm -rf "$dist"
 mkdir -p "$dist/VST3/NULL JSFX" "$dist/CLAP/NULL JSFX"
 cp -R "$build"/bin/*.vst3 "$dist/VST3/NULL JSFX/"
 cp -R "$build"/bin/*.clap "$dist/CLAP/NULL JSFX/"
+if compgen -G "$build/bin/*.lv2" >/dev/null; then
+  mkdir -p "$dist/LV2/NULL JSFX"
+  cp -R "$build"/bin/*.lv2 "$dist/LV2/NULL JSFX/"
+fi
 echo "== done: $dist"

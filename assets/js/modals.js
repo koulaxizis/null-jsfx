@@ -498,10 +498,11 @@ const guides = {
     category: 'Essentials',
     sliders: [
       { name: 'Threshold', range: '0 to 100%', desc: 'Detection sensitivity: 0% flags jumps 4x the running average step, 100% only flags jumps 30x larger.' },
-      { name: 'Window', range: '1 to 50 Samples', desc: 'Number of samples marked as damaged after each detected click and redrawn.' }
+      { name: 'Window', range: '1 to 50 Samples', desc: 'Number of samples marked as damaged after each detected click and redrawn.' },
+      { name: 'Mode', range: 'Click / Crackle', desc: 'Click finds single clicks and pops (a sample\'s jump against the slow running average); Crackle finds the dense small ticks of worn vinyl (the second difference, which hides the music\'s low end, against a faster average, 3x to 20x).' }
     ],
     uses: ['Removing clicks and pops from vinyl transfers', 'Fixing digital spikes and edit clicks', 'Cleaning mouth clicks on close-miked vocals', 'Restoring archival recordings'],
-    properties: 'Input → step detector (sample jump vs running average) → mark Window samples as damaged → linear interpolation between the good samples on either side → Output. Latency of 2 × Window samples, reported to REAPER for delay compensation; each channel is repaired independently.',
+    properties: 'Input → step detector (Click: sample jump vs running average; Crackle: second difference vs a faster average) → mark Window samples as damaged → linear interpolation between the good samples on either side → Output. Latency of 2 × Window samples, reported to REAPER for delay compensation; each channel is repaired independently.',
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
     shot: 'assets/img/gfx/click_repair.png',
     video: 'assets/video/click_repair.mp4',
@@ -520,7 +521,8 @@ const guides = {
       { name: 'Oversampling', range: 'Off / 2x / 4x / 8x', desc: 'Runs the clipper at 2x, 4x or 8x the sample rate so the harmonics it creates do not fold back as aliasing (Off = no latency, more grit).' },
       { name: 'Mix', range: '0 to 100%', desc: 'Blend of clipped and dry signal (the dry path is delayed to match), for parallel clipping.' },
       { name: 'Output', range: '−24 to +12 dB', desc: 'Level after the mix (-24 to +12 dB).' },
-      { name: 'Link', range: 'Stereo / Dual', desc: 'Stereo applies the same gain to both channels so the image stays put; Dual clips each channel on its own.' }
+      { name: 'Link', range: 'Stereo / Dual', desc: 'Stereo applies the same gain to both channels so the image stays put; Dual clips each channel on its own.' },
+      { name: 'Listen', range: 'Output / Delta', desc: 'Listen: Output plays the result; Delta plays only what the clipper takes away (the driven input minus the clipped signal), to hear exactly what is lost.' }
     ],
     uses: ['Shave drum transients on a bus for more level without a limiter\'s pumping', 'Smash 808s and kicks into a dense, loud low end', 'Catch the last peaks before a limiter on the master for extra loudness', 'Add soft saturation and glue with a high Knee and some Mix', 'Parallel clipping for punch that keeps the dry transients'],
     properties: 'Signal chain: Input gain → optional oversampling (1 to 3 linear-phase halfband FIR stages, 63/23/15 taps, Kaiser-windowed sinc) → clipper: linear up to Ceiling × (1 − Knee), then a tanh bend into the Ceiling (Knee 0 = hard clip), linked or per channel → back down → Mix with the delayed dry signal → Output. Latency 0 / 31 / 37 / 39 samples (Off / 2x / 4x / 8x), reported for delay compensation. With oversampling the band-limited output can peak slightly above Ceiling.',
@@ -691,7 +693,9 @@ const guides = {
       { name: 'B4 Threshold', range: '−36 to 0 dB', desc: 'Level at which band 4 starts to act.' },
       { name: 'Attack', range: '0.1 to 10 ms', desc: 'How fast each band\'s detector reacts to rising level.' },
       { name: 'Release', range: '1 to 500 ms', desc: 'How fast each band\'s detector recovers.' },
-      { name: 'Makeup', range: '0 to 24 dB', desc: 'Output gain after all four bands.' }
+      { name: 'Makeup', range: '0 to 24 dB', desc: 'Output gain after all four bands.' },
+      { name: 'Channels', range: 'Stereo / Mid / Side', desc: 'Channels: Stereo works on the whole signal; Mid or Side processes only that half of the mid/side pair and leaves the other untouched.' },
+      { name: 'Listen', range: 'Output / Delta', desc: 'Listen: Output plays the result; Delta plays only what the bands change (the input minus the result, before Makeup).' }
     ],
     uses: ['Taming resonances only when they ring out', 'Controlling boomy low notes on bass or vocals', 'Reducing harshness on loud passages only', 'Lifting a band only when it is played', 'Frequency-specific control on mixes'],
     properties: 'Input → four bell bands in series (each: band-pass detector → envelope → gain scaled by level over Threshold) → Makeup → Output. Below Threshold a band is neutral; detection is stereo-linked per band and there is no latency.',
@@ -716,7 +720,9 @@ const guides = {
       { name: 'Style', range: 'Clean / Bus / FET / Opto / Upward', desc: 'Character of the detector: Clean is the transparent original, Bus a smooth glue compressor with auto release, FET a fast and aggressive one with a little harmonic colour, Opto a slow, program-dependent one, Upward raises quiet material below the threshold instead of turning loud parts down (up to 24 dB, leaving silence alone).' },
       { name: 'Sidechain HPF', range: '20 to 500 Hz', desc: 'High-pass filter on the detector only, so low end does not drive the gain reduction (20 Hz = off).' },
       { name: 'Mix', range: '0 to 100%', desc: 'Blend of compressed and dry signal for parallel compression (100% = fully compressed).' },
-      { name: 'Sidechain', range: 'Internal / External', desc: 'Internal listens to the track itself; External listens to input channels 3/4 (sidechain key).' }
+      { name: 'Sidechain', range: 'Internal / External', desc: 'Internal listens to the track itself; External listens to input channels 3/4 (sidechain key).' },
+      { name: 'Channels', range: 'Stereo / Mid / Side', desc: 'Channels: Stereo works on the whole signal; Mid or Side processes only that half of the mid/side pair and leaves the other untouched. The detector hears that half too (or the external key).' },
+      { name: 'Listen', range: 'Output / Delta', desc: 'Listen: Output plays the result; Delta plays only what the compressor takes away (or, Upward, adds), before Makeup and Mix.' }
     ],
     uses: ['General-purpose bus and track compression', 'Evening out vocal and bass levels', 'Downward expansion to reduce noise and bleed', 'Controlling dynamics on drums'],
     properties: 'Input → stereo-linked peak detection → gain computer (compress above / expand below Threshold, soft knee) → attack/release smoothing → Makeup → Output. Zero latency.',
@@ -834,7 +840,9 @@ const guides = {
       { name: 'Threshold', range: '−30 to 0 dB', desc: 'Drive control: a signal at Threshold comes out at the Ceiling, so lower values push harder.' },
       { name: 'Ceiling', range: '−6 to −0.1 dB', desc: 'Maximum output level.' },
       { name: 'Release', range: '0 to 1000 ms', desc: 'How fast the gain recovers after a peak.' },
-      { name: 'Lookahead', range: '0 to 10 ms', desc: 'How far ahead peaks are detected (ignored in Clipper mode).' }
+      { name: 'Lookahead', range: '0 to 10 ms', desc: 'How far ahead peaks are detected (ignored in Clipper mode).' },
+      { name: 'True Peak', range: 'Off / On', desc: 'True Peak: the limiter reacts to the peaks between the samples (4x, ITU-R BS.1770), so the output stays under Ceiling in dBTP as streaming services ask; adds 6 samples of latency. Limiter and Brickwall only.' },
+      { name: 'Listen', range: 'Output / Delta', desc: 'Listen: Output plays the result; Delta plays only what the limiter or clipper takes away.' }
     ],
     uses: ['Peak protection on the master bus', 'Transparent loudness gain in mastering', 'Soft clipping for drums and transient-heavy material', 'Catching stray peaks on individual tracks'],
     properties: 'Input → drive (Ceiling − Threshold) → Limiter/Brickwall: held peak detector + delayed signal + gain, followed by a safety clamp at Ceiling; Clipper: smooth knee from 70% of Ceiling → Output. Stereo-linked; latency equals Lookahead (0 in Clipper mode) and is reported for delay compensation.',
@@ -861,7 +869,9 @@ const guides = {
       { name: 'Character', range: 'CLEAN / PUNCHY / WARM', desc: 'Shapes the signal before the limiter: CLEAN leaves it alone, PUNCHY soft-clips only the peaks above Ceiling so the limiter pumps less on transients, WARM saturates gently for a denser, rounder sound.' },
       { name: 'Multiband', range: 'OFF / ON', desc: 'ON splits the signal into three bands that are limited on their own (a quarter linked), so a loud bass no longer pushes down the mids and highs; the look-ahead limiter then holds the sum at Ceiling.' },
       { name: 'Low Crossover', range: '50 to 500 Hz', desc: 'Split point between the low and mid bands in Multiband mode.' },
-      { name: 'High Crossover', range: '1000 to 12000 Hz', desc: 'Split point between the mid and high bands in Multiband mode.' }
+      { name: 'High Crossover', range: '1000 to 12000 Hz', desc: 'Split point between the mid and high bands in Multiband mode.' },
+      { name: 'True Peak', range: 'OFF / ON', desc: 'True Peak: the limiter reacts to the peaks between the samples (4x, ITU-R BS.1770), so the output stays under Ceiling in dBTP (for example -1 dBTP for Spotify and Apple Music); adds 6 samples of latency.' },
+      { name: 'Listen', range: 'OUTPUT / DELTA', desc: 'Listen: Output plays the result; Delta plays only what the limiter takes away (undithered).' }
     ],
     uses: ['Final loudness stage in mastering', 'Raising stems and bounces to a target level', 'Peak control on buses', 'Dithered 16-bit masters for CD'],
     properties: 'Input Gain → held peak detector + look-ahead delay → gain reduction to Ceiling → clamp at Ceiling → Output Gain trim (≤ 0 dB) → optional TPDF dither and rounding to 16 or 24 bits, with optional first-order noise shaping → Output. Latency equals Lookahead (0–5 ms), reported to REAPER for delay compensation.',
@@ -916,7 +926,9 @@ const guides = {
       { name: 'Attack', range: '0 to 200 ms', desc: 'How fast gain reduction is applied in all bands.' },
       { name: 'Release', range: '0 to 1000 ms', desc: 'How fast gain recovers in all bands.' },
       { name: 'Knee', range: '0 to 100%', desc: 'Width of the soft knee around each threshold (100% = ±60 dB).' },
-      { name: 'Master Output', range: '0 to 12 dB', desc: 'Overall output gain after the bands are summed.' }
+      { name: 'Master Output', range: '0 to 12 dB', desc: 'Overall output gain after the bands are summed.' },
+      { name: 'Channels', range: 'Stereo / Mid / Side', desc: 'Channels: Stereo works on the whole signal; Mid or Side processes only that half of the mid/side pair and leaves the other untouched.' },
+      { name: 'Listen', range: 'Output / Delta', desc: 'Listen: Output plays the result; Delta plays only what each band\'s compressor takes away, before Makeup and Master Output.' }
     ],
     uses: ['Mastering bus dynamics', 'Controlling a boomy low end without dulling the top', 'Taming harsh upper mids on vocals or guitars', 'Per-band level balancing with Solo to audition each band', 'Broadcast-style density'],
     properties: 'Input → complementary crossovers (four cascaded one-pole low-passes, subtracted from the remainder) → 4 bands, each with stereo-linked peak compression, knee and makeup → Mute/Solo/Bypass → Sum → Master Output → Output. The bands sum back to the original signal with compression off; zero latency.',
@@ -1153,7 +1165,8 @@ const guides = {
       { name: 'Input', range: '−12 to +12 dB', desc: 'Gain into the saturation stage before Drive, in dB; 0 dB is off.' },
       { name: 'Output', range: '−24 to +12 dB', desc: 'Output level after the dry/wet mix, in dB; 0 dB is off.' },
       { name: 'Oversampling', range: 'Off / 2x / 4x', desc: 'Runs the saturation at 2x or 4x the sample rate (linear-phase halfband filters, 31 or 37 samples of latency) so its harmonics do not fold back as aliasing; Off adds no latency.' },
-      { name: 'Emphasis', range: '−12 to +12 dB', desc: 'Tilt EQ around 800 Hz before the saturation and its exact inverse after it: positive values make the highs distort more, negative values the lows, while the clean tone stays the same; 0 dB is off.' }
+      { name: 'Emphasis', range: '−12 to +12 dB', desc: 'Tilt EQ around 800 Hz before the saturation and its exact inverse after it: positive values make the highs distort more, negative values the lows, while the clean tone stays the same; 0 dB is off.' },
+      { name: 'Channels', range: 'Stereo / Mid / Side', desc: 'Channels: Stereo works on the whole signal; Mid or Side processes only that half of the mid/side pair and leaves the other untouched.' }
     ],
     uses: ['Warmth and density on buses', 'Fuzz and overdrive on guitars and bass', 'Bit-crushed lo-fi textures', 'Wavefolded synth tones'],
     properties: 'Input → Drive → selected curve (Fold: a sine wavefolder whose depth grows with Drive) → Tone tilt EQ (one-pole split at 800 Hz, ±Tone/2 dB on each side) on the wet signal → Dry/Wet Mix → Output. No oversampling; zero latency.',
@@ -1256,10 +1269,11 @@ const guides = {
       { name: 'Output', range: '−12 to +12 dB', desc: 'Output level' },
       { name: 'Mix', range: '0 to 100%', desc: 'Dry/wet blend (the dry signal is delayed to stay aligned with the wet path)' },
       { name: 'Tape Type', range: 'Classic / Type I / Type II / Type IV', desc: 'Tape formulation: Classic (open reel), Type I (ferric, warm, more hiss), Type II (chrome, more high-frequency headroom, brighter and quieter hiss) or Type IV (metal, cleanest and most extended)' },
-      { name: 'Noise Reduction', range: 'Off / On', desc: 'Cassette-style noise reduction: a compander that boosts quiet highs up to 10 dB before the tape and cuts them after it, lowering the hiss with a slight breathing on loud highs' }
+      { name: 'Noise Reduction', range: 'Off / On', desc: 'Cassette-style noise reduction: a compander that boosts quiet highs up to 10 dB before the tape and cuts them after it, lowering the hiss with a slight breathing on loud highs' },
+      { name: 'Oversampling', range: 'Off / 2x / 4x', desc: 'Runs the saturation at 2x or 4x the sample rate (linear-phase halfband filters, 31 or 37 more samples of latency) so its harmonics do not fold back as aliasing; Off adds nothing.' }
     ],
     uses: ['Glue and warmth on the mix bus', 'Rounder low end and softer transients on drums and bass', 'Lo-fi, cassette-like wobble with Wow and Flutter turned up', 'Subtle analog colour on vocals and acoustic tracks'],
-    properties: 'Signal chain: Input → Wow/Flutter Modulated Delay (3 ms centre, cubic interpolation) → Pre-Emphasis → Drive → Asymmetric Saturation with memory (hysteresis-like) → De-Emphasis → Low Cut + Head Bump → Hiss → High-Frequency Loss → Mix → Output. The hiss is an exact Park-Miller generator. The dry signal is delayed by the same 3 ms, and the 3 ms latency is reported to the host for delay compensation.',
+    properties: 'Signal chain: Input → Wow/Flutter Modulated Delay (3 ms centre, cubic interpolation) → Pre-Emphasis → Drive → Asymmetric Saturation with memory (hysteresis-like) → De-Emphasis → Low Cut + Head Bump → Hiss → High-Frequency Loss → Mix → Output. The hiss is an exact Park-Miller generator. The dry signal is delayed by the same 3 ms, and the 3 ms latency is reported to the host for delay compensation. Oversampling (2x / 4x) runs the saturation stage at the higher rate and adds 31 / 37 samples.',
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
     shot: 'assets/img/gfx/tape.png',
     video: 'assets/video/tape.mp4',
@@ -1645,10 +1659,11 @@ const guides = {
       { name: 'Resonance', range: '0 to 4', desc: 'Feedback around the ladder; high values approach self-oscillation (capped at 3.95)' },
       { name: 'Drive', range: '0 to 100%', desc: 'Input gain into the saturating ladder for analog growl (level-compensated)' },
       { name: 'Mode', range: 'Lowpass / Highpass', desc: 'Lowpass or Highpass 24 dB/oct response' },
-      { name: 'Gain', range: '−12 to +12 dB', desc: 'Output level' }
+      { name: 'Gain', range: '−12 to +12 dB', desc: 'Output level' },
+      { name: 'Oversampling', range: 'Off / 2x / 4x', desc: 'Runs the ladder at 2x or 4x the sample rate (linear-phase halfband filters, 31 or 37 samples of latency) so the saturation in its loop does not alias at high Drive and Resonance; Off adds no latency.' }
     ],
     uses: ['Classic resonant synth filter sweeps', 'Warm, driven lowpass on drums and bass', 'Automated filter build-ups', 'Highpass sweeps with resonant peak', 'Taming harsh digital sources with analog character'],
-    properties: 'Signal chain: Input → Drive → 4-Pole Zero-Delay-Feedback Ladder (24 dB/oct, tanh saturation in the loop) → LP / HP Output → Gain → Output. Stable and in tune up to 20 kHz at full resonance; stereo channels independent, zero latency.',
+    properties: 'Signal chain: Input → Drive → 4-Pole Zero-Delay-Feedback Ladder (24 dB/oct, tanh saturation in the loop) → LP / HP Output → Gain → Output. Stable and in tune up to 20 kHz at full resonance; stereo channels independent, zero latency (Oversampling 2x / 4x runs the ladder at the higher rate and adds 31 / 37 samples).',
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
     shot: 'assets/img/gfx/ladder_filter.png',
     video: 'assets/video/ladder_filter.mp4',

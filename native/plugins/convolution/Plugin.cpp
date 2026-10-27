@@ -6,9 +6,9 @@
 
 #include "ConvolutionShared.hpp"
 #include "ConvolutionSliders.hpp"
+#include "NullMailbox.hpp"
 
 #include <cstring>
-#include <mutex>
 #include <string>
 
 START_NAMESPACE_DISTRHO
@@ -37,32 +37,24 @@ protected:
 
     void sampleRateChanged(double newSampleRate) override { init(newSampleRate); }
 
-    // the IR file: read off the audio thread, handed over to run() under the lock
+    // the IR file: read off the audio thread, handed over to run() without a lock
     void setState(const char* key, const char* value) override
     {
         if (std::strcmp(key, "irfile") != 0)
             return;
-        nullconv::IrFile file;
+        nullconv::IrFile* file = new nullconv::IrFile();
         if (value && value[0])
-            nullconv::readWav(value, file);
-        const std::lock_guard<std::mutex> lock(fFileLock);
-        std::swap(fPending.data, file.data);
-        fPending.channels = file.channels;
-        fPending.sampleRate = file.sampleRate;
-        ++fFileId;
+            nullconv::readWav(value, *file);
+        fFiles.post(file);
     }
 
     void process(const float** inputs, float** outputs, uint32_t frames) override
     {
         // the JSFX's @slider before the block: a new file, then a rebuild if anything changed
-        if (fFileLock.try_lock())
+        if (nullconv::IrFile* file = fFiles.take())
         {
-            if (fFileId != fAppliedFileId)
-            {
-                fDsp.swapFile(fPending, fFileId); // the old data goes back to fPending, freed later
-                fAppliedFileId = fFileId;
-            }
-            fFileLock.unlock();
+            fDsp.swapFile(*file, ++fFileId); // the old data goes back in file, freed off the audio thread
+            fFiles.giveBack(file);
         }
         fDsp.update();
         if (fDsp.builds() != fShownBuild)
@@ -96,9 +88,8 @@ private:
     }
 
     nullconv::ConvolutionProcessor fDsp;
-    std::mutex fFileLock;
-    nullconv::IrFile fPending;
-    int fFileId = 0, fAppliedFileId = 0, fShownBuild = -1;
+    nulljsfx::Mailbox<nullconv::IrFile> fFiles;
+    int fFileId = 0, fShownBuild = -1;
 
     DISTRHO_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(PluginConvolution)
 };

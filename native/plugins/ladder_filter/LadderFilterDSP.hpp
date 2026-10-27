@@ -6,6 +6,8 @@
  * Port of DATA/Effects/null_jsfx/ladder_filter.jsfx, computed in double like EEL2: a Moog-style
  * 4-pole zero-delay-feedback ladder (lowpass, or highpass from the stage mix) with a soft
  * saturator (tanh approximation) at the ladder input, Drive into it and Gain after it.
+ * Oversampling (appended in 2.7): the ladder at 2x / 4x through the halfband stages of
+ * plugins/clipper, latency 31 / 37 samples.
  */
 
 #pragma once
@@ -14,24 +16,32 @@
 #include <cmath>
 #include <cstdint>
 
+#include "../clipper/ClipperDSP.hpp"
+
 namespace nullladder {
 
 static constexpr double kPi = 3.141592653589793;
 
 struct Coeffs {
-    double fc = 1000, wg = 0, G = 0, b = 0, Gb = 0, G2b = 0, G3b = 0, G4 = 0;
+    double fc = 1000, wg = 0, lw = 0, G = 0, b = 0, Gb = 0, G2b = 0, G3b = 0, G4 = 0;
     double k = 0.5, drive = 1, comp = 1, outGain = 1;
     int mode = 0;
+    int osf = 1, lat = 0, pad = 0; // Oversampling: factor, latency, pad delay at the top rate
 };
 
-// the JSFX's @slider
-inline Coeffs coeffs(double sr, double cutoff, double reso, double drivePct, int mode, double gainDb) noexcept
+// the JSFX's @slider; wg is the display's (the sample rate), lw the ladder's (its rate)
+inline Coeffs coeffs(double sr, double cutoff, double reso, double drivePct, int mode, double gainDb,
+                     int os = 0) noexcept
 {
     Coeffs c;
     c.fc = std::min(cutoff, sr * 0.45);
     c.wg = std::tan(kPi * (c.fc / sr));
-    c.G = c.wg / (1 + c.wg);
-    c.b = 1 / (1 + c.wg);
+    c.osf = os <= 0 ? 1 : os == 1 ? 2 : 4;
+    c.lat = os <= 0 ? 0 : os == 1 ? 31 : 37;
+    c.pad = os >= 2 ? 2 : 0;
+    c.lw = c.osf > 1 ? std::tan(kPi * (c.fc / (sr * c.osf))) : c.wg;
+    c.G = c.lw / (1 + c.lw);
+    c.b = 1 / (1 + c.lw);
     c.Gb = c.G * c.b; c.G2b = c.G * c.Gb; c.G3b = c.G * c.G2b;
     c.G4 = c.G * c.G * c.G * c.G;
     c.k = std::min(reso, 3.95);
@@ -64,32 +74,89 @@ inline double responseDb(const Coeffs& c, double f, double sr) noexcept
 
 class LadderProcessor {
 public:
+    LadderProcessor()
+    {
+        nullclipper::halfbandDesign(fE1, fD1, 63, 7.5);
+        nullclipper::halfbandDesign(fE2, fD2, 23, 8.0);
+    }
+
     // @init
     void setSampleRate(double sr)
     {
         fSr = sr;
         fL = State();
         fR = State();
+        fOsPrev = -1;
     }
 
     // @slider
-    void setParams(double cutoff, double reso, double drivePct, int mode, double gainDb)
+    void setParams(double cutoff, double reso, double drivePct, int mode, double gainDb, int os = 0)
     {
-        fC = coeffs(fSr, cutoff, reso, drivePct, mode, gainDb);
+        fC = coeffs(fSr, cutoff, reso, drivePct, mode, gainDb, os);
+        // a new rate starts every filter and delay from silence
+        if (fC.osf != fOsPrev)
+        {
+            fL = State();
+            fR = State();
+            fOsPrev = fC.osf;
+        }
     }
+
+    int latency() const noexcept { return fC.lat; }
 
     template <typename T>
     void process(const T* inL, const T* inR, T* outL, T* outR, uint32_t frames)
     {
         for (uint32_t n = 0; n < frames; ++n)
         {
-            outL[n] = static_cast<T>(ladder(fL, double(inL[n]) * fC.drive) * fC.outGain);
-            outR[n] = static_cast<T>(ladder(fR, double(inR[n]) * fC.drive) * fC.outGain);
+            if (fC.osf > 1)
+            {
+                outL[n] = static_cast<T>(ladderOs(fL, double(inL[n]) * fC.drive) * fC.outGain);
+                outR[n] = static_cast<T>(ladderOs(fR, double(inR[n]) * fC.drive) * fC.outGain);
+            }
+            else
+            {
+                outL[n] = static_cast<T>(ladder(fL, double(inL[n]) * fC.drive) * fC.outGain);
+                outR[n] = static_cast<T>(ladder(fR, double(inR[n]) * fC.drive) * fC.outGain);
+            }
         }
     }
 
 private:
-    struct State { double s1 = 0, s2 = 0, s3 = 0, s4 = 0; };
+    struct State {
+        double s1 = 0, s2 = 0, s3 = 0, s4 = 0;
+        nullclipper::Channel c;
+        int pw = 0;
+    };
+
+    // the ladder at osf x the sample rate for one input sample (ladder_os)
+    double ladderOs(State& s, double x) noexcept
+    {
+        nullclipper::Channel& c = s.c;
+        double o0, o1;
+        c.u1.process(x, fE1, 15, o0, o1); c.a1[0] = o0; c.a1[1] = o1;
+        if (fC.osf > 2)
+            for (int k = 0; k < 2; ++k)
+            {
+                c.u2.process(c.a1[k], fE2, 5, o0, o1); c.a2[2 * k] = o0; c.a2[2 * k + 1] = o1;
+            }
+        double* t = fC.osf > 2 ? c.a2 : c.a1;
+        for (int k = 0; k < fC.osf; ++k)
+        {
+            double v = t[k];
+            if (fC.pad > 0)
+            {
+                c.pd[s.pw] = v;
+                v = c.pd[(s.pw - fC.pad + 8) % 8];
+                s.pw = (s.pw + 1) % 8;
+            }
+            t[k] = ladder(s, v);
+        }
+        if (fC.osf > 2)
+            for (int k = 0; k < 2; ++k)
+                c.a1[k] = c.d2.process(c.a2[2 * k], c.a2[2 * k + 1], fD2);
+        return c.d1.process(c.a1[0], c.a1[1], fD1);
+    }
 
     double ladder(State& s, double x) const noexcept
     {
@@ -110,6 +177,8 @@ private:
     double fSr = 48000.0;
     Coeffs fC;
     State fL, fR;
+    double fE1[32] = {}, fD1[32] = {}, fE2[12] = {}, fD2[12] = {};
+    int fOsPrev = -1;
 };
 
 } // namespace nullladder

@@ -8,28 +8,28 @@ namespace nullpresets {
 
 struct FactoryPreset {
     const char* name;
-    float values[11];
+    float values[13];
 };
 
 static const FactoryPreset kPresets[] = {
-    { "Default", { 0.0f, -20.0f, 4.0f, 6.0f, 10.0f, 100.0f, 0.0f, 0.0f, 20.0f, 100.0f, 0.0f } },
-    { "Vocal Leveler", { 0.0f, -20.0f, 3.0f, 6.0f, 5.0f, 120.0f, 4.0f, 0.0f, 20.0f, 100.0f, 0.0f } },
-    { "Gentle Bus Glue", { 0.0f, -12.0f, 2.0f, 10.0f, 30.0f, 200.0f, 2.0f, 0.0f, 20.0f, 100.0f, 0.0f } },
-    { "Bass Control", { 0.0f, -18.0f, 4.0f, 6.0f, 10.0f, 150.0f, 4.0f, 0.0f, 20.0f, 100.0f, 0.0f } },
-    { "Snare Punch", { 0.0f, -18.0f, 4.0f, 3.0f, 15.0f, 80.0f, 3.0f, 0.0f, 20.0f, 100.0f, 0.0f } },
-    { "Drum Smash", { 0.0f, -24.0f, 8.0f, 3.0f, 1.0f, 60.0f, 6.0f, 0.0f, 20.0f, 100.0f, 0.0f } },
-    { "Peak Catcher", { 0.0f, -6.0f, 20.0f, 0.0f, 0.0f, 50.0f, 0.0f, 0.0f, 20.0f, 100.0f, 0.0f } },
-    { "Noise Expander", { 1.0f, -45.0f, 2.0f, 6.0f, 1.0f, 150.0f, 0.0f, 0.0f, 20.0f, 100.0f, 0.0f } },
-    { "Drum Bleed Expander", { 1.0f, -30.0f, 4.0f, 3.0f, 1.0f, 100.0f, 0.0f, 0.0f, 20.0f, 100.0f, 0.0f } },
-    { "Bus Glue", { 0.0f, -18.0f, 2.0f, 6.0f, 30.0f, 200.0f, 2.0f, 1.0f, 100.0f, 100.0f, 0.0f } },
-    { "FET Vocal", { 0.0f, -24.0f, 4.0f, 2.0f, 4.0f, 80.0f, 6.0f, 2.0f, 80.0f, 100.0f, 0.0f } },
-    { "Opto Bass", { 0.0f, -22.0f, 4.0f, 10.0f, 15.0f, 300.0f, 5.0f, 3.0f, 20.0f, 100.0f, 0.0f } },
-    { "Parallel Smash", { 0.0f, -36.0f, 20.0f, 0.0f, 1.0f, 60.0f, 12.0f, 2.0f, 20.0f, 40.0f, 0.0f } },
-    { "Kick Ducking", { 0.0f, -30.0f, 8.0f, 3.0f, 1.0f, 120.0f, 0.0f, 0.0f, 20.0f, 100.0f, 1.0f } },
-    { "Upward Detail Lift", { 0.0f, -35.0f, 2.0f, 10.0f, 20.0f, 300.0f, 0.0f, 4.0f, 20.0f, 100.0f, 0.0f } },
-    { "Upward Quiet Voice", { 0.0f, -28.0f, 3.0f, 6.0f, 10.0f, 200.0f, 0.0f, 4.0f, 80.0f, 100.0f, 0.0f } },
+    { "Default", { 0.0f, -20.0f, 4.0f, 6.0f, 10.0f, 100.0f, 0.0f, 0.0f, 20.0f, 100.0f, 0.0f, 0.0f, 0.0f } },
+    { "Vocal Leveler", { 0.0f, -20.0f, 3.0f, 6.0f, 5.0f, 120.0f, 4.0f, 0.0f, 20.0f, 100.0f, 0.0f, 0.0f, 0.0f } },
+    { "Gentle Bus Glue", { 0.0f, -12.0f, 2.0f, 10.0f, 30.0f, 200.0f, 2.0f, 0.0f, 20.0f, 100.0f, 0.0f, 0.0f, 0.0f } },
+    { "Bass Control", { 0.0f, -18.0f, 4.0f, 6.0f, 10.0f, 150.0f, 4.0f, 0.0f, 20.0f, 100.0f, 0.0f, 0.0f, 0.0f } },
+    { "Snare Punch", { 0.0f, -18.0f, 4.0f, 3.0f, 15.0f, 80.0f, 3.0f, 0.0f, 20.0f, 100.0f, 0.0f, 0.0f, 0.0f } },
+    { "Drum Smash", { 0.0f, -24.0f, 8.0f, 3.0f, 1.0f, 60.0f, 6.0f, 0.0f, 20.0f, 100.0f, 0.0f, 0.0f, 0.0f } },
+    { "Peak Catcher", { 0.0f, -6.0f, 20.0f, 0.0f, 0.0f, 50.0f, 0.0f, 0.0f, 20.0f, 100.0f, 0.0f, 0.0f, 0.0f } },
+    { "Noise Expander", { 1.0f, -45.0f, 2.0f, 6.0f, 1.0f, 150.0f, 0.0f, 0.0f, 20.0f, 100.0f, 0.0f, 0.0f, 0.0f } },
+    { "Drum Bleed Expander", { 1.0f, -30.0f, 4.0f, 3.0f, 1.0f, 100.0f, 0.0f, 0.0f, 20.0f, 100.0f, 0.0f, 0.0f, 0.0f } },
+    { "Bus Glue", { 0.0f, -18.0f, 2.0f, 6.0f, 30.0f, 200.0f, 2.0f, 1.0f, 100.0f, 100.0f, 0.0f, 0.0f, 0.0f } },
+    { "FET Vocal", { 0.0f, -24.0f, 4.0f, 2.0f, 4.0f, 80.0f, 6.0f, 2.0f, 80.0f, 100.0f, 0.0f, 0.0f, 0.0f } },
+    { "Opto Bass", { 0.0f, -22.0f, 4.0f, 10.0f, 15.0f, 300.0f, 5.0f, 3.0f, 20.0f, 100.0f, 0.0f, 0.0f, 0.0f } },
+    { "Parallel Smash", { 0.0f, -36.0f, 20.0f, 0.0f, 1.0f, 60.0f, 12.0f, 2.0f, 20.0f, 40.0f, 0.0f, 0.0f, 0.0f } },
+    { "Kick Ducking", { 0.0f, -30.0f, 8.0f, 3.0f, 1.0f, 120.0f, 0.0f, 0.0f, 20.0f, 100.0f, 1.0f, 0.0f, 0.0f } },
+    { "Upward Detail Lift", { 0.0f, -35.0f, 2.0f, 10.0f, 20.0f, 300.0f, 0.0f, 4.0f, 20.0f, 100.0f, 0.0f, 0.0f, 0.0f } },
+    { "Upward Quiet Voice", { 0.0f, -28.0f, 3.0f, 6.0f, 10.0f, 200.0f, 0.0f, 4.0f, 80.0f, 100.0f, 0.0f, 0.0f, 0.0f } },
 };
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
-static constexpr uint32_t kNumValues = 11;
+static constexpr uint32_t kNumValues = 13;
 
 } // namespace nullpresets

@@ -4,12 +4,15 @@
 
 const T = window.__TAURI__;
 const invoke = (cmd, args) => T.core.invoke(cmd, args);
-const FORMATS = [
+const ALL_FORMATS = [
   ["jsfx", "JSFX", "REAPER, with REAPER's own sliders"],
   ["gfx", "GFX", "REAPER, with the NULL JSFX interface"],
   ["vst3", "VST3", "any DAW"],
   ["clap", "CLAP", "any DAW"],
+  ["lv2", "LV2", "Ardour, Carla, Qtractor and other Linux hosts"],
 ];
+/** the formats offered on this computer: LV2 only on Linux */
+function formats() { return ALL_FORMATS.filter(([f]) => f !== "lv2" || V?.os === "Linux"); }
 const $ = (id) => document.getElementById(id);
 
 let V = null; // the view from Rust: catalog, state, settings, os, hubVersion, dataDir
@@ -39,7 +42,7 @@ function isNew(id) { return (V.settings.new_ids || []).includes(id); }
 
 /** VST3/CLAP files change: a running DAW keeps them (Windows can't replace them at all) */
 function touchesNative(request) {
-  return [...(request.install || []), ...(request.remove || [])].some(([, f]) => f === "vst3" || f === "clap");
+  return [...(request.install || []), ...(request.remove || [])].some(([, f]) => f === "vst3" || f === "clap" || f === "lv2");
 }
 
 async function run(request, doneText, checked) {
@@ -147,7 +150,7 @@ function removeReq(list) {
   return { install: [], remove: list.flatMap((p) => installedFormats(p.id).map((f) => [p.id, f])) };
 }
 
-function label(f) { return FORMATS.find(([k]) => k === f)?.[1] ?? f; }
+function label(f) { return ALL_FORMATS.find(([k]) => k === f)?.[1] ?? f; }
 function plural(n, one, many) { return `${n} ${tr(n === 1 ? one : many)}`; }
 
 function updateReq(list, extras = []) {
@@ -179,7 +182,7 @@ function shotHtml(p, big) {
 
 function chips(p) {
   const s = st(p.id);
-  return (isNew(p.id) ? `<span class="chip new" title="${tr("New in this release")}">${tr("NEW")}</span>` : "") + FORMATS.filter(([f]) => p.formats.includes(f))
+  return (isNew(p.id) ? `<span class="chip new" title="${tr("New in this release")}">${tr("NEW")}</span>` : "") + formats().filter(([f]) => p.formats.includes(f))
     .map(([f, label]) => {
       const x = s[f] || {};
       const cls = x.outdated ? "chip old" : x.installed ? "chip on" : "chip";
@@ -276,15 +279,15 @@ function render() {
 
 /** the format toggles in the bar: the same list as Settings > Formats */
 function renderPick() {
-  $("pick").innerHTML = `<span class="muted">${tr("Install as")}</span>` + FORMATS.map(([f, label, desc]) =>
+  $("pick").innerHTML = `<span class="muted">${tr("Install as")}</span>` + formats().map(([f, label, desc]) =>
     `<button class="chip-btn ${V.settings.formats.includes(f) ? "on" : ""}" data-pick="${f}" title="${esc(`${label}: ${tr(desc)}`)}" aria-pressed="${V.settings.formats.includes(f)}">${label}</button>`).join("");
 }
 
 async function togglePick(f) {
-  const formats = V.settings.formats.includes(f) ? V.settings.formats.filter((x) => x !== f) : FORMATS.map(([k]) => k).filter((k) => k === f || V.settings.formats.includes(k));
-  if (!formats.length) return toast(tr("Pick at least one format."), true);
+  const picked = V.settings.formats.includes(f) ? V.settings.formats.filter((x) => x !== f) : formats().map(([k]) => k).filter((k) => k === f || V.settings.formats.includes(k));
+  if (!picked.length) return toast(tr("Pick at least one format."), true);
   try {
-    V = await invoke("hub_save_settings", { settings: { ...V.settings, formats } });
+    V = await invoke("hub_save_settings", { settings: { ...V.settings, formats: picked } });
   } catch (e) {
     toast(String(e), true);
   }
@@ -454,7 +457,7 @@ function renderNews() {
 function renderSettings() {
   $("view-settings").hidden = false;
   const s = V.settings;
-  $("set-formats").innerHTML = FORMATS.map(
+  $("set-formats").innerHTML = formats().map(
     ([f, label, desc]) => `<label><input type="checkbox" value="${f}" ${s.formats.includes(f) ? "checked" : ""}> ${label} <span class="muted">(${esc(tr(desc))})</span></label>`
   ).join("");
   $("set-check").checked = s.check_updates;
@@ -463,6 +466,8 @@ function renderSettings() {
   $("set-reaper").value = s.targets.reaper;
   $("set-vst3").value = s.targets.vst3;
   $("set-clap").value = s.targets.clap;
+  $("set-lv2").value = s.targets.lv2 ?? "";
+  $("set-lv2-row").hidden = V.os !== "Linux";
   const n = plugins().filter((p) => isInstalled(p.id)).length;
   $("verify").disabled = busy || !V.catalog;
   $("export").disabled = busy || !V.catalog;
@@ -482,7 +487,7 @@ async function saveSettings() {
     check_updates: $("set-check").checked,
     notify: $("set-notify").checked,
     autostart: $("set-autostart").checked,
-    targets: { ...V.settings.targets, reaper: $("set-reaper").value.trim(), vst3: $("set-vst3").value.trim(), clap: $("set-clap").value.trim() },
+    targets: { ...V.settings.targets, reaper: $("set-reaper").value.trim(), vst3: $("set-vst3").value.trim(), clap: $("set-clap").value.trim(), lv2: $("set-lv2").value.trim() || V.settings.targets.lv2 },
   };
   if (!settings.formats.length) return ($("set-msg").textContent = tr("Pick at least one format."));
   try {
@@ -556,7 +561,7 @@ function openDetail(id) {
   $("d-shot").querySelector("video")?.addEventListener("play", () => { demo.wet.pause(); demo.dry.pause(); $("d-play").textContent = tr("Play"); });
   $("d-guide").href = p.guide || "https://nulljsfx.tech";
   const s = st(id);
-  $("d-formats").innerHTML = FORMATS.filter(([f]) => p.formats.includes(f))
+  $("d-formats").innerHTML = formats().filter(([f]) => p.formats.includes(f))
     .map(([f, label, desc]) => {
       const x = s[f] || {};
       const status = x.outdated ? `${tr("update")}: ${x.version ? `${x.version} → ` : ""}${V.catalog.version}` : x.held ? tr("kept at {v}", { v: x.version }) : x.installed ? `${tr("installed")} ${x.version ?? ""}` : tr("not installed");
@@ -718,6 +723,7 @@ $("set-defaults").onclick = async () => {
   $("set-reaper").value = t.reaper;
   $("set-vst3").value = t.vst3;
   $("set-clap").value = t.clap;
+  $("set-lv2").value = t.lv2;
 };
 
 (async () => {

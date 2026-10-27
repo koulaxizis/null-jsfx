@@ -13,14 +13,16 @@
 namespace nullladder {
 
 static const char* const kModeOptions[] = { "LP", "HP" };
+static const char* const kOsOptions[] = { "OFF", "2X", "4X" };
 
-// slider1..slider5 of ladder_filter.jsfx, in order
+// slider1..slider6 of ladder_filter.jsfx, in order
 static const DISTRHO::SliderInfo kSliders[] = {
     { "Cutoff", "cutoff", 20.0f, 20000.0f, 1000.0f, "Hz", 1.0f },
     { "Resonance", "resonance", 0.0f, 4.0f, 0.5f, "", 0.1f },
     { "Drive", "drive", 0.0f, 100.0f, 0.0f, "%", 1.0f },
     { "Mode", "mode", 0.0f, 1.0f, 0.0f, "", 1.0f, kModeOptions },
     { "Gain", "gain", -12.0f, 12.0f, 0.0f, "dB", 0.1f },
+    { "Oversampling", "oversampling", 0.0f, 2.0f, 0.0f, "", 1.0f, kOsOptions },
 };
 static constexpr uint32_t kNumSliders = sizeof(kSliders) / sizeof(kSliders[0]);
 
@@ -32,6 +34,7 @@ static const Range kRanges[] = {
     { 0.0, 100.0, 0.0, 1.0 },
     { 0.0, 1.0, 0.0, 1.0 },
     { -12.0, 12.0, 0.0, 0.1 },
+    { 0.0, 2.0, 0.0, 1.0 },
 };
 
 // The host passes parameters as float, the JSFX keeps the slider in double. Rebuild that double:

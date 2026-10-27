@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: MIT
  *
  * usage: compare <ref.jsfx> <other.clap|other.jsfx|module:id> [--tol 1e-5] [--values v1,v2,...]
- *                [--rpl presets.jsfx.rpl]
+ *                [--rpl presets.jsfx.rpl] [--changes 1]
  *
  * module:<id> (only in the module_compare build of this file) renders the Rack's module <id>
  * (plugins/rack/modules/<id>.hpp) instead of a plugin, set up the way the Rack drives it.
@@ -17,6 +17,8 @@
  * random settings (rounded to each slider's step). With --rpl: every preset of that REAPER
  * preset library instead (the factory presets, tools/build_presets.py), also printing the output
  * level against the input's. Every setting runs at 44.1 and 96 kHz.
+ * With --changes 1, the sliders also change while it plays: each setting is followed by the next
+ * one at 1 s and the one after it at 2 s (at a block start, between blocks in both renders).
  * Exit code 0 when every max diff <= tolerance.
  *
  * Sidechain plugins (a JSFX with more than two input pins, a CLAP with a second input port):
@@ -29,8 +31,10 @@
  *
  * Instruments (a JSFX without input pins) get no audio but MIDI notes on the General MIDI drum
  * map (one every 1/8 s, varied velocities) and a playing transport at 120 bpm in 4/4 from beat 0,
- * so their sequencer runs too; the CLAP gets the same notes and transport. An instrument passes
- * every message on, and that MIDI is compared like a MIDI effect's.
+ * so their sequencer runs too, merged in time order with the MIDI effects' stream below (note-offs,
+ * note-ons with velocity 0, the same key again, sustain, all notes off, pitch bend, pressure,
+ * program changes); the CLAP gets the same MIDI and transport. An instrument passes every message
+ * on, and that MIDI is compared like a MIDI effect's.
  *
  * MIDI effects (a JSFX in //category: MIDI) get, besides the audio, a stream of MIDI on three
  * channels (chords of overlapping notes, repeated note-ons, note-ons with velocity 0, poly and
@@ -59,6 +63,13 @@
 #include <vector>
 
 static constexpr uint32_t kBlock = 512;
+
+// slider changes while rendering: from frame `at` on, these values (one per slider / parameter)
+struct Change {
+    uint32_t at;
+    std::vector<double> values;
+};
+using Changes = std::vector<Change>;
 
 struct Stereo {
     std::vector<float> l, r;
@@ -213,14 +224,19 @@ static ysfx_t* loadJsfx(const char* path)
 static bool g_instrument = false; // the reference JSFX has no input pins
 
 // the MIDI a plugin gets, in time order: a MIDI effect the stream above, an instrument its notes
+// and that stream (at the same sample, the note first)
 static std::vector<MidiMsg> testInput(double sr, uint32_t frames)
 {
     if (g_midifx)
         return testMidi(sr, frames);
     std::vector<MidiMsg> out;
-    if (g_instrument)
+    if (g_instrument) {
         for (const TestNote& n : testNotes(sr, frames))
             out.push_back({ n.at, 0x99, n.note, n.vel, 3 });
+        const std::vector<MidiMsg> more = testMidi(sr, frames);
+        out.insert(out.end(), more.begin(), more.end());
+        std::stable_sort(out.begin(), out.end(), [](const MidiMsg& a, const MidiMsg& b) { return a.at < b.at; });
+    }
     return out;
 }
 
@@ -251,7 +267,8 @@ static bool sliders(const char* path, std::vector<Slider>& out, uint32_t* numOut
 }
 
 static bool renderJsfx(const char* path, double sr, const std::vector<Slider>& sl, const std::vector<double>& values,
-                       const Stereo& in, const Stereo& sc, Channels& out, std::vector<MidiMsg>* midiOut = nullptr)
+                       const Stereo& in, const Stereo& sc, Channels& out, std::vector<MidiMsg>* midiOut = nullptr,
+                       const Changes& changes = Changes())
 {
     ysfx_t* fx = loadJsfx(path);
     if (!fx)
@@ -272,9 +289,13 @@ static bool renderJsfx(const char* path, double sr, const std::vector<Slider>& s
     const uint32_t frames = uint32_t(in.l.size());
     const uint32_t numIns = ysfx_get_num_inputs(fx) > 2 ? 4 : 2; // pins 3/4: the sidechain
     const std::vector<MidiMsg> fxMidi = testInput(sr, frames);
-    size_t nextFx = 0;
+    size_t nextFx = 0, nextChange = 0;
     for (uint32_t pos = 0; pos < frames; pos += kBlock) {
         const uint32_t n = std::min(kBlock, frames - pos);
+        for (; nextChange < changes.size() && changes[nextChange].at <= pos; ++nextChange)
+            for (size_t k = 0; k < sl.size(); ++k)
+                if (!sl[k].path)
+                    ysfx_slider_set_value(fx, sl[k].index, changes[nextChange].values[k]);
         for (; nextFx < fxMidi.size() && fxMidi[nextFx].at < pos + n; ++nextFx) {
             const uint8_t msg[3] = { fxMidi[nextFx].st, fxMidi[nextFx].d1, fxMidi[nextFx].d2 };
             ysfx_midi_event_t ev { 0, fxMidi[nextFx].at - pos, fxMidi[nextFx].size, msg };
@@ -352,7 +373,8 @@ struct MidiCollector {
 };
 
 static bool renderClap(const char* path, double sr, const std::vector<double>& values, const Stereo& in,
-                       const Stereo& sc, Channels& out, bool verbose, std::vector<MidiMsg>* midiOut = nullptr)
+                       const Stereo& sc, Channels& out, bool verbose, std::vector<MidiMsg>* midiOut = nullptr,
+                       const Changes& changes = Changes())
 {
     void* lib = dlopen(path, RTLD_NOW | RTLD_LOCAL);
     if (!lib) {
@@ -382,19 +404,22 @@ static bool renderClap(const char* path, double sr, const std::vector<double>& v
     }
 
     EventList ev;
-    for (uint32_t k = 0; k < values.size(); ++k) {
-        clap_param_info_t info {};
-        params->get_info(plugin, k, &info);
-        clap_event_param_value_t pv {};
-        pv.header.size = sizeof(pv);
-        pv.header.space_id = CLAP_CORE_EVENT_SPACE_ID;
-        pv.header.type = CLAP_EVENT_PARAM_VALUE;
-        pv.param_id = info.id;
-        pv.cookie = info.cookie;
-        pv.note_id = -1; pv.port_index = -1; pv.channel = -1; pv.key = -1;
-        pv.value = values[k];
-        ev.events.push_back(pv);
-    }
+    auto pushValues = [&](const std::vector<double>& v) {
+        for (uint32_t k = 0; k < v.size(); ++k) {
+            clap_param_info_t info {};
+            params->get_info(plugin, k, &info);
+            clap_event_param_value_t pv {};
+            pv.header.size = sizeof(pv);
+            pv.header.space_id = CLAP_CORE_EVENT_SPACE_ID;
+            pv.header.type = CLAP_EVENT_PARAM_VALUE;
+            pv.param_id = info.id;
+            pv.cookie = info.cookie;
+            pv.note_id = -1; pv.port_index = -1; pv.channel = -1; pv.key = -1;
+            pv.value = v[k];
+            ev.events.push_back(pv);
+        }
+    };
+    pushValues(values);
     clap_input_events_t inEv { &ev, EventList::size, EventList::get };
     clap_output_events_t outEv { &ev, EventList::push };
 
@@ -443,8 +468,12 @@ static bool renderClap(const char* path, double sr, const std::vector<double>& v
     collect.out = midiOut;
     clap_output_events_t midiOutEv { &collect, MidiCollector::push };
     clap_event_transport_t transport {};
+    size_t nextChange = 0;
     for (uint32_t pos = 0; pos < frames; pos += kBlock) {
         const uint32_t n = std::min(kBlock, frames - pos);
+        ev.events.clear();
+        for (; nextChange < changes.size() && changes[nextChange].at <= pos; ++nextChange)
+            pushValues(changes[nextChange].values); // at time 0 of this block
         midi.events.clear();
         for (; nextFx < fxMidi.size() && fxMidi[nextFx].at < pos + n; ++nextFx) {
             clap_event_midi_t me {};
@@ -516,7 +545,7 @@ static bool renderClap(const char* path, double sr, const std::vector<double>& v
 #include "NullModules.hpp"
 
 static bool renderModule(const std::string& id, double sr, const std::vector<double>& values, const Stereo& in,
-                         Channels& out)
+                         Channels& out, const Changes& changes = Changes())
 {
     const nulljsfx::ModuleDesc* desc = nullptr;
     for (uint32_t i = 0; i < nullrack::kNumModules; ++i)
@@ -537,8 +566,12 @@ static bool renderModule(const std::string& id, double sr, const std::vector<dou
     m->setSampleRate(sr);
     const nulljsfx::ModuleTime time; // no transport, like the CLAP test host
     const uint32_t frames = uint32_t(in.l.size());
+    size_t nextChange = 0;
     for (uint32_t pos = 0; pos < frames; pos += kBlock) {
         const uint32_t n = std::min(kBlock, frames - pos);
+        for (; nextChange < changes.size() && changes[nextChange].at <= pos; ++nextChange)
+            for (uint32_t k = 0; k < changes[nextChange].values.size(); ++k)
+                m->setValue(k, float(changes[nextChange].values[k]));
         m->process(in.l.data() + pos, in.r.data() + pos, out[0].data() + pos, out[1].data() + pos, n, time);
     }
     delete m;
@@ -628,11 +661,14 @@ int main(int argc, char** argv)
     double tol = 1e-5;
     std::vector<double> values;
     const char* rpl = nullptr;
+    bool withChanges = false;
     for (int i = 3; i + 1 < argc; i += 2) {
         if (!std::strcmp(argv[i], "--tol"))
             tol = std::atof(argv[i + 1]);
         else if (!std::strcmp(argv[i], "--rpl"))
             rpl = argv[i + 1];
+        else if (!std::strcmp(argv[i], "--changes"))
+            withChanges = std::atoi(argv[i + 1]) != 0;
         else if (!std::strcmp(argv[i], "--values")) {
             std::string v = argv[i + 1];
             for (size_t p = 0; p < v.size();) {
@@ -713,20 +749,34 @@ int main(int argc, char** argv)
             for (size_t k = 0; k < sl.size(); ++k)
                 if (!sl[k].path)
                     params.push_back(sets[i][k]);
+            // --changes: the next setting from 1 s, the one after it from 2 s (JSFX: every slider,
+            // the others: without the file sliders)
+            Changes jsfxChanges, otherChanges;
+            if (withChanges && sets.size() > 1)
+                for (uint32_t c = 1; c <= 2; ++c) {
+                    const std::vector<double>& set = sets[(i + c) % sets.size()];
+                    const uint32_t at = uint32_t(c * sr) / kBlock * kBlock;
+                    std::vector<double> p;
+                    for (size_t k = 0; k < sl.size(); ++k)
+                        if (!sl[k].path)
+                            p.push_back(set[k]);
+                    jsfxChanges.push_back({ at, set });
+                    otherChanges.push_back({ at, p });
+                }
             // a Rack module has no sidechain bus: its JSFX hears the track on pins 3/4 as well
             const bool toModule = other.compare(0, 7, "module:") == 0;
             std::vector<MidiMsg> ma, mb;
-            if (!renderJsfx(ref, sr, sl, sets[i], in, toModule ? in : sc, a, &ma))
+            if (!renderJsfx(ref, sr, sl, sets[i], in, toModule ? in : sc, a, &ma, jsfxChanges))
                 return 1;
             bool rendered;
             if (isJsfx)
-                rendered = renderJsfx(other.c_str(), sr, sl, sets[i], in, sc, b, &mb);
+                rendered = renderJsfx(other.c_str(), sr, sl, sets[i], in, sc, b, &mb, jsfxChanges);
 #ifdef NULL_MODULE_TEST
             else if (other.compare(0, 7, "module:") == 0)
-                rendered = renderModule(other.substr(7), sr, params, in, b);
+                rendered = renderModule(other.substr(7), sr, params, in, b, otherChanges);
 #endif
             else
-                rendered = renderClap(other.c_str(), sr, params, in, sc, b, first, &mb);
+                rendered = renderClap(other.c_str(), sr, params, in, sc, b, first, &mb, otherChanges);
             if (!rendered)
                 return 1;
             first = false;

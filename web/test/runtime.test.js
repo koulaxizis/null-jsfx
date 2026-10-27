@@ -121,6 +121,63 @@ test("the preset box in the GFX header steps through and lists the factory prese
   view.destroy();
 });
 
+test("str_getchar / str_setchar keep doubles and unsigned shorts like EEL2", function () {
+  var S = new R.Strings([]), h = 90001;
+  S.put(h, "");
+  S.setchar(h, 0, 0.1, 100); S.setchar(h, 8, -1234.5678, 100);        // 'd'
+  S.setchar(h, 16, 300, 0x7573); S.setchar(h, 18, 70000, 0x7573);      // 'us' (70000 wraps)
+  assert.strictEqual(S.len(h), 20);
+  assert.strictEqual(S.getchar(h, 0, 100), 0.1);
+  assert.strictEqual(S.getchar(h, 8, 100), -1234.5678);
+  assert.strictEqual(S.getchar(h, 16, 0x7573), 300);
+  assert.strictEqual(S.getchar(h, 18, 0x7573), 70000 - 65536);
+  assert.strictEqual(S.getchar(h, 16, 0x73), 300);                    // 's', signed
+  S.setchar(h, 0, -1, 0x63);                                          // 'c' in place
+  assert.strictEqual(S.getchar(h, 0, 0x63), -1);
+  assert.strictEqual(S.getchar(h, 0), 255);
+  assert.strictEqual(S.getchar(h, 14, 100), 0, "a read past the end gives 0");
+});
+
+test("undo, redo and A/B in the GFX header", function () {
+  var FX = fx("tilt"), cv = fakeCanvas(), got = [];
+  var view = new GFX.View(FX, cv, { srate: 48000, sliders: { 1: 0 }, onSlider: function (i, v) { got.push(v); } });
+  function click(x, y) {
+    cv.fire("pointermove", { clientX: x, clientY: y, button: 0 });
+    cv.fire("pointerdown", { clientX: x, clientY: y, button: 0 }); view.draw();
+    cv.fire("pointerup", { clientX: x, clientY: y, button: 0 }); view.draw(); view.draw();
+  }
+  function wheel(d) {
+    cv.fire("pointermove", { clientX: 180, clientY: 210 });
+    cv.fire("wheel", { clientX: 180, clientY: 210, deltaY: d }); view.draw(); view.draw();
+  }
+  var sl = function () { return view.fx.inst.getSlider(1); };
+  view.draw(); view.draw();
+  // a drag is one step
+  cv.fire("pointerdown", { clientX: 180, clientY: 210, button: 0 }); view.draw();
+  cv.fire("pointermove", { clientX: 200, clientY: 210, button: 0 }); view.draw();
+  cv.fire("pointermove", { clientX: 240, clientY: 210, button: 0 }); view.draw();
+  cv.fire("pointerup", { clientX: 240, clientY: 210, button: 0 }); view.draw(); view.draw();
+  var v1 = sl();
+  assert.ok(v1 > 40, "dragged to " + v1);
+  // the buttons: undo 129..143, redo 145..159, A 165..179, B 181..195, copy 197..217, y 9.5..20.5
+  click(136, 15);
+  assert.strictEqual(sl(), 0, "undo");
+  click(152, 15);
+  assert.strictEqual(sl(), v1, "redo");
+  click(188, 15);                    // B starts as a copy of A
+  assert.strictEqual(sl(), v1);
+  wheel(-100);
+  assert.strictEqual(sl(), v1 + 1);
+  click(172, 15);                    // back to A
+  assert.strictEqual(sl(), v1);
+  click(188, 15);                    // and to B
+  assert.strictEqual(sl(), v1 + 1);
+  click(136, 15);                    // undo the switch to B
+  assert.strictEqual(sl(), v1);
+  assert.strictEqual(got[got.length - 1], v1, "the page heard every change");
+  view.destroy();
+});
+
 test("freembuf(0) clears block 0 without detaching it", function () {
   var m = R.memory(), b0 = m.b[0];
   m.w(5, 3); m.w(70000, 4);
@@ -137,6 +194,45 @@ test("memory reads and writes outside the 8M slots share one scratch slot", func
   m.w(m.i(-5), 7);
   assert.strictEqual(m.r(-5), 7);
   assert.strictEqual(m.r(9e6), 7);
+});
+
+test("options:maxmem raises the memory to 32M slots, as in EEL2", function () {
+  var m = R.memory(33554432);
+  m.w(m.i(9e6), 5);
+  assert.strictEqual(m.r(9e6), 5);
+  assert.strictEqual(m.scratch, 0);
+  m.w(m.i(33554432), 6); // past the end: the scratch slot
+  assert.strictEqual(m.r(4e7), 6);
+  m.set(33554430, 1, 10); // clipped at the end
+  assert.strictEqual(m.r(33554431), 1);
+  // the translated effects ask for it from their header
+  assert.ok(/R\.memory\(33554432\)/.test(fx("slicer").create.toString()));
+  assert.ok(/R\.memory\(\)/.test(fx("tilt").create.toString()));
+});
+
+// ---- transport start: @init runs again only where the effect did not set ext_noinit ---------
+
+test("ext_noinit: a Delay tail goes on through Play, the Spectrum Analyzer starts fresh", function () {
+  var sr = 48000, n = sr / 2;
+  function tail(id, sliders) {
+    var e = new HOST.Effect(fx(id), R, { srate: sr, blockSize: 256, sliders: sliders });
+    var x = [new Float64Array(n), new Float64Array(n)];
+    x[0][0] = x[1][0] = 1;
+    e.setTime({ tempo: 120, playing: false });
+    run(e, x, 256);                          // the impulse goes in with the transport stopped
+    e.setTime({ tempo: 120, playing: true, position: 0, beat: 0 });
+    return { e: e, y: run(e, [x[0].subarray(256), x[1].subarray(256)], n - 256) };
+  }
+  // Delay at 250 ms, 100 % wet: the echo comes 250 ms after the impulse, after Play
+  var d = tail("delay", { 1: 250, 3: 100 }), peak = 0;
+  for (var i = 0; i < d.y[0].length; i++) peak = Math.max(peak, Math.abs(d.y[0][i]));
+  assert.ok(peak > 0.1, "the echo survives the transport start (peak " + peak + ")");
+  assert.strictEqual(d.e.inst.getHost("ext_noinit"), 1);
+  // the analyzer keeps REAPER's reset at Play: @init runs again on the next block
+  var e = new HOST.Effect(fx("spectrum_analyzer"), R, { srate: sr, blockSize: 256 });
+  e.setTime({ tempo: 120, playing: false });
+  e.setTime({ tempo: 120, playing: true });
+  assert.strictEqual(e.mustInit, true);
 });
 
 // ---- instruments: MIDI, transport, @serialize, the interface's shared state ----------------

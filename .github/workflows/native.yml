@@ -4,7 +4,7 @@ name: VST3 and CLAP
 # that each one sounds identical to its JSFX, and uploads these packages:
 #   NULL-JSFX-JSFX                 the JSFX (plain and GFX) and the tablet remote (Remote/),
 #                                  the same for every OS
-#   NULL-JSFX-VST3-CLAP-<OS>       the VST3 and CLAP versions for Windows, macOS or Linux
+#   NULL-JSFX-VST3-CLAP-<OS>       the VST3 and CLAP versions for Windows, macOS or Linux (Linux: also LV2)
 # each with native/INSTALL.txt, and from those the installers where the user picks formats,
 # plugins and extras (tools/build_installer.py, installer/):
 #   NULL-JSFX-Installer-Windows.exe, NULL-JSFX-Installer-Linux.sh, NULL-JSFX-Installer-macOS.pkg,
@@ -13,14 +13,15 @@ name: VST3 and CLAP
 # the packages as zips with these names (the site's Download links use
 # releases/latest/download/<name>; each upload is retried, since the upload endpoint can answer
 # HTTP 500 for a while). Run the workflow by hand with a release tag to attach them
-# to a release that already exists.
+# to a release that already exists. Job validate runs the official validators (pluginval,
+# clap-validator) on every plugin on Windows and Linux; it reports only, for now.
 
 on:
   push:
     branches: [main]
-    paths: ["native/**", "DATA/**", "remote/**", "tests/**", "installer/**", "tools/build_installer.py", ".github/workflows/native.yml"]
+    paths: ["native/**", "DATA/**", "remote/**", "tests/run.sh", "tests/installer_test.sh", "tests/pkg_test.sh", "installer/**", "tools/build_installer.py", ".github/workflows/native.yml"]
   pull_request:
-    paths: ["native/**", "DATA/**", "remote/**", "tests/**", "installer/**", "tools/build_installer.py", ".github/workflows/native.yml"]
+    paths: ["native/**", "DATA/**", "remote/**", "tests/run.sh", "tests/installer_test.sh", "tests/pkg_test.sh", "installer/**", "tools/build_installer.py", ".github/workflows/native.yml"]
   workflow_dispatch:
     inputs:
       release_tag:
@@ -38,11 +39,15 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.ref || github.run_id }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
+# Read-only by default; only the jobs that attach packages to a release may write.
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   build:
+    permissions:
+      contents: write
+    timeout-minutes: 120
     strategy:
       fail-fast: false
       matrix:
@@ -56,6 +61,13 @@ jobs:
         shell: bash
     steps:
       - uses: actions/checkout@v4
+
+      # ysfx for the comparison tests (built by tests/run.sh --build-only), per OS image
+      - uses: actions/cache@v4
+        if: matrix.test != ''
+        with:
+          path: tests/.build/ysfx
+          key: ysfx-${{ matrix.os }}-${{ hashFiles('tests/run.sh') }}
 
       - name: Linux deps
         if: runner.os == 'Linux'
@@ -83,11 +95,21 @@ jobs:
             echo "::endgroup::"
           done
 
+      - name: Check the LV2 plugins against the JSFX (lilv)
+        if: runner.os == 'Linux'
+        run: |
+          # lv2_test.py needs numpy; the runner's system python3 has none
+          sudo apt-get install -y liblilv-0-0 python3-numpy
+          b=tests/.build
+          g++ -O2 -std=c++17 -I "$b/ysfx/include" web/test/render_ref.cpp "$b/ysfx/build/libysfx.a" -lpthread -ldl -o "$b/render_ref"
+          python3 native/test/lv2_test.py native/dist/LV2/"NULL JSFX"
+
       - name: Package
         run: |
           out="NULL-JSFX-VST3-CLAP-${{ matrix.name }}"
           mkdir -p "$out"
           cp -R native/dist/VST3 native/dist/CLAP "$out/"
+          if [ -d native/dist/LV2 ]; then cp -R native/dist/LV2 "$out/"; fi
           cp native/INSTALL.txt "$out/"
 
       - uses: actions/upload-artifact@v4
@@ -109,6 +131,9 @@ jobs:
           for i in 1 2 3 4 5; do gh release upload "${{ github.event.release.tag_name || inputs.release_tag }}" "$out.zip" --clobber && exit 0; sleep $((i * 30)); done; exit 1
 
   jsfx:
+    permissions:
+      contents: write
+    timeout-minutes: 15
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
@@ -144,6 +169,9 @@ jobs:
 
   installer-windows:
     needs: [build, jsfx]
+    permissions:
+      contents: write
+    timeout-minutes: 30
     runs-on: windows-2022
     defaults:
       run:
@@ -221,6 +249,9 @@ jobs:
 
   installer-unix:
     needs: [build, jsfx]
+    permissions:
+      contents: write
+    timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:
@@ -265,3 +296,88 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: for i in 1 2 3 4 5; do gh release upload "${{ github.event.release.tag_name || inputs.release_tag }}" build-installer/NULL-JSFX-Installer-${{ matrix.name }}.* --clobber && exit 0; sleep $((i * 30)); done; exit 1
+
+  validate:
+    # The official validators on every built plugin: pluginval on each VST3 and clap-validator on
+    # each CLAP, on Windows and Linux. Report-only for now (continue-on-error): failures show as
+    # warnings and in the job summary, the reports are uploaded as artifacts. Christos makes the
+    # job required once every plugin passes.
+    name: validate (${{ matrix.name }})
+    needs: build
+    continue-on-error: true
+    timeout-minutes: 120
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # 24.04: pluginval 2 needs glibc 2.38; the plugins built on 22.04 load there too
+          - { os: ubuntu-24.04, name: Linux, exe: "", python: python3,
+              pluginval_sha256: 2e23d311c8c2664457b11be8f6cf4ed29cfdc08765c71c43934a1ed3360f118f }
+          - { os: windows-2022, name: Windows, exe: ".exe", python: python,
+              pluginval_sha256: da158e918b60430c6a5223cd99cc2e746bda604e583258c400898caf4e95c523 }
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
+    env:
+      # pluginval (Tracktion, GPLv3): only run here, never linked or shipped. Pinned to a release
+      # tag and checked by SHA-256. There is no v2.0.0 tag yet; v2.0.0-beta3 reports 2.0.0.
+      PLUGINVAL_TAG: v2.0.0-beta3
+      # clap-validator (free-audio, MIT): no release binaries, built from this commit
+      CLAP_VALIDATOR_REV: b2f1d9b79b1d264a5747f46707d72b1aa40a02ef
+      PYTHON: ${{ matrix.python }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: NULL-JSFX-VST3-CLAP-${{ matrix.name }}
+          path: pkg
+
+      - name: Linux libraries (pluginval, plugins)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libasound2t64 libfreetype6 libfontconfig1 \
+            libgl1 libx11-6 libxcursor1 libxext6 libxrandr2 libdbus-1-3
+
+      - name: pluginval
+        if: ${{ !cancelled() }}
+        run: |
+          curl -sSfL -o pluginval.zip \
+            "https://github.com/Tracktion/pluginval/releases/download/$PLUGINVAL_TAG/pluginval_${{ matrix.name }}.zip"
+          echo "${{ matrix.pluginval_sha256 }}  pluginval.zip" | sha256sum -c -
+          mkdir -p validators
+          ${{ matrix.python }} -m zipfile -e pluginval.zip validators/
+          chmod +x validators/pluginval${{ matrix.exe }}
+          validators/pluginval${{ matrix.exe }} --version
+          echo "PLUGINVAL=$PWD/validators/pluginval${{ matrix.exe }}" >> "$GITHUB_ENV"
+
+      - uses: actions/cache@v4
+        if: ${{ !cancelled() }}
+        with:
+          path: clap-validator
+          key: clap-validator-${{ runner.os }}-${{ env.CLAP_VALIDATOR_REV }}
+
+      - name: clap-validator
+        if: ${{ !cancelled() }}
+        run: |
+          if [ ! -x "clap-validator/bin/clap-validator${{ matrix.exe }}" ]; then
+            cargo install --git https://github.com/free-audio/clap-validator \
+              --rev "$CLAP_VALIDATOR_REV" --locked --root clap-validator
+          fi
+          echo "CLAP_VALIDATOR=$PWD/clap-validator/bin/clap-validator${{ matrix.exe }}" >> "$GITHUB_ENV"
+
+      - name: Validate the VST3 plugins (pluginval)
+        if: ${{ !cancelled() }}
+        run: native/scripts/validate.sh pluginval pkg reports
+
+      - name: Validate the CLAP plugins (clap-validator)
+        if: ${{ !cancelled() }}
+        run: native/scripts/validate.sh clap pkg reports
+
+      - uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        with:
+          name: NULL-JSFX-Validation-${{ matrix.name }}
+          path: reports

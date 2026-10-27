@@ -15,8 +15,9 @@ static const char* const kModeOptions[] = { "Tape", "Tube", "Overdrive", "Fuzz",
 static const char* const kModeShort[] = { "TAPE", "TUBE", "DRIVE", "FUZZ", "CRUSH", "SHAPE", "FOLD" };
 static const char* const kOsOptions[] = { "Off", "2x", "4x" };
 static const char* const kOsShort[] = { "OFF", "2X", "4X" };
+static const char* const kChannelsOptions[] = { "STEREO", "MID", "SIDE" };
 
-// slider1..slider8 of saturation.jsfx, in order
+// slider1..slider9 of saturation.jsfx, in order (9 appended in 2.7)
 static const DISTRHO::SliderInfo kSliders[] = {
     { "Drive", "drive", 0.0f, 100.0f, 30.0f, "%", 1.0f },
     { "Tone", "tone", -12.0f, 12.0f, 0.0f, "dB", 0.1f },
@@ -26,6 +27,7 @@ static const DISTRHO::SliderInfo kSliders[] = {
     { "Output", "output", -24.0f, 12.0f, 0.0f, "dB", 0.1f },
     { "Oversampling", "oversampling", 0.0f, 2.0f, 0.0f, "", 1.0f, kOsOptions },
     { "Emphasis", "emphasis", -12.0f, 12.0f, 0.0f, "dB", 0.1f },
+    { "Channels", "channels", 0.0f, 2.0f, 0.0f, "", 1.0f, kChannelsOptions },
 };
 static constexpr uint32_t kNumSliders = sizeof(kSliders) / sizeof(kSliders[0]);
 
@@ -35,7 +37,7 @@ static const DISTRHO::SliderInfo kUiSliders[] = {
     { "Mode", "mode", 0.0f, 6.0f, 0.0f, "", 1.0f, kModeShort },
     kSliders[4], kSliders[5],
     { "Oversampling", "oversampling", 0.0f, 2.0f, 0.0f, "", 1.0f, kOsShort },
-    kSliders[7],
+    kSliders[7], kSliders[8],
 };
 
 } // namespace nullsaturation

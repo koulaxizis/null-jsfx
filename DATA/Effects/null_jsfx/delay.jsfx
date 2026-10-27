@@ -23,7 +23,10 @@ in_pin:Right
 out_pin:Left
 out_pin:Right
 
+options:maxmem=33554432
+
 @init
+  ext_noinit = 1;              // play and seek keep tails and state, as in the VST3/CLAP
   // 6.1 s per channel: a whole note (1/1) down to 40 bpm (6 s); slower tempos are clamped
   buf_size = ceil(srate * 6.1);
   buf_l = 0;

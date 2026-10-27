@@ -1,0 +1,342 @@
+desc:NULL Tuner GFX
+author: Christos Koulaxizis
+tags: tuner chromatic strobe pitch guitar bass vocals intonation a4 baroque 432 meter analyzer gui
+//category: Advanced
+//NULL JSFX v2.6 • https://nulljsfx.tech • MIT License
+
+import null_gfx.jsfx-inc
+
+slider1:440<415,466,1>-Reference A4 (Hz)
+slider2:0<0,1,1{Needle,Strobe}>-Display
+slider3:0<0,2,1{Stereo,Left,Right}>-Input
+slider4:0<0,1,1{Thru,Mute}>-Output
+
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
+
+@init
+  // NULL Tuner (../tuner.jsfx) with its own interface: same audio code, plus @gfx.
+  // Chromatic tuner. The input (both channels summed, or one of them) is low passed and taken
+  // down to 22 to 24 kHz (24 kHz and below: as it is), and about 47 times a second the YIN
+  // method finds its period in the last 1024 + up to 960 samples: the difference function
+  // from an FFT autocorrelation, its cumulative mean normalised form, the first dip below
+  // 0.15 (or the deepest below 0.35), refined by a parabola on the difference function there
+  // and again at 2, 4, 8 ... times that period. 25 Hz to about 4.5 kHz, quieter
+  // than -70 dBFS RMS counts as silence. A reading within 50 cents of the last one glides to it
+  // (on a log scale), anything else jumps; silence keeps the last note for half a second.
+  // The note and cents come from the frequency and Reference A4. The audio passes through
+  // (Output Mute silences it, for tuning on stage); the GFX version (gfx/tuner_gfx.jsfx) and
+  // the VST3/CLAP draw the needle or the strobe.
+  TN_X = 0;                    // decimated input ring (4096)
+  TN_A = 16384;                // FFT of the first 1024 samples (4096 complex)
+  TN_B = 24576;                // FFT of all of them
+  TN_D = 32768;                // cumulative mean normalised difference, by lag
+  TN_E = 34816;                // the difference itself, by lag
+  memset(0, 0, TN_E + 1100);
+  tn_dec = max(1, ceil(srate / 24000));
+  tn_fd = srate / tn_dec;
+  tn_tmax = min(1023, floor(tn_fd / 25));
+  tn_tmin = max(2, floor(tn_fd / 4500));
+  tn_n = 1024 + tn_tmax + 1;
+  // anti-alias: two Butterworth low passes at 0.42 x the decimated rate
+  tn_w = 2 * $pi * min(0.42 * tn_fd, 0.45 * srate) / srate;
+  tn_al = sin(tn_w) / (2 * sqrt(0.5));
+  tn_a0 = 1 + tn_al;
+  tn_b0 = (1 - cos(tn_w)) / 2 / tn_a0;
+  tn_b1 = (1 - cos(tn_w)) / tn_a0;
+  tn_a1 = -2 * cos(tn_w) / tn_a0;
+  tn_a2 = (1 - tn_al) / tn_a0;
+  tn_s1 = tn_s2 = tn_s3 = tn_s4 = 0;
+  tn_dc = 0;
+  tn_xw = 0;
+  tn_hop = 0;
+  tn_f = 0;
+  tn_hold = 0;
+  tn_hn = floor(0.5 * srate);
+
+  // YIN over the last tn_n decimated samples; the frequency in Hz, or 0 for none
+  function tn_yin() local(i, j, k, ar, ai, br, bi, e0, e, d, s, t, best, bv, p, dl, dr, dd)
+  (
+    memset(TN_A, 0, 8192);
+    memset(TN_B, 0, 8192);
+    i = 0;
+    loop(tn_n,
+      j = TN_X[(tn_xw - tn_n + i + 4096) % 4096];
+      i < 1024 ? TN_A[i * 2] = j;
+      TN_B[i * 2] = j;
+      i += 1;
+    );
+    e0 = 0;
+    i = 0;
+    loop(1024, e0 += sqr(TN_B[i * 2]); i += 1;);
+    e0 / 1024 > 0.0000001 ? (
+      fft(TN_A, 4096);
+      fft(TN_B, 4096);
+      i = 0;
+      loop(4096,
+        k = i * 2;
+        ar = TN_A[k]; ai = TN_A[k + 1];
+        br = TN_B[k]; bi = TN_B[k + 1];
+        TN_B[k] = ar * br + ai * bi;
+        TN_B[k + 1] = ar * bi - ai * br;
+        i += 1;
+      );
+      ifft(TN_B, 4096);
+      // difference d(t) = e0 + e(t) - 2 r(t), then d'(t) = d(t) t / sum d(1..t)
+      e = e0;
+      s = 0;
+      TN_D[0] = 1;
+      t = 1;
+      loop(tn_tmax + 1,
+        j = TN_X[(tn_xw - tn_n + t - 1 + 4096) % 4096];
+        k = TN_X[(tn_xw - tn_n + t - 1 + 1024 + 4096) % 4096];
+        e += k * k - j * j;
+        d = max(0, e0 + e - 2 * TN_B[t * 2] / 4096);
+        s += d;
+        TN_E[t] = d;
+        TN_D[t] = s > 0 ? d * t / s : 1;
+        t += 1;
+      );
+      best = 0;
+      t = tn_tmin;
+      while (t <= tn_tmax && !best) (
+        TN_D[t] < 0.15 ? (
+          while (t < tn_tmax && TN_D[t + 1] < TN_D[t]) ( t += 1; );
+          best = t;
+        );
+        t += 1;
+      );
+      !best ? (
+        bv = 0.35;
+        t = tn_tmin;
+        loop(tn_tmax - tn_tmin + 1,
+          TN_D[t] < bv ? ( bv = TN_D[t]; best = t; );
+          t += 1;
+        );
+      );
+      best ? (
+        dl = TN_E[best - 1];
+        dr = TN_E[best + 1];
+        dd = dl - 2 * TN_E[best] + dr;
+        p = best + (dd > 0 ? min(1, max(-1, (dl - dr) / (2 * dd))) : 0);
+        // refine on the dips at 2, 4, 8 ... periods while they fit: the same interpolation
+        // error, divided by the multiple
+        k = 2;
+        while (k * p < tn_tmax - 1) (
+          t = floor(k * p + 0.5);
+          while (t > 1 && TN_E[t - 1] < TN_E[t]) ( t -= 1; );
+          while (t < tn_tmax && TN_E[t + 1] < TN_E[t]) ( t += 1; );
+          abs(t - k * p) < max(1, p * 0.25) ? (
+            dl = TN_E[t - 1];
+            dr = TN_E[t + 1];
+            dd = dl - 2 * TN_E[t] + dr;
+            p = (t + (dd > 0 ? min(1, max(-1, (dl - dr) / (2 * dd))) : 0)) / k;
+          );
+          k *= 2;
+        );
+        tn_fd / p;
+      ) : 0;
+    ) : 0;
+  );
+
+  gfx_ext_retina = 1;
+  tg_s1 = tg_s2 = tg_s3 = 0;
+  tg_last = time_precise();
+
+  function update()
+  (
+    tn_a4 = slider1;
+    tn_in = floor(slider3 + 0.5);
+    tn_mute = slider4 >= 0.5;
+  );
+
+  // a strobe row: blocks 10 wide every 20, moved by phase ph (cycles), clipped to the bar
+  function tg_row(y, ph) local(o, x, a, b)
+  (
+    o = (ph - floor(ph)) * 20;
+    x = -20 + o;
+    while (
+      a = max(0, x);
+      b = min(400, x + 10);
+      b > a ? gfx_rect(X(40 + a), Y(y), (b - a) * ng_s, 11 * ng_s);
+      x += 20;
+      x < 400;
+    );
+  );
+
+  // ---- factory presets: generated by tools/build_presets.py, do not edit ----
+  ng_pre_n = 7;
+  strcpy(#ng_h_ix, "");
+  ng_hist_add(1); ng_hist_add(2); ng_hist_add(3); ng_hist_add(4);
+  ng_hist_init();
+
+  function ng_preset_load(p)
+  (
+    p == 0 ? ( ng_slider_set(1, 440); ng_slider_set(2, 0); ng_slider_set(3, 0); ng_slider_set(4, 0); );
+    p == 1 ? ( ng_slider_set(1, 415); ng_slider_set(2, 0); ng_slider_set(3, 0); ng_slider_set(4, 0); );
+    p == 2 ? ( ng_slider_set(1, 432); ng_slider_set(2, 0); ng_slider_set(3, 0); ng_slider_set(4, 0); );
+    p == 3 ? ( ng_slider_set(1, 442); ng_slider_set(2, 0); ng_slider_set(3, 0); ng_slider_set(4, 0); );
+    p == 4 ? ( ng_slider_set(1, 440); ng_slider_set(2, 1); ng_slider_set(3, 0); ng_slider_set(4, 0); );
+    p == 5 ? ( ng_slider_set(1, 440); ng_slider_set(2, 0); ng_slider_set(3, 0); ng_slider_set(4, 1); );
+    p == 6 ? ( ng_slider_set(1, 440); ng_slider_set(2, 0); ng_slider_set(3, 1); ng_slider_set(4, 0); );
+  );
+
+  // the first preset every slider matches, or -1
+  function ng_preset_match() local(m)
+  (
+    m = -1;
+    m < 0 && ng_pre_eq(slider1, 440) && ng_pre_eq(slider2, 0) && ng_pre_eq(slider3, 0) && ng_pre_eq(slider4, 0) ? m = 0;
+    m < 0 && ng_pre_eq(slider1, 415) && ng_pre_eq(slider2, 0) && ng_pre_eq(slider3, 0) && ng_pre_eq(slider4, 0) ? m = 1;
+    m < 0 && ng_pre_eq(slider1, 432) && ng_pre_eq(slider2, 0) && ng_pre_eq(slider3, 0) && ng_pre_eq(slider4, 0) ? m = 2;
+    m < 0 && ng_pre_eq(slider1, 442) && ng_pre_eq(slider2, 0) && ng_pre_eq(slider3, 0) && ng_pre_eq(slider4, 0) ? m = 3;
+    m < 0 && ng_pre_eq(slider1, 440) && ng_pre_eq(slider2, 1) && ng_pre_eq(slider3, 0) && ng_pre_eq(slider4, 0) ? m = 4;
+    m < 0 && ng_pre_eq(slider1, 440) && ng_pre_eq(slider2, 0) && ng_pre_eq(slider3, 0) && ng_pre_eq(slider4, 1) ? m = 5;
+    m < 0 && ng_pre_eq(slider1, 440) && ng_pre_eq(slider2, 0) && ng_pre_eq(slider3, 1) && ng_pre_eq(slider4, 0) ? m = 6;
+    m;
+  );
+
+  function ng_preset_name(p) local(s)
+  (
+    s = "";
+    p == 0 ? s = "Default";
+    p == 1 ? s = "Baroque A415";
+    p == 2 ? s = "A432";
+    p == 3 ? s = "Orchestra A442";
+    p == 4 ? s = "Strobe";
+    p == 5 ? s = "Stage Mute";
+    p == 6 ? s = "Guitar on Left";
+    s;
+  );
+
+  function ng_presets() local(i)
+  (
+    ng_pre_req >= 0 ? ( ng_preset_load(ng_pre_req); update(); ng_pre_req = -1; );
+    ng_hist() ? update();
+    ng_pre_cur = ng_preset_match();
+    ng_pre_open ? (
+      ng_pre_menu_begin();
+      i = 0;
+      loop(ng_pre_n, ng_pre_item(i, ng_preset_name(i)); i += 1;);
+      ng_pre_menu_end();
+    );
+    strcpy(#ng_pre_name, ng_pre_cur >= 0 ? ng_preset_name(ng_pre_cur) : "CUSTOM");
+  );
+  // ---- end of factory presets ----
+
+@slider
+  update();
+
+@sample
+  tn_sx = tn_in == 1 ? spl0 : tn_in == 2 ? spl1 : (spl0 + spl1) * 0.5;
+  tn_y = tn_b0 * tn_sx + tn_s1;
+  tn_s1 = tn_b1 * tn_sx - tn_a1 * tn_y + tn_s2;
+  tn_s2 = tn_b0 * tn_sx - tn_a2 * tn_y;
+  tn_sx = tn_y;
+  tn_y = tn_b0 * tn_sx + tn_s3;
+  tn_s3 = tn_b1 * tn_sx - tn_a1 * tn_y + tn_s4;
+  tn_s4 = tn_b0 * tn_sx - tn_a2 * tn_y;
+  tn_dc += 1;
+  tn_dc >= tn_dec ? (
+    tn_dc = 0;
+    TN_X[tn_xw] = tn_y;
+    tn_xw = (tn_xw + 1) % 4096;
+    tn_hop += 1;
+    tn_hop >= 512 ? (
+      tn_hop = 0;
+      tn_v = tn_yin();
+      tn_v > 0 ? (
+        tn_f > 0 && abs(1200 * log(tn_v / tn_f) / log(2)) < 50 ? tn_f *= (tn_v / tn_f) ^ 0.35 : tn_f = tn_v;
+        tn_hold = tn_hn;
+      ) : (
+        tn_hold -= 512 * tn_dec;
+        tn_hold <= 0 ? ( tn_hold = 0; tn_f = 0; );
+      );
+    );
+  );
+  tn_mute ? spl0 = spl1 = 0;
+
+@gfx 480 334
+  ng_knobs_begin("TUNER", "ADVANCED", 480, 160, 1, 0);
+
+  // the note, its cents and frequency from tn_f; the strobe turns at 0.05 / 0.1 / 0.2 cycles a
+  // second per cent off (right = sharp)
+  tg_now = time_precise();
+  tg_dt = min(0.1, max(0, tg_now - tg_last));
+  tg_last = tg_now;
+  tg_on = tn_f > 0;
+  tg_c = 0;
+  tg_on ? (
+    tg_m = 69 + 12 * log(tn_f / tn_a4) / log(2);
+    tg_n = floor(tg_m + 0.5);
+    tg_c = (tg_m - tg_n) * 100;
+    tg_pc = tg_n - 12 * floor(tg_n / 12);
+    tg_oct = floor(tg_n / 12) - 1;
+    tg_s1 += tg_c * tg_dt * 0.05;
+    tg_s2 += tg_c * tg_dt * 0.1;
+    tg_s3 += tg_c * tg_dt * 0.2;
+  );
+
+  ng_font(1, 7, 1);
+  ng_col(NG_MUTED, 1);
+  sprintf(#tg_t, "A4 = %d HZ", tn_a4);
+  ng_txt(#tg_t, ng_vx + 10, ng_vy + 12, 0, 1.2);
+  ng_col(tg_on && abs(tg_c) < 2 ? NG_TEXT : NG_BORDER, 1);
+  ng_txt("IN TUNE", ng_vx + ng_vw - 10, ng_vy + 12, 2, 1.2);
+
+  ng_font(5, 30, 1);
+  ng_col(tg_on ? NG_TEXT : NG_BORDER, 1);
+  tg_on ? (
+    tg_pc == 0 ? strcpy(#tg_nm, "C") : tg_pc == 1 ? strcpy(#tg_nm, "C#") : tg_pc == 2 ? strcpy(#tg_nm, "D")
+    : tg_pc == 3 ? strcpy(#tg_nm, "D#") : tg_pc == 4 ? strcpy(#tg_nm, "E") : tg_pc == 5 ? strcpy(#tg_nm, "F")
+    : tg_pc == 6 ? strcpy(#tg_nm, "F#") : tg_pc == 7 ? strcpy(#tg_nm, "G") : tg_pc == 8 ? strcpy(#tg_nm, "G#")
+    : tg_pc == 9 ? strcpy(#tg_nm, "A") : tg_pc == 10 ? strcpy(#tg_nm, "A#") : strcpy(#tg_nm, "B");
+    sprintf(#tg_t, "%s%d", #tg_nm, tg_oct);
+  ) : strcpy(#tg_t, "-");
+  ng_txt(#tg_t, 240, ng_vy + 42, 1, 0);
+  ng_font(1, 8, 1);
+  ng_col(NG_MUTED, 1);
+  tg_on ? sprintf(#tg_t, "%+.1f CENTS   %.1f HZ", tg_c, tn_f) : strcpy(#tg_t, "NO SIGNAL");
+  ng_txt(#tg_t, 240, ng_vy + 74, 1, 1);
+
+  slider2 < 0.5 ? (
+    // needle: -50 .. +50 cents, a tick every 10, the reading as a bar from the centre
+    tg_i = -50;
+    loop(11,
+      tg_x = floor(X(40 + (tg_i + 50) * 4)) + 0.5;
+      ng_col(tg_i == 0 ? NG_TEXT : NG_MUTED, tg_i == 0 ? 0.8 : 0.6);
+      tg_i == 0 ? gfx_line(tg_x, Y(152), tg_x, Y(192), 0) : gfx_line(tg_x, Y(166), tg_x, Y(178), 0);
+      tg_i += 10;
+    );
+    ng_col(NG_BORDER, 1);
+    gfx_line(X(40), floor(Y(172)) + 0.5, X(440), floor(Y(172)) + 0.5, 0);
+    tg_on ? (
+      tg_x = 40 + (min(50, max(-50, tg_c)) + 50) * 4;
+      ng_col(NG_ACCENT, 0.25);
+      gfx_rect(X(min(240, tg_x)), Y(167), abs(tg_x - 240) * ng_s, 10 * ng_s);
+      ng_col(NG_ACCENT, 1);
+      gfx_rect(X(tg_x - 1.5), Y(154), 3 * ng_s, 36 * ng_s);
+    );
+  ) : (
+    // strobe: three rows, slow to fast
+    ng_col(tg_on ? NG_ACCENT : NG_BORDER, tg_on ? 0.9 : 1);
+    tg_row(152, tg_s1);
+    tg_row(166, tg_s2);
+    tg_row(180, tg_s3);
+  );
+  ng_font(4, 7.5, 0);
+  ng_col(NG_MUTED, 1);
+  ng_txt("FLAT", 40, 199, 0, 1);
+  ng_txt("SHARP", 440, 199, 2, 1);
+
+  ng_row(4);
+  sprintf(#v1, "%d Hz", slider1);
+  ng_knob_ctl(1, "A4", #v1, 415, 466, 440, 1, 0) ? update();
+  ng_select_ctl(2, "DISPLAY", "NEEDLE|STROBE", 0) ? update();
+  ng_select_ctl(3, "INPUT", "STEREO|LEFT|RIGHT", 0) ? update();
+  ng_select_ctl(4, "OUTPUT", "THRU|MUTE", 0) ? update();
+
+  ng_end();
+
+  ng_presets(); // the preset list (generated by tools/build_presets.py)

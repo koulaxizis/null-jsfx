@@ -1,0 +1,51 @@
+desc:NULL GFX history test
+//NULL JSFX test • not a plugin
+// Checks A/B and undo/redo in null_gfx.jsfx-inc (ng_hist*) without a window: edits, a drag
+// as one step, untracked sliders, undo/redo, A/B, copy, the 32-step ring and a new @init.
+// tests/run.sh renders it with tests/jsfx_test: the output is half the input when every
+// check passes and NaN (a failure) when one does not; fail_step names the first.
+
+slider1:0<0,10,0.1>a
+slider2:0<0,10,0.1>b
+slider3:0<0,10,0.1>c
+
+import ../DATA/Effects/null_jsfx/gfx/null_gfx.jsfx-inc
+
+@init
+  strcpy(#ng_h_ix, ""); ng_hist_add(1); ng_hist_add(3); ng_hist_init();
+  function chk(c) ( step += 1; !c && ok ? ( ok = 0; fail_step = step; ); );
+  function edit(i, v) ( ng_slider_set(i, v); ng_lmb = 0; ng_hist(); );
+  // jsfx_test may run @init again on the same instance: check once
+  runs += 1;
+  runs == 1 ? (
+    ok = 1; step = 0;
+    slider1 = slider2 = slider3 = 0;
+    ng_lmb = 1; ng_slider_set(1, 1); ng_slider_set(1, 2); ng_hist();  // drag, still held
+    chk(ng_h_uc == 0);
+    ng_lmb = 0; ng_hist();
+    chk(ng_h_uc == 1);  // one step for the drag
+    edit(3, 5); chk(ng_h_uc == 2);
+    edit(2, 7); chk(ng_h_uc == 2);  // slider 2 is not tracked: no step
+    ng_h_req = 1; chk(ng_hist() == 1); chk(slider1 == 2 && slider3 == 0 && ng_h_rc == 1);
+    ng_h_req = 1; ng_hist(); chk(slider1 == 0 && slider3 == 0 && ng_h_uc == 0 && ng_h_rc == 2);
+    ng_h_req = 1; chk(ng_hist() == 0);
+    ng_h_req = 2; ng_hist(); chk(slider1 == 2 && ng_h_rc == 1);
+    ng_h_req = 2; ng_hist(); chk(slider3 == 5 && ng_h_rc == 0 && ng_h_uc == 2);
+    // A/B: first switch copies
+    ng_h_req = 4; chk(ng_hist() == 0); chk(ng_h_ab == 1 && slider1 == 2 && slider3 == 5);
+    edit(1, 9); chk(slider1 == 9);
+    ng_h_req = 3; chk(ng_hist() == 1); chk(ng_h_ab == 0 && slider1 == 2 && slider3 == 5);
+    ng_h_req = 4; ng_hist(); chk(ng_h_ab == 1 && slider1 == 9);
+    ng_h_req = 1; ng_hist(); chk(slider1 == 2);  // undo the switch
+    ng_h_req = 5; ng_hist(); chk(ng_h_ab == 1);  // B>A copies B (now 2,5) into A
+    edit(3, 1); ng_h_req = 3; ng_hist(); chk(slider3 == 5 && slider1 == 2);
+    // ring: 40 edits keep 32
+    i = 0; loop(40, edit(1, i * 0.1); i += 1;); chk(ng_h_uc == 32);
+    loop(32, ng_h_req = 1; ng_hist();); chk(ng_h_uc == 0 && abs(slider1 - 0.7) < 0.000000001);
+    // state survives a new init with the same strings
+    uc0 = ng_h_rc; ng_h_rc = 0; strcpy(#ng_h_ix, ""); ng_hist_add(1); ng_hist_add(3); ng_hist_init(); chk(ng_h_rc == uc0);
+  );
+
+@sample
+  spl0 = ok ? spl0 * 0.5 : 0 / 0;
+  spl1 = ok ? spl1 * 0.5 : 0 / 0;

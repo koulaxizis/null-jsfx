@@ -22,6 +22,8 @@ static const NullKnobsUI::Control kControls[] = {
     { 16, NullKnobsUI::kKnob, "ATTACK", 1, -1, false },
     { 17, NullKnobsUI::kKnob, "RELEASE", 1, -1, false },
     { 18, NullKnobsUI::kKnob, "MAKEUP", 1, -1, false },
+    { 19, NullKnobsUI::kSelect, "CHANNELS", 1, -1, false },
+    { 20, NullKnobsUI::kSelect, "LISTEN", 1, -1, false },
 };
 
 #undef NULL_DEQ_CONTROLS

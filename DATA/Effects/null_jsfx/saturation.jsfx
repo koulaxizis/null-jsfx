@@ -12,6 +12,7 @@ slider5:0<-12,12,0.1>Input (dB)
 slider6:0<-24,12,0.1>Output (dB)
 slider7:0<0,2,1{Off,2x,4x}>Oversampling
 slider8:0<-12,12,0.1>Emphasis (dB)
+slider9:0<0,2,1{Stereo,Mid,Side}>Channels
 
 in_pin:Left
 in_pin:Right
@@ -19,6 +20,7 @@ out_pin:Left
 out_pin:Right
 
 @init
+  ext_noinit = 1;              // play and seek keep tails and state, as in the VST3/CLAP
   // Tone is a tilt EQ on the wet signal: a one-pole split at 800 Hz, with the
   // highs raised by Tone/2 dB and the lows lowered by Tone/2 dB (and the reverse
   // for negative values). 0 dB is flat; -12 dB is dark, +12 dB is bright.
@@ -131,7 +133,11 @@ out_pin:Right
   );
   chl.ch_init(128);
   chr.ch_init(512);
-  freembuf(896);
+  // Channels Mid / Side (appended in 2.7) saturates only the mid or the side of the stereo pair;
+  // the other half waits here (64 slots) for the oversampling latency, then is added back
+  ms_buf = 896;
+  memset(ms_buf, 0, 64);
+  freembuf(960);
 
   // the shaper for one driven sample: mode sat_mode, drive 0..1
   function sat_shape(x) local(a, y, bits, quants)
@@ -220,6 +226,7 @@ out_pin:Right
   em_a0 = 1 + em_t;
   em_a1 = em_t - 1;
   em_on ? 0 : ( em_xl = em_yl = em_xr = em_yr = 0; de_xl = de_yl = de_xr = de_yr = 0; );
+  ms_mode = slider9;
   os = slider7;
   os < 0.5 ? ( osf = 1; lat = 0; pad = 0; ) :
   os < 1.5 ? ( osf = 2; lat = 31; pad = 0; ) :
@@ -228,12 +235,26 @@ out_pin:Right
   // a new rate starts every filter and delay from silence
   osf != os_prev ? (
     memset(128, 0, 768);
+    memset(ms_buf, 0, 64);
     pw = 0;
     dw = 0;
     os_prev = osf;
   );
 
 @sample
+  // Channels Mid / Side: the chosen half of the mid/side pair goes through on both channels,
+  // the other waits and is added back after
+  ms_mode ? (
+    ms_m = (spl0 + spl1) * 0.5;
+    ms_s = (spl0 - spl1) * 0.5;
+    ms_mode == 1 ? (
+      spl0 = spl1 = ms_m;
+      ms_o = ms_s;
+    ) : (
+      spl0 = spl1 = ms_s;
+      ms_o = ms_m;
+    );
+  );
   dry_l = spl0;
   dry_r = spl1;
 
@@ -301,6 +322,10 @@ out_pin:Right
     j = (dw - lat + 64) % 64;
     dry_l = chl.dr[j];
     dry_r = chr.dr[j];
+    ms_mode ? (
+      ms_buf[dw] = ms_o;
+      ms_o = ms_buf[j];
+    );
     dw = (dw + 1) % 64;
   ) : (
     wet_l = sat_shape(in_l);
@@ -327,4 +352,17 @@ out_pin:Right
   out_on ? (
     spl0 *= gout;
     spl1 *= gout;
+  );
+
+  ms_mode ? (
+    // back to left / right
+    ms_mode == 1 ? (
+      ms_x = spl0;
+      spl0 = ms_x + ms_o;
+      spl1 = ms_x - ms_o;
+    ) : (
+      ms_x = spl0;
+      spl0 = ms_o + ms_x;
+      spl1 = ms_o - ms_x;
+    );
   );

@@ -25,7 +25,6 @@ public:
     {
         // @init then @slider
         fDsp.setSampleRate(sr);
-        fLatency = uint32_t(nulltape::TapeProcessor::latencyFor(sr));
         update();
     }
 
@@ -43,7 +42,7 @@ public:
         fDsp.process(inL, inR, outL, outR, frames);
     }
 
-    uint32_t latency() const override { return fLatency; }
+    uint32_t latency() const override { return uint32_t(fDsp.latency()); } // pdc_delay
 
 private:
     void update()
@@ -56,7 +55,6 @@ private:
 
     nulltape::TapeProcessor fDsp;
     float fV[nulltape::kNumSliders];
-    uint32_t fLatency = 0;
 };
 
 inline nulljsfx::Module* create() { return new TapeModule(); }

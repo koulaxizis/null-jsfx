@@ -1,0 +1,8 @@
+[
+  ["VU -20 dBFS (SMPTE)", {"Reference": -20}],
+  ["VU -14 dBFS (Hot)", {"Reference": -14}],
+  ["PPM EBU", {"Mode": "PPM", "Reference": -18}],
+  ["K-14 Mastering", {"Mode": "K-14", "Peak Hold": "Hold"}],
+  ["K-20 Film and Classical", {"Mode": "K-20", "Peak Hold": "Hold"}],
+  ["Mono Check", {"Monitor": "Mono"}]
+]
