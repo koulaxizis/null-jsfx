@@ -373,7 +373,7 @@ private:
         fNSteps = std::fmax(1.0, std::fmin(16.0, double(fP.numSteps)));
         fSw = fP.swing / 150.0; // as the JSFX: 2/3 of a step at 100%
         fRepBeats = fP.repeatSize == 0 ? 0.25 : fP.repeatSize == 1 ? 0.125 : 0.0625;
-        fFLc = std::log(fP.filterHz);
+        fFLc = std::log(std::fmin(fP.filterHz, fFTop)); // below Nyquist at any sample rate
         const double crush = fP.crush / 100.0;
         fCQ = std::pow(2.0, 1.0 - (16.0 - 12.0 * crush));
         fCInc = 1.0 / (1.0 + 15.0 * crush);

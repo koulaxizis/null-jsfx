@@ -17,6 +17,8 @@ in_pin:Band 2 Left ... in_pin:Band 4 Right, and out_pin:Band 1 Left ... out_pin:
 Instruments make their own sound and take no audio: in_pin:none, out_pin:Left, out_pin:Right.
 MIDI effects (MIDI in, MIDI out) pass the audio through on the four standard pins.
 
+It also checks that the release version shown in llms.txt and index.html matches FOOTER.
+
 Usage: lint.py file.jsfx [...]   Exit status 1 if any file has an error.
 """
 import re
@@ -152,8 +154,37 @@ def check(path):
     return errors
 
 
+ROOT = Path(__file__).resolve().parent.parent
+VERSION = re.search(r"v(\d+(?:\.\d+)+)", FOOTER).group(1)
+# Places outside the plugins that show the release version; each must match FOOTER.
+VERSION_SPOTS = [
+    ("llms.txt", r"^- Version: (\S+)$"),
+    ("index.html", r'id="release-version">v([^<]+)<'),
+    ("index.html", r"Download NULL JSFX v(\S+?)<"),
+]
+
+
+def check_versions():
+    errors = []
+    for name, pattern in VERSION_SPOTS:
+        path = ROOT / name
+        if not path.exists():
+            continue
+        m = re.search(pattern, path.read_text(encoding="utf-8"), flags=re.M)
+        if not m:
+            errors.append(f"{name}: version not found (pattern {pattern!r})")
+        elif m.group(1) != VERSION:
+            errors.append(f"{name}: version {m.group(1)} does not match FOOTER {VERSION}")
+    return errors
+
+
 def main(paths):
     failed = 0
+    version_errors = check_versions()
+    if version_errors:
+        print("LINT version")
+        for e in version_errors:
+            print(f"    {e}")
     for p in map(Path, paths):
         errs = check(p)
         if errs:
@@ -162,7 +193,9 @@ def main(paths):
             for e in errs:
                 print(f"    {e}")
     print(f"\nlint: {failed} of {len(paths)} plugins have convention errors")
-    return 1 if failed else 0
+    if version_errors:
+        print(f"lint: release version mismatch outside the plugins (FOOTER says {VERSION})")
+    return 1 if failed or version_errors else 0
 
 
 if __name__ == "__main__":

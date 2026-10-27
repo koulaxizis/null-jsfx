@@ -30,7 +30,7 @@ protected:
 
     void valueChanged(uint32_t, float) override { update(); }
 
-    void activate() override
+    void onActivate() override
     {
         fDsp.setSampleRate(getSampleRate());
         update();
@@ -42,7 +42,7 @@ protected:
         update();
     }
 
-    void run(const float** inputs, float** outputs, uint32_t frames) override
+    void process(const float** inputs, float** outputs, uint32_t frames) override
     {
         // one sample at a time so the display gets the unrepaired signal next to the output
         for (uint32_t i = 0; i < frames; ++i)

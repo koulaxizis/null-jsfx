@@ -30,7 +30,7 @@ protected:
 
     void valueChanged(float v) override { fDsp.setAmount(v); }
 
-    void activate() override
+    void onActivate() override
     {
         fDsp.setSampleRate(getSampleRate());
         fDsp.reset();
@@ -38,7 +38,7 @@ protected:
 
     void sampleRateChanged(double newSampleRate) override { fDsp.setSampleRate(newSampleRate); }
 
-    void run(const float** inputs, float** outputs, uint32_t frames) override
+    void process(const float** inputs, float** outputs, uint32_t frames) override
     {
         const TimePosition& tp = getTimePosition();
         const double tempo = tp.bbt.beatsPerMinute > 0.0 ? tp.bbt.beatsPerMinute : 120.0;
