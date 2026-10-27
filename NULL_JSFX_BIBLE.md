@@ -969,3 +969,8 @@ entry and the Bible delta.
 - **Fixes:** after Wave 3 (#72) the Hub's release smoke test failed: it builds the catalog from the checkout for the latest published release (2.6), the catalog offered LV2 on Linux, and `install tilt:all` looked for `LV2/NULL JSFX/null_jsfx_tilt.lv2`, which no 2.6 package has. `tools/build_catalog.py` now writes `packages.lv2` as `["Linux"]` only for 2.7 and later (and for `dev`), `[]` before.
 - **Files:** `tools/build_catalog.py`, this Bible (II.4, this entry).
 - **Tests:** run locally: `hub/tests/release_smoke.sh` against release 2.6 (ok), `build_catalog.py --check`, and the catalog for 2.6 / 2.7 / dev / 2.10 (LV2 only from 2.7).
+
+### 2026-10-27 — CI — numpy for the LV2 check
+- **Fixes:** the LV2 check of Wave 3 (#72) in `native.yml` stopped at `import numpy`: the ubuntu-22.04 runner's Python has no numpy. The step now installs `python3-numpy` with `liblilv-0-0`.
+- **Files:** `.github/workflows/native.yml`, this entry.
+- **Tests:** the YAML parses; the step runs in the PR's Linux build.

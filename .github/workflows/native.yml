@@ -98,7 +98,7 @@ jobs:
       - name: Check the LV2 plugins against the JSFX (lilv)
         if: runner.os == 'Linux'
         run: |
-          sudo apt-get install -y liblilv-0-0
+          sudo apt-get install -y liblilv-0-0 python3-numpy
           b=tests/.build
           g++ -O2 -std=c++17 -I "$b/ysfx/include" web/test/render_ref.cpp "$b/ysfx/build/libysfx.a" -lpthread -ldl -o "$b/render_ref"
           python3 native/test/lv2_test.py native/dist/LV2/"NULL JSFX"
