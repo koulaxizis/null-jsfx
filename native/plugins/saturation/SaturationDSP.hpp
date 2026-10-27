@@ -135,7 +135,7 @@ public:
         // Emphasis: H(s) = (hi s + lo w) / (s + w) at w = 2 pi 800 Hz (bilinear, prewarped)
         fEmOn = std::fabs(em) >= 0.00001;
         const double hi = std::pow(10.0, em / 40.0), lo = 1.0 / hi;
-        const double t = std::tan(nullclipper::kPi * 800.0 / fSr);
+        const double t = std::tan(nullclipper::kPi * std::fmin(800.0, fSr * 0.45) / fSr);
         fB0 = hi + lo * t;
         fB1 = lo * t - hi;
         fA0 = 1.0 + t;

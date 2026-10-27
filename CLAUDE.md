@@ -17,7 +17,7 @@ Never guess the contents of a file. Read it from the repo, or ask for it.
 - Rack parameter indices are fixed forever, new features are silent at their default, state strings never change meaning, and `RackEngineV1.hpp` is frozen.
 - Released plugin identities (name, unique id, CLAP id, URI) never change.
 - Generated files are never edited by hand (Bible Part II.9). Run the generators and tests the change touches (Bible R15, Part V).
-- The version changes everywhere at once (Bible Part VI.1). Releases are published by the owner.
+- The version changes everywhere at once (Bible Part VI.1); `tests/lint.py` fails if `llms.txt` or `index.html` shows another version than `FOOTER`. Releases are published by the owner.
 - Free forever: no paywalls, licence keys, ads or nags. Support and news go through Ko-fi only.
 
 ## Every delivery ends with

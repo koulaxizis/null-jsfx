@@ -15,6 +15,10 @@ jobs:
           key: ysfx-${{ hashFiles('tests/run.sh') }}
       - run: sudo apt-get install -y nasm
       - run: tests/run.sh
+      # odd and very low sample rates (8 kHz phone audio, 22.05 kHz, and two odd rates of
+      # clap-validator): every filter must stay below Nyquist; the plain JSFX share their audio
+      # code with the GFX versions, so they are enough here
+      - run: NULL_TEST_RATES=8000,22050,1234.57,12345.68 tests/run.sh DATA/Effects/null_jsfx/*.jsfx
       - run: python3 tools/build_site.py --check
       - run: python3 tools/build_chains.py --check
       - run: python3 tools/build_presets.py --check

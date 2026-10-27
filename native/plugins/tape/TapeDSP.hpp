@@ -47,7 +47,7 @@ static const TapeType kTypes[4] = {
 };
 inline const TapeType& tapeType(int t) noexcept { return kTypes[std::max(0, std::min(3, t))]; }
 
-// RBJ biquad (normalised), transposed direct form II
+// RBJ biquad (normalised), transposed direct form II; f is held below 0.45 x sr
 struct Biquad {
     double b0 = 1, b1 = 0, b2 = 0, a1 = 0, a2 = 0, z1 = 0, z2 = 0;
 
@@ -59,13 +59,13 @@ struct Biquad {
     }
     void hp(double sr, double f, double q)
     {
-        const double w = 2.0 * kPi * f / sr, al = std::sin(w) / (2.0 * q);
+        const double w = 2.0 * kPi * std::min(f, 0.45 * sr) / sr, al = std::sin(w) / (2.0 * q);
         b0 = (1.0 + std::cos(w)) / 2.0 / (1.0 + al); b1 = -(1.0 + std::cos(w)) / (1.0 + al); b2 = b0;
         a1 = -2.0 * std::cos(w) / (1.0 + al); a2 = (1.0 - al) / (1.0 + al);
     }
     void peak(double sr, double f, double q, double db)
     {
-        const double w = 2.0 * kPi * f / sr, al = std::sin(w) / (2.0 * q), A = std::pow(10.0, db / 40.0);
+        const double w = 2.0 * kPi * std::min(f, 0.45 * sr) / sr, al = std::sin(w) / (2.0 * q), A = std::pow(10.0, db / 40.0);
         b0 = (1.0 + al * A) / (1.0 + al / A); b1 = -2.0 * std::cos(w) / (1.0 + al / A); b2 = (1.0 - al * A) / (1.0 + al / A);
         a1 = b1; a2 = (1.0 - al / A) / (1.0 + al / A);
     }
@@ -154,7 +154,7 @@ public:
         fOut = std::pow(10.0, s[6] / 20.0);
         fMix = s[7] / 100.0;
 
-        const double fc = speed == 0 ? 2500.0 : speed == 1 ? 3500.0 : 5000.0;
+        const double fc = std::min(speed == 0 ? 2500.0 : speed == 1 ? 3500.0 : 5000.0, 0.45 * fSr);
         const double g = tt.emG, wc = 2.0 * kPi * fc, k = wc / std::tan(kPi * fc / fSr);
         fEmB0 = (g * k + wc) / (k + wc);
         fEmB1 = (wc - g * k) / (k + wc);

@@ -1,8 +1,8 @@
 {
-  "display": 500,
-  "total": 926,
+  "display": 1000,
+  "total": 1117,
   "offset": 0,
-  "updated": "2026-10-26",
+  "updated": "2026-10-27",
   "assets": {
     "489296831": {
       "file": "1.0/null_jsfx.zip",
@@ -210,11 +210,11 @@
     },
     "654611766": {
       "file": "2.5/NULL-JSFX-JSFX.zip",
-      "count": 30
+      "count": 64
     },
     "654619983": {
       "file": "2.5/NULL-JSFX-Hub-Windows-Setup.exe",
-      "count": 12
+      "count": 14
     },
     "654621350": {
       "file": "2.5/NULL-JSFX-Hub-macOS.dmg",
@@ -238,7 +238,7 @@
     },
     "654721086": {
       "file": "2.5/NULL-JSFX-VST3-CLAP-Linux.zip",
-      "count": 24
+      "count": 57
     },
     "654724792": {
       "file": "2.5/NULL-JSFX-Installer-Windows.exe",
@@ -262,11 +262,11 @@
     },
     "678451544": {
       "file": "2.6/NULL-JSFX-Hub-Linux.deb",
-      "count": 0
+      "count": 1
     },
     "678451545": {
       "file": "2.6/NULL-JSFX-Hub-Linux.AppImage",
-      "count": 0
+      "count": 1
     },
     "678453224": {
       "file": "2.6/NULL-JSFX-Hub-macOS.dmg",
@@ -278,6 +278,54 @@
     },
     "678607528": {
       "file": "2.6/NULL-JSFX-VST3-CLAP-Linux.zip",
+      "count": 0
+    },
+    "679099254": {
+      "file": "2.6/NULL-JSFX-JSFX.zip",
+      "count": 64
+    },
+    "679124526": {
+      "file": "2.6/NULL-JSFX-VST3-CLAP-Windows.zip",
+      "count": 0
+    },
+    "679276461": {
+      "file": "2.6/NULL-JSFX-VST3-CLAP-Linux.zip",
+      "count": 56
+    },
+    "679343346": {
+      "file": "2.6/NULL-JSFX-VST3-CLAP-macOS.zip",
+      "count": 0
+    },
+    "679429393": {
+      "file": "2.6/NULL-JSFX-Installer-Windows.exe",
+      "count": 0
+    },
+    "679466310": {
+      "file": "2.6/NULL-JSFX-Installer-Linux.sh",
+      "count": 0
+    },
+    "679509036": {
+      "file": "2.6/NULL-JSFX-Catalog.json",
+      "count": 0
+    },
+    "679884493": {
+      "file": "2.6/NULL-JSFX-Installer-macOS.sh",
+      "count": 0
+    },
+    "679884494": {
+      "file": "2.6/NULL-JSFX-Installer-macOS.pkg",
+      "count": 0
+    },
+    "679896336": {
+      "file": "2.6/NULL-JSFX-Hub-Windows-Setup.exe",
+      "count": 0
+    },
+    "679897017": {
+      "file": "2.6/NULL-JSFX-Hub-Linux.AppImage",
+      "count": 0
+    },
+    "679897018": {
+      "file": "2.6/NULL-JSFX-Hub-Linux.deb",
       "count": 0
     }
   }
