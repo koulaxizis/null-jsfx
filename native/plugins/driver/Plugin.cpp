@@ -29,14 +29,14 @@ protected:
 
     void valueChanged(float v) override { fDsp.setAmount(v); }
 
-    void activate() override
+    void onActivate() override
     {
         fDsp.reset();
     }
 
     void sampleRateChanged(double) override {}
 
-    void run(const float** inputs, float** outputs, uint32_t frames) override
+    void process(const float** inputs, float** outputs, uint32_t frames) override
     {
         fDsp.process(inputs[0], inputs[1], outputs[0], outputs[1], frames);
     }
