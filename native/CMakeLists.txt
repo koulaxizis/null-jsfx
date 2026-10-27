@@ -52,11 +52,17 @@ if(MSVC)
   # MSVC ships only OpenGL 1.1 headers; NanoVG needs the GL 2.0 types from Khronos (MIT)
   include_directories(BEFORE "${CMAKE_CURRENT_SOURCE_DIR}/third_party/khronos")
 endif()
+# third_party/dpf/null-jsfx.patch, applied on top of the pinned commit (a local --dpf checkout
+# needs it applied by hand): the CLAP wrapper calls clap_host_latency::changed() only inside
+# activate(), as the CLAP spec requires, and no output sample is subnormal (clap-validator)
 FetchContent_Declare(dpf
   GIT_REPOSITORY https://github.com/DISTRHO/DPF.git
   GIT_TAG        ${DPF_GIT_SHA}
   GIT_SUBMODULES "dgl/src/pugl-upstream"
-  GIT_SHALLOW    FALSE)
+  GIT_SHALLOW    FALSE
+  GIT_CONFIG     core.autocrlf=false
+  PATCH_COMMAND  git reset -q --hard ${DPF_GIT_SHA}
+         COMMAND git apply "${CMAKE_CURRENT_SOURCE_DIR}/third_party/dpf/null-jsfx.patch")
 set(DPF_LIBRARIES OFF CACHE BOOL "" FORCE)
 set(DPF_EXAMPLES  OFF CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(dpf)
