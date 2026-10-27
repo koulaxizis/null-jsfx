@@ -62,7 +62,7 @@ sc_gl = sc_gr = 1;
 /* RBJ biquads for the shellac band: type 0 high-pass, 1 low-pass, 2 peaking */
 function sh_set(type, f, q, db) local(w, cs, al, A, a0) instance(b0, b1, b2, a1, a2)
 (
-  w = 2 * $pi * f / srate; cs = cos(w); al = sin(w) / (2 * q); A = 10 ^ (db / 40);
+  w = 2 * $pi * min(f, srate * 0.45) / srate; cs = cos(w); al = sin(w) / (2 * q); A = 10 ^ (db / 40);
   type == 0 ? (b0 = (1 + cs) / 2; b1 = -(1 + cs); b2 = b0; a0 = 1 + al; a1 = -2 * cs; a2 = 1 - al) :
   type == 1 ? (b0 = (1 - cs) / 2; b1 = 1 - cs; b2 = b0; a0 = 1 + al; a1 = -2 * cs; a2 = 1 - al) :
   (b0 = 1 + al * A; b1 = -2 * cs; b2 = 1 - al * A; a0 = 1 + al / A; a1 = -2 * cs; a2 = 1 - al / A);

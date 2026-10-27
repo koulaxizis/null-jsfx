@@ -49,7 +49,7 @@ struct Setup {
 
     static void peak(double* c, double f, double q, double db, double fs) noexcept
     {
-        const double A = std::pow(10.0, db / 40.0), w = 2 * M_PI * f / fs;
+        const double A = std::pow(10.0, db / 40.0), w = 2 * M_PI * std::min(f, 0.45 * fs) / fs;
         const double cs = std::cos(w), al = std::sin(w) / (2 * q);
         const double a0 = 1 + al / A;
         c[0] = (1 + al * A) / a0; c[1] = -2 * cs / a0; c[2] = (1 - al * A) / a0;
@@ -58,7 +58,7 @@ struct Setup {
 
     static void highShelf(double* c, double f, double db, double fs) noexcept
     {
-        const double A = std::pow(10.0, db / 40.0), w = 2 * M_PI * f / fs;
+        const double A = std::pow(10.0, db / 40.0), w = 2 * M_PI * std::min(f, 0.45 * fs) / fs;
         const double cs = std::cos(w), al = std::sin(w) / 2 * std::sqrt(2.0), sa = 2 * std::sqrt(A) * al;
         const double a0 = (A + 1) - (A - 1) * cs + sa;
         c[0] = A * ((A + 1) + (A - 1) * cs + sa) / a0;

@@ -129,11 +129,13 @@ static Render render(ysfx_t *fx, double sr, double seconds, int signal, bool mid
                 ++m;
             }
             // the last block: all notes off on both channels, as a host sends at stop (a latched
-            // arpeggio or a note still waiting must end too)
+            // arpeggio or a note still waiting must end too). It comes at the block's last sample,
+            // after this block's notes: a host hands a plugin its events in time order, and no
+            // note follows the stop
             if (n + block >= total) {
                 static const uint8_t off[2][3] = {{0xB0, 123, 0}, {0xB1, 123, 0}};
                 for (int c = 0; c < 2; ++c) {
-                    ysfx_midi_event_t ev = {0, 0, 3, off[c]};
+                    ysfx_midi_event_t ev = {0, block - 1, 3, off[c]};
                     ysfx_send_midi(fx, &ev);
                 }
             }
@@ -182,7 +184,20 @@ static std::string fmt(double v)
 static Result test_plugin(const char *path)
 {
     Result res;
-    static const double rates[] = {44100, 48000, 96000};
+    // NULL_TEST_RATES="8000,22050,..." replaces the default rates (CI also runs the odd ones)
+    static std::vector<double> rates = [] {
+        std::vector<double> v;
+        const char *env = getenv("NULL_TEST_RATES");
+        for (const char *p = env; p && *p;) {
+            char *end;
+            double r = strtod(p, &end);
+            if (end == p) break;
+            if (r > 0) v.push_back(r);
+            p = *end == ',' ? end + 1 : end;
+        }
+        if (v.empty()) v = {44100, 48000, 96000};
+        return v;
+    }();
     static const char *pname[] = {"defaults", "min", "max", "random"};
     bool changes_sound = false;
     const bool midifx = is_midi_effect(path);
@@ -207,7 +222,7 @@ static Result test_plugin(const char *path)
             ysfx_init(fx);
             apply_preset(fx, preset, rng);
             char where[96];
-            snprintf(where, sizeof where, "%s @ %.0f Hz", pname[preset], sr);
+            snprintf(where, sizeof where, "%s @ %.6g Hz", pname[preset], sr);
             Render r = render(fx, sr, 2.0, 0, midifx);
             if (r.diff > 1e-4) changes_sound = true;
             if (midifx) {
