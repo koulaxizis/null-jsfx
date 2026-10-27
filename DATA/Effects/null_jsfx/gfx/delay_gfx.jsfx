@@ -25,6 +25,8 @@ in_pin:Right
 out_pin:Left
 out_pin:Right
 
+options:maxmem=33554432
+
 @init
   // NULL Delay (../delay.jsfx) with its own interface: same audio code, plus @gfx.
   // 6.1 s per channel: a whole note (1/1) down to 40 bpm (6 s); slower tempos are clamped

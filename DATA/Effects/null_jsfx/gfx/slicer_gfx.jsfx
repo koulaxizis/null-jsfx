@@ -20,6 +20,8 @@ in_pin:Right
 out_pin:Left
 out_pin:Right
 
+options:maxmem=33554432
+
 @init
   // NULL Slicer (../slicer.jsfx) with its own interface: same audio code, plus @gfx.
   // Real-time loop remixer. Every bar (4 beats) of input is recorded into one of two bar
