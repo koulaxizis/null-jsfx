@@ -16,6 +16,7 @@ concurrency:
 
 jobs:
   test:
+    timeout-minutes: 30
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -36,6 +37,7 @@ jobs:
 
   remote:
     # the tablet remote (remote/): page in a real browser + bridge script under a REAPER stand-in
+    timeout-minutes: 20
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

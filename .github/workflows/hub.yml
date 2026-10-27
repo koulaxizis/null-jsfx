@@ -33,14 +33,47 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.ref || github.run_id }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
+# Read-only by default; only the jobs that attach to a release may write.
 permissions:
-  contents: write
+  contents: read
 
 env:
   TAG: ${{ github.event.release.tag_name || inputs.release_tag }}
 
 jobs:
+  # Whether the Hub itself changed. Plugin and site changes (DATA/, tools/...) only touch the
+  # catalog, which ui and smoke check; the engine tests and the app builds on 3 OS run when hub/
+  # or this workflow changes, and always on main pushes of those, releases and manual runs.
+  changes:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      hub: ${{ steps.diff.outputs.hub }}
+    steps:
+      - id: diff
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EVENT: ${{ github.event_name }}
+          PR: ${{ github.event.pull_request.number }}
+          BEFORE: ${{ github.event.before }}
+          AFTER: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          case "$EVENT" in
+            pull_request)
+              files="$(gh api --paginate "repos/$GITHUB_REPOSITORY/pulls/$PR/files" --jq '.[].filename')" ;;
+            push)
+              # the compare API lists at most 300 files: past that, build everything
+              files="$(gh api "repos/$GITHUB_REPOSITORY/compare/$BEFORE...$AFTER" --jq 'if (.files | length) >= 300 then "hub/" else .files[].filename end' || echo hub/)" ;;
+            *) files="hub/" ;;
+          esac
+          if grep -qE '^(hub/|\.github/workflows/hub\.yml$)' <<<"$files"; then hub=true; else hub=false; fi
+          echo "hub=$hub" | tee -a "$GITHUB_OUTPUT"
+
   core:
+    needs: changes
+    if: needs.changes.outputs.hub == 'true'
+    timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:
@@ -48,14 +81,17 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@stable
-      - uses: Swatinem/rust-cache@v2
+      - uses: dtolnay/rust-toolchain@b725eda525362e7cf34af9a7243cac1e3f01a7ec # stable
+        with:
+          toolchain: stable
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
         with:
           workspaces: hub
       - run: cargo test -p null_hub_core
         working-directory: hub
 
   ui:
+    timeout-minutes: 20
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -78,17 +114,23 @@ jobs:
   smoke:
     # not on a release: its packages are still being attached (native.yml) when this starts
     if: github.event_name != 'release'
+    timeout-minutes: 30
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@stable
-      - uses: Swatinem/rust-cache@v2
+      - uses: dtolnay/rust-toolchain@b725eda525362e7cf34af9a7243cac1e3f01a7ec # stable
+        with:
+          toolchain: stable
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
         with:
           workspaces: hub
       - run: hub/tests/release_smoke.sh
 
   build:
     needs: [core, ui]
+    permissions:
+      contents: write
+    timeout-minutes: 60
     strategy:
       fail-fast: false
       matrix:
@@ -105,10 +147,11 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: dtolnay/rust-toolchain@b725eda525362e7cf34af9a7243cac1e3f01a7ec # stable
         with:
+          toolchain: stable
           targets: ${{ matrix.name == 'macOS' && 'aarch64-apple-darwin,x86_64-apple-darwin' || '' }}
-      - uses: Swatinem/rust-cache@v2
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
         with:
           workspaces: hub
 
@@ -201,6 +244,9 @@ jobs:
 
   catalog:
     if: github.event_name == 'release' || inputs.release_tag != ''
+    permissions:
+      contents: write
+    timeout-minutes: 15
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
