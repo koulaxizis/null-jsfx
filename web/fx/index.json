@@ -965,7 +965,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 8,
-   "bytes": 51886
+   "bytes": 55510
   },
   {
    "id": "formant_filter",
