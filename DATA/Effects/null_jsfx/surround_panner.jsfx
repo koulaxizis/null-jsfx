@@ -29,6 +29,7 @@ out_pin:Ltr
 out_pin:Rtr
 
 @init
+  ext_noinit = 1;              // play and seek keep tails and state, as in the VST3/CLAP
   // Pans a mono or stereo track into a surround bed: 5.1 (L R C LFE Ls Rs), 7.1 (L R C LFE Lss
   // Rss Lrs Rrs) or 7.1.4 (7.1 and the four tops Ltf Rtf Ltr Rtr), in that pin order; the pins a
   // format does not use stay silent. Speakers as ITU-R BS.775 / BS.2051 and Dolby: L/R at 30

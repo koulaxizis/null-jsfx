@@ -993,7 +993,7 @@
    "ins": 12,
    "outs": 12,
    "sliders": 7,
-   "bytes": 55046
+   "bytes": 55134
   },
   {
    "id": "comb_filter",
@@ -1035,7 +1035,7 @@
    "ins": 12,
    "outs": 12,
    "sliders": 8,
-   "bytes": 55741
+   "bytes": 55813
   },
   {
    "id": "formant_filter",
@@ -1175,7 +1175,7 @@
    "ins": 12,
    "outs": 12,
    "sliders": 5,
-   "bytes": 57970
+   "bytes": 58040
   },
   {
    "id": "noise_reduction",
@@ -1441,7 +1441,7 @@
    "ins": 2,
    "outs": 12,
    "sliders": 8,
-   "bytes": 67015
+   "bytes": 67104
   },
   {
    "id": "tape_stop",

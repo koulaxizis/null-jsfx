@@ -40,6 +40,7 @@ out_pin:Ltr
 out_pin:Rtr
 
 @init
+  ext_noinit = 1;              // play and seek keep tails and state, as in the VST3/CLAP
   // Plays a surround bed the way a monitoring system with a subwoofer does: the bass of every
   // main speaker of the Bed (all but the LFE) is taken off at the Crossover by a 4th-order
   // Linkwitz-Riley high-pass and sent, summed, through the matching low-pass to the
