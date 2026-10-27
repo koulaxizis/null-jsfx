@@ -10,7 +10,7 @@ FX.create = function (R, H, G) {
 var MEM = R.memory(), M0 = MEM.b[0], S = R.strings(FX.strings), IO;
 var V = new Float64Array(358);
 function f0_te_lp_40_hc_l(p0_f, p1_q) {
-(V[73] = R.d((6.283185307179586 * (p0_f / V[20]))));
+(V[73] = R.d((6.283185307179586 * (R.min(p0_f, (0.45 * V[20])) / V[20]))));
 (V[74] = R.d((Math.sin(V[73]) / (2 * p1_q))));
 (V[75] = R.d((((1 - Math.cos(V[73])) / 2) / (1 + V[74]))));
 (V[76] = R.d(((1 - Math.cos(V[73])) / (1 + V[74]))));
@@ -19,7 +19,7 @@ function f0_te_lp_40_hc_l(p0_f, p1_q) {
 return (V[79] = R.d(((1 - V[74]) / (1 + V[74]))));
 }
 function f1_te_lp_40_hc_r(p0_f, p1_q) {
-(V[80] = R.d((6.283185307179586 * (p0_f / V[20]))));
+(V[80] = R.d((6.283185307179586 * (R.min(p0_f, (0.45 * V[20])) / V[20]))));
 (V[81] = R.d((Math.sin(V[80]) / (2 * p1_q))));
 (V[82] = R.d((((1 - Math.cos(V[80])) / 2) / (1 + V[81]))));
 (V[83] = R.d(((1 - Math.cos(V[80])) / (1 + V[81]))));
@@ -60,7 +60,7 @@ return f7_te_time();
 }
 function f3_te_shelf_40_bs_l(p0_f, p1_db, p2_high) {
 var t1;
-(V[96] = R.d((6.283185307179586 * (p0_f / V[20]))));
+(V[96] = R.d((6.283185307179586 * (R.min(p0_f, (0.45 * V[20])) / V[20]))));
 (V[97] = Math.cos(V[96]));
 (V[98] = R.d(R.pow(10, (p1_db / 40))));
 (V[99] = R.d((((2 * R.sqrt(V[98])) * (Math.sin(V[96]) / 2)) * R.sqrt(2))));
@@ -83,7 +83,7 @@ return t1;
 }
 function f4_te_shelf_40_bs_r(p0_f, p1_db, p2_high) {
 var t2;
-(V[107] = R.d((6.283185307179586 * (p0_f / V[20]))));
+(V[107] = R.d((6.283185307179586 * (R.min(p0_f, (0.45 * V[20])) / V[20]))));
 (V[108] = Math.cos(V[107]));
 (V[109] = R.d(R.pow(10, (p1_db / 40))));
 (V[110] = R.d((((2 * R.sqrt(V[109])) * (Math.sin(V[107]) / 2)) * R.sqrt(2))));
@@ -106,7 +106,7 @@ return t2;
 }
 function f5_te_shelf_40_tr_l(p0_f, p1_db, p2_high) {
 var t3;
-(V[117] = R.d((6.283185307179586 * (p0_f / V[20]))));
+(V[117] = R.d((6.283185307179586 * (R.min(p0_f, (0.45 * V[20])) / V[20]))));
 (V[118] = Math.cos(V[117]));
 (V[119] = R.d(R.pow(10, (p1_db / 40))));
 (V[120] = R.d((((2 * R.sqrt(V[119])) * (Math.sin(V[117]) / 2)) * R.sqrt(2))));
@@ -129,7 +129,7 @@ return t3;
 }
 function f6_te_shelf_40_tr_r(p0_f, p1_db, p2_high) {
 var t4;
-(V[128] = R.d((6.283185307179586 * (p0_f / V[20]))));
+(V[128] = R.d((6.283185307179586 * (R.min(p0_f, (0.45 * V[20])) / V[20]))));
 (V[129] = Math.cos(V[128]));
 (V[130] = R.d(R.pow(10, (p1_db / 40))));
 (V[131] = R.d((((2 * R.sqrt(V[130])) * (Math.sin(V[128]) / 2)) * R.sqrt(2))));

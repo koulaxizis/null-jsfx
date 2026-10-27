@@ -38,19 +38,24 @@ protected:
     const char* getMaker() const override { return "NULL JSFX"; }
     const char* getHomePage() const override { return "https://nulljsfx.tech"; }
     const char* getLicense() const override { return "MIT"; }
-    uint32_t getVersion() const override { return d_version(2, 1, 0); }
+    uint32_t getVersion() const override
+    {
+        return d_version(NULL_JSFX_VERSION_MAJOR, NULL_JSFX_VERSION_MINOR, NULL_JSFX_VERSION_PATCH);
+    }
     int64_t getUniqueId() const override { return d_cconst('N', 'R', 'c', 'k'); }
 
     // ---- parameters --------------------------------------------------------------------------
 
     void initParameter(uint32_t index, Parameter& p) override
     {
+        // paramInfo writes the buffers only for slot and appended parameters: read the name and
+        // symbol from what it returns (the globals' come from kGlobals)
         char name[32], sym[32];
         const SliderInfo in = rack::paramInfo(index, name, sizeof(name), sym, sizeof(sym));
         p.hints = kParameterIsAutomatable;
-        p.name = name;
-        p.shortName = name;
-        p.symbol = sym;
+        p.name = in.name;
+        p.shortName = in.name;
+        p.symbol = in.symbol;
         p.unit = in.unit;
         p.ranges.min = in.min;
         p.ranges.max = in.max;

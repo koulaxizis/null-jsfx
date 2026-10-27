@@ -48,7 +48,7 @@ out_pin:Right
     stereo_width = slider3 / 100;
     gain_lin = exp(level_db * 0.11512925464970228420);
     lc_on = slider4 > 20;
-    lc_g = tan($pi * slider4 / srate);
+    lc_g = tan($pi * min(slider4, srate * 0.45) / srate);
     lc_d = 1 / (1 + 1.4142135623730951 * lc_g + lc_g * lc_g);
     hc_on = slider5 < 20000;
     hc_g = tan($pi * min(slider5, srate * 0.45) / srate);
