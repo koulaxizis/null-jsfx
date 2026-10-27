@@ -2,7 +2,7 @@ desc:NULL Delay
 author: Christos Koulaxizis
 tags: delay echo slapback feedback pre-delay timing sync tempo tape modulation diffusion ducking freeze dotted triplet
 //category: Essentials
-//NULL JSFX v2.6 • https://nulljsfx.tech • MIT License
+//NULL JSFX v2.6.1 • https://nulljsfx.tech • MIT License
 
 slider1:250<0,2000,1>Time (ms)
 slider2:0<0,100,1>Feedback (%)

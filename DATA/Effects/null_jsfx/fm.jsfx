@@ -2,7 +2,7 @@ desc:NULL FM
 author: Christos Koulaxizis
 tags: instrument synth synthesizer fm frequency modulation 4-operator polyphonic electric piano bells bass brass mallets pad midi
 //category: Instruments
-//NULL JSFX v2.6 • https://nulljsfx.tech • MIT License
+//NULL JSFX v2.6.1 • https://nulljsfx.tech • MIT License
 
 slider1:0<0,7,1{Stack,Dual Mod,Branch,Pair Stack,Two Pairs,Triple,One Pair,Additive}>Algorithm
 slider2:0<0,100,1>Feedback (%)

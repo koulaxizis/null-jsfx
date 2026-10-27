@@ -59,10 +59,10 @@
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                     <span class="btn-text">Download</span>
                     <div class="download-meta">
-                        <span><b id="release-version">v2.6</b></span>
+                        <span><b id="release-version">v2.6.1</b></span>
                         <span class="release-new" id="release-new" hidden>NEW</span>
                         <span class="sep">&bull;</span>
-                        <span id="last-update">Released: 26/10/26</span>
+                        <span id="last-update">Released: 28/10/26</span>
                     </div>
                 </div>
             </a>
@@ -157,7 +157,7 @@
             <div class="modal-content modal-download">
                 <button class="modal-close" onclick="closeDownload()">&times;</button>
                 <div class="changelog-header">
-                    <h3>Download NULL JSFX v2.6</h3>
+                    <h3>Download NULL JSFX v2.6.1</h3>
                     <p class="changelog-date">Free and open source. Pick what you need.</p>
                 </div>
                 <div class="download-support" id="download-support" hidden>
@@ -218,10 +218,21 @@
             <div class="modal-content modal-changelog">
                 <button class="modal-close" onclick="closeChangelog()">&times;</button>
                 <div class="changelog-header">
-                    <h3>Release Notes v2.6</h3>
+                    <h3>Release Notes v2.6.1</h3>
                     <p class="changelog-date">October 2026</p>
                 </div>
                 <div class="changelog-body">
+                    <div class="changelog-section">
+                        <h4 class="changelog-title">2.6.1: FIXES</h4>
+                        <ul>
+                            <li><strong>PLAY</strong>: reverb and delay tails, and the state of 96 effects, carry on when you press Play or move the cursor instead of starting from silence</li>
+                            <li><strong>CONVOLUTION</strong>: changing the impulse response no longer causes a dropout, and the tail carries on into the new one; Slicer and Half Speed start at once</li>
+                            <li><strong>SAMPLE RATES</strong>: twelve plugins no longer go silent or blow up at very low or unusual sample rates, and Convolution, Slicer and Tape Echo work at very high ones</li>
+                            <li><strong>INSTRUMENTS</strong>: every instrument passes the MIDI it receives on, so you can layer two of them; the Pluck strummer sounds the same in every format</li>
+                            <li><strong>VST3/CLAP</strong>: settings come back exactly when a project is reopened in every DAW, no CPU spikes on silent tails, latency reported correctly in CLAP hosts, and the plugins show the right version</li>
+                            <li><strong>RACK</strong>: its global controls have proper names in the DAW's automation list</li>
+                        </ul>
+                    </div>
                     <div class="changelog-section">
                         <h4 class="changelog-title">2.6: FIXES</h4>
                         <ul>

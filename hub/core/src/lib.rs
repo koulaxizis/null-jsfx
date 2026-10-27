@@ -926,7 +926,7 @@ pub fn now() -> u64 {
     std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map(|d| d.as_secs()).unwrap_or(0)
 }
 
-/// The release in a JSFX's footer line ("//NULL JSFX v2.6 • https://nulljsfx.tech • MIT License").
+/// The release in a JSFX's footer line ("//NULL JSFX v2.6.1 • https://nulljsfx.tech • MIT License").
 pub fn jsfx_version(path: &Path) -> Option<String> {
     let text = fs::read_to_string(path).ok()?;
     let rest = &text[text.find("NULL JSFX v")? + "NULL JSFX v".len()..];
