@@ -29,11 +29,11 @@ protected:
 
     void valueChanged(uint32_t, float) override { update(); }
 
-    void activate() override { init(getSampleRate()); }
+    void onActivate() override { init(getSampleRate()); }
 
     void sampleRateChanged(double newSampleRate) override { init(newSampleRate); }
 
-    void run(const float** inputs, float** outputs, uint32_t frames) override
+    void process(const float** inputs, float** outputs, uint32_t frames) override
     {
         fDsp.process(inputs[0], inputs[1], outputs[0], outputs[1], frames);
         for (uint32_t i = 0; i < frames; ++i)

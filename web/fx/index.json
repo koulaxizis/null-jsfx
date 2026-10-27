@@ -1401,7 +1401,7 @@
    "ins": 0,
    "outs": 2,
    "sliders": 19,
-   "bytes": 81940
+   "bytes": 81980
   },
   {
    "id": "drum_machine",
@@ -1415,7 +1415,7 @@
    "ins": 0,
    "outs": 8,
    "sliders": 63,
-   "bytes": 183205
+   "bytes": 183245
   },
   {
    "id": "fm",
@@ -1429,7 +1429,7 @@
    "ins": 0,
    "outs": 2,
    "sliders": 37,
-   "bytes": 227929
+   "bytes": 227971
   },
   {
    "id": "keys",
@@ -1443,7 +1443,7 @@
    "ins": 0,
    "outs": 2,
    "sliders": 12,
-   "bytes": 86786
+   "bytes": 86826
   },
   {
    "id": "organ",
@@ -1457,7 +1457,7 @@
    "ins": 0,
    "outs": 2,
    "sliders": 20,
-   "bytes": 91923
+   "bytes": 91963
   },
   {
    "id": "percussion",
@@ -1471,7 +1471,7 @@
    "ins": 0,
    "outs": 2,
    "sliders": 52,
-   "bytes": 160748
+   "bytes": 160788
   },
   {
    "id": "pluck",
@@ -1485,7 +1485,7 @@
    "ins": 0,
    "outs": 2,
    "sliders": 12,
-   "bytes": 94132
+   "bytes": 94172
   },
   {
    "id": "sampler",
@@ -1499,7 +1499,7 @@
    "ins": 0,
    "outs": 2,
    "sliders": 21,
-   "bytes": 95603
+   "bytes": 95643
   },
   {
    "id": "synth",
@@ -1513,7 +1513,7 @@
    "ins": 0,
    "outs": 2,
    "sliders": 45,
-   "bytes": 219175
+   "bytes": 219219
   }
  ],
  "midi": [

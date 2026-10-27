@@ -30,11 +30,11 @@ protected:
 
     void valueChanged(uint32_t, float) override { update(); }
 
-    void activate() override { setup(getSampleRate()); }
+    void onActivate() override { setup(getSampleRate()); }
 
     void sampleRateChanged(double newSampleRate) override { setup(newSampleRate); }
 
-    void run(const float** inputs, float** outputs, uint32_t frames) override
+    void process(const float** inputs, float** outputs, uint32_t frames) override
     {
         // display: vectorscope taps of the input (read before the outputs are written)
         for (uint32_t i = 0; i < frames; ++i)
