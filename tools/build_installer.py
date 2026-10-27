@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Builds the NULL JSFX installers from the release packages, so the user picks what to install:
-the formats (JSFX, JSFX GFX, VST3, CLAP), the plugins (by group or one by one) and the extras
+the formats (JSFX, JSFX GFX, VST3, CLAP, and LV2 on Linux), the plugins (by group or one by one) and the extras
 (FX chains, Rack, tablet remote, Noto Sans).
 
   Windows        writes components.iss (the plugin tree and its files) next to a copy of

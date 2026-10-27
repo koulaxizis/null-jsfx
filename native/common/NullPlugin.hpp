@@ -18,6 +18,7 @@
 #pragma once
 
 #include "DistrhoPlugin.hpp"
+#include "NullBeatClock.hpp"
 #include "NullSliders.hpp"
 #include "NullTaps.hpp"
 
@@ -69,14 +70,22 @@ protected:
              const MidiEvent* midiEvents, uint32_t midiEventCount) final
     {
         applyChangedParameters();
+        tick(frames);
         process(inputs, outputs, frames, midiEvents, midiEventCount);
     }
 #else
     void run(const float** inputs, float** outputs, uint32_t frames) final
     {
         applyChangedParameters();
+        tick(frames);
         process(inputs, outputs, frames);
     }
+#endif
+
+#if DISTRHO_PLUGIN_WANT_TIMEPOS
+    // the host's position for this block, exact in LV2 too (NullBeatClock.hpp); it hides
+    // Plugin::getTimePosition for the plugins
+    const TimePosition& getTimePosition() const noexcept { return fClock.time(); }
 #endif
 
     // the parameter changes (one bit per index) waiting for the audio thread
@@ -126,7 +135,19 @@ protected:
     }
 
 private:
+    void tick(uint32_t frames)
+    {
+#if DISTRHO_PLUGIN_WANT_TIMEPOS
+        fClock.update(Plugin::getTimePosition(), getSampleRate(), frames);
+#else
+        (void)frames;
+#endif
+    }
+
     std::atomic<uint64_t> fChanged { 0 };
+#if DISTRHO_PLUGIN_WANT_TIMEPOS
+    NullBeatClock fClock;
+#endif
 };
 
 class NullOneSliderPlugin : public NullPluginBase

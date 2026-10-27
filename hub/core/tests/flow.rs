@@ -120,7 +120,7 @@ fn publish(files: &Files, v: &str) {
 }
 
 fn targets(root: &Path) -> Targets {
-    Targets { reaper: root.join("REAPER"), vst3: root.join("VST3"), clap: root.join("CLAP"), fonts: root.join("fonts") }
+    Targets { reaper: root.join("REAPER"), vst3: root.join("VST3"), clap: root.join("CLAP"), lv2: root.join("LV2"), fonts: root.join("fonts") }
 }
 
 fn hub(root: &Path) -> Hub {
@@ -387,7 +387,7 @@ fn round(ranges: bool) {
     let file = h.export_selection(&cat, &root.join("out")).unwrap();
     let sel: null_hub_core::Selection = serde_json::from_slice(&fs::read(file).unwrap()).unwrap();
     assert_eq!(sel.kind, "null-jsfx-selection");
-    assert_eq!(sel.plugins["tilt"], Format::ALL.to_vec());
+    assert_eq!(sel.plugins["tilt"], vec![Format::Jsfx, Format::Gfx, Format::Vst3, Format::Clap]);
     assert_eq!(sel.plugins["delay"], vec![Format::Jsfx]);
 
     // the records survive a restart
@@ -395,7 +395,7 @@ fn round(ranges: bool) {
     assert_eq!(h2.scan(&cat).plugins["tilt"][&Format::Vst3].version.as_deref(), Some("2.2"));
 
     // removing the last GFX version takes the include along; empty folders go too
-    let rm: Vec<(String, Format)> = Format::ALL.iter().map(|f| ("tilt".to_string(), *f)).collect();
+    let rm: Vec<(String, Format)> = [Format::Jsfx, Format::Gfx, Format::Vst3, Format::Clap].iter().map(|f| ("tilt".to_string(), *f)).collect();
     let s = h.apply(&cat, &Request { install: vec![], remove: rm, ..Default::default() }, &mut |_| {}).unwrap();
     assert_eq!(s.installed, 1);
     assert!(!r.join("gfx").exists(), "gfx folder with the include must go with the last GFX plugin");

@@ -305,16 +305,50 @@
     return d;
   };
   Strings.prototype.from = function (d, s, offs) { return this.substr(d, s, offs); };
-  Strings.prototype.getchar = function (s, idx) {
+  // str_getchar / str_setchar with a type ('c', 's', 'i', 'f', 'd', 'u' before it for unsigned,
+  // upper case for big endian), like eel_getchar_flag in WDL's eel_strings.h
+  function charType(type) {
+    var t = int32(type), uns = false, big = false, up = function (c) { return c >= 97 && c <= 122 ? c - 32 : c; };
+    if (up((t >> 8) & 255) === 85) uns = true;
+    else if (t > 255 && up(t & 255) === 85) { uns = true; t >>= 8; }
+    t &= 255;
+    if (t >= 65 && t <= 90) big = true; else t -= 32;
+    var size = t === 70 ? 4 : t === 68 ? 8 : t === 83 ? 2 : t === 73 ? 4 : 1;
+    return { size: size, float: t === 70 || t === 68, uns: uns, big: big };
+  }
+  var cbuf = new DataView(new ArrayBuffer(8));
+  function cint(v, bits, uns) {
+    v = Math.trunc(v); if (!isFinite(v)) v = 0;
+    var m = Math.pow(2, bits); v = ((v % m) + m) % m;
+    return !uns && v >= m / 2 ? v - m : v;
+  }
+  Strings.prototype.getchar = function (s, idx, type) {
     var str = this.get(s), i = int32(idx);
     if (i < 0) i += str.length;
-    return i >= 0 && i < str.length ? str.charCodeAt(i) & 255 : 0;
+    if (arguments.length < 3) return i >= 0 && i < str.length ? str.charCodeAt(i) & 255 : 0;
+    var ct = charType(type), le = !ct.big;
+    if (i < 0 || i > str.length - ct.size) return 0;
+    for (var k = 0; k < ct.size; k++) cbuf.setUint8(k, str.charCodeAt(i + k) & 255);
+    if (ct.float) return ct.size === 8 ? cbuf.getFloat64(0, le) : cbuf.getFloat32(0, le);
+    if (ct.size === 4) return ct.uns ? cbuf.getUint32(0, le) : cbuf.getInt32(0, le);
+    if (ct.size === 2) return ct.uns ? cbuf.getUint16(0, le) : cbuf.getInt16(0, le);
+    return ct.uns ? cbuf.getUint8(0) : cbuf.getInt8(0);
   };
-  Strings.prototype.setchar = function (s, idx, ch) {
+  Strings.prototype.setchar = function (s, idx, ch, type) {
     var str = this.get(s), i = int32(idx);
     if (i < 0) i += str.length;
     if (i < 0 || i > str.length) return s;
-    this.put(s, str.slice(0, i) + String.fromCharCode(int32(ch) & 255) + str.slice(i + 1));
+    if (arguments.length < 4) {
+      this.put(s, str.slice(0, i) + String.fromCharCode(int32(ch) & 255) + str.slice(i + 1));
+      return s;
+    }
+    var ct = charType(type), le = !ct.big, out = "";
+    if (ct.float) { if (ct.size === 8) cbuf.setFloat64(0, ch, le); else cbuf.setFloat32(0, ch, le); }
+    else if (ct.size === 4) cbuf.setUint32(0, cint(ch, 32, true), le);
+    else if (ct.size === 2) cbuf.setUint16(0, cint(ch, 16, true), le);
+    else cbuf.setUint8(0, cint(ch, 8, true));
+    for (var k = 0; k < ct.size; k++) out += String.fromCharCode(cbuf.getUint8(k));
+    this.put(s, str.slice(0, i) + out + str.slice(i + ct.size));
     return s;
   };
   Strings.prototype.setlen = function (s, n) {

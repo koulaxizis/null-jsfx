@@ -57,7 +57,10 @@ VST3 and CLAP (any DAW), from NULL-JSFX-VST3-CLAP-<your OS>.zip
       Linux:   ~/.vst3   and   ~/.clap
     then rescan plugins in your DAW.
 
-Rack (any DAW), in the VST3 and CLAP folders
+LV2 (Linux: Ardour, Carla, Qtractor and others), in the same zip for Linux
+    Copy the "NULL JSFX" folder from LV2 to ~/.lv2, then rescan plugins.
+
+Rack (any DAW), in the VST3 and CLAP folders (and LV2 on Linux)
     "Rack" by NULL JSFX chains up to 8 NULL JSFX effects in one plugin, with
     band splitting (Low/Mid/High), Mid/Side or Left/Right processing per slot,
     8 macros, 2 LFOs and an envelope follower. Its presets include the FX

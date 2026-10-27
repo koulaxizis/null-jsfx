@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 use std::env;
 use std::path::{Path, PathBuf};
 
-/// The folder of the suite inside the VST3 and CLAP folders.
+/// The folder of the suite inside the VST3, CLAP and LV2 folders.
 pub const VENDOR_DIR: &str = "NULL JSFX";
 
 pub fn os_name() -> &'static str {
@@ -25,12 +25,20 @@ pub struct Targets {
     pub vst3: PathBuf,
     /// the CLAP folder; plugins go into its "NULL JSFX" subfolder
     pub clap: PathBuf,
+    /// the LV2 folder (Linux); plugins go into its "NULL JSFX" subfolder. Settings saved by
+    /// Hubs before 2.7 have none and get the default.
+    #[serde(default = "default_lv2")]
+    pub lv2: PathBuf,
     /// the user's font folder
     pub fonts: PathBuf,
 }
 
 fn home() -> PathBuf {
     dirs::home_dir().unwrap_or_else(|| PathBuf::from("."))
+}
+
+fn default_lv2() -> PathBuf {
+    Targets::default().lv2
 }
 
 impl Default for Targets {
@@ -46,6 +54,7 @@ impl Default for Targets {
                 reaper: appdata.join("REAPER"),
                 vst3: common.join("VST3"),
                 clap: common.join("CLAP"),
+                lv2: common.join("LV2"),
                 fonts: local.join(r"Microsoft\Windows\Fonts"),
             }
         } else if cfg!(target_os = "macos") {
@@ -53,12 +62,13 @@ impl Default for Targets {
                 reaper: h.join("Library/Application Support/REAPER"),
                 vst3: h.join("Library/Audio/Plug-Ins/VST3"),
                 clap: h.join("Library/Audio/Plug-Ins/CLAP"),
+                lv2: h.join("Library/Audio/Plug-Ins/LV2"),
                 fonts: h.join("Library/Fonts"),
             }
         } else {
             let config = env::var_os("XDG_CONFIG_HOME").map(PathBuf::from).unwrap_or_else(|| h.join(".config"));
             let data = env::var_os("XDG_DATA_HOME").map(PathBuf::from).unwrap_or_else(|| h.join(".local/share"));
-            Targets { reaper: config.join("REAPER"), vst3: h.join(".vst3"), clap: h.join(".clap"), fonts: data.join("fonts") }
+            Targets { reaper: config.join("REAPER"), vst3: h.join(".vst3"), clap: h.join(".clap"), lv2: h.join(".lv2"), fonts: data.join("fonts") }
         }
     }
 }
@@ -94,6 +104,7 @@ pub fn plugin_paths(t: &Targets, id: &str, format: crate::Format) -> (PathBuf, S
             t.clap.join(VENDOR_DIR).join(format!("null_jsfx_{id}.clap")),
             format!("CLAP/{VENDOR_DIR}/null_jsfx_{id}.clap"),
         ),
+        Lv2 => (t.lv2.join(VENDOR_DIR).join(format!("null_jsfx_{id}.lv2")), format!("LV2/{VENDOR_DIR}/null_jsfx_{id}.lv2")),
     }
 }
 

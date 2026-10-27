@@ -44,7 +44,7 @@
                 </section>
                 <section class="guide-section">
                     <h2>Controls</h2>
-                    <ul class="guide-sliders"><li><span class="slider-name">Cutoff</span><span class="slider-desc">20 to 20000 Hz — Filter cutoff frequency</span></li><li><span class="slider-name">Resonance</span><span class="slider-desc">0 to 4 — Feedback around the ladder; high values approach self-oscillation (capped at 3.95)</span></li><li><span class="slider-name">Drive</span><span class="slider-desc">0 to 100% — Input gain into the saturating ladder for analog growl (level-compensated)</span></li><li><span class="slider-name">Mode</span><span class="slider-desc">Lowpass / Highpass — Lowpass or Highpass 24 dB/oct response</span></li><li><span class="slider-name">Gain</span><span class="slider-desc">−12 to +12 dB — Output level</span></li></ul>
+                    <ul class="guide-sliders"><li><span class="slider-name">Cutoff</span><span class="slider-desc">20 to 20000 Hz — Filter cutoff frequency</span></li><li><span class="slider-name">Resonance</span><span class="slider-desc">0 to 4 — Feedback around the ladder; high values approach self-oscillation (capped at 3.95)</span></li><li><span class="slider-name">Drive</span><span class="slider-desc">0 to 100% — Input gain into the saturating ladder for analog growl (level-compensated)</span></li><li><span class="slider-name">Mode</span><span class="slider-desc">Lowpass / Highpass — Lowpass or Highpass 24 dB/oct response</span></li><li><span class="slider-name">Gain</span><span class="slider-desc">−12 to +12 dB — Output level</span></li><li><span class="slider-name">Oversampling</span><span class="slider-desc">Off / 2x / 4x — Runs the ladder at 2x or 4x the sample rate (linear-phase halfband filters, 31 or 37 samples of latency) so the saturation in its loop does not alias at high Drive and Resonance; Off adds no latency.</span></li></ul>
                 </section>
                 <section class="guide-section">
                     <h2>Best uses</h2>
@@ -52,7 +52,7 @@
                 </section>
                 <section class="guide-section">
                     <h2>Properties</h2>
-                    <p class="page-props">Signal chain: Input → Drive → 4-Pole Zero-Delay-Feedback Ladder (24 dB/oct, tanh saturation in the loop) → LP / HP Output → Gain → Output. Stable and in tune up to 20 kHz at full resonance; stereo channels independent, zero latency.</p>
+                    <p class="page-props">Signal chain: Input → Drive → 4-Pole Zero-Delay-Feedback Ladder (24 dB/oct, tanh saturation in the loop) → LP / HP Output → Gain → Output. Stable and in tune up to 20 kHz at full resonance; stereo channels independent, zero latency (Oversampling 2x / 4x runs the ladder at the higher rate and adds 31 / 37 samples).</p>
                 </section>
                 <section class="guide-section">
                     <h2>Formats</h2>

@@ -10,6 +10,8 @@
  * Speed, Park-Miller hiss and the high-frequency loss of the tape speed. Tape Type picks the
  * curve, emphasis, top end and hiss colour (Classic = the open-reel voice); Noise Reduction is a
  * one-band compander (quiet highs up to +10 dB before the tape, the exact inverse after it).
+ * Oversampling (appended in 2.7): the saturation at 2x / 4x through the halfband stages of
+ * plugins/clipper; the latency grows by 31 / 37 samples and the dry path reads that much later.
  */
 
 #pragma once
@@ -18,6 +20,8 @@
 #include <cmath>
 #include <cstdint>
 #include <vector>
+
+#include "../clipper/ClipperDSP.hpp"
 
 namespace nulltape {
 
@@ -110,8 +114,15 @@ struct Playback {
 
 class TapeProcessor {
 public:
-    // the plugin delay (samples) the JSFX reports as pdc_delay
-    static int latencyFor(double sr) noexcept { return int(std::floor(0.003 * sr)); }
+    TapeProcessor()
+    {
+        nullclipper::halfbandDesign(fE1, fD1, 63, 7.5);
+        nullclipper::halfbandDesign(fE2, fD2, 23, 8.0);
+    }
+
+    // the plugin delay (samples) the JSFX reports as pdc_delay: the 3 ms centre plus the
+    // oversampling latency
+    int latency() const noexcept { return int(fBase) + fLat; }
 
     // @init
     void setSampleRate(double sr)
@@ -134,9 +145,13 @@ public:
         fPreL = fPreR = fDeL = fDeR = OnePole();
         fPbL = Playback();
         fPbR = Playback();
+        fOsL.reset();
+        fOsR.reset();
+        fPwL = fPwR = 0;
+        fOsPrev = -1;
     }
 
-    // @slider; s[0..7] = slider1..slider8
+    // @slider; s[0..10] = slider1..slider11
     void setParams(const double* s)
     {
         fDrive = std::pow(10.0, s[0] / 20.0);
@@ -171,6 +186,19 @@ public:
         fNrAt = 1.0 - std::exp(-1.0 / (0.002 * fSr));
         fNrRt = 1.0 - std::exp(-1.0 / (0.06 * fSr));
         fNrMax = std::pow(10.0, 10.0 / 20.0) - 1.0;
+
+        const int os = int(s[10]);
+        fOsf = os <= 0 ? 1 : os == 1 ? 2 : 4;
+        fLat = os <= 0 ? 0 : os == 1 ? 31 : 37;
+        fPad = os >= 2 ? 2 : 0;
+        // a new rate starts the oversampling filters from silence
+        if (fOsf != fOsPrev)
+        {
+            fOsL.reset();
+            fOsR.reset();
+            fPwL = fPwR = 0;
+            fOsPrev = fOsf;
+        }
     }
 
     template <typename T>
@@ -186,7 +214,7 @@ public:
             const double dly = fBase + fWowDepth * (std::sin(2.0 * kPi * fWow1) + 0.31 * std::sin(2.0 * kPi * fWow2))
                                      + fFltDepth * (std::sin(2.0 * kPi * fFlt1) + 0.4 * std::sin(2.0 * kPi * fFlt2));
             double xl = tap(fL, dly), xr = tap(fR, dly);
-            const int dp = (fW - int(fBase)) & fMask;
+            const int dp = (fW - int(fBase) - fLat) & fMask;
             const double dryL = fL[size_t(dp)], dryR = fR[size_t(dp)];
             fL[size_t(fW)] = inL[n];
             fR[size_t(fW)] = inR[n];
@@ -200,10 +228,19 @@ public:
 
             const double ul = pre(fPreL, xl) * fDrive;
             const double ur = pre(fPreR, xr) * fDrive;
-            const double yl = satCurve(ul + fSatA * (fSatYL - fSatUL), fSatB);
-            const double yr = satCurve(ur + fSatA * (fSatYR - fSatUR), fSatB);
-            fSatUL = ul; fSatYL = yl;
-            fSatUR = ur; fSatYR = yr;
+            double yl, yr;
+            if (fOsf > 1)
+            {
+                yl = satOs(ul, fOsL, fPwL, fSatUL, fSatYL);
+                yr = satOs(ur, fOsR, fPwR, fSatUR, fSatYR);
+            }
+            else
+            {
+                yl = satCurve(ul + fSatA * (fSatYL - fSatUL), fSatB);
+                yr = satCurve(ur + fSatA * (fSatYR - fSatUR), fSatB);
+                fSatUL = ul; fSatYL = yl;
+                fSatUR = ur; fSatYR = yr;
+            }
             double wl = de(fDeL, yl * fSatComp);
             double wr = de(fDeR, yr * fSatComp);
 
@@ -238,6 +275,37 @@ public:
     }
 
 private:
+    // the saturation with its memory (su, sy) at osf x the sample rate for one driven sample
+    // (sat_os); c = the channel's oversampling buffers, pw its pad position
+    double satOs(double x, nullclipper::Channel& c, int& pw, double& su, double& sy) noexcept
+    {
+        double o0, o1;
+        c.u1.process(x, fE1, 15, o0, o1); c.a1[0] = o0; c.a1[1] = o1;
+        if (fOsf > 2)
+            for (int k = 0; k < 2; ++k)
+            {
+                c.u2.process(c.a1[k], fE2, 5, o0, o1); c.a2[2 * k] = o0; c.a2[2 * k + 1] = o1;
+            }
+        double* t = fOsf > 2 ? c.a2 : c.a1;
+        for (int k = 0; k < fOsf; ++k)
+        {
+            double v = t[k];
+            if (fPad > 0)
+            {
+                c.pd[pw] = v;
+                v = c.pd[(pw - fPad + 8) % 8];
+                pw = (pw + 1) % 8;
+            }
+            const double y = satCurve(v + fSatA * (sy - su), fSatB);
+            su = v; sy = y;
+            t[k] = y;
+        }
+        if (fOsf > 2)
+            for (int k = 0; k < 2; ++k)
+                c.a1[k] = c.d2.process(c.a2[2 * k], c.a2[2 * k + 1], fD2);
+        return c.d1.process(c.a1[0], c.a1[1], fD1);
+    }
+
     struct OnePole { double x1 = 0.0, y1 = 0.0; };
     struct Compander { double x1 = 0.0, h1 = 0.0, env = 0.0; };
 
@@ -320,6 +388,9 @@ private:
     double fSatB = kSatB, fSatA = kSatA, fNc = 0, fNzL = 0, fNzR = 0;
     double fNcA = 0, fNrA = 0, fNrAt = 0, fNrRt = 0, fNrMax = 0;
     Compander fEnc[2], fDec[2];
+    double fE1[32] = {}, fD1[32] = {}, fE2[12] = {}, fD2[12] = {};
+    nullclipper::Channel fOsL, fOsR;
+    int fOsf = 1, fLat = 0, fPad = 0, fPwL = 0, fPwR = 0, fOsPrev = -1;
 };
 
 } // namespace nulltape

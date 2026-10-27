@@ -16,6 +16,7 @@ static const NullKnobsUI::Control kControls[] = {
     { 8, NullKnobsUI::kSelect, "TAPE TYPE", 0, -1, false },
     { 2, NullKnobsUI::kKnob, "BUMP", 0, -1, false },
     { 5, NullKnobsUI::kKnob, "HISS", 0, -1, false },
+    { 10, NullKnobsUI::kSelect, "OVERSAMPLE", 0, -1, false },
     { 3, NullKnobsUI::kKnob, "WOW", 1, -1, false },
     { 4, NullKnobsUI::kKnob, "FLUTTER", 1, -1, false },
     { 9, NullKnobsUI::kSelect, "NOISE RED", 1, -1, false },

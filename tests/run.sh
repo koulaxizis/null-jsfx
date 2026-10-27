@@ -4,6 +4,7 @@
 #   2. tests/jsfx_test    - compiles and renders every plugin (and GFX version) at 44.1/48/96 kHz
 #                           (NULL_TEST_RATES="8000,22050" sets other rates)
 #   3. tests/chain_test   - renders every FX chain in DATA/FXChains (only when no plugins are given)
+#   4. tests/gfx_hist_test.jsfx - A/B and undo/redo of the GFX library (only when no plugins are given)
 # Usage: tests/run.sh [plugin.jsfx ...]   (default: every plugin and every chain)
 #        tests/run.sh --build-only        only build ysfx and the test programs (native/scripts/build.sh)
 set -euo pipefail
@@ -39,5 +40,6 @@ python3 "$here/lint.py" "$@" || status=1
 "$build/jsfx_test" "$@" || status=1
 if [ $chains -eq 1 ]; then
   "$build/chain_test" "$root/DATA/Effects" "$root"/DATA/FXChains/*/*.RfxChain || status=1
+  "$build/jsfx_test" "$here/gfx_hist_test.jsfx" || status=1
 fi
 exit $status

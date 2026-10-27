@@ -171,9 +171,12 @@ static constexpr uint32_t kNumValues = {n};
 
 def gfx_block(stem, presets, files):
     """EEL2 for the end of @init of <stem>_gfx.jsfx: the functions the header's preset selector
-    (null_gfx.jsfx-inc) calls through ng_presets()."""
+    (null_gfx.jsfx-inc) calls through ng_presets(), and the sliders A/B and undo/redo keep."""
     idx = [i for i in range(len(presets[0][1])) if i not in files]
-    out = [GFX_BEGIN, f"  ng_pre_n = {len(presets)};", "",
+    out = [GFX_BEGIN, f"  ng_pre_n = {len(presets)};",
+           '  strcpy(#ng_h_ix, "");',
+           "  " + " ".join(f"ng_hist_add({i + 1});" for i in idx),
+           "  ng_hist_init();", "",
            "  function ng_preset_load(p)", "  ("]
     for k, (_, vals) in enumerate(presets):
         out.append(f"    p == {k} ? ( " + " ".join(f"ng_slider_set({i + 1}, {fmt(vals[i])});" for i in idx) + " );")
@@ -186,6 +189,7 @@ def gfx_block(stem, presets, files):
     out += ["    s;", "  );", "",
             "  function ng_presets() local(i)", "  (",
             "    ng_pre_req >= 0 ? ( ng_preset_load(ng_pre_req); update(); ng_pre_req = -1; );",
+            "    ng_hist() ? update();",
             "    ng_pre_cur = ng_preset_match();",
             "    ng_pre_open ? (",
             "      ng_pre_menu_begin();",

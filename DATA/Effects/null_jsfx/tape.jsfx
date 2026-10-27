@@ -14,6 +14,7 @@ slider7:0<-12,12,0.1>Output (dB)
 slider8:100<0,100,1>Mix (%)
 slider9:0<0,3,1{Classic,Type I,Type II,Type IV}>Tape Type
 slider10:0<0,1,1{Off,On}>Noise Reduction
+slider11:0<0,2,1{Off,2x,4x}>Oversampling
 
 in_pin:Left
 in_pin:Right
@@ -36,6 +37,9 @@ out_pin:Right
   // and brighter. Noise Reduction is a one-band compander: quiet highs are boosted up to 10 dB
   // before the tape and cut again after it, so the hiss drops, but loud highs let it through
   // (the "breathing" of cassette noise reduction).
+  // Oversampling (appended in 2.7) runs the saturation at 2x or 4x the sample rate through the
+  // halfband stages of NULL Saturation, so its harmonics do not fold back as aliasing; the
+  // latency grows by 31 or 37 samples and the dry signal is read that much later to match.
   buf_size = 1024;
   while (buf_size < ceil(0.008 * srate)) ( buf_size *= 2; );
   base = floor(0.003 * srate);
@@ -44,8 +48,13 @@ out_pin:Right
   pdc_delay = base;
   buf_l = 0;
   buf_r = buf_size;
-  freembuf(buf_r + buf_size);
+  // the oversampling stages after the lines: halfband taps, then a block per channel
+  E1 = 2 * buf_size; D1 = E1 + 32;  // stage 1 (63 taps): 32 even-phase taps, x2 for the upsampler
+  E2 = E1 + 64;      D2 = E1 + 76;  // stage 2 (23 taps): 12
+  freembuf(E1 + 896);
   memset(buf_l, 0, 2 * buf_size);
+  memset(E1, 0, 896);
+  os_prev = -1;
   wpos = 0;
   wow_p1 = 0; wow_p2 = 0.3; flt_p1 = 0; flt_p2 = 0.6;
   seed_l = 13579;
@@ -59,6 +68,137 @@ out_pin:Right
 
   function soft(v) ( v / sqrt(1 + v * v); );
   function sat_curve(v) ( soft(v + sat_b) - soft(sat_b); );
+
+  // modified Bessel function I0 (series), for the Kaiser window
+  function bessel_i0(x) local(s, t, k, q)
+  (
+    s = 1; t = 1; k = 1;
+    loop(40,
+      q = x / (2 * k);
+      t *= q * q;
+      s += t;
+      k += 1;
+    );
+    s;
+  );
+
+  // the n = (taps + 1) / 2 nonzero side taps of a halfband lowpass (Kaiser beta), normalised
+  // so they sum to 0.5 (the centre tap is 0.5): e = 2 h for the upsampler, d = h for the
+  // downsampler
+  function hb_design(e, d, taps, beta) local(c, i, dd, a, sg, r, w, s)
+  (
+    c = (taps - 1) / 2;
+    s = 0;
+    i = 0;
+    loop((taps + 1) / 2,
+      dd = 2 * i - c;
+      a = abs(dd);
+      sg = ((a - 1) / 2) % 2 ? -1 : 1;
+      r = 2 * dd / (taps - 1);
+      w = bessel_i0(beta * sqrt(max(0, 1 - r * r))) / bessel_i0(beta);
+      d[i] = sg / ($pi * a) * w;
+      s += d[i];
+      i += 1;
+    );
+    i = 0;
+    loop((taps + 1) / 2,
+      d[i] = 0.5 * d[i] / s;
+      e[i] = 2 * d[i];
+      i += 1;
+    );
+  );
+
+  hb_design(E1, D1, 63, 7.5);
+  hb_design(E2, D2, 23, 8);
+
+  // 2x upsampler, polyphase: one input sample in, hb_o0 (even) and hb_o1 (odd) out.
+  // s[0] = write position, s[1 ..] = the last n inputs, stored twice
+  function hb_up(x, s, e, n, m) local(p, q, acc, i)
+  (
+    p = s[0];
+    p = p > 0 ? p - 1 : n - 1;
+    s[0] = p;
+    q = s + 1 + p;
+    q[0] = x;
+    q[n] = x;
+    acc = 0;
+    i = 0;
+    loop(n, acc += e[i] * q[i]; i += 1;);
+    hb_o0 = acc;
+    hb_o1 = q[m];
+  );
+
+  // 2x downsampler, polyphase: an even and an odd sample in, one sample out.
+  // s[0] = write position, s[1] = position in the odd delay, s[2 ..] = the last n even
+  // samples stored twice, then m + 1 odd samples
+  function hb_down(v0, v1, s, d, n, m) local(p, q, acc, i, o)
+  (
+    p = s[0];
+    p = p > 0 ? p - 1 : n - 1;
+    s[0] = p;
+    q = s + 2 + p;
+    q[0] = v0;
+    q[n] = v0;
+    acc = 0;
+    i = 0;
+    loop(n, acc += d[i] * q[i]; i += 1;);
+    o = s + 2 + 2 * n + s[1];
+    acc += 0.5 * o[0];
+    o[0] = v1;
+    s[1] = s[1] < m ? s[1] + 1 : 0;
+    acc;
+  );
+
+  // per channel: filter states, the sample arrays of each rate, the pad and dry delays
+  function ch_init(b)
+  (
+    this.u1 = b;              // 1 + 64
+    this.u2 = b + 65;         // 1 + 24
+    this.d1 = b + 107;        // 2 + 64 + 16
+    this.d2 = b + 189;        // 2 + 24 + 6
+    this.a1 = b + 244;        // 2
+    this.a2 = b + 246;        // 4
+    this.pd = b + 258;        // 8
+    this.dr = b + 266;        // 64
+  );
+  chl.ch_init(E1 + 128);
+  chr.ch_init(E1 + 512);
+
+  // the saturation with its memory (su, sy) at osf x the sample rate for one driven sample x;
+  // c = the channel's oversampling buffers and its pad position c.pw
+  function sat_os(x, c*, su*, sy*) local(i, t, v, y)
+  (
+    hb_up(x, c.u1, E1, 32, 15); c.a1[0] = hb_o0; c.a1[1] = hb_o1;
+    osf > 2 ? (
+      i = 0;
+      loop(2,
+        hb_up(c.a1[i], c.u2, E2, 12, 5); c.a2[2 * i] = hb_o0; c.a2[2 * i + 1] = hb_o1;
+        i += 1;
+      );
+    );
+    t = osf > 2 ? c.a2 : c.a1;
+    i = 0;
+    loop(osf,
+      v = t[i];
+      pad > 0 ? (
+        c.pd[c.pw] = v;
+        v = c.pd[(c.pw - pad + 8) % 8];
+        c.pw = (c.pw + 1) % 8;
+      );
+      y = sat_curve(v + sat_a * (sy - su));
+      su = v; sy = y;
+      t[i] = y;
+      i += 1;
+    );
+    osf > 2 ? (
+      i = 0;
+      loop(2,
+        c.a1[i] = hb_down(c.a2[2 * i], c.a2[2 * i + 1], c.d2, D2, 12, 5);
+        i += 1;
+      );
+    );
+    hb_down(c.a1[0], c.a1[1], c.d1, D1, 32, 15);
+  );
 
   // 4-point cubic (Hermite) read at pos (fractional samples behind wpos) from line b
   function tap(b, pos) local(rp, i, fr, xm1, x0, x1, x2, c1, c2, c3)
@@ -173,6 +313,18 @@ out_pin:Right
   nr_rt = 1 - exp(-1 / (0.06 * srate));
   nr_max = 10 ^ (10 / 20) - 1;
 
+  os = slider11;
+  os < 0.5 ? ( osf = 1; lat = 0; pad = 0; ) :
+  os < 1.5 ? ( osf = 2; lat = 31; pad = 0; ) :
+             ( osf = 4; lat = 37; pad = 2; );
+  pdc_delay = base + lat;
+  // a new rate starts the oversampling filters from silence
+  osf != os_prev ? (
+    memset(E1 + 128, 0, 768);
+    chl.pw = chr.pw = 0;
+    os_prev = osf;
+  );
+
 @sample
   // transport: two slow and two fast sines (one tape, so both channels move together)
   wow_p1 += 0.55 / srate; wow_p1 >= 1 ? wow_p1 -= 1;
@@ -183,8 +335,8 @@ out_pin:Right
              + flt_depth * (sin(2 * $pi * flt_p1) + 0.4 * sin(2 * $pi * flt_p2));
   x_l = tap(buf_l, dly);
   x_r = tap(buf_r, dly);
-  dry_l = buf_l[(wpos - base) & (buf_size - 1)];
-  dry_r = buf_r[(wpos - base) & (buf_size - 1)];
+  dry_l = buf_l[(wpos - base - lat) & (buf_size - 1)];
+  dry_r = buf_r[(wpos - base - lat) & (buf_size - 1)];
   buf_l[wpos] = spl0;
   buf_r[wpos] = spl1;
   wpos = (wpos + 1) & (buf_size - 1);
@@ -204,10 +356,15 @@ out_pin:Right
   // record: pre-emphasis, Drive into the saturation with memory, de-emphasis
   u_l = pre_l.pre(x_l) * drive;
   u_r = pre_r.pre(x_r) * drive;
-  y_l = sat_curve(u_l + sat_a * (sat_y_l - sat_u_l));
-  y_r = sat_curve(u_r + sat_a * (sat_y_r - sat_u_r));
-  sat_u_l = u_l; sat_y_l = y_l;
-  sat_u_r = u_r; sat_y_r = y_r;
+  osf > 1 ? (
+    y_l = sat_os(u_l, chl, sat_u_l, sat_y_l);
+    y_r = sat_os(u_r, chr, sat_u_r, sat_y_r);
+  ) : (
+    y_l = sat_curve(u_l + sat_a * (sat_y_l - sat_u_l));
+    y_r = sat_curve(u_r + sat_a * (sat_y_r - sat_u_r));
+    sat_u_l = u_l; sat_y_l = y_l;
+    sat_u_r = u_r; sat_y_r = y_r;
+  );
   w_l = de_l.de(y_l * sat_comp);
   w_r = de_r.de(y_r * sat_comp);
 

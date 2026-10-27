@@ -16,6 +16,7 @@ static const NullKnobsUI::Control kControls[] = {
     { 2, NullKnobsUI::kKnob, "DRIVE", 0, -1, false },
     { 3, NullKnobsUI::kSelect, "MODE", 0, -1, false },
     { 4, NullKnobsUI::kKnob, "GAIN", 0, -1, true },
+    { 5, NullKnobsUI::kSelect, "OVERSAMPLE", 0, -1, false },
 };
 
 class UILadderFilter : public NullKnobsUI
