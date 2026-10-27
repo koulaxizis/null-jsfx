@@ -18,6 +18,7 @@ name: VST3 and CLAP
 
 on:
   push:
+    branches: [main]
     paths: ["native/**", "DATA/**", "remote/**", "tests/**", "installer/**", "tools/build_installer.py", ".github/workflows/native.yml"]
   pull_request:
     paths: ["native/**", "DATA/**", "remote/**", "tests/**", "installer/**", "tools/build_installer.py", ".github/workflows/native.yml"]
@@ -29,6 +30,14 @@ on:
         default: ""
   release:
     types: [published]
+
+# Pull requests run on every push to their branch; a newer push cancels the older run of the same
+# PR. Pushes run only on main, so a branch with a PR is not built twice. Runs on main, releases
+# and manual runs each get their own group, so they are never cancelled or queued (release
+# uploads always finish).
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.ref || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions:
   contents: write
