@@ -22,8 +22,10 @@ static const char* const kKitOptions[] = { "Manual", "Deep Boom", "Punch Box", "
 static const char* const kKitShort[] = { "MANUAL", "DEEP BOOM", "PUNCH BOX", "VINTAGE", "POP STUDIO", "LO-FI DUST", "INDUSTRIAL", "MINIMAL", "BIG ROOM" };
 static const char* const kOutputsOptions[] = { "Main", "Groups" };
 static const char* const kOutputsShort[] = { "MAIN", "GROUPS" };
+static const char* const kSongOptions[] = { "Off", "On" };
+static const char* const kSongShort[] = { "OFF", "ON" };
 
-// slider1..slider63 of drum_machine.jsfx, in order
+// slider1..slider64 of drum_machine.jsfx, in order
 static const DISTRHO::SliderInfo kSliders[] = {
     { "Pattern", "pattern", 0.0f, 19.0f, 2.0f, "", 1.0f, kPatternOptions },
     { "Swing", "swing", 50.0f, 75.0f, 50.0f, "%", 1.0f },
@@ -88,6 +90,7 @@ static const DISTRHO::SliderInfo kSliders[] = {
     { "Style", "style", 0.0f, 5.0f, 0.0f, "", 1.0f, kStyleOptions },
     { "Kit", "kit", 0.0f, 8.0f, 0.0f, "", 1.0f, kKitOptions },
     { "Outputs", "outputs", 0.0f, 1.0f, 0.0f, "", 1.0f, kOutputsOptions },
+    { "Song", "song", 0.0f, 1.0f, 0.0f, "", 1.0f, kSongOptions },
 };
 static constexpr uint32_t kNumParams = sizeof(kSliders) / sizeof(kSliders[0]);
 

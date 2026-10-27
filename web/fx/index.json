@@ -1505,15 +1505,15 @@
    "id": "drum_machine",
    "name": "Drum Machine",
    "category": "Instruments",
-   "tags": "instrument drum machine drums beat sequencer synth 808 909 kick snare hats midi probability generator multi-out gui",
+   "tags": "instrument drum machine drums beat sequencer synth 808 909 kick snare hats midi probability chance song mode generator multi-out gui",
    "gfx": [
     640,
-    580
+    614
    ],
    "ins": 0,
    "outs": 8,
-   "sliders": 63,
-   "bytes": 193224
+   "sliders": 64,
+   "bytes": 204536
   },
   {
    "id": "fm",
@@ -1656,6 +1656,34 @@
    "outs": 2,
    "sliders": 5,
    "bytes": 58001
+  },
+  {
+   "id": "midi_lfo",
+   "name": "MIDI LFO",
+   "category": "MIDI",
+   "tags": "midi lfo modulation cc pitch bend channel pressure tempo sync sine triangle saw square random sample and hold automation gui",
+   "gfx": [
+    480,
+    342
+   ],
+   "ins": 2,
+   "outs": 2,
+   "sliders": 12,
+   "bytes": 61291
+  },
+  {
+   "id": "midi_utility",
+   "name": "MIDI Utility",
+   "category": "MIDI",
+   "tags": "midi utility transpose velocity curve channel split key range velocity range filter cc pitch bend aftertouch program change gui",
+   "gfx": [
+    480,
+    342
+   ],
+   "ins": 2,
+   "outs": 2,
+   "sliders": 14,
+   "bytes": 75083
   },
   {
    "id": "riff",

@@ -1,5 +1,5 @@
 /*
- * NULL JSFX - the note tracking of the MIDI effects (Chords, Scale), framework-free: the same
+ * NULL JSFX - the note tracking of the MIDI effects (Chords, Scale, MIDI Utility), framework-free: the same
  * steps as the cd_* / sc_* functions of chords.jsfx and scale.jsfx, so the MIDI that goes out is
  * the same message for message, at the same sample.
  * Copyright (C) 2026 Christos Koulaxizis / NULL JSFX
@@ -91,6 +91,14 @@ public:
             fOn[s * kPerKey + i] = t + i * strum;
             put(t + i * strum, 0x90 | ch, notes[i], vel, s);
         }
+    }
+
+    // every key held ends at time t (MIDI Utility's new Channel)
+    void releaseAll(double t)
+    {
+        for (int s = 0; s < kKeys; ++s)
+            if (fAct[s])
+                release(t, s, 0);
     }
 
     // the messages due in the next `frames` samples, in order: send(offset, status, d1, d2)

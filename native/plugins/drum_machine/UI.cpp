@@ -7,7 +7,10 @@
  * and the kit's row. A click on a step cycles off, hit, accent, flam, roll; a right click
  * clears it; a click on a name selects the voice and plays it; the boxes on the right set
  * each track's length. An edit plays the User pattern (a factory or generated one is copied
- * first). The third row holds Probability, Seed, Generate, Density, Style and Outputs; Kit sits
+ * first). Under the grid, the song: Song on or off and 8 sections (a pattern and its bars; a
+ * click on the left half steps back, on the right half forward, the wheel too; a right click on
+ * a pattern ends the song there), saved as the state "song". A click on a step also reaches
+ * chance. The third row holds Probability, Seed, Generate, Density, Style and Outputs; Kit sits
  * next to the voice's knobs on every tab.
  */
 
@@ -67,6 +70,7 @@ static const SliderInfo* uiSliders()
     s[60].options = nulldrum::kStyleShort;
     s[61].options = nulldrum::kKitShort;
     s[62].options = nulldrum::kOutputsShort;
+    s[63].options = nulldrum::kSongShort;
     return s;
 }
 
@@ -74,10 +78,11 @@ class UIDrumMachine : public NullKnobsUI
 {
 public:
     UIDrumMachine()
-        : NullKnobsUI({ "DRUM MACHINE", "INSTRUMENTS", 640, 206, "KICK|SNARE|CLAP|RIM|C HAT|O HAT|LO TOM|HI TOM|BELL|CYMBAL",
+        : NullKnobsUI({ "DRUM MACHINE", "INSTRUMENTS", 640, 240, "KICK|SNARE|CLAP|RIM|C HAT|O HAT|LO TOM|HI TOM|BELL|CYMBAL",
                         3, uiSliders(), nulldrum::kNumParams, controls(), kNumControls, true })
     {
         nulldrum::defaultUser(fUser);
+        nulldrum::defaultSong(fSong);
     }
 
 protected:
@@ -88,13 +93,34 @@ protected:
 
     int pattern() const { return int(std::lround(value(0))); }
     bool generated() const { return value(58) >= 0.5f && pattern() > 0; }
+    bool songOn() const { return value(63) >= 0.5f; }
 
-    // the pattern the grid shows: the generated one, the User one (also when Off) or the factory
-    // one that plays
+    // the song's sections up to the first End (0 with Song Off)
+    int songSections() const
+    {
+        int n = 0;
+        if (songOn())
+            for (int k = 0; k < nulldrum::kSongSections; ++k)
+                if (fSong[k] >= 1 && n == k)
+                    ++n;
+        return n;
+    }
+
+    // the section that plays (the first one while stopped)
+    int songSection() const
+    {
+        nulljsfx::Taps* t = taps();
+        return t ? std::max(0, std::min(nulldrum::kSongSections - 1, int(std::lround(t->aux[nulldrum::kTracks].load(std::memory_order_relaxed))))) : 0;
+    }
+
+    // the pattern the grid shows: the song section's, the generated one, the User one (also
+    // when Off) or the factory one that plays
     const double* shown()
     {
-        const int p = pattern();
-        if (generated())
+        int p = pattern();
+        if (songSections() > 0)
+            p = int(fSong[songSection()]);
+        else if (generated())
         {
             // the plugin's parameters arrive as float: back on the JSFX's 1-steps
             nulldrum::generate(fGen, std::round(double(value(57))), std::round(double(value(59))), std::round(double(value(60))));
@@ -126,6 +152,19 @@ protected:
             if (x >= 566.0f && x < 616.0f)
                 return 3;
         }
+        // the song: 4 Song on or off, 5 a section's pattern, 6 its bars (i = the section)
+        if (y >= 262.0f && y < 294.0f && x >= 24.0f && x < 104.0f)
+            return 4;
+        for (i = 0; i < nulldrum::kSongSections; ++i)
+        {
+            const float xx = 112.0f + float(i) * 63.0f;
+            if (x < xx || x >= xx + 59.0f)
+                continue;
+            if (y >= 262.0f && y < 277.0f)
+                return 5;
+            if (y >= 279.0f && y < 294.0f)
+                return 6;
+        }
         return 0;
     }
 
@@ -153,11 +192,23 @@ protected:
         fill();
     }
 
-    void outline(float x, float y, float w, float h, uint32_t rgb)
+    void outline(float x, float y, float w, float h, uint32_t rgb, float alpha = 1.0f)
     {
         beginPath();
         rect(x + 0.5f, y + 0.5f, w - 1.0f, h - 1.0f);
-        strokeColor(col(rgb));
+        strokeColor(col(rgb, alpha));
+        strokeWidth(1.0f);
+        stroke();
+    }
+
+    // ng_arrow, faded
+    void arrow(float x, float y, float dir, float alpha)
+    {
+        beginPath();
+        moveTo(x - dir * 1.5f, y - 3.0f);
+        lineTo(x + dir * 1.5f, y);
+        lineTo(x - dir * 1.5f, y + 3.0f);
+        strokeColor(col(theme::kMuted, alpha));
         strokeWidth(1.0f);
         stroke();
     }
@@ -181,7 +232,14 @@ protected:
             dtext(cellX(i) + 12.5f, 71.0f, ALIGN_CENTER, 7.0f, 0.0f, beat ? theme::kText : theme::kMuted, beat ? 0.9f : 0.6f, buf, true);
         }
         dtext(591.0f, 71.0f, ALIGN_CENTER, 7.0f, 1.0f, theme::kMuted, 0.6f, "STEPS", true);
-        dtext(28.0f, 71.0f, ALIGN_LEFT, 7.0f, 1.0f, theme::kMuted, 0.6f, p == 0 ? "OFF: MIDI ONLY" : generated() ? "GENERATED" : p == 1 ? "USER" : "FACTORY", true);
+        const int songN = songSections(), songK = songSection();
+        if (songN > 0)
+        {
+            std::snprintf(buf, sizeof(buf), "SONG %d", songK + 1);
+            dtext(28.0f, 71.0f, ALIGN_LEFT, 7.0f, 1.0f, theme::kMuted, 0.6f, buf, true);
+        }
+        else
+            dtext(28.0f, 71.0f, ALIGN_LEFT, 7.0f, 1.0f, theme::kMuted, 0.6f, p == 0 ? "OFF: MIDI ONLY" : generated() ? "GENERATED" : p == 1 ? "USER" : "FACTORY", true);
 
         // the step that plays and each voice's hits, from the plugin
         double step = -1.0;
@@ -221,7 +279,7 @@ protected:
                 const float xx = cellX(i);
                 const int v = int(std::lround(pat[t * nulldrum::kSteps + i]));
                 const bool on = i < len;
-                const float a = (v > 0 ? (v == 1 ? 0.55f : v == 2 ? 1.0f : 0.8f) : 1.0f) * (on ? 1.0f : 0.35f);
+                const float a = (v > 0 ? (v == 1 ? 0.55f : v == 2 ? 1.0f : v == 5 ? 0.3f : 0.8f) : 1.0f) * (on ? 1.0f : 0.35f);
                 box(xx, yy, 25.0f, 15.0f, v > 0 ? theme::kAccent : theme::kBackground, a);
                 const float ma = on ? 1.0f : 0.6f;
                 if (v == 3)
@@ -231,6 +289,8 @@ protected:
                         box(xx + 8.0f + 4.0f * float(k), yy + 6.0f, 2.0f, 3.0f, theme::kBackground, ma);
                 if (v == 2)
                     box(xx + 11.0f, yy + 6.0f, 3.0f, 3.0f, theme::kBackground, ma);
+                if (v == 5)
+                    outline(xx + 10.0f, yy + 5.0f, 5.0f, 5.0f, theme::kBackground, ma);
                 const bool hover = fHoverKind == 2 && fHoverT == t && fHoverI == i;
                 outline(xx, yy, 25.0f, 15.0f, hover ? theme::kTrackHover : theme::kBorder);
                 // the playhead, at the track's own position
@@ -247,6 +307,38 @@ protected:
             dtext(591.0f, yy + 7.5f, ALIGN_CENTER, 7.5f, 0.0f, len < 16 ? theme::kText : theme::kMuted, 1.0f, buf, false);
             drawArrow(572.0f, yy + 7.5f, -1.0f);
             drawArrow(610.0f, yy + 7.5f, 1.0f);
+        }
+
+        // the song: Song on or off, then the 8 sections (those after the first End dimmed, the
+        // one that plays outlined)
+        const bool son = songOn();
+        box(24.0f, 262.0f, 80.0f, 32.0f, son ? theme::kAccent : theme::kBackground, 1.0f);
+        outline(24.0f, 262.0f, 80.0f, 32.0f, fHoverKind == 4 ? theme::kTrackHover : theme::kBorder);
+        dtext(64.0f, 271.0f, ALIGN_CENTER, 7.0f, 1.0f, son ? theme::kBackground : theme::kMuted, 1.0f, "SONG", true);
+        dtext(64.0f, 285.0f, ALIGN_CENTER, 7.5f, 1.0f, son ? theme::kBackground : theme::kText, 1.0f, son ? "ON" : "OFF", true);
+        int live = 0;
+        for (int k = 0; k < nulldrum::kSongSections; ++k)
+        {
+            const float xx = 112.0f + float(k) * 63.0f;
+            const int sp = int(fSong[k]), sb = int(fSong[nulldrum::kSongSections + k]);
+            if (sp >= 1 && live == k)
+                ++live;
+            const float a = k <= live ? 1.0f : 0.35f;
+            box(xx, 262.0f, 59.0f, 15.0f, theme::kBackground, 1.0f);
+            box(xx, 279.0f, 59.0f, 15.0f, theme::kBackground, 1.0f);
+            outline(xx, 262.0f, 59.0f, 15.0f, fHoverKind == 5 && fHoverI == k ? theme::kTrackHover : theme::kBorder);
+            outline(xx, 279.0f, 59.0f, 15.0f, fHoverKind == 6 && fHoverI == k ? theme::kTrackHover : theme::kBorder);
+            if (songN > 0 && step >= 0.0 && k == songK)
+            {
+                outline(xx, 262.0f, 59.0f, 15.0f, theme::kText);
+                outline(xx + 1.0f, 263.0f, 57.0f, 13.0f, theme::kText);
+            }
+            const uint32_t c = sp >= 1 ? theme::kText : theme::kMuted;
+            dtext(xx + 29.5f, 269.5f, ALIGN_CENTER, 6.5f, 0.5f, c, a, sp == 0 ? "END" : nulldrum::kPatternShort[std::min(sp, 19)], true);
+            std::snprintf(buf, sizeof(buf), sb == 1 ? "%d BAR" : "%d BARS", sb);
+            dtext(xx + 29.5f, 286.5f, ALIGN_CENTER, 7.5f, 0.0f, c, a, buf, false);
+            arrow(xx + 6.0f, 286.5f, -1.0f, a);
+            arrow(xx + 53.0f, 286.5f, 1.0f, a);
         }
     }
 
@@ -275,6 +367,22 @@ protected:
 
     void stateChanged(const char* key, const char* value) override
     {
+        if (std::strcmp(key, "song") == 0)
+        {
+            const char* c = value;
+            double p[nulldrum::kSongSize];
+            for (int i = 0; i < nulldrum::kSongSize; ++i)
+            {
+                char* end = nullptr;
+                p[i] = double(std::strtol(c, &end, 10));
+                if (end == c)
+                    return;
+                c = end;
+            }
+            std::copy(p, p + nulldrum::kSongSize, fSong);
+            repaint();
+            return;
+        }
         if (std::strcmp(key, "pattern") != 0)
             return;
         const char* c = value;
@@ -292,10 +400,21 @@ protected:
     }
 
     // an edit plays the User pattern: from a factory or generated pattern it starts as a copy of
-    // it (and Generate goes Off)
+    // it (and Generate goes Off); in the song, the section shown becomes User
     void toUser()
     {
         const int p = pattern();
+        if (songSections() > 0)
+        {
+            const int k = songSection(), sp = int(fSong[k]);
+            if (sp >= 2)
+            {
+                nulldrum::factory(sp - 1, fUser);
+                fSong[k] = 1;
+                sendSong();
+            }
+            return;
+        }
         if (generated())
         {
             std::copy(fGen, fGen + nulldrum::kPatternSize, fUser);
@@ -323,6 +442,26 @@ protected:
         repaint();
     }
 
+    void sendSong()
+    {
+        std::string s;
+        for (int i = 0; i < nulldrum::kSongSize; ++i)
+        {
+            s += i ? " " : "";
+            s += std::to_string(int(fSong[i]));
+        }
+        setState("song", s.c_str());
+        repaint();
+    }
+
+    // a song section's pattern and bars
+    void setSection(int k, int p, int b)
+    {
+        fSong[k] = std::max(0, std::min(19, p));
+        fSong[nulldrum::kSongSections + k] = std::max(1, std::min(16, b));
+        sendSong();
+    }
+
     void setLength(int t, int len)
     {
         toUser();
@@ -341,6 +480,23 @@ protected:
         const int kind = at(float(ev.pos.getX()) / s, float(ev.pos.getY()) / s, t, i);
         if (kind == 0)
             return NullKnobsUI::onMouse(ev);
+        const float x = float(ev.pos.getX()) / s;
+        if (kind == 4)
+        {
+            if (ev.button == kMouseButtonLeft)
+                setGesture(63, songOn() ? 0.0f : 1.0f);
+            return true;
+        }
+        if (kind == 5 || kind == 6)
+        {
+            const int sp = int(fSong[i]), sb = int(fSong[nulldrum::kSongSections + i]);
+            const int d = x < 112.0f + float(i) * 63.0f + 29.5f ? -1 : 1;
+            if (kind == 5 && ev.button == kMouseButtonRight)
+                setSection(i, 0, sb);
+            else if (ev.button == kMouseButtonLeft)
+                setSection(i, kind == 5 ? sp + d : sp, kind == 6 ? sb + d : sb);
+            return true;
+        }
         const double* pat = shown();
         const int len = int(std::lround(pat[nulldrum::kTracks * nulldrum::kSteps + t]));
         if (kind == 1 && ev.button == kMouseButtonLeft)
@@ -353,7 +509,7 @@ protected:
         {
             const int v = int(std::lround(pat[t * nulldrum::kSteps + i]));
             toUser();
-            fUser[t * nulldrum::kSteps + i] = ev.button == kMouseButtonRight ? 0 : (v >= 4 ? 0 : v + 1);
+            fUser[t * nulldrum::kSteps + i] = ev.button == kMouseButtonRight ? 0 : (v >= 5 ? 0 : v + 1);
             send();
         }
         else if (kind == 3 && ev.button == kMouseButtonLeft)
@@ -380,7 +536,17 @@ protected:
     {
         const float s = uiScale();
         int t = 0, i = 0;
-        if (!presetOpen() && at(float(ev.pos.getX()) / s, float(ev.pos.getY()) / s, t, i) == 3)
+        const int kind = presetOpen() ? 0 : at(float(ev.pos.getX()) / s, float(ev.pos.getY()) / s, t, i);
+        if (kind == 5 || kind == 6)
+        {
+            const float d = float(ev.delta.getY()) + float(ev.delta.getX());
+            if (d == 0.0f)
+                return false;
+            const int sp = int(fSong[i]), sb = int(fSong[nulldrum::kSongSections + i]), k = d > 0.0f ? 1 : -1;
+            setSection(i, kind == 5 ? sp + k : sp, kind == 6 ? sb + k : sb);
+            return true;
+        }
+        if (kind == 3)
         {
             const float d = float(ev.delta.getY()) + float(ev.delta.getX());
             if (d == 0.0f)
@@ -396,6 +562,7 @@ private:
     double fUser[nulldrum::kPatternSize];
     double fFactory[nulldrum::kPatternSize];
     double fGen[nulldrum::kPatternSize] = {};
+    double fSong[nulldrum::kSongSize];
     int fFactoryShown = -1;
     float fHits[nulldrum::kTracks] = {}, fFlash[nulldrum::kTracks] = {};
     int fHoverKind = 0, fHoverT = 0, fHoverI = 0;

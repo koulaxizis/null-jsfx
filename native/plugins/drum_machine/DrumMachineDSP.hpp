@@ -24,7 +24,7 @@
 namespace nulldrum {
 
 static constexpr double kPi = 3.141592653589793; // EEL2 $pi
-static constexpr int kNumSliders = 63;
+static constexpr int kNumSliders = 64;
 static constexpr int kNumOutputs = 8;
 static constexpr int kMaxNotes = 128;
 
@@ -136,6 +136,7 @@ public:
     DrumMachine()
     {
         defaultUser(fUser);
+        defaultSong(fSong);
         for (int k = 1; k <= kNumFactory; ++k)
             factory(k, fFactory[k - 1]);
         for (int i = 0; i < kNumSliders; ++i)
@@ -160,9 +161,10 @@ public:
         grPh = 0; grHl = grHr = 0;
         std::fill(grH, grH + kNumOutputs, 0.0);
         prX = 0;
+        songK = 0;
     }
 
-    // @slider, from the 63 slider values in order
+    // @slider, from the 64 slider values in order
     void setParams(const double* v)
     {
         std::copy(v, v + kNumSliders, fSl);
@@ -193,6 +195,7 @@ public:
             generate(fGen, fSeedV, s[60], s[61]);
         fKit = std::max(0.0, std::min(double(kNumKits), std::floor(s[62] + 0.5)));
         fOuts = s[63] >= 0.5;
+        fSongOn = s[64] >= 0.5;
         // a slider value with the Kit's offset (Manual: the value itself)
         const int kit = int(fKit);
         auto kp = [s, kit](int n, int t, int j, double lo, double hi) {
@@ -281,15 +284,35 @@ public:
     double* user() { return fUser; }
     const double* user() const { return fUser; }
 
+    // the song (kSongSize values)
+    double* song() { return fSong; }
+
     // @block: the note-ons of the block (offsets within it, velocity 0..1), the transport
     void beginBlock(const Note* notes, uint32_t count, bool playing, double tempo, double beatPos)
     {
         fNumNotes = std::min<uint32_t>(count, kMaxNotes);
         std::copy(notes, notes + fNumNotes, fNotes);
         fNoteIdx = 0;
-        fSeqOn = playing && fPat > 0;
+        // the song's sections up to the first End (none: Song Off) and its length in bars
+        fSongN = 0;
+        fSongLen = 0;
+        if (fSongOn)
+        {
+            for (int k = 0; k < kSongSections; ++k)
+                if (fSong[k] >= 1 && fSongN == k)
+                    ++fSongN;
+            for (int k = 0; k < fSongN; ++k)
+            {
+                fSong[kSongSections + k] = std::max(1.0, std::min(16.0, std::floor(fSong[kSongSections + k] + 0.5)));
+                fSongLen += fSong[kSongSections + k];
+            }
+        }
+        fSeqOn = playing && (fPat > 0 || fSongN > 0);
         if (!fSeqOn)
+        {
             fLastS = -1000;
+            songK = 0;
+        }
         fPb = fGenOn && fPat > 0 ? fGen : fPat <= 1 ? fUser : fFactory[int(fPat) - 2];
         fInc = tempo / (60 * fSr);
         fB0 = beatPos;
@@ -539,8 +562,10 @@ public:
         }
     }
 
-    // for the interface: the step that plays (-1 when stopped), a count of each voice's hits
+    // for the interface: the step that plays (-1 when stopped), a count of each voice's hits, the
+    // song's section that plays
     double step = -1;
+    int songK = 0;
     uint32_t hits[kTracks] = {};
 
 private:
@@ -565,13 +590,28 @@ private:
     // one sequencer step on every track: its value in the track's own length
     void playStep(double s)
     {
+        // Song: the section of this bar and its pattern
+        if (fSongN > 0)
+        {
+            double b = std::floor(s / 16);
+            b -= std::floor(b / fSongLen) * fSongLen;
+            songK = 0;
+            for (int k = 0; k < fSongN - 1; ++k)
+                if (b >= fSong[kSongSections + songK])
+                {
+                    b -= fSong[kSongSections + songK];
+                    ++songK;
+                }
+            const int p = int(fSong[songK]);
+            fPb = p <= 1 ? fUser : fFactory[p - 2];
+        }
         for (int t = 0; t < kTracks; ++t)
         {
             const double len = std::max(1.0, fPb[kTracks * kSteps + t]);
             const double i = s - std::floor(s / len) * len;
             double v = fPb[t * kSteps + int(i)];
             // Probability: an unaccented step plays when the draw is below it
-            if (v > 0 && fProb < 1 && v != 2)
+            if (v > 0 && fProb < 1 && v != 2 && v != 5)
             {
                 if (prX == 0)
                 {
@@ -582,6 +622,18 @@ private:
                 prX = pm(prX);
                 if (prX / 2147483647 >= fProb)
                     v = 0;
+            }
+            // Chance: a hit when the draw is below half of Probability
+            if (v == 5)
+            {
+                if (prX == 0)
+                {
+                    prX = fSeedV;
+                    for (int k = 0; k < 3; ++k)
+                        prX = pm(prX);
+                }
+                prX = pm(prX);
+                v = prX / 2147483647 < 0.5 * fProb ? 1 : 0;
             }
             if (v > 0)
             {
@@ -599,6 +651,10 @@ private:
     double fFactory[kNumFactory][kPatternSize];
 
     double fGen[kPatternSize] = {}; // the generated pattern
+    double fSong[kSongSize];
+    bool fSongOn = false;
+    int fSongN = 0;
+    double fSongLen = 0;
 
     // @slider
     double fProb = 1, fSeedV = 1, fKit = 0, prX = 0, prLast = 0;

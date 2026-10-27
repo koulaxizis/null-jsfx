@@ -182,5 +182,59 @@
     ],
     "properties": "Per channel. A run of at least Min Length samples in a row at or above Clip Level is redrawn with the cubic through the two good samples on either side of it, kept on the side of the clip level it was on and at most 12 dB above it. Runs up to 120 samples are rebuilt; longer ones stay as they are. 128 samples of latency, reported for delay compensation.",
     "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-de_clip\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><path d=\"M 6,32 L 12,18 L 20,18 L 26,32 L 32,46 L 40,46 L 46,32\" fill=\"none\" stroke=\"url(#icon-de_clip)\" stroke-width=\"2\" stroke-linejoin=\"round\" opacity=\"0.45\"/><path d=\"M 6,32 C 10,18 12,10 16,10 C 20,10 22,18 26,32 C 30,46 32,54 36,54 C 40,54 42,46 46,32 C 50,18 52,10 56,10\" fill=\"none\" stroke=\"url(#icon-de_clip)\" stroke-width=\"2.5\" stroke-linecap=\"round\"/><path d=\"M 4,18 L 60,18 M 4,46 L 60,46\" stroke=\"url(#icon-de_clip)\" stroke-width=\"1\" stroke-dasharray=\"2 3\" opacity=\"0.6\"/></svg>"
+  },
+  "midi_utility": {
+    "card_desc": "Transpose, Velocity, Splits, Filters",
+    "keywords": "midi utility transpose velocity curve fixed velocity channel key range split layer velocity range filter cc pitch bend aftertouch program change",
+    "slider_desc": [
+      "Moves every note up or down (-48 to +48 semitones).",
+      "Sends everything on one MIDI channel (1 to 16); Thru keeps each message's own channel.",
+      "Bends the velocity curve: above 0 lifts soft notes, below 0 lowers them.",
+      "The velocity the softest note becomes (1 to 127).",
+      "The velocity the hardest note becomes (1 to 127); Min above Max turns the curve upside down.",
+      "Every note plays at this velocity when above 0 (0 = off).",
+      "The lowest key that plays; notes below it are dropped (a split).",
+      "The highest key that plays; notes above it are dropped.",
+      "The softest velocity that plays; softer notes are dropped (a velocity layer).",
+      "The hardest velocity that plays; harder notes are dropped.",
+      "Pass or block controllers (all notes off always passes).",
+      "Pass or block pitch bend.",
+      "Pass or block channel and polyphonic aftertouch.",
+      "Pass or block program changes."
+    ],
+    "uses": [
+      "Keyboard splits and layers across two instruments",
+      "Taming or boosting a keyboard's velocity response",
+      "Transposing a part without touching the notes",
+      "Cleaning controller and aftertouch data from a performance"
+    ],
+    "properties": "A MIDI effect; the audio passes through. Every note-on remembers the key that made it, so the key's note-off always ends exactly that note, even when the settings change while it is held; a new Channel releases every held key. Notes shared by two keys start again and end with the last one.",
+    "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-midi_utility\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><path d=\"M 8,54 C 24,54 40,40 56,10\" fill=\"none\" stroke=\"url(#icon-midi_utility)\" stroke-width=\"2.5\" stroke-linecap=\"round\"/><path d=\"M 8,54 L 56,54 M 8,54 L 8,10\" stroke=\"url(#icon-midi_utility)\" stroke-width=\"1\" opacity=\"0.6\"/><path d=\"M 20,14 L 20,30 M 28,14 L 28,30 M 36,14 L 36,30\" stroke=\"url(#icon-midi_utility)\" stroke-width=\"3\" opacity=\"0.45\"/></svg>"
+  },
+  "midi_lfo": {
+    "card_desc": "LFO to CC, Pitch Bend, Pressure",
+    "keywords": "midi lfo modulation cc automation pitch bend channel pressure tempo sync sine triangle saw square random sample and hold wobble vibrato tremolo",
+    "slider_desc": [
+      "The wave: Sine, Triangle, Saw Up, Saw Down, Square, Random (holds a new value each cycle) or Smooth Random (glides to it).",
+      "Free runs at Rate in Hz; Tempo takes one cycle per Length, locked to the host's beat while it plays.",
+      "Cycles per second in Free (0.01 to 20 Hz).",
+      "The length of one cycle in Tempo, from 8 bars to 1/32, with triplets and dotted values.",
+      "Moves the start of the cycle (0 to 360 degrees).",
+      "What it sends: a controller (CC Number), pitch bend or channel pressure.",
+      "The controller it sends (0 to 127): 1 mod wheel, 7 volume, 10 pan, 11 expression, 74 cutoff.",
+      "The MIDI channel it sends on.",
+      "The lowest value of the swing (% of the range).",
+      "The highest value of the swing; Min above Max turns the wave upside down.",
+      "On Note starts the cycle again at every note-on (free running only).",
+      "Picks the random sequence: the same Seed always plays the same values."
+    ],
+    "uses": [
+      "Tempo-synced filter sweeps and wobbles on any synth",
+      "Volume pumping and auto-pan without a sidechain",
+      "Vibrato through pitch bend",
+      "Slow random drift for movement"
+    ],
+    "properties": "A MIDI effect; the audio passes through. Every 64 samples the value is worked out and sent when it changed, in time order with the incoming MIDI, which passes through untouched. Pitch bend is sent at 14-bit resolution. Random uses an exact Park-Miller sequence from Seed, so a render repeats.",
+    "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-midi_lfo\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><path d=\"M 6,32 C 12,8 20,8 26,32 C 32,56 40,56 46,32 C 50,16 54,12 58,14\" fill=\"none\" stroke=\"url(#icon-midi_lfo)\" stroke-width=\"2.5\" stroke-linecap=\"round\"/><path d=\"M 6,56 L 14,56 L 14,48 L 22,48 L 22,40 L 30,40\" fill=\"none\" stroke=\"url(#icon-midi_lfo)\" stroke-width=\"1.5\" opacity=\"0.5\"/></svg>"
   }
 }

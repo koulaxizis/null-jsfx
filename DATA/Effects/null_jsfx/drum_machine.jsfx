@@ -1,6 +1,6 @@
 desc:NULL Drum Machine
 author: Christos Koulaxizis
-tags: instrument drum machine drums beat sequencer synth 808 909 kick snare hats midi probability generator multi-out
+tags: instrument drum machine drums beat sequencer synth 808 909 kick snare hats midi probability chance song mode generator multi-out
 //category: Instruments
 //NULL JSFX v2.6 • https://nulljsfx.tech • MIT License
 
@@ -67,6 +67,7 @@ slider60:50<0,100,1>Density (%)
 slider61:0<0,5,1{Four Floor,Breakbeat,Half Time,Electro,Latin,Random}>Style
 slider62:0<0,8,1{Manual,Deep Boom,Punch Box,Vintage,Pop Studio,Lo-Fi Dust,Industrial,Minimal,Big Room}>Kit
 slider63:0<0,1,1{Main,Groups}>Outputs
+slider64:0<0,1,1{Off,On}>Song
 
 in_pin:none
 out_pin:Left
@@ -96,20 +97,24 @@ out_pin:Perc Right
   // unaccented steps (a Park-Miller draw from Seed), Generate plays a pattern made from Seed,
   // Density and Style instead of the selected one, Kit moves every voice's Level, Tune, Decay
   // and Tone by a set of offsets, and Outputs Groups puts the kick on pins 1/2, snare, clap and
-  // rim on 3/4, the hats and cymbal on 5/6, the toms and cowbell on 7/8. At their defaults
-  // (100 %, Off, Manual, Main) the kit sounds as before.
+  // rim on 3/4, the hats and cymbal on 5/6, the toms and cowbell on 7/8. Song On plays the
+  // song instead of the Pattern: up to 8 sections in turn (up to the first End), each a pattern
+  // for 1 to 16 bars, counted from the start of the project, set in the GFX version and saved
+  // with the project. A Chance step plays half the time (times Probability). At their defaults
+  // (100 %, Off, Manual, Main, Off) the kit sounds as before.
   //
   // Memory: 0..169 the User pattern (10 tracks x 16 steps, then 10 lengths), 10000.. the
   // factory patterns (170 each), 4000.. the MIDI notes of the block, 5000.. per-voice values,
-  // 9000.. the generated pattern, 9200.. the kits, 9600.. the group outputs, 9610.. their Grit.
-  // Step values: 0 off, 1 hit, 2 accent, 3 flam, 4 roll.
+  // 9000.. the generated pattern, 9200.. the kits, 9600.. the group outputs, 9610.. their Grit,
+  // 9620.. the song: 8 sections' patterns (0 End, 1 User, 2.. factory), then their bars.
+  // Step values: 0 off, 1 hit, 2 accent, 3 flam, 4 roll, 5 chance.
   ext_tail_size = -1;
   NT = 10;
   FACT = 10000;
   MQ = 4000;
   VL = 5000; VPL = 5010; VPR = 5020; PEND = 5030; PVEL = 5040; HIT = 5050;
-  GEN = 9000; KITM = 9200; GO = 9600; GH = 9610;
-  ser_ver = 1;
+  GEN = 9000; KITM = 9200; GO = 9600; GH = 9610; SONG = 9620; SBAR = 9628;
+  ser_ver = 2;
 
   // pattern k (0 = the User pattern, 1.. the factory ones): track t from a string of 16 steps
   // ". x X f r" (off, hit, accent, flam, roll) and the track's length
@@ -137,6 +142,11 @@ out_pin:Perc Right
     pat_set(0, 0, "x...x...x...x...", 16);
     pat_set(0, 1, "....x.......x...", 16);
     pat_set(0, 4, "x.x.x.x.x.x.x.x.", 16);
+    // the song starts as three bars of House and one of Breakbeat
+    memset(SONG, 0, 8);
+    memset(SBAR, 4, 8);
+    SONG[0] = 2; SBAR[0] = 3;
+    SONG[1] = 6; SBAR[1] = 1;
     dm_ready = 1;
   );
 
@@ -506,18 +516,32 @@ out_pin:Perc Right
   );
 
   // one sequencer step on every track: its value in the track's own length
-  function play_step(s) local(t, len, i, v, vel)
+  function play_step(s) local(t, len, i, v, vel, b)
   (
+    // Song: the section of this bar and its pattern
+    song_n > 0 ? (
+      b = floor(s / 16);
+      b -= floor(b / song_len) * song_len;
+      song_k = 0;
+      loop(song_n - 1, b >= SBAR[song_k] ? ( b -= SBAR[song_k]; song_k += 1; ); );
+      pb = SONG[song_k] <= 1 ? 0 : FACT + (SONG[song_k] - 2) * 170;
+    );
     t = 0;
     loop(NT,
       len = max(1, pb[160 + t]);
       i = s - floor(s / len) * len;
       v = pb[t * 16 + i];
       // Probability: an unaccented step plays when the draw is below it
-      v > 0 && prob < 1 && v != 2 ? (
+      v > 0 && prob < 1 && v != 2 && v != 5 ? (
         pr_x == 0 ? ( pr_x = seed_v; loop(3, pr_x = pm(pr_x)); );
         pr_x = pm(pr_x);
         pr_x / 2147483647 >= prob ? v = 0;
+      );
+      // Chance: a hit when the draw is below half of Probability
+      v == 5 ? (
+        pr_x == 0 ? ( pr_x = seed_v; loop(3, pr_x = pm(pr_x)); );
+        pr_x = pm(pr_x);
+        v = pr_x / 2147483647 < 0.5 * prob ? 1 : 0;
       );
       v > 0 ? (
         vel = v == 2 ? 1 : 1 - 0.5 * acc;
@@ -538,12 +562,17 @@ out_pin:Perc Right
   gr_ph = 0; gr_hl = gr_hr = 0;
   memset(GH, 0, 8);
   pr_x = 0;
+  song_k = 0;
   dm_preview = 0;
   m_ofs = m_1 = m_2 = m_3 = 0;
 
 @serialize
+  // version 1 holds the User pattern; version 2 adds the song (sections, then bars)
+  ser_ver = 2;
   file_var(0, ser_ver);
   file_mem(0, 0, 170);
+  ser_ver >= 2 ? file_mem(0, SONG, 16);
+  ser_ver = 2;
 
 @slider
   pat = floor(slider1 + 0.5);
@@ -564,6 +593,7 @@ out_pin:Perc Right
   gen_on ? gen_make();
   kit = max(0, min(8, floor(slider62 + 0.5)));
   outs = slider63 >= 0.5;
+  song_on = slider64 >= 0.5;
 
   // Kick: 808 boom (Tone 0) to 909 punch (Tone 100): more click, faster and deeper sweep
   pan_set(0, kp(slider7, 0, 0, -40, 6), slider11);
@@ -665,9 +695,20 @@ out_pin:Perc Right
   );
   mq_i = 0;
 
-  // the sequencer runs while the host plays; the pattern is the User one (memory 0) or a factory one
-  seq_on = (play_state & 1) && pat > 0;
-  !seq_on ? last_s = -1000;
+  // the song's sections up to the first End (none: Song Off) and its length in bars
+  song_n = 0;
+  song_len = 0;
+  song_on ? (
+    sg_i = 0;
+    loop(8, SONG[sg_i] >= 1 && song_n == sg_i ? song_n += 1; sg_i += 1;);
+    sg_i = 0;
+    loop(song_n, SBAR[sg_i] = max(1, min(16, floor(SBAR[sg_i] + 0.5))); song_len += SBAR[sg_i]; sg_i += 1;);
+  );
+
+  // the sequencer runs while the host plays; the pattern is the User one (memory 0) or a factory
+  // one, or in the song the section's (play_step picks it)
+  seq_on = (play_state & 1) && (pat > 0 || song_n > 0);
+  !seq_on ? ( last_s = -1000; song_k = 0; );
   pb = gen_on && pat > 0 ? GEN : pat <= 1 ? 0 : FACT + (pat - 2) * 170;
   b_inc = tempo / (60 * srate);
   b_0 = beat_position;

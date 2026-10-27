@@ -285,23 +285,33 @@ test("Drum Machine: the User pattern goes through @serialize", function () {
   var FX = fx("drum_machine"), sr = 48000;
   var a = new HOST.Effect(FX, R, { srate: sr });
   var st = a.getState();
-  assert.strictEqual(st.length, 171, "version, then 170 values");
+  assert.strictEqual(st.length, 187, "version, then 170 values, then the song's 16");
+  assert.strictEqual(st[0], 2, "version 2");
   assert.deepStrictEqual(st.slice(1, 17), [1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0], "the basic beat's kick");
+  assert.deepStrictEqual(st.slice(171, 173).concat(st.slice(179, 181)), [2, 6, 3, 1], "the song: House for 3 bars, Breakbeat for 1");
   st[1 + 3] = 2;                 // an accent on kick step 4
   st[1 + 160] = 12;              // kick length 12
+  st[171 + 2] = 4;               // a third section: Techno
   var b = new HOST.Effect(FX, R, { srate: sr });
   b.setState(st);
   assert.strictEqual(b.inst.mem.r(3), 2);
   assert.strictEqual(b.inst.mem.r(160), 12);
+  assert.strictEqual(b.inst.mem.r(9622), 4);
   // @init again (transport start) keeps it, as in REAPER
   b.init();
   assert.deepStrictEqual(b.getState(), st);
+  // a version 1 state (before the song) keeps the default song
+  var c = new HOST.Effect(FX, R, { srate: sr });
+  c.setState([1].concat(st.slice(1, 171)));
+  assert.strictEqual(c.inst.mem.r(3), 2);
+  assert.strictEqual(c.inst.mem.r(9622), 0);
+  assert.strictEqual(c.getState()[0], 2, "saved again as version 2");
 });
 
 test("Drum Machine interface: a step edit is state to save, a name click a voice to hear", function () {
   globalThis.NULLRT = R; globalThis.NULLFXHost = HOST;
   var FX = fx("drum_machine"), cv = fakeCanvas(), got = [];
-  cv.clientWidth = 640; cv.clientHeight = 580;
+  cv.clientWidth = 640; cv.clientHeight = 614;
   var view = new GFX.View(FX, cv, { srate: 48000, onSlider: function (i, v) { got.push([i, v]); } });
   function click(x, y) {
     cv.fire("pointermove", { clientX: x, clientY: y, button: 0 });
