@@ -1583,7 +1583,7 @@
    "ins": 0,
    "outs": 2,
    "sliders": 12,
-   "bytes": 102032
+   "bytes": 102037
   },
   {
    "id": "sampler",

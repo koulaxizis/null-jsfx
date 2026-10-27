@@ -526,7 +526,7 @@ The recipes live in the READMEs. This Part says where they are and lists the ste
 | Odd rates | `NULL_TEST_RATES=8000,22050,1234.57,12345.68 tests/run.sh DATA/Effects/null_jsfx/*.jsfx` | R25: the same checks at very low and odd sample rates (the plain JSFX only: the GFX audio code is the same) |
 | Chains | `tests/run.sh` (no arguments) → `chain_test` | every `.RfxChain` loads and renders |
 | GFX = JSFX | ctest `gfx_<name>` | the audio code is identical, tolerance 0 |
-| Native = JSFX | ctest `compare_<name>` | the CLAP matches the JSFX within 1e-5 at 44.1 and 96 kHz: defaults, every slider at min and max, random sets; MIDI effects compare every message byte for byte at the same sample; instruments play notes with the transport at 120 bpm, and the MIDI they pass on is compared byte for byte at the same sample |
+| Native = JSFX | ctest `compare_<name>` | the CLAP matches the JSFX within 1e-5 at 44.1 and 96 kHz: defaults, every slider at min and max, random sets; MIDI effects compare every message byte for byte at the same sample; instruments play GM notes merged with the MIDI effects' stream (note-offs, velocity-0 note-ons, sustain, all notes off, pitch bend, pressure, program changes) with the transport at 120 bpm, and the MIDI they pass on is compared byte for byte at the same sample |
 | Changes while playing | ctest `changes_convolution`, `changes_gfx_convolution`, `changes_module_convolution` (`compare --changes 1`) | the sliders jump to other settings at 1 s and 2 s; the CLAP, the GFX JSFX (tolerance 0) and the Rack module still match the JSFX |
 | Realtime safety | ctest `rt_test` | Slicer and Half Speed with the lazy clear render bit for bit like a full clear through transport starts, jumps and tempo changes |
 | Presets | ctest `presets_<name>` | every factory preset renders the same in the JSFX and the CLAP |
@@ -890,6 +890,12 @@ entry and the Bible delta.
 - **Files:** `native/third_party/dpf/null-jsfx.patch` (new), `native/third_party/dpf/.gitattributes` (new, keeps the patch LF on Windows), `native/CMakeLists.txt` (`PATCH_COMMAND`, `GIT_CONFIG core.autocrlf=false`), `native/README.md`, this Bible (Part II.2, Part VII).
 - **Tests:** run locally on Linux: `native/scripts/build.sh --test` (all ctest: compare, presets, gfx, module, rack), and clap-validator rev `b2f1d9b` on all 114 CLAPs: 0 latency and 0 subnormal failures (before: clipper and chorus_one reproduced both). Six CLAPs still failed for other reasons, fixed elsewhere: very low sample rate NaN/inf (#54, #58) and Rack state reproducibility (PR #53). Windows and macOS: CI only.
 - **Next:** the release with the other fixes (2.6.1, Christos publishes).
+
+### 2026-10-26 — Pluck 2.6.1 — native strummer matches the JSFX on a key at the half step
+- **Fixes:** with richer MIDI, the Pluck CLAP/VST3 differed from `pluck.jsfx` at 96 kHz on the preset "Harp Rolls" (max diff 0.338 from sample 264000). The cause: a first key that lands exactly on the half of a strum step (`t - s` = 0.5) plays that step only when it comes in the first half, and the native beat position (CLAP's fixed-point `song_pos_beats` through DPF's bar/beat/tick) came out a hair below 0.5 where the JSFX's came out at 0.5. Neither side was wrong in itself; the tie was decided by rounding. Now a key within 1e-6 of a step of the half waits for the next step in every form (`t - s < 0.499999`), like the step boundary already uses `floor(t + 0.000001)`.
+- **Sound:** the JSFX renders bit for bit as before with the test MIDI and every factory preset at 44.1 and 96 kHz (old vs new JSFX at tolerance 0); only a first key within about 0.5 µs of a half step can now wait where it played before.
+- **Tests:** `compare.cpp` gives instruments the GM notes merged in time order with the MIDI effects' `testMidi()` stream (note first at the same sample), through one `testInput()` in both renderers, the shape PR #62 also uses.
+- **Files:** `DATA/Effects/null_jsfx/pluck.jsfx`, `gfx/pluck_gfx.jsfx`, `native/plugins/pluck/PluckDSP.hpp`, `web/fx/pluck.js` and `web/fx/index.json` (generated), `native/test/compare.cpp`, this Bible (Part V.1).
 
 ### 2026-10-27 — Wave 1 of the studio plan (2.7, not released yet) — True Peak, Delta, Mid/Side; Studio EQ, Spectral Ducker, Reference
 - **Changes (appended sliders, silent at their defaults, R11/R12/R17):**
