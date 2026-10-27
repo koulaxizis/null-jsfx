@@ -63,6 +63,7 @@ private:
         p.mix = v(4);
         p.output = v(5);
         p.link = int(std::lround(v(6)));
+        p.delta = v(7) >= 0.5f;
         fDsp.setParams(p);
     }
 

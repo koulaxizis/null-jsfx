@@ -18,6 +18,7 @@ out_pin:Left
 out_pin:Right
 
 @init
+  ext_noinit = 1;              // play and seek keep tails and state, as in the VST3/CLAP
   // NULL Panner (../panner.jsfx) with its own interface: same audio code, plus @gfx.
   // Places a source in the stereo field. The input is split into mid and side (Width scales
   // the side); the mid is what gets placed, the side keeps the source's own stereo image.

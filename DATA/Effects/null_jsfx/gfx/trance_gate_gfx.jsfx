@@ -37,6 +37,7 @@ out_pin:Left
 out_pin:Right
 
 @init
+  ext_noinit = 1;              // play and seek keep tails and state, as in the VST3/CLAP
   // NULL Trance Gate (../trance_gate.jsfx) with its own interface: same audio code, plus @gfx.
   // 16-step gate. Sync: one step = Step Length at the host tempo; while the transport
   // plays, the step is taken from beat_position so the pattern stays locked to the bar

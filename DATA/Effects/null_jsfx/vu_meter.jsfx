@@ -1,0 +1,106 @@
+desc:NULL VU Meter
+author: Christos Koulaxizis
+tags: vu meter ppm k-system k-14 k-20 level metering analog needle ballistics gain staging analyzer
+//category: Advanced
+//NULL JSFX v2.6 • https://nulljsfx.tech • MIT License
+
+slider1:0<0,3,1{VU,PPM,K-14,K-20}>Mode
+slider2:-18<-24,-8,1>Reference (dBFS)
+slider3:1<0,2,1{Off,3 s,Hold}>Peak Hold
+slider4:0<0,2,1{Stereo,Mono,Side}>Monitor
+
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
+
+@init
+  // Level meter with analog ballistics, per channel. The audio passes through untouched
+  // (Monitor Mono or Side only folds it for listening, after the meters); the GFX version
+  // (gfx/vu_meter_gfx.jsfx) and the VST3/CLAP draw the needles.
+  // VU (IEC 60268-17): the full-wave rectified signal through a second-order low pass (damping
+  //   0.8, so about 1.5 % overshoot, reaching 99 % in 300 ms), read as the RMS of a sine; a sine
+  //   peaking at Reference dBFS reads 0 VU.
+  // PPM (EBU Type IIa): a peak follower that charges with a 5 ms time constant (about -4 dB on a
+  //   10 ms burst) and falls 24 dB in 2.8 s; 0 = a sine peaking at Reference.
+  // K-14 / K-20 (Katz): RMS over 300 ms (99 % rise), sine-calibrated; 0 = -14 / -20 dBFS RMS.
+  // Peak Hold keeps the highest reading for 3 s or until reset. OVER lights for 1 s when a
+  // sample reaches 0 dBFS.
+  ext_noinit = 1;
+  vu_yl = vu_yr = -200;        // readings in dB on the mode's scale
+  vu_hl = vu_hr = -200;        // held readings
+  vu_htl = vu_htr = 0;         // hold timers in samples
+  vu_ol = vu_or = 0;           // OVER timers in samples
+  vu_z1l = vu_z2l = vu_z1r = vu_z2r = 0;
+  vu_pl = vu_pr = 0;
+  vu_ml = vu_mr = 0;
+  vu_last_mode = -1;
+  vu_last_hold = -1;
+
+  // VU: RBJ low pass at 2.0853 Hz, Q 0.625 (damping 0.8)
+  vu_w = 2 * $pi * 2.085341377482407 / srate;
+  vu_al = sin(vu_w) / (2 * 0.625);
+  vu_a0 = 1 + vu_al;
+  vu_b0 = (1 - cos(vu_w)) / 2 / vu_a0;
+  vu_b1 = (1 - cos(vu_w)) / vu_a0;
+  vu_b2 = vu_b0;
+  vu_a1 = -2 * cos(vu_w) / vu_a0;
+  vu_a2 = (1 - vu_al) / vu_a0;
+  vu_pa = 1 - exp(-1 / (0.005 * srate));        // PPM charge
+  vu_pf = 10 ^ (-24 / 2.8 / 20 / srate);        // PPM fall, 24 dB in 2.8 s
+  vu_ka = 1 - exp(-log(100) / (0.3 * srate));   // K: mean square, 99 % in 300 ms
+  vu_hn = floor(3 * srate);
+  vu_on = floor(srate);
+
+  function vu_db(a) ( a > 0.0000000001 ? 20 * log10(a) : -200; );
+
+  function vu_reset() ( vu_hl = vu_hr = -200; vu_htl = vu_htr = 0; vu_ol = vu_or = 0; );
+
+  // one channel: the reading, its hold and its OVER timer
+  function vu_chan(x, z1*, z2*, p*, m*, y*, h*, ht*, ov*) local(a, v)
+  (
+    a = abs(x);
+    vu_mode == 0 ? (
+      v = vu_b0 * a + z1;
+      z1 = vu_b1 * a - vu_a1 * v + z2;
+      z2 = vu_b2 * a - vu_a2 * v;
+      y = vu_db(v * $pi / 2) - vu_ref;
+    ) : vu_mode == 1 ? (
+      p = a > p ? p + (a - p) * vu_pa : p * vu_pf;
+      y = vu_db(p) - vu_ref;
+    ) : (
+      m += (a * a - m) * vu_ka;
+      y = (m > 0.00000000000000000001 ? 10 * log10(2 * m) : -200) + (vu_mode == 2 ? 14 : 20);
+    );
+    y > h ? (
+      h = y;
+      ht = vu_hn;
+    ) : vu_hold == 1 ? (
+      ht > 0 ? ht -= 1 : h = y;
+    ) : vu_hold == 0 ? (
+      h = y;
+    );
+    a >= 1 ? ov = vu_on : ov > 0 ? ov -= 1;
+  );
+
+@slider
+  vu_mode = floor(slider1 + 0.5);
+  vu_ref = slider2;
+  vu_hold = floor(slider3 + 0.5);
+  vu_mon = floor(slider4 + 0.5);
+  vu_mode != vu_last_mode || vu_hold != vu_last_hold ? (
+    vu_z1l = vu_z2l = vu_z1r = vu_z2r = 0;
+    vu_pl = vu_pr = vu_ml = vu_mr = 0;
+    vu_reset();
+    vu_last_mode = vu_mode;
+    vu_last_hold = vu_hold;
+  );
+
+@sample
+  vu_chan(spl0, vu_z1l, vu_z2l, vu_pl, vu_ml, vu_yl, vu_hl, vu_htl, vu_ol);
+  vu_chan(spl1, vu_z1r, vu_z2r, vu_pr, vu_mr, vu_yr, vu_hr, vu_htr, vu_or);
+  vu_mon ? (
+    vu_x = vu_mon == 1 ? (spl0 + spl1) * 0.5 : (spl0 - spl1) * 0.5;
+    spl0 = vu_x;
+    spl1 = vu_x;
+  );

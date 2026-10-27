@@ -19,6 +19,7 @@ out_pin:Left
 out_pin:Right
 
 @init
+  ext_noinit = 1;              // play and seek keep tails and state, as in the VST3/CLAP
   // NULL Shimmer Reverb (../shimmer_reverb.jsfx) with its own interface: same audio code, plus @gfx.
   // A large, smooth reverb (4-line feedback delay network with a Hadamard mixing
   // matrix) whose tail is fed through a pitch shifter and back into the network. Each

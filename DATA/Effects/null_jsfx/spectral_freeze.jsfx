@@ -16,6 +16,7 @@ out_pin:Left
 out_pin:Right
 
 @init
+  ext_noinit = 1;              // play and seek keep tails and state, as in the VST3/CLAP
   // Captures the spectrum of the sound at the moment Freeze is switched on and holds
   // it forever as a sustained texture (2048-point FFT, 4x overlap). While Off the audio
   // passes untouched and the plugin keeps listening. Smear sets how much the frozen

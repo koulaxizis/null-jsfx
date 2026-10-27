@@ -20,6 +20,7 @@ out_pin:Left
 out_pin:Right
 
 @init
+  ext_noinit = 1;              // play and seek keep tails and state, as in the VST3/CLAP
   // NULL DeEsser (../deesser.jsfx) with its own interface: same audio code, plus @gfx.
   // Split-band de-esser: a band-pass around Target isolates the sibilance, an envelope
   // follower measures it, and only that band is turned down (by up to Reduction dB)

@@ -19,6 +19,7 @@ out_pin:Left
 out_pin:Right
 
 @init
+  ext_noinit = 1;              // play and seek keep tails and state, as in the VST3/CLAP
   // NULL Octaver (../octaver.jsfx) with its own interface: same audio code, plus @gfx.
   // Analog-style octave divider (the OC-2 idea) for monophonic bass and guitar, zero latency:
   //   the input (mono sum, DC removed) is low-passed at Tracking (two one-poles) so only the

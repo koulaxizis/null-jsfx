@@ -26,6 +26,7 @@ out_pin:Right
 options:maxmem=33554432
 
 @init
+  ext_noinit = 1;              // play and seek keep tails and state, as in the VST3/CLAP
   // NULL Tape Echo (../tape_echo.jsfx) with its own interface: same audio code, plus @gfx.
   // A multi-head tape echo. One tape loop per channel is written by the record head and read
   // by three playback heads at 1x, 2x and 3x the Repeat Time (or the synced note). The heads

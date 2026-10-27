@@ -17,6 +17,7 @@ out_pin:Left
 out_pin:Right
 
 @init
+  ext_noinit = 1;              // play and seek keep tails and state, as in the VST3/CLAP
   // A large, smooth reverb (4-line feedback delay network with a Hadamard mixing
   // matrix) whose tail is fed through a pitch shifter and back into the network. Each
   // round trip the tail climbs another interval, building the bright, organ-like

@@ -9,6 +9,8 @@
  * Input and Output gains (skipped at 0 dB), Emphasis (a first-order tilt before the shaper and
  * its exact inverse after it, skipped at 0 dB) and Oversampling (2x / 4x through the halfband
  * stages of plugins/clipper, latency 31 / 37 samples, the dry signal delayed to match).
+ * Channels (appended in 2.7): Mid / Side saturates only that half of the mid/side pair, on both
+ * channels; the other half is delayed by the oversampling latency and added back after.
  */
 
 #pragma once
@@ -82,6 +84,7 @@ struct Params {
     double input = 0.0, output = 0.0;
     int oversampling = 0; // 0 off, 1 = 2x, 2 = 4x
     double emphasis = 0.0;
+    int channels = 0; // 0 stereo, 1 mid, 2 side
 };
 
 // latency in samples for an Oversampling setting (the JSFX's pdc_delay)
@@ -106,6 +109,8 @@ public:
         fOsPrev = -1;
         fPw = 0;
         fDw = 0;
+        for (double& v : fMsBuf)
+            v = 0.0;
     }
 
     // @slider (the 4-argument form keeps the newer sliders at their defaults)
@@ -145,6 +150,7 @@ public:
             fEmXl = fEmYl = fEmXr = fEmYr = 0.0;
             fDeXl = fDeYl = fDeXr = fDeYr = 0.0;
         }
+        fMs = p.channels;
         const int os = p.oversampling;
         fOsf = os <= 0 ? 1 : os == 1 ? 2 : 4;
         fLat = latencyFor(os);
@@ -156,6 +162,8 @@ public:
             fR.reset();
             fPw = 0;
             fDw = 0;
+            for (double& v : fMsBuf)
+                v = 0.0;
             fOsPrev = fOsf;
         }
     }
@@ -167,7 +175,22 @@ public:
     {
         for (uint32_t i = 0; i < frames; ++i)
         {
-            double dl = inL[i], dr = inR[i];
+            double dl = inL[i], dr = inR[i], other = 0.0;
+            if (fMs != 0)
+            {
+                const double m = (dl + dr) * 0.5;
+                const double sd = (dl - dr) * 0.5;
+                if (fMs == 1)
+                {
+                    dl = dr = m;
+                    other = sd;
+                }
+                else
+                {
+                    dl = dr = sd;
+                    other = m;
+                }
+            }
             double xl = dl, xr = dr;
             if (fInOn)
             {
@@ -227,6 +250,11 @@ public:
                 const int j = (fDw - fLat + 64) % 64;
                 dl = fL.dr[j];
                 dr = fR.dr[j];
+                if (fMs != 0)
+                {
+                    fMsBuf[fDw] = other;
+                    other = fMsBuf[j];
+                }
                 fDw = (fDw + 1) % 64;
             }
             else
@@ -254,6 +282,21 @@ public:
                 yl *= fGout;
                 yr *= fGout;
             }
+            if (fMs != 0)
+            {
+                // back to left / right
+                const double x = yl;
+                if (fMs == 1)
+                {
+                    yl = x + other;
+                    yr = x - other;
+                }
+                else
+                {
+                    yl = other + x;
+                    yr = other - x;
+                }
+            }
             outL[i] = static_cast<T>(yl);
             outR[i] = static_cast<T>(yr);
         }
@@ -269,7 +312,8 @@ private:
     double fEmXl = 0, fEmYl = 0, fEmXr = 0, fEmYr = 0, fDeXl = 0, fDeYl = 0, fDeXr = 0, fDeYr = 0;
     double fE1[32] = {}, fD1[32] = {}, fE2[12] = {}, fD2[12] = {};
     nullclipper::Channel fL, fR;
-    int fOsf = 1, fOsPrev = -1, fLat = 0, fPad = 0, fPw = 0, fDw = 0;
+    int fOsf = 1, fOsPrev = -1, fLat = 0, fPad = 0, fPw = 0, fDw = 0, fMs = 0;
+    double fMsBuf[64] = {};
 };
 
 } // namespace nullsaturation

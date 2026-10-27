@@ -20,6 +20,7 @@ out_pin:Left
 out_pin:Right
 
 @init
+  ext_noinit = 1;              // play and seek keep tails and state, as in the VST3/CLAP
   // Follows the loudness of the input and uses it to move a filter (auto-wah) or the
   // volume. Louder playing opens the filter from Low Freq toward High Freq (Direction
   // Up) or closes it (Down). Sensitivity sets how hard you need to play to reach the end.

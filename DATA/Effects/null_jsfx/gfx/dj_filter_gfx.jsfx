@@ -14,6 +14,7 @@ out_pin:Left
 out_pin:Right
 
 @init
+  ext_noinit = 1;              // play and seek keep tails and state, as in the VST3/CLAP
   // NULL DJ Filter (../dj_filter.jsfx) with its own interface: same audio code, plus @gfx.
   // One-knob DJ filter. Left of centre a 24 dB/oct low-pass sweeps down from 20 kHz to
   // 60 Hz; right of centre a 24 dB/oct high-pass sweeps up from 20 Hz to 10 kHz. The centre

@@ -12,7 +12,7 @@ Never guess the contents of a file. Read it from the repo, or ask for it.
 - Design first. Ask open questions in one numbered list, offer improvements as numbered proposals, and raise risks before you proceed. Touch only what the task needs.
 - One sound, four forms: plain JSFX, GFX JSFX, VST3/CLAP and the Rack module sound identical (GFX tolerance 0, native 1e-5, web 1e-6).
 - Lines 1–5 of every `.jsfx` follow `tests/lint.py`. A One Slider plugin has exactly one slider.
-- GFX never calls `slider()` (it uses `ng_slider_set`), the accent is silver and never the site purple, and `null_gfx.jsfx-inc` stays in step with `NullUI.hpp` and `NullTheme.hpp`.
+- GFX never sets a slider through `slider()` (it uses `ng_slider_set`), the accent is silver and never the site purple, and `null_gfx.jsfx-inc` stays in step with `NullUI.hpp` and `NullTheme.hpp`.
 - Native code computes in double in the EEL2 order, allocates in `setSampleRate` and never in `process`, and implements `rand()` as an exact Park-Miller step.
 - Rack parameter indices are fixed forever, new features are silent at their default, state strings never change meaning, and `RackEngineV1.hpp` is frozen.
 - Released plugin identities (name, unique id, CLAP id, URI) never change.

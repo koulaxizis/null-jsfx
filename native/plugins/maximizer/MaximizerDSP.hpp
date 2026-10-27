@@ -14,6 +14,11 @@
  * at Low / High Crossover into three bands, each limited at Ceiling and a quarter linked (in dB)
  * to the band that reduces most, with the look-ahead limiter on their sum. At CLEAN and OFF
  * every operation is the original's. ShortTermLoudness is the display's 3 s K-weighted meter.
+ *
+ * Appended in 2.7: True Peak (the look-ahead limiter sees the true peak from TruePeak, the
+ * BS.1770-4 interpolator, 6 samples late, and the audio waits 6 samples more) and Listen DELTA
+ * (the limiter's input minus its output, after the Output Gain, undithered). Off, every
+ * operation is the original's.
  */
 
 #pragma once
@@ -21,6 +26,8 @@
 #include <algorithm>
 #include <cmath>
 #include <vector>
+
+#include "NullTruePeak.hpp"
 
 namespace nullmaximizer {
 
@@ -134,7 +141,7 @@ public:
     void setSampleRate(double sr)
     {
         fSr = sr;
-        fMaxLook = int(std::ceil(sr * 0.006)) + 2;
+        fMaxLook = int(std::ceil(sr * 0.006)) + 2 + 6;
         fL.assign(size_t(fMaxLook), 0.0);
         fR.assign(size_t(fMaxLook), 0.0);
         fML.assign(size_t(fMaxLook), 0.0);
@@ -156,13 +163,16 @@ public:
         fGL = fGR = 1.0;
         fSeed = 12345.0;
         fEL = fER = 0.0;
+        fTp.reset();
     }
 
     // @slider
     void setParams(double inputDb, double ceilingDb, double releaseMs, double lookaheadMs, double outputDb, bool link, int dither,
                    bool noiseShaping, int character = 0, bool multiband = false, double lowHz = 150.0,
-                   double highHz = 4000.0)
+                   double highHz = 4000.0, bool truePeak = false, bool delta = false)
     {
+        fTpk = truePeak;
+        fDelta = delta;
         fInGain = std::pow(10.0, inputDb / 20.0);
         fCeiling = std::pow(10.0, ceilingDb / 20.0);
         fRel = std::exp(-1.0 / (releaseMs * fSr / 1000.0));
@@ -180,7 +190,7 @@ public:
         fX2.set(highHz, fSr);
     }
 
-    int latency() const noexcept { return fLook; } // pdc_delay
+    int latency() const noexcept { return fLook + (fTpk ? 6 : 0); } // pdc_delay
     // the lowest gain now (Multiband: of the most reduced band, band and sum limiters together)
     double gain() const noexcept
     {
@@ -232,7 +242,9 @@ public:
             // the look-ahead limiter on the sum the bands will make
             const double sl = lo[0] * fBE[0][0] + mi[0] * fBE[1][0] + hi[0] * fBE[2][0];
             const double sr = lo[1] * fBE[0][1] + mi[1] * fBE[1][1] + hi[1] * fBE[2][1];
-            if (fLink)
+            if (fTpk)
+                tpDetect(sl, sr);
+            else if (fLink)
             {
                 detect(std::max(std::fabs(sl), std::fabs(sr)), fHvL, fHcL, fGL);
                 fGR = fGL;
@@ -252,7 +264,9 @@ public:
         }
         else
         {
-            if (fLink)
+            if (fTpk)
+                tpDetect(il, ir);
+            else if (fLink)
             {
                 detect(std::max(std::fabs(il), std::fabs(ir)), fHvL, fHcL, fGL);
                 fGR = fGL;
@@ -265,7 +279,7 @@ public:
             fL[size_t(fW)] = il;
             fR[size_t(fW)] = ir;
         }
-        rp = fW - fLook;
+        rp = fW - fLook - (fTpk ? 6 : 0);
         if (rp < 0)
             rp += fMaxLook;
         if (++fW >= fMaxLook)
@@ -275,13 +289,23 @@ public:
         {
             l = std::max(-fCeiling, std::min(fCeiling, (fL[k] * fBE[0][0] + fML[k] * fBE[1][0] + fHL[k] * fBE[2][0]) * fGL)) * fOutGain;
             r = std::max(-fCeiling, std::min(fCeiling, (fR[k] * fBE[0][1] + fMR[k] * fBE[1][1] + fHR[k] * fBE[2][1]) * fGR)) * fOutGain;
+            if (fDelta)
+            {
+                l = (fL[k] + fML[k] + fHL[k]) * fOutGain - l;
+                r = (fR[k] + fMR[k] + fHR[k]) * fOutGain - r;
+            }
         }
         else
         {
             l = std::max(-fCeiling, std::min(fCeiling, fL[k] * fGL)) * fOutGain;
             r = std::max(-fCeiling, std::min(fCeiling, fR[k] * fGR)) * fOutGain;
+            if (fDelta)
+            {
+                l = fL[k] * fOutGain - l;
+                r = fR[k] * fOutGain - r;
+            }
         }
-        if (fDither != 0)
+        if (fDither != 0 && !fDelta)
         {
             l = quantise(l, fEL);
             r = quantise(r, fER);
@@ -336,6 +360,16 @@ private:
         return q;
     }
 
+    // True Peak: the look-ahead limiter on the true peak (6 samples late), as the JSFX
+    void tpDetect(double l, double r) noexcept
+    {
+        detect(fTp.peak(l, r, fLink), fHvL, fHcL, fGL);
+        if (fLink)
+            fGR = fGL;
+        else
+            detect(fTp.right(), fHvR, fHcR, fGR);
+    }
+
     void detect(double peak, double& hv, double& hc, double& g) const noexcept
     {
         if (peak >= hv)
@@ -365,6 +399,8 @@ private:
     double fSeed = 12345.0, fQ = 32768.0, fEL = 0.0, fER = 0.0;
     int fDither = 0;
     bool fLink = true, fShape = false;
+    nulljsfx::TruePeak fTp;
+    bool fTpk = false, fDelta = false;
 };
 
 } // namespace nullmaximizer

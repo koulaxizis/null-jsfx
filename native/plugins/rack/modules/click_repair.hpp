@@ -47,7 +47,7 @@ public:
     uint32_t latency() const override { return uint32_t(fDsp.latency()); }
 
 private:
-    void update() { fDsp.setParams(fV[0], fV[1]); }
+    void update() { fDsp.setParams(fV[0], fV[1], fV[2]); }
 
     nullclick::ClickRepairProcessor fDsp;
     float fV[nullclick::kNumSliders];

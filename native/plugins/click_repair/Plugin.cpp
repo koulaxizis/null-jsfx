@@ -56,7 +56,7 @@ protected:
 private:
     void update()
     {
-        fDsp.setParams(value(0), value(1));
+        fDsp.setParams(value(0), value(1), value(2));
         setLatency(uint32_t(fDsp.latency())); // the JSFX's pdc_delay
     }
 

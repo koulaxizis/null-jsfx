@@ -20,6 +20,7 @@ out_pin:Left
 out_pin:Right
 
 @init
+  ext_noinit = 1;              // play and seek keep tails and state, as in the VST3/CLAP
   // Ducks the track whenever the key signal goes above Threshold: kick under bass, voice-over
   // under music. Route the key to track channels 3/4 in REAPER (or pick Main Input to duck from
   // the track itself). The gain falls by up to Depth over Attack, stays down for Hold after the

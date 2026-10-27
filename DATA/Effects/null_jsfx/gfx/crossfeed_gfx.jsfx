@@ -1,0 +1,295 @@
+desc:NULL Crossfeed GFX
+author: Christos Koulaxizis
+tags: crossfeed headphones bs2b bauer speakers room head shadow itd monitoring mixing fatigue gui
+//category: Essentials
+//NULL JSFX v2.6 • https://nulljsfx.tech • MIT License
+
+import null_gfx.jsfx-inc
+
+slider1:0<0,1,1{Crossfeed,Speakers}>-Mode
+slider2:700<300,2000,10>-Cutoff (Hz)
+slider3:4.5<1,15,0.5>-Feed (dB)
+slider4:30<10,60,1>-Angle (deg)
+slider5:20<0,100,1>-Room (%)
+slider6:100<0,100,1>-Mix (%)
+slider7:0<-12,12,0.1>-Output (dB)
+
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
+
+@init
+  ext_noinit = 1;              // play and seek keep tails and state, as in the VST3/CLAP
+  // NULL Crossfeed (../crossfeed.jsfx) with its own interface: same audio code, plus @gfx.
+  // Headphone monitoring that sounds less like the music sits inside the head.
+  // Crossfeed: Bauer's stereophonic-to-binaural filter as libbs2b computes it. Each ear gets its
+  //   own side through a high-frequency boost and the other side through a first-order low
+  //   pass at Cutoff, Feed dB below it at low frequencies; a mono signal keeps its level in the
+  //   lows and loses up to 2 dB in the highs, as in libbs2b.
+  //   700 Hz / 4.5 dB is the bs2b default, 700 / 6 Chu Moy, 650 / 9.5 Jan Meier.
+  // Speakers: two speakers Angle degrees off centre. Each ear gets both: its own side through
+  //   the Brown-Duda head-shadow filter for the near ear, the other side through the one for
+  //   the far ear and later by Woodworth's interaural time (head radius 8.75 cm, sound at
+  //   343 m/s), half each so a mono signal keeps its level (the far ear's delay still colours it
+  //   a little, as real speakers do); Room adds six early reflections
+  //   (4 to 22 ms, low passed at 5 kHz), different for each ear.
+  // Then Mix with the dry signal and Output. No latency.
+  XF_DL = 0;                   // far-ear delay lines (256 each)
+  XF_DR = 256;
+  XF_RL = 512;                 // room delay lines (8192 each)
+  XF_RR = XF_RL + 8192;
+  XF_T = XF_RR + 8192;         // room taps: delay ms (left ear, right ear), gain, source side
+  freembuf(XF_T + 32);
+  memset(0, 0, XF_T);
+  XF_T[0] = 4.3;  XF_T[1] = 4.67; XF_T[2] = 0.62; XF_T[3] = 0;
+  XF_T[4] = 6.1;  XF_T[5] = 5.81; XF_T[6] = 0.53; XF_T[7] = 1;
+  XF_T[8] = 8.9;  XF_T[9] = 9.43; XF_T[10] = 0.45; XF_T[11] = 0;
+  XF_T[12] = 11.4; XF_T[13] = 10.99; XF_T[14] = 0.37; XF_T[15] = 1;
+  XF_T[16] = 15.7; XF_T[17] = 16.31; XF_T[18] = 0.29; XF_T[19] = 0;
+  XF_T[20] = 21.2; XF_T[21] = 20.73; XF_T[22] = 0.22; XF_T[23] = 1;
+  xf_w = xf_rw = 0;
+  xf_lol = xf_lor = xf_hil = xf_hir = xf_asl = xf_asr = 0;
+  xf_nl1 = xf_nr1 = xf_ynl = xf_ynr = 0;
+  xf_fl1 = xf_fr1 = xf_yfl = xf_yfr = 0;
+  xf_rlp_l = xf_rlp_r = 0;
+  // the head-shadow coefficients, set by xf_hsf in @slider
+  xf_nb0 = xf_nb1 = xf_na1 = xf_fb0 = xf_fb1 = xf_fa1 = 0;
+  xf_rlpa = exp(-2 * $pi * min(5000, srate * 0.45) / srate);
+
+  // Brown-Duda head shadow, bilinear: H(s) = (alpha s + beta) / (s + beta), beta = 2 c / a,
+  // alpha = 1.05 + 0.95 cos(phi / 150 x 180 deg) for incidence phi degrees from the ear axis
+  function xf_alpha(phi) ( 1.05 + 0.95 * cos(phi / 150 * $pi); );
+  function xf_hsf(al, b0*, b1*, a1*) local(be, k)
+  (
+    be = 2 * 343 / 0.0875;
+    k = 2 * srate;
+    b0 = (al * k + be) / (k + be);
+    b1 = (be - al * k) / (k + be);
+    a1 = (be - k) / (k + be);
+  );
+
+  gfx_ext_retina = 1;
+
+  function update()
+  (
+    xf_mode = slider1 >= 0.5;
+    // bs2b: levels in dB, the cross low pass and the direct high boost
+    xf_gblo = slider3 * -5 / 6 - 3;
+    xf_gbhi = slider3 / 6 - 3;
+    xf_glo = 10 ^ (xf_gblo / 20);
+    xf_ghi = 1 - 10 ^ (xf_gbhi / 20);
+    xf_fchi = slider2 * 2 ^ ((xf_gblo - 20 * log10(xf_ghi)) / 12);
+    xf_x = exp(-2 * $pi * slider2 / srate);
+    xf_b1lo = xf_x;
+    xf_a0lo = xf_glo * (1 - xf_x);
+    xf_x = exp(-2 * $pi * xf_fchi / srate);
+    xf_b1hi = xf_x;
+    xf_a0hi = 1 - xf_ghi * (1 - xf_x);
+    xf_a1hi = -xf_x;
+    xf_gain = 1 / (1 - xf_ghi + xf_glo);
+    // speakers: near and far ear filters, their high-frequency gains scaled to sum to 2 so a
+    // mono signal keeps its level on average up top as well as at the bottom; the far ear's
+    // delay in samples
+    xf_an = xf_alpha(90 - slider4);
+    xf_af = xf_alpha(90 + slider4);
+    xf_hsf(2 * xf_an / (xf_an + xf_af), xf_nb0, xf_nb1, xf_na1);
+    xf_hsf(2 * xf_af / (xf_an + xf_af), xf_fb0, xf_fb1, xf_fa1);
+    xf_th = slider4 / 180 * $pi;
+    xf_itd = 0.0875 / 343 * (xf_th + sin(xf_th)) * srate;
+    xf_itdi = floor(xf_itd);
+    xf_itdf = xf_itd - xf_itdi;
+    xf_room = slider5 / 100 * 0.5;
+    xf_mix = slider6 / 100;
+    xf_out = 10 ^ (slider7 / 20);
+  );
+
+  // magnitude in dB at f of g (b0 + b1 z^-1) / (1 + a1 z^-1)
+  function xg_db(g, b0, b1, a1, f) local(w, nr, ni, dr, di)
+  (
+    w = 2 * $pi * min(f, srate * 0.499) / srate;
+    nr = b0 + b1 * cos(w);
+    ni = -b1 * sin(w);
+    dr = 1 + a1 * cos(w);
+    di = -a1 * sin(w);
+    10 * log10(max(g * g * (nr * nr + ni * ni) / (dr * dr + di * di), 0.0000000001));
+  );
+
+  // the path to each ear from its own side (which = 0) or the other side (which = 1)
+  function xg_path(which, f)
+  (
+    xf_mode ? (
+      which ? xg_db(0.5, xf_fb0, xf_fb1, xf_fa1, f) : xg_db(0.5, xf_nb0, xf_nb1, xf_na1, f);
+    ) : (
+      which ? xg_db(xf_gain, xf_a0lo, 0, -xf_b1lo, f) : xg_db(xf_gain, xf_a0hi, xf_a1hi, -xf_b1hi, f);
+    );
+  );
+
+  // ---- factory presets: generated by tools/build_presets.py, do not edit ----
+  ng_pre_n = 10;
+
+  function ng_preset_load(p)
+  (
+    p == 0 ? ( ng_slider_set(1, 0); ng_slider_set(2, 700); ng_slider_set(3, 4.5); ng_slider_set(4, 30); ng_slider_set(5, 20); ng_slider_set(6, 100); ng_slider_set(7, 0); );
+    p == 1 ? ( ng_slider_set(1, 0); ng_slider_set(2, 700); ng_slider_set(3, 6); ng_slider_set(4, 30); ng_slider_set(5, 20); ng_slider_set(6, 100); ng_slider_set(7, 0); );
+    p == 2 ? ( ng_slider_set(1, 0); ng_slider_set(2, 650); ng_slider_set(3, 9.5); ng_slider_set(4, 30); ng_slider_set(5, 20); ng_slider_set(6, 100); ng_slider_set(7, 0); );
+    p == 3 ? ( ng_slider_set(1, 0); ng_slider_set(2, 700); ng_slider_set(3, 10); ng_slider_set(4, 30); ng_slider_set(5, 20); ng_slider_set(6, 100); ng_slider_set(7, 0); );
+    p == 4 ? ( ng_slider_set(1, 0); ng_slider_set(2, 800); ng_slider_set(3, 3); ng_slider_set(4, 30); ng_slider_set(5, 20); ng_slider_set(6, 100); ng_slider_set(7, 0); );
+    p == 5 ? ( ng_slider_set(1, 1); ng_slider_set(2, 700); ng_slider_set(3, 4.5); ng_slider_set(4, 30); ng_slider_set(5, 15); ng_slider_set(6, 100); ng_slider_set(7, 0); );
+    p == 6 ? ( ng_slider_set(1, 1); ng_slider_set(2, 700); ng_slider_set(3, 4.5); ng_slider_set(4, 45); ng_slider_set(5, 25); ng_slider_set(6, 100); ng_slider_set(7, 0); );
+    p == 7 ? ( ng_slider_set(1, 1); ng_slider_set(2, 700); ng_slider_set(3, 4.5); ng_slider_set(4, 20); ng_slider_set(5, 10); ng_slider_set(6, 100); ng_slider_set(7, 0); );
+    p == 8 ? ( ng_slider_set(1, 1); ng_slider_set(2, 700); ng_slider_set(3, 4.5); ng_slider_set(4, 30); ng_slider_set(5, 45); ng_slider_set(6, 100); ng_slider_set(7, 0); );
+    p == 9 ? ( ng_slider_set(1, 1); ng_slider_set(2, 700); ng_slider_set(3, 4.5); ng_slider_set(4, 30); ng_slider_set(5, 0); ng_slider_set(6, 100); ng_slider_set(7, 0); );
+  );
+
+  // the first preset every slider matches, or -1
+  function ng_preset_match() local(m)
+  (
+    m = -1;
+    m < 0 && ng_pre_eq(slider1, 0) && ng_pre_eq(slider2, 700) && ng_pre_eq(slider3, 4.5) && ng_pre_eq(slider4, 30) && ng_pre_eq(slider5, 20) && ng_pre_eq(slider6, 100) && ng_pre_eq(slider7, 0) ? m = 0;
+    m < 0 && ng_pre_eq(slider1, 0) && ng_pre_eq(slider2, 700) && ng_pre_eq(slider3, 6) && ng_pre_eq(slider4, 30) && ng_pre_eq(slider5, 20) && ng_pre_eq(slider6, 100) && ng_pre_eq(slider7, 0) ? m = 1;
+    m < 0 && ng_pre_eq(slider1, 0) && ng_pre_eq(slider2, 650) && ng_pre_eq(slider3, 9.5) && ng_pre_eq(slider4, 30) && ng_pre_eq(slider5, 20) && ng_pre_eq(slider6, 100) && ng_pre_eq(slider7, 0) ? m = 2;
+    m < 0 && ng_pre_eq(slider1, 0) && ng_pre_eq(slider2, 700) && ng_pre_eq(slider3, 10) && ng_pre_eq(slider4, 30) && ng_pre_eq(slider5, 20) && ng_pre_eq(slider6, 100) && ng_pre_eq(slider7, 0) ? m = 3;
+    m < 0 && ng_pre_eq(slider1, 0) && ng_pre_eq(slider2, 800) && ng_pre_eq(slider3, 3) && ng_pre_eq(slider4, 30) && ng_pre_eq(slider5, 20) && ng_pre_eq(slider6, 100) && ng_pre_eq(slider7, 0) ? m = 4;
+    m < 0 && ng_pre_eq(slider1, 1) && ng_pre_eq(slider2, 700) && ng_pre_eq(slider3, 4.5) && ng_pre_eq(slider4, 30) && ng_pre_eq(slider5, 15) && ng_pre_eq(slider6, 100) && ng_pre_eq(slider7, 0) ? m = 5;
+    m < 0 && ng_pre_eq(slider1, 1) && ng_pre_eq(slider2, 700) && ng_pre_eq(slider3, 4.5) && ng_pre_eq(slider4, 45) && ng_pre_eq(slider5, 25) && ng_pre_eq(slider6, 100) && ng_pre_eq(slider7, 0) ? m = 6;
+    m < 0 && ng_pre_eq(slider1, 1) && ng_pre_eq(slider2, 700) && ng_pre_eq(slider3, 4.5) && ng_pre_eq(slider4, 20) && ng_pre_eq(slider5, 10) && ng_pre_eq(slider6, 100) && ng_pre_eq(slider7, 0) ? m = 7;
+    m < 0 && ng_pre_eq(slider1, 1) && ng_pre_eq(slider2, 700) && ng_pre_eq(slider3, 4.5) && ng_pre_eq(slider4, 30) && ng_pre_eq(slider5, 45) && ng_pre_eq(slider6, 100) && ng_pre_eq(slider7, 0) ? m = 8;
+    m < 0 && ng_pre_eq(slider1, 1) && ng_pre_eq(slider2, 700) && ng_pre_eq(slider3, 4.5) && ng_pre_eq(slider4, 30) && ng_pre_eq(slider5, 0) && ng_pre_eq(slider6, 100) && ng_pre_eq(slider7, 0) ? m = 9;
+    m;
+  );
+
+  function ng_preset_name(p) local(s)
+  (
+    s = "";
+    p == 0 ? s = "Default";
+    p == 1 ? s = "Chu Moy";
+    p == 2 ? s = "Jan Meier";
+    p == 3 ? s = "Subtle";
+    p == 4 ? s = "Strong";
+    p == 5 ? s = "Near-Field Speakers";
+    p == 6 ? s = "Wide Speakers";
+    p == 7 ? s = "Narrow Desk";
+    p == 8 ? s = "Control Room";
+    p == 9 ? s = "Dry Speakers";
+    s;
+  );
+
+  function ng_presets() local(i)
+  (
+    ng_pre_req >= 0 ? ( ng_preset_load(ng_pre_req); update(); ng_pre_req = -1; );
+    ng_pre_cur = ng_preset_match();
+    ng_pre_open ? (
+      ng_pre_menu_begin();
+      i = 0;
+      loop(ng_pre_n, ng_pre_item(i, ng_preset_name(i)); i += 1;);
+      ng_pre_menu_end();
+    );
+    strcpy(#ng_pre_name, ng_pre_cur >= 0 ? ng_preset_name(ng_pre_cur) : "CUSTOM");
+  );
+  // ---- end of factory presets ----
+
+@slider
+  update();
+
+@sample
+  xf_inl = spl0;
+  xf_inr = spl1;
+  xf_mode ? (
+    // near ear: own side through its head shadow
+    xf_ynl = xf_nb0 * xf_inl + xf_nb1 * xf_nl1 - xf_na1 * xf_ynl;
+    xf_ynr = xf_nb0 * xf_inr + xf_nb1 * xf_nr1 - xf_na1 * xf_ynr;
+    xf_nl1 = xf_inl;
+    xf_nr1 = xf_inr;
+    // far ear: the other side, delayed (linear interpolation), through its head shadow
+    XF_DL[xf_w] = xf_inl;
+    XF_DR[xf_w] = xf_inr;
+    xf_a = (xf_w - xf_itdi + 256) % 256;
+    xf_b = (xf_a + 255) % 256;
+    xf_fdl = XF_DL[xf_a] + (XF_DL[xf_b] - XF_DL[xf_a]) * xf_itdf;
+    xf_fdr = XF_DR[xf_a] + (XF_DR[xf_b] - XF_DR[xf_a]) * xf_itdf;
+    xf_w = (xf_w + 1) % 256;
+    xf_yfl = xf_fb0 * xf_fdl + xf_fb1 * xf_fl1 - xf_fa1 * xf_yfl;
+    xf_yfr = xf_fb0 * xf_fdr + xf_fb1 * xf_fr1 - xf_fa1 * xf_yfr;
+    xf_fl1 = xf_fdl;
+    xf_fr1 = xf_fdr;
+    xf_wl = (xf_ynl + xf_yfr) * 0.5;
+    xf_wr = (xf_ynr + xf_yfl) * 0.5;
+    // room: six reflections per ear from both sides, low passed
+    XF_RL[xf_rw] = xf_inl;
+    XF_RR[xf_rw] = xf_inr;
+    xf_el = xf_er = 0;
+    xf_i = 0;
+    loop(6,
+      xf_j = xf_i * 4;
+      xf_a = (xf_rw - floor(XF_T[xf_j] * srate / 1000 + 0.5) + 8192) % 8192;
+      xf_b = (xf_rw - floor(XF_T[xf_j + 1] * srate / 1000 + 0.5) + 8192) % 8192;
+      xf_el += XF_T[xf_j + 2] * (XF_T[xf_j + 3] ? XF_RR[xf_a] : XF_RL[xf_a]);
+      xf_er += XF_T[xf_j + 2] * (XF_T[xf_j + 3] ? XF_RL[xf_b] : XF_RR[xf_b]);
+      xf_i += 1;
+    );
+    xf_rw = (xf_rw + 1) % 8192;
+    xf_rlp_l = xf_el + (xf_rlp_l - xf_el) * xf_rlpa;
+    xf_rlp_r = xf_er + (xf_rlp_r - xf_er) * xf_rlpa;
+    xf_wl += xf_rlp_l * xf_room;
+    xf_wr += xf_rlp_r * xf_room;
+  ) : (
+    xf_lol = xf_a0lo * xf_inl + xf_b1lo * xf_lol;
+    xf_lor = xf_a0lo * xf_inr + xf_b1lo * xf_lor;
+    xf_hil = xf_a0hi * xf_inl + xf_a1hi * xf_asl + xf_b1hi * xf_hil;
+    xf_hir = xf_a0hi * xf_inr + xf_a1hi * xf_asr + xf_b1hi * xf_hir;
+    xf_asl = xf_inl;
+    xf_asr = xf_inr;
+    xf_wl = (xf_hil + xf_lor) * xf_gain;
+    xf_wr = (xf_hir + xf_lol) * xf_gain;
+  );
+  spl0 = (xf_inl + (xf_wl - xf_inl) * xf_mix) * xf_out;
+  spl1 = (xf_inr + (xf_wr - xf_inr) * xf_mix) * xf_out;
+
+@gfx 480 380
+  ng_knobs_begin("CROSSFEED", "ESSENTIALS", 480, 120, 2, 0);
+
+  // display: what each ear gets from its own side (accent) and from the other side (muted),
+  // -24 .. +24 dB; the mode's numbers at the top left
+  ng_plot(ng_vx + 34, ng_vy + 6, ng_vw - 40, ng_vh - 24);
+  ng_grid_freq(36);
+  xg_k = 1;
+  loop(2,
+    ng_col(xg_k ? NG_MUTED : NG_ACCENT, 1);
+    xg_i = 0;
+    loop(floor(ng_pw) + 1,
+      xg_y = ng_lin_y(xg_path(xg_k, 20 * 1000 ^ (xg_i / ng_pw)), -24, 24);
+      xg_i == 0 ? ng_line_start(ng_px, xg_y) : ng_line_to(ng_px + xg_i, xg_y);
+      xg_i += 1;
+    );
+    xg_k -= 1;
+  );
+  ng_font(4, 8, 0);
+  ng_col(NG_MUTED, 1);
+  xf_mode ? sprintf(#xg_t, "SPEAKERS +-%d DEG   ITD %.2f ms   ROOM %d%%", slider4, xf_itd / srate * 1000, slider5)
+          : sprintf(#xg_t, "BS2B   %d Hz   %.1f dB", slider2, slider3);
+  ng_ptxt(#xg_t, ng_px + 6 * ng_s, ng_py + 9 * ng_s, 0);
+  ng_col(NG_ACCENT, 1);
+  ng_ptxt("OWN SIDE", ng_px + ng_pw - 70 * ng_s, ng_py + 9 * ng_s, 2);
+  ng_col(NG_MUTED, 1);
+  ng_ptxt("OTHER SIDE", ng_px + ng_pw - 6 * ng_s, ng_py + 9 * ng_s, 2);
+
+  ng_row(4);
+  ng_select_ctl(1, "MODE", "BS2B|SPEAKERS", 0) ? update();
+  sprintf(#v2, "%d Hz", slider2);
+  ng_knob_ctl(2, "CUTOFF", #v2, 300, 2000, 700, 10, 0) ? update();
+  sprintf(#v3, "%.1f dB", slider3);
+  ng_knob_ctl(3, "FEED", #v3, 1, 15, 4.5, 0.5, 0) ? update();
+  sprintf(#v4, "%d deg", slider4);
+  ng_knob_ctl(4, "ANGLE", #v4, 10, 60, 30, 1, 0) ? update();
+  ng_row(3);
+  sprintf(#v5, "%d%%", slider5);
+  ng_knob_ctl(5, "ROOM", #v5, 0, 100, 20, 1, 0) ? update();
+  sprintf(#v6, "%d%%", slider6);
+  ng_knob_ctl(6, "MIX", #v6, 0, 100, 100, 1, 0) ? update();
+  sprintf(#v7, "%+.1f dB", slider7);
+  ng_knob_ctl(7, "OUTPUT", #v7, -12, 12, 0, 0.1, 1) ? update();
+
+  ng_end();
+
+  ng_presets(); // the preset list (generated by tools/build_presets.py)

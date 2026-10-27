@@ -17,6 +17,7 @@ out_pin:Left
 out_pin:Right
 
 @init
+  ext_noinit = 1;              // play and seek keep tails and state, as in the VST3/CLAP
   // Two-spring reverb tank as found in guitar amps. Each spring is a long chain of
   // dispersive all-pass filters (high frequencies travel faster than low ones, which
   // makes the characteristic "chirp" and "drip") inside a feedback delay loop. The

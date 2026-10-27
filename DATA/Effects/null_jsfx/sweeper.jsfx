@@ -12,6 +12,7 @@ out_pin:Left
 out_pin:Right
 
 @init
+  ext_noinit = 1;              // play and seek keep tails and state, as in the VST3/CLAP
   // DJ-style filter sweep on one knob. 50 = open (no effect). Below 50 a low-pass closes
   // from 20 kHz down to 80 Hz; above 50 a high-pass rises from 20 Hz up to 8 kHz.
   // A little resonance builds up as the filter moves away from the centre.

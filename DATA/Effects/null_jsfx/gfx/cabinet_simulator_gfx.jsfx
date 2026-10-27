@@ -20,6 +20,7 @@ out_pin:Left
 out_pin:Right
 
 @init
+  ext_noinit = 1;              // play and seek keep tails and state, as in the VST3/CLAP
   // NULL Cabinet Simulator (../cabinet_simulator.jsfx) with its own interface: same audio code, plus @gfx.
   // Turns a DI or amp-output signal into the sound of a miked speaker cabinet, without
   // impulse files. Each cabinet is a set of filters: the low-end resonance of the box,

@@ -1,0 +1,181 @@
+diff --git a/distrho/src/DistrhoPluginCLAP.cpp b/distrho/src/DistrhoPluginCLAP.cpp
+index 59390921..94901f77 100644
+--- a/distrho/src/DistrhoPluginCLAP.cpp
++++ b/distrho/src/DistrhoPluginCLAP.cpp
+@@ -826,15 +826,14 @@ public:
+         fPlugin.setSampleRate(sampleRate, true);
+         fPlugin.setBufferSize(maxFramesCount, true);
+         fPlugin.activate();
++       #if DISTRHO_PLUGIN_WANT_LATENCY
++        reportLatencyOnActivate();
++       #endif
+     }
+ 
+     void deactivate()
+     {
+         fPlugin.deactivate();
+-       #if DISTRHO_PLUGIN_WANT_LATENCY
+-        checkForLatencyChanges(false, true);
+-        reportLatencyChangeIfNeeded();
+-       #endif
+     }
+ 
+     void reset()
+@@ -1121,7 +1120,7 @@ public:
+         }
+ 
+        #if DISTRHO_PLUGIN_WANT_LATENCY
+-        checkForLatencyChanges(true, false);
++        checkForLatencyChanges(true);
+        #endif
+ 
+         return true;
+@@ -1129,9 +1128,6 @@ public:
+ 
+     void onMainThread()
+     {
+-       #if DISTRHO_PLUGIN_WANT_LATENCY
+-        reportLatencyChangeIfNeeded();
+-       #endif
+     }
+ 
+     // ----------------------------------------------------------------------------------------------------------------
+@@ -1310,8 +1306,7 @@ public:
+         }
+ 
+        #if DISTRHO_PLUGIN_WANT_LATENCY
+-        const bool active = fPlugin.isActive();
+-        checkForLatencyChanges(active, !active);
++        checkForLatencyChanges(fPlugin.isActive());
+        #endif
+     }
+ 
+@@ -1405,48 +1400,35 @@ public:
+         return fPlugin.getLatency();
+     }
+ 
+-    void checkForLatencyChanges(const bool isActive, const bool fromMainThread)
++    // NULL JSFX patch: clap_host_latency::changed() is only allowed while the plugin is being
++    // activated [main-thread & being-activated]. A change while active asks the host for a restart,
++    // a change while inactive waits for the next activate(), which reports it.
++    void checkForLatencyChanges(const bool isActive)
+     {
+-        const uint32_t latency = fPlugin.getLatency();
+-
+-        if (fLastKnownLatency == latency)
++        if (! isActive || fLatencyChanged || fHostExtensions.latency == nullptr)
+             return;
+ 
+-        fLastKnownLatency = latency;
+-
+-        if (fHostExtensions.latency == nullptr)
++        if (fLastKnownLatency == fPlugin.getLatency())
+             return;
+ 
+-        if (isActive)
+-        {
+-            fLatencyChanged = true;
+-            fHost->request_restart(fHost);
+-        }
+-        else
+-        {
+-            // if this is main-thread we can report latency change directly
+-            if (fromMainThread || (fHostExtensions.threadCheck != nullptr && fHostExtensions.threadCheck->is_main_thread(fHost)))
+-            {
+-                fLatencyChanged = false;
+-                fHostExtensions.latency->changed(fHost);
+-            }
+-            // otherwise we need to request a main-thread callback
+-            else
+-            {
+-                fLatencyChanged = true;
+-                fHost->request_callback(fHost);
+-            }
+-        }
++        fLatencyChanged = true;
++        fHost->request_restart(fHost);
+     }
+ 
+-    // called from main thread
+-    void reportLatencyChangeIfNeeded()
++    // called from activate(), on the main thread
++    void reportLatencyOnActivate()
+     {
+-        if (fLatencyChanged)
+-        {
+-            fLatencyChanged = false;
++        fLatencyChanged = false;
++
++        const uint32_t latency = fPlugin.getLatency();
++
++        if (fLastKnownLatency == latency)
++            return;
++
++        fLastKnownLatency = latency;
++
++        if (fHostExtensions.latency != nullptr)
+             fHostExtensions.latency->changed(fHost);
+-        }
+     }
+    #endif
+ 
+@@ -1745,8 +1727,7 @@ public:
+             fHostExtensions.params->rescan(fHost, CLAP_PARAM_RESCAN_VALUES|CLAP_PARAM_RESCAN_TEXT);
+ 
+        #if DISTRHO_PLUGIN_WANT_LATENCY
+-        checkForLatencyChanges(fPlugin.isActive(), true);
+-        reportLatencyChangeIfNeeded();
++        checkForLatencyChanges(fPlugin.isActive());
+        #endif
+ 
+        #if DISTRHO_PLUGIN_HAS_UI
+diff --git a/distrho/src/DistrhoPluginInternal.hpp b/distrho/src/DistrhoPluginInternal.hpp
+index d0bef80a..06f388f5 100644
+--- a/distrho/src/DistrhoPluginInternal.hpp
++++ b/distrho/src/DistrhoPluginInternal.hpp
+@@ -23,6 +23,8 @@
+ # include "DistrhoPluginVST.hpp"
+ #endif
+ 
++#include <cfloat>
++#include <cmath>
+ #include <set>
+ 
+ START_NAMESPACE_DISTRHO
+@@ -997,6 +999,9 @@ public:
+         fData->isProcessing = true;
+         fPlugin->run(inputs, outputs, frames, midiEvents, midiEventCount);
+         fData->isProcessing = false;
++       #if DISTRHO_PLUGIN_NUM_OUTPUTS != 0
++        flushSubnormalOutputs(outputs, frames);
++       #endif
+     }
+    #else
+     void run(const float** const inputs, float** const outputs, const uint32_t frames)
+@@ -1013,6 +1018,26 @@ public:
+         fData->isProcessing = true;
+         fPlugin->run(inputs, outputs, frames);
+         fData->isProcessing = false;
++       #if DISTRHO_PLUGIN_NUM_OUTPUTS != 0
++        flushSubnormalOutputs(outputs, frames);
++       #endif
++    }
++   #endif
++
++   #if DISTRHO_PLUGIN_NUM_OUTPUTS != 0
++    // NULL JSFX patch: no output sample is subnormal. The DSP runs in double, so a decaying tail
++    // turns into subnormal floats on the way out, which hosts and clap-validator reject.
++    static void flushSubnormalOutputs(float** const outputs, const uint32_t frames) noexcept
++    {
++        for (uint32_t i=0; i<DISTRHO_PLUGIN_NUM_OUTPUTS; ++i)
++        {
++            if (float* const out = outputs[i])
++            {
++                for (uint32_t j=0; j<frames; ++j)
++                    if (std::fabs(out[j]) < FLT_MIN)
++                        out[j] = 0.0f;
++            }
++        }
+     }
+    #endif
+ 

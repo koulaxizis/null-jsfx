@@ -14,6 +14,7 @@ out_pin:Left
 out_pin:Right
 
 @init
+  ext_noinit = 1;              // play and seek keep tails and state, as in the VST3/CLAP
   // NULL Formant Shift (../formant_shift.jsfx) with its own interface: same audio code,
   // plus @gfx.
   PI=3.14159265358979;

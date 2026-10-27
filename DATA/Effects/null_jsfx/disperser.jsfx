@@ -16,6 +16,7 @@ out_pin:Left
 out_pin:Right
 
 @init
+  ext_noinit = 1;              // play and seek keep tails and state, as in the VST3/CLAP
   // Phase dispersion: a chain of Amount identical 2nd-order all-pass filters (up to 64) around
   // Frequency. The magnitude stays flat, but frequencies near Frequency are delayed more than
   // the rest, so transients smear into a falling "laser" chirp and kicks get a tighter, more

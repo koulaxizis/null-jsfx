@@ -21,6 +21,7 @@ out_pin:Left
 out_pin:Right
 
 @init
+  ext_noinit = 1;              // play and seek keep tails and state, as in the VST3/CLAP
   // NULL Warped Delay (../warped_delay.jsfx) with its own interface: same audio code, plus @gfx.
   // Stereo delay whose time is wobbled by an LFO (tape-style warble); the repeats are
   // filtered and saturated inside the feedback loop, so they degrade as they repeat.

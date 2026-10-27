@@ -10,25 +10,28 @@
 
 START_NAMESPACE_DISTRHO
 
+// COMPRESSOR tab, then KEY / CHANNELS, as in dynamics_gfx.jsfx
 static const NullKnobsUI::Control kControls[] = {
-    { 0, NullKnobsUI::kSelect, "MODE", 0, -1, false },
-    { 1, NullKnobsUI::kKnob, "THRESHOLD", 0, -1, false },
-    { 2, NullKnobsUI::kKnob, "RATIO", 0, -1, false },
-    { 3, NullKnobsUI::kKnob, "KNEE", 0, -1, false },
-    { 4, NullKnobsUI::kKnob, "ATTACK", 0, -1, false },
-    { 5, NullKnobsUI::kKnob, "RELEASE", 0, -1, false },
-    { 7, NullKnobsUI::kSelect, "STYLE", 1, -1, false },
-    { 6, NullKnobsUI::kKnob, "MAKEUP", 1, -1, false },
-    { 9, NullKnobsUI::kKnob, "MIX", 1, -1, false },
-    { 8, NullKnobsUI::kKnob, "SC HPF", 1, -1, false, true },
-    { 10, NullKnobsUI::kSelect, "SIDECHAIN", 1, -1, false },
+    { 0, NullKnobsUI::kSelect, "MODE", 0, 0, false },
+    { 1, NullKnobsUI::kKnob, "THRESHOLD", 0, 0, false },
+    { 2, NullKnobsUI::kKnob, "RATIO", 0, 0, false },
+    { 3, NullKnobsUI::kKnob, "KNEE", 0, 0, false },
+    { 4, NullKnobsUI::kKnob, "ATTACK", 0, 0, false },
+    { 5, NullKnobsUI::kKnob, "RELEASE", 0, 0, false },
+    { 7, NullKnobsUI::kSelect, "STYLE", 1, 0, false },
+    { 6, NullKnobsUI::kKnob, "MAKEUP", 1, 0, false },
+    { 9, NullKnobsUI::kKnob, "MIX", 1, 0, false },
+    { 12, NullKnobsUI::kSelect, "LISTEN", 1, 0, false },
+    { 8, NullKnobsUI::kKnob, "SC HPF", 0, 1, false, true },
+    { 10, NullKnobsUI::kSelect, "SIDECHAIN", 0, 1, false },
+    { 11, NullKnobsUI::kSelect, "CHANNELS", 0, 1, false },
 };
 
 class UIDynamics : public NullKnobsUI
 {
 public:
     UIDynamics()
-        : NullKnobsUI({ "DYNAMICS", "ESSENTIALS", 480, 120, nullptr, 2, nulldynamics::kSliders, nulldynamics::kNumSliders,
+        : NullKnobsUI({ "DYNAMICS", "ESSENTIALS", 480, 120, "COMPRESSOR|KEY / CHANNELS", 2, nulldynamics::kSliders, nulldynamics::kNumSliders,
                         kControls, sizeof(kControls) / sizeof(kControls[0]), true }) {}
 
 protected:
@@ -87,13 +90,15 @@ protected:
         // status line: the style, plus what is switched on (detector high-pass, mix, external key)
         static const char* const kStyles[] = { "CLEAN", "BUS", "FET", "OPTO", "UPWARD" };
         label(180.0f, 66.0f, ALIGN_LEFT, 7.5f, 1.0f, theme::kAccent, kStyles[std::min(4, std::max(0, p.style))], true);
-        char a[24] = "", b[24] = "", st[80];
+        char a[24] = "", b[24] = "", st[96];
         const bool ext = value(10) > 0.5f;
         if (value(8) > 20.0f)
             std::snprintf(a, sizeof(a), "   HPF %d HZ", int(std::lround(value(8))));
         if (value(9) < 100.0f)
             std::snprintf(b, sizeof(b), "   MIX %d%%", int(std::lround(value(9))));
-        std::snprintf(st, sizeof(st), "%s%s%s", a, b, ext ? "   EXT KEY" : "");
+        const int ch = int(std::lround(value(11)));
+        std::snprintf(st, sizeof(st), "%s%s%s%s%s", a, b, ext ? "   EXT KEY" : "", ch == 1 ? "   MID" : ch == 2 ? "   SIDE" : "",
+                      value(12) >= 0.5f ? "   DELTA" : "");
         label(448.0f, 66.0f, ALIGN_RIGHT, 7.5f, 1.0f, theme::kMuted, st, true);
         meter(180.0f, 82.0f, 268.0f, 10.0f, ext ? "KEY" : "IN", db, value(1), -60.0f);
         // Upward: the lift (gain above 1) on the same meter, as LIFT
