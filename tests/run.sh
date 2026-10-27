@@ -5,6 +5,7 @@
 #                           (NULL_TEST_RATES="8000,22050" sets other rates)
 #   3. tests/chain_test   - renders every FX chain in DATA/FXChains (only when no plugins are given)
 # Usage: tests/run.sh [plugin.jsfx ...]   (default: every plugin and every chain)
+#        tests/run.sh --build-only        only build ysfx and the test programs (native/scripts/build.sh)
 set -euo pipefail
 here="$(cd "$(dirname "$0")" && pwd)"
 root="$(dirname "$here")"
@@ -28,6 +29,8 @@ fi
 if [ ! -x "$build/chain_test" ] || [ "$here/chain_test.cpp" -nt "$build/chain_test" ]; then
   g++ -O2 -std=c++17 -I "$build/ysfx/include" "$here/chain_test.cpp" "$build/ysfx/build/libysfx.a" -lpthread -ldl -o "$build/chain_test"
 fi
+
+if [ "${1:-}" = --build-only ]; then exit 0; fi
 
 chains=0
 if [ $# -eq 0 ]; then set -- "$root"/DATA/Effects/null_jsfx/*.jsfx "$root"/DATA/Effects/null_jsfx/gfx/*.jsfx; chains=1; fi

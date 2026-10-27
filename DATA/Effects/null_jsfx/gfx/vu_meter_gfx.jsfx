@@ -1,0 +1,285 @@
+desc:NULL VU Meter GFX
+author: Christos Koulaxizis
+tags: vu meter ppm k-system k-14 k-20 level metering analog needle ballistics gain staging analyzer gui
+//category: Advanced
+//NULL JSFX v2.6 • https://nulljsfx.tech • MIT License
+
+import null_gfx.jsfx-inc
+
+slider1:0<0,3,1{VU,PPM,K-14,K-20}>-Mode
+slider2:-18<-24,-8,1>-Reference (dBFS)
+slider3:1<0,2,1{Off,3 s,Hold}>-Peak Hold
+slider4:0<0,2,1{Stereo,Mono,Side}>-Monitor
+
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
+
+@init
+  // NULL VU Meter (../vu_meter.jsfx) with its own interface: same audio code, plus @gfx.
+  // Level meter with analog ballistics, per channel. The audio passes through untouched
+  // (Monitor Mono or Side only folds it for listening, after the meters); the GFX version
+  // (gfx/vu_meter_gfx.jsfx) and the VST3/CLAP draw the needles.
+  // VU (IEC 60268-17): the full-wave rectified signal through a second-order low pass (damping
+  //   0.8, so about 1.5 % overshoot, reaching 99 % in 300 ms), read as the RMS of a sine; a sine
+  //   peaking at Reference dBFS reads 0 VU.
+  // PPM (EBU Type IIa): a peak follower that charges with a 5 ms time constant (about -4 dB on a
+  //   10 ms burst) and falls 24 dB in 2.8 s; 0 = a sine peaking at Reference.
+  // K-14 / K-20 (Katz): RMS over 300 ms (99 % rise), sine-calibrated; 0 = -14 / -20 dBFS RMS.
+  // Peak Hold keeps the highest reading for 3 s or until reset. OVER lights for 1 s when a
+  // sample reaches 0 dBFS.
+  ext_noinit = 1;
+  vu_yl = vu_yr = -200;        // readings in dB on the mode's scale
+  vu_hl = vu_hr = -200;        // held readings
+  vu_htl = vu_htr = 0;         // hold timers in samples
+  vu_ol = vu_or = 0;           // OVER timers in samples
+  vu_z1l = vu_z2l = vu_z1r = vu_z2r = 0;
+  vu_pl = vu_pr = 0;
+  vu_ml = vu_mr = 0;
+  vu_last_mode = -1;
+  vu_last_hold = -1;
+
+  // VU: RBJ low pass at 2.0853 Hz, Q 0.625 (damping 0.8)
+  vu_w = 2 * $pi * 2.085341377482407 / srate;
+  vu_al = sin(vu_w) / (2 * 0.625);
+  vu_a0 = 1 + vu_al;
+  vu_b0 = (1 - cos(vu_w)) / 2 / vu_a0;
+  vu_b1 = (1 - cos(vu_w)) / vu_a0;
+  vu_b2 = vu_b0;
+  vu_a1 = -2 * cos(vu_w) / vu_a0;
+  vu_a2 = (1 - vu_al) / vu_a0;
+  vu_pa = 1 - exp(-1 / (0.005 * srate));        // PPM charge
+  vu_pf = 10 ^ (-24 / 2.8 / 20 / srate);        // PPM fall, 24 dB in 2.8 s
+  vu_ka = 1 - exp(-log(100) / (0.3 * srate));   // K: mean square, 99 % in 300 ms
+  vu_hn = floor(3 * srate);
+  vu_on = floor(srate);
+
+  function vu_db(a) ( a > 0.0000000001 ? 20 * log10(a) : -200; );
+
+  function vu_reset() ( vu_hl = vu_hr = -200; vu_htl = vu_htr = 0; vu_ol = vu_or = 0; );
+
+  // one channel: the reading, its hold and its OVER timer
+  function vu_chan(x, z1*, z2*, p*, m*, y*, h*, ht*, ov*) local(a, v)
+  (
+    a = abs(x);
+    vu_mode == 0 ? (
+      v = vu_b0 * a + z1;
+      z1 = vu_b1 * a - vu_a1 * v + z2;
+      z2 = vu_b2 * a - vu_a2 * v;
+      y = vu_db(v * $pi / 2) - vu_ref;
+    ) : vu_mode == 1 ? (
+      p = a > p ? p + (a - p) * vu_pa : p * vu_pf;
+      y = vu_db(p) - vu_ref;
+    ) : (
+      m += (a * a - m) * vu_ka;
+      y = (m > 0.00000000000000000001 ? 10 * log10(2 * m) : -200) + (vu_mode == 2 ? 14 : 20);
+    );
+    y > h ? (
+      h = y;
+      ht = vu_hn;
+    ) : vu_hold == 1 ? (
+      ht > 0 ? ht -= 1 : h = y;
+    ) : vu_hold == 0 ? (
+      h = y;
+    );
+    a >= 1 ? ov = vu_on : ov > 0 ? ov -= 1;
+  );
+
+  gfx_ext_retina = 1;
+
+  function update()
+  (
+    vu_mode = floor(slider1 + 0.5);
+    vu_ref = slider2;
+    vu_hold = floor(slider3 + 0.5);
+    vu_mon = floor(slider4 + 0.5);
+    vu_mode != vu_last_mode || vu_hold != vu_last_hold ? (
+      vu_z1l = vu_z2l = vu_z1r = vu_z2r = 0;
+      vu_pl = vu_pr = vu_ml = vu_mr = 0;
+      vu_reset();
+      vu_last_mode = vu_mode;
+      vu_last_hold = vu_hold;
+    );
+  );
+
+  // the scale of the mode: lowest and highest reading, and where a reading sits (0..1); VU is
+  // linear in voltage like the real dial, the others linear in dB
+  function vg_lo() ( vu_mode == 0 ? -20 : vu_mode == 1 ? -24 : -30; );
+  function vg_hi() ( vu_mode == 0 ? 3 : vu_mode == 1 ? 12 : vu_mode == 2 ? 14 : 20; );
+  function vg_pos(db) local(lo, hi)
+  (
+    lo = vg_lo();
+    hi = vg_hi();
+    db = min(hi, max(lo, db));
+    vu_mode == 0 ? (10 ^ (db / 20) - 0.1) / (10 ^ (3 / 20) - 0.1) : (db - lo) / (hi - lo);
+  );
+
+  // a point of the dial in pixels: pos 0..1 across -50..+50 degrees, r design units from the pivot
+  function vg_x(pos, r) ( vg_px + r * ng_s * sin((pos * 100 - 50) / 180 * $pi); );
+  function vg_y(pos, r) ( vg_py - r * ng_s * cos((pos * 100 - 50) / 180 * $pi); );
+
+  // one tick at reading db, with its label when lbl is not 0
+  function vg_tick(db, major, lbl) local(p)
+  (
+    p = vg_pos(db);
+    ng_col(db > 0 ? NG_TEXT : NG_MUTED, 1);
+    gfx_line(vg_x(p, major ? 102 : 105), vg_y(p, major ? 102 : 105), vg_x(p, 111), vg_y(p, 111), 1);
+    lbl ? (
+      db > 0 ? sprintf(#vg_l, "+%d", db) : sprintf(#vg_l, "%d", db);
+      ng_ptxt(#vg_l, vg_x(p, 122), vg_y(p, 122), 1);
+    );
+  );
+
+  // one meter face at design (x, y), 208 x 144: dial, ticks, held reading, needle, numbers
+  function vg_face(x, y, name, rd, hd, ov) local(i, p, q, db)
+  (
+    ng_col(NG_BG, 1);
+    gfx_roundrect(X(x), Y(y), 208 * ng_s, 144 * ng_s, 4 * ng_s, 1);
+    gfx_rect(X(x) + 1, Y(y) + 1, 208 * ng_s - 1, 144 * ng_s - 1);
+    ng_col(NG_BORDER, 1);
+    gfx_roundrect(X(x), Y(y), 208 * ng_s, 144 * ng_s, 4 * ng_s, 1);
+    vg_px = X(x + 104);
+    vg_py = Y(y + 150);
+    // the dial: muted up to 0, bright above
+    i = 0;
+    loop(60,
+      p = i / 60;
+      q = (i + 1) / 60;
+      ng_col(p >= vg_pos(0) - 0.0001 ? NG_TEXT : NG_MUTED, p >= vg_pos(0) - 0.0001 ? 1 : 0.7);
+      gfx_line(vg_x(p, 111), vg_y(p, 111), vg_x(q, 111), vg_y(q, 111), 1);
+      i += 1;
+    );
+    ng_font(4, 7.5, 0);
+    vu_mode == 0 ? (
+      vg_tick(-20, 1, 1); vg_tick(-10, 1, 1); vg_tick(-7, 1, 1); vg_tick(-5, 1, 1);
+      vg_tick(-3, 1, 1); vg_tick(-2, 0, 0); vg_tick(-1, 0, 0); vg_tick(0, 1, 1);
+      vg_tick(1, 0, 0); vg_tick(2, 0, 0); vg_tick(3, 1, 1);
+    ) : (
+      db = vg_lo();
+      while (
+        vg_tick(db, 1, 1);
+        vu_mode == 1 ? db += 6 : db += 10;
+        db <= vg_hi();
+      );
+      vu_mode == 2 ? vg_tick(14, 1, 1);
+    );
+    // held reading
+    hd > vg_lo() ? (
+      p = vg_pos(hd);
+      ng_col(NG_ACCENT, 1);
+      gfx_line(vg_x(p, 96), vg_y(p, 96), vg_x(p, 114), vg_y(p, 114), 1);
+    );
+    // needle
+    p = vg_pos(rd);
+    ng_col(NG_TEXT, 1);
+    gfx_line(vg_x(p, 46), vg_y(p, 46), vg_x(p, 116), vg_y(p, 116), 1);
+    gfx_line(vg_x(p, 46) + 1, vg_y(p, 46), vg_x(p, 116) + 1, vg_y(p, 116), 1);
+    // numbers
+    ng_font(1, 7, 1);
+    ng_col(NG_MUTED, 1);
+    ng_txt(name, x + 10, y + 12, 0, 1.2);
+    ng_col(ov > 0 ? NG_TEXT : NG_BORDER, 1);
+    ng_txt("OVER", x + 198, y + 12, 2, 1.2);
+    ng_font(5, 13, 1);
+    ng_col(NG_TEXT, 1);
+    rd <= vg_lo() ? strcpy(#vg_v, "-INF") : rd > 0.05 ? sprintf(#vg_v, "+%.1f", rd) : sprintf(#vg_v, "%.1f", rd);
+    ng_txt(#vg_v, x + 10, y + 130, 0, 0);
+    ng_font(1, 7, 1);
+    ng_col(NG_MUTED, 1);
+    hd <= vg_lo() ? strcpy(#vg_v, "MAX -INF") : hd > 0.05 ? sprintf(#vg_v, "MAX +%.1f", hd) : sprintf(#vg_v, "MAX %.1f", hd);
+    ng_txt(#vg_v, x + 198, y + 130, 2, 1);
+  );
+
+  // ---- factory presets: generated by tools/build_presets.py, do not edit ----
+  ng_pre_n = 7;
+
+  function ng_preset_load(p)
+  (
+    p == 0 ? ( ng_slider_set(1, 0); ng_slider_set(2, -18); ng_slider_set(3, 1); ng_slider_set(4, 0); );
+    p == 1 ? ( ng_slider_set(1, 0); ng_slider_set(2, -20); ng_slider_set(3, 1); ng_slider_set(4, 0); );
+    p == 2 ? ( ng_slider_set(1, 0); ng_slider_set(2, -14); ng_slider_set(3, 1); ng_slider_set(4, 0); );
+    p == 3 ? ( ng_slider_set(1, 1); ng_slider_set(2, -18); ng_slider_set(3, 1); ng_slider_set(4, 0); );
+    p == 4 ? ( ng_slider_set(1, 2); ng_slider_set(2, -18); ng_slider_set(3, 2); ng_slider_set(4, 0); );
+    p == 5 ? ( ng_slider_set(1, 3); ng_slider_set(2, -18); ng_slider_set(3, 2); ng_slider_set(4, 0); );
+    p == 6 ? ( ng_slider_set(1, 0); ng_slider_set(2, -18); ng_slider_set(3, 1); ng_slider_set(4, 1); );
+  );
+
+  // the first preset every slider matches, or -1
+  function ng_preset_match() local(m)
+  (
+    m = -1;
+    m < 0 && ng_pre_eq(slider1, 0) && ng_pre_eq(slider2, -18) && ng_pre_eq(slider3, 1) && ng_pre_eq(slider4, 0) ? m = 0;
+    m < 0 && ng_pre_eq(slider1, 0) && ng_pre_eq(slider2, -20) && ng_pre_eq(slider3, 1) && ng_pre_eq(slider4, 0) ? m = 1;
+    m < 0 && ng_pre_eq(slider1, 0) && ng_pre_eq(slider2, -14) && ng_pre_eq(slider3, 1) && ng_pre_eq(slider4, 0) ? m = 2;
+    m < 0 && ng_pre_eq(slider1, 1) && ng_pre_eq(slider2, -18) && ng_pre_eq(slider3, 1) && ng_pre_eq(slider4, 0) ? m = 3;
+    m < 0 && ng_pre_eq(slider1, 2) && ng_pre_eq(slider2, -18) && ng_pre_eq(slider3, 2) && ng_pre_eq(slider4, 0) ? m = 4;
+    m < 0 && ng_pre_eq(slider1, 3) && ng_pre_eq(slider2, -18) && ng_pre_eq(slider3, 2) && ng_pre_eq(slider4, 0) ? m = 5;
+    m < 0 && ng_pre_eq(slider1, 0) && ng_pre_eq(slider2, -18) && ng_pre_eq(slider3, 1) && ng_pre_eq(slider4, 1) ? m = 6;
+    m;
+  );
+
+  function ng_preset_name(p) local(s)
+  (
+    s = "";
+    p == 0 ? s = "Default";
+    p == 1 ? s = "VU -20 dBFS (SMPTE)";
+    p == 2 ? s = "VU -14 dBFS (Hot)";
+    p == 3 ? s = "PPM EBU";
+    p == 4 ? s = "K-14 Mastering";
+    p == 5 ? s = "K-20 Film and Classical";
+    p == 6 ? s = "Mono Check";
+    s;
+  );
+
+  function ng_presets() local(i)
+  (
+    ng_pre_req >= 0 ? ( ng_preset_load(ng_pre_req); update(); ng_pre_req = -1; );
+    ng_pre_cur = ng_preset_match();
+    ng_pre_open ? (
+      ng_pre_menu_begin();
+      i = 0;
+      loop(ng_pre_n, ng_pre_item(i, ng_preset_name(i)); i += 1;);
+      ng_pre_menu_end();
+    );
+    strcpy(#ng_pre_name, ng_pre_cur >= 0 ? ng_preset_name(ng_pre_cur) : "CUSTOM");
+  );
+  // ---- end of factory presets ----
+
+@slider
+  update();
+
+@sample
+  vu_chan(spl0, vu_z1l, vu_z2l, vu_pl, vu_ml, vu_yl, vu_hl, vu_htl, vu_ol);
+  vu_chan(spl1, vu_z1r, vu_z2r, vu_pr, vu_mr, vu_yr, vu_hr, vu_htr, vu_or);
+  vu_mon ? (
+    vu_x = vu_mon == 1 ? (spl0 + spl1) * 0.5 : (spl0 - spl1) * 0.5;
+    spl0 = vu_x;
+    spl1 = vu_x;
+  );
+
+@gfx 480 334
+  ng_knobs_begin("VU METER", "ADVANCED", 480, 160, 1, 0);
+
+  // display: a dial per channel; a click resets the held readings
+  ng_click && mouse_x >= X(ng_vx) && mouse_x < X(ng_vx + ng_vw) && mouse_y >= Y(ng_vy) && mouse_y < Y(ng_vy + ng_vh) ? vu_reset();
+  vg_face(ng_vx, ng_vy, "L", vu_yl, vu_hl, vu_ol);
+  vg_face(ng_vx + 224, ng_vy, "R", vu_yr, vu_hr, vu_or);
+  ng_font(1, 7, 1);
+  ng_col(NG_MUTED, 1);
+  vu_mode == 0 ? sprintf(#vg_t, "VU   0 VU = %d dBFS", vu_ref)
+  : vu_mode == 1 ? sprintf(#vg_t, "PPM   0 = %d dBFS", vu_ref)
+  : vu_mode == 2 ? strcpy(#vg_t, "K-14   0 = -14 dBFS RMS") : strcpy(#vg_t, "K-20   0 = -20 dBFS RMS");
+  ng_txt(#vg_t, ng_vx + 104, ng_vy + 12, 1, 1.2);
+  ng_txt(#vg_t, ng_vx + 328, ng_vy + 12, 1, 1.2);
+
+  ng_row(4);
+  ng_select_ctl(1, "MODE", "VU|PPM|K-14|K-20", 0) ? update();
+  sprintf(#v2, "%d dBFS", slider2);
+  ng_knob_ctl(2, "REFERENCE", #v2, -24, -8, -18, 1, 0) ? update();
+  ng_select_ctl(3, "PEAK HOLD", "OFF|3 S|HOLD", 0) ? update();
+  ng_select_ctl(4, "MONITOR", "STEREO|MONO|SIDE", 0) ? update();
+
+  ng_end();
+
+  ng_presets(); // the preset list (generated by tools/build_presets.py)

@@ -1,0 +1,7 @@
+[
+  ["Hard Clipped Master", {"Clip Level": -0.1, "Min Length": 2, "Output": -6}],
+  ["Normalized Clip", {"Clip Level": -1, "Min Length": 3, "Output": -6}],
+  ["Clipped Recorder", {"Clip Level": -0.5, "Min Length": 3, "Output": -3}],
+  ["Gentle", {"Clip Level": -0.1, "Min Length": 4}],
+  ["Hear What Returns", {"Clip Level": -0.3, "Min Length": 3, "Listen": "Delta"}]
+]

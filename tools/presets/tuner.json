@@ -1,0 +1,8 @@
+[
+  ["Baroque A415", {"Reference A4": 415}],
+  ["A432", {"Reference A4": 432}],
+  ["Orchestra A442", {"Reference A4": 442}],
+  ["Strobe", {"Display": "Strobe"}],
+  ["Stage Mute", {"Output": "Mute"}],
+  ["Guitar on Left", {"Input": "Left"}]
+]

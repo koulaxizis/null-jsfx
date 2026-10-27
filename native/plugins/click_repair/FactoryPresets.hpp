@@ -8,19 +8,21 @@ namespace nullpresets {
 
 struct FactoryPreset {
     const char* name;
-    float values[2];
+    float values[3];
 };
 
 static const FactoryPreset kPresets[] = {
-    { "Default", { 50.0f, 10.0f } },
-    { "Vinyl Crackle", { 35.0f, 8.0f } },
-    { "Heavy Vinyl Pops", { 50.0f, 30.0f } },
-    { "Digital Spikes", { 70.0f, 3.0f } },
-    { "Edit Click Fix", { 60.0f, 6.0f } },
-    { "Mouth Clicks", { 45.0f, 20.0f } },
-    { "Archival Restore", { 25.0f, 15.0f } },
+    { "Default", { 50.0f, 10.0f, 0.0f } },
+    { "Vinyl Crackle", { 35.0f, 8.0f, 0.0f } },
+    { "Heavy Vinyl Pops", { 50.0f, 30.0f, 0.0f } },
+    { "Digital Spikes", { 70.0f, 3.0f, 0.0f } },
+    { "Edit Click Fix", { 60.0f, 6.0f, 0.0f } },
+    { "Mouth Clicks", { 45.0f, 20.0f, 0.0f } },
+    { "Archival Restore", { 25.0f, 15.0f, 0.0f } },
+    { "Worn Vinyl Crackle", { 40.0f, 3.0f, 1.0f } },
+    { "Light Crackle", { 60.0f, 2.0f, 1.0f } },
 };
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
-static constexpr uint32_t kNumValues = 2;
+static constexpr uint32_t kNumValues = 3;
 
 } // namespace nullpresets
