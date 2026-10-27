@@ -20,6 +20,7 @@
 #include <cmath>
 #include <cstdio>
 #include <cstring>
+#include <vector>
 
 // the plugin's factory presets (written by tools/build_presets.py into the plugin's folder)
 #if __has_include("FactoryPresets.hpp")
@@ -122,6 +123,8 @@ protected:
         label(46.0f, 28.0f, ALIGN_LEFT, 15.0f, 2.0f, theme::kText, name, true);
         label(kWidth - 14.0f, 15.0f, ALIGN_RIGHT, 7.5f, 2.0f, theme::kSlogan, "AUDIO WITHOUT NOISE", true);
         if (numPresets() > 0)
+            drawHistBar();
+        if (numPresets() > 0)
             drawPresetBox();
         else
             label(kWidth - 14.0f, 29.0f, ALIGN_RIGHT, 8.5f, 2.0f, theme::kMuted, category, true);
@@ -199,6 +202,7 @@ protected:
             presetSet(i, v);
             editParameter(i, false);
         }
+        histEnd();
 #else
         (void)p;
 #endif
@@ -301,6 +305,8 @@ protected:
             repaint();
             return true;
         }
+        if (ev.button == 1 && histClick(x, y))
+            return true;
         if (ev.button != 1 || !inPresetBox(x, y))
             return false;
         const int n = int(numPresets()), cur = presetMatch();
@@ -326,13 +332,218 @@ protected:
         const float x = float(ev.pos.getX()) / s, y = float(ev.pos.getY()) / s;
         const bool box = inPresetBox(x, y);
         const int item = fPresetOpen ? presetItemAt(x, y) : -1;
-        if (box != fPresetHoverBox || item != fPresetHover)
+        const int hist = fPresetOpen ? -1 : histAt(x, y);
+        if (box != fPresetHoverBox || item != fPresetHover || hist != fHistHover)
         {
             fPresetHoverBox = box;
             fPresetHover = item;
+            fHistHover = hist;
             repaint();
         }
         return fPresetOpen;
+    }
+
+    // ---- A/B and undo/redo ---------------------------------------------------------------------
+    // The twin of ng_hist* in null_gfx.jsfx-inc: undo, redo, A, B and a copy button left of the
+    // slogan, over the parameters the presets set. The subclasses call histTouch() before the UI
+    // changes a value and histEnd() when the edit is over (mouse up, or after a one-shot change):
+    // the values from before it then go on the undo list, and the redo list empties. A and B are
+    // two sets of values: a click on the other letter keeps the values in this one and loads that
+    // one (the first time it starts as a copy); A>B (B>A) copies this one into the other. Loading
+    // the other letter, undo and redo are steps like an edit, applied as host edits. Up to 32
+    // steps (fewer when 32 would not fit in 16000 bytes as doubles, like the GFX strings).
+
+    void histTouch()
+    {
+        const uint32_t n = numPresets() > 0 ? histCount() : 0;
+        if (n == 0 || fHistApplying || fHistPending)
+            return;
+        histStore(fHistPre);
+        fHistPending = true;
+    }
+
+    void histEnd()
+    {
+        if (!fHistPending)
+            return;
+        fHistPending = false;
+        if (!histSame(fHistPre))
+        {
+            histPush(fHistUndo, fHistUndoCount, fHistUndoPos, fHistPre);
+            fHistRedoCount = 0;
+        }
+    }
+
+    static uint32_t histCount()
+    {
+#if NULL_UI_PRESETS
+        return nullpresets::kNumValues;
+#else
+        return 0;
+#endif
+    }
+
+    uint32_t histDepth() const
+    {
+        return uint32_t(std::max(1, std::min(32, int(16000 / (8 * std::max<uint32_t>(1, histCount()))))));
+    }
+
+    void histStore(std::vector<float>& to) const
+    {
+        to.resize(histCount());
+        for (uint32_t i = 0; i < histCount(); ++i)
+            to[i] = presetGet(i);
+    }
+
+    bool histSame(const std::vector<float>& a) const
+    {
+        for (uint32_t i = 0; i < histCount() && i < a.size(); ++i)
+            if (a[i] != presetGet(i))
+                return false;
+        return true;
+    }
+
+    void histApply(const std::vector<float>& a)
+    {
+        fHistApplying = true;
+        for (uint32_t i = 0; i < histCount() && i < a.size(); ++i)
+        {
+            if (presetGet(i) == a[i])
+                continue;
+            editParameter(i, true);
+            presetSet(i, a[i]);
+            editParameter(i, false);
+        }
+        fHistApplying = false;
+    }
+
+    void histPush(std::vector<std::vector<float>>& list, uint32_t& count, uint32_t& pos, const std::vector<float>& v)
+    {
+        const uint32_t d = histDepth();
+        if (list.size() != d)
+            list.assign(d, std::vector<float>());
+        list[pos] = v;
+        pos = (pos + 1) % d;
+        count = std::min(count + 1, d);
+    }
+
+    void histPop(std::vector<std::vector<float>>& list, uint32_t& count, uint32_t& pos)
+    {
+        const uint32_t d = histDepth();
+        pos = (pos + d - 1) % d;
+        --count;
+        histApply(list[pos]);
+    }
+
+    // a click on the buttons: 1 undo, 2 redo, 3 A, 4 B, 5 copy
+    void histRequest(int req)
+    {
+        fHistPending = false;
+        std::vector<float> cur;
+        histStore(cur);
+        if (req == 1 && fHistUndoCount > 0)
+        {
+            histPush(fHistRedo, fHistRedoCount, fHistRedoPos, cur);
+            histPop(fHistUndo, fHistUndoCount, fHistUndoPos);
+        }
+        else if (req == 2 && fHistRedoCount > 0)
+        {
+            histPush(fHistUndo, fHistUndoCount, fHistUndoPos, cur);
+            histPop(fHistRedo, fHistRedoCount, fHistRedoPos);
+        }
+        else if ((req == 3 || req == 4) && req - 3 != fHistAB)
+        {
+            fHistSlot[fHistAB] = cur;
+            fHistAB = req - 3;
+            if (fHistHasB)
+            {
+                histApply(fHistSlot[fHistAB]);
+                if (!histSame(cur))
+                {
+                    histPush(fHistUndo, fHistUndoCount, fHistUndoPos, cur);
+                    fHistRedoCount = 0;
+                }
+            }
+            else
+                fHistHasB = true;
+        }
+        else if (req == 5)
+        {
+            fHistSlot[1 - fHistAB] = cur;
+            fHistHasB = true;
+        }
+        repaint();
+    }
+
+    // the buttons: x and width in design units, at y 9.5..20.5, right-aligned 143 from the edge
+    static constexpr float kHistY = 9.5f, kHistH = 11.0f;
+    float histX(int b) const
+    {
+        static const float off[5] = { 88.0f, 72.0f, 52.0f, 36.0f, 20.0f };
+        return float(kWidth) - 143.0f - off[b];
+    }
+    static float histW(int b) { return b == 4 ? 20.0f : 14.0f; }
+    bool histOn(int b) const { return b == 0 ? fHistUndoCount > 0 : b == 1 ? fHistRedoCount > 0 : true; }
+
+    int histAt(float x, float y) const
+    {
+        if (numPresets() == 0 || histCount() == 0 || y < kHistY || y >= kHistY + kHistH)
+            return -1;
+        for (int b = 0; b < 5; ++b)
+            if (histOn(b) && x >= histX(b) && x < histX(b) + histW(b))
+                return b;
+        return -1;
+    }
+
+    bool histClick(float x, float y)
+    {
+        const int b = histAt(x, y);
+        if (b < 0)
+            return false;
+        histRequest(b + 1);
+        return true;
+    }
+
+    // curved arrow for undo (dir -1, head on the left) and redo (1), like ng_h_arrow
+    void drawHistArrow(float x, float dir, uint32_t rgb)
+    {
+        const float cx = x - dir, r = 3.2f, hp = 0.5f * float(M_PI);
+        beginPath();
+        if (dir < 0.0f)
+            arc(cx, 16.0f, r, -hp, hp, CW);
+        else
+            arc(cx, 16.0f, r, hp, 3.0f * hp, CW);
+        moveTo(cx - dir * 2.2f, 11.2f);
+        lineTo(cx, 12.8f);
+        lineTo(cx - dir * 2.2f, 14.4f);
+        strokeColor(col(rgb));
+        strokeWidth(1.0f);
+        stroke();
+    }
+
+    void drawHistBar()
+    {
+        if (histCount() == 0)
+            return;
+        for (int b = 0; b < 5; ++b)
+        {
+            const float x = histX(b), w = histW(b);
+            const bool on = histOn(b), hover = on && b == fHistHover;
+            const bool lit = (b == 2 && fHistAB == 0) || (b == 3 && fHistAB == 1);
+            beginPath();
+            roundedRect(x + 0.5f, kHistY + 0.5f, w - 1.0f, kHistH - 1.0f, 3.0f);
+            fillColor(col(theme::kBackground));
+            fill();
+            strokeColor(col(lit ? theme::kAccent : hover ? theme::kTrackHover : theme::kBorder));
+            strokeWidth(1.0f);
+            stroke();
+            const uint32_t fg = !on ? theme::kLogoEdge : lit || hover ? theme::kText : theme::kMuted;
+            if (b < 2)
+                drawHistArrow(x + 7.0f, b == 0 ? -1.0f : 1.0f, fg);
+            else
+                label(x + w * 0.5f, 15.0f, ALIGN_CENTER, 7.0f, 0.0f, fg,
+                      b == 2 ? "A" : b == 3 ? "B" : fHistAB ? "B>A" : "A>B", true);
+        }
     }
 
     void card(float x, float y, float w, float h)
@@ -684,6 +895,11 @@ protected:
 private:
     bool fPresetOpen = false, fPresetHoverBox = false;
     int fPresetHover = -1;
+    std::vector<float> fHistPre, fHistSlot[2];
+    std::vector<std::vector<float>> fHistUndo, fHistRedo;
+    uint32_t fHistUndoCount = 0, fHistUndoPos = 0, fHistRedoCount = 0, fHistRedoPos = 0;
+    int fHistAB = 0, fHistHover = -1;
+    bool fHistHasB = false, fHistPending = false, fHistApplying = false;
 };
 
 // ------------------------------------------------------------------------------------------------
@@ -790,6 +1006,7 @@ protected:
         v = clampf(v, fInfo.min, fInfo.max);
         if (v == fValue)
             return;
+        histTouch();
         fValue = v;
         setParameterValue(0, v);
         repaint();
@@ -800,6 +1017,7 @@ protected:
         editParameter(0, true);
         setFromUI(v);
         editParameter(0, false);
+        histEnd();
     }
 
     bool onMouse(const MouseEvent& ev) override
@@ -835,6 +1053,7 @@ protected:
         {
             fDragging = false;
             editParameter(0, false);
+            histEnd();
             repaint();
             return true;
         }
@@ -1168,6 +1387,7 @@ protected:
     {
         if (v == fValues[param])
             return;
+        histTouch();
         fValues[param] = v;
         setParameterValue(param, v);
         repaint();
@@ -1178,6 +1398,7 @@ protected:
         editParameter(param, true);
         setFromUI(param, v);
         editParameter(param, false);
+        histEnd();
     }
 
     void step(int i, int dir, bool wrap)
@@ -1247,6 +1468,7 @@ protected:
         if (fDrag >= 0)
         {
             editParameter(fL.controls[fDrag].param, false);
+            histEnd();
             fDrag = -1;
             repaint();
             return true;

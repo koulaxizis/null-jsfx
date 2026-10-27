@@ -37,6 +37,8 @@ public:
         update();
     }
 
+    uint32_t latency() const override { return uint32_t(fDsp.latency()); } // pdc_delay
+
     void process(const float* inL, const float* inR, float* outL, float* outR, uint32_t frames,
                  const nulljsfx::ModuleTime&) override
     {
@@ -48,7 +50,7 @@ private:
 
     void update()
     {
-        fDsp.setParams(v(0), v(1), v(2), int(std::lround(v(3))), v(4));
+        fDsp.setParams(v(0), v(1), v(2), int(std::lround(v(3))), v(4), int(std::lround(v(5))));
     }
 
     nullladder::LadderProcessor fDsp;

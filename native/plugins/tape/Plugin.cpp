@@ -43,7 +43,6 @@ private:
     void reset(double sr)
     {
         fDsp.setSampleRate(sr);
-        setLatency(uint32_t(nulltape::TapeProcessor::latencyFor(sr)));
         update();
     }
 
@@ -53,6 +52,7 @@ private:
         for (uint32_t i = 0; i < nulltape::kNumSliders; ++i)
             s[i] = nulltape::sliderValue(i, value(i));
         fDsp.setParams(s);
+        setLatency(uint32_t(fDsp.latency())); // pdc_delay
     }
 
     nulltape::TapeProcessor fDsp;

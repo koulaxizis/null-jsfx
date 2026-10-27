@@ -405,7 +405,7 @@ Why the exceptions exist: hosts store the CLAP id in sessions, so the released i
 | Sidechain Ducker | `sidechain_ducker` | `sidechain-ducker` | `N9Sd` | yes | 480x380 | 7 |
 | Stereo Width | `stereo_width` | `stereo-width` | `N3sw` | yes | 480x294 | 3 |
 | Studio EQ | `studio_eq` | `studio-eq` | `NSEq` | no | 480x468 | 51 |
-| Tape | `tape` | `tape` | `NTap` | yes | 480x380 | 10 |
+| Tape | `tape` | `tape` | `NTap` | yes | 480x380 | 11 |
 | Tape Echo | `tape_echo` | `tape-echo` | `NTEc` | yes | 480x380 | 11 |
 | Transient Shaper | `transient_shaper` | `transient-shaper` | `N1ts` | yes | 480x380 | 8 |
 | Tremolo | `tremolo` | `tremolo` | `N4tr` | yes | 480x380 | 7 |
@@ -427,7 +427,7 @@ Why the exceptions exist: hosts store the CLAP id in sessions, so the released i
 | Half Speed | `half_speed` | `half-speed` | `NHsp` | yes | 480x294 | 6 |
 | Harmonizer | `harmonizer` | `harmonizer` | `N8Hm` | yes | 480x380 | 12 |
 | Kick Shaper | `kick_shaper` | `kick-shaper` | `N7Ks` | yes | 480x294 | 6 |
-| Ladder Filter | `ladder_filter` | `ladder-filter` | `N6lf` | yes | 480x294 | 5 |
+| Ladder Filter | `ladder_filter` | `ladder-filter` | `N6lf` | yes | 480x294 | 6 |
 | Loudness Meter | `loudness_meter` | `loudness-meter` | `N0Lm` | no | 600x414 | 6 |
 | Noise Reduction | `noise_reduction` | `noise-reduction` | `NNRd` | yes | 480x410 | 9 |
 | OTT | `ott` | `ott` | `N9Ot` | yes | 480x380 | 8 |
