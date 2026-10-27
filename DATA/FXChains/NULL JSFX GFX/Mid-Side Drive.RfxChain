@@ -22,7 +22,7 @@ FXID {F62063F6-7149-574C-BF00-83BD38400766}
 WAK 0 0
 BYPASS 0 0
 <JS null_jsfx/gfx/saturation_gfx.jsfx ""
-  35 0 100 1 0 0 0 0 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  35 0 100 1 0 0 0 0 0 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 >
 <JS_PINMAP
   6AMAABwAAADoAwAAAgAAAAIAAAABAAAAAAAAAAEAAAAAAAAAHAAAAOgDAAACAAAAAgAAAAEAAAAAAAAAAAAAAAAAAAA=
@@ -66,7 +66,7 @@ FXID {65329780-E6F2-5FC2-9014-78489A182D15}
 WAK 0 0
 BYPASS 0 0
 <JS null_jsfx/gfx/dynamics_gfx.jsfx ""
-  0 -18 3 6 10 120 2 0 20 100 0 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  0 -18 3 6 10 120 2 0 20 100 0 0 0 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 >
 FXID {9644DC6C-7F86-5688-9968-5C1A60E0501B}
 WAK 0 0

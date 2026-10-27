@@ -13,8 +13,10 @@ namespace nulldynamics {
 static const char* const kModeOptions[] = { "COMP", "EXPAND" };
 static const char* const kStyleOptions[] = { "CLEAN", "BUS", "FET", "OPTO", "UPWARD" };
 static const char* const kSidechainOptions[] = { "INT", "EXT" };
+static const char* const kChannelsOptions[] = { "STEREO", "MID", "SIDE" };
+static const char* const kListenOptions[] = { "OUTPUT", "DELTA" };
 
-// slider1..slider11 of dynamics.jsfx, in order
+// slider1..slider13 of dynamics.jsfx, in order (12..13 appended in 2.7)
 static const DISTRHO::SliderInfo kSliders[] = {
     { "Mode", "mode", 0.0f, 1.0f, 0.0f, "", 1.0f, kModeOptions },
     { "Threshold", "threshold", -60.0f, 0.0f, -20.0f, "dB", 1.0f },
@@ -27,6 +29,8 @@ static const DISTRHO::SliderInfo kSliders[] = {
     { "Sidechain HPF", "schpf", 20.0f, 500.0f, 20.0f, "Hz", 1.0f },
     { "Mix", "mix", 0.0f, 100.0f, 100.0f, "%", 1.0f },
     { "Sidechain", "sidechain", 0.0f, 1.0f, 0.0f, "", 1.0f, kSidechainOptions },
+    { "Channels", "channels", 0.0f, 2.0f, 0.0f, "", 1.0f, kChannelsOptions },
+    { "Listen", "listen", 0.0f, 1.0f, 0.0f, "", 1.0f, kListenOptions },
 };
 static constexpr uint32_t kNumSliders = sizeof(kSliders) / sizeof(kSliders[0]);
 
@@ -36,7 +40,7 @@ static constexpr uint32_t kNumSliders = sizeof(kSliders) / sizeof(kSliders[0]);
 static const DISTRHO::SliderInfo kRackSliders[] = {
     kSliders[0], kSliders[1], kSliders[2], kSliders[3], kSliders[4], kSliders[5], kSliders[6],
     { "Style", "style", 0.0f, 3.0f, 0.0f, "", 1.0f, kStyleOptions },
-    kSliders[8], kSliders[9], kSliders[10],
+    kSliders[8], kSliders[9], kSliders[10], kSliders[11], kSliders[12],
 };
 static_assert(sizeof(kRackSliders) / sizeof(kRackSliders[0]) == kNumSliders, "one Rack slider per JSFX slider");
 

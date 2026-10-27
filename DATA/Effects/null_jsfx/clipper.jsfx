@@ -11,6 +11,7 @@ slider4:2<0,3,1{Off,2x,4x,8x}>Oversampling
 slider5:100<0,100,1>Mix (%)
 slider6:0<-24,12,0.1>Output (dB)
 slider7:1<0,1,1{Stereo,Dual}>Link
+slider8:0<0,1,1{Output,Delta}>Listen
 
 in_pin:Left
 in_pin:Right
@@ -30,6 +31,8 @@ out_pin:Right
   // its own. Mix blends the clipped signal with the dry input (delayed to match), Output sets
   // the level after the mix.
   // Latency (reported to the host): 0, 31, 37 or 39 samples for Off, 2x, 4x and 8x.
+  // Listen Delta (appended in 2.7) plays what the clipper takes away: the driven input (delayed
+  // to match) minus the clipped signal, after Output and without Mix.
   E1 = 0;  D1 = 32;  // stage 1 (63 taps): 32 even-phase taps, x2 for the upsampler
   E2 = 64; D2 = 76;  // stage 2 (23 taps): 12
   E3 = 88; D3 = 96;  // stage 3 (15 taps): 8
@@ -156,6 +159,7 @@ out_pin:Right
   mix = slider5 / 100;
   gout = 10 ^ (slider6 / 20);
   link = slider7;
+  listen_delta = slider8;
   os < 0.5 ? ( osf = 1; lat = 0; pad = 0; ) :
   os < 1.5 ? ( osf = 2; lat = 31; pad = 0; ) :
   os < 2.5 ? ( osf = 4; lat = 37; pad = 2; ) :
@@ -273,5 +277,10 @@ out_pin:Right
   dry_l = chl.dr[j];
   dry_r = chr.dr[j];
   dw = (dw + 1) % 64;
-  spl0 = (dry_l * (1 - mix) + yl * mix) * gout;
-  spl1 = (dry_r * (1 - mix) + yr * mix) * gout;
+  listen_delta ? (
+    spl0 = (dry_l * gin - yl) * gout;
+    spl1 = (dry_r * gin - yr) * gout;
+  ) : (
+    spl0 = (dry_l * (1 - mix) + yl * mix) * gout;
+    spl1 = (dry_r * (1 - mix) + yr * mix) * gout;
+  );

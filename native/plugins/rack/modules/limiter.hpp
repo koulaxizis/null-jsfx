@@ -54,7 +54,7 @@ public:
 private:
     void update()
     {
-        fDsp.setParams(int(std::lround(fV[0])), fV[1], fV[2], fV[3], fV[4]);
+        fDsp.setParams(int(std::lround(fV[0])), fV[1], fV[2], fV[3], fV[4], fV[5] >= 0.5f, fV[6] >= 0.5f);
     }
 
     nulllimiter::LimiterProcessor fDsp;

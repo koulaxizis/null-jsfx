@@ -418,8 +418,8 @@
    ],
    "ins": 2,
    "outs": 2,
-   "sliders": 7,
-   "bytes": 56355
+   "sliders": 8,
+   "bytes": 57592
   },
   {
    "id": "de_hum",
@@ -516,8 +516,8 @@
    ],
    "ins": 2,
    "outs": 2,
-   "sliders": 19,
-   "bytes": 56792
+   "sliders": 21,
+   "bytes": 61847
   },
   {
    "id": "dynamics",
@@ -526,12 +526,12 @@
    "tags": "dynamics compressor expander gain reduction ratio threshold knee sidechain parallel bus fet opto upward gui",
    "gfx": [
     480,
-    380
+    408
    ],
    "ins": 4,
    "outs": 2,
-   "sliders": 11,
-   "bytes": 57949
+   "sliders": 13,
+   "bytes": 63805
   },
   {
    "id": "envelope_follower",
@@ -596,12 +596,12 @@
    "tags": "limiter ceiling clipper brickwall peak protection mastering gui",
    "gfx": [
     480,
-    294
+    380
    ],
    "ins": 2,
    "outs": 2,
-   "sliders": 5,
-   "bytes": 39450
+   "sliders": 7,
+   "bytes": 46972
   },
   {
    "id": "maximizer",
@@ -610,12 +610,12 @@
    "tags": "limiter maximizing loudness ceiling mastering peak protection dither multiband saturation lufs gui",
    "gfx": [
     480,
-    380
+    408
    ],
    "ins": 2,
    "outs": 2,
-   "sliders": 12,
-   "bytes": 71912
+   "sliders": 14,
+   "bytes": 83774
   },
   {
    "id": "mid_side_matrix",
@@ -642,8 +642,8 @@
    ],
    "ins": 2,
    "outs": 2,
-   "sliders": 23,
-   "bytes": 63536
+   "sliders": 25,
+   "bytes": 66892
   },
   {
    "id": "noise_generator",
@@ -782,8 +782,8 @@
    ],
    "ins": 2,
    "outs": 2,
-   "sliders": 8,
-   "bytes": 59888
+   "sliders": 9,
+   "bytes": 62226
   },
   {
    "id": "shaper",
@@ -826,6 +826,20 @@
    "outs": 2,
    "sliders": 3,
    "bytes": 32121
+  },
+  {
+   "id": "studio_eq",
+   "name": "Studio EQ",
+   "category": "Essentials",
+   "tags": "equalizer eq parametric linear phase mid side mixing mastering essentials gui",
+   "gfx": [
+    480,
+    468
+   ],
+   "ins": 2,
+   "outs": 2,
+   "sliders": 51,
+   "bytes": 134489
   },
   {
    "id": "tape",
@@ -1136,6 +1150,20 @@
    "bytes": 67122
   },
   {
+   "id": "reference",
+   "name": "Reference",
+   "category": "Advanced",
+   "tags": "reference track a/b compare level match loudness lufs mixing mastering meter analyzer gui",
+   "gfx": [
+    480,
+    334
+   ],
+   "ins": 4,
+   "outs": 2,
+   "sliders": 4,
+   "bytes": 42421
+  },
+  {
    "id": "resonance_suppressor",
    "name": "Resonance Suppressor",
    "category": "Advanced",
@@ -1232,6 +1260,20 @@
    "outs": 2,
    "sliders": 8,
    "bytes": 49778
+  },
+  {
+   "id": "spectral_ducker",
+   "name": "Spectral Ducker",
+   "category": "Advanced",
+   "tags": "sidechain spectral ducking ducker trackspacer vocal space mix eq advanced gui",
+   "gfx": [
+    480,
+    380
+   ],
+   "ins": 4,
+   "outs": 2,
+   "sliders": 10,
+   "bytes": 51096
   },
   {
    "id": "spectral_freeze",

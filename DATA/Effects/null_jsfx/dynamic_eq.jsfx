@@ -23,6 +23,8 @@ slider16:-12<-36,0,1>B4 Threshold (dB)
 slider17:1<0.1,10,0.1>Attack (ms)
 slider18:100<1,500,1>Release (ms)
 slider19:0<0,24,1>Makeup (dB)
+slider20:0<0,2,1{Stereo,Mid,Side}>Channels
+slider21:0<0,1,1{Output,Delta}>Listen
 
 in_pin:Left
 in_pin:Right
@@ -35,6 +37,8 @@ out_pin:Right
   // frequency range; once that level passes Threshold, the band's Gain is applied,
   // fading in fully at 12 dB over the threshold. Negative Gain tames resonances or
   // harshness only when they happen; positive Gain lifts a band only when it is played.
+  // Appended in 2.7: Channels Mid / Side equalises only the mid or the side of the stereo pair,
+  // Listen Delta plays what the bands change (the input minus the result, before Makeup).
 
   // constant-peak band-pass (RBJ), coefficients this.b0 / this.a1 / this.a2
   function setup(freq, q, gain, thresh)
@@ -83,12 +87,46 @@ out_pin:Right
   att = exp(-1 / (slider17 * srate / 1000));
   rel = exp(-1 / (slider18 * srate / 1000));
   makeup = 10 ^ (slider19 / 20);
+  ms_mode = slider20;
+  listen_delta = slider21;
 
 @sample
+  // Channels Mid / Side: the chosen half of the mid/side pair goes through on both channels,
+  // the other waits and is added back after
+  ms_mode ? (
+    ms_m = (spl0 + spl1) * 0.5;
+    ms_s = (spl0 - spl1) * 0.5;
+    ms_mode == 1 ? (
+      spl0 = spl1 = ms_m;
+      ms_o = ms_s;
+    ) : (
+      spl0 = spl1 = ms_s;
+      ms_o = ms_m;
+    );
+  );
   l = spl0; r = spl1;
   e1.band(l, r);
   e2.band(l, r);
   e3.band(l, r);
   e4.band(l, r);
-  spl0 = l * makeup;
-  spl1 = r * makeup;
+  listen_delta ? (
+    spl0 = spl0 - l;
+    spl1 = spl1 - r;
+  ) : (
+    spl0 = l * makeup;
+    spl1 = r * makeup;
+  );
+
+  ms_mode ? (
+    // back to left / right (Delta: the processed half alone)
+    listen_delta ? ms_o = 0;
+    ms_mode == 1 ? (
+      ms_x = spl0;
+      spl0 = ms_x + ms_o;
+      spl1 = ms_x - ms_o;
+    ) : (
+      ms_x = spl0;
+      spl0 = ms_o + ms_x;
+      spl1 = ms_o - ms_x;
+    );
+  );

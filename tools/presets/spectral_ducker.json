@@ -1,0 +1,9 @@
+[
+  ["Vocal Space", {"Amount": 40, "Threshold": -42, "Attack": 5, "Release": 120, "Low Cut": 150, "High Cut": 8000}],
+  ["Vocal Space Wide", {"Amount": 50, "Threshold": -42, "Attack": 5, "Release": 120, "Low Cut": 150, "High Cut": 8000, "Channels": "Mid"}],
+  ["Kick Through Bass", {"Amount": 70, "Threshold": -36, "Attack": 1, "Release": 90, "Low Cut": 30, "High Cut": 250}],
+  ["Lead Over Pads", {"Amount": 55, "Threshold": -45, "Attack": 10, "Release": 250, "Low Cut": 200, "High Cut": 12000}],
+  ["Voice Over Music", {"Amount": 80, "Threshold": -48, "Attack": 8, "Release": 300, "Low Cut": 120, "High Cut": 10000}],
+  ["Gentle Carve", {"Amount": 25, "Threshold": -40, "Attack": 10, "Release": 200}],
+  ["Snare Room In Reverb", {"Amount": 60, "Threshold": -36, "Attack": 2, "Release": 150, "Low Cut": 150, "High Cut": 10000, "Mix": 80}]
+]
