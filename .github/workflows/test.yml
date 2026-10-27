@@ -22,6 +22,8 @@ jobs:
       - run: python3 tools/build_site.py --check
       - run: python3 tools/build_chains.py --check
       - run: python3 tools/build_presets.py --check
+      # the Bible's changelog (Part X) stays oldest first, newest at the bottom (R26)
+      - run: python3 tests/bible_order.py
 
   remote:
     # the tablet remote (remote/): page in a real browser + bridge script under a REAPER stand-in

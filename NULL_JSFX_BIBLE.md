@@ -14,7 +14,7 @@
 | Part | Content |
 |---|---|
 | 0 | Working agreement and session start (read first) |
-| I | Mission, one sound four forms, free forever, rules R1–R24 |
+| I | Mission, one sound four forms, free forever, rules R1–R26 |
 | II | Architecture |
 | III | Plugin registry (generated from the files) |
 | IV | Recipes index |
@@ -177,6 +177,7 @@ Rule numbers are stable. A retired rule keeps its number, marked *retired*, and 
 |---|---|
 | R23 | Every delivery updates this Bible: a changelog entry in Part X, plus the delta in its own Part. Facts carry their source tag (header). |
 | R24 | Part III is generated from the files and never typed by hand. Until a generator exists (Part VIII, B1), it is regenerated with the script recorded there and its date is updated. |
+| R26 | Part X stays in order: oldest first, and a new entry goes at the very end, never near the top or newest-first. `tests/bible_order.py` checks it in CI (`test.yml`) (2026-10-27). |
 
 ---
 
@@ -512,6 +513,7 @@ The recipes live in the READMEs. This Part says where they are and lists the ste
 | Hub release smoke | `hub/tests/release_smoke.sh [tag]` | install and remove from the real latest release |
 | Installers | `tests/installer_test.sh`, `tests/pkg_test.sh`, the Windows step in `native.yml` | install, check (counts, presets merged, the user's preset kept) and uninstall |
 | Remote | `node tests/remote/remote_test.cjs` | the page in Chromium plus the real bridge under `mock_reaper.lua` |
+| Bible order | `python3 tests/bible_order.py` (in `test.yml`) | R26: every Part X entry has a date and the dates never go back |
 | Generators | `build_site.py`, `build_chains.py`, `build_presets.py`, `build_remote.py`, `build_catalog.py` with `--check` | the generated files are up to date |
 
 The ysfx engine is pinned at `8077347ccf4115567aed81400281dca57acbb0cc` (in `tests/run.sh` and `web/test/run.sh`). Building the native tests: `native/scripts/build.sh --test [--plugins "a;b"]`, on Linux and macOS.
@@ -692,7 +694,7 @@ Paste this as the first message of a new chat:
 ```
 Continuing NULL JSFX work (repo koulaxizis/null-jsfx, site nulljsfx.tech).
 NULL_JSFX_BIBLE.md is the SINGLE SOURCE OF TRUTH: read Part 0 (working
-agreement), Part I (rules R1-R24) and Part VIII (open items) before touching
+agreement), Part I (rules R1-R26) and Part VIII (open items) before touching
 anything. Work from the CURRENT files in the repo; never guess a file.
 Next task: <task>. Areas involved: <DATA / gfx / native / rack / web / hub /
 installer / remote / site / tools>.
@@ -706,7 +708,7 @@ entry and the Bible delta.
 ## Part X — Changelog
 
 **Format:**
-- The order is ascending: oldest first, and each new entry goes at the BOTTOM, in the same delivery as the change.
+- The order is ascending: oldest first, and each new entry goes at the BOTTOM, in the same delivery as the change (R26; `tests/bible_order.py` fails a PR whose dates go back).
 - The heading is `### YYYY-MM-DD — <area> <version or PR> — <title>`.
 - The bullets are **Changes**, **Fixes**, **Decisions**, **Files**, **Tests** and **Next**, as needed.
 - Code, files and keys go in backticks.
@@ -765,3 +767,9 @@ entry and the Bible delta.
 - **Tests:** `tests/run.sh` on the 18 changed JSFX (0 failed); `node web/tools/build.js` + `web/test/run.sh` (0 of 226 differ); `native/scripts/build.sh --test` for the 9 instruments plus Chords, Scale and Arpeggiator: every `compare_`, `presets_` and `gfx_` test passes, with `midi n/n same` for instruments; old vs new JSFX rendered with `compare` for the audio-unchanged check.
 - **Found:** with a richer MIDI stimulus (note-offs, sustain, all notes off, bend), `presets_pluck` diverges at 96 kHz on "Harp Rolls" (0.338). Pre-existing; sent to a separate fix thread, which also adds that stimulus to `compare.cpp`.
 - **Next:** ships in the next patch release; no version bump in this PR.
+
+### 2026-10-27 — tests, Bible — Part X order check (R26)
+- **Changes:** new rule R26: Part X stays oldest first, a new entry goes at the very end. `tests/bible_order.py` checks that every Part X entry has a date and that the dates never go back; `test.yml` runs it. The Map, the Part IX handoff and `CLAUDE.md` say R1–R26 (they still said R1–R24 although R25 existed). Part V.1 lists the check.
+- **Why:** the same problem in orOS (parallel PRs put their entries newest-first, 98 entries out of order) was fixed there with `tests/bible-order.test.js` and rule R40.
+- **Files:** `tests/bible_order.py` (new), `.github/workflows/test.yml`, `NULL_JSFX_BIBLE.md`, `CLAUDE.md`.
+- **Tests:** the check passes on this Bible and fails (exit 1, with the two titles named) when an entry dated 2026-10-27 is moved above one dated 2026-10-26. Only dates are checked: Part X headings carry no single version scheme.
