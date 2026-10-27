@@ -4,7 +4,7 @@
 >
 > - **Site:** https://nulljsfx.tech · **Repo:** github.com/koulaxizis/null-jsfx · **Author:** Christos Koulaxizis (koulaxizis.gr)
 > - **Slogan:** AUDIO WITHOUT NOISE
-> - **Bible version:** 1.0 (2026-10-26). The Bible has its own version: a patch step (1.0.1) for corrections, a minor step (1.1) for new rules or Parts. The suite's version is in Part VI.
+> - **Bible version:** 1.1 (2026-10-26). The Bible has its own version: a patch step (1.0.1) for corrections, a minor step (1.1) for new rules or Parts. The suite's version is in Part VI.
 > - **Suite state:** 2.6 (release published 2026-10-26 14:26 UTC), main at `a231c1b`.
 > - **Last full read of the repo:** 2026-10-26. These files were read for this edition: CLAUDE.md, README.md, native/README.md, web/README.md, hub/README.md, tools/video/README.md, llms.txt, tests/lint.py, tests/run.sh, web/test/run.sh, native/test/CMakeLists.txt, every `.github/workflows/*.yml`, the docstrings of every `tools/*.py`, the headers of `native/common/*.hpp`, and the reference plugins tilt, delay, drum_machine and chords in JSFX, GFX and VST3/CLAP, plus downloads.json and supporters.json.
 > - **Tags:** **[verified 2026-10-26]** means the fact was checked against the file or the GitHub API on that date. **[memory]** means it comes from the project's memory notes or from a thread, and was not re-checked against a file. **[PR #n]** means it comes from that pull request.
@@ -142,7 +142,7 @@ Rule numbers are stable. A retired rule keeps its number, marked *retired*, and 
 | # | Rule |
 |---|---|
 | R14 | Generated files are never edited by hand: change the source, then regenerate. See the table in Part II.9. CI runs the `--check` of each generator. |
-| R15 | After a change, run the matching generators. Plugin added or sliders changed: `tools/build_site.py`, `tools/build_remote.py`, `tools/build_catalog.py --check`. Anything in `DATA/` changed: `node web/tools/build.js`. Presets: `tools/build_presets.py`. Chains or Rack presets: `tools/build_chains.py`. |
+| R15 | After a change, run the matching generators. Plugin added or sliders changed: `tools/build_site.py`, `tools/build_remote.py`, `tools/build_bible.py`, `tools/build_catalog.py --check`. Anything in `DATA/` changed: `node web/tools/build.js`. Presets: `tools/build_presets.py`. Chains or Rack presets: `tools/build_chains.py`. |
 
 **Presets and chains**
 
@@ -176,7 +176,7 @@ Rule numbers are stable. A retired rule keeps its number, marked *retired*, and 
 | # | Rule |
 |---|---|
 | R23 | Every delivery updates this Bible: a changelog entry in Part X, plus the delta in its own Part. Facts carry their source tag (header). |
-| R24 | Part III is generated from the files and never typed by hand. Until a generator exists (Part VIII, B1), it is regenerated with the script recorded there and its date is updated. |
+| R24 | Part III is generated from the files by `tools/build_bible.py` and never typed by hand. Run it after adding a plugin or changing its sliders, `@gfx` size, unique id or Rack module; CI runs `--check`. |
 
 ---
 
@@ -254,6 +254,7 @@ The user picks formats, plugins and extras. FX chains are installed only when al
 | `build_remote.py` | the remote's plugin list; `--check` |
 | `count_downloads.py` | `downloads.json` (VI.5) |
 | `render_demos.py` | `assets/audio/demos/*.mp3` + `demos.json`: the before/after demos (ysfx + ffmpeg) |
+| `build_bible.py` | Part III of this Bible (the registry); `--check` in CI |
 | `make_social_preview.py` | `assets/img/social-preview.jpg` (run it again when the plugin count changes) |
 | `video/` | the presentation videos ([tools/video/README.md](tools/video/README.md)) |
 | `gfx_render/`, `render_gfx_shots.sh` | GFX screenshots (`assets/img/gfx/`) |
@@ -284,13 +285,13 @@ The data files are `site_content.json` (texts per plugin), `site_content_next.js
 | the plugin list in `remote/reaper_www_root/null_jsfx.html` | `tools/build_remote.py` |
 | `assets/video/*`, `assets/audio/demos/*`, `assets/img/gfx/*`, `assets/img/social-preview.jpg` | `tools/video`, `render_demos.py`, `render_gfx_shots.sh`, `make_social_preview.py` |
 | `downloads.json` | the `downloads.yml` bot |
-| Part III of this Bible | the registry script (Part VIII, B1) |
+| Part III of this Bible (between the REGISTRY markers) | `tools/build_bible.py` |
 
 ---
 
 ## Part III — Plugin registry
 
-Generated from the files on 2026-10-26 (main `a231c1b`) by the script in Part VIII, B1. Do not edit this table by hand (R24).
+Generated from the files by `tools/build_bible.py`, and checked in CI with `--check`. Do not edit the block by hand (R24).
 
 The columns are read from these files:
 
@@ -305,21 +306,21 @@ The columns are read from these files:
 
 Every plugin has all of these: a GFX version, a VST3/CLAP version, a site page, a presets file and a web build.
 
+Why the exceptions exist: hosts store the CLAP id in sessions, so the released ids stay as they are (R3). Meters, MIDI effects and instruments get no module, and neither does Band Splitter, which needs eight-channel buses (R13).
+
+<!-- BEGIN REGISTRY: generated by tools/build_bible.py -->
+
 **Totals:**
 - 113 plugins: 21 One Slider, 45 Essentials, 33 Advanced, 9 Instruments, 5 MIDI.
 - 95 Rack modules.
-- 73 FX chains in each of the two chain folders.
+- 73 FX chains in `NULL JSFX` and 73 in `NULL JSFX GFX`.
 - 1,006 factory presets, Default included.
 - 86 Rack presets, Init included.
 
 **Exceptions:**
-- **CLAP ids with a hyphen** (released, frozen by R3): `tech.nulljsfx.granular-delay`, `tech.nulljsfx.shimmer-reverb`, `tech.nulljsfx.spring-reverb`, `tech.nulljsfx.vinyl-age` and `tech.nulljsfx.warped-delay`. Every other plugin uses `tech.nulljsfx.<file>`.
-- **No Rack module** (R13):
-  - meters: Loudness Meter, Spectrum Analyzer, Stereo Scope;
-  - eight-channel buses: Band Splitter;
-  - every Instrument and every MIDI effect.
+- **CLAP ids that differ from the file name** (released, frozen by R3): `tech.nulljsfx.granular-delay`, `tech.nulljsfx.shimmer-reverb`, `tech.nulljsfx.spring-reverb`, `tech.nulljsfx.vinyl-age`, `tech.nulljsfx.warped-delay`.
+- **No Rack module** (R13): Arpeggiator, Band Splitter, Bass, Chords, Drum Machine, FM, Humanize, Keys, Loudness Meter, Organ, Percussion, Pluck, Riff, Sampler, Scale, Spectrum Analyzer, Stereo Scope, Synth.
 
-<!-- BEGIN REGISTRY: generated, see Part VIII B1 -->
 ### One Slider (21)
 
 | Plugin | File | Site slug | Unique ID | Rack | GFX | Sliders |
@@ -512,7 +513,7 @@ The recipes live in the READMEs. This Part says where they are and lists the ste
 | Hub release smoke | `hub/tests/release_smoke.sh [tag]` | install and remove from the real latest release |
 | Installers | `tests/installer_test.sh`, `tests/pkg_test.sh`, the Windows step in `native.yml` | install, check (counts, presets merged, the user's preset kept) and uninstall |
 | Remote | `node tests/remote/remote_test.cjs` | the page in Chromium plus the real bridge under `mock_reaper.lua` |
-| Generators | `build_site.py`, `build_chains.py`, `build_presets.py`, `build_remote.py`, `build_catalog.py` with `--check` | the generated files are up to date |
+| Generators | `build_site.py`, `build_chains.py`, `build_presets.py`, `build_bible.py`, `build_remote.py`, `build_catalog.py` with `--check` | the generated files are up to date |
 
 The ysfx engine is pinned at `8077347ccf4115567aed81400281dca57acbb0cc` (in `tests/run.sh` and `web/test/run.sh`). Building the native tests: `native/scripts/build.sh --test [--plugins "a;b"]`, on Linux and macOS.
 
@@ -520,7 +521,7 @@ The ysfx engine is pinned at `8077347ccf4115567aed81400281dca57acbb0cc` (in `tes
 
 | Workflow | Trigger | Does |
 |---|---|---|
-| `test.yml` "Test plugins" | every push and PR | `tests/run.sh`; the odd-rates run (R25); `build_site.py`, `build_chains.py` and `build_presets.py` with `--check`; job `remote`: `build_remote.py --check` + `remote_test.cjs` |
+| `test.yml` "Test plugins" | every push and PR | `tests/run.sh`; the odd-rates run (R25); `build_site.py`, `build_chains.py`, `build_presets.py` and `build_bible.py` with `--check`; job `remote`: `build_remote.py --check` + `remote_test.cjs` |
 | `native.yml` "VST3 and CLAP" | changes under `native/`, `DATA/`, `remote/`, `tests/`, `installer/` and `build_installer.py`; release published; manual with `release_tag` | builds on 3 OS (tests on Linux and macOS), pluginval, the JSFX package, the 4 installers each installed and checked; attaches them to the release |
 | `hub.yml` "NULL JSFX Hub" | changes under `hub/`, the catalog and site inputs, `tools/presets/` and `DATA/`; release published; manual with `release_tag` | `core` tests on 3 OS, `ui` + `build_catalog.py --check`, `smoke` (not on release events), build of the 4 bundles, the Linux start test, the Windows self-update test; attaches the bundles and `NULL-JSFX-Catalog.json` |
 | `web.yml` "Web version" | changes under `web/` and `DATA/` | `web/test/run.sh` |
@@ -654,21 +655,12 @@ Format: **date · topic** — the decision. (Who approved it, and the source.) D
 
 ## Part VIII — Open items, known inconsistencies, backlog
 
-### VIII.A Known inconsistencies (found 2026-10-26, to be fixed in the docs PR that follows the Bible)
+### VIII.A Known inconsistencies
 
-| # | Where | What | Fix |
-|---|---|---|---|
-| A1 | `README.md`, line 5 | "The One Slider plugins also come as GFX … VST3 / CLAP", but all 113 do | closed by #49 |
-| A2 | `native/README.md`, instruments | "the web build and orOS leave them out", but `web/fx/index.json` has 9 instruments and orOS syncs them | reword |
-| A3 | `native/README.md`, knob layout | the example says `@gfx 480 294` next to "delay is the reference", but Delay is 480x408 and knob plugins run from 480x294 to 480x460 | reword the sizes |
-| A4 | `index.html`, Rack showcase | "72 presets", but `RackPresets.hpp` has 85 + Init | fix the number; in the long run, generate it |
-| A5 | `CLAUDE.md`, Versions | the version list is incomplete | closed by this PR: CLAUDE.md now points to Part VI.1 |
-| A6 | project instructions | they list 3 categories, the "launch" gate, "2.0 only when all", and "Christos merges"; they omit Rack, web and Hub | new text drafted for Christos (2026-10-26) |
-| A7 | skill `null-jsfx` | it says llms.txt is still 2.4 (fixed by #48) and knob plugins are 480x294 | updated skill proposed to Christos |
+None open. The ones found on 2026-10-26 (README.md said only One Slider had GFX/VST3/CLAP, closed by #49; native/README.md said the web leaves instruments out and gave Delay a 480x294 size; the site said the Rack has 72 presets; CLAUDE.md's version list was short) were fixed in Bible 1.0 and 1.1 (Part X). The stale project instructions and `null-jsfx` skill are open items C8 and C9. A new one goes here as `A<n>` with where, what and the fix, and leaves when it is fixed.
 
 ### VIII.B Backlog (proposed or approved, not done)
 
-- **B1 Registry generator.** Part III was generated on 2026-10-26 by a one-off script (`/mnt/project-files/bible/registry.py` in the project files, which prints the tables; it reads the `.jsfx` headers, `@gfx` lines, `DistrhoPluginInfo.h` and the Rack `modules/`). Proposal: commit it as `tools/build_bible.py`, which rewrites the block between `<!-- BEGIN REGISTRY -->` and `<!-- END REGISTRY -->` and the CLAP exceptions, with `--check` in `test.yml`. It goes in the docs PR.
 - **B2** Generate the hand-written counts (plugin count in `index.html` `<title>` and meta, the Rack module and preset counts in the showcase) with `build_site.py`.
 - **B3 Drum Machine ideas** (deferred 2026-10-17): song mode and step probability. Multi-out and a Sampler exist now. [memory]
 - **B4 Very low and odd sample rates** (found 2026-10-26 with clap-validator's `process-varying-sample-rates`, which plays 8000 Hz to 768 kHz, 1234.57 Hz and 12345.68 Hz among them). Wah, Tape, Tape Echo, Band Splitter and Amp Simulator are fixed (Part X). A scan of every plain JSFX at those rates, with `tests/jsfx_test.cpp`'s settings, still blows up in Reverser (8000, 22050 and 12345.68 Hz, max/random), Vinyl Age (8000 Hz, max), Step FX (8000 Hz, random), Formant Filter, Saturation, Noise Generator and Phase Align (1234.57 Hz), and Arpeggiator leaves notes hanging at 1234.57 Hz: a separate fix thread. **Done 2026-10-26 (PR #58):** the seven are fixed (the Arpeggiator finding was the test's own MIDI order), and `test.yml` renders every plain JSFX at 8000, 22050, 1234.57 and 12345.68 Hz (R25). The convention is that every filter frequency is held below `0.45 * srate` (most plugins already did this).
@@ -682,6 +674,8 @@ Format: **date · topic** — the decision. (Who approved it, and the source.) D
 - **C5** The 1080p Ko-fi videos zip in the project files (`videos/NULL-JSFX-Videos-Ko-fi-1080p.zip`) is older than the 2.5 videos. [memory]
 - **C6** `reaper-rfxchain-format`: the `LFOSPEED` units and whether `PLINK` adds to `PARAMBASE` were never verified in REAPER. [memory]
 - **C7** Code signing for macOS and Windows is deferred (little value for these plugins, 2026-10-12). [memory]
+- **C8** The new project-instructions text is drafted (`/mnt/project-files/bible/project-instructions-2026-10-26.md`) and waits for Christos to paste it.
+- **C9** The updated `null-jsfx` skill was proposed to Christos on 2026-10-26 and waits for him to save it.
 
 ---
 
@@ -772,6 +766,13 @@ entry and the Bible delta.
 - **Files:** `native/plugins/rack/Plugin.cpp`.
 - **Tests:** run on Linux: `native/scripts/build.sh --plugins rack`, then `clap-validator validate --only-failed` (rev `b2f1d9b`) on `null_jsfx_rack.clap`: before 4 failed (`param-set-events`, `state-reproducibility-basic`, `-binary`, `-buffered`), after 0 failed, 31 passed, 2 warnings (denormal slowdown 4.3x, random state bytes accepted). A small CLAP host dump confirmed `Input`/`input` … `S8 Lane`/`s8_lane`. `native/scripts/build.sh --test --plugins rack`: 96/96 ctest passed (`rack_test` and the 95 `module_` tests). pluginval on the Rack VST3 was not run locally.
 - **Next:** the two clap-validator warnings are left for PR #52's report.
+
+### 2026-10-26 — Bible 1.1 — docs fixes and the registry generator
+- **Changes:** new `tools/build_bible.py` writes Part III (totals, exceptions, the registry tables) between the REGISTRY markers from the plugin files; `test.yml` runs it with `--check`. R24, II.7, II.9, V.1, V.2 and R15 name it.
+- **Fixes:** `README.md` line 5 also names the Rack (on top of #49). `native/README.md` says the web build lists instruments and orOS Studio plays them, and gives the knob layout's real sizes (Delay is 480x408). The site's Rack showcase says 85 presets (it said 72; `RackPresets.hpp` has 85 + Init). Part VIII.A is empty again.
+- **Decisions:** none new.
+- **Files:** `tools/build_bible.py` (new), `.github/workflows/test.yml`, `README.md`, `native/README.md`, `index.html` (one line), `NULL_JSFX_BIBLE.md`.
+- **Tests:** `tools/build_bible.py --check` (up to date; the generated tables are identical to the 1.0 ones), `tools/build_site.py --check`, and CI on the PR.
 
 ### 2026-10-26 — Pluck 2.6.1 — native strummer matches the JSFX on a key at the half step
 - **Fixes:** with richer MIDI, the Pluck CLAP/VST3 differed from `pluck.jsfx` at 96 kHz on the preset "Harp Rolls" (max diff 0.338 from sample 264000). The cause: a first key that lands exactly on the half of a strum step (`t - s` = 0.5) plays that step only when it comes in the first half, and the native beat position (CLAP's fixed-point `song_pos_beats` through DPF's bar/beat/tick) came out a hair below 0.5 where the JSFX's came out at 0.5. Neither side was wrong in itself; the tie was decided by rounding. Now a key within 1e-6 of a step of the half waits for the next step in every form (`t - s < 0.499999`), like the step boundary already uses `floor(t + 0.000001)`.
