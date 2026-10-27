@@ -4,7 +4,7 @@
 >
 > - **Site:** https://nulljsfx.tech · **Repo:** github.com/koulaxizis/null-jsfx · **Author:** Christos Koulaxizis (koulaxizis.gr)
 > - **Slogan:** AUDIO WITHOUT NOISE
-> - **Bible version:** 1.1 (2026-10-26). The Bible has its own version: a patch step (1.0.1) for corrections, a minor step (1.1) for new rules or Parts. The suite's version is in Part VI.
+> - **Bible version:** 1.2 (2026-10-27). The Bible has its own version: a patch step (1.0.1) for corrections, a minor step (1.1) for new rules or Parts. The suite's version is in Part VI.
 > - **Suite state:** 2.6 (release published 2026-10-26 14:26 UTC), main at `a231c1b`.
 > - **Last full read of the repo:** 2026-10-26. These files were read for this edition: CLAUDE.md, README.md, native/README.md, web/README.md, hub/README.md, tools/video/README.md, llms.txt, tests/lint.py, tests/run.sh, web/test/run.sh, native/test/CMakeLists.txt, every `.github/workflows/*.yml`, the docstrings of every `tools/*.py`, the headers of `native/common/*.hpp`, and the reference plugins tilt, delay, drum_machine and chords in JSFX, GFX and VST3/CLAP, plus downloads.json and supporters.json.
 > - **Tags:** **[verified 2026-10-26]** means the fact was checked against the file or the GitHub API on that date. **[memory]** means it comes from the project's memory notes or from a thread, and was not re-checked against a file. **[PR #n]** means it comes from that pull request.
@@ -14,7 +14,7 @@
 | Part | Content |
 |---|---|
 | 0 | Working agreement and session start (read first) |
-| I | Mission, one sound four forms, free forever, rules R1–R24 |
+| I | Mission, one sound four forms, free forever, rules R1–R26 |
 | II | Architecture |
 | III | Plugin registry (generated from the files) |
 | IV | Recipes index |
@@ -188,6 +188,7 @@ Rule numbers are stable. A retired rule keeps its number, marked *retired*, and 
 |---|---|
 | R23 | Every delivery updates this Bible: a changelog entry in Part X, plus the delta in its own Part. Facts carry their source tag (header). |
 | R24 | Part III is generated from the files by `tools/build_bible.py` and never typed by hand. Run it after adding a plugin or changing its sliders, `@gfx` size, unique id or Rack module; CI runs `--check`. |
+| R26 | Part X stays in order: oldest first, and a new entry goes at the very end, never near the top or newest-first. `tests/bible_order.py` checks it in CI (`test.yml`) (2026-10-27). |
 
 ---
 
@@ -543,6 +544,7 @@ The recipes live in the READMEs. This Part says where they are and lists the ste
 | Hub release smoke | `hub/tests/release_smoke.sh [tag]` | install and remove from the real latest release |
 | Installers | `tests/installer_test.sh`, `tests/pkg_test.sh`, the Windows step in `native.yml` | install, check (counts, presets merged, the user's preset kept) and uninstall |
 | Remote | `node tests/remote/remote_test.cjs` | the page in Chromium plus the real bridge under `mock_reaper.lua` |
+| Bible order | `python3 tests/bible_order.py` (in `test.yml`) | R26: every Part X entry has a date and the dates never go back |
 | Generators | `build_site.py`, `build_chains.py`, `build_presets.py`, `build_bible.py`, `build_remote.py`, `build_catalog.py` with `--check` | the generated files are up to date |
 | Stress | `tests/stress.sh [plugin.jsfx ...]` → `stress_test` | every plain JSFX (MIDI effects skipped): no NaN/Inf and no output above 1e4 under hard signals (+12 dBFS square with DC, sines near Nyquist, tone then silence, DC, every slider jumping every 50 ms) with default, min, max and random settings at 44.1 and 192 kHz; the same output at 384 kHz with and without `options:maxmem=32M` (nothing past REAPER's default 8M slots); the median cost of a slider change within one 256-sample block at 48 kHz (5.33 ms, noted above half) |
 
@@ -756,7 +758,7 @@ Paste this as the first message of a new chat:
 ```
 Continuing NULL JSFX work (repo koulaxizis/null-jsfx, site nulljsfx.tech).
 NULL_JSFX_BIBLE.md is the SINGLE SOURCE OF TRUTH: read Part 0 (working
-agreement), Part I (rules R1-R24) and Part VIII (open items) before touching
+agreement), Part I (rules R1-R26) and Part VIII (open items) before touching
 anything. Work from the CURRENT files in the repo; never guess a file.
 Next task: <task>. Areas involved: <DATA / gfx / native / rack / web / hub /
 installer / remote / site / tools>.
@@ -770,7 +772,7 @@ entry and the Bible delta.
 ## Part X — Changelog
 
 **Format:**
-- The order is ascending: oldest first, and each new entry goes at the BOTTOM, in the same delivery as the change.
+- The order is ascending: oldest first, and each new entry goes at the BOTTOM, in the same delivery as the change (R26; `tests/bible_order.py` fails a PR whose dates go back).
 - The heading is `### YYYY-MM-DD — <area> <version or PR> — <title>`.
 - The bullets are **Changes**, **Fixes**, **Decisions**, **Files**, **Tests** and **Next**, as needed.
 - Code, files and keys go in backticks.
@@ -959,3 +961,9 @@ entry and the Bible delta.
 - **Changes:** `native/CMakeLists.txt` applies every `native/third_party/dpf/*.patch` in name order after a reset to the pinned SHA, with `core.autocrlf=false`. `native.yml` also installs `python3-numpy` for the LV2 check from #72, which failed on main with "No module named numpy". New ctest `state_<name>` (`native/test/state_test.cpp`) for every plugin.
 - **Files:** `native/third_party/dpf/state-load.patch`, `native/third_party/dpf/.gitattributes`, `native/CMakeLists.txt`, `native/test/state_test.cpp`, `native/test/CMakeLists.txt`, `native/README.md`, this Bible (II.2, V.1, VII).
 - **Tests:** see the PR. Before the patch, `state_test` failed for all 11 CLAPs tried (Tilt too, which CI had not flagged); after it they pass. `state_rack` also needs the Rack's global parameter symbols (PR #53, above).
+
+### 2026-10-27 — Bible 1.2, tests — Part X order check (R26)
+- **Changes:** new rule R26: Part X stays oldest first, a new entry goes at the very end. `tests/bible_order.py` checks that every Part X entry has a date and that the dates never go back; `test.yml` runs it. The Map, the Part IX handoff and `CLAUDE.md` say R1–R26 (they still said R1–R24 although R25 existed). Part V.1 lists the check.
+- **Why:** the same problem in orOS (parallel PRs put their entries newest-first, 98 entries out of order) was fixed there with `tests/bible-order.test.js` and rule R40.
+- **Files:** `tests/bible_order.py` (new), `.github/workflows/test.yml`, `NULL_JSFX_BIBLE.md` (version 1.2, R26, V.1, X), `CLAUDE.md`.
+- **Tests:** the check passes on this Bible and fails (exit 1, with the two titles named) when an entry dated 2026-10-27 is moved above one dated 2026-10-26. Only dates are checked: Part X headings carry no single version scheme.
