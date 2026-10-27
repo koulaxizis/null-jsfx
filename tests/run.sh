@@ -2,6 +2,7 @@
 # Builds the ysfx engine (once) and runs the NULL JSFX checks:
 #   1. tests/lint.py      - header and code conventions
 #   2. tests/jsfx_test    - compiles and renders every plugin (and GFX version) at 44.1/48/96 kHz
+#                           (NULL_TEST_RATES="8000,22050" sets other rates)
 #   3. tests/chain_test   - renders every FX chain in DATA/FXChains (only when no plugins are given)
 # Usage: tests/run.sh [plugin.jsfx ...]   (default: every plugin and every chain)
 set -euo pipefail

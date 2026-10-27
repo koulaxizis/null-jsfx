@@ -29,11 +29,11 @@ protected:
 
     void valueChanged(float v) override { fDsp.setAmount(v); }
 
-    void activate() override { init(getSampleRate()); }
+    void onActivate() override { init(getSampleRate()); }
 
     void sampleRateChanged(double newSampleRate) override { init(newSampleRate); }
 
-    void run(const float** inputs, float** outputs, uint32_t frames) override
+    void process(const float** inputs, float** outputs, uint32_t frames) override
     {
         // input meter first: the host may process in place
         for (uint32_t i = 0; i < frames; ++i)

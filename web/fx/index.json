@@ -335,7 +335,7 @@
    "ins": 8,
    "outs": 8,
    "sliders": 6,
-   "bytes": 58244
+   "bytes": 58267
   },
   {
    "id": "breath_control",
@@ -657,7 +657,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 8,
-   "bytes": 46135
+   "bytes": 46158
   },
   {
    "id": "octaver",
@@ -713,7 +713,7 @@
    "ins": 4,
    "outs": 2,
    "sliders": 8,
-   "bytes": 49811
+   "bytes": 49834
   },
   {
    "id": "phaser",
@@ -783,7 +783,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 8,
-   "bytes": 59773
+   "bytes": 59796
   },
   {
    "id": "shaper",
@@ -839,7 +839,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 10,
-   "bytes": 60227
+   "bytes": 60364
   },
   {
    "id": "tape_echo",
@@ -853,7 +853,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 11,
-   "bytes": 61265
+   "bytes": 61403
   },
   {
    "id": "transient_shaper",
@@ -923,7 +923,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 11,
-   "bytes": 46166
+   "bytes": 46212
   },
   {
    "id": "amp_simulator",
@@ -937,7 +937,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 12,
-   "bytes": 79467
+   "bytes": 79513
   },
   {
    "id": "comb_filter",
@@ -979,7 +979,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 3,
-   "bytes": 36587
+   "bytes": 36656
   },
   {
    "id": "frequency_shifter",
@@ -1175,7 +1175,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 4,
-   "bytes": 37537
+   "bytes": 37565
   },
   {
    "id": "robotizer",
@@ -1287,7 +1287,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 25,
-   "bytes": 72477
+   "bytes": 72491
   },
   {
    "id": "stereo_scope",
@@ -1357,7 +1357,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 11,
-   "bytes": 59093
+   "bytes": 59231
   },
   {
    "id": "vocoder",

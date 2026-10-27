@@ -27,6 +27,8 @@ struct Coeffs {
 
 inline Coeffs coeffs(int mode, double freq, double sr) noexcept
 {
+    // below Nyquist at any sample rate, as the JSFX: freq = min(filt_freq, srate * 0.49)
+    freq = std::min(freq, sr * 0.49);
     const double omega = 2 * kPi * freq / sr;
     const double cs = std::cos(omega), sn = std::sin(omega);
     const double q = 0.707;
