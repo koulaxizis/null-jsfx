@@ -35,11 +35,11 @@ protected:
 
     void valueChanged(uint32_t, float) override { update(); }
 
-    void activate() override { reset(getSampleRate()); }
+    void onActivate() override { reset(getSampleRate()); }
 
     void sampleRateChanged(double newSampleRate) override { reset(newSampleRate); }
 
-    void run(const float** inputs, float** outputs, uint32_t frames, const MidiEvent* midi, uint32_t midiCount) override
+    void process(const float** inputs, float** outputs, uint32_t frames, const MidiEvent* midi, uint32_t midiCount) override
     {
         for (uint32_t i = 0; i < midiCount; ++i)
             writeMidiEvent(midi[i]); // every message passes through
