@@ -15,6 +15,9 @@ in_pin:Sidechain Left and in_pin:Sidechain Right after the two main inputs. Mult
 plugins (Band Splitter) use eight pins each way instead: in_pin:Left, in_pin:Right, then
 in_pin:Band 2 Left ... in_pin:Band 4 Right, and out_pin:Band 1 Left ... out_pin:Band 4 Right.
 Instruments make their own sound and take no audio: in_pin:none, out_pin:Left, out_pin:Right.
+Surround plugins use the 7.1.4 bed in the order L R C LFE Ls Rs Lrs Rrs Ltf Rtf Ltr Rtr (5.1
+and 7.1 use the first 6 or 8): a panner takes in_pin:Left, in_pin:Right and puts out the twelve
+bed pins; the other surround plugins take the twelve bed pins in and put them out.
 MIDI effects (MIDI in, MIDI out) pass the audio through on the four standard pins.
 
 It also checks that the release version shown in llms.txt and index.html matches FOOTER.
@@ -38,10 +41,14 @@ INSTRUMENT_GROUP_PINS = INSTRUMENT_PINS + [f"out_pin:{g} {s}" for g in ("Snare",
 BAND_PINS = (["in_pin:Left", "in_pin:Right"]
              + [f"in_pin:Band {b} {s}" for b in (2, 3, 4) for s in ("Left", "Right")]
              + [f"out_pin:Band {b} {s}" for b in (1, 2, 3, 4) for s in ("Left", "Right")])
+# a surround bed (7.1.4; 5.1 and 7.1 use the first 6 or 8): stereo in for a panner, else the bed
+BED = ["L", "R", "C", "LFE", "Ls", "Rs", "Lrs", "Rrs", "Ltf", "Rtf", "Ltr", "Rtr"]
+PANNER_PINS = ["in_pin:Left", "in_pin:Right"] + [f"out_pin:{c}" for c in BED]
+BED_PINS = [f"in_pin:{c}" for c in BED] + [f"out_pin:{c}" for c in BED]
 
 # EEL2 built-ins and keywords that may be read without being assigned first.
 BUILTINS = set("""
-spl0 spl1 srate samplesblock tempo play_state play_position beat_position ts_num ts_denom num_ch trigger
+spl0 spl1 spl2 spl3 spl4 spl5 spl6 spl7 spl8 spl9 spl10 spl11 srate samplesblock tempo play_state play_position beat_position ts_num ts_denom num_ch trigger spl
 sin cos tan asin acos atan atan2 sqrt pow exp log log10 abs min max sign floor ceil rand invsqrt sqr
 memset memcpy freembuf loop while this local static instance global
 fft ifft fft_permute fft_ipermute fft_real ifft_real convolve_c file_open file_close file_avail file_riff file_mem file_var
@@ -68,7 +75,7 @@ def check(path):
         errors.append(f"line 1 must be 'desc:NULL <Name>', found {lines[0]!r}")
     if len(lines) < 5 or lines[1] != AUTHOR:
         errors.append(f"line 2 must be {AUTHOR!r}")
-    if len(lines) < 5 or not re.fullmatch(r"tags: [a-z0-9][a-z0-9 \-/]*", lines[2]):
+    if len(lines) < 5 or not re.fullmatch(r"tags: [a-z0-9][a-z0-9 \-/.]*", lines[2]):
         errors.append("line 3 must be 'tags: <lowercase keywords>'")
     m = re.fullmatch(r"//category: (.+)", lines[3]) if len(lines) > 3 else None
     category = m.group(1) if m else None
@@ -99,10 +106,10 @@ def check(path):
     if category == "Instruments" and pins not in (INSTRUMENT_PINS, INSTRUMENT_GROUP_PINS):
         errors.append("instrument pins must be in_pin:none, out_pin:Left, out_pin:Right "
                       "(plus the Snare, Hats and Perc pairs for group outputs)")
-    elif category != "Instruments" and pins not in (PINS, SIDECHAIN_PINS, BAND_PINS):
+    elif category != "Instruments" and pins not in (PINS, SIDECHAIN_PINS, BAND_PINS, PANNER_PINS, BED_PINS):
         errors.append("pins must be in_pin:Left, in_pin:Right, out_pin:Left, out_pin:Right "
                       "(plus in_pin:Sidechain Left/Right after the main inputs for sidechain plugins, "
-                      "or the eight-channel band layout, see the docstring)")
+                      "the eight-channel band layout or a surround bed, see the docstring)")
 
     # --- code ---
     code = strip_comments("\n".join(lines[header_end:]))

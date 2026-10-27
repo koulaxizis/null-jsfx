@@ -982,6 +982,20 @@
    "bytes": 87439
   },
   {
+   "id": "bass_management",
+   "name": "Bass Management",
+   "category": "Advanced",
+   "tags": "surround bass management crossover subwoofer lfe redirect 5.1 7.1 7.1.4 atmos bed monitoring linkwitz riley gui",
+   "gfx": [
+    480,
+    460
+   ],
+   "ins": 12,
+   "outs": 12,
+   "sliders": 7,
+   "bytes": 55046
+  },
+  {
    "id": "comb_filter",
    "name": "Comb Filter",
    "category": "Advanced",
@@ -1008,6 +1022,20 @@
    "outs": 2,
    "sliders": 8,
    "bytes": 63279
+  },
+  {
+   "id": "downmix_check",
+   "name": "Downmix Check",
+   "category": "Advanced",
+   "tags": "surround downmix fold down check 5.1 7.1 7.1.4 atmos bed lo ro stereo mono solo itu bs775 monitoring post production gui",
+   "gfx": [
+    480,
+    460
+   ],
+   "ins": 12,
+   "outs": 12,
+   "sliders": 8,
+   "bytes": 55741
   },
   {
    "id": "formant_filter",
@@ -1134,6 +1162,20 @@
    "outs": 2,
    "sliders": 6,
    "bytes": 53299
+  },
+  {
+   "id": "multichannel_loudness",
+   "name": "Multichannel Loudness",
+   "category": "Advanced",
+   "tags": "loudness meter lufs lra true peak surround 5.1 7.1 7.1.4 atmos bed multichannel ebu r128 itu bs1770 atsc a85 metering post production gui",
+   "gfx": [
+    600,
+    414
+   ],
+   "ins": 12,
+   "outs": 12,
+   "sliders": 5,
+   "bytes": 57970
   },
   {
    "id": "noise_reduction",
@@ -1386,6 +1428,20 @@
    "outs": 2,
    "sliders": 5,
    "bytes": 58174
+  },
+  {
+   "id": "surround_panner",
+   "name": "Surround Panner",
+   "category": "Advanced",
+   "tags": "surround panner 5.1 7.1 7.1.4 atmos bed immersive vbap azimuth elevation spread lfe post production film music gui",
+   "gfx": [
+    480,
+    460
+   ],
+   "ins": 2,
+   "outs": 12,
+   "sliders": 8,
+   "bytes": 67015
   },
   {
    "id": "tape_stop",

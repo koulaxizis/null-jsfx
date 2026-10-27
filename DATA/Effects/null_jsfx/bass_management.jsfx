@@ -1,0 +1,107 @@
+desc:NULL Bass Management
+author: Christos Koulaxizis
+tags: surround bass management crossover subwoofer lfe redirect 5.1 7.1 7.1.4 atmos bed monitoring linkwitz riley
+//category: Advanced
+//NULL JSFX v2.6 • https://nulljsfx.tech • MIT License
+
+slider1:2<0,2,1{5.1,7.1,7.1.4}>Bed
+slider2:80<40,200,1>Crossover (Hz)
+slider3:0<0,1,1{Bass Managed,Full Range}>Mains
+slider4:1<0,1,1{0 dB,+10 dB}>LFE Gain
+slider5:0<-12,12,0.1>Sub Level (dB)
+slider6:0<0,2,1{All,Sub Only,Mains Only}>Listen
+slider7:0<-24,12,0.1>Output (dB)
+
+in_pin:L
+in_pin:R
+in_pin:C
+in_pin:LFE
+in_pin:Ls
+in_pin:Rs
+in_pin:Lrs
+in_pin:Rrs
+in_pin:Ltf
+in_pin:Rtf
+in_pin:Ltr
+in_pin:Rtr
+out_pin:L
+out_pin:R
+out_pin:C
+out_pin:LFE
+out_pin:Ls
+out_pin:Rs
+out_pin:Lrs
+out_pin:Rrs
+out_pin:Ltf
+out_pin:Rtf
+out_pin:Ltr
+out_pin:Rtr
+
+@init
+  // Plays a surround bed the way a monitoring system with a subwoofer does: the bass of every
+  // main speaker of the Bed (all but the LFE) is taken off at the Crossover by a 4th-order
+  // Linkwitz-Riley high-pass and sent, summed, through the matching low-pass to the
+  // subwoofer, the LFE pin, with the LFE channel itself (+10 dB, as the LFE is played back, or
+  // 0 dB) and Sub Level. The two LR4 halves add up flat, so the bass managed system sums to the
+  // full range one (with the crossover's phase turn). Mains Full Range keeps the mains whole and
+  // only adds their bass to the sub. Listen plays the sub or the mains alone. No latency.
+  BM = 0;        // per pin: the high-pass state (4 each), 12 pins
+  memset(0, 0, 64);
+
+  // one LR4 section of the pin's high-pass (coefficients hb*, ha*), state at s
+  function bm_hp(x, s) local(y)
+  (
+    y = hb0 * x + s[0];
+    s[0] = hb1 * x - ha1 * y + s[1];
+    s[1] = hb2 * x - ha2 * y;
+    x = y;
+    y = hb0 * x + s[2];
+    s[2] = hb1 * x - ha1 * y + s[3];
+    s[3] = hb2 * x - ha2 * y;
+    y;
+  );
+
+  // the sub's low-pass
+  function bm_lp(x) local(y)
+  (
+    y = lb0 * x + lz1;
+    lz1 = lb1 * x - la1 * y + lz2;
+    lz2 = lb2 * x - la2 * y;
+    x = y;
+    y = lb0 * x + lw1;
+    lw1 = lb1 * x - la1 * y + lw2;
+    lw2 = lb2 * x - la2 * y;
+    y;
+  );
+
+@slider
+  bed = slider1;
+  full = slider3;
+  lfeg = slider4 ? 10 ^ (10 / 20) : 1;
+  subg = 10 ^ (slider5 / 20);
+  listen = slider6;
+  outg = 10 ^ (slider7 / 20);
+  bm_k = tan($pi * min(slider2, 0.45 * srate) / srate);
+  bm_n = 1 / (1 + sqrt(2) * bm_k + bm_k * bm_k);
+  lb0 = bm_k * bm_k * bm_n; lb1 = 2 * lb0; lb2 = lb0;
+  la1 = 2 * (bm_k * bm_k - 1) * bm_n;
+  la2 = (1 - sqrt(2) * bm_k + bm_k * bm_k) * bm_n;
+  hb0 = bm_n; hb1 = -2 * hb0; hb2 = hb0;
+  ha1 = la1; ha2 = la2;
+
+@sample
+  i6 = bed >= 1 ? spl6 : 0; i7 = bed >= 1 ? spl7 : 0;
+  i8 = bed == 2 ? spl8 : 0; i9 = bed == 2 ? spl9 : 0; i10 = bed == 2 ? spl10 : 0; i11 = bed == 2 ? spl11 : 0;
+  // the bass of the mains, to the sub
+  sub = (bm_lp(spl0 + spl1 + spl2 + spl4 + spl5 + i6 + i7 + i8 + i9 + i10 + i11) + spl3 * lfeg) * subg;
+  // the mains
+  !full ? (
+    spl0 = bm_hp(spl0, BM); spl1 = bm_hp(spl1, BM + 4); spl2 = bm_hp(spl2, BM + 8);
+    spl4 = bm_hp(spl4, BM + 16); spl5 = bm_hp(spl5, BM + 20);
+    i6 = bm_hp(i6, BM + 24); i7 = bm_hp(i7, BM + 28);
+    i8 = bm_hp(i8, BM + 32); i9 = bm_hp(i9, BM + 36); i10 = bm_hp(i10, BM + 40); i11 = bm_hp(i11, BM + 44);
+  );
+  mg = listen == 1 ? 0 : outg;
+  spl0 *= mg; spl1 *= mg; spl2 *= mg; spl4 *= mg; spl5 *= mg;
+  spl6 = i6 * mg; spl7 = i7 * mg; spl8 = i8 * mg; spl9 = i9 * mg; spl10 = i10 * mg; spl11 = i11 * mg;
+  spl3 = listen == 2 ? 0 : sub * outg;

@@ -1,0 +1,13 @@
+[
+  ["Stereo Lo/Ro with LFE", {"Monitor": "Stereo Lo/Ro", "LFE Mix": -10}],
+  ["Stereo Dialogue Forward", {"Monitor": "Stereo Lo/Ro", "Center Mix": 0}],
+  ["Stereo Soft Surrounds", {"Monitor": "Stereo Lo/Ro", "Surround Mix": -6}],
+  ["Mono Check", {"Monitor": "Mono"}],
+  ["7.1.4 to 5.1", {"Monitor": "5.1"}],
+  ["7.1 to 5.1", {"Bed": "7.1", "Monitor": "5.1"}],
+  ["5.1 to Stereo", {"Bed": "5.1", "Monitor": "Stereo Lo/Ro"}],
+  ["Bed Pass", {"Monitor": "Bed"}],
+  ["Solo Center", {"Monitor": "Bed", "Solo": "C"}],
+  ["Solo LFE", {"Monitor": "Bed", "Solo": "LFE"}],
+  ["Heights in Stereo", {"Monitor": "Stereo Lo/Ro", "Height Mix": 0, "Center Mix": -6}]
+]

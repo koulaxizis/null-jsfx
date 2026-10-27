@@ -1,0 +1,98 @@
+desc:NULL Downmix Check
+author: Christos Koulaxizis
+tags: surround downmix fold down check 5.1 7.1 7.1.4 atmos bed lo ro stereo mono solo itu bs775 monitoring post production
+//category: Advanced
+//NULL JSFX v2.6 • https://nulljsfx.tech • MIT License
+
+slider1:2<0,2,1{5.1,7.1,7.1.4}>Bed
+slider2:2<0,3,1{Bed,5.1,Stereo Lo/Ro,Mono}>Monitor
+slider3:-3<-6,0,0.5>Center Mix (dB)
+slider4:-3<-6,0,0.5>Surround Mix (dB)
+slider5:-3<-6,0,0.5>Height Mix (dB)
+slider6:-60<-60,10,0.5>LFE Mix (dB)
+slider7:0<0,12,1{Off,L,R,C,LFE,Ls,Rs,Lrs,Rrs,Ltf,Rtf,Ltr,Rtr}>Solo
+slider8:0<-24,12,0.1>Output (dB)
+
+in_pin:L
+in_pin:R
+in_pin:C
+in_pin:LFE
+in_pin:Ls
+in_pin:Rs
+in_pin:Lrs
+in_pin:Rrs
+in_pin:Ltf
+in_pin:Rtf
+in_pin:Ltr
+in_pin:Rtr
+out_pin:L
+out_pin:R
+out_pin:C
+out_pin:LFE
+out_pin:Ls
+out_pin:Rs
+out_pin:Lrs
+out_pin:Rrs
+out_pin:Ltf
+out_pin:Rtf
+out_pin:Ltr
+out_pin:Rtr
+
+@init
+  // Hears a surround bed the way smaller systems will: the Bed as it is, folded to 5.1, to
+  // stereo (Lo/Ro, ITU-R BS.775) or to mono, on the first pins (Stereo and Mono on L and R, the
+  // other pins silent). Bed says which pins carry the mix (L R C LFE Ls Rs | Lrs Rrs | Ltf Rtf
+  // Ltr Rtr); the pins it does not use are ignored. The folds:
+  //   7.1.4 to 7.1: each top into the ear-level speaker below it (Ltf to L, Ltr to Lss), at
+  //     Height Mix
+  //   7.1 to 5.1: the side and the rear of each side summed at -3 dB into Ls/Rs
+  //   5.1 to Lo/Ro: Lo = L + C x Center Mix + Ls x Surround Mix (Ro likewise), the LFE at LFE
+  //     Mix (Off at -60 dB, as BS.775 drops it)
+  //   Mono: (Lo + Ro) / 2
+  // Solo plays one pin of the bed alone, through the same fold. The audio is only re-routed:
+  // gains, no filters, no latency.
+  dm_pk = 0;   // the folded stereo's peak, for the display
+
+@slider
+  bed = slider1;
+  mon = slider2;
+  cmix = 10 ^ (slider3 / 20);
+  smix = 10 ^ (slider4 / 20);
+  hmix = 10 ^ (slider5 / 20);
+  lmix = slider6 > -60 ? 10 ^ (slider6 / 20) : 0;
+  solo = slider7;
+  outg = 10 ^ (slider8 / 20);
+  g71 = bed >= 1 ? sqrt(0.5) : 1;
+
+@sample
+  // the pins of the Bed, or the soloed one
+  i0 = spl0; i1 = spl1; i2 = spl2; i3 = spl3; i4 = spl4; i5 = spl5;
+  i6 = bed >= 1 ? spl6 : 0; i7 = bed >= 1 ? spl7 : 0;
+  i8 = bed == 2 ? spl8 : 0; i9 = bed == 2 ? spl9 : 0; i10 = bed == 2 ? spl10 : 0; i11 = bed == 2 ? spl11 : 0;
+  solo > 0 ? (
+    solo != 1 ? i0 = 0; solo != 2 ? i1 = 0; solo != 3 ? i2 = 0; solo != 4 ? i3 = 0;
+    solo != 5 ? i4 = 0; solo != 6 ? i5 = 0; solo != 7 ? i6 = 0; solo != 8 ? i7 = 0;
+    solo != 9 ? i8 = 0; solo != 10 ? i9 = 0; solo != 11 ? i10 = 0; solo != 12 ? i11 = 0;
+  );
+  // 7.1.4 to 7.1, 7.1 to 5.1
+  f0 = i0 + i8 * hmix;
+  f1 = i1 + i9 * hmix;
+  f4 = (i4 + i10 * hmix + i6) * g71;
+  f5 = (i5 + i11 * hmix + i7) * g71;
+  // 5.1 to Lo/Ro
+  lo = f0 + i2 * cmix + f4 * smix + i3 * lmix;
+  ro = f1 + i2 * cmix + f5 * smix + i3 * lmix;
+  dm_pk = max(dm_pk, max(abs(lo), abs(ro)) * outg);
+  mon == 0 ? (
+    spl0 = i0 * outg; spl1 = i1 * outg; spl2 = i2 * outg; spl3 = i3 * outg;
+    spl4 = i4 * outg; spl5 = i5 * outg; spl6 = i6 * outg; spl7 = i7 * outg;
+    spl8 = i8 * outg; spl9 = i9 * outg; spl10 = i10 * outg; spl11 = i11 * outg;
+  ) : mon == 1 ? (
+    spl0 = f0 * outg; spl1 = f1 * outg; spl2 = i2 * outg; spl3 = i3 * outg;
+    spl4 = f4 * outg; spl5 = f5 * outg;
+    spl6 = spl7 = spl8 = spl9 = spl10 = spl11 = 0;
+  ) : (
+    mon == 3 ? lo = ro = (lo + ro) * 0.5;
+    spl0 = lo * outg; spl1 = ro * outg;
+    spl2 = spl3 = spl4 = spl5 = spl6 = spl7 = spl8 = spl9 = spl10 = spl11 = 0;
+  );

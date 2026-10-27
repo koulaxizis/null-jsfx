@@ -50,7 +50,10 @@ function signal(sr, frames, nin) {
     if (nin > 0) ch[0][i] = 0.25 * env * (Math.sin(2 * Math.PI * 220 * t) + 0.3 * rnd());
     if (nin > 1) ch[1][i] = 0.25 * env * (Math.sin(2 * Math.PI * 330 * t) + 0.3 * rnd());
     var tk = t % 0.25, sc = 0.8 * Math.exp(-tk * 20) * Math.sin(2 * Math.PI * 60 * tk);
-    for (var c2 = 2; c2 < nin; c2++) ch[c2][i] = sc;
+    for (var c2 = 2; c2 < nin; c2++)
+      // pins 3/4: the key; 5 on (bands, a surround bed): a tone of its own on each, so a swapped
+      // or dropped pin shows
+      ch[c2][i] = c2 < 4 ? sc : 0.2 * env * Math.sin(2 * Math.PI * 55 * (c2 - 1) * t) + 0.3 * sc;
   }
   return ch;
 }

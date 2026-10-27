@@ -236,5 +236,89 @@
     ],
     "properties": "A MIDI effect; the audio passes through. Every 64 samples the value is worked out and sent when it changed, in time order with the incoming MIDI, which passes through untouched. Pitch bend is sent at 14-bit resolution. Random uses an exact Park-Miller sequence from Seed, so a render repeats.",
     "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-midi_lfo\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><path d=\"M 6,32 C 12,8 20,8 26,32 C 32,56 40,56 46,32 C 50,16 54,12 58,14\" fill=\"none\" stroke=\"url(#icon-midi_lfo)\" stroke-width=\"2.5\" stroke-linecap=\"round\"/><path d=\"M 6,56 L 14,56 L 14,48 L 22,48 L 22,40 L 30,40\" fill=\"none\" stroke=\"url(#icon-midi_lfo)\" stroke-width=\"1.5\" opacity=\"0.5\"/></svg>"
+  },
+  "surround_panner": {
+    "card_desc": "Mono or Stereo into 5.1, 7.1, 7.1.4",
+    "keywords": "surround panner 5.1 7.1 7.1.4 atmos bed immersive vbap azimuth elevation spread height lfe center phantom post production film music mixing",
+    "slider_desc": [
+      "The bed it pans into: 5.1, 7.1 or 7.1.4, on the pins L R C LFE Ls Rs Lrs Rrs Ltf Rtf Ltr Rtr (the pins a format does not use stay silent).",
+      "Mono pans one source and spreads it; Stereo places the left and right inputs either side of Azimuth.",
+      "Where the sound sits around the room, from -180 to 180 degrees, 0 in front, negative to the left.",
+      "How high the sound sits in 7.1.4, from 0 (ear level) to 90 degrees (overhead).",
+      "Mono: how wide the source is spread (0 to 180 degrees). Stereo: the angle between left and right (60 is the front pair).",
+      "How much of a front sound plays from the centre speaker; below 100 % it moves into a phantom centre between L and R.",
+      "Sends the mono sum through a 120 Hz low-pass to the LFE, from -60 dB (Off) to 0 dB.",
+      "Gain on every pin (-24 to +12 dB)."
+    ],
+    "uses": [
+      "Place a stereo music stem or a mono effect in a 5.1 or 7.1 mix",
+      "Put pads, ambiences and flyovers above the listener in 7.1.4",
+      "Keep dialogue in the centre, or make it phantom",
+      "Feed the LFE from a bass or an effect"
+    ],
+    "properties": "Pairwise power-normalised VBAP on the ear-level ring (speakers as ITU-R BS.775 / BS.2051: L/R at 30 degrees, 5.1 surrounds at 110, 7.1 sides at 90 and rears at 150, tops at 45 and 135 degrees, elevation 45). Elevation crossfades the power from the ear level to the tops. A mono source with Spread is seven points with their powers averaged, so its level stays the same. The LFE send is a 4th-order Linkwitz-Riley low-pass at 120 Hz. The gains glide over about 20 ms. No latency. Twelve output pins: in REAPER set the track to 12 channels and route the pins to your bed.",
+    "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-surround_panner\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><circle cx=\"32\" cy=\"34\" r=\"22\" fill=\"none\" stroke=\"url(#icon-surround_panner)\" stroke-width=\"2\" opacity=\"0.5\"/><rect x=\"29\" y=\"8\" width=\"6\" height=\"6\" fill=\"url(#icon-surround_panner)\"/><rect x=\"12\" y=\"16\" width=\"6\" height=\"6\" fill=\"url(#icon-surround_panner)\"/><rect x=\"46\" y=\"16\" width=\"6\" height=\"6\" fill=\"url(#icon-surround_panner)\"/><rect x=\"8\" y=\"46\" width=\"6\" height=\"6\" fill=\"url(#icon-surround_panner)\"/><rect x=\"50\" y=\"46\" width=\"6\" height=\"6\" fill=\"url(#icon-surround_panner)\"/><circle cx=\"40\" cy=\"24\" r=\"4\" fill=\"url(#icon-surround_panner)\"/></svg>"
+  },
+  "downmix_check": {
+    "card_desc": "Hear a Bed as 5.1, Stereo or Mono",
+    "keywords": "surround downmix fold down check lo ro stereo mono 5.1 7.1 7.1.4 atmos bed solo itu bs775 monitoring compatibility post production",
+    "slider_desc": [
+      "The bed coming in: 5.1, 7.1 or 7.1.4; the pins it does not use are ignored.",
+      "What you hear: the Bed as it is, folded to 5.1, to stereo Lo/Ro, or to mono (Stereo and Mono play on L and R).",
+      "The centre in the stereo fold (-6 to 0 dB, -3 dB as ITU-R BS.775).",
+      "The surrounds in the stereo fold (-6 to 0 dB, -3 dB as ITU-R BS.775).",
+      "The tops folded into the ear-level speakers below them (-6 to 0 dB).",
+      "The LFE in the stereo fold, from -60 dB (Off, as BS.775 drops it) to +10 dB.",
+      "Plays one channel of the bed alone, through the same fold.",
+      "Gain on what you hear (-24 to +12 dB)."
+    ],
+    "uses": [
+      "Check that a surround mix still works on stereo and mono systems",
+      "Catch the stereo fold clipping before a delivery",
+      "Solo one channel of a bed to find a problem",
+      "Listen to a 7.1.4 mix on a 5.1 room"
+    ],
+    "properties": "7.1.4 to 7.1: each top into the ear-level speaker below it. 7.1 to 5.1: side and rear summed at -3 dB. 5.1 to Lo/Ro: Lo = L + C x Center Mix + Ls x Surround Mix (+ LFE x LFE Mix), Ro likewise. Mono: (Lo + Ro) / 2. The display shows every channel of the bed, every output, and the fold's highest peak, so you see when the stereo fold would clip. Gains only: no filters, no latency.",
+    "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-downmix_check\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><rect x=\"6\" y=\"10\" width=\"8\" height=\"8\" fill=\"url(#icon-downmix_check)\"/><rect x=\"18\" y=\"10\" width=\"8\" height=\"8\" fill=\"url(#icon-downmix_check)\"/><rect x=\"30\" y=\"10\" width=\"8\" height=\"8\" fill=\"url(#icon-downmix_check)\"/><rect x=\"42\" y=\"10\" width=\"8\" height=\"8\" fill=\"url(#icon-downmix_check)\"/><rect x=\"54\" y=\"10\" width=\"4\" height=\"8\" fill=\"url(#icon-downmix_check)\"/><path d=\"M 10,22 L 22,44 M 22,22 L 22,44 M 34,22 L 42,44 M 46,22 L 42,44 M 56,22 L 42,44\" stroke=\"url(#icon-downmix_check)\" stroke-width=\"2\" fill=\"none\"/><rect x=\"16\" y=\"46\" width=\"12\" height=\"10\" fill=\"url(#icon-downmix_check)\"/><rect x=\"36\" y=\"46\" width=\"12\" height=\"10\" fill=\"url(#icon-downmix_check)\"/></svg>"
+  },
+  "bass_management": {
+    "card_desc": "Crossover a Bed to the Subwoofer",
+    "keywords": "surround bass management crossover subwoofer sub lfe redirect 5.1 7.1 7.1.4 atmos bed monitoring linkwitz riley lr4 80 hz",
+    "slider_desc": [
+      "The bed: 5.1, 7.1 or 7.1.4; the pins it does not use are ignored.",
+      "Where the mains hand over to the sub (40 to 200 Hz, 80 Hz as most rooms are set).",
+      "Split takes the bass off the mains; Full keeps them whole and only adds their bass to the sub.",
+      "The LFE channel in the sub at +10 dB, as it is played back, or 0 dB.",
+      "Gain on the sub (-12 to +12 dB), to match it to the room.",
+      "Plays everything, the sub alone or the mains alone.",
+      "Gain on every pin (-24 to +12 dB)."
+    ],
+    "uses": [
+      "Hear a bed the way a room with small speakers and a sub plays it",
+      "Check what goes to the sub and what stays in the mains",
+      "Monitor a 5.1 or 7.1.4 mix on speakers that do not go low",
+      "Set the sub level against the mains"
+    ],
+    "properties": "4th-order Linkwitz-Riley crossover: the high-pass on every main channel and the low-pass on their sum add up flat (measured within 0.0001 dB from 20 Hz to 10 kHz), so the managed system sums like the full-range one, with the crossover's phase turn. The sub plays on the LFE pin. No latency.",
+    "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-bass_management\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><path d=\"M 6,18 C 24,18 28,20 32,32 C 36,44 40,52 58,52\" stroke=\"url(#icon-bass_management)\" stroke-width=\"2.5\" fill=\"none\"/><path d=\"M 6,52 C 24,52 28,44 32,32 C 36,20 40,18 58,18\" stroke=\"url(#icon-bass_management)\" stroke-width=\"2.5\" fill=\"none\" opacity=\"0.5\"/><circle cx=\"32\" cy=\"32\" r=\"3\" fill=\"url(#icon-bass_management)\"/></svg>"
+  },
+  "multichannel_loudness": {
+    "card_desc": "LUFS of a 5.1, 7.1 or 7.1.4 Bed",
+    "keywords": "loudness meter lufs lra true peak surround 5.1 7.1 7.1.4 atmos bed multichannel ebu r128 itu bs1770 atsc a85 netflix broadcast delivery metering post production",
+    "slider_desc": [
+      "The bed: 5.1, 7.1 or 7.1.4; it sets which channels are measured and their weights.",
+      "The level the readout compares with: -23 LUFS (EBU R128), -24 LUFS (ATSC A/85), -18 LUFS or -14 LUFS.",
+      "How much of the loudness history the graph shows.",
+      "On Play starts a new measurement every time playback starts.",
+      "Any change clears integrated, LRA, maxima and the history."
+    ],
+    "uses": [
+      "Measure a surround or Atmos bed for a broadcast or streaming delivery",
+      "Check a 5.1 film mix against EBU R128 or ATSC A/85",
+      "Watch the true peak of every channel",
+      "Compare the loudness of stems in a bed"
+    ],
+    "properties": "ITU-R BS.1770-4 / EBU R128: every channel of the bed but the LFE is K-weighted and weighted by its place, 1.41 (+1.5 dB) for the speakers at 60 to 120 degrees (5.1 Ls/Rs, 7.1 sides) and 1.0 for the rest, then summed. Momentary, short-term, integrated (gated), loudness range (EBU Tech 3342) and the 4x true peak of every channel, LFE too. A 0 dBFS 997 Hz tone measures -3.01 LUFS on a front channel and -1.51 LUFS on a side, as the standard says. The audio passes through untouched.",
+    "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-multichannel_loudness\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><rect x=\"6\" y=\"30\" width=\"6\" height=\"26\" fill=\"url(#icon-multichannel_loudness)\"/><rect x=\"15\" y=\"22\" width=\"6\" height=\"34\" fill=\"url(#icon-multichannel_loudness)\"/><rect x=\"24\" y=\"14\" width=\"6\" height=\"42\" fill=\"url(#icon-multichannel_loudness)\"/><rect x=\"33\" y=\"40\" width=\"6\" height=\"16\" fill=\"url(#icon-multichannel_loudness)\" opacity=\"0.5\"/><rect x=\"42\" y=\"24\" width=\"6\" height=\"32\" fill=\"url(#icon-multichannel_loudness)\"/><rect x=\"51\" y=\"28\" width=\"6\" height=\"28\" fill=\"url(#icon-multichannel_loudness)\"/><path d=\"M 4,12 L 60,12\" stroke=\"url(#icon-multichannel_loudness)\" stroke-width=\"1.5\" stroke-dasharray=\"3 3\"/></svg>"
   }
 }
