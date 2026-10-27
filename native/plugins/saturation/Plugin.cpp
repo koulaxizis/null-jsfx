@@ -59,6 +59,7 @@ private:
         p.output = value(5);
         p.oversampling = int(std::lround(value(6)));
         p.emphasis = value(7);
+        p.channels = int(std::lround(value(8)));
         fDsp.setParams(p);
         setLatency(uint32_t(fDsp.latency())); // pdc_delay
     }

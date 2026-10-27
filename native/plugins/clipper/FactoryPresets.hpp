@@ -8,23 +8,23 @@ namespace nullpresets {
 
 struct FactoryPreset {
     const char* name;
-    float values[7];
+    float values[8];
 };
 
 static const FactoryPreset kPresets[] = {
-    { "Default", { 0.0f, -0.1f, 0.0f, 2.0f, 100.0f, 0.0f, 1.0f } },
-    { "Gentle Safety", { 0.0f, -0.3f, 30.0f, 2.0f, 100.0f, 0.0f, 1.0f } },
-    { "Drum Bus Clip", { 4.0f, -1.0f, 10.0f, 2.0f, 100.0f, 0.0f, 1.0f } },
-    { "Loud Master", { 6.0f, -0.3f, 20.0f, 3.0f, 100.0f, 0.0f, 0.0f } },
-    { "808 Smash", { 12.0f, -3.0f, 0.0f, 1.0f, 100.0f, 2.0f, 1.0f } },
-    { "Soft Saturate", { 6.0f, -6.0f, 100.0f, 2.0f, 60.0f, 3.0f, 1.0f } },
-    { "Snare Crack", { 8.0f, -2.0f, 15.0f, 2.0f, 100.0f, 0.0f, 1.0f } },
-    { "Parallel Crush", { 18.0f, -6.0f, 0.0f, 2.0f, 35.0f, 0.0f, 1.0f } },
-    { "Hard Ceiling", { 0.0f, -1.0f, 0.0f, 3.0f, 100.0f, 0.0f, 0.0f } },
-    { "Bass Round", { 6.0f, -3.0f, 60.0f, 2.0f, 100.0f, 2.0f, 1.0f } },
-    { "Lo-Fi Aliased", { 10.0f, -4.0f, 0.0f, 0.0f, 100.0f, 3.0f, 1.0f } },
+    { "Default", { 0.0f, -0.1f, 0.0f, 2.0f, 100.0f, 0.0f, 1.0f, 0.0f } },
+    { "Gentle Safety", { 0.0f, -0.3f, 30.0f, 2.0f, 100.0f, 0.0f, 1.0f, 0.0f } },
+    { "Drum Bus Clip", { 4.0f, -1.0f, 10.0f, 2.0f, 100.0f, 0.0f, 1.0f, 0.0f } },
+    { "Loud Master", { 6.0f, -0.3f, 20.0f, 3.0f, 100.0f, 0.0f, 0.0f, 0.0f } },
+    { "808 Smash", { 12.0f, -3.0f, 0.0f, 1.0f, 100.0f, 2.0f, 1.0f, 0.0f } },
+    { "Soft Saturate", { 6.0f, -6.0f, 100.0f, 2.0f, 60.0f, 3.0f, 1.0f, 0.0f } },
+    { "Snare Crack", { 8.0f, -2.0f, 15.0f, 2.0f, 100.0f, 0.0f, 1.0f, 0.0f } },
+    { "Parallel Crush", { 18.0f, -6.0f, 0.0f, 2.0f, 35.0f, 0.0f, 1.0f, 0.0f } },
+    { "Hard Ceiling", { 0.0f, -1.0f, 0.0f, 3.0f, 100.0f, 0.0f, 0.0f, 0.0f } },
+    { "Bass Round", { 6.0f, -3.0f, 60.0f, 2.0f, 100.0f, 2.0f, 1.0f, 0.0f } },
+    { "Lo-Fi Aliased", { 10.0f, -4.0f, 0.0f, 0.0f, 100.0f, 3.0f, 1.0f, 0.0f } },
 };
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
-static constexpr uint32_t kNumValues = 7;
+static constexpr uint32_t kNumValues = 8;
 
 } // namespace nullpresets

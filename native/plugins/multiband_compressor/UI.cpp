@@ -27,6 +27,8 @@ static const NullKnobsUI::Control kControls[] = {
     { 20, NullKnobsUI::kKnob, "RELEASE", 1, -1, false },
     { 21, NullKnobsUI::kKnob, "KNEE", 1, -1, false },
     { 22, NullKnobsUI::kKnob, "OUTPUT", 1, -1, false },
+    { 23, NullKnobsUI::kSelect, "CHANNELS", 1, -1, false },
+    { 24, NullKnobsUI::kSelect, "LISTEN", 1, -1, false },
 };
 
 #undef NULL_MB_BAND

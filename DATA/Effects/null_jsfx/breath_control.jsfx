@@ -15,6 +15,7 @@ out_pin:Left
 out_pin:Right
 
 @init
+  ext_noinit = 1;              // play and seek keep tails and state, as in the VST3/CLAP
   // Breath reducer: a stereo-linked level detector (max of L/R power, 1 ms rise and
   // 30 ms fall smoothing) is compared with Threshold. While the level stays below Threshold
   // (breaths, room noise between phrases) the gain moves down to Range; when the

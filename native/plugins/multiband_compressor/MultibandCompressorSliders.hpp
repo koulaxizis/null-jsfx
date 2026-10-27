@@ -13,8 +13,10 @@
 namespace nullmultiband {
 
 static const char* const kModeOptions[] = { "ACTIVE", "BYPASS", "MUTE", "SOLO" };
+static const char* const kChannelsOptions[] = { "STEREO", "MID", "SIDE" };
+static const char* const kListenOptions[] = { "OUTPUT", "DELTA" };
 
-// slider1..slider23 of multiband_compressor.jsfx, in order
+// slider1..slider25 of multiband_compressor.jsfx, in order (24..25 appended in 2.7)
 static const DISTRHO::SliderInfo kSliders[] = {
     { "Crossover 1", "crossover1", 50.0f, 1000.0f, 120.0f, "Hz", 1.0f },
     { "Crossover 2", "crossover2", 500.0f, 4000.0f, 1000.0f, "Hz", 1.0f },
@@ -39,6 +41,8 @@ static const DISTRHO::SliderInfo kSliders[] = {
     { "Release", "release", 0.0f, 1000.0f, 100.0f, "ms", 1.0f },
     { "Knee", "knee", 0.0f, 100.0f, 0.0f, "%", 1.0f },
     { "Master Output", "master_output", 0.0f, 12.0f, 0.0f, "dB", 1.0f },
+    { "Channels", "channels", 0.0f, 2.0f, 0.0f, "", 1.0f, kChannelsOptions },
+    { "Listen", "listen", 0.0f, 1.0f, 0.0f, "", 1.0f, kListenOptions },
 };
 static constexpr uint32_t kNumSliders = sizeof(kSliders) / sizeof(kSliders[0]);
 

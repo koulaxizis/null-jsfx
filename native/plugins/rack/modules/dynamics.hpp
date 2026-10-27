@@ -3,9 +3,9 @@
  * Copyright (C) 2026 Christos Koulaxizis / NULL JSFX
  * SPDX-License-Identifier: MIT
  *
- * The Rack's modules are stereo, so this one has no sidechain input: the detector always listens
- * to the slot's own signal and Sidechain = External acts like Internal (the JSFX's External with
- * the track on pins 3/4).
+ * The Rack's modules are stereo, so this one has no sidechain input: Sidechain = External keys
+ * the detector from the slot's own input (the JSFX's External with the track on pins 3/4). It
+ * is the same as Internal, except with Channels Mid / Side, where Internal hears only that half.
  */
 
 #pragma once
@@ -47,7 +47,7 @@ public:
         for (uint32_t i = 0; i < frames; ++i)
         {
             double l = inL[i], r = inR[i];
-            fDsp.processSample(l, r); // no sidechain in the Rack (see the top)
+            fDsp.processSample(l, r, inL[i], inR[i]); // the key is the slot's own input (see the top)
             outL[i] = float(l);
             outR[i] = float(r);
         }
@@ -57,7 +57,8 @@ private:
     void update()
     {
         fDsp.setParams(int(std::lround(fV[0])), fV[1], fV[2], fV[3], fV[4], fV[5], fV[6], int(std::lround(fV[7])), fV[8],
-                       fV[9], false); // External: no sidechain bus in the Rack, treated as Internal
+                       fV[9], fV[10] > 0.5f, // External: keyed from the slot's own input
+                       int(std::lround(fV[11])), fV[12] >= 0.5f);
     }
 
     nulldynamics::DynamicsProcessor fDsp;

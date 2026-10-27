@@ -15,13 +15,15 @@ static const NullKnobsUI::Control kControls[] = {
     { 2, NullKnobsUI::kKnob, "CEILING", 0, -1, false },
     { 3, NullKnobsUI::kKnob, "RELEASE", 0, -1, false },
     { 4, NullKnobsUI::kKnob, "LOOKAHEAD", 0, -1, false },
+    { 5, NullKnobsUI::kSelect, "TRUE PEAK", 1, -1, false },
+    { 6, NullKnobsUI::kSelect, "LISTEN", 1, -1, false },
 };
 
 class UILimiter : public NullKnobsUI
 {
 public:
     UILimiter()
-        : NullKnobsUI({ "LIMITER", "ESSENTIALS", 480, 120, nullptr, 1, nulllimiter::kSliders, nulllimiter::kNumSliders,
+        : NullKnobsUI({ "LIMITER", "ESSENTIALS", 480, 120, nullptr, 2, nulllimiter::kSliders, nulllimiter::kNumSliders,
                         kControls, sizeof(kControls) / sizeof(kControls[0]), true }) {}
 
 protected:

@@ -9,6 +9,9 @@
  * the input. Each band has a stereo-linked peak compressor (threshold, ratio, makeup, soft
  * knee) with shared attack and release, and a mode: active, bypass (no compression), mute or
  * solo. A master gain follows.
+ * Appended in 2.7: Channels (Mid / Side: only that half of the mid/side pair is compressed, on
+ * both channels, the other half is added back after) and Listen Delta (each band minus its
+ * compressed self, before Makeup and Master Output; the modes still mute, solo and bypass).
  */
 
 #pragma once
@@ -31,6 +34,8 @@ struct Params {
     double xover[3] = { 120.0, 1000.0, 6000.0 };
     Band band[4];
     double attackMs = 10.0, releaseMs = 100.0, kneePct = 0.0, masterDb = 0.0;
+    int channels = 0; // 0 stereo, 1 mid, 2 side
+    bool delta = false;
 };
 
 // the crossovers actually used (the JSFX's @slider limits): each at least 1.5x the one below,
@@ -90,7 +95,22 @@ public:
         const double db2lin = kLn10 / 20.0;
         for (uint32_t i = 0; i < frames; ++i)
         {
-            const double s0 = inL[i], s1 = inR[i];
+            double s0 = inL[i], s1 = inR[i], other = 0.0;
+            if (fP.channels != 0)
+            {
+                const double m = (s0 + s1) * 0.5;
+                const double s = (s0 - s1) * 0.5;
+                if (fP.channels == 1)
+                {
+                    s0 = s1 = m;
+                    other = s;
+                }
+                else
+                {
+                    s0 = s1 = s;
+                    other = m;
+                }
+            }
             double bl[4], br[4];
             double remL = s0, remR = s1;
             for (int k = 0; k < 3; ++k)
@@ -149,6 +169,12 @@ public:
                     orr[b] = br[b] * fEnv[b] * fMk[b];
                 }
             }
+            if (fP.delta)
+                for (int b = 0; b < 4; ++b)
+                {
+                    ol[b] = fMode[b] == 1 ? 0.0 : bl[b] - bl[b] * fEnv[b];
+                    orr[b] = fMode[b] == 1 ? 0.0 : br[b] - br[b] * fEnv[b];
+                }
 
             const bool anySolo = fMode[0] == 3 || fMode[1] == 3 || fMode[2] == 3 || fMode[3] == 3;
             double l, r;
@@ -174,8 +200,30 @@ public:
                         r = r - orr[b];
                     }
             }
-            outL[i] = static_cast<T>(l * fMaster);
-            outR[i] = static_cast<T>(r * fMaster);
+            if (!fP.delta)
+            {
+                l = l * fMaster;
+                r = r * fMaster;
+            }
+            if (fP.channels != 0)
+            {
+                // back to left / right (Delta: the processed half alone)
+                if (fP.delta)
+                    other = 0.0;
+                const double x = l;
+                if (fP.channels == 1)
+                {
+                    l = x + other;
+                    r = x - other;
+                }
+                else
+                {
+                    l = other + x;
+                    r = other - x;
+                }
+            }
+            outL[i] = static_cast<T>(l);
+            outR[i] = static_cast<T>(r);
         }
     }
 

@@ -23,6 +23,7 @@ out_pin:Left
 out_pin:Right
 
 @init
+  ext_noinit = 1;              // play and seek keep tails and state, as in the VST3/CLAP
   // Adds two pitch-shifted copies of the input at fixed intervals (e.g. +4 and +7 =
   // a major chord). Each voice is slightly detuned and delayed so it sounds like a
   // separate performer, and Spread pans voice 1 left and voice 2 right.

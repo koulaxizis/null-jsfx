@@ -14,8 +14,9 @@ namespace nullclipper {
 
 static const char* const kOversamplingOptions[] = { "OFF", "2X", "4X", "8X" };
 static const char* const kLinkOptions[] = { "STEREO", "DUAL" };
+static const char* const kListenOptions[] = { "OUTPUT", "DELTA" };
 
-// slider1..slider7 of clipper.jsfx, in order
+// slider1..slider8 of clipper.jsfx, in order (8 appended in 2.7)
 static const DISTRHO::SliderInfo kSliders[] = {
     { "Input", "input", -12.0f, 24.0f, 0.0f, "dB", 0.1f },
     { "Ceiling", "ceiling", -24.0f, 0.0f, -0.1f, "dB", 0.1f },
@@ -24,6 +25,7 @@ static const DISTRHO::SliderInfo kSliders[] = {
     { "Mix", "mix", 0.0f, 100.0f, 100.0f, "%", 1.0f },
     { "Output", "output", -24.0f, 12.0f, 0.0f, "dB", 0.1f },
     { "Link", "link", 0.0f, 1.0f, 1.0f, "", 1.0f, kLinkOptions },
+    { "Listen", "listen", 0.0f, 1.0f, 0.0f, "", 1.0f, kListenOptions },
 };
 static constexpr uint32_t kNumSliders = sizeof(kSliders) / sizeof(kSliders[0]);
 
@@ -37,7 +39,9 @@ static const Range kRanges[] = {
     { 0.0, 100.0, 100.0, 1.0 },
     { -24.0, 12.0, 0.0, 0.1 },
     { 0.0, 1.0, 1.0, 1.0 },
+    { 0.0, 1.0, 0.0, 1.0 },
 };
+static_assert(sizeof(kRanges) / sizeof(kRanges[0]) == kNumSliders, "one range per slider");
 
 // The host passes parameters as float, the JSFX keeps the slider in double. Rebuild that double:
 // the exact min / max / default, else the nearest point of the slider's step grid.

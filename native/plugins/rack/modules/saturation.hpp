@@ -57,6 +57,7 @@ private:
         p.output = fV[5];
         p.oversampling = int(std::lround(fV[6]));
         p.emphasis = fV[7];
+        p.channels = int(std::lround(fV[8]));
         fDsp.setParams(p);
     }
 

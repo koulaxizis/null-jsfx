@@ -15,6 +15,7 @@ out_pin:Left
 out_pin:Right
 
 @init
+  ext_noinit = 1;              // play and seek keep tails and state, as in the VST3/CLAP
   // Classic FFT robotization: once every Pitch period a 1024-point slice of the input
   // is analysed, all of its phases are set to zero and it is resynthesised. Each slice
   // becomes a single buzz pulse with the voice's spectrum, and the pulses repeat at

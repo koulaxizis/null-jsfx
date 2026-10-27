@@ -20,6 +20,7 @@ out_pin:Left
 out_pin:Right
 
 @init
+  ext_noinit = 1;              // play and seek keep tails and state, as in the VST3/CLAP
   // NULL Resonator (../resonator.jsfx) with its own interface: same audio code, plus @gfx.
   // A bank of up to four tuned Karplus-Strong string loops per channel, one per chord note,
   // that the input excites. Each loop is a delay line, a first-order allpass for the

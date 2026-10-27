@@ -18,6 +18,7 @@ static const NullKnobsUI::Control kControls[] = {
     { 3, NullKnobsUI::kSelect, "OVERSAMPLE", 1, -1, false },
     { 6, NullKnobsUI::kSelect, "LINK", 1, -1, false },
     { 5, NullKnobsUI::kKnob, "OUTPUT", 1, -1, false },
+    { 7, NullKnobsUI::kSelect, "LISTEN", 1, -1, false },
 };
 
 class UIClipper : public NullKnobsUI

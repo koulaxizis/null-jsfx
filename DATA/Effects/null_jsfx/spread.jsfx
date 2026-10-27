@@ -12,6 +12,7 @@ out_pin:Left
 out_pin:Right
 
 @init
+  ext_noinit = 1;              // play and seek keep tails and state, as in the VST3/CLAP
   // Widens the stereo image while staying mono-compatible: a delayed, high-passed copy
   // of the mid signal is added to the left and subtracted from the right. When the mix
   // is summed to mono the two copies cancel, so nothing is lost; the low end (below

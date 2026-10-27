@@ -45,7 +45,7 @@ spl0 spl1 srate samplesblock tempo play_state play_position beat_position ts_num
 sin cos tan asin acos atan atan2 sqrt pow exp log log10 abs min max sign floor ceil rand invsqrt sqr
 memset memcpy freembuf loop while this local static instance global
 fft ifft fft_permute fft_ipermute fft_real ifft_real convolve_c file_open file_close file_avail file_riff file_mem file_var
-pdc_delay pdc_bot_ch pdc_top_ch ext_noinit ext_tail_size ext_nodenorm slider_automate sliderchange
+pdc_delay pdc_bot_ch pdc_top_ch ext_noinit ext_tail_size ext_nodenorm slider_automate sliderchange slider
 gfx_r gfx_g gfx_b gfx_a gfx_x gfx_y gfx_w gfx_h gfx_texth gfx_set gfx_rect gfx_line gfx_lineto gfx_circle gfx_arc
 gfx_drawstr gfx_drawnumber gfx_measurestr gfx_setfont gfx_roundrect gfx_triangle gfx_getchar gfx_clienttoscreen
 mouse_x mouse_y mouse_cap mouse_wheel gfx_ext_retina time_precise sprintf strcpy strlen strcpy_substr
