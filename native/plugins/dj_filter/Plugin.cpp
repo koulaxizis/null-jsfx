@@ -28,11 +28,11 @@ protected:
 
     void valueChanged(float v) override { fDsp.setFilter(v); }
 
-    void activate() override { reinit(getSampleRate()); }
+    void onActivate() override { reinit(getSampleRate()); }
 
     void sampleRateChanged(double newSampleRate) override { reinit(newSampleRate); }
 
-    void run(const float** inputs, float** outputs, uint32_t frames) override
+    void process(const float** inputs, float** outputs, uint32_t frames) override
     {
         fDsp.process(inputs[0], inputs[1], outputs[0], outputs[1], frames);
     }

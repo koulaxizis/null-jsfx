@@ -87,7 +87,7 @@ protected:
 
     void valueChanged(uint32_t, float) override { update(); }
 
-    void activate() override
+    void onActivate() override
     {
         fDsp.setSampleRate(getSampleRate());
         update();
@@ -117,7 +117,7 @@ protected:
         fPendingReady.store(true, std::memory_order_release);
     }
 
-    void run(const float**, float** outputs, uint32_t frames, const MidiEvent* midi, uint32_t midiCount) override
+    void process(const float**, float** outputs, uint32_t frames, const MidiEvent* midi, uint32_t midiCount) override
     {
         if (fPendingReady.exchange(false, std::memory_order_acquire))
             std::copy(fPending, fPending + nulldrum::kPatternSize, fDsp.user());
