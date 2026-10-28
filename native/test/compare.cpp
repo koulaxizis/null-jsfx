@@ -26,6 +26,10 @@
  * File sliders (slider:/folder:default:Name) stay at their default and are not CLAP parameters:
  * the k-th other slider is the k-th CLAP parameter.
  *
+ * Surround beds (a JSFX with more than four input pins, up to twelve): pins 5-12 get eight more
+ * channels made from the program and the key (delayed, scaled, some inverted), so every pin of
+ * a 7.1.4 bed carries its own signal.
+ *
  * Every output pin the reference JSFX declares is compared (two for most plugins, eight for the
  * Band Splitter); the CLAP's output ports are numbered across like the pins.
  *
@@ -101,6 +105,23 @@ static Stereo makeSignal(double sr)
     }
     return s;
 }
+
+// pins 5-12 of a surround bed: the program's sides delayed by 97 samples a step, scaled down,
+// every third one inverted, with a little of the key
+static Channels makeBed(const Stereo& in, const Stereo& sc)
+{
+    const size_t frames = in.l.size();
+    Channels b(8, std::vector<float>(frames));
+    for (size_t k = 0; k < 8; ++k) {
+        const std::vector<float>& src = k % 2 ? in.r : in.l;
+        const size_t d = 97 * (k + 1);
+        const double g = (0.9 - 0.08 * k) * (k % 3 == 2 ? -1 : 1);
+        for (size_t n = 0; n < frames; ++n)
+            b[k][n] = float((n >= d ? g * src[n - d] : 0.0) + 0.1 * (k % 3) * sc.l[n]);
+    }
+    return b;
+}
+static const Channels* g_bed = nullptr;
 
 // key signal for the sidechain inputs: kick-like hits every 0.6 s, level steps every 0.75 s
 // (0, -24, -9 dB, silence) so a ducker triggers, holds and releases
@@ -287,7 +308,9 @@ static bool renderJsfx(const char* path, double sr, const std::vector<Slider>& s
     for (size_t k = 0; k < sl.size(); ++k)
         ysfx_slider_set_value(fx, sl[k].index, values[k]);
     const uint32_t frames = uint32_t(in.l.size());
-    const uint32_t numIns = ysfx_get_num_inputs(fx) > 2 ? 4 : 2; // pins 3/4: the sidechain
+    // pins 3/4: the sidechain; 5-12: the rest of a surround bed
+    const uint32_t numIns = ysfx_get_num_inputs(fx) > 4 ? std::min<uint32_t>(12, ysfx_get_num_inputs(fx))
+                          : ysfx_get_num_inputs(fx) > 2 ? 4 : 2;
     const std::vector<MidiMsg> fxMidi = testInput(sr, frames);
     size_t nextFx = 0, nextChange = 0;
     for (uint32_t pos = 0; pos < frames; pos += kBlock) {
@@ -307,7 +330,9 @@ static bool renderJsfx(const char* path, double sr, const std::vector<Slider>& s
             ti.beat_position = pos / sr * 2.0;
             ysfx_set_time_info(fx, &ti);
         }
-        const float* ins[4] = { in.l.data() + pos, in.r.data() + pos, sc.l.data() + pos, sc.r.data() + pos };
+        const float* ins[12] = { in.l.data() + pos, in.r.data() + pos, sc.l.data() + pos, sc.r.data() + pos };
+        for (uint32_t c = 4; c < 12; ++c)
+            ins[c] = (*g_bed)[c - 4].data() + pos;
         std::vector<float*> outs(out.size());
         for (size_t c = 0; c < out.size(); ++c)
             outs[c] = out[c].data() + pos;
@@ -500,10 +525,12 @@ static bool renderClap(const char* path, double sr, const std::vector<double>& v
             transport.tsig_num = 4;
             transport.tsig_denom = 4;
         }
-        float* srcs[4] = { const_cast<float*>(in.l.data()) + pos, const_cast<float*>(in.r.data()) + pos,
-                           const_cast<float*>(sc.l.data()) + pos, const_cast<float*>(sc.r.data()) + pos };
+        float* srcs[12] = { const_cast<float*>(in.l.data()) + pos, const_cast<float*>(in.r.data()) + pos,
+                            const_cast<float*>(sc.l.data()) + pos, const_cast<float*>(sc.r.data()) + pos };
+        for (uint32_t c = 4; c < 12; ++c)
+            srcs[c] = const_cast<float*>((*g_bed)[c - 4].data()) + pos;
         for (uint32_t c = 0; c < totalIns; ++c)
-            inPtrs[c] = c < 4 ? srcs[c] : silence.data();
+            inPtrs[c] = c < 12 ? srcs[c] : silence.data();
         for (uint32_t p = 0, c = 0; p < inChannels.size(); c += inChannels[p], ++p) {
             ibs[p] = clap_audio_buffer_t {};
             ibs[p].data32 = inPtrs.data() + c;
@@ -742,6 +769,8 @@ int main(int argc, char** argv)
     bool ok = true, first = true;
     for (double sr : { 44100.0, 96000.0 }) {
         const Stereo in = makeSignal(sr), sc = makeSidechain(sr);
+        const Channels bed = makeBed(in, sc);
+        g_bed = &bed;
         for (size_t i = 0; i < sets.size(); ++i) {
             Channels a(numOuts, std::vector<float>(in.l.size())), b = a;
             // the CLAP gets every slider's value except the file sliders'

@@ -1,0 +1,14 @@
+[
+  ["Crossover 60 Hz", {"Crossover": 60}],
+  ["Crossover 100 Hz", {"Crossover": 100}],
+  ["Crossover 120 Hz", {"Crossover": 120}],
+  ["Small Satellites 150 Hz", {"Crossover": 150}],
+  ["Full Range Mains", {"Mains": "Full Range"}],
+  ["LFE at 0 dB", {"LFE Gain": "0 dB"}],
+  ["Sub Only", {"Listen": "Sub Only"}],
+  ["Mains Only", {"Listen": "Mains Only"}],
+  ["Sub Hot +3 dB", {"Sub Level": 3}],
+  ["Sub Low -3 dB", {"Sub Level": -3}],
+  ["5.1 at 80 Hz", {"Bed": "5.1"}],
+  ["7.1 at 80 Hz", {"Bed": "7.1"}]
+]

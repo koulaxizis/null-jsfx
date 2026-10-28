@@ -1,0 +1,9 @@
+[
+  ["ATSC A/85 -24 LUFS", {"Target": "-24 LUFS"}],
+  ["Atmos Music -18 LUFS", {"Target": "-18 LUFS"}],
+  ["Streaming -14 LUFS", {"Target": "-14 LUFS"}],
+  ["5.1 EBU R128", {"Bed": "5.1"}],
+  ["7.1 EBU R128", {"Bed": "7.1"}],
+  ["Long Program 5 min", {"History": "5 min"}],
+  ["Reset on Play", {"Auto Reset": "On Play"}]
+]

@@ -1,0 +1,14 @@
+[
+  ["Stereo to 5.1 Front", {"Format": "5.1", "Input": "Stereo"}],
+  ["Stereo to 7.1 Front", {"Format": "7.1", "Input": "Stereo"}],
+  ["Stereo Wide to Sides", {"Format": "7.1", "Input": "Stereo", "Spread": 180}],
+  ["Stereo Phantom Center", {"Format": "5.1", "Input": "Stereo", "Spread": 30, "Center": 0}],
+  ["Mono Dialogue Center", {"Format": "5.1", "Input": "Mono", "Spread": 0}],
+  ["Mono Ambience Surround", {"Format": "7.1", "Input": "Mono", "Azimuth": 180, "Spread": 180}],
+  ["Mono Rear Left", {"Format": "7.1", "Input": "Mono", "Azimuth": -150, "Spread": 0}],
+  ["Mono Overhead", {"Format": "7.1.4", "Input": "Mono", "Elevation": 90, "Spread": 0}],
+  ["Mono Front Height", {"Format": "7.1.4", "Input": "Mono", "Elevation": 45, "Spread": 30}],
+  ["Stereo Pad Above", {"Format": "7.1.4", "Input": "Stereo", "Elevation": 60, "Spread": 90}],
+  ["Bass with LFE", {"Format": "5.1", "Input": "Stereo", "LFE": -10}],
+  ["Effects with LFE", {"Format": "7.1.4", "Input": "Mono", "Spread": 120, "LFE": -6}]
+]

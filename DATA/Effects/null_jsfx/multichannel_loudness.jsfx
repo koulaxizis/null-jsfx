@@ -1,0 +1,261 @@
+desc:NULL Multichannel Loudness
+author: Christos Koulaxizis
+tags: loudness meter lufs lra true peak surround 5.1 7.1 7.1.4 atmos bed multichannel ebu r128 itu bs1770 atsc a85 metering post production
+//category: Advanced
+//NULL JSFX v2.6 • https://nulljsfx.tech • MIT License
+
+slider1:2<0,2,1{5.1,7.1,7.1.4}>Bed
+slider2:0<0,3,1{-23 LUFS,-24 LUFS,-18 LUFS,-14 LUFS}>Target
+slider3:1<0,3,1{10 s,30 s,1 min,5 min}>History
+slider4:0<0,1,1{Off,On Play}>Auto Reset
+slider5:0<0,1,1{Reset,Reset}>Reset
+
+in_pin:L
+in_pin:R
+in_pin:C
+in_pin:LFE
+in_pin:Ls
+in_pin:Rs
+in_pin:Lrs
+in_pin:Rrs
+in_pin:Ltf
+in_pin:Rtf
+in_pin:Ltr
+in_pin:Rtr
+out_pin:L
+out_pin:R
+out_pin:C
+out_pin:LFE
+out_pin:Ls
+out_pin:Rs
+out_pin:Lrs
+out_pin:Rrs
+out_pin:Ltf
+out_pin:Rtf
+out_pin:Ltr
+out_pin:Rtr
+
+@init
+  // ITU-R BS.1770-4 / EBU R128 loudness of a surround bed, as the Loudness Meter measures a
+  // stereo track: every channel of the Bed but the LFE is K-weighted and its energy weighted by
+  // its place, 1.41 (+1.5 dB) for the speakers at 60 to 120 degrees (5.1 Ls/Rs at 110, 7.1
+  // Lss/Rss at 90) and 1.0 for the rest (front, 7.1 rears at 150, the tops), then summed:
+  //   momentary = last 400 ms, short-term = last 3 s, both updated every 100 ms,
+  //   integrated = 400 ms blocks every 100 ms, gated at -70 LUFS and -10 LU below their mean,
+  //   loudness range (EBU Tech 3342) = 95th - 10th percentile of the short-term values, gated
+  //   at -70 LUFS and -20 LU,
+  //   sample peak and true peak (4x, BS.1770-4 Annex 2) of every channel of the Bed, LFE too.
+  // The audio passes through untouched. This file shows the numbers nowhere: the GFX version
+  // and the VST3/CLAP draw them, with a meter for each channel.
+  ext_noinit = 1;              // REAPER must not restart the measurement at every play
+
+  lm_sb = 0;                   // 30 sub-block energies (ring)
+  lm_hs = 64;                  // short-term history, 3000 x 100 ms
+  lm_hm = 3064;                // momentary history, 3000 x 100 ms
+  LM_NB = 9000;                // histogram bins: 0.01 LU from -70 LUFS
+  lm_ic = 6100;                // integrated: block count per bin
+  lm_ie = lm_ic + LM_NB;       // integrated: block energy sum per bin
+  lm_rc = lm_ie + LM_NB;       // LRA: short-term block count per bin
+  lm_tc = lm_rc + LM_NB;       // true peak: 4 phases x 12 taps
+  lm_x = lm_tc + 48;           // true peak input history, 24 slots per channel (12, mirrored)
+  lm_z = lm_x + 12 * 24;       // K-weighting state, 4 per channel
+  lm_w = lm_z + 12 * 4;        // each channel's weight (0: not measured)
+  lm_cp = lm_w + 12;           // each channel's peak since the display last looked
+  freembuf(lm_cp + 12);
+  memset(0, 0, lm_cp + 12);
+
+  // K-weighting at this sample rate (the BS.1770 48 kHz filters re-derived, as in libebur128)
+  lm_k = tan($pi * 1681.974450955533 / srate);
+  lm_vh = 10 ^ (3.999843853973347 / 20);
+  lm_vb = lm_vh ^ 0.4996667741545416;
+  lm_q = 0.7071752369554196;
+  lm_a0 = 1 + lm_k / lm_q + lm_k * lm_k;
+  lm_b0 = (lm_vh + lm_vb * lm_k / lm_q + lm_k * lm_k) / lm_a0;
+  lm_b1 = 2 * (lm_k * lm_k - lm_vh) / lm_a0;
+  lm_b2 = (lm_vh - lm_vb * lm_k / lm_q + lm_k * lm_k) / lm_a0;
+  lm_a1 = 2 * (lm_k * lm_k - 1) / lm_a0;
+  lm_a2 = (1 - lm_k / lm_q + lm_k * lm_k) / lm_a0;
+  lm_k = tan($pi * 38.13547087602444 / srate);
+  lm_q = 0.5003270373238773;
+  lm_c0 = 1 + lm_k / lm_q + lm_k * lm_k;
+  lm_c1 = 2 * (lm_k * lm_k - 1) / lm_c0;
+  lm_c2 = (1 - lm_k / lm_q + lm_k * lm_k) / lm_c0;
+  // true-peak interpolator, BS.1770-4 Annex 2
+  lm_i = 0;
+  loop(48,
+    lm_tc[lm_i] =
+      lm_i ==  0 ?  0.0017089843750 : lm_i ==  1 ?  0.0109863281250 : lm_i ==  2 ? -0.0196533203125 :
+      lm_i ==  3 ?  0.0332031250000 : lm_i ==  4 ? -0.0594482421875 : lm_i ==  5 ?  0.1373291015625 :
+      lm_i ==  6 ?  0.9721679687500 : lm_i ==  7 ? -0.1022949218750 : lm_i ==  8 ?  0.0476074218750 :
+      lm_i ==  9 ? -0.0266113281250 : lm_i == 10 ?  0.0148925781250 : lm_i == 11 ? -0.0083007812500 :
+      lm_i == 12 ? -0.0291748046875 : lm_i == 13 ?  0.0292968750000 : lm_i == 14 ? -0.0517578125000 :
+      lm_i == 15 ?  0.0891113281250 : lm_i == 16 ? -0.1665039062500 : lm_i == 17 ?  0.4650878906250 :
+      lm_i == 18 ?  0.7797851562500 : lm_i == 19 ? -0.2003173828125 : lm_i == 20 ?  0.1015625000000 :
+      lm_i == 21 ? -0.0582275390625 : lm_i == 22 ?  0.0330810546875 : lm_i == 23 ? -0.0189208984375 :
+      lm_tc[47 - lm_i];   // phases 2 and 3 are phases 1 and 0 reversed
+    lm_i += 1;
+  );
+  lm_tw = 0;
+
+  lm_n = floor(srate * 0.1 + 0.5);   // samples per 100 ms sub-block
+  lm_acc = 0;
+  lm_cnt = 0;
+  lm_sbw = 0;
+  lm_was_play = 0;
+  lm_rst_last = slider5;
+
+  // loudness of a mean-square energy, -200 for silence
+  function lm_db(p) ( p > 0 ? -0.691 + 10 * log10(p) : -200; );
+
+  // clears integrated, LRA, maxima and the history (momentary and short-term keep running)
+  function lm_reset()
+  (
+    memset(lm_ic, 0, 3 * LM_NB);
+    lm_blocks = 0;
+    lm_abs_sum = lm_abs_n = lm_ihi = 0;
+    lm_st_sum = lm_st_n = lm_rhi = 0;
+    lm_int = -200;
+    lm_lra = 0;
+    lm_mmax = lm_smax = -200;
+    lm_tpmax = lm_spmax = 0;
+    lm_hw = lm_hn = 0;
+  );
+
+  // every 100 ms: momentary, short-term, gating blocks, integrated, LRA, history
+  function lm_subblock() local(k, s, b, rel, sum, cnt, n, lo, hi, cum, ilo, ihi)
+  (
+    lm_sb[lm_sbw] = lm_acc;
+    lm_acc = 0;
+    lm_sbw += 1;
+    lm_sbw >= 30 ? lm_sbw = 0;
+    lm_blocks += 1;
+
+    // newest sub-block first: 4 for momentary, 30 for short-term
+    s = 0;
+    k = lm_sbw;
+    loop(4, k -= 1; k < 0 ? k += 30; s += lm_sb[k];);
+    lm_mp = s / (4 * lm_n);
+    loop(26, k -= 1; k < 0 ? k += 30; s += lm_sb[k];);
+    lm_stp = s / (30 * lm_n);
+    lm_m = lm_db(lm_mp);
+    lm_s = lm_db(lm_stp);
+
+    // integrated: a 400 ms gating block every 100 ms
+    lm_blocks >= 4 && lm_m > -70 ? (
+      b = min(LM_NB - 1, floor((lm_m + 70) * 100));
+      lm_ic[b] += 1;
+      lm_ie[b] += lm_mp;
+      b >= lm_ihi ? lm_ihi = b + 1;
+      lm_abs_sum += lm_mp;
+      lm_abs_n += 1;
+      rel = lm_db(lm_abs_sum / lm_abs_n) - 10;
+      b = max(0, floor((rel + 70) * 100));
+      sum = cnt = 0;
+      while (b < lm_ihi) ( sum += lm_ie[b]; cnt += lm_ic[b]; b += 1; );
+      lm_int = cnt > 0 ? lm_db(sum / cnt) : -200;
+    );
+
+    // loudness range: the short-term value every 100 ms once 3 s have been measured
+    lm_blocks >= 30 && lm_s > -70 ? (
+      b = min(LM_NB - 1, floor((lm_s + 70) * 100));
+      lm_rc[b] += 1;
+      b >= lm_rhi ? lm_rhi = b + 1;
+      lm_st_sum += lm_stp;
+      lm_st_n += 1;
+      rel = lm_db(lm_st_sum / lm_st_n) - 20;
+      b = max(0, floor((rel + 70) * 100));
+      n = 0;
+      k = b;
+      while (k < lm_rhi) ( n += lm_rc[k]; k += 1; );
+      n > 0 ? (
+        lo = floor((n - 1) * 0.1 + 0.5);
+        hi = floor((n - 1) * 0.95 + 0.5);
+        cum = 0;
+        ilo = ihi = -1;
+        k = b;
+        while (k < lm_rhi && ihi < 0) (
+          cum += lm_rc[k];
+          ilo < 0 && cum > lo ? ilo = k;
+          ihi < 0 && cum > hi ? ihi = k;
+          k += 1;
+        );
+        lm_lra = (ihi - ilo) / 100;
+      );
+    );
+
+    lm_m > lm_mmax ? lm_mmax = lm_m;
+    lm_s > lm_smax ? lm_smax = lm_s;
+    lm_hs[lm_hw] = lm_s;
+    lm_hm[lm_hw] = lm_m;
+    lm_hw += 1;
+    lm_hw >= 3000 ? lm_hw = 0;
+    lm_hn = min(3000, lm_hn + 1);
+  );
+
+  lm_reset();
+  lm_m = lm_s = -200;
+
+
+@slider
+  lm_target = slider2 == 0 ? -23 : slider2 == 1 ? -24 : slider2 == 2 ? -18 : -14;
+  bed = slider1;
+  lm_i = 0;
+  loop(12,
+    lm_w[lm_i] = lm_i == 3 ? 0 : (lm_i >= 6 && bed == 0) || (lm_i >= 8 && bed < 2) ? 0 :
+                 lm_i == 4 || lm_i == 5 ? 1.41 : 1;
+    lm_i += 1;
+  );
+  // the true peak looks at the LFE too
+  lm_nch = bed == 0 ? 6 : bed == 1 ? 8 : 12;
+  slider5 != lm_rst_last ? (
+    lm_rst_last = slider5;
+    lm_reset();
+  );
+
+@block
+  lm_play = play_state == 1 || play_state == 5;
+  lm_play && !lm_was_play && slider4 ? lm_reset();
+  lm_was_play = lm_play;
+
+@sample
+  lm_tw -= 1;
+  lm_tw < 0 ? lm_tw = 11;
+  lm_c = 0;
+  loop(lm_nch,
+    lm_v = spl(lm_c);
+    // K-weighting, transposed direct form II: shelf (b, a) then high pass (1, -2, 1 / c)
+    lm_s4 = lm_z + lm_c * 4;
+    lm_y = lm_b0 * lm_v + lm_s4[0];
+    lm_s4[0] = lm_b1 * lm_v - lm_a1 * lm_y + lm_s4[1];
+    lm_s4[1] = lm_b2 * lm_v - lm_a2 * lm_y;
+    lm_kk = lm_y + lm_s4[2];
+    lm_s4[2] = -2 * lm_y - lm_c1 * lm_kk + lm_s4[3];
+    lm_s4[3] = lm_y - lm_c2 * lm_kk;
+    lm_acc += lm_w[lm_c] * lm_kk * lm_kk;
+    // sample peak and true peak (newest input at lm_tw, mirrored 12 slots on so taps read straight)
+    lm_xc = lm_x + lm_c * 24;
+    lm_xc[lm_tw] = lm_xc[lm_tw + 12] = lm_v;
+    lm_pk = abs(lm_v);
+    lm_pk > lm_spmax ? lm_spmax = lm_pk;
+    lm_ph = 0;
+    loop(4,
+      lm_a = 0;
+      lm_j = 0;
+      loop(12, lm_a += lm_tc[lm_ph + lm_j] * lm_xc[lm_tw + lm_j]; lm_j += 1;);
+      lm_pk = max(lm_pk, abs(lm_a));
+      lm_ph += 12;
+    );
+    lm_pk > lm_tpmax ? lm_tpmax = lm_pk;
+    lm_pk > lm_cp[lm_c] ? lm_cp[lm_c] = lm_pk;
+    lm_c += 1;
+  );
+
+  lm_cnt += 1;
+  lm_cnt >= lm_n ? (
+    lm_cnt = 0;
+    lm_subblock();
+  );
+
+  // the audio passes through
+  spl0 = spl0;
+  spl1 = spl1;

@@ -1,0 +1,367 @@
+desc:NULL Surround Panner GFX
+author: Christos Koulaxizis
+tags: surround panner 5.1 7.1 7.1.4 atmos bed immersive vbap azimuth elevation spread lfe post production film music gui
+//category: Advanced
+//NULL JSFX v2.6 • https://nulljsfx.tech • MIT License
+
+import null_gfx.jsfx-inc
+
+slider1:0<0,2,1{5.1,7.1,7.1.4}>-Format
+slider2:1<0,1,1{Mono,Stereo}>-Input
+slider3:0<-180,180,1>-Azimuth (deg)
+slider4:0<0,90,1>-Elevation (deg)
+slider5:60<0,180,1>-Spread (deg)
+slider6:100<0,100,1>-Center (%)
+slider7:-60<-60,0,0.1>-LFE (dB)
+slider8:0<-24,12,0.1>-Output (dB)
+
+in_pin:Left
+in_pin:Right
+out_pin:L
+out_pin:R
+out_pin:C
+out_pin:LFE
+out_pin:Ls
+out_pin:Rs
+out_pin:Lrs
+out_pin:Rrs
+out_pin:Ltf
+out_pin:Rtf
+out_pin:Ltr
+out_pin:Rtr
+
+@init
+  ext_noinit = 1;              // play and seek keep tails and state, as in the VST3/CLAP
+  // Pans a mono or stereo track into a surround bed: 5.1 (L R C LFE Ls Rs), 7.1 (L R C LFE Lss
+  // Rss Lrs Rrs) or 7.1.4 (7.1 and the four tops Ltf Rtf Ltr Rtr), in that pin order; the pins a
+  // format does not use stay silent. Speakers as ITU-R BS.775 / BS.2051 and Dolby: L/R at 30
+  // degrees, C at 0, 5.1 surrounds at 110, 7.1 sides at 90 and rears at 150, tops at 45 and 135
+  // (elevation 45). Azimuth runs from -180 to 180, negative to the left.
+  //   - pairwise 2D VBAP on the ear-level ring, power-normalised; Center below 100 % moves the
+  //     sound from C into a phantom centre between L and R (the powers crossfade)
+  //   - Mono: the source is spread over Spread degrees (seven points, powers averaged);
+  //     Stereo: the left and right inputs sit at Azimuth -/+ Spread/2 (60 = the front pair)
+  //   - 7.1.4: Elevation crossfades the power from the ear level (cos) to the top ring (sin),
+  //     VBAP on the four tops at the same azimuth
+  //   - LFE sends the mono sum through a 120 Hz Linkwitz-Riley low-pass (Off at -60 dB)
+  // Gains glide over about 20 ms, so a moving pan does not click.
+  NCH = 12;
+  GL = 0; GR = 16; SL = 32; SR = 48;   // target and smoothed gains per output pin
+  SPK = 64;                            // the ring: azimuth, pin (pairs)
+  TMP = 128;                           // gains of one point
+  MTR = 256;                           // the peak of each output pin, for the meters
+  memset(0, 0, 272);
+  sp_init = 0;
+
+  // VBAP of the point at azimuth a (deg) on the ring of n speakers at SPK (sorted by azimuth),
+  // added as power x w into the gains at dst
+  function sp_vbap(a, n, dst, w) local(i, j, a1, a2, x, d, g1, g2, k)
+  (
+    // the pair around a: i at or below, j above (wrapping round the back)
+    i = n - 1;
+    k = 0;
+    loop(n, SPK[k * 2] <= a ? i = k; k += 1;);
+    a < SPK[0] ? i = n - 1;
+    j = i + 1;
+    j >= n ? j = 0;
+    a1 = SPK[i * 2];
+    a2 = SPK[j * 2];
+    // angles relative to a1, the pair's span taken the short way round
+    x = a - a1; x < 0 ? x += 360;
+    d = a2 - a1; d <= 0 ? d += 360;
+    a1 = 0;
+    a2 = d * $pi / 180;
+    x *= $pi / 180;
+    d = sin(a2);
+    g1 = (cos(x) * sin(a2) - sin(x) * cos(a2)) / d;
+    g2 = sin(x) / d;
+    d = g1 * g1 + g2 * g2;
+    d > 0 ? (
+      dst[SPK[i * 2 + 1]] += w * g1 * g1 / d;
+      dst[SPK[j * 2 + 1]] += w * g2 * g2 / d;
+    );
+  );
+
+  // the ring of the ear level (with or without C) or of the tops, at SPK; returns its size
+  function sp_ring(top, withc) local(n)
+  (
+    n = 0;
+    top ? (
+      SPK[0] = -135; SPK[1] = 10; SPK[2] = -45; SPK[3] = 8; SPK[4] = 45; SPK[5] = 9; SPK[6] = 135; SPK[7] = 11;
+      n = 4;
+    ) : fmt == 0 ? (
+      SPK[0] = -110; SPK[1] = 4; SPK[2] = -30; SPK[3] = 0;
+      withc ? ( SPK[4] = 0; SPK[5] = 2; SPK[6] = 30; SPK[7] = 1; SPK[8] = 110; SPK[9] = 5; n = 5; )
+            : ( SPK[4] = 30; SPK[5] = 1; SPK[6] = 110; SPK[7] = 5; n = 4; );
+    ) : (
+      SPK[0] = -150; SPK[1] = 6; SPK[2] = -90; SPK[3] = 4; SPK[4] = -30; SPK[5] = 0;
+      withc ? ( SPK[6] = 0; SPK[7] = 2; SPK[8] = 30; SPK[9] = 1; SPK[10] = 90; SPK[11] = 5; SPK[12] = 150; SPK[13] = 7; n = 7; )
+            : ( SPK[6] = 30; SPK[7] = 1; SPK[8] = 90; SPK[9] = 5; SPK[10] = 150; SPK[11] = 7; n = 6; );
+    );
+    n;
+  );
+
+  // the gains (power, summed into TMP) of a point source at azimuth a with the given power w
+  function sp_point(a, w) local(n, e)
+  (
+    a = a - floor((a + 180) / 360) * 360;
+    e = fmt == 2 ? cos(elev * $pi / 180) : 1;
+    e *= e;
+    cen > 0 ? ( n = sp_ring(0, 1); sp_vbap(a, n, TMP, w * e * cen); );
+    cen < 1 ? ( n = sp_ring(0, 0); sp_vbap(a, n, TMP, w * e * (1 - cen)); );
+    fmt == 2 && elev > 0 ? ( n = sp_ring(1, 0); sp_vbap(a, n, TMP, w * (1 - e)); );
+  );
+
+  // the amplitude gains of one input into dst: a point, or spread over sp degrees (mono)
+  function sp_source(a, sp, dst) local(k)
+  (
+    memset(TMP, 0, NCH);
+    sp > 0 ? (
+      k = 0;
+      loop(7, sp_point(a + sp * (k / 6 - 0.5), 1 / 7); k += 1;);
+    ) : sp_point(a, 1);
+    k = 0;
+    loop(NCH, dst[k] = sqrt(TMP[k]) * outg; k += 1;);
+  );
+
+  // Linkwitz-Riley 120 Hz low-pass for the LFE: two Butterworth biquads
+  function sp_lp(x) local(y)
+  (
+    y = lb0 * x + lz1;
+    lz1 = lb1 * x - la1 * y + lz2;
+    lz2 = lb2 * x - la2 * y;
+    x = y;
+    y = lb0 * x + lw1;
+    lw1 = lb1 * x - la1 * y + lw2;
+    lw2 = lb2 * x - la2 * y;
+    y;
+  );
+
+  gfx_ext_retina = 1;
+  function update()
+  (
+    fmt = slider1;
+    stereo = slider2 >= 0.5;
+    elev = slider4;
+    cen = slider6 / 100;
+    outg = 10 ^ (slider8 / 20);
+    lfe = slider7 > -60 ? 10 ^ (slider7 / 20) * outg : 0;
+    stereo ? (
+      sp_source(slider3 - slider5 / 2, 0, GL);
+      sp_source(slider3 + slider5 / 2, 0, GR);
+    ) : (
+      sp_source(slider3, slider5, GL);
+      memset(GR, 0, NCH);
+    );
+    // the pins the format does not use
+    fmt == 0 ? ( memset(GL + 6, 0, 6); memset(GR + 6, 0, 6); );
+    fmt == 1 ? ( memset(GL + 8, 0, 4); memset(GR + 8, 0, 4); );
+    // the LFE low-pass
+    lp_k = tan($pi * min(120, 0.45 * srate) / srate);
+    lp_n = 1 / (1 + sqrt(2) * lp_k + lp_k * lp_k);
+    lb0 = lp_k * lp_k * lp_n; lb1 = 2 * lb0; lb2 = lb0;
+    la1 = 2 * (lp_k * lp_k - 1) * lp_n;
+    la2 = (1 - sqrt(2) * lp_k + lp_k * lp_k) * lp_n;
+    // the first @slider: no glide
+    !sp_init ? ( memcpy(SL, GL, NCH); memcpy(SR, GR, NCH); sp_init = 1; );
+    sm_c = exp(-1 / (0.02 * srate / 3));
+  );
+
+  // ---- factory presets: generated by tools/build_presets.py, do not edit ----
+  ng_pre_n = 13;
+  strcpy(#ng_h_ix, "");
+  ng_hist_add(1); ng_hist_add(2); ng_hist_add(3); ng_hist_add(4); ng_hist_add(5); ng_hist_add(6); ng_hist_add(7); ng_hist_add(8);
+  ng_hist_init();
+
+  function ng_preset_load(p)
+  (
+    p == 0 ? ( ng_slider_set(1, 0); ng_slider_set(2, 1); ng_slider_set(3, 0); ng_slider_set(4, 0); ng_slider_set(5, 60); ng_slider_set(6, 100); ng_slider_set(7, -60); ng_slider_set(8, 0); );
+    p == 1 ? ( ng_slider_set(1, 0); ng_slider_set(2, 1); ng_slider_set(3, 0); ng_slider_set(4, 0); ng_slider_set(5, 60); ng_slider_set(6, 100); ng_slider_set(7, -60); ng_slider_set(8, 0); );
+    p == 2 ? ( ng_slider_set(1, 1); ng_slider_set(2, 1); ng_slider_set(3, 0); ng_slider_set(4, 0); ng_slider_set(5, 60); ng_slider_set(6, 100); ng_slider_set(7, -60); ng_slider_set(8, 0); );
+    p == 3 ? ( ng_slider_set(1, 1); ng_slider_set(2, 1); ng_slider_set(3, 0); ng_slider_set(4, 0); ng_slider_set(5, 180); ng_slider_set(6, 100); ng_slider_set(7, -60); ng_slider_set(8, 0); );
+    p == 4 ? ( ng_slider_set(1, 0); ng_slider_set(2, 1); ng_slider_set(3, 0); ng_slider_set(4, 0); ng_slider_set(5, 30); ng_slider_set(6, 0); ng_slider_set(7, -60); ng_slider_set(8, 0); );
+    p == 5 ? ( ng_slider_set(1, 0); ng_slider_set(2, 0); ng_slider_set(3, 0); ng_slider_set(4, 0); ng_slider_set(5, 0); ng_slider_set(6, 100); ng_slider_set(7, -60); ng_slider_set(8, 0); );
+    p == 6 ? ( ng_slider_set(1, 1); ng_slider_set(2, 0); ng_slider_set(3, 180); ng_slider_set(4, 0); ng_slider_set(5, 180); ng_slider_set(6, 100); ng_slider_set(7, -60); ng_slider_set(8, 0); );
+    p == 7 ? ( ng_slider_set(1, 1); ng_slider_set(2, 0); ng_slider_set(3, -150); ng_slider_set(4, 0); ng_slider_set(5, 0); ng_slider_set(6, 100); ng_slider_set(7, -60); ng_slider_set(8, 0); );
+    p == 8 ? ( ng_slider_set(1, 2); ng_slider_set(2, 0); ng_slider_set(3, 0); ng_slider_set(4, 90); ng_slider_set(5, 0); ng_slider_set(6, 100); ng_slider_set(7, -60); ng_slider_set(8, 0); );
+    p == 9 ? ( ng_slider_set(1, 2); ng_slider_set(2, 0); ng_slider_set(3, 0); ng_slider_set(4, 45); ng_slider_set(5, 30); ng_slider_set(6, 100); ng_slider_set(7, -60); ng_slider_set(8, 0); );
+    p == 10 ? ( ng_slider_set(1, 2); ng_slider_set(2, 1); ng_slider_set(3, 0); ng_slider_set(4, 60); ng_slider_set(5, 90); ng_slider_set(6, 100); ng_slider_set(7, -60); ng_slider_set(8, 0); );
+    p == 11 ? ( ng_slider_set(1, 0); ng_slider_set(2, 1); ng_slider_set(3, 0); ng_slider_set(4, 0); ng_slider_set(5, 60); ng_slider_set(6, 100); ng_slider_set(7, -10); ng_slider_set(8, 0); );
+    p == 12 ? ( ng_slider_set(1, 2); ng_slider_set(2, 0); ng_slider_set(3, 0); ng_slider_set(4, 0); ng_slider_set(5, 120); ng_slider_set(6, 100); ng_slider_set(7, -6); ng_slider_set(8, 0); );
+  );
+
+  // the first preset every slider matches, or -1
+  function ng_preset_match() local(m)
+  (
+    m = -1;
+    m < 0 && ng_pre_eq(slider1, 0) && ng_pre_eq(slider2, 1) && ng_pre_eq(slider3, 0) && ng_pre_eq(slider4, 0) && ng_pre_eq(slider5, 60) && ng_pre_eq(slider6, 100) && ng_pre_eq(slider7, -60) && ng_pre_eq(slider8, 0) ? m = 0;
+    m < 0 && ng_pre_eq(slider1, 0) && ng_pre_eq(slider2, 1) && ng_pre_eq(slider3, 0) && ng_pre_eq(slider4, 0) && ng_pre_eq(slider5, 60) && ng_pre_eq(slider6, 100) && ng_pre_eq(slider7, -60) && ng_pre_eq(slider8, 0) ? m = 1;
+    m < 0 && ng_pre_eq(slider1, 1) && ng_pre_eq(slider2, 1) && ng_pre_eq(slider3, 0) && ng_pre_eq(slider4, 0) && ng_pre_eq(slider5, 60) && ng_pre_eq(slider6, 100) && ng_pre_eq(slider7, -60) && ng_pre_eq(slider8, 0) ? m = 2;
+    m < 0 && ng_pre_eq(slider1, 1) && ng_pre_eq(slider2, 1) && ng_pre_eq(slider3, 0) && ng_pre_eq(slider4, 0) && ng_pre_eq(slider5, 180) && ng_pre_eq(slider6, 100) && ng_pre_eq(slider7, -60) && ng_pre_eq(slider8, 0) ? m = 3;
+    m < 0 && ng_pre_eq(slider1, 0) && ng_pre_eq(slider2, 1) && ng_pre_eq(slider3, 0) && ng_pre_eq(slider4, 0) && ng_pre_eq(slider5, 30) && ng_pre_eq(slider6, 0) && ng_pre_eq(slider7, -60) && ng_pre_eq(slider8, 0) ? m = 4;
+    m < 0 && ng_pre_eq(slider1, 0) && ng_pre_eq(slider2, 0) && ng_pre_eq(slider3, 0) && ng_pre_eq(slider4, 0) && ng_pre_eq(slider5, 0) && ng_pre_eq(slider6, 100) && ng_pre_eq(slider7, -60) && ng_pre_eq(slider8, 0) ? m = 5;
+    m < 0 && ng_pre_eq(slider1, 1) && ng_pre_eq(slider2, 0) && ng_pre_eq(slider3, 180) && ng_pre_eq(slider4, 0) && ng_pre_eq(slider5, 180) && ng_pre_eq(slider6, 100) && ng_pre_eq(slider7, -60) && ng_pre_eq(slider8, 0) ? m = 6;
+    m < 0 && ng_pre_eq(slider1, 1) && ng_pre_eq(slider2, 0) && ng_pre_eq(slider3, -150) && ng_pre_eq(slider4, 0) && ng_pre_eq(slider5, 0) && ng_pre_eq(slider6, 100) && ng_pre_eq(slider7, -60) && ng_pre_eq(slider8, 0) ? m = 7;
+    m < 0 && ng_pre_eq(slider1, 2) && ng_pre_eq(slider2, 0) && ng_pre_eq(slider3, 0) && ng_pre_eq(slider4, 90) && ng_pre_eq(slider5, 0) && ng_pre_eq(slider6, 100) && ng_pre_eq(slider7, -60) && ng_pre_eq(slider8, 0) ? m = 8;
+    m < 0 && ng_pre_eq(slider1, 2) && ng_pre_eq(slider2, 0) && ng_pre_eq(slider3, 0) && ng_pre_eq(slider4, 45) && ng_pre_eq(slider5, 30) && ng_pre_eq(slider6, 100) && ng_pre_eq(slider7, -60) && ng_pre_eq(slider8, 0) ? m = 9;
+    m < 0 && ng_pre_eq(slider1, 2) && ng_pre_eq(slider2, 1) && ng_pre_eq(slider3, 0) && ng_pre_eq(slider4, 60) && ng_pre_eq(slider5, 90) && ng_pre_eq(slider6, 100) && ng_pre_eq(slider7, -60) && ng_pre_eq(slider8, 0) ? m = 10;
+    m < 0 && ng_pre_eq(slider1, 0) && ng_pre_eq(slider2, 1) && ng_pre_eq(slider3, 0) && ng_pre_eq(slider4, 0) && ng_pre_eq(slider5, 60) && ng_pre_eq(slider6, 100) && ng_pre_eq(slider7, -10) && ng_pre_eq(slider8, 0) ? m = 11;
+    m < 0 && ng_pre_eq(slider1, 2) && ng_pre_eq(slider2, 0) && ng_pre_eq(slider3, 0) && ng_pre_eq(slider4, 0) && ng_pre_eq(slider5, 120) && ng_pre_eq(slider6, 100) && ng_pre_eq(slider7, -6) && ng_pre_eq(slider8, 0) ? m = 12;
+    m;
+  );
+
+  function ng_preset_name(p) local(s)
+  (
+    s = "";
+    p == 0 ? s = "Default";
+    p == 1 ? s = "Stereo to 5.1 Front";
+    p == 2 ? s = "Stereo to 7.1 Front";
+    p == 3 ? s = "Stereo Wide to Sides";
+    p == 4 ? s = "Stereo Phantom Center";
+    p == 5 ? s = "Mono Dialogue Center";
+    p == 6 ? s = "Mono Ambience Surround";
+    p == 7 ? s = "Mono Rear Left";
+    p == 8 ? s = "Mono Overhead";
+    p == 9 ? s = "Mono Front Height";
+    p == 10 ? s = "Stereo Pad Above";
+    p == 11 ? s = "Bass with LFE";
+    p == 12 ? s = "Effects with LFE";
+    s;
+  );
+
+  function ng_presets() local(i)
+  (
+    ng_pre_req >= 0 ? ( ng_preset_load(ng_pre_req); update(); ng_pre_req = -1; );
+    ng_hist() ? update();
+    ng_pre_cur = ng_preset_match();
+    ng_pre_open ? (
+      ng_pre_menu_begin();
+      i = 0;
+      loop(ng_pre_n, ng_pre_item(i, ng_preset_name(i)); i += 1;);
+      ng_pre_menu_end();
+    );
+    strcpy(#ng_pre_name, ng_pre_cur >= 0 ? ng_preset_name(ng_pre_cur) : "CUSTOM");
+  );
+  // ---- end of factory presets ----
+
+@slider
+  update();
+
+@sample
+  in_l = spl0;
+  in_r = spl1;
+  // the gains glide to their targets
+  k = 0;
+  loop(NCH,
+    SL[k] = GL[k] + (SL[k] - GL[k]) * sm_c;
+    SR[k] = GR[k] + (SR[k] - GR[k]) * sm_c;
+    k += 1;
+  );
+  lfe_s = stereo ? (in_l + in_r) * 0.5 : in_l;
+  spl0 = in_l * SL[0] + in_r * SR[0];
+  spl1 = in_l * SL[1] + in_r * SR[1];
+  spl2 = in_l * SL[2] + in_r * SR[2];
+  spl3 = in_l * SL[3] + in_r * SR[3] + sp_lp(lfe_s) * lfe;
+  spl4 = in_l * SL[4] + in_r * SR[4];
+  spl5 = in_l * SL[5] + in_r * SR[5];
+  spl6 = in_l * SL[6] + in_r * SR[6];
+  spl7 = in_l * SL[7] + in_r * SR[7];
+  spl8 = in_l * SL[8] + in_r * SR[8];
+  spl9 = in_l * SL[9] + in_r * SR[9];
+  spl10 = in_l * SL[10] + in_r * SR[10];
+  spl11 = in_l * SL[11] + in_r * SR[11];
+  // the meters (the sound does not use them)
+  k = 0;
+  loop(NCH, MTR[k] = max(MTR[k], abs(spl(k))); k += 1;);
+
+@gfx 480 460
+  ng_knobs_begin("SURROUND PANNER", "ADVANCED", 480, 200, 2, 0);
+
+  // the room from above: front at the top, the speakers of the Format (tops inside, at half the
+  // radius), each lit by its gain, and where the sound sits
+  g_cx = 128; g_cy = 152; g_r = 78;
+  ng_col(NG_BG, 1);
+  gfx_rect(X(24), Y(62), 208 * ng_s, 180 * ng_s);
+  ng_col(NG_BORDER, 1);
+  gfx_circle(X(g_cx), Y(g_cy), g_r * ng_s, 0, 1);
+  fmt == 2 ? gfx_circle(X(g_cx), Y(g_cy), g_r * 0.5 * ng_s, 0, 1);
+  g_k = 0;
+  loop(12,
+    // the speaker of pin g_k: its azimuth, ring and whether the format has it
+    g_a = g_k == 0 ? -30 : g_k == 1 ? 30 : g_k == 2 ? 0 : g_k == 4 ? (fmt ? -90 : -110) : g_k == 5 ? (fmt ? 90 : 110) :
+          g_k == 6 ? -150 : g_k == 7 ? 150 : g_k == 8 ? -45 : g_k == 9 ? 45 : g_k == 10 ? -135 : 135;
+    g_rr = g_k >= 8 ? g_r * 0.5 : g_r;
+    g_on = g_k != 3 && (g_k < 6 || (g_k < 8 && fmt >= 1) || fmt == 2);
+    g_on ? (
+      g_x = g_cx + g_rr * sin(g_a * $pi / 180);
+      g_y = g_cy - g_rr * cos(g_a * $pi / 180);
+      g_p = sqrt(min(1, GL[g_k] * GL[g_k] + GR[g_k] * GR[g_k]) / max(0.0001, outg * outg));
+      ng_col(NG_CARD, 1);
+      gfx_rect(X(g_x - 5), Y(g_y - 5), 10 * ng_s, 10 * ng_s);
+      ng_col(NG_ACCENT, min(1, g_p));
+      gfx_rect(X(g_x - 5), Y(g_y - 5), 10 * ng_s, 10 * ng_s);
+      ng_col(NG_BORDER, 1);
+      gfx_rect(X(g_x - 5), Y(g_y - 5), 10 * ng_s, 10 * ng_s, 0);
+    );
+    g_k += 1;
+  );
+  // the source: its points (one for each input, or the spread of a mono input)
+  g_e = fmt == 2 ? cos(elev * $pi / 180) : 1;
+  g_n = stereo ? 2 : slider5 > 0 ? 7 : 1;
+  g_i = 0;
+  loop(g_n,
+    g_a = stereo ? slider3 + slider5 * (g_i - 0.5) : g_n > 1 ? slider3 + slider5 * (g_i / 6 - 0.5) : slider3;
+    g_x = g_cx + g_r * g_e * 0.85 * sin(g_a * $pi / 180);
+    g_y = g_cy - g_r * g_e * 0.85 * cos(g_a * $pi / 180);
+    ng_col(NG_TEXT, 1);
+    gfx_circle(X(g_x), Y(g_y), (g_n == 7 && g_i != 3 ? 1.5 : 3) * ng_s, 1, 1);
+    g_i += 1;
+  );
+  ng_font(1, 7, 1);
+  ng_col(NG_MUTED, 1);
+  ng_txt("FRONT UP", 30, 66, 0, 1.2);
+  ng_txt(fmt == 0 ? "5.1" : fmt == 1 ? "7.1" : "7.1.4", 30, 230, 0, 1.2);
+
+  // a meter for each output pin (the pins of the Format), the LFE among them
+  g_k = 0;
+  ng_col(NG_BG, 1);
+  gfx_rect(X(244), Y(62), 212 * ng_s, 180 * ng_s);
+  loop(12,
+    g_on = g_k < 6 || (g_k < 8 && fmt >= 1) || fmt == 2;
+    g_x = 250 + g_k * 17.2;
+    g_f = ng_db_norm(ng_to_db(MTR[g_k]), -60);
+    ng_col(NG_CARD, 1);
+    gfx_rect(X(g_x), Y(68), 11 * ng_s, 150 * ng_s);
+    g_on ? (
+      ng_col(MTR[g_k] > 1 ? NG_TEXT : NG_ACCENT, 1);
+      gfx_rect(X(g_x), Y(68 + 150 * (1 - g_f)), 11 * ng_s, 150 * g_f * ng_s);
+    );
+    ng_font(1, 6, 1);
+    ng_col(g_on ? NG_MUTED : NG_BORDER, 1);
+    ng_txt(g_k == 0 ? "L" : g_k == 1 ? "R" : g_k == 2 ? "C" : g_k == 3 ? "LFE" : g_k == 4 ? (fmt ? "LSS" : "LS") :
+           g_k == 5 ? (fmt ? "RSS" : "RS") : g_k == 6 ? "LRS" : g_k == 7 ? "RRS" : g_k == 8 ? "LTF" : g_k == 9 ? "RTF" :
+           g_k == 10 ? "LTR" : "RTR", g_x + 5.5, 226, 1, 0.5);
+    MTR[g_k] *= 0.85;
+    g_k += 1;
+  );
+
+  ng_row(4);
+  ng_select_ctl(1, "FORMAT", "5.1|7.1|7.1.4", 0) ? update();
+  ng_select_ctl(2, "INPUT", "MONO|STEREO", 0) ? update();
+  sprintf(#v3, "%d deg", slider3);
+  ng_knob_ctl(3, "AZIMUTH", #v3, -180, 180, 0, 1, 1) ? update();
+  sprintf(#v4, "%d deg", slider4);
+  ng_knob_ctl(4, "ELEVATION", #v4, 0, 90, 0, 1, 0) ? update();
+  ng_row(4);
+  sprintf(#v5, "%d deg", slider5);
+  ng_knob_ctl(5, "SPREAD", #v5, 0, 180, 60, 1, 0) ? update();
+  sprintf(#v6, "%d%%", slider6);
+  ng_knob_ctl(6, "CENTER", #v6, 0, 100, 100, 1, 0) ? update();
+  slider7 <= -60 ? strcpy(#v7, "OFF") : sprintf(#v7, "%.1f dB", slider7);
+  ng_knob_ctl(7, "LFE", #v7, -60, 0, -60, 0.1, 0) ? update();
+  sprintf(#v8, "%+.1f dB", slider8);
+  ng_knob_ctl(8, "OUTPUT", #v8, -24, 12, 0, 0.1, 1) ? update();
+
+  ng_end();
+
+  ng_presets(); // the preset list (generated by tools/build_presets.py)

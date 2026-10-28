@@ -57,6 +57,14 @@ static void apply_preset(ysfx_t *fx, Preset p, std::mt19937 &rng)
 // Renders `seconds` of a stereo test signal; returns output peak and RMS per channel.
 struct Render { double peak = 0, rms[2] = {0, 0}, diff = 0; bool nonfinite = false; size_t midiSent = 0; int unbalanced = 0; };
 
+// meters with no listening option: the audio passes through untouched by design
+static bool is_pure_meter(const char *path)
+{
+    const char *base = strrchr(path, '/');
+    base = base ? base + 1 : path;
+    return !strncmp(base, "multichannel_loudness", 21);
+}
+
 static bool is_midi_effect(const char *path)
 {
     FILE *f = fopen(path, "rb");
@@ -248,7 +256,7 @@ static Result test_plugin(const char *path)
             ysfx_free(fx);
         }
     }
-    if (!changes_sound && !midifx) { res.fail = true; res.errors.push_back("output always equals input: the plugin has no effect"); }
+    if (!changes_sound && !midifx && !is_pure_meter(path)) { res.fail = true; res.errors.push_back("output always equals input: the plugin has no effect"); }
     return res;
 }
 
