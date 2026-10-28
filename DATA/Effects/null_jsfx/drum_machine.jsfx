@@ -2,7 +2,7 @@ desc:NULL Drum Machine
 author: Christos Koulaxizis
 tags: instrument drum machine drums beat sequencer synth 808 909 kick snare hats midi probability chance song mode generator multi-out
 //category: Instruments
-//NULL JSFX v2.6 • https://nulljsfx.tech • MIT License
+//NULL JSFX v2.6.1 • https://nulljsfx.tech • MIT License
 
 slider1:2<0,19,1{Off,User,House,Techno,Boom Bap,Electro,Breakbeat,Trap,Disco,Synth Pop,Dembow,Bossa,Rock,Funk,UK Garage,Jungle,Afrobeat,Reggae,Footwork,Industrial}>Pattern
 slider2:50<50,75,1>Swing (%)

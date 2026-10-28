@@ -2,7 +2,7 @@ desc:NULL De-Hum GFX
 author: Christos Koulaxizis
 tags: hum mains notch noise reduction repair restoration ground loop buzz rumble gui
 //category: Essentials
-//NULL JSFX v2.6 • https://nulljsfx.tech • MIT License
+//NULL JSFX v2.6.1 • https://nulljsfx.tech • MIT License
 
 import null_gfx.jsfx-inc
 

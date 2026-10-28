@@ -2,7 +2,7 @@ desc:NULL Stretch
 author: Christos Koulaxizis
 tags: stretch pitch shift granular slow-motion warp texture
 //category: One Slider
-//NULL JSFX v2.6 • https://nulljsfx.tech • MIT License
+//NULL JSFX v2.6.1 • https://nulljsfx.tech • MIT License
 
 slider1:0<-100,100,1>Amount
 

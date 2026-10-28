@@ -2,7 +2,7 @@ desc:NULL Downmix Check GFX
 author: Christos Koulaxizis
 tags: surround downmix fold down check 5.1 7.1 7.1.4 atmos bed lo ro stereo mono solo itu bs775 monitoring post production gui
 //category: Advanced
-//NULL JSFX v2.6 • https://nulljsfx.tech • MIT License
+//NULL JSFX v2.6.1 • https://nulljsfx.tech • MIT License
 
 import null_gfx.jsfx-inc
 

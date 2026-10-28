@@ -2,7 +2,7 @@ desc:NULL Glitch FX
 author: Christos Koulaxizis
 tags: glitch stutter pitch tape-stop reverse granular freeze random creative midi trigger
 //category: Advanced
-//NULL JSFX v2.6 • https://nulljsfx.tech • MIT License
+//NULL JSFX v2.6.1 • https://nulljsfx.tech • MIT License
 
 slider1:4<0.1,20,0.1>Rate (Hz)
 slider2:8<1,64,1>Stutter Length (1/x notes)
