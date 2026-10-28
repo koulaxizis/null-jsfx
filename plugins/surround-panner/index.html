@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Surround Panner by NULL JSFX: free audio plugin for REAPER, VST3 and CLAP</title>
+    <meta name="description" content="Surround Panner: Mono or Stereo into 5.1, 7.1, 7.1.4. Free and open source audio plugin for REAPER (JSFX) and any DAW (VST3, CLAP) on Windows, macOS and Linux.">
+    <link rel="canonical" href="https://nulljsfx.tech/plugins/surround-panner/">
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Surround Panner: Mono or Stereo into 5.1, 7.1, 7.1.4">
+    <meta property="og:description" content="Surround Panner: Mono or Stereo into 5.1, 7.1, 7.1.4. Free and open source audio plugin for REAPER (JSFX) and any DAW (VST3, CLAP) on Windows, macOS and Linux.">
+    <meta property="og:url" content="https://nulljsfx.tech/plugins/surround-panner/">
+    <meta property="og:image" content="https://nulljsfx.tech/assets/video/surround_panner.jpg">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Surround Panner: Mono or Stereo into 5.1, 7.1, 7.1.4">
+    <meta name="twitter:description" content="Surround Panner: Mono or Stereo into 5.1, 7.1, 7.1.4. Free and open source audio plugin for REAPER (JSFX) and any DAW (VST3, CLAP) on Windows, macOS and Linux.">
+    <meta name="twitter:image" content="https://nulljsfx.tech/assets/video/surround_panner.jpg">
+    <link rel="icon" type="image/svg+xml" href="/assets/img/favicon.svg">
+    <link rel="stylesheet" href="/assets/css/style.css">
+    <script type="application/ld+json">{"@context": "https://schema.org", "@type": "SoftwareApplication", "name": "NULL Surround Panner", "description": "Mono or Stereo into 5.1, 7.1, 7.1.4", "url": "https://nulljsfx.tech/plugins/surround-panner/", "image": "https://nulljsfx.tech/assets/video/surround_panner.jpg", "applicationCategory": "MultimediaApplication", "applicationSubCategory": "Audio audio plugin", "operatingSystem": "Windows, macOS, Linux", "softwareVersion": "2.7", "license": "https://opensource.org/licenses/MIT", "offers": {"@type": "Offer", "price": "0", "priceCurrency": "EUR"}, "author": {"@type": "Person", "name": "Christos Koulaxizis"}, "isPartOf": {"@type": "SoftwareApplication", "name": "NULL JSFX", "url": "https://nulljsfx.tech/"}}</script>
+    <script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "NULL JSFX", "item": "https://nulljsfx.tech/"}, {"@type": "ListItem", "position": 2, "name": "Advanced", "item": "https://nulljsfx.tech/#effects"}, {"@type": "ListItem", "position": 3, "name": "Surround Panner", "item": "https://nulljsfx.tech/plugins/surround-panner/"}]}</script>
+</head>
+<body class="plugin-page">
+    <main>
+        <nav class="page-crumbs" aria-label="Breadcrumb">
+            <a href="/" class="page-home"><img src="/assets/img/favicon.svg" alt="NULL JSFX" width="28" height="28"></a>
+            <a href="/">NULL JSFX</a> <span>/</span> <a href="/">Effects</a> <span>/</span> <span>Surround Panner</span>
+        </nav>
+        <article class="page-plugin">
+            <header class="guide-header page-header">
+                <span class="guide-category">Advanced</span>
+                <h1>SURROUND PANNER</h1>
+                <p>Mono or Stereo into 5.1, 7.1, 7.1.4</p>
+            </header>
+            <video class="guide-shot guide-video" poster="/assets/video/surround_panner.jpg" controls playsinline preload="none" width="1280" height="720" aria-label="Surround Panner presentation video"><source src="https://github.com/koulaxizis/null-jsfx/releases/download/media/surround_panner.mp4" type="video/mp4"><source src="/assets/video/surround_panner.mp4" type="video/mp4"></video>
+            <div class="page-actions">
+                <a class="featured-btn" href="/#download"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg><span>Download free</span></a>
+                <small>Part of NULL JSFX 2.7: 126 plugins, free and open source (MIT). Easiest with <a href="/#hub">NULL JSFX Hub</a>.</small>
+            </div>
+            <div class="guide-body">
+                <section class="guide-section">
+                    <h2>Controls</h2>
+                    <ul class="guide-sliders"><li><span class="slider-name">Format</span><span class="slider-desc">5.1 / 7.1 / 7.1.4 — The bed it pans into: 5.1, 7.1 or 7.1.4, on the pins L R C LFE Ls Rs Lrs Rrs Ltf Rtf Ltr Rtr (the pins a format does not use stay silent).</span></li><li><span class="slider-name">Input</span><span class="slider-desc">Mono / Stereo — Mono pans one source and spreads it; Stereo places the left and right inputs either side of Azimuth.</span></li><li><span class="slider-name">Azimuth</span><span class="slider-desc">−180 to +180 deg — Where the sound sits around the room, from -180 to 180 degrees, 0 in front, negative to the left.</span></li><li><span class="slider-name">Elevation</span><span class="slider-desc">0 to 90 deg — How high the sound sits in 7.1.4, from 0 (ear level) to 90 degrees (overhead).</span></li><li><span class="slider-name">Spread</span><span class="slider-desc">0 to 180 deg — Mono: how wide the source is spread (0 to 180 degrees). Stereo: the angle between left and right (60 is the front pair).</span></li><li><span class="slider-name">Center</span><span class="slider-desc">0 to 100% — How much of a front sound plays from the centre speaker; below 100 % it moves into a phantom centre between L and R.</span></li><li><span class="slider-name">LFE</span><span class="slider-desc">−60 to 0 dB — Sends the mono sum through a 120 Hz low-pass to the LFE, from -60 dB (Off) to 0 dB.</span></li><li><span class="slider-name">Output</span><span class="slider-desc">−24 to +12 dB — Gain on every pin (-24 to +12 dB).</span></li></ul>
+                </section>
+                <section class="guide-section">
+                    <h2>Best uses</h2>
+                    <ul class="use-cases"><li>Place a stereo music stem or a mono effect in a 5.1 or 7.1 mix</li><li>Put pads, ambiences and flyovers above the listener in 7.1.4</li><li>Keep dialogue in the centre, or make it phantom</li><li>Feed the LFE from a bass or an effect</li></ul>
+                </section>
+                <section class="guide-section">
+                    <h2>Properties</h2>
+                    <p class="page-props">Pairwise power-normalised VBAP on the ear-level ring (speakers as ITU-R BS.775 / BS.2051: L/R at 30 degrees, 5.1 surrounds at 110, 7.1 sides at 90 and rears at 150, tops at 45 and 135 degrees, elevation 45). Elevation crossfades the power from the ear level to the tops. A mono source with Spread is seven points with their powers averaged, so its level stays the same. The LFE send is a 4th-order Linkwitz-Riley low-pass at 120 Hz. The gains glide over about 20 ms. No latency. Twelve output pins: in REAPER set the track to 12 channels and route the pins to your bed. The player on this site plays pins 1 and 2 only.</p>
+                </section>
+                <section class="guide-section">
+                    <h2>Formats</h2>
+                    <ul class="guide-formats"><li><span class="format-tag">JSFX</span>JSFX for REAPER, with REAPER&#x27;s own sliders</li><li><span class="format-tag">GFX</span>JSFX GFX for REAPER, with its own interface</li><li><span class="format-tag">VST3</span>VST3 for any DAW</li><li><span class="format-tag">CLAP</span>CLAP for any DAW</li></ul>
+                </section>
+                <section class="guide-section">
+                    <h2>Factory presets</h2>
+                    <p class="page-list">Stereo to 5.1 Front · Stereo to 7.1 Front · Stereo Wide to Sides · Stereo Phantom Center · Mono Dialogue Center · Mono Ambience Surround · Mono Rear Left · Mono Overhead · Mono Front Height · Stereo Pad Above · Bass with LFE · Effects with LFE</p>
+                </section>
+                <section class="guide-section">
+                    <h2>Try it</h2>
+                    <a class="try-studio guide-studio" href="https://useoros.online/studio/" target="_blank" rel="noopener"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8" fill="currentColor"/></svg><span class="try-studio-text"><b>Try it on orOS Studio</b><small>Add it to a track in your browser, with its own interface. Nothing to install.</small></span></a>
+                </section>
+            </div>
+        </article>
+        <section class="page-related">
+            <h2 class="section-title">Goes well with</h2>
+            <div class="related-grid"><a class="related-card" href="/plugins/amp-simulator/"><b>Amp Simulator</b><small>Guitar &amp; Bass Amp, No Cabinet</small></a><a class="related-card" href="/plugins/pitch-correction/"><b>Pitch Correction</b><small>Auto-Tune Style Vocal Pitch Correction</small></a><a class="related-card" href="/plugins/shimmer-reverb/"><b>Shimmer Reverb</b><small>Pitched Ambient Reverb</small></a><a class="related-card" href="/plugins/spectral-ducker/"><b>Spectral Ducker</b><small>Make Room for a Vocal, Band by Band</small></a><a class="related-card" href="/plugins/spectral-freeze/"><b>Spectral Freeze</b><small>FFT Spectrum Freeze</small></a><a class="related-card" href="/plugins/synth/"><b>Synth</b><small>Polyphonic Analog &amp; Wavetable Synth</small></a></div>
+            <p class="page-more"><a href="/">All 126 NULL JSFX plugins</a></p>
+        </section>
+    </main>
+    <footer class="site-footer">
+        <div class="footer-content">
+            Designed with &#9825; by <a href="https://koulaxizis.gr" target="_blank" rel="noopener">Christos Koulaxizis</a>.
+            <div class="footer-links">
+                <a href="https://ko-fi.com/koulaxizis" target="_blank" rel="noopener">Support on Ko-fi</a>
+                <span class="sep">&bull;</span>
+                <a href="https://github.com/koulaxizis/null-jsfx" target="_blank" rel="noopener">GitHub</a>
+                <span class="sep">&bull;</span>
+                <a href="/">nulljsfx.tech</a>
+            </div>
+        </div>
+    </footer>
+    <button id="theme-toggle" class="theme-toggle-floating" aria-label="Toggle color theme" title="Switch between light/dark theme">
+        <svg class="sun-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2 M12 21v2 M4.22 4.22l1.42 1.42 M18.36 18.36l1.42 1.42 M1 12h2 M21 12h2 M4.22 19.78l1.42-1.42 M18.36 5.64l1.42-1.42"/></svg>
+        <svg class="moon-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none;"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+    </button>
+    <script src="/assets/js/theme.js"></script>
+    <script src="/assets/js/demo.js"></script>
+</body>
+</html>

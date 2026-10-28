@@ -533,6 +533,45 @@ const guides = {
     demo: 'clipper',
     page: 'plugins/clipper/'
   },
+  'crossfeed': {
+    title: 'CROSSFEED',
+    subtitle: 'Headphone Crossfeed and Speaker Simulation',
+    category: 'Essentials',
+    sliders: [
+      { name: 'Mode', range: 'Crossfeed / Speakers', desc: 'Crossfeed: Bauer\'s headphone filter (bs2b). Speakers: two speakers in front of you, with head shadow, the time between the ears and a room.' },
+      { name: 'Cutoff', range: '300 to 2000 Hz', desc: 'Crossfeed: where the other side\'s signal starts to roll off (300 to 2000 Hz; 700 is the bs2b default, 650 Jan Meier).' },
+      { name: 'Feed', range: '1 to 15 dB', desc: 'Crossfeed: how far below the own side the other side arrives in the lows (1 to 15 dB; 4.5 bs2b default, 6 Chu Moy, 9.5 Jan Meier).' },
+      { name: 'Angle', range: '10 to 60 deg', desc: 'Speakers: how far each speaker is off centre (10 to 60 degrees; 30 is the usual stereo triangle).' },
+      { name: 'Room', range: '0 to 100%', desc: 'Speakers: early reflections of a room (0 = none).' },
+      { name: 'Mix', range: '0 to 100%', desc: 'Blend of the dry and processed signal.' },
+      { name: 'Output', range: '−12 to +12 dB', desc: 'Output level (-12 to +12 dB).' }
+    ],
+    uses: ['Mixing on headphones with less in-the-head fatigue', 'Checking the stereo image as it would sound on speakers', 'Long listening sessions on headphones', 'Hearing hard-panned parts as a speaker listener would'],
+    properties: 'Crossfeed: libbs2b\'s filter: the other side through a first-order low pass at Cutoff, Feed dB down in the lows; the own side through a matching high boost; a mono signal keeps its level in the lows and loses up to 2 dB in the highs. Speakers: Brown-Duda head-shadow filters for the near and the far ear (their high-frequency gains scaled so a mono signal keeps its level on average), Woodworth\'s interaural time on the far ear (0.26 ms at 30 degrees), each ear half of each; Room adds six early reflections per ear (4 to 22 ms, low passed at 5 kHz). Then Mix and Output. No latency.',
+    formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
+    shot: 'assets/img/gfx/crossfeed.png',
+    video: 'assets/video/crossfeed.mp4',
+    studio: true,
+    page: 'plugins/crossfeed/'
+  },
+  'de-clip': {
+    title: 'DE-CLIP',
+    subtitle: 'Rebuild Clipped Peaks',
+    category: 'Essentials',
+    sliders: [
+      { name: 'Clip Level', range: '−24 to 0 dB', desc: 'The level at and above which samples count as clipped (-24 to 0 dB); set it just under where the waveform flattens.' },
+      { name: 'Min Length', range: '2 to 8 Samples', desc: 'How many samples in a row must sit at the clip level before they are rebuilt (2 to 8); higher leaves natural peaks alone.' },
+      { name: 'Output', range: '−24 to +12 dB', desc: 'Output level (-24 to +12 dB): the rebuilt peaks pass the clip level and often 0 dBFS, so turn down here or limit after.' },
+      { name: 'Listen', range: 'Output / Delta', desc: 'Listen: Output plays the result; Delta plays only what was added back.' }
+    ],
+    uses: ['Rescuing clipped interview and dialogue recordings', 'Repairing a hard-clipped master or stem', 'Field recorder overloads', 'Restoring peaks before further processing'],
+    properties: 'Per channel. A run of at least Min Length samples in a row at or above Clip Level is redrawn with the cubic through the two good samples on either side of it, kept on the side of the clip level it was on and at most 12 dB above it. Runs up to 120 samples are rebuilt; longer ones stay as they are. 128 samples of latency, reported for delay compensation.',
+    formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
+    shot: 'assets/img/gfx/de_clip.png',
+    video: 'assets/video/de_clip.mp4',
+    studio: true,
+    page: 'plugins/de-clip/'
+  },
   'de-hum': {
     title: 'DE-HUM',
     subtitle: 'Mains Hum Notch Remover',
@@ -1255,6 +1294,71 @@ const guides = {
     studio: true,
     page: 'plugins/stereo-width/'
   },
+  'studio-eq': {
+    title: 'STUDIO EQ',
+    subtitle: 'Eight-Band EQ with Mid/Side and Linear Phase',
+    category: 'Essentials',
+    sliders: [
+      { name: 'Band 1 Type', range: 'Off / Bell / Low Shelf / High Shelf / Low Cut / High Cut / Notch / Band Pass', desc: 'Band 1 shape: Off, Bell, Low Shelf, High Shelf, Low Cut, High Cut, Notch or Band Pass.' },
+      { name: 'Band 1 Freq', range: '10 to 30000 Hz', desc: 'Band 1 frequency (10 Hz to 30 kHz, log scale); drag the band\'s node across the display.' },
+      { name: 'Band 1 Gain', range: '−30 to +30 dB', desc: 'Band 1 gain (-30 to +30 dB) for a bell or shelf; drag the node up or down.' },
+      { name: 'Band 1 Q', range: '0.1 to 18', desc: 'Band 1 Q (0.1 to 18): the width of a bell, notch or band pass, the steepness of a shelf; on a cut, the resonance at the corner (0.71 = flat Butterworth).' },
+      { name: 'Band 1 Slope', range: '6 dB/oct / 12 dB/oct / 18 dB/oct / 24 dB/oct / 36 dB/oct / 48 dB/oct / 72 dB/oct / 96 dB/oct', desc: 'Band 1 slope for Low Cut and High Cut: 6, 12, 18, 24, 36, 48, 72 or 96 dB per octave.' },
+      { name: 'Band 1 Channels', range: 'Stereo / Mid / Side / Left / Right', desc: 'What band 1 works on: both channels (Stereo), the Mid, the Side, only the Left or only the Right.' },
+      { name: 'Band 2 Type', range: 'Off / Bell / Low Shelf / High Shelf / Low Cut / High Cut / Notch / Band Pass', desc: 'Band 2 shape: Off, Bell, Low Shelf, High Shelf, Low Cut, High Cut, Notch or Band Pass.' },
+      { name: 'Band 2 Freq', range: '10 to 30000 Hz', desc: 'Band 2 frequency (10 Hz to 30 kHz, log scale); drag the band\'s node across the display.' },
+      { name: 'Band 2 Gain', range: '−30 to +30 dB', desc: 'Band 2 gain (-30 to +30 dB) for a bell or shelf; drag the node up or down.' },
+      { name: 'Band 2 Q', range: '0.1 to 18', desc: 'Band 2 Q (0.1 to 18): the width of a bell, notch or band pass, the steepness of a shelf; on a cut, the resonance at the corner (0.71 = flat Butterworth).' },
+      { name: 'Band 2 Slope', range: '6 dB/oct / 12 dB/oct / 18 dB/oct / 24 dB/oct / 36 dB/oct / 48 dB/oct / 72 dB/oct / 96 dB/oct', desc: 'Band 2 slope for Low Cut and High Cut: 6, 12, 18, 24, 36, 48, 72 or 96 dB per octave.' },
+      { name: 'Band 2 Channels', range: 'Stereo / Mid / Side / Left / Right', desc: 'What band 2 works on: both channels (Stereo), the Mid, the Side, only the Left or only the Right.' },
+      { name: 'Band 3 Type', range: 'Off / Bell / Low Shelf / High Shelf / Low Cut / High Cut / Notch / Band Pass', desc: 'Band 3 shape: Off, Bell, Low Shelf, High Shelf, Low Cut, High Cut, Notch or Band Pass.' },
+      { name: 'Band 3 Freq', range: '10 to 30000 Hz', desc: 'Band 3 frequency (10 Hz to 30 kHz, log scale); drag the band\'s node across the display.' },
+      { name: 'Band 3 Gain', range: '−30 to +30 dB', desc: 'Band 3 gain (-30 to +30 dB) for a bell or shelf; drag the node up or down.' },
+      { name: 'Band 3 Q', range: '0.1 to 18', desc: 'Band 3 Q (0.1 to 18): the width of a bell, notch or band pass, the steepness of a shelf; on a cut, the resonance at the corner (0.71 = flat Butterworth).' },
+      { name: 'Band 3 Slope', range: '6 dB/oct / 12 dB/oct / 18 dB/oct / 24 dB/oct / 36 dB/oct / 48 dB/oct / 72 dB/oct / 96 dB/oct', desc: 'Band 3 slope for Low Cut and High Cut: 6, 12, 18, 24, 36, 48, 72 or 96 dB per octave.' },
+      { name: 'Band 3 Channels', range: 'Stereo / Mid / Side / Left / Right', desc: 'What band 3 works on: both channels (Stereo), the Mid, the Side, only the Left or only the Right.' },
+      { name: 'Band 4 Type', range: 'Off / Bell / Low Shelf / High Shelf / Low Cut / High Cut / Notch / Band Pass', desc: 'Band 4 shape: Off, Bell, Low Shelf, High Shelf, Low Cut, High Cut, Notch or Band Pass.' },
+      { name: 'Band 4 Freq', range: '10 to 30000 Hz', desc: 'Band 4 frequency (10 Hz to 30 kHz, log scale); drag the band\'s node across the display.' },
+      { name: 'Band 4 Gain', range: '−30 to +30 dB', desc: 'Band 4 gain (-30 to +30 dB) for a bell or shelf; drag the node up or down.' },
+      { name: 'Band 4 Q', range: '0.1 to 18', desc: 'Band 4 Q (0.1 to 18): the width of a bell, notch or band pass, the steepness of a shelf; on a cut, the resonance at the corner (0.71 = flat Butterworth).' },
+      { name: 'Band 4 Slope', range: '6 dB/oct / 12 dB/oct / 18 dB/oct / 24 dB/oct / 36 dB/oct / 48 dB/oct / 72 dB/oct / 96 dB/oct', desc: 'Band 4 slope for Low Cut and High Cut: 6, 12, 18, 24, 36, 48, 72 or 96 dB per octave.' },
+      { name: 'Band 4 Channels', range: 'Stereo / Mid / Side / Left / Right', desc: 'What band 4 works on: both channels (Stereo), the Mid, the Side, only the Left or only the Right.' },
+      { name: 'Band 5 Type', range: 'Off / Bell / Low Shelf / High Shelf / Low Cut / High Cut / Notch / Band Pass', desc: 'Band 5 shape: Off, Bell, Low Shelf, High Shelf, Low Cut, High Cut, Notch or Band Pass.' },
+      { name: 'Band 5 Freq', range: '10 to 30000 Hz', desc: 'Band 5 frequency (10 Hz to 30 kHz, log scale); drag the band\'s node across the display.' },
+      { name: 'Band 5 Gain', range: '−30 to +30 dB', desc: 'Band 5 gain (-30 to +30 dB) for a bell or shelf; drag the node up or down.' },
+      { name: 'Band 5 Q', range: '0.1 to 18', desc: 'Band 5 Q (0.1 to 18): the width of a bell, notch or band pass, the steepness of a shelf; on a cut, the resonance at the corner (0.71 = flat Butterworth).' },
+      { name: 'Band 5 Slope', range: '6 dB/oct / 12 dB/oct / 18 dB/oct / 24 dB/oct / 36 dB/oct / 48 dB/oct / 72 dB/oct / 96 dB/oct', desc: 'Band 5 slope for Low Cut and High Cut: 6, 12, 18, 24, 36, 48, 72 or 96 dB per octave.' },
+      { name: 'Band 5 Channels', range: 'Stereo / Mid / Side / Left / Right', desc: 'What band 5 works on: both channels (Stereo), the Mid, the Side, only the Left or only the Right.' },
+      { name: 'Band 6 Type', range: 'Off / Bell / Low Shelf / High Shelf / Low Cut / High Cut / Notch / Band Pass', desc: 'Band 6 shape: Off, Bell, Low Shelf, High Shelf, Low Cut, High Cut, Notch or Band Pass.' },
+      { name: 'Band 6 Freq', range: '10 to 30000 Hz', desc: 'Band 6 frequency (10 Hz to 30 kHz, log scale); drag the band\'s node across the display.' },
+      { name: 'Band 6 Gain', range: '−30 to +30 dB', desc: 'Band 6 gain (-30 to +30 dB) for a bell or shelf; drag the node up or down.' },
+      { name: 'Band 6 Q', range: '0.1 to 18', desc: 'Band 6 Q (0.1 to 18): the width of a bell, notch or band pass, the steepness of a shelf; on a cut, the resonance at the corner (0.71 = flat Butterworth).' },
+      { name: 'Band 6 Slope', range: '6 dB/oct / 12 dB/oct / 18 dB/oct / 24 dB/oct / 36 dB/oct / 48 dB/oct / 72 dB/oct / 96 dB/oct', desc: 'Band 6 slope for Low Cut and High Cut: 6, 12, 18, 24, 36, 48, 72 or 96 dB per octave.' },
+      { name: 'Band 6 Channels', range: 'Stereo / Mid / Side / Left / Right', desc: 'What band 6 works on: both channels (Stereo), the Mid, the Side, only the Left or only the Right.' },
+      { name: 'Band 7 Type', range: 'Off / Bell / Low Shelf / High Shelf / Low Cut / High Cut / Notch / Band Pass', desc: 'Band 7 shape: Off, Bell, Low Shelf, High Shelf, Low Cut, High Cut, Notch or Band Pass.' },
+      { name: 'Band 7 Freq', range: '10 to 30000 Hz', desc: 'Band 7 frequency (10 Hz to 30 kHz, log scale); drag the band\'s node across the display.' },
+      { name: 'Band 7 Gain', range: '−30 to +30 dB', desc: 'Band 7 gain (-30 to +30 dB) for a bell or shelf; drag the node up or down.' },
+      { name: 'Band 7 Q', range: '0.1 to 18', desc: 'Band 7 Q (0.1 to 18): the width of a bell, notch or band pass, the steepness of a shelf; on a cut, the resonance at the corner (0.71 = flat Butterworth).' },
+      { name: 'Band 7 Slope', range: '6 dB/oct / 12 dB/oct / 18 dB/oct / 24 dB/oct / 36 dB/oct / 48 dB/oct / 72 dB/oct / 96 dB/oct', desc: 'Band 7 slope for Low Cut and High Cut: 6, 12, 18, 24, 36, 48, 72 or 96 dB per octave.' },
+      { name: 'Band 7 Channels', range: 'Stereo / Mid / Side / Left / Right', desc: 'What band 7 works on: both channels (Stereo), the Mid, the Side, only the Left or only the Right.' },
+      { name: 'Band 8 Type', range: 'Off / Bell / Low Shelf / High Shelf / Low Cut / High Cut / Notch / Band Pass', desc: 'Band 8 shape: Off, Bell, Low Shelf, High Shelf, Low Cut, High Cut, Notch or Band Pass.' },
+      { name: 'Band 8 Freq', range: '10 to 30000 Hz', desc: 'Band 8 frequency (10 Hz to 30 kHz, log scale); drag the band\'s node across the display.' },
+      { name: 'Band 8 Gain', range: '−30 to +30 dB', desc: 'Band 8 gain (-30 to +30 dB) for a bell or shelf; drag the node up or down.' },
+      { name: 'Band 8 Q', range: '0.1 to 18', desc: 'Band 8 Q (0.1 to 18): the width of a bell, notch or band pass, the steepness of a shelf; on a cut, the resonance at the corner (0.71 = flat Butterworth).' },
+      { name: 'Band 8 Slope', range: '6 dB/oct / 12 dB/oct / 18 dB/oct / 24 dB/oct / 36 dB/oct / 48 dB/oct / 72 dB/oct / 96 dB/oct', desc: 'Band 8 slope for Low Cut and High Cut: 6, 12, 18, 24, 36, 48, 72 or 96 dB per octave.' },
+      { name: 'Band 8 Channels', range: 'Stereo / Mid / Side / Left / Right', desc: 'What band 8 works on: both channels (Stereo), the Mid, the Side, only the Left or only the Right.' },
+      { name: 'Output', range: '−24 to +24 dB', desc: 'Level after the EQ (-24 to +24 dB).' },
+      { name: 'Auto Gain', range: 'Off / On', desc: 'Auto Gain: offsets the average level change of the bell and shelf bands, so a brighter or fuller setting is not judged as better just for being louder.' },
+      { name: 'Phase', range: 'Zero Latency / Linear Phase', desc: 'Zero Latency runs the bands as minimum-phase filters; Linear Phase gives the same magnitude with no phase shift (5120 samples of latency, reported for delay compensation).' }
+    ],
+    uses: ['Everyday corrective and tonal EQ on any track, with up to eight bands', 'Steep low and high cuts (up to 96 dB/oct) to clean up rumble and hiss', 'Mid/side EQ on the mix bus: mono the lows, open up the side highs', 'Linear-phase mastering EQ that keeps transients and stereo image intact', 'Fix a single side of a stereo recording with Left or Right bands'],
+    properties: 'Eight bands in series, each a bell, shelf (RBJ), notch, band pass, or a low or high cut built as a Butterworth cascade of 1 to 16 poles (6 to 96 dB/oct; Q 0.71 is flat, higher Q lifts the corner). Each band runs on stereo, mid, side, left or right. Zero Latency: biquad cascades, no latency. Linear Phase: the same magnitude response as a 2x2 matrix per frequency bin (so mid/side and left/right bands combine exactly), turned into four 8192-tap FIRs (Hann window) and run by 16384-point FFT convolution in 1024-sample blocks; latency 5120 samples, reported for delay compensation. Auto Gain: minus the mean level change of the bell and shelf bands over 64 log-spaced points from 20 Hz to 20 kHz (mid and stereo bands count fully, left and right half, side not), within ±24 dB. The GFX and VST3/CLAP interfaces draw the response over a live spectrum (post, pre or off); drag a node to set its frequency and gain.',
+    formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
+    shot: 'assets/img/gfx/studio_eq.png',
+    video: 'assets/video/studio_eq.mp4',
+    studio: true,
+    page: 'plugins/studio-eq/'
+  },
   'tape': {
     title: 'TAPE',
     subtitle: 'Analog Tape Machine',
@@ -1448,6 +1552,27 @@ const guides = {
     demo: 'amp_simulator',
     page: 'plugins/amp-simulator/'
   },
+  'bass-management': {
+    title: 'BASS MANAGEMENT',
+    subtitle: 'Crossover a Bed to the Subwoofer',
+    category: 'Advanced',
+    sliders: [
+      { name: 'Bed', range: '5.1 / 7.1 / 7.1.4', desc: 'The bed: 5.1, 7.1 or 7.1.4; the pins it does not use are ignored.' },
+      { name: 'Crossover', range: '40 to 200 Hz', desc: 'Where the mains hand over to the sub (40 to 200 Hz, 80 Hz as most rooms are set).' },
+      { name: 'Mains', range: 'Bass Managed / Full Range', desc: 'Split takes the bass off the mains; Full keeps them whole and only adds their bass to the sub.' },
+      { name: 'LFE Gain', range: '0 dB / +10 dB', desc: 'The LFE channel in the sub at +10 dB, as it is played back, or 0 dB.' },
+      { name: 'Sub Level', range: '−12 to +12 dB', desc: 'Gain on the sub (-12 to +12 dB), to match it to the room.' },
+      { name: 'Listen', range: 'All / Sub Only / Mains Only', desc: 'Plays everything, the sub alone or the mains alone.' },
+      { name: 'Output', range: '−24 to +12 dB', desc: 'Gain on every pin (-24 to +12 dB).' }
+    ],
+    uses: ['Hear a bed the way a room with small speakers and a sub plays it', 'Check what goes to the sub and what stays in the mains', 'Monitor a 5.1 or 7.1.4 mix on speakers that do not go low', 'Set the sub level against the mains'],
+    properties: '4th-order Linkwitz-Riley crossover: the high-pass on every main channel and the low-pass on their sum add up flat (measured within 0.0001 dB from 20 Hz to 10 kHz), so the managed system sums like the full-range one, with the crossover\'s phase turn. The sub plays on the LFE pin. No latency. In REAPER set the track to 12 channels and route the pins to your bed. The player on this site plays pins 1 and 2 only.',
+    formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
+    shot: 'assets/img/gfx/bass_management.png',
+    video: 'assets/video/bass_management.mp4',
+    studio: true,
+    page: 'plugins/bass-management/'
+  },
   'comb-filter': {
     title: 'COMB FILTER',
     subtitle: 'Resonant Delay Comb',
@@ -1489,6 +1614,28 @@ const guides = {
     studio: true,
     demo: 'convolution',
     page: 'plugins/convolution/'
+  },
+  'downmix-check': {
+    title: 'DOWNMIX CHECK',
+    subtitle: 'Hear a Bed as 5.1, Stereo or Mono',
+    category: 'Advanced',
+    sliders: [
+      { name: 'Bed', range: '5.1 / 7.1 / 7.1.4', desc: 'The bed coming in: 5.1, 7.1 or 7.1.4; the pins it does not use are ignored.' },
+      { name: 'Monitor', range: 'Bed / 5.1 / Stereo Lo/Ro / Mono', desc: 'What you hear: the Bed as it is, folded to 5.1, to stereo Lo/Ro, or to mono (Stereo and Mono play on L and R).' },
+      { name: 'Center Mix', range: '−6 to 0 dB', desc: 'The centre in the stereo fold (-6 to 0 dB, -3 dB as ITU-R BS.775).' },
+      { name: 'Surround Mix', range: '−6 to 0 dB', desc: 'The surrounds in the stereo fold (-6 to 0 dB, -3 dB as ITU-R BS.775).' },
+      { name: 'Height Mix', range: '−6 to 0 dB', desc: 'The tops folded into the ear-level speakers below them (-6 to 0 dB).' },
+      { name: 'LFE Mix', range: '−60 to +10 dB', desc: 'The LFE in the stereo fold, from -60 dB (Off, as BS.775 drops it) to +10 dB.' },
+      { name: 'Solo', range: 'Off / L / R / C / LFE / Ls / Rs / Lrs / Rrs / Ltf / Rtf / Ltr / Rtr', desc: 'Plays one channel of the bed alone, through the same fold.' },
+      { name: 'Output', range: '−24 to +12 dB', desc: 'Gain on what you hear (-24 to +12 dB).' }
+    ],
+    uses: ['Check that a surround mix still works on stereo and mono systems', 'Catch the stereo fold clipping before a delivery', 'Solo one channel of a bed to find a problem', 'Listen to a 7.1.4 mix on a 5.1 room'],
+    properties: '7.1.4 to 7.1: each top into the ear-level speaker below it. 7.1 to 5.1: side and rear summed at -3 dB. 5.1 to Lo/Ro: Lo = L + C x Center Mix + Ls x Surround Mix (+ LFE x LFE Mix), Ro likewise. Mono: (Lo + Ro) / 2. The display shows every channel of the bed, every output, and the fold\'s highest peak, so you see when the stereo fold would clip. Gains only: no filters, no latency. In REAPER set the track to 12 channels and route the pins to your bed. The player on this site plays pins 1 and 2 only.',
+    formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
+    shot: 'assets/img/gfx/downmix_check.png',
+    video: 'assets/video/downmix_check.mp4',
+    studio: true,
+    page: 'plugins/downmix-check/'
   },
   'formant-filter': {
     title: 'FORMANT FILTER',
@@ -1691,6 +1838,25 @@ const guides = {
     studio: true,
     page: 'plugins/loudness-meter/'
   },
+  'multichannel-loudness': {
+    title: 'MULTICHANNEL LOUDNESS',
+    subtitle: 'LUFS of a 5.1, 7.1 or 7.1.4 Bed',
+    category: 'Advanced',
+    sliders: [
+      { name: 'Bed', range: '5.1 / 7.1 / 7.1.4', desc: 'The bed: 5.1, 7.1 or 7.1.4; it sets which channels are measured and their weights.' },
+      { name: 'Target', range: '-23 LUFS / -24 LUFS / -18 LUFS / -14 LUFS', desc: 'The level the readout compares with: -23 LUFS (EBU R128), -24 LUFS (ATSC A/85), -18 LUFS or -14 LUFS.' },
+      { name: 'History', range: '10 s / 30 s / 1 min / 5 min', desc: 'How much of the loudness history the graph shows.' },
+      { name: 'Auto Reset', range: 'Off / On Play', desc: 'On Play starts a new measurement every time playback starts.' },
+      { name: 'Reset', range: 'Reset / Reset', desc: 'Any change clears integrated, LRA, maxima and the history.' }
+    ],
+    uses: ['Measure a surround or Atmos bed for a broadcast or streaming delivery', 'Check a 5.1 film mix against EBU R128 or ATSC A/85', 'Watch the true peak of every channel', 'Compare the loudness of stems in a bed'],
+    properties: 'ITU-R BS.1770-4 / EBU R128: every channel of the bed but the LFE is K-weighted and weighted by its place, 1.41 (+1.5 dB) for the speakers at 60 to 120 degrees (5.1 Ls/Rs, 7.1 sides) and 1.0 for the rest, then summed. Momentary, short-term, integrated (gated), loudness range (EBU Tech 3342) and the 4x true peak of every channel, LFE too. A 0 dBFS 997 Hz tone measures -3.01 LUFS on a front channel and -1.51 LUFS on a side, as the standard says. The audio passes through untouched. In REAPER set the track to 12 channels and route the pins to your bed. The player on this site plays pins 1 and 2 only.',
+    formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
+    shot: 'assets/img/gfx/multichannel_loudness.png',
+    video: 'assets/video/multichannel_loudness.mp4',
+    studio: true,
+    page: 'plugins/multichannel-loudness/'
+  },
   'noise-reduction': {
     title: 'NOISE REDUCTION',
     subtitle: 'Spectral Noise Reducer',
@@ -1762,6 +1928,24 @@ const guides = {
     studio: true,
     demo: 'pitch_correction',
     page: 'plugins/pitch-correction/'
+  },
+  'reference': {
+    title: 'REFERENCE',
+    subtitle: 'A/B Your Mix Against a Reference',
+    category: 'Advanced',
+    sliders: [
+      { name: 'Listen', range: 'Track / Reference', desc: 'What you hear: the Track (your mix, channels 1/2) or the Reference (channels 3/4); the switch crossfades over 10 ms.' },
+      { name: 'Level Match', range: 'Off / On', desc: 'Level Match: plays the reference at your mix\'s short-term loudness, so the comparison is about tone and balance, not volume.' },
+      { name: 'Trim', range: '−12 to +12 dB', desc: 'Extra gain on the reference (-12 to +12 dB), on top of the match.' },
+      { name: 'Monitor', range: 'Stereo / Mono / Side', desc: 'Monitor: Stereo, Mono (both channels summed) or Side (the difference only), for both sources.' }
+    ],
+    uses: ['A/B a mix against a commercial track at the same loudness', 'Check a master\'s tonal balance and width against a reference', 'Compare two versions of a mix routed to the same track', 'Mono and side checks of mix and reference with one switch'],
+    properties: 'Both inputs are K-weighted (ITU-R BS.1770) and measured as short-term loudness (the last 3 s, every 100 ms). With Level Match on, the reference\'s gain moves a tenth of the way to the difference every 100 ms (about a second to settle), within ±24 dB, and holds while either source is below -60 LUFS; Trim is added. Listen crossfades linearly over 10 ms. Monitor folds after the switch. The interfaces show both loudnesses, the reference\'s gain, each source\'s stereo correlation (averaged over about 3 s) and both spectra (each bin averaged over about a second, the reference at its played gain). No latency, no Rack module (it needs a second stereo input).',
+    formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
+    shot: 'assets/img/gfx/reference.png',
+    video: 'assets/video/reference.mp4',
+    studio: true,
+    page: 'plugins/reference/'
   },
   'resonance-suppressor': {
     title: 'RESONANCE SUPPRESSOR',
@@ -1913,6 +2097,30 @@ const guides = {
     demo: 'slicer',
     page: 'plugins/slicer/'
   },
+  'spectral-ducker': {
+    title: 'SPECTRAL DUCKER',
+    subtitle: 'Make Room for a Vocal, Band by Band',
+    category: 'Advanced',
+    sliders: [
+      { name: 'Amount', range: '0 to 100%', desc: 'How deep the track can be cut in each band (0 to 100% = up to 24 dB).' },
+      { name: 'Threshold', range: '−60 to 0 dB', desc: 'Key level per band above which the track ducks (-60 to 0 dB); the dashed line in the display.' },
+      { name: 'Attack', range: '0.1 to 100 ms', desc: 'How fast the cut follows the key (0.1 to 100 ms).' },
+      { name: 'Release', range: '10 to 1000 ms', desc: 'How fast the track comes back when the key stops (10 to 1000 ms).' },
+      { name: 'Low Cut', range: '20 to 5000 Hz', desc: 'Bands below this frequency never duck (20 Hz to 5 kHz).' },
+      { name: 'High Cut', range: '200 to 20000 Hz', desc: 'Bands above this frequency never duck (200 Hz to 20 kHz).' },
+      { name: 'Channels', range: 'Stereo / Mid / Side', desc: 'What ducks: both channels (Stereo), only the Mid, or only the Side, which keeps the centre intact and makes room at the edges.' },
+      { name: 'Mix', range: '0 to 100%', desc: 'Blend of ducked and dry track (0 to 100%).' },
+      { name: 'Output', range: '−12 to +12 dB', desc: 'Level after the ducker (-12 to +12 dB).' },
+      { name: 'Listen', range: 'Output / Delta', desc: 'Output plays the ducked track; Delta plays only what is taken out, to hear exactly where the ducker works.' }
+    ],
+    uses: ['Carve space for a lead vocal in a busy instrumental or pad bus', 'Let the kick through the bass only where they overlap', 'Voice-over over music that stays full between the words', 'Duck a reverb or delay return by the dry signal it comes from', 'Side-only ducking to clear the edges for a centred vocal'],
+    properties: 'The key (track channels 3/4, summed to mono) runs through 32 fourth-order band passes, a third of an octave apart from 30 Hz to 18 kHz; each band\'s level follows with Attack and Release. Every 16 samples, where a band is above Threshold, its excess (up to Amount × 24 dB) sets the cut of a Q 3 bell on the same band of the track; the bells overlap, so each cuts 0.43 of its band\'s amount and together they cut about the amount. Bells at 0 dB pass the signal unchanged. Stereo, mid or side; Mix and Output; Listen Delta plays dry minus ducked. Zero latency. In the Rack, the key is the Rack\'s dry input.',
+    formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
+    shot: 'assets/img/gfx/spectral_ducker.png',
+    video: 'assets/video/spectral_ducker.mp4',
+    studio: true,
+    page: 'plugins/spectral-ducker/'
+  },
   'spectral-freeze': {
     title: 'SPECTRAL FREEZE',
     subtitle: 'FFT Spectrum Freeze',
@@ -2054,6 +2262,28 @@ const guides = {
     demo: 'sub_bloom',
     page: 'plugins/sub-bloom/'
   },
+  'surround-panner': {
+    title: 'SURROUND PANNER',
+    subtitle: 'Mono or Stereo into 5.1, 7.1, 7.1.4',
+    category: 'Advanced',
+    sliders: [
+      { name: 'Format', range: '5.1 / 7.1 / 7.1.4', desc: 'The bed it pans into: 5.1, 7.1 or 7.1.4, on the pins L R C LFE Ls Rs Lrs Rrs Ltf Rtf Ltr Rtr (the pins a format does not use stay silent).' },
+      { name: 'Input', range: 'Mono / Stereo', desc: 'Mono pans one source and spreads it; Stereo places the left and right inputs either side of Azimuth.' },
+      { name: 'Azimuth', range: '−180 to +180 deg', desc: 'Where the sound sits around the room, from -180 to 180 degrees, 0 in front, negative to the left.' },
+      { name: 'Elevation', range: '0 to 90 deg', desc: 'How high the sound sits in 7.1.4, from 0 (ear level) to 90 degrees (overhead).' },
+      { name: 'Spread', range: '0 to 180 deg', desc: 'Mono: how wide the source is spread (0 to 180 degrees). Stereo: the angle between left and right (60 is the front pair).' },
+      { name: 'Center', range: '0 to 100%', desc: 'How much of a front sound plays from the centre speaker; below 100 % it moves into a phantom centre between L and R.' },
+      { name: 'LFE', range: '−60 to 0 dB', desc: 'Sends the mono sum through a 120 Hz low-pass to the LFE, from -60 dB (Off) to 0 dB.' },
+      { name: 'Output', range: '−24 to +12 dB', desc: 'Gain on every pin (-24 to +12 dB).' }
+    ],
+    uses: ['Place a stereo music stem or a mono effect in a 5.1 or 7.1 mix', 'Put pads, ambiences and flyovers above the listener in 7.1.4', 'Keep dialogue in the centre, or make it phantom', 'Feed the LFE from a bass or an effect'],
+    properties: 'Pairwise power-normalised VBAP on the ear-level ring (speakers as ITU-R BS.775 / BS.2051: L/R at 30 degrees, 5.1 surrounds at 110, 7.1 sides at 90 and rears at 150, tops at 45 and 135 degrees, elevation 45). Elevation crossfades the power from the ear level to the tops. A mono source with Spread is seven points with their powers averaged, so its level stays the same. The LFE send is a 4th-order Linkwitz-Riley low-pass at 120 Hz. The gains glide over about 20 ms. No latency. Twelve output pins: in REAPER set the track to 12 channels and route the pins to your bed. The player on this site plays pins 1 and 2 only.',
+    formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
+    shot: 'assets/img/gfx/surround_panner.png',
+    video: 'assets/video/surround_panner.mp4',
+    studio: true,
+    page: 'plugins/surround-panner/'
+  },
   'tape-stop': {
     title: 'TAPE STOP',
     subtitle: 'Tape Stop & Spin-Up',
@@ -2111,6 +2341,24 @@ const guides = {
     demo: 'trance_gate',
     page: 'plugins/trance-gate/'
   },
+  'tuner': {
+    title: 'TUNER',
+    subtitle: 'Chromatic Tuner with Strobe',
+    category: 'Advanced',
+    sliders: [
+      { name: 'Reference A4', range: '415 to 466 Hz', desc: 'The pitch of A4 the notes are named from, 415 to 466 Hz (440 standard, 415 baroque, 442 many orchestras).' },
+      { name: 'Display', range: 'Needle / Strobe', desc: 'Needle: a bar from -50 to +50 cents. Strobe: three bands that stand still in tune and move right when sharp, left when flat, faster the further off.' },
+      { name: 'Input', range: 'Stereo / Left / Right', desc: 'What is tuned: both channels summed, or only the left or right input.' },
+      { name: 'Output', range: 'Thru / Mute', desc: 'Thru passes the audio; Mute silences it, for tuning on stage.' }
+    ],
+    uses: ['Tuning guitars, basses and synths in the session', 'Checking a singer\'s or a string player\'s intonation', 'Baroque (A415) and orchestral (A442) tuning', 'Silent tuning on stage with Mute'],
+    properties: 'YIN pitch detection: the input low passed and taken down to 22 to 24 kHz, analysed about 47 times a second over the last 1024 + up to 960 samples (FFT autocorrelation, cumulative mean normalised difference, first dip below 0.15), refined by parabolas on the difference function at 1, 2, 4, 8 ... periods; within 0.25 cent from 27 Hz to 4.2 kHz on test tones. 25 Hz to about 4.5 kHz; below -70 dBFS RMS counts as silence, and the last note holds for half a second. Readings within 50 cents glide. No latency, no Rack module.',
+    formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
+    shot: 'assets/img/gfx/tuner.png',
+    video: 'assets/video/tuner.mp4',
+    studio: true,
+    page: 'plugins/tuner/'
+  },
   'vinyl-age': {
     title: 'VINYL AGE',
     subtitle: 'Vintage Vinyl Degrader',
@@ -2160,6 +2408,24 @@ const guides = {
     studio: true,
     demo: 'vocoder',
     page: 'plugins/vocoder/'
+  },
+  'vu-meter': {
+    title: 'VU METER',
+    subtitle: 'VU, PPM and K-System Meter',
+    category: 'Advanced',
+    sliders: [
+      { name: 'Mode', range: 'VU / PPM / K-14 / K-20', desc: 'VU (300 ms ballistics, average reading), PPM (EBU Type IIa peak programme meter), K-14 or K-20 (Katz RMS with the 0 mark at -14 or -20 dBFS).' },
+      { name: 'Reference', range: '−24 to −8 dBFS', desc: 'The level that reads 0 in VU and PPM: a sine peaking at -24 to -8 dBFS (-18 is the EBU alignment level, -20 SMPTE).' },
+      { name: 'Peak Hold', range: 'Off / 3 s / Hold', desc: 'How the held maximum (the silver mark) behaves: Off, held for 3 s, or held until you click the meters.' },
+      { name: 'Monitor', range: 'Stereo / Mono / Side', desc: 'Monitor: Stereo, Mono (both channels summed) or Side (the difference only), after the meters.' }
+    ],
+    uses: ['Gain staging into analog-modelled plugins at -18 dBFS', 'Mixing to a VU like on a console', 'Broadcast peak levels with an EBU PPM', 'Mastering with the K-14 or K-20 system'],
+    properties: 'Per channel. VU: the rectified signal through a second-order low pass (damping 0.8: about 1.5 % overshoot, 99 % in 300 ms), sine-calibrated, on the classic -20 to +3 VU dial. PPM: a peak follower charging with a 5 ms time constant (about -4 dB on a 10 ms burst) and falling 24 dB in 2.8 s, -24 to +12 around the reference. K-14 / K-20: RMS over 300 ms, sine-calibrated. OVER lights for 1 s at 0 dBFS. The audio passes through (Monitor folds it after the meters). No latency, no Rack module.',
+    formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
+    shot: 'assets/img/gfx/vu_meter.png',
+    video: 'assets/video/vu_meter.mp4',
+    studio: true,
+    page: 'plugins/vu-meter/'
   },
   'warped-delay': {
     title: 'WARPED DELAY',
@@ -2665,6 +2931,58 @@ const guides = {
     shot: 'assets/img/gfx/humanize.png',
     video: 'assets/video/humanize.mp4',
     page: 'plugins/humanize/'
+  },
+  'midi-lfo': {
+    title: 'MIDI LFO',
+    subtitle: 'LFO to CC, Pitch Bend, Pressure',
+    category: 'MIDI',
+    sliders: [
+      { name: 'Shape', range: 'Sine / Triangle / Saw Up / Saw Down / Square / Random / Smooth Random', desc: 'The wave: Sine, Triangle, Saw Up, Saw Down, Square, Random (holds a new value each cycle) or Smooth Random (glides to it).' },
+      { name: 'Sync', range: 'Free / Tempo', desc: 'Free runs at Rate in Hz; Tempo takes one cycle per Length, locked to the host\'s beat while it plays.' },
+      { name: 'Rate', range: '0.01 to 20 Hz', desc: 'Cycles per second in Free (0.01 to 20 Hz).' },
+      { name: 'Length', range: '8 Bars / 4 Bars / 2 Bars / 1 Bar / 1/2 / 1/4 / 1/8 / 1/16 / 1/32 / 1/2T / 1/4T / 1/8T / 1/16T / 1/2D / 1/4D / 1/8D', desc: 'The length of one cycle in Tempo, from 8 bars to 1/32, with triplets and dotted values.' },
+      { name: 'Phase', range: '0 to 360 deg', desc: 'Moves the start of the cycle (0 to 360 degrees).' },
+      { name: 'Destination', range: 'CC / Pitch Bend / Channel Pressure', desc: 'What it sends: a controller (CC Number), pitch bend or channel pressure.' },
+      { name: 'CC Number', range: '0 to 127', desc: 'The controller it sends (0 to 127): 1 mod wheel, 7 volume, 10 pan, 11 expression, 74 cutoff.' },
+      { name: 'Channel', range: '1 to 16', desc: 'The MIDI channel it sends on.' },
+      { name: 'Min', range: '0 to 100%', desc: 'The lowest value of the swing (% of the range).' },
+      { name: 'Max', range: '0 to 100%', desc: 'The highest value of the swing; Min above Max turns the wave upside down.' },
+      { name: 'Retrigger', range: 'Off / On Note', desc: 'On Note starts the cycle again at every note-on (free running only).' },
+      { name: 'Seed', range: '1 to 999', desc: 'Picks the random sequence: the same Seed always plays the same values.' }
+    ],
+    uses: ['Tempo-synced filter sweeps and wobbles on any synth', 'Volume pumping and auto-pan without a sidechain', 'Vibrato through pitch bend', 'Slow random drift for movement'],
+    properties: 'A MIDI effect; the audio passes through. Every 64 samples the value is worked out and sent when it changed, in time order with the incoming MIDI, which passes through untouched. Pitch bend is sent at 14-bit resolution. Random uses an exact Park-Miller sequence from Seed, so a render repeats.',
+    formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
+    shot: 'assets/img/gfx/midi_lfo.png',
+    video: 'assets/video/midi_lfo.mp4',
+    page: 'plugins/midi-lfo/'
+  },
+  'midi-utility': {
+    title: 'MIDI UTILITY',
+    subtitle: 'Transpose, Velocity, Splits, Filters',
+    category: 'MIDI',
+    sliders: [
+      { name: 'Transpose', range: '−48 to +48 st', desc: 'Moves every note up or down (-48 to +48 semitones).' },
+      { name: 'Channel', range: 'Thru / 1 / 2 / 3 / 4 / 5 / 6 / 7 / 8 / 9 / 10 / 11 / 12 / 13 / 14 / 15 / 16', desc: 'Sends everything on one MIDI channel (1 to 16); Thru keeps each message\'s own channel.' },
+      { name: 'Velocity Curve', range: '−100 to +100%', desc: 'Bends the velocity curve: above 0 lifts soft notes, below 0 lowers them.' },
+      { name: 'Velocity Min', range: '1 to 127', desc: 'The velocity the softest note becomes (1 to 127).' },
+      { name: 'Velocity Max', range: '1 to 127', desc: 'The velocity the hardest note becomes (1 to 127); Min above Max turns the curve upside down.' },
+      { name: 'Fixed Velocity', range: '0 to 127', desc: 'Every note plays at this velocity when above 0 (0 = off).' },
+      { name: 'Key Low', range: '0 to 127', desc: 'The lowest key that plays; notes below it are dropped (a split).' },
+      { name: 'Key High', range: '0 to 127', desc: 'The highest key that plays; notes above it are dropped.' },
+      { name: 'Velocity Low', range: '1 to 127', desc: 'The softest velocity that plays; softer notes are dropped (a velocity layer).' },
+      { name: 'Velocity High', range: '1 to 127', desc: 'The hardest velocity that plays; harder notes are dropped.' },
+      { name: 'CC', range: 'Pass / Block', desc: 'Pass or block controllers (all notes off always passes).' },
+      { name: 'Pitch Bend', range: 'Pass / Block', desc: 'Pass or block pitch bend.' },
+      { name: 'Aftertouch', range: 'Pass / Block', desc: 'Pass or block channel and polyphonic aftertouch.' },
+      { name: 'Program Change', range: 'Pass / Block', desc: 'Pass or block program changes.' }
+    ],
+    uses: ['Keyboard splits and layers across two instruments', 'Taming or boosting a keyboard\'s velocity response', 'Transposing a part without touching the notes', 'Cleaning controller and aftertouch data from a performance'],
+    properties: 'A MIDI effect; the audio passes through. Every note-on remembers the key that made it, so the key\'s note-off always ends exactly that note, even when the settings change while it is held; a new Channel releases every held key. Notes shared by two keys start again and end with the last one.',
+    formats: ['JSFX', 'GFX', 'VST3', 'CLAP'],
+    shot: 'assets/img/gfx/midi_utility.png',
+    video: 'assets/video/midi_utility.mp4',
+    page: 'plugins/midi-utility/'
   },
   'riff': {
     title: 'RIFF',

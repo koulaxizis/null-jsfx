@@ -25,6 +25,8 @@
     const os = detectOS();
     const file = 'NULL-JSFX-VST3-CLAP-' + os + '.zip';
     document.getElementById('dl-os').textContent = os;
+    // the Linux package also holds LV2 (from 2.7)
+    if (os === 'Linux') document.querySelector('#dl-native .download-option-title').firstChild.textContent = 'VST3, CLAP & LV2 for ';
     document.getElementById('dl-native').href = base + file;
     document.getElementById('dl-native-file').textContent = file;
     const installer = 'NULL-JSFX-Installer-' + os + { Windows: '.exe', macOS: '.pkg', Linux: '.sh' }[os];

@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VU Meter by NULL JSFX: free audio plugin for REAPER, VST3 and CLAP</title>
+    <meta name="description" content="VU Meter: VU, PPM and K-System Meter. Free and open source audio plugin for REAPER (JSFX) and any DAW (VST3, CLAP) on Windows, macOS and Linux.">
+    <link rel="canonical" href="https://nulljsfx.tech/plugins/vu-meter/">
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="VU Meter: VU, PPM and K-System Meter">
+    <meta property="og:description" content="VU Meter: VU, PPM and K-System Meter. Free and open source audio plugin for REAPER (JSFX) and any DAW (VST3, CLAP) on Windows, macOS and Linux.">
+    <meta property="og:url" content="https://nulljsfx.tech/plugins/vu-meter/">
+    <meta property="og:image" content="https://nulljsfx.tech/assets/video/vu_meter.jpg">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="VU Meter: VU, PPM and K-System Meter">
+    <meta name="twitter:description" content="VU Meter: VU, PPM and K-System Meter. Free and open source audio plugin for REAPER (JSFX) and any DAW (VST3, CLAP) on Windows, macOS and Linux.">
+    <meta name="twitter:image" content="https://nulljsfx.tech/assets/video/vu_meter.jpg">
+    <link rel="icon" type="image/svg+xml" href="/assets/img/favicon.svg">
+    <link rel="stylesheet" href="/assets/css/style.css">
+    <script type="application/ld+json">{"@context": "https://schema.org", "@type": "SoftwareApplication", "name": "NULL VU Meter", "description": "VU, PPM and K-System Meter", "url": "https://nulljsfx.tech/plugins/vu-meter/", "image": "https://nulljsfx.tech/assets/video/vu_meter.jpg", "applicationCategory": "MultimediaApplication", "applicationSubCategory": "Audio audio plugin", "operatingSystem": "Windows, macOS, Linux", "softwareVersion": "2.7", "license": "https://opensource.org/licenses/MIT", "offers": {"@type": "Offer", "price": "0", "priceCurrency": "EUR"}, "author": {"@type": "Person", "name": "Christos Koulaxizis"}, "isPartOf": {"@type": "SoftwareApplication", "name": "NULL JSFX", "url": "https://nulljsfx.tech/"}}</script>
+    <script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "NULL JSFX", "item": "https://nulljsfx.tech/"}, {"@type": "ListItem", "position": 2, "name": "Advanced", "item": "https://nulljsfx.tech/#effects"}, {"@type": "ListItem", "position": 3, "name": "VU Meter", "item": "https://nulljsfx.tech/plugins/vu-meter/"}]}</script>
+</head>
+<body class="plugin-page">
+    <main>
+        <nav class="page-crumbs" aria-label="Breadcrumb">
+            <a href="/" class="page-home"><img src="/assets/img/favicon.svg" alt="NULL JSFX" width="28" height="28"></a>
+            <a href="/">NULL JSFX</a> <span>/</span> <a href="/">Effects</a> <span>/</span> <span>VU Meter</span>
+        </nav>
+        <article class="page-plugin">
+            <header class="guide-header page-header">
+                <span class="guide-category">Advanced</span>
+                <h1>VU METER</h1>
+                <p>VU, PPM and K-System Meter</p>
+            </header>
+            <video class="guide-shot guide-video" poster="/assets/video/vu_meter.jpg" controls playsinline preload="none" width="1280" height="720" aria-label="VU Meter presentation video"><source src="https://github.com/koulaxizis/null-jsfx/releases/download/media/vu_meter.mp4" type="video/mp4"><source src="/assets/video/vu_meter.mp4" type="video/mp4"></video>
+            <div class="page-actions">
+                <a class="featured-btn" href="/#download"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg><span>Download free</span></a>
+                <small>Part of NULL JSFX 2.7: 126 plugins, free and open source (MIT). Easiest with <a href="/#hub">NULL JSFX Hub</a>.</small>
+            </div>
+            <div class="guide-body">
+                <section class="guide-section">
+                    <h2>Controls</h2>
+                    <ul class="guide-sliders"><li><span class="slider-name">Mode</span><span class="slider-desc">VU / PPM / K-14 / K-20 — VU (300 ms ballistics, average reading), PPM (EBU Type IIa peak programme meter), K-14 or K-20 (Katz RMS with the 0 mark at -14 or -20 dBFS).</span></li><li><span class="slider-name">Reference</span><span class="slider-desc">−24 to −8 dBFS — The level that reads 0 in VU and PPM: a sine peaking at -24 to -8 dBFS (-18 is the EBU alignment level, -20 SMPTE).</span></li><li><span class="slider-name">Peak Hold</span><span class="slider-desc">Off / 3 s / Hold — How the held maximum (the silver mark) behaves: Off, held for 3 s, or held until you click the meters.</span></li><li><span class="slider-name">Monitor</span><span class="slider-desc">Stereo / Mono / Side — Monitor: Stereo, Mono (both channels summed) or Side (the difference only), after the meters.</span></li></ul>
+                </section>
+                <section class="guide-section">
+                    <h2>Best uses</h2>
+                    <ul class="use-cases"><li>Gain staging into analog-modelled plugins at -18 dBFS</li><li>Mixing to a VU like on a console</li><li>Broadcast peak levels with an EBU PPM</li><li>Mastering with the K-14 or K-20 system</li></ul>
+                </section>
+                <section class="guide-section">
+                    <h2>Properties</h2>
+                    <p class="page-props">Per channel. VU: the rectified signal through a second-order low pass (damping 0.8: about 1.5 % overshoot, 99 % in 300 ms), sine-calibrated, on the classic -20 to +3 VU dial. PPM: a peak follower charging with a 5 ms time constant (about -4 dB on a 10 ms burst) and falling 24 dB in 2.8 s, -24 to +12 around the reference. K-14 / K-20: RMS over 300 ms, sine-calibrated. OVER lights for 1 s at 0 dBFS. The audio passes through (Monitor folds it after the meters). No latency, no Rack module.</p>
+                </section>
+                <section class="guide-section">
+                    <h2>Formats</h2>
+                    <ul class="guide-formats"><li><span class="format-tag">JSFX</span>JSFX for REAPER, with REAPER&#x27;s own sliders</li><li><span class="format-tag">GFX</span>JSFX GFX for REAPER, with its own interface</li><li><span class="format-tag">VST3</span>VST3 for any DAW</li><li><span class="format-tag">CLAP</span>CLAP for any DAW</li></ul>
+                </section>
+                <section class="guide-section">
+                    <h2>Factory presets</h2>
+                    <p class="page-list">VU -20 dBFS (SMPTE) · VU -14 dBFS (Hot) · PPM EBU · K-14 Mastering · K-20 Film and Classical · Mono Check</p>
+                </section>
+                <section class="guide-section">
+                    <h2>Try it</h2>
+                    <a class="try-studio guide-studio" href="https://useoros.online/studio/" target="_blank" rel="noopener"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8" fill="currentColor"/></svg><span class="try-studio-text"><b>Try it on orOS Studio</b><small>Add it to a track in your browser, with its own interface. Nothing to install.</small></span></a>
+                </section>
+            </div>
+        </article>
+        <section class="page-related">
+            <h2 class="section-title">Goes well with</h2>
+            <div class="related-grid"><a class="related-card" href="/plugins/loudness-meter/"><b>Loudness Meter</b><small>EBU R128 LUFS and True Peak Meter</small></a><a class="related-card" href="/plugins/amp-simulator/"><b>Amp Simulator</b><small>Guitar &amp; Bass Amp, No Cabinet</small></a><a class="related-card" href="/plugins/clipper/"><b>Clipper</b><small>Oversampled Hard &amp; Soft Clipper</small></a><a class="related-card" href="/plugins/de-clip/"><b>De-Clip</b><small>Rebuild Clipped Peaks</small></a><a class="related-card" href="/plugins/glitch-fx/"><b>Glitch FX</b><small>Stutter &amp; Glitch Engine</small></a><a class="related-card" href="/plugins/half-speed/"><b>Half Speed</b><small>Real-Time Halftime &amp; Slow-Down</small></a></div>
+            <p class="page-more"><a href="/">All 126 NULL JSFX plugins</a></p>
+        </section>
+    </main>
+    <footer class="site-footer">
+        <div class="footer-content">
+            Designed with &#9825; by <a href="https://koulaxizis.gr" target="_blank" rel="noopener">Christos Koulaxizis</a>.
+            <div class="footer-links">
+                <a href="https://ko-fi.com/koulaxizis" target="_blank" rel="noopener">Support on Ko-fi</a>
+                <span class="sep">&bull;</span>
+                <a href="https://github.com/koulaxizis/null-jsfx" target="_blank" rel="noopener">GitHub</a>
+                <span class="sep">&bull;</span>
+                <a href="/">nulljsfx.tech</a>
+            </div>
+        </div>
+    </footer>
+    <button id="theme-toggle" class="theme-toggle-floating" aria-label="Toggle color theme" title="Switch between light/dark theme">
+        <svg class="sun-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2 M12 21v2 M4.22 4.22l1.42 1.42 M18.36 18.36l1.42 1.42 M1 12h2 M21 12h2 M4.22 19.78l1.42-1.42 M18.36 5.64l1.42-1.42"/></svg>
+        <svg class="moon-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none;"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+    </button>
+    <script src="/assets/js/theme.js"></script>
+    <script src="/assets/js/demo.js"></script>
+</body>
+</html>
