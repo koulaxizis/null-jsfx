@@ -1,0 +1,18 @@
+diff --git a/distrho/src/DistrhoPluginVST3.cpp b/distrho/src/DistrhoPluginVST3.cpp
+index fa10edf1..287ce31c 100644
+--- a/distrho/src/DistrhoPluginVST3.cpp
++++ b/distrho/src/DistrhoPluginVST3.cpp
+@@ -2752,6 +2752,13 @@ private:
+             V3_SPEAKER_SL | V3_SPEAKER_SR |
+             V3_SPEAKER_LC | V3_SPEAKER_RC |
+             V3_SPEAKER_C | V3_SPEAKER_S | V3_SPEAKER_LFE);
++        // 7.1.4 (Steinberg k71_4): without it a 12-channel bed has no arrangement and hosts
++        // and validators cannot set or query the bus layout
++        case 12: return (
++            V3_SPEAKER_L | V3_SPEAKER_R | V3_SPEAKER_C | V3_SPEAKER_LFE |
++            V3_SPEAKER_LS | V3_SPEAKER_RS |
++            V3_SPEAKER_SL | V3_SPEAKER_SR |
++            V3_SPEAKER_TFL | V3_SPEAKER_TFR | V3_SPEAKER_TRL | V3_SPEAKER_TRR);
+         default:
+             d_stderr("portCountToSpeaker error: got weirdly big number ports %u in a single bus", portCount);
+             return 0;
