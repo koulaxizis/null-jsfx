@@ -2,7 +2,7 @@ desc:NULL Reverser
 author: Christos Koulaxizis
 tags: reverse buffer playback realtime backwards filter
 //category: Advanced
-//NULL JSFX v2.6 • https://nulljsfx.tech • MIT License
+//NULL JSFX v2.6.1 • https://nulljsfx.tech • MIT License
 
 slider1:2<1,10,0.1>Buffer Length (s)
 slider2:0<0,3,1{Off,LP,BP,HP}>Filter

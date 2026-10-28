@@ -2,7 +2,7 @@ desc:NULL Warped Delay
 author: Christos Koulaxizis
 tags: delay modulated feedback distortion filter warping
 //category: Advanced
-//NULL JSFX v2.6 • https://nulljsfx.tech • MIT License
+//NULL JSFX v2.6.1 • https://nulljsfx.tech • MIT License
 
 slider1:150<1,1000,1>Time (ms)
 slider2:2<0.1,10,0.1>Mod Rate (Hz)

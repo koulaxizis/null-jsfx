@@ -2,7 +2,7 @@ desc:NULL Granular Delay
 author: Christos Koulaxizis
 tags: granular delay grains cloud texture pitch spray ambient glitch
 //category: Advanced
-//NULL JSFX v2.6 • https://nulljsfx.tech • MIT License
+//NULL JSFX v2.6.1 • https://nulljsfx.tech • MIT License
 
 slider1:300<10,2000,1>Delay Time (ms)
 slider2:80<10,500,1>Grain Size (ms)

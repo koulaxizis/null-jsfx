@@ -2,7 +2,7 @@ desc:NULL Tuner
 author: Christos Koulaxizis
 tags: tuner chromatic strobe pitch guitar bass vocals intonation a4 baroque 432 meter analyzer
 //category: Advanced
-//NULL JSFX v2.6 • https://nulljsfx.tech • MIT License
+//NULL JSFX v2.6.1 • https://nulljsfx.tech • MIT License
 
 slider1:440<415,466,1>Reference A4 (Hz)
 slider2:0<0,1,1{Needle,Strobe}>Display

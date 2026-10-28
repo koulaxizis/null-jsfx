@@ -589,8 +589,8 @@ This list was checked against the 2.6 bump (`bc60d15`, PR #47) and its follow-up
 | `tests/lint.py` | `FOOTER` and the docstring example |
 | `web/tools/eel2js.js` | the footer line it writes, then `node web/tools/build.js` (regenerates `web/fx/*.js`) |
 | `remote/Scripts/null_jsfx_remote_bridge.lua`, `remote/reaper_www_root/null_jsfx.html` | the footer comment |
-| `native/CMakeLists.txt` | `project(... VERSION <v>.0 ...)`; every plugin's and the Rack's `getVersion()` derives from it (it was hard-coded 2.1.0 until 2026-10-26) |
-| `hub/Cargo.toml` | the workspace `version = "<v>.0"`, plus the `null-jsfx-hub` and `null_hub_core` entries in `hub/Cargo.lock` |
+| `native/CMakeLists.txt` | `project(... VERSION <v>.0 ...)`, or `<v>` for a patch tag such as 2.6.1; every plugin's and the Rack's `getVersion()` derives from it (it was hard-coded 2.1.0 until 2026-10-26) |
+| `hub/Cargo.toml` | the workspace `version = "<v>.0"` (`"<v>"` for a patch tag), plus the `null-jsfx-hub` and `null_hub_core` entries in `hub/Cargo.lock` |
 | `hub/core/src/lib.rs` | the footer example in a doc comment |
 | `index.html` | `#release-version`, `#last-update` ("Released: dd/mm/yy"), "Download NULL JSFX v<v>", "Release Notes v<v>", and a new changelog section on top |
 | `llms.txt` | `- Version: <v>` (the last line) |
@@ -605,6 +605,7 @@ Then run every test of Part V that the PR touches, merge it once CI is green, an
 1. Claude cannot create GitHub releases: the API answers 403 for these sessions [memory, verified 2026-10-13]. Give Christos a prefilled link:
    `https://github.com/koulaxizis/null-jsfx/releases/new?tag=<v>&target=main&title=<v>`
    with the release notes. The tag is numeric with no "v".
+   When main holds work meant for a later version, the release is cut from a branch instead (`release-<v>`: the previous tag plus the PRs that belong in it), and the link's `target` names that branch; main then gets the same version and release notes in its own PR (2.6.1, 2026-10-28).
 2. Christos clicks Publish. `native.yml` and `hub.yml` start on `release: published` and attach 13 assets:
    - `NULL-JSFX-JSFX.zip`;
    - `NULL-JSFX-VST3-CLAP-Windows.zip`, `-macOS.zip` and `-Linux.zip`;
@@ -631,6 +632,7 @@ Then run every test of Part V that the PR touches, merge it once CI is green, an
 | 2.4 | 2026-10-16 22:40 | Hub fixes |
 | 2.5 | 2026-10-18 22:16 | Instruments and MIDI categories, the vendor plan's new effects, 113 plugins |
 | 2.6 | 2026-10-26 14:26 | Wah level fix, Windows Hub self-update, Ko-fi as the only update channel |
+| 2.6.1 | 2026-10-28 07:19 | fixes only, from branch `release-2.6.1`: tails at Play, Convolution IR changes, low/odd/high sample rates, instrument MIDI passthrough, VST3/CLAP state, latency and parameters |
 | media | 2026-10-19 (pre-release) | the videos, not a plugin release |
 
 ### VI.4 Hub rollback and updates
@@ -1032,3 +1034,10 @@ entry and the Bible delta.
 - **Fixes:** pluginval failed "Bus layout processing" for Surround Panner, Downmix Check, Bass Management and Multichannel Loudness on Linux and Windows (job `validate`, first seen on PR #77; 123/127 passed). DPF's VST3 wrapper maps a bus's port count to a speaker arrangement only up to 11 ports; for the 12-pin bed it returned an empty arrangement (`portCountToSpeaker error: got weirdly big number ports 12`), so the host could neither read nor set the layout. `native/third_party/dpf/surround-bus.patch` maps 12 ports to 7.1.4 (Steinberg `k71_4`: L R C LFE Ls Rs Sl Sr Tfl Tfr Trl Trr). Only the bus description changed: channel count, pin order, pin names, plugin identities and the DSP are as before, so the sound is unchanged (R17). CLAP and LV2 were not affected.
 - **Files:** `native/third_party/dpf/surround-bus.patch` (new), `native/CMakeLists.txt` (comment), `native/README.md`, this Bible (II.2, VIII B6).
 - **Tests (run on Linux):** pluginval `v2.0.0-beta3` (the CI pin, SHA-256 checked) `--strictness-level 5 --skip-gui-tests` on the four VST3s and Band Splitter: before the patch Downmix Check failed "Bus layout processing", after it all five pass. Clean configure with the pinned DPF (all three patches applied in order) and ctest for the four plugins: 118/118 passed (`compare_`, `gfx_`, `presets_`, `state_`, Rack and the rest). Windows and the full suite: CI.
+
+### 2026-10-28 — release 2.6.1 — fixes-only release branch; main at 2.6.1
+- **Decisions:** main also held waves 1–3 of the studio plan (#68, #71, #72) and, by the time of the bump, waves 4–5 (#73, #74), all meant for 2.7: new plugins not yet launched, new sliders, A/B and Undo/Redo, LV2. The packages and the Hub catalog take every plugin in `DATA/`, so a release from main would have shipped the new plugins before "launch" (R18). Christos chose a fixes-only 2.6.1 (2026-10-27). The branch `release-2.6.1` is tag 2.6 plus every PR merged since then except the waves, in merge order (`git cherry-pick -m1`); PR #75 bumped it to 2.6.1 with all CI green, and the release is published from that branch (Part VI.2).
+- **Content of 2.6.1:** #49, #51, #52, #53, #54, #55, #56, #57, #58, #59, #60, #61, #62, #63, #64, #65, #66, #67, #69, #70.
+- **Changes (this PR, main):** the version is 2.6.1 everywhere in Part VI.1, so the site, `llms.txt` and main's builds match the release: every plain and GFX footer (the unlaunched plugins too) and `null_gfx.jsfx-inc`, `FOOTER` in `tests/lint.py`, `web/tools/eel2js.js` (+ `web/fx/*.js`), the remote bridge and page, `native/CMakeLists.txt` (`VERSION 2.6.1`), `hub/Cargo.toml` + `hub/Cargo.lock`, the doc example in `hub/core/src/lib.rs`, `llms.txt`, and `index.html` (version, "Released: 28/10/26", download heading, and the same "2.6.1: FIXES" release notes as the release branch); `plugins/*/index.html` and `sitemap.xml` regenerated. Part VI.1 notes that a patch tag uses `<v>` in CMake and Cargo; Part VI.2 describes the release branch; Part VI.3 gets the 2.6.1 row (published by Christos 2026-10-28 07:19 UTC).
+- **Tests:** on `release-2.6.1` (PR #75): locally `tests/run.sh` (226 files and 146 chains pass), `web/test/run.sh` (0 of 226 differ), `cargo test -p null_hub_core`, every generator's `--check`, `tests/bible_order.py`; the native build ran in CI only (the container lacks OpenGL headers), where every job passed on Windows, Linux and macOS. On main: see the PR.
+- **Next:** check the 13 release assets, `hub/tests/release_smoke.sh 2.6.1`, the footer in the JSFX zip and the site's download links. 2.7 follows from main.

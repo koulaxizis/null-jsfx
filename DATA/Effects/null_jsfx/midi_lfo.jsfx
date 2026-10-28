@@ -2,7 +2,7 @@ desc:NULL MIDI LFO
 author: Christos Koulaxizis
 tags: midi lfo modulation cc pitch bend channel pressure tempo sync sine triangle saw square random sample and hold automation
 //category: MIDI
-//NULL JSFX v2.6 • https://nulljsfx.tech • MIT License
+//NULL JSFX v2.6.1 • https://nulljsfx.tech • MIT License
 
 slider1:0<0,6,1{Sine,Triangle,Saw Up,Saw Down,Square,Random,Smooth Random}>Shape
 slider2:1<0,1,1{Free,Tempo}>Sync
