@@ -2,7 +2,7 @@ desc:NULL Phase Align GFX
 author: Christos Koulaxizis
 tags: phase alignment align polarity invert delay time all-pass rotation correlation sidechain multi-mic drums bass di mixing utility gui
 //category: Essentials
-//NULL JSFX v2.6 • https://nulljsfx.tech • MIT License
+//NULL JSFX v2.6.1 • https://nulljsfx.tech • MIT License
 
 import null_gfx.jsfx-inc
 

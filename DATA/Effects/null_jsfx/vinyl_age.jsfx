@@ -2,7 +2,7 @@ desc:NULL Vinyl Age
 author: Christos Koulaxizis
 tags: vinyl lo-fi wow flutter crackle bitcrush degradation
 //category: Advanced
-//NULL JSFX v2.6 • https://nulljsfx.tech • MIT License
+//NULL JSFX v2.6.1 • https://nulljsfx.tech • MIT License
 
 slider1:30<0,100,1>Wow (%)
 slider2:20<0,100,1>Flutter (%)

@@ -2,7 +2,7 @@ desc:NULL Tape Echo
 author: Christos Koulaxizis
 tags: tape echo delay space multi-head repeat dub reggae spring reverb wow flutter saturation self-oscillation vintage sync freeze
 //category: Essentials
-//NULL JSFX v2.6 • https://nulljsfx.tech • MIT License
+//NULL JSFX v2.6.1 • https://nulljsfx.tech • MIT License
 
 slider1:300<50,1000,1>Repeat Time (ms)
 slider2:0<0,7,1{Off,1/4,1/8,1/16,1/4D,1/8D,1/4T,1/8T}>Tempo Sync

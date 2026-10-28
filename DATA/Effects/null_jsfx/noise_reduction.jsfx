@@ -2,7 +2,7 @@ desc:NULL Noise Reduction
 author: Christos Koulaxizis
 tags: noise reduction denoise hiss hum room tone spectral subtraction restoration fft
 //category: Advanced
-//NULL JSFX v2.6 • https://nulljsfx.tech • MIT License
+//NULL JSFX v2.6.1 • https://nulljsfx.tech • MIT License
 
 slider1:0<0,1,1{Off,On}>Learn
 slider2:0<0,1,1{Off,On}>Auto

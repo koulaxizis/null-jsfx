@@ -2,7 +2,7 @@ desc:NULL Wetter GFX
 author: Christos Koulaxizis
 tags: reverb space ambience hall room wet gui
 //category: One Slider
-//NULL JSFX v2.6 • https://nulljsfx.tech • MIT License
+//NULL JSFX v2.6.1 • https://nulljsfx.tech • MIT License
 
 import null_gfx.jsfx-inc
 

@@ -2,7 +2,7 @@ desc:NULL Formant Filter
 author: Christos Koulaxizis
 tags: filter formant vowel voice speech synthesis a e i o u
 //category: Advanced
-//NULL JSFX v2.6 • https://nulljsfx.tech • MIT License
+//NULL JSFX v2.6.1 • https://nulljsfx.tech • MIT License
 
 slider1:0<0,4,1{A,E,I,O,U}>Vowel
 slider2:0<-12,12,0.1>Gain (dB)
