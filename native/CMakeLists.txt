@@ -63,6 +63,7 @@ endif()
 #   null-jsfx.patch   the CLAP wrapper calls clap_host_latency::changed() only inside activate(), as
 #                     the CLAP spec requires, and no output sample is subnormal (clap-validator)
 #   state-load.patch  CLAP/VST3 state load: a string cut by a short stream read is not ended early
+#   surround-bus.patch  VST3: a 12-channel bus is a 7.1.4 speaker arrangement (the surround beds)
 file(GLOB _dpf_patches "${CMAKE_CURRENT_SOURCE_DIR}/third_party/dpf/*.patch")
 list(SORT _dpf_patches)
 set(_dpf_patch_command PATCH_COMMAND git reset -q --hard ${DPF_GIT_SHA})
