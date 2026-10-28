@@ -2,7 +2,7 @@ desc:NULL Crunch GFX
 author: Christos Koulaxizis
 tags: distortion grit crunch fuzz aggressive gui
 //category: One Slider
-//NULL JSFX v2.6.1 • https://nulljsfx.tech • MIT License
+//NULL JSFX v2.7 • https://nulljsfx.tech • MIT License
 
 import null_gfx.jsfx-inc
 

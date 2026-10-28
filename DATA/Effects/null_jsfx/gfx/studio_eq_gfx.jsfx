@@ -2,7 +2,7 @@ desc:NULL Studio EQ GFX
 author: Christos Koulaxizis
 tags: equalizer eq parametric linear phase mid side mixing mastering essentials gui
 //category: Essentials
-//NULL JSFX v2.6.1 • https://nulljsfx.tech • MIT License
+//NULL JSFX v2.7 • https://nulljsfx.tech • MIT License
 
 import null_gfx.jsfx-inc
 

@@ -2,7 +2,7 @@ desc:NULL Bass Management GFX
 author: Christos Koulaxizis
 tags: surround bass management crossover subwoofer lfe redirect 5.1 7.1 7.1.4 atmos bed monitoring linkwitz riley gui
 //category: Advanced
-//NULL JSFX v2.6.1 • https://nulljsfx.tech • MIT License
+//NULL JSFX v2.7 • https://nulljsfx.tech • MIT License
 
 import null_gfx.jsfx-inc
 

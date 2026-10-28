@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crossfeed by NULL JSFX: free audio plugin for REAPER, VST3 and CLAP</title>
+    <meta name="description" content="Crossfeed: Headphone Crossfeed and Speaker Simulation. Free and open source audio plugin for REAPER (JSFX) and any DAW (VST3, CLAP) on Windows, macOS and Linux.">
+    <link rel="canonical" href="https://nulljsfx.tech/plugins/crossfeed/">
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Crossfeed: Headphone Crossfeed and Speaker Simulation">
+    <meta property="og:description" content="Crossfeed: Headphone Crossfeed and Speaker Simulation. Free and open source audio plugin for REAPER (JSFX) and any DAW (VST3, CLAP) on Windows, macOS and Linux.">
+    <meta property="og:url" content="https://nulljsfx.tech/plugins/crossfeed/">
+    <meta property="og:image" content="https://nulljsfx.tech/assets/video/crossfeed.jpg">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Crossfeed: Headphone Crossfeed and Speaker Simulation">
+    <meta name="twitter:description" content="Crossfeed: Headphone Crossfeed and Speaker Simulation. Free and open source audio plugin for REAPER (JSFX) and any DAW (VST3, CLAP) on Windows, macOS and Linux.">
+    <meta name="twitter:image" content="https://nulljsfx.tech/assets/video/crossfeed.jpg">
+    <link rel="icon" type="image/svg+xml" href="/assets/img/favicon.svg">
+    <link rel="stylesheet" href="/assets/css/style.css">
+    <script type="application/ld+json">{"@context": "https://schema.org", "@type": "SoftwareApplication", "name": "NULL Crossfeed", "description": "Headphone Crossfeed and Speaker Simulation", "url": "https://nulljsfx.tech/plugins/crossfeed/", "image": "https://nulljsfx.tech/assets/video/crossfeed.jpg", "applicationCategory": "MultimediaApplication", "applicationSubCategory": "Audio audio plugin", "operatingSystem": "Windows, macOS, Linux", "softwareVersion": "2.7", "license": "https://opensource.org/licenses/MIT", "offers": {"@type": "Offer", "price": "0", "priceCurrency": "EUR"}, "author": {"@type": "Person", "name": "Christos Koulaxizis"}, "isPartOf": {"@type": "SoftwareApplication", "name": "NULL JSFX", "url": "https://nulljsfx.tech/"}}</script>
+    <script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "NULL JSFX", "item": "https://nulljsfx.tech/"}, {"@type": "ListItem", "position": 2, "name": "Essentials", "item": "https://nulljsfx.tech/#effects"}, {"@type": "ListItem", "position": 3, "name": "Crossfeed", "item": "https://nulljsfx.tech/plugins/crossfeed/"}]}</script>
+</head>
+<body class="plugin-page">
+    <main>
+        <nav class="page-crumbs" aria-label="Breadcrumb">
+            <a href="/" class="page-home"><img src="/assets/img/favicon.svg" alt="NULL JSFX" width="28" height="28"></a>
+            <a href="/">NULL JSFX</a> <span>/</span> <a href="/">Effects</a> <span>/</span> <span>Crossfeed</span>
+        </nav>
+        <article class="page-plugin">
+            <header class="guide-header page-header">
+                <span class="guide-category">Essentials</span>
+                <h1>CROSSFEED</h1>
+                <p>Headphone Crossfeed and Speaker Simulation</p>
+            </header>
+            <video class="guide-shot guide-video" poster="/assets/video/crossfeed.jpg" controls playsinline preload="none" width="1280" height="720" aria-label="Crossfeed presentation video"><source src="https://github.com/koulaxizis/null-jsfx/releases/download/media/crossfeed.mp4" type="video/mp4"><source src="/assets/video/crossfeed.mp4" type="video/mp4"></video>
+            <div class="page-actions">
+                <a class="featured-btn" href="/#download"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg><span>Download free</span></a>
+                <small>Part of NULL JSFX 2.7: 126 plugins, free and open source (MIT). Easiest with <a href="/#hub">NULL JSFX Hub</a>.</small>
+            </div>
+            <div class="guide-body">
+                <section class="guide-section">
+                    <h2>Controls</h2>
+                    <ul class="guide-sliders"><li><span class="slider-name">Mode</span><span class="slider-desc">Crossfeed / Speakers — Crossfeed: Bauer&#x27;s headphone filter (bs2b). Speakers: two speakers in front of you, with head shadow, the time between the ears and a room.</span></li><li><span class="slider-name">Cutoff</span><span class="slider-desc">300 to 2000 Hz — Crossfeed: where the other side&#x27;s signal starts to roll off (300 to 2000 Hz; 700 is the bs2b default, 650 Jan Meier).</span></li><li><span class="slider-name">Feed</span><span class="slider-desc">1 to 15 dB — Crossfeed: how far below the own side the other side arrives in the lows (1 to 15 dB; 4.5 bs2b default, 6 Chu Moy, 9.5 Jan Meier).</span></li><li><span class="slider-name">Angle</span><span class="slider-desc">10 to 60 deg — Speakers: how far each speaker is off centre (10 to 60 degrees; 30 is the usual stereo triangle).</span></li><li><span class="slider-name">Room</span><span class="slider-desc">0 to 100% — Speakers: early reflections of a room (0 = none).</span></li><li><span class="slider-name">Mix</span><span class="slider-desc">0 to 100% — Blend of the dry and processed signal.</span></li><li><span class="slider-name">Output</span><span class="slider-desc">−12 to +12 dB — Output level (-12 to +12 dB).</span></li></ul>
+                </section>
+                <section class="guide-section">
+                    <h2>Best uses</h2>
+                    <ul class="use-cases"><li>Mixing on headphones with less in-the-head fatigue</li><li>Checking the stereo image as it would sound on speakers</li><li>Long listening sessions on headphones</li><li>Hearing hard-panned parts as a speaker listener would</li></ul>
+                </section>
+                <section class="guide-section">
+                    <h2>Properties</h2>
+                    <p class="page-props">Crossfeed: libbs2b&#x27;s filter: the other side through a first-order low pass at Cutoff, Feed dB down in the lows; the own side through a matching high boost; a mono signal keeps its level in the lows and loses up to 2 dB in the highs. Speakers: Brown-Duda head-shadow filters for the near and the far ear (their high-frequency gains scaled so a mono signal keeps its level on average), Woodworth&#x27;s interaural time on the far ear (0.26 ms at 30 degrees), each ear half of each; Room adds six early reflections per ear (4 to 22 ms, low passed at 5 kHz). Then Mix and Output. No latency.</p>
+                </section>
+                <section class="guide-section">
+                    <h2>Formats</h2>
+                    <ul class="guide-formats"><li><span class="format-tag">JSFX</span>JSFX for REAPER, with REAPER&#x27;s own sliders</li><li><span class="format-tag">GFX</span>JSFX GFX for REAPER, with its own interface</li><li><span class="format-tag">VST3</span>VST3 for any DAW</li><li><span class="format-tag">CLAP</span>CLAP for any DAW</li></ul>
+                </section>
+                <section class="guide-section">
+                    <h2>Factory presets</h2>
+                    <p class="page-list">Chu Moy · Jan Meier · Subtle · Strong · Near-Field Speakers · Wide Speakers · Narrow Desk · Control Room · Dry Speakers</p>
+                </section>
+                <section class="guide-section">
+                    <h2>Try it</h2>
+                    <a class="try-studio guide-studio" href="https://useoros.online/studio/" target="_blank" rel="noopener"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8" fill="currentColor"/></svg><span class="try-studio-text"><b>Try it on orOS Studio</b><small>Add it to a track in your browser, with its own interface. Nothing to install.</small></span></a>
+                </section>
+            </div>
+        </article>
+        <section class="page-related">
+            <h2 class="section-title">Goes well with</h2>
+            <div class="related-grid"><a class="related-card" href="/plugins/delay/"><b>Delay</b><small>Stereo &amp; Ping-Pong Echo</small></a><a class="related-card" href="/plugins/phase-align/"><b>Phase Align</b><small>Time, Polarity and Phase Alignment</small></a><a class="related-card" href="/plugins/reverb/"><b>Reverb</b><small>Compact Stereo Algorithmic Reverb</small></a><a class="related-card" href="/plugins/auto-pan/"><b>Auto Pan</b><small>LFO Stereo Panner</small></a><a class="related-card" href="/plugins/band-splitter/"><b>Band Splitter</b><small>Multiband Crossover Router</small></a><a class="related-card" href="/plugins/channel-utility/"><b>Channel Utility</b><small>Gain, Phase &amp; Routing</small></a></div>
+            <p class="page-more"><a href="/">All 126 NULL JSFX plugins</a></p>
+        </section>
+    </main>
+    <footer class="site-footer">
+        <div class="footer-content">
+            Designed with &#9825; by <a href="https://koulaxizis.gr" target="_blank" rel="noopener">Christos Koulaxizis</a>.
+            <div class="footer-links">
+                <a href="https://ko-fi.com/koulaxizis" target="_blank" rel="noopener">Support on Ko-fi</a>
+                <span class="sep">&bull;</span>
+                <a href="https://github.com/koulaxizis/null-jsfx" target="_blank" rel="noopener">GitHub</a>
+                <span class="sep">&bull;</span>
+                <a href="/">nulljsfx.tech</a>
+            </div>
+        </div>
+    </footer>
+    <button id="theme-toggle" class="theme-toggle-floating" aria-label="Toggle color theme" title="Switch between light/dark theme">
+        <svg class="sun-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2 M12 21v2 M4.22 4.22l1.42 1.42 M18.36 18.36l1.42 1.42 M1 12h2 M21 12h2 M4.22 19.78l1.42-1.42 M18.36 5.64l1.42-1.42"/></svg>
+        <svg class="moon-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none;"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+    </button>
+    <script src="/assets/js/theme.js"></script>
+    <script src="/assets/js/demo.js"></script>
+</body>
+</html>

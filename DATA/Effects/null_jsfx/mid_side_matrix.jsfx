@@ -2,7 +2,7 @@ desc:NULL Mid/Side Matrix
 author: Christos Koulaxizis
 tags: mid side stereo matrix encode decode m/s processing
 //category: Essentials
-//NULL JSFX v2.6.1 • https://nulljsfx.tech • MIT License
+//NULL JSFX v2.7 • https://nulljsfx.tech • MIT License
 
 slider1:0<-6,6,0.1>Mid Gain (dB)
 slider2:0<-6,6,0.1>Side Gain (dB)

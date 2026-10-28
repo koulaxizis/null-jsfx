@@ -2,7 +2,7 @@ desc:NULL Phase Align
 author: Christos Koulaxizis
 tags: phase alignment align polarity invert delay time all-pass rotation correlation sidechain multi-mic drums bass di mixing utility
 //category: Essentials
-//NULL JSFX v2.6.1 • https://nulljsfx.tech • MIT License
+//NULL JSFX v2.7 • https://nulljsfx.tech • MIT License
 
 slider1:0<0,1,1{Right to Left,Track to Sidechain}>Source
 slider2:0<-10,10,0.01>Delay (ms)

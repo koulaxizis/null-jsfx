@@ -2,7 +2,7 @@ desc:NULL Trance Gate
 author: Christos Koulaxizis
 tags: trance gate 16-step sequencer rhythmic pattern staccato tempo sync probability random
 //category: Advanced
-//NULL JSFX v2.6.1 • https://nulljsfx.tech • MIT License
+//NULL JSFX v2.7 • https://nulljsfx.tech • MIT License
 
 slider1:1<0,1,1{Off,On}>Step 1
 slider2:1<0,1,1{Off,On}>Step 2

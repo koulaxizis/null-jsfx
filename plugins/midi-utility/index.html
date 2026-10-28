@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MIDI Utility by NULL JSFX: free MIDI tool for REAPER, VST3 and CLAP</title>
+    <meta name="description" content="MIDI Utility: Transpose, Velocity, Splits, Filters. Free and open source MIDI tool for REAPER (JSFX) and any DAW (VST3, CLAP) on Windows, macOS and Linux.">
+    <link rel="canonical" href="https://nulljsfx.tech/plugins/midi-utility/">
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="MIDI Utility: Transpose, Velocity, Splits, Filters">
+    <meta property="og:description" content="MIDI Utility: Transpose, Velocity, Splits, Filters. Free and open source MIDI tool for REAPER (JSFX) and any DAW (VST3, CLAP) on Windows, macOS and Linux.">
+    <meta property="og:url" content="https://nulljsfx.tech/plugins/midi-utility/">
+    <meta property="og:image" content="https://nulljsfx.tech/assets/video/midi_utility.jpg">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="MIDI Utility: Transpose, Velocity, Splits, Filters">
+    <meta name="twitter:description" content="MIDI Utility: Transpose, Velocity, Splits, Filters. Free and open source MIDI tool for REAPER (JSFX) and any DAW (VST3, CLAP) on Windows, macOS and Linux.">
+    <meta name="twitter:image" content="https://nulljsfx.tech/assets/video/midi_utility.jpg">
+    <link rel="icon" type="image/svg+xml" href="/assets/img/favicon.svg">
+    <link rel="stylesheet" href="/assets/css/style.css">
+    <script type="application/ld+json">{"@context": "https://schema.org", "@type": "SoftwareApplication", "name": "NULL MIDI Utility", "description": "Transpose, Velocity, Splits, Filters", "url": "https://nulljsfx.tech/plugins/midi-utility/", "image": "https://nulljsfx.tech/assets/video/midi_utility.jpg", "applicationCategory": "MultimediaApplication", "applicationSubCategory": "Audio MIDI tool", "operatingSystem": "Windows, macOS, Linux", "softwareVersion": "2.7", "license": "https://opensource.org/licenses/MIT", "offers": {"@type": "Offer", "price": "0", "priceCurrency": "EUR"}, "author": {"@type": "Person", "name": "Christos Koulaxizis"}, "isPartOf": {"@type": "SoftwareApplication", "name": "NULL JSFX", "url": "https://nulljsfx.tech/"}}</script>
+    <script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "NULL JSFX", "item": "https://nulljsfx.tech/"}, {"@type": "ListItem", "position": 2, "name": "MIDI", "item": "https://nulljsfx.tech/#midi"}, {"@type": "ListItem", "position": 3, "name": "MIDI Utility", "item": "https://nulljsfx.tech/plugins/midi-utility/"}]}</script>
+</head>
+<body class="plugin-page">
+    <main>
+        <nav class="page-crumbs" aria-label="Breadcrumb">
+            <a href="/" class="page-home"><img src="/assets/img/favicon.svg" alt="NULL JSFX" width="28" height="28"></a>
+            <a href="/">NULL JSFX</a> <span>/</span> <a href="/#midi">MIDI</a> <span>/</span> <span>MIDI Utility</span>
+        </nav>
+        <article class="page-plugin">
+            <header class="guide-header page-header">
+                <span class="guide-category">MIDI</span>
+                <h1>MIDI UTILITY</h1>
+                <p>Transpose, Velocity, Splits, Filters</p>
+            </header>
+            <video class="guide-shot guide-video" poster="/assets/video/midi_utility.jpg" controls playsinline preload="none" width="1280" height="720" aria-label="MIDI Utility presentation video"><source src="https://github.com/koulaxizis/null-jsfx/releases/download/media/midi_utility.mp4" type="video/mp4"><source src="/assets/video/midi_utility.mp4" type="video/mp4"></video>
+            <div class="page-actions">
+                <a class="featured-btn" href="/#download"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg><span>Download free</span></a>
+                <small>Part of NULL JSFX 2.7: 126 plugins, free and open source (MIT). Easiest with <a href="/#hub">NULL JSFX Hub</a>.</small>
+            </div>
+            <div class="guide-body">
+                <section class="guide-section">
+                    <h2>Controls</h2>
+                    <ul class="guide-sliders"><li><span class="slider-name">Transpose</span><span class="slider-desc">−48 to +48 st — Moves every note up or down (-48 to +48 semitones).</span></li><li><span class="slider-name">Channel</span><span class="slider-desc">Thru / 1 / 2 / 3 / 4 / 5 / 6 / 7 / 8 / 9 / 10 / 11 / 12 / 13 / 14 / 15 / 16 — Sends everything on one MIDI channel (1 to 16); Thru keeps each message&#x27;s own channel.</span></li><li><span class="slider-name">Velocity Curve</span><span class="slider-desc">−100 to +100% — Bends the velocity curve: above 0 lifts soft notes, below 0 lowers them.</span></li><li><span class="slider-name">Velocity Min</span><span class="slider-desc">1 to 127 — The velocity the softest note becomes (1 to 127).</span></li><li><span class="slider-name">Velocity Max</span><span class="slider-desc">1 to 127 — The velocity the hardest note becomes (1 to 127); Min above Max turns the curve upside down.</span></li><li><span class="slider-name">Fixed Velocity</span><span class="slider-desc">0 to 127 — Every note plays at this velocity when above 0 (0 = off).</span></li><li><span class="slider-name">Key Low</span><span class="slider-desc">0 to 127 — The lowest key that plays; notes below it are dropped (a split).</span></li><li><span class="slider-name">Key High</span><span class="slider-desc">0 to 127 — The highest key that plays; notes above it are dropped.</span></li><li><span class="slider-name">Velocity Low</span><span class="slider-desc">1 to 127 — The softest velocity that plays; softer notes are dropped (a velocity layer).</span></li><li><span class="slider-name">Velocity High</span><span class="slider-desc">1 to 127 — The hardest velocity that plays; harder notes are dropped.</span></li><li><span class="slider-name">CC</span><span class="slider-desc">Pass / Block — Pass or block controllers (all notes off always passes).</span></li><li><span class="slider-name">Pitch Bend</span><span class="slider-desc">Pass / Block — Pass or block pitch bend.</span></li><li><span class="slider-name">Aftertouch</span><span class="slider-desc">Pass / Block — Pass or block channel and polyphonic aftertouch.</span></li><li><span class="slider-name">Program Change</span><span class="slider-desc">Pass / Block — Pass or block program changes.</span></li></ul>
+                </section>
+                <section class="guide-section">
+                    <h2>Best uses</h2>
+                    <ul class="use-cases"><li>Keyboard splits and layers across two instruments</li><li>Taming or boosting a keyboard&#x27;s velocity response</li><li>Transposing a part without touching the notes</li><li>Cleaning controller and aftertouch data from a performance</li></ul>
+                </section>
+                <section class="guide-section">
+                    <h2>Properties</h2>
+                    <p class="page-props">A MIDI effect; the audio passes through. Every note-on remembers the key that made it, so the key&#x27;s note-off always ends exactly that note, even when the settings change while it is held; a new Channel releases every held key. Notes shared by two keys start again and end with the last one.</p>
+                </section>
+                <section class="guide-section">
+                    <h2>Formats</h2>
+                    <ul class="guide-formats"><li><span class="format-tag">JSFX</span>JSFX for REAPER, with REAPER&#x27;s own sliders</li><li><span class="format-tag">GFX</span>JSFX GFX for REAPER, with its own interface</li><li><span class="format-tag">VST3</span>VST3 for any DAW</li><li><span class="format-tag">CLAP</span>CLAP for any DAW</li></ul>
+                </section>
+                <section class="guide-section">
+                    <h2>Factory presets</h2>
+                    <p class="page-list">Octave Up · Octave Down · Soft Touch · Hard Touch · Compressed Velocity · Organ (Fixed 100) · Split: Bass (below C3) · Split: Upper (C3 and up) · Layer: Loud Notes Only · Layer: Soft Notes Only · To Channel 10 (Drums) · Notes Only · No Program Changes · Inverted Velocity</p>
+                </section>
+            </div>
+        </article>
+        <section class="page-related">
+            <h2 class="section-title">Goes well with</h2>
+            <div class="related-grid"><a class="related-card" href="/plugins/arpeggiator/"><b>Arpeggiator</b><small>Tempo-Synced Arpeggiator with Velocity Lane (MIDI)</small></a><a class="related-card" href="/plugins/chords/"><b>Chords</b><small>One-Key Chords &amp; Progressions (MIDI)</small></a><a class="related-card" href="/plugins/humanize/"><b>Humanize</b><small>Random Timing, Velocity &amp; Groove for MIDI</small></a><a class="related-card" href="/plugins/midi-lfo/"><b>MIDI LFO</b><small>LFO to CC, Pitch Bend, Pressure</small></a><a class="related-card" href="/plugins/riff/"><b>Riff</b><small>Seeded Riff &amp; Melody Generator (MIDI)</small></a><a class="related-card" href="/plugins/scale/"><b>Scale</b><small>Force MIDI Notes to Key &amp; Scale (MIDI)</small></a></div>
+            <p class="page-more"><a href="/#midi">All 126 NULL JSFX plugins</a></p>
+        </section>
+    </main>
+    <footer class="site-footer">
+        <div class="footer-content">
+            Designed with &#9825; by <a href="https://koulaxizis.gr" target="_blank" rel="noopener">Christos Koulaxizis</a>.
+            <div class="footer-links">
+                <a href="https://ko-fi.com/koulaxizis" target="_blank" rel="noopener">Support on Ko-fi</a>
+                <span class="sep">&bull;</span>
+                <a href="https://github.com/koulaxizis/null-jsfx" target="_blank" rel="noopener">GitHub</a>
+                <span class="sep">&bull;</span>
+                <a href="/">nulljsfx.tech</a>
+            </div>
+        </div>
+    </footer>
+    <button id="theme-toggle" class="theme-toggle-floating" aria-label="Toggle color theme" title="Switch between light/dark theme">
+        <svg class="sun-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2 M12 21v2 M4.22 4.22l1.42 1.42 M18.36 18.36l1.42 1.42 M1 12h2 M21 12h2 M4.22 19.78l1.42-1.42 M18.36 5.64l1.42-1.42"/></svg>
+        <svg class="moon-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none;"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+    </button>
+    <script src="/assets/js/theme.js"></script>
+    <script src="/assets/js/demo.js"></script>
+</body>
+</html>

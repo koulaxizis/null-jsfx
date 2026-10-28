@@ -2,7 +2,7 @@ desc:NULL Doubler
 author: Christos Koulaxizis
 tags: doubler vocal doubling double-tracking adt stereo width
 //category: One Slider
-//NULL JSFX v2.6.1 • https://nulljsfx.tech • MIT License
+//NULL JSFX v2.7 • https://nulljsfx.tech • MIT License
 
 slider1:40<0,100,1>Amount
 

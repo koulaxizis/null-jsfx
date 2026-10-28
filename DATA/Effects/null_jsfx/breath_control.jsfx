@@ -2,7 +2,7 @@ desc:NULL Breath Control
 author: Christos Koulaxizis
 tags: breath vocal dynamics
 //category: Essentials
-//NULL JSFX v2.6.1 • https://nulljsfx.tech • MIT License
+//NULL JSFX v2.7 • https://nulljsfx.tech • MIT License
 
 slider1:-40<-70,0,0.5>Threshold (dB)
 slider2:5<1,50,1>Attack (ms)

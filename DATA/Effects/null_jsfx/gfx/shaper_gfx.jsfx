@@ -2,7 +2,7 @@ desc:NULL Shaper GFX
 author: Christos Koulaxizis
 tags: shaper waveshaper waveshaping distortion saturation fold wavefolder transfer curve drawable oversampling harmonics gui
 //category: Essentials
-//NULL JSFX v2.6.1 • https://nulljsfx.tech • MIT License
+//NULL JSFX v2.7 • https://nulljsfx.tech • MIT License
 
 import null_gfx.jsfx-inc
 

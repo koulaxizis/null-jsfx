@@ -2,7 +2,7 @@ desc:NULL Saturation GFX
 author: Christos Koulaxizis
 tags: saturation distortion tape tube overdrive fuzz bitcrush waveshaper wavefolder drive oversampling emphasis gui
 //category: Essentials
-//NULL JSFX v2.6.1 • https://nulljsfx.tech • MIT License
+//NULL JSFX v2.7 • https://nulljsfx.tech • MIT License
 
 import null_gfx.jsfx-inc
 

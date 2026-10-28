@@ -2,7 +2,7 @@ desc:NULL Amp Simulator GFX
 author: Christos Koulaxizis
 tags: amp amplifier guitar bass preamp power amp tube valve distortion overdrive tone stack gui
 //category: Advanced
-//NULL JSFX v2.6.1 • https://nulljsfx.tech • MIT License
+//NULL JSFX v2.7 • https://nulljsfx.tech • MIT License
 
 import null_gfx.jsfx-inc
 

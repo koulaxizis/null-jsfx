@@ -2,7 +2,7 @@ desc:NULL Bass GFX
 author: Christos Koulaxizis
 tags: instrument bass synth bass 808 sub saw square mono glide portamento acid filter drive phrase player key switch midi gui
 //category: Instruments
-//NULL JSFX v2.6.1 • https://nulljsfx.tech • MIT License
+//NULL JSFX v2.7 • https://nulljsfx.tech • MIT License
 
 import null_gfx.jsfx-inc
 
