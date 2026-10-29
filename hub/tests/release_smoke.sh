@@ -32,12 +32,16 @@ cd "$here"
 cargo build -q -p null_hub_core --example hub_cli
 cli="$here/target/debug/examples/hub_cli"
 export NULL_JSFX_HUB_DATA="$work/data" NULL_JSFX_HUB_RELEASES="http://127.0.0.1:$port"
+# tilt:all is jsfx, gfx, vst3, clap, plus lv2 where the catalog lists this OS (Linux since 2.7)
+os=$(case "$(uname -s)" in Darwin) echo macOS;; MINGW*|MSYS*|CYGWIN*) echo Windows;; *) echo Linux;; esac)
+lv2=$(python3 -c 'import json,sys; print(int(sys.argv[2] in json.load(open(sys.argv[1]))["packages"].get("lv2", [])))' "$work/catalog.json" "$os")
 "$cli" --root "$work/root" install tilt:all delay:vst3 | tee "$work/out.txt"
-grep -q "release $tag: 5 installed, 0 to update" "$work/out.txt"
+grep -q "release $tag: $((5 + lv2)) installed, 0 to update" "$work/out.txt"
 test -f "$work/root/REAPER/Effects/null_jsfx/tilt.jsfx"
 test -f "$work/root/REAPER/Effects/null_jsfx/gfx/null_gfx.jsfx-inc"
 test -d "$work/root/VST3/NULL JSFX/null_jsfx_delay.vst3/Contents"
 test -e "$work/root/CLAP/NULL JSFX/null_jsfx_tilt.clap"
+if [ "$lv2" = 1 ]; then test -d "$work/root/LV2/NULL JSFX/null_jsfx_tilt.lv2"; fi
 if [ -d "$work/data/cache/$tag" ]; then
   echo "the whole package was downloaded; only parts were needed" >&2
   exit 1
