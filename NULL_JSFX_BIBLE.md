@@ -547,7 +547,7 @@ The recipes live in the READMEs. This Part says where they are and lists the ste
 | Web | `web/test/run.sh` | `build.js --check`, the runtime tests, and the null test against ysfx below 1e-6 (MIDI too) |
 | Hub engine | `cd hub && cargo test -p null_hub_core` | install, update, remove and repair against a local release server |
 | Hub page | `cd hub && node tests/ui_test.cjs` | the page in Chromium against `tests/mock.cjs`; fails on any UI text without Greek |
-| Hub release smoke | `hub/tests/release_smoke.sh [tag]` | install and remove from the real latest release |
+| Hub release smoke | `hub/tests/release_smoke.sh [tag]` | install and remove from the real latest release; the expected count includes LV2 when the catalog lists the OS (Linux from 2.7) |
 | Installers | `tests/installer_test.sh`, `tests/pkg_test.sh`, the Windows step in `native.yml` | install, check (counts, presets merged, the user's preset kept) and uninstall |
 | Remote | `node tests/remote/remote_test.cjs` | the page in Chromium plus the real bridge under `mock_reaper.lua` |
 | Bible order | `python3 tests/bible_order.py` (in `test.yml`) | R26: every Part X entry has a date and the dates never go back |
@@ -1054,6 +1054,11 @@ entry and the Bible delta.
 ### 2026-10-28 — Bible — 2.7 published; Driver and Exciter decision
 - **Changes:** Christos published 2.7 on 2026-10-28 at 20:19 UTC from main (`b6c77e2`, #76). The map's suite state and the VI.3 row are updated. Part VII records two decisions: Driver and Exciter keep no oversampling, and SFZ stays on hold. B10 is updated. No plugin, DSP or site file changed.
 - **Tests:** run locally: `tools/build_bible.py --check`, `tests/bible_order.py`.
+
+### 2026-10-29 — Hub test — release smoke counts LV2 on Linux
+- **Fixes:** `hub/tests/release_smoke.sh` expected "5 installed" after `install tilt:all delay:vst3`, but since 2.7 the Linux native package carries LV2, so `tilt:all` is five formats on Linux and the total is 6. The `hub.yml` smoke job (ubuntu) was red against release 2.7 (seen on PR #80). The script now reads `packages.lv2` from the catalog it builds and adds 1 when it lists this OS, the same rule `hub/core/src/catalog.rs` uses, and checks that `LV2/NULL JSFX/null_jsfx_tilt.lv2` exists in that case. No Hub, plugin or site code changed.
+- **Files:** `hub/tests/release_smoke.sh`, `NULL_JSFX_BIBLE.md` (Part V table row).
+- **Tests:** run locally on Linux: `hub/tests/release_smoke.sh 2.7` (6 installed, ok, including the rollback to 2.6.1) and `hub/tests/release_smoke.sh 2.6.1` (5 installed, ok), `cargo test -p null_hub_core`, `tools/build_bible.py --check`, `tests/bible_order.py`. CI runs the smoke job on the PR.
 
 ### 2026-10-29 — site (no version change) — LV2 shown on the site, README and llms.txt
 - **Why:** Christos asked whether the site shows everything new. The live site matched main and release 2.7 (version, date, changelog, the 13 new plugins with cards, pages and videos, the 12 download links, all 13 assets attached, `site_content_next.json` empty), but LV2, new in 2.7, appeared only in the changelog. Christos approved both proposals (2026-10-29).
