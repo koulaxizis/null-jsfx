@@ -2,7 +2,7 @@
 
 126 professional audio plugins for Cockos Reaper. Pure EEL2 scripting, native sliders, zero dependencies. Free and open source.
 
-Every plugin also comes as **GFX** JSFX with its own interface and as **VST3 / CLAP** for any DAW (Windows, macOS, Linux), and most effects also as a module of the **Rack**. All versions of a plugin sound the same.
+Every plugin also comes as **GFX** JSFX with its own interface as **VST3 / CLAP** for any DAW (Windows, macOS, Linux), as **LV2** on Linux, and most effects also as a module of the **Rack**. All versions of a plugin sound the same.
 
 ## Plugins
 
@@ -33,7 +33,7 @@ Each [release](https://github.com/koulaxizis/null-jsfx/releases) has:
 | `NULL-JSFX-Hub-Windows-Setup.exe` / `-macOS.dmg` / `-Linux.AppImage` / `-Linux.deb` | [NULL JSFX Hub](hub/README.md): installs, updates and removes the plugins in any format, with FX chains, presets and extras, and tells you when a new version is out |
 | `NULL-JSFX-Installer-Windows.exe` / `-macOS.pkg` / `-Linux.sh` (also `-macOS.sh` for a terminal) | one-off installer with a format, plugin and extras picker; the Linux one asks in windows when double-clicked |
 | `NULL-JSFX-JSFX.zip` | all JSFX plugins and their GFX versions, for every OS |
-| `NULL-JSFX-VST3-CLAP-Windows.zip` / `-macOS.zip` / `-Linux.zip` | the VST3 and CLAP versions |
+| `NULL-JSFX-VST3-CLAP-Windows.zip` / `-macOS.zip` / `-Linux.zip` | the VST3 and CLAP versions; the Linux zip also has the LV2 versions |
 
 **JSFX:** extract the `null_jsfx` folder to your Reaper Effects directory, then restart Reaper or re-scan:
 
@@ -45,7 +45,7 @@ Each [release](https://github.com/koulaxizis/null-jsfx/releases) has:
 
 Find plugins under **JS: NULL JSFX** in the FX browser. The GFX versions (`NULL <Name> GFX`) live in the `gfx` folder; keep it inside `null_jsfx`.
 
-**VST3 and CLAP:** copy the `NULL JSFX` folders from the download's `VST3` and `CLAP` folders to `C:/Program Files/Common Files/VST3` and `.../CLAP` (Windows), `~/Library/Audio/Plug-Ins/VST3` and `.../CLAP` (macOS) or `~/.vst3` and `~/.clap` (Linux), then rescan in your DAW. They show up under their own names with **NULL JSFX** as the maker. The macOS builds are not code-signed; see `native/INSTALL.txt`.
+**VST3, CLAP and LV2:** copy the `NULL JSFX` folders from the download's `VST3` and `CLAP` folders (Linux: also `LV2`) to `C:/Program Files/Common Files/VST3` and `.../CLAP` (Windows), `~/Library/Audio/Plug-Ins/VST3` and `.../CLAP` (macOS) or `~/.vst3`, `~/.clap` and `~/.lv2` (Linux), then rescan in your DAW. They show up under their own names with **NULL JSFX** as the maker. The macOS builds are not code-signed; see `native/INSTALL.txt`.
 
 ## Properties
 
