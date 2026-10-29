@@ -117,12 +117,12 @@ def parse_sliders(text):
 
 
 def formats(stem):
-    """The versions a plugin ships in: always JSFX, plus GFX and VST3/CLAP when they exist."""
+    """The versions a plugin ships in: always JSFX, plus GFX and VST3/CLAP/LV2 when they exist (LV2 is built for Linux only)."""
     out = ["JSFX"]
     if (GFX / f"{stem}_gfx.jsfx").exists():
         out.append("GFX")
     if (NATIVE / stem / "Plugin.cpp").exists():
-        out += ["VST3", "CLAP"]
+        out += ["VST3", "CLAP", "LV2"]
     return out
 
 
@@ -341,7 +341,8 @@ def guides_block(plugins):
 CATEGORY_TAB = {"One Slider": "Effects", "Essentials": "Effects", "Advanced": "Effects",
                 "Instruments": "Instruments", "MIDI": "MIDI"}
 FORMAT_NAMES = {"JSFX": "JSFX for REAPER, with REAPER's own sliders", "GFX": "JSFX GFX for REAPER, with its own interface",
-                "VST3": "VST3 for any DAW", "CLAP": "CLAP for any DAW"}
+                "VST3": "VST3 for any DAW", "CLAP": "CLAP for any DAW",
+                "LV2": "LV2 for Linux DAWs such as Ardour, Carla and Qtractor"}
 KIND = {"Instruments": "instrument", "MIDI": "MIDI tool"}
 
 
@@ -358,7 +359,7 @@ def page(p, plugins):
     kind = KIND.get(p["category"], "audio plugin")
     url = SITE + p["page"]
     title = f"{p['name']} by NULL JSFX: free {kind} for REAPER, VST3 and CLAP"
-    desc = f"{p['name']}: {p['card_desc']}. Free and open source {kind} for REAPER (JSFX) and any DAW (VST3, CLAP) on Windows, macOS and Linux."
+    desc = f"{p['name']}: {p['card_desc']}. Free and open source {kind} for REAPER (JSFX) and any DAW (VST3, CLAP) on Windows, macOS and Linux, plus LV2 on Linux."
     poster = p["video"].rsplit("/", 1)[-1].replace(".mp4", ".jpg") if p["video"] else None
     image = SITE + f"assets/video/{poster}" if poster else SITE + "assets/img/social-preview.jpg"
     ld = {
