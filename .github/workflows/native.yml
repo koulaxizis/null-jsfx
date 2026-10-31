@@ -53,7 +53,7 @@ jobs:
       matrix:
         include:
           - { os: ubuntu-22.04, name: Linux, test: "--test" }
-          - { os: macos-15, name: macOS, test: "--test" }
+          - { os: macos-14, name: macOS, test: "--test" }
           - { os: windows-2022, name: Windows, test: "" }
     runs-on: ${{ matrix.os }}
     defaults:
@@ -259,7 +259,7 @@ jobs:
       matrix:
         include:
           - { os: ubuntu-22.04, name: Linux }
-          - { os: macos-15, name: macOS }
+          - { os: macos-14, name: macOS }
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
