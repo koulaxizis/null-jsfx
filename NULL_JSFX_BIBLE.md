@@ -5,7 +5,7 @@
 > - **Site:** https://nulljsfx.tech · **Repo:** github.com/koulaxizis/null-jsfx · **Author:** Christos Koulaxizis (koulaxizis.gr)
 > - **Slogan:** AUDIO WITHOUT NOISE
 > - **Bible version:** 1.2 (2026-10-27). The Bible has its own version: a patch step (1.0.1) for corrections, a minor step (1.1) for new rules or Parts. The suite's version is in Part VI.
-> - **Suite state:** 2.8 on main (own suite, B11, launched with it; release not published yet): 133 plugins on the site. Last published release: 2.7 (2026-10-28 20:19 UTC, `b6c77e2`, PR #76).
+> - **Suite state:** 2.8 published 2026-10-31 09:16 UTC from main (`43c2b45`, PR #82): the own suite (B11), 133 plugins on the site.
 > - **Last full read of the repo:** 2026-10-26. These files were read for this edition: CLAUDE.md, README.md, native/README.md, web/README.md, hub/README.md, tools/video/README.md, llms.txt, tests/lint.py, tests/run.sh, web/test/run.sh, native/test/CMakeLists.txt, every `.github/workflows/*.yml`, the docstrings of every `tools/*.py`, the headers of `native/common/*.hpp`, and the reference plugins tilt, delay, drum_machine and chords in JSFX, GFX and VST3/CLAP, plus downloads.json and supporters.json.
 > - **Tags:** **[verified 2026-10-26]** means the fact was checked against the file or the GitHub API on that date. **[memory]** means it comes from the project's memory notes or from a thread, and was not re-checked against a file. **[PR #n]** means it comes from that pull request.
 
@@ -641,6 +641,7 @@ Then run every test of Part V that the PR touches, merge it once CI is green, an
 | 2.6 | 2026-10-26 14:26 | Wah level fix, Windows Hub self-update, Ko-fi as the only update channel |
 | 2.6.1 | 2026-10-28 07:19 | fixes only, from branch `release-2.6.1`: tails at Play, Convolution IR changes, low/odd/high sample rates, instrument MIDI passthrough, VST3/CLAP state, latency and parameters |
 | 2.7 | 2026-10-28 20:19 | studio plan: 13 new plugins (Studio EQ, Spectral Ducker, Reference, Tuner, VU Meter, Crossfeed, De-Clip, MIDI Utility, MIDI LFO, four surround bed tools), True Peak, Delta, Mid/Side, A/B and Undo/Redo, oversampling in Tape and Ladder Filter, LV2 on Linux |
+| 2.8 | 2026-10-31 09:16 | own suite for orOS Studio (B11): 7 new plugins (Air, Tone, Glue Comp, Console Channel, Console Buss, Space, Mallets), Gate Tone Release, Saturation Focus and Density, Pluck Pizzicato, Organ Pipe voice |
 | media | 2026-10-19 (pre-release) | the videos, not a plugin release |
 
 ### VI.4 Hub rollback and updates
@@ -1169,3 +1170,8 @@ entry and the Bible delta.
 - **Test fixes:** the Windows installer test in `native.yml` counts the One Slider plugins from the repo (Air made them 22, the test had 21 + Delay fixed), and the Hub UI test's search check compares with the number of cards (Space made "reverb" find 10, the test wanted fewer than 10).
 - **Tests (run on Linux):** `tests/lint.py` on all 266 JSFX and GFX (0 errors, with the version checks), `tests/bible_order.py`, the `--check` of `build_bible`, `build_presets`, `build_chains`, `build_catalog`, `build_remote`, `build_site` and `web/tools/build.js`. Full CI on the PR.
 - **Next:** Christos publishes 2.8 from https://github.com/koulaxizis/null-jsfx/releases/new?tag=2.8&target=main&title=2.8 (Part VI.2); then the VI.3 row, the suite state and the Studio sync in orOS (`studio/nullfx/`, after orOS #716).
+
+### 2026-10-31 — 2.8 published
+- **Why:** Christos, 2026-10-31: "Έγινε το release."
+- **Changes:** Christos published 2.8 on 2026-10-31 at 09:16 UTC from main (`43c2b45`, #82). The map's suite state and the VI.3 row are updated. In oros-sounds (PR #5), the eight VSCO packs that the 2.8 instruments replace are removed: organ, harp, violins pizzicato, glockenspiel, marimba, xylophone, timpani and tubular bells. The orchestral percussion kit stays, because nothing replaces it yet. No plugin, DSP or site file changed.
+- **Next:** the Studio sync in orOS (`studio/nullfx/`, after orOS #716). Christos's longer goal is to replace every remaining sound pack with NULL instruments and sounds, starting with strings, winds, brass, orchestral percussion and piano.
