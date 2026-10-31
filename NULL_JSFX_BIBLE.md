@@ -1220,4 +1220,4 @@ entry and the Bible delta.
 - **Decisions:** pinned `macos-15` rather than `macos-latest` (now macOS 26), so an image change is always a deliberate PR, like the other pinned labels (Part V.2).
 - **Not here:** Ubuntu 26.04 as `ubuntu-latest` broke the Playwright Chromium install; that fix (jobs `remote` in `test.yml` and `ui` in `hub.yml` on `ubuntu-24.04`) lands with #85.
 - **Files:** `.github/workflows/native.yml`, `.github/workflows/hub.yml`, `NULL_JSFX_BIBLE.md` (Part V.2, Part X).
-- **Tests:** the workflows' own run on this PR (macOS native build with `--test`, macOS installers; the Hub jobs run only on `hub/` changes, so `macos-15` for the Hub is first proven on the next Hub PR or a manual run); `tests/lint.py`, `tests/bible_order.py`, `tools/build_bible.py --check` locally.
+- **Tests:** the workflows' own run on this PR: the macOS native build with `--test`, the macOS installers, and, since `hub.yml` changed, the Hub `core` tests and the universal dmg on `macos-15`; `tests/lint.py`, `tests/bible_order.py`, `tools/build_bible.py --check` locally.
