@@ -2,7 +2,7 @@ desc:NULL FM GFX
 author: Christos Koulaxizis
 tags: instrument synth synthesizer fm frequency modulation 4-operator polyphonic electric piano bells bass brass mallets pad midi gui
 //category: Instruments
-//NULL JSFX v2.7 • https://nulljsfx.tech • MIT License
+//NULL JSFX v2.8 • https://nulljsfx.tech • MIT License
 import null_gfx.jsfx-inc
 
 slider1:0<0,7,1{Stack,Dual Mod,Branch,Pair Stack,Two Pairs,Triple,One Pair,Additive}>-Algorithm

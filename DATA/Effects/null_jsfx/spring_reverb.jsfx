@@ -2,7 +2,7 @@ desc:NULL Spring Reverb
 author: Christos Koulaxizis
 tags: spring reverb guitar amp vintage surf drip boing dub
 //category: Advanced
-//NULL JSFX v2.7 • https://nulljsfx.tech • MIT License
+//NULL JSFX v2.8 • https://nulljsfx.tech • MIT License
 
 slider1:2.5<0.5,8,0.1>Decay (s)
 slider2:60<0,100,1>Tension (%)

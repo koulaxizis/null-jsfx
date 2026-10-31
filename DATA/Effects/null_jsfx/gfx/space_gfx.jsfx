@@ -2,7 +2,7 @@ desc:NULL Space GFX
 author: Christos Koulaxizis
 tags: reverb space room chamber hall galaxy fdn feedback delay network algorithmic modulation ambience long decay pre-delay gui
 //category: Essentials
-//NULL JSFX v2.7 • https://nulljsfx.tech • MIT License
+//NULL JSFX v2.8 • https://nulljsfx.tech • MIT License
 
 import null_gfx.jsfx-inc
 

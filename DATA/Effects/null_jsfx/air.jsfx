@@ -2,7 +2,7 @@ desc:NULL Air
 author: Christos Koulaxizis
 tags: eq air high shelf top end sheen brightness presence open
 //category: One Slider
-//NULL JSFX v2.7 • https://nulljsfx.tech • MIT License
+//NULL JSFX v2.8 • https://nulljsfx.tech • MIT License
 
 slider1:0<0,100,1>Amount
 

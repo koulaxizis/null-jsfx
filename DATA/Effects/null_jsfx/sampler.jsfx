@@ -2,7 +2,7 @@ desc:NULL Sampler
 author: Christos Koulaxizis
 tags: instrument sampler sample player one-shot chromatic wav flac loop adsr filter polyphonic midi
 //category: Instruments
-//NULL JSFX v2.7 • https://nulljsfx.tech • MIT License
+//NULL JSFX v2.8 • https://nulljsfx.tech • MIT License
 
 slider1:/null_jsfx_samples:none:Sample File
 slider2:1<0,1,1{One-shot,Chromatic}>Mode

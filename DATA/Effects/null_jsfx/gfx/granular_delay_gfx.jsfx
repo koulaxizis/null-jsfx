@@ -2,7 +2,7 @@ desc:NULL Granular Delay GFX
 author: Christos Koulaxizis
 tags: granular delay grains cloud texture pitch spray ambient glitch gui
 //category: Advanced
-//NULL JSFX v2.7 • https://nulljsfx.tech • MIT License
+//NULL JSFX v2.8 • https://nulljsfx.tech • MIT License
 
 import null_gfx.jsfx-inc
 

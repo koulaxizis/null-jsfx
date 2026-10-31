@@ -2,7 +2,7 @@ desc:NULL Slicer GFX
 author: Christos Koulaxizis
 tags: slicer slice beat repeat rearrange shuffle stutter reverse backspin chop remix loop tempo sync glitch creative gui
 //category: Advanced
-//NULL JSFX v2.7 • https://nulljsfx.tech • MIT License
+//NULL JSFX v2.8 • https://nulljsfx.tech • MIT License
 
 import null_gfx.jsfx-inc
 

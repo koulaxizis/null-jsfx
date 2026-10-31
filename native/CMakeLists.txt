@@ -15,7 +15,7 @@ if(APPLE AND NOT DEFINED CMAKE_OSX_DEPLOYMENT_TARGET)
   set(CMAKE_OSX_DEPLOYMENT_TARGET "10.13" CACHE STRING "macOS deployment target")
 endif()
 
-project(null_jsfx_native VERSION 2.7.0 LANGUAGES C CXX)
+project(null_jsfx_native VERSION 2.8.0 LANGUAGES C CXX)
 
 # getVersion() of every plugin reports this version (common/NullPlugin.hpp, plugins/rack/Plugin.cpp)
 add_compile_definitions(NULL_JSFX_VERSION_MAJOR=${PROJECT_VERSION_MAJOR}

@@ -16,8 +16,10 @@ static const char* const kStrumOptions[] = { "Off", "Down", "Up", "Down-Up", "Fo
 static const char* const kStrumShort[] = { "OFF", "DOWN", "UP", "DOWN-UP", "FOLK", "OFFBEAT" };
 static const char* const kRateOptions[] = { "Quarters", "Eighths", "Sixteenths", "Eighth Triplets" };
 static const char* const kRateShort[] = { "1/4", "1/8", "1/16", "1/8 T" };
+static const char* const kPizzOptions[] = { "Off", "Violins", "Cellos" };
+static const char* const kPizzShort[] = { "OFF", "VIOLINS", "CELLOS" };
 
-// slider1..slider12 of pluck.jsfx, in order
+// slider1..slider13 of pluck.jsfx, in order
 static const DISTRHO::SliderInfo kSliders[] = {
     { "Model", "model", 0.0f, 7.0f, 0.0f, "", 1.0f, kModelOptions },
     { "Pick Position", "pick_position", 5.0f, 50.0f, 18.0f, "%", 1.0f },
@@ -31,6 +33,7 @@ static const DISTRHO::SliderInfo kSliders[] = {
     { "Strum Rate", "strum_rate", 0.0f, 3.0f, 1.0f, "", 1.0f, kRateOptions },
     { "Strum Spread", "strum_spread", 0.0f, 100.0f, 20.0f, "ms", 1.0f },
     { "Volume", "volume", -24.0f, 12.0f, 0.0f, "dB", 0.1f },
+    { "Pizzicato", "pizzicato", 0.0f, 2.0f, 0.0f, "", 1.0f, kPizzOptions },
 };
 static constexpr uint32_t kNumParams = sizeof(kSliders) / sizeof(kSliders[0]);
 

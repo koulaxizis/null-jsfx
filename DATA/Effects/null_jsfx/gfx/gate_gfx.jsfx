@@ -2,7 +2,7 @@ desc:NULL Gate GFX
 author: Christos Koulaxizis
 tags: gate noise vocal floor reduce silence threshold mute sidechain hold lookahead ducking gui
 //category: Essentials
-//NULL JSFX v2.7 • https://nulljsfx.tech • MIT License
+//NULL JSFX v2.8 • https://nulljsfx.tech • MIT License
 
 import null_gfx.jsfx-inc
 

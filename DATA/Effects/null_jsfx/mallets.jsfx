@@ -1,0 +1,314 @@
+desc:NULL Mallets
+author: Christos Koulaxizis
+tags: instrument mallets marimba xylophone vibraphone vibes glockenspiel tubular bells chimes timpani kettle drum orchestral percussion modal synthesis midi
+//category: Instruments
+//NULL JSFX v2.8 • https://nulljsfx.tech • MIT License
+
+slider1:0<0,5,1{Marimba,Xylophone,Vibraphone,Glockenspiel,Tubular Bells,Timpani}>Model
+slider2:50<0,100,1>Mallet (%)
+slider3:50<0,100,1>Strike (%)
+slider4:50<0,100,1>Resonator (%)
+slider5:100<10,400,1>Decay (%)
+slider6:0<0,1,1{Ring,Damp}>Key Up
+slider7:150<10,3000,1:log>Damp Time (ms)
+slider8:0<0,12,0.1>Motor (Hz)
+slider9:60<0,100,1>Velocity (%)
+slider10:50<0,100,1>Width (%)
+slider11:0<-24,12,0.1>Volume (dB)
+
+in_pin:none
+out_pin:Left
+out_pin:Right
+
+@init
+  // Tuned and orchestral percussion from modal synthesis (no samples), 24 voices. Every strike
+  // excites six damped resonators at the model's mode ratios (the tuned bars' 1:4:10 or 1:3:6,
+  // the glockenspiel's free bar, the tube's modes around its strike tone, the kettle drum's
+  // membrane), each with its own level and decay. The mallet is a pulse as long as its contact
+  // time (3 ms soft to 0.24 ms hard): it rounds off the modes above 1/contact time and sets the
+  // onset. Strike moves from the centre, where the antisymmetric modes (the 2nd, 4th and 6th)
+  // are silent, to the edge. Resonator scales the lowest mode of the models with a tube or a
+  // kettle (louder and shorter as it rises). Decay scales every decay; higher keys decay faster.
+  // Velocity sets the level and hardens the mallet (Velocity = how much). Key Up Ring lets every
+  // strike ring out; Damp fades it over Damp Time when the key comes up (the sustain pedal,
+  // CC 64, holds it, as on a vibraphone). A key struck again takes a new voice and the old one
+  // keeps ringing; a 25th voice takes the oldest released one after a 2 ms fade. Motor is the
+  // vibraphone's rotating discs, a level tremolo at that rate (0 = off). The voices are spread
+  // by pitch over Width. All notes off (CC 123/120) releases every key.
+  //
+  // Memory: 0.. the MIDI of the block (4 per message), 2048.. keys down, 2304.. per-voice
+  // values (32 each), 3072.. the modes (6 per voice, 144 each), 4096.. the models.
+  ext_noinit = 1;
+  ext_tail_size = -1;
+  NV = 24;
+  NM = 6;
+  MQ = 0;
+  KD = 2048;
+  v_note = 2304; v_gate = 2336; v_env = 2368; v_pend = 2400; v_pvel = 2432; v_age = 2464;
+  v_gl = 2496; v_gr = 2528; v_rel = 2560; v_ai = 2592;
+  p_s1 = 3072; p_s2 = 3216; p_cf = 3360; p_df = 3504; p_e = 3648; p_r = 3792;
+  MT = 4096;
+  tpi = 2 * $pi;
+
+  // the models, 24 values each: six mode ratios (to the key's pitch), six levels, six decays
+  // (s at C4), the level, the decay factor per octave, and 1 when Resonator acts on the lowest
+  // mode (tube or kettle)
+  function mrow(a, b, c, d, e, f)
+  (
+    MT[mw] = a; MT[mw + 1] = b; MT[mw + 2] = c; MT[mw + 3] = d; MT[mw + 4] = e; MT[mw + 5] = f;
+    mw += 6;
+  );
+  function mend(g, k, r)
+  (
+    MT[mw] = g; MT[mw + 1] = k; MT[mw + 2] = r;
+    mw += 6;
+  );
+  mw = 0;
+  // Marimba
+  mrow(1, 3.99, 9.9, 17.6, 0, 0); mrow(1, 0.3, 0.12, 0.04, 0, 0); mrow(1.4, 0.5, 0.18, 0.08, 0, 0); mend(0.9, 0.6, 1);
+  // Xylophone
+  mrow(1, 3, 6.1, 9.7, 14.3, 0); mrow(1, 0.55, 0.3, 0.15, 0.06, 0); mrow(0.7, 0.35, 0.15, 0.08, 0.05, 0); mend(0.8, 0.65, 1);
+  // Vibraphone
+  mrow(1, 4, 10, 17.3, 0, 0); mrow(1, 0.25, 0.1, 0.03, 0, 0); mrow(6, 2.5, 0.8, 0.3, 0, 0); mend(0.8, 0.75, 1);
+  // Glockenspiel
+  mrow(1, 2.76, 5.4, 8.93, 13.34, 0); mrow(1, 0.35, 0.25, 0.12, 0.06, 0); mrow(4.5, 2.5, 1.2, 0.6, 0.3, 0); mend(0.6, 0.8, 0);
+  // Tubular Bells
+  mrow(0.618, 1.209, 2, 2.988, 4.175, 5.55); mrow(0.25, 0.5, 1, 0.8, 0.55, 0.3); mrow(5, 7, 6, 4.5, 3, 2); mend(0.4, 0.85, 0);
+  // Timpani
+  mrow(1, 1.5, 1.98, 2.44, 2.94, 0.63); mrow(1, 0.5, 0.35, 0.2, 0.12, 0.6); mrow(2.2, 1.5, 1.2, 0.9, 0.7, 0.15); mend(0.55, 0.7, 1);
+
+  function v_start(v, n, vel) local(f, oc, kdec, vn, g, h, tc, x, w0, b, k, r, a, t, w, rr)
+  (
+    v_note[v] = n; v_pend[v] = -1;
+    v_gate[v] = KD[n] > 0 || sus ? 1 : 0;
+    v_env[v] = 0;
+    v_rel[v] = 1;
+    age += 1;
+    v_age[v] = age;
+    f = 440 * 2 ^ ((n - 69) / 12);
+    oc = (n - 60) / 12;
+    kdec = m_kt ^ oc;
+    vn = vel / 127;
+    g = vn * vn;
+    g = 1 - vs + vs * g;
+    g *= m_gain;
+    // the mallet: its contact time and the weight of each mode in its spectrum
+    h = hard + vs * 0.3 * (vn - 0.6);
+    h = max(0, min(1, h));
+    tc = 0.003 * 0.08 ^ h;
+    v_ai[v] = 1 / (tc * srate);
+    x = f * tc;
+    x *= x;
+    w0 = 1 + x * x;
+    b = v * NM;
+    k = 0;
+    loop(NM,
+      r = mb[k];
+      a = mb[k + 6] * g;
+      t = mb[k + 12];
+      k == 0 && m_res ? ( a *= res_a; t *= res_t; );
+      k == 1 || k == 3 || k == 5 ? a *= str_k;
+      x = f * r;
+      x *= tc;
+      x *= x;
+      a *= min(1, w0 / (1 + x * x));
+      x = f * r;
+      r > 0 && a > 0 && x < 0.45 * srate ? (
+        w = tpi * x;
+        w /= srate;
+        t *= dsc;
+        t *= kdec;
+        rr = exp(-6.907755 / (t * srate));
+        t = 2 * rr;
+        p_cf[b] = t * cos(w);
+        p_df[b] = rr * rr;
+        p_s1[b] = 0;
+        t = a * sin(w);
+        p_s2[b] = -t / rr;
+        p_e[b] = a;
+        p_r[b] = rr;
+      ) : (
+        p_e[b] = 0; p_s1[b] = 0; p_s2[b] = 0;
+      );
+      b += 1;
+      k += 1;
+    );
+    t = max(-1, min(1, (n - 60) / 30));
+    t *= wd;
+    v_gl[v] = 1 - 0.6 * t;
+    v_gr[v] = 1 + 0.6 * t;
+  );
+
+  function note_on(n, vel) local(v, f, ba)
+  (
+    KD[n] = 1;
+    f = -1;
+    v = 0;
+    loop(NV,
+      // the same key waiting for its voice: a new velocity only
+      v_pend[v] == n ? ( f = v; v_pvel[v] = vel; );
+      v += 1;
+    );
+    f < 0 ? (
+      // the same key still held lets go of its voice, which keeps ringing (or damps)
+      v = 0;
+      loop(NV, v_pend[v] < 0 && v_note[v] == n ? v_gate[v] = 0; v += 1;);
+      // a free voice, else the oldest released one, else the oldest
+      v = 0;
+      loop(NV, f < 0 && v_note[v] < 0 ? f = v; v += 1;);
+      f < 0 ? (
+        ba = 0;
+        v = 0;
+        loop(NV,
+          v_gate[v] == 0 && v_pend[v] < 0 && (f < 0 || v_age[v] < ba) ? ( f = v; ba = v_age[v]; );
+          v += 1;
+        );
+      );
+      f < 0 ? (
+        v = 0;
+        loop(NV,
+          f < 0 || v_age[v] < ba ? ( f = v; ba = v_age[v]; );
+          v += 1;
+        );
+      );
+      v_note[f] < 0 ? v_start(f, n, vel) : (
+        // fade the old note out first
+        v_gate[f] = 0;
+        v_pend[f] = n;
+        v_pvel[f] = vel;
+        age += 1;
+        v_age[f] = age;
+      );
+    );
+  );
+  function note_off(n) local(v)
+  (
+    KD[n] = 0;
+    !sus ? (
+      v = 0;
+      loop(NV, v_pend[v] < 0 && v_note[v] == n ? v_gate[v] = 0; v += 1;);
+    );
+  );
+  function sus_off() local(v)
+  (
+    sus = 0;
+    v = 0;
+    loop(NV, v_pend[v] < 0 && v_note[v] >= 0 && KD[v_note[v]] == 0 ? v_gate[v] = 0; v += 1;);
+  );
+  function all_off() local(v)
+  (
+    memset(KD, 0, 128);
+    sus = 0;
+    v = 0;
+    loop(NV, v_gate[v] = 0; v_rel[v] = min(v_rel[v], 0.999); v += 1;);
+  );
+  function midi_ev(st, d1, d2) local(t)
+  (
+    t = st & 0xF0;
+    t == 0x90 && d2 > 0 ? note_on(d1, d2) :
+    t == 0x80 || t == 0x90 ? note_off(d1) :
+    t == 0xB0 ? (
+      d1 == 64 ? ( d2 >= 64 ? sus = 1 : sus ? sus_off(); ) :
+      d1 == 123 || d1 == 120 ? all_off();
+    );
+  );
+
+  v = 0;
+  loop(NV, v_note[v] = -1; v_gate[v] = 0; v_env[v] = 0; v_pend[v] = -1; v_rel[v] = 1; v += 1;);
+  memset(KD, 0, 128);
+  sus = 0; age = 0;
+  mt_ph = 0;
+  m_ofs = m_1 = m_2 = m_3 = 0;
+
+@slider
+  model = max(0, min(5, floor(slider1 + 0.5)));
+  mb = MT + model * 24;
+  m_gain = mb[18]; m_kt = mb[19]; m_res = mb[20];
+  hard = slider2 / 100;
+  str_k = 0.1 + 0.009 * slider3;
+  res_a = 2 ^ ((slider4 - 50) / 50);
+  res_t = 2 ^ ((50 - slider4) / 100);
+  dsc = slider5 / 100;
+  damp = slider6 >= 0.5;
+  r_c = exp(-6.907755 / (slider7 * 0.001 * srate));
+  mt_dt = slider8 / srate;
+  vs = slider9 / 100;
+  wd = slider10 / 100;
+  vol = 10 ^ (slider11 / 20);
+  s_inc = 1 / (0.002 * srate);
+
+@block
+  // the MIDI of this block, played at its offsets in @sample
+  mq_n = 0;
+  while (midirecv(m_ofs, m_1, m_2, m_3)) (
+    // every message goes on to the next plugin too, so instruments can be layered
+    midisend(m_ofs, m_1, m_2, m_3);
+    mq_n < 512 ? (
+      MQ[mq_n * 4] = m_ofs;
+      MQ[mq_n * 4 + 1] = m_1;
+      MQ[mq_n * 4 + 2] = m_2;
+      MQ[mq_n * 4 + 3] = m_3;
+      mq_n += 1;
+    );
+  );
+  mq_i = 0;
+  si = 0;
+
+@sample
+  while (mq_i < mq_n && MQ[mq_i * 4] <= si) (
+    midi_ev(MQ[mq_i * 4 + 1], MQ[mq_i * 4 + 2], MQ[mq_i * 4 + 3]);
+    mq_i += 1;
+  );
+  si += 1;
+
+  // the voices
+  sl = 0; sr = 0;
+  v = 0;
+  loop(NV,
+    v_note[v] >= 0 ? (
+      y = 0;
+      life = 0;
+      b = v * NM;
+      loop(NM,
+        p_e[b] > 0 ? (
+          r = p_cf[b] * p_s1[b] - p_df[b] * p_s2[b];
+          p_s2[b] = p_s1[b];
+          p_s1[b] = r;
+          y += r;
+          life += p_e[b];
+          p_e[b] *= p_r[b];
+          p_e[b] < 0.000001 ? p_e[b] = 0;
+        );
+        b += 1;
+      );
+      e = v_env[v];
+      v_pend[v] >= 0 ? e = max(0, e - s_inc) : e = min(1, e + v_ai[v]);
+      v_env[v] = e;
+      q = v_rel[v];
+      (damp && v_gate[v] <= 0) || q < 1 ? ( q *= r_c; v_rel[v] = q; );
+      y *= e;
+      y *= q;
+      sl += y * v_gl[v];
+      sr += y * v_gr[v];
+      v_pend[v] >= 0 ? (
+        e <= 0 ? v_start(v, v_pend[v], v_pvel[v]);
+      ) : (
+        q < 0.0001 || life < 0.00002 ? v_note[v] = -1;
+      );
+    );
+    v += 1;
+  );
+  l = sl * 0.25;
+  r = sr * 0.25;
+
+  // Motor: the vibraphone's rotating discs, a level tremolo (0 Hz = off)
+  mt_ph += mt_dt;
+  mt_ph -= floor(mt_ph);
+  mt_dt > 0 ? (
+    t = 1 - 0.35 * (1 - cos(tpi * mt_ph));
+    l *= t;
+    r *= t;
+  );
+
+  spl0 = l * vol;
+  spl1 = r * vol;

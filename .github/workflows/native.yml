@@ -221,12 +221,14 @@ jobs:
           $v = (Get-ChildItem "$vst3\*.vst3").Count
           $chains = (Get-ChildItem "$reaper\FXChains\NULL JSFX\*.RfxChain" -ErrorAction SilentlyContinue).Count
           "JSFX $jsfx, GFX $gfx, VST3 $v, chains $chains, CLAP present: $(Test-Path $clap)"
-          if ($jsfx -ne 22 -or $gfx -ne 22 -or $v -ne 22) { throw "expected 22 plugins (One Slider + Delay) in each format" }
+          # One Slider (counted from the repo, so a new one needs no edit here) plus Delay
+          $want = (Select-String -Path "DATA\Effects\null_jsfx\*.jsfx" -Pattern '^//category: One Slider' -List).Count + 1
+          if ($jsfx -ne $want -or $gfx -ne $want -or $v -ne $want) { throw "expected $want plugins (One Slider + Delay) in each format" }
           if (-not (Test-Path "$fx\gfx\null_gfx.jsfx-inc")) { throw "null_gfx.jsfx-inc missing" }
           if (-not (Test-Path "$vst3\null_jsfx_delay.vst3\Contents")) { throw "VST3 bundle not copied whole" }
           if (Test-Path $clap) { throw "CLAP was not selected" }
           $ini = (Get-ChildItem "$reaper\presets\js-null_jsfx_*.ini").Count
-          if ($ini -ne 44) { throw "expected 44 preset files (22 JSFX + 22 GFX), got $ini" }
+          if ($ini -ne 2 * $want) { throw "expected $(2 * $want) preset files ($want JSFX + $want GFX), got $ini" }
           $names = (Select-String -Path $mine -Pattern '^Name=(.*)$' | ForEach-Object { $_.Matches[0].Groups[1].Value })
           $nb = (Select-String -Path $mine -Pattern '^NbPresets=(\d+)$').Matches[0].Groups[1].Value
           "Tilt presets: $($names -join ', ') (NbPresets=$nb)"

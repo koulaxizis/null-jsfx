@@ -12,6 +12,6 @@
   ["Fuzz Lows", {"Mode": "Fuzz", "Drive": 40, "Tone": -2, "Mix": 30, "Emphasis": -8, "Output": -4}],
   ["Clean Drive 4x", {"Mode": "Overdrive", "Drive": 50, "Mix": 100, "Input": 3, "Output": -7, "Oversampling": "4x"}],
   ["Bright Exciter", {"Mode": "Tube", "Drive": 20, "Mix": 25, "Emphasis": 10, "Oversampling": "2x"}],
-  ["Bass Focus Tube", {"Drive (%)": 45, "Mix (%)": 70, "Mode": 1, "Focus": 1, "Density (%)": 30}],
-  ["Dense Mid Bus", {"Drive (%)": 25, "Mix (%)": 50, "Mode": 0, "Focus": 2, "Density (%)": 60}]
+  ["Bass Focus Tube", {"Mode": "Tube", "Drive": 45, "Mix": 70, "Focus": "Bass", "Density": 30}],
+  ["Dense Mid Bus", {"Mode": "Tape", "Drive": 25, "Mix": 50, "Focus": "Mid", "Density": 60}]
 ]

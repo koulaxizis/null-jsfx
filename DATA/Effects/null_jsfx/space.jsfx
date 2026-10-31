@@ -2,7 +2,7 @@ desc:NULL Space
 author: Christos Koulaxizis
 tags: reverb space room chamber hall galaxy fdn feedback delay network algorithmic modulation ambience long decay pre-delay
 //category: Essentials
-//NULL JSFX v2.7 • https://nulljsfx.tech • MIT License
+//NULL JSFX v2.8 • https://nulljsfx.tech • MIT License
 
 slider1:2<0,3,1{Room,Chamber,Hall,Galaxy}>Type
 slider2:50<0,100,1>Size (%)

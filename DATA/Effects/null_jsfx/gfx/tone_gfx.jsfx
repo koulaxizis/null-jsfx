@@ -2,7 +2,7 @@ desc:NULL Tone GFX
 author: Christos Koulaxizis
 tags: eq tone bass treble baxandall shelf low high console hi-fi warm bright simple gui
 //category: Essentials
-//NULL JSFX v2.7 • https://nulljsfx.tech • MIT License
+//NULL JSFX v2.8 • https://nulljsfx.tech • MIT License
 
 import null_gfx.jsfx-inc
 

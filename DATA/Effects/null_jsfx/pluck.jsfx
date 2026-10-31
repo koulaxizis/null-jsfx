@@ -2,7 +2,7 @@ desc:NULL Pluck
 author: Christos Koulaxizis
 tags: instrument pluck plucked string karplus strong guitar nylon steel harp koto pipa lute banjo dulcimer strum strummer chord rhythm body midi
 //category: Instruments
-//NULL JSFX v2.7 • https://nulljsfx.tech • MIT License
+//NULL JSFX v2.8 • https://nulljsfx.tech • MIT License
 
 slider1:0<0,7,1{Nylon Guitar,Steel Guitar,Harp,Koto,Pipa,Banjo,Muted Guitar,Dulcimer}>Model
 slider2:18<5,50,1>Pick Position (%)
@@ -16,6 +16,7 @@ slider9:0<0,5,1{Off,Down,Up,Down-Up,Folk,Offbeat}>Strum
 slider10:1<0,3,1{Quarters,Eighths,Sixteenths,Eighth Triplets}>Strum Rate
 slider11:20<0,100,1>Strum Spread (ms)
 slider12:0<-24,12,0.1>Volume (dB)
+slider13:0<0,2,1{Off,Violins,Cellos}>Pizzicato
 
 in_pin:none
 out_pin:Left
@@ -37,7 +38,9 @@ out_pin:Right
   // tempo while stopped, from the first key) at Strum Rate: Down (low to high), Up, Down-Up
   // and Folk (whose up strums hit the top four strings), and Offbeat; Strum Spread is the
   // time from one string to the next, the beat's strums are louder. All notes off (CC 123/120)
-  // stops everything.
+  // stops everything. Pizzicato (appended in 2.8, Off = as before) replaces Model with the
+  // plucked strings of a violin or a cello: a finger's soft pluck, a short decay and the
+  // instrument's body resonances.
   //
   // Memory: 0.. the MIDI of the block (4 per message), 2048.. keys down, 2176.. keys held
   // (with the pedal), 2304.. per-voice values, 3072.. the models, 3584.. the strum patterns,
@@ -92,6 +95,10 @@ out_pin:Right
   mrow(0.25, 0.9, 0.5, 1500, 0, 0.05); mbody(110, 2, 1, 220, 3, 0.6, 440, 3, 0.3); mend(0.7, 1.4);
   // Dulcimer
   mrow(6, 0.75, 0.12, 6000, 2, 0.02); mbody(200, 2, 0.6, 600, 3, 0.5, 1800, 3, 0.3); mend(0.1, 0.6);
+  // Pizzicato Violins
+  mrow(1, 0.7, 0.45, 1500, 0, 0.05); mbody(280, 6, 1.2, 470, 5, 0.8, 2800, 2, 0.4); mend(0.7, 1);
+  // Pizzicato Cellos
+  mrow(1.4, 0.75, 0.45, 1000, 0, 0.05); mbody(110, 5, 1.2, 220, 4, 0.8, 1300, 2, 0.3); mend(0.7, 1.1);
 
   // the strum patterns, 8 steps (0 rest, 1 down, 2 up): Down, Up, Down-Up, Folk, Offbeat
   function prow(a, b, c, d, e, f, g, h)
@@ -346,7 +353,8 @@ out_pin:Right
   m_ofs = m_1 = m_2 = m_3 = 0;
 
 @slider
-  model = max(0, min(7, floor(slider1 + 0.5)));
+  pz = max(0, min(2, floor(slider13 + 0.5)));
+  model = pz > 0 ? 7 + pz : max(0, min(7, floor(slider1 + 0.5)));
   mb = MT + model * 24;
   m_t60 = mb[0]; m_kt = mb[1]; m_lpb = mb[2]; m_exb = mb[3]; m_tw = mb[4]; m_twt = mb[5];
   tri_m = mb[15]; m_gain = mb[16];

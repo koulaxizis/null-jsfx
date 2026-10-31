@@ -1,0 +1,16 @@
+[
+  ["Soft Marimba", {"Model": "Marimba", "Mallet": 25, "Strike": 35, "Resonator": 65}],
+  ["Bright Marimba", {"Model": "Marimba", "Mallet": 75, "Strike": 60, "Velocity": 70}],
+  ["Concert Xylophone", {"Model": "Xylophone", "Mallet": 80, "Strike": 55}],
+  ["Wooden Pop", {"Model": "Xylophone", "Mallet": 55, "Decay": 60, "Resonator": 70}],
+  ["Jazz Vibes", {"Model": "Vibraphone", "Mallet": 40, "Key Up": "Damp", "Damp Time": 200, "Motor": 5.5}],
+  ["Dry Vibes", {"Model": "Vibraphone", "Mallet": 50, "Key Up": "Damp", "Damp Time": 120}],
+  ["Ambient Vibes", {"Model": "Vibraphone", "Mallet": 20, "Decay": 200, "Motor": 3, "Width": 80}],
+  ["Glockenspiel", {"Model": "Glockenspiel", "Mallet": 70, "Strike": 40}],
+  ["Music Box Glock", {"Model": "Glockenspiel", "Mallet": 45, "Decay": 60, "Volume": -2}],
+  ["Tubular Bells", {"Model": "Tubular Bells", "Mallet": 70, "Strike": 50}],
+  ["Church Chimes", {"Model": "Tubular Bells", "Mallet": 85, "Decay": 160, "Width": 30}],
+  ["Timpani", {"Model": "Timpani", "Mallet": 40, "Strike": 70, "Resonator": 55}],
+  ["Timpani Roll Hits", {"Model": "Timpani", "Mallet": 25, "Strike": 80, "Decay": 70}],
+  ["Hard Timpani", {"Model": "Timpani", "Mallet": 85, "Strike": 75, "Velocity": 80}]
+]

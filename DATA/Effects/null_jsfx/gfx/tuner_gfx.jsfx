@@ -2,7 +2,7 @@ desc:NULL Tuner GFX
 author: Christos Koulaxizis
 tags: tuner chromatic strobe pitch guitar bass vocals intonation a4 baroque 432 meter analyzer gui
 //category: Advanced
-//NULL JSFX v2.7 • https://nulljsfx.tech • MIT License
+//NULL JSFX v2.8 • https://nulljsfx.tech • MIT License
 
 import null_gfx.jsfx-inc
 

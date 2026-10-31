@@ -2,7 +2,7 @@ desc:NULL Console Buss GFX
 author: Christos Koulaxizis
 tags: console buss bus master analog mixer summing saturation crosstalk colour warm punchy bright drive glue gui
 //category: Advanced
-//NULL JSFX v2.7 • https://nulljsfx.tech • MIT License
+//NULL JSFX v2.8 • https://nulljsfx.tech • MIT License
 
 import null_gfx.jsfx-inc
 

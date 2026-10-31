@@ -2,7 +2,7 @@ desc:NULL Chorus
 author: Christos Koulaxizis
 tags: chorus modulation thickening detune lfo stereo width ensemble dimension tempo sync
 //category: Essentials
-//NULL JSFX v2.7 • https://nulljsfx.tech • MIT License
+//NULL JSFX v2.8 • https://nulljsfx.tech • MIT License
 
 slider1:5<0.1,20,0.1>Rate (Hz)
 slider2:3<0,10,0.1>Depth (ms)

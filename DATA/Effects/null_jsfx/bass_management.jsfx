@@ -2,7 +2,7 @@ desc:NULL Bass Management
 author: Christos Koulaxizis
 tags: surround bass management crossover subwoofer lfe redirect 5.1 7.1 7.1.4 atmos bed monitoring linkwitz riley
 //category: Advanced
-//NULL JSFX v2.7 • https://nulljsfx.tech • MIT License
+//NULL JSFX v2.8 • https://nulljsfx.tech • MIT License
 
 slider1:2<0,2,1{5.1,7.1,7.1.4}>Bed
 slider2:80<40,200,1>Crossover (Hz)

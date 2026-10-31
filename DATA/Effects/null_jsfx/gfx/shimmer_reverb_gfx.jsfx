@@ -2,7 +2,7 @@ desc:NULL Shimmer Reverb GFX
 author: Christos Koulaxizis
 tags: shimmer reverb octave pitch ambient pad ethereal cinematic gui
 //category: Advanced
-//NULL JSFX v2.7 • https://nulljsfx.tech • MIT License
+//NULL JSFX v2.8 • https://nulljsfx.tech • MIT License
 
 import null_gfx.jsfx-inc
 

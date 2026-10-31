@@ -2,6 +2,21 @@
 const guides = {
 
   // ─── ONE SLIDER ───
+  'air': {
+    title: 'AIR',
+    subtitle: 'One-Knob Top-End Air Shelf',
+    category: 'One Slider',
+    sliders: [
+      { name: 'Amount', range: '0 to 100', desc: 'How much air: up to +9 dB of gentle high shelf, its corner moving from 16 kHz down to 10 kHz as the amount grows; 0 is flat.' }
+    ],
+    uses: ['Opening up a dull mix or master', 'Adding sheen to vocals and acoustic guitars', 'Lifting cymbals and room tone without harshness', 'A last touch of brightness on a bus'],
+    properties: 'Input → RBJ high shelf (slope 0.5, 0..+9 dB, corner 16 kHz → 10 kHz with the amount, held below 0.45 × sample rate) → Output. Zero latency, stereo channels processed independently.',
+    formats: ['JSFX', 'GFX', 'VST3', 'CLAP', 'LV2'],
+    shot: 'assets/img/gfx/air.png',
+    video: 'assets/video/air.mp4',
+    studio: true,
+    page: 'plugins/air/'
+  },
   'brighter': {
     title: 'BRIGHTER',
     subtitle: 'One-Knob Treble Lift',
@@ -871,6 +886,27 @@ const guides = {
     studio: true,
     page: 'plugins/gate/'
   },
+  'glue-comp': {
+    title: 'GLUE COMP',
+    subtitle: 'Stereo Bus Compressor',
+    category: 'Essentials',
+    sliders: [
+      { name: 'Threshold', range: '−40 to 0 dB', desc: 'Level above which the compressor starts to work (4 dB soft knee around it).' },
+      { name: 'Ratio', range: '2 / 4 / 10', desc: 'Compression ratio: 2:1 for gentle glue, 4:1 for control, 10:1 for heavy squash.' },
+      { name: 'Attack', range: '0.1 ms / 0.3 ms / 1 ms / 3 ms / 10 ms / 30 ms', desc: 'How fast the gain reduction sets in; slower attacks let transients through.' },
+      { name: 'Release', range: '0.1 s / 0.3 s / 0.6 s / 1.2 s / Auto', desc: 'How fast the gain recovers; Auto follows the program (fast after peaks, slow under dense passages).' },
+      { name: 'Makeup', range: '0 to 20 dB', desc: 'Gain after compression.' },
+      { name: 'Mix', range: '0 to 100%', desc: 'Blend between the dry and the compressed signal (parallel compression).' },
+      { name: 'Sidechain HPF', range: '0 to 300 Hz', desc: 'High-pass on the detector only, so bass does not pump the mix (0 = off).' }
+    ],
+    uses: ['Gluing a mix bus together', 'Punchy drum bus compression', 'Parallel (New York) compression', 'Gentle control on a master or a group'],
+    properties: 'Input → key (optional one-pole high-pass) → stereo-linked peak detector → gain computer (2/4/10:1, 4 dB soft knee) → smoothing in dB (stepped attack 0.1–30 ms, release 0.1–1.2 s or Auto: the deeper of an 80 ms and a 0.5 s / 1.5 s envelope) → Makeup → Dry/Wet Mix → Output. Zero latency.',
+    formats: ['JSFX', 'GFX', 'VST3', 'CLAP', 'LV2'],
+    shot: 'assets/img/gfx/glue_comp.png',
+    video: 'assets/video/glue_comp.mp4',
+    studio: true,
+    page: 'plugins/glue-comp/'
+  },
   'limiter': {
     title: 'LIMITER',
     subtitle: 'Limiter, Clipper & Brickwall',
@@ -1280,6 +1316,27 @@ const guides = {
     demo: 'sidechain_ducker',
     page: 'plugins/sidechain-ducker/'
   },
+  'space': {
+    title: 'SPACE',
+    subtitle: 'Room, Chamber, Hall & Galaxy Reverb',
+    category: 'Essentials',
+    sliders: [
+      { name: 'Type', range: 'Room / Chamber / Hall / Galaxy', desc: 'The kind of space: Room (short, close), Chamber (dense), Hall (big and smooth) or Galaxy (huge, long and moving).' },
+      { name: 'Size', range: '0 to 100%', desc: 'How big the space is, from half to twice its type\'s size.' },
+      { name: 'Decay', range: '0 to 100%', desc: 'How long the tail lasts: Room 0.2 to 1.5 s, Chamber 0.5 to 3 s, Hall 1 to 8 s, Galaxy 3 to 30 s.' },
+      { name: 'Damping', range: '0 to 100%', desc: 'How fast the highs die away compared with the rest of the tail.' },
+      { name: 'Detune', range: '0 to 100%', desc: 'How much the delay lines drift, for a smooth, chorused tail without metallic ringing.' },
+      { name: 'Pre-Delay', range: '0 to 250 ms', desc: 'Time before the reverb starts, to keep the dry sound clear.' },
+      { name: 'Mix', range: '0 to 100%', desc: 'Blend between the dry and the reverberated signal.' }
+    ],
+    uses: ['Rooms and chambers on drums and vocals', 'Concert halls on strings, piano and choirs', 'Huge ambient tails on pads and sound design', 'Putting a whole mix in one space'],
+    properties: 'Input → Pre-Delay → two Schroeder all-passes per side → 8-line feedback delay network (moving interpolated reads, one-pole damping, 60 dB decay in the decay time, 8×8 Hadamard matrix) → left from the even lines, right from the odd → Dry/Wet Mix → Output. Zero latency.',
+    formats: ['JSFX', 'GFX', 'VST3', 'CLAP', 'LV2'],
+    shot: 'assets/img/gfx/space.png',
+    video: 'assets/video/space.mp4',
+    studio: true,
+    page: 'plugins/space/'
+  },
   'stereo-width': {
     title: 'STEREO WIDTH',
     subtitle: 'M/S Width with Mono Bass',
@@ -1413,6 +1470,25 @@ const guides = {
     studio: true,
     demo: 'tape_echo',
     page: 'plugins/tape-echo/'
+  },
+  'tone': {
+    title: 'TONE',
+    subtitle: 'Bass & Treble Shelves',
+    category: 'Essentials',
+    sliders: [
+      { name: 'Bass', range: '−12 to +12 dB', desc: 'Low shelf gain, ±12 dB.' },
+      { name: 'Treble', range: '−12 to +12 dB', desc: 'High shelf gain, ±12 dB.' },
+      { name: 'Bass Freq', range: '40 to 400 Hz', desc: 'Corner of the low shelf.' },
+      { name: 'Treble Freq', range: '2000 to 16000 Hz', desc: 'Corner of the high shelf.' },
+      { name: 'Output', range: '−12 to +12 dB', desc: 'Output level after the shelves.' }
+    ],
+    uses: ['Quick tone shaping of a track or bus', 'Adding warmth or weight to thin sources', 'Taming dull or harsh recordings', 'A hi-fi style loudness curve'],
+    properties: 'Input → two first-order shelves (one-pole low-passes at Bass Freq and Treble Freq, 6 dB per octave, never ringing) → Output gain. Flat at 0 dB. Zero latency, stereo channels processed independently.',
+    formats: ['JSFX', 'GFX', 'VST3', 'CLAP', 'LV2'],
+    shot: 'assets/img/gfx/tone.png',
+    video: 'assets/video/tone.mp4',
+    studio: true,
+    page: 'plugins/tone/'
   },
   'transient-shaper': {
     title: 'TRANSIENT SHAPER',
@@ -1594,6 +1670,40 @@ const guides = {
     studio: true,
     demo: 'comb_filter',
     page: 'plugins/comb-filter/'
+  },
+  'console-buss': {
+    title: 'CONSOLE BUSS',
+    subtitle: 'Console Summing Bus',
+    category: 'Advanced',
+    sliders: [
+      { name: 'Character', range: 'Clean / Warm / Punchy / Bright', desc: 'Clean: no emphasis, symmetric saturation. Warm: the lows saturate first, with even harmonics. Punchy: the deep lows saturate first. Bright: the highs saturate first.' },
+      { name: 'Drive', range: '0 to 100%', desc: 'How hard the bus is driven (up to 9 or 12 dB depending on the character), and how much the sides leak into each other (up to -30 dB).' },
+      { name: 'Output', range: '−12 to +12 dB', desc: 'Output level after the console stage.' }
+    ],
+    uses: ['Analog summing colour on the mix bus', 'Pairing with Console Channel on the tracks', 'Gentle density on drum and music busses', 'A touch of desk crosstalk for a less clinical stereo image'],
+    properties: 'Input → first-order pre-emphasis shelf (per character) → soft saturator (Padé tanh, 8 dB of headroom) → the exact inverse shelf → crosstalk (the other side high-passed at 1 kHz, up to -30 dB with Drive) → 5 Hz DC blocker → Output. Zero latency.',
+    formats: ['JSFX', 'GFX', 'VST3', 'CLAP', 'LV2'],
+    shot: 'assets/img/gfx/console_buss.png',
+    video: 'assets/video/console_buss.mp4',
+    studio: true,
+    page: 'plugins/console-buss/'
+  },
+  'console-channel': {
+    title: 'CONSOLE CHANNEL',
+    subtitle: 'Console Channel Colour',
+    category: 'Advanced',
+    sliders: [
+      { name: 'Character', range: 'Clean / Warm / Punchy / Bright', desc: 'Clean: no emphasis, symmetric saturation. Warm: the lows saturate first, with even harmonics. Punchy: the deep lows saturate first, with more drive. Bright: the highs saturate first.' },
+      { name: 'Drive', range: '0 to 100%', desc: 'How hard the channel is driven: up to 12, 15 or 18 dB depending on the character; small signals stay clean.' },
+      { name: 'Output', range: '−12 to +12 dB', desc: 'Output level after the console stage.' }
+    ],
+    uses: ['Analog-desk colour on every track of a mix', 'Warming up thin digital sources', 'Adding weight and punch to drums and bass', 'Use with Console Buss on the bus the tracks feed'],
+    properties: 'Input → first-order pre-emphasis shelf (per character) → soft saturator (Padé tanh, 6 dB of headroom, even harmonics for Warm and Punchy) → the exact inverse shelf (flat response at low level) → 5 Hz DC blocker → Output. Zero latency, stereo channels processed independently.',
+    formats: ['JSFX', 'GFX', 'VST3', 'CLAP', 'LV2'],
+    shot: 'assets/img/gfx/console_channel.png',
+    video: 'assets/video/console_channel.mp4',
+    studio: true,
+    page: 'plugins/console-channel/'
   },
   'convolution': {
     title: 'CONVOLUTION',
@@ -2639,6 +2749,30 @@ const guides = {
     video: 'assets/video/keys.mp4',
     page: 'plugins/keys/'
   },
+  'mallets': {
+    title: 'MALLETS',
+    subtitle: 'Marimba, Vibes, Bells & Timpani',
+    category: 'Instruments',
+    sliders: [
+      { name: 'Model', range: 'Marimba / Xylophone / Vibraphone / Glockenspiel / Tubular Bells / Timpani', desc: 'The instrument: Marimba, Xylophone, Vibraphone, Glockenspiel, Tubular Bells or Timpani.' },
+      { name: 'Mallet', range: '0 to 100%', desc: 'How hard the mallet is: soft yarn gives a round, dark tone, hard plastic a bright, clicky one.' },
+      { name: 'Strike', range: '0 to 100%', desc: 'Where the mallet hits: the centre gives a pure tone, the edge brings out more overtones.' },
+      { name: 'Resonator', range: '0 to 100%', desc: 'How much the tube (or the timpani\'s kettle) under the bar reinforces the lowest note: louder and shorter as it rises.' },
+      { name: 'Decay', range: '10 to 400%', desc: 'How long every note rings, from 10 % to 4 times as long.' },
+      { name: 'Key Up', range: 'Ring / Damp', desc: 'Ring lets every note ring out; Damp mutes it over Damp Time when the key comes up, unless the sustain pedal holds it, as on a vibraphone.' },
+      { name: 'Damp Time', range: '10 to 3000 ms', desc: 'How fast a note is muted when Key Up is Damp.' },
+      { name: 'Motor', range: '0 to 12 Hz', desc: 'The vibraphone\'s motor: a tremolo at this rate (0 = off).' },
+      { name: 'Velocity', range: '0 to 100%', desc: 'How much the velocity changes the level and the mallet\'s hardness (0 % = every note the same).' },
+      { name: 'Width', range: '0 to 100%', desc: 'How far the notes spread across the stereo field by pitch.' },
+      { name: 'Volume', range: '−24 to +12 dB', desc: 'The output level (-24 to +12 dB).' }
+    ],
+    uses: ['Marimba and xylophone for film, games, pop and world grooves', 'Vibraphone with the motor and the damper pedal for jazz and lounge', 'Glockenspiel and tubular bells for orchestral, holiday and cinematic cues', 'Timpani rolls and hits for orchestral builds and trailers'],
+    properties: 'An instrument: MIDI in, stereo out, no samples, 24 voices (the same key struck again takes a new voice and the old one keeps ringing; a 25th voice takes the oldest one, released ones first, after a 2 ms fade). Each strike excites six damped resonators at the model\'s mode ratios, each with its own level and decay; the mallet\'s contact time (3 ms soft to 0.24 ms hard) rounds off the high modes and sets the onset, the strike position silences or brings out the antisymmetric modes, and higher keys decay faster. Key Up Ring lets every note ring out, Damp mutes it over Damp Time (the sustain pedal, CC 64, holds it); all notes off (CC 123/120) fades every key. The voices are spread by pitch over Width, then the vibraphone motor (a level tremolo). Sample-accurate and the same in the JSFX, the GFX version and the VST3/CLAP.',
+    formats: ['JSFX', 'GFX', 'VST3', 'CLAP', 'LV2'],
+    shot: 'assets/img/gfx/mallets.png',
+    video: 'assets/video/mallets.mp4',
+    page: 'plugins/mallets/'
+  },
   'organ': {
     title: 'ORGAN',
     subtitle: 'Tonewheel Organ with Rotary Speaker',
@@ -2663,7 +2797,8 @@ const guides = {
       { name: 'Rotary', range: 'Off / Slow / Fast / Stop', desc: 'The built-in rotary speaker: Slow (chorale), Fast (tremolo) or Stop, with the horn and drum speeding up and slowing down like heavy rotors; Off bypasses it. The mod wheel from the middle up switches Slow and Fast.' },
       { name: 'Acceleration', range: '10 to 400%', desc: 'How long the rotors take to change speed (10 to 400% of the natural time; the light horn is always quicker than the heavy drum).' },
       { name: 'Horn/Drum Balance', range: '0 to 100%', desc: 'The mix of the horn (highs) and the drum (lows) of the rotary speaker; 50% is even.' },
-      { name: 'Volume', range: '−24 to +12 dB', desc: 'The output level (-24 to +12 dB).' }
+      { name: 'Volume', range: '−24 to +12 dB', desc: 'The output level (-24 to +12 dB).' },
+      { name: 'Voice', range: 'Tonewheel / Pipe', desc: 'Voice: Tonewheel is the drawbar organ; Pipe turns it into a pipe organ, the drawbars become the stops (each a rank with its own overtones), the wind starts and stops softly, Key Click becomes the pipes\' chiff and there is no percussion.' }
     ],
     uses: ['Gospel, soul and blues organ with fast rotary swells on the mod wheel', 'Jazz organ: 888 drawbars, third percussion and chorus', 'Driven rock organ with key click and a fast rotor', 'Soft pads and ballad organ with gentle chorus and the rotor slow', 'Reggae skank and pop percussion organ'],
     properties: 'An instrument: MIDI in, stereo out, no samples, 16 voices (a 17th key takes the oldest voice, released ones first, after a 1.5 ms fade). Each key sums its nine drawbars as sines at the harmonics 1/2, 3/2, 1, 2, 3, 4, 5, 6 and 8 of its pitch, made from one sine and cosine per key; like tonewheels the harmonics fold back an octave above 5.9 kHz and below 32 Hz. Keys start and stop with 1.5 and 6 ms ramps; velocity does nothing, as on the original. The sum passes the vibrato scanner (a delay swept at 6.9 Hz), the preamp (a soft clipper) and the rotary speaker of NULL Rotary Speaker (an 800 Hz crossover, horn and drum with Doppler and tremolo, two microphones). CC 11 is expression (smoothed), the mod wheel (CC 1) at 64 and up switches the rotor speed, all notes off (CC 123/120) releases every key. Sample-accurate and the same in the JSFX, the GFX version and the VST3/CLAP.',
@@ -2753,7 +2888,8 @@ const guides = {
       { name: 'Strum', range: 'Off / Down / Up / Down-Up / Folk / Offbeat', desc: 'Off plays every key as you press it; Down, Up, Down-Up, Folk and Offbeat strum the chord you hold in time with the host\'s tempo (on its beat while it plays, from the first key while it is stopped).' },
       { name: 'Strum Rate', range: 'Quarters / Eighths / Sixteenths / Eighth Triplets', desc: 'How often the chord is strummed: quarters, eighths, sixteenths or eighth-note triplets.' },
       { name: 'Strum Spread', range: '0 to 100 ms', desc: 'The time from one string to the next within a strum (0 to 100 ms): short for a tight chop, long for a slow roll.' },
-      { name: 'Volume', range: '−24 to +12 dB', desc: 'The output level (-24 to +12 dB).' }
+      { name: 'Volume', range: '−24 to +12 dB', desc: 'The output level (-24 to +12 dB).' },
+      { name: 'Pizzicato', range: 'Off / Violins / Cellos', desc: 'Pizzicato: plays plucked violins or cellos instead of the Model: a finger\'s soft pluck, a short decay and the instrument\'s wooden body; Off uses the Model.' }
     ],
     uses: ['Strummed acoustic rhythm guitar from held chords, synced to the song', 'Fingerpicked nylon guitar and harp lines and arpeggios', 'Koto and pipa melodies with the twang of the string', 'Reggae skanks and funk sixteenths with muted, short strums', 'Banjo rolls, dulcimer and plucked textures for folk and film'],
     properties: 'An instrument: MIDI in, stereo out, no samples, 12 voices (a note played again lets go of the string still sounding in 40 ms and takes a new voice; a 13th takes the oldest voice, released ones first, after a 2 ms fade). Each note is a Karplus-Strong string: a delay line one period long, read with interpolation and corrected for the loop filter so it is in tune, a one-pole low-pass and a loop gain from the decay time at the pitch. The pluck is low-passed noise and the triangle of a string pulled at Pick Position, combed at that position; Koto, Pipa and Banjo start slightly sharp and settle. The strings pass the model\'s body (three resonances) and a DC blocker. The strummer plays the keys held (or held by the sustain pedal, CC 64) at Strum Rate on the host\'s beat, low to high (down) or high to low (up), Strum Spread apart; up strums in Down-Up and Folk hit the top four strings, the beat\'s strums are louder. All notes off (CC 123/120) stops everything. Sample-accurate and the same in the JSFX, the GFX version and the VST3/CLAP.',

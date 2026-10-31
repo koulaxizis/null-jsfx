@@ -1684,6 +1684,20 @@
    "bytes": 94765
   },
   {
+   "id": "mallets",
+   "name": "Mallets",
+   "category": "Instruments",
+   "tags": "instrument mallets marimba xylophone vibraphone vibes glockenspiel tubular bells chimes timpani kettle drum orchestral percussion modal synthesis midi gui",
+   "gfx": [
+    560,
+    416
+   ],
+   "ins": 0,
+   "outs": 2,
+   "sliders": 11,
+   "bytes": 81933
+  },
+  {
    "id": "organ",
    "name": "Organ",
    "category": "Instruments",
@@ -1694,8 +1708,8 @@
    ],
    "ins": 0,
    "outs": 2,
-   "sliders": 20,
-   "bytes": 99994
+   "sliders": 21,
+   "bytes": 106630
   },
   {
    "id": "percussion",
@@ -1718,12 +1732,12 @@
    "tags": "instrument pluck plucked string karplus strong guitar nylon steel harp koto pipa lute banjo dulcimer strum strummer chord rhythm body midi gui",
    "gfx": [
     560,
-    416
+    502
    ],
    "ins": 0,
    "outs": 2,
-   "sliders": 12,
-   "bytes": 102037
+   "sliders": 13,
+   "bytes": 103851
   },
   {
    "id": "sampler",
