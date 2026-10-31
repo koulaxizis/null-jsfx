@@ -82,6 +82,8 @@ const EL = {
   "The everyday mixing and mastering toolbox.": "Η καθημερινή εργαλειοθήκη για μίξη και mastering.",
   "Advanced": "Προχωρημένα",
   "Deeper sound design, creative effects and special processing.": "Βαθύτερος σχεδιασμός ήχου, δημιουργικά εφέ και ειδική επεξεργασία.",
+  "Assisted": "Assisted",
+  "Effects that set themselves: press Learn, play the track, pick a target.": "Εφέ που ρυθμίζονται μόνα τους: πάτα Learn, παίξε το κομμάτι, διάλεξε στόχο.",
   "Instruments": "Όργανα",
   "Synths, keys, bass and drums. Play them from MIDI, no samples needed.": "Synths, πλήκτρα, μπάσα και ντραμς. Παίζονται από MIDI, χωρίς samples.",
   "MIDI": "MIDI",

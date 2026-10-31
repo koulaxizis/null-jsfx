@@ -22,7 +22,7 @@ PLUGINS='@@PLUGINS@@'
 # folder|file|plugins it uses
 CHAINS='@@CHAINS@@'
 
-GROUP_KEYS='one-slider essentials advanced instruments midi'
+GROUP_KEYS='one-slider essentials advanced assisted instruments midi'
 FORMAT_KEYS='jsfx gfx vst3 clap'
 EXTRA_KEYS='chains rack remote fonts'
 
@@ -70,7 +70,7 @@ Without options it asks what to install. With any of these it asks only about th
 and with --yes it asks nothing (everything not given is installed in full).
 
   --formats LIST    $fmts or all       e.g. --formats vst3,clap
-  --groups LIST     one-slider, essentials, advanced, instruments, midi or all
+  --groups LIST     one-slider, essentials, advanced, assisted, instruments, midi or all
   --plugins LIST    single plugins, e.g. --plugins tilt,delay,parametric-eq (see --list)
   --extras LIST     chains (REAPER FX chains), rack (Rack VST3/CLAP), remote (tablet
                     remote for REAPER), fonts (Noto Sans for the GFX look), all or none
@@ -101,7 +101,7 @@ list_plugins() {
 }
 
 group_title() {
-  case "$1" in one-slider) say "One Slider" ;; essentials) say "Essentials" ;; advanced) say "Advanced" ;; instruments) say "Instruments" ;; midi) say "MIDI" ;; esac
+  case "$1" in one-slider) say "One Slider" ;; essentials) say "Essentials" ;; advanced) say "Advanced" ;; assisted) say "Assisted" ;; instruments) say "Instruments" ;; midi) say "MIDI" ;; esac
 }
 group_count() { plugin_rows | awk -F'|' -v g="$1" '$3 == g' | wc -l | tr -d ' '; }
 
@@ -292,6 +292,7 @@ if [ "$plugins_set" = 0 ]; then
       one-slider "One Slider ($(group_count one-slider)): one control, instant result" \
       essentials "Essentials ($(group_count essentials)): the everyday mixing toolbox" \
       advanced "Advanced ($(group_count advanced)): sound design and special processing" \
+      assisted "Assisted ($(group_count assisted)): effects that set themselves from the track" \
       instruments "Instruments ($(group_count instruments)): play them from MIDI or their sequencer" \
       midi "MIDI ($(group_count midi)): MIDI effects, chords and scales before an instrument" \
       pick "Pick single plugins")"
@@ -317,7 +318,7 @@ fi
 # the selected plugins, by stem
 SELECTED=''
 has "$GROUPS_SEL" all && GROUPS_SEL="$GROUP_KEYS"
-for g in $GROUPS_SEL; do has "$GROUP_KEYS" "$g" || die "unknown group: $g (one-slider, essentials, advanced, instruments, midi)"; done
+for g in $GROUPS_SEL; do has "$GROUP_KEYS" "$g" || die "unknown group: $g (one-slider, essentials, advanced, assisted, instruments, midi)"; done
 has "$PICKS" all && GROUPS_SEL="$GROUP_KEYS" PICKS=''
 known=''
 while IFS='|' read -r stem name group gfx native; do

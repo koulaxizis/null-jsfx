@@ -1680,6 +1680,34 @@
    "outs": 2,
    "sliders": 8,
    "bytes": 47741
+  },
+  {
+   "id": "assisted_comp",
+   "name": "Assisted Comp",
+   "category": "Assisted",
+   "tags": "compressor dynamics assisted learn assistant auto threshold vocal drums bus podcast loudness lufs gui",
+   "gfx": [
+    480,
+    400
+   ],
+   "ins": 2,
+   "outs": 2,
+   "sliders": 14,
+   "bytes": 73147
+  },
+  {
+   "id": "assisted_eq",
+   "name": "Assisted EQ",
+   "category": "Assisted",
+   "tags": "eq equalizer assisted learn assistant tonal balance auto vocal mix warm bright radio podcast gui",
+   "gfx": [
+    480,
+    400
+   ],
+   "ins": 2,
+   "outs": 2,
+   "sliders": 16,
+   "bytes": 98956
   }
  ],
  "instruments": [

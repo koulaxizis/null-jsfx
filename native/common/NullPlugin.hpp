@@ -235,6 +235,16 @@ protected:
 
     void applyParameter(uint32_t index) override { valueChanged(index, value(index)); }
 
+    // audio thread: the plugin moved one of its own sliders, as a JSFX writes sliderN in its
+    // code (the Assisted plugins' Learn). Stores the value without calling valueChanged (the
+    // DSP already uses it), so getParameterValue and the saved state carry it; the interface
+    // tells the host when it is open (the Assisted plugins' UI.cpp).
+    void setOwnValue(uint32_t index, float v) noexcept
+    {
+        if (index < fCount)
+            fValues[index].store(v, std::memory_order_relaxed);
+    }
+
 private:
     const SliderInfo* fInfos;
     const uint32_t fCount;

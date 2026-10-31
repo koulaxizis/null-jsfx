@@ -1,0 +1,273 @@
+desc:NULL Assisted Comp
+author: Christos Koulaxizis
+tags: compressor dynamics assisted learn assistant auto threshold vocal drums bus podcast loudness lufs
+//category: Assisted
+//NULL JSFX v2.8 • https://nulljsfx.tech • MIT License
+
+slider1:0<0,1,1{Off,On}>Learn
+slider2:0<0,4,1{Vocal,Drums,Bass,Instrument,Mix}>Source
+slider3:0<0,6,1{Natural,Warm,Bright,Punchy,Radio,Podcast,Lo-Fi}>Target
+slider4:100<0,150,1>Amount (%)
+slider5:0<-6,6,0.1>Squash Trim (dB)
+slider6:0<-2,2,0.1>Speed Trim
+slider7:100<0,100,1>Mix (%)
+slider8:0<-12,12,0.1>Output (dB)
+slider9:0<0,1,1{No,Yes}>-Learned
+slider10:-18<-80,0,0.1>-Learned Loud (dB)
+slider11:-24<-80,0,0.1>-Learned Median (dB)
+slider12:12<0,30,0.1>-Learned Crest (dB)
+slider13:0<0,2000,1>-Learned Onset (ms)
+slider14:-23<-70,0,0.1>-Learned Loudness (LUFS)
+
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
+
+@init
+  ext_noinit = 1;              // play and seek keep tails and state, as in the VST3/CLAP
+  // A compressor that sets itself. Learn (On) listens to the input in 50 ms windows; only
+  // windows above -60 dBFS RMS count. After 15 s of such signal (or when Learn is turned off
+  // after at least 0.5 s) it stores in the hidden Learned sliders: the 90th percentile and the
+  // median of the window levels (dBFS RMS, 0.1 dB bins), the mean crest factor (window peak
+  // over window RMS), the mean time between onsets (a 5 ms envelope jumping 6 dB over a 100 ms
+  // one, at least 50 ms apart; 0 = fewer than two found) and the integrated loudness of
+  // everything it heard (BS.1770: K-weighting, 400 ms blocks every 100 ms, gates at -70 LUFS
+  // and 10 LU under the mean, 0.1 LU bins); Learn goes back to Off.
+  // The settings follow from those, Source and Target whenever a slider moves (the numbers live
+  // in tools/assisted_targets.json): the target's reduction times Amount is what the loud parts
+  // (the 90th percentile) lose; the ratio is the source's plus the target's step (1.5:1-10:1);
+  // the threshold sits so the loud parts lose that reduction, minus Squash Trim; attack runs from
+  // attack[0] ms at a crest factor of 9 dB to attack[1] ms at 15 dB, times the target's factor;
+  // release is a share of the onset interval (release_none without onsets); Speed Trim halves
+  // (+1) or doubles (-1) both; makeup gives back half the reduction. With a loudness target
+  // (Podcast: -16 LUFS) Output also moves the loudness there: the learned loudness, minus
+  // loudness_share of the reduction, plus makeup. Before Learn the Learned sliders hold a
+  // typical signal (loud parts at -18 dBFS, crest 12 dB), so it compresses gently from the
+  // start. The compressor: peak detector (both channels), 6 dB soft knee, gain smoothed with
+  // attack and release; Mix blends the dry signal back after makeup.
+  // BEGIN tables (tools/build_assisted.py, do not edit)
+  as_red = 0; as_ratio = 8; as_radd = 16; as_amul = 24; as_loud = 32;
+  as_red[0] = 3; as_red[1] = 4; as_red[2] = 3; as_red[3] = 6; as_red[4] = 8; as_red[5] = 5; as_red[6] = 8;
+  as_ratio[0] = 3; as_ratio[1] = 4; as_ratio[2] = 4; as_ratio[3] = 3; as_ratio[4] = 2;
+  as_radd[0] = -0.5; as_radd[1] = 0; as_radd[2] = 0; as_radd[3] = 0; as_radd[4] = 2; as_radd[5] = 0; as_radd[6] = 3;
+  as_amul[0] = 1; as_amul[1] = 1.5; as_amul[2] = 0.7; as_amul[3] = 1.5; as_amul[4] = 0.5; as_amul[5] = 1; as_amul[6] = 0.3;
+  as_loud[0] = 0; as_loud[1] = 0; as_loud[2] = 0; as_loud[3] = 0; as_loud[4] = 0; as_loud[5] = -16; as_loud[6] = 0;
+  as_att_lo = 5; as_att_hi = 25; as_rel = 0.6; as_rel_min = 50; as_rel_max = 500; as_rel_none = 150; as_lshare = 0.75;
+  // END tables
+
+  // memory: tables 0-63; level histogram (800 bins) from 1000; loudness histogram counts and
+  // power sums (700 bins each) from 2000 and 3000; the last four 100 ms sums from 3800
+  ac_lh = 1000; ac_nlh = 800;
+  ac_kc = 2000; ac_kp = 3000; ac_nkh = 700;
+  ac_sub = 3800;
+  ac_on = 0;
+  ac_prev = 0;
+  ac_env = 1;
+  ac_gr = 0;
+
+  // K-weighting at this sample rate (as Loudness Meter)
+  ac_k = tan($pi * 1681.974450955533 / srate);
+  ac_vh = 10 ^ (3.999843853973347 / 20);
+  ac_vb = ac_vh ^ 0.4996667741545416;
+  ac_q = 0.7071752369554196;
+  ac_a0 = 1 + ac_k / ac_q + ac_k * ac_k;
+  ac_b0 = (ac_vh + ac_vb * ac_k / ac_q + ac_k * ac_k) / ac_a0;
+  ac_b1 = 2 * (ac_k * ac_k - ac_vh) / ac_a0;
+  ac_b2 = (ac_vh - ac_vb * ac_k / ac_q + ac_k * ac_k) / ac_a0;
+  ac_a1 = 2 * (ac_k * ac_k - 1) / ac_a0;
+  ac_a2 = (1 - ac_k / ac_q + ac_k * ac_k) / ac_a0;
+  ac_k = tan($pi * 38.13547087602444 / srate);
+  ac_q = 0.5003270373238773;
+  ac_c0 = 1 + ac_k / ac_q + ac_k * ac_k;
+  ac_c1 = 2 * (ac_k * ac_k - 1) / ac_c0;
+  ac_c2 = (1 - ac_k / ac_q + ac_k * ac_k) / ac_c0;
+  ac_ef = 1 - exp(-1 / (0.005 * srate));
+  ac_es = 1 - exp(-1 / (0.1 * srate));
+
+  function ac_start()
+  (
+    memset(ac_lh, 0, ac_nlh);
+    memset(ac_kc, 0, ac_nkh);
+    memset(ac_kp, 0, ac_nkh);
+    memset(ac_sub, 0, 4);
+    ac_win = floor(0.05 * srate);
+    ac_need = floor(15 * srate);
+    ac_sublen = floor(0.1 * srate);
+    ac_wn = ac_wp = ac_wpk = 0;
+    ac_n = 0;
+    ac_cs = ac_cn = 0;
+    ac_z1l = ac_z2l = ac_z3l = ac_z4l = 0;
+    ac_z1r = ac_z2r = ac_z3r = ac_z4r = 0;
+    ac_kacc = 0; ac_kn = 0; ac_ksubs = 0; ac_kw = 0;
+    ac_ff = ac_fs = 0;
+    ac_t = 0; ac_last = -1; ac_is = 0; ac_in = 0;
+    ac_on = 1;
+  );
+
+  function ac_round(v) ( floor(v * 10 + 0.5) / 10; );
+
+  // the level under which a share p of the windows lies
+  function ac_pct(p, total) local(c, i, r)
+  (
+    c = 0; i = 0; r = -1;
+    loop(ac_nlh,
+      c += ac_lh[i];
+      r < 0 && c >= p * total ? r = i;
+      i += 1;
+    );
+    -80 + (max(0, r) + 0.5) / 10;
+  );
+
+  function ac_pdb(x) ( x > 0 ? 10 * log10(x) : -200; );
+
+  // tools/assisted_targets.json and the Learned sliders -> the compressor's settings
+  function update() local(lr, amt, sp, t, rel)
+  (
+    ac_src = slider2;
+    ac_tgt = slider3;
+    lr = slider9 >= 0.5;
+    amt = slider4 / 100;
+    ac_red = as_red[ac_tgt] * amt;
+    ac_ratio = max(1.5, min(10, as_ratio[ac_src] + as_radd[ac_tgt]));
+    ac_slope = 1 - 1 / ac_ratio;
+    ac_thr = max(-60, min(0, slider10 - ac_red / ac_slope - slider5));
+    ac_active = ac_red > 0.05 || slider5 > 0;
+    sp = 2 ^ (-slider6);
+    t = max(0, min(1, (slider12 - 9) / 6));
+    ac_att = max(0.1, min(200, (as_att_lo + t * (as_att_hi - as_att_lo)) * as_amul[ac_tgt] * sp));
+    rel = slider13 > 0 ? max(as_rel_min, min(as_rel_max, as_rel * slider13)) : as_rel_none;
+    ac_rel = max(10, min(2000, rel * sp));
+    ac_atc = 1 - exp(-1 / (ac_att * srate / 1000));
+    ac_rtc = 1 - exp(-1 / (ac_rel * srate / 1000));
+    ac_mk = ac_active ? (ac_red + max(0, slider5) * ac_slope) * 0.5 : 0;
+    // the loudness after compression: the learned one, minus the share of the reduction the
+    // loudness loses, plus makeup
+    ac_auto = lr && as_loud[ac_tgt] < 0 ? max(-24, min(24, as_loud[ac_tgt] - (slider14 + ac_mk - as_lshare * 2 * ac_mk))) : 0;
+    ac_mkl = 10 ^ (ac_mk / 20);
+    ac_mix = slider7 / 100;
+    ac_out = 10 ^ ((slider8 + ac_auto) / 20);
+  );
+
+  // the measurements, written to the hidden sliders; Learn goes back to Off
+  function ac_finish() local(total, i, p, c, g, lo)
+  (
+    total = 0; i = 0;
+    loop(ac_nlh, total += ac_lh[i]; i += 1;);
+    slider10 = ac_round(max(-80, min(0, ac_pct(0.9, total))));
+    slider11 = ac_round(max(-80, min(0, ac_pct(0.5, total))));
+    slider12 = ac_round(max(0, min(30, ac_cn > 0 ? ac_cs / ac_cn : 12)));
+    slider13 = ac_in >= 2 ? max(0, min(2000, floor(ac_is / ac_in * 1000 / srate + 0.5))) : 0;
+    // integrated loudness: the mean of the blocks over -70 LUFS, then of those over it - 10 LU
+    p = c = 0; i = 0;
+    loop(ac_nkh, p += ac_kp[i]; c += ac_kc[i]; i += 1;);
+    c > 0 ? (
+      g = -0.691 + 10 * log10(p / c) - 10;
+      lo = max(0, ceil((g + 70) * 10));
+      p = c = 0; i = lo;
+      loop(ac_nkh - lo, p += ac_kp[i]; c += ac_kc[i]; i += 1;);
+      slider14 = c > 0 ? ac_round(max(-70, min(0, -0.691 + 10 * log10(p / c)))) : -70;
+    ) : (
+      slider14 = -70;
+    );
+    slider9 = 1;
+    slider1 = 0;
+    ac_on = 0;
+    ac_prev = 0;
+    sliderchange(slider1); sliderchange(slider9); sliderchange(slider10); sliderchange(slider11);
+    sliderchange(slider12); sliderchange(slider13); sliderchange(slider14);
+    update();
+  );
+
+  update();
+
+@slider
+  update();
+
+@block
+  // Learn turned on starts listening; turned off early, it finishes with what it heard
+  // (0.5 s at least) or gives up. Checked per block, however the slider was set.
+  slider1 >= 0.5 && ac_prev < 0.5 ? ac_start();
+  slider1 < 0.5 && ac_on ? (
+    ac_n >= 0.5 * srate ? ac_finish() : ac_on = 0;
+  );
+  ac_prev = slider1 >= 0.5 ? 1 : 0;
+
+@sample
+  ac_on ? (
+    // 50 ms windows: level and crest factor
+    ac_pw = (spl0 * spl0 + spl1 * spl1) * 0.5;
+    ac_wp += ac_pw;
+    ac_wpk = max(ac_wpk, max(abs(spl0), abs(spl1)));
+    ac_wn += 1;
+    // onsets: a fast envelope jumping 6 dB over a slow one, 50 ms apart at least
+    ac_x = max(abs(spl0), abs(spl1));
+    ac_ff += (ac_x - ac_ff) * ac_ef;
+    ac_fs += (ac_x - ac_fs) * ac_es;
+    ac_ff > 0.003 && ac_ff > 2 * ac_fs && (ac_last < 0 || ac_t - ac_last >= 0.05 * srate) ? (
+      ac_last >= 0 && ac_t - ac_last <= 2 * srate ? ( ac_is += ac_t - ac_last; ac_in += 1; );
+      ac_last = ac_t;
+    );
+    ac_t += 1;
+    // loudness: K-weighted power in 100 ms sums, a 400 ms block every 100 ms
+    ac_y = ac_b0 * spl0 + ac_z1l;
+    ac_z1l = ac_b1 * spl0 - ac_a1 * ac_y + ac_z2l;
+    ac_z2l = ac_b2 * spl0 - ac_a2 * ac_y;
+    ac_kl = ac_y + ac_z3l;
+    ac_z3l = -2 * ac_y - ac_c1 * ac_kl + ac_z4l;
+    ac_z4l = ac_y - ac_c2 * ac_kl;
+    ac_y = ac_b0 * spl1 + ac_z1r;
+    ac_z1r = ac_b1 * spl1 - ac_a1 * ac_y + ac_z2r;
+    ac_z2r = ac_b2 * spl1 - ac_a2 * ac_y;
+    ac_kr = ac_y + ac_z3r;
+    ac_z3r = -2 * ac_y - ac_c1 * ac_kr + ac_z4r;
+    ac_z4r = ac_y - ac_c2 * ac_kr;
+    ac_kacc += ac_kl * ac_kl + ac_kr * ac_kr;
+    ac_kn += 1;
+    ac_kn >= ac_sublen ? (
+      ac_sub[ac_kw] = ac_kacc;
+      ac_kw = (ac_kw + 1) % 4;
+      ac_ksubs += 1;
+      ac_kacc = 0;
+      ac_kn = 0;
+      ac_ksubs >= 4 ? (
+        ac_bp = (ac_sub[0] + ac_sub[1] + ac_sub[2] + ac_sub[3]) / (4 * ac_sublen);
+        ac_bl = ac_pdb(ac_bp) - 0.691;
+        ac_bl > -70 ? (
+          ac_bi = min(ac_nkh - 1, floor((ac_bl + 70) * 10));
+          ac_kc[ac_bi] += 1;
+          ac_kp[ac_bi] += ac_bp;
+        );
+      );
+    );
+    ac_wn >= ac_win ? (
+      ac_wp > 0.000001 * ac_wn ? (
+        ac_wr = sqrt(ac_wp / ac_wn);
+        ac_lv = 20 * log10(ac_wr);
+        ac_lh[max(0, min(ac_nlh - 1, floor((ac_lv + 80) * 10)))] += 1;
+        ac_cs += 20 * log10(max(ac_wpk, ac_wr) / ac_wr);
+        ac_cn += 1;
+        ac_n += ac_wn;
+      );
+      ac_wp = 0;
+      ac_wpk = 0;
+      ac_wn = 0;
+      ac_n >= ac_need ? ac_finish();
+    );
+  );
+
+  // the compressor: peak detector, soft knee, gain smoothed with attack and release
+  ac_active ? (
+    ac_x = max(max(abs(spl0), abs(spl1)), 0.000001);
+    ac_ex = 20 * log10(ac_x) - ac_thr;
+    ac_tg = ac_ex <= 0 ? 0 : ac_ex < 6 ? ac_slope * ac_ex * ac_ex / 12 : ac_slope * (ac_ex - 3);
+    ac_gt = 10 ^ (-ac_tg / 20);
+    ac_env += (ac_gt - ac_env) * (ac_gt < ac_env ? ac_atc : ac_rtc);
+  ) : (
+    ac_env = 1;
+  );
+  ac_gr = -20 * log10(ac_env);
+  ac_w0 = spl0 * ac_env * ac_mkl;
+  ac_w1 = spl1 * ac_env * ac_mkl;
+  spl0 = (spl0 + (ac_w0 - spl0) * ac_mix) * ac_out;
+  spl1 = (spl1 + (ac_w1 - spl1) * ac_mix) * ac_out;

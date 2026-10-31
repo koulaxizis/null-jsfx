@@ -1,0 +1,14 @@
+[
+  ["Vocal Natural", {"Source": "Vocal", "Target": "Natural"}],
+  ["Vocal Warm", {"Source": "Vocal", "Target": "Warm"}],
+  ["Vocal Upfront", {"Source": "Vocal", "Target": "Punchy"}],
+  ["Radio Voice", {"Source": "Vocal", "Target": "Radio"}],
+  ["Podcast Voice", {"Source": "Vocal", "Target": "Podcast"}],
+  ["Punchy Drums", {"Source": "Drums", "Target": "Punchy"}],
+  ["Parallel Drums", {"Source": "Drums", "Target": "Lo-Fi", "Mix (%)": 40}],
+  ["Steady Bass", {"Source": "Bass", "Target": "Natural"}],
+  ["Instrument Glue", {"Source": "Instrument", "Target": "Natural"}],
+  ["Mix Glue", {"Source": "Mix", "Target": "Natural", "Amount (%)": 70}],
+  ["Mix Punch", {"Source": "Mix", "Target": "Punchy", "Amount (%)": 60}],
+  ["Gentle Leveler", {"Source": "Mix", "Target": "Warm", "Amount (%)": 50}]
+]
