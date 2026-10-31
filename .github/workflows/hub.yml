@@ -92,7 +92,8 @@ jobs:
 
   ui:
     timeout-minutes: 20
-    runs-on: ubuntu-latest
+    # Playwright 1.56 has no Chromium for ubuntu-latest (26.04), so this job stays on 24.04
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4

@@ -1232,4 +1232,5 @@ entry and the Bible delta.
   - `tests/run.sh` on the ten files, also at 8000, 22050, 1234.57 and 12345.68 Hz; `tests/stress.sh` on the five plain files.
   - `native/scripts/build.sh --test --plugins "passive_eq;speaker_sim;transient_split;multi_tap_delay;drum_trigger"`: ctest 131/131 (compare, gfx, presets, state and module tests of the five).
   - `web/test/run.sh`, the generators (`build_site`, `build_remote`, `build_bible`, `build_catalog --check`, `build_presets`), `tests/lint.py` and `tests/bible_order.py`.
+- **CI:** `ubuntu-latest` became Ubuntu 26.04, where Playwright 1.56 installs no Chromium; the two Playwright jobs (`test.yml` remote, `hub.yml` ui) run on `ubuntu-24.04`.
 - **Next:** wave B (B12).
