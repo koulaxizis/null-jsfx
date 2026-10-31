@@ -33,6 +33,7 @@ jobs:
       - run: python3 tools/build_site.py --check
       - run: python3 tools/build_chains.py --check
       - run: python3 tools/build_presets.py --check
+      - run: python3 tools/build_assisted.py --check
       - run: python3 tools/build_bible.py --check
       # the Bible's changelog (Part X) stays oldest first, newest at the bottom (R26)
       - run: python3 tests/bible_order.py

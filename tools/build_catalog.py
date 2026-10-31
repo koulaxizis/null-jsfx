@@ -182,7 +182,9 @@ def catalog(version, notes, date):
         "previous": previous(version),
         # the music of the plugin demos without any plugin
         "demo_dry": f"{SITE}assets/audio/demos/dry.mp3" if demos() else None,
-        "groups": [{"id": key, "name": title, "desc": desc} for title, key, desc in CATEGORIES],
+        # a group whose plugins all wait for launch (R18) is left out, as on the site
+        "groups": [{"id": key, "name": title, "desc": desc} for title, key, desc in CATEGORIES
+                   if any(p["group"] == key for p in plugs)],
         # the Rack is in "plugins" with group "extras"; the Hub lists it with these
 
         "plugins": plugs + [rack()],

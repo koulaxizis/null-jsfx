@@ -1,0 +1,15 @@
+[
+  ["Vocal Warm", {"Source": "Vocal", "Target": "Warm"}],
+  ["Vocal Bright", {"Source": "Vocal", "Target": "Bright"}],
+  ["Radio Voice", {"Source": "Vocal", "Target": "Radio"}],
+  ["Podcast Voice", {"Source": "Vocal", "Target": "Podcast"}],
+  ["Phone Voice", {"Source": "Vocal", "Target": "Lo-Fi"}],
+  ["Punchy Drums", {"Source": "Drums", "Target": "Punchy"}],
+  ["Natural Drums", {"Source": "Drums", "Target": "Natural"}],
+  ["Warm Bass", {"Source": "Bass", "Target": "Warm"}],
+  ["Bright Instrument", {"Source": "Instrument", "Target": "Bright"}],
+  ["Natural Instrument", {"Source": "Instrument", "Target": "Natural"}],
+  ["Mix Natural", {"Source": "Mix", "Target": "Natural"}],
+  ["Mix Warm", {"Source": "Mix", "Target": "Warm", "Amount": 75}],
+  ["Mix Bright", {"Source": "Mix", "Target": "Bright", "Amount": 75}]
+]

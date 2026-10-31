@@ -1,0 +1,542 @@
+desc:NULL Assisted EQ GFX
+author: Christos Koulaxizis
+tags: eq equalizer assisted learn assistant tonal balance auto vocal mix warm bright radio podcast gui
+//category: Assisted
+//NULL JSFX v2.8 • https://nulljsfx.tech • MIT License
+
+import null_gfx.jsfx-inc
+
+slider1:0<0,1,1{Off,On}>-Learn
+slider2:0<0,4,1{Vocal,Drums,Bass,Instrument,Mix}>-Source
+slider3:0<0,6,1{Natural,Warm,Bright,Punchy,Radio,Podcast,Lo-Fi}>-Target
+slider4:100<0,150,1>-Amount (%)
+slider5:0<-6,6,0.1>-Low Trim (dB)
+slider6:0<-6,6,0.1>-Mid Trim (dB)
+slider7:0<-6,6,0.1>-High Trim (dB)
+slider8:0<-12,12,0.1>-Output (dB)
+slider9:0<0,1,1{No,Yes}>-Learned
+slider10:0<-24,24,0.1>-Learned Low (dB)
+slider11:0<-24,24,0.1>-Learned Mud (dB)
+slider12:300<200,500,1>-Learned Mud Freq (Hz)
+slider13:0<-24,24,0.1>-Learned Honk (dB)
+slider14:0<-24,24,0.1>-Learned Presence (dB)
+slider15:0<-24,24,0.1>-Learned Air (dB)
+slider16:20<20,500,1>-Learned Lowest (Hz)
+
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
+
+@init
+  ext_noinit = 1;              // play and seek keep tails and state, as in the VST3/CLAP
+  // An EQ that sets itself. Learn (On) listens to the input: a bank of 29 third-octave band
+  // filters (25 Hz-16 kHz, the bands above 0.45 * srate left out) sums the energy of the mono
+  // input in 50 ms windows, and only windows above -60 dBFS RMS count, so silence does not
+  // skew it. After 15 s of such signal (or when Learn is turned off after at least 0.5 s) the
+  // band levels are compared with a -4.5 dB/oct slope, levelled at 500 Hz-4 kHz, and the
+  // average deviation of five regions (low 63-125 Hz, mud 200-500 Hz, honk 800 Hz-1.6 kHz,
+  // presence 2-5 kHz, air 8-16 kHz; for mud, the loudest band of its region and its two
+  // neighbours, since mud is a resonance), the loudest mud band, and the lowest band within
+  // 30 dB of the loudest are stored in the hidden Learned sliders; Learn goes back to Off.
+  // Those are measurements only: the corrections are worked out from them, Source and Target
+  // whenever a slider moves, so Source, Target and Amount can change without learning again.
+  // Correction per region: the deviation from what a healthy source of this kind shows
+  // (source_ref) beyond a deadband, times -correction, held between max_cut and max_boost
+  // (the mud region only cuts), plus the target's own flavour, times Amount; the trims are
+  // added after. A learned high-pass sits at 0.7x the lowest band, inside the source's range;
+  // the target can add its own high-pass and low-pass (Radio, Podcast, Lo-Fi). Output is
+  // compensated automatically for the level change (the EQ's gain over the bands, weighted by
+  // the learned spectrum), so A/B compares tone, not loudness. Before Learn, with Target
+  // Natural, the EQ is flat. The numbers live in tools/assisted_targets.json.
+  // BEGIN tables (tools/build_assisted.py, do not edit)
+  as_flav = 0; as_thp = 40; as_tlp = 48; as_sref = 56; as_shpl = 88; as_shph = 96;
+  as_flav[0] = 0; as_flav[1] = 0; as_flav[2] = 0; as_flav[3] = 0; as_flav[4] = 0; as_flav[5] = 1.5; as_flav[6] = 0; as_flav[7] = 0;
+  as_flav[8] = -1.5; as_flav[9] = -1.5; as_flav[10] = -0.5; as_flav[11] = -1; as_flav[12] = 0; as_flav[13] = 1; as_flav[14] = 2.5; as_flav[15] = 1;
+  as_flav[16] = -2; as_flav[17] = 0; as_flav[18] = 1.5; as_flav[19] = 0; as_flav[20] = -1; as_flav[21] = -1.5; as_flav[22] = 0; as_flav[23] = 2.5;
+  as_flav[24] = -1; as_flav[25] = -1; as_flav[26] = -2; as_flav[27] = 0; as_flav[28] = 1.5; as_flav[29] = 0; as_flav[30] = 0; as_flav[31] = 0;
+  as_flav[32] = 2; as_flav[33] = 0; as_flav[34] = 0;
+  as_thp[0] = 0; as_thp[1] = 0; as_thp[2] = 0; as_thp[3] = 0; as_thp[4] = 100; as_thp[5] = 80; as_thp[6] = 300;
+  as_tlp[0] = 0; as_tlp[1] = 0; as_tlp[2] = 0; as_tlp[3] = 0; as_tlp[4] = 0; as_tlp[5] = 0; as_tlp[6] = 3400;
+  as_sref[0] = -6; as_sref[1] = 0; as_sref[2] = 0; as_sref[3] = 0; as_sref[4] = -2; as_sref[5] = 2; as_sref[6] = 0; as_sref[7] = -1;
+  as_sref[8] = 0; as_sref[9] = 0; as_sref[10] = 8; as_sref[11] = 3; as_sref[12] = -2; as_sref[13] = -6; as_sref[14] = -12; as_sref[15] = 0;
+  as_sref[16] = 0; as_sref[17] = 0; as_sref[18] = 0; as_sref[19] = -2; as_sref[20] = 0; as_sref[21] = 0; as_sref[22] = 0; as_sref[23] = 0;
+  as_sref[24] = 0;
+  as_shpl[0] = 60; as_shpl[1] = 20; as_shpl[2] = 20; as_shpl[3] = 40; as_shpl[4] = 20;
+  as_shph[0] = 120; as_shph[1] = 40; as_shph[2] = 35; as_shph[3] = 100; as_shph[4] = 30;
+  as_k = 0.6; as_dead = 1.5; as_cut = -6; as_boost = 4;
+  // END tables
+
+  // memory: tables 0-127, analysis bands from 200, EQ stages from 600
+  ae_nb = 29;
+  ae_f = 200; ae_c0 = 240; ae_c1 = 280; ae_c2 = 320; ae_z1 = 360; ae_z2 = 400;
+  ae_wa = 440; ae_acc = 480; ae_dev = 520;
+  ae_k = 0;
+  loop(ae_nb,
+    ae_f[ae_k] = 1000 * 10 ^ ((ae_k - 16) / 10);
+    ae_k += 1;
+  );
+  // EQ stages: 0 HPF, 1 low shelf, 2 mud, 3 honk, 4 presence, 5 air shelf, 6 LPF;
+  // coefficients b0 b1 b2 a1 a2 at 600 + 5 * stage, state l1 l2 r1 r2 at 640 + 4 * stage
+  ae_cf = 600; ae_st = 640; ae_ns = 7;
+  memset(ae_st, 0, 4 * ae_ns);
+  ae_on = 0;
+  ae_prev = 0;
+
+  // a third-octave RBJ band-pass, its bandwidth set in the digital domain (no warping)
+  function ae_band(i) local(w, x, al)
+  (
+    w = 2 * $pi * ae_f[i] / srate;
+    x = log(2) / 6 * w / sin(w);
+    al = sin(w) * (exp(x) - exp(-x)) / 2;
+    ae_c0[i] = al / (1 + al);
+    ae_c1[i] = -2 * cos(w) / (1 + al);
+    ae_c2[i] = (1 - al) / (1 + al);
+  );
+
+  function ae_start() local(i)
+  (
+    ae_nv = 0;
+    i = 0;
+    loop(ae_nb,
+      ae_f[i] < 0.45 * srate ? (
+        ae_band(i);
+        ae_nv = i + 1;
+      );
+      i += 1;
+    );
+    memset(ae_z1, 0, ae_nb); memset(ae_z2, 0, ae_nb);
+    memset(ae_wa, 0, ae_nb); memset(ae_acc, 0, ae_nb);
+    ae_we = 0; ae_wn = 0; ae_n = 0;
+    ae_win = floor(0.05 * srate);
+    ae_need = floor(15 * srate);
+    ae_on = 1;
+  );
+
+  // mean deviation of bands i0..i1 (only the analysed ones), 0 when none
+  function ae_region(i0, i1) local(s, n, i)
+  (
+    s = n = 0;
+    i = i0;
+    loop(i1 - i0 + 1,
+      i < ae_nv ? ( s += ae_dev[i]; n += 1; );
+      i += 1;
+    );
+    n > 0 ? s / n : 0;
+  );
+
+  function ae_round(v) ( floor(v * 10 + 0.5) / 10; );
+
+  // RBJ coefficients of stage s: type 0 off, 1 peak, 2 low shelf, 3 high shelf, 4 HPF, 5 LPF
+  function ae_set(s, type, f, q, g) local(a, w, cs, al, sa, b0, b1, b2, a0, a1, a2, p)
+  (
+    p = ae_cf + 5 * s;
+    type == 0 ? (
+      p[0] = 1; p[1] = 0; p[2] = 0; p[3] = 0; p[4] = 0;
+    ) : (
+      a = 10 ^ (g / 40);
+      w = 2 * $pi * min(f, 0.45 * srate) / srate;
+      cs = cos(w);
+      al = sin(w) / (2 * q);
+      sa = 2 * sqrt(a) * al;
+      type == 1 ? (
+        b0 = 1 + al * a; b1 = -2 * cs; b2 = 1 - al * a;
+        a0 = 1 + al / a; a1 = -2 * cs; a2 = 1 - al / a;
+      ) : type == 2 ? (
+        b0 = a * ((a + 1) - (a - 1) * cs + sa);
+        b1 = 2 * a * ((a - 1) - (a + 1) * cs);
+        b2 = a * ((a + 1) - (a - 1) * cs - sa);
+        a0 = (a + 1) + (a - 1) * cs + sa;
+        a1 = -2 * ((a - 1) + (a + 1) * cs);
+        a2 = (a + 1) + (a - 1) * cs - sa;
+      ) : type == 3 ? (
+        b0 = a * ((a + 1) + (a - 1) * cs + sa);
+        b1 = -2 * a * ((a - 1) + (a + 1) * cs);
+        b2 = a * ((a + 1) + (a - 1) * cs - sa);
+        a0 = (a + 1) - (a - 1) * cs + sa;
+        a1 = 2 * ((a - 1) - (a + 1) * cs);
+        a2 = (a + 1) - (a - 1) * cs - sa;
+      ) : type == 4 ? (
+        b0 = (1 + cs) / 2; b1 = -(1 + cs); b2 = (1 + cs) / 2;
+        a0 = 1 + al; a1 = -2 * cs; a2 = 1 - al;
+      ) : (
+        b0 = (1 - cs) / 2; b1 = 1 - cs; b2 = (1 - cs) / 2;
+        a0 = 1 + al; a1 = -2 * cs; a2 = 1 - al;
+      );
+      p[0] = b0 / a0; p[1] = b1 / a0; p[2] = b2 / a0; p[3] = a1 / a0; p[4] = a2 / a0;
+    );
+  );
+
+  // |H|^2 of the whole EQ at frequency f
+  function ae_mag2(f) local(w, c1, c2, s, p, n, d, m)
+  (
+    w = 2 * $pi * f / srate;
+    c1 = cos(w); c2 = cos(2 * w);
+    m = 1;
+    s = 0;
+    loop(ae_ns,
+      p = ae_cf + 5 * s;
+      n = p[0] * p[0] + p[1] * p[1] + p[2] * p[2] + 2 * (p[0] * p[1] + p[1] * p[2]) * c1 + 2 * p[0] * p[2] * c2;
+      d = 1 + p[3] * p[3] + p[4] * p[4] + 2 * (p[3] + p[3] * p[4]) * c1 + 2 * p[4] * c2;
+      m *= n / d;
+      s += 1;
+    );
+    m;
+  );
+
+  // the correction of region r: measured deviation d against the source's reference
+  function ae_corr(r, d) local(x, c)
+  (
+    x = d - as_sref[ae_src * 5 + r];
+    c = abs(x) > as_dead ? -as_k * (x - sign(x) * as_dead) : 0;
+    c = max(as_cut, min(as_boost, c));
+    r == 1 ? c = min(0, c);
+    c;
+  );
+
+  function update() local(lr, amt, i, sw, sh, w, db, r, nb)
+  (
+    ae_src = slider2;
+    ae_tgt = slider3;
+    lr = slider9 >= 0.5;
+    amt = slider4 / 100;
+    ae_mreg[0] = slider10; ae_mreg[1] = slider11; ae_mreg[2] = slider13;
+    ae_mreg[3] = slider14; ae_mreg[4] = slider15;
+    i = 0;
+    loop(5,
+      ae_g[i] = amt * max(as_cut, min(as_boost, as_flav[ae_tgt * 5 + i] + (lr ? ae_corr(i, ae_mreg[i]) : 0)));
+      i += 1;
+    );
+    ae_g[0] += slider5;
+    ae_g[2] += slider6;
+    ae_g[4] += slider7;
+    // high-pass: the learned one (inside the source's range) and the target's, the higher wins
+    ae_hp = lr ? max(as_shpl[ae_src], min(as_shph[ae_src], 0.7 * slider16)) : 0;
+    ae_hp <= 20 ? ae_hp = 0;
+    ae_hp = max(ae_hp, as_thp[ae_tgt]);
+    ae_lp = as_tlp[ae_tgt];
+    ae_mf = lr ? slider12 : 300;
+    ae_set(0, ae_hp > 0 && amt > 0 ? 4 : 0, ae_hp, 0.7071, 0);
+    ae_set(1, 2, 100, 0.7071, ae_g[0]);
+    ae_set(2, 1, ae_mf, 1.2, ae_g[1]);
+    ae_set(3, 1, 1000, 1, ae_g[2]);
+    ae_set(4, 1, 3000, 0.8, ae_g[3]);
+    ae_set(5, 3, 10000, 0.7071, ae_g[4]);
+    ae_set(6, ae_lp > 0 && amt > 0 ? 5 : 0, ae_lp, 0.7071, 0);
+    // automatic level: the EQ's power gain over the analysis bands, each weighted by the
+    // -4.5 dB/oct slope plus the learned deviation of its region
+    sw = sh = 0;
+    nb = 0;
+    i = 0;
+    loop(ae_nb,
+      ae_f[i] < 0.45 * srate ? (
+        r = i >= 4 && i <= 7 ? 0 : i >= 9 && i <= 13 ? 1 : i >= 15 && i <= 18 ? 2 : i >= 19 && i <= 23 ? 3 : i >= 25 ? 4 : -1;
+        db = -4.5 * log(ae_f[i] / 1000) / log(2) + (lr && r >= 0 ? ae_mreg[r] : 0);
+        w = 10 ^ (db / 10);
+        sw += w;
+        sh += w * ae_mag2(ae_f[i]);
+      );
+      i += 1;
+    );
+    ae_auto = sh > 0 ? max(-12, min(12, -10 * log10(sh / sw))) : 0;
+    ae_out = 10 ^ ((slider8 + ae_auto) / 20);
+  );
+
+  // the measurements, written to the hidden sliders; Learn goes back to Off
+  function ae_finish() local(i, mx, s, n, lo)
+  (
+    i = 0; mx = -1000;
+    loop(ae_nv,
+      ae_dev[i] = 10 * log10(ae_acc[i] / ae_n + 0.000000000000000000000000000001);
+      mx = max(mx, ae_dev[i]);
+      i += 1;
+    );
+    // the lowest band within 30 dB of the loudest
+    lo = 0;
+    i = ae_nv - 1;
+    loop(ae_nv,
+      ae_dev[i] > mx - 30 ? lo = i;
+      i -= 1;
+    );
+    i = 0;
+    loop(ae_nv,
+      ae_dev[i] += 4.5 * log(ae_f[i] / 1000) / log(2);
+      i += 1;
+    );
+    s = n = 0;
+    i = 13;                                  // 500 Hz-4 kHz: bands 13-22
+    loop(10,
+      i < ae_nv ? ( s += ae_dev[i]; n += 1; );
+      i += 1;
+    );
+    s = n > 0 ? s / n : 0;
+    i = 0;
+    loop(ae_nv,
+      ae_dev[i] -= s;
+      i += 1;
+    );
+    slider10 = ae_round(max(-24, min(24, ae_region(4, 7))));
+    // mud: the loudest band of 200-500 Hz and its two neighbours (a resonance, not the average)
+    mx = 9;
+    i = 10;
+    loop(4,
+      i < ae_nv && ae_dev[i] > ae_dev[mx] ? mx = i;
+      i += 1;
+    );
+    slider11 = ae_round(max(-24, min(24, ae_region(max(9, mx - 1), min(13, mx + 1)))));
+    slider12 = max(200, min(500, floor(ae_f[mx] + 0.5)));
+    slider13 = ae_round(max(-24, min(24, ae_region(15, 18))));
+    slider14 = ae_round(max(-24, min(24, ae_region(19, 23))));
+    slider15 = ae_round(max(-24, min(24, ae_region(25, 28))));
+    slider16 = max(20, min(500, floor(ae_f[lo] + 0.5)));
+    slider9 = 1;
+    slider1 = 0;
+    ae_on = 0;
+    ae_prev = 0;
+    sliderchange(slider1); sliderchange(slider9); sliderchange(slider10); sliderchange(slider11);
+    sliderchange(slider12); sliderchange(slider13); sliderchange(slider14); sliderchange(slider15);
+    sliderchange(slider16);
+    update();
+  );
+
+  ae_mreg = 128; ae_g = 136;
+  update();
+
+  // ---- factory presets: generated by tools/build_presets.py, do not edit ----
+  ng_pre_n = 14;
+  strcpy(#ng_h_ix, "");
+  ng_hist_add(1); ng_hist_add(2); ng_hist_add(3); ng_hist_add(4); ng_hist_add(5); ng_hist_add(6); ng_hist_add(7); ng_hist_add(8); ng_hist_add(9); ng_hist_add(10); ng_hist_add(11); ng_hist_add(12); ng_hist_add(13); ng_hist_add(14); ng_hist_add(15); ng_hist_add(16);
+  ng_hist_init();
+
+  function ng_preset_load(p)
+  (
+    p == 0 ? ( ng_slider_set(1, 0); ng_slider_set(2, 0); ng_slider_set(3, 0); ng_slider_set(4, 100); ng_slider_set(5, 0); ng_slider_set(6, 0); ng_slider_set(7, 0); ng_slider_set(8, 0); ng_slider_set(9, 0); ng_slider_set(10, 0); ng_slider_set(11, 0); ng_slider_set(12, 300); ng_slider_set(13, 0); ng_slider_set(14, 0); ng_slider_set(15, 0); ng_slider_set(16, 20); );
+    p == 1 ? ( ng_slider_set(1, 0); ng_slider_set(2, 0); ng_slider_set(3, 1); ng_slider_set(4, 100); ng_slider_set(5, 0); ng_slider_set(6, 0); ng_slider_set(7, 0); ng_slider_set(8, 0); ng_slider_set(9, 0); ng_slider_set(10, 0); ng_slider_set(11, 0); ng_slider_set(12, 300); ng_slider_set(13, 0); ng_slider_set(14, 0); ng_slider_set(15, 0); ng_slider_set(16, 20); );
+    p == 2 ? ( ng_slider_set(1, 0); ng_slider_set(2, 0); ng_slider_set(3, 2); ng_slider_set(4, 100); ng_slider_set(5, 0); ng_slider_set(6, 0); ng_slider_set(7, 0); ng_slider_set(8, 0); ng_slider_set(9, 0); ng_slider_set(10, 0); ng_slider_set(11, 0); ng_slider_set(12, 300); ng_slider_set(13, 0); ng_slider_set(14, 0); ng_slider_set(15, 0); ng_slider_set(16, 20); );
+    p == 3 ? ( ng_slider_set(1, 0); ng_slider_set(2, 0); ng_slider_set(3, 4); ng_slider_set(4, 100); ng_slider_set(5, 0); ng_slider_set(6, 0); ng_slider_set(7, 0); ng_slider_set(8, 0); ng_slider_set(9, 0); ng_slider_set(10, 0); ng_slider_set(11, 0); ng_slider_set(12, 300); ng_slider_set(13, 0); ng_slider_set(14, 0); ng_slider_set(15, 0); ng_slider_set(16, 20); );
+    p == 4 ? ( ng_slider_set(1, 0); ng_slider_set(2, 0); ng_slider_set(3, 5); ng_slider_set(4, 100); ng_slider_set(5, 0); ng_slider_set(6, 0); ng_slider_set(7, 0); ng_slider_set(8, 0); ng_slider_set(9, 0); ng_slider_set(10, 0); ng_slider_set(11, 0); ng_slider_set(12, 300); ng_slider_set(13, 0); ng_slider_set(14, 0); ng_slider_set(15, 0); ng_slider_set(16, 20); );
+    p == 5 ? ( ng_slider_set(1, 0); ng_slider_set(2, 0); ng_slider_set(3, 6); ng_slider_set(4, 100); ng_slider_set(5, 0); ng_slider_set(6, 0); ng_slider_set(7, 0); ng_slider_set(8, 0); ng_slider_set(9, 0); ng_slider_set(10, 0); ng_slider_set(11, 0); ng_slider_set(12, 300); ng_slider_set(13, 0); ng_slider_set(14, 0); ng_slider_set(15, 0); ng_slider_set(16, 20); );
+    p == 6 ? ( ng_slider_set(1, 0); ng_slider_set(2, 1); ng_slider_set(3, 3); ng_slider_set(4, 100); ng_slider_set(5, 0); ng_slider_set(6, 0); ng_slider_set(7, 0); ng_slider_set(8, 0); ng_slider_set(9, 0); ng_slider_set(10, 0); ng_slider_set(11, 0); ng_slider_set(12, 300); ng_slider_set(13, 0); ng_slider_set(14, 0); ng_slider_set(15, 0); ng_slider_set(16, 20); );
+    p == 7 ? ( ng_slider_set(1, 0); ng_slider_set(2, 1); ng_slider_set(3, 0); ng_slider_set(4, 100); ng_slider_set(5, 0); ng_slider_set(6, 0); ng_slider_set(7, 0); ng_slider_set(8, 0); ng_slider_set(9, 0); ng_slider_set(10, 0); ng_slider_set(11, 0); ng_slider_set(12, 300); ng_slider_set(13, 0); ng_slider_set(14, 0); ng_slider_set(15, 0); ng_slider_set(16, 20); );
+    p == 8 ? ( ng_slider_set(1, 0); ng_slider_set(2, 2); ng_slider_set(3, 1); ng_slider_set(4, 100); ng_slider_set(5, 0); ng_slider_set(6, 0); ng_slider_set(7, 0); ng_slider_set(8, 0); ng_slider_set(9, 0); ng_slider_set(10, 0); ng_slider_set(11, 0); ng_slider_set(12, 300); ng_slider_set(13, 0); ng_slider_set(14, 0); ng_slider_set(15, 0); ng_slider_set(16, 20); );
+    p == 9 ? ( ng_slider_set(1, 0); ng_slider_set(2, 3); ng_slider_set(3, 2); ng_slider_set(4, 100); ng_slider_set(5, 0); ng_slider_set(6, 0); ng_slider_set(7, 0); ng_slider_set(8, 0); ng_slider_set(9, 0); ng_slider_set(10, 0); ng_slider_set(11, 0); ng_slider_set(12, 300); ng_slider_set(13, 0); ng_slider_set(14, 0); ng_slider_set(15, 0); ng_slider_set(16, 20); );
+    p == 10 ? ( ng_slider_set(1, 0); ng_slider_set(2, 3); ng_slider_set(3, 0); ng_slider_set(4, 100); ng_slider_set(5, 0); ng_slider_set(6, 0); ng_slider_set(7, 0); ng_slider_set(8, 0); ng_slider_set(9, 0); ng_slider_set(10, 0); ng_slider_set(11, 0); ng_slider_set(12, 300); ng_slider_set(13, 0); ng_slider_set(14, 0); ng_slider_set(15, 0); ng_slider_set(16, 20); );
+    p == 11 ? ( ng_slider_set(1, 0); ng_slider_set(2, 4); ng_slider_set(3, 0); ng_slider_set(4, 100); ng_slider_set(5, 0); ng_slider_set(6, 0); ng_slider_set(7, 0); ng_slider_set(8, 0); ng_slider_set(9, 0); ng_slider_set(10, 0); ng_slider_set(11, 0); ng_slider_set(12, 300); ng_slider_set(13, 0); ng_slider_set(14, 0); ng_slider_set(15, 0); ng_slider_set(16, 20); );
+    p == 12 ? ( ng_slider_set(1, 0); ng_slider_set(2, 4); ng_slider_set(3, 1); ng_slider_set(4, 75); ng_slider_set(5, 0); ng_slider_set(6, 0); ng_slider_set(7, 0); ng_slider_set(8, 0); ng_slider_set(9, 0); ng_slider_set(10, 0); ng_slider_set(11, 0); ng_slider_set(12, 300); ng_slider_set(13, 0); ng_slider_set(14, 0); ng_slider_set(15, 0); ng_slider_set(16, 20); );
+    p == 13 ? ( ng_slider_set(1, 0); ng_slider_set(2, 4); ng_slider_set(3, 2); ng_slider_set(4, 75); ng_slider_set(5, 0); ng_slider_set(6, 0); ng_slider_set(7, 0); ng_slider_set(8, 0); ng_slider_set(9, 0); ng_slider_set(10, 0); ng_slider_set(11, 0); ng_slider_set(12, 300); ng_slider_set(13, 0); ng_slider_set(14, 0); ng_slider_set(15, 0); ng_slider_set(16, 20); );
+  );
+
+  // the first preset every slider matches, or -1
+  function ng_preset_match() local(m)
+  (
+    m = -1;
+    m < 0 && ng_pre_eq(slider1, 0) && ng_pre_eq(slider2, 0) && ng_pre_eq(slider3, 0) && ng_pre_eq(slider4, 100) && ng_pre_eq(slider5, 0) && ng_pre_eq(slider6, 0) && ng_pre_eq(slider7, 0) && ng_pre_eq(slider8, 0) && ng_pre_eq(slider9, 0) && ng_pre_eq(slider10, 0) && ng_pre_eq(slider11, 0) && ng_pre_eq(slider12, 300) && ng_pre_eq(slider13, 0) && ng_pre_eq(slider14, 0) && ng_pre_eq(slider15, 0) && ng_pre_eq(slider16, 20) ? m = 0;
+    m < 0 && ng_pre_eq(slider1, 0) && ng_pre_eq(slider2, 0) && ng_pre_eq(slider3, 1) && ng_pre_eq(slider4, 100) && ng_pre_eq(slider5, 0) && ng_pre_eq(slider6, 0) && ng_pre_eq(slider7, 0) && ng_pre_eq(slider8, 0) && ng_pre_eq(slider9, 0) && ng_pre_eq(slider10, 0) && ng_pre_eq(slider11, 0) && ng_pre_eq(slider12, 300) && ng_pre_eq(slider13, 0) && ng_pre_eq(slider14, 0) && ng_pre_eq(slider15, 0) && ng_pre_eq(slider16, 20) ? m = 1;
+    m < 0 && ng_pre_eq(slider1, 0) && ng_pre_eq(slider2, 0) && ng_pre_eq(slider3, 2) && ng_pre_eq(slider4, 100) && ng_pre_eq(slider5, 0) && ng_pre_eq(slider6, 0) && ng_pre_eq(slider7, 0) && ng_pre_eq(slider8, 0) && ng_pre_eq(slider9, 0) && ng_pre_eq(slider10, 0) && ng_pre_eq(slider11, 0) && ng_pre_eq(slider12, 300) && ng_pre_eq(slider13, 0) && ng_pre_eq(slider14, 0) && ng_pre_eq(slider15, 0) && ng_pre_eq(slider16, 20) ? m = 2;
+    m < 0 && ng_pre_eq(slider1, 0) && ng_pre_eq(slider2, 0) && ng_pre_eq(slider3, 4) && ng_pre_eq(slider4, 100) && ng_pre_eq(slider5, 0) && ng_pre_eq(slider6, 0) && ng_pre_eq(slider7, 0) && ng_pre_eq(slider8, 0) && ng_pre_eq(slider9, 0) && ng_pre_eq(slider10, 0) && ng_pre_eq(slider11, 0) && ng_pre_eq(slider12, 300) && ng_pre_eq(slider13, 0) && ng_pre_eq(slider14, 0) && ng_pre_eq(slider15, 0) && ng_pre_eq(slider16, 20) ? m = 3;
+    m < 0 && ng_pre_eq(slider1, 0) && ng_pre_eq(slider2, 0) && ng_pre_eq(slider3, 5) && ng_pre_eq(slider4, 100) && ng_pre_eq(slider5, 0) && ng_pre_eq(slider6, 0) && ng_pre_eq(slider7, 0) && ng_pre_eq(slider8, 0) && ng_pre_eq(slider9, 0) && ng_pre_eq(slider10, 0) && ng_pre_eq(slider11, 0) && ng_pre_eq(slider12, 300) && ng_pre_eq(slider13, 0) && ng_pre_eq(slider14, 0) && ng_pre_eq(slider15, 0) && ng_pre_eq(slider16, 20) ? m = 4;
+    m < 0 && ng_pre_eq(slider1, 0) && ng_pre_eq(slider2, 0) && ng_pre_eq(slider3, 6) && ng_pre_eq(slider4, 100) && ng_pre_eq(slider5, 0) && ng_pre_eq(slider6, 0) && ng_pre_eq(slider7, 0) && ng_pre_eq(slider8, 0) && ng_pre_eq(slider9, 0) && ng_pre_eq(slider10, 0) && ng_pre_eq(slider11, 0) && ng_pre_eq(slider12, 300) && ng_pre_eq(slider13, 0) && ng_pre_eq(slider14, 0) && ng_pre_eq(slider15, 0) && ng_pre_eq(slider16, 20) ? m = 5;
+    m < 0 && ng_pre_eq(slider1, 0) && ng_pre_eq(slider2, 1) && ng_pre_eq(slider3, 3) && ng_pre_eq(slider4, 100) && ng_pre_eq(slider5, 0) && ng_pre_eq(slider6, 0) && ng_pre_eq(slider7, 0) && ng_pre_eq(slider8, 0) && ng_pre_eq(slider9, 0) && ng_pre_eq(slider10, 0) && ng_pre_eq(slider11, 0) && ng_pre_eq(slider12, 300) && ng_pre_eq(slider13, 0) && ng_pre_eq(slider14, 0) && ng_pre_eq(slider15, 0) && ng_pre_eq(slider16, 20) ? m = 6;
+    m < 0 && ng_pre_eq(slider1, 0) && ng_pre_eq(slider2, 1) && ng_pre_eq(slider3, 0) && ng_pre_eq(slider4, 100) && ng_pre_eq(slider5, 0) && ng_pre_eq(slider6, 0) && ng_pre_eq(slider7, 0) && ng_pre_eq(slider8, 0) && ng_pre_eq(slider9, 0) && ng_pre_eq(slider10, 0) && ng_pre_eq(slider11, 0) && ng_pre_eq(slider12, 300) && ng_pre_eq(slider13, 0) && ng_pre_eq(slider14, 0) && ng_pre_eq(slider15, 0) && ng_pre_eq(slider16, 20) ? m = 7;
+    m < 0 && ng_pre_eq(slider1, 0) && ng_pre_eq(slider2, 2) && ng_pre_eq(slider3, 1) && ng_pre_eq(slider4, 100) && ng_pre_eq(slider5, 0) && ng_pre_eq(slider6, 0) && ng_pre_eq(slider7, 0) && ng_pre_eq(slider8, 0) && ng_pre_eq(slider9, 0) && ng_pre_eq(slider10, 0) && ng_pre_eq(slider11, 0) && ng_pre_eq(slider12, 300) && ng_pre_eq(slider13, 0) && ng_pre_eq(slider14, 0) && ng_pre_eq(slider15, 0) && ng_pre_eq(slider16, 20) ? m = 8;
+    m < 0 && ng_pre_eq(slider1, 0) && ng_pre_eq(slider2, 3) && ng_pre_eq(slider3, 2) && ng_pre_eq(slider4, 100) && ng_pre_eq(slider5, 0) && ng_pre_eq(slider6, 0) && ng_pre_eq(slider7, 0) && ng_pre_eq(slider8, 0) && ng_pre_eq(slider9, 0) && ng_pre_eq(slider10, 0) && ng_pre_eq(slider11, 0) && ng_pre_eq(slider12, 300) && ng_pre_eq(slider13, 0) && ng_pre_eq(slider14, 0) && ng_pre_eq(slider15, 0) && ng_pre_eq(slider16, 20) ? m = 9;
+    m < 0 && ng_pre_eq(slider1, 0) && ng_pre_eq(slider2, 3) && ng_pre_eq(slider3, 0) && ng_pre_eq(slider4, 100) && ng_pre_eq(slider5, 0) && ng_pre_eq(slider6, 0) && ng_pre_eq(slider7, 0) && ng_pre_eq(slider8, 0) && ng_pre_eq(slider9, 0) && ng_pre_eq(slider10, 0) && ng_pre_eq(slider11, 0) && ng_pre_eq(slider12, 300) && ng_pre_eq(slider13, 0) && ng_pre_eq(slider14, 0) && ng_pre_eq(slider15, 0) && ng_pre_eq(slider16, 20) ? m = 10;
+    m < 0 && ng_pre_eq(slider1, 0) && ng_pre_eq(slider2, 4) && ng_pre_eq(slider3, 0) && ng_pre_eq(slider4, 100) && ng_pre_eq(slider5, 0) && ng_pre_eq(slider6, 0) && ng_pre_eq(slider7, 0) && ng_pre_eq(slider8, 0) && ng_pre_eq(slider9, 0) && ng_pre_eq(slider10, 0) && ng_pre_eq(slider11, 0) && ng_pre_eq(slider12, 300) && ng_pre_eq(slider13, 0) && ng_pre_eq(slider14, 0) && ng_pre_eq(slider15, 0) && ng_pre_eq(slider16, 20) ? m = 11;
+    m < 0 && ng_pre_eq(slider1, 0) && ng_pre_eq(slider2, 4) && ng_pre_eq(slider3, 1) && ng_pre_eq(slider4, 75) && ng_pre_eq(slider5, 0) && ng_pre_eq(slider6, 0) && ng_pre_eq(slider7, 0) && ng_pre_eq(slider8, 0) && ng_pre_eq(slider9, 0) && ng_pre_eq(slider10, 0) && ng_pre_eq(slider11, 0) && ng_pre_eq(slider12, 300) && ng_pre_eq(slider13, 0) && ng_pre_eq(slider14, 0) && ng_pre_eq(slider15, 0) && ng_pre_eq(slider16, 20) ? m = 12;
+    m < 0 && ng_pre_eq(slider1, 0) && ng_pre_eq(slider2, 4) && ng_pre_eq(slider3, 2) && ng_pre_eq(slider4, 75) && ng_pre_eq(slider5, 0) && ng_pre_eq(slider6, 0) && ng_pre_eq(slider7, 0) && ng_pre_eq(slider8, 0) && ng_pre_eq(slider9, 0) && ng_pre_eq(slider10, 0) && ng_pre_eq(slider11, 0) && ng_pre_eq(slider12, 300) && ng_pre_eq(slider13, 0) && ng_pre_eq(slider14, 0) && ng_pre_eq(slider15, 0) && ng_pre_eq(slider16, 20) ? m = 13;
+    m;
+  );
+
+  function ng_preset_name(p) local(s)
+  (
+    s = "";
+    p == 0 ? s = "Default";
+    p == 1 ? s = "Vocal Warm";
+    p == 2 ? s = "Vocal Bright";
+    p == 3 ? s = "Radio Voice";
+    p == 4 ? s = "Podcast Voice";
+    p == 5 ? s = "Phone Voice";
+    p == 6 ? s = "Punchy Drums";
+    p == 7 ? s = "Natural Drums";
+    p == 8 ? s = "Warm Bass";
+    p == 9 ? s = "Bright Instrument";
+    p == 10 ? s = "Natural Instrument";
+    p == 11 ? s = "Mix Natural";
+    p == 12 ? s = "Mix Warm";
+    p == 13 ? s = "Mix Bright";
+    s;
+  );
+
+  function ng_presets() local(i)
+  (
+    ng_pre_req >= 0 ? ( ng_preset_load(ng_pre_req); update(); ng_pre_req = -1; );
+    ng_hist() ? update();
+    ng_pre_cur = ng_preset_match();
+    ng_pre_open ? (
+      ng_pre_menu_begin();
+      i = 0;
+      loop(ng_pre_n, ng_pre_item(i, ng_preset_name(i)); i += 1;);
+      ng_pre_menu_end();
+    );
+    strcpy(#ng_pre_name, ng_pre_cur >= 0 ? ng_preset_name(ng_pre_cur) : "CUSTOM");
+  );
+  // ---- end of factory presets ----
+
+@slider
+  update();
+
+@block
+  // Learn turned on starts listening; turned off early, it finishes with what it heard
+  // (0.5 s at least) or gives up. Checked per block, however the slider was set.
+  slider1 >= 0.5 && ae_prev < 0.5 ? ae_start();
+  slider1 < 0.5 && ae_on ? (
+    ae_n >= 0.5 * srate ? ae_finish() : ae_on = 0;
+  );
+  ae_prev = slider1 >= 0.5 ? 1 : 0;
+
+@sample
+  ae_on ? (
+    ae_m = (spl0 + spl1) * 0.5;
+    ae_k = 0;
+    loop(ae_nv,
+      ae_y = ae_c0[ae_k] * ae_m + ae_z1[ae_k];
+      ae_z1[ae_k] = ae_z2[ae_k] - ae_c1[ae_k] * ae_y;
+      ae_z2[ae_k] = -ae_c0[ae_k] * ae_m - ae_c2[ae_k] * ae_y;
+      ae_wa[ae_k] += ae_y * ae_y;
+      ae_k += 1;
+    );
+    ae_we += ae_m * ae_m;
+    ae_wn += 1;
+    ae_wn >= ae_win ? (
+      ae_we > 0.000001 * ae_wn ? (
+        ae_k = 0;
+        loop(ae_nv,
+          ae_acc[ae_k] += ae_wa[ae_k];
+          ae_k += 1;
+        );
+        ae_n += ae_wn;
+      );
+      memset(ae_wa, 0, ae_nb);
+      ae_we = 0;
+      ae_wn = 0;
+      ae_n >= ae_need ? ae_finish();
+    );
+  );
+
+  ae_s = 0;
+  loop(ae_ns,
+    ae_p = ae_cf + 5 * ae_s;
+    ae_q = ae_st + 4 * ae_s;
+    ae_y = ae_p[0] * spl0 + ae_q[0];
+    ae_q[0] = ae_p[1] * spl0 - ae_p[3] * ae_y + ae_q[1];
+    ae_q[1] = ae_p[2] * spl0 - ae_p[4] * ae_y;
+    spl0 = ae_y;
+    ae_y = ae_p[0] * spl1 + ae_q[2];
+    ae_q[2] = ae_p[1] * spl1 - ae_p[3] * ae_y + ae_q[3];
+    ae_q[3] = ae_p[2] * spl1 - ae_p[4] * ae_y;
+    spl1 = ae_y;
+    ae_s += 1;
+  );
+  spl0 *= ae_out;
+  spl1 *= ae_out;
+
+@gfx 480 400
+  ng_knobs_begin("ASSISTED EQ", "ASSISTED", 480, 140, 2, 0);
+
+  // display: the EQ's response (Output and the automatic level included), Learn's progress
+  // while it listens, and up to three lines on what it does
+  ag_px = ng_vx + 26; ag_py = ng_vy + 4; ag_pw = ng_vw - 150; ag_ph = ng_vh - 20;
+  ng_plot(ag_px, ag_py, ag_pw, ag_ph);
+  ng_grid_freq(24);
+  ag_zy = ng_lin_y(0, -12, 12);
+  ng_col(NG_ACCENT, 0.10);
+  ag_i = 0;
+  loop(floor(ng_pw) + 1,
+    ag_db = 10 * log10(ae_mag2(20 * 1000 ^ (ag_i / ng_pw))) + 20 * log10(ae_out);
+    gfx_line(ng_px + ag_i, ag_zy, ng_px + ag_i, ng_lin_y(ag_db, -12, 12), 0);
+    ag_i += 1;
+  );
+  ng_col(NG_ACCENT, 1);
+  ag_i = 0;
+  loop(floor(ng_pw) + 1,
+    ag_yy = ng_lin_y(10 * log10(ae_mag2(20 * 1000 ^ (ag_i / ng_pw))) + 20 * log10(ae_out), -12, 12);
+    ag_i == 0 ? ng_line_start(ng_px, ag_yy) : ng_line_to(ng_px + ag_i, ag_yy);
+    ag_i += 1;
+  );
+
+  // the side panel: status, then the largest moves
+  ag_tx = ng_vx + ng_vw - 112;
+  ng_font(1, 7.5, 1);
+  ng_col(NG_MUTED, 1);
+  ng_txt(ae_on ? "LISTENING" : slider9 >= 0.5 ? "LEARNED" : "NOT LEARNED", ag_tx, ng_vy + 10, 0, 1.5);
+  ae_on ? (
+    ag_f = min(1, ae_n / ae_need);
+    ng_col(NG_BORDER, 1);
+    gfx_rect(X(ag_tx), Y(ng_vy + 22), 104 * ng_s, 4 * ng_s);
+    ng_col(NG_ACCENT, 1);
+    gfx_rect(X(ag_tx), Y(ng_vy + 22), 104 * ag_f * ng_s, 4 * ng_s);
+    ng_font(1, 8, 0);
+    ng_col(NG_TEXT, 1);
+    sprintf(#ag_s, "%d of 15 s", floor(ae_n / srate));
+    ng_txt(#ag_s, ag_tx, ng_vy + 38, 0, 0);
+  ) : (
+    // the three largest region gains, largest first
+    ag_used = 0;
+    ag_row = 0;
+    loop(3,
+      ag_best = -1; ag_bv = 0.25;
+      ag_i = 0;
+      loop(5,
+        !(ag_used & (2 ^ ag_i)) && abs(ae_g[ag_i]) >= ag_bv ? ( ag_best = ag_i; ag_bv = abs(ae_g[ag_i]); );
+        ag_i += 1;
+      );
+      ag_best >= 0 ? (
+        ag_used |= 2 ^ ag_best;
+        ag_best == 0 ? sprintf(#ag_s, "LOW %+.1f dB", ae_g[0]) :
+        ag_best == 1 ? sprintf(#ag_s, "MUD %d Hz %+.1f dB", ae_mf, ae_g[1]) :
+        ag_best == 2 ? sprintf(#ag_s, "HONK %+.1f dB", ae_g[2]) :
+        ag_best == 3 ? sprintf(#ag_s, "PRESENCE %+.1f dB", ae_g[3]) :
+        sprintf(#ag_s, "AIR %+.1f dB", ae_g[4]);
+        ng_font(1, 8, 0);
+        ng_col(NG_TEXT, 1);
+        ng_txt(#ag_s, ag_tx, ng_vy + 30 + ag_row * 16, 0, 0);
+        ag_row += 1;
+      );
+    );
+    ae_hp > 0 && ag_row < 3 ? (
+      sprintf(#ag_s, "HIGH-PASS %d Hz", ae_hp);
+      ng_font(1, 8, 0);
+      ng_col(NG_TEXT, 1);
+      ng_txt(#ag_s, ag_tx, ng_vy + 30 + ag_row * 16, 0, 0);
+      ag_row += 1;
+    );
+    ag_row == 0 ? (
+      ng_font(1, 8, 0);
+      ng_col(NG_MUTED, 1);
+      ng_txt(slider9 >= 0.5 ? "NO CHANGES NEEDED" : "PRESS LEARN AND PLAY", ag_tx, ng_vy + 30, 0, 0);
+    );
+  );
+  sprintf(#ag_s, "LEVEL %+.1f dB", ae_auto);
+  ng_font(1, 7.5, 1);
+  ng_col(NG_MUTED, 1);
+  ng_txt(#ag_s, ag_tx, ng_vy + ng_vh - 6, 0, 1.5);
+
+  ng_row(4);
+  ng_select_ctl(1, "LEARN", "OFF|ON", 0) ? update();
+  ng_select_ctl(2, "SOURCE", "VOCAL|DRUMS|BASS|INSTR.|MIX", 0) ? update();
+  ng_select_ctl(3, "TARGET", "NATURAL|WARM|BRIGHT|PUNCHY|RADIO|PODCAST|LO-FI", 0) ? update();
+  sprintf(#ag_v4, "%d%%", slider4);
+  ng_knob_ctl(4, "AMOUNT", #ag_v4, 0, 150, 100, 1, 0) ? update();
+  ng_row(4);
+  sprintf(#ag_v5, "%+.1f dB", slider5);
+  ng_knob_ctl(5, "LOW TRIM", #ag_v5, -6, 6, 0, 0.1, 1) ? update();
+  sprintf(#ag_v6, "%+.1f dB", slider6);
+  ng_knob_ctl(6, "MID TRIM", #ag_v6, -6, 6, 0, 0.1, 1) ? update();
+  sprintf(#ag_v7, "%+.1f dB", slider7);
+  ng_knob_ctl(7, "HIGH TRIM", #ag_v7, -6, 6, 0, 0.1, 1) ? update();
+  sprintf(#ag_v8, "%+.1f dB", slider8);
+  ng_knob_ctl(8, "OUTPUT", #ag_v8, -12, 12, 0, 0.1, 1) ? update();
+
+  ng_end();
+
+  ng_presets(); // the preset list (generated by tools/build_presets.py)

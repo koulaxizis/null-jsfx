@@ -15,7 +15,7 @@ var src = path.join(root, "DATA/Effects/null_jsfx");
 var out = path.join(root, "web/fx");
 var check = process.argv.indexOf("--check") >= 0;
 
-var CATEGORY_ORDER = ["One Slider", "Essentials", "Advanced"];
+var CATEGORY_ORDER = ["One Slider", "Essentials", "Advanced", "Assisted"];
 
 // What an interface and its audio share through REAPER's common memory, which the web runs
 // apart (the page draws, a worklet plays): variables @gfx sets for the audio to take (pokes),

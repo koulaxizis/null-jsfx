@@ -1,0 +1,51 @@
+{
+  "_doc": "The rules of the Assisted plugins (Assisted EQ, Assisted Comp). tools/build_assisted.py writes these numbers into the generated table blocks of the JSFX and GFX files and into native/common/AssistedTargets.hpp; edit them here and run it. Order of the lists: targets and sources as below, EQ regions low, mud, honk, presence, air.",
+  "targets": ["Natural", "Warm", "Bright", "Punchy", "Radio", "Podcast", "Lo-Fi"],
+  "sources": ["Vocal", "Drums", "Bass", "Instrument", "Mix"],
+  "eq": {
+    "_doc": "flavor: dB per region that the target adds on its own (Natural is flat). hpf/lpf: the target's own high-pass / low-pass in Hz (0 = none). source_ref: the region levels, in dB against a -4.5 dB/oct slope levelled at 500 Hz-4 kHz, that a healthy source of this kind shows; Learn corrects the measured levels toward these. source_hpf: the range in Hz where a learned high-pass may sit for that source. correction: the share of a measured deviation that is corrected; deadband: deviations smaller than this (dB) are left alone; max_cut / max_boost: the limits of a learned correction in dB.",
+    "flavor": {
+      "Natural": [0, 0, 0, 0, 0],
+      "Warm": [1.5, 0, 0, -1.5, -1.5],
+      "Bright": [-0.5, -1, 0, 1, 2.5],
+      "Punchy": [1, -2, 0, 1.5, 0],
+      "Radio": [-1, -1.5, 0, 2.5, -1],
+      "Podcast": [-1, -2, 0, 1.5, 0],
+      "Lo-Fi": [0, 0, 2, 0, 0]
+    },
+    "hpf": {"Natural": 0, "Warm": 0, "Bright": 0, "Punchy": 0, "Radio": 100, "Podcast": 80, "Lo-Fi": 300},
+    "lpf": {"Natural": 0, "Warm": 0, "Bright": 0, "Punchy": 0, "Radio": 0, "Podcast": 0, "Lo-Fi": 3400},
+    "source_ref": {
+      "Vocal": [-6, 0, 0, 0, -2],
+      "Drums": [2, 0, -1, 0, 0],
+      "Bass": [8, 3, -2, -6, -12],
+      "Instrument": [0, 0, 0, 0, -2],
+      "Mix": [0, 0, 0, 0, 0]
+    },
+    "source_hpf": {
+      "Vocal": [60, 120],
+      "Drums": [20, 40],
+      "Bass": [20, 35],
+      "Instrument": [40, 100],
+      "Mix": [20, 30]
+    },
+    "correction": 0.6,
+    "deadband": 1.5,
+    "max_cut": -6,
+    "max_boost": 4
+  },
+  "comp": {
+    "_doc": "reduction: dB of gain reduction the target aims for on the loud parts (the 90th percentile of the 50 ms levels). ratio: per source, plus ratio_add per target. attack: ms for a low crest factor (9 dB and below) and a high one (15 dB and above), scaled by attack_mul per target. release: share of the mean time between onsets, kept between release_min and release_max ms (release_none when no onsets were found). loudness: the integrated loudness in LUFS that Output aims for after Learn (0 = leave the level alone); loudness_share: the share of the loud parts' reduction the loudness is taken to lose (makeup gives back half of it).",
+    "reduction": {"Natural": 3, "Warm": 4, "Bright": 3, "Punchy": 6, "Radio": 8, "Podcast": 5, "Lo-Fi": 8},
+    "ratio": {"Vocal": 3, "Drums": 4, "Bass": 4, "Instrument": 3, "Mix": 2},
+    "ratio_add": {"Natural": -0.5, "Warm": 0, "Bright": 0, "Punchy": 0, "Radio": 2, "Podcast": 0, "Lo-Fi": 3},
+    "attack": [5, 25],
+    "attack_mul": {"Natural": 1, "Warm": 1.5, "Bright": 0.7, "Punchy": 1.5, "Radio": 0.5, "Podcast": 1, "Lo-Fi": 0.3},
+    "release": 0.6,
+    "release_min": 50,
+    "release_max": 500,
+    "release_none": 150,
+    "loudness_share": 0.75,
+    "loudness": {"Natural": 0, "Warm": 0, "Bright": 0, "Punchy": 0, "Radio": 0, "Podcast": -16, "Lo-Fi": 0}
+  }
+}
