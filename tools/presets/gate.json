@@ -10,5 +10,7 @@
   ["Kick Ducking Pad", {"Threshold": -30, "Attack": 5, "Hold": 20, "Release": 250, "Sidechain": "External", "Sidechain LPF": 2000, "Range": -12, "Flip": "On"}],
   ["Voice Over Ducker", {"Threshold": -40, "Attack": 20, "Hold": 300, "Release": 600, "Sidechain": "External", "Sidechain HPF": 100, "Range": -10, "Flip": "On"}],
   ["Spoken Word Gate", {"Threshold": -48, "Attack": 2, "Hold": 150, "Release": 300, "Lookahead": 3, "Sidechain HPF": 100, "Range": -18}],
-  ["Kick Only Trigger", {"Threshold": -24, "Attack": 1, "Hold": 40, "Release": 100, "Sidechain LPF": 1000, "Range": -80}]
+  ["Kick Only Trigger", {"Threshold": -24, "Attack": 1, "Hold": 40, "Release": 100, "Sidechain LPF": 1000, "Range": -80}],
+  ["Dark Tail Toms", {"Threshold": -32, "Attack": 1, "Hold": 40, "Release": 300, "Sidechain HPF": 80, "Range": -40, "Tone Release": 70}],
+  ["Soft Fade Vocals", {"Threshold": -45, "Attack": 5, "Hold": 100, "Release": 400, "Sidechain HPF": 100, "Range": -24, "Tone Release": 50}]
 ]

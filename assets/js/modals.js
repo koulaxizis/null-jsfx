@@ -860,7 +860,8 @@ const guides = {
       { name: 'Lookahead', range: '0 to 10 ms', desc: 'Delays the audio so the gate opens just before each hit and keeps the attack intact (adds that much latency; 0 = off).' },
       { name: 'Sidechain', range: 'Internal / External', desc: 'Internal listens to the track itself; External listens to input channels 3/4 (sidechain key).' },
       { name: 'Sidechain LPF', range: '1000 to 20000 Hz', desc: 'Low-pass on the detector only, so hi-hats or cymbals do not open the gate (20 kHz = off).' },
-      { name: 'Flip', range: 'Off / On', desc: 'Turns the gate into a ducker: the signal is turned down by Range while the detector is above the threshold.' }
+      { name: 'Flip', range: 'Off / On', desc: 'Turns the gate into a ducker: the signal is turned down by Range while the detector is above the threshold.' },
+      { name: 'Tone Release', range: '0 to 100%', desc: 'Tone Release: while the gate closes, the tail also gets darker, like an instrument dying away, instead of only quieter; 0 % is off.' }
     ],
     uses: ['Removing noise between vocal phrases', 'Cutting bleed on tom and snare mics', 'Cleaning amp hiss between guitar parts', 'Tightening drum tails'],
     properties: 'Input → optional one-pole high-pass on the detector → stereo-linked peak envelope → open/close against Threshold with attack/release smoothing → closed gain set by Range → Output. Zero latency.',
@@ -1205,7 +1206,9 @@ const guides = {
       { name: 'Output', range: '−24 to +12 dB', desc: 'Output level after the dry/wet mix, in dB; 0 dB is off.' },
       { name: 'Oversampling', range: 'Off / 2x / 4x', desc: 'Runs the saturation at 2x or 4x the sample rate (linear-phase halfband filters, 31 or 37 samples of latency) so its harmonics do not fold back as aliasing; Off adds no latency.' },
       { name: 'Emphasis', range: '−12 to +12 dB', desc: 'Tilt EQ around 800 Hz before the saturation and its exact inverse after it: positive values make the highs distort more, negative values the lows, while the clean tone stays the same; 0 dB is off.' },
-      { name: 'Channels', range: 'Stereo / Mid / Side', desc: 'Channels: Stereo works on the whole signal; Mid or Side processes only that half of the mid/side pair and leaves the other untouched.' }
+      { name: 'Channels', range: 'Stereo / Mid / Side', desc: 'Channels: Stereo works on the whole signal; Mid or Side processes only that half of the mid/side pair and leaves the other untouched.' },
+      { name: 'Focus', range: 'Off / Bass / Mid / Presence', desc: 'Focus: a +9 dB bell (Bass 100 Hz, Mid 1 kHz, Presence 3 kHz) before the saturation and its exact inverse after it, so that band distorts more while the clean tone stays the same; Off adds nothing.' },
+      { name: 'Density', range: '0 to 100%', desc: 'Density: thickens the curve so quieter parts of the wave saturate too, for a denser, more compressed sound; 0 % is off.' }
     ],
     uses: ['Warmth and density on buses', 'Fuzz and overdrive on guitars and bass', 'Bit-crushed lo-fi textures', 'Wavefolded synth tones'],
     properties: 'Input → Drive → selected curve (Fold: a sine wavefolder whose depth grows with Drive) → Tone tilt EQ (one-pole split at 800 Hz, ±Tone/2 dB on each side) on the wet signal → Dry/Wet Mix → Output. No oversampling; zero latency.',

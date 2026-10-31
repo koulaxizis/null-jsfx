@@ -16,8 +16,10 @@ static const NullKnobsUI::Control kControls[] = {
     { 1, NullKnobsUI::kKnob, "TONE", 0, -1, true },
     { 2, NullKnobsUI::kKnob, "MIX", 0, -1, false },
     { 3, NullKnobsUI::kSelect, "MODE", 0, -1, false },
+    { 10, NullKnobsUI::kKnob, "DENSITY", 0, -1, false },
     { 4, NullKnobsUI::kKnob, "INPUT", 1, -1, true },
     { 7, NullKnobsUI::kKnob, "EMPHASIS", 1, -1, true },
+    { 9, NullKnobsUI::kSelect, "FOCUS", 1, -1, false },
     { 6, NullKnobsUI::kSelect, "OVERSAMPLE", 1, -1, false },
     { 5, NullKnobsUI::kKnob, "OUTPUT", 1, -1, false },
     { 8, NullKnobsUI::kSelect, "CHANNELS", 1, -1, false },
@@ -61,13 +63,17 @@ protected:
         const double drive = value(0) / 100.0, mix = value(2) / 100.0;
         const double gin = std::pow(10.0, double(value(4)) / 20.0), gout = std::pow(10.0, double(value(5)) / 20.0);
         const int mode = int(std::lround(value(3)));
+        const double dn = value(10) / 100.0;
         const int n = std::max(2, int(fPW) + 1);
         float xs[512], ys[512];
         const int m = std::min(n, 512);
         for (int i = 0; i < m; ++i)
         {
             const double x = -1.0 + 2.0 * double(i) / double(m - 1);
-            double y = (x * (1.0 - mix) + nullsaturation::shape(x * gin * (1.0 + drive * 3.0), mode, drive) * mix) * gout;
+            double w = nullsaturation::shape(x * gin * (1.0 + drive * 3.0), mode, drive);
+            if (dn > 0.0)
+                w = w * (1.0 + dn) / (1.0 + dn * std::fabs(w));
+            double y = (x * (1.0 - mix) + w * mix) * gout;
             y = std::max(-1.0, std::min(1.0, y));
             xs[i] = fPX + fPW * float(i) / float(m - 1);
             ys[i] = linY(float(y), -1.0f, 1.0f);
@@ -84,6 +90,8 @@ protected:
             else
                 std::snprintf(buf, n, "%+.1f dB", v);
         }
+        else if (param == 10 && v < 0.5f)
+            std::snprintf(buf, n, "OFF");
         else
             NullKnobsUI::formatValue(param, v, buf, n);
     }

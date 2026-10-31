@@ -58,6 +58,8 @@ private:
         p.oversampling = int(std::lround(fV[6]));
         p.emphasis = fV[7];
         p.channels = int(std::lround(fV[8]));
+        p.focus = int(std::lround(fV[9]));
+        p.density = fV[10];
         fDsp.setParams(p);
     }
 

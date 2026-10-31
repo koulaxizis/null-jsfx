@@ -1018,7 +1018,8 @@
       "Delays the audio so the gate opens just before each hit and keeps the attack intact (adds that much latency; 0 = off).",
       "Internal listens to the track itself; External listens to input channels 3/4 (sidechain key).",
       "Low-pass on the detector only, so hi-hats or cymbals do not open the gate (20 kHz = off).",
-      "Turns the gate into a ducker: the signal is turned down by Range while the detector is above the threshold."
+      "Turns the gate into a ducker: the signal is turned down by Range while the detector is above the threshold.",
+      "Tone Release: while the gate closes, the tail also gets darker, like an instrument dying away, instead of only quieter; 0 % is off."
     ],
     "uses": [
       "Removing noise between vocal phrases",
@@ -2130,7 +2131,9 @@
       "Output level after the dry/wet mix, in dB; 0 dB is off.",
       "Runs the saturation at 2x or 4x the sample rate (linear-phase halfband filters, 31 or 37 samples of latency) so its harmonics do not fold back as aliasing; Off adds no latency.",
       "Tilt EQ around 800 Hz before the saturation and its exact inverse after it: positive values make the highs distort more, negative values the lows, while the clean tone stays the same; 0 dB is off.",
-      "Channels: Stereo works on the whole signal; Mid or Side processes only that half of the mid/side pair and leaves the other untouched."
+      "Channels: Stereo works on the whole signal; Mid or Side processes only that half of the mid/side pair and leaves the other untouched.",
+      "Focus: a +9 dB bell (Bass 100 Hz, Mid 1 kHz, Presence 3 kHz) before the saturation and its exact inverse after it, so that band distorts more while the clean tone stays the same; Off adds nothing.",
+      "Density: thickens the curve so quieter parts of the wave saturate too, for a denser, more compressed sound; 0 % is off."
     ],
     "uses": [
       "Warmth and density on buses",

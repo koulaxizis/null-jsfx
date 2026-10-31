@@ -8,7 +8,9 @@
  * (Attack) and closes it below (Release) down to Range (-80 dB = fully closed). Hold keeps it
  * open that long after the level falls; Lookahead delays the audio (not the detector), reported as
  * latency; External listens to a key (JSFX pins 3/4); Sidechain LPF low-passes the detector (off at
- * 20 kHz); Flip makes it a ducker (down to Range above Threshold).
+ * 20 kHz); Flip makes it a ducker (down to Range above Threshold); Tone Release (appended in 2.7,
+ * off at 0) crossfades the audio towards a one-pole low-pass of itself (20 kHz down to 500 Hz) as
+ * the gate closes.
  */
 
 #pragma once
@@ -42,13 +44,16 @@ public:
         fLaSize = int(std::floor(0.01 * sr)) + 2;
         fLa.assign(size_t(2 * fLaSize), 0.0);
         fLaPos = 0;
+        fTrL = fTrR = 0.0;
     }
 
     // @slider
     void setParams(double thresholdDb, double attackMs, double releaseMs, double scHpf, double rangeDb,
                    double holdMs = 0.0, double lookaheadMs = 0.0, bool external = false, double scLpf = 20000.0,
-                   bool flip = false)
+                   bool flip = false, double toneRelease = 0.0)
     {
+        fTrOn = toneRelease > 0.0;
+        fTrC = 1.0 - std::exp(-2.0 * 3.141592653589793 * std::fmin(20000.0 * std::pow(0.025, toneRelease / 100.0), 0.45 * fSr) / fSr);
         fHoldS = std::floor(holdMs * fSr / 1000.0 + 0.5);
         fLaN = int(std::floor(lookaheadMs * fSr / 1000.0 + 0.5));
         fExt = external;
@@ -130,6 +135,16 @@ public:
         }
         if (++fLaPos >= fLaSize)
             fLaPos = 0;
+        if (fTrOn)
+        {
+            fTrL += fTrC * (l - fTrL);
+            fTrR += fTrC * (r - fTrR);
+            fTrL = std::fabs(fTrL) < 0.000000000000001 ? 0.0 : fTrL;
+            fTrR = std::fabs(fTrR) < 0.000000000000001 ? 0.0 : fTrR;
+            const double o = fFlip ? 1.0 - fGateLevel : fGateLevel;
+            l = l - (l - fTrL) * (1.0 - o);
+            r = r - (r - fTrR) * (1.0 - o);
+        }
         l = l * fGain;
         r = r * fGain;
     }
@@ -148,7 +163,8 @@ private:
         fReleaseCoef = 1.0 - std::exp(-1.0 / (rt > 1.0 ? rt : 1.0));
     }
 
-    bool fExt = false, fLpOn = false, fFlip = false;
+    bool fExt = false, fLpOn = false, fFlip = false, fTrOn = false;
+    double fTrC = 1.0, fTrL = 0.0, fTrR = 0.0;
     double fHoldS = 0.0, fHoldN = 0.0, fLpCoef = 0.0, fLpL = 0.0, fLpR = 0.0;
     std::vector<double> fLa;
     int fLaSize = 2, fLaN = 0, fLaPos = 0;

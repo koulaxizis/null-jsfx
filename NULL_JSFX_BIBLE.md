@@ -331,7 +331,7 @@ Why the exceptions exist: hosts store the CLAP id in sessions, so the released i
 - 132 plugins: 22 One Slider, 51 Essentials, 43 Advanced, 9 Instruments, 7 MIDI.
 - 104 Rack modules.
 - 73 FX chains in `NULL JSFX` and 73 in `NULL JSFX GFX`.
-- 1,163 factory presets, Default included.
+- 1,167 factory presets, Default included.
 - 86 Rack presets, Init included.
 
 **Exceptions:**
@@ -391,7 +391,7 @@ Why the exceptions exist: hosts store the CLAP id in sessions, so the released i
 | Envelope Follower | `envelope_follower` | `envelope-follower` | `N1ef` | yes | 480x380 | 9 |
 | Filter | `filter` | `filter` | `N2FL` | yes | 480x322 | 12 |
 | Flanger | `flanger` | `flanger` | `N4fl` | yes | 480x380 | 8 |
-| Gate | `gate` | `gate` | `N1gt` | yes | 480x380 | 10 |
+| Gate | `gate` | `gate` | `N1gt` | yes | 480x380 | 11 |
 | Glue Comp | `glue_comp` | `glue-comp` | `NGlu` | yes | 480x380 | 7 |
 | Limiter | `limiter` | `limiter` | `N1lm` | yes | 480x380 | 7 |
 | Maximizer | `maximizer` | `maximizer` | `N1mx` | yes | 480x408 | 14 |
@@ -406,7 +406,7 @@ Why the exceptions exist: hosts store the CLAP id in sessions, so the released i
 | Pitch Shifter | `pitch_shifter` | `pitch-shifter` | `N4ps` | yes | 480x294 | 4 |
 | Reverb | `reverb` | `reverb` | `N5Rv` | yes | 480x380 | 12 |
 | Ring Mod | `ring_mod` | `ring-mod` | `N4rm` | yes | 480x294 | 4 |
-| Saturation | `saturation` | `saturation` | `N5Sa` | yes | 480x380 | 9 |
+| Saturation | `saturation` | `saturation` | `N5Sa` | yes | 480x380 | 11 |
 | Shaper | `shaper` | `shaper` | `NShp` | yes | 480x460 | 24 |
 | Sidechain Ducker | `sidechain_ducker` | `sidechain-ducker` | `N9Sd` | yes | 480x380 | 7 |
 | Space | `space` | `space` | `NSpc` | yes | 480x380 | 7 |
@@ -762,7 +762,7 @@ None open. The ones found on 2026-10-26 (README.md said only One Slider had GFX/
 - **B7 Convolution's partition sum** runs all at once every 1024 samples (3.5–7 ms at 96 kHz with a 3 s IR, steady state, not a rebuild). Spreading it over the block would remove that spike but changes the summation order (differences around 1e-16, inside the native tolerance). Proposed, not approved.
 - **B3 Drum Machine ideas** (deferred 2026-10-17): song mode and step probability. Multi-out and a Sampler exist now. [memory] Approved 2026-10-27 as Wave 4 of the studio plan. **Done 2026-10-27** (Part X, Wave 4).
 - **B10 Studio plan, waves 2–5** (approved 2026-10-27, Part VII): all five waves are done and published in 2.7 (2026-10-28). Driver and Exciter keep no oversampling (Part VII, 2026-10-28). Still open: SFZ in Sampler, which waits until Christos tries the REAPER probe; the native A/B and undo buttons and the four surround interfaces need a look in a DAW (only built, rendered and read so far).
-- **B11 Own-suite plan, waves 2–5** (approved 2026-10-31, Part VII): waves 1 (Glue Comp, Air, Tone), 2 (Console Channel, Console Buss) and 3 (Space) are done (Part X, 2026-10-31). Open: wave 4 the appended controls on Saturation, Tape and Gate; wave 5 Mallets and the new Pluck, Organ and Percussion characters. All of them stay off the site until "launch".
+- **B11 Own-suite plan, waves 2–5** (approved 2026-10-31, Part VII): waves 1 (Glue Comp, Air, Tone), 2 (Console Channel, Console Buss), 3 (Space) and 4 (Gate Tone Release, Saturation Focus and Density) are done (Part X, 2026-10-31). Open: wave 5 Mallets and the new Pluck, Organ and Percussion characters. All of them stay off the site until "launch".
 - **B4 Very low and odd sample rates** (found 2026-10-26 with clap-validator's `process-varying-sample-rates`, which plays 8000 Hz to 768 kHz, 1234.57 Hz and 12345.68 Hz among them). Wah, Tape, Tape Echo, Band Splitter and Amp Simulator are fixed (Part X). A scan of every plain JSFX at those rates, with `tests/jsfx_test.cpp`'s settings, still blows up in Reverser (8000, 22050 and 12345.68 Hz, max/random), Vinyl Age (8000 Hz, max), Step FX (8000 Hz, random), Formant Filter, Saturation, Noise Generator and Phase Align (1234.57 Hz), and Arpeggiator leaves notes hanging at 1234.57 Hz: a separate fix thread. **Done 2026-10-26 (PR #58):** the seven are fixed (the Arpeggiator finding was the test's own MIDI order), and `test.yml` renders every plain JSFX at 8000, 22050, 1234.57 and 12345.68 Hz (R25). The convention is that every filter frequency is held below `0.45 * srate` (most plugins already did this).
 - **B5 Convolution above 384 kHz.** At 705.6 and 768 kHz the 3-second IR buffers need more than REAPER's 32M slots, so `options:maxmem` cannot cover them: the wet signal is wrong there in the JSFX, GFX and web (the native port is fine). A fix changes the DSP at those rates (for example, cap the IR length so it fits) and waits for Christos's decision (2026-10-26).
 - **B6 Validators.** (a) Make job `validate` required once every plugin passes, with Christos's approval. (b) Then drop the old pluginval v1.0.4 step in job `build`. (c) Move to pluginval `v2.0.0` when that tag exists (as of 2026-10-26 the newest is `v2.0.0-beta3`). Baseline of the first run (Linux, local, 2026-10-26): pluginval 114/114 pass; clap-validator 70/114 pass, failures in four groups: latency reported outside `activate` (19 plugins with `setLatency`), subnormal output samples (23), NaN/inf at a 1234.57 Hz sample rate (amp_simulator, band_splitter, tape, tape_echo, wah), and Rack parameter module names that are not UTF-8 plus `s8_lane` state not reproduced (rack). Each group has its own fix thread; the NaN/inf group is fixed (B4), the Rack group by #53, and the latency and subnormal groups by the DPF patch (#57). CI on 2026-10-27 added a fifth group: `state-reproducibility-buffered`, parameter values not restored after a state load read in pieces (about 70 plugins on Windows, 7 on Linux), sent to a fix thread. On 2026-10-28 the four Wave 5 surround beds failed pluginval's "Bus layout processing" (12-channel VST3 bus with no speaker arrangement), fixed by `surround-bus.patch`.
@@ -1120,3 +1120,21 @@ entry and the Bible delta.
   - The GFX was rendered and looked at.
   - Not run: the plugin in a DAW (so it has not been listened to), Windows and macOS (CI).
 - **Next:** wave 4, the appended controls on Saturation, Tape and Gate (B11).
+
+### 2026-10-31 — appended controls (no version change) — own-suite wave 4: Gate, Saturation, Tape
+- **What:** the appended controls of wave 4 (B11). Each one is silent at its default (R11), so existing projects, presets and Rack states sound as before.
+- **Gate:** `slider11` Tone Release 0–100 % (default 0 = off). While the gate closes, the audio crossfades from itself to a one-pole low-pass of itself, so the tail gets darker as well as quieter. The corner is 20000·0.025^(TR/100) Hz (20 kHz down to 500 Hz), held below 0.45 × srate (R25). The crossfade follows the gate level, or its complement when Flip is on. States below 1e-15 are cleared.
+- **Saturation:**
+  - `slider10` Focus Off/Bass/Mid/Presence (default Off). An RBJ peak of +9 dB at Q 0.7 (100 Hz, 1 kHz or 3 kHz, held below 0.45 × srate) goes before the drive, and its exact inverse after the downsample and before the tilt de-emphasis. The clean tone stays the same, and only that band distorts more.
+  - `slider11` Density 0–100 % (default 0 = off). The shaped sample goes through y·(1+d)/(1+d·|y|), with d = Density/100, in both the oversampled and the plain path, so quiet parts of the wave saturate too.
+  - **Why not "Character Classic/Tube/Density":** the study named a Character selector, but Saturation already has a Mode enum with Tube, and an enum's range can never be extended (R17, VST3 normalised values). Classic and Tube exist as modes, so only Density was missing, and it became its own slider.
+- **Tape:** no change. Head Bump, Flutter and Speed (7.5/15/30 ips) already exist since 2.5, so the study's Tape items were already covered.
+- **Forms:** plain and GFX JSFX (Gate: a TONE REL knob on the second row; Saturation: DENSITY on the first row, FOCUS on the second, the curve shows the density), VST3/CLAP/LV2 (`GateDSP.hpp`, `SaturationDSP.hpp`), the Rack modules `gate` and `saturation` (new values at the end of their slots), web, `site_content.json` slider texts, and presets: Gate "Dark Tail Toms" and "Soft Fade Vocals" (14), Saturation "Bass Focus Tube" and "Dense Mid Bus" (15; "Presence Grit" was dropped to stay within R16).
+- **Files:** `DATA/Effects/null_jsfx/{gate,saturation}.jsfx` and `gfx/`, `native/plugins/{gate,saturation}/`, `native/plugins/rack/modules/{gate,saturation}.hpp`, `tools/presets/{gate,saturation}.json`, `tools/site_content.json`, this Bible (B11); regenerated: `.rpl`, `FactoryPresets.hpp`, GFX preset blocks, FX chains, `web/fx/*`, `remote/`, the two plugin pages and `modals.js`.
+- **Tests (run on Linux):**
+  - `tests/run.sh` on the four files, also at 8000, 22050, 1234.57 and 12345.68 Hz.
+  - `tests/stress.sh` on Gate and Saturation: 0 failing.
+  - `native/scripts/build.sh --test --plugins "gate;saturation"`: ctest 116/116.
+  - Both GFX were rendered and looked at.
+  - `web/test/run.sh` on both files, the generators, `tests/lint.py` and `tests/bible_order.py`.
+- **Next:** wave 5, Mallets and the Pluck, Organ and Percussion characters (B11).

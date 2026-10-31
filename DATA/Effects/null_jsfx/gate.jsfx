@@ -14,6 +14,7 @@ slider7:0<0,10,0.1>Lookahead (ms)
 slider8:0<0,1,1{Internal,External}>Sidechain
 slider9:20000<1000,20000,1:log>Sidechain LPF (Hz)
 slider10:0<0,1,1{Off,On}>Flip
+slider11:0<0,100,1>Tone Release (%)
 
 in_pin:Left
 in_pin:Right
@@ -51,6 +52,10 @@ out_pin:Right
   // the audio (not the detector) so the gate opens before the hit (reported as latency);
   // External listens to pins 3/4; Sidechain LPF low-passes the detector (off at 20 kHz);
   // Flip turns the gate into a ducker (the signal goes down to Range above Threshold).
+  // Tone Release (appended in 2.8, off at 0) closes a low-pass as the gate closes: the audio
+  // crossfades from itself (gate open) to a one-pole low-pass of itself (gate closed), whose
+  // corner goes from 20 kHz down to 500 Hz as Tone Release rises; the gain follows as before.
+  tr_l = tr_r = 0;
   hold_n = 0;
   sc_lp_l = sc_lp_r = 0;
   la_buf = 0;
@@ -90,6 +95,8 @@ out_pin:Right
   sc_lp_on = slider9 < 20000;
   sc_lp_on ? sc_lp_coef = 1 - exp(-2 * $pi * slider9 / srate);
   flip = slider10 >= 0.5;
+  tr_on = slider11 > 0;
+  tr_c = 1 - exp(-2 * $pi * min(20000 * 0.025 ^ (slider11 / 100), 0.45 * srate) / srate);
 
 @sample
   // detector input: the track, or pins 3/4 (External)
@@ -152,5 +159,14 @@ out_pin:Right
     spl1 = la_buf[la_size + la_k];
   );
   (la_pos += 1) >= la_size ? la_pos = 0;
+  tr_on ? (
+    tr_l += tr_c * (spl0 - tr_l);
+    tr_r += tr_c * (spl1 - tr_r);
+    tr_l = abs(tr_l) < 0.000000000000001 ? 0 : tr_l;
+    tr_r = abs(tr_r) < 0.000000000000001 ? 0 : tr_r;
+    tr_o = flip ? 1 - gate_level : gate_level;
+    spl0 = spl0 - (spl0 - tr_l) * (1 - tr_o);
+    spl1 = spl1 - (spl1 - tr_r) * (1 - tr_o);
+  );
   spl0 = spl0 * gate_gain;
   spl1 = spl1 * gate_gain;

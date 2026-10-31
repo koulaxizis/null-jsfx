@@ -13,6 +13,8 @@ slider6:0<-24,12,0.1>Output (dB)
 slider7:0<0,2,1{Off,2x,4x}>Oversampling
 slider8:0<-12,12,0.1>Emphasis (dB)
 slider9:0<0,2,1{Stereo,Mid,Side}>Channels
+slider10:0<0,3,1{Off,Bass,Mid,Presence}>Focus
+slider11:0<0,100,1>Density (%)
 
 in_pin:Left
 in_pin:Right
@@ -139,6 +141,17 @@ out_pin:Right
   memset(ms_buf, 0, 64);
   freembuf(960);
 
+  // Focus and Density (appended in 2.8, both off by default). Focus is a +9 dB peak (Q 0.7) at
+  // 100 Hz (Bass), 1 kHz (Mid) or 3 kHz (Presence) before the shaper and its exact inverse (the
+  // same peak at -9 dB) after it, so that band saturates first while the clean tone stays the
+  // same. Density follows the shaper (at its rate): y (1 + d) / (1 + d |y|), d = Density / 100,
+  // which lifts low levels by up to 6 dB and leaves full scale where it was: a thicker sound.
+  fa_xl1 = fa_xl2 = fa_yl1 = fa_yl2 = fa_xr1 = fa_xr2 = fa_yr1 = fa_yr2 = 0;
+  fb_xl1 = fb_xl2 = fb_yl1 = fb_yl2 = fb_xr1 = fb_xr2 = fb_yr1 = fb_yr2 = 0;
+
+  // Density after the shaper
+  function sat_dens(y) ( dn_on ? y * (1 + dn) / (1 + dn * abs(y)) : y; );
+
   // the shaper for one driven sample: mode sat_mode, drive 0..1
   function sat_shape(x) local(a, y, bits, quants)
   (
@@ -227,6 +240,22 @@ out_pin:Right
   em_a1 = em_t - 1;
   em_on ? 0 : ( em_xl = em_yl = em_xr = em_yr = 0; de_xl = de_yl = de_xr = de_yr = 0; );
   ms_mode = slider9;
+  dn_on = slider11 > 0;
+  dn = slider11 / 100;
+  fo_on = slider10 > 0;
+  fo_on ? (
+    fo_w = 2 * $pi * min(slider10 == 1 ? 100 : slider10 == 2 ? 1000 : 3000, 0.45 * srate) / srate;
+    fo_a = 10 ^ (9 / 40);
+    fo_al = sin(fo_w) / (2 * 0.7);
+    fo_p0 = 1 + fo_al * fo_a;
+    fo_p1 = -2 * cos(fo_w);
+    fo_p2 = 1 - fo_al * fo_a;
+    fo_q0 = 1 + fo_al / fo_a;
+    fo_q2 = 1 - fo_al / fo_a;
+  ) : (
+    fa_xl1 = fa_xl2 = fa_yl1 = fa_yl2 = fa_xr1 = fa_xr2 = fa_yr1 = fa_yr2 = 0;
+    fb_xl1 = fb_xl2 = fb_yl1 = fb_yl2 = fb_xr1 = fb_xr2 = fb_yr1 = fb_yr2 = 0;
+  );
   os = slider7;
   os < 0.5 ? ( osf = 1; lat = 0; pad = 0; ) :
   os < 1.5 ? ( osf = 2; lat = 31; pad = 0; ) :
@@ -271,6 +300,13 @@ out_pin:Right
     em_v = (em_b0 * in_r + em_b1 * em_xr - em_a1 * em_yr) / em_a0;
     em_xr = in_r; em_yr = em_v; in_r = em_v;
   );
+  fo_on ? (
+    // Focus: the peak, (p0 x + p1 x1 + p2 x2 - p1 y1 - q2 y2) / q0
+    fo_v = (fo_p0 * in_l + fo_p1 * fa_xl1 + fo_p2 * fa_xl2 - fo_p1 * fa_yl1 - fo_q2 * fa_yl2) / fo_q0;
+    fa_xl2 = fa_xl1; fa_xl1 = in_l; fa_yl2 = fa_yl1; fa_yl1 = fo_v; in_l = fo_v;
+    fo_v = (fo_p0 * in_r + fo_p1 * fa_xr1 + fo_p2 * fa_xr2 - fo_p1 * fa_yr1 - fo_q2 * fa_yr2) / fo_q0;
+    fa_xr2 = fa_xr1; fa_xr1 = in_r; fa_yr2 = fa_yr1; fa_yr1 = fo_v; in_r = fo_v;
+  );
   in_l = in_l * (1 + drive * 3);
   in_r = in_r * (1 + drive * 3);
 
@@ -301,8 +337,8 @@ out_pin:Right
         cxr = chr.pd[j];
         pw = (pw + 1) % 8;
       );
-      tl[i] = sat_shape(cxl);
-      tr[i] = sat_shape(cxr);
+      tl[i] = sat_dens(sat_shape(cxl));
+      tr[i] = sat_dens(sat_shape(cxr));
       i += 1;
     );
     // back down to the sample rate
@@ -328,8 +364,16 @@ out_pin:Right
     );
     dw = (dw + 1) % 64;
   ) : (
-    wet_l = sat_shape(in_l);
-    wet_r = sat_shape(in_r);
+    wet_l = sat_dens(sat_shape(in_l));
+    wet_r = sat_dens(sat_shape(in_r));
+  );
+
+  fo_on ? (
+    // Focus, the exact inverse: (q0 x + p1 x1 + q2 x2 - p1 y1 - p2 y2) / p0
+    fo_v = (fo_q0 * wet_l + fo_p1 * fb_xl1 + fo_q2 * fb_xl2 - fo_p1 * fb_yl1 - fo_p2 * fb_yl2) / fo_p0;
+    fb_xl2 = fb_xl1; fb_xl1 = wet_l; fb_yl2 = fb_yl1; fb_yl1 = fo_v; wet_l = fo_v;
+    fo_v = (fo_q0 * wet_r + fo_p1 * fb_xr1 + fo_q2 * fb_xr2 - fo_p1 * fb_yr1 - fo_p2 * fb_yr2) / fo_p0;
+    fb_xr2 = fb_xr1; fb_xr1 = wet_r; fb_yr2 = fb_yr1; fb_yr1 = fo_v; wet_r = fo_v;
   );
 
   em_on ? (
