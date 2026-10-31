@@ -1,0 +1,391 @@
+desc:NULL Assisted Delay GFX
+author: Christos Koulaxizis
+tags: delay echo slapback assisted learn assistant auto automatic tempo sync ping-pong ducking vocal drums bus gui
+//category: Assisted
+//NULL JSFX v2.8 • https://nulljsfx.tech • MIT License
+
+import null_gfx.jsfx-inc
+
+slider1:0<0,1,1{Off,On}>-Learn
+slider2:0<0,4,1{Vocal,Drums,Bass,Instrument,Mix}>-Source
+slider3:0<0,6,1{Natural,Warm,Bright,Punchy,Radio,Podcast,Lo-Fi}>-Target
+slider4:100<0,150,1>-Amount (%)
+slider5:0<-2,2,0.1>-Repeats Trim
+slider6:0<-2,2,0.1>-Tone Trim
+slider7:0<-12,12,0.1>-Level Trim (dB)
+slider8:0<-12,12,0.1>-Output (dB)
+slider9:0<0,1,1{No,Yes}>-Learned
+slider10:-18<-80,0,0.1>-Learned Loud (dB)
+slider11:-24<-80,0,0.1>-Learned Median (dB)
+slider12:0<0,2000,1>-Learned Onset (ms)
+slider13:-18<-60,0,0.1>-Learned Bright (dB)
+
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
+
+@init
+  ext_noinit = 1;              // play and seek keep tails and state, as in the VST3/CLAP
+  // A delay that sets itself. Learn (On) listens exactly as Assisted Reverb does: after 15 s of
+  // signal above -60 dBFS (or when turned off after at least 0.5 s) it stores the 90th
+  // percentile and median of the 50 ms levels, the mean time between onsets and the brightness
+  // (the power above 4 kHz against the whole, dB) in the hidden Learned sliders and goes back
+  // to Off.
+  // The settings follow from those, Source and Target whenever a slider moves (the numbers live
+  // in tools/assisted_targets.json): the time is the target's note at the host tempo (120 bpm
+  // when the host gives none), or a slapback; the target sets ping-pong and how many repeats
+  // stay within 30 dB, fewer when the learned onsets come faster than the echoes, times
+  // 2^Repeats Trim; the low cut in the loop comes from the source, the high cut from the
+  // target moved by the learned brightness (as in Assisted Reverb) and 2^Tone Trim; the echo
+  // level from the source and the target times Amount and Level Trim; the echoes dip by the
+  // source's ducking depth while the dry signal is between its learned median and loud levels.
+  // The delay: up to 3 s per side; every repeat passes a one-pole low cut and high cut in the
+  // feedback loop; ping-pong sends the mono input into the left line and crosses the lines.
+  // BEGIN tables (tools/build_assisted.py, do not edit)
+  as_note = 0; as_pp = 8; as_rep = 16; as_lc = 24; as_hc = 32; as_mix = 40; as_mixm = 48; as_duck = 56; as_duckm = 64;
+  as_note[0] = 1; as_note[1] = 1.5; as_note[2] = 0.5; as_note[3] = 0.75; as_note[4] = 0; as_note[5] = 0; as_note[6] = 0.75;
+  as_pp[0] = 0; as_pp[1] = 0; as_pp[2] = 1; as_pp[3] = 1; as_pp[4] = 0; as_pp[5] = 0; as_pp[6] = 0;
+  as_rep[0] = 3; as_rep[1] = 4; as_rep[2] = 3; as_rep[3] = 2; as_rep[4] = 1; as_rep[5] = 1; as_rep[6] = 5;
+  as_lc[0] = 300; as_lc[1] = 200; as_lc[2] = 120; as_lc[3] = 200; as_lc[4] = 250;
+  as_hc[0] = 6000; as_hc[1] = 3500; as_hc[2] = 10000; as_hc[3] = 5000; as_hc[4] = 3000; as_hc[5] = 4000; as_hc[6] = 2500;
+  as_mix[0] = 0.2; as_mix[1] = 0.12; as_mix[2] = 0.05; as_mix[3] = 0.22; as_mix[4] = 0.1;
+  as_mixm[0] = 1; as_mixm[1] = 1; as_mixm[2] = 1; as_mixm[3] = 0.8; as_mixm[4] = 0.6; as_mixm[5] = 0.2; as_mixm[6] = 1.2;
+  as_duck[0] = 8; as_duck[1] = 3; as_duck[2] = 0; as_duck[3] = 4; as_duck[4] = 3;
+  as_duckm[0] = 1; as_duckm[1] = 0.8; as_duckm[2] = 1; as_duckm[3] = 1.3; as_duckm[4] = 1; as_duckm[5] = 1.5; as_duckm[6] = 0.5;
+  as_slap = 90; as_br_ref = -18; as_br_db = 12; as_hc_lo = 1000; as_hc_hi = 16000;
+  // END tables
+
+  // memory: tables 0-71; level histogram (800 bins) from 1000; the delay lines from 2000
+  ad_lh = 1000; ad_nlh = 800;
+  ad_size = ceil(3.05 * srate);
+  ad_bl = 2000;
+  ad_br = ad_bl + ad_size;
+  memset(ad_bl, 0, 2 * ad_size);
+  freembuf(ad_br + ad_size);
+  ad_wp = 0;
+  ad_d = 1;
+  ad_on = 0;
+  ad_prev = 0;
+  ad_env = 0;
+  ad_duckg = 1;
+  ad_lcl = ad_lcr = ad_hcl = ad_hcr = 0;
+  ad_bpm = 120;
+  ad_ef = 1 - exp(-1 / (0.005 * srate));
+  ad_es = 1 - exp(-1 / (0.1 * srate));
+  ad_dka = 1 - exp(-1 / (0.01 * srate));
+  ad_dkr = 1 - exp(-1 / (0.25 * srate));
+  // the brightness detector: a 4 kHz high-pass (RBJ, Q 0.7071)
+  ad_w = 2 * $pi * min(4000, 0.45 * srate) / srate;
+  ad_a = sin(ad_w) / (2 * 0.7071067811865476);
+  ad_cs = cos(ad_w);
+  ad_h0 = (1 + ad_cs) / 2 / (1 + ad_a); ad_h1 = -(1 + ad_cs) / (1 + ad_a);
+  ad_h3 = -2 * ad_cs / (1 + ad_a); ad_h4 = (1 - ad_a) / (1 + ad_a);
+
+  function ad_start()
+  (
+    memset(ad_lh, 0, ad_nlh);
+    ad_win = floor(0.05 * srate);
+    ad_need = floor(15 * srate);
+    ad_wn = ad_wq = ad_wh = ad_wm = 0;
+    ad_n = 0;
+    ad_hs = ad_ps = 0;
+    ad_z1 = ad_z2 = 0;
+    ad_ff = ad_fs = 0;
+    ad_t = 0; ad_last = -1; ad_is = 0; ad_in = 0;
+    ad_on = 1;
+  );
+
+  function ad_round(v) ( floor(v * 10 + 0.5) / 10; );
+
+  // the level under which a share p of the windows lies
+  function ad_pct(p, total) local(c, i, r)
+  (
+    c = 0; i = 0; r = -1;
+    loop(ad_nlh,
+      c += ad_lh[i];
+      r < 0 && c >= p * total ? r = i;
+      i += 1;
+    );
+    -80 + (max(0, r) + 0.5) / 10;
+  );
+
+  // the delay time from the target's note and the tempo
+  function ad_time()
+  (
+    ad_ms = as_note[ad_tgt] > 0 ? 60000 / ad_bpm * as_note[ad_tgt] : as_slap;
+    ad_ms = max(1, min(3000, ad_ms));
+    ad_d = max(1, min(ad_size - 1, floor(ad_ms * srate / 1000 + 0.5)));
+  );
+
+  // tools/assisted_targets.json and the Learned sliders -> the delay's settings
+  function update() local(lr, amt, rep)
+  (
+    ad_src = slider2;
+    ad_tgt = slider3;
+    lr = slider9 >= 0.5;
+    amt = slider4 / 100;
+    ad_time();
+    ad_pp = as_pp[ad_tgt] >= 0.5;
+    rep = as_rep[ad_tgt] * 2 ^ slider5;
+    lr && slider12 > 0 && slider12 < ad_ms ? rep *= max(0.5, slider12 / ad_ms);
+    ad_rep = max(0.25, rep);
+    ad_fb = min(0.9, 10 ^ (-30 / ad_rep / 20));
+    ad_lcf = as_lc[ad_src];
+    ad_hcf = as_hc[ad_tgt] * (lr ? 2 ^ ((slider13 - as_br_ref) / as_br_db) : 1);
+    ad_hcf = max(as_hc_lo, min(as_hc_hi, ad_hcf)) * 2 ^ slider6;
+    ad_hcf = max(500, min(20000, ad_hcf));
+    ad_lca = 1 - exp(-2 * $pi * min(ad_lcf, 0.45 * srate) / srate);
+    ad_hca = 1 - exp(-2 * $pi * min(ad_hcf, 0.45 * srate) / srate);
+    ad_wet = as_mix[ad_src] * as_mixm[ad_tgt] * amt * 10 ^ (slider7 / 20);
+    ad_duck = as_duck[ad_src] * as_duckm[ad_tgt] * min(1, amt);
+    ad_dlo = slider11;
+    ad_drng = max(3, slider10 - slider11);
+    ad_out = 10 ^ (slider8 / 20);
+  );
+
+  // the measurements, written to the hidden sliders; Learn goes back to Off
+  function ad_finish() local(total, i)
+  (
+    total = 0; i = 0;
+    loop(ad_nlh, total += ad_lh[i]; i += 1;);
+    slider10 = ad_round(max(-80, min(0, ad_pct(0.9, total))));
+    slider11 = ad_round(max(-80, min(0, ad_pct(0.5, total))));
+    slider12 = ad_in >= 2 ? max(0, min(2000, floor(ad_is / ad_in * 1000 / srate + 0.5))) : 0;
+    slider13 = ad_round(max(-60, min(0, ad_ps > 0 ? 10 * log10(ad_hs / ad_ps + 0.000000000001) : -60)));
+    slider9 = 1;
+    slider1 = 0;
+    ad_on = 0;
+    ad_prev = 0;
+    sliderchange(slider1); sliderchange(slider9); sliderchange(slider10); sliderchange(slider11);
+    sliderchange(slider12); sliderchange(slider13);
+    update();
+  );
+
+  update();
+
+  // ---- factory presets: generated by tools/build_presets.py, do not edit ----
+  ng_pre_n = 12;
+  strcpy(#ng_h_ix, "");
+  ng_hist_add(1); ng_hist_add(2); ng_hist_add(3); ng_hist_add(4); ng_hist_add(5); ng_hist_add(6); ng_hist_add(7); ng_hist_add(8); ng_hist_add(9); ng_hist_add(10); ng_hist_add(11); ng_hist_add(12); ng_hist_add(13);
+  ng_hist_init();
+
+  function ng_preset_load(p)
+  (
+    p == 0 ? ( ng_slider_set(1, 0); ng_slider_set(2, 0); ng_slider_set(3, 0); ng_slider_set(4, 100); ng_slider_set(5, 0); ng_slider_set(6, 0); ng_slider_set(7, 0); ng_slider_set(8, 0); ng_slider_set(9, 0); ng_slider_set(10, -18); ng_slider_set(11, -24); ng_slider_set(12, 0); ng_slider_set(13, -18); );
+    p == 1 ? ( ng_slider_set(1, 0); ng_slider_set(2, 0); ng_slider_set(3, 0); ng_slider_set(4, 100); ng_slider_set(5, 0); ng_slider_set(6, 0); ng_slider_set(7, 0); ng_slider_set(8, 0); ng_slider_set(9, 0); ng_slider_set(10, -18); ng_slider_set(11, -24); ng_slider_set(12, 0); ng_slider_set(13, -18); );
+    p == 2 ? ( ng_slider_set(1, 0); ng_slider_set(2, 0); ng_slider_set(3, 1); ng_slider_set(4, 100); ng_slider_set(5, 0); ng_slider_set(6, 0); ng_slider_set(7, 0); ng_slider_set(8, 0); ng_slider_set(9, 0); ng_slider_set(10, -18); ng_slider_set(11, -24); ng_slider_set(12, 0); ng_slider_set(13, -18); );
+    p == 3 ? ( ng_slider_set(1, 0); ng_slider_set(2, 0); ng_slider_set(3, 2); ng_slider_set(4, 100); ng_slider_set(5, 0); ng_slider_set(6, 0); ng_slider_set(7, 0); ng_slider_set(8, 0); ng_slider_set(9, 0); ng_slider_set(10, -18); ng_slider_set(11, -24); ng_slider_set(12, 0); ng_slider_set(13, -18); );
+    p == 4 ? ( ng_slider_set(1, 0); ng_slider_set(2, 0); ng_slider_set(3, 4); ng_slider_set(4, 100); ng_slider_set(5, 0); ng_slider_set(6, 0); ng_slider_set(7, 0); ng_slider_set(8, 0); ng_slider_set(9, 0); ng_slider_set(10, -18); ng_slider_set(11, -24); ng_slider_set(12, 0); ng_slider_set(13, -18); );
+    p == 5 ? ( ng_slider_set(1, 0); ng_slider_set(2, 0); ng_slider_set(3, 5); ng_slider_set(4, 100); ng_slider_set(5, 0); ng_slider_set(6, 0); ng_slider_set(7, 0); ng_slider_set(8, 0); ng_slider_set(9, 0); ng_slider_set(10, -18); ng_slider_set(11, -24); ng_slider_set(12, 0); ng_slider_set(13, -18); );
+    p == 6 ? ( ng_slider_set(1, 0); ng_slider_set(2, 1); ng_slider_set(3, 3); ng_slider_set(4, 100); ng_slider_set(5, 0); ng_slider_set(6, 0); ng_slider_set(7, 0); ng_slider_set(8, 0); ng_slider_set(9, 0); ng_slider_set(10, -18); ng_slider_set(11, -24); ng_slider_set(12, 0); ng_slider_set(13, -18); );
+    p == 7 ? ( ng_slider_set(1, 0); ng_slider_set(2, 2); ng_slider_set(3, 0); ng_slider_set(4, 100); ng_slider_set(5, 0); ng_slider_set(6, 0); ng_slider_set(7, 0); ng_slider_set(8, 0); ng_slider_set(9, 0); ng_slider_set(10, -18); ng_slider_set(11, -24); ng_slider_set(12, 0); ng_slider_set(13, -18); );
+    p == 8 ? ( ng_slider_set(1, 0); ng_slider_set(2, 3); ng_slider_set(3, 0); ng_slider_set(4, 100); ng_slider_set(5, 0); ng_slider_set(6, 0); ng_slider_set(7, 0); ng_slider_set(8, 0); ng_slider_set(9, 0); ng_slider_set(10, -18); ng_slider_set(11, -24); ng_slider_set(12, 0); ng_slider_set(13, -18); );
+    p == 9 ? ( ng_slider_set(1, 0); ng_slider_set(2, 3); ng_slider_set(3, 6); ng_slider_set(4, 100); ng_slider_set(5, 0); ng_slider_set(6, 0); ng_slider_set(7, 0); ng_slider_set(8, 0); ng_slider_set(9, 0); ng_slider_set(10, -18); ng_slider_set(11, -24); ng_slider_set(12, 0); ng_slider_set(13, -18); );
+    p == 10 ? ( ng_slider_set(1, 0); ng_slider_set(2, 4); ng_slider_set(3, 1); ng_slider_set(4, 70); ng_slider_set(5, 0); ng_slider_set(6, 0); ng_slider_set(7, 0); ng_slider_set(8, 0); ng_slider_set(9, 0); ng_slider_set(10, -18); ng_slider_set(11, -24); ng_slider_set(12, 0); ng_slider_set(13, -18); );
+    p == 11 ? ( ng_slider_set(1, 0); ng_slider_set(2, 3); ng_slider_set(3, 1); ng_slider_set(4, 100); ng_slider_set(5, 1); ng_slider_set(6, -1); ng_slider_set(7, 0); ng_slider_set(8, 0); ng_slider_set(9, 0); ng_slider_set(10, -18); ng_slider_set(11, -24); ng_slider_set(12, 0); ng_slider_set(13, -18); );
+  );
+
+  // the first preset every slider matches, or -1
+  function ng_preset_match() local(m)
+  (
+    m = -1;
+    m < 0 && ng_pre_eq(slider1, 0) && ng_pre_eq(slider2, 0) && ng_pre_eq(slider3, 0) && ng_pre_eq(slider4, 100) && ng_pre_eq(slider5, 0) && ng_pre_eq(slider6, 0) && ng_pre_eq(slider7, 0) && ng_pre_eq(slider8, 0) && ng_pre_eq(slider9, 0) && ng_pre_eq(slider10, -18) && ng_pre_eq(slider11, -24) && ng_pre_eq(slider12, 0) && ng_pre_eq(slider13, -18) ? m = 0;
+    m < 0 && ng_pre_eq(slider1, 0) && ng_pre_eq(slider2, 0) && ng_pre_eq(slider3, 0) && ng_pre_eq(slider4, 100) && ng_pre_eq(slider5, 0) && ng_pre_eq(slider6, 0) && ng_pre_eq(slider7, 0) && ng_pre_eq(slider8, 0) && ng_pre_eq(slider9, 0) && ng_pre_eq(slider10, -18) && ng_pre_eq(slider11, -24) && ng_pre_eq(slider12, 0) && ng_pre_eq(slider13, -18) ? m = 1;
+    m < 0 && ng_pre_eq(slider1, 0) && ng_pre_eq(slider2, 0) && ng_pre_eq(slider3, 1) && ng_pre_eq(slider4, 100) && ng_pre_eq(slider5, 0) && ng_pre_eq(slider6, 0) && ng_pre_eq(slider7, 0) && ng_pre_eq(slider8, 0) && ng_pre_eq(slider9, 0) && ng_pre_eq(slider10, -18) && ng_pre_eq(slider11, -24) && ng_pre_eq(slider12, 0) && ng_pre_eq(slider13, -18) ? m = 2;
+    m < 0 && ng_pre_eq(slider1, 0) && ng_pre_eq(slider2, 0) && ng_pre_eq(slider3, 2) && ng_pre_eq(slider4, 100) && ng_pre_eq(slider5, 0) && ng_pre_eq(slider6, 0) && ng_pre_eq(slider7, 0) && ng_pre_eq(slider8, 0) && ng_pre_eq(slider9, 0) && ng_pre_eq(slider10, -18) && ng_pre_eq(slider11, -24) && ng_pre_eq(slider12, 0) && ng_pre_eq(slider13, -18) ? m = 3;
+    m < 0 && ng_pre_eq(slider1, 0) && ng_pre_eq(slider2, 0) && ng_pre_eq(slider3, 4) && ng_pre_eq(slider4, 100) && ng_pre_eq(slider5, 0) && ng_pre_eq(slider6, 0) && ng_pre_eq(slider7, 0) && ng_pre_eq(slider8, 0) && ng_pre_eq(slider9, 0) && ng_pre_eq(slider10, -18) && ng_pre_eq(slider11, -24) && ng_pre_eq(slider12, 0) && ng_pre_eq(slider13, -18) ? m = 4;
+    m < 0 && ng_pre_eq(slider1, 0) && ng_pre_eq(slider2, 0) && ng_pre_eq(slider3, 5) && ng_pre_eq(slider4, 100) && ng_pre_eq(slider5, 0) && ng_pre_eq(slider6, 0) && ng_pre_eq(slider7, 0) && ng_pre_eq(slider8, 0) && ng_pre_eq(slider9, 0) && ng_pre_eq(slider10, -18) && ng_pre_eq(slider11, -24) && ng_pre_eq(slider12, 0) && ng_pre_eq(slider13, -18) ? m = 5;
+    m < 0 && ng_pre_eq(slider1, 0) && ng_pre_eq(slider2, 1) && ng_pre_eq(slider3, 3) && ng_pre_eq(slider4, 100) && ng_pre_eq(slider5, 0) && ng_pre_eq(slider6, 0) && ng_pre_eq(slider7, 0) && ng_pre_eq(slider8, 0) && ng_pre_eq(slider9, 0) && ng_pre_eq(slider10, -18) && ng_pre_eq(slider11, -24) && ng_pre_eq(slider12, 0) && ng_pre_eq(slider13, -18) ? m = 6;
+    m < 0 && ng_pre_eq(slider1, 0) && ng_pre_eq(slider2, 2) && ng_pre_eq(slider3, 0) && ng_pre_eq(slider4, 100) && ng_pre_eq(slider5, 0) && ng_pre_eq(slider6, 0) && ng_pre_eq(slider7, 0) && ng_pre_eq(slider8, 0) && ng_pre_eq(slider9, 0) && ng_pre_eq(slider10, -18) && ng_pre_eq(slider11, -24) && ng_pre_eq(slider12, 0) && ng_pre_eq(slider13, -18) ? m = 7;
+    m < 0 && ng_pre_eq(slider1, 0) && ng_pre_eq(slider2, 3) && ng_pre_eq(slider3, 0) && ng_pre_eq(slider4, 100) && ng_pre_eq(slider5, 0) && ng_pre_eq(slider6, 0) && ng_pre_eq(slider7, 0) && ng_pre_eq(slider8, 0) && ng_pre_eq(slider9, 0) && ng_pre_eq(slider10, -18) && ng_pre_eq(slider11, -24) && ng_pre_eq(slider12, 0) && ng_pre_eq(slider13, -18) ? m = 8;
+    m < 0 && ng_pre_eq(slider1, 0) && ng_pre_eq(slider2, 3) && ng_pre_eq(slider3, 6) && ng_pre_eq(slider4, 100) && ng_pre_eq(slider5, 0) && ng_pre_eq(slider6, 0) && ng_pre_eq(slider7, 0) && ng_pre_eq(slider8, 0) && ng_pre_eq(slider9, 0) && ng_pre_eq(slider10, -18) && ng_pre_eq(slider11, -24) && ng_pre_eq(slider12, 0) && ng_pre_eq(slider13, -18) ? m = 9;
+    m < 0 && ng_pre_eq(slider1, 0) && ng_pre_eq(slider2, 4) && ng_pre_eq(slider3, 1) && ng_pre_eq(slider4, 70) && ng_pre_eq(slider5, 0) && ng_pre_eq(slider6, 0) && ng_pre_eq(slider7, 0) && ng_pre_eq(slider8, 0) && ng_pre_eq(slider9, 0) && ng_pre_eq(slider10, -18) && ng_pre_eq(slider11, -24) && ng_pre_eq(slider12, 0) && ng_pre_eq(slider13, -18) ? m = 10;
+    m < 0 && ng_pre_eq(slider1, 0) && ng_pre_eq(slider2, 3) && ng_pre_eq(slider3, 1) && ng_pre_eq(slider4, 100) && ng_pre_eq(slider5, 1) && ng_pre_eq(slider6, -1) && ng_pre_eq(slider7, 0) && ng_pre_eq(slider8, 0) && ng_pre_eq(slider9, 0) && ng_pre_eq(slider10, -18) && ng_pre_eq(slider11, -24) && ng_pre_eq(slider12, 0) && ng_pre_eq(slider13, -18) ? m = 11;
+    m;
+  );
+
+  function ng_preset_name(p) local(s)
+  (
+    s = "";
+    p == 0 ? s = "Default";
+    p == 1 ? s = "Vocal Quarter";
+    p == 2 ? s = "Vocal Warm Dotted";
+    p == 3 ? s = "Vocal Bright Ping-Pong";
+    p == 4 ? s = "Vocal Slapback";
+    p == 5 ? s = "Podcast Touch";
+    p == 6 ? s = "Drum Dotted Eighths";
+    p == 7 ? s = "Bass Hint";
+    p == 8 ? s = "Instrument Quarter";
+    p == 9 ? s = "Instrument Lo-Fi Echoes";
+    p == 10 ? s = "Mix Throw";
+    p == 11 ? s = "Long Dark Repeats";
+    s;
+  );
+
+  function ng_presets() local(i)
+  (
+    ng_pre_req >= 0 ? ( ng_preset_load(ng_pre_req); update(); ng_pre_req = -1; );
+    ng_hist() ? update();
+    ng_pre_cur = ng_preset_match();
+    ng_pre_open ? (
+      ng_pre_menu_begin();
+      i = 0;
+      loop(ng_pre_n, ng_pre_item(i, ng_preset_name(i)); i += 1;);
+      ng_pre_menu_end();
+    );
+    strcpy(#ng_pre_name, ng_pre_cur >= 0 ? ng_preset_name(ng_pre_cur) : "CUSTOM");
+  );
+  // ---- end of factory presets ----
+
+@slider
+  update();
+
+@block
+  // the host tempo, read once per block (120 bpm when the host gives none)
+  ad_nb = tempo > 0 ? tempo : 120;
+  ad_nb != ad_bpm ? ( ad_bpm = ad_nb; update(); );
+  // Learn turned on starts listening; turned off early, it finishes with what it heard
+  // (0.5 s at least) or gives up. Checked per block, however the slider was set.
+  slider1 >= 0.5 && ad_prev < 0.5 ? ad_start();
+  slider1 < 0.5 && ad_on ? (
+    ad_n >= 0.5 * srate ? ad_finish() : ad_on = 0;
+  );
+  ad_prev = slider1 >= 0.5 ? 1 : 0;
+
+@sample
+  ad_x = max(abs(spl0), abs(spl1));
+  ad_on ? (
+    // 50 ms windows: level and the power above 4 kHz
+    ad_m = (spl0 + spl1) * 0.5;
+    ad_wq += (spl0 * spl0 + spl1 * spl1) * 0.5;
+    ad_y = ad_h0 * ad_m + ad_z1;
+    ad_z1 = ad_h1 * ad_m - ad_h3 * ad_y + ad_z2;
+    ad_z2 = ad_h0 * ad_m - ad_h4 * ad_y;
+    ad_wh += ad_y * ad_y;
+    ad_wm += ad_m * ad_m;
+    ad_wn += 1;
+    // onsets: a fast envelope jumping 6 dB over a slow one, 50 ms apart at least
+    ad_ff += (ad_x - ad_ff) * ad_ef;
+    ad_fs += (ad_x - ad_fs) * ad_es;
+    ad_ff > 0.003 && ad_ff > 2 * ad_fs && (ad_last < 0 || ad_t - ad_last >= 0.05 * srate) ? (
+      ad_last >= 0 && ad_t - ad_last <= 2 * srate ? ( ad_is += ad_t - ad_last; ad_in += 1; );
+      ad_last = ad_t;
+    );
+    ad_t += 1;
+    ad_wn >= ad_win ? (
+      ad_wq > 0.000001 * ad_wn ? (
+        ad_lh[max(0, min(ad_nlh - 1, floor((10 * log10(ad_wq / ad_wn) + 80) * 10)))] += 1;
+        ad_hs += ad_wh;
+        ad_ps += ad_wm;
+        ad_n += ad_wn;
+      );
+      ad_wq = ad_wh = ad_wm = 0;
+      ad_wn = 0;
+      ad_n >= ad_need ? ad_finish();
+    );
+  );
+
+  // ducking: the echoes dip while the dry signal is loud (10 ms attack, 250 ms release)
+  ad_env += (ad_x - ad_env) * (ad_x > ad_env ? ad_dka : ad_dkr);
+  ad_duck > 0 ? (
+    ad_dt = max(0, min(1, (20 * log10(max(ad_env, 0.000001)) - ad_dlo) / ad_drng));
+    ad_duckg = 10 ^ (-ad_duck * ad_dt / 20);
+  ) : (
+    ad_duckg = 1;
+  );
+
+  ad_rp = ad_wp - ad_d;
+  ad_rp < 0 ? ad_rp += ad_size;
+  ad_el = ad_bl[ad_rp];
+  ad_er = ad_br[ad_rp];
+  // every repeat passes the low cut and the high cut again
+  ad_lcl += ad_lca * (ad_el - ad_lcl); ad_el -= ad_lcl;
+  ad_lcr += ad_lca * (ad_er - ad_lcr); ad_er -= ad_lcr;
+  ad_hcl += ad_hca * (ad_el - ad_hcl); ad_el = ad_hcl;
+  ad_hcr += ad_hca * (ad_er - ad_hcr); ad_er = ad_hcr;
+  ad_pp ? (
+    ad_bl[ad_wp] = (spl0 + spl1) * 0.5 + ad_er * ad_fb;
+    ad_br[ad_wp] = ad_el * ad_fb;
+  ) : (
+    ad_bl[ad_wp] = spl0 + ad_el * ad_fb;
+    ad_br[ad_wp] = spl1 + ad_er * ad_fb;
+  );
+  ad_wp += 1;
+  ad_wp >= ad_size ? ad_wp = 0;
+
+  ad_g = ad_wet * ad_duckg;
+  spl0 = (spl0 + ad_el * ad_g) * ad_out;
+  spl1 = (spl1 + ad_er * ad_g) * ad_out;
+
+@gfx 480 400
+  ng_knobs_begin("ASSISTED DELAY", "ASSISTED", 480, 140, 2, 0);
+
+  // display, left: the echoes (0..3 s across, 0..-40 dB down; with ping-pong the right ones
+  // are dimmer); right: Learn's progress or the settings it chose, and the ducking
+  ng_plot(64, 66, 112, 112);
+  ng_grid(3, 4, 0);
+  ng_font(4, 8, 0);
+  ng_col(NG_MUTED, 1);
+  dg_i = 0;
+  loop(3, sprintf(#dg_l, "%d", -20 * dg_i); ng_ptxt(#dg_l, ng_px - 6 * ng_s, ng_py + ng_ph * dg_i / 2, 2); dg_i += 1;);
+  dg_k = 1;
+  dg_g = 0;
+  while (
+    dg_xx = floor(ng_lin_x(dg_k * ad_ms / 1000, 0, 3)) + 0.5;
+    dg_yy = ng_lin_y(dg_g, -40, 0);
+    ng_col(NG_ACCENT, ad_pp && (dg_k % 2) == 0 ? 0.5 : 1);
+    gfx_line(dg_xx, ng_py + ng_ph, dg_xx, dg_yy, 0);
+    gfx_line(dg_xx + 1, ng_py + ng_ph, dg_xx + 1, dg_yy, 0);
+    dg_k += 1;
+    dg_g += ad_fb > 0 ? 20 * log10(ad_fb) : -100;
+    dg_k * ad_ms <= 3000 && dg_g > -40 && dg_k < 64;
+  );
+
+  dg_tx = 200;
+  ng_font(1, 7.5, 1);
+  ng_col(NG_MUTED, 1);
+  ng_txt(ad_on ? "LISTENING" : slider9 >= 0.5 ? "LEARNED" : "NOT LEARNED", dg_tx, 70, 0, 1.5);
+  ad_on ? (
+    ng_col(NG_BORDER, 1);
+    gfx_rect(X(dg_tx), Y(82), 248 * ng_s, 4 * ng_s);
+    ng_col(NG_ACCENT, 1);
+    gfx_rect(X(dg_tx), Y(82), 248 * min(1, ad_n / ad_need) * ng_s, 4 * ng_s);
+    ng_font(1, 8, 0);
+    ng_col(NG_TEXT, 1);
+    sprintf(#dg_s, "%d of 15 s", floor(ad_n / srate));
+    ng_txt(#dg_s, dg_tx, 98, 0, 0);
+  ) : (
+    ng_font(1, 8, 0);
+    ng_col(NG_TEXT, 1);
+    sprintf(#dg_s, "TIME %d ms%s", floor(ad_ms + 0.5), ad_pp ? "   PING-PONG" : "");
+    ng_txt(#dg_s, dg_tx, 90, 0, 0);
+    sprintf(#dg_s, "REPEATS %.1f   FEEDBACK %d%%", ad_rep, floor(ad_fb * 100 + 0.5));
+    ng_txt(#dg_s, dg_tx, 106, 0, 0);
+    sprintf(#dg_s, "LOW CUT %d Hz   HIGH CUT %.1f kHz", ad_lcf, ad_hcf / 1000);
+    ng_txt(#dg_s, dg_tx, 122, 0, 0);
+    ad_wet > 0 ? sprintf(#dg_s, "LEVEL %.1f dB   DUCKING %.1f dB", 20 * log10(ad_wet), ad_duck)
+               : sprintf(#dg_s, "LEVEL OFF   DUCKING %.1f dB", ad_duck);
+    ng_txt(#dg_s, dg_tx, 138, 0, 0);
+  );
+  ng_gr_meter(dg_tx, 166, 248, 10, "DUCK", -20 * log10(ad_duckg), 12);
+
+  ng_row(4);
+  ng_select_ctl(1, "LEARN", "OFF|ON", 0) ? update();
+  ng_select_ctl(2, "SOURCE", "VOCAL|DRUMS|BASS|INSTR.|MIX", 0) ? update();
+  ng_select_ctl(3, "TARGET", "NATURAL|WARM|BRIGHT|PUNCHY|RADIO|PODCAST|LO-FI", 0) ? update();
+  sprintf(#dg_v4, "%d%%", slider4);
+  ng_knob_ctl(4, "AMOUNT", #dg_v4, 0, 150, 100, 1, 0) ? update();
+  ng_row(4);
+  sprintf(#dg_v5, "%+.1f", slider5);
+  ng_knob_ctl(5, "REPEATS", #dg_v5, -2, 2, 0, 0.1, 1) ? update();
+  sprintf(#dg_v6, "%+.1f", slider6);
+  ng_knob_ctl(6, "TONE", #dg_v6, -2, 2, 0, 0.1, 1) ? update();
+  sprintf(#dg_v7, "%+.1f dB", slider7);
+  ng_knob_ctl(7, "LEVEL", #dg_v7, -12, 12, 0, 0.1, 1) ? update();
+  sprintf(#dg_v8, "%+.1f dB", slider8);
+  ng_knob_ctl(8, "OUTPUT", #dg_v8, -12, 12, 0, 0.1, 1) ? update();
+
+  ng_end();
+
+  ng_presets(); // the preset list (generated by tools/build_presets.py)
