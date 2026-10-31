@@ -1,5 +1,5 @@
 {
-  "_doc": "The rules of the Assisted plugins (Assisted EQ, Assisted Comp). tools/build_assisted.py writes these numbers into the generated table blocks of the JSFX and GFX files and into native/common/AssistedTargets.hpp; edit them here and run it. Order of the lists: targets and sources as below, EQ regions low, mud, honk, presence, air.",
+  "_doc": "The rules of the Assisted plugins (Assisted EQ, Comp, Reverb and Delay). tools/build_assisted.py writes these numbers into the generated table blocks of the JSFX and GFX files and into native/common/AssistedTargets.hpp; edit them here and run it. Order of the lists: targets and sources as below, EQ regions low, mud, honk, presence, air.",
   "targets": ["Natural", "Warm", "Bright", "Punchy", "Radio", "Podcast", "Lo-Fi"],
   "sources": ["Vocal", "Drums", "Bass", "Instrument", "Mix"],
   "eq": {
@@ -22,13 +22,7 @@
       "Instrument": [0, 0, 0, 0, -2],
       "Mix": [0, 0, 0, 0, 0]
     },
-    "source_hpf": {
-      "Vocal": [60, 120],
-      "Drums": [20, 40],
-      "Bass": [20, 35],
-      "Instrument": [40, 100],
-      "Mix": [20, 30]
-    },
+    "source_hpf": {"Vocal": [60, 120], "Drums": [20, 40], "Bass": [20, 35], "Instrument": [40, 100], "Mix": [20, 30]},
     "correction": 0.6,
     "deadband": 1.5,
     "max_cut": -6,
@@ -47,5 +41,59 @@
     "release_none": 150,
     "loudness_share": 0.75,
     "loudness": {"Natural": 0, "Warm": 0, "Bright": 0, "Punchy": 0, "Radio": 0, "Podcast": -16, "Lo-Fi": 0}
+  },
+  "reverb": {
+    "_doc": "decay: RT60 in s per target, times decay_mul per source; with learned onsets it is kept under decay_onsets onset intervals (min decay_min s). size: the room (comb lengths) per target. predelay: pre-delay in ms = predelay_share of the learned onset interval times predelay_mul per target, kept in predelay_range (predelay_none ms without onsets). lowcut: Hz per source (the target's lowcut_target if higher). highcut: Hz per target, moved by the learned brightness: one octave per bright_db dB above or below bright_ref, kept in highcut_range. mix: wet level per source (linear, added to the dry signal), times mix_mul per target and Amount. duck: dB the wet dips while the dry signal is loud, per source, times duck_mul per target.",
+    "decay": {"Natural": 1.4, "Warm": 1.8, "Bright": 1.4, "Punchy": 0.9, "Radio": 0.7, "Podcast": 0.5, "Lo-Fi": 1.2},
+    "decay_mul": {"Vocal": 1, "Drums": 0.6, "Bass": 0.5, "Instrument": 1.1, "Mix": 0.8},
+    "decay_onsets": 6,
+    "decay_min": 0.3,
+    "size": {"Natural": 1, "Warm": 1.1, "Bright": 0.95, "Punchy": 0.75, "Radio": 0.6, "Podcast": 0.5, "Lo-Fi": 0.8},
+    "predelay_share": 0.1,
+    "predelay_range": [0, 60],
+    "predelay_none": 15,
+    "predelay_mul": {"Natural": 1, "Warm": 0.7, "Bright": 1, "Punchy": 1.6, "Radio": 0.5, "Podcast": 0.3, "Lo-Fi": 1},
+    "lowcut": {"Vocal": 250, "Drums": 200, "Bass": 400, "Instrument": 200, "Mix": 300},
+    "lowcut_target": {"Natural": 0, "Warm": 0, "Bright": 0, "Punchy": 0, "Radio": 400, "Podcast": 350, "Lo-Fi": 400},
+    "highcut": {
+      "Natural": 9000,
+      "Warm": 5500,
+      "Bright": 14000,
+      "Punchy": 8000,
+      "Radio": 4500,
+      "Podcast": 6000,
+      "Lo-Fi": 3400
+    },
+    "bright_ref": -18,
+    "bright_db": 12,
+    "highcut_range": [1500, 16000],
+    "mix": {"Vocal": 0.18, "Drums": 0.12, "Bass": 0.04, "Instrument": 0.2, "Mix": 0.08},
+    "mix_mul": {"Natural": 1, "Warm": 1.1, "Bright": 1, "Punchy": 0.7, "Radio": 0.5, "Podcast": 0.25, "Lo-Fi": 1.2},
+    "duck": {"Vocal": 6, "Drums": 3, "Bass": 0, "Instrument": 3, "Mix": 2},
+    "duck_mul": {"Natural": 1, "Warm": 0.7, "Bright": 1, "Punchy": 1.5, "Radio": 1, "Podcast": 1.5, "Lo-Fi": 0.5}
+  },
+  "delay": {
+    "_doc": "note: the delay time in beats at the host tempo per target (0 = a slapback of slap_ms). pingpong: 1 = the echoes alternate left and right. repeats: how many echoes stay within 30 dB, per target; with learned onsets closer together than the delay time it is scaled down to (onset / time), at least half. lowcut: Hz per source, in the feedback loop. highcut: Hz per target in the feedback loop, moved by the learned brightness as in reverb, kept in highcut_range. mix: echo level per source (added to the dry signal), times mix_mul per target and Amount. duck: as in reverb.",
+    "note": {"Natural": 1, "Warm": 1.5, "Bright": 0.5, "Punchy": 0.75, "Radio": 0, "Podcast": 0, "Lo-Fi": 0.75},
+    "slap_ms": 90,
+    "pingpong": {"Natural": 0, "Warm": 0, "Bright": 1, "Punchy": 1, "Radio": 0, "Podcast": 0, "Lo-Fi": 0},
+    "repeats": {"Natural": 3, "Warm": 4, "Bright": 3, "Punchy": 2, "Radio": 1, "Podcast": 1, "Lo-Fi": 5},
+    "lowcut": {"Vocal": 300, "Drums": 200, "Bass": 120, "Instrument": 200, "Mix": 250},
+    "highcut": {
+      "Natural": 6000,
+      "Warm": 3500,
+      "Bright": 10000,
+      "Punchy": 5000,
+      "Radio": 3000,
+      "Podcast": 4000,
+      "Lo-Fi": 2500
+    },
+    "bright_ref": -18,
+    "bright_db": 12,
+    "highcut_range": [1000, 16000],
+    "mix": {"Vocal": 0.2, "Drums": 0.12, "Bass": 0.05, "Instrument": 0.22, "Mix": 0.1},
+    "mix_mul": {"Natural": 1, "Warm": 1, "Bright": 1, "Punchy": 0.8, "Radio": 0.6, "Podcast": 0.2, "Lo-Fi": 1.2},
+    "duck": {"Vocal": 8, "Drums": 3, "Bass": 0, "Instrument": 4, "Mix": 3},
+    "duck_mul": {"Natural": 1, "Warm": 0.8, "Bright": 1, "Punchy": 1.3, "Radio": 1, "Podcast": 1.5, "Lo-Fi": 0.5}
   }
 }

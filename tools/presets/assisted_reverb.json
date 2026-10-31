@@ -1,0 +1,14 @@
+[
+  ["Vocal Natural", {"Source": "Vocal", "Target": "Natural"}],
+  ["Vocal Warm Hall", {"Source": "Vocal", "Target": "Warm"}],
+  ["Vocal Bright Plate", {"Source": "Vocal", "Target": "Bright"}],
+  ["Radio Voice Room", {"Source": "Vocal", "Target": "Radio"}],
+  ["Podcast Voice Touch", {"Source": "Vocal", "Target": "Podcast"}],
+  ["Punchy Drum Room", {"Source": "Drums", "Target": "Punchy"}],
+  ["Natural Drum Space", {"Source": "Drums", "Target": "Natural"}],
+  ["Bass Hint", {"Source": "Bass", "Target": "Natural"}],
+  ["Instrument Ambience", {"Source": "Instrument", "Target": "Natural"}],
+  ["Instrument Lo-Fi Wash", {"Source": "Instrument", "Target": "Lo-Fi"}],
+  ["Mix Glue Space", {"Source": "Mix", "Target": "Natural", "Amount (%)": 70}],
+  ["Long Warm Tail", {"Source": "Instrument", "Target": "Warm", "Length Trim": 1}]
+]

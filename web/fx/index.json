@@ -1640,6 +1640,20 @@
    "bytes": 73147
   },
   {
+   "id": "assisted_delay",
+   "name": "Assisted Delay",
+   "category": "Assisted",
+   "tags": "delay echo slapback assisted learn assistant auto automatic tempo sync ping-pong ducking vocal drums bus gui",
+   "gfx": [
+    480,
+    400
+   ],
+   "ins": 2,
+   "outs": 2,
+   "sliders": 13,
+   "bytes": 72246
+  },
+  {
    "id": "assisted_eq",
    "name": "Assisted EQ",
    "category": "Assisted",
@@ -1652,6 +1666,20 @@
    "outs": 2,
    "sliders": 16,
    "bytes": 98956
+  },
+  {
+   "id": "assisted_reverb",
+   "name": "Assisted Reverb",
+   "category": "Assisted",
+   "tags": "reverb room space ambience assisted learn assistant auto automatic decay pre-delay ducking vocal drums bus gui",
+   "gfx": [
+    480,
+    400
+   ],
+   "ins": 2,
+   "outs": 2,
+   "sliders": 13,
+   "bytes": 83945
   }
  ],
  "instruments": [
