@@ -591,6 +591,8 @@ Pushes run these four workflows only on main, so a branch with a PR is built onc
 
 Every job has a `timeout-minutes` (120 for the native build, 60 for the Hub build, 5–30 elsewhere), so a stuck job never holds a runner for GitHub's 6 hours. The token is `contents: read` by default; only the jobs that attach to a release (`native.yml` build, jsfx and installers, `hub.yml` build and catalog) and the workflows that push or upload (`downloads.yml`, `media.yml`) can write. Third-party actions are pinned to a commit SHA with the tag in a comment (`dtolnay/rust-toolchain`, `Swatinem/rust-cache`); the `actions/*` ones stay on their major tag. `native/scripts/build.sh --test` builds ysfx with `tests/run.sh --build-only` (until 2026-10-27 it ran the whole JSFX suite for that, about 5 minutes, output thrown away) and runs ctest on every core; `native.yml` caches `tests/.build/ysfx` per OS image.
 
+Runner images are pinned by label: `ubuntu-22.04` (native, installers, Hub core and bundles), `ubuntu-24.04` (job `validate`), `ubuntu-latest` (the light jobs), `windows-2022` and `macos-15` (arm64; native build and tests, macOS installers, Hub core and the universal dmg). GitHub retires an image with brownouts first (jobs fail or never get a runner) and then for good; when a label is retired, move every workflow that uses it in one PR, and check the arm64/x86_64 build of the universal binaries. `macos-14` was retired on 2026-11-02 and replaced by `macos-15` on 2026-10-31.
+
 `downloads.yml` pushes to main by itself, so a branch can be behind by a `downloads.json` commit: rebase or merge main before you push.
 
 ---
@@ -1211,3 +1213,11 @@ entry and the Bible delta.
   - `web/test/run.sh` on the two (largest diff 3.1e-12), `node tests/remote/remote_test.cjs`, `node hub/tests/ui_test.cjs`, `bash -n` on the installer scripts, and the `--check` of every generator.
   - Not run here: the installers, the macOS and Windows builds (CI), Learn in a real REAPER or DAW session (B13).
 - **Next:** PR 2, Assisted Reverb and Assisted Delay (B13).
+
+### 2026-10-31 — CI (no version change) — macOS jobs move from macos-14 to macos-15
+- **Why:** from 2026-10-31 every macOS job (native build, macOS installers, Hub core and dmg) was cancelled before it started, with no runner (PRs #85, #86, #87). GitHub retires the `macos-14` image on 2026-11-02, after brownouts in October, and has already cut its capacity. Christos asked whether this costs money: no, the repository is public, so GitHub-hosted runners, macOS included, are free.
+- **Fixes:** `native.yml` (jobs `build` and `installer-unix`) and `hub.yml` (jobs `core` and `build`) run on `macos-15` instead of `macos-14`. Both images are arm64, so the universal binaries (`arm64;x86_64`, deployment target 10.13) and the host-arch native tests build as before.
+- **Decisions:** pinned `macos-15` rather than `macos-latest` (now macOS 26), so an image change is always a deliberate PR, like the other pinned labels (Part V.2).
+- **Not here:** Ubuntu 26.04 as `ubuntu-latest` broke the Playwright Chromium install; that fix (jobs `remote` in `test.yml` and `ui` in `hub.yml` on `ubuntu-24.04`) lands with #85.
+- **Files:** `.github/workflows/native.yml`, `.github/workflows/hub.yml`, `NULL_JSFX_BIBLE.md` (Part V.2, Part X).
+- **Tests:** the workflows' own run on this PR (macOS native build with `--test`, macOS installers; the Hub jobs run only on `hub/` changes, so `macos-15` for the Hub is first proven on the next Hub PR or a manual run); `tests/lint.py`, `tests/bible_order.py`, `tools/build_bible.py --check` locally.
