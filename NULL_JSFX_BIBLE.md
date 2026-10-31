@@ -1263,5 +1263,5 @@ entry and the Bible delta.
   - `tests/run.sh` on the ten files, also at 8000, 22050, 1234.57 and 12345.68 Hz; `tests/stress.sh` on the five plain files.
   - `native/scripts/build.sh --test --plugins "passive_eq;speaker_sim;transient_split;multi_tap_delay;drum_trigger"`: ctest 131/131 (compare, gfx, presets, state and module tests of the five).
   - `web/test/run.sh`, the generators (`build_site`, `build_remote`, `build_bible`, `build_catalog --check`, `build_presets`), `tests/lint.py` and `tests/bible_order.py`.
-- **CI:** `ubuntu-latest` became Ubuntu 26.04, where Playwright 1.56 installs no Chromium; the two Playwright jobs (`test.yml` remote, `hub.yml` ui) run on `ubuntu-24.04`.
+- **CI:** `ubuntu-latest` became Ubuntu 26.04, where Playwright 1.56 installs no Chromium; the two Playwright jobs (`test.yml` remote, `hub.yml` ui) run on `ubuntu-24.04`. The Linux LV2 check (`native/test/lv2_test.py`) failed on Glitch FX: its random settings come from one generator shared by all plugins in name order, so new plugins move them, and Rate 0.1 + 23 x 0.1 reached the reference JSFX as 2.4000000000000004 (an event at 19,999 samples) while the plugin, like REAPER, uses 2.4 (20,000). The check now rounds each random value to 12 significant digits, the decimal a JSFX header would hold; Glitch FX itself is unchanged.
 - **Next:** wave B (B12).
