@@ -5,7 +5,8 @@
     --text: #e0e0e0;
     --muted: #999999;
     --border: #333333;
-    --accent: #6d4aff;
+    --accent: #c4c4c4;          /* silver, the plugins' accent (R8); purple is Noxpress only */
+    --accent-ring: rgba(196, 196, 196, 0.15);
     --card-bg: #232220;
     --shadow: rgba(0, 0, 0, 0.3);
 }
@@ -17,7 +18,8 @@
     --text: #1b1a18;
     --muted: #666666;
     --border: #dddddd;
-    --accent: #6d4aff;
+    --accent: #555555;          /* dark silver: #c4c4c4 on white is 1.7:1, this is 7.5:1 (WCAG AA) */
+    --accent-ring: rgba(85, 85, 85, 0.15);
     --card-bg: #ffffff;
     --shadow: rgba(0, 0, 0, 0.1);
 }
@@ -251,7 +253,7 @@ main {
 
 .plugin-search-input:focus {
     border-color: var(--accent);
-    box-shadow: 0 0 0 3px rgba(109, 74, 255, 0.1);
+    box-shadow: 0 0 0 3px var(--accent-ring);
 }
 
 .search-clear {
