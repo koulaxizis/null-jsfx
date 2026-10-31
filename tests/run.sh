@@ -5,6 +5,8 @@
 #                           (NULL_TEST_RATES="8000,22050" sets other rates)
 #   3. tests/chain_test   - renders every FX chain in DATA/FXChains (only when no plugins are given)
 #   4. tests/gfx_hist_test.jsfx - A/B and undo/redo of the GFX library (only when no plugins are given)
+#   5. tests/assisted_test - the Learn rules of the Assisted plugins, and their native DSP against
+#                           the JSFX (only when no plugins are given)
 # Usage: tests/run.sh [plugin.jsfx ...]   (default: every plugin and every chain)
 #        tests/run.sh --build-only        only build ysfx and the test programs (native/scripts/build.sh)
 set -euo pipefail
@@ -31,6 +33,17 @@ if [ ! -x "$build/chain_test" ] || [ "$here/chain_test.cpp" -nt "$build/chain_te
   g++ -O2 -std=c++17 -I "$build/ysfx/include" "$here/chain_test.cpp" "$build/ysfx/build/libysfx.a" -lpthread -ldl -o "$build/chain_test"
 fi
 
+# the Assisted test also compiles the native DSP headers it compares against
+assisted_src=("$here/assisted_test.cpp" "$root"/native/plugins/assisted_*/Assisted*DSP.hpp "$root/native/common/AssistedTargets.hpp")
+assisted_new=0
+[ -x "$build/assisted_test" ] || assisted_new=1
+for f in "${assisted_src[@]}"; do [ "$f" -nt "$build/assisted_test" ] && assisted_new=1; done
+if [ $assisted_new -eq 1 ]; then
+  g++ -O2 -std=c++17 -I "$build/ysfx/include" -I "$root/native/common" -I "$root/native/plugins/assisted_eq" \
+    -I "$root/native/plugins/assisted_comp" "$here/assisted_test.cpp" "$build/ysfx/build/libysfx.a" -lpthread -ldl \
+    -o "$build/assisted_test"
+fi
+
 if [ "${1:-}" = --build-only ]; then exit 0; fi
 
 chains=0
@@ -41,5 +54,6 @@ python3 "$here/lint.py" "$@" || status=1
 if [ $chains -eq 1 ]; then
   "$build/chain_test" "$root/DATA/Effects" "$root"/DATA/FXChains/*/*.RfxChain || status=1
   "$build/jsfx_test" "$here/gfx_hist_test.jsfx" || status=1
+  "$build/assisted_test" "$root/DATA/Effects/null_jsfx" || status=1
 fi
 exit $status

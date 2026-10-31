@@ -49,6 +49,7 @@ CATEGORIES = [
     ("One Slider", "one-slider", "One control, instant result. Turn it up until it sounds right."),
     ("Essentials", "essentials", "The everyday mixing and mastering toolbox."),
     ("Advanced", "advanced", "Deeper sound design, creative effects and special processing."),
+    ("Assisted", "assisted", "Effects that set themselves: press Learn, play the track, pick a target."),
     ("Instruments", "instruments", "Synths, keys, bass and drums. Play them from MIDI, no samples needed."),
     ("MIDI", "midi", "Tools that change the notes before they reach an instrument."),
 ]
@@ -208,6 +209,8 @@ def cards_block(plugins, cats):
     out = []
     for title, slug, desc in (c for c in CATEGORIES if c[0] in cats):
         group = [p for p in plugins if p["category"] == title]
+        if not group:
+            continue  # a category whose plugins all wait for launch (R18) stays off the site too
         out.append(f"""            <div class="plugin-category" id="{slug}">
                 <h3 class="category-title">{title} <span class="category-count">{len(group)}</span></h3>
                 <p class="category-desc">{desc}</p>
@@ -270,7 +273,7 @@ def chain_cards(plugins):
 
 
 TABS = [  # (tab id, label, categories in it); the FX Chains tab comes last
-    ("effects", "Effects", ["One Slider", "Essentials", "Advanced"]),
+    ("effects", "Effects", ["One Slider", "Essentials", "Advanced", "Assisted"]),
     ("instruments", "Instruments", ["Instruments"]),
     ("midi", "MIDI", ["MIDI"]),
 ]
@@ -311,6 +314,8 @@ def js(s):
 def guides_block(plugins):
     out = ["const guides = {\n"]
     for title, _, _ in CATEGORIES:
+        if not any(p["category"] == title for p in plugins):
+            continue  # nothing launched in it yet (R18)
         out.append(f"\n  // ─── {title.upper()} ───\n")
         for p in (p for p in plugins if p["category"] == title):
             sliders = ",\n".join(
@@ -338,7 +343,7 @@ def guides_block(plugins):
     return "".join(out)
 
 
-CATEGORY_TAB = {"One Slider": "Effects", "Essentials": "Effects", "Advanced": "Effects",
+CATEGORY_TAB = {"One Slider": "Effects", "Essentials": "Effects", "Advanced": "Effects", "Assisted": "Effects",
                 "Instruments": "Instruments", "MIDI": "MIDI"}
 FORMAT_NAMES = {"JSFX": "JSFX for REAPER, with REAPER's own sliders", "GFX": "JSFX GFX for REAPER, with its own interface",
                 "VST3": "VST3 for any DAW", "CLAP": "CLAP for any DAW",
@@ -518,6 +523,8 @@ def list_block(plugins, with_desc):
     out = []
     for title, _, desc in CATEGORIES:
         group = [p for p in plugins if p["category"] == title]
+        if not group:
+            continue  # nothing launched in it yet (R18)
         if with_desc:
             out.append(f"\n### {title} ({len(group)})\n{desc}\n\n")
             out += [f"- [{p['name']}]({SITE}{p['page']}): {p['card_desc']}"

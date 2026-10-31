@@ -6,7 +6,7 @@ Header (first lines of every file, in this order):
     desc:NULL <Name>
     author: Christos Koulaxizis
     tags: <lowercase keywords>
-    //category: One Slider | Essentials | Advanced | Instruments | MIDI
+    //category: One Slider | Essentials | Advanced | Instruments | MIDI | Assisted
     //NULL JSFX v2.8 • https://nulljsfx.tech • MIT License
 
 followed by a blank line, the sliders, a blank line and the four pins
@@ -30,7 +30,7 @@ from pathlib import Path
 
 AUTHOR = "author: Christos Koulaxizis"
 FOOTER = "//NULL JSFX v2.8 • https://nulljsfx.tech • MIT License"
-CATEGORIES = ("One Slider", "Essentials", "Advanced", "Instruments", "MIDI")
+CATEGORIES = ("One Slider", "Essentials", "Advanced", "Instruments", "MIDI", "Assisted")
 PINS = ["in_pin:Left", "in_pin:Right", "out_pin:Left", "out_pin:Right"]
 SIDECHAIN_PINS = ["in_pin:Left", "in_pin:Right", "in_pin:Sidechain Left", "in_pin:Sidechain Right",
                   "out_pin:Left", "out_pin:Right"]
@@ -100,7 +100,7 @@ def check(path):
             errors.append(f"slider label style must be 'Name (unit)': {name!r}")
     if category == "One Slider" and len(sliders) != 1:
         errors.append(f"One Slider plugin has {len(sliders)} sliders")
-    if category in ("Essentials", "Advanced", "Instruments", "MIDI") and len(sliders) == 1:
+    if category in ("Essentials", "Advanced", "Instruments", "MIDI", "Assisted") and len(sliders) == 1:
         errors.append(f"{category} plugin has only one slider; should it be One Slider?")
     pins = [l.strip() for l in header if l.startswith(("in_pin:", "out_pin:"))]
     if category == "Instruments" and pins not in (INSTRUMENT_PINS, INSTRUMENT_GROUP_PINS):
