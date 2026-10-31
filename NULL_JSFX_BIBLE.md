@@ -659,6 +659,7 @@ Then run every test of Part V that the PR touches, merge it once CI is green, an
 | 2.6.1 | 2026-10-28 07:19 | fixes only, from branch `release-2.6.1`: tails at Play, Convolution IR changes, low/odd/high sample rates, instrument MIDI passthrough, VST3/CLAP state, latency and parameters |
 | 2.7 | 2026-10-28 20:19 | studio plan: 13 new plugins (Studio EQ, Spectral Ducker, Reference, Tuner, VU Meter, Crossfeed, De-Clip, MIDI Utility, MIDI LFO, four surround bed tools), True Peak, Delta, Mid/Side, A/B and Undo/Redo, oversampling in Tape and Ladder Filter, LV2 on Linux |
 | 2.8 | 2026-10-31 09:16 | own suite for orOS Studio (B11): 7 new plugins (Air, Tone, Glue Comp, Console Channel, Console Buss, Space, Mallets), Gate Tone Release, Saturation Focus and Density, Pluck Pizzicato, Organ Pipe voice |
+| 2.9 | 2026-10-31 19:56 | Assisted category as beta (B13): Assisted EQ, Comp, Reverb and Delay, set by Learn from fixed rules (no AI); 137 plugins |
 | media | 2026-10-19 (pre-release) | the videos, not a plugin release |
 
 ### VI.4 Hub rollback and updates
@@ -1264,3 +1265,10 @@ entry and the Bible delta.
 - **Docs:** `DESIGN.md` (new, from Christos) at the repo root; its sentence that the CSS still had `#6d4aff` now names the new tokens. R8 notes the site accent; II.8 lists the colour tokens.
 - **Files:** `assets/css/style.css`, `DESIGN.md`, `NULL_JSFX_BIBLE.md` (R8, II.8, VII, X).
 - **Tests (run on Linux):** `tests/lint.py`, `tools/build_site.py --check`, `tests/bible_order.py`; screenshots before and after (index with the search focused, release notes, supporters; dark and light; 1440 px and 360 px) with Playwright.
+
+### 2026-10-31 — Bible only (no version change) — 2.9 published
+- **Why:** Christos published 2.9 on 2026-10-31 at 19:56 UTC (Part VI.2).
+- **Checks (VI.2.3):** all 13 assets are attached (checked through the GitHub API at 21:05 UTC); `NULL-JSFX-JSFX.zip` holds the four Assisted plugins in plain and GFX form with the v2.9 footer; `hub/tests/release_smoke.sh 2.9` passes (install, check, update and remove through `hub_cli` from the real release).
+- **Changes:** Part VI.3 gets the 2.9 row.
+- **Files:** this Bible (VI.3, Part X).
+- **Tests:** `tests/bible_order.py`, `tools/build_bible.py --check`.
