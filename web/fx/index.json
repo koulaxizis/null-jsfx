@@ -1052,6 +1052,34 @@
    "bytes": 42520
   },
   {
+   "id": "console_buss",
+   "name": "Console Buss",
+   "category": "Advanced",
+   "tags": "console buss bus master analog mixer summing saturation crosstalk colour warm punchy bright drive glue gui",
+   "gfx": [
+    480,
+    294
+   ],
+   "ins": 2,
+   "outs": 2,
+   "sliders": 3,
+   "bytes": 43556
+  },
+  {
+   "id": "console_channel",
+   "name": "Console Channel",
+   "category": "Advanced",
+   "tags": "console channel analog mixer summing saturation colour warm punchy bright drive harmonics gui",
+   "gfx": [
+    480,
+    294
+   ],
+   "ins": 2,
+   "outs": 2,
+   "sliders": 3,
+   "bytes": 42625
+  },
+  {
    "id": "convolution",
    "name": "Convolution",
    "category": "Advanced",

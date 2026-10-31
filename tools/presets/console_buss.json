@@ -1,0 +1,8 @@
+[
+  ["Clean Sum", {"Character": 0, "Drive (%)": 40}],
+  ["Warm Mix Bus", {"Character": 1, "Drive (%)": 50}],
+  ["Punchy Drum Bus", {"Character": 2, "Drive (%)": 60}],
+  ["Bright Master", {"Character": 3, "Drive (%)": 30}],
+  ["Driven Bus", {"Character": 1, "Drive (%)": 90, "Output (dB)": -2}],
+  ["Subtle Glue", {"Character": 1, "Drive (%)": 15}]
+]

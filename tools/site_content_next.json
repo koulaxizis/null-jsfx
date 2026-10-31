@@ -53,5 +53,39 @@
     ],
     "properties": "Input → key (optional one-pole high-pass) → stereo-linked peak detector → gain computer (2/4/10:1, 4 dB soft knee) → smoothing in dB (stepped attack 0.1–30 ms, release 0.1–1.2 s or Auto: the deeper of an 80 ms and a 0.5 s / 1.5 s envelope) → Makeup → Dry/Wet Mix → Output. Zero latency.",
     "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-glue\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><path d=\"M 8,52 L 30,30 L 56,20\" stroke=\"url(#icon-glue)\" stroke-width=\"2.5\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M 8,52 L 56,4\" stroke=\"url(#icon-glue)\" stroke-width=\"1.5\" fill=\"none\" opacity=\"0.3\"/><rect x=\"40\" y=\"38\" width=\"16\" height=\"4\" rx=\"1\" fill=\"url(#icon-glue)\" opacity=\"0.5\"/><rect x=\"40\" y=\"46\" width=\"10\" height=\"4\" rx=\"1\" fill=\"url(#icon-glue)\" opacity=\"0.5\"/></svg>"
+  },
+  "console_channel": {
+    "card_desc": "Console Channel Colour",
+    "keywords": "console channel analog mixer desk summing saturation colour warm punchy bright drive harmonics tape track",
+    "slider_desc": [
+      "Clean: no emphasis, symmetric saturation. Warm: the lows saturate first, with even harmonics. Punchy: the deep lows saturate first, with more drive. Bright: the highs saturate first.",
+      "How hard the channel is driven: up to 12, 15 or 18 dB depending on the character; small signals stay clean.",
+      "Output level after the console stage."
+    ],
+    "uses": [
+      "Analog-desk colour on every track of a mix",
+      "Warming up thin digital sources",
+      "Adding weight and punch to drums and bass",
+      "Use with Console Buss on the bus the tracks feed"
+    ],
+    "properties": "Input → first-order pre-emphasis shelf (per character) → soft saturator (Padé tanh, 6 dB of headroom, even harmonics for Warm and Punchy) → the exact inverse shelf (flat response at low level) → 5 Hz DC blocker → Output. Zero latency, stereo channels processed independently.",
+    "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-cch\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><rect x=\"24\" y=\"8\" width=\"16\" height=\"48\" rx=\"3\" stroke=\"url(#icon-cch)\" stroke-width=\"2\" fill=\"none\" opacity=\"0.5\"/><rect x=\"20\" y=\"30\" width=\"24\" height=\"7\" rx=\"2\" fill=\"url(#icon-cch)\"/><circle cx=\"32\" cy=\"16\" r=\"3\" stroke=\"url(#icon-cch)\" stroke-width=\"1.5\" fill=\"none\"/></svg>"
+  },
+  "console_buss": {
+    "card_desc": "Console Summing Bus",
+    "keywords": "console buss bus master analog mixer desk summing saturation crosstalk colour warm punchy bright drive glue mix",
+    "slider_desc": [
+      "Clean: no emphasis, symmetric saturation. Warm: the lows saturate first, with even harmonics. Punchy: the deep lows saturate first. Bright: the highs saturate first.",
+      "How hard the bus is driven (up to 9 or 12 dB depending on the character), and how much the sides leak into each other (up to -30 dB).",
+      "Output level after the console stage."
+    ],
+    "uses": [
+      "Analog summing colour on the mix bus",
+      "Pairing with Console Channel on the tracks",
+      "Gentle density on drum and music busses",
+      "A touch of desk crosstalk for a less clinical stereo image"
+    ],
+    "properties": "Input → first-order pre-emphasis shelf (per character) → soft saturator (Padé tanh, 8 dB of headroom) → the exact inverse shelf → crosstalk (the other side high-passed at 1 kHz, up to -30 dB with Drive) → 5 Hz DC blocker → Output. Zero latency.",
+    "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-cbu\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><rect x=\"10\" y=\"8\" width=\"12\" height=\"48\" rx=\"3\" stroke=\"url(#icon-cbu)\" stroke-width=\"1.5\" fill=\"none\" opacity=\"0.4\"/><rect x=\"26\" y=\"8\" width=\"12\" height=\"48\" rx=\"3\" stroke=\"url(#icon-cbu)\" stroke-width=\"1.5\" fill=\"none\" opacity=\"0.4\"/><path d=\"M 16,40 L 32,40 L 48,24 L 56,24\" stroke=\"url(#icon-cbu)\" stroke-width=\"2.5\" fill=\"none\" stroke-linecap=\"round\"/><rect x=\"42\" y=\"8\" width=\"12\" height=\"48\" rx=\"3\" stroke=\"url(#icon-cbu)\" stroke-width=\"2\" fill=\"none\"/></svg>"
   }
 }
