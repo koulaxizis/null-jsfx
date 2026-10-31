@@ -1,0 +1,13 @@
+[
+  ["Vocal Quarter", {"Source": "Vocal", "Target": "Natural"}],
+  ["Vocal Warm Dotted", {"Source": "Vocal", "Target": "Warm"}],
+  ["Vocal Bright Ping-Pong", {"Source": "Vocal", "Target": "Bright"}],
+  ["Vocal Slapback", {"Source": "Vocal", "Target": "Radio"}],
+  ["Podcast Touch", {"Source": "Vocal", "Target": "Podcast"}],
+  ["Drum Dotted Eighths", {"Source": "Drums", "Target": "Punchy"}],
+  ["Bass Hint", {"Source": "Bass", "Target": "Natural"}],
+  ["Instrument Quarter", {"Source": "Instrument", "Target": "Natural"}],
+  ["Instrument Lo-Fi Echoes", {"Source": "Instrument", "Target": "Lo-Fi"}],
+  ["Mix Throw", {"Source": "Mix", "Target": "Warm", "Amount (%)": 70}],
+  ["Long Dark Repeats", {"Source": "Instrument", "Target": "Warm", "Repeats Trim": 1, "Tone Trim": -1}]
+]

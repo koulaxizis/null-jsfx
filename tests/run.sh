@@ -40,7 +40,8 @@ assisted_new=0
 for f in "${assisted_src[@]}"; do [ "$f" -nt "$build/assisted_test" ] && assisted_new=1; done
 if [ $assisted_new -eq 1 ]; then
   g++ -O2 -std=c++17 -I "$build/ysfx/include" -I "$root/native/common" -I "$root/native/plugins/assisted_eq" \
-    -I "$root/native/plugins/assisted_comp" "$here/assisted_test.cpp" "$build/ysfx/build/libysfx.a" -lpthread -ldl \
+    -I "$root/native/plugins/assisted_comp" -I "$root/native/plugins/assisted_reverb" \
+    -I "$root/native/plugins/assisted_delay" "$here/assisted_test.cpp" "$build/ysfx/build/libysfx.a" -lpthread -ldl \
     -o "$build/assisted_test"
 fi
 
