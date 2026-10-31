@@ -161,6 +161,7 @@ def load():
             "presets": [n for n, _ in json.loads((PRESETS / f"{stem}.json").read_text(encoding="utf-8"))]
             if (PRESETS / f"{stem}.json").exists() else [],
             "page": f"plugins/{stem.replace('_', '-')}/",
+            "beta": bool(c.get("beta")),
             **{k: c[k] for k in ("card_desc", "keywords", "uses", "properties", "icon")},
         })
     for stem in sorted(set(content) - {p.stem for p in files}):
@@ -170,6 +171,13 @@ def load():
     for p in plugins:
         p["tags"] = tags(p)
     return sorted(plugins, key=lambda p: p["name"].lower())
+
+
+# a plugin marked "beta" in site_content.json: a BETA badge on its card, guide and page, a note
+# in its guide and page, "(beta)" in README.md, llms.txt and the Hub catalog
+BETA_BADGE = '<span class="beta-badge">BETA</span>'
+BETA_NOTE = ("Beta: its rules have been tested on test signals so far and may still be tuned from your feedback, "
+             "so a project saved now can sound a little different after an update.")
 
 
 DEMO_BUTTONS = ("""<button type="button" class="demo-play" aria-label="Listen: with and without the plugin" title="Listen">"""
@@ -197,7 +205,7 @@ def card(p):
                         {icon}
                     </div>
                     <div class="plugin-info">
-                        <h3><a href="{p['page']}" class="card-link">{e(p['name'].upper())}</a></h3>
+                        <h3><a href="{p['page']}" class="card-link">{e(p['name'].upper())}</a>{' ' + BETA_BADGE if p['beta'] else ''}</h3>
                         <p class="plugin-desc">{e(p['card_desc'])}</p>{badges}
                         <span class="info-badge">?</span>
                     </div>
@@ -334,7 +342,8 @@ def guides_block(plugins):
     shot: {js(p['shot'])}""" if p["shot"] else "") + (f""",
     video: {js(p['video'])}""" if p["video"] else "") + (""",
     studio: true""" if p["studio"] else "") + (f""",
-    demo: {js(p['stem'])}""" if p["demo"] else "") + f""",
+    demo: {js(p['stem'])}""" if p["demo"] else "") + (f""",
+    beta: {js(BETA_NOTE)}""" if p["beta"] else "") + f""",
     page: {js(p['page'])}
   }},
 """)
@@ -398,6 +407,8 @@ def page(p, plugins):
                     <h2>Factory presets</h2>
                     <p class="page-list">{" · ".join(e(x) for x in p["presets"] if x != "Default")}</p>
                 </section>""" if [x for x in p["presets"] if x != "Default"] else ""
+    beta = f"""
+                <p class="beta-note">{e(BETA_NOTE)}</p>""" if p["beta"] else ""
     chains = chains_with(p["stem"])
     chains_html = f"""
                 <section class="guide-section">
@@ -445,8 +456,8 @@ def page(p, plugins):
         <article class="page-plugin">
             <header class="guide-header page-header">
                 <span class="guide-category">{e(p['category'])}</span>
-                <h1>{e(p['name'].upper())}</h1>
-                <p>{e(p['card_desc'])}</p>
+                <h1>{e(p['name'].upper())}{' ' + BETA_BADGE if p['beta'] else ''}</h1>
+                <p>{e(p['card_desc'])}</p>{beta}
             </header>
             {media}
             <div class="page-actions">
@@ -527,11 +538,11 @@ def list_block(plugins, with_desc):
             continue  # nothing launched in it yet (R18)
         if with_desc:
             out.append(f"\n### {title} ({len(group)})\n{desc}\n\n")
-            out += [f"- [{p['name']}]({SITE}{p['page']}): {p['card_desc']}"
+            out += [f"- [{p['name']}]({SITE}{p['page']}){' (beta)' if p['beta'] else ''}: {p['card_desc']}"
                     + (f" (also as {', '.join(p['formats'][1:])})" if len(p['formats']) > 1 else "") + "\n"
                     for p in group]
         else:
-            out.append(f"| **{title}** ({len(group)}) | {', '.join(p['name'] for p in group)} |\n")
+            out.append(f"| **{title}** ({len(group)}) | {', '.join(p['name'] + (' (beta)' if p['beta'] else '') for p in group)} |\n")
     return ("| Category | Plugins |\n|----------|---------|\n" if not with_desc else "") + "".join(out)
 
 

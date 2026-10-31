@@ -2,7 +2,7 @@ desc:NULL Stereo Scope GFX
 author: Christos Koulaxizis
 tags: stereo scope goniometer vectorscope lissajous correlation phase balance width meter analyzer metering gui
 //category: Advanced
-//NULL JSFX v2.8 • https://nulljsfx.tech • MIT License
+//NULL JSFX v2.9 • https://nulljsfx.tech • MIT License
 
 import null_gfx.jsfx-inc
 

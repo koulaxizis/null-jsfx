@@ -2,7 +2,7 @@ desc:NULL MIDI Utility
 author: Christos Koulaxizis
 tags: midi utility transpose velocity curve channel split key range velocity range filter cc pitch bend aftertouch program change
 //category: MIDI
-//NULL JSFX v2.8 • https://nulljsfx.tech • MIT License
+//NULL JSFX v2.9 • https://nulljsfx.tech • MIT License
 
 slider1:0<-48,48,1>Transpose (st)
 slider2:0<0,16,1{Thru,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16}>Channel

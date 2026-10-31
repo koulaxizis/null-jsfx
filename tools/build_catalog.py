@@ -108,7 +108,7 @@ def plugins():
             "id": stem,
             "name": p["name"],
             "group": next(key for title, key, _ in CATEGORIES if title == p["category"]),
-            "tagline": p["card_desc"],
+            "tagline": p["card_desc"] + (" (beta)" if p["beta"] else ""),
             "keywords": p["keywords"],
             "uses": p["uses"],
             "properties": p["properties"],

@@ -2,7 +2,7 @@ desc:NULL Surround Panner GFX
 author: Christos Koulaxizis
 tags: surround panner 5.1 7.1 7.1.4 atmos bed immersive vbap azimuth elevation spread lfe post production film music gui
 //category: Advanced
-//NULL JSFX v2.8 • https://nulljsfx.tech • MIT License
+//NULL JSFX v2.9 • https://nulljsfx.tech • MIT License
 
 import null_gfx.jsfx-inc
 

@@ -2,7 +2,7 @@ desc:NULL Assisted EQ
 author: Christos Koulaxizis
 tags: eq equalizer assisted learn assistant tonal balance auto vocal mix warm bright radio podcast
 //category: Assisted
-//NULL JSFX v2.8 • https://nulljsfx.tech • MIT License
+//NULL JSFX v2.9 • https://nulljsfx.tech • MIT License
 
 slider1:0<0,1,1{Off,On}>Learn
 slider2:0<0,4,1{Vocal,Drums,Bass,Instrument,Mix}>Source

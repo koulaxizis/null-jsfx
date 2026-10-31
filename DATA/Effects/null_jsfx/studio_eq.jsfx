@@ -2,7 +2,7 @@ desc:NULL Studio EQ
 author: Christos Koulaxizis
 tags: equalizer eq parametric linear phase mid side mixing mastering essentials
 //category: Essentials
-//NULL JSFX v2.8 • https://nulljsfx.tech • MIT License
+//NULL JSFX v2.9 • https://nulljsfx.tech • MIT License
 
 slider1:0<0,7,1{Off,Bell,Low Shelf,High Shelf,Low Cut,High Cut,Notch,Band Pass}>Band 1 Type
 slider2:30<10,30000,1:log>Band 1 Freq (Hz)

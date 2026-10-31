@@ -14,6 +14,9 @@ of the main control, end card. tools/video/videos.json can change a plugin's scr
                               none, for an instrument that plays its own groove with the host)
   "play": [instrument, preset] a MIDI effect: the NULL instrument that plays its notes
   "input_label": text         the caption of what goes in (default: the loop, or the MIDI pattern)
+  "learn": {"source": name, "seconds": s, "targets": [names]}  an Assisted plugin: instead of the
+                              presets, Learn listens to the loop for s seconds (then turns Off, so
+                              it finishes with what it heard), then the plugin plays each target
 
 Instruments (category Instruments) have no input: the video plays a MIDI pattern into them
 (or lets their groove run with the host), shows their output and a roll of the notes played,
@@ -293,8 +296,37 @@ def pick_sweep(info, cfg):
     return i, lo + (hi - lo) * 0.05, lo + (hi - lo) * 0.9
 
 
+def learn_script(info, cfg):
+    """An Assisted plugin's script: the loop, Learn listening to it, the targets on what it
+    learned, a before/after, the sweep. The learned (hidden) sliders never change in the
+    control rows, so gfx_video never sets them and the plugin keeps what it wrote itself."""
+    lc = cfg["learn"]
+    names = [s[0] for s in info["sliders"]]
+    src, tgt = names.index("Source"), names.index("Target")
+    base = list(info["presets"][0][1])  # Default
+    base[names.index("Learn")] = 0
+    base[src] = info["sliders"][src][4].index(lc["source"])
+    seg = [(3.0, "title", "", base, True, None),
+           (4.0, "before", cfg.get("input_label", "The loop, untouched"), base, True, None),
+           (lc["seconds"] + 1.5, "learn", ("LEARN", "Listening to the loop"), base, False, None)]
+    for k, t in enumerate(lc["targets"]):
+        v = list(base)
+        v[tgt] = info["sliders"][tgt][4].index(t)
+        seg.append((5.0, "preset", ("TARGET", t), v, False, None))
+        if k == 0:
+            seg.append((2.0, "ab", ("TARGET", t), v, True, None))
+            seg.append((2.5, "ab", ("TARGET", t), v, False, None))
+    sw = pick_sweep(info, cfg)
+    if sw:
+        seg.append((8.0, "sweep", info["sliders"][sw[0]][0], list(seg[-1][3]), False, sw))
+    seg.append((4.5, "end", "", seg[-1][3], False, None))
+    return seg
+
+
 def build_script(info, cfg):
     """[(seconds, kind, label, values, bypass, sweep)]."""
+    if "learn" in cfg:
+        return learn_script(info, cfg)
     presets = info["presets"]
     names = cfg.get("presets")
     if names:
@@ -616,6 +648,8 @@ def render(stem, hq_dir, tool, loop):
             step = 1 if (hi - lo) >= 20 and not is_log(s) else 0
             if step:
                 v[k] = round(v[k])
+        if kind == "learn":  # Learn on, then Off after the set time: the plugin finishes with what it heard
+            v[[s[0] for s in info["sliders"]].index("Learn")] = 1 if f / FPS - starts[i] < cfg["learn"]["seconds"] else 0
         if "pulse" in cfg and kind not in ("title", "before") and not bypass:
             # a switch (Tape Stop's Trigger, Spectral Freeze's Freeze) held on for a while every few seconds
             name, every, length = cfg["pulse"]

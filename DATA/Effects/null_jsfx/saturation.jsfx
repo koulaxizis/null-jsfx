@@ -2,7 +2,7 @@ desc:NULL Saturation
 author: Christos Koulaxizis
 tags: saturation distortion tape tube overdrive fuzz bitcrush waveshaper wavefolder drive oversampling emphasis
 //category: Essentials
-//NULL JSFX v2.8 • https://nulljsfx.tech • MIT License
+//NULL JSFX v2.9 • https://nulljsfx.tech • MIT License
 
 slider1:30<0,100,1>Drive (%)
 slider2:0<-12,12,0.1>Tone (dB)
