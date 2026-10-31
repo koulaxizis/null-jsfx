@@ -1,0 +1,10 @@
+[
+  ["More Attack", {"Transient (dB)": 6}],
+  ["Less Room", {"Tonal (dB)": -6, "Decay (ms)": 120}],
+  ["Snappy Drums", {"Transient (dB)": 4, "Tonal (dB)": -2, "Sensitivity (%)": 70, "Decay (ms)": 40}],
+  ["Soft Hits", {"Transient (dB)": -8, "Sensitivity (%)": 60}],
+  ["Only Transients", {"Tonal (dB)": -24, "Sensitivity (%)": 80, "Decay (ms)": 30}],
+  ["Only Body", {"Transient (dB)": -24, "Sensitivity (%)": 80, "Decay (ms)": 80}],
+  ["Split For Reverb", {"Mode": 1, "Decay (ms)": 80}],
+  ["Split Tight", {"Mode": 1, "Sensitivity (%)": 75, "Decay (ms)": 25}]
+]

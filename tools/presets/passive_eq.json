@@ -1,0 +1,10 @@
+[
+  ["Kick Weight", {"Low Freq": 2, "Low Boost": 5, "Low Atten": 3, "High Freq": 2, "High Boost": 2, "Bandwidth": 4}],
+  ["Bass Body", {"Low Freq": 3, "Low Boost": 3, "Low Atten": 1.5, "Tube (%)": 20}],
+  ["Vocal Air", {"High Freq": 5, "High Boost": 3.5, "Bandwidth": 7, "Atten Freq": 2, "High Atten": 1}],
+  ["Vocal Presence", {"Low Freq": 3, "Low Atten": 2, "High Freq": 2, "High Boost": 2.5, "Bandwidth": 3}],
+  ["Master Sheen", {"Low Freq": 1, "Low Boost": 2, "Low Atten": 1, "High Freq": 6, "High Boost": 2, "Bandwidth": 8, "Tube (%)": 15}],
+  ["Dark Tape", {"Low Freq": 2, "Low Boost": 1.5, "Atten Freq": 0, "High Atten": 4, "Tube (%)": 40}],
+  ["Snare Crack", {"Low Freq": 3, "Low Atten": 3, "High Freq": 1, "High Boost": 4, "Bandwidth": 2.5}],
+  ["Warm Tube", {"Tube (%)": 60, "Output (dB)": -1}]
+]

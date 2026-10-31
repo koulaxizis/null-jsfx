@@ -688,6 +688,20 @@
    "bytes": 39710
   },
   {
+   "id": "multi_tap_delay",
+   "name": "Multi-Tap Delay",
+   "category": "Essentials",
+   "tags": "delay multi tap multitap rhythmic echo pattern dotted triplet swing accelerate scatter tempo sync stereo spread gui",
+   "gfx": [
+    480,
+    380
+   ],
+   "ins": 2,
+   "outs": 2,
+   "sliders": 11,
+   "bytes": 54563
+  },
+  {
    "id": "multiband_compressor",
    "name": "Multiband Comp",
    "category": "Essentials",
@@ -756,6 +770,20 @@
    "outs": 2,
    "sliders": 25,
    "bytes": 91691
+  },
+  {
+   "id": "passive_eq",
+   "name": "Passive EQ",
+   "category": "Essentials",
+   "tags": "eq equalizer passive program tube vintage low boost attenuate shelf air bandwidth mastering color gui",
+   "gfx": [
+    480,
+    380
+   ],
+   "ins": 2,
+   "outs": 2,
+   "sliders": 10,
+   "bytes": 61997
   },
   {
    "id": "phase_align",
@@ -882,6 +910,20 @@
    "outs": 2,
    "sliders": 7,
    "bytes": 58901
+  },
+  {
+   "id": "speaker_sim",
+   "name": "Speaker Sim",
+   "category": "Essentials",
+   "tags": "speaker simulator device phone laptop earbuds tv radio telephone megaphone car mix check lo-fi small speaker gui",
+   "gfx": [
+    480,
+    294
+   ],
+   "ins": 2,
+   "outs": 2,
+   "sliders": 4,
+   "bytes": 71146
   },
   {
    "id": "stereo_width",
@@ -1556,6 +1598,20 @@
    "bytes": 75878
   },
   {
+   "id": "transient_split",
+   "name": "Transient Split",
+   "category": "Advanced",
+   "tags": "transient tonal split attack sustain body tail drums separate routing parallel reverb saturation gui",
+   "gfx": [
+    480,
+    294
+   ],
+   "ins": 2,
+   "outs": 4,
+   "sliders": 6,
+   "bytes": 45692
+  },
+  {
    "id": "tuner",
    "name": "Tuner",
    "category": "Advanced",
@@ -1796,6 +1852,20 @@
    "outs": 2,
    "sliders": 11,
    "bytes": 91739
+  },
+  {
+   "id": "drum_trigger",
+   "name": "Drum Trigger",
+   "category": "MIDI",
+   "tags": "midi drum trigger replace replacement audio to midi kick snare tom hit detect velocity sample layer gui",
+   "gfx": [
+    480,
+    380
+   ],
+   "ins": 2,
+   "outs": 2,
+   "sliders": 8,
+   "bytes": 50017
   },
   {
    "id": "humanize",

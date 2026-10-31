@@ -1,0 +1,11 @@
+[
+  ["Dotted Eighths", {"Taps": 4, "Pattern": 1, "Tempo Sync": 1, "Subdivision": 1, "Decay (%)": 35, "Mix (%)": 30}],
+  ["Triplet Bounce", {"Taps": 6, "Pattern": 2, "Tempo Sync": 1, "Subdivision": 0, "Decay (%)": 25}],
+  ["Swing Echo", {"Taps": 6, "Pattern": 3, "Tempo Sync": 1, "Subdivision": 1, "Decay (%)": 30, "Spread (%)": 70}],
+  ["Bouncing Ball", {"Taps": 8, "Pattern": 4, "Time (ms)": 400, "Decay (%)": 15, "Spread (%)": 30}],
+  ["Slow Down Tail", {"Taps": 7, "Pattern": 5, "Time (ms)": 90, "Decay (%)": 20, "High Cut (Hz)": 6000}],
+  ["Scatter Cloud", {"Taps": 8, "Pattern": 6, "Time (ms)": 120, "Decay (%)": 18, "Spread (%)": 100, "Feedback (%)": 20, "Mix (%)": 40}],
+  ["Slapback Pair", {"Taps": 2, "Time (ms)": 90, "Decay (%)": 40, "Spread (%)": 80, "Mix (%)": 25}],
+  ["Dub Space", {"Taps": 3, "Pattern": 1, "Tempo Sync": 1, "Subdivision": 0, "Feedback (%)": 55, "Low Cut (Hz)": 200, "High Cut (Hz)": 3500, "Mix (%)": 35}],
+  ["Wide Rhythm", {"Taps": 8, "Tempo Sync": 1, "Subdivision": 2, "Decay (%)": 22, "Spread (%)": 100}]
+]

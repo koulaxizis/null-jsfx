@@ -1,0 +1,142 @@
+desc:NULL Drum Trigger
+author: Christos Koulaxizis
+tags: midi drum trigger replace replacement audio to midi kick snare tom hit detect velocity sample layer
+//category: MIDI
+//NULL JSFX v2.8 • https://nulljsfx.tech • MIT License
+
+slider1:36<0,127,1>Note
+slider2:-24<-60,0,0.1>Threshold (dB)
+slider3:60<10,500,1>Retrigger (ms)
+slider4:100<0,100,1>Dynamics (%)
+slider5:20<20,2000,1:log>Detector HPF (Hz)
+slider6:20000<50,20000,1:log>Detector LPF (Hz)
+slider7:50<10,1000,1>Note Length (ms)
+slider8:9<0,15,1{1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16}>Channel
+
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
+
+@init
+  // Turns the hits of a recorded drum into MIDI notes, for Drum Machine, Sampler or any
+  // instrument after it. The detector hears the sum of both channels through a 12 dB/oct
+  // high-pass and low-pass (to keep the other drums out) and follows its peak (5 ms release).
+  // When that crosses Threshold and the trigger is armed, a hit starts: its peak over the next
+  // 2 ms sets the velocity, and the note-on goes out at the end of those 2 ms. Dynamics 100 %
+  // maps Threshold..0 dBFS to velocity 1..127, 0 % gives every hit 100. The note ends after
+  // Note Length (or just before the next hit). The trigger arms again once Retrigger has passed
+  // and the level has fallen 3 dB under Threshold. The MIDI that comes in passes through at its
+  // own sample, before the notes made at that sample; an all notes off (CC 120/123) on any
+  // channel also ends the note sounding. The audio passes through untouched (an instrument
+  // after it replaces the drum; for layering, put the instrument on a send).
+  ext_noinit = 1;
+  Q = 0;                       // incoming messages of the block: offset, status, data 1, data 2
+  QMAX = 256;
+  qn = qi = 0;
+  h1 = h2 = l1 = l2 = 0;
+  env = 0;
+  armed = 1;
+  win = 0;                     // samples left in the velocity window (0 = none)
+  pk = 0;
+  since = 1000000000;
+  off_left = 0;                // samples until the note-off (0 = no note sounding)
+  on_note = on_chan = -1;
+  last_vel = 0;
+  hits = 0;
+
+  function dt_bq(kind, f) local(w0, cw, al, a0)
+  (
+    w0 = 2 * $pi * min(f, 0.45 * srate) / srate;
+    cw = cos(w0);
+    al = sin(w0) / (2 * 0.7071067811865476);
+    a0 = 1 + al;
+    this.b0 = (kind ? (1 - cw) / 2 : (1 + cw) / 2) / a0;
+    this.b1 = (kind ? 1 - cw : -(1 + cw)) / a0;
+    this.b2 = this.b0;
+    this.a1 = -2 * cw / a0;
+    this.a2 = (1 - al) / a0;
+  );
+
+@slider
+  note = slider1;
+  thr = 10 ^ (slider2 / 20);
+  rearm = 10 ^ ((slider2 - 3) / 20);
+  retrig = floor(slider3 * 0.001 * srate);
+  dyn = slider4 / 100;
+  hp.dt_bq(0, slider5);
+  lp.dt_bq(1, slider6);
+  len = max(1, floor(slider7 * 0.001 * srate));
+  chan = slider8;
+  wlen = max(1, floor(0.002 * srate));
+  erel = exp(-1 / (0.005 * srate));
+
+@block
+  qn = qi = 0;
+  while (midirecv(ofs, m1, m2, m3)) (
+    qn < QMAX ? (
+      Q[qn * 4] = min(max(ofs, 0), samplesblock - 1);
+      Q[qn * 4 + 1] = m1;
+      Q[qn * 4 + 2] = m2;
+      Q[qn * 4 + 3] = m3;
+      qn += 1;
+    );
+  );
+  si = 0;
+
+@sample
+  // the MIDI that came in at this sample goes first
+  while (qi < qn && Q[qi * 4] <= si) (
+    m1 = Q[qi * 4 + 1];
+    m2 = Q[qi * 4 + 2];
+    (m1 & 0xF0) == 0xB0 && (m2 == 120 || m2 == 123) && off_left > 0 ? (
+      midisend(si, 0x80 | on_chan, on_note, 0);
+      off_left = 0;
+    );
+    midisend(si, m1, m2, Q[qi * 4 + 3]);
+    qi += 1;
+  );
+  // the note that is sounding ends after Note Length
+  off_left > 0 ? (
+    off_left -= 1;
+    off_left == 0 ? midisend(si, 0x80 | on_chan, on_note, 0);
+  );
+  // the detector
+  x = (spl0 + spl1) * 0.5;
+  y = hp.b0 * x + h1;
+  h1 = hp.b1 * x - hp.a1 * y + h2;
+  h2 = hp.b2 * x - hp.a2 * y;
+  z = lp.b0 * y + l1;
+  l1 = lp.b1 * y - lp.a1 * z + l2;
+  l2 = lp.b2 * y - lp.a2 * z;
+  d = abs(z);
+  env = d > env ? d : env * erel;
+  env < 0.0000000001 ? env = 0;
+  since += 1;
+  !armed && since >= retrig && env < rearm ? armed = 1;
+  armed && env >= thr ? (
+    armed = 0;
+    since = 0;
+    win = wlen;
+    pk = 0;
+  );
+  win > 0 ? (
+    pk = max(pk, env);
+    win -= 1;
+    win == 0 ? (
+      fr = slider2 < 0 ? min(1, max(0, (20 * log10(max(pk, 0.000001)) - slider2) / -slider2)) : 1;
+      vel = floor(100 + (1 + 126 * fr - 100) * dyn + 0.5);
+      vel = max(1, min(127, vel));
+      off_left > 0 ? midisend(si, 0x80 | on_chan, on_note, 0);
+      midisend(si, 0x90 | chan, note, vel);
+      on_note = note;
+      on_chan = chan;
+      off_left = len;
+      last_vel = vel;
+      hits += 1;
+    );
+  );
+  si += 1;
+  // the audio passes through
+  spl0 = spl0;
+  spl1 = spl1;

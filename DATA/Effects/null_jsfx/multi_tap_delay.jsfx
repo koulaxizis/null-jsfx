@@ -1,0 +1,136 @@
+desc:NULL Multi-Tap Delay
+author: Christos Koulaxizis
+tags: delay multi tap multitap rhythmic echo pattern dotted triplet swing accelerate scatter tempo sync stereo spread
+//category: Essentials
+//NULL JSFX v2.8 • https://nulljsfx.tech • MIT License
+
+slider1:4<1,8,1>Taps
+slider2:0<0,6,1{Even,Dotted,Triplet,Swing,Speed Up,Slow Down,Scatter}>Pattern
+slider3:250<10,1000,1>Time (ms)
+slider4:0<0,1,1{Off,On}>Tempo Sync
+slider5:1<0,4,1{1/4,1/8,1/16,1/32,1/2}>Subdivision
+slider6:30<0,100,1>Decay (%)
+slider7:50<0,100,1>Spread (%)
+slider8:0<0,90,1>Feedback (%)
+slider9:20<20,2000,1:log>Low Cut (Hz)
+slider10:20000<1000,20000,1:log>High Cut (Hz)
+slider11:35<0,100,1>Mix (%)
+
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
+
+@init
+  ext_noinit = 1;              // play and seek keep the echoes, as in the VST3/CLAP
+  // Up to eight echoes from one stereo delay line (4 s per channel). Time (or a tempo-synced
+  // note) is the step; Pattern places tap k (1..Taps) at a multiple of it: Even k, Dotted
+  // 1.5 k, Triplet 2/3 k, Swing k with every odd tap a third of a step late, Speed Up with
+  // each gap 0.8 times the one before, Slow Down with each 1.25 times, and Scatter from a fixed
+  // table. Taps past the 4 s line are held at its end. Tap k has the level (1 - Decay)^(k - 1)
+  // and is panned left and right in turn, by Spread. Feedback sends the last tap back into the
+  // line. Low Cut and High Cut (12 dB/oct) shape the echoes only, and Mix blends them with the
+  // dry signal.
+  bufn = floor(4 * srate);
+  BL = 0;
+  BR = bufn;
+  TP = 2 * bufn;               // tap positions (8), then levels (8), left gains (8), right gains (8)
+  memset(0, 0, 2 * bufn + 32);
+  wp = 0;
+  h1l = h2l = h1r = h2r = 0;
+  l1l = l2l = l1r = l2r = 0;
+
+  // RBJ biquad coefficients: kind 0 = high-pass, 1 = low-pass, Q = 1/sqrt(2)
+  function mt_bq(kind, f) local(w0, cw, al, a0)
+  (
+    w0 = 2 * $pi * min(f, 0.45 * srate) / srate;
+    cw = cos(w0);
+    al = sin(w0) / (2 * 0.7071067811865476);
+    a0 = 1 + al;
+    this.b0 = (kind ? (1 - cw) / 2 : (1 + cw) / 2) / a0;
+    this.b1 = (kind ? 1 - cw : -(1 + cw)) / a0;
+    this.b2 = this.b0;
+    this.a1 = -2 * cw / a0;
+    this.a2 = (1 - al) / a0;
+  );
+
+  function mt_update() local(step, k, t, g, p, sp)
+  (
+    step = tsync && tempo > 0 ? 60000 / tempo * (slider5 == 0 ? 1 : slider5 == 1 ? 0.5 : slider5 == 2 ? 0.25 :
+                                                  slider5 == 3 ? 0.125 : 2) : slider3;
+    step = step * srate / 1000;
+    ntap = slider1;
+    k = 1;
+    t = 0;
+    g = 1;
+    sp = slider7 / 100;
+    loop(8,
+      slider2 == 0 ? t = k :
+      slider2 == 1 ? t = 1.5 * k :
+      slider2 == 2 ? t = 2 * k / 3 :
+      slider2 == 3 ? t = k + (k % 2 == 1 ? 1 / 3 : 0) :
+      slider2 == 4 ? t = (1 - 0.8 ^ k) / 0.2 :
+      slider2 == 5 ? t = (1.25 ^ k - 1) / 0.25 :
+      t = k == 1 ? 0.75 : k == 2 ? 1.5 : k == 3 ? 2.75 : k == 4 ? 3 : k == 5 ? 4.25 : k == 6 ? 5.5 : k == 7 ? 6 : 7.25;
+      TP[k - 1] = max(1, min(bufn - 2, floor(t * step + 0.5)));
+      TP[8 + k - 1] = g;
+      p = (k % 2 == 1 ? -1 : 1) * sp;
+      TP[16 + k - 1] = g * (p <= 0 ? 1 : 1 - p);
+      TP[24 + k - 1] = g * (p >= 0 ? 1 : 1 - p);
+      g *= 1 - slider6 / 100;
+      k += 1;
+    );
+  );
+
+@slider
+  tsync = slider4;
+  fb = slider8 / 100;
+  lc_on = slider9 > 20;
+  hc_on = slider10 < 20000;
+  lc.mt_bq(0, slider9);
+  hc.mt_bq(1, slider10);
+  mix = slider11 / 100;
+  mt_update();
+
+@block
+  tsync ? mt_update();
+
+@sample
+  // the echoes: every tap reads the line, panned; the last tap also feeds back
+  wl = wr = 0;
+  i = 0;
+  loop(ntap,
+    rp = wp - TP[i];
+    rp < 0 ? rp += bufn;
+    dl = BL[rp];
+    dr = BR[rp];
+    wl += dl * TP[16 + i];
+    wr += dr * TP[24 + i];
+    i += 1;
+  );
+  BL[wp] = spl0 + fb * dl;
+  BR[wp] = spl1 + fb * dr;
+  wp += 1;
+  wp >= bufn ? wp = 0;
+  lc_on ? (
+    x = wl;
+    wl = lc.b0 * x + h1l;
+    h1l = lc.b1 * x - lc.a1 * wl + h2l;
+    h2l = lc.b2 * x - lc.a2 * wl;
+    x = wr;
+    wr = lc.b0 * x + h1r;
+    h1r = lc.b1 * x - lc.a1 * wr + h2r;
+    h2r = lc.b2 * x - lc.a2 * wr;
+  );
+  hc_on ? (
+    x = wl;
+    wl = hc.b0 * x + l1l;
+    l1l = hc.b1 * x - hc.a1 * wl + l2l;
+    l2l = hc.b2 * x - hc.a2 * wl;
+    x = wr;
+    wr = hc.b0 * x + l1r;
+    l1r = hc.b1 * x - hc.a1 * wr + l2r;
+    l2r = hc.b2 * x - hc.a2 * wr;
+  );
+  spl0 += (wl - spl0) * mix;
+  spl1 += (wr - spl1) * mix;
