@@ -870,6 +870,20 @@
    "bytes": 44923
   },
   {
+   "id": "space",
+   "name": "Space",
+   "category": "Essentials",
+   "tags": "reverb space room chamber hall galaxy fdn feedback delay network algorithmic modulation ambience long decay pre-delay gui",
+   "gfx": [
+    480,
+    380
+   ],
+   "ins": 2,
+   "outs": 2,
+   "sliders": 7,
+   "bytes": 58901
+  },
+  {
    "id": "stereo_width",
    "name": "Stereo Width",
    "category": "Essentials",

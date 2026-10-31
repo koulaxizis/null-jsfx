@@ -87,5 +87,26 @@
     ],
     "properties": "Input → first-order pre-emphasis shelf (per character) → soft saturator (Padé tanh, 8 dB of headroom) → the exact inverse shelf → crosstalk (the other side high-passed at 1 kHz, up to -30 dB with Drive) → 5 Hz DC blocker → Output. Zero latency.",
     "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-cbu\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><rect x=\"10\" y=\"8\" width=\"12\" height=\"48\" rx=\"3\" stroke=\"url(#icon-cbu)\" stroke-width=\"1.5\" fill=\"none\" opacity=\"0.4\"/><rect x=\"26\" y=\"8\" width=\"12\" height=\"48\" rx=\"3\" stroke=\"url(#icon-cbu)\" stroke-width=\"1.5\" fill=\"none\" opacity=\"0.4\"/><path d=\"M 16,40 L 32,40 L 48,24 L 56,24\" stroke=\"url(#icon-cbu)\" stroke-width=\"2.5\" fill=\"none\" stroke-linecap=\"round\"/><rect x=\"42\" y=\"8\" width=\"12\" height=\"48\" rx=\"3\" stroke=\"url(#icon-cbu)\" stroke-width=\"2\" fill=\"none\"/></svg>"
+  },
+  "space": {
+    "card_desc": "Room, Chamber, Hall & Galaxy Reverb",
+    "keywords": "reverb space room chamber hall galaxy algorithmic fdn ambience long decay modulation pre-delay vocals pads",
+    "slider_desc": [
+      "The kind of space: Room (short, close), Chamber (dense), Hall (big and smooth) or Galaxy (huge, long and moving).",
+      "How big the space is, from half to twice its type's size.",
+      "How long the tail lasts: Room 0.2 to 1.5 s, Chamber 0.5 to 3 s, Hall 1 to 8 s, Galaxy 3 to 30 s.",
+      "How fast the highs die away compared with the rest of the tail.",
+      "How much the delay lines drift, for a smooth, chorused tail without metallic ringing.",
+      "Time before the reverb starts, to keep the dry sound clear.",
+      "Blend between the dry and the reverberated signal."
+    ],
+    "uses": [
+      "Rooms and chambers on drums and vocals",
+      "Concert halls on strings, piano and choirs",
+      "Huge ambient tails on pads and sound design",
+      "Putting a whole mix in one space"
+    ],
+    "properties": "Input → Pre-Delay → two Schroeder all-passes per side → 8-line feedback delay network (moving interpolated reads, one-pole damping, 60 dB decay in the decay time, 8×8 Hadamard matrix) → left from the even lines, right from the odd → Dry/Wet Mix → Output. Zero latency.",
+    "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-space\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><circle cx=\"32\" cy=\"32\" r=\"4\" fill=\"url(#icon-space)\"/><circle cx=\"32\" cy=\"32\" r=\"12\" stroke=\"url(#icon-space)\" stroke-width=\"2\" fill=\"none\" opacity=\"0.7\"/><circle cx=\"32\" cy=\"32\" r=\"20\" stroke=\"url(#icon-space)\" stroke-width=\"1.5\" fill=\"none\" opacity=\"0.45\"/><circle cx=\"32\" cy=\"32\" r=\"27\" stroke=\"url(#icon-space)\" stroke-width=\"1\" fill=\"none\" opacity=\"0.25\"/></svg>"
   }
 }
