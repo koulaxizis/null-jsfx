@@ -2,6 +2,20 @@
  "version": "2.0",
  "effects": [
   {
+   "id": "air",
+   "name": "Air",
+   "category": "One Slider",
+   "tags": "eq air high shelf top end sheen brightness presence open gui",
+   "gfx": [
+    360,
+    240
+   ],
+   "ins": 2,
+   "outs": 2,
+   "sliders": 1,
+   "bytes": 34525
+  },
+  {
    "id": "brighter",
    "name": "Brighter",
    "category": "One Slider",
@@ -618,6 +632,20 @@
    "bytes": 59100
   },
   {
+   "id": "glue_comp",
+   "name": "Glue Comp",
+   "category": "Essentials",
+   "tags": "compressor bus glue mix buss console stereo link auto release parallel sidechain hpf gui",
+   "gfx": [
+    480,
+    380
+   ],
+   "ins": 2,
+   "outs": 2,
+   "sliders": 7,
+   "bytes": 46176
+  },
+  {
    "id": "limiter",
    "name": "Limiter",
    "category": "Essentials",
@@ -896,6 +924,20 @@
    "outs": 2,
    "sliders": 11,
    "bytes": 69264
+  },
+  {
+   "id": "tone",
+   "name": "Tone",
+   "category": "Essentials",
+   "tags": "eq tone bass treble baxandall shelf low high console hi-fi warm bright simple gui",
+   "gfx": [
+    480,
+    294
+   ],
+   "ins": 2,
+   "outs": 2,
+   "sliders": 5,
+   "bytes": 40717
   },
   {
    "id": "transient_shaper",

@@ -1,0 +1,72 @@
+desc:NULL Glue Comp
+author: Christos Koulaxizis
+tags: compressor bus glue mix buss console stereo link auto release parallel sidechain hpf
+//category: Essentials
+//NULL JSFX v2.7 • https://nulljsfx.tech • MIT License
+
+slider1:-10<-40,0,0.1>Threshold (dB)
+slider2:0<0,2,1{2,4,10}>Ratio
+slider3:4<0,5,1{0.1 ms,0.3 ms,1 ms,3 ms,10 ms,30 ms}>Attack
+slider4:4<0,4,1{0.1 s,0.3 s,0.6 s,1.2 s,Auto}>Release
+slider5:0<0,20,0.1>Makeup (dB)
+slider6:100<0,100,1>Mix (%)
+slider7:0<0,300,1>Sidechain HPF (Hz)
+
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
+
+@init
+  ext_noinit = 1;              // play and seek keep tails and state, as in the VST3/CLAP
+  // A stereo bus compressor for gluing a mix or a group together. Both channels share one
+  // peak detector (stereo linked, so the image never shifts), the gain computer has a 4 dB
+  // soft knee, and the gain reduction is smoothed in dB with stepped attack and release
+  // times. Auto release follows the program: a fast envelope (80 ms) recovers from short
+  // peaks while a slow one (0.5 s in, 1.5 s out) holds the reduction under dense passages,
+  // and the deeper of the two wins. Sidechain HPF (0 = off) keeps the low end from pumping
+  // the detector; Mix blends the dry signal back in (parallel compression) after Makeup.
+  hl = hr = 0;
+  grf = grs = gr = 0;
+
+@slider
+  thr = slider1;
+  slope = 1 - 1 / (slider2 == 0 ? 2 : slider2 == 1 ? 4 : 10);
+  att = slider3 == 0 ? 0.1 : slider3 == 1 ? 0.3 : slider3 == 2 ? 1 : slider3 == 3 ? 3 : slider3 == 4 ? 10 : 30;
+  rel = slider4 == 0 ? 0.1 : slider4 == 1 ? 0.3 : slider4 == 2 ? 0.6 : slider4 == 3 ? 1.2 : 0.08;
+  rel_auto = slider4 >= 4;
+  ca = 1 - exp(-1 / (att * 0.001 * srate));
+  cr = 1 - exp(-1 / (rel * srate));
+  csa = 1 - exp(-1 / (0.5 * srate));
+  csr = 1 - exp(-1 / (1.5 * srate));
+  mk = 10 ^ (slider5 / 20);
+  mix = slider6 / 100;
+  hpf = slider7 > 0;
+  ch = exp(-2 * $pi * min(max(slider7, 1), 0.45 * srate) / srate);
+
+@sample
+  // detector key: the track, high-passed (one pole) when Sidechain HPF is on
+  kl = spl0;
+  kr = spl1;
+  hpf ? (
+    hl = (1 - ch) * kl + ch * hl;
+    hr = (1 - ch) * kr + ch * hr;
+    kl -= hl;
+    kr -= hr;
+  );
+  lv = 20 * log10(max(max(abs(kl), abs(kr)), 0.000001));
+  // gain computer: 4 dB soft knee centred on Threshold
+  x = lv - thr;
+  tg = x <= -2 ? 0 : x < 2 ? slope * (x + 2) * (x + 2) / 8 : slope * x;
+  grf += (tg - grf) * (tg > grf ? ca : cr);
+  grf < 0.000000001 ? grf = 0;
+  rel_auto ? (
+    grs += (tg - grs) * (tg > grs ? csa : csr);
+    grs < 0.000000001 ? grs = 0;
+    gr = max(grf, grs);
+  ) : (
+    gr = grf;
+  );
+  g = 1 - mix + mix * mk * 10 ^ (-gr / 20);
+  spl0 *= g;
+  spl1 *= g;
