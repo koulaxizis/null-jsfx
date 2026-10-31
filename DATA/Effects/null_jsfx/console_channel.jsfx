@@ -2,7 +2,7 @@ desc:NULL Console Channel
 author: Christos Koulaxizis
 tags: console channel analog mixer summing saturation colour warm punchy bright drive harmonics
 //category: Advanced
-//NULL JSFX v2.8 • https://nulljsfx.tech • MIT License
+//NULL JSFX v2.9 • https://nulljsfx.tech • MIT License
 
 slider1:1<0,3,1{Clean,Warm,Punchy,Bright}>Character
 slider2:30<0,100,1>Drive (%)

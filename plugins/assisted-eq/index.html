@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Assisted EQ by NULL JSFX: free audio plugin for REAPER, VST3 and CLAP</title>
+    <meta name="description" content="Assisted EQ: EQ that sets itself from the track. Free and open source audio plugin for REAPER (JSFX) and any DAW (VST3, CLAP) on Windows, macOS and Linux, plus LV2 on Linux.">
+    <link rel="canonical" href="https://nulljsfx.tech/plugins/assisted-eq/">
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Assisted EQ: EQ that sets itself from the track">
+    <meta property="og:description" content="Assisted EQ: EQ that sets itself from the track. Free and open source audio plugin for REAPER (JSFX) and any DAW (VST3, CLAP) on Windows, macOS and Linux, plus LV2 on Linux.">
+    <meta property="og:url" content="https://nulljsfx.tech/plugins/assisted-eq/">
+    <meta property="og:image" content="https://nulljsfx.tech/assets/video/assisted_eq.jpg">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Assisted EQ: EQ that sets itself from the track">
+    <meta name="twitter:description" content="Assisted EQ: EQ that sets itself from the track. Free and open source audio plugin for REAPER (JSFX) and any DAW (VST3, CLAP) on Windows, macOS and Linux, plus LV2 on Linux.">
+    <meta name="twitter:image" content="https://nulljsfx.tech/assets/video/assisted_eq.jpg">
+    <link rel="icon" type="image/svg+xml" href="/assets/img/favicon.svg">
+    <link rel="stylesheet" href="/assets/css/style.css">
+    <script type="application/ld+json">{"@context": "https://schema.org", "@type": "SoftwareApplication", "name": "NULL Assisted EQ", "description": "EQ that sets itself from the track", "url": "https://nulljsfx.tech/plugins/assisted-eq/", "image": "https://nulljsfx.tech/assets/video/assisted_eq.jpg", "applicationCategory": "MultimediaApplication", "applicationSubCategory": "Audio audio plugin", "operatingSystem": "Windows, macOS, Linux", "softwareVersion": "2.9", "license": "https://opensource.org/licenses/MIT", "offers": {"@type": "Offer", "price": "0", "priceCurrency": "EUR"}, "author": {"@type": "Person", "name": "Christos Koulaxizis"}, "isPartOf": {"@type": "SoftwareApplication", "name": "NULL JSFX", "url": "https://nulljsfx.tech/"}}</script>
+    <script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "NULL JSFX", "item": "https://nulljsfx.tech/"}, {"@type": "ListItem", "position": 2, "name": "Assisted", "item": "https://nulljsfx.tech/#effects"}, {"@type": "ListItem", "position": 3, "name": "Assisted EQ", "item": "https://nulljsfx.tech/plugins/assisted-eq/"}]}</script>
+</head>
+<body class="plugin-page">
+    <main>
+        <nav class="page-crumbs" aria-label="Breadcrumb">
+            <a href="/" class="page-home"><img src="/assets/img/favicon.svg" alt="NULL JSFX" width="28" height="28"></a>
+            <a href="/">NULL JSFX</a> <span>/</span> <a href="/">Effects</a> <span>/</span> <span>Assisted EQ</span>
+        </nav>
+        <article class="page-plugin">
+            <header class="guide-header page-header">
+                <span class="guide-category">Assisted</span>
+                <h1>ASSISTED EQ <span class="beta-badge">BETA</span></h1>
+                <p>EQ that sets itself from the track</p>
+                <p class="beta-note">Beta: its rules have been tested on test signals so far and may still be tuned from your feedback, so a project saved now can sound a little different after an update.</p>
+            </header>
+            <video class="guide-shot guide-video" poster="/assets/video/assisted_eq.jpg" controls playsinline preload="none" width="1280" height="720" aria-label="Assisted EQ presentation video"><source src="https://github.com/koulaxizis/null-jsfx/releases/download/media/assisted_eq.mp4" type="video/mp4"><source src="/assets/video/assisted_eq.mp4" type="video/mp4"></video>
+            <div class="page-actions">
+                <a class="featured-btn" href="/#download"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg><span>Download free</span></a>
+                <small>Part of NULL JSFX 2.9: 137 plugins, free and open source (MIT). Easiest with <a href="/#hub">NULL JSFX Hub</a>.</small>
+            </div>
+            <div class="guide-body">
+                <section class="guide-section">
+                    <h2>Controls</h2>
+                    <ul class="guide-sliders"><li><span class="slider-name">Learn</span><span class="slider-desc">Off / On — Press On and play the track: it listens for 15 s of signal (or until you turn it Off, after at least 0.5 s), then stores what it heard and returns to Off.</span></li><li><span class="slider-name">Source</span><span class="slider-desc">Vocal / Drums / Bass / Instrument / Mix — What is playing: Vocal, Drums, Bass, Instrument or Mix. Each has its own healthy balance that Learn corrects toward.</span></li><li><span class="slider-name">Target</span><span class="slider-desc">Natural / Warm / Bright / Punchy / Radio / Podcast / Lo-Fi — The sound you want: Natural (only corrects), Warm, Bright, Punchy, Radio, Podcast or Lo-Fi.</span></li><li><span class="slider-name">Amount</span><span class="slider-desc">0 to 150% — How much of the learned correction and target is applied, 0-150%.</span></li><li><span class="slider-name">Low Trim</span><span class="slider-desc">−6 to +6 dB — Your own shelf at 100 Hz on top.</span></li><li><span class="slider-name">Mid Trim</span><span class="slider-desc">−6 to +6 dB — Your own bell at 1 kHz on top.</span></li><li><span class="slider-name">High Trim</span><span class="slider-desc">−6 to +6 dB — Your own shelf at 10 kHz on top.</span></li><li><span class="slider-name">Output</span><span class="slider-desc">−12 to +12 dB — Level after the EQ, on top of the automatic level match.</span></li><li><span class="slider-name">Learned</span><span class="slider-desc">No / Yes — Hidden: whether Learn has run. Saved with the project.</span></li><li><span class="slider-name">Learned Low</span><span class="slider-desc">−24 to +24 dB — Hidden: the learned level of the lows (60-120 Hz) against the reference, in dB.</span></li><li><span class="slider-name">Learned Mud</span><span class="slider-desc">−24 to +24 dB — Hidden: the learned level of the mud region (200-500 Hz) against the reference, in dB.</span></li><li><span class="slider-name">Learned Mud Freq</span><span class="slider-desc">200 to 500 Hz — Hidden: the frequency where the mud peaks.</span></li><li><span class="slider-name">Learned Honk</span><span class="slider-desc">−24 to +24 dB — Hidden: the learned level of the honk region (800 Hz-1.6 kHz) against the reference, in dB.</span></li><li><span class="slider-name">Learned Presence</span><span class="slider-desc">−24 to +24 dB — Hidden: the learned level of the presence region (2-5 kHz) against the reference, in dB.</span></li><li><span class="slider-name">Learned Air</span><span class="slider-desc">−24 to +24 dB — Hidden: the learned level of the air region (8-16 kHz) against the reference, in dB.</span></li><li><span class="slider-name">Learned Lowest</span><span class="slider-desc">20 to 500 Hz — Hidden: the lowest band with real content; the learned high-pass sits below it.</span></li></ul>
+                </section>
+                <section class="guide-section">
+                    <h2>Best uses</h2>
+                    <ul class="use-cases"><li>A first EQ on a vocal without knowing where to cut</li><li>Taking the mud out of a recording with one button</li><li>Radio, podcast or phone sound on a voice</li><li>A quick, safe tone balance on a bus or a mix</li></ul>
+                </section>
+                <section class="guide-section">
+                    <h2>Properties</h2>
+                    <p class="page-props">Learn: 29 third-octave band-passes in 50 ms windows (only windows above -60 dBFS count), measured against a -4.5 dB/oct reference levelled at 500 Hz-4 kHz, grouped into low, mud, honk, presence and air. Rules (tools/assisted_targets.json): 60% of each deviation from the source&#x27;s healthy balance beyond 1.5 dB is corrected (-6 to +4 dB, mud only cut), plus the target&#x27;s flavour, times Amount. EQ: high-pass (learned and target), low shelf 100 Hz, mud bell, honk bell 1 kHz, presence bell 3 kHz, air shelf 10 kHz, target low-pass (RBJ biquads) → automatic level match → Output. No AI: fixed rules, the same result every time. Zero latency.</p>
+                </section>
+                <section class="guide-section">
+                    <h2>Formats</h2>
+                    <ul class="guide-formats"><li><span class="format-tag">JSFX</span>JSFX for REAPER, with REAPER&#x27;s own sliders</li><li><span class="format-tag">GFX</span>JSFX GFX for REAPER, with its own interface</li><li><span class="format-tag">VST3</span>VST3 for any DAW</li><li><span class="format-tag">CLAP</span>CLAP for any DAW</li><li><span class="format-tag">LV2</span>LV2 for Linux DAWs such as Ardour, Carla and Qtractor</li></ul>
+                </section>
+                <section class="guide-section">
+                    <h2>Factory presets</h2>
+                    <p class="page-list">Vocal Warm · Vocal Bright · Radio Voice · Podcast Voice · Phone Voice · Punchy Drums · Natural Drums · Warm Bass · Bright Instrument · Natural Instrument · Mix Natural · Mix Warm · Mix Bright</p>
+                </section>
+                <section class="guide-section">
+                    <h2>Try it</h2>
+                    <a class="try-studio guide-studio" href="https://useoros.online/studio/" target="_blank" rel="noopener"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8" fill="currentColor"/></svg><span class="try-studio-text"><b>Try it on orOS Studio</b><small>Add it to a track in your browser, with its own interface. Nothing to install.</small></span></a>
+                </section>
+            </div>
+        </article>
+        <section class="page-related">
+            <h2 class="section-title">Goes well with</h2>
+            <div class="related-grid"><a class="related-card" href="/plugins/assisted-comp/"><b>Assisted Comp</b><small>Compressor that sets itself from the track</small></a><a class="related-card" href="/plugins/assisted-delay/"><b>Assisted Delay</b><small>Delay that sets itself from the track</small></a><a class="related-card" href="/plugins/assisted-reverb/"><b>Assisted Reverb</b><small>Reverb that sets itself from the track</small></a><a class="related-card" href="/plugins/clipper/"><b>Clipper</b><small>Oversampled Hard &amp; Soft Clipper</small></a><a class="related-card" href="/plugins/crunch/"><b>Crunch</b><small>One-Knob Hard Distortion</small></a><a class="related-card" href="/plugins/driver/"><b>Driver</b><small>One-Knob Warm Tube Drive</small></a></div>
+            <p class="page-more"><a href="/">All 137 NULL JSFX plugins</a></p>
+        </section>
+    </main>
+    <footer class="site-footer">
+        <div class="footer-content">
+            Designed with &#9825; by <a href="https://koulaxizis.gr" target="_blank" rel="noopener">Christos Koulaxizis</a>.
+            <div class="footer-links">
+                <a href="https://ko-fi.com/koulaxizis" target="_blank" rel="noopener">Support on Ko-fi</a>
+                <span class="sep">&bull;</span>
+                <a href="https://github.com/koulaxizis/null-jsfx" target="_blank" rel="noopener">GitHub</a>
+                <span class="sep">&bull;</span>
+                <a href="/">nulljsfx.tech</a>
+            </div>
+        </div>
+    </footer>
+    <button id="theme-toggle" class="theme-toggle-floating" aria-label="Toggle color theme" title="Switch between light/dark theme">
+        <svg class="sun-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2 M12 21v2 M4.22 4.22l1.42 1.42 M18.36 18.36l1.42 1.42 M1 12h2 M21 12h2 M4.22 19.78l1.42-1.42 M18.36 5.64l1.42-1.42"/></svg>
+        <svg class="moon-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none;"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+    </button>
+    <script src="/assets/js/theme.js"></script>
+    <script src="/assets/js/demo.js"></script>
+</body>
+</html>

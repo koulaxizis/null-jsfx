@@ -2,7 +2,7 @@ desc:NULL Drum Trigger GFX
 author: Christos Koulaxizis
 tags: midi drum trigger replace replacement audio to midi kick snare tom hit detect velocity sample layer gui
 //category: MIDI
-//NULL JSFX v2.8 • https://nulljsfx.tech • MIT License
+//NULL JSFX v2.9 • https://nulljsfx.tech • MIT License
 
 import null_gfx.jsfx-inc
 

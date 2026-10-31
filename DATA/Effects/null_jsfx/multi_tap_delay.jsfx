@@ -2,7 +2,7 @@ desc:NULL Multi-Tap Delay
 author: Christos Koulaxizis
 tags: delay multi tap multitap rhythmic echo pattern dotted triplet swing accelerate scatter tempo sync stereo spread
 //category: Essentials
-//NULL JSFX v2.8 • https://nulljsfx.tech • MIT License
+//NULL JSFX v2.9 • https://nulljsfx.tech • MIT License
 
 slider1:4<1,8,1>Taps
 slider2:0<0,6,1{Even,Dotted,Triplet,Swing,Speed Up,Slow Down,Scatter}>Pattern

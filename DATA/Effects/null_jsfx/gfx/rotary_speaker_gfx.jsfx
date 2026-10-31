@@ -2,7 +2,7 @@ desc:NULL Rotary Speaker GFX
 author: Christos Koulaxizis
 tags: rotary leslie organ speaker doppler tremolo chorale horn drum gui
 //category: Advanced
-//NULL JSFX v2.8 • https://nulljsfx.tech • MIT License
+//NULL JSFX v2.9 • https://nulljsfx.tech • MIT License
 
 import null_gfx.jsfx-inc
 

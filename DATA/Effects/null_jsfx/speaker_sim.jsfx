@@ -2,7 +2,7 @@ desc:NULL Speaker Sim
 author: Christos Koulaxizis
 tags: speaker simulator device phone laptop earbuds tv radio telephone megaphone car mix check lo-fi small speaker
 //category: Essentials
-//NULL JSFX v2.8 • https://nulljsfx.tech • MIT License
+//NULL JSFX v2.9 • https://nulljsfx.tech • MIT License
 
 slider1:0<0,7,1{Phone,Laptop,Earbuds,TV,Radio,Telephone,Megaphone,Car}>Device
 slider2:100<0,100,1>Mix (%)

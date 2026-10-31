@@ -2,7 +2,7 @@ desc:NULL Noise Generator
 author: Christos Koulaxizis
 tags: noise generator pink white brown test tone calibration stereo filter envelope follower ducking layer
 //category: Essentials
-//NULL JSFX v2.8 • https://nulljsfx.tech • MIT License
+//NULL JSFX v2.9 • https://nulljsfx.tech • MIT License
 
 slider1:0<0,2,1{White,Pink,Brown}>Type
 slider2:-24<-60,0,0.1>Level (dB)

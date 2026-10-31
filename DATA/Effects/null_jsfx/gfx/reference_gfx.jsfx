@@ -2,7 +2,7 @@ desc:NULL Reference GFX
 author: Christos Koulaxizis
 tags: reference track a/b compare level match loudness lufs mixing mastering meter analyzer gui
 //category: Advanced
-//NULL JSFX v2.8 • https://nulljsfx.tech • MIT License
+//NULL JSFX v2.9 • https://nulljsfx.tech • MIT License
 
 import null_gfx.jsfx-inc
 

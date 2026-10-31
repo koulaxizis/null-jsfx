@@ -2,7 +2,7 @@ desc:NULL Assisted Comp GFX
 author: Christos Koulaxizis
 tags: compressor dynamics assisted learn assistant auto threshold vocal drums bus podcast loudness lufs gui
 //category: Assisted
-//NULL JSFX v2.8 • https://nulljsfx.tech • MIT License
+//NULL JSFX v2.9 • https://nulljsfx.tech • MIT License
 
 import null_gfx.jsfx-inc
 

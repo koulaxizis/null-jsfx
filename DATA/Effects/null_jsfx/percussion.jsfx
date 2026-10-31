@@ -2,7 +2,7 @@ desc:NULL Percussion
 author: Christos Koulaxizis
 tags: instrument percussion latin hand drums conga bongo shaker tambourine cowbell claves guiro cabasa triangle groove synth midi
 //category: Instruments
-//NULL JSFX v2.8 • https://nulljsfx.tech • MIT License
+//NULL JSFX v2.9 • https://nulljsfx.tech • MIT License
 
 slider1:1<0,8,1{Off,Salsa,Bossa,Samba,Cumbia,Afro Bell,Afrobeat,Reggaeton,Pop}>Groove
 slider2:0<0,1,1{Transport,Keys}>Groove Play

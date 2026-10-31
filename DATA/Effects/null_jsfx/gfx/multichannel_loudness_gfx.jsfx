@@ -2,7 +2,7 @@ desc:NULL Multichannel Loudness GFX
 author: Christos Koulaxizis
 tags: loudness meter lufs lra true peak surround 5.1 7.1 7.1.4 atmos bed multichannel ebu r128 itu bs1770 atsc a85 metering post production gui
 //category: Advanced
-//NULL JSFX v2.8 • https://nulljsfx.tech • MIT License
+//NULL JSFX v2.9 • https://nulljsfx.tech • MIT License
 
 import null_gfx.jsfx-inc
 

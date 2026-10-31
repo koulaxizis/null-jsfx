@@ -2,7 +2,7 @@ desc:NULL Transient Split GFX
 author: Christos Koulaxizis
 tags: transient tonal split attack sustain body tail drums separate routing parallel reverb saturation gui
 //category: Advanced
-//NULL JSFX v2.8 • https://nulljsfx.tech • MIT License
+//NULL JSFX v2.9 • https://nulljsfx.tech • MIT License
 
 import null_gfx.jsfx-inc
 
