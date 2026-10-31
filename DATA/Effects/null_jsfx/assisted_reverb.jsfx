@@ -1,0 +1,325 @@
+desc:NULL Assisted Reverb
+author: Christos Koulaxizis
+tags: reverb room space ambience assisted learn assistant auto automatic decay pre-delay ducking vocal drums bus
+//category: Assisted
+//NULL JSFX v2.8 • https://nulljsfx.tech • MIT License
+
+slider1:0<0,1,1{Off,On}>Learn
+slider2:0<0,4,1{Vocal,Drums,Bass,Instrument,Mix}>Source
+slider3:0<0,6,1{Natural,Warm,Bright,Punchy,Radio,Podcast,Lo-Fi}>Target
+slider4:100<0,150,1>Amount (%)
+slider5:0<-2,2,0.1>Length Trim
+slider6:0<-2,2,0.1>Tone Trim
+slider7:0<-12,12,0.1>Level Trim (dB)
+slider8:0<-12,12,0.1>Output (dB)
+slider9:0<0,1,1{No,Yes}>-Learned
+slider10:-18<-80,0,0.1>-Learned Loud (dB)
+slider11:-24<-80,0,0.1>-Learned Median (dB)
+slider12:0<0,2000,1>-Learned Onset (ms)
+slider13:-18<-60,0,0.1>-Learned Bright (dB)
+
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
+
+@init
+  ext_noinit = 1;              // play and seek keep tails and state, as in the VST3/CLAP
+  // A reverb that sets itself. Learn (On) listens to the input in 50 ms windows; only windows
+  // above -60 dBFS RMS count. After 15 s of such signal (or when Learn is turned off after at
+  // least 0.5 s) it stores in the hidden Learned sliders: the 90th percentile and the median of
+  // the window levels (dBFS RMS, 0.1 dB bins), the mean time between onsets (a 5 ms envelope
+  // jumping 6 dB over a 100 ms one, at least 50 ms apart; 0 = fewer than two found) and the
+  // brightness (the power above 4 kHz against the whole, dB); Learn goes back to Off.
+  // The settings follow from those, Source and Target whenever a slider moves (the numbers live
+  // in tools/assisted_targets.json): the decay (RT60) is the target's times the source's factor,
+  // kept under a few onset intervals so a busy part does not wash out, times 2^Length Trim; the
+  // pre-delay is a share of the onset interval; the low cut comes from the source (or the target
+  // when higher); the high cut from the target, an octave darker or brighter per bright_db dB of
+  // learned brightness under or over the reference, times 2^Tone Trim; the wet level from the
+  // source and the target times Amount and Level Trim; and the wet dips by the source's ducking
+  // depth while the dry signal is between its learned median and loud levels.
+  // The reverb: pre-delay, eight damped feedback combs per side whose feedback gives the decay
+  // in seconds (the right side 23 samples longer at 44.1 kHz), four series all-passes, then a
+  // 12 dB/oct low cut and high cut on the wet signal, which is added to the dry one.
+  // BEGIN tables (tools/build_assisted.py, do not edit)
+  as_dec = 0; as_decm = 8; as_size = 16; as_pdm = 24; as_lc = 32; as_lct = 40; as_hc = 48; as_mix = 56; as_mixm = 64; as_duck = 72; as_duckm = 80;
+  as_dec[0] = 1.4; as_dec[1] = 1.8; as_dec[2] = 1.4; as_dec[3] = 0.9; as_dec[4] = 0.7; as_dec[5] = 0.5; as_dec[6] = 1.2;
+  as_decm[0] = 1; as_decm[1] = 0.6; as_decm[2] = 0.5; as_decm[3] = 1.1; as_decm[4] = 0.8;
+  as_size[0] = 1; as_size[1] = 1.1; as_size[2] = 0.95; as_size[3] = 0.75; as_size[4] = 0.6; as_size[5] = 0.5; as_size[6] = 0.8;
+  as_pdm[0] = 1; as_pdm[1] = 0.7; as_pdm[2] = 1; as_pdm[3] = 1.6; as_pdm[4] = 0.5; as_pdm[5] = 0.3; as_pdm[6] = 1;
+  as_lc[0] = 250; as_lc[1] = 200; as_lc[2] = 400; as_lc[3] = 200; as_lc[4] = 300;
+  as_lct[0] = 0; as_lct[1] = 0; as_lct[2] = 0; as_lct[3] = 0; as_lct[4] = 400; as_lct[5] = 350; as_lct[6] = 400;
+  as_hc[0] = 9000; as_hc[1] = 5500; as_hc[2] = 14000; as_hc[3] = 8000; as_hc[4] = 4500; as_hc[5] = 6000; as_hc[6] = 3400;
+  as_mix[0] = 0.18; as_mix[1] = 0.12; as_mix[2] = 0.04; as_mix[3] = 0.2; as_mix[4] = 0.08;
+  as_mixm[0] = 1; as_mixm[1] = 1.1; as_mixm[2] = 1; as_mixm[3] = 0.7; as_mixm[4] = 0.5; as_mixm[5] = 0.25; as_mixm[6] = 1.2;
+  as_duck[0] = 6; as_duck[1] = 3; as_duck[2] = 0; as_duck[3] = 3; as_duck[4] = 2;
+  as_duckm[0] = 1; as_duckm[1] = 0.7; as_duckm[2] = 1; as_duckm[3] = 1.5; as_duckm[4] = 1; as_duckm[5] = 1.5; as_duckm[6] = 0.5;
+  as_dec_on = 6; as_dec_min = 0.3; as_pd_share = 0.1; as_pd_lo = 0; as_pd_hi = 60; as_pd_none = 15;
+  as_br_ref = -18; as_br_db = 12; as_hc_lo = 1500; as_hc_hi = 16000;
+  // END tables
+
+  // memory: tables 0-87; level histogram (800 bins) from 1000; the reverb's lines from 2000
+  ar_lh = 1000; ar_nlh = 800;
+  ar_sc = srate / 44100;
+  ar_cl = 2000;                                  // comb lengths (16) and all-pass lengths (8)
+  ar_cl[0] = 1116; ar_cl[1] = 1188; ar_cl[2] = 1277; ar_cl[3] = 1356;
+  ar_cl[4] = 1422; ar_cl[5] = 1491; ar_cl[6] = 1557; ar_cl[7] = 1617;
+  ar_al = 2016;
+  ar_al[0] = 556; ar_al[1] = 441; ar_al[2] = 341; ar_al[3] = 225;
+  ar_st = 2100;                                  // per line: write index, length, damping state, feedback
+  ar_blen = ceil((1617 + 23) * 1.1 * ar_sc) + 4; // the longest comb at the largest size
+  ar_alen = ceil((556 + 23) * 1.1 * ar_sc) + 4;
+  ar_buf = 2200;                                 // 16 comb lines, then 8 all-pass lines, then the pre-delay
+  ar_abuf = ar_buf + 16 * ar_blen;
+  ar_pd = ar_abuf + 8 * ar_alen;
+  ar_pdn = ceil(0.061 * srate) + 2;
+  memset(ar_st, 0, 100);
+  memset(ar_buf, 0, ar_pd + ar_pdn - ar_buf);
+  freembuf(ar_pd + ar_pdn);
+  ar_pdw = 0;
+  ar_on = 0;
+  ar_prev = 0;
+  ar_env = 0;
+  ar_duckg = 1;
+  ar_lc1l = ar_lc2l = ar_lc1r = ar_lc2r = 0;
+  ar_hc1l = ar_hc2l = ar_hc1r = ar_hc2r = 0;
+  ar_ef = 1 - exp(-1 / (0.005 * srate));
+  ar_es = 1 - exp(-1 / (0.1 * srate));
+  ar_dka = 1 - exp(-1 / (0.01 * srate));
+  ar_dkr = 1 - exp(-1 / (0.25 * srate));
+  // the brightness detector: a 4 kHz high-pass (RBJ, Q 0.7071)
+  ar_w = 2 * $pi * min(4000, 0.45 * srate) / srate;
+  ar_a = sin(ar_w) / (2 * 0.7071067811865476);
+  ar_cs = cos(ar_w);
+  ar_h0 = (1 + ar_cs) / 2 / (1 + ar_a); ar_h1 = -(1 + ar_cs) / (1 + ar_a);
+  ar_h3 = -2 * ar_cs / (1 + ar_a); ar_h4 = (1 - ar_a) / (1 + ar_a);
+
+  function ar_start()
+  (
+    memset(ar_lh, 0, ar_nlh);
+    ar_win = floor(0.05 * srate);
+    ar_need = floor(15 * srate);
+    ar_wn = ar_wp = ar_wh = ar_wm = 0;
+    ar_n = 0;
+    ar_hs = ar_ps = 0;
+    ar_z1 = ar_z2 = 0;
+    ar_ff = ar_fs = 0;
+    ar_t = 0; ar_last = -1; ar_is = 0; ar_in = 0;
+    ar_on = 1;
+  );
+
+  function ar_round(v) ( floor(v * 10 + 0.5) / 10; );
+
+  // the level under which a share p of the windows lies
+  function ar_pct(p, total) local(c, i, r)
+  (
+    c = 0; i = 0; r = -1;
+    loop(ar_nlh,
+      c += ar_lh[i];
+      r < 0 && c >= p * total ? r = i;
+      i += 1;
+    );
+    -80 + (max(0, r) + 0.5) / 10;
+  );
+
+  // the coefficients of a 12 dB/oct Butterworth low cut (hp 1) or high cut (hp 0) at f
+  function ar_bq(f, hp) local(w, a, c, a0)
+  (
+    w = 2 * $pi * min(f, 0.45 * srate) / srate;
+    a = sin(w) / (2 * 0.7071067811865476);
+    c = cos(w);
+    a0 = 1 + a;
+    hp ? (
+      this.b0 = (1 + c) / 2 / a0; this.b1 = -(1 + c) / a0;
+    ) : (
+      this.b0 = (1 - c) / 2 / a0; this.b1 = (1 - c) / a0;
+    );
+    this.b2 = this.b0;
+    this.a1 = -2 * c / a0;
+    this.a2 = (1 - a) / a0;
+  );
+
+  // tools/assisted_targets.json and the Learned sliders -> the reverb's settings
+  function update() local(lr, amt, i, k, len, sp)
+  (
+    ar_src = slider2;
+    ar_tgt = slider3;
+    lr = slider9 >= 0.5;
+    amt = slider4 / 100;
+    ar_dec = as_dec[ar_tgt] * as_decm[ar_src];
+    lr && slider12 > 0 ? ar_dec = min(ar_dec, max(as_dec_min, as_dec_on * slider12 / 1000));
+    ar_dec = max(0.2, min(10, ar_dec * 2 ^ slider5));
+    ar_pdms = lr && slider12 > 0 ? max(as_pd_lo, min(as_pd_hi, slider12 * as_pd_share * as_pdm[ar_tgt]))
+                                 : as_pd_none * as_pdm[ar_tgt];
+    ar_pdms = max(0, min(60, ar_pdms));
+    ar_pdl = floor(ar_pdms * srate / 1000 + 0.5);
+    ar_lcf = max(as_lc[ar_src], as_lct[ar_tgt]);
+    ar_hcf = as_hc[ar_tgt] * (lr ? 2 ^ ((slider13 - as_br_ref) / as_br_db) : 1);
+    ar_hcf = max(as_hc_lo, min(as_hc_hi, ar_hcf)) * 2 ^ slider6;
+    ar_hcf = max(500, min(20000, ar_hcf));
+    ar_lo.ar_bq(ar_lcf, 1);
+    ar_hi.ar_bq(ar_hcf, 0);
+    ar_damp = exp(-2 * $pi * min(ar_hcf, 0.45 * srate) / srate);
+    ar_dampa = 1 - ar_damp;
+    // the lines: lengths from the target's size, feedback from the decay
+    k = as_size[ar_tgt] * ar_sc;
+    i = 0;
+    loop(16,
+      sp = i >= 8 ? 23 : 0;
+      len = max(1, min(ar_blen - 1, floor((ar_cl[i % 8] + sp) * k)));
+      ar_st[4 * i + 1] = len;
+      ar_st[4 * i] >= len ? ar_st[4 * i] = 0;
+      ar_st[4 * i + 3] = 10 ^ (-3 * len / (ar_dec * srate));
+      i += 1;
+    );
+    i = 0;
+    loop(8,
+      sp = i >= 4 ? 23 : 0;
+      len = max(1, min(ar_alen - 1, floor((ar_al[i % 4] + sp) * k)));
+      ar_st[64 + 4 * i + 1] = len;
+      ar_st[64 + 4 * i] >= len ? ar_st[64 + 4 * i] = 0;
+      i += 1;
+    );
+    ar_wet = as_mix[ar_src] * as_mixm[ar_tgt] * amt * 10 ^ (slider7 / 20);
+    ar_duck = as_duck[ar_src] * as_duckm[ar_tgt] * min(1, amt);
+    ar_dlo = slider11;
+    ar_drng = max(3, slider10 - slider11);
+    ar_out = 10 ^ (slider8 / 20);
+  );
+
+  // the measurements, written to the hidden sliders; Learn goes back to Off
+  function ar_finish() local(total, i)
+  (
+    total = 0; i = 0;
+    loop(ar_nlh, total += ar_lh[i]; i += 1;);
+    slider10 = ar_round(max(-80, min(0, ar_pct(0.9, total))));
+    slider11 = ar_round(max(-80, min(0, ar_pct(0.5, total))));
+    slider12 = ar_in >= 2 ? max(0, min(2000, floor(ar_is / ar_in * 1000 / srate + 0.5))) : 0;
+    slider13 = ar_round(max(-60, min(0, ar_ps > 0 ? 10 * log10(ar_hs / ar_ps + 0.000000000001) : -60)));
+    slider9 = 1;
+    slider1 = 0;
+    ar_on = 0;
+    ar_prev = 0;
+    sliderchange(slider1); sliderchange(slider9); sliderchange(slider10); sliderchange(slider11);
+    sliderchange(slider12); sliderchange(slider13);
+    update();
+  );
+
+  update();
+
+@slider
+  update();
+
+@block
+  // Learn turned on starts listening; turned off early, it finishes with what it heard
+  // (0.5 s at least) or gives up. Checked per block, however the slider was set.
+  slider1 >= 0.5 && ar_prev < 0.5 ? ar_start();
+  slider1 < 0.5 && ar_on ? (
+    ar_n >= 0.5 * srate ? ar_finish() : ar_on = 0;
+  );
+  ar_prev = slider1 >= 0.5 ? 1 : 0;
+
+@sample
+  ar_x = max(abs(spl0), abs(spl1));
+  ar_on ? (
+    // 50 ms windows: level and the power above 4 kHz
+    ar_m = (spl0 + spl1) * 0.5;
+    ar_wp += (spl0 * spl0 + spl1 * spl1) * 0.5;
+    ar_y = ar_h0 * ar_m + ar_z1;
+    ar_z1 = ar_h1 * ar_m - ar_h3 * ar_y + ar_z2;
+    ar_z2 = ar_h0 * ar_m - ar_h4 * ar_y;
+    ar_wh += ar_y * ar_y;
+    ar_wm += ar_m * ar_m;
+    ar_wn += 1;
+    // onsets: a fast envelope jumping 6 dB over a slow one, 50 ms apart at least
+    ar_ff += (ar_x - ar_ff) * ar_ef;
+    ar_fs += (ar_x - ar_fs) * ar_es;
+    ar_ff > 0.003 && ar_ff > 2 * ar_fs && (ar_last < 0 || ar_t - ar_last >= 0.05 * srate) ? (
+      ar_last >= 0 && ar_t - ar_last <= 2 * srate ? ( ar_is += ar_t - ar_last; ar_in += 1; );
+      ar_last = ar_t;
+    );
+    ar_t += 1;
+    ar_wn >= ar_win ? (
+      ar_wp > 0.000001 * ar_wn ? (
+        ar_lh[max(0, min(ar_nlh - 1, floor((10 * log10(ar_wp / ar_wn) + 80) * 10)))] += 1;
+        ar_hs += ar_wh;
+        ar_ps += ar_wm;
+        ar_n += ar_wn;
+      );
+      ar_wp = ar_wh = ar_wm = 0;
+      ar_wn = 0;
+      ar_n >= ar_need ? ar_finish();
+    );
+  );
+
+  // ducking: the wet dips while the dry signal is loud (10 ms attack, 250 ms release)
+  ar_env += (ar_x - ar_env) * (ar_x > ar_env ? ar_dka : ar_dkr);
+  ar_duck > 0 ? (
+    ar_dt = max(0, min(1, (20 * log10(max(ar_env, 0.000001)) - ar_dlo) / ar_drng));
+    ar_duckg = 10 ^ (-ar_duck * ar_dt / 20);
+  ) : (
+    ar_duckg = 1;
+  );
+
+  // pre-delay of the mono input
+  ar_pd[ar_pdw] = (spl0 + spl1) * 0.5;
+  ar_pr = ar_pdw - ar_pdl;
+  ar_pr < 0 ? ar_pr += ar_pdn;
+  ar_in0 = ar_pd[ar_pr] * 0.07;
+  ar_pdw += 1;
+  ar_pdw >= ar_pdn ? ar_pdw = 0;
+
+  // eight damped combs per side, in parallel
+  ar_wl = ar_wr = 0;
+  ar_i = 0;
+  loop(16,
+    ar_b = ar_buf + ar_i * ar_blen;
+    ar_p = ar_st + 4 * ar_i;
+    ar_y = ar_b[ar_p[0]];
+    ar_p[2] = ar_y * ar_dampa + ar_p[2] * ar_damp;
+    ar_b[ar_p[0]] = ar_in0 + ar_p[2] * ar_p[3];
+    ar_p[0] += 1;
+    ar_p[0] >= ar_p[1] ? ar_p[0] = 0;
+    ar_i < 8 ? ar_wl += ar_y : ar_wr += ar_y;
+    ar_i += 1;
+  );
+  // four all-passes per side, in series
+  ar_i = 0;
+  loop(8,
+    ar_b = ar_abuf + ar_i * ar_alen;
+    ar_p = ar_st + 64 + 4 * ar_i;
+    ar_y = ar_b[ar_p[0]];
+    ar_i < 4 ? (
+      ar_b[ar_p[0]] = ar_wl + ar_y * 0.5;
+      ar_wl = ar_y - ar_wl;
+    ) : (
+      ar_b[ar_p[0]] = ar_wr + ar_y * 0.5;
+      ar_wr = ar_y - ar_wr;
+    );
+    ar_p[0] += 1;
+    ar_p[0] >= ar_p[1] ? ar_p[0] = 0;
+    ar_i += 1;
+  );
+
+  // low cut and high cut on the wet signal (transposed direct form II)
+  ar_y = ar_lo.b0 * ar_wl + ar_lc1l;
+  ar_lc1l = ar_lo.b1 * ar_wl - ar_lo.a1 * ar_y + ar_lc2l;
+  ar_lc2l = ar_lo.b2 * ar_wl - ar_lo.a2 * ar_y;
+  ar_wl = ar_y;
+  ar_y = ar_lo.b0 * ar_wr + ar_lc1r;
+  ar_lc1r = ar_lo.b1 * ar_wr - ar_lo.a1 * ar_y + ar_lc2r;
+  ar_lc2r = ar_lo.b2 * ar_wr - ar_lo.a2 * ar_y;
+  ar_wr = ar_y;
+  ar_y = ar_hi.b0 * ar_wl + ar_hc1l;
+  ar_hc1l = ar_hi.b1 * ar_wl - ar_hi.a1 * ar_y + ar_hc2l;
+  ar_hc2l = ar_hi.b2 * ar_wl - ar_hi.a2 * ar_y;
+  ar_wl = ar_y;
+  ar_y = ar_hi.b0 * ar_wr + ar_hc1r;
+  ar_hc1r = ar_hi.b1 * ar_wr - ar_hi.a1 * ar_y + ar_hc2r;
+  ar_hc2r = ar_hi.b2 * ar_wr - ar_hi.a2 * ar_y;
+  ar_wr = ar_y;
+
+  ar_g = ar_wet * ar_duckg;
+  spl0 = (spl0 + ar_wl * ar_g) * ar_out;
+  spl1 = (spl1 + ar_wr * ar_g) * ar_out;
