@@ -18,17 +18,18 @@ START_NAMESPACE_DISTRHO
 
 static const NullKnobsUI::Control kControls[] = {
     { 0, NullKnobsUI::kSelect, "MODEL", 0, -1, false },
+    { 12, NullKnobsUI::kSelect, "PIZZICATO", 0, -1, false },
     { 1, NullKnobsUI::kKnob, "PICK POSITION", 0, -1, false },
     { 2, NullKnobsUI::kKnob, "BRIGHTNESS", 0, -1, false },
-    { 3, NullKnobsUI::kKnob, "DECAY", 0, -1, false },
-    { 4, NullKnobsUI::kKnob, "RELEASE", 0, -1, false, true },
     { 5, NullKnobsUI::kKnob, "BODY", 0, -1, false },
+    { 7, NullKnobsUI::kKnob, "VELOCITY", 0, -1, false },
+    { 3, NullKnobsUI::kKnob, "DECAY", 1, -1, false },
+    { 4, NullKnobsUI::kKnob, "RELEASE", 1, -1, false, true },
     { 6, NullKnobsUI::kKnob, "WIDTH", 1, -1, false },
-    { 7, NullKnobsUI::kKnob, "VELOCITY", 1, -1, false },
-    { 8, NullKnobsUI::kSelect, "STRUM", 1, -1, false },
-    { 9, NullKnobsUI::kSelect, "STRUM RATE", 1, -1, false },
-    { 10, NullKnobsUI::kKnob, "SPREAD", 1, -1, false },
     { 11, NullKnobsUI::kKnob, "VOLUME", 1, -1, false },
+    { 8, NullKnobsUI::kSelect, "STRUM", 2, -1, false },
+    { 9, NullKnobsUI::kSelect, "STRUM RATE", 2, -1, false },
+    { 10, NullKnobsUI::kKnob, "SPREAD", 2, -1, false },
 };
 static constexpr uint32_t kNumControls = sizeof(kControls) / sizeof(kControls[0]);
 
@@ -40,6 +41,7 @@ static const SliderInfo* uiSliders()
     s[0].options = nullpluck::kModelShort;
     s[8].options = nullpluck::kStrumShort;
     s[9].options = nullpluck::kRateShort;
+    s[12].options = nullpluck::kPizzShort;
     return s;
 }
 
@@ -47,7 +49,7 @@ class UIPluck : public NullKnobsUI
 {
 public:
     UIPluck()
-        : NullKnobsUI({ "PLUCK", "INSTRUMENTS", 560, 156, nullptr, 2, uiSliders(), nullpluck::kNumParams, kControls, kNumControls, true })
+        : NullKnobsUI({ "PLUCK", "INSTRUMENTS", 560, 156, nullptr, 3, uiSliders(), nullpluck::kNumParams, kControls, kNumControls, true })
     {
     }
 
@@ -84,7 +86,8 @@ protected:
 
     void drawDisplay() override
     {
-        const int model = std::max(0, std::min(7, int(std::lround(value(0)))));
+        const int pz = std::max(0, std::min(2, int(std::lround(value(12)))));
+        const int model = pz > 0 ? 7 + pz : std::max(0, std::min(7, int(std::lround(value(0)))));
         const double* mb = nullpluck::kModels[model];
         const double bm = std::round(value(5)) / 100;
         const int mode = std::max(0, std::min(5, int(std::lround(value(8)))));

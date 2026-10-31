@@ -2,7 +2,7 @@ desc:NULL Mono Maker
 author: Christos Koulaxizis
 tags: mono bass low frequency summing stereo width
 //category: One Slider
-//NULL JSFX v2.7 • https://nulljsfx.tech • MIT License
+//NULL JSFX v2.8 • https://nulljsfx.tech • MIT License
 
 slider1:50<0,100,1>Amount
 

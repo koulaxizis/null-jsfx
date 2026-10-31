@@ -8,26 +8,28 @@ namespace nullpresets {
 
 struct FactoryPreset {
     const char* name;
-    float values[9];
+    float values[11];
 };
 
 static const FactoryPreset kPresets[] = {
-    { "Default", { 30.0f, 0.0f, 50.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f } },
-    { "Bus Warmth", { 15.0f, 0.0f, 40.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f } },
-    { "Vocal Tube Glow", { 20.0f, 1.0f, 35.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f } },
-    { "Bass Grit", { 40.0f, -2.0f, 35.0f, 2.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f } },
-    { "Drum Crunch", { 60.0f, 2.0f, 30.0f, 2.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f } },
-    { "Guitar Fuzz", { 50.0f, -4.0f, 50.0f, 3.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f } },
-    { "Lo-Fi Bitcrush", { 60.0f, -3.0f, 50.0f, 4.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f } },
-    { "Synth Wavefolder", { 50.0f, 0.0f, 60.0f, 6.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f } },
-    { "Hard Fold Lead", { 70.0f, -2.0f, 40.0f, 5.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f } },
-    { "Tape Glue", { 25.0f, 0.0f, 60.0f, 0.0f, 0.0f, -1.0f, 1.0f, 0.0f, 0.0f } },
-    { "Tube Push Highs", { 35.0f, -1.0f, 50.0f, 1.0f, 0.0f, -2.0f, 1.0f, 6.0f, 0.0f } },
-    { "Fuzz Lows", { 40.0f, -2.0f, 30.0f, 3.0f, 0.0f, -4.0f, 0.0f, -8.0f, 0.0f } },
-    { "Clean Drive 4x", { 50.0f, 0.0f, 100.0f, 2.0f, 3.0f, -7.0f, 2.0f, 0.0f, 0.0f } },
-    { "Bright Exciter", { 20.0f, 0.0f, 25.0f, 1.0f, 0.0f, 0.0f, 1.0f, 10.0f, 0.0f } },
+    { "Default", { 30.0f, 0.0f, 50.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f } },
+    { "Bus Warmth", { 15.0f, 0.0f, 40.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f } },
+    { "Vocal Tube Glow", { 20.0f, 1.0f, 35.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f } },
+    { "Bass Grit", { 40.0f, -2.0f, 35.0f, 2.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f } },
+    { "Drum Crunch", { 60.0f, 2.0f, 30.0f, 2.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f } },
+    { "Guitar Fuzz", { 50.0f, -4.0f, 50.0f, 3.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f } },
+    { "Lo-Fi Bitcrush", { 60.0f, -3.0f, 50.0f, 4.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f } },
+    { "Synth Wavefolder", { 50.0f, 0.0f, 60.0f, 6.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f } },
+    { "Hard Fold Lead", { 70.0f, -2.0f, 40.0f, 5.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f } },
+    { "Tape Glue", { 25.0f, 0.0f, 60.0f, 0.0f, 0.0f, -1.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f } },
+    { "Tube Push Highs", { 35.0f, -1.0f, 50.0f, 1.0f, 0.0f, -2.0f, 1.0f, 6.0f, 0.0f, 0.0f, 0.0f } },
+    { "Fuzz Lows", { 40.0f, -2.0f, 30.0f, 3.0f, 0.0f, -4.0f, 0.0f, -8.0f, 0.0f, 0.0f, 0.0f } },
+    { "Clean Drive 4x", { 50.0f, 0.0f, 100.0f, 2.0f, 3.0f, -7.0f, 2.0f, 0.0f, 0.0f, 0.0f, 0.0f } },
+    { "Bright Exciter", { 20.0f, 0.0f, 25.0f, 1.0f, 0.0f, 0.0f, 1.0f, 10.0f, 0.0f, 0.0f, 0.0f } },
+    { "Bass Focus Tube", { 45.0f, 0.0f, 70.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 30.0f } },
+    { "Dense Mid Bus", { 25.0f, 0.0f, 50.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 2.0f, 60.0f } },
 };
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
-static constexpr uint32_t kNumValues = 9;
+static constexpr uint32_t kNumValues = 11;
 
 } // namespace nullpresets

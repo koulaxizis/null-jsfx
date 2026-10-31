@@ -1,0 +1,10 @@
+[
+  ["Small Room", {"Type": 0, "Size (%)": 40, "Decay (%)": 40, "Damping (%)": 40, "Mix (%)": 20}],
+  ["Live Room", {"Type": 0, "Size (%)": 70, "Decay (%)": 60, "Damping (%)": 25, "Mix (%)": 25}],
+  ["Vocal Chamber", {"Type": 1, "Size (%)": 50, "Decay (%)": 50, "Damping (%)": 35, "Pre-Delay (ms)": 25, "Mix (%)": 25}],
+  ["Drum Chamber", {"Type": 1, "Size (%)": 35, "Decay (%)": 30, "Damping (%)": 45, "Mix (%)": 20}],
+  ["Concert Hall", {"Type": 2, "Size (%)": 60, "Decay (%)": 55, "Damping (%)": 30, "Pre-Delay (ms)": 20, "Mix (%)": 30}],
+  ["Dark Hall", {"Type": 2, "Size (%)": 70, "Decay (%)": 70, "Damping (%)": 70, "Pre-Delay (ms)": 30, "Mix (%)": 30}],
+  ["Galaxy Pad", {"Type": 3, "Size (%)": 80, "Decay (%)": 70, "Damping (%)": 40, "Detune (%)": 70, "Pre-Delay (ms)": 40, "Mix (%)": 45}],
+  ["Infinite Space", {"Type": 3, "Size (%)": 100, "Decay (%)": 100, "Damping (%)": 30, "Detune (%)": 60, "Mix (%)": 50}]
+]

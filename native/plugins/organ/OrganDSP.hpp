@@ -22,7 +22,7 @@
 namespace nullorgan {
 
 static constexpr double kPi = 3.141592653589793; // EEL2 $pi
-static constexpr int kNumSliders = 20;
+static constexpr int kNumSliders = 21;
 static constexpr int kMaxEvents = 512;
 static constexpr int NV = 16;
 
@@ -77,14 +77,15 @@ public:
             const double b = std::floor(s[d + 1] + 0.5);
             DG[d] = b > 0 ? std::pow(2.0, (b - 8) / 2) : 0;
         }
-        percOn = s[10] >= 0.5;
+        pipe = s[21] >= 0.5;
+        percOn = s[10] >= 0.5 && !pipe;
         percK = s[11] >= 0.5 ? 6 : 4;
         if (percOn)
             DG[8] = 0;
         pC = std::exp(-1 / ((s[12] >= 0.5 ? 0.36 : 0.11) * sr));
         percG = s[13] >= 0.5 ? 0.6 : 1.2;
         click = s[14] / 100;
-        cC = std::exp(-1 / (0.002 * sr));
+        cC = std::exp(-1 / ((pipe ? 0.015 : 0.002) * sr));
         vib = std::floor(s[15] + 0.5);
         vibD = vib == 1 || vib == 4 ? 0.0003 : vib == 2 || vib == 5 ? 0.0006 : 0.001;
         lfoDt = 6.9 / sr;
@@ -99,8 +100,8 @@ public:
         hornG = std::min(1.0, 2 * bal);
         drumG = std::min(1.0, 2 * (1 - bal));
         vol = std::pow(10.0, s[20] / 20);
-        aInc = 1 / (0.0015 * sr);
-        rInc = 1 / (0.006 * sr);
+        aInc = 1 / ((pipe ? 0.03 : 0.0015) * sr);
+        rInc = 1 / ((pipe ? 0.08 : 0.006) * sr);
         sInc = 1 / (0.0015 * sr);
         exC = 1 - std::exp(-1 / (0.01 * sr));
         xc = std::exp(-2 * kPi * 800 / sr);
@@ -146,6 +147,8 @@ public:
 private:
     double keff(double f0, double k) const
     {
+        if (pipe)
+            return f0 * k > 0.45 * fSr ? 0 : k;
         while (f0 * k < 32 && k > 0 && k <= 8)
             k *= 2;
         while (f0 * k > 5900 && k - std::floor(k / 2) * 2 == 0)
@@ -163,6 +166,42 @@ private:
             KE[v * 9 + d] = k;
             if (DG[d] > 0 && k > km)
                 km = k;
+        }
+        // a pipe rank: its harmonic and the rank's 2nd and 3rd (-12 / -18 dB), 16 at most
+        if (pipe)
+        {
+            double* b = PG + v * 17;
+            std::fill(b, b + 17, 0.0);
+            for (int d = 0; d < 9; ++d)
+            {
+                if (DG[d] <= 0)
+                    continue;
+                double k = KE[v * 9 + d];
+                if (k > 0)
+                    b[int(k)] += DG[d];
+                k = kHK[d] * 2;
+                if (k <= 16)
+                {
+                    k = keff(f0, k);
+                    if (k > 0)
+                    {
+                        b[int(k)] += DG[d] * 0.25;
+                        if (k > km)
+                            km = k;
+                    }
+                }
+                k = kHK[d] * 3;
+                if (k <= 16)
+                {
+                    k = keff(f0, k);
+                    if (k > 0)
+                    {
+                        b[int(k)] += DG[d] * 0.125;
+                        if (k > km)
+                            km = k;
+                    }
+                }
+            }
         }
         const double k = keff(f0, percK);
         VKP[v] = k;
@@ -244,7 +283,8 @@ private:
             if (VPEND[v] < 0 && VN[v] == n && VG[v] > 0)
             {
                 VG[v] = 0;
-                VCE[v] = 0.5;
+                if (!pipe)
+                    VCE[v] = 0.5;
             }
             if (VPEND[v] == n)
                 VPEND[v] = -1;
@@ -330,10 +370,21 @@ private:
             const int km = int(VKM[v]);
             for (int k = 3; k <= km; ++k)
                 H[k] = c2 * H[k - 1] - H[k - 2];
-            const double* ke = KE + v * 9;
-            double y = DG[0] * H[int(ke[0])] + DG[1] * H[int(ke[1])] + DG[2] * H[int(ke[2])] + DG[3] * H[int(ke[3])]
-                     + DG[4] * H[int(ke[4])] + DG[5] * H[int(ke[5])] + DG[6] * H[int(ke[6])] + DG[7] * H[int(ke[7])]
-                     + DG[8] * H[int(ke[8])];
+            double y;
+            if (pipe)
+            {
+                const double* b = PG + v * 17;
+                y = 0;
+                for (int k = 1; k <= km; ++k)
+                    y += b[k] * H[k];
+            }
+            else
+            {
+                const double* ke = KE + v * 9;
+                y = DG[0] * H[int(ke[0])] + DG[1] * H[int(ke[1])] + DG[2] * H[int(ke[2])] + DG[3] * H[int(ke[3])]
+                  + DG[4] * H[int(ke[4])] + DG[5] * H[int(ke[5])] + DG[6] * H[int(ke[6])] + DG[7] * H[int(ke[7])]
+                  + DG[8] * H[int(ke[8])];
+            }
             if (VPK[v] > 0)
             {
                 if (percOn)
@@ -441,9 +492,9 @@ private:
     double fSr = 44100;
     double VE[NV] = {}, VPH[NV] = {}, VDT[NV] = {}, VPE[NV] = {}, VPK[NV] = {}, VCE[NV] = {};
     double VAGE[NV] = {}, VKM[NV] = {}, VPEND[NV] = {}, VKP[NV] = {}, VPP[NV] = {};
-    double KE[NV * 9] = {}, H[17] = {}, DG[9] = {}, KD[128] = {};
+    double KE[NV * 9] = {}, H[17] = {}, DG[9] = {}, KD[128] = {}, PG[NV * 17] = {};
     double kdN = 0, age = 0, exT = 1;
-    bool wheel = false, percOn = false;
+    bool wheel = false, percOn = false, pipe = false;
     double percK = 6, pC = 0, percG = 1, click = 0, cC = 0, vib = 0, vibD = 0, lfoDt = 0;
     double drive = 1, drvN = 1, rotMode = 1, acc = 1, hornC = 0, drumC = 0, bal = 0.5, hornG = 1, drumG = 1, vol = 1;
     double aInc = 0, rInc = 0, sInc = 0, exC = 0, xc = 0, cA1 = 0, cA2 = 0, cA3 = 0;

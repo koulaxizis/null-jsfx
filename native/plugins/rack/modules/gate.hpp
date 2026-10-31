@@ -58,7 +58,7 @@ private:
     void update()
     {
         fDsp.setParams(fV[0], fV[1], fV[2], fV[3], fV[4], fV[5], nullgate::onGrid(fV[6]), false, fV[8],
-                       fV[9] >= 0.5f); // External: no sidechain bus in the Rack, treated as Internal
+                       fV[9] >= 0.5f, fV[10]); // External: no sidechain bus in the Rack, treated as Internal
     }
 
     nullgate::GateProcessor fDsp;

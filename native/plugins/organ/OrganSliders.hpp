@@ -23,7 +23,10 @@ static const char* const kVibShort[] = { "OFF", "V1", "V2", "V3", "C1", "C2", "C
 static const char* const kRotOptions[] = { "Off", "Slow", "Fast", "Stop" };
 static const char* const kRotShort[] = { "OFF", "SLOW", "FAST", "STOP" };
 
-// slider1..slider20 of organ.jsfx, in order
+// slider1..slider21 of organ.jsfx, in order
+static const char* const kVoiceOptions[] = { "Tonewheel", "Pipe" };
+static const char* const kVoiceShort[] = { "TONEWHEEL", "PIPE" };
+
 static const DISTRHO::SliderInfo kSliders[] = {
     { "Drawbar 16'", "drawbar_16", 0.0f, 8.0f, 8.0f, "", 1.0f },
     { "Drawbar 5 1/3'", "drawbar_5_1_3", 0.0f, 8.0f, 8.0f, "", 1.0f },
@@ -45,6 +48,7 @@ static const DISTRHO::SliderInfo kSliders[] = {
     { "Acceleration", "acceleration", 10.0f, 400.0f, 100.0f, "%", 1.0f },
     { "Horn/Drum Balance", "horn_drum_balance", 0.0f, 100.0f, 50.0f, "%", 1.0f },
     { "Volume", "volume", -24.0f, 12.0f, 0.0f, "dB", 0.1f },
+    { "Voice", "voice", 0.0f, 1.0f, 0.0f, "", 1.0f, kVoiceOptions },
 };
 static constexpr uint32_t kNumParams = sizeof(kSliders) / sizeof(kSliders[0]);
 

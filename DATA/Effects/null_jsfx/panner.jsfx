@@ -2,7 +2,7 @@ desc:NULL Panner
 author: Christos Koulaxizis
 tags: pan panner panning balance binaural itd ild haas stereo placement width
 //category: Essentials
-//NULL JSFX v2.7 • https://nulljsfx.tech • MIT License
+//NULL JSFX v2.8 • https://nulljsfx.tech • MIT License
 
 slider1:0<-100,100,1>Pan
 slider2:1<0,2,1{Balance,Natural,Haas}>Mode

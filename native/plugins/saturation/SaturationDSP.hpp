@@ -11,6 +11,9 @@
  * stages of plugins/clipper, latency 31 / 37 samples, the dry signal delayed to match).
  * Channels (appended in 2.7): Mid / Side saturates only that half of the mid/side pair, on both
  * channels; the other half is delayed by the oversampling latency and added back after.
+ * Focus and Density (appended in 2.7, off by default): Focus is a +9 dB peak (Q 0.7) at 100 Hz,
+ * 1 kHz or 3 kHz before the shaper and its exact inverse after it; Density follows the shaper
+ * (at its rate), y (1 + d) / (1 + d |y|).
  */
 
 #pragma once
@@ -85,6 +88,8 @@ struct Params {
     int oversampling = 0; // 0 off, 1 = 2x, 2 = 4x
     double emphasis = 0.0;
     int channels = 0; // 0 stereo, 1 mid, 2 side
+    int focus = 0;    // 0 off, 1 bass, 2 mid, 3 presence
+    double density = 0.0;
 };
 
 // latency in samples for an Oversampling setting (the JSFX's pdc_delay)
@@ -106,6 +111,7 @@ public:
         fAlpha = 1.0 - std::exp(-2.0 * 3.14159265358979 * 800.0 / fSr);
         fEmXl = fEmYl = fEmXr = fEmYr = 0.0;
         fDeXl = fDeYl = fDeXr = fDeYr = 0.0;
+        clearFocus();
         fOsPrev = -1;
         fPw = 0;
         fDw = 0;
@@ -151,6 +157,22 @@ public:
             fDeXl = fDeYl = fDeXr = fDeYr = 0.0;
         }
         fMs = p.channels;
+        fDnOn = p.density > 0.0;
+        fDn = p.density / 100.0;
+        fFoOn = p.focus > 0;
+        if (fFoOn)
+        {
+            const double w = 2.0 * nullclipper::kPi * std::fmin(p.focus == 1 ? 100.0 : p.focus == 2 ? 1000.0 : 3000.0, 0.45 * fSr) / fSr;
+            const double a = std::pow(10.0, 9.0 / 40.0);
+            const double al = std::sin(w) / (2.0 * 0.7);
+            fP0 = 1.0 + al * a;
+            fP1 = -2.0 * std::cos(w);
+            fP2 = 1.0 - al * a;
+            fQ0 = 1.0 + al / a;
+            fQ2 = 1.0 - al / a;
+        }
+        else
+            clearFocus();
         const int os = p.oversampling;
         fOsf = os <= 0 ? 1 : os == 1 ? 2 : 4;
         fLat = latencyFor(os);
@@ -204,6 +226,13 @@ public:
                 v = (fB0 * xr + fB1 * fEmXr - fA1 * fEmYr) / fA0;
                 fEmXr = xr; fEmYr = v; xr = v;
             }
+            if (fFoOn)
+            {
+                double v = (fP0 * xl + fP1 * fFa[0] + fP2 * fFa[1] - fP1 * fFa[2] - fQ2 * fFa[3]) / fQ0;
+                fFa[1] = fFa[0]; fFa[0] = xl; fFa[3] = fFa[2]; fFa[2] = v; xl = v;
+                v = (fP0 * xr + fP1 * fFa[4] + fP2 * fFa[5] - fP1 * fFa[6] - fQ2 * fFa[7]) / fQ0;
+                fFa[5] = fFa[4]; fFa[4] = xr; fFa[7] = fFa[6]; fFa[6] = v; xr = v;
+            }
             xl = xl * (1.0 + fDrive * 3.0);
             xr = xr * (1.0 + fDrive * 3.0);
 
@@ -233,8 +262,8 @@ public:
                         cxr = fR.pd[j];
                         fPw = (fPw + 1) % 8;
                     }
-                    tl[k] = shape(cxl, fMode, fDrive);
-                    tr[k] = shape(cxr, fMode, fDrive);
+                    tl[k] = dens(shape(cxl, fMode, fDrive));
+                    tr[k] = dens(shape(cxr, fMode, fDrive));
                 }
                 if (fOsf > 2)
                     for (int k = 0; k < 2; ++k)
@@ -259,8 +288,16 @@ public:
             }
             else
             {
-                wl = shape(xl, fMode, fDrive);
-                wr = shape(xr, fMode, fDrive);
+                wl = dens(shape(xl, fMode, fDrive));
+                wr = dens(shape(xr, fMode, fDrive));
+            }
+
+            if (fFoOn)
+            {
+                double v = (fQ0 * wl + fP1 * fFb[0] + fQ2 * fFb[1] - fP1 * fFb[2] - fP2 * fFb[3]) / fP0;
+                fFb[1] = fFb[0]; fFb[0] = wl; fFb[3] = fFb[2]; fFb[2] = v; wl = v;
+                v = (fQ0 * wr + fP1 * fFb[4] + fQ2 * fFb[5] - fP1 * fFb[6] - fP2 * fFb[7]) / fP0;
+                fFb[5] = fFb[4]; fFb[4] = wr; fFb[7] = fFb[6]; fFb[6] = v; wr = v;
             }
 
             if (fEmOn)
@@ -303,6 +340,16 @@ public:
     }
 
 private:
+    double dens(double y) const noexcept { return fDnOn ? y * (1.0 + fDn) / (1.0 + fDn * std::fabs(y)) : y; }
+    void clearFocus() noexcept
+    {
+        for (int k = 0; k < 8; ++k)
+            fFa[k] = fFb[k] = 0.0;
+    }
+
+    bool fFoOn = false, fDnOn = false;
+    double fDn = 0.0, fP0 = 1.0, fP1 = 0.0, fP2 = 0.0, fQ0 = 1.0, fQ2 = 0.0;
+    double fFa[8] = {}, fFb[8] = {}; // per side: x1, x2, y1, y2 (left 0-3, right 4-7)
     double fSr = 48000.0, fAlpha = 0.0, fToneL = 0.0, fToneR = 0.0;
     double fDrive = 0.3, fMix = 0.5, fHi = 1.0, fLo = 1.0;
     int fMode = 0;

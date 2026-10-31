@@ -2,7 +2,7 @@ desc:NULL Delay GFX
 author: Christos Koulaxizis
 tags: delay echo slapback feedback pre-delay timing sync tempo tape modulation diffusion ducking freeze dotted triplet gui
 //category: Essentials
-//NULL JSFX v2.7 • https://nulljsfx.tech • MIT License
+//NULL JSFX v2.8 • https://nulljsfx.tech • MIT License
 
 import null_gfx.jsfx-inc
 

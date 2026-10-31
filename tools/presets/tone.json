@@ -1,0 +1,9 @@
+[
+  ["Warm", {"Bass (dB)": 3, "Treble (dB)": -2}],
+  ["Bright", {"Treble (dB)": 4, "Treble Freq (Hz)": 6000}],
+  ["Loudness", {"Bass (dB)": 6, "Treble (dB)": 3, "Bass Freq (Hz)": 120, "Treble Freq (Hz)": 6000, "Output (dB)": -3}],
+  ["Thin Out Lows", {"Bass (dB)": -6, "Bass Freq (Hz)": 200}],
+  ["Tame Highs", {"Treble (dB)": -4, "Treble Freq (Hz)": 5000}],
+  ["Telephone Lite", {"Bass (dB)": -12, "Treble (dB)": -9, "Bass Freq (Hz)": 400, "Treble Freq (Hz)": 3000, "Output (dB)": 4}],
+  ["Sub Weight", {"Bass (dB)": 4, "Bass Freq (Hz)": 60}]
+]

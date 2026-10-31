@@ -1,0 +1,8 @@
+[
+  ["Clean Desk", {"Character": 0, "Drive (%)": 40}],
+  ["Warm Tracks", {"Character": 1, "Drive (%)": 50}],
+  ["Punchy Drums", {"Character": 2, "Drive (%)": 60}],
+  ["Bright Vocals", {"Character": 3, "Drive (%)": 40}],
+  ["Hot Channel", {"Character": 1, "Drive (%)": 90, "Output (dB)": -3}],
+  ["Subtle Colour", {"Character": 1, "Drive (%)": 15}]
+]

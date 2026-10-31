@@ -54,9 +54,10 @@ function check(cond, what) {
   check((await page.locator('.card[data-id="tape"] .chip.new').count()) === 1, 'a new plugin carries a NEW mark');
   check((await page.textContent('#hub-update')).includes('A new NULL JSFX Hub (2.2)'), 'a newer Hub is announced');
 
+  const cards = await page.locator('.card').count();
   await page.fill('#search', 'reverb');
   const n = await page.locator('.card').count();
-  check(n > 0 && n < 10, `search "reverb" narrows to ${n}`);
+  check(n > 0 && n < cards / 4, `search "reverb" narrows to ${n} of ${cards}`);
   await page.fill('#search', '');
   await page.waitForTimeout(100);
   if (shots) await page.screenshot({ path: path.join(shots, 'hub-plugins.png') });

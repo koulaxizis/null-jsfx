@@ -2,7 +2,7 @@ desc:NULL Crossfeed
 author: Christos Koulaxizis
 tags: crossfeed headphones bs2b bauer speakers room head shadow itd monitoring mixing fatigue
 //category: Essentials
-//NULL JSFX v2.7 • https://nulljsfx.tech • MIT License
+//NULL JSFX v2.8 • https://nulljsfx.tech • MIT License
 
 slider1:0<0,1,1{Crossfeed,Speakers}>Mode
 slider2:700<300,2000,10>Cutoff (Hz)

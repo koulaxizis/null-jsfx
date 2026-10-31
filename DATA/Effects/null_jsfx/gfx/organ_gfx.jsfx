@@ -2,7 +2,7 @@ desc:NULL Organ GFX
 author: Christos Koulaxizis
 tags: instrument organ tonewheel drawbar percussion key click vibrato chorus rotary speaker drive gospel jazz rock midi gui
 //category: Instruments
-//NULL JSFX v2.7 • https://nulljsfx.tech • MIT License
+//NULL JSFX v2.8 • https://nulljsfx.tech • MIT License
 
 import null_gfx.jsfx-inc
 
@@ -26,6 +26,7 @@ slider17:1<0,3,1{Off,Slow,Fast,Stop}>-Rotary
 slider18:100<10,400,1>-Acceleration (%)
 slider19:50<0,100,1>-Horn/Drum Balance (%)
 slider20:0<-24,12,0.1>-Volume (dB)
+slider21:0<0,1,1{Tonewheel,Pipe}>-Voice
 
 in_pin:none
 out_pin:Left
@@ -47,10 +48,16 @@ out_pin:Right
   // of NULL Rotary Speaker (horn and drum at 800 Hz, Doppler, tremolo, two microphones; Slow,
   // Fast and Stop with inertia scaled by Acceleration; Off bypasses it). Expression: CC 11.
   // The mod wheel (CC 1) from 64 up switches Slow to Fast, Fast to Slow and Stop to Fast.
+  // Voice Pipe (appended in 2.8, Tonewheel = as before) makes it a pipe organ: the drawbars
+  // are the stops (Bourdon 16' to Sifflet 1'), each one a pipe rank with its 2nd and 3rd
+  // harmonic (-12 and -18 dB, up to the 16th harmonic of the 16'), nothing folds back but
+  // above 0.45 x srate, the wind starts over 30 ms and stops over 80 ms, Key Click is the
+  // pipes' chiff (15 ms, none at key up) and there is no percussion.
   //
   // Memory: 0.. the MIDI of the block (4 per message), 2048.. per-voice values, 2400.. the
   // drawbar harmonic of each voice, 2600.. the harmonics of a voice, 2640.. keys down,
-  // 3000.. the vibrato delay, 6000.. the rotary delays.
+  // 3000.. the vibrato delay, 6000.. the rotary delays, 100000.. the pipe harmonics of each
+  // voice (17 per voice).
   ext_noinit = 1;
   ext_tail_size = -1;
   NV = 16;
@@ -58,18 +65,20 @@ out_pin:Right
   VN = 2048; VG = 2064; VE = 2080; VPH = 2096; VDT = 2112; VPE = 2128; VPK = 2144; VCE = 2160;
   VAGE = 2176; VKM = 2192; VPEND = 2208; VKP = 2224; VPP = 2240;
   KE = 2400; H = 2600; HK = 2620; DG = 2630; KD = 2640;
-  VB = 3000; RB = 6000;
+  VB = 3000; RB = 6000; PG = 100000;
   HK[0] = 1; HK[1] = 3; HK[2] = 2; HK[3] = 4; HK[4] = 6; HK[5] = 8; HK[6] = 10; HK[7] = 12; HK[8] = 16;
 
   // the harmonic k of a key whose 16' sounds at f0, folded back like the tonewheels (0: none)
   function keff(f0, k)
   (
+    pipe ? (f0 * k > 0.45 * srate ? 0 : k) : (
     while (f0 * k < 32 && k > 0 && k <= 8) ( k *= 2; );
     while (f0 * k > 5900 && k - floor(k / 2) * 2 == 0) ( k /= 2; );
     f0 * k > 0.45 * srate ? 0 : k;
+    );
   );
   // voice v: the harmonic of every drawbar and of the percussion, the highest one it needs
-  function vkeys(v) local(f0, d, k, km)
+  function vkeys(v) local(f0, d, k, km, b)
   (
     f0 = 440 * 2 ^ ((VN[v] - 81) / 12);
     km = 1;
@@ -79,6 +88,23 @@ out_pin:Right
       KE[v * 9 + d] = k;
       DG[d] > 0 && k > km ? km = k;
       d += 1;
+    );
+    // a pipe rank: its harmonic and the rank's 2nd and 3rd (-12 / -18 dB), 16 at most
+    pipe ? (
+      b = PG + v * 17;
+      memset(b, 0, 17);
+      d = 0;
+      loop(9,
+        DG[d] > 0 ? (
+          k = KE[v * 9 + d];
+          k > 0 ? b[k] += DG[d];
+          k = HK[d] * 2;
+          k <= 16 ? ( k = keff(f0, k); k > 0 ? ( b[k] += DG[d] * 0.25; k > km ? km = k; ); );
+          k = HK[d] * 3;
+          k <= 16 ? ( k = keff(f0, k); k > 0 ? ( b[k] += DG[d] * 0.125; k > km ? km = k; ); );
+        );
+        d += 1;
+      );
     );
     k = keff(f0, perc_k);
     VKP[v] = k;
@@ -143,7 +169,7 @@ out_pin:Right
     KD[n] > 0 ? ( KD[n] = 0; kd_n -= 1; );
     v = 0;
     loop(NV,
-      VPEND[v] < 0 && VN[v] == n && VG[v] > 0 ? ( VG[v] = 0; VCE[v] = 0.5; );
+      VPEND[v] < 0 && VN[v] == n && VG[v] > 0 ? ( VG[v] = 0; !pipe ? VCE[v] = 0.5; );
       VPEND[v] == n ? VPEND[v] = -1;
       v += 1;
     );
@@ -240,14 +266,15 @@ out_pin:Right
     DG[0] = db_gain(slider1); DG[1] = db_gain(slider2); DG[2] = db_gain(slider3);
     DG[3] = db_gain(slider4); DG[4] = db_gain(slider5); DG[5] = db_gain(slider6);
     DG[6] = db_gain(slider7); DG[7] = db_gain(slider8); DG[8] = db_gain(slider9);
-    perc_on = slider10 >= 0.5;
+    pipe = slider21 >= 0.5;
+    perc_on = slider10 >= 0.5 && !pipe;
     perc_k = slider11 >= 0.5 ? 6 : 4;
     // the percussion silences the 1' drawbar
     perc_on ? DG[8] = 0;
     p_c = exp(-1 / ((slider12 >= 0.5 ? 0.36 : 0.11) * srate));
     perc_g = slider13 >= 0.5 ? 0.6 : 1.2;
     click = slider14 / 100;
-    c_c = exp(-1 / (0.002 * srate));
+    c_c = exp(-1 / ((pipe ? 0.015 : 0.002) * srate));
     vib = floor(slider15 + 0.5);
     vib_d = vib == 1 || vib == 4 ? 0.0003 : vib == 2 || vib == 5 ? 0.0006 : 0.001;
     lfo_dt = 6.9 / srate;
@@ -261,8 +288,8 @@ out_pin:Right
     bal = slider19 / 100;
     horn_g = min(1, 2 * bal); drum_g = min(1, 2 * (1 - bal));
     vol = 10 ^ (slider20 / 20);
-    a_inc = 1 / (0.0015 * srate);
-    r_inc = 1 / (0.006 * srate);
+    a_inc = 1 / ((pipe ? 0.03 : 0.0015) * srate);
+    r_inc = 1 / ((pipe ? 0.08 : 0.006) * srate);
     s_inc = 1 / (0.0015 * srate);
     ex_c = 1 - exp(-1 / (0.01 * srate));
     xc = exp(-2 * $pi * 800 / srate);
@@ -275,49 +302,51 @@ out_pin:Right
   );
 
   // ---- factory presets: generated by tools/build_presets.py, do not edit ----
-  ng_pre_n = 15;
+  ng_pre_n = 16;
   strcpy(#ng_h_ix, "");
-  ng_hist_add(1); ng_hist_add(2); ng_hist_add(3); ng_hist_add(4); ng_hist_add(5); ng_hist_add(6); ng_hist_add(7); ng_hist_add(8); ng_hist_add(9); ng_hist_add(10); ng_hist_add(11); ng_hist_add(12); ng_hist_add(13); ng_hist_add(14); ng_hist_add(15); ng_hist_add(16); ng_hist_add(17); ng_hist_add(18); ng_hist_add(19); ng_hist_add(20);
+  ng_hist_add(1); ng_hist_add(2); ng_hist_add(3); ng_hist_add(4); ng_hist_add(5); ng_hist_add(6); ng_hist_add(7); ng_hist_add(8); ng_hist_add(9); ng_hist_add(10); ng_hist_add(11); ng_hist_add(12); ng_hist_add(13); ng_hist_add(14); ng_hist_add(15); ng_hist_add(16); ng_hist_add(17); ng_hist_add(18); ng_hist_add(19); ng_hist_add(20); ng_hist_add(21);
   ng_hist_init();
 
   function ng_preset_load(p)
   (
-    p == 0 ? ( ng_slider_set(1, 8); ng_slider_set(2, 8); ng_slider_set(3, 8); ng_slider_set(4, 0); ng_slider_set(5, 0); ng_slider_set(6, 0); ng_slider_set(7, 0); ng_slider_set(8, 0); ng_slider_set(9, 0); ng_slider_set(10, 0); ng_slider_set(11, 1); ng_slider_set(12, 0); ng_slider_set(13, 0); ng_slider_set(14, 30); ng_slider_set(15, 6); ng_slider_set(16, 15); ng_slider_set(17, 1); ng_slider_set(18, 100); ng_slider_set(19, 50); ng_slider_set(20, 0); );
-    p == 1 ? ( ng_slider_set(1, 8); ng_slider_set(2, 8); ng_slider_set(3, 8); ng_slider_set(4, 0); ng_slider_set(5, 0); ng_slider_set(6, 0); ng_slider_set(7, 0); ng_slider_set(8, 0); ng_slider_set(9, 0); ng_slider_set(10, 1); ng_slider_set(11, 1); ng_slider_set(12, 0); ng_slider_set(13, 0); ng_slider_set(14, 40); ng_slider_set(15, 6); ng_slider_set(16, 15); ng_slider_set(17, 1); ng_slider_set(18, 100); ng_slider_set(19, 50); ng_slider_set(20, 0); );
-    p == 2 ? ( ng_slider_set(1, 8); ng_slider_set(2, 3); ng_slider_set(3, 8); ng_slider_set(4, 0); ng_slider_set(5, 0); ng_slider_set(6, 0); ng_slider_set(7, 0); ng_slider_set(8, 0); ng_slider_set(9, 0); ng_slider_set(10, 1); ng_slider_set(11, 1); ng_slider_set(12, 1); ng_slider_set(13, 1); ng_slider_set(14, 20); ng_slider_set(15, 6); ng_slider_set(16, 5); ng_slider_set(17, 1); ng_slider_set(18, 100); ng_slider_set(19, 50); ng_slider_set(20, 0); );
-    p == 3 ? ( ng_slider_set(1, 8); ng_slider_set(2, 8); ng_slider_set(3, 8); ng_slider_set(4, 0); ng_slider_set(5, 0); ng_slider_set(6, 0); ng_slider_set(7, 0); ng_slider_set(8, 0); ng_slider_set(9, 8); ng_slider_set(10, 0); ng_slider_set(11, 1); ng_slider_set(12, 0); ng_slider_set(13, 0); ng_slider_set(14, 40); ng_slider_set(15, 6); ng_slider_set(16, 30); ng_slider_set(17, 2); ng_slider_set(18, 100); ng_slider_set(19, 50); ng_slider_set(20, 0); );
-    p == 4 ? ( ng_slider_set(1, 8); ng_slider_set(2, 8); ng_slider_set(3, 8); ng_slider_set(4, 8); ng_slider_set(5, 0); ng_slider_set(6, 0); ng_slider_set(7, 0); ng_slider_set(8, 0); ng_slider_set(9, 0); ng_slider_set(10, 0); ng_slider_set(11, 1); ng_slider_set(12, 0); ng_slider_set(13, 0); ng_slider_set(14, 50); ng_slider_set(15, 6); ng_slider_set(16, 65); ng_slider_set(17, 2); ng_slider_set(18, 100); ng_slider_set(19, 50); ng_slider_set(20, -2); );
-    p == 5 ? ( ng_slider_set(1, 8); ng_slider_set(2, 8); ng_slider_set(3, 8); ng_slider_set(4, 0); ng_slider_set(5, 0); ng_slider_set(6, 0); ng_slider_set(7, 0); ng_slider_set(8, 0); ng_slider_set(9, 0); ng_slider_set(10, 0); ng_slider_set(11, 1); ng_slider_set(12, 0); ng_slider_set(13, 0); ng_slider_set(14, 70); ng_slider_set(15, 3); ng_slider_set(16, 100); ng_slider_set(17, 2); ng_slider_set(18, 60); ng_slider_set(19, 50); ng_slider_set(20, -3); );
-    p == 6 ? ( ng_slider_set(1, 8); ng_slider_set(2, 8); ng_slider_set(3, 8); ng_slider_set(4, 6); ng_slider_set(5, 0); ng_slider_set(6, 0); ng_slider_set(7, 0); ng_slider_set(8, 0); ng_slider_set(9, 0); ng_slider_set(10, 1); ng_slider_set(11, 1); ng_slider_set(12, 0); ng_slider_set(13, 0); ng_slider_set(14, 40); ng_slider_set(15, 6); ng_slider_set(16, 40); ng_slider_set(17, 1); ng_slider_set(18, 100); ng_slider_set(19, 50); ng_slider_set(20, 0); );
-    p == 7 ? ( ng_slider_set(1, 0); ng_slider_set(2, 0); ng_slider_set(3, 8); ng_slider_set(4, 4); ng_slider_set(5, 0); ng_slider_set(6, 0); ng_slider_set(7, 0); ng_slider_set(8, 0); ng_slider_set(9, 0); ng_slider_set(10, 0); ng_slider_set(11, 1); ng_slider_set(12, 0); ng_slider_set(13, 0); ng_slider_set(14, 10); ng_slider_set(15, 5); ng_slider_set(16, 0); ng_slider_set(17, 1); ng_slider_set(18, 100); ng_slider_set(19, 40); ng_slider_set(20, 0); );
-    p == 8 ? ( ng_slider_set(1, 8); ng_slider_set(2, 8); ng_slider_set(3, 8); ng_slider_set(4, 8); ng_slider_set(5, 8); ng_slider_set(6, 8); ng_slider_set(7, 8); ng_slider_set(8, 8); ng_slider_set(9, 8); ng_slider_set(10, 0); ng_slider_set(11, 1); ng_slider_set(12, 0); ng_slider_set(13, 0); ng_slider_set(14, 40); ng_slider_set(15, 6); ng_slider_set(16, 40); ng_slider_set(17, 2); ng_slider_set(18, 100); ng_slider_set(19, 50); ng_slider_set(20, -4); );
-    p == 9 ? ( ng_slider_set(1, 8); ng_slider_set(2, 8); ng_slider_set(3, 8); ng_slider_set(4, 0); ng_slider_set(5, 0); ng_slider_set(6, 0); ng_slider_set(7, 0); ng_slider_set(8, 0); ng_slider_set(9, 0); ng_slider_set(10, 1); ng_slider_set(11, 0); ng_slider_set(12, 0); ng_slider_set(13, 0); ng_slider_set(14, 60); ng_slider_set(15, 0); ng_slider_set(16, 10); ng_slider_set(17, 0); ng_slider_set(18, 100); ng_slider_set(19, 50); ng_slider_set(20, 0); );
-    p == 10 ? ( ng_slider_set(1, 0); ng_slider_set(2, 0); ng_slider_set(3, 8); ng_slider_set(4, 8); ng_slider_set(5, 0); ng_slider_set(6, 0); ng_slider_set(7, 0); ng_slider_set(8, 0); ng_slider_set(9, 0); ng_slider_set(10, 1); ng_slider_set(11, 0); ng_slider_set(12, 0); ng_slider_set(13, 0); ng_slider_set(14, 30); ng_slider_set(15, 4); ng_slider_set(16, 10); ng_slider_set(17, 1); ng_slider_set(18, 100); ng_slider_set(19, 50); ng_slider_set(20, 0); );
-    p == 11 ? ( ng_slider_set(1, 0); ng_slider_set(2, 0); ng_slider_set(3, 8); ng_slider_set(4, 0); ng_slider_set(5, 0); ng_slider_set(6, 0); ng_slider_set(7, 0); ng_slider_set(8, 0); ng_slider_set(9, 0); ng_slider_set(10, 0); ng_slider_set(11, 1); ng_slider_set(12, 0); ng_slider_set(13, 0); ng_slider_set(14, 0); ng_slider_set(15, 1); ng_slider_set(16, 0); ng_slider_set(17, 0); ng_slider_set(18, 100); ng_slider_set(19, 50); ng_slider_set(20, 0); );
-    p == 12 ? ( ng_slider_set(1, 8); ng_slider_set(2, 0); ng_slider_set(3, 0); ng_slider_set(4, 0); ng_slider_set(5, 0); ng_slider_set(6, 0); ng_slider_set(7, 0); ng_slider_set(8, 0); ng_slider_set(9, 8); ng_slider_set(10, 0); ng_slider_set(11, 1); ng_slider_set(12, 0); ng_slider_set(13, 0); ng_slider_set(14, 30); ng_slider_set(15, 6); ng_slider_set(16, 20); ng_slider_set(17, 1); ng_slider_set(18, 100); ng_slider_set(19, 50); ng_slider_set(20, 0); );
-    p == 13 ? ( ng_slider_set(1, 0); ng_slider_set(2, 0); ng_slider_set(3, 6); ng_slider_set(4, 6); ng_slider_set(5, 6); ng_slider_set(6, 6); ng_slider_set(7, 0); ng_slider_set(8, 0); ng_slider_set(9, 0); ng_slider_set(10, 0); ng_slider_set(11, 1); ng_slider_set(12, 0); ng_slider_set(13, 0); ng_slider_set(14, 5); ng_slider_set(15, 5); ng_slider_set(16, 0); ng_slider_set(17, 0); ng_slider_set(18, 100); ng_slider_set(19, 50); ng_slider_set(20, -2); );
-    p == 14 ? ( ng_slider_set(1, 8); ng_slider_set(2, 8); ng_slider_set(3, 8); ng_slider_set(4, 8); ng_slider_set(5, 0); ng_slider_set(6, 0); ng_slider_set(7, 0); ng_slider_set(8, 0); ng_slider_set(9, 0); ng_slider_set(10, 0); ng_slider_set(11, 1); ng_slider_set(12, 0); ng_slider_set(13, 0); ng_slider_set(14, 40); ng_slider_set(15, 6); ng_slider_set(16, 35); ng_slider_set(17, 3); ng_slider_set(18, 150); ng_slider_set(19, 50); ng_slider_set(20, 0); );
+    p == 0 ? ( ng_slider_set(1, 8); ng_slider_set(2, 8); ng_slider_set(3, 8); ng_slider_set(4, 0); ng_slider_set(5, 0); ng_slider_set(6, 0); ng_slider_set(7, 0); ng_slider_set(8, 0); ng_slider_set(9, 0); ng_slider_set(10, 0); ng_slider_set(11, 1); ng_slider_set(12, 0); ng_slider_set(13, 0); ng_slider_set(14, 30); ng_slider_set(15, 6); ng_slider_set(16, 15); ng_slider_set(17, 1); ng_slider_set(18, 100); ng_slider_set(19, 50); ng_slider_set(20, 0); ng_slider_set(21, 0); );
+    p == 1 ? ( ng_slider_set(1, 8); ng_slider_set(2, 8); ng_slider_set(3, 8); ng_slider_set(4, 0); ng_slider_set(5, 0); ng_slider_set(6, 0); ng_slider_set(7, 0); ng_slider_set(8, 0); ng_slider_set(9, 0); ng_slider_set(10, 1); ng_slider_set(11, 1); ng_slider_set(12, 0); ng_slider_set(13, 0); ng_slider_set(14, 40); ng_slider_set(15, 6); ng_slider_set(16, 15); ng_slider_set(17, 1); ng_slider_set(18, 100); ng_slider_set(19, 50); ng_slider_set(20, 0); ng_slider_set(21, 0); );
+    p == 2 ? ( ng_slider_set(1, 8); ng_slider_set(2, 3); ng_slider_set(3, 8); ng_slider_set(4, 0); ng_slider_set(5, 0); ng_slider_set(6, 0); ng_slider_set(7, 0); ng_slider_set(8, 0); ng_slider_set(9, 0); ng_slider_set(10, 1); ng_slider_set(11, 1); ng_slider_set(12, 1); ng_slider_set(13, 1); ng_slider_set(14, 20); ng_slider_set(15, 6); ng_slider_set(16, 5); ng_slider_set(17, 1); ng_slider_set(18, 100); ng_slider_set(19, 50); ng_slider_set(20, 0); ng_slider_set(21, 0); );
+    p == 3 ? ( ng_slider_set(1, 8); ng_slider_set(2, 8); ng_slider_set(3, 8); ng_slider_set(4, 0); ng_slider_set(5, 0); ng_slider_set(6, 0); ng_slider_set(7, 0); ng_slider_set(8, 0); ng_slider_set(9, 8); ng_slider_set(10, 0); ng_slider_set(11, 1); ng_slider_set(12, 0); ng_slider_set(13, 0); ng_slider_set(14, 40); ng_slider_set(15, 6); ng_slider_set(16, 30); ng_slider_set(17, 2); ng_slider_set(18, 100); ng_slider_set(19, 50); ng_slider_set(20, 0); ng_slider_set(21, 0); );
+    p == 4 ? ( ng_slider_set(1, 8); ng_slider_set(2, 8); ng_slider_set(3, 8); ng_slider_set(4, 8); ng_slider_set(5, 0); ng_slider_set(6, 0); ng_slider_set(7, 0); ng_slider_set(8, 0); ng_slider_set(9, 0); ng_slider_set(10, 0); ng_slider_set(11, 1); ng_slider_set(12, 0); ng_slider_set(13, 0); ng_slider_set(14, 50); ng_slider_set(15, 6); ng_slider_set(16, 65); ng_slider_set(17, 2); ng_slider_set(18, 100); ng_slider_set(19, 50); ng_slider_set(20, -2); ng_slider_set(21, 0); );
+    p == 5 ? ( ng_slider_set(1, 8); ng_slider_set(2, 8); ng_slider_set(3, 8); ng_slider_set(4, 0); ng_slider_set(5, 0); ng_slider_set(6, 0); ng_slider_set(7, 0); ng_slider_set(8, 0); ng_slider_set(9, 0); ng_slider_set(10, 0); ng_slider_set(11, 1); ng_slider_set(12, 0); ng_slider_set(13, 0); ng_slider_set(14, 70); ng_slider_set(15, 3); ng_slider_set(16, 100); ng_slider_set(17, 2); ng_slider_set(18, 60); ng_slider_set(19, 50); ng_slider_set(20, -3); ng_slider_set(21, 0); );
+    p == 6 ? ( ng_slider_set(1, 8); ng_slider_set(2, 8); ng_slider_set(3, 8); ng_slider_set(4, 6); ng_slider_set(5, 0); ng_slider_set(6, 0); ng_slider_set(7, 0); ng_slider_set(8, 0); ng_slider_set(9, 0); ng_slider_set(10, 1); ng_slider_set(11, 1); ng_slider_set(12, 0); ng_slider_set(13, 0); ng_slider_set(14, 40); ng_slider_set(15, 6); ng_slider_set(16, 40); ng_slider_set(17, 1); ng_slider_set(18, 100); ng_slider_set(19, 50); ng_slider_set(20, 0); ng_slider_set(21, 0); );
+    p == 7 ? ( ng_slider_set(1, 0); ng_slider_set(2, 0); ng_slider_set(3, 8); ng_slider_set(4, 4); ng_slider_set(5, 0); ng_slider_set(6, 0); ng_slider_set(7, 0); ng_slider_set(8, 0); ng_slider_set(9, 0); ng_slider_set(10, 0); ng_slider_set(11, 1); ng_slider_set(12, 0); ng_slider_set(13, 0); ng_slider_set(14, 10); ng_slider_set(15, 5); ng_slider_set(16, 0); ng_slider_set(17, 1); ng_slider_set(18, 100); ng_slider_set(19, 40); ng_slider_set(20, 0); ng_slider_set(21, 0); );
+    p == 8 ? ( ng_slider_set(1, 8); ng_slider_set(2, 8); ng_slider_set(3, 8); ng_slider_set(4, 8); ng_slider_set(5, 8); ng_slider_set(6, 8); ng_slider_set(7, 8); ng_slider_set(8, 8); ng_slider_set(9, 8); ng_slider_set(10, 0); ng_slider_set(11, 1); ng_slider_set(12, 0); ng_slider_set(13, 0); ng_slider_set(14, 40); ng_slider_set(15, 6); ng_slider_set(16, 40); ng_slider_set(17, 2); ng_slider_set(18, 100); ng_slider_set(19, 50); ng_slider_set(20, -4); ng_slider_set(21, 0); );
+    p == 9 ? ( ng_slider_set(1, 8); ng_slider_set(2, 8); ng_slider_set(3, 8); ng_slider_set(4, 0); ng_slider_set(5, 0); ng_slider_set(6, 0); ng_slider_set(7, 0); ng_slider_set(8, 0); ng_slider_set(9, 0); ng_slider_set(10, 1); ng_slider_set(11, 0); ng_slider_set(12, 0); ng_slider_set(13, 0); ng_slider_set(14, 60); ng_slider_set(15, 0); ng_slider_set(16, 10); ng_slider_set(17, 0); ng_slider_set(18, 100); ng_slider_set(19, 50); ng_slider_set(20, 0); ng_slider_set(21, 0); );
+    p == 10 ? ( ng_slider_set(1, 0); ng_slider_set(2, 0); ng_slider_set(3, 8); ng_slider_set(4, 8); ng_slider_set(5, 0); ng_slider_set(6, 0); ng_slider_set(7, 0); ng_slider_set(8, 0); ng_slider_set(9, 0); ng_slider_set(10, 1); ng_slider_set(11, 0); ng_slider_set(12, 0); ng_slider_set(13, 0); ng_slider_set(14, 30); ng_slider_set(15, 4); ng_slider_set(16, 10); ng_slider_set(17, 1); ng_slider_set(18, 100); ng_slider_set(19, 50); ng_slider_set(20, 0); ng_slider_set(21, 0); );
+    p == 11 ? ( ng_slider_set(1, 0); ng_slider_set(2, 0); ng_slider_set(3, 8); ng_slider_set(4, 0); ng_slider_set(5, 0); ng_slider_set(6, 0); ng_slider_set(7, 0); ng_slider_set(8, 0); ng_slider_set(9, 0); ng_slider_set(10, 0); ng_slider_set(11, 1); ng_slider_set(12, 0); ng_slider_set(13, 0); ng_slider_set(14, 0); ng_slider_set(15, 1); ng_slider_set(16, 0); ng_slider_set(17, 0); ng_slider_set(18, 100); ng_slider_set(19, 50); ng_slider_set(20, 0); ng_slider_set(21, 0); );
+    p == 12 ? ( ng_slider_set(1, 8); ng_slider_set(2, 0); ng_slider_set(3, 0); ng_slider_set(4, 0); ng_slider_set(5, 0); ng_slider_set(6, 0); ng_slider_set(7, 0); ng_slider_set(8, 0); ng_slider_set(9, 8); ng_slider_set(10, 0); ng_slider_set(11, 1); ng_slider_set(12, 0); ng_slider_set(13, 0); ng_slider_set(14, 30); ng_slider_set(15, 6); ng_slider_set(16, 20); ng_slider_set(17, 1); ng_slider_set(18, 100); ng_slider_set(19, 50); ng_slider_set(20, 0); ng_slider_set(21, 0); );
+    p == 13 ? ( ng_slider_set(1, 0); ng_slider_set(2, 0); ng_slider_set(3, 6); ng_slider_set(4, 6); ng_slider_set(5, 6); ng_slider_set(6, 6); ng_slider_set(7, 0); ng_slider_set(8, 0); ng_slider_set(9, 0); ng_slider_set(10, 0); ng_slider_set(11, 1); ng_slider_set(12, 0); ng_slider_set(13, 0); ng_slider_set(14, 5); ng_slider_set(15, 5); ng_slider_set(16, 0); ng_slider_set(17, 0); ng_slider_set(18, 100); ng_slider_set(19, 50); ng_slider_set(20, -2); ng_slider_set(21, 0); );
+    p == 14 ? ( ng_slider_set(1, 8); ng_slider_set(2, 8); ng_slider_set(3, 8); ng_slider_set(4, 8); ng_slider_set(5, 0); ng_slider_set(6, 0); ng_slider_set(7, 0); ng_slider_set(8, 0); ng_slider_set(9, 0); ng_slider_set(10, 0); ng_slider_set(11, 1); ng_slider_set(12, 0); ng_slider_set(13, 0); ng_slider_set(14, 40); ng_slider_set(15, 6); ng_slider_set(16, 35); ng_slider_set(17, 3); ng_slider_set(18, 150); ng_slider_set(19, 50); ng_slider_set(20, 0); ng_slider_set(21, 0); );
+    p == 15 ? ( ng_slider_set(1, 6); ng_slider_set(2, 0); ng_slider_set(3, 8); ng_slider_set(4, 7); ng_slider_set(5, 0); ng_slider_set(6, 6); ng_slider_set(7, 0); ng_slider_set(8, 4); ng_slider_set(9, 3); ng_slider_set(10, 0); ng_slider_set(11, 1); ng_slider_set(12, 0); ng_slider_set(13, 0); ng_slider_set(14, 25); ng_slider_set(15, 0); ng_slider_set(16, 0); ng_slider_set(17, 0); ng_slider_set(18, 100); ng_slider_set(19, 50); ng_slider_set(20, 0); ng_slider_set(21, 1); );
   );
 
   // the first preset every slider matches, or -1
   function ng_preset_match() local(m)
   (
     m = -1;
-    m < 0 && ng_pre_eq(slider1, 8) && ng_pre_eq(slider2, 8) && ng_pre_eq(slider3, 8) && ng_pre_eq(slider4, 0) && ng_pre_eq(slider5, 0) && ng_pre_eq(slider6, 0) && ng_pre_eq(slider7, 0) && ng_pre_eq(slider8, 0) && ng_pre_eq(slider9, 0) && ng_pre_eq(slider10, 0) && ng_pre_eq(slider11, 1) && ng_pre_eq(slider12, 0) && ng_pre_eq(slider13, 0) && ng_pre_eq(slider14, 30) && ng_pre_eq(slider15, 6) && ng_pre_eq(slider16, 15) && ng_pre_eq(slider17, 1) && ng_pre_eq(slider18, 100) && ng_pre_eq(slider19, 50) && ng_pre_eq(slider20, 0) ? m = 0;
-    m < 0 && ng_pre_eq(slider1, 8) && ng_pre_eq(slider2, 8) && ng_pre_eq(slider3, 8) && ng_pre_eq(slider4, 0) && ng_pre_eq(slider5, 0) && ng_pre_eq(slider6, 0) && ng_pre_eq(slider7, 0) && ng_pre_eq(slider8, 0) && ng_pre_eq(slider9, 0) && ng_pre_eq(slider10, 1) && ng_pre_eq(slider11, 1) && ng_pre_eq(slider12, 0) && ng_pre_eq(slider13, 0) && ng_pre_eq(slider14, 40) && ng_pre_eq(slider15, 6) && ng_pre_eq(slider16, 15) && ng_pre_eq(slider17, 1) && ng_pre_eq(slider18, 100) && ng_pre_eq(slider19, 50) && ng_pre_eq(slider20, 0) ? m = 1;
-    m < 0 && ng_pre_eq(slider1, 8) && ng_pre_eq(slider2, 3) && ng_pre_eq(slider3, 8) && ng_pre_eq(slider4, 0) && ng_pre_eq(slider5, 0) && ng_pre_eq(slider6, 0) && ng_pre_eq(slider7, 0) && ng_pre_eq(slider8, 0) && ng_pre_eq(slider9, 0) && ng_pre_eq(slider10, 1) && ng_pre_eq(slider11, 1) && ng_pre_eq(slider12, 1) && ng_pre_eq(slider13, 1) && ng_pre_eq(slider14, 20) && ng_pre_eq(slider15, 6) && ng_pre_eq(slider16, 5) && ng_pre_eq(slider17, 1) && ng_pre_eq(slider18, 100) && ng_pre_eq(slider19, 50) && ng_pre_eq(slider20, 0) ? m = 2;
-    m < 0 && ng_pre_eq(slider1, 8) && ng_pre_eq(slider2, 8) && ng_pre_eq(slider3, 8) && ng_pre_eq(slider4, 0) && ng_pre_eq(slider5, 0) && ng_pre_eq(slider6, 0) && ng_pre_eq(slider7, 0) && ng_pre_eq(slider8, 0) && ng_pre_eq(slider9, 8) && ng_pre_eq(slider10, 0) && ng_pre_eq(slider11, 1) && ng_pre_eq(slider12, 0) && ng_pre_eq(slider13, 0) && ng_pre_eq(slider14, 40) && ng_pre_eq(slider15, 6) && ng_pre_eq(slider16, 30) && ng_pre_eq(slider17, 2) && ng_pre_eq(slider18, 100) && ng_pre_eq(slider19, 50) && ng_pre_eq(slider20, 0) ? m = 3;
-    m < 0 && ng_pre_eq(slider1, 8) && ng_pre_eq(slider2, 8) && ng_pre_eq(slider3, 8) && ng_pre_eq(slider4, 8) && ng_pre_eq(slider5, 0) && ng_pre_eq(slider6, 0) && ng_pre_eq(slider7, 0) && ng_pre_eq(slider8, 0) && ng_pre_eq(slider9, 0) && ng_pre_eq(slider10, 0) && ng_pre_eq(slider11, 1) && ng_pre_eq(slider12, 0) && ng_pre_eq(slider13, 0) && ng_pre_eq(slider14, 50) && ng_pre_eq(slider15, 6) && ng_pre_eq(slider16, 65) && ng_pre_eq(slider17, 2) && ng_pre_eq(slider18, 100) && ng_pre_eq(slider19, 50) && ng_pre_eq(slider20, -2) ? m = 4;
-    m < 0 && ng_pre_eq(slider1, 8) && ng_pre_eq(slider2, 8) && ng_pre_eq(slider3, 8) && ng_pre_eq(slider4, 0) && ng_pre_eq(slider5, 0) && ng_pre_eq(slider6, 0) && ng_pre_eq(slider7, 0) && ng_pre_eq(slider8, 0) && ng_pre_eq(slider9, 0) && ng_pre_eq(slider10, 0) && ng_pre_eq(slider11, 1) && ng_pre_eq(slider12, 0) && ng_pre_eq(slider13, 0) && ng_pre_eq(slider14, 70) && ng_pre_eq(slider15, 3) && ng_pre_eq(slider16, 100) && ng_pre_eq(slider17, 2) && ng_pre_eq(slider18, 60) && ng_pre_eq(slider19, 50) && ng_pre_eq(slider20, -3) ? m = 5;
-    m < 0 && ng_pre_eq(slider1, 8) && ng_pre_eq(slider2, 8) && ng_pre_eq(slider3, 8) && ng_pre_eq(slider4, 6) && ng_pre_eq(slider5, 0) && ng_pre_eq(slider6, 0) && ng_pre_eq(slider7, 0) && ng_pre_eq(slider8, 0) && ng_pre_eq(slider9, 0) && ng_pre_eq(slider10, 1) && ng_pre_eq(slider11, 1) && ng_pre_eq(slider12, 0) && ng_pre_eq(slider13, 0) && ng_pre_eq(slider14, 40) && ng_pre_eq(slider15, 6) && ng_pre_eq(slider16, 40) && ng_pre_eq(slider17, 1) && ng_pre_eq(slider18, 100) && ng_pre_eq(slider19, 50) && ng_pre_eq(slider20, 0) ? m = 6;
-    m < 0 && ng_pre_eq(slider1, 0) && ng_pre_eq(slider2, 0) && ng_pre_eq(slider3, 8) && ng_pre_eq(slider4, 4) && ng_pre_eq(slider5, 0) && ng_pre_eq(slider6, 0) && ng_pre_eq(slider7, 0) && ng_pre_eq(slider8, 0) && ng_pre_eq(slider9, 0) && ng_pre_eq(slider10, 0) && ng_pre_eq(slider11, 1) && ng_pre_eq(slider12, 0) && ng_pre_eq(slider13, 0) && ng_pre_eq(slider14, 10) && ng_pre_eq(slider15, 5) && ng_pre_eq(slider16, 0) && ng_pre_eq(slider17, 1) && ng_pre_eq(slider18, 100) && ng_pre_eq(slider19, 40) && ng_pre_eq(slider20, 0) ? m = 7;
-    m < 0 && ng_pre_eq(slider1, 8) && ng_pre_eq(slider2, 8) && ng_pre_eq(slider3, 8) && ng_pre_eq(slider4, 8) && ng_pre_eq(slider5, 8) && ng_pre_eq(slider6, 8) && ng_pre_eq(slider7, 8) && ng_pre_eq(slider8, 8) && ng_pre_eq(slider9, 8) && ng_pre_eq(slider10, 0) && ng_pre_eq(slider11, 1) && ng_pre_eq(slider12, 0) && ng_pre_eq(slider13, 0) && ng_pre_eq(slider14, 40) && ng_pre_eq(slider15, 6) && ng_pre_eq(slider16, 40) && ng_pre_eq(slider17, 2) && ng_pre_eq(slider18, 100) && ng_pre_eq(slider19, 50) && ng_pre_eq(slider20, -4) ? m = 8;
-    m < 0 && ng_pre_eq(slider1, 8) && ng_pre_eq(slider2, 8) && ng_pre_eq(slider3, 8) && ng_pre_eq(slider4, 0) && ng_pre_eq(slider5, 0) && ng_pre_eq(slider6, 0) && ng_pre_eq(slider7, 0) && ng_pre_eq(slider8, 0) && ng_pre_eq(slider9, 0) && ng_pre_eq(slider10, 1) && ng_pre_eq(slider11, 0) && ng_pre_eq(slider12, 0) && ng_pre_eq(slider13, 0) && ng_pre_eq(slider14, 60) && ng_pre_eq(slider15, 0) && ng_pre_eq(slider16, 10) && ng_pre_eq(slider17, 0) && ng_pre_eq(slider18, 100) && ng_pre_eq(slider19, 50) && ng_pre_eq(slider20, 0) ? m = 9;
-    m < 0 && ng_pre_eq(slider1, 0) && ng_pre_eq(slider2, 0) && ng_pre_eq(slider3, 8) && ng_pre_eq(slider4, 8) && ng_pre_eq(slider5, 0) && ng_pre_eq(slider6, 0) && ng_pre_eq(slider7, 0) && ng_pre_eq(slider8, 0) && ng_pre_eq(slider9, 0) && ng_pre_eq(slider10, 1) && ng_pre_eq(slider11, 0) && ng_pre_eq(slider12, 0) && ng_pre_eq(slider13, 0) && ng_pre_eq(slider14, 30) && ng_pre_eq(slider15, 4) && ng_pre_eq(slider16, 10) && ng_pre_eq(slider17, 1) && ng_pre_eq(slider18, 100) && ng_pre_eq(slider19, 50) && ng_pre_eq(slider20, 0) ? m = 10;
-    m < 0 && ng_pre_eq(slider1, 0) && ng_pre_eq(slider2, 0) && ng_pre_eq(slider3, 8) && ng_pre_eq(slider4, 0) && ng_pre_eq(slider5, 0) && ng_pre_eq(slider6, 0) && ng_pre_eq(slider7, 0) && ng_pre_eq(slider8, 0) && ng_pre_eq(slider9, 0) && ng_pre_eq(slider10, 0) && ng_pre_eq(slider11, 1) && ng_pre_eq(slider12, 0) && ng_pre_eq(slider13, 0) && ng_pre_eq(slider14, 0) && ng_pre_eq(slider15, 1) && ng_pre_eq(slider16, 0) && ng_pre_eq(slider17, 0) && ng_pre_eq(slider18, 100) && ng_pre_eq(slider19, 50) && ng_pre_eq(slider20, 0) ? m = 11;
-    m < 0 && ng_pre_eq(slider1, 8) && ng_pre_eq(slider2, 0) && ng_pre_eq(slider3, 0) && ng_pre_eq(slider4, 0) && ng_pre_eq(slider5, 0) && ng_pre_eq(slider6, 0) && ng_pre_eq(slider7, 0) && ng_pre_eq(slider8, 0) && ng_pre_eq(slider9, 8) && ng_pre_eq(slider10, 0) && ng_pre_eq(slider11, 1) && ng_pre_eq(slider12, 0) && ng_pre_eq(slider13, 0) && ng_pre_eq(slider14, 30) && ng_pre_eq(slider15, 6) && ng_pre_eq(slider16, 20) && ng_pre_eq(slider17, 1) && ng_pre_eq(slider18, 100) && ng_pre_eq(slider19, 50) && ng_pre_eq(slider20, 0) ? m = 12;
-    m < 0 && ng_pre_eq(slider1, 0) && ng_pre_eq(slider2, 0) && ng_pre_eq(slider3, 6) && ng_pre_eq(slider4, 6) && ng_pre_eq(slider5, 6) && ng_pre_eq(slider6, 6) && ng_pre_eq(slider7, 0) && ng_pre_eq(slider8, 0) && ng_pre_eq(slider9, 0) && ng_pre_eq(slider10, 0) && ng_pre_eq(slider11, 1) && ng_pre_eq(slider12, 0) && ng_pre_eq(slider13, 0) && ng_pre_eq(slider14, 5) && ng_pre_eq(slider15, 5) && ng_pre_eq(slider16, 0) && ng_pre_eq(slider17, 0) && ng_pre_eq(slider18, 100) && ng_pre_eq(slider19, 50) && ng_pre_eq(slider20, -2) ? m = 13;
-    m < 0 && ng_pre_eq(slider1, 8) && ng_pre_eq(slider2, 8) && ng_pre_eq(slider3, 8) && ng_pre_eq(slider4, 8) && ng_pre_eq(slider5, 0) && ng_pre_eq(slider6, 0) && ng_pre_eq(slider7, 0) && ng_pre_eq(slider8, 0) && ng_pre_eq(slider9, 0) && ng_pre_eq(slider10, 0) && ng_pre_eq(slider11, 1) && ng_pre_eq(slider12, 0) && ng_pre_eq(slider13, 0) && ng_pre_eq(slider14, 40) && ng_pre_eq(slider15, 6) && ng_pre_eq(slider16, 35) && ng_pre_eq(slider17, 3) && ng_pre_eq(slider18, 150) && ng_pre_eq(slider19, 50) && ng_pre_eq(slider20, 0) ? m = 14;
+    m < 0 && ng_pre_eq(slider1, 8) && ng_pre_eq(slider2, 8) && ng_pre_eq(slider3, 8) && ng_pre_eq(slider4, 0) && ng_pre_eq(slider5, 0) && ng_pre_eq(slider6, 0) && ng_pre_eq(slider7, 0) && ng_pre_eq(slider8, 0) && ng_pre_eq(slider9, 0) && ng_pre_eq(slider10, 0) && ng_pre_eq(slider11, 1) && ng_pre_eq(slider12, 0) && ng_pre_eq(slider13, 0) && ng_pre_eq(slider14, 30) && ng_pre_eq(slider15, 6) && ng_pre_eq(slider16, 15) && ng_pre_eq(slider17, 1) && ng_pre_eq(slider18, 100) && ng_pre_eq(slider19, 50) && ng_pre_eq(slider20, 0) && ng_pre_eq(slider21, 0) ? m = 0;
+    m < 0 && ng_pre_eq(slider1, 8) && ng_pre_eq(slider2, 8) && ng_pre_eq(slider3, 8) && ng_pre_eq(slider4, 0) && ng_pre_eq(slider5, 0) && ng_pre_eq(slider6, 0) && ng_pre_eq(slider7, 0) && ng_pre_eq(slider8, 0) && ng_pre_eq(slider9, 0) && ng_pre_eq(slider10, 1) && ng_pre_eq(slider11, 1) && ng_pre_eq(slider12, 0) && ng_pre_eq(slider13, 0) && ng_pre_eq(slider14, 40) && ng_pre_eq(slider15, 6) && ng_pre_eq(slider16, 15) && ng_pre_eq(slider17, 1) && ng_pre_eq(slider18, 100) && ng_pre_eq(slider19, 50) && ng_pre_eq(slider20, 0) && ng_pre_eq(slider21, 0) ? m = 1;
+    m < 0 && ng_pre_eq(slider1, 8) && ng_pre_eq(slider2, 3) && ng_pre_eq(slider3, 8) && ng_pre_eq(slider4, 0) && ng_pre_eq(slider5, 0) && ng_pre_eq(slider6, 0) && ng_pre_eq(slider7, 0) && ng_pre_eq(slider8, 0) && ng_pre_eq(slider9, 0) && ng_pre_eq(slider10, 1) && ng_pre_eq(slider11, 1) && ng_pre_eq(slider12, 1) && ng_pre_eq(slider13, 1) && ng_pre_eq(slider14, 20) && ng_pre_eq(slider15, 6) && ng_pre_eq(slider16, 5) && ng_pre_eq(slider17, 1) && ng_pre_eq(slider18, 100) && ng_pre_eq(slider19, 50) && ng_pre_eq(slider20, 0) && ng_pre_eq(slider21, 0) ? m = 2;
+    m < 0 && ng_pre_eq(slider1, 8) && ng_pre_eq(slider2, 8) && ng_pre_eq(slider3, 8) && ng_pre_eq(slider4, 0) && ng_pre_eq(slider5, 0) && ng_pre_eq(slider6, 0) && ng_pre_eq(slider7, 0) && ng_pre_eq(slider8, 0) && ng_pre_eq(slider9, 8) && ng_pre_eq(slider10, 0) && ng_pre_eq(slider11, 1) && ng_pre_eq(slider12, 0) && ng_pre_eq(slider13, 0) && ng_pre_eq(slider14, 40) && ng_pre_eq(slider15, 6) && ng_pre_eq(slider16, 30) && ng_pre_eq(slider17, 2) && ng_pre_eq(slider18, 100) && ng_pre_eq(slider19, 50) && ng_pre_eq(slider20, 0) && ng_pre_eq(slider21, 0) ? m = 3;
+    m < 0 && ng_pre_eq(slider1, 8) && ng_pre_eq(slider2, 8) && ng_pre_eq(slider3, 8) && ng_pre_eq(slider4, 8) && ng_pre_eq(slider5, 0) && ng_pre_eq(slider6, 0) && ng_pre_eq(slider7, 0) && ng_pre_eq(slider8, 0) && ng_pre_eq(slider9, 0) && ng_pre_eq(slider10, 0) && ng_pre_eq(slider11, 1) && ng_pre_eq(slider12, 0) && ng_pre_eq(slider13, 0) && ng_pre_eq(slider14, 50) && ng_pre_eq(slider15, 6) && ng_pre_eq(slider16, 65) && ng_pre_eq(slider17, 2) && ng_pre_eq(slider18, 100) && ng_pre_eq(slider19, 50) && ng_pre_eq(slider20, -2) && ng_pre_eq(slider21, 0) ? m = 4;
+    m < 0 && ng_pre_eq(slider1, 8) && ng_pre_eq(slider2, 8) && ng_pre_eq(slider3, 8) && ng_pre_eq(slider4, 0) && ng_pre_eq(slider5, 0) && ng_pre_eq(slider6, 0) && ng_pre_eq(slider7, 0) && ng_pre_eq(slider8, 0) && ng_pre_eq(slider9, 0) && ng_pre_eq(slider10, 0) && ng_pre_eq(slider11, 1) && ng_pre_eq(slider12, 0) && ng_pre_eq(slider13, 0) && ng_pre_eq(slider14, 70) && ng_pre_eq(slider15, 3) && ng_pre_eq(slider16, 100) && ng_pre_eq(slider17, 2) && ng_pre_eq(slider18, 60) && ng_pre_eq(slider19, 50) && ng_pre_eq(slider20, -3) && ng_pre_eq(slider21, 0) ? m = 5;
+    m < 0 && ng_pre_eq(slider1, 8) && ng_pre_eq(slider2, 8) && ng_pre_eq(slider3, 8) && ng_pre_eq(slider4, 6) && ng_pre_eq(slider5, 0) && ng_pre_eq(slider6, 0) && ng_pre_eq(slider7, 0) && ng_pre_eq(slider8, 0) && ng_pre_eq(slider9, 0) && ng_pre_eq(slider10, 1) && ng_pre_eq(slider11, 1) && ng_pre_eq(slider12, 0) && ng_pre_eq(slider13, 0) && ng_pre_eq(slider14, 40) && ng_pre_eq(slider15, 6) && ng_pre_eq(slider16, 40) && ng_pre_eq(slider17, 1) && ng_pre_eq(slider18, 100) && ng_pre_eq(slider19, 50) && ng_pre_eq(slider20, 0) && ng_pre_eq(slider21, 0) ? m = 6;
+    m < 0 && ng_pre_eq(slider1, 0) && ng_pre_eq(slider2, 0) && ng_pre_eq(slider3, 8) && ng_pre_eq(slider4, 4) && ng_pre_eq(slider5, 0) && ng_pre_eq(slider6, 0) && ng_pre_eq(slider7, 0) && ng_pre_eq(slider8, 0) && ng_pre_eq(slider9, 0) && ng_pre_eq(slider10, 0) && ng_pre_eq(slider11, 1) && ng_pre_eq(slider12, 0) && ng_pre_eq(slider13, 0) && ng_pre_eq(slider14, 10) && ng_pre_eq(slider15, 5) && ng_pre_eq(slider16, 0) && ng_pre_eq(slider17, 1) && ng_pre_eq(slider18, 100) && ng_pre_eq(slider19, 40) && ng_pre_eq(slider20, 0) && ng_pre_eq(slider21, 0) ? m = 7;
+    m < 0 && ng_pre_eq(slider1, 8) && ng_pre_eq(slider2, 8) && ng_pre_eq(slider3, 8) && ng_pre_eq(slider4, 8) && ng_pre_eq(slider5, 8) && ng_pre_eq(slider6, 8) && ng_pre_eq(slider7, 8) && ng_pre_eq(slider8, 8) && ng_pre_eq(slider9, 8) && ng_pre_eq(slider10, 0) && ng_pre_eq(slider11, 1) && ng_pre_eq(slider12, 0) && ng_pre_eq(slider13, 0) && ng_pre_eq(slider14, 40) && ng_pre_eq(slider15, 6) && ng_pre_eq(slider16, 40) && ng_pre_eq(slider17, 2) && ng_pre_eq(slider18, 100) && ng_pre_eq(slider19, 50) && ng_pre_eq(slider20, -4) && ng_pre_eq(slider21, 0) ? m = 8;
+    m < 0 && ng_pre_eq(slider1, 8) && ng_pre_eq(slider2, 8) && ng_pre_eq(slider3, 8) && ng_pre_eq(slider4, 0) && ng_pre_eq(slider5, 0) && ng_pre_eq(slider6, 0) && ng_pre_eq(slider7, 0) && ng_pre_eq(slider8, 0) && ng_pre_eq(slider9, 0) && ng_pre_eq(slider10, 1) && ng_pre_eq(slider11, 0) && ng_pre_eq(slider12, 0) && ng_pre_eq(slider13, 0) && ng_pre_eq(slider14, 60) && ng_pre_eq(slider15, 0) && ng_pre_eq(slider16, 10) && ng_pre_eq(slider17, 0) && ng_pre_eq(slider18, 100) && ng_pre_eq(slider19, 50) && ng_pre_eq(slider20, 0) && ng_pre_eq(slider21, 0) ? m = 9;
+    m < 0 && ng_pre_eq(slider1, 0) && ng_pre_eq(slider2, 0) && ng_pre_eq(slider3, 8) && ng_pre_eq(slider4, 8) && ng_pre_eq(slider5, 0) && ng_pre_eq(slider6, 0) && ng_pre_eq(slider7, 0) && ng_pre_eq(slider8, 0) && ng_pre_eq(slider9, 0) && ng_pre_eq(slider10, 1) && ng_pre_eq(slider11, 0) && ng_pre_eq(slider12, 0) && ng_pre_eq(slider13, 0) && ng_pre_eq(slider14, 30) && ng_pre_eq(slider15, 4) && ng_pre_eq(slider16, 10) && ng_pre_eq(slider17, 1) && ng_pre_eq(slider18, 100) && ng_pre_eq(slider19, 50) && ng_pre_eq(slider20, 0) && ng_pre_eq(slider21, 0) ? m = 10;
+    m < 0 && ng_pre_eq(slider1, 0) && ng_pre_eq(slider2, 0) && ng_pre_eq(slider3, 8) && ng_pre_eq(slider4, 0) && ng_pre_eq(slider5, 0) && ng_pre_eq(slider6, 0) && ng_pre_eq(slider7, 0) && ng_pre_eq(slider8, 0) && ng_pre_eq(slider9, 0) && ng_pre_eq(slider10, 0) && ng_pre_eq(slider11, 1) && ng_pre_eq(slider12, 0) && ng_pre_eq(slider13, 0) && ng_pre_eq(slider14, 0) && ng_pre_eq(slider15, 1) && ng_pre_eq(slider16, 0) && ng_pre_eq(slider17, 0) && ng_pre_eq(slider18, 100) && ng_pre_eq(slider19, 50) && ng_pre_eq(slider20, 0) && ng_pre_eq(slider21, 0) ? m = 11;
+    m < 0 && ng_pre_eq(slider1, 8) && ng_pre_eq(slider2, 0) && ng_pre_eq(slider3, 0) && ng_pre_eq(slider4, 0) && ng_pre_eq(slider5, 0) && ng_pre_eq(slider6, 0) && ng_pre_eq(slider7, 0) && ng_pre_eq(slider8, 0) && ng_pre_eq(slider9, 8) && ng_pre_eq(slider10, 0) && ng_pre_eq(slider11, 1) && ng_pre_eq(slider12, 0) && ng_pre_eq(slider13, 0) && ng_pre_eq(slider14, 30) && ng_pre_eq(slider15, 6) && ng_pre_eq(slider16, 20) && ng_pre_eq(slider17, 1) && ng_pre_eq(slider18, 100) && ng_pre_eq(slider19, 50) && ng_pre_eq(slider20, 0) && ng_pre_eq(slider21, 0) ? m = 12;
+    m < 0 && ng_pre_eq(slider1, 0) && ng_pre_eq(slider2, 0) && ng_pre_eq(slider3, 6) && ng_pre_eq(slider4, 6) && ng_pre_eq(slider5, 6) && ng_pre_eq(slider6, 6) && ng_pre_eq(slider7, 0) && ng_pre_eq(slider8, 0) && ng_pre_eq(slider9, 0) && ng_pre_eq(slider10, 0) && ng_pre_eq(slider11, 1) && ng_pre_eq(slider12, 0) && ng_pre_eq(slider13, 0) && ng_pre_eq(slider14, 5) && ng_pre_eq(slider15, 5) && ng_pre_eq(slider16, 0) && ng_pre_eq(slider17, 0) && ng_pre_eq(slider18, 100) && ng_pre_eq(slider19, 50) && ng_pre_eq(slider20, -2) && ng_pre_eq(slider21, 0) ? m = 13;
+    m < 0 && ng_pre_eq(slider1, 8) && ng_pre_eq(slider2, 8) && ng_pre_eq(slider3, 8) && ng_pre_eq(slider4, 8) && ng_pre_eq(slider5, 0) && ng_pre_eq(slider6, 0) && ng_pre_eq(slider7, 0) && ng_pre_eq(slider8, 0) && ng_pre_eq(slider9, 0) && ng_pre_eq(slider10, 0) && ng_pre_eq(slider11, 1) && ng_pre_eq(slider12, 0) && ng_pre_eq(slider13, 0) && ng_pre_eq(slider14, 40) && ng_pre_eq(slider15, 6) && ng_pre_eq(slider16, 35) && ng_pre_eq(slider17, 3) && ng_pre_eq(slider18, 150) && ng_pre_eq(slider19, 50) && ng_pre_eq(slider20, 0) && ng_pre_eq(slider21, 0) ? m = 14;
+    m < 0 && ng_pre_eq(slider1, 6) && ng_pre_eq(slider2, 0) && ng_pre_eq(slider3, 8) && ng_pre_eq(slider4, 7) && ng_pre_eq(slider5, 0) && ng_pre_eq(slider6, 6) && ng_pre_eq(slider7, 0) && ng_pre_eq(slider8, 4) && ng_pre_eq(slider9, 3) && ng_pre_eq(slider10, 0) && ng_pre_eq(slider11, 1) && ng_pre_eq(slider12, 0) && ng_pre_eq(slider13, 0) && ng_pre_eq(slider14, 25) && ng_pre_eq(slider15, 0) && ng_pre_eq(slider16, 0) && ng_pre_eq(slider17, 0) && ng_pre_eq(slider18, 100) && ng_pre_eq(slider19, 50) && ng_pre_eq(slider20, 0) && ng_pre_eq(slider21, 1) ? m = 15;
     m;
   );
 
@@ -339,6 +368,7 @@ out_pin:Right
     p == 12 ? s = "Whistle Top";
     p == 13 ? s = "Chapel";
     p == 14 ? s = "Rotor Brake";
+    p == 15 ? s = "Church Pipes";
     s;
   );
 
@@ -400,9 +430,16 @@ out_pin:Right
       km = VKM[v];
       while (k <= km) ( H[k] = c2 * H[k - 1] - H[k - 2]; k += 1; );
       b = v * 9;
-      y = DG[0] * H[KE[b]] + DG[1] * H[KE[b + 1]] + DG[2] * H[KE[b + 2]] + DG[3] * H[KE[b + 3]]
-        + DG[4] * H[KE[b + 4]] + DG[5] * H[KE[b + 5]] + DG[6] * H[KE[b + 6]] + DG[7] * H[KE[b + 7]]
-        + DG[8] * H[KE[b + 8]];
+      pipe ? (
+        b = PG + v * 17;
+        y = 0;
+        k = 1;
+        loop(km, y += b[k] * H[k]; k += 1;);
+      ) : (
+        y = DG[0] * H[KE[b]] + DG[1] * H[KE[b + 1]] + DG[2] * H[KE[b + 2]] + DG[3] * H[KE[b + 3]]
+          + DG[4] * H[KE[b + 4]] + DG[5] * H[KE[b + 5]] + DG[6] * H[KE[b + 6]] + DG[7] * H[KE[b + 7]]
+          + DG[8] * H[KE[b + 8]];
+      );
       VPK[v] > 0 ? (
         perc_on ? y += perc_g * H[VKP[v]] * VPE[v];
         VPE[v] *= p_c;
@@ -570,7 +607,8 @@ out_pin:Right
   ng_knob_ctl(14, "KEY CLICK", #og_k, 0, 100, 30, 1, 0) ? update();
   ng_select_ctl(15, "VIBRATO", "OFF|V1|V2|V3|C1|C2|C3", 0) ? update();
 
-  ng_row(5);
+  ng_row(6);
+  ng_select_ctl(21, "VOICE", "TONEWHEEL|PIPE", 0) ? update();
   sprintf(#og_drv, "%d%%", slider16);
   ng_knob_ctl(16, "DRIVE", #og_drv, 0, 100, 15, 1, 0) ? update();
   ng_select_ctl(17, "ROTARY", "OFF|SLOW|FAST|STOP", 0) ? update();

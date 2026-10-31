@@ -22,6 +22,7 @@ static const NullKnobsUI::Control kControls[] = {
     { 12, NullKnobsUI::kSelect, "PERC VOLUME", 0, -1, false },
     { 13, NullKnobsUI::kKnob, "KEY CLICK", 0, -1, false },
     { 14, NullKnobsUI::kSelect, "VIBRATO", 0, -1, false },
+    { 20, NullKnobsUI::kSelect, "VOICE", 1, -1, false },
     { 15, NullKnobsUI::kKnob, "DRIVE", 1, -1, false },
     { 16, NullKnobsUI::kSelect, "ROTARY", 1, -1, false },
     { 17, NullKnobsUI::kKnob, "ACCELERATION", 1, -1, false },
@@ -41,6 +42,7 @@ static const SliderInfo* uiSliders()
     s[12].options = nullorgan::kPercVolShort;
     s[14].options = nullorgan::kVibShort;
     s[16].options = nullorgan::kRotShort;
+    s[20].options = nullorgan::kVoiceShort;
     return s;
 }
 

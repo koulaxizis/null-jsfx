@@ -1,0 +1,169 @@
+desc:NULL Space
+author: Christos Koulaxizis
+tags: reverb space room chamber hall galaxy fdn feedback delay network algorithmic modulation ambience long decay pre-delay
+//category: Essentials
+//NULL JSFX v2.8 • https://nulljsfx.tech • MIT License
+
+slider1:2<0,3,1{Room,Chamber,Hall,Galaxy}>Type
+slider2:50<0,100,1>Size (%)
+slider3:50<0,100,1>Decay (%)
+slider4:30<0,100,1>Damping (%)
+slider5:30<0,100,1>Detune (%)
+slider6:0<0,250,1>Pre-Delay (ms)
+slider7:30<0,100,1>Mix (%)
+
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
+
+@init
+  ext_noinit = 1;              // play and seek keep tails and state, as in the VST3/CLAP
+  // An algorithmic reverb built on an 8-line feedback delay network. Each side goes through a
+  // pre-delay and two Schroeder all-passes (input diffusion), then feeds every other line of
+  // the network. Each line is read with a slowly moving length (Detune: eight sine LFOs from
+  // 0.13 to 0.48 Hz, linear interpolation), damped by a one-pole low-pass (Damping: 20 kHz
+  // down to 1.5 kHz) and scaled so it decays by 60 dB in the decay time, then the eight
+  // outputs are mixed by an 8x8 Hadamard matrix and written back with the input. The left
+  // output sums lines 0, 2, 4, 6 and the right 1, 3, 5, 7 with alternating signs.
+  // Type sets the line lengths (Room 9.7-24.7 ms, Chamber x1.7, Hall x3, Galaxy x5, each
+  // times Size: x0.5 to x2), the decay range (Room 0.2-1.5 s, Chamber 0.5-3 s, Hall 1-8 s,
+  // Galaxy 3-30 s, exponential over Decay), the detune depth (0.5 ms, Galaxy 1.5 ms) and the
+  // diffusion (0.6, Galaxy 0.7). Line lengths glide (50 ms) so Type and Size do not click.
+  // States below 1e-15 are cleared so silence stays free of denormals.
+  lmax = ceil(0.26 * srate) + 8;
+  pmax = ceil(0.25 * srate) + 8;
+  amax = ceil(0.03 * srate) + 8;
+  pb = 8 * lmax;
+  ab = pb + 2 * pmax;
+  st = ab + 4 * amax;
+  // st: 0-7 line lengths (gliding), 8-15 their targets, 16-23 line gains, 24-31 damping
+  // states, 32-39 LFO phases, 40-47 the lines' outputs, 48-55 line lengths at Size 1 in the
+  // Room (ms), 56-63 LFO steps, 64-67 all-pass lengths (gliding), 68-71 their targets,
+  // 72-75 all-pass lengths at Size 1 in the Room (ms)
+  memset(0, 0, st + 76);
+  freembuf(st + 76);
+  st[48] = 9.7; st[49] = 11.3; st[50] = 13.1; st[51] = 14.9;
+  st[52] = 17.3; st[53] = 19.9; st[54] = 22.1; st[55] = 24.7;
+  st[72] = 1.31; st[73] = 1.97; st[74] = 1.43; st[75] = 2.11;
+  wp = pw = aw = 0;
+  ks = 1 - exp(-1 / (0.05 * srate));
+  snap = 1;
+
+  // Schroeder all-pass of n samples on the buffer at b
+  function sp_ap(x, b, n) local(rp, d, w)
+  (
+    rp = aw - n;
+    rp < 0 ? rp += amax;
+    d = b[rp];
+    w = x + apg * d;
+    w = abs(w) < 0.000000000000001 ? 0 : w;
+    b[aw] = w;
+    d - apg * w;
+  );
+
+@slider
+  typ = slider1;
+  tm = typ == 0 ? 1 : typ == 1 ? 1.7 : typ == 2 ? 3 : 5;
+  sz = 0.5 * 2 ^ (slider2 / 50);
+  rt = typ == 0 ? 0.2 * 7.5 ^ (slider3 / 100) : typ == 1 ? 0.5 * 6 ^ (slider3 / 100) :
+       typ == 2 ? 8 ^ (slider3 / 100) : 3 * 10 ^ (slider3 / 100);
+  da = 1 - exp(-2 * $pi * min(20000 * 0.075 ^ (slider4 / 100), 0.45 * srate) / srate);
+  md = slider5 / 100 * (typ == 3 ? 1.5 : 0.5) * srate / 1000;
+  pd = floor(slider6 / 1000 * srate + 0.5);
+  mx = slider7 / 100;
+  apg = typ == 3 ? 0.7 : 0.6;
+  i = 0;
+  loop(8,
+    st[8 + i] = st[48 + i] * tm * sz * srate / 1000;
+    st[16 + i] = 10 ^ (-3 * st[8 + i] / (rt * srate));
+    st[56 + i] = (0.13 + 0.05 * i) * 2 * $pi / srate;
+    i += 1;
+  );
+  i = 0;
+  loop(4,
+    st[68 + i] = st[72 + i] * tm * sz * srate / 1000;
+    i += 1;
+  );
+  snap ? (
+    memcpy(st, st + 8, 8);
+    memcpy(st + 64, st + 68, 4);
+    snap = 0;
+  );
+
+@sample
+  // pre-delay (the buffer is always written, so switching it on starts clean)
+  pd > 0 ? (
+    rp = pw - pd;
+    rp < 0 ? rp += pmax;
+    xl = pb[rp];
+    xr = pb[pmax + rp];
+  ) : (
+    xl = spl0;
+    xr = spl1;
+  );
+  pb[pw] = spl0;
+  pb[pmax + pw] = spl1;
+  pw += 1;
+  pw >= pmax ? pw = 0;
+
+  // input diffusion: two all-passes per side
+  i = 0;
+  loop(4,
+    st[64 + i] += (st[68 + i] - st[64 + i]) * ks;
+    i += 1;
+  );
+  xl = sp_ap(sp_ap(xl, ab, floor(st[64] + 0.5)), ab + amax, floor(st[65] + 0.5));
+  xr = sp_ap(sp_ap(xr, ab + 2 * amax, floor(st[66] + 0.5)), ab + 3 * amax, floor(st[67] + 0.5));
+  aw += 1;
+  aw >= amax ? aw = 0;
+
+  // read the eight lines (moving, interpolated), damp and scale them
+  i = 0;
+  loop(8,
+    st[i] += (st[8 + i] - st[i]) * ks;
+    st[32 + i] += st[56 + i];
+    st[32 + i] >= 2 * $pi ? st[32 + i] -= 2 * $pi;
+    rp = wp - (st[i] + md * sin(st[32 + i]));
+    rp < 0 ? rp += lmax;
+    i0 = floor(rp);
+    fr = rp - i0;
+    i1 = i0 + 1;
+    i1 >= lmax ? i1 = 0;
+    b = i * lmax;
+    o = b[i0] + fr * (b[i1] - b[i0]);
+    o = st[24 + i] + (o - st[24 + i]) * da;
+    st[24 + i] = abs(o) < 0.000000000000001 ? 0 : o;
+    st[40 + i] = st[24 + i] * st[16 + i];
+    i += 1;
+  );
+  wl = st[40] - st[42] + st[44] - st[46];
+  wr = st[41] - st[43] + st[45] - st[47];
+
+  // 8x8 Hadamard (three butterfly stages, then 1/sqrt(8)), write back with the input
+  h = 1;
+  loop(3,
+    j = 0;
+    loop(8,
+      (j & h) == 0 ? (
+        a = st[40 + j];
+        c = st[40 + j + h];
+        st[40 + j] = a + c;
+        st[40 + j + h] = a - c;
+      );
+      j += 1;
+    );
+    h *= 2;
+  );
+  i = 0;
+  loop(8,
+    w = st[40 + i] * 0.35355339059327373 + (i & 1 ? xr : xl);
+    b = i * lmax;
+    b[wp] = abs(w) < 0.000000000000001 ? 0 : w;
+    i += 1;
+  );
+  wp += 1;
+  wp >= lmax ? wp = 0;
+
+  spl0 = spl0 * (1 - mx) + wl * 0.5 * mx;
+  spl1 = spl1 * (1 - mx) + wr * 0.5 * mx;

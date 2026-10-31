@@ -2,7 +2,7 @@ desc:NULL DeEsser
 author: Christos Koulaxizis
 tags: deess sibilance sibilants hiss vocal harshness frequency wideband listen
 //category: Essentials
-//NULL JSFX v2.7 • https://nulljsfx.tech • MIT License
+//NULL JSFX v2.8 • https://nulljsfx.tech • MIT License
 
 slider1:6000<4000,10000,100>Target (Hz)
 slider2:-6<-18,0,0.1>Reduction (dB)

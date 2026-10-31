@@ -1,0 +1,46 @@
+desc:NULL Air
+author: Christos Koulaxizis
+tags: eq air high shelf top end sheen brightness presence open
+//category: One Slider
+//NULL JSFX v2.8 • https://nulljsfx.tech • MIT License
+
+slider1:0<0,100,1>Amount
+
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
+
+@init
+  ext_noinit = 1;              // play and seek keep tails and state, as in the VST3/CLAP
+  // A broad high shelf for the very top of the spectrum. At 100 it lifts 9 dB, and its
+  // corner moves from 16 kHz down to 10 kHz as the amount grows, so small amounts only
+  // open the top octave. The shelf slope is 0.5 (gentler than a standard shelf), so it
+  // never peaks and leaves the 2-5 kHz presence region alone. At 0 it is flat.
+  xl1 = xl2 = yl1 = yl2 = 0;
+  xr1 = xr2 = yr1 = yr2 = 0;
+
+@slider
+  t = slider1 / 100;
+  f = min(16000 - 6000 * t, 0.45 * srate);
+  gdb = 9 * t;
+  A = 10 ^ (gdb / 40);
+  w = 2 * $pi * f / srate;
+  cw = cos(w);
+  sa = sqrt(A) * sin(w) * sqrt((A + 1 / A) * (1 / 0.5 - 1) + 2);
+  a0 = (A + 1) - (A - 1) * cw + sa;
+  b0 = A * ((A + 1) + (A - 1) * cw + sa) / a0;
+  b1 = -2 * A * ((A - 1) + (A + 1) * cw) / a0;
+  b2 = A * ((A + 1) + (A - 1) * cw - sa) / a0;
+  a1 = 2 * ((A - 1) - (A + 1) * cw) / a0;
+  a2 = ((A + 1) - (A - 1) * cw - sa) / a0;
+
+@sample
+  yl = b0 * spl0 + b1 * xl1 + b2 * xl2 - a1 * yl1 - a2 * yl2;
+  xl2 = xl1; xl1 = spl0;
+  yl2 = yl1; yl1 = yl;
+  yr = b0 * spl1 + b1 * xr1 + b2 * xr2 - a1 * yr1 - a2 * yr2;
+  xr2 = xr1; xr1 = spl1;
+  yr2 = yr1; yr1 = yr;
+  spl0 = yl;
+  spl1 = yr;

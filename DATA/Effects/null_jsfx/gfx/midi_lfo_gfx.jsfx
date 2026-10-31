@@ -2,7 +2,7 @@ desc:NULL MIDI LFO GFX
 author: Christos Koulaxizis
 tags: midi lfo modulation cc pitch bend channel pressure tempo sync sine triangle saw square random sample and hold automation gui
 //category: MIDI
-//NULL JSFX v2.7 • https://nulljsfx.tech • MIT License
+//NULL JSFX v2.8 • https://nulljsfx.tech • MIT License
 
 import null_gfx.jsfx-inc
 

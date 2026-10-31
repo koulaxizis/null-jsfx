@@ -1,0 +1,41 @@
+desc:NULL Tone
+author: Christos Koulaxizis
+tags: eq tone bass treble baxandall shelf low high console hi-fi warm bright simple
+//category: Essentials
+//NULL JSFX v2.8 • https://nulljsfx.tech • MIT License
+
+slider1:0<-12,12,0.1>Bass (dB)
+slider2:0<-12,12,0.1>Treble (dB)
+slider3:100<40,400,1:log>Bass Freq (Hz)
+slider4:8000<2000,16000,10:log>Treble Freq (Hz)
+slider5:0<-12,12,0.1>Output (dB)
+
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
+
+@init
+  ext_noinit = 1;              // play and seek keep tails and state, as in the VST3/CLAP
+  // Two broad first-order shelves, the gentle bass and treble controls of a hi-fi amplifier
+  // or a console channel. Each shelf is a one-pole low-pass at its corner: the bass shelf
+  // adds (gain - 1) of the low band, the treble shelf adds (gain - 1) of what lies above
+  // its corner. The slopes are 6 dB per octave, so the curves are wide and never ring.
+  // At 0 dB both shelves are flat and the plugin passes the signal unchanged.
+  lbl = lbr = 0;
+  ltl = ltr = 0;
+
+@slider
+  gb = 10 ^ (slider1 / 20);
+  gt = 10 ^ (slider2 / 20);
+  go = 10 ^ (slider5 / 20);
+  cb = exp(-2 * $pi * min(slider3, 0.45 * srate) / srate);
+  ct = exp(-2 * $pi * min(slider4, 0.45 * srate) / srate);
+
+@sample
+  lbl = (1 - cb) * spl0 + cb * lbl;
+  ltl = (1 - ct) * spl0 + ct * ltl;
+  lbr = (1 - cb) * spl1 + cb * lbr;
+  ltr = (1 - ct) * spl1 + ct * ltr;
+  spl0 = (spl0 + (gb - 1) * lbl + (gt - 1) * (spl0 - ltl)) * go;
+  spl1 = (spl1 + (gb - 1) * lbr + (gt - 1) * (spl1 - ltr)) * go;

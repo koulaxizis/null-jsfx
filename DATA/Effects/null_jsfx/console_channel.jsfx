@@ -1,0 +1,75 @@
+desc:NULL Console Channel
+author: Christos Koulaxizis
+tags: console channel analog mixer summing saturation colour warm punchy bright drive harmonics
+//category: Advanced
+//NULL JSFX v2.8 • https://nulljsfx.tech • MIT License
+
+slider1:1<0,3,1{Clean,Warm,Punchy,Bright}>Character
+slider2:30<0,100,1>Drive (%)
+slider3:0<-12,12,0.1>Output (dB)
+
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
+
+@init
+  ext_noinit = 1;              // play and seek keep tails and state, as in the VST3/CLAP
+  // The colour of a mixing-console channel, for every track that feeds a bus with Console Buss.
+  // Each channel goes through a pre-emphasis shelf, a soft saturator (Pade tanh, flat beyond
+  // +-3) with 6 dB of headroom above full scale, and the exact inverse of the shelf, so small
+  // signals come out with a flat response and only the saturation depends on frequency.
+  // Character: Clean = no shelf, symmetric, up to 12 dB of drive; Warm = the lows (+6 dB below
+  // 200 Hz) saturate first, with even harmonics, 15 dB; Punchy = the deep lows (+4 dB below
+  // 80 Hz), a touch of even harmonics, 18 dB; Bright = the highs (+6 dB above 3 kHz), 12 dB.
+  // A 5 Hz DC blocker follows (the even harmonics bring DC). States below 1e-15 are cleared
+  // so silence stays free of denormals.
+
+  // one channel: emphasis, saturation, de-emphasis, DC blocker
+  function cc_ch(x) instance(xp, ep, sp, yp, dx, dy) local(e, u, v, s, y)
+  (
+    emph ? (
+      e = b0 * x - b1 * xp + sc * ep;
+      xp = x;
+      ep = abs(e) < 0.000000000000001 ? 0 : e;
+    ) : (
+      e = x;
+    );
+    u = e * k;
+    u = u > 3 ? 3 : u < -3 ? -3 : u;
+    v = u * (27 + u * u) / (27 + 9 * u * u);
+    s = (v + asym * v * v) * ik;
+    emph ? (
+      y = (s - sc * sp + b1 * yp) / b0;
+      sp = s;
+      yp = abs(y) < 0.000000000000001 ? 0 : y;
+    ) : (
+      y = s;
+    );
+    v = y - dx + dc * dy;
+    dx = y;
+    dy = abs(v) < 0.000000000000001 ? 0 : v;
+    v * go;
+  );
+
+@slider
+  ch = slider1;
+  emph = ch > 0;
+  sg = 10 ^ ((ch == 2 ? 4 : 6) / 20);
+  sc = exp(-2 * $pi * min(ch == 1 ? 200 : ch == 2 ? 80 : 3000, 0.45 * srate) / srate);
+  ch == 3 ? (
+    b0 = 1 + sc * (sg - 1);
+    b1 = sg * sc;
+  ) : (
+    b0 = 1 + (sg - 1) * (1 - sc);
+    b1 = sc;
+  );
+  asym = ch == 1 ? 0.15 : ch == 2 ? 0.05 : 0;
+  k = 10 ^ (slider2 / 100 * (ch == 1 ? 15 : ch == 2 ? 18 : 12) / 20) / 2;
+  ik = 1 / k;
+  go = 10 ^ (slider3 / 20);
+  dc = 1 - 2 * $pi * 5 / srate;
+
+@sample
+  spl0 = l.cc_ch(spl0);
+  spl1 = r.cc_ch(spl1);

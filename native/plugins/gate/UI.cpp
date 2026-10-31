@@ -20,6 +20,7 @@ static const NullKnobsUI::Control kControls[] = {
     { 8, NullKnobsUI::kKnob, "SC LPF", 1, -1, false, true },
     { 7, NullKnobsUI::kSelect, "SIDECHAIN", 1, -1, false },
     { 9, NullKnobsUI::kSelect, "FLIP", 1, -1, false },
+    { 10, NullKnobsUI::kKnob, "TONE REL", 1, -1, false },
 };
 
 class UIGate : public NullKnobsUI
@@ -101,7 +102,7 @@ protected:
 
     void formatValue(uint32_t param, float v, char* buf, size_t n) override
     {
-        if ((param == 3 && v < 0.5f) || (param == 6 && v < 0.05f) || (param == 8 && v >= 20000.0f))
+        if ((param == 3 && v < 0.5f) || (param == 6 && v < 0.05f) || (param == 8 && v >= 20000.0f) || (param == 10 && v < 0.5f))
             std::snprintf(buf, n, "OFF");
         else if (param == 6)
             std::snprintf(buf, n, "%.1f ms", v);

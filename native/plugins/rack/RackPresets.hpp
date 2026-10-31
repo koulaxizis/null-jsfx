@@ -3227,6 +3227,7 @@ static const LogSlider kLogSliders[] = {
     { "half_speed", 3 },
     { "keys", 4 },
     { "ladder_filter", 0 },
+    { "mallets", 6 },
     { "midi_lfo", 2 },
     { "noise_generator", 3 },
     { "noise_generator", 4 },
@@ -3278,6 +3279,8 @@ static const LogSlider kLogSliders[] = {
     { "synth", 21 },
     { "synth", 23 },
     { "synth", 25 },
+    { "tone", 2 },
+    { "tone", 3 },
     { "transient_shaper", 4 },
     { "transient_shaper", 5 },
 };

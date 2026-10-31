@@ -21,10 +21,10 @@
 namespace nullpluck {
 
 static constexpr double kPi = 3.141592653589793; // EEL2 $pi
-static constexpr int kNumSliders = 12;
+static constexpr int kNumSliders = 13;
 static constexpr int kMaxEvents = 512;
 static constexpr int NV = 12;
-static constexpr int kNumModels = 8;
+static constexpr int kNumModels = 10;
 
 struct MidiEv {
     uint32_t offset;
@@ -43,6 +43,8 @@ static const double kModels[kNumModels][17] = {
     { 1.5, 0.8, 0.1, 8000, 6, 0.02, 350, 4, 1.2, 1100, 4, 0.7, 3000, 3, 0.4, 0.2, 0.6 },       // Banjo
     { 0.25, 0.9, 0.5, 1500, 0, 0.05, 110, 2, 1, 220, 3, 0.6, 440, 3, 0.3, 0.7, 1.4 },          // Muted Guitar
     { 6, 0.75, 0.12, 6000, 2, 0.02, 200, 2, 0.6, 600, 3, 0.5, 1800, 3, 0.3, 0.1, 0.6 },        // Dulcimer
+    { 1, 0.7, 0.45, 1500, 0, 0.05, 280, 6, 1.2, 470, 5, 0.8, 2800, 2, 0.4, 0.7, 1 },           // Pizzicato Violins
+    { 1.4, 0.75, 0.45, 1000, 0, 0.05, 110, 5, 1.2, 220, 4, 0.8, 1300, 2, 0.3, 0.7, 1.1 },      // Pizzicato Cellos
 };
 
 // the strum patterns (PT), 8 steps (0 rest, 1 down, 2 up) for Strum 1..5
@@ -90,7 +92,8 @@ public:
     {
         const double* s = v - 1; // s[n] = slider n
         const double sr = fSr;
-        model = std::max(0.0, std::min(7.0, std::floor(s[1] + 0.5)));
+        const double pz = std::max(0.0, std::min(2.0, std::floor(s[13] + 0.5)));
+        model = pz > 0 ? 7 + pz : std::max(0.0, std::min(7.0, std::floor(s[1] + 0.5)));
         mb = kModels[int(model)];
         mT60 = mb[0]; mKt = mb[1]; mLpb = mb[2]; mExb = mb[3]; mTw = mb[4]; mTwt = mb[5];
         triM = mb[15]; mGain = mb[16];

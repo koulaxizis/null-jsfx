@@ -1,4 +1,19 @@
 {
+  "air": {
+    "card_desc": "One-Knob Top-End Air Shelf",
+    "keywords": "air eq high shelf top end sheen brightness presence open treble mastering vocals",
+    "slider_desc": [
+      "How much air: up to +9 dB of gentle high shelf, its corner moving from 16 kHz down to 10 kHz as the amount grows; 0 is flat."
+    ],
+    "uses": [
+      "Opening up a dull mix or master",
+      "Adding sheen to vocals and acoustic guitars",
+      "Lifting cymbals and room tone without harshness",
+      "A last touch of brightness on a bus"
+    ],
+    "properties": "Input → RBJ high shelf (slope 0.5, 0..+9 dB, corner 16 kHz → 10 kHz with the amount, held below 0.45 × sample rate) → Output. Zero latency, stereo channels processed independently.",
+    "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-air\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><path d=\"M 8,44 L 30,44 C 40,44 42,24 56,22\" stroke=\"url(#icon-air)\" stroke-width=\"2.5\" fill=\"none\" stroke-linecap=\"round\"/><path d=\"M 8,44 L 56,44\" stroke=\"url(#icon-air)\" stroke-width=\"1.5\" fill=\"none\" opacity=\"0.3\"/><path d=\"M 44,12 C 48,10 52,14 56,12 M 40,18 C 45,16 50,20 56,18\" stroke=\"url(#icon-air)\" stroke-width=\"1.5\" fill=\"none\" stroke-linecap=\"round\" opacity=\"0.5\"/></svg>"
+  },
   "amp_simulator": {
     "card_desc": "Guitar & Bass Amp, No Cabinet",
     "keywords": "amp simulator amplifier guitar bass preamp power amp tube valve distortion overdrive crunch lead clean tone stack fender marshall presence sag oversampling di reamp",
@@ -385,6 +400,40 @@
     ],
     "properties": "Signal chain: Input → Delay (1 period of Frequency, interpolated) → Feed-Forward or Feed-Backward sum → Level Compensation → Gain → Output. Output is normalised by 1/(1+fb) or (1−fb) so high Feedback does not blow up; stereo channels processed independently, zero latency.",
     "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-comb\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><path d=\"M 8,16 L 8,48 M 14,16 L 14,48 M 20,16 L 20,48 M 26,16 L 26,48 M 32,16 L 32,48 M 38,16 L 38,48 M 44,16 L 44,48 M 50,16 L 50,48 M 56,16 L 56,48\" stroke=\"url(#icon-comb)\" stroke-width=\"1.5\"/></svg>"
+  },
+  "console_buss": {
+    "card_desc": "Console Summing Bus",
+    "keywords": "console buss bus master analog mixer desk summing saturation crosstalk colour warm punchy bright drive glue mix",
+    "slider_desc": [
+      "Clean: no emphasis, symmetric saturation. Warm: the lows saturate first, with even harmonics. Punchy: the deep lows saturate first. Bright: the highs saturate first.",
+      "How hard the bus is driven (up to 9 or 12 dB depending on the character), and how much the sides leak into each other (up to -30 dB).",
+      "Output level after the console stage."
+    ],
+    "uses": [
+      "Analog summing colour on the mix bus",
+      "Pairing with Console Channel on the tracks",
+      "Gentle density on drum and music busses",
+      "A touch of desk crosstalk for a less clinical stereo image"
+    ],
+    "properties": "Input → first-order pre-emphasis shelf (per character) → soft saturator (Padé tanh, 8 dB of headroom) → the exact inverse shelf → crosstalk (the other side high-passed at 1 kHz, up to -30 dB with Drive) → 5 Hz DC blocker → Output. Zero latency.",
+    "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-cbu\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><rect x=\"10\" y=\"8\" width=\"12\" height=\"48\" rx=\"3\" stroke=\"url(#icon-cbu)\" stroke-width=\"1.5\" fill=\"none\" opacity=\"0.4\"/><rect x=\"26\" y=\"8\" width=\"12\" height=\"48\" rx=\"3\" stroke=\"url(#icon-cbu)\" stroke-width=\"1.5\" fill=\"none\" opacity=\"0.4\"/><path d=\"M 16,40 L 32,40 L 48,24 L 56,24\" stroke=\"url(#icon-cbu)\" stroke-width=\"2.5\" fill=\"none\" stroke-linecap=\"round\"/><rect x=\"42\" y=\"8\" width=\"12\" height=\"48\" rx=\"3\" stroke=\"url(#icon-cbu)\" stroke-width=\"2\" fill=\"none\"/></svg>"
+  },
+  "console_channel": {
+    "card_desc": "Console Channel Colour",
+    "keywords": "console channel analog mixer desk summing saturation colour warm punchy bright drive harmonics tape track",
+    "slider_desc": [
+      "Clean: no emphasis, symmetric saturation. Warm: the lows saturate first, with even harmonics. Punchy: the deep lows saturate first, with more drive. Bright: the highs saturate first.",
+      "How hard the channel is driven: up to 12, 15 or 18 dB depending on the character; small signals stay clean.",
+      "Output level after the console stage."
+    ],
+    "uses": [
+      "Analog-desk colour on every track of a mix",
+      "Warming up thin digital sources",
+      "Adding weight and punch to drums and bass",
+      "Use with Console Buss on the bus the tracks feed"
+    ],
+    "properties": "Input → first-order pre-emphasis shelf (per character) → soft saturator (Padé tanh, 6 dB of headroom, even harmonics for Warm and Punchy) → the exact inverse shelf (flat response at low level) → 5 Hz DC blocker → Output. Zero latency, stereo channels processed independently.",
+    "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-cch\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><rect x=\"24\" y=\"8\" width=\"16\" height=\"48\" rx=\"3\" stroke=\"url(#icon-cch)\" stroke-width=\"2\" fill=\"none\" opacity=\"0.5\"/><rect x=\"20\" y=\"30\" width=\"24\" height=\"7\" rx=\"2\" fill=\"url(#icon-cch)\"/><circle cx=\"32\" cy=\"16\" r=\"3\" stroke=\"url(#icon-cch)\" stroke-width=\"1.5\" fill=\"none\"/></svg>"
   },
   "convolution": {
     "card_desc": "Impulse Response Reverb",
@@ -1018,7 +1067,8 @@
       "Delays the audio so the gate opens just before each hit and keeps the attack intact (adds that much latency; 0 = off).",
       "Internal listens to the track itself; External listens to input channels 3/4 (sidechain key).",
       "Low-pass on the detector only, so hi-hats or cymbals do not open the gate (20 kHz = off).",
-      "Turns the gate into a ducker: the signal is turned down by Range while the detector is above the threshold."
+      "Turns the gate into a ducker: the signal is turned down by Range while the detector is above the threshold.",
+      "Tone Release: while the gate closes, the tail also gets darker, like an instrument dying away, instead of only quieter; 0 % is off."
     ],
     "uses": [
       "Removing noise between vocal phrases",
@@ -1058,6 +1108,27 @@
     ],
     "properties": "Signal chain: Input → 4 s Ring Buffer → Event Clock (Rate) → Slice Loop (Stutter / Granular grain, Reverse, Pitch, Tape Stop) or, with Stutter off, live processing (reversed chunks, two overlapping Hann grains, varispeed pitch / tape stop) → Gate → Mix → Output. Every effect works on its own; slice length follows host tempo; loop seams get 3 ms fades; zero latency.",
     "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-glitch-fx\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><path d=\"M6,32 L58,32\" stroke=\"url(#icon-glitch-fx)\" stroke-width=\"1.5\" fill=\"none\" stroke-linecap=\"round\" opacity=\"0.4\"/><path d=\"M6,32 L12,32 L12,18 L20,18 L20,46 L26,46 L26,32\" stroke=\"url(#icon-glitch-fx)\" stroke-width=\"2.5\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M32,22 L38,22 L38,42 L44,42\" stroke=\"url(#icon-glitch-fx)\" stroke-width=\"2.5\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M50,26 L50,38 M54,32 L58,32\" stroke=\"url(#icon-glitch-fx)\" stroke-width=\"2.5\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/></svg>"
+  },
+  "glue_comp": {
+    "card_desc": "Stereo Bus Compressor",
+    "keywords": "glue compressor bus buss mix console stereo link auto release parallel sidechain hpf drums mastering",
+    "slider_desc": [
+      "Level above which the compressor starts to work (4 dB soft knee around it).",
+      "Compression ratio: 2:1 for gentle glue, 4:1 for control, 10:1 for heavy squash.",
+      "How fast the gain reduction sets in; slower attacks let transients through.",
+      "How fast the gain recovers; Auto follows the program (fast after peaks, slow under dense passages).",
+      "Gain after compression.",
+      "Blend between the dry and the compressed signal (parallel compression).",
+      "High-pass on the detector only, so bass does not pump the mix (0 = off)."
+    ],
+    "uses": [
+      "Gluing a mix bus together",
+      "Punchy drum bus compression",
+      "Parallel (New York) compression",
+      "Gentle control on a master or a group"
+    ],
+    "properties": "Input → key (optional one-pole high-pass) → stereo-linked peak detector → gain computer (2/4/10:1, 4 dB soft knee) → smoothing in dB (stepped attack 0.1–30 ms, release 0.1–1.2 s or Auto: the deeper of an 80 ms and a 0.5 s / 1.5 s envelope) → Makeup → Dry/Wet Mix → Output. Zero latency.",
+    "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-glue\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><path d=\"M 8,52 L 30,30 L 56,20\" stroke=\"url(#icon-glue)\" stroke-width=\"2.5\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M 8,52 L 56,4\" stroke=\"url(#icon-glue)\" stroke-width=\"1.5\" fill=\"none\" opacity=\"0.3\"/><rect x=\"40\" y=\"38\" width=\"16\" height=\"4\" rx=\"1\" fill=\"url(#icon-glue)\" opacity=\"0.5\"/><rect x=\"40\" y=\"46\" width=\"10\" height=\"4\" rx=\"1\" fill=\"url(#icon-glue)\" opacity=\"0.5\"/></svg>"
   },
   "granular_delay": {
     "card_desc": "Grain Cloud Delay",
@@ -1291,6 +1362,31 @@
     ],
     "properties": "Input → ITU-R BS.1770-4 K-weighting (high shelf + high pass) → 100 ms energy blocks → Momentary (400 ms), Short-term (3 s), Integrated (gated at −70 LUFS and −10 LU), Loudness Range (EBU Tech 3342, 10th to 95th percentile, gated at −70 LUFS and −20 LU), sample peak and 4x oversampled true peak. Audio passes through unchanged (Monitor Mono is a listening aid). Zero latency. The plain JSFX only measures; the GFX, VST3 and CLAP versions show the readouts and a loudness history graph.",
     "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-loudness-meter\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><path d=\"M 12,46 A 22,22 0 1 1 52,46\" stroke=\"url(#icon-loudness-meter)\" stroke-width=\"2.5\" fill=\"none\" stroke-linecap=\"round\"/><path d=\"M 32,40 L 44,22\" stroke=\"url(#icon-loudness-meter)\" stroke-width=\"2.5\" fill=\"none\" stroke-linecap=\"round\"/><path d=\"M 20,52 L 44,52\" stroke=\"url(#icon-loudness-meter)\" stroke-width=\"1.5\" fill=\"none\" stroke-linecap=\"round\" opacity=\"0.5\"/><path d=\"M 17,30 L 21,32 M 32,17 L 32,21 M 47,30 L 43,32\" stroke=\"url(#icon-loudness-meter)\" stroke-width=\"1.5\" fill=\"none\" stroke-linecap=\"round\" opacity=\"0.4\"/></svg>"
+  },
+  "mallets": {
+    "card_desc": "Marimba, Vibes, Bells & Timpani",
+    "keywords": "mallets marimba xylophone vibraphone vibes glockenspiel tubular bells chimes timpani kettle drum orchestral percussion modal synthesis mallet hardness strike position resonator damper motor sustain pedal midi instrument",
+    "slider_desc": [
+      "The instrument: Marimba, Xylophone, Vibraphone, Glockenspiel, Tubular Bells or Timpani.",
+      "How hard the mallet is: soft yarn gives a round, dark tone, hard plastic a bright, clicky one.",
+      "Where the mallet hits: the centre gives a pure tone, the edge brings out more overtones.",
+      "How much the tube (or the timpani's kettle) under the bar reinforces the lowest note: louder and shorter as it rises.",
+      "How long every note rings, from 10 % to 4 times as long.",
+      "Ring lets every note ring out; Damp mutes it over Damp Time when the key comes up, unless the sustain pedal holds it, as on a vibraphone.",
+      "How fast a note is muted when Key Up is Damp.",
+      "The vibraphone's motor: a tremolo at this rate (0 = off).",
+      "How much the velocity changes the level and the mallet's hardness (0 % = every note the same).",
+      "How far the notes spread across the stereo field by pitch.",
+      "The output level (-24 to +12 dB)."
+    ],
+    "uses": [
+      "Marimba and xylophone for film, games, pop and world grooves",
+      "Vibraphone with the motor and the damper pedal for jazz and lounge",
+      "Glockenspiel and tubular bells for orchestral, holiday and cinematic cues",
+      "Timpani rolls and hits for orchestral builds and trailers"
+    ],
+    "properties": "An instrument: MIDI in, stereo out, no samples, 24 voices (the same key struck again takes a new voice and the old one keeps ringing; a 25th voice takes the oldest one, released ones first, after a 2 ms fade). Each strike excites six damped resonators at the model's mode ratios, each with its own level and decay; the mallet's contact time (3 ms soft to 0.24 ms hard) rounds off the high modes and sets the onset, the strike position silences or brings out the antisymmetric modes, and higher keys decay faster. Key Up Ring lets every note ring out, Damp mutes it over Damp Time (the sustain pedal, CC 64, holds it); all notes off (CC 123/120) fades every key. The voices are spread by pitch over Width, then the vibraphone motor (a level tremolo). Sample-accurate and the same in the JSFX, the GFX version and the VST3/CLAP.",
+    "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-mallets\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><rect x=\"6\" y=\"30\" width=\"8\" height=\"24\" rx=\"2\" fill=\"url(#icon-mallets)\"/><rect x=\"18\" y=\"33\" width=\"8\" height=\"21\" rx=\"2\" fill=\"url(#icon-mallets)\"/><rect x=\"30\" y=\"36\" width=\"8\" height=\"18\" rx=\"2\" fill=\"url(#icon-mallets)\"/><rect x=\"42\" y=\"39\" width=\"8\" height=\"15\" rx=\"2\" fill=\"url(#icon-mallets)\"/><line x1=\"22\" y1=\"8\" x2=\"44\" y2=\"30\" stroke=\"url(#icon-mallets)\" stroke-width=\"3\" stroke-linecap=\"round\"/><circle cx=\"20\" cy=\"7\" r=\"5\" fill=\"url(#icon-mallets)\"/><line x1=\"52\" y1=\"10\" x2=\"36\" y2=\"30\" stroke=\"url(#icon-mallets)\" stroke-width=\"3\" stroke-linecap=\"round\" opacity=\"0.6\"/><circle cx=\"54\" cy=\"8\" r=\"5\" fill=\"url(#icon-mallets)\" opacity=\"0.6\"/></svg>"
   },
   "maximizer": {
     "card_desc": "Look-Ahead Loudness Maximizer",
@@ -1554,7 +1650,8 @@
       "The built-in rotary speaker: Slow (chorale), Fast (tremolo) or Stop, with the horn and drum speeding up and slowing down like heavy rotors; Off bypasses it. The mod wheel from the middle up switches Slow and Fast.",
       "How long the rotors take to change speed (10 to 400% of the natural time; the light horn is always quicker than the heavy drum).",
       "The mix of the horn (highs) and the drum (lows) of the rotary speaker; 50% is even.",
-      "The output level (-24 to +12 dB)."
+      "The output level (-24 to +12 dB).",
+      "Voice: Tonewheel is the drawbar organ; Pipe turns it into a pipe organ, the drawbars become the stops (each a rank with its own overtones), the wind starts and stops softly, Key Click becomes the pipes' chiff and there is no percussion."
     ],
     "uses": [
       "Gospel, soul and blues organ with fast rotary swells on the mod wheel",
@@ -1833,7 +1930,8 @@
       "Off plays every key as you press it; Down, Up, Down-Up, Folk and Offbeat strum the chord you hold in time with the host's tempo (on its beat while it plays, from the first key while it is stopped).",
       "How often the chord is strummed: quarters, eighths, sixteenths or eighth-note triplets.",
       "The time from one string to the next within a strum (0 to 100 ms): short for a tight chop, long for a slow roll.",
-      "The output level (-24 to +12 dB)."
+      "The output level (-24 to +12 dB).",
+      "Pizzicato: plays plucked violins or cellos instead of the Model: a finger's soft pluck, a short decay and the instrument's wooden body; Off uses the Model."
     ],
     "uses": [
       "Strummed acoustic rhythm guitar from held chords, synced to the song",
@@ -2130,7 +2228,9 @@
       "Output level after the dry/wet mix, in dB; 0 dB is off.",
       "Runs the saturation at 2x or 4x the sample rate (linear-phase halfband filters, 31 or 37 samples of latency) so its harmonics do not fold back as aliasing; Off adds no latency.",
       "Tilt EQ around 800 Hz before the saturation and its exact inverse after it: positive values make the highs distort more, negative values the lows, while the clean tone stays the same; 0 dB is off.",
-      "Channels: Stereo works on the whole signal; Mid or Side processes only that half of the mid/side pair and leaves the other untouched."
+      "Channels: Stereo works on the whole signal; Mid or Side processes only that half of the mid/side pair and leaves the other untouched.",
+      "Focus: a +9 dB bell (Bass 100 Hz, Mid 1 kHz, Presence 3 kHz) before the saturation and its exact inverse after it, so that band distorts more while the clean tone stays the same; Off adds nothing.",
+      "Density: thickens the curve so quieter parts of the wave saturate too, for a denser, more compressed sound; 0 % is off."
     ],
     "uses": [
       "Warmth and density on buses",
@@ -2279,6 +2379,27 @@
     ],
     "properties": "Input → stereo-linked level → fast (1 ms) and slow (25 ms) attack envelopes, 80 ms release → transient amount from their difference → gain between -3 and +9 dB scaled by Amount → Output. Zero latency, no look-ahead.",
     "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-snappy\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><path d=\"M 8,46 L 18,46 L 22,10 L 30,38 Q 40,46 56,46\" stroke=\"url(#icon-snappy)\" stroke-width=\"2.5\" fill=\"none\" stroke-linecap=\"round\"/><path d=\"M 22,10 L 26,10\" stroke=\"url(#icon-snappy)\" stroke-width=\"1.5\" fill=\"none\" stroke-linecap=\"round\" opacity=\"0.4\"/><path d=\"M 8,46 L 56,46\" stroke=\"url(#icon-snappy)\" stroke-width=\"1.5\" fill=\"none\" stroke-linecap=\"round\" opacity=\"0.3\"/></svg>"
+  },
+  "space": {
+    "card_desc": "Room, Chamber, Hall & Galaxy Reverb",
+    "keywords": "reverb space room chamber hall galaxy algorithmic fdn ambience long decay modulation pre-delay vocals pads",
+    "slider_desc": [
+      "The kind of space: Room (short, close), Chamber (dense), Hall (big and smooth) or Galaxy (huge, long and moving).",
+      "How big the space is, from half to twice its type's size.",
+      "How long the tail lasts: Room 0.2 to 1.5 s, Chamber 0.5 to 3 s, Hall 1 to 8 s, Galaxy 3 to 30 s.",
+      "How fast the highs die away compared with the rest of the tail.",
+      "How much the delay lines drift, for a smooth, chorused tail without metallic ringing.",
+      "Time before the reverb starts, to keep the dry sound clear.",
+      "Blend between the dry and the reverberated signal."
+    ],
+    "uses": [
+      "Rooms and chambers on drums and vocals",
+      "Concert halls on strings, piano and choirs",
+      "Huge ambient tails on pads and sound design",
+      "Putting a whole mix in one space"
+    ],
+    "properties": "Input → Pre-Delay → two Schroeder all-passes per side → 8-line feedback delay network (moving interpolated reads, one-pole damping, 60 dB decay in the decay time, 8×8 Hadamard matrix) → left from the even lines, right from the odd → Dry/Wet Mix → Output. Zero latency.",
+    "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-space\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><circle cx=\"32\" cy=\"32\" r=\"4\" fill=\"url(#icon-space)\"/><circle cx=\"32\" cy=\"32\" r=\"12\" stroke=\"url(#icon-space)\" stroke-width=\"2\" fill=\"none\" opacity=\"0.7\"/><circle cx=\"32\" cy=\"32\" r=\"20\" stroke=\"url(#icon-space)\" stroke-width=\"1.5\" fill=\"none\" opacity=\"0.45\"/><circle cx=\"32\" cy=\"32\" r=\"27\" stroke=\"url(#icon-space)\" stroke-width=\"1\" fill=\"none\" opacity=\"0.25\"/></svg>"
   },
   "spectral_ducker": {
     "card_desc": "Make Room for a Vocal, Band by Band",
@@ -2740,6 +2861,25 @@
     ],
     "properties": "Input → 700 Hz one-pole split → low band × opposite gain of high band (±6 dB) → summed → Output. Zero latency, stereo channels processed independently.",
     "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-tilt\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><path d=\"M 8,44 L 56,20\" stroke=\"url(#icon-tilt)\" stroke-width=\"2.5\" fill=\"none\" stroke-linecap=\"round\"/><path d=\"M 8,32 L 56,32\" stroke=\"url(#icon-tilt)\" stroke-width=\"1.5\" fill=\"none\" stroke-linecap=\"round\" opacity=\"0.3\"/><circle cx=\"32\" cy=\"32\" r=\"3\" stroke=\"url(#icon-tilt)\" stroke-width=\"1.5\" fill=\"none\" stroke-linecap=\"round\" opacity=\"0.5\"/></svg>"
+  },
+  "tone": {
+    "card_desc": "Bass & Treble Shelves",
+    "keywords": "tone eq bass treble baxandall hi-fi shelf low high warm bright simple console channel",
+    "slider_desc": [
+      "Low shelf gain, ±12 dB.",
+      "High shelf gain, ±12 dB.",
+      "Corner of the low shelf.",
+      "Corner of the high shelf.",
+      "Output level after the shelves."
+    ],
+    "uses": [
+      "Quick tone shaping of a track or bus",
+      "Adding warmth or weight to thin sources",
+      "Taming dull or harsh recordings",
+      "A hi-fi style loudness curve"
+    ],
+    "properties": "Input → two first-order shelves (one-pole low-passes at Bass Freq and Treble Freq, 6 dB per octave, never ringing) → Output gain. Flat at 0 dB. Zero latency, stereo channels processed independently.",
+    "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-tone\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><path d=\"M 8,22 C 20,22 22,32 32,32 C 42,32 44,42 56,42\" stroke=\"url(#icon-tone)\" stroke-width=\"2.5\" fill=\"none\" stroke-linecap=\"round\"/><path d=\"M 8,32 L 56,32\" stroke=\"url(#icon-tone)\" stroke-width=\"1.5\" fill=\"none\" opacity=\"0.3\"/><circle cx=\"18\" cy=\"50\" r=\"4\" stroke=\"url(#icon-tone)\" stroke-width=\"1.5\" fill=\"none\" opacity=\"0.5\"/><circle cx=\"46\" cy=\"50\" r=\"4\" stroke=\"url(#icon-tone)\" stroke-width=\"1.5\" fill=\"none\" opacity=\"0.5\"/></svg>"
   },
   "trance_gate": {
     "card_desc": "16-Step Rhythmic Gate",

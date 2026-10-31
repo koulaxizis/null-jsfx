@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Glue Comp by NULL JSFX: free audio plugin for REAPER, VST3 and CLAP</title>
+    <meta name="description" content="Glue Comp: Stereo Bus Compressor. Free and open source audio plugin for REAPER (JSFX) and any DAW (VST3, CLAP) on Windows, macOS and Linux, plus LV2 on Linux.">
+    <link rel="canonical" href="https://nulljsfx.tech/plugins/glue-comp/">
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Glue Comp: Stereo Bus Compressor">
+    <meta property="og:description" content="Glue Comp: Stereo Bus Compressor. Free and open source audio plugin for REAPER (JSFX) and any DAW (VST3, CLAP) on Windows, macOS and Linux, plus LV2 on Linux.">
+    <meta property="og:url" content="https://nulljsfx.tech/plugins/glue-comp/">
+    <meta property="og:image" content="https://nulljsfx.tech/assets/video/glue_comp.jpg">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Glue Comp: Stereo Bus Compressor">
+    <meta name="twitter:description" content="Glue Comp: Stereo Bus Compressor. Free and open source audio plugin for REAPER (JSFX) and any DAW (VST3, CLAP) on Windows, macOS and Linux, plus LV2 on Linux.">
+    <meta name="twitter:image" content="https://nulljsfx.tech/assets/video/glue_comp.jpg">
+    <link rel="icon" type="image/svg+xml" href="/assets/img/favicon.svg">
+    <link rel="stylesheet" href="/assets/css/style.css">
+    <script type="application/ld+json">{"@context": "https://schema.org", "@type": "SoftwareApplication", "name": "NULL Glue Comp", "description": "Stereo Bus Compressor", "url": "https://nulljsfx.tech/plugins/glue-comp/", "image": "https://nulljsfx.tech/assets/video/glue_comp.jpg", "applicationCategory": "MultimediaApplication", "applicationSubCategory": "Audio audio plugin", "operatingSystem": "Windows, macOS, Linux", "softwareVersion": "2.8", "license": "https://opensource.org/licenses/MIT", "offers": {"@type": "Offer", "price": "0", "priceCurrency": "EUR"}, "author": {"@type": "Person", "name": "Christos Koulaxizis"}, "isPartOf": {"@type": "SoftwareApplication", "name": "NULL JSFX", "url": "https://nulljsfx.tech/"}}</script>
+    <script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "NULL JSFX", "item": "https://nulljsfx.tech/"}, {"@type": "ListItem", "position": 2, "name": "Essentials", "item": "https://nulljsfx.tech/#effects"}, {"@type": "ListItem", "position": 3, "name": "Glue Comp", "item": "https://nulljsfx.tech/plugins/glue-comp/"}]}</script>
+</head>
+<body class="plugin-page">
+    <main>
+        <nav class="page-crumbs" aria-label="Breadcrumb">
+            <a href="/" class="page-home"><img src="/assets/img/favicon.svg" alt="NULL JSFX" width="28" height="28"></a>
+            <a href="/">NULL JSFX</a> <span>/</span> <a href="/">Effects</a> <span>/</span> <span>Glue Comp</span>
+        </nav>
+        <article class="page-plugin">
+            <header class="guide-header page-header">
+                <span class="guide-category">Essentials</span>
+                <h1>GLUE COMP</h1>
+                <p>Stereo Bus Compressor</p>
+            </header>
+            <video class="guide-shot guide-video" poster="/assets/video/glue_comp.jpg" controls playsinline preload="none" width="1280" height="720" aria-label="Glue Comp presentation video"><source src="https://github.com/koulaxizis/null-jsfx/releases/download/media/glue_comp.mp4" type="video/mp4"><source src="/assets/video/glue_comp.mp4" type="video/mp4"></video>
+            <div class="page-actions">
+                <a class="featured-btn" href="/#download"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg><span>Download free</span></a>
+                <small>Part of NULL JSFX 2.8: 133 plugins, free and open source (MIT). Easiest with <a href="/#hub">NULL JSFX Hub</a>.</small>
+            </div>
+            <div class="guide-body">
+                <section class="guide-section">
+                    <h2>Controls</h2>
+                    <ul class="guide-sliders"><li><span class="slider-name">Threshold</span><span class="slider-desc">−40 to 0 dB — Level above which the compressor starts to work (4 dB soft knee around it).</span></li><li><span class="slider-name">Ratio</span><span class="slider-desc">2 / 4 / 10 — Compression ratio: 2:1 for gentle glue, 4:1 for control, 10:1 for heavy squash.</span></li><li><span class="slider-name">Attack</span><span class="slider-desc">0.1 ms / 0.3 ms / 1 ms / 3 ms / 10 ms / 30 ms — How fast the gain reduction sets in; slower attacks let transients through.</span></li><li><span class="slider-name">Release</span><span class="slider-desc">0.1 s / 0.3 s / 0.6 s / 1.2 s / Auto — How fast the gain recovers; Auto follows the program (fast after peaks, slow under dense passages).</span></li><li><span class="slider-name">Makeup</span><span class="slider-desc">0 to 20 dB — Gain after compression.</span></li><li><span class="slider-name">Mix</span><span class="slider-desc">0 to 100% — Blend between the dry and the compressed signal (parallel compression).</span></li><li><span class="slider-name">Sidechain HPF</span><span class="slider-desc">0 to 300 Hz — High-pass on the detector only, so bass does not pump the mix (0 = off).</span></li></ul>
+                </section>
+                <section class="guide-section">
+                    <h2>Best uses</h2>
+                    <ul class="use-cases"><li>Gluing a mix bus together</li><li>Punchy drum bus compression</li><li>Parallel (New York) compression</li><li>Gentle control on a master or a group</li></ul>
+                </section>
+                <section class="guide-section">
+                    <h2>Properties</h2>
+                    <p class="page-props">Input → key (optional one-pole high-pass) → stereo-linked peak detector → gain computer (2/4/10:1, 4 dB soft knee) → smoothing in dB (stepped attack 0.1–30 ms, release 0.1–1.2 s or Auto: the deeper of an 80 ms and a 0.5 s / 1.5 s envelope) → Makeup → Dry/Wet Mix → Output. Zero latency.</p>
+                </section>
+                <section class="guide-section">
+                    <h2>Formats</h2>
+                    <ul class="guide-formats"><li><span class="format-tag">JSFX</span>JSFX for REAPER, with REAPER&#x27;s own sliders</li><li><span class="format-tag">GFX</span>JSFX GFX for REAPER, with its own interface</li><li><span class="format-tag">VST3</span>VST3 for any DAW</li><li><span class="format-tag">CLAP</span>CLAP for any DAW</li><li><span class="format-tag">LV2</span>LV2 for Linux DAWs such as Ardour, Carla and Qtractor</li></ul>
+                </section>
+                <section class="guide-section">
+                    <h2>Factory presets</h2>
+                    <p class="page-list">Mix Bus Glue · Drum Bus Punch · Parallel Drums · Gentle Master · Vocal Group · Pumping Bus</p>
+                </section>
+                <section class="guide-section">
+                    <h2>Try it</h2>
+                    <a class="try-studio guide-studio" href="https://useoros.online/studio/" target="_blank" rel="noopener"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8" fill="currentColor"/></svg><span class="try-studio-text"><b>Try it on orOS Studio</b><small>Add it to a track in your browser, with its own interface. Nothing to install.</small></span></a>
+                </section>
+            </div>
+        </article>
+        <section class="page-related">
+            <h2 class="section-title">Goes well with</h2>
+            <div class="related-grid"><a class="related-card" href="/plugins/channel-utility/"><b>Channel Utility</b><small>Gain, Phase &amp; Routing</small></a><a class="related-card" href="/plugins/clipper/"><b>Clipper</b><small>Oversampled Hard &amp; Soft Clipper</small></a><a class="related-card" href="/plugins/phase-align/"><b>Phase Align</b><small>Time, Polarity and Phase Alignment</small></a><a class="related-card" href="/plugins/stereo-width/"><b>Stereo Width</b><small>M/S Width with Mono Bass</small></a><a class="related-card" href="/plugins/studio-eq/"><b>Studio EQ</b><small>Eight-Band EQ with Mid/Side and Linear Phase</small></a><a class="related-card" href="/plugins/auto-pan/"><b>Auto Pan</b><small>LFO Stereo Panner</small></a></div>
+            <p class="page-more"><a href="/">All 133 NULL JSFX plugins</a></p>
+        </section>
+    </main>
+    <footer class="site-footer">
+        <div class="footer-content">
+            Designed with &#9825; by <a href="https://koulaxizis.gr" target="_blank" rel="noopener">Christos Koulaxizis</a>.
+            <div class="footer-links">
+                <a href="https://ko-fi.com/koulaxizis" target="_blank" rel="noopener">Support on Ko-fi</a>
+                <span class="sep">&bull;</span>
+                <a href="https://github.com/koulaxizis/null-jsfx" target="_blank" rel="noopener">GitHub</a>
+                <span class="sep">&bull;</span>
+                <a href="/">nulljsfx.tech</a>
+            </div>
+        </div>
+    </footer>
+    <button id="theme-toggle" class="theme-toggle-floating" aria-label="Toggle color theme" title="Switch between light/dark theme">
+        <svg class="sun-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2 M12 21v2 M4.22 4.22l1.42 1.42 M18.36 18.36l1.42 1.42 M1 12h2 M21 12h2 M4.22 19.78l1.42-1.42 M18.36 5.64l1.42-1.42"/></svg>
+        <svg class="moon-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none;"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+    </button>
+    <script src="/assets/js/theme.js"></script>
+    <script src="/assets/js/demo.js"></script>
+</body>
+</html>

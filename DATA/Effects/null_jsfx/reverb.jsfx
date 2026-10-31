@@ -2,7 +2,7 @@ desc:NULL Reverb
 author: Christos Koulaxizis
 tags: reverb room space ambience hall plate decay pre-delay freeze modulation
 //category: Essentials
-//NULL JSFX v2.7 • https://nulljsfx.tech • MIT License
+//NULL JSFX v2.8 • https://nulljsfx.tech • MIT License
 
 slider1:50<10,100,1>Room Size (%)
 slider2:50<0,100,1>Decay (%)

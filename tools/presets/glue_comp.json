@@ -1,0 +1,8 @@
+[
+  ["Mix Bus Glue", {"Threshold (dB)": -12, "Ratio": 0, "Attack": 4, "Release": 4, "Makeup (dB)": 2}],
+  ["Drum Bus Punch", {"Threshold (dB)": -18, "Ratio": 1, "Attack": 5, "Release": 1, "Makeup (dB)": 4, "Sidechain HPF (Hz)": 80}],
+  ["Parallel Drums", {"Threshold (dB)": -30, "Ratio": 2, "Attack": 1, "Release": 1, "Makeup (dB)": 8, "Mix (%)": 40}],
+  ["Gentle Master", {"Threshold (dB)": -8, "Ratio": 0, "Attack": 5, "Release": 4, "Makeup (dB)": 1, "Sidechain HPF (Hz)": 100}],
+  ["Vocal Group", {"Threshold (dB)": -16, "Ratio": 1, "Attack": 3, "Release": 2, "Makeup (dB)": 3}],
+  ["Pumping Bus", {"Threshold (dB)": -24, "Ratio": 2, "Attack": 3, "Release": 0, "Makeup (dB)": 6}]
+]

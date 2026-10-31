@@ -2,7 +2,7 @@ desc:NULL Multiband Comp
 author: Christos Koulaxizis
 tags: multiband compressor four-band crossover dynamics mastering per-band
 //category: Essentials
-//NULL JSFX v2.7 • https://nulljsfx.tech • MIT License
+//NULL JSFX v2.8 • https://nulljsfx.tech • MIT License
 
 slider1:120<50,1000,1>Crossover 1 (Hz)
 slider2:1000<500,4000,1>Crossover 2 (Hz)
