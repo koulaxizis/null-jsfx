@@ -2,7 +2,7 @@ desc:NULL Sweeper GFX
 author: Christos Koulaxizis
 tags: filter sweep lowpass resonance creative gui
 //category: One Slider
-//NULL JSFX v2.8 • https://nulljsfx.tech • MIT License
+//NULL JSFX v2.9 • https://nulljsfx.tech • MIT License
 
 import null_gfx.jsfx-inc
 

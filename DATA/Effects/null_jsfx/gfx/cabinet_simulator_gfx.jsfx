@@ -2,7 +2,7 @@ desc:NULL Cabinet Simulator GFX
 author: Christos Koulaxizis
 tags: cabinet cab speaker guitar bass amp simulation di re-amp gui
 //category: Essentials
-//NULL JSFX v2.8 • https://nulljsfx.tech • MIT License
+//NULL JSFX v2.9 • https://nulljsfx.tech • MIT License
 
 import null_gfx.jsfx-inc
 

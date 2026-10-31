@@ -2,7 +2,7 @@ desc:NULL Transient Shaper GFX
 author: Christos Koulaxizis
 tags: transient attack sustain punch envelope dynamics shaping focus band clip gui
 //category: Essentials
-//NULL JSFX v2.8 • https://nulljsfx.tech • MIT License
+//NULL JSFX v2.9 • https://nulljsfx.tech • MIT License
 
 import null_gfx.jsfx-inc
 

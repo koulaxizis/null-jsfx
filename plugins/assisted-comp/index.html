@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Assisted Comp by NULL JSFX: free audio plugin for REAPER, VST3 and CLAP</title>
+    <meta name="description" content="Assisted Comp: Compressor that sets itself from the track. Free and open source audio plugin for REAPER (JSFX) and any DAW (VST3, CLAP) on Windows, macOS and Linux, plus LV2 on Linux.">
+    <link rel="canonical" href="https://nulljsfx.tech/plugins/assisted-comp/">
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Assisted Comp: Compressor that sets itself from the track">
+    <meta property="og:description" content="Assisted Comp: Compressor that sets itself from the track. Free and open source audio plugin for REAPER (JSFX) and any DAW (VST3, CLAP) on Windows, macOS and Linux, plus LV2 on Linux.">
+    <meta property="og:url" content="https://nulljsfx.tech/plugins/assisted-comp/">
+    <meta property="og:image" content="https://nulljsfx.tech/assets/video/assisted_comp.jpg">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Assisted Comp: Compressor that sets itself from the track">
+    <meta name="twitter:description" content="Assisted Comp: Compressor that sets itself from the track. Free and open source audio plugin for REAPER (JSFX) and any DAW (VST3, CLAP) on Windows, macOS and Linux, plus LV2 on Linux.">
+    <meta name="twitter:image" content="https://nulljsfx.tech/assets/video/assisted_comp.jpg">
+    <link rel="icon" type="image/svg+xml" href="/assets/img/favicon.svg">
+    <link rel="stylesheet" href="/assets/css/style.css">
+    <script type="application/ld+json">{"@context": "https://schema.org", "@type": "SoftwareApplication", "name": "NULL Assisted Comp", "description": "Compressor that sets itself from the track", "url": "https://nulljsfx.tech/plugins/assisted-comp/", "image": "https://nulljsfx.tech/assets/video/assisted_comp.jpg", "applicationCategory": "MultimediaApplication", "applicationSubCategory": "Audio audio plugin", "operatingSystem": "Windows, macOS, Linux", "softwareVersion": "2.9", "license": "https://opensource.org/licenses/MIT", "offers": {"@type": "Offer", "price": "0", "priceCurrency": "EUR"}, "author": {"@type": "Person", "name": "Christos Koulaxizis"}, "isPartOf": {"@type": "SoftwareApplication", "name": "NULL JSFX", "url": "https://nulljsfx.tech/"}}</script>
+    <script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "NULL JSFX", "item": "https://nulljsfx.tech/"}, {"@type": "ListItem", "position": 2, "name": "Assisted", "item": "https://nulljsfx.tech/#effects"}, {"@type": "ListItem", "position": 3, "name": "Assisted Comp", "item": "https://nulljsfx.tech/plugins/assisted-comp/"}]}</script>
+</head>
+<body class="plugin-page">
+    <main>
+        <nav class="page-crumbs" aria-label="Breadcrumb">
+            <a href="/" class="page-home"><img src="/assets/img/favicon.svg" alt="NULL JSFX" width="28" height="28"></a>
+            <a href="/">NULL JSFX</a> <span>/</span> <a href="/">Effects</a> <span>/</span> <span>Assisted Comp</span>
+        </nav>
+        <article class="page-plugin">
+            <header class="guide-header page-header">
+                <span class="guide-category">Assisted</span>
+                <h1>ASSISTED COMP <span class="beta-badge">BETA</span></h1>
+                <p>Compressor that sets itself from the track</p>
+                <p class="beta-note">Beta: its rules have been tested on test signals so far and may still be tuned from your feedback, so a project saved now can sound a little different after an update.</p>
+            </header>
+            <video class="guide-shot guide-video" poster="/assets/video/assisted_comp.jpg" controls playsinline preload="none" width="1280" height="720" aria-label="Assisted Comp presentation video"><source src="https://github.com/koulaxizis/null-jsfx/releases/download/media/assisted_comp.mp4" type="video/mp4"><source src="/assets/video/assisted_comp.mp4" type="video/mp4"></video>
+            <div class="page-actions">
+                <a class="featured-btn" href="/#download"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg><span>Download free</span></a>
+                <small>Part of NULL JSFX 2.9: 137 plugins, free and open source (MIT). Easiest with <a href="/#hub">NULL JSFX Hub</a>.</small>
+            </div>
+            <div class="guide-body">
+                <section class="guide-section">
+                    <h2>Controls</h2>
+                    <ul class="guide-sliders"><li><span class="slider-name">Learn</span><span class="slider-desc">Off / On — Press On and play the track: it listens for 15 s of signal (or until you turn it Off, after at least 0.5 s), then stores what it heard and returns to Off.</span></li><li><span class="slider-name">Source</span><span class="slider-desc">Vocal / Drums / Bass / Instrument / Mix — What is playing: Vocal, Drums, Bass, Instrument or Mix. Each has its own ratio.</span></li><li><span class="slider-name">Target</span><span class="slider-desc">Natural / Warm / Bright / Punchy / Radio / Podcast / Lo-Fi — The sound you want: Natural, Warm, Bright, Punchy, Radio, Podcast (also brings the loudness to -16 LUFS) or Lo-Fi.</span></li><li><span class="slider-name">Amount</span><span class="slider-desc">0 to 150% — How much of the target&#x27;s gain reduction is applied, 0-150%.</span></li><li><span class="slider-name">Squash Trim</span><span class="slider-desc">−6 to +6 dB — More (+) or less (-) compression than the target: moves the threshold down or up.</span></li><li><span class="slider-name">Speed Trim</span><span class="slider-desc">−2 to +2 — Faster (+) or slower (-): +1 halves attack and release, -1 doubles them.</span></li><li><span class="slider-name">Mix</span><span class="slider-desc">0 to 100% — Blend between the dry and the compressed signal (parallel compression).</span></li><li><span class="slider-name">Output</span><span class="slider-desc">−12 to +12 dB — Level after compression and makeup, on top of the automatic loudness of Podcast.</span></li><li><span class="slider-name">Learned</span><span class="slider-desc">No / Yes — Hidden: whether Learn has run. Saved with the project.</span></li><li><span class="slider-name">Learned Loud</span><span class="slider-desc">−80 to 0 dB — Hidden: the learned level of the loud parts (90th percentile of the 50 ms levels).</span></li><li><span class="slider-name">Learned Median</span><span class="slider-desc">−80 to 0 dB — Hidden: the learned median level.</span></li><li><span class="slider-name">Learned Crest</span><span class="slider-desc">0 to 30 dB — Hidden: the learned crest factor (peak over RMS).</span></li><li><span class="slider-name">Learned Onset</span><span class="slider-desc">0 to 2000 ms — Hidden: the learned mean time between onsets (0 = none found).</span></li><li><span class="slider-name">Learned Loudness</span><span class="slider-desc">−70 to 0 LUFS — Hidden: the learned integrated loudness (BS.1770).</span></li></ul>
+                </section>
+                <section class="guide-section">
+                    <h2>Best uses</h2>
+                    <ul class="use-cases"><li>A first compressor on a vocal without knowing the settings</li><li>A podcast voice at -16 LUFS with one button</li><li>Drum bus punch or parallel crush</li><li>Gentle glue on a bus or a mix</li></ul>
+                </section>
+                <section class="guide-section">
+                    <h2>Properties</h2>
+                    <p class="page-props">Learn: level histogram of 50 ms windows (0.1 dB bins, only windows above -60 dBFS count), mean crest factor, onset intervals (a 5 ms envelope jumping 6 dB over a 100 ms one) and BS.1770 integrated loudness. Rules (tools/assisted_targets.json): the target&#x27;s reduction on the loud parts times Amount sets the threshold; ratio per source plus a target step (1.5:1-10:1); attack 5-25 ms by crest factor times the target&#x27;s factor; release 60% of the onset interval (50-500 ms); makeup gives back half the reduction; Podcast moves Output to -16 LUFS. Compressor: stereo-linked peak detector → 6 dB soft knee → attack/release smoothing → makeup → Mix → Output. No AI: fixed rules, the same result every time. Zero latency.</p>
+                </section>
+                <section class="guide-section">
+                    <h2>Formats</h2>
+                    <ul class="guide-formats"><li><span class="format-tag">JSFX</span>JSFX for REAPER, with REAPER&#x27;s own sliders</li><li><span class="format-tag">GFX</span>JSFX GFX for REAPER, with its own interface</li><li><span class="format-tag">VST3</span>VST3 for any DAW</li><li><span class="format-tag">CLAP</span>CLAP for any DAW</li><li><span class="format-tag">LV2</span>LV2 for Linux DAWs such as Ardour, Carla and Qtractor</li></ul>
+                </section>
+                <section class="guide-section">
+                    <h2>Factory presets</h2>
+                    <p class="page-list">Vocal Natural · Vocal Warm · Vocal Upfront · Radio Voice · Podcast Voice · Punchy Drums · Parallel Drums · Steady Bass · Instrument Glue · Mix Glue · Mix Punch · Gentle Leveler</p>
+                </section>
+                <section class="guide-section">
+                    <h2>Try it</h2>
+                    <a class="try-studio guide-studio" href="https://useoros.online/studio/" target="_blank" rel="noopener"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8" fill="currentColor"/></svg><span class="try-studio-text"><b>Try it on orOS Studio</b><small>Add it to a track in your browser, with its own interface. Nothing to install.</small></span></a>
+                </section>
+            </div>
+        </article>
+        <section class="page-related">
+            <h2 class="section-title">Goes well with</h2>
+            <div class="related-grid"><a class="related-card" href="/plugins/assisted-eq/"><b>Assisted EQ</b><small>EQ that sets itself from the track</small></a><a class="related-card" href="/plugins/assisted-delay/"><b>Assisted Delay</b><small>Delay that sets itself from the track</small></a><a class="related-card" href="/plugins/assisted-reverb/"><b>Assisted Reverb</b><small>Reverb that sets itself from the track</small></a><a class="related-card" href="/plugins/clipper/"><b>Clipper</b><small>Oversampled Hard &amp; Soft Clipper</small></a><a class="related-card" href="/plugins/resonance-suppressor/"><b>Resonance Suppressor</b><small>Dynamic Resonance Suppression</small></a><a class="related-card" href="/plugins/sidechain-ducker/"><b>Sidechain Ducker</b><small>Sidechain Ducking</small></a></div>
+            <p class="page-more"><a href="/">All 137 NULL JSFX plugins</a></p>
+        </section>
+    </main>
+    <footer class="site-footer">
+        <div class="footer-content">
+            Designed with &#9825; by <a href="https://koulaxizis.gr" target="_blank" rel="noopener">Christos Koulaxizis</a>.
+            <div class="footer-links">
+                <a href="https://ko-fi.com/koulaxizis" target="_blank" rel="noopener">Support on Ko-fi</a>
+                <span class="sep">&bull;</span>
+                <a href="https://github.com/koulaxizis/null-jsfx" target="_blank" rel="noopener">GitHub</a>
+                <span class="sep">&bull;</span>
+                <a href="/">nulljsfx.tech</a>
+            </div>
+        </div>
+    </footer>
+    <button id="theme-toggle" class="theme-toggle-floating" aria-label="Toggle color theme" title="Switch between light/dark theme">
+        <svg class="sun-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2 M12 21v2 M4.22 4.22l1.42 1.42 M18.36 18.36l1.42 1.42 M1 12h2 M21 12h2 M4.22 19.78l1.42-1.42 M18.36 5.64l1.42-1.42"/></svg>
+        <svg class="moon-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none;"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+    </button>
+    <script src="/assets/js/theme.js"></script>
+    <script src="/assets/js/demo.js"></script>
+</body>
+</html>

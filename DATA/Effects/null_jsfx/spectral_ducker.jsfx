@@ -2,7 +2,7 @@ desc:NULL Spectral Ducker
 author: Christos Koulaxizis
 tags: sidechain spectral ducking ducker trackspacer vocal space mix eq advanced
 //category: Advanced
-//NULL JSFX v2.8 • https://nulljsfx.tech • MIT License
+//NULL JSFX v2.9 • https://nulljsfx.tech • MIT License
 
 slider1:50<0,100,1>Amount (%)
 slider2:-40<-60,0,0.5>Threshold (dB)

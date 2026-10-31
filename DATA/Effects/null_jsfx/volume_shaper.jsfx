@@ -2,7 +2,7 @@ desc:NULL Volume Shaper
 author: Christos Koulaxizis
 tags: volume shaper lfo envelope sidechain pump duck gate trance tempo sync rhythm midi trigger one-shot
 //category: Essentials
-//NULL JSFX v2.8 • https://nulljsfx.tech • MIT License
+//NULL JSFX v2.9 • https://nulljsfx.tech • MIT License
 
 slider1:0<0,9,1{Pump,Pump Hard,Saw Down,Saw Up,Gate 1/16,Trance 1/8,Sine,Triangle,Half-time Pump,Stutter}>Shape
 slider2:2<0,6,1{1/1,1/2,1/4,1/8,1/16,1/4T,1/8T}>Rate

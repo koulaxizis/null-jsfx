@@ -2,7 +2,7 @@ desc:NULL Mallets
 author: Christos Koulaxizis
 tags: instrument mallets marimba xylophone vibraphone vibes glockenspiel tubular bells chimes timpani kettle drum orchestral percussion modal synthesis midi
 //category: Instruments
-//NULL JSFX v2.8 • https://nulljsfx.tech • MIT License
+//NULL JSFX v2.9 • https://nulljsfx.tech • MIT License
 
 slider1:0<0,5,1{Marimba,Xylophone,Vibraphone,Glockenspiel,Tubular Bells,Timpani}>Model
 slider2:50<0,100,1>Mallet (%)

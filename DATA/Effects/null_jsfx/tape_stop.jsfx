@@ -2,7 +2,7 @@ desc:NULL Tape Stop
 author: Christos Koulaxizis
 tags: tape stop start motor slowdown pitch ramp dj
 //category: Advanced
-//NULL JSFX v2.8 • https://nulljsfx.tech • MIT License
+//NULL JSFX v2.9 • https://nulljsfx.tech • MIT License
 
 slider1:0<0,1,1{Idle,Trigger}>Trigger
 slider2:500<50,5000,10>Stop Time (ms)

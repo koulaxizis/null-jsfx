@@ -2,7 +2,7 @@ desc:NULL Scale GFX
 author: Christos Koulaxizis
 tags: midi scale quantize snap key force to scale white keys transpose octave filter diatonic pentatonic blues gui
 //category: MIDI
-//NULL JSFX v2.8 • https://nulljsfx.tech • MIT License
+//NULL JSFX v2.9 • https://nulljsfx.tech • MIT License
 
 import null_gfx.jsfx-inc
 

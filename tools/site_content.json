@@ -79,6 +79,122 @@
     "properties": "A MIDI effect: MIDI in, MIDI out, the audio passes through untouched (place it before an instrument). Steps fall on a grid locked to the host's beat position while it plays (a held chord starts on the next step); while it is stopped the arpeggio runs at the tempo from the first key. The sequence is the held notes by pitch (or as played) over the octaves; each step plays one note, or every note for Chord, for Gate % of the step, with the played velocity times the step's lane value. Every note sent is ended: releasing the last key (without Latch), all notes off (CC 120/123) and the transport stopping end the arpeggio's notes at once; a pitch played twice in a row starts again cleanly. Controllers, pitch bend and other messages pass through. The Random pattern uses an exact Park-Miller sequence from Seed. Sample-accurate and the same in the JSFX, the GFX version and the VST3/CLAP.",
     "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-arpeggiator\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><path d=\"M 8,54 L 56,54\" stroke=\"url(#icon-arpeggiator)\" stroke-width=\"1.5\" opacity=\"0.5\"/><rect x=\"9\" y=\"40\" width=\"8\" height=\"5\" rx=\"1\" fill=\"url(#icon-arpeggiator)\"/><rect x=\"19\" y=\"32\" width=\"8\" height=\"5\" rx=\"1\" fill=\"url(#icon-arpeggiator)\"/><rect x=\"29\" y=\"24\" width=\"8\" height=\"5\" rx=\"1\" fill=\"url(#icon-arpeggiator)\"/><rect x=\"39\" y=\"16\" width=\"8\" height=\"5\" rx=\"1\" fill=\"url(#icon-arpeggiator)\"/><rect x=\"49\" y=\"24\" width=\"8\" height=\"5\" rx=\"1\" fill=\"url(#icon-arpeggiator)\" opacity=\"0.6\"/><path d=\"M 13,40 L 23,32 L 33,24 L 43,16 L 53,24\" fill=\"none\" stroke=\"url(#icon-arpeggiator)\" stroke-width=\"1\" stroke-dasharray=\"2 2\" opacity=\"0.6\"/></svg>"
   },
+  "assisted_comp": {
+    "card_desc": "Compressor that sets itself from the track",
+    "keywords": "assisted compressor comp dynamics learn auto automatic smart assistant threshold attack release loudness lufs podcast radio punchy vocal drums bass bus",
+    "slider_desc": [
+      "Press On and play the track: it listens for 15 s of signal (or until you turn it Off, after at least 0.5 s), then stores what it heard and returns to Off.",
+      "What is playing: Vocal, Drums, Bass, Instrument or Mix. Each has its own ratio.",
+      "The sound you want: Natural, Warm, Bright, Punchy, Radio, Podcast (also brings the loudness to -16 LUFS) or Lo-Fi.",
+      "How much of the target's gain reduction is applied, 0-150%.",
+      "More (+) or less (-) compression than the target: moves the threshold down or up.",
+      "Faster (+) or slower (-): +1 halves attack and release, -1 doubles them.",
+      "Blend between the dry and the compressed signal (parallel compression).",
+      "Level after compression and makeup, on top of the automatic loudness of Podcast.",
+      "Hidden: whether Learn has run. Saved with the project.",
+      "Hidden: the learned level of the loud parts (90th percentile of the 50 ms levels).",
+      "Hidden: the learned median level.",
+      "Hidden: the learned crest factor (peak over RMS).",
+      "Hidden: the learned mean time between onsets (0 = none found).",
+      "Hidden: the learned integrated loudness (BS.1770)."
+    ],
+    "uses": [
+      "A first compressor on a vocal without knowing the settings",
+      "A podcast voice at -16 LUFS with one button",
+      "Drum bus punch or parallel crush",
+      "Gentle glue on a bus or a mix"
+    ],
+    "properties": "Learn: level histogram of 50 ms windows (0.1 dB bins, only windows above -60 dBFS count), mean crest factor, onset intervals (a 5 ms envelope jumping 6 dB over a 100 ms one) and BS.1770 integrated loudness. Rules (tools/assisted_targets.json): the target's reduction on the loud parts times Amount sets the threshold; ratio per source plus a target step (1.5:1-10:1); attack 5-25 ms by crest factor times the target's factor; release 60% of the onset interval (50-500 ms); makeup gives back half the reduction; Podcast moves Output to -16 LUFS. Compressor: stereo-linked peak detector → 6 dB soft knee → attack/release smoothing → makeup → Mix → Output. No AI: fixed rules, the same result every time. Zero latency.",
+    "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-ascomp\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><path d=\"M 6,56 L 28,34 L 44,28\" stroke=\"url(#icon-ascomp)\" stroke-width=\"2.5\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M 6,56 L 44,18\" stroke=\"url(#icon-ascomp)\" stroke-width=\"1.5\" fill=\"none\" opacity=\"0.3\"/><circle cx=\"50\" cy=\"14\" r=\"6\" stroke=\"url(#icon-ascomp)\" stroke-width=\"2\" fill=\"none\"/><circle cx=\"50\" cy=\"14\" r=\"2\" fill=\"url(#icon-ascomp)\"/></svg>",
+    "beta": true
+  },
+  "assisted_delay": {
+    "card_desc": "Delay that sets itself from the track",
+    "keywords": "assisted delay echo slapback learn auto automatic smart assistant tempo sync ping-pong repeats ducking vocal drums bus podcast radio lo-fi",
+    "slider_desc": [
+      "Press On and play the track: it listens for 15 s of signal (or until you turn it Off, after at least 0.5 s), then stores what it heard and returns to Off.",
+      "What is playing: Vocal, Drums, Bass, Instrument or Mix. Each has its own low cut, level and ducking.",
+      "The sound you want: Natural, Warm, Bright, Punchy, Radio, Podcast or Lo-Fi.",
+      "How much echo, 0-150% of the level the rules choose.",
+      "More (+) or fewer (-) repeats: +1 doubles them, -1 halves them.",
+      "Brighter (+) or darker (-) repeats: +1 moves the high cut up an octave.",
+      "The echoes' level on top of the rules, in dB.",
+      "Level after the delay.",
+      "Hidden: whether Learn has run. Saved with the project.",
+      "Hidden: the learned level of the loud parts (90th percentile of the 50 ms levels).",
+      "Hidden: the learned median level; the ducking starts above it.",
+      "Hidden: the learned mean time between onsets (0 = none found).",
+      "Hidden: the learned brightness: the power above 4 kHz against the whole."
+    ],
+    "uses": [
+      "A tempo-synced vocal echo without knowing the settings",
+      "Slapback for radio or a vintage voice",
+      "Echoes that duck under the singer and come back in the gaps",
+      "Fewer repeats on busy parts, more on sparse ones"
+    ],
+    "properties": "Learn: as Assisted Reverb (levels, onset interval, brightness). Rules (tools/assisted_targets.json): time is the target's note at the host tempo (quarter, dotted quarter, eighth, dotted eighth) or a 90 ms slapback; ping-pong per target; repeats (echoes within 30 dB) per target, fewer when the learned onsets come faster than the echoes, times 2^Repeats; one-pole low cut per source and high cut per target moved by the brightness, times 2^Tone, in the feedback loop; echo level per source and target times Amount; ducking as in Assisted Reverb. Up to 3 s. No AI: fixed rules, the same result every time. Zero latency.",
+    "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-asdl\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><rect x=\"8\" y=\"20\" width=\"4\" height=\"36\" rx=\"1\" fill=\"url(#icon-asdl)\"/><rect x=\"20\" y=\"32\" width=\"4\" height=\"24\" rx=\"1\" fill=\"url(#icon-asdl)\" opacity=\"0.8\"/><rect x=\"32\" y=\"42\" width=\"4\" height=\"14\" rx=\"1\" fill=\"url(#icon-asdl)\" opacity=\"0.6\"/><rect x=\"44\" y=\"49\" width=\"4\" height=\"7\" rx=\"1\" fill=\"url(#icon-asdl)\" opacity=\"0.4\"/><circle cx=\"50\" cy=\"14\" r=\"6\" stroke=\"url(#icon-asdl)\" stroke-width=\"2\" fill=\"none\"/><circle cx=\"50\" cy=\"14\" r=\"2\" fill=\"url(#icon-asdl)\"/></svg>",
+    "beta": true
+  },
+  "assisted_eq": {
+    "card_desc": "EQ that sets itself from the track",
+    "keywords": "assisted eq equalizer learn auto automatic smart assistant tone match mud boxy harsh dull warm bright radio podcast lo-fi vocal drums bass mix",
+    "slider_desc": [
+      "Press On and play the track: it listens for 15 s of signal (or until you turn it Off, after at least 0.5 s), then stores what it heard and returns to Off.",
+      "What is playing: Vocal, Drums, Bass, Instrument or Mix. Each has its own healthy balance that Learn corrects toward.",
+      "The sound you want: Natural (only corrects), Warm, Bright, Punchy, Radio, Podcast or Lo-Fi.",
+      "How much of the learned correction and target is applied, 0-150%.",
+      "Your own shelf at 100 Hz on top.",
+      "Your own bell at 1 kHz on top.",
+      "Your own shelf at 10 kHz on top.",
+      "Level after the EQ, on top of the automatic level match.",
+      "Hidden: whether Learn has run. Saved with the project.",
+      "Hidden: the learned level of the lows (60-120 Hz) against the reference, in dB.",
+      "Hidden: the learned level of the mud region (200-500 Hz) against the reference, in dB.",
+      "Hidden: the frequency where the mud peaks.",
+      "Hidden: the learned level of the honk region (800 Hz-1.6 kHz) against the reference, in dB.",
+      "Hidden: the learned level of the presence region (2-5 kHz) against the reference, in dB.",
+      "Hidden: the learned level of the air region (8-16 kHz) against the reference, in dB.",
+      "Hidden: the lowest band with real content; the learned high-pass sits below it."
+    ],
+    "uses": [
+      "A first EQ on a vocal without knowing where to cut",
+      "Taking the mud out of a recording with one button",
+      "Radio, podcast or phone sound on a voice",
+      "A quick, safe tone balance on a bus or a mix"
+    ],
+    "properties": "Learn: 29 third-octave band-passes in 50 ms windows (only windows above -60 dBFS count), measured against a -4.5 dB/oct reference levelled at 500 Hz-4 kHz, grouped into low, mud, honk, presence and air. Rules (tools/assisted_targets.json): 60% of each deviation from the source's healthy balance beyond 1.5 dB is corrected (-6 to +4 dB, mud only cut), plus the target's flavour, times Amount. EQ: high-pass (learned and target), low shelf 100 Hz, mud bell, honk bell 1 kHz, presence bell 3 kHz, air shelf 10 kHz, target low-pass (RBJ biquads) → automatic level match → Output. No AI: fixed rules, the same result every time. Zero latency.",
+    "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-aseq\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><path d=\"M 6,36 C 14,36 16,26 22,26 C 28,26 28,44 34,44 C 40,44 42,30 50,30 L 58,30\" stroke=\"url(#icon-aseq)\" stroke-width=\"2.5\" fill=\"none\" stroke-linecap=\"round\"/><circle cx=\"50\" cy=\"14\" r=\"6\" stroke=\"url(#icon-aseq)\" stroke-width=\"2\" fill=\"none\"/><circle cx=\"50\" cy=\"14\" r=\"2\" fill=\"url(#icon-aseq)\"/></svg>",
+    "beta": true
+  },
+  "assisted_reverb": {
+    "card_desc": "Reverb that sets itself from the track",
+    "keywords": "assisted reverb room hall space ambience learn auto automatic smart assistant decay pre-delay ducking vocal drums bus podcast radio lo-fi",
+    "slider_desc": [
+      "Press On and play the track: it listens for 15 s of signal (or until you turn it Off, after at least 0.5 s), then stores what it heard and returns to Off.",
+      "What is playing: Vocal, Drums, Bass, Instrument or Mix. Each has its own decay, low cut, level and ducking.",
+      "The sound you want: Natural, Warm, Bright, Punchy, Radio, Podcast or Lo-Fi.",
+      "How much reverb, 0-150% of the level the rules choose.",
+      "Longer (+) or shorter (-) tail: +1 doubles the decay, -1 halves it.",
+      "Brighter (+) or darker (-) tail: +1 moves the high cut up an octave.",
+      "The reverb's level on top of the rules, in dB.",
+      "Level after the reverb.",
+      "Hidden: whether Learn has run. Saved with the project.",
+      "Hidden: the learned level of the loud parts (90th percentile of the 50 ms levels).",
+      "Hidden: the learned median level; the ducking starts above it.",
+      "Hidden: the learned mean time between onsets (0 = none found).",
+      "Hidden: the learned brightness: the power above 4 kHz against the whole."
+    ],
+    "uses": [
+      "A first reverb on a vocal without knowing the settings",
+      "A tail that stays out of the way of a busy part",
+      "Radio, podcast or lo-fi spaces with one choice",
+      "Ducked vocal reverb that blooms between phrases"
+    ],
+    "properties": "Learn: 50 ms windows above -60 dBFS give a level histogram (loud parts and median), the mean onset interval and the brightness above 4 kHz. Rules (tools/assisted_targets.json): decay (RT60) per target times a source factor, kept under six onset intervals, times 2^Length; pre-delay a tenth of the onset interval (0-60 ms) times the target's factor; low cut per source; high cut per target moved an octave per 12 dB of brightness, times 2^Tone; wet level per source and target times Amount; ducking per source while the dry signal sits between its median and loud levels. Reverb: pre-delay → 8 damped combs per side tuned to the decay → 4 all-passes → 12 dB/oct low cut and high cut → added to the dry signal → Output. No AI: fixed rules, the same result every time. Zero latency.",
+    "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-asrv\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><path d=\"M 6,56 L 12,56 L 12,22 L 44,56\" stroke=\"url(#icon-asrv)\" stroke-width=\"2.5\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><circle cx=\"50\" cy=\"14\" r=\"6\" stroke=\"url(#icon-asrv)\" stroke-width=\"2\" fill=\"none\"/><circle cx=\"50\" cy=\"14\" r=\"2\" fill=\"url(#icon-asrv)\"/></svg>",
+    "beta": true
+  },
   "auto_leveler": {
     "card_desc": "Automatic Gain Rider",
     "keywords": "auto leveler leveller gain rider riding agc automatic volume loudness dialogue podcast voice",

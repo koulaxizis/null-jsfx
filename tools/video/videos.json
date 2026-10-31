@@ -1,6 +1,10 @@
 {
   "amp_simulator": {"sweep": ["Gain", 1, 9]},
   "arpeggiator": {"midi": "chords", "play": ["synth", "Pluck"], "presets": ["Up & Down 8ths", "Two Octave Run", "Random Sparkle"], "sweep": ["Gate", 10, 150], "sweep_base": "Two Octave Run"},
+  "assisted_comp": {"learn": {"source": "Mix", "seconds": 5, "targets": ["Natural", "Punchy", "Podcast", "Lo-Fi"]}, "sweep": ["Amount", 0, 150]},
+  "assisted_delay": {"learn": {"source": "Mix", "seconds": 5, "targets": ["Natural", "Warm", "Bright", "Lo-Fi"]}, "sweep": ["Amount", 0, 150]},
+  "assisted_eq": {"learn": {"source": "Mix", "seconds": 5, "targets": ["Natural", "Warm", "Bright", "Radio"]}, "sweep": ["Amount", 0, 150]},
+  "assisted_reverb": {"learn": {"source": "Mix", "seconds": 5, "targets": ["Natural", "Warm", "Bright", "Lo-Fi"]}, "sweep": ["Amount", 0, 150]},
   "band_splitter": {"sweep": ["Crossover 1", 60, 900]},
   "bass": {"midi": "bass", "presets": ["Reese", "Square Pluck", "808 Boom"], "sweep": ["Cutoff", 150, 4000], "sweep_base": "Reese"},
   "bass_management": {"sweep": ["Crossover", 40, 200]},

@@ -2,7 +2,7 @@ desc:NULL Loudness Meter GFX
 author: Christos Koulaxizis
 tags: loudness meter lufs lra true peak ebu r128 itu bs1770 metering analyzer mastering streaming gui
 //category: Advanced
-//NULL JSFX v2.8 • https://nulljsfx.tech • MIT License
+//NULL JSFX v2.9 • https://nulljsfx.tech • MIT License
 
 import null_gfx.jsfx-inc
 

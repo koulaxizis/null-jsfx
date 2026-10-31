@@ -2564,6 +2564,124 @@ const guides = {
     page: 'plugins/warped-delay/'
   },
 
+  // ─── ASSISTED ───
+  'assisted-comp': {
+    title: 'ASSISTED COMP',
+    subtitle: 'Compressor that sets itself from the track',
+    category: 'Assisted',
+    sliders: [
+      { name: 'Learn', range: 'Off / On', desc: 'Press On and play the track: it listens for 15 s of signal (or until you turn it Off, after at least 0.5 s), then stores what it heard and returns to Off.' },
+      { name: 'Source', range: 'Vocal / Drums / Bass / Instrument / Mix', desc: 'What is playing: Vocal, Drums, Bass, Instrument or Mix. Each has its own ratio.' },
+      { name: 'Target', range: 'Natural / Warm / Bright / Punchy / Radio / Podcast / Lo-Fi', desc: 'The sound you want: Natural, Warm, Bright, Punchy, Radio, Podcast (also brings the loudness to -16 LUFS) or Lo-Fi.' },
+      { name: 'Amount', range: '0 to 150%', desc: 'How much of the target\'s gain reduction is applied, 0-150%.' },
+      { name: 'Squash Trim', range: '−6 to +6 dB', desc: 'More (+) or less (-) compression than the target: moves the threshold down or up.' },
+      { name: 'Speed Trim', range: '−2 to +2', desc: 'Faster (+) or slower (-): +1 halves attack and release, -1 doubles them.' },
+      { name: 'Mix', range: '0 to 100%', desc: 'Blend between the dry and the compressed signal (parallel compression).' },
+      { name: 'Output', range: '−12 to +12 dB', desc: 'Level after compression and makeup, on top of the automatic loudness of Podcast.' },
+      { name: 'Learned', range: 'No / Yes', desc: 'Hidden: whether Learn has run. Saved with the project.' },
+      { name: 'Learned Loud', range: '−80 to 0 dB', desc: 'Hidden: the learned level of the loud parts (90th percentile of the 50 ms levels).' },
+      { name: 'Learned Median', range: '−80 to 0 dB', desc: 'Hidden: the learned median level.' },
+      { name: 'Learned Crest', range: '0 to 30 dB', desc: 'Hidden: the learned crest factor (peak over RMS).' },
+      { name: 'Learned Onset', range: '0 to 2000 ms', desc: 'Hidden: the learned mean time between onsets (0 = none found).' },
+      { name: 'Learned Loudness', range: '−70 to 0 LUFS', desc: 'Hidden: the learned integrated loudness (BS.1770).' }
+    ],
+    uses: ['A first compressor on a vocal without knowing the settings', 'A podcast voice at -16 LUFS with one button', 'Drum bus punch or parallel crush', 'Gentle glue on a bus or a mix'],
+    properties: 'Learn: level histogram of 50 ms windows (0.1 dB bins, only windows above -60 dBFS count), mean crest factor, onset intervals (a 5 ms envelope jumping 6 dB over a 100 ms one) and BS.1770 integrated loudness. Rules (tools/assisted_targets.json): the target\'s reduction on the loud parts times Amount sets the threshold; ratio per source plus a target step (1.5:1-10:1); attack 5-25 ms by crest factor times the target\'s factor; release 60% of the onset interval (50-500 ms); makeup gives back half the reduction; Podcast moves Output to -16 LUFS. Compressor: stereo-linked peak detector → 6 dB soft knee → attack/release smoothing → makeup → Mix → Output. No AI: fixed rules, the same result every time. Zero latency.',
+    formats: ['JSFX', 'GFX', 'VST3', 'CLAP', 'LV2'],
+    shot: 'assets/img/gfx/assisted_comp.png',
+    video: 'assets/video/assisted_comp.mp4',
+    studio: true,
+    beta: 'Beta: its rules have been tested on test signals so far and may still be tuned from your feedback, so a project saved now can sound a little different after an update.',
+    page: 'plugins/assisted-comp/'
+  },
+  'assisted-delay': {
+    title: 'ASSISTED DELAY',
+    subtitle: 'Delay that sets itself from the track',
+    category: 'Assisted',
+    sliders: [
+      { name: 'Learn', range: 'Off / On', desc: 'Press On and play the track: it listens for 15 s of signal (or until you turn it Off, after at least 0.5 s), then stores what it heard and returns to Off.' },
+      { name: 'Source', range: 'Vocal / Drums / Bass / Instrument / Mix', desc: 'What is playing: Vocal, Drums, Bass, Instrument or Mix. Each has its own low cut, level and ducking.' },
+      { name: 'Target', range: 'Natural / Warm / Bright / Punchy / Radio / Podcast / Lo-Fi', desc: 'The sound you want: Natural, Warm, Bright, Punchy, Radio, Podcast or Lo-Fi.' },
+      { name: 'Amount', range: '0 to 150%', desc: 'How much echo, 0-150% of the level the rules choose.' },
+      { name: 'Repeats Trim', range: '−2 to +2', desc: 'More (+) or fewer (-) repeats: +1 doubles them, -1 halves them.' },
+      { name: 'Tone Trim', range: '−2 to +2', desc: 'Brighter (+) or darker (-) repeats: +1 moves the high cut up an octave.' },
+      { name: 'Level Trim', range: '−12 to +12 dB', desc: 'The echoes\' level on top of the rules, in dB.' },
+      { name: 'Output', range: '−12 to +12 dB', desc: 'Level after the delay.' },
+      { name: 'Learned', range: 'No / Yes', desc: 'Hidden: whether Learn has run. Saved with the project.' },
+      { name: 'Learned Loud', range: '−80 to 0 dB', desc: 'Hidden: the learned level of the loud parts (90th percentile of the 50 ms levels).' },
+      { name: 'Learned Median', range: '−80 to 0 dB', desc: 'Hidden: the learned median level; the ducking starts above it.' },
+      { name: 'Learned Onset', range: '0 to 2000 ms', desc: 'Hidden: the learned mean time between onsets (0 = none found).' },
+      { name: 'Learned Bright', range: '−60 to 0 dB', desc: 'Hidden: the learned brightness: the power above 4 kHz against the whole.' }
+    ],
+    uses: ['A tempo-synced vocal echo without knowing the settings', 'Slapback for radio or a vintage voice', 'Echoes that duck under the singer and come back in the gaps', 'Fewer repeats on busy parts, more on sparse ones'],
+    properties: 'Learn: as Assisted Reverb (levels, onset interval, brightness). Rules (tools/assisted_targets.json): time is the target\'s note at the host tempo (quarter, dotted quarter, eighth, dotted eighth) or a 90 ms slapback; ping-pong per target; repeats (echoes within 30 dB) per target, fewer when the learned onsets come faster than the echoes, times 2^Repeats; one-pole low cut per source and high cut per target moved by the brightness, times 2^Tone, in the feedback loop; echo level per source and target times Amount; ducking as in Assisted Reverb. Up to 3 s. No AI: fixed rules, the same result every time. Zero latency.',
+    formats: ['JSFX', 'GFX', 'VST3', 'CLAP', 'LV2'],
+    shot: 'assets/img/gfx/assisted_delay.png',
+    video: 'assets/video/assisted_delay.mp4',
+    studio: true,
+    beta: 'Beta: its rules have been tested on test signals so far and may still be tuned from your feedback, so a project saved now can sound a little different after an update.',
+    page: 'plugins/assisted-delay/'
+  },
+  'assisted-eq': {
+    title: 'ASSISTED EQ',
+    subtitle: 'EQ that sets itself from the track',
+    category: 'Assisted',
+    sliders: [
+      { name: 'Learn', range: 'Off / On', desc: 'Press On and play the track: it listens for 15 s of signal (or until you turn it Off, after at least 0.5 s), then stores what it heard and returns to Off.' },
+      { name: 'Source', range: 'Vocal / Drums / Bass / Instrument / Mix', desc: 'What is playing: Vocal, Drums, Bass, Instrument or Mix. Each has its own healthy balance that Learn corrects toward.' },
+      { name: 'Target', range: 'Natural / Warm / Bright / Punchy / Radio / Podcast / Lo-Fi', desc: 'The sound you want: Natural (only corrects), Warm, Bright, Punchy, Radio, Podcast or Lo-Fi.' },
+      { name: 'Amount', range: '0 to 150%', desc: 'How much of the learned correction and target is applied, 0-150%.' },
+      { name: 'Low Trim', range: '−6 to +6 dB', desc: 'Your own shelf at 100 Hz on top.' },
+      { name: 'Mid Trim', range: '−6 to +6 dB', desc: 'Your own bell at 1 kHz on top.' },
+      { name: 'High Trim', range: '−6 to +6 dB', desc: 'Your own shelf at 10 kHz on top.' },
+      { name: 'Output', range: '−12 to +12 dB', desc: 'Level after the EQ, on top of the automatic level match.' },
+      { name: 'Learned', range: 'No / Yes', desc: 'Hidden: whether Learn has run. Saved with the project.' },
+      { name: 'Learned Low', range: '−24 to +24 dB', desc: 'Hidden: the learned level of the lows (60-120 Hz) against the reference, in dB.' },
+      { name: 'Learned Mud', range: '−24 to +24 dB', desc: 'Hidden: the learned level of the mud region (200-500 Hz) against the reference, in dB.' },
+      { name: 'Learned Mud Freq', range: '200 to 500 Hz', desc: 'Hidden: the frequency where the mud peaks.' },
+      { name: 'Learned Honk', range: '−24 to +24 dB', desc: 'Hidden: the learned level of the honk region (800 Hz-1.6 kHz) against the reference, in dB.' },
+      { name: 'Learned Presence', range: '−24 to +24 dB', desc: 'Hidden: the learned level of the presence region (2-5 kHz) against the reference, in dB.' },
+      { name: 'Learned Air', range: '−24 to +24 dB', desc: 'Hidden: the learned level of the air region (8-16 kHz) against the reference, in dB.' },
+      { name: 'Learned Lowest', range: '20 to 500 Hz', desc: 'Hidden: the lowest band with real content; the learned high-pass sits below it.' }
+    ],
+    uses: ['A first EQ on a vocal without knowing where to cut', 'Taking the mud out of a recording with one button', 'Radio, podcast or phone sound on a voice', 'A quick, safe tone balance on a bus or a mix'],
+    properties: 'Learn: 29 third-octave band-passes in 50 ms windows (only windows above -60 dBFS count), measured against a -4.5 dB/oct reference levelled at 500 Hz-4 kHz, grouped into low, mud, honk, presence and air. Rules (tools/assisted_targets.json): 60% of each deviation from the source\'s healthy balance beyond 1.5 dB is corrected (-6 to +4 dB, mud only cut), plus the target\'s flavour, times Amount. EQ: high-pass (learned and target), low shelf 100 Hz, mud bell, honk bell 1 kHz, presence bell 3 kHz, air shelf 10 kHz, target low-pass (RBJ biquads) → automatic level match → Output. No AI: fixed rules, the same result every time. Zero latency.',
+    formats: ['JSFX', 'GFX', 'VST3', 'CLAP', 'LV2'],
+    shot: 'assets/img/gfx/assisted_eq.png',
+    video: 'assets/video/assisted_eq.mp4',
+    studio: true,
+    beta: 'Beta: its rules have been tested on test signals so far and may still be tuned from your feedback, so a project saved now can sound a little different after an update.',
+    page: 'plugins/assisted-eq/'
+  },
+  'assisted-reverb': {
+    title: 'ASSISTED REVERB',
+    subtitle: 'Reverb that sets itself from the track',
+    category: 'Assisted',
+    sliders: [
+      { name: 'Learn', range: 'Off / On', desc: 'Press On and play the track: it listens for 15 s of signal (or until you turn it Off, after at least 0.5 s), then stores what it heard and returns to Off.' },
+      { name: 'Source', range: 'Vocal / Drums / Bass / Instrument / Mix', desc: 'What is playing: Vocal, Drums, Bass, Instrument or Mix. Each has its own decay, low cut, level and ducking.' },
+      { name: 'Target', range: 'Natural / Warm / Bright / Punchy / Radio / Podcast / Lo-Fi', desc: 'The sound you want: Natural, Warm, Bright, Punchy, Radio, Podcast or Lo-Fi.' },
+      { name: 'Amount', range: '0 to 150%', desc: 'How much reverb, 0-150% of the level the rules choose.' },
+      { name: 'Length Trim', range: '−2 to +2', desc: 'Longer (+) or shorter (-) tail: +1 doubles the decay, -1 halves it.' },
+      { name: 'Tone Trim', range: '−2 to +2', desc: 'Brighter (+) or darker (-) tail: +1 moves the high cut up an octave.' },
+      { name: 'Level Trim', range: '−12 to +12 dB', desc: 'The reverb\'s level on top of the rules, in dB.' },
+      { name: 'Output', range: '−12 to +12 dB', desc: 'Level after the reverb.' },
+      { name: 'Learned', range: 'No / Yes', desc: 'Hidden: whether Learn has run. Saved with the project.' },
+      { name: 'Learned Loud', range: '−80 to 0 dB', desc: 'Hidden: the learned level of the loud parts (90th percentile of the 50 ms levels).' },
+      { name: 'Learned Median', range: '−80 to 0 dB', desc: 'Hidden: the learned median level; the ducking starts above it.' },
+      { name: 'Learned Onset', range: '0 to 2000 ms', desc: 'Hidden: the learned mean time between onsets (0 = none found).' },
+      { name: 'Learned Bright', range: '−60 to 0 dB', desc: 'Hidden: the learned brightness: the power above 4 kHz against the whole.' }
+    ],
+    uses: ['A first reverb on a vocal without knowing the settings', 'A tail that stays out of the way of a busy part', 'Radio, podcast or lo-fi spaces with one choice', 'Ducked vocal reverb that blooms between phrases'],
+    properties: 'Learn: 50 ms windows above -60 dBFS give a level histogram (loud parts and median), the mean onset interval and the brightness above 4 kHz. Rules (tools/assisted_targets.json): decay (RT60) per target times a source factor, kept under six onset intervals, times 2^Length; pre-delay a tenth of the onset interval (0-60 ms) times the target\'s factor; low cut per source; high cut per target moved an octave per 12 dB of brightness, times 2^Tone; wet level per source and target times Amount; ducking per source while the dry signal sits between its median and loud levels. Reverb: pre-delay → 8 damped combs per side tuned to the decay → 4 all-passes → 12 dB/oct low cut and high cut → added to the dry signal → Output. No AI: fixed rules, the same result every time. Zero latency.',
+    formats: ['JSFX', 'GFX', 'VST3', 'CLAP', 'LV2'],
+    shot: 'assets/img/gfx/assisted_reverb.png',
+    video: 'assets/video/assisted_reverb.mp4',
+    studio: true,
+    beta: 'Beta: its rules have been tested on test signals so far and may still be tuned from your feedback, so a project saved now can sound a little different after an update.',
+    page: 'plugins/assisted-reverb/'
+  },
+
   // ─── INSTRUMENTS ───
   'bass': {
     title: 'BASS',
@@ -3179,7 +3297,8 @@ function openGuide(pluginId) {
   }
 
   const modalBody = document.getElementById('modal-body');
-  let html = '<div class="guide-header"><span class="guide-category">' + guide.category + '</span><h3>' + guide.title + '</h3><p>' + guide.subtitle + '</p></div>';
+  let html = '<div class="guide-header"><span class="guide-category">' + guide.category + '</span><h3>' + guide.title + (guide.beta ? ' <span class="beta-badge">BETA</span>' : '') + '</h3><p>' + guide.subtitle + '</p>'
+    + (guide.beta ? '<p class="beta-note">' + guide.beta + '</p>' : '') + '</div>';
 
   html += '<div class="guide-body">';
 

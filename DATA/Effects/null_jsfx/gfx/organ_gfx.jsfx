@@ -2,7 +2,7 @@ desc:NULL Organ GFX
 author: Christos Koulaxizis
 tags: instrument organ tonewheel drawbar percussion key click vibrato chorus rotary speaker drive gospel jazz rock midi gui
 //category: Instruments
-//NULL JSFX v2.8 • https://nulljsfx.tech • MIT License
+//NULL JSFX v2.9 • https://nulljsfx.tech • MIT License
 
 import null_gfx.jsfx-inc
 

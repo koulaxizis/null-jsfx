@@ -2,7 +2,7 @@ desc:NULL Dynamic EQ
 author: Christos Koulaxizis
 tags: dynamic eq equalizer parametric compressor expander essentials
 //category: Essentials
-//NULL JSFX v2.8 • https://nulljsfx.tech • MIT License
+//NULL JSFX v2.9 • https://nulljsfx.tech • MIT License
 
 slider1:200<20,1000,10>B1 Freq (Hz)
 slider2:0<-12,12,0.5>B1 Gain (dB)

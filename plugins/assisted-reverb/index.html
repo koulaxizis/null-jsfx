@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Assisted Reverb by NULL JSFX: free audio plugin for REAPER, VST3 and CLAP</title>
+    <meta name="description" content="Assisted Reverb: Reverb that sets itself from the track. Free and open source audio plugin for REAPER (JSFX) and any DAW (VST3, CLAP) on Windows, macOS and Linux, plus LV2 on Linux.">
+    <link rel="canonical" href="https://nulljsfx.tech/plugins/assisted-reverb/">
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Assisted Reverb: Reverb that sets itself from the track">
+    <meta property="og:description" content="Assisted Reverb: Reverb that sets itself from the track. Free and open source audio plugin for REAPER (JSFX) and any DAW (VST3, CLAP) on Windows, macOS and Linux, plus LV2 on Linux.">
+    <meta property="og:url" content="https://nulljsfx.tech/plugins/assisted-reverb/">
+    <meta property="og:image" content="https://nulljsfx.tech/assets/video/assisted_reverb.jpg">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Assisted Reverb: Reverb that sets itself from the track">
+    <meta name="twitter:description" content="Assisted Reverb: Reverb that sets itself from the track. Free and open source audio plugin for REAPER (JSFX) and any DAW (VST3, CLAP) on Windows, macOS and Linux, plus LV2 on Linux.">
+    <meta name="twitter:image" content="https://nulljsfx.tech/assets/video/assisted_reverb.jpg">
+    <link rel="icon" type="image/svg+xml" href="/assets/img/favicon.svg">
+    <link rel="stylesheet" href="/assets/css/style.css">
+    <script type="application/ld+json">{"@context": "https://schema.org", "@type": "SoftwareApplication", "name": "NULL Assisted Reverb", "description": "Reverb that sets itself from the track", "url": "https://nulljsfx.tech/plugins/assisted-reverb/", "image": "https://nulljsfx.tech/assets/video/assisted_reverb.jpg", "applicationCategory": "MultimediaApplication", "applicationSubCategory": "Audio audio plugin", "operatingSystem": "Windows, macOS, Linux", "softwareVersion": "2.9", "license": "https://opensource.org/licenses/MIT", "offers": {"@type": "Offer", "price": "0", "priceCurrency": "EUR"}, "author": {"@type": "Person", "name": "Christos Koulaxizis"}, "isPartOf": {"@type": "SoftwareApplication", "name": "NULL JSFX", "url": "https://nulljsfx.tech/"}}</script>
+    <script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "NULL JSFX", "item": "https://nulljsfx.tech/"}, {"@type": "ListItem", "position": 2, "name": "Assisted", "item": "https://nulljsfx.tech/#effects"}, {"@type": "ListItem", "position": 3, "name": "Assisted Reverb", "item": "https://nulljsfx.tech/plugins/assisted-reverb/"}]}</script>
+</head>
+<body class="plugin-page">
+    <main>
+        <nav class="page-crumbs" aria-label="Breadcrumb">
+            <a href="/" class="page-home"><img src="/assets/img/favicon.svg" alt="NULL JSFX" width="28" height="28"></a>
+            <a href="/">NULL JSFX</a> <span>/</span> <a href="/">Effects</a> <span>/</span> <span>Assisted Reverb</span>
+        </nav>
+        <article class="page-plugin">
+            <header class="guide-header page-header">
+                <span class="guide-category">Assisted</span>
+                <h1>ASSISTED REVERB <span class="beta-badge">BETA</span></h1>
+                <p>Reverb that sets itself from the track</p>
+                <p class="beta-note">Beta: its rules have been tested on test signals so far and may still be tuned from your feedback, so a project saved now can sound a little different after an update.</p>
+            </header>
+            <video class="guide-shot guide-video" poster="/assets/video/assisted_reverb.jpg" controls playsinline preload="none" width="1280" height="720" aria-label="Assisted Reverb presentation video"><source src="https://github.com/koulaxizis/null-jsfx/releases/download/media/assisted_reverb.mp4" type="video/mp4"><source src="/assets/video/assisted_reverb.mp4" type="video/mp4"></video>
+            <div class="page-actions">
+                <a class="featured-btn" href="/#download"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg><span>Download free</span></a>
+                <small>Part of NULL JSFX 2.9: 137 plugins, free and open source (MIT). Easiest with <a href="/#hub">NULL JSFX Hub</a>.</small>
+            </div>
+            <div class="guide-body">
+                <section class="guide-section">
+                    <h2>Controls</h2>
+                    <ul class="guide-sliders"><li><span class="slider-name">Learn</span><span class="slider-desc">Off / On — Press On and play the track: it listens for 15 s of signal (or until you turn it Off, after at least 0.5 s), then stores what it heard and returns to Off.</span></li><li><span class="slider-name">Source</span><span class="slider-desc">Vocal / Drums / Bass / Instrument / Mix — What is playing: Vocal, Drums, Bass, Instrument or Mix. Each has its own decay, low cut, level and ducking.</span></li><li><span class="slider-name">Target</span><span class="slider-desc">Natural / Warm / Bright / Punchy / Radio / Podcast / Lo-Fi — The sound you want: Natural, Warm, Bright, Punchy, Radio, Podcast or Lo-Fi.</span></li><li><span class="slider-name">Amount</span><span class="slider-desc">0 to 150% — How much reverb, 0-150% of the level the rules choose.</span></li><li><span class="slider-name">Length Trim</span><span class="slider-desc">−2 to +2 — Longer (+) or shorter (-) tail: +1 doubles the decay, -1 halves it.</span></li><li><span class="slider-name">Tone Trim</span><span class="slider-desc">−2 to +2 — Brighter (+) or darker (-) tail: +1 moves the high cut up an octave.</span></li><li><span class="slider-name">Level Trim</span><span class="slider-desc">−12 to +12 dB — The reverb&#x27;s level on top of the rules, in dB.</span></li><li><span class="slider-name">Output</span><span class="slider-desc">−12 to +12 dB — Level after the reverb.</span></li><li><span class="slider-name">Learned</span><span class="slider-desc">No / Yes — Hidden: whether Learn has run. Saved with the project.</span></li><li><span class="slider-name">Learned Loud</span><span class="slider-desc">−80 to 0 dB — Hidden: the learned level of the loud parts (90th percentile of the 50 ms levels).</span></li><li><span class="slider-name">Learned Median</span><span class="slider-desc">−80 to 0 dB — Hidden: the learned median level; the ducking starts above it.</span></li><li><span class="slider-name">Learned Onset</span><span class="slider-desc">0 to 2000 ms — Hidden: the learned mean time between onsets (0 = none found).</span></li><li><span class="slider-name">Learned Bright</span><span class="slider-desc">−60 to 0 dB — Hidden: the learned brightness: the power above 4 kHz against the whole.</span></li></ul>
+                </section>
+                <section class="guide-section">
+                    <h2>Best uses</h2>
+                    <ul class="use-cases"><li>A first reverb on a vocal without knowing the settings</li><li>A tail that stays out of the way of a busy part</li><li>Radio, podcast or lo-fi spaces with one choice</li><li>Ducked vocal reverb that blooms between phrases</li></ul>
+                </section>
+                <section class="guide-section">
+                    <h2>Properties</h2>
+                    <p class="page-props">Learn: 50 ms windows above -60 dBFS give a level histogram (loud parts and median), the mean onset interval and the brightness above 4 kHz. Rules (tools/assisted_targets.json): decay (RT60) per target times a source factor, kept under six onset intervals, times 2^Length; pre-delay a tenth of the onset interval (0-60 ms) times the target&#x27;s factor; low cut per source; high cut per target moved an octave per 12 dB of brightness, times 2^Tone; wet level per source and target times Amount; ducking per source while the dry signal sits between its median and loud levels. Reverb: pre-delay → 8 damped combs per side tuned to the decay → 4 all-passes → 12 dB/oct low cut and high cut → added to the dry signal → Output. No AI: fixed rules, the same result every time. Zero latency.</p>
+                </section>
+                <section class="guide-section">
+                    <h2>Formats</h2>
+                    <ul class="guide-formats"><li><span class="format-tag">JSFX</span>JSFX for REAPER, with REAPER&#x27;s own sliders</li><li><span class="format-tag">GFX</span>JSFX GFX for REAPER, with its own interface</li><li><span class="format-tag">VST3</span>VST3 for any DAW</li><li><span class="format-tag">CLAP</span>CLAP for any DAW</li><li><span class="format-tag">LV2</span>LV2 for Linux DAWs such as Ardour, Carla and Qtractor</li></ul>
+                </section>
+                <section class="guide-section">
+                    <h2>Factory presets</h2>
+                    <p class="page-list">Vocal Natural · Vocal Warm Hall · Vocal Bright Plate · Radio Voice Room · Podcast Voice Touch · Punchy Drum Room · Natural Drum Space · Bass Hint · Instrument Ambience · Instrument Lo-Fi Wash · Mix Glue Space · Long Warm Tail</p>
+                </section>
+                <section class="guide-section">
+                    <h2>Try it</h2>
+                    <a class="try-studio guide-studio" href="https://useoros.online/studio/" target="_blank" rel="noopener"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8" fill="currentColor"/></svg><span class="try-studio-text"><b>Try it on orOS Studio</b><small>Add it to a track in your browser, with its own interface. Nothing to install.</small></span></a>
+                </section>
+            </div>
+        </article>
+        <section class="page-related">
+            <h2 class="section-title">Goes well with</h2>
+            <div class="related-grid"><a class="related-card" href="/plugins/assisted-delay/"><b>Assisted Delay</b><small>Delay that sets itself from the track</small></a><a class="related-card" href="/plugins/assisted-eq/"><b>Assisted EQ</b><small>EQ that sets itself from the track</small></a><a class="related-card" href="/plugins/assisted-comp/"><b>Assisted Comp</b><small>Compressor that sets itself from the track</small></a><a class="related-card" href="/plugins/delay/"><b>Delay</b><small>Stereo &amp; Ping-Pong Echo</small></a><a class="related-card" href="/plugins/driver/"><b>Driver</b><small>One-Knob Warm Tube Drive</small></a><a class="related-card" href="/plugins/exciter/"><b>Exciter</b><small>Harmonic High Enhancer</small></a></div>
+            <p class="page-more"><a href="/">All 137 NULL JSFX plugins</a></p>
+        </section>
+    </main>
+    <footer class="site-footer">
+        <div class="footer-content">
+            Designed with &#9825; by <a href="https://koulaxizis.gr" target="_blank" rel="noopener">Christos Koulaxizis</a>.
+            <div class="footer-links">
+                <a href="https://ko-fi.com/koulaxizis" target="_blank" rel="noopener">Support on Ko-fi</a>
+                <span class="sep">&bull;</span>
+                <a href="https://github.com/koulaxizis/null-jsfx" target="_blank" rel="noopener">GitHub</a>
+                <span class="sep">&bull;</span>
+                <a href="/">nulljsfx.tech</a>
+            </div>
+        </div>
+    </footer>
+    <button id="theme-toggle" class="theme-toggle-floating" aria-label="Toggle color theme" title="Switch between light/dark theme">
+        <svg class="sun-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2 M12 21v2 M4.22 4.22l1.42 1.42 M18.36 18.36l1.42 1.42 M1 12h2 M21 12h2 M4.22 19.78l1.42-1.42 M18.36 5.64l1.42-1.42"/></svg>
+        <svg class="moon-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none;"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+    </button>
+    <script src="/assets/js/theme.js"></script>
+    <script src="/assets/js/demo.js"></script>
+</body>
+</html>

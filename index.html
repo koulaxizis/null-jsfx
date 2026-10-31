@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NULL JSFX: 133 free audio plugins for REAPER, VST3 and CLAP</title>
-    <meta name="description" content="133 free audio plugins: effects, instruments and MIDI tools for REAPER (JSFX) and any DAW (VST3, CLAP) on Windows, macOS and Linux. Open source, no account.">
+    <title>NULL JSFX: 137 free audio plugins for REAPER, VST3 and CLAP</title>
+    <meta name="description" content="137 free audio plugins: effects, instruments and MIDI tools for REAPER (JSFX) and any DAW (VST3, CLAP) on Windows, macOS and Linux. Open source, no account.">
     <meta name="keywords" content="JSFX, REAPER plugins, free VST3, free CLAP, audio effects, virtual instruments, MIDI effects, open source, mixing, mastering, NULL JSFX, Linux audio plugins">
     <meta name="author" content="Christos Koulaxizis">
     <link rel="canonical" href="https://nulljsfx.tech">
@@ -12,12 +12,12 @@
     <!-- Open Graph / Social Media -->
     <meta property="og:type" content="website">
     <meta property="og:title" content="NULL JSFX — Audio Without Noise">
-    <meta property="og:description" content="133 free audio plugins: effects, instruments and MIDI tools for REAPER (JSFX) and any DAW (VST3, CLAP) on Windows, macOS and Linux. Open source, no account.">
+    <meta property="og:description" content="137 free audio plugins: effects, instruments and MIDI tools for REAPER (JSFX) and any DAW (VST3, CLAP) on Windows, macOS and Linux. Open source, no account.">
     <meta property="og:url" content="https://nulljsfx.tech">
     <meta property="og:image" content="https://nulljsfx.tech/assets/img/social-preview.jpg">
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="NULL JSFX — Audio Without Noise">
-    <meta name="twitter:description" content="133 free audio plugins: effects, instruments and MIDI tools for REAPER (JSFX) and any DAW (VST3, CLAP) on Windows, macOS and Linux. Open source, no account.">
+    <meta name="twitter:description" content="137 free audio plugins: effects, instruments and MIDI tools for REAPER (JSFX) and any DAW (VST3, CLAP) on Windows, macOS and Linux. Open source, no account.">
     <meta name="twitter:image" content="https://nulljsfx.tech/assets/img/social-preview.jpg">
 
     <link rel="icon" type="image/svg+xml" href="assets/img/favicon.svg">
@@ -61,7 +61,7 @@
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                     <span class="btn-text">Download</span>
                     <div class="download-meta">
-                        <span><b id="release-version">v2.8</b></span>
+                        <span><b id="release-version">v2.9</b></span>
                         <span class="release-new" id="release-new" hidden>NEW</span>
                         <span class="sep">&bull;</span>
                         <span id="last-update">Released: 31/10/26</span>
@@ -159,7 +159,7 @@
             <div class="modal-content modal-download">
                 <button class="modal-close" onclick="closeDownload()">&times;</button>
                 <div class="changelog-header">
-                    <h3>Download NULL JSFX v2.8</h3>
+                    <h3>Download NULL JSFX v2.9</h3>
                     <p class="changelog-date">Free and open source. Pick what you need.</p>
                 </div>
                 <div class="download-support" id="download-support" hidden>
@@ -183,12 +183,12 @@
                     </a>
                     <a class="download-option" id="dl-jsfx" href="https://github.com/koulaxizis/null-jsfx/releases/latest/download/NULL-JSFX-JSFX.zip">
                         <span class="download-option-title">JSFX for REAPER</span>
-                        <span class="download-option-desc">All 133 plugins, the GFX versions with their own interface and 73 ready-made FX chains. One package for Windows, macOS and Linux.</span>
+                        <span class="download-option-desc">All 137 plugins, the GFX versions with their own interface and 73 ready-made FX chains. One package for Windows, macOS and Linux.</span>
                         <span class="download-option-file">NULL-JSFX-JSFX.zip</span>
                     </a>
                     <a class="download-option" id="dl-native" href="https://github.com/koulaxizis/null-jsfx/releases/latest/download/NULL-JSFX-VST3-CLAP-Windows.zip">
                         <span class="download-option-title">VST3 &amp; CLAP for <span id="dl-os">Windows</span></span>
-                        <span class="download-option-desc">All 133 plugins for any DAW, with the same interface and the same sound, plus the Rack.</span>
+                        <span class="download-option-desc">All 137 plugins for any DAW, with the same interface and the same sound, plus the Rack.</span>
                         <span class="download-option-file" id="dl-native-file">NULL-JSFX-VST3-CLAP-Windows.zip</span>
                     </a>
                     <p class="download-other">NULL JSFX Hub:
@@ -220,10 +220,21 @@
             <div class="modal-content modal-changelog">
                 <button class="modal-close" onclick="closeChangelog()">&times;</button>
                 <div class="changelog-header">
-                    <h3>Release Notes v2.8</h3>
+                    <h3>Release Notes v2.9</h3>
                     <p class="changelog-date">October 2026</p>
                 </div>
                 <div class="changelog-body">
+                    <div class="changelog-section">
+                        <h4 class="changelog-title">2.9: ASSISTED (BETA)</h4>
+                        <ul>
+                            <li>A new category of effects that set themselves: press <strong>Learn</strong>, play the track for up to 15 seconds, pick what is playing and the sound you want (Natural, Warm, Bright, Punchy, Radio, Podcast, Lo-Fi)</li>
+                            <li><strong>ASSISTED EQ</strong>: finds the mud, the honk, the harshness and the missing air, and corrects them toward a healthy balance</li>
+                            <li><strong>ASSISTED COMP</strong>: sets threshold, ratio, attack, release and makeup from the track's levels and rhythm; Podcast brings a voice to -16 LUFS on its own</li>
+                            <li><strong>ASSISTED REVERB</strong> and <strong>ASSISTED DELAY</strong>: pre-delay, decay, repeats, tone and level from the track, the delay in time with the project's tempo, both ducking under the dry sound</li>
+                            <li>No AI and nothing online: fixed rules from mixing practice, the same result every time. What Learn heard is saved with the project</li>
+                            <li>Beta: the rules may still be tuned from your feedback. JSFX, GFX, VST3 / CLAP and LV2, like the rest of the suite</li>
+                        </ul>
+                    </div>
                     <div class="changelog-section">
                         <h4 class="changelog-title">2.8: 7 NEW PLUGINS</h4>
                         <ul>
@@ -469,7 +480,7 @@
                 <button type="button" class="tag-chip active" data-tag="" aria-pressed="true">All</button><button type="button" class="tag-chip" data-tag="Vocals" aria-pressed="false">Vocals</button><button type="button" class="tag-chip" data-tag="Drums" aria-pressed="false">Drums</button><button type="button" class="tag-chip" data-tag="Bass" aria-pressed="false">Bass</button><button type="button" class="tag-chip" data-tag="Guitar" aria-pressed="false">Guitar</button><button type="button" class="tag-chip" data-tag="Synths &amp; Keys" aria-pressed="false">Synths &amp; Keys</button><button type="button" class="tag-chip" data-tag="Mastering" aria-pressed="false">Mastering</button><button type="button" class="tag-chip" data-tag="Stereo" aria-pressed="false">Stereo</button><button type="button" class="tag-chip" data-tag="Space" aria-pressed="false">Space</button><button type="button" class="tag-chip" data-tag="Modulation" aria-pressed="false">Modulation</button><button type="button" class="tag-chip" data-tag="Character" aria-pressed="false">Character</button><button type="button" class="tag-chip" data-tag="Repair" aria-pressed="false">Repair</button><button type="button" class="tag-chip" data-tag="Creative" aria-pressed="false">Creative</button>
             </div>
             <div class="plugin-tabs" role="tablist">
-                <button type="button" class="plugin-tab active" role="tab" aria-selected="true" aria-controls="tab-effects" id="tab-btn-effects" data-tab="effects">Effects <span class="category-count">116</span></button>
+                <button type="button" class="plugin-tab active" role="tab" aria-selected="true" aria-controls="tab-effects" id="tab-btn-effects" data-tab="effects">Effects <span class="category-count">120</span></button>
                 <button type="button" class="plugin-tab" role="tab" aria-selected="false" aria-controls="tab-instruments" id="tab-btn-instruments" data-tab="instruments">Instruments <span class="category-count">10</span></button>
                 <button type="button" class="plugin-tab" role="tab" aria-selected="false" aria-controls="tab-midi" id="tab-btn-midi" data-tab="midi">MIDI <span class="category-count">7</span></button>
                 <button type="button" class="plugin-tab" role="tab" aria-selected="false" aria-controls="tab-chains" id="tab-btn-chains" data-tab="chains">FX Chains <span class="category-count">73</span></button>
@@ -1967,6 +1978,56 @@
                     <div class="plugin-info">
                         <h3><a href="plugins/warped-delay/" class="card-link">WARPED DELAY</a></h3>
                         <p class="plugin-desc">Modulated Degrading Delay</p>
+                        <div class="plugin-formats"><span>JSFX</span><span>GFX</span><span>VST3</span><span>CLAP</span><span>LV2</span></div>
+                        <span class="info-badge">?</span>
+                    </div>
+                </article>
+                </div>
+            </div>
+            <div class="plugin-category" id="assisted">
+                <h3 class="category-title">Assisted <span class="category-count">4</span></h3>
+                <p class="category-desc">Effects that set themselves: press Learn, play the track, pick a target.</p>
+                <div class="plugin-grid">
+                <article class="plugin-card" data-name="assisted compressor comp dynamics learn auto automatic smart assistant threshold attack release loudness lufs podcast radio punchy vocal drums bass bus gfx vst3 clap lv2" data-tags="Vocals|Drums|Bass|Mastering" onclick="openGuide('assisted-comp')">
+                    <div class="plugin-icon">
+                        <svg viewBox="0 0 64 64" width="48" height="48"><defs><linearGradient id="icon-ascomp" x1="0%" y1="100%" x2="0%" y2="0%"><stop offset="0%" stop-color="#888888"/><stop offset="100%" stop-color="#aaaaaa"/></linearGradient></defs><path d="M 6,56 L 28,34 L 44,28" stroke="url(#icon-ascomp)" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/><path d="M 6,56 L 44,18" stroke="url(#icon-ascomp)" stroke-width="1.5" fill="none" opacity="0.3"/><circle cx="50" cy="14" r="6" stroke="url(#icon-ascomp)" stroke-width="2" fill="none"/><circle cx="50" cy="14" r="2" fill="url(#icon-ascomp)"/></svg>
+                    </div>
+                    <div class="plugin-info">
+                        <h3><a href="plugins/assisted-comp/" class="card-link">ASSISTED COMP</a> <span class="beta-badge">BETA</span></h3>
+                        <p class="plugin-desc">Compressor that sets itself from the track</p>
+                        <div class="plugin-formats"><span>JSFX</span><span>GFX</span><span>VST3</span><span>CLAP</span><span>LV2</span></div>
+                        <span class="info-badge">?</span>
+                    </div>
+                </article>
+                <article class="plugin-card" data-name="assisted delay echo slapback learn auto automatic smart assistant tempo sync ping-pong repeats ducking vocal drums bus podcast radio lo-fi gfx vst3 clap lv2" data-tags="Vocals|Drums|Space|Character" onclick="openGuide('assisted-delay')">
+                    <div class="plugin-icon">
+                        <svg viewBox="0 0 64 64" width="48" height="48"><defs><linearGradient id="icon-asdl" x1="0%" y1="100%" x2="0%" y2="0%"><stop offset="0%" stop-color="#888888"/><stop offset="100%" stop-color="#aaaaaa"/></linearGradient></defs><rect x="8" y="20" width="4" height="36" rx="1" fill="url(#icon-asdl)"/><rect x="20" y="32" width="4" height="24" rx="1" fill="url(#icon-asdl)" opacity="0.8"/><rect x="32" y="42" width="4" height="14" rx="1" fill="url(#icon-asdl)" opacity="0.6"/><rect x="44" y="49" width="4" height="7" rx="1" fill="url(#icon-asdl)" opacity="0.4"/><circle cx="50" cy="14" r="6" stroke="url(#icon-asdl)" stroke-width="2" fill="none"/><circle cx="50" cy="14" r="2" fill="url(#icon-asdl)"/></svg>
+                    </div>
+                    <div class="plugin-info">
+                        <h3><a href="plugins/assisted-delay/" class="card-link">ASSISTED DELAY</a> <span class="beta-badge">BETA</span></h3>
+                        <p class="plugin-desc">Delay that sets itself from the track</p>
+                        <div class="plugin-formats"><span>JSFX</span><span>GFX</span><span>VST3</span><span>CLAP</span><span>LV2</span></div>
+                        <span class="info-badge">?</span>
+                    </div>
+                </article>
+                <article class="plugin-card" data-name="assisted eq equalizer learn auto automatic smart assistant tone match mud boxy harsh dull warm bright radio podcast lo-fi vocal drums bass mix gfx vst3 clap lv2" data-tags="Vocals|Drums|Bass|Character" onclick="openGuide('assisted-eq')">
+                    <div class="plugin-icon">
+                        <svg viewBox="0 0 64 64" width="48" height="48"><defs><linearGradient id="icon-aseq" x1="0%" y1="100%" x2="0%" y2="0%"><stop offset="0%" stop-color="#888888"/><stop offset="100%" stop-color="#aaaaaa"/></linearGradient></defs><path d="M 6,36 C 14,36 16,26 22,26 C 28,26 28,44 34,44 C 40,44 42,30 50,30 L 58,30" stroke="url(#icon-aseq)" stroke-width="2.5" fill="none" stroke-linecap="round"/><circle cx="50" cy="14" r="6" stroke="url(#icon-aseq)" stroke-width="2" fill="none"/><circle cx="50" cy="14" r="2" fill="url(#icon-aseq)"/></svg>
+                    </div>
+                    <div class="plugin-info">
+                        <h3><a href="plugins/assisted-eq/" class="card-link">ASSISTED EQ</a> <span class="beta-badge">BETA</span></h3>
+                        <p class="plugin-desc">EQ that sets itself from the track</p>
+                        <div class="plugin-formats"><span>JSFX</span><span>GFX</span><span>VST3</span><span>CLAP</span><span>LV2</span></div>
+                        <span class="info-badge">?</span>
+                    </div>
+                </article>
+                <article class="plugin-card" data-name="assisted reverb room hall space ambience learn auto automatic smart assistant decay pre-delay ducking vocal drums bus podcast radio lo-fi gfx vst3 clap lv2" data-tags="Vocals|Drums|Space|Character" onclick="openGuide('assisted-reverb')">
+                    <div class="plugin-icon">
+                        <svg viewBox="0 0 64 64" width="48" height="48"><defs><linearGradient id="icon-asrv" x1="0%" y1="100%" x2="0%" y2="0%"><stop offset="0%" stop-color="#888888"/><stop offset="100%" stop-color="#aaaaaa"/></linearGradient></defs><path d="M 6,56 L 12,56 L 12,22 L 44,56" stroke="url(#icon-asrv)" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/><circle cx="50" cy="14" r="6" stroke="url(#icon-asrv)" stroke-width="2" fill="none"/><circle cx="50" cy="14" r="2" fill="url(#icon-asrv)"/></svg>
+                    </div>
+                    <div class="plugin-info">
+                        <h3><a href="plugins/assisted-reverb/" class="card-link">ASSISTED REVERB</a> <span class="beta-badge">BETA</span></h3>
+                        <p class="plugin-desc">Reverb that sets itself from the track</p>
                         <div class="plugin-formats"><span>JSFX</span><span>GFX</span><span>VST3</span><span>CLAP</span><span>LV2</span></div>
                         <span class="info-badge">?</span>
                     </div>
