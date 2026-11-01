@@ -310,7 +310,7 @@ The data files are `site_content.json` (texts per plugin), `site_content_next.js
 
 ### II.11 `android/web/mixers/` — NULL Remote, Mixers tab
 
-Remote control of digital mixers in **Remote for Mixers**, the mixers app of the shared Android shell (flavor `mixers`, `tech.nulljsfx.remote.mixers`, a separate app from Remote for REAPER on the same shell, II.10); the tab registers with `app: 'mixers'`. Web code only: the shell's UDP bridge (`window.NullShell.udpOpen/udpSend/udpBroadcast/udpClose`, packets as base64, delivered as `{type:"udp", id, host, port, data}`) carries the OSC.
+Remote control of digital mixers in **Remote for Mixers**, the mixers app of the shared Android shell (flavor `mixers`, `tech.nulljsfx.remote.mixers`, a separate app from Remote for REAPER on the same shell, II.10); the tab registers with `app: 'mixers'`. Web code only: the shell's UDP bridge (`window.NullShell.udpOpen/udpSend/udpBroadcast/udpClose`, packets as base64, delivered through `NullShell.on('udp', fn)` as `{type:"udp", id, host, port, data}`) carries the OSC.
 
 - `core/osc.js` OSC 1.0 codec (i, f, s, b; bundles flattened), `core/levels.js` the fader law (1.0 = +10 dB, 0.75 = 0 dB, four segments, 1024 steps), pan and meter blobs, `core/transport.js` the bridge adapter, `core/mixer.js` the session (discovery, query of every parameter on connect, coalesced sends at most every 20 ms per parameter, keep-alive, link watch). They are shared by every mixer family.
 - `xair/profile.js` the X AIR family (XR12, XR16, XR18, X18; MR12/MR18 share it), UDP 10024, `/xinfo` for discovery and the model, `/xremote` and `/meters ,s /meters/1` renewed every 8 s. X32 and M32 (UDP 10023, same paths on both) come later as a second profile.

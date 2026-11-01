@@ -119,11 +119,11 @@
         err,
         h('h2', { style: 'margin-top:16px' }, 'HOW TO CONNECT'),
         h('ol', { class: 'nm-help' }, P.connectHelp.map((t) => h('li', null, t))),
-        h('div', { class: 'nm-note' }, 'X AIR, X32 and M32 are trademarks of their owners. NULL Remote is an independent free app and is not made or endorsed by them.'));
+        h('div', { class: 'nm-note' }, 'X AIR, X32 and M32 are trademarks of their owners. Remote for Mixers is an independent free app from NULL JSFX and is not made or endorsed by them.'));
       this.root.replaceChildren(ui);
       this.root.className = 'nm';
       if (this.transportFactory || window.NullMixerTransport.available()) this.scan(found, err, scan);
-      else err.textContent = 'Open this tab in the NULL Remote app: a browser cannot reach the mixer.';
+      else err.textContent = 'Open this in the Remote for Mixers app: a browser cannot reach the mixer.';
     }
 
     async ensureTransport() {

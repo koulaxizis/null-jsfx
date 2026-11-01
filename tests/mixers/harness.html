@@ -11,11 +11,12 @@
   // NullShell stand-in: the Node side exposes nmUdpSend/nmUdpBroadcast and calls __nmDeliver
   const udpListeners = [];
   window.NullShell = {
-    udpOpen: async () => 1,
+    udpOpen: () => 1,
     udpSend: (id, host, port, b64) => window.nmUdpSend(host, port, b64),
     udpBroadcast: (id, port, b64) => window.nmUdpBroadcast(port, b64),
     udpClose: () => {},
-    onUdp: (cb) => { udpListeners.push(cb); return () => udpListeners.splice(udpListeners.indexOf(cb), 1); },
+    on: (type, cb) => { if (type === 'udp') udpListeners.push(cb); },
+    off: (type, cb) => { const i = udpListeners.indexOf(cb); if (i >= 0) udpListeners.splice(i, 1); },
     haptic: () => {},
     keepAwake: (on) => { window.__awake = on; },
   };
