@@ -550,7 +550,7 @@ The recipes live in the READMEs. This Part says where they are and lists the ste
 | Rack module | [native/README.md › The Rack](native/README.md#the-rack-pluginsrack) (`modules/<id>.hpp`, `module_<id>` test) | any Essentials module; `sidechain_ducker` for a keyed one |
 | Factory presets | [native/README.md › Factory presets](native/README.md#factory-presets-toolspresetsnamejson), then `tools/build_presets.py` | — |
 | FX chain / Rack preset | `CHAINS` or `RACK_PRESETS` in `tools/build_chains.py` (docstring), one line in `tools/site_chains.json`, then `tools/build_chains.py` and `tools/build_site.py` | — |
-| Presentation video | [tools/video/README.md](tools/video/README.md), then `tools/build_site.py`. 1080p Ko-fi copies go with `--hq` into the project files, not into the repo | — |
+| Presentation video | [tools/video/README.md](tools/video/README.md), then `tools/build_site.py`. 1080p Ko-fi copies (`--hq`, into the project files, never the repo) only when Christos asks for them | — |
 | Audio demo | `tools/render_demos.py --source assets/audio/null-jsfx-loop.flac <plugin>` | — |
 
 **Steps around a new plugin that are easy to forget:**
@@ -562,6 +562,8 @@ The recipes live in the READMEs. This Part says where they are and lists the ste
 5. Render the video and the demo, then update the screenshot in `assets/img/gfx/`.
 6. Plugin counts that are written by hand need updating too: `<title>` and the meta descriptions in `index.html`, the download dialog and the Rack showcase there, and the social preview (`make_social_preview.py`).
 7. For orOS Studio, the orOS weekly sync picks up `web/` on its own.
+
+**When a shared interface part changes** (the header, the preset bar or anything else in `null_gfx.jsfx-inc` that every GFX draws), re-render every screenshot (`tools/render_gfx_shots.sh`) and every plugin video (`tools/video/make_videos.py`), not only the plugins of the delivery. To find stale ones, compare a file's last commit date (`git log -1 -- <file>`) with the commit that changed the shared part; a footer-only difference is not a test (2.7's A/B and undo buttons went unnoticed in 95 videos and 89 screenshots until the audit of 2026-11-01).
 
 ---
 
@@ -735,6 +737,7 @@ Then run every test of Part V that the PR touches, merge it once CI is green, an
 
 Format: **date · topic** — the decision. (Who approved it, and the source.) Decisions made before this Bible came from the project's memory notes and the PRs, and were not re-checked one by one.
 
+- **2026-11-01 · 1080p videos only on request** — re-rendered videos no longer get their 1920x1080 Ko-fi copies (`--hq`) by default; Claude makes them when Christos asks. (Christos, thread on re-rendering the old screenshots and videos, 2026-11-01: "Μη βγάζεις τα βίντεο και για ko-fi, θα στα ζητάω όταν τα χρειάζομαι.")
 - **2026-11-01 · Mixer remotes** — Christos asked for Android remotes for Behringer X AIR, X32 and Midas M32 (with REAPER, orOS Studio and other DAWs, in their own threads). His answers: they live in this repo as a "Mixers" tab, with the NULL JSFX look, in a mixers app that is separate from Remote for REAPER but built on the same shell (his choice in the REAPER thread, 2026-11-01), named "Remote for Mixers" on the device (decision card, 2026-11-01); X AIR first, X32 and M32 later; for the engineer first and for musicians too; phone and tablet; English only at first; one app that finds the mixer and its model by itself, with connection instructions; distribution as APK on the GitHub releases with an in-app update notice that downloads directly, plus F-Droid, Droid-ify and Obtainium. He approved the four proposals: the shared OSC core, the v1 scope (discovery, channels, buses and main with faders, mute, solo, pan and meters, sends, mute groups; v2: EQ, dynamics, FX, snapshots, routing), My mix for musicians, and a software X AIR for the tests with CI. The stack (a thin Kotlin shell with one WebView, UI in HTML/CSS/JS, Kotlin owns the UDP socket) is shared with the other remotes and was asked once, in the REAPER remote thread. (Christos, thread "Φτιάξε Android remote για Behringer XAir", 2026-11-01.)
 - **2026-11-01 · Vendor research launch, with 3.0** — the 13 new plugins of the vendor research (B12) go on the site with screenshots, videos and the 1080p videos for Ko-fi, together with the version step. The version is 3.0 rather than 2.10, as the largest addition since 2.0 (Christos chose it on a decision card). (Christos: "Launch!", thread on the vendor research, 2026-11-01.)
 - **2026-10-31 · Site accent silver** — nulljsfx.tech uses the plugins' silver accent; purple (`#6d4aff`) is Noxpress only. The light theme takes a darker silver (`#555555`) because `#c4c4c4` fails WCAG AA on white. A site-only change, so no version step. `DESIGN.md` (written by Christos) goes into the repo root. (Christos, handoff "NULL JSFX site accent", 2026-10-31.)
@@ -849,7 +852,7 @@ None open. The ones found on 2026-10-26 (README.md said only One Slider had GFX/
 - **C2 The tablet remote has never been tried on a real REAPER**, as of 2026-10-13. [memory]
 - **C3 The Drum Machine defaults** (sample-free voices, the pattern plays only with the transport) were never confirmed by Christos. [memory]
 - **C4 Click Repair** re-trigger after level jumps, and the **Glitch** gate half-slice, were open questions before 2.0. Whether they were answered is not recorded. [memory, unverified]
-- **C5** The 1080p Ko-fi videos zip in the project files (`videos/NULL-JSFX-Videos-Ko-fi-1080p.zip`) is older than the 2.5 videos. [memory]
+- **C5** The 1080p Ko-fi videos zip in the project files (`videos/NULL-JSFX-Videos-Ko-fi-1080p.zip`) is older than the 2.5 videos. [memory] Since 2026-11-01, 1080p copies are made only when Christos asks for them (Part VII), so this zip and the other 1080p sets in the project files are history, not a current copy.
 - **C6** `reaper-rfxchain-format`: the `LFOSPEED` units and whether `PLINK` adds to `PARAMBASE` were never verified in REAPER. [memory]
 - **C7** Code signing for macOS and Windows is deferred (little value for these plugins, 2026-10-12). [memory]
 - **C8** The new project-instructions text is drafted (`/mnt/project-files/bible/project-instructions-2026-10-26.md`) and waits for Christos to paste it.
@@ -1450,3 +1453,13 @@ entry and the Bible delta.
 - **Files:** `NULL_JSFX_BIBLE.md` (Part VIII B6, Part X).
 - **Tests (run on Linux):** `native/scripts/build.sh --test --plugins "scale;chords;tilt;reverb;wah;band_splitter;delay"` (141/141 ctests pass, the `compare_` tests included) on unchanged code; the timing host above; `python3 tests/bible_order.py`. Not run: clap-validator itself (not built in this session); the timing on Windows and macOS.
 - **Version:** v3.0 (no change).
+
+### 2026-11-01 — GFX screenshots and videos re-rendered with the 2.7 header (no version change)
+- **Why:** the audit of 2026-11-01 found that 89 screenshots in `assets/img/gfx/` and 95 plugin videos in `assets/video/` (and their 1080p Ko-fi copies) were rendered before Wave 3a (commit `2f777f09`, 2026-10-27), so they show the GFX header without the undo, redo, A, B and A>B buttons that every GFX has had since 2.7. Found by rendering Tilt and comparing it with its screenshot, and by the last commit date of every file. The 3.0 launch had judged these screenshots to differ "only in the version in the footer".
+- **Screenshots:** `tools/render_gfx_shots.sh`, keeping only the 89 stale files. Harmonizer and Reference also came out different, but their screenshots are newer, already show the new header and were taken in a showcase state (Harmonizer with four voices), so they stay as they were.
+- **Videos:** `tools/video/make_videos.py` for the 95 stale plugin videos and posters; `media.yml` uploads them on the push to main. `hub.mp4` and `rack.mp4` are not GFX and were left. No 1080p Ko-fi copies: Christos asks for them when he needs them (Part VII, 2026-11-01).
+- **Bible delta:** Part IV gains the rule to re-render everything when a shared interface part changes, and its video row says 1080p copies are made only on request; Part VII records that decision; C5 notes it.
+- **Files:** `assets/img/gfx/` (89), `assets/video/*.mp4` and `*.jpg` (95 each), `NULL_JSFX_BIBLE.md`. No DSP, plugin or generator change.
+- **Tests (run on Linux):** the screenshots looked at before and after (Tilt), frames of the videos looked at, `tools/build_site.py --check`, `tests/lint.py`, `tests/bible_order.py`. Not run: the full `tests/run.sh` and the native tests, as no plugin file changed.
+- **Version:** v3.0 (no change).
+- **Next:** none; 1080p copies on request.
