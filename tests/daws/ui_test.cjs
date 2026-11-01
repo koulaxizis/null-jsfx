@@ -286,6 +286,57 @@ async function main() {
     assert(await btab.locator('.da-sheet').isHidden());
     ok('Bitwig: other devices as rows with their own value text, bypass, Back');
 
+    // sends: the faders move the send to an effect track
+    assert.deepStrictEqual(await btab.locator('.da-mixsel button').allTextContents(), ['Volume', 'Send FX 1']);
+    await btab.locator('.da-mixsel button', { hasText: 'Send FX 1' }).click();
+    assert(await bstrip('Master').locator('.da-cap').isHidden(), 'the master has no send');
+    assert(await bstrip('FX 1').locator('.da-cap').isHidden(), 'nor the effect track');
+    const send0 = bw.doc.tracks[0].sends[0];
+    const vol1 = bw.doc.tracks[0].vol;
+    await drag(bstrip('Vocal').locator('.da-fader'), 0, -60);
+    await until(async () => bw.doc.tracks[0].sends[0] > send0 + 0.05, 'Vocal send up in Bitwig');
+    assert.strictEqual(bw.doc.tracks[0].vol, vol1, 'the volume stays');
+    await until(async () => /dB$/.test(await bstrip('Vocal').locator('.da-db').textContent()), "Bitwig's send text");
+    await shot('bitwig-sends');
+    await btab.locator('.da-mixsel button', { hasText: 'Volume' }).click();
+    assert(await bstrip('Master').locator('.da-cap').isVisible());
+    ok('Bitwig: sends on the faders, to the effect track by name; the volume untouched');
+
+    // a container: the devices in its layers show indented under the layer's name
+    bw.change((d) => { d.tracks[1].devices = [{ name: 'FX Layer', enabled: true, plugin: false, params: [], layers: [{ name: 'Wet', devices: [{ name: 'NULL Tilt', enabled: true, plugin: true, params: d.tracks[0].devices[0].params.map((p) => ({ ...p })) }] }] }]; });
+    await bstrip('Synth').locator('.da-fx').click();
+    await until(async () => (await btab.locator('.da-plugin').count()) === 2, 'the container and the device inside');
+    assert.deepStrictEqual(await btab.locator('.da-plugin-open small').allTextContents(), ['parameters', 'Wet · NULL JSFX']);
+    assert.strictEqual(await btab.locator('.da-plugin').nth(1).evaluate((e) => e.style.paddingLeft), '20px');
+    await shot('bitwig-container');
+    await btab.locator('.da-plugin-open').nth(1).click();
+    await until(async () => (await btab.locator('.da-gfx canvas').count()) === 1, 'Tilt inside the layer in its GFX');
+    assert(await page.evaluate(() => NullRemote.back()));
+    assert(await page.evaluate(() => NullRemote.back()));
+    ok('Bitwig: a device inside a container, indented under its layer, opens in its own GFX');
+
+    // a bigger project: the desk pages through the script's window of 32 tracks
+    assert(await btab.locator('.da-pager').isHidden(), 'no pager for 4 tracks');
+    bw.change((d) => {
+      const master = d.tracks.pop();
+      for (let k = d.tracks.length + 1; d.tracks.length < 40; k++) d.tracks.push({ name: 'Track ' + k, type: 'Audio', vol: 0.5, pan: 0.5, mute: false, solo: false, arm: false, color: [0.4, 0.4, 0.4], devices: [] });
+      d.tracks.push(master);
+    });
+    await until(async () => (await btab.locator('.da-strip').count()) === 32, '32 Bitwig strips');
+    assert.strictEqual(await btab.locator('.da-page').textContent(), 'Tracks 1–32 of 41');
+    assert(await btab.locator('.da-prev').isDisabled());
+    await shot('bitwig-pager');
+    await btab.locator('.da-next').click();
+    await until(async () => (await btab.locator('.da-strip').count()) === 9, 'the second page');
+    assert.strictEqual(await btab.locator('.da-page').textContent(), 'Tracks 33–41 of 41');
+    assert(await btab.locator('.da-next').isDisabled());
+    assert.strictEqual(await btab.locator('.da-name').first().textContent(), 'Track 33');
+    await bstrip('Track 34').locator('.da-m').click();
+    await until(async () => bw.doc.tracks[33].mute === true, 'mute on the second page');
+    await btab.locator('.da-prev').click();
+    await until(async () => (await btab.locator('.da-name').first().textContent()) === 'Vocal', 'back to the first page');
+    ok('Bitwig: 41 tracks in pages of 32, next and previous, a mute on the second page');
+
     // --- Ableton Live ----------------------------------------------------------------------
     const atab = page.locator('[data-tab=ableton]');
     const astrip = (name) => atab.locator('.da-strip', { has: page.locator('.da-name', { hasText: name }) }).first();

@@ -20,12 +20,19 @@
 //       bypass  i d on                     on = active
 //       transport  do("play"|"stop"|"rec"|"loop"|"start")
 //       scroll  from                       first track of the window
+//       send  i k v(0..1)                  send k of track i (to effect track k)
+//       list  i                            track i's devices with those inside containers (1.2)
+//       reset  i what("send") k            send k back to its default
 //   Bitwig -> phone: one object per line ("\n"); a send holds one or more lines. (If Bitwig puts
 //   its length header in front of a send as well, the phone skips it.)
 //       hello  proto ext size              size = tracks in the window
-//       tracks  total from list[{i name type vol volText pan panText mute solo arm color}]
+//       tracks  total from list[{i name type vol volText pan panText mute solo arm color sends sendTexts}]
+//                                          sends[k]: 0..1, or null where track i has no send k
+//       sends  list[name]                  the effect tracks, the targets of sends 0..SENDS-1
 //       track  i + the fields that changed
-//       devices  i list[{d name on plugin}]
+//       devices  i list[{d name on plugin depth chain}]
+//                                          depth 1: inside the container listed before it, in its
+//                                          layer or slot `chain`; d >= 1000 for those (1.2)
 //       meters  v[]                         peak per track of the window, 0..1
 //       transport  play rec loop
 //       time  s                             bars:beats:sixteenths
@@ -37,17 +44,28 @@
 
 loadAPI(10);
 host.setShouldFailOnDeprecatedUse(false);
-host.defineController('NULL JSFX', 'Remote for DAWs', '1.0', 'cfc6570f-19fc-4fe2-86ee-bebc547acd68', 'NULL JSFX');
+host.defineController('NULL JSFX', 'Remote for DAWs', '1.2', 'cfc6570f-19fc-4fe2-86ee-bebc547acd68', 'NULL JSFX');
 host.defineMidiPorts(0, 0);
 
 var PROTO = 1;
-var VERSION = '1.0';
+var VERSION = '1.2'; // 1.1: sends; 1.2: devices inside containers
 var DEFAULT_PORT = 8818;
 var SIZE = 32; // tracks in the window
 var DEVICES = 16; // devices per track
 var TICK = 40; // ms between meter and clock updates
+var SENDS = 8; // sends per track, to the first effect tracks
+var LAYERS = 4; // layers of a container shown (FX Layer, Instrument Layer, Selectors, ...)
+var INNER = 8; // devices per layer or slot shown
 
-var bank, cursorTrack, cursorDevice, transport, formatter, displays;
+var bank, fxBank, cursorTrack, cursorDevice, transport, formatter, displays;
+var sendNames = []; // per send slot: the effect track's name, or null
+var dirtySends = false;
+// the devices of the script's cursor track, containers opened one level: the track the phone
+// listed or opened last (slot `listed`); the other tracks show their top-level devices
+var listed = -1;
+var tree = []; // per top device: {exists, name, on, plugin, layers[{exists, name, devs[]}], slot{name, devs[]}}
+var inner = {}; // id -> the API's device, for open and bypass
+var dirtyTree = false;
 var tracks = []; // per window slot: state sent to the phone
 var devices = []; // per window slot: [{name, on, plugin, exists}]
 var deviceBanks = [];
@@ -90,14 +108,19 @@ function init() {
   position.addValueObserver(function () { timeText = position.getFormatted(formatter); });
 
   // every track of the document, effect tracks and the master included, nested ones flattened
-  bank = host.createTrackBank(SIZE, 0, 0, true);
+  bank = host.createTrackBank(SIZE, SENDS, 0, true);
   bank.itemCount().addValueObserver(function (n) { total = n; dirtyTracks = true; });
-  bank.scrollPosition().addValueObserver(function (n) { from = n; dirtyTracks = true; });
+  bank.scrollPosition().addValueObserver(function (n) { from = n; listed = -1; dirtyTracks = true; });
   for (var i = 0; i < SIZE; i++) watchTrack(i);
+  // the names of the send targets: the effect tracks, in the order of every track's sends
+  fxBank = host.createEffectTrackBank(SENDS, 0);
+  for (var k = 0; k < SENDS; k++) watchSendName(k);
 
   // the device whose parameters the phone sees: its own cursors, so Bitwig's selection stays
   cursorTrack = host.createCursorTrack('null-jsfx-remote', 'NULL JSFX Remote', 0, 0, false);
   cursorDevice = cursorTrack.createCursorDevice();
+  var treeBank = cursorTrack.createDeviceBank(DEVICES);
+  for (var td = 0; td < DEVICES; td++) watchTree(treeBank.getItemAt(td), td);
   cursorDevice.isPinned().markInterested();
   cursorDevice.exists().addValueObserver(function (v) { open.exists = v; dirtyOpen = true; });
   cursorDevice.name().addValueObserver(function (v) { open.name = String(v); dirtyOpen = true; });
@@ -140,7 +163,7 @@ function init() {
 
 function watchTrack(i) {
   var t = bank.getItemAt(i);
-  var s = { i: i, exists: false, name: '', type: '', vol: 0, volText: '', pan: 0.5, panText: '', mute: false, solo: false, arm: false, color: '' };
+  var s = { i: i, exists: false, name: '', type: '', vol: 0, volText: '', pan: 0.5, panText: '', mute: false, solo: false, arm: false, color: '', sends: [], sendTexts: [], sendOn: [] };
   tracks[i] = s;
   meters[i] = 0;
   metersSent[i] = -1;
@@ -165,10 +188,112 @@ function watchTrack(i) {
   t.color().addValueObserver(function (r, g, b) { s.color = hex(r, g, b); mark(i, 'color'); });
   t.addVuMeterObserver(1000, -1, true, function (v) { meters[i] = v / 999; });
 
+  for (var k = 0; k < SENDS; k++) watchSend(i, s, t.sendBank().getItemAt(k), k);
+
   var db = t.createDeviceBank(DEVICES);
   deviceBanks[i] = db;
   devices[i] = [];
   for (var d = 0; d < DEVICES; d++) watchDevice(i, db, d);
+}
+
+function watchSend(i, s, send, k) {
+  s.sends[k] = 0;
+  s.sendTexts[k] = '';
+  s.sendOn[k] = false;
+  send.exists().addValueObserver(function (v) { s.sendOn[k] = v; mark(i, 'sends'); });
+  send.value().addValueObserver(function (v) { s.sends[k] = v; mark(i, 'sends'); });
+  send.value().displayedValue().addValueObserver(function (v) { s.sendTexts[k] = String(v); mark(i, 'sends'); });
+}
+
+function watchSendName(k) {
+  var fx = fxBank.getItemAt(k);
+  var on = false;
+  var name = '';
+  sendNames[k] = null;
+  var set = function () { sendNames[k] = on ? name : null; dirtySends = true; };
+  fx.exists().addValueObserver(function (v) { on = v; set(); });
+  fx.name().addValueObserver(function (v) { name = String(v); set(); });
+}
+
+function devState(dev, onChange) {
+  var s = { exists: false, name: '', on: true, plugin: false };
+  dev.exists().addValueObserver(function (v) { s.exists = v; onChange(); });
+  dev.name().addValueObserver(function (v) { s.name = String(v); onChange(); });
+  dev.isEnabled().addValueObserver(function (v) { s.on = v; onChange(); });
+  dev.isPlugin().addValueObserver(function (v) { s.plugin = v; onChange(); });
+  return s;
+}
+
+function watchTree(dev, d) {
+  var dirty = function () { dirtyTree = true; };
+  var top = devState(dev, dirty);
+  top.layers = [];
+  var layers = dev.createLayerBank(LAYERS);
+  for (var l = 0; l < LAYERS; l++) {
+    var layer = layers.getItemAt(l);
+    var ls = { exists: false, name: '', devs: [] };
+    (function (ls) {
+      layer.exists().addValueObserver(function (v) { ls.exists = v; dirty(); });
+      layer.name().addValueObserver(function (v) { ls.name = String(v); dirty(); });
+    })(ls);
+    var lb = layer.createDeviceBank(INNER);
+    for (var j = 0; j < INNER; j++) {
+      ls.devs[j] = devState(lb.getItemAt(j), dirty);
+      inner[1000 + d * 100 + l * 10 + j] = lb.getItemAt(j);
+    }
+    top.layers[l] = ls;
+  }
+  // a container with a slot (Chain, a device's FX slot): the first slot's devices
+  var slot = dev.getCursorSlot();
+  top.slot = { name: '', devs: [] };
+  dev.slotNames().addValueObserver(function (names) {
+    var first = names && names.length ? String(names[0]) : '';
+    if (first && first !== top.slot.name) slot.selectSlot(first);
+    top.slot.name = first;
+    dirty();
+  });
+  var sb = slot.createDeviceBank(INNER);
+  for (var k = 0; k < INNER; k++) {
+    top.slot.devs[k] = devState(sb.getItemAt(k), dirty);
+    inner[1000 + d * 100 + 90 + k] = sb.getItemAt(k);
+  }
+  tree[d] = top;
+}
+
+// track i's devices with one level inside containers, from the cursor track's banks
+function treeList(i) {
+  var list = [];
+  var add = function (d, s, depth, chain) {
+    var m = { d: d, name: s.name, on: s.on, plugin: s.plugin };
+    if (depth) { m.depth = depth; m.chain = chain; }
+    list.push(m);
+  };
+  for (var d = 0; d < DEVICES; d++) {
+    var top = tree[d];
+    if (!top.exists) continue;
+    add(d, top, 0, '');
+    for (var l = 0; l < LAYERS; l++) {
+      var ls = top.layers[l];
+      if (!ls.exists) continue;
+      for (var j = 0; j < INNER; j++) if (ls.devs[j].exists) add(1000 + d * 100 + l * 10 + j, ls.devs[j], 1, ls.name);
+    }
+    for (var k = 0; k < INNER; k++) if (top.slot.devs[k].exists) add(1000 + d * 100 + 90 + k, top.slot.devs[k], 1, top.slot.name);
+  }
+  return { t: 'devices', i: i, list: list };
+}
+
+// the API's device for id d of track slot i (null when the cursor track is elsewhere)
+function deviceAt(i, d) {
+  if (d >= 0 && d < DEVICES) return deviceBanks[i].getItemAt(d);
+  if (d >= 1000 && i === listed && inner[d]) return inner[d];
+  return null;
+}
+
+function sendsOut() {
+  // the names up to the last send that exists
+  var list = sendNames.slice(0);
+  while (list.length && list[list.length - 1] == null) list.pop();
+  return { t: 'sends', list: list };
 }
 
 function watchDevice(i, db, d) {
@@ -197,7 +322,18 @@ function hex(r, g, b) {
 // --- what goes to the phone --------------------------------------------------------------------
 
 function trackOut(s) {
-  return { i: s.i, name: s.name, type: s.type, vol: s.vol, volText: s.volText, pan: s.pan, panText: s.panText, mute: s.mute, solo: s.solo, arm: s.arm, color: s.color };
+  var m = { i: s.i, name: s.name, type: s.type, vol: s.vol, volText: s.volText, pan: s.pan, panText: s.panText, mute: s.mute, solo: s.solo, arm: s.arm, color: s.color };
+  addSends(m, s);
+  return m;
+}
+
+function addSends(m, s) {
+  m.sends = [];
+  m.sendTexts = [];
+  for (var k = 0; k < SENDS; k++) {
+    m.sends.push(s.sendOn[k] ? s.sends[k] : null);
+    m.sendTexts.push(s.sendOn[k] ? s.sendTexts[k] : '');
+  }
 }
 
 function trackList() {
@@ -207,6 +343,7 @@ function trackList() {
 }
 
 function deviceList(i) {
+  if (i === listed) return treeList(i);
   var list = [];
   var ds = devices[i];
   for (var d = 0; d < ds.length; d++) {
@@ -229,6 +366,7 @@ function hello(c) {
   var lines = [];
   var add = function (m) { lines.push(JSON.stringify(m)); };
   add({ t: 'hello', proto: PROTO, ext: VERSION, size: SIZE });
+  add(sendsOut());
   add(trackList());
   for (var i = 0; i < SIZE; i++) if (tracks[i].exists) add(deviceList(i));
   add({ t: 'transport', play: tstate.play, rec: tstate.rec, loop: tstate.loop });
@@ -253,10 +391,13 @@ function flush() {
     dirtyDevices = {};
     dirtyTransport = false;
     dirtyOpen = false;
+    dirtySends = false;
+    dirtyTree = false;
     out = [];
     return;
   }
   var lines = [];
+  if (dirtySends) lines.push(JSON.stringify(sendsOut()));
   if (dirtyTracks) {
     lines.push(JSON.stringify(trackList()));
     dirtyTrack = {};
@@ -266,9 +407,13 @@ function flush() {
     var s = tracks[i];
     if (!s.exists) continue;
     var m = { t: 'track', i: i };
-    for (var f in dirtyTrack[k]) m[f] = s[f];
+    for (var f in dirtyTrack[k]) {
+      if (f === 'sends') addSends(m, s);
+      else m[f] = s[f];
+    }
     lines.push(JSON.stringify(m));
   }
+  if (dirtyTree && listed >= 0) dirtyDevices[listed] = true;
   for (var d in dirtyDevices) if (tracks[Number(d)].exists) lines.push(JSON.stringify(deviceList(Number(d))));
   if (dirtyTransport) lines.push(JSON.stringify({ t: 'transport', play: tstate.play, rec: tstate.rec, loop: tstate.loop }));
   if (dirtyOpen && open.i >= 0) lines.push(JSON.stringify(openOut()));
@@ -277,6 +422,8 @@ function flush() {
   dirtyDevices = {};
   dirtyTransport = false;
   dirtyOpen = false;
+  dirtySends = false;
+  dirtyTree = false;
   // parameter messages queue in the order Bitwig reported them: after the device line
   lines = lines.concat(out);
   out = [];
@@ -387,6 +534,18 @@ function unit(v) {
   return v !== v ? null : Math.max(0, Math.min(1, v));
 }
 
+// the script's cursor track goes to track slot i: its banks then show i's containers
+function listTrack(i, tr) {
+  if (listed !== i) {
+    var was = listed;
+    listed = i;
+    cursorTrack.selectChannel(tr);
+    if (was >= 0) dirtyDevices[was] = true; // back to its top-level list
+  }
+  dirtyDevices[i] = true;
+  host.requestFlush();
+}
+
 function handle(client, m) {
   var t = m && m.t;
   var tr;
@@ -407,17 +566,32 @@ function handle(client, m) {
     tr = slot(m.i);
     if (tr && m.what === 'vol') tr.volume().reset();
     if (tr && m.what === 'pan') tr.pan().reset();
+    if (tr && m.what === 'send' && Number(m.k) >= 0 && Number(m.k) < SENDS) tr.sendBank().getItemAt(Number(m.k)).reset();
+    return;
+  }
+  if (t === 'send') {
+    tr = slot(m.i);
+    v = unit(m.v);
+    var sk = Number(m.k);
+    if (tr && v != null && sk >= 0 && sk < SENDS) tr.sendBank().getItemAt(sk).value().set(v);
+    return;
+  }
+  if (t === 'list') {
+    tr = slot(m.i);
+    if (!tr) return;
+    listTrack(Number(m.i), tr);
     return;
   }
   if (t === 'open') {
     tr = slot(m.i);
     var d = Number(m.d);
-    if (!tr || !(d >= 0 && d < DEVICES)) return;
+    var dev = tr ? deviceAt(Number(m.i), d) : null;
+    if (!dev) return;
     open.i = Number(m.i);
     open.d = d;
-    cursorTrack.selectChannel(tr);
+    listTrack(open.i, tr);
     cursorDevice.isPinned().set(true);
-    cursorDevice.selectDevice(deviceBanks[open.i].getItemAt(d));
+    cursorDevice.selectDevice(dev);
     dirtyOpen = true;
     host.requestFlush();
     return;
@@ -438,8 +612,8 @@ function handle(client, m) {
   }
   if (t === 'bypass') {
     tr = slot(m.i);
-    var b = Number(m.d);
-    if (tr && b >= 0 && b < DEVICES) deviceBanks[Number(m.i)].getItemAt(b).isEnabled().set(!!m.on);
+    var bd = tr ? deviceAt(Number(m.i), Number(m.d)) : null;
+    if (bd) bd.isEnabled().set(!!m.on);
     return;
   }
   if (t === 'transport') {

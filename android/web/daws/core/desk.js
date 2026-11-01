@@ -14,12 +14,18 @@
 //     'time' (text), 'link' (up), 'plugins' (ssid, list), 'params' (ssid, piid, params)
 //   connect(), close(), strips (Map ssid -> strip), rate
 //   strip: {ssid, name, type, mute, solo, rec, canRec, fader (0..1), pan (0..1), meter}
-//   listStrips(), listPlugins(ssid) -> 'plugins' with [{piid, name, enabled}]
+//   listStrips(), listPlugins(ssid) -> 'plugins' with [{piid, name, enabled, depth?, chain?}]
+//     (depth > 0: inside the rack or container listed before it, in its chain or layer `chain`)
 //   watchPlugin(ssid, piid) / watchPlugin(null) -> 'params' while it is open, with
 //     [{par, name, flags, min, max, points [[value, label]], value, text?}]
 //   setFader, setPan (ssid, 0..1), resetFader, resetPan (ssid), setMute, setSolo, setRec (ssid, on)
 //   setParam(ssid, piid, par, value in the parameter's range), setPluginActive(ssid, piid, on)
 //   play(), stop(), toStart(), record(), loop()
+//   optional, a DAW that shows a window of its tracks (Bitwig, Live): total, from, size and
+//     scroll(from); the desk pages through the window when total > size
+//   optional, a DAW that reports sends (Bitwig, Live): sendNames (targets, null where none),
+//     'sends' (names), strip.sends[k] (0..1 or null) and strip.sendTexts[k],
+//     setSend(ssid, k, 0..1), resetSend(ssid, k); the desk puts the faders on a send
 'use strict';
 (function () {
   const NULLFX = '../nullfx/';
@@ -136,7 +142,8 @@
   function register(P) {
     const { el, prefs, header } = NullRemote;
     let root, connectView, desk, msg, session = null, conn = null;
-    let strips, clock, transportBtns, sheet, sheetBody, sheetTitle;
+    let strips, clock, transportBtns, sheet, sheetBody, sheetTitle, pager, mixsel;
+    let mix = -1; // what the faders move: -1 the volume, k send k
     let view = null; // the open sheet: {kind: 'list' | 'plugin', ssid, ...}
 
     function say(text, err) {
@@ -210,6 +217,8 @@
       }
       if (session) session.close();
       session = s;
+      mix = -1;
+      drawMixSelector();
       let answered = false;
       session.on('strips', (list) => {
         if (session !== s) return;
@@ -223,6 +232,7 @@
         drawStrips(list);
       });
       session.on('strip', updateStrip);
+      session.on('sends', drawMixSelector);
       session.on('meter', updateMeter);
       session.on('transport', updateTransport);
       session.on('time', (t) => { if (clock) clock.textContent = t || '--:--:--'; });
@@ -242,6 +252,8 @@
       session = null;
       conn = null;
       drawn = '';
+      mix = -1;
+      mixsel.hidden = true;
       desk.hidden = true;
       connectView.hidden = false;
     }
@@ -269,6 +281,19 @@
       leave.setAttribute('aria-label', 'Disconnect');
       leave.onclick = disconnect;
       bar.append(clock, t, leave);
+      // pages of tracks, for a DAW that shows them a window at a time
+      pager = el('div', 'da-pager');
+      pager.hidden = true;
+      const prev = el('button', 'da-prev', '‹');
+      prev.setAttribute('aria-label', 'Previous tracks');
+      prev.onclick = () => page(-1);
+      const next = el('button', 'da-next', '›');
+      next.setAttribute('aria-label', 'Next tracks');
+      next.onclick = () => page(1);
+      pager.append(prev, el('div', 'da-page'), next);
+      // what the faders move: the volume or one send (a DAW that reports sends)
+      mixsel = el('div', 'da-mixsel');
+      mixsel.hidden = true;
       strips = el('div', 'da-strips');
       sheet = el('div', 'da-sheet');
       sheet.hidden = true;
@@ -280,7 +305,7 @@
       sh.append(back, sheetTitle);
       sheetBody = el('div', 'da-sheet-body');
       sheet.append(sh, sheetBody);
-      desk.append(bar, strips, sheet);
+      desk.append(bar, pager, mixsel, strips, sheet);
       return desk;
     }
 
@@ -289,10 +314,52 @@
       desk.hidden = false;
     }
 
+    function drawMixSelector() {
+      const names = (session && session.sendNames) || [];
+      if (mix >= 0 && names[mix] == null) mix = -1;
+      mixsel.textContent = '';
+      mixsel.hidden = !names.some((n) => n != null);
+      if (mixsel.hidden) return;
+      const add = (k, label) => {
+        const b = el('button', k === mix ? 'on' : '', label);
+        b.onclick = () => {
+          NullShell.haptic();
+          mix = k;
+          drawMixSelector();
+          if (session) for (const st of session.strips.values()) updateStrip(st);
+        };
+        mixsel.appendChild(b);
+      };
+      add(-1, 'Volume');
+      names.forEach((n, k) => { if (n != null) add(k, 'Send ' + n); });
+    }
+    // the fader's value in the current mode, null where the strip has no such send
+    function faderOf(s) {
+      if (mix < 0) return s.fader ?? P.unity;
+      return s.sends && s.sends[mix] != null ? s.sends[mix] : null;
+    }
+
+    function page(dir) {
+      if (!session || !session.size) return;
+      NullShell.haptic();
+      session.scroll(session.from + dir * session.size);
+    }
+    function drawPager() {
+      const s = session;
+      const on = !!(s && s.scroll && s.size && s.total > s.size);
+      pager.hidden = !on;
+      if (!on) return;
+      const last = Math.min(s.total, s.from + s.size);
+      pager.querySelector('.da-page').textContent = `Tracks ${s.from + 1}–${last} of ${s.total}`;
+      pager.querySelector('.da-prev').disabled = s.from <= 0;
+      pager.querySelector('.da-next').disabled = last >= s.total;
+    }
+
     // the list is drawn again only when its tracks change, so a strip under a finger stays put
     // while the DAW sends the list again; the controls always act on the newest strip object
     let drawn = '';
     function drawStrips(list) {
+      drawPager();
       const key = list.map((s) => [s.ssid, s.name, s.type, !!s.canRec].join('|')).join('\n');
       if (key === drawn && strips.childElementCount) {
         for (const s of list) updateStrip(s);
@@ -320,8 +387,15 @@
         meter.appendChild(el('div', 'da-meter-fill'));
         const fader = el('div', 'da-fader');
         fader.appendChild(el('div', 'da-cap'));
-        relativeDrag(fader, 'y', () => cur().fader ?? P.unity, (v) => { session.setFader(ssid, v); updateStrip(cur()); },
-          () => { session.resetFader(ssid); updateStrip(cur()); });
+        relativeDrag(fader, 'y', () => faderOf(cur()) ?? 0, (v) => {
+          if (mix < 0) session.setFader(ssid, v);
+          else if (faderOf(cur()) != null) session.setSend(ssid, mix, v);
+          updateStrip(cur());
+        }, () => {
+          if (mix < 0) session.resetFader(ssid);
+          else if (faderOf(cur()) != null) session.resetSend(ssid, mix);
+          updateStrip(cur());
+        });
         lane.append(meter, fader);
         const db = el('div', 'da-db');
         const btns = el('div', 'da-btns');
@@ -348,9 +422,12 @@
       const st = stripEl(s.ssid);
       if (!st) return;
       st.querySelector('.da-name').textContent = s.name;
-      const pos = s.fader ?? P.unity;
-      st.querySelector('.da-cap').style.bottom = `calc(${(pos * 100).toFixed(2)}% - ${(pos * 24).toFixed(1)}px)`;
-      st.querySelector('.da-db').textContent = P.dbText(s, session);
+      const f = faderOf(s);
+      const pos = f ?? 0;
+      const cap = st.querySelector('.da-cap');
+      cap.hidden = f == null; // no such send on this strip (the master, an effect track)
+      cap.style.bottom = `calc(${(pos * 100).toFixed(2)}% - ${(pos * 24).toFixed(1)}px)`;
+      st.querySelector('.da-db').textContent = mix < 0 ? P.dbText(s, session) : f == null ? '' : (s.sendTexts && s.sendTexts[mix]) || '';
       const pan = s.pan ?? 0.5;
       st.querySelector('.da-pan-dot').style.left = (pan * 100).toFixed(1) + '%';
       st.querySelector('.da-m').classList.toggle('on', !!s.mute);
@@ -413,9 +490,12 @@
       for (const p of list) {
         const fx = nullEffect(p.name, effects);
         const row = el('div', 'da-plugin');
+        // a device inside a rack or container: indented, with its chain or layer named
+        if (p.depth) row.style.paddingLeft = (Math.min(p.depth, 4) * 20) + 'px';
         const open = el('button', 'da-plugin-open');
         const label = el('span', '', p.name);
-        open.append(label, el('small', '', fx ? 'NULL JSFX' : 'parameters'));
+        const kind = fx ? 'NULL JSFX' : 'parameters';
+        open.append(label, el('small', '', p.depth && p.chain ? p.chain + ' · ' + kind : kind));
         open.onclick = () => openPlugin(ssid, p, fx);
         const on = el('button', 'da-onoff' + (p.enabled ? ' on' : ''), p.enabled ? 'ON' : 'OFF');
         on.setAttribute('aria-label', (p.enabled ? 'Bypass ' : 'Activate ') + p.name);

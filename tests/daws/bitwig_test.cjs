@@ -194,11 +194,116 @@ async function run(headerOut) {
   }
 }
 
+// a project with more tracks than the script's window: the phone pages through them
+async function paging() {
+  const doc = host.defaultDocument();
+  const master = doc.tracks.pop();
+  for (let k = doc.tracks.length + 1; doc.tracks.length < 40; k++) {
+    doc.tracks.push({ name: 'Track ' + k, type: 'Audio', vol: host.UNITY, pan: 0.5, mute: false, solo: false, arm: false, color: [0.4, 0.4, 0.4], devices: [] });
+  }
+  doc.tracks.push(master);
+  const bw = await host.start({ doc });
+  const s = new BW.Session({ dial: nodeDial(bw.port) });
+  try {
+    s.connect();
+    await until(() => s.strips.size === 32 && s.total === 41 && s.size === 32, 'a window of 32 of 41 tracks');
+    assert.strictEqual(s.from, 0);
+    assert.strictEqual(s.strips.get(0).name, 'Vocal');
+    s.scroll(32);
+    await until(() => s.from === 32 && s.strips.size === 9 && s.strips.get(0).name === 'Track 33', 'the next page');
+    assert.strictEqual(s.strips.get(8).name, 'Master');
+    s.setMute(0, true);
+    s.setFader(8, 0.5);
+    await until(() => doc.tracks[32].mute === true && Math.abs(doc.tracks[40].vol - 0.5) < 1e-9, 'controls act on the tracks of the page');
+    assert.strictEqual(doc.tracks[0].mute, false, 'not on the first page');
+    s.scroll(1000);
+    await until(() => s.from === 40 && s.strips.size === 1, 'scroll stops at the last track');
+    s.scroll(-5);
+    await until(() => s.from === 0 && s.strips.get(0).name === 'Vocal', 'back to the start');
+    ok('more than 32 tracks: a window of 32, paging forward and back, controls on the page shown');
+  } finally {
+    s.close();
+    bw.close();
+  }
+}
+
+// sends: one per effect track, on every track that has them
+async function sends() {
+  const bw = await host.start();
+  const s = new BW.Session({ dial: nodeDial(bw.port) });
+  const names = [];
+  s.on('sends', (l) => names.push(l.slice()));
+  try {
+    s.connect();
+    await until(() => s.strips.size === 4 && names.length, 'strips and send names');
+    assert.deepStrictEqual(s.sendNames, ['FX 1']);
+    assert.deepStrictEqual([...s.strips.values()].map((x) => x.sends[0]), [0.25, 0, null, null], 'the effect track and the master have no send');
+    assert.match(s.strips.get(0).sendTexts[0], /dB$/);
+    s.setSend(0, 0, 0.5);
+    s.setSend(2, 0, 0.9); // none: nothing happens
+    await until(() => bw.doc.tracks[0].sends[0] === 0.5, 'send in Bitwig');
+    assert(!bw.doc.tracks[2].sends, 'no send on the effect track');
+    await until(() => s.strips.get(0).sendTexts[0] === '-12.0 dB', "Bitwig's send text");
+    await sleep(400); // let go of the send: Bitwig's values show again
+    bw.change((d) => { d.tracks[1].sends = [0.75]; });
+    await until(() => s.strips.get(1).sends[0] === 0.75, 'a send changed in Bitwig');
+    s.resetSend(0, 0);
+    await until(() => bw.doc.tracks[0].sends[0] === 0 && s.strips.get(0).sends[0] === 0, 'send reset');
+    bw.change((d) => { d.tracks[2].name = 'Reverb'; });
+    await until(() => s.sendNames[0] === 'Reverb', 'the effect track renamed');
+    ok('sends: the effect tracks by name, set, reset, following Bitwig, none on effect tracks and the master');
+  } finally {
+    s.close();
+    bw.close();
+  }
+}
+
+// containers: the listed track shows the devices in their layers and slots, one level in
+async function containers() {
+  const doc = host.defaultDocument();
+  const eq = { name: 'EQ+', enabled: true, plugin: false, params: [{ id: 'CONTENTS/G', name: 'Gain', value: 0.5, lo: -24, hi: 24 }] };
+  doc.tracks[1].devices = [
+    { name: 'FX Layer', enabled: true, plugin: false, params: [], layers: [{ name: 'Dry', devices: [] }, { name: 'Wet', devices: [host.nullPlugin('tilt')] }] },
+    { name: 'Chain', enabled: true, plugin: false, params: [], slots: [{ name: 'CHAIN', devices: [eq] }] },
+  ];
+  const bw = await host.start({ doc });
+  const s = new BW.Session({ dial: nodeDial(bw.port) });
+  const events = [];
+  s.on('params', (ssid, piid, list) => events.push([ssid, piid, list]));
+  try {
+    s.connect();
+    await until(() => (s.devices.get(1) || []).length === 2, 'top-level devices first');
+    s.listPlugins(1);
+    await until(() => (s.devices.get(1) || []).length === 4, 'with those inside the containers');
+    assert.deepStrictEqual(s.devices.get(1).map((d) => [d.name, d.depth, d.chain, d.piid]), [
+      ['FX Layer', 0, '', 0], ['NULL Tilt', 1, 'Wet', 1010], ['Chain', 0, '', 1], ['EQ+', 1, 'CHAIN', 1190],
+    ]);
+    assert.strictEqual(s.devices.get(0).length, 3, 'another track keeps its list');
+    s.watchPlugin(1, 1010);
+    await until(() => events.some(([a, b, l]) => a === 1 && b === 1010 && l.some((p) => p.name === 'Amount')), 'Tilt inside the layer');
+    const amount = events[events.length - 1][2].find((p) => p.name === 'Amount');
+    s.setParam(1, 1010, amount.par, 0.875);
+    await until(() => Math.abs(doc.tracks[1].devices[0].layers[1].devices[0].params[0].value - 0.875) < 1e-6, 'Tilt in the layer set');
+    s.setPluginActive(1, 1190, false);
+    await until(() => eq.enabled === false, 'EQ+ in the chain bypassed');
+    // listing another track gives this one back its top-level list
+    s.listPlugins(0);
+    await until(() => (s.devices.get(1) || []).length === 2, 'track 1 back to top level');
+    ok('containers: layers and slots one level in on the listed track, a NULL plugin inside opened and set, bypass inside');
+  } finally {
+    s.close();
+    bw.close();
+  }
+}
+
 async function main() {
   scriptChecks();
   readerChecks();
   await run(false);
   await run(true);
+  await paging();
+  await sends();
+  await containers();
   console.log(`bitwig_test: ${passed} passed`);
 }
 

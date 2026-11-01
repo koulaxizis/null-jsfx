@@ -200,7 +200,111 @@ async function main() {
     s.close();
     L.close();
   }
+  await paging();
+  await sends();
+  await racks();
   console.log(`ableton_test: ${passed} passed`);
+}
+
+// sends: one per return track; the master has none, a return none to itself
+async function sends() {
+  const L = await live.start();
+  const s = new BW.Session({ dial: nodeDial(L.port) });
+  try {
+    s.connect();
+    await until(() => s.strips.size === 4 && s.sendNames.length === 1, 'strips and send names');
+    assert.deepStrictEqual(s.sendNames, ['FX 1']);
+    assert.deepStrictEqual([...s.strips.values()].map((x) => x.sends[0]), [0.25, 0, null, null]);
+    s.setSend(1, 0, 0.5);
+    await until(async () => (await L.get()).tracks[1].sends[0] === 0.5, 'send in Live');
+    await until(() => s.strips.get(1).sendTexts[0] === '-12.0 dB', "Live's send text");
+    await sleep(400);
+    await L.set(['tracks', 0, 'mixer_device', 'sends', 0, 'value'], 0.75);
+    await until(() => s.strips.get(0).sends[0] === 0.75, 'a send changed in Live');
+    s.resetSend(0, 0);
+    await until(async () => (await L.get()).tracks[0].sends[0] === 0, 'send reset');
+    await L.set(['return_tracks', 0, 'name'], 'Reverb');
+    await until(() => s.sendNames[0] === 'Reverb', 'the return renamed');
+    ok('sends: the returns by name, set, reset, following Live, none on the master or a return to itself');
+  } catch (e) {
+    console.error(L.log.join(''));
+    throw e;
+  } finally {
+    s.close();
+    L.close();
+  }
+}
+
+// a rack: the devices of its chains follow it in the list, one level in, under the chain's name
+async function racks() {
+  const doc = live.defaultDocument();
+  const tilt = doc.tracks[0].devices[0];
+  doc.tracks[1].devices = [{
+    name: 'Audio Effect Rack', class_name: 'AudioEffectGroupDevice', on: true, params: [{ name: 'Macro 1', value: 0, min: 0, max: 127 }],
+    chains: [
+      { name: 'Dry', devices: [] },
+      { name: 'Wet', devices: [tilt, { name: 'Inner Rack', class_name: 'AudioEffectGroupDevice', on: true, params: [], chains: [{ name: 'Deep', devices: [{ name: 'Utility', class_name: 'StereoGain', on: true, params: [{ name: 'Gain', value: 0, min: -35, max: 35 }] }] }] }] },
+    ],
+  }, { name: 'Saturator', class_name: 'Saturator', on: true, params: [{ name: 'Drive', value: 0, min: 0, max: 36 }] }];
+  const L = await live.start({ doc });
+  const s = new BW.Session({ dial: nodeDial(L.port) });
+  const events = [];
+  s.on('params', (ssid, piid, list) => events.push([ssid, piid, list]));
+  try {
+    s.connect();
+    await until(() => (s.devices.get(1) || []).length === 5, 'five devices with those inside the racks');
+    const list = s.devices.get(1);
+    assert.deepStrictEqual(list.map((d) => [d.name, d.depth, d.chain]), [
+      ['Audio Effect Rack', 0, ''], ['NULL Tilt', 1, 'Wet'], ['Inner Rack', 1, 'Wet'], ['Utility', 2, 'Deep'], ['Saturator', 0, ''],
+    ]);
+    assert.deepStrictEqual(list.map((d) => d.piid), [0, 1, 2, 3, 4]);
+    assert.strictEqual(list[1].plugin, true);
+    // the NULL plugin inside the rack opens and is set like any other
+    s.watchPlugin(1, 1);
+    await until(() => events.some(([a, b, l]) => a === 1 && b === 1 && l.length === 1 && l[0].name === 'Amount'), 'Tilt inside the rack');
+    s.setParam(1, 1, 1, 0.875);
+    await until(async () => Math.abs((await L.get()).tracks[1].devices[0].chains[1].devices[0].parameters[1].value - 0.875) < 1e-9, 'Tilt in the rack set in Live');
+    s.setPluginActive(1, 3, false);
+    await until(async () => (await L.get()).tracks[1].devices[0].chains[1].devices[1].chains[0].devices[0].on === false, 'Utility two racks in bypassed');
+    s.watchPlugin(1, 4);
+    await until(() => events.some(([a, b, l]) => b === 4 && l.length === 1 && l[0].name === 'Drive'), 'the device after the rack');
+    ok('racks: devices inside chains follow the rack in the list (two levels), open, set and bypass like top-level ones');
+  } catch (e) {
+    console.error(L.log.join(''));
+    throw e;
+  } finally {
+    s.close();
+    L.close();
+  }
+}
+
+// a Set with more tracks than the surface's window: the phone pages through them
+async function paging() {
+  const doc = live.defaultDocument();
+  for (let k = doc.tracks.length + 1; doc.tracks.length < 40; k++) doc.tracks.push({ name: 'Track ' + k, kind: 'audio', vol: live.UNITY, pan: 0, color: 0x666666, devices: [] });
+  const L = await live.start({ doc });
+  const s = new BW.Session({ dial: nodeDial(L.port) });
+  try {
+    s.connect();
+    // 40 tracks, a return and the master
+    await until(() => s.strips.size === 32 && s.total === 42 && s.size === 32, 'a window of 32 of 42 tracks');
+    s.scroll(32);
+    await until(() => s.from === 32 && s.strips.size === 10 && s.strips.get(0).name === 'Track 33', 'the next page');
+    assert.deepStrictEqual([s.strips.get(8).type, s.strips.get(9).type], ['Return', 'Master']);
+    s.setMute(0, true);
+    s.setFader(9, 0.5);
+    await until(async () => { const d = await L.get(); return d.tracks[32].mute && Math.abs(d.master.vol - 0.5) < 1e-9; }, 'controls act on the tracks of the page');
+    assert.strictEqual((await L.get()).tracks[0].mute, false, 'not on the first page');
+    s.scroll(-5);
+    await until(() => s.from === 0 && s.strips.get(0).name === 'Vocal', 'back to the start');
+    ok('more than 32 tracks: a window of 32, paging forward and back, controls on the page shown');
+  } catch (e) {
+    console.error(L.log.join(''));
+    throw e;
+  } finally {
+    s.close();
+    L.close();
+  }
 }
 
 main().catch((e) => { console.error(e); process.exit(1); });

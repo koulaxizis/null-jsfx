@@ -33,7 +33,7 @@ function nullPlugin(id) {
 function defaultDocument() {
   return {
     tracks: [
-      { name: 'Vocal', type: 'Audio', vol: UNITY, pan: 0.5, mute: false, solo: false, arm: false, color: [0.8, 0.3, 0.2],
+      { name: 'Vocal', type: 'Audio', vol: UNITY, pan: 0.5, mute: false, solo: false, arm: false, color: [0.8, 0.3, 0.2], sends: [0.25],
         devices: [nullPlugin('tilt'), nullPlugin('delay'),
           { name: 'EQ+', enabled: true, plugin: false, params: [
             { id: 'CONTENTS/ROOT_GENERIC_MODULE/GAIN1', name: 'Gain 1', value: 0.5, lo: -24, hi: 24 },
@@ -44,6 +44,15 @@ function defaultDocument() {
       { name: 'Master', type: 'Master', vol: UNITY, pan: 0.5, mute: false, solo: false, arm: false, color: [0.3, 0.3, 0.3], devices: [] },
     ],
   };
+}
+
+// sends: track.sends[k] goes to the k-th effect track; effect tracks and the master have none
+const SEND_DEFAULT = 0;
+const effects = (doc) => doc.tracks.filter((t) => t.type === 'Effect');
+const hasSends = (t) => !!t && t.type !== 'Effect' && t.type !== 'Master';
+function sendText(v) {
+  if (v <= 0) return '-inf dB';
+  return (20 * Math.log10(v) * 2).toFixed(1) + ' dB';
 }
 
 function volText(v) {
@@ -97,7 +106,9 @@ class Host {
     this.timers = new Set();
     this.log = [];
     this.scroll = 0;
-    this.cursor = { track: -1, device: -1 }; // document indices
+    this.cursor = { track: -1, device: -1 }; // document indices (device: the id of the cursor's device)
+    this.cursorRef = null; // () -> the cursor device's object in the document
+    this.ctrack = -1; // the script's cursor track, a document index
     this.observed = null;
     this.meters = [];
     this.position = 0;
@@ -105,6 +116,7 @@ class Host {
   }
   track(slot) { return this.doc.tracks[this.scroll + slot]; }
   device() {
+    if (this.cursorRef) return this.cursorRef();
     const t = this.doc.tracks[this.cursor.track];
     return t && t.devices[this.cursor.device];
   }
@@ -174,7 +186,30 @@ function api(H) {
     const solo = field('solo');
     const arm = field('arm');
     const devApis = [];
+    const sendApis = [];
+    const sendBank = {
+      getItemAt(k) {
+        if (sendApis[k]) return sendApis[k];
+        const on = () => hasSends(H.track(slot)) && k < effects(H.doc).length;
+        const get = () => (on() ? (t().sends && t().sends[k]) || 0 : 0);
+        const value = V(get, (v) => {
+          if (!on()) return;
+          if (!t().sends) t().sends = [];
+          t().sends[k] = v;
+          H.log.push(`send ${slot} ${k} ${v}`);
+        });
+        const text = V(() => sendText(get()));
+        value.displayedValue = () => text;
+        sendApis[k] = {
+          exists: () => V(on),
+          value: () => value,
+          reset() { if (on()) { if (!t().sends) t().sends = []; t().sends[k] = SEND_DEFAULT; } H.log.push(`reset send ${slot} ${k}`); H.update(); },
+        };
+        return sendApis[k];
+      },
+    };
     return {
+      sendBank: () => sendBank,
       exists: () => V(() => !!H.track(slot)),
       name: () => V(() => t().name || ''),
       trackType: () => V(() => t().type || ''),
@@ -194,6 +229,8 @@ function api(H) {
             const dev = () => (H.track(slot) || { devices: [] }).devices[d];
             devApis[d] = {
               slot, d,
+              track: () => H.scroll + slot,
+              get: () => (H.track(slot) || { devices: [] }).devices[d],
               exists: () => V(() => !!dev()),
               name: () => V(() => (dev() ? dev().name : '')),
               isEnabled: () => V(() => (dev() ? dev().enabled : false), (v) => { if (dev()) dev().enabled = v; H.log.push(`enabled ${slot}/${d} ${v}`); }),
@@ -207,6 +244,41 @@ function api(H) {
     };
   };
 
+  // a device anywhere in a track (top level or in a container), by a getter
+  function treeDev(get, d, slotLabel, top) {
+    const api = {
+      slot: slotLabel, d, get,
+      track: () => H.ctrack,
+      exists: () => V(() => !!get()),
+      name: () => V(() => (get() ? get().name : '')),
+      isEnabled: () => V(() => (get() ? get().enabled : false), (v) => { if (get()) get().enabled = v; H.log.push(`enabled ${d} ${v}`); }),
+      isPlugin: () => V(() => (get() ? get().plugin : false)),
+      createLayerBank(n) {
+        return {
+          getItemAt(l) {
+            const layer = () => (get() && get().layers ? get().layers[l] : null);
+            return {
+              exists: () => V(() => !!layer()),
+              name: () => V(() => (layer() ? layer().name : '')),
+              createDeviceBank: () => ({ getItemAt: (j) => treeDev(() => (layer() ? layer().devices[j] : null), 1000 + top * 100 + l * 10 + j, '', top) }),
+            };
+          },
+        };
+      },
+      // StringArrayValue: one observer argument, the array
+      slotNames: () => V(() => [get() && get().slots ? get().slots.map((x) => x.name) : []]),
+      getCursorSlot() {
+        let sel = '';
+        const slotObj = () => (get() && get().slots ? get().slots.find((x) => x.name === sel) : null);
+        return {
+          selectSlot(name) { sel = name; H.log.push('slot ' + name); H.update(); },
+          createDeviceBank: () => ({ getItemAt: (k) => treeDev(() => (slotObj() ? slotObj().devices[k] : null), 1000 + top * 100 + 90 + k, '', top) }),
+        };
+      },
+    };
+    return api;
+  }
+
   const trackApis = [];
   const cursorDevice = {
     idObs: [], nameObs: [], valObs: [], dispObs: [], lastKey: null, lastVals: {}, lastDisp: {},
@@ -218,7 +290,8 @@ function api(H) {
     position: () => V(() => (H.device() ? H.cursor.device : -1)),
     selectDevice(devApi) {
       // a device of the bank of track slot s: the cursor goes there
-      H.cursor = { track: H.scroll + devApi.slot, device: devApi.d };
+      H.cursor = { track: devApi.track(), device: devApi.d };
+      H.cursorRef = devApi.get;
       H.log.push(`select ${devApi.slot}/${devApi.d}`);
       H.update();
     },
@@ -275,11 +348,25 @@ function api(H) {
         getItemAt: (k) => trackApis[k],
       };
     },
+    createEffectTrackBank(n) {
+      return {
+        getItemAt: (k) => ({
+          exists: () => V(() => k < effects(H.doc).length),
+          name: () => V(() => (effects(H.doc)[k] ? effects(H.doc)[k].name : '')),
+        }),
+      };
+    },
     createCursorTrack(id, name, sends, scenes, follow) {
       H.cursorFollows = follow;
       return {
-        selectChannel(t) { H.cursor.track = H.scroll + t._slot; H.log.push('channel ' + t._slot); },
+        selectChannel(t) { H.ctrack = H.scroll + t._slot; H.log.push('channel ' + t._slot); H.update(); },
         createCursorDevice: () => cursorDevice,
+        // the cursor track's devices, with containers' layers and slots (doc: device.layers,
+        // device.slots: [{name, devices}])
+        createDeviceBank(n) {
+          const items = [];
+          return { getItemAt: (d) => items[d] || (items[d] = treeDev(() => { const t = H.doc.tracks[H.ctrack]; return t && t.devices[d]; }, d, '', d)) };
+        },
       };
     },
     createRemoteConnection(name, port) {
@@ -379,7 +466,7 @@ async function start(opts = {}) {
   };
 }
 
-module.exports = { start, defaultDocument, UNITY };
+module.exports = { start, defaultDocument, nullPlugin, UNITY };
 
 if (require.main === module) {
   start({ port: parseInt(process.argv[2], 10) || 8818, headerOut: process.argv.includes('--header') })
