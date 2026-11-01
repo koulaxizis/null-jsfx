@@ -219,5 +219,28 @@
     ],
     "properties": "Sine or log sweep (20 Hz → 20 kHz) from a phase accumulator, pink noise (Paul Kellet's filter) or white noise from a Park-Miller generator, or a 2 ms raised-cosine pulse twice a second → Level (10 ms glide) → Channels / Invert Right → replaces or adds to the input. Zero latency.",
     "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-tsg\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><rect x=\"6\" y=\"14\" width=\"52\" height=\"36\" rx=\"5\" stroke=\"url(#icon-tsg)\" stroke-width=\"2.5\" fill=\"none\"/><path d=\"M12 32 Q18 18 24 32 T36 32 T48 32 T54 32\" stroke=\"url(#icon-tsg)\" stroke-width=\"2.5\" fill=\"none\"/></svg>"
+  },
+  "oscilloscope": {
+    "card_desc": "Triggered Waveform Display",
+    "keywords": "oscilloscope scope waveform trigger time domain wave shape phase meter analyzer metering tempo sync",
+    "slider_desc": [
+      "The width of the screen, from 1 ms to 2 s.",
+      "Set the width from the tempo instead, from a 1/16 note to two bars.",
+      "Auto waits for a crossing and draws anyway after two screens; Normal draws only on a crossing; Free draws all the time.",
+      "Trigger when the signal rises or falls through the level.",
+      "The level the signal must cross to start a screen.",
+      "Show the mid, left and right over each other, or the side.",
+      "Make the picture bigger or smaller (the trigger level follows it).",
+      "Freeze the last screen.",
+      "Play what the screen shows (the mid or the side); Stereo leaves the audio untouched."
+    ],
+    "uses": [
+      "Seeing the shape of a kick, a bass note or a synth wave",
+      "Checking clipping, DC offset and the polarity of two channels",
+      "Watching an envelope over one beat or one bar",
+      "Lining up the attack of two layers"
+    ],
+    "properties": "The audio passes through untouched (Listen View plays the mid or the side). Display: 512 columns of minimum and maximum over the screen width, started by a rising or falling crossing of the trigger level after Gain (Auto: or after two screens; Free: at once). Zero latency.",
+    "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-osc\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><rect x=\"6\" y=\"10\" width=\"52\" height=\"44\" rx=\"4\" stroke=\"url(#icon-osc)\" stroke-width=\"2.5\" fill=\"none\"/><path d=\"M6 32 H58 M32 10 V54\" stroke=\"url(#icon-osc)\" stroke-width=\"1\" opacity=\"0.5\"/><path d=\"M10 40 L18 22 L26 40 L34 22 L42 40 L50 22 L54 30\" stroke=\"url(#icon-osc)\" stroke-width=\"2.5\" fill=\"none\"/></svg>"
   }
 }

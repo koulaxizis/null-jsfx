@@ -1,0 +1,45 @@
+desc:NULL Oscilloscope
+author: Christos Koulaxizis
+tags: oscilloscope scope waveform trigger time domain wave shape phase meter analyzer metering tempo sync
+//category: Advanced
+//NULL JSFX v2.9 • https://nulljsfx.tech • MIT License
+
+slider1:20<1,2000,0.1:log>Time (ms)
+slider2:0<0,6,1{Off,1/16,1/8,1/4,1/2,1 Bar,2 Bars}>Sync
+slider3:0<0,2,1{Auto,Normal,Free}>Trigger
+slider4:0<0,1,1{Rising,Falling}>Edge
+slider5:0<-1,1,0.01>Trigger Level
+slider6:0<0,2,1{Mid,Left/Right,Side}>View
+slider7:0<-24,24,0.5>Gain (dB)
+slider8:0<0,1,1{Off,On}>Hold
+slider9:0<0,1,1{Stereo,View}>Listen
+
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
+
+@init
+  // Waveform display. The audio passes through untouched (bit-exact); every slider only
+  // changes what the interface (gfx/oscilloscope_gfx.jsfx, the VST3/CLAP) shows:
+  //   - Time is the width of the screen, or Sync sets it from the tempo (1/16 to 2 bars of 4/4)
+  //   - Trigger Auto waits for the signal to cross Trigger Level in the Edge direction, and
+  //     draws anyway when nothing crosses for two screens; Normal only draws on a crossing (a
+  //     steady picture of a periodic wave); Free draws screen after screen
+  //   - View shows the mid ((L + R) / 2), left and right over each other, or the side
+  //     ((L - R) / 2); Gain scales the picture (and the trigger compares after it)
+  //   - Hold freezes the last screen
+  //   - Listen View plays what the screen shows: the mid or the side on both channels (Left/Right
+  //     plays the stereo signal); Stereo leaves the audio untouched
+  // This file has no interface of its own; it keeps Listen.
+
+@slider
+  os_view = floor(slider6 + 0.5);
+  os_listen = slider9 >= 0.5 && os_view != 1;
+
+@sample
+  os_listen ? (
+    os_o = os_view == 2 ? (spl0 - spl1) * 0.5 : (spl0 + spl1) * 0.5;
+    spl0 = os_o;
+    spl1 = os_o;
+  );

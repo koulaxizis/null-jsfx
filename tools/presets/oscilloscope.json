@@ -1,0 +1,12 @@
+[
+  ["Waveform Close-Up", {"Time (ms)": 5}],
+  ["Bass Cycle", {"Time (ms)": 50}],
+  ["Kick Shape", {"Time (ms)": 200, "Trigger": 1, "Trigger Level": 0.3}],
+  ["Envelope Overview", {"Time (ms)": 2000, "Trigger": 2}],
+  ["One Beat", {"Sync": 3, "Trigger": 2}],
+  ["One Bar", {"Sync": 5, "Trigger": 2}],
+  ["Stereo Phase Check", {"Time (ms)": 10, "View": 1}],
+  ["Side Only", {"Time (ms)": 20, "View": 2, "Listen": 1}],
+  ["Quiet Signal", {"Time (ms)": 20, "Gain (dB)": 18}],
+  ["Falling Edge", {"Time (ms)": 20, "Edge": 1}]
+]

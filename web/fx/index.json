@@ -1346,6 +1346,20 @@
    "bytes": 62929
   },
   {
+   "id": "oscilloscope",
+   "name": "Oscilloscope",
+   "category": "Advanced",
+   "tags": "oscilloscope scope waveform trigger time domain wave shape phase meter analyzer metering tempo sync gui",
+   "gfx": [
+    560,
+    500
+   ],
+   "ins": 2,
+   "outs": 2,
+   "sliders": 9,
+   "bytes": 54030
+  },
+  {
    "id": "ott",
    "name": "OTT",
    "category": "Advanced",
