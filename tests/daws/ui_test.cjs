@@ -302,6 +302,19 @@ async function main() {
     assert(await bstrip('Master').locator('.da-cap').isVisible());
     ok('Bitwig: sends on the faders, to the effect track by name; the volume untouched');
 
+    // a container: the devices in its layers show indented under the layer's name
+    bw.change((d) => { d.tracks[1].devices = [{ name: 'FX Layer', enabled: true, plugin: false, params: [], layers: [{ name: 'Wet', devices: [{ name: 'NULL Tilt', enabled: true, plugin: true, params: d.tracks[0].devices[0].params.map((p) => ({ ...p })) }] }] }]; });
+    await bstrip('Synth').locator('.da-fx').click();
+    await until(async () => (await btab.locator('.da-plugin').count()) === 2, 'the container and the device inside');
+    assert.deepStrictEqual(await btab.locator('.da-plugin-open small').allTextContents(), ['parameters', 'Wet · NULL JSFX']);
+    assert.strictEqual(await btab.locator('.da-plugin').nth(1).evaluate((e) => e.style.paddingLeft), '20px');
+    await shot('bitwig-container');
+    await btab.locator('.da-plugin-open').nth(1).click();
+    await until(async () => (await btab.locator('.da-gfx canvas').count()) === 1, 'Tilt inside the layer in its GFX');
+    assert(await page.evaluate(() => NullRemote.back()));
+    assert(await page.evaluate(() => NullRemote.back()));
+    ok('Bitwig: a device inside a container, indented under its layer, opens in its own GFX');
+
     // a bigger project: the desk pages through the script's window of 32 tracks
     assert(await btab.locator('.da-pager').isHidden(), 'no pager for 4 tracks');
     bw.change((d) => {

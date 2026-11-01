@@ -258,6 +258,44 @@ async function sends() {
   }
 }
 
+// containers: the listed track shows the devices in their layers and slots, one level in
+async function containers() {
+  const doc = host.defaultDocument();
+  const eq = { name: 'EQ+', enabled: true, plugin: false, params: [{ id: 'CONTENTS/G', name: 'Gain', value: 0.5, lo: -24, hi: 24 }] };
+  doc.tracks[1].devices = [
+    { name: 'FX Layer', enabled: true, plugin: false, params: [], layers: [{ name: 'Dry', devices: [] }, { name: 'Wet', devices: [host.nullPlugin('tilt')] }] },
+    { name: 'Chain', enabled: true, plugin: false, params: [], slots: [{ name: 'CHAIN', devices: [eq] }] },
+  ];
+  const bw = await host.start({ doc });
+  const s = new BW.Session({ dial: nodeDial(bw.port) });
+  const events = [];
+  s.on('params', (ssid, piid, list) => events.push([ssid, piid, list]));
+  try {
+    s.connect();
+    await until(() => (s.devices.get(1) || []).length === 2, 'top-level devices first');
+    s.listPlugins(1);
+    await until(() => (s.devices.get(1) || []).length === 4, 'with those inside the containers');
+    assert.deepStrictEqual(s.devices.get(1).map((d) => [d.name, d.depth, d.chain, d.piid]), [
+      ['FX Layer', 0, '', 0], ['NULL Tilt', 1, 'Wet', 1010], ['Chain', 0, '', 1], ['EQ+', 1, 'CHAIN', 1190],
+    ]);
+    assert.strictEqual(s.devices.get(0).length, 3, 'another track keeps its list');
+    s.watchPlugin(1, 1010);
+    await until(() => events.some(([a, b, l]) => a === 1 && b === 1010 && l.some((p) => p.name === 'Amount')), 'Tilt inside the layer');
+    const amount = events[events.length - 1][2].find((p) => p.name === 'Amount');
+    s.setParam(1, 1010, amount.par, 0.875);
+    await until(() => Math.abs(doc.tracks[1].devices[0].layers[1].devices[0].params[0].value - 0.875) < 1e-6, 'Tilt in the layer set');
+    s.setPluginActive(1, 1190, false);
+    await until(() => eq.enabled === false, 'EQ+ in the chain bypassed');
+    // listing another track gives this one back its top-level list
+    s.listPlugins(0);
+    await until(() => (s.devices.get(1) || []).length === 2, 'track 1 back to top level');
+    ok('containers: layers and slots one level in on the listed track, a NULL plugin inside opened and set, bypass inside');
+  } finally {
+    s.close();
+    bw.close();
+  }
+}
+
 async function main() {
   scriptChecks();
   readerChecks();
@@ -265,6 +303,7 @@ async function main() {
   await run(true);
   await paging();
   await sends();
+  await containers();
   console.log(`bitwig_test: ${passed} passed`);
 }
 

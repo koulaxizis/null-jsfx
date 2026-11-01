@@ -14,7 +14,8 @@
 //     'time' (text), 'link' (up), 'plugins' (ssid, list), 'params' (ssid, piid, params)
 //   connect(), close(), strips (Map ssid -> strip), rate
 //   strip: {ssid, name, type, mute, solo, rec, canRec, fader (0..1), pan (0..1), meter}
-//   listStrips(), listPlugins(ssid) -> 'plugins' with [{piid, name, enabled}]
+//   listStrips(), listPlugins(ssid) -> 'plugins' with [{piid, name, enabled, depth?, chain?}]
+//     (depth > 0: inside the rack or container listed before it, in its chain or layer `chain`)
 //   watchPlugin(ssid, piid) / watchPlugin(null) -> 'params' while it is open, with
 //     [{par, name, flags, min, max, points [[value, label]], value, text?}]
 //   setFader, setPan (ssid, 0..1), resetFader, resetPan (ssid), setMute, setSolo, setRec (ssid, on)
@@ -489,9 +490,12 @@
       for (const p of list) {
         const fx = nullEffect(p.name, effects);
         const row = el('div', 'da-plugin');
+        // a device inside a rack or container: indented, with its chain or layer named
+        if (p.depth) row.style.paddingLeft = (Math.min(p.depth, 4) * 20) + 'px';
         const open = el('button', 'da-plugin-open');
         const label = el('span', '', p.name);
-        open.append(label, el('small', '', fx ? 'NULL JSFX' : 'parameters'));
+        const kind = fx ? 'NULL JSFX' : 'parameters';
+        open.append(label, el('small', '', p.depth && p.chain ? p.chain + ' · ' + kind : kind));
         open.onclick = () => openPlugin(ssid, p, fx);
         const on = el('button', 'da-onoff' + (p.enabled ? ' on' : ''), p.enabled ? 'ON' : 'OFF');
         on.setAttribute('aria-label', (p.enabled ? 'Bypass ' : 'Activate ') + p.name);

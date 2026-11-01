@@ -71,9 +71,24 @@ class Device(object):
         self.parameters = [Param('Device On', 1.0 if d.get('on', True) else 0.0, quantized=True)]
         for p in d['params']:
             self.parameters.append(Param(p['name'], p['value'], p.get('min', 0), p.get('max', 1), shown=p.get('shown')))
+        # a rack: chains, each with its own devices (Live's RackDevice and Chain)
+        self.can_have_chains = 'chains' in d
+        self.chains = [Chain(c) for c in d.get('chains', [])]
 
     def dump(self):
-        return {'name': self.name, 'on': self.parameters[0].value == 1.0, 'parameters': [p.dump() for p in self.parameters]}
+        m = {'name': self.name, 'on': self.parameters[0].value == 1.0, 'parameters': [p.dump() for p in self.parameters]}
+        if self.can_have_chains:
+            m['chains'] = [c.dump() for c in self.chains]
+        return m
+
+
+class Chain(object):
+    def __init__(self, c):
+        self.name = c['name']
+        self.devices = [Device(x) for x in c.get('devices', [])]
+
+    def dump(self):
+        return {'name': self.name, 'devices': [d.dump() for d in self.devices]}
 
 
 def send_text(v):

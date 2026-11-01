@@ -36,10 +36,12 @@ except ImportError:  # older Live
     from _Framework.ControlSurface import ControlSurface
 
 PROTO = 1
-VERSION = '1.1'  # 1.1: sends
+VERSION = '1.2'  # 1.1: sends; 1.2: devices inside racks
 PORT = 8819
 SIZE = 32  # tracks in the window
-DEVICES = 16  # devices per track
+DEVICES = 16  # top-level devices per track
+FLAT = 64  # devices per track with those inside racks, depth first
+DEPTH = 4  # racks inside racks shown
 SENDS = 8  # sends per track, to the first return tracks
 PARAMS = 256  # parameters of the open device
 MAX_IN = 1 << 20  # bytes of one message from a phone
@@ -317,12 +319,33 @@ class Remote(ControlSurface):
             'color': '#%06x' % (int(color) & 0xffffff),
         }
 
+    def _flat(self, t):
+        # the track's devices depth first, those inside a rack's chains right after the rack:
+        # [(device, depth, chain name)]; a device's index here is its id `d` for the phone
+        out = []
+
+        def walk(devs, depth, chain):
+            for dev in devs:
+                if len(out) >= FLAT:
+                    return
+                out.append((dev, depth, chain))
+                if depth + 1 < DEPTH and _get(dev, 'can_have_chains', False):
+                    for c in list(_get(dev, 'chains', None) or []):
+                        walk(list(c.devices), depth + 1, str(c.name))
+
+        walk(list(t.devices)[:DEVICES], 0, '')
+        return out
+
     def _devices(self, t):
         out = []
-        for d, dev in enumerate(list(t.devices)[:DEVICES]):
+        for d, (dev, depth, chain) in enumerate(self._flat(t)):
             params = list(dev.parameters)
             on = bool(params[0].value) if params else True
-            out.append({'d': d, 'name': str(dev.name), 'on': on, 'plugin': _get(dev, 'class_name', '') in PLUGIN_CLASSES})
+            m = {'d': d, 'name': str(dev.name), 'on': on, 'plugin': _get(dev, 'class_name', '') in PLUGIN_CLASSES}
+            if depth:
+                m['depth'] = depth  # inside a rack: indented on the phone, under its chain's name
+                m['chain'] = chain
+            out.append(m)
         return out
 
     def _snapshot(self):
@@ -354,7 +377,7 @@ class Remote(ControlSurface):
         dev = o['dev']
         pos, exists = -1, False
         if o['i'] < len(window):
-            listed = list(window[o['i']].devices)
+            listed = [x[0] for x in self._flat(window[o['i']])]
             for k, x in enumerate(listed):
                 if x == dev:
                     pos, exists = k, True
@@ -464,9 +487,9 @@ class Remote(ControlSurface):
                 _set_norm(p, v)
         elif t == 'open':
             tr = self._slot(m.get('i'))
-            devs = list(tr.devices) if tr is not None else []
+            devs = [x[0] for x in self._flat(tr)] if tr is not None else []
             d = m.get('d')
-            if isinstance(d, int) and 0 <= d < min(len(devs), DEVICES):
+            if isinstance(d, int) and 0 <= d < len(devs):
                 self._open = {'i': int(m.get('i')), 'd': d, 'dev': devs[d]}
                 if self._sent is not None:
                     self._sent['open'] = None  # the phone waits for the whole list again
@@ -485,9 +508,9 @@ class Remote(ControlSurface):
                 _set_norm(params[k], v)
         elif t == 'bypass':
             tr = self._slot(m.get('i'))
-            devs = list(tr.devices) if tr is not None else []
+            devs = [x[0] for x in self._flat(tr)] if tr is not None else []
             d = m.get('d')
-            if isinstance(d, int) and 0 <= d < min(len(devs), DEVICES):
+            if isinstance(d, int) and 0 <= d < len(devs):
                 params = list(devs[d].parameters)
                 if params and _get(params[0], 'is_enabled', True):
                     params[0].value = 1.0 if m.get('on') else 0.0

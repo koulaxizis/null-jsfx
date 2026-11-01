@@ -302,7 +302,8 @@
       this.emit('strip', s);
     }
     deviceList(m) {
-      const list = (m.list || []).map((d) => ({ piid: d.d, name: String(d.name), enabled: !!d.on, plugin: !!d.plugin }));
+      // depth and chain: a device inside a rack or container, under the name of its chain or layer
+      const list = (m.list || []).map((d) => ({ piid: d.d, name: String(d.name), enabled: !!d.on, plugin: !!d.plugin, depth: d.depth | 0, chain: String(d.chain || '') }));
       this.devices.set(m.i, list);
       this.emit('plugins', m.i, list);
     }
@@ -348,8 +349,10 @@
       this.send({ t: 'scroll', from: Math.max(0, Math.min(last, Math.round(from) || 0)) });
     }
     listPlugins(ssid) {
-      const list = this.devices.get(ssid);
-      if (list) setTimeout(() => this.emit('plugins', ssid, list), 0);
+      // the DAW lists this track with the devices inside its containers (Bitwig 1.2; Live always)
+      this.send({ t: 'list', i: ssid });
+      // the list known now, at once; the newest one, should the DAW's answer come first
+      if (this.devices.has(ssid)) setTimeout(() => { const l = this.devices.get(ssid); if (l) this.emit('plugins', ssid, l); }, 0);
     }
     watchPlugin(ssid, piid) {
       if (ssid == null) {
