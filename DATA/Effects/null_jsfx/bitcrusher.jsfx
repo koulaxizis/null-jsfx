@@ -1,0 +1,92 @@
+desc:NULL Bitcrusher
+author: Christos Koulaxizis
+tags: bitcrusher bit crusher decimator sample rate reduction lo-fi lofi digital aliasing 8-bit 12-bit retro
+//category: Essentials
+//NULL JSFX v2.9 • https://nulljsfx.tech • MIT License
+
+slider1:8<1,16,1>Bits
+slider2:8000<100,48000,1:log>Sample Rate (Hz)
+slider3:0<0,1,1{Off,On}>Anti Alias
+slider4:0<0,100,1>Smooth (%)
+slider5:0<0,24,0.1>Drive (dB)
+slider6:100<0,100,1>Mix (%)
+slider7:0<-24,12,0.1>Output (dB)
+
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
+
+@init
+  ext_noinit = 1;              // play and seek keep the held sample, as in the VST3/CLAP
+  // A digital degrader. Drive raises the level first. Anti Alias On puts a 12 dB/oct low-pass
+  // at 0.45 x Sample Rate before the decimator, for the clean, filtered sound of an old sampler;
+  // Off lets the aliasing through. The decimator holds each sample for 1 / Sample Rate seconds
+  // (a phase that runs at Sample Rate / srate), then Bits rounds it to 2^(Bits - 1) steps on
+  // each side of zero. Smooth sweeps a 12 dB/oct low-pass after it from 20 kHz (0 %) down to
+  // 0.45 x Sample Rate (100 %), which takes the edge off the steps. Mix blends with the dry
+  // signal and Output sets the level. A Sample Rate at or above srate holds nothing.
+  ph = 1;
+  hl = hr = 0;
+  a1l = a2l = a1r = a2r = 0;
+  s1l = s2l = s1r = s2r = 0;
+
+  // RBJ low-pass coefficients, Q = 1/sqrt(2)
+  function bc_lp(f) local(w0, cw, al, a0)
+  (
+    w0 = 2 * $pi * min(f, 0.45 * srate) / srate;
+    cw = cos(w0);
+    al = sin(w0) / (2 * 0.7071067811865476);
+    a0 = 1 + al;
+    this.b0 = (1 - cw) / 2 / a0;
+    this.b1 = (1 - cw) / a0;
+    this.b2 = this.b0;
+    this.a1 = -2 * cw / a0;
+    this.a2 = (1 - al) / a0;
+  );
+
+@slider
+  q = 2 ^ (slider1 - 1);
+  inc = slider2 / srate;
+  aa_on = slider3;
+  aa.bc_lp(0.45 * slider2);
+  sm_on = slider4 > 0;
+  sm.bc_lp(20000 * (min(0.45 * slider2, 20000) / 20000) ^ (slider4 / 100));
+  dg = 10 ^ (slider5 / 20);
+  mix = slider6 / 100;
+  og = 10 ^ (slider7 / 20);
+
+@sample
+  xl = spl0 * dg;
+  xr = spl1 * dg;
+  aa_on ? (
+    y = aa.b0 * xl + a1l;
+    a1l = aa.b1 * xl - aa.a1 * y + a2l;
+    a2l = aa.b2 * xl - aa.a2 * y;
+    xl = y;
+    y = aa.b0 * xr + a1r;
+    a1r = aa.b1 * xr - aa.a1 * y + a2r;
+    a2r = aa.b2 * xr - aa.a2 * y;
+    xr = y;
+  );
+  // the decimator: a new sample when the phase wraps
+  ph += inc;
+  ph >= 1 ? (
+    ph -= floor(ph);
+    hl = floor(xl * q + 0.5) / q;
+    hr = floor(xr * q + 0.5) / q;
+  );
+  wl = hl;
+  wr = hr;
+  sm_on ? (
+    y = sm.b0 * wl + s1l;
+    s1l = sm.b1 * wl - sm.a1 * y + s2l;
+    s2l = sm.b2 * wl - sm.a2 * y;
+    wl = y;
+    y = sm.b0 * wr + s1r;
+    s1r = sm.b1 * wr - sm.a1 * y + s2r;
+    s2r = sm.b2 * wr - sm.a2 * y;
+    wr = y;
+  );
+  spl0 = (spl0 + (wl - spl0) * mix) * og;
+  spl1 = (spl1 + (wr - spl1) * mix) * og;

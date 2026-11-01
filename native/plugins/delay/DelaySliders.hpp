@@ -18,7 +18,7 @@ static const char* const kFreezeShort[] = { "OFF", "ON" };
 static const char* const kModeOptions[] = { "Stereo", "Ping-Pong" };
 static const char* const kModeShort[] = { "STEREO", "PING" };
 
-// slider1..slider13 of delay.jsfx, in order
+// slider1..slider15 of delay.jsfx, in order
 static const DISTRHO::SliderInfo kSliders[] = {
     { "Time", "time", 0.0f, 2000.0f, 250.0f, "ms", 1.0f },
     { "Feedback", "feedback", 0.0f, 100.0f, 0.0f, "%", 1.0f },
@@ -33,6 +33,8 @@ static const DISTRHO::SliderInfo kSliders[] = {
     { "Diffusion", "diffusion", 0.0f, 100.0f, 0.0f, "%", 1.0f },
     { "Ducking", "ducking", 0.0f, 100.0f, 0.0f, "%", 1.0f },
     { "Freeze", "freeze", 0.0f, 1.0f, 0.0f, "", 1.0f, kFreezeOptions },
+    { "Reverse", "reverse", 0.0f, 1.0f, 0.0f, "", 1.0f, kFreezeOptions },
+    { "Pitch", "pitch", -12.0f, 12.0f, 0.0f, "semitones", 1.0f },
 };
 static constexpr uint32_t kNumSliders = sizeof(kSliders) / sizeof(kSliders[0]);
 
@@ -42,6 +44,8 @@ static const DISTRHO::SliderInfo kUiSliders[] = {
     { "Mode", "mode", 0.0f, 1.0f, 0.0f, "", 1.0f, kModeShort },
     kSliders[6], kSliders[7], kSliders[8], kSliders[9], kSliders[10], kSliders[11],
     { "Freeze", "freeze", 0.0f, 1.0f, 0.0f, "", 1.0f, kFreezeShort },
+    { "Reverse", "reverse", 0.0f, 1.0f, 0.0f, "", 1.0f, kFreezeShort },
+    kSliders[14],
 };
 
 } // namespace nulldelay

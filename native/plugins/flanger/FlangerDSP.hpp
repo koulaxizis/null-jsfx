@@ -46,8 +46,10 @@ public:
 
     // @slider (the values on the JSFX slider grid; sync = the Tempo Sync option, cycle its beats)
     void setParams(double rateHz, double depthMs, double feedbackPct, double mixPct, double manualMs = 0.5,
-                   int sync = 0, double cycleBeats = 1.0, double phaseDeg = 0.0, bool thruZero = false)
+                   int sync = 0, double cycleBeats = 1.0, double phaseDeg = 0.0, bool thruZero = false, int barber = 0)
     {
+        fBarber = barber;
+        fStDeg = phaseDeg;
         fDepth = depthMs;
         fFb = feedbackPct / 100.0 * 0.7;
         fMix = mixPct / 100.0;
@@ -87,12 +89,25 @@ public:
             const double lfo = std::sin(fPhase);
             fPhase = fPhase + fPhaseInc;
 
+            double dl, dr;
+            if (fBarber)
+            {
+                // Barber Pole: two taps half a sweep apart on a ramp (fl_pair)
+                double p = ph / kTwoPi;
+                if (p >= 1.0) p -= 1.0;
+                double pr = p + fStDeg / 360.0;
+                if (pr >= 1.0) pr -= 1.0;
+                dl = pair(fL, p);
+                dr = pair(fR, fStOff > 0.0 ? pr : p);
+            }
+            else
+            {
             const double ds = (fManual + fDepth * 0.5 * (1.0 + lfo)) * fSr / 1000.0;
             double r = double(fW) - ds;
             r = r < 0.0 ? r + double(fSize) : r;
             double ri = std::floor(r), rf = r - ri;
             size_t i1 = size_t(ri), i2 = ri >= double(fSize - 1) ? 0 : size_t(ri) + 1;
-            double dl = fL[i1] + (fL[i2] - fL[i1]) * rf;
+            dl = fL[i1] + (fL[i2] - fL[i1]) * rf;
 
             if (fStOff > 0.0)
             {
@@ -105,7 +120,8 @@ public:
                 i1 = size_t(ri);
                 i2 = ri >= double(fSize - 1) ? 0 : size_t(ri) + 1;
             }
-            double dr = fR[i1] + (fR[i2] - fR[i1]) * rf;
+            dr = fR[i1] + (fR[i2] - fR[i1]) * rf;
+            }
 
             fL[size_t(fW)] = xl + fFbL * fFb;
             fR[size_t(fW)] = xr + fFbR * fFb;
@@ -134,6 +150,27 @@ public:
     }
 
 private:
+    double tap(const std::vector<double>& b, double ms) const noexcept
+    {
+        double r = double(fW) - ms * fSr / 1000.0;
+        r = r < 0.0 ? r + double(fSize) : r;
+        const double ri = std::floor(r), rf = r - ri;
+        const size_t i1 = size_t(ri), i2 = ri >= double(fSize - 1) ? 0 : size_t(ri) + 1;
+        return b[i1] + (b[i2] - b[i1]) * rf;
+    }
+    double pair(const std::vector<double>& b, double p) const noexcept
+    {
+        double q = p + 0.5;
+        if (q >= 1.0) q -= 1.0;
+        const double sa = std::sin(kPi * p);
+        const double ta = tap(b, fManual + fDepth * (fBarber == 1 ? 1.0 - p : p));
+        const double sb = std::sin(kPi * q);
+        const double tb = tap(b, fManual + fDepth * (fBarber == 1 ? 1.0 - q : q));
+        return sa * ta + sb * tb;
+    }
+
+    int fBarber = 0;
+    double fStDeg = 0.0;
     double fSr = 48000.0, fPhase = 0.0, fPhaseInc = 0.0, fDepth = 5.0, fFb = 0.35, fMix = 0.4;
     double fManual = 0.5, fCyc = 1.0, fStOff = 0.0;
     double fFbL = 0.0, fFbR = 0.0;

@@ -1,0 +1,11 @@
+[
+  ["Bass Guitar", {"Threshold (dB)": -40, "Low Note": 28, "High Note": 67, "Stability (ms)": 50}],
+  ["Synth Bass Layer", {"Threshold (dB)": -36, "Low Note": 28, "High Note": 60, "Stability (ms)": 40, "Transpose (semitones)": -12}],
+  ["Male Voice", {"Threshold (dB)": -42, "Low Note": 40, "High Note": 72, "Stability (ms)": 60}],
+  ["Female Voice", {"Threshold (dB)": -42, "Low Note": 52, "High Note": 84, "Stability (ms)": 60}],
+  ["Whistle", {"Threshold (dB)": -45, "Low Note": 72, "High Note": 108, "Stability (ms)": 30}],
+  ["Guitar Lead", {"Threshold (dB)": -40, "Low Note": 40, "High Note": 88, "Stability (ms)": 35}],
+  ["Lead with Bend", {"Threshold (dB)": -40, "Low Note": 40, "High Note": 88, "Stability (ms)": 35, "Pitch Bend": "On"}],
+  ["Steady Velocity", {"Velocity": "Fixed", "Fixed Velocity": 100}],
+  ["Octave Up Double", {"Low Note": 36, "High Note": 84, "Transpose (semitones)": 12, "Channel": 1}]
+]

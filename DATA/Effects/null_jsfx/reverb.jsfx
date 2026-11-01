@@ -1,6 +1,6 @@
 desc:NULL Reverb
 author: Christos Koulaxizis
-tags: reverb room space ambience hall plate decay pre-delay freeze modulation
+tags: reverb room space ambience hall plate decay pre-delay freeze modulation ducking gated reverb gate
 //category: Essentials
 //NULL JSFX v2.9 • https://nulljsfx.tech • MIT License
 
@@ -16,6 +16,9 @@ slider9:100<0,200,1>Width (%)
 slider10:0<0,100,1>Modulation (%)
 slider11:0<0,1,1{Off,On}>Freeze
 slider12:0<0,2,1{Classic,Plate,Hall}>Character
+slider13:0<0,100,1>Ducking (%)
+slider14:-80<-80,0,0.1>Gate Threshold (dB)
+slider15:150<10,1000,1>Gate Hold (ms)
 
 in_pin:Left
 in_pin:Right
@@ -24,6 +27,14 @@ out_pin:Right
 
 @init
   ext_noinit = 1;              // play and seek keep tails and state, as in the VST3/CLAP
+  // Ducking dips the wet signal while the dry input is loud (10 ms attack, 250 ms release),
+  // so the tail fills the gaps. Gate Threshold above -80 dB gates the wet signal for the
+  // classic gated reverb: it stays open while the input's peak (20 ms release) is above the
+  // threshold and for Gate Hold after, then closes in 10 ms (opens in 1 ms). Both are
+  // skipped at their defaults.
+  dk_env = gt_env = 0;
+  gt_hold = 0;
+  gt_g = 1;
   // Stereo Schroeder/Freeverb-style reverb: the mono sum feeds four damped
   // feedback combs per side (the right side's delays are 23 samples longer at
   // 44.1 kHz), then two series all-passes per side. All lengths are scaled by
@@ -194,6 +205,16 @@ out_pin:Right
   hc_a0 = 1 + hc_al;
   hc_b0 = (1 - hc_c) / 2 / hc_a0; hc_b1 = (1 - hc_c) / hc_a0; hc_b2 = hc_b0;
   hc_a1 = -2 * hc_c / hc_a0; hc_a2 = (1 - hc_al) / hc_a0;
+  duck_on = slider13 > 0;
+  duck_amt = slider13 / 100;
+  dk_att = 1 - exp(-1 / (0.01 * srate));
+  dk_rel = 1 - exp(-1 / (0.25 * srate));
+  gt_on = slider14 > -80;
+  gt_thr = 10 ^ (slider14 / 20);
+  gt_len = floor(slider15 * srate / 1000);
+  gt_er = exp(-1 / (0.02 * srate));
+  gt_ga = 1 - exp(-1 / (0.001 * srate));
+  gt_gr = 1 - exp(-1 / (0.01 * srate));
 
 @sample
   orig_l = spl0;
@@ -254,6 +275,23 @@ out_pin:Right
     wet_r = rv_bq(wet_r, hc_x1r, hc_x2r, hc_y1r, hc_y2r, hc_b0, hc_b1, hc_b2, hc_a1, hc_a2);
   ) : (
     hc_x1l = hc_x2l = hc_y1l = hc_y2l = hc_x1r = hc_x2r = hc_y1r = hc_y2r = 0;
+  );
+
+  duck_on ? (
+    dk_x = max(abs(orig_l), abs(orig_r));
+    dk_env += (dk_x > dk_env ? dk_att : dk_rel) * (dk_x - dk_env);
+    dk_g = 1 - duck_amt * min(1, dk_env * 4);
+    wet_l *= dk_g;
+    wet_r *= dk_g;
+  );
+  gt_on ? (
+    gt_x = max(abs(orig_l), abs(orig_r));
+    gt_env = gt_x > gt_env ? gt_x : gt_env * gt_er;
+    gt_env >= gt_thr ? gt_hold = gt_len : gt_hold > 0 ? gt_hold -= 1;
+    gt_t = gt_env >= gt_thr || gt_hold > 0 ? 1 : 0;
+    gt_g += (gt_t > gt_g ? gt_ga : gt_gr) * (gt_t - gt_g);
+    wet_l *= gt_g;
+    wet_r *= gt_g;
   );
 
   out_l = orig_l * (1 - mix) + wet_l * 3 * mix;

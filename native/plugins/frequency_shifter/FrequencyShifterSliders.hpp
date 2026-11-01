@@ -13,12 +13,13 @@
 namespace nullfreqshift {
 
 
-// slider1..slider4 of frequency_shifter.jsfx, in order
+// slider1..slider5 of frequency_shifter.jsfx, in order
 static const DISTRHO::SliderInfo kSliders[] = {
     { "Shift", "shift", -2000.0f, 2000.0f, 100.0f, "Hz", 0.1f },
     { "Stereo Offset", "offset", -100.0f, 100.0f, 0.0f, "Hz", 0.1f },
     { "Feedback", "feedback", 0.0f, 95.0f, 0.0f, "%", 1.0f },
     { "Mix", "mix", 0.0f, 100.0f, 50.0f, "%", 1.0f },
+    { "Feedback Delay", "fb_delay", 0.0f, 1000.0f, 0.0f, "ms", 1.0f },
 };
 static constexpr uint32_t kNumSliders = sizeof(kSliders) / sizeof(kSliders[0]);
 
@@ -29,6 +30,7 @@ static const Range kRanges[] = {
     { -100.0, 100.0, 0.0, 0.1 },
     { 0.0, 95.0, 0.0, 1.0 },
     { 0.0, 100.0, 50.0, 1.0 },
+    { 0.0, 1000.0, 0.0, 1.0 },
 };
 
 // The host passes parameters as float, the JSFX keeps the slider in double. Rebuild that double:

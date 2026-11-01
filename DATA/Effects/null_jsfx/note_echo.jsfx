@@ -1,0 +1,173 @@
+desc:NULL Note Echo
+author: Christos Koulaxizis
+tags: midi note echo delay repeat repeater ratchet tempo sync velocity decay pitch step arpeggio generative
+//category: MIDI
+//NULL JSFX v2.9 • https://nulljsfx.tech • MIT License
+
+slider1:3<1,16,1>Repeats
+slider2:250<10,2000,1>Time (ms)
+slider3:1<0,1,1{Off,On}>Tempo Sync
+slider4:1<0,7,1{1/4,1/8,1/16,1/32,1/2,1/8T,1/16T,1/8D}>Subdivision
+slider5:20<0,100,1>Velocity Decay (%)
+slider6:0<-12,12,1>Pitch Step (semitones)
+slider7:50<5,95,1>Gate (%)
+slider8:1<0,1,1{Off,On}>Dry
+
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
+
+@init
+  // A delay for notes: every note-on that comes in is played again Repeats times, one Time (or a
+  // tempo-synced Subdivision) apart, on its own channel. Echo k has the velocity v (1 - Velocity
+  // Decay)^k (rounded; the echoes stop when it falls under 1) and the pitch moved by k x Pitch
+  // Step (they stop past 0 or 127), and lasts Gate of the interval. Dry Off leaves out the notes
+  // that came in, so only the echoes sound. A note that starts again while it still sounds is
+  // ended first, so notes never pile up. Other MIDI passes through at its own sample; an all
+  // notes off (CC 120/123) ends that channel's notes and drops its waiting echoes. The audio
+  // passes through.
+  ext_noinit = 1;
+  Q = 0;                       // incoming messages of the block: offset, status, data 1, data 2
+  QMAX = 256;
+  qn = qi = 0;
+  E = 1024;                    // waiting echoes, sorted by time: time, status, note, velocity, id
+  EMAX = 4096;
+  eh = et = 0;
+  SND = E + EMAX * 5;          // per channel and note: id of the note we sent that sounds (0 = none)
+  ORG = SND + 2048;            // per channel and note: id of the dry note that came in
+  memset(SND, 0, 4096);
+  next_id = 1;
+  now = 0;                     // samples since the start
+  echoes = 0;
+
+  function ne_on(ofs, ch, nt, v, id) local(k)
+  (
+    k = ch * 128 + nt;
+    SND[k] ? midisend(ofs, 0x80 | ch, nt, 0);
+    midisend(ofs, 0x90 | ch, nt, v);
+    SND[k] = id;
+  );
+
+  function ne_off(ofs, ch, nt, id) local(k)
+  (
+    k = ch * 128 + nt;
+    SND[k] == id ? (
+      midisend(ofs, 0x80 | ch, nt, 0);
+      SND[k] = 0;
+    );
+  );
+
+  // a waiting event, kept in time order (after the ones at the same time)
+  function ne_push(t, st, nt, v, id) local(i)
+  (
+    et >= EMAX ? (
+      i = 0;
+      loop(et - eh, memcpy(E + i * 5, E + (eh + i) * 5, 5); i += 1;);
+      et -= eh;
+      eh = 0;
+    );
+    i = et;
+    while (i > eh && E[(i - 1) * 5] > t) (
+      memcpy(E + i * 5, E + (i - 1) * 5, 5);
+      i -= 1;
+    );
+    E[i * 5] = t; E[i * 5 + 1] = st; E[i * 5 + 2] = nt; E[i * 5 + 3] = v; E[i * 5 + 4] = id;
+    et += 1;
+  );
+
+  // a note-on that came in at time t: its echoes wait in the queue
+  function ne_note(t, ch, nt, v) local(k, vk, pk, ok)
+  (
+    k = 1;
+    ok = 1;
+    while (ok && k <= reps) (
+      vk = floor(v * (1 - dec) ^ k + 0.5);
+      pk = nt + k * pstep;
+      vk >= 1 && pk >= 0 && pk <= 127 && et - eh + 2 <= EMAX ? (
+        ne_push(t + k * iv, 0x90 | ch, pk, vk, next_id);
+        ne_push(t + k * iv + len, 0x80 | ch, pk, 0, next_id);
+        next_id += 1;
+        echoes += 1;
+      ) : ok = 0;
+      k += 1;
+    );
+  );
+
+  // all notes off on channel ch: its echoes are dropped and its notes end
+  function ne_flush(ofs, ch) local(i, j, nt)
+  (
+    i = j = eh;
+    while (i < et) (
+      (E[i * 5 + 1] & 15) != ch ? ( j != i ? memcpy(E + j * 5, E + i * 5, 5); j += 1; );
+      i += 1;
+    );
+    et = j;
+    nt = 0;
+    loop(128,
+      SND[ch * 128 + nt] ? ( midisend(ofs, 0x80 | ch, nt, 0); SND[ch * 128 + nt] = 0; );
+      ORG[ch * 128 + nt] = 0;
+      nt += 1;
+    );
+  );
+
+@slider
+  reps = slider1;
+  tsync = slider3;
+  dec = slider5 / 100;
+  pstep = slider6;
+  gate = slider7 / 100;
+  dry = slider8;
+
+@block
+  qn = qi = 0;
+  while (midirecv(ofs, m1, m2, m3)) (
+    qn < QMAX ? (
+      Q[qn * 4] = min(max(ofs, 0), samplesblock - 1);
+      Q[qn * 4 + 1] = m1;
+      Q[qn * 4 + 2] = m2;
+      Q[qn * 4 + 3] = m3;
+      qn += 1;
+    );
+  );
+  iv = tsync ? 60 / tempo * (slider4 == 0 ? 1 : slider4 == 1 ? 0.5 : slider4 == 2 ? 0.25 : slider4 == 3 ? 0.125 :
+                             slider4 == 4 ? 2 : slider4 == 5 ? 1 / 3 : slider4 == 6 ? 1 / 6 : 0.75) : slider2 / 1000;
+  iv = max(1, floor(iv * srate));
+  len = max(1, floor(iv * gate));
+  si = 0;
+
+@sample
+  // the echoes that are due go first
+  while (eh < et && E[eh * 5] <= now) (
+    E[eh * 5 + 1] >= 0x90 ? ne_on(si, E[eh * 5 + 1] & 15, E[eh * 5 + 2], E[eh * 5 + 3], E[eh * 5 + 4])
+                          : ne_off(si, E[eh * 5 + 1] & 15, E[eh * 5 + 2], E[eh * 5 + 4]);
+    eh += 1;
+  );
+  eh >= et ? eh = et = 0;
+  // then the MIDI that came in at this sample
+  while (qi < qn && Q[qi * 4] <= si) (
+    m1 = Q[qi * 4 + 1];
+    m2 = Q[qi * 4 + 2];
+    m3 = Q[qi * 4 + 3];
+    st = m1 & 0xF0;
+    ch = m1 & 15;
+    st == 0x90 && m3 > 0 ? (
+      dry ? (
+        ne_on(si, ch, m2, m3, next_id);
+        ORG[ch * 128 + m2] = next_id;
+        next_id += 1;
+      );
+      ne_note(now, ch, m2, m3);
+    ) : st == 0x80 || st == 0x90 ? (
+      dry ? ne_off(si, ch, m2, ORG[ch * 128 + m2]);
+    ) : (
+      st == 0xB0 && (m2 == 120 || m2 == 123) ? ne_flush(si, ch);
+      midisend(si, m1, m2, m3);
+    );
+    qi += 1;
+  );
+  now += 1;
+  si += 1;
+  // the audio passes through
+  spl0 = spl0;
+  spl1 = spl1;

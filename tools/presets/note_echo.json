@@ -1,0 +1,11 @@
+[
+  ["Eighth Echoes", {"Repeats": 3, "Subdivision": "1/8", "Velocity Decay (%)": 25}],
+  ["Dotted Eighth", {"Repeats": 4, "Subdivision": "1/8D", "Velocity Decay (%)": 20}],
+  ["Sixteenth Ratchet", {"Repeats": 3, "Subdivision": "1/16", "Velocity Decay (%)": 10, "Gate (%)": 40}],
+  ["Triplet Trail", {"Repeats": 6, "Subdivision": "1/8T", "Velocity Decay (%)": 18}],
+  ["Rising Fifths", {"Repeats": 4, "Subdivision": "1/8", "Velocity Decay (%)": 15, "Pitch Step (semitones)": 7}],
+  ["Falling Octaves", {"Repeats": 3, "Subdivision": "1/4", "Velocity Decay (%)": 20, "Pitch Step (semitones)": -12}],
+  ["Chromatic Climb", {"Repeats": 8, "Subdivision": "1/16", "Velocity Decay (%)": 8, "Pitch Step (semitones)": 1, "Gate (%)": 60}],
+  ["Echoes Only", {"Repeats": 4, "Subdivision": "1/8", "Velocity Decay (%)": 25, "Dry": "Off"}],
+  ["Free Time Slapback", {"Repeats": 1, "Time (ms)": 90, "Tempo Sync": "Off", "Velocity Decay (%)": 35}]
+]

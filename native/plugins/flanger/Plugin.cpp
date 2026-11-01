@@ -70,7 +70,7 @@ private:
         const int sync = int(std::lround(value(5)));
         fDsp.setParams(onGrid(value(0), 0.1, 5.0, 0.1), onGrid(value(1), 1.0, 20.0, 0.1), value(2), value(3),
                        onGrid(value(4), 0.1, 10.0, 0.1), sync, nullflanger::syncCycle(sync), std::round(value(6)),
-                       value(7) >= 0.5f);
+                       value(7) >= 0.5f, int(std::lround(value(8))));
         setLatency(uint32_t(fDsp.latency())); // the JSFX's pdc_delay: the dry path's delay while Thru Zero is on
     }
 

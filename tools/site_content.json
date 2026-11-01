@@ -706,7 +706,9 @@
       "Tape-like wow: two slow sine LFOs gently move the delay time by up to 4 ms, so the echoes waver in pitch. 0% is off.",
       "A chain of short all-pass filters inside the feedback loop that smears every repeat a little more, turning the echoes into a reverb-like wash. 0% is off.",
       "Pushes the echoes down while the dry input is loud (10 ms attack, 250 ms release), so they bloom in the gaps between phrases. 0% is off.",
-      "Holds the current echoes and repeats them forever: no new input enters the loop, feedback is 100% and the filters and drive are bypassed so the loop neither fades nor builds up."
+      "Holds the current echoes and repeats them forever: no new input enters the loop, feedback is 100% and the filters and drive are bypassed so the loop neither fades nor builds up.",
+      "Plays every echo backwards, one window of the delay time at a time",
+      "Shifts every echo up or down by this many semitones, so the repeats climb or fall (0 = off; not used while Reverse is on)"
     ],
     "uses": [
       "Slapback on vocals and guitars",
@@ -1054,7 +1056,8 @@
       "Shortest delay of the sweep (its starting point); the delay moves from Manual up to Manual + Depth. 0.5 ms is the classic setting.",
       "Locks one LFO cycle to a note value at the project tempo (straight, triplet or dotted), following the song position while playing. Off uses Rate.",
       "Offsets the right channel's LFO against the left, from 0 (mono sweep) to 180 degrees (opposite sweeps for a wide stereo flange).",
-      "Through-zero flanging: the dry signal is delayed by the middle of the sweep and the swept signal is inverted, so the sweep passes through the dry signal and cancels it, like the tape jet effect. Adds latency equal to that delay while on."
+      "Through-zero flanging: the dry signal is delayed by the middle of the sweep and the swept signal is inverted, so the sweep passes through the dry signal and cancels it, like the tape jet effect. Adds latency equal to that delay while on.",
+      "Off sweeps up and down as before; Up or Down reads the delay on a ramp with two crossfading taps, so the sweep rises or falls for ever"
     ],
     "uses": [
       "Jet-plane sweeps on drums and cymbals",
@@ -1158,7 +1161,8 @@
       "Amount every frequency is moved up or down, in Hz",
       "Extra shift applied to the right channel only, for stereo movement",
       "Output fed back into the shifter for spiralling barber-pole sweeps",
-      "Dry/wet blend"
+      "Dry/wet blend",
+      "A delay inside the feedback loop, so each repeat comes back shifted once more and the echoes climb or fall in steps (0 = off)"
     ],
     "uses": [
       "Subtle phasing and beating with small shifts",
@@ -1962,7 +1966,8 @@
       "Amount of the phased signal fed back into the all-pass chain: higher values sharpen the peaks, negative values move them between the notches. Above 30% the wet level is trimmed to keep the peaks in check.",
       "Middle frequency of the sweep (1020 Hz by default, log scale from 200 Hz to 5 kHz).",
       "Offset between the left and right LFOs: 0 deg sweeps both channels together, 180 deg sweeps them in opposite directions for a wide stereo swirl.",
-      "Locks one LFO cycle to a note value at the project tempo (and to the bar while the transport plays), replacing Rate. Off uses Rate."
+      "Locks one LFO cycle to a note value at the project tempo (and to the bar while the transport plays), replacing Rate. Off uses Rate.",
+      "Off sweeps up and down as before; Up or Down turns the sweep into an endless rise or fall (two voices take turns, the Shepard-tone trick)"
     ],
     "uses": [
       "Swirling movement on guitars and keys",
@@ -2169,7 +2174,10 @@
       "Stereo width of the reverb (mid/side): 0% is mono, 100% unchanged, 200% extra wide.",
       "Slow, gentle movement of the internal delay lengths that smears metallic ringing and gives the tail a chorused shimmer; 0% is off.",
       "Holds the current tail forever: the loop stops losing level and no new input enters, for pads and drones.",
-      "Classic is the original room algorithm; Plate adds dense input diffusion and a brighter tail; Hall adds the diffusion with longer, wider delays for a bigger, smoother space."
+      "Classic is the original room algorithm; Plate adds dense input diffusion and a brighter tail; Hall adds the diffusion with longer, wider delays for a bigger, smoother space.",
+      "Dips the reverb while the dry signal is loud, so the tail fills the gaps between phrases and hits",
+      "Gated reverb: above -80 dB the tail stays open while the input is above this level, then is cut (-80 = off)",
+      "How long the gate stays open after the input falls under the threshold"
     ],
     "uses": [
       "Room and hall ambience on dry sources",

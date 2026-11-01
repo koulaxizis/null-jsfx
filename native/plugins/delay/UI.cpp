@@ -20,6 +20,8 @@ static const NullKnobsUI::Control kControls[] = {
     { 3, NullKnobsUI::kSelect, "SYNC", 1, 0, false },
     { 4, NullKnobsUI::kSelect, "NOTE", 1, 0, false },
     { 12, NullKnobsUI::kSelect, "FREEZE", 1, 0, false },
+    { 13, NullKnobsUI::kSelect, "REVERSE", 1, 0, false },
+    { 14, NullKnobsUI::kKnob, "PITCH", 1, 0, true },
     { 6, NullKnobsUI::kKnob, "LOW CUT", 0, 1, false, true },
     { 7, NullKnobsUI::kKnob, "HIGH CUT", 0, 1, false, true },
     { 8, NullKnobsUI::kKnob, "DRIVE", 0, 1, false },
@@ -140,6 +142,8 @@ protected:
             std::snprintf(buf, n, "OFF");
         else if (param == 7 && v >= 1000.0f)
             std::snprintf(buf, n, "%.1f kHz", std::lround(v) / 1000.0);
+        else if (param == 14)
+            std::snprintf(buf, n, "%+d st", int(std::lround(v)));
         else
             NullKnobsUI::formatValue(param, v, buf, n);
     }

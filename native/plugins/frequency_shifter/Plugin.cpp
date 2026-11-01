@@ -50,7 +50,7 @@ protected:
 private:
     double v(uint32_t i) const { return nullfreqshift::sliderValue(i, value(i)); }
 
-    void update() { fDsp.setParams(v(0), v(1), v(2), v(3)); }
+    void update() { fDsp.setParams(v(0), v(1), v(2), v(3), v(4)); }
 
     nullfreqshift::FreqShiftProcessor fDsp;
 

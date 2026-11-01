@@ -8,6 +8,8 @@
 #include "FlangerDSP.hpp"
 #include "FlangerSliders.hpp"
 
+#include <cstring>
+
 START_NAMESPACE_DISTRHO
 
 static const NullKnobsUI::Control kControls[] = {
@@ -19,6 +21,7 @@ static const NullKnobsUI::Control kControls[] = {
     { 5, NullKnobsUI::kSelect, "SYNC", 1, -1, false },
     { 6, NullKnobsUI::kKnob, "PHASE", 1, -1, false },
     { 7, NullKnobsUI::kSelect, "THRU-ZERO", 1, -1, false },
+    { 8, NullKnobsUI::kSelect, "BARBER", 1, -1, false },
 };
 
 class UIFlanger : public NullKnobsUI
@@ -34,13 +37,16 @@ protected:
     // in Thru Zero
     void drawDisplay() override
     {
-        char a[16] = "", b[16] = "", buf[80];
+        char a[32] = "", b[16] = "", buf[80];
         const double depth = value(1), manual = value(4);
         const int sync = int(std::lround(value(5)));
         const float ph = value(6);
         const bool tz = value(7) >= 0.5f;
         if (tz)
             std::snprintf(a, sizeof(a), "THRU-ZERO  ");
+        const int barber = int(std::lround(value(8)));
+        if (barber)
+            std::snprintf(a + std::strlen(a), sizeof(a) - std::strlen(a), "%s", barber == 2 ? "BARBER DOWN  " : "BARBER UP  ");
         if (sync > 0)
             std::snprintf(b, sizeof(b), "%s  ", nullflanger::kSyncShort[sync]);
         std::snprintf(buf, sizeof(buf), "%s%s%.1f TO %.1f ms", a, b, manual, manual + depth);

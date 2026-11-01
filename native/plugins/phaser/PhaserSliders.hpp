@@ -17,7 +17,10 @@ static const char* const kSyncOptions[] = { "Off", "1/1", "1/2", "1/4", "1/8", "
 static const char* const kSyncShort[] = { "OFF", "1/1", "1/2", "1/4", "1/8", "1/16", "2/1", "4/1",
                                            "1/4T", "1/8T", "1/4D", "1/8D" };
 
-// slider1..slider8 of phaser.jsfx, in order
+static const char* const kBarberOptions[] = { "Off", "Up", "Down" };
+static const char* const kBarberShort[] = { "OFF", "UP", "DOWN" };
+
+// slider1..slider9 of phaser.jsfx, in order
 static const DISTRHO::SliderInfo kSliders[] = {
     { "Rate", "rate", 0.1f, 5.0f, 0.5f, "Hz", 0.1f },
     { "Stages", "stages", 1.0f, 8.0f, 4.0f, "", 1.0f },
@@ -27,6 +30,7 @@ static const DISTRHO::SliderInfo kSliders[] = {
     { "Center", "center", 200.0f, 5000.0f, 1020.0f, "Hz", 1.0f },
     { "Stereo Phase", "stereophase", 0.0f, 180.0f, 0.0f, "deg", 1.0f },
     { "Tempo Sync", "sync", 0.0f, 11.0f, 0.0f, "", 1.0f, kSyncOptions },
+    { "Barber Pole", "barber", 0.0f, 2.0f, 0.0f, "", 1.0f, kBarberOptions },
 };
 static constexpr uint32_t kNumSliders = sizeof(kSliders) / sizeof(kSliders[0]);
 
@@ -34,6 +38,7 @@ static constexpr uint32_t kNumSliders = sizeof(kSliders) / sizeof(kSliders[0]);
 static const DISTRHO::SliderInfo kUiSliders[] = {
     kSliders[0], kSliders[1], kSliders[2], kSliders[3], kSliders[4], kSliders[5], kSliders[6],
     { "Tempo Sync", "sync", 0.0f, 11.0f, 0.0f, "", 1.0f, kSyncShort },
+    { "Barber Pole", "barber", 0.0f, 2.0f, 0.0f, "", 1.0f, kBarberShort },
 };
 
 // a parameter value on the JSFX slider's grid in double (min + n * step, at most max), as the
@@ -52,7 +57,8 @@ template <typename DSP, typename V>
 inline void applyParams(DSP& dsp, const V& v)
 {
     dsp.setParams(onGrid(v(0), 0.1, 5.0, 0.1), v(1), v(2), onGrid(v(3), 0.0, 100.0, 1.0), onGrid(v(4), -95.0, 95.0, 1.0),
-                  onGrid(v(5), 200.0, 5000.0, 1.0), onGrid(v(6), 0.0, 180.0, 1.0), int(std::lround(v(7))));
+                  onGrid(v(5), 200.0, 5000.0, 1.0), onGrid(v(6), 0.0, 180.0, 1.0), int(std::lround(v(7))),
+                  int(std::lround(v(8))));
 }
 
 } // namespace nullphaser

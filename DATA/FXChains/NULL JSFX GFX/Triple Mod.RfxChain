@@ -1,6 +1,6 @@
 BYPASS 0 0
 <JS null_jsfx/gfx/phaser_gfx.jsfx ""
-  0.3 4 15 57 30 1020 0 0 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  0.3 4 15 57 30 1020 0 0 0 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 >
 FXID {748AD1D2-8D2D-5737-B42C-6185F267DC6B}
 <PROGRAMENV 0 0
@@ -22,7 +22,7 @@ FXID {07EB0B66-6388-5135-98FD-C39BF7E6CFA1}
 WAK 0 0
 BYPASS 0 0
 <JS null_jsfx/gfx/flanger_gfx.jsfx ""
-  0.2 3 30 15 0.5 0 0 0 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  0.2 3 30 15 0.5 0 0 0 0 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 >
 <JS_PINMAP
   6AMAABwAAADoAwAAAgAAAAIAAAACAAAAAAAAAAIAAAAAAAAAHAAAAOgDAAACAAAAAgAAAAAAAAAAAAAAAgAAAAAAAAA=

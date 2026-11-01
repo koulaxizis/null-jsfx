@@ -6,7 +6,7 @@ FXID {BFAD3B5B-A31F-55D9-AF60-DCCAAE77433D}
 WAK 0 0
 BYPASS 0 0
 <JS null_jsfx/frequency_shifter.jsfx ""
-  5 0 0 50 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  5 0 0 50 0 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 >
 <JS_PINMAP
   6AMAABwAAADoAwAAAgAAAAIAAAACAAAAAAAAAAIAAAAAAAAAHAAAAOgDAAACAAAAAgAAAAAAAAAAAAAAAgAAAAAAAAA=

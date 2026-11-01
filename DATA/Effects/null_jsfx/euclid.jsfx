@@ -1,0 +1,140 @@
+desc:NULL Euclid
+author: Christos Koulaxizis
+tags: midi euclid euclidean rhythm generator sequencer pattern pulses steps rotate polyrhythm drum trigger swing tempo sync
+//category: MIDI
+//NULL JSFX v2.9 • https://nulljsfx.tech • MIT License
+
+slider1:16<1,32,1>Steps
+slider2:4<0,32,1>Pulses
+slider3:0<0,31,1>Rotate
+slider4:2<0,5,1{1/4,1/8,1/16,1/32,1/8T,1/16T}>Rate
+slider5:36<0,127,1>Note
+slider6:100<1,127,1>Velocity
+slider7:0<0,100,1>Accent (%)
+slider8:50<5,95,1>Gate (%)
+slider9:0<0,75,1>Swing (%)
+slider10:0<0,1,1{Transport,Always}>Run
+slider11:9<0,15,1{1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16}>Channel
+
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
+
+@init
+  // A Euclidean rhythm generator: Pulses notes spread as evenly as they go over Steps (step i
+  // plays when (i x Pulses) mod Steps < Pulses), turned by Rotate, one step per Rate at the
+  // host's tempo. Transport: it plays while the host plays, locked to its beat. Always: it also
+  // runs while the host is stopped, at the host's tempo. Every pulse sends Note on Channel with
+  // Velocity; the pattern's first pulse (step 0 before Rotate) gets Accent of the way up to 127.
+  // Swing moves every second step later, up to 0.375 of a step at 75 %. A note lasts Gate of a
+  // step (shortened by the swing, so it always ends before the next step). Incoming MIDI passes
+  // through at its own sample, before the notes made at that sample; an all notes off (CC 120/
+  // 123) also ends the note sounding, and so does stopping. The audio passes through.
+  ext_noinit = 1;
+  Q = 0;                       // incoming messages of the block: offset, status, data 1, data 2
+  QMAX = 256;
+  qn = qi = 0;
+  last_s = -1000;
+  fb = 0;                      // beat position while running free
+  off_left = 0;                // samples until the note-off (0 = no note sounding)
+  on_note = on_chan = -1;
+  cur_step = -1;
+  was_run = 0;
+
+  function eu_off(ofs)
+  (
+    off_left > 0 ? (
+      midisend(ofs, 0x80 | on_chan, on_note, 0);
+      off_left = 0;
+    );
+  );
+
+  // step s of the running position: a pulse sends its note
+  function eu_step(ofs, s) local(i, j, v)
+  (
+    i = s - floor(s / steps) * steps;
+    cur_step = i;
+    j = i + rot;
+    j >= steps ? j -= steps;
+    (j * pulses) % steps < pulses ? (
+      v = j == 0 ? floor(vel + (127 - vel) * acc + 0.5) : vel;
+      eu_off(ofs);
+      midisend(ofs, 0x90 | chan, note, v);
+      on_note = note;
+      on_chan = chan;
+      off_left = len;
+    );
+  );
+
+@slider
+  steps = slider1;
+  pulses = min(slider2, steps);
+  rot = slider3 - floor(slider3 / steps) * steps;
+  sb = slider4 == 0 ? 1 : slider4 == 1 ? 0.5 : slider4 == 2 ? 0.25 : slider4 == 3 ? 0.125 : slider4 == 4 ? 1 / 3 : 1 / 6;
+  note = slider5;
+  vel = slider6;
+  acc = slider7 / 100;
+  gate = slider8 / 100;
+  swd = slider9 / 100 * 0.25;  // the delay of the odd steps, in pairs of steps
+  always = slider10;
+  chan = slider11;
+
+@block
+  qn = qi = 0;
+  while (midirecv(ofs, m1, m2, m3)) (
+    qn < QMAX ? (
+      Q[qn * 4] = min(max(ofs, 0), samplesblock - 1);
+      Q[qn * 4 + 1] = m1;
+      Q[qn * 4 + 2] = m2;
+      Q[qn * 4 + 3] = m3;
+      qn += 1;
+    );
+  );
+  playing = play_state & 1;
+  run = playing || always;
+  b_inc = tempo / (60 * srate);
+  b_0 = playing ? beat_position : fb;
+  fb = b_0 + samplesblock * b_inc;
+  len = max(1, floor(gate * (1 - 2 * swd) * sb * 60 / tempo * srate));
+  si = 0;
+
+@sample
+  // the MIDI that came in at this sample goes first
+  while (qi < qn && Q[qi * 4] <= si) (
+    m1 = Q[qi * 4 + 1];
+    m2 = Q[qi * 4 + 2];
+    (m1 & 0xF0) == 0xB0 && (m2 == 120 || m2 == 123) ? eu_off(si);
+    midisend(si, m1, m2, Q[qi * 4 + 3]);
+    qi += 1;
+  );
+  // the note that is sounding ends after Gate
+  off_left > 0 ? (
+    off_left -= 1;
+    off_left == 0 ? midisend(si, 0x80 | on_chan, on_note, 0);
+  );
+  // a stop ends the note and the position starts again
+  !run && was_run ? (
+    eu_off(si);
+    last_s = -1000;
+    cur_step = -1;
+  );
+  was_run = run;
+  // steps, the odd ones moved later by Swing; a step plays when the position enters it
+  run ? (
+    bb = b_0 + si * b_inc;
+    bb >= 0 ? (
+      u = bb / sb;
+      pp = floor(u / 2 + 0.000001);
+      s = pp * 2 + (u / 2 - pp + 0.000001 >= 0.5 + swd ? 1 : 0);
+      s != last_s ? (
+        // at the start, only when it starts on the step's beginning
+        last_s > -1000 || u - (s & 1 ? 2 * pp + 1 + 2 * swd : 2 * pp) < 0.004 ? eu_step(si, s);
+        last_s = s;
+      );
+    );
+  );
+  si += 1;
+  // the audio passes through
+  spl0 = spl0;
+  spl1 = spl1;

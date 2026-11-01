@@ -12,6 +12,7 @@ slider5:30<-95,95,1>Feedback (%)
 slider6:1020<200,5000,1:log>Center (Hz)
 slider7:0<0,180,1>Stereo Phase (deg)
 slider8:0<0,11,1{Off,1/1,1/2,1/4,1/8,1/16,2/1,4/1,1/4T,1/8T,1/4D,1/8D}>Tempo Sync
+slider9:0<0,2,1{Off,Up,Down}>Barber Pole
 
 in_pin:Left
 in_pin:Right
@@ -27,6 +28,31 @@ out_pin:Right
   rx1=0; rx2=0; rx3=0; rx4=0; rx5=0; rx6=0; rx7=0; rx8=0;
   last_l = 0;
   last_r = 0;
+
+  // one allpass voice of the barber pole: up to 8 stages in a loop with feedback
+  function pb_run(x, c) local(w)
+  (
+    w = x + this.last * feedback;
+    this.y1 = c * (this.y1 + w) - this.x1;  this.x1 = w;  w = this.y1;
+    stages >= 2 ? (this.y2 = c * (this.y2 + w) - this.x2;  this.x2 = w;  w = this.y2;);
+    stages >= 3 ? (this.y3 = c * (this.y3 + w) - this.x3;  this.x3 = w;  w = this.y3;);
+    stages >= 4 ? (this.y4 = c * (this.y4 + w) - this.x4;  this.x4 = w;  w = this.y4;);
+    stages >= 5 ? (this.y5 = c * (this.y5 + w) - this.x5;  this.x5 = w;  w = this.y5;);
+    stages >= 6 ? (this.y6 = c * (this.y6 + w) - this.x6;  this.x6 = w;  w = this.y6;);
+    stages >= 7 ? (this.y7 = c * (this.y7 + w) - this.x7;  this.x7 = w;  w = this.y7;);
+    stages >= 8 ? (this.y8 = c * (this.y8 + w) - this.x8;  this.x8 = w;  w = this.y8;);
+    this.last = w;
+  );
+  // the two voices of a channel at sweep position p (0..1), half a sweep apart and faded in and
+  // out with sin(pi p), so their powers always add up to one
+  function pb_pair(x, p) local(q, da, db)
+  (
+    q = p + 0.5;
+    q >= 1 ? q -= 1;
+    da = d_min + 2 * d_sc * p;
+    db = d_min + 2 * d_sc * q;
+    sin($pi * p) * this.a.pb_run(x, (1 - da) / (1 + da)) + sin($pi * q) * this.b.pb_run(x, (1 - db) / (1 + db));
+  );
 
 @slider
   rate = slider1;
@@ -50,6 +76,7 @@ out_pin:Right
   sync_beats = slider8 == 1 ? 4 : slider8 == 2 ? 2 : slider8 == 3 ? 1 : slider8 == 4 ? 0.5 :
                slider8 == 5 ? 0.25 : slider8 == 6 ? 8 : slider8 == 7 ? 16 : slider8 == 8 ? 2 / 3 :
                slider8 == 9 ? 1 / 3 : slider8 == 10 ? 1.5 : 0.75;
+  bp = slider9;
 
 @block
   // synced: the rate follows the host tempo, and while playing the phase is locked to
@@ -65,7 +92,18 @@ out_pin:Right
 @sample
   lfo_phase += lfo_inc;
   lfo_phase >= 2 * $pi ? lfo_phase -= 2 * $pi;
-  
+
+  // Barber Pole: the LFO becomes a ramp (up or down) and two voices take turns, so the
+  // sweep seems to rise or fall for ever; Stereo Phase moves the right channel's ramp
+  bp ? (
+    bp_p = lfo_phase / (2 * $pi);
+    bp == 2 ? bp_p = 1 - bp_p;
+    bp_p >= 1 ? bp_p -= 1;
+    bp_r = bp_p + slider7 / 360;
+    bp_r >= 1 ? bp_r -= 1;
+    spl0 += vl.pb_pair(spl0, bp_p) * mix_w;
+    spl1 += vr.pb_pair(spl1, st_on ? bp_r : bp_p) * mix_w;
+  ) : (
   d = d_min + d_sc * (sin(lfo_phase) + 1);
   coef = (1 - d) / (1 + d);
   st_on ? (
@@ -105,3 +143,4 @@ out_pin:Right
   
   last_r = wet_r;
   spl1 += wet_r * mix_w;
+  );

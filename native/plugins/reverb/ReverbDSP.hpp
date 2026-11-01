@@ -68,6 +68,8 @@ public:
     {
         fSr = sr;
         fSc = sr / 44100.0;
+        fDkEnv = fGtEnv = fGtHold = 0.0;
+        fGtG = 1.0;
         fBlen = int(std::ceil((1687 + 47) * 1.45 * fSc)) + 4;
         for (auto& c : fCombs)
             c.reset(fBlen);
@@ -93,8 +95,20 @@ public:
     // @slider
     void setParams(double sizePct, double decayPct, double dampingPct, double mixPct, bool bypass,
                    double preDelayMs = 0.0, double lowCut = 20.0, double highCut = 20000.0, double widthPct = 100.0,
-                   double modPct = 0.0, bool freeze = false, int chr = 0)
+                   double modPct = 0.0, bool freeze = false, int chr = 0, double duckPct = 0.0,
+                   double gateDb = -80.0, double gateHoldMs = 150.0)
     {
+        // Ducking and the gate on the wet signal (skipped at 0 % and -80 dB)
+        fDuckOn = duckPct > 0.0;
+        fDuckAmt = duckPct / 100.0;
+        fDkAtt = 1.0 - std::exp(-1.0 / (0.01 * fSr));
+        fDkRel = 1.0 - std::exp(-1.0 / (0.25 * fSr));
+        fGtOn = gateDb > -80.0;
+        fGtThr = std::pow(10.0, gateDb / 20.0);
+        fGtLen = std::floor(gateHoldMs * fSr / 1000.0);
+        fGtEr = std::exp(-1.0 / (0.02 * fSr));
+        fGtGa = 1.0 - std::exp(-1.0 / (0.001 * fSr));
+        fGtGr = 1.0 - std::exp(-1.0 / (0.01 * fSr));
         fP = paramsFor(sizePct, decayPct, dampingPct, mixPct, fSr, chr, freeze);
         const double k = fP.room * fSc;
         const double kc = k * combScale(chr);
@@ -212,6 +226,28 @@ public:
             {
                 fHc[0].clear();
                 fHc[1].clear();
+            }
+
+            if (fDuckOn)
+            {
+                const double x = std::fmax(std::fabs(origL), std::fabs(origR));
+                fDkEnv += (x > fDkEnv ? fDkAtt : fDkRel) * (x - fDkEnv);
+                const double g = 1.0 - fDuckAmt * std::fmin(1.0, fDkEnv * 4.0);
+                wl *= g;
+                wr *= g;
+            }
+            if (fGtOn)
+            {
+                const double x = std::fmax(std::fabs(origL), std::fabs(origR));
+                fGtEnv = x > fGtEnv ? x : fGtEnv * fGtEr;
+                if (fGtEnv >= fGtThr)
+                    fGtHold = fGtLen;
+                else if (fGtHold > 0.0)
+                    fGtHold -= 1.0;
+                const double t = fGtEnv >= fGtThr || fGtHold > 0.0 ? 1.0 : 0.0;
+                fGtG += (t > fGtG ? fGtGa : fGtGr) * (t - fGtG);
+                wl *= fGtG;
+                wr *= fGtG;
             }
 
             const double ol = origL * (1.0 - mix) + wl * 3.0 * mix;
@@ -354,6 +390,9 @@ private:
     double fWd = 1.0, fModC = 0.0, fModP = 0.0, fModIa = 0.0, fModIb = 0.0, fModA = 0.0, fModB = 0.0;
     BqCoef fLcK, fHcK;
     Bq fLc[2], fHc[2];
+    bool fDuckOn = false, fGtOn = false;
+    double fDuckAmt = 0.0, fDkAtt = 0.0, fDkRel = 0.0, fDkEnv = 0.0;
+    double fGtThr = 0.0, fGtLen = 0.0, fGtEr = 0.0, fGtGa = 0.0, fGtGr = 0.0, fGtEnv = 0.0, fGtHold = 0.0, fGtG = 1.0;
 };
 
 } // namespace nullreverb

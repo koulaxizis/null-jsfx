@@ -19,6 +19,7 @@ static const NullKnobsUI::Control kControls[] = {
     { 5, NullKnobsUI::kKnob, "CENTER", 1, -1, false, true },
     { 6, NullKnobsUI::kKnob, "STEREO", 1, -1, false },
     { 7, NullKnobsUI::kSelect, "SYNC", 1, -1, false },
+    { 8, NullKnobsUI::kSelect, "BARBER", 1, -1, false },
 };
 
 class UIPhaser : public NullKnobsUI
@@ -59,6 +60,14 @@ protected:
         label(fPX + fPW - 6.0f, fPY + 9.0f, ALIGN_RIGHT, 8.0f, 0.0f, theme::kMuted, buf);
 
         const double ph = tapExtra() * nullphaser::kTwoPi;
+        if (p.barber())
+        {
+            // Barber Pole: the first voice's position on the ramp
+            if (value(6) > 0.0f)
+                response(p, sr, p.barberCoef(p.barberPos(ph, true)), 0.45f);
+            response(p, sr, p.barberCoef(p.barberPos(ph, false)), 1.0f);
+            return;
+        }
         if (value(6) > 0.0f)
             response(p, sr, p.coefAt(ph + p.stereoOffset()), 0.45f);
         response(p, sr, p.coefAt(ph), 1.0f);

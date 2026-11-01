@@ -8,6 +8,7 @@ slider1:100<-2000,2000,0.1>Shift (Hz)
 slider2:0<-100,100,0.1>Stereo Offset (Hz)
 slider3:0<0,95,1>Feedback (%)
 slider4:50<0,100,1>Mix (%)
+slider5:0<0,1000,1>Feedback Delay (ms)
 
 in_pin:Left
 in_pin:Right
@@ -22,6 +23,13 @@ out_pin:Right
   // allpass chains, Niemitalo design) produces the quadrature pair; a sine/cosine
   // oscillator then shifts it. Stereo Offset shifts the right channel by a different
   // amount; Feedback sends the output back in for a spiralling "barber-pole" sound.
+  // Feedback Delay puts a delay line (up to 1 s) inside that loop: every echo comes back
+  // shifted once more, so the repeats climb (or fall) in steps. At 0 ms the loop is the
+  // one-sample loop it always was.
+  bufn = floor(srate) + 2;
+  L.base = 0;
+  R.base = bufn;
+  memset(0, 0, 2 * bufn);
 
   // first-order-in-z^2 allpass section: y = a*(x + y[n-2]) - x[n-2]
   function ap(x, a) local(y)
@@ -48,12 +56,20 @@ out_pin:Right
     this.ph < 0 ? this.ph += 1;
     // feedback is high-passed (the Hilbert pair is inaccurate below ~20 Hz) and
     // softly limited so the loop can never run away
-    f = this.fb * feedback;
+    f = dly > 0 ? (
+      this.rp = this.wp - 1 - dly;
+      this.rp < 0 ? this.rp += bufn;
+      this.base[this.rp];
+    ) : this.fb;
+    f *= feedback;
     this.dc = this.dc * 0.995 + f * 0.005;
     f -= this.dc;
     f = f / (1 + abs(f));
     re = this.h.hilbert(x + f);
     this.fb = re * cos(2 * $pi * this.ph) + this.h.im * sin(2 * $pi * this.ph);
+    this.base[this.wp] = this.fb;
+    this.wp += 1;
+    this.wp >= bufn ? this.wp = 0;
     this.fb;
   );
 
@@ -62,6 +78,7 @@ out_pin:Right
   inc_r = (slider1 + slider2) / srate;
   feedback = slider3 / 100;
   mix = slider4 / 100;
+  dly = min(bufn - 2, floor(slider5 * srate / 1000));
 
 @sample
   w_l = L.shift(spl0, inc_l);

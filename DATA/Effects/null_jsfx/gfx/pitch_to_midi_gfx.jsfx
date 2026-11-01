@@ -1,0 +1,381 @@
+desc:NULL Pitch to MIDI GFX
+author: Christos Koulaxizis
+tags: midi pitch to midi audio to midi convert tracker detection yin monophonic bass vocal guitar melody note pitch bend gui
+//category: MIDI
+//NULL JSFX v2.9 • https://nulljsfx.tech • MIT License
+
+import null_gfx.jsfx-inc
+
+slider1:-40<-70,0,0.1>-Threshold (dB)
+slider2:36<28,127,1>-Low Note
+slider3:84<28,127,1>-High Note
+slider4:40<10,200,1>-Stability (ms)
+slider5:1<0,1,1{Fixed,Level}>-Velocity
+slider6:100<1,127,1>-Fixed Velocity
+slider7:0<-24,24,1>-Transpose (semitones)
+slider8:0<0,1,1{Off,On}>-Pitch Bend
+slider9:0<0,15,1{1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16}>-Channel
+
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
+
+@init
+  // Turns a monophonic line (bass, voice, a lead) into MIDI notes. The sum of both channels goes
+  // through a 30 Hz high-pass and a 24 dB/oct low-pass at 0.4 x the reduced rate, and every D-th
+  // sample is kept (D = srate / 11025, rounded, at least 1). Every 64 kept samples the YIN method
+  // (difference function, cumulative mean normalisation, first dip under 0.15 or the deepest
+  // under 0.3, parabolic interpolation) finds the period between Low Note and High Note, and the
+  // RMS of the window gives the level. A note starts when the same nearest note has been heard
+  // above Threshold for Stability; while it sounds, the pitch may wander 0.8 semitones before a
+  // new note can take over, and the note ends when the line has been silent (3 dB under
+  // Threshold) or unpitched for Stability. Velocity Level maps Threshold..0 dBFS to 1..127.
+  // Transpose moves the notes it sends. Pitch Bend On follows the pitch inside the note
+  // (range +/-2 semitones) and centres the bend after the note. Incoming MIDI passes through at
+  // its own sample; an all notes off (CC 120/123) also ends the note sounding. The audio passes
+  // through.
+  ext_noinit = 1;
+  // NULL Pitch to MIDI (../pitch_to_midi.jsfx) with its own interface: same audio code, plus @gfx.
+  Q = 0;                       // incoming messages of the block: offset, status, data 1, data 2
+  QMAX = 256;
+  qn = qi = 0;
+  BUF = 1024;                  // the kept samples, oldest first (up to 2048); the window starts at bs
+  DF = 4096;                   // the difference function (up to 1024)
+  HOP = 64;
+  dn = floor(srate / 11025 + 0.5);
+  dn = max(1, dn);
+  dsr = srate / dn;
+  dc = 0;                      // samples until the next kept one
+  bn = 0;                      // kept samples in BUF
+  hc = 0;                      // kept samples since the last analysis
+  h1 = h2 = a1 = a2 = b1 = b2 = 0;
+  cur = -1;                    // the note sounding (before Transpose), -1 = none
+  sent = -1;                   // the note sent
+  cand = -1;
+  cand_t = 0;
+  quiet_t = 0;
+  bend = 8192;
+  det_f = 0;
+  det_lvl = -120;
+
+  function pm_bq(kind, f, q) local(w0, cw, al, a0)
+  (
+    w0 = 2 * $pi * min(f, 0.45 * srate) / srate;
+    cw = cos(w0);
+    al = sin(w0) / (2 * q);
+    a0 = 1 + al;
+    this.b0 = (kind ? (1 - cw) / 2 : (1 + cw) / 2) / a0;
+    this.b1 = (kind ? 1 - cw : -(1 + cw)) / a0;
+    this.b2 = this.b0;
+    this.a1 = -2 * cw / a0;
+    this.a2 = (1 - al) / a0;
+  );
+
+  function pm_off(ofs)
+  (
+    sent >= 0 ? (
+      midisend(ofs, 0x80 | chan, sent, 0);
+      sent = -1;
+      bend != 8192 ? ( midisend(ofs, 0xE0 | chan, 0, 64); bend = 8192; );
+    );
+    cur = -1;
+  );
+
+  function pm_on(ofs, n, lv) local(v, fr)
+  (
+    pm_off(ofs);
+    fr = thr_db < 0 ? min(1, max(0, (lv - thr_db) / -thr_db)) : 1;
+    v = vmode ? max(1, min(127, floor(1 + 126 * fr + 0.5))) : fvel;
+    cur = n;
+    sent = max(0, min(127, n + transp));
+    midisend(ofs, 0x90 | chan, sent, v);
+  );
+
+  // YIN over the window: the pitch in MIDI notes (fractional), or -1
+  function pm_detect() local(w, tau, j, s, d, cum, best, bt, x0, x1, x2, den, tp)
+  (
+    w = tmax + 32;
+    tau = 1;
+    cum = 0;
+    best = 1000;
+    bt = -1;
+    while (tau <= tmax) (
+      s = 0;
+      j = 0;
+      loop(w,
+        d = BUF[bs + j] - BUF[bs + j + tau];
+        s += d * d;
+        j += 1;
+      );
+      cum += s;
+      DF[tau] = cum > 0 ? s * tau / cum : 1;
+      tau += 1;
+    );
+    // the first dip under 0.15 (to the bottom of it), else the deepest under 0.3
+    tau = tmin;
+    while (tau <= tmax && bt < 0) (
+      DF[tau] < 0.15 ? (
+        while (tau < tmax && DF[tau + 1] < DF[tau]) ( tau += 1; );
+        bt = tau;
+      );
+      tau += 1;
+    );
+    bt < 0 ? (
+      tau = tmin;
+      loop(tmax - tmin + 1,
+        DF[tau] < best ? ( best = DF[tau]; bt = tau; );
+        tau += 1;
+      );
+      best >= 0.3 ? bt = -1;
+    );
+    bt > 0 ? (
+      x0 = DF[max(1, bt - 1)]; x1 = DF[bt]; x2 = DF[min(tmax, bt + 1)];
+      den = x0 - 2 * x1 + x2;
+      tp = bt + (den > 0 ? 0.5 * (x0 - x2) / den : 0);
+      69 + 12 * log(dsr / tp / 440) / log(2);
+    ) : -1;
+  );
+
+  // one analysis, at sample offset ofs of the block
+  function pm_analyse(ofs) local(w, j, e, lv, m, n)
+  (
+    w = tmax + 32;
+    e = 0;
+    j = 0;
+    loop(w, e += BUF[bs + tmax + j] * BUF[bs + tmax + j]; j += 1;);
+    lv = 10 * log10(max(e / w, 0.000000000001));
+    det_lvl = lv;
+    m = lv >= thr_db ? pm_detect() : -1;
+    det_f = m;
+    n = m >= 0 ? floor(m + 0.5) : -1;
+    n >= 0 && (n < lo || n > hi) ? n = -1;
+    // a note sounding keeps going while the pitch stays near it
+    cur >= 0 && m >= 0 && abs(m - cur) < 0.8 ? n = cur;
+    n >= 0 ? (
+      quiet_t = 0;
+      n == cand ? cand_t += hop_s : ( cand = n; cand_t = hop_s; );
+      cand != cur && cand_t >= stab ? pm_on(ofs, cand, lv);
+    ) : (
+      cand = -1;
+      cand_t = 0;
+      cur >= 0 && (lv < thr_db - 3 || m < 0) ? (
+        quiet_t += hop_s;
+        quiet_t >= stab ? pm_off(ofs);
+      );
+    );
+    // the bend follows the pitch inside the note
+    pbend && sent >= 0 && m >= 0 && n == cur ? (
+      j = floor(8192 + max(-1, min(1, (m - cur) / 2)) * 8191 + 0.5);
+      j != bend ? ( midisend(ofs, 0xE0 | chan, j & 127, floor(j / 128)); bend = j; );
+    );
+  );
+  gfx_ext_retina = 1;
+
+  function update()
+  (
+    thr_db = slider1;
+    lo = min(slider2, slider3);
+    hi = max(slider2, slider3);
+    tmin = max(2, floor(dsr / (440 * 2 ^ ((hi + 0.5 - 69) / 12))));
+    tmax = min(1000, ceil(dsr / (440 * 2 ^ ((lo - 0.5 - 69) / 12))));
+    tmin = min(tmin, tmax - 1);
+    stab = slider4 / 1000;
+    hop_s = HOP / dsr;
+    vmode = slider5;
+    fvel = slider6;
+    transp = slider7;
+    pbend = slider8;
+    chan_new = slider9;
+    hp.pm_bq(0, 30, 0.7071067811865476);
+    la.pm_bq(1, 0.4 * dsr, 0.5411961001461969);
+    lb.pm_bq(1, 0.4 * dsr, 1.3065629648763766);
+  );
+
+  // ---- factory presets: generated by tools/build_presets.py, do not edit ----
+  ng_pre_n = 10;
+  strcpy(#ng_h_ix, "");
+  ng_hist_add(1); ng_hist_add(2); ng_hist_add(3); ng_hist_add(4); ng_hist_add(5); ng_hist_add(6); ng_hist_add(7); ng_hist_add(8); ng_hist_add(9);
+  ng_hist_init();
+
+  function ng_preset_load(p)
+  (
+    p == 0 ? ( ng_slider_set(1, -40); ng_slider_set(2, 36); ng_slider_set(3, 84); ng_slider_set(4, 40); ng_slider_set(5, 1); ng_slider_set(6, 100); ng_slider_set(7, 0); ng_slider_set(8, 0); ng_slider_set(9, 0); );
+    p == 1 ? ( ng_slider_set(1, -40); ng_slider_set(2, 28); ng_slider_set(3, 67); ng_slider_set(4, 50); ng_slider_set(5, 1); ng_slider_set(6, 100); ng_slider_set(7, 0); ng_slider_set(8, 0); ng_slider_set(9, 0); );
+    p == 2 ? ( ng_slider_set(1, -36); ng_slider_set(2, 28); ng_slider_set(3, 60); ng_slider_set(4, 40); ng_slider_set(5, 1); ng_slider_set(6, 100); ng_slider_set(7, -12); ng_slider_set(8, 0); ng_slider_set(9, 0); );
+    p == 3 ? ( ng_slider_set(1, -42); ng_slider_set(2, 40); ng_slider_set(3, 72); ng_slider_set(4, 60); ng_slider_set(5, 1); ng_slider_set(6, 100); ng_slider_set(7, 0); ng_slider_set(8, 0); ng_slider_set(9, 0); );
+    p == 4 ? ( ng_slider_set(1, -42); ng_slider_set(2, 52); ng_slider_set(3, 84); ng_slider_set(4, 60); ng_slider_set(5, 1); ng_slider_set(6, 100); ng_slider_set(7, 0); ng_slider_set(8, 0); ng_slider_set(9, 0); );
+    p == 5 ? ( ng_slider_set(1, -45); ng_slider_set(2, 72); ng_slider_set(3, 108); ng_slider_set(4, 30); ng_slider_set(5, 1); ng_slider_set(6, 100); ng_slider_set(7, 0); ng_slider_set(8, 0); ng_slider_set(9, 0); );
+    p == 6 ? ( ng_slider_set(1, -40); ng_slider_set(2, 40); ng_slider_set(3, 88); ng_slider_set(4, 35); ng_slider_set(5, 1); ng_slider_set(6, 100); ng_slider_set(7, 0); ng_slider_set(8, 0); ng_slider_set(9, 0); );
+    p == 7 ? ( ng_slider_set(1, -40); ng_slider_set(2, 40); ng_slider_set(3, 88); ng_slider_set(4, 35); ng_slider_set(5, 1); ng_slider_set(6, 100); ng_slider_set(7, 0); ng_slider_set(8, 1); ng_slider_set(9, 0); );
+    p == 8 ? ( ng_slider_set(1, -40); ng_slider_set(2, 36); ng_slider_set(3, 84); ng_slider_set(4, 40); ng_slider_set(5, 0); ng_slider_set(6, 100); ng_slider_set(7, 0); ng_slider_set(8, 0); ng_slider_set(9, 0); );
+    p == 9 ? ( ng_slider_set(1, -40); ng_slider_set(2, 36); ng_slider_set(3, 84); ng_slider_set(4, 40); ng_slider_set(5, 1); ng_slider_set(6, 100); ng_slider_set(7, 12); ng_slider_set(8, 0); ng_slider_set(9, 1); );
+  );
+
+  // the first preset every slider matches, or -1
+  function ng_preset_match() local(m)
+  (
+    m = -1;
+    m < 0 && ng_pre_eq(slider1, -40) && ng_pre_eq(slider2, 36) && ng_pre_eq(slider3, 84) && ng_pre_eq(slider4, 40) && ng_pre_eq(slider5, 1) && ng_pre_eq(slider6, 100) && ng_pre_eq(slider7, 0) && ng_pre_eq(slider8, 0) && ng_pre_eq(slider9, 0) ? m = 0;
+    m < 0 && ng_pre_eq(slider1, -40) && ng_pre_eq(slider2, 28) && ng_pre_eq(slider3, 67) && ng_pre_eq(slider4, 50) && ng_pre_eq(slider5, 1) && ng_pre_eq(slider6, 100) && ng_pre_eq(slider7, 0) && ng_pre_eq(slider8, 0) && ng_pre_eq(slider9, 0) ? m = 1;
+    m < 0 && ng_pre_eq(slider1, -36) && ng_pre_eq(slider2, 28) && ng_pre_eq(slider3, 60) && ng_pre_eq(slider4, 40) && ng_pre_eq(slider5, 1) && ng_pre_eq(slider6, 100) && ng_pre_eq(slider7, -12) && ng_pre_eq(slider8, 0) && ng_pre_eq(slider9, 0) ? m = 2;
+    m < 0 && ng_pre_eq(slider1, -42) && ng_pre_eq(slider2, 40) && ng_pre_eq(slider3, 72) && ng_pre_eq(slider4, 60) && ng_pre_eq(slider5, 1) && ng_pre_eq(slider6, 100) && ng_pre_eq(slider7, 0) && ng_pre_eq(slider8, 0) && ng_pre_eq(slider9, 0) ? m = 3;
+    m < 0 && ng_pre_eq(slider1, -42) && ng_pre_eq(slider2, 52) && ng_pre_eq(slider3, 84) && ng_pre_eq(slider4, 60) && ng_pre_eq(slider5, 1) && ng_pre_eq(slider6, 100) && ng_pre_eq(slider7, 0) && ng_pre_eq(slider8, 0) && ng_pre_eq(slider9, 0) ? m = 4;
+    m < 0 && ng_pre_eq(slider1, -45) && ng_pre_eq(slider2, 72) && ng_pre_eq(slider3, 108) && ng_pre_eq(slider4, 30) && ng_pre_eq(slider5, 1) && ng_pre_eq(slider6, 100) && ng_pre_eq(slider7, 0) && ng_pre_eq(slider8, 0) && ng_pre_eq(slider9, 0) ? m = 5;
+    m < 0 && ng_pre_eq(slider1, -40) && ng_pre_eq(slider2, 40) && ng_pre_eq(slider3, 88) && ng_pre_eq(slider4, 35) && ng_pre_eq(slider5, 1) && ng_pre_eq(slider6, 100) && ng_pre_eq(slider7, 0) && ng_pre_eq(slider8, 0) && ng_pre_eq(slider9, 0) ? m = 6;
+    m < 0 && ng_pre_eq(slider1, -40) && ng_pre_eq(slider2, 40) && ng_pre_eq(slider3, 88) && ng_pre_eq(slider4, 35) && ng_pre_eq(slider5, 1) && ng_pre_eq(slider6, 100) && ng_pre_eq(slider7, 0) && ng_pre_eq(slider8, 1) && ng_pre_eq(slider9, 0) ? m = 7;
+    m < 0 && ng_pre_eq(slider1, -40) && ng_pre_eq(slider2, 36) && ng_pre_eq(slider3, 84) && ng_pre_eq(slider4, 40) && ng_pre_eq(slider5, 0) && ng_pre_eq(slider6, 100) && ng_pre_eq(slider7, 0) && ng_pre_eq(slider8, 0) && ng_pre_eq(slider9, 0) ? m = 8;
+    m < 0 && ng_pre_eq(slider1, -40) && ng_pre_eq(slider2, 36) && ng_pre_eq(slider3, 84) && ng_pre_eq(slider4, 40) && ng_pre_eq(slider5, 1) && ng_pre_eq(slider6, 100) && ng_pre_eq(slider7, 12) && ng_pre_eq(slider8, 0) && ng_pre_eq(slider9, 1) ? m = 9;
+    m;
+  );
+
+  function ng_preset_name(p) local(s)
+  (
+    s = "";
+    p == 0 ? s = "Default";
+    p == 1 ? s = "Bass Guitar";
+    p == 2 ? s = "Synth Bass Layer";
+    p == 3 ? s = "Male Voice";
+    p == 4 ? s = "Female Voice";
+    p == 5 ? s = "Whistle";
+    p == 6 ? s = "Guitar Lead";
+    p == 7 ? s = "Lead with Bend";
+    p == 8 ? s = "Steady Velocity";
+    p == 9 ? s = "Octave Up Double";
+    s;
+  );
+
+  function ng_presets() local(i)
+  (
+    ng_pre_req >= 0 ? ( ng_preset_load(ng_pre_req); update(); ng_pre_req = -1; );
+    ng_hist() ? update();
+    ng_pre_cur = ng_preset_match();
+    ng_pre_open ? (
+      ng_pre_menu_begin();
+      i = 0;
+      loop(ng_pre_n, ng_pre_item(i, ng_preset_name(i)); i += 1;);
+      ng_pre_menu_end();
+    );
+    strcpy(#ng_pre_name, ng_pre_cur >= 0 ? ng_preset_name(ng_pre_cur) : "CUSTOM");
+  );
+  // ---- end of factory presets ----
+
+@slider
+  update();
+
+@block
+  qn = qi = 0;
+  while (midirecv(ofs, m1, m2, m3)) (
+    qn < QMAX ? (
+      Q[qn * 4] = min(max(ofs, 0), samplesblock - 1);
+      Q[qn * 4 + 1] = m1;
+      Q[qn * 4 + 2] = m2;
+      Q[qn * 4 + 3] = m3;
+      qn += 1;
+    );
+  );
+  si = 0;
+
+@sample
+  // a new Channel ends the note on the old one
+  chan_new != chan ? ( pm_off(si); chan = chan_new; );
+  // the MIDI that came in at this sample goes first
+  while (qi < qn && Q[qi * 4] <= si) (
+    m1 = Q[qi * 4 + 1];
+    m2 = Q[qi * 4 + 2];
+    (m1 & 0xF0) == 0xB0 && (m2 == 120 || m2 == 123) ? ( pm_off(si); cand = -1; cand_t = 0; );
+    midisend(si, m1, m2, Q[qi * 4 + 3]);
+    qi += 1;
+  );
+  // the detector's input: high-pass, low-pass, every dn-th sample
+  x = (spl0 + spl1) * 0.5;
+  y = hp.b0 * x + h1;
+  h1 = hp.b1 * x - hp.a1 * y + h2;
+  h2 = hp.b2 * x - hp.a2 * y;
+  z = la.b0 * y + a1;
+  a1 = la.b1 * y - la.a1 * z + a2;
+  a2 = la.b2 * y - la.a2 * z;
+  y = lb.b0 * z + b1;
+  b1 = lb.b1 * z - lb.a1 * y + b2;
+  b2 = lb.b2 * z - lb.a2 * y;
+  abs(y) < 0.000000000001 ? y = 0;
+  dc <= 0 ? (
+    dc = dn;
+    nw = 2 * tmax + 32;
+    bn >= 2048 ? (
+      memcpy(BUF, BUF + bn - nw, nw);
+      bn = nw;
+    );
+    BUF[bn] = y;
+    bn += 1;
+    hc += 1;
+    hc >= HOP && bn >= nw ? ( hc = 0; bs = bn - nw; pm_analyse(si); );
+  );
+  dc -= 1;
+  si += 1;
+  // the audio passes through
+  spl0 = spl0;
+  spl1 = spl1;
+
+@gfx 480 380
+  ng_knobs_begin("PITCH TO MIDI", "MIDI", 480, 120, 2, 0);
+
+  // display: the level the detector hears with Threshold marked, the pitch it finds (note and
+  // cents, dim when unpitched), and the note it sends (lit while it sounds)
+  ng_meter(40, 82, 260, 12, "IN", det_lvl, thr_db, -70);
+  ng_font(1, 7, 1);
+  det_f >= 0 ? (
+    pm_g_n = floor(det_f + 0.5);
+    pm_g_c = floor((det_f - pm_g_n) * 100 + 0.5);
+    pm_g_nn = pm_g_n % 12;
+    strcpy(#pm_g_s, pm_g_nn == 0 ? "C" : pm_g_nn == 1 ? "C#" : pm_g_nn == 2 ? "D" : pm_g_nn == 3 ? "D#" : pm_g_nn == 4 ? "E" :
+                    pm_g_nn == 5 ? "F" : pm_g_nn == 6 ? "F#" : pm_g_nn == 7 ? "G" : pm_g_nn == 8 ? "G#" : pm_g_nn == 9 ? "A" :
+                    pm_g_nn == 10 ? "A#" : "B");
+    sprintf(#pm_g_d, "PITCH %s%d %+d CENTS", #pm_g_s, floor(pm_g_n / 12) - 1, pm_g_c);
+    ng_col(NG_TEXT, 1);
+  ) : (
+    strcpy(#pm_g_d, "PITCH --");
+    ng_col(NG_MUTED, 1);
+  );
+  ng_txt(#pm_g_d, 40, 118, 0, 1);
+  ng_col(NG_MUTED, 1);
+  sprintf(#pm_g_r, "RANGE %d-%d   CH %d", lo, hi, chan + 1);
+  ng_txt(#pm_g_r, 40, 136, 0, 1);
+  // the note sent
+  sent >= 0 ? ng_col(NG_ACCENT, 1) : ng_col(NG_BORDER, 1);
+  gfx_roundrect(X(340), Y(70), 108 * ng_s, 76 * ng_s, 6 * ng_s);
+  sent >= 0 ? (
+    pm_g_nn = sent % 12;
+    strcpy(#pm_g_s, pm_g_nn == 0 ? "C" : pm_g_nn == 1 ? "C#" : pm_g_nn == 2 ? "D" : pm_g_nn == 3 ? "D#" : pm_g_nn == 4 ? "E" :
+                    pm_g_nn == 5 ? "F" : pm_g_nn == 6 ? "F#" : pm_g_nn == 7 ? "G" : pm_g_nn == 8 ? "G#" : pm_g_nn == 9 ? "A" :
+                    pm_g_nn == 10 ? "A#" : "B");
+    sprintf(#pm_g_o, "%s%d", #pm_g_s, floor(sent / 12) - 1);
+  ) : strcpy(#pm_g_o, "--");
+  ng_font(2, 12, 1);
+  sent >= 0 ? ng_col(NG_TEXT, 1) : ng_col(NG_MUTED, 1);
+  ng_txt(#pm_g_o, 394, 102, 1, 1);
+  ng_font(1, 7, 1);
+  ng_col(NG_MUTED, 1);
+  ng_txt("NOTE OUT", 394, 132, 1, 1);
+
+  ng_row(5);
+  sprintf(#pm_v1, "%.1f dB", slider1);
+  ng_knob_ctl(1, "THRESHOLD", #pm_v1, -70, 0, -40, 0.1, 0) ? update();
+  sprintf(#pm_v2, "%d", slider2);
+  ng_knob_ctl(2, "LOW NOTE", #pm_v2, 28, 127, 36, 1, 0) ? update();
+  sprintf(#pm_v3, "%d", slider3);
+  ng_knob_ctl(3, "HIGH NOTE", #pm_v3, 28, 127, 84, 1, 0) ? update();
+  sprintf(#pm_v4, "%d ms", slider4);
+  ng_knob_ctl(4, "STABILITY", #pm_v4, 10, 200, 40, 1, 0) ? update();
+  ng_select_ctl(5, "VELOCITY", "FIXED|LEVEL", 0) ? update();
+  ng_row(4);
+  sprintf(#pm_v6, "%d", slider6);
+  ng_knob_ctl(6, "FIXED VEL", #pm_v6, 1, 127, 100, 1, 0) ? update();
+  sprintf(#pm_v7, "%+d st", slider7);
+  ng_knob_ctl(7, "TRANSPOSE", #pm_v7, -24, 24, 0, 1, 1) ? update();
+  ng_select_ctl(8, "BEND", "OFF|ON", 0) ? update();
+  ng_select_ctl(9, "CHANNEL", "1|2|3|4|5|6|7|8|9|10|11|12|13|14|15|16", 0) ? update();
+
+  ng_end();
+
+  ng_presets(); // the preset list (generated by tools/build_presets.py)

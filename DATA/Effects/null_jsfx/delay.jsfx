@@ -1,6 +1,6 @@
 desc:NULL Delay
 author: Christos Koulaxizis
-tags: delay echo slapback feedback pre-delay timing sync tempo tape modulation diffusion ducking freeze dotted triplet
+tags: delay echo slapback feedback pre-delay timing sync tempo tape modulation diffusion ducking freeze dotted triplet reverse pitch shimmer
 //category: Essentials
 //NULL JSFX v2.9 • https://nulljsfx.tech • MIT License
 
@@ -17,6 +17,8 @@ slider10:0<0,100,1>Modulation (%)
 slider11:0<0,100,1>Diffusion (%)
 slider12:0<0,100,1>Ducking (%)
 slider13:0<0,1,1{Off,On}>Freeze
+slider14:0<0,1,1{Off,On}>Reverse
+slider15:0<-12,12,1>Pitch (semitones)
 
 in_pin:Left
 in_pin:Right
@@ -44,6 +46,13 @@ options:maxmem=33554432
   hc_l = hc_r = 0;
   // Modulation, Diffusion, Ducking and Freeze are skipped at their defaults (0, 0, 0, Off)
   md_p1 = md_p2 = 0;
+  // Reverse plays every echo backwards: the line is read from the write point back, one
+  // window of the delay time at a time (at most half the line), faded 10 ms at its ends.
+  // Pitch shifts every echo by that many semitones with two crossfaded taps 50 ms apart, so
+  // the repeats climb or fall; it moves the echo about 25 ms later. Both are inside the loop
+  // and skipped at their defaults and while frozen; with Reverse on, Pitch is not used.
+  rv_c = 0;
+  ps_p = 0;
   dk_env = 0;
   diff_was = 0;
 
@@ -74,6 +83,19 @@ options:maxmem=33554432
   apr3.dl_ap_init(ap_base + 6 * ap_size, floor(srate * 0.00323));
   apr4.dl_ap_init(ap_base + 7 * ap_size, floor(srate * 0.00463));
 
+  // the line at off samples behind the write point, linearly interpolated
+  function dl_rd(b, off) local(rf, ri, fr, r2)
+  (
+    rf = wpos - off;
+    rf < 0 ? rf += buf_size;
+    ri = floor(rf);
+    fr = rf - ri;
+    ri >= buf_size ? ri -= buf_size;
+    r2 = ri + 1;
+    r2 >= buf_size ? r2 = 0;
+    b[ri] + (b[r2] - b[ri]) * fr;
+  );
+
   function update_time()
   (
     tempo_sync && tempo > 0 ? (
@@ -85,6 +107,8 @@ options:maxmem=33554432
     );
     delay_samples = floor(delay_ms * srate / 1000 + 0.5);
     delay_samples = max(1, min(buf_size - 1, delay_samples));
+    rv_len = max(2, min(delay_samples, floor(buf_size / 2) - 2));
+    rv_fade = max(1, min(floor(rv_len / 2), floor(0.01 * srate)));
   );
 
 @slider
@@ -112,13 +136,45 @@ options:maxmem=33554432
   dk_att = 1 - exp(-1 / (0.01 * srate));
   dk_rel = 1 - exp(-1 / (0.25 * srate));
   frz = slider13;
+  rv_on = slider14;
+  ps_on = slider15 != 0;
+  ps_ratio = 2 ^ (slider15 / 12);
+  ps_w = floor(0.05 * srate);
   update_time();
 
 @block
   tempo_sync ? update_time();
 
 @sample
-  mod_on && !frz ? (
+  rv_on && !frz ? (
+    // reverse: the window just written, read backwards
+    rv_c >= rv_len ? rv_c = 0;
+    rv_rp = wpos - 2 * rv_c - 1;
+    rv_rp < 0 ? rv_rp += buf_size;
+    rv_g = min(1, min((rv_c + 1) / rv_fade, (rv_len - rv_c) / rv_fade));
+    echo_l = buf_l[rv_rp] * rv_g;
+    echo_r = buf_r[rv_rp] * rv_g;
+    rv_c += 1;
+  ) : ps_on && !frz ? (
+    // pitch: two taps sweep through a 50 ms window half a window apart, faded in and out
+    mod_on ? (
+      md_p1 += md_i1;
+      md_p1 >= 1 ? md_p1 -= 1;
+      md_p2 += md_i2;
+      md_p2 >= 1 ? md_p2 -= 1;
+      ps_b = delay_samples + md_dep * (1 + 0.75 * sin(2 * $pi * md_p1) + 0.25 * sin(2 * $pi * md_p2));
+    ) : ps_b = delay_samples;
+    ps_p += (1 - ps_ratio) / ps_w;
+    ps_p -= floor(ps_p);
+    ps_q = ps_p + 0.5;
+    ps_q >= 1 ? ps_q -= 1;
+    ps_o1 = min(buf_size - 2, ps_b + ps_p * ps_w);
+    ps_o2 = min(buf_size - 2, ps_b + ps_q * ps_w);
+    ps_g1 = 1 - abs(2 * ps_p - 1);
+    ps_g2 = 1 - abs(2 * ps_q - 1);
+    echo_l = ps_g1 * dl_rd(buf_l, ps_o1) + ps_g2 * dl_rd(buf_l, ps_o2);
+    echo_r = ps_g1 * dl_rd(buf_r, ps_o1) + ps_g2 * dl_rd(buf_r, ps_o2);
+  ) : mod_on && !frz ? (
     // tape wow: a fractional read point, linearly interpolated
     md_p1 += md_i1;
     md_p1 >= 1 ? md_p1 -= 1;

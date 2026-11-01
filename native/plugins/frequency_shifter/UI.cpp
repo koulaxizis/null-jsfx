@@ -15,6 +15,7 @@ static const NullKnobsUI::Control kControls[] = {
     { 1, NullKnobsUI::kKnob, "OFFSET", 0, -1, true },
     { 2, NullKnobsUI::kKnob, "FEEDBACK", 0, -1, false },
     { 3, NullKnobsUI::kKnob, "MIX", 0, -1, false },
+    { 4, NullKnobsUI::kKnob, "FB DELAY", 0, -1, false },
 };
 
 class UIFrequencyShifter : public NullKnobsUI

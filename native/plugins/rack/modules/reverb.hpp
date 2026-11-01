@@ -47,7 +47,7 @@ private:
     void update()
     {
         fDsp.setParams(fV[0], fV[1], fV[2], fV[3], fV[4] > 0.0f, fV[5], fV[6], fV[7], fV[8], fV[9], fV[10] > 0.0f,
-                       int(std::lround(fV[11])));
+                       int(std::lround(fV[11])), fV[12], fV[13], fV[14]);
     }
 
     nullreverb::ReverbProcessor fDsp;

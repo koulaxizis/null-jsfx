@@ -107,5 +107,96 @@
     ],
     "properties": "Input → low shelf boost at 1.2 × Low Freq → low shelf cut at 2.2 × Low Freq → high peak at High Freq (Q from Bandwidth) → high shelf cut at Atten Freq (each skipped at 0) → tube stage (asymmetric tanh, 10 Hz DC blocker, skipped at 0%) → Output. Zero latency; every control at 0 leaves the sound untouched.",
     "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-peq\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><path d=\"M 4,40 Q 14,20 22,36 Q 28,46 34,40 L 40,40 Q 48,40 52,22 Q 56,34 60,40\" stroke=\"url(#icon-peq)\" stroke-width=\"2.5\" fill=\"none\" stroke-linecap=\"round\"/><path d=\"M 4,40 L 60,40\" stroke=\"url(#icon-peq)\" stroke-width=\"1\" opacity=\"0.3\"/></svg>"
+  },
+  "pitch_to_midi": {
+    "card_desc": "Audio to MIDI for Monophonic Lines",
+    "keywords": "midi pitch to midi audio to midi convert tracker detection yin monophonic bass vocal guitar melody note pitch bend transcribe",
+    "slider_desc": [
+      "Level the line must reach to make a note (and 3 dB under it to end one).",
+      "Lowest note it looks for.",
+      "Highest note it looks for.",
+      "How long a pitch must hold before a note starts or ends (longer is steadier, shorter is faster).",
+      "Fixed gives every note Fixed Velocity; Level maps Threshold..0 dBFS to 1..127.",
+      "The velocity when Velocity is Fixed.",
+      "Moves the notes it sends.",
+      "On follows the pitch inside the note with pitch bend (range +/-2 semitones).",
+      "MIDI channel of the notes."
+    ],
+    "uses": [
+      "Doubling a bass guitar with a synth bass",
+      "Turning a hummed or sung idea into MIDI",
+      "Layering a lead line with an instrument",
+      "Writing down a melody from a recording"
+    ],
+    "properties": "Input (passes through) → mono sum → 30 Hz high-pass → 24 dB/oct low-pass → decimation to about 11 kHz → YIN pitch detection every 64 kept samples (threshold 0.15, parabolic interpolation) and window RMS → note state (Stability, 0.8 semitone hold, silence 3 dB under Threshold) → note-on, note-off, optional pitch bend. Monophonic. Latency about the window plus Stability (some tens of ms). Incoming MIDI passes through at its own sample.",
+    "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-p2m\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><path d=\"M 4,32 C 8,18 12,18 16,32 C 20,46 24,46 28,32\" stroke=\"url(#icon-p2m)\" stroke-width=\"2.2\" fill=\"none\" stroke-linecap=\"round\"/><path d=\"M 31,32 L 36,32\" stroke=\"url(#icon-p2m)\" stroke-width=\"2\" stroke-linecap=\"round\"/><rect x=\"40\" y=\"18\" width=\"16\" height=\"6\" rx=\"1.5\" fill=\"url(#icon-p2m)\"/><rect x=\"40\" y=\"30\" width=\"10\" height=\"6\" rx=\"1.5\" fill=\"url(#icon-p2m)\" opacity=\"0.8\"/><rect x=\"44\" y=\"42\" width=\"14\" height=\"6\" rx=\"1.5\" fill=\"url(#icon-p2m)\" opacity=\"0.6\"/></svg>"
+  },
+  "bitcrusher": {
+    "card_desc": "Bits and Sample Rate Lo-Fi",
+    "keywords": "bitcrusher bit crusher decimator sample rate reduction lo-fi lofi digital aliasing 8-bit 12-bit retro sampler",
+    "slider_desc": [
+      "Resolution: 2^(Bits - 1) steps on each side of zero (16 is nearly clean, 1 is a square).",
+      "How often a new sample is taken; lower is grittier, with more aliasing.",
+      "On filters before the decimator at 0.45 x Sample Rate, for the clean sound of an old sampler; Off lets the aliasing through.",
+      "Low-pass after the decimator, from 20 kHz (0%) down to 0.45 x Sample Rate (100%), to soften the steps.",
+      "Level into the crusher (more level uses more of the steps).",
+      "Blend of the crushed and the dry signal.",
+      "Output level."
+    ],
+    "uses": [
+      "Lo-fi drums and old sampler grit",
+      "8-bit game sounds",
+      "Parallel crunch on a bus",
+      "Telephone and broken-device effects"
+    ],
+    "properties": "Input → Drive → optional 12 dB/oct anti-alias low-pass → sample-and-hold at Sample Rate → rounding to Bits → optional 12 dB/oct Smooth low-pass → Mix → Output. No latency, stereo.",
+    "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-bcr\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><path d=\"M 6,40 L 6,32 L 14,32 L 14,22 L 22,22 L 22,16 L 30,16 L 30,22 L 38,22 L 38,32 L 46,32 L 46,42 L 54,42 L 54,48 L 58,48\" stroke=\"url(#icon-bcr)\" stroke-width=\"2.4\" fill=\"none\" stroke-linejoin=\"miter\"/></svg>"
+  },
+  "note_echo": {
+    "card_desc": "MIDI Delay for Notes",
+    "keywords": "midi note echo delay repeat repeater ratchet tempo sync velocity decay pitch step arpeggio generative",
+    "slider_desc": [
+      "How many times each note is played again.",
+      "Time between echoes when Tempo Sync is Off.",
+      "On uses Subdivision at the host's tempo.",
+      "Time between echoes when Tempo Sync is On.",
+      "How much quieter each echo is than the one before.",
+      "How far each echo moves in pitch (they stop past note 0 or 127).",
+      "How long each echo lasts, as a share of the time between echoes.",
+      "Off leaves out the notes that come in, so only the echoes sound."
+    ],
+    "uses": [
+      "Echoes that any instrument can play, without an audio delay",
+      "Rising or falling note cascades",
+      "Ratchets and rolls on drums",
+      "Generative patterns from a few notes"
+    ],
+    "properties": "MIDI in → every note-on adds Repeats echoes to a time-sorted queue (velocity x (1 - Decay)^k, pitch + k x Pitch Step, Gate of the interval) → notes out; a note that starts again while it sounds is ended first. Other MIDI passes through at its own sample; all notes off drops that channel's echoes. Audio passes through.",
+    "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-nec\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><rect x=\"6\" y=\"18\" width=\"10\" height=\"28\" rx=\"2\" fill=\"url(#icon-nec)\"/><rect x=\"22\" y=\"24\" width=\"10\" height=\"22\" rx=\"2\" fill=\"url(#icon-nec)\" opacity=\"0.8\"/><rect x=\"38\" y=\"30\" width=\"10\" height=\"16\" rx=\"2\" fill=\"url(#icon-nec)\" opacity=\"0.6\"/><rect x=\"54\" y=\"36\" width=\"6\" height=\"10\" rx=\"2\" fill=\"url(#icon-nec)\" opacity=\"0.4\"/></svg>"
+  },
+  "euclid": {
+    "card_desc": "Euclidean Rhythm Generator",
+    "keywords": "midi euclid euclidean rhythm generator sequencer pattern pulses steps rotate polyrhythm drum trigger swing tempo sync",
+    "slider_desc": [
+      "Length of the pattern in steps.",
+      "How many of the steps play, spread as evenly as they go.",
+      "Turns the pattern by this many steps.",
+      "Length of one step at the host's tempo.",
+      "The MIDI note each pulse plays.",
+      "Velocity of the pulses.",
+      "How much louder the pattern's first pulse is, up to 127.",
+      "How long each note lasts, as a share of a step.",
+      "Moves every second step later, up to 0.375 of a step.",
+      "Transport plays while the host plays, locked to its beat; Always also runs while it is stopped.",
+      "MIDI channel of the notes."
+    ],
+    "uses": [
+      "Drum and percussion patterns from a few numbers",
+      "Polyrhythms with several instances on different lengths",
+      "Bass and synth rhythms",
+      "Rhythm ideas with rotate and swing"
+    ],
+    "properties": "Host beat (or a free beat at the host's tempo) → step = beat / Rate, odd steps moved by Swing → step j plays when (j x Pulses) mod Steps < Pulses after Rotate → note-on with Velocity (Accent on the first pulse), note-off after Gate. Incoming MIDI passes through at its own sample; stopping ends the note. Audio passes through.",
+    "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-euc\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><circle cx=\"32\" cy=\"32\" r=\"22\" stroke=\"url(#icon-euc)\" stroke-width=\"1.6\" fill=\"none\" opacity=\"0.5\"/><circle cx=\"32\" cy=\"10\" r=\"5\" fill=\"url(#icon-euc)\"/><circle cx=\"51\" cy=\"43\" r=\"5\" fill=\"url(#icon-euc)\"/><circle cx=\"13\" cy=\"43\" r=\"5\" fill=\"url(#icon-euc)\"/><circle cx=\"54\" cy=\"32\" r=\"2.5\" fill=\"url(#icon-euc)\" opacity=\"0.5\"/><circle cx=\"32\" cy=\"54\" r=\"2.5\" fill=\"url(#icon-euc)\" opacity=\"0.5\"/></svg>"
   }
 }

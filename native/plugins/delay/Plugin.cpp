@@ -54,7 +54,8 @@ private:
     void update()
     {
         fDsp.setParams(value(0), value(1), value(2), value(3) >= 0.5f, int(std::lround(value(4))), value(5) >= 0.5f,
-                       value(6), value(7), value(8), value(9), value(10), value(11), value(12) >= 0.5f);
+                       value(6), value(7), value(8), value(9), value(10), value(11), value(12) >= 0.5f,
+                       value(13) >= 0.5f, std::round(value(14)));
     }
 
     nulldelay::DelayProcessor fDsp;
