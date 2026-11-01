@@ -996,6 +996,20 @@
    "bytes": 69264
   },
   {
+   "id": "test_signal",
+   "name": "Test Signal",
+   "category": "Essentials",
+   "tags": "test signal tone generator sine sweep pink noise white noise polarity calibration reference level speaker wiring utility gui",
+   "gfx": [
+    480,
+    380
+   ],
+   "ins": 2,
+   "outs": 2,
+   "sliders": 7,
+   "bytes": 50327
+  },
+  {
    "id": "tone",
    "name": "Tone",
    "category": "Essentials",
@@ -1330,6 +1344,20 @@
    "outs": 2,
    "sliders": 9,
    "bytes": 62929
+  },
+  {
+   "id": "oscilloscope",
+   "name": "Oscilloscope",
+   "category": "Advanced",
+   "tags": "oscilloscope scope waveform trigger time domain wave shape phase meter analyzer metering tempo sync gui",
+   "gfx": [
+    560,
+    500
+   ],
+   "ins": 2,
+   "outs": 2,
+   "sliders": 9,
+   "bytes": 54030
   },
   {
    "id": "ott",
@@ -1796,6 +1824,20 @@
    "bytes": 251553
   },
   {
+   "id": "granular",
+   "name": "Granular",
+   "category": "Instruments",
+   "tags": "instrument granular grains cloud texture pad ambient sample wav flac freeze scan spray polyphonic midi gui",
+   "gfx": [
+    560,
+    496
+   ],
+   "ins": 0,
+   "outs": 2,
+   "sliders": 14,
+   "bytes": 75238
+  },
+  {
    "id": "keys",
    "name": "Keys",
    "category": "Instruments",
@@ -1808,6 +1850,20 @@
    "outs": 2,
    "sliders": 14,
    "bytes": 103597
+  },
+  {
+   "id": "kick",
+   "name": "Kick",
+   "category": "Instruments",
+   "tags": "instrument kick drum bass drum 808 909 sub click punch pitch sweep synth midi gui",
+   "gfx": [
+    560,
+    410
+   ],
+   "ins": 0,
+   "outs": 2,
+   "sliders": 10,
+   "bytes": 58860
   },
   {
    "id": "mallets",

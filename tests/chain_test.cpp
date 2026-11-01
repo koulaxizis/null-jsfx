@@ -4,7 +4,8 @@
 // 96 kHz, and report errors (missing plugin, compile failure, NaN/Inf, blow-ups, silence) plus the
 // level change from input to output. Routing works as in REAPER: REQUIRED_CHANNELS sets the track
 // channels and a plugin's JS_PINMAP the channels each pin reads or writes (a channel no output pin
-// writes passes through). Parameter modulation (PROGRAMENV) stays at its baseline, the slider value.
+// writes passes through). MIDI flows down the chain as in REAPER: what a plugin sends reaches the
+// next one (a MIDI-to-instrument chain such as Drum Replace). Parameter modulation (PROGRAMENV) stays at its baseline, the slider value.
 // Exit code is the number of chains that failed.
 #include "ysfx.h"
 #include <cmath>
@@ -160,8 +161,15 @@ static int test_chain(const std::string &file, const std::string &effects)
             if (n > sr) in2 += inblk;  // skip the first second (latency, settling)
             ti.time_position = n / sr;
             ti.beat_position = ti.time_position * 2;
+            // the MIDI the previous plugin sent in this block (bytes copied, ysfx owns the data)
+            std::vector<ysfx_midi_event_t> midi;
+            std::vector<std::vector<uint8_t>> midi_bytes;
             for (size_t k = 0; k < fxs.size(); ++k) {
                 ysfx_t *fx = fxs[k];
+                for (size_t e = 0; e < midi.size(); ++e) {
+                    midi[e].data = midi_bytes[e].data();
+                    ysfx_send_midi(fx, &midi[e]);
+                }
                 const Fx &f = chain[k];
                 uint32_t nin = ysfx_get_num_inputs(fx), nout = ysfx_get_num_outputs(fx);
                 // pins without a pin map read and write the track channel of the same number
@@ -179,6 +187,12 @@ static int test_chain(const std::string &file, const std::string &effects)
                 for (uint32_t p = 0; p < nout; ++p) outs[p] = pin_out[p].data();
                 ysfx_set_time_info(fx, &ti);
                 ysfx_process_double(fx, ins.data(), outs.data(), nin, nout, block);
+                midi.clear();
+                midi_bytes.clear();
+                for (ysfx_midi_event_t ev; ysfx_receive_midi(fx, &ev);) {
+                    midi_bytes.emplace_back(ev.data, ev.data + ev.size);
+                    midi.push_back(ev);
+                }
                 for (uint32_t c = 0; c < nch; ++c) {
                     bool written = false;
                     for (uint32_t p = 0; p < nout; ++p) {

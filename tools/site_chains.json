@@ -71,5 +71,9 @@
   "Sub Harmonics": "An octave down, a sub layer and mono, all below 120 Hz, to add weight; Amount adds both, Depth adds a second octave down.",
   "Pusher": "Attack, sparkle, width and a soft clipper to push a sound forward; Amount does more of all of it, Width spreads it.",
   "Stutter Build": "Sixteenth repeats on the second half of each bar, a rising high-pass and a wash, all on one control for a build-up; a second control makes the repeats shorter.",
-  "Dub Echo Bus": "A dark multi-head tape echo with its spring, a low cut and more spring for dub; Amount adds echo and repeats, Wobble adds tape wow and flutter."
+  "Dub Echo Bus": "A dark multi-head tape echo with its spring, a low cut and more spring for dub; Amount adds echo and repeats, Wobble adds tape wow and flutter.",
+  "Ambient Wash": "A shimmering reverb into drifting grains and a vast detuned space, for pads and evolving textures.",
+  "Drum Replace": "Each hit of a recorded kick plays the Drum Machine's kick instead, with the hit's own dynamics.",
+  "Phone Vocal": "A telephone voice with a little grit and a short slap echo.",
+  "Transient Verb": "Reverb on the tail of each sound only, so the attack stays dry and close."
 }

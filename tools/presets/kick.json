@@ -1,0 +1,12 @@
+[
+  ["Deep 808", {"Pitch (Hz)": 45, "Sweep (st)": 12, "Sweep Time (ms)": 60, "Decay (ms)": 1500, "Click (%)": 5, "Follow Notes": 1}],
+  ["Punchy 909", {"Pitch (Hz)": 55, "Sweep (st)": 30, "Sweep Time (ms)": 25, "Decay (ms)": 350, "Click (%)": 45, "Click Tone (Hz)": 4000, "Drive (%)": 20}],
+  ["Tight Rock", {"Pitch (Hz)": 62, "Sweep (st)": 20, "Sweep Time (ms)": 18, "Decay (ms)": 220, "Click (%)": 55, "Click Tone (Hz)": 2500}],
+  ["Techno Thump", {"Pitch (Hz)": 50, "Sweep (st)": 28, "Sweep Time (ms)": 35, "Decay (ms)": 500, "Click (%)": 25, "Drive (%)": 35}],
+  ["Hard Distorted", {"Pitch (Hz)": 52, "Sweep (st)": 36, "Sweep Time (ms)": 30, "Decay (ms)": 600, "Click (%)": 40, "Drive (%)": 80}],
+  ["Soft Sub", {"Pitch (Hz)": 40, "Sweep (st)": 6, "Sweep Time (ms)": 80, "Decay (ms)": 900, "Click (%)": 0}],
+  ["Lo-Fi Thud", {"Pitch (Hz)": 70, "Sweep (st)": 10, "Sweep Time (ms)": 15, "Decay (ms)": 180, "Click (%)": 20, "Click Tone (Hz)": 900}],
+  ["Zap", {"Pitch (Hz)": 48, "Sweep (st)": 48, "Sweep Time (ms)": 12, "Decay (ms)": 400, "Click (%)": 10}],
+  ["Tuned Bass Kick", {"Pitch (Hz)": 41.2, "Sweep (st)": 18, "Sweep Time (ms)": 45, "Decay (ms)": 2000, "Click (%)": 15, "Follow Notes": 1}],
+  ["Even Velocity", {"Velocity (%)": 0}]
+]

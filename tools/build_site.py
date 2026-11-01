@@ -236,7 +236,7 @@ def chain_cards(plugins):
     e = html.escape
     text = json.loads(CHAIN_TEXT.read_text(encoding="utf-8"))
     # (name, [(plugin, tag)], what REAPER routing it uses) for the plain chains and the routing ones
-    chains = [(c, [(stem, "") for stem, _ in fxs], []) for c, fxs in CHAINS]
+    chains = [(c, [(fx[0], "") for fx in fxs], []) for c, fxs in CHAINS]
     for c, _, slots, routes, globs in RACK_PRESETS:
         if rack_only(c, slots, routes, globs):
             continue  # no REAPER chain
@@ -362,7 +362,10 @@ KIND = {"Instruments": "instrument", "MIDI": "MIDI tool"}
 
 def chains_with(stem):
     """Names of the FX chains and Rack presets a plugin is part of."""
-    out = [c for c, fxs in CHAINS if any(s == stem for s, _ in fxs)]
+    nxt = ROOT / "tools/site_content_next.json"
+    waiting = set(json.loads(nxt.read_text(encoding="utf-8"))) if nxt.exists() else set()
+    # a chain with a plugin that still waits off the site (R18) is not named either
+    out = [c for c, fxs in CHAINS if any(fx[0] == stem for fx in fxs) and not any(fx[0] in waiting for fx in fxs)]
     out += [c for c, _, slots, routes, globs in RACK_PRESETS if any(sl["id"] == stem for sl in slots)]
     return sorted(set(out), key=str.lower)
 

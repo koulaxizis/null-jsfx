@@ -34,7 +34,9 @@ RACK = ROOT / "native/plugins/rack"
 RACK_PRESETS_H = RACK / "RackPresets.hpp"
 FOLDERS = {"plain": "NULL JSFX", "gfx": "NULL JSFX GFX"}
 
-# (chain name, [(plugin file stem, {slider name: value}), ...])
+# (chain name, [(plugin file stem, {slider name: value}[, pins]), ...]). pins, optional:
+# (input channels, output channels), one track channel (from 0) per pin, None = not connected;
+# a chain that uses them gets as many track channels as its highest channel needs.
 CHAINS = [
     ("Tube EQ", [
         ("parametric_eq", {"Low Freq": 60, "Low Gain": 3, "Low Type": "Low Shelf",
@@ -119,7 +121,33 @@ CHAINS = [
         ("maximizer", {"Input Gain": 3, "Ceiling": -1, "Release": 80}),
         ("loudness_meter", {"Target": "-14 LUFS"}),
     ]),
+    ("Ambient Wash", [
+        ("shimmer_reverb", {"Size": 85, "Decay": 9, "Shimmer": 45, "Mix": 40}),
+        ("granular_delay", {"Delay Time": 450, "Grain Size": 160, "Density": 30, "Spray": 50,
+                            "Reverse": 30, "Feedback": 55, "Stereo Spread": 90, "Mix": 35}),
+        ("space", {"Type": "Galaxy", "Size": 80, "Decay": 75, "Damping": 40, "Mix": 35}),
+    ]),
+    ("Drum Replace", [
+        ("drum_trigger", {"Note": 36, "Threshold": -24, "Retrigger": 60, "Channel": "10"}),
+        ("drum_machine", {"Pattern": "Off"}),
+    ]),
+    ("Phone Vocal", [
+        ("speaker_sim", {"Device": "Telephone", "Drive": 20}),
+        ("saturation", {"Drive": 25, "Mix": 60, "Mode": "Overdrive"}),
+        ("delay", {"Time": 180, "Feedback": 25, "Mix": 20, "Low Cut": 400, "High Cut": 3500}),
+    ]),
+    ("Transient Verb", [
+        # the attack on 1/2, the tail on 3/4; the reverb only on the tail; Merge sums them
+        ("transient_split", {"Mode": "Split"}, ([0, 1], [0, 1, 2, 3])),
+        ("reverb", {"Room Size": 75, "Decay": 65, "Mix": 40}, ([2, 3], [2, 3])),
+        ("band_splitter", {"Mode": "Merge", "Bands": 2}, ([0, 1, 2, 3, None, None, None, None],
+                                                         [0, 1, None, None, None, None, None, None])),
+    ]),
 ]
+
+# chains whose plugins the Rack does not have (MIDI, instruments, more than two channels):
+# REAPER chains only, no Rack preset
+REAPER_ONLY = {"Drum Replace", "Transient Verb"}
 
 
 # The Rack's own presets: what a REAPER chain cannot do. A slot is (module, {slider: value}) plus
@@ -768,13 +796,14 @@ def find_slider(path, key):
     """The indexes of the sliders named key: the name without its unit, or the full label with it
     ("Pitch Shift (semitones)") when two sliders share a name."""
     hits = [i for i, sl in enumerate(parse_sliders(path)) if sl[0] == key]
+    # the full labels, one per slider; a file slider keeps its place (its label never matches),
+    # so the indexes after it stay those of parse_sliders
+    labels = [re.sub(r"^slider\d+:[^<]*<[^>]*>-?", "", l).strip() if re.match(r"slider\d+:[^/]", l) else None
+              for l in path.read_text(encoding="utf-8").split("\n") if re.match(r"slider\d+:", l)]
     if len(hits) > 1:
-        labels = [re.sub(r"^slider\d+:[^<]*<[^>]*>-?", "", l).strip()
-                  for l in path.read_text(encoding="utf-8").split("\n") if re.match(r"slider\d+:[^/]", l)]
         hits = [i for i in hits if labels[i] == key] or hits
     elif not hits:
-        hits = [i for i, l in enumerate(re.sub(r"^slider\d+:[^<]*<[^>]*>-?", "", l).strip()
-                for l in path.read_text(encoding="utf-8").split("\n") if re.match(r"slider\d+:[^/]", l)) if l == key]
+        hits = [i for i, l in enumerate(labels) if l == key]
     return hits
 
 
@@ -825,14 +854,30 @@ def render():
     files = {}
     for kind, folder in FOLDERS.items():
         for chain, fxs in CHAINS:
-            files[OUT / folder / f"{chain}.RfxChain"] = "".join(
-                fx_block(chain, stem, values, kind == "gfx") for stem, values in fxs)
+            files[OUT / folder / f"{chain}.RfxChain"] = chain_file(chain, fxs, kind == "gfx")
         for name, _, slots, routes, globs in RACK_PRESETS:
             if rack_only(name, slots, routes, globs):
                 continue
             files[OUT / folder / f"{name.replace('/', '-')}.RfxChain"] = reaper_preset(
                 name, slots, routes, globs, kind == "gfx")
     return files
+
+
+def chain_file(chain, fxs, gfx):
+    """A CHAINS entry as a REAPER chain; items with pins get a JS_PINMAP."""
+    pinned = [fx[2] for fx in fxs if len(fx) > 2]
+    nch = max([2] + [c + 1 for ins, outs in pinned for c in ins + outs if c is not None])
+    blocks = []
+    for n, fx in enumerate(fxs):
+        stem, values = fx[0], fx[1]
+        pins = ""
+        if len(fx) > 2:
+            ins, outs = fx[2]
+            if (len(ins), len(outs)) != pin_counts(stem):
+                sys.exit(f"build_chains: {chain}: {stem} has {pin_counts(stem)} pins, not {(len(ins), len(outs))}")
+            pins = pinmap(nch, [0 if c is None else 1 << c for c in ins], [0 if c is None else 1 << c for c in outs])
+        blocks.append(fx_block(chain, stem, values, gfx, seed=f"#{n}" if pinned else "", pins=pins))
+    return (f"REQUIRED_CHANNELS {nch}\n" if nch > 2 else "") + "".join(blocks)
 
 
 def pin_counts(stem):
@@ -1024,9 +1069,11 @@ def render_rack():
     lanes, sources = cpp_options("kLaneOptions"), cpp_options("kSourceSymbols")
     presets = [("Init", "Init", [], [], {})]
     for chain, fxs in CHAINS:
+        if chain in REAPER_ONLY:
+            continue
         # a chain plugin that is not a Rack module (a meter) has nothing to do in the Rack
-        presets.append((chain, "Chain", [slot(stem, values) for stem, values in fxs
-                                         if (RACK / "modules" / f"{stem}.hpp").exists()], [], {}))
+        presets.append((chain, "Chain", [slot(fx[0], fx[1]) for fx in fxs
+                                         if (RACK / "modules" / f"{fx[0]}.hpp").exists()], [], {}))
     presets += [(name, cat, *rack_slots(name, slots, routes, globs), globs)
                 for name, cat, slots, routes, globs in RACK_PRESETS]
     out = ["// generated by tools/build_chains.py from its CHAINS and RACK_PRESETS - do not edit",
