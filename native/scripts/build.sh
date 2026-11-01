@@ -37,7 +37,11 @@ esac
 
 gen=()
 if [ "$os" = windows ]; then
-  gen=(-G "Visual Studio 17 2022" -A x64)
+  # Windows on Arm builds ARM64 plugins (DPF puts them in Contents/arm64-win); x64 everywhere else
+  case "${PROCESSOR_ARCHITECTURE:-}" in
+    ARM64) gen=(-G "Visual Studio 17 2022" -A ARM64) ;;
+    *)     gen=(-G "Visual Studio 17 2022" -A x64) ;;
+  esac
   tests=OFF   # the comparison test uses dlopen; the DSP is identical on every OS
 elif command -v ninja >/dev/null 2>&1; then
   gen=(-G Ninja)

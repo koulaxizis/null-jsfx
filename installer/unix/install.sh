@@ -3,10 +3,10 @@
 # the plugins (all, by group or one by one) and the extras, and it copies them where REAPER and
 # your DAW look for them. The packages ride along at the end of this file.
 #
-#   bash NULL-JSFX-Installer-@@OS@@.sh               asks what to install (opened from the file
+#   bash NULL-JSFX-Installer-@@OS@@@@SUFFIX@@.sh               asks what to install (opened from the file
 #                                                    manager it asks in windows: zenity or kdialog)
-#   bash NULL-JSFX-Installer-@@OS@@.sh --help        all options (installing without questions too)
-#   bash NULL-JSFX-Installer-@@OS@@.sh --uninstall   removes what it installed
+#   bash NULL-JSFX-Installer-@@OS@@@@SUFFIX@@.sh --help        all options (installing without questions too)
+#   bash NULL-JSFX-Installer-@@OS@@@@SUFFIX@@.sh --uninstall   removes what it installed
 #
 # Free and open source (MIT), https://nulljsfx.tech
 # Made by tools/build_installer.py from installer/unix/install.sh; works with bash 3.2 (macOS) too.
@@ -14,6 +14,7 @@ set -eu
 
 VERSION='@@VERSION@@'
 TARGET_OS='@@OS@@'
+TARGET_ARCH='@@ARCH@@'   # x86_64 or aarch64 on Linux; empty for macOS (universal)
 STUDIO='https://useoros.online/studio/'
 
 # stem|name|group|has GFX|has VST3/CLAP
@@ -152,6 +153,13 @@ fi
 case "$(uname -s)" in Darwin) host=macOS ;; Linux) host=Linux ;; *) host="$(uname -s)" ;; esac
 if [ "$host" != "$TARGET_OS" ] && [ "$force" = 0 ]; then
   die "this is the $TARGET_OS installer and this computer runs $host. Download the one for $host from https://nulljsfx.tech (or add --force)."
+fi
+# the VST3, CLAP and LV2 plugins load only on the CPU they were built for
+cpu="$(uname -m)"
+case "$cpu" in arm64) cpu=aarch64 ;; amd64) cpu=x86_64 ;; esac
+if [ -n "$TARGET_ARCH" ] && [ "$cpu" != "$TARGET_ARCH" ] && [ "$force" = 0 ]; then
+  case "$cpu" in aarch64) other='the Linux ARM64 installer' ;; *) other='the Linux installer (x86_64)' ;; esac
+  die "this installer holds $TARGET_ARCH plugins and this computer is $cpu. Download $other from https://nulljsfx.tech (or add --force)."
 fi
 
 # --- questions -----------------------------------------------------------------------------

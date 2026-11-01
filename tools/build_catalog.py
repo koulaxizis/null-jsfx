@@ -56,6 +56,8 @@ EXTRAS = [
 
 # the first release whose packages the Hub can install from (rolling a plugin back)
 FIRST_LV2 = "2.7"
+# the ARM64 VST3/CLAP zips (Windows-ARM64, Linux-ARM64) are built for every release after 3.0
+FIRST_ARM64 = "3.0.1"
 FIRST_PACKAGED = "2.1"
 
 
@@ -76,6 +78,15 @@ def previous(version):
     if re.fullmatch(r"\d+(\.\d+)*", version):
         known = [t for t in known if vkey(t) < vkey(version)]
     return sorted(known, key=vkey, reverse=True)
+
+
+def native_packages(version):
+    """The VST3/CLAP zip per key: one per OS, plus Windows-ARM64 and Linux-ARM64 from FIRST_ARM64
+    on (the Hub takes the ARM64 one on an ARM64 computer when it is listed, paths::native_key)."""
+    keys = list(OSES)
+    if not re.fullmatch(r"\d+(\.\d+)*", version) or vkey(version) >= vkey(FIRST_ARM64):
+        keys += ["Windows-ARM64", "Linux-ARM64"]
+    return {k: f"NULL-JSFX-VST3-CLAP-{k}.zip" for k in keys}
 
 
 def has_lv2(version):
@@ -174,7 +185,7 @@ def catalog(version, notes, date):
         "repo": REPO,
         "site": SITE,
         "packages": {"jsfx": "NULL-JSFX-JSFX.zip",
-                     "native": {os: f"NULL-JSFX-VST3-CLAP-{os}.zip" for os in OSES},
+                     "native": native_packages(version),
                      # the Linux zip also holds LV2 (2.7 on); the Hub adds it to every VST3 plugin
                      "lv2": ["Linux"] if has_lv2(version) else []},
         "hub": {"version": version, "assets": HUB_ASSETS},

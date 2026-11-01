@@ -4,11 +4,12 @@ name: VST3 and CLAP
 # that each one sounds identical to its JSFX, and uploads these packages:
 #   NULL-JSFX-JSFX                 the JSFX (plain and GFX) and the tablet remote (Remote/),
 #                                  the same for every OS
-#   NULL-JSFX-VST3-CLAP-<OS>       the VST3 and CLAP versions for Windows, macOS or Linux (Linux: also LV2)
+#   NULL-JSFX-VST3-CLAP-<OS>       the VST3 and CLAP versions for Windows, macOS or Linux (Linux: also LV2);
+#                                  Windows-ARM64 and Linux-ARM64 for ARM computers (macOS is universal)
 # each with native/INSTALL.txt, and from those the installers where the user picks formats,
 # plugins and extras (tools/build_installer.py, installer/):
 #   NULL-JSFX-Installer-Windows.exe, NULL-JSFX-Installer-Linux.sh, NULL-JSFX-Installer-macOS.pkg,
-#   NULL-JSFX-Installer-macOS.sh
+#   NULL-JSFX-Installer-macOS.sh, NULL-JSFX-Installer-Windows-ARM64.exe, NULL-JSFX-Installer-Linux-ARM64.sh
 # each installed and checked here. With a release tag (the Release workflow, which builds a draft
 # release, or a run by hand for a release that already exists) they are attached to that release,
 # the packages as zips with these names (the site's Download links use
@@ -60,6 +61,10 @@ jobs:
           - { os: ubuntu-22.04, name: Linux, test: "--test" }
           - { os: macos-15, name: macOS, test: "--test" }
           - { os: windows-2022, name: Windows, test: "" }
+          # ARM64 (Bible B17): Windows on Arm and Linux arm64, each on its own runner; Linux also
+          # runs the comparison tests there, so the sound is checked on an ARM CPU too
+          - { os: ubuntu-22.04-arm, name: Linux-ARM64, test: "--test" }
+          - { os: windows-11-arm, name: Windows-ARM64, test: "" }
     runs-on: ${{ matrix.os }}
     defaults:
       run:
@@ -170,7 +175,13 @@ jobs:
     permissions:
       contents: write
     timeout-minutes: 30
-    runs-on: windows-2022
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { os: windows-2022, name: Windows, arch: x64 }
+          - { os: windows-11-arm, name: Windows-ARM64, arch: arm64 }
+    runs-on: ${{ matrix.os }}
     defaults:
       run:
         shell: bash
@@ -184,15 +195,15 @@ jobs:
 
       - uses: actions/download-artifact@v8
         with:
-          name: NULL-JSFX-VST3-CLAP-Windows
-          path: pkg/NULL-JSFX-VST3-CLAP-Windows
+          name: NULL-JSFX-VST3-CLAP-${{ matrix.name }}
+          path: pkg/NULL-JSFX-VST3-CLAP-${{ matrix.name }}
 
       - name: Build
         run: |
           version="${{ inputs.release_tag }}"
           version="${version:-dev}"
-          python tools/build_installer.py --os Windows --jsfx pkg/NULL-JSFX-JSFX \
-            --native pkg/NULL-JSFX-VST3-CLAP-Windows --version "$version" --out build-installer
+          python tools/build_installer.py --os Windows --arch ${{ matrix.arch }} --jsfx pkg/NULL-JSFX-JSFX \
+            --native pkg/NULL-JSFX-VST3-CLAP-${{ matrix.name }} --version "$version" --out build-installer
           iscc="/c/Program Files (x86)/Inno Setup 6/ISCC.exe"
           if [ ! -f "$iscc" ]; then
             choco install innosetup -y --no-progress
@@ -202,7 +213,7 @@ jobs:
       - name: Install, check and uninstall
         shell: pwsh
         run: |
-          $setup = "build-installer\NULL-JSFX-Installer-Windows.exe"
+          $setup = "build-installer\NULL-JSFX-Installer-${{ matrix.name }}.exe"
           $reaper = "$env:RUNNER_TEMP\REAPER"
           # a preset the user saved on Tilt: it must stay, with ours added after it
           $mine = "$reaper\presets\js-null_jsfx_tilt_jsfx.ini"
@@ -238,15 +249,15 @@ jobs:
 
       - uses: actions/upload-artifact@v7
         with:
-          name: NULL-JSFX-Installer-Windows
-          path: build-installer/NULL-JSFX-Installer-Windows.exe
+          name: NULL-JSFX-Installer-${{ matrix.name }}
+          path: build-installer/NULL-JSFX-Installer-${{ matrix.name }}.exe
           retention-days: 14
 
       - name: Attach to the release
         if: inputs.release_tag != ''
         env:
           GH_TOKEN: ${{ github.token }}
-        run: for i in 1 2 3 4 5; do gh release upload "${{ inputs.release_tag }}" build-installer/NULL-JSFX-Installer-Windows.exe --clobber && exit 0; sleep $((i * 30)); done; exit 1
+        run: for i in 1 2 3 4 5; do gh release upload "${{ inputs.release_tag }}" build-installer/NULL-JSFX-Installer-${{ matrix.name }}.exe --clobber && exit 0; sleep $((i * 30)); done; exit 1
 
   installer-unix:
     needs: [build, jsfx]
@@ -257,8 +268,9 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - { os: ubuntu-22.04, name: Linux }
-          - { os: macos-15, name: macOS }
+          - { os: ubuntu-22.04, name: Linux, os_name: Linux, arch: x64 }
+          - { os: macos-15, name: macOS, os_name: macOS, arch: universal }
+          - { os: ubuntu-22.04-arm, name: Linux-ARM64, os_name: Linux, arch: arm64 }
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v7
@@ -276,7 +288,7 @@ jobs:
       - name: Build
         run: |
           version="${{ inputs.release_tag }}"
-          python3 tools/build_installer.py --os ${{ matrix.name }} --jsfx pkg/NULL-JSFX-JSFX \
+          python3 tools/build_installer.py --os ${{ matrix.os_name }} --arch ${{ matrix.arch }} --jsfx pkg/NULL-JSFX-JSFX \
             --native pkg/NULL-JSFX-VST3-CLAP-${{ matrix.name }} --version "${version:-dev}" --out build-installer
 
       - name: Install, check and uninstall

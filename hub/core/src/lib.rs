@@ -413,8 +413,9 @@ impl Hub {
         }
         let want = want_native;
         if !want.is_empty() {
-            let os = paths::os_name();
-            let name = catalog.packages.native.get(os).ok_or_else(|| format!("This release has no VST3/CLAP package for {os}"))?;
+            // an earlier release (rolling back) may predate the ARM64 packages: it gets the x64 one
+            let os = if release == catalog.version { paths::native_key(&catalog.packages.native) } else { paths::os_name().to_string() };
+            let name = catalog.packages.native.get(&os).ok_or_else(|| format!("This release has no VST3/CLAP package for {os}"))?;
             native = Some(self.package(&release, name, &want, &cache, progress)?);
         }
         self.prune_cache(&cache);
@@ -601,8 +602,8 @@ impl Hub {
             let slot = if f.is_native() { &mut native } else { &mut jsfx };
             if slot.is_none() {
                 let file = if f.is_native() {
-                    let os = paths::os_name();
-                    catalog.packages.native.get(os).ok_or_else(|| format!("This release has no VST3/CLAP package for {os}"))?
+                    let os = paths::native_key(&catalog.packages.native);
+                    catalog.packages.native.get(&os).ok_or_else(|| format!("This release has no VST3/CLAP package for {os}"))?
                 } else {
                     &catalog.packages.jsfx
                 };
