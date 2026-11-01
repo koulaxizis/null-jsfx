@@ -1,6 +1,6 @@
 // NULL Remote, Mixers tab: remote control for digital mixers (X AIR first; X32/M32 later as
 // profiles). Loads its own files next to it, then registers with the app's tab shell:
-//   NullRemote.register({id:'mixers', title:'Mixers', mount(el), unmount()}).
+//   NullRemote.register({id:'mixers', title:'Mixers', app:'mixers', mount(el), unmount()}).
 // Views: Connect (scan, manual IP, how to connect) and Desk (layers of strips, the mix selector
 // "Main LR / Bus n / FX n" with sends on faders, mute groups, clear solo, My mix, screen lock).
 // NULL JSFX • https://nulljsfx.tech • MIT License
@@ -407,6 +407,7 @@
   const api = {
     id: 'mixers',
     title: 'Mixers',
+    app: 'mixers', // shown only in the mixers app of the shell (flavor "mixers")
     mount(el) { tab = tab && tab.root === el ? tab : new MixersTab(el); return tab.mount(); },
     unmount() { if (tab) tab.unmount(); },
     // for tests and the desktop harness: a transport factory replacing the app's UDP bridge
