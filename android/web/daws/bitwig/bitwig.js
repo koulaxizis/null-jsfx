@@ -117,6 +117,7 @@
       this.total = 0; // tracks in the document
       this.from = 0; // the first of them in the script's window
       this.size = 0; // tracks in the window (the script says it in hello)
+      this.sendNames = []; // the targets of sends 0.. (Bitwig's effect tracks, Live's returns)
       this.conn = null;
       this.open = false; // TCP up
       this.up = false; // and Bitwig's script answered
@@ -205,6 +206,10 @@
         const [kind, rest] = [key.slice(0, key.indexOf('/')), key.slice(key.indexOf('/') + 1)];
         if (kind === 'param') {
           if (this.watch && this.watch.ids.includes(rest)) { this.watch.vals[rest] = v; this.paramsDue = true; }
+        } else if (kind === 'send') {
+          const [ssid, k] = rest.split('/').map(Number);
+          const st = this.strips.get(ssid);
+          if (st && st.sends) { st.sends[k] = v; this.emit('strip', st); }
         } else {
           const st = this.strips.get(Number(rest));
           if (st) { st[kind === 'vol' ? 'fader' : 'pan'] = v; this.emit('strip', st); }
@@ -223,6 +228,10 @@
         case 'hello':
           if (m.proto > PROTO && root.console) console.warn('the DAW script speaks protocol ' + m.proto);
           this.size = m.size | 0;
+          return;
+        case 'sends':
+          this.sendNames = (m.list || []).map((n) => (n == null ? null : String(n)));
+          this.emit('sends', this.sendNames);
           return;
         case 'tracks': return this.tracks(m);
         case 'track': return this.track(m);
@@ -267,6 +276,12 @@
       if ('arm' in t) s.rec = !!t.arm;
       if ('color' in t) s.color = String(t.color);
       if ('name' in t) s.name = String(t.name);
+      if (Array.isArray(t.sends)) {
+        // a send being dragged keeps the phone's value until it is let go
+        const old = s.sends || [];
+        s.sends = t.sends.map((v, k) => (v == null ? null : this.take('send/' + s.ssid + '/' + k, Number(v)) ? Number(v) : old[k]));
+        s.sendTexts = (t.sendTexts || []).map(String);
+      }
     }
     tracks(m) {
       this.total = m.total | 0;
@@ -358,6 +373,14 @@
       if (s) s.pan = v;
       this.sendSoon('pan/' + ssid, { t: 'pan', i: ssid, v });
     }
+    /** Send k of a strip, 0..1 (a script or surface that reports sends: Bitwig, Live). */
+    setSend(ssid, k, v) {
+      const s = this.strips.get(ssid);
+      v = Math.min(1, Math.max(0, v));
+      if (s && s.sends && s.sends[k] != null) s.sends[k] = v;
+      this.sendSoon('send/' + ssid + '/' + k, { t: 'send', i: ssid, k, v });
+    }
+    resetSend(ssid, k) { this.touched.delete('send/' + ssid + '/' + k); this.send({ t: 'reset', i: ssid, what: 'send', k }); }
     resetFader(ssid) { this.touched.delete('vol/' + ssid); this.send({ t: 'reset', i: ssid, what: 'vol' }); }
     resetPan(ssid) { this.touched.delete('pan/' + ssid); this.send({ t: 'reset', i: ssid, what: 'pan' }); }
     setMute(ssid, on) { this.button(ssid, 'mute', on, 'mute'); }

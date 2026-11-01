@@ -227,12 +227,44 @@ async function paging() {
   }
 }
 
+// sends: one per effect track, on every track that has them
+async function sends() {
+  const bw = await host.start();
+  const s = new BW.Session({ dial: nodeDial(bw.port) });
+  const names = [];
+  s.on('sends', (l) => names.push(l.slice()));
+  try {
+    s.connect();
+    await until(() => s.strips.size === 4 && names.length, 'strips and send names');
+    assert.deepStrictEqual(s.sendNames, ['FX 1']);
+    assert.deepStrictEqual([...s.strips.values()].map((x) => x.sends[0]), [0.25, 0, null, null], 'the effect track and the master have no send');
+    assert.match(s.strips.get(0).sendTexts[0], /dB$/);
+    s.setSend(0, 0, 0.5);
+    s.setSend(2, 0, 0.9); // none: nothing happens
+    await until(() => bw.doc.tracks[0].sends[0] === 0.5, 'send in Bitwig');
+    assert(!bw.doc.tracks[2].sends, 'no send on the effect track');
+    await until(() => s.strips.get(0).sendTexts[0] === '-12.0 dB', "Bitwig's send text");
+    await sleep(400); // let go of the send: Bitwig's values show again
+    bw.change((d) => { d.tracks[1].sends = [0.75]; });
+    await until(() => s.strips.get(1).sends[0] === 0.75, 'a send changed in Bitwig');
+    s.resetSend(0, 0);
+    await until(() => bw.doc.tracks[0].sends[0] === 0 && s.strips.get(0).sends[0] === 0, 'send reset');
+    bw.change((d) => { d.tracks[2].name = 'Reverb'; });
+    await until(() => s.sendNames[0] === 'Reverb', 'the effect track renamed');
+    ok('sends: the effect tracks by name, set, reset, following Bitwig, none on effect tracks and the master');
+  } finally {
+    s.close();
+    bw.close();
+  }
+}
+
 async function main() {
   scriptChecks();
   readerChecks();
   await run(false);
   await run(true);
   await paging();
+  await sends();
   console.log(`bitwig_test: ${passed} passed`);
 }
 

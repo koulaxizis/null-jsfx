@@ -36,17 +36,18 @@ except ImportError:  # older Live
     from _Framework.ControlSurface import ControlSurface
 
 PROTO = 1
-VERSION = '1.0'
+VERSION = '1.1'  # 1.1: sends
 PORT = 8819
 SIZE = 32  # tracks in the window
 DEVICES = 16  # devices per track
+SENDS = 8  # sends per track, to the first return tracks
 PARAMS = 256  # parameters of the open device
 MAX_IN = 1 << 20  # bytes of one message from a phone
 MAX_OUT = 8 << 20  # bytes waiting for a phone that does not read
 RELISTEN = 20  # update_display calls between tries to open the port
 
 PLUGIN_CLASSES = ('PluginDevice', 'AuPluginDevice')
-TRACK_FIELDS = ('vol', 'volText', 'pan', 'panText', 'mute', 'solo', 'arm', 'color')
+TRACK_FIELDS = ('vol', 'volText', 'pan', 'panText', 'mute', 'solo', 'arm', 'color', 'sends', 'sendTexts')
 
 _AGAIN = (errno.EAGAIN, errno.EWOULDBLOCK, getattr(errno, 'WSAEWOULDBLOCK', errno.EAGAIN))
 
@@ -286,12 +287,29 @@ class Remote(ControlSurface):
             return 'MIDI'
         return 'Audio'
 
-    def _track(self, i, t, kind):
+    def _sends(self, t, count):
+        # Live's sends of a track, one per return track; None where it has none (the master)
+        # or where the send is off (a return's send to itself)
+        params = list(_get(t.mixer_device, 'sends', None) or [])[:count]
+        sends, texts = [], []
+        for k in range(count):
+            p = params[k] if k < len(params) else None
+            if p is None or not _get(p, 'is_enabled', True):
+                sends.append(None)
+                texts.append('')
+            else:
+                sends.append(round(_norm(p), 6))
+                texts.append(_text(p))
+        return sends, texts
+
+    def _track(self, i, t, kind, send_count=0):
         mix = t.mixer_device
         vol, pan = mix.volume, mix.panning
         color = _get(t, 'color', 0) or 0
         arm = bool(_get(t, 'arm', False)) if _get(t, 'can_be_armed', False) else False
+        sends, send_texts = self._sends(t, send_count)
         return {
+            'sends': sends, 'sendTexts': send_texts,
             'i': i, 'name': str(t.name), 'type': kind,
             'vol': round(_norm(vol), 6), 'volText': _text(vol),
             'pan': round(_norm(pan), 6), 'panText': _text(pan),
@@ -313,15 +331,16 @@ class Remote(ControlSurface):
         returns = list(song.return_tracks)
         master = song.master_track
         tracks, devices, meters = [], [], []
+        send_names = [str(r.name) for r in returns[:SENDS]]
         for i, t in enumerate(window):
-            tracks.append(self._track(i, t, self._kind(t, returns, master)))
+            tracks.append(self._track(i, t, self._kind(t, returns, master), len(send_names)))
             devices.append(self._devices(t))
             level = _get(t, 'output_meter_level', 0.0) if _get(t, 'has_audio_output', True) else 0.0
             meters.append(round(max(0.0, min(1.0, float(level or 0.0))), 3))
         meters += [0.0] * (SIZE - len(meters))
         bt = song.get_current_beats_song_time()
         snap = {
-            'total': len(all_tracks), 'from': self._from, 'tracks': tracks, 'devices': devices, 'meters': meters,
+            'total': len(all_tracks), 'from': self._from, 'sendNames': send_names, 'tracks': tracks, 'devices': devices, 'meters': meters,
             'transport': {'play': bool(song.is_playing), 'rec': bool(song.record_mode), 'loop': bool(song.loop)},
             'time': '%03d:%d:%d' % (bt.bars, bt.beats, bt.sub_division),
             'open': None,
@@ -353,12 +372,16 @@ class Remote(ControlSurface):
         lines = []
         if old is None:
             lines.append(_line({'t': 'hello', 'proto': PROTO, 'ext': VERSION, 'size': SIZE}))
+        if old is None or old['sendNames'] != new['sendNames']:
+            lines.append(_line({'t': 'sends', 'list': new['sendNames']}))
         heads = lambda s: [(t['i'], t['name'], t['type']) for t in s['tracks']]
         if old is None or heads(old) != heads(new) or old['total'] != new['total'] or old['from'] != new['from']:
             lines.append(_line({'t': 'tracks', 'total': new['total'], 'from': new['from'], 'list': new['tracks']}))
         else:
             for a, b in zip(old['tracks'], new['tracks']):
                 m = dict((f, b[f]) for f in TRACK_FIELDS if a[f] != b[f])
+                if 'sends' in m or 'sendTexts' in m:
+                    m['sends'], m['sendTexts'] = b['sends'], b['sendTexts']  # the phone takes both together
                 if m:
                     m['t'] = 'track'
                     m['i'] = b['i']
@@ -403,6 +426,12 @@ class Remote(ControlSurface):
         _, window = self._window()
         return window[i] if 0 <= i < len(window) else None
 
+    def _send(self, tr, k):
+        if tr is None or not isinstance(k, int) or not 0 <= k < SENDS:
+            return None
+        sends = list(_get(tr.mixer_device, 'sends', None) or [])
+        return sends[k] if k < len(sends) else None
+
     def _handle(self, client, m):
         t = m.get('t')
         song = self._song()
@@ -422,10 +451,17 @@ class Remote(ControlSurface):
             setattr(tr, t, bool(m.get('on')))
         elif t == 'reset':
             tr = self._slot(m.get('i'))
+            p = None
             if tr is not None and m.get('what') in ('vol', 'pan'):
                 p = tr.mixer_device.volume if m.get('what') == 'vol' else tr.mixer_device.panning
-                if _get(p, 'is_enabled', True):
-                    p.value = p.default_value
+            elif tr is not None and m.get('what') == 'send':
+                p = self._send(tr, m.get('k'))
+            if p is not None and _get(p, 'is_enabled', True):
+                p.value = p.default_value
+        elif t == 'send':
+            p, v = self._send(self._slot(m.get('i')), m.get('k')), _unit(m.get('v'))
+            if p is not None and v is not None and _get(p, 'is_enabled', True):
+                _set_norm(p, v)
         elif t == 'open':
             tr = self._slot(m.get('i'))
             devs = list(tr.devices) if tr is not None else []

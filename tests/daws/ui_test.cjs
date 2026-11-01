@@ -286,6 +286,22 @@ async function main() {
     assert(await btab.locator('.da-sheet').isHidden());
     ok('Bitwig: other devices as rows with their own value text, bypass, Back');
 
+    // sends: the faders move the send to an effect track
+    assert.deepStrictEqual(await btab.locator('.da-mixsel button').allTextContents(), ['Volume', 'Send FX 1']);
+    await btab.locator('.da-mixsel button', { hasText: 'Send FX 1' }).click();
+    assert(await bstrip('Master').locator('.da-cap').isHidden(), 'the master has no send');
+    assert(await bstrip('FX 1').locator('.da-cap').isHidden(), 'nor the effect track');
+    const send0 = bw.doc.tracks[0].sends[0];
+    const vol1 = bw.doc.tracks[0].vol;
+    await drag(bstrip('Vocal').locator('.da-fader'), 0, -60);
+    await until(async () => bw.doc.tracks[0].sends[0] > send0 + 0.05, 'Vocal send up in Bitwig');
+    assert.strictEqual(bw.doc.tracks[0].vol, vol1, 'the volume stays');
+    await until(async () => /dB$/.test(await bstrip('Vocal').locator('.da-db').textContent()), "Bitwig's send text");
+    await shot('bitwig-sends');
+    await btab.locator('.da-mixsel button', { hasText: 'Volume' }).click();
+    assert(await bstrip('Master').locator('.da-cap').isVisible());
+    ok('Bitwig: sends on the faders, to the effect track by name; the volume untouched');
+
     // a bigger project: the desk pages through the script's window of 32 tracks
     assert(await btab.locator('.da-pager').isHidden(), 'no pager for 4 tracks');
     bw.change((d) => {

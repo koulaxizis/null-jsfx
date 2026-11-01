@@ -22,6 +22,9 @@
 //   play(), stop(), toStart(), record(), loop()
 //   optional, a DAW that shows a window of its tracks (Bitwig, Live): total, from, size and
 //     scroll(from); the desk pages through the window when total > size
+//   optional, a DAW that reports sends (Bitwig, Live): sendNames (targets, null where none),
+//     'sends' (names), strip.sends[k] (0..1 or null) and strip.sendTexts[k],
+//     setSend(ssid, k, 0..1), resetSend(ssid, k); the desk puts the faders on a send
 'use strict';
 (function () {
   const NULLFX = '../nullfx/';
@@ -138,7 +141,8 @@
   function register(P) {
     const { el, prefs, header } = NullRemote;
     let root, connectView, desk, msg, session = null, conn = null;
-    let strips, clock, transportBtns, sheet, sheetBody, sheetTitle, pager;
+    let strips, clock, transportBtns, sheet, sheetBody, sheetTitle, pager, mixsel;
+    let mix = -1; // what the faders move: -1 the volume, k send k
     let view = null; // the open sheet: {kind: 'list' | 'plugin', ssid, ...}
 
     function say(text, err) {
@@ -212,6 +216,8 @@
       }
       if (session) session.close();
       session = s;
+      mix = -1;
+      drawMixSelector();
       let answered = false;
       session.on('strips', (list) => {
         if (session !== s) return;
@@ -225,6 +231,7 @@
         drawStrips(list);
       });
       session.on('strip', updateStrip);
+      session.on('sends', drawMixSelector);
       session.on('meter', updateMeter);
       session.on('transport', updateTransport);
       session.on('time', (t) => { if (clock) clock.textContent = t || '--:--:--'; });
@@ -244,6 +251,8 @@
       session = null;
       conn = null;
       drawn = '';
+      mix = -1;
+      mixsel.hidden = true;
       desk.hidden = true;
       connectView.hidden = false;
     }
@@ -281,6 +290,9 @@
       next.setAttribute('aria-label', 'Next tracks');
       next.onclick = () => page(1);
       pager.append(prev, el('div', 'da-page'), next);
+      // what the faders move: the volume or one send (a DAW that reports sends)
+      mixsel = el('div', 'da-mixsel');
+      mixsel.hidden = true;
       strips = el('div', 'da-strips');
       sheet = el('div', 'da-sheet');
       sheet.hidden = true;
@@ -292,13 +304,38 @@
       sh.append(back, sheetTitle);
       sheetBody = el('div', 'da-sheet-body');
       sheet.append(sh, sheetBody);
-      desk.append(bar, pager, strips, sheet);
+      desk.append(bar, pager, mixsel, strips, sheet);
       return desk;
     }
 
     function showDesk() {
       connectView.hidden = true;
       desk.hidden = false;
+    }
+
+    function drawMixSelector() {
+      const names = (session && session.sendNames) || [];
+      if (mix >= 0 && names[mix] == null) mix = -1;
+      mixsel.textContent = '';
+      mixsel.hidden = !names.some((n) => n != null);
+      if (mixsel.hidden) return;
+      const add = (k, label) => {
+        const b = el('button', k === mix ? 'on' : '', label);
+        b.onclick = () => {
+          NullShell.haptic();
+          mix = k;
+          drawMixSelector();
+          if (session) for (const st of session.strips.values()) updateStrip(st);
+        };
+        mixsel.appendChild(b);
+      };
+      add(-1, 'Volume');
+      names.forEach((n, k) => { if (n != null) add(k, 'Send ' + n); });
+    }
+    // the fader's value in the current mode, null where the strip has no such send
+    function faderOf(s) {
+      if (mix < 0) return s.fader ?? P.unity;
+      return s.sends && s.sends[mix] != null ? s.sends[mix] : null;
     }
 
     function page(dir) {
@@ -349,8 +386,15 @@
         meter.appendChild(el('div', 'da-meter-fill'));
         const fader = el('div', 'da-fader');
         fader.appendChild(el('div', 'da-cap'));
-        relativeDrag(fader, 'y', () => cur().fader ?? P.unity, (v) => { session.setFader(ssid, v); updateStrip(cur()); },
-          () => { session.resetFader(ssid); updateStrip(cur()); });
+        relativeDrag(fader, 'y', () => faderOf(cur()) ?? 0, (v) => {
+          if (mix < 0) session.setFader(ssid, v);
+          else if (faderOf(cur()) != null) session.setSend(ssid, mix, v);
+          updateStrip(cur());
+        }, () => {
+          if (mix < 0) session.resetFader(ssid);
+          else if (faderOf(cur()) != null) session.resetSend(ssid, mix);
+          updateStrip(cur());
+        });
         lane.append(meter, fader);
         const db = el('div', 'da-db');
         const btns = el('div', 'da-btns');
@@ -377,9 +421,12 @@
       const st = stripEl(s.ssid);
       if (!st) return;
       st.querySelector('.da-name').textContent = s.name;
-      const pos = s.fader ?? P.unity;
-      st.querySelector('.da-cap').style.bottom = `calc(${(pos * 100).toFixed(2)}% - ${(pos * 24).toFixed(1)}px)`;
-      st.querySelector('.da-db').textContent = P.dbText(s, session);
+      const f = faderOf(s);
+      const pos = f ?? 0;
+      const cap = st.querySelector('.da-cap');
+      cap.hidden = f == null; // no such send on this strip (the master, an effect track)
+      cap.style.bottom = `calc(${(pos * 100).toFixed(2)}% - ${(pos * 24).toFixed(1)}px)`;
+      st.querySelector('.da-db').textContent = mix < 0 ? P.dbText(s, session) : f == null ? '' : (s.sendTexts && s.sendTexts[mix]) || '';
       const pan = s.pan ?? 0.5;
       st.querySelector('.da-pan-dot').style.left = (pan * 100).toFixed(1) + '%';
       st.querySelector('.da-m').classList.toggle('on', !!s.mute);

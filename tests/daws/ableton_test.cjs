@@ -201,7 +201,37 @@ async function main() {
     L.close();
   }
   await paging();
+  await sends();
   console.log(`ableton_test: ${passed} passed`);
+}
+
+// sends: one per return track; the master has none, a return none to itself
+async function sends() {
+  const L = await live.start();
+  const s = new BW.Session({ dial: nodeDial(L.port) });
+  try {
+    s.connect();
+    await until(() => s.strips.size === 4 && s.sendNames.length === 1, 'strips and send names');
+    assert.deepStrictEqual(s.sendNames, ['FX 1']);
+    assert.deepStrictEqual([...s.strips.values()].map((x) => x.sends[0]), [0.25, 0, null, null]);
+    s.setSend(1, 0, 0.5);
+    await until(async () => (await L.get()).tracks[1].sends[0] === 0.5, 'send in Live');
+    await until(() => s.strips.get(1).sendTexts[0] === '-12.0 dB', "Live's send text");
+    await sleep(400);
+    await L.set(['tracks', 0, 'mixer_device', 'sends', 0, 'value'], 0.75);
+    await until(() => s.strips.get(0).sends[0] === 0.75, 'a send changed in Live');
+    s.resetSend(0, 0);
+    await until(async () => (await L.get()).tracks[0].sends[0] === 0, 'send reset');
+    await L.set(['return_tracks', 0, 'name'], 'Reverb');
+    await until(() => s.sendNames[0] === 'Reverb', 'the return renamed');
+    ok('sends: the returns by name, set, reset, following Live, none on the master or a return to itself');
+  } catch (e) {
+    console.error(L.log.join(''));
+    throw e;
+  } finally {
+    s.close();
+    L.close();
+  }
 }
 
 // a Set with more tracks than the surface's window: the phone pages through them

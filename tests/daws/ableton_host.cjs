@@ -27,7 +27,7 @@ function nullPlugin(id) {
 function defaultDocument() {
   return {
     tracks: [
-      { name: 'Vocal', kind: 'audio', vol: UNITY, pan: 0, color: 0xcc4d33,
+      { name: 'Vocal', kind: 'audio', vol: UNITY, pan: 0, color: 0xcc4d33, sends: [0.25],
         devices: [nullPlugin('tilt'), nullPlugin('delay'),
           { name: 'EQ Eight', class_name: 'Eq8', on: true, params: [
             { name: '1 Gain A', value: 0, min: -15, max: 15 },

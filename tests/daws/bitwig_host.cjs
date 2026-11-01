@@ -33,7 +33,7 @@ function nullPlugin(id) {
 function defaultDocument() {
   return {
     tracks: [
-      { name: 'Vocal', type: 'Audio', vol: UNITY, pan: 0.5, mute: false, solo: false, arm: false, color: [0.8, 0.3, 0.2],
+      { name: 'Vocal', type: 'Audio', vol: UNITY, pan: 0.5, mute: false, solo: false, arm: false, color: [0.8, 0.3, 0.2], sends: [0.25],
         devices: [nullPlugin('tilt'), nullPlugin('delay'),
           { name: 'EQ+', enabled: true, plugin: false, params: [
             { id: 'CONTENTS/ROOT_GENERIC_MODULE/GAIN1', name: 'Gain 1', value: 0.5, lo: -24, hi: 24 },
@@ -44,6 +44,15 @@ function defaultDocument() {
       { name: 'Master', type: 'Master', vol: UNITY, pan: 0.5, mute: false, solo: false, arm: false, color: [0.3, 0.3, 0.3], devices: [] },
     ],
   };
+}
+
+// sends: track.sends[k] goes to the k-th effect track; effect tracks and the master have none
+const SEND_DEFAULT = 0;
+const effects = (doc) => doc.tracks.filter((t) => t.type === 'Effect');
+const hasSends = (t) => !!t && t.type !== 'Effect' && t.type !== 'Master';
+function sendText(v) {
+  if (v <= 0) return '-inf dB';
+  return (20 * Math.log10(v) * 2).toFixed(1) + ' dB';
 }
 
 function volText(v) {
@@ -174,7 +183,30 @@ function api(H) {
     const solo = field('solo');
     const arm = field('arm');
     const devApis = [];
+    const sendApis = [];
+    const sendBank = {
+      getItemAt(k) {
+        if (sendApis[k]) return sendApis[k];
+        const on = () => hasSends(H.track(slot)) && k < effects(H.doc).length;
+        const get = () => (on() ? (t().sends && t().sends[k]) || 0 : 0);
+        const value = V(get, (v) => {
+          if (!on()) return;
+          if (!t().sends) t().sends = [];
+          t().sends[k] = v;
+          H.log.push(`send ${slot} ${k} ${v}`);
+        });
+        const text = V(() => sendText(get()));
+        value.displayedValue = () => text;
+        sendApis[k] = {
+          exists: () => V(on),
+          value: () => value,
+          reset() { if (on()) { if (!t().sends) t().sends = []; t().sends[k] = SEND_DEFAULT; } H.log.push(`reset send ${slot} ${k}`); H.update(); },
+        };
+        return sendApis[k];
+      },
+    };
     return {
+      sendBank: () => sendBank,
       exists: () => V(() => !!H.track(slot)),
       name: () => V(() => t().name || ''),
       trackType: () => V(() => t().type || ''),
@@ -273,6 +305,14 @@ function api(H) {
         itemCount: () => V(() => H.doc.tracks.length),
         scrollPosition: () => V(() => H.scroll, (v) => { H.scroll = Math.max(0, Math.min(v, H.doc.tracks.length - 1)); }),
         getItemAt: (k) => trackApis[k],
+      };
+    },
+    createEffectTrackBank(n) {
+      return {
+        getItemAt: (k) => ({
+          exists: () => V(() => k < effects(H.doc).length),
+          name: () => V(() => (effects(H.doc)[k] ? effects(H.doc)[k].name : '')),
+        }),
       };
     },
     createCursorTrack(id, name, sends, scenes, follow) {
