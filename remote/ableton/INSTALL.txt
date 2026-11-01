@@ -1,0 +1,32 @@
+NULL JSFX Remote for Ableton Live
+=================================
+
+A control surface (a MIDI Remote Script) that lets the Android app Remote for DAWs (tab
+Ableton) run Live's mixer (volume, pan, mute, solo, arm, meters), transport and the devices
+of every track, return track and the master. The NULL JSFX plugins (VST3) open on the phone
+with their own interface; any other device gets a list of its parameters. Nothing else to
+install on the computer.
+
+Needs Ableton Live 11 or newer.
+
+Install (once)
+    1. Copy the folder NullJSFX into the folder "Remote Scripts" of Live's User Library
+       (create "Remote Scripts" if it is not there):
+         Windows   Documents\Ableton\User Library\Remote Scripts
+         macOS     ~/Music/Ableton/User Library/Remote Scripts
+       (Live shows where its User Library is: Settings > Library.)
+    2. Restart Live. Settings (Preferences in Live 11) > Link, Tempo & MIDI > Control Surface:
+       choose NullJSFX; leave its Input and Output on None. Live's status bar shows
+       "NULL JSFX Remote: TCP 8819".
+    3. Allow Live through the computer's firewall on private networks (TCP 8819).
+
+On the phone
+    Remote for DAWs > Ableton: type the computer's address (port 8819) and Connect.
+
+What it covers
+    The first 32 tracks (tracks, then return tracks, then the master), 16 devices on each,
+    and up to 256 parameters of the open device. Devices inside racks, sends and clips are
+    not covered yet.
+
+The protocol is the one of the Bitwig controller script, written out at the top of
+../bitwig/NullJSFX/NullJSFX.control.js; NullJSFX/remote.py says what differs.

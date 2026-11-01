@@ -78,10 +78,11 @@ jobs:
       - run: node tests/mixers/ui_test.cjs
 
   daws:
-    # the Ardour/Mixbus and Bitwig tabs of Remote for DAWs (android/web/daws/): the OSC session
-    # against a software Ardour surface over UDP, the Bitwig session against our controller script
-    # (remote/bitwig) in a software Bitwig over TCP, then both tabs in a real browser with the
-    # plugins' own GFX
+    # the Ardour/Mixbus, Bitwig and Ableton tabs of Remote for DAWs (android/web/daws/): the OSC
+    # session against a software Ardour surface over UDP, the Bitwig session against our controller
+    # script (remote/bitwig) in a software Bitwig and against our control surface for Live
+    # (remote/ableton, the runner's python3) in a software Live over TCP, then the tabs in a real
+    # browser with the plugins' own GFX
     timeout-minutes: 15
     # tests/daws is still on Playwright 1.56, which has no Chromium for newer Ubuntu images
     runs-on: ubuntu-24.04
@@ -96,6 +97,7 @@ jobs:
         working-directory: tests/daws
       - run: node tests/daws/ardour_test.cjs
       - run: node tests/daws/bitwig_test.cjs
+      - run: node tests/daws/ableton_test.cjs
       - run: node tests/daws/ui_test.cjs
 
   media:

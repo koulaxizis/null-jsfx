@@ -50,7 +50,8 @@ Not covered
     Sends and routing, automation modes, take FX, input/monitoring FX. File choosers
     (the Convolution IR file) are picked on the computer.
 
-Bitwig Studio
+Bitwig Studio and Ableton Live
     The app Remote for DAWs also runs Bitwig (tab Bitwig) through a controller script:
-    see bitwig/INSTALL.txt. Ardour and Mixbus (tab Ardour) need nothing installed; their
+    see bitwig/INSTALL.txt; and Ableton Live (tab Ableton) through a control surface:
+    see ableton/INSTALL.txt. Ardour and Mixbus (tab Ardour) need nothing installed; their
     own OSC surface is enough.
