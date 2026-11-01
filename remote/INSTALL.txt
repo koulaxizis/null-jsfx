@@ -9,7 +9,7 @@ bypass and remove FX. Nothing to install on the tablet.
 
 Needs a recent REAPER (6.37 or newer).
 
-On Android there is also the app Remote for REAPER (NULL-JSFX-Remote-REAPER-Android.apk in
+On Android there is also the app Remote for DAWs (NULL-JSFX-Remote-DAWs-Android.apk in
 the releases): it carries this page itself, so step 2 is not needed, and it finds REAPER on
 the network. Steps 3 to 5 still apply.
 

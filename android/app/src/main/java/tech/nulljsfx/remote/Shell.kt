@@ -258,7 +258,7 @@ class Shell(
 
     // --- the phone ----------------------------------------------------------------------------
 
-    /** {app: "reaper" | "mixers", version, code, flavor, updateCheck, sdk} */
+    /** {app: "daws" | "mixers", version, code, flavor, updateCheck, sdk} */
     @JavascriptInterface
     fun info(): String = JSONObject()
         .put("app", BuildConfig.APP)

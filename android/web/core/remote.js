@@ -1,11 +1,11 @@
 // NULL JSFX Android remotes: the tabs, settings storage and update notice.
 // NULL JSFX • https://nulljsfx.tech • MIT License
 //
-// One shell, two apps (android/app/build.gradle.kts): Remote for REAPER (app 'reaper') and the
-// mixer remote (app 'mixers'). A tab registers itself before NullRemote.start():
+// One shell, two apps (android/app/build.gradle.kts): Remote for DAWs (app 'daws': REAPER, and
+// more DAWs as tabs) and Remote for Mixers (app 'mixers'). A tab registers itself before NullRemote.start():
 //   NullRemote.register({
 //     id: 'reaper', title: 'REAPER', order: 10,
-//     app: 'reaper'  the app it belongs to; without it (Settings) it shows in both
+//     app: 'daws'    the app it belongs to; without it (Settings) it shows in both
 //     mount(el)      build the tab into el (once, the first time it is shown)
 //     show(), hide() optional, when the user switches to or away from it
 //     back()         optional: handle the phone's Back button, return true if it did
@@ -17,7 +17,7 @@
   const all = new Map();   // every registered tab
   const tabs = new Map();  // the tabs of this app
   let current = null;
-  const APP = (window.NullShell && NullShell.info().app) || 'reaper';
+  const APP = (window.NullShell && NullShell.info().app) || 'daws';
 
   const $ = id => document.getElementById(id);
   function el(tag, cls, text) {
@@ -105,7 +105,7 @@
   // --- the update notice (the GitHub APK only; F-Droid and Droidify update it themselves) ---
 
   const RELEASES = 'https://api.github.com/repos/koulaxizis/null-jsfx/releases/latest';
-  const APK = { reaper: 'NULL-JSFX-Remote-REAPER-Android.apk', mixers: 'NULL-JSFX-Remote-Mixers-Android.apk' }[APP];
+  const APK = { daws: 'NULL-JSFX-Remote-DAWs-Android.apk', mixers: 'NULL-JSFX-Remote-Mixers-Android.apk' }[APP];
 
   function newer(a, b) {
     const x = String(a).split('.').map(n => parseInt(n, 10) || 0);
@@ -150,7 +150,7 @@
   }
 
   function start() {
-    document.title = APP === 'mixers' ? 'Remote for Mixers' : 'Remote for REAPER';
+    document.title = APP === 'mixers' ? 'Remote for Mixers' : 'Remote for DAWs';
     if (APP === 'mixers' && !tabs.has('mixers')) {
       register({
         id: 'mixers', title: 'Mixers', order: 20, app: 'mixers',

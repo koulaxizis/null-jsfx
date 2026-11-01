@@ -1,5 +1,5 @@
 // The NULL JSFX Android remotes: one shell, two apps (Christos, 2026-11-01).
-//   reaper  "Remote for REAPER"   tech.nulljsfx.remote.reaper
+//   daws    "Remote for DAWs"     tech.nulljsfx.remote.daws  (android/web/daws: REAPER first)
 //   mixers  "Remote for Mixers"   tech.nulljsfx.remote.mixers (android/web/mixers)
 // Each comes as "github" (our releases, with an update notice) and "fdroid". The pages live in
 // android/web (bundled as assets); the REAPER page and the fonts are copied in at build time
@@ -40,10 +40,10 @@ android {
     flavorDimensions += listOf("app", "store")
     productFlavors {
         // released identities: the application ids never change (Bible R3)
-        create("reaper") {
+        create("daws") {
             dimension = "app"
-            applicationId = "tech.nulljsfx.remote.reaper"
-            buildConfigField("String", "APP", "\"reaper\"")
+            applicationId = "tech.nulljsfx.remote.daws"
+            buildConfigField("String", "APP", "\"daws\"")
         }
         create("mixers") {
             dimension = "app"
@@ -118,7 +118,7 @@ abstract class SharedAssets : DefaultTask() {
     fun copy() {
         val root = out.get().asFile
         root.deleteRecursively()
-        page.get().asFile.copyTo(root.resolve("reaper/null_jsfx.html"), true)
+        page.get().asFile.copyTo(root.resolve("daws/reaper/null_jsfx.html"), true)
         for (name in listOf("NotoSans-Regular.ttf", "NotoSans-Bold.ttf")) {
             fonts.get().asFile.resolve(name).copyTo(root.resolve("core/fonts/$name"), true)
         }

@@ -1,4 +1,4 @@
-Remote for REAPER puts REAPER's mixer and transport, and the controls of every NULL JSFX plugin, on your Android phone or tablet, over your local Wi-Fi.
+Remote for DAWs puts your DAW's mixer and transport, and the controls of every NULL JSFX plugin, on your Android phone or tablet, over your local Wi-Fi. REAPER is supported first; more DAWs follow.
 
 <b>What it does</b>
 <ul>

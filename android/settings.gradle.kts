@@ -1,5 +1,5 @@
-// NULL Remote for Android: one app (tech.nulljsfx.remote) with a tab per target
-// (REAPER now, Mixers next). See android/README.md.
+// The NULL JSFX Android remotes: Remote for DAWs and Remote for Mixers on one shell.
+// See android/README.md.
 pluginManagement {
     repositories {
         google()

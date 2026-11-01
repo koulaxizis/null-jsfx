@@ -1,14 +1,14 @@
-// Remote for REAPER: the REAPER tab. NULL JSFX • https://nulljsfx.tech • MIT License
+// Remote for DAWs: the REAPER tab. NULL JSFX • https://nulljsfx.tech • MIT License
 //
 // Connects to REAPER's web interface and then shows the tablet page
 // (remote/reaper_www_root/null_jsfx.html, copied into the app at build time as
-// reaper/null_jsfx.html) in a frame. The page talks to /_/ on its own origin; the app forwards
+// daws/reaper/null_jsfx.html) in a frame. The page talks to /_/ on its own origin; the app forwards
 // those requests to the REAPER chosen here (NullShell.reaperSet), so the page is the same file
 // that REAPER serves to a tablet browser and needs no change for the app.
 'use strict';
 (function () {
   const { el, prefs, header } = NullRemote;
-  const PAGE = '../reaper/null_jsfx.html';
+  const PAGE = '../daws/reaper/null_jsfx.html';
   let root, top, form, frame, msg, found, conn = null;
 
   function saved() { return prefs.get('reaper-hosts', []); }
@@ -78,8 +78,8 @@
     const d = frame && frame.contentDocument;
     if (!d) return;
     const st = d.createElement('style');
-    st.textContent = '@font-face{font-family:"Noto Sans";src:url("../core/fonts/NotoSans-Regular.ttf") format("truetype");font-weight:400}' +
-      '@font-face{font-family:"Noto Sans";src:url("../core/fonts/NotoSans-Bold.ttf") format("truetype");font-weight:700}';
+    st.textContent = '@font-face{font-family:"Noto Sans";src:url("../../core/fonts/NotoSans-Regular.ttf") format("truetype");font-weight:400}' +
+      '@font-face{font-family:"Noto Sans";src:url("../../core/fonts/NotoSans-Bold.ttf") format("truetype");font-weight:700}';
     d.head.appendChild(st);
     d.addEventListener('pointerdown', e => {
       if (prefs.get('haptics', true) && e.target.closest && e.target.closest('button')) NullShell.haptic();
@@ -199,7 +199,7 @@
   }
 
   NullRemote.register({
-    id: 'reaper', title: 'REAPER', order: 10, app: 'reaper',
+    id: 'reaper', title: 'REAPER', order: 10, app: 'daws',
     mount(e) {
       root = e;
       top = header('Remote');

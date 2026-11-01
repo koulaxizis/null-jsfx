@@ -6,7 +6,7 @@
 // go to the page's own origin, UDP is not available, and ?app=mixers picks the mixer app.
 //
 //   NullShell.native                     true inside the app
-//   NullShell.info()                     {app: 'reaper' | 'mixers', version, code, flavor, updateCheck, sdk}
+//   NullShell.info()                     {app: 'daws' | 'mixers', version, code, flavor, updateCheck, sdk}
 //   NullShell.reaperSet({host, port, user, pass})   where /_/ requests go
 //   NullShell.scan(port) -> Promise<{hosts: [{host, auth}], self}>
 //   NullShell.udpOpen(localPort) -> id (-1 = failed)
@@ -44,7 +44,7 @@
 
   const stub = {
     info: () => JSON.stringify({
-      app: new URLSearchParams(location.search).get('app') === 'mixers' ? 'mixers' : 'reaper',
+      app: new URLSearchParams(location.search).get('app') === 'mixers' ? 'mixers' : 'daws',
       version: 'dev', code: 0, flavor: 'browser', updateCheck: false, sdk: 0,
     }),
     reaperSet() {},

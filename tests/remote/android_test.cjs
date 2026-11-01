@@ -1,5 +1,5 @@
-// Tests the pages of the Android remotes (android/web: Remote for REAPER, and the shell the
-// mixer remote shares) in Chromium, the way the app
+// Tests the pages of the Android remotes (android/web: the REAPER tab of Remote for DAWs, and
+// the shell Remote for Mixers shares) in Chromium, the way the app
 // shows them: served under /app/ with the REAPER page and the fonts copied in as the Gradle
 // build does (android/app/build.gradle.kts, SharedAssets), and /_/ answered by the same
 // stand-in for REAPER as remote_test.cjs (mock_reaper.lua running the real bridge under
@@ -77,7 +77,7 @@ const server = http.createServer((req, res) => {
     return res.end(call('web', req.url.slice(3)));
   }
   let file = null;
-  if (url === '/app/reaper/null_jsfx.html') file = page_file;
+  if (url === '/app/daws/reaper/null_jsfx.html') file = page_file;
   else if (url.startsWith('/app/core/fonts/')) file = path.join(fonts, path.basename(url));
   else if (url.startsWith('/app/')) file = path.join(web, url.slice(5));
   if (file && file.startsWith(root) && fs.existsSync(file) && fs.statSync(file).isFile()) {
@@ -120,7 +120,7 @@ async function dragBy(page, locator, dx, dy) {
 const FAKE_NATIVE = `
 window.__calls = [];
 window.NullShellNative = {
-  info: () => JSON.stringify({ app: 'reaper', version: '3.0', code: 30000, flavor: 'github', updateCheck: true, sdk: 35 }),
+  info: () => JSON.stringify({ app: 'daws', version: '3.0', code: 30000, flavor: 'github', updateCheck: true, sdk: 35 }),
   reaperSet: j => __calls.push(['reaperSet', JSON.parse(j)]),
   scan: (id, port) => { __calls.push(['scan', port]); setTimeout(() => NullShell._recv(JSON.stringify({ type: 'scan', id, hosts: [{ host: '127.0.0.1', auth: false }], self: '127.0.0.9' })), 30); },
   udpOpen: p => { __calls.push(['udpOpen', p]); return 7; },
@@ -151,7 +151,7 @@ window.NullShellNative = {
   page.on('pageerror', e => errors.push(e.message));
   await page.goto(start);
   await until('REAPER and Settings tabs', async () => (await page.locator('#tabs button').allTextContents()).join() === 'REAPER,Settings');
-  check('named Remote for REAPER', (await page.title()) === 'Remote for REAPER');
+  check('named Remote for DAWs', (await page.title()) === 'Remote for DAWs');
   check('REAPER tab first', (await page.locator('#tabs button.on').textContent()) === 'REAPER');
   check('NULL JSFX header', (await page.locator('[data-tab=reaper] .top .name').textContent()) === 'NULL JSFXRemote');
   check('no recent hosts yet', await page.locator('[data-saved]').locator('..').isHidden());
@@ -224,7 +224,7 @@ window.NullShellNative = {
   await app.route('https://api.github.com/repos/koulaxizis/null-jsfx/releases/latest', r => {
     apiCalls++;
     r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({
-      tag_name: '3.1', assets: [{ name: 'NULL-JSFX-Remote-Mixers-Android.apk', browser_download_url: 'https://github.com/koulaxizis/null-jsfx/releases/download/3.1/NULL-JSFX-Remote-Mixers-Android.apk' }, { name: 'NULL-JSFX-Remote-REAPER-Android.apk', browser_download_url: 'https://github.com/koulaxizis/null-jsfx/releases/download/3.1/NULL-JSFX-Remote-REAPER-Android.apk' }],
+      tag_name: '3.1', assets: [{ name: 'NULL-JSFX-Remote-Mixers-Android.apk', browser_download_url: 'https://github.com/koulaxizis/null-jsfx/releases/download/3.1/NULL-JSFX-Remote-Mixers-Android.apk' }, { name: 'NULL-JSFX-Remote-DAWs-Android.apk', browser_download_url: 'https://github.com/koulaxizis/null-jsfx/releases/download/3.1/NULL-JSFX-Remote-DAWs-Android.apk' }],
     }) });
   });
   page = await app.newPage();
@@ -232,9 +232,9 @@ window.NullShellNative = {
   await page.goto(start);
   const calls = () => page.evaluate(() => __calls);
   await until('keeps the screen on at start', async () => (await calls()).some(c => c[0] === 'keepAwake' && c[1] === true));
-  await until('update notice', async () => /Remote for REAPER 3\.1 is out \(you have 3\.0\)/.test(await page.locator('#update-text').textContent()));
+  await until('update notice', async () => /Remote for DAWs 3\.1 is out \(you have 3\.0\)/.test(await page.locator('#update-text').textContent()));
   await page.click('#update-get');
-  await until('Download opens the APK link', async () => (await calls()).some(c => c[0] === 'openUrl' && /3\.1\/NULL-JSFX-Remote-REAPER-Android\.apk$/.test(c[1])));
+  await until('Download opens the APK link', async () => (await calls()).some(c => c[0] === 'openUrl' && /3\.1\/NULL-JSFX-Remote-DAWs-Android\.apk$/.test(c[1])));
   await page.click('#update-later');
   check('Later hides it', await page.locator('#update').isHidden());
   await page.reload();

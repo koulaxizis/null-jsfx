@@ -1,7 +1,7 @@
 name: Android remotes
 
-# The NULL JSFX Android remotes (android/): one shell, two apps (Remote for REAPER, and the
-# mixer remote), each as "github" (our releases, with an update notice) and "fdroid".
+# The NULL JSFX Android remotes (android/): one shell, two apps (Remote for DAWs, and Remote
+# for Mixers), each as "github" (our releases, with an update notice) and "fdroid".
 #   pages   the apps' pages (android/web) in Chromium against the REAPER stand-in
 #   build   unit tests, Android lint, and every APK (debug) as a workflow artifact
 #   release when a GitHub release is published (or by hand with its tag): the signed release
@@ -35,7 +35,7 @@ permissions:
 env:
   TAG: ${{ github.event.release.tag_name || inputs.release_tag }}
   # the apps attached to a release; the mixer remote joins when its first version is ready
-  RELEASED_APPS: "reaper"
+  RELEASED_APPS: "daws"
 
 jobs:
   pages:
@@ -65,7 +65,7 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
       - name: Unit tests, lint and the debug APKs
         working-directory: android
-        run: ./gradlew --no-daemon testReaperGithubDebugUnitTest lintReaperGithubDebug lintMixersGithubDebug assembleDebug
+        run: ./gradlew --no-daemon testDawsGithubDebugUnitTest lintDawsGithubDebug lintMixersGithubDebug assembleDebug
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -111,7 +111,7 @@ jobs:
             ./gradlew --no-daemon "assemble${A}GithubRelease"
             apk="app/build/outputs/apk/${app}Github/release/app-${app}-github-release.apk"
             [ -f "$apk" ] || { echo "no $apk"; exit 1; }
-            name="$([ "$app" = reaper ] && echo REAPER || echo "$A")"
+            name="$([ "$app" = daws ] && echo DAWs || echo "$A")"
             cp "$apk" "out/NULL-JSFX-Remote-${name}-Android.apk"
           done
           ls -l out
