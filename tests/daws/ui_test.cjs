@@ -1,7 +1,8 @@
-// The Ardour and Bitwig tabs of Remote for DAWs in Chromium (Playwright), the way the app shows
-// them: the real start page (android/web/core) served under /app/ with web/ as nullfx/ (as the
-// Gradle build copies it), a stand-in for Shell.kt whose UDP goes to the Ardour simulator and
-// whose TCP goes to the software Bitwig (the real controller script), both over the network.
+// The Ardour, Bitwig and Ableton tabs of Remote for DAWs in Chromium (Playwright), the way the
+// app shows them: the real start page (android/web/core) served under /app/ with web/ as nullfx/
+// (as the Gradle build copies it), a stand-in for Shell.kt whose UDP goes to the Ardour simulator
+// and whose TCP goes to the software Bitwig (the real controller script) or, on port 8819, to the
+// software Live (the real control surface, needs python3), all over the network.
 // Usage: node tests/daws/ui_test.cjs [screenshot dir]
 // NULL JSFX • https://nulljsfx.tech • MIT License
 'use strict';
@@ -14,6 +15,7 @@ const { chromium } = require('playwright');
 const net = require('net');
 const sim = require('./ardour_sim.cjs');
 const bitwig = require('./bitwig_host.cjs');
+const ableton = require('./ableton_host.cjs');
 
 const root = path.resolve(__dirname, '../..');
 const shots = process.argv[2];
@@ -53,6 +55,7 @@ const ok = (name) => { passed++; console.log('ok  ' + name); };
 async function main() {
   const ard = await sim.start();
   const bw = await bitwig.start();
+  const live = await ableton.start();
   const server = await serve();
   const browser = await chromium.launch(process.env.CHROMIUM ? { executablePath: process.env.CHROMIUM } : {});
   const ctx = await browser.newContext({ viewport: { width: 1180, height: 820 }, hasTouch: true });
@@ -68,11 +71,11 @@ async function main() {
   sock.on('message', (buf) => {
     page.evaluate((m) => NullShell._recv(m), { type: 'udp', id: 1, host: '127.0.0.1', port: 3819, data: buf.toString('base64') }).catch(() => {});
   });
-  // the phone's TCP connections: to the software Bitwig, whatever address the page asks for
+  // the phone's TCP connections: to the software Live on 8819, else to the software Bitwig
   const tcps = new Map();
   const toPage = (m) => page.evaluate((x) => NullShell._recv(x), m).catch(() => {});
   await page.exposeFunction('daTcpOpen', (id, h, p) => {
-    const s = net.connect(bw.port, '127.0.0.1');
+    const s = net.connect(p === 8819 ? live.port : bw.port, '127.0.0.1');
     tcps.set(id, s);
     s.on('connect', () => toPage({ type: 'tcpopen', id }));
     s.on('data', (d) => toPage({ type: 'tcp', id, data: d.toString('base64') }));
@@ -108,7 +111,7 @@ async function main() {
   try {
     await page.goto(`http://127.0.0.1:${server.address().port}/app/core/index.html`);
     await until(async () => (await page.locator('#tabs button').allTextContents()).includes('Ardour'), 'Ardour tab');
-    assert.deepStrictEqual(await page.locator('#tabs button').allTextContents(), ['REAPER', 'Ardour', 'Bitwig', 'Settings']);
+    assert.deepStrictEqual(await page.locator('#tabs button').allTextContents(), ['REAPER', 'Ardour', 'Bitwig', 'Ableton', 'Settings']);
     await page.locator('#tabs button', { hasText: 'Ardour' }).click();
     assert.strictEqual(await tab.locator('.top .name').textContent(), 'NULL JSFXArdour · Mixbus');
     ok('Ardour tab, after REAPER, with the NULL JSFX header');
@@ -283,6 +286,65 @@ async function main() {
     assert(await btab.locator('.da-sheet').isHidden());
     ok('Bitwig: other devices as rows with their own value text, bypass, Back');
 
+    // --- Ableton Live ----------------------------------------------------------------------
+    const atab = page.locator('[data-tab=ableton]');
+    const astrip = (name) => atab.locator('.da-strip', { has: page.locator('.da-name', { hasText: name }) }).first();
+    await page.locator('#tabs button', { hasText: 'Ableton' }).click();
+    assert.strictEqual(await atab.locator('.top .name').textContent(), 'NULL JSFXAbleton Live');
+    assert.strictEqual(await atab.locator('input').nth(1).inputValue(), '8819');
+    await shot('ableton-connect');
+    await atab.locator('input').first().fill('127.0.0.1');
+    await atab.locator('button.primary').click();
+    await until(async () => (await atab.locator('.da-strip').count()) === 4, 'four Live strips');
+    assert.deepStrictEqual(await atab.locator('.da-name').allTextContents(), ['Vocal', 'Synth', 'FX 1', 'Master']);
+    assert.deepStrictEqual(await atab.locator('.da-kind').allTextContents(), ['Audio', 'MIDI', 'Return', 'Master']);
+    assert(await astrip('Synth').locator('.da-r').evaluate((b) => b.classList.contains('on')));
+    assert.strictEqual(await astrip('FX 1').locator('.da-r').count(), 0, 'no arm button on a return track');
+    assert.strictEqual(await astrip('Vocal').locator('.da-db').textContent(), '0.0 dB');
+    ok('Ableton tab: connects over TCP to the control surface and shows the Set');
+
+    const lv0 = (await live.get()).tracks[0].vol;
+    await drag(astrip('Vocal').locator('.da-fader'), 0, -60);
+    await until(async () => (await live.get()).tracks[0].vol > lv0 + 0.05, 'Live fader up');
+    await until(async () => parseFloat(await astrip('Vocal').locator('.da-db').textContent()) > 0, "Live's level text");
+    await astrip('Vocal').locator('.da-m').click();
+    await until(async () => (await live.get()).tracks[0].mute === true, 'mute in Live');
+    await atab.locator('.da-play').click();
+    await until(async () => atab.locator('.da-play').evaluate((b) => b.classList.contains('on')), 'Live playing');
+    await until(async () => (await astrip('Vocal').locator('.da-meter-fill').evaluate((e) => parseFloat(e.style.height) || 0)) > 0, 'Live meters');
+    ok('Ableton: fader, level text, mute, transport, meters');
+    await shot('ableton-desk');
+
+    await astrip('Vocal').locator('.da-fx').click();
+    await until(async () => (await atab.locator('.da-plugin').count()) === 3, 'Live device list');
+    assert.deepStrictEqual(await atab.locator('.da-plugin-open small').allTextContents(), ['NULL JSFX', 'NULL JSFX', 'parameters']);
+    await atab.locator('.da-plugin-open', { hasText: 'Tilt' }).click();
+    await until(async () => (await atab.locator('.da-gfx canvas').count()) === 1, 'Tilt GFX in Live');
+    await sleep(400);
+    const acv = atab.locator('.da-gfx canvas');
+    const ltilt = async () => (await live.get()).tracks[0].devices[0].parameters[1].value;
+    const lt0 = await ltilt();
+    const ab = await acv.boundingBox();
+    await page.mouse.move(ab.x + ab.width * 0.5, ab.y + ab.height * 0.875);
+    await page.mouse.down();
+    for (let k = 1; k <= 12; k++) { await sleep(20); await page.mouse.move(ab.x + ab.width * (0.5 - 0.03 * k), ab.y + ab.height * 0.875); }
+    await page.mouse.up();
+    await until(async () => (await ltilt()) < lt0 - 0.01, 'Tilt Amount down in Live');
+    await sleep(700);
+    await live.set(['tracks', 0, 'devices', 0, 'parameters', 1, 'value'], 0.115);
+    await until(async () => page.evaluate(() => {
+      const v = NullRemote.ableton.view;
+      return v && v.gfx && Math.round(v.gfx.fx.inst.getSlider(1)) === -77;
+    }), 'Live GFX follows');
+    ok('Ableton: NULL Tilt in its own GFX, a drag moves it in Live, and it follows Live');
+    await shot('ableton-tilt');
+    await atab.locator('.da-back').click();
+    await atab.locator('.da-onoff').nth(2).click();
+    await until(async () => (await live.get()).tracks[0].devices[2].on === false, 'EQ Eight off in Live');
+    assert(await page.evaluate(() => NullRemote.back()));
+    assert(await atab.locator('.da-sheet').isHidden());
+    ok('Ableton: bypass and Back');
+
     assert.deepStrictEqual(errors, []);
     ok('no page errors');
   } finally {
@@ -291,6 +353,7 @@ async function main() {
     sock.close();
     ard.close();
     bw.close();
+    live.close();
   }
   console.log(`ui_test (daws): ${passed} passed`);
 }

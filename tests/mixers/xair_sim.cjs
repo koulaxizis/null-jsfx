@@ -1,20 +1,22 @@
-// A software X AIR console for the tests and for trying the Mixers tab without hardware.
-// It answers /xinfo, parameter queries and sets for every parameter of the profile's layout,
-// pushes changes to /xremote subscribers (for 10 s per renewal, like the console), streams
-// /meters/1 blobs every 50 ms to /meters subscribers, and handles /-action/clearsolo.
-// It follows our reading of the protocol (android/web/mixers/xair/profile.js), so it proves the
-// app is consistent with that reading, not that the reading matches a real console.
-//   node tests/mixers/xair_sim.cjs [--model XR18] [--port 10024] [--name XR18-SIM]
+// A software X AIR console (or, with profile 'x32', an X32/M32) for the tests and for trying the
+// Mixers tab without hardware. It answers /xinfo, parameter queries and sets for every parameter
+// of the profile's layout, pushes changes to /xremote subscribers (for 10 s per renewal, like the
+// console), streams meter blobs every 50 ms to /meters subscribers (X AIR /meters/1; X32
+// /meters/0 and /meters/2, float32), and handles /-action/clearsolo.
+// It follows our reading of the protocol (android/web/mixers/{xair,x32}/profile.js), so it proves
+// the app is consistent with that reading, not that the reading matches a real console.
+//   node tests/mixers/xair_sim.cjs [--profile xair|x32] [--model XR18] [--port 10024] [--name XR18-SIM]
 'use strict';
 const dgram = require('dgram');
 const path = require('path');
 const web = path.resolve(__dirname, '../../android/web/mixers');
 const Osc = require(path.join(web, 'core/osc.js'));
 const Levels = require(path.join(web, 'core/levels.js'));
-const profile = require(path.join(web, 'xair/profile.js'));
+const profiles = { xair: require(path.join(web, 'xair/profile.js')), x32: require(path.join(web, 'x32/profile.js')) };
 
 function start(opts = {}) {
-  const model = opts.model || 'XR18';
+  const profile = profiles[opts.profile || 'xair'];
+  const model = opts.model || (profile.id === 'x32' ? 'X32' : 'XR18');
   const name = opts.name || model + '-SIM';
   const subscribeMs = opts.subscribeMs || 10000;
   const layout = profile.layout(model);
@@ -34,7 +36,7 @@ function start(opts = {}) {
   state.set('/ch/01/config/color', 1);
   state.set('/ch/02/config/name', 'Vocal');
   state.set('/ch/02/config/color', 3);
-  state.set('/bus/1/config/name', 'Drummer');
+  state.set(layout.targets[0].master.name, 'Drummer');
 
   const sock = dgram.createSocket({ type: 'udp4', reuseAddr: true });
   const remotes = new Map();  // "host:port" -> expiry
@@ -65,7 +67,8 @@ function start(opts = {}) {
       } else if (a === '/xremote') {
         remotes.set(key(rinfo), Date.now() + subscribeMs);
       } else if (a === '/meters') {
-        if (m.args[0] && m.args[0].v === '/meters/1') meterSubs.set(key(rinfo), Date.now() + subscribeMs);
+        const blocks = layout.meters ? layout.meters.map((b) => b.address) : [layout.meterAddress];
+        if (m.args[0] && blocks.includes(m.args[0].v)) meterSubs.set(key(rinfo) + '|' + m.args[0].v, Date.now() + subscribeMs);
       } else if (a === '/-action/clearsolo') {
         for (const p of state.keys()) if (p.startsWith('/-stat/solosw/') && state.get(p)) { state.set(p, 0); push(p); }
       } else if (types.has(a)) {
@@ -79,25 +82,32 @@ function start(opts = {}) {
     }
   });
 
-  // 40 meter values: inputs follow their fader so a test can see movement
+  // meter values: inputs follow their fader so a test can see movement
   let phase = 0;
   const meterTimer = setInterval(() => {
     const now = Date.now();
     if (!meterSubs.size) return;
     phase += 1;
-    const vals = new Array(40).fill(-90);
+    const vals = new Array(profile.id === 'x32' ? 119 : 40).fill(-90);
     const all = layout.inputs.concat(layout.returns, layout.targets.map((t) => t.master), [layout.main]);
     for (const s of all) {
       if (s.meter == null) continue;
       const db = state.get(s.on) ? Math.max(-90, Levels.faderToDb(state.get(s.fader)) - 12 + 6 * Math.sin(phase / 7 + s.meter)) : -90;
       vals[s.meter] = db;
-      if (s.kind === 'rtn' || s.kind === 'aux' || s.kind === 'lr') vals[s.meter + 1] = db;
+      if (profile.id === 'xair' && (s.kind === 'rtn' || s.kind === 'aux' || s.kind === 'lr')) vals[s.meter + 1] = db;
     }
-    const blob = Levels.buildMeterBlob(vals, true);
     for (const [k, exp] of meterSubs) {
       if (exp < now) { meterSubs.delete(k); continue; }
-      const [h, port] = k.split(':');
-      send('/meters/1', [{ t: 'b', v: blob }], h, +port);
+      const [who, addr] = k.split('|');
+      const [h, port] = who.split(':');
+      let blob;
+      if (profile.id === 'x32') {
+        const b = layout.meters.find((x) => x.address === addr);
+        blob = profile.buildMeter(vals.slice(b.offset, b.offset + b.count));
+      } else {
+        blob = Levels.buildMeterBlob(vals, true);
+      }
+      send(addr, [{ t: 'b', v: blob }], h, +port);
     }
   }, 50);
 
@@ -111,6 +121,7 @@ function start(opts = {}) {
         // a change made on the console itself (or by another app): pushed to subscribers
         change(p, v) { state.set(p, v); push(p); },
         meterSubscribers: () => meterSubs.size,
+        profile: profile.id,
         close() { clearInterval(meterTimer); sock.close(); },
       });
     });
@@ -121,7 +132,8 @@ module.exports = { start };
 
 if (require.main === module) {
   const arg = (n, d) => { const i = process.argv.indexOf('--' + n); return i > 0 ? process.argv[i + 1] : d; };
-  start({ model: arg('model', 'XR18'), port: +arg('port', 10024), name: arg('name'), host: arg('host', '0.0.0.0') }).then((s) => {
-    console.log(`X AIR simulator (${s.model}) on UDP ${s.port}`);
+  const prof = arg('profile', 'xair');
+  start({ profile: prof, model: arg('model'), port: +arg('port', prof === 'x32' ? 10023 : 10024), name: arg('name'), host: arg('host', '0.0.0.0') }).then((s) => {
+    console.log(`${prof === 'x32' ? 'X32' : 'X AIR'} simulator (${s.model}) on UDP ${s.port}`);
   });
 }

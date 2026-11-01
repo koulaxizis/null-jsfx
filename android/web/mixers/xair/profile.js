@@ -42,6 +42,8 @@
     const key = String(name || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
     return MODELS[key] ? key : 'XR18';
   }
+  // which answers to /xinfo this profile takes (an X32 or M32 answers X32.. or M32..)
+  const matches = (raw) => !/^[XM]32/i.test(String(raw || '').trim());
 
   // One strip: a fader with its mute, pan, name and colour, and where it sits in solo and meters.
   function strip(kind, index, base, label, opts = {}) {
@@ -123,7 +125,7 @@
   // /xinfo reply: ip, console name, model, firmware version (all strings).
   function parseInfo(args) {
     const s = (args || []).map((a) => String(a.v));
-    if (s.length < 3) return null;
+    if (s.length < 3 || !matches(s[2])) return null;
     return { ip: s[0], name: s[1], model: model(s[2]), modelRaw: s[2], version: s[3] || '' };
   }
 
@@ -139,6 +141,7 @@
     isMeter: (a) => a.startsWith('/meters/'),
     models: Object.keys(MODELS),
     model,
+    matches,
     layout,
     parseInfo,
     colorOf,
