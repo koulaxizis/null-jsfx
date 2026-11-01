@@ -1,0 +1,27 @@
+NULL JSFX Remote for Bitwig Studio
+==================================
+
+A controller script that lets the Android app Remote for DAWs (tab Bitwig) run Bitwig's
+mixer (volume, pan, mute, solo, arm, meters), transport and the devices of every track.
+The NULL JSFX plugins (VST3 or CLAP) open on the phone with their own interface; any other
+device gets a list of its parameters. Nothing else to install on the computer.
+
+Needs Bitwig Studio 3.0 or newer.
+
+Install (once)
+    1. Copy the folder NullJSFX into Bitwig's Controller Scripts folder:
+         Windows   Documents\Bitwig Studio\Controller Scripts
+         macOS     ~/Documents/Bitwig Studio/Controller Scripts
+         Linux     ~/Bitwig Studio/Controller Scripts
+    2. Bitwig: Settings > Controllers > Add controller > NULL JSFX > Remote for DAWs.
+       The controller has no MIDI ports. Bitwig's log shows "listening on TCP 8818".
+    3. Allow Bitwig through the computer's firewall on private networks (TCP 8818).
+
+On the phone
+    Remote for DAWs > Bitwig: type the computer's address (port 8818) and Connect.
+
+Another port
+    Settings > Controllers > NULL JSFX Remote for DAWs > Port; then switch the controller
+    off and on (or restart Bitwig) and type the same port on the phone.
+
+The protocol is written out at the top of NullJSFX/NullJSFX.control.js.

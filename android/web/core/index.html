@@ -1,7 +1,8 @@
 <!doctype html>
 <!-- The start page of the NULL JSFX Android remotes. Remote for DAWs shows the DAW tabs
-     (android/web/daws: REAPER first), the mixer remote the Mixers tab (android/web/mixers); both have
-     Settings. NULL JSFX • https://nulljsfx.tech • MIT License -->
+     (android/web/daws: REAPER, then Ardour and Bitwig on the shared desk in daws/core), the
+     mixer remote the Mixers tab (android/web/mixers); both have Settings.
+     NULL JSFX • https://nulljsfx.tech • MIT License -->
 <html lang="en">
 <head>
 <meta charset="utf-8">
@@ -21,7 +22,9 @@
 <script src="shell.js"></script>
 <script src="remote.js"></script>
 <script src="../daws/reaper/reaper.js"></script>
+<script src="../daws/core/desk.js"></script>
 <script src="../daws/ardour/ardour-tab.js"></script>
+<script src="../daws/bitwig/bitwig-tab.js"></script>
 <script src="../mixers/mixers.js" onerror="this.remove()"></script>
 <script src="settings.js"></script>
 <script>NullRemote.start();</script>

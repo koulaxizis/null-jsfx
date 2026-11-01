@@ -1,4 +1,4 @@
-/* Remote for DAWs, the Ardour tab: desk, strips and plugins. NULL JSFX palette (core/style.css). */
+/* Remote for DAWs: the desk the DAW tabs share (core/desk.js): strips, transport and plugins. NULL JSFX palette (core/style.css). */
 .da-desk { flex: 1; display: flex; flex-direction: column; min-height: 0; position: relative; }
 .da-desk.da-down .da-strips { opacity: .45; }
 .da-desk.da-down .da-clock::after { content: " · offline"; color: var(--clip); }

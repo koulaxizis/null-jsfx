@@ -150,7 +150,7 @@ window.NullShellNative = {
   let page = await ctx.newPage();
   page.on('pageerror', e => errors.push(e.message));
   await page.goto(start);
-  await until('REAPER, Ardour and Settings tabs', async () => (await page.locator('#tabs button').allTextContents()).join() === 'REAPER,Ardour,Settings');
+  await until('REAPER, Ardour, Bitwig and Settings tabs', async () => (await page.locator('#tabs button').allTextContents()).join() === 'REAPER,Ardour,Bitwig,Settings');
   check('named Remote for DAWs', (await page.title()) === 'Remote for DAWs');
   check('REAPER tab first', (await page.locator('#tabs button.on').textContent()) === 'REAPER');
   check('NULL JSFX header', (await page.locator('[data-tab=reaper] .top .name').textContent()) === 'NULL JSFXRemote');

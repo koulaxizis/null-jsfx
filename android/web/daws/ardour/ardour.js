@@ -338,6 +338,8 @@
       this.touched.set(ssid + '/pan', this.now());
       this.sendSoon('p' + ssid, '/strip/pan_stereo_position', [{ t: 'i', v: ssid }, { t: 'f', v: pos }]);
     }
+    resetFader(ssid) { this.setFader(ssid, dbToFader(0)); }
+    resetPan(ssid) { this.setPan(ssid, 0.5); }
     setMute(ssid, on) { this.button(ssid, 'mute', on); }
     setSolo(ssid, on) { this.button(ssid, 'solo', on); }
     setRec(ssid, on) { this.button(ssid, 'recenable', on, 'rec'); }
