@@ -14,6 +14,8 @@ static const char* const kModelOptions[] = { "Tine EP", "Reed EP", "FM EP", "Mus
 static const char* const kModelShort[] = { "TINE EP", "REED EP", "FM EP", "MUSIC BOX", "CELESTA", "GLOCKEN", "VIBES", "MARIMBA", "KALIMBA" };
 static const char* const kTremOptions[] = { "Mono", "Stereo" };
 static const char* const kTremShort[] = { "MONO", "STEREO" };
+static const char* const kMpeOptions[] = { "Off", "On" };
+static const char* const kMpeShort[] = { "OFF", "ON" };
 
 // slider1..slider12 of keys.jsfx, in order
 static const DISTRHO::SliderInfo kSliders[] = {
@@ -29,6 +31,8 @@ static const DISTRHO::SliderInfo kSliders[] = {
     { "Drive", "drive", 0.0f, 100.0f, 0.0f, "%", 1.0f },
     { "Chorus", "chorus", 0.0f, 100.0f, 0.0f, "%", 1.0f },
     { "Volume", "volume", -24.0f, 12.0f, 0.0f, "dB", 0.1f },
+    { "MPE", "mpe", 0.0f, 1.0f, 0.0f, "", 1.0f, kMpeOptions },
+    { "MPE Bend Range", "mpe_bend_range", 0.0f, 96.0f, 48.0f, "st", 1.0f },
 };
 static constexpr uint32_t kNumParams = sizeof(kSliders) / sizeof(kSliders[0]);
 

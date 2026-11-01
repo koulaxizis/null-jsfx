@@ -8,20 +8,22 @@ namespace nullpresets {
 
 struct FactoryPreset {
     const char* name;
-    float values[7];
+    float values[8];
 };
 
 static const FactoryPreset kPresets[] = {
-    { "Default", { 0.0f, 3.0f, 3.0f, 1.5f, 50.0f, 30.0f, 50.0f } },
-    { "Drum Bus Tuned Ring", { 0.0f, 2.0f, 2.0f, 0.6f, 40.0f, 20.0f, 25.0f } },
-    { "A Minor Sympathetic", { 9.0f, 3.0f, 4.0f, 3.0f, 40.0f, 50.0f, 40.0f } },
-    { "D Drone Strings", { 2.0f, 3.0f, 1.0f, 4.0f, 70.0f, 40.0f, 35.0f } },
-    { "Bright Metal Pluck", { 4.0f, 4.0f, 0.0f, 0.8f, 85.0f, 20.0f, 50.0f } },
-    { "Ambient Maj7 Bloom", { 5.0f, 3.0f, 6.0f, 6.0f, 35.0f, 70.0f, 40.0f } },
-    { "Dark Sus Texture", { 7.0f, 2.0f, 5.0f, 2.5f, 20.0f, 40.0f, 45.0f } },
-    { "Noise To Min7 Chords", { 0.0f, 3.0f, 7.0f, 1.2f, 55.0f, 30.0f, 70.0f } },
+    { "Default", { 0.0f, 3.0f, 3.0f, 1.5f, 50.0f, 30.0f, 50.0f, 0.0f } },
+    { "Drum Bus Tuned Ring", { 0.0f, 2.0f, 2.0f, 0.6f, 40.0f, 20.0f, 25.0f, 0.0f } },
+    { "A Minor Sympathetic", { 9.0f, 3.0f, 4.0f, 3.0f, 40.0f, 50.0f, 40.0f, 0.0f } },
+    { "D Drone Strings", { 2.0f, 3.0f, 1.0f, 4.0f, 70.0f, 40.0f, 35.0f, 0.0f } },
+    { "Bright Metal Pluck", { 4.0f, 4.0f, 0.0f, 0.8f, 85.0f, 20.0f, 50.0f, 0.0f } },
+    { "Ambient Maj7 Bloom", { 5.0f, 3.0f, 6.0f, 6.0f, 35.0f, 70.0f, 40.0f, 0.0f } },
+    { "Dark Sus Texture", { 7.0f, 2.0f, 5.0f, 2.5f, 20.0f, 40.0f, 45.0f, 0.0f } },
+    { "Noise To Min7 Chords", { 0.0f, 3.0f, 7.0f, 1.2f, 55.0f, 30.0f, 70.0f, 0.0f } },
+    { "MIDI Played Strings", { 0.0f, 3.0f, 3.0f, 3.0f, 45.0f, 35.0f, 55.0f, 1.0f } },
+    { "MIDI Bright Shimmer", { 0.0f, 3.0f, 3.0f, 6.0f, 80.0f, 60.0f, 40.0f, 1.0f } },
 };
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
-static constexpr uint32_t kNumValues = 7;
+static constexpr uint32_t kNumValues = 8;
 
 } // namespace nullpresets

@@ -677,15 +677,15 @@
    "id": "maximizer",
    "name": "Maximizer",
    "category": "Essentials",
-   "tags": "limiter maximizing loudness ceiling mastering peak protection dither multiband saturation lufs gui",
+   "tags": "limiter maximizing loudness ceiling mastering peak protection dither multiband saturation lufs target loudness learn streaming gui",
    "gfx": [
     480,
     408
    ],
    "ins": 2,
    "outs": 2,
-   "sliders": 14,
-   "bytes": 91597
+   "sliders": 16,
+   "bytes": 101737
   },
   {
    "id": "mid_side_matrix",
@@ -1251,15 +1251,15 @@
    "id": "harmonizer",
    "name": "Harmonizer",
    "category": "Advanced",
-   "tags": "harmonizer harmony pitch shift voices interval thirds fifths octave backing vocals scale diatonic key midi formant psola gui",
+   "tags": "harmonizer harmony pitch shift voices interval thirds fifths octave backing vocals scale diatonic key midi formant psola four voices choir gui",
    "gfx": [
     480,
-    380
+    466
    ],
    "ins": 2,
    "outs": 2,
-   "sliders": 12,
-   "bytes": 80758
+   "sliders": 17,
+   "bytes": 100930
   },
   {
    "id": "kick_shaper",
@@ -1391,15 +1391,15 @@
    "id": "resonator",
    "name": "Resonator",
    "category": "Advanced",
-   "tags": "resonator karplus-strong comb tuned pitch chord ringing sympathetic string gui",
+   "tags": "resonator karplus-strong comb tuned pitch chord ringing sympathetic string midi gui",
    "gfx": [
     480,
     380
    ],
    "ins": 2,
    "outs": 2,
-   "sliders": 7,
-   "bytes": 54777
+   "sliders": 8,
+   "bytes": 62000
   },
   {
    "id": "reverser",
@@ -1503,15 +1503,15 @@
    "id": "spectrum_analyzer",
    "name": "Spectrum Analyzer",
    "category": "Advanced",
-   "tags": "spectrum analyzer analyser fft frequency meter metering peak hold slope visual mixing mastering gui",
+   "tags": "spectrum analyzer analyser fft frequency meter metering peak hold slope visual mixing mastering spectrogram waterfall sidechain overlay compare gui",
    "gfx": [
     640,
     540
    ],
-   "ins": 2,
+   "ins": 4,
    "outs": 2,
-   "sliders": 7,
-   "bytes": 49514
+   "sliders": 9,
+   "bytes": 60491
   },
   {
    "id": "spring_reverb",
@@ -1545,15 +1545,15 @@
    "id": "stereo_scope",
    "name": "Stereo Scope",
    "category": "Advanced",
-   "tags": "stereo scope goniometer vectorscope lissajous correlation phase balance width meter analyzer metering gui",
+   "tags": "stereo scope goniometer vectorscope lissajous correlation phase balance width meter analyzer metering multiband band low mid high bass mono gui",
    "gfx": [
     600,
     474
    ],
    "ins": 2,
    "outs": 2,
-   "sliders": 5,
-   "bytes": 50118
+   "sliders": 6,
+   "bytes": 60775
   },
   {
    "id": "sub_bloom",
@@ -1792,8 +1792,8 @@
    ],
    "ins": 0,
    "outs": 2,
-   "sliders": 37,
-   "bytes": 237054
+   "sliders": 39,
+   "bytes": 251553
   },
   {
    "id": "keys",
@@ -1802,12 +1802,12 @@
    "tags": "instrument keys electric piano ep tine reed fm music box celesta glockenspiel vibraphone marimba kalimba mallets bell tremolo autopan chorus drive midi gui",
    "gfx": [
     560,
-    416
+    502
    ],
    "ins": 0,
    "outs": 2,
-   "sliders": 12,
-   "bytes": 94765
+   "sliders": 14,
+   "bytes": 103597
   },
   {
    "id": "mallets",
@@ -1862,22 +1862,22 @@
    ],
    "ins": 0,
    "outs": 2,
-   "sliders": 13,
-   "bytes": 103851
+   "sliders": 15,
+   "bytes": 110829
   },
   {
    "id": "sampler",
    "name": "Sampler",
    "category": "Instruments",
-   "tags": "instrument sampler sample player one-shot chromatic wav flac loop adsr filter polyphonic midi gui",
+   "tags": "instrument sampler sample player one-shot chromatic wav flac loop adsr filter polyphonic midi slice slices chop beat gui",
    "gfx": [
     640,
     448
    ],
    "ins": 0,
    "outs": 2,
-   "sliders": 21,
-   "bytes": 103654
+   "sliders": 23,
+   "bytes": 110282
   },
   {
    "id": "synth",
@@ -1890,8 +1890,8 @@
    ],
    "ins": 0,
    "outs": 2,
-   "sliders": 45,
-   "bytes": 228663
+   "sliders": 47,
+   "bytes": 242826
   }
  ],
  "midi": [

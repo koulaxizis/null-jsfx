@@ -22,6 +22,8 @@ static const NullKnobsUI::Control kControls[] = {
     { 12, NullKnobsUI::kSelect, "TRUE PEAK", 1, 0, false },
     { 8, NullKnobsUI::kSelect, "CHARACTER", 1, 0, false },
     { 13, NullKnobsUI::kSelect, "LISTEN", 1, 0, false },
+    { 14, NullKnobsUI::kKnob, "TARGET", 1, 0, false },
+    { 15, NullKnobsUI::kSelect, "LEARN", 1, 0, false },
     { 9, NullKnobsUI::kSelect, "MULTIBAND", 0, 1, false },
     { 10, NullKnobsUI::kKnob, "LOW X", 0, 1, false },
     { 11, NullKnobsUI::kKnob, "HIGH X", 0, 1, false },
@@ -37,6 +39,38 @@ public:
                         kControls, sizeof(kControls) / sizeof(kControls[0]), true }) {}
 
 protected:
+    // When Learn moves Input Gain or finishes, the plugin moves those sliders itself (as the JSFX
+    // writes them in its code). Tell the host, so automation, undo and its own view follow.
+    void uiIdle() override
+    {
+#if DISTRHO_PLUGIN_WANT_DIRECT_ACCESS
+        if (nulljsfx::Taps* t = taps())
+        {
+            const float gen = t->aux[1].load(std::memory_order_acquire);
+            if (gen != fGen)
+            {
+                fGen = gen;
+                auto* p = static_cast<NullMultiPlugin*>(getPluginInstancePointer());
+                const uint32_t ids[2] = { 0, 15 };
+                for (uint32_t k = 0; p && k < 2; ++k)
+                {
+                    const uint32_t i = ids[k];
+                    const float v = p->value(i);
+                    if (v != value(i))
+                    {
+                        editParameter(i, true);
+                        setParameterValue(i, v);
+                        editParameter(i, false);
+                        parameterChanged(i, v);
+                    }
+                }
+            }
+        }
+#endif
+        NullKnobsUI::uiIdle();
+    }
+
+    float fGen = 0.0f;
     static constexpr int kLen = 260; // history entries, one per design pixel (7 ms each)
 
     // the gain history: output level as dim bars (-48..0 dB), gain as the line (-24..0 dB)
@@ -117,6 +151,8 @@ protected:
             st = st.empty() ? "TRUE PEAK" : "TRUE PEAK / " + st;
         if (value(13) >= 0.5f)
             st = st.empty() ? "DELTA" : "DELTA / " + st;
+        if (taps() && taps()->aux[2].load(std::memory_order_relaxed) >= 0.5f)
+            st = st.empty() ? "LEARNING" : "LEARNING / " + st;
         if (!st.empty())
             label(448.0f, 152.0f, ALIGN_RIGHT, 8.0f, 0.0f, theme::kMuted, st.c_str());
     }
@@ -129,6 +165,8 @@ protected:
             std::snprintf(buf, n, "%.1f dB", v);
         else if (param == 10)
             std::snprintf(buf, n, "%d Hz", int(std::lround(v)));
+        else if (param == 14)
+            std::snprintf(buf, n, "%.1f LUFS", v);
         else if (param == 11)
             std::snprintf(buf, n, "%.1f kHz", std::round(v) / 1000.0);
         else

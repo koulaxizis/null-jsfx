@@ -29,6 +29,8 @@ static const NullKnobsUI::Control kControls[] = {
     { 9, NullKnobsUI::kKnob, "DRIVE", 1, -1, false },
     { 10, NullKnobsUI::kKnob, "CHORUS", 1, -1, false },
     { 11, NullKnobsUI::kKnob, "VOLUME", 1, -1, false },
+    { 12, NullKnobsUI::kSelect, "MPE", 2, -1, false },
+    { 13, NullKnobsUI::kKnob, "MPE BEND", 2, -1, false },
 };
 static constexpr uint32_t kNumControls = sizeof(kControls) / sizeof(kControls[0]);
 
@@ -39,6 +41,7 @@ static const SliderInfo* uiSliders()
         s[i] = nullkeys::kSliders[i];
     s[0].options = nullkeys::kModelShort;
     s[8].options = nullkeys::kTremShort;
+    s[12].options = nullkeys::kMpeShort;
     return s;
 }
 
@@ -46,7 +49,7 @@ class UIKeys : public NullKnobsUI
 {
 public:
     UIKeys()
-        : NullKnobsUI({ "KEYS", "INSTRUMENTS", 560, 156, nullptr, 2, uiSliders(), nullkeys::kNumParams, kControls, kNumControls, true })
+        : NullKnobsUI({ "KEYS", "INSTRUMENTS", 560, 156, nullptr, 3, uiSliders(), nullkeys::kNumParams, kControls, kNumControls, true })
     {
     }
 
@@ -167,6 +170,8 @@ protected:
             std::snprintf(buf, n, "%+.1f dB", v);
         else if (param == 6)
             std::snprintf(buf, n, "%.1f Hz", v);
+        else if (param == 13)
+            std::snprintf(buf, n, "%d st", int(std::lround(v)));
         else if (param == 4)
         {
             if (v >= 1000.0f)

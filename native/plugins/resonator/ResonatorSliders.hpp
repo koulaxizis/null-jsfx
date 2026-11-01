@@ -14,8 +14,9 @@ namespace nullres {
 
 static const char* const kRootOptions[] = { "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B" };
 static const char* const kChordOptions[] = { "UNISON", "OCTAVES", "FIFTH", "MAJOR", "MINOR", "SUS4", "MAJ7", "MIN7" };
+static const char* const kNotesOptions[] = { "CHORD", "MIDI" };
 
-// slider1..slider7 of resonator.jsfx, in order
+// slider1..slider8 of resonator.jsfx, in order
 static const DISTRHO::SliderInfo kSliders[] = {
     { "Root Note", "root", 0.0f, 11.0f, 0.0f, "", 1.0f, kRootOptions },
     { "Octave", "octave", 1.0f, 6.0f, 3.0f, "", 1.0f },
@@ -24,6 +25,7 @@ static const DISTRHO::SliderInfo kSliders[] = {
     { "Brightness", "brightness", 0.0f, 100.0f, 50.0f, "%", 1.0f },
     { "Spread", "spread", 0.0f, 100.0f, 30.0f, "%", 1.0f },
     { "Mix", "mix", 0.0f, 100.0f, 50.0f, "%", 1.0f },
+    { "Notes", "notes", 0.0f, 1.0f, 0.0f, "", 1.0f, kNotesOptions },
 };
 static constexpr uint32_t kNumSliders = sizeof(kSliders) / sizeof(kSliders[0]);
 
@@ -37,6 +39,7 @@ static const Range kRanges[] = {
     { 0.0, 100.0, 50.0, 1.0 },
     { 0.0, 100.0, 30.0, 1.0 },
     { 0.0, 100.0, 50.0, 1.0 },
+    { 0.0, 1.0, 0.0, 1.0 },
 };
 
 // The host passes parameters as float, the JSFX keeps the slider in double. Rebuild that double:

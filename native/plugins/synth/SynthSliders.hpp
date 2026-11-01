@@ -30,6 +30,8 @@ static const char* const kVoiceModeOptions[] = { "Poly", "Mono", "Legato" };
 static const char* const kVoiceModeShort[] = { "POLY", "MONO", "LEGATO" };
 static const char* const kDelayTimeOptions[] = { "1/16", "1/8T", "1/8", "1/8D", "1/4T", "1/4", "1/4D", "1/2" };
 static const char* const kDelayTimeShort[] = { "1/16", "1/8T", "1/8", "1/8D", "1/4T", "1/4", "1/4D", "1/2" };
+static const char* const kMpeOptions[] = { "Off", "On" };
+static const char* const kMpeShort[] = { "OFF", "ON" };
 
 // slider1..slider45 of synth.jsfx, in order
 static const DISTRHO::SliderInfo kSliders[] = {
@@ -78,6 +80,8 @@ static const DISTRHO::SliderInfo kSliders[] = {
     { "Bend Range", "bend_range", 0.0f, 24.0f, 2.0f, "st", 1.0f },
     { "Octave", "octave", -3.0f, 3.0f, 0.0f, "", 1.0f },
     { "Volume", "volume", -24.0f, 12.0f, 0.0f, "dB", 0.1f },
+    { "MPE", "mpe", 0.0f, 1.0f, 0.0f, "", 1.0f, kMpeOptions },
+    { "MPE Bend Range", "mpe_bend_range", 0.0f, 96.0f, 48.0f, "st", 1.0f },
 };
 static constexpr uint32_t kNumParams = sizeof(kSliders) / sizeof(kSliders[0]);
 

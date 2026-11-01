@@ -23,7 +23,7 @@
 namespace nullsmp {
 
 static constexpr double kPi = 3.141592653589793; // EEL2 $pi
-static constexpr int kNumParams20 = 20;           // slider2..slider21
+static constexpr int kNumParams20 = 22;           // slider2..slider23
 static constexpr int kVoices = 16;                // NV
 static constexpr int kMaxEvents = 256;
 static constexpr size_t kMaxValues = 4194304;     // SMAX
@@ -64,6 +64,7 @@ public:
         double fc = 0, a1 = 0, a2 = 0, a3 = 0;
         bool in = false;
         double kst = 0;
+        double end = 0;                   // where it stops: the sample's or its slice's end
     };
 
     // the JSFX's @init: the voices stop, the built-in sound is made at this rate
@@ -140,12 +141,14 @@ public:
         fLs = std::floor(x * fNfr);
         x = s[14] / 100;
         fLe = std::floor(x * fNfr);
-        fLpOn = fChrom && s[12] >= 0.5 && fLe - fLs >= 64;
+        fLpOn = fChrom && s[12] >= 0.5 && fLe - fLs >= 64 && fSlN == 0;
         if (!fLpOn)
             fLe = fNfr + 1;
         x = s[15] / 100;
         fP0 = x * (fNfr - 1);
         fRev = s[16] >= 0.5;
+        fSlN = s[20] >= 1 ? std::pow(2.0, s[20] + 1) : 0.0;
+        fSKey = s[21];
         fVsens = s[17] / 100;
         fVol = std::pow(10.0, s[19] / 20);
         fFadeN = 0.003 * fSr;
@@ -163,9 +166,9 @@ public:
         fSi = 0;
         if (preview)
         {
-            noteOn(fRoot, 0.8);
+            fPvNote = fSlN > 0 ? fSKey : fRoot; // with Slices: the first slice
+            noteOn(fPvNote, 0.8);
             fPvLeft = std::floor(0.4 * fSr);
-            fPvNote = fRoot;
         }
     }
 
@@ -315,6 +318,22 @@ private:
 
     void noteOn(double n, double vel)
     {
+        // where the voice plays: from Start to the end, or its slice (Slices)
+        double vs = fP0, ve = fNfr - 1;
+        const double k = n - fSKey;
+        if (fSlN > 0)
+        {
+            if (!(k >= 0 && k < fSlN))
+                return; // no slice on this key: no voice
+            vs = std::floor(k * fNfr / fSlN);
+            ve = std::floor((k + 1) * fNfr / fSlN) - 1;
+            if (fRev)
+            {
+                const double a = vs;
+                vs = (fNfr - 1) - ve;
+                ve = (fNfr - 1) - a;
+            }
+        }
         int b = -1;
         for (int i = 0; i < kVoices; ++i)
             if (b < 0 && !fV[i].on)
@@ -339,14 +358,14 @@ private:
         Voice& v = fV[b];
         kill(v);
         fAge += 1;
-        if (fP0 < fNfr - 1)
+        if (vs < ve)
         {
             double bv = fVsens * vel;
             bv += 1 - fVsens;
             v.on = true;
             v.note = n;
             v.gain = bv * 0.5;
-            v.pos = fP0;
+            v.pos = vs;
             v.st = 1;
             v.env = 0;
             v.fe = 1;
@@ -357,8 +376,9 @@ private:
             v.tl = v.tr = 0;
             v.ll = v.lr = 0;
             v.fc = 0;
-            v.in = fP0 < fLe;
-            v.kst = fChrom ? n - fRoot : 0;
+            v.in = vs < fLe;
+            v.kst = fChrom && fSlN == 0 ? n - fRoot : 0;
+            v.end = ve;
             setRate(v);
         }
     }
@@ -485,7 +505,7 @@ private:
             double g = e * v.gain;
             if (!fLpOn || !v.in)
             {
-                double x = fNfr - 1 - p;
+                double x = v.end - p;
                 x /= v.rate;
                 if (x < fFadeN)
                     g *= x / fFadeN;
@@ -529,7 +549,7 @@ private:
                 p = x;
             }
             v.pos = p;
-            if (p >= fNfr - 1 || (st == 3 && e < 0.0001) || (st == 2 && fSus == 0 && e < 0.0001))
+            if (p >= v.end || (st == 3 && e < 0.0001) || (st == 2 && fSus == 0 && e < 0.0001))
                 v.on = false;
         }
 
@@ -552,7 +572,7 @@ private:
     bool fChrom = true, fFOn = false, fLpOn = false, fRev = false, fPed = false;
     double fRoot = 60, fBaseR = 1, fGSt = 0, fBend = 0;
     double fAttInc = 1, fDecC = 0, fSus = 1, fRelC = 0, fCut = 20000, fFk = 1.414, fFamt = 0, fFeC = 0;
-    double fLs = 0, fLe = 0, fP0 = 0, fVsens = 1, fVol = 1, fFadeN = 0, fKt = 0;
+    double fLs = 0, fLe = 0, fP0 = 0, fVsens = 1, fVol = 1, fFadeN = 0, fKt = 0, fSlN = 0, fSKey = 36;
     double fAge = 0, fTl = 0, fTr = 0, fPvLeft = 0, fPvNote = 60, fSi = 0;
 
     Voice fV[kVoices];

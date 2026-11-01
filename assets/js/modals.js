@@ -950,7 +950,9 @@ const guides = {
       { name: 'Low Crossover', range: '50 to 500 Hz', desc: 'Split point between the low and mid bands in Multiband mode.' },
       { name: 'High Crossover', range: '1000 to 12000 Hz', desc: 'Split point between the mid and high bands in Multiband mode.' },
       { name: 'True Peak', range: 'OFF / ON', desc: 'True Peak: the limiter reacts to the peaks between the samples (4x, ITU-R BS.1770), so the output stays under Ceiling in dBTP (for example -1 dBTP for Spotify and Apple Music); adds 6 samples of latency.' },
-      { name: 'Listen', range: 'OUTPUT / DELTA', desc: 'Listen: Output plays the result; Delta plays only what the limiter takes away (undithered).' }
+      { name: 'Listen', range: 'OUTPUT / DELTA', desc: 'Listen: Output plays the result; Delta plays only what the limiter takes away (undithered).' },
+      { name: 'Target', range: '−24 to −6 LUFS', desc: 'Target: the integrated loudness (LUFS) that Learn aims for, for example -14 for streaming or -9 for a loud club master.' },
+      { name: 'Learn', range: 'Off / On', desc: 'Learn: play the loudest part of the song; the plugin measures 4 s at a time and moves Input Gain towards Target (up to 6 steps), then sets itself back to Off. Not in the Rack.' }
     ],
     uses: ['Final loudness stage in mastering', 'Raising stems and bounces to a target level', 'Peak control on buses', 'Dithered 16-bit masters for CD'],
     properties: 'Input Gain → held peak detector + look-ahead delay → gain reduction to Ceiling → clamp at Ceiling → Output Gain trim (≤ 0 dB) → optional TPDF dither and rounding to 16 or 24 bits, with optional first-order noise shaping → Output. Latency equals Lookahead (0–5 ms), reported to REAPER for delay compensation.',
@@ -1886,10 +1888,15 @@ const guides = {
       { name: 'Mode', range: 'Semitones / Scale / MIDI', desc: 'How the voices find their notes: Semitones uses the fixed intervals, Scale turns the intervals into steps of the chosen key and scale above or below the note you sing (so harmonies stay in key), MIDI makes the voices sing the notes you hold on a MIDI keyboard' },
       { name: 'Key', range: 'C / C# / D / D# / E / F / F# / G / G# / A / A# / B', desc: 'Key of the scale used in Scale mode' },
       { name: 'Scale', range: 'Major / Minor / Dorian / Mixolydian / Harmonic Minor / Pentatonic Major / Pentatonic Minor', desc: 'Scale used in Scale mode: Major, Minor, Dorian, Mixolydian, Harmonic Minor, Pentatonic Major or Pentatonic Minor' },
-      { name: 'Formant Preserve', range: 'Off / On', desc: 'Shifts the voices with pitch-synchronous grains that keep the character of the vowels instead of the chipmunk effect (the voices come about 40 ms later)' }
+      { name: 'Formant Preserve', range: 'Off / On', desc: 'Shifts the voices with pitch-synchronous grains that keep the character of the vowels instead of the chipmunk effect (the voices come about 40 ms later)' },
+      { name: 'Voices', range: '2 / 3 / 4', desc: 'How many harmony voices sing: 2, or add voice 3 and 4 (in MIDI mode they sing the third and fourth latest held notes)' },
+      { name: 'Voice 3 Interval', range: '−12 to +12 semitones', desc: 'Interval of voice 3 (Voices 3 or 4)' },
+      { name: 'Voice 4 Interval', range: '−12 to +12 semitones', desc: 'Interval of voice 4 (Voices 4)' },
+      { name: 'Voice 3 Level', range: '−48 to 0 dB', desc: 'Level of voice 3' },
+      { name: 'Voice 4 Level', range: '−48 to 0 dB', desc: 'Level of voice 4' }
     ],
     uses: ['Instant backing vocal harmonies', 'Thirds and fifths on lead lines', 'Octave doubling on guitars and synths', 'Wide stereo harmony beds'],
-    properties: 'Signal chain: Input (summed to mono) → 2 Crossfading Delay-Line Pitch Shifters (50 ms window) → Detune + Delay → Equal-Power Spread → Equal-Power Dry/Wet Mix → Output. Fixed intervals (no key detection); Mix at 100% outputs only the harmony for printing to its own track; zero latency.',
+    properties: 'Signal chain: Input (summed to mono) → 2 to 4 Crossfading Delay-Line Pitch Shifters (50 ms window) → Detune + Delay → Equal-Power Spread → Equal-Power Dry/Wet Mix → Output. Fixed intervals (no key detection); Mix at 100% outputs only the harmony for printing to its own track; zero latency.',
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP', 'LV2'],
     shot: 'assets/img/gfx/harmonizer.png',
     video: 'assets/video/harmonizer.mp4',
@@ -2104,7 +2111,8 @@ const guides = {
       { name: 'Decay', range: '0.1 to 10 s', desc: 'Ring time of the fundamental (time to fall by 60 dB)' },
       { name: 'Brightness', range: '0 to 100%', desc: 'How long the upper harmonics ring compared with the fundamental (low = dark, damped strings; high = bright, metallic)' },
       { name: 'Spread', range: '0 to 100%', desc: 'Stereo detune: left strings down, right strings up, by up to 15 cents' },
-      { name: 'Mix', range: '0 to 100%', desc: 'Dry/wet blend' }
+      { name: 'Mix', range: '0 to 100%', desc: 'Dry/wet blend' },
+      { name: 'Notes', range: 'Chord / MIDI', desc: 'Where the string notes come from: Chord uses Root, Octave and Chord; MIDI tunes the strings to the notes you play (the four latest held notes; they keep ringing after you let go)' }
     ],
     uses: ['Turn drums and percussion into tuned, pitched hits', 'Sympathetic-string shimmer on vocals, guitars and pads', 'Make noise, rain or field recordings sing in the key of the song', 'Drones and ambient beds from any source'],
     properties: 'Signal chain: Input → 20 Hz High-Pass → up to 4 Karplus-Strong string loops per channel (one per chord note) → DC Blocker → Soft Ceiling → Mix → Output. Each loop is a delay line, a first-order allpass for the fractional part of the period and a linear-phase 3-tap low-pass, so every harmonic is exactly in tune. The loop gain sets the decay of the fundamental and stays below 1, the input to each loop is scaled for unity noise power, and the wet sum has a soft ceiling at 0 dBFS, so it can ring but never run away. No latency.',
@@ -2273,7 +2281,9 @@ const guides = {
       { name: 'Range', range: '60 dB / 80 dB / 100 dB / 120 dB', desc: 'Lowest level on the display, below 0 dB at the top.' },
       { name: 'Peak Hold', range: 'Off / 2 s / Infinite', desc: 'Keeps a second, thinner curve at the highest level each frequency reached: for 2 s, or until the setting changes (Infinite).' },
       { name: 'Channel', range: 'Mid / Left / Right / Side', desc: 'Signal analysed: Mid (L+R)/2, Left, Right or Side (L−R)/2.' },
-      { name: 'Monitor', range: 'Stereo / Solo', desc: 'Stereo passes the audio through untouched (bit-exact). Solo plays the analysed channel on both outputs, e.g. to listen to the side signal.' }
+      { name: 'Monitor', range: 'Stereo / Solo', desc: 'Stereo passes the audio through untouched (bit-exact). Solo plays the analysed channel on both outputs, e.g. to listen to the side signal.' },
+      { name: 'View', range: 'Spectrum / Spectrogram', desc: 'Spectrum draws the live curve; Spectrogram draws the last seconds as a scrolling image (time left to right, frequency bottom to top, brightness = level).' },
+      { name: 'Sidechain', range: 'Off / On', desc: 'On analyses the sidechain input (pins 3/4) the same way and draws it over the spectrum, to compare a mix with a reference track or see where two tracks overlap.' }
     ],
     uses: ['Spotting resonances and build-ups while mixing', 'Comparing the tonal balance of a mix with a reference', 'Checking low-end content and sub-bass on small speakers', 'Inspecting the side signal for stereo problems'],
     properties: 'Chosen channel → Hann window → FFT (1024 to 16384 points) every 25 ms → per-bin power, instant rise and adjustable release, optional peak hold → log-frequency display 20 Hz to 20 kHz with slope around 1 kHz. Audio passes through unchanged (Monitor Solo is a listening aid). Zero latency. The plain JSFX only analyses; the GFX, VST3 and CLAP versions draw the spectrum.',
@@ -2353,7 +2363,8 @@ const guides = {
       { name: 'Auto Gain', range: 'Off / On', desc: 'Scales the goniometer to the signal level automatically.' },
       { name: 'Decay', range: '0 to 100%', desc: 'Persistence: how much recent history the goniometer shows, newest samples brightest.' },
       { name: 'Integration', range: '50 to 3000 ms', desc: 'Time constant of the correlation, balance and width measurement.' },
-      { name: 'Monitor', range: 'Stereo / Mono / Side', desc: 'Listen to the stereo signal, its mono sum or its side signal (the meter always reads the input).' }
+      { name: 'Monitor', range: 'Stereo / Mono / Side', desc: 'Listen to the stereo signal, its mono sum or its side signal (the meter always reads the input).' },
+      { name: 'Band Correlation', range: 'Off / On', desc: 'Shows the correlation in three bands, Low (below 200 Hz), Mid and High (above 2 kHz), to find which part of the mix is out of phase.' }
     ],
     uses: ['Checking mono compatibility and phase problems', 'Judging stereo width and balance while mixing and mastering', 'Spotting out-of-phase or swapped channels', 'Comparing the image of references'],
     properties: 'Pass-through (bit-exact in Stereo monitor mode). Integrated <LL>, <RR>, <LR> (one-pole, Integration time) → correlation (-1..+1), balance (dB) and width (side/mid level). Goniometer of the last 8192 samples (L/R rotated 45°), 5 s correlation history, L/R peak meters. Zero latency.',
@@ -2841,7 +2852,9 @@ const guides = {
       { name: 'Reverb Size', range: '0 to 100%', desc: 'The reverb\'s size (0 to 100%).' },
       { name: 'Octave', range: '−3 to +3', desc: 'Moves the whole instrument by octaves (-3 to +3).' },
       { name: 'Bend Range', range: '0 to 24 st', desc: 'The pitch bend range in semitones (0 to 24).' },
-      { name: 'Volume', range: '−24 to +12 dB', desc: 'The output level (-24 to +12 dB).' }
+      { name: 'Volume', range: '−24 to +12 dB', desc: 'The output level (-24 to +12 dB).' },
+      { name: 'MPE', range: 'Off / On', desc: 'MPE: On for an MPE controller (lower zone): channel 1 stays the master channel, and on channels 2-16 each note gets its own pitch bend, pressure (louder, up to +6 dB) and CC74 timbre (every modulator\'s index, half to double); Off treats every channel alike.' },
+      { name: 'MPE Bend Range', range: '0 to 96 st', desc: 'MPE Bend Range: how far a note\'s own pitch bend goes (48 semitones is the MPE default).' }
     ],
     uses: ['Electric pianos with chorus, from soft to barking', 'Tubular, glass and digital bells', 'Punchy FM and slap basses', 'Brass stabs, clavs and organ tones', 'Marimba, vibraphone and harp plucks', 'Soft and bell-like pads'],
     properties: 'An instrument: MIDI in, stereo out, no samples, 8 voices (a new note takes a silent voice, then the oldest released one, then the oldest; a sounding voice keeps its envelopes and phases, so nothing clicks). Four sine operators per voice in phase modulation, each with a ratio, a linear-attack exponential ADSR and velocity sensitivity; a modulator\'s level is its index (square law, up to 8 radians), operator 4\'s feedback averages its last two outputs for stability. A voice ends when every carrier\'s envelope has. Sample-accurate MIDI with sustain pedal, mod wheel vibrato (5.5 Hz), pitch bend and all notes off, then chorus and an eight-line feedback delay network reverb. The same in the JSFX, the GFX version and the VST3/CLAP.',
@@ -2866,7 +2879,9 @@ const guides = {
       { name: 'Tremolo Mode', range: 'Mono / Stereo', desc: 'Mono pulses the level; Stereo pans the sound from side to side, like the classic suitcase electric piano.' },
       { name: 'Drive', range: '0 to 100%', desc: 'The overdrive of the preamp (0 to 100%), from a little bark to a growl; 0 is clean.' },
       { name: 'Chorus', range: '0 to 100%', desc: 'The amount of the built-in stereo chorus (0 to 100%).' },
-      { name: 'Volume', range: '−24 to +12 dB', desc: 'The output level (-24 to +12 dB).' }
+      { name: 'Volume', range: '−24 to +12 dB', desc: 'The output level (-24 to +12 dB).' },
+      { name: 'MPE', range: 'Off / On', desc: 'MPE: On for an MPE controller: on channels 2-16 each note gets its own pitch bend (the partials follow) and pressure (louder, up to +6 dB); Off treats every channel alike.' },
+      { name: 'MPE Bend Range', range: '0 to 96 st', desc: 'MPE Bend Range: how far a note\'s own pitch bend goes (48 semitones is the MPE default).' }
     ],
     uses: ['Classic tine electric piano with stereo autopan for soul, R&B and neo-soul', 'Barking reed piano with drive and tremolo for rock and funk', 'Glassy FM piano with chorus for ballads and pop', 'Music box, celesta and glockenspiel for lullabies, film and winter themes', 'Vibraphone, marimba and kalimba for jazz, lo-fi and world grooves'],
     properties: 'An instrument: MIDI in, stereo out, no samples, 16 voices (the same key struck again takes a new voice and releases the old one; a 17th key takes the oldest voice, released ones first, after a 2 ms fade). Each key is a two-operator FM tone whose index falls after the strike, with a fast and a slow decay, plus up to three modal partials (damped resonators at the model\'s overtone ratios) and a short mallet noise; higher keys decay faster. Keys start with a 0.2 to 1.5 ms ramp and fade over Release; the sustain pedal (CC 64) holds them, all notes off (CC 123/120) releases every key. The voices are spread a little by pitch, then pass the drive (a soft clipper), the tremolo (level or autopan) and a stereo chorus. Sample-accurate and the same in the JSFX, the GFX version and the VST3/CLAP.',
@@ -3015,7 +3030,9 @@ const guides = {
       { name: 'Strum Rate', range: 'Quarters / Eighths / Sixteenths / Eighth Triplets', desc: 'How often the chord is strummed: quarters, eighths, sixteenths or eighth-note triplets.' },
       { name: 'Strum Spread', range: '0 to 100 ms', desc: 'The time from one string to the next within a strum (0 to 100 ms): short for a tight chop, long for a slow roll.' },
       { name: 'Volume', range: '−24 to +12 dB', desc: 'The output level (-24 to +12 dB).' },
-      { name: 'Pizzicato', range: 'Off / Violins / Cellos', desc: 'Pizzicato: plays plucked violins or cellos instead of the Model: a finger\'s soft pluck, a short decay and the instrument\'s wooden body; Off uses the Model.' }
+      { name: 'Pizzicato', range: 'Off / Violins / Cellos', desc: 'Pizzicato: plays plucked violins or cellos instead of the Model: a finger\'s soft pluck, a short decay and the instrument\'s wooden body; Off uses the Model.' },
+      { name: 'MPE', range: 'Off / On', desc: 'MPE: On for an MPE controller: on channels 2-16 each note gets its own pitch bend (the string\'s length, down to 30 Hz) and pressure (louder, up to +6 dB); Off treats every channel alike.' },
+      { name: 'MPE Bend Range', range: '0 to 96 st', desc: 'MPE Bend Range: how far a note\'s own pitch bend goes (48 semitones is the MPE default).' }
     ],
     uses: ['Strummed acoustic rhythm guitar from held chords, synced to the song', 'Fingerpicked nylon guitar and harp lines and arpeggios', 'Koto and pipa melodies with the twang of the string', 'Reggae skanks and funk sixteenths with muted, short strums', 'Banjo rolls, dulcimer and plucked textures for folk and film'],
     properties: 'An instrument: MIDI in, stereo out, no samples, 12 voices (a note played again lets go of the string still sounding in 40 ms and takes a new voice; a 13th takes the oldest voice, released ones first, after a 2 ms fade). Each note is a Karplus-Strong string: a delay line one period long, read with interpolation and corrected for the loop filter so it is in tune, a one-pole low-pass and a loop gain from the decay time at the pitch. The pluck is low-passed noise and the triangle of a string pulled at Pick Position, combed at that position; Koto, Pipa and Banjo start slightly sharp and settle. The strings pass the model\'s body (three resonances) and a DC blocker. The strummer plays the keys held (or held by the sustain pedal, CC 64) at Strum Rate on the host\'s beat, low to high (down) or high to low (up), Strum Spread apart; up strums in Down-Up and Folk hit the top four strings, the beat\'s strums are louder. All notes off (CC 123/120) stops everything. Sample-accurate and the same in the JSFX, the GFX version and the VST3/CLAP.',
@@ -3049,7 +3066,9 @@ const guides = {
       { name: 'Reverse', range: 'Off / On', desc: 'Plays the sample backwards (Start and the loop then count from its end).' },
       { name: 'Velocity', range: '0 to 100%', desc: 'How much the key velocity changes the level (0% plays every note the same).' },
       { name: 'Bend Range', range: '0 to 24 st', desc: 'Pitch-bend range (0 to 24 semitones).' },
-      { name: 'Volume', range: '−24 to +12 dB', desc: 'The output level (-24 to +12 dB).' }
+      { name: 'Volume', range: '−24 to +12 dB', desc: 'The output level (-24 to +12 dB).' },
+      { name: 'Slices', range: 'Off / 4 / 8 / 16 / 32 / 64', desc: 'Cuts the sample into 4 to 64 equal slices, one per key, for chopping beats and phrases (Off: the whole sample, as before).' },
+      { name: 'Slice Key', range: '0 to 127', desc: 'The key that plays the first slice; each key above it plays the next one.' }
     ],
     uses: ['Play your own one-shots (hits, stabs, vocal chops) from a keyboard or pads', 'Turn a single recorded note into a playable chromatic instrument', 'Looped pads and drones from any sustained sample', 'Reverse swells and filtered textures from found sounds', 'Quick sketching with the built-in electric-piano sound'],
     properties: 'An instrument: MIDI in, stereo out, 16 voices (a 17th note takes the oldest released voice, else the oldest, with a 2 ms fade). Reads WAV and FLAC (mono, stereo; more channels play the first two) up to 4,194,304 sample values, at the file\'s own rate with 4-point Hermite interpolation. Linear attack and exponential decay/release, a TPT state-variable low-pass per voice with its own decaying envelope, loop with a declick of the jump, 3 ms fade at the sample\'s end, sustain pedal (CC 64), all notes off (CC 123), all sound off (CC 120), pitch bend. Without a file a deterministic built-in sound is generated, so it always makes sound.',
@@ -3107,7 +3126,9 @@ const guides = {
       { name: 'Velocity', range: '0 to 100%', desc: 'How much the velocity changes the loudness and the filter envelope (0 to 100%).' },
       { name: 'Bend Range', range: '0 to 24 st', desc: 'The pitch bend range in semitones (0 to 24).' },
       { name: 'Octave', range: '−3 to +3', desc: 'Moves the whole instrument by octaves (-3 to +3).' },
-      { name: 'Volume', range: '−24 to +12 dB', desc: 'The output level (-24 to +12 dB).' }
+      { name: 'Volume', range: '−24 to +12 dB', desc: 'The output level (-24 to +12 dB).' },
+      { name: 'MPE', range: 'Off / On', desc: 'MPE: On for an MPE controller (lower zone): channel 1 stays the master channel, and on channels 2-16 each note gets its own pitch bend, pressure (louder, up to +6 dB) and CC74 timbre (the cutoff, ±2 octaves); Off treats every channel alike.' },
+      { name: 'MPE Bend Range', range: '0 to 96 st', desc: 'MPE Bend Range: how far a note\'s own pitch bend goes (48 semitones is the MPE default).' }
     ],
     uses: ['Warm pads and evolving wavetable pads with chorus and a long reverb', 'Mono leads with glide, unison and a synced delay', 'Plucks, soft keys and arpeggios', 'Vintage string machine with four-voice unison and deep chorus', 'Analog, sub and wobble basses (LFO synced to the tempo)', 'Digital bells and organ tones from the built-in tables'],
     properties: 'An instrument: MIDI in, stereo out, no samples, 8 voices (a new note takes a silent voice, then the oldest released one, then the oldest; a sounding voice keeps its envelope and phases, so nothing clicks). Analog: PolyBLEP saw and square, triangle, sine. Wavetable: eight tables of eight frames made at load by synthesis (additive or one cycle through the FFT), band-limited per octave and read with linear interpolation between samples and frames. Per voice: a state-variable filter (12 or 24 dB, low, band or high pass), linear-attack exponential ADSRs for amp and filter. A global LFO (smoothed over 2 ms), sample-accurate MIDI with sustain pedal, mod wheel vibrato, pitch bend and all notes off, then chorus, ping-pong delay and an eight-line feedback delay network reverb. Deterministic (Park-Miller noise) and the same in the JSFX, the GFX version and the VST3/CLAP.',

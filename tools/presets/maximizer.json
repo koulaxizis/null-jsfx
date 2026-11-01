@@ -11,5 +11,7 @@
   ["Warm Master", {"Input Gain": 4, "Ceiling": -1.0, "Release": 100, "Lookahead": 5, "Character": "WARM"}],
   ["Multiband Master", {"Input Gain": 5, "Ceiling": -1.0, "Release": 80, "Lookahead": 5, "Multiband": "ON"}],
   ["Bass Heavy Multiband", {"Input Gain": 6, "Ceiling": -1.0, "Release": 100, "Lookahead": 5, "Multiband": "ON", "Low Crossover": 120, "High Crossover": 5000}],
-  ["Punchy Multiband Club", {"Input Gain": 8, "Ceiling": -0.5, "Release": 40, "Lookahead": 3, "Character": "PUNCHY", "Multiband": "ON", "Low Crossover": 150, "High Crossover": 4000}]
+  ["Punchy Multiband Club", {"Input Gain": 8, "Ceiling": -0.5, "Release": 40, "Lookahead": 3, "Character": "PUNCHY", "Multiband": "ON", "Low Crossover": 150, "High Crossover": 4000}],
+  ["Streaming Target", {"Ceiling": -1.0, "Release": 80, "Lookahead": 5, "True Peak": "ON", "Target": -14}],
+  ["Club Target", {"Ceiling": -0.3, "Release": 40, "Lookahead": 3, "Target": -9}]
 ]

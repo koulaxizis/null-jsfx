@@ -5,8 +5,8 @@
  *
  * A port of DATA/Effects/null_jsfx/synth.jsfx, computed in double like EEL2 and in the same
  * order: eight voices (Analog or Wavetable engine, filter, two envelopes), the LFO, Glide,
- * Poly / Mono / Legato, Unison, Character, then Chorus, Delay and Reverb. Comments name the
- * JSFX variables.
+ * Poly / Mono / Legato, Unison, Character, then Chorus, Delay and Reverb, and MPE (per-note
+ * bend, pressure and CC74 timbre on channels 2-16). Comments name the JSFX variables.
  *
  * Call setSampleRate (the JSFX @init), setParams (@slider), then per block beginBlock (@block)
  * with the block's MIDI messages, and process.
@@ -24,7 +24,7 @@
 
 namespace nullsynth {
 
-static constexpr int kNumSliders = 45;
+static constexpr int kNumSliders = 47;
 static constexpr int kMaxEvents = 256;
 static constexpr int kVoices = 8;
 
@@ -83,8 +83,8 @@ public:
         int st = 0, fs = 0;
         double ae = 0, fe = 0;
         bool gate = false, sus = false;
-        int note = -1;
-        double ord = 0, pt = 0, pc = 0, vg = 0;
+        int note = -1, ch = 0;
+        double ord = 0, pt = 0, pc = 0, vg = 0, pp = 0, tt = 0;
         double m[20] = {};
     };
 
@@ -121,12 +121,17 @@ public:
         ord_n = 0; key_n = 0;
         last_p = -1;
         sus_on = false; mwheel = 0; bend = 0;
+        std::fill(std::begin(chb), std::end(chb), 0.0);
+        std::fill(std::begin(chp), std::end(chp), 0.0);
+        std::fill(std::begin(cht), std::end(cht), 0.0);
+        std::fill(std::begin(kch), std::end(kch), 0);
+        cur_ch = 0; mpe_was = false;
         lfo_ph = 0; lfo_v = 0; lfo_s = 0; lfo_r = 0; lfo_x = 4321;
         ch_ph = 0;
         seed = 22222;
     }
 
-    // @slider (v: slider1..slider45 on the JSFX grid)
+    // @slider (v: slider1..slider47 on the JSFX grid)
     void setParams(const double* s)
     {
         engine = s[0] >= 0.5;
@@ -192,6 +197,17 @@ public:
         bend_r = s[42];
         oct = 12 * std::floor(s[43] + 0.5);
         vol = std::pow(10.0, s[44] / 20);
+        mpe = s[45] >= 0.5;
+        mpe_r = s[46];
+        mpe_sm = 1 - std::exp(-1000 / (5 * srate));
+        // MPE turned on starts from neutral channels
+        if (mpe && !mpe_was)
+        {
+            std::fill(std::begin(chb), std::end(chb), 0.0);
+            std::fill(std::begin(chp), std::end(chp), 0.0);
+            std::fill(std::begin(cht), std::end(cht), 0.0);
+        }
+        mpe_was = mpe;
         if (ch_mix > 0 && !ch_on)
         {
             std::fill(chL.begin(), chL.end(), 0.0);
@@ -275,6 +291,9 @@ private:
             v.ae = 0; v.fe = 0;
         }
         v.note = n;
+        v.ch = mpe ? kch[n] : 0;
+        v.pp = chp[v.ch];
+        v.tt = cht[v.ch];
         v.pt = n + oct;
         v.pc = glide_from >= 0 && glide_on ? glide_from : v.pt;
         v.vg = 1 - vs + vs * vel;
@@ -286,6 +305,7 @@ private:
     void vmove(Voice& v, int n, bool glide)
     {
         v.note = n;
+        v.ch = mpe ? kch[n] : 0;
         v.pt = n + oct;
         if (!glide || !glide_on)
             v.pc = v.pt;
@@ -304,7 +324,7 @@ private:
 
     void voff(Voice& v, int n)
     {
-        if (v.gate && v.note == n)
+        if (v.gate && v.note == n && (!mpe || v.ch == cur_ch))
         {
             if (sus_on)
             {
@@ -382,7 +402,16 @@ private:
             v.fe *= f_rc;
 
         v.pc += (v.pt - v.pc) * gl_c;
-        const double f1 = 440 * std::pow(2.0, (v.pc + pmod - 69) / 12);
+        // MPE: the note's own channel bend, pressure and timbre (pressure and timbre over 5 ms)
+        double f1;
+        if (mpe)
+        {
+            v.pp += (chp[v.ch] - v.pp) * mpe_sm;
+            v.tt += (cht[v.ch] - v.tt) * mpe_sm;
+            f1 = 440 * std::pow(2.0, ((v.pc + (pmod + mpe_r * chb[v.ch])) - 69) / 12);
+        }
+        else
+            f1 = 440 * std::pow(2.0, (v.pc + pmod - 69) / 12);
         const double f2 = f1 * o2r;
         double l1 = 0, l2 = 0;
         if (engine)
@@ -415,6 +444,8 @@ private:
             sr += char_a * (sat(sr * char_g) - sr);
         }
         double fc = cutoff * std::pow(2.0, fenv_o * v.fe * v.vg + kt * (v.pt - 60) / 12 + lfo_f * lfo_v + char_a);
+        if (mpe)
+            fc *= std::pow(2.0, 2 * v.tt);
         fc = std::max(20.0, std::min(0.45 * srate, fc));
         const double g = std::tan(kPi * fc / srate);
         const double kk = 1 / q_main;
@@ -437,7 +468,9 @@ private:
             sl = svfTick(sl, m + 10, a1, a2, a3, kk, fmode);
             sr = nuni > 1 ? svfTick(sr, m + 14, a1, a2, a3, kk, fmode) : sl;
         }
-        const double e = v.ae * v.vg * 0.25;
+        double e = v.ae * v.vg * 0.25;
+        if (mpe)
+            e *= 1 + v.pp;
         outl += sl * e;
         outr += sr * e;
     }
@@ -448,6 +481,7 @@ private:
     {
         key_n += 1;
         keys[n] = key_n;
+        kch[n] = cur_ch;
         if (vmode == 0)
         {
             int best = -1;
@@ -499,7 +533,7 @@ private:
             for (Voice& v : voices)
                 voff(v, n);
         }
-        else if (voices[0].gate && voices[0].note == n)
+        else if (voices[0].gate && voices[0].note == n && (!mpe || voices[0].ch == cur_ch))
         {
             int best = -1;
             double bo = 0;
@@ -527,7 +561,18 @@ private:
     void midiIn(int st, int d1, int d2)
     {
         const int c = st & 0xF0;
-        if (c == 0x90 && d2 > 0)
+        cur_ch = st & 0x0F;
+        if (mpe && cur_ch > 0 && (c == 0xE0 || c == 0xD0 || (c == 0xB0 && d1 == 74)))
+        {
+            // MPE: a member channel's bend, pressure and timbre belong to its note
+            if (c == 0xE0)
+                chb[cur_ch] = (d2 * 128 + d1 - 8192) / 8192.0;
+            else if (c == 0xD0)
+                chp[cur_ch] = d1 / 127.0;
+            else
+                cht[cur_ch] = (d2 - 64) / 64.0;
+        }
+        else if (c == 0x90 && d2 > 0)
             noteOn(d1, d2 / 127.0);
         else if (c == 0x80 || c == 0x90)
             noteOff(d1);
@@ -678,6 +723,8 @@ private:
     double UD[4] = {}, UPL[4] = {}, UPR[4] = {};
     double ch_mix = 0, dl_mix = 0, dl_beats = 0.75, dl_fb = 0, rv_mix = 0, rv_dc = 0, RVG[8] = {};
     double vs = 0, bend_r = 2, oct = 0, vol = 1;
+    bool mpe = false, mpe_was = false;
+    double mpe_r = 48, mpe_sm = 0;
 
     // state
     MidiEv mq[kMaxEvents];
@@ -685,6 +732,8 @@ private:
     double ord_n = 0, key_n = 0, last_p = -1;
     bool sus_on = false;
     double mwheel = 0, bend = 0, pmod = 0;
+    double chb[16] = {}, chp[16] = {}, cht[16] = {}; // MPE: CHB, CHP, CHT
+    int kch[128] = {}, cur_ch = 0;                   // KCH, cur_ch
     double lfo_ph = 0, lfo_v = 0, lfo_s = 0, lfo_r = 0, lfo_x = 4321, lfo_inc = 0, lfo_sm = 0;
     double seed = 22222, nz = 0;
     double wt_f = 0;

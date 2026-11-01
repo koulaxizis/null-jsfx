@@ -10,5 +10,8 @@
   ["Thirds Below (A Minor)", {"Voice 1 Interval": -2, "Voice 2 Interval": -4, "Voice 1 Level": -7, "Voice 2 Level": -9, "Mode": "Scale", "Key": "A", "Scale": "Minor"}],
   ["Natural Duet (G Major)", {"Voice 1 Interval": 2, "Voice 2 Interval": 0, "Voice 2 Level": -48, "Detune": 4, "Delay": 20, "Spread": 40, "Mode": "Scale", "Key": "G", "Scale": "Major", "Formant Preserve": "On"}],
   ["MIDI Choir", {"Voice 1 Level": -4, "Voice 2 Level": -4, "Detune": 6, "Delay": 12, "Spread": 90, "Mix": 55, "Mode": "MIDI", "Formant Preserve": "On"}],
-  ["Formant Octave Up", {"Voice 1 Interval": 12, "Voice 2 Interval": 0, "Voice 1 Level": -6, "Voice 2 Level": -48, "Detune": 0, "Delay": 0, "Spread": 0, "Mix": 40, "Formant Preserve": "On"}]
+  ["Formant Octave Up", {"Voice 1 Interval": 12, "Voice 2 Interval": 0, "Voice 1 Level": -6, "Voice 2 Level": -48, "Detune": 0, "Delay": 0, "Spread": 0, "Mix": 40, "Formant Preserve": "On"}],
+  ["Four Part Choir (C)", {"Voice 1 Interval": 2, "Voice 2 Interval": 4, "Voice 1 Level": -7, "Voice 2 Level": -8, "Detune": 6, "Delay": 12, "Spread": 90, "Mix": 50, "Mode": "Scale", "Key": "C", "Scale": "Major", "Formant Preserve": "On", "Voices": "4", "Voice 3 Interval": 7, "Voice 4 Interval": -3, "Voice 3 Level": -10, "Voice 4 Level": -9}],
+  ["MIDI Quartet", {"Voice 1 Level": -5, "Voice 2 Level": -5, "Detune": 6, "Delay": 12, "Spread": 100, "Mix": 55, "Mode": "MIDI", "Formant Preserve": "On", "Voices": "4", "Voice 3 Level": -6, "Voice 4 Level": -6}],
+  ["Octave Stack", {"Voice 1 Interval": 7, "Voice 2 Interval": 12, "Voice 1 Level": -9, "Voice 2 Level": -10, "Detune": 5, "Delay": 8, "Spread": 70, "Mix": 45, "Voices": "3", "Voice 3 Interval": -12, "Voice 3 Level": -9}]
 ]

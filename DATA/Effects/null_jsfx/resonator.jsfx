@@ -1,6 +1,6 @@
 desc:NULL Resonator
 author: Christos Koulaxizis
-tags: resonator karplus-strong comb tuned pitch chord ringing sympathetic string
+tags: resonator karplus-strong comb tuned pitch chord ringing sympathetic string midi
 //category: Advanced
 //NULL JSFX v2.9 • https://nulljsfx.tech • MIT License
 
@@ -11,6 +11,7 @@ slider4:1.5<0.1,10,0.01:log>Decay (s)
 slider5:50<0,100,1>Brightness (%)
 slider6:30<0,100,1>Spread (%)
 slider7:50<0,100,1>Mix (%)
+slider8:0<0,1,1{Chord,MIDI}>Notes
 
 in_pin:Left
 in_pin:Right
@@ -26,11 +27,21 @@ out_pin:Right
   // decay time of the fundamental, the low-pass how much faster the upper harmonics die.
   // The input to each loop is scaled by sqrt(1 - g^2) (unity noise power gain), and the
   // wet sum passes a DC blocker and a soft ceiling at 0 dBFS, so it can ring but never run away.
+  // Notes MIDI tunes the strings to MIDI notes instead: each new note retunes them to the
+  // four latest held notes (any octave; Root, Octave and Chord are then ignored). Releasing
+  // notes keeps the tuning, so the tail rings on; before the first note the chord is used.
+  // Every MIDI message passes through.
   buf_size = ceil(srate / 30) + 8;
   buf = 0;                          // 8 loops: voice v, channel c at buf + (v * 2 + c) * buf_size
   st = buf + 8 * buf_size;          // per loop: delay M, allpass coef, gain, input scale, states
   ivs = st + 8 * 16;                // chord table: 8 chords x 4 intervals (-1 = unused)
-  freembuf(ivs + 32);
+  held = ivs + 32;                  // MIDI: when each note was pressed (0 = not held)
+  evq = held + 128;                 // this block's MIDI events
+  mnt = evq + 1024;                 // Notes MIDI: the notes the strings are tuned to, newest first
+  freembuf(mnt + 4);
+  memset(held, 0, mnt + 4 - held);
+  stamp = 0; mcnt = 0;
+  m_ofs = m_1 = m_2 = m_3 = 0;
   memset(buf, 0, ivs - buf);
   wpos = 0;
   hp_x_l = hp_y_l = hp_x_r = hp_y_r = 0;
@@ -65,6 +76,64 @@ out_pin:Right
     y;
   );
 
+  // the two loops (left, right) of voice nv at MIDI note n
+  function tune(n)
+  (
+    note = n;
+    c = 0;
+    loop(2,
+      // Spread detunes the left loops down and the right ones up, by up to 15 cents
+      f0 = 440 * 2 ^ ((note - 69 + (c == 0 ? -1 : 1) * spread * 0.15) / 12);
+      len = srate / f0;
+      // period = M (delay) + d (allpass, 0.5..1.5) + 1 (low-pass)
+      m = floor(len - 1.5);
+      d = len - 1 - m;
+      p = st + (nv * 2 + c) * 16;
+      p[0] = m;
+      p[1] = (1 - d) / (1 + d);
+      p[2] = min(0.99995, 10 ^ (-3 / (f0 * decay)));
+      p[3] = sqrt(1 - p[2] * p[2]);
+      p[8] = len;                 // period and note, for the GFX display
+      p[9] = note;
+      c += 1;
+    );
+    nv += 1;
+  );
+
+  // the strings: the chord, or in Notes MIDI the notes of mnt
+  function retune()
+  (
+    nv = 0;
+    v = 0;
+    slider8 >= 0.5 && mcnt > 0 ? (
+      loop(mcnt, tune(mnt[v]); v += 1;);
+    ) : (
+      loop(4,
+        ivs[chord * 4 + v] >= 0 ? tune(12 * (octave + 1) + root + ivs[chord * 4 + v]);
+        v += 1;
+      );
+    );
+    wet_gain = 1 / sqrt(nv);
+  );
+
+  // the four latest held notes into mnt, newest first
+  function held_notes() local(prev, b, j, k, cnt)
+  (
+    prev = 1000000000; cnt = 0;
+    loop(4,
+      b = 0; j = -1; k = 0;
+      loop(128,
+        held[k] > b && held[k] < prev ? ( b = held[k]; j = k; );
+        k += 1;
+      );
+      j >= 0 ? ( evq[1020 + cnt] = j; cnt += 1; prev = b; );
+    );
+    cnt > 0 ? (
+      mcnt = cnt; k = 0;
+      loop(cnt, mnt[k] = evq[1020 + k]; k += 1;);
+    );
+  );
+
 @slider
   root = slider1;
   octave = slider2;
@@ -79,35 +148,43 @@ out_pin:Right
   hp_c = exp(-2 * $pi * 20 / srate);
   dc_c = exp(-2 * $pi * 8 / srate);
 
-  nv = 0;
-  v = 0;
-  loop(4,
-    ivs[chord * 4 + v] >= 0 ? (
-      note = 12 * (octave + 1) + root + ivs[chord * 4 + v];
-      c = 0;
-      loop(2,
-        // Spread detunes the left loops down and the right ones up, by up to 15 cents
-        f0 = 440 * 2 ^ ((note - 69 + (c == 0 ? -1 : 1) * spread * 0.15) / 12);
-        len = srate / f0;
-        // period = M (delay) + d (allpass, 0.5..1.5) + 1 (low-pass)
-        m = floor(len - 1.5);
-        d = len - 1 - m;
-        p = st + (nv * 2 + c) * 16;
-        p[0] = m;
-        p[1] = (1 - d) / (1 + d);
-        p[2] = min(0.99995, 10 ^ (-3 / (f0 * decay)));
-        p[3] = sqrt(1 - p[2] * p[2]);
-        p[8] = len;                 // period and note, for the GFX display
-        p[9] = note;
-        c += 1;
-      );
-      nv += 1;
+  retune();
+
+@block
+  // MIDI: every message passes through; notes are applied at their offsets in @sample
+  mq_n = 0;
+  while (midirecv(m_ofs, m_1, m_2, m_3)) (
+    midisend(m_ofs, m_1, m_2, m_3);
+    mq_n < 255 ? (
+      evq[mq_n * 4] = m_ofs;
+      evq[mq_n * 4 + 1] = m_1;
+      evq[mq_n * 4 + 2] = m_2;
+      evq[mq_n * 4 + 3] = m_3;
+      mq_n += 1;
     );
-    v += 1;
   );
-  wet_gain = 1 / sqrt(nv);
+  mq_i = 0;
+  si = 0;
 
 @sample
+  // MIDI notes due now: held / released, all notes off; Notes MIDI retunes the strings
+  while (mq_i < mq_n && evq[mq_i * 4] <= si) (
+    m_st = evq[mq_i * 4 + 1] & 0xF0;
+    m_n = evq[mq_i * 4 + 2];
+    m_st == 0x90 && evq[mq_i * 4 + 3] > 0 ? (
+      stamp += 1;
+      held[m_n] = stamp;
+      held_notes();
+      slider8 >= 0.5 ? retune();
+    ) : m_st == 0x80 || m_st == 0x90 ? (
+      held[m_n] = 0;
+    ) : m_st == 0xB0 && (m_n == 120 || m_n == 123) ? (
+      memset(held, 0, 128);
+    );
+    mq_i += 1;
+  );
+  si += 1;
+
   // 20 Hz high-pass into the loops, so DC and rumble do not pile up in them
   hp_y_l = hp_c * (hp_y_l + spl0 - hp_x_l); hp_x_l = spl0;
   hp_y_r = hp_c * (hp_y_r + spl1 - hp_x_r); hp_x_r = spl1;

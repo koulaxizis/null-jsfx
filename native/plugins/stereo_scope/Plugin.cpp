@@ -46,7 +46,7 @@ protected:
     }
 
 private:
-    void update() { fDsp.setParams(value(3), int(std::lround(value(4)))); }
+    void update() { fDsp.setParams(value(3), int(std::lround(value(4))), value(5) >= 0.5f); }
 
     nullscope::StereoScope fDsp;
 

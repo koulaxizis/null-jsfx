@@ -21,7 +21,7 @@ using K = NullKnobsUI;
 
 static const char* const kAlgNames[] = { "STACK", "DUAL MOD", "BRANCH", "PAIR STACK", "TWO PAIRS", "TRIPLE", "ONE PAIR", "ADDITIVE" };
 
-static constexpr uint32_t kNumControls = 4 * 7 + 4 + 5;
+static constexpr uint32_t kNumControls = 4 * 7 + 6 + 5;
 
 static const NullKnobsUI::Control* controls()
 {
@@ -42,6 +42,8 @@ static const NullKnobsUI::Control* controls()
     c[n++] = { 34, K::kKnob, "OCTAVE", 0, 4, true };
     c[n++] = { 35, K::kKnob, "BEND", 0, 4, false };
     c[n++] = { 36, K::kKnob, "VOLUME", 0, 4, false };
+    c[n++] = { 37, K::kSelect, "MPE", 0, 4, false };
+    c[n++] = { 38, K::kKnob, "MPE BEND", 0, 4, false };
     c[n++] = { 0, K::kSelect, "ALGORITHM", 1, -1, false };
     c[n++] = { 1, K::kKnob, "FEEDBACK", 1, -1, false };
     c[n++] = { 30, K::kKnob, "BRIGHTNESS", 1, -1, true };
@@ -56,6 +58,7 @@ static const SliderInfo* uiSliders()
     for (uint32_t i = 0; i < nullfm::kNumParams; ++i)
         s[i] = nullfm::kSliders[i];
     s[0].options = nullfm::kAlgorithmShort;
+    s[37].options = nullfm::kMpeShort;
     return s;
 }
 
@@ -250,7 +253,7 @@ protected:
             std::snprintf(buf, n, "%+d%%", int(std::lround(v)));
         else if (p == 34)
             std::snprintf(buf, n, "%+d", int(std::lround(v)));
-        else if (p == 35)
+        else if (p == 35 || p == 38)
             std::snprintf(buf, n, "%d st", int(std::lround(v)));
         else if (p == 36)
             std::snprintf(buf, n, "%+.1f dB", double(v));

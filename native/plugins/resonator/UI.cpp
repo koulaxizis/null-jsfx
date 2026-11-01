@@ -18,6 +18,7 @@ static const NullKnobsUI::Control kControls[] = {
     { 4, NullKnobsUI::kKnob, "BRIGHT", 1, -1, false },
     { 5, NullKnobsUI::kKnob, "SPREAD", 1, -1, false },
     { 6, NullKnobsUI::kKnob, "MIX", 1, -1, false },
+    { 7, NullKnobsUI::kSelect, "NOTES", 1, -1, false },
 };
 
 class UIResonator : public NullKnobsUI
@@ -25,7 +26,7 @@ class UIResonator : public NullKnobsUI
 public:
     UIResonator()
         : NullKnobsUI({ "RESONATOR", "ADVANCED", 480, 120, nullptr, 2, nullres::kSliders, nullres::kNumSliders,
-                        kControls, sizeof(kControls) / sizeof(kControls[0]), false }) {}
+                        kControls, sizeof(kControls) / sizeof(kControls[0]), true }) {}
 
 protected:
     // as in resonator_gfx.jsfx: the wet gain over frequency, with the resonant peaks (both
@@ -41,7 +42,15 @@ protected:
         double s[nullres::kNumSliders];
         for (uint32_t i = 0; i < nullres::kNumSliders; ++i)
             s[i] = nullres::sliderValue(i, value(i));
-        const nullres::Params p = nullres::computeParams(sr, s);
+        // Notes MIDI: the notes the plugin is tuned to now
+        int notes[4] = {}, nNotes = 0;
+        if (nulljsfx::Taps* t = taps())
+        {
+            nNotes = std::max(0, std::min(4, int(std::lround(t->aux[0].load(std::memory_order_relaxed)))));
+            for (int k = 0; k < nNotes; ++k)
+                notes[k] = int(std::lround(t->aux[1 + k].load(std::memory_order_relaxed)));
+        }
+        const nullres::Params p = nullres::computeParams(sr, s, notes, nNotes);
 
         const float by = fPY + fPH;
         const int n = std::min(512, int(fPW));

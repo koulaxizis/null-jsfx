@@ -30,6 +30,8 @@ static const NullKnobsUI::Control kControls[] = {
     { 8, NullKnobsUI::kSelect, "STRUM", 2, -1, false },
     { 9, NullKnobsUI::kSelect, "STRUM RATE", 2, -1, false },
     { 10, NullKnobsUI::kKnob, "SPREAD", 2, -1, false },
+    { 13, NullKnobsUI::kSelect, "MPE", 2, -1, false },
+    { 14, NullKnobsUI::kKnob, "MPE BEND", 2, -1, false },
 };
 static constexpr uint32_t kNumControls = sizeof(kControls) / sizeof(kControls[0]);
 
@@ -42,6 +44,7 @@ static const SliderInfo* uiSliders()
     s[8].options = nullpluck::kStrumShort;
     s[9].options = nullpluck::kRateShort;
     s[12].options = nullpluck::kPizzShort;
+    s[13].options = nullpluck::kMpeShort;
     return s;
 }
 
@@ -206,7 +209,9 @@ protected:
 
     void formatValue(uint32_t param, float v, char* buf, size_t n) override
     {
-        if (param == 11)
+        if (param == 14)
+            std::snprintf(buf, n, "%d st", int(std::lround(v)));
+        else if (param == 11)
             std::snprintf(buf, n, "%+.1f dB", v);
         else if (param == 10)
             std::snprintf(buf, n, "%d ms", int(std::lround(v)));

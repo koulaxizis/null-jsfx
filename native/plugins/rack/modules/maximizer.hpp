@@ -1,5 +1,7 @@
 /*
  * NULL JSFX - Maximizer as a Rack module: drives nullmaximizer::MaximizerProcessor as plugins/maximizer/Plugin.cpp does
+ * Target and Learn (values 15 and 16) are kept but do nothing here: Learn writes Input Gain, and a
+ * module cannot move its own values (R13), so the DSP never starts measuring (setLearn is not called).
  * Copyright (C) 2026 Christos Koulaxizis / NULL JSFX
  * SPDX-License-Identifier: MIT
  */

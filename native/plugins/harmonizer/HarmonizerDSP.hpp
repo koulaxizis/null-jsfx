@@ -11,7 +11,9 @@
  * of Key + Scale from the sung note, MIDI sings the latest two held notes (midi(), called before
  * the sample at the event's frame), and Formant Preserve shifts with TD-PSOLA (pitch-synchronous
  * two-period grains) instead of the two-tap shifters. Mode Semitones with Formant Preserve Off
- * runs the original code only.
+ * runs the original code only. Voices 3 or 4 adds voice 3 and 4 (Detune +-half, Delay x1.71 and
+ * x2.09, panned halfway; in Mode MIDI the third and fourth latest held notes); at Voices 2 they
+ * are skipped.
  */
 
 #pragma once
@@ -33,7 +35,7 @@ public:
         fSize = int(std::ceil(sr * 0.2) + fWin);
         fBuf.assign(size_t(fSize + 2), 0.0); // + the never-written memory after the JSFX's line
         fW = 0;
-        fPh1 = fPh2 = 0.0;
+        fPh1 = fPh2 = fPh3 = fPh4 = 0.0;
 
         // pitch tracking and PSOLA, as pitch_correction
         fDec = std::max(1.0, std::floor(sr / 11025.0 + 0.5));
@@ -44,12 +46,16 @@ public:
         fHm = std::ceil(sr / 70.0);
         fMlag = fTmax * fDec + std::floor(kHop * fDec / 2.0);
         fLat = fMlag + std::ceil(1.5 * fHm) + 4.0;
-        fBs = int(fLat + std::ceil(sr * 0.1096) + 2.0 * fHm + 20.0);
+        fBs = int(fLat + std::ceil(sr * 0.1672) + 2.0 * fHm + 20.0);
         fInM.assign(size_t(fBs), 0.0);
         fAcc1.assign(size_t(fBs), 0.0);
         fAcc2.assign(size_t(fBs), 0.0);
         fAw1.assign(size_t(fBs), 0.0);
         fAw2.assign(size_t(fBs), 0.0);
+        fAcc3.assign(size_t(fBs), 0.0);
+        fAcc4.assign(size_t(fBs), 0.0);
+        fAw3.assign(size_t(fBs), 0.0);
+        fAw4.assign(size_t(fBs), 0.0);
         fLpb.assign(size_t(fBs), 0.0);
         std::fill(std::begin(fDbuf), std::end(fDbuf), 0.0);
         std::fill(std::begin(fFrm), std::end(fFrm), 0.0);
@@ -79,17 +85,28 @@ public:
         fVoiced = false; fWasV = false; fUvc = fHoldN + 1.0;
         fTf = fTmax; fDet = 60.0; fCur = -1.0;
         fHt1 = fHt2 = fHs1 = fHs2 = 0.0; fHgt1 = fHgt2 = fHg1 = fHg2 = 0.0; fHsNew = true;
+        fHt3 = fHt4 = fHs3 = fHs4 = 0.0; fHgt3 = fHgt4 = fHg3 = fHg4 = 0.0; fSn3 = fSn4 = 0.0;
         fHk = 1.0 - std::exp(-1.0 / (sr * 0.01));
-        fStamp = 0.0; fMn1 = fMn2 = -1;
+        fStamp = 0.0; fMn1 = fMn2 = fMn3 = fMn4 = -1;
     }
 
-    // @slider; s[0..11] = slider1..slider12
+    // @slider; s[0..16] = slider1..slider17
     void setParams(const double* s)
     {
         fR1 = std::pow(2.0, (s[0] + s[4] / 100.0) / 12.0);
         fR2 = std::pow(2.0, (s[1] - s[4] / 100.0) / 12.0);
         fG1 = std::pow(10.0, s[2] / 20.0);
         fG2 = std::pow(10.0, s[3] / 20.0);
+        fNv = int(std::lround(s[12])) + 2;
+        fR3 = std::pow(2.0, (s[13] + s[4] / 200.0) / 12.0);
+        fR4 = std::pow(2.0, (s[14] - s[4] / 200.0) / 12.0);
+        fG3 = std::pow(10.0, s[15] / 20.0);
+        fG4 = std::pow(10.0, s[16] / 20.0);
+        fBase3 = s[5] * 1.71 * fSr / 1000.0;
+        fBase4 = s[5] * 2.09 * fSr / 1000.0;
+        fFb3 = int(std::floor(fBase3 + 0.5));
+        fFb4 = int(std::floor(fBase4 + 0.5));
+        fS14 = s[13]; fS15 = s[14];
         fBase1 = s[5] * fSr / 1000.0;
         fBase2 = s[5] * 1.37 * fSr / 1000.0;
         fSp = s[6] / 100.0;
@@ -110,7 +127,7 @@ public:
             if (fCur < 0.0)
                 fCur = 60.0 + fKey;
             setIv();
-            fHgt1 = fHgt2 = 1.0;
+            fHgt1 = fHgt2 = fHgt3 = fHgt4 = 1.0;
         }
         else if (fMode == 2)
             midiIv();
@@ -118,7 +135,9 @@ public:
         {
             fHt1 = s[0] + s[4] / 100.0;
             fHt2 = s[1] - s[4] / 100.0;
-            fHgt1 = fHgt2 = 1.0;
+            fHt3 = s[13] + s[4] / 200.0;
+            fHt4 = s[14] - s[4] / 200.0;
+            fHgt1 = fHgt2 = fHgt3 = fHgt4 = 1.0;
         }
     }
 
@@ -141,7 +160,7 @@ public:
 
     // for the display: the voices' intervals now (semitones, Detune included) and levels
     // (0..1, Mode MIDI fades), whether the pitch-tracking path runs, the note the scale is on
-    // (-1 = none yet), whether the input is pitched, the held notes voice 1 and 2 sing
+    // (-1 = none yet), whether the input is pitched, the held notes voice 1 to 4 sing, the voice count
     bool advanced() const noexcept { return fAdv; }
     double interval1() const noexcept { return fHs1; }
     double interval2() const noexcept { return fHs2; }
@@ -151,13 +170,20 @@ public:
     bool pitched() const noexcept { return fWasV; }
     int note1() const noexcept { return fMn1; }
     int note2() const noexcept { return fMn2; }
+    double interval3() const noexcept { return fHs3; }
+    double interval4() const noexcept { return fHs4; }
+    double gate3() const noexcept { return fHg3; }
+    double gate4() const noexcept { return fHg4; }
+    int note3() const noexcept { return fMn3; }
+    int note4() const noexcept { return fMn4; }
+    int voices() const noexcept { return fNv; }
 
     // @sample (the MIDI messages due at this sample already given to midi())
     void processSample(double& l, double& r)
     {
         const double xl = l, xr = r;
         fBuf[size_t(fW)] = (xl + xr) * 0.5;
-        double v1, v2;
+        double v1, v2, v3 = 0.0, v4 = 0.0;
         if (fAdv)
         {
             // pitch tracking on a band-limited mono copy, decimated (as pitch_correction)
@@ -194,12 +220,25 @@ public:
             {
                 fHs1 = fHt1;
                 fHs2 = fHt2;
+                fHs3 = fHt3;
+                fHs4 = fHt4;
                 fHsNew = false;
             }
             fHs1 += (fHt1 - fHs1) * fHk;
             fHs2 += (fHt2 - fHs2) * fHk;
             fHg1 += (fHgt1 - fHg1) * fHk;
             fHg2 += (fHgt2 - fHg2) * fHk;
+            if (fNv > 2)
+            {
+                fHs3 += (fHt3 - fHs3) * fHk;
+                fHs4 += (fHt4 - fHs4) * fHk;
+                fHg3 += (fHgt3 - fHg3) * fHk;
+                fHg4 += (fHgt4 - fHg4) * fHk;
+            }
+            else
+            {
+                fHs3 = fHt3; fHs4 = fHt4; fHg3 = fHgt3; fHg4 = fHgt4;
+            }
             // PSOLA: analysis marks one input period apart, synthesis marks one output period apart
             fInM[size_t(fWp)] = ax;
             fLpb[size_t(fWp)] = yb;
@@ -216,6 +255,21 @@ public:
                 fSn1 += place(fSn1, fHs1, fAcc1, fAw1);
             while (fSn2 - fN <= fHm + 1.0 - fLat)
                 fSn2 += place(fSn2, fHs2, fAcc2, fAw2);
+            // a voice that is off places no grains and starts at voice 1's next mark
+            if (fFmt && fNv > 2)
+            {
+                while (fSn3 - fN <= fHm + 1.0 - fLat)
+                    fSn3 += place(fSn3, fHs3, fAcc3, fAw3);
+            }
+            else
+                fSn3 = fSn1;
+            if (fFmt && fNv > 3)
+            {
+                while (fSn4 - fN <= fHm + 1.0 - fLat)
+                    fSn4 += place(fSn4, fHs4, fAcc4, fAw4);
+            }
+            else
+                fSn4 = fSn1;
             int ro = fWp - int(fLat) - fFb1;
             if (ro < 0)
                 ro += fBs;
@@ -226,6 +280,20 @@ public:
                 ro += fBs;
             const double f2 = fAcc2[size_t(ro)] / std::max(fAw2[size_t(ro)], 0.5);
             fAcc2[size_t(ro)] = 0.0; fAw2[size_t(ro)] = 0.0;
+            double f3 = 0.0, f4 = 0.0;
+            if (fNv > 2)
+            {
+                ro = fWp - int(fLat) - fFb3;
+                if (ro < 0)
+                    ro += fBs;
+                f3 = fAcc3[size_t(ro)] / std::max(fAw3[size_t(ro)], 0.5);
+                fAcc3[size_t(ro)] = 0.0; fAw3[size_t(ro)] = 0.0;
+                ro = fWp - int(fLat) - fFb4;
+                if (ro < 0)
+                    ro += fBs;
+                f4 = fAcc4[size_t(ro)] / std::max(fAw4[size_t(ro)], 0.5);
+                fAcc4[size_t(ro)] = 0.0; fAw4[size_t(ro)] = 0.0;
+            }
             if (++fWp >= fBs)
                 fWp = 0;
             fN += 1.0;
@@ -233,24 +301,49 @@ public:
             {
                 v1 = f1 * (fG1 * fHg1);
                 v2 = f2 * (fG2 * fHg2);
+                if (fNv > 2)
+                    v3 = f3 * (fG3 * fHg3);
+                if (fNv > 3)
+                    v4 = f4 * (fG4 * fHg4);
             }
             else
             {
                 v1 = voice(fPh1, std::pow(2.0, fHs1 / 12.0), fBase1) * (fG1 * fHg1);
                 v2 = voice(fPh2, std::pow(2.0, fHs2 / 12.0), fBase2) * (fG2 * fHg2);
+                if (fNv > 2)
+                    v3 = voice(fPh3, std::pow(2.0, fHs3 / 12.0), fBase3) * (fG3 * fHg3);
+                if (fNv > 3)
+                    v4 = voice(fPh4, std::pow(2.0, fHs4 / 12.0), fBase4) * (fG4 * fHg4);
             }
         }
         else
         {
             v1 = voice(fPh1, fR1, fBase1) * fG1;
             v2 = voice(fPh2, fR2, fBase2) * fG2;
+            if (fNv > 2)
+                v3 = voice(fPh3, fR3, fBase3) * fG3;
+            if (fNv > 3)
+                v4 = voice(fPh4, fR4, fBase4) * fG4;
         }
         if (++fW >= fSize)
             fW = 0;
         const double p1 = M_PI / 4.0 * (1.0 - fSp);
         const double p2 = M_PI / 2.0 - p1;
-        const double wl = v1 * std::cos(p1) + v2 * std::cos(p2);
-        const double wr = v1 * std::sin(p1) + v2 * std::sin(p2);
+        double wl = v1 * std::cos(p1) + v2 * std::cos(p2);
+        double wr = v1 * std::sin(p1) + v2 * std::sin(p2);
+        if (fNv > 2)
+        {
+            // voice 3 halfway left, voice 4 halfway right
+            const double p3 = M_PI / 4.0 * (1.0 - fSp / 2.0);
+            wl += v3 * std::cos(p3);
+            wr += v3 * std::sin(p3);
+            if (fNv > 3)
+            {
+                const double p4 = M_PI / 2.0 - p3;
+                wl += v4 * std::cos(p4);
+                wr += v4 * std::sin(p4);
+            }
+        }
         l = xl * fDry + wl * fWet;
         r = xr * fDry + wr * fWet;
     }
@@ -326,31 +419,53 @@ private:
     {
         fHt1 = (deg(fCur, fS1) - fCur) + fS5 / 100.0;
         fHt2 = (deg(fCur, fS2) - fCur) - fS5 / 100.0;
+        fHt3 = (deg(fCur, fS14) - fCur) + fS5 / 200.0;
+        fHt4 = (deg(fCur, fS15) - fCur) - fS5 / 200.0;
     }
 
-    // Mode MIDI: voice 1 sings the latest held note, voice 2 the one held before it
+    // Mode MIDI: voice 1 sings the latest held note, voice 2 the one held before it, voices 3
+    // and 4 the two before that
     void midiIv() noexcept
     {
-        fMn1 = fMn2 = -1;
-        double b1 = 0.0, b2 = 0.0;
+        fMn1 = fMn2 = fMn3 = fMn4 = -1;
+        double b1 = 0.0, b2 = 0.0, b3 = 0.0, b4 = 0.0;
         for (int k = 0; k < 128; ++k)
         {
             if (fHeld[k] > b1)
             {
+                b4 = b3; fMn4 = fMn3;
+                b3 = b2; fMn3 = fMn2;
                 b2 = b1; fMn2 = fMn1;
                 b1 = fHeld[k]; fMn1 = k;
             }
             else if (fHeld[k] > b2)
             {
+                b4 = b3; fMn4 = fMn3;
+                b3 = b2; fMn3 = fMn2;
                 b2 = fHeld[k]; fMn2 = k;
+            }
+            else if (fHeld[k] > b3)
+            {
+                b4 = b3; fMn4 = fMn3;
+                b3 = fHeld[k]; fMn3 = k;
+            }
+            else if (fHeld[k] > b4)
+            {
+                b4 = fHeld[k]; fMn4 = k;
             }
         }
         fHgt1 = fMn1 >= 0 ? 1.0 : 0.0;
         fHgt2 = fMn2 >= 0 ? 1.0 : 0.0;
+        fHgt3 = fMn3 >= 0 ? 1.0 : 0.0;
+        fHgt4 = fMn4 >= 0 ? 1.0 : 0.0;
         if (fMn1 >= 0)
             fHt1 = std::max(-36.0, std::min(36.0, double(fMn1) - fDet)) + fS5 / 100.0;
         if (fMn2 >= 0)
             fHt2 = std::max(-36.0, std::min(36.0, double(fMn2) - fDet)) - fS5 / 100.0;
+        if (fMn3 >= 0)
+            fHt3 = std::max(-36.0, std::min(36.0, double(fMn3) - fDet)) + fS5 / 200.0;
+        if (fMn4 >= 0)
+            fHt4 = std::max(-36.0, std::min(36.0, double(fMn4) - fDet)) - fS5 / 200.0;
     }
 
     // YIN on the last 2 * tmax decimated samples: sets voiced and tf
@@ -545,12 +660,19 @@ private:
     double fSr = 48000.0, fWin = 1.0;
     std::vector<double> fBuf;
     int fSize = 1, fW = 0;
-    double fPh1 = 0.0, fPh2 = 0.0;
+    double fPh1 = 0.0, fPh2 = 0.0, fPh3 = 0.0, fPh4 = 0.0;
     double fR1 = 1.0, fR2 = 1.0, fG1 = 1.0, fG2 = 1.0, fBase1 = 0.0, fBase2 = 0.0, fSp = 0.0, fDry = 1.0, fWet = 0.0;
 
     // Mode, Key, Scale, Formant Preserve
     double fS1 = 4.0, fS2 = 7.0, fS5 = 8.0, fKey = 0.0;
     int fMode = 0, fMask = 2741, fFb1 = 0, fFb2 = 0;
+
+    // voices 3 and 4
+    int fNv = 2, fFb3 = 0, fFb4 = 0, fMn3 = -1, fMn4 = -1;
+    double fR3 = 1.0, fR4 = 1.0, fG3 = 1.0, fG4 = 1.0, fBase3 = 0.0, fBase4 = 0.0, fS14 = 12.0, fS15 = -12.0;
+    double fHt3 = 0.0, fHt4 = 0.0, fHs3 = 0.0, fHs4 = 0.0, fHgt3 = 0.0, fHgt4 = 0.0, fHg3 = 0.0, fHg4 = 0.0;
+    double fSn3 = 0.0, fSn4 = 0.0;
+    std::vector<double> fAcc3, fAcc4, fAw3, fAw4;
     bool fFmt = false, fAdv = false;
 
     // pitch tracking and PSOLA

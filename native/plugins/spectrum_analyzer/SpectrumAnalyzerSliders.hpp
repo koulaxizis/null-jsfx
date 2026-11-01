@@ -16,8 +16,10 @@ static const char* const kRangeOptions[] = { "60 DB", "80 DB", "100 DB", "120 DB
 static const char* const kHoldOptions[] = { "OFF", "2 S", "INFINITE" };
 static const char* const kChannelOptions[] = { "MID", "LEFT", "RIGHT", "SIDE" };
 static const char* const kMonitorOptions[] = { "STEREO", "SOLO" };
+static const char* const kViewOptions[] = { "SPECTRUM", "SONOGRAM" };
+static const char* const kOffOn[] = { "OFF", "ON" };
 
-// slider1..slider7 of spectrum_analyzer.jsfx, in order
+// slider1..slider9 of spectrum_analyzer.jsfx, in order
 static const DISTRHO::SliderInfo kSliders[] = {
     { "FFT Size", "fft_size", 0.0f, 4.0f, 2.0f, "", 1.0f, kSizeOptions },
     { "Slope", "slope", 0.0f, 6.0f, 4.5f, "dB/oct", 0.5f },
@@ -26,6 +28,8 @@ static const DISTRHO::SliderInfo kSliders[] = {
     { "Peak Hold", "peak_hold", 0.0f, 2.0f, 1.0f, "", 1.0f, kHoldOptions },
     { "Channel", "channel", 0.0f, 3.0f, 0.0f, "", 1.0f, kChannelOptions },
     { "Monitor", "monitor", 0.0f, 1.0f, 0.0f, "", 1.0f, kMonitorOptions },
+    { "View", "view", 0.0f, 1.0f, 0.0f, "", 1.0f, kViewOptions },
+    { "Sidechain", "sidechain", 0.0f, 1.0f, 0.0f, "", 1.0f, kOffOn },
 };
 static constexpr uint32_t kNumSliders = sizeof(kSliders) / sizeof(kSliders[0]);
 

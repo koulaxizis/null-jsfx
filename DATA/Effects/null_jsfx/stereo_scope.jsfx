@@ -1,6 +1,6 @@
 desc:NULL Stereo Scope
 author: Christos Koulaxizis
-tags: stereo scope goniometer vectorscope lissajous correlation phase balance width meter analyzer metering
+tags: stereo scope goniometer vectorscope lissajous correlation phase balance width meter analyzer metering multiband band low mid high bass mono
 //category: Advanced
 //NULL JSFX v2.9 • https://nulljsfx.tech • MIT License
 
@@ -9,6 +9,7 @@ slider2:1<0,1,1{Off,On}>Auto Gain
 slider3:50<0,100,1>Decay (%)
 slider4:300<50,3000,10:log>Integration (ms)
 slider5:0<0,2,1{Stereo,Mono,Side}>Monitor
+slider6:0<0,1,1{Off,On}>Band Correlation
 
 in_pin:Left
 in_pin:Right
@@ -24,11 +25,42 @@ out_pin:Right
   //   width       = side level / mid level    (0% mono, 100% as much side as mid)
   // The interface draws a goniometer (Lissajous, L/R rotated 45 degrees so mid is up) with
   // persistence, the meters and a correlation history.
+  // Band Correlation On also measures the correlation in three bands, Low (below 200 Hz), Mid
+  // (200 Hz to 2 kHz) and High (above 2 kHz), split with 12 dB/octave Butterworth filters,
+  // to find which part of the mix is out of phase (e.g. a wide bass that collapses in mono).
   sc_ll = sc_rr = sc_lr = 0;
+  bd_ll1 = bd_rr1 = bd_lr1 = bd_ll2 = bd_rr2 = bd_lr2 = bd_ll3 = bd_rr3 = bd_lr3 = 0;
+
+  // RBJ biquad coefficients (Q 0.7071) into c0..c4: hp = 0 low-pass, 1 high-pass
+  function bd_coef(f, hp) local(w, cs, al, a0)
+  (
+    w = (2 * $pi * f) / srate;
+    cs = cos(w);
+    al = sin(w) / (2 * 0.7071067811865476);
+    a0 = 1 + al;
+    this.c0 = (hp ? (1 + cs) / 2 : (1 - cs) / 2) / a0;
+    this.c1 = (hp ? -(1 + cs) : 1 - cs) / a0;
+    this.c2 = this.c0;
+    this.c3 = (-2 * cs) / a0;
+    this.c4 = (1 - al) / a0;
+  );
+  // one biquad (transposed direct form II) with coefficients c0..c4, state in this
+  function bd_tick(x, c0, c1, c2, c3, c4) local(y)
+  (
+    y = c0 * x + this.z1;
+    this.z1 = (c1 * x - c3 * y) + this.z2;
+    this.z2 = c2 * x - c4 * y;
+    abs(this.z1) < 0.000000000000000000001 ? this.z1 = 0;
+    abs(this.z2) < 0.000000000000000000001 ? this.z2 = 0;
+    y;
+  );
 
 @slider
   sc_k = 1 - exp(-1 / (slider4 / 1000 * srate));
   sc_mon = slider5;
+  sc_bd = slider6 >= 0.5;
+  lp1.bd_coef(200, 0); hp1.bd_coef(200, 1);
+  lp2.bd_coef(2000, 0); hp2.bd_coef(2000, 1);
 
 @sample
   sc_dl = spl0;
@@ -39,6 +71,20 @@ out_pin:Right
   abs(sc_ll) < 0.000000000000000000001 ? sc_ll = 0;
   abs(sc_rr) < 0.000000000000000000001 ? sc_rr = 0;
   abs(sc_lr) < 0.000000000000000000001 ? sc_lr = 0;
+  sc_bd ? (
+    // the three bands of L and R, and their energies as above
+    bd_l1 = fl1.bd_tick(sc_dl, lp1.c0, lp1.c1, lp1.c2, lp1.c3, lp1.c4);
+    bd_r1 = fr1.bd_tick(sc_dr, lp1.c0, lp1.c1, lp1.c2, lp1.c3, lp1.c4);
+    bd_l2 = fl4.bd_tick(sc_dl, hp1.c0, hp1.c1, hp1.c2, hp1.c3, hp1.c4);
+    bd_l2 = fl2.bd_tick(bd_l2, lp2.c0, lp2.c1, lp2.c2, lp2.c3, lp2.c4);
+    bd_r2 = fr4.bd_tick(sc_dr, hp1.c0, hp1.c1, hp1.c2, hp1.c3, hp1.c4);
+    bd_r2 = fr2.bd_tick(bd_r2, lp2.c0, lp2.c1, lp2.c2, lp2.c3, lp2.c4);
+    bd_l3 = fl3.bd_tick(sc_dl, hp2.c0, hp2.c1, hp2.c2, hp2.c3, hp2.c4);
+    bd_r3 = fr3.bd_tick(sc_dr, hp2.c0, hp2.c1, hp2.c2, hp2.c3, hp2.c4);
+    bd_ll1 += sc_k * (bd_l1 * bd_l1 - bd_ll1); bd_rr1 += sc_k * (bd_r1 * bd_r1 - bd_rr1); bd_lr1 += sc_k * (bd_l1 * bd_r1 - bd_lr1);
+    bd_ll2 += sc_k * (bd_l2 * bd_l2 - bd_ll2); bd_rr2 += sc_k * (bd_r2 * bd_r2 - bd_rr2); bd_lr2 += sc_k * (bd_l2 * bd_r2 - bd_lr2);
+    bd_ll3 += sc_k * (bd_l3 * bd_l3 - bd_ll3); bd_rr3 += sc_k * (bd_r3 * bd_r3 - bd_rr3); bd_lr3 += sc_k * (bd_l3 * bd_r3 - bd_lr3);
+  );
 
   sc_mon == 1 ? (
     sc_o = (spl0 + spl1) * 0.5;

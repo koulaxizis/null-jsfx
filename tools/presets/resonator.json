@@ -5,5 +5,7 @@
   ["Bright Metal Pluck", {"Root Note": "E", "Octave": 4, "Chord": "Unison", "Decay": 0.8, "Brightness": 85, "Spread": 20, "Mix": 50}],
   ["Ambient Maj7 Bloom", {"Root Note": "F", "Octave": 3, "Chord": "Maj7", "Decay": 6, "Brightness": 35, "Spread": 70, "Mix": 40}],
   ["Dark Sus Texture", {"Root Note": "G", "Octave": 2, "Chord": "Sus4", "Decay": 2.5, "Brightness": 20, "Spread": 40, "Mix": 45}],
-  ["Noise To Min7 Chords", {"Root Note": "C", "Octave": 3, "Chord": "Min7", "Decay": 1.2, "Brightness": 55, "Spread": 30, "Mix": 70}]
+  ["Noise To Min7 Chords", {"Root Note": "C", "Octave": 3, "Chord": "Min7", "Decay": 1.2, "Brightness": 55, "Spread": 30, "Mix": 70}],
+  ["MIDI Played Strings", {"Decay": 3, "Brightness": 45, "Spread": 35, "Mix": 55, "Notes": "MIDI"}],
+  ["MIDI Bright Shimmer", {"Decay": 6, "Brightness": 80, "Spread": 60, "Mix": 40, "Notes": "MIDI"}]
 ]

@@ -8,19 +8,20 @@ namespace nullpresets {
 
 struct FactoryPreset {
     const char* name;
-    float values[5];
+    float values[6];
 };
 
 static const FactoryPreset kPresets[] = {
-    { "Default", { 0.0f, 1.0f, 50.0f, 300.0f, 0.0f } },
-    { "Fast Response", { 0.0f, 1.0f, 20.0f, 100.0f, 0.0f } },
-    { "Slow Averaging", { 0.0f, 1.0f, 80.0f, 2000.0f, 0.0f } },
-    { "Quiet Source Zoom", { 12.0f, 0.0f, 60.0f, 300.0f, 0.0f } },
-    { "Hot Master View", { -6.0f, 0.0f, 40.0f, 300.0f, 0.0f } },
-    { "Mono Check", { 0.0f, 1.0f, 50.0f, 300.0f, 1.0f } },
-    { "Side Listen", { 0.0f, 1.0f, 50.0f, 300.0f, 2.0f } },
+    { "Default", { 0.0f, 1.0f, 50.0f, 300.0f, 0.0f, 0.0f } },
+    { "Fast Response", { 0.0f, 1.0f, 20.0f, 100.0f, 0.0f, 0.0f } },
+    { "Slow Averaging", { 0.0f, 1.0f, 80.0f, 2000.0f, 0.0f, 0.0f } },
+    { "Quiet Source Zoom", { 12.0f, 0.0f, 60.0f, 300.0f, 0.0f, 0.0f } },
+    { "Hot Master View", { -6.0f, 0.0f, 40.0f, 300.0f, 0.0f, 0.0f } },
+    { "Mono Check", { 0.0f, 1.0f, 50.0f, 300.0f, 1.0f, 0.0f } },
+    { "Side Listen", { 0.0f, 1.0f, 50.0f, 300.0f, 2.0f, 0.0f } },
+    { "Band Phase Check", { 0.0f, 1.0f, 50.0f, 600.0f, 0.0f, 1.0f } },
 };
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
-static constexpr uint32_t kNumValues = 5;
+static constexpr uint32_t kNumValues = 6;
 
 } // namespace nullpresets

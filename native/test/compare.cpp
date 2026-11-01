@@ -36,13 +36,13 @@
  * Instruments (a JSFX without input pins) get no audio but MIDI notes on the General MIDI drum
  * map (one every 1/8 s, varied velocities) and a playing transport at 120 bpm in 4/4 from beat 0,
  * so their sequencer runs too, merged in time order with the MIDI effects' stream below (note-offs,
- * note-ons with velocity 0, the same key again, sustain, all notes off, pitch bend, pressure,
+ * note-ons with velocity 0, the same key again, sustain, CC74, all notes off, pitch bend, pressure,
  * program changes); the CLAP gets the same MIDI and transport. An instrument passes every message
  * on, and that MIDI is compared like a MIDI effect's.
  *
  * MIDI effects (a JSFX in //category: MIDI) get, besides the audio, a stream of MIDI on three
  * channels (chords of overlapping notes, repeated note-ons, note-ons with velocity 0, poly and
- * channel pressure, pitch bend, sustain, program changes and all notes off) and every message
+ * channel pressure, pitch bend, sustain, CC74 timbre, program changes and all notes off) and every message
  * they send is compared too: the same messages, bytes and sample, in the same order.
  */
 
@@ -199,8 +199,10 @@ static std::vector<MidiMsg> testMidi(double sr, uint32_t frames)
         } else if (kind < 84) {
             const size_t k = rnd(uint32_t(held.size()));
             out.push_back({ at, uint8_t(0xA0 | held[k].first), held[k].second, uint8_t(rnd(128)), 3 });
-        } else if (kind < 88) {
+        } else if (kind < 86) {
             out.push_back({ at, uint8_t(0xB0 | ch), 64, uint8_t(rnd(2) ? 127 : 0), 3 });
+        } else if (kind < 88) {
+            out.push_back({ at, uint8_t(0xB0 | ch), 74, uint8_t(rnd(128)), 3 }); // MPE timbre
         } else if (kind < 92) {
             out.push_back({ at, uint8_t(0xE0 | ch), uint8_t(rnd(128)), uint8_t(rnd(128)), 3 });
         } else if (kind < 95) {
@@ -243,12 +245,16 @@ static ysfx_t* loadJsfx(const char* path)
 }
 
 static bool g_instrument = false; // the reference JSFX has no input pins
+// an audio effect whose JSFX reads MIDI (midirecv: Harmonizer and Resonator notes, MIDI-driven
+// triggers): it gets the MIDI test input too, and its MIDI out is compared (pass-through)
+static bool g_midiin = false;
+static bool g_noMidi = false; // set while rendering against a Rack module, which has no MIDI
 
 // the MIDI a plugin gets, in time order: a MIDI effect the stream above, an instrument its notes
 // and that stream (at the same sample, the note first)
 static std::vector<MidiMsg> testInput(double sr, uint32_t frames)
 {
-    if (g_midifx)
+    if (g_midifx || (g_midiin && !g_noMidi))
         return testMidi(sr, frames);
     std::vector<MidiMsg> out;
     if (g_instrument) {
@@ -275,6 +281,15 @@ static bool sliders(const char* path, std::vector<Slider>& out, uint32_t* numOut
                 g_midifx = true;
         std::fclose(f);
     }
+    if (!g_instrument && !g_midifx)
+        if (std::FILE* f = std::fopen(path, "rb")) {
+            std::string src;
+            char chunk[4096];
+            for (size_t n; (n = std::fread(chunk, 1, sizeof(chunk), f)) > 0;)
+                src.append(chunk, n);
+            std::fclose(f);
+            g_midiin = src.find("midirecv(") != std::string::npos;
+        }
     for (uint32_t i = 0; i < ysfx_max_sliders; ++i) {
         if (!ysfx_slider_exists(fx, i))
             continue;
@@ -548,7 +563,8 @@ static bool renderClap(const char* path, double sr, const std::vector<double>& v
         proc.frames_count = n;
         proc.audio_inputs = ibs.data(); proc.audio_inputs_count = uint32_t(ibs.size());
         proc.audio_outputs = obs.data(); proc.audio_outputs_count = uint32_t(obs.size());
-        proc.in_events = g_instrument || g_midifx ? &midiEv : &inEv; proc.out_events = g_midifx || g_instrument ? &midiOutEv : &outEv;
+        proc.in_events = g_instrument || g_midifx || g_midiin ? &midiEv : &inEv;
+        proc.out_events = g_midifx || g_instrument || g_midiin ? &midiOutEv : &outEv;
         proc.transport = g_instrument ? &transport : nullptr;
         if (plugin->process(plugin, &proc) == CLAP_PROCESS_ERROR) {
             std::fprintf(stderr, "process error\n");
@@ -794,6 +810,7 @@ int main(int argc, char** argv)
                 }
             // a Rack module has no sidechain bus: its JSFX hears the track on pins 3/4 as well
             const bool toModule = other.compare(0, 7, "module:") == 0;
+            g_noMidi = toModule;
             std::vector<MidiMsg> ma, mb;
             if (!renderJsfx(ref, sr, sl, sets[i], in, toModule ? in : sc, a, &ma, jsfxChanges))
                 return 1;
@@ -813,7 +830,7 @@ int main(int argc, char** argv)
             const double d = maxDiff(a, b, &at, &ch);
             bool pass = d <= tol && std::isfinite(d);
             std::string level;
-            if (g_midifx || g_instrument) {
+            if (g_midifx || g_instrument || (g_midiin && !toModule)) {
                 // the MIDI out (an instrument passes on what it gets): the same messages at the
                 // same samples, in the same order
                 size_t same = 0;

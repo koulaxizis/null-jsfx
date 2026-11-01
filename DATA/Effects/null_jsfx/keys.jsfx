@@ -16,6 +16,8 @@ slider9:1<0,1,1{Mono,Stereo}>Tremolo Mode
 slider10:0<0,100,1>Drive (%)
 slider11:0<0,100,1>Chorus (%)
 slider12:0<-24,12,0.1>Volume (dB)
+slider13:0<0,1,1{Off,On}>MPE
+slider14:48<0,96,1>MPE Bend Range (st)
 
 in_pin:none
 out_pin:Left
@@ -34,9 +36,14 @@ out_pin:Right
   // old one; a 17th key takes the oldest voice (released ones first) after a 2 ms fade.
   // The voices are spread a little by pitch, then Drive (a soft clip), the tremolo (Mono:
   // level, Stereo: autopan) and a stereo chorus. All notes off (CC 123/120) releases every key.
+  // MPE (On): on channels 2-16 the pitch bend (MPE Bend Range) and channel pressure (up to
+  // +6 dB) belong to the note on that channel (the partials follow the bend), and a note-off or
+  // the same key again acts only on the note of its own channel.
   //
   // Memory: 0.. the MIDI of the block (4 per message), 2048.. keys down, 2304.. per-voice
-  // values, 3072.. the partials (3 per voice), 4096.. the models, 8192.. the chorus delay.
+  // values, 2624.. MPE per voice, channel bend and pressure and the channel of each key,
+  // 3072.. the partials (3 per voice), 3360.. their base frequencies, 4096.. the models,
+  // 8192.. the chorus delay.
   ext_noinit = 1;
   ext_tail_size = -1;
   NV = 16;
@@ -45,6 +52,7 @@ out_pin:Right
   v_note = 2304; v_gate = 2320; v_env = 2336; v_pend = 2352; v_pvel = 2368; v_age = 2384;
   v_pc = 2400; v_dc = 2416; v_pm = 2432; v_dm = 2448; v_ix = 2464; v_ixc = 2480;
   v_a1 = 2496; v_a1c = 2512; v_a2 = 2528; v_a2c = 2544; v_nz = 2560; v_gl = 2576; v_gr = 2592; v_rel = 2608;
+  v_ch = 2624; v_pp = 2640; v_bw = 2656; CHB = 2672; CHP = 2688; KCH = 2704; p_w = 3360;
   p_s1 = 3072; p_s2 = 3120; p_cf = 3168; p_df = 3216; p_e = 3264; p_r = 3312;
   MT = 4096;
   CB = 8192;
@@ -88,6 +96,7 @@ out_pin:Right
   function v_start(v, n, vel) local(f, oc, kdec, vn, g, ix, t, r, a, w, rr, b, p)
   (
     v_note[v] = n; v_pend[v] = -1;
+    v_ch[v] = mpe ? KCH[n] : 0; v_pp[v] = CHP[v_ch[v]]; v_bw[v] = 1;
     v_gate[v] = KD[n] > 0 || sus ? 1 : 0;
     v_env[v] = 0;
     v_rel[v] = 1;
@@ -140,6 +149,7 @@ out_pin:Right
         p_s2[b] = -t / rr;
         p_e[b] = a;
         p_r[b] = rr;
+        p_w[b] = w;
       ) : (
         p_e[b] = 0; p_s1[b] = 0; p_s2[b] = 0;
       );
@@ -157,6 +167,7 @@ out_pin:Right
   function note_on(n, vel) local(v, f, ba)
   (
     KD[n] = 1;
+    KCH[n] = cur_ch;
     f = -1;
     v = 0;
     loop(NV,
@@ -167,7 +178,7 @@ out_pin:Right
     f < 0 ? (
       // the same key still held or sustained lets go of its voice
       v = 0;
-      loop(NV, v_pend[v] < 0 && v_note[v] == n ? v_gate[v] = 0; v += 1;);
+      loop(NV, v_pend[v] < 0 && v_note[v] == n && (!mpe || v_ch[v] == cur_ch) ? v_gate[v] = 0; v += 1;);
       // a free voice, else the oldest released one, else the oldest
       v = 0;
       loop(NV, f < 0 && v_note[v] < 0 ? f = v; v += 1;);
@@ -201,7 +212,7 @@ out_pin:Right
     KD[n] = 0;
     !sus ? (
       v = 0;
-      loop(NV, v_pend[v] < 0 && v_note[v] == n ? v_gate[v] = 0; v += 1;);
+      loop(NV, v_pend[v] < 0 && v_note[v] == n && (!mpe || v_ch[v] == cur_ch) ? v_gate[v] = 0; v += 1;);
     );
   );
   function sus_off() local(v)
@@ -220,6 +231,11 @@ out_pin:Right
   function midi_ev(st, d1, d2) local(t)
   (
     t = st & 0xF0;
+    cur_ch = st & 0x0F;
+    mpe && cur_ch > 0 && (t == 0xE0 || t == 0xD0) ? (
+      // MPE: a member channel's bend and pressure belong to its note
+      t == 0xE0 ? CHB[cur_ch] = (d2 * 128 + d1 - 8192) / 8192 : CHP[cur_ch] = d1 / 127;
+    ) :
     t == 0x90 && d2 > 0 ? note_on(d1, d2) :
     t == 0x80 || t == 0x90 ? note_off(d1) :
     t == 0xB0 ? (
@@ -232,6 +248,8 @@ out_pin:Right
   loop(NV, v_note[v] = -1; v_gate[v] = 0; v_env[v] = 0; v_pend[v] = -1; v += 1;);
   memset(KD, 0, 128);
   sus = 0; age = 0;
+  memset(CHB, 0, 32); memset(KCH, 0, 128);
+  cur_ch = 0; mpe_was = 0;
   seed = 31337; nzf = 0;
   tr_ph = 0; ch_ph = 0;
   cb_size = ceil(srate * 0.025) + 4;
@@ -263,6 +281,12 @@ out_pin:Right
   ch_c = 0.007 * srate;
   ch_d = 0.0025 * srate;
   vol = 10 ^ (slider12 / 20);
+  mpe = slider13 >= 0.5;
+  mpe_r = slider14;
+  mpe_sm = 1 - exp(-1000 / (5 * srate));
+  // MPE turned on starts from neutral channels
+  mpe && !mpe_was ? memset(CHB, 0, 32);
+  mpe_was = mpe;
   a_inc = 1 / (m_att * 0.001 * srate);
   s_inc = 1 / (0.002 * srate);
   nzc = exp(-6.907755 / (m_nd * srate));
@@ -302,10 +326,20 @@ out_pin:Right
   v = 0;
   loop(NV,
     v_note[v] >= 0 ? (
-      pc = v_pc[v] + v_dc[v];
+      // MPE: the note's own bend (the partials retuned when it moves) and pressure (5 ms)
+      mpe ? (
+        br = 2 ^ (mpe_r * CHB[v_ch[v]] / 12);
+        br != v_bw[v] ? (
+          v_bw[v] = br;
+          b = v * 3;
+          loop(3, p_cf[b] = 2 * p_r[b] * cos(min(2.8, p_w[b] * br)); b += 1;);
+        );
+        v_pp[v] += (CHP[v_ch[v]] - v_pp[v]) * mpe_sm;
+        pc = v_pc[v] + v_dc[v] * br;
+      ) : pc = v_pc[v] + v_dc[v];
       pc -= floor(pc);
       v_pc[v] = pc;
-      pm = v_pm[v] + v_dm[v];
+      pm = mpe ? v_pm[v] + v_dm[v] * br : v_pm[v] + v_dm[v];
       pm -= floor(pm);
       v_pm[v] = pm;
       mo = v_ix[v] > 0 ? v_ix[v] * sin(tpi * pm) : 0;
@@ -341,6 +375,7 @@ out_pin:Right
       v_gate[v] <= 0 ? ( q *= r_c; v_rel[v] = q; );
       y *= e;
       y *= q;
+      mpe ? y *= 1 + v_pp[v];
       sl += y * v_gl[v];
       sr += y * v_gr[v];
       v_pend[v] >= 0 ? (

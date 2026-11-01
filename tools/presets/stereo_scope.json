@@ -4,5 +4,6 @@
   ["Quiet Source Zoom", {"Auto Gain": "Off", "Scope Gain": 12, "Decay": 60}],
   ["Hot Master View", {"Auto Gain": "Off", "Scope Gain": -6, "Decay": 40}],
   ["Mono Check", {"Monitor": "Mono"}],
-  ["Side Listen", {"Monitor": "Side"}]
+  ["Side Listen", {"Monitor": "Side"}],
+  ["Band Phase Check", {"Integration": 600, "Band Correlation": "On"}]
 ]

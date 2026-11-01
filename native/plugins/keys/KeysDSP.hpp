@@ -21,7 +21,7 @@
 namespace nullkeys {
 
 static constexpr double kPi = 3.141592653589793; // EEL2 $pi
-static constexpr int kNumSliders = 12;
+static constexpr int kNumSliders = 14;
 static constexpr int kMaxEvents = 512;
 static constexpr int NV = 16;
 static constexpr int kNumModels = 9;
@@ -71,6 +71,14 @@ public:
         std::fill(pR, pR + NV * 3, 0.0);
         std::fill(KD, KD + 128, 0.0);
         sus = false; age = 0;
+        std::fill(vCh, vCh + NV, 0.0);
+        std::fill(vPp, vPp + NV, 0.0);
+        std::fill(vBw, vBw + NV, 0.0);
+        std::fill(pW, pW + NV * 3, 0.0);
+        std::fill(CHB, CHB + 16, 0.0);
+        std::fill(CHP, CHP + 16, 0.0);
+        std::fill(KCH, KCH + 128, 0.0);
+        curCh = 0; mpeWas = false;
         seed = 31337; nzf = 0;
         trPh = 0; chPh = 0;
         cbSize = int(std::ceil(fSr * 0.025)) + 4;
@@ -78,7 +86,7 @@ public:
         cbW = 0;
     }
 
-    // @slider, from the 12 slider values in order
+    // @slider, from the 14 slider values in order
     void setParams(const double* v)
     {
         const double* s = v - 1; // s[n] = slider n
@@ -106,6 +114,16 @@ public:
         chC = 0.007 * sr;
         chD = 0.0025 * sr;
         vol = std::pow(10.0, s[12] / 20);
+        mpe = s[13] >= 0.5;
+        mpeR = s[14];
+        mpeSm = 1 - std::exp(-1000 / (5 * sr));
+        // MPE turned on starts from neutral channels
+        if (mpe && !mpeWas)
+        {
+            std::fill(CHB, CHB + 16, 0.0);
+            std::fill(CHP, CHP + 16, 0.0);
+        }
+        mpeWas = mpe;
         aInc = 1 / (mAtt * 0.001 * sr);
         sInc = 1 / (0.002 * sr);
         nzc = std::exp(-6.907755 / (mNd * sr));
@@ -157,6 +175,9 @@ private:
     {
         const double sr = fSr;
         vNote[v] = n; vPend[v] = -1;
+        vCh[v] = mpe ? KCH[int(n)] : 0;
+        vPp[v] = CHP[int(vCh[v])];
+        vBw[v] = 1;
         vGate[v] = KD[int(n)] > 0 || sus ? 1 : 0;
         vEnv[v] = 0;
         vRel[v] = 1;
@@ -211,6 +232,7 @@ private:
                 pS2[b] = -t / rr;
                 pE[b] = a;
                 pR[b] = rr;
+                pW[b] = w;
             }
             else
             {
@@ -228,6 +250,7 @@ private:
     void noteOn(double n, double vel)
     {
         KD[int(n)] = 1;
+        KCH[int(n)] = curCh;
         int f = -1;
         for (int v = 0; v < NV; ++v)
             if (vPend[v] == n)
@@ -238,7 +261,7 @@ private:
         if (f >= 0)
             return;
         for (int v = 0; v < NV; ++v)
-            if (vPend[v] < 0 && vNote[v] == n)
+            if (vPend[v] < 0 && vNote[v] == n && (!mpe || vCh[v] == curCh))
                 vGate[v] = 0;
         for (int v = 0; v < NV; ++v)
             if (f < 0 && vNote[v] < 0)
@@ -279,7 +302,7 @@ private:
         KD[int(n)] = 0;
         if (!sus)
             for (int v = 0; v < NV; ++v)
-                if (vPend[v] < 0 && vNote[v] == n)
+                if (vPend[v] < 0 && vNote[v] == n && (!mpe || vCh[v] == curCh))
                     vGate[v] = 0;
     }
 
@@ -302,7 +325,16 @@ private:
     void midiEv(double st, double d1, double d2)
     {
         const int t = int(st) & 0xF0;
-        if (t == 0x90 && d2 > 0)
+        curCh = double(int(st) & 0x0F);
+        if (mpe && curCh > 0 && (t == 0xE0 || t == 0xD0))
+        {
+            // MPE: a member channel's bend and pressure belong to its note
+            if (t == 0xE0)
+                CHB[int(curCh)] = (d2 * 128 + d1 - 8192) / 8192;
+            else
+                CHP[int(curCh)] = d1 / 127;
+        }
+        else if (t == 0x90 && d2 > 0)
             noteOn(d1, d2);
         else if (t == 0x80 || t == 0x90)
             noteOff(d1);
@@ -339,10 +371,26 @@ private:
         {
             if (vNote[v] < 0)
                 continue;
-            double pc = vPc[v] + vDc[v];
+            // MPE: the note's own bend (the partials retuned when it moves) and pressure (5 ms)
+            double pc, br = 1;
+            if (mpe)
+            {
+                const int ch = int(vCh[v]);
+                br = std::pow(2.0, mpeR * CHB[ch] / 12);
+                if (br != vBw[v])
+                {
+                    vBw[v] = br;
+                    for (int b = v * 3; b < v * 3 + 3; ++b)
+                        pCf[b] = 2 * pR[b] * std::cos(std::min(2.8, pW[b] * br));
+                }
+                vPp[v] += (CHP[ch] - vPp[v]) * mpeSm;
+                pc = vPc[v] + vDc[v] * br;
+            }
+            else
+                pc = vPc[v] + vDc[v];
             pc -= std::floor(pc);
             vPc[v] = pc;
-            double pm = vPm[v] + vDm[v];
+            double pm = mpe ? vPm[v] + vDm[v] * br : vPm[v] + vDm[v];
             pm -= std::floor(pm);
             vPm[v] = pm;
             const double mo = vIx[v] > 0 ? vIx[v] * std::sin(tpi * pm) : 0;
@@ -390,6 +438,8 @@ private:
             }
             y *= e;
             y *= q;
+            if (mpe)
+                y *= 1 + vPp[v];
             sl += y * vGl[v];
             sr += y * vGr[v];
             if (vPend[v] >= 0)
@@ -478,6 +528,10 @@ private:
     double vA1[NV] = {}, vA1c[NV] = {}, vA2[NV] = {}, vA2c[NV] = {}, vNz[NV] = {}, vGl[NV] = {}, vGr[NV] = {}, vRel[NV] = {};
     double pS1[NV * 3] = {}, pS2[NV * 3] = {}, pCf[NV * 3] = {}, pDf[NV * 3] = {}, pE[NV * 3] = {}, pR[NV * 3] = {};
     double KD[128] = {};
+    // MPE: v_ch, v_pp, v_bw, p_w, CHB, CHP, KCH, cur_ch
+    double vCh[NV] = {}, vPp[NV] = {}, vBw[NV] = {}, pW[NV * 3] = {}, CHB[16] = {}, CHP[16] = {}, KCH[128] = {}, curCh = 0;
+    bool mpe = false, mpeWas = false;
+    double mpeR = 48, mpeSm = 0;
     bool sus = false, trSt = true;
     double age = 0, seed = 31337, nzf = 0, chPh = 0;
     double model = 0;

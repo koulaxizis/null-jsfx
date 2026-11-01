@@ -55,6 +55,8 @@ static const NullKnobsUI::Control kControls[] = {
     { 43, K::kKnob, "OCTAVE", 1, 2, true },
     { 42, K::kKnob, "BEND", 1, 2, false },
     { 34, K::kKnob, "CHARACTER", 1, 2, false },
+    { 45, K::kSelect, "MPE", 1, 2, false },
+    { 46, K::kKnob, "MPE BEND", 1, 2, false },
 
     { 24, K::kSelect, "LFO SHAPE", 0, 3, false },
     { 25, K::kKnob, "LFO RATE", 0, 3, false, true },
@@ -88,6 +90,7 @@ static const SliderInfo* uiSliders()
     s[26].options = kLfoSyncShort;
     s[31].options = kVoiceModeShort;
     s[37].options = kDelayTimeShort;
+    s[45].options = kMpeShort;
     return s;
 }
 
@@ -301,7 +304,7 @@ protected:
         case 28: std::snprintf(buf, n, "%.1f oct", double(v)); break;
         case 30: std::snprintf(buf, n, "%d ms", int(std::lround(v))); break;
         case 32: std::snprintf(buf, n, "%d", int(std::lround(v))); break;
-        case 42: std::snprintf(buf, n, "%d st", int(std::lround(v))); break;
+        case 42: case 46: std::snprintf(buf, n, "%d st", int(std::lround(v))); break;
         case 43: std::snprintf(buf, n, "%+d", int(std::lround(v))); break;
         case 44: std::snprintf(buf, n, "%+.1f dB", double(v)); break;
         default: NullKnobsUI::formatValue(p, v, buf, n); break;

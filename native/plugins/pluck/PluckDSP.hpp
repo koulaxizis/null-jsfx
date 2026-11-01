@@ -21,7 +21,7 @@
 namespace nullpluck {
 
 static constexpr double kPi = 3.141592653589793; // EEL2 $pi
-static constexpr int kNumSliders = 13;
+static constexpr int kNumSliders = 15;
 static constexpr int kMaxEvents = 512;
 static constexpr int NV = 12;
 static constexpr int kNumModels = 10;
@@ -77,6 +77,12 @@ public:
         std::fill(KD, KD + 128, 0.0);
         std::fill(HL, HL + 128, 0.0);
         nheld = 0; sus = false; age = 0; lastVel = 100;
+        std::fill(vCh, vCh + NV, 0.0);
+        std::fill(vMp, vMp + NV, 0.0);
+        std::fill(CHB, CHB + 16, 0.0);
+        std::fill(CHP, CHP + 16, 0.0);
+        std::fill(KCH, KCH + 128, 0.0);
+        curCh = 0; mpeWas = false;
         seed = 4711;
         lb = int(std::ceil(fSr / 30)) + 8;
         SB.assign(size_t(NV * lb), 0.0);
@@ -87,7 +93,7 @@ public:
         dcXl = dcYl = dcXr = dcYr = 0;
     }
 
-    // @slider, from the 12 slider values in order
+    // @slider, from the 15 slider values in order
     void setParams(const double* v)
     {
         const double* s = v - 1; // s[n] = slider n
@@ -112,6 +118,16 @@ public:
         double t = s[11] * 0.001;
         spreadS = std::floor(t * sr + 0.5);
         vol = std::pow(10.0, s[12] / 20);
+        mpe = s[14] >= 0.5;
+        mpeR = s[15];
+        mpeSm = 1 - std::exp(-1000 / (5 * fSr));
+        // MPE turned on starts from neutral channels
+        if (mpe && !mpeWas)
+        {
+            std::fill(CHB, CHB + 16, 0.0);
+            std::fill(CHP, CHP + 16, 0.0);
+        }
+        mpeWas = mpe;
         twK = 1 - std::pow(2.0, -mTw / 1200);
         twc = std::exp(-1 / (mTwt * sr));
         aInc = 1 / (0.0005 * sr);
@@ -205,6 +221,8 @@ private:
     {
         const double sr = fSr;
         vNote[v] = n; vPend[v] = -1;
+        vCh[v] = mpe ? KCH[int(n)] : 0;
+        vMp[v] = CHP[int(vCh[v])];
         vGate[v] = HL[int(n)] > 0 ? 1 : 0;
         vEnv[v] = 0; vRel[v] = 1; vFast[v] = 0;
         age += 1;
@@ -290,7 +308,7 @@ private:
         if (f >= 0)
             return;
         for (int v = 0; v < NV; ++v)
-            if (vPend[v] < 0 && vNote[v] == n && vFast[v] == 0)
+            if (vPend[v] < 0 && vNote[v] == n && vFast[v] == 0 && (!mpe || vCh[v] == curCh))
             {
                 vGate[v] = 0;
                 vFast[v] = 1;
@@ -338,7 +356,7 @@ private:
     void release(double n)
     {
         for (int v = 0; v < NV; ++v)
-            if (vPend[v] < 0 && vNote[v] == n)
+            if (vPend[v] < 0 && vNote[v] == n && (!mpe || vCh[v] == curCh))
                 vGate[v] = 0;
     }
     void noteOn(double n, double vel)
@@ -346,6 +364,7 @@ private:
         if (nheld == 0)
             stClock = 0;
         KD[int(n)] = 1;
+        KCH[int(n)] = curCh;
         HL[int(n)] = 1;
         countHeld();
         lastVel = vel;
@@ -386,7 +405,16 @@ private:
     void midiEv(double st, double d1, double d2)
     {
         const int t = int(st) & 0xF0;
-        if (t == 0x90 && d2 > 0)
+        curCh = double(int(st) & 0x0F);
+        if (mpe && curCh > 0 && (t == 0xE0 || t == 0xD0))
+        {
+            // MPE: a member channel's bend and pressure belong to its note
+            if (t == 0xE0)
+                CHB[int(curCh)] = (d2 * 128 + d1 - 8192) / 8192;
+            else
+                CHP[int(curCh)] = d1 / 127;
+        }
+        else if (t == 0x90 && d2 > 0)
             noteOn(d1, d2);
         else if (t == 0x80 || t == 0x90)
             noteOff(d1);
@@ -489,7 +517,15 @@ private:
                 continue;
             const double tw = vTw[v];
             double t = vTwk[v] * tw;
-            const double d = vD0[v] * (1 - t);
+            double d = vD0[v] * (1 - t);
+            // MPE: the note's own bend (the string's length, within the line) and pressure (5 ms)
+            if (mpe)
+            {
+                const int ch = int(vCh[v]);
+                vMp[v] += (CHP[ch] - vMp[v]) * mpeSm;
+                d /= std::pow(2.0, mpeR * CHB[ch] / 12);
+                d = std::max(2.0, std::min(double(lb - 2), d));
+            }
             vTw[v] = tw * twc;
             if (vTw[v] < 0.000001)
                 vTw[v] = 0;
@@ -539,6 +575,8 @@ private:
             }
             double y = sv * e;
             y *= q;
+            if (mpe)
+                y *= 1 + vMp[v];
             sl += y * vGl[v];
             sr += y * vGr[v];
             if (vPend[v] >= 0)
@@ -592,6 +630,10 @@ private:
     double vLp[NV] = {}, vB[NV] = {}, vG[NV] = {}, vEk[NV] = {}, vEn[NV] = {}, vPp[NV] = {}, vAmp[NV] = {};
     double vGl[NV] = {}, vGr[NV] = {}, vPk[NV] = {};
     double KD[128] = {}, HL[128] = {};
+    // MPE: v_ch, v_mp, CHB, CHP, KCH, cur_ch
+    double vCh[NV] = {}, vMp[NV] = {}, CHB[16] = {}, CHP[16] = {}, KCH[128] = {}, curCh = 0;
+    bool mpe = false, mpeWas = false;
+    double mpeR = 48, mpeSm = 0;
     int nheld = 0;
     bool sus = false, playing = false, stOn = false;
     double age = 0, lastVel = 100, seed = 4711;

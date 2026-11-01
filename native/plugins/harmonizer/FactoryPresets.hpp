@@ -8,25 +8,28 @@ namespace nullpresets {
 
 struct FactoryPreset {
     const char* name;
-    float values[12];
+    float values[17];
 };
 
 static const FactoryPreset kPresets[] = {
-    { "Default", { 4.0f, 7.0f, -6.0f, -6.0f, 8.0f, 15.0f, 70.0f, 50.0f, 0.0f, 0.0f, 0.0f, 0.0f } },
-    { "Minor Harmony", { 3.0f, 7.0f, -6.0f, -6.0f, 8.0f, 15.0f, 70.0f, 50.0f, 0.0f, 0.0f, 0.0f, 0.0f } },
-    { "Power Fifths", { 7.0f, -5.0f, -6.0f, -6.0f, 6.0f, 10.0f, 60.0f, 45.0f, 0.0f, 0.0f, 0.0f, 0.0f } },
-    { "Octave Doubler", { 12.0f, -12.0f, -9.0f, -9.0f, 5.0f, 10.0f, 50.0f, 40.0f, 0.0f, 0.0f, 0.0f, 0.0f } },
-    { "Sub Octave Thickener", { -12.0f, 0.0f, -6.0f, -12.0f, 12.0f, 12.0f, 40.0f, 40.0f, 0.0f, 0.0f, 0.0f, 0.0f } },
-    { "Wide Vocal Double", { 0.0f, 0.0f, -6.0f, -6.0f, 12.0f, 25.0f, 100.0f, 40.0f, 0.0f, 0.0f, 0.0f, 0.0f } },
-    { "Low Harmony Pair", { -5.0f, -9.0f, -8.0f, -8.0f, 8.0f, 15.0f, 70.0f, 45.0f, 0.0f, 0.0f, 0.0f, 0.0f } },
-    { "Harmony Only Print", { 4.0f, 7.0f, -6.0f, -6.0f, 8.0f, 15.0f, 70.0f, 100.0f, 0.0f, 0.0f, 0.0f, 0.0f } },
-    { "Thirds Above (C Major)", { 2.0f, 4.0f, -6.0f, -6.0f, 8.0f, 15.0f, 70.0f, 50.0f, 1.0f, 0.0f, 0.0f, 0.0f } },
-    { "Thirds Below (A Minor)", { -2.0f, -4.0f, -7.0f, -9.0f, 8.0f, 15.0f, 70.0f, 50.0f, 1.0f, 9.0f, 1.0f, 0.0f } },
-    { "Natural Duet (G Major)", { 2.0f, 0.0f, -6.0f, -48.0f, 4.0f, 20.0f, 40.0f, 50.0f, 1.0f, 7.0f, 0.0f, 1.0f } },
-    { "MIDI Choir", { 4.0f, 7.0f, -4.0f, -4.0f, 6.0f, 12.0f, 90.0f, 55.0f, 2.0f, 0.0f, 0.0f, 1.0f } },
-    { "Formant Octave Up", { 12.0f, 0.0f, -6.0f, -48.0f, 0.0f, 0.0f, 0.0f, 40.0f, 0.0f, 0.0f, 0.0f, 1.0f } },
+    { "Default", { 4.0f, 7.0f, -6.0f, -6.0f, 8.0f, 15.0f, 70.0f, 50.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 12.0f, -12.0f, -6.0f, -6.0f } },
+    { "Minor Harmony", { 3.0f, 7.0f, -6.0f, -6.0f, 8.0f, 15.0f, 70.0f, 50.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 12.0f, -12.0f, -6.0f, -6.0f } },
+    { "Power Fifths", { 7.0f, -5.0f, -6.0f, -6.0f, 6.0f, 10.0f, 60.0f, 45.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 12.0f, -12.0f, -6.0f, -6.0f } },
+    { "Octave Doubler", { 12.0f, -12.0f, -9.0f, -9.0f, 5.0f, 10.0f, 50.0f, 40.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 12.0f, -12.0f, -6.0f, -6.0f } },
+    { "Sub Octave Thickener", { -12.0f, 0.0f, -6.0f, -12.0f, 12.0f, 12.0f, 40.0f, 40.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 12.0f, -12.0f, -6.0f, -6.0f } },
+    { "Wide Vocal Double", { 0.0f, 0.0f, -6.0f, -6.0f, 12.0f, 25.0f, 100.0f, 40.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 12.0f, -12.0f, -6.0f, -6.0f } },
+    { "Low Harmony Pair", { -5.0f, -9.0f, -8.0f, -8.0f, 8.0f, 15.0f, 70.0f, 45.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 12.0f, -12.0f, -6.0f, -6.0f } },
+    { "Harmony Only Print", { 4.0f, 7.0f, -6.0f, -6.0f, 8.0f, 15.0f, 70.0f, 100.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 12.0f, -12.0f, -6.0f, -6.0f } },
+    { "Thirds Above (C Major)", { 2.0f, 4.0f, -6.0f, -6.0f, 8.0f, 15.0f, 70.0f, 50.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 12.0f, -12.0f, -6.0f, -6.0f } },
+    { "Thirds Below (A Minor)", { -2.0f, -4.0f, -7.0f, -9.0f, 8.0f, 15.0f, 70.0f, 50.0f, 1.0f, 9.0f, 1.0f, 0.0f, 0.0f, 12.0f, -12.0f, -6.0f, -6.0f } },
+    { "Natural Duet (G Major)", { 2.0f, 0.0f, -6.0f, -48.0f, 4.0f, 20.0f, 40.0f, 50.0f, 1.0f, 7.0f, 0.0f, 1.0f, 0.0f, 12.0f, -12.0f, -6.0f, -6.0f } },
+    { "MIDI Choir", { 4.0f, 7.0f, -4.0f, -4.0f, 6.0f, 12.0f, 90.0f, 55.0f, 2.0f, 0.0f, 0.0f, 1.0f, 0.0f, 12.0f, -12.0f, -6.0f, -6.0f } },
+    { "Formant Octave Up", { 12.0f, 0.0f, -6.0f, -48.0f, 0.0f, 0.0f, 0.0f, 40.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 12.0f, -12.0f, -6.0f, -6.0f } },
+    { "Four Part Choir (C)", { 2.0f, 4.0f, -7.0f, -8.0f, 6.0f, 12.0f, 90.0f, 50.0f, 1.0f, 0.0f, 0.0f, 1.0f, 2.0f, 7.0f, -3.0f, -10.0f, -9.0f } },
+    { "MIDI Quartet", { 4.0f, 7.0f, -5.0f, -5.0f, 6.0f, 12.0f, 100.0f, 55.0f, 2.0f, 0.0f, 0.0f, 1.0f, 2.0f, 12.0f, -12.0f, -6.0f, -6.0f } },
+    { "Octave Stack", { 7.0f, 12.0f, -9.0f, -10.0f, 5.0f, 8.0f, 70.0f, 45.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, -12.0f, -12.0f, -9.0f, -6.0f } },
 };
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
-static constexpr uint32_t kNumValues = 12;
+static constexpr uint32_t kNumValues = 17;
 
 } // namespace nullpresets
