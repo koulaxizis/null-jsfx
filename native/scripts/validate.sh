@@ -9,7 +9,10 @@
 # $CLAP_VALIDATOR (default: on PATH).
 #
 #   pluginval       pluginval validate --strictness-level 5 --skip-gui-tests per .vst3,
-#                   a JUnit report and a log per plugin in <reports>/pluginval/
+#                   a JUnit report and a log per plugin in <reports>/pluginval/. Each plugin gets
+#                   its own random seed (or $PLUGINVAL_SEED, hex 0x.. or decimal, for all of
+#                   them), printed in the job log with the failed checks, so a failure seen once
+#                   can be replayed with --random-seed
 #   clap            clap-validator validate --only-failed --json per .clap (out of process),
 #                   the JSON and a log per plugin in <reports>/clap-validator/
 #
@@ -46,9 +49,17 @@ for p in "${plugins[@]}"; do
   echo "::group::$name.$ext"
   start=$SECONDS
   if [ "$kind" = pluginval ]; then
-    "$tool" validate --strictness-level 5 --skip-gui-tests --junit-xml "$out/$name.xml" "$p" > "$out/$name.log" 2>&1
+    seed="${PLUGINVAL_SEED:-$(printf '0x%x' $(( (RANDOM << 15 | RANDOM) + 1 )))}"
+    echo "seed $seed"
+    "$tool" validate --strictness-level 5 --skip-gui-tests --random-seed "$seed" \
+      --junit-xml "$out/$name.xml" "$p" > "$out/$name.log" 2>&1
     rc=$?
     tail -n 5 "$out/$name.log"
+    if [ $rc -ne 0 ]; then
+      # the failed checks with the test they belong to (the tail shows only the last test)
+      grep -E '^(Starting tests in|!!! )' "$out/$name.log" | grep -B1 '^!!! ' | grep -v '^--$'
+      echo "replay: pluginval validate --strictness-level 5 --skip-gui-tests --random-seed $seed $name.$ext"
+    fi
   else
     "$tool" validate --only-failed --json "$p" > "$out/$name.json" 2> "$out/$name.log"
     rc=$?
@@ -58,7 +69,7 @@ for p in "${plugins[@]}"; do
   echo "::endgroup::"
   if [ $rc -ne 0 ]; then
     failed+=("$name")
-    echo "::warning title=$kind::$name.$ext failed (exit $rc)"
+    echo "::warning title=$kind::$name.$ext failed (exit $rc)${seed:+, seed $seed}"
   fi
 done
 

@@ -1,0 +1,41 @@
+name: Diag synth pluginval (temporary)
+# TEMPORARY, removed before merge: runs pluginval on Synth's VST3 with seeds 1..400 to find
+# the seed of the intermittent Windows failure.
+on:
+  pull_request:
+    paths: [".github/workflows/diag-synth.yml"]
+permissions:
+  contents: read
+jobs:
+  diag:
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { os: windows-2022, name: Windows, exe: ".exe", sha: da158e918b60430c6a5223cd99cc2e746bda604e583258c400898caf4e95c523 }
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v7
+      - name: Build Synth
+        run: native/scripts/build.sh --plugins synth
+      - name: pluginval seeds
+        run: |
+          curl -sSfL -o pluginval.zip "https://github.com/Tracktion/pluginval/releases/download/v2.0.0-beta3/pluginval_${{ matrix.name }}.zip"
+          echo "${{ matrix.sha }}  pluginval.zip" | sha256sum -c -
+          python -m zipfile -e pluginval.zip pv/
+          p="native/dist/VST3/NULL JSFX/null_jsfx_synth.vst3"
+          mkdir -p logs; fails=0
+          for s in $(seq 1 400); do
+            if ! pv/pluginval.exe validate --strictness-level 5 --skip-gui-tests --random-seed $s "$p" > logs/$s.log 2>&1; then
+              fails=$((fails + 1)); echo "=== seed $s FAILED"
+              grep -E '^(Starting tests in|!!! |Testing with)' logs/$s.log | grep -B2 '^!!! ' | head -40
+            fi
+          done
+          echo "failures: $fails / 400"
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with: { name: diag-logs, path: logs, retention-days: 3 }
