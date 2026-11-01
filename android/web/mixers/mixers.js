@@ -1,5 +1,4 @@
-// NULL Remote, Mixers tab: remote control for digital mixers (X AIR first; X32/M32 later as
-// profiles). Loads its own files next to it, then registers with the app's tab shell:
+// NULL Remote, Mixers tab: remote control for digital mixers (profiles: X AIR, X32/M32). Loads its own files next to it, then registers with the app's tab shell:
 //   NullRemote.register({id:'mixers', title:'Mixers', app:'mixers', mount(el), back()}).
 // The shell (android/web/core) owns the header, the tab bar and keep-awake (a Settings choice).
 // Views: Connect (scan, manual IP, how to connect) and Desk (layers of strips, the mix selector
@@ -9,7 +8,7 @@
   'use strict';
 
   const here = (document.currentScript && document.currentScript.src) || location.href;
-  const FILES = ['core/osc.js', 'core/levels.js', 'core/transport.js', 'core/mixer.js', 'xair/profile.js'];
+  const FILES = ['core/osc.js', 'core/levels.js', 'core/transport.js', 'core/mixer.js', 'xair/profile.js', 'x32/profile.js'];
   const HOLD_MS = 1500;
   const STORE = 'null-remote-mixers';
 
@@ -99,12 +98,13 @@
       this.raf = 0;
     }
 
-    get profile() { return window.NullMixerProfiles.xair; }
+    // every console family the tab knows; the connected one is this.profile
+    get profiles() { const P = window.NullMixerProfiles; return [P.xair, P.x32]; }
+    get profile() { return (this.session && this.session.profile) || this.profiles[0]; }
 
     // ---- connect view -------------------------------------------------------------------------
     showConnect(error) {
       this.teardown();
-      const P = this.profile;
       const found = h('div', { class: 'nm-found' });
       const err = h('div', { class: 'nm-error' }, error || '');
       const ip = h('input', { type: 'text', inputmode: 'decimal', placeholder: 'Mixer IP address, e.g. 192.168.1.1', value: this.view.host || '' });
@@ -112,14 +112,14 @@
       const go = h('button', { onclick: () => this.connect(ip.value.trim(), err) }, 'Connect');
       const ui = h('div', { class: 'nm-connect' },
         h('h2', null, 'MIXERS ', h('span', { class: 'nm-beta' }, 'BETA')),
-        h('div', { class: 'nm-sub' }, 'Works with ' + P.family + ' mixers: ' + P.models.filter((m) => !m.startsWith('MR')).join(', ') + '.'),
-        h('div', { class: 'nm-sub' }, 'Beta: tested against a software ' + P.family + ', not yet on every model. If something differs on your mixer, tell us at github.com/koulaxizis/null-jsfx/issues.'),
+        h('div', { class: 'nm-sub' }, 'Works with ' + this.profiles.map((P) => P.family + ' (' + P.models.filter((m) => !m.startsWith('MR')).join(', ') + ')').join(' and ') + '.'),
+        h('div', { class: 'nm-sub' }, 'Beta: tested against software consoles, not yet on every model. If something differs on your mixer, tell us at github.com/koulaxizis/null-jsfx/issues.'),
         h('div', { class: 'nm-row' }, scan),
         found,
         h('div', { class: 'nm-row' }, ip, go),
         err,
         h('h2', { style: 'margin-top:16px' }, 'HOW TO CONNECT'),
-        h('ol', { class: 'nm-help' }, P.connectHelp.map((t) => h('li', null, t))),
+        this.profiles.flatMap((P) => [h('div', { class: 'nm-sub' }, P.family), h('ol', { class: 'nm-help' }, P.connectHelp.map((t) => h('li', null, t)))]),
         h('div', { class: 'nm-note' }, 'X AIR, X32 and M32 are trademarks of their owners. Remote for Mixers is an independent free app from NULL JSFX and is not made or endorsed by them.'));
       this.root.replaceChildren(ui);
       this.root.className = 'nm';
@@ -137,8 +137,10 @@
       btn.textContent = 'Scanning…';
       try {
         const tr = await this.ensureTransport();
-        const consoles = await window.NullMixer.discover(this.profile, tr, 1500);
-        list.replaceChildren(...consoles.map((c) => h('button', { onclick: () => this.connect(c.host, err) },
+        const found = await Promise.all(this.profiles.map((P) => window.NullMixer.discover(P, tr, 1500)
+          .then((list) => list.map((c) => Object.assign(c, { profile: P })))));
+        const consoles = [].concat(...found);
+        list.replaceChildren(...consoles.map((c) => h('button', { onclick: () => this.connect(c.host, err, c.profile) },
           h('b', null, c.name || c.model), h('span', null, c.model + ' • ' + c.host + (c.version ? ' • firmware ' + c.version : '')))));
         if (!consoles.length) err.textContent = 'No mixer answered. Check the network, or type its IP address.';
         else err.textContent = '';
@@ -149,13 +151,15 @@
       btn.textContent = 'Scan';
     }
 
-    async connect(host, err) {
+    async connect(host, err, profile) {
       if (!/^[\w.-]+$/.test(host)) { err.textContent = 'Type the mixer’s IP address.'; return; }
       err.textContent = 'Connecting to ' + host + '…';
       try {
         const tr = await this.ensureTransport();
-        const s = new window.NullMixer.Session(this.profile, tr);
-        await s.connect(host, this.profile.port);
+        // a typed address: ask it on every family's port which console it is
+        if (!profile) profile = (await window.NullMixer.identify(this.profiles, tr, host)).profile;
+        const s = new window.NullMixer.Session(profile, tr);
+        await s.connect(host, profile.port);
         this.session = s;
         this.view.host = host;
         store.set({ host });
@@ -253,7 +257,15 @@
       }
 
       // meters
-      this.offs.push(s.onMeters((addr, db) => { if (addr === L.meterAddress) this.meters = db; }));
+      // one index space for every meter block of the profile (X AIR: /meters/1; X32: /meters/0 and 2)
+      const blocks = new Map((L.meters || [{ address: L.meterAddress, offset: 0 }]).map((m) => [m.address, m.offset]));
+      this.meters = null;
+      this.offs.push(s.onMeters((addr, db) => {
+        if (!blocks.has(addr)) return;
+        const off = blocks.get(addr);
+        if (!this.meters) this.meters = [];
+        for (let i = 0; i < db.length; i++) this.meters[off + i] = db[i];
+      }));
       const tick = () => {
         this.raf = requestAnimationFrame(tick);
         const m = this.meters;

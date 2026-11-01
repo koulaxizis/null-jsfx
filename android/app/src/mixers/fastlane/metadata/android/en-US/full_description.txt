@@ -1,6 +1,6 @@
-Remote for Mixers controls a digital mixer from your Android phone or tablet over the mixer's Wi-Fi or your local network. It works with Behringer X AIR mixers (XR12, XR16, XR18, X18) first; X32 and Midas M32 follow.
+Remote for Mixers controls a digital mixer from your Android phone or tablet over the mixer's Wi-Fi or your local network. It works with Behringer X AIR mixers (XR12, XR16, XR18, X18) and with the Behringer X32 and Midas M32 families (X32, Compact, Producer, Rack, Core; M32, M32R, M32C).
 
-This is a beta: it is tested against a software X AIR. Please report anything that behaves differently on your mixer.
+This is a beta: it is tested against software X AIR and X32 consoles. Please report anything that behaves differently on your mixer.
 
 <b>What it does</b>
 <ul>

@@ -1,4 +1,5 @@
-// Drives the Mixers tab in a real browser (Playwright, Chromium) against the X AIR simulator.
+// Drives the Mixers tab in a real browser (Playwright, Chromium) against the X AIR simulator and
+// an X32/M32 simulator (xair_sim.cjs with profile x32), side by side on the network.
 // The page's NullShell UDP bridge is wired to real UDP in Node, so the tab's own transport,
 // session and UI code all run as in the app. Usage: node tests/mixers/ui_test.cjs [screenshot dir]
 'use strict';
@@ -28,6 +29,7 @@ function serve() {
 
 async function main() {
   const console_ = await sim.start({ model: 'XR18', name: 'Stage XR18' });
+  const m32 = await sim.start({ profile: 'x32', model: 'M32', name: 'FOH M32' });
   const server = await serve();
   const browser = await chromium.launch();
   const page = await browser.newPage({ viewport: { width: 1280, height: 800 } });
@@ -35,18 +37,20 @@ async function main() {
   page.on('pageerror', (e) => errors.push(e.message));
   page.on('console', (m) => { if (m.type() === 'error') errors.push(m.text()); });
 
-  // the native bridge: the page's port 10024 is the simulator's port
+  // the native bridge: the page's port 10024 is the X AIR simulator, 10023 the M32 simulator,
+  // which the page sees at 127.0.0.2 so the two consoles never share an address
   const sock = dgram.createSocket('udp4');
   await new Promise((r) => sock.bind(0, '127.0.0.1', r));
-  const toSim = (b64) => sock.send(Buffer.from(b64, 'base64'), console_.port, '127.0.0.1');
-  await page.exposeFunction('nmUdpSend', (host, port, b64) => toSim(b64));
-  await page.exposeFunction('nmUdpBroadcast', (port, b64) => toSim(b64));
+  const toSim = (b64, port) => sock.send(Buffer.from(b64, 'base64'), port === 10023 ? m32.port : console_.port, '127.0.0.1');
+  await page.exposeFunction('nmUdpSend', (host, port, b64) => toSim(b64, port));
+  await page.exposeFunction('nmUdpBroadcast', (port, b64) => toSim(b64, port));
   // packets from the simulator go to the page: the harness's __nmDeliver, or in the real shell
   // page (android/web/core) the shell's own receive path, as Shell.kt posts them
   let deliverTo = page;
-  sock.on('message', (buf) => {
+  sock.on('message', (buf, r) => {
+    const fromM32 = r.port === m32.port;
     deliverTo.evaluate((m) => (window.__nmDeliver ? window.__nmDeliver(m) : window.NullShell._recv(JSON.stringify(m))),
-      { type: 'udp', id: 1, host: '127.0.0.1', port: 10024, data: buf.toString('base64') }).catch(() => {});
+      { type: 'udp', id: 1, host: fromM32 ? '127.0.0.2' : '127.0.0.1', port: fromM32 ? 10023 : 10024, data: buf.toString('base64') }).catch(() => {});
   });
 
   const shot = async (name, size) => {
@@ -163,10 +167,43 @@ async function main() {
 
     await page.locator('.nm-bar button', { hasText: 'Disconnect' }).click();
     await page.locator('.nm-connect').waitFor();
+
+    // the M32 in the same scan: its own layout, paths and meters
+    await page.locator('.nm-found button', { hasText: 'FOH M32' }).waitFor({ timeout: 5000 });
+    assert.match(await page.locator('.nm-found button', { hasText: 'FOH M32' }).innerText(), /M32 • 127\.0\.0\.2/);
+    await page.locator('.nm-found button', { hasText: 'FOH M32' }).click();
+    await page.locator('.nm-desk').waitFor({ timeout: 5000 });
+    assert.match(await page.locator('.nm-console').innerText(), /FOH M32 • M32/);
+    assert.strictEqual(await page.locator('.nm-strips .nm-strip').count(), 40, '32 channels + 8 aux ins');
+    assert.strictEqual(await page.locator('button.mg').count(), 6, 'six mute groups');
+    await strip('Ch 32').locator('button.mute').click();
+    await until(() => m32.state.get('/ch/32/mix/on') === 0, 'mute channel 32 on the M32');
+    await strip('Aux 1').locator('button.solo').click();
+    await until(() => m32.state.get('/-stat/solosw/33') === 1, 'solo aux 1 on the M32');
+    await page.locator('button.clear-solo').click();
+    await until(() => m32.state.get('/-stat/solosw/33') === 0, 'clear solo on the M32');
+    await until(async () => (await page.locator('.nm-meter[data-i="0"] i').evaluate((e) => parseFloat(e.style.height) || 0)) > 5, 'M32 meters (/meters/0)');
+    await until(async () => (await page.locator('.nm-master .nm-meter[data-i="92"] i').evaluate((e) => parseFloat(e.style.height) || 0)) >= 0, 'Main LR meter slot');
+    await page.locator('.nm-bar button', { hasText: 'Bus 16' }).click();
+    await drag(strip('Kick').locator('.nm-fader'), -150);
+    await until(() => m32.state.get('/ch/01/mix/16/level') > 0.1, 'send to bus 16 on the M32');
+    await page.locator('.nm-bar button', { hasText: 'Main LR' }).click();
+    await page.locator('.nm-bar button', { hasText: 'Buses' }).click();
+    assert.strictEqual(await page.locator('.nm-strips .nm-strip').count(), 16);
+    await page.locator('.nm-bar button', { hasText: 'DCA' }).click();
+    assert.strictEqual(await page.locator('.nm-strips .nm-strip').count(), 8);
+    await page.locator('.nm-strips .nm-strip').nth(7).locator('button.mute').click();
+    await until(() => m32.state.get('/dca/8/on') === 0, 'DCA 8 mute on the M32');
+    await page.locator('.nm-bar button', { hasText: 'Inputs' }).click();
+    await shot('mixers-m32-tablet', { width: 1280, height: 800 });
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await page.locator('.nm-bar button', { hasText: 'Disconnect' }).click();
+    await page.locator('.nm-connect').waitFor();
+
     // inside the real shell page (android/web/core/index.html) of the mixers app, with a
     // stand-in for Shell.kt's NullShellNative: header, tab bar, and the same session
     const app = await browser.newContext({ viewport: { width: 412, height: 860 }, hasTouch: true, isMobile: true });
-    await app.exposeBinding('nmUdpSend', (src, host, port, b64) => toSim(b64));
+    await app.exposeBinding('nmUdpSend', (src, host, port, b64) => toSim(b64, port));
     await app.addInitScript(() => {
       window.NullShellNative = {
         info: () => JSON.stringify({ app: 'mixers', version: '3.0', code: 30000, flavor: 'github', updateCheck: false, sdk: 35 }),
@@ -204,6 +241,7 @@ async function main() {
     server.close();
     sock.close();
     console_.close();
+    m32.close();
   }
 }
 

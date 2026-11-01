@@ -1,5 +1,5 @@
 // NULL Remote, Mixers: one live session with an OSC console, independent of the model family.
-// A profile (xair/profile.js today, x32 later) supplies the port, discovery and info messages,
+// A profile (xair/profile.js, x32/profile.js) supplies the port, discovery and info messages,
 // the keep-alive messages and the layout (strips and the typed OSC parameters); this file keeps
 // the state, queries every parameter on connect, applies updates the console pushes, sends
 // changes (coalesced per parameter), renews subscriptions and watches the link.
@@ -34,6 +34,40 @@
       });
       transport.broadcast(profile.port, Osc.encode(profile.infoAddress));
       setTimeout(() => { off(); resolve([...found.values()]); }, ms);
+    });
+  }
+
+  // Ask one address which console it is, on the port of every profile at once (the user typed
+  // an IP and did not say X AIR or X32). Resolves to {profile, info} from the first answer.
+  function identify(profiles, transport, host, ms = 2500) {
+    return new Promise((resolve, reject) => {
+      let done = false;
+      let tries = 0;
+      let timer = null;
+      const off = transport.onPacket((bytes, from) => {
+        if (done || from !== host) return;
+        let msgs;
+        try { msgs = Osc.decode(bytes); } catch (_) { return; }
+        for (const m of msgs) {
+          for (const p of profiles) {
+            if (m.address !== p.infoAddress) continue;
+            const info = p.parseInfo(m.args);
+            if (!info) continue;
+            done = true;
+            clearTimeout(timer);
+            off();
+            resolve({ profile: p, info });
+            return;
+          }
+        }
+      });
+      const ask = () => {
+        if (done) return;
+        if (tries++ >= 3) { done = true; off(); reject(new Error('No answer from ' + host)); return; }
+        for (const p of profiles) transport.send(host, p.port, Osc.encode(p.infoAddress));
+        timer = setTimeout(ask, ms / 3);
+      };
+      ask();
     });
   }
 
@@ -143,7 +177,8 @@
         }
         if (this.profile.isMeter(m.address)) {
           const blob = m.args[0] && m.args[0].t === 'b' ? m.args[0].v : null;
-          const db = Levels.parseMeterBlob(blob);
+          // a profile with its own blob format parses it (X32: float32), else X AIR's int16 dB
+          const db = this.profile.parseMeter ? this.profile.parseMeter(blob) : Levels.parseMeterBlob(blob);
           if (db) for (const cb of this.meterListeners) cb(m.address, db);
           continue;
         }
@@ -205,5 +240,5 @@
     }
   }
 
-  return { discover, Session };
+  return { discover, identify, Session };
 });
