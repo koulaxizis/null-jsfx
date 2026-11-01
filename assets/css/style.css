@@ -1781,8 +1781,14 @@ a.download-option:hover {
     border-color: #c4c4c4;
 }
 
-/* the card's name is a link to its page, but reads like the heading it was */
+/* the card's name is a link to its page, but reads like the heading it was. The padding,
+   taken back by the margin, makes it a 24 px touch target (WCAG 2.2 AA 2.5.8) with no change
+   to the layout */
 .card-link {
+    display: inline-block;
+    min-width: 24px;
+    padding: 4px 0;
+    margin: -4px 0;
     color: inherit;
     text-decoration: none;
 }
@@ -1802,6 +1808,7 @@ a.download-option:hover {
 }
 
 .demo-play {
+    position: relative;
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -1814,6 +1821,14 @@ a.download-option:hover {
     color: var(--muted);
     cursor: pointer;
     transition: color 0.2s, border-color 0.2s;
+}
+
+/* a 26 px touch target around the 22 px circle (WCAG 2.2 AA 2.5.8), invisible */
+.demo-play::before {
+    content: "";
+    position: absolute;
+    inset: -3px;
+    border-radius: 50%;
 }
 
 .demo-play:hover,

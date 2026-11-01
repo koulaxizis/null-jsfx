@@ -10,6 +10,9 @@ name: Count downloads
 on:
   schedule:
     - cron: "0 3 * * *"
+  # a release is built as a draft (release.yml) and counted once it is published
+  release:
+    types: [published]
   workflow_run:
     workflows: ["VST3 and CLAP"]
     types: [completed]
@@ -24,16 +27,15 @@ concurrency:
 
 jobs:
   count:
-    # after "VST3 and CLAP" only when that run attached packages to a release (published, or a
-    # manual run): PR and main runs add no assets
+    # after "VST3 and CLAP" only when a manual run attached packages to a release: PR and main
+    # runs add no assets
     if: >-
       github.event_name != 'workflow_run' ||
-      github.event.workflow_run.event == 'release' ||
       github.event.workflow_run.event == 'workflow_dispatch'
     timeout-minutes: 10
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           ref: main
 

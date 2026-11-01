@@ -20,16 +20,20 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.ref || github.run_id }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
+# Read-only: these jobs only build and test.
+permissions:
+  contents: read
+
 jobs:
   web:
     timeout-minutes: 30
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version: 22
-      - uses: actions/cache@v4
+      - uses: actions/cache@v6
         with:
           path: tests/.build/ysfx
           key: ysfx-${{ hashFiles('tests/run.sh') }}

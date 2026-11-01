@@ -4,11 +4,11 @@ name: NULL JSFX Hub
 #   core      its engine (hub/core) tested on Windows, macOS and Linux
 #   ui        its page (hub/ui) in a browser against a stand-in, and the catalog check
 #   smoke     install and remove from the latest real release, fetching only the parts needed
-#             (skipped when a release is published, before its packages are attached)
 #   build     the app for Windows (setup .exe), Linux (.AppImage, .deb) and macOS (.dmg)
-# When a GitHub release is published, the app and NULL-JSFX-Catalog.json (what the Hub reads to
-# know the release: tools/build_catalog.py) are attached to it. Run by hand with a release tag
-# to attach them to a release that already exists.
+# With a release tag (the Release workflow, which builds a draft release, or a run by hand) the
+# app and NULL-JSFX-Catalog.json (what the Hub reads to know the release: tools/build_catalog.py)
+# are attached to that release. When the release is published, only the catalog is built again,
+# so it carries the final release notes and the publish date.
 
 on:
   push:
@@ -22,15 +22,22 @@ on:
         description: "Attach the Hub and the catalog to this existing release (e.g. 2.2); empty = only build"
         required: false
         default: ""
+  # from release.yml, which creates the draft release first
+  workflow_call:
+    inputs:
+      release_tag:
+        type: string
+        required: true
   release:
     types: [published]
 
 # Pull requests run on every push to their branch; a newer push cancels the older run of the same
 # PR. Pushes run only on main, so a branch with a PR is not built twice. Runs on main, releases
 # and manual runs each get their own group, so they are never cancelled or queued (release
-# uploads always finish).
+# uploads always finish). The group name is fixed rather than github.workflow, which is the
+# caller's name when release.yml calls this workflow and would put both called workflows in one group.
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.ref || github.run_id }}
+  group: hub-${{ github.event_name == 'pull_request' && github.ref || github.run_id }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 # Read-only by default; only the jobs that attach to a release may write.
@@ -45,6 +52,8 @@ jobs:
   # catalog, which ui and smoke check; the engine tests and the app builds on 3 OS run when hub/
   # or this workflow changes, and always on main pushes of those, releases and manual runs.
   changes:
+    # a published release only gets its catalog again (job catalog)
+    if: github.event_name != 'release'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     outputs:
@@ -80,7 +89,7 @@ jobs:
         os: [ubuntu-22.04, windows-2022, macos-15]
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: dtolnay/rust-toolchain@b725eda525362e7cf34af9a7243cac1e3f01a7ec # stable
         with:
           toolchain: stable
@@ -91,12 +100,14 @@ jobs:
         working-directory: hub
 
   ui:
+    if: github.event_name != 'release'
     timeout-minutes: 20
-    # Playwright 1.56 has no Chromium for ubuntu-latest (26.04), so this job stays on 24.04
-    runs-on: ubuntu-24.04
+    # Playwright 1.64 has a Chromium for ubuntu-latest (26.04); 1.56 had none, so until
+    # 2026-11-01 this job was pinned to 24.04
+    runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version: 22
       - run: python3 tools/build_catalog.py --check
@@ -106,19 +117,20 @@ jobs:
         working-directory: hub
       - run: node tests/ui_test.cjs shots
         working-directory: hub
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: hub-screenshots
           path: hub/shots
+          retention-days: 14
 
   smoke:
-    # not on a release: its packages are still being attached (native.yml) when this starts
+    # against the latest published release; a published release only gets its catalog again
     if: github.event_name != 'release'
     timeout-minutes: 30
     runs-on: ubuntu-22.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: dtolnay/rust-toolchain@b725eda525362e7cf34af9a7243cac1e3f01a7ec # stable
         with:
           toolchain: stable
@@ -144,8 +156,8 @@ jobs:
       run:
         shell: bash
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version: 22
       - uses: dtolnay/rust-toolchain@b725eda525362e7cf34af9a7243cac1e3f01a7ec # stable
@@ -195,13 +207,13 @@ jobs:
           kill $pid || true
 
       - name: The released Hub (Windows)
-        # from the newest release other than $TAG that has one: when a release is published,
-        # "latest" is that release, and its Hub is the one being built here
+        # from the newest published release other than $TAG that has one (a draft is not released
+        # yet, and $TAG's Hub is the one being built here)
         if: runner.os == 'Windows'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          from="$(gh api "repos/$GITHUB_REPOSITORY/releases" --jq '[.[] | select((.prerelease | not) and .tag_name != env.TAG and any(.assets[]; .name == "NULL-JSFX-Hub-Windows-Setup.exe"))][0].tag_name // empty')"
+          from="$(gh api "repos/$GITHUB_REPOSITORY/releases" --jq '[.[] | select((.prerelease | not) and (.draft | not) and .tag_name != env.TAG and any(.assets[]; .name == "NULL-JSFX-Hub-Windows-Setup.exe"))][0].tag_name // empty')"
           [ -n "$from" ] || { echo "no earlier release has a Windows Hub"; exit 1; }
           echo "updating from the Hub of release $from"
           gh release download "$from" --repo "$GITHUB_REPOSITORY" --pattern NULL-JSFX-Hub-Windows-Setup.exe --output "$RUNNER_TEMP/released.exe"
@@ -231,10 +243,11 @@ jobs:
           if (-not (Get-Process null-jsfx-hub -ErrorAction SilentlyContinue)) { throw "the new Hub did not start" }
           Stop-Process -Name null-jsfx-hub -Force
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: NULL-JSFX-Hub-${{ matrix.name }}
           path: out/*
+          retention-days: 14
 
       - name: Attach to the release
         if: env.TAG != ''
@@ -250,7 +263,7 @@ jobs:
     timeout-minutes: 15
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Build and attach NULL-JSFX-Catalog.json
         env:
           GH_TOKEN: ${{ github.token }}
@@ -258,6 +271,8 @@ jobs:
         run: |
           if [ -z "$NOTES" ]; then NOTES="$(gh release view "$TAG" --json body --jq .body)"; fi
           printf '%s\n' "$NOTES" > notes.md
-          date="$(gh release view "$TAG" --json publishedAt --jq '.publishedAt[:10]')"
+          # a draft has no publish date yet: today's, until the catalog is built again on publish
+          date="$(gh release view "$TAG" --json isDraft,publishedAt --jq 'if .isDraft then "" else .publishedAt[:10] end')"
+          date="${date:-$(date -u +%F)}"
           python3 tools/build_catalog.py --version "$TAG" --notes notes.md --date "$date" --out NULL-JSFX-Catalog.json
           for i in 1 2 3 4 5; do gh release upload "$TAG" NULL-JSFX-Catalog.json --clobber && exit 0; sleep $((i * 30)); done; exit 1
