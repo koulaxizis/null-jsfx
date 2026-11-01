@@ -1,0 +1,122 @@
+name: Android remotes
+
+# The NULL JSFX Android remotes (android/): one shell, two apps (Remote for REAPER, and the
+# mixer remote), each as "github" (our releases, with an update notice) and "fdroid".
+#   pages   the apps' pages (android/web) in Chromium against the REAPER stand-in
+#   build   unit tests, Android lint, and every APK (debug) as a workflow artifact
+#   release when a GitHub release is published (or by hand with its tag): the signed release
+#           APKs of the apps in RELEASED_APPS, attached to it
+# Signing uses the orOS keystore (Christos, 2026-11-01) from the repository secrets
+# ANDROID_KEYSTORE (base64 of the .jks), ANDROID_KEYSTORE_PASSWORD, ANDROID_KEY_ALIAS and
+# ANDROID_KEY_PASSWORD. Without them a release gets no APK and the run says so.
+
+on:
+  push:
+    branches: [main]
+    paths: ["android/**", "remote/**", "native/common/fonts/**", "tests/remote/**", "tests/lint.py", ".github/workflows/android.yml"]
+  pull_request:
+    paths: ["android/**", "remote/**", "native/common/fonts/**", "tests/remote/**", "tests/lint.py", ".github/workflows/android.yml"]
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: "Attach the APKs to this existing release (e.g. 3.1); empty = only build"
+        required: false
+        default: ""
+  release:
+    types: [published]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.ref || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
+
+env:
+  TAG: ${{ github.event.release.tag_name || inputs.release_tag }}
+  # the apps attached to a release; the mixer remote joins when its first version is ready
+  RELEASED_APPS: "reaper"
+
+jobs:
+  pages:
+    timeout-minutes: 15
+    # Playwright 1.56 has no Chromium for ubuntu-latest (26.04), as in test.yml's job remote
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm ci
+        working-directory: tests/remote
+      - run: npx playwright install --with-deps chromium
+        working-directory: tests/remote
+      - run: node tests/remote/android_test.cjs
+
+  build:
+    timeout-minutes: 30
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Unit tests, lint and the debug APKs
+        working-directory: android
+        run: ./gradlew --no-daemon testReaperGithubDebugUnitTest lintReaperGithubDebug lintMixersGithubDebug assembleDebug
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: NULL-JSFX-Android-debug
+          path: |
+            android/app/build/outputs/apk/**/*.apk
+            android/app/build/reports/
+          retention-days: 14
+
+  release:
+    if: github.event_name == 'release' || inputs.release_tag != ''
+    needs: [pages, build]
+    timeout-minutes: 30
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.TAG }}
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Signed release APKs
+        id: apks
+        working-directory: android
+        env:
+          NULL_REMOTE_KEYSTORE: ${{ secrets.ANDROID_KEYSTORE }}
+          NULL_REMOTE_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          NULL_REMOTE_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          NULL_REMOTE_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          if [ -z "$NULL_REMOTE_KEYSTORE" ]; then
+            echo "::warning::No ANDROID_KEYSTORE secret: release $TAG gets no Android APKs"
+            echo "skip=1" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          mkdir -p out
+          for app in $RELEASED_APPS; do
+            A="$(tr '[:lower:]' '[:upper:]' <<< "${app:0:1}")${app:1}"
+            ./gradlew --no-daemon "assemble${A}GithubRelease"
+            apk="app/build/outputs/apk/${app}Github/release/app-${app}-github-release.apk"
+            [ -f "$apk" ] || { echo "no $apk"; exit 1; }
+            name="$([ "$app" = reaper ] && echo REAPER || echo "$A")"
+            cp "$apk" "out/NULL-JSFX-Remote-${name}-Android.apk"
+          done
+          ls -l out
+      - name: Attach to the release
+        if: steps.apks.outputs.skip != '1'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: for i in 1 2 3 4 5; do gh release upload "$TAG" android/out/* --clobber && exit 0; sleep $((i * 30)); done; exit 1

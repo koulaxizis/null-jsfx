@@ -1,0 +1,33 @@
+# Draft of the F-Droid build recipe for Remote for REAPER, for a merge request to
+# https://gitlab.com/fdroid/fdroiddata (metadata/tech.nulljsfx.remote.reaper.yml). Not used by
+# our own builds. F-Droid builds the "fdroid" flavor from the release tag and signs it with its
+# own key unless the build is reproducible and we ask for our signature (AllowedAPKSigningKeys).
+Categories:
+  - Multimedia
+License: MIT
+AuthorName: Christos Koulaxizis
+WebSite: https://nulljsfx.tech
+SourceCode: https://github.com/koulaxizis/null-jsfx
+IssueTracker: https://github.com/koulaxizis/null-jsfx/issues
+
+AutoName: Remote for REAPER
+
+RepoType: git
+Repo: https://github.com/koulaxizis/null-jsfx.git
+
+Builds:
+  - versionName: '3.1'
+    versionCode: 30100
+    commit: '3.1'
+    subdir: android/app
+    gradle:
+      - reaper
+      - fdroid
+
+# versionCode is computed from the suite version (3.1 -> 30100, android/app/build.gradle.kts)
+AutoUpdateMode: Version
+UpdateCheckMode: Tags ^[0-9.]+$
+VercodeOperation:
+  - '%c'
+CurrentVersion: '3.1'
+CurrentVersionCode: 30100

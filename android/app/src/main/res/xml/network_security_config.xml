@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- REAPER's web interface is plain HTTP on the local network, at an address only the user
+     knows, so cleartext cannot be limited to fixed hosts. The app's own pages are local assets,
+     and its only internet request (the update check) is HTTPS. -->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="true" />
+</network-security-config>

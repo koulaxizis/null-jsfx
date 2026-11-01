@@ -1,0 +1,81 @@
+/* NULL JSFX Android remotes: the apps's own screens. Palette and type as the GFX plugins and the tablet page
+   (Bible R8): dark only, silver accent, Noto Sans. */
+@font-face { font-family: "Noto Sans"; src: url("fonts/NotoSans-Regular.ttf") format("truetype"); font-weight: 400; }
+@font-face { font-family: "Noto Sans"; src: url("fonts/NotoSans-Bold.ttf") format("truetype"); font-weight: 700; }
+:root {
+  --bg: #1b1a18; --bg2: #131211; --card: #232220; --border: #333333; --border-hi: #45433f;
+  --active: #2d2b28; --text: #e0e0e0; --muted: #999999; --slogan: #6a6a6a; --accent: #c4c4c4;
+  --warn: #d9a441; --clip: #d4534a;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+[hidden] { display: none !important; }
+html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text); overflow: hidden; }
+body {
+  font: 15px/1.4 "Noto Sans", system-ui, sans-serif;
+  display: flex; flex-direction: column; height: 100dvh;
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) 0 env(safe-area-inset-left);
+}
+button, input, select { font: inherit; color: var(--text); }
+button {
+  background: var(--card); border: 1px solid var(--border); border-radius: 8px;
+  padding: 0 16px; height: 44px; min-width: 44px; cursor: pointer; touch-action: manipulation;
+}
+button:active, button.on { background: var(--active); border-color: var(--border-hi); }
+button.primary { border-color: var(--accent); }
+button:disabled { opacity: .4; }
+input {
+  background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; height: 44px;
+  padding: 0 12px; width: 100%; min-width: 0;
+}
+input:focus { outline: none; border-color: var(--accent); }
+a { color: var(--accent); }
+
+#views { flex: 1; position: relative; min-height: 0; }
+.view { position: absolute; inset: 0; display: flex; flex-direction: column; }
+.view > iframe { flex: 1; border: 0; width: 100%; background: var(--bg); }
+.scroll { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+
+/* bottom tabs */
+nav.tabs {
+  display: flex; flex: none; background: var(--bg2); border-top: 1px solid var(--border);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+nav.tabs button {
+  flex: 1; border: 0; border-radius: 0; background: none; height: 52px; color: var(--muted);
+  font-size: 12px; letter-spacing: 1.5px; text-transform: uppercase;
+}
+nav.tabs button.on { color: var(--accent); box-shadow: inset 0 2px 0 var(--accent); }
+
+/* header: logo, name and slogan, as in the GFX versions */
+.top {
+  display: flex; align-items: center; gap: 10px; padding: 8px 16px; background: var(--bg2);
+  border-bottom: 1px solid var(--border); flex: none; min-height: 60px;
+}
+.top .name { font-weight: 700; letter-spacing: 2px; white-space: nowrap; }
+.top .name span { color: var(--muted); font-weight: 400; letter-spacing: 1px; margin-left: 6px; }
+.top .slogan { color: var(--slogan); font-size: 10px; letter-spacing: 2.5px; white-space: nowrap; }
+
+.page { max-width: 640px; margin: 0 auto; padding: 16px; display: flex; flex-direction: column; gap: 16px; }
+.card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+.card h2 { margin: 0; font-size: 13px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); font-weight: 700; }
+.row { display: flex; gap: 8px; align-items: center; }
+.row > * { flex: 1; }
+.row > .narrow { flex: 0 0 96px; }
+.muted { color: var(--muted); font-size: 13px; }
+.msg { font-size: 14px; }
+.msg.err { color: var(--clip); }
+.list { display: flex; flex-direction: column; gap: 8px; }
+.list button { text-align: left; display: flex; justify-content: space-between; align-items: center; height: 52px; }
+.list button small { color: var(--muted); }
+details summary { cursor: pointer; color: var(--accent); }
+ol { margin: 8px 0 0; padding-left: 20px; color: var(--muted); font-size: 14px; }
+ol b { color: var(--text); font-weight: 400; }
+label.switch { display: flex; justify-content: space-between; align-items: center; min-height: 44px; gap: 12px; }
+label.switch input { width: 48px; height: 28px; flex: none; accent-color: var(--accent); }
+.banner {
+  flex: none; display: flex; gap: 12px; align-items: center; padding: 8px 16px;
+  background: var(--card); border-bottom: 1px solid var(--border); font-size: 14px;
+}
+.banner span { flex: 1; }
+.empty { margin: auto; text-align: center; color: var(--muted); padding: 24px; }

@@ -9,6 +9,10 @@ bypass and remove FX. Nothing to install on the tablet.
 
 Needs a recent REAPER (6.37 or newer).
 
+On Android there is also the app Remote for REAPER (NULL-JSFX-Remote-REAPER-Android.apk in
+the releases): it carries this page itself, so step 2 is not needed, and it finds REAPER on
+the network. Steps 3 to 5 still apply.
+
 Install (once)
     1. In REAPER: Options > Show REAPER resource path in explorer/finder.
     2. Copy reaper_www_root/null_jsfx.html into the reaper_www_root folder there

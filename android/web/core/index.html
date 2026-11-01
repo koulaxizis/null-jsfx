@@ -1,0 +1,28 @@
+<!doctype html>
+<!-- The start page of the NULL JSFX Android remotes. Remote for REAPER shows the REAPER tab
+     (android/web/reaper), the mixer remote the Mixers tab (android/web/mixers); both have
+     Settings. NULL JSFX • https://nulljsfx.tech • MIT License -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="color-scheme" content="dark">
+<title>NULL JSFX Remote</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="banner" id="update" hidden>
+  <span id="update-text"></span>
+  <button id="update-get" class="primary">Download</button>
+  <button id="update-later" aria-label="Later">✕</button>
+</div>
+<div id="views"></div>
+<nav class="tabs" id="tabs"></nav>
+<script src="shell.js"></script>
+<script src="remote.js"></script>
+<script src="../reaper/reaper.js"></script>
+<script src="../mixers/mixers.js" onerror="this.remove()"></script>
+<script src="settings.js"></script>
+<script>NullRemote.start();</script>
+</body>
+</html>
