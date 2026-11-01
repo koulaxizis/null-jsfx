@@ -14,6 +14,10 @@ const x32 = require(path.join(web, 'x32/profile.js'));
 const sim = require('./xair_sim.cjs');
 const wing = require(path.join(web, 'wing/profile.js'));
 const wingSim = require('./wing_sim.cjs');
+const net = require('net');
+const sq = require(path.join(web, 'sq/profile.js'));
+const Nrpn = require(path.join(web, 'core/nrpn.js'));
+const sqSim = require('./sq_sim.cjs');
 
 let failures = 0;
 const tests = [];
@@ -435,6 +439,134 @@ test('WING: discover and identify next to an X AIR, connect, both directions, on
     await until(() => s.get('/ch/2/name') === 'Lead', 1000, 'subscription renewed');
     s.disconnect();
   } finally { tr.close(); tr2.close(); wg.close(); xr.close(); }
+});
+
+// --- Allen & Heath SQ (MIDI NRPN over TCP) ---------------------------------------------------
+
+// a TCP dial with the shape of the app's bridge (core/transport.js shellTcp)
+const nodeTcp = (host, port) => (cb) => {
+  const sock = net.connect(port, host);
+  sock.on('connect', () => cb.onOpen());
+  sock.on('data', (d) => cb.onData(new Uint8Array(d)));
+  sock.on('error', () => {});
+  sock.on('close', () => cb.onClose(''));
+  return { send: (bytes) => sock.write(Buffer.from(bytes)), close: () => sock.destroy() };
+};
+
+test("SQ addresses match the protocol document's examples", () => {
+  const hex = (path) => { const a = sq.address(path); return ((a >> 7).toString(16) + ' ' + (a & 127).toString(16)).toUpperCase(); };
+  assert.strictEqual(hex('/ip/40/aux/5'), '44 1C', 'Ip40 > Aux5');
+  assert.strictEqual(hex('/fx/1/aux/1'), '46 14', 'FX1 Rtn > Aux1');
+  assert.strictEqual(hex('/ip/24/pan'), '50 17', 'Ip24 pan to LR');
+  assert.strictEqual(hex('/ip/1/lr'), '40 0', 'Ip1 > LR');
+  assert.strictEqual(hex('/fx/8/lr'), '40 43', 'FX8 Rtn > LR');
+  assert.strictEqual(hex('/ip/1/mute'), '0 0');
+  assert.strictEqual(hex('/fx/1/mute'), '0 3C');
+  assert.strictEqual(hex('/lr/mute'), '0 44');
+  assert.strictEqual(hex('/aux/12/mute'), '0 50');
+  assert.strictEqual(hex('/lr/lvl'), '4F 0');
+  assert.strictEqual(hex('/aux/12/lvl'), '4F C');
+  assert.strictEqual(hex('/mgrp/8'), '4 7');
+  // the pan to an aux (the document: Ip24 > Aux5 = 52 5C, Ip37 > Aux8 = 53 7B) is not on the
+  // tab (pans follow LR), but the formula the profile uses for sends gives the same base
+  const panAux = (ip, a) => 0x50 * 128 + 0x44 + (ip - 1) * 12 + (a - 1);
+  assert.strictEqual(panAux(24, 5), 0x52 * 128 + 0x5c);
+  assert.strictEqual(panAux(37, 8), 0x53 * 128 + 0x7b);
+  const L = sq.layout();
+  assert.strictEqual(L.inputs.length, 48);
+  assert.strictEqual(L.returns.length, 8);
+  assert.strictEqual(L.targets.length, 12);
+  assert.strictEqual(L.muteGroups.length, 8);
+  assert.deepStrictEqual(L.dcas, []);
+  const addrs = L.params.map((p) => sq.address(p.path));
+  assert.strictEqual(new Set(addrs).size, addrs.length, 'no two parameters share an address');
+  assert.strictEqual(L.params.length, (48 + 8) * (3 + 12) + 12 * 2 + 2 + 8);
+});
+
+test('SQ values: the linear taper at 0 dB and +10 dB, pan centre, inverted mute', () => {
+  assert.strictEqual(sq.toValue('/ip/1/lr', 0), 0);
+  assert.strictEqual(sq.toValue('/ip/1/lr', 0.75), 0x76 * 128 + 0x5c, '0 dB = 76 5C');
+  assert.strictEqual(sq.toValue('/ip/1/lr', 1), 16383, '+10 dB = 7F 7F');
+  for (const f of [0, 0.1, 0.5, 0.75, 0.9, 1]) assert.ok(Math.abs(sq.fromValue('/lr/lvl', sq.toValue('/lr/lvl', f)) - f) < 1e-4, 'round trip ' + f);
+  assert.strictEqual(sq.toValue('/ip/1/pan', 0.5), 0x3f * 128 + 0x7f);
+  assert.strictEqual(sq.toValue('/ip/1/pan', 0), 0);
+  assert.strictEqual(sq.toValue('/ip/1/pan', 1), 16383);
+  for (const x of [0, 0.2, 0.5, 0.8, 1]) assert.ok(Math.abs(sq.fromValue('/ip/1/pan', sq.toValue('/ip/1/pan', x)) - x) < 1e-4, 'pan ' + x);
+  assert.strictEqual(sq.fromValue('/ip/1/pan', 0x3f * 128 + 0x7f), 0.5, '3F 7F is the centre');
+  assert.strictEqual(sq.toValue('/ip/1/mute', 1), 0, 'on = not muted');
+  assert.strictEqual(sq.fromValue('/ip/1/mute', 1), 0, 'muted = off');
+  assert.strictEqual(sq.toValue('/mgrp/1', 1), 1, 'a mute group is not inverted');
+});
+
+test('NRPN messages byte for byte; the parser takes running status and other channels apart', () => {
+  // Ip1 > LR at 0 dB on MIDI channel 1
+  assert.deepStrictEqual(Nrpn.setMessage(0, 0x40 * 128, ZERO), [0xb0, 0x63, 0x40, 0xb0, 0x62, 0, 0xb0, 6, 0x76, 0xb0, 0x26, 0x5c]);
+  assert.deepStrictEqual(Nrpn.getMessage(0, 0x4f * 128), [0xb0, 0x63, 0x4f, 0xb0, 0x62, 0, 0xb0, 0x60, 0x7f]);
+  const got = [];
+  const p = new Nrpn.Parser((ch, a, v) => got.push([ch, a, v]));
+  p.push([0xb0, 0x63, 1, 0x62, 2, 0x06, 3, 0x26, 4]); // running status
+  p.push([0xb5, 0x63, 0, 0xf8, 0x62, 9]);              // real time in the middle
+  p.push([0x06, 0x7f, 0x26, 0x7f]);
+  p.push([0xb0, 0x06, 1, 0x26, 1]);                    // a new value on the last address
+  assert.deepStrictEqual(got, [[0, 130, 388], [5, 9, 16383], [0, 130, 129]]);
+});
+const ZERO = 0x76 * 128 + 0x5c;
+
+test('SQ: connect over TCP, read everything, both directions, a second remote, reconnect', async () => {
+  const sim = await sqSim.start();
+  const s = new Nrpn.Session(sq, nodeTcp);
+  const other = new Nrpn.Session(sq, nodeTcp);
+  try {
+    const info = await s.connect('127.0.0.1', sim.port);
+    assert.strictEqual(info.model, 'SQ');
+    assert.strictEqual(s.status, 'online');
+    assert.strictEqual(s.values.size, s.layout.params.length, 'every parameter answered');
+    assert.strictEqual(sim.gets, s.layout.params.length);
+    assert.strictEqual(s.get('/ip/1/lr'), 0.75, '0 dB');
+    assert.strictEqual(s.get('/ip/1/aux/1'), 0, 'send off');
+    assert.strictEqual(s.get('/ip/1/pan'), 0.5);
+    assert.strictEqual(s.get('/ip/1/mute'), 1, 'unmuted shows as on');
+    await other.connect('127.0.0.1', sim.port);
+    // a drag: many sets, at most one message per 20 ms, ending on the last value
+    const before = sim.received.length;
+    for (let i = 0; i <= 50; i++) s.set('/ip/48/lr', i / 50);
+    s.set('/ip/5/mute', 0);
+    s.set('/fx/2/aux/12', 0.75);
+    s.set('/mgrp/3', 1);
+    s.set('/ip/7/pan', 0);
+    await until(() => sim.state.get('/ip/48/lr') === 16383 && sim.state.get('/ip/5/mute') === 1 && sim.state.get('/fx/2/aux/12') === ZERO
+      && sim.state.get('/mgrp/3') === 1 && sim.state.get('/ip/7/pan') === 0, 1000, 'sets reach the SQ');
+    assert.ok(sim.received.length - before < 20, 'the drag was coalesced: ' + (sim.received.length - before));
+    await until(() => other.get('/ip/48/lr') === 1 && other.get('/ip/5/mute') === 0, 1000, 'the other remote hears it');
+    assert.strictEqual(s.get('/ip/48/lr'), 1, 'no echo back to the sender');
+    // a change on the console
+    let heard = null;
+    s.on('/aux/3/lvl', (v) => { heard = v; });
+    sim.change('/aux/3/lvl', 0);
+    await until(() => heard === 0, 1000, "the console's change");
+    // the console goes away and comes back: the session redials and reads everything again
+    const states = [];
+    s.onStatus((x) => states.push(x));
+    sim.change('/lr/mute', 1);
+    await until(() => s.get('/lr/mute') === 0, 1000, 'LR muted');
+    sim.drop();
+    await until(() => states.includes('lost'), 1000, 'lost');
+    await until(() => s.status === 'online', 4000, 'back online');
+    s.disconnect();
+    other.disconnect();
+    await sleep(50);
+    assert.strictEqual(sim.clients(), 0, 'connections closed');
+  } finally { s.disconnect(); other.disconnect(); sim.close(); }
+});
+
+test('SQ: nobody on the port fails cleanly', async () => {
+  const srv = net.createServer();
+  await new Promise((r) => srv.listen(0, '127.0.0.1', r));
+  const port = srv.address().port;
+  await new Promise((r) => srv.close(r));
+  const s = new Nrpn.Session(sq, nodeTcp);
+  await assert.rejects(s.connect('127.0.0.1', port, 1000), /no connection/);
+  assert.strictEqual(s.status, 'failed');
 });
 
 (async () => {

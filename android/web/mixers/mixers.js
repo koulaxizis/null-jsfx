@@ -8,7 +8,7 @@
   'use strict';
 
   const here = (document.currentScript && document.currentScript.src) || location.href;
-  const FILES = ['core/osc.js', 'core/levels.js', 'core/transport.js', 'core/mixer.js', 'xair/profile.js', 'x32/profile.js', 'wing/profile.js'];
+  const FILES = ['core/osc.js', 'core/levels.js', 'core/transport.js', 'core/mixer.js', 'xair/profile.js', 'x32/profile.js', 'wing/profile.js', 'core/nrpn.js', 'sq/profile.js'];
   const HOLD_MS = 1500;
   const STORE = 'null-remote-mixers';
 
@@ -99,7 +99,9 @@
     }
 
     // every console family the tab knows; the connected one is this.profile
-    get profiles() { const P = window.NullMixerProfiles; return [P.xair, P.x32, P.wing]; }
+    get profiles() { const P = window.NullMixerProfiles; return [P.xair, P.x32, P.wing, P.sq]; }
+    // the OSC families, which answer a scan and an info request (the SQ does neither)
+    get oscProfiles() { return this.profiles.filter((P) => P.session !== 'nrpn'); }
     get profile() { return (this.session && this.session.profile) || this.profiles[0]; }
 
     // ---- connect view -------------------------------------------------------------------------
@@ -112,7 +114,7 @@
       const go = h('button', { onclick: () => this.connect(ip.value.trim(), err) }, 'Connect');
       const ui = h('div', { class: 'nm-connect' },
         h('h2', null, 'MIXERS ', h('span', { class: 'nm-beta' }, 'BETA')),
-        h('div', { class: 'nm-sub' }, 'Works with ' + this.profiles.map((P) => P.family + ' (' + P.models.filter((m) => !m.startsWith('MR')).join(', ') + ')').join(' and ') + '.'),
+        h('div', { class: 'nm-sub' }, 'Works with ' + this.profiles.map((P) => P.family + ' (' + P.models.filter((m) => !m.startsWith('MR')).join(', ') + ')').join(', ').replace(/, ([^,]+)$/, ' and $1') + '.'),
         h('div', { class: 'nm-sub' }, 'Beta: tested against software consoles, not yet on every model. If something differs on your mixer, tell us at github.com/koulaxizis/null-jsfx/issues.'),
         h('div', { class: 'nm-row' }, scan),
         found,
@@ -120,7 +122,7 @@
         err,
         h('h2', { style: 'margin-top:16px' }, 'HOW TO CONNECT'),
         this.profiles.flatMap((P) => [h('div', { class: 'nm-sub' }, P.family), h('ol', { class: 'nm-help' }, P.connectHelp.map((t) => h('li', null, t)))]),
-        h('div', { class: 'nm-note' }, 'X AIR, X32, M32 and WING are trademarks of their owners. Remote for Mixers is an independent free app from NULL JSFX and is not made or endorsed by them.'));
+        h('div', { class: 'nm-note' }, 'X AIR, X32, M32, WING, Allen & Heath and SQ are trademarks of their owners. Remote for Mixers is an independent free app from NULL JSFX and is not made or endorsed by them.'));
       this.root.replaceChildren(ui);
       this.root.className = 'nm';
       if (this.transportFactory || window.NullMixerTransport.available()) this.scan(found, err, scan);
@@ -137,7 +139,7 @@
       btn.textContent = 'Scanning…';
       try {
         const tr = await this.ensureTransport();
-        const found = await Promise.all(this.profiles.map((P) => window.NullMixer.discover(P, tr, 1500)
+        const found = await Promise.all(this.oscProfiles.map((P) => window.NullMixer.discover(P, tr, 1500)
           .then((list) => list.map((c) => Object.assign(c, { profile: P })))));
         const consoles = [].concat(...found);
         list.replaceChildren(...consoles.map((c) => h('button', { onclick: () => this.connect(c.host, err, c.profile) },
@@ -156,9 +158,18 @@
       err.textContent = 'Connecting to ' + host + '…';
       try {
         const tr = await this.ensureTransport();
-        // a typed address: ask it on every family's port which console it is
-        if (!profile) profile = (await window.NullMixer.identify(this.profiles, tr, host)).profile;
-        const s = new window.NullMixer.Session(profile, tr);
+        // a typed address: ask it on every OSC family's port which console it is; no answer
+        // there, then an Allen & Heath SQ on its MIDI TCP port
+        if (!profile) {
+          profile = await window.NullMixer.identify(this.oscProfiles, tr, host).then((w) => w.profile,
+            () => window.NullMixerProfiles.sq);
+        }
+        let s;
+        if (profile.session === 'nrpn') {
+          s = new window.NullNrpn.Session(profile, this.tcpFactory || window.NullMixerTransport.shellTcp);
+        } else {
+          s = new window.NullMixer.Session(profile, tr);
+        }
         await s.connect(host, profile.port);
         this.session = s;
         this.view.host = host;
@@ -218,8 +229,10 @@
       } else {
         bar.append(lock, h('button', { onclick: () => this.pickMyMix() }, 'My mix'));
         // layers
-        // a family without separate FX returns (WING) shows no FX Returns layer
-        const layers = [['inputs', 'Inputs'], ['returns', 'FX Returns'], ['masters', 'Buses'], ['dca', 'DCA']].filter(([id]) => id !== 'returns' || L.returns.length);
+        // a family without separate FX returns (WING) shows no FX Returns layer, one without
+        // DCAs on its protocol (SQ) no DCA layer
+        const layers = [['inputs', 'Inputs'], ['returns', 'FX Returns'], ['masters', 'Buses'], ['dca', 'DCA']]
+          .filter(([id]) => (id !== 'returns' || L.returns.length) && (id !== 'dca' || L.dcas.length));
         if (!layers.some(([id]) => id === v.layer)) v.layer = 'inputs';
         bar.append(h('span', { class: 'nm-sep' }));
         for (const [id, label] of layers) {
@@ -445,6 +458,8 @@
     back() { return tab ? tab.back() : false; },
     // for tests and the desktop harness: a transport factory replacing the app's UDP bridge
     useTransport(factory) { MixersTab.prototype.transportFactory = factory; },
+    // and a TCP dial replacing the app's TCP bridge (core/nrpn.js: dial(host, port)(callbacks))
+    useTcp(dial) { MixersTab.prototype.tcpFactory = dial; },
   };
   window.NullMixersTab = api;
   if (window.NullRemote && window.NullRemote.register) window.NullRemote.register(api);
