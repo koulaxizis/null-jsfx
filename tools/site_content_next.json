@@ -198,5 +198,26 @@
     ],
     "properties": "Host beat (or a free beat at the host's tempo) → step = beat / Rate, odd steps moved by Swing → step j plays when (j x Pulses) mod Steps < Pulses after Rotate → note-on with Velocity (Accent on the first pulse), note-off after Gate. Incoming MIDI passes through at its own sample; stopping ends the note. Audio passes through.",
     "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-euc\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><circle cx=\"32\" cy=\"32\" r=\"22\" stroke=\"url(#icon-euc)\" stroke-width=\"1.6\" fill=\"none\" opacity=\"0.5\"/><circle cx=\"32\" cy=\"10\" r=\"5\" fill=\"url(#icon-euc)\"/><circle cx=\"51\" cy=\"43\" r=\"5\" fill=\"url(#icon-euc)\"/><circle cx=\"13\" cy=\"43\" r=\"5\" fill=\"url(#icon-euc)\"/><circle cx=\"54\" cy=\"32\" r=\"2.5\" fill=\"url(#icon-euc)\" opacity=\"0.5\"/><circle cx=\"32\" cy=\"54\" r=\"2.5\" fill=\"url(#icon-euc)\" opacity=\"0.5\"/></svg>"
+  },
+  "test_signal": {
+    "card_desc": "Sine, Sweep, Noise and Polarity Tones",
+    "keywords": "test signal tone generator sine sweep pink noise white noise polarity calibration reference level speaker wiring utility",
+    "slider_desc": [
+      "The signal: sine, logarithmic sweep, pink noise, white noise or polarity pulses.",
+      "The sine's frequency.",
+      "The level: peak for the sine, sweep and pulses, RMS for the noises.",
+      "How long one sweep from 20 Hz to 20 kHz takes.",
+      "Play on both sides, or only on the left or right.",
+      "Turn the right channel upside down, to hear what a wrong-polarity speaker sounds like.",
+      "Off replaces the input with the signal; On adds the signal to it."
+    ],
+    "uses": [
+      "Calibrating monitor levels with pink noise",
+      "Finding which speaker is which, and checking wiring and polarity",
+      "Sweeping a room or a filter for resonances",
+      "A reference tone at the start of a mix or a broadcast"
+    ],
+    "properties": "Sine or log sweep (20 Hz → 20 kHz) from a phase accumulator, pink noise (Paul Kellet's filter) or white noise from a Park-Miller generator, or a 2 ms raised-cosine pulse twice a second → Level (10 ms glide) → Channels / Invert Right → replaces or adds to the input. Zero latency.",
+    "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-tsg\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><rect x=\"6\" y=\"14\" width=\"52\" height=\"36\" rx=\"5\" stroke=\"url(#icon-tsg)\" stroke-width=\"2.5\" fill=\"none\"/><path d=\"M12 32 Q18 18 24 32 T36 32 T48 32 T54 32\" stroke=\"url(#icon-tsg)\" stroke-width=\"2.5\" fill=\"none\"/></svg>"
   }
 }

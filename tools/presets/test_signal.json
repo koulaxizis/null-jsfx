@@ -1,0 +1,14 @@
+[
+  ["1 kHz Reference", {"Signal": 0, "Frequency (Hz)": 1000, "Level (dBFS)": -18}],
+  ["Pink Noise -20 dBFS", {"Signal": 2, "Level (dBFS)": -20}],
+  ["Speaker Level Check", {"Signal": 2, "Level (dBFS)": -23}],
+  ["Left Speaker", {"Signal": 2, "Level (dBFS)": -23, "Channels": 1}],
+  ["Right Speaker", {"Signal": 2, "Level (dBFS)": -23, "Channels": 2}],
+  ["Polarity Check", {"Signal": 4, "Level (dBFS)": -12}],
+  ["Out Of Phase Test", {"Signal": 2, "Level (dBFS)": -23, "Invert Right": 1}],
+  ["Slow Sweep", {"Signal": 1, "Level (dBFS)": -20, "Sweep Time (s)": 30}],
+  ["Fast Sweep", {"Signal": 1, "Level (dBFS)": -20, "Sweep Time (s)": 3}],
+  ["Sub Check 40 Hz", {"Signal": 0, "Frequency (Hz)": 40, "Level (dBFS)": -20}],
+  ["Hum Hunt 50 Hz", {"Signal": 0, "Frequency (Hz)": 50, "Level (dBFS)": -30, "Pass Input": 1}],
+  ["White Noise -20 dBFS", {"Signal": 3, "Level (dBFS)": -20}]
+]

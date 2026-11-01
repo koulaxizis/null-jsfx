@@ -23,7 +23,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 sys.dont_write_bytecode = True
 sys.path.insert(0, str(ROOT / "tools"))
-from build_chains import RACK_PRESETS, CHAINS as CHAIN_LIST  # noqa: E402
+from build_chains import RACK_PRESETS, REAPER_ONLY, CHAINS as CHAIN_LIST  # noqa: E402
 from build_site import CATEGORIES, load  # noqa: E402
 
 SITE = "https://nulljsfx.tech/"
@@ -140,7 +140,7 @@ def rack():
         "shot": SITE + "assets/img/hub/rack.png",
         "video": SITE + "assets/video/rack.mp4" if (ROOT / "assets/video/rack.mp4").exists() else None,
         "guide": SITE,
-        "presets": [c[0] for c in CHAIN_LIST] + [p[0] for p in RACK_PRESETS],
+        "presets": [c[0] for c in CHAIN_LIST if c[0] not in REAPER_ONLY] + [p[0] for p in RACK_PRESETS],
     }
 
 

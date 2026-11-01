@@ -996,6 +996,20 @@
    "bytes": 69264
   },
   {
+   "id": "test_signal",
+   "name": "Test Signal",
+   "category": "Essentials",
+   "tags": "test signal tone generator sine sweep pink noise white noise polarity calibration reference level speaker wiring utility gui",
+   "gfx": [
+    480,
+    380
+   ],
+   "ins": 2,
+   "outs": 2,
+   "sliders": 7,
+   "bytes": 50327
+  },
+  {
    "id": "tone",
    "name": "Tone",
    "category": "Essentials",

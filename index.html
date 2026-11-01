@@ -183,7 +183,7 @@
                     </a>
                     <a class="download-option" id="dl-jsfx" href="https://github.com/koulaxizis/null-jsfx/releases/latest/download/NULL-JSFX-JSFX.zip">
                         <span class="download-option-title">JSFX for REAPER</span>
-                        <span class="download-option-desc">All 137 plugins, the GFX versions with their own interface and 73 ready-made FX chains. One package for Windows, macOS and Linux.</span>
+                        <span class="download-option-desc">All 137 plugins, the GFX versions with their own interface and 74 ready-made FX chains. One package for Windows, macOS and Linux.</span>
                         <span class="download-option-file">NULL-JSFX-JSFX.zip</span>
                     </a>
                     <a class="download-option" id="dl-native" href="https://github.com/koulaxizis/null-jsfx/releases/latest/download/NULL-JSFX-VST3-CLAP-Windows.zip">
@@ -316,7 +316,7 @@
                             <li><strong>NEW</strong>: Clipper, De-Plosive, Step FX, Tape Echo, Wah, Half Speed, Slicer, Shaper, Draw EQ and Phase Align</li>
                             <li><strong>UPGRADED</strong>: new controls in Reverb, Delay, Chorus, Phaser, Flanger, Tremolo, Dynamics and 20 more; Parametric EQ shows a live spectrum. At their default settings they sound exactly as in 2.4</li>
                             <li><strong>RACK</strong>: two lanes, a feedback loop, a step sequencer, and Sidechain Ducker and Convolution modules</li>
-                            <li><strong>CHAINS</strong>: 73 ready-made FX chains, 29 more than before</li>
+                            <li><strong>CHAINS</strong>: 74 ready-made FX chains, 29 more than before</li>
                             <li><strong>BROWSER</strong>: instruments and MIDI tools also run on the website</li>
                             <li>Every plugin has a presentation video</li>
                         </ul>
@@ -483,7 +483,7 @@
                 <button type="button" class="plugin-tab active" role="tab" aria-selected="true" aria-controls="tab-effects" id="tab-btn-effects" data-tab="effects">Effects <span class="category-count">120</span></button>
                 <button type="button" class="plugin-tab" role="tab" aria-selected="false" aria-controls="tab-instruments" id="tab-btn-instruments" data-tab="instruments">Instruments <span class="category-count">10</span></button>
                 <button type="button" class="plugin-tab" role="tab" aria-selected="false" aria-controls="tab-midi" id="tab-btn-midi" data-tab="midi">MIDI <span class="category-count">7</span></button>
-                <button type="button" class="plugin-tab" role="tab" aria-selected="false" aria-controls="tab-chains" id="tab-btn-chains" data-tab="chains">FX Chains <span class="category-count">73</span></button>
+                <button type="button" class="plugin-tab" role="tab" aria-selected="false" aria-controls="tab-chains" id="tab-btn-chains" data-tab="chains">FX Chains <span class="category-count">74</span></button>
             </div>
             <div class="tab-panel tab-plugins" id="tab-effects" role="tabpanel" aria-labelledby="tab-btn-effects">
             <div class="plugin-category" id="one-slider">
@@ -2264,6 +2264,12 @@
                     <p class="plugin-desc">Softened attacks, a modulated dotted-quarter ping-pong and a long shimmer for ambient guitar; Amount adds echo and shimmer, Swell softens the picking more.</p>
                     <div class="chain-steps"><button type="button" class="chain-step" onclick="openGuide('transient-shaper')">Transient Shaper</button><span class="chain-arrow" aria-hidden="true">&#8594;</span><button type="button" class="chain-step" onclick="openGuide('delay')">Delay</button><span class="chain-arrow" aria-hidden="true">&#8594;</span><button type="button" class="chain-step" onclick="openGuide('shimmer-reverb')">Shimmer Reverb</button></div>
                     <div class="plugin-formats"><span>JSFX</span><span>GFX</span><span>MODULATION</span></div>
+                </article>
+                <article class="chain-card">
+                    <h3>AMBIENT WASH</h3>
+                    <p class="plugin-desc">A shimmering reverb into drifting grains and a vast detuned space, for pads and evolving textures.</p>
+                    <div class="chain-steps"><button type="button" class="chain-step" onclick="openGuide('shimmer-reverb')">Shimmer Reverb</button><span class="chain-arrow" aria-hidden="true">&#8594;</span><button type="button" class="chain-step" onclick="openGuide('granular-delay')">Granular Delay</button><span class="chain-arrow" aria-hidden="true">&#8594;</span><button type="button" class="chain-step" onclick="openGuide('space')">Space</button></div>
+                    <div class="plugin-formats"><span>JSFX</span><span>GFX</span></div>
                 </article>
                 <article class="chain-card">
                     <h3>AUTO FILTER</h3>
