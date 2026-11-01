@@ -66,7 +66,7 @@ out_pin:Right
   // the coefficients of one source at azimuth az and elevation el (degrees)
   function setup(az, el) instance(ac, gd, sb0, sb1, sb2, sa1, sa2, nb0, nb1, nb2, na1, na2, dlt, drt,
                                   lb0, lb1, la1, rb0, rb1, ra1)
-    local(t, p, ca, se, rear, A, w, cw, al, a0, f, lat, tau, k, al_l, al_r, th)
+    local(t, p, se, rear, A, w, cw, al, a0, f, lat, tau, k, al_l, al_r, th)
   (
     t = az * $pi / 180;
     p = el * $pi / 180;
