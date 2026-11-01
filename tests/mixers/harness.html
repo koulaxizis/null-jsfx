@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<!-- Test harness for the Mixers tab: a stand-in for the app's tab shell and native UDP bridge.
+     ui_test.cjs serves it and wires window.NullShell to real UDP in Node. -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>NULL Remote Mixers harness</title>
+<style>html, body { margin: 0; height: 100%; background: #1b1a18; } #tab { height: 100vh; }</style>
+<script>
+  // NullShell stand-in: the Node side exposes nmUdpSend/nmUdpBroadcast and calls __nmDeliver
+  const udpListeners = [];
+  window.NullShell = {
+    udpOpen: async () => 1,
+    udpSend: (id, host, port, b64) => window.nmUdpSend(host, port, b64),
+    udpBroadcast: (id, port, b64) => window.nmUdpBroadcast(port, b64),
+    udpClose: () => {},
+    onUdp: (cb) => { udpListeners.push(cb); return () => udpListeners.splice(udpListeners.indexOf(cb), 1); },
+    haptic: () => {},
+    keepAwake: (on) => { window.__awake = on; },
+  };
+  window.__nmDeliver = (m) => udpListeners.forEach((cb) => cb(m));
+  window.NullRemote = { register: (tab) => { window.__tab = tab; } };
+</script>
+</head>
+<body>
+<div id="tab"></div>
+<script src="/android/web/mixers/mixers.js"></script>
+<script>window.__tab.mount(document.getElementById('tab'));</script>
+</body>
+</html>
