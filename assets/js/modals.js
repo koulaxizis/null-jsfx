@@ -432,6 +432,7 @@ const guides = {
     properties: 'Input → Drive → optional 12 dB/oct anti-alias low-pass → sample-and-hold at Sample Rate → rounding to Bits → optional 12 dB/oct Smooth low-pass → Mix → Output. No latency, stereo.',
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP', 'LV2'],
     shot: 'assets/img/gfx/bitcrusher.png',
+    video: 'assets/video/bitcrusher.mp4',
     studio: true,
     page: 'plugins/bitcrusher/'
   },
@@ -1188,6 +1189,7 @@ const guides = {
     properties: 'Input → low shelf boost at 1.2 × Low Freq → low shelf cut at 2.2 × Low Freq → high peak at High Freq (Q from Bandwidth) → high shelf cut at Atten Freq (each skipped at 0) → tube stage (asymmetric tanh, 10 Hz DC blocker, skipped at 0%) → Output. Zero latency; every control at 0 leaves the sound untouched.',
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP', 'LV2'],
     shot: 'assets/img/gfx/passive_eq.png',
+    video: 'assets/video/passive_eq.mp4',
     studio: true,
     page: 'plugins/passive-eq/'
   },
@@ -1583,6 +1585,7 @@ const guides = {
     properties: 'Sine or log sweep (20 Hz → 20 kHz) from a phase accumulator, pink noise (Paul Kellet\'s filter) or white noise from a Park-Miller generator, or a 2 ms raised-cosine pulse twice a second → Level (10 ms glide) → Channels / Invert Right → replaces or adds to the input. Zero latency.',
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP', 'LV2'],
     shot: 'assets/img/gfx/test_signal.png',
+    video: 'assets/video/test_signal.mp4',
     studio: true,
     page: 'plugins/test-signal/'
   },
@@ -2134,6 +2137,7 @@ const guides = {
     properties: 'The audio passes through untouched (Listen View plays the mid or the side). Display: 512 columns of minimum and maximum over the screen width, started by a rising or falling crossing of the trigger level after Gain (Auto: or after two screens; Free: at once). Zero latency.',
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP', 'LV2'],
     shot: 'assets/img/gfx/oscilloscope.png',
+    video: 'assets/video/oscilloscope.mp4',
     studio: true,
     page: 'plugins/oscilloscope/'
   },
@@ -3035,6 +3039,7 @@ const guides = {
     properties: 'MIDI → 8 voices → each starts Density grains/s: Hann window of Grain Size, from Position + Scan ± Spray (Park-Miller draws), pitch from Root Key ± Pitch Spread, pan ± Stereo Spread, backwards with chance Reverse; up to 64 grains, linear reading → voice envelope (Attack, Release) → 1/√(density × size) → Volume. Every MIDI message passes on.',
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP', 'LV2'],
     shot: 'assets/img/gfx/granular.png',
+    video: 'assets/video/granular.mp4',
     page: 'plugins/granular/'
   },
   'keys': {
@@ -3084,6 +3089,7 @@ const guides = {
     properties: 'MIDI note-on → sine body, pitch from Pitch + Sweep falling exponentially (Sweep Time), level −60 dB over Decay; + white noise (Park-Miller) low-passed at Click Tone, −60 dB over 20 ms → velocity → soft clip tanh(g·x)/tanh(g) → Volume. Two voices: a retrigger fades the old kick out over 3 ms. Every MIDI message passes on. No samples.',
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP', 'LV2'],
     shot: 'assets/img/gfx/kick.png',
+    video: 'assets/video/kick.mp4',
     page: 'plugins/kick/'
   },
   'mallets': {
@@ -3438,6 +3444,7 @@ const guides = {
     properties: 'Host beat (or a free beat at the host\'s tempo) → step = beat / Rate, odd steps moved by Swing → step j plays when (j x Pulses) mod Steps < Pulses after Rotate → note-on with Velocity (Accent on the first pulse), note-off after Gate. Incoming MIDI passes through at its own sample; stopping ends the note. Audio passes through.',
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP', 'LV2'],
     shot: 'assets/img/gfx/euclid.png',
+    video: 'assets/video/euclid.mp4',
     page: 'plugins/euclid/'
   },
   'humanize': {
@@ -3528,6 +3535,7 @@ const guides = {
     properties: 'MIDI in → every note-on adds Repeats echoes to a time-sorted queue (velocity x (1 - Decay)^k, pitch + k x Pitch Step, Gate of the interval) → notes out; a note that starts again while it sounds is ended first. Other MIDI passes through at its own sample; all notes off drops that channel\'s echoes. Audio passes through.',
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP', 'LV2'],
     shot: 'assets/img/gfx/note_echo.png',
+    video: 'assets/video/note_echo.mp4',
     page: 'plugins/note-echo/'
   },
   'pitch-to-midi': {
@@ -3549,6 +3557,7 @@ const guides = {
     properties: 'Input (passes through) → mono sum → 30 Hz high-pass → 24 dB/oct low-pass → decimation to about 11 kHz → YIN pitch detection every 64 kept samples (threshold 0.15, parabolic interpolation) and window RMS → note state (Stability, 0.8 semitone hold, silence 3 dB under Threshold) → note-on, note-off, optional pitch bend. Monophonic. Latency about the window plus Stability (some tens of ms). Incoming MIDI passes through at its own sample.',
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP', 'LV2'],
     shot: 'assets/img/gfx/pitch_to_midi.png',
+    video: 'assets/video/pitch_to_midi.mp4',
     page: 'plugins/pitch-to-midi/'
   },
   'riff': {
