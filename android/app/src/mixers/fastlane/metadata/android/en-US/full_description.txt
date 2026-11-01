@@ -1,0 +1,14 @@
+Remote for Mixers controls a digital mixer from your Android phone or tablet over the mixer's Wi-Fi or your local network. It works with Behringer X AIR mixers (XR12, XR16, XR18, X18) first; X32 and Midas M32 follow.
+
+<b>What it does</b>
+<ul>
+<li>Finds the mixer on the network and recognises its model by itself, with step-by-step connection help. You can also type its IP address.</li>
+<li>Channels, aux, FX returns, buses, FX sends, DCAs and the main mix: faders, mute, solo, pan and meters, with names and colours from the mixer.</li>
+<li>Sends on faders: pick a bus or FX and the faders become the sends to it, for monitor mixes.</li>
+<li>Mute groups and Clear solo.</li>
+<li>My mix: lock a musician's phone to the sends of their own monitor bus, without mute or solo.</li>
+<li>Screen lock that opens only with a long press, so a stray touch on stage changes nothing.</li>
+<li>Faders move with your finger from where they are; they never jump to where you touch.</li>
+</ul>
+
+Part of NULL JSFX (https://nulljsfx.tech): free, MIT licensed, no ads, no tracking, no account. X AIR, X32 and M32 are trademarks of their owners. This app is independent and is not made or endorsed by them.

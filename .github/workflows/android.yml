@@ -34,8 +34,8 @@ permissions:
 
 env:
   TAG: ${{ github.event.release.tag_name || inputs.release_tag }}
-  # the apps attached to a release; the mixer remote joins when its first version is ready
-  RELEASED_APPS: "daws"
+  # the apps attached to a release (Remote for Mixers since its X AIR version, 2026-11-01)
+  RELEASED_APPS: "daws mixers"
 
 jobs:
   pages:

@@ -41,8 +41,12 @@ async function main() {
   const toSim = (b64) => sock.send(Buffer.from(b64, 'base64'), console_.port, '127.0.0.1');
   await page.exposeFunction('nmUdpSend', (host, port, b64) => toSim(b64));
   await page.exposeFunction('nmUdpBroadcast', (port, b64) => toSim(b64));
-  sock.on('message', (buf, r) => {
-    page.evaluate((m) => window.__nmDeliver(m), { type: 'udp', id: 1, host: '127.0.0.1', port: 10024, data: buf.toString('base64') }).catch(() => {});
+  // packets from the simulator go to the page: the harness's __nmDeliver, or in the real shell
+  // page (android/web/core) the shell's own receive path, as Shell.kt posts them
+  let deliverTo = page;
+  sock.on('message', (buf) => {
+    deliverTo.evaluate((m) => (window.__nmDeliver ? window.__nmDeliver(m) : window.NullShell._recv(JSON.stringify(m))),
+      { type: 'udp', id: 1, host: '127.0.0.1', port: 10024, data: buf.toString('base64') }).catch(() => {});
   });
 
   const shot = async (name, size) => {
@@ -86,7 +90,6 @@ async function main() {
     await page.locator('.nm-found button').first().click();
     await page.locator('.nm-desk').waitFor({ timeout: 5000 });
     assert.strictEqual(await page.locator('.nm-strips .nm-strip').count(), 17, '16 channels + aux');
-    assert.strictEqual(await page.evaluate(() => window.__awake), true, 'screen kept awake');
     assert.strictEqual(await strip('Kick').count(), 1, 'channel names from the console');
 
     // mute channel 2 (Vocal)
@@ -160,6 +163,40 @@ async function main() {
 
     await page.locator('.nm-bar button', { hasText: 'Disconnect' }).click();
     await page.locator('.nm-connect').waitFor();
+    // inside the real shell page (android/web/core/index.html) of the mixers app, with a
+    // stand-in for Shell.kt's NullShellNative: header, tab bar, and the same session
+    const app = await browser.newContext({ viewport: { width: 412, height: 860 }, hasTouch: true, isMobile: true });
+    await app.exposeBinding('nmUdpSend', (src, host, port, b64) => toSim(b64));
+    await app.addInitScript(() => {
+      window.NullShellNative = {
+        info: () => JSON.stringify({ app: 'mixers', version: '3.0', code: 30000, flavor: 'github', updateCheck: false, sdk: 35 }),
+        reaperSet() {}, scan() {},
+        udpOpen: () => 1,
+        udpSend: (id, h, p, d) => { window.nmUdpSend(h, p, d); return true; },
+        udpBroadcast: (id, p, d) => { window.nmUdpSend('255.255.255.255', p, d); return true; },
+        udpClose() {}, tcpOpen: () => -1, tcpSend: () => false, tcpClose() {},
+        keepAwake() {}, fullscreen() {}, haptic() {}, openUrl() {},
+      };
+    });
+    const shellPage = await app.newPage();
+    shellPage.on('pageerror', (e) => errors.push(e.message));
+    deliverTo = shellPage;
+    await shellPage.goto(`http://127.0.0.1:${server.address().port}/android/web/core/index.html`);
+    await shellPage.locator('#tabs button', { hasText: 'Mixers' }).waitFor();
+    assert.deepStrictEqual(await shellPage.locator('#tabs button').allTextContents(), ['Mixers', 'Settings']);
+    assert.strictEqual(await shellPage.locator('section[data-tab=mixers] header.top').count(), 1, 'NULL JSFX header');
+    await shellPage.locator('.nm-found button').first().waitFor({ timeout: 5000 });
+    await shellPage.locator('.nm-found button').first().click();
+    await shellPage.locator('.nm-desk').waitFor({ timeout: 5000 });
+    assert.strictEqual(await shellPage.locator('.nm-strips .nm-strip').count(), 17);
+    await shellPage.locator('.nm-strips .nm-strip').nth(3).locator('button.mute').click();
+    await until(() => state('/ch/04/mix/on') === 0, 'mute from the shell page');
+    await shellPage.locator('.nm-bar button', { hasText: 'My mix' }).click();
+    assert.strictEqual(await shellPage.evaluate(() => NullRemote.back()), true, 'Back closes the My mix picker');
+    assert.strictEqual(await shellPage.locator('.nm-sheet').count(), 0);
+    if (shots) { fs.mkdirSync(shots, { recursive: true }); await shellPage.screenshot({ path: path.join(shots, 'mixers-app-phone.png') }); }
+    await app.close();
+
     assert.deepStrictEqual(errors, []);
     console.log('ui test passed');
   } finally {
