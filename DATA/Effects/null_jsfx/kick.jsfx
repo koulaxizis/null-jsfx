@@ -1,0 +1,137 @@
+desc:NULL Kick
+author: Christos Koulaxizis
+tags: instrument kick drum bass drum 808 909 sub click punch pitch sweep synth midi
+//category: Instruments
+//NULL JSFX v2.9 • https://nulljsfx.tech • MIT License
+
+slider1:50<30,120,0.1>Pitch (Hz)
+slider2:0<0,1,1{Off,On}>Follow Notes
+slider3:24<0,48,0.1>Sweep (st)
+slider4:40<2,300,0.1:log>Sweep Time (ms)
+slider5:450<20,3000,1:log>Decay (ms)
+slider6:30<0,100,1>Click (%)
+slider7:3000<500,12000,1:log>Click Tone (Hz)
+slider8:0<0,100,1>Drive (%)
+slider9:50<0,100,1>Velocity (%)
+slider10:0<-24,12,0.1>Volume (dB)
+
+in_pin:none
+out_pin:Left
+out_pin:Right
+
+@init
+  ext_noinit = 1;              // play and seek keep tails, as in the VST3/CLAP
+  // A kick drum synthesizer (no samples), played from MIDI: any note-on starts a kick.
+  //   - the body is a sine whose pitch starts Sweep semitones above Pitch and falls back to it
+  //     exponentially (time constant Sweep Time); its level falls by 60 dB over Decay
+  //   - Click is a burst of white noise (Park-Miller) through a one-pole low-pass at Click
+  //     Tone, falling by 60 dB in 20 ms: the beater
+  //   - Follow Notes On tunes the kick to the note (C1, MIDI 36, plays Pitch); Off plays
+  //     Pitch on every key
+  //   - Velocity sets how much the key velocity changes the level (0 % = always full)
+  //   - Drive is a soft clip tanh(g x) / tanh(g), g = 1 + 9 x Drive, so a full-level kick
+  //     still peaks at 1
+  // A new kick while one rings fades the old one out over 3 ms (two voices), so retriggers
+  // do not click. The noise generator steps every sample, played or not.
+  // Memory: 4000.. the MIDI of the block, 100.. the two voices (16 values each).
+  ext_tail_size = -1;
+  MQ = 4000;
+  VB = 100;                    // voice k at VB + k * 16: on, phase, pitch env, amp env,
+                               // click env, click filter, velocity gain, f0, fade, fade rate
+  memset(VB, 0, 32);
+  k_last = 1;                  // the voice that started last
+  seed = 12345;
+
+  // tanh (EEL2 has none): (e^2x - 1) / (e^2x + 1), clamped
+  function k_tanh(x) local(e)
+  (
+    x > 20 ? 1 : x < -20 ? -1 : (e = exp(2 * x); (e - 1) / (e + 1));
+  );
+
+  // a MIDI message at this sample: a note-on starts a kick in the other voice
+  function midi_ev(m1, m2, m3) local(st, v, o)
+  (
+    st = m1 & 0xF0;
+    st == 0x90 && m3 > 0 ? (
+      o = VB + k_last * 16;
+      o[0] ? o[9] = 1 / (0.003 * srate);
+      k_last = 1 - k_last;
+      v = VB + k_last * 16;
+      v[0] = 1;
+      v[1] = 0;
+      v[2] = 1;
+      v[3] = 1;
+      v[4] = 1;
+      v[5] = 0;
+      v[6] = 1 - vs + vs * m3 / 127;
+      v[7] = follow ? pitch * 2 ^ ((m2 - 36) / 12) : pitch;
+      v[8] = 1;
+      v[9] = 0;
+    );
+  );
+
+@slider
+  pitch = slider1;
+  follow = slider2 >= 0.5;
+  sw = slider3 / 12;
+  pek = exp(-1 / (slider4 / 1000 * srate));
+  aek = exp(-6.907755278982137 / (slider5 / 1000 * srate));
+  cek = exp(-6.907755278982137 / (0.02 * srate));
+  click = slider6 / 100 * 2;
+  ck = 1 - exp(-2 * $pi * slider7 / srate);
+  dr = slider8 / 100;
+  dg = 1 + 9 * dr;
+  dn = k_tanh(dg);
+  vs = slider9 / 100;
+  og = 10 ^ (slider10 / 20);
+
+@block
+  // the MIDI of this block, played at its offsets in @sample
+  mq_n = 0;
+  while (midirecv(m_ofs, m_1, m_2, m_3)) (
+    // every message goes on to the next plugin too, so instruments can be layered
+    midisend(m_ofs, m_1, m_2, m_3);
+    mq_n < 512 ? (
+      MQ[mq_n * 4] = m_ofs;
+      MQ[mq_n * 4 + 1] = m_1;
+      MQ[mq_n * 4 + 2] = m_2;
+      MQ[mq_n * 4 + 3] = m_3;
+      mq_n += 1;
+    );
+  );
+  mq_i = 0;
+  si = 0;
+
+@sample
+  while (mq_i < mq_n && MQ[mq_i * 4] <= si) (
+    midi_ev(MQ[mq_i * 4 + 1], MQ[mq_i * 4 + 2], MQ[mq_i * 4 + 3]);
+    mq_i += 1;
+  );
+  si += 1;
+
+  seed *= 16807; seed -= floor(seed / 2147483647) * 2147483647;
+  w = seed / 1073741824 - 1;
+  x = 0;
+  k = 0;
+  loop(2,
+    v = VB + k * 16;
+    v[0] ? (
+      f = v[7] * 2 ^ (sw * v[2]);
+      y = sin(2 * $pi * v[1]) * v[3];
+      v[1] += f / srate;
+      v[1] -= floor(v[1]);
+      v[5] += (w - v[5]) * ck;
+      y += v[5] * v[4] * click;
+      x += y * v[6] * v[8];
+      v[2] *= pek;
+      v[3] *= aek;
+      v[4] *= cek;
+      v[8] -= v[9];
+      v[8] <= 0 || (v[3] < 0.00001 && v[4] < 0.00001) ? v[0] = 0;
+    );
+    k += 1;
+  );
+  dr > 0 ? x = k_tanh(dg * x) / dn;
+  x *= og;
+  spl0 = x;
+  spl1 = x;

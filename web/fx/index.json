@@ -1838,6 +1838,20 @@
    "bytes": 103597
   },
   {
+   "id": "kick",
+   "name": "Kick",
+   "category": "Instruments",
+   "tags": "instrument kick drum bass drum 808 909 sub click punch pitch sweep synth midi gui",
+   "gfx": [
+    560,
+    410
+   ],
+   "ins": 0,
+   "outs": 2,
+   "sliders": 10,
+   "bytes": 58860
+  },
+  {
    "id": "mallets",
    "name": "Mallets",
    "category": "Instruments",

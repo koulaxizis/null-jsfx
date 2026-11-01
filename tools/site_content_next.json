@@ -242,5 +242,29 @@
     ],
     "properties": "The audio passes through untouched (Listen View plays the mid or the side). Display: 512 columns of minimum and maximum over the screen width, started by a rising or falling crossing of the trigger level after Gain (Auto: or after two screens; Free: at once). Zero latency.",
     "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-osc\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><rect x=\"6\" y=\"10\" width=\"52\" height=\"44\" rx=\"4\" stroke=\"url(#icon-osc)\" stroke-width=\"2.5\" fill=\"none\"/><path d=\"M6 32 H58 M32 10 V54\" stroke=\"url(#icon-osc)\" stroke-width=\"1\" opacity=\"0.5\"/><path d=\"M10 40 L18 22 L26 40 L34 22 L42 40 L50 22 L54 30\" stroke=\"url(#icon-osc)\" stroke-width=\"2.5\" fill=\"none\"/></svg>"
+  },
+  "kick": {
+    "card_desc": "Kick Drum Synthesizer",
+    "keywords": "instrument kick drum bass drum 808 909 sub click punch pitch sweep synth midi",
+    "slider_desc": [
+      "The kick's pitch, where the sweep ends.",
+      "On: the kick follows the notes (C1 plays Pitch); Off: every key plays Pitch.",
+      "How far above Pitch the kick starts.",
+      "How fast the pitch falls to Pitch.",
+      "How long the kick rings (the time to fall 60 dB).",
+      "The level of the beater click.",
+      "How bright the click is.",
+      "Soft clipping for a harder, louder kick.",
+      "How much the key velocity changes the level.",
+      "Output level."
+    ],
+    "uses": [
+      "808 and 909 style kicks from MIDI",
+      "Tuned sub kicks that follow the bass line",
+      "Layering a click or a sub under a sampled kick",
+      "Replacing a weak recorded kick together with Drum Trigger"
+    ],
+    "properties": "MIDI note-on → sine body, pitch from Pitch + Sweep falling exponentially (Sweep Time), level −60 dB over Decay; + white noise (Park-Miller) low-passed at Click Tone, −60 dB over 20 ms → velocity → soft clip tanh(g·x)/tanh(g) → Volume. Two voices: a retrigger fades the old kick out over 3 ms. Every MIDI message passes on. No samples.",
+    "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-kik\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><circle cx=\"32\" cy=\"32\" r=\"24\" stroke=\"url(#icon-kik)\" stroke-width=\"2.5\" fill=\"none\"/><circle cx=\"32\" cy=\"32\" r=\"14\" stroke=\"url(#icon-kik)\" stroke-width=\"1.5\" fill=\"none\" opacity=\"0.6\"/><circle cx=\"32\" cy=\"32\" r=\"4\" fill=\"url(#icon-kik)\"/></svg>"
   }
 }
