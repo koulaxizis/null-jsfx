@@ -54,3 +54,21 @@ jobs:
       - run: npx playwright install --with-deps chromium
         working-directory: tests/remote
       - run: node tests/remote/remote_test.cjs
+
+  mixers:
+    # the Mixers tab of NULL Remote (android/web/mixers/): OSC codec, laws, the X AIR profile and a
+    # live session against the X AIR simulator over UDP, then the tab in a real browser
+    timeout-minutes: 15
+    # same Playwright pin as the remote job, so it stays on 24.04 too
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm ci
+        working-directory: tests/mixers
+      - run: npx playwright install --with-deps chromium
+        working-directory: tests/mixers
+      - run: node tests/mixers/mixers_test.cjs
+      - run: node tests/mixers/ui_test.cjs
