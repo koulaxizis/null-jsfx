@@ -6,8 +6,9 @@ name: Android remotes
 #   build   unit tests, Android lint, and every APK (debug) as a workflow artifact
 #   mixers-device  Remote for Mixers (debug APK) in an Android emulator against the X AIR
 #           simulator on the host: the Kotlin UDP bridge and the WebView end to end
-#   release when a GitHub release is published (or by hand with its tag): the signed release
-#           APKs of the apps in RELEASED_APPS, attached to it
+#   release with a release tag (the Release workflow, which builds a draft release, or by hand
+#           for a release that exists): the signed release APKs of the apps in RELEASED_APPS,
+#           attached to it
 # Signing uses the orOS keystore (Christos, 2026-11-01) from the repository secrets
 # ANDROID_KEYSTORE (base64 of the .jks), ANDROID_KEYSTORE_PASSWORD, ANDROID_KEY_ALIAS and
 # ANDROID_KEY_PASSWORD. Without them a release gets no APK and the run says so.
@@ -24,29 +25,39 @@ on:
         description: "Attach the APKs to this existing release (e.g. 3.1); empty = only build"
         required: false
         default: ""
-  release:
-    types: [published]
+  # from release.yml, which creates the draft release first; a draft has no tag yet, so it
+  # passes the commit to build
+  workflow_call:
+    inputs:
+      release_tag:
+        type: string
+        required: true
+      checkout_ref:
+        type: string
+        required: false
+        default: ""
 
+# A fixed group name, as in native.yml: github.workflow is the caller's name in a called workflow.
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.ref || github.run_id }}
+  group: android-${{ github.event_name == 'pull_request' && github.ref || github.run_id }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions:
   contents: read
 
 env:
-  TAG: ${{ github.event.release.tag_name || inputs.release_tag }}
+  TAG: ${{ inputs.release_tag }}
   # the apps attached to a release (Remote for Mixers since its X AIR version, 2026-11-01)
   RELEASED_APPS: "daws mixers"
 
 jobs:
   pages:
     timeout-minutes: 15
-    # Playwright 1.56 has no Chromium for ubuntu-latest (26.04), as in test.yml's job remote
-    runs-on: ubuntu-24.04
+    # Playwright 1.64 (tests/remote) has a Chromium for ubuntu-latest, as in test.yml's job remote
+    runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version: 22
       - run: npm ci
@@ -59,16 +70,16 @@ jobs:
     timeout-minutes: 30
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-java@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: 17
-      - uses: gradle/actions/setup-gradle@v4
+      - uses: gradle/actions/setup-gradle@v5
       - name: Unit tests, lint and the debug APKs
         working-directory: android
         run: ./gradlew --no-daemon testDawsGithubDebugUnitTest lintDawsGithubDebug lintMixersGithubDebug assembleDebug
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: NULL-JSFX-Android-debug
@@ -81,13 +92,13 @@ jobs:
     timeout-minutes: 30
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-java@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: 17
-      - uses: gradle/actions/setup-gradle@v4
-      - uses: actions/setup-node@v4
+      - uses: gradle/actions/setup-gradle@v5
+      - uses: actions/setup-node@v7
         with:
           node-version: 22
       - run: npm ci
@@ -109,7 +120,7 @@ jobs:
           disable-animations: true
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -no-snapshot
           script: node tests/mixers/device_test.cjs android/app/build/outputs/apk/mixersGithub/debug/app-mixers-github-debug.apk device-shots
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: Remote-for-Mixers-emulator
@@ -117,21 +128,21 @@ jobs:
           retention-days: 14
 
   release:
-    if: github.event_name == 'release' || inputs.release_tag != ''
+    if: inputs.release_tag != ''
     needs: [pages, build]
     timeout-minutes: 30
     runs-on: ubuntu-24.04
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
-          ref: ${{ env.TAG }}
-      - uses: actions/setup-java@v4
+          ref: ${{ inputs.checkout_ref || env.TAG }}
+      - uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: 17
-      - uses: gradle/actions/setup-gradle@v4
+      - uses: gradle/actions/setup-gradle@v5
       - name: Signed release APKs
         id: apks
         working-directory: android

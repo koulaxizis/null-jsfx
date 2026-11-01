@@ -370,13 +370,31 @@ def chains_with(stem):
     return sorted(set(out), key=str.lower)
 
 
+TITLE_MAX = 60
+DESC_MAX = 160
+
+
+def fit(limit, *texts):
+    """The first text that is at most limit characters long, else the last one."""
+    return next((t for t in texts if len(t) <= limit), texts[-1])
+
+
 def page(p, plugins):
     """The plugin's own page: everything in its guide, its demo, presets, chains and neighbours."""
     e = html.escape
     kind = KIND.get(p["category"], "audio plugin")
     url = SITE + p["page"]
-    title = f"{p['name']} by NULL JSFX: free {kind} for REAPER, VST3 and CLAP"
-    desc = f"{p['name']}: {p['card_desc']}. Free and open source {kind} for REAPER (JSFX) and any DAW (VST3, CLAP) on Windows, macOS and Linux, plus LV2 on Linux."
+    # the longest that fits what search results show (about 60 characters of title, 160 of
+    # description): the formats go first when the name or the description is long
+    title = fit(TITLE_MAX, f"{p['name']}: free {kind} for REAPER, VST3, CLAP | NULL JSFX",
+                f"{p['name']}: free {kind.replace('audio ', '')} for REAPER, VST3, CLAP | NULL JSFX",
+                f"{p['name']}: free {kind} for REAPER and VST3 | NULL JSFX",
+                f"{p['name']}: free {kind} for REAPER | NULL JSFX",
+                f"{p['name']}: free {kind} | NULL JSFX", f"{p['name']} | NULL JSFX")
+    desc = fit(DESC_MAX, f"{p['name']}: {p['card_desc']}. Free, open source {kind} for REAPER (JSFX) and any DAW (VST3, CLAP, LV2) on Windows, macOS and Linux.",
+               f"{p['name']}: {p['card_desc']}. Free {kind} for REAPER and any DAW: JSFX, VST3, CLAP, LV2.",
+               f"{p['name']}: {p['card_desc']}. Free: JSFX, VST3, CLAP, LV2.",
+               f"{p['name']}: {p['card_desc']}.")
     poster = p["video"].rsplit("/", 1)[-1].replace(".mp4", ".jpg") if p["video"] else None
     image = SITE + f"assets/video/{poster}" if poster else SITE + "assets/img/social-preview.jpg"
     ld = {

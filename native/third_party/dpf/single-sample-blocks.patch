@@ -1,0 +1,12 @@
+diff --git a/distrho/src/DistrhoPluginInternal.hpp b/distrho/src/DistrhoPluginInternal.hpp
+--- a/distrho/src/DistrhoPluginInternal.hpp
++++ b/distrho/src/DistrhoPluginInternal.hpp
+@@ -1073,7 +1073,7 @@
+     {
+         DISTRHO_SAFE_ASSERT_RETURN(fData != nullptr, false);
+         DISTRHO_SAFE_ASSERT_RETURN(fPlugin != nullptr, false);
+-        DISTRHO_SAFE_ASSERT(bufferSize >= 2);
++        DISTRHO_SAFE_ASSERT(bufferSize >= 1);
+ 
+         if (fData->bufferSize == bufferSize)
+             return false;

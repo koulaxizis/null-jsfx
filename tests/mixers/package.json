@@ -6,6 +6,6 @@
     "test": "node mixers_test.cjs && node ui_test.cjs"
   },
   "dependencies": {
-    "playwright": "1.56.1"
+    "playwright": "1.64.1"
   }
 }
