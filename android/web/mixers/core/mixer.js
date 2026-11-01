@@ -1,5 +1,5 @@
 // NULL Remote, Mixers: one live session with an OSC console, independent of the model family.
-// A profile (xair/profile.js, x32/profile.js) supplies the port, discovery and info messages,
+// A profile (xair/, x32/, wing/profile.js) supplies the port, discovery and info messages,
 // the keep-alive messages and the layout (strips and the typed OSC parameters); this file keeps
 // the state, queries every parameter on connect, applies updates the console pushes, sends
 // changes (coalesced per parameter), renews subscriptions and watches the link.
@@ -142,7 +142,7 @@
       if (!p) { p = { value, timer: null, last: 0 }; this.pending.set(path, p); }
       p.value = value;
       const now = Date.now();
-      const flush = () => { p.timer = null; p.last = Date.now(); this._tx(path, [{ t: type, v: p.value }]); };
+      const flush = () => { p.timer = null; p.last = Date.now(); this._tx(path, this.profile.toWire ? this.profile.toWire(path, p.value, type) : [{ t: type, v: p.value }]); };
       if (p.timer) return;
       if (now - p.last >= SEND_GAP_MS) flush();
       else p.timer = setTimeout(flush, SEND_GAP_MS - (now - p.last));
@@ -186,8 +186,9 @@
         // a value the user is dragging right now wins over an echo of an older one
         const p = this.pending.get(m.address);
         if (p && p.timer) continue;
-        const v = m.args[0].v;
-        if (this.values.get(m.address) === v) continue;
+        // a profile in other units (WING: dB, -100..100 pan, 1 = muted) converts to the tab's
+        const v = this.profile.fromWire ? this.profile.fromWire(m.address, m.args) : m.args[0].v;
+        if (v === undefined || this.values.get(m.address) === v) continue;
         this.values.set(m.address, v);
         this._emit(m.address, v, false);
       }

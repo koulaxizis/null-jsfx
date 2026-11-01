@@ -1,4 +1,4 @@
-// NULL Remote, Mixers tab: remote control for digital mixers (profiles: X AIR, X32/M32). Loads its own files next to it, then registers with the app's tab shell:
+// NULL Remote, Mixers tab: remote control for digital mixers (profiles: X AIR, X32/M32, WING). Loads its own files next to it, then registers with the app's tab shell:
 //   NullRemote.register({id:'mixers', title:'Mixers', app:'mixers', mount(el), back()}).
 // The shell (android/web/core) owns the header, the tab bar and keep-awake (a Settings choice).
 // Views: Connect (scan, manual IP, how to connect) and Desk (layers of strips, the mix selector
@@ -8,7 +8,7 @@
   'use strict';
 
   const here = (document.currentScript && document.currentScript.src) || location.href;
-  const FILES = ['core/osc.js', 'core/levels.js', 'core/transport.js', 'core/mixer.js', 'xair/profile.js', 'x32/profile.js'];
+  const FILES = ['core/osc.js', 'core/levels.js', 'core/transport.js', 'core/mixer.js', 'xair/profile.js', 'x32/profile.js', 'wing/profile.js'];
   const HOLD_MS = 1500;
   const STORE = 'null-remote-mixers';
 
@@ -99,7 +99,7 @@
     }
 
     // every console family the tab knows; the connected one is this.profile
-    get profiles() { const P = window.NullMixerProfiles; return [P.xair, P.x32]; }
+    get profiles() { const P = window.NullMixerProfiles; return [P.xair, P.x32, P.wing]; }
     get profile() { return (this.session && this.session.profile) || this.profiles[0]; }
 
     // ---- connect view -------------------------------------------------------------------------
@@ -120,7 +120,7 @@
         err,
         h('h2', { style: 'margin-top:16px' }, 'HOW TO CONNECT'),
         this.profiles.flatMap((P) => [h('div', { class: 'nm-sub' }, P.family), h('ol', { class: 'nm-help' }, P.connectHelp.map((t) => h('li', null, t)))]),
-        h('div', { class: 'nm-note' }, 'X AIR, X32 and M32 are trademarks of their owners. Remote for Mixers is an independent free app from NULL JSFX and is not made or endorsed by them.'));
+        h('div', { class: 'nm-note' }, 'X AIR, X32, M32 and WING are trademarks of their owners. Remote for Mixers is an independent free app from NULL JSFX and is not made or endorsed by them.'));
       this.root.replaceChildren(ui);
       this.root.className = 'nm';
       if (this.transportFactory || window.NullMixerTransport.available()) this.scan(found, err, scan);
@@ -218,14 +218,16 @@
       } else {
         bar.append(lock, h('button', { onclick: () => this.pickMyMix() }, 'My mix'));
         // layers
-        const layers = [['inputs', 'Inputs'], ['returns', 'FX Returns'], ['masters', 'Buses'], ['dca', 'DCA']];
+        // a family without separate FX returns (WING) shows no FX Returns layer
+        const layers = [['inputs', 'Inputs'], ['returns', 'FX Returns'], ['masters', 'Buses'], ['dca', 'DCA']].filter(([id]) => id !== 'returns' || L.returns.length);
+        if (!layers.some(([id]) => id === v.layer)) v.layer = 'inputs';
         bar.append(h('span', { class: 'nm-sep' }));
         for (const [id, label] of layers) {
           bar.append(h('button', { class: v.layer === id ? 'on' : '', onclick: () => { v.layer = id; store.set({ layer: id }); this.showDesk(); } }, label));
         }
         // mix selector: what the faders control
         bar.append(h('span', { class: 'nm-sep' }));
-        const mixes = [{ id: 'main', label: 'Main LR' }].concat(L.targets.map((t) => ({ id: t.id, label: this.targetName(t) })));
+        const mixes = [{ id: 'main', label: L.main.label }].concat(L.targets.map((t) => ({ id: t.id, label: this.targetName(t) })));
         for (const m of mixes) {
           bar.append(h('button', { class: v.mix === m.id ? 'on' : '', onclick: () => { v.mix = m.id; store.set({ mix: m.id }); this.showDesk(); } }, m.label));
         }
@@ -238,8 +240,10 @@
           this.offs.push(s.on(g.path, () => { paint(); this.paintGroupMutes(); }));
           bar.append(b);
         }
-        const clear = h('button', { class: 'clear-solo', onclick: () => { haptic(); s.action(...L.clearSolo); } }, 'Clear solo');
-        const soloPaths = L.inputs.concat(L.returns, L.targets.map((t) => t.master), [L.main]).map((x) => x.solo).filter(Boolean);
+        const soloPaths = L.inputs.concat(L.returns, L.targets.map((t) => t.master), [L.main], L.dcas).map((x) => x.solo).filter(Boolean);
+        // a family with no clear-solo command (WING) gets every soloed strip set back to 0
+        const clearSolo = () => { if (L.clearSolo) s.action(...L.clearSolo); else for (const p of soloPaths) if (s.get(p)) s.set(p, 0); };
+        const clear = h('button', { class: 'clear-solo', onclick: () => { haptic(); clearSolo(); } }, 'Clear solo');
         const paintClear = () => { clear.style.display = soloPaths.some((p) => s.get(p)) ? '' : 'none'; };
         paintClear();
         for (const p of soloPaths) this.offs.push(s.on(p, paintClear));
