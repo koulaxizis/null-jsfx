@@ -1,0 +1,11 @@
+{
+  "name": "null-remote-mixers-test",
+  "private": true,
+  "description": "Tests of the Mixers tab of NULL Remote (see mixers_test.cjs and ui_test.cjs)",
+  "scripts": {
+    "test": "node mixers_test.cjs && node ui_test.cjs"
+  },
+  "dependencies": {
+    "playwright": "1.56.1"
+  }
+}
