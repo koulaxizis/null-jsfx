@@ -870,6 +870,20 @@
    "bytes": 37854
   },
   {
+   "id": "room_tone",
+   "name": "Room Tone",
+   "category": "Essentials",
+   "tags": "room tone ambience fill gaps dialogue edit post production noise bed adr restoration fft gui",
+   "gfx": [
+    480,
+    410
+   ],
+   "ins": 2,
+   "outs": 2,
+   "sliders": 7,
+   "bytes": 56392
+  },
+  {
    "id": "saturation",
    "name": "Saturation",
    "category": "Essentials",
