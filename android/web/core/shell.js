@@ -11,6 +11,9 @@
 //   NullShell.scan(port) -> Promise<{hosts: [{host, auth}], self}>
 //   NullShell.udpOpen(localPort) -> id (-1 = failed)
 //   NullShell.udpSend(id, host, port, base64) / udpBroadcast(id, port, base64) / udpClose(id)
+//   NullShell.tcpOpen(host, port, timeoutMs) -> id; then {type: "tcpopen", id},
+//     {type: "tcp", id, data: base64} per chunk read, {type: "tcpclose", id, error}
+//   NullShell.tcpSend(id, base64) / tcpClose(id)
 //   NullShell.on(type, fn) / off(type, fn)   messages from the phone, e.g. "udp":
 //                                             {type: "udp", id, host, port, data: base64}
 //   NullShell.keepAwake(bool), fullscreen(bool), haptic(), openUrl(https url)
@@ -47,6 +50,8 @@
     reaperSet() {},
     scan(id) { setTimeout(() => recv({ type: 'scan', id, hosts: window.__NULL_STUB_SCAN || [], self: '' }), 50); },
     udpOpen: () => -1, udpSend: () => false, udpBroadcast: () => false, udpClose() {},
+    tcpOpen(host, port, ms, id) { setTimeout(() => recv({ type: 'tcpclose', id, error: 'no TCP in a browser' }), 0); },
+    tcpSend: () => false, tcpClose() {},
     keepAwake() {}, fullscreen() {}, haptic() {},
     openUrl(u) { if (/^https:\/\//.test(u)) window.open(u, '_blank', 'noopener'); },
   };
@@ -64,6 +69,14 @@
     udpSend: (id, host, port, b64) => n.udpSend(id, String(host), port | 0, String(b64)),
     udpBroadcast: (id, port, b64) => n.udpBroadcast(id, port | 0, String(b64)),
     udpClose: id => n.udpClose(id),
+    tcpOpen(host, port, timeoutMs) {
+      if (N) return N.tcpOpen(String(host), port | 0, timeoutMs | 0 || 5000);
+      const id = -(nextId++);
+      stub.tcpOpen(host, port, timeoutMs, id);
+      return id;
+    },
+    tcpSend: (id, b64) => n.tcpSend(id, String(b64)),
+    tcpClose: id => n.tcpClose(id),
     on(type, fn) { if (!handlers.has(type)) handlers.set(type, new Set()); handlers.get(type).add(fn); },
     off(type, fn) { handlers.get(type)?.delete(fn); },
     keepAwake: on => n.keepAwake(!!on),

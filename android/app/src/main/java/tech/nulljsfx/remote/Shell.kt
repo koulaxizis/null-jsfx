@@ -191,7 +191,67 @@ class Shell(
         }
     }
 
+    // --- TCP (consoles whose native protocol is a TCP stream) ---------------------------------
+
+    private val tcps = ConcurrentHashMap<Int, java.net.Socket>()
+
+    /**
+     * Connects to [host]:[port] in the background and returns the connection id at once. Posts
+     * {type: "tcpopen", id} when connected, {type: "tcp", id, data: base64} for every chunk read,
+     * and {type: "tcpclose", id, error} when it ends or fails. [timeoutMs] limits the connect.
+     */
+    @JavascriptInterface
+    fun tcpOpen(host: String, port: Int, timeoutMs: Int): Int {
+        val id = nextUdp.getAndIncrement()
+        io.execute {
+            val s = java.net.Socket()
+            var error = ""
+            try {
+                s.tcpNoDelay = true
+                s.connect(InetSocketAddress(host, port), timeoutMs.coerceIn(500, 30000))
+                tcps[id] = s
+                post(JSONObject().put("type", "tcpopen").put("id", id).toString())
+                val buf = ByteArray(65536)
+                val input = s.getInputStream()
+                while (true) {
+                    val n = input.read(buf)
+                    if (n < 0) break
+                    post(JSONObject().put("type", "tcp").put("id", id)
+                        .put("data", Base64.encodeToString(buf, 0, n, Base64.NO_WRAP)).toString())
+                }
+            } catch (e: Exception) {
+                if (!s.isClosed) error = e.toString()
+            } finally {
+                tcps.remove(id)
+                try { s.close() } catch (e: Exception) { }
+                post(JSONObject().put("type", "tcpclose").put("id", id).put("error", error).toString())
+            }
+        }
+        return id
+    }
+
+    /** Writes [b64] (raw bytes, base64) to connection [id]; false when it is not open. */
+    @JavascriptInterface
+    fun tcpSend(id: Int, b64: String): Boolean {
+        val s = tcps[id] ?: return false
+        val bytes = try { Base64.decode(b64, Base64.DEFAULT) } catch (e: Exception) { return false }
+        io.execute {
+            try {
+                synchronized(s) { s.getOutputStream().apply { write(bytes); flush() } }
+            } catch (e: Exception) {
+                try { s.close() } catch (x: Exception) { }
+            }
+        }
+        return true
+    }
+
+    @JavascriptInterface
+    fun tcpClose(id: Int) {
+        tcps.remove(id)?.let { try { it.close() } catch (e: Exception) { } }
+    }
+
     fun closeAll() {
+        for (id in tcps.keys.toList()) tcpClose(id)
         for (id in udps.keys.toList()) udpClose(id)
         io.shutdownNow()
     }

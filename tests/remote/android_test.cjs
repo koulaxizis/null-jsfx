@@ -127,6 +127,9 @@ window.NullShellNative = {
   udpSend: (id, h, p, d) => { __calls.push(['udpSend', id, h, p, d]); return true; },
   udpBroadcast: (id, p, d) => { __calls.push(['udpBroadcast', id, p, d]); return true; },
   udpClose: id => __calls.push(['udpClose', id]),
+  tcpOpen: (h, p, ms) => { __calls.push(['tcpOpen', h, p, ms]); return 9; },
+  tcpSend: (id, d) => { __calls.push(['tcpSend', id, d]); return true; },
+  tcpClose: id => __calls.push(['tcpClose', id]),
   keepAwake: on => __calls.push(['keepAwake', on]),
   fullscreen: on => __calls.push(['fullscreen', on]),
   haptic: () => __calls.push(['haptic']),
@@ -263,6 +266,16 @@ window.NullShellNative = {
   });
   check('udpOpen returns the socket id', udp.id === 7);
   check('udpBroadcast reaches the phone', (await calls()).some(c => c[0] === 'udpBroadcast' && c[2] === 10024 && c[3] === 'L3hpbmZvAAAALAAAAA=='));
+  const tcp = await page.evaluate(() => {
+    const got = [];
+    NullShell.on('tcp', m => got.push(m));
+    const id = NullShell.tcpOpen('192.168.1.60', 51325);
+    NullShell.tcpSend(id, 'AQI=');
+    NullShell._recv(JSON.stringify({ type: 'tcp', id, data: 'AwQ=' }));
+    return { id, got };
+  });
+  check('tcpOpen with a default timeout', tcp.id === 9 && (await calls()).some(c => c[0] === 'tcpOpen' && c[2] === 51325 && c[3] === 5000));
+  check('tcpSend and incoming TCP data', (await calls()).some(c => c[0] === 'tcpSend' && c[2] === 'AQI=') && tcp.got.length === 1 && tcp.got[0].data === 'AwQ=');
   check('incoming packets reach NullShell.on("udp")', udp.got.length === 1 && udp.got[0].host === '192.168.1.50' && udp.got[0].data === 'AQI=');
 
   check('no page errors', !errors.length, errors.join('; '));
