@@ -1,0 +1,74 @@
+/* Remote for DAWs: the desk the DAW tabs share (core/desk.js): strips, transport and plugins. NULL JSFX palette (core/style.css). */
+.da-desk { flex: 1; display: flex; flex-direction: column; min-height: 0; position: relative; }
+.da-desk.da-down .da-strips { opacity: .45; }
+.da-desk.da-down .da-clock::after { content: " · offline"; color: var(--clip); }
+
+.da-bar {
+  flex: none; display: flex; align-items: center; gap: 8px; padding: 8px 12px;
+  background: var(--bg2); border-bottom: 1px solid var(--border);
+}
+.da-clock { font-variant-numeric: tabular-nums; font-size: 14px; color: var(--accent); min-width: 0; flex: 1; white-space: nowrap; overflow: hidden; }
+.da-transport { display: flex; gap: 6px; }
+.da-transport button, .da-leave { padding: 0; width: 44px; font-size: 16px; }
+.da-transport .da-rec.on { color: var(--clip); border-color: var(--clip); }
+.da-transport .da-play.on { color: var(--accent); border-color: var(--accent); }
+
+.da-strips {
+  flex: 1; display: flex; gap: 8px; padding: 12px; overflow-x: auto; overflow-y: hidden;
+  -webkit-overflow-scrolling: touch; min-height: 0;
+}
+.da-strip {
+  flex: 0 0 88px; display: flex; flex-direction: column; align-items: stretch; gap: 6px;
+  background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 8px 6px;
+  min-height: 0;
+}
+.da-strip.da-master { border-color: var(--border-hi); margin-left: auto; }
+.da-name { font-size: 13px; font-weight: 700; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.da-kind { font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); text-align: center; margin-top: -4px; }
+.da-fx { height: 36px; padding: 0; font-size: 12px; letter-spacing: 1.5px; }
+.da-pan { position: relative; height: 22px; border-radius: 11px; background: var(--bg2); border: 1px solid var(--border); flex: none; }
+.da-pan::before { content: ""; position: absolute; left: 50%; top: 4px; bottom: 4px; width: 1px; background: var(--border-hi); }
+.da-pan-dot { position: absolute; top: 3px; width: 14px; height: 14px; margin-left: -7px; border-radius: 50%; background: var(--accent); }
+.da-lane { flex: 1; display: flex; gap: 6px; min-height: 120px; }
+.da-meter { width: 8px; background: var(--bg2); border-radius: 4px; position: relative; overflow: hidden; }
+.da-meter-fill { position: absolute; left: 0; right: 0; bottom: 0; height: 0; background: linear-gradient(to top, #6f6f6f, var(--accent)); }
+.da-meter-fill.hot { background: var(--clip); }
+.da-fader { flex: 1; position: relative; background: var(--bg2); border-radius: 6px; }
+.da-fader::before { content: ""; position: absolute; left: 50%; top: 12px; bottom: 12px; width: 4px; margin-left: -2px; background: #2a2926; border-radius: 2px; }
+.da-cap {
+  position: absolute; left: 4px; right: 4px; height: 24px; border-radius: 5px;
+  background: linear-gradient(#5a5955, #3c3b38); border: 1px solid var(--border-hi);
+}
+.da-cap::after { content: ""; position: absolute; left: 6px; right: 6px; top: 11px; height: 1px; background: var(--accent); }
+.da-db { font-size: 12px; text-align: center; color: var(--muted); font-variant-numeric: tabular-nums; }
+.da-btns { display: flex; gap: 4px; }
+.da-btns button { flex: 1; padding: 0; min-width: 0; height: 36px; font-weight: 700; font-size: 13px; }
+.da-btns .da-m.on { color: #1b1a18; background: var(--warn); border-color: var(--warn); }
+.da-btns .da-s.on { color: #1b1a18; background: var(--accent); border-color: var(--accent); }
+.da-btns .da-r.on { color: #fff; background: var(--clip); border-color: var(--clip); }
+
+.da-sheet { position: absolute; inset: 0; background: var(--bg); display: flex; flex-direction: column; z-index: 2; }
+.da-sheet-top { flex: none; display: flex; align-items: center; gap: 8px; padding: 8px 12px; background: var(--bg2); border-bottom: 1px solid var(--border); }
+.da-back { padding: 0; width: 44px; font-size: 22px; }
+.da-sheet-title { font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.da-sheet-body { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+.da-plugins { max-width: 640px; width: 100%; margin: 0 auto; }
+.da-plugin { display: flex; gap: 8px; }
+.da-plugin-open { flex: 1; min-width: 0; }
+.da-plugin-open span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.da-onoff { flex: 0 0 64px; padding: 0; height: 52px; font-size: 12px; letter-spacing: 1.5px; color: var(--muted); }
+.da-onoff.on { color: var(--accent); border-color: var(--accent); }
+.da-gfx { width: 100%; margin: 0 auto; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; background: var(--bg2); }
+.da-gfx canvas { display: block; width: 100%; height: 100%; touch-action: none; }
+.da-note { text-align: center; }
+.da-params { max-width: 640px; width: 100%; margin: 0 auto; display: flex; flex-direction: column; gap: 10px; }
+.da-param { display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; }
+.da-param-name { font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.da-param-val { font-size: 13px; color: var(--accent); font-variant-numeric: tabular-nums; }
+.da-param-bar { grid-column: 1 / -1; height: 28px; background: var(--bg2); border-radius: 6px; position: relative; overflow: hidden; touch-action: none; cursor: ew-resize; }
+.da-param-bar.da-step { cursor: pointer; }
+.da-param-fill { position: absolute; left: 0; top: 0; bottom: 0; background: linear-gradient(to right, #4a4946, var(--accent)); opacity: .8; }
+
+@media (min-width: 900px) {
+  .da-strip { flex-basis: 104px; }
+}

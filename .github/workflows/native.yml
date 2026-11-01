@@ -149,7 +149,7 @@ jobs:
           cp native/common/fonts/* "$out/fonts/"
           cp native/INSTALL.txt "$out/"
           mkdir -p "$out/Remote"
-          cp -R remote/reaper_www_root remote/Scripts remote/INSTALL.txt "$out/Remote/"
+          cp -R remote/reaper_www_root remote/Scripts remote/INSTALL.txt remote/bitwig "$out/Remote/"
 
       - uses: actions/upload-artifact@v7
         with:
