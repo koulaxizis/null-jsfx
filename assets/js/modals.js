@@ -665,7 +665,9 @@ const guides = {
       { name: 'Modulation', range: '0 to 100%', desc: 'Tape-like wow: two slow sine LFOs gently move the delay time by up to 4 ms, so the echoes waver in pitch. 0% is off.' },
       { name: 'Diffusion', range: '0 to 100%', desc: 'A chain of short all-pass filters inside the feedback loop that smears every repeat a little more, turning the echoes into a reverb-like wash. 0% is off.' },
       { name: 'Ducking', range: '0 to 100%', desc: 'Pushes the echoes down while the dry input is loud (10 ms attack, 250 ms release), so they bloom in the gaps between phrases. 0% is off.' },
-      { name: 'Freeze', range: 'Off / On', desc: 'Holds the current echoes and repeats them forever: no new input enters the loop, feedback is 100% and the filters and drive are bypassed so the loop neither fades nor builds up.' }
+      { name: 'Freeze', range: 'Off / On', desc: 'Holds the current echoes and repeats them forever: no new input enters the loop, feedback is 100% and the filters and drive are bypassed so the loop neither fades nor builds up.' },
+      { name: 'Reverse', range: 'Off / On', desc: 'Plays every echo backwards, one window of the delay time at a time' },
+      { name: 'Pitch', range: '−12 to +12 semitones', desc: 'Shifts every echo up or down by this many semitones, so the repeats climb or fall (0 = off; not used while Reverse is on)' }
     ],
     uses: ['Slapback on vocals and guitars', 'Tempo-synced rhythmic echoes', 'Ping-pong echoes that bounce across the stereo field', 'Dark, saturated tape-style trails for transitions'],
     properties: 'Input → delay line (up to 2 s, or tempo-synced; Stereo: left and right independent, Ping-Pong: mono sum into the left line, lines cross-fed) → Low Cut → High Cut → Drive on every repeat inside the feedback loop → Dry/Wet Mix → Output. At their defaults the filters and drive are bypassed; zero latency.',
@@ -850,7 +852,8 @@ const guides = {
       { name: 'Manual', range: '0.1 to 10 ms', desc: 'Shortest delay of the sweep (its starting point); the delay moves from Manual up to Manual + Depth. 0.5 ms is the classic setting.' },
       { name: 'Tempo Sync', range: 'Off / 1/1 / 1/2 / 1/4 / 1/8 / 1/16 / 2/1 / 4/1 / 1/4T / 1/8T / 1/4D / 1/8D', desc: 'Locks one LFO cycle to a note value at the project tempo (straight, triplet or dotted), following the song position while playing. Off uses Rate.' },
       { name: 'Stereo Phase', range: '0 to 180 deg', desc: 'Offsets the right channel\'s LFO against the left, from 0 (mono sweep) to 180 degrees (opposite sweeps for a wide stereo flange).' },
-      { name: 'Thru Zero', range: 'Off / On', desc: 'Through-zero flanging: the dry signal is delayed by the middle of the sweep and the swept signal is inverted, so the sweep passes through the dry signal and cancels it, like the tape jet effect. Adds latency equal to that delay while on.' }
+      { name: 'Thru Zero', range: 'Off / On', desc: 'Through-zero flanging: the dry signal is delayed by the middle of the sweep and the swept signal is inverted, so the sweep passes through the dry signal and cancels it, like the tape jet effect. Adds latency equal to that delay while on.' },
+      { name: 'Barber Pole', range: 'Off / Up / Down', desc: 'Off sweeps up and down as before; Up or Down reads the delay on a ramp with two crossfading taps, so the sweep rises or falls for ever' }
     ],
     uses: ['Jet-plane sweeps on drums and cymbals', 'Movement on guitars and synths', 'Psychedelic effects on vocals', 'Build-ups and transitions'],
     properties: 'Input → short modulated delay (0.5 ms to 0.5 ms + Depth) with feedback → linear interpolation → Dry/Wet Mix → Output. One LFO drives both channels; zero latency.',
@@ -1153,7 +1156,8 @@ const guides = {
       { name: 'Feedback', range: '−95 to +95%', desc: 'Amount of the phased signal fed back into the all-pass chain: higher values sharpen the peaks, negative values move them between the notches. Above 30% the wet level is trimmed to keep the peaks in check.' },
       { name: 'Center', range: '200 to 5000 Hz', desc: 'Middle frequency of the sweep (1020 Hz by default, log scale from 200 Hz to 5 kHz).' },
       { name: 'Stereo Phase', range: '0 to 180 deg', desc: 'Offset between the left and right LFOs: 0 deg sweeps both channels together, 180 deg sweeps them in opposite directions for a wide stereo swirl.' },
-      { name: 'Tempo Sync', range: 'Off / 1/1 / 1/2 / 1/4 / 1/8 / 1/16 / 2/1 / 4/1 / 1/4T / 1/8T / 1/4D / 1/8D', desc: 'Locks one LFO cycle to a note value at the project tempo (and to the bar while the transport plays), replacing Rate. Off uses Rate.' }
+      { name: 'Tempo Sync', range: 'Off / 1/1 / 1/2 / 1/4 / 1/8 / 1/16 / 2/1 / 4/1 / 1/4T / 1/8T / 1/4D / 1/8D', desc: 'Locks one LFO cycle to a note value at the project tempo (and to the bar while the transport plays), replacing Rate. Off uses Rate.' },
+      { name: 'Barber Pole', range: 'Off / Up / Down', desc: 'Off sweeps up and down as before; Up or Down turns the sweep into an endless rise or fall (two voices take turns, the Shepard-tone trick)' }
     ],
     uses: ['Swirling movement on guitars and keys', 'Vintage phasing on synths', 'Subtle motion on pads', 'Psychedelic effects on drums and vocals'],
     properties: 'Input → 1–8 first-order all-pass stages swept by a sine LFO (roughly 440–1600 Hz range) with fixed 30% feedback → added to the dry signal by Mix → Output. One LFO drives both channels; zero latency.',
@@ -1199,7 +1203,10 @@ const guides = {
       { name: 'Width', range: '0 to 200%', desc: 'Stereo width of the reverb (mid/side): 0% is mono, 100% unchanged, 200% extra wide.' },
       { name: 'Modulation', range: '0 to 100%', desc: 'Slow, gentle movement of the internal delay lengths that smears metallic ringing and gives the tail a chorused shimmer; 0% is off.' },
       { name: 'Freeze', range: 'Off / On', desc: 'Holds the current tail forever: the loop stops losing level and no new input enters, for pads and drones.' },
-      { name: 'Character', range: 'Classic / Plate / Hall', desc: 'Classic is the original room algorithm; Plate adds dense input diffusion and a brighter tail; Hall adds the diffusion with longer, wider delays for a bigger, smoother space.' }
+      { name: 'Character', range: 'Classic / Plate / Hall', desc: 'Classic is the original room algorithm; Plate adds dense input diffusion and a brighter tail; Hall adds the diffusion with longer, wider delays for a bigger, smoother space.' },
+      { name: 'Ducking', range: '0 to 100%', desc: 'Dips the reverb while the dry signal is loud, so the tail fills the gaps between phrases and hits' },
+      { name: 'Gate Threshold', range: '−80 to 0 dB', desc: 'Gated reverb: above -80 dB the tail stays open while the input is above this level, then is cut (-80 = off)' },
+      { name: 'Gate Hold', range: '10 to 1000 ms', desc: 'How long the gate stays open after the input falls under the threshold' }
     ],
     uses: ['Room and hall ambience on dry sources', 'Stereo space on vocals and instruments', 'Dark, damped tails for pads', 'Quick sketch reverb during writing'],
     properties: 'Input → mono sum → four damped feedback combs per side (right side slightly longer for a decorrelated stereo tail) → two series all-passes per side → Dry/Wet Mix → Output. Delay lengths and damping are scaled to the sample rate, so it sounds the same at 44.1, 48 or 96 kHz; zero latency.',
@@ -1776,7 +1783,8 @@ const guides = {
       { name: 'Shift', range: '−2000 to +2000 Hz', desc: 'Amount every frequency is moved up or down, in Hz' },
       { name: 'Stereo Offset', range: '−100 to +100 Hz', desc: 'Extra shift applied to the right channel only, for stereo movement' },
       { name: 'Feedback', range: '0 to 95%', desc: 'Output fed back into the shifter for spiralling barber-pole sweeps' },
-      { name: 'Mix', range: '0 to 100%', desc: 'Dry/wet blend' }
+      { name: 'Mix', range: '0 to 100%', desc: 'Dry/wet blend' },
+      { name: 'Feedback Delay', range: '0 to 1000 ms', desc: 'A delay inside the feedback loop, so each repeat comes back shifted once more and the echoes climb or fall in steps (0 = off)' }
     ],
     uses: ['Subtle phasing and beating with small shifts', 'Metallic, bell-like inharmonic tones', 'Barber-pole rising or falling effects with Feedback', 'Stereo widening via Stereo Offset', 'Sci-fi sound design'],
     properties: 'Signal chain: Input → Hilbert Transform (two 4-stage allpass chains) → Quadrature Oscillator Mix → Feedback (DC-blocked, soft-limited) → Mix → Output. Shifts by a fixed Hz amount rather than a ratio, so harmonics become inharmonic; zero latency.',

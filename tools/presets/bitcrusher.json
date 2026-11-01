@@ -1,0 +1,11 @@
+[
+  ["12-Bit Sampler", {"Bits": 12, "Sample Rate (Hz)": 26040, "Anti Alias": "On"}],
+  ["Old Sampler Drums", {"Bits": 12, "Sample Rate (Hz)": 22050, "Anti Alias": "On", "Drive (dB)": 3}],
+  ["8-Bit Console", {"Bits": 8, "Sample Rate (Hz)": 11025}],
+  ["4-Bit Grit", {"Bits": 4, "Sample Rate (Hz)": 8000, "Mix (%)": 60}],
+  ["Telephone Lo-Fi", {"Bits": 8, "Sample Rate (Hz)": 6000, "Anti Alias": "On", "Smooth (%)": 40}],
+  ["Aliasing Hash", {"Bits": 16, "Sample Rate (Hz)": 3000}],
+  ["Soft Steps", {"Bits": 6, "Sample Rate (Hz)": 16000, "Smooth (%)": 70}],
+  ["Parallel Crunch", {"Bits": 5, "Sample Rate (Hz)": 9000, "Drive (dB)": 6, "Mix (%)": 35}],
+  ["Broken Toy", {"Bits": 3, "Sample Rate (Hz)": 2500, "Drive (dB)": 9, "Output (dB)": -6}]
+]

@@ -5,5 +5,6 @@
   ["Metallic Bells", {"Shift": 180, "Mix": 70}],
   ["Barber Pole Rise", {"Shift": 4, "Feedback": 70, "Mix": 50}],
   ["Barber Pole Fall", {"Shift": -4, "Feedback": 70, "Mix": 50}],
-  ["Sci-Fi Radio", {"Shift": -350, "Stereo Offset": 40, "Feedback": 30, "Mix": 100}]
+  ["Sci-Fi Radio", {"Shift": -350, "Stereo Offset": 40, "Feedback": 30, "Mix": 100}],
+  ["Spiral Echo", {"Shift": 30, "Feedback": 70, "Mix": 50, "Feedback Delay": 250}]
 ]

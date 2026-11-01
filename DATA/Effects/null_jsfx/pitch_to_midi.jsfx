@@ -1,0 +1,241 @@
+desc:NULL Pitch to MIDI
+author: Christos Koulaxizis
+tags: midi pitch to midi audio to midi convert tracker detection yin monophonic bass vocal guitar melody note pitch bend
+//category: MIDI
+//NULL JSFX v2.9 • https://nulljsfx.tech • MIT License
+
+slider1:-40<-70,0,0.1>Threshold (dB)
+slider2:36<28,127,1>Low Note
+slider3:84<28,127,1>High Note
+slider4:40<10,200,1>Stability (ms)
+slider5:1<0,1,1{Fixed,Level}>Velocity
+slider6:100<1,127,1>Fixed Velocity
+slider7:0<-24,24,1>Transpose (semitones)
+slider8:0<0,1,1{Off,On}>Pitch Bend
+slider9:0<0,15,1{1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16}>Channel
+
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
+
+@init
+  // Turns a monophonic line (bass, voice, a lead) into MIDI notes. The sum of both channels goes
+  // through a 30 Hz high-pass and a 24 dB/oct low-pass at 0.4 x the reduced rate, and every D-th
+  // sample is kept (D = srate / 11025, rounded, at least 1). Every 64 kept samples the YIN method
+  // (difference function, cumulative mean normalisation, first dip under 0.15 or the deepest
+  // under 0.3, parabolic interpolation) finds the period between Low Note and High Note, and the
+  // RMS of the window gives the level. A note starts when the same nearest note has been heard
+  // above Threshold for Stability; while it sounds, the pitch may wander 0.8 semitones before a
+  // new note can take over, and the note ends when the line has been silent (3 dB under
+  // Threshold) or unpitched for Stability. Velocity Level maps Threshold..0 dBFS to 1..127.
+  // Transpose moves the notes it sends. Pitch Bend On follows the pitch inside the note
+  // (range +/-2 semitones) and centres the bend after the note. Incoming MIDI passes through at
+  // its own sample; an all notes off (CC 120/123) also ends the note sounding. The audio passes
+  // through.
+  ext_noinit = 1;
+  Q = 0;                       // incoming messages of the block: offset, status, data 1, data 2
+  QMAX = 256;
+  qn = qi = 0;
+  BUF = 1024;                  // the kept samples, oldest first (up to 2048); the window starts at bs
+  DF = 4096;                   // the difference function (up to 1024)
+  HOP = 64;
+  dn = floor(srate / 11025 + 0.5);
+  dn = max(1, dn);
+  dsr = srate / dn;
+  dc = 0;                      // samples until the next kept one
+  bn = 0;                      // kept samples in BUF
+  hc = 0;                      // kept samples since the last analysis
+  h1 = h2 = a1 = a2 = b1 = b2 = 0;
+  cur = -1;                    // the note sounding (before Transpose), -1 = none
+  sent = -1;                   // the note sent
+  cand = -1;
+  cand_t = 0;
+  quiet_t = 0;
+  bend = 8192;
+  det_f = 0;
+  det_lvl = -120;
+
+  function pm_bq(kind, f, q) local(w0, cw, al, a0)
+  (
+    w0 = 2 * $pi * min(f, 0.45 * srate) / srate;
+    cw = cos(w0);
+    al = sin(w0) / (2 * q);
+    a0 = 1 + al;
+    this.b0 = (kind ? (1 - cw) / 2 : (1 + cw) / 2) / a0;
+    this.b1 = (kind ? 1 - cw : -(1 + cw)) / a0;
+    this.b2 = this.b0;
+    this.a1 = -2 * cw / a0;
+    this.a2 = (1 - al) / a0;
+  );
+
+  function pm_off(ofs)
+  (
+    sent >= 0 ? (
+      midisend(ofs, 0x80 | chan, sent, 0);
+      sent = -1;
+      bend != 8192 ? ( midisend(ofs, 0xE0 | chan, 0, 64); bend = 8192; );
+    );
+    cur = -1;
+  );
+
+  function pm_on(ofs, n, lv) local(v, fr)
+  (
+    pm_off(ofs);
+    fr = thr_db < 0 ? min(1, max(0, (lv - thr_db) / -thr_db)) : 1;
+    v = vmode ? max(1, min(127, floor(1 + 126 * fr + 0.5))) : fvel;
+    cur = n;
+    sent = max(0, min(127, n + transp));
+    midisend(ofs, 0x90 | chan, sent, v);
+  );
+
+  // YIN over the window: the pitch in MIDI notes (fractional), or -1
+  function pm_detect() local(w, tau, j, s, d, cum, best, bt, x0, x1, x2, den, tp)
+  (
+    w = tmax + 32;
+    tau = 1;
+    cum = 0;
+    best = 1000;
+    bt = -1;
+    while (tau <= tmax) (
+      s = 0;
+      j = 0;
+      loop(w,
+        d = BUF[bs + j] - BUF[bs + j + tau];
+        s += d * d;
+        j += 1;
+      );
+      cum += s;
+      DF[tau] = cum > 0 ? s * tau / cum : 1;
+      tau += 1;
+    );
+    // the first dip under 0.15 (to the bottom of it), else the deepest under 0.3
+    tau = tmin;
+    while (tau <= tmax && bt < 0) (
+      DF[tau] < 0.15 ? (
+        while (tau < tmax && DF[tau + 1] < DF[tau]) ( tau += 1; );
+        bt = tau;
+      );
+      tau += 1;
+    );
+    bt < 0 ? (
+      tau = tmin;
+      loop(tmax - tmin + 1,
+        DF[tau] < best ? ( best = DF[tau]; bt = tau; );
+        tau += 1;
+      );
+      best >= 0.3 ? bt = -1;
+    );
+    bt > 0 ? (
+      x0 = DF[max(1, bt - 1)]; x1 = DF[bt]; x2 = DF[min(tmax, bt + 1)];
+      den = x0 - 2 * x1 + x2;
+      tp = bt + (den > 0 ? 0.5 * (x0 - x2) / den : 0);
+      69 + 12 * log(dsr / tp / 440) / log(2);
+    ) : -1;
+  );
+
+  // one analysis, at sample offset ofs of the block
+  function pm_analyse(ofs) local(w, j, e, lv, m, n)
+  (
+    w = tmax + 32;
+    e = 0;
+    j = 0;
+    loop(w, e += BUF[bs + tmax + j] * BUF[bs + tmax + j]; j += 1;);
+    lv = 10 * log10(max(e / w, 0.000000000001));
+    det_lvl = lv;
+    m = lv >= thr_db ? pm_detect() : -1;
+    det_f = m;
+    n = m >= 0 ? floor(m + 0.5) : -1;
+    n >= 0 && (n < lo || n > hi) ? n = -1;
+    // a note sounding keeps going while the pitch stays near it
+    cur >= 0 && m >= 0 && abs(m - cur) < 0.8 ? n = cur;
+    n >= 0 ? (
+      quiet_t = 0;
+      n == cand ? cand_t += hop_s : ( cand = n; cand_t = hop_s; );
+      cand != cur && cand_t >= stab ? pm_on(ofs, cand, lv);
+    ) : (
+      cand = -1;
+      cand_t = 0;
+      cur >= 0 && (lv < thr_db - 3 || m < 0) ? (
+        quiet_t += hop_s;
+        quiet_t >= stab ? pm_off(ofs);
+      );
+    );
+    // the bend follows the pitch inside the note
+    pbend && sent >= 0 && m >= 0 && n == cur ? (
+      j = floor(8192 + max(-1, min(1, (m - cur) / 2)) * 8191 + 0.5);
+      j != bend ? ( midisend(ofs, 0xE0 | chan, j & 127, floor(j / 128)); bend = j; );
+    );
+  );
+
+@slider
+  thr_db = slider1;
+  lo = min(slider2, slider3);
+  hi = max(slider2, slider3);
+  tmin = max(2, floor(dsr / (440 * 2 ^ ((hi + 0.5 - 69) / 12))));
+  tmax = min(1000, ceil(dsr / (440 * 2 ^ ((lo - 0.5 - 69) / 12))));
+  tmin = min(tmin, tmax - 1);
+  stab = slider4 / 1000;
+  hop_s = HOP / dsr;
+  vmode = slider5;
+  fvel = slider6;
+  transp = slider7;
+  pbend = slider8;
+  chan_new = slider9;
+  hp.pm_bq(0, 30, 0.7071067811865476);
+  la.pm_bq(1, 0.4 * dsr, 0.5411961001461969);
+  lb.pm_bq(1, 0.4 * dsr, 1.3065629648763766);
+
+@block
+  qn = qi = 0;
+  while (midirecv(ofs, m1, m2, m3)) (
+    qn < QMAX ? (
+      Q[qn * 4] = min(max(ofs, 0), samplesblock - 1);
+      Q[qn * 4 + 1] = m1;
+      Q[qn * 4 + 2] = m2;
+      Q[qn * 4 + 3] = m3;
+      qn += 1;
+    );
+  );
+  si = 0;
+
+@sample
+  // a new Channel ends the note on the old one
+  chan_new != chan ? ( pm_off(si); chan = chan_new; );
+  // the MIDI that came in at this sample goes first
+  while (qi < qn && Q[qi * 4] <= si) (
+    m1 = Q[qi * 4 + 1];
+    m2 = Q[qi * 4 + 2];
+    (m1 & 0xF0) == 0xB0 && (m2 == 120 || m2 == 123) ? ( pm_off(si); cand = -1; cand_t = 0; );
+    midisend(si, m1, m2, Q[qi * 4 + 3]);
+    qi += 1;
+  );
+  // the detector's input: high-pass, low-pass, every dn-th sample
+  x = (spl0 + spl1) * 0.5;
+  y = hp.b0 * x + h1;
+  h1 = hp.b1 * x - hp.a1 * y + h2;
+  h2 = hp.b2 * x - hp.a2 * y;
+  z = la.b0 * y + a1;
+  a1 = la.b1 * y - la.a1 * z + a2;
+  a2 = la.b2 * y - la.a2 * z;
+  y = lb.b0 * z + b1;
+  b1 = lb.b1 * z - lb.a1 * y + b2;
+  b2 = lb.b2 * z - lb.a2 * y;
+  abs(y) < 0.000000000001 ? y = 0;
+  dc <= 0 ? (
+    dc = dn;
+    nw = 2 * tmax + 32;
+    bn >= 2048 ? (
+      memcpy(BUF, BUF + bn - nw, nw);
+      bn = nw;
+    );
+    BUF[bn] = y;
+    bn += 1;
+    hc += 1;
+    hc >= HOP && bn >= nw ? ( hc = 0; bs = bn - nw; pm_analyse(si); );
+  );
+  dc -= 1;
+  si += 1;
+  // the audio passes through
+  spl0 = spl0;
+  spl1 = spl1;

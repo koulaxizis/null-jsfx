@@ -80,6 +80,8 @@ public:
         fMdP1 = fMdP2 = 0.0;
         fDkEnv = 0.0;
         fDiffWas = false;
+        fRvC = 0;
+        fPsP = 0.0;
         static const double kMs[8] = { 0.00113, 0.00187, 0.00307, 0.00441, 0.00129, 0.00203, 0.00323, 0.00463 };
         const int cap = int(std::ceil(sr * 0.005)) + 1;
         for (int k = 0; k < 8; ++k)
@@ -90,8 +92,12 @@ public:
     // @slider
     void setParams(double timeMs, double feedbackPct, double mixPct, bool sync, int subdivision, bool pingPong,
                    double lowCutHz, double highCutHz, double drivePct, double modPct = 0.0, double diffPct = 0.0,
-                   double duckPct = 0.0, bool freeze = false)
+                   double duckPct = 0.0, bool freeze = false, bool reverse = false, double pitchSt = 0.0)
     {
+        fRvOn = reverse;
+        fPsOn = std::fabs(pitchSt) >= 0.00001; // EEL2's fuzzy !=
+        fPsRatio = std::pow(2.0, pitchSt / 12.0);
+        fPsW = std::floor(0.05 * fSr);
         fTimeMs = timeMs;
         fSubdivision = subdivision;
         fFeedback = feedbackPct / 100.0 * 0.95;
@@ -136,7 +142,48 @@ public:
         {
             const double xl = inL[i], xr = inR[i];
             double el, er;
-            if (fModOn && !fFreeze)
+            if (fRvOn && !fFreeze)
+            {
+                // reverse: the window just written, read backwards
+                if (fRvC >= fRvLen)
+                    fRvC = 0;
+                int rp = fW - 2 * fRvC - 1;
+                if (rp < 0)
+                    rp += fSize;
+                const double g = std::min(1.0, std::min(double(fRvC + 1) / fRvFade, double(fRvLen - fRvC) / fRvFade));
+                el = fL[size_t(rp)] * g;
+                er = fR[size_t(rp)] * g;
+                ++fRvC;
+            }
+            else if (fPsOn && !fFreeze)
+            {
+                // pitch: two taps sweep through a 50 ms window half a window apart, faded in and out
+                double base;
+                if (fModOn)
+                {
+                    fMdP1 += fMdI1;
+                    if (fMdP1 >= 1.0)
+                        fMdP1 -= 1.0;
+                    fMdP2 += fMdI2;
+                    if (fMdP2 >= 1.0)
+                        fMdP2 -= 1.0;
+                    base = fDelay + fMdDep * (1.0 + 0.75 * std::sin(kTwoPi * fMdP1) + 0.25 * std::sin(kTwoPi * fMdP2));
+                }
+                else
+                    base = fDelay;
+                fPsP += (1.0 - fPsRatio) / fPsW;
+                fPsP -= std::floor(fPsP);
+                double q = fPsP + 0.5;
+                if (q >= 1.0)
+                    q -= 1.0;
+                const double o1 = std::min(double(fSize - 2), base + fPsP * fPsW);
+                const double o2 = std::min(double(fSize - 2), base + q * fPsW);
+                const double g1 = 1.0 - std::fabs(2.0 * fPsP - 1.0);
+                const double g2 = 1.0 - std::fabs(2.0 * q - 1.0);
+                el = g1 * read(fL, o1) + g2 * read(fL, o2);
+                er = g1 * read(fR, o1) + g2 * read(fR, o2);
+            }
+            else if (fModOn && !fFreeze)
             {
                 // tape wow: a fractional read point, linearly interpolated
                 fMdP1 += fMdI1;
@@ -259,7 +306,27 @@ private:
         double d = std::floor(fDelayMs * fSr / 1000.0 + 0.5);
         d = std::max(1.0, std::min(double(fSize - 1), d));
         fDelay = int(d);
+        fRvLen = std::max(2, std::min(fDelay, fSize / 2 - 2));
+        fRvFade = std::max(1.0, std::min(std::floor(fRvLen / 2.0), std::floor(0.01 * fSr)));
     }
+
+    // the line at off samples behind the write point, linearly interpolated (dl_rd)
+    double read(const std::vector<double>& b, double off) const noexcept
+    {
+        double rf = fW - off;
+        if (rf < 0.0)
+            rf += fSize;
+        double ri = std::floor(rf);
+        const double fr = rf - ri;
+        if (ri >= fSize)
+            ri -= fSize;
+        const size_t a = size_t(ri), c = a + 1 >= size_t(fSize) ? 0 : a + 1;
+        return b[a] + (b[c] - b[a]) * fr;
+    }
+
+    bool fRvOn = false, fPsOn = false;
+    int fRvC = 0, fRvLen = 2;
+    double fRvFade = 1.0, fPsRatio = 1.0, fPsW = 1.0, fPsP = 0.0;
 
     double fSr = 48000.0, fTempo = 120.0;
     std::vector<double> fL, fR;

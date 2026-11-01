@@ -19,7 +19,10 @@ static const char* const kSyncShort[] = { "OFF", "1/1", "1/2", "1/4", "1/8", "1/
 static const char* const kOffOn[] = { "Off", "On" };
 static const char* const kOffOnShort[] = { "OFF", "ON" };
 
-// slider1..slider8 of flanger.jsfx, in order
+static const char* const kBarberOptions[] = { "Off", "Up", "Down" };
+static const char* const kBarberShort[] = { "OFF", "UP", "DOWN" };
+
+// slider1..slider9 of flanger.jsfx, in order
 static const DISTRHO::SliderInfo kSliders[] = {
     { "Rate", "rate", 0.1f, 5.0f, 0.3f, "Hz", 0.1f },
     { "Depth", "depth", 1.0f, 20.0f, 5.0f, "ms", 0.1f },
@@ -29,6 +32,7 @@ static const DISTRHO::SliderInfo kSliders[] = {
     { "Tempo Sync", "sync", 0.0f, 11.0f, 0.0f, "", 1.0f, kSyncOptions },
     { "Stereo Phase", "phase", 0.0f, 180.0f, 0.0f, "deg", 1.0f },
     { "Thru Zero", "thruzero", 0.0f, 1.0f, 0.0f, "", 1.0f, kOffOn },
+    { "Barber Pole", "barber", 0.0f, 2.0f, 0.0f, "", 1.0f, kBarberOptions },
 };
 static constexpr uint32_t kNumSliders = sizeof(kSliders) / sizeof(kSliders[0]);
 
@@ -38,6 +42,7 @@ static const DISTRHO::SliderInfo kUiSliders[] = {
     { "Tempo Sync", "sync", 0.0f, 11.0f, 0.0f, "", 1.0f, kSyncShort },
     kSliders[6],
     { "Thru Zero", "thruzero", 0.0f, 1.0f, 0.0f, "", 1.0f, kOffOnShort },
+    { "Barber Pole", "barber", 0.0f, 2.0f, 0.0f, "", 1.0f, kBarberShort },
 };
 
 // the LFO cycle in beats of Tempo Sync option s (1..11), as fl_cycle in the JSFX

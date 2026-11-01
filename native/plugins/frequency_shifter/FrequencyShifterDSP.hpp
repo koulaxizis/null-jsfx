@@ -6,13 +6,15 @@
  * Port of DATA/Effects/null_jsfx/frequency_shifter.jsfx, computed in double like EEL2: a Bode
  * shifter per channel. A Hilbert transform (two chains of four allpasses in z^2, Niemitalo
  * design) gives the quadrature pair, a sine/cosine oscillator moves every frequency by Shift
- * (the right channel by Shift + Stereo Offset). Feedback is high-passed and softly limited.
+ * (the right channel by Shift + Stereo Offset). Feedback is high-passed and softly limited;
+ * Feedback Delay puts a delay line of up to 1 s inside the loop (0 ms: the one-sample loop).
  */
 
 #pragma once
 
 #include <cmath>
 #include <cstdint>
+#include <vector>
 
 namespace nullfreqshift {
 
@@ -48,17 +50,30 @@ struct Hilbert {
 struct Shifter {
     Hilbert h;
     double ph = 0, fb = 0, dc = 0;
-    double operator()(double x, double inc, double feedback) noexcept
+    std::vector<double> buf; // the loop's delay line (allocated in setSampleRate)
+    int wp = 0;
+    double operator()(double x, double inc, double feedback, int dly) noexcept
     {
         ph += inc;
         if (ph >= 1) ph -= 1;
         if (ph < 0) ph += 1;
-        double f = fb * feedback;
+        double f;
+        if (dly > 0)
+        {
+            int rp = wp - 1 - dly;
+            if (rp < 0) rp += int(buf.size());
+            f = buf[size_t(rp)];
+        }
+        else
+            f = fb;
+        f *= feedback;
         dc = dc * 0.995 + f * 0.005;
         f -= dc;
         f = f / (1 + std::fabs(f));
         const double re = h(x + f);
         fb = re * std::cos(2 * kPi * ph) + h.im * std::sin(2 * kPi * ph);
+        buf[size_t(wp)] = fb;
+        if (++wp >= int(buf.size())) wp = 0;
         return fb;
     }
 };
@@ -71,11 +86,15 @@ public:
         fSr = sr;
         fL = Shifter();
         fR = Shifter();
+        const size_t n = size_t(std::floor(sr)) + 2;
+        fL.buf.assign(n, 0.0);
+        fR.buf.assign(n, 0.0);
     }
 
     // @slider
-    void setParams(double shift, double offset, double feedbackPct, double mixPct)
+    void setParams(double shift, double offset, double feedbackPct, double mixPct, double delayMs = 0.0)
     {
+        fDly = int(std::fmin(double(fL.buf.size()) - 2.0, std::floor(delayMs * fSr / 1000)));
         fIncL = shift / fSr;
         fIncR = (shift + offset) / fSr;
         fFeedback = feedbackPct / 100;
@@ -88,8 +107,8 @@ public:
         for (uint32_t n = 0; n < frames; ++n)
         {
             const double xl = inL[n], xr = inR[n];
-            const double wl = fL(xl, fIncL, fFeedback);
-            const double wr = fR(xr, fIncR, fFeedback);
+            const double wl = fL(xl, fIncL, fFeedback, fDly);
+            const double wr = fR(xr, fIncR, fFeedback, fDly);
             outL[n] = static_cast<T>(xl * (1 - fMix) + wl * fMix);
             outR[n] = static_cast<T>(xr * (1 - fMix) + wr * fMix);
         }
@@ -97,6 +116,7 @@ public:
 
 private:
     double fSr = 48000.0, fIncL = 0, fIncR = 0, fFeedback = 0, fMix = 0.5;
+    int fDly = 0;
     Shifter fL, fR;
 };
 

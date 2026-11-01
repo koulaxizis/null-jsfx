@@ -16,7 +16,7 @@ static const char* const kCharOptions[] = { "Classic", "Plate", "Hall" };
 static const char* const kFreezeShort[] = { "OFF", "ON" };
 static const char* const kCharShort[] = { "CLASSIC", "PLATE", "HALL" };
 
-// slider1..slider12 of reverb.jsfx, in order
+// slider1..slider15 of reverb.jsfx, in order
 static const DISTRHO::SliderInfo kSliders[] = {
     { "Room Size", "room_size", 10.0f, 100.0f, 50.0f, "%", 1.0f },
     { "Decay", "decay", 0.0f, 100.0f, 50.0f, "%", 1.0f },
@@ -30,6 +30,9 @@ static const DISTRHO::SliderInfo kSliders[] = {
     { "Modulation", "modulation", 0.0f, 100.0f, 0.0f, "%", 1.0f },
     { "Freeze", "freeze", 0.0f, 1.0f, 0.0f, "", 1.0f, kFreezeOptions },
     { "Character", "character", 0.0f, 2.0f, 0.0f, "", 1.0f, kCharOptions },
+    { "Ducking", "ducking", 0.0f, 100.0f, 0.0f, "%", 1.0f },
+    { "Gate Threshold", "gate", -80.0f, 0.0f, -80.0f, "dB", 0.1f },
+    { "Gate Hold", "gatehold", 10.0f, 1000.0f, 150.0f, "ms", 1.0f },
 };
 static constexpr uint32_t kNumSliders = sizeof(kSliders) / sizeof(kSliders[0]);
 
@@ -39,6 +42,7 @@ static const DISTRHO::SliderInfo kUiSliders[] = {
     kSliders[6], kSliders[7], kSliders[8], kSliders[9],
     { "Freeze", "freeze", 0.0f, 1.0f, 0.0f, "", 1.0f, kFreezeShort },
     { "Character", "character", 0.0f, 2.0f, 0.0f, "", 1.0f, kCharShort },
+    kSliders[12], kSliders[13], kSliders[14],
 };
 
 } // namespace nullreverb

@@ -8,20 +8,21 @@ namespace nullpresets {
 
 struct FactoryPreset {
     const char* name;
-    float values[4];
+    float values[5];
 };
 
 static const FactoryPreset kPresets[] = {
-    { "Default", { 100.0f, 0.0f, 0.0f, 50.0f } },
-    { "Slow Phase Drift", { 0.3f, -0.6f, 0.0f, 50.0f } },
-    { "Detuned Stereo Wide", { 3.0f, -6.0f, 0.0f, 30.0f } },
-    { "Detuned Shimmer", { 12.0f, -24.0f, 0.0f, 35.0f } },
-    { "Metallic Bells", { 180.0f, 0.0f, 0.0f, 70.0f } },
-    { "Barber Pole Rise", { 4.0f, 0.0f, 70.0f, 50.0f } },
-    { "Barber Pole Fall", { -4.0f, 0.0f, 70.0f, 50.0f } },
-    { "Sci-Fi Radio", { -350.0f, 40.0f, 30.0f, 100.0f } },
+    { "Default", { 100.0f, 0.0f, 0.0f, 50.0f, 0.0f } },
+    { "Slow Phase Drift", { 0.3f, -0.6f, 0.0f, 50.0f, 0.0f } },
+    { "Detuned Stereo Wide", { 3.0f, -6.0f, 0.0f, 30.0f, 0.0f } },
+    { "Detuned Shimmer", { 12.0f, -24.0f, 0.0f, 35.0f, 0.0f } },
+    { "Metallic Bells", { 180.0f, 0.0f, 0.0f, 70.0f, 0.0f } },
+    { "Barber Pole Rise", { 4.0f, 0.0f, 70.0f, 50.0f, 0.0f } },
+    { "Barber Pole Fall", { -4.0f, 0.0f, 70.0f, 50.0f, 0.0f } },
+    { "Sci-Fi Radio", { -350.0f, 40.0f, 30.0f, 100.0f, 0.0f } },
+    { "Spiral Echo", { 30.0f, 0.0f, 70.0f, 50.0f, 250.0f } },
 };
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
-static constexpr uint32_t kNumValues = 4;
+static constexpr uint32_t kNumValues = 5;
 
 } // namespace nullpresets

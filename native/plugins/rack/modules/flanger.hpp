@@ -54,7 +54,7 @@ private:
         const int sync = int(std::lround(fV[5]));
         fDsp.setParams(onGrid(fV[0], 0.1, 5.0, 0.1), onGrid(fV[1], 1.0, 20.0, 0.1), fV[2], fV[3],
                        onGrid(fV[4], 0.1, 10.0, 0.1), sync, nullflanger::syncCycle(sync), std::round(fV[6]),
-                       fV[7] >= 0.5f);
+                       fV[7] >= 0.5f, int(std::lround(fV[8])));
     }
 
     nullflanger::FlangerProcessor fDsp;

@@ -23,13 +23,16 @@ static const NullKnobsUI::Control kControls[] = {
     { 8, NullKnobsUI::kKnob, "WIDTH", 1, -1, true },
     { 9, NullKnobsUI::kKnob, "MODULATION", 1, -1, false },
     { 10, NullKnobsUI::kSelect, "FREEZE", 1, -1, false },
+    { 12, NullKnobsUI::kKnob, "DUCKING", 2, -1, false },
+    { 13, NullKnobsUI::kKnob, "GATE", 2, -1, false },
+    { 14, NullKnobsUI::kKnob, "HOLD", 2, -1, false },
 };
 
 class UIReverb : public NullKnobsUI
 {
 public:
     UIReverb()
-        : NullKnobsUI({ "REVERB", "ESSENTIALS", 480, 120, nullptr, 2, nullreverb::kUiSliders, nullreverb::kNumSliders,
+        : NullKnobsUI({ "REVERB", "ESSENTIALS", 480, 120, nullptr, 3, nullreverb::kUiSliders, nullreverb::kNumSliders,
                         kControls, sizeof(kControls) / sizeof(kControls[0]), false }) {}
 
 protected:
@@ -129,6 +132,10 @@ protected:
             std::snprintf(buf, n, "OFF");
         else if (param == 7)
             std::snprintf(buf, n, "%.1f kHz", std::lround(v) / 1000.0);
+        else if (param == 13 && v <= -80.0f)
+            std::snprintf(buf, n, "OFF");
+        else if (param == 13)
+            std::snprintf(buf, n, "%.1f dB", v);
         else
             NullKnobsUI::formatValue(param, v, buf, n);
     }

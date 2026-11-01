@@ -3195,6 +3195,7 @@ static const LogSlider kLogSliders[] = {
     { "bass", 10 },
     { "bass", 11 },
     { "bass", 13 },
+    { "bitcrusher", 1 },
     { "chorus", 7 },
     { "comb_filter", 0 },
     { "de_plosive", 1 },

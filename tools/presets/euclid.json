@@ -1,0 +1,11 @@
+[
+  ["Tresillo 3 of 8", {"Steps": 8, "Pulses": 3, "Rate": "1/8", "Note": 36}],
+  ["Cinquillo 5 of 8", {"Steps": 8, "Pulses": 5, "Rate": "1/16", "Note": 38}],
+  ["Four on the Floor", {"Steps": 16, "Pulses": 4, "Note": 36}],
+  ["Bossa 5 of 16", {"Steps": 16, "Pulses": 5, "Rotate": 3, "Note": 37}],
+  ["Hats 7 of 12", {"Steps": 12, "Pulses": 7, "Rate": "1/16T", "Note": 42, "Velocity": 80, "Accent (%)": 40, "Gate (%)": 20}],
+  ["Off-Beat Shaker", {"Steps": 8, "Pulses": 4, "Rotate": 1, "Rate": "1/16", "Note": 70, "Velocity": 70}],
+  ["Swung Perc 9 of 16", {"Steps": 16, "Pulses": 9, "Note": 39, "Accent (%)": 30, "Swing (%)": 35}],
+  ["Polymeter 5 of 13", {"Steps": 13, "Pulses": 5, "Rate": "1/16", "Note": 45}],
+  ["Free Running Bass", {"Steps": 16, "Pulses": 7, "Rate": "1/16", "Note": 36, "Gate (%)": 70, "Run": "Always", "Channel": 0}]
+]

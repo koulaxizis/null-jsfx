@@ -40,6 +40,23 @@ inline double responseDb(double f, double sr, double c, int stages, double feedb
     return 10.0 * std::log10(std::fmax(cr * cr + ci * ci, 1e-12));
 }
 
+// one allpass voice of the barber pole: up to 8 stages in a loop with feedback (the JSFX's pb_run)
+struct BarberVoice {
+    double y[8] = {}, x[8] = {}, last = 0.0;
+    double run(double in, double c, int stages, double feedback) noexcept
+    {
+        double w = in + last * feedback;
+        for (int k = 0; k < stages && k < 8; ++k)
+        {
+            y[k] = c * (y[k] + w) - x[k];
+            x[k] = w;
+            w = y[k];
+        }
+        last = w;
+        return w;
+    }
+};
+
 class PhaserProcessor {
 public:
     // @init
@@ -50,12 +67,15 @@ public:
         for (int k = 0; k < 8; ++k)
             fLy[k] = fLx[k] = fRy[k] = fRx[k] = 0.0;
         fLastL = fLastR = 0.0;
+        fBla = fBlb = fBra = fBrb = BarberVoice();
     }
 
     // @slider
     void setParams(double rateHz, double stages, double mixPct, double depthPct = 57.0, double feedbackPct = 30.0,
-                   double centerHz = 1020.0, double stereoDeg = 0.0, int sync = 0)
+                   double centerHz = 1020.0, double stereoDeg = 0.0, int sync = 0, int barber = 0)
     {
+        fBarber = barber;
+        fStDeg = stereoDeg;
         fStages = int(std::floor(stages));
         fMix = mixPct / 100.0;
         fInc = 2.0 * M_PI * rateHz / fSr;
@@ -84,6 +104,26 @@ public:
         const double d = fDMin + fDSc * (std::sin(ph) + 1.0);
         return (1.0 - d) / (1.0 + d);
     }
+    // Barber Pole: the sweep position (0..1) of the first voice at LFO phase ph (radians), and
+    // the coefficient there
+    int barber() const noexcept { return fBarber; }
+    double barberPos(double ph, bool right) const noexcept
+    {
+        double p = ph / kTwoPi;
+        if (fBarber == 2) p = 1.0 - p;
+        if (p >= 1.0) p -= 1.0;
+        if (right)
+        {
+            p += fStDeg / 360.0;
+            if (p >= 1.0) p -= 1.0;
+        }
+        return p;
+    }
+    double barberCoef(double p) const noexcept
+    {
+        const double d = fDMin + 2.0 * fDSc * p;
+        return (1.0 - d) / (1.0 + d);
+    }
     double sweepLoHz() const noexcept { return fDMin * fSr / 2.0; }
     double sweepHiHz() const noexcept { return (fDMin + 2.0 * fDSc) * fSr / 2.0; }
     double feedback() const noexcept { return fFeedback; }
@@ -109,6 +149,21 @@ public:
             fPhase += fInc;
             if (fPhase >= 2.0 * M_PI)
                 fPhase -= 2.0 * M_PI;
+            if (fBarber)
+            {
+                // the LFO is a ramp and two voices half a sweep apart take turns (pb_pair)
+                double p = fPhase / kTwoPi;
+                if (fBarber == 2) p = 1.0 - p;
+                if (p >= 1.0) p -= 1.0;
+                double pr = p + fStDeg / 360.0;
+                if (pr >= 1.0) pr -= 1.0;
+                const double xl = inL[i], xr = inR[i];
+                const double wl = pair(fBla, fBlb, xl, p);
+                outL[i] = static_cast<T>(xl + wl * fMixW);
+                const double wr = pair(fBra, fBrb, xr, fStOn ? pr : p);
+                outR[i] = static_cast<T>(xr + wr * fMixW);
+                continue;
+            }
             const double d = fDMin + fDSc * (std::sin(fPhase) + 1.0);
             const double coef = (1.0 - d) / (1.0 + d);
             double coefR = coef;
@@ -144,6 +199,22 @@ public:
     }
 
 private:
+    double pair(BarberVoice& a, BarberVoice& b, double x, double p) noexcept
+    {
+        double q = p + 0.5;
+        if (q >= 1.0) q -= 1.0;
+        const double da = fDMin + 2.0 * fDSc * p;
+        const double db = fDMin + 2.0 * fDSc * q;
+        const double sa = std::sin(M_PI * p);
+        const double ra = a.run(x, (1.0 - da) / (1.0 + da), fStages, fFeedback);
+        const double sb = std::sin(M_PI * q);
+        const double rb = b.run(x, (1.0 - db) / (1.0 + db), fStages, fFeedback);
+        return sa * ra + sb * rb;
+    }
+
+    BarberVoice fBla, fBlb, fBra, fBrb;
+    double fStDeg = 0.0;
+    int fBarber = 0;
     double fSr = 48000.0, fPhase = 0.0, fInc = 0.0, fMix = 0.3, fMixW = 0.3, fDMin = 0.0, fDSc = 0.0;
     double fFeedback = 0.3, fStOff = 0.0, fSyncBeats = 1.0;
     double fLy[8] = {}, fLx[8] = {}, fRy[8] = {}, fRx[8] = {};

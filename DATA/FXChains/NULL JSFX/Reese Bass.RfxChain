@@ -39,7 +39,7 @@ FXID {41C192B1-A5FE-53F8-BF94-0035E7FA2D9C}
 WAK 0 0
 BYPASS 0 0
 <JS null_jsfx/phaser.jsfx ""
-  0.2 6 40 60 40 1020 0 0 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  0.2 6 40 60 40 1020 0 0 0 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 >
 <JS_PINMAP
   6AMAABwAAADoAwAABgAAAAIAAAAEAAAAAAAAAAgAAAAAAAAAHAAAAOgDAAAGAAAAAgAAAAQAAAAAAAAACAAAAAAAAAA=
