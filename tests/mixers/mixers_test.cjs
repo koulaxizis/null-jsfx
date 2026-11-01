@@ -10,7 +10,10 @@ const Osc = require(path.join(web, 'core/osc.js'));
 const Levels = require(path.join(web, 'core/levels.js'));
 const Mixer = require(path.join(web, 'core/mixer.js'));
 const profile = require(path.join(web, 'xair/profile.js'));
+const x32 = require(path.join(web, 'x32/profile.js'));
 const sim = require('./xair_sim.cjs');
+const wing = require(path.join(web, 'wing/profile.js'));
+const wingSim = require('./wing_sim.cjs');
 
 let failures = 0;
 const tests = [];
@@ -235,6 +238,203 @@ test('a console that does not answer fails cleanly', async () => {
     assert.strictEqual(s.status, 'failed');
     s.disconnect();
   } finally { tr.close(); }
+});
+
+// --- X32 / M32 ----------------------------------------------------------------------------------
+
+test('X32 layout: paths, solo switches, meters, the same tree on every model', () => {
+  const L = x32.layout('X32');
+  assert.strictEqual(L.inputs.length, 40); // 32 channels + 8 aux ins
+  assert.strictEqual(L.returns.length, 8);
+  assert.strictEqual(L.targets.length, 16);
+  assert.strictEqual(L.dcas.length, 8);
+  assert.strictEqual(L.muteGroups.length, 6);
+  assert.strictEqual(L.inputs[0].fader, '/ch/01/mix/fader');
+  assert.strictEqual(L.inputs[31].name, '/ch/32/config/name');
+  assert.strictEqual(L.inputs[32].fader, '/auxin/01/mix/fader');
+  assert.strictEqual(L.returns[7].on, '/fxrtn/08/mix/on');
+  assert.strictEqual(L.inputs[0].sends.bus16, '/ch/01/mix/16/level');
+  assert.strictEqual(L.returns[0].sends.bus1, '/fxrtn/01/mix/01/level');
+  assert.strictEqual(L.targets[9].master.fader, '/bus/10/mix/fader');
+  assert.strictEqual(L.main.fader, '/main/st/mix/fader');
+  assert.strictEqual(L.main.pan, '/main/st/mix/pan');
+  assert.strictEqual(L.dcas[7].fader, '/dca/8/fader');
+  assert.strictEqual(L.dcas[0].name, '/dca/1/config/name');
+  assert.strictEqual(L.muteGroups[5].path, '/config/mute/6');
+  // solo switches (Companion's map): ch 01..32, aux 33..40, FX returns 41..48, buses 49..64, main 71, DCA 73..80
+  assert.deepStrictEqual([L.inputs[0], L.inputs[31], L.inputs[32], L.returns[0], L.targets[0].master, L.targets[15].master, L.main, L.dcas[0], L.dcas[7]].map((x) => x.solo),
+    ['/-stat/solosw/01', '/-stat/solosw/32', '/-stat/solosw/33', '/-stat/solosw/41', '/-stat/solosw/49', '/-stat/solosw/64', '/-stat/solosw/71', '/-stat/solosw/73', '/-stat/solosw/80']);
+  // meters: /meters/0 then /meters/2 in one index space
+  assert.deepStrictEqual([L.inputs[0], L.inputs[32], L.returns[0], L.targets[0].master, L.main].map((x) => x.meter), [0, 32, 40, 48, 92]);
+  assert.deepStrictEqual(L.meters.map((m) => [m.address, m.offset, m.count]), [['/meters/0', 0, 70], ['/meters/2', 70, 49]]);
+  assert.strictEqual(new Set(L.params.map((p) => p.path)).size, L.params.length, 'no duplicate parameters');
+  for (const m of ['X32', 'x32 rack', 'X32C', 'M32', 'M32R', 'M32C']) assert.strictEqual(x32.layout(m).params.length, L.params.length, m);
+  assert.strictEqual(x32.model('M32R'), 'M32R');
+  assert.strictEqual(x32.model('X32 Compact'), 'X32');
+});
+
+test('/xinfo answers go to the right family; X32 meter blobs (float32) round trip', () => {
+  const info = (m) => [{ v: '10.0.0.5' }, { v: 'FOH' }, { v: m }, { v: '4.06' }];
+  assert.strictEqual(x32.parseInfo(info('M32')).model, 'M32');
+  assert.strictEqual(x32.parseInfo(info('X32RACK')).model, 'X32RACK');
+  assert.strictEqual(x32.parseInfo(info('XR18')), null);
+  assert.strictEqual(profile.parseInfo(info('X32')), null);
+  assert.strictEqual(profile.parseInfo(info('M32C')), null);
+  assert.strictEqual(profile.parseInfo(info('XR18')).model, 'XR18');
+  const db = [0, -6, -20, -90, 6];
+  const back = x32.parseMeter(x32.buildMeter(db));
+  assert.strictEqual(back.length, 5);
+  db.forEach((d, i) => assert.ok(Math.abs(back[i] - d) < 1e-3, 'meter ' + i + ': ' + back[i]));
+  assert.strictEqual(x32.parseMeter(new Uint8Array([9, 0, 0, 0, 1, 2])), null, 'a count past the end is refused');
+  assert.strictEqual(x32.keepAlive().map((k) => k[0] + ' ' + (k[1][0] ? k[1][0].v : '')).join(', '), '/xremote , /meters /meters/0, /meters /meters/2');
+});
+
+test('X32: identify a typed address, connect, both directions, both meter blocks', async () => {
+  const xr = await sim.start({ model: 'XR18' });
+  const mx = await sim.start({ profile: 'x32', model: 'M32' });
+  const tr = nodeTransport();
+  await tr.ready;
+  // each simulator on its own port; both answer on 127.0.0.1
+  const pX = Object.assign({}, x32, { port: mx.port, keepAliveMs: 250 });
+  const pA = Object.assign({}, profile, { port: xr.port });
+  try {
+    const found = await Mixer.discover(pX, tr, 300);
+    assert.deepStrictEqual(found.map((c) => c.model), ['M32']);
+    assert.deepStrictEqual((await Mixer.discover(pA, tr, 300)).map((c) => c.model), ['XR18']);
+    const who = await Mixer.identify([pA, pX], tr, '127.0.0.1', 600);
+    assert.ok(who.profile === pA || who.profile === pX);
+    const s = new Mixer.Session(pX, tr);
+    const inf = await s.connect('127.0.0.1', mx.port);
+    assert.strictEqual(inf.model, 'M32');
+    assert.strictEqual(s.values.size, s.layout.params.length);
+    assert.strictEqual(s.get('/ch/01/config/name'), 'Kick');
+    assert.strictEqual(s.get('/bus/01/config/name'), 'Drummer');
+    s.set('/ch/32/mix/fader', Levels.dbToFader(-10));
+    s.set('/auxin/03/mix/12/level', Levels.dbToFader(-3));
+    s.set('/dca/8/on', 0);
+    s.set('/config/mute/6', 1);
+    await until(() => mx.state.get('/dca/8/on') === 0 && mx.state.get('/config/mute/6') === 1
+      && Math.abs(mx.state.get('/ch/32/mix/fader') - Levels.dbToFader(-10)) < 1e-6
+      && Math.abs(mx.state.get('/auxin/03/mix/12/level') - Levels.dbToFader(-3)) < 1e-6, 1000, 'X32 sets');
+    let heard = null;
+    s.on('/main/st/mix/fader', (v) => { heard = v; });
+    mx.change('/main/st/mix/fader', 0.5);
+    await until(() => heard === 0.5, 1000, 'Main LR from the console');
+    mx.change('/-stat/solosw/41', 1);
+    await until(() => s.get('/-stat/solosw/41') === 1, 1000, 'solo FX return 1');
+    s.action(...s.layout.clearSolo);
+    await until(() => s.get('/-stat/solosw/41') === 0, 1000, 'solo cleared');
+    const blocks = new Map();
+    s.onMeters((addr, db) => blocks.set(addr, db));
+    await until(() => blocks.has('/meters/0') && blocks.has('/meters/2'), 1500, 'both meter blocks');
+    assert.strictEqual(blocks.get('/meters/0').length, 70);
+    assert.strictEqual(blocks.get('/meters/2').length, 49);
+    // channel 1 sits at 0 dB on the fader: its meter reads about -12 dB +-6 in the simulator
+    assert.ok(blocks.get('/meters/0')[0] > -20 && blocks.get('/meters/0')[0] < -5, 'ch 1 meter ' + blocks.get('/meters/0')[0]);
+    s.disconnect();
+  } finally { tr.close(); xr.close(); mx.close(); }
+});
+
+// --- WING ---------------------------------------------------------------------------------------
+
+test('WING layout and info: paths not zero padded, every model the same tree, other families refused', () => {
+  const L = wing.layout('ngc-full');
+  assert.strictEqual(L.inputs.length, 48);
+  assert.strictEqual(L.returns.length, 0);
+  assert.strictEqual(L.targets.length, 16);
+  assert.strictEqual(L.dcas.length, 16);
+  assert.strictEqual(L.muteGroups.length, 8);
+  assert.strictEqual(L.inputs[0].fader, '/ch/1/fdr');
+  assert.strictEqual(L.inputs[40].on, '/aux/1/mute');
+  assert.strictEqual(L.inputs[39].sends.bus16, '/ch/40/send/16/lvl');
+  assert.strictEqual(L.main.fader, '/main/1/fdr');
+  assert.strictEqual(L.dcas[15].solo, '/dca/16/$solo');
+  assert.strictEqual(L.muteGroups[7].path, '/mgrp/8/mute');
+  assert.strictEqual(L.clearSolo, null);
+  assert.deepStrictEqual(L.meters, []);
+  assert.strictEqual(new Set(L.params.map((p) => p.path)).size, L.params.length, 'no parameter twice');
+  for (const m of ['ngc-compact', 'ngc-rack']) assert.strictEqual(wing.layout(m).params.length, L.params.length, m);
+  const info = (s) => [{ t: 's', v: s }];
+  assert.deepStrictEqual(wing.parseInfo(info('WING,192.168.1.62,FOH,ngc-compact,S123,3.0.5')),
+    { ip: '192.168.1.62', name: 'FOH', model: 'WING Compact', modelRaw: 'ngc-compact', version: '3.0.5' });
+  assert.strictEqual(wing.parseInfo(info('XR18')), null);
+  assert.strictEqual(wing.parseInfo([{ t: 's', v: '192.168.1.1' }, { t: 's', v: 'X' }, { t: 's', v: 'X32' }]), null);
+  assert.strictEqual(profile.parseInfo(info('WING,1.2.3.4,FOH,ngc-full,S,3')), null);
+  assert.strictEqual(x32.parseInfo(info('WING,1.2.3.4,FOH,ngc-full,S,3')), null);
+});
+
+test('WING units: dB, pan -100..100 and an inverted mute, both ways', () => {
+  const f = (v) => [{ t: 'f', v }];
+  const sff = (v) => [{ t: 's', v: 'x' }, { t: 'f', v: 0.5 }, { t: 'f', v }];
+  for (const db of [-60, -30, -10, -3, 0, 6, 10]) {
+    const pos = Levels.dbToFader(db);
+    assert.strictEqual(wing.toWire('/ch/1/fdr', pos, 'f')[0].v, db, 'to dB ' + db);
+    assert.ok(Math.abs(wing.fromWire('/ch/1/fdr', sff(db)) - pos) < 1e-3, 'from dB ' + db);
+    assert.ok(Math.abs(wing.fromWire('/ch/3/send/2/lvl', f(db)) - pos) < 1e-3, 'event dB ' + db);
+  }
+  assert.strictEqual(wing.toWire('/ch/1/fdr', 0, 'f')[0].v, -144);
+  assert.strictEqual(wing.fromWire('/ch/1/fdr', f(-144)), 0);
+  assert.strictEqual(wing.fromWire('/ch/1/fdr', f(20)), 1, 'clamped at +10 dB');
+  assert.strictEqual(wing.toWire('/ch/1/pan', 0.5, 'f')[0].v, 0);
+  assert.strictEqual(wing.toWire('/ch/1/pan', 0, 'f')[0].v, -100);
+  assert.strictEqual(wing.fromWire('/ch/1/pan', sff(100)), 1);
+  assert.deepStrictEqual(wing.toWire('/ch/1/mute', 1, 'i'), [{ t: 'i', v: 0 }], 'on = not muted');
+  assert.strictEqual(wing.fromWire('/ch/1/mute', [{ t: 's', v: 'ON' }, { t: 'f', v: 1 }, { t: 'i', v: 1 }]), 0, 'muted = off');
+  assert.deepStrictEqual(wing.toWire('/mgrp/2/mute', 1, 'i'), [{ t: 'i', v: 1 }], 'a mute group is not inverted');
+  assert.strictEqual(wing.fromWire('/ch/1/name', [{ t: 's', v: 'Kick' }]), 'Kick');
+  assert.strictEqual(wing.fromWire('/ch/1/col', [{ t: 's', v: '9' }, { t: 'f', v: 0.7 }, { t: 'i', v: 9 }]), 9);
+  assert.strictEqual(wing.fromWire('/ch/1/name', []), undefined);
+});
+
+test('WING: discover and identify next to an X AIR, connect, both directions, one subscriber', async () => {
+  const wg = await wingSim.start({ model: 'ngc-rack' });
+  const xr = await sim.start({ model: 'XR18' });
+  const tr = nodeTransport();
+  const tr2 = nodeTransport();
+  await Promise.all([tr.ready, tr2.ready]);
+  const pW = Object.assign({}, wing, { port: wg.port, keepAliveMs: 250 });
+  const pA = Object.assign({}, profile, { port: xr.port });
+  try {
+    assert.deepStrictEqual((await Mixer.discover(pW, tr, 300)).map((c) => c.model), ['WING Rack']);
+    // an X AIR on the same host answers /xinfo; asked "/?" on its port it stays silent
+    assert.deepStrictEqual(await Mixer.discover(Object.assign({}, wing, { port: xr.port }), tr, 300), []);
+    const who = await Mixer.identify([pW], tr, '127.0.0.1', 600);
+    assert.strictEqual(who.profile, pW);
+    assert.strictEqual(who.info.name, 'WING-SIM');
+    const s = new Mixer.Session(pW, tr);
+    const inf = await s.connect('127.0.0.1', wg.port);
+    assert.strictEqual(inf.model, 'WING Rack');
+    assert.strictEqual(s.values.size, s.layout.params.length);
+    assert.strictEqual(s.get('/ch/1/name'), 'Kick');
+    assert.strictEqual(s.get('/ch/1/col'), 9);
+    assert.strictEqual(s.get('/bus/1/name'), 'Drummer');
+    assert.ok(Math.abs(s.get('/ch/1/fdr') - Levels.dbToFader(0)) < 1e-3, '0 dB at unity');
+    assert.strictEqual(s.get('/ch/1/mute'), 1, 'unmuted shows as on');
+    assert.strictEqual(s.get('/ch/1/pan'), 0.5);
+    assert.strictEqual(s.get('/ch/1/send/1/lvl'), 0, 'send off');
+    s.set('/ch/40/fdr', Levels.dbToFader(-10));
+    s.set('/aux/3/send/12/lvl', Levels.dbToFader(-3));
+    s.set('/ch/5/mute', 0);
+    s.set('/ch/6/pan', 0.25);
+    s.set('/mgrp/8/mute', 1);
+    await until(() => wg.state.get('/ch/5/mute') === 1 && wg.state.get('/mgrp/8/mute') === 1 && wg.state.get('/ch/6/pan') === -50
+      && Math.abs(wg.state.get('/ch/40/fdr') + 10) < 1e-3 && Math.abs(wg.state.get('/aux/3/send/12/lvl') + 3) < 1e-3, 1000, 'WING sets in dB');
+    assert.strictEqual(s.get('/ch/5/mute'), 0, 'the set holds without an echo');
+    assert.ok(wg.received.some((m) => m.address === '/*S'), 'subscribed');
+    let heard = null;
+    s.on('/main/1/fdr', (v) => { heard = v; });
+    wg.change('/main/1/fdr', -10);
+    await until(() => heard !== null && Math.abs(heard - Levels.dbToFader(-10)) < 1e-3, 1000, 'Main from the console');
+    wg.change('/dca/4/$solo', 1);
+    await until(() => s.get('/dca/4/$solo') === 1, 1000, 'DCA solo from the console');
+    // a second remote subscribes: the WING follows it only; ours comes back at its next renewal
+    tr2.send('127.0.0.1', wg.port, Osc.encode('/*S'));
+    await until(() => wg.subscriber() && wg.subscriber() !== '127.0.0.1:' + tr2.port, 500, 'second subscriber').catch(() => {});
+    await sleep(400);
+    wg.change('/ch/2/name', 'Lead');
+    await until(() => s.get('/ch/2/name') === 'Lead', 1000, 'subscription renewed');
+    s.disconnect();
+  } finally { tr.close(); tr2.close(); wg.close(); xr.close(); }
 });
 
 (async () => {
