@@ -1739,6 +1739,24 @@ a.download-option:hover {
     box-shadow: 0 4px 12px var(--shadow);
 }
 
+/* a third card (Remote for orOS Studio) takes the whole row: picture left, text right */
+.featured-card.wide {
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+}
+
+.featured-card.wide .featured-video {
+    height: 100%;
+    object-fit: cover;
+    border-bottom: 0;
+    border-right: 1px solid var(--border);
+}
+
+.featured-actions small a {
+    color: var(--text);
+}
+
 [data-theme="light"] .featured-card {
     border-color: #cccccc;
 }
@@ -1746,6 +1764,16 @@ a.download-option:hover {
 @media (max-width: 768px) {
     .featured-grid {
         grid-template-columns: 1fr;
+    }
+
+    .featured-card.wide {
+        display: flex;
+    }
+
+    .featured-card.wide .featured-video {
+        height: auto;
+        border-right: 0;
+        border-bottom: 1px solid var(--border);
     }
 }
 

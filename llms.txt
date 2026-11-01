@@ -191,3 +191,4 @@ Tools that change the notes before they reach an instrument.
 - License: MIT
 - Version: 3.0
 - NULL JSFX Hub: app that installs, updates and removes the plugins (Windows, Linux, macOS), see hub/README.md
+- Remote for orOS Studio: Android app that controls orOS Studio (mixer, transport, every NULL JSFX effect, pads and keys for the NULL instruments) from a phone or tablet: https://github.com/koulaxizis/oros/releases/download/android-apks/oros-studioremote.apk (also in the orOS F-Droid repository https://koulaxizis.github.io/oros-fdroid/)
