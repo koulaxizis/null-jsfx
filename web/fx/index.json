@@ -1147,7 +1147,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 8,
-   "bytes": 58991
+   "bytes": 58970
   },
   {
    "id": "comb_filter",
