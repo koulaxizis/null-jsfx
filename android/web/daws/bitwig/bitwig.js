@@ -214,10 +214,11 @@
     // --- from Bitwig ------------------------------------------------------------------------
 
     handle(m) {
+      // any message means the script is there (a flush can overtake the answer to hello)
+      if (!this.up) { this.up = true; this.emit('link', true); }
       switch (m.t) {
         case 'hello':
           if (m.proto > PROTO && root.console) console.warn('Bitwig script speaks protocol ' + m.proto);
-          if (!this.up) { this.up = true; this.emit('link', true); }
           return;
         case 'tracks': return this.tracks(m);
         case 'track': return this.track(m);
