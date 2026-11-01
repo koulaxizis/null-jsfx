@@ -194,11 +194,45 @@ async function run(headerOut) {
   }
 }
 
+// a project with more tracks than the script's window: the phone pages through them
+async function paging() {
+  const doc = host.defaultDocument();
+  const master = doc.tracks.pop();
+  for (let k = doc.tracks.length + 1; doc.tracks.length < 40; k++) {
+    doc.tracks.push({ name: 'Track ' + k, type: 'Audio', vol: host.UNITY, pan: 0.5, mute: false, solo: false, arm: false, color: [0.4, 0.4, 0.4], devices: [] });
+  }
+  doc.tracks.push(master);
+  const bw = await host.start({ doc });
+  const s = new BW.Session({ dial: nodeDial(bw.port) });
+  try {
+    s.connect();
+    await until(() => s.strips.size === 32 && s.total === 41 && s.size === 32, 'a window of 32 of 41 tracks');
+    assert.strictEqual(s.from, 0);
+    assert.strictEqual(s.strips.get(0).name, 'Vocal');
+    s.scroll(32);
+    await until(() => s.from === 32 && s.strips.size === 9 && s.strips.get(0).name === 'Track 33', 'the next page');
+    assert.strictEqual(s.strips.get(8).name, 'Master');
+    s.setMute(0, true);
+    s.setFader(8, 0.5);
+    await until(() => doc.tracks[32].mute === true && Math.abs(doc.tracks[40].vol - 0.5) < 1e-9, 'controls act on the tracks of the page');
+    assert.strictEqual(doc.tracks[0].mute, false, 'not on the first page');
+    s.scroll(1000);
+    await until(() => s.from === 40 && s.strips.size === 1, 'scroll stops at the last track');
+    s.scroll(-5);
+    await until(() => s.from === 0 && s.strips.get(0).name === 'Vocal', 'back to the start');
+    ok('more than 32 tracks: a window of 32, paging forward and back, controls on the page shown');
+  } finally {
+    s.close();
+    bw.close();
+  }
+}
+
 async function main() {
   scriptChecks();
   readerChecks();
   await run(false);
   await run(true);
+  await paging();
   console.log(`bitwig_test: ${passed} passed`);
 }
 

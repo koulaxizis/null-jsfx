@@ -20,6 +20,8 @@
 //   setFader, setPan (ssid, 0..1), resetFader, resetPan (ssid), setMute, setSolo, setRec (ssid, on)
 //   setParam(ssid, piid, par, value in the parameter's range), setPluginActive(ssid, piid, on)
 //   play(), stop(), toStart(), record(), loop()
+//   optional, a DAW that shows a window of its tracks (Bitwig, Live): total, from, size and
+//     scroll(from); the desk pages through the window when total > size
 'use strict';
 (function () {
   const NULLFX = '../nullfx/';
@@ -136,7 +138,7 @@
   function register(P) {
     const { el, prefs, header } = NullRemote;
     let root, connectView, desk, msg, session = null, conn = null;
-    let strips, clock, transportBtns, sheet, sheetBody, sheetTitle;
+    let strips, clock, transportBtns, sheet, sheetBody, sheetTitle, pager;
     let view = null; // the open sheet: {kind: 'list' | 'plugin', ssid, ...}
 
     function say(text, err) {
@@ -269,6 +271,16 @@
       leave.setAttribute('aria-label', 'Disconnect');
       leave.onclick = disconnect;
       bar.append(clock, t, leave);
+      // pages of tracks, for a DAW that shows them a window at a time
+      pager = el('div', 'da-pager');
+      pager.hidden = true;
+      const prev = el('button', 'da-prev', '‹');
+      prev.setAttribute('aria-label', 'Previous tracks');
+      prev.onclick = () => page(-1);
+      const next = el('button', 'da-next', '›');
+      next.setAttribute('aria-label', 'Next tracks');
+      next.onclick = () => page(1);
+      pager.append(prev, el('div', 'da-page'), next);
       strips = el('div', 'da-strips');
       sheet = el('div', 'da-sheet');
       sheet.hidden = true;
@@ -280,7 +292,7 @@
       sh.append(back, sheetTitle);
       sheetBody = el('div', 'da-sheet-body');
       sheet.append(sh, sheetBody);
-      desk.append(bar, strips, sheet);
+      desk.append(bar, pager, strips, sheet);
       return desk;
     }
 
@@ -289,10 +301,27 @@
       desk.hidden = false;
     }
 
+    function page(dir) {
+      if (!session || !session.size) return;
+      NullShell.haptic();
+      session.scroll(session.from + dir * session.size);
+    }
+    function drawPager() {
+      const s = session;
+      const on = !!(s && s.scroll && s.size && s.total > s.size);
+      pager.hidden = !on;
+      if (!on) return;
+      const last = Math.min(s.total, s.from + s.size);
+      pager.querySelector('.da-page').textContent = `Tracks ${s.from + 1}–${last} of ${s.total}`;
+      pager.querySelector('.da-prev').disabled = s.from <= 0;
+      pager.querySelector('.da-next').disabled = last >= s.total;
+    }
+
     // the list is drawn again only when its tracks change, so a strip under a finger stays put
     // while the DAW sends the list again; the controls always act on the newest strip object
     let drawn = '';
     function drawStrips(list) {
+      drawPager();
       const key = list.map((s) => [s.ssid, s.name, s.type, !!s.canRec].join('|')).join('\n');
       if (key === drawn && strips.childElementCount) {
         for (const s of list) updateStrip(s);

@@ -200,7 +200,37 @@ async function main() {
     s.close();
     L.close();
   }
+  await paging();
   console.log(`ableton_test: ${passed} passed`);
+}
+
+// a Set with more tracks than the surface's window: the phone pages through them
+async function paging() {
+  const doc = live.defaultDocument();
+  for (let k = doc.tracks.length + 1; doc.tracks.length < 40; k++) doc.tracks.push({ name: 'Track ' + k, kind: 'audio', vol: live.UNITY, pan: 0, color: 0x666666, devices: [] });
+  const L = await live.start({ doc });
+  const s = new BW.Session({ dial: nodeDial(L.port) });
+  try {
+    s.connect();
+    // 40 tracks, a return and the master
+    await until(() => s.strips.size === 32 && s.total === 42 && s.size === 32, 'a window of 32 of 42 tracks');
+    s.scroll(32);
+    await until(() => s.from === 32 && s.strips.size === 10 && s.strips.get(0).name === 'Track 33', 'the next page');
+    assert.deepStrictEqual([s.strips.get(8).type, s.strips.get(9).type], ['Return', 'Master']);
+    s.setMute(0, true);
+    s.setFader(9, 0.5);
+    await until(async () => { const d = await L.get(); return d.tracks[32].mute && Math.abs(d.master.vol - 0.5) < 1e-9; }, 'controls act on the tracks of the page');
+    assert.strictEqual((await L.get()).tracks[0].mute, false, 'not on the first page');
+    s.scroll(-5);
+    await until(() => s.from === 0 && s.strips.get(0).name === 'Vocal', 'back to the start');
+    ok('more than 32 tracks: a window of 32, paging forward and back, controls on the page shown');
+  } catch (e) {
+    console.error(L.log.join(''));
+    throw e;
+  } finally {
+    s.close();
+    L.close();
+  }
 }
 
 main().catch((e) => { console.error(e); process.exit(1); });

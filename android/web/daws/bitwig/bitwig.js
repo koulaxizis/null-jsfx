@@ -114,7 +114,9 @@
       this.rate = 0; // not reported: the GFX uses 48 kHz
       this.transport = { play: false, stop: true, rec: false, loop: false };
       this.time = '';
-      this.total = 0;
+      this.total = 0; // tracks in the document
+      this.from = 0; // the first of them in the script's window
+      this.size = 0; // tracks in the window (the script says it in hello)
       this.conn = null;
       this.open = false; // TCP up
       this.up = false; // and Bitwig's script answered
@@ -220,6 +222,7 @@
       switch (m.t) {
         case 'hello':
           if (m.proto > PROTO && root.console) console.warn('the DAW script speaks protocol ' + m.proto);
+          this.size = m.size | 0;
           return;
         case 'tracks': return this.tracks(m);
         case 'track': return this.track(m);
@@ -267,6 +270,7 @@
     }
     tracks(m) {
       this.total = m.total | 0;
+      this.from = m.from | 0;
       const list = new Map();
       for (const t of m.list || []) {
         // a slot keeps its strip object (and meter) when its track changes name or moves
@@ -322,6 +326,12 @@
     // --- to Bitwig --------------------------------------------------------------------------
 
     listStrips() { this.send({ t: 'hello' }); }
+    /** Moves the script's window so that track `from` of the document comes first (the last
+     *  page may hold fewer tracks than the window). */
+    scroll(from) {
+      const last = Math.max(0, this.total - 1);
+      this.send({ t: 'scroll', from: Math.max(0, Math.min(last, Math.round(from) || 0)) });
+    }
     listPlugins(ssid) {
       const list = this.devices.get(ssid);
       if (list) setTimeout(() => this.emit('plugins', ssid, list), 0);

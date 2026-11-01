@@ -286,6 +286,28 @@ async function main() {
     assert(await btab.locator('.da-sheet').isHidden());
     ok('Bitwig: other devices as rows with their own value text, bypass, Back');
 
+    // a bigger project: the desk pages through the script's window of 32 tracks
+    assert(await btab.locator('.da-pager').isHidden(), 'no pager for 4 tracks');
+    bw.change((d) => {
+      const master = d.tracks.pop();
+      for (let k = d.tracks.length + 1; d.tracks.length < 40; k++) d.tracks.push({ name: 'Track ' + k, type: 'Audio', vol: 0.5, pan: 0.5, mute: false, solo: false, arm: false, color: [0.4, 0.4, 0.4], devices: [] });
+      d.tracks.push(master);
+    });
+    await until(async () => (await btab.locator('.da-strip').count()) === 32, '32 Bitwig strips');
+    assert.strictEqual(await btab.locator('.da-page').textContent(), 'Tracks 1–32 of 41');
+    assert(await btab.locator('.da-prev').isDisabled());
+    await shot('bitwig-pager');
+    await btab.locator('.da-next').click();
+    await until(async () => (await btab.locator('.da-strip').count()) === 9, 'the second page');
+    assert.strictEqual(await btab.locator('.da-page').textContent(), 'Tracks 33–41 of 41');
+    assert(await btab.locator('.da-next').isDisabled());
+    assert.strictEqual(await btab.locator('.da-name').first().textContent(), 'Track 33');
+    await bstrip('Track 34').locator('.da-m').click();
+    await until(async () => bw.doc.tracks[33].mute === true, 'mute on the second page');
+    await btab.locator('.da-prev').click();
+    await until(async () => (await btab.locator('.da-name').first().textContent()) === 'Vocal', 'back to the first page');
+    ok('Bitwig: 41 tracks in pages of 32, next and previous, a mute on the second page');
+
     // --- Ableton Live ----------------------------------------------------------------------
     const atab = page.locator('[data-tab=ableton]');
     const astrip = (name) => atab.locator('.da-strip', { has: page.locator('.da-name', { hasText: name }) }).first();
