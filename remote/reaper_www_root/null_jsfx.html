@@ -178,6 +178,13 @@ input[type=search] { font: inherit; color: var(--text); background: var(--bg2); 
   .top { gap: 8px; padding: 8px; }
   .transport button { width: 40px; }
 }
+/* phones: the transport gets its own row under the logo */
+@media (max-width: 520px) {
+  .top { flex-wrap: wrap; }
+  .status { margin-left: auto; }
+  .transport { order: 3; width: 100%; margin-left: 0; }
+  .transport button { flex: 1; width: auto; }
+}
 </style>
 </head>
 <body>

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- nulljsfx.tech dark palette (Bible R8): bg #1b1a18, header #131211 -->
+    <color name="null_bg">#1B1A18</color>
+    <color name="null_bar">#131211</color>
+    <color name="null_logo">#2D2D2D</color>
+    <style name="Theme.NullRemote" parent="android:Theme.Material.NoActionBar">
+        <item name="android:windowBackground">@color/null_bg</item>
+        <item name="android:statusBarColor">@color/null_bar</item>
+        <item name="android:navigationBarColor">@color/null_bar</item>
+        <item name="android:colorAccent">#C4C4C4</item>
+    </style>
+</resources>
