@@ -796,13 +796,14 @@ def find_slider(path, key):
     """The indexes of the sliders named key: the name without its unit, or the full label with it
     ("Pitch Shift (semitones)") when two sliders share a name."""
     hits = [i for i, sl in enumerate(parse_sliders(path)) if sl[0] == key]
+    # the full labels, one per slider; a file slider keeps its place (its label never matches),
+    # so the indexes after it stay those of parse_sliders
+    labels = [re.sub(r"^slider\d+:[^<]*<[^>]*>-?", "", l).strip() if re.match(r"slider\d+:[^/]", l) else None
+              for l in path.read_text(encoding="utf-8").split("\n") if re.match(r"slider\d+:", l)]
     if len(hits) > 1:
-        labels = [re.sub(r"^slider\d+:[^<]*<[^>]*>-?", "", l).strip()
-                  for l in path.read_text(encoding="utf-8").split("\n") if re.match(r"slider\d+:[^/]", l)]
         hits = [i for i in hits if labels[i] == key] or hits
     elif not hits:
-        hits = [i for i, l in enumerate(re.sub(r"^slider\d+:[^<]*<[^>]*>-?", "", l).strip()
-                for l in path.read_text(encoding="utf-8").split("\n") if re.match(r"slider\d+:[^/]", l)) if l == key]
+        hits = [i for i, l in enumerate(labels) if l == key]
     return hits
 
 

@@ -266,5 +266,33 @@
     ],
     "properties": "MIDI note-on → sine body, pitch from Pitch + Sweep falling exponentially (Sweep Time), level −60 dB over Decay; + white noise (Park-Miller) low-passed at Click Tone, −60 dB over 20 ms → velocity → soft clip tanh(g·x)/tanh(g) → Volume. Two voices: a retrigger fades the old kick out over 3 ms. Every MIDI message passes on. No samples.",
     "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-kik\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><circle cx=\"32\" cy=\"32\" r=\"24\" stroke=\"url(#icon-kik)\" stroke-width=\"2.5\" fill=\"none\"/><circle cx=\"32\" cy=\"32\" r=\"14\" stroke=\"url(#icon-kik)\" stroke-width=\"1.5\" fill=\"none\" opacity=\"0.6\"/><circle cx=\"32\" cy=\"32\" r=\"4\" fill=\"url(#icon-kik)\"/></svg>"
+  },
+  "granular": {
+    "card_desc": "Clouds of Grains from Your Samples",
+    "keywords": "instrument granular grains cloud texture pad ambient sample wav flac freeze scan spray polyphonic midi",
+    "slider_desc": [
+      "The WAV or FLAC file the grains come from (Data/null_jsfx_samples); none plays a built-in tone.",
+      "Where in the sound the grains are taken from.",
+      "How far around Position the grains scatter.",
+      "Moves the position while a key is held, forwards or backwards.",
+      "How long each grain is.",
+      "How many grains each key starts per second.",
+      "How far each grain's pitch may wander up or down.",
+      "How far the grains spread across the stereo field.",
+      "The chance that a grain plays backwards.",
+      "The key that plays the sound at its own pitch.",
+      "How slowly a note fades in.",
+      "How long a note rings after the key.",
+      "How much the key velocity changes the level.",
+      "Output level."
+    ],
+    "uses": [
+      "Ambient pads and textures from any recording",
+      "Freezing a moment of a voice or an instrument",
+      "Slowly scanning through a field recording",
+      "Shimmering, detuned or reversed clouds for sound design"
+    ],
+    "properties": "MIDI → 8 voices → each starts Density grains/s: Hann window of Grain Size, from Position + Scan ± Spray (Park-Miller draws), pitch from Root Key ± Pitch Spread, pan ± Stereo Spread, backwards with chance Reverse; up to 64 grains, linear reading → voice envelope (Attack, Release) → 1/√(density × size) → Volume. Every MIDI message passes on.",
+    "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-grn\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><circle cx=\"20\" cy=\"24\" r=\"5\" fill=\"url(#icon-grn)\"/><circle cx=\"36\" cy=\"18\" r=\"3\" fill=\"url(#icon-grn)\"/><circle cx=\"46\" cy=\"32\" r=\"6\" fill=\"url(#icon-grn)\" opacity=\"0.7\"/><circle cx=\"28\" cy=\"40\" r=\"4\" fill=\"url(#icon-grn)\" opacity=\"0.8\"/><circle cx=\"16\" cy=\"46\" r=\"2.5\" fill=\"url(#icon-grn)\"/><circle cx=\"42\" cy=\"48\" r=\"3\" fill=\"url(#icon-grn)\" opacity=\"0.6\"/></svg>"
   }
 }

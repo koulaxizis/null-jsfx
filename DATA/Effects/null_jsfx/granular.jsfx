@@ -1,0 +1,323 @@
+desc:NULL Granular
+author: Christos Koulaxizis
+tags: instrument granular grains cloud texture pad ambient sample wav flac freeze scan spray polyphonic midi
+//category: Instruments
+//NULL JSFX v2.9 • https://nulljsfx.tech • MIT License
+
+slider1:/null_jsfx_samples:none:Sample File
+slider2:30<0,100,0.1>Position (%)
+slider3:10<0,100,0.1>Spray (%)
+slider4:0<-100,100,0.1>Scan (%/s)
+slider5:80<10,500,1:log>Grain Size (ms)
+slider6:30<1,100,0.1:log>Density (/s)
+slider7:0<0,12,0.1>Pitch Spread (st)
+slider8:50<0,100,1>Stereo Spread (%)
+slider9:0<0,100,1>Reverse (%)
+slider10:60<0,127,1>Root Key
+slider11:200<1,5000,1:log>Attack (ms)
+slider12:1000<1,10000,1:log>Release (ms)
+slider13:50<0,100,1>Velocity (%)
+slider14:0<-24,12,0.1>Volume (dB)
+
+in_pin:none
+out_pin:Left
+out_pin:Right
+
+@init
+  // A granular instrument: every held key plays a cloud of short grains of a sound. Put .wav
+  // (or .flac) files in REAPER's Data/null_jsfx_samples folder (the Sampler's folder) and pick
+  // one with Sample File; without a file (or when it cannot be read) a built-in sound plays, a
+  // slowly changing organ-like tone at C4. A file is kept up to 4,194,304 sample values.
+  //   - every voice (8, one per key) starts Density grains a second, each Grain Size long with
+  //     a Hann window, read from Position in the sound, scattered by up to Spray (a part of
+  //     the whole sound, half before and half after); Scan moves the position while the key is
+  //     held (% of the sound per second, backwards when negative)
+  //   - the grains play at the key's pitch from Root Key, each up to Pitch Spread semitones
+  //     higher or lower, panned up to Stereo Spread to either side, and backwards with the
+  //     chance Reverse
+  //   - the voice's envelope (Attack, then Release after the key) shapes its grains; Velocity
+  //     sets how much the velocity changes the level
+  //   - the level is scaled by 1 / sqrt(Density x Grain Size), so denser clouds stay as loud
+  //   - all notes off (CC 123) releases every voice, all sound off (CC 120) stops them
+  // The random draws (position, pitch, pan, reverse, in that order, at every grain) come from
+  // one Park-Miller generator. At most 64 grains sound; a grain with no free place is skipped.
+  // A new key with every voice busy takes the oldest.
+  //
+  // Memory: 4000.. the MIDI of the block, 6000.. the voices (16 values each), 7000.. the
+  // grains (16 values each), 65536.. the sample (interleaved).
+  ext_noinit = 1;
+  ext_tail_size = -1;
+  NV = 8;
+  NG = 64;
+  MQ = 4000;
+  VOX = 6000;
+  GRN = 7000;
+  SBUF = 65536;
+  SMAX = 4194304;
+  // voice values: on, note, gain, envelope, stage (1 attack, 2 held, 3 release), samples to the
+  // next grain, scan offset (part of the sound), age
+  V_ON = 0; V_NOTE = 1; V_GAIN = 2; V_ENV = 3; V_ST = 4; V_CNT = 5; V_SCAN = 6; V_AGE = 7;
+  // grain values: on, position (frames), step (frames per sample, negative backwards), age
+  // (samples), length (samples), left gain, right gain, voice (its VOX address)
+  G_ON = 0; G_POS = 1; G_RATE = 2; G_T = 3; G_LEN = 4; G_GL = 5; G_GR = 6; G_V = 7;
+  memset(VOX, 0, NV * 16);
+  memset(GRN, 0, NG * 16);
+  seed = 12345;
+  last_file = -1;              // the first @slider reads the file
+
+  // the built-in sound at the current rate: eight harmonics of C4, each swelling at its own
+  // slow rate (mono, 2 s, a 10 ms fade at both ends)
+  function make_builtin() local(i, k, t, y, a, x, f0, fo, tp)
+  (
+    nch = 1;
+    fsr = srate;
+    nfr = floor(2 * srate);
+    f0 = 261.6255653005986;
+    fo = floor(0.01 * srate);
+    tp = 2 * $pi;
+    i = 0;
+    loop(nfr,
+      t = i / srate;
+      y = 0;
+      k = 1;
+      loop(8,
+        x = tp * k;
+        x *= f0;
+        x *= t;
+        a = tp * (0.3 + 0.17 * k);
+        a *= t;
+        a = 0.6 + 0.4 * sin(a + k);
+        a /= k;
+        y += sin(x) * a;
+        k += 1;
+      );
+      y *= 0.35;
+      i < fo ? ( x = i / fo; y *= x; );
+      a = nfr - i;
+      a < fo ? ( x = a / fo; y *= x; );
+      SBUF[i] = y;
+      i += 1;
+    );
+  );
+
+  // read the chosen file; the built-in sound when there is none
+  function load_sample() local(h, ch, rt, n)
+  (
+    file_ok = 0;
+    h = file_open(slider1);
+    h >= 0 ? (
+      ch = rt = 0;
+      file_riff(h, ch, rt);
+      ch > 0 && rt > 0 ? (
+        n = min(file_avail(h), SMAX - SMAX % ch);
+        n -= n % ch;
+        n >= 4 * ch ? (
+          file_mem(h, SBUF, n);
+          nch = ch;
+          fsr = rt;
+          nfr = n / ch;
+          file_ok = 1;
+        );
+      );
+      file_close(h);
+    );
+    !file_ok ? make_builtin();
+    smp_id += 1;
+  );
+
+  // the sound at position p (0..nfr, wrapping) of channel c, read linearly
+  function rd(p, c) local(i, j, f, a, b)
+  (
+    i = floor(p);
+    f = p - i;
+    j = i + 1;
+    j >= nfr ? j = 0;
+    c = min(c, nch - 1);
+    a = SBUF[i * nch + c];
+    b = SBUF[j * nch + c];
+    a + (b - a) * f;
+  );
+
+  // the next Park-Miller draw, 0..1
+  function rnd()
+  (
+    seed *= 16807; seed -= floor(seed / 2147483647) * 2147483647;
+    seed / 2147483647;
+  );
+
+  // a new grain for voice vb, in the first free place
+  function spawn(vb) local(r1, r2, r3, r4, g, gb, p, st, pan)
+  (
+    r1 = rnd(); r2 = rnd(); r3 = rnd(); r4 = rnd();
+    gb = -1;
+    g = 0;
+    while (gb < 0 && g < NG) (
+      !GRN[g * 16] ? gb = GRN + g * 16;
+      g += 1;
+    );
+    gb >= 0 ? (
+      p = pos0 + vb[V_SCAN];
+      p += (r1 * 2 - 1) * spray;
+      p -= floor(p);
+      gb[G_POS] = p * nfr;
+      st = vb[V_NOTE] - root;
+      st += (r2 * 2 - 1) * pspread;
+      gb[G_RATE] = base_r * 2 ^ (st / 12);
+      r4 < rev ? gb[G_RATE] = -gb[G_RATE];
+      pan = (r3 * 2 - 1) * sspread;
+      gb[G_GL] = min(1, 1 - pan);
+      gb[G_GR] = min(1, 1 + pan);
+      gb[G_T] = 0;
+      gb[G_LEN] = glen;
+      gb[G_V] = vb;
+      gb[G_ON] = 1;
+    );
+  );
+
+  function note_on(n, v) local(i, vb, bv, ba, bo)
+  (
+    bv = -1;
+    ba = -1;
+    i = 0;
+    loop(NV,
+      vb = VOX + i * 16;
+      vb[V_AGE] += 1;
+      bv < 0 && !vb[V_ON] ? bv = vb;
+      vb[V_AGE] > ba ? ( ba = vb[V_AGE]; bo = vb; );
+      i += 1;
+    );
+    bv < 0 ? bv = bo;
+    bv[V_ON] = 1;
+    bv[V_NOTE] = n;
+    bv[V_GAIN] = 1 - vs + vs * v;
+    bv[V_ENV] = 0;
+    bv[V_ST] = 1;
+    bv[V_CNT] = 0;
+    bv[V_SCAN] = 0;
+    bv[V_AGE] = 0;
+  );
+
+  function note_off(n) local(i, vb)
+  (
+    i = 0;
+    loop(NV,
+      vb = VOX + i * 16;
+      vb[V_ON] && vb[V_NOTE] == n && vb[V_ST] < 3 ? vb[V_ST] = 3;
+      i += 1;
+    );
+  );
+
+  function release_all() local(i, vb)
+  (
+    i = 0;
+    loop(NV, vb = VOX + i * 16; vb[V_ON] ? vb[V_ST] = 3; i += 1;);
+  );
+
+  function kill_all()
+  (
+    memset(VOX, 0, NV * 16);
+    memset(GRN, 0, NG * 16);
+  );
+
+@slider
+  // a new file (or the first @slider after @init): read it, the voices stop
+  slider1 != last_file ? (
+    kill_all();
+    load_sample();
+    last_file = slider1;
+  );
+  base_r = fsr / srate;
+  pos0 = slider2 / 100;
+  spray = slider3 / 200;
+  scan_inc = slider4 / 100 / srate;
+  glen = max(16, floor(slider5 / 1000 * srate));
+  gap = srate / slider6;
+  pspread = slider7;
+  sspread = slider8 / 100;
+  rev = slider9 / 100;
+  root = slider10;
+  att_inc = 1 / max(1, slider11 / 1000 * srate);
+  rel_c = exp(-6.907755278982137 / max(1, slider12 / 1000 * srate));
+  vs = slider13 / 100;
+  norm = 1 / sqrt(max(1, slider6 * slider5 / 1000));
+  og = 10 ^ (slider14 / 20);
+
+@block
+  // the MIDI of this block, played at its offsets in @sample
+  mq_n = 0;
+  while (midirecv(m_ofs, m_1, m_2, m_3)) (
+    // every message goes on to the next plugin too, so instruments can be layered
+    midisend(m_ofs, m_1, m_2, m_3);
+    mq_n < 512 ? (
+      MQ[mq_n * 4] = m_ofs;
+      MQ[mq_n * 4 + 1] = m_1;
+      MQ[mq_n * 4 + 2] = m_2;
+      MQ[mq_n * 4 + 3] = m_3;
+      mq_n += 1;
+    );
+  );
+  mq_i = 0;
+  si = 0;
+
+@sample
+  while (mq_i < mq_n && MQ[mq_i * 4] <= si) (
+    m_s = MQ[mq_i * 4 + 1] & 0xF0;
+    m_n = MQ[mq_i * 4 + 2];
+    m_v = MQ[mq_i * 4 + 3];
+    m_s == 0x90 && m_v > 0 ? note_on(m_n, m_v / 127) :
+    m_s == 0x80 || m_s == 0x90 ? note_off(m_n) :
+    m_s == 0xB0 ? (
+      m_n == 123 ? release_all() :
+      m_n == 120 ? kill_all();
+    );
+    mq_i += 1;
+  );
+  si += 1;
+
+  // the voices: envelope, scan, and a grain when it is due
+  i = 0;
+  loop(NV,
+    vb = VOX + i * 16;
+    vb[V_ON] ? (
+      vb[V_ST] == 1 ? (
+        vb[V_ENV] += att_inc;
+        vb[V_ENV] >= 1 ? ( vb[V_ENV] = 1; vb[V_ST] = 2; );
+      ) : vb[V_ST] == 3 ? (
+        vb[V_ENV] *= rel_c;
+        vb[V_ENV] < 0.0001 ? vb[V_ON] = 0;
+      );
+      vb[V_ON] ? (
+        vb[V_SCAN] += scan_inc;
+        vb[V_SCAN] -= floor(vb[V_SCAN]);
+        vb[V_CNT] -= 1;
+        vb[V_CNT] <= 0 ? (
+          spawn(vb);
+          vb[V_CNT] += gap;
+        );
+      );
+    );
+    i += 1;
+  );
+
+  // the grains
+  outl = outr = 0;
+  g = 0;
+  loop(NG,
+    gb = GRN + g * 16;
+    gb[G_ON] ? (
+      vb = gb[G_V];
+      w = 0.5 - 0.5 * cos(2 * $pi * gb[G_T] / gb[G_LEN]);
+      a = w * vb[V_ENV];
+      a *= vb[V_GAIN];
+      outl += rd(gb[G_POS], 0) * gb[G_GL] * a;
+      outr += rd(gb[G_POS], 1) * gb[G_GR] * a;
+      gb[G_POS] += gb[G_RATE];
+      gb[G_POS] -= floor(gb[G_POS] / nfr) * nfr;
+      gb[G_T] += 1;
+      gb[G_T] >= gb[G_LEN] ? gb[G_ON] = 0;
+    );
+    g += 1;
+  );
+  x = norm * og;
+  spl0 = outl * x;
+  spl1 = outr * x;

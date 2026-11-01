@@ -1,0 +1,14 @@
+[
+  ["Soft Cloud", {"Grain Size (ms)": 120, "Density (/s)": 25, "Spray (%)": 15, "Attack (ms)": 600, "Release (ms)": 2500}],
+  ["Frozen Moment", {"Spray (%)": 1, "Grain Size (ms)": 200, "Density (/s)": 20, "Stereo Spread (%)": 30}],
+  ["Slow Scan", {"Position (%)": 0, "Scan (%/s)": 5, "Spray (%)": 4, "Grain Size (ms)": 150, "Density (/s)": 20}],
+  ["Shimmer Cloud", {"Pitch Spread (st)": 12, "Grain Size (ms)": 90, "Density (/s)": 40, "Stereo Spread (%)": 100}],
+  ["Glitter", {"Grain Size (ms)": 20, "Density (/s)": 80, "Spray (%)": 60, "Pitch Spread (st)": 7, "Stereo Spread (%)": 100}],
+  ["Backwards Haze", {"Reverse (%)": 100, "Grain Size (ms)": 250, "Density (/s)": 12, "Attack (ms)": 1500, "Release (ms)": 4000}],
+  ["Half Reverse", {"Reverse (%)": 50, "Spray (%)": 25, "Grain Size (ms)": 100}],
+  ["Wide Texture", {"Spray (%)": 100, "Grain Size (ms)": 60, "Density (/s)": 50, "Stereo Spread (%)": 100}],
+  ["Stutter", {"Grain Size (ms)": 40, "Density (/s)": 8, "Spray (%)": 0, "Attack (ms)": 1, "Release (ms)": 100}],
+  ["Detuned Pad", {"Pitch Spread (st)": 0.3, "Grain Size (ms)": 180, "Density (/s)": 30, "Attack (ms)": 800, "Release (ms)": 3000}],
+  ["Rewind", {"Scan (%/s)": -20, "Spray (%)": 2, "Grain Size (ms)": 70, "Density (/s)": 40}],
+  ["Even Velocity", {"Velocity (%)": 0}]
+]

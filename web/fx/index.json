@@ -1824,6 +1824,20 @@
    "bytes": 251553
   },
   {
+   "id": "granular",
+   "name": "Granular",
+   "category": "Instruments",
+   "tags": "instrument granular grains cloud texture pad ambient sample wav flac freeze scan spray polyphonic midi gui",
+   "gfx": [
+    560,
+    496
+   ],
+   "ins": 0,
+   "outs": 2,
+   "sliders": 14,
+   "bytes": 75238
+  },
+  {
    "id": "keys",
    "name": "Keys",
    "category": "Instruments",
