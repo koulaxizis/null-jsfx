@@ -1,0 +1,67 @@
+desc:NULL Transient Split
+author: Christos Koulaxizis
+tags: transient tonal split attack sustain body tail drums separate routing parallel reverb saturation
+//category: Advanced
+//NULL JSFX v2.9 • https://nulljsfx.tech • MIT License
+
+slider1:0<0,1,1{Balance,Split}>Mode
+slider2:0<-24,12,0.1>Transient (dB)
+slider3:0<-24,12,0.1>Tonal (dB)
+slider4:50<0,100,1>Sensitivity (%)
+slider5:60<5,500,1>Decay (ms)
+slider6:0<-24,12,0.1>Output (dB)
+
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
+out_pin:Tonal Left
+out_pin:Tonal Right
+
+@init
+  ext_noinit = 1;              // play and seek keep the detector, as in the VST3/CLAP
+  // Splits the signal into its transient part (the attack of each hit) and its tonal part
+  // (the body and the tail), with no frequency bands: a weight w between 0 and 1 says how much
+  // of each sample is transient, and the two parts are x * w and x * (1 - w), so they always
+  // add up to the input. The weight comes from two linked peak envelopes of the louder channel:
+  // a fast one (1 ms attack) and a slow one (25 ms attack), both with a 100 ms release. At an
+  // onset the fast one leads, and (fast - slow) / fast, scaled by Sensitivity, is the target
+  // weight; the weight jumps up to it at once and falls back over Decay.
+  // Balance: both parts, each with its own level, come out on channels 1/2 (Transient and
+  // Tonal at 0 dB give back the input). Split: the transient part on channels 1/2 and the tonal
+  // part on channels 3/4, for processing them apart in REAPER (a reverb only on the tail).
+  ef = es = w = 0;
+
+@slider
+  split = slider1;
+  gt = 10 ^ (slider2 / 20);
+  gn = 10 ^ (slider3 / 20);
+  sens = 0.5 + slider4 / 100 * 3.5;
+  af = 1 - exp(-1 / (0.001 * srate));
+  as = 1 - exp(-1 / (0.025 * srate));
+  ar = 1 - exp(-1 / (0.1 * srate));
+  cd = 1 - exp(-1 / (slider5 * 0.001 * srate));
+  og = 10 ^ (slider6 / 20);
+
+@sample
+  k = max(abs(spl0), abs(spl1));
+  ef += (k - ef) * (k > ef ? af : ar);
+  es += (k - es) * (k > es ? as : ar);
+  tw = ef > 0.00001 ? min(1, max(0, (ef - es) / ef * sens)) : 0;
+  tw > w ? w = tw : w += (tw - w) * cd;
+  w < 0.000000001 ? w = 0;
+  tl = spl0 * w;
+  tr = spl1 * w;
+  nl = spl0 - tl;
+  nr = spl1 - tr;
+  split ? (
+    spl0 = tl * gt * og;
+    spl1 = tr * gt * og;
+    spl2 = nl * gn * og;
+    spl3 = nr * gn * og;
+  ) : (
+    spl0 = (tl * gt + nl * gn) * og;
+    spl1 = (tr * gt + nr * gn) * og;
+    spl2 = 0;
+    spl3 = 0;
+  );

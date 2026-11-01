@@ -1,1 +1,111 @@
-{}
+{
+  "transient_split": {
+    "card_desc": "Transient and Tonal Splitter",
+    "keywords": "transient tonal split attack body tail drums separate routing parallel reverb saturation",
+    "slider_desc": [
+      "Balance: both parts on channels 1/2, each with its own level. Split: the transients on 1/2 and the tonal part on 3/4, for processing them apart.",
+      "Level of the transient part (the attack of each hit).",
+      "Level of the tonal part (the body and the tail).",
+      "How easily a sound counts as a transient.",
+      "How long the transient part lasts after each onset.",
+      "Output level."
+    ],
+    "uses": [
+      "More or less attack on drums without EQ",
+      "Turning down room and tail on a drum recording",
+      "Reverb or saturation on only the body or only the attack (Split mode)",
+      "Softening plucks and clicks"
+    ],
+    "properties": "Input → fast (1 ms) and slow (25 ms) linked peak envelopes, 100 ms release → transient weight (fast − slow) / fast × Sensitivity, instant rise, fall over Decay → transient = x·w, tonal = x·(1 − w) → Balance: levels and sum on 1/2; Split: transient on 1/2, tonal on 3/4 → Output. No frequency bands, zero latency; the two parts always sum to the input.",
+    "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-tsplit\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><path d=\"M 6,40 L 14,40 L 18,10 L 24,34 L 58,40\" stroke=\"url(#icon-tsplit)\" stroke-width=\"2.5\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M 6,54 L 18,54 Q 26,44 58,52\" stroke=\"url(#icon-tsplit)\" stroke-width=\"2\" fill=\"none\" opacity=\"0.5\" stroke-linecap=\"round\"/></svg>"
+  },
+  "multi_tap_delay": {
+    "card_desc": "Rhythmic Multi-Tap Echo",
+    "keywords": "delay multi tap multitap rhythmic echo pattern dotted triplet swing accelerate scatter tempo sync stereo spread",
+    "slider_desc": [
+      "How many echoes (1 to 8).",
+      "Where the echoes fall: even steps, dotted, triplet, swing, speeding up, slowing down or scattered.",
+      "The step between echoes in milliseconds (when Tempo Sync is off).",
+      "Lock the step to the host tempo.",
+      "The note value of the step when synced.",
+      "How much quieter each echo is than the one before.",
+      "How far the echoes are panned left and right in turn.",
+      "Sends the last echo back into the line for longer tails.",
+      "High-pass on the echoes.",
+      "Low-pass on the echoes.",
+      "Blend between the dry signal and the echoes."
+    ],
+    "uses": [
+      "Rhythmic echoes on vocals and guitars",
+      "Bouncing-ball and slowing-down effects",
+      "Wide stereo patterns on synths",
+      "Dub-style repeats with feedback"
+    ],
+    "properties": "Input → 4 s stereo line → up to 8 taps at pattern × step (Time or a synced note), level (1 − Decay)^(k−1), alternating pan by Spread → sum → 12 dB/oct low cut and high cut → Dry/Wet Mix; the last tap feeds back. Zero latency.",
+    "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-mtap\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><rect x=\"8\" y=\"14\" width=\"5\" height=\"36\" rx=\"1\" fill=\"url(#icon-mtap)\"/><rect x=\"20\" y=\"22\" width=\"5\" height=\"28\" rx=\"1\" fill=\"url(#icon-mtap)\" opacity=\"0.85\"/><rect x=\"32\" y=\"28\" width=\"5\" height=\"22\" rx=\"1\" fill=\"url(#icon-mtap)\" opacity=\"0.7\"/><rect x=\"44\" y=\"34\" width=\"5\" height=\"16\" rx=\"1\" fill=\"url(#icon-mtap)\" opacity=\"0.55\"/><rect x=\"54\" y=\"39\" width=\"5\" height=\"11\" rx=\"1\" fill=\"url(#icon-mtap)\" opacity=\"0.4\"/></svg>"
+  },
+  "drum_trigger": {
+    "card_desc": "Audio to MIDI Drum Trigger",
+    "keywords": "midi drum trigger replace replacement audio to midi kick snare tom hit detect velocity sample layer",
+    "slider_desc": [
+      "The MIDI note each hit plays.",
+      "Level a hit must reach to trigger.",
+      "Shortest time between two hits (stops double triggers).",
+      "How much the velocity follows the hit: 100% maps Threshold..0 dBFS to 1..127, 0% gives every hit 100.",
+      "High-pass on the detector, to keep lower drums out.",
+      "Low-pass on the detector, to keep cymbals out.",
+      "How long each note lasts.",
+      "MIDI channel of the notes."
+    ],
+    "uses": [
+      "Replacing a weak kick or snare with Drum Machine or Sampler",
+      "Layering a sample under a recorded drum",
+      "Turning a drum loop into MIDI",
+      "Driving a synth from a drum's rhythm"
+    ],
+    "properties": "Input (passes through) → mono sum → 12 dB/oct detector high-pass and low-pass → peak follower (5 ms release) → trigger (Threshold, Retrigger, 3 dB hysteresis) → 2 ms velocity window → note-on, note-off after Note Length. Incoming MIDI passes through at its own sample. About 2 ms from onset to note-on.",
+    "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-dtrig\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><path d=\"M 4,36 L 12,36 L 15,12 L 19,50 L 22,30 L 26,36 L 30,36\" stroke=\"url(#icon-dtrig)\" stroke-width=\"2.2\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><rect x=\"38\" y=\"22\" width=\"20\" height=\"20\" rx=\"3\" fill=\"url(#icon-dtrig)\" opacity=\"0.8\"/><path d=\"M 31,32 L 36,32\" stroke=\"url(#icon-dtrig)\" stroke-width=\"2\" stroke-linecap=\"round\"/></svg>"
+  },
+  "speaker_sim": {
+    "card_desc": "Phone, Laptop and Car Speakers",
+    "keywords": "speaker simulator device phone laptop earbuds tv radio telephone megaphone car mix check lo-fi small speaker",
+    "slider_desc": [
+      "The device: phone, laptop, earbuds, TV, radio, telephone, megaphone or car.",
+      "Blend between the dry signal and the device.",
+      "Extra clipping of the small speaker.",
+      "Output level."
+    ],
+    "uses": [
+      "Checking how a mix translates to phones, laptops and cars (on the monitor FX)",
+      "Telephone and radio voices",
+      "Megaphone shouts",
+      "Lo-fi textures"
+    ],
+    "properties": "Input → mono sum (phone, radio, telephone, megaphone) → 24 dB/oct high-pass → two resonance bands → soft clip tanh(g·x)/g (Drive, plus the megaphone's own) → 24 dB/oct low-pass → Dry/Wet Mix → Output. Zero latency.",
+    "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-spk\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><rect x=\"18\" y=\"6\" width=\"28\" height=\"52\" rx=\"5\" stroke=\"url(#icon-spk)\" stroke-width=\"2.5\" fill=\"none\"/><circle cx=\"32\" cy=\"38\" r=\"9\" stroke=\"url(#icon-spk)\" stroke-width=\"2\" fill=\"none\"/><circle cx=\"32\" cy=\"18\" r=\"3\" fill=\"url(#icon-spk)\"/></svg>"
+  },
+  "passive_eq": {
+    "card_desc": "Passive-Style Program EQ",
+    "keywords": "eq equalizer passive program tube vintage low boost attenuate shelf air bandwidth mastering color",
+    "slider_desc": [
+      "The low frequency for both low controls.",
+      "Low shelf boost (up to +13.5 dB).",
+      "Gentler low shelf cut a little higher; with Low Boost it gives the classic bump with a dip above it.",
+      "The frequency of the high peak.",
+      "High peak boost (up to +18 dB).",
+      "Width of the high peak: 0 is sharp, 10 is broad.",
+      "The frequency of the high shelf cut.",
+      "High shelf cut (down to −20 dB).",
+      "Drive of the tube stage (even harmonics).",
+      "Output level."
+    ],
+    "uses": [
+      "Weight on kick and bass with boost and attenuation together",
+      "Air and presence on vocals",
+      "Broad tone shaping on the mix bus or master",
+      "Warming up with the tube stage"
+    ],
+    "properties": "Input → low shelf boost at 1.2 × Low Freq → low shelf cut at 2.2 × Low Freq → high peak at High Freq (Q from Bandwidth) → high shelf cut at Atten Freq (each skipped at 0) → tube stage (asymmetric tanh, 10 Hz DC blocker, skipped at 0%) → Output. Zero latency; every control at 0 leaves the sound untouched.",
+    "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-peq\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><path d=\"M 4,40 Q 14,20 22,36 Q 28,46 34,40 L 40,40 Q 48,40 52,22 Q 56,34 60,40\" stroke=\"url(#icon-peq)\" stroke-width=\"2.5\" fill=\"none\" stroke-linecap=\"round\"/><path d=\"M 4,40 L 60,40\" stroke=\"url(#icon-peq)\" stroke-width=\"1\" opacity=\"0.3\"/></svg>"
+  }
+}

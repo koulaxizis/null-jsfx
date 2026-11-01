@@ -14,6 +14,7 @@ followed by a blank line, the sliders, a blank line and the four pins
 in_pin:Sidechain Left and in_pin:Sidechain Right after the two main inputs. Multiband routing
 plugins (Band Splitter) use eight pins each way instead: in_pin:Left, in_pin:Right, then
 in_pin:Band 2 Left ... in_pin:Band 4 Right, and out_pin:Band 1 Left ... out_pin:Band 4 Right.
+Split plugins (Transient Split) add out_pin:Tonal Left and out_pin:Tonal Right after the four pins.
 Instruments make their own sound and take no audio: in_pin:none, out_pin:Left, out_pin:Right.
 Surround plugins use the 7.1.4 bed in the order L R C LFE Ls Rs Lrs Rrs Ltf Rtf Ltr Rtr (5.1
 and 7.1 use the first 6 or 8): a panner takes in_pin:Left, in_pin:Right and puts out the twelve
@@ -41,6 +42,8 @@ INSTRUMENT_GROUP_PINS = INSTRUMENT_PINS + [f"out_pin:{g} {s}" for g in ("Snare",
 BAND_PINS = (["in_pin:Left", "in_pin:Right"]
              + [f"in_pin:Band {b} {s}" for b in (2, 3, 4) for s in ("Left", "Right")]
              + [f"out_pin:Band {b} {s}" for b in (1, 2, 3, 4) for s in ("Left", "Right")])
+# a split into two stereo parts (Transient Split): the input in, part one on 1/2, part two on 3/4
+SPLIT_PINS = PINS + ["out_pin:Tonal Left", "out_pin:Tonal Right"]
 # a surround bed (7.1.4; 5.1 and 7.1 use the first 6 or 8): stereo in for a panner, else the bed
 BED = ["L", "R", "C", "LFE", "Ls", "Rs", "Lrs", "Rrs", "Ltf", "Rtf", "Ltr", "Rtr"]
 PANNER_PINS = ["in_pin:Left", "in_pin:Right"] + [f"out_pin:{c}" for c in BED]
@@ -106,10 +109,11 @@ def check(path):
     if category == "Instruments" and pins not in (INSTRUMENT_PINS, INSTRUMENT_GROUP_PINS):
         errors.append("instrument pins must be in_pin:none, out_pin:Left, out_pin:Right "
                       "(plus the Snare, Hats and Perc pairs for group outputs)")
-    elif category != "Instruments" and pins not in (PINS, SIDECHAIN_PINS, BAND_PINS, PANNER_PINS, BED_PINS):
+    elif category != "Instruments" and pins not in (PINS, SIDECHAIN_PINS, SPLIT_PINS, BAND_PINS, PANNER_PINS, BED_PINS):
         errors.append("pins must be in_pin:Left, in_pin:Right, out_pin:Left, out_pin:Right "
                       "(plus in_pin:Sidechain Left/Right after the main inputs for sidechain plugins, "
-                      "the eight-channel band layout or a surround bed, see the docstring)")
+                      "the Tonal Left/Right outputs of a split, the eight-channel band layout or a surround bed, "
+                      "see the docstring)")
 
     # --- code ---
     code = strip_comments("\n".join(lines[header_end:]))

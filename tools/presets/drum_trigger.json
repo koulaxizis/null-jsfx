@@ -1,0 +1,10 @@
+[
+  ["Kick", {"Note": 36, "Threshold (dB)": -20, "Retrigger (ms)": 80, "Detector LPF (Hz)": 150}],
+  ["Snare", {"Note": 38, "Threshold (dB)": -22, "Retrigger (ms)": 70, "Detector HPF (Hz)": 150, "Detector LPF (Hz)": 6000}],
+  ["Tom High", {"Note": 50, "Threshold (dB)": -24, "Retrigger (ms)": 90, "Detector HPF (Hz)": 120, "Detector LPF (Hz)": 1500}],
+  ["Tom Floor", {"Note": 43, "Threshold (dB)": -24, "Retrigger (ms)": 110, "Detector HPF (Hz)": 50, "Detector LPF (Hz)": 600}],
+  ["Hi-Hat", {"Note": 42, "Threshold (dB)": -30, "Retrigger (ms)": 40, "Detector HPF (Hz)": 2000, "Note Length (ms)": 30}],
+  ["Fixed Velocity", {"Dynamics (%)": 0}],
+  ["Sensitive Ghosts", {"Note": 38, "Threshold (dB)": -36, "Retrigger (ms)": 50, "Detector HPF (Hz)": 150}],
+  ["Channel 1 Synth", {"Note": 48, "Channel": 0, "Note Length (ms)": 200}]
+]

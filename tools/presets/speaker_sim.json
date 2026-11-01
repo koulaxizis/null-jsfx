@@ -1,0 +1,11 @@
+[
+  ["Phone Check", {"Device": 0}],
+  ["Laptop Check", {"Device": 1}],
+  ["Earbuds Check", {"Device": 2}],
+  ["Car Check", {"Device": 7}],
+  ["Old Radio", {"Device": 4, "Drive (%)": 25}],
+  ["Phone Call Voice", {"Device": 5, "Drive (%)": 15, "Output (dB)": 3}],
+  ["Megaphone Shout", {"Device": 6, "Drive (%)": 40, "Output (dB)": 2}],
+  ["Half Radio Blend", {"Device": 4, "Mix (%)": 50}],
+  ["TV In The Next Room", {"Device": 3, "Mix (%)": 100, "Output (dB)": -6}]
+]

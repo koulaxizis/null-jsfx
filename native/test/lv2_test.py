@@ -299,6 +299,7 @@ def main():
                     v = rng.uniform(s[2], s[3])
                     if s[4] > 0:
                         v = s[2] + round((v - s[2]) / s[4]) * s[4]
+                        v = float(f"{v:.12g}")  # the decimal the JSFX header would write (0.1 + 23 * 0.1 is not 2.4)
                     v = min(max(v, s[2]), s[3])
                 vals[s[0]] = v
             controls = {p[0]: vals[s[0]] for p, s in zip(cin, sl)}

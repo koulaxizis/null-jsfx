@@ -122,7 +122,7 @@ Rule numbers are stable. A retired rule keeps its number, marked *retired*, and 
 | # | Rule |
 |---|---|
 | R4 | Lines 1–5 are exactly: `desc:NULL <Name>`, `author: Christos Koulaxizis`, `tags: <lowercase keywords>`, `//category: <One Slider \| Essentials \| Advanced \| Assisted \| Instruments \| MIDI>`, and the footer `//NULL JSFX v<version> • https://nulljsfx.tech • MIT License`. Then come a blank line, the sliders, a blank line and the pins. |
-| R5 | Categories. A One Slider plugin has exactly one slider, and a plugin in any other category with one slider is rejected. An Assisted plugin has a `Learn` slider (slider1) and hidden `-Learned ...` sliders after its visible ones: Learn listens to the signal, then the plugin writes what it measured into the hidden sliders in its own code (`sliderchange()`) and sets Learn back to Off, so the result is saved with the project and every form computes the same settings from it (R2). Learn start and stop are checked once per block in `@block`, however the slider was set. The rules live only in `tools/assisted_targets.json` (R15); no AI or model is involved. Pins: the standard four; sidechain plugins add `in_pin:Sidechain Left/Right` after the main inputs; Band Splitter has the eight-channel band layout; instruments have `in_pin:none` and stereo outs (Drum Machine adds the Snare, Hats and Perc pairs), and send every MIDI message they receive on (`midisend` in `@block`; VST3/CLAP: `WANT_MIDI_OUTPUT` and echo), so instruments can be layered; MIDI effects use the four standard pins and pass the audio through. Surround beds use the 7.1.4 pin order `L R C LFE Ls Rs Lrs Rrs Ltf Rtf Ltr Rtr` (5.1 and 7.1 use the first 6 or 8; in 7.1, pins 5/6 are the sides): a panner takes the stereo inputs and has the twelve as outputs, every other bed plugin has the twelve in and out (`tests/lint.py`, `PANNER_PINS` and `BED_PINS`). |
+| R5 | Categories. A One Slider plugin has exactly one slider, and a plugin in any other category with one slider is rejected. An Assisted plugin has a `Learn` slider (slider1) and hidden `-Learned ...` sliders after its visible ones: Learn listens to the signal, then the plugin writes what it measured into the hidden sliders in its own code (`sliderchange()`) and sets Learn back to Off, so the result is saved with the project and every form computes the same settings from it (R2). Learn start and stop are checked once per block in `@block`, however the slider was set. The rules live only in `tools/assisted_targets.json` (R15); no AI or model is involved. Pins: the standard four; sidechain plugins add `in_pin:Sidechain Left/Right` after the main inputs; Band Splitter has the eight-channel band layout; instruments have `in_pin:none` and stereo outs (Drum Machine adds the Snare, Hats and Perc pairs), and send every MIDI message they receive on (`midisend` in `@block`; VST3/CLAP: `WANT_MIDI_OUTPUT` and echo), so instruments can be layered; MIDI effects use the four standard pins and pass the audio through. Surround beds use the 7.1.4 pin order `L R C LFE Ls Rs Lrs Rrs Ltf Rtf Ltr Rtr` (5.1 and 7.1 use the first 6 or 8; in 7.1, pins 5/6 are the sides): a panner takes the stereo inputs and has the twelve as outputs, every other bed plugin has the twelve in and out (`tests/lint.py`, `PANNER_PINS` and `BED_PINS`). Transient Split adds `out_pin:Tonal Left/Right` after the standard four (`SPLIT_PINS`). |
 | R6 | EEL2 code. Every `@section` appears once, and there is a `@sample` section that writes `spl0` and `spl1`. No variable is read without being assigned somewhere. Only real EEL2 functions are used (`slider(i)` may read slider i by index, as Studio EQ does for its eight bands). At most 64 sliders: ysfx (the tests and the web) and REAPER before 6.74 read no more; Drum Machine uses all 64, so its further settings go into `@serialize` state. Imports must exist. Slider labels follow `Name (unit)`. There is no C syntax (`if`, braces, `return`, `else`, `int()`). |
 | R25 | Every sample rate works. Each filter frequency (a `tan()`, an RBJ biquad, an SVF) is held below Nyquist: `min(f, 0.45 * srate)`, or `0.49 * srate` where 0.45 would move the sound at 44.1 kHz (Reverser, Parametric EQ). The native port holds it the same way. CI renders every plain JSFX at 8000, 22050, 1234.57 and 12345.68 Hz too (2026-10-26). |
 
@@ -198,7 +198,7 @@ Each area has one short paragraph here. The details are in the README it links t
 
 ### II.1 `DATA/` — the plugins (the base)
 
-- `DATA/Effects/null_jsfx/<name>.jsfx`: 113 plain JSFX, each with its `<name>.jsfx.rpl` preset library (generated).
+- `DATA/Effects/null_jsfx/<name>.jsfx`: 142 plain JSFX, each with its `<name>.jsfx.rpl` preset library (generated).
 - `DATA/Effects/null_jsfx/gfx/<name>_gfx.jsfx`: 113 GFX versions, plus `null_gfx.jsfx-inc` (the shared look: `ng_*` functions and `NG_*` colours) and their `.rpl` files.
 - `DATA/FXChains/NULL JSFX/` and `DATA/FXChains/NULL JSFX GFX/`: 73 REAPER FX chains each (generated by `tools/build_chains.py`).
 - **Memory.** REAPER gives a JSFX 8,388,608 memory slots (8M) unless the header asks for more with `options:maxmem=`, up to 33,554,432 (32M). Memory past the limit is silently lost, so a plugin whose buffers grow with the sample rate past 8M declares `options:maxmem=33554432` after its pins, in the plain and the GFX file alike. Blocks are allocated on first use, so the option costs nothing at normal rates. Today seven plugins declare it: Convolution, Delay, Half Speed, Reverser, Slicer, Tape Echo and Tape Stop (2026-10-26). The web runtime honours the same option (`memMax` in `web/tools/eel2js.js`).
@@ -221,7 +221,7 @@ Each area has one short paragraph here. The details are in the README it links t
   - `EelFft.hpp`: EEL2's `fft`/`ifft`/`convolve_c` in WDL bin order.
   - `fonts/`: Noto Sans, OFL.
 - **`native/plugins/<name>/`:** `DistrhoPluginInfo.h`, `<Name>DSP.hpp` (framework-free), `<Name>Sliders.hpp` (multi-slider plugins), `Plugin.cpp`, `UI.cpp`, `FactoryPresets.hpp` (generated), and optionally `compare_args.txt`.
-- **`native/plugins/rack/`:** the Rack, a host for up to 8 modules. It has lanes A/B, a feedback loop, 8 macros, 2 LFOs, an envelope follower and a 16-step sequencer, with up to 32 modulation routes. The engine is `RackEngine.hpp`, there is one adapter per plugin in `modules/<id>.hpp` (95 today), `RackPresets.hpp` is generated with 86 presets including Init, and the tests are in `test/`. There is no rack.jsfx.
+- **`native/plugins/rack/`:** the Rack, a host for up to 8 modules. It has lanes A/B, a feedback loop, 8 macros, 2 LFOs, an envelope follower and a 16-step sequencer, with up to 32 modulation routes. The engine is `RackEngine.hpp`, there is one adapter per plugin in `modules/<id>.hpp` (107 today), `RackPresets.hpp` is generated with 86 presets including Init, and the tests are in `test/`. There is no rack.jsfx.
 - **`native/test/`:** `compare.cpp` (the JSFX in ysfx against the CLAP build), `state_test.cpp` (the CLAP state round trip), `module_info`, `lv2_test.py` (every LV2 bundle through lilv against `render_ref`).
 - Guide: [native/README.md](native/README.md).
 
@@ -327,20 +327,20 @@ The columns are read from these files:
 
 Every plugin has all of these: a GFX version, a VST3/CLAP version, a site page, a presets file and a web build. The 13 plugins of the studio plan were launched with 2.7 (2026-10-28), the 7 of the own suite with 2.8 (2026-10-31), the 4 Assisted plugins as beta with 2.9 (2026-10-31).
 
-Why the exceptions exist: hosts store the CLAP id in sessions, so the released ids stay as they are (R3). Meters, MIDI effects and instruments get no module, and neither do Band Splitter, which needs eight-channel buses, and the surround bed plugins, which need twelve (R13).
+Why the exceptions exist: hosts store the CLAP id in sessions, so the released ids stay as they are (R3). Meters, MIDI effects and instruments get no module, and neither do Band Splitter, which needs eight-channel buses, Transient Split, which has a second stereo output, and the surround bed plugins, which need twelve (R13). Plugins that wait for "launch" (R18) have no site page yet: their texts are in `tools/site_content_next.json`.
 
 <!-- BEGIN REGISTRY: generated by tools/build_bible.py -->
 
 **Totals:**
-- 137 plugins: 22 One Slider, 51 Essentials, 43 Advanced, 4 Assisted, 10 Instruments, 7 MIDI.
-- 104 Rack modules.
+- 142 plugins: 22 One Slider, 54 Essentials, 44 Advanced, 4 Assisted, 10 Instruments, 8 MIDI.
+- 107 Rack modules.
 - 73 FX chains in `NULL JSFX` and 73 in `NULL JSFX GFX`.
-- 1,230 factory presets, Default included.
+- 1,272 factory presets, Default included.
 - 86 Rack presets, Init included.
 
 **Exceptions:**
 - **CLAP ids that differ from the file name** (released, frozen by R3): `tech.nulljsfx.granular-delay`, `tech.nulljsfx.shimmer-reverb`, `tech.nulljsfx.spring-reverb`, `tech.nulljsfx.vinyl-age`, `tech.nulljsfx.warped-delay`.
-- **No Rack module** (R13): Arpeggiator, Assisted Comp, Assisted Delay, Assisted EQ, Assisted Reverb, Band Splitter, Bass, Bass Management, Chords, Downmix Check, Drum Machine, FM, Humanize, Keys, Loudness Meter, Mallets, MIDI LFO, MIDI Utility, Multichannel Loudness, Organ, Percussion, Pluck, Reference, Riff, Sampler, Scale, Spectrum Analyzer, Stereo Scope, Studio EQ, Surround Panner, Synth, Tuner, VU Meter.
+- **No Rack module** (R13): Arpeggiator, Assisted Comp, Assisted Delay, Assisted EQ, Assisted Reverb, Band Splitter, Bass, Bass Management, Chords, Downmix Check, Drum Machine, Drum Trigger, FM, Humanize, Keys, Loudness Meter, Mallets, MIDI LFO, MIDI Utility, Multichannel Loudness, Organ, Percussion, Pluck, Reference, Riff, Sampler, Scale, Spectrum Analyzer, Stereo Scope, Studio EQ, Surround Panner, Synth, Transient Split, Tuner, VU Meter.
 
 ### One Slider (22)
 
@@ -369,7 +369,7 @@ Why the exceptions exist: hosts store the CLAP id in sessions, so the released i
 | Tilt | `tilt` | `tilt` | `NTlt` | yes | 360x240 | 1 |
 | Wetter | `wetter` | `wetter` | `NWet` | yes | 360x240 | 1 |
 
-### Essentials (51)
+### Essentials (54)
 
 | Plugin | File | Site slug | Unique ID | Rack | GFX | Sliders |
 |---|---|---|---|---|---|---|
@@ -400,11 +400,13 @@ Why the exceptions exist: hosts store the CLAP id in sessions, so the released i
 | Limiter | `limiter` | `limiter` | `N1lm` | yes | 480x380 | 7 |
 | Maximizer | `maximizer` | `maximizer` | `N1mx` | yes | 480x408 | 14 |
 | Mid/Side Matrix | `mid_side_matrix` | `mid-side-matrix` | `N3ms` | yes | 480x294 | 3 |
+| Multi-Tap Delay | `multi_tap_delay` | `multi-tap-delay` | `NMTD` | yes | 480x380 | 11 |
 | Multiband Comp | `multiband_compressor` | `multiband-compressor` | `N3mb` | yes | 480x408 | 25 |
 | Noise Generator | `noise_generator` | `noise-generator` | `N5Ng` | yes | 480x380 | 8 |
 | Octaver | `octaver` | `octaver` | `NOct` | yes | 480x294 | 6 |
 | Panner | `panner` | `panner` | `NPan` | yes | 480x304 | 5 |
 | Parametric EQ | `parametric_eq` | `parametric-eq` | `N2PE` | yes | 480x342 | 25 |
+| Passive EQ | `passive_eq` | `passive-eq` | `NPEq` | yes | 480x380 | 10 |
 | Phase Align | `phase_align` | `phase-align` | `NPhA` | yes | 480x440 | 8 |
 | Phaser | `phaser` | `phaser` | `N4ph` | yes | 480x380 | 8 |
 | Pitch Shifter | `pitch_shifter` | `pitch-shifter` | `N4ps` | yes | 480x294 | 4 |
@@ -414,6 +416,7 @@ Why the exceptions exist: hosts store the CLAP id in sessions, so the released i
 | Shaper | `shaper` | `shaper` | `NShp` | yes | 480x460 | 24 |
 | Sidechain Ducker | `sidechain_ducker` | `sidechain-ducker` | `N9Sd` | yes | 480x380 | 7 |
 | Space | `space` | `space` | `NSpc` | yes | 480x380 | 7 |
+| Speaker Sim | `speaker_sim` | `speaker-sim` | `NSpk` | yes | 480x294 | 4 |
 | Stereo Width | `stereo_width` | `stereo-width` | `N3sw` | yes | 480x294 | 3 |
 | Studio EQ | `studio_eq` | `studio-eq` | `NSEq` | no | 480x468 | 51 |
 | Tape | `tape` | `tape` | `NTap` | yes | 480x380 | 11 |
@@ -425,7 +428,7 @@ Why the exceptions exist: hosts store the CLAP id in sessions, so the released i
 | Volume Shaper | `volume_shaper` | `volume-shaper` | `NVSh` | yes | 480x380 | 8 |
 | Wah | `wah` | `wah` | `NWah` | yes | 480x380 | 11 |
 
-### Advanced (43)
+### Advanced (44)
 
 | Plugin | File | Site slug | Unique ID | Rack | GFX | Sliders |
 |---|---|---|---|---|---|---|
@@ -467,6 +470,7 @@ Why the exceptions exist: hosts store the CLAP id in sessions, so the released i
 | Surround Panner | `surround_panner` | `surround-panner` | `NSrP` | no | 480x460 | 8 |
 | Tape Stop | `tape_stop` | `tape-stop` | `N6ts` | yes | 480x294 | 3 |
 | Trance Gate | `trance_gate` | `trance-gate` | `N7Tg` | yes | 480x408 | 24 |
+| Transient Split | `transient_split` | `transient-split` | `NTSp` | no | 480x294 | 6 |
 | Tuner | `tuner` | `tuner` | `NTun` | no | 480x334 | 4 |
 | Vinyl Age | `vinyl_age` | `vinyl-age` | `N8Va` | yes | 480x380 | 11 |
 | Vocoder | `vocoder` | `vocoder` | `N9Vc` | yes | 480x380 | 9 |
@@ -497,12 +501,13 @@ Why the exceptions exist: hosts store the CLAP id in sessions, so the released i
 | Sampler | `sampler` | `sampler` | `NSmp` | no | 640x448 | 21 |
 | Synth | `synth` | `synth` | `NSyn` | no | 600x438 | 45 |
 
-### MIDI (7)
+### MIDI (8)
 
 | Plugin | File | Site slug | Unique ID | Rack | GFX | Sliders |
 |---|---|---|---|---|---|---|
 | Arpeggiator | `arpeggiator` | `arpeggiator` | `NArp` | no | 480x430 | 24 |
 | Chords | `chords` | `chords` | `NChd` | no | 480x400 | 11 |
+| Drum Trigger | `drum_trigger` | `drum-trigger` | `NDTr` | no | 480x380 | 8 |
 | Humanize | `humanize` | `humanize` | `NHum` | no | 480x324 | 5 |
 | MIDI LFO | `midi_lfo` | `midi-lfo` | `NMlf` | no | 480x342 | 12 |
 | MIDI Utility | `midi_utility` | `midi-utility` | `NMut` | no | 480x342 | 14 |
@@ -693,6 +698,7 @@ Format: **date · topic** — the decision. (Who approved it, and the source.) D
 
 - **2026-10-31 · Site accent silver** — nulljsfx.tech uses the plugins' silver accent; purple (`#6d4aff`) is Noxpress only. The light theme takes a darker silver (`#555555`) because `#c4c4c4` fails WCAG AA on white. A site-only change, so no version step. `DESIGN.md` (written by Christos) goes into the repo root. (Christos, handoff "NULL JSFX site accent", 2026-10-31.)
 - **2026-10-31 · Assisted launch as beta, with 2.9** — the four Assisted plugins go on the site marked beta, with modals, videos and the 1080p videos for Ko-fi, before Christos has tried them by ear (he tests on Monday 2026-11-02). 2.9 is published with them, so the site never shows plugins that the download does not contain; main held nothing else since 2.8 but CI fixes. The beta note says the rules may still be tuned from feedback, so a saved project can sound a little different after an update; ending the beta is taking `"beta"` out of `site_content.json`. (Christos: "Ανέβασέ τα. Θα χρειαστούν και modals, videos + ko-fi εκδοχές. Θα κάνω δοκιμές την Δευτέρα, βγάλε τα ως beta.", and the decision card "Ναι, 2.9 μαζί με το launch", thread on AI in the plugins, 2026-10-31.)
+- **2026-10-31 · Vendor research plan** — research on 20 vendors (Native Instruments, Waves, iZotope, Universal Audio, Arturia, FabFilter, Soundtoys, Eventide, Softube, Slate Digital, u-he, Valhalla DSP, AudioThing, Analog Obsession, Klevgrand, Kilohearts, WA Production, Initial Audio, Audiomodern, Tokyo Dawn Labs) and on Plugin Boutique, KVR and Bedroom Producers Blog, building on the studio plan (B10) without repeating it, gave 27 proposals (doc https://claude.ai/artifact/HSkewSaz66RMYbYambiv6i). Christos approved all of them and the recommendations on the open questions: two separate audio-to-MIDI plugins (Drum Trigger, Pitch to MIDI), a granular instrument, Passive EQ without hardware names, and four waves, one PR each, merged by Claude when CI is green: A) Transient Split, Multi-Tap Delay, Drum Trigger, Speaker Sim, Passive EQ; B) Pitch to MIDI, Bitcrusher, Note Echo, Euclid, and Frequency Shifter delay in the feedback, barber pole in Phaser and Flanger, Reverb gate and ducking, Delay reverse and pitch; C) Harmonizer voices 3–4, Resonator chord and MIDI notes, Sampler slice mode, Spectrum Analyzer spectrogram and sidechain overlay, Stereo Scope correlation in 3 bands, Maximizer Target LUFS with Learn, MPE in Synth, FM, Keys and Pluck; D) Kick, Oscilloscope, Test Signal, the granular instrument, and the chains Ambient Wash, Drum Replace, Phone Vocal, Transient Verb. New plugins stay off the site until "launch" (R18); AI in plugins is a separate thread. (Christos: "Ναι σε όλα!", thread on the vendor research, 2026-10-31.)
 - **2026-10-31 · Assisted series, rules not AI** — Christos asked about AI in the plugins (local models or the user's own key). The first step is a new category, Assisted, of plugins that listen to the track and set themselves, with no AI: measurements (spectrum bands, levels, crest factor, onsets, loudness) and fixed rules written from published mixing practice, so the result is the same every time and in every form (R2). Seven targets (Natural, Warm, Bright, Punchy, Radio, Podcast, Lo-Fi) and five sources (Vocal, Drums, Bass, Instrument, Mix), the numbers in one JSON file with a generator. The button is "Learn"; the learned values freeze and are saved with the project (no continuous mode). Podcast in Assisted Comp brings the loudness to −16 LUFS on its own. Four plugins: Assisted EQ and Comp (PR 1), Reverb and Delay (PR 2; planned after the vendor-research thread's wave B, then written with their own DSP when Christos asked to finish everything but the launch: "Ολοκληρωσέ τα όλα εκτός από το launch, δοκιμάζουμε και έπειτα ενημερώνουμε τη σελίδα."). Every form except the Rack; a Rack Assistant is phase 2, a small embedded classifier phase 3, an LLM chat not planned. Presets set the learned sliders back to their defaults (a preset is a starting point; press Learn after). They stay off the site until "launch" (R18). Names in REAPER "NULL Assisted EQ", in a DAW "Assisted EQ". (Christos: "Ωραία. Πάμε με το 1 για αρχή", "Ξεκίνα!", and the answers "1. Νέα κατηγορία. 2. Ναι! 3. Είμαι εντάξει για την ώρα. 4. Αυτόματα. 5. Αυτά τα τέσσερα για την ώρα.", thread on AI in the plugins, 2026-10-31; design doc https://claude.ai/artifact/9T7JZ7Kmf7Zu6s5WuN4wbC.)
 - **2026-10-31 · Own suite instead of Airwindows** — orOS Studio had shipped Airwindows effects (orOS 4.49.00); they were never used and are removed from orOS (orOS 4.58.00). NULL JSFX is Studio's only effects suite. A study mapped the Airwindows effects to NULL JSFX (13 covered, 13 partly, 6 gaps); the gaps and the partial ones are filled with new NULL JSFX plugins and controls, written from scratch (no Airwindows code or algorithm is ported), in five waves: 1) Glue Comp, Air (One Slider), Tone; 2) Console Channel and Console Buss; 3) Space (Room, Chamber, Hall, Galaxy); 4) appended controls on Saturation (Character Classic/Tube/Density, Focus), Tape (Head Bump, Flutter, Speed) and Gate (Tone release), silent at their defaults (R17); 5) Mallets, plus new characters for Pluck (Harp, Pizzicato), Organ (Pipe) and Percussion (Timpani). The names and groups are as proposed. New plugins wait off the site until "launch" (R18). Once Christos has approved the new instruments by ear, the nine VSCO packs they replace are deleted from oros-sounds. (Christos: "Ναι σε όλα σύμφωνα με το πλάνο σου!", orOS project thread on Studio, 2026-10-31; study doc https://claude.ai/artifact/SSjKCkxfdqi4Rpgd4CZjRa.)
 - **2026-10-28 · Driver and Exciter keep no oversampling** — they alias at high settings (Part VII, Wave 3), but as One Slider plugins they cannot take an Oversampling slider (R5), and always-on oversampling would change their released sound (R11). They stay as they are; Saturation, Shaper and Clipper already oversample for a clean drive. (Christos: "do what you think best", thread "Σουίτα στούντιο", 2026-10-28.)
@@ -786,6 +792,7 @@ None open. The ones found on 2026-10-26 (README.md said only One Slider had GFX/
 - **B3 Drum Machine ideas** (deferred 2026-10-17): song mode and step probability. Multi-out and a Sampler exist now. [memory] Approved 2026-10-27 as Wave 4 of the studio plan. **Done 2026-10-27** (Part X, Wave 4).
 - **B10 Studio plan, waves 2–5** (approved 2026-10-27, Part VII): all five waves are done and published in 2.7 (2026-10-28). Driver and Exciter keep no oversampling (Part VII, 2026-10-28). Still open: SFZ in Sampler, which waits until Christos tries the REAPER probe; the native A/B and undo buttons and the four surround interfaces need a look in a DAW (only built, rendered and read so far).
 - **B11 Own-suite plan, waves 2–5** (approved 2026-10-31, Part VII): all five waves are done (Part X, 2026-10-31): 1 Glue Comp, Air, Tone; 2 Console Channel, Console Buss; 3 Space; 4 Gate Tone Release, Saturation Focus and Density; 5 Mallets (with Timpani), Pluck Pizzicato, Organ Pipe. They stay off the site until "launch". Open: Chris approves the new instruments by ear before the 9 replaced VSCO packs leave oros-sounds.
+- **B12 Vendor research plan, waves A–D** (approved 2026-10-31, Part VII): wave A is done (Part X, 2026-10-31): Transient Split, Multi-Tap Delay, Drum Trigger, Speaker Sim, Passive EQ, off the site until "launch". Waves B, C and D are next.
 - **B13 Assisted series** (approved 2026-10-31, Part VII). PR 1 (Assisted EQ and Comp) and PR 2 (Assisted Reverb and Delay, with their own DSP, so they do not wait for the vendor-research thread's wave B) are done (Part X). Launched as beta with 2.9 (Part VII, 2026-10-31). Open: Christos tries Learn by ear in REAPER and a DAW (planned 2026-11-02; so far it is tested on synthetic signals only); any rule changes from that; then the beta ends (remove `"beta"` from the four entries of `site_content.json`). Phase 2: an assistant in the Rack that builds a chain from a target. Phase 3: a small embedded classifier that picks the Source.
 - **B4 Very low and odd sample rates** (found 2026-10-26 with clap-validator's `process-varying-sample-rates`, which plays 8000 Hz to 768 kHz, 1234.57 Hz and 12345.68 Hz among them). Wah, Tape, Tape Echo, Band Splitter and Amp Simulator are fixed (Part X). A scan of every plain JSFX at those rates, with `tests/jsfx_test.cpp`'s settings, still blows up in Reverser (8000, 22050 and 12345.68 Hz, max/random), Vinyl Age (8000 Hz, max), Step FX (8000 Hz, random), Formant Filter, Saturation, Noise Generator and Phase Align (1234.57 Hz), and Arpeggiator leaves notes hanging at 1234.57 Hz: a separate fix thread. **Done 2026-10-26 (PR #58):** the seven are fixed (the Arpeggiator finding was the test's own MIDI order), and `test.yml` renders every plain JSFX at 8000, 22050, 1234.57 and 12345.68 Hz (R25). The convention is that every filter frequency is held below `0.45 * srate` (most plugins already did this).
 - **B5 Convolution above 384 kHz.** At 705.6 and 768 kHz the 3-second IR buffers need more than REAPER's 32M slots, so `options:maxmem` cannot cover them: the wet signal is wrong there in the JSFX, GFX and web (the native port is fine). A fix changes the DSP at those rates (for example, cap the IR length so it fits) and waits for Christos's decision (2026-10-26).
@@ -1246,6 +1253,22 @@ entry and the Bible delta.
 - **Fixes (ported from #85, same lines):** on 2026-10-31 `ubuntu-latest` became Ubuntu 26.04, where Playwright 1.56.1 installs no Chromium, so the jobs `remote` (`test.yml`) and `ui` (`hub.yml`) failed on every PR. Both now run on `ubuntu-24.04`.
 - **Files:** `.github/workflows/{native,hub,test}.yml`, `NULL_JSFX_BIBLE.md` (Part V.2, Part X).
 - **Tests:** the workflows' own run on this PR: the macOS native build with `--test`, the macOS installers, and, since `hub.yml` changed, the Hub `core` tests and the universal dmg on `macos-15`; `tests/lint.py`, `tests/bible_order.py`, `tools/build_bible.py --check` locally.
+
+### 2026-10-31 — vendor research wave A (no version change): Transient Split, Multi-Tap Delay, Drum Trigger, Speaker Sim, Passive EQ
+- **Why:** wave A of the vendor research plan (Part VII, 2026-10-31; B12). Christos: "Ναι σε όλα!".
+- **Transient Split** (Advanced, `NTSp`): splits a track into its attack and its body with a fast (1 ms) and a slow (25 ms) envelope; the transient weight jumps up at once and falls with Decay. Mode Balance sets the two levels on pins 1/2; Mode Split puts the transient on pins 1/2 and the tonal part on the new pins 3/4 (`out_pin:Tonal Left/Right`, `SPLIT_PINS` in `tests/lint.py`, R5). VST3/CLAP have a second stereo output port. No Rack module (R13: a second output bus).
+- **Multi-Tap Delay** (Essentials, `NMTD`): up to 8 taps on one 4 s stereo line, placed by Pattern (Even, Dotted, Triplet, Swing, Speed Up, Slow Down, Scatter) from Time or a synced note, with Decay, alternating Spread, Feedback from the last tap, 12 dB/oct Low and High Cut on the echoes only, and Mix. The GFX and native interface show the taps. Rack module `multi_tap_delay`.
+- **Drum Trigger** (MIDI, `NDTr`): turns drum hits into notes. The detector hears the sum through a high-pass and low-pass, follows its peak, and a hit's peak over 2 ms sets the velocity (Dynamics 0 % gives 100). Retrigger and a 3 dB hysteresis rearm it; Note Length ends the note. Incoming MIDI passes through at its own sample, and CC 120/123 also ends the sounding note. The audio passes untouched (R5). No Rack module (R13).
+- **Speaker Sim** (Essentials, `NSpk`): eight devices (Phone, Laptop, Earbuds, TV, Radio, Telephone, Megaphone, Car), each a 24 dB/oct high-pass and low-pass, two peaking bands, mono where the device is mono, and a soft clip with Drive (Megaphone has some of its own); Mix and Output. Rack module `speaker_sim`.
+- **Passive EQ** (Essentials, `NPEq`): a passive-style program EQ with no hardware names: stepped Low Freq with boost and a gentler cut at 2.2 times the frequency (the low-end "trick"), a High Freq peak with Bandwidth, a high shelf cut at Atten Freq, a Tube stage (asymmetric tanh, 10 Hz DC blocker) and Output; each filter is skipped at 0. Rack module `passive_eq`.
+- **Forms:** plain and GFX JSFX (curves for the two EQs, a history for Transient Split, the taps for Multi-Tap Delay, a pad for Drum Trigger), VST3/CLAP/LV2 (`native/plugins/<name>/`), web, presets (8–9 each). The five wait off the site in `tools/site_content_next.json` (R18).
+- **Files:** `DATA/Effects/null_jsfx/{transient_split,multi_tap_delay,drum_trigger,speaker_sim,passive_eq}.jsfx` and `gfx/`, `native/plugins/` (the five), `native/plugins/rack/modules/{multi_tap_delay,speaker_sim,passive_eq}.hpp`, `tools/presets/` (the five), `tools/site_content_next.json`, `tests/lint.py`, this Bible (R5, Part II counts, Part III regenerated, Part VII, B12); regenerated: `.rpl`, `FactoryPresets.hpp`, GFX preset blocks, `web/fx/*`, `remote/`, `RackPresets.hpp` (its table of log-scale sliders, `build_chains.py`).
+- **Tests (run on Linux):**
+  - `tests/run.sh` on the ten files, also at 8000, 22050, 1234.57 and 12345.68 Hz; `tests/stress.sh` on the five plain files.
+  - `native/scripts/build.sh --test --plugins "passive_eq;speaker_sim;transient_split;multi_tap_delay;drum_trigger"`: ctest 131/131 (compare, gfx, presets, state and module tests of the five).
+  - `web/test/run.sh`, the generators (`build_site`, `build_remote`, `build_bible`, `build_catalog --check`, `build_presets`), `tests/lint.py` and `tests/bible_order.py`.
+- **CI:** `ubuntu-latest` became Ubuntu 26.04, where Playwright 1.56 installs no Chromium; the two Playwright jobs (`test.yml` remote, `hub.yml` ui) run on `ubuntu-24.04`. The Linux LV2 check (`native/test/lv2_test.py`) failed on Glitch FX: its random settings come from one generator shared by all plugins in name order, so new plugins move them, and Rate 0.1 + 23 x 0.1 reached the reference JSFX as 2.4000000000000004 (an event at 19,999 samples) while the plugin, like REAPER, uses 2.4 (20,000). The check now rounds each random value to 12 significant digits, the decimal a JSFX header would hold; Glitch FX itself is unchanged. After main moved to 2.9 (#89), line 5 of the ten new files says v2.9 (Part VI.1) and their four Assisted neighbours left `tools/site_content_next.json` for the site.
+- **Next:** wave B (B12).
 
 ### 2026-10-31 — 2.9 (release not published yet) — Assisted launch as beta
 - **Why:** Christos, 2026-10-31: "Ανέβασέ τα. Θα χρειαστούν και modals, videos + ko-fi εκδοχές. Θα κάνω δοκιμές την Δευτέρα, βγάλε τα ως beta." On the decision card he chose to publish 2.9 with the launch, so the plugins on the site are also in the download.
