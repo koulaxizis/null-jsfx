@@ -2,7 +2,7 @@ desc:NULL MIDI Utility GFX
 author: Christos Koulaxizis
 tags: midi utility transpose velocity curve channel split key range velocity range filter cc pitch bend aftertouch program change gui
 //category: MIDI
-//NULL JSFX v2.9 • https://nulljsfx.tech • MIT License
+//NULL JSFX v3.0 • https://nulljsfx.tech • MIT License
 
 import null_gfx.jsfx-inc
 

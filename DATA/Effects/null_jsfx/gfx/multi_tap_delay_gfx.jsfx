@@ -2,7 +2,7 @@ desc:NULL Multi-Tap Delay GFX
 author: Christos Koulaxizis
 tags: delay multi tap multitap rhythmic echo pattern dotted triplet swing accelerate scatter tempo sync stereo spread gui
 //category: Essentials
-//NULL JSFX v2.9 • https://nulljsfx.tech • MIT License
+//NULL JSFX v3.0 • https://nulljsfx.tech • MIT License
 
 import null_gfx.jsfx-inc
 

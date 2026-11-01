@@ -2,7 +2,7 @@ desc:NULL Octaver
 author: Christos Koulaxizis
 tags: octave octaver octave divider sub octave bass guitar analog flip-flop synth
 //category: Essentials
-//NULL JSFX v2.9 • https://nulljsfx.tech • MIT License
+//NULL JSFX v3.0 • https://nulljsfx.tech • MIT License
 
 slider1:100<0,100,1>Dry (%)
 slider2:70<0,100,1>Oct -1 (%)

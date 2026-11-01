@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NULL JSFX: 137 free audio plugins for REAPER, VST3 and CLAP</title>
-    <meta name="description" content="137 free audio plugins: effects, instruments and MIDI tools for REAPER (JSFX) and any DAW (VST3, CLAP) on Windows, macOS and Linux. Open source, no account.">
+    <title>NULL JSFX: 150 free audio plugins for REAPER, VST3 and CLAP</title>
+    <meta name="description" content="150 free audio plugins: effects, instruments and MIDI tools for REAPER (JSFX) and any DAW (VST3, CLAP) on Windows, macOS and Linux. Open source, no account.">
     <meta name="keywords" content="JSFX, REAPER plugins, free VST3, free CLAP, audio effects, virtual instruments, MIDI effects, open source, mixing, mastering, NULL JSFX, Linux audio plugins">
     <meta name="author" content="Christos Koulaxizis">
     <link rel="canonical" href="https://nulljsfx.tech">
@@ -12,12 +12,12 @@
     <!-- Open Graph / Social Media -->
     <meta property="og:type" content="website">
     <meta property="og:title" content="NULL JSFX — Audio Without Noise">
-    <meta property="og:description" content="137 free audio plugins: effects, instruments and MIDI tools for REAPER (JSFX) and any DAW (VST3, CLAP) on Windows, macOS and Linux. Open source, no account.">
+    <meta property="og:description" content="150 free audio plugins: effects, instruments and MIDI tools for REAPER (JSFX) and any DAW (VST3, CLAP) on Windows, macOS and Linux. Open source, no account.">
     <meta property="og:url" content="https://nulljsfx.tech">
     <meta property="og:image" content="https://nulljsfx.tech/assets/img/social-preview.jpg">
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="NULL JSFX — Audio Without Noise">
-    <meta name="twitter:description" content="137 free audio plugins: effects, instruments and MIDI tools for REAPER (JSFX) and any DAW (VST3, CLAP) on Windows, macOS and Linux. Open source, no account.">
+    <meta name="twitter:description" content="150 free audio plugins: effects, instruments and MIDI tools for REAPER (JSFX) and any DAW (VST3, CLAP) on Windows, macOS and Linux. Open source, no account.">
     <meta name="twitter:image" content="https://nulljsfx.tech/assets/img/social-preview.jpg">
 
     <link rel="icon" type="image/svg+xml" href="assets/img/favicon.svg">
@@ -61,10 +61,10 @@
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                     <span class="btn-text">Download</span>
                     <div class="download-meta">
-                        <span><b id="release-version">v2.9</b></span>
+                        <span><b id="release-version">v3.0</b></span>
                         <span class="release-new" id="release-new" hidden>NEW</span>
                         <span class="sep">&bull;</span>
-                        <span id="last-update">Released: 31/10/26</span>
+                        <span id="last-update">Released: 01/11/26</span>
                     </div>
                 </div>
             </a>
@@ -159,7 +159,7 @@
             <div class="modal-content modal-download">
                 <button class="modal-close" onclick="closeDownload()">&times;</button>
                 <div class="changelog-header">
-                    <h3>Download NULL JSFX v2.9</h3>
+                    <h3>Download NULL JSFX v3.0</h3>
                     <p class="changelog-date">Free and open source. Pick what you need.</p>
                 </div>
                 <div class="download-support" id="download-support" hidden>
@@ -183,12 +183,12 @@
                     </a>
                     <a class="download-option" id="dl-jsfx" href="https://github.com/koulaxizis/null-jsfx/releases/latest/download/NULL-JSFX-JSFX.zip">
                         <span class="download-option-title">JSFX for REAPER</span>
-                        <span class="download-option-desc">All 137 plugins, the GFX versions with their own interface and 74 ready-made FX chains. One package for Windows, macOS and Linux.</span>
+                        <span class="download-option-desc">All 150 plugins, the GFX versions with their own interface and 77 ready-made FX chains. One package for Windows, macOS and Linux.</span>
                         <span class="download-option-file">NULL-JSFX-JSFX.zip</span>
                     </a>
                     <a class="download-option" id="dl-native" href="https://github.com/koulaxizis/null-jsfx/releases/latest/download/NULL-JSFX-VST3-CLAP-Windows.zip">
                         <span class="download-option-title">VST3 &amp; CLAP for <span id="dl-os">Windows</span></span>
-                        <span class="download-option-desc">All 137 plugins for any DAW, with the same interface and the same sound, plus the Rack.</span>
+                        <span class="download-option-desc">All 150 plugins for any DAW, with the same interface and the same sound, plus the Rack.</span>
                         <span class="download-option-file" id="dl-native-file">NULL-JSFX-VST3-CLAP-Windows.zip</span>
                     </a>
                     <p class="download-other">NULL JSFX Hub:
@@ -220,10 +220,31 @@
             <div class="modal-content modal-changelog">
                 <button class="modal-close" onclick="closeChangelog()">&times;</button>
                 <div class="changelog-header">
-                    <h3>Release Notes v2.9</h3>
-                    <p class="changelog-date">October 2026</p>
+                    <h3>Release Notes v3.0</h3>
+                    <p class="changelog-date">November 2026</p>
                 </div>
                 <div class="changelog-body">
+                    <div class="changelog-section">
+                        <h4 class="changelog-title">3.0: 13 NEW PLUGINS</h4>
+                        <ul>
+                            <li><strong>DRUMS</strong>: Kick (a kick drum synthesizer: pitch sweep, click and drive), Drum Trigger (turns recorded drum hits into MIDI notes, for replacing or layering), Transient Split (sends the attack and the body to different channels) and Euclid (Euclidean rhythms as MIDI)</li>
+                            <li><strong>MIDI</strong>: Pitch to MIDI (plays a synth from a sung or played line) and Note Echo (repeats notes in time, rising or falling in pitch)</li>
+                            <li><strong>SOUND DESIGN</strong>: Granular (grain clouds from your own WAV or FLAC files, or a built-in tone), Multi-Tap Delay (up to 8 taps in rhythmic patterns), Bitcrusher and Passive EQ</li>
+                            <li><strong>CHECK AND MEASURE</strong>: Speaker Sim (hear the mix on a phone, laptop, earbuds or car), Oscilloscope and Test Signal (tones, sweeps, noise and polarity pulses for calibrating speakers)</li>
+                            <li>Every one as JSFX, GFX, VST3 / CLAP and LV2, like the rest of the suite</li>
+                        </ul>
+                    </div>
+                    <div class="changelog-section">
+                        <h4 class="changelog-title">3.0: UPGRADES</h4>
+                        <ul>
+                            <li><strong>MPE</strong> in Synth, FM, Keys and Pluck: per-note pitch bend, pressure and slide from an MPE controller</li>
+                            <li><strong>HARMONIZER</strong>: four voices; <strong>RESONATOR</strong>: chords and MIDI notes; <strong>SAMPLER</strong>: a slice mode</li>
+                            <li><strong>SPECTRUM ANALYZER</strong>: a spectrogram and a sidechain overlay; <strong>STEREO SCOPE</strong>: correlation in three bands; <strong>MAXIMIZER</strong>: a loudness target with Learn</li>
+                            <li><strong>REVERB</strong>: a gate and ducking; <strong>DELAY</strong>: reverse and pitch; <strong>PHASER</strong> and <strong>FLANGER</strong>: endless barber-pole sweeps; <strong>FREQUENCY SHIFTER</strong>: a delay in the feedback</li>
+                            <li><strong>FX CHAINS</strong>: Ambient Wash, Phone Vocal, and for REAPER Drum Replace and Transient Verb</li>
+                            <li>At their default settings the plugins sound exactly as in 2.9</li>
+                        </ul>
+                    </div>
                     <div class="changelog-section">
                         <h4 class="changelog-title">2.9: ASSISTED (BETA)</h4>
                         <ul>
@@ -316,7 +337,7 @@
                             <li><strong>NEW</strong>: Clipper, De-Plosive, Step FX, Tape Echo, Wah, Half Speed, Slicer, Shaper, Draw EQ and Phase Align</li>
                             <li><strong>UPGRADED</strong>: new controls in Reverb, Delay, Chorus, Phaser, Flanger, Tremolo, Dynamics and 20 more; Parametric EQ shows a live spectrum. At their default settings they sound exactly as in 2.4</li>
                             <li><strong>RACK</strong>: two lanes, a feedback loop, a step sequencer, and Sidechain Ducker and Convolution modules</li>
-                            <li><strong>CHAINS</strong>: 74 ready-made FX chains, 29 more than before</li>
+                            <li><strong>CHAINS</strong>: 77 ready-made FX chains, 29 more than before</li>
                             <li><strong>BROWSER</strong>: instruments and MIDI tools also run on the website</li>
                             <li>Every plugin has a presentation video</li>
                         </ul>
@@ -480,10 +501,10 @@
                 <button type="button" class="tag-chip active" data-tag="" aria-pressed="true">All</button><button type="button" class="tag-chip" data-tag="Vocals" aria-pressed="false">Vocals</button><button type="button" class="tag-chip" data-tag="Drums" aria-pressed="false">Drums</button><button type="button" class="tag-chip" data-tag="Bass" aria-pressed="false">Bass</button><button type="button" class="tag-chip" data-tag="Guitar" aria-pressed="false">Guitar</button><button type="button" class="tag-chip" data-tag="Synths &amp; Keys" aria-pressed="false">Synths &amp; Keys</button><button type="button" class="tag-chip" data-tag="Mastering" aria-pressed="false">Mastering</button><button type="button" class="tag-chip" data-tag="Stereo" aria-pressed="false">Stereo</button><button type="button" class="tag-chip" data-tag="Space" aria-pressed="false">Space</button><button type="button" class="tag-chip" data-tag="Modulation" aria-pressed="false">Modulation</button><button type="button" class="tag-chip" data-tag="Character" aria-pressed="false">Character</button><button type="button" class="tag-chip" data-tag="Repair" aria-pressed="false">Repair</button><button type="button" class="tag-chip" data-tag="Creative" aria-pressed="false">Creative</button>
             </div>
             <div class="plugin-tabs" role="tablist">
-                <button type="button" class="plugin-tab active" role="tab" aria-selected="true" aria-controls="tab-effects" id="tab-btn-effects" data-tab="effects">Effects <span class="category-count">120</span></button>
-                <button type="button" class="plugin-tab" role="tab" aria-selected="false" aria-controls="tab-instruments" id="tab-btn-instruments" data-tab="instruments">Instruments <span class="category-count">10</span></button>
-                <button type="button" class="plugin-tab" role="tab" aria-selected="false" aria-controls="tab-midi" id="tab-btn-midi" data-tab="midi">MIDI <span class="category-count">7</span></button>
-                <button type="button" class="plugin-tab" role="tab" aria-selected="false" aria-controls="tab-chains" id="tab-btn-chains" data-tab="chains">FX Chains <span class="category-count">74</span></button>
+                <button type="button" class="plugin-tab active" role="tab" aria-selected="true" aria-controls="tab-effects" id="tab-btn-effects" data-tab="effects">Effects <span class="category-count">127</span></button>
+                <button type="button" class="plugin-tab" role="tab" aria-selected="false" aria-controls="tab-instruments" id="tab-btn-instruments" data-tab="instruments">Instruments <span class="category-count">12</span></button>
+                <button type="button" class="plugin-tab" role="tab" aria-selected="false" aria-controls="tab-midi" id="tab-btn-midi" data-tab="midi">MIDI <span class="category-count">11</span></button>
+                <button type="button" class="plugin-tab" role="tab" aria-selected="false" aria-controls="tab-chains" id="tab-btn-chains" data-tab="chains">FX Chains <span class="category-count">77</span></button>
             </div>
             <div class="tab-panel tab-plugins" id="tab-effects" role="tabpanel" aria-labelledby="tab-btn-effects">
             <div class="plugin-category" id="one-slider">
@@ -755,7 +776,7 @@
                 </div>
             </div>
             <div class="plugin-category" id="essentials">
-                <h3 class="category-title">Essentials <span class="category-count">51</span></h3>
+                <h3 class="category-title">Essentials <span class="category-count">56</span></h3>
                 <p class="category-desc">The everyday mixing and mastering toolbox.</p>
                 <div class="plugin-grid">
                 <article class="plugin-card" data-name="auto pan autopan panner panning lfo stereo movement modulation tempo sync ping pong gfx vst3 clap lv2" data-tags="Guitar|Synths &amp; Keys|Stereo|Modulation" onclick="openGuide('auto-pan')">
@@ -793,6 +814,17 @@
                     <div class="plugin-info">
                         <h3><a href="plugins/band-splitter/" class="card-link">BAND SPLITTER</a></h3>
                         <p class="plugin-desc">Multiband Crossover Router</p>
+                        <div class="plugin-formats"><span>JSFX</span><span>GFX</span><span>VST3</span><span>CLAP</span><span>LV2</span></div>
+                        <span class="info-badge">?</span>
+                    </div>
+                </article>
+                <article class="plugin-card" data-name="bitcrusher bit crusher decimator sample rate reduction lo-fi lofi digital aliasing 8-bit 12-bit retro sampler gfx vst3 clap lv2" data-tags="Drums|Character" onclick="openGuide('bitcrusher')">
+                    <div class="plugin-icon">
+                        <svg viewBox="0 0 64 64" width="48" height="48"><defs><linearGradient id="icon-bcr" x1="0%" y1="100%" x2="0%" y2="0%"><stop offset="0%" stop-color="#888888"/><stop offset="100%" stop-color="#aaaaaa"/></linearGradient></defs><path d="M 6,40 L 6,32 L 14,32 L 14,22 L 22,22 L 22,16 L 30,16 L 30,22 L 38,22 L 38,32 L 46,32 L 46,42 L 54,42 L 54,48 L 58,48" stroke="url(#icon-bcr)" stroke-width="2.4" fill="none" stroke-linejoin="miter"/></svg>
+                    </div>
+                    <div class="plugin-info">
+                        <h3><a href="plugins/bitcrusher/" class="card-link">BITCRUSHER</a></h3>
+                        <p class="plugin-desc">Bits and Sample Rate Lo-Fi</p>
                         <div class="plugin-formats"><span>JSFX</span><span>GFX</span><span>VST3</span><span>CLAP</span><span>LV2</span></div>
                         <span class="info-badge">?</span>
                     </div>
@@ -1127,6 +1159,17 @@
                         <span class="info-badge">?</span>
                     </div>
                 </article>
+                <article class="plugin-card" data-name="delay multi tap multitap rhythmic echo pattern dotted triplet swing accelerate scatter tempo sync stereo spread gfx vst3 clap lv2" data-tags="Vocals|Guitar|Stereo|Space" onclick="openGuide('multi-tap-delay')">
+                    <div class="plugin-icon">
+                        <svg viewBox="0 0 64 64" width="48" height="48"><defs><linearGradient id="icon-mtap" x1="0%" y1="100%" x2="0%" y2="0%"><stop offset="0%" stop-color="#888888"/><stop offset="100%" stop-color="#aaaaaa"/></linearGradient></defs><rect x="8" y="14" width="5" height="36" rx="1" fill="url(#icon-mtap)"/><rect x="20" y="22" width="5" height="28" rx="1" fill="url(#icon-mtap)" opacity="0.85"/><rect x="32" y="28" width="5" height="22" rx="1" fill="url(#icon-mtap)" opacity="0.7"/><rect x="44" y="34" width="5" height="16" rx="1" fill="url(#icon-mtap)" opacity="0.55"/><rect x="54" y="39" width="5" height="11" rx="1" fill="url(#icon-mtap)" opacity="0.4"/></svg>
+                    </div>
+                    <div class="plugin-info">
+                        <h3><a href="plugins/multi-tap-delay/" class="card-link">MULTI-TAP DELAY</a></h3>
+                        <p class="plugin-desc">Rhythmic Multi-Tap Echo</p>
+                        <div class="plugin-formats"><span>JSFX</span><span>GFX</span><span>VST3</span><span>CLAP</span><span>LV2</span></div>
+                        <span class="info-badge">?</span>
+                    </div>
+                </article>
                 <article class="plugin-card" data-name="multiband multi-band compressor four band crossover dynamics mastering per band split gfx vst3 clap lv2" data-tags="Bass|Mastering" onclick="openGuide('multiband-compressor')">
                     <div class="demo demo-card" data-demo="multiband_compressor"><button type="button" class="demo-play" aria-label="Listen: with and without the plugin" title="Listen"><svg class="i-play" width="12" height="12" viewBox="0 0 24 24" aria-hidden="true"><polygon points="6 4 20 12 6 20" fill="currentColor"/></svg><svg class="i-stop" width="12" height="12" viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="6" width="12" height="12" fill="currentColor"/></svg></button><button type="button" class="demo-ab" title="Switch between the plugin and the dry sound"><span class="on">ON</span><span class="off">BYPASS</span></button></div>
                     <div class="plugin-icon">
@@ -1201,6 +1244,17 @@
                     <div class="plugin-info">
                         <h3><a href="plugins/parametric-eq/" class="card-link">PARAMETRIC EQ</a></h3>
                         <p class="plugin-desc">Five-Band Parametric EQ</p>
+                        <div class="plugin-formats"><span>JSFX</span><span>GFX</span><span>VST3</span><span>CLAP</span><span>LV2</span></div>
+                        <span class="info-badge">?</span>
+                    </div>
+                </article>
+                <article class="plugin-card" data-name="eq equalizer passive program tube vintage low boost attenuate shelf air bandwidth mastering color gfx vst3 clap lv2" data-tags="Vocals|Drums|Bass|Mastering|Stereo|Character" onclick="openGuide('passive-eq')">
+                    <div class="plugin-icon">
+                        <svg viewBox="0 0 64 64" width="48" height="48"><defs><linearGradient id="icon-peq" x1="0%" y1="100%" x2="0%" y2="0%"><stop offset="0%" stop-color="#888888"/><stop offset="100%" stop-color="#aaaaaa"/></linearGradient></defs><path d="M 4,40 Q 14,20 22,36 Q 28,46 34,40 L 40,40 Q 48,40 52,22 Q 56,34 60,40" stroke="url(#icon-peq)" stroke-width="2.5" fill="none" stroke-linecap="round"/><path d="M 4,40 L 60,40" stroke="url(#icon-peq)" stroke-width="1" opacity="0.3"/></svg>
+                    </div>
+                    <div class="plugin-info">
+                        <h3><a href="plugins/passive-eq/" class="card-link">PASSIVE EQ</a></h3>
+                        <p class="plugin-desc">Passive-Style Program EQ</p>
                         <div class="plugin-formats"><span>JSFX</span><span>GFX</span><span>VST3</span><span>CLAP</span><span>LV2</span></div>
                         <span class="info-badge">?</span>
                     </div>
@@ -1333,6 +1387,17 @@
                         <span class="info-badge">?</span>
                     </div>
                 </article>
+                <article class="plugin-card" data-name="speaker simulator device phone laptop earbuds tv radio telephone megaphone car mix check lo-fi small speaker gfx vst3 clap lv2" data-tags="Vocals|Character" onclick="openGuide('speaker-sim')">
+                    <div class="plugin-icon">
+                        <svg viewBox="0 0 64 64" width="48" height="48"><defs><linearGradient id="icon-spk" x1="0%" y1="100%" x2="0%" y2="0%"><stop offset="0%" stop-color="#888888"/><stop offset="100%" stop-color="#aaaaaa"/></linearGradient></defs><rect x="18" y="6" width="28" height="52" rx="5" stroke="url(#icon-spk)" stroke-width="2.5" fill="none"/><circle cx="32" cy="38" r="9" stroke="url(#icon-spk)" stroke-width="2" fill="none"/><circle cx="32" cy="18" r="3" fill="url(#icon-spk)"/></svg>
+                    </div>
+                    <div class="plugin-info">
+                        <h3><a href="plugins/speaker-sim/" class="card-link">SPEAKER SIM</a></h3>
+                        <p class="plugin-desc">Phone, Laptop and Car Speakers</p>
+                        <div class="plugin-formats"><span>JSFX</span><span>GFX</span><span>VST3</span><span>CLAP</span><span>LV2</span></div>
+                        <span class="info-badge">?</span>
+                    </div>
+                </article>
                 <article class="plugin-card" data-name="stereo width widener imager mid side narrow mono bass crossover spread gfx vst3 clap lv2" data-tags="Vocals|Drums|Bass|Synths &amp; Keys|Stereo" onclick="openGuide('stereo-width')">
                     <div class="plugin-icon">
                         <svg viewBox="0 0 64 64" width="48" height="48">
@@ -1383,6 +1448,17 @@
                     <div class="plugin-info">
                         <h3><a href="plugins/tape-echo/" class="card-link">TAPE ECHO</a></h3>
                         <p class="plugin-desc">Multi-Head Tape Echo with Spring</p>
+                        <div class="plugin-formats"><span>JSFX</span><span>GFX</span><span>VST3</span><span>CLAP</span><span>LV2</span></div>
+                        <span class="info-badge">?</span>
+                    </div>
+                </article>
+                <article class="plugin-card" data-name="test signal tone generator sine sweep pink noise white noise polarity calibration reference level speaker wiring utility gfx vst3 clap lv2" data-tags="" onclick="openGuide('test-signal')">
+                    <div class="plugin-icon">
+                        <svg viewBox="0 0 64 64" width="48" height="48"><defs><linearGradient id="icon-tsg" x1="0%" y1="100%" x2="0%" y2="0%"><stop offset="0%" stop-color="#888888"/><stop offset="100%" stop-color="#aaaaaa"/></linearGradient></defs><rect x="6" y="14" width="52" height="36" rx="5" stroke="url(#icon-tsg)" stroke-width="2.5" fill="none"/><path d="M12 32 Q18 18 24 32 T36 32 T48 32 T54 32" stroke="url(#icon-tsg)" stroke-width="2.5" fill="none"/></svg>
+                    </div>
+                    <div class="plugin-info">
+                        <h3><a href="plugins/test-signal/" class="card-link">TEST SIGNAL</a></h3>
+                        <p class="plugin-desc">Sine, Sweep, Noise and Polarity Tones</p>
                         <div class="plugin-formats"><span>JSFX</span><span>GFX</span><span>VST3</span><span>CLAP</span><span>LV2</span></div>
                         <span class="info-badge">?</span>
                     </div>
@@ -1471,7 +1547,7 @@
                 </div>
             </div>
             <div class="plugin-category" id="advanced">
-                <h3 class="category-title">Advanced <span class="category-count">43</span></h3>
+                <h3 class="category-title">Advanced <span class="category-count">45</span></h3>
                 <p class="category-desc">Deeper sound design, creative effects and special processing.</p>
                 <div class="plugin-grid">
                 <article class="plugin-card" data-name="amp simulator amplifier guitar bass preamp power amp tube valve distortion overdrive crunch lead clean tone stack fender marshall presence sag oversampling di reamp gfx vst3 clap lv2" data-tags="Bass|Guitar|Synths &amp; Keys|Space|Character" onclick="openGuide('amp-simulator')">
@@ -1680,6 +1756,17 @@
                     <div class="plugin-info">
                         <h3><a href="plugins/noise-reduction/" class="card-link">NOISE REDUCTION</a></h3>
                         <p class="plugin-desc">Spectral Noise Reducer</p>
+                        <div class="plugin-formats"><span>JSFX</span><span>GFX</span><span>VST3</span><span>CLAP</span><span>LV2</span></div>
+                        <span class="info-badge">?</span>
+                    </div>
+                </article>
+                <article class="plugin-card" data-name="oscilloscope scope waveform trigger time domain wave shape phase meter analyzer metering tempo sync gfx vst3 clap lv2" data-tags="Drums|Bass|Synths &amp; Keys" onclick="openGuide('oscilloscope')">
+                    <div class="plugin-icon">
+                        <svg viewBox="0 0 64 64" width="48" height="48"><defs><linearGradient id="icon-osc" x1="0%" y1="100%" x2="0%" y2="0%"><stop offset="0%" stop-color="#888888"/><stop offset="100%" stop-color="#aaaaaa"/></linearGradient></defs><rect x="6" y="10" width="52" height="44" rx="4" stroke="url(#icon-osc)" stroke-width="2.5" fill="none"/><path d="M6 32 H58 M32 10 V54" stroke="url(#icon-osc)" stroke-width="1" opacity="0.5"/><path d="M10 40 L18 22 L26 40 L34 22 L42 40 L50 22 L54 30" stroke="url(#icon-osc)" stroke-width="2.5" fill="none"/></svg>
+                    </div>
+                    <div class="plugin-info">
+                        <h3><a href="plugins/oscilloscope/" class="card-link">OSCILLOSCOPE</a></h3>
+                        <p class="plugin-desc">Triggered Waveform Display</p>
                         <div class="plugin-formats"><span>JSFX</span><span>GFX</span><span>VST3</span><span>CLAP</span><span>LV2</span></div>
                         <span class="info-badge">?</span>
                     </div>
@@ -1924,6 +2011,17 @@
                         <span class="info-badge">?</span>
                     </div>
                 </article>
+                <article class="plugin-card" data-name="transient tonal split attack body tail drums separate routing parallel reverb saturation gfx vst3 clap lv2" data-tags="Drums|Space|Character" onclick="openGuide('transient-split')">
+                    <div class="plugin-icon">
+                        <svg viewBox="0 0 64 64" width="48" height="48"><defs><linearGradient id="icon-tsplit" x1="0%" y1="100%" x2="0%" y2="0%"><stop offset="0%" stop-color="#888888"/><stop offset="100%" stop-color="#aaaaaa"/></linearGradient></defs><path d="M 6,40 L 14,40 L 18,10 L 24,34 L 58,40" stroke="url(#icon-tsplit)" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/><path d="M 6,54 L 18,54 Q 26,44 58,52" stroke="url(#icon-tsplit)" stroke-width="2" fill="none" opacity="0.5" stroke-linecap="round"/></svg>
+                    </div>
+                    <div class="plugin-info">
+                        <h3><a href="plugins/transient-split/" class="card-link">TRANSIENT SPLIT</a></h3>
+                        <p class="plugin-desc">Transient and Tonal Splitter</p>
+                        <div class="plugin-formats"><span>JSFX</span><span>GFX</span><span>VST3</span><span>CLAP</span><span>LV2</span></div>
+                        <span class="info-badge">?</span>
+                    </div>
+                </article>
                 <article class="plugin-card" data-name="tuner chromatic strobe needle pitch guitar bass vocals strings intonation a4 415 432 440 442 baroque orchestra stage mute gfx vst3 clap lv2" data-tags="Vocals|Bass|Guitar|Synths &amp; Keys" onclick="openGuide('tuner')">
                     <div class="plugin-icon">
                         <svg viewBox="0 0 64 64" width="48" height="48"><defs><linearGradient id="icon-tuner" x1="0%" y1="100%" x2="0%" y2="0%"><stop offset="0%" stop-color="#888888"/><stop offset="100%" stop-color="#aaaaaa"/></linearGradient></defs><path d="M 10,44 A 24,24 0 0 1 54,44" fill="none" stroke="url(#icon-tuner)" stroke-width="2" stroke-linecap="round" opacity="0.5"/><path d="M 32,46 L 36,22" stroke="url(#icon-tuner)" stroke-width="2.5" stroke-linecap="round"/><circle cx="32" cy="46" r="3" fill="url(#icon-tuner)"/><path d="M 32,18 L 32,24" stroke="url(#icon-tuner)" stroke-width="1.5"/></svg>
@@ -2037,7 +2135,7 @@
             </div>
             <div class="tab-panel tab-plugins" id="tab-instruments" role="tabpanel" aria-labelledby="tab-btn-instruments" hidden>
             <div class="plugin-category" id="instruments">
-                <h3 class="category-title">Instruments <span class="category-count">10</span></h3>
+                <h3 class="category-title">Instruments <span class="category-count">12</span></h3>
                 <p class="category-desc">Synths, keys, bass and drums. Play them from MIDI, no samples needed.</p>
                 <div class="plugin-grid">
                 <article class="plugin-card" data-name="bass synth bass 808 sub bass saw square reese acid mono glide portamento slide drive distortion low-pass filter resonance punch phrase player key switch trap house funk midi instrument gfx vst3 clap lv2" data-tags="Bass|Synths &amp; Keys|Stereo|Character" onclick="openGuide('bass')">
@@ -2073,6 +2171,17 @@
                         <span class="info-badge">?</span>
                     </div>
                 </article>
+                <article class="plugin-card" data-name="instrument granular grains cloud texture pad ambient sample wav flac freeze scan spray polyphonic midi gfx vst3 clap lv2" data-tags="Vocals|Synths &amp; Keys|Space|Creative" onclick="openGuide('granular')">
+                    <div class="plugin-icon">
+                        <svg viewBox="0 0 64 64" width="48" height="48"><defs><linearGradient id="icon-grn" x1="0%" y1="100%" x2="0%" y2="0%"><stop offset="0%" stop-color="#888888"/><stop offset="100%" stop-color="#aaaaaa"/></linearGradient></defs><circle cx="20" cy="24" r="5" fill="url(#icon-grn)"/><circle cx="36" cy="18" r="3" fill="url(#icon-grn)"/><circle cx="46" cy="32" r="6" fill="url(#icon-grn)" opacity="0.7"/><circle cx="28" cy="40" r="4" fill="url(#icon-grn)" opacity="0.8"/><circle cx="16" cy="46" r="2.5" fill="url(#icon-grn)"/><circle cx="42" cy="48" r="3" fill="url(#icon-grn)" opacity="0.6"/></svg>
+                    </div>
+                    <div class="plugin-info">
+                        <h3><a href="plugins/granular/" class="card-link">GRANULAR</a></h3>
+                        <p class="plugin-desc">Clouds of Grains from Your Samples</p>
+                        <div class="plugin-formats"><span>JSFX</span><span>GFX</span><span>VST3</span><span>CLAP</span><span>LV2</span></div>
+                        <span class="info-badge">?</span>
+                    </div>
+                </article>
                 <article class="plugin-card" data-name="keys electric piano ep tine reed fm music box celesta glockenspiel vibraphone vibes marimba kalimba mallets bells fm synthesis modal synthesis tremolo autopan chorus drive sustain pedal midi instrument gfx vst3 clap lv2" data-tags="Guitar|Synths &amp; Keys|Stereo|Modulation" onclick="openGuide('keys')">
                     <div class="plugin-icon">
                         <svg viewBox="0 0 64 64" width="48" height="48"><defs><linearGradient id="icon-keys" x1="0%" y1="100%" x2="0%" y2="0%"><stop offset="0%" stop-color="#888888"/><stop offset="100%" stop-color="#aaaaaa"/></linearGradient></defs><rect x="8" y="14" width="14" height="38" rx="2" fill="none" stroke="url(#icon-keys)" stroke-width="3"/><rect x="25" y="14" width="14" height="38" rx="2" fill="none" stroke="url(#icon-keys)" stroke-width="3"/><rect x="42" y="14" width="14" height="38" rx="2" fill="none" stroke="url(#icon-keys)" stroke-width="3"/><rect x="18" y="14" width="8" height="22" rx="1.5" fill="url(#icon-keys)"/><rect x="36" y="14" width="8" height="22" rx="1.5" fill="url(#icon-keys)"/></svg>
@@ -2080,6 +2189,17 @@
                     <div class="plugin-info">
                         <h3><a href="plugins/keys/" class="card-link">KEYS</a></h3>
                         <p class="plugin-desc">Electric Piano, Music Box and Mallets</p>
+                        <div class="plugin-formats"><span>JSFX</span><span>GFX</span><span>VST3</span><span>CLAP</span><span>LV2</span></div>
+                        <span class="info-badge">?</span>
+                    </div>
+                </article>
+                <article class="plugin-card" data-name="instrument kick drum bass drum 808 909 sub click punch pitch sweep synth midi gfx vst3 clap lv2" data-tags="Drums|Bass|Synths &amp; Keys" onclick="openGuide('kick')">
+                    <div class="plugin-icon">
+                        <svg viewBox="0 0 64 64" width="48" height="48"><defs><linearGradient id="icon-kik" x1="0%" y1="100%" x2="0%" y2="0%"><stop offset="0%" stop-color="#888888"/><stop offset="100%" stop-color="#aaaaaa"/></linearGradient></defs><circle cx="32" cy="32" r="24" stroke="url(#icon-kik)" stroke-width="2.5" fill="none"/><circle cx="32" cy="32" r="14" stroke="url(#icon-kik)" stroke-width="1.5" fill="none" opacity="0.6"/><circle cx="32" cy="32" r="4" fill="url(#icon-kik)"/></svg>
+                    </div>
+                    <div class="plugin-info">
+                        <h3><a href="plugins/kick/" class="card-link">KICK</a></h3>
+                        <p class="plugin-desc">Kick Drum Synthesizer</p>
                         <div class="plugin-formats"><span>JSFX</span><span>GFX</span><span>VST3</span><span>CLAP</span><span>LV2</span></div>
                         <span class="info-badge">?</span>
                     </div>
@@ -2155,7 +2275,7 @@
             </div>
             <div class="tab-panel tab-plugins" id="tab-midi" role="tabpanel" aria-labelledby="tab-btn-midi" hidden>
             <div class="plugin-category" id="midi">
-                <h3 class="category-title">MIDI <span class="category-count">7</span></h3>
+                <h3 class="category-title">MIDI <span class="category-count">11</span></h3>
                 <p class="category-desc">Tools that change the notes before they reach an instrument.</p>
                 <div class="plugin-grid">
                 <article class="plugin-card" data-name="midi arpeggiator arp arpeggio sequencer pattern up down up-down random played chord octaves latch gate swing velocity lane accent tempo sync synth trance gfx vst3 clap lv2" data-tags="Synths &amp; Keys" onclick="openGuide('arpeggiator')">
@@ -2176,6 +2296,28 @@
                     <div class="plugin-info">
                         <h3><a href="plugins/chords/" class="card-link">CHORDS</a></h3>
                         <p class="plugin-desc">One-Key Chords &amp; Progressions (MIDI)</p>
+                        <div class="plugin-formats"><span>JSFX</span><span>GFX</span><span>VST3</span><span>CLAP</span><span>LV2</span></div>
+                        <span class="info-badge">?</span>
+                    </div>
+                </article>
+                <article class="plugin-card" data-name="midi drum trigger replace replacement audio to midi kick snare tom hit detect velocity sample layer gfx vst3 clap lv2" data-tags="Drums" onclick="openGuide('drum-trigger')">
+                    <div class="plugin-icon">
+                        <svg viewBox="0 0 64 64" width="48" height="48"><defs><linearGradient id="icon-dtrig" x1="0%" y1="100%" x2="0%" y2="0%"><stop offset="0%" stop-color="#888888"/><stop offset="100%" stop-color="#aaaaaa"/></linearGradient></defs><path d="M 4,36 L 12,36 L 15,12 L 19,50 L 22,30 L 26,36 L 30,36" stroke="url(#icon-dtrig)" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/><rect x="38" y="22" width="20" height="20" rx="3" fill="url(#icon-dtrig)" opacity="0.8"/><path d="M 31,32 L 36,32" stroke="url(#icon-dtrig)" stroke-width="2" stroke-linecap="round"/></svg>
+                    </div>
+                    <div class="plugin-info">
+                        <h3><a href="plugins/drum-trigger/" class="card-link">DRUM TRIGGER</a></h3>
+                        <p class="plugin-desc">Audio to MIDI Drum Trigger</p>
+                        <div class="plugin-formats"><span>JSFX</span><span>GFX</span><span>VST3</span><span>CLAP</span><span>LV2</span></div>
+                        <span class="info-badge">?</span>
+                    </div>
+                </article>
+                <article class="plugin-card" data-name="midi euclid euclidean rhythm generator sequencer pattern pulses steps rotate polyrhythm drum trigger swing tempo sync gfx vst3 clap lv2" data-tags="Drums" onclick="openGuide('euclid')">
+                    <div class="plugin-icon">
+                        <svg viewBox="0 0 64 64" width="48" height="48"><defs><linearGradient id="icon-euc" x1="0%" y1="100%" x2="0%" y2="0%"><stop offset="0%" stop-color="#888888"/><stop offset="100%" stop-color="#aaaaaa"/></linearGradient></defs><circle cx="32" cy="32" r="22" stroke="url(#icon-euc)" stroke-width="1.6" fill="none" opacity="0.5"/><circle cx="32" cy="10" r="5" fill="url(#icon-euc)"/><circle cx="51" cy="43" r="5" fill="url(#icon-euc)"/><circle cx="13" cy="43" r="5" fill="url(#icon-euc)"/><circle cx="54" cy="32" r="2.5" fill="url(#icon-euc)" opacity="0.5"/><circle cx="32" cy="54" r="2.5" fill="url(#icon-euc)" opacity="0.5"/></svg>
+                    </div>
+                    <div class="plugin-info">
+                        <h3><a href="plugins/euclid/" class="card-link">EUCLID</a></h3>
+                        <p class="plugin-desc">Euclidean Rhythm Generator</p>
                         <div class="plugin-formats"><span>JSFX</span><span>GFX</span><span>VST3</span><span>CLAP</span><span>LV2</span></div>
                         <span class="info-badge">?</span>
                     </div>
@@ -2209,6 +2351,28 @@
                     <div class="plugin-info">
                         <h3><a href="plugins/midi-utility/" class="card-link">MIDI UTILITY</a></h3>
                         <p class="plugin-desc">Transpose, Velocity, Splits, Filters</p>
+                        <div class="plugin-formats"><span>JSFX</span><span>GFX</span><span>VST3</span><span>CLAP</span><span>LV2</span></div>
+                        <span class="info-badge">?</span>
+                    </div>
+                </article>
+                <article class="plugin-card" data-name="midi note echo delay repeat repeater ratchet tempo sync velocity decay pitch step arpeggio generative gfx vst3 clap lv2" data-tags="Space" onclick="openGuide('note-echo')">
+                    <div class="plugin-icon">
+                        <svg viewBox="0 0 64 64" width="48" height="48"><defs><linearGradient id="icon-nec" x1="0%" y1="100%" x2="0%" y2="0%"><stop offset="0%" stop-color="#888888"/><stop offset="100%" stop-color="#aaaaaa"/></linearGradient></defs><rect x="6" y="18" width="10" height="28" rx="2" fill="url(#icon-nec)"/><rect x="22" y="24" width="10" height="22" rx="2" fill="url(#icon-nec)" opacity="0.8"/><rect x="38" y="30" width="10" height="16" rx="2" fill="url(#icon-nec)" opacity="0.6"/><rect x="54" y="36" width="6" height="10" rx="2" fill="url(#icon-nec)" opacity="0.4"/></svg>
+                    </div>
+                    <div class="plugin-info">
+                        <h3><a href="plugins/note-echo/" class="card-link">NOTE ECHO</a></h3>
+                        <p class="plugin-desc">MIDI Delay for Notes</p>
+                        <div class="plugin-formats"><span>JSFX</span><span>GFX</span><span>VST3</span><span>CLAP</span><span>LV2</span></div>
+                        <span class="info-badge">?</span>
+                    </div>
+                </article>
+                <article class="plugin-card" data-name="midi pitch to midi audio to midi convert tracker detection yin monophonic bass vocal guitar melody note pitch bend transcribe gfx vst3 clap lv2" data-tags="Vocals|Bass|Guitar|Synths &amp; Keys|Stereo" onclick="openGuide('pitch-to-midi')">
+                    <div class="plugin-icon">
+                        <svg viewBox="0 0 64 64" width="48" height="48"><defs><linearGradient id="icon-p2m" x1="0%" y1="100%" x2="0%" y2="0%"><stop offset="0%" stop-color="#888888"/><stop offset="100%" stop-color="#aaaaaa"/></linearGradient></defs><path d="M 4,32 C 8,18 12,18 16,32 C 20,46 24,46 28,32" stroke="url(#icon-p2m)" stroke-width="2.2" fill="none" stroke-linecap="round"/><path d="M 31,32 L 36,32" stroke="url(#icon-p2m)" stroke-width="2" stroke-linecap="round"/><rect x="40" y="18" width="16" height="6" rx="1.5" fill="url(#icon-p2m)"/><rect x="40" y="30" width="10" height="6" rx="1.5" fill="url(#icon-p2m)" opacity="0.8"/><rect x="44" y="42" width="14" height="6" rx="1.5" fill="url(#icon-p2m)" opacity="0.6"/></svg>
+                    </div>
+                    <div class="plugin-info">
+                        <h3><a href="plugins/pitch-to-midi/" class="card-link">PITCH TO MIDI</a></h3>
+                        <p class="plugin-desc">Audio to MIDI for Monophonic Lines</p>
                         <div class="plugin-formats"><span>JSFX</span><span>GFX</span><span>VST3</span><span>CLAP</span><span>LV2</span></div>
                         <span class="info-badge">?</span>
                     </div>
@@ -2359,6 +2523,12 @@
                     <h3>DRUM BUS</h3>
                     <p class="plugin-desc">Punchier transients, tape warmth and glue compression for a drum group.</p>
                     <div class="chain-steps"><button type="button" class="chain-step" onclick="openGuide('transient-shaper')">Transient Shaper</button><span class="chain-arrow" aria-hidden="true">&#8594;</span><button type="button" class="chain-step" onclick="openGuide('saturation')">Saturation</button><span class="chain-arrow" aria-hidden="true">&#8594;</span><button type="button" class="chain-step" onclick="openGuide('dynamics')">Dynamics</button></div>
+                    <div class="plugin-formats"><span>JSFX</span><span>GFX</span></div>
+                </article>
+                <article class="chain-card">
+                    <h3>DRUM REPLACE</h3>
+                    <p class="plugin-desc">Each hit of a recorded kick plays the Drum Machine&#x27;s kick instead, with the hit&#x27;s own dynamics.</p>
+                    <div class="chain-steps"><button type="button" class="chain-step" onclick="openGuide('drum-trigger')">Drum Trigger</button><span class="chain-arrow" aria-hidden="true">&#8594;</span><button type="button" class="chain-step" onclick="openGuide('drum-machine')">Drum Machine</button></div>
                     <div class="plugin-formats"><span>JSFX</span><span>GFX</span></div>
                 </article>
                 <article class="chain-card">
@@ -2536,6 +2706,12 @@
                     <div class="plugin-formats"><span>JSFX</span><span>GFX</span><span>MODULATION</span></div>
                 </article>
                 <article class="chain-card">
+                    <h3>PHONE VOCAL</h3>
+                    <p class="plugin-desc">A telephone voice with a little grit and a short slap echo.</p>
+                    <div class="chain-steps"><button type="button" class="chain-step" onclick="openGuide('speaker-sim')">Speaker Sim</button><span class="chain-arrow" aria-hidden="true">&#8594;</span><button type="button" class="chain-step" onclick="openGuide('saturation')">Saturation</button><span class="chain-arrow" aria-hidden="true">&#8594;</span><button type="button" class="chain-step" onclick="openGuide('delay')">Delay</button></div>
+                    <div class="plugin-formats"><span>JSFX</span><span>GFX</span></div>
+                </article>
+                <article class="chain-card">
                     <h3>PODCAST READY</h3>
                     <p class="plugin-desc">Noise reduction, hum removal, de-plosive, de-esser, leveling and a limiter, with a meter set to -16 LUFS; Amount cleans harder, Loudness raises the level.</p>
                     <div class="chain-steps"><button type="button" class="chain-step" onclick="openGuide('noise-reduction')">Noise Reduction</button><span class="chain-arrow" aria-hidden="true">&#8594;</span><button type="button" class="chain-step" onclick="openGuide('de-hum')">De-Hum</button><span class="chain-arrow" aria-hidden="true">&#8594;</span><button type="button" class="chain-step" onclick="openGuide('de-plosive')">De-Plosive</button><span class="chain-arrow" aria-hidden="true">&#8594;</span><button type="button" class="chain-step" onclick="openGuide('deesser')">DeEsser</button><span class="chain-arrow" aria-hidden="true">&#8594;</span><button type="button" class="chain-step" onclick="openGuide('auto-leveler')">Auto-Leveler</button><span class="chain-arrow" aria-hidden="true">&#8594;</span><button type="button" class="chain-step" onclick="openGuide('limiter')">Limiter</button><span class="chain-arrow" aria-hidden="true">&#8594;</span><button type="button" class="chain-step" onclick="openGuide('loudness-meter')">Loudness Meter</button></div>
@@ -2636,6 +2812,12 @@
                     <p class="plugin-desc">An octave down, a sub layer and mono, all below 120 Hz, to add weight; Amount adds both, Depth adds a second octave down.</p>
                     <div class="chain-steps"><button type="button" class="chain-step" onclick="openGuide('octaver')">Octaver <small>Low</small></button><span class="chain-arrow" aria-hidden="true">&#8594;</span><button type="button" class="chain-step" onclick="openGuide('sub-bloom')">Sub Bloom <small>Low</small></button><span class="chain-arrow" aria-hidden="true">&#8594;</span><button type="button" class="chain-step" onclick="openGuide('mono-maker')">Mono Maker <small>Low</small></button></div>
                     <div class="plugin-formats"><span>JSFX</span><span>GFX</span><span>PIN ROUTING</span><span>MODULATION</span></div>
+                </article>
+                <article class="chain-card">
+                    <h3>TRANSIENT VERB</h3>
+                    <p class="plugin-desc">Reverb on the tail of each sound only, so the attack stays dry and close.</p>
+                    <div class="chain-steps"><button type="button" class="chain-step" onclick="openGuide('transient-split')">Transient Split</button><span class="chain-arrow" aria-hidden="true">&#8594;</span><button type="button" class="chain-step" onclick="openGuide('reverb')">Reverb</button><span class="chain-arrow" aria-hidden="true">&#8594;</span><button type="button" class="chain-step" onclick="openGuide('band-splitter')">Band Splitter</button></div>
+                    <div class="plugin-formats"><span>JSFX</span><span>GFX</span></div>
                 </article>
                 <article class="chain-card">
                     <h3>TRIPLE MOD</h3>

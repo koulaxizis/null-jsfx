@@ -415,6 +415,27 @@ const guides = {
     studio: true,
     page: 'plugins/band-splitter/'
   },
+  'bitcrusher': {
+    title: 'BITCRUSHER',
+    subtitle: 'Bits and Sample Rate Lo-Fi',
+    category: 'Essentials',
+    sliders: [
+      { name: 'Bits', range: '1 to 16', desc: 'Resolution: 2^(Bits - 1) steps on each side of zero (16 is nearly clean, 1 is a square).' },
+      { name: 'Sample Rate', range: '100 to 48000 Hz', desc: 'How often a new sample is taken; lower is grittier, with more aliasing.' },
+      { name: 'Anti Alias', range: 'Off / On', desc: 'On filters before the decimator at 0.45 x Sample Rate, for the clean sound of an old sampler; Off lets the aliasing through.' },
+      { name: 'Smooth', range: '0 to 100%', desc: 'Low-pass after the decimator, from 20 kHz (0%) down to 0.45 x Sample Rate (100%), to soften the steps.' },
+      { name: 'Drive', range: '0 to 24 dB', desc: 'Level into the crusher (more level uses more of the steps).' },
+      { name: 'Mix', range: '0 to 100%', desc: 'Blend of the crushed and the dry signal.' },
+      { name: 'Output', range: '−24 to +12 dB', desc: 'Output level.' }
+    ],
+    uses: ['Lo-fi drums and old sampler grit', '8-bit game sounds', 'Parallel crunch on a bus', 'Telephone and broken-device effects'],
+    properties: 'Input → Drive → optional 12 dB/oct anti-alias low-pass → sample-and-hold at Sample Rate → rounding to Bits → optional 12 dB/oct Smooth low-pass → Mix → Output. No latency, stereo.',
+    formats: ['JSFX', 'GFX', 'VST3', 'CLAP', 'LV2'],
+    shot: 'assets/img/gfx/bitcrusher.png',
+    video: 'assets/video/bitcrusher.mp4',
+    studio: true,
+    page: 'plugins/bitcrusher/'
+  },
   'breath-control': {
     title: 'BREATH CONTROL',
     subtitle: 'Vocal Breath Reduction',
@@ -980,6 +1001,31 @@ const guides = {
     studio: true,
     page: 'plugins/mid-side-matrix/'
   },
+  'multi-tap-delay': {
+    title: 'MULTI-TAP DELAY',
+    subtitle: 'Rhythmic Multi-Tap Echo',
+    category: 'Essentials',
+    sliders: [
+      { name: 'Taps', range: '1 to 8', desc: 'How many echoes (1 to 8).' },
+      { name: 'Pattern', range: 'Even / Dotted / Triplet / Swing / Speed Up / Slow Down / Scatter', desc: 'Where the echoes fall: even steps, dotted, triplet, swing, speeding up, slowing down or scattered.' },
+      { name: 'Time', range: '10 to 1000 ms', desc: 'The step between echoes in milliseconds (when Tempo Sync is off).' },
+      { name: 'Tempo Sync', range: 'Off / On', desc: 'Lock the step to the host tempo.' },
+      { name: 'Subdivision', range: '1/4 / 1/8 / 1/16 / 1/32 / 1/2', desc: 'The note value of the step when synced.' },
+      { name: 'Decay', range: '0 to 100%', desc: 'How much quieter each echo is than the one before.' },
+      { name: 'Spread', range: '0 to 100%', desc: 'How far the echoes are panned left and right in turn.' },
+      { name: 'Feedback', range: '0 to 90%', desc: 'Sends the last echo back into the line for longer tails.' },
+      { name: 'Low Cut', range: '20 to 2000 Hz', desc: 'High-pass on the echoes.' },
+      { name: 'High Cut', range: '1000 to 20000 Hz', desc: 'Low-pass on the echoes.' },
+      { name: 'Mix', range: '0 to 100%', desc: 'Blend between the dry signal and the echoes.' }
+    ],
+    uses: ['Rhythmic echoes on vocals and guitars', 'Bouncing-ball and slowing-down effects', 'Wide stereo patterns on synths', 'Dub-style repeats with feedback'],
+    properties: 'Input → 4 s stereo line → up to 8 taps at pattern × step (Time or a synced note), level (1 − Decay)^(k−1), alternating pan by Spread → sum → 12 dB/oct low cut and high cut → Dry/Wet Mix; the last tap feeds back. Zero latency.',
+    formats: ['JSFX', 'GFX', 'VST3', 'CLAP', 'LV2'],
+    shot: 'assets/img/gfx/multi_tap_delay.png',
+    video: 'assets/video/multi_tap_delay.mp4',
+    studio: true,
+    page: 'plugins/multi-tap-delay/'
+  },
   'multiband-compressor': {
     title: 'MULTIBAND COMP',
     subtitle: 'Four-Band Compressor',
@@ -1122,6 +1168,30 @@ const guides = {
     studio: true,
     demo: 'parametric_eq',
     page: 'plugins/parametric-eq/'
+  },
+  'passive-eq': {
+    title: 'PASSIVE EQ',
+    subtitle: 'Passive-Style Program EQ',
+    category: 'Essentials',
+    sliders: [
+      { name: 'Low Freq', range: '20 Hz / 30 Hz / 60 Hz / 100 Hz', desc: 'The low frequency for both low controls.' },
+      { name: 'Low Boost', range: '0 to 10', desc: 'Low shelf boost (up to +13.5 dB).' },
+      { name: 'Low Atten', range: '0 to 10', desc: 'Gentler low shelf cut a little higher; with Low Boost it gives the classic bump with a dip above it.' },
+      { name: 'High Freq', range: '3 kHz / 4 kHz / 5 kHz / 8 kHz / 10 kHz / 12 kHz / 16 kHz', desc: 'The frequency of the high peak.' },
+      { name: 'High Boost', range: '0 to 10', desc: 'High peak boost (up to +18 dB).' },
+      { name: 'Bandwidth', range: '0 to 10', desc: 'Width of the high peak: 0 is sharp, 10 is broad.' },
+      { name: 'Atten Freq', range: '5 kHz / 10 kHz / 20 kHz', desc: 'The frequency of the high shelf cut.' },
+      { name: 'High Atten', range: '0 to 10', desc: 'High shelf cut (down to −20 dB).' },
+      { name: 'Tube', range: '0 to 100%', desc: 'Drive of the tube stage (even harmonics).' },
+      { name: 'Output', range: '−12 to +12 dB', desc: 'Output level.' }
+    ],
+    uses: ['Weight on kick and bass with boost and attenuation together', 'Air and presence on vocals', 'Broad tone shaping on the mix bus or master', 'Warming up with the tube stage'],
+    properties: 'Input → low shelf boost at 1.2 × Low Freq → low shelf cut at 2.2 × Low Freq → high peak at High Freq (Q from Bandwidth) → high shelf cut at Atten Freq (each skipped at 0) → tube stage (asymmetric tanh, 10 Hz DC blocker, skipped at 0%) → Output. Zero latency; every control at 0 leaves the sound untouched.',
+    formats: ['JSFX', 'GFX', 'VST3', 'CLAP', 'LV2'],
+    shot: 'assets/img/gfx/passive_eq.png',
+    video: 'assets/video/passive_eq.mp4',
+    studio: true,
+    page: 'plugins/passive-eq/'
   },
   'phase-align': {
     title: 'PHASE ALIGN',
@@ -1346,6 +1416,24 @@ const guides = {
     studio: true,
     page: 'plugins/space/'
   },
+  'speaker-sim': {
+    title: 'SPEAKER SIM',
+    subtitle: 'Phone, Laptop and Car Speakers',
+    category: 'Essentials',
+    sliders: [
+      { name: 'Device', range: 'Phone / Laptop / Earbuds / TV / Radio / Telephone / Megaphone / Car', desc: 'The device: phone, laptop, earbuds, TV, radio, telephone, megaphone or car.' },
+      { name: 'Mix', range: '0 to 100%', desc: 'Blend between the dry signal and the device.' },
+      { name: 'Drive', range: '0 to 100%', desc: 'Extra clipping of the small speaker.' },
+      { name: 'Output', range: '−24 to +12 dB', desc: 'Output level.' }
+    ],
+    uses: ['Checking how a mix translates to phones, laptops and cars (on the monitor FX)', 'Telephone and radio voices', 'Megaphone shouts', 'Lo-fi textures'],
+    properties: 'Input → mono sum (phone, radio, telephone, megaphone) → 24 dB/oct high-pass → two resonance bands → soft clip tanh(g·x)/g (Drive, plus the megaphone\'s own) → 24 dB/oct low-pass → Dry/Wet Mix → Output. Zero latency.',
+    formats: ['JSFX', 'GFX', 'VST3', 'CLAP', 'LV2'],
+    shot: 'assets/img/gfx/speaker_sim.png',
+    video: 'assets/video/speaker_sim.mp4',
+    studio: true,
+    page: 'plugins/speaker-sim/'
+  },
   'stereo-width': {
     title: 'STEREO WIDTH',
     subtitle: 'M/S Width with Mono Bass',
@@ -1479,6 +1567,27 @@ const guides = {
     studio: true,
     demo: 'tape_echo',
     page: 'plugins/tape-echo/'
+  },
+  'test-signal': {
+    title: 'TEST SIGNAL',
+    subtitle: 'Sine, Sweep, Noise and Polarity Tones',
+    category: 'Essentials',
+    sliders: [
+      { name: 'Signal', range: 'Sine / Sweep / Pink Noise / White Noise / Polarity', desc: 'The signal: sine, logarithmic sweep, pink noise, white noise or polarity pulses.' },
+      { name: 'Frequency', range: '20 to 20000 Hz', desc: 'The sine\'s frequency.' },
+      { name: 'Level', range: '−60 to 0 dBFS', desc: 'The level: peak for the sine, sweep and pulses, RMS for the noises.' },
+      { name: 'Sweep Time', range: '1 to 60 s', desc: 'How long one sweep from 20 Hz to 20 kHz takes.' },
+      { name: 'Channels', range: 'Both / Left / Right', desc: 'Play on both sides, or only on the left or right.' },
+      { name: 'Invert Right', range: 'Off / On', desc: 'Turn the right channel upside down, to hear what a wrong-polarity speaker sounds like.' },
+      { name: 'Pass Input', range: 'Off / On', desc: 'Off replaces the input with the signal; On adds the signal to it.' }
+    ],
+    uses: ['Calibrating monitor levels with pink noise', 'Finding which speaker is which, and checking wiring and polarity', 'Sweeping a room or a filter for resonances', 'A reference tone at the start of a mix or a broadcast'],
+    properties: 'Sine or log sweep (20 Hz → 20 kHz) from a phase accumulator, pink noise (Paul Kellet\'s filter) or white noise from a Park-Miller generator, or a 2 ms raised-cosine pulse twice a second → Level (10 ms glide) → Channels / Invert Right → replaces or adds to the input. Zero latency.',
+    formats: ['JSFX', 'GFX', 'VST3', 'CLAP', 'LV2'],
+    shot: 'assets/img/gfx/test_signal.png',
+    video: 'assets/video/test_signal.mp4',
+    studio: true,
+    page: 'plugins/test-signal/'
   },
   'tone': {
     title: 'TONE',
@@ -2009,6 +2118,29 @@ const guides = {
     demo: 'noise_reduction',
     page: 'plugins/noise-reduction/'
   },
+  'oscilloscope': {
+    title: 'OSCILLOSCOPE',
+    subtitle: 'Triggered Waveform Display',
+    category: 'Advanced',
+    sliders: [
+      { name: 'Time', range: '1 to 2000 ms', desc: 'The width of the screen, from 1 ms to 2 s.' },
+      { name: 'Sync', range: 'Off / 1/16 / 1/8 / 1/4 / 1/2 / 1 Bar / 2 Bars', desc: 'Set the width from the tempo instead, from a 1/16 note to two bars.' },
+      { name: 'Trigger', range: 'Auto / Normal / Free', desc: 'Auto waits for a crossing and draws anyway after two screens; Normal draws only on a crossing; Free draws all the time.' },
+      { name: 'Edge', range: 'Rising / Falling', desc: 'Trigger when the signal rises or falls through the level.' },
+      { name: 'Trigger Level', range: '−1 to +1', desc: 'The level the signal must cross to start a screen.' },
+      { name: 'View', range: 'Mid / Left/Right / Side', desc: 'Show the mid, left and right over each other, or the side.' },
+      { name: 'Gain', range: '−24 to +24 dB', desc: 'Make the picture bigger or smaller (the trigger level follows it).' },
+      { name: 'Hold', range: 'Off / On', desc: 'Freeze the last screen.' },
+      { name: 'Listen', range: 'Stereo / View', desc: 'Play what the screen shows (the mid or the side); Stereo leaves the audio untouched.' }
+    ],
+    uses: ['Seeing the shape of a kick, a bass note or a synth wave', 'Checking clipping, DC offset and the polarity of two channels', 'Watching an envelope over one beat or one bar', 'Lining up the attack of two layers'],
+    properties: 'The audio passes through untouched (Listen View plays the mid or the side). Display: 512 columns of minimum and maximum over the screen width, started by a rising or falling crossing of the trigger level after Gain (Auto: or after two screens; Free: at once). Zero latency.',
+    formats: ['JSFX', 'GFX', 'VST3', 'CLAP', 'LV2'],
+    shot: 'assets/img/gfx/oscilloscope.png',
+    video: 'assets/video/oscilloscope.mp4',
+    studio: true,
+    page: 'plugins/oscilloscope/'
+  },
   'ott': {
     title: 'OTT',
     subtitle: 'Multiband Upward/Downward Compressor',
@@ -2473,6 +2605,26 @@ const guides = {
     demo: 'trance_gate',
     page: 'plugins/trance-gate/'
   },
+  'transient-split': {
+    title: 'TRANSIENT SPLIT',
+    subtitle: 'Transient and Tonal Splitter',
+    category: 'Advanced',
+    sliders: [
+      { name: 'Mode', range: 'Balance / Split', desc: 'Balance: both parts on channels 1/2, each with its own level. Split: the transients on 1/2 and the tonal part on 3/4, for processing them apart.' },
+      { name: 'Transient', range: '−24 to +12 dB', desc: 'Level of the transient part (the attack of each hit).' },
+      { name: 'Tonal', range: '−24 to +12 dB', desc: 'Level of the tonal part (the body and the tail).' },
+      { name: 'Sensitivity', range: '0 to 100%', desc: 'How easily a sound counts as a transient.' },
+      { name: 'Decay', range: '5 to 500 ms', desc: 'How long the transient part lasts after each onset.' },
+      { name: 'Output', range: '−24 to +12 dB', desc: 'Output level.' }
+    ],
+    uses: ['More or less attack on drums without EQ', 'Turning down room and tail on a drum recording', 'Reverb or saturation on only the body or only the attack (Split mode)', 'Softening plucks and clicks'],
+    properties: 'Input → fast (1 ms) and slow (25 ms) linked peak envelopes, 100 ms release → transient weight (fast − slow) / fast × Sensitivity, instant rise, fall over Decay → transient = x·w, tonal = x·(1 − w) → Balance: levels and sum on 1/2; Split: transient on 1/2, tonal on 3/4 → Output. No frequency bands, zero latency; the two parts always sum to the input.',
+    formats: ['JSFX', 'GFX', 'VST3', 'CLAP', 'LV2'],
+    shot: 'assets/img/gfx/transient_split.png',
+    video: 'assets/video/transient_split.mp4',
+    studio: true,
+    page: 'plugins/transient-split/'
+  },
   'tuner': {
     title: 'TUNER',
     subtitle: 'Chromatic Tuner with Strobe',
@@ -2863,6 +3015,33 @@ const guides = {
     video: 'assets/video/fm.mp4',
     page: 'plugins/fm/'
   },
+  'granular': {
+    title: 'GRANULAR',
+    subtitle: 'Clouds of Grains from Your Samples',
+    category: 'Instruments',
+    sliders: [
+      { name: 'Sample File', range: 'WAV file in REAPER/Data/null_jsfx_samples', desc: 'The WAV or FLAC file the grains come from (Data/null_jsfx_samples); none plays a built-in tone.' },
+      { name: 'Position', range: '0 to 100%', desc: 'Where in the sound the grains are taken from.' },
+      { name: 'Spray', range: '0 to 100%', desc: 'How far around Position the grains scatter.' },
+      { name: 'Scan', range: '−100 to +100 %/s', desc: 'Moves the position while a key is held, forwards or backwards.' },
+      { name: 'Grain Size', range: '10 to 500 ms', desc: 'How long each grain is.' },
+      { name: 'Density', range: '1 to 100 /s', desc: 'How many grains each key starts per second.' },
+      { name: 'Pitch Spread', range: '0 to 12 st', desc: 'How far each grain\'s pitch may wander up or down.' },
+      { name: 'Stereo Spread', range: '0 to 100%', desc: 'How far the grains spread across the stereo field.' },
+      { name: 'Reverse', range: '0 to 100%', desc: 'The chance that a grain plays backwards.' },
+      { name: 'Root Key', range: '0 to 127', desc: 'The key that plays the sound at its own pitch.' },
+      { name: 'Attack', range: '1 to 5000 ms', desc: 'How slowly a note fades in.' },
+      { name: 'Release', range: '1 to 10000 ms', desc: 'How long a note rings after the key.' },
+      { name: 'Velocity', range: '0 to 100%', desc: 'How much the key velocity changes the level.' },
+      { name: 'Volume', range: '−24 to +12 dB', desc: 'Output level.' }
+    ],
+    uses: ['Ambient pads and textures from any recording', 'Freezing a moment of a voice or an instrument', 'Slowly scanning through a field recording', 'Shimmering, detuned or reversed clouds for sound design'],
+    properties: 'MIDI → 8 voices → each starts Density grains/s: Hann window of Grain Size, from Position + Scan ± Spray (Park-Miller draws), pitch from Root Key ± Pitch Spread, pan ± Stereo Spread, backwards with chance Reverse; up to 64 grains, linear reading → voice envelope (Attack, Release) → 1/√(density × size) → Volume. Every MIDI message passes on.',
+    formats: ['JSFX', 'GFX', 'VST3', 'CLAP', 'LV2'],
+    shot: 'assets/img/gfx/granular.png',
+    video: 'assets/video/granular.mp4',
+    page: 'plugins/granular/'
+  },
   'keys': {
     title: 'KEYS',
     subtitle: 'Electric Piano, Music Box and Mallets',
@@ -2889,6 +3068,29 @@ const guides = {
     shot: 'assets/img/gfx/keys.png',
     video: 'assets/video/keys.mp4',
     page: 'plugins/keys/'
+  },
+  'kick': {
+    title: 'KICK',
+    subtitle: 'Kick Drum Synthesizer',
+    category: 'Instruments',
+    sliders: [
+      { name: 'Pitch', range: '30 to 120 Hz', desc: 'The kick\'s pitch, where the sweep ends.' },
+      { name: 'Follow Notes', range: 'Off / On', desc: 'On: the kick follows the notes (C1 plays Pitch); Off: every key plays Pitch.' },
+      { name: 'Sweep', range: '0 to 48 st', desc: 'How far above Pitch the kick starts.' },
+      { name: 'Sweep Time', range: '2 to 300 ms', desc: 'How fast the pitch falls to Pitch.' },
+      { name: 'Decay', range: '20 to 3000 ms', desc: 'How long the kick rings (the time to fall 60 dB).' },
+      { name: 'Click', range: '0 to 100%', desc: 'The level of the beater click.' },
+      { name: 'Click Tone', range: '500 to 12000 Hz', desc: 'How bright the click is.' },
+      { name: 'Drive', range: '0 to 100%', desc: 'Soft clipping for a harder, louder kick.' },
+      { name: 'Velocity', range: '0 to 100%', desc: 'How much the key velocity changes the level.' },
+      { name: 'Volume', range: '−24 to +12 dB', desc: 'Output level.' }
+    ],
+    uses: ['808 and 909 style kicks from MIDI', 'Tuned sub kicks that follow the bass line', 'Layering a click or a sub under a sampled kick', 'Replacing a weak recorded kick together with Drum Trigger'],
+    properties: 'MIDI note-on → sine body, pitch from Pitch + Sweep falling exponentially (Sweep Time), level −60 dB over Decay; + white noise (Park-Miller) low-passed at Click Tone, −60 dB over 20 ms → velocity → soft clip tanh(g·x)/tanh(g) → Volume. Two voices: a retrigger fades the old kick out over 3 ms. Every MIDI message passes on. No samples.',
+    formats: ['JSFX', 'GFX', 'VST3', 'CLAP', 'LV2'],
+    shot: 'assets/img/gfx/kick.png',
+    video: 'assets/video/kick.mp4',
+    page: 'plugins/kick/'
   },
   'mallets': {
     title: 'MALLETS',
@@ -3200,6 +3402,51 @@ const guides = {
     video: 'assets/video/chords.mp4',
     page: 'plugins/chords/'
   },
+  'drum-trigger': {
+    title: 'DRUM TRIGGER',
+    subtitle: 'Audio to MIDI Drum Trigger',
+    category: 'MIDI',
+    sliders: [
+      { name: 'Note', range: '0 to 127', desc: 'The MIDI note each hit plays.' },
+      { name: 'Threshold', range: '−60 to 0 dB', desc: 'Level a hit must reach to trigger.' },
+      { name: 'Retrigger', range: '10 to 500 ms', desc: 'Shortest time between two hits (stops double triggers).' },
+      { name: 'Dynamics', range: '0 to 100%', desc: 'How much the velocity follows the hit: 100% maps Threshold..0 dBFS to 1..127, 0% gives every hit 100.' },
+      { name: 'Detector HPF', range: '20 to 2000 Hz', desc: 'High-pass on the detector, to keep lower drums out.' },
+      { name: 'Detector LPF', range: '50 to 20000 Hz', desc: 'Low-pass on the detector, to keep cymbals out.' },
+      { name: 'Note Length', range: '10 to 1000 ms', desc: 'How long each note lasts.' },
+      { name: 'Channel', range: '1 / 2 / 3 / 4 / 5 / 6 / 7 / 8 / 9 / 10 / 11 / 12 / 13 / 14 / 15 / 16', desc: 'MIDI channel of the notes.' }
+    ],
+    uses: ['Replacing a weak kick or snare with Drum Machine or Sampler', 'Layering a sample under a recorded drum', 'Turning a drum loop into MIDI', 'Driving a synth from a drum\'s rhythm'],
+    properties: 'Input (passes through) → mono sum → 12 dB/oct detector high-pass and low-pass → peak follower (5 ms release) → trigger (Threshold, Retrigger, 3 dB hysteresis) → 2 ms velocity window → note-on, note-off after Note Length. Incoming MIDI passes through at its own sample. About 2 ms from onset to note-on.',
+    formats: ['JSFX', 'GFX', 'VST3', 'CLAP', 'LV2'],
+    shot: 'assets/img/gfx/drum_trigger.png',
+    video: 'assets/video/drum_trigger.mp4',
+    page: 'plugins/drum-trigger/'
+  },
+  'euclid': {
+    title: 'EUCLID',
+    subtitle: 'Euclidean Rhythm Generator',
+    category: 'MIDI',
+    sliders: [
+      { name: 'Steps', range: '1 to 32', desc: 'Length of the pattern in steps.' },
+      { name: 'Pulses', range: '0 to 32', desc: 'How many of the steps play, spread as evenly as they go.' },
+      { name: 'Rotate', range: '0 to 31', desc: 'Turns the pattern by this many steps.' },
+      { name: 'Rate', range: '1/4 / 1/8 / 1/16 / 1/32 / 1/8T / 1/16T', desc: 'Length of one step at the host\'s tempo.' },
+      { name: 'Note', range: '0 to 127', desc: 'The MIDI note each pulse plays.' },
+      { name: 'Velocity', range: '1 to 127', desc: 'Velocity of the pulses.' },
+      { name: 'Accent', range: '0 to 100%', desc: 'How much louder the pattern\'s first pulse is, up to 127.' },
+      { name: 'Gate', range: '5 to 95%', desc: 'How long each note lasts, as a share of a step.' },
+      { name: 'Swing', range: '0 to 75%', desc: 'Moves every second step later, up to 0.375 of a step.' },
+      { name: 'Run', range: 'Transport / Always', desc: 'Transport plays while the host plays, locked to its beat; Always also runs while it is stopped.' },
+      { name: 'Channel', range: '1 / 2 / 3 / 4 / 5 / 6 / 7 / 8 / 9 / 10 / 11 / 12 / 13 / 14 / 15 / 16', desc: 'MIDI channel of the notes.' }
+    ],
+    uses: ['Drum and percussion patterns from a few numbers', 'Polyrhythms with several instances on different lengths', 'Bass and synth rhythms', 'Rhythm ideas with rotate and swing'],
+    properties: 'Host beat (or a free beat at the host\'s tempo) → step = beat / Rate, odd steps moved by Swing → step j plays when (j x Pulses) mod Steps < Pulses after Rotate → note-on with Velocity (Accent on the first pulse), note-off after Gate. Incoming MIDI passes through at its own sample; stopping ends the note. Audio passes through.',
+    formats: ['JSFX', 'GFX', 'VST3', 'CLAP', 'LV2'],
+    shot: 'assets/img/gfx/euclid.png',
+    video: 'assets/video/euclid.mp4',
+    page: 'plugins/euclid/'
+  },
   'humanize': {
     title: 'HUMANIZE',
     subtitle: 'Random Timing, Velocity & Groove for MIDI',
@@ -3269,6 +3516,49 @@ const guides = {
     shot: 'assets/img/gfx/midi_utility.png',
     video: 'assets/video/midi_utility.mp4',
     page: 'plugins/midi-utility/'
+  },
+  'note-echo': {
+    title: 'NOTE ECHO',
+    subtitle: 'MIDI Delay for Notes',
+    category: 'MIDI',
+    sliders: [
+      { name: 'Repeats', range: '1 to 16', desc: 'How many times each note is played again.' },
+      { name: 'Time', range: '10 to 2000 ms', desc: 'Time between echoes when Tempo Sync is Off.' },
+      { name: 'Tempo Sync', range: 'Off / On', desc: 'On uses Subdivision at the host\'s tempo.' },
+      { name: 'Subdivision', range: '1/4 / 1/8 / 1/16 / 1/32 / 1/2 / 1/8T / 1/16T / 1/8D', desc: 'Time between echoes when Tempo Sync is On.' },
+      { name: 'Velocity Decay', range: '0 to 100%', desc: 'How much quieter each echo is than the one before.' },
+      { name: 'Pitch Step', range: '−12 to +12 semitones', desc: 'How far each echo moves in pitch (they stop past note 0 or 127).' },
+      { name: 'Gate', range: '5 to 95%', desc: 'How long each echo lasts, as a share of the time between echoes.' },
+      { name: 'Dry', range: 'Off / On', desc: 'Off leaves out the notes that come in, so only the echoes sound.' }
+    ],
+    uses: ['Echoes that any instrument can play, without an audio delay', 'Rising or falling note cascades', 'Ratchets and rolls on drums', 'Generative patterns from a few notes'],
+    properties: 'MIDI in → every note-on adds Repeats echoes to a time-sorted queue (velocity x (1 - Decay)^k, pitch + k x Pitch Step, Gate of the interval) → notes out; a note that starts again while it sounds is ended first. Other MIDI passes through at its own sample; all notes off drops that channel\'s echoes. Audio passes through.',
+    formats: ['JSFX', 'GFX', 'VST3', 'CLAP', 'LV2'],
+    shot: 'assets/img/gfx/note_echo.png',
+    video: 'assets/video/note_echo.mp4',
+    page: 'plugins/note-echo/'
+  },
+  'pitch-to-midi': {
+    title: 'PITCH TO MIDI',
+    subtitle: 'Audio to MIDI for Monophonic Lines',
+    category: 'MIDI',
+    sliders: [
+      { name: 'Threshold', range: '−70 to 0 dB', desc: 'Level the line must reach to make a note (and 3 dB under it to end one).' },
+      { name: 'Low Note', range: '28 to 127', desc: 'Lowest note it looks for.' },
+      { name: 'High Note', range: '28 to 127', desc: 'Highest note it looks for.' },
+      { name: 'Stability', range: '10 to 200 ms', desc: 'How long a pitch must hold before a note starts or ends (longer is steadier, shorter is faster).' },
+      { name: 'Velocity', range: 'Fixed / Level', desc: 'Fixed gives every note Fixed Velocity; Level maps Threshold..0 dBFS to 1..127.' },
+      { name: 'Fixed Velocity', range: '1 to 127', desc: 'The velocity when Velocity is Fixed.' },
+      { name: 'Transpose', range: '−24 to +24 semitones', desc: 'Moves the notes it sends.' },
+      { name: 'Pitch Bend', range: 'Off / On', desc: 'On follows the pitch inside the note with pitch bend (range +/-2 semitones).' },
+      { name: 'Channel', range: '1 / 2 / 3 / 4 / 5 / 6 / 7 / 8 / 9 / 10 / 11 / 12 / 13 / 14 / 15 / 16', desc: 'MIDI channel of the notes.' }
+    ],
+    uses: ['Doubling a bass guitar with a synth bass', 'Turning a hummed or sung idea into MIDI', 'Layering a lead line with an instrument', 'Writing down a melody from a recording'],
+    properties: 'Input (passes through) → mono sum → 30 Hz high-pass → 24 dB/oct low-pass → decimation to about 11 kHz → YIN pitch detection every 64 kept samples (threshold 0.15, parabolic interpolation) and window RMS → note state (Stability, 0.8 semitone hold, silence 3 dB under Threshold) → note-on, note-off, optional pitch bend. Monophonic. Latency about the window plus Stability (some tens of ms). Incoming MIDI passes through at its own sample.',
+    formats: ['JSFX', 'GFX', 'VST3', 'CLAP', 'LV2'],
+    shot: 'assets/img/gfx/pitch_to_midi.png',
+    video: 'assets/video/pitch_to_midi.mp4',
+    page: 'plugins/pitch-to-midi/'
   },
   'riff': {
     title: 'RIFF',

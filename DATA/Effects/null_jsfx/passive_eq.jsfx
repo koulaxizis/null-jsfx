@@ -2,7 +2,7 @@ desc:NULL Passive EQ
 author: Christos Koulaxizis
 tags: eq equalizer passive program tube vintage low boost attenuate shelf air bandwidth mastering color
 //category: Essentials
-//NULL JSFX v2.9 • https://nulljsfx.tech • MIT License
+//NULL JSFX v3.0 • https://nulljsfx.tech • MIT License
 
 slider1:2<0,3,1{20 Hz,30 Hz,60 Hz,100 Hz}>Low Freq
 slider2:0<0,10,0.1>Low Boost

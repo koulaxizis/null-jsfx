@@ -310,6 +310,27 @@
     "properties": "4th-order Linkwitz-Riley crossover: the high-pass on every main channel and the low-pass on their sum add up flat (measured within 0.0001 dB from 20 Hz to 10 kHz), so the managed system sums like the full-range one, with the crossover's phase turn. The sub plays on the LFE pin. No latency. In REAPER set the track to 12 channels and route the pins to your bed. The player on this site plays pins 1 and 2 only.",
     "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-bass_management\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><path d=\"M 6,18 C 24,18 28,20 32,32 C 36,44 40,52 58,52\" stroke=\"url(#icon-bass_management)\" stroke-width=\"2.5\" fill=\"none\"/><path d=\"M 6,52 C 24,52 28,44 32,32 C 36,20 40,18 58,18\" stroke=\"url(#icon-bass_management)\" stroke-width=\"2.5\" fill=\"none\" opacity=\"0.5\"/><circle cx=\"32\" cy=\"32\" r=\"3\" fill=\"url(#icon-bass_management)\"/></svg>"
   },
+  "bitcrusher": {
+    "card_desc": "Bits and Sample Rate Lo-Fi",
+    "keywords": "bitcrusher bit crusher decimator sample rate reduction lo-fi lofi digital aliasing 8-bit 12-bit retro sampler",
+    "slider_desc": [
+      "Resolution: 2^(Bits - 1) steps on each side of zero (16 is nearly clean, 1 is a square).",
+      "How often a new sample is taken; lower is grittier, with more aliasing.",
+      "On filters before the decimator at 0.45 x Sample Rate, for the clean sound of an old sampler; Off lets the aliasing through.",
+      "Low-pass after the decimator, from 20 kHz (0%) down to 0.45 x Sample Rate (100%), to soften the steps.",
+      "Level into the crusher (more level uses more of the steps).",
+      "Blend of the crushed and the dry signal.",
+      "Output level."
+    ],
+    "uses": [
+      "Lo-fi drums and old sampler grit",
+      "8-bit game sounds",
+      "Parallel crunch on a bus",
+      "Telephone and broken-device effects"
+    ],
+    "properties": "Input → Drive → optional 12 dB/oct anti-alias low-pass → sample-and-hold at Sample Rate → rounding to Bits → optional 12 dB/oct Smooth low-pass → Mix → Output. No latency, stereo.",
+    "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-bcr\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><path d=\"M 6,40 L 6,32 L 14,32 L 14,22 L 22,22 L 22,16 L 30,16 L 30,22 L 38,22 L 38,32 L 46,32 L 46,42 L 54,42 L 54,48 L 58,48\" stroke=\"url(#icon-bcr)\" stroke-width=\"2.4\" fill=\"none\" stroke-linejoin=\"miter\"/></svg>"
+  },
   "breath_control": {
     "card_desc": "Vocal Breath Reduction",
     "keywords": "breath control breaths vocal de-breath reduce attenuate expander dynamics voice podcast",
@@ -916,6 +937,28 @@
     "properties": "An instrument: MIDI in, stereo out (or four stereo pairs with Outputs Groups), no samples. Ten synthesized voices after the classic drum machines: a sine kick with click and pitch sweep, a two-tone snare with noise, a three-burst clap, rim/clave, closed and open hats and a cymbal from six detuned squares (the closed hat chokes the open one), two toms with pitch sweep and a two-square cowbell. A 16-step sequencer locked to the host's beat while it plays: steps are hit, accent, flam, roll or chance (half the time), each track has its own length (1 to 16 steps), with swing up to 75%. Probability and Generate draw from an exact Park-Miller sequence from Seed, so a pattern always comes back the same. General MIDI drum notes (36 kick, 38 snare, 39 clap, 37 rim, 42 closed hat, 46 open hat, toms, 56 cowbell, 49 cymbal) play the voices at any time, with velocity. Drive is a soft clipper and Grit a sample-and-hold with bit reduction on the whole kit. Sample-accurate and the same in the JSFX, the GFX version and the VST3/CLAP. Song mode chains up to 8 sections (a pattern for 1 to 16 bars each), counted from the start of the project.",
     "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-drum-machine\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><rect x=\"8\" y=\"8\" width=\"10\" height=\"10\" rx=\"2\" fill=\"url(#icon-drum-machine)\"/><rect x=\"21\" y=\"8\" width=\"10\" height=\"10\" rx=\"2\" fill=\"none\" stroke=\"url(#icon-drum-machine)\" stroke-width=\"1.5\" opacity=\"0.6\"/><rect x=\"34\" y=\"8\" width=\"10\" height=\"10\" rx=\"2\" fill=\"url(#icon-drum-machine)\"/><rect x=\"47\" y=\"8\" width=\"10\" height=\"10\" rx=\"2\" fill=\"none\" stroke=\"url(#icon-drum-machine)\" stroke-width=\"1.5\" opacity=\"0.6\"/><rect x=\"8\" y=\"21\" width=\"10\" height=\"10\" rx=\"2\" fill=\"none\" stroke=\"url(#icon-drum-machine)\" stroke-width=\"1.5\" opacity=\"0.6\"/><rect x=\"21\" y=\"21\" width=\"10\" height=\"10\" rx=\"2\" fill=\"url(#icon-drum-machine)\"/><rect x=\"34\" y=\"21\" width=\"10\" height=\"10\" rx=\"2\" fill=\"none\" stroke=\"url(#icon-drum-machine)\" stroke-width=\"1.5\" opacity=\"0.6\"/><rect x=\"47\" y=\"21\" width=\"10\" height=\"10\" rx=\"2\" fill=\"none\" stroke=\"url(#icon-drum-machine)\" stroke-width=\"1.5\" opacity=\"0.6\"/><rect x=\"8\" y=\"34\" width=\"10\" height=\"10\" rx=\"2\" fill=\"url(#icon-drum-machine)\"/><rect x=\"21\" y=\"34\" width=\"10\" height=\"10\" rx=\"2\" fill=\"none\" stroke=\"url(#icon-drum-machine)\" stroke-width=\"1.5\" opacity=\"0.6\"/><rect x=\"34\" y=\"34\" width=\"10\" height=\"10\" rx=\"2\" fill=\"none\" stroke=\"url(#icon-drum-machine)\" stroke-width=\"1.5\" opacity=\"0.6\"/><rect x=\"47\" y=\"34\" width=\"10\" height=\"10\" rx=\"2\" fill=\"url(#icon-drum-machine)\"/><rect x=\"8\" y=\"47\" width=\"10\" height=\"10\" rx=\"2\" fill=\"none\" stroke=\"url(#icon-drum-machine)\" stroke-width=\"1.5\" opacity=\"0.6\"/><rect x=\"21\" y=\"47\" width=\"10\" height=\"10\" rx=\"2\" fill=\"url(#icon-drum-machine)\"/><rect x=\"34\" y=\"47\" width=\"10\" height=\"10\" rx=\"2\" fill=\"url(#icon-drum-machine)\"/><rect x=\"47\" y=\"47\" width=\"10\" height=\"10\" rx=\"2\" fill=\"none\" stroke=\"url(#icon-drum-machine)\" stroke-width=\"1.5\" opacity=\"0.6\"/></svg>"
   },
+  "drum_trigger": {
+    "card_desc": "Audio to MIDI Drum Trigger",
+    "keywords": "midi drum trigger replace replacement audio to midi kick snare tom hit detect velocity sample layer",
+    "slider_desc": [
+      "The MIDI note each hit plays.",
+      "Level a hit must reach to trigger.",
+      "Shortest time between two hits (stops double triggers).",
+      "How much the velocity follows the hit: 100% maps Threshold..0 dBFS to 1..127, 0% gives every hit 100.",
+      "High-pass on the detector, to keep lower drums out.",
+      "Low-pass on the detector, to keep cymbals out.",
+      "How long each note lasts.",
+      "MIDI channel of the notes."
+    ],
+    "uses": [
+      "Replacing a weak kick or snare with Drum Machine or Sampler",
+      "Layering a sample under a recorded drum",
+      "Turning a drum loop into MIDI",
+      "Driving a synth from a drum's rhythm"
+    ],
+    "properties": "Input (passes through) → mono sum → 12 dB/oct detector high-pass and low-pass → peak follower (5 ms release) → trigger (Threshold, Retrigger, 3 dB hysteresis) → 2 ms velocity window → note-on, note-off after Note Length. Incoming MIDI passes through at its own sample. About 2 ms from onset to note-on.",
+    "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-dtrig\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><path d=\"M 4,36 L 12,36 L 15,12 L 19,50 L 22,30 L 26,36 L 30,36\" stroke=\"url(#icon-dtrig)\" stroke-width=\"2.2\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><rect x=\"38\" y=\"22\" width=\"20\" height=\"20\" rx=\"3\" fill=\"url(#icon-dtrig)\" opacity=\"0.8\"/><path d=\"M 31,32 L 36,32\" stroke=\"url(#icon-dtrig)\" stroke-width=\"2\" stroke-linecap=\"round\"/></svg>"
+  },
   "dynamic_eq": {
     "card_desc": "Four-Band Dynamic EQ",
     "keywords": "dynamic eq equalizer equaliser parametric resonance harshness compressor expander frequency dependent dynamics",
@@ -1001,6 +1044,31 @@
     ],
     "properties": "Input → stereo-linked envelope (−48 to 0 dB mapped to 0–1) → exponential cutoff sweep from Low Freq to High Freq → TPT state-variable filter (or VCA in Volume mode) → Dry/Wet Mix → Output. Zero latency.",
     "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-envelope-follower\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><path d=\"M 8,46 L 18,22 L 30,30 L 42,38 L 56,44\" stroke=\"url(#icon-envelope-follower)\" stroke-width=\"1.5\" fill=\"none\" stroke-linecap=\"round\" opacity=\"0.5\"/><path d=\"M 8,40 L 22,40 C 30,40 30,18 36,18 C 40,18 42,30 44,40 L 56,40\" stroke=\"url(#icon-envelope-follower)\" stroke-width=\"2.5\" fill=\"none\" stroke-linecap=\"round\"/></svg>"
+  },
+  "euclid": {
+    "card_desc": "Euclidean Rhythm Generator",
+    "keywords": "midi euclid euclidean rhythm generator sequencer pattern pulses steps rotate polyrhythm drum trigger swing tempo sync",
+    "slider_desc": [
+      "Length of the pattern in steps.",
+      "How many of the steps play, spread as evenly as they go.",
+      "Turns the pattern by this many steps.",
+      "Length of one step at the host's tempo.",
+      "The MIDI note each pulse plays.",
+      "Velocity of the pulses.",
+      "How much louder the pattern's first pulse is, up to 127.",
+      "How long each note lasts, as a share of a step.",
+      "Moves every second step later, up to 0.375 of a step.",
+      "Transport plays while the host plays, locked to its beat; Always also runs while it is stopped.",
+      "MIDI channel of the notes."
+    ],
+    "uses": [
+      "Drum and percussion patterns from a few numbers",
+      "Polyrhythms with several instances on different lengths",
+      "Bass and synth rhythms",
+      "Rhythm ideas with rotate and swing"
+    ],
+    "properties": "Host beat (or a free beat at the host's tempo) → step = beat / Rate, odd steps moved by Swing → step j plays when (j x Pulses) mod Steps < Pulses after Rotate → note-on with Velocity (Accent on the first pulse), note-off after Gate. Incoming MIDI passes through at its own sample; stopping ends the note. Audio passes through.",
+    "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-euc\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><circle cx=\"32\" cy=\"32\" r=\"22\" stroke=\"url(#icon-euc)\" stroke-width=\"1.6\" fill=\"none\" opacity=\"0.5\"/><circle cx=\"32\" cy=\"10\" r=\"5\" fill=\"url(#icon-euc)\"/><circle cx=\"51\" cy=\"43\" r=\"5\" fill=\"url(#icon-euc)\"/><circle cx=\"13\" cy=\"43\" r=\"5\" fill=\"url(#icon-euc)\"/><circle cx=\"54\" cy=\"32\" r=\"2.5\" fill=\"url(#icon-euc)\" opacity=\"0.5\"/><circle cx=\"32\" cy=\"54\" r=\"2.5\" fill=\"url(#icon-euc)\" opacity=\"0.5\"/></svg>"
   },
   "exciter": {
     "card_desc": "Harmonic High Enhancer",
@@ -1252,6 +1320,34 @@
     "properties": "Input → key (optional one-pole high-pass) → stereo-linked peak detector → gain computer (2/4/10:1, 4 dB soft knee) → smoothing in dB (stepped attack 0.1–30 ms, release 0.1–1.2 s or Auto: the deeper of an 80 ms and a 0.5 s / 1.5 s envelope) → Makeup → Dry/Wet Mix → Output. Zero latency.",
     "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-glue\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><path d=\"M 8,52 L 30,30 L 56,20\" stroke=\"url(#icon-glue)\" stroke-width=\"2.5\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M 8,52 L 56,4\" stroke=\"url(#icon-glue)\" stroke-width=\"1.5\" fill=\"none\" opacity=\"0.3\"/><rect x=\"40\" y=\"38\" width=\"16\" height=\"4\" rx=\"1\" fill=\"url(#icon-glue)\" opacity=\"0.5\"/><rect x=\"40\" y=\"46\" width=\"10\" height=\"4\" rx=\"1\" fill=\"url(#icon-glue)\" opacity=\"0.5\"/></svg>"
   },
+  "granular": {
+    "card_desc": "Clouds of Grains from Your Samples",
+    "keywords": "instrument granular grains cloud texture pad ambient sample wav flac freeze scan spray polyphonic midi",
+    "slider_desc": [
+      "The WAV or FLAC file the grains come from (Data/null_jsfx_samples); none plays a built-in tone.",
+      "Where in the sound the grains are taken from.",
+      "How far around Position the grains scatter.",
+      "Moves the position while a key is held, forwards or backwards.",
+      "How long each grain is.",
+      "How many grains each key starts per second.",
+      "How far each grain's pitch may wander up or down.",
+      "How far the grains spread across the stereo field.",
+      "The chance that a grain plays backwards.",
+      "The key that plays the sound at its own pitch.",
+      "How slowly a note fades in.",
+      "How long a note rings after the key.",
+      "How much the key velocity changes the level.",
+      "Output level."
+    ],
+    "uses": [
+      "Ambient pads and textures from any recording",
+      "Freezing a moment of a voice or an instrument",
+      "Slowly scanning through a field recording",
+      "Shimmering, detuned or reversed clouds for sound design"
+    ],
+    "properties": "MIDI → 8 voices → each starts Density grains/s: Hann window of Grain Size, from Position + Scan ± Spray (Park-Miller draws), pitch from Root Key ± Pitch Spread, pan ± Stereo Spread, backwards with chance Reverse; up to 64 grains, linear reading → voice envelope (Attack, Release) → 1/√(density × size) → Volume. Every MIDI message passes on.",
+    "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-grn\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><circle cx=\"20\" cy=\"24\" r=\"5\" fill=\"url(#icon-grn)\"/><circle cx=\"36\" cy=\"18\" r=\"3\" fill=\"url(#icon-grn)\"/><circle cx=\"46\" cy=\"32\" r=\"6\" fill=\"url(#icon-grn)\" opacity=\"0.7\"/><circle cx=\"28\" cy=\"40\" r=\"4\" fill=\"url(#icon-grn)\" opacity=\"0.8\"/><circle cx=\"16\" cy=\"46\" r=\"2.5\" fill=\"url(#icon-grn)\"/><circle cx=\"42\" cy=\"48\" r=\"3\" fill=\"url(#icon-grn)\" opacity=\"0.6\"/></svg>"
+  },
   "granular_delay": {
     "card_desc": "Grain Cloud Delay",
     "keywords": "granular delay grains cloud texture pitch spray ambient glitch reverse shimmer",
@@ -1328,7 +1424,12 @@
       "How the voices find their notes: Semitones uses the fixed intervals, Scale turns the intervals into steps of the chosen key and scale above or below the note you sing (so harmonies stay in key), MIDI makes the voices sing the notes you hold on a MIDI keyboard",
       "Key of the scale used in Scale mode",
       "Scale used in Scale mode: Major, Minor, Dorian, Mixolydian, Harmonic Minor, Pentatonic Major or Pentatonic Minor",
-      "Shifts the voices with pitch-synchronous grains that keep the character of the vowels instead of the chipmunk effect (the voices come about 40 ms later)", "How many harmony voices sing: 2, or add voice 3 and 4 (in MIDI mode they sing the third and fourth latest held notes)", "Interval of voice 3 (Voices 3 or 4)", "Interval of voice 4 (Voices 4)", "Level of voice 3", "Level of voice 4"
+      "Shifts the voices with pitch-synchronous grains that keep the character of the vowels instead of the chipmunk effect (the voices come about 40 ms later)",
+      "How many harmony voices sing: 2, or add voice 3 and 4 (in MIDI mode they sing the third and fourth latest held notes)",
+      "Interval of voice 3 (Voices 3 or 4)",
+      "Interval of voice 4 (Voices 4)",
+      "Level of voice 3",
+      "Level of voice 4"
     ],
     "uses": [
       "Instant backing vocal harmonies",
@@ -1387,6 +1488,30 @@
     ],
     "properties": "An instrument: MIDI in, stereo out, no samples, 16 voices (the same key struck again takes a new voice and releases the old one; a 17th key takes the oldest voice, released ones first, after a 2 ms fade). Each key is a two-operator FM tone whose index falls after the strike, with a fast and a slow decay, plus up to three modal partials (damped resonators at the model's overtone ratios) and a short mallet noise; higher keys decay faster. Keys start with a 0.2 to 1.5 ms ramp and fade over Release; the sustain pedal (CC 64) holds them, all notes off (CC 123/120) releases every key. The voices are spread a little by pitch, then pass the drive (a soft clipper), the tremolo (level or autopan) and a stereo chorus. Sample-accurate and the same in the JSFX, the GFX version and the VST3/CLAP.",
     "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-keys\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><rect x=\"8\" y=\"14\" width=\"14\" height=\"38\" rx=\"2\" fill=\"none\" stroke=\"url(#icon-keys)\" stroke-width=\"3\"/><rect x=\"25\" y=\"14\" width=\"14\" height=\"38\" rx=\"2\" fill=\"none\" stroke=\"url(#icon-keys)\" stroke-width=\"3\"/><rect x=\"42\" y=\"14\" width=\"14\" height=\"38\" rx=\"2\" fill=\"none\" stroke=\"url(#icon-keys)\" stroke-width=\"3\"/><rect x=\"18\" y=\"14\" width=\"8\" height=\"22\" rx=\"1.5\" fill=\"url(#icon-keys)\"/><rect x=\"36\" y=\"14\" width=\"8\" height=\"22\" rx=\"1.5\" fill=\"url(#icon-keys)\"/></svg>"
+  },
+  "kick": {
+    "card_desc": "Kick Drum Synthesizer",
+    "keywords": "instrument kick drum bass drum 808 909 sub click punch pitch sweep synth midi",
+    "slider_desc": [
+      "The kick's pitch, where the sweep ends.",
+      "On: the kick follows the notes (C1 plays Pitch); Off: every key plays Pitch.",
+      "How far above Pitch the kick starts.",
+      "How fast the pitch falls to Pitch.",
+      "How long the kick rings (the time to fall 60 dB).",
+      "The level of the beater click.",
+      "How bright the click is.",
+      "Soft clipping for a harder, louder kick.",
+      "How much the key velocity changes the level.",
+      "Output level."
+    ],
+    "uses": [
+      "808 and 909 style kicks from MIDI",
+      "Tuned sub kicks that follow the bass line",
+      "Layering a click or a sub under a sampled kick",
+      "Replacing a weak recorded kick together with Drum Trigger"
+    ],
+    "properties": "MIDI note-on → sine body, pitch from Pitch + Sweep falling exponentially (Sweep Time), level −60 dB over Decay; + white noise (Park-Miller) low-passed at Click Tone, −60 dB over 20 ms → velocity → soft clip tanh(g·x)/tanh(g) → Volume. Two voices: a retrigger fades the old kick out over 3 ms. Every MIDI message passes on. No samples.",
+    "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-kik\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><circle cx=\"32\" cy=\"32\" r=\"24\" stroke=\"url(#icon-kik)\" stroke-width=\"2.5\" fill=\"none\"/><circle cx=\"32\" cy=\"32\" r=\"14\" stroke=\"url(#icon-kik)\" stroke-width=\"1.5\" fill=\"none\" opacity=\"0.6\"/><circle cx=\"32\" cy=\"32\" r=\"4\" fill=\"url(#icon-kik)\"/></svg>"
   },
   "kick_shaper": {
     "card_desc": "Kick Drum Sculptor",
@@ -1629,6 +1754,31 @@
     "properties": "Input → M/S split → side signal through a 4th-order low-pass (two Butterworth stages) → low side removed from L/R → Output. Mid and high side content are untouched; zero latency.",
     "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-mono-maker\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><path d=\"M 8,18 Q 20,18 32,40 Q 44,18 56,18\" stroke=\"url(#icon-mono-maker)\" stroke-width=\"2.5\" fill=\"none\" stroke-linecap=\"round\"/><path d=\"M 32,40 L 32,52\" stroke=\"url(#icon-mono-maker)\" stroke-width=\"2.5\" fill=\"none\" stroke-linecap=\"round\"/><path d=\"M 8,26 L 56,26\" stroke=\"url(#icon-mono-maker)\" stroke-width=\"1.5\" fill=\"none\" stroke-linecap=\"round\" opacity=\"0.3\"/></svg>"
   },
+  "multi_tap_delay": {
+    "card_desc": "Rhythmic Multi-Tap Echo",
+    "keywords": "delay multi tap multitap rhythmic echo pattern dotted triplet swing accelerate scatter tempo sync stereo spread",
+    "slider_desc": [
+      "How many echoes (1 to 8).",
+      "Where the echoes fall: even steps, dotted, triplet, swing, speeding up, slowing down or scattered.",
+      "The step between echoes in milliseconds (when Tempo Sync is off).",
+      "Lock the step to the host tempo.",
+      "The note value of the step when synced.",
+      "How much quieter each echo is than the one before.",
+      "How far the echoes are panned left and right in turn.",
+      "Sends the last echo back into the line for longer tails.",
+      "High-pass on the echoes.",
+      "Low-pass on the echoes.",
+      "Blend between the dry signal and the echoes."
+    ],
+    "uses": [
+      "Rhythmic echoes on vocals and guitars",
+      "Bouncing-ball and slowing-down effects",
+      "Wide stereo patterns on synths",
+      "Dub-style repeats with feedback"
+    ],
+    "properties": "Input → 4 s stereo line → up to 8 taps at pattern × step (Time or a synced note), level (1 − Decay)^(k−1), alternating pan by Spread → sum → 12 dB/oct low cut and high cut → Dry/Wet Mix; the last tap feeds back. Zero latency.",
+    "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-mtap\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><rect x=\"8\" y=\"14\" width=\"5\" height=\"36\" rx=\"1\" fill=\"url(#icon-mtap)\"/><rect x=\"20\" y=\"22\" width=\"5\" height=\"28\" rx=\"1\" fill=\"url(#icon-mtap)\" opacity=\"0.85\"/><rect x=\"32\" y=\"28\" width=\"5\" height=\"22\" rx=\"1\" fill=\"url(#icon-mtap)\" opacity=\"0.7\"/><rect x=\"44\" y=\"34\" width=\"5\" height=\"16\" rx=\"1\" fill=\"url(#icon-mtap)\" opacity=\"0.55\"/><rect x=\"54\" y=\"39\" width=\"5\" height=\"11\" rx=\"1\" fill=\"url(#icon-mtap)\" opacity=\"0.4\"/></svg>"
+  },
   "multiband_compressor": {
     "card_desc": "Four-Band Compressor",
     "keywords": "multiband multi-band compressor four band crossover dynamics mastering per band split",
@@ -1733,6 +1883,28 @@
     "properties": "Signal chain: Input → 2048-Point FFT (4× overlap, Hann) → Noise Estimate (Learnt Profile or Auto Minimum Statistics) → Wiener-Like Gain with Floor → Time + Frequency Smoothing → Attack/Release → IFFT Overlap-Add → Mix → Output. One gain for both channels; latency 2047 samples (reported). The learnt profile lives in memory and is not saved with the project: learn again after a reload, or use Auto.",
     "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-noise-reduction\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><path d=\"M8,44 L11,40 L14,46 L17,39 L20,45 L23,41 L26,46 L29,40 L32,44\" stroke=\"url(#icon-noise-reduction)\" stroke-width=\"1.5\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\" opacity=\"0.4\"/><path d=\"M8,20 C20,20 22,32 32,32 L56,32\" stroke=\"url(#icon-noise-reduction)\" stroke-width=\"2.5\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M36,44 L56,44\" stroke=\"url(#icon-noise-reduction)\" stroke-width=\"2.5\" fill=\"none\" stroke-linecap=\"round\"/><path d=\"M40,16 L52,16 M46,10 L46,22\" stroke=\"url(#icon-noise-reduction)\" stroke-width=\"1.5\" fill=\"none\" stroke-linecap=\"round\" opacity=\"0.4\"/></svg>"
   },
+  "note_echo": {
+    "card_desc": "MIDI Delay for Notes",
+    "keywords": "midi note echo delay repeat repeater ratchet tempo sync velocity decay pitch step arpeggio generative",
+    "slider_desc": [
+      "How many times each note is played again.",
+      "Time between echoes when Tempo Sync is Off.",
+      "On uses Subdivision at the host's tempo.",
+      "Time between echoes when Tempo Sync is On.",
+      "How much quieter each echo is than the one before.",
+      "How far each echo moves in pitch (they stop past note 0 or 127).",
+      "How long each echo lasts, as a share of the time between echoes.",
+      "Off leaves out the notes that come in, so only the echoes sound."
+    ],
+    "uses": [
+      "Echoes that any instrument can play, without an audio delay",
+      "Rising or falling note cascades",
+      "Ratchets and rolls on drums",
+      "Generative patterns from a few notes"
+    ],
+    "properties": "MIDI in → every note-on adds Repeats echoes to a time-sorted queue (velocity x (1 - Decay)^k, pitch + k x Pitch Step, Gate of the interval) → notes out; a note that starts again while it sounds is ended first. Other MIDI passes through at its own sample; all notes off drops that channel's echoes. Audio passes through.",
+    "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-nec\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><rect x=\"6\" y=\"18\" width=\"10\" height=\"28\" rx=\"2\" fill=\"url(#icon-nec)\"/><rect x=\"22\" y=\"24\" width=\"10\" height=\"22\" rx=\"2\" fill=\"url(#icon-nec)\" opacity=\"0.8\"/><rect x=\"38\" y=\"30\" width=\"10\" height=\"16\" rx=\"2\" fill=\"url(#icon-nec)\" opacity=\"0.6\"/><rect x=\"54\" y=\"36\" width=\"6\" height=\"10\" rx=\"2\" fill=\"url(#icon-nec)\" opacity=\"0.4\"/></svg>"
+  },
   "octaver": {
     "card_desc": "Analog Octave Divider",
     "keywords": "octave octaver octave down sub octave divider bass guitar analog flip-flop octave up synth",
@@ -1788,6 +1960,29 @@
     ],
     "properties": "An instrument: MIDI in, stereo out, no samples, 16 voices (a 17th key takes the oldest voice, released ones first, after a 1.5 ms fade). Each key sums its nine drawbars as sines at the harmonics 1/2, 3/2, 1, 2, 3, 4, 5, 6 and 8 of its pitch, made from one sine and cosine per key; like tonewheels the harmonics fold back an octave above 5.9 kHz and below 32 Hz. Keys start and stop with 1.5 and 6 ms ramps; velocity does nothing, as on the original. The sum passes the vibrato scanner (a delay swept at 6.9 Hz), the preamp (a soft clipper) and the rotary speaker of NULL Rotary Speaker (an 800 Hz crossover, horn and drum with Doppler and tremolo, two microphones). CC 11 is expression (smoothed), the mod wheel (CC 1) at 64 and up switches the rotor speed, all notes off (CC 123/120) releases every key. Sample-accurate and the same in the JSFX, the GFX version and the VST3/CLAP.",
     "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-organ\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><rect x=\"8\" y=\"8\" width=\"6\" height=\"34\" rx=\"2\" fill=\"url(#icon-organ)\"/><rect x=\"18\" y=\"8\" width=\"6\" height=\"28\" rx=\"2\" fill=\"url(#icon-organ)\" opacity=\"0.8\"/><rect x=\"28\" y=\"8\" width=\"6\" height=\"34\" rx=\"2\" fill=\"url(#icon-organ)\"/><rect x=\"38\" y=\"8\" width=\"6\" height=\"16\" rx=\"2\" fill=\"url(#icon-organ)\" opacity=\"0.6\"/><rect x=\"48\" y=\"8\" width=\"6\" height=\"10\" rx=\"2\" fill=\"url(#icon-organ)\" opacity=\"0.5\"/><path d=\"M 6,52 L 58,52\" stroke=\"url(#icon-organ)\" stroke-width=\"3\" stroke-linecap=\"round\"/></svg>"
+  },
+  "oscilloscope": {
+    "card_desc": "Triggered Waveform Display",
+    "keywords": "oscilloscope scope waveform trigger time domain wave shape phase meter analyzer metering tempo sync",
+    "slider_desc": [
+      "The width of the screen, from 1 ms to 2 s.",
+      "Set the width from the tempo instead, from a 1/16 note to two bars.",
+      "Auto waits for a crossing and draws anyway after two screens; Normal draws only on a crossing; Free draws all the time.",
+      "Trigger when the signal rises or falls through the level.",
+      "The level the signal must cross to start a screen.",
+      "Show the mid, left and right over each other, or the side.",
+      "Make the picture bigger or smaller (the trigger level follows it).",
+      "Freeze the last screen.",
+      "Play what the screen shows (the mid or the side); Stereo leaves the audio untouched."
+    ],
+    "uses": [
+      "Seeing the shape of a kick, a bass note or a synth wave",
+      "Checking clipping, DC offset and the polarity of two channels",
+      "Watching an envelope over one beat or one bar",
+      "Lining up the attack of two layers"
+    ],
+    "properties": "The audio passes through untouched (Listen View plays the mid or the side). Display: 512 columns of minimum and maximum over the screen width, started by a rising or falling crossing of the trigger level after Gain (Auto: or after two screens; Free: at once). Zero latency.",
+    "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-osc\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><rect x=\"6\" y=\"10\" width=\"52\" height=\"44\" rx=\"4\" stroke=\"url(#icon-osc)\" stroke-width=\"2.5\" fill=\"none\"/><path d=\"M6 32 H58 M32 10 V54\" stroke=\"url(#icon-osc)\" stroke-width=\"1\" opacity=\"0.5\"/><path d=\"M10 40 L18 22 L26 40 L34 22 L42 40 L50 22 L54 30\" stroke=\"url(#icon-osc)\" stroke-width=\"2.5\" fill=\"none\"/></svg>"
   },
   "ott": {
     "card_desc": "Multiband Upward/Downward Compressor",
@@ -1870,6 +2065,30 @@
     ],
     "properties": "Input → five RBJ biquad bands in series (Low Shelf, High Shelf, Peaking, Low Pass, High Pass, Notch, Band Pass or All Pass per band) → Output. Solo replaces the soloed band with a band-pass and mutes the other bands' processing; Gain only affects shelf and peaking types; zero latency. The GFX and VST3/CLAP interfaces draw a real-time FFT spectrum (4096 points, Hann window, 300 ms fall) behind the EQ curve; the FFT POST / PRE / OFF selector in the display picks the output, the input or none (an interface setting, the audio is unchanged).",
     "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\">\n<defs><linearGradient id=\"icon-5bpeq\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs>\n<path d=\"M 4,44 L 60,44\" stroke=\"url(#icon-5bpeq)\" stroke-width=\"1\" fill=\"none\" stroke-dasharray=\"2,3\" opacity=\"0.3\"/>\n<path d=\"M 4,44 Q 9,36 14,44\" stroke=\"url(#icon-5bpeq)\" stroke-width=\"2.5\" fill=\"none\" stroke-linecap=\"round\"/>\n<path d=\"M 16,44 Q 21,28 26,44\" stroke=\"url(#icon-5bpeq)\" stroke-width=\"2.5\" fill=\"none\" stroke-linecap=\"round\"/>\n<path d=\"M 28,44 Q 33,18 38,44\" stroke=\"url(#icon-5bpeq)\" stroke-width=\"2.5\" fill=\"none\" stroke-linecap=\"round\"/>\n<path d=\"M 40,44 Q 45,26 50,44\" stroke=\"url(#icon-5bpeq)\" stroke-width=\"2.5\" fill=\"none\" stroke-linecap=\"round\"/>\n<path d=\"M 52,44 Q 56,34 60,44\" stroke=\"url(#icon-5bpeq)\" stroke-width=\"2.5\" fill=\"none\" stroke-linecap=\"round\"/>\n</svg>"
+  },
+  "passive_eq": {
+    "card_desc": "Passive-Style Program EQ",
+    "keywords": "eq equalizer passive program tube vintage low boost attenuate shelf air bandwidth mastering color",
+    "slider_desc": [
+      "The low frequency for both low controls.",
+      "Low shelf boost (up to +13.5 dB).",
+      "Gentler low shelf cut a little higher; with Low Boost it gives the classic bump with a dip above it.",
+      "The frequency of the high peak.",
+      "High peak boost (up to +18 dB).",
+      "Width of the high peak: 0 is sharp, 10 is broad.",
+      "The frequency of the high shelf cut.",
+      "High shelf cut (down to −20 dB).",
+      "Drive of the tube stage (even harmonics).",
+      "Output level."
+    ],
+    "uses": [
+      "Weight on kick and bass with boost and attenuation together",
+      "Air and presence on vocals",
+      "Broad tone shaping on the mix bus or master",
+      "Warming up with the tube stage"
+    ],
+    "properties": "Input → low shelf boost at 1.2 × Low Freq → low shelf cut at 2.2 × Low Freq → high peak at High Freq (Q from Bandwidth) → high shelf cut at Atten Freq (each skipped at 0) → tube stage (asymmetric tanh, 10 Hz DC blocker, skipped at 0%) → Output. Zero latency; every control at 0 leaves the sound untouched.",
+    "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-peq\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><path d=\"M 4,40 Q 14,20 22,36 Q 28,46 34,40 L 40,40 Q 48,40 52,22 Q 56,34 60,40\" stroke=\"url(#icon-peq)\" stroke-width=\"2.5\" fill=\"none\" stroke-linecap=\"round\"/><path d=\"M 4,40 L 60,40\" stroke=\"url(#icon-peq)\" stroke-width=\"1\" opacity=\"0.3\"/></svg>"
   },
   "percussion": {
     "card_desc": "Hand Percussion with Groove Player",
@@ -2042,6 +2261,29 @@
     "properties": "Input → 60 ms delay line read by two taps in opposite phase with Hann crossfades → Dry/Wet Mix → Output. Total shift = Octave × 12 + Semitones + Fine/100 semitones; the window-based method adds some smearing on transients.",
     "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\">\n<defs><linearGradient id=\"icon-pitch\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs>\n<path d=\"M 8,32 L 16,32 L 18,26 L 20,38 L 22,26 L 24,38 L 26,26 L 28,38 L 30,32 L 38,32\" stroke=\"url(#icon-pitch)\" stroke-width=\"2.5\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/>\n<path d=\"M 38,32 L 48,20 M 38,32 L 48,44\" stroke=\"url(#icon-pitch)\" stroke-width=\"2\"/>\n<path d=\"M 48,20 L 48,44\" stroke=\"url(#icon-pitch)\" stroke-width=\"2\"/>\n</svg>"
   },
+  "pitch_to_midi": {
+    "card_desc": "Audio to MIDI for Monophonic Lines",
+    "keywords": "midi pitch to midi audio to midi convert tracker detection yin monophonic bass vocal guitar melody note pitch bend transcribe",
+    "slider_desc": [
+      "Level the line must reach to make a note (and 3 dB under it to end one).",
+      "Lowest note it looks for.",
+      "Highest note it looks for.",
+      "How long a pitch must hold before a note starts or ends (longer is steadier, shorter is faster).",
+      "Fixed gives every note Fixed Velocity; Level maps Threshold..0 dBFS to 1..127.",
+      "The velocity when Velocity is Fixed.",
+      "Moves the notes it sends.",
+      "On follows the pitch inside the note with pitch bend (range +/-2 semitones).",
+      "MIDI channel of the notes."
+    ],
+    "uses": [
+      "Doubling a bass guitar with a synth bass",
+      "Turning a hummed or sung idea into MIDI",
+      "Layering a lead line with an instrument",
+      "Writing down a melody from a recording"
+    ],
+    "properties": "Input (passes through) → mono sum → 30 Hz high-pass → 24 dB/oct low-pass → decimation to about 11 kHz → YIN pitch detection every 64 kept samples (threshold 0.15, parabolic interpolation) and window RMS → note state (Stability, 0.8 semitone hold, silence 3 dB under Threshold) → note-on, note-off, optional pitch bend. Monophonic. Latency about the window plus Stability (some tens of ms). Incoming MIDI passes through at its own sample.",
+    "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-p2m\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><path d=\"M 4,32 C 8,18 12,18 16,32 C 20,46 24,46 28,32\" stroke=\"url(#icon-p2m)\" stroke-width=\"2.2\" fill=\"none\" stroke-linecap=\"round\"/><path d=\"M 31,32 L 36,32\" stroke=\"url(#icon-p2m)\" stroke-width=\"2\" stroke-linecap=\"round\"/><rect x=\"40\" y=\"18\" width=\"16\" height=\"6\" rx=\"1.5\" fill=\"url(#icon-p2m)\"/><rect x=\"40\" y=\"30\" width=\"10\" height=\"6\" rx=\"1.5\" fill=\"url(#icon-p2m)\" opacity=\"0.8\"/><rect x=\"44\" y=\"42\" width=\"14\" height=\"6\" rx=\"1.5\" fill=\"url(#icon-p2m)\" opacity=\"0.6\"/></svg>"
+  },
   "pluck": {
     "card_desc": "Plucked Strings with Strummer",
     "keywords": "pluck plucked strings karplus strong physical model guitar nylon steel acoustic harp koto pipa lute banjo dulcimer strum strummer chords rhythm guitar body resonance sustain pedal midi instrument",
@@ -2156,7 +2398,8 @@
       "Ring time of the fundamental (time to fall by 60 dB)",
       "How long the upper harmonics ring compared with the fundamental (low = dark, damped strings; high = bright, metallic)",
       "Stereo detune: left strings down, right strings up, by up to 15 cents",
-      "Dry/wet blend", "Where the string notes come from: Chord uses Root, Octave and Chord; MIDI tunes the strings to the notes you play (the four latest held notes; they keep ringing after you let go)"
+      "Dry/wet blend",
+      "Where the string notes come from: Chord uses Root, Octave and Chord; MIDI tunes the strings to the notes you play (the four latest held notes; they keep ringing after you let go)"
     ],
     "uses": [
       "Turn drums and percussion into tuned, pitched hits",
@@ -2336,7 +2579,9 @@
       "Plays the sample backwards (Start and the loop then count from its end).",
       "How much the key velocity changes the level (0% plays every note the same).",
       "Pitch-bend range (0 to 24 semitones).",
-      "The output level (-24 to +12 dB).", "Cuts the sample into 4 to 64 equal slices, one per key, for chopping beats and phrases (Off: the whole sample, as before).", "The key that plays the first slice; each key above it plays the next one."
+      "The output level (-24 to +12 dB).",
+      "Cuts the sample into 4 to 64 equal slices, one per key, for chopping beats and phrases (Off: the whole sample, as before).",
+      "The key that plays the first slice; each key above it plays the next one."
     ],
     "uses": [
       "Play your own one-shots (hits, stabs, vocal chops) from a keyboard or pads",
@@ -2533,6 +2778,24 @@
     "properties": "Input → Pre-Delay → two Schroeder all-passes per side → 8-line feedback delay network (moving interpolated reads, one-pole damping, 60 dB decay in the decay time, 8×8 Hadamard matrix) → left from the even lines, right from the odd → Dry/Wet Mix → Output. Zero latency.",
     "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-space\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><circle cx=\"32\" cy=\"32\" r=\"4\" fill=\"url(#icon-space)\"/><circle cx=\"32\" cy=\"32\" r=\"12\" stroke=\"url(#icon-space)\" stroke-width=\"2\" fill=\"none\" opacity=\"0.7\"/><circle cx=\"32\" cy=\"32\" r=\"20\" stroke=\"url(#icon-space)\" stroke-width=\"1.5\" fill=\"none\" opacity=\"0.45\"/><circle cx=\"32\" cy=\"32\" r=\"27\" stroke=\"url(#icon-space)\" stroke-width=\"1\" fill=\"none\" opacity=\"0.25\"/></svg>"
   },
+  "speaker_sim": {
+    "card_desc": "Phone, Laptop and Car Speakers",
+    "keywords": "speaker simulator device phone laptop earbuds tv radio telephone megaphone car mix check lo-fi small speaker",
+    "slider_desc": [
+      "The device: phone, laptop, earbuds, TV, radio, telephone, megaphone or car.",
+      "Blend between the dry signal and the device.",
+      "Extra clipping of the small speaker.",
+      "Output level."
+    ],
+    "uses": [
+      "Checking how a mix translates to phones, laptops and cars (on the monitor FX)",
+      "Telephone and radio voices",
+      "Megaphone shouts",
+      "Lo-fi textures"
+    ],
+    "properties": "Input → mono sum (phone, radio, telephone, megaphone) → 24 dB/oct high-pass → two resonance bands → soft clip tanh(g·x)/g (Drive, plus the megaphone's own) → 24 dB/oct low-pass → Dry/Wet Mix → Output. Zero latency.",
+    "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-spk\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><rect x=\"18\" y=\"6\" width=\"28\" height=\"52\" rx=\"5\" stroke=\"url(#icon-spk)\" stroke-width=\"2.5\" fill=\"none\"/><circle cx=\"32\" cy=\"38\" r=\"9\" stroke=\"url(#icon-spk)\" stroke-width=\"2\" fill=\"none\"/><circle cx=\"32\" cy=\"18\" r=\"3\" fill=\"url(#icon-spk)\"/></svg>"
+  },
   "spectral_ducker": {
     "card_desc": "Make Room for a Vocal, Band by Band",
     "keywords": "spectral ducker sidechain ducking trackspacer vocal space carve mix masking frequency ducking dynamic eq kick bass voice over 32 band",
@@ -2587,7 +2850,9 @@
       "Lowest level on the display, below 0 dB at the top.",
       "Keeps a second, thinner curve at the highest level each frequency reached: for 2 s, or until the setting changes (Infinite).",
       "Signal analysed: Mid (L+R)/2, Left, Right or Side (L−R)/2.",
-      "Stereo passes the audio through untouched (bit-exact). Solo plays the analysed channel on both outputs, e.g. to listen to the side signal.", "Spectrum draws the live curve; Spectrogram draws the last seconds as a scrolling image (time left to right, frequency bottom to top, brightness = level).", "On analyses the sidechain input (pins 3/4) the same way and draws it over the spectrum, to compare a mix with a reference track or see where two tracks overlap."
+      "Stereo passes the audio through untouched (bit-exact). Solo plays the analysed channel on both outputs, e.g. to listen to the side signal.",
+      "Spectrum draws the live curve; Spectrogram draws the last seconds as a scrolling image (time left to right, frequency bottom to top, brightness = level).",
+      "On analyses the sidechain input (pins 3/4) the same way and draws it over the spectrum, to compare a mix with a reference track or see where two tracks overlap."
     ],
     "uses": [
       "Spotting resonances and build-ups while mixing",
@@ -2682,7 +2947,8 @@
       "Scales the goniometer to the signal level automatically.",
       "Persistence: how much recent history the goniometer shows, newest samples brightest.",
       "Time constant of the correlation, balance and width measurement.",
-      "Listen to the stereo signal, its mono sum or its side signal (the meter always reads the input).", "Shows the correlation in three bands, Low (below 200 Hz), Mid and High (above 2 kHz), to find which part of the mix is out of phase."
+      "Listen to the stereo signal, its mono sum or its side signal (the meter always reads the input).",
+      "Shows the correlation in three bands, Low (below 200 Hz), Mid and High (above 2 kHz), to find which part of the mix is out of phase."
     ],
     "uses": [
       "Checking mono compatibility and phase problems",
@@ -2980,6 +3246,27 @@
     "properties": "Signal chain: Input → 12 s Buffer → Varispeed Read (quadratic slow-down, square-root spin-up) → 10 ms Crossfade → Output. Audio passes untouched while Idle; the tape output also fades as the motor stops; zero latency.",
     "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-tape\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><circle cx=\"32\" cy=\"32\" r=\"18\" stroke=\"url(#icon-tape)\" stroke-width=\"2\" fill=\"none\"/><circle cx=\"32\" cy=\"32\" r=\"10\" stroke=\"url(#icon-tape)\" stroke-width=\"1\" fill=\"none\" opacity=\"0.4\"/><circle cx=\"32\" cy=\"32\" r=\"3\" fill=\"url(#icon-tape)\" opacity=\"0.5\"/><path d=\"M 8,32 Q 20,28 32,32 Q 44,36 56,32\" stroke=\"url(#icon-tape)\" stroke-width=\"1.5\" fill=\"none\" opacity=\"0.3\" stroke-dasharray=\"3,2\"/></svg>"
   },
+  "test_signal": {
+    "card_desc": "Sine, Sweep, Noise and Polarity Tones",
+    "keywords": "test signal tone generator sine sweep pink noise white noise polarity calibration reference level speaker wiring utility",
+    "slider_desc": [
+      "The signal: sine, logarithmic sweep, pink noise, white noise or polarity pulses.",
+      "The sine's frequency.",
+      "The level: peak for the sine, sweep and pulses, RMS for the noises.",
+      "How long one sweep from 20 Hz to 20 kHz takes.",
+      "Play on both sides, or only on the left or right.",
+      "Turn the right channel upside down, to hear what a wrong-polarity speaker sounds like.",
+      "Off replaces the input with the signal; On adds the signal to it."
+    ],
+    "uses": [
+      "Calibrating monitor levels with pink noise",
+      "Finding which speaker is which, and checking wiring and polarity",
+      "Sweeping a room or a filter for resonances",
+      "A reference tone at the start of a mix or a broadcast"
+    ],
+    "properties": "Sine or log sweep (20 Hz → 20 kHz) from a phase accumulator, pink noise (Paul Kellet's filter) or white noise from a Park-Miller generator, or a 2 ms raised-cosine pulse twice a second → Level (10 ms glide) → Channels / Invert Right → replaces or adds to the input. Zero latency.",
+    "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-tsg\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><rect x=\"6\" y=\"14\" width=\"52\" height=\"36\" rx=\"5\" stroke=\"url(#icon-tsg)\" stroke-width=\"2.5\" fill=\"none\"/><path d=\"M12 32 Q18 18 24 32 T36 32 T48 32 T54 32\" stroke=\"url(#icon-tsg)\" stroke-width=\"2.5\" fill=\"none\"/></svg>"
+  },
   "tilt": {
     "card_desc": "One-Knob Tilt EQ",
     "keywords": "tilt eq equalizer tone bass treble balance tonal brighter darker",
@@ -3074,6 +3361,26 @@
     ],
     "properties": "Input → stereo-linked fast (1/20 ms) and slow (20/150 ms) envelopes → transient amount from their difference → gain blend of Attack and Sustain → Dry/Wet Mix → Output. Level-independent, no threshold; zero latency.",
     "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\">\n<defs><linearGradient id=\"icon-trans\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs>\n<path d=\"M 8,32 L 16,32 L 20,16 L 28,48 L 36,16 L 44,48 L 48,32 L 56,32\" stroke=\"url(#icon-trans)\" stroke-width=\"2.5\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/>\n<path d=\"M 20,32 L 20,48 M 28,32 L 28,48 M 36,32 L 36,48 M 44,32 L 44,48\" stroke=\"url(#icon-trans)\" stroke-width=\"1.5\" opacity=\"0.4\"/>\n</svg>"
+  },
+  "transient_split": {
+    "card_desc": "Transient and Tonal Splitter",
+    "keywords": "transient tonal split attack body tail drums separate routing parallel reverb saturation",
+    "slider_desc": [
+      "Balance: both parts on channels 1/2, each with its own level. Split: the transients on 1/2 and the tonal part on 3/4, for processing them apart.",
+      "Level of the transient part (the attack of each hit).",
+      "Level of the tonal part (the body and the tail).",
+      "How easily a sound counts as a transient.",
+      "How long the transient part lasts after each onset.",
+      "Output level."
+    ],
+    "uses": [
+      "More or less attack on drums without EQ",
+      "Turning down room and tail on a drum recording",
+      "Reverb or saturation on only the body or only the attack (Split mode)",
+      "Softening plucks and clicks"
+    ],
+    "properties": "Input → fast (1 ms) and slow (25 ms) linked peak envelopes, 100 ms release → transient weight (fast − slow) / fast × Sensitivity, instant rise, fall over Decay → transient = x·w, tonal = x·(1 − w) → Balance: levels and sum on 1/2; Split: transient on 1/2, tonal on 3/4 → Output. No frequency bands, zero latency; the two parts always sum to the input.",
+    "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-tsplit\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><path d=\"M 6,40 L 14,40 L 18,10 L 24,34 L 58,40\" stroke=\"url(#icon-tsplit)\" stroke-width=\"2.5\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M 6,54 L 18,54 Q 26,44 58,52\" stroke=\"url(#icon-tsplit)\" stroke-width=\"2\" fill=\"none\" opacity=\"0.5\" stroke-linecap=\"round\"/></svg>"
   },
   "tremolo": {
     "card_desc": "Sine LFO Tremolo",

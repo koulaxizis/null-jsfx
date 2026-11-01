@@ -2,7 +2,7 @@ desc:NULL Harmonizer GFX
 author: Christos Koulaxizis
 tags: harmonizer harmony pitch shift voices interval thirds fifths octave backing vocals scale diatonic key midi formant psola four voices choir gui
 //category: Advanced
-//NULL JSFX v2.9 • https://nulljsfx.tech • MIT License
+//NULL JSFX v3.0 • https://nulljsfx.tech • MIT License
 
 import null_gfx.jsfx-inc
 

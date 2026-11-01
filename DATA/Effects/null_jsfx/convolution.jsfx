@@ -2,7 +2,7 @@ desc:NULL Convolution
 author: Christos Koulaxizis
 tags: convolution reverb impulse response ir room hall plate cabinet
 //category: Advanced
-//NULL JSFX v2.9 • https://nulljsfx.tech • MIT License
+//NULL JSFX v3.0 • https://nulljsfx.tech • MIT License
 
 slider1:2<0,5,1{Small Room,Large Room,Hall,Plate,Cathedral,IR File}>Source
 slider2:/null_jsfx_ir:none:IR File

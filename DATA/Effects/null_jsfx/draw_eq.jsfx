@@ -2,7 +2,7 @@ desc:NULL Draw EQ
 author: Christos Koulaxizis
 tags: equalizer eq draw drawable curve graphic 10-band smooth tone shaping mixing mastering
 //category: Essentials
-//NULL JSFX v2.9 • https://nulljsfx.tech • MIT License
+//NULL JSFX v3.0 • https://nulljsfx.tech • MIT License
 
 slider1:0<-18,18,0.1>31 Hz (dB)
 slider2:0<-18,18,0.1>63 Hz (dB)

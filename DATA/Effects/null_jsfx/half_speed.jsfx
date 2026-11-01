@@ -2,7 +2,7 @@ desc:NULL Half Speed
 author: Christos Koulaxizis
 tags: half speed halftime half-time slow down octave down tempo sync time stretch granular pitch creative
 //category: Advanced
-//NULL JSFX v2.9 • https://nulljsfx.tech • MIT License
+//NULL JSFX v3.0 • https://nulljsfx.tech • MIT License
 
 slider1:2<0,3,1{1/4,1/2,1 Bar,2 Bars}>Length
 slider2:0<0,2,1{1/2,1/4,2/3}>Speed

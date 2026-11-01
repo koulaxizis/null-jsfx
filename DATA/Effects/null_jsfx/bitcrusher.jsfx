@@ -2,7 +2,7 @@ desc:NULL Bitcrusher
 author: Christos Koulaxizis
 tags: bitcrusher bit crusher decimator sample rate reduction lo-fi lofi digital aliasing 8-bit 12-bit retro
 //category: Essentials
-//NULL JSFX v2.9 • https://nulljsfx.tech • MIT License
+//NULL JSFX v3.0 • https://nulljsfx.tech • MIT License
 
 slider1:8<1,16,1>Bits
 slider2:8000<100,48000,1:log>Sample Rate (Hz)

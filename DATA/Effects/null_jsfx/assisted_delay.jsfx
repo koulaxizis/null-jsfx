@@ -2,7 +2,7 @@ desc:NULL Assisted Delay
 author: Christos Koulaxizis
 tags: delay echo slapback assisted learn assistant auto automatic tempo sync ping-pong ducking vocal drums bus
 //category: Assisted
-//NULL JSFX v2.9 • https://nulljsfx.tech • MIT License
+//NULL JSFX v3.0 • https://nulljsfx.tech • MIT License
 
 slider1:0<0,1,1{Off,On}>Learn
 slider2:0<0,4,1{Vocal,Drums,Bass,Instrument,Mix}>Source

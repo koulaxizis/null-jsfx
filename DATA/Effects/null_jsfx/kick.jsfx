@@ -2,7 +2,7 @@ desc:NULL Kick
 author: Christos Koulaxizis
 tags: instrument kick drum bass drum 808 909 sub click punch pitch sweep synth midi
 //category: Instruments
-//NULL JSFX v2.9 • https://nulljsfx.tech • MIT License
+//NULL JSFX v3.0 • https://nulljsfx.tech • MIT License
 
 slider1:50<30,120,0.1>Pitch (Hz)
 slider2:0<0,1,1{Off,On}>Follow Notes

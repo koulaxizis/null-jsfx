@@ -2,7 +2,7 @@ desc:NULL Granular
 author: Christos Koulaxizis
 tags: instrument granular grains cloud texture pad ambient sample wav flac freeze scan spray polyphonic midi
 //category: Instruments
-//NULL JSFX v2.9 • https://nulljsfx.tech • MIT License
+//NULL JSFX v3.0 • https://nulljsfx.tech • MIT License
 
 slider1:/null_jsfx_samples:none:Sample File
 slider2:30<0,100,0.1>Position (%)

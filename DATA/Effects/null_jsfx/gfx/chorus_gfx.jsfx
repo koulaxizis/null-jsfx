@@ -2,7 +2,7 @@ desc:NULL Chorus GFX
 author: Christos Koulaxizis
 tags: chorus modulation thickening detune lfo stereo width ensemble dimension tempo sync gui
 //category: Essentials
-//NULL JSFX v2.9 • https://nulljsfx.tech • MIT License
+//NULL JSFX v3.0 • https://nulljsfx.tech • MIT License
 
 import null_gfx.jsfx-inc
 

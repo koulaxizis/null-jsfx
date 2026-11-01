@@ -2,7 +2,7 @@ desc:NULL Test Signal
 author: Christos Koulaxizis
 tags: test signal tone generator sine sweep pink noise white noise polarity calibration reference level speaker wiring utility
 //category: Essentials
-//NULL JSFX v2.9 • https://nulljsfx.tech • MIT License
+//NULL JSFX v3.0 • https://nulljsfx.tech • MIT License
 
 slider1:0<0,4,1{Sine,Sweep,Pink Noise,White Noise,Polarity}>Signal
 slider2:1000<20,20000,1:log>Frequency (Hz)

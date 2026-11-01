@@ -2,7 +2,7 @@ desc:NULL Noise Reduction GFX
 author: Christos Koulaxizis
 tags: noise reduction denoise hiss hum room tone spectral subtraction restoration fft gui
 //category: Advanced
-//NULL JSFX v2.9 • https://nulljsfx.tech • MIT License
+//NULL JSFX v3.0 • https://nulljsfx.tech • MIT License
 
 import null_gfx.jsfx-inc
 

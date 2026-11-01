@@ -2,7 +2,7 @@ desc:NULL Note Echo
 author: Christos Koulaxizis
 tags: midi note echo delay repeat repeater ratchet tempo sync velocity decay pitch step arpeggio generative
 //category: MIDI
-//NULL JSFX v2.9 • https://nulljsfx.tech • MIT License
+//NULL JSFX v3.0 • https://nulljsfx.tech • MIT License
 
 slider1:3<1,16,1>Repeats
 slider2:250<10,2000,1>Time (ms)

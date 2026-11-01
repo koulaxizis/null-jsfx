@@ -2,7 +2,7 @@ desc:NULL Pitch Correction
 author: Christos Koulaxizis
 tags: pitch correction auto tune autotune vocal tuning key scale retune hard tune psola midi vibrato
 //category: Advanced
-//NULL JSFX v2.9 • https://nulljsfx.tech • MIT License
+//NULL JSFX v3.0 • https://nulljsfx.tech • MIT License
 
 slider1:0<0,11,1{C,C#,D,D#,E,F,F#,G,G#,A,A#,B}>Key
 slider2:0<0,8,1{Chromatic,Major,Minor,Harmonic Minor,Pentatonic Major,Pentatonic Minor,Blues,Dorian,Mixolydian}>Scale
