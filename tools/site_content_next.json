@@ -1,1 +1,23 @@
-{}
+{
+  "room_tone": {
+    "card_desc": "Dialogue Gap Filler",
+    "keywords": "room tone ambience fill gaps dialogue edit post production noise bed adr restoration fft",
+    "slider_desc": [
+      "While On, learns the room tone per frequency and between the channels: play a passage of room tone only, then switch Off",
+      "The input level below which a gap begins",
+      "Level of the fill against the learnt room tone",
+      "How fast the fill fades in and out",
+      "How long the input must stay below Threshold before a gap is filled",
+      "Fill gaps tops quiet passages up to the room tone; Constant bed adds the fill all the time",
+      "Hear the output or only the fill"
+    ],
+    "uses": [
+      "Fill the digital silence that cuts and gates leave in dialogue",
+      "Keep the room under a podcast steady after noise reduction",
+      "Lay a matching room bed under ADR recorded elsewhere",
+      "Bridge the gaps between edited takes from the same location"
+    ],
+    "properties": "Signal chain: Learn: Input → 2048-Point FFT (4× overlap, Hann) → Power per Bin and Cross Spectrum. Fill: Learnt Magnitudes + Random Phases (Park-Miller) → IFFT Overlap-Add → Fill Level. Gap Detector (10 ms Power, Threshold, Hold) → Top-Up to the Room Tone → Fade → Output = Input + Fill. The fill never repeats, keeps the stereo coherence of the recording and adds only what is missing, so a gap that still holds its room tone gets nothing; no latency. The profile lives in memory and is not saved with the project: learn again after a reload.",
+    "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-room-tone\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><path d=\"M8,32 L12,18 L16,44 L20,22 L24,40\" stroke=\"url(#icon-room-tone)\" stroke-width=\"2.5\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M24,34 L28,30 L32,35 L36,29 L40,34\" stroke=\"url(#icon-room-tone)\" stroke-width=\"1.5\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\" opacity=\"0.5\"/><path d=\"M40,32 L44,16 L48,46 L52,20 L56,40\" stroke=\"url(#icon-room-tone)\" stroke-width=\"2.5\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M24,48 L40,48\" stroke=\"url(#icon-room-tone)\" stroke-width=\"1.5\" fill=\"none\" stroke-linecap=\"round\" opacity=\"0.4\"/></svg>"
+  }
+}

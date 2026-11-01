@@ -119,3 +119,20 @@ add_test(NAME changes_gfx_convolution COMMAND compare "${_jsfx_dir}/convolution.
 if(NULL_RACK_MODULES AND "convolution" IN_LIST NULL_RACK_MODULES)
   add_test(NAME changes_module_convolution COMMAND module_compare "${_jsfx_dir}/convolution.jsfx" "module:convolution" --changes 1)
 endif()
+
+# Room Tone learns, then fills: Learn On, then Fill gaps, then Constant bed heard alone (Listen
+# Fill only), changed mid-render, must give the same output in the JSFX, the GFX JSFX, the CLAP
+# and the Rack module
+set(_rt_sets "1,-50,0,40,80,0,0;0,-20,-3,10,0,0,0;0,-50,6,200,500,1,1;1,-30,-10,100,200,1,1")
+if(TARGET null_jsfx_room_tone-clap)
+  if(APPLE)
+    set(_rt_bin "${CMAKE_BINARY_DIR}/bin/null_jsfx_room_tone.clap/Contents/MacOS/null_jsfx_room_tone")
+  else()
+    set(_rt_bin "${CMAKE_BINARY_DIR}/bin/null_jsfx_room_tone.clap")
+  endif()
+  add_test(NAME changes_room_tone COMMAND compare "${_jsfx_dir}/room_tone.jsfx" "${_rt_bin}" --changes 1 --sets "${_rt_sets}")
+endif()
+add_test(NAME changes_gfx_room_tone COMMAND compare "${_jsfx_dir}/room_tone.jsfx" "${_jsfx_dir}/gfx/room_tone_gfx.jsfx" --tol 0 --changes 1 --sets "${_rt_sets}")
+if(NULL_RACK_MODULES AND "room_tone" IN_LIST NULL_RACK_MODULES)
+  add_test(NAME changes_module_room_tone COMMAND module_compare "${_jsfx_dir}/room_tone.jsfx" "module:room_tone" --changes 1 --sets "${_rt_sets}")
+endif()

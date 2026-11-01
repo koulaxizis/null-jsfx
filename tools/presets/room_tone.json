@@ -1,0 +1,9 @@
+[
+  ["Podcast Pauses", {"Threshold (dB)": -55, "Hold (ms)": 150, "Fade (ms)": 60}],
+  ["Fast Edits", {"Hold (ms)": 20, "Fade (ms)": 15}],
+  ["Smooth Gaps", {"Hold (ms)": 200, "Fade (ms)": 120}],
+  ["Quiet Studio", {"Threshold (dB)": -62, "Hold (ms)": 120}],
+  ["Noisy Location", {"Threshold (dB)": -40, "Hold (ms)": 60, "Fade (ms)": 30}],
+  ["ADR Bed", {"Mode": "Constant bed", "Fill Level (dB)": -6, "Fade (ms)": 100}],
+  ["Listen to the Fill", {"Mode": "Constant bed", "Listen": "Fill only"}]
+]

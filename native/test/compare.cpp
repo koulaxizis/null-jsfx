@@ -19,6 +19,8 @@
  * level against the input's. Every setting runs at 44.1 and 96 kHz.
  * With --changes 1, the sliders also change while it plays: each setting is followed by the next
  * one at 1 s and the one after it at 2 s (at a block start, between blocks in both renders).
+ * --sets "a,b,...;c,d,..." adds settings of every slider, in order, after the generated ones (a
+ * plugin whose sound depends on a sequence, such as Room Tone's Learn On then Off, with --changes).
  * Exit code 0 when every max diff <= tolerance.
  *
  * Sidechain plugins (a JSFX with more than two input pins, a CLAP with a second input port):
@@ -703,6 +705,7 @@ int main(int argc, char** argv)
     const std::string other = argv[2];
     double tol = 1e-5;
     std::vector<double> values;
+    std::vector<std::vector<double>> extraSets;
     const char* rpl = nullptr;
     bool withChanges = false;
     for (int i = 3; i + 1 < argc; i += 2) {
@@ -712,6 +715,21 @@ int main(int argc, char** argv)
             rpl = argv[i + 1];
         else if (!std::strcmp(argv[i], "--changes"))
             withChanges = std::atoi(argv[i + 1]) != 0;
+        else if (!std::strcmp(argv[i], "--sets")) {
+            const std::string v = argv[i + 1];
+            for (size_t p = 0; p < v.size();) {
+                size_t q = v.find(';', p);
+                const std::string one = v.substr(p, q == std::string::npos ? std::string::npos : q - p);
+                std::vector<double> set;
+                for (size_t a = 0; a < one.size();) {
+                    size_t b = one.find(',', a);
+                    set.push_back(std::atof(one.substr(a, b == std::string::npos ? std::string::npos : b - a).c_str()));
+                    a = b == std::string::npos ? one.size() : b + 1;
+                }
+                extraSets.push_back(set);
+                p = q == std::string::npos ? v.size() : q + 1;
+            }
+        }
         else if (!std::strcmp(argv[i], "--values")) {
             std::string v = argv[i + 1];
             for (size_t p = 0; p < v.size();) {
@@ -779,6 +797,16 @@ int main(int argc, char** argv)
             sets.push_back(set);
             labels.push_back("random #" + std::to_string(r + 1));
         }
+    }
+
+    for (size_t e = 0; e < extraSets.size(); ++e) {
+        if (extraSets[e].size() != sl.size()) {
+            std::fprintf(stderr, "--sets: set %zu has %zu values, the JSFX has %zu sliders\n", e + 1,
+                         extraSets[e].size(), sl.size());
+            return 2;
+        }
+        sets.push_back(extraSets[e]);
+        labels.push_back("set #" + std::to_string(e + 1));
     }
 
     const bool isJsfx = endsWith(other, ".jsfx");

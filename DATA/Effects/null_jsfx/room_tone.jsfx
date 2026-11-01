@@ -1,0 +1,183 @@
+desc:NULL Room Tone
+author: Christos Koulaxizis
+tags: room tone ambience fill gaps dialogue edit post production noise bed adr restoration fft
+//category: Essentials
+//NULL JSFX v3.0 • https://nulljsfx.tech • MIT License
+
+slider1:0<0,1,1{Off,On}>Learn
+slider2:-50<-80,-20,1>Threshold (dB)
+slider3:0<-20,6,0.5>Fill Level (dB)
+slider4:40<5,200,1>Fade (ms)
+slider5:80<0,500,1>Hold (ms)
+slider6:0<0,1,1{Fill gaps,Constant bed}>Mode
+slider7:0<0,1,1{Output,Fill only}>Listen
+
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
+
+@init
+  ext_noinit = 1;              // play and seek keep tails and state, as in the VST3/CLAP
+  // Learns the room tone of a recording and fills the gaps of the dialogue with it, so cuts,
+  // gates and noise reduction do not leave holes of silence. No AI: with Learn On the power
+  // of each channel and their cross spectrum are averaged per bin (2048-point FFT, Hann
+  // window, 4x overlap); play a passage of room tone only, then switch Learn Off. The fill
+  // is new noise with that spectrum: every 512 samples a frame of random phases (an exact
+  // Park-Miller sequence) with the learnt magnitudes, the right channel as coherent with the
+  // left as in the recording, inverse FFT, Hann window, overlap-add. It never repeats.
+  // Fill gaps: when the input stays below Threshold for Hold, the fill tops the level up to
+  // the room tone (only what is missing: a gap that still holds its room tone gets nothing)
+  // and fades in and out with Fade. Constant bed adds the fill all the time (ADR recorded
+  // elsewhere). Nothing is added while learning or before a profile exists. The profile stays
+  // in memory while the plugin runs (also across playback starts); it is not saved with the
+  // project, like Noise Reduction's. No latency.
+  N = 2048; H = N / 4; NB = N / 2 + 1;
+  fft_l = 0; fft_r = 2 * N;          // 2N slots each, neither crosses a 65536 boundary
+  win = 4 * N;
+  in_l = win + N; in_r = in_l + N;
+  out_l = in_r + N; out_r = out_l + N;
+  ppl = out_r + N;                   // learnt profile: summed power, left
+  ppr = ppl + NB;                    // summed power, right
+  pcr = ppr + NB;                    // summed cross spectrum left x conj(right), real
+  pci = pcr + NB;                    // and imaginary
+  freembuf(pci + NB);
+  memset(win, 0, ppl - win);
+  // the profile survives @init (playback start); only a new sample rate clears it
+  prof_sr != srate ? (memset(ppl, 0, 4 * NB); lcount = 0; learning = 0; prof_sr = srate);
+  i = 0;
+  loop(N, win[i] = 0.5 - 0.5 * cos(2 * $pi * i / N); i += 1);
+  // white noise of power p learns p x sum(w^2) = p x 3N/8 per bin; the inverse FFT of N bins
+  // of that power has N times it, and overlap-added squared Hann windows at 4x sum to 1.5:
+  // (4 / (3N))^2 x N x 3N/8 x 1.5 = 1
+  oscale = 4 / (3 * N);
+  di = exp(-1 / (0.01 * srate));     // input power detector: 10 ms, a gap is found quickly
+  df = exp(-1 / (0.05 * srate));     // fill power detector: 50 ms, the fill is steady
+  // Park-Miller generator in exact double arithmetic (seed * 16807 < 2^53), so the fill is the
+  // same on every host and CPU
+  seed = 12345;
+  ipos = 0; opos = 0; cnt = 0; filled = 0;
+  ein = 0; efl = 0; hc = 0; g = 0;
+
+  function rt_rand()
+  (
+    seed *= 16807;
+    seed -= floor(seed / 2147483647) * 2147483647;
+    seed / 2147483647;
+  );
+
+  // learning: analyse the last N samples into the profile; otherwise, with a profile, write
+  // the next frame of fill
+  function rt_frame() local(i, k, p, w, rl, il, rr, ir, pl, pr, d, gr, gi, s, a, b, ar, ai, br, bi, ml, mr)
+  (
+    // Learn switched on: start a new profile
+    learn && !learning ? (memset(ppl, 0, 4 * NB); lcount = 0);
+    learning = learn;
+    learning ? (
+      filled >= N ? (
+        i = 0;
+        loop(N,
+          p = (ipos + i) % N;
+          w = win[i];
+          fft_l[2 * i] = in_l[p] * w; fft_l[2 * i + 1] = 0;
+          fft_r[2 * i] = in_r[p] * w; fft_r[2 * i + 1] = 0;
+          i += 1;
+        );
+        fft(fft_l, N); fft_permute(fft_l, N);
+        fft(fft_r, N); fft_permute(fft_r, N);
+        k = 0;
+        loop(NB,
+          rl = fft_l[2 * k]; il = fft_l[2 * k + 1];
+          rr = fft_r[2 * k]; ir = fft_r[2 * k + 1];
+          ppl[k] += rl * rl + il * il;
+          ppr[k] += rr * rr + ir * ir;
+          pcr[k] += rl * rr + il * ir;
+          pci[k] += il * rr - rl * ir;
+          k += 1;
+        );
+        lcount += 1;
+      );
+    ) : lcount > 0 ? (
+      memset(fft_l, 0, 2 * N);
+      memset(fft_r, 0, 2 * N);
+      k = 1;
+      loop(N / 2 - 1,
+        pl = ppl[k] / lcount;
+        pr = ppr[k] / lcount;
+        d = sqrt(pl * pr);
+        gr = d > 0 ? pcr[k] / lcount / d : 0;
+        gi = d > 0 ? pci[k] / lcount / d : 0;
+        s = sqrt(max(0, 1 - gr * gr - gi * gi));
+        a = 2 * $pi * rt_rand();
+        b = 2 * $pi * rt_rand();
+        ar = cos(a); ai = sin(a);
+        br = cos(b); bi = sin(b);
+        ml = sqrt(pl);
+        mr = sqrt(pr);
+        // left: the learnt magnitude, a random phase; right: conj(coherence) x the left's
+        // phase plus the rest of its power on a second random phase
+        fft_l[2 * k] = ml * ar;
+        fft_l[2 * k + 1] = ml * ai;
+        fft_r[2 * k] = mr * (gr * ar + gi * ai + s * br);
+        fft_r[2 * k + 1] = mr * (gr * ai - gi * ar + s * bi);
+        fft_l[2 * (N - k)] = fft_l[2 * k];
+        fft_l[2 * (N - k) + 1] = -fft_l[2 * k + 1];
+        fft_r[2 * (N - k)] = fft_r[2 * k];
+        fft_r[2 * (N - k) + 1] = -fft_r[2 * k + 1];
+        k += 1;
+      );
+      fft_ipermute(fft_l, N); ifft(fft_l, N);
+      fft_ipermute(fft_r, N); ifft(fft_r, N);
+      i = 0;
+      loop(N,
+        p = (opos + i) % N;
+        w = win[i] * oscale;
+        out_l[p] += fft_l[2 * i] * w;
+        out_r[p] += fft_r[2 * i] * w;
+        i += 1;
+      );
+    );
+  );
+
+@slider
+  learn = slider1;
+  thp = 10 ^ (slider2 / 10);         // Threshold as a power
+  lvl = 10 ^ (slider3 / 20);
+  fc = exp(-1 / (slider4 / 1000 * srate));
+  hold = floor(slider5 / 1000 * srate);
+  mode = slider6;
+  listen = slider7;
+
+@sample
+  in_l[ipos] = spl0;
+  in_r[ipos] = spl1;
+  ipos += 1; ipos >= N ? ipos = 0;
+  filled < N ? filled += 1;
+
+  cnt += 1;
+  cnt >= H ? (
+    cnt = 0;
+    rt_frame();
+  );
+
+  f_l = out_l[opos] * lvl; out_l[opos] = 0;
+  f_r = out_r[opos] * lvl; out_r[opos] = 0;
+  opos += 1; opos >= N ? opos = 0;
+
+  // the input's power (10 ms) and the fill's (50 ms); a gap starts after Hold below Threshold
+  ein = ein * di + (spl0 * spl0 + spl1 * spl1) * 0.5 * (1 - di);
+  efl = efl * df + (f_l * f_l + f_r * f_r) * 0.5 * (1 - df);
+  ein < thp ? (hc < hold ? hc += 1) : (hc = 0);
+  // the share of the fill that brings the level up to the room tone: sqrt(1 - input / fill)
+  target = (learning || lcount == 0) ? 0 :
+    mode == 1 ? 1 :
+    (ein < thp && hc >= hold && efl > 0) ? sqrt(max(0, 1 - ein / efl)) : 0;
+  g = g * fc + target * (1 - fc);
+
+  listen ? (
+    spl0 = f_l * g;
+    spl1 = f_r * g;
+  ) : (
+    spl0 += f_l * g;
+    spl1 += f_r * g;
+  );
