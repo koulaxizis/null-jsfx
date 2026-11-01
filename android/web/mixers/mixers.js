@@ -1,6 +1,7 @@
 // NULL Remote, Mixers tab: remote control for digital mixers (X AIR first; X32/M32 later as
 // profiles). Loads its own files next to it, then registers with the app's tab shell:
-//   NullRemote.register({id:'mixers', title:'Mixers', app:'mixers', mount(el), unmount()}).
+//   NullRemote.register({id:'mixers', title:'Mixers', app:'mixers', mount(el), back()}).
+// The shell (android/web/core) owns the header, the tab bar and keep-awake (a Settings choice).
 // Views: Connect (scan, manual IP, how to connect) and Desk (layers of strips, the mix selector
 // "Main LR / Bus n / FX n" with sends on faders, mute groups, clear solo, My mix, screen lock).
 // NULL JSFX • https://nulljsfx.tech • MIT License
@@ -37,7 +38,6 @@
   };
   const shell = () => window.NullShell || {};
   const haptic = () => { try { shell().haptic && shell().haptic(); } catch (_) { /* optional */ } };
-  const keepAwake = (on) => { try { shell().keepAwake && shell().keepAwake(on); } catch (_) { /* optional */ } };
 
   function h(tag, attrs, ...kids) {
     const el = document.createElement(tag);
@@ -158,7 +158,6 @@
         this.session = s;
         this.view.host = host;
         store.set({ host });
-        keepAwake(true);
         this.showDesk();
       } catch (e) {
         err.textContent = e.message + '. Is the phone on the mixer’s network?';
@@ -176,7 +175,6 @@
       this.teardown();
       if (this.session) this.session.disconnect();
       this.session = null;
-      keepAwake(false);
       this.showConnect();
     }
 
@@ -381,7 +379,8 @@
     pickMyMix() {
       const L = this.session.layout;
       const sheet = h('div', { class: 'nm-sheet' });
-      const close = () => sheet.remove();
+      const close = () => { sheet.remove(); this.closeSheet = null; };
+      this.closeSheet = close;
       sheet.append(h('div', null,
         h('h2', null, 'MY MIX'),
         h('div', { class: 'nm-sub' }, 'For a musician: this device then shows only the sends to one monitor bus and its master. Hold the button at the top to leave.'),
@@ -397,9 +396,12 @@
       return ready.then(() => { if (this.session) this.showDesk(); else this.showConnect(); });
     }
 
-    unmount() {
-      this.teardown();
-      keepAwake(false);
+    unmount() { this.teardown(); }
+
+    // the phone's Back button: close the My mix picker; otherwise let the shell decide
+    back() {
+      if (this.closeSheet) { this.closeSheet(); return true; }
+      return false;
     }
   }
 
@@ -407,9 +409,23 @@
   const api = {
     id: 'mixers',
     title: 'Mixers',
+    order: 20,
     app: 'mixers', // shown only in the mixers app of the shell (flavor "mixers")
-    mount(el) { tab = tab && tab.root === el ? tab : new MixersTab(el); return tab.mount(); },
+    // The tab draws into its own root inside el, under the shell's NULL JSFX header when the
+    // shell offers one, so the class names it sets never touch the shell's element.
+    mount(el) {
+      if (!tab || tab.host !== el) {
+        const root = document.createElement('div');
+        root.className = 'nm';
+        if (window.NullRemote && window.NullRemote.header) el.appendChild(window.NullRemote.header('Mixers'));
+        el.appendChild(root);
+        tab = new MixersTab(root);
+        tab.host = el;
+      }
+      return tab.mount();
+    },
     unmount() { if (tab) tab.unmount(); },
+    back() { return tab ? tab.back() : false; },
     // for tests and the desktop harness: a transport factory replacing the app's UDP bridge
     useTransport(factory) { MixersTab.prototype.transportFactory = factory; },
   };
