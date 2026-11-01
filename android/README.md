@@ -4,7 +4,7 @@ One shell, two apps (Christos, 2026-11-01; the DAW app is one app for every DAW,
 
 | App | applicationId | Tab code | Release asset |
 |---|---|---|---|
-| Remote for DAWs | `tech.nulljsfx.remote.daws` | `web/daws/` (REAPER first; Ardour/Mixbus and Bitwig next) | `NULL-JSFX-Remote-DAWs-Android.apk` |
+| Remote for DAWs | `tech.nulljsfx.remote.daws` | `web/daws/` (REAPER; Ardour/Mixbus and Bitwig on the shared desk `daws/core/`) | `NULL-JSFX-Remote-DAWs-Android.apk` |
 | Remote for Mixers | `tech.nulljsfx.remote.mixers` | `web/mixers/` | `NULL-JSFX-Remote-Mixers-Android.apk` |
 
 The application ids never change once released (Bible R3). Each app comes in two store

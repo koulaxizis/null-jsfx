@@ -1,6 +1,7 @@
 // NULL Remote, Mixers: OSC 1.0 codec shared by every mixer profile (X AIR now, X32/M32 later).
 // Encodes and decodes messages and bundles as Uint8Array, with the argument types the
-// Behringer/Midas consoles use: i (int32), f (float32), s (string), b (blob). Big-endian, as the
+// Behringer/Midas consoles use: i (int32), f (float32), s (string), b (blob); also d (float64)
+// and h (int64), which Ardour sends (t, a time tag, is decoded as a number). Big-endian, as the
 // OSC spec says. Runs in the WebView and in Node (tests and the simulator).
 // NULL JSFX • https://nulljsfx.tech • MIT License
 (function (root, factory) {
@@ -40,6 +41,11 @@
         const dv = new DataView(b.buffer);
         if (a.t === 'i') dv.setInt32(0, a.v | 0, false);
         else dv.setFloat32(0, a.v, false);
+        parts.push(b);
+      } else if (a.t === 'd' || a.t === 'h') {
+        const b = new Uint8Array(8);
+        if (a.t === 'd') new DataView(b.buffer).setFloat64(0, a.v, false);
+        else new DataView(b.buffer).setBigInt64(0, BigInt(Math.trunc(a.v)), false);
         parts.push(b);
       } else if (a.t === 's') {
         parts.push(stringBytes(String(a.v)));
@@ -99,6 +105,9 @@
       for (const t of tags.slice(1)) {
         if (t === 'i') { args.push({ t, v: dv.getInt32(pos, false) }); pos += 4; }
         else if (t === 'f') { args.push({ t, v: dv.getFloat32(pos, false) }); pos += 4; }
+        // 64-bit types (Ardour sends d for plugin values and h for the session's sample rate)
+        else if (t === 'd') { args.push({ t, v: dv.getFloat64(pos, false) }); pos += 8; }
+        else if (t === 'h' || t === 't') { args.push({ t, v: Number(dv.getBigInt64(pos, false)) }); pos += 8; }
         else if (t === 's') { let s; [s, pos] = readString(bytes, pos); args.push({ t, v: s }); }
         else if (t === 'b') {
           const n = dv.getInt32(pos, false);
