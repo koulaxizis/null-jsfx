@@ -22,13 +22,18 @@ static const NullKnobsUI::Control kControls[] = {
     { 7, NullKnobsUI::kKnob, "MIX", 1, -1, false },
     { 10, NullKnobsUI::kSelect, "SCALE", 1, -1, false },
     { 11, NullKnobsUI::kSelect, "FORMANT", 1, -1, false },
+    { 12, NullKnobsUI::kSelect, "VOICES", 2, -1, false },
+    { 13, NullKnobsUI::kKnob, "VOICE 3", 2, -1, true },
+    { 14, NullKnobsUI::kKnob, "VOICE 4", 2, -1, true },
+    { 15, NullKnobsUI::kKnob, "LEVEL 3", 2, -1, false },
+    { 16, NullKnobsUI::kKnob, "LEVEL 4", 2, -1, false },
 };
 
 class UIHarmonizer : public NullKnobsUI
 {
 public:
     UIHarmonizer()
-        : NullKnobsUI({ "HARMONIZER", "ADVANCED", 480, 120, nullptr, 2, nullharmonizer::kSliders, nullharmonizer::kNumSliders,
+        : NullKnobsUI({ "HARMONIZER", "ADVANCED", 480, 120, nullptr, 3, nullharmonizer::kSliders, nullharmonizer::kNumSliders,
                         kControls, sizeof(kControls) / sizeof(kControls[0]), true }) {}
 
 protected:
@@ -75,6 +80,8 @@ protected:
         const float cx = fPX + fPW * 0.5f, cy = linY(0.0f, -12.0f, 12.0f);
         const float x1 = linX((1.0f - sp) * 0.5f, 0.0f, 1.0f), x2 = linX(1.0f - (1.0f - sp) * 0.5f, 0.0f, 1.0f);
         float i1 = value(0) + det, i2 = value(1) - det, a1 = 1.0f, a2 = 1.0f, cur = 0.0f, n1 = 0.0f, n2 = 0.0f;
+        float i3 = value(13) + det * 0.5f, i4 = value(14) - det * 0.5f, a3 = 1.0f, a4 = 1.0f, n3 = 0.0f, n4 = 0.0f;
+        const int nv = int(std::lround(value(12))) + 2;
         bool pitched = false;
         nulljsfx::Taps* t = taps();
         if (t && t->aux[8].load(std::memory_order_relaxed) > 0.5f)
@@ -83,6 +90,10 @@ protected:
             i2 = t->aux[1].load(std::memory_order_relaxed);
             a1 = t->aux[2].load(std::memory_order_relaxed);
             a2 = t->aux[3].load(std::memory_order_relaxed);
+            i3 = t->aux[9].load(std::memory_order_relaxed);
+            i4 = t->aux[10].load(std::memory_order_relaxed);
+            a3 = t->aux[11].load(std::memory_order_relaxed);
+            a4 = t->aux[12].load(std::memory_order_relaxed);
         }
         if (t)
         {
@@ -90,9 +101,15 @@ protected:
             pitched = t->aux[5].load(std::memory_order_relaxed) > 0.5f;
             n1 = t->aux[6].load(std::memory_order_relaxed);
             n2 = t->aux[7].load(std::memory_order_relaxed);
+            n3 = t->aux[13].load(std::memory_order_relaxed);
+            n4 = t->aux[14].load(std::memory_order_relaxed);
         }
         const float y1 = linY(clampf(i1, -12.0f, 12.0f), -12.0f, 12.0f), y2 = linY(clampf(i2, -12.0f, 12.0f), -12.0f, 12.0f);
         const float r1 = 3.0f + 5.0f * (value(2) + 48.0f) / 48.0f, r2 = 3.0f + 5.0f * (value(3) + 48.0f) / 48.0f;
+        // voices 3 and 4 (Voices 3 or 4) sit halfway out
+        const float x3 = linX((1.0f - sp * 0.5f) * 0.5f, 0.0f, 1.0f), x4 = linX(1.0f - (1.0f - sp * 0.5f) * 0.5f, 0.0f, 1.0f);
+        const float y3 = linY(clampf(i3, -12.0f, 12.0f), -12.0f, 12.0f), y4 = linY(clampf(i4, -12.0f, 12.0f), -12.0f, 12.0f);
+        const float r3 = 3.0f + 5.0f * (value(15) + 48.0f) / 48.0f, r4 = 3.0f + 5.0f * (value(16) + 48.0f) / 48.0f;
 
         // the mode, bottom left under the dots: the key and the note sung (Scale), the held
         // notes (MIDI); Formant Preserve
@@ -124,6 +141,17 @@ protected:
                 }
                 else
                     std::snprintf(buf, sizeof(buf), "MIDI  %s", a);
+                const float nn[2] = { n3, n4 };
+                for (int v = 0; v < 2 && v + 3 <= nv; ++v)
+                {
+                    if (nn[v] > 0.5f)
+                    {
+                        char m[64];
+                        noteName(int(std::lround(nn[v])) - 1, b, sizeof(b));
+                        std::snprintf(m, sizeof(m), "%s  %s", buf, b);
+                        std::snprintf(buf, sizeof(buf), "%s", m);
+                    }
+                }
             }
             else
                 std::snprintf(buf, sizeof(buf), "MIDI  HOLD NOTES");
@@ -143,6 +171,16 @@ protected:
         lineTo(x1, y1);
         moveTo(cx, cy);
         lineTo(x2, y2);
+        if (nv > 2)
+        {
+            moveTo(cx, cy);
+            lineTo(x3, y3);
+        }
+        if (nv > 3)
+        {
+            moveTo(cx, cy);
+            lineTo(x4, y4);
+        }
         strokeColor(col(theme::kAccent, 0.35f));
         strokeWidth(1.0f);
         stroke();
@@ -152,11 +190,21 @@ protected:
         dot(x2, y2, r2, theme::kAccent, wet * a2);
         labelA(x1 + r1 + 4.0f, y1, "1", a1);
         labelA(x2 + r2 + 4.0f, y2, "2", a2);
+        if (nv > 2)
+        {
+            dot(x3, y3, r3, theme::kAccent, wet * a3);
+            labelA(x3 + r3 + 4.0f, y3, "3", a3);
+        }
+        if (nv > 3)
+        {
+            dot(x4, y4, r4, theme::kAccent, wet * a4);
+            labelA(x4 + r4 + 4.0f, y4, "4", a4);
+        }
     }
 
     void formatValue(uint32_t param, float v, char* buf, size_t n) override
     {
-        if (param <= 1)
+        if (param <= 1 || param == 13 || param == 14)
         {
             const int mode = int(std::lround(value(8)));
             if (mode == 2)
@@ -164,7 +212,7 @@ protected:
             else
                 std::snprintf(buf, n, mode == 1 ? "%+d deg" : "%+d st", int(std::lround(v)));
         }
-        else if (param <= 3)
+        else if (param <= 3 || param == 15 || param == 16)
             std::snprintf(buf, n, "%.1f dB", v);
         else if (param == 4)
             std::snprintf(buf, n, "%.1f ct", v);

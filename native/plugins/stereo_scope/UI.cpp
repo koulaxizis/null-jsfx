@@ -15,6 +15,7 @@ static const NullKnobsUI::Control kControls[] = {
     { 2, NullKnobsUI::kKnob, "DECAY", 0, -1, false },
     { 3, NullKnobsUI::kKnob, "INTEGRATION", 0, -1, false, true },
     { 4, NullKnobsUI::kSelect, "MONITOR", 0, -1, false },
+    { 5, NullKnobsUI::kSelect, "BANDS", 0, -1, false },
 };
 
 static constexpr uint32_t kBg2 = 0x131211; // --bg-secondary (NG_BG2 in null_gfx.jsfx-inc)
@@ -82,6 +83,19 @@ protected:
         label(x, y + h + 9.0f, ALIGN_LEFT, 7.5f, 0.0f, theme::kMuted, lo);
         label(x + w * 0.5f, y + h + 9.0f, ALIGN_CENTER, 7.5f, 0.0f, theme::kMuted, mid);
         label(x + w, y + h + 9.0f, ALIGN_RIGHT, 7.5f, 0.0f, theme::kMuted, hi);
+    }
+
+    // a band's correlation: a thin bar from the centre, its label on the left (sc_bbar)
+    void bandBar(float y, const char* name, float v)
+    {
+        const float x = 350.0f, w = 218.0f, h = 7.0f;
+        label(318.0f, y + h * 0.5f, ALIGN_LEFT, 7.0f, 1.0f, theme::kMuted, name, true);
+        box(x, y, w, h, theme::kBackground);
+        for (int i = 0; i <= 4; ++i)
+            box(x + w * float(i) / 4.0f - (i == 4 ? 1.0f : 0.0f), y, 1.0f, h, theme::kBorder);
+        const float cx = x + w * 0.5f, vx = x + w * (v + 1.0f) * 0.5f;
+        box(std::fmin(cx, vx), y + 1.0f, std::fabs(vx - cx), h - 2.0f, theme::kAccent, 0.75f);
+        box(vx - 1.0f, y - 1.0f, 2.0f, h + 2.0f, theme::kText);
     }
 
     // as the @gfx of stereo_scope_gfx.jsfx: the goniometer on the left; readouts, correlation and
@@ -187,7 +201,16 @@ protected:
         tile(488.0f, 66.0f, 80.0f, 46.0f, "BALANCE", buf);
 
         // ---- meters ----
-        bar(318.0f, 138.0f, 250.0f, 10.0f, "CORRELATION", float(c), "-1", "0", "+1");
+        if (value(5) >= 0.5f)
+        {
+            // Band Correlation: Low, Mid and High instead of the one bar
+            label(318.0f, 124.0f, ALIGN_LEFT, 7.0f, 1.2f, theme::kMuted, "CORRELATION BY BAND  (-1 TO +1)", true);
+            static const char* const kBands[] = { "LOW", "MID", "HIGH" };
+            for (int b = 0; b < 3; ++b)
+                bandBar(132.0f + 12.0f * float(b), kBands[b], v ? v->band[b].load(std::memory_order_relaxed) : 0.0f);
+        }
+        else
+            bar(318.0f, 138.0f, 250.0f, 10.0f, "CORRELATION", float(c), "-1", "0", "+1");
         const double bp = live ? (rr - ll) / (rr + ll) : 0.0;
         bar(318.0f, 182.0f, 250.0f, 10.0f, "BALANCE", float(bp), "L", "C", "R");
         meter(318.0f, 214.0f, 250.0f, 7.0f, "L", v ? nulljsfx::toDb(v->pl.load(std::memory_order_relaxed)) : -140.0f, -140.0f, -60.0f);

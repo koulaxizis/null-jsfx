@@ -17,6 +17,8 @@ slider10:1<0,3,1{Quarters,Eighths,Sixteenths,Eighth Triplets}>Strum Rate
 slider11:20<0,100,1>Strum Spread (ms)
 slider12:0<-24,12,0.1>Volume (dB)
 slider13:0<0,2,1{Off,Violins,Cellos}>Pizzicato
+slider14:0<0,1,1{Off,On}>MPE
+slider15:48<0,96,1>MPE Bend Range (st)
 
 in_pin:none
 out_pin:Left
@@ -40,10 +42,13 @@ out_pin:Right
   // time from one string to the next, the beat's strums are louder. All notes off (CC 123/120)
   // stops everything. Pizzicato (appended in 2.8, Off = as before) replaces Model with the
   // plucked strings of a violin or a cello: a finger's soft pluck, a short decay and the
-  // instrument's body resonances.
+  // instrument's body resonances. MPE (On): on channels 2-16 the pitch bend (MPE Bend Range,
+  // the string's length; down to 30 Hz) and channel pressure (up to +6 dB) belong to the note
+  // on that channel, and a note-off or the same note again acts only on its own channel.
   //
   // Memory: 0.. the MIDI of the block (4 per message), 2048.. keys down, 2176.. keys held
-  // (with the pedal), 2304.. per-voice values, 3072.. the models, 3584.. the strum patterns,
+  // (with the pedal), 2304.. per-voice values, 2656.. MPE per voice, channel bend and pressure
+  // and the channel of each key, 3072.. the models, 3584.. the strum patterns,
   // 8192.. the strings' delay lines, then the plucks.
   ext_noinit = 1;
   ext_tail_size = -1;
@@ -54,6 +59,7 @@ out_pin:Right
   v_age = 2400; v_fast = 2416; v_w = 2432; v_d0 = 2448; v_tw = 2464; v_twk = 2480;
   v_lp = 2496; v_b = 2512; v_g = 2528; v_ek = 2544; v_en = 2560; v_pp = 2576; v_amp = 2592;
   v_gl = 2608; v_gr = 2624; v_pk = 2640;
+  v_ch = 2656; v_mp = 2672; CHB = 2688; CHP = 2704; KCH = 2720;
   MT = 3072;
   PT = 3584;
   SB = 8192;
@@ -117,6 +123,7 @@ out_pin:Right
   function v_start(v, n, vel) local(f, d0, d, w0, b, t, tt, pd, hlp, hm, fr, g, vn, gv, fc, c, nn, ebp, z, s, k, pos, tri, e, p)
   (
     v_note[v] = n; v_pend[v] = -1;
+    v_ch[v] = mpe ? KCH[n] : 0; v_mp[v] = CHP[v_ch[v]];
     v_gate[v] = HL[n] > 0 ? 1 : 0;
     v_env[v] = 0; v_rel[v] = 1; v_fast[v] = 0;
     age += 1;
@@ -202,7 +209,7 @@ out_pin:Right
     );
     f < 0 ? (
       v = 0;
-      loop(NV, v_pend[v] < 0 && v_note[v] == n && v_fast[v] == 0 ? ( v_gate[v] = 0; v_fast[v] = 1; ); v += 1;);
+      loop(NV, v_pend[v] < 0 && v_note[v] == n && v_fast[v] == 0 && (!mpe || v_ch[v] == cur_ch) ? ( v_gate[v] = 0; v_fast[v] = 1; ); v += 1;);
       v = 0;
       loop(NV, f < 0 && v_note[v] < 0 ? f = v; v += 1;);
       f < 0 ? (
@@ -239,12 +246,13 @@ out_pin:Right
   function release(n) local(v)
   (
     v = 0;
-    loop(NV, v_pend[v] < 0 && v_note[v] == n ? v_gate[v] = 0; v += 1;);
+    loop(NV, v_pend[v] < 0 && v_note[v] == n && (!mpe || v_ch[v] == cur_ch) ? v_gate[v] = 0; v += 1;);
   );
   function note_on(n, vel)
   (
     nheld == 0 ? st_clock = 0;
     KD[n] = 1;
+    KCH[n] = cur_ch;
     HL[n] = 1;
     count_held();
     last_vel = vel;
@@ -282,6 +290,11 @@ out_pin:Right
   function midi_ev(st, d1, d2) local(t)
   (
     t = st & 0xF0;
+    cur_ch = st & 0x0F;
+    mpe && cur_ch > 0 && (t == 0xE0 || t == 0xD0) ? (
+      // MPE: a member channel's bend and pressure belong to its note
+      t == 0xE0 ? CHB[cur_ch] = (d2 * 128 + d1 - 8192) / 8192 : CHP[cur_ch] = d1 / 127;
+    ) :
     t == 0x90 && d2 > 0 ? note_on(d1, d2) :
     t == 0x80 || t == 0x90 ? note_off(d1) :
     t == 0xB0 ? (
@@ -342,6 +355,8 @@ out_pin:Right
   memset(KD, 0, 128);
   memset(HL, 0, 128);
   nheld = 0; sus = 0; age = 0; last_vel = 100;
+  memset(CHB, 0, 32); memset(KCH, 0, 128);
+  cur_ch = 0; mpe_was = 0;
   seed = 4711;
   lb = ceil(srate / 30) + 8;
   EB = SB + NV * lb;
@@ -373,6 +388,12 @@ out_pin:Right
   t = slider11 * 0.001;
   spread_s = floor(t * srate + 0.5);
   vol = 10 ^ (slider12 / 20);
+  mpe = slider14 >= 0.5;
+  mpe_r = slider15;
+  mpe_sm = 1 - exp(-1000 / (5 * srate));
+  // MPE turned on starts from neutral channels
+  mpe && !mpe_was ? memset(CHB, 0, 32);
+  mpe_was = mpe;
   tw_k = 1 - 2 ^ (-m_tw / 1200);
   twc = exp(-1 / (m_twt * srate));
   a_inc = 1 / (0.0005 * srate);
@@ -447,6 +468,12 @@ out_pin:Right
       tw = v_tw[v];
       t = v_twk[v] * tw;
       d = v_d0[v] * (1 - t);
+      // MPE: the note's own bend (the string's length, within the line) and pressure (5 ms)
+      mpe ? (
+        v_mp[v] += (CHP[v_ch[v]] - v_mp[v]) * mpe_sm;
+        d /= 2 ^ (mpe_r * CHB[v_ch[v]] / 12);
+        d = max(2, min(lb - 2, d));
+      );
       v_tw[v] = tw * twc;
       v_tw[v] < 0.000001 ? v_tw[v] = 0;
       sbuf = SB + v * lb;
@@ -481,6 +508,7 @@ out_pin:Right
       v_gate[v] <= 0 ? ( q *= v_fast[v] > 0 ? rf_c : r_c; v_rel[v] = q; );
       y = sv * e;
       y *= q;
+      mpe ? y *= 1 + v_mp[v];
       sl += y * v_gl[v];
       sr += y * v_gr[v];
       v_pend[v] >= 0 ? (

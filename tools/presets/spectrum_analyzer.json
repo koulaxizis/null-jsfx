@@ -6,5 +6,7 @@
   ["Reference Compare", {"FFT Size": "8192", "Release": 1000, "Range": "80 dB", "Peak Hold": "Off"}],
   ["Flat Test Signal", {"FFT Size": "8192", "Slope": 0, "Release": 0, "Range": "120 dB", "Peak Hold": "Infinite"}],
   ["Side Channel Check", {"Channel": "Side", "Range": "100 dB", "Peak Hold": "2 s"}],
-  ["Side Solo Listen", {"Channel": "Side", "Monitor": "Solo"}]
+  ["Side Solo Listen", {"Channel": "Side", "Monitor": "Solo"}],
+  ["Spectrogram", {"FFT Size": "4096", "Release": 100, "Range": "100 dB", "Peak Hold": "Off", "View": "Spectrogram"}],
+  ["Sidechain Overlay", {"FFT Size": "8192", "Release": 600, "Range": "80 dB", "Peak Hold": "Off", "Sidechain": "On"}]
 ]

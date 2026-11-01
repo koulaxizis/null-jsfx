@@ -12,5 +12,6 @@
   ["Octave Down", {"Transpose": -12}],
   ["Octave Up", {"Transpose": 12, "Volume": -2}],
   ["Wide Bend", {"Bend Range": 12}],
-  ["Fixed Velocity", {"Velocity": 0, "Volume": -2}]
+  ["Fixed Velocity", {"Velocity": 0, "Volume": -2}],
+  ["Beat Slicer (16 Slices)", {"Mode": "One-shot", "Attack": 1, "Decay": 5000, "Sustain": 100, "Release": 30, "Slices": "16", "Slice Key": 36}]
 ]

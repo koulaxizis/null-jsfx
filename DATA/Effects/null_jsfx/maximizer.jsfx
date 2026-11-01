@@ -1,6 +1,6 @@
 desc:NULL Maximizer
 author: Christos Koulaxizis
-tags: limiter maximizing loudness ceiling mastering peak protection dither multiband saturation lufs
+tags: limiter maximizing loudness ceiling mastering peak protection dither multiband saturation lufs target loudness learn streaming
 //category: Essentials
 //NULL JSFX v2.9 • https://nulljsfx.tech • MIT License
 
@@ -18,6 +18,8 @@ slider11:150<50,500,10>Low Crossover (Hz)
 slider12:4000<1000,12000,100>High Crossover (Hz)
 slider13:0<0,1,1{OFF,ON}>True Peak
 slider14:0<0,1,1{OUTPUT,DELTA}>Listen
+slider15:-14<-24,-6,0.5>Target (LUFS)
+slider16:0<0,1,1{Off,On}>Learn
 
 in_pin:Left
 in_pin:Right
@@ -43,6 +45,13 @@ out_pin:Right
   // the peaks between the samples. It sees the signal 6 samples late, so the audio waits 6
   // samples more (pdc_delay = Lookahead + 6). Listen DELTA plays what the limiter takes away:
   // the signal going into the limiter minus the limited one, after the Output Gain, undithered.
+  // Learn (On) sets Input Gain so that the output reaches Target (integrated loudness, BS.1770
+  // K-weighting): it measures the output in 400 ms blocks every 100 ms (blocks under -70 LUFS
+  // do not count); after 4 s of such blocks it moves Input Gain by the difference (at most
+  // 6 dB, in 0.1 dB steps) and measures again, until the output is within 0.3 LU of Target,
+  // after 6 steps, or when Input Gain is at its end; then Learn goes back to Off. Turned off
+  // early it keeps the gain it has. Play the loudest part of the song, with Listen OUTPUT.
+  // At Off nothing of this runs.
   max_look = ceil(srate * 0.006) + 2 + 6;
   buf_l = 0;
   buf_r = buf_l + max_look;
@@ -93,6 +102,65 @@ out_pin:Right
     tp_i += 1;
   );
   tp_w = 0;
+
+  // Learn: K-weighting at this sample rate (as Loudness Meter), the last four 100 ms sums
+  lm_sub = tp_xr + 24;
+  memset(lm_sub, 0, 4);
+  freembuf(lm_sub + 4);
+  lm_on = lm_prev = 0;
+  lm_k = tan(($pi * 1681.974450955533) / srate);
+  lm_vh = 10 ^ (3.999843853973347 / 20);
+  lm_vb = lm_vh ^ 0.4996667741545416;
+  lm_q = 0.7071752369554196;
+  lm_a0 = (1 + lm_k / lm_q) + lm_k * lm_k;
+  lm_b0 = ((lm_vh + (lm_vb * lm_k) / lm_q) + lm_k * lm_k) / lm_a0;
+  lm_b1 = (2 * (lm_k * lm_k - lm_vh)) / lm_a0;
+  lm_b2 = ((lm_vh - (lm_vb * lm_k) / lm_q) + lm_k * lm_k) / lm_a0;
+  lm_a1 = (2 * (lm_k * lm_k - 1)) / lm_a0;
+  lm_a2 = ((1 - lm_k / lm_q) + lm_k * lm_k) / lm_a0;
+  lm_k = tan(($pi * 38.13547087602444) / srate);
+  lm_q = 0.5003270373238773;
+  lm_c0 = (1 + lm_k / lm_q) + lm_k * lm_k;
+  lm_c1 = (2 * (lm_k * lm_k - 1)) / lm_c0;
+  lm_c2 = ((1 - lm_k / lm_q) + lm_k * lm_k) / lm_c0;
+  lm_sublen = floor(0.1 * srate);
+
+  // a new measuring step: the blocks start again
+  function lm_reset()
+  (
+    memset(lm_sub, 0, 4);
+    lm_kacc = lm_kn = lm_kw = lm_ksubs = 0;
+    lm_p = lm_c = 0;
+  );
+  function lm_start()
+  (
+    lm_reset();
+    lm_z1l = lm_z2l = lm_z3l = lm_z4l = lm_z1r = lm_z2r = lm_z3r = lm_z4r = 0;
+    lm_steps = 0;
+    lm_on = 1;
+  );
+  function lm_stop()
+  (
+    lm_on = 0;
+    lm_prev = 0;
+    slider16 = 0;
+    sliderchange(slider16);
+  );
+  // a step's loudness (the mean power of its blocks) against Target: move Input Gain or stop
+  function lm_step() local(e, ng)
+  (
+    e = slider15 - (-0.691 + 10 * log10(lm_p / lm_c));
+    lm_steps += 1;
+    abs(e) <= 0.3 ? lm_stop() : (
+      ng = max(-12, min(12, floor((slider1 + max(-6, min(6, e))) * 10 + 0.5) / 10));
+      ng == slider1 ? lm_stop() : (
+        slider1 = ng;
+        sliderchange(slider1);
+        in_gain = 10 ^ (slider1 / 20);
+        lm_steps >= 6 ? lm_stop() : lm_reset();
+      );
+    );
+  );
 
   // the true peak of a stereo pair, 6 samples late: the larger of the sample 6 back and the
   // four interpolated values around it
@@ -201,6 +269,12 @@ out_pin:Right
   x2_hb1 = -(1 + mb_cs) / mb_a0;
   x2_a1 = -2 * mb_cs / mb_a0;
   x2_a2 = (1 - mb_al) / mb_a0;
+
+@block
+  // Learn turned on starts measuring; turned off, it stops where it is
+  slider16 >= 0.5 && lm_prev < 0.5 ? lm_start();
+  slider16 < 0.5 ? lm_on = 0;
+  lm_prev = slider16 >= 0.5 ? 1 : 0;
 
 @sample
   in_l = spl0 * in_gain;
@@ -317,4 +391,37 @@ out_pin:Right
     dt_v = nshape ? spl1 - dt_er : spl1;
     spl1 = floor(dt_v * dt_q + (dt_n1 + dt_n2) * 0.5 + 0.5) / dt_q;
     dt_er = nshape ? spl1 - dt_v : 0;
+  );
+
+  lm_on ? (
+    // Learn: the output K-weighted, summed in 100 ms parts; a 400 ms block every 100 ms
+    lm_y = lm_b0 * spl0 + lm_z1l;
+    lm_z1l = (lm_b1 * spl0 - lm_a1 * lm_y) + lm_z2l;
+    lm_z2l = lm_b2 * spl0 - lm_a2 * lm_y;
+    lm_kl = lm_y + lm_z3l;
+    lm_z3l = (-2 * lm_y - lm_c1 * lm_kl) + lm_z4l;
+    lm_z4l = lm_y - lm_c2 * lm_kl;
+    lm_y = lm_b0 * spl1 + lm_z1r;
+    lm_z1r = (lm_b1 * spl1 - lm_a1 * lm_y) + lm_z2r;
+    lm_z2r = lm_b2 * spl1 - lm_a2 * lm_y;
+    lm_kr = lm_y + lm_z3r;
+    lm_z3r = (-2 * lm_y - lm_c1 * lm_kr) + lm_z4r;
+    lm_z4r = lm_y - lm_c2 * lm_kr;
+    lm_kacc += lm_kl * lm_kl + lm_kr * lm_kr;
+    lm_kn += 1;
+    lm_kn >= lm_sublen ? (
+      lm_sub[lm_kw] = lm_kacc;
+      lm_kw = (lm_kw + 1) % 4;
+      lm_ksubs += 1;
+      lm_kacc = 0;
+      lm_kn = 0;
+      lm_ksubs >= 4 ? (
+        lm_bp = (lm_sub[0] + lm_sub[1] + lm_sub[2] + lm_sub[3]) / (4 * lm_sublen);
+        lm_bp > 0 && -0.691 + 10 * log10(lm_bp) > -70 ? (
+          lm_p += lm_bp;
+          lm_c += 1;
+          lm_c >= 40 ? lm_step();
+        );
+      );
+    );
   );

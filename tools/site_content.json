@@ -1108,7 +1108,9 @@
       "The reverb's size (0 to 100%).",
       "Moves the whole instrument by octaves (-3 to +3).",
       "The pitch bend range in semitones (0 to 24).",
-      "The output level (-24 to +12 dB)."
+      "The output level (-24 to +12 dB).",
+      "MPE: On for an MPE controller (lower zone): channel 1 stays the master channel, and on channels 2-16 each note gets its own pitch bend, pressure (louder, up to +6 dB) and CC74 timbre (every modulator's index, half to double); Off treats every channel alike.",
+      "MPE Bend Range: how far a note's own pitch bend goes (48 semitones is the MPE default)."
     ],
     "uses": [
       "Electric pianos with chorus, from soft to barking",
@@ -1326,7 +1328,7 @@
       "How the voices find their notes: Semitones uses the fixed intervals, Scale turns the intervals into steps of the chosen key and scale above or below the note you sing (so harmonies stay in key), MIDI makes the voices sing the notes you hold on a MIDI keyboard",
       "Key of the scale used in Scale mode",
       "Scale used in Scale mode: Major, Minor, Dorian, Mixolydian, Harmonic Minor, Pentatonic Major or Pentatonic Minor",
-      "Shifts the voices with pitch-synchronous grains that keep the character of the vowels instead of the chipmunk effect (the voices come about 40 ms later)"
+      "Shifts the voices with pitch-synchronous grains that keep the character of the vowels instead of the chipmunk effect (the voices come about 40 ms later)", "How many harmony voices sing: 2, or add voice 3 and 4 (in MIDI mode they sing the third and fourth latest held notes)", "Interval of voice 3 (Voices 3 or 4)", "Interval of voice 4 (Voices 4)", "Level of voice 3", "Level of voice 4"
     ],
     "uses": [
       "Instant backing vocal harmonies",
@@ -1334,7 +1336,7 @@
       "Octave doubling on guitars and synths",
       "Wide stereo harmony beds"
     ],
-    "properties": "Signal chain: Input (summed to mono) → 2 Crossfading Delay-Line Pitch Shifters (50 ms window) → Detune + Delay → Equal-Power Spread → Equal-Power Dry/Wet Mix → Output. Fixed intervals (no key detection); Mix at 100% outputs only the harmony for printing to its own track; zero latency.",
+    "properties": "Signal chain: Input (summed to mono) → 2 to 4 Crossfading Delay-Line Pitch Shifters (50 ms window) → Detune + Delay → Equal-Power Spread → Equal-Power Dry/Wet Mix → Output. Fixed intervals (no key detection); Mix at 100% outputs only the harmony for printing to its own track; zero latency.",
     "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-harmonizer\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><path d=\"M8,18 Q16,10 24,18 T40,18 T56,18\" stroke=\"url(#icon-harmonizer)\" stroke-width=\"1.5\" fill=\"none\" stroke-linecap=\"round\" opacity=\"0.4\"/><path d=\"M8,32 Q16,22 24,32 T40,32 T56,32\" stroke=\"url(#icon-harmonizer)\" stroke-width=\"2.5\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M8,46 Q16,38 24,46 T40,46 T56,46\" stroke=\"url(#icon-harmonizer)\" stroke-width=\"1.5\" fill=\"none\" stroke-linecap=\"round\" opacity=\"0.4\"/></svg>"
   },
   "humanize": {
@@ -1372,7 +1374,9 @@
       "Mono pulses the level; Stereo pans the sound from side to side, like the classic suitcase electric piano.",
       "The overdrive of the preamp (0 to 100%), from a little bark to a growl; 0 is clean.",
       "The amount of the built-in stereo chorus (0 to 100%).",
-      "The output level (-24 to +12 dB)."
+      "The output level (-24 to +12 dB).",
+      "MPE: On for an MPE controller: on channels 2-16 each note gets its own pitch bend (the partials follow) and pressure (louder, up to +6 dB); Off treats every channel alike.",
+      "MPE Bend Range: how far a note's own pitch bend goes (48 semitones is the MPE default)."
     ],
     "uses": [
       "Classic tine electric piano with stereo autopan for soul, R&B and neo-soul",
@@ -1525,7 +1529,9 @@
       "Split point between the low and mid bands in Multiband mode.",
       "Split point between the mid and high bands in Multiband mode.",
       "True Peak: the limiter reacts to the peaks between the samples (4x, ITU-R BS.1770), so the output stays under Ceiling in dBTP (for example -1 dBTP for Spotify and Apple Music); adds 6 samples of latency.",
-      "Listen: Output plays the result; Delta plays only what the limiter takes away (undithered)."
+      "Listen: Output plays the result; Delta plays only what the limiter takes away (undithered).",
+      "Target: the integrated loudness (LUFS) that Learn aims for, for example -14 for streaming or -9 for a loud club master.",
+      "Learn: play the loudest part of the song; the plugin measures 4 s at a time and moves Input Gain towards Target (up to 6 steps), then sets itself back to Off. Not in the Rack."
     ],
     "uses": [
       "Final loudness stage in mastering",
@@ -2052,7 +2058,9 @@
       "How often the chord is strummed: quarters, eighths, sixteenths or eighth-note triplets.",
       "The time from one string to the next within a strum (0 to 100 ms): short for a tight chop, long for a slow roll.",
       "The output level (-24 to +12 dB).",
-      "Pizzicato: plays plucked violins or cellos instead of the Model: a finger's soft pluck, a short decay and the instrument's wooden body; Off uses the Model."
+      "Pizzicato: plays plucked violins or cellos instead of the Model: a finger's soft pluck, a short decay and the instrument's wooden body; Off uses the Model.",
+      "MPE: On for an MPE controller: on channels 2-16 each note gets its own pitch bend (the string's length, down to 30 Hz) and pressure (louder, up to +6 dB); Off treats every channel alike.",
+      "MPE Bend Range: how far a note's own pitch bend goes (48 semitones is the MPE default)."
     ],
     "uses": [
       "Strummed acoustic rhythm guitar from held chords, synced to the song",
@@ -2148,7 +2156,7 @@
       "Ring time of the fundamental (time to fall by 60 dB)",
       "How long the upper harmonics ring compared with the fundamental (low = dark, damped strings; high = bright, metallic)",
       "Stereo detune: left strings down, right strings up, by up to 15 cents",
-      "Dry/wet blend"
+      "Dry/wet blend", "Where the string notes come from: Chord uses Root, Octave and Chord; MIDI tunes the strings to the notes you play (the four latest held notes; they keep ringing after you let go)"
     ],
     "uses": [
       "Turn drums and percussion into tuned, pitched hits",
@@ -2328,7 +2336,7 @@
       "Plays the sample backwards (Start and the loop then count from its end).",
       "How much the key velocity changes the level (0% plays every note the same).",
       "Pitch-bend range (0 to 24 semitones).",
-      "The output level (-24 to +12 dB)."
+      "The output level (-24 to +12 dB).", "Cuts the sample into 4 to 64 equal slices, one per key, for chopping beats and phrases (Off: the whole sample, as before).", "The key that plays the first slice; each key above it plays the next one."
     ],
     "uses": [
       "Play your own one-shots (hits, stabs, vocal chops) from a keyboard or pads",
@@ -2579,7 +2587,7 @@
       "Lowest level on the display, below 0 dB at the top.",
       "Keeps a second, thinner curve at the highest level each frequency reached: for 2 s, or until the setting changes (Infinite).",
       "Signal analysed: Mid (L+R)/2, Left, Right or Side (L−R)/2.",
-      "Stereo passes the audio through untouched (bit-exact). Solo plays the analysed channel on both outputs, e.g. to listen to the side signal."
+      "Stereo passes the audio through untouched (bit-exact). Solo plays the analysed channel on both outputs, e.g. to listen to the side signal.", "Spectrum draws the live curve; Spectrogram draws the last seconds as a scrolling image (time left to right, frequency bottom to top, brightness = level).", "On analyses the sidechain input (pins 3/4) the same way and draws it over the spectrum, to compare a mix with a reference track or see where two tracks overlap."
     ],
     "uses": [
       "Spotting resonances and build-ups while mixing",
@@ -2674,7 +2682,7 @@
       "Scales the goniometer to the signal level automatically.",
       "Persistence: how much recent history the goniometer shows, newest samples brightest.",
       "Time constant of the correlation, balance and width measurement.",
-      "Listen to the stereo signal, its mono sum or its side signal (the meter always reads the input)."
+      "Listen to the stereo signal, its mono sum or its side signal (the meter always reads the input).", "Shows the correlation in three bands, Low (below 200 Hz), Mid and High (above 2 kHz), to find which part of the mix is out of phase."
     ],
     "uses": [
       "Checking mono compatibility and phase problems",
@@ -2889,7 +2897,9 @@
       "How much the velocity changes the loudness and the filter envelope (0 to 100%).",
       "The pitch bend range in semitones (0 to 24).",
       "Moves the whole instrument by octaves (-3 to +3).",
-      "The output level (-24 to +12 dB)."
+      "The output level (-24 to +12 dB).",
+      "MPE: On for an MPE controller (lower zone): channel 1 stays the master channel, and on channels 2-16 each note gets its own pitch bend, pressure (louder, up to +6 dB) and CC74 timbre (the cutoff, ±2 octaves); Off treats every channel alike.",
+      "MPE Bend Range: how far a note's own pitch bend goes (48 semitones is the MPE default)."
     ],
     "uses": [
       "Warm pads and evolving wavetable pads with chorus and a long reverb",

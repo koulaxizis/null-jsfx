@@ -27,8 +27,10 @@ static constexpr int kRing = 16384;
 
 // the bins the interface draws; written by the audio thread, read by the UI
 struct View {
-    float spec[kMaxN / 2 + 1] = {}, hold[kMaxN / 2 + 1] = {};
+    float spec[kMaxN / 2 + 1] = {}, hold[kMaxN / 2 + 1] = {}, sc[kMaxN / 2 + 1] = {};
     std::atomic<int> n { 4096 };
+    std::atomic<int> frames { 0 };      // frames analysed: the spectrogram's clock
+    std::atomic<float> hop { 1200.0f }; // samples per frame
     std::atomic<float> sampleRate { 48000.0f };
 };
 
@@ -41,7 +43,7 @@ inline int fftSize(float v)
 class SpectrumAnalyzer {
 public:
     SpectrumAnalyzer() : fRing(kRing), fWin(kMaxN), fRe(kMaxN), fIm(kMaxN), fTwR(kMaxN / 2), fTwI(kMaxN / 2), fSpec(kMaxN / 2 + 1),
-                         fHold(kMaxN / 2 + 1), fHoldT(kMaxN / 2 + 1) {}
+                         fHold(kMaxN / 2 + 1), fHoldT(kMaxN / 2 + 1), fScRing(kRing), fScs(kMaxN / 2 + 1) {}
 
     void setView(View* v) noexcept { fView = v; }
 
@@ -53,6 +55,8 @@ public:
         std::fill(fSpec.begin(), fSpec.end(), 0.0);
         std::fill(fHold.begin(), fHold.end(), 0.0);
         std::fill(fHoldT.begin(), fHoldT.end(), 0.0);
+        std::fill(fScRing.begin(), fScRing.end(), 0.0);
+        std::fill(fScs.begin(), fScs.end(), 0.0);
         fWp = 0;
         fHc = 0;
         fN = 0;
@@ -61,12 +65,13 @@ public:
         {
             std::fill(std::begin(fView->spec), std::end(fView->spec), 0.0f);
             std::fill(std::begin(fView->hold), std::end(fView->hold), 0.0f);
+            std::fill(std::begin(fView->sc), std::end(fView->sc), 0.0f);
             fView->sampleRate.store(float(sr), std::memory_order_relaxed);
         }
     }
 
     // @slider
-    void setParams(int n, double releaseMs, int holdMode, int channel, bool solo) noexcept
+    void setParams(int n, double releaseMs, int holdMode, int channel, bool solo, bool sidechain = false) noexcept
     {
         if (n != fN || holdMode != fHMode)
         {
@@ -81,6 +86,7 @@ public:
                     fTwI[k] = std::sin(-2.0 * 3.141592653589793 * k / fN);
                 }
                 std::fill(fSpec.begin(), fSpec.end(), 0.0);
+                std::fill(fScs.begin(), fScs.end(), 0.0);
             }
             fHMode = holdMode;
             std::fill(fHold.begin(), fHold.end(), 0.0);
@@ -98,16 +104,23 @@ public:
         fHFrames = std::ceil(2.0 * fSr / fHop);
         fChan = channel;
         fSolo = solo;
+        fSc = sidechain;
+        if (fView)
+            fView->hop.store(float(fHop), std::memory_order_relaxed);
     }
 
     // @sample for a block
-    void process(const float* inL, const float* inR, float* outL, float* outR, uint32_t frames) noexcept
+    // scL / scR: the sidechain (JSFX pins 3/4), or null
+    void process(const float* inL, const float* inR, float* outL, float* outR, uint32_t frames,
+                 const float* scL = nullptr, const float* scR = nullptr) noexcept
     {
         for (uint32_t i = 0; i < frames; ++i)
         {
             const double l = inL[i], r = inR[i];
             const double x = fChan == 0 ? (l + r) * 0.5 : fChan == 1 ? l : fChan == 2 ? r : (l - r) * 0.5;
             fRing[fWp] = x;
+            if (fSc)
+                fScRing[fWp] = scL && scR ? (double(scL[i]) + double(scR[i])) * 0.5 : 0.0;
             fWp += 1;
             if (fWp >= kRing)
                 fWp = 0;
@@ -207,13 +220,40 @@ private:
                 fView->hold[k] = float(fHold[k]);
             }
         }
+        // Sidechain: the same analysis of pins 3/4, smoothed with Release (no peak hold)
+        if (fSc)
+        {
+            p = fWp - fN;
+            if (p < 0)
+                p += kRing;
+            for (int i = 0; i < fN; ++i)
+            {
+                fRe[i] = fScRing[p] * fWin[i];
+                fIm[i] = 0.0;
+                p += 1;
+                if (p >= kRing)
+                    p = 0;
+            }
+            fft();
+            for (int k = 0; k <= fN / 2; ++k)
+            {
+                const double pw = (fRe[k] * fRe[k] + fIm[k] * fIm[k]) * fNorm;
+                double s = fScs[k];
+                s = pw > s ? pw : s * fRc + pw * (1.0 - fRc);
+                fScs[k] = s;
+                if (fView)
+                    fView->sc[k] = float(s);
+            }
+        }
+        if (fView)
+            fView->frames.fetch_add(1, std::memory_order_relaxed);
     }
 
     View* fView = nullptr;
-    std::vector<double> fRing, fWin, fRe, fIm, fTwR, fTwI, fSpec, fHold, fHoldT;
+    std::vector<double> fRing, fWin, fRe, fIm, fTwR, fTwI, fSpec, fHold, fHoldT, fScRing, fScs;
     double fSr = 48000.0, fHop = 1200.0, fNorm = 0.0, fRc = 0.0, fHFrames = 80.0, fHc = 0.0;
     int fWp = 0, fN = 0, fHMode = -1, fChan = 0;
-    bool fSolo = false;
+    bool fSolo = false, fSc = false;
 };
 
 } // namespace nullspec

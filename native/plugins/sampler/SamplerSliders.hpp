@@ -18,6 +18,8 @@ static const char* const kModeOptions[] = { "One-shot", "Chromatic" };
 static const char* const kModeShort[] = { "ONE-SHOT", "CHROMATIC" };
 static const char* const kOffOnOptions[] = { "Off", "On" };
 static const char* const kOffOnShort[] = { "OFF", "ON" };
+static const char* const kSlicesOptions[] = { "Off", "4", "8", "16", "32", "64" };
+static const char* const kSlicesShort[] = { "OFF", "4", "8", "16", "32", "64" };
 
 static const DISTRHO::SliderInfo kSliders[] = {
     { "Mode", "mode", 0.0f, 1.0f, 1.0f, "", 1.0f, kModeOptions },
@@ -40,6 +42,8 @@ static const DISTRHO::SliderInfo kSliders[] = {
     { "Velocity", "velocity", 0.0f, 100.0f, 100.0f, "%", 1.0f },
     { "Bend Range", "bend_range", 0.0f, 24.0f, 2.0f, "st", 1.0f },
     { "Volume", "volume", -24.0f, 12.0f, 0.0f, "dB", 0.1f },
+    { "Slices", "slices", 0.0f, 5.0f, 0.0f, "", 1.0f, kSlicesOptions },
+    { "Slice Key", "slice_key", 0.0f, 127.0f, 36.0f, "", 1.0f },
 };
 static constexpr uint32_t kNumParams = sizeof(kSliders) / sizeof(kSliders[0]);
 

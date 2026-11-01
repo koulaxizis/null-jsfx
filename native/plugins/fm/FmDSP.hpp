@@ -22,7 +22,7 @@
 namespace nullfm {
 
 static constexpr double kPi = 3.141592653589793; // EEL2 $pi
-static constexpr int kNumSliders = 37;
+static constexpr int kNumSliders = 39;
 static constexpr int kMaxEvents = 256;
 static constexpr int kVoices = 8;
 
@@ -56,8 +56,8 @@ public:
     struct Voice {
         int st = 0;
         bool gate = false, sus = false;
-        int note = -1;
-        double ord = 0, pt = 0;
+        int note = -1, ch = 0;
+        double ord = 0, pt = 0, pp = 0, tt = 0;
         double m[20] = {};
     };
 
@@ -86,10 +86,15 @@ public:
         ch_on = rv_on = false;
         ord_n = 0;
         sus_on = false; mwheel = 0; bend = 0;
+        std::fill(std::begin(chb), std::end(chb), 0.0);
+        std::fill(std::begin(chp), std::end(chp), 0.0);
+        std::fill(std::begin(cht), std::end(cht), 0.0);
+        std::fill(std::begin(kch), std::end(kch), 0);
+        cur_ch = 0; mpe_was = false;
         vib_ph = 0; ch_ph = 0;
     }
 
-    // @slider (s: slider1..slider37 on the JSFX grid)
+    // @slider (s: slider1..slider39 on the JSFX grid)
     void setParams(const double* s)
     {
         alg = int(std::floor(s[0] + 0.5));
@@ -121,6 +126,17 @@ public:
         oct = 12 * std::floor(s[34] + 0.5);
         bend_r = s[35];
         vol = std::pow(10.0, s[36] / 20);
+        mpe = s[37] >= 0.5;
+        mpe_r = s[38];
+        mpe_sm = 1 - std::exp(-1000 / (5 * srate));
+        // MPE turned on starts from neutral channels
+        if (mpe && !mpe_was)
+        {
+            std::fill(std::begin(chb), std::end(chb), 0.0);
+            std::fill(std::begin(chp), std::end(chp), 0.0);
+            std::fill(std::begin(cht), std::end(cht), 0.0);
+        }
+        mpe_was = mpe;
         if (ch_mix > 0 && !ch_on)
         {
             std::fill(chL.begin(), chL.end(), 0.0);
@@ -179,6 +195,9 @@ private:
             m[8 + k] = 1;
         }
         v.note = n;
+        v.ch = mpe ? kch[n] : 0;
+        v.pp = chp[v.ch];
+        v.tt = cht[v.ch];
         v.pt = n + oct;
         v.gate = true; v.sus = false;
         v.st = 1;
@@ -197,7 +216,7 @@ private:
 
     void voff(Voice& v, int n)
     {
-        if (v.gate && v.note == n)
+        if (v.gate && v.note == n && (!mpe || v.ch == cur_ch))
         {
             if (sus_on)
             {
@@ -251,18 +270,29 @@ private:
             return;
         double* m = v.m;
         const double e4 = opEnv(m, 3), e3 = opEnv(m, 2), e2 = opEnv(m, 1), e1 = opEnv(m, 0);
-        const double f = 440 * std::pow(2.0, (v.pt + pmod - 69) / 12) / srate;
+        // MPE: the note's own channel bend, pressure and timbre (pressure and timbre over 5 ms)
+        double mk = 1, lk = 1, f;
+        if (mpe)
+        {
+            v.pp += (chp[v.ch] - v.pp) * mpe_sm;
+            v.tt += (cht[v.ch] - v.tt) * mpe_sm;
+            mk = std::pow(2.0, v.tt);
+            lk = 1 + v.pp;
+            f = 440 * std::pow(2.0, ((v.pt + (pmod + mpe_r * chb[v.ch])) - 69) / 12) / srate;
+        }
+        else
+            f = 440 * std::pow(2.0, (v.pt + pmod - 69) / 12) / srate;
         const double y4 = std::sin(2 * kPi * m[3] + fb_k * (m[16] + m[17])) * e4;
         m[17] = m[16];
         m[16] = y4 * 0.5;
-        const double y3 = std::sin(2 * kPi * m[2] + MM[11] * y4 * OPS[25]) * e3;
-        const double y2 = std::sin(2 * kPi * m[1] + MM[6] * y3 * OPS[17] + MM[7] * y4 * OPS[25]) * e2;
-        const double y1 = std::sin(2 * kPi * m[0] + MM[1] * y2 * OPS[9] + MM[2] * y3 * OPS[17] + MM[3] * y4 * OPS[25]) * e1;
+        const double y3 = std::sin(2 * kPi * m[2] + MM[11] * y4 * OPS[25] * mk) * e3;
+        const double y2 = std::sin(2 * kPi * m[1] + MM[6] * y3 * OPS[17] * mk + MM[7] * y4 * OPS[25] * mk) * e2;
+        const double y1 = std::sin(2 * kPi * m[0] + MM[1] * y2 * OPS[9] * mk + MM[2] * y3 * OPS[17] * mk + MM[3] * y4 * OPS[25] * mk) * e1;
         m[0] += f * OPS[0]; m[0] -= std::floor(m[0]);
         m[1] += f * OPS[8]; m[1] -= std::floor(m[1]);
         m[2] += f * OPS[16]; m[2] -= std::floor(m[2]);
         m[3] += f * OPS[24]; m[3] -= std::floor(m[3]);
-        outv += (CR[0] * y1 * OPS[1] + CR[1] * y2 * OPS[9] + CR[2] * y3 * OPS[17] + CR[3] * y4 * OPS[25]) * out_g;
+        outv += (CR[0] * y1 * OPS[1] + CR[1] * y2 * OPS[9] + CR[2] * y3 * OPS[17] + CR[3] * y4 * OPS[25]) * out_g * lk;
         const bool on = (CR[0] > 0 && m[8] > 0) || (CR[1] > 0 && m[9] > 0) || (CR[2] > 0 && m[10] > 0) || (CR[3] > 0 && m[11] > 0);
         if (!on)
             v.st = 0;
@@ -270,6 +300,7 @@ private:
 
     void noteOn(int n, double vel)
     {
+        kch[n] = cur_ch;
         int best = -1;
         for (int i = 0; i < kVoices; ++i)
             if (best < 0 && voices[i].st > 0 && voices[i].note == n)
@@ -304,7 +335,18 @@ private:
     void midiIn(int st, int d1, int d2)
     {
         const int c = st & 0xF0;
-        if (c == 0x90 && d2 > 0)
+        cur_ch = st & 0x0F;
+        if (mpe && cur_ch > 0 && (c == 0xE0 || c == 0xD0 || (c == 0xB0 && d1 == 74)))
+        {
+            // MPE: a member channel's bend, pressure and timbre belong to its note
+            if (c == 0xE0)
+                chb[cur_ch] = (d2 * 128 + d1 - 8192) / 8192.0;
+            else if (c == 0xD0)
+                chp[cur_ch] = d1 / 127.0;
+            else
+                cht[cur_ch] = (d2 - 64) / 64.0;
+        }
+        else if (c == 0x90 && d2 > 0)
             noteOn(d1, d2 / 127.0);
         else if (c == 0x80 || c == 0x90)
         {
@@ -413,6 +455,10 @@ private:
     int alg = 0;
     double fb_k = 0, bright = 1, out_g = 0.25, OPS[32] = {}, MM[16] = {}, CR[4] = {};
     double ch_mix = 0, rv_mix = 0, rv_dc = 0, RVG[8] = {}, oct = 0, bend_r = 2, vol = 1;
+    bool mpe = false, mpe_was = false;
+    double mpe_r = 48, mpe_sm = 0;
+    double chb[16] = {}, chp[16] = {}, cht[16] = {}; // MPE: CHB, CHP, CHT
+    int kch[128] = {}, cur_ch = 0;                   // KCH, cur_ch
 
     MidiEv mq[kMaxEvents];
     uint32_t mq_n = 0, mq_i = 0, si = 0;

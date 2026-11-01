@@ -1,6 +1,6 @@
 desc:NULL Spectrum Analyzer
 author: Christos Koulaxizis
-tags: spectrum analyzer analyser fft frequency meter metering peak hold slope visual mixing mastering
+tags: spectrum analyzer analyser fft frequency meter metering peak hold slope visual mixing mastering spectrogram waterfall sidechain overlay compare
 //category: Advanced
 //NULL JSFX v2.9 • https://nulljsfx.tech • MIT License
 
@@ -11,9 +11,13 @@ slider4:2<0,3,1{60 dB,80 dB,100 dB,120 dB}>Range
 slider5:1<0,2,1{Off,2 s,Infinite}>Peak Hold
 slider6:0<0,3,1{Mid,Left,Right,Side}>Channel
 slider7:0<0,1,1{Stereo,Solo}>Monitor
+slider8:0<0,1,1{Spectrum,Spectrogram}>View
+slider9:0<0,1,1{Off,On}>Sidechain
 
 in_pin:Left
 in_pin:Right
+in_pin:Sidechain Left
+in_pin:Sidechain Right
 out_pin:Left
 out_pin:Right
 
@@ -25,14 +29,22 @@ out_pin:Right
   // Slope tilts the display around 1 kHz; Range is the floor of the display below 0 dB.
   // This file shows nothing: the GFX version (gfx/spectrum_analyzer_gfx.jsfx) and the
   // VST3/CLAP draw the spectrum from these bins.
+  // View Spectrogram draws the last seconds as a scrolling image instead (time left to right,
+  // frequency bottom to top, brightness = level). Sidechain On analyses pins 3/4 (their mid)
+  // the same way and draws it over the spectrum as a second line, to compare a track with a
+  // reference or find where two tracks overlap.
   sa_ring = 0;                 // input ring, 16384
   sa_win = 16384;              // Hann window, N
   sa_buf = 65536;              // FFT buffer, 2N, does not cross a 65536 boundary
   sa_spec = 131072;            // smoothed power, N/2 + 1
   sa_hold = 147456;            // held power
   sa_holdt = 163840;           // hold countdown in frames
-  freembuf(sa_holdt + 8193);
-  memset(0, 0, sa_holdt + 8193);
+  sa_scr = 180224;             // sidechain ring, 16384
+  sa_scs = 196608;             // sidechain smoothed power, N/2 + 1
+  freembuf(sa_scs + 8193);
+  memset(0, 0, sa_scs + 8193);
+  sa_fc = 0;                   // frames analysed (the spectrogram's clock)
+  sa_sc = 0;
   sa_wp = 0;
   sa_hc = 0;
   sa_n = 0;
@@ -70,6 +82,32 @@ out_pin:Right
       );
       k += 1;
     );
+    // Sidechain: the same analysis of pins 3/4, smoothed with Release (no peak hold)
+    sa_sc ? (
+      i = 0;
+      p = sa_wp - sa_n;
+      p < 0 ? p += 16384;
+      loop(sa_n,
+        sa_buf[2 * i] = sa_scr[p] * sa_win[i];
+        sa_buf[2 * i + 1] = 0;
+        p += 1;
+        p >= 16384 ? p = 0;
+        i += 1;
+      );
+      fft(sa_buf, sa_n);
+      fft_permute(sa_buf, sa_n);
+      k = 0;
+      loop(sa_n / 2 + 1,
+        re = sa_buf[2 * k];
+        im = sa_buf[2 * k + 1];
+        pw = (re * re + im * im) * sa_norm;
+        s = sa_scs[k];
+        s = pw > s ? pw : s * sa_rc + pw * (1 - sa_rc);
+        sa_scs[k] = s;
+        k += 1;
+      );
+    );
+    sa_fc += 1;
   );
 
 @slider
@@ -80,6 +118,7 @@ out_pin:Right
       sa_i = 0;
       loop(sa_n, sa_win[sa_i] = 0.5 - 0.5 * cos(2 * $pi * sa_i / sa_n); sa_i += 1;);
       memset(sa_spec, 0, 8193);
+      memset(sa_scs, 0, 8193);
     );
     sa_hmode = slider5;
     memset(sa_hold, 0, 8193);
@@ -91,10 +130,12 @@ out_pin:Right
   sa_hframes = ceil(2 * srate / sa_hop);
   sa_chan = slider6;
   sa_solo = slider7;
+  sa_sc = slider9 >= 0.5;
 
 @sample
   sa_x = sa_chan == 0 ? (spl0 + spl1) * 0.5 : sa_chan == 1 ? spl0 : sa_chan == 2 ? spl1 : (spl0 - spl1) * 0.5;
   sa_ring[sa_wp] = sa_x;
+  sa_sc ? sa_scr[sa_wp] = (spl2 + spl3) * 0.5;
   sa_wp += 1;
   sa_wp >= 16384 ? sa_wp = 0;
   sa_hc += 1;

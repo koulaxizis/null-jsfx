@@ -7,7 +7,9 @@
  * as in maximizer_gfx.jsfx: one entry per 7 ms chunk, pushed into the Taps ring (scopeL = the
  * chunk's output peak, scopeR = its lowest gain, the lower channel when unlinked). inLevel / outLevel = input / output peak
  * meters, gr = the gain reduction now in dB (Multiband: of the most reduced band), extra = the
- * output's short-term loudness in LUFS (display only, as the GFX JSFX).
+ * output's short-term loudness in LUFS (display only, as the GFX JSFX). Learn (Target LUFS):
+ * the plugin moves Input Gain and Learn itself as the JSFX writes slider1 / slider16; aux[1] counts
+ * those writes for the interface, aux[2] = measuring or not.
  */
 
 #include "NullPlugin.hpp"
@@ -52,6 +54,7 @@ protected:
 
     void process(const float** inputs, float** outputs, uint32_t frames) override
     {
+        fDsp.block(); // the JSFX's @block: Learn turned on starts measuring
         double g = 1.0;
         for (uint32_t i = 0; i < frames; ++i)
         {
@@ -82,6 +85,15 @@ protected:
         taps.outLevel.store(fOut.value, std::memory_order_relaxed);
         taps.extra.store(float(fLoud.lufs()), std::memory_order_relaxed);
         taps.gr.store(float(-20.0 * std::log10(std::fmax(g, 0.0000001))), std::memory_order_relaxed);
+        if (fDsp.takeLearned())
+        {
+            // Learn moved Input Gain or set Learn back to Off, as the JSFX's sliderchange does;
+            // the interface sees the count go up and tells the host
+            setOwnValue(0, float(fDsp.inputDb()));
+            setOwnValue(15, fDsp.learnOn() ? 1.0f : 0.0f);
+            taps.aux[1].store(taps.aux[1].load(std::memory_order_relaxed) + 1.0f, std::memory_order_release);
+        }
+        taps.aux[2].store(fDsp.learning() ? 1.0f : 0.0f, std::memory_order_relaxed);
     }
 
 private:
@@ -105,6 +117,7 @@ private:
                        sliderValue(4, value(4)), value(5) >= 0.5f,
                        int(std::lround(value(6))), value(7) >= 0.5f, int(std::lround(value(8))), value(9) >= 0.5f,
                        std::round(value(10)), std::round(value(11)), value(12) >= 0.5f, value(13) >= 0.5f);
+        fDsp.setLearn(sliderValue(14, value(14)), value(15) >= 0.5f);
         setLatency(uint32_t(fDsp.latency())); // pdc_delay = look (+ 6 with True Peak)
     }
 

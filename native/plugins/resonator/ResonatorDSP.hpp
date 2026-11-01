@@ -7,7 +7,9 @@
  * Karplus-Strong string loops per channel (one per chord note), each a delay line, a first-order
  * allpass for the fractional period and a symmetric 3-tap low-pass (exactly one sample of delay),
  * excited by the 20 Hz high-passed input scaled by sqrt(1 - g^2). The wet sum passes a DC blocker
- * and a soft ceiling, then mixes with the dry signal.
+ * and a soft ceiling, then mixes with the dry signal. Notes MIDI tunes the loops to the four
+ * latest held notes instead (midi(), called before the sample at the event's frame); releases
+ * keep the tuning, and before the first note the chord is used.
  */
 
 #pragma once
@@ -40,14 +42,35 @@ struct Loop {
     int note = 0;
 };
 
-// the JSFX's @slider; s[0..6] = slider1..slider7
+// the JSFX's @slider and retune(); s[0..7] = slider1..slider8
 struct Params {
     Loop loops[8];
     int nv = 1;
     double lpA0 = 0.0, lpA1 = 1.0, hpC = 0.0, dcC = 0.0, wetGain = 1.0, mix = 0.5;
 };
 
-inline Params computeParams(double sr, const double* s) noexcept
+// the two loops (left, right) of voice nv at MIDI note (the JSFX's tune())
+inline void tuneVoice(Params& p, double sr, double note, double spread, double decay) noexcept
+{
+    for (int c = 0; c < 2; ++c)
+    {
+        const double f0 = 440.0 * std::pow(2.0, (note - 69.0 + (c == 0 ? -1.0 : 1.0) * spread * 0.15) / 12.0);
+        const double len = sr / f0;
+        const double m = std::floor(len - 1.5);
+        const double d = len - 1.0 - m;
+        Loop& l = p.loops[p.nv * 2 + c];
+        l.m = m;
+        l.ap = (1.0 - d) / (1.0 + d);
+        l.g = std::min(0.99995, std::pow(10.0, -3.0 / (f0 * decay)));
+        l.k = std::sqrt(1.0 - l.g * l.g);
+        l.len = len;
+        l.note = int(note);
+    }
+    ++p.nv;
+}
+
+// notes / nNotes: Notes MIDI's tuning (newest first); the chord when Notes is Chord or nNotes is 0
+inline Params computeParams(double sr, const double* s, const int* notes = nullptr, int nNotes = 0) noexcept
 {
     Params p;
     const double root = s[0], octave = s[1], decay = std::max(0.1, s[3]);
@@ -58,30 +81,19 @@ inline Params computeParams(double sr, const double* s) noexcept
     p.lpA1 = 1.0 - 2.0 * p.lpA0;
     p.hpC = std::exp(-2.0 * kPi * 20.0 / sr);
     p.dcC = std::exp(-2.0 * kPi * 8.0 / sr);
-    int nv = 0;
-    for (int v = 0; v < 4; ++v)
+    p.nv = 0;
+    if (s[7] >= 0.5 && nNotes > 0)
     {
-        if (kChords[chord][v] < 0)
-            continue;
-        const double note = 12.0 * (octave + 1.0) + root + kChords[chord][v];
-        for (int c = 0; c < 2; ++c)
-        {
-            const double f0 = 440.0 * std::pow(2.0, (note - 69.0 + (c == 0 ? -1.0 : 1.0) * spread * 0.15) / 12.0);
-            const double len = sr / f0;
-            const double m = std::floor(len - 1.5);
-            const double d = len - 1.0 - m;
-            Loop& l = p.loops[nv * 2 + c];
-            l.m = m;
-            l.ap = (1.0 - d) / (1.0 + d);
-            l.g = std::min(0.99995, std::pow(10.0, -3.0 / (f0 * decay)));
-            l.k = std::sqrt(1.0 - l.g * l.g);
-            l.len = len;
-            l.note = int(note);
-        }
-        ++nv;
+        for (int v = 0; v < nNotes; ++v)
+            tuneVoice(p, sr, double(notes[v]), spread, decay);
     }
-    p.nv = nv;
-    p.wetGain = 1.0 / std::sqrt(double(nv));
+    else
+    {
+        for (int v = 0; v < 4; ++v)
+            if (kChords[chord][v] >= 0)
+                tuneVoice(p, sr, 12.0 * (octave + 1.0) + root + kChords[chord][v], spread, decay);
+    }
+    p.wetGain = 1.0 / std::sqrt(double(p.nv));
     return p;
 }
 
@@ -123,18 +135,59 @@ public:
         fW = 0;
         fHpXL = fHpYL = fHpXR = fHpYR = 0.0;
         fDcXL = fDcYL = fDcXR = fDcYR = 0.0;
+        std::fill(std::begin(fHeld), std::end(fHeld), 0.0);
+        fStamp = 0.0;
+        fMcnt = 0;
     }
 
     // @slider
-    void setParams(const double* s) { fP = computeParams(fSr, s); }
+    void setParams(const double* s)
+    {
+        std::copy(s, s + 8, fS);
+        retune();
+    }
+
+    // a MIDI message due now (the JSFX's @sample queue): a new note retunes the strings in Notes
+    // MIDI to the four latest held notes; releases keep the tuning
+    void midi(uint8_t status, uint8_t d1, uint8_t d2) noexcept
+    {
+        const int st = status & 0xF0, n = d1 & 0x7F;
+        if (st == 0x90 && d2 > 0)
+        {
+            fStamp += 1.0;
+            fHeld[n] = fStamp;
+            heldNotes();
+            if (fS[7] >= 0.5)
+                retune();
+        }
+        else if (st == 0x80 || st == 0x90)
+            fHeld[n] = 0.0;
+        else if (st == 0xB0 && (n == 120 || n == 123))
+            std::fill(std::begin(fHeld), std::end(fHeld), 0.0);
+    }
+
+    // for the display: Notes MIDI's tuning (0 notes = the chord)
+    int tunedCount() const noexcept { return fMcnt; }
+    int tunedNote(int i) const noexcept { return fMnt[i]; }
 
     template <typename T>
     void process(const T* inL, const T* inR, T* outL, T* outR, uint32_t frames)
     {
-        const double mix = fP.mix;
         for (uint32_t n = 0; n < frames; ++n)
         {
-            const double xl = inL[n], xr = inR[n];
+            double l = inL[n], r = inR[n];
+            processSample(l, r);
+            outL[n] = static_cast<T>(l);
+            outR[n] = static_cast<T>(r);
+        }
+    }
+
+    // @sample (the MIDI messages due at this sample already given to midi())
+    void processSample(double& outL, double& outR)
+    {
+        const double mix = fP.mix;
+        {
+            const double xl = outL, xr = outR;
             fHpYL = fP.hpC * (fHpYL + xl - fHpXL); fHpXL = xl;
             fHpYR = fP.hpC * (fHpYR + xr - fHpXR); fHpXR = xr;
             if (std::fabs(fHpYL) < kTiny) fHpYL = 0.0;
@@ -158,13 +211,43 @@ public:
 
             wl = ceiling(fDcYL);
             wr = ceiling(fDcYR);
-            outL[n] = static_cast<T>(xl * (1.0 - mix) + wl * mix);
-            outR[n] = static_cast<T>(xr * (1.0 - mix) + wr * mix);
+            outL = xl * (1.0 - mix) + wl * mix;
+            outR = xr * (1.0 - mix) + wr * mix;
         }
     }
 
 private:
     struct State { double apX = 0.0, apY = 0.0, f1 = 0.0, f2 = 0.0; };
+
+    void retune() noexcept { fP = computeParams(fSr, fS, fMnt, fMcnt); }
+
+    // the four latest held notes into fMnt, newest first (the JSFX's held_notes())
+    void heldNotes() noexcept
+    {
+        double prev = 1000000000.0;
+        int tmp[4], cnt = 0;
+        for (int r = 0; r < 4; ++r)
+        {
+            double b = 0.0;
+            int j = -1;
+            for (int k = 0; k < 128; ++k)
+                if (fHeld[k] > b && fHeld[k] < prev)
+                {
+                    b = fHeld[k];
+                    j = k;
+                }
+            if (j >= 0)
+            {
+                tmp[cnt++] = j;
+                prev = b;
+            }
+        }
+        if (cnt > 0)
+        {
+            fMcnt = cnt;
+            std::copy(tmp, tmp + cnt, fMnt);
+        }
+    }
 
     // soft ceiling: linear up to 0.7, then bends smoothly towards 1.0
     static double ceiling(double x)
@@ -206,6 +289,9 @@ private:
     State fSt[8];
     int fSize = 1, fW = 0;
     Params fP;
+    double fS[8] = { 0.0, 3.0, 3.0, 1.5, 50.0, 30.0, 50.0, 0.0 };
+    double fHeld[128] = {}, fStamp = 0.0;
+    int fMnt[4] = {}, fMcnt = 0;
     double fHpXL = 0, fHpYL = 0, fHpXR = 0, fHpYR = 0;
     double fDcXL = 0, fDcYL = 0, fDcXR = 0, fDcYR = 0;
 };

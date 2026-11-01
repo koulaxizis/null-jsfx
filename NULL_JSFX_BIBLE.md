@@ -335,7 +335,7 @@ Why the exceptions exist: hosts store the CLAP id in sessions, so the released i
 - 146 plugins: 22 One Slider, 55 Essentials, 44 Advanced, 4 Assisted, 10 Instruments, 11 MIDI.
 - 108 Rack modules.
 - 73 FX chains in `NULL JSFX` and 73 in `NULL JSFX GFX`.
-- 1,311 factory presets, Default included.
+- 1,322 factory presets, Default included.
 - 86 Rack presets, Init included.
 
 **Exceptions:**
@@ -399,7 +399,7 @@ Why the exceptions exist: hosts store the CLAP id in sessions, so the released i
 | Gate | `gate` | `gate` | `N1gt` | yes | 480x380 | 11 |
 | Glue Comp | `glue_comp` | `glue-comp` | `NGlu` | yes | 480x380 | 7 |
 | Limiter | `limiter` | `limiter` | `N1lm` | yes | 480x380 | 7 |
-| Maximizer | `maximizer` | `maximizer` | `N1mx` | yes | 480x408 | 14 |
+| Maximizer | `maximizer` | `maximizer` | `N1mx` | yes | 480x408 | 16 |
 | Mid/Side Matrix | `mid_side_matrix` | `mid-side-matrix` | `N3ms` | yes | 480x294 | 3 |
 | Multi-Tap Delay | `multi_tap_delay` | `multi-tap-delay` | `NMTD` | yes | 480x380 | 11 |
 | Multiband Comp | `multiband_compressor` | `multiband-compressor` | `N3mb` | yes | 480x408 | 25 |
@@ -445,7 +445,7 @@ Why the exceptions exist: hosts store the CLAP id in sessions, so the released i
 | Glitch FX | `glitch_fx` | `glitch-fx` | `N7Gl` | yes | 480x408 | 15 |
 | Granular Delay | `granular_delay` | `granular-delay` | `N8Gd` | yes | 480x380 | 9 |
 | Half Speed | `half_speed` | `half-speed` | `NHsp` | yes | 480x294 | 6 |
-| Harmonizer | `harmonizer` | `harmonizer` | `N8Hm` | yes | 480x380 | 12 |
+| Harmonizer | `harmonizer` | `harmonizer` | `N8Hm` | yes | 480x466 | 17 |
 | Kick Shaper | `kick_shaper` | `kick-shaper` | `N7Ks` | yes | 480x294 | 6 |
 | Ladder Filter | `ladder_filter` | `ladder-filter` | `N6lf` | yes | 480x294 | 6 |
 | Loudness Meter | `loudness_meter` | `loudness-meter` | `N0Lm` | no | 600x414 | 6 |
@@ -455,7 +455,7 @@ Why the exceptions exist: hosts store the CLAP id in sessions, so the released i
 | Pitch Correction | `pitch_correction` | `pitch-correction` | `NPCr` | yes | 480x410 | 10 |
 | Reference | `reference` | `reference` | `NRef` | no | 480x334 | 4 |
 | Resonance Suppressor | `resonance_suppressor` | `resonance-suppressor` | `NRSp` | yes | 480x420 | 10 |
-| Resonator | `resonator` | `resonator` | `NRes` | yes | 480x380 | 7 |
+| Resonator | `resonator` | `resonator` | `NRes` | yes | 480x380 | 8 |
 | Reverser | `reverser` | `reverser` | `N6rv` | yes | 480x294 | 4 |
 | Robotizer | `robotizer` | `robotizer` | `N9Rb` | yes | 480x294 | 4 |
 | Rotary Speaker | `rotary_speaker` | `rotary-speaker` | `N7Rs` | yes | 480x294 | 6 |
@@ -463,10 +463,10 @@ Why the exceptions exist: hosts store the CLAP id in sessions, so the released i
 | Slicer | `slicer` | `slicer` | `NSlc` | yes | 480x380 | 8 |
 | Spectral Ducker | `spectral_ducker` | `spectral-ducker` | `NSDk` | yes | 480x380 | 10 |
 | Spectral Freeze | `spectral_freeze` | `spectral-freeze` | `N9Sf` | yes | 480x294 | 5 |
-| Spectrum Analyzer | `spectrum_analyzer` | `spectrum-analyzer` | `N0Sa` | no | 640x540 | 7 |
+| Spectrum Analyzer | `spectrum_analyzer` | `spectrum-analyzer` | `N0Sa` | no | 640x540 | 9 |
 | Spring Reverb | `spring_reverb` | `spring-reverb` | `N8Sp` | yes | 480x294 | 6 |
 | Step FX | `step_fx` | `step-fx` | `NStF` | yes | 480x390 | 25 |
-| Stereo Scope | `stereo_scope` | `stereo-scope` | `NScp` | no | 600x474 | 5 |
+| Stereo Scope | `stereo_scope` | `stereo-scope` | `NScp` | no | 600x474 | 6 |
 | Sub Bloom | `sub_bloom` | `sub-bloom` | `N6sb` | yes | 480x294 | 5 |
 | Surround Panner | `surround_panner` | `surround-panner` | `NSrP` | no | 480x460 | 8 |
 | Tape Stop | `tape_stop` | `tape-stop` | `N6ts` | yes | 480x294 | 3 |
@@ -493,14 +493,14 @@ Why the exceptions exist: hosts store the CLAP id in sessions, so the released i
 |---|---|---|---|---|---|---|
 | Bass | `bass` | `bass` | `NBas` | no | 560x502 | 19 |
 | Drum Machine | `drum_machine` | `drum-machine` | `NDrm` | no | 640x614 | 64 |
-| FM | `fm` | `fm` | `NFMs` | no | 600x438 | 37 |
-| Keys | `keys` | `keys` | `NKey` | no | 560x416 | 12 |
+| FM | `fm` | `fm` | `NFMs` | no | 600x438 | 39 |
+| Keys | `keys` | `keys` | `NKey` | no | 560x502 | 14 |
 | Mallets | `mallets` | `mallets` | `NMlt` | no | 560x416 | 11 |
 | Organ | `organ` | `organ` | `NOrg` | no | 560x430 | 21 |
 | Percussion | `percussion` | `percussion` | `NPrc` | no | 640x494 | 52 |
-| Pluck | `pluck` | `pluck` | `NPlk` | no | 560x502 | 13 |
-| Sampler | `sampler` | `sampler` | `NSmp` | no | 640x448 | 21 |
-| Synth | `synth` | `synth` | `NSyn` | no | 600x438 | 45 |
+| Pluck | `pluck` | `pluck` | `NPlk` | no | 560x502 | 15 |
+| Sampler | `sampler` | `sampler` | `NSmp` | no | 640x448 | 23 |
+| Synth | `synth` | `synth` | `NSyn` | no | 600x438 | 47 |
 
 ### MIDI (11)
 
@@ -815,7 +815,7 @@ None open. The ones found on 2026-10-26 (README.md said only One Slider had GFX/
 - **B3 Drum Machine ideas** (deferred 2026-10-17): song mode and step probability. Multi-out and a Sampler exist now. [memory] Approved 2026-10-27 as Wave 4 of the studio plan. **Done 2026-10-27** (Part X, Wave 4).
 - **B10 Studio plan, waves 2–5** (approved 2026-10-27, Part VII): all five waves are done and published in 2.7 (2026-10-28). Driver and Exciter keep no oversampling (Part VII, 2026-10-28). Still open: SFZ in Sampler, which waits until Christos tries the REAPER probe; the native A/B and undo buttons and the four surround interfaces need a look in a DAW (only built, rendered and read so far).
 - **B11 Own-suite plan, waves 2–5** (approved 2026-10-31, Part VII): all five waves are done (Part X, 2026-10-31): 1 Glue Comp, Air, Tone; 2 Console Channel, Console Buss; 3 Space; 4 Gate Tone Release, Saturation Focus and Density; 5 Mallets (with Timpani), Pluck Pizzicato, Organ Pipe. They stay off the site until "launch". Open: Chris approves the new instruments by ear before the 9 replaced VSCO packs leave oros-sounds.
-- **B12 Vendor research plan, waves A–D** (approved 2026-10-31, Part VII): waves A and B are done (Part X, 2026-10-31). A: Transient Split, Multi-Tap Delay, Drum Trigger, Speaker Sim, Passive EQ. B: Pitch to MIDI, Bitcrusher, Note Echo, Euclid, and the additions to Frequency Shifter, Phaser, Flanger, Reverb and Delay. The new plugins stay off the site until "launch". Waves C and D are next.
+- **B12 Vendor research plan, waves A–D** (approved 2026-10-31, Part VII): waves A, B and C are done (Part X, 2026-10-31 and 2026-11-01). A: Transient Split, Multi-Tap Delay, Drum Trigger, Speaker Sim, Passive EQ. B: Pitch to MIDI, Bitcrusher, Note Echo, Euclid, and the additions to Frequency Shifter, Phaser, Flanger, Reverb and Delay. C: additions to Harmonizer, Resonator, Sampler, Spectrum Analyzer, Stereo Scope and Maximizer, and MPE in Synth, FM, Keys and Pluck. The new plugins stay off the site until "launch". Wave D is next; open: MPE and Maximizer Learn tried by ear with a real controller and real songs (so far synthetic signals only).
 - **B13 Assisted series** (approved 2026-10-31, Part VII). PR 1 (Assisted EQ and Comp) and PR 2 (Assisted Reverb and Delay, with their own DSP, so they do not wait for the vendor-research thread's wave B) are done (Part X). Launched as beta with 2.9 (Part VII, 2026-10-31). Open: Christos tries Learn by ear in REAPER and a DAW (planned 2026-11-02; so far it is tested on synthetic signals only); any rule changes from that; then the beta ends (remove `"beta"` from the four entries of `site_content.json`). Phase 2: an assistant in the Rack that builds a chain from a target. Phase 3: a small embedded classifier that picks the Source.
 - **B4 Very low and odd sample rates** (found 2026-10-26 with clap-validator's `process-varying-sample-rates`, which plays 8000 Hz to 768 kHz, 1234.57 Hz and 12345.68 Hz among them). Wah, Tape, Tape Echo, Band Splitter and Amp Simulator are fixed (Part X). A scan of every plain JSFX at those rates, with `tests/jsfx_test.cpp`'s settings, still blows up in Reverser (8000, 22050 and 12345.68 Hz, max/random), Vinyl Age (8000 Hz, max), Step FX (8000 Hz, random), Formant Filter, Saturation, Noise Generator and Phase Align (1234.57 Hz), and Arpeggiator leaves notes hanging at 1234.57 Hz: a separate fix thread. **Done 2026-10-26 (PR #58):** the seven are fixed (the Arpeggiator finding was the test's own MIDI order), and `test.yml` renders every plain JSFX at 8000, 22050, 1234.57 and 12345.68 Hz (R25). The convention is that every filter frequency is held below `0.45 * srate` (most plugins already did this).
 - **B5 Convolution above 384 kHz.** At 705.6 and 768 kHz the 3-second IR buffers need more than REAPER's 32M slots, so `options:maxmem` cannot cover them: the wet signal is wrong there in the JSFX, GFX and web (the native port is fine). A fix changes the DSP at those rates (for example, cap the IR length so it fits) and waits for Christos's decision (2026-10-26).
@@ -1350,3 +1350,33 @@ entry and the Bible delta.
 - **Changes:** new Part V.3, the checklist the bimonthly audit works through, covering what came after the routine was set on 2026-10-27: the Assisted category and its beta flag, LV2, the validators (B6), plugins waiting for launch in `site_content_next.json`, extra output pins and tempo-synced MIDI effects, CI runner images (`macos-15`, the Ubuntu 26.04 Playwright gap), the `main` ruleset, the silver accent and `DESIGN.md`, the 1080p Ko-fi videos, orOS sound packs. Part 0.5 points to it and now names the audit thread correctly ("Διμηνιαίος έλεγχος σουίτας", not "Μηνιαίος"). The scheduled task's prompt points to V.3 (outside the repo).
 - **Files:** `NULL_JSFX_BIBLE.md` (0.5, V.3, this entry).
 - **Tests:** `tests/bible_order.py`, `tools/build_bible.py --check`, `tests/lint.py`.
+
+### 2026-11-01 — vendor research wave C (no version change): six improvements and MPE in four instruments
+- **Why:** wave C of the vendor research plan (Part VII, 2026-10-31; B12).
+- **Additions (R11: appended sliders; R12: silent at their defaults; R17: the default render of each plain JSFX against a copy from before the change, max diff 0):**
+  - Harmonizer: slider13 Voices 2/3/4, slider14–15 Voice 3/4 Interval, slider16–17 Voice 3/4 Level. Voices 3 and 4 get their own interval and level, Detune ±half, Delay ×1.71 and ×2.09, and Spread pans them halfway (3 left, 4 right). In Scale mode the intervals are degrees; in MIDI mode they sing the third and fourth latest held notes. GFX and native interface 480x466.
+  - Resonator: slider8 Notes Chord/MIDI. MIDI retunes the four strings to the four latest held notes; releasing keeps the tuning, before the first note the chord plays, and every message passes through (the native plugin now takes and sends MIDI). In the Rack, which has no MIDI, MIDI mode plays the chord.
+  - Sampler: slider22 Slices Off/4/8/16/32/64 and slider23 Slice Key. Slice Key plays the first slice and each key above it the next; One-shot plays a slice to its end, Chromatic until the key comes up; Reverse plays it backwards.
+  - Spectrum Analyzer: slider8 View Spectrum/Spectrogram (a scrolling image; the native UI labels it SONOGRAM to fit) and slider9 Sidechain (pins 3/4 drawn over the spectrum as a second line; the native plugin gets four inputs).
+  - Stereo Scope: slider6 Band Correlation: correlation in Low (<200 Hz), Mid and High (>2 kHz), split with 12 dB/oct Butterworth filters.
+  - Maximizer: slider15 Target (LUFS, −24 to −6, default −14) and slider16 Learn. Learn measures the output's integrated loudness (BS.1770, 400 ms blocks every 100 ms, gate −70 LUFS). After 4 s it moves Input Gain by the difference (at most 6 dB, 0.1 dB steps), until it is within 0.3 LU, after 6 steps, or at the end of the range. Then Learn goes back to Off. Native: the plugin writes Input Gain and Learn as the Assisted plugins do (`setOwnValue`, a count in `taps.aux[1]`, the interface tells the host); `aux[2]` shows LEARNING. The Rack module keeps Target and Learn as values but does nothing with them, because a module cannot move its own values (R13).
+  - MPE in Synth (slider46–47), FM (slider38–39), Keys (slider13–14) and Pluck (slider14–15): MPE Off/On and MPE Bend Range (0–96 st, default 48). With MPE on:
+    - Channel 1 stays the master channel.
+    - On channels 2–16, each note follows its own channel's pitch bend and pressure (up to +6 dB, smoothed over 5 ms).
+    - CC74 timbre (64 = neutral) moves Synth's cutoff ±2 octaves and FM's modulation index ×0.5 to ×2.
+    - A note-off, or the same key again, acts only on the note of its own channel.
+    - Keys retunes its partials when a note bends. Pluck changes the string length and can bend down to 30 Hz.
+    - Turning MPE on starts every channel from neutral.
+    - Keys GFX and native interface get a third row (560x502).
+- **Test tool:** `native/test/compare.cpp` now gives MIDI to every JSFX that reads it (`midirecv`), except when it renders against a Rack module. Its MIDI stream now has CC74 in place of half of the sustain messages, so every instrument and MIDI effect is tested on a new stream.
+- **Presets:** Harmonizer "Four Part Choir (C)" and others, Spectrum Analyzer "Sidechain Overlay", Maximizer "Streaming Target" and "Club Target" (Learn stays Off in presets), and the others in `tools/presets/`.
+- **Files:** `DATA/Effects/null_jsfx/{harmonizer,resonator,sampler,spectrum_analyzer,stereo_scope,maximizer,synth,fm,keys,pluck}.jsfx` and `gfx/`, `native/plugins/` (the ten), `native/plugins/rack/modules/maximizer.hpp` (comment), `native/test/compare.cpp`, `tools/presets/` (six), `tools/site_content.json` (slider descriptions), `assets/img/gfx/` (harmonizer, resonator, maximizer, keys, pluck), this Bible (Part II counts, Part III regenerated, B12); regenerated: `.rpl`, `FactoryPresets.hpp`, GFX preset blocks, `web/fx/*`, `remote/`, the four FX chains with Harmonizer or Maximizer (Choir Pad Vocal, Harmony Stack, Loud Master, Mastering Chain: the new sliders at their defaults), the plugin pages and `assets/js/modals.js`.
+- **Tests (run on Linux):**
+  - `tests/run.sh` in full; `tests/lint.py` on all 292 files; every changed plain file against its old copy at defaults (max diff 0) and against its GFX file (max diff 0).
+  - `native/scripts/build.sh --test` for each changed plugin and the Rack, then for the 27 plugins whose JSFX reads MIDI (the new stream) with the wave C plugins and the Rack: ctest 233/233. (`build.sh` keeps `--plugins` in the CMake cache, so a later run without it tests only the last list.)
+  - With MPE on (a copy of each JSFX with MPE defaulting to On), each CLAP matches its JSFX within 1e-5 (largest 7.5e-9). Against the old JSFX it differs, which shows MPE is active.
+  - Maximizer with Learn on and Target −9, rendered for 20 s (a temporary longer `compare`, reverted): the CLAP matches the JSFX exactly. The Rack module differs from 14.5 s, where Learn moves the gain.
+  - `web/test/run.sh`, `tests/remote/remote_test.cjs`, the generators (`build_presets`, `build_chains`, `build_remote`, `build_site`, `build_bible`, `web/tools/build.js`, and every `--check` CI runs) and `tests/bible_order.py`. The changed GFX were rendered and looked at.
+  - Not run: the interfaces in REAPER or a DAW, an MPE controller, Learn on real songs, Windows and macOS (CI).
+- **Version:** v2.9 (no change).
+- **Next:** wave D (B12).

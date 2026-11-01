@@ -1,6 +1,6 @@
 desc:NULL Sampler
 author: Christos Koulaxizis
-tags: instrument sampler sample player one-shot chromatic wav flac loop adsr filter polyphonic midi
+tags: instrument sampler sample player one-shot chromatic wav flac loop adsr filter polyphonic midi slice slices chop beat
 //category: Instruments
 //NULL JSFX v2.9 • https://nulljsfx.tech • MIT License
 
@@ -25,6 +25,8 @@ slider18:0<0,1,1{Off,On}>Reverse
 slider19:100<0,100,1>Velocity (%)
 slider20:2<0,24,1>Bend Range (st)
 slider21:0<-24,12,0.1>Volume (dB)
+slider22:0<0,5,1{Off,4,8,16,32,64}>Slices
+slider23:36<0,127,1>Slice Key
 
 in_pin:none
 out_pin:Left
@@ -46,6 +48,10 @@ out_pin:Right
   //     cutoff up to 6 octaves up or down at the note's start, back over Filter Decay
   //   - pitch bend over Bend Range, sustain pedal (CC 64), all notes off (CC 123) and all
   //     sound off (CC 120)
+  //   - Slices cuts the sample into 4 to 64 equal slices: Slice Key plays the first, each key
+  //     above it the next (keys outside the slices are ignored), at the pitch of Transpose and
+  //     Fine; each slice plays to its own end (One-shot) or until the key is released
+  //     (Chromatic), backwards with Reverse; Start and Loop are not used. Off plays as before.
   // The voices read the sample with 4-point Hermite interpolation. When all 16 voices sound,
   // a new note takes the oldest released voice (else the oldest); what the old voice still
   // played fades out over 2 ms, and so does the step at a loop's end, so nothing clicks.
@@ -66,7 +72,7 @@ out_pin:Right
   V_ON = 0; V_NOTE = 1; V_GAIN = 2; V_POS = 3; V_RATE = 4; V_ST = 5; V_ENV = 6; V_FE = 7;
   V_S1L = 8; V_S2L = 9; V_S1R = 10; V_S2R = 11; V_AGE = 12; V_HELD = 13; V_PED = 14;
   V_TL = 15; V_TR = 16; V_LL = 17; V_LR = 18; V_FC = 19; V_A1 = 20; V_A2 = 21; V_A3 = 22;
-  V_IN = 24; V_KST = 25;
+  V_IN = 24; V_KST = 25; V_END = 26; // V_END: where the voice stops (the sample's or its slice's end)
 
   // the built-in sound at the current rate: a soft electric piano at C4 (mono, 1.5 s)
   function make_builtin() local(i, d1, d2, d3, p1, p2, p3, e1, e2, e3, e4, c1, c2, c3, c4, n, y, a, fo, tp, s1, s2, s3, m, x)
@@ -171,34 +177,47 @@ out_pin:Right
   );
   function kill_all() local(i) ( i = 0; loop(NV, v_kill(VOX + i * 32); i += 1;); );
 
-  function note_on(n, v) local(i, b, vb, ba, bv)
+  function note_on(n, v) local(i, b, vb, ba, bv, k, vs, ve)
   (
-    // a free voice, else the oldest released one, else the oldest
-    b = -1; i = 0;
-    loop(NV, b < 0 && !VOX[i * 32] ? b = i; i += 1;);
-    b < 0 ? (
-      ba = -1; i = 0;
-      loop(NV, vb = VOX + i * 32; vb[V_ST] == 3 && (ba < 0 || vb[V_AGE] < ba) ? ( ba = vb[V_AGE]; b = i; ); i += 1;);
-      b < 0 ? (
-        i = 0;
-        loop(NV, vb = VOX + i * 32; ba < 0 || vb[V_AGE] < ba ? ( ba = vb[V_AGE]; b = i; ); i += 1;);
-      );
+    // where the voice plays: from Start to the end, or its slice (Slices)
+    vs = p0; ve = nfr - 1;
+    k = n - skey;
+    sl_n > 0 ? (
+      k >= 0 && k < sl_n ? (
+        vs = floor((k * nfr) / sl_n);
+        ve = floor(((k + 1) * nfr) / sl_n) - 1;
+        rev ? ( b = vs; vs = (nfr - 1) - ve; ve = (nfr - 1) - b; );
+      ) : ve = -1;                  // no slice on this key: no voice
     );
-    vb = VOX + b * 32;
-    v_kill(vb);
-    age += 1;
-    p0 < nfr - 1 ? (
-      bv = vsens * v;
-      bv += 1 - vsens;
-      vb[V_ON] = 1; vb[V_NOTE] = n; vb[V_GAIN] = bv * 0.5;
-      vb[V_POS] = p0; vb[V_ST] = 1; vb[V_ENV] = 0; vb[V_FE] = 1;
-      vb[V_S1L] = vb[V_S2L] = vb[V_S1R] = vb[V_S2R] = 0;
-      vb[V_AGE] = age; vb[V_HELD] = 1; vb[V_PED] = 0;
-      vb[V_TL] = vb[V_TR] = 0; vb[V_LL] = vb[V_LR] = 0;
-      vb[V_FC] = 0;
-      vb[V_IN] = p0 < le;
-      vb[V_KST] = chrom ? n - root : 0;
-      set_rate(vb);
+    ve >= 0 ? (
+      // a free voice, else the oldest released one, else the oldest
+      b = -1; i = 0;
+      loop(NV, b < 0 && !VOX[i * 32] ? b = i; i += 1;);
+      b < 0 ? (
+        ba = -1; i = 0;
+        loop(NV, vb = VOX + i * 32; vb[V_ST] == 3 && (ba < 0 || vb[V_AGE] < ba) ? ( ba = vb[V_AGE]; b = i; ); i += 1;);
+        b < 0 ? (
+          i = 0;
+          loop(NV, vb = VOX + i * 32; ba < 0 || vb[V_AGE] < ba ? ( ba = vb[V_AGE]; b = i; ); i += 1;);
+        );
+      );
+      vb = VOX + b * 32;
+      v_kill(vb);
+      age += 1;
+      vs < ve ? (
+        bv = vsens * v;
+        bv += 1 - vsens;
+        vb[V_ON] = 1; vb[V_NOTE] = n; vb[V_GAIN] = bv * 0.5;
+        vb[V_POS] = vs; vb[V_ST] = 1; vb[V_ENV] = 0; vb[V_FE] = 1;
+        vb[V_S1L] = vb[V_S2L] = vb[V_S1R] = vb[V_S2R] = 0;
+        vb[V_AGE] = age; vb[V_HELD] = 1; vb[V_PED] = 0;
+        vb[V_TL] = vb[V_TR] = 0; vb[V_LL] = vb[V_LR] = 0;
+        vb[V_FC] = 0;
+        vb[V_IN] = vs < le;
+        vb[V_KST] = chrom && sl_n == 0 ? n - root : 0;
+        vb[V_END] = ve;
+        set_rate(vb);
+      );
     );
   );
   function note_off(n) local(i, vb)
@@ -287,7 +306,9 @@ out_pin:Right
   ls = floor(x * nfr);
   x = slider16 / 100;
   le = floor(x * nfr);
-  lp_on = chrom && slider14 >= 0.5 && le - ls >= 64;
+  sl_n = slider22 >= 1 ? 2 ^ (slider22 + 1) : 0;
+  skey = slider23;
+  lp_on = chrom && slider14 >= 0.5 && le - ls >= 64 && sl_n == 0;
   !lp_on ? le = nfr + 1;
   x = slider17 / 100;
   p0 = x * (nfr - 1);
@@ -316,7 +337,10 @@ out_pin:Right
   si = 0;
 
   // a note heard from the interface (GFX version): the root key, held for 0.4 s
-  sm_preview > 0 ? ( note_on(root, 0.8); sm_pv_left = floor(0.4 * srate); sm_pv_note = root; sm_preview = 0; );
+  sm_preview > 0 ? (
+    sm_pv_note = sl_n > 0 ? skey : root; // with Slices: the first slice
+    note_on(sm_pv_note, 0.8); sm_pv_left = floor(0.4 * srate); sm_preview = 0;
+  );
 
 @sample
   while (mq_i < mq_n && MQ[mq_i * 4] <= si) (
@@ -366,9 +390,9 @@ out_pin:Right
       xr = rd(p, 1) + vb[V_TR];
       vb[V_TL] *= kt; vb[V_TR] *= kt;
       g = e * vb[V_GAIN];
-      // the last 3 ms of the sample fade out
+      // the last 3 ms of the sample (or of the slice) fade out
       !lp_on || !vb[V_IN] ? (
-        x = nfr - 1 - p;
+        x = vb[V_END] - p;
         x /= vb[V_RATE];
         x < fade_n ? g *= x / fade_n;
       );
@@ -404,7 +428,7 @@ out_pin:Right
         p = x;
       );
       vb[V_POS] = p;
-      p >= nfr - 1 || (st == 3 && e < 0.0001) || (st == 2 && sus == 0 && e < 0.0001) ? vb[V_ON] = 0;
+      p >= vb[V_END] || (st == 3 && e < 0.0001) || (st == 2 && sus == 0 && e < 0.0001) ? vb[V_ON] = 0;
     );
     i += 1;
   );

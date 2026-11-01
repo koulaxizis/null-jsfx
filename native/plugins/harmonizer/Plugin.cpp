@@ -7,7 +7,8 @@
  * as the JSFX's midisend does. For the display: aux[0..1] = the voices' intervals now, aux[2..3]
  * their levels (Mode MIDI fades), aux[4] = 1 + the note the scale is on (0 = none yet),
  * aux[5] = 1 while the input is pitched, aux[6..7] = 1 + the held notes voice 1 and 2 sing,
- * aux[8] = 1 when the pitch-tracking path runs.
+ * aux[8] = 1 when the pitch-tracking path runs, aux[9..10] and aux[11..12] the intervals and
+ * levels of voices 3 and 4, aux[13..14] = 1 + their held notes.
  */
 
 #include "NullPlugin.hpp"
@@ -29,7 +30,7 @@ protected:
     const char* getLabel() const override { return "Harmonizer"; }
     const char* getDescription() const override
     {
-        return "Two pitch-shifted harmony voices at fixed intervals, scale degrees of a key or held MIDI notes, detuned, delayed and spread, with optional formant preservation and an equal-power mix.";
+        return "Two to four pitch-shifted harmony voices at fixed intervals, scale degrees of a key or held MIDI notes, detuned, delayed and spread, with optional formant preservation and an equal-power mix.";
     }
     int64_t getUniqueId() const override { return d_cconst('N', '8', 'H', 'm'); }
 
@@ -66,6 +67,12 @@ protected:
         taps.aux[6].store(float(fDsp.note1() + 1), std::memory_order_relaxed);
         taps.aux[7].store(float(fDsp.note2() + 1), std::memory_order_relaxed);
         taps.aux[8].store(fDsp.advanced() ? 1.0f : 0.0f, std::memory_order_relaxed);
+        taps.aux[9].store(float(fDsp.interval3()), std::memory_order_relaxed);
+        taps.aux[10].store(float(fDsp.interval4()), std::memory_order_relaxed);
+        taps.aux[11].store(float(fDsp.gate3()), std::memory_order_relaxed);
+        taps.aux[12].store(float(fDsp.gate4()), std::memory_order_relaxed);
+        taps.aux[13].store(float(fDsp.note3() + 1), std::memory_order_relaxed);
+        taps.aux[14].store(float(fDsp.note4() + 1), std::memory_order_relaxed);
     }
 
 private:

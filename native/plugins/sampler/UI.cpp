@@ -47,6 +47,8 @@ static const NullKnobsUI::Control kControls[] = {
     { 9, NullKnobsUI::kKnob, "RESONANCE", 1, 1, false },
     { 10, NullKnobsUI::kKnob, "FILTER ENV", 1, 1, true },
     { 11, NullKnobsUI::kKnob, "FILTER DECAY", 1, 1, false, true },
+    { 20, NullKnobsUI::kSelect, "SLICES", 1, 1, false },
+    { 21, NullKnobsUI::kKnob, "SLICE KEY", 1, 1, false },
 };
 
 // the sliders with the selectors' upper-case names
@@ -58,6 +60,7 @@ static const SliderInfo* uiSliders()
     s[0].options = nullsmp::kModeShort;
     s[12].options = nullsmp::kOffOnShort;
     s[16].options = nullsmp::kOffOnShort;
+    s[20].options = nullsmp::kSlicesShort;
     return s;
 }
 
@@ -109,8 +112,17 @@ protected:
             std::snprintf(buf, sizeof(buf), "BUILT-IN SOUND: SOFT PIANO, C4, 1.50 S");
         label(28.0f, 71.0f, ALIGN_LEFT, 7.0f, 1.0f, theme::kMuted, buf, true);
         char nb[8];
-        noteName(int(std::lround(value(1))), nb, sizeof(nb));
-        std::snprintf(buf, sizeof(buf), "%s, ROOT %s", value(0) >= 0.5f ? "CHROMATIC" : "ONE-SHOT", nb);
+        const int slices = int(std::lround(value(20))) >= 1 ? 1 << (int(std::lround(value(20))) + 1) : 0;
+        if (slices > 0)
+        {
+            noteName(int(std::lround(value(21))), nb, sizeof(nb));
+            std::snprintf(buf, sizeof(buf), "%s, %d SLICES FROM %s", value(0) >= 0.5f ? "CHROMATIC" : "ONE-SHOT", slices, nb);
+        }
+        else
+        {
+            noteName(int(std::lround(value(1))), nb, sizeof(nb));
+            std::snprintf(buf, sizeof(buf), "%s, ROOT %s", value(0) >= 0.5f ? "CHROMATIC" : "ONE-SHOT", nb);
+        }
         label(612.0f, 71.0f, ALIGN_RIGHT, 7.0f, 1.0f, theme::kMuted, buf, true);
 
         const float mid = kY0 + kH * 0.5f;
@@ -120,7 +132,7 @@ protected:
         const float ls = std::floor(value(13) * 10.0f + 0.5f) / 1000.0f, le = std::floor(value(14) * 10.0f + 0.5f) / 1000.0f;
         const float secs = p ? p->seconds.load(std::memory_order_relaxed) : 1.5f;
         const float rate = p ? p->fileRate.load(std::memory_order_relaxed) : 44100.0f;
-        const bool loop = chrom && value(12) >= 0.5f && (le - ls) * secs * rate >= 64.0f;
+        const bool loop = chrom && value(12) >= 0.5f && (le - ls) * secs * rate >= 64.0f && slices == 0;
         if (loop)
         {
             const float a = rev ? 1.0f - le : ls, b = rev ? 1.0f - ls : le;
@@ -163,6 +175,9 @@ protected:
             line(kX0 + kW * a, kY0, kX0 + kW * a, kY0 + kH, theme::kText, 0.5f);
             line(kX0 + kW * b, kY0, kX0 + kW * b, kY0 + kH, theme::kText, 0.5f);
         }
+        // the slices' borders
+        for (int j = 1; j < slices; ++j)
+            line(kX0 + kW * float(j) / float(slices), kY0, kX0 + kW * float(j) / float(slices), kY0 + kH, theme::kText, 0.35f);
         // the voices that play
         int nv = 0;
         if (nulljsfx::Taps* tp = taps())
@@ -181,7 +196,8 @@ protected:
         stroke();
         std::snprintf(buf, sizeof(buf), "%d / 16 VOICES", nv);
         label(28.0f, 206.0f, ALIGN_LEFT, 7.0f, 1.0f, theme::kMuted, buf, true);
-        label(612.0f, 206.0f, ALIGN_RIGHT, 7.0f, 1.0f, theme::kMuted, "CLICK THE WAVE TO HEAR THE ROOT KEY", true);
+        label(612.0f, 206.0f, ALIGN_RIGHT, 7.0f, 1.0f, theme::kMuted,
+              slices > 0 ? "CLICK THE WAVE TO HEAR THE FIRST SLICE" : "CLICK THE WAVE TO HEAR THE ROOT KEY", true);
     }
 
     void box(float x, float y, float w, float h, uint32_t rgb, float alpha)
@@ -206,7 +222,7 @@ protected:
     {
         switch (param)
         {
-        case 1: noteName(int(std::lround(v)), buf, n); break;
+        case 1: case 21: noteName(int(std::lround(v)), buf, n); break;
         case 2: std::snprintf(buf, n, "%+d st", int(std::lround(v))); break;
         case 3: std::snprintf(buf, n, "%+d ct", int(std::lround(v))); break;
         case 4: case 5: case 7: case 11: msText(v, buf, n); break;

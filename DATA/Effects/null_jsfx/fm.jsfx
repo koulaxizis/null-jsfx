@@ -41,6 +41,8 @@ slider34:50<0,100,1>Reverb Size (%)
 slider35:0<-3,3,1>Octave
 slider36:2<0,24,1>Bend Range (st)
 slider37:0<-24,12,0.1>Volume (dB)
+slider38:0<0,1,1{Off,On}>MPE
+slider39:48<0,96,1>MPE Bend Range (st)
 
 in_pin:none
 out_pin:Left
@@ -56,10 +58,14 @@ out_pin:Right
   // A modulator's Level sets its modulation index (up to 8 radians, square law), a carrier's
   // its loudness. Brightness scales every modulator's index (x0.25 .. x2). After the voices:
   // Chorus and Reverb. MIDI: notes (any channel), sustain pedal, mod wheel (vibrato), pitch
-  // bend (Bend Range) and all notes off.
+  // bend (Bend Range) and all notes off. MPE (On): channel 1 is the master channel as above; on
+  // channels 2-16 the pitch bend (MPE Bend Range), channel pressure (up to +6 dB) and CC74
+  // timbre (64 neutral, every modulator's index x0.5 .. x2) belong to the note on that channel,
+  // and a note-off ends only the note of its own channel.
   //
   // Memory: 1000.. the MIDI queue of the block, 2200.. voice info for the allocator, 2300..
-  // operator settings, 2360.. the algorithm's routing, 2500.. per-voice state, 700000.. the
+  // operator settings, 2360.. the algorithm's routing, 2500.. per-voice state, 3200.. MPE
+  // channel bend, pressure and timbre (16 each), 3300.. the channel of each key, 700000.. the
   // chorus and reverb lines.
   ext_noinit = 1;
   ext_tail_size = -1;
@@ -71,12 +77,13 @@ out_pin:Right
   MM = 2360;    // MM[i * 4 + j]: operator j modulates operator i (0-based)
   CR = 2380;    // CR[i]: operator i is heard
   VM = 2500;
+  CHB = 3200; CHP = 3216; CHT = 3232; KCH = 3300;
   FXM = 700000;
 
   // ---- voices (v0 .. v7): this.st 1 while any carrier sounds, this.gate the key, this.sus held by
   // the pedal; this.m: [0..3] phases, [4..7] envelopes, [8..11] stages (0 off, 1 attack,
   // 2 decay/sustain, 4 release), [12..15] velocity factors, [16..17] the feedback history
-  function vinit(i) ( this.m = VM + i * 20; this.st = 0; this.gate = 0; this.sus = 0; this.note = -1; this.ord = 0; );
+  function vinit(i) ( this.m = VM + i * 20; this.st = 0; this.gate = 0; this.sus = 0; this.note = -1; this.ord = 0; this.ch = 0; this.pp = 0; this.tt = 0; );
   function vinfo(i) ( VI[i * 4] = this.st; VI[i * 4 + 1] = this.note; VI[i * 4 + 2] = this.ord; VI[i * 4 + 3] = this.gate; );
 
   function vstart(n, v) local(m, k, s)
@@ -91,6 +98,7 @@ out_pin:Right
       k += 1;
     );
     this.note = n;
+    this.ch = mpe ? KCH[n] : 0; this.pp = CHP[this.ch]; this.tt = CHT[this.ch];
     this.pt = n + oct;
     this.gate = 1; this.sus = 0;
     this.st = 1;
@@ -102,7 +110,7 @@ out_pin:Right
     this.st > 0 ? ( m[8] = m[8] > 0 ? 4 : 0; m[9] = m[9] > 0 ? 4 : 0; m[10] = m[10] > 0 ? 4 : 0; m[11] = m[11] > 0 ? 4 : 0; );
     this.gate = 0; this.sus = 0;
   );
-  function voff(n) ( this.gate && this.note == n ? ( sus_on ? ( this.gate = 0; this.sus = 1; ) : this.vrelease(); ); );
+  function voff(n) ( this.gate && this.note == n && (!mpe || this.ch == cur_ch) ? ( sus_on ? ( this.gate = 0; this.sus = 1; ) : this.vrelease(); ); );
   function vpedal() ( this.sus ? this.vrelease(); );
 
   // one operator's envelope (stage in m[8 + k], level in m[4 + k])
@@ -117,23 +125,31 @@ out_pin:Right
     e * m[12 + k];
   );
 
-  function vproc() local(m, f, e1, e2, e3, e4, y1, y2, y3, y4, on)
+  function vproc() local(m, f, e1, e2, e3, e4, y1, y2, y3, y4, on, mk, lk)
   (
     this.st > 0 ? (
       m = this.m;
       e4 = op_env(m, 3); e3 = op_env(m, 2); e2 = op_env(m, 1); e1 = op_env(m, 0);
-      f = 440 * 2 ^ ((this.pt + pmod - 69) / 12) / srate;
+      // MPE: the note's own channel bend, pressure and timbre (pressure and timbre over 5 ms)
+      mk = lk = 1;
+      mpe ? (
+        this.pp += (CHP[this.ch] - this.pp) * mpe_sm;
+        this.tt += (CHT[this.ch] - this.tt) * mpe_sm;
+        mk = 2 ^ this.tt;
+        lk = 1 + this.pp;
+        f = 440 * 2 ^ (((this.pt + (pmod + mpe_r * CHB[this.ch])) - 69) / 12) / srate;
+      ) : f = 440 * 2 ^ ((this.pt + pmod - 69) / 12) / srate;
       // operator 4 (with feedback), then 3, 2, 1, each modulated by those the algorithm routes
       y4 = sin(2 * $pi * m[3] + fb_k * (m[16] + m[17])) * e4;
       m[17] = m[16]; m[16] = y4 * 0.5;
-      y3 = sin(2 * $pi * m[2] + MM[11] * y4 * OPS[25]) * e3;
-      y2 = sin(2 * $pi * m[1] + MM[6] * y3 * OPS[17] + MM[7] * y4 * OPS[25]) * e2;
-      y1 = sin(2 * $pi * m[0] + MM[1] * y2 * OPS[9] + MM[2] * y3 * OPS[17] + MM[3] * y4 * OPS[25]) * e1;
+      y3 = sin(2 * $pi * m[2] + MM[11] * y4 * OPS[25] * mk) * e3;
+      y2 = sin(2 * $pi * m[1] + MM[6] * y3 * OPS[17] * mk + MM[7] * y4 * OPS[25] * mk) * e2;
+      y1 = sin(2 * $pi * m[0] + MM[1] * y2 * OPS[9] * mk + MM[2] * y3 * OPS[17] * mk + MM[3] * y4 * OPS[25] * mk) * e1;
       m[0] += f * OPS[0]; m[0] -= floor(m[0]);
       m[1] += f * OPS[8]; m[1] -= floor(m[1]);
       m[2] += f * OPS[16]; m[2] -= floor(m[2]);
       m[3] += f * OPS[24]; m[3] -= floor(m[3]);
-      outv += (CR[0] * y1 * OPS[1] + CR[1] * y2 * OPS[9] + CR[2] * y3 * OPS[17] + CR[3] * y4 * OPS[25]) * out_g;
+      outv += (CR[0] * y1 * OPS[1] + CR[1] * y2 * OPS[9] + CR[2] * y3 * OPS[17] + CR[3] * y4 * OPS[25]) * out_g * lk;
       // the voice ends when every carrier's envelope has
       on = (CR[0] > 0 && m[8] > 0) || (CR[1] > 0 && m[9] > 0) || (CR[2] > 0 && m[10] > 0) || (CR[3] > 0 && m[11] > 0);
       !on ? this.st = 0;
@@ -143,6 +159,7 @@ out_pin:Right
   // note on: the same key still sounding, a silent voice, the oldest releasing one, the oldest
   function note_on(n, v) local(i, best, bo)
   (
+    KCH[n] = cur_ch;
     v0.vinfo(0); v1.vinfo(1); v2.vinfo(2); v3.vinfo(3); v4.vinfo(4); v5.vinfo(5); v6.vinfo(6); v7.vinfo(7);
     best = -1;
     i = 0; loop(NV, best < 0 && VI[i * 4] > 0 && VI[i * 4 + 1] == n ? best = i; i += 1; );
@@ -168,6 +185,13 @@ out_pin:Right
   function midi_in(st, d1, d2) local(c)
   (
     c = st & 0xF0;
+    cur_ch = st & 0x0F;
+    mpe && cur_ch > 0 && (c == 0xE0 || c == 0xD0 || (c == 0xB0 && d1 == 74)) ? (
+      // MPE: a member channel's bend, pressure and timbre belong to its note
+      c == 0xE0 ? CHB[cur_ch] = (d2 * 128 + d1 - 8192) / 8192 :
+      c == 0xD0 ? CHP[cur_ch] = d1 / 127 :
+      CHT[cur_ch] = (d2 - 64) / 64;
+    ) :
     c == 0x90 && d2 > 0 ? note_on(d1, d2 / 127) :
     c == 0x80 || c == 0x90 ? note_off(d1) :
     c == 0xB0 ? (
@@ -214,6 +238,8 @@ out_pin:Right
   ch_on = rv_on = 0;
   ord_n = 0;
   sus_on = 0; mwheel = 0; bend = 0;
+  memset(CHB, 0, 48); memset(KCH, 0, 128);
+  cur_ch = 0; mpe_was = 0;
   vib_ph = 0; ch_ph = 0;
   m_ofs = m_1 = m_2 = m_3 = 0;
 
@@ -250,6 +276,12 @@ out_pin:Right
   oct = 12 * floor(slider35 + 0.5);
   bend_r = slider36;
   vol = 10 ^ (slider37 / 20);
+  mpe = slider38 >= 0.5;
+  mpe_r = slider39;
+  mpe_sm = 1 - exp(-1000 / (5 * srate));
+  // MPE turned on starts from neutral channels
+  mpe && !mpe_was ? memset(CHB, 0, 48);
+  mpe_was = mpe;
   ch_mix > 0 && !ch_on ? memset(CHL, 0, 2 * CHN);
   rv_mix > 0 && !rv_on ? ( memset(RVB, 0, 8 * RVN); memset(RVS, 0, 8); );
   ch_on = ch_mix > 0; rv_on = rv_mix > 0;
