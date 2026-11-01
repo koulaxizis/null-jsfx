@@ -1,6 +1,7 @@
 // Remote for DAWs, Bitwig Studio: the session. Talks over TCP to our controller script
 // (remote/bitwig/NullJSFX/NullJSFX.control.js, port 8818), which runs inside Bitwig; the
-// protocol is written out at the top of that script. JSON both ways: to Bitwig every message
+// protocol is written out at the top of that script. The Ableton tab uses this session too:
+// our control surface for Live (remote/ableton/NullJSFX, port 8819) speaks the same protocol. JSON both ways: to Bitwig every message
 // has Bitwig's 4-byte big-endian length in front (RemoteConnection's framing); from Bitwig one
 // object per line. The API documents only the framing towards Bitwig, so the reader also takes
 // a 4-byte length in front of a send, should Bitwig add one (a JSON line never starts with 0).
@@ -218,7 +219,7 @@
       if (!this.up) { this.up = true; this.emit('link', true); }
       switch (m.t) {
         case 'hello':
-          if (m.proto > PROTO && root.console) console.warn('Bitwig script speaks protocol ' + m.proto);
+          if (m.proto > PROTO && root.console) console.warn('the DAW script speaks protocol ' + m.proto);
           return;
         case 'tracks': return this.tracks(m);
         case 'track': return this.track(m);
@@ -249,7 +250,7 @@
       const s = old || { ssid: t.i, meter: 0 };
       s.name = String(t.name || '');
       s.type = String(t.type || '');
-      s.canRec = /^(Audio|Instrument|Hybrid)$/.test(s.type);
+      s.canRec = /^(Audio|Instrument|Hybrid|MIDI)$/.test(s.type); // Bitwig's and Live's types
       this.fields(s, t);
       return s;
     }
