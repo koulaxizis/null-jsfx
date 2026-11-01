@@ -1,1 +1,1 @@
-Control your digital mixer from your phone or tablet: faders, mutes, sends, meters.
+Beta: your digital mixer on your phone or tablet. Faders, mutes, sends, meters.
