@@ -1,0 +1,205 @@
+desc:NULL Binaural Panner
+author: Christos Koulaxizis
+tags: binaural panner headphones 3d spatial hrtf itd ild head shadow elevation distance immersive
+//category: Advanced
+//NULL JSFX v3.0 • https://nulljsfx.tech • MIT License
+
+slider1:0<-180,180,1>Azimuth (deg)
+slider2:0<-40,90,1>Elevation (deg)
+slider3:1<0.25,20,0.01:log>Distance (m)
+slider4:20<0,100,1>Room (%)
+slider5:17.5<14,20,0.1>Head Size (cm)
+slider6:0<0,1,1{Mono sum,Stereo}>Input
+slider7:30<0,90,1>Width (deg)
+slider8:0<-24,12,0.1>Output (dB)
+
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
+
+@init
+  ext_noinit = 1;              // play and seek keep tails and state, as in the VST3/CLAP
+  // Places a sound anywhere around the head, for headphones, with no measured HRTF data: the
+  // spherical head of Brown and Duda (1998). Per source: air absorption (a one-pole low-pass
+  // that falls with Distance), the pinna's shadow from behind (a high shelf at 4 kHz, down to
+  // -10 dB straight behind), the pinna notch of elevation (-10 dB, from 6 kHz at -40 deg to
+  // 10 kHz overhead), 1/r level (0 dB at 1 m); then per ear the interaural delay of Woodworth's
+  // formula (a/c x (lat + sin lat), lat the lateral angle; fractional, glided over 20 ms) and
+  // the head shadow, a one-pole/one-zero filter (alpha s + beta) / (s + beta), beta = 2c/a, with
+  // alpha from 2 (the ear facing the source) to 0.1 (150 deg away). Room adds six early
+  // reflections that do not fall with distance, so the direct-to-room ratio is the distance cue
+  // and the sound leaves the head. Input Stereo: the left input at Azimuth - Width, the right one
+  // at Azimuth + Width. No latency.
+  BL = 4096;                         // per-source ring buffers (ITD up to 0.75 ms at 768 kHz)
+  buf_a = 0; buf_b = BL;
+  ref_buf = 2 * BL;                  // early reflections: one mono ring buffer
+  RL = ceil(0.03 * srate) + 2;
+  freembuf(ref_buf + RL);
+  memset(0, 0, ref_buf + RL);
+  pos = 0; rpos = 0;
+  sk = 1 - exp(-1 / (0.02 * srate)); // 20 ms glide of the ear delays
+  // the six reflections: time (ms), gain, left and right weights
+  r1t = 2.9; r1g = 0.62; r1l = 1; r1r = 0.35;
+  r2t = 5.3; r2g = -0.55; r2l = 0.35; r2r = 1;
+  r3t = 8.1; r3g = 0.47; r3l = 0.8; r3r = 0.6;
+  r4t = 11.6; r4g = -0.41; r4l = 0.6; r4r = 0.8;
+  r5t = 15.2; r5g = 0.34; r5l = 1; r5r = 0.2;
+  r6t = 19.7; r6g = -0.28; r6l = 0.2; r6r = 1;
+  r1d = floor(r1t / 1000 * srate); r2d = floor(r2t / 1000 * srate); r3d = floor(r3t / 1000 * srate);
+  r4d = floor(r4t / 1000 * srate); r5d = floor(r5t / 1000 * srate); r6d = floor(r6t / 1000 * srate);
+  rlp_c = 1 - exp(-2 * $pi * min(5000, 0.45 * srate) / srate); // the reflections are darker
+  rlp_l = rlp_r = 0;
+  first = 1;
+
+  function clear() instance(lp, x1, x2, y1, y2, n1, n2, m1, m2, dlc, drc, hl1, hly, hr1, hry)
+  (
+    lp = x1 = x2 = y1 = y2 = n1 = n2 = m1 = m2 = 0;
+    dlc = drc = 0;
+    hl1 = hly = hr1 = hry = 0;
+  );
+
+  // the coefficients of one source at azimuth az and elevation el (degrees)
+  function setup(az, el) instance(ac, gd, sb0, sb1, sb2, sa1, sa2, nb0, nb1, nb2, na1, na2, dlt, drt,
+                                  lb0, lb1, la1, rb0, rb1, ra1)
+    local(t, p, ca, se, rear, A, w, cw, al, a0, f, lat, tau, k, al_l, al_r, th)
+  (
+    t = az * $pi / 180;
+    p = el * $pi / 180;
+    // air: a one-pole low-pass, 20 kHz x 10^(-r/40)
+    f = min(0.45 * srate, 20000 * 10 ^ (-dist / 40));
+    ac = 1 - exp(-2 * $pi * f / srate);
+    gd = 1 / dist;
+    // behind: high shelf at 4 kHz (RBJ, S = 1), down to -10 dB straight behind
+    rear = max(0, -cos(t) * cos(p));
+    A = 10 ^ (-10 * rear / 40);
+    w = 2 * $pi * min(4000, 0.45 * srate) / srate;
+    cw = cos(w);
+    al = sin(w) / 2 * sqrt(2);
+    a0 = (A + 1) - (A - 1) * cw + 2 * sqrt(A) * al;
+    sb0 = A * ((A + 1) + (A - 1) * cw + 2 * sqrt(A) * al) / a0;
+    sb1 = -2 * A * ((A - 1) + (A + 1) * cw) / a0;
+    sb2 = A * ((A + 1) + (A - 1) * cw - 2 * sqrt(A) * al) / a0;
+    sa1 = 2 * ((A - 1) - (A + 1) * cw) / a0;
+    sa2 = ((A + 1) - (A - 1) * cw - 2 * sqrt(A) * al) / a0;
+    // elevation: the pinna notch (RBJ peaking, -10 dB, Q 2) from 6 kHz at -40 deg to 10 kHz at 90 deg
+    A = 10 ^ (-10 / 40);
+    w = 2 * $pi * min(6000 + 4000 * (el + 40) / 130, 0.45 * srate) / srate;
+    cw = cos(w);
+    al = sin(w) / (2 * 2);
+    a0 = 1 + al / A;
+    nb0 = (1 + al * A) / a0;
+    nb1 = -2 * cw / a0;
+    nb2 = (1 - al * A) / a0;
+    na1 = -2 * cw / a0;
+    na2 = (1 - al / A) / a0;
+    // the interaural delay (Woodworth), on the far ear
+    se = sin(t) * cos(p);
+    lat = asin(max(-1, min(1, se)));
+    tau = hrad / 343 * (abs(lat) + sin(abs(lat))) * srate;
+    dlt = lat > 0 ? tau : 0;
+    drt = lat < 0 ? tau : 0;
+    // the head shadow per ear: th = angle between the source and the ear's axis
+    k = 2 * srate;
+    th = acos(max(-1, min(1, -se))) * 180 / $pi;
+    al_l = 1.05 + 0.95 * cos(th / 150 * $pi);
+    th = acos(max(-1, min(1, se))) * 180 / $pi;
+    al_r = 1.05 + 0.95 * cos(th / 150 * $pi);
+    lb0 = (al_l * k + beta) / (k + beta);
+    lb1 = (beta - al_l * k) / (k + beta);
+    la1 = (beta - k) / (k + beta);
+    rb0 = (al_r * k + beta) / (k + beta);
+    rb1 = (beta - al_r * k) / (k + beta);
+    ra1 = la1;
+  );
+
+  // a read between samples of a source's ring buffer, d samples back (linear)
+  function rd(buf, d) local(i, fr, p0, p1)
+  (
+    i = floor(d);
+    fr = d - i;
+    p0 = pos - i; p0 < 0 ? p0 += BL;
+    p1 = p0 - 1; p1 < 0 ? p1 += BL;
+    buf[p0] + (buf[p1] - buf[p0]) * fr;
+  );
+
+  // one source: filters, level, then both ears; returns the signal for the reflections, the ears
+  // in yl and yr
+  function run(buf, x) instance(ac, gd, sb0, sb1, sb2, sa1, sa2, nb0, nb1, nb2, na1, na2, dlt, drt,
+                                lb0, lb1, la1, rb0, rb1, ra1, lp, x1, x2, y1, y2, n1, n2, m1, m2,
+                                dlc, drc, hl1, hly, hr1, hry, yl, yr)
+    local(y, z, xl, xr)
+  (
+    lp += ac * (x - lp);
+    y = sb0 * lp + sb1 * x1 + sb2 * x2 - sa1 * y1 - sa2 * y2;
+    x2 = x1; x1 = lp; y2 = y1; y1 = y;
+    z = nb0 * y + nb1 * n1 + nb2 * n2 - na1 * m1 - na2 * m2;
+    n2 = n1; n1 = y; m2 = m1; m1 = z;
+    buf[pos] = z * gd;
+    dlc += sk * (dlt - dlc);
+    drc += sk * (drt - drc);
+    xl = rd(buf, dlc);
+    xr = rd(buf, drc);
+    yl = lb0 * xl + lb1 * hl1 - la1 * hly;
+    hl1 = xl; hly = yl;
+    yr = rb0 * xr + rb1 * hr1 - ra1 * hry;
+    hr1 = xr; hry = yr;
+    z;
+  );
+
+  sa.clear(); sb.clear();
+
+@slider
+  dist = slider3;
+  room = slider4 / 100;
+  hrad = slider5 / 200;              // Head Size is the diameter, in cm
+  beta = 2 * 343 / hrad;
+  stereo = slider6;
+  outg = 10 ^ (slider8 / 20);
+  stereo ? (
+    sa.setup(slider1 - slider7, slider2);
+    sb.setup(slider1 + slider7, slider2);
+  ) : (
+    sa.setup(slider1, slider2);
+  );
+  // a new setting glides from where the ears are; the very first one starts there
+  first ? (
+    sa.dlc = sa.dlt; sa.drc = sa.drt;
+    sb.dlc = sb.dlt; sb.drc = sb.drt;
+    first = 0;
+  );
+
+@sample
+  stereo ? (
+    xa = sa.run(buf_a, spl0);
+    xb = sb.run(buf_b, spl1);
+    o_l = sa.yl + sb.yl;
+    o_r = sa.yr + sb.yr;
+    xm = (xa + xb) * 0.5;
+  ) : (
+    xa = sa.run(buf_a, (spl0 + spl1) * 0.5);
+    o_l = sa.yl;
+    o_r = sa.yr;
+    xm = xa;
+  );
+  pos += 1; pos >= BL ? pos = 0;
+
+  // early reflections of the source before its distance level, so they stay as the source moves away
+  ref_buf[rpos] = xm;
+  room > 0 ? (
+    rr_l = 0; rr_r = 0;
+    q = rpos - r1d; q < 0 ? q += RL; v = ref_buf[q] * r1g; rr_l += v * r1l; rr_r += v * r1r;
+    q = rpos - r2d; q < 0 ? q += RL; v = ref_buf[q] * r2g; rr_l += v * r2l; rr_r += v * r2r;
+    q = rpos - r3d; q < 0 ? q += RL; v = ref_buf[q] * r3g; rr_l += v * r3l; rr_r += v * r3r;
+    q = rpos - r4d; q < 0 ? q += RL; v = ref_buf[q] * r4g; rr_l += v * r4l; rr_r += v * r4r;
+    q = rpos - r5d; q < 0 ? q += RL; v = ref_buf[q] * r5g; rr_l += v * r5l; rr_r += v * r5r;
+    q = rpos - r6d; q < 0 ? q += RL; v = ref_buf[q] * r6g; rr_l += v * r6l; rr_r += v * r6r;
+    rlp_l += rlp_c * (rr_l - rlp_l);
+    rlp_r += rlp_c * (rr_r - rlp_r);
+    o_l += rlp_l * room * 0.5;
+    o_r += rlp_r * room * 0.5;
+  );
+  rpos += 1; rpos >= RL ? rpos = 0;
+
+  spl0 = o_l * outg;
+  spl1 = o_r * outg;
