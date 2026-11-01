@@ -2,7 +2,7 @@ desc:NULL Kick GFX
 author: Christos Koulaxizis
 tags: instrument kick drum bass drum 808 909 sub click punch pitch sweep synth midi gui
 //category: Instruments
-//NULL JSFX v2.9 • https://nulljsfx.tech • MIT License
+//NULL JSFX v3.0 • https://nulljsfx.tech • MIT License
 
 import null_gfx.jsfx-inc
 

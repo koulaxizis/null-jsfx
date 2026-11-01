@@ -2,7 +2,7 @@ desc:NULL Filter
 author: Christos Koulaxizis
 tags: filter lowpass resonance q cutoff svf tpt 24 db drive lfo envelope auto-wah wobble tempo sync
 //category: Essentials
-//NULL JSFX v2.9 • https://nulljsfx.tech • MIT License
+//NULL JSFX v3.0 • https://nulljsfx.tech • MIT License
 
 slider1:1000<20,20000,1:log>Cutoff (Hz)
 slider2:1<0.1,10,0.1>Resonance

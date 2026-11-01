@@ -2,7 +2,7 @@ desc:NULL De-Plosive
 author: Christos Koulaxizis
 tags: de-plosive deplosive plosive pop p b vocal voice dialogue podcast low end thump repair restoration
 //category: Essentials
-//NULL JSFX v2.9 • https://nulljsfx.tech • MIT License
+//NULL JSFX v3.0 • https://nulljsfx.tech • MIT License
 
 slider1:50<0,100,1>Sensitivity (%)
 slider2:150<60,400,1:log>Frequency (Hz)

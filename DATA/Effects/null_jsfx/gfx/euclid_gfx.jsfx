@@ -2,7 +2,7 @@ desc:NULL Euclid GFX
 author: Christos Koulaxizis
 tags: midi euclid euclidean rhythm generator sequencer pattern pulses steps rotate polyrhythm drum trigger swing tempo sync gui
 //category: MIDI
-//NULL JSFX v2.9 • https://nulljsfx.tech • MIT License
+//NULL JSFX v3.0 • https://nulljsfx.tech • MIT License
 
 import null_gfx.jsfx-inc
 

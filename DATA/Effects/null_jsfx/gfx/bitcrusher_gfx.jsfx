@@ -2,7 +2,7 @@ desc:NULL Bitcrusher GFX
 author: Christos Koulaxizis
 tags: bitcrusher bit crusher decimator sample rate reduction lo-fi lofi digital aliasing 8-bit 12-bit retro gui
 //category: Essentials
-//NULL JSFX v2.9 • https://nulljsfx.tech • MIT License
+//NULL JSFX v3.0 • https://nulljsfx.tech • MIT License
 
 import null_gfx.jsfx-inc
 

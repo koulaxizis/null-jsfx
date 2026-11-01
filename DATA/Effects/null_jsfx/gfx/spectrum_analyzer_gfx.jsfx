@@ -2,7 +2,7 @@ desc:NULL Spectrum Analyzer GFX
 author: Christos Koulaxizis
 tags: spectrum analyzer analyser fft frequency meter metering peak hold slope visual mixing mastering spectrogram waterfall sidechain overlay compare gui
 //category: Advanced
-//NULL JSFX v2.9 • https://nulljsfx.tech • MIT License
+//NULL JSFX v3.0 • https://nulljsfx.tech • MIT License
 
 import null_gfx.jsfx-inc
 

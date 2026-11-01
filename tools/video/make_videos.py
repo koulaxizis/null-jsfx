@@ -126,6 +126,21 @@ def make_input(kind, loop):
     elif kind == "clicks":
         for i in rng.integers(0, n - 40, 70):
             x[i:i + 3] += rng.choice([-1, 1]) * np.array([0.5, -0.35, 0.15])[:, None]
+    elif kind == "kick":  # a kick drum alone (an audio-to-MIDI effect's input)
+        k = kick_track(n)
+        x = np.column_stack([k, k])
+    elif kind == "bassline":  # a plain sawtooth bass line, one voice (for pitch detection)
+        x = np.zeros((n, 2))
+        for i, (beat, ln, pitch, vel) in enumerate(BASSLINE * (n // (16 * BEAT) + 1)):
+            a = int((i // len(BASSLINE)) * 16 * BEAT + beat * BEAT)
+            m = min(n, a + int(ln * BEAT))
+            if a >= n:
+                break
+            t = np.arange(m - a) / SR
+            f = 440 * 2 ** ((pitch - 69) / 12)
+            saw = 2 * (t * f % 1) - 1
+            env = np.minimum(1, t / 0.005) * np.minimum(1, (m - a - np.arange(m - a)) / (0.01 * SR))
+            x[a:m] += (saw * env * 0.35 * vel / 127)[:, None]
     if kind == "sidechain":
         k = kick_track(n)
         main = loop * 0.9
@@ -150,6 +165,12 @@ WRONG = [  # a line with notes from outside any one scale, for Scale
     [(0, 0.5, 60), (0.5, 0.5, 62), (1, 0.5, 63), (1.5, 0.5, 65), (2, 1, 66), (3, 1, 68)],
     [(0, 1.5, 70), (1.5, 0.5, 69), (2, 2, 64)],
 ]
+BASSLINE = [  # (beat, length, note, velocity) over four bars: A, F, C, G
+    (0, 1.5, 45, 110), (2, 0.9, 45, 100), (3, 0.9, 52, 100),
+    (4, 1.5, 41, 110), (6, 0.9, 41, 100), (7, 0.9, 48, 100),
+    (8, 1.5, 48, 110), (10, 0.9, 48, 100), (11, 0.9, 43, 100),
+    (12, 1.5, 43, 110), (14, 0.9, 43, 100), (15, 0.9, 50, 100),
+]
 PATTERNS = {  # name: what the video says is played
     "chords": "Held chords: Am, F, C, G",
     "pad": "Held chords over a bass note",
@@ -160,6 +181,7 @@ PATTERNS = {  # name: what the video says is played
     "riff": "A held key: C, then G",
     "wrong": "A melody with notes out of key",
     "drums": "A straight drum beat (GM notes)",
+    "kick": "A kick on every beat, C1",
 }
 
 
@@ -202,6 +224,9 @@ def midi_pattern(name, seconds):
         elif name == "wrong":
             for at, ln, n in WRONG[bar % 4]:
                 note(b + at, ln * 0.9, n, 90)
+        elif name == "kick":
+            for beat in range(4):
+                note(b + beat, 0.25, 36, 112 if beat % 2 == 0 else 96)
         elif name == "drums":
             for step in range(16):
                 at = b + step / 4
@@ -662,7 +687,7 @@ def render(stem, hq_dir, tool, loop):
     with tempfile.TemporaryDirectory() as tmp:
         tmp = Path(tmp)
         midi_args, events = [], []
-        if mode == "fx":
+        if mode == "fx" or (mode == "midi" and "input" in cfg):  # audio in (an audio-to-MIDI effect too)
             ins, before = make_input(cfg.get("input", "loop"), loop)
         else:  # instruments and MIDI effects: silence in, the MIDI pattern as what is played
             ins = before = np.zeros((SR, 2))
@@ -692,7 +717,12 @@ def render(stem, hq_dir, tool, loop):
         if mode == "midi":  # the instrument plays the notes going in (before) and coming out (after)
             out_events = read_midi(tmp / "midi_out.txt")
             inst, preset = cfg["play"]
-            dry = play_instrument(tool, inst, preset, tmp / "midi_in.txt", nframes, n, tmp)
+            if "input" in cfg:  # audio to MIDI: before is the audio, after the instrument on the notes
+                pass
+            elif cfg.get("midi"):
+                dry = play_instrument(tool, inst, preset, tmp / "midi_in.txt", nframes, n, tmp)
+            else:  # a MIDI effect that plays on its own (Euclid): nothing before it
+                dry = np.zeros((n, 2))
             wet = play_instrument(tool, inst, preset, tmp / "midi_out.txt", nframes, n, tmp)
             info["played_by"] = f"{plugin_info(inst)['name']} · {preset}"
             info["notes"] = (note_spans(events), note_spans(out_events))
@@ -737,7 +767,8 @@ def play_instrument(tool, stem, preset, midi, nframes, n, tmp):
     n samples long (a MIDI effect's video: what its notes sound like)."""
     vals = next(v for name, v in build_presets.load(stem) if name == preset)
     np.tile(np.asarray(vals, np.float32), (nframes, 1)).tofile(tmp / "inst_ctl.f32")
-    r = subprocess.run([tool, "-m", str(midi), str(GFX / f"{stem}_gfx.jsfx"), str(tmp / "in.f32"), "2",
+    np.zeros((SR, 2), np.float32).tofile(tmp / "inst_in.f32")  # silence in: only the notes play
+    r = subprocess.run([tool, "-m", str(midi), str(GFX / f"{stem}_gfx.jsfx"), str(tmp / "inst_in.f32"), "2",
                         str(tmp / "inst_ctl.f32"), str(len(vals)), str(FPS), str(tmp / "inst.f32")],
                        capture_output=True, text=True)
     if r.returncode:

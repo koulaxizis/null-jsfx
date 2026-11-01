@@ -2,7 +2,7 @@ desc:NULL Glue Comp GFX
 author: Christos Koulaxizis
 tags: compressor bus glue mix buss console stereo link auto release parallel sidechain hpf gui
 //category: Essentials
-//NULL JSFX v2.9 • https://nulljsfx.tech • MIT License
+//NULL JSFX v3.0 • https://nulljsfx.tech • MIT License
 
 import null_gfx.jsfx-inc
 

@@ -2,7 +2,7 @@ desc:NULL Kick Shaper GFX
 author: Christos Koulaxizis
 tags: kick drum transient shaping punch body thump click decay gui
 //category: Advanced
-//NULL JSFX v2.9 • https://nulljsfx.tech • MIT License
+//NULL JSFX v3.0 • https://nulljsfx.tech • MIT License
 
 import null_gfx.jsfx-inc
 

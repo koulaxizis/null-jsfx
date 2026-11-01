@@ -2,7 +2,7 @@ desc:NULL Assisted Reverb GFX
 author: Christos Koulaxizis
 tags: reverb room space ambience assisted learn assistant auto automatic decay pre-delay ducking vocal drums bus gui
 //category: Assisted
-//NULL JSFX v2.9 • https://nulljsfx.tech • MIT License
+//NULL JSFX v3.0 • https://nulljsfx.tech • MIT License
 
 import null_gfx.jsfx-inc
 

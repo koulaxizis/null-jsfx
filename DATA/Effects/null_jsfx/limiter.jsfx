@@ -2,7 +2,7 @@ desc:NULL Limiter
 author: Christos Koulaxizis
 tags: limiter ceiling clipper brickwall peak protection mastering
 //category: Essentials
-//NULL JSFX v2.9 • https://nulljsfx.tech • MIT License
+//NULL JSFX v3.0 • https://nulljsfx.tech • MIT License
 
 slider1:0<0,2,1{Limiter,Clipper,Brickwall}>Mode
 slider2:0<-30,0,0.1>Threshold (dB)

@@ -1,5 +1,5 @@
 -- NULL JSFX Remote: bridge between REAPER and the tablet page (null_jsfx.html)
--- NULL JSFX v2.9 • https://nulljsfx.tech • MIT License
+-- NULL JSFX v3.0 • https://nulljsfx.tech • MIT License
 --
 -- REAPER's web interface can reach tracks (volume, pan, mute, solo...) but not the FX on
 -- them. This script runs in the background inside REAPER and passes FX data through

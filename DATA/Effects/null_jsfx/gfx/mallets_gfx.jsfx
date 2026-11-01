@@ -2,7 +2,7 @@ desc:NULL Mallets GFX
 author: Christos Koulaxizis
 tags: instrument mallets marimba xylophone vibraphone vibes glockenspiel tubular bells chimes timpani kettle drum orchestral percussion modal synthesis midi gui
 //category: Instruments
-//NULL JSFX v2.9 • https://nulljsfx.tech • MIT License
+//NULL JSFX v3.0 • https://nulljsfx.tech • MIT License
 
 import null_gfx.jsfx-inc
 

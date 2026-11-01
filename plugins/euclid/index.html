@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Euclid by NULL JSFX: free MIDI tool for REAPER, VST3 and CLAP</title>
+    <meta name="description" content="Euclid: Euclidean Rhythm Generator. Free and open source MIDI tool for REAPER (JSFX) and any DAW (VST3, CLAP) on Windows, macOS and Linux, plus LV2 on Linux.">
+    <link rel="canonical" href="https://nulljsfx.tech/plugins/euclid/">
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Euclid: Euclidean Rhythm Generator">
+    <meta property="og:description" content="Euclid: Euclidean Rhythm Generator. Free and open source MIDI tool for REAPER (JSFX) and any DAW (VST3, CLAP) on Windows, macOS and Linux, plus LV2 on Linux.">
+    <meta property="og:url" content="https://nulljsfx.tech/plugins/euclid/">
+    <meta property="og:image" content="https://nulljsfx.tech/assets/img/social-preview.jpg">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Euclid: Euclidean Rhythm Generator">
+    <meta name="twitter:description" content="Euclid: Euclidean Rhythm Generator. Free and open source MIDI tool for REAPER (JSFX) and any DAW (VST3, CLAP) on Windows, macOS and Linux, plus LV2 on Linux.">
+    <meta name="twitter:image" content="https://nulljsfx.tech/assets/img/social-preview.jpg">
+    <link rel="icon" type="image/svg+xml" href="/assets/img/favicon.svg">
+    <link rel="stylesheet" href="/assets/css/style.css">
+    <script type="application/ld+json">{"@context": "https://schema.org", "@type": "SoftwareApplication", "name": "NULL Euclid", "description": "Euclidean Rhythm Generator", "url": "https://nulljsfx.tech/plugins/euclid/", "image": "https://nulljsfx.tech/assets/img/social-preview.jpg", "applicationCategory": "MultimediaApplication", "applicationSubCategory": "Audio MIDI tool", "operatingSystem": "Windows, macOS, Linux", "softwareVersion": "3.0", "license": "https://opensource.org/licenses/MIT", "offers": {"@type": "Offer", "price": "0", "priceCurrency": "EUR"}, "author": {"@type": "Person", "name": "Christos Koulaxizis"}, "isPartOf": {"@type": "SoftwareApplication", "name": "NULL JSFX", "url": "https://nulljsfx.tech/"}}</script>
+    <script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "NULL JSFX", "item": "https://nulljsfx.tech/"}, {"@type": "ListItem", "position": 2, "name": "MIDI", "item": "https://nulljsfx.tech/#midi"}, {"@type": "ListItem", "position": 3, "name": "Euclid", "item": "https://nulljsfx.tech/plugins/euclid/"}]}</script>
+</head>
+<body class="plugin-page">
+    <main>
+        <nav class="page-crumbs" aria-label="Breadcrumb">
+            <a href="/" class="page-home"><img src="/assets/img/favicon.svg" alt="NULL JSFX" width="28" height="28"></a>
+            <a href="/">NULL JSFX</a> <span>/</span> <a href="/#midi">MIDI</a> <span>/</span> <span>Euclid</span>
+        </nav>
+        <article class="page-plugin">
+            <header class="guide-header page-header">
+                <span class="guide-category">MIDI</span>
+                <h1>EUCLID</h1>
+                <p>Euclidean Rhythm Generator</p>
+            </header>
+            <img class="guide-shot" src="/assets/img/gfx/euclid.png" alt="Euclid interface" width="720" height="480">
+            <div class="page-actions">
+                <a class="featured-btn" href="/#download"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg><span>Download free</span></a>
+                <small>Part of NULL JSFX 3.0: 150 plugins, free and open source (MIT). Easiest with <a href="/#hub">NULL JSFX Hub</a>.</small>
+            </div>
+            <div class="guide-body">
+                <section class="guide-section">
+                    <h2>Controls</h2>
+                    <ul class="guide-sliders"><li><span class="slider-name">Steps</span><span class="slider-desc">1 to 32 — Length of the pattern in steps.</span></li><li><span class="slider-name">Pulses</span><span class="slider-desc">0 to 32 — How many of the steps play, spread as evenly as they go.</span></li><li><span class="slider-name">Rotate</span><span class="slider-desc">0 to 31 — Turns the pattern by this many steps.</span></li><li><span class="slider-name">Rate</span><span class="slider-desc">1/4 / 1/8 / 1/16 / 1/32 / 1/8T / 1/16T — Length of one step at the host&#x27;s tempo.</span></li><li><span class="slider-name">Note</span><span class="slider-desc">0 to 127 — The MIDI note each pulse plays.</span></li><li><span class="slider-name">Velocity</span><span class="slider-desc">1 to 127 — Velocity of the pulses.</span></li><li><span class="slider-name">Accent</span><span class="slider-desc">0 to 100% — How much louder the pattern&#x27;s first pulse is, up to 127.</span></li><li><span class="slider-name">Gate</span><span class="slider-desc">5 to 95% — How long each note lasts, as a share of a step.</span></li><li><span class="slider-name">Swing</span><span class="slider-desc">0 to 75% — Moves every second step later, up to 0.375 of a step.</span></li><li><span class="slider-name">Run</span><span class="slider-desc">Transport / Always — Transport plays while the host plays, locked to its beat; Always also runs while it is stopped.</span></li><li><span class="slider-name">Channel</span><span class="slider-desc">1 / 2 / 3 / 4 / 5 / 6 / 7 / 8 / 9 / 10 / 11 / 12 / 13 / 14 / 15 / 16 — MIDI channel of the notes.</span></li></ul>
+                </section>
+                <section class="guide-section">
+                    <h2>Best uses</h2>
+                    <ul class="use-cases"><li>Drum and percussion patterns from a few numbers</li><li>Polyrhythms with several instances on different lengths</li><li>Bass and synth rhythms</li><li>Rhythm ideas with rotate and swing</li></ul>
+                </section>
+                <section class="guide-section">
+                    <h2>Properties</h2>
+                    <p class="page-props">Host beat (or a free beat at the host&#x27;s tempo) → step = beat / Rate, odd steps moved by Swing → step j plays when (j x Pulses) mod Steps &lt; Pulses after Rotate → note-on with Velocity (Accent on the first pulse), note-off after Gate. Incoming MIDI passes through at its own sample; stopping ends the note. Audio passes through.</p>
+                </section>
+                <section class="guide-section">
+                    <h2>Formats</h2>
+                    <ul class="guide-formats"><li><span class="format-tag">JSFX</span>JSFX for REAPER, with REAPER&#x27;s own sliders</li><li><span class="format-tag">GFX</span>JSFX GFX for REAPER, with its own interface</li><li><span class="format-tag">VST3</span>VST3 for any DAW</li><li><span class="format-tag">CLAP</span>CLAP for any DAW</li><li><span class="format-tag">LV2</span>LV2 for Linux DAWs such as Ardour, Carla and Qtractor</li></ul>
+                </section>
+                <section class="guide-section">
+                    <h2>Factory presets</h2>
+                    <p class="page-list">Tresillo 3 of 8 · Cinquillo 5 of 8 · Four on the Floor · Bossa 5 of 16 · Hats 7 of 12 · Off-Beat Shaker · Swung Perc 9 of 16 · Polymeter 5 of 13 · Free Running Bass</p>
+                </section>
+            </div>
+        </article>
+        <section class="page-related">
+            <h2 class="section-title">Goes well with</h2>
+            <div class="related-grid"><a class="related-card" href="/plugins/drum-trigger/"><b>Drum Trigger</b><small>Audio to MIDI Drum Trigger</small></a><a class="related-card" href="/plugins/humanize/"><b>Humanize</b><small>Random Timing, Velocity &amp; Groove for MIDI</small></a><a class="related-card" href="/plugins/arpeggiator/"><b>Arpeggiator</b><small>Tempo-Synced Arpeggiator with Velocity Lane (MIDI)</small></a><a class="related-card" href="/plugins/assisted-comp/"><b>Assisted Comp</b><small>Compressor that sets itself from the track</small></a><a class="related-card" href="/plugins/assisted-delay/"><b>Assisted Delay</b><small>Delay that sets itself from the track</small></a><a class="related-card" href="/plugins/assisted-eq/"><b>Assisted EQ</b><small>EQ that sets itself from the track</small></a></div>
+            <p class="page-more"><a href="/#midi">All 150 NULL JSFX plugins</a></p>
+        </section>
+    </main>
+    <footer class="site-footer">
+        <div class="footer-content">
+            Designed with &#9825; by <a href="https://koulaxizis.gr" target="_blank" rel="noopener">Christos Koulaxizis</a>.
+            <div class="footer-links">
+                <a href="https://ko-fi.com/koulaxizis" target="_blank" rel="noopener">Support on Ko-fi</a>
+                <span class="sep">&bull;</span>
+                <a href="https://github.com/koulaxizis/null-jsfx" target="_blank" rel="noopener">GitHub</a>
+                <span class="sep">&bull;</span>
+                <a href="/">nulljsfx.tech</a>
+            </div>
+        </div>
+    </footer>
+    <button id="theme-toggle" class="theme-toggle-floating" aria-label="Toggle color theme" title="Switch between light/dark theme">
+        <svg class="sun-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2 M12 21v2 M4.22 4.22l1.42 1.42 M18.36 18.36l1.42 1.42 M1 12h2 M21 12h2 M4.22 19.78l1.42-1.42 M18.36 5.64l1.42-1.42"/></svg>
+        <svg class="moon-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none;"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+    </button>
+    <script src="/assets/js/theme.js"></script>
+    <script src="/assets/js/demo.js"></script>
+</body>
+</html>

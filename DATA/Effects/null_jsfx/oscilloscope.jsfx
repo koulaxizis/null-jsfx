@@ -2,7 +2,7 @@ desc:NULL Oscilloscope
 author: Christos Koulaxizis
 tags: oscilloscope scope waveform trigger time domain wave shape phase meter analyzer metering tempo sync
 //category: Advanced
-//NULL JSFX v2.9 • https://nulljsfx.tech • MIT License
+//NULL JSFX v3.0 • https://nulljsfx.tech • MIT License
 
 slider1:20<1,2000,0.1:log>Time (ms)
 slider2:0<0,6,1{Off,1/16,1/8,1/4,1/2,1 Bar,2 Bars}>Sync
