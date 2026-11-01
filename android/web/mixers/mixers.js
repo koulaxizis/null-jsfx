@@ -111,8 +111,9 @@
       const scan = h('button', { onclick: () => this.scan(found, err, scan) }, 'Scan');
       const go = h('button', { onclick: () => this.connect(ip.value.trim(), err) }, 'Connect');
       const ui = h('div', { class: 'nm-connect' },
-        h('h2', null, 'MIXERS'),
+        h('h2', null, 'MIXERS ', h('span', { class: 'nm-beta' }, 'BETA')),
         h('div', { class: 'nm-sub' }, 'Works with ' + P.family + ' mixers: ' + P.models.filter((m) => !m.startsWith('MR')).join(', ') + '.'),
+        h('div', { class: 'nm-sub' }, 'Beta: tested against a software ' + P.family + ', not yet on every model. If something differs on your mixer, tell us at github.com/koulaxizis/null-jsfx/issues.'),
         h('div', { class: 'nm-row' }, scan),
         found,
         h('div', { class: 'nm-row' }, ip, go),
@@ -417,7 +418,7 @@
       if (!tab || tab.host !== el) {
         const root = document.createElement('div');
         root.className = 'nm';
-        if (window.NullRemote && window.NullRemote.header) el.appendChild(window.NullRemote.header('Mixers'));
+        if (window.NullRemote && window.NullRemote.header) el.appendChild(window.NullRemote.header('Mixers beta'));
         el.appendChild(root);
         tab = new MixersTab(root);
         tab.host = el;

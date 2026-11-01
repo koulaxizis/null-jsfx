@@ -21,7 +21,8 @@
 .nm button:disabled { opacity: .4; }
 .nm input { user-select: text; -webkit-user-select: text; background: var(--nm-bg2); }
 .nm h2 { font-size: 16px; letter-spacing: 2px; margin: 0 0 4px; font-weight: 700; }
-.nm .nm-sub { color: var(--nm-muted); font-size: 12px; }
+.nm .nm-sub { color: var(--nm-muted); font-size: 12px; margin-top: 4px; }
+.nm .nm-beta { font-size: 10px; letter-spacing: 1px; border: 1px solid var(--nm-accent); color: var(--nm-accent); border-radius: 4px; padding: 1px 5px; vertical-align: 2px; }
 
 /* connect view */
 .nm-connect { padding: 16px; overflow-y: auto; max-width: 640px; width: 100%; margin: 0 auto; }
