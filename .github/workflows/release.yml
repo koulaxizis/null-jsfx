@@ -1,0 +1,131 @@
+name: Release
+
+# Builds a release as a draft (Bible VI.2). Christos runs it by hand with the version, once the
+# version bump (Bible VI.1) is on main:
+#   draft    creates the draft release <version> on the commit this run builds (a draft that
+#            already exists is moved to it and its assets are rebuilt)
+#   native   native.yml: the JSFX zip, the 3 VST3/CLAP/LV2 zips and the 4 installers
+#   hub      hub.yml: the 4 Hub bundles and NULL-JSFX-Catalog.json
+#   android  android.yml: the signed APKs of the Android remotes, when the signing secrets are set
+#   check    all 13 assets are attached and the JSFX zip carries the new footer
+# A draft is not public: releases/latest, and so the site's Download links, keep pointing to the
+# previous release until Christos clicks Publish, so no link is ever missing a file. On publish,
+# hub.yml builds the catalog again (final release notes and date) and downloads.yml counts.
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to release, e.g. 3.1: numeric, no v, the one in FOOTER (tests/lint.py)"
+        required: true
+
+concurrency:
+  group: release-${{ inputs.version }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  draft:
+    permissions:
+      contents: write
+    timeout-minutes: 10
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Create the draft release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ inputs.version }}
+        run: |
+          set -euo pipefail
+          if ! [[ "$VERSION" =~ ^[0-9]+(\.[0-9]+)+$ ]]; then
+            echo "::error::the version is numeric with no v, e.g. 3.1"; exit 1
+          fi
+          if ! grep -qF "FOOTER = \"//NULL JSFX v$VERSION " tests/lint.py; then
+            echo "::error::FOOTER in tests/lint.py is not v$VERSION: merge the version bump first (Bible VI.1)"; exit 1
+          fi
+          if draft="$(gh release view "$VERSION" --json isDraft --jq .isDraft 2>/dev/null)"; then
+            if [ "$draft" != true ]; then
+              echo "::error::release $VERSION is already published"; exit 1
+            fi
+            gh release edit "$VERSION" --draft --target "$GITHUB_SHA"
+            echo "draft $VERSION exists: moved to $GITHUB_SHA, its assets are rebuilt"
+            exit 0
+          fi
+          if git ls-remote --exit-code --tags origin "refs/tags/$VERSION" > /dev/null; then
+            echo "::error::tag $VERSION exists already"; exit 1
+          fi
+          gh release create "$VERSION" --draft --target "$GITHUB_SHA" --title "$VERSION" \
+            --notes "Release notes: write them here before you publish (the Hub shows them)."
+          echo "draft $VERSION created on $GITHUB_SHA"
+
+  native:
+    needs: draft
+    permissions:
+      contents: write
+    uses: ./.github/workflows/native.yml
+    with:
+      release_tag: ${{ inputs.version }}
+
+  hub:
+    needs: draft
+    permissions:
+      contents: write
+    uses: ./.github/workflows/hub.yml
+    with:
+      release_tag: ${{ inputs.version }}
+
+  # the signed APKs of the Android remotes, when the signing secrets are set (not among the 13:
+  # without the secrets a release has none)
+  android:
+    needs: draft
+    permissions:
+      contents: write
+    uses: ./.github/workflows/android.yml
+    with:
+      release_tag: ${{ inputs.version }}
+      checkout_ref: ${{ github.sha }}
+    secrets: inherit
+
+  check:
+    needs: [native, hub, android]
+    timeout-minutes: 10
+    runs-on: ubuntu-latest
+    steps:
+      - name: All 13 assets, and the new footer
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          VERSION: ${{ inputs.version }}
+        run: |
+          set -euo pipefail
+          want="NULL-JSFX-JSFX.zip
+          NULL-JSFX-VST3-CLAP-Windows.zip
+          NULL-JSFX-VST3-CLAP-macOS.zip
+          NULL-JSFX-VST3-CLAP-Linux.zip
+          NULL-JSFX-Installer-Windows.exe
+          NULL-JSFX-Installer-Linux.sh
+          NULL-JSFX-Installer-macOS.pkg
+          NULL-JSFX-Installer-macOS.sh
+          NULL-JSFX-Hub-Windows-Setup.exe
+          NULL-JSFX-Hub-Linux.AppImage
+          NULL-JSFX-Hub-Linux.deb
+          NULL-JSFX-Hub-macOS.dmg
+          NULL-JSFX-Catalog.json"
+          have="$(gh release view "$VERSION" --json assets --jq '.assets[].name')"
+          missing="$(comm -23 <(sed 's/^ *//' <<<"$want" | sort) <(sort <<<"$have"))"
+          if [ -n "$missing" ]; then
+            echo "::error::missing from draft $VERSION: $(tr '\n' ' ' <<<"$missing")"; exit 1
+          fi
+          gh release download "$VERSION" --pattern NULL-JSFX-JSFX.zip --dir pkg
+          unzip -p pkg/NULL-JSFX-JSFX.zip 'NULL-JSFX-JSFX/null_jsfx/tilt.jsfx' | sed -n 5p | grep -qF "//NULL JSFX v$VERSION " \
+            || { echo "::error::the JSFX zip does not carry the v$VERSION footer"; exit 1; }
+          url="$(gh release view "$VERSION" --json url --jq .url)"
+          {
+            echo "### Draft $VERSION is ready: 13/13 assets"
+            echo
+            echo "Write the release notes and publish it: $url"
+            echo "(after publishing: \`hub/tests/release_smoke.sh $VERSION\`, Bible VI.2)"
+          } | tee -a "$GITHUB_STEP_SUMMARY"

@@ -1,0 +1,44 @@
+diff --git a/distrho/src/DistrhoPluginCLAP.cpp b/distrho/src/DistrhoPluginCLAP.cpp
+--- a/distrho/src/DistrhoPluginCLAP.cpp
++++ b/distrho/src/DistrhoPluginCLAP.cpp
+@@ -1538,6 +1538,21 @@
+         return true;
+     }
+ 
++    // NULL JSFX: a state holds at least one of the sections stateSave() writes (program, states,
++    // parameters) when the plugin has any. Random bytes or another plugin's data hold none, and are
++    // rejected (clap-validator state-invalid-random); nothing was applied from them, since programs,
++    // states and parameters are only set inside their sections.
++    bool isKnownState(const char queryingType) const noexcept
++    {
++        if (queryingType != 'i')
++            return true;
++       #if DISTRHO_PLUGIN_WANT_STATE
++        if (fPlugin.getStateCount() != 0)
++            return false;
++       #endif
++        return fCachedParameters.numParams == 0;
++    }
++
+     bool stateLoad(const clap_istream_t* const stream)
+     {
+        #if DISTRHO_PLUGIN_HAS_UI
+@@ -1558,7 +1573,7 @@
+             DISTRHO_SAFE_ASSERT_INT_RETURN(read >= 0, read, false);
+ 
+             if (read == 0)
+-                return !empty;
++                return !empty && isKnownState(queryingType);
+ 
+             empty = false;
+             for (int32_t i = 0; i < read; ++i)
+@@ -1724,6 +1739,9 @@
+             }
+         }
+ 
++        if (! isKnownState(queryingType))
++            return false;
++
+         if (fHostExtensions.params != nullptr)
+             fHostExtensions.params->rescan(fHost, CLAP_PARAM_RESCAN_VALUES|CLAP_PARAM_RESCAN_TEXT);
+ 

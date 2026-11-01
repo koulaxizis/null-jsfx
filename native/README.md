@@ -264,7 +264,10 @@ native/scripts/build.sh --dpf DIR       # offline: a local DPF checkout (with dg
 DPF is fetched at the pinned commit and every `third_party/dpf/*.patch` is applied on top, in name
 order. A local `--dpf` checkout needs them applied by hand (`git apply`). `state-load.patch`: the
 CLAP and VST3 state parser no longer ends a string early when the host hands the state over in
-short reads. `surround-bus.patch`: a 12-channel VST3 bus (the surround beds) is a 7.1.4 speaker
+short reads. `state-reject.patch`: the CLAP wrapper rejects a state that holds none of the
+sections it writes (random bytes, another plugin's data) instead of accepting it.
+`single-sample-blocks.patch`: a host block size of 1 sample is legal and no longer prints a DPF
+assertion. `surround-bus.patch`: a 12-channel VST3 bus (the surround beds) is a 7.1.4 speaker
 arrangement; DPF gave it none, which failed pluginval's bus layout test.
 
 Requirements: CMake 3.15+, a C++17 compiler, Git. Linux also needs `libgl1-mesa-dev libx11-dev

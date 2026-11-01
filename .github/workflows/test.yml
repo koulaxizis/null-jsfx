@@ -14,13 +14,17 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.ref || github.run_id }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
+# Read-only: these jobs only build and test.
+permissions:
+  contents: read
+
 jobs:
   test:
     timeout-minutes: 30
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/cache@v4
+      - uses: actions/checkout@v7
+      - uses: actions/cache@v6
         with:
           path: tests/.build/ysfx
           key: ysfx-${{ hashFiles('tests/run.sh') }}
@@ -41,11 +45,12 @@ jobs:
   remote:
     # the tablet remote (remote/): page in a real browser + bridge script under a REAPER stand-in
     timeout-minutes: 20
-    # Playwright 1.56 has no Chromium for ubuntu-latest (26.04), so this job stays on 24.04
-    runs-on: ubuntu-24.04
+    # Playwright 1.64 has a Chromium for ubuntu-latest (26.04); 1.56 had none, so until
+    # 2026-11-01 this job was pinned to 24.04
+    runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version: 22
       - run: python3 tools/build_remote.py --check
@@ -59,11 +64,10 @@ jobs:
     # the Mixers tab of NULL Remote (android/web/mixers/): OSC codec, laws, the X AIR profile and a
     # live session against the X AIR simulator over UDP, then the tab in a real browser
     timeout-minutes: 15
-    # same Playwright pin as the remote job, so it stays on 24.04 too
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version: 22
       - run: npm ci
@@ -72,3 +76,14 @@ jobs:
         working-directory: tests/mixers
       - run: node tests/mixers/mixers_test.cjs
       - run: node tests/mixers/ui_test.cjs
+
+  media:
+    # presentation videos, posters and screenshots older than their plugin's interface
+    # (tools/media_check.py): report only, as warnings on the run
+    timeout-minutes: 10
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - run: python3 tools/media_check.py
