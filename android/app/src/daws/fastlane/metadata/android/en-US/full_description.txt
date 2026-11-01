@@ -1,0 +1,15 @@
+Remote for DAWs puts your DAW's mixer and transport, and the controls of every NULL JSFX plugin, on your Android phone or tablet, over your local Wi-Fi. REAPER is supported first; more DAWs follow.
+
+<b>What it does</b>
+<ul>
+<li>Mixer: volume, pan, mute, solo, record arm and meters for every track.</li>
+<li>Transport: play, pause, stop, record, repeat, go to start.</li>
+<li>FX: the chain of every track. NULL JSFX plugins (JSFX, GFX, VST3 and CLAP) get their own knobs, sliders and buttons; any other plugin gets a list of its parameters. Add, move, bypass and remove FX.</li>
+<li>Finds REAPER on your network, remembers the computers you used, and works with a password.</li>
+<li>Keeps the screen on while you work, optional full screen.</li>
+</ul>
+
+<b>What REAPER needs</b>
+Turn on REAPER's web interface (Preferences > Control/OSC/web). For the FX, run the small script null_jsfx_remote_bridge.lua that comes with NULL JSFX. The mixer and transport work without it.
+
+Part of NULL JSFX (https://nulljsfx.tech): free, MIT licensed, no ads, no tracking, no account. REAPER is a trademark of Cockos Incorporated; this app is not made or endorsed by Cockos.

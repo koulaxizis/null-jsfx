@@ -6,6 +6,7 @@ name: Release
 #            already exists is moved to it and its assets are rebuilt)
 #   native   native.yml: the JSFX zip, the 3 VST3/CLAP/LV2 zips and the 4 installers
 #   hub      hub.yml: the 4 Hub bundles and NULL-JSFX-Catalog.json
+#   android  android.yml: the signed APKs of the Android remotes, when the signing secrets are set
 #   check    all 13 assets are attached and the JSFX zip carries the new footer
 # A draft is not public: releases/latest, and so the site's Download links, keep pointing to the
 # previous release until Christos clicks Publish, so no link is ever missing a file. On publish,
@@ -76,8 +77,20 @@ jobs:
     with:
       release_tag: ${{ inputs.version }}
 
+  # the signed APKs of the Android remotes, when the signing secrets are set (not among the 13:
+  # without the secrets a release has none)
+  android:
+    needs: draft
+    permissions:
+      contents: write
+    uses: ./.github/workflows/android.yml
+    with:
+      release_tag: ${{ inputs.version }}
+      checkout_ref: ${{ github.sha }}
+    secrets: inherit
+
   check:
-    needs: [native, hub]
+    needs: [native, hub, android]
     timeout-minutes: 10
     runs-on: ubuntu-latest
     steps:
