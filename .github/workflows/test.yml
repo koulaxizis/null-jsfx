@@ -72,3 +72,21 @@ jobs:
         working-directory: tests/mixers
       - run: node tests/mixers/mixers_test.cjs
       - run: node tests/mixers/ui_test.cjs
+
+  daws:
+    # the Ardour/Mixbus tab of Remote for DAWs (android/web/daws/ardour/): the OSC session against
+    # a software Ardour surface over UDP, then the tab in a real browser with the plugins' own GFX
+    timeout-minutes: 15
+    # same Playwright pin as the remote and mixers jobs, so it stays on 24.04 too
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm ci
+        working-directory: tests/daws
+      - run: npx playwright install --with-deps chromium
+        working-directory: tests/daws
+      - run: node tests/daws/ardour_test.cjs
+      - run: node tests/daws/ui_test.cjs

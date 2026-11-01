@@ -13,9 +13,9 @@ name: Android remotes
 on:
   push:
     branches: [main]
-    paths: ["android/**", "remote/**", "native/common/fonts/**", "tests/remote/**", "tests/lint.py", ".github/workflows/android.yml"]
+    paths: ["android/**", "remote/**", "native/common/fonts/**", "web/runtime/**", "web/fx/**", "tests/remote/**", "tests/lint.py", ".github/workflows/android.yml"]
   pull_request:
-    paths: ["android/**", "remote/**", "native/common/fonts/**", "tests/remote/**", "tests/lint.py", ".github/workflows/android.yml"]
+    paths: ["android/**", "remote/**", "native/common/fonts/**", "web/runtime/**", "web/fx/**", "tests/remote/**", "tests/lint.py", ".github/workflows/android.yml"]
   workflow_dispatch:
     inputs:
       release_tag:
