@@ -8,7 +8,7 @@
   'use strict';
 
   const here = (document.currentScript && document.currentScript.src) || location.href;
-  const FILES = ['core/osc.js', 'core/levels.js', 'core/transport.js', 'core/mixer.js', 'xair/profile.js', 'x32/profile.js', 'wing/profile.js', 'core/nrpn.js', 'sq/profile.js'];
+  const FILES = ['core/osc.js', 'core/levels.js', 'core/transport.js', 'core/mixer.js', 'xair/profile.js', 'x32/profile.js', 'wing/profile.js', 'core/nrpn.js', 'sq/profile.js', 'qu/profile.js'];
   const HOLD_MS = 1500;
   const STORE = 'null-remote-mixers';
 
@@ -99,8 +99,8 @@
     }
 
     // every console family the tab knows; the connected one is this.profile
-    get profiles() { const P = window.NullMixerProfiles; return [P.xair, P.x32, P.wing, P.sq]; }
-    // the OSC families, which answer a scan and an info request (the SQ does neither)
+    get profiles() { const P = window.NullMixerProfiles; return [P.xair, P.x32, P.wing, P.sq, P.qu]; }
+    // the OSC families, which answer a scan and an info request (the SQ and the Qu do neither)
     get oscProfiles() { return this.profiles.filter((P) => P.session !== 'nrpn'); }
     get profile() { return (this.session && this.session.profile) || this.profiles[0]; }
 
@@ -122,7 +122,7 @@
         err,
         h('h2', { style: 'margin-top:16px' }, 'HOW TO CONNECT'),
         this.profiles.flatMap((P) => [h('div', { class: 'nm-sub' }, P.family), h('ol', { class: 'nm-help' }, P.connectHelp.map((t) => h('li', null, t)))]),
-        h('div', { class: 'nm-note' }, 'X AIR, X32, M32, WING, Allen & Heath and SQ are trademarks of their owners. Remote for Mixers is an independent free app from NULL JSFX and is not made or endorsed by them.'));
+        h('div', { class: 'nm-note' }, 'X AIR, X32, M32, WING, Allen & Heath, SQ and Qu are trademarks of their owners. Remote for Mixers is an independent free app from NULL JSFX and is not made or endorsed by them.'));
       this.root.replaceChildren(ui);
       this.root.className = 'nm';
       if (this.transportFactory || window.NullMixerTransport.available()) this.scan(found, err, scan);
@@ -159,18 +159,23 @@
       try {
         const tr = await this.ensureTransport();
         // a typed address: ask it on every OSC family's port which console it is; no answer
-        // there, then an Allen & Heath SQ on its MIDI TCP port
+        // there, then the Allen & Heath MIDI port (TCP 51325): a Qu answers its hello, else an SQ
         if (!profile) {
-          profile = await window.NullMixer.identify(this.oscProfiles, tr, host).then((w) => w.profile,
-            () => window.NullMixerProfiles.sq);
+          profile = await window.NullMixer.identify(this.oscProfiles, tr, host).then((w) => w.profile, () => null);
         }
+        const tcp = this.tcpFactory || window.NullMixerTransport.shellTcp;
         let s;
-        if (profile.session === 'nrpn') {
-          s = new window.NullNrpn.Session(profile, this.tcpFactory || window.NullMixerTransport.shellTcp);
+        if (!profile) {
+          const P = window.NullMixerProfiles;
+          s = new window.NullNrpn.Session(P.qu, tcp);
+          try { await s.connect(host, P.qu.port, 1500); } catch (e) {
+            s = new window.NullNrpn.Session(P.sq, tcp);
+            await s.connect(host, P.sq.port);
+          }
         } else {
-          s = new window.NullMixer.Session(profile, tr);
+          s = profile.session === 'nrpn' ? new window.NullNrpn.Session(profile, tcp) : new window.NullMixer.Session(profile, tr);
+          await s.connect(host, profile.port);
         }
-        await s.connect(host, profile.port);
         this.session = s;
         this.view.host = host;
         store.set({ host });
@@ -230,7 +235,7 @@
         bar.append(lock, h('button', { onclick: () => this.pickMyMix() }, 'My mix'));
         // layers
         // a family without separate FX returns (WING) shows no FX Returns layer, one without
-        // DCAs on its protocol (SQ) no DCA layer
+        // DCAs on its protocol (SQ, Qu) no DCA layer
         const layers = [['inputs', 'Inputs'], ['returns', 'FX Returns'], ['masters', 'Buses'], ['dca', 'DCA']]
           .filter(([id]) => (id !== 'returns' || L.returns.length) && (id !== 'dca' || L.dcas.length));
         if (!layers.some(([id]) => id === v.layer)) v.layer = 'inputs';
