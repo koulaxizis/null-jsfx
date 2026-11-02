@@ -71,23 +71,48 @@ class Device(object):
         self.parameters = [Param('Device On', 1.0 if d.get('on', True) else 0.0, quantized=True)]
         for p in d['params']:
             self.parameters.append(Param(p['name'], p['value'], p.get('min', 0), p.get('max', 1), shown=p.get('shown')))
+        # a rack: chains, each with its own devices (Live's RackDevice and Chain)
+        self.can_have_chains = 'chains' in d
+        self.chains = [Chain(c) for c in d.get('chains', [])]
 
     def dump(self):
-        return {'name': self.name, 'on': self.parameters[0].value == 1.0, 'parameters': [p.dump() for p in self.parameters]}
+        m = {'name': self.name, 'on': self.parameters[0].value == 1.0, 'parameters': [p.dump() for p in self.parameters]}
+        if self.can_have_chains:
+            m['chains'] = [c.dump() for c in self.chains]
+        return m
+
+
+class Chain(object):
+    def __init__(self, c):
+        self.name = c['name']
+        self.devices = [Device(x) for x in c.get('devices', [])]
+
+    def dump(self):
+        return {'name': self.name, 'devices': [d.dump() for d in self.devices]}
+
+
+def send_text(v):
+    # Live's sends: 0..1, 0 dB at 1.0 (its own law; the test only needs a text that moves)
+    if v <= 0:
+        return '-inf dB'
+    return '%.1f dB' % (40 * math.log10(v))
 
 
 class Mixer(object):
-    def __init__(self, vol, pan):
+    def __init__(self, vol, pan, sends=()):
         self.volume = Param('Track Volume', vol, 0.0, 1.0, UNITY, vol_text)
         self.panning = Param('Track Panning', pan, -1.0, 1.0, 0.0, pan_text)
+        self.sends = [Param('%s-Send' % chr(65 + k), v, 0.0, 1.0, 0.0, send_text) for k, v in enumerate(sends)]
 
 
 class Track(object):
-    def __init__(self, d, kind):
+    def __init__(self, d, kind, returns=0):
         self._kind = kind
         self.name = d['name']
         self.color = d.get('color', 0)
-        self.mixer_device = Mixer(d.get('vol', UNITY), d.get('pan', 0.0))
+        # one send per return track, none on the master; a return's send to itself is off
+        sends = list(d.get('sends', [])) + [0.0] * returns
+        self.mixer_device = Mixer(d.get('vol', UNITY), d.get('pan', 0.0), sends[:returns])
         self.devices = [Device(x) for x in d.get('devices', [])]
         self._mute = d.get('mute', False)
         self._solo = d.get('solo', False)
@@ -140,6 +165,7 @@ class Track(object):
     def dump(self):
         return {
             'name': self.name, 'vol': self.mixer_device.volume.value, 'pan': self.mixer_device.panning.value,
+            'sends': [p.value for p in self.mixer_device.sends],
             'mute': self._mute, 'solo': self._solo, 'arm': self._arm,
             'devices': [d.dump() for d in self.devices],
         }
@@ -155,8 +181,11 @@ class BeatTime(object):
 
 class Song(object):
     def __init__(self, doc):
-        self.tracks = [Track(t, t.get('kind', 'audio')) for t in doc['tracks']]
-        self.return_tracks = [Track(t, 'return') for t in doc.get('returns', [])]
+        n = len(doc.get('returns', []))
+        self.tracks = [Track(t, t.get('kind', 'audio'), n) for t in doc['tracks']]
+        self.return_tracks = [Track(t, 'return', n) for t in doc.get('returns', [])]
+        for k, r in enumerate(self.return_tracks):
+            r.mixer_device.sends[k].is_enabled = False
         self.master_track = Track(doc['master'], 'master')
         self.is_playing = False
         self.record_mode = False

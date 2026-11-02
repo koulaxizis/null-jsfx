@@ -13,6 +13,21 @@
 .da-transport .da-rec.on { color: var(--clip); border-color: var(--clip); }
 .da-transport .da-play.on { color: var(--accent); border-color: var(--accent); }
 
+.da-pager {
+  flex: none; display: flex; align-items: center; gap: 8px; padding: 6px 12px;
+  border-bottom: 1px solid var(--border);
+}
+.da-pager button { padding: 0; width: 44px; height: 36px; font-size: 18px; }
+.da-pager button:disabled { opacity: .35; }
+.da-page { flex: 1; text-align: center; font-size: 12px; letter-spacing: 1px; color: var(--muted); font-variant-numeric: tabular-nums; }
+
+.da-mixsel {
+  flex: none; display: flex; gap: 6px; padding: 6px 12px; overflow-x: auto;
+  border-bottom: 1px solid var(--border); -webkit-overflow-scrolling: touch;
+}
+.da-mixsel button { flex: none; height: 32px; padding: 0 12px; font-size: 12px; white-space: nowrap; }
+.da-mixsel button.on { color: var(--accent); border-color: var(--accent); }
+
 .da-strips {
   flex: 1; display: flex; gap: 8px; padding: 12px; overflow-x: auto; overflow-y: hidden;
   -webkit-overflow-scrolling: touch; min-height: 0;
