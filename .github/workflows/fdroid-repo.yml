@@ -20,6 +20,10 @@ name: F-Droid repository
 on:
   release:
     types: [published]
+  # a change to this workflow or its tool: the whole run on the PR's own commit with the real
+  # keys, but nothing pushed (a dry run; the repository is kept as a workflow artifact)
+  pull_request:
+    paths: [".github/workflows/fdroid-repo.yml", "tools/fdroid_repo.py", "android/fdroid/**"]
   workflow_dispatch:
     inputs:
       release_tag:
@@ -31,8 +35,8 @@ permissions:
   contents: read
 
 concurrency:
-  group: fdroid-repo
-  cancel-in-progress: false
+  group: fdroid-repo-${{ github.event_name == 'pull_request' && github.ref || 'publish' }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   publish:
@@ -52,6 +56,11 @@ jobs:
           if [ "$HAS" != "true" ]; then
             echo "::notice::No ANDROID_KEYSTORE or FDROID_DEPLOY_TOKEN secret: nothing published."
             echo "go=0" >> "$GITHUB_OUTPUT"; exit 0
+          fi
+          if [ "$GITHUB_EVENT_NAME" = pull_request ]; then
+            echo "dry=1" >> "$GITHUB_OUTPUT"
+            echo "tag=$GITHUB_SHA" >> "$GITHUB_OUTPUT"
+            echo "go=1" >> "$GITHUB_OUTPUT"; exit 0
           fi
           [ -n "$TAG" ] || TAG=$(gh release view --repo "$GITHUB_REPOSITORY" --json tagName --jq .tagName)
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
@@ -158,6 +167,7 @@ jobs:
         env:
           TOKEN: ${{ secrets.FDROID_DEPLOY_TOKEN }}
           TAG: ${{ steps.pre.outputs.tag }}
+          DRY: ${{ steps.pre.outputs.dry }}
         run: |
           set -e
           site="$RUNNER_TEMP/site"
@@ -179,6 +189,20 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -A
           git commit -q -m "NULL JSFX F-Droid repository from release $TAG"
+          url="https://x-access-token:$TOKEN@github.com/$DEST.git"
+          if [ "$DRY" = 1 ]; then
+            # the token can reach the repository; nothing is sent
+            git ls-remote "$url" > /dev/null
+            git push --dry-run --force "$url" main
+            echo "Dry run: $(ls repo/*.apk | wc -l) APKs, not published"; exit 0
+          fi
           # one commit, replaced each time: the APKs never pile up in history
-          git push -q --force "https://x-access-token:$TOKEN@github.com/$DEST.git" main
+          git push -q --force "$url" main
           echo "Published $(ls repo/*.apk | wc -l) APKs to $SITE/repo"
+      - name: Keep the repository (dry run)
+        if: steps.pre.outputs.go == '1' && steps.pre.outputs.dry == '1'
+        uses: actions/upload-artifact@v7
+        with:
+          name: NULL-JSFX-F-Droid-repository
+          path: ${{ runner.temp }}/site/
+          retention-days: 7
