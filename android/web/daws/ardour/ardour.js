@@ -63,11 +63,15 @@
     return Math.min(1, Math.max(0, Math.pow(p, 8.0)));
   }
 
-  /** The NULL JSFX effect an Ardour plugin name stands for, from web/fx/index.json, or null. */
+  /**
+   * The NULL JSFX plugin an Ardour plugin name stands for, or null. [effects] is a list of
+   * {id, name, nn?} (nn: the native name, when it differs), as the desk makes from the shared
+   * catalog (remote/null_plugins.json).
+   */
   function nullEffect(name, effects) {
     if (!name || !effects) return null;
     const bare = String(name).replace(/^NULL\s+/i, '').replace(/\s+GFX$/i, '').trim().toLowerCase();
-    return effects.find((e) => e.name.toLowerCase() === bare) || null;
+    return effects.find((e) => e.name.toLowerCase() === bare || (e.nn && e.nn.toLowerCase() === bare)) || null;
   }
 
   /**

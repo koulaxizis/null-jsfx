@@ -107,11 +107,14 @@ android {
     }
 }
 
-// The REAPER page (remote/reaper_www_root/null_jsfx.html), the Noto Sans fonts and the web version
-// of the plugins (web/runtime and web/fx, as nullfx/: the DAW tabs draw each NULL JSFX plugin with
-// its own GFX interface), copied into the assets at build time; never committed twice (Bible R14).
+// The REAPER page (remote/reaper_www_root/null_jsfx.html), the NULL plugin catalog every remote
+// shares (remote/null_plugins.json, as core/null_plugins.json: the DAW tabs recognise NULL plugins
+// by it), the Noto Sans fonts and the web version of the plugins (web/runtime and web/fx, as
+// nullfx/: the DAW tabs draw each NULL JSFX plugin with its own GFX interface), copied into the
+// assets at build time; never committed twice (Bible R14).
 abstract class SharedAssets : DefaultTask() {
     @get:InputFile abstract val page: RegularFileProperty
+    @get:InputFile abstract val catalog: RegularFileProperty
     @get:InputDirectory abstract val fonts: DirectoryProperty
     @get:InputDirectory abstract val web: DirectoryProperty
     @get:OutputDirectory abstract val out: DirectoryProperty
@@ -121,6 +124,7 @@ abstract class SharedAssets : DefaultTask() {
         val root = out.get().asFile
         root.deleteRecursively()
         page.get().asFile.copyTo(root.resolve("daws/reaper/null_jsfx.html"), true)
+        catalog.get().asFile.copyTo(root.resolve("core/null_plugins.json"), true)
         for (name in listOf("NotoSans-Regular.ttf", "NotoSans-Bold.ttf")) {
             fonts.get().asFile.resolve(name).copyTo(root.resolve("core/fonts/$name"), true)
         }
@@ -136,6 +140,7 @@ abstract class SharedAssets : DefaultTask() {
 
 val sharedAssets = tasks.register<SharedAssets>("sharedAssets") {
     page.set(repo.resolve("remote/reaper_www_root/null_jsfx.html"))
+    catalog.set(repo.resolve("remote/null_plugins.json"))
     fonts.set(repo.resolve("native/common/fonts"))
     web.set(repo.resolve("web"))
 }
