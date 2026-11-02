@@ -16,10 +16,12 @@ pub enum Format {
     Clap,
     /// LV2: Linux only, from the same native package (catalog `packages.lv2`)
     Lv2,
+    /// Audio Unit (AUv2): macOS only, from the same native package (catalog `packages.au`)
+    Au,
 }
 
 impl Format {
-    pub const ALL: [Format; 5] = [Format::Jsfx, Format::Gfx, Format::Vst3, Format::Clap, Format::Lv2];
+    pub const ALL: [Format; 6] = [Format::Jsfx, Format::Gfx, Format::Vst3, Format::Clap, Format::Lv2, Format::Au];
 
     pub fn key(self) -> &'static str {
         match self {
@@ -28,6 +30,7 @@ impl Format {
             Format::Vst3 => "vst3",
             Format::Clap => "clap",
             Format::Lv2 => "lv2",
+            Format::Au => "au",
         }
     }
 
@@ -35,14 +38,18 @@ impl Format {
         Format::ALL.into_iter().find(|f| f.key() == key)
     }
 
-    /// JSFX and GFX live in REAPER; VST3, CLAP and LV2 come from the per-OS native package.
+    /// JSFX and GFX live in REAPER; VST3, CLAP, LV2 and AU come from the per-OS native package.
     pub fn is_native(self) -> bool {
-        matches!(self, Format::Vst3 | Format::Clap | Format::Lv2)
+        matches!(self, Format::Vst3 | Format::Clap | Format::Lv2 | Format::Au)
     }
 
-    /// The formats offered on this computer: LV2 only on Linux.
+    /// The formats offered on this computer: LV2 only on Linux, AU only on macOS.
     pub fn here() -> Vec<Format> {
-        Format::ALL.into_iter().filter(|&f| f != Format::Lv2 || crate::paths::os_name() == "Linux").collect()
+        let os = crate::paths::os_name();
+        Format::ALL
+            .into_iter()
+            .filter(|&f| (f != Format::Lv2 || os == "Linux") && (f != Format::Au || os == "macOS"))
+            .collect()
     }
 }
 
@@ -128,6 +135,13 @@ pub struct Packages {
     /// Plugins list only the formats every Hub knows, so older Hubs keep reading the catalog.
     #[serde(default)]
     pub lv2: Vec<String>,
+    /// the OS names whose native zip also holds an Audio Unit of every VST3 plugin except those
+    /// in `no_au` (macOS, from 3.0.1 on), the same way as `lv2`
+    #[serde(default)]
+    pub au: Vec<String>,
+    /// the plugins without an Audio Unit (native/scripts/au_skip.txt: auval rejects them)
+    #[serde(default)]
+    pub no_au: Vec<String>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -182,6 +196,14 @@ impl Catalog {
                 }
             }
         }
+        if catalog.packages.au.iter().any(|os| os == crate::paths::os_name()) {
+            let skip = catalog.packages.no_au.clone();
+            for p in &mut catalog.plugins {
+                if p.formats.contains(&Format::Vst3) && !p.formats.contains(&Format::Au) && !skip.contains(&p.id) {
+                    p.formats.push(Format::Au);
+                }
+            }
+        }
         Ok(catalog)
     }
 
@@ -225,6 +247,28 @@ mod tests {
     fn newer_schema_is_refused() {
         let err = Catalog::parse(r#"{"schema": 99}"#).unwrap_err();
         assert!(err.contains("newer NULL JSFX Hub"), "{err}");
+    }
+
+    #[test]
+    fn au_comes_with_vst3_on_the_listed_os_except_no_au() {
+        let text = |au: &str| {
+            format!(
+                r#"{{"schema": 1, "version": "3.0.1", "repo": "r", "packages": {{"jsfx": "j.zip", "native": {{}}, "au": {au}, "no_au": ["gate"]}},
+                "hub": {{"version": "3.0.1"}}, "plugins": [
+                {{"id": "tilt", "name": "Tilt", "group": "one-slider", "formats": ["jsfx", "gfx", "vst3", "clap"]}},
+                {{"id": "gate", "name": "Gate", "group": "essentials", "formats": ["jsfx", "gfx", "vst3", "clap"]}},
+                {{"id": "old", "name": "Old", "group": "advanced", "formats": ["jsfx"]}}]}}"#
+            )
+        };
+        let c = Catalog::parse(&text(&format!("[\"{}\"]", crate::paths::os_name()))).unwrap();
+        assert!(c.plugin("tilt").unwrap().formats.contains(&Format::Au));
+        assert!(!c.plugin("gate").unwrap().formats.contains(&Format::Au));
+        assert!(!c.plugin("old").unwrap().formats.contains(&Format::Au));
+        let c = Catalog::parse(&text("[]")).unwrap();
+        assert!(!c.plugin("tilt").unwrap().formats.contains(&Format::Au));
+        // a catalog from before 3.0.1 has no "au" at all
+        let c = Catalog::parse(&text("[]").replace(r#", "au": [], "no_au": ["gate"]"#, "")).unwrap();
+        assert!(!c.plugin("tilt").unwrap().formats.contains(&Format::Au));
     }
 
     #[test]

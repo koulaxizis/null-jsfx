@@ -10,9 +10,10 @@ const ALL_FORMATS = [
   ["vst3", "VST3", "any DAW"],
   ["clap", "CLAP", "any DAW"],
   ["lv2", "LV2", "Ardour, Carla, Qtractor and other Linux hosts"],
+  ["au", "AU", "Logic Pro, GarageBand and MainStage"],
 ];
-/** the formats offered on this computer: LV2 only on Linux */
-function formats() { return ALL_FORMATS.filter(([f]) => f !== "lv2" || V?.os === "Linux"); }
+/** the formats offered on this computer: LV2 only on Linux, AU only on macOS */
+function formats() { return ALL_FORMATS.filter(([f]) => (f !== "lv2" || V?.os === "Linux") && (f !== "au" || V?.os === "macOS")); }
 const $ = (id) => document.getElementById(id);
 
 let V = null; // the view from Rust: catalog, state, settings, os, hubVersion, dataDir
@@ -40,9 +41,9 @@ function isNew(id) { return (V.settings.new_ids || []).includes(id); }
 
 // --- talking to Rust -----------------------------------------------------------------------
 
-/** VST3/CLAP files change: a running DAW keeps them (Windows can't replace them at all) */
+/** VST3/CLAP/LV2/AU files change: a running DAW keeps them (Windows can't replace them at all) */
 function touchesNative(request) {
-  return [...(request.install || []), ...(request.remove || [])].some(([, f]) => f === "vst3" || f === "clap" || f === "lv2");
+  return [...(request.install || []), ...(request.remove || [])].some(([, f]) => f === "vst3" || f === "clap" || f === "lv2" || f === "au");
 }
 
 async function run(request, doneText, checked) {
@@ -468,6 +469,8 @@ function renderSettings() {
   $("set-clap").value = s.targets.clap;
   $("set-lv2").value = s.targets.lv2 ?? "";
   $("set-lv2-row").hidden = V.os !== "Linux";
+  $("set-au").value = s.targets.au ?? "";
+  $("set-au-row").hidden = V.os !== "macOS";
   const n = plugins().filter((p) => isInstalled(p.id)).length;
   $("verify").disabled = busy || !V.catalog;
   $("export").disabled = busy || !V.catalog;
@@ -487,7 +490,7 @@ async function saveSettings() {
     check_updates: $("set-check").checked,
     notify: $("set-notify").checked,
     autostart: $("set-autostart").checked,
-    targets: { ...V.settings.targets, reaper: $("set-reaper").value.trim(), vst3: $("set-vst3").value.trim(), clap: $("set-clap").value.trim(), lv2: $("set-lv2").value.trim() || V.settings.targets.lv2 },
+    targets: { ...V.settings.targets, reaper: $("set-reaper").value.trim(), vst3: $("set-vst3").value.trim(), clap: $("set-clap").value.trim(), lv2: $("set-lv2").value.trim() || V.settings.targets.lv2, au: $("set-au").value.trim() || V.settings.targets.au },
   };
   if (!settings.formats.length) return ($("set-msg").textContent = tr("Pick at least one format."));
   try {
@@ -724,6 +727,7 @@ $("set-defaults").onclick = async () => {
   $("set-vst3").value = t.vst3;
   $("set-clap").value = t.clap;
   $("set-lv2").value = t.lv2;
+  $("set-au").value = t.au;
 };
 
 (async () => {

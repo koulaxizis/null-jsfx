@@ -61,9 +61,11 @@ LV2 (Linux: Ardour, Carla, Qtractor and others), in the same zip for Linux
     Copy the "NULL JSFX" folder from LV2 to ~/.lv2, then rescan plugins.
 
 Audio Unit (macOS: Logic Pro, GarageBand, MainStage), in the same zip for macOS
-    Copy the "NULL JSFX" folder from AU to ~/Library/Audio/Plug-Ins/Components,
-    then open Logic (it checks new Audio Units when it starts; Logic Pro >
-    Settings > Plug-in Manager shows them under NULL JSFX).
+    Copy the .component files inside AU/NULL JSFX straight into
+    ~/Library/Audio/Plug-Ins/Components (not in a subfolder), or use the macOS
+    installer or the Hub, which put them there. Then open Logic (it checks new
+    Audio Units when it starts; Logic Pro > Settings > Plug-in Manager shows
+    them under NULL JSFX).
 
 Rack (any DAW), in the VST3 and CLAP folders (and LV2 on Linux)
     "Rack" by NULL JSFX chains up to 8 NULL JSFX effects in one plugin, with

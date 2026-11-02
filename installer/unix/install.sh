@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# NULL JSFX @@VERSION@@ installer for @@OS@@: pick the formats (JSFX, JSFX GFX, VST3, CLAP),
+# NULL JSFX @@VERSION@@ installer for @@OS@@: pick the formats (JSFX, JSFX GFX, VST3, CLAP, LV2 or AU),
 # the plugins (all, by group or one by one) and the extras, and it copies them where REAPER and
 # your DAW look for them. The packages ride along at the end of this file.
 #
@@ -32,6 +32,9 @@ case "$TARGET_OS" in
     REAPER_DIR="$HOME/Library/Application Support/REAPER"
     VST3_DIR="$HOME/Library/Audio/Plug-Ins/VST3"
     CLAP_DIR="$HOME/Library/Audio/Plug-Ins/CLAP"
+    # the Audio Units go straight into Components, where Logic and auval look, not into a subfolder
+    AU_DIR="$HOME/Library/Audio/Plug-Ins/Components"
+    FORMAT_KEYS="$FORMAT_KEYS au"    # Audio Units are built for macOS only
     FONT_DIR="$HOME/Library/Fonts"
     DATA_DIR="$HOME/Library/Application Support/NULL JSFX"
     ;;
@@ -61,9 +64,11 @@ has() { case " $1 " in *" $2 "*) return 0 ;; esac; return 1; }
 lower() { printf '%s' "$1" | tr 'A-Z_,' 'a-z- '; }
 
 usage() {
-  fmts="$(echo $FORMAT_KEYS | sed 's/ /, /g')" lv2_dir=''
-  [ -n "${LV2_DIR:-}" ] && lv2_dir="
+  fmts="$(echo $FORMAT_KEYS | sed 's/ /, /g')" os_dir=''
+  [ -n "${LV2_DIR:-}" ] && os_dir="
   --lv2-dir DIR     default: $LV2_DIR"
+  [ -n "${AU_DIR:-}" ] && os_dir="
+  --au-dir DIR      default: $AU_DIR"
   cat <<EOF
 NULL JSFX $VERSION installer for $TARGET_OS
 
@@ -78,7 +83,7 @@ and with --yes it asks nothing (everything not given is installed in full).
   --all             everything
   --reaper DIR      REAPER resource folder (default: $REAPER_DIR)
   --vst3-dir DIR    default: $VST3_DIR
-  --clap-dir DIR    default: $CLAP_DIR$lv2_dir
+  --clap-dir DIR    default: $CLAP_DIR$os_dir
   -y, --yes         no questions
   --list            list the plugins and their groups
   --uninstall       remove everything this installer put on this computer
@@ -119,6 +124,7 @@ while [ $# -gt 0 ]; do
     --vst3-dir) need_arg "$@"; VST3_DIR="$2"; shift ;;
     --clap-dir) need_arg "$@"; CLAP_DIR="$2"; shift ;;
     --lv2-dir)  need_arg "$@"; LV2_DIR="$2"; shift ;;
+    --au-dir)   need_arg "$@"; AU_DIR="$2"; shift ;;
     -y|--yes) yes=1 ;;
     --uninstall) uninstall=1 ;;
     --force) force=1 ;;
@@ -154,7 +160,7 @@ case "$(uname -s)" in Darwin) host=macOS ;; Linux) host=Linux ;; *) host="$(unam
 if [ "$host" != "$TARGET_OS" ] && [ "$force" = 0 ]; then
   die "this is the $TARGET_OS installer and this computer runs $host. Download the one for $host from https://nulljsfx.tech (or add --force)."
 fi
-# the VST3, CLAP and LV2 plugins load only on the CPU they were built for
+# the VST3, CLAP, LV2 and AU plugins load only on the CPU they were built for
 cpu="$(uname -m)"
 case "$cpu" in arm64) cpu=aarch64 ;; amd64) cpu=x86_64 ;; esac
 if [ -n "$TARGET_ARCH" ] && [ "$cpu" != "$TARGET_ARCH" ] && [ "$force" = 0 ]; then
@@ -288,6 +294,7 @@ if [ "$formats_set" = 0 ]; then
       vst3 "VST3: any DAW"
       clap "CLAP: any DAW")
     has "$FORMAT_KEYS" lv2 && fmts+=(lv2 "LV2: Ardour, Carla, Qtractor and other Linux hosts")
+    has "$FORMAT_KEYS" au && fmts+=(au "AU: Logic Pro, GarageBand and MainStage")
     FORMATS="$(checklist "Formats" "NULL JSFX $VERSION: free audio plugins. Which versions of the plugins?" all "${fmts[@]}")"
   else FORMATS=all; fi
 fi
@@ -373,7 +380,7 @@ fi
 count=0; for s in $SELECTED; do count=$((count + 1)); done
 fmt_names=''
 for f in $FORMATS; do
-  case "$f" in jsfx) n=JSFX ;; gfx) n='JSFX GFX' ;; vst3) n=VST3 ;; clap) n=CLAP ;; lv2) n=LV2 ;; esac
+  case "$f" in jsfx) n=JSFX ;; gfx) n='JSFX GFX' ;; vst3) n=VST3 ;; clap) n=CLAP ;; lv2) n=LV2 ;; au) n=AU ;; esac
   fmt_names="${fmt_names:+$fmt_names, }$n"
 done
 plan="Installing $count plugins as ${fmt_names:-nothing}${EXTRAS:+, with:$(printf ' %s' $EXTRAS)}"
@@ -385,6 +392,8 @@ has "$FORMATS" clap && plan="$plan
   CLAP:   $CLAP_DIR/NULL JSFX"
 has "$FORMATS" lv2 && plan="$plan
   LV2:    $LV2_DIR/NULL JSFX"
+has "$FORMATS" au && plan="$plan
+  AU:     $AU_DIR"
 if [ -n "$gui" ]; then
   dialog question "$plan" || { say "Nothing installed."; exit 0; }
   # what the installer says from here goes in the last window
@@ -453,7 +462,7 @@ presets() {
 merged=0
 
 J="$tmp/jsfx/null_jsfx" E="$REAPER_DIR/Effects/null_jsfx" P="$REAPER_DIR/presets"
-V="$tmp/native/VST3/NULL JSFX" C="$tmp/native/CLAP/NULL JSFX" L="$tmp/native/LV2/NULL JSFX"
+V="$tmp/native/VST3/NULL JSFX" C="$tmp/native/CLAP/NULL JSFX" L="$tmp/native/LV2/NULL JSFX" A="$tmp/native/AU/NULL JSFX"
 for stem in $SELECTED; do
   if has "$FORMATS" jsfx; then
     put "$J/$stem.jsfx" "$E/$stem.jsfx"
@@ -466,6 +475,8 @@ for stem in $SELECTED; do
   if has "$FORMATS" vst3; then put "$V/null_jsfx_$stem.vst3" "$VST3_DIR/NULL JSFX/null_jsfx_$stem.vst3"; fi
   if has "$FORMATS" clap; then put "$C/null_jsfx_$stem.clap" "$CLAP_DIR/NULL JSFX/null_jsfx_$stem.clap"; fi
   if has "$FORMATS" lv2; then put "$L/null_jsfx_$stem.lv2" "$LV2_DIR/NULL JSFX/null_jsfx_$stem.lv2"; fi
+  # a plugin that auval rejects has no Audio Unit in the package (native/scripts/au_skip.txt): put skips it
+  if has "$FORMATS" au; then put "$A/null_jsfx_$stem.component" "$AU_DIR/null_jsfx_$stem.component"; fi
 done
 if has "$FORMATS" gfx && [ -n "$SELECTED" ]; then
   put "$J/gfx/null_gfx.jsfx-inc" "$E/gfx/null_gfx.jsfx-inc"
@@ -474,6 +485,7 @@ if has "$EXTRAS" rack; then
   if has "$FORMATS" vst3; then put "$V/null_jsfx_rack.vst3" "$VST3_DIR/NULL JSFX/null_jsfx_rack.vst3"; fi
   if has "$FORMATS" clap; then put "$C/null_jsfx_rack.clap" "$CLAP_DIR/NULL JSFX/null_jsfx_rack.clap"; fi
   if has "$FORMATS" lv2; then put "$L/null_jsfx_rack.lv2" "$LV2_DIR/NULL JSFX/null_jsfx_rack.lv2"; fi
+  if has "$FORMATS" au; then put "$A/null_jsfx_rack.component" "$AU_DIR/null_jsfx_rack.component"; fi
 fi
 chains=0
 if has "$EXTRAS" chains; then
@@ -501,7 +513,7 @@ cp "$tmp/jsfx/INSTALL.txt" "$DATA_DIR/INSTALL.txt"
 sort -u "$MANIFEST" > "$MANIFEST.new" && mv "$MANIFEST.new" "$MANIFEST"
 
 if [ "$TARGET_OS" = macOS ] && command -v xattr >/dev/null 2>&1; then
-  for d in "$VST3_DIR/NULL JSFX" "$CLAP_DIR/NULL JSFX"; do
+  for d in "$VST3_DIR/NULL JSFX" "$CLAP_DIR/NULL JSFX" "$AU_DIR"/null_jsfx_*.component; do
     [ -d "$d" ] && xattr -dr com.apple.quarantine "$d" 2>/dev/null || true
   done
 fi
@@ -513,8 +525,11 @@ if [ "$merged" -gt 0 ]; then say "Factory presets added next to your own in $mer
 if [ "$needs_reaper" = 1 ]; then
   say "REAPER: open the FX browser and press F5 (or restart REAPER) to see them."
 fi
-if has "$FORMATS" vst3 || has "$FORMATS" clap || has "$FORMATS" lv2; then
+if has "$FORMATS" vst3 || has "$FORMATS" clap || has "$FORMATS" lv2 || has "$FORMATS" au; then
   say "Other DAWs: rescan plugins. Manufacturer: NULL JSFX."
+fi
+if has "$FORMATS" au; then
+  say "Logic checks new Audio Units when it starts (Settings > Plug-in Manager, under NULL JSFX)."
 fi
 has "$EXTRAS" remote && say "Tablet remote: finish the steps in $DATA_DIR/Remote-INSTALL.txt (from step 4)."
 say "Remove it all later with: bash $(basename "$0") --uninstall"

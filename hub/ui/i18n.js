@@ -64,6 +64,7 @@ const EL = {
   "REAPER, with the NULL JSFX interface": "REAPER, με το περιβάλλον του NULL JSFX",
   "any DAW": "κάθε DAW",
   "Ardour, Carla, Qtractor and other Linux hosts": "Ardour, Carla, Qtractor και άλλα προγράμματα στο Linux",
+  "Logic Pro, GarageBand and MainStage": "Logic Pro, GarageBand και MainStage",
 
   // counting
   "plugin": "plugin",
@@ -194,6 +195,8 @@ const EL = {
   "VST3 folder": "Φάκελος VST3",
   "CLAP folder": "Φάκελος CLAP",
   "LV2 folder": "Φάκελος LV2",
+  "Audio Unit folder": "Φάκελος Audio Unit",
+  "(Logic looks for plugins here)": "(εδώ αναζητά το Logic τα πρόσθετα)",
   "(plugins go into its NULL JSFX folder)": "(τα plugins μπαίνουν στον φάκελο NULL JSFX μέσα του)",
   "Use the usual folders": "Οι συνηθισμένοι φάκελοι",
   "Privacy": "Απόρρητο",
