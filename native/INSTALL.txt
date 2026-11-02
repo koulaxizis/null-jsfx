@@ -60,6 +60,11 @@ VST3 and CLAP (any DAW), from NULL-JSFX-VST3-CLAP-<your OS>.zip
 LV2 (Linux: Ardour, Carla, Qtractor and others), in the same zip for Linux
     Copy the "NULL JSFX" folder from LV2 to ~/.lv2, then rescan plugins.
 
+Audio Unit (macOS: Logic Pro, GarageBand, MainStage), in the same zip for macOS
+    Copy the "NULL JSFX" folder from AU to ~/Library/Audio/Plug-Ins/Components,
+    then open Logic (it checks new Audio Units when it starts; Logic Pro >
+    Settings > Plug-in Manager shows them under NULL JSFX).
+
 Rack (any DAW), in the VST3 and CLAP folders (and LV2 on Linux)
     "Rack" by NULL JSFX chains up to 8 NULL JSFX effects in one plugin, with
     band splitting (Low/Mid/High), Mid/Side or Left/Right processing per slot,
@@ -80,7 +85,7 @@ Presets
 
 macOS (not officially supported): the builds are not code-signed. If macOS
 refuses to load them, run
-    xattr -dr com.apple.quarantine <path to the .vst3/.clap>
+    xattr -dr com.apple.quarantine <path to the .vst3/.clap/.component>
 and rescan.
 
 Controls: drag the slider sideways (Ctrl/Cmd or Shift for fine steps),
