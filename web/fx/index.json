@@ -1964,6 +1964,20 @@
    "bytes": 110282
   },
   {
+   "id": "string_ensemble",
+   "name": "String Ensemble",
+   "category": "Instruments",
+   "tags": "instrument string ensemble string machine strings pad divide down chorus ensemble 70s vintage polyphonic synth midi gui",
+   "gfx": [
+    560,
+    416
+   ],
+   "ins": 0,
+   "outs": 2,
+   "sliders": 9,
+   "bytes": 60855
+  },
+  {
    "id": "synth",
    "name": "Synth",
    "category": "Instruments",

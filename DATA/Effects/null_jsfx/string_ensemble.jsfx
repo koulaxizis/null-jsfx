@@ -1,0 +1,239 @@
+desc:NULL String Ensemble
+author: Christos Koulaxizis
+tags: instrument string ensemble string machine strings pad divide down chorus ensemble 70s vintage polyphonic synth midi
+//category: Instruments
+//NULL JSFX v3.0 • https://nulljsfx.tech • MIT License
+
+slider1:80<0,100,1>Violins 4' (%)
+slider2:100<0,100,1>Violas 8' (%)
+slider3:50<0,100,1>Cellos 16' (%)
+slider4:250<5,3000,1:log>Attack (ms)
+slider5:900<20,5000,1:log>Release (ms)
+slider6:55<0,100,1>Brightness (%)
+slider7:70<0,100,1>Ensemble (%)
+slider8:0<0,2,1{Classic,Wide,Deep}>Ensemble Mode
+slider9:-6<-24,12,0.1>Volume (dB)
+
+in_pin:none
+out_pin:Left
+out_pin:Right
+
+@init
+  // A string machine of the 1970s from synthesis (no samples), fully polyphonic like the
+  // divide-down originals: every key has its own voice, three sawtooths an octave apart (16', 8'
+  // and 4', PolyBLEP, locked in phase and running freely from the start, so a key always meets its
+  // oscillator mid-cycle) and one envelope (Attack to full, Release to silence; the sustain pedal,
+  // CC 64, holds keys). Velocity does nothing, as on the originals. The sum of the keys goes
+  // through a 12 dB/oct low-pass (Brightness: 600 Hz to 16 kHz), two body resonances (+4 dB at
+  // 450 Hz, +3 dB at 2.8 kHz), then the ensemble: three taps on one delay line, each moved by a
+  // slow and a fast LFO 120 degrees apart (Classic 0.6 and 6 Hz, Wide 0.5 and 6.5 Hz with the
+  // outer taps spread to the sides, Deep 0.4 and 5.5 Hz, deeper). Ensemble blends it in; the mod
+  // wheel (CC 1) deepens it up to twice. Pitch bend: +-2 semitones. All notes off (CC 123/120)
+  // releases every key.
+  //
+  // Memory: 0.. the MIDI of the block (4 per message), 2048.. keys down, 2176.. gates,
+  // 2304.. envelopes, 2432.. pitch increments (16'), 2560.. phases, 4096.. the delay line.
+  ext_noinit = 1;
+  ext_tail_size = -1;
+  MQ = 0;
+  KD = 2048; K_g = 2176; K_e = 2304; K_dt = 2432; K_ph = 2560;
+  DB = 4096; DL = 16384;
+  freembuf(DB + DL);
+  tpi = 2 * $pi;
+  memset(KD, 0, 128 * 5);
+  memset(DB, 0, DL);
+  k = 0;
+  loop(128, K_dt[k] = 440 * 2 ^ ((k - 69) / 12) / 2 / srate; k += 1;);
+  sus = 0; bend = 1; mod = 0;
+  klo = 128; khi = -1;               // the range of keys sounding or held
+  t_s = 0;                           // samples since @init: the free-running oscillators' clock
+  dpos = 0;
+  ps = 0; pf = 0;
+  lp1 = lp2 = 0;
+  f1x1 = f1x2 = f1y1 = f1y2 = 0;
+  f2x1 = f2x2 = f2y1 = f2y2 = 0;
+  m_ofs = m_1 = m_2 = m_3 = 0;
+
+  // RBJ peaking filter coefficients into b0..a2 of the namespace
+  function peak(f, gdb, q) instance(b0, b1, b2, a1, a2) local(A, w, al, cw, a0)
+  (
+    A = 10 ^ (gdb / 40);
+    w = tpi * min(f, 0.45 * srate) / srate;
+    cw = cos(w);
+    al = sin(w) / (2 * q);
+    a0 = 1 + al / A;
+    b0 = (1 + al * A) / a0;
+    b1 = -2 * cw / a0;
+    b2 = (1 - al * A) / a0;
+    a1 = -2 * cw / a0;
+    a2 = (1 - al / A) / a0;
+  );
+  pk1.peak(450, 4, 1.2);
+  pk2.peak(2800, 3, 1.5);
+
+  // a PolyBLEP sawtooth at phase t (0..1) with increment dt
+  function saw(t, dt) local(x, y)
+  (
+    y = 2 * t - 1;
+    t < dt ? ( x = t / dt; y -= 2 * x - x * x - 1; ) :
+    t > 1 - dt ? ( x = (t - 1) / dt; y -= x * x + 2 * x + 1; );
+    y;
+  );
+
+  // a key starting from silence meets its free-running oscillator
+  function note_on(n) local(p)
+  (
+    KD[n] = 1;
+    klo = min(klo, n); khi = max(khi, n);
+    K_e[n] <= 0 ? (
+      p = t_s * K_dt[n];
+      K_ph[n] = p - floor(p);
+    );
+    K_g[n] = 1;
+  );
+  function note_off(n)
+  (
+    KD[n] = 0;
+    !sus ? K_g[n] = 0;
+  );
+  function sus_off() local(k)
+  (
+    sus = 0;
+    k = 0;
+    loop(128, KD[k] == 0 ? K_g[k] = 0; k += 1;);
+  );
+  function all_off()
+  (
+    memset(KD, 0, 128);
+    memset(K_g, 0, 128);
+    sus = 0;
+  );
+  function midi_ev(st, d1, d2) local(t)
+  (
+    t = st & 0xF0;
+    t == 0x90 && d2 > 0 ? note_on(d1) :
+    t == 0x80 || t == 0x90 ? note_off(d1) :
+    t == 0xE0 ? bend = 2 ^ (((d2 * 128 + d1) - 8192) / 8192 * 2 / 12) :
+    t == 0xB0 ? (
+      d1 == 64 ? ( d2 >= 64 ? sus = 1 : sus ? sus_off(); ) :
+      d1 == 1 ? mod = d2 / 127 :
+      d1 == 123 || d1 == 120 ? all_off();
+    );
+  );
+
+  // a read between samples of the delay line, d samples back
+  function tap(d) local(i, fr, p0, p1)
+  (
+    i = floor(d);
+    fr = d - i;
+    p0 = dpos - i; p0 < 0 ? p0 += DL;
+    p1 = p0 - 1; p1 < 0 ? p1 += DL;
+    DB[p0] + (DB[p1] - DB[p0]) * fr;
+  );
+
+@slider
+  c4 = slider1 / 100;
+  c8 = slider2 / 100;
+  c16 = slider3 / 100;
+  ka = 1 - exp(-2.302585 / (slider4 * 0.001 * srate));
+  kr = exp(-6.907755 / (slider5 * 0.001 * srate));
+  fc = 600 * (16000 / 600) ^ (slider6 / 100);
+  sg = tan($pi * min(fc, 0.45 * srate) / srate);
+  sk = 1.4142135623730951;             // 1 / Q, Butterworth
+  sa1 = 1 / (1 + sg * (sg + sk));
+  ens = slider7 / 100;
+  mode = max(0, min(2, floor(slider8 + 0.5)));
+  mode == 0 ? ( e_fs = 0.6; e_ff = 6; e_ds = 2; e_df = 0.25; e_sp = 0.5; ) :
+  mode == 1 ? ( e_fs = 0.5; e_ff = 6.5; e_ds = 2.4; e_df = 0.25; e_sp = 1; ) :
+              ( e_fs = 0.4; e_ff = 5.5; e_ds = 3.5; e_df = 0.4; e_sp = 0.7; );
+  e_base = 0.008 * srate;
+  e_ds *= 0.001 * srate;
+  e_df *= 0.001 * srate;
+  vol = 10 ^ (slider9 / 20);
+
+@block
+  // the MIDI of this block, played at its offsets in @sample
+  mq_n = 0;
+  while (midirecv(m_ofs, m_1, m_2, m_3)) (
+    // every message goes on to the next plugin too, so instruments can be layered
+    midisend(m_ofs, m_1, m_2, m_3);
+    mq_n < 512 ? (
+      MQ[mq_n * 4] = m_ofs;
+      MQ[mq_n * 4 + 1] = m_1;
+      MQ[mq_n * 4 + 2] = m_2;
+      MQ[mq_n * 4 + 3] = m_3;
+      mq_n += 1;
+    );
+  );
+  mq_i = 0;
+  si = 0;
+
+@sample
+  while (mq_i < mq_n && MQ[mq_i * 4] <= si) (
+    midi_ev(MQ[mq_i * 4 + 1], MQ[mq_i * 4 + 2], MQ[mq_i * 4 + 3]);
+    mq_i += 1;
+  );
+  si += 1;
+
+  // the keys: 16', 8' and 4' locked an octave apart, one envelope each (only the range that
+  // sounds or is held: a silent key adds nothing)
+  s = 0;
+  nlo = 128; nhi = -1;
+  k = klo;
+  loop(max(0, khi - klo + 1),
+    e = K_e[k];
+    K_g[k] > 0 ? (
+      e += ka * (1 - e);
+      e > 0.9999 ? e = 1;
+    ) : (
+      e *= kr;
+      e < 0.0001 ? e = 0;
+    );
+    K_e[k] = e;
+    e > 0 ? (
+      dt = K_dt[k] * bend;
+      p = K_ph[k] + dt;
+      p -= floor(p);
+      K_ph[k] = p;
+      y = 0;
+      dt < 0.45 ? y += c16 * saw(p, dt);
+      q = 2 * p; q -= floor(q);
+      2 * dt < 0.45 ? y += c8 * saw(q, 2 * dt);
+      q = 4 * p; q -= floor(q);
+      4 * dt < 0.45 ? y += c4 * saw(q, 4 * dt);
+      s += y * e;
+    );
+    e > 0 || K_g[k] > 0 ? ( nlo = min(nlo, k); nhi = k; );
+    k += 1;
+  );
+  klo = nlo; khi = nhi;
+  t_s += 1;
+  s *= 0.12;
+
+  // Brightness: a 12 dB/oct low-pass (TPT state variable)
+  hp = (s - (sk + sg) * lp1 - lp2) * sa1;
+  bp = sg * hp + lp1;
+  lp1 = sg * hp + bp;
+  lw = sg * bp + lp2;
+  lp2 = sg * bp + lw;
+  // the body
+  y = pk1.b0 * lw + pk1.b1 * f1x1 + pk1.b2 * f1x2 - pk1.a1 * f1y1 - pk1.a2 * f1y2;
+  f1x2 = f1x1; f1x1 = lw; f1y2 = f1y1; f1y1 = y;
+  z = pk2.b0 * y + pk2.b1 * f2x1 + pk2.b2 * f2x2 - pk2.a1 * f2y1 - pk2.a2 * f2y2;
+  f2x2 = f2x1; f2x1 = y; f2y2 = f2y1; f2y1 = z;
+
+  // the ensemble: three taps, a slow and a fast LFO each, 120 degrees apart
+  DB[dpos] = z;
+  ps += e_fs / srate; ps -= floor(ps);
+  pf += e_ff / srate; pf -= floor(pf);
+  dm = 1 + mod;
+  d0 = e_base + dm * (e_ds * sin(tpi * ps) + e_df * sin(tpi * pf));
+  d1 = e_base + dm * (e_ds * sin(tpi * (ps + 1 / 3)) + e_df * sin(tpi * (pf + 1 / 3)));
+  d2 = e_base + dm * (e_ds * sin(tpi * (ps + 2 / 3)) + e_df * sin(tpi * (pf + 2 / 3)));
+  t0 = tap(d0); t1 = tap(d1); t2 = tap(d2);
+  w_l = (0.5 * t1 + (0.5 + 0.5 * e_sp) * t0 + (0.5 - 0.5 * e_sp) * t2) / 1.5;
+  w_r = (0.5 * t1 + (0.5 + 0.5 * e_sp) * t2 + (0.5 - 0.5 * e_sp) * t0) / 1.5;
+  dpos += 1; dpos >= DL ? dpos = 0;
+
+  spl0 = (z * (1 - ens) + w_l * ens) * vol;
+  spl1 = (z * (1 - ens) + w_r * ens) * vol;

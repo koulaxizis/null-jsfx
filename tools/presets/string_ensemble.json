@@ -1,0 +1,8 @@
+[
+  ["Classic Strings", {"Ensemble Mode": "Classic"}],
+  ["Wide Pad", {"Ensemble Mode": "Wide", "Ensemble (%)": 85, "Attack (ms)": 600, "Release (ms)": 1800}],
+  ["Slow Swell", {"Attack (ms)": 2000, "Release (ms)": 2500, "Brightness (%)": 45}],
+  ["Cello Bed", {"Violins 4' (%)": 0, "Violas 8' (%)": 60, "Cellos 16' (%)": 100, "Brightness (%)": 35}],
+  ["Bright Section", {"Violins 4' (%)": 100, "Violas 8' (%)": 80, "Cellos 16' (%)": 20, "Brightness (%)": 80, "Attack (ms)": 80}],
+  ["Dark Wash", {"Ensemble Mode": "Deep", "Brightness (%)": 25, "Ensemble (%)": 100, "Release (ms)": 3000}]
+]
