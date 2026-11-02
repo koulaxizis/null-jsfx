@@ -93,8 +93,9 @@ test('inserts of the selected track: list, open, parameters both ways, bypass', 
     assert.deepStrictEqual(ev.plugins.get(1), []);
     // open NULL Delay on Vocal: Vocal is selected again, the parameters come
     s.watchPlugin(0, 0);
-    await until(() => ev.params && ev.params.i === 0 && ev.params.params.length >= 2, 3000, 'Delay parameters');
     const tilt = Host.nullPlugin('delay');
+    // the names come in one message each: wait for all of them, not the first few
+    await until(() => ev.params && ev.params.i === 0 && ev.params.params.length === tilt.params.length, 3000, 'Delay parameters');
     assert.deepStrictEqual(ev.params.params.map((p) => p.name), tilt.params.map((p) => p.name));
     assert.ok(Math.abs(ev.params.params[0].value - tilt.params[0].v) < 1e-9);
     s.setParam(0, 0, 1, 0.8);
