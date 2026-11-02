@@ -14,6 +14,7 @@ const sim = require('./xair_sim.cjs');
 const wingSim = require('./wing_sim.cjs');
 const sqSim = require('./sq_sim.cjs');
 const quSim = require('./qu_sim.cjs');
+const quProfile = require('../../android/web/mixers/qu/profile.js');
 const net = require('net');
 
 const root = path.resolve(__dirname, '../..');
@@ -43,7 +44,8 @@ async function main() {
   const page = await browser.newPage({ viewport: { width: 1280, height: 800 } });
   const errors = [];
   page.on('pageerror', (e) => errors.push(e.message));
-  page.on('console', (m) => { if (m.type() === 'error') errors.push(m.text()); });
+  // (a newer Chromium asks the test server for /favicon.ico, which the app does not have)
+  page.on('console', (m) => { if (m.type() === 'error' && !/\/favicon\.ico$/.test(m.location().url || '')) errors.push(m.text()); });
 
   // the native bridge: the page's port 10024 is the X AIR simulator, 10023 the M32 simulator and
   // 2223 the WING simulator, which the page sees at 127.0.0.2 and 127.0.0.3 so no two consoles
@@ -306,6 +308,9 @@ async function main() {
     assert.strictEqual(await page.locator('.nm-bar button', { hasText: 'DCA' }).count(), 0, 'no DCA layer');
     assert.strictEqual(await page.locator('button.mg').count(), 4, 'four mute groups');
     assert.match(await strip('Kick').locator('.nm-db').innerText(), /^0\.0/, 'Kick (Ip 1) at 0 dB, named by the Qu');
+    // meters: the Qu's meter data (Post Delay of Ip 1 at -12 dB) moves Kick's meter
+    qu.meter(quProfile.meterPoints('Qu-16')[0][0], -12);
+    await until(async () => (await strip('Kick').locator('.nm-meter[data-i="0"] i').evaluate((e) => parseFloat(e.style.height) || 0)) > 50, 'Qu meters');
     await strip('Vox').locator('button.mute').click();
     await until(() => qu.state.get('/ip/2/mute') === 1, 'mute input 2 on the Qu');
     await drag(strip('Kick').locator('.nm-fader'), 80);

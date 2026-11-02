@@ -3,7 +3,9 @@
 // closed), sends Active Sensing (FE) every 300 ms and closes a connection that stays quiet, answers
 // Get System State with its box id and channel, pushes every value of the profile's layout and
 // ends the push, takes NRPN sets (BN 63 CH, 62 ID, 06 VA, 26 VX) and mutes (note on, velocity 40
-// or more = muted), answers a name request, and sends a change made on its own surface.
+// or more = muted), answers a name request, and sends a change made on its own surface. Meters:
+// 12 01 F7 is answered with one 13 meter message (or, with meterStreamMs, one that often until
+// 12 00 F7); a meter the test has not set reads -90 dB.
 // It follows our reading of the Qu MIDI Protocol (android/web/mixers/qu/profile.js), so it proves
 // the app is consistent with that reading, not that the reading matches a real Qu (Bible C21).
 //   node tests/mixers/qu_sim.cjs [--port 51325] [--model Qu-24]
@@ -38,6 +40,19 @@ function start(opts = {}) {
   const received = []; // every NRPN set and mute: {path, raw}
   let hellos = 0;
   let iPadFlag = -1;
+  const meterDb = new Map(); // the Qu's meter index -> dB
+  const meterCount = profile.meterPoints(model).flat().reduce((a, b) => Math.max(a, b), 0) + 1 + 200;
+  let meterAsks = 0;
+  let meterOn = false;
+  let meterTimer = null;
+  const meterMessage = () => {
+    const bytes = [];
+    for (let i = 0; i < meterCount; i++) {
+      const u = profile.dbMeter(meterDb.has(i) ? meterDb.get(i) : -90);
+      bytes.push(u >> 8, u & 255);
+    }
+    return sysex([0x13].concat(profile.pack7(bytes)));
+  };
 
   const bytesOf = (p) => (/\/name$/.test(p) ? [] : profile.encode(ch, p, state.get(p)));
   const sysex = (body) => Buffer.from(profile.header.concat([ch], body, [0xf7]));
@@ -60,6 +75,14 @@ function start(opts = {}) {
         for (const p of layout.params) all.push(...bytesOf(p.path));
         send(sock, all);
         send(sock, sysex([0x14]));
+      } else if (m[8] === ch && m[9] === 0x12) { // meters on (01) or off (00)
+        meterAsks++;
+        meterOn = m[10] === 1;
+        clearInterval(meterTimer);
+        if (meterOn) {
+          send(sock, meterMessage());
+          if (opts.meterStreamMs) meterTimer = setInterval(() => send(sock, meterMessage()), opts.meterStreamMs);
+        }
       } else if (m[8] === ch && m[9] === 0x01) { // get name: 02 CH <ASCII>
         const p = nameOf.get(m[10]);
         if (p) send(sock, sysex([0x02, m[10]].concat(profile.ascii(state.get(p)))));
@@ -106,7 +129,7 @@ function start(opts = {}) {
       send(sock, [0xfe]);
     }, 300);
     sock.on('data', (buf) => { last = Date.now(); read(buf); });
-    sock.on('close', () => { clearInterval(alive); if (client === sock) client = null; });
+    sock.on('close', () => { clearInterval(alive); clearInterval(meterTimer); meterOn = false; if (client === sock) client = null; });
   });
   return new Promise((resolve) => {
     server.listen(opts.port || 0, opts.host || '127.0.0.1', () => {
@@ -118,6 +141,10 @@ function start(opts = {}) {
         get iPadFlag() { return iPadFlag; },
         get refused() { return refused; },
         connected: () => !!client,
+        get meterAsks() { return meterAsks; },
+        get meterOn() { return meterOn; },
+        // a meter in the Qu's own numbering (profile.meterPoints gives a strip's)
+        meter(i, db) { meterDb.set(i, db); },
         // a change made on the console's own surface
         change(p, raw) { state.set(p, raw); send(client, bytesOf(p)); },
         // the console goes away: the connection drops
