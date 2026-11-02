@@ -1,0 +1,14 @@
+# Audio Units left out of the macOS package because they fail `auval -strict` (native/scripts/auval.sh).
+# One plugin folder name per line; the VST3, CLAP and JSFX of these plugins are not affected.
+# Baseline of the first run, 2026-11-02 (PR #118): 10 of 155 failed. The reason of each is in its
+# auval log; most of them have a sidechain input or more than two channels.
+dynamics
+gate
+phase_align
+reference
+sidechain_ducker
+spectral_ducker
+spectrum_analyzer
+surround_panner
+transient_split
+volume_shaper
