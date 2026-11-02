@@ -27,7 +27,7 @@ jobs:
       - uses: actions/cache@v6
         with:
           path: tests/.build/ysfx
-          key: ysfx-${{ hashFiles('tests/run.sh') }}
+          key: ysfx-${{ hashFiles('tests/run.sh', 'tests/ysfx_preprocessor.patch') }}
       - run: sudo apt-get install -y nasm
       - run: tests/run.sh
       # odd and very low sample rates (8 kHz phone audio, 22.05 kHz, and two odd rates of
