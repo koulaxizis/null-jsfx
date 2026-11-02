@@ -61,6 +61,10 @@ function readJsfx(file, seen) {
   if (seen[abs]) return null;
   seen[abs] = true;
   var text = fs.readFileSync(abs, "utf8").replace(/\r\n?/g, "\n");
+  // <? ... ?> blocks are REAPER's EEL preprocessor (e.g. note names on REAPER 7.83+, guarded by
+  // jsfx_has_set_midi_note_name); the web runtime drops them, as an older REAPER emits nothing
+  // for them. Newlines inside a block stay, so line numbers still match the file.
+  text = text.replace(/<\?[\s\S]*?\?>/g, function (m) { return m.replace(/[^\n]/g, ""); });
   var lines = text.split("\n");
   var hdr = { desc: "", author: "", tags: "", category: "", sliders: [], inPins: [], outPins: [], options: "", gfx: null };
   var sections = { init: [], slider: [], block: [], sample: [], gfx: [], serialize: [] };

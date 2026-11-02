@@ -64,6 +64,8 @@ midirecv midisend str_getchar
 
 
 def strip_comments(code):
+    """Comments and <? ?> blocks (REAPER's preprocessor, run before compiling; checked by hand)."""
+    code = re.sub(r"<\?.*?\?>", "", code, flags=re.S)
     code = re.sub(r"/\*.*?\*/", "", code, flags=re.S)
     return re.sub(r"//[^\n]*", "", code)
 
