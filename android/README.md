@@ -60,10 +60,9 @@ committed (`.gitignore` blocks `*.jks` and `*.keystore`).
 flavor of each app in `tools/fdroid_repo.py` `APPS` from the release tag, signed with the same
 key as the APKs on the release (so a phone can move between the two without reinstalling), and
 publishes them with `fdroid update` to `koulaxizis/null-jsfx-fdroid` (GitHub Pages), keeping the
-newest 3 versions of each app. The index is signed with the orOS repository key (alias
-`orosrepo`). Store texts and the icon come from `app/src/<app>/fastlane/` and
-`fdroid/icon.png`. Secrets: the four `ANDROID_*` of Signing, plus `FDROID_KEYSTORE_BASE64`,
-`FDROID_KEYSTORE_PASSWORD` and `FDROID_DEPLOY_TOKEN`; without them the run publishes nothing.
+newest 3 versions of each app. The index is signed with the same APK key. Store texts and the icon come from `app/src/<app>/fastlane/` and
+`fdroid/icon.png`. Secrets: the four `ANDROID_*` of Signing, plus `FDROID_DEPLOY_TOKEN`; without them the run
+publishes nothing.
 Droid-ify is an F-Droid client, so it uses the same repository.
 
 **Obtainium** reads our GitHub releases directly. Each release carries both APKs, so each app
