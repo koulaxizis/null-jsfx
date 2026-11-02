@@ -262,7 +262,8 @@
       const s = old || { ssid: t.i, meter: 0 };
       s.name = String(t.name || '');
       s.type = String(t.type || '');
-      s.canRec = /^(Audio|Instrument|Hybrid|MIDI)$/.test(s.type); // Bitwig's and Live's types
+      // Bitwig's and Live's types; a script that knows better says so (FL Studio: every insert)
+      s.canRec = 'canRec' in t ? !!t.canRec : /^(Audio|Instrument|Hybrid|MIDI)$/.test(s.type);
       this.fields(s, t);
       return s;
     }
