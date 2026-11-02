@@ -138,6 +138,7 @@
    *   open(c) -> session (after files are loaded; may throw with a message for the user),
    *   kind(s) -> label under the name, isMaster(s), hasFx(s), hasPan(s),
    *   meter(s) -> {h (0..1), hot}, dbText(s, session), unity (fader position of 0 dB)
+   *   noBypass (true: the DAW has no switch per plugin, so no ON/OFF button; FL Studio)
    * }
    */
   function register(P) {
@@ -506,7 +507,8 @@
           on.classList.toggle('on', p.enabled);
           on.textContent = p.enabled ? 'ON' : 'OFF';
         };
-        row.append(open, on);
+        if (P.noBypass) row.append(open);
+        else row.append(open, on);
         box.appendChild(row);
       }
       sheetBody.appendChild(box);
