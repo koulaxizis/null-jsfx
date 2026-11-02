@@ -1,0 +1,102 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<style>
+@font-face{font-family:Noto;src:url(NotoSans-Regular.ttf);font-weight:400}
+@font-face{font-family:Noto;src:url(NotoSans-Bold.ttf);font-weight:700}
+@font-face{font-family:Nunito;src:url(Nunito.ttf);font-weight:200 1000}
+@font-face{font-family:Inter;src:url(Inter.ttf);font-weight:100 900}
+html,body{margin:0;padding:0;overflow:hidden;background:transparent}
+svg{display:block}
+</style></head><body>
+<script src="brand.js"></script>
+<script>
+// Logos and banners.
+// kind: icon | mark | lockup-h | lockup-v | banner | avatar
+// v: dark (on dark backgrounds) | light (on light backgrounds) | white | black
+const q = new URLSearchParams(location.search);
+const ID = q.get('s'), KIND = q.get('kind'), V = q.get('v') || 'dark', TAG = q.get('tag') !== '0';
+const NS = 'http://www.w3.org/2000/svg';
+function col(id) {
+  const mono = V === 'white' ? '#ffffff' : V === 'black' ? '#000000' : null;
+  const dk = V === 'dark';
+  const base = {
+    null: { acc: 'url(#sv)', fg: dk ? '#d4d4d4' : '#232220', sub: dk ? '#8a8a8a' : '#5a5a5a', box: { fill: '#232220', stroke: '#4a4a4a' } },
+    oros: { acc: dk ? '#d4af37' : '#b8860b', fg: dk ? '#f0ead9' : '#241f14', sub: dk ? '#a89f8a' : '#6a6050', box: { fill: '#1b1a18' } },
+    nox:  { acc: '#6d4aff', fg: dk ? '#f6f4ff' : '#14121f', sub: dk ? '#b7b2d6' : '#5a5478', box: { fill: '#0d0f14', stroke: '#2e3240' } }
+  }[id];
+  if (mono) return { acc: mono, fg: mono, sub: mono, dot: mono, box: null, mono: true };
+  return { ...base, dot: '#6d4aff' };
+}
+const DEFS = `<linearGradient id="sv" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#9a9a9a"/><stop offset="1" stop-color="#d4d4d4"/></linearGradient>`;
+function t(x, y, str, fam, wt, size, fill, ls) {
+  return `<text x="${x}" y="${y}" font-family="${fam}" font-weight="${wt}" font-size="${size}" letter-spacing="${ls || 0}" fill="${fill}">${str}</text>`;
+}
+// icon in a 100-unit square at x,y (top-left)
+function iconAt(id, x, y, sz, boxed) {
+  const c = col(id);
+  const box = boxed && c.box ? c.box : null;
+  // NULL JSFX's mark is designed inside its box; the bare mark is drawn larger
+  if (id === 'null' && !box) return mark('null', c.acc, x + sz / 2, y + sz / 2, sz * 1.6, null);
+  if (id === 'oros' && !box) return mark('oros', c.acc, x + sz / 2, y + sz / 2, sz * 1.18, null);
+  if (id === 'nox' && !box) return mark('nox', c.acc, x + sz / 2, y + sz / 2, sz * 1.7, null);
+  return mark(id, id === 'oros' && box ? '#d4af37' : c.acc, x + sz / 2, y + sz / 2, sz, box);
+}
+// wordmark with its baseline at y, starting at x (anchor start or middle)
+function words(id, x, y, k, anchor) {
+  const c = col(id); const a = `text-anchor="${anchor}"`;
+  let s = '';
+  if (id === 'null') {
+    s += `<text ${a} x="${x}" y="${y}" font-family="Noto" font-weight="700" font-size="${k}" letter-spacing="${k * 0.3}" fill="${c.fg}">NULL JSFX</text>`;
+    if (TAG) s += `<text ${a} x="${x}" y="${y + k * 0.62}" font-family="Noto" font-size="${k * 0.4}" letter-spacing="${k * 0.19}" fill="${c.sub}">AUDIO WITHOUT NOISE</text>`;
+  } else if (id === 'oros') {
+    s += `<text ${a} x="${x}" y="${y}" font-family="Nunito" font-weight="800" font-size="${k * 1.45}" fill="${c.fg}">orOS</text>`;
+    if (TAG) s += `<text ${a} x="${x}" y="${y + k * 0.7}" font-family="Nunito" font-weight="600" font-size="${k * 0.42}" fill="${c.sub}">${BRAND.oros.tag}</text>`;
+  } else {
+    s += `<text ${a} x="${x}" y="${y}" font-family="Inter" font-weight="700" font-size="${k * 1.4}" letter-spacing="${-k * 0.042}" fill="${c.fg}">noxpress<tspan fill="${c.dot}">.</tspan></text>`;
+    if (TAG) s += `<text ${a} x="${x}" y="${y + k * 0.7}" font-family="Inter" font-weight="500" font-size="${k * 0.45}" fill="${c.sub}">${BRAND.nox.tag}</text>`;
+  }
+  return s;
+}
+function lockup(id, dir) {
+  const k = 100, sz = 260;
+  if (dir === 'h') return iconAt(id, 0, -sz / 2, sz, true) + words(id, sz + 90, TAG ? 10 : 45, k, 'start');
+  return iconAt(id, -sz / 2, 0, sz, true) + words(id, 0, sz + 190, k, 'middle');
+}
+function trio(sz, gap) {
+  const c = V === 'white' || V === 'black';
+  let s = '';
+  ['null', 'oros', 'nox'].forEach((id, i) => s += iconAt(id, i * (sz + gap), 0, sz, !c));
+  return s;
+}
+function content() {
+  if (KIND === 'icon') return ID === 'all' ? trio(300, 60) : iconAt(ID, 0, 0, 300, true);
+  if (KIND === 'mark') return iconAt(ID, 0, 0, 300, false);
+  if (KIND === 'lockup-h') return ID === 'all' ? trio(300, 60) + `<text x="510" y="420" text-anchor="middle" font-family="Noto" font-size="54" letter-spacing="16" fill="${col('null').sub}">NULL JSFX · orOS · NOXPRESS</text>` : lockup(ID, 'h');
+  if (KIND === 'lockup-v') return lockup(ID, 'v');
+  return '';
+}
+// backgrounds for banners/avatars
+function background(W, H) {
+  if (ID === 'all') return `<rect width="${W}" height="${H}" fill="${V === 'light' ? '#f4f4f5' : '#111214'}"/>`;
+  const p = BRAND[ID].pal[V === 'light' ? 'light' : 'dark'];
+  const fx = ID === 'nox' ? W * 0.82 : W / 2, fy = ID === 'nox' ? H * 0.1 : H / 2;
+  return `<radialGradient id="bg" gradientUnits="userSpaceOnUse" cx="${fx}" cy="${fy}" r="${Math.hypot(W, H) * 0.6}"><stop offset="0" stop-color="${p.bg0}"/>${p.mid ? `<stop offset=".45" stop-color="${p.mid}"/>` : ''}<stop offset="1" stop-color="${p.bg1}"/></radialGradient><rect width="${W}" height="${H}" fill="url(#bg)"/>`;
+}
+window.build = function () {
+  const W = innerWidth, H = innerHeight;
+  const inner = (KIND === 'banner') ? (ID === 'all' ? trio(300, 60) + `<text x="510" y="420" text-anchor="middle" font-family="Noto" font-size="54" letter-spacing="16" fill="${V === 'light' ? '#55565a' : '#9a9a9a'}">NULL JSFX · orOS · NOXPRESS</text>` : lockup(ID, 'h'))
+    : KIND === 'avatar' ? (ID === 'all' ? trio(300, 60) : iconAt(ID, 0, 0, 300, true)) : content();
+  document.body.innerHTML = `<svg xmlns="${NS}" width="${W}" height="${H}"><defs>${DEFS}</defs><g id="bgl"></g><g id="c">${inner}</g></svg>`;
+  const g = document.getElementById('c'), b = g.getBBox();
+  window.ASPECT = b.width / b.height;
+  let pad, fw, fh;
+  if (KIND === 'banner') { document.getElementById('bgl').innerHTML = background(W, H); fw = W * (+q.get('sw') || 0.62); fh = H * (+q.get('sh') || 0.42); }
+  else if (KIND === 'avatar') { document.getElementById('bgl').innerHTML = background(W, H); fw = W * (ID === 'all' ? 0.8 : 0.62); fh = H * 0.62; }
+  else { pad = Math.min(W, H) * 0.06; fw = W - 2 * pad; fh = H - 2 * pad; }
+  const sc = Math.min(fw / b.width, fh / b.height);
+  // banners keep their lockup a little above centre where profile pictures do not cover it
+  const oy = KIND === 'banner' ? H * (+q.get('oy') || 0.5) : H / 2;
+  g.setAttribute('transform', `translate(${W / 2 - (b.x + b.width / 2) * sc},${oy - (b.y + b.height / 2) * sc}) scale(${sc})`);
+};
+window.build();
+</script></body></html>

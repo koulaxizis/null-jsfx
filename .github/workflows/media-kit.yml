@@ -1,0 +1,49 @@
+name: Media kit
+
+# Builds the media kits of NULL JSFX, orOS and noxpress and the combined kit
+# (tools/media_kit/build.py) and keeps the zips on a pre-release called "media-kit", so the
+# three sites link to them from GitHub's release storage. Like "media", it is a pre-release:
+# it never becomes the latest release, and the download counter and the Hub's rollback list
+# only count version tags. A push to main that changes the kit, or a manual run, rebuilds
+# and replaces all eight zips.
+
+on:
+  push:
+    branches: [main]
+    paths: ["tools/media_kit/**", ".github/workflows/media-kit.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: media-kit
+  cancel-in-progress: false
+
+jobs:
+  build:
+    timeout-minutes: 30
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+      - run: npm ci
+        working-directory: tests/remote
+      - run: npx playwright install --with-deps chromium
+        working-directory: tests/remote
+      # the runner's system python3 has neither
+      - run: sudo apt-get update -q && sudo apt-get install -y python3-pil python3-numpy
+      - name: Build the kits
+        run: python3 tools/media_kit/build.py "$RUNNER_TEMP/media-kit"
+      - name: Upload the zips to the media-kit release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          if ! gh release view media-kit >/dev/null 2>&1; then
+            gh release create media-kit --prerelease --title "Media kit (NULL JSFX, orOS, noxpress)" \
+              --notes "Wallpapers, logos, banners, print files, palettes, fonts and press texts for NULL JSFX, orOS and noxpress, each on its own and all three together. Free to use to present or write about the projects (see LICENSE-media-kit.md in each zip). Not a release of the plugins: get those from the latest release."
+          fi
+          gh release upload media-kit "$RUNNER_TEMP"/media-kit/zips/*.zip --clobber

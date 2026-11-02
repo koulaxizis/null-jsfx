@@ -1,0 +1,76 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<style>
+@font-face{font-family:Noto;src:url(NotoSans-Regular.ttf);font-weight:400}
+@font-face{font-family:Noto;src:url(NotoSans-Bold.ttf);font-weight:700}
+@font-face{font-family:Nunito;src:url(Nunito.ttf);font-weight:200 1000}
+@font-face{font-family:Inter;src:url(Inter.ttf);font-weight:100 900}
+html,body{margin:0;padding:0;overflow:hidden;background:transparent}
+svg{display:block}
+</style></head><body>
+<script src="brand.js"></script>
+<script>
+// Printful print files. item: tshirt (3600x4800, 12x16 in), mug (2700x1050, 11 oz wrap), sticker (1200x1200, 4 in); all 300 dpi.
+// v: dark = for dark garments / dark mug (light text), light = for light garments (dark text).
+const q = new URLSearchParams(location.search);
+const W = +q.get('w'), H = +q.get('h'), IT = q.get('it'), SUB = q.get('s'), V = q.get('v') || 'dark';
+const dk = V === 'dark';
+let defs = `<linearGradient id="sv" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#9a9a9a"/><stop offset="1" stop-color="#d4d4d4"/></linearGradient>`, s = '';
+const C = {
+  null: { acc: 'url(#sv)', box: { fill: '#232220', stroke: '#4a4a4a' }, fg: dk ? '#d4d4d4' : '#232220', sub: dk ? '#8a8a8a' : '#5a5a5a', bg: '#1b1a18' },
+  oros: { acc: dk ? '#d4af37' : '#b8860b', box: { fill: '#1b1a18' }, fg: dk ? '#ffffff' : '#241f14', sub: dk ? '#a8a8ad' : '#6a6050', bg: '#1b1a18' },
+  nox:  { acc: '#6d4aff', box: { fill: '#0d0f14' }, fg: dk ? '#f2f0ff' : '#14121f', sub: dk ? '#9e98c0' : '#5a5478', bg: '#0d0f14' }
+};
+function t(x, y, str, fam, wt, size, fill, ls, anchor) {
+  return `<text x="${x}" y="${y}" text-anchor="${anchor || 'middle'}" font-family="${fam}" font-weight="${wt}" font-size="${size}" letter-spacing="${ls || 0}" fill="${fill}">${str}</text>`;
+}
+function wordmark(id, x, y, k, anchor) { // k = scale unit; returns svg for name + tagline with baseline at y
+  const c = C[id];
+  if (id === 'null') return t(x, y, 'NULL JSFX', 'Noto', 700, k * 1.0, c.fg, k * 0.33, anchor) + t(x, y + k * 0.62, 'AUDIO WITHOUT NOISE', 'Noto', 400, k * 0.42, c.sub, k * 0.2, anchor);
+  if (id === 'oros') return t(x, y, 'orOS', 'Nunito', 800, k * 1.45, c.fg, 0, anchor) + t(x, y + k * 0.75, BRAND.oros.tag, 'Nunito', 600, k * 0.42, c.sub, 0, anchor);
+  return `<text x="${x}" y="${y}" text-anchor="${anchor || 'middle'}" font-family="Inter" font-weight="700" font-size="${k * 1.4}" letter-spacing="${-k * 0.04}" fill="${c.fg}">noxpress<tspan fill="#6d4aff">.</tspan></text>` +
+    t(x, y + k * 0.72, BRAND.nox.tag, 'Inter', 500, k * 0.45, c.sub, 0, anchor);
+}
+function icon(id, x, y, size, boxed) {
+  const c = C[id];
+  if (id === 'null') return mark('null', c.acc, x, y, size, c.box);          // NULL JSFX mark always sits in its box
+  return mark(id, c.acc, x, y, size, boxed ? c.box : null);
+}
+if (IT === 'tshirt') {
+  if (SUB === 'all') {
+    const sz = W * 0.24, y = H * 0.16, g = W * 0.3;
+    s += mark('null', 'url(#sv)', W / 2 - g, y, sz, C.null.box) + mark('oros', '#d4af37', W / 2, y, sz, C.oros.box) + mark('nox', '#6d4aff', W / 2 + g, y, sz, C.nox.box);
+    s += t(W / 2, H * 0.33, 'NULL JSFX · orOS · NOXPRESS', 'Noto', 700, W * 0.05, dk ? '#e6e6e6' : '#232220', W * 0.008);
+    s += t(W / 2, H * 0.37, 'FREE AND OPEN SOURCE', 'Noto', 400, W * 0.028, dk ? '#8a8a8a' : '#5a5a5a', W * 0.012);
+  } else {
+    s += icon(SUB, W / 2, H * 0.16, W * (SUB === 'null' ? 0.30 : 0.34), false);
+    s += wordmark(SUB, W / 2, H * 0.37, W * (SUB === 'oros' ? 0.12 : 0.105));
+  }
+} else if (IT === 'mug') {
+  // full wrap: printed background, wordmark left half, mark right half (each half faces one side of the mug)
+  const bg = SUB === 'all' ? '#111214' : C[SUB].bg;
+  s += `<rect width="${W}" height="${H}" fill="${dk ? bg : '#ffffff'}"/>`;
+  if (SUB === 'all') {
+    const sz = H * 0.34;
+    s += mark('null', 'url(#sv)', W * 0.17, H * 0.45, sz, C.null.box) + mark('oros', '#d4af37', W * 0.33, H * 0.45, sz, C.oros.box);
+    s += mark('nox', '#6d4aff', W * 0.75, H * 0.45, sz * 1.2, C.nox.box);
+    s += t(W * 0.25, H * 0.78, 'FREE AND OPEN SOURCE', 'Noto', 400, H * 0.045, dk ? '#8a8a8a' : '#5a5a5a', H * 0.012);
+  } else {
+    s += wordmark(SUB, W * 0.25, H * 0.53, H * (SUB === 'oros' ? 0.15 : SUB === 'null' ? 0.115 : 0.14));
+    s += icon(SUB, W * 0.75, H * 0.48, H * (SUB === 'null' ? 0.5 : 0.52), false);
+  }
+} else if (IT === 'sticker') {
+  const m = W * 0.042; // ~1/8 in border kept clear for the cut line
+  if (SUB === 'all') {
+    s += `<rect x="${m}" y="${W * 0.3}" width="${W - 2 * m}" height="${W * 0.4}" rx="${W * 0.08}" fill="#111214"/>`;
+    const sz = W * 0.25;
+    s += mark('null', 'url(#sv)', W * 0.22, W / 2, sz, C.null.box) + mark('oros', '#d4af37', W / 2, W / 2, sz, C.oros.box) + mark('nox', '#6d4aff', W * 0.78, W / 2, sz, C.nox.box);
+  } else {
+    const box = SUB === 'null' ? { fill: '#2d2c2a', stroke: '#4a4a4a' } : C[SUB].box;
+    s += `<svg x="${m}" y="${m}" width="${W - 2 * m}" height="${W - 2 * m}" viewBox="0 0 100 100"><rect x="${SUB === 'null' ? 1 : 0}" y="${SUB === 'null' ? 1 : 0}" width="${SUB === 'null' ? 98 : 100}" height="${SUB === 'null' ? 98 : 100}" rx="20" fill="${box.fill}" ${box.stroke ? `stroke="${box.stroke}" stroke-width="1.5"` : ''}/></svg>`;
+    const inner = W - 2 * m;
+    s += mark(SUB, C[SUB].acc, W / 2, W / 2, inner * (SUB === 'oros' ? 0.82 : SUB === 'null' ? 0.85 : 0.94), null);
+  }
+}
+document.body.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}"><defs>${defs}</defs>${s}</svg>`;
+</script></body></html>

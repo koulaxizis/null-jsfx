@@ -1,0 +1,163 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<style>
+@font-face{font-family:Noto;src:url(NotoSans-Regular.ttf);font-weight:400}
+@font-face{font-family:Noto;src:url(NotoSans-Bold.ttf);font-weight:700}
+@font-face{font-family:Nunito;src:url(Nunito.ttf);font-weight:200 1000}
+@font-face{font-family:Inter;src:url(Inter.ttf);font-weight:100 900}
+html,body{margin:0;padding:0;overflow:hidden;background:#000}
+svg{display:block}
+</style></head><body>
+<script src="brand.js"></script>
+<script>
+const q = new URLSearchParams(location.search);
+const W = +q.get('w'), H = +q.get('h'), SUB = q.get('s'), ST = q.get('st'), T = q.get('t');
+const port = H > W, dark = T === "dark", S = Math.min(W, H) * (port ? 1.4 : 1);
+const cx = W / 2, cy = port ? H * 0.42 : H / 2;
+let defs = '', s = '';
+const P = SUB === 'all' ? null : BRAND[SUB].pal[T];
+
+function radial(id, c0, c1, fx, fy, r, mid) {
+  return `<radialGradient id="${id}" gradientUnits="userSpaceOnUse" cx="${fx}" cy="${fy}" r="${r}"><stop offset="0" stop-color="${c0}"/>${mid ? `<stop offset=".45" stop-color="${mid}"/>` : ''}<stop offset="1" stop-color="${c1}"/></radialGradient>`;
+}
+function text(x, y, str, fam, wt, size, fill, ls, anchor) {
+  return `<text x="${x}" y="${y}" text-anchor="${anchor || 'middle'}" font-family="${fam}" font-weight="${wt}" font-size="${size}" letter-spacing="${ls || 0}" fill="${fill}">${str}</text>`;
+}
+const R = rng(7);
+
+// ---------- motifs ----------
+function waveLine(y, amp, flatX, flatW, seed, op, sw, color) {
+  const r = rng(seed); const ph = [r() * 6, r() * 6, r() * 6];
+  let p = '', n = Math.round(W / 2.2);
+  for (let i = 0; i <= n; i++) {
+    const x = i / n * W; const d = Math.min(1, Math.abs(x - flatX) / flatW);
+    const env = Math.pow(d, 1.6);
+    const v = Math.sin(i * 0.37 + ph[0]) * 0.6 + Math.sin(i * 0.113 + ph[1]) * 0.4 + Math.sin(i * 1.7 + ph[2]) * 0.25;
+    p += (i ? 'L' : 'M') + x.toFixed(1) + ' ' + (y + env * amp * v).toFixed(1);
+  }
+  return `<path d="${p}" stroke="${color}" stroke-opacity="${op}" stroke-width="${sw}" fill="none"/>`;
+}
+function contours(n, top, step, peakX, h, color, op0) {
+  let out = '';
+  for (let k = 0; k < n; k++) {
+    let p = ''; const base = top + k * step;
+    for (let i = 0; i <= 240; i++) {
+      const x = i / 240 * W, t = x / W, px = peakX / W;
+      const ridge = Math.max(0, 1 - Math.abs(t - px) * 2.2) * h * (1 - k / (n + 2)) + Math.max(0, 1 - Math.abs(t - px - 0.18) * 5) * h * 0.3 * (1 - k / n);
+      p += (i ? 'L' : 'M') + x.toFixed(1) + ' ' + (base - ridge + Math.sin(t * 9 + k) * S * 0.006).toFixed(1);
+    }
+    out += `<path d="${p}" stroke="${color}" stroke-opacity="${Math.max(0.03, op0 - k * op0 / (n + 3)).toFixed(3)}" stroke-width="${S * 0.0016}" fill="none"/>`;
+  }
+  return out;
+}
+function arches(n, x, y, r0, step, color, op0) {
+  let out = '';
+  for (let k = 0; k < n; k++) {
+    const r = r0 + k * step;
+    out += `<path d="M${x - r} ${H + 10} V${y} a${r} ${r} 0 0 1 ${2 * r} 0 V${H + 10}" stroke="${color}" stroke-opacity="${Math.max(0.025, op0 - k * op0 / (n + 2)).toFixed(3)}" stroke-width="${S * 0.0016}" fill="none"/>`;
+  }
+  return out;
+}
+
+// ---------- backgrounds ----------
+function bgNull() { defs += radial('bg', P.bg0, P.bg1, cx, cy, Math.hypot(W, H) * 0.6); s += `<rect width="${W}" height="${H}" fill="url(#bg)"/>`; }
+function bgOros() { defs += radial('bg', P.bg0, P.bg1, cx, cy, Math.hypot(W, H) * 0.62, dark ? '#17140e' : '#f7f2e4'); s += `<rect width="${W}" height="${H}" fill="url(#bg)"/>`; }
+function bgNox() { defs += radial('bg', P.bg0, P.bg1, W * (port ? 0.7 : 0.78), H * (port ? 0.12 : 0.08), Math.hypot(W, H) * 0.6, P.mid); s += `<rect width="${W}" height="${H}" fill="url(#bg)"/>`; }
+
+function nullMark(x, y, sz) {
+  defs += `<linearGradient id="sv" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="${P.g0}"/><stop offset="1" stop-color="${P.g1}"/></linearGradient>`;
+  return mark('null', 'url(#sv)', x, y, sz, { fill: P.box, stroke: P.boxS });
+}
+
+// ---------- subjects ----------
+const draw = {
+  null() {
+    bgNull();
+    if (ST === 'mark') {
+      s += waveLine(cy + S * (port ? 0.40 : 0.30), S * 0.09, cx, W / 2, 3, dark ? .28 : .35, S * 0.0018, P.acc);
+      s += nullMark(cx, cy, S * 0.26);
+      s += text(cx, cy + S * 0.215, 'NULL JSFX', 'Noto', 700, S * 0.034, P.fg, S * 0.012);
+      s += text(cx, cy + S * 0.255, 'AUDIO WITHOUT NOISE', 'Noto', 400, S * 0.0145, P.sub, S * 0.007);
+    } else if (ST === 'pattern') {
+      const n = 26, top = H * 0.08, step = (H * 0.84) / (n - 1);
+      for (let k = 0; k < n; k++) {
+        const y = top + k * step; const dc = Math.abs(y - H / 2) / (H / 2);
+        s += waveLine(y, S * 0.035 * (0.3 + dc), cx, W * (0.25 + 0.35 * (1 - dc)), 11 + k, ((dark ? .10 : .14) + .16 * (1 - dc)).toFixed(3), S * 0.0014, P.acc);
+      }
+      s += nullMark(port ? cx : W - S * 0.12, port ? H - S * 0.2 : H - S * 0.12, S * 0.09);
+    } else {
+      s += nullMark(cx, cy, S * 0.11);
+    }
+  },
+  oros() {
+    bgOros();
+    if (ST === 'mark') {
+      s += contours(14, H * (port ? 0.70 : 0.66), S * 0.035, cx, S * 0.16, P.acc, dark ? .22 : .30);
+      s += mark('oros', P.acc, cx, cy - S * 0.04, S * 0.40);
+      s += text(cx, cy + S * 0.215, 'orOS', 'Nunito', 800, S * 0.07, P.fg, 0);
+      s += text(cx, cy + S * 0.265, BRAND.oros.tag, 'Nunito', 600, S * 0.02, P.sub, 0);
+    } else if (ST === 'pattern') {
+      s += contours(34, H * 0.30, H * 0.024, W * 0.42, S * 0.26, P.acc, dark ? .30 : .38);
+      s += mark('oros', P.acc, port ? cx : S * 0.12, port ? S * 0.22 : S * 0.12, S * 0.1);
+    } else {
+      s += mark('oros', P.acc, cx, cy, S * 0.13);
+    }
+  },
+  nox() {
+    bgNox();
+    const box = { fill: P.box, stroke: P.boxS };
+    if (ST === 'mark') {
+      s += arches(9, cx, cy, S * 0.22, S * 0.075, P.acc, dark ? .16 : .22);
+      s += mark('nox', P.acc, cx, cy, S * 0.24, box);
+      const fs = S * 0.065;
+      s += `<text x="${cx}" y="${cy + S * 0.24}" text-anchor="middle" font-family="Inter" font-weight="700" font-size="${fs}" letter-spacing="${-fs * 0.03}" fill="${P.fg}">noxpress<tspan fill="${P.acc}">.</tspan></text>`;
+      s += text(cx, cy + S * 0.29, BRAND.nox.tag, 'Inter', 500, S * 0.02, P.sub, 0);
+    } else if (ST === 'pattern') {
+      s += arches(22, cx, port ? H * 0.62 : H * 0.72, S * 0.06, S * 0.05, P.acc, dark ? .30 : .34);
+      s += mark('nox', P.acc, port ? cx : W - S * 0.12, port ? S * 0.22 : S * 0.12, S * 0.09, box);
+    } else {
+      s += mark('nox', P.acc, cx, cy, S * 0.12, box);
+    }
+  },
+  all() {
+    const bg = dark ? '#111214' : '#f4f4f5', fg = dark ? '#9a9a9a' : '#55565a', fg2 = dark ? '#6a6a6a' : '#8a8b90';
+    s += `<rect width="${W}" height="${H}" fill="${bg}"/>`;
+    const nP = BRAND.null.pal.dark, oP = BRAND.oros.pal.dark, xP = BRAND.nox.pal.dark;
+    defs += `<linearGradient id="sv" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="${nP.g0}"/><stop offset="1" stop-color="${nP.g1}"/></linearGradient>`;
+    const glowOp = dark ? [.16, .22, .26] : [.18, .20, .16];
+    const gc = [dark ? '#c4c4c4' : '#555555', '#d4af37', '#6d4aff'];
+    gc.forEach((c, i) => defs += `<radialGradient id="g${i}"><stop offset="0" stop-color="${c}" stop-opacity="${glowOp[i]}"/><stop offset="1" stop-color="${c}" stop-opacity="0"/></radialGradient>`);
+    const trio = (pos, sz, glow) => {
+      if (glow) pos.forEach((p, i) => s += `<circle cx="${p[0]}" cy="${p[1]}" r="${sz * 1.6}" fill="url(#g${i})"/>`);
+      s += mark('null', 'url(#sv)', pos[0][0], pos[0][1], sz, { fill: nP.box, stroke: nP.boxS });
+      s += mark('oros', oP.acc, pos[1][0], pos[1][1], sz, { fill: oP.box });
+      s += mark('nox', xP.acc, pos[2][0], pos[2][1], sz, { fill: xP.box, stroke: xP.boxS });
+    };
+    if (ST === 'mark') {
+      const pos = port ? [[cx, H * 0.24], [cx, H * 0.44], [cx, H * 0.64]] : [[W / 2 - S * 0.42, cy], [W / 2, cy], [W / 2 + S * 0.42, cy]];
+      const sz = port ? W * 0.30 : S * 0.24;
+      s += port ? `<line x1="${cx}" y1="${H * 0.12}" x2="${cx}" y2="${H * 0.76}" stroke="${fg}" stroke-opacity=".12" stroke-width="${S * 0.002}"/>`
+        : `<line x1="${W / 2 - S * 0.8}" y1="${cy}" x2="${W / 2 + S * 0.8}" y2="${cy}" stroke="${fg}" stroke-opacity=".12" stroke-width="${S * 0.002}"/>`;
+      trio(pos, sz, true);
+      const ly = port ? H * 0.80 : cy + S * 0.30;
+      s += text(cx, ly, 'NULL JSFX  ·  orOS  ·  NOXPRESS', 'Noto', 400, S * 0.019, fg, S * 0.006);
+      s += text(cx, ly + S * 0.038, 'FREE AND OPEN SOURCE', 'Noto', 400, S * 0.013, fg2, S * 0.004);
+    } else if (ST === 'pattern') {
+      // diagonal lattice of the three marks, faint, with one bright trio
+      const step = S * 0.16, ids = ['null', 'oros', 'nox'], cols = [dark ? '#c4c4c4' : '#555555', dark ? '#d4af37' : '#b8860b', '#6d4aff'];
+      for (let row = -1; row * step < H + step; row++) for (let col = -1; col * step < W + step; col++) {
+        const i = ((row + col) % 3 + 3) % 3; const x = col * step + (row % 2 ? step / 2 : 0), y = row * step;
+        s += `<g opacity="${dark ? .11 : .14}">${mark(ids[i], cols[i], x, y, S * 0.06)}</g>`;
+      }
+      const sz = S * 0.07, by = port ? H - S * 0.25 : H - S * 0.11, bx = port ? cx : W - S * 0.3;
+      s += `<rect x="${bx - sz * 2.1}" y="${by - sz * 0.8}" width="${sz * 4.2}" height="${sz * 1.6}" rx="${sz * 0.4}" fill="${bg}" fill-opacity=".85"/>`;
+      trio([[bx - sz * 1.3, by], [bx, by], [bx + sz * 1.3, by]], sz, false);
+    } else {
+      const sz = S * 0.085, g = sz * 1.35;
+      trio(port ? [[cx, cy - g], [cx, cy], [cx, cy + g]] : [[cx - g, cy], [cx, cy], [cx + g, cy]], sz, false);
+    }
+  }
+};
+draw[SUB]();
+document.body.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}"><defs>${defs}</defs>${s}</svg>`;
+</script></body></html>
