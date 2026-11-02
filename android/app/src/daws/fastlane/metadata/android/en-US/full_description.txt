@@ -1,4 +1,4 @@
-Remote for DAWs puts your DAW's mixer and transport, and the controls of every NULL JSFX plugin, on your Android phone or tablet, over your local Wi-Fi. It works with REAPER, Ardour and Mixbus, Bitwig Studio, Ableton Live and Cubase.
+Remote for DAWs puts your DAW's mixer and transport, and the controls of every NULL JSFX plugin, on your Android phone or tablet, over your local Wi-Fi. It works with REAPER, Ardour and Mixbus, Bitwig Studio, Ableton Live, Cubase and FL Studio.
 
 <b>What it does</b>
 <ul>
@@ -13,6 +13,6 @@ Remote for DAWs puts your DAW's mixer and transport, and the controls of every N
 Turn on REAPER's web interface (Preferences > Control/OSC/web). For the FX, run the small script null_jsfx_remote_bridge.lua that comes with NULL JSFX. The mixer and transport work without it.
 
 <b>The other DAWs</b>
-Ardour and Mixbus: turn on their OSC control surface. Bitwig Studio, Ableton Live and Cubase: install the small script for it that comes with NULL JSFX (Remote folder). Cubase is reached over network MIDI: a network MIDI session on the computer (built into macOS; rtpMIDI on Windows).
+Ardour and Mixbus: turn on their OSC control surface. Bitwig Studio, Ableton Live, Cubase and FL Studio: install the small script for it that comes with NULL JSFX (Remote folder). Cubase and FL Studio are reached over network MIDI: a network MIDI session on the computer (built into macOS; rtpMIDI on Windows).
 
-Part of NULL JSFX (https://nulljsfx.tech): free, MIT licensed, no ads, no tracking, no account. REAPER, Ardour, Mixbus, Bitwig Studio, Ableton Live and Cubase are trademarks of their owners; this app is independent and is not made or endorsed by them.
+Part of NULL JSFX (https://nulljsfx.tech): free, MIT licensed, no ads, no tracking, no account. REAPER, Ardour, Mixbus, Bitwig Studio, Ableton Live, Cubase and FL Studio are trademarks of their owners; this app is independent and is not made or endorsed by them.
