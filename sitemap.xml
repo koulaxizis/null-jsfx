@@ -79,6 +79,12 @@
         <priority>0.8</priority>
     </url>
     <url>
+        <loc>https://nulljsfx.tech/plugins/binaural-panner/</loc>
+        <lastmod>2026-11-01</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.8</priority>
+    </url>
+    <url>
         <loc>https://nulljsfx.tech/plugins/bitcrusher/</loc>
         <lastmod>2026-11-01</lastmod>
         <changefreq>monthly</changefreq>
@@ -445,6 +451,12 @@
         <priority>0.8</priority>
     </url>
     <url>
+        <loc>https://nulljsfx.tech/plugins/modal-piano/</loc>
+        <lastmod>2026-11-01</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.8</priority>
+    </url>
+    <url>
         <loc>https://nulljsfx.tech/plugins/mono-maker/</loc>
         <lastmod>2026-11-01</lastmod>
         <changefreq>monthly</changefreq>
@@ -643,6 +655,12 @@
         <priority>0.8</priority>
     </url>
     <url>
+        <loc>https://nulljsfx.tech/plugins/room-tone/</loc>
+        <lastmod>2026-11-01</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.8</priority>
+    </url>
+    <url>
         <loc>https://nulljsfx.tech/plugins/rotary-speaker/</loc>
         <lastmod>2026-11-01</lastmod>
         <changefreq>monthly</changefreq>
@@ -758,6 +776,12 @@
     </url>
     <url>
         <loc>https://nulljsfx.tech/plugins/stretch/</loc>
+        <lastmod>2026-11-01</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.8</priority>
+    </url>
+    <url>
+        <loc>https://nulljsfx.tech/plugins/string-ensemble/</loc>
         <lastmod>2026-11-01</lastmod>
         <changefreq>monthly</changefreq>
         <priority>0.8</priority>
