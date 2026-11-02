@@ -187,10 +187,16 @@ jobs:
                           : raw.length > 1 && raw[0] == 0x30 ? "PKCS12" : "unknown";
               System.out.println("keystore: " + raw.length + " bytes, looks like " + kind);
               if (kind.equals("unknown")) fail("ANDROID_KEYSTORE does not decode to a .jks or .p12 file (was the file encoded twice, or is it another file?)");
+              // a PKCS12 file is one DER sequence, so its first bytes give its full length
+              if (kind.equals("PKCS12") && raw.length > 4 && (raw[1] & 0xff) == 0x82) {
+                int want = 4 + (((raw[2] & 0xff) << 8) | (raw[3] & 0xff));
+                if (raw.length < want) fail("ANDROID_KEYSTORE is cut short: the file says " + want + " bytes, the secret gives " + raw.length + "; copy the whole base64 again");
+              }
               File f = new File(a[0]);
               Files.write(f.toPath(), raw);
               KeyStore ks;
               try { ks = KeyStore.getInstance(f, sp.toCharArray()); }
+              catch (java.io.EOFException e) { fail("ANDROID_KEYSTORE ends too early (the base64 was cut short); copy the whole base64 again"); return; }
               catch (Exception e) { fail("ANDROID_KEYSTORE_PASSWORD does not open the keystore (" + e.getClass().getSimpleName() + ")"); return; }
               finally { f.delete(); }
               int keys = 0;
