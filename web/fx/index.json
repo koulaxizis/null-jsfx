@@ -1908,6 +1908,20 @@
    "bytes": 81933
   },
   {
+   "id": "modal_piano",
+   "name": "Modal Piano",
+   "category": "Instruments",
+   "tags": "instrument piano acoustic grand modal physical model hammer strings inharmonic sustain pedal una corda polyphonic midi gui",
+   "gfx": [
+    560,
+    416
+   ],
+   "ins": 0,
+   "outs": 2,
+   "sliders": 10,
+   "bytes": 75217
+  },
+  {
    "id": "organ",
    "name": "Organ",
    "category": "Instruments",

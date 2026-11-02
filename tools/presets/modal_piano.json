@@ -1,0 +1,8 @@
+[
+  ["Concert Grand", {"Hardness (%)": 55, "Decay (%)": 110, "Body (%)": 55}],
+  ["Soft Felt", {"Hardness (%)": 15, "Hammer Noise (%)": 50, "Velocity (%)": 50, "Damper (ms)": 400, "Body (%)": 40, "Width (%)": 40}],
+  ["Bright Pop", {"Hardness (%)": 85, "Decay (%)": 80, "Body (%)": 70}],
+  ["Honky Tonk", {"Hardness (%)": 70, "Unison (cents)": 4, "Inharmonicity (%)": 140, "Decay (%)": 70}],
+  ["Upright", {"Decay (%)": 60, "Inharmonicity (%)": 160, "Hammer Noise (%)": 50, "Body (%)": 70, "Width (%)": 30}],
+  ["Long Sustain", {"Decay (%)": 250, "Damper (ms)": 600}]
+]

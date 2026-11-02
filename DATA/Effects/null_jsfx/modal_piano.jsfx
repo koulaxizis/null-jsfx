@@ -1,0 +1,358 @@
+desc:NULL Modal Piano
+author: Christos Koulaxizis
+tags: instrument piano acoustic grand modal physical model hammer strings inharmonic sustain pedal una corda polyphonic midi
+//category: Instruments
+//NULL JSFX v3.0 • https://nulljsfx.tech • MIT License
+
+slider1:50<0,100,1>Hardness (%)
+slider2:100<25,400,1>Decay (%)
+slider3:1.2<0,4,0.1>Unison (cents)
+slider4:100<0,200,1>Inharmonicity (%)
+slider5:30<0,100,1>Hammer Noise (%)
+slider6:70<0,100,1>Velocity (%)
+slider7:250<30,1000,1:log>Damper (ms)
+slider8:50<0,100,1>Body (%)
+slider9:60<0,100,1>Width (%)
+slider10:-6<-24,12,0.1>Volume (dB)
+
+in_pin:none
+out_pin:Left
+out_pin:Right
+
+@init
+  // A piano from physics, no samples: modal synthesis. Every key that sounds has a voice of up to
+  // 24 partials at f_k = k f0 sqrt(1 + B k^2) (a stiff string, Fletcher 1964; B rises from 2.5e-4
+  // at C4 to about 1e-2 at C8, times Inharmonicity), each a decaying sine resonator (two-pole,
+  // started from rest by the hammer). The first six partials are two resonators each: a
+  // "prompt" sound (65 %, a fifth of the decay) and an "aftersound" (35 %, the full decay), a
+  // little apart in pitch (Unison: the full value on the three-string keys, 70 % on two, 20 % on
+  // one), which gives the double decay and the beats of a real piano (Weinreich 1977); the
+  // higher ones, which die fast anyway, are one resonator at 40 % of their decay. The decay of the fundamental runs from about 22 s in
+  // the low bass to 0.6 s at the top (times Decay); higher partials die faster. The hammer sets
+  // the partials' levels: struck at 1/8 of the string (a comb), a felt that is brighter the
+  // harder it hits (Hardness, Velocity), a contact of 1.5 ms (soft) to 0.4 ms (hard) and a short
+  // thump of noise (Hammer Noise). Striking a key that still rings adds to it (the resonators
+  // are linear). A key let go is damped (Damper: the time to fall 60 dB) unless the sustain
+  // pedal (CC 64) holds it; keys above F#6 have no dampers. The soft pedal (CC 67, una corda)
+  // makes new notes softer and darker. 16 voices: a new key takes a free voice, or the quietest.
+  // The keys sit across the stereo field as seen from the player (Width); Body adds the board's
+  // low resonance and its presence. Pitch bend and the mod wheel do nothing, as on a piano. All
+  // notes off (CC 123/120) damps every key.
+  //
+  // Memory: 0.. the MIDI of the block (4 per message), 2048.. keys down, 2176.. the voice of each
+  // key, 2304.. the voices (16 each: key, resonators, level, level factor, damped, attack,
+  // attack length, left, right, thump position, thump level), 2560.. the resonators (7 each: b1,
+  // b2 at rest, c1, c2 now, y1, y2, which partial; up to 48 per voice), then a map of a voice's
+  // partials to its resonators (a strike on a key that still rings).
+  //
+  // CPU: a resonator that has fallen 100 dB is dropped (each voice is looked at every 256
+  // samples), so a voice costs less as it dies away and ends when it has none left.
+  ext_noinit = 1;
+  ext_tail_size = -1;
+  MQ = 0;
+  KD = 2048; KV = 2176;
+  NV = 16; NP = 24;
+  V_key = 2304; V_n = V_key + NV; V_lv = V_n + NV; V_lr = V_lv + NV; V_dm = V_lr + NV;
+  V_at = V_dm + NV; V_ta = V_at + NV; V_gl = V_ta + NV; V_gr = V_gl + NV; V_bt = V_gr + NV;
+  V_bv = V_bt + NV;
+  RB = 2560; RS = NP * 2 * 7;
+  MP = RB + NV * RS;
+  freembuf(MP + NP * 2);
+  tpi = 2 * $pi;
+  memset(KD, 0, 128);
+  memset(KV, 0, 128);
+  k = 0;
+  loop(128, KV[k] = -1; k += 1;);
+  memset(V_key, 0, NV * 11);
+  k = 0;
+  loop(NV, V_key[k] = -1; k += 1;);
+  memset(RB, 0, NV * RS);
+  sus = 0; soft = 0;
+  pc = 0; pv = 0;
+  seed = 4711;
+  th_lp = 0;
+  b1x1 = b1x2 = b1y1 = b1y2 = 0;
+  b2x1 = b2x2 = b2y1 = b2y2 = 0;
+  b3x1 = b3x2 = b3y1 = b3y2 = 0;
+  b4x1 = b4x2 = b4y1 = b4y2 = 0;
+  m_ofs = m_1 = m_2 = m_3 = 0;
+
+  // RBJ peaking filter coefficients into b0..a2 of the namespace
+  function peak(f, gdb, q) instance(b0, b1, b2, a1, a2) local(A, w, al, cw, a0)
+  (
+    A = 10 ^ (gdb / 40);
+    w = tpi * min(f, 0.45 * srate) / srate;
+    cw = cos(w);
+    al = sin(w) / (2 * q);
+    a0 = 1 + al / A;
+    b0 = (1 + al * A) / a0;
+    b1 = -2 * cw / a0;
+    b2 = (1 - al * A) / a0;
+    a1 = -2 * cw / a0;
+    a2 = (1 - al / A) / a0;
+  );
+
+  // the resonators of voice v take the damper (d 1) or leave it (d 0)
+  function v_damp(v, d) local(p, g1, g2)
+  (
+    V_dm[v] = d;
+    g1 = d ? dmp : 1;
+    g2 = g1 * g1;
+    p = RB + v * RS;
+    loop(V_n[v],
+      p[2] = p[0] * g1;
+      p[3] = p[1] * g2;
+      p += 7;
+    );
+  );
+
+  // the voice for key n: its own, a free one, or the quietest (cut)
+  function v_get(n) local(v, i, lo)
+  (
+    v = KV[n];
+    v < 0 ? (
+      i = 0;
+      loop(NV, v < 0 && V_key[i] < 0 ? v = i; i += 1;);
+      v < 0 ? (
+        v = 0; lo = V_lv[0];
+        i = 1;
+        loop(NV - 1, V_lv[i] < lo ? ( v = i; lo = V_lv[i]; ); i += 1;);
+        KV[V_key[v]] = -1;
+      );
+      memset(RB + v * RS, 0, RS);
+      V_key[v] = n; V_n[v] = 0; V_lv[v] = 0; V_dm[v] = 0;
+      KV[n] = v;
+    );
+    v;
+  );
+
+  // the hammer strikes key n at velocity vel (1..127)
+  function strike(n, vel) local(v, vn, vh, f0, B, T0, fh, ns, dc, g, k, fk, fmax, comb, amp, T, j, f, w, r, p, a, lv, i, id)
+  (
+    v = v_get(n);
+    vn = vel / 127;
+    vh = 0.65 + (vn - 0.65) * velo;
+    vh = max(0.05, min(1, vh));
+    f0 = 440 * 2 ^ ((n - 69) / 12);
+    B = 0.00025 * 10 ^ (max(0, n - 60) / 30) * inh;
+    T0 = 22 * 2 ^ (-(n - 21) / 17) * dec;
+    fh = (900 + 7000 * vh * vh) * hard;
+    g = vh ^ 0.6 * (0.25 + 0.75 * vh);
+    soft ? ( fh *= 0.6; g *= 0.7; );
+    ns = n < 32 ? 0.2 : n < 44 ? 0.7 : 1;
+    dc = uni * ns / 2;
+    fmax = min(14000, 0.45 * srate);
+    // where each partial of the voice rings now (dropped ones are gone)
+    i = 0;
+    loop(NP * 2, MP[i] = -1; i += 1;);
+    i = 0;
+    p = RB + v * RS;
+    loop(V_n[v], MP[p[6]] = i; p += 7; i += 1;);
+    lv = 0;
+    k = 1;
+    while (
+      fk = k * f0 * sqrt(1 + B * k * k);
+      fk < fmax && k <= NP ? (
+        comb = abs(sin($pi * k / 8));
+        amp = comb / k ^ 0.9 * exp(-fk / fh) * g;
+        T = T0 / (1 + (fk / 1800) ^ 1.4);
+        amp > 0.000001 ? (
+          j = 0;
+          loop(k <= 6 ? 2 : 1,
+            id = (k - 1) * 2 + j;
+            MP[id] < 0 ? (
+              MP[id] = V_n[v];
+              p = RB + v * RS + V_n[v] * 7;
+              p[4] = p[5] = 0;
+              p[6] = id;
+              V_n[v] += 1;
+            );
+            p = RB + v * RS + MP[id] * 7;
+            k <= 6 ? (
+              f = fk * 2 ^ ((j ? dc : -dc) / 1200);
+              r = exp(-6.907755 / ((j ? T : T / 5) * srate));
+              a = (j ? 0.35 : 0.65) * amp;
+            ) : (
+              f = fk;
+              r = exp(-6.907755 / (T / 2.5 * srate));
+              a = amp;
+            );
+            w = tpi * f / srate;
+            p[0] = 2 * r * cos(w);
+            p[1] = r * r;
+            p[4] -= a * sin(w) / r;
+            p[5] -= a * sin(2 * w) / (r * r);
+            k == 1 && j ? V_lr[v] = r;
+            j += 1;
+          );
+          lv += amp;
+        );
+        k += 1;
+        1;
+      ) : 0;
+    );
+    V_lv[v] += lv;
+    v_damp(v, 0);
+    V_at[v] = 0;
+    V_ta[v] = max(1, (0.0015 - 0.0011 * vh) * srate);
+    V_gl[v] = cos((1 + max(-1, min(1, (n - 60) / 36)) * wid) * $pi / 4);
+    V_gr[v] = sin((1 + max(-1, min(1, (n - 60) / 36)) * wid) * $pi / 4);
+    V_bt[v] = 0;
+    V_bv[v] = 0.08 * noi * vh;
+  );
+
+  // drop the resonators of voice v whose amplitude has fallen under 1e-5 (the last one takes
+  // the place): e / sin(w)^2 is the amplitude squared of a decaying sine from two samples
+  function prune(v) local(p, q, i, e)
+  (
+    p = RB + v * RS;
+    i = 0;
+    while (i < V_n[v]) (
+      e = p[4] * p[4] + p[1] * p[5] * p[5] - p[0] * p[4] * p[5];
+      e < 0.0000000001 * (1 - p[0] * p[0] / (4 * p[1])) ? (
+        V_n[v] -= 1;
+        q = RB + v * RS + V_n[v] * 7;
+        p[0] = q[0]; p[1] = q[1]; p[2] = q[2]; p[3] = q[3]; p[4] = q[4]; p[5] = q[5]; p[6] = q[6];
+      ) : (
+        p += 7;
+        i += 1;
+      );
+    );
+  );
+
+  function lifted(n) ( KD[n] || sus || n > 90; );
+
+  function note_on(n, vel)
+  (
+    KD[n] = 1;
+    strike(n, vel);
+  );
+  function note_off(n)
+  (
+    KD[n] = 0;
+    KV[n] >= 0 && !lifted(n) ? v_damp(KV[n], 1);
+  );
+  function sus_off() local(i)
+  (
+    sus = 0;
+    i = 0;
+    loop(NV, V_key[i] >= 0 && !V_dm[i] && !lifted(V_key[i]) ? v_damp(i, 1); i += 1;);
+  );
+  function all_off() local(i)
+  (
+    memset(KD, 0, 128);
+    sus = 0;
+    i = 0;
+    loop(NV, V_key[i] >= 0 && !V_dm[i] && V_key[i] <= 90 ? v_damp(i, 1); i += 1;);
+  );
+  function midi_ev(st, d1, d2) local(t)
+  (
+    t = st & 0xF0;
+    t == 0x90 && d2 > 0 ? note_on(d1, d2) :
+    t == 0x80 || t == 0x90 ? note_off(d1) :
+    t == 0xB0 ? (
+      d1 == 64 ? ( d2 >= 64 ? sus = 1 : sus ? sus_off(); ) :
+      d1 == 67 ? soft = d2 >= 64 :
+      d1 == 123 || d1 == 120 ? all_off();
+    );
+  );
+
+@slider
+  hard = 2 ^ ((slider1 - 50) / 40);
+  dec = slider2 / 100;
+  uni = slider3;
+  inh = slider4 / 100;
+  noi = slider5 / 100;
+  velo = slider6 / 100;
+  dmp = exp(-6.907755 / (slider7 * 0.001 * srate));
+  bod = slider8 / 100;
+  wid = slider9 / 100;
+  vol = 10 ^ (slider10 / 20);
+  bl.peak(110, 6 * bod, 0.9);
+  bh.peak(2500, 3 * bod, 1.1);
+  th_c = exp(-tpi * 2500 / srate);
+  // a voice already damped takes the new Damper
+  i = 0;
+  loop(NV, V_key[i] >= 0 && V_dm[i] ? v_damp(i, 1); i += 1;);
+
+@block
+  // the MIDI of this block, played at its offsets in @sample
+  mq_n = 0;
+  while (midirecv(m_ofs, m_1, m_2, m_3)) (
+    // every message goes on to the next plugin too, so instruments can be layered
+    midisend(m_ofs, m_1, m_2, m_3);
+    mq_n < 512 ? (
+      MQ[mq_n * 4] = m_ofs;
+      MQ[mq_n * 4 + 1] = m_1;
+      MQ[mq_n * 4 + 2] = m_2;
+      MQ[mq_n * 4 + 3] = m_3;
+      mq_n += 1;
+    );
+  );
+  mq_i = 0;
+  si = 0;
+
+@sample
+  while (mq_i < mq_n && MQ[mq_i * 4] <= si) (
+    midi_ev(MQ[mq_i * 4 + 1], MQ[mq_i * 4 + 2], MQ[mq_i * 4 + 3]);
+    mq_i += 1;
+  );
+  si += 1;
+
+  // the voices: the resonators of each, the hammer's contact, the thump, the level that ends it
+  sl = sr = 0;
+  th = 0;
+  v = 0;
+  loop(NV,
+    V_key[v] >= 0 ? (
+      s = 0;
+      p = RB + v * RS;
+      loop(V_n[v],
+        y = p[2] * p[4] - p[3] * p[5];
+        p[5] = p[4];
+        p[4] = y;
+        s += y;
+        p += 7;
+      );
+      V_at[v] < V_ta[v] ? ( s *= V_at[v] / V_ta[v]; V_at[v] += 1; );
+      V_bt[v] < 0.006 * srate ? (
+        th += V_bv[v] * (0.5 - 0.5 * cos(tpi * V_bt[v] / (0.006 * srate)));
+        V_bt[v] += 1;
+      );
+      sl += s * V_gl[v];
+      sr += s * V_gr[v];
+      V_lv[v] *= V_dm[v] ? V_lr[v] * dmp : V_lr[v];
+      V_n[v] == 0 && V_bt[v] >= 0.006 * srate ? (
+        KV[V_key[v]] = -1;
+        V_key[v] = -1;
+      );
+    );
+    v += 1;
+  );
+
+  // one voice in turn loses its silent resonators, every 16 samples
+  pc += 1;
+  pc >= 16 ? (
+    pc = 0;
+    V_key[pv] >= 0 ? prune(pv);
+    pv += 1; pv >= NV ? pv = 0;
+  );
+
+  // the thump: noise (Park-Miller) through a one-pole low-pass, in the middle
+  seed *= 16807; seed -= floor(seed / 2147483647) * 2147483647;
+  th_lp = (1 - th_c) * (seed / 1073741824 - 1) * th + th_c * th_lp;
+  sl = (sl + th_lp * 0.7071) * 0.25;
+  sr = (sr + th_lp * 0.7071) * 0.25;
+
+  // the body: the board's low resonance and its presence, per side
+  y = bl.b0 * sl + bl.b1 * b1x1 + bl.b2 * b1x2 - bl.a1 * b1y1 - bl.a2 * b1y2;
+  b1x2 = b1x1; b1x1 = sl; b1y2 = b1y1; b1y1 = y;
+  zl = bh.b0 * y + bh.b1 * b2x1 + bh.b2 * b2x2 - bh.a1 * b2y1 - bh.a2 * b2y2;
+  b2x2 = b2x1; b2x1 = y; b2y2 = b2y1; b2y1 = zl;
+  y = bl.b0 * sr + bl.b1 * b3x1 + bl.b2 * b3x2 - bl.a1 * b3y1 - bl.a2 * b3y2;
+  b3x2 = b3x1; b3x1 = sr; b3y2 = b3y1; b3y1 = y;
+  zr = bh.b0 * y + bh.b1 * b4x1 + bh.b2 * b4x2 - bh.a1 * b4y1 - bh.a2 * b4y2;
+  b4x2 = b4x1; b4x1 = y; b4y2 = b4y1; b4y1 = zr;
+
+  spl0 = zl * vol;
+  spl1 = zr * vol;

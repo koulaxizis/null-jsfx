@@ -3293,6 +3293,7 @@ static const LogSlider kLogSliders[] = {
     { "ladder_filter", 0 },
     { "mallets", 6 },
     { "midi_lfo", 2 },
+    { "modal_piano", 6 },
     { "multi_tap_delay", 8 },
     { "multi_tap_delay", 9 },
     { "noise_generator", 3 },
