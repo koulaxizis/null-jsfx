@@ -71,4 +71,8 @@ if compgen -G "$build/bin/*.lv2" >/dev/null; then
   mkdir -p "$dist/LV2/NULL JSFX"
   cp -R "$build"/bin/*.lv2 "$dist/LV2/NULL JSFX/"
 fi
+if compgen -G "$build/bin/*.component" >/dev/null; then
+  mkdir -p "$dist/AU/NULL JSFX"
+  cp -R "$build"/bin/*.component "$dist/AU/NULL JSFX/"
+fi
 echo "== done: $dist"

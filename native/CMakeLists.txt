@@ -42,6 +42,14 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
 else()
   option(NULL_LV2 "Build LV2" OFF)
 endif()
+# Audio Unit (appended in 3.0.1, Bible B17): macOS only, for Logic, GarageBand and MainStage. Built and
+# validated (auval) on the free macOS runner and signed ad hoc like the other macOS builds, so it
+# costs nothing; DPF's AU wrapper takes the type, subtype and maker from DistrhoPluginInfo.h.
+if(APPLE)
+  option(NULL_AU "Build Audio Unit (v2)" ON)
+else()
+  option(NULL_AU "Build Audio Unit (v2)" OFF)
+endif()
 option(NULL_JACK  "Build standalones (JACK / native audio), handy for UI screenshots" OFF)
 option(NULL_TESTS "Build the JSFX-vs-native comparison tests (needs a built ysfx)" OFF)
 set(NULL_PLUGINS "" CACHE STRING "Plugins to build (folder names in plugins/); empty = all")
@@ -105,7 +113,7 @@ include_directories("${CMAKE_CURRENT_BINARY_DIR}/generated")
 # Plugins
 
 set(_targets)
-foreach(_t JACK LV2 VST3 CLAP)
+foreach(_t JACK LV2 VST3 CLAP AU)
   if(NULL_${_t})
     string(TOLOWER ${_t} _lt)
     list(APPEND _targets ${_lt})
