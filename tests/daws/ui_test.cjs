@@ -1,8 +1,10 @@
-// The Ardour, Bitwig and Ableton tabs of Remote for DAWs in Chromium (Playwright), the way the
+// The Ardour, Bitwig, Ableton and Cubase tabs of Remote for DAWs in Chromium (Playwright), the way the
 // app shows them: the real start page (android/web/core) served under /app/ with web/ as nullfx/
 // (as the Gradle build copies it), a stand-in for Shell.kt whose UDP goes to the Ardour simulator
 // and whose TCP goes to the software Bitwig (the real controller script) or, on port 8819, to the
-// software Live (the real control surface, needs python3), all over the network.
+// software Live (the real control surface, needs python3); its UDP to 5004/5005 goes to a
+// network MIDI session in front of the software Cubase (the real MIDI Remote script), all over
+// the network.
 // Usage: node tests/daws/ui_test.cjs [screenshot dir]
 // NULL JSFX • https://nulljsfx.tech • MIT License
 'use strict';
@@ -16,6 +18,7 @@ const net = require('net');
 const sim = require('./ardour_sim.cjs');
 const bitwig = require('./bitwig_host.cjs');
 const ableton = require('./ableton_host.cjs');
+const cubase = require('./cubase_host.cjs');
 
 const root = path.resolve(__dirname, '../..');
 const shots = process.argv[2];
@@ -40,9 +43,9 @@ const FAKE_NATIVE = `
 window.NullShellNative = {
   info: () => JSON.stringify({ app: 'daws', version: '3.0', code: 30000, flavor: 'github', updateCheck: false, sdk: 35 }),
   reaperSet() {}, scan() {},
-  udpOpen: () => 1,
-  udpSend: (id, h, p, d) => { window.daUdpSend(h, p, d); return true; },
-  udpBroadcast: () => true, udpClose() {},
+  udpOpen: (p) => { const id = (window.daUdpId = (window.daUdpId || 0) + 1); window.daUdpOpen(id, p); return id; },
+  udpSend: (id, h, p, d) => { window.daUdpSend(id, h, p, d); return true; },
+  udpBroadcast: () => true, udpClose: (id) => { window.daUdpClose(id); },
   tcpOpen: (h, p, ms) => { const id = (window.daTcpId = (window.daTcpId || 0) + 1); window.daTcpOpen(id, h, p); return id; },
   tcpSend: (id, d) => { window.daTcpSend(id, d); return true; },
   tcpClose: (id) => { window.daTcpClose(id); },
@@ -56,6 +59,7 @@ async function main() {
   const ard = await sim.start();
   const bw = await bitwig.start();
   const live = await ableton.start();
+  const cub = await cubase.start();
   const server = await serve();
   const browser = await chromium.launch(process.env.CHROMIUM ? { executablePath: process.env.CHROMIUM } : {});
   const ctx = await browser.newContext({ viewport: { width: 1180, height: 820 }, hasTouch: true });
@@ -64,13 +68,25 @@ async function main() {
   page.on('pageerror', (e) => errors.push(e.message));
   page.on('console', (m) => { if (m.type() === 'error') errors.push(m.text()); });
 
-  // the phone's UDP socket: whatever the page sends goes to the simulator, replies come back
-  const sock = dgram.createSocket('udp4');
-  await new Promise((r) => sock.bind(0, '127.0.0.1', r));
-  await page.exposeFunction('daUdpSend', (host, port, b64) => sock.send(Buffer.from(b64, 'base64'), ard.port, '127.0.0.1'));
-  sock.on('message', (buf) => {
-    page.evaluate((m) => NullShell._recv(m), { type: 'udp', id: 1, host: '127.0.0.1', port: 3819, data: buf.toString('base64') }).catch(() => {});
+  // the phone's UDP sockets: port 3819 goes to the Ardour simulator, 5004 and 5005 to the
+  // network MIDI session in front of the software Cubase; replies come back on their socket
+  const udps = new Map();
+  const toSim = { 3819: ard.port, 5004: cub.port, 5005: cub.port + 1 };
+  const fromSim = { [ard.port]: 3819, [cub.port]: 5004, [cub.port + 1]: 5005 };
+  await page.exposeFunction('daUdpOpen', (id) => {
+    const u = dgram.createSocket('udp4');
+    u.bind(0, '127.0.0.1');
+    u.on('message', (buf, r) => {
+      page.evaluate((m) => NullShell._recv(m), { type: 'udp', id, host: '127.0.0.1', port: fromSim[r.port] || r.port, data: buf.toString('base64') }).catch(() => {});
+    });
+    u.on('error', () => {});
+    udps.set(id, u);
   });
+  await page.exposeFunction('daUdpSend', (id, host, port, b64) => {
+    const u = udps.get(id);
+    if (u) u.send(Buffer.from(b64, 'base64'), toSim[port] || port, '127.0.0.1');
+  });
+  await page.exposeFunction('daUdpClose', (id) => { const u = udps.get(id); udps.delete(id); if (u) try { u.close(); } catch (e) { /* closed */ } });
   // the phone's TCP connections: to the software Live on 8819, else to the software Bitwig
   const tcps = new Map();
   const toPage = (m) => page.evaluate((x) => NullShell._recv(x), m).catch(() => {});
@@ -111,7 +127,7 @@ async function main() {
   try {
     await page.goto(`http://127.0.0.1:${server.address().port}/app/core/index.html`);
     await until(async () => (await page.locator('#tabs button').allTextContents()).includes('Ardour'), 'Ardour tab');
-    assert.deepStrictEqual(await page.locator('#tabs button').allTextContents(), ['REAPER', 'Ardour', 'Bitwig', 'Ableton', 'Settings']);
+    assert.deepStrictEqual(await page.locator('#tabs button').allTextContents(), ['REAPER', 'Ardour', 'Bitwig', 'Ableton', 'Cubase', 'Settings']);
     await page.locator('#tabs button', { hasText: 'Ardour' }).click();
     assert.strictEqual(await tab.locator('.top .name').textContent(), 'NULL JSFXArdour · Mixbus');
     ok('Ardour tab, after REAPER, with the NULL JSFX header');
@@ -396,13 +412,47 @@ async function main() {
     assert(await atab.locator('.da-sheet').isHidden());
     ok('Ableton: bypass and Back');
 
+    // --- Cubase, over network MIDI ---------------------------------------------------------
+    const ctab = page.locator('[data-tab=cubase]');
+    const cstrip = (name) => ctab.locator('.da-strip', { has: page.locator('.da-name', { hasText: name }) }).first();
+    await page.locator('#tabs button', { hasText: 'Cubase' }).click();
+    assert.strictEqual(await ctab.locator('.top .name').textContent(), 'NULL JSFXCubase');
+    assert.strictEqual(await ctab.locator('input').nth(1).inputValue(), '5004');
+    await shot('cubase-connect');
+    await ctab.locator('input').first().fill('127.0.0.1');
+    await ctab.locator('button.primary').click();
+    await until(async () => (await ctab.locator('.da-strip').count()) === 3, 'three Cubase strips', 6000);
+    assert.deepStrictEqual(await ctab.locator('.da-name').allTextContents(), ['Vocal', 'Μπάσο', 'Track 3']);
+    assert.strictEqual(await cstrip('Vocal').locator('.da-db').textContent(), '0.00 dB');
+    assert.strictEqual(cub.peer.phone.name, 'NULL Remote', 'the phone invited the session');
+    const cv0 = cub.project.tracks[0].vol;
+    await drag(cstrip('Vocal').locator('.da-fader'), 0, 60);
+    await until(async () => cub.project.tracks[0].vol < cv0 - 0.05, 'Cubase fader down');
+    await cstrip('Μπάσο').locator('.da-m').click();
+    await until(async () => cub.project.tracks[1].mute === 0, 'unmute in Cubase');
+    await until(async () => (await cstrip('Vocal').locator('.da-meter-fill').evaluate((e) => parseFloat(e.style.height) || 0)) > 0, 'Cubase meters');
+    ok('Cubase tab: network MIDI to the MIDI Remote script, fader, mute, meters');
+    await shot('cubase-desk');
+    await cstrip('Vocal').locator('.da-fx').click();
+    await until(async () => (await ctab.locator('.da-plugin').count()) === 2, 'Cubase inserts');
+    await ctab.locator('.da-plugin-open', { hasText: 'Delay' }).click();
+    await until(async () => (await ctab.locator('.da-gfx canvas').count()) === 1, 'Delay GFX in Cubase');
+    ok('Cubase: the selected track\'s inserts, NULL Delay in its own GFX');
+    await shot('cubase-delay');
+    await ctab.locator('.da-back').click();
+    await ctab.locator('.da-onoff').nth(1).click();
+    await until(async () => cub.project.tracks[0].inserts[2].bypass === 1, 'bypass in Cubase');
+    assert(await page.evaluate(() => NullRemote.back()));
+    ok('Cubase: bypass and Back');
+
     assert.deepStrictEqual(errors, []);
     ok('no page errors');
   } finally {
     await browser.close();
     server.close();
-    sock.close();
+    for (const u of udps.values()) try { u.close(); } catch (e) { /* closed */ }
     ard.close();
+    cub.close();
     bw.close();
     live.close();
   }
