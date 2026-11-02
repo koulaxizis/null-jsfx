@@ -15,6 +15,7 @@ const wingSim = require('./wing_sim.cjs');
 const sqSim = require('./sq_sim.cjs');
 const quSim = require('./qu_sim.cjs');
 const quProfile = require('../../android/web/mixers/qu/profile.js');
+const cqProfile = require('../../android/web/mixers/cq/profile.js');
 const net = require('net');
 
 const root = path.resolve(__dirname, '../..');
@@ -39,6 +40,7 @@ async function main() {
   const wing = await wingSim.start({ model: 'ngc-compact', name: 'Mon WING' });
   const sq = await sqSim.start();
   const qu = await quSim.start({ model: 'Qu-16' });
+  const cq = await sqSim.start({ profile: cqProfile });
   const server = await serve();
   const browser = await chromium.launch();
   const page = await browser.newPage({ viewport: { width: 1280, height: 800 } });
@@ -65,12 +67,12 @@ async function main() {
       { type: 'udp', id: 1, host, port, data: buf.toString('base64') }).catch(() => {});
   });
 
-  // the TCP bridge: a connection to port 51325 goes to the Qu simulator at 127.0.0.5, else to the
-  // SQ simulator
+  // the TCP bridge: a connection to port 51325 goes to the Qu simulator at 127.0.0.5, the CQ
+  // simulator at 127.0.0.6, else to the SQ simulator
   const tcps = new Map();
   const tcpToPage = (m) => page.evaluate((x) => window.__nmDeliver(x), m).catch(() => {});
   await page.exposeFunction('nmTcpOpen', (id, host, port) => {
-    const c = net.connect(port !== 51325 ? 1 : host === '127.0.0.5' ? qu.port : sq.port, '127.0.0.1');
+    const c = net.connect(port !== 51325 ? 1 : host === '127.0.0.5' ? qu.port : host === '127.0.0.6' ? cq.port : sq.port, '127.0.0.1');
     tcps.set(id, c);
     c.on('connect', () => tcpToPage({ type: 'tcpopen', id }));
     c.on('data', (d) => tcpToPage({ type: 'tcp', id, data: d.toString('base64') }));
@@ -334,6 +336,34 @@ async function main() {
     await page.locator('.nm-connect').waitFor();
     await until(() => !qu.connected(), 'the Qu connection closed');
 
+    // an Allen & Heath CQ by its typed address: no Qu hello, the SQ's parameters answered but not
+    // Aux 12's mute, so a CQ: 16 inputs, ST 1-2, USB, BT; Out 1-6, 4 DCAs, 4 mute groups
+    await page.locator('.nm-connect input').fill('127.0.0.6');
+    await page.locator('.nm-connect button', { hasText: 'Connect' }).click();
+    await page.locator('.nm-desk').waitFor({ timeout: 12000 });
+    assert.match(await page.locator('.nm-console').innerText(), /127\.0\.0\.6 • CQ/);
+    assert.strictEqual(await page.locator('.nm-strips .nm-strip').count(), 20, '16 inputs, ST 1-2, USB and BT');
+    assert.strictEqual(await page.locator('button.mg').count(), 4, 'four mute groups');
+    await strip('BT').locator('button.mute').click();
+    await until(() => cq.state.get('/bt/1/mute') === 1, 'mute BT on the CQ');
+    await strip('Ip 1').scrollIntoViewIfNeeded(); // BT's mute scrolled the strips to the end
+    await drag(strip('Ip 1').locator('.nm-fader'), 80);
+    await until(() => cq.state.get('/ip/1/lr') < 0x62 * 128 - 100, 'Ip 1 fader down on the CQ');
+    cq.change('/ip/2/lr', 0x7f * 128 + 0x40);
+    await until(async () => (await strip('Ip 2').locator('.nm-db').innerText()).startsWith('+10'), 'a change on the CQ shows');
+    await page.locator('.nm-bar button', { hasText: 'Out 3' }).click();
+    await strip('ST 1').scrollIntoViewIfNeeded();
+    await drag(strip('ST 1').locator('.nm-fader'), -150);
+    await until(() => cq.state.get('/st/1/out/3') > 100, 'send to Out 3 on the CQ');
+    await page.locator('.nm-bar button', { hasText: 'LR' }).first().click();
+    await page.locator('.nm-bar button', { hasText: 'DCA' }).click();
+    assert.strictEqual(await page.locator('.nm-strips .nm-strip').count(), 4, 'four DCAs');
+    await page.locator('.nm-bar button', { hasText: 'Inputs' }).click();
+    await shot('mixers-cq-tablet', { width: 1280, height: 800 });
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await page.locator('.nm-bar button', { hasText: 'Disconnect' }).click();
+    await page.locator('.nm-connect').waitFor();
+
     // inside the real shell page (android/web/core/index.html) of the mixers app, with a
     // stand-in for Shell.kt's NullShellNative: header, tab bar, and the same session
     const app = await browser.newContext({ viewport: { width: 412, height: 860 }, hasTouch: true, isMobile: true });
@@ -379,6 +409,7 @@ async function main() {
     wing.close();
     sq.close();
     qu.close();
+    cq.close();
   }
 }
 
