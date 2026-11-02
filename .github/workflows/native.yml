@@ -4,7 +4,7 @@ name: VST3 and CLAP
 # that each one sounds identical to its JSFX, and uploads these packages:
 #   NULL-JSFX-JSFX                 the JSFX (plain and GFX) and the tablet remote (Remote/),
 #                                  the same for every OS
-#   NULL-JSFX-VST3-CLAP-<OS>       the VST3 and CLAP versions for Windows, macOS or Linux (Linux: also LV2);
+#   NULL-JSFX-VST3-CLAP-<OS>       the VST3 and CLAP versions for Windows, macOS or Linux (Linux: also LV2, macOS: also AU);
 #                                  Windows-ARM64 and Linux-ARM64 for ARM computers (macOS is universal)
 # each with native/INSTALL.txt, and from those the installers where the user picks formats,
 # plugins and extras (tools/build_installer.py, installer/):
@@ -108,8 +108,9 @@ jobs:
       # Audio Units (Bible B17): Apple's own validator on every component, report-only until a
       # first run sets the baseline (as pluginval and clap-validator were, B6)
       - name: Validate the Audio Units (auval)
+        # required since its baseline (2026-11-02): every packaged AU passes; a plugin auval
+        # rejects is fixed or listed in native/scripts/au_skip.txt, which keeps it out of the package
         if: runner.os == 'macOS'
-        continue-on-error: true
         run: native/scripts/auval.sh native/dist reports
 
       - uses: actions/upload-artifact@v7

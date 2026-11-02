@@ -9,8 +9,8 @@
 const fs = require('fs');
 const http = require('http');
 const path = require('path');
-const { lua, lauxlib, lualib, to_luastring } = require('fengari');
 const { chromium } = require('playwright');
+const { standin } = require('./reaper_standin.cjs');
 
 const root = path.resolve(__dirname, '../..');
 const web = path.join(root, 'android/web');
@@ -18,45 +18,10 @@ const page_file = path.join(root, 'remote/reaper_www_root/null_jsfx.html');
 const fonts = path.join(root, 'native/common/fonts');
 const shots = process.argv[2];
 
-// --- REAPER stand-in ------------------------------------------------------------------------
+// --- REAPER stand-in (reaper_standin.cjs) -------------------------------------------------
 
-const L = lauxlib.luaL_newstate();
-lualib.luaL_openlibs(L);
-function run(code, name) {
-  if (lauxlib.luaL_loadbuffer(L, to_luastring(code), null, to_luastring(name || 'chunk')) !== 0 || lua.lua_pcall(L, 0, 0, 0) !== 0) {
-    throw new Error(lua.lua_tojsstring(L, -1));
-  }
-}
-function call(fn, arg) {
-  lua.lua_getglobal(L, to_luastring(fn));
-  if (arg !== undefined) lua.lua_pushstring(L, to_luastring(String(arg)));
-  if (lua.lua_pcall(L, arg !== undefined ? 1 : 0, 1, 0) !== 0) throw new Error(lua.lua_tojsstring(L, -1));
-  const out = lua.lua_isnil(L, -1) ? null : lua.lua_tojsstring(L, -1);
-  lua.lua_pop(L, 1);
-  return out;
-}
-function q(expr) {
-  run(`__q = tostring(${expr})`);
-  lua.lua_getglobal(L, to_luastring('__q'));
-  const v = lua.lua_tojsstring(L, -1);
-  lua.lua_pop(L, 1);
-  return v;
-}
-const luaVal = v => (v === null || v === undefined ? 'nil'
-  : Array.isArray(v) ? '{' + v.map(luaVal).join(',') + '}'
-  : typeof v === 'string' ? JSON.stringify(v) : String(v));
-const num = expr => parseFloat(q(expr));
-
-run(fs.readFileSync(path.join(__dirname, 'mock_reaper.lua'), 'utf8'), 'mock_reaper.lua');
-const html = fs.readFileSync(page_file, 'utf8');
-const NULL_PLUGINS = eval(html.match(/const NULL_PLUGINS = (\[[\s\S]*?\n\]);/)[1]);
-const delay = NULL_PLUGINS.find(p => p.s === 'delay');
-const js = delay.sl.map(s => [(s[7].includes('h') ? '-' : '') + s[0] + (s[1] ? ` (${s[1]})` : ''), s[5], s[2], s[3] || 1, s[6]]);
-js.push(['Wet', 1, 0, 1], ['Bypass', 0, 0, 1]);
-run(`catalog_add(${luaVal(['JS:null_jsfx/delay.jsfx'])}, "JS: NULL Delay", "JS: NULL Delay", "null_jsfx/delay.jsfx", ${luaVal(js)})
-reaper.TrackFX_AddByName(tracks[1], "JS:null_jsfx/delay.jsfx", false, -1)`);
-run(fs.readFileSync(path.join(root, 'remote/Scripts/null_jsfx_remote_bridge.lua'), 'utf8'), 'null_jsfx_remote_bridge.lua');
-const ticker = setInterval(() => call('tick'), 30);
+const reaper = standin();
+const { q, num } = reaper;
 
 // --- the app's assets, as the build lays them out -------------------------------------------
 
@@ -74,7 +39,7 @@ const server = http.createServer((req, res) => {
       return res.end();
     }
     res.writeHead(200, { 'Content-Type': 'text/plain; charset=utf-8' });
-    return res.end(call('web', req.url.slice(3)));
+    return res.end(reaper.web(req.url.slice(3)));
   }
   let file = null;
   if (url === '/app/daws/reaper/null_jsfx.html') file = page_file;
@@ -281,7 +246,7 @@ window.NullShellNative = {
   check('no page errors', !errors.length, errors.join('; '));
   check('no bridge errors', q('#console') === '0', q('console[1]'));
   await browser.close();
-  clearInterval(ticker);
+  reaper.close();
   server.close();
   console.log(failed ? `${failed} app check(s) failed` : 'android app pages: all checks passed');
   process.exit(failed ? 1 : 0);
