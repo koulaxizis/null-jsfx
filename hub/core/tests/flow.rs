@@ -185,6 +185,11 @@ fn extras_round() {
     // the user's own Tilt preset
     fs::create_dir_all(r.join("presets")).unwrap();
     fs::write(r.join("presets/js-null_jsfx_tilt_jsfx.ini"), "[General]\nNbPresets=1\n\n[Preset0]\nData=BB\nLen=1\nName=Mine\n").unwrap();
+    // the user's own Scripts/__startup.lua
+    let startup = r.join("Scripts/__startup.lua");
+    let my_startup = "-- \u{3b3}\u{3b5}\u{3b9}\u{3ac}\nreaper.ShowConsoleMsg(\"hi\")\n";
+    fs::create_dir_all(r.join("Scripts")).unwrap();
+    fs::write(&startup, my_startup).unwrap();
 
     let req = Request {
         install: vec![("tilt".into(), Format::Jsfx)],
@@ -200,6 +205,7 @@ fn extras_round() {
     assert_eq!(names, ["Mine", "Factory"], "{mine}");
     assert!(r.join("reaper_www_root/null_jsfx.html").is_file() && r.join("Scripts/null_jsfx_remote_bridge.lua").is_file());
     assert!(root.join("data/Remote-INSTALL.txt").is_file());
+    assert_eq!(fs::read_to_string(&startup).unwrap(), format!("{my_startup}{}", null_hub_core::extras::STARTUP), "the bridge starts with REAPER");
     assert!(root.join("fonts/NotoSans-Bold.ttf").is_file());
     assert!(["chains", "presets", "remote", "fonts"].iter().all(|e| s.extras[*e].installed && !s.extras[*e].outdated));
 
@@ -223,6 +229,7 @@ fn extras_round() {
         .apply(&cat, &Request { extras_remove: vec!["remote".into(), "fonts".into(), "chains".into()], ..Default::default() }, &mut |_| {})
         .unwrap();
     assert!(!r.join("reaper_www_root/null_jsfx.html").exists() && r.join("reaper_www_root").exists(), "REAPER's own folder stays");
+    assert_eq!(fs::read_to_string(&startup).unwrap(), my_startup, "our lines go, the user's stay");
     assert!(!root.join("fonts/NotoSans-Bold.ttf").exists());
     assert!(!s.extras["remote"].installed && !s.extras["fonts"].installed && !s.extras["chains"].installed);
     assert!(s.extras["presets"].installed);

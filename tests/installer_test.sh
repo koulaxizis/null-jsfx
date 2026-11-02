@@ -53,6 +53,8 @@ fi
 [ -f "$h/$reaper/Effects/null_jsfx/gfx/null_gfx.jsfx-inc" ] || fail "all: null_gfx.jsfx-inc missing"
 [ -f "$h/$reaper/reaper_www_root/null_jsfx.html" ] || fail "all: remote page missing"
 [ -f "$h/$reaper/Scripts/null_jsfx_remote_bridge.lua" ] || fail "all: remote bridge missing"
+cmp -s "$h/$reaper/Scripts/__startup.lua" "$(dirname "$0")/../remote/startup.lua" || fail "all: __startup.lua is not our block"
+echo "ok   all: the bridge starts with REAPER (__startup.lua)"
 chains=$(count "$h/$reaper/FXChains/NULL JSFX" '*.RfxChain')
 expect "all: GFX chains" "$(count "$h/$reaper/FXChains/NULL JSFX GFX" '*.RfxChain')" "$chains"
 [ "$chains" -gt 20 ] || fail "all: only $chains FX chains"
@@ -79,6 +81,21 @@ expect "merge again: no duplicates" "$(grep '^Name=' "$h/$reaper/presets/$ini" |
 HOME="$h" bash "$installer" --uninstall > /dev/null
 grep -q '^Name=Mine$' "$h/$reaper/presets/$ini" || fail "merge: --uninstall removed the user's presets"
 echo "ok   merge: the user's presets kept"
+
+# the user's own Scripts/__startup.lua: ours goes after it, once even when installed twice, and
+# --uninstall gives it back byte for byte
+h="$work/startup" su="$reaper/Scripts/__startup.lua"
+mkdir -p "$h/$reaper/Scripts"
+printf -- '-- my startup: \316\263\316\265\316\271\316\254\nreaper.ShowConsoleMsg("hi")' > "$h/$su"
+cp "$h/$su" "$work/startup.mine"
+run startup --formats jsfx --plugins tilt --extras remote --yes
+run startup --formats jsfx --plugins tilt --extras remote --yes
+expect "startup: our blocks" "$(grep -c '^-- BEGIN NULL JSFX Remote' "$h/$su")" 1
+head -c "$(wc -c < "$work/startup.mine")" "$h/$su" | cmp -s - "$work/startup.mine" || fail "startup: the user's lines changed"
+grep -q 'null_jsfx_remote_bridge.lua' "$h/$su" || fail "startup: no bridge line"
+HOME="$h" bash "$installer" --uninstall > /dev/null
+printf '\n' | cat "$work/startup.mine" - | cmp -s - "$h/$su" || fail "startup: --uninstall did not give back the user's lines"
+echo "ok   startup: the user's __startup.lua kept"
 
 # a subset: CLAP only, One Slider plus Delay; chains need JSFX or GFX so none come
 run some --formats clap --groups one-slider --plugins delay --extras chains,fonts --yes

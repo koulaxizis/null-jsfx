@@ -239,8 +239,13 @@ jobs:
           $mine = "$reaper\presets\js-null_jsfx_tilt_jsfx.ini"
           New-Item -ItemType Directory -Force "$reaper\presets" | Out-Null
           Set-Content $mine "[General]`r`nNbPresets=1`r`n`r`n[Preset0]`r`nData=31202D2074657374E5`r`nLen=8`r`nName=Mine`r`n"
+          # the user's own Scripts\__startup.lua, with a UTF-8 line that must stay byte for byte
+          $startup = "$reaper\Scripts\__startup.lua"
+          New-Item -ItemType Directory -Force "$reaper\Scripts" | Out-Null
+          $userLua = [System.Text.Encoding]::UTF8.GetBytes("-- my startup: $([char]0x03B3)$([char]0x03B5)$([char]0x03B9)$([char]0x03AC)`nreaper.ShowConsoleMsg('hi')`n")
+          [System.IO.File]::WriteAllBytes($startup, $userLua)
           $p = Start-Process $setup -Wait -PassThru -ArgumentList '/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART',
-            '/COMPONENTS="fmt\jsfx,fmt\gfx,fmt\vst3,extra\chains,*fx\oneslider,fx\essentials\delay"', "/REAPERDIR=`"$reaper`"", "/LOG=`"$env:RUNNER_TEMP\setup.log`""
+            '/COMPONENTS="fmt\jsfx,fmt\gfx,fmt\vst3,extra\chains,extra\remote,*fx\oneslider,fx\essentials\delay"', "/REAPERDIR=`"$reaper`"", "/LOG=`"$env:RUNNER_TEMP\setup.log`""
           if ($p.ExitCode -ne 0) { Get-Content "$env:RUNNER_TEMP\setup.log"; throw "setup exit code $($p.ExitCode)" }
           $vst3 = "$env:CommonProgramFiles\VST3\NULL JSFX"
           $clap = "$env:CommonProgramFiles\CLAP\NULL JSFX"
@@ -262,9 +267,19 @@ jobs:
           $nb = (Select-String -Path $mine -Pattern '^NbPresets=(\d+)$').Matches[0].Groups[1].Value
           "Tilt presets: $($names -join ', ') (NbPresets=$nb)"
           if ($names[0] -ne 'Mine' -or $names[1] -ne 'Default' -or [int]$nb -ne $names.Count) { throw "presets not merged" }
+          # the remote: its files, and its bridge started from __startup.lua after the user's lines
+          if (-not (Test-Path "$reaper\Scripts\null_jsfx_remote_bridge.lua")) { throw "remote bridge missing" }
+          $after = [System.IO.File]::ReadAllBytes($startup)
+          $head = $after[0..($userLua.Length - 1)]
+          if (Compare-Object $head $userLua -SyncWindow 0) { throw "the user's __startup.lua lines changed" }
+          $text = [System.Text.Encoding]::UTF8.GetString($after)
+          if (([regex]::Matches($text, '-- BEGIN NULL JSFX Remote')).Count -ne 1 -or $text -notmatch 'null_jsfx_remote_bridge\.lua') { throw "the bridge is not started from __startup.lua" }
+          "__startup.lua:"; $text
           $u = Start-Process "$env:ProgramFiles\NULL JSFX\unins000.exe" -Wait -PassThru -ArgumentList '/VERYSILENT', '/SUPPRESSMSGBOXES'
           Start-Sleep -Seconds 3
           if ((Test-Path "$fx\tilt.jsfx") -or (Test-Path "$vst3\null_jsfx_tilt.vst3")) { throw "uninstall left plugins behind" }
+          $left = [System.IO.File]::ReadAllBytes($startup)
+          if (Compare-Object $left $userLua -SyncWindow 0) { throw "uninstall did not give back the user's __startup.lua as it was: $([System.Text.Encoding]::UTF8.GetString($left))" }
           "installed and removed cleanly"
 
       - uses: actions/upload-artifact@v7

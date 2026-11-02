@@ -98,6 +98,8 @@ const EL = {
   "Tablet remote": "Χειριστήριο tablet",
   "Control REAPER's mixer and the NULL JSFX plugins from a tablet. Needs a few steps in REAPER after.":
     "Χειρισμός της μίξης του REAPER και των NULL JSFX plugins από tablet. Χρειάζεται μετά λίγα βήματα στο REAPER.",
+  "Control REAPER's mixer and the NULL JSFX plugins from a tablet or the Remote for DAWs app. Its bridge starts with REAPER; a few steps in REAPER after.":
+    "Χειρισμός της μίξης του REAPER και των NULL JSFX plugins από tablet ή από την εφαρμογή Remote for DAWs. Η γέφυρά του ξεκινά μαζί με το REAPER· μετά χρειάζονται λίγα βήματα στο REAPER.",
   "Noto Sans font": "Γραμματοσειρά Noto Sans",
   "The font of the GFX versions, for their exact look.": "Η γραμματοσειρά των εκδοχών GFX, για την ακριβή τους εμφάνιση.",
   "update": "ενημέρωση",

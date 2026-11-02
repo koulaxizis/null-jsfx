@@ -178,7 +178,7 @@
     help.insertAdjacentHTML('beforeend',
       '<ol>' +
       '<li>In REAPER: <b>Options &gt; Preferences &gt; Control/OSC/web &gt; Add &gt; Web browser interface</b>. Any default interface works; note the port (8080) and the address REAPER shows.</li>' +
-      '<li>For the FX: copy <b>null_jsfx_remote_bridge.lua</b> (in the NULL JSFX download, folder Remote/Scripts) into REAPER\'s Scripts folder, and run it from <b>Actions &gt; Show action list &gt; New action &gt; Load ReaScript</b>. The mixer and transport work without it.</li>' +
+      '<li>For the FX: the NULL JSFX installer or Hub installs the bridge with the tablet remote and starts it with REAPER. By hand: copy <b>null_jsfx_remote_bridge.lua</b> (in the NULL JSFX download, folder Remote/Scripts) into REAPER\'s Scripts folder, and run it from <b>Actions &gt; Show action list &gt; New action &gt; Load ReaScript</b>. The mixer and transport work without it.</li>' +
       '<li>Put the phone on the same Wi-Fi as the computer, and allow REAPER through the computer\'s firewall on private networks.</li>' +
       '</ol>' +
       '<p class="muted">Several phones or tablets at the same time: give each one its own slot (1 to 4).</p>');
