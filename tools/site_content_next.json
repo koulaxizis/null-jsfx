@@ -41,5 +41,28 @@
     ],
     "properties": "Signal chain: Input (Mono Sum or two Stereo Sources) → Air Absorption Low-Pass → Rear Pinna Shelf (4 kHz) → Elevation Pinna Notch (6–10 kHz) → 1/r Level → per Ear: Woodworth Interaural Delay (fractional, 20 ms glide) → Brown–Duda Head Shadow → + Six Early Reflections (Room) → Output. A spherical-head model, no measured HRTF data: listen with headphones; front and back are less certain than with a measured HRTF. No latency.",
     "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-binaural-panner\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><circle cx=\"32\" cy=\"34\" r=\"8\" fill=\"url(#icon-binaural-panner)\"/><path d=\"M32,26 L32,22\" stroke=\"url(#icon-binaural-panner)\" stroke-width=\"2\" stroke-linecap=\"round\"/><circle cx=\"32\" cy=\"34\" r=\"20\" stroke=\"url(#icon-binaural-panner)\" stroke-width=\"1.5\" fill=\"none\" opacity=\"0.4\"/><circle cx=\"46\" cy=\"20\" r=\"4\" fill=\"url(#icon-binaural-panner)\"/><path d=\"M40,34 C44,34 46,30 46,26\" stroke=\"url(#icon-binaural-panner)\" stroke-width=\"1.5\" fill=\"none\" stroke-linecap=\"round\" opacity=\"0.6\"/></svg>"
+  },
+  "string_ensemble": {
+    "card_desc": "70s String Machine",
+    "keywords": "string ensemble string machine strings pad divide down chorus ensemble vintage 70s polyphonic instrument",
+    "slider_desc": [
+      "Level of the 4' register, an octave above the key",
+      "Level of the 8' register, at the key's pitch",
+      "Level of the 16' register, an octave below the key",
+      "How slowly the keys swell in",
+      "How long the keys ring after they are let go",
+      "Low-pass of the whole section, from dark to bright",
+      "How much of the three-tap ensemble chorus is heard",
+      "Classic, Wide (the taps spread to the sides) or Deep (slower and deeper)",
+      "Output level"
+    ],
+    "uses": [
+      "Lay a warm string bed under a song",
+      "Play the classic 70s string-machine parts",
+      "Swell pads in from silence with a long attack",
+      "Thicken synth or organ parts with an octave of strings"
+    ],
+    "properties": "Signal chain: MIDI → a Voice per Key (16', 8' and 4' PolyBLEP Sawtooths, locked an octave apart, free-running) × Attack/Release Envelope → Sum → 12 dB/oct Low-Pass (Brightness) → Body Resonances (450 Hz, 2.8 kHz) → Three-Tap Ensemble (slow and fast LFOs, 120° apart; mod wheel deepens it) → Volume. Fully polyphonic like the divide-down originals, no samples; sustain pedal, pitch bend ±2 semitones, all MIDI passed on.",
+    "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-string-ensemble\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><path d=\"M10,22 C22,16 42,28 54,22\" stroke=\"url(#icon-string-ensemble)\" stroke-width=\"2.5\" fill=\"none\" stroke-linecap=\"round\"/><path d=\"M10,32 C22,26 42,38 54,32\" stroke=\"url(#icon-string-ensemble)\" stroke-width=\"2.5\" fill=\"none\" stroke-linecap=\"round\" opacity=\"0.7\"/><path d=\"M10,42 C22,36 42,48 54,42\" stroke=\"url(#icon-string-ensemble)\" stroke-width=\"2.5\" fill=\"none\" stroke-linecap=\"round\" opacity=\"0.4\"/></svg>"
   }
 }
