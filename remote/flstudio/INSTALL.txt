@@ -1,0 +1,40 @@
+NULL JSFX Remote for FL Studio
+==============================
+
+A MIDI script that lets the Android app Remote for DAWs (tab FL Studio) run FL Studio's
+mixer (volume, pan, mute, solo, record arm, meters), transport and the effects in the slots
+of every mixer track. The NULL JSFX plugins (VST3) open on the phone with their own
+interface; any other plugin gets a list of its parameters.
+
+Needs FL Studio 20.7 or newer (MIDI scripting with the mixer, plugins and transport modules),
+any edition.
+
+FL Studio's scripts speak MIDI only, so the phone reaches the script over network MIDI
+(RTP-MIDI): a network MIDI session on the computer is the script's MIDI port.
+
+Install (once)
+    1. Copy the folder "NULL JSFX" into FL Studio's hardware scripts folder:
+         Documents/Image-Line/FL Studio/Settings/Hardware
+       (so that .../Hardware/NULL JSFX/device_NULLJSFX.py exists).
+    2. Open a network MIDI session named NULL Remote:
+         macOS     Audio MIDI Setup > Window > Show MIDI Studio > Network: add a session,
+                   name it NULL Remote, tick it, "Who may connect to me: Anyone".
+         Windows   install rtpMIDI (free, Tobias Erichsen, tobias-erichsen.de), add a
+                   session named NULL Remote, enable it, "Who may connect to me: Anyone".
+       The session's port is 5004 unless you change it.
+    3. Start FL Studio. Options > MIDI settings:
+         Input     select NULL Remote, Enable it, set Controller type to
+                   "NULL JSFX Remote for DAWs (user)" and give it a Port number (say 50).
+         Output    select NULL Remote and give it the same Port number.
+       The script's answers go out through the output with the input's port number.
+    4. Allow UDP 5004 and 5005 through the computer's firewall on private networks.
+
+On the phone
+    Remote for DAWs > FL Studio: type the computer's address (port 5004) and Connect.
+
+What it covers
+    The mixer 32 tracks at a time: the master, then the inserts up to the last one that is
+    named or holds an effect, paged with the arrows; the 10 effect slots of each track, up to
+    256 parameters of the plugin you open; play/pause, stop, record, back to the start, and
+    the song position. Not covered: sends and routing, a bypass per slot (FL Studio switches
+    all slots of a track at once), loop, the channel rack and the piano roll.

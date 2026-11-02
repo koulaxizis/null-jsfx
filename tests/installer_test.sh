@@ -15,6 +15,7 @@ expect() { [ "$2" = "$3" ] || fail "$1: expected $3, got $2"; echo "ok   $1: $2"
 
 if [ "$(uname -s)" = Darwin ]; then
   reaper='Library/Application Support/REAPER' vst3='Library/Audio/Plug-Ins/VST3' clap='Library/Audio/Plug-Ins/CLAP'
+  au='Library/Audio/Plug-Ins/Components'
 else
   reaper='.config/REAPER' vst3='.vst3' clap='.clap' lv2='.lv2'
 fi
@@ -42,6 +43,12 @@ expect "all: CLAP (with Rack)" "$(count "$h/$clap/NULL JSFX" '*.clap')" "$((plug
 if [ -n "${lv2:-}" ]; then
   expect "all: LV2 (with Rack)" "$(count "$h/$lv2/NULL JSFX" '*.lv2')" "$((plugins + 1))"
   [ -f "$h/$lv2/NULL JSFX/null_jsfx_tilt.lv2/manifest.ttl" ] || fail "all: LV2 manifest missing"
+fi
+if [ -n "${au:-}" ]; then
+  # every plugin and the Rack but those auval rejects (native/scripts/au_skip.txt), straight into Components
+  skip=$(sed 's/[[:space:]]*#.*//' "$(dirname "$0")/../native/scripts/au_skip.txt" | grep -c .)
+  expect "all: AU (with Rack)" "$(count "$h/$au" 'null_jsfx_*.component')" "$((plugins + 1 - skip))"
+  [ -f "$h/$au/null_jsfx_tilt.component/Contents/Info.plist" ] || fail "all: AU Info.plist missing"
 fi
 [ -f "$h/$reaper/Effects/null_jsfx/gfx/null_gfx.jsfx-inc" ] || fail "all: null_gfx.jsfx-inc missing"
 [ -f "$h/$reaper/reaper_www_root/null_jsfx.html" ] || fail "all: remote page missing"
@@ -79,6 +86,7 @@ h="$work/some"
 expect "some: CLAP" "$(count "$h/$clap/NULL JSFX" '*.clap')" "$((one + 1))"
 expect "some: VST3" "$(count "$h/$vst3/NULL JSFX" '*.vst3')" 0
 [ -n "${lv2:-}" ] && expect "some: LV2" "$(count "$h/$lv2/NULL JSFX" '*.lv2')" 0
+[ -n "${au:-}" ] && expect "some: AU" "$(count "$h/$au" 'null_jsfx_*.component')" 0
 expect "some: JSFX" "$(count "$h/$reaper/Effects/null_jsfx" '*.jsfx')" 0
 expect "some: chains" "$(count "$h/$reaper/FXChains/NULL JSFX" '*.RfxChain')" 0
 [ -e "$h/$clap/NULL JSFX/null_jsfx_delay.clap" ] || fail "some: Delay missing"

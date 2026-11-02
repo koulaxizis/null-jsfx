@@ -1,10 +1,11 @@
-// The Ardour, Bitwig, Ableton and Cubase tabs of Remote for DAWs in Chromium (Playwright), the way the
+// The Ardour, Bitwig, Ableton, Cubase and FL Studio tabs of Remote for DAWs in Chromium (Playwright), the way the
 // app shows them: the real start page (android/web/core) served under /app/ with web/ as nullfx/
 // (as the Gradle build copies it), a stand-in for Shell.kt whose UDP goes to the Ardour simulator
 // and whose TCP goes to the software Bitwig (the real controller script) or, on port 8819, to the
 // software Live (the real control surface, needs python3); its UDP to 5004/5005 goes to a
-// network MIDI session in front of the software Cubase (the real MIDI Remote script), all over
-// the network.
+// network MIDI session in front of the software Cubase (the real MIDI Remote script), and to
+// 5006/5007 to one in front of the software FL Studio (the real MIDI script, needs python3), all
+// over the network.
 // Usage: node tests/daws/ui_test.cjs [screenshot dir]
 // NULL JSFX • https://nulljsfx.tech • MIT License
 'use strict';
@@ -19,6 +20,7 @@ const sim = require('./ardour_sim.cjs');
 const bitwig = require('./bitwig_host.cjs');
 const ableton = require('./ableton_host.cjs');
 const cubase = require('./cubase_host.cjs');
+const flstudio = require('./fl_host.cjs');
 
 const root = path.resolve(__dirname, '../..');
 const shots = process.argv[2];
@@ -60,19 +62,22 @@ async function main() {
   const bw = await bitwig.start();
   const live = await ableton.start();
   const cub = await cubase.start();
+  const fl = await flstudio.start();
   const server = await serve();
   const browser = await chromium.launch(process.env.CHROMIUM ? { executablePath: process.env.CHROMIUM } : {});
   const ctx = await browser.newContext({ viewport: { width: 1180, height: 820 }, hasTouch: true });
   const page = await ctx.newPage();
   const errors = [];
   page.on('pageerror', (e) => errors.push(e.message));
-  page.on('console', (m) => { if (m.type() === 'error') errors.push(m.text()); });
+  // (a newer Chromium asks the test server for /favicon.ico, which the app does not have)
+  page.on('console', (m) => { if (m.type() === 'error' && !/\/favicon\.ico$/.test(m.location().url || '')) errors.push(m.text()); });
 
   // the phone's UDP sockets: port 3819 goes to the Ardour simulator, 5004 and 5005 to the
-  // network MIDI session in front of the software Cubase; replies come back on their socket
+  // network MIDI session in front of the software Cubase, 5006 and 5007 to the one in front of
+  // the software FL Studio; replies come back on their socket
   const udps = new Map();
-  const toSim = { 3819: ard.port, 5004: cub.port, 5005: cub.port + 1 };
-  const fromSim = { [ard.port]: 3819, [cub.port]: 5004, [cub.port + 1]: 5005 };
+  const toSim = { 3819: ard.port, 5004: cub.port, 5005: cub.port + 1, 5006: fl.port, 5007: fl.port + 1 };
+  const fromSim = { [ard.port]: 3819, [cub.port]: 5004, [cub.port + 1]: 5005, [fl.port]: 5006, [fl.port + 1]: 5007 };
   await page.exposeFunction('daUdpOpen', (id) => {
     const u = dgram.createSocket('udp4');
     u.bind(0, '127.0.0.1');
@@ -127,7 +132,7 @@ async function main() {
   try {
     await page.goto(`http://127.0.0.1:${server.address().port}/app/core/index.html`);
     await until(async () => (await page.locator('#tabs button').allTextContents()).includes('Ardour'), 'Ardour tab');
-    assert.deepStrictEqual(await page.locator('#tabs button').allTextContents(), ['REAPER', 'Ardour', 'Bitwig', 'Ableton', 'Cubase', 'Settings']);
+    assert.deepStrictEqual(await page.locator('#tabs button').allTextContents(), ['REAPER', 'Ardour', 'Bitwig', 'Ableton', 'Cubase', 'FL Studio', 'Settings']);
     await page.locator('#tabs button', { hasText: 'Ardour' }).click();
     assert.strictEqual(await tab.locator('.top .name').textContent(), 'NULL JSFXArdour · Mixbus');
     ok('Ardour tab, after REAPER, with the NULL JSFX header');
@@ -445,6 +450,37 @@ async function main() {
     assert(await page.evaluate(() => NullRemote.back()));
     ok('Cubase: bypass and Back');
 
+    // --- FL Studio, over network MIDI (a session on port 5006) ------------------------------
+    const ftab = page.locator('[data-tab=flstudio]');
+    const fstrip = (name) => ftab.locator('.da-strip', { has: page.locator('.da-name', { hasText: name }) }).first();
+    await page.locator('#tabs button', { hasText: 'FL Studio' }).click();
+    assert.strictEqual(await ftab.locator('.top .name').textContent(), 'NULL JSFXFL Studio');
+    assert.strictEqual(await ftab.locator('input').nth(1).inputValue(), '5004');
+    await shot('flstudio-connect');
+    await ftab.locator('input').first().fill('127.0.0.1');
+    await ftab.locator('input').nth(1).fill('5006');
+    await ftab.locator('button.primary').click();
+    await until(async () => (await ftab.locator('.da-strip').count()) === 3, 'three FL Studio strips', 6000);
+    assert.deepStrictEqual(await ftab.locator('.da-name').allTextContents(), ['Master', 'Vocal', 'Μπάσο']);
+    assert.deepStrictEqual(await ftab.locator('.da-kind').allTextContents(), ['Master', 'Insert', 'Insert']);
+    assert.strictEqual(await fstrip('Vocal').locator('.da-db').textContent(), '0.0 dB');
+    assert.strictEqual(await fstrip('Master').locator('.da-r').count(), 0, 'no record arm on the master');
+    await drag(fstrip('Vocal').locator('.da-fader'), 0, 60);
+    await until(async () => (await fl.project()).tracks[1].vol < 0.75, 'FL Studio fader down');
+    await fstrip('Μπάσο').locator('.da-m').click();
+    await until(async () => (await fl.project()).tracks[2].mute === 0, 'unmute in FL Studio');
+    await until(async () => (await fstrip('Vocal').locator('.da-meter-fill').evaluate((e) => parseFloat(e.style.height) || 0)) > 0, 'FL Studio meters');
+    ok('FL Studio tab: network MIDI to the MIDI script, fader, mute, meters');
+    await shot('flstudio-desk');
+    await fstrip('Vocal').locator('.da-fx').click();
+    await until(async () => (await ftab.locator('.da-plugin').count()) === 2, 'FL Studio effect slots');
+    assert.strictEqual(await ftab.locator('.da-onoff').count(), 0, 'no bypass per slot in FL Studio');
+    await ftab.locator('.da-plugin-open', { hasText: 'Delay' }).click();
+    await until(async () => (await ftab.locator('.da-gfx canvas').count()) === 1, 'Delay GFX in FL Studio');
+    ok('FL Studio: the effect slots, NULL Delay in its own GFX, no bypass button');
+    await shot('flstudio-delay');
+    assert(await page.evaluate(() => NullRemote.back()));
+
     assert.deepStrictEqual(errors, []);
     ok('no page errors');
   } finally {
@@ -453,6 +489,7 @@ async function main() {
     for (const u of udps.values()) try { u.close(); } catch (e) { /* closed */ }
     ard.close();
     cub.close();
+    await fl.close();
     bw.close();
     live.close();
   }

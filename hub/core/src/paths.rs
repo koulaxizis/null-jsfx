@@ -59,6 +59,10 @@ pub struct Targets {
     /// Hubs before 2.7 have none and get the default.
     #[serde(default = "default_lv2")]
     pub lv2: PathBuf,
+    /// the Audio Unit folder (macOS, Components). Plugins go straight into it, not into a
+    /// subfolder, since that is where Logic and auval look. Settings saved before have none.
+    #[serde(default = "default_au")]
+    pub au: PathBuf,
     /// the user's font folder
     pub fonts: PathBuf,
 }
@@ -69,6 +73,10 @@ fn home() -> PathBuf {
 
 fn default_lv2() -> PathBuf {
     Targets::default().lv2
+}
+
+fn default_au() -> PathBuf {
+    Targets::default().au
 }
 
 impl Default for Targets {
@@ -85,6 +93,7 @@ impl Default for Targets {
                 vst3: common.join("VST3"),
                 clap: common.join("CLAP"),
                 lv2: common.join("LV2"),
+                au: common.join("Components"),
                 fonts: local.join(r"Microsoft\Windows\Fonts"),
             }
         } else if cfg!(target_os = "macos") {
@@ -93,12 +102,13 @@ impl Default for Targets {
                 vst3: h.join("Library/Audio/Plug-Ins/VST3"),
                 clap: h.join("Library/Audio/Plug-Ins/CLAP"),
                 lv2: h.join("Library/Audio/Plug-Ins/LV2"),
+                au: h.join("Library/Audio/Plug-Ins/Components"),
                 fonts: h.join("Library/Fonts"),
             }
         } else {
             let config = env::var_os("XDG_CONFIG_HOME").map(PathBuf::from).unwrap_or_else(|| h.join(".config"));
             let data = env::var_os("XDG_DATA_HOME").map(PathBuf::from).unwrap_or_else(|| h.join(".local/share"));
-            Targets { reaper: config.join("REAPER"), vst3: h.join(".vst3"), clap: h.join(".clap"), lv2: h.join(".lv2"), fonts: data.join("fonts") }
+            Targets { reaper: config.join("REAPER"), vst3: h.join(".vst3"), clap: h.join(".clap"), lv2: h.join(".lv2"), au: h.join(".components"), fonts: data.join("fonts") }
         }
     }
 }
@@ -135,6 +145,7 @@ pub fn plugin_paths(t: &Targets, id: &str, format: crate::Format) -> (PathBuf, S
             format!("CLAP/{VENDOR_DIR}/null_jsfx_{id}.clap"),
         ),
         Lv2 => (t.lv2.join(VENDOR_DIR).join(format!("null_jsfx_{id}.lv2")), format!("LV2/{VENDOR_DIR}/null_jsfx_{id}.lv2")),
+        Au => (t.au.join(format!("null_jsfx_{id}.component")), format!("AU/{VENDOR_DIR}/null_jsfx_{id}.component")),
     }
 }
 

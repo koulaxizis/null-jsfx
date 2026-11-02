@@ -13,9 +13,9 @@ name: NULL JSFX Hub
 on:
   push:
     branches: [main]
-    paths: ["hub/**", "tools/build_catalog.py", "tools/build_site.py", "tools/site_content.json", "tools/site_chains.json", "tools/presets/**", "DATA/**", ".github/workflows/hub.yml"]
+    paths: ["hub/**", "tools/build_catalog.py", "native/scripts/au_skip.txt", "tools/build_site.py", "tools/site_content.json", "tools/site_chains.json", "tools/presets/**", "DATA/**", ".github/workflows/hub.yml"]
   pull_request:
-    paths: ["hub/**", "tools/build_catalog.py", "tools/build_site.py", "tools/site_content.json", "tools/site_chains.json", "tools/presets/**", "DATA/**", ".github/workflows/hub.yml"]
+    paths: ["hub/**", "tools/build_catalog.py", "native/scripts/au_skip.txt", "tools/build_site.py", "tools/site_content.json", "tools/site_chains.json", "tools/presets/**", "DATA/**", ".github/workflows/hub.yml"]
   workflow_dispatch:
     inputs:
       release_tag:
