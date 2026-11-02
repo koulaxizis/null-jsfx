@@ -573,8 +573,9 @@ test('SQ: nobody on the port fails cleanly', async () => {
 
 // --- Allen & Heath Qu (MIDI over TCP, its own hooks on core/nrpn.js) -----------------------
 
+const hx = (a) => a.map((x) => x.toString(16).toUpperCase().padStart(2, '0')).join(' ');
+
 test('Qu messages byte for byte, as the protocol document writes them', () => {
-  const hx = (a) => a.map((x) => x.toString(16).toUpperCase().padStart(2, '0')).join(' ');
   // Input 1 fader at 0 dB: BN 63 CH, BN 62 17, BN 06 VA, BN 26 07 (channel N = 0)
   assert.strictEqual(hx(qu.encode(0, '/ip/1/lr', qu.toValue('/ip/1/lr', 0.75))), 'B0 63 20 B0 62 17 B0 06 62 B0 26 07');
   // ST 2 pan full right, to LR: ID 16, VA 4A, VX 07
@@ -661,6 +662,80 @@ test('Qu: connect over TCP, the hello and the push, names, both directions, keep
     await sleep(50);
     assert.ok(!sim.connected(), 'connection closed');
   } finally { s.disconnect(); other.disconnect(); sim.close(); }
+});
+
+test('Qu meters: the request, the 7-bit packing and 7Q8 dB as the document gives them, the strip map', () => {
+  assert.strictEqual(hx(qu.meterRequest(0, true)), 'F0 00 00 1A 50 11 01 00 00 12 01 F7');
+  assert.strictEqual(hx(qu.meterRequest(3, false)), 'F0 00 00 1A 50 11 01 00 03 12 00 F7');
+  // the document's worked example: 20 7C 00 unpacks to 7C 80, which is -3.5 dB
+  assert.deepStrictEqual(qu.unpack7([0x20, 0x7c, 0x00]), [0x7c, 0x80]);
+  assert.strictEqual(qu.meterDb(0x7c80), -3.5);
+  const bytes = Array.from({ length: 23 }, (_, i) => (i * 37 + 128) & 255);
+  assert.deepStrictEqual(qu.unpack7(qu.pack7(bytes)), bytes, 'pack and unpack, a partial last group too');
+  assert.ok(qu.pack7(bytes).every((b) => b < 128), 'MIDI data bytes only');
+  // where a strip reads its meter: input 1 Post Delay, input 25 in its own block on a Qu-32, ST 1
+  // Post Delay L/R, Mix 1 Post Fader, LR Post Fader L/R
+  const P = qu.meterPoints('Qu-32');
+  assert.deepStrictEqual(P[0], [3]);
+  assert.deepStrictEqual(P[24], [323]);
+  assert.deepStrictEqual(P[32], [246, 247]);
+  assert.deepStrictEqual(P[35], [405]);
+  assert.deepStrictEqual(P[42], [510, 511]);
+  assert.deepStrictEqual(qu.meterPoints('Qu-24')[27], [485], 'Qu-24: Mix 1 after 180 unused meters');
+  assert.deepStrictEqual(qu.meterPoints('Qu-16')[16], [246, 247], 'Qu-16: ST 1 after 80 unused meters');
+  for (const m of qu.models) {
+    const L = qu.layoutFor(m);
+    const strips = L.inputs.concat(L.targets.map((t) => t.master), [L.main]);
+    assert.deepStrictEqual(strips.map((st) => st.meter), strips.map((_, i) => i), m + ': one meter per strip, in order');
+    assert.strictEqual(qu.meterPoints(m).length, strips.length, m);
+  }
+  // a whole answer: the loudest side of a stereo strip, -90 where the data ends
+  const data = [];
+  for (let i = 0; i < 520; i++) { const u = qu.dbMeter(i === 3 ? -12 : i === 247 ? -6 : i === 510 ? 4.5 : -60); data.push(u >> 8, u & 255); }
+  const m = qu.parseMeters([0xf0, 0, 0, 0x1a, 0x50, 0x11, 1, 0, 0, 0x13].concat(qu.pack7(data), [0xf7]), 'Qu-32');
+  assert.strictEqual(m.address, 'qu');
+  assert.strictEqual(m.db[0], -12);
+  assert.strictEqual(m.db[32], -6);
+  assert.strictEqual(m.db[42], 4.5);
+  assert.strictEqual(m.db[1], -60);
+  assert.strictEqual(qu.parseMeters([0xf0, 0, 0, 0x1a, 0x50, 0x11, 1, 0, 0, 0x13, 0xf7], 'Qu-32').db[0], -90);
+  assert.strictEqual(qu.parseMeters([0xf0, 0, 0, 0x1a, 0x50, 0x11, 1, 0, 0, 0x14, 0xf7], 'Qu-32'), null);
+});
+
+test('Qu meters over TCP: on while someone listens, asked again after each answer, off when nobody does; a streaming Qu is not asked again', async () => {
+  for (const stream of [0, 40]) {
+    const sim = await quSim.start({ model: 'Qu-16', channel: 1, meterStreamMs: stream || undefined });
+    const s = new Nrpn.Session(qu, nodeTcp);
+    try {
+      await s.connect('127.0.0.1', sim.port);
+      await sleep(150);
+      assert.strictEqual(sim.meterAsks, 0, 'no meters while nobody shows them');
+      const P = qu.meterPoints('Qu-16');
+      sim.meter(P[0][0], -20);
+      sim.meter(P[16][1], -3);
+      sim.meter(P[26][0], 2);
+      let got = 0;
+      let last = null;
+      const off = s.onMeters((addr, db) => { assert.strictEqual(addr, 'qu'); got++; last = db; });
+      await until(() => got >= 5, 2000, 'meters keep coming');
+      assert.strictEqual(last[0], -20, 'input 1');
+      assert.strictEqual(last[16], -3, 'ST 1, its louder side');
+      assert.strictEqual(last[26], 2, 'LR');
+      assert.strictEqual(last[1], -90);
+      if (stream) assert.strictEqual(sim.meterAsks, 1, 'a Qu that keeps sending is asked once');
+      else assert.ok(sim.meterAsks >= 5, 'a Qu that answers once is asked again: ' + sim.meterAsks);
+      off();
+      await until(() => !sim.meterOn, 1000, 'meters off');
+      const asks = sim.meterAsks;
+      await sleep(300);
+      assert.strictEqual(sim.meterAsks, asks, 'nobody listens: nothing asked');
+      // a redial with someone listening asks again
+      s.onMeters(() => {});
+      await until(() => sim.meterOn, 1000, 'meters on again');
+      sim.drop();
+      await until(() => s.status === 'online' && sim.hellos === 2 && sim.meterOn, 5000, 'meters after a redial');
+    } finally { s.disconnect(); sim.close(); }
+  }
 });
 
 test('Qu: an SQ (or anything without the Qu hello) is not taken for a Qu', async () => {

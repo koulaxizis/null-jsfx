@@ -22,6 +22,10 @@
 //   fromSysex(sysex) -> [{addr, raw}]        values in System Exclusive messages (Qu: names)
 //   layoutFor(model)                         the layout once the console has said what it is
 //   keepAliveMs                              send Active Sensing (FE) this often
+//   meterRequest(channel, on) -> bytes, parseMeters(sysex, model) -> {address, db} or null,
+//   meterGapMs                               meters (Qu): asked while someone listens; asked
+//                                            again meterGapMs after each answer unless the next
+//                                            comes first, and after 2 s without one
 // NULL JSFX • https://nulljsfx.tech • MIT License
 (function (root, factory) {
   const api = factory(root);
@@ -95,6 +99,7 @@
       this.byAddr = new Map(); // address -> path
       this.listeners = new Map();
       this.anyListeners = new Set();
+      this.meterListeners = new Set();
       this.statusListeners = new Set();
       this.pending = new Map();
       this.status = 'idle';
@@ -143,6 +148,7 @@
         onClose: (why) => {
           this.conn = null;
           clearInterval(this.alive);
+          this._stopMeters();
           if (!up) { if (onFail) onFail(why); return; }
           if (this.closed) return;
           // the link went away: try again until it is back, then read everything again
@@ -159,6 +165,8 @@
     }
 
     disconnect() {
+      if (this.metering && this.conn) this._tx(this.profile.meterRequest(this.channel, false));
+      this._stopMeters();
       this.closed = true;
       clearTimeout(this.redial);
       clearInterval(this.alive);
@@ -199,7 +207,12 @@
       return () => s.delete(cb);
     }
     onAny(cb) { this.anyListeners.add(cb); return () => this.anyListeners.delete(cb); }
-    onMeters() { return () => {}; } // no meters on this protocol
+    onMeters(cb) {
+      if (!this.profile.meterRequest) return () => {}; // no meters on this protocol (SQ)
+      this.meterListeners.add(cb);
+      this._meters();
+      return () => { this.meterListeners.delete(cb); this._meters(); };
+    }
     onStatus(cb) { this.statusListeners.add(cb); return () => this.statusListeners.delete(cb); }
 
     _tx(bytes) { if (this.conn) this.conn.send(Uint8Array.from(bytes)); }
@@ -227,9 +240,44 @@
       }
     }
 
-    // a System Exclusive message: the hello's answer, the end of the push, or values (names)
+    // meters: on while someone listens and the console is read (fresh: after a new hello)
+    _meters(fresh) {
+      const P = this.profile;
+      if (!P.meterRequest) return;
+      const want = this.meterListeners.size > 0 && !!this.conn && !this.helloWaiter && !this.syncWaiter;
+      if (!want) {
+        if (this.metering && this.conn) this._tx(P.meterRequest(this.channel, false));
+        this._stopMeters();
+        return;
+      }
+      if (this.metering && !fresh) return;
+      this._stopMeters();
+      this.metering = true;
+      const ask = () => { this.meterAsked = Date.now(); this._tx(P.meterRequest(this.channel, true)); };
+      ask();
+      // the watchdog: nothing for 2 s (an answer lost, or the console stopped): ask again
+      this.meterDog = setInterval(() => { if (Date.now() - Math.max(this.meterAsked, this.meterAt || 0) > 2000) ask(); }, 500);
+      this.meterAgain = ask;
+    }
+    _stopMeters() {
+      this.metering = false;
+      clearInterval(this.meterDog);
+      clearTimeout(this.meterNext);
+    }
+    _meterData(m) {
+      this.meterAt = Date.now();
+      for (const cb of this.meterListeners) cb(m.address, m.db);
+      clearTimeout(this.meterNext);
+      if (this.metering) this.meterNext = setTimeout(this.meterAgain, this.profile.meterGapMs || 100);
+    }
+
+    // a System Exclusive message: the hello's answer, the end of the push, meters, or values (names)
     _sysex(sx) {
       const P = this.profile;
+      if (P.parseMeters) {
+        const m = P.parseMeters(sx, this.info && this.info.model);
+        if (m) { this._meterData(m); return; }
+      }
       if (this.helloWaiter && P.helloReply) {
         const r = P.helloReply(sx);
         if (r) { this.helloWaiter(r); return; }
@@ -254,6 +302,7 @@
           const done = () => {
             this.syncWaiter = null;
             clearTimeout(this.syncTimer);
+            this._meters(true);
             this._queryAll(1500).then(resolve);
           };
           this.syncWaiter = done;
