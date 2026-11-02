@@ -251,7 +251,7 @@ jobs:
           bt="$ANDROID_HOME/build-tools/$(ls "$ANDROID_HOME/build-tools" | sort -V | tail -1)"
           for apk in out/*.apk; do
             echo "== $apk"
-            "$bt/apksigner" verify --verbose --print-certs "$apk" | grep -E "Verified using|Signer #1 certificate (DN|SHA-256)"
+            "$bt/apksigner" verify --verbose --print-certs "$apk" | grep -E "Verified using v2|certificate (DN|SHA-256)"
             if "$bt/apksigner" verify --print-certs "$apk" | grep -q "CN=Android Debug"; then
               echo "::error::$apk is debug-signed"; exit 1
             fi
