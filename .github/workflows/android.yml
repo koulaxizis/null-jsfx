@@ -8,7 +8,8 @@ name: Android remotes
 #           simulator on the host: the Kotlin UDP bridge and the WebView end to end
 #   release with a release tag (the Release workflow, which builds a draft release, or by hand
 #           for a release that exists): the signed release APKs of the apps in RELEASED_APPS,
-#           attached to it
+#           attached to it; or by hand with sign_check: the same APKs, signature checked, kept
+#           as a workflow artifact only (to test the secrets without a release)
 # Signing uses the orOS keystore (Christos, 2026-11-01) from the repository secrets
 # ANDROID_KEYSTORE (base64 of the .jks), ANDROID_KEYSTORE_PASSWORD, ANDROID_KEY_ALIAS and
 # ANDROID_KEY_PASSWORD. Without them a release gets no APK and the run says so.
@@ -25,6 +26,11 @@ on:
         description: "Attach the APKs to this existing release (e.g. 3.1); empty = only build"
         required: false
         default: ""
+      sign_check:
+        description: "Build the signed release APKs, check their signature and keep them as a workflow artifact (no release)"
+        type: boolean
+        required: false
+        default: false
   # from release.yml, which creates the draft release first; a draft has no tag yet, so it
   # passes the commit to build
   workflow_call:
@@ -128,7 +134,7 @@ jobs:
           retention-days: 14
 
   release:
-    if: inputs.release_tag != ''
+    if: inputs.release_tag != '' || inputs.sign_check
     needs: [pages, build]
     timeout-minutes: 30
     runs-on: ubuntu-24.04
@@ -153,6 +159,7 @@ jobs:
           NULL_REMOTE_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
         run: |
           if [ -z "$NULL_REMOTE_KEYSTORE" ]; then
+            if [ -z "$TAG" ]; then echo "::error::No ANDROID_KEYSTORE secret"; exit 1; fi
             echo "::warning::No ANDROID_KEYSTORE secret: release $TAG gets no Android APKs"
             echo "skip=1" >> "$GITHUB_OUTPUT"
             exit 0
@@ -167,8 +174,29 @@ jobs:
             cp "$apk" "out/NULL-JSFX-Remote-${name}-Android.apk"
           done
           ls -l out
-      - name: Attach to the release
+      # The certificate digests are public (they are in every APK); they let anyone check that
+      # an APK is ours and that the orOS key signed it.
+      - name: Check the signatures
         if: steps.apks.outputs.skip != '1'
+        working-directory: android
+        run: |
+          bt="$ANDROID_HOME/build-tools/$(ls "$ANDROID_HOME/build-tools" | sort -V | tail -1)"
+          for apk in out/*.apk; do
+            echo "== $apk"
+            "$bt/apksigner" verify --verbose --print-certs "$apk" | grep -E "Verified using|Signer #1 certificate (DN|SHA-256)"
+            if "$bt/apksigner" verify --print-certs "$apk" | grep -q "CN=Android Debug"; then
+              echo "::error::$apk is debug-signed"; exit 1
+            fi
+          done
+      - name: Keep the APKs (sign check)
+        if: steps.apks.outputs.skip != '1' && env.TAG == ''
+        uses: actions/upload-artifact@v7
+        with:
+          name: NULL-JSFX-Android-signed
+          path: android/out/
+          retention-days: 7
+      - name: Attach to the release
+        if: steps.apks.outputs.skip != '1' && env.TAG != ''
         env:
           GH_TOKEN: ${{ github.token }}
         run: for i in 1 2 3 4 5; do gh release upload "$TAG" android/out/* --clobber && exit 0; sleep $((i * 30)); done; exit 1
