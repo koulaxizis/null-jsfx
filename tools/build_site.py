@@ -537,7 +537,7 @@ def sitemap(plugins):
     d, m, y = re.search(r'id="last-update">Released: (\d+)/(\d+)/(\d+)<', INDEX.read_text(encoding="utf-8")).groups()
     today = f"20{y}-{m}-{d}"  # the release date: changes with each release, not each run
     urls = [(SITE, "1.0", "weekly")] + [(SITE + p["page"], "0.8", "monthly") for p in plugins] + \
-        [(SITE + "supporters/", "0.5", "monthly")]
+        [(SITE + "supporters/", "0.5", "monthly"), (SITE + "media-kit/", "0.4", "yearly")]
     body = "".join(f"""    <url>
         <loc>{u}</loc>
         <lastmod>{today}</lastmod>
