@@ -149,6 +149,64 @@ jobs:
           distribution: temurin
           java-version: 17
       - uses: gradle/actions/setup-gradle@v5
+      # Says which secret is wrong without printing any of them (the alias and passwords are
+      # masked anyway); keytool comes with the JDK.
+      - name: Check the signing secrets
+        env:
+          KS: ${{ secrets.ANDROID_KEYSTORE }}
+          SP: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KA: ${{ secrets.ANDROID_KEY_ALIAS }}
+          KP: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          [ -n "$KS" ] || { echo "no ANDROID_KEYSTORE (checked in the next step)"; exit 0; }
+          ks="$RUNNER_TEMP/check.keystore"; trap 'rm -f "$ks"' EXIT
+          bad=0
+          for v in SP KA KP; do
+            [ -n "${!v}" ] || { echo "::error::secret for $v is empty"; bad=1; }
+            [ "${!v}" = "$(printf '%s' "${!v}" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')" ] \
+              || { echo "::error::secret for $v starts or ends with a space or a line break"; bad=1; }
+          done
+          printf '%s' "$KS" | tr -d '\r\n ' | base64 -d > "$ks" 2>/dev/null \
+            || { echo "::error::ANDROID_KEYSTORE is not valid base64"; exit 1; }
+          echo "keystore: $(stat -c %s "$ks") bytes"
+          if ! list="$(keytool -list -keystore "$ks" -storepass "$SP" 2>&1)"; then
+            echo "::error::ANDROID_KEYSTORE_PASSWORD does not open the keystore ($(grep -m1 -o 'keytool error: [^:]*' <<< "$list"))"
+            exit 1
+          fi
+          echo "store password: ok; $(grep -m1 'Keystore type' <<< "$list")"
+          echo "entries: $(grep -c 'PrivateKeyEntry' <<< "$list") private key(s)"
+          if keytool -list -keystore "$ks" -storepass "$SP" -alias "$KA" >/dev/null 2>&1; then
+            echo "alias: found"
+          else
+            echo "::error::ANDROID_KEY_ALIAS is not in the keystore"
+            bad=1
+          fi
+          # keytool ignores -keypass on a PKCS12 store, so the key is read as the build reads it:
+          # KeyStore.getKey(alias, key password)
+          if [ "$bad" = 0 ]; then
+            cat > "$RUNNER_TEMP/KeyCheck.java" <<'JAVA'
+          import java.io.FileInputStream;
+          import java.security.KeyStore;
+          public class KeyCheck {
+            public static void main(String[] a) throws Exception {
+              KeyStore ks = KeyStore.getInstance(new java.io.File(a[0]), System.getenv("SP").toCharArray());
+              try {
+                if (ks.getKey(System.getenv("KA"), System.getenv("KP").toCharArray()) != null) { System.out.println("key password: ok"); return; }
+                System.out.println("::error::the alias holds no private key");
+              } catch (java.security.UnrecoverableKeyException e) {
+                boolean sp = false;
+                try { sp = ks.getKey(System.getenv("KA"), System.getenv("SP").toCharArray()) != null; } catch (Exception e2) {}
+                System.out.println(sp ? "::error::ANDROID_KEY_PASSWORD is wrong; the keystore password opens the key, so set ANDROID_KEY_PASSWORD to the same value as ANDROID_KEYSTORE_PASSWORD"
+                                      : "::error::ANDROID_KEY_PASSWORD does not open the key");
+              }
+              System.exit(1);
+            }
+          }
+          JAVA
+            java "$RUNNER_TEMP/KeyCheck.java" "$ks" || bad=1
+            rm -f "$RUNNER_TEMP/KeyCheck.java"
+          fi
+          exit $bad
       - name: Signed release APKs
         id: apks
         working-directory: android
