@@ -17,6 +17,36 @@ pub fn os_name() -> &'static str {
     }
 }
 
+/// True on an ARM64 computer. On Windows the Hub may be an x64 build running under emulation,
+/// so the processor is read from the system (PROCESSOR_IDENTIFIER reads "ARMv8 ..." there, and
+/// PROCESSOR_ARCHITECTURE is ARM64 for a native process), not from how the Hub was built.
+pub fn is_arm64() -> bool {
+    if cfg!(target_os = "windows") {
+        let var = |k: &str| env::var(k).unwrap_or_default().to_ascii_uppercase();
+        var("PROCESSOR_ARCHITECTURE") == "ARM64" || var("PROCESSOR_ARCHITEW6432") == "ARM64" || var("PROCESSOR_IDENTIFIER").starts_with("ARM")
+    } else if cfg!(target_os = "macos") {
+        false // the macOS packages are universal
+    } else {
+        cfg!(target_arch = "aarch64")
+    }
+}
+
+/// The key of the VST3/CLAP package for this computer in the catalog's `native` map: "<OS>-ARM64"
+/// on an ARM64 computer when the release has one (from the first release after 2026-11-01),
+/// otherwise "<OS>".
+pub fn native_key<V>(native: &std::collections::BTreeMap<String, V>) -> String {
+    native_key_for(os_name(), is_arm64(), native)
+}
+
+pub fn native_key_for<V>(os: &str, arm64: bool, native: &std::collections::BTreeMap<String, V>) -> String {
+    let arm = format!("{os}-ARM64");
+    if arm64 && native.contains_key(&arm) {
+        arm
+    } else {
+        os.to_string()
+    }
+}
+
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Targets {
     /// REAPER's resource folder (JSFX, GFX, FX chains, presets, remote)
@@ -119,4 +149,24 @@ pub fn gfx_include(t: &Targets) -> (PathBuf, String) {
 
 pub fn display(p: &Path) -> String {
     p.to_string_lossy().into_owned()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::native_key_for;
+    use std::collections::BTreeMap;
+
+    #[test]
+    fn native_key_picks_arm64_only_when_the_release_has_it() {
+        let old: BTreeMap<String, ()> = ["Windows", "Linux", "macOS"].iter().map(|k| (k.to_string(), ())).collect();
+        let mut new = old.clone();
+        new.insert("Windows-ARM64".into(), ());
+        new.insert("Linux-ARM64".into(), ());
+        assert_eq!(native_key_for("Windows", true, &new), "Windows-ARM64");
+        assert_eq!(native_key_for("Linux", true, &new), "Linux-ARM64");
+        assert_eq!(native_key_for("Windows", false, &new), "Windows");
+        assert_eq!(native_key_for("macOS", true, &new), "macOS");
+        // a release from before the ARM64 packages: the x64 one, as before
+        assert_eq!(native_key_for("Windows", true, &old), "Windows");
+    }
 }

@@ -87,10 +87,17 @@ def q(s):
     return '"' + str(s).replace('"', '""') + '"'
 
 
+def arch_suffix(args):
+    """-ARM64 for the ARM packages and installers, nothing for x64 and macOS (universal)."""
+    return "-ARM64" if args.arch == "arm64" else ""
+
+
 def windows(args, plugs, chain_list):
     out = args.out
     out.mkdir(parents=True, exist_ok=True)
-    shutil.copy(ROOT / "installer/windows/null_jsfx.iss", out / "null_jsfx.iss")
+    # the CPU goes in as a define, so a plain "iscc null_jsfx.iss" builds the right installer
+    iss = (ROOT / "installer/windows/null_jsfx.iss").read_text(encoding="utf-8")
+    (out / "null_jsfx.iss").write_text(f'#define Arch "{args.arch}"\n' + iss, encoding="utf-8")
     shutil.copy(ROOT / "assets/img/favicon.ico", out / "null_jsfx.ico")
     jsfx, native = args.jsfx.resolve(), args.native.resolve()
     comp, files = ["[Components]"], ["[Files]"]
@@ -177,7 +184,9 @@ def unix(args, plugs, chain_list):
         if "'" in text:
             sys.exit("build_installer: a plugin or chain name has a ' in it")
     script = (ROOT / "installer/unix/install.sh").read_text(encoding="utf-8")
-    for key, value in (("@@PLUGINS@@", rows), ("@@CHAINS@@", crow), ("@@VERSION@@", args.version), ("@@OS@@", args.os)):
+    for key, value in (("@@PLUGINS@@", rows), ("@@CHAINS@@", crow), ("@@VERSION@@", args.version), ("@@OS@@", args.os),
+                       ("@@ARCH@@", {"x64": "x86_64", "arm64": "aarch64", "universal": ""}[args.arch]),
+                       ("@@SUFFIX@@", arch_suffix(args))):
         script = script.replace(key, value)
     if not script.endswith("\n__PAYLOAD_BELOW__\n"):
         sys.exit("build_installer: install.sh must end with the __PAYLOAD_BELOW__ line")
@@ -185,7 +194,7 @@ def unix(args, plugs, chain_list):
     with tarfile.open(fileobj=payload, mode="w:gz", compresslevel=9) as tar:
         tar.add(args.jsfx, arcname="jsfx", filter=clean)
         tar.add(args.native, arcname="native", filter=clean)
-    path = args.out / f"NULL-JSFX-Installer-{args.os}.sh"
+    path = args.out / f"NULL-JSFX-Installer-{args.os}{arch_suffix(args)}.sh"
     path.write_bytes(script.encode("utf-8") + payload.getvalue())
     os.chmod(path, 0o755)
     print(f"build_installer: {path}: {len(plugs)} plugins, {len(chain_list)} FX chains, {path.stat().st_size // 1024} KB")
@@ -397,12 +406,19 @@ def macos_pkg(args, plugs, chain_list):
 def main():
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     ap.add_argument("--os", required=True, choices=["Windows", "Linux", "macOS"])
+    ap.add_argument("--arch", default=None, choices=["x64", "arm64", "universal"],
+                    help="the CPU of the --native package: x64 (default on Windows and Linux), arm64 "
+                         "(names the installer ...-ARM64), universal (macOS, the only choice there)")
     ap.add_argument("--jsfx", required=True, type=Path)
     ap.add_argument("--native", required=True, type=Path)
     ap.add_argument("--version", default="dev")
     ap.add_argument("--out", required=True, type=Path)
     ap.add_argument("--pkg-root", type=Path, help="macOS: write the .pkg parts here and stop before pkgbuild")
     args = ap.parse_args()
+    if args.arch is None:
+        args.arch = "universal" if args.os == "macOS" else "x64"
+    if (args.os == "macOS") != (args.arch == "universal"):
+        sys.exit("build_installer: macOS packages are universal, Windows and Linux ones x64 or arm64")
     plugs, chain_list = plugins(args.jsfx, args.native), chains(args.jsfx)
     stems = {p[0] for p in plugs}
     for folder, name, uses in chain_list:
