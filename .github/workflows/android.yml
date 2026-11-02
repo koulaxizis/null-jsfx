@@ -121,6 +121,8 @@ jobs:
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
       - name: The app in an emulator against the X AIR simulator
+        # the test bounds each of its steps (6 min in all); this bounds the emulator's boot too
+        timeout-minutes: 15
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 34
