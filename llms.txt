@@ -193,7 +193,7 @@ Tools that change the notes before they reach an instrument.
 - Author: Christos Koulaxizis (https://koulaxizis.gr)
 - Platform: Cockos Reaper (JSFX/EEL2)
 - License: MIT
-- Version: 3.0
+- Version: 3.1
 - NULL JSFX Hub: app that installs, updates and removes the plugins (Windows, Linux, macOS), see hub/README.md
 - Remote for orOS Studio: Android app that controls orOS Studio (mixer, transport, every NULL JSFX effect, pads and keys for the NULL instruments) from a phone or tablet: https://github.com/koulaxizis/oros/releases/download/android-apks/oros-studioremote.apk (also in the orOS F-Droid repository https://koulaxizis.github.io/oros-fdroid/)
 - Remote for DAWs (beta): Android app for REAPER, Ardour/Mixbus, Bitwig Studio, Ableton Live, Cubase and FL Studio (mixer, transport, every NULL JSFX plugin with its own interface): https://github.com/koulaxizis/null-jsfx/releases/latest/download/NULL-JSFX-Remote-DAWs-Android.apk (also in the NULL JSFX F-Droid repository https://koulaxizis.github.io/null-jsfx-fdroid/repo, and in Obtainium)
