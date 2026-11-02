@@ -635,7 +635,9 @@ private:
             ch_ph -= std::floor(ch_ph);
             chL[size_t(ch_w)] = outl;
             chR[size_t(ch_w)] = outr;
-            double d = (0.012 + 0.003 * std::sin(2 * kPi * ch_ph)) * srate;
+            // the 16384-sample line holds 15 ms up to 1.09 MHz; above that the delay is held inside
+            // the line (the JSFX would read the memory in front of it, the native port would crash)
+            double d = std::min(double(CHN - 2), (0.012 + 0.003 * std::sin(2 * kPi * ch_ph)) * srate);
             double rp = ch_w - d;
             if (rp < 0)
                 rp += CHN;
@@ -643,7 +645,7 @@ private:
             if (i1 >= CHN)
                 i1 -= CHN;
             const double yl = chL[size_t(i0)] + (chL[size_t(i1)] - chL[size_t(i0)]) * fr;
-            d = (0.012 + 0.003 * std::cos(2 * kPi * ch_ph)) * srate;
+            d = std::min(double(CHN - 2), (0.012 + 0.003 * std::cos(2 * kPi * ch_ph)) * srate);
             rp = ch_w - d;
             if (rp < 0)
                 rp += CHN;
