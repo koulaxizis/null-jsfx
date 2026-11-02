@@ -64,5 +64,29 @@
     ],
     "properties": "Signal chain: MIDI → a Voice per Key (16', 8' and 4' PolyBLEP Sawtooths, locked an octave apart, free-running) × Attack/Release Envelope → Sum → 12 dB/oct Low-Pass (Brightness) → Body Resonances (450 Hz, 2.8 kHz) → Three-Tap Ensemble (slow and fast LFOs, 120° apart; mod wheel deepens it) → Volume. Fully polyphonic like the divide-down originals, no samples; sustain pedal, pitch bend ±2 semitones, all MIDI passed on.",
     "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-string-ensemble\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><path d=\"M10,22 C22,16 42,28 54,22\" stroke=\"url(#icon-string-ensemble)\" stroke-width=\"2.5\" fill=\"none\" stroke-linecap=\"round\"/><path d=\"M10,32 C22,26 42,38 54,32\" stroke=\"url(#icon-string-ensemble)\" stroke-width=\"2.5\" fill=\"none\" stroke-linecap=\"round\" opacity=\"0.7\"/><path d=\"M10,42 C22,36 42,48 54,42\" stroke=\"url(#icon-string-ensemble)\" stroke-width=\"2.5\" fill=\"none\" stroke-linecap=\"round\" opacity=\"0.4\"/></svg>"
+  },
+  "modal_piano": {
+    "card_desc": "Physically Modelled Piano",
+    "keywords": "modal piano acoustic piano grand piano physical model modelled piano hammer strings inharmonic sustain pedal una corda instrument no samples",
+    "slider_desc": [
+      "Felt of the hammers, from soft and dark to hard and bright",
+      "How long the strings ring, against a real grand",
+      "How far apart the strings of one key are tuned: the beats and the shimmer",
+      "Stiffness of the strings: how far the partials stretch above the harmonics",
+      "Level of the hammer's thump",
+      "How much the velocity changes level and tone",
+      "How quickly a key let go falls silent",
+      "The soundboard's low resonance and presence",
+      "How far the keys spread from left to right, as seen from the player",
+      "Output level"
+    ],
+    "uses": [
+      "Play piano parts without a sample library or a download",
+      "Write and sketch with a light piano that loads at once",
+      "Shape a felt, upright or honky-tonk piano from one model",
+      "Layer a piano under pads and strings"
+    ],
+    "properties": "Signal chain: MIDI → 16 Voices (up to 24 Stiff-String Partials each, Two-Pole Resonators; the first six as Prompt and Aftersound pairs a little apart in pitch: double decay and unison beats) ← Hammer (strike position 1/8, felt low-pass by velocity and Hardness, contact time) → Damper per Key (Sustain pedal CC 64, Soft pedal CC 67; no dampers above F#6) → Stereo Keys (Width) + Hammer Thump → Body (110 Hz and 2.5 kHz) → Volume. Modal synthesis from physics, no samples; resonators that fall 100 dB are dropped, so a voice costs less as it dies away. All MIDI passed on.",
+    "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-modal-piano\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><rect x=\"10\" y=\"18\" width=\"44\" height=\"30\" rx=\"2\" stroke=\"url(#icon-modal-piano)\" stroke-width=\"2\" fill=\"none\"/><path d=\"M21,18 L21,48 M32,18 L32,48 M43,18 L43,48\" stroke=\"url(#icon-modal-piano)\" stroke-width=\"1.5\" opacity=\"0.6\"/><rect x=\"17.5\" y=\"18\" width=\"7\" height=\"17\" fill=\"url(#icon-modal-piano)\"/><rect x=\"28.5\" y=\"18\" width=\"7\" height=\"17\" fill=\"url(#icon-modal-piano)\"/><rect x=\"39.5\" y=\"18\" width=\"7\" height=\"17\" fill=\"url(#icon-modal-piano)\"/></svg>"
   }
 }
