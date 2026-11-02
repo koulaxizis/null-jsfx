@@ -46,6 +46,9 @@ function reaperServer(reaper) {
   return new Promise((r) => s.server.listen(REAPER_PORT, '0.0.0.0', () => r(s)));
 }
 
+const { step, install, watchdog, sleep: nap } = require('./device_steps.cjs');
+const LIMIT_MS = 12 * 60 * 1000; // the whole test; it passes in about two minutes
+
 let passed = 0;
 const ok = (name) => { passed++; console.log('ok  ' + name); };
 
@@ -54,15 +57,17 @@ async function main() {
   const web = await reaperServer(reaper);
   const ard = await ardourSim.start({ port: 3819 });
   const bw = await bitwigHost.start({ port: 8818 });
-  const [device] = await android.devices();
+  const [device] = await step('find the device', 60000, () => android.devices());
   assert.ok(device, 'no Android device or emulator');
   console.log('device', device.model(), device.serial());
-  if (apk) await device.installApk(fs.readFileSync(apk));
-  await device.shell(`am force-stop ${PKG}`);
-  await device.shell(`pm clear ${PKG}`); // no saved REAPER from an earlier run
-  await device.shell(`am start -n ${PKG}/tech.nulljsfx.remote.MainActivity`);
-  const webview = await device.webView({ pkg: PKG }, { timeout: 60000 });
-  const page = await webview.page();
+  if (apk) await install(device, apk);
+  await step('start the app', 60000, async () => {
+    await device.shell(`am force-stop ${PKG}`);
+    await device.shell(`pm clear ${PKG}`); // no saved REAPER from an earlier run
+    await device.shell(`am start -n ${PKG}/tech.nulljsfx.remote.MainActivity`);
+  });
+  const webview = await step('find its WebView', 90000, () => device.webView({ pkg: PKG }, { timeout: 80000 }));
+  const page = await step('attach to the WebView', 60000, () => webview.page());
   const errors = [];
   page.on('pageerror', (e) => errors.push(e.message));
   async function until(cond, what, ms = 15000) {
@@ -171,7 +176,8 @@ async function main() {
     assert.strictEqual(reaper.q('#console'), '0', 'bridge errors: ' + reaper.q('console[1]'));
     console.log(`device test passed (${passed} checks, ${web.requests} REAPER requests through the proxy)`);
   } finally {
-    await device.close();
+    // closing can hang on a stuck adb connection: never let it hide the result
+    await Promise.race([device.close(), nap(15000)]);
     reaper.close();
     web.server.close();
     ard.close();
@@ -179,4 +185,5 @@ async function main() {
   }
 }
 
-main().catch((e) => { console.error(e); process.exit(1); });
+const dog = watchdog(LIMIT_MS);
+main().then(() => { dog.done(); process.exit(0); }, (e) => { console.error('failed in step: ' + dog.step); console.error(e); process.exit(1); });

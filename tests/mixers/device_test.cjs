@@ -14,25 +14,15 @@ const apk = process.argv[2];
 const shots = process.argv[3];
 const PKG = 'tech.nulljsfx.remote.mixers';
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
-const LIMIT_MS = 6 * 60 * 1000; // the whole test; it passes in about a minute
-
-// each step is logged, and a step that does not finish in its time fails the test with its name
-// (an install or a WebView that never answers once hung the job until its 30 min limit)
-let current = 'start';
-function step(name, ms, work) {
-  current = name;
-  console.log('step: ' + name);
-  let t;
-  const late = new Promise((_, reject) => { t = setTimeout(() => reject(new Error('timed out after ' + ms / 1000 + ' s: ' + name)), ms); });
-  return Promise.race([Promise.resolve().then(work), late]).finally(() => clearTimeout(t));
-}
+const { step, install, watchdog } = require('../remote/device_steps.cjs');
+const LIMIT_MS = 8 * 60 * 1000; // the whole test; it passes in about a minute
 
 async function main() {
   const console_ = await sim.start({ model: 'XR18', name: 'Emulator XR18', host: '0.0.0.0', port: 10024 });
   const [device] = await step('find the device', 60000, () => android.devices());
   assert.ok(device, 'no Android device or emulator');
   console.log('device', device.model(), device.serial());
-  if (apk) await step('install the APK', 180000, () => device.installApk(fs.readFileSync(apk)));
+  if (apk) await install(device, apk);
   await step('start the app', 60000, async () => {
     await device.shell(`am force-stop ${PKG}`);
     await device.shell(`am start -n ${PKG}/tech.nulljsfx.remote.MainActivity`);
@@ -85,5 +75,5 @@ async function main() {
   }
 }
 
-const watchdog = setTimeout(() => { console.error('device test timed out after ' + LIMIT_MS / 60000 + ' min, in step: ' + current); process.exit(1); }, LIMIT_MS);
-main().then(() => { clearTimeout(watchdog); process.exit(0); }, (e) => { console.error('failed in step: ' + current); console.error(e); process.exit(1); });
+const dog = watchdog(LIMIT_MS);
+main().then(() => { dog.done(); process.exit(0); }, (e) => { console.error('failed in step: ' + dog.step); console.error(e); process.exit(1); });

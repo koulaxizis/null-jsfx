@@ -162,6 +162,8 @@ jobs:
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
       - name: The app in an emulator against REAPER, Ardour and Bitwig stand-ins
+        # the test bounds each of its steps (12 min in all); this bounds the emulator's boot too
+        timeout-minutes: 20
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 34
