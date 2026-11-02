@@ -12,6 +12,7 @@ on:
       - "DATA/Effects/null_jsfx/**.jsfx"
       - "tests/stress_test.cpp"
       - "tests/stress.sh"
+      - "tests/ysfx_preprocessor.patch"
       - ".github/workflows/stress.yml"
 
 # A newer push to a pull request cancels its older run; the nightly and manual runs each get
@@ -34,7 +35,7 @@ jobs:
       - uses: actions/cache@v6
         with:
           path: tests/.build/ysfx
-          key: ysfx-${{ hashFiles('tests/run.sh') }}
+          key: ysfx-${{ hashFiles('tests/run.sh', 'tests/ysfx_preprocessor.patch') }}
       - run: sudo apt-get install -y nasm
       - name: Plugins to test
         id: pick

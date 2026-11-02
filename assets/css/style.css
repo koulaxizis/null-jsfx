@@ -1540,6 +1540,62 @@ a.download-option:hover {
     font-size: 0.8rem;
 }
 
+/* Media kit page */
+.media-kit-page .mk-kit {
+    max-width: 760px;
+    margin: 0 auto 2.5rem;
+}
+
+.mk-kit h2 {
+    font-size: 1.15rem;
+    margin-bottom: 0.9rem;
+    text-align: center;
+}
+
+.mk-previews {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 12px;
+    margin-bottom: 14px;
+}
+
+.mk-previews img {
+    width: 100%;
+    height: auto;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: #111214;
+}
+
+.mk-previews .mk-phone {
+    max-width: 420px;
+    margin: 0 auto;
+}
+
+.mk-downloads {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 10px;
+}
+
+.mk-note,
+.mk-terms p {
+    color: var(--muted);
+    font-size: 0.9rem;
+    line-height: 1.6;
+    margin-top: 12px;
+    text-align: center;
+}
+
+.mk-terms p {
+    text-align: left;
+}
+
+.mk-note a,
+.mk-terms a {
+    color: var(--accent);
+}
+
 .free-forever {
     font-size: 12px;
     color: var(--muted);

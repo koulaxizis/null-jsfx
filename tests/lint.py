@@ -7,7 +7,7 @@ Header (first lines of every file, in this order):
     author: Christos Koulaxizis
     tags: <lowercase keywords>
     //category: One Slider | Essentials | Advanced | Instruments | MIDI | Assisted
-    //NULL JSFX v3.0 • https://nulljsfx.tech • MIT License
+    //NULL JSFX v3.1 • https://nulljsfx.tech • MIT License
 
 followed by a blank line, the sliders, a blank line and the four pins
 (in_pin:Left, in_pin:Right, out_pin:Left, out_pin:Right); sidechain plugins add
@@ -30,7 +30,7 @@ import sys
 from pathlib import Path
 
 AUTHOR = "author: Christos Koulaxizis"
-FOOTER = "//NULL JSFX v3.0 • https://nulljsfx.tech • MIT License"
+FOOTER = "//NULL JSFX v3.1 • https://nulljsfx.tech • MIT License"
 CATEGORIES = ("One Slider", "Essentials", "Advanced", "Instruments", "MIDI", "Assisted")
 PINS = ["in_pin:Left", "in_pin:Right", "out_pin:Left", "out_pin:Right"]
 SIDECHAIN_PINS = ["in_pin:Left", "in_pin:Right", "in_pin:Sidechain Left", "in_pin:Sidechain Right",
@@ -64,6 +64,8 @@ midirecv midisend str_getchar
 
 
 def strip_comments(code):
+    """Comments and <? ?> blocks (REAPER's preprocessor, run before compiling; checked by hand)."""
+    code = re.sub(r"<\?.*?\?>", "", code, flags=re.S)
     code = re.sub(r"/\*.*?\*/", "", code, flags=re.S)
     return re.sub(r"//[^\n]*", "", code)
 

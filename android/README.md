@@ -53,10 +53,32 @@ workflow fills from the repository secrets `ANDROID_KEYSTORE`, `ANDROID_KEYSTORE
 `ANDROID_KEY_ALIAS` and `ANDROID_KEY_PASSWORD`. No key, password or keystore file is ever
 committed (`.gitignore` blocks `*.jks` and `*.keystore`).
 
-## F-Droid
+## F-Droid, Droid-ify and Obtainium
 
-`fdroid/tech.nulljsfx.remote.daws.yml` is a draft recipe for a merge request to fdroiddata;
-the store texts are in `app/src/daws/fastlane/metadata/android/en-US/`. F-Droid builds the
-`fdroid` flavor from the release tag and signs it with its own key unless the build is shown to
-be reproducible, so users cannot switch between the F-Droid and GitHub APKs without
-reinstalling.
+**Our F-Droid repository** (Christos, 2026-11-02): `https://koulaxizis.github.io/null-jsfx-fdroid/repo`.
+`.github/workflows/fdroid-repo.yml` runs on every published release: it builds the `fdroid`
+flavor of each app in `tools/fdroid_repo.py` `APPS` from the release tag, signed with the same
+key as the APKs on the release (so a phone can move between the two without reinstalling), and
+publishes them with `fdroid update` to `koulaxizis/null-jsfx-fdroid` (GitHub Pages), keeping the
+newest 3 versions of each app. The index is signed with the same APK key. Store texts and the icon come from `app/src/<app>/fastlane/` and
+`fdroid/icon.png`. Secrets: the four `ANDROID_*` of Signing, plus `FDROID_DEPLOY_TOKEN`; without them the run
+publishes nothing.
+Droid-ify is an F-Droid client, so it uses the same repository.
+
+**Obtainium** reads our GitHub releases directly. Each release carries both APKs, so each app
+needs its own filter. Add `https://github.com/koulaxizis/null-jsfx` and set "Filter APKs by
+regular expression" to:
+
+| App | APK filter |
+|---|---|
+| Remote for DAWs | `Remote-DAWs` |
+| Remote for Mixers | `Remote-Mixers` |
+
+The tag (`3.1`) is the app's `versionName`, so Obtainium's version check matches. The asset
+names `NULL-JSFX-Remote-<App>-Android.apk` never change. Obtainium can also add our F-Droid
+repository as a source instead.
+
+**Official F-Droid** (later, optional): `fdroid/tech.nulljsfx.remote.{daws,mixers}.yml` are
+draft recipes for a merge request to fdroiddata. F-Droid builds the `fdroid` flavor from the
+release tag and signs it with its own key unless the build is shown to be reproducible, so users
+cannot switch between the official F-Droid APK and ours without reinstalling.

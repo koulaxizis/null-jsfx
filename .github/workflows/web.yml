@@ -7,9 +7,9 @@ name: Web version
 on:
   push:
     branches: [main]
-    paths: ["web/**", "DATA/**", ".github/workflows/web.yml"]
+    paths: ["web/**", "DATA/**", "tests/ysfx_preprocessor.patch", ".github/workflows/web.yml"]
   pull_request:
-    paths: ["web/**", "DATA/**", ".github/workflows/web.yml"]
+    paths: ["web/**", "DATA/**", "tests/ysfx_preprocessor.patch", ".github/workflows/web.yml"]
   workflow_dispatch:
 
 # Pull requests run on every push to their branch; a newer push cancels the older run of the same
@@ -36,6 +36,6 @@ jobs:
       - uses: actions/cache@v6
         with:
           path: tests/.build/ysfx
-          key: ysfx-${{ hashFiles('tests/run.sh') }}
+          key: ysfx-${{ hashFiles('tests/run.sh', 'tests/ysfx_preprocessor.patch') }}
       - run: sudo apt-get install -y nasm
       - run: web/test/run.sh

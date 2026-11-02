@@ -15,26 +15,32 @@ root="$(dirname "$here")"
 build="$here/.build"
 ysfx_rev=8077347ccf4115567aed81400281dca57acbb0cc
 
-if [ ! -f "$build/ysfx/build/libysfx.a" ]; then
+# ysfx gets tests/ysfx_preprocessor.patch (it drops <? ?> blocks, as an older REAPER would);
+# a changed patch rebuilds it
+patch="$root/tests/ysfx_preprocessor.patch"
+if [ ! -f "$build/ysfx/build/libysfx.a" ] || ! cmp -s "$patch" "$build/ysfx/.null_patch"; then
   mkdir -p "$build"
   if [ ! -d "$build/ysfx" ]; then
     git clone --quiet https://github.com/jpcima/ysfx.git "$build/ysfx"
     git -C "$build/ysfx" checkout --quiet "$ysfx_rev"
     git -C "$build/ysfx" submodule update --quiet --init --recursive
   fi
+  git -C "$build/ysfx" checkout --quiet -- .
+  git -C "$build/ysfx" apply "$patch"
   cmake -S "$build/ysfx" -B "$build/ysfx/build" -DYSFX_PLUGIN=OFF -DYSFX_GFX=OFF -DCMAKE_BUILD_TYPE=Release >/dev/null
   cmake --build "$build/ysfx/build" -j"$(nproc 2>/dev/null || echo 2)" >/dev/null
+  cp "$patch" "$build/ysfx/.null_patch"
 fi
-if [ ! -x "$build/jsfx_test" ] || [ "$here/jsfx_test.cpp" -nt "$build/jsfx_test" ]; then
+if [ ! -x "$build/jsfx_test" ] || [ "$here/jsfx_test.cpp" -nt "$build/jsfx_test" ] || [ "$build/ysfx/build/libysfx.a" -nt "$build/jsfx_test" ]; then
   g++ -O2 -std=c++17 -I "$build/ysfx/include" "$here/jsfx_test.cpp" "$build/ysfx/build/libysfx.a" -lpthread -ldl -o "$build/jsfx_test"
 fi
 
-if [ ! -x "$build/chain_test" ] || [ "$here/chain_test.cpp" -nt "$build/chain_test" ]; then
+if [ ! -x "$build/chain_test" ] || [ "$here/chain_test.cpp" -nt "$build/chain_test" ] || [ "$build/ysfx/build/libysfx.a" -nt "$build/chain_test" ]; then
   g++ -O2 -std=c++17 -I "$build/ysfx/include" "$here/chain_test.cpp" "$build/ysfx/build/libysfx.a" -lpthread -ldl -o "$build/chain_test"
 fi
 
 # the Assisted test also compiles the native DSP headers it compares against
-assisted_src=("$here/assisted_test.cpp" "$root"/native/plugins/assisted_*/Assisted*DSP.hpp "$root/native/common/AssistedTargets.hpp")
+assisted_src=("$here/assisted_test.cpp" "$build/ysfx/build/libysfx.a" "$root"/native/plugins/assisted_*/Assisted*DSP.hpp "$root/native/common/AssistedTargets.hpp")
 assisted_new=0
 [ -x "$build/assisted_test" ] || assisted_new=1
 for f in "${assisted_src[@]}"; do [ "$f" -nt "$build/assisted_test" ] && assisted_new=1; done
