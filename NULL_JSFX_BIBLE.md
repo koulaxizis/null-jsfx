@@ -171,7 +171,7 @@ Rule numbers are stable. A retired rule keeps its number, marked *retired*, and 
 
 | # | Rule |
 |---|---|
-| R18 | The plugin cards, guides, plugin pages, sitemap and the plugin lists in README.md and llms.txt come from the headers and `tools/site_content.json`. A new plugin stays off the site until Christos says "launch": its entry waits in `tools/site_content_next.json`, and so do the FX chains that use it. |
+| R18 | The plugin cards, guides, plugin pages, sitemap and the plugin lists in README.md and llms.txt come from the headers and `tools/site_content.json`. A finished plugin goes on the site in the same delivery, without waiting for a "launch" (Christos, 2026-11-02, Part VII); what is not confirmed for real or beyond doubt by the automated tests gets `"beta": true`. `tools/site_content_next.json` stays as the place for a plugin that is not finished yet. |
 
 **Versions and distribution**
 
@@ -284,7 +284,7 @@ The user picks formats, plugins and extras (on Linux the formats include LV2 in 
 | `gfx_render/`, `render_gfx_shots.sh` | GFX screenshots (`assets/img/gfx/`) |
 | `demo_render/` | the ysfx renderer behind `render_demos.py` |
 
-The data files are `site_content.json` (texts per plugin), `site_content_next.json` (plugins waiting off the site: none since the 3.0 launch). An entry in `site_content.json` with `"beta": true` gets a BETA badge on its card, guide and page, a beta note in its guide and page, and "(beta)" in README.md, llms.txt and the Hub catalog's tagline (`build_site.py` `BETA_BADGE`, `BETA_NOTE`); taking the key out ends the beta, `site_chains.json` (one line per chain, plus Macro 1/2 names), `assisted_targets.json` (the targets, sources and rule numbers of the Assisted plugins) and `presets/*.json`.
+The data files are `site_content.json` (texts per plugin), `site_content_next.json` (plugins not finished yet: none since 2026-11-02, when Binaural Panner, Modal Piano, Room Tone and String Ensemble went on the site). An entry in `site_content.json` with `"beta": true` gets a BETA badge on its card, guide and page, a beta note in its guide and page, and "(beta)" in README.md, llms.txt and the Hub catalog's tagline (`build_site.py` `BETA_BADGE`, `BETA_NOTE`); taking the key out ends the beta, `site_chains.json` (one line per chain, plus Macro 1/2 names), `assisted_targets.json` (the targets, sources and rule numbers of the Assisted plugins) and `presets/*.json`.
 
 ### II.8 The site (GitHub Pages, `CNAME` nulljsfx.tech)
 
@@ -415,7 +415,7 @@ The columns are read from these files:
 | GFX | the `@gfx` line of `gfx/<file>_gfx.jsfx`, which is also the native UI size |
 | Sliders | the number of JSFX sliders |
 
-Every plugin has all of these: a GFX version, a VST3/CLAP version, a site page, a presets file and a web build. The 13 plugins of the studio plan were launched with 2.7 (2026-10-28), the 7 of the own suite with 2.8 (2026-10-31), the 4 Assisted plugins as beta with 2.9 (2026-10-31), the 13 of the vendor research with 3.0 (2026-11-01).
+Every plugin has all of these: a GFX version, a VST3/CLAP version, a site page, a presets file and a web build. The 13 plugins of the studio plan were launched with 2.7 (2026-10-28), the 7 of the own suite with 2.8 (2026-10-31), the 4 Assisted plugins as beta with 2.9 (2026-10-31), the 13 of the vendor research with 3.0 (2026-11-01), and Room Tone, Binaural Panner, String Ensemble and Modal Piano on 2026-11-02 under the rule that finished work goes on the site (R18).
 
 Why the exceptions exist: hosts store the CLAP id in sessions, so the released ids stay as they are (R3). Meters, MIDI effects and instruments get no module, and neither do Band Splitter, which needs eight-channel buses, Transient Split, which has a second stereo output, and the surround bed plugins, which need twelve (R13). Plugins that wait for "launch" (R18) have no site page yet: their texts are in `tools/site_content_next.json`.
 
@@ -641,7 +641,7 @@ The recipes live in the READMEs. This Part says where they are and lists the ste
 
 1. Write the plain JSFX first, and run `tests/run.sh <file>` on it.
 2. Add the GFX version, the native port, a Rack module (R13) and `tools/presets/<name>.json`.
-3. Add the site text in `tools/site_content.json`. Until launch, put it in `tools/site_content_next.json` instead (R18).
+3. Add the site text in `tools/site_content.json` (R18; `"beta": true` when it is not confirmed). Only a plugin that is not finished yet waits in `tools/site_content_next.json`.
 4. Run every generator in R15 and the tests in Part V.
 5. Render the video and the demo, then update the screenshot in `assets/img/gfx/`.
 6. Plugin counts that are written by hand need updating too: `<title>` and the meta descriptions in `index.html`, the download dialog and the Rack showcase there, and the social preview (`make_social_preview.py`).
@@ -1854,4 +1854,11 @@ entry and the Bible delta.
 - **Changes:** `index.html`: the showcase is now "Hub, Rack & Remotes", with two cards before Remote for orOS Studio: `#daws-remote` (REAPER, Ardour/Mixbus, Bitwig, Ableton Live, Cubase, FL Studio) and `#mixers-remote` (X AIR, X32, WING, M32, SQ, Qu), each with a Beta kicker and note, "Get the APK" (`releases/latest/download/NULL-JSFX-Remote-<App>-Android.apk`), our F-Droid repository (`fdroidrepos://` link with the fingerprint of the APK key that signs its index) and Obtainium with its APK filter. Pictures `assets/img/remote/remote-for-{daws,mixers}.jpg` (1280x720) from the screenshots of `tests/remote/android_test.cjs` and `tests/mixers/ui_test.cjs`. `llms.txt`: two lines under Links.
 - **Files:** `index.html`, `llms.txt`, `assets/img/remote/remote-for-daws.jpg` (new), `assets/img/remote/remote-for-mixers.jpg` (new), this Bible (II.8, VII).
 - **Tests (run on Linux):** the page in Chromium at 1280 and 390 px (no sideways scroll, the cards render), `python3 tools/build_site.py --check`, `python3 tests/lint.py`, `python3 tests/bible_order.py`, `python3 tools/build_bible.py --check`. Not run: the download links, which answer 404 until a published release carries the APKs (the first one after 3.0), and the F-Droid repository, which fills on that release.
+- **Version:** v3.0 (no change).
+
+### 2026-11-02 — site (no version change) — Binaural Panner, Modal Piano, Room Tone and String Ensemble on the site
+- **Why:** Christos's rule of 2026-11-02, finished work goes on the site without a "launch" (Part VII); the four were finished on 2026-11-01 and 2026-11-02 (B17) and waited in `tools/site_content_next.json`.
+- **Changes:** their entries moved into `tools/site_content.json` (`site_content_next.json` is now `{}`); `build_site.py` regenerated the cards, guides, plugin pages, sitemap, README and `llms.txt` (154 plugins: 22 One Slider, 57 Essentials, 46 Advanced, 4 Assisted, 14 Instruments, 11 MIDI). GFX screenshots `assets/img/gfx/{binaural_panner,modal_piano,room_tone,string_ensemble}.png` (the `render_gfx_shots.sh` renderer at twice the @gfx size) and videos `assets/video/<name>.{mp4,jpg}` (`tools/video/make_videos.py`; Modal Piano and String Ensemble got entries in `tools/video/videos.json`: the "keys" and "pad" patterns, three presets and a sweep; without them the instruments' videos were silent); `media.yml` uploads the videos on the push to main. Not beta: all four pass the suite's automated tests in every form. Christos's ear on Modal Piano (B17) stays open as feedback, not a beta condition. Counts written by hand: `<title>` (154) and the Rack card (111 modules, the files in `native/plugins/rack/modules/`; it still said 95), `assets/img/social-preview.jpg` (`make_social_preview.py`). No audio demos, as for the plugins launched with 2.8 and 3.0. R18, II.8, III and IV updated.
+- **Files:** `tools/site_content.json`, `tools/site_content_next.json`, `tools/video/videos.json`, `index.html`, `assets/js/modals.js`, `README.md`, `llms.txt`, `sitemap.xml`, `plugins/*/index.html` (4 new, the others for the count), `assets/img/gfx/*.png` (4 new), `assets/video/*` (8 new), `assets/img/social-preview.jpg`, this Bible (R18, II.8, III, IV, VII).
+- **Tests (run on Linux):** `python3 tools/build_site.py --check`, `build_catalog.py --check` (155), `build_chains.py --check`, `build_presets.py --check`, `build_remote.py --check`, `build_bible.py --check`, `tests/lint.py`, `tests/bible_order.py`; the four videos checked for sound (mean −18 to −20 dB) and a frame of each instrument's video looked at. Not run: the upload of the videos (after the merge).
 - **Version:** v3.0 (no change).

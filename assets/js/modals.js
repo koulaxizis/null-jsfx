@@ -1308,6 +1308,27 @@ const guides = {
     demo: 'ring_mod',
     page: 'plugins/ring-mod/'
   },
+  'room-tone': {
+    title: 'ROOM TONE',
+    subtitle: 'Dialogue Gap Filler',
+    category: 'Essentials',
+    sliders: [
+      { name: 'Learn', range: 'Off / On', desc: 'While On, learns the room tone per frequency and between the channels: play a passage of room tone only, then switch Off' },
+      { name: 'Threshold', range: '−80 to −20 dB', desc: 'The input level below which a gap begins' },
+      { name: 'Fill Level', range: '−20 to +6 dB', desc: 'Level of the fill against the learnt room tone' },
+      { name: 'Fade', range: '5 to 200 ms', desc: 'How fast the fill fades in and out' },
+      { name: 'Hold', range: '0 to 500 ms', desc: 'How long the input must stay below Threshold before a gap is filled' },
+      { name: 'Mode', range: 'Fill gaps / Constant bed', desc: 'Fill gaps tops quiet passages up to the room tone; Constant bed adds the fill all the time' },
+      { name: 'Listen', range: 'Output / Fill only', desc: 'Hear the output or only the fill' }
+    ],
+    uses: ['Fill the digital silence that cuts and gates leave in dialogue', 'Keep the room under a podcast steady after noise reduction', 'Lay a matching room bed under ADR recorded elsewhere', 'Bridge the gaps between edited takes from the same location'],
+    properties: 'Signal chain: Learn: Input → 2048-Point FFT (4× overlap, Hann) → Power per Bin and Cross Spectrum. Fill: Learnt Magnitudes + Random Phases (Park-Miller) → IFFT Overlap-Add → Fill Level. Gap Detector (10 ms Power, Threshold, Hold) → Top-Up to the Room Tone → Fade → Output = Input + Fill. The fill never repeats, keeps the stereo coherence of the recording and adds only what is missing, so a gap that still holds its room tone gets nothing; no latency. The profile lives in memory and is not saved with the project: learn again after a reload.',
+    formats: ['JSFX', 'GFX', 'VST3', 'CLAP', 'LV2'],
+    shot: 'assets/img/gfx/room_tone.png',
+    video: 'assets/video/room_tone.mp4',
+    studio: true,
+    page: 'plugins/room-tone/'
+  },
   'saturation': {
     title: 'SATURATION',
     subtitle: 'Seven-Mode Saturation',
@@ -1769,6 +1790,28 @@ const guides = {
     video: 'assets/video/bass_management.mp4',
     studio: true,
     page: 'plugins/bass-management/'
+  },
+  'binaural-panner': {
+    title: 'BINAURAL PANNER',
+    subtitle: '3D Headphone Panner',
+    category: 'Advanced',
+    sliders: [
+      { name: 'Azimuth', range: '−180 to +180 deg', desc: 'Direction around the head: 0 in front, 90 right, 180 behind, -90 left' },
+      { name: 'Elevation', range: '−40 to +90 deg', desc: 'Height of the source: below the ears to straight overhead' },
+      { name: 'Distance', range: '0.25 to 20 m', desc: 'Distance from the head (log scale): level, air absorption and the room\'s share' },
+      { name: 'Room', range: '0 to 100%', desc: 'Early reflections that place the sound outside the head' },
+      { name: 'Head Size', range: '14 to 20 cm', desc: 'Diameter of the listener\'s head: sets the time difference between the ears' },
+      { name: 'Input', range: 'Mono sum / Stereo', desc: 'Mono sum places one source; Stereo places the left and right inputs as two sources' },
+      { name: 'Width', range: '0 to 90 deg', desc: 'In Stereo, how far each input sits from Azimuth' },
+      { name: 'Output', range: '−24 to +12 dB', desc: 'Output level' }
+    ],
+    uses: ['Place dialogue and effects around the listener for headphone mixes', 'Move a sound behind or above the head in podcasts and audio drama', 'Turn a stereo pair into a wide image in front of the head', 'Sketch 3D positions before a surround or immersive mix'],
+    properties: 'Signal chain: Input (Mono Sum or two Stereo Sources) → Air Absorption Low-Pass → Rear Pinna Shelf (4 kHz) → Elevation Pinna Notch (6–10 kHz) → 1/r Level → per Ear: Woodworth Interaural Delay (fractional, 20 ms glide) → Brown–Duda Head Shadow → + Six Early Reflections (Room) → Output. A spherical-head model, no measured HRTF data: listen with headphones; front and back are less certain than with a measured HRTF. No latency.',
+    formats: ['JSFX', 'GFX', 'VST3', 'CLAP', 'LV2'],
+    shot: 'assets/img/gfx/binaural_panner.png',
+    video: 'assets/video/binaural_panner.mp4',
+    studio: true,
+    page: 'plugins/binaural-panner/'
   },
   'comb-filter': {
     title: 'COMB FILTER',
@@ -3116,6 +3159,29 @@ const guides = {
     video: 'assets/video/mallets.mp4',
     page: 'plugins/mallets/'
   },
+  'modal-piano': {
+    title: 'MODAL PIANO',
+    subtitle: 'Physically Modelled Piano',
+    category: 'Instruments',
+    sliders: [
+      { name: 'Hardness', range: '0 to 100%', desc: 'Felt of the hammers, from soft and dark to hard and bright' },
+      { name: 'Decay', range: '25 to 400%', desc: 'How long the strings ring, against a real grand' },
+      { name: 'Unison', range: '0 to 4 cents', desc: 'How far apart the strings of one key are tuned: the beats and the shimmer' },
+      { name: 'Inharmonicity', range: '0 to 200%', desc: 'Stiffness of the strings: how far the partials stretch above the harmonics' },
+      { name: 'Hammer Noise', range: '0 to 100%', desc: 'Level of the hammer\'s thump' },
+      { name: 'Velocity', range: '0 to 100%', desc: 'How much the velocity changes level and tone' },
+      { name: 'Damper', range: '30 to 1000 ms', desc: 'How quickly a key let go falls silent' },
+      { name: 'Body', range: '0 to 100%', desc: 'The soundboard\'s low resonance and presence' },
+      { name: 'Width', range: '0 to 100%', desc: 'How far the keys spread from left to right, as seen from the player' },
+      { name: 'Volume', range: '−24 to +12 dB', desc: 'Output level' }
+    ],
+    uses: ['Play piano parts without a sample library or a download', 'Write and sketch with a light piano that loads at once', 'Shape a felt, upright or honky-tonk piano from one model', 'Layer a piano under pads and strings'],
+    properties: 'Signal chain: MIDI → 16 Voices (up to 24 Stiff-String Partials each, Two-Pole Resonators; the first six as Prompt and Aftersound pairs a little apart in pitch: double decay and unison beats) ← Hammer (strike position 1/8, felt low-pass by velocity and Hardness, contact time) → Damper per Key (Sustain pedal CC 64, Soft pedal CC 67; no dampers above F#6) → Stereo Keys (Width) + Hammer Thump → Body (110 Hz and 2.5 kHz) → Volume. Modal synthesis from physics, no samples; resonators that fall 100 dB are dropped, so a voice costs less as it dies away. All MIDI passed on.',
+    formats: ['JSFX', 'GFX', 'VST3', 'CLAP', 'LV2'],
+    shot: 'assets/img/gfx/modal_piano.png',
+    video: 'assets/video/modal_piano.mp4',
+    page: 'plugins/modal-piano/'
+  },
   'organ': {
     title: 'ORGAN',
     subtitle: 'Tonewheel Organ with Rotary Speaker',
@@ -3278,6 +3344,28 @@ const guides = {
     shot: 'assets/img/gfx/sampler.png',
     video: 'assets/video/sampler.mp4',
     page: 'plugins/sampler/'
+  },
+  'string-ensemble': {
+    title: 'STRING ENSEMBLE',
+    subtitle: '70s String Machine',
+    category: 'Instruments',
+    sliders: [
+      { name: 'Violins 4\'', range: '0 to 100%', desc: 'Level of the 4\' register, an octave above the key' },
+      { name: 'Violas 8\'', range: '0 to 100%', desc: 'Level of the 8\' register, at the key\'s pitch' },
+      { name: 'Cellos 16\'', range: '0 to 100%', desc: 'Level of the 16\' register, an octave below the key' },
+      { name: 'Attack', range: '5 to 3000 ms', desc: 'How slowly the keys swell in' },
+      { name: 'Release', range: '20 to 5000 ms', desc: 'How long the keys ring after they are let go' },
+      { name: 'Brightness', range: '0 to 100%', desc: 'Low-pass of the whole section, from dark to bright' },
+      { name: 'Ensemble', range: '0 to 100%', desc: 'How much of the three-tap ensemble chorus is heard' },
+      { name: 'Ensemble Mode', range: 'Classic / Wide / Deep', desc: 'Classic, Wide (the taps spread to the sides) or Deep (slower and deeper)' },
+      { name: 'Volume', range: '−24 to +12 dB', desc: 'Output level' }
+    ],
+    uses: ['Lay a warm string bed under a song', 'Play the classic 70s string-machine parts', 'Swell pads in from silence with a long attack', 'Thicken synth or organ parts with an octave of strings'],
+    properties: 'Signal chain: MIDI → a Voice per Key (16\', 8\' and 4\' PolyBLEP Sawtooths, locked an octave apart, free-running) × Attack/Release Envelope → Sum → 12 dB/oct Low-Pass (Brightness) → Body Resonances (450 Hz, 2.8 kHz) → Three-Tap Ensemble (slow and fast LFOs, 120° apart; mod wheel deepens it) → Volume. Fully polyphonic like the divide-down originals, no samples; sustain pedal, pitch bend ±2 semitones, all MIDI passed on.',
+    formats: ['JSFX', 'GFX', 'VST3', 'CLAP', 'LV2'],
+    shot: 'assets/img/gfx/string_ensemble.png',
+    video: 'assets/video/string_ensemble.mp4',
+    page: 'plugins/string-ensemble/'
   },
   'synth': {
     title: 'SYNTH',
