@@ -29,13 +29,13 @@ jobs:
           python -m zipfile -e pluginval.zip pv/
           p="native/dist/VST3/NULL JSFX/null_jsfx_synth.vst3"
           mkdir -p logs; fails=0
-          for s in $(seq 1 400); do
+          for s in $(seq 1 120); do
             if ! pv/pluginval.exe validate --strictness-level 5 --skip-gui-tests --random-seed $s "$p" > logs/$s.log 2>&1; then
               fails=$((fails + 1)); echo "=== seed $s FAILED"
-              grep -E '^(Starting tests in|!!! |Testing with)' logs/$s.log | grep -B2 '^!!! ' | head -40
+              sed -n '/Starting tests in: pluginval \/ vst3 validator/,/Starting tests in: pluginval \/ Basic bus/p' logs/$s.log | head -80
             fi
           done
-          echo "failures: $fails / 400"
+          echo "failures: $fails / 120"
       - uses: actions/upload-artifact@v7
         if: always()
         with: { name: diag-logs, path: logs, retention-days: 3 }
