@@ -36,10 +36,13 @@ Variants are `<app><Store>`, e.g. `dawsGithubRelease`.
 ```
 cd android && ./gradlew testDawsGithubDebugUnitTest assembleDebug      # needs the Android SDK (API 35)
 node tests/remote/android_test.cjs                                       # the pages, in Chromium
+node tests/remote/device_test.cjs <app-daws-github-debug.apk>            # Remote for DAWs in an emulator
+node tests/mixers/device_test.cjs <app-mixers-github-debug.apk>          # Remote for Mixers in an emulator
 ```
 
-CI: `.github/workflows/android.yml` (pages, unit tests, lint, every debug APK as an artifact;
-on a published release the signed APKs of `RELEASED_APPS`).
+CI: `.github/workflows/android.yml` (pages, unit tests, lint, every debug APK as an artifact,
+each app in an emulator against stand-ins on the host; on a published release the signed APKs
+of `RELEASED_APPS`).
 
 ## Signing
 
