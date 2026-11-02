@@ -50,21 +50,26 @@
   }
   async function loadAll(list) { for (const f of list) await load(f); }
 
-  let effects = null; // web/fx/index.json effects
+  // The NULL plugin catalog every remote shares (remote/null_plugins.json from
+  // tools/build_remote.py, copied into the app as core/null_plugins.json): every plugin,
+  // effects, instruments and MIDI effects alike, as {id, name, nn (native name, when it
+  // differs), category}.
+  const CATALOG = '../core/null_plugins.json';
+  let effects = null;
   async function nullIndex() {
     if (effects) return effects;
     try {
-      const res = await fetch(NULLFX + 'fx/index.json');
-      effects = res.ok ? (await res.json()).effects : [];
+      const res = await fetch(CATALOG);
+      effects = res.ok ? (await res.json()).plugins.map((p) => ({ id: p.s, name: p.n, nn: p.nn, category: p.c })) : [];
     } catch (e) { effects = []; }
     return effects;
   }
 
-  /** The NULL JSFX effect a plugin name stands for ("NULL Tilt", "Tilt GFX"), or null. */
+  /** The NULL JSFX plugin a plugin name stands for ("NULL Tilt", "Tilt GFX"), or null. */
   function nullEffect(name, list) {
     if (!name || !list) return null;
     const bare = String(name).replace(/^NULL\s+/i, '').replace(/\s+GFX$/i, '').trim().toLowerCase();
-    return list.find((e) => e.name.toLowerCase() === bare) || null;
+    return list.find((e) => e.name.toLowerCase() === bare || (e.nn && e.nn.toLowerCase() === bare)) || null;
   }
 
   /**
@@ -703,5 +708,5 @@
     NullRemote[P.id] = { connect, get session() { return session; }, get view() { return view; } };
   }
 
-  window.NullDawDesk = { register, FLAG, nullEffect, mapSliders, toParam, fromParam, load };
+  window.NullDawDesk = { register, FLAG, nullIndex, nullEffect, mapSliders, toParam, fromParam, load };
 })();
