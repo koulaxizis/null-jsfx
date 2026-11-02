@@ -10,17 +10,22 @@ root="$(dirname "$here")"
 build="$here/.build"
 ysfx_rev="$(sed -n 's/^ysfx_rev=//p' "$here/run.sh")"
 
-if [ ! -f "$build/ysfx/build/libysfx.a" ]; then
+# the same patched ysfx as tests/run.sh (tests/ysfx_preprocessor.patch)
+patch="$root/tests/ysfx_preprocessor.patch"
+if [ ! -f "$build/ysfx/build/libysfx.a" ] || ! cmp -s "$patch" "$build/ysfx/.null_patch"; then
   mkdir -p "$build"
   if [ ! -d "$build/ysfx" ]; then
     git clone --quiet https://github.com/jpcima/ysfx.git "$build/ysfx"
     git -C "$build/ysfx" checkout --quiet "$ysfx_rev"
     git -C "$build/ysfx" submodule update --quiet --init --recursive
   fi
+  git -C "$build/ysfx" checkout --quiet -- .
+  git -C "$build/ysfx" apply "$patch"
   cmake -S "$build/ysfx" -B "$build/ysfx/build" -DYSFX_PLUGIN=OFF -DYSFX_GFX=OFF -DCMAKE_BUILD_TYPE=Release >/dev/null
   cmake --build "$build/ysfx/build" -j"$(nproc 2>/dev/null || echo 2)" >/dev/null
+  cp "$patch" "$build/ysfx/.null_patch"
 fi
-if [ ! -x "$build/stress_test" ] || [ "$here/stress_test.cpp" -nt "$build/stress_test" ]; then
+if [ ! -x "$build/stress_test" ] || [ "$here/stress_test.cpp" -nt "$build/stress_test" ] || [ "$build/ysfx/build/libysfx.a" -nt "$build/stress_test" ]; then
   g++ -O2 -std=c++17 -I "$build/ysfx/include" "$here/stress_test.cpp" "$build/ysfx/build/libysfx.a" -lpthread -ldl -o "$build/stress_test"
 fi
 

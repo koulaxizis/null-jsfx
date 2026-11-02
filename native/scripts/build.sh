@@ -49,7 +49,7 @@ elif command -v ninja >/dev/null 2>&1; then
   gen=(-G Ninja)
 fi
 
-if [ "$tests" = ON ] && [ ! -f "$repo/tests/.build/ysfx/build/libysfx.a" ]; then
+if [ "$tests" = ON ] && ! cmp -s "$repo/tests/ysfx_preprocessor.patch" "$repo/tests/.build/ysfx/.null_patch"; then
   echo "== building ysfx via tests/run.sh"
   bash "$repo/tests/run.sh" --build-only
 fi
