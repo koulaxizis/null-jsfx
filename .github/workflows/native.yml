@@ -20,9 +20,9 @@ name: VST3 and CLAP
 on:
   push:
     branches: [main]
-    paths: ["native/**", "DATA/**", "remote/**", "tests/run.sh", "tests/installer_test.sh", "tests/pkg_test.sh", "installer/**", "tools/build_installer.py", ".github/workflows/native.yml"]
+    paths: ["native/**", "DATA/**", "remote/**", "tests/run.sh", "tests/ysfx_preprocessor.patch", "tests/installer_test.sh", "tests/pkg_test.sh", "installer/**", "tools/build_installer.py", ".github/workflows/native.yml"]
   pull_request:
-    paths: ["native/**", "DATA/**", "remote/**", "tests/run.sh", "tests/installer_test.sh", "tests/pkg_test.sh", "installer/**", "tools/build_installer.py", ".github/workflows/native.yml"]
+    paths: ["native/**", "DATA/**", "remote/**", "tests/run.sh", "tests/ysfx_preprocessor.patch", "tests/installer_test.sh", "tests/pkg_test.sh", "installer/**", "tools/build_installer.py", ".github/workflows/native.yml"]
   workflow_dispatch:
     inputs:
       release_tag:
@@ -79,7 +79,7 @@ jobs:
         if: matrix.test != ''
         with:
           path: tests/.build/ysfx
-          key: ysfx-${{ matrix.os }}-${{ hashFiles('tests/run.sh') }}
+          key: ysfx-${{ matrix.os }}-${{ hashFiles('tests/run.sh', 'tests/ysfx_preprocessor.patch') }}
 
       - name: Linux deps
         if: runner.os == 'Linux'

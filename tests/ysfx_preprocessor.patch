@@ -1,0 +1,54 @@
+diff --git a/sources/ysfx_parse.cpp b/sources/ysfx_parse.cpp
+index 8e9f93f..900ccb1 100644
+--- a/sources/ysfx_parse.cpp
++++ b/sources/ysfx_parse.cpp
+@@ -20,8 +20,41 @@
+ #include <cstdlib>
+ #include <cstring>
+ 
++// NULL JSFX test patch: REAPER runs <? ... ?> blocks (the EEL preprocessor) before it compiles a
++// JSFX; ysfx has no preprocessor. Drop the blocks, as an older REAPER whose preprocessor defines
++// none of the feature names tested in them (jsfx_has_...) would emit nothing for them. The line
++// count stays the same, so error lines still match the file.
++static void null_strip_preprocessor(std::string &line, bool &in_block)
++{
++    std::string out;
++    size_t i = 0;
++    while (i < line.size()) {
++        if (in_block) {
++            size_t e = line.find("?>", i);
++            if (e == std::string::npos)
++                i = line.size();
++            else {
++                i = e + 2;
++                in_block = false;
++            }
++        }
++        else {
++            size_t b = line.find("<?", i);
++            if (b == std::string::npos) {
++                out.append(line, i, std::string::npos);
++                break;
++            }
++            out.append(line, i, b - i);
++            i = b + 2;
++            in_block = true;
++        }
++    }
++    line.swap(out);
++}
++
+ bool ysfx_parse_toplevel(ysfx::text_reader &reader, ysfx_toplevel_t &toplevel, ysfx_parse_error *error)
+ {
++    bool in_preprocessor = false;
+     toplevel = ysfx_toplevel_t{};
+ 
+     ysfx_section_t *current = new ysfx_section_t;
+@@ -73,6 +106,7 @@ bool ysfx_parse_toplevel(ysfx::text_reader &reader, ysfx_toplevel_t &toplevel, y
+             current->line_offset = lineno + 1;
+         }
+         else {
++            null_strip_preprocessor(line, in_preprocessor);
+             current->text.append(line);
+             current->text.push_back('\n');
+         }

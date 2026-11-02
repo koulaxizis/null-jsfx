@@ -1,5 +1,5 @@
 desc:NULL JSFX shared GFX library
-//NULL JSFX v3.0 • https://nulljsfx.tech • MIT License
+//NULL JSFX v3.1 • https://nulljsfx.tech • MIT License
 //
 // Shared look for every "NULL X GFX" plugin: the nulljsfx.tech palette, header, cards,
 // knobs and text helpers. Import it with `import null_gfx.jsfx-inc` and draw in design
@@ -498,6 +498,9 @@ desc:NULL JSFX shared GFX library
   // its hover result and an id; returns the new value. Drag (Ctrl = fine), double-click
   // resets to def, wheel steps by step. px_range = design pixels for the full range;
   // horiz = 1 for sliders (only sideways movement counts), 0 for knobs (both directions).
+  // While dragging, the cursor is hidden (REAPER 7.83+: mouse_cap bit 65536 set in @gfx; it
+  // comes back where the drag began, and mouse_x/mouse_y keep moving, so the deltas below are
+  // unchanged; older REAPER ignores the bit).
   function ng_input(id, hover, v, lo, hi, def, step, px_range, horiz) local(sens, nv, mv)
   (
     nv = v;
@@ -523,6 +526,7 @@ desc:NULL JSFX shared GFX library
       ng_lx = mouse_x;
       ng_ly = mouse_y;
       nv = ng_drag_val;
+      mouse_cap |= 65536;
     );
     hover && mouse_wheel != 0 && !ng_drag ? (
       nv = max(lo, min(hi, v + (mouse_wheel > 0 ? step : -step)));
