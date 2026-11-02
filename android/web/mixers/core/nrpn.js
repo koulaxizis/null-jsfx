@@ -1,4 +1,5 @@
-// NULL Remote, Mixers: a console that speaks MIDI NRPN over TCP (Allen & Heath SQ, sq/profile.js).
+// NULL Remote, Mixers: a console that speaks MIDI NRPN over TCP (Allen & Heath SQ, sq/profile.js;
+// Allen & Heath Qu, qu/profile.js).
 // The same interface as the OSC session in core/mixer.js (connect, disconnect, get, set, on,
 // onAny, onMeters, onStatus, action, layout, info, profile, status), so the tab (mixers.js) does
 // not care which one it drives.
@@ -8,6 +9,19 @@
 //         message and not the answer's format; the set format is the natural one)
 // The parameter address is MSB·128 + LSB and the value VC·128 + VF (14 bits). The profile maps
 // the tab's paths to addresses and values (address, toValue, fromValue).
+// A profile may change how the session talks (the Qu does; every hook is optional, the SQ has none):
+//   key(msb, lsb, vc, vf) -> {addr, raw}     an NRPN message's address and value (default: MSB·128
+//                                            + LSB, VC·128 + VF)
+//   noteKey(note, velocity) -> {addr, raw}   a note on (velocity > 0) as a value (Qu: mutes)
+//   encode(channel, path, raw) -> bytes      what a set sends (default: the NRPN set above)
+//   hello() -> bytes, helloReply(sysex) -> {channel, model} or null, syncEnd(sysex) -> bool:
+//                                            the console pushes its whole state after a hello, so
+//                                            nothing is asked one by one; connect waits for the
+//                                            reply, then for the end of the push
+//   query(path) -> bytes or null             ask one value (default: the NRPN get above; Qu: names)
+//   fromSysex(sysex) -> [{addr, raw}]        values in System Exclusive messages (Qu: names)
+//   layoutFor(model)                         the layout once the console has said what it is
+//   keepAliveMs                              send Active Sensing (FE) this often
 // NULL JSFX • https://nulljsfx.tech • MIT License
 (function (root, factory) {
   const api = factory(root);
@@ -31,17 +45,25 @@
   }
 
   /** Reads a MIDI byte stream (running status too) and calls onValue(channel, address, value)
-   *  for every complete NRPN value (CC 38 after 99, 98 and 6). */
+   *  for every complete NRPN value (CC 38 after 99, 98 and 6), with MSB, LSB, VC and VF after
+   *  them for a profile that reads them its own way. */
   class Parser {
-    constructor(onValue) {
+    // onNote(channel, note, velocity) for a note on, onSysex(bytes F0..F7): both optional
+    constructor(onValue, onNote, onSysex) {
       this.onValue = onValue;
+      this.onNote = onNote || null;
+      this.onSysex = onSysex || null;
+      this.sx = null; // a System Exclusive message being read
       this.status = 0;
       this.data = [];
       this.ch = new Map(); // channel -> {msb, lsb, vc}
     }
     push(bytes) {
       for (const x of bytes) {
-        if (x >= 0xf8) continue; // real time
+        if (x >= 0xf8) continue; // real time (the Qu's Active Sensing too)
+        if (x === 0xf0) { this.sx = [x]; this.status = 0; continue; }
+        if (x === 0xf7) { if (this.sx && this.onSysex) { this.sx.push(x); this.onSysex(this.sx); } this.sx = null; continue; }
+        if (this.sx) { if (x < 0x80) { this.sx.push(x); continue; } this.sx = null; }
         if (x >= 0x80) { this.status = x < 0xf0 ? x : 0; this.data = []; continue; }
         if (!this.status) continue;
         this.data.push(x);
@@ -51,13 +73,14 @@
         const [a, b] = this.data;
         this.data = [];
         if (type === 0xb0) this.cc(this.status & 15, a, b);
+        else if (type === 0x90 && b > 0 && this.onNote) this.onNote(this.status & 15, a, b);
       }
     }
     cc(ch, num, v) {
       let s = this.ch.get(ch);
       if (!s) this.ch.set(ch, (s = { msb: -1, lsb: -1, vc: -1 }));
       if (num === 0x63) { s.msb = v; s.vc = -1; } else if (num === 0x62) { s.lsb = v; s.vc = -1; } else if (num === 0x06) s.vc = v;
-      else if (num === 0x26 && s.msb >= 0 && s.lsb >= 0 && s.vc >= 0) this.onValue(ch, s.msb * 128 + s.lsb, s.vc * 128 + v);
+      else if (num === 0x26 && s.msb >= 0 && s.lsb >= 0 && s.vc >= 0) this.onValue(ch, s.msb * 128 + s.lsb, s.vc * 128 + v, s.msb, s.lsb, s.vc, v);
     }
   }
 
@@ -79,18 +102,21 @@
       this.layout = null;
       this.conn = null;
       this.closed = true;
-      this.parser = new Parser((ch, addr, v) => this._rx(ch, addr, v));
+      const P = profile;
+      this.parser = new Parser(
+        (ch, addr, raw, msb, lsb, vc, vf) => {
+          const k = P.key ? P.key(msb, lsb, vc, vf) : { addr, raw };
+          if (k) this._rx(ch, k.addr, k.raw);
+        },
+        P.noteKey ? (ch, note, vel) => { const k = P.noteKey(note, vel); if (k) this._rx(ch, k.addr, k.raw); } : null,
+        (sx) => this._sysex(sx));
     }
 
     connect(host, port, timeoutMs = 3000) {
       this.host = host;
       this.port = port || this.profile.port;
       this.closed = false;
-      this.layout = this.profile.layout();
-      for (const p of this.layout.params) {
-        this.params.set(p.path, p.type);
-        this.byAddr.set(this.profile.address(p.path), p.path);
-      }
+      this._useLayout(this.profile.layout());
       this._setStatus('connecting');
       return new Promise((resolve, reject) => {
         const t = setTimeout(() => { fail(new Error('No answer from ' + host)); }, timeoutMs);
@@ -99,7 +125,7 @@
           clearTimeout(t);
           // no console name on this protocol: the address stands in for it
           this.info = { ip: host, name: host, model: this.profile.family.replace(/^Allen & Heath /, '') };
-          this._queryAll().then(() => { this._setStatus('online'); resolve(this.info); });
+          this._sync(timeoutMs).then(() => { this._setStatus('online'); resolve(this.info); }, fail);
         }, (why) => fail(new Error((why ? why + ': ' : '') + 'no connection to ' + host + ':' + this.port)));
       });
     }
@@ -107,10 +133,16 @@
     _open(onUp, onFail) {
       let up = false;
       this.conn = this.dial(this.host, this.port)({
-        onOpen: () => { up = true; onUp(); },
+        onOpen: () => {
+          up = true;
+          clearInterval(this.alive);
+          if (this.profile.keepAliveMs) this.alive = setInterval(() => this._tx([0xfe]), this.profile.keepAliveMs);
+          onUp();
+        },
         onData: (bytes) => this.parser.push(bytes),
         onClose: (why) => {
           this.conn = null;
+          clearInterval(this.alive);
           if (!up) { if (onFail) onFail(why); return; }
           if (this.closed) return;
           // the link went away: try again until it is back, then read everything again
@@ -122,13 +154,14 @@
     _redial() {
       this.redial = setTimeout(() => {
         if (this.closed) return;
-        this._open(() => this._queryAll().then(() => this._setStatus('online')), () => { if (!this.closed) this._redial(); });
+        this._open(() => this._sync(3000).then(() => this._setStatus('online'), () => { if (this.conn) this.conn.close(); }), () => { if (!this.closed) this._redial(); });
       }, REDIAL_MS);
     }
 
     disconnect() {
       this.closed = true;
       clearTimeout(this.redial);
+      clearInterval(this.alive);
       for (const p of this.pending.values()) clearTimeout(p.timer);
       this.pending.clear();
       if (this.conn) { const c = this.conn; this.conn = null; c.close(); }
@@ -146,7 +179,12 @@
       let p = this.pending.get(path);
       if (!p) { p = { value, timer: null, last: 0 }; this.pending.set(path, p); }
       p.value = value;
-      const flush = () => { p.timer = null; p.last = Date.now(); this._tx(setMessage(this.channel, this.profile.address(path), this.profile.toValue(path, p.value))); };
+      const flush = () => {
+        p.timer = null;
+        p.last = Date.now();
+        const raw = this.profile.toValue(path, p.value);
+        this._tx(this.profile.encode ? this.profile.encode(this.channel, path, raw) : setMessage(this.channel, this.profile.address(path), raw));
+      };
       if (p.timer) return;
       const now = Date.now();
       if (now - p.last >= SEND_GAP_MS) flush();
@@ -176,7 +214,53 @@
       if (this.values.get(path) === v) return;
       this.values.set(path, v);
       this._emit(path, v, false);
-      if (this.queryWaiter && this.values.size >= this.layout.params.length) this.queryWaiter();
+      if (this.queryWaiter && this.values.size >= this.want) this.queryWaiter();
+    }
+
+    _useLayout(layout) {
+      this.layout = layout;
+      this.params.clear();
+      this.byAddr.clear();
+      for (const p of layout.params) {
+        this.params.set(p.path, p.type);
+        this.byAddr.set(this.profile.address(p.path), p.path);
+      }
+    }
+
+    // a System Exclusive message: the hello's answer, the end of the push, or values (names)
+    _sysex(sx) {
+      const P = this.profile;
+      if (this.helloWaiter && P.helloReply) {
+        const r = P.helloReply(sx);
+        if (r) { this.helloWaiter(r); return; }
+      }
+      if (this.syncWaiter && P.syncEnd && P.syncEnd(sx)) { this.syncWaiter(); return; }
+      if (P.fromSysex) for (const k of P.fromSysex(sx) || []) this._rx(this.channel, k.addr, k.raw);
+    }
+
+    // read the console's state: a hello and its push (Qu), or every parameter asked (SQ)
+    _sync(ms) {
+      const P = this.profile;
+      if (!P.hello) return this._queryAll();
+      return new Promise((resolve, reject) => {
+        const t = setTimeout(() => { this.helloWaiter = null; reject(new Error('No answer from the ' + P.family.replace(/^Allen & Heath /, '') + ' at ' + this.host)); }, ms);
+        this.helloWaiter = (r) => {
+          clearTimeout(t);
+          this.helloWaiter = null;
+          this.channel = r.channel;
+          if (r.model) this.info.model = r.model;
+          if (P.layoutFor) this._useLayout(P.layoutFor(r.model));
+          // the push of every value follows; then ask what only a query gives (names)
+          const done = () => {
+            this.syncWaiter = null;
+            clearTimeout(this.syncTimer);
+            this._queryAll(1500).then(resolve);
+          };
+          this.syncWaiter = done;
+          this.syncTimer = setTimeout(done, 4000);
+        };
+        this._tx(P.hello());
+      });
     }
 
     _emit(path, value, local) {
@@ -185,19 +269,24 @@
       for (const cb of this.anyListeners) cb(path, value, local);
     }
 
-    // ask every parameter, paced; resolves when all have answered or after a timeout
+    // ask every parameter (the profile's query: only those it can ask), paced; resolves when all
+    // have answered or after a timeout
     _queryAll(ms = 2500) {
-      const paths = this.layout.params.map((p) => p.path);
+      const P = this.profile;
+      const ask = (path) => (P.query ? P.query(this.channel, path) : getMessage(this.channel, P.address(path)));
+      const paths = this.layout.params.map((p) => p.path).filter((path) => ask(path));
+      const want = this.values.size + paths.filter((path) => !this.values.has(path)).length;
       let i = 0;
       const tick = () => {
         const out = [];
-        for (let n = 0; n < QUERY_BATCH && i < paths.length; n++, i++) out.push(...getMessage(this.channel, this.profile.address(paths[i])));
+        for (let n = 0; n < QUERY_BATCH && i < paths.length; n++, i++) out.push(...ask(paths[i]));
         if (out.length) this._tx(out);
         if (i < paths.length) setTimeout(tick, QUERY_TICK_MS);
       };
       tick();
+      this.want = want;
       return new Promise((resolve) => {
-        if (this.values.size >= paths.length) { resolve(); return; }
+        if (this.values.size >= want) { resolve(); return; }
         const t = setTimeout(() => { this.queryWaiter = null; resolve(); }, ms);
         this.queryWaiter = () => { clearTimeout(t); this.queryWaiter = null; resolve(); };
       });

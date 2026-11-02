@@ -18,6 +18,8 @@ const net = require('net');
 const sq = require(path.join(web, 'sq/profile.js'));
 const Nrpn = require(path.join(web, 'core/nrpn.js'));
 const sqSim = require('./sq_sim.cjs');
+const qu = require(path.join(web, 'qu/profile.js'));
+const quSim = require('./qu_sim.cjs');
 
 let failures = 0;
 const tests = [];
@@ -567,6 +569,107 @@ test('SQ: nobody on the port fails cleanly', async () => {
   const s = new Nrpn.Session(sq, nodeTcp);
   await assert.rejects(s.connect('127.0.0.1', port, 1000), /no connection/);
   assert.strictEqual(s.status, 'failed');
+});
+
+// --- Allen & Heath Qu (MIDI over TCP, its own hooks on core/nrpn.js) -----------------------
+
+test('Qu messages byte for byte, as the protocol document writes them', () => {
+  const hx = (a) => a.map((x) => x.toString(16).toUpperCase().padStart(2, '0')).join(' ');
+  // Input 1 fader at 0 dB: BN 63 CH, BN 62 17, BN 06 VA, BN 26 07 (channel N = 0)
+  assert.strictEqual(hx(qu.encode(0, '/ip/1/lr', qu.toValue('/ip/1/lr', 0.75))), 'B0 63 20 B0 62 17 B0 06 62 B0 26 07');
+  // ST 2 pan full right, to LR: ID 16, VA 4A, VX 07
+  assert.strictEqual(hx(qu.encode(0, '/st/2/pan', qu.toValue('/st/2/pan', 1))), 'B0 63 41 B0 62 16 B0 06 4A B0 26 07');
+  // Input 32 send to Mix 9-10 at +10 dB on channel 3: ID 20, VX 06
+  assert.strictEqual(hx(qu.encode(2, '/ip/32/mix/7', qu.toValue('/ip/32/mix/7', 1))), 'B2 63 3F B2 62 20 B2 06 7F B2 26 06');
+  // mutes: note on 9N CH 7F (on) / 3F (off), then the note with velocity 00
+  assert.strictEqual(hx(qu.encode(0, '/fx/1/mute', qu.toValue('/fx/1/mute', 0))), '90 08 7F 90 08 00', 'FX Rtn 1 muted');
+  assert.strictEqual(hx(qu.encode(0, '/lr/mute', qu.toValue('/lr/mute', 1))), '90 67 3F 90 67 00', 'LR unmuted');
+  assert.strictEqual(hx(qu.encode(0, '/mgrp/4', 1)), '90 53 7F 90 53 00', 'mute group 4 on');
+  assert.strictEqual(hx(qu.encode(0, '/mix/5/lvl', 0)), 'B0 63 64 B0 62 17 B0 06 00 B0 26 07', 'Mix 5-6 master at -inf');
+  // Get System State and its answer; a name request
+  assert.strictEqual(hx(qu.hello()), 'F0 00 00 1A 50 11 01 00 7F 10 01 F7');
+  assert.deepStrictEqual(qu.helloReply([0xf0, 0, 0, 0x1a, 0x50, 0x11, 1, 0, 3, 0x11, 2, 1, 9, 0xf7]), { channel: 3, model: 'Qu-24' });
+  assert.strictEqual(qu.helloReply([0xf0, 0, 0, 0x1a, 0x50, 0x11, 1, 0, 3, 0x14, 0xf7]), null);
+  assert.ok(qu.syncEnd([0xf0, 0, 0, 0x1a, 0x50, 0x11, 1, 0, 3, 0x14, 0xf7]));
+  assert.strictEqual(hx(qu.query(0, '/ip/3/name')), 'F0 00 00 1A 50 11 01 00 00 01 22 F7');
+  assert.strictEqual(qu.query(0, '/ip/3/lr'), null, 'values come in the push, not asked');
+  // levels: -inf, 0 dB and +10 dB exact; pan centre 25
+  assert.strictEqual(qu.toValue('/lr/lvl', 0), 0);
+  assert.strictEqual(qu.toValue('/lr/lvl', 1), 0x7f);
+  assert.strictEqual(qu.fromValue('/lr/lvl', 0x62), 0.75);
+  assert.strictEqual(qu.toValue('/ip/1/pan', 0.5), 0x25);
+  assert.strictEqual(qu.fromValue('/ip/1/pan', 0x25), 0.5);
+  for (const x of [0, 0.25, 0.5, 0.75, 1]) assert.ok(Math.abs(qu.fromValue('/ip/1/pan', qu.toValue('/ip/1/pan', x)) - x) < 0.02, 'pan ' + x);
+  // layouts per model: mono inputs, then ST 1-3
+  assert.strictEqual(qu.layoutFor('Qu-16').inputs.length, 19);
+  assert.strictEqual(qu.layoutFor('Qu-24').inputs.length, 27);
+  assert.strictEqual(qu.layoutFor('Qu-SB').inputs.length, 35);
+  const L = qu.layoutFor('Qu-32');
+  assert.deepStrictEqual(L.targets.map((t) => t.label), ['Mix 1', 'Mix 2', 'Mix 3', 'Mix 4', 'Mix 5-6', 'Mix 7-8', 'Mix 9-10']);
+  const addrs = L.params.map((p) => qu.address(p.path));
+  assert.strictEqual(new Set(addrs).size, addrs.length, 'every parameter has its own address');
+});
+
+test('Qu: connect over TCP, the hello and the push, names, both directions, keep-alive, one connection, reconnect', async () => {
+  const sim = await quSim.start({ model: 'Qu-24', channel: 2, quietMs: 1500 });
+  const s = new Nrpn.Session(qu, nodeTcp);
+  const other = new Nrpn.Session(qu, nodeTcp);
+  try {
+    const info = await s.connect('127.0.0.1', sim.port);
+    assert.strictEqual(info.model, 'Qu-24', 'the model from the box id');
+    assert.strictEqual(s.channel, 2, 'the MIDI channel the Qu said');
+    assert.strictEqual(sim.hellos, 1);
+    assert.strictEqual(s.layout.inputs.length, 27, 'a Qu-24: 24 inputs and ST 1-3');
+    assert.strictEqual(s.values.size, s.layout.params.length, 'every value pushed and every name asked');
+    assert.strictEqual(s.get('/ip/1/lr'), 0.75, '0 dB');
+    assert.strictEqual(s.get('/ip/1/pan'), 0.5);
+    assert.strictEqual(s.get('/ip/1/mute'), 1, 'unmuted shows as on');
+    assert.strictEqual(s.get('/ip/1/name'), 'Kick');
+    assert.strictEqual(s.get('/mix/1/name'), 'Wedge 1');
+    assert.strictEqual(s.get('/ip/3/name'), '');
+    // the Qu takes one TCP MIDI connection: a second remote gets nothing
+    await assert.rejects(other.connect('127.0.0.1', sim.port, 800));
+    assert.strictEqual(sim.refused, 1);
+    // a drag is coalesced, mutes go as notes
+    const before = sim.received.length;
+    for (let i = 0; i <= 50; i++) s.set('/ip/24/lr', i / 50);
+    s.set('/st/1/mute', 0);
+    s.set('/fx/4/mix/5', 0.75);
+    s.set('/mgrp/2', 1);
+    s.set('/ip/7/pan', 0);
+    await until(() => sim.state.get('/ip/24/lr') === 0x7f && sim.state.get('/st/1/mute') === 1 && sim.state.get('/fx/4/mix/5') === 0x62
+      && sim.state.get('/mgrp/2') === 1 && sim.state.get('/ip/7/pan') === 0, 1000, 'sets reach the Qu');
+    assert.ok(sim.received.length - before < 20, 'the drag was coalesced: ' + (sim.received.length - before));
+    // a change on the console's surface
+    let heard = null;
+    s.on('/mix/3/lvl', (v) => { heard = v; });
+    sim.change('/mix/3/lvl', 0);
+    await until(() => heard === 0, 1000, "the console's change");
+    sim.change('/lr/mute', 1);
+    await until(() => s.get('/lr/mute') === 0, 1000, 'LR muted on the console');
+    // Active Sensing keeps a quiet connection open past the Qu's limit (1.5 s here)
+    await sleep(2200);
+    assert.ok(sim.connected() && s.status === 'online', 'still connected after a quiet spell');
+    // the console goes away and comes back: the session redials, says hello and reads again
+    const states = [];
+    s.onStatus((x) => states.push(x));
+    sim.drop();
+    await until(() => states.includes('lost'), 1000, 'lost');
+    await until(() => s.status === 'online', 5000, 'back online');
+    assert.strictEqual(sim.hellos, 2);
+    s.disconnect();
+    await sleep(50);
+    assert.ok(!sim.connected(), 'connection closed');
+  } finally { s.disconnect(); other.disconnect(); sim.close(); }
+});
+
+test('Qu: an SQ (or anything without the Qu hello) is not taken for a Qu', async () => {
+  const sim = await sqSim.start();
+  const s = new Nrpn.Session(qu, nodeTcp);
+  try {
+    await assert.rejects(s.connect('127.0.0.1', sim.port, 800), /No answer from the Qu/);
+    assert.strictEqual(s.status, 'failed');
+  } finally { s.disconnect(); sim.close(); }
 });
 
 (async () => {
