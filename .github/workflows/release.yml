@@ -4,10 +4,10 @@ name: Release
 # version bump (Bible VI.1) is on main:
 #   draft    creates the draft release <version> on the commit this run builds (a draft that
 #            already exists is moved to it and its assets are rebuilt)
-#   native   native.yml: the JSFX zip, the 3 VST3/CLAP/LV2 zips and the 4 installers
+#   native   native.yml: the JSFX zip, the 5 VST3/CLAP/LV2 zips (2 of them ARM64) and the 6 installers
 #   hub      hub.yml: the 4 Hub bundles and NULL-JSFX-Catalog.json
 #   android  android.yml: the signed APKs of the Android remotes, when the signing secrets are set
-#   check    all 13 assets are attached and the JSFX zip carries the new footer
+#   check    all 17 assets are attached and the JSFX zip carries the new footer
 # A draft is not public: releases/latest, and so the site's Download links, keep pointing to the
 # previous release until Christos clicks Publish, so no link is ever missing a file. On publish,
 # hub.yml builds the catalog again (final release notes and date) and downloads.yml counts.
@@ -77,7 +77,7 @@ jobs:
     with:
       release_tag: ${{ inputs.version }}
 
-  # the signed APKs of the Android remotes, when the signing secrets are set (not among the 13:
+  # the signed APKs of the Android remotes, when the signing secrets are set (not among the 17:
   # without the secrets a release has none)
   android:
     needs: draft
@@ -94,7 +94,7 @@ jobs:
     timeout-minutes: 10
     runs-on: ubuntu-latest
     steps:
-      - name: All 13 assets, and the new footer
+      - name: All 17 assets, and the new footer
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
@@ -105,10 +105,14 @@ jobs:
           NULL-JSFX-VST3-CLAP-Windows.zip
           NULL-JSFX-VST3-CLAP-macOS.zip
           NULL-JSFX-VST3-CLAP-Linux.zip
+          NULL-JSFX-VST3-CLAP-Windows-ARM64.zip
+          NULL-JSFX-VST3-CLAP-Linux-ARM64.zip
           NULL-JSFX-Installer-Windows.exe
           NULL-JSFX-Installer-Linux.sh
           NULL-JSFX-Installer-macOS.pkg
           NULL-JSFX-Installer-macOS.sh
+          NULL-JSFX-Installer-Windows-ARM64.exe
+          NULL-JSFX-Installer-Linux-ARM64.sh
           NULL-JSFX-Hub-Windows-Setup.exe
           NULL-JSFX-Hub-Linux.AppImage
           NULL-JSFX-Hub-Linux.deb
@@ -124,7 +128,7 @@ jobs:
             || { echo "::error::the JSFX zip does not carry the v$VERSION footer"; exit 1; }
           url="$(gh release view "$VERSION" --json url --jq .url)"
           {
-            echo "### Draft $VERSION is ready: 13/13 assets"
+            echo "### Draft $VERSION is ready: 17/17 assets"
             echo
             echo "Write the release notes and publish it: $url"
             echo "(after publishing: \`hub/tests/release_smoke.sh $VERSION\`, Bible VI.2)"

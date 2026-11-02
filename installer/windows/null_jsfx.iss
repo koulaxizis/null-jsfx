@@ -10,6 +10,10 @@
 #ifndef AppVersion
   #define AppVersion "dev"
 #endif
+; x64 or arm64: build_installer.py --arch writes the define at the top of the copy it makes
+#ifndef Arch
+  #define Arch "x64"
+#endif
 
 [Setup]
 AppId={{287A1049-D196-490D-AD87-B04B0757988D}
@@ -27,11 +31,18 @@ UninstallDisplayName=NULL JSFX
 UninstallDisplayIcon={app}\null_jsfx.ico
 SetupIconFile=null_jsfx.ico
 OutputDir=.
+#if Arch == "arm64"
+OutputBaseFilename=NULL-JSFX-Installer-Windows-ARM64
+; ARM64 plugins load only in ARM64 hosts, so this installer runs only on Windows on Arm
+ArchitecturesAllowed=arm64
+ArchitecturesInstallIn64BitMode=arm64
+#else
 OutputBaseFilename=NULL-JSFX-Installer-Windows
-Compression=lzma2/max
-SolidCompression=yes
 ArchitecturesAllowed=x64compatible
 ArchitecturesInstallIn64BitMode=x64compatible
+#endif
+Compression=lzma2/max
+SolidCompression=yes
 ; VST3 and CLAP belong in C:\Program Files\Common Files
 PrivilegesRequired=admin
 UsedUserAreasWarning=no
