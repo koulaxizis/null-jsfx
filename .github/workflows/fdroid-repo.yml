@@ -6,13 +6,17 @@ name: F-Droid repository
 # On every published release it builds the "fdroid" flavor (no update notice of our own) of
 # each app in tools/fdroid_repo.py APPS from the release tag, signed with the same key as the
 # APKs on the release, so a phone can switch between the two without reinstalling. The index is
-# signed with that same key (Christos, 2026-11-02: one key, no second keystore to keep). Store texts come from the apps'
-# fastlane folders. Published as one force-pushed commit on koulaxizis/null-jsfx-fdroid
+# signed with a key of its own (FDROID_KEYSTORE): F-Droid knows a repository by the key of its
+# index, and the APK key also signs the index of the Noxpress repository, so with it F-Droid took
+# ours for a mirror of that one (2026-11-02). Store texts come from the apps' fastlane folders. Published as one force-pushed commit on koulaxizis/null-jsfx-fdroid
 # (GitHub Pages), keeping the newest 3 versions of each app.
 #
 # Secrets (Settings > Secrets and variables > Actions):
 #   ANDROID_KEYSTORE, ANDROID_KEYSTORE_PASSWORD, ANDROID_KEY_ALIAS, ANDROID_KEY_PASSWORD
-#                            the APK key, as in android.yml; it also signs the repository index
+#                            the APK key, as in android.yml
+#   FDROID_KEYSTORE, FDROID_KEYSTORE_PASSWORD
+#                            the index key: a PKCS12 keystore with one key (base64, one line);
+#                            its key password is the keystore password, its alias is read from it
 #   FDROID_DEPLOY_TOKEN      fine-grained token: koulaxizis/null-jsfx-fdroid, Contents read/write
 # Without them a release or manual run fails and publishes nothing (a pull request only skips).
 # A new key means every phone has to add the repository again (and reinstall the apps).
@@ -50,17 +54,17 @@ jobs:
         id: pre
         env:
           GH_TOKEN: ${{ github.token }}
-          HAS: ${{ secrets.ANDROID_KEYSTORE != '' && secrets.FDROID_DEPLOY_TOKEN != '' }}
+          HAS: ${{ secrets.ANDROID_KEYSTORE != '' && secrets.FDROID_KEYSTORE != '' && secrets.FDROID_DEPLOY_TOKEN != '' }}
           TAG: ${{ github.event.release.tag_name || inputs.release_tag }}
         run: |
           if [ "$HAS" != "true" ]; then
             # a pull request from a fork gets no secrets: it skips. A release or a run by hand
             # fails, so a missing secret is never a green run that published nothing (3.1).
             if [ "$GITHUB_EVENT_NAME" = pull_request ]; then
-              echo "::notice::No ANDROID_KEYSTORE or FDROID_DEPLOY_TOKEN secret: dry run skipped."
+              echo "::notice::A secret is missing (ANDROID_KEYSTORE, FDROID_KEYSTORE or FDROID_DEPLOY_TOKEN): dry run skipped."
               echo "go=0" >> "$GITHUB_OUTPUT"; exit 0
             fi
-            echo "::error::No ANDROID_KEYSTORE or FDROID_DEPLOY_TOKEN secret: nothing published."
+            echo "::error::A secret is missing (ANDROID_KEYSTORE, FDROID_KEYSTORE or FDROID_DEPLOY_TOKEN): nothing published."
             exit 1
           fi
           if [ "$GITHUB_EVENT_NAME" = pull_request ]; then
@@ -114,10 +118,9 @@ jobs:
       - name: Build the repository
         if: steps.pre.outputs.go == '1'
         env:
-          KS_B64: ${{ secrets.ANDROID_KEYSTORE }}
-          KS_PASS: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
-          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
-          KEY_PASS: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          KS_B64: ${{ secrets.FDROID_KEYSTORE }}
+          KS_PASS: ${{ secrets.FDROID_KEYSTORE_PASSWORD }}
+          APK_KS_B64: ${{ secrets.ANDROID_KEYSTORE }}
         run: |
           set -e
           pip install --quiet fdroidserver==2.4.5
@@ -146,6 +149,15 @@ jobs:
           python3 tools/fdroid_repo.py prune "$fd/repo" 3
           umask 077
           echo "$KS_B64" | tr -d '[:space:]' | base64 -d > "$RUNNER_TEMP/repo.keystore"
+          if [ "$(echo "$KS_B64" | tr -d '[:space:]')" = "$(echo "$APK_KS_B64" | tr -d '[:space:]')" ]; then
+            echo "::error::FDROID_KEYSTORE is the APK key; the index needs a key of its own"; exit 1
+          fi
+          KEY_ALIAS=$(keytool -list -keystore "$RUNNER_TEMP/repo.keystore" -storetype PKCS12 -storepass "$KS_PASS" \
+            | sed -n 's/^\([^,]*\), .*PrivateKeyEntry.*/\1/p' | head -1)
+          [ -n "$KEY_ALIAS" ] || { echo "::error::FDROID_KEYSTORE: no key found (wrong password, or not PKCS12?)"; exit 1; }
+          FP=$(keytool -list -v -keystore "$RUNNER_TEMP/repo.keystore" -storetype PKCS12 -storepass "$KS_PASS" -alias "$KEY_ALIAS" \
+            | sed -n 's/^[[:space:]]*SHA256: //p' | head -1 | tr -d ':')
+          echo "::notice::Repository fingerprint (index key SHA-256): $FP"
           cat > "$fd/config.yml" <<EOF
           repo_url: $SITE/repo
           repo_name: NULL JSFX
@@ -154,7 +166,7 @@ jobs:
           archive_older: 0
           keystore: $RUNNER_TEMP/repo.keystore
           keystorepass: "$KS_PASS"
-          keypass: "$KEY_PASS"
+          keypass: "$KS_PASS"
           repo_keyalias: "$KEY_ALIAS"
           keydname: CN=NULL JSFX F-Droid repo, O=NULL JSFX
           apksigner: $bt/apksigner
