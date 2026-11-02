@@ -3322,6 +3322,8 @@ static const LogSlider kLogSliders[] = {
     { "spectral_ducker", 5 },
     { "step_fx", 20 },
     { "stereo_scope", 3 },
+    { "string_ensemble", 3 },
+    { "string_ensemble", 4 },
     { "studio_eq", 1 },
     { "studio_eq", 3 },
     { "studio_eq", 7 },

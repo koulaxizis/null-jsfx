@@ -1,0 +1,432 @@
+desc:NULL String Ensemble GFX
+author: Christos Koulaxizis
+tags: instrument string ensemble string machine strings pad divide down chorus ensemble 70s vintage polyphonic synth midi gui
+//category: Instruments
+//NULL JSFX v3.0 • https://nulljsfx.tech • MIT License
+
+import null_gfx.jsfx-inc
+
+slider1:80<0,100,1>-Violins 4' (%)
+slider2:100<0,100,1>-Violas 8' (%)
+slider3:50<0,100,1>-Cellos 16' (%)
+slider4:250<5,3000,1:log>-Attack (ms)
+slider5:900<20,5000,1:log>-Release (ms)
+slider6:55<0,100,1>-Brightness (%)
+slider7:70<0,100,1>-Ensemble (%)
+slider8:0<0,2,1{Classic,Wide,Deep}>-Ensemble Mode
+slider9:-6<-24,12,0.1>-Volume (dB)
+
+in_pin:none
+out_pin:Left
+out_pin:Right
+
+@init
+  // A string machine of the 1970s from synthesis (no samples), fully polyphonic like the
+  // divide-down originals: every key has its own voice, three sawtooths an octave apart (16', 8'
+  // and 4', PolyBLEP, locked in phase and running freely from the start, so a key always meets its
+  // oscillator mid-cycle) and one envelope (Attack to full, Release to silence; the sustain pedal,
+  // CC 64, holds keys). Velocity does nothing, as on the originals. The sum of the keys goes
+  // through a 12 dB/oct low-pass (Brightness: 600 Hz to 16 kHz), two body resonances (+4 dB at
+  // 450 Hz, +3 dB at 2.8 kHz), then the ensemble: three taps on one delay line, each moved by a
+  // slow and a fast LFO 120 degrees apart (Classic 0.6 and 6 Hz, Wide 0.5 and 6.5 Hz with the
+  // outer taps spread to the sides, Deep 0.4 and 5.5 Hz, deeper). Ensemble blends it in; the mod
+  // wheel (CC 1) deepens it up to twice. Pitch bend: +-2 semitones. All notes off (CC 123/120)
+  // releases every key.
+  //
+  // Memory: 0.. the MIDI of the block (4 per message), 2048.. keys down, 2176.. gates,
+  // 2304.. envelopes, 2432.. pitch increments (16'), 2560.. phases, 4096.. the delay line.
+  ext_noinit = 1;
+  ext_tail_size = -1;
+  // NULL String Ensemble (../string_ensemble.jsfx) with its own interface: same audio code, plus @gfx.
+  gfx_ext_retina = 1;
+  MQ = 0;
+  KD = 2048; K_g = 2176; K_e = 2304; K_dt = 2432; K_ph = 2560;
+  DB = 4096; DL = 16384;
+  freembuf(DB + DL);
+  tpi = 2 * $pi;
+  memset(KD, 0, 128 * 5);
+  memset(DB, 0, DL);
+  k = 0;
+  loop(128, K_dt[k] = 440 * 2 ^ ((k - 69) / 12) / 2 / srate; k += 1;);
+  sus = 0; bend = 1; mod = 0;
+  klo = 128; khi = -1;               // the range of keys sounding or held
+  t_s = 0;                           // samples since @init: the free-running oscillators' clock
+  dpos = 0;
+  ps = 0; pf = 0;
+  lp1 = lp2 = 0;
+  f1x1 = f1x2 = f1y1 = f1y2 = 0;
+  f2x1 = f2x2 = f2y1 = f2y2 = 0;
+  m_ofs = m_1 = m_2 = m_3 = 0;
+
+  // RBJ peaking filter coefficients into b0..a2 of the namespace
+  function peak(f, gdb, q) instance(b0, b1, b2, a1, a2) local(A, w, al, cw, a0)
+  (
+    A = 10 ^ (gdb / 40);
+    w = tpi * min(f, 0.45 * srate) / srate;
+    cw = cos(w);
+    al = sin(w) / (2 * q);
+    a0 = 1 + al / A;
+    b0 = (1 + al * A) / a0;
+    b1 = -2 * cw / a0;
+    b2 = (1 - al * A) / a0;
+    a1 = -2 * cw / a0;
+    a2 = (1 - al / A) / a0;
+  );
+  pk1.peak(450, 4, 1.2);
+  pk2.peak(2800, 3, 1.5);
+
+  // a PolyBLEP sawtooth at phase t (0..1) with increment dt
+  function saw(t, dt) local(x, y)
+  (
+    y = 2 * t - 1;
+    t < dt ? ( x = t / dt; y -= 2 * x - x * x - 1; ) :
+    t > 1 - dt ? ( x = (t - 1) / dt; y -= x * x + 2 * x + 1; );
+    y;
+  );
+
+  // a key starting from silence meets its free-running oscillator
+  function note_on(n) local(p)
+  (
+    KD[n] = 1;
+    klo = min(klo, n); khi = max(khi, n);
+    K_e[n] <= 0 ? (
+      p = t_s * K_dt[n];
+      K_ph[n] = p - floor(p);
+    );
+    K_g[n] = 1;
+  );
+  function note_off(n)
+  (
+    KD[n] = 0;
+    !sus ? K_g[n] = 0;
+  );
+  function sus_off() local(k)
+  (
+    sus = 0;
+    k = 0;
+    loop(128, KD[k] == 0 ? K_g[k] = 0; k += 1;);
+  );
+  function all_off()
+  (
+    memset(KD, 0, 128);
+    memset(K_g, 0, 128);
+    sus = 0;
+  );
+  function midi_ev(st, d1, d2) local(t)
+  (
+    t = st & 0xF0;
+    t == 0x90 && d2 > 0 ? note_on(d1) :
+    t == 0x80 || t == 0x90 ? note_off(d1) :
+    t == 0xE0 ? bend = 2 ^ (((d2 * 128 + d1) - 8192) / 8192 * 2 / 12) :
+    t == 0xB0 ? (
+      d1 == 64 ? ( d2 >= 64 ? sus = 1 : sus ? sus_off(); ) :
+      d1 == 1 ? mod = d2 / 127 :
+      d1 == 123 || d1 == 120 ? all_off();
+    );
+  );
+
+  // a read between samples of the delay line, d samples back
+  function tap(d) local(i, fr, p0, p1)
+  (
+    i = floor(d);
+    fr = d - i;
+    p0 = dpos - i; p0 < 0 ? p0 += DL;
+    p1 = p0 - 1; p1 < 0 ? p1 += DL;
+    DB[p0] + (DB[p1] - DB[p0]) * fr;
+  );
+
+
+  // for the display: the white keys, and the magnitude of a biquad of the namespace at w
+  function se_white(pc) ( pc == 0 || pc == 2 || pc == 4 || pc == 5 || pc == 7 || pc == 9 || pc == 11; );
+  function mag(w) instance(b0, b1, b2, a1, a2) local(c1, s1, c2, s2, nr, ni, dr, di)
+  (
+    c1 = cos(w); s1 = sin(w); c2 = cos(2 * w); s2 = sin(2 * w);
+    nr = b0 + b1 * c1 + b2 * c2; ni = -b1 * s1 - b2 * s2;
+    dr = 1 + a1 * c1 + a2 * c2; di = -a1 * s1 - a2 * s2;
+    sqrt((nr * nr + ni * ni) / (dr * dr + di * di));
+  );
+
+  function update()
+  (
+    c4 = slider1 / 100;
+    c8 = slider2 / 100;
+    c16 = slider3 / 100;
+    ka = 1 - exp(-2.302585 / (slider4 * 0.001 * srate));
+    kr = exp(-6.907755 / (slider5 * 0.001 * srate));
+    fc = 600 * (16000 / 600) ^ (slider6 / 100);
+    sg = tan($pi * min(fc, 0.45 * srate) / srate);
+    sk = 1.4142135623730951;             // 1 / Q, Butterworth
+    sa1 = 1 / (1 + sg * (sg + sk));
+    ens = slider7 / 100;
+    mode = max(0, min(2, floor(slider8 + 0.5)));
+    mode == 0 ? ( e_fs = 0.6; e_ff = 6; e_ds = 2; e_df = 0.25; e_sp = 0.5; ) :
+    mode == 1 ? ( e_fs = 0.5; e_ff = 6.5; e_ds = 2.4; e_df = 0.25; e_sp = 1; ) :
+                ( e_fs = 0.4; e_ff = 5.5; e_ds = 3.5; e_df = 0.4; e_sp = 0.7; );
+    e_base = 0.008 * srate;
+    e_ds *= 0.001 * srate;
+    e_df *= 0.001 * srate;
+    vol = 10 ^ (slider9 / 20);
+  );
+
+  // ---- factory presets: generated by tools/build_presets.py, do not edit ----
+  ng_pre_n = 7;
+  strcpy(#ng_h_ix, "");
+  ng_hist_add(1); ng_hist_add(2); ng_hist_add(3); ng_hist_add(4); ng_hist_add(5); ng_hist_add(6); ng_hist_add(7); ng_hist_add(8); ng_hist_add(9);
+  ng_hist_init();
+
+  function ng_preset_load(p)
+  (
+    p == 0 ? ( ng_slider_set(1, 80); ng_slider_set(2, 100); ng_slider_set(3, 50); ng_slider_set(4, 250); ng_slider_set(5, 900); ng_slider_set(6, 55); ng_slider_set(7, 70); ng_slider_set(8, 0); ng_slider_set(9, -6); );
+    p == 1 ? ( ng_slider_set(1, 80); ng_slider_set(2, 100); ng_slider_set(3, 50); ng_slider_set(4, 250); ng_slider_set(5, 900); ng_slider_set(6, 55); ng_slider_set(7, 70); ng_slider_set(8, 0); ng_slider_set(9, -6); );
+    p == 2 ? ( ng_slider_set(1, 80); ng_slider_set(2, 100); ng_slider_set(3, 50); ng_slider_set(4, 600); ng_slider_set(5, 1800); ng_slider_set(6, 55); ng_slider_set(7, 85); ng_slider_set(8, 1); ng_slider_set(9, -6); );
+    p == 3 ? ( ng_slider_set(1, 80); ng_slider_set(2, 100); ng_slider_set(3, 50); ng_slider_set(4, 2000); ng_slider_set(5, 2500); ng_slider_set(6, 45); ng_slider_set(7, 70); ng_slider_set(8, 0); ng_slider_set(9, -6); );
+    p == 4 ? ( ng_slider_set(1, 0); ng_slider_set(2, 60); ng_slider_set(3, 100); ng_slider_set(4, 250); ng_slider_set(5, 900); ng_slider_set(6, 35); ng_slider_set(7, 70); ng_slider_set(8, 0); ng_slider_set(9, -6); );
+    p == 5 ? ( ng_slider_set(1, 100); ng_slider_set(2, 80); ng_slider_set(3, 20); ng_slider_set(4, 80); ng_slider_set(5, 900); ng_slider_set(6, 80); ng_slider_set(7, 70); ng_slider_set(8, 0); ng_slider_set(9, -6); );
+    p == 6 ? ( ng_slider_set(1, 80); ng_slider_set(2, 100); ng_slider_set(3, 50); ng_slider_set(4, 250); ng_slider_set(5, 3000); ng_slider_set(6, 25); ng_slider_set(7, 100); ng_slider_set(8, 2); ng_slider_set(9, -6); );
+  );
+
+  // the first preset every slider matches, or -1
+  function ng_preset_match() local(m)
+  (
+    m = -1;
+    m < 0 && ng_pre_eq(slider1, 80) && ng_pre_eq(slider2, 100) && ng_pre_eq(slider3, 50) && ng_pre_eq(slider4, 250) && ng_pre_eq(slider5, 900) && ng_pre_eq(slider6, 55) && ng_pre_eq(slider7, 70) && ng_pre_eq(slider8, 0) && ng_pre_eq(slider9, -6) ? m = 0;
+    m < 0 && ng_pre_eq(slider1, 80) && ng_pre_eq(slider2, 100) && ng_pre_eq(slider3, 50) && ng_pre_eq(slider4, 250) && ng_pre_eq(slider5, 900) && ng_pre_eq(slider6, 55) && ng_pre_eq(slider7, 70) && ng_pre_eq(slider8, 0) && ng_pre_eq(slider9, -6) ? m = 1;
+    m < 0 && ng_pre_eq(slider1, 80) && ng_pre_eq(slider2, 100) && ng_pre_eq(slider3, 50) && ng_pre_eq(slider4, 600) && ng_pre_eq(slider5, 1800) && ng_pre_eq(slider6, 55) && ng_pre_eq(slider7, 85) && ng_pre_eq(slider8, 1) && ng_pre_eq(slider9, -6) ? m = 2;
+    m < 0 && ng_pre_eq(slider1, 80) && ng_pre_eq(slider2, 100) && ng_pre_eq(slider3, 50) && ng_pre_eq(slider4, 2000) && ng_pre_eq(slider5, 2500) && ng_pre_eq(slider6, 45) && ng_pre_eq(slider7, 70) && ng_pre_eq(slider8, 0) && ng_pre_eq(slider9, -6) ? m = 3;
+    m < 0 && ng_pre_eq(slider1, 0) && ng_pre_eq(slider2, 60) && ng_pre_eq(slider3, 100) && ng_pre_eq(slider4, 250) && ng_pre_eq(slider5, 900) && ng_pre_eq(slider6, 35) && ng_pre_eq(slider7, 70) && ng_pre_eq(slider8, 0) && ng_pre_eq(slider9, -6) ? m = 4;
+    m < 0 && ng_pre_eq(slider1, 100) && ng_pre_eq(slider2, 80) && ng_pre_eq(slider3, 20) && ng_pre_eq(slider4, 80) && ng_pre_eq(slider5, 900) && ng_pre_eq(slider6, 80) && ng_pre_eq(slider7, 70) && ng_pre_eq(slider8, 0) && ng_pre_eq(slider9, -6) ? m = 5;
+    m < 0 && ng_pre_eq(slider1, 80) && ng_pre_eq(slider2, 100) && ng_pre_eq(slider3, 50) && ng_pre_eq(slider4, 250) && ng_pre_eq(slider5, 3000) && ng_pre_eq(slider6, 25) && ng_pre_eq(slider7, 100) && ng_pre_eq(slider8, 2) && ng_pre_eq(slider9, -6) ? m = 6;
+    m;
+  );
+
+  function ng_preset_name(p) local(s)
+  (
+    s = "";
+    p == 0 ? s = "Default";
+    p == 1 ? s = "Classic Strings";
+    p == 2 ? s = "Wide Pad";
+    p == 3 ? s = "Slow Swell";
+    p == 4 ? s = "Cello Bed";
+    p == 5 ? s = "Bright Section";
+    p == 6 ? s = "Dark Wash";
+    s;
+  );
+
+  function ng_presets() local(i)
+  (
+    ng_pre_req >= 0 ? ( ng_preset_load(ng_pre_req); update(); ng_pre_req = -1; );
+    ng_hist() ? update();
+    ng_pre_cur = ng_preset_match();
+    ng_pre_open ? (
+      ng_pre_menu_begin();
+      i = 0;
+      loop(ng_pre_n, ng_pre_item(i, ng_preset_name(i)); i += 1;);
+      ng_pre_menu_end();
+    );
+    strcpy(#ng_pre_name, ng_pre_cur >= 0 ? ng_preset_name(ng_pre_cur) : "CUSTOM");
+  );
+  // ---- end of factory presets ----
+
+@slider
+  update();
+
+@block
+  // the MIDI of this block, played at its offsets in @sample
+  mq_n = 0;
+  while (midirecv(m_ofs, m_1, m_2, m_3)) (
+    // every message goes on to the next plugin too, so instruments can be layered
+    midisend(m_ofs, m_1, m_2, m_3);
+    mq_n < 512 ? (
+      MQ[mq_n * 4] = m_ofs;
+      MQ[mq_n * 4 + 1] = m_1;
+      MQ[mq_n * 4 + 2] = m_2;
+      MQ[mq_n * 4 + 3] = m_3;
+      mq_n += 1;
+    );
+  );
+  mq_i = 0;
+  si = 0;
+
+@sample
+  while (mq_i < mq_n && MQ[mq_i * 4] <= si) (
+    midi_ev(MQ[mq_i * 4 + 1], MQ[mq_i * 4 + 2], MQ[mq_i * 4 + 3]);
+    mq_i += 1;
+  );
+  si += 1;
+
+  // the keys: 16', 8' and 4' locked an octave apart, one envelope each (only the range that
+  // sounds or is held: a silent key adds nothing)
+  s = 0;
+  nlo = 128; nhi = -1;
+  k = klo;
+  loop(max(0, khi - klo + 1),
+    e = K_e[k];
+    K_g[k] > 0 ? (
+      e += ka * (1 - e);
+      e > 0.9999 ? e = 1;
+    ) : (
+      e *= kr;
+      e < 0.0001 ? e = 0;
+    );
+    K_e[k] = e;
+    e > 0 ? (
+      dt = K_dt[k] * bend;
+      p = K_ph[k] + dt;
+      p -= floor(p);
+      K_ph[k] = p;
+      y = 0;
+      dt < 0.45 ? y += c16 * saw(p, dt);
+      q = 2 * p; q -= floor(q);
+      2 * dt < 0.45 ? y += c8 * saw(q, 2 * dt);
+      q = 4 * p; q -= floor(q);
+      4 * dt < 0.45 ? y += c4 * saw(q, 4 * dt);
+      s += y * e;
+    );
+    e > 0 || K_g[k] > 0 ? ( nlo = min(nlo, k); nhi = k; );
+    k += 1;
+  );
+  klo = nlo; khi = nhi;
+  t_s += 1;
+  s *= 0.12;
+
+  // Brightness: a 12 dB/oct low-pass (TPT state variable)
+  hp = (s - (sk + sg) * lp1 - lp2) * sa1;
+  bp = sg * hp + lp1;
+  lp1 = sg * hp + bp;
+  lw = sg * bp + lp2;
+  lp2 = sg * bp + lw;
+  // the body
+  y = pk1.b0 * lw + pk1.b1 * f1x1 + pk1.b2 * f1x2 - pk1.a1 * f1y1 - pk1.a2 * f1y2;
+  f1x2 = f1x1; f1x1 = lw; f1y2 = f1y1; f1y1 = y;
+  z = pk2.b0 * y + pk2.b1 * f2x1 + pk2.b2 * f2x2 - pk2.a1 * f2y1 - pk2.a2 * f2y2;
+  f2x2 = f2x1; f2x1 = y; f2y2 = f2y1; f2y1 = z;
+
+  // the ensemble: three taps, a slow and a fast LFO each, 120 degrees apart
+  DB[dpos] = z;
+  ps += e_fs / srate; ps -= floor(ps);
+  pf += e_ff / srate; pf -= floor(pf);
+  dm = 1 + mod;
+  d0 = e_base + dm * (e_ds * sin(tpi * ps) + e_df * sin(tpi * pf));
+  d1 = e_base + dm * (e_ds * sin(tpi * (ps + 1 / 3)) + e_df * sin(tpi * (pf + 1 / 3)));
+  d2 = e_base + dm * (e_ds * sin(tpi * (ps + 2 / 3)) + e_df * sin(tpi * (pf + 2 / 3)));
+  t0 = tap(d0); t1 = tap(d1); t2 = tap(d2);
+  w_l = (0.5 * t1 + (0.5 + 0.5 * e_sp) * t0 + (0.5 - 0.5 * e_sp) * t2) / 1.5;
+  w_r = (0.5 * t1 + (0.5 + 0.5 * e_sp) * t2 + (0.5 - 0.5 * e_sp) * t0) / 1.5;
+  dpos += 1; dpos >= DL ? dpos = 0;
+
+  spl0 = (z * (1 - ens) + w_l * ens) * vol;
+  spl1 = (z * (1 - ens) + w_r * ens) * vol;
+
+@gfx 560 416
+  ng_knobs_begin("STRING ENSEMBLE", "INSTRUMENTS", 560, 156, 2, 0);
+
+  // display: the tone (the low-pass of Brightness and the body, 20 Hz to 20 kHz, -24 to +12 dB),
+  // the ensemble's three delays over 2 s (Ensemble Mode, mod wheel at rest), the keys sounding and
+  // a keyboard from C2 to C7
+  ng_plot(24, 66, 252, 70);
+  ng_grid(4, 3, 0);
+  ng_col(NG_ACCENT, 1);
+  se_j = 0;
+  loop(101,
+    se_f = 20 * 1000 ^ (se_j / 100);
+    se_w = tpi * min(se_f, 0.4999 * srate) / srate;
+    se_t = tan(se_w / 2) / sg;
+    se_m = 1 / sqrt(1 + se_t * se_t * se_t * se_t) * pk1.mag(se_w) * pk2.mag(se_w);
+    se_x = ng_px + ng_pw * se_j / 100;
+    se_y = ng_lin_y(20 * log10(max(se_m, 0.0000001)), -24, 12);
+    se_j == 0 ? ng_line_start(se_x, se_y) : ng_line_to(se_x, se_y);
+    se_j += 1;
+  );
+  ng_font(1, 6.5, 1);
+  ng_col(NG_MUTED, 1);
+  ng_txt("TONE", 30, 72, 0, 0.5);
+
+  ng_plot(284, 66, 252, 70);
+  ng_grid(4, 3, 0);
+  se_k = 0;
+  loop(3,
+    ng_col(NG_ACCENT, se_k == 1 ? 1 : 0.55);
+    se_j = 0;
+    loop(101,
+      se_t = se_j / 50;
+      se_d = 8 + e_ds / (0.001 * srate) * sin(tpi * (se_t * e_fs + se_k / 3)) + e_df / (0.001 * srate) * sin(tpi * (se_t * e_ff + se_k / 3));
+      se_x = ng_px + ng_pw * se_j / 100;
+      se_y = ng_lin_y(se_d, 2, 14);
+      se_j == 0 ? ng_line_start(se_x, se_y) : ng_line_to(se_x, se_y);
+      se_j += 1;
+    );
+    se_k += 1;
+  );
+  ng_font(1, 6.5, 1);
+  ng_col(NG_MUTED, 1);
+  ng_txt("ENSEMBLE DELAYS, 2 S", 530, 72, 2, 0.5);
+
+  // the keys sounding and the mode
+  se_n = 0;
+  se_i = 0;
+  loop(128, K_e[se_i] > 0 ? se_n += 1; se_i += 1;);
+  ng_font(1, 7, 1);
+  ng_col(NG_TEXT, 1);
+  sprintf(#se_info, "KEYS %d", se_n);
+  ng_txt(#se_info, 24, 146, 0, 1);
+  ng_col(NG_MUTED, 1);
+  ng_txt(mode == 0 ? "CLASSIC" : mode == 1 ? "WIDE" : "DEEP", 536, 146, 2, 1);
+
+  // the keyboard from C2 to C7, the keys sounding lit
+  se_ww = 512 / 36; se_bw = se_ww * 0.62; se_bh = 44 * 0.6;
+  se_i = 0; se_nn = 36;
+  loop(61,
+    se_pc = se_nn - floor(se_nn / 12) * 12;
+    se_white(se_pc) ? (
+      se_x = 24 + se_i * se_ww;
+      se_on = K_e[se_nn] > 0;
+      ng_col(se_on ? NG_ACCENT : 0x2d2b28, 1);
+      gfx_rect(X(se_x + 0.5), Y(156), (se_ww - 1) * ng_s, 44 * ng_s);
+      se_pc == 0 ? (
+        ng_font(1, 6, 1);
+        ng_col(se_on ? NG_BG : NG_MUTED, 1);
+        sprintf(#se_c, "C%d", floor(se_nn / 12) - 1);
+        ng_txt(#se_c, se_x + se_ww / 2, 156 + 44 - 5, 1, 0);
+      );
+      se_i += 1;
+    );
+    se_nn += 1;
+  );
+  se_i = 0; se_nn = 36;
+  loop(61,
+    se_pc = se_nn - floor(se_nn / 12) * 12;
+    se_white(se_pc) ? se_i += 1 : (
+      se_x = 24 + se_i * se_ww - se_bw / 2;
+      ng_col(NG_CARD, 1);
+      gfx_rect(X(se_x - 1), Y(156), (se_bw + 2) * ng_s, (se_bh + 1) * ng_s);
+      ng_col(K_e[se_nn] > 0 ? NG_ACCENT : 0x131211, 1);
+      gfx_rect(X(se_x), Y(156), se_bw * ng_s, se_bh * ng_s);
+    );
+    se_nn += 1;
+  );
+
+  // controls
+  ng_row(5);
+  sprintf(#se_v3, "%d%%", slider3);
+  ng_knob_ctl(3, "CELLOS 16'", #se_v3, 0, 100, 50, 1, 0) ? update();
+  sprintf(#se_v2, "%d%%", slider2);
+  ng_knob_ctl(2, "VIOLAS 8'", #se_v2, 0, 100, 100, 1, 0) ? update();
+  sprintf(#se_v1, "%d%%", slider1);
+  ng_knob_ctl(1, "VIOLINS 4'", #se_v1, 0, 100, 80, 1, 0) ? update();
+  slider4 >= 1000 ? sprintf(#se_v4, "%.2f s", slider4 / 1000) : sprintf(#se_v4, "%d ms", slider4);
+  ng_knob_ctl_log(4, "ATTACK", #se_v4, 5, 3000, 250, 1) ? update();
+  slider5 >= 1000 ? sprintf(#se_v5, "%.2f s", slider5 / 1000) : sprintf(#se_v5, "%d ms", slider5);
+  ng_knob_ctl_log(5, "RELEASE", #se_v5, 20, 5000, 900, 1) ? update();
+
+  ng_row(4);
+  sprintf(#se_v6, "%d%%", slider6);
+  ng_knob_ctl(6, "BRIGHTNESS", #se_v6, 0, 100, 55, 1, 0) ? update();
+  sprintf(#se_v7, "%d%%", slider7);
+  ng_knob_ctl(7, "ENSEMBLE", #se_v7, 0, 100, 70, 1, 0) ? update();
+  ng_select_ctl(8, "MODE", "CLASSIC|WIDE|DEEP", 0) ? update();
+  sprintf(#se_v9, "%+.1f dB", slider9);
+  ng_knob_ctl(9, "VOLUME", #se_v9, -24, 12, -6, 0.1, 0) ? update();
+
+  ng_end();
+
+  ng_presets(); // the preset list (generated by tools/build_presets.py)
