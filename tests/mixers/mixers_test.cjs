@@ -23,6 +23,9 @@ const cq = require(path.join(web, 'cq/profile.js'));
 const dlive = require(path.join(web, 'dlive/profile.js'));
 const dliveSim = require('./dlive_sim.cjs');
 const quSim = require('./qu_sim.cjs');
+const Rcp = require(path.join(web, 'core/rcp.js'));
+const yamaha = require(path.join(web, 'yamaha/profile.js'));
+const yamahaSim = require('./yamaha_sim.cjs');
 
 let failures = 0;
 const tests = [];
@@ -930,6 +933,108 @@ for (const [model, channel, gets] of [['dLive', 11, true], ['Avantis', 4, false]
       await until(() => s.status === 'lost', 1000, 'lost');
       await until(() => s.status === 'online', 8000, 'back online');
       assert.strictEqual(s.get('/ip/10/name'), 'Gtr');
+    } finally { s.disconnect(); other.disconnect(); sim.close(); }
+  });
+}
+
+// --- Yamaha RCP --------------------------------------------------------------------------
+
+test('Yamaha: RCP lines, addresses, values and the model sizes', () => {
+  // answer lines
+  assert.deepStrictEqual(Rcp.parse('OK get MIXER:Current/InCh/Fader/Level 0 0 -1000 "-10.00"'),
+    { status: 'OK', action: 'get', key: 'MIXER:Current/InCh/Fader/Level 0 0', value: -1000 });
+  assert.deepStrictEqual(Rcp.parse('NOTIFY set MIXER:Current/InCh/Label/Name 3 0 "Lead \\"Vox\\" 2"'),
+    { status: 'NOTIFY', action: 'set', key: 'MIXER:Current/InCh/Label/Name 3 0', value: 'Lead "Vox" 2' });
+  assert.deepStrictEqual(Rcp.parse('OK devinfo productname "DM7 Compact"'), { status: 'OK', action: 'devinfo', what: 'productname', value: 'DM7 Compact' });
+  assert.strictEqual(Rcp.parse('ERROR get MIXER:Current/InCh/Fader/Level 99 0 WrongFormat').status, 'ERROR');
+  assert.strictEqual(Rcp.parse('garbage'), null);
+  // models
+  for (const [p, m] of [['CL5', 'CL5'], ['QL1', 'QL1'], ['TF-RACK', 'TF-RACK'], ['TF Rack', 'TF-RACK'], ['DM7', 'DM7'], ['DM7 Compact', 'DM7 Compact'], ['TF3', 'TF3']]) {
+    assert.strictEqual(yamaha.modelOf(p), m, p);
+  }
+  const sizes = (m) => { const L = yamaha.layoutFor(m); return [L.inputs.length, L.returns.length, L.targets.length, L.dcas.length, L.muteGroups.length]; };
+  assert.deepStrictEqual(sizes('CL5'), [72 + 8, 0, 24, 16, 8]);
+  assert.deepStrictEqual(sizes('QL1'), [32 + 8, 0, 24, 16, 8]);
+  assert.deepStrictEqual(sizes('TF1'), [40 + 2, 2, 20, 8, 6]);
+  assert.deepStrictEqual(sizes('DM7'), [120, 0, 48, 24, 12]);
+  assert.deepStrictEqual(sizes('DM7 Compact'), [72, 0, 48, 24, 12]);
+  const L = yamaha.layoutFor('TF5');
+  const keys = L.params.map((p) => yamaha.key(p.path));
+  assert.strictEqual(new Set(keys).size, keys.length, 'every parameter has its own address');
+  // what a set sends
+  assert.deepStrictEqual(yamaha.encode('/ch/1/lvl', yamaha.toValue('/ch/1/lvl', 0.75)), ['MIXER:Current/InCh/Fader/Level 0 0 0']);
+  assert.deepStrictEqual(yamaha.encode('/ch/40/lvl', yamaha.toValue('/ch/40/lvl', 1)), ['MIXER:Current/InCh/Fader/Level 39 0 1000']);
+  assert.deepStrictEqual(yamaha.encode('/ch/2/lvl', yamaha.toValue('/ch/2/lvl', 0)), ['MIXER:Current/InCh/Fader/Level 1 0 -32768']);
+  assert.deepStrictEqual(yamaha.encode('/ch/2/lvl', yamaha.toValue('/ch/2/lvl', 0.5)), ['MIXER:Current/InCh/Fader/Level 1 0 -1000'], '-10 dB');
+  assert.deepStrictEqual(yamaha.encode('/ch/3/mix/20', yamaha.toValue('/ch/3/mix/20', 0.75)), ['MIXER:Current/InCh/ToMix/Level 2 19 0']);
+  assert.deepStrictEqual(yamaha.encode('/st/2/lvl', 1000), ['MIXER:Current/StInCh/Fader/Level 2 0 1000', 'MIXER:Current/StInCh/Fader/Level 3 0 1000'], 'a stereo input sets L and R');
+  assert.deepStrictEqual(yamaha.encode('/fxr/1/mix/1', 0), ['MIXER:Current/FxRtnCh/ToMix/Level 0 0 0', 'MIXER:Current/FxRtnCh/ToMix/Level 1 0 0']);
+  assert.deepStrictEqual(yamaha.encode('/ch/1/on', yamaha.toValue('/ch/1/on', 0)), ['MIXER:Current/InCh/Fader/On 0 0 0'], 'off (muted)');
+  assert.deepStrictEqual(yamaha.encode('/ch/1/pan', yamaha.toValue('/ch/1/pan', 0)), ['MIXER:Current/InCh/ToSt/Pan 0 0 -63']);
+  assert.deepStrictEqual(yamaha.encode('/stm/1/lvl', 0), ['MIXER:Current/St/Fader/Level 0 0 0']);
+  assert.deepStrictEqual(yamaha.encode('/mgrp/6', 1), ['MIXER:Current/MuteMaster/On 5 0 1']);
+  assert.deepStrictEqual(yamaha.encode('/ch/1/col', yamaha.toValue('/ch/1/col', 7)), ['MIXER:Current/InCh/Label/Color 0 0 "Red"']);
+  yamaha.layoutFor('DM7');
+  assert.deepStrictEqual(yamaha.encode('/mgrp/12', 1), ['MIXER:Current/MuteGrpCtrl/On 11 0 1'], 'DM7 mute groups');
+  // values back
+  assert.strictEqual(yamaha.fromValue('/ch/1/lvl', 0), 0.75);
+  assert.strictEqual(yamaha.fromValue('/ch/1/lvl', 1000), 1);
+  assert.strictEqual(yamaha.fromValue('/ch/1/lvl', -32768), 0);
+  assert.strictEqual(yamaha.fromValue('/ch/1/pan', 0), 0.5);
+  assert.strictEqual(yamaha.fromValue('/ch/1/pan', 63), 1);
+  assert.strictEqual(yamaha.fromValue('/ch/1/col', 'SkyBlue'), yamaha.colors.indexOf('SkyBlue'));
+  assert.strictEqual(yamaha.fromValue('/ch/1/col', 'Unknown'), 0);
+  yamaha.layoutFor('CL5');
+});
+
+for (const model of ['TF5', 'CL5', 'DM7']) {
+  test('Yamaha ' + model + ': connect over TCP, read everything, both directions, redial', async () => {
+    const sim = await yamahaSim.start({ model });
+    const s = new Rcp.Session(yamaha, nodeTcp);
+    const other = new Rcp.Session(yamaha, nodeTcp);
+    try {
+      const info = await s.connect('127.0.0.1', sim.port);
+      assert.strictEqual(info.model, model);
+      await until(() => info.name === 'FOH ' + model, 1000, 'the console name');
+      const L = s.layout;
+      assert.strictEqual(s.get('/ch/1/name'), 'Kick');
+      assert.strictEqual(s.get('/ch/1/col'), yamaha.colors.indexOf('Red'));
+      assert.strictEqual(s.get('/ch/1/lvl'), 0.75, '0 dB');
+      assert.strictEqual(s.get('/ch/2/lvl'), 0, '-inf');
+      assert.strictEqual(s.get('/ch/2/pan'), 0, 'hard left');
+      assert.strictEqual(s.get('/ch/3/on'), 1, 'on');
+      assert.strictEqual(s.get('/mixm/1/name'), 'Wedge');
+      assert.strictEqual(s.get('/mgrp/1'), 0);
+      // the sends come after: every value answered
+      await until(() => s.values.size === L.params.length, 20000, 'every value');
+      assert.strictEqual(s.get('/ch/1/mix/1'), 0, 'send -inf');
+      await other.connect('127.0.0.1', sim.port);
+      // sets: a fader, an on, a pan, a send, a stereo strip, a mute group, a DCA
+      const st = L.inputs.find((x) => x.kind === 'st');
+      const last = L.muteGroups.length;
+      s.set('/ch/7/lvl', 1);
+      s.set('/ch/2/on', 0);
+      s.set('/ch/5/pan', 1);
+      s.set('/ch/4/mix/2', 0.75);
+      if (st) s.set(st.fader, 0.75);
+      s.set('/mgrp/' + last, 1);
+      s.set('/dca/2/lvl', 0);
+      const v = (k) => sim.values.get('MIXER:Current/' + k);
+      await until(() => v('InCh/Fader/Level 6 0') === 1000 && v('InCh/Fader/On 1 0') === 0 && v('InCh/ToSt/Pan 4 0') === 63
+        && v('InCh/ToMix/Level 3 1') === 0 && (!st || (v('StInCh/Fader/Level 0 0') === 0 && v('StInCh/Fader/Level 1 0') === 0))
+        && v((model === 'DM7' ? 'MuteGrpCtrl' : 'MuteMaster') + '/On ' + (last - 1) + ' 0') === 1 && v('DCA/Fader/Level 1 0') === -32768, 1000, 'sets reach the console');
+      await until(() => other.get('/ch/7/lvl') === 1 && other.get('/ch/2/on') === 0 && other.get('/ch/5/pan') === 1
+        && other.get('/ch/4/mix/2') === 0.75 && other.get('/mgrp/' + last) === 1 && other.get('/dca/2/lvl') === 0, 1000, 'the other remote hears them');
+      // changes on the console
+      sim.change('MIXER:Current/InCh/Fader/Level 2 0', -1000);
+      sim.change('MIXER:Current/St/Fader/On 0 0', 0);
+      sim.change('MIXER:Current/InCh/Label/Name 9 0', 'Gtr "Amp"');
+      await until(() => s.get('/ch/3/lvl') === 0.5 && s.get('/stm/1/on') === 0 && s.get('/ch/10/name') === 'Gtr "Amp"', 1000, "the console's changes");
+      // a dropped link: redial and read again
+      sim.drop();
+      await until(() => s.status === 'lost', 1000, 'lost');
+      await until(() => s.status === 'online', 8000, 'back online');
+      assert.strictEqual(s.get('/ch/10/name'), 'Gtr "Amp"');
     } finally { s.disconnect(); other.disconnect(); sim.close(); }
   });
 }
