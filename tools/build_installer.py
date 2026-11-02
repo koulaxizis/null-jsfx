@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Builds the NULL JSFX installers from the release packages, so the user picks what to install:
-the formats (JSFX, JSFX GFX, VST3, CLAP, and LV2 on Linux), the plugins (by group or one by one) and the extras
+the formats (JSFX, JSFX GFX, VST3, CLAP, LV2 on Linux, AU on macOS), the plugins (by group or one by one) and the extras
 (FX chains, Rack, tablet remote, Noto Sans).
 
   Windows        writes components.iss (the plugin tree and its files) next to a copy of
@@ -211,7 +211,17 @@ def clean(info):
 PKG_ID = "tech.nulljsfx.pkg"
 REAPER_REL = "Library/Application Support/REAPER"
 DATA_REL = "Library/Application Support/NULL JSFX"
-FORMAT_TITLES = [("jsfx", "JSFX for REAPER"), ("gfx", "JSFX with the NULL look (GFX)"), ("vst3", "VST3"), ("clap", "CLAP")]
+FORMAT_TITLES = [("jsfx", "JSFX for REAPER"), ("gfx", "JSFX with the NULL look (GFX)"), ("vst3", "VST3"), ("clap", "CLAP"),
+                 ("au", "Audio Unit (Logic, GarageBand, MainStage)")]
+NATIVE_EXT = {"vst3": "vst3", "clap": "clap", "au": "component"}
+
+
+def native_dest(fmt, name):
+    """Where a VST3, CLAP or AU bundle goes under the home folder: the Audio Units straight into
+    Components (Logic and auval look there), the others into their NULL JSFX subfolder."""
+    if fmt == "au":
+        return f"Library/Audio/Plug-Ins/Components/{name}"
+    return f"Library/Audio/Plug-Ins/{fmt.upper()}/NULL JSFX/{name}"
 
 
 class Part:
@@ -251,6 +261,9 @@ def pkg_parts(args, plugs, chain_list, base):
         parts = []
         for gtitle, _, gkey in GROUPS:
             members = [p for p in plugs if p[2] == gtitle and (fmt in ("jsfx", "gfx") or p[4]) and (fmt != "gfx" or p[3])]
+            if fmt == "au":
+                # a plugin that auval rejects has no Audio Unit in the package (native/scripts/au_skip.txt)
+                members = [p for p in members if (native / "AU/NULL JSFX" / f"null_jsfx_{p[0]}.component").is_dir()]
             if not members:
                 continue
             part = Part(base, f"{fmt}.{gkey}", f"{gtitle} ({len(members)})",
@@ -263,8 +276,8 @@ def pkg_parts(args, plugs, chain_list, base):
                     part.put(jsfx / "null_jsfx/gfx" / f"{stem}_gfx.jsfx", f"{REAPER_REL}/Effects/null_jsfx/gfx/{stem}_gfx.jsfx")
                     effect = f"null_jsfx/gfx/{stem}_gfx.jsfx"
                 else:
-                    name = f"null_jsfx_{stem}.{fmt}"
-                    part.put(native / fmt.upper() / "NULL JSFX" / name, f"Library/Audio/Plug-Ins/{fmt.upper()}/NULL JSFX/{name}")
+                    name = f"null_jsfx_{stem}.{NATIVE_EXT[fmt]}"
+                    part.put(native / fmt.upper() / "NULL JSFX" / name, native_dest(fmt, name))
                     continue
                 ini = jsfx / "presets" / ini_name(effect)
                 if not ini.is_file():
@@ -273,12 +286,13 @@ def pkg_parts(args, plugs, chain_list, base):
             if fmt == "gfx":
                 part.put(jsfx / "null_jsfx/gfx/null_gfx.jsfx-inc", f"{REAPER_REL}/Effects/null_jsfx/gfx/null_gfx.jsfx-inc")
             parts.append(part)
-        if fmt in ("vst3", "clap"):
+        name = f"null_jsfx_rack.{NATIVE_EXT.get(fmt, '')}"
+        if fmt in NATIVE_EXT and (native / fmt.upper() / "NULL JSFX" / name).exists():
             part = Part(base, f"{fmt}.rack", "Rack", "Several NULL JSFX plugins in one, in any order")
-            name = f"null_jsfx_rack.{fmt}"
-            part.put(native / fmt.upper() / "NULL JSFX" / name, f"Library/Audio/Plug-Ins/{fmt.upper()}/NULL JSFX/{name}")
+            part.put(native / fmt.upper() / "NULL JSFX" / name, native_dest(fmt, name))
             parts.append(part)
-        tree.append((ftitle, parts))
+        if parts:
+            tree.append((ftitle, parts))
     extras = []
     part = Part(base, "remote", "Tablet remote for REAPER", "Control the NULL JSFX plugins from a tablet or phone", on=False)
     part.put(jsfx / "Remote/reaper_www_root/null_jsfx.html", f"{REAPER_REL}/reaper_www_root/null_jsfx.html")
@@ -351,9 +365,9 @@ def pkg_resources(res, version):
     (res / "welcome.html").write_text(
         f"<html><head>{style}</head><body><h2>NULL JSFX {html.escape(version)}</h2>"
         "<p>Free and open source audio plugins (MIT). Under <b>Customize</b> you pick the formats "
-        "(JSFX for REAPER, JSFX with the NULL look, VST3, CLAP), the groups of plugins and the extras.</p>"
+        "(JSFX for REAPER, JSFX with the NULL look, VST3, CLAP, Audio Unit), the groups of plugins and the extras.</p>"
         "<p>Everything goes into your own Library folder, so no password is needed: REAPER's "
-        "resource folder, Library/Audio/Plug-Ins/VST3 and CLAP. For one plugin at a time, and for "
+        "resource folder, Library/Audio/Plug-Ins/VST3, CLAP and Components. For one plugin at a time, and for "
         "updates, use the NULL JSFX Hub from <a href=\"https://nulljsfx.tech\">nulljsfx.tech</a>.</p>"
         "</body></html>\n", encoding="utf-8")
     (res / "conclusion.html").write_text(

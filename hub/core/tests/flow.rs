@@ -120,7 +120,7 @@ fn publish(files: &Files, v: &str) {
 }
 
 fn targets(root: &Path) -> Targets {
-    Targets { reaper: root.join("REAPER"), vst3: root.join("VST3"), clap: root.join("CLAP"), lv2: root.join("LV2"), fonts: root.join("fonts") }
+    Targets { reaper: root.join("REAPER"), vst3: root.join("VST3"), clap: root.join("CLAP"), lv2: root.join("LV2"), au: root.join("Components"), fonts: root.join("fonts") }
 }
 
 fn hub(root: &Path) -> Hub {

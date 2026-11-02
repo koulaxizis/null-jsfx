@@ -507,6 +507,7 @@ impl Hub {
                 Format::Vst3 => t.vst3.clone(),
                 Format::Clap => t.clap.clone(),
                 Format::Lv2 => t.lv2.clone(),
+                Format::Au => t.au.clone(),
             };
             ops.push(Op::Remove { path: dest, keep: Some(keep) });
         }

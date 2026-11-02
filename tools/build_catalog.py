@@ -58,6 +58,9 @@ EXTRAS = [
 FIRST_LV2 = "2.7"
 # the ARM64 VST3/CLAP zips (Windows-ARM64, Linux-ARM64) are built for every release after 3.0
 FIRST_ARM64 = "3.0.1"
+# the Audio Units in the macOS VST3/CLAP zip: every release after 3.0
+FIRST_AU = "3.0.1"
+AU_SKIP = ROOT / "native/scripts/au_skip.txt"
 FIRST_PACKAGED = "2.1"
 
 
@@ -93,6 +96,17 @@ def has_lv2(version):
     """LV2 is in the Linux package from FIRST_LV2 on; a catalog for an older release (the Hub's
     release smoke test builds one) must not offer it."""
     return not re.fullmatch(r"\d+(\.\d+)*", version) or vkey(version) >= vkey(FIRST_LV2)
+
+
+def has_au(version):
+    """The Audio Units are in the macOS package from FIRST_AU on (as has_lv2)."""
+    return not re.fullmatch(r"\d+(\.\d+)*", version) or vkey(version) >= vkey(FIRST_AU)
+
+
+def no_au():
+    """The plugins left out of the Audio Units because auval rejects them (au_skip.txt)."""
+    lines = (line.split("#")[0].strip() for line in AU_SKIP.read_text(encoding="utf-8").splitlines())
+    return sorted(line for line in lines if line)
 
 
 DEMOS = ROOT / "assets/audio/demos"
@@ -187,7 +201,10 @@ def catalog(version, notes, date):
         "packages": {"jsfx": "NULL-JSFX-JSFX.zip",
                      "native": native_packages(version),
                      # the Linux zip also holds LV2 (2.7 on); the Hub adds it to every VST3 plugin
-                     "lv2": ["Linux"] if has_lv2(version) else []},
+                     "lv2": ["Linux"] if has_lv2(version) else [],
+                     # the macOS zip also holds an Audio Unit of every VST3 plugin but these (3.0.1 on)
+                     "au": ["macOS"] if has_au(version) else [],
+                     "no_au": no_au() if has_au(version) else []},
         "hub": {"version": version, "assets": HUB_ASSETS},
         # earlier releases with the same packages, newest first: a plugin can go back to one
         "previous": previous(version),

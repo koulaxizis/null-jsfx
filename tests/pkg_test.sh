@@ -23,13 +23,18 @@ R='Library/Application Support/REAPER'
 N='Library/Application Support/NULL JSFX'
 V='Library/Audio/Plug-Ins/VST3/NULL JSFX'
 C='Library/Audio/Plug-Ins/CLAP/NULL JSFX'
+A='Library/Audio/Plug-Ins/Components'
 ALL='base jsfx.one-slider jsfx.essentials jsfx.advanced jsfx.assisted jsfx.instruments jsfx.midi
      gfx.one-slider gfx.essentials gfx.advanced gfx.assisted gfx.instruments gfx.midi vst3.one-slider
      vst3.essentials vst3.advanced vst3.assisted vst3.instruments vst3.midi vst3.rack clap.one-slider
      clap.essentials clap.advanced clap.assisted clap.instruments clap.midi clap.rack remote fonts chains'
+# the Audio Unit parts (from 3.0.1 on; a package built without Audio Units has none): before the extras
+au_parts=$(cd "$parts/roots" && for d in au.*; do [ -d "$d" ] && echo "$d"; done | tr '\n' ' ')
+ALL="${ALL/ remote / $au_parts remote }"
 plugins=$(cat "$parts"/roots/jsfx.*/"$R"/Effects/null_jsfx/*.jsfx | grep -c '^desc:')
 natives=$(find "$parts"/roots/vst3.*/"$V" -maxdepth 1 -name 'null_jsfx_*.vst3' ! -name '*rack*' | wc -l | tr -d ' ')
-echo "package: $plugins plugins, $natives with VST3/CLAP"
+aus=$(find "$parts"/roots/au.*/"$A" -maxdepth 1 -name 'null_jsfx_*.component' 2>/dev/null | wc -l | tr -d ' ')
+echo "package: $plugins plugins, $natives with VST3/CLAP, $aus Audio Units (with Rack)"
 
 install() {  # install HOME PART...: those parts and not the rest; "default": as the package picks
   h="$1"; shift
@@ -69,6 +74,7 @@ uninstall() {
            "$R/reaper_www_root/null_jsfx.html" "$R/Scripts/null_jsfx_remote_bridge.lua"; do
     [ ! -e "$1/$d" ] || fail "left after uninstalling: $d"
   done
+  [ "$(count "$1/$A" 'null_jsfx_*.component')" = 0 ] || fail "left after uninstalling: Audio Units"
   if [ -n "$pkg" ] && pkgutil --volume "$1" --pkgs='tech\.nulljsfx\.pkg\..*' > /dev/null 2>&1; then
     fail "pkgutil still knows the parts"
   fi
@@ -94,6 +100,7 @@ expect "all: GFX" "$(count "$h/$R/Effects/null_jsfx/gfx" '*_gfx.jsfx')" "$plugin
 expect "all: preset files" "$(count "$h/$R/presets" 'js-null_jsfx_*.ini')" "$((plugins * 2))"
 expect "all: VST3 (with Rack)" "$(count "$h/$V" '*.vst3')" "$((natives + 1))"
 expect "all: CLAP (with Rack)" "$(count "$h/$C" '*.clap')" "$((natives + 1))"
+expect "all: AU (with Rack)" "$(count "$h/$A" 'null_jsfx_*.component')" "$aus"
 [ -f "$h/$R/Effects/null_jsfx/gfx/null_gfx.jsfx-inc" ] || fail "all: null_gfx.jsfx-inc missing"
 [ ! -e "$h/$R/reaper_www_root/null_jsfx.html" ] || fail "all: the remote is off unless picked"
 [ -f "$h/Library/Fonts/NotoSans-Regular.ttf" ] || fail "all: font missing"
@@ -120,6 +127,7 @@ ones=$(count "$h/$R/Effects/null_jsfx" '*.jsfx')
 echo "ok   some: $ones JSFX (One Slider)"
 expect "some: GFX" "$(count "$h/$R/Effects/null_jsfx/gfx" '*')" 0
 expect "some: CLAP" "$(count "$h/$C" '*.clap')" 0
+expect "some: AU" "$(count "$h/$A" 'null_jsfx_*.component')" 0
 [ "$(count "$h/$V" '*.vst3')" -gt 0 ] || fail "some: no VST3"
 [ ! -e "$h/$V/null_jsfx_rack.vst3" ] || fail "some: Rack not picked"
 [ -f "$h/$R/reaper_www_root/null_jsfx.html" ] || fail "some: remote page missing"
