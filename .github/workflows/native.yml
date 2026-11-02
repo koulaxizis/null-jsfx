@@ -96,7 +96,8 @@ jobs:
         run: native/scripts/build.sh ${{ matrix.test }}
 
       - name: Check the LV2 plugins against the JSFX (lilv)
-        if: runner.os == 'Linux'
+        # needs the ysfx of the comparison tests (not built on Linux-ARM64, Bible B17)
+        if: runner.os == 'Linux' && matrix.test != ''
         run: |
           # lv2_test.py needs numpy; the runner's system python3 has none
           sudo apt-get install -y liblilv-0-0 python3-numpy
