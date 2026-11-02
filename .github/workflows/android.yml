@@ -8,7 +8,8 @@ name: Android remotes
 #           simulator on the host: the Kotlin UDP bridge and the WebView end to end
 #   release with a release tag (the Release workflow, which builds a draft release, or by hand
 #           for a release that exists): the signed release APKs of the apps in RELEASED_APPS,
-#           attached to it
+#           attached to it; or by hand with sign_check: the same APKs, signature checked, kept
+#           as a workflow artifact only (to test the secrets without a release)
 # Signing uses the orOS keystore (Christos, 2026-11-01) from the repository secrets
 # ANDROID_KEYSTORE (base64 of the .jks), ANDROID_KEYSTORE_PASSWORD, ANDROID_KEY_ALIAS and
 # ANDROID_KEY_PASSWORD. Without them a release gets no APK and the run says so.
@@ -25,6 +26,11 @@ on:
         description: "Attach the APKs to this existing release (e.g. 3.1); empty = only build"
         required: false
         default: ""
+      sign_check:
+        description: "Build the signed release APKs, check their signature and keep them as a workflow artifact (no release)"
+        type: boolean
+        required: false
+        default: false
   # from release.yml, which creates the draft release first; a draft has no tag yet, so it
   # passes the commit to build
   workflow_call:
@@ -128,7 +134,7 @@ jobs:
           retention-days: 14
 
   release:
-    if: inputs.release_tag != ''
+    if: inputs.release_tag != '' || inputs.sign_check
     needs: [pages, build]
     timeout-minutes: 30
     runs-on: ubuntu-24.04
@@ -143,6 +149,74 @@ jobs:
           distribution: temurin
           java-version: 17
       - uses: gradle/actions/setup-gradle@v5
+      # Says which secret is wrong without printing any of them (they are masked anyway). It reads
+      # them exactly as android/app/build.gradle.kts does: java.util.Base64 on the trimmed
+      # keystore, KeyStore.getInstance(file, store password), getKey(alias, key password).
+      - name: Check the signing secrets
+        env:
+          KS: ${{ secrets.ANDROID_KEYSTORE }}
+          SP: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KA: ${{ secrets.ANDROID_KEY_ALIAS }}
+          KP: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          [ -n "$KS" ] || { echo "no ANDROID_KEYSTORE (checked in the next step)"; exit 0; }
+          bad=0
+          for v in SP KA KP; do
+            [ -n "${!v}" ] || { echo "::error::secret for $v is empty"; bad=1; }
+            [ "${!v}" = "$(printf '%s' "${!v}" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')" ] \
+              || { echo "::error::secret for $v starts or ends with a space or a line break"; bad=1; }
+          done
+          [ "$bad" = 0 ] || exit 1
+          trap 'rm -f "$RUNNER_TEMP/KeyCheck.java" "$RUNNER_TEMP/check.keystore"' EXIT
+          cat > "$RUNNER_TEMP/KeyCheck.java" <<'JAVA'
+          import java.io.File;
+          import java.nio.file.Files;
+          import java.security.KeyStore;
+          import java.util.Base64;
+          public class KeyCheck {
+            static void fail(String m) { System.out.println("::error::" + m); System.exit(1); }
+            public static void main(String[] a) throws Exception {
+              String ks64 = System.getenv("KS").trim(), sp = System.getenv("SP"), ka = System.getenv("KA"), kp = System.getenv("KP");
+              byte[] raw;
+              try { raw = Base64.getDecoder().decode(ks64); }
+              catch (IllegalArgumentException e) {
+                fail("ANDROID_KEYSTORE is not one line of base64 (" + e.getMessage() + "); make it with: base64 -w0 your.jks");
+                return;
+              }
+              String kind = raw.length > 4 && (raw[0] & 0xff) == 0xFE && (raw[1] & 0xff) == 0xED ? "JKS"
+                          : raw.length > 1 && raw[0] == 0x30 ? "PKCS12" : "unknown";
+              System.out.println("keystore: " + raw.length + " bytes, looks like " + kind);
+              if (kind.equals("unknown")) fail("ANDROID_KEYSTORE does not decode to a .jks or .p12 file (was the file encoded twice, or is it another file?)");
+              // a PKCS12 file is one DER sequence, so its first bytes give its full length
+              if (kind.equals("PKCS12") && raw.length > 4 && (raw[1] & 0xff) == 0x82) {
+                int want = 4 + (((raw[2] & 0xff) << 8) | (raw[3] & 0xff));
+                if (raw.length < want) fail("ANDROID_KEYSTORE is cut short: the file says " + want + " bytes, the secret gives " + raw.length + "; copy the whole base64 again");
+              }
+              File f = new File(a[0]);
+              Files.write(f.toPath(), raw);
+              KeyStore ks;
+              try { ks = KeyStore.getInstance(f, sp.toCharArray()); }
+              catch (java.io.EOFException e) { fail("ANDROID_KEYSTORE ends too early (the base64 was cut short); copy the whole base64 again"); return; }
+              catch (Exception e) { fail("ANDROID_KEYSTORE_PASSWORD does not open the keystore (" + e.getClass().getSimpleName() + ")"); return; }
+              finally { f.delete(); }
+              int keys = 0;
+              for (String al : java.util.Collections.list(ks.aliases())) if (ks.isKeyEntry(al)) keys++;
+              System.out.println("store password: ok; type " + ks.getType() + ", " + keys + " private key(s)");
+              if (!ks.containsAlias(ka)) fail("ANDROID_KEY_ALIAS is not in the keystore");
+              System.out.println("alias: found");
+              try {
+                if (ks.getKey(ka, kp.toCharArray()) == null) fail("ANDROID_KEY_ALIAS names a certificate, not a private key");
+                System.out.println("key password: ok");
+              } catch (java.security.UnrecoverableKeyException e) {
+                boolean same = false;
+                try { same = ks.getKey(ka, sp.toCharArray()) != null; } catch (Exception e2) {}
+                fail(same ? "ANDROID_KEY_PASSWORD is wrong; the keystore password opens the key, so set ANDROID_KEY_PASSWORD to the same value as ANDROID_KEYSTORE_PASSWORD"
+                          : "ANDROID_KEY_PASSWORD does not open the key");
+              }
+            }
+          }
+          JAVA
+          java "$RUNNER_TEMP/KeyCheck.java" "$RUNNER_TEMP/check.keystore"
       - name: Signed release APKs
         id: apks
         working-directory: android
@@ -153,6 +227,7 @@ jobs:
           NULL_REMOTE_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
         run: |
           if [ -z "$NULL_REMOTE_KEYSTORE" ]; then
+            if [ -z "$TAG" ]; then echo "::error::No ANDROID_KEYSTORE secret"; exit 1; fi
             echo "::warning::No ANDROID_KEYSTORE secret: release $TAG gets no Android APKs"
             echo "skip=1" >> "$GITHUB_OUTPUT"
             exit 0
@@ -167,8 +242,29 @@ jobs:
             cp "$apk" "out/NULL-JSFX-Remote-${name}-Android.apk"
           done
           ls -l out
-      - name: Attach to the release
+      # The certificate digests are public (they are in every APK); they let anyone check that
+      # an APK is ours and that the orOS key signed it.
+      - name: Check the signatures
         if: steps.apks.outputs.skip != '1'
+        working-directory: android
+        run: |
+          bt="$ANDROID_HOME/build-tools/$(ls "$ANDROID_HOME/build-tools" | sort -V | tail -1)"
+          for apk in out/*.apk; do
+            echo "== $apk"
+            "$bt/apksigner" verify --verbose --print-certs "$apk" | grep -E "Verified using v2|certificate (DN|SHA-256)"
+            if "$bt/apksigner" verify --print-certs "$apk" | grep -q "CN=Android Debug"; then
+              echo "::error::$apk is debug-signed"; exit 1
+            fi
+          done
+      - name: Keep the APKs (sign check)
+        if: steps.apks.outputs.skip != '1' && env.TAG == ''
+        uses: actions/upload-artifact@v7
+        with:
+          name: NULL-JSFX-Android-signed
+          path: android/out/
+          retention-days: 7
+      - name: Attach to the release
+        if: steps.apks.outputs.skip != '1' && env.TAG != ''
         env:
           GH_TOKEN: ${{ github.token }}
         run: for i in 1 2 3 4 5; do gh release upload "$TAG" android/out/* --clobber && exit 0; sleep $((i * 30)); done; exit 1
