@@ -286,6 +286,7 @@
     tracks(m) {
       this.total = m.total | 0;
       this.from = m.from | 0;
+      this.more = !!m.more; // the DAW does not know its track count (Cubase): more may follow
       const list = new Map();
       for (const t of m.list || []) {
         // a slot keeps its strip object (and meter) when its track changes name or moves

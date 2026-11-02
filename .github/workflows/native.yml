@@ -105,12 +105,28 @@ jobs:
           g++ -O2 -std=c++17 -I "$b/ysfx/include" web/test/render_ref.cpp "$b/ysfx/build/libysfx.a" -lpthread -ldl -o "$b/render_ref"
           python3 native/test/lv2_test.py native/dist/LV2/"NULL JSFX"
 
+      # Audio Units (Bible B17): Apple's own validator on every component, report-only until a
+      # first run sets the baseline (as pluginval and clap-validator were, B6)
+      - name: Validate the Audio Units (auval)
+        if: runner.os == 'macOS'
+        continue-on-error: true
+        run: native/scripts/auval.sh native/dist reports
+
+      - uses: actions/upload-artifact@v7
+        if: runner.os == 'macOS' && !cancelled()
+        with:
+          name: NULL-JSFX-Validation-AU-macOS
+          path: reports
+          if-no-files-found: ignore
+          retention-days: 14
+
       - name: Package
         run: |
           out="NULL-JSFX-VST3-CLAP-${{ matrix.name }}"
           mkdir -p "$out"
           cp -R native/dist/VST3 native/dist/CLAP "$out/"
           if [ -d native/dist/LV2 ]; then cp -R native/dist/LV2 "$out/"; fi
+          if [ -d native/dist/AU ]; then cp -R native/dist/AU "$out/"; fi
           cp native/INSTALL.txt "$out/"
 
       - uses: actions/upload-artifact@v7
@@ -157,7 +173,7 @@ jobs:
           cp native/common/fonts/* "$out/fonts/"
           cp native/INSTALL.txt "$out/"
           mkdir -p "$out/Remote"
-          cp -R remote/reaper_www_root remote/Scripts remote/INSTALL.txt remote/bitwig remote/ableton "$out/Remote/"
+          cp -R remote/reaper_www_root remote/Scripts remote/INSTALL.txt remote/bitwig remote/ableton remote/cubase "$out/Remote/"
 
       - uses: actions/upload-artifact@v7
         with:

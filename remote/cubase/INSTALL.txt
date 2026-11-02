@@ -1,0 +1,36 @@
+NULL JSFX Remote for Cubase
+===========================
+
+A MIDI Remote script that lets the Android app Remote for DAWs (tab Cubase) run Cubase's
+mixer (volume, pan, mute, solo, record, sends 1-4, meters), transport and the insert effects
+of the selected track. The NULL JSFX plugins (VST3) open on the phone with their own
+interface; any other plugin gets a list of its parameters.
+
+Needs Cubase 12 or newer (the MIDI Remote API), Pro, Artist or Elements.
+
+Cubase's scripts speak MIDI only, so the phone reaches the script over network MIDI
+(RTP-MIDI): a network MIDI session on the computer is the script's MIDI port.
+
+Install (once)
+    1. Copy the folder nulljsfx into Cubase's local driver scripts folder:
+         Documents/Steinberg/Cubase/MIDI Remote/Driver Scripts/Local
+       (so that .../Local/nulljsfx/remotefordaws/nulljsfx_remotefordaws.js exists).
+    2. Open a network MIDI session named NULL Remote:
+         macOS     Audio MIDI Setup > Window > Show MIDI Studio > Network: add a session,
+                   name it NULL Remote, tick it, "Who may connect to me: Anyone".
+         Windows   install rtpMIDI (free, Tobias Erichsen, tobias-erichsen.de), add a
+                   session named NULL Remote, enable it, "Who may connect to me: Anyone".
+       The session's port is 5004 unless you change it.
+    3. Start (or restart) Cubase. It finds the port NULL Remote and lists "NULL JSFX Remote
+       for DAWs" in Studio > MIDI Remote Manager. In Studio > Studio Setup > MIDI Port Setup,
+       untick "In 'All MIDI Inputs'" for NULL Remote, so its messages never reach a track.
+    4. Allow UDP 5004 and 5005 through the computer's firewall on private networks.
+
+On the phone
+    Remote for DAWs > Cubase: type the computer's address (port 5004) and Connect.
+
+What it covers
+    16 tracks at a time (audio, instrument, MIDI, group and FX channels; not the inputs and
+    outputs), paged with the arrows; sends 1-4 of each; the 16 insert slots of the selected
+    track, 48 parameters each (opening a track's inserts on the phone selects that track in
+    Cubase). Not covered: the clock, strip effects, plugins inside other plugins.
