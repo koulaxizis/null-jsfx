@@ -73,6 +73,11 @@ if compgen -G "$build/bin/*.lv2" >/dev/null; then
 fi
 if compgen -G "$build/bin/*.component" >/dev/null; then
   mkdir -p "$dist/AU/NULL JSFX"
-  cp -R "$build"/bin/*.component "$dist/AU/NULL JSFX/"
+  # the Audio Units that fail Apple's auval stay out of the package until fixed (au_skip.txt)
+  for c in "$build"/bin/*.component; do
+    n="$(basename "$c" .component)"
+    n="${n#null_jsfx_}"
+    grep -qx "$n" <(sed 's/[[:space:]]*#.*//' "$here/scripts/au_skip.txt") || cp -R "$c" "$dist/AU/NULL JSFX/"
+  done
 fi
 echo "== done: $dist"

@@ -51,6 +51,10 @@ for p in "${plugins[@]}"; do
   else
     auval -strict -v "$type" "$sub" "$maker" > "$out/$name.log" 2>&1
     rc=$?
+    if [ $rc -ne 0 ]; then
+      # the errors and warnings themselves (the log's tail only says that it failed)
+      grep -E 'ERROR|FAIL|WARNING|Error|error:' "$out/$name.log" | grep -v '^\* \* FAIL$' | head -n 20
+    fi
     tail -n 5 "$out/$name.log"
   fi
   echo "::endgroup::"
