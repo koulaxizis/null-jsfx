@@ -14,8 +14,8 @@ name: F-Droid repository
 #   ANDROID_KEYSTORE, ANDROID_KEYSTORE_PASSWORD, ANDROID_KEY_ALIAS, ANDROID_KEY_PASSWORD
 #                            the APK key, as in android.yml; it also signs the repository index
 #   FDROID_DEPLOY_TOKEN      fine-grained token: koulaxizis/null-jsfx-fdroid, Contents read/write
-# Without them the run says so and publishes nothing. A new key means every phone has to add the
-# repository again (and reinstall the apps).
+# Without them a release or manual run fails and publishes nothing (a pull request only skips).
+# A new key means every phone has to add the repository again (and reinstall the apps).
 
 on:
   release:
@@ -54,8 +54,14 @@ jobs:
           TAG: ${{ github.event.release.tag_name || inputs.release_tag }}
         run: |
           if [ "$HAS" != "true" ]; then
-            echo "::notice::No ANDROID_KEYSTORE or FDROID_DEPLOY_TOKEN secret: nothing published."
-            echo "go=0" >> "$GITHUB_OUTPUT"; exit 0
+            # a pull request from a fork gets no secrets: it skips. A release or a run by hand
+            # fails, so a missing secret is never a green run that published nothing (3.1).
+            if [ "$GITHUB_EVENT_NAME" = pull_request ]; then
+              echo "::notice::No ANDROID_KEYSTORE or FDROID_DEPLOY_TOKEN secret: dry run skipped."
+              echo "go=0" >> "$GITHUB_OUTPUT"; exit 0
+            fi
+            echo "::error::No ANDROID_KEYSTORE or FDROID_DEPLOY_TOKEN secret: nothing published."
+            exit 1
           fi
           if [ "$GITHUB_EVENT_NAME" = pull_request ]; then
             echo "dry=1" >> "$GITHUB_OUTPUT"
