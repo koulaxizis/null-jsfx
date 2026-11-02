@@ -21,8 +21,9 @@
 //   setFader, setPan (ssid, 0..1), resetFader, resetPan (ssid), setMute, setSolo, setRec (ssid, on)
 //   setParam(ssid, piid, par, value in the parameter's range), setPluginActive(ssid, piid, on)
 //   play(), stop(), toStart(), record(), loop()
-//   optional, a DAW that shows a window of its tracks (Bitwig, Live): total, from, size and
-//     scroll(from); the desk pages through the window when total > size
+//   optional, a DAW that shows a window of its tracks (Bitwig, Live, Cubase): total, from, size
+//     and scroll(from), and more (Cubase, which does not know the count: more may follow); the
+//     desk pages through the window when total > size
 //   optional, a DAW that reports sends (Bitwig, Live): sendNames (targets, null where none),
 //     'sends' (names), strip.sends[k] (0..1 or null) and strip.sendTexts[k],
 //     setSend(ssid, k, 0..1), resetSend(ssid, k); the desk puts the faders on a send
@@ -350,7 +351,8 @@
       pager.hidden = !on;
       if (!on) return;
       const last = Math.min(s.total, s.from + s.size);
-      pager.querySelector('.da-page').textContent = `Tracks ${s.from + 1}–${last} of ${s.total}`;
+      // a DAW that does not know its track count (Cubase) says more may follow
+      pager.querySelector('.da-page').textContent = s.more ? `Tracks ${s.from + 1}–${last}` : `Tracks ${s.from + 1}–${last} of ${s.total}`;
       pager.querySelector('.da-prev').disabled = s.from <= 0;
       pager.querySelector('.da-next').disabled = last >= s.total;
     }
