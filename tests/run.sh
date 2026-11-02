@@ -22,10 +22,7 @@ if [ ! -f "$build/ysfx/build/libysfx.a" ]; then
     git -C "$build/ysfx" checkout --quiet "$ysfx_rev"
     git -C "$build/ysfx" submodule update --quiet --init --recursive
   fi
-  # no fused multiply-add in the engine either: GCC fuses by default on aarch64 (-ffp-contract=fast),
-  # which changes EEL2's rounding there (the first Linux arm64 run failed 114 exact comparisons)
-  cmake -S "$build/ysfx" -B "$build/ysfx/build" -DYSFX_PLUGIN=OFF -DYSFX_GFX=OFF -DCMAKE_BUILD_TYPE=Release \
-    -DCMAKE_C_FLAGS=-ffp-contract=off -DCMAKE_CXX_FLAGS=-ffp-contract=off >/dev/null
+  cmake -S "$build/ysfx" -B "$build/ysfx/build" -DYSFX_PLUGIN=OFF -DYSFX_GFX=OFF -DCMAKE_BUILD_TYPE=Release >/dev/null
   cmake --build "$build/ysfx/build" -j"$(nproc 2>/dev/null || echo 2)" >/dev/null
 fi
 if [ ! -x "$build/jsfx_test" ] || [ "$here/jsfx_test.cpp" -nt "$build/jsfx_test" ]; then
