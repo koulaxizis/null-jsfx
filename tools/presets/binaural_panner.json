@@ -1,0 +1,10 @@
+[
+  ["Hard Right", {"Azimuth (deg)": 90}],
+  ["Front Left", {"Azimuth (deg)": -30}],
+  ["Behind", {"Azimuth (deg)": 180}],
+  ["Overhead", {"Elevation (deg)": 75}],
+  ["Close Whisper", {"Azimuth (deg)": 60, "Distance (m)": 0.3, "Room (%)": 5, "Output (dB)": -9}],
+  ["Far Away", {"Distance (m)": 12, "Room (%)": 60, "Output (dB)": 6}],
+  ["Wide Stereo", {"Input": "Stereo", "Width (deg)": 45}],
+  ["Orbit Start", {"Azimuth (deg)": -90, "Distance (m)": 2, "Room (%)": 30}]
+]

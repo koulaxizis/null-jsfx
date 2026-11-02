@@ -19,5 +19,27 @@
     ],
     "properties": "Signal chain: Learn: Input → 2048-Point FFT (4× overlap, Hann) → Power per Bin and Cross Spectrum. Fill: Learnt Magnitudes + Random Phases (Park-Miller) → IFFT Overlap-Add → Fill Level. Gap Detector (10 ms Power, Threshold, Hold) → Top-Up to the Room Tone → Fade → Output = Input + Fill. The fill never repeats, keeps the stereo coherence of the recording and adds only what is missing, so a gap that still holds its room tone gets nothing; no latency. The profile lives in memory and is not saved with the project: learn again after a reload.",
     "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-room-tone\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><path d=\"M8,32 L12,18 L16,44 L20,22 L24,40\" stroke=\"url(#icon-room-tone)\" stroke-width=\"2.5\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M24,34 L28,30 L32,35 L36,29 L40,34\" stroke=\"url(#icon-room-tone)\" stroke-width=\"1.5\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\" opacity=\"0.5\"/><path d=\"M40,32 L44,16 L48,46 L52,20 L56,40\" stroke=\"url(#icon-room-tone)\" stroke-width=\"2.5\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M24,48 L40,48\" stroke=\"url(#icon-room-tone)\" stroke-width=\"1.5\" fill=\"none\" stroke-linecap=\"round\" opacity=\"0.4\"/></svg>"
+  },
+  "binaural_panner": {
+    "card_desc": "3D Headphone Panner",
+    "keywords": "binaural panner headphones 3d spatial itd ild head shadow elevation distance immersive brown duda",
+    "slider_desc": [
+      "Direction around the head: 0 in front, 90 right, 180 behind, -90 left",
+      "Height of the source: below the ears to straight overhead",
+      "Distance from the head (log scale): level, air absorption and the room's share",
+      "Early reflections that place the sound outside the head",
+      "Diameter of the listener's head: sets the time difference between the ears",
+      "Mono sum places one source; Stereo places the left and right inputs as two sources",
+      "In Stereo, how far each input sits from Azimuth",
+      "Output level"
+    ],
+    "uses": [
+      "Place dialogue and effects around the listener for headphone mixes",
+      "Move a sound behind or above the head in podcasts and audio drama",
+      "Turn a stereo pair into a wide image in front of the head",
+      "Sketch 3D positions before a surround or immersive mix"
+    ],
+    "properties": "Signal chain: Input (Mono Sum or two Stereo Sources) → Air Absorption Low-Pass → Rear Pinna Shelf (4 kHz) → Elevation Pinna Notch (6–10 kHz) → 1/r Level → per Ear: Woodworth Interaural Delay (fractional, 20 ms glide) → Brown–Duda Head Shadow → + Six Early Reflections (Room) → Output. A spherical-head model, no measured HRTF data: listen with headphones; front and back are less certain than with a measured HRTF. No latency.",
+    "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-binaural-panner\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><circle cx=\"32\" cy=\"34\" r=\"8\" fill=\"url(#icon-binaural-panner)\"/><path d=\"M32,26 L32,22\" stroke=\"url(#icon-binaural-panner)\" stroke-width=\"2\" stroke-linecap=\"round\"/><circle cx=\"32\" cy=\"34\" r=\"20\" stroke=\"url(#icon-binaural-panner)\" stroke-width=\"1.5\" fill=\"none\" opacity=\"0.4\"/><circle cx=\"46\" cy=\"20\" r=\"4\" fill=\"url(#icon-binaural-panner)\"/><path d=\"M40,34 C44,34 46,30 46,26\" stroke=\"url(#icon-binaural-panner)\" stroke-width=\"1.5\" fill=\"none\" stroke-linecap=\"round\" opacity=\"0.6\"/></svg>"
   }
 }

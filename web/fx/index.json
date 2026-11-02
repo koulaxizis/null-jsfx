@@ -1136,6 +1136,20 @@
    "bytes": 55134
   },
   {
+   "id": "binaural_panner",
+   "name": "Binaural Panner",
+   "category": "Advanced",
+   "tags": "binaural panner headphones 3d spatial hrtf itd ild head shadow elevation distance immersive gui",
+   "gfx": [
+    480,
+    410
+   ],
+   "ins": 2,
+   "outs": 2,
+   "sliders": 8,
+   "bytes": 58970
+  },
+  {
    "id": "comb_filter",
    "name": "Comb Filter",
    "category": "Advanced",
