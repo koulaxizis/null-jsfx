@@ -2,7 +2,7 @@ desc:NULL Room Tone GFX
 author: Christos Koulaxizis
 tags: room tone ambience fill gaps dialogue edit post production noise bed adr restoration fft gui
 //category: Essentials
-//NULL JSFX v3.0 • https://nulljsfx.tech • MIT License
+//NULL JSFX v3.1 • https://nulljsfx.tech • MIT License
 
 import null_gfx.jsfx-inc
 

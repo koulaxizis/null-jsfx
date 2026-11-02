@@ -62,10 +62,10 @@
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                     <span class="btn-text">Download</span>
                     <div class="download-meta">
-                        <span><b id="release-version">v3.0</b></span>
+                        <span><b id="release-version">v3.1</b></span>
                         <span class="release-new" id="release-new" hidden>NEW</span>
                         <span class="sep">&bull;</span>
-                        <span id="last-update">Released: 01/11/26</span>
+                        <span id="last-update">Released: 02/11/26</span>
                     </div>
                 </div>
             </a>
@@ -223,7 +223,7 @@
             <div class="modal-content modal-download">
                 <button class="modal-close" onclick="closeDownload()">&times;</button>
                 <div class="changelog-header">
-                    <h3>Download NULL JSFX v3.0</h3>
+                    <h3>Download NULL JSFX v3.1</h3>
                     <p class="changelog-date">Free and open source. Pick what you need.</p>
                 </div>
                 <div class="download-support" id="download-support" hidden>
@@ -264,14 +264,18 @@
                     <p class="download-other">Installers:
                         <a href="https://github.com/koulaxizis/null-jsfx/releases/latest/download/NULL-JSFX-Installer-Windows.exe">Windows</a> &bull;
                         <a href="https://github.com/koulaxizis/null-jsfx/releases/latest/download/NULL-JSFX-Installer-macOS.pkg">macOS</a> &bull;
-                        <a href="https://github.com/koulaxizis/null-jsfx/releases/latest/download/NULL-JSFX-Installer-Linux.sh">Linux</a>
+                        <a href="https://github.com/koulaxizis/null-jsfx/releases/latest/download/NULL-JSFX-Installer-Linux.sh">Linux</a> &bull;
+                        <a href="https://github.com/koulaxizis/null-jsfx/releases/latest/download/NULL-JSFX-Installer-Windows-ARM64.exe">Windows on Arm</a> &bull;
+                        <a href="https://github.com/koulaxizis/null-jsfx/releases/latest/download/NULL-JSFX-Installer-Linux-ARM64.sh">Linux arm64</a>
                         (Linux: make it executable and double-click it; macOS from a terminal:
                         <a href="https://github.com/koulaxizis/null-jsfx/releases/latest/download/NULL-JSFX-Installer-macOS.sh">.sh</a>)
                     </p>
                     <p class="download-other">VST3 &amp; CLAP zips:
                         <a href="https://github.com/koulaxizis/null-jsfx/releases/latest/download/NULL-JSFX-VST3-CLAP-Windows.zip">Windows</a> &bull;
-                        <a href="https://github.com/koulaxizis/null-jsfx/releases/latest/download/NULL-JSFX-VST3-CLAP-macOS.zip">macOS</a> &bull;
-                        <a href="https://github.com/koulaxizis/null-jsfx/releases/latest/download/NULL-JSFX-VST3-CLAP-Linux.zip">Linux</a>
+                        <a href="https://github.com/koulaxizis/null-jsfx/releases/latest/download/NULL-JSFX-VST3-CLAP-macOS.zip">macOS</a> (with Audio Unit) &bull;
+                        <a href="https://github.com/koulaxizis/null-jsfx/releases/latest/download/NULL-JSFX-VST3-CLAP-Linux.zip">Linux</a> &bull;
+                        <a href="https://github.com/koulaxizis/null-jsfx/releases/latest/download/NULL-JSFX-VST3-CLAP-Windows-ARM64.zip">Windows on Arm</a> &bull;
+                        <a href="https://github.com/koulaxizis/null-jsfx/releases/latest/download/NULL-JSFX-VST3-CLAP-Linux-ARM64.zip">Linux arm64</a>
                     </p>
                 </div>
                 <div class="changelog-footer">
@@ -284,10 +288,32 @@
             <div class="modal-content modal-changelog">
                 <button class="modal-close" onclick="closeChangelog()">&times;</button>
                 <div class="changelog-header">
-                    <h3>Release Notes v3.0</h3>
+                    <h3>Release Notes v3.1</h3>
                     <p class="changelog-date">November 2026</p>
                 </div>
                 <div class="changelog-body">
+                    <div class="changelog-section">
+                        <h4 class="changelog-title">3.1: 4 NEW PLUGINS</h4>
+                        <ul>
+                            <li><strong>MODAL PIANO</strong>: a physically modelled piano with no samples: hammer hardness, string stiffness, unison detune, damper, sustain and soft pedals</li>
+                            <li><strong>STRING ENSEMBLE</strong>: the classic string machine, violins, violas and cellos with a lush ensemble in three modes</li>
+                            <li><strong>BINAURAL PANNER</strong>: place a sound around, above or behind your head on headphones</li>
+                            <li><strong>ROOM TONE</strong>: fills the silent gaps of edited dialogue with matching room noise</li>
+                            <li>Every one as JSFX, GFX, VST3 / CLAP and LV2, like the rest of the suite</li>
+                        </ul>
+                    </div>
+                    <div class="changelog-section">
+                        <h4 class="changelog-title">3.1: NEW FORMATS AND APPS</h4>
+                        <ul>
+                            <li><strong>AUDIO UNIT</strong> for Logic, GarageBand and MainStage in the macOS zip, the macOS installers and the Hub</li>
+                            <li><strong>ARM64</strong>: native builds and installers for Windows on Arm and Linux arm64; the Hub picks them by itself</li>
+                            <li><strong>REMOTE FOR DAWS</strong> (beta, Android): the mixer, transport and every NULL JSFX plugin of REAPER, Ardour / Mixbus, Bitwig Studio, Ableton Live, Cubase and FL Studio on your phone or tablet</li>
+                            <li><strong>REMOTE FOR MIXERS</strong> (beta, Android): Behringer X AIR, X32 and WING, Midas M32, Allen &amp; Heath SQ and Qu on your phone or tablet</li>
+                            <li>Both apps also through our F-Droid repository (F-Droid, Droid-ify) and Obtainium</li>
+                            <li><strong>GFX</strong>: the mouse pointer hides while you drag a knob, and the Drum Machine names its notes in REAPER's MIDI editor (REAPER 7.83)</li>
+                            <li>At their default settings the plugins sound exactly as in 3.0</li>
+                        </ul>
+                    </div>
                     <div class="changelog-section">
                         <h4 class="changelog-title">3.0: 13 NEW PLUGINS</h4>
                         <ul>
