@@ -31,7 +31,8 @@ function serve() {
   const server = http.createServer((req, res) => {
     const url = decodeURIComponent(req.url.split('?')[0]);
     let file = null;
-    if (url.startsWith('/app/core/fonts/')) file = path.join(root, 'native/common/fonts', path.basename(url));
+    if (url === '/app/core/null_plugins.json') file = path.join(root, 'remote/null_plugins.json');
+    else if (url.startsWith('/app/core/fonts/')) file = path.join(root, 'native/common/fonts', path.basename(url));
     else if (url.startsWith('/app/nullfx/')) file = path.join(root, 'web', url.slice('/app/nullfx/'.length));
     else if (url.startsWith('/app/')) file = path.join(root, 'android/web', url.slice(5));
     if (!file || !file.startsWith(root) || !fs.existsSync(file) || fs.statSync(file).isDirectory()) { res.writeHead(404); res.end(); return; }
@@ -136,6 +137,15 @@ async function main() {
     await page.locator('#tabs button', { hasText: 'Ardour' }).click();
     assert.strictEqual(await tab.locator('.top .name').textContent(), 'NULL JSFXArdour · Mixbus');
     ok('Ardour tab, after REAPER, with the NULL JSFX header');
+    // the shared catalog (remote/null_plugins.json, core/null_plugins.json in the app): every
+    // NULL plugin, so instruments and MIDI effects are marked as NULL JSFX in a DAW too
+    const cat = await page.evaluate(async () => {
+      const list = await NullDawDesk.nullIndex();
+      const id = (n) => (NullDawDesk.nullEffect(n, list) || {}).id || null;
+      return { n: list.length, synth: id('NULL Synth'), arp: id('Arpeggiator'), tilt: id('Tilt GFX') };
+    });
+    assert.deepStrictEqual(cat, { n: require('../../remote/null_plugins.json').plugins.length, synth: 'synth', arp: 'arpeggiator', tilt: 'tilt' });
+    ok(`the desk reads the shared plugin catalog (${cat.n} plugins, instruments and MIDI effects included)`);
     await shot('ardour-connect');
 
     await tab.locator('input').first().fill('127.0.0.1');

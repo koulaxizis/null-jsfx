@@ -11,6 +11,9 @@ const A = require('../../android/web/daws/ardour/ardour.js');
 const Osc = require('../../android/web/mixers/core/osc.js');
 const sim = require('./ardour_sim.cjs');
 
+// the shared plugin catalog (remote/null_plugins.json) as android/web/daws/core/desk.js reads it
+const catalog = () => require('../../remote/null_plugins.json').plugins.map((p) => ({ id: p.s, name: p.n, nn: p.nn, category: p.c }));
+
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 async function until(cond, what, ms = 3000) {
   const t0 = Date.now();
@@ -42,12 +45,16 @@ function unit() {
   assert(Math.abs(A.dbToFader(0) - 0.78179) < 1e-4);
   assert.strictEqual(A.faderToDb(0), -Infinity);
   ok('fader law');
-  // NULL plugins by name (bare, with the JSFX prefix or the GFX suffix), others not
-  const fx = require('../../web/fx/index.json').effects;
+  // NULL plugins by name (bare, with the JSFX prefix or the GFX suffix), others not, from the
+  // shared catalog as the desk reads it: effects, instruments and MIDI effects alike
+  const fx = catalog();
   assert.strictEqual(A.nullEffect('Tilt', fx).id, 'tilt');
   assert.strictEqual(A.nullEffect('NULL Delay GFX', fx).id, 'delay');
+  assert.strictEqual(A.nullEffect('NULL Synth', fx).id, 'synth');
+  assert.strictEqual(A.nullEffect('Arpeggiator', fx).id, 'arpeggiator');
   assert.strictEqual(A.nullEffect('ACE Reverb', fx), null);
-  ok('NULL plugins found by name');
+  assert.strictEqual(A.nullEffect('Native Name', [{ id: 'x', name: 'JSFX Name', nn: 'Native Name' }]).id, 'x');
+  ok('NULL plugins found by name, instruments and MIDI effects too');
   // range mapping: identity for the slider range, linear for a normalized one
   const p = { min: 0, max: 1 };
   assert.strictEqual(A.toParam(1000, 0, 2000, p), 0.5);
@@ -115,7 +122,7 @@ async function live() {
       off();
       return got;
     };
-    const fxIndex = require('../../web/fx/index.json').effects;
+    const fxIndex = catalog();
     for (const [piid, id] of [[1, 'tilt'], [2, 'delay']]) {
       const params = await read(piid);
       const e = A.nullEffect(plugins[piid - 1].name, fxIndex);
