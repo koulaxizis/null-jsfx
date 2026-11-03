@@ -781,7 +781,7 @@ Then run every test of Part V that the PR touches, merge it once CI is green, an
 
 Since 2026-11-01 a release is built as a **draft** and published only when every asset is attached. Before that, `native.yml` and `hub.yml` started on `release: published` and attached the assets afterwards, so for about an hour the site's Download links (`releases/latest/download/<name>`) answered 404 (3.0 had 2 of 13 assets at publish time).
 
-1. Claude cannot create GitHub releases (the API answers 403 for its sessions [memory, verified 2026-10-13]), and publishing is Christos's call. Give Christos the link to the Release workflow, `https://github.com/koulaxizis/null-jsfx/actions/workflows/release.yml`, with the version and the release notes. He clicks "Run workflow" on `main` and types the version (numeric, no "v").
+1. Claude runs releases (Christos, 2026-11-03: "from now on, you do it"). Claude writes the release notes to `release-notes/<v>.md` with the version bump (VI.1), merges it, and starts the Release workflow on `main` with the version (`gh api -X POST repos/koulaxizis/null-jsfx/actions/workflows/release.yml/dispatches -f ref=main -f inputs[version]=<v>`). Claude's sessions cannot create, edit or publish releases (HTTP 403 "not permitted for this session type", verified 2026-10-13 and 2026-11-03), and Claude does not route around that through a workflow, so Christos clicks Publish.
    When main holds work meant for a later version, the release is cut from a branch (`release-<v>`: the previous tag plus the PRs that belong in it), and Christos picks that branch in "Run workflow"; main then gets the same version and release notes in its own PR (2.6.1, 2026-10-28).
 2. `release.yml` checks that `FOOTER` in `tests/lint.py` names that version, creates the draft release `<v>` on the commit it runs on (a draft that already exists is moved there and its assets rebuilt; a published release or an existing tag stops it), then calls `native.yml` and `hub.yml` with `release_tag`, which attach 17 assets (13 until 3.0; the 4 ARM64 ones from the first release after it):
    - `NULL-JSFX-JSFX.zip`;
@@ -793,7 +793,7 @@ Since 2026-11-01 a release is built as a **draft** and published only when every
    From the first release after 2026-11-01, `release.yml` also calls `android.yml`, which adds `NULL-JSFX-Remote-DAWs-Android.apk` once the signing secrets are set (II.10), and later `NULL-JSFX-Remote-Mixers-Android.apk`; they are not among the 17 that `check` requires, since a release without the secrets gets no APK.
 
    Its last job, `check`, fails unless all 17 are attached and the JSFX zip carries the new footer, and its summary links the draft. A failed validator, test or installer check fails the run before that, so a draft that is not 17/17 is never offered.
-3. Christos pastes the release notes into the draft and clicks Publish. The tag is created then, and `releases/latest` moves to it with every file in place. On `release: published`, `hub.yml` runs only job `catalog` (the catalog again, with the final notes and the publish date; the draft's catalog carries the draft's notes and the build date) and `downloads.yml` counts.
+3. The draft carries the notes from `release-notes/<v>.md` (the run fails without them); Claude tells Christos it is ready and he clicks Publish. The tag is created then, and `releases/latest` moves to it with every file in place. On `release: published`, `hub.yml` runs only job `catalog` (the catalog again, with the final notes and the publish date; the draft's catalog carries the draft's notes and the build date) and `downloads.yml` counts.
 4. Afterwards, Claude checks that all 17 assets are attached, runs `hub/tests/release_smoke.sh <v>`, checks that the JSFX zip carries the new footer, and checks the site's Download links (`releases/latest/download/<name>`).
 5. To attach packages to a release that exists (draft or published), run `native.yml` and `hub.yml` by hand with `release_tag`. This re-uploads every package of that workflow with `--clobber`, so assets that were already there are replaced by rebuilds.
 6. Every `gh release upload` in `native.yml` and `hub.yml` is retried up to 5 times: on 2.6 the upload endpoint answered HTTP 500 and two assets were never attached (2026-10-26).
@@ -817,6 +817,7 @@ Since 2026-11-01 a release is built as a **draft** and published only when every
 | 2.9 | 2026-10-31 19:56 | Assisted category as beta (B13): Assisted EQ, Comp, Reverb and Delay, set by Learn from fixed rules (no AI); 137 plugins |
 | 3.0 | 2026-11-01 12:23 | vendor research launch (B12): 13 new plugins (Kick, Drum Trigger, Transient Split, Euclid, Pitch to MIDI, Note Echo, Granular, Multi-Tap Delay, Bitcrusher, Passive EQ, Speaker Sim, Oscilloscope, Test Signal), MPE in four instruments, upgrades to 11 plugins, four FX chains; 150 plugins |
 | 3.1 | 2026-11-02 21:22 | Modal Piano, String Ensemble, Binaural Panner, Room Tone (154 plugins); Audio Unit on macOS; ARM64 builds and installers for Windows and Linux; Remote for DAWs and Remote for Mixers APKs (beta); hidden cursor on GFX knob drags, Drum Machine note names. The Hub was attached later by a manual `hub.yml` run (the release run's macOS Hub test was cancelled, so its build was skipped) |
+| 3.2 | 2026-11-03 12:18 | F-Droid repo author "NULL JSFX" and its own index key; separate DAWs and Mixers app icons; Mixers remote: CQ, dLive/Avantis, Yamaha CL/QL/TF/DM7 (beta); DAWs remote: Mackie Control (beta). First release run by Claude (notes, dispatch, asset check, smoke test); Christos clicked Publish. Release check job needed `contents: write` to see the draft (#144) |
 | media | 2026-10-19 (pre-release) | the videos, not a plugin release |
 
 ### VI.4 Hub rollback and updates
@@ -2021,4 +2022,12 @@ entry and the Bible delta.
 - **Tests (run on Linux):** `tests/lint.py` on all 308 JSFX and GFX (0 errors, with the version checks), `tests/fdroid_repo_test.py`, `node web/tools/build.js`, `tools/build_site.py --check`, `tools/build_catalog.py --check`, `tools/build_remote.py --check`, `tests/bible_order.py`, `tools/build_bible.py --check`. Full CI on the PR.
 - **Next:** Christos runs the Release workflow with 3.2 and publishes; Claude checks the 19 assets, `release_smoke.sh 3.2`, the site links, the F-Droid repository (3.2 of both apps, "NULL JSFX" as author) and adds the 3.2 row to Part VI.3.
 - **Version:** v3.2.
+
+### 2026-11-03 — Release workflow: the final check can see the draft; notes from the repo (no version change)
+- **Why:** the 3.2 run built all 19 assets, but its `check` job failed with "release not found": the workflow's default token is `contents: read`, and a draft release is visible only to a token that may write contents. In 3.1 the job had been skipped (a cancelled macOS job), so the fault never showed.
+- **Changes:** `release.yml`: `check` gets `permissions: contents: write`. The 3.2 draft was checked by hand meanwhile: 19 assets, the JSFX zip carries the v3.2 footer, target 9fd6abca (#142 plus the download counter).
+- **Also (2026-11-03):** Christos asked Claude to run releases from now on. Claude can start the Release workflow, but its sessions cannot write releases (HTTP 403 "not permitted for this session type"), and Claude does not route around that through a workflow. So the draft now gets its notes from `release-notes/<v>.md` (new folder; 3.2's notes are the first), Claude starts the run and checks it, and Christos only clicks Publish (VI.2 rewritten).
+- **Files:** `.github/workflows/release.yml`, `release-notes/3.2.md` (new), this Bible (VI.2).
+- **Tests:** the workflow parsed as YAML; `python3 tests/bible_order.py`, `python3 tools/build_bible.py --check`. The fixed job runs with the next release.
+- **Version:** v3.2 (no change).
 

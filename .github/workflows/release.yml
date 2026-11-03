@@ -1,7 +1,7 @@
 name: Release
 
-# Builds a release as a draft (Bible VI.2). Christos runs it by hand with the version, once the
-# version bump (Bible VI.1) is on main:
+# Builds a release as a draft (Bible VI.2). Claude runs it with the version, once the version bump
+# (Bible VI.1) and the release notes (release-notes/<version>.md) are on main; Christos publishes:
 #   draft    creates the draft release <version> on the commit this run builds (a draft that
 #            already exists is moved to it and its assets are rebuilt)
 #   native   native.yml: the JSFX zip, the 5 VST3/CLAP/LV2 zips (2 of them ARM64) and the 6 installers
@@ -9,7 +9,7 @@ name: Release
 #   android  android.yml: the signed APKs of the Android remotes, when the signing secrets are set
 #   check    all 17 assets are attached and the JSFX zip carries the new footer
 # A draft is not public: releases/latest, and so the site's Download links, keep pointing to the
-# previous release until Christos clicks Publish, so no link is ever missing a file. On publish,
+# previous release until Christos clicks Publish (Claude's sessions cannot publish releases), so no link is ever missing a file. On publish,
 # hub.yml builds the catalog again (final release notes and date) and downloads.yml counts.
 
 on:
@@ -46,19 +46,24 @@ jobs:
           if ! grep -qF "FOOTER = \"//NULL JSFX v$VERSION " tests/lint.py; then
             echo "::error::FOOTER in tests/lint.py is not v$VERSION: merge the version bump first (Bible VI.1)"; exit 1
           fi
+          # the release notes, written by Claude in release-notes/<version>.md (Bible VI.2), so
+          # publishing is one click
+          notes="release-notes/$VERSION.md"
+          if [ ! -s "$notes" ]; then
+            echo "::error::$notes is missing or empty: write the release notes first (Bible VI.2)"; exit 1
+          fi
           if draft="$(gh release view "$VERSION" --json isDraft --jq .isDraft 2>/dev/null)"; then
             if [ "$draft" != true ]; then
               echo "::error::release $VERSION is already published"; exit 1
             fi
-            gh release edit "$VERSION" --draft --target "$GITHUB_SHA"
+            gh release edit "$VERSION" --draft --target "$GITHUB_SHA" --notes-file "$notes"
             echo "draft $VERSION exists: moved to $GITHUB_SHA, its assets are rebuilt"
             exit 0
           fi
           if git ls-remote --exit-code --tags origin "refs/tags/$VERSION" > /dev/null; then
             echo "::error::tag $VERSION exists already"; exit 1
           fi
-          gh release create "$VERSION" --draft --target "$GITHUB_SHA" --title "$VERSION" \
-            --notes "Release notes: write them here before you publish (the Hub shows them)."
+          gh release create "$VERSION" --draft --target "$GITHUB_SHA" --title "$VERSION" --notes-file "$notes"
           echo "draft $VERSION created on $GITHUB_SHA"
 
   native:
@@ -91,10 +96,14 @@ jobs:
 
   check:
     needs: [native, hub, android]
+    # a draft is visible only to a token that may write the repository's contents (with
+    # contents: read, `gh release view` answered "release not found" on 3.2)
+    permissions:
+      contents: write
     timeout-minutes: 10
     runs-on: ubuntu-latest
     steps:
-      - name: All 17 assets, and the new footer
+      - name: All 17 assets (the APKs come on top), and the new footer
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
@@ -130,6 +139,6 @@ jobs:
           {
             echo "### Draft $VERSION is ready: 17/17 assets"
             echo
-            echo "Write the release notes and publish it: $url"
+            echo "The notes come from release-notes/$VERSION.md: check them and publish it: $url"
             echo "(after publishing: \`hub/tests/release_smoke.sh $VERSION\`, Bible VI.2)"
           } | tee -a "$GITHUB_STEP_SUMMARY"
