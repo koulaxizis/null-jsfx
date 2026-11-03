@@ -5,6 +5,10 @@
 //   a child process with a time limit, three tries. Playwright's own installApk once hung both
 //   jobs until their 30 min limit right after the emulator reported booted (Bible Part X,
 //   2026-11-02): sys.boot_completed can be 1 before the package manager answers.
+// - open(device, pkg, start): starts the app (start), finds its WebView and attaches to it, three
+//   tries. Attaching (Playwright's webview.page()) once never answered in both jobs when it came
+//   about 2 s after the app started (Bible Part X, 2026-11-03); each try now restarts the app,
+//   waits for the WebView, lets its page settle, and gives page() 30 s.
 // - watchdog(ms): exits with the current step's name if the whole test takes longer.
 // NULL JSFX • https://nulljsfx.tech • MIT License
 'use strict';
@@ -60,9 +64,23 @@ async function install(device, apk) {
   });
 }
 
+async function open(device, pkg, start) {
+  for (let i = 1; ; i++) {
+    await step('start the app', 60000, start);
+    const webview = await step('find its WebView', 90000, () => device.webView({ pkg }, { timeout: 80000 }));
+    await sleep(3000);
+    try {
+      return await step('attach to the WebView', 30000, () => webview.page());
+    } catch (e) {
+      console.log('attach try ' + i + ' failed: ' + e.message);
+      if (i >= 3) throw e;
+    }
+  }
+}
+
 function watchdog(ms) {
   const t = setTimeout(() => { console.error('device test timed out after ' + ms / 60000 + ' min, in step: ' + current); process.exit(1); }, ms);
   return { done() { clearTimeout(t); }, get step() { return current; } };
 }
 
-module.exports = { step, install, watchdog, sleep };
+module.exports = { step, install, open, watchdog, sleep };

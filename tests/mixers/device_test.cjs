@@ -14,7 +14,7 @@ const apk = process.argv[2];
 const shots = process.argv[3];
 const PKG = 'tech.nulljsfx.remote.mixers';
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
-const { step, install, watchdog } = require('../remote/device_steps.cjs');
+const { step, install, open, watchdog } = require('../remote/device_steps.cjs');
 const LIMIT_MS = 8 * 60 * 1000; // the whole test; it passes in about a minute
 
 async function main() {
@@ -23,12 +23,10 @@ async function main() {
   assert.ok(device, 'no Android device or emulator');
   console.log('device', device.model(), device.serial());
   if (apk) await install(device, apk);
-  await step('start the app', 60000, async () => {
+  const page = await open(device, PKG, async () => {
     await device.shell(`am force-stop ${PKG}`);
     await device.shell(`am start -n ${PKG}/tech.nulljsfx.remote.MainActivity`);
   });
-  const webview = await step('find its WebView', 90000, () => device.webView({ pkg: PKG }, { timeout: 80000 }));
-  const page = await step('attach to the WebView', 60000, () => webview.page());
   const errors = [];
   page.on('pageerror', (e) => errors.push(e.message));
   const state = (p) => console_.state.get(p);

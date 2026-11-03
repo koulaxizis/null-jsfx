@@ -46,7 +46,7 @@ function reaperServer(reaper) {
   return new Promise((r) => s.server.listen(REAPER_PORT, '0.0.0.0', () => r(s)));
 }
 
-const { step, install, watchdog, sleep: nap } = require('./device_steps.cjs');
+const { step, install, open, watchdog, sleep: nap } = require('./device_steps.cjs');
 const LIMIT_MS = 12 * 60 * 1000; // the whole test; it passes in about two minutes
 
 let passed = 0;
@@ -61,13 +61,11 @@ async function main() {
   assert.ok(device, 'no Android device or emulator');
   console.log('device', device.model(), device.serial());
   if (apk) await install(device, apk);
-  await step('start the app', 60000, async () => {
+  const page = await open(device, PKG, async () => {
     await device.shell(`am force-stop ${PKG}`);
     await device.shell(`pm clear ${PKG}`); // no saved REAPER from an earlier run
     await device.shell(`am start -n ${PKG}/tech.nulljsfx.remote.MainActivity`);
   });
-  const webview = await step('find its WebView', 90000, () => device.webView({ pkg: PKG }, { timeout: 80000 }));
-  const page = await step('attach to the WebView', 60000, () => webview.page());
   const errors = [];
   page.on('pageerror', (e) => errors.push(e.message));
   async function until(cond, what, ms = 15000) {
