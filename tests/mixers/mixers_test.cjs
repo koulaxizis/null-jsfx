@@ -20,6 +20,8 @@ const Nrpn = require(path.join(web, 'core/nrpn.js'));
 const sqSim = require('./sq_sim.cjs');
 const qu = require(path.join(web, 'qu/profile.js'));
 const cq = require(path.join(web, 'cq/profile.js'));
+const dlive = require(path.join(web, 'dlive/profile.js'));
+const dliveSim = require('./dlive_sim.cjs');
 const quSim = require('./qu_sim.cjs');
 
 let failures = 0;
@@ -821,6 +823,116 @@ test('CQ: connect over TCP, read everything, both directions', async () => {
     probe.disconnect();
   } finally { s.disconnect(); sim.close(); }
 });
+
+// --- Allen & Heath dLive and Avantis (one scheme: a MIDI channel per channel type) ----------
+
+test('dLive/Avantis messages byte for byte, as the protocol documents write them', () => {
+  dlive.layoutFor('dLive');
+  // base channel N = 12 (B): inputs on B, aux on N+2 = 1 (wraps), FX returns, mains, DCAs on N+4
+  assert.strictEqual(hx(dlive.encode(11, '/ip/1/lvl', dlive.toValue('/ip/1/lvl', 0.75))), 'BB 63 00 BB 62 17 BB 06 6B', 'Ip 1 fader at 0 dB');
+  assert.strictEqual(hx(dlive.encode(0, '/ip/128/lvl', dlive.toValue('/ip/128/lvl', 1))), 'B0 63 7F B0 62 17 B0 06 7F', '+10 dB');
+  assert.strictEqual(hx(dlive.encode(0, '/ip/2/mute', dlive.toValue('/ip/2/mute', 0))), '90 01 7F 90 01 00', 'muted');
+  assert.strictEqual(hx(dlive.encode(0, '/ip/2/mute', dlive.toValue('/ip/2/mute', 1))), '90 01 3F 90 01 00', 'not muted');
+  assert.strictEqual(hx(dlive.encode(0, '/main/1/lvl', 0)), 'B4 63 30 B4 62 17 B4 06 00', 'Main 1 on N+4');
+  assert.strictEqual(hx(dlive.encode(0, '/dca/24/mute', 1)), '94 4D 7F 94 4D 00');
+  assert.strictEqual(hx(dlive.encode(0, '/mgrp/1', 1)), '94 4E 7F 94 4E 00', 'mute group 1 (dLive 4E)');
+  assert.strictEqual(hx(dlive.encode(0, '/ip/3/send/saux2', 0x6b)), 'F0 00 00 1A 50 10 01 00 00 0D 02 02 41 6B F7', 'Ip 3 to stereo Aux 2');
+  assert.strictEqual(hx(dlive.encode(0, '/fxr/1/send/aux62', 0x10)), 'F0 00 00 1A 50 10 01 00 04 0D 20 02 3D 10 F7', 'FX Rtn 1 to Aux 62');
+  assert.strictEqual(hx(dlive.query(0, '/ip/5/name')), 'F0 00 00 1A 50 10 01 00 00 01 04 F7');
+  assert.strictEqual(hx(dlive.query(0, '/aux/1/col')), 'F0 00 00 1A 50 10 01 00 02 04 00 F7');
+  assert.strictEqual(hx(dlive.query(0, '/ip/1/lvl')), 'F0 00 00 1A 50 10 01 00 00 05 0B 17 00 F7');
+  assert.strictEqual(hx(dlive.query(0, '/ip/1/mute')), 'F0 00 00 1A 50 10 01 00 00 05 09 00 F7');
+  assert.strictEqual(hx(dlive.query(0, '/ip/1/send/aux1')), 'F0 00 00 1A 50 10 01 00 00 05 0F 0D 00 02 00 F7');
+  // what comes back, on any of the five channels from N
+  assert.deepStrictEqual(dlive.key(0x00, 0x17, 0x6b, -1, 3, 3), { addr: dlive.address('/ip/1/lvl'), raw: 0x6b });
+  assert.strictEqual(dlive.key(0x00, 0x18, 0x7f, -1, 3, 3), null, 'main assign: not shown');
+  assert.deepStrictEqual(dlive.noteKey(0x36, 0x7f, 7, 3), { addr: dlive.address('/dca/1/mute'), raw: 1 });
+  assert.deepStrictEqual(dlive.noteKey(0x4e, 0x3f, 7, 3), { addr: dlive.address('/mgrp/1'), raw: 0 });
+  const H = [0xf0, 0, 0, 0x1a, 0x50, 0x10, 1, 0];
+  assert.deepStrictEqual(dlive.fromSysex(H.concat([5, 0x02, 0x00, 0x57, 0x65, 0x64, 0x67, 0x65, 0xf7]), 3), [{ addr: dlive.address('/aux/1/name'), raw: 'Wedge' }]);
+  assert.deepStrictEqual(dlive.fromSysex(H.concat([3, 0x05, 0x00, 0x01, 0xf7]), 3), [{ addr: dlive.address('/ip/1/col'), raw: 1 }]);
+  assert.deepStrictEqual(dlive.fromSysex(H.concat([3, 0x0d, 0x01, 0x05, 0x40, 0x22, 0xf7]), 3), [{ addr: dlive.address('/ip/2/send/saux1'), raw: 0x22 }]);
+  // connect: Input 65's name, then Input 1's, on channels 1-12; the answer says N and the model
+  const hello = dlive.hello();
+  assert.strictEqual(hello.length, 12 * 24);
+  assert.strictEqual(hx(hello.slice(0, 24)), 'F0 00 00 1A 50 10 01 00 00 01 40 F7 F0 00 00 1A 50 10 01 00 00 01 00 F7');
+  assert.deepStrictEqual(dlive.helloReply(H.concat([9, 0x02, 0x40, 0xf7])), { channel: 9, model: 'dLive' });
+  assert.deepStrictEqual(dlive.helloReply(H.concat([9, 0x02, 0x00, 0x4b, 0xf7])), { channel: 9, model: 'Avantis' });
+  assert.strictEqual(dlive.helloReply([0xf0, 0, 0, 0x1a, 0x50, 0x11, 1, 0, 0, 0x11, 1, 1, 9, 0xf7]), null, 'a Qu answer is not ours');
+  // layouts
+  const D = dlive.layoutFor('dLive');
+  assert.strictEqual(D.inputs.length, 128);
+  assert.strictEqual(D.returns.length, 16);
+  assert.strictEqual(D.dcas.length, 24);
+  assert.strictEqual(D.targets.length, 62 + 31);
+  const A = dlive.layoutFor('Avantis');
+  assert.strictEqual(A.inputs.length, 64);
+  assert.strictEqual(A.dcas.length, 16);
+  assert.strictEqual(A.targets.length, 40 + 20);
+  assert.strictEqual(hx(dlive.encode(0, '/mgrp/8', 1)), '94 4D 7F 94 4D 00', 'Avantis mute group 8 at 4D');
+  const addrs = A.params.map((p) => dlive.address(p.path));
+  assert.strictEqual(new Set(addrs).size, addrs.length, 'every parameter has its own address');
+  const P = dlive.prune(A, (p) => p === '/aux/3/name' || p === '/saux/2/name');
+  assert.deepStrictEqual(P.targets.map((t) => t.label), ['Aux 3', 'St Aux 2']);
+  assert.deepStrictEqual(Object.keys(P.inputs[0].sends), ['aux3', 'saux2']);
+  assert.deepStrictEqual(dlive.prune(dlive.layoutFor('Avantis'), () => false).targets.length, 8, 'no names: the first eight aux');
+  // levels: -inf 00, 0 dB 6B, +10 dB 7F
+  assert.strictEqual(dlive.toValue('/ip/1/lvl', 0), 0);
+  assert.strictEqual(dlive.fromValue('/ip/1/lvl', 0x6b), 0.75);
+  assert.strictEqual(dlive.fromValue('/ip/1/lvl', 0x7f), 1);
+  dlive.layoutFor('dLive');
+});
+
+for (const [model, channel, gets] of [['dLive', 11, true], ['Avantis', 4, false]]) {
+  test(model + ': connect over TCP, the MIDI channel found, the mixes set up, both directions' + (gets ? '' : ' (no gets)'), async () => {
+    const sim = await dliveSim.start({ model, channel, gets, mixes: ['aux1', 'aux4', 'saux1'] });
+    const s = new Nrpn.Session(dlive, nodeTcp);
+    const other = new Nrpn.Session(dlive, nodeTcp);
+    try {
+      const info = await s.connect('127.0.0.1', sim.port);
+      assert.strictEqual(info.model, model);
+      assert.strictEqual(s.channel, channel, 'the base MIDI channel from the answer');
+      assert.strictEqual(s.layout.inputs.length, model === 'dLive' ? 128 : 64);
+      assert.deepStrictEqual(s.layout.targets.map((t) => t.label), ['Aux 1', 'Aux 4', 'St Aux 1'], 'only the mixes set up on the console');
+      assert.strictEqual(s.get('/ip/1/name'), 'Kick');
+      assert.strictEqual(s.get('/ip/1/col'), 1, 'red');
+      assert.strictEqual(s.get('/aux/1/name'), 'Wedge');
+      assert.strictEqual(s.get('/saux/1/name'), 'IEM Drums');
+      assert.strictEqual(s.get('/fxr/1/name'), 'Reverb 1');
+      if (gets) {
+        assert.strictEqual(s.values.size, s.layout.params.length, 'every value answered');
+        assert.strictEqual(s.get('/ip/1/lvl'), 0.75, '0 dB');
+        assert.strictEqual(s.get('/ip/1/mute'), 1, 'not muted');
+        assert.strictEqual(s.get('/ip/1/send/aux4'), 0, 'send off');
+      } else {
+        assert.strictEqual(s.get('/ip/1/lvl'), undefined, 'no gets: a level is unknown until it changes');
+      }
+      await other.connect('127.0.0.1', sim.port);
+      // sets: a fader, a mute, a send, a mute group, a DCA
+      s.set('/ip/7/lvl', 1);
+      s.set('/ip/2/mute', 0);
+      s.set('/fxr/2/send/saux1', 0.75);
+      s.set('/mgrp/3', 1);
+      s.set('/dca/2/lvl', 0);
+      const mg = (model === 'dLive' ? 0x4e : 0x46) + 2;
+      await until(() => sim.chans.get('0/6').fader === 0x7f && sim.chans.get('0/1').mute === 1 && sim.sends.get('4/33>2/64') === 0x6b
+        && sim.chans.get('4/' + mg).mute === 1 && sim.chans.get('4/55').fader === 0, 1000, 'sets reach the console');
+      await until(() => other.get('/ip/7/lvl') === 1 && other.get('/ip/2/mute') === 0 && other.get('/fxr/2/send/saux1') === 0.75
+        && other.get('/mgrp/3') === 1, 1000, 'the other remote hears them');
+      // changes on the console
+      sim.fader('0/2', 0);
+      sim.mute('4/48', 1);
+      sim.name('0/9', 'Gtr');
+      sim.send('0/0>2/3', 0x7f);
+      await until(() => s.get('/ip/3/lvl') === 0 && s.get('/main/1/mute') === 0 && s.get('/ip/10/name') === 'Gtr' && s.get('/ip/1/send/aux4') === 1, 1000, "the console's changes");
+      // a dropped link: redial, find the channel again, read again
+      sim.drop();
+      await until(() => s.status === 'lost', 1000, 'lost');
+      await until(() => s.status === 'online', 8000, 'back online');
+      assert.strictEqual(s.get('/ip/10/name'), 'Gtr');
+    } finally { s.disconnect(); other.disconnect(); sim.close(); }
+  });
+}
 
 (async () => {
   for (const [name, fn] of tests) {
