@@ -28,6 +28,10 @@ with tempfile.TemporaryDirectory() as d:
             check(os.path.getsize(os.path.join(loc, f)) > 0, p + ": " + f)
         short = open(os.path.join(loc, "short_description.txt"), encoding="utf-8").read().strip()
         check(len(short) <= 80, p + ": summary %d <= 80 characters" % len(short))
+    icons = [open(os.path.join(d, "metadata", p, "en-US", "images", "icon.png"), "rb").read() for p in pkgs]
+    repo_icon = open(os.path.join(fdroid_repo.ROOT, "android", "fdroid", "icon.png"), "rb").read()
+    check(icons[0] != icons[1] and repo_icon not in icons, "each app has its own icon, not the repository's")
+    check(all(i.startswith(b"\x89PNG") for i in icons), "the app icons are PNG")
     mixers = open(os.path.join(d, "metadata", "tech.nulljsfx.remote.mixers", "en-US", "short_description.txt")).read()
     check(mixers.lower().startswith("beta"), "Remote for Mixers says beta")
 
