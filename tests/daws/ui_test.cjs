@@ -1,11 +1,11 @@
-// The Ardour, Bitwig, Ableton, Cubase and FL Studio tabs of Remote for DAWs in Chromium (Playwright), the way the
+// The Ardour, Bitwig, Ableton, Cubase, FL Studio and Mackie Control tabs of Remote for DAWs in Chromium (Playwright), the way the
 // app shows them: the real start page (android/web/core) served under /app/ with web/ as nullfx/
 // (as the Gradle build copies it), a stand-in for Shell.kt whose UDP goes to the Ardour simulator
 // and whose TCP goes to the software Bitwig (the real controller script) or, on port 8819, to the
 // software Live (the real control surface, needs python3); its UDP to 5004/5005 goes to a
 // network MIDI session in front of the software Cubase (the real MIDI Remote script), and to
-// 5006/5007 to one in front of the software FL Studio (the real MIDI script, needs python3), all
-// over the network.
+// 5006/5007 to one in front of the software FL Studio (the real MIDI script, needs python3), and
+// 5008/5009 to a software DAW driving a Mackie Control (mackie_host.cjs), all over the network.
 // Usage: node tests/daws/ui_test.cjs [screenshot dir]
 // NULL JSFX • https://nulljsfx.tech • MIT License
 'use strict';
@@ -21,6 +21,7 @@ const bitwig = require('./bitwig_host.cjs');
 const ableton = require('./ableton_host.cjs');
 const cubase = require('./cubase_host.cjs');
 const flstudio = require('./fl_host.cjs');
+const mackie = require('./mackie_host.cjs');
 
 const root = path.resolve(__dirname, '../..');
 const shots = process.argv[2];
@@ -64,6 +65,7 @@ async function main() {
   const live = await ableton.start();
   const cub = await cubase.start();
   const fl = await flstudio.start();
+  const mcu = await mackie.start({ tracks: 10 });
   const server = await serve();
   const browser = await chromium.launch(process.env.CHROMIUM ? { executablePath: process.env.CHROMIUM } : {});
   const ctx = await browser.newContext({ viewport: { width: 1180, height: 820 }, hasTouch: true });
@@ -77,8 +79,8 @@ async function main() {
   // network MIDI session in front of the software Cubase, 5006 and 5007 to the one in front of
   // the software FL Studio; replies come back on their socket
   const udps = new Map();
-  const toSim = { 3819: ard.port, 5004: cub.port, 5005: cub.port + 1, 5006: fl.port, 5007: fl.port + 1 };
-  const fromSim = { [ard.port]: 3819, [cub.port]: 5004, [cub.port + 1]: 5005, [fl.port]: 5006, [fl.port + 1]: 5007 };
+  const toSim = { 3819: ard.port, 5004: cub.port, 5005: cub.port + 1, 5006: fl.port, 5007: fl.port + 1, 5008: mcu.port, 5009: mcu.port + 1 };
+  const fromSim = { [ard.port]: 3819, [cub.port]: 5004, [cub.port + 1]: 5005, [fl.port]: 5006, [fl.port + 1]: 5007, [mcu.port]: 5008, [mcu.port + 1]: 5009 };
   await page.exposeFunction('daUdpOpen', (id) => {
     const u = dgram.createSocket('udp4');
     u.bind(0, '127.0.0.1');
@@ -133,7 +135,7 @@ async function main() {
   try {
     await page.goto(`http://127.0.0.1:${server.address().port}/app/core/index.html`);
     await until(async () => (await page.locator('#tabs button').allTextContents()).includes('Ardour'), 'Ardour tab');
-    assert.deepStrictEqual(await page.locator('#tabs button').allTextContents(), ['REAPER', 'Ardour', 'Bitwig', 'Ableton', 'Cubase', 'FL Studio', 'Settings']);
+    assert.deepStrictEqual(await page.locator('#tabs button').allTextContents(), ['REAPER', 'Ardour', 'Bitwig', 'Ableton', 'Cubase', 'FL Studio', 'Mackie', 'Settings']);
     await page.locator('#tabs button', { hasText: 'Ardour' }).click();
     assert.strictEqual(await tab.locator('.top .name').textContent(), 'NULL JSFXArdour · Mixbus');
     ok('Ardour tab, after REAPER, with the NULL JSFX header');
@@ -491,6 +493,33 @@ async function main() {
     await shot('flstudio-delay');
     assert(await page.evaluate(() => NullRemote.back()));
 
+    // --- Mackie Control, over network MIDI (a session on port 5008) --------------------------
+    const mtab = page.locator('[data-tab=mackie]');
+    const mstrip = (name) => mtab.locator('.da-strip', { has: page.locator('.da-name', { hasText: name }) }).first();
+    await page.locator('#tabs button', { hasText: 'Mackie' }).click();
+    assert.strictEqual(await mtab.locator('.top .name').textContent(), 'NULL JSFXMackie Control · beta');
+    await shot('mackie-connect');
+    await mtab.locator('input').first().fill('127.0.0.1');
+    await mtab.locator('input').nth(1).fill('5008');
+    await mtab.locator('button.primary').click();
+    await until(async () => (await mtab.locator('.da-strip').count()) === 9, 'eight Mackie strips and the master', 6000);
+    assert.deepStrictEqual(await mtab.locator('.da-name').allTextContents(), ['Kick', 'Snare', 'Hats', 'Bass', 'Keys', 'Guitar', 'Vox', 'Pad', 'Master']);
+    assert.strictEqual(await mtab.locator('.da-fx:visible').count(), 0, 'no plugins in Mackie Control');
+    assert.strictEqual(await mstrip('Master').locator('.da-btns').evaluate((e) => e.style.visibility), 'hidden', 'no buttons on the master');
+    await drag(mstrip('Snare').locator('.da-fader'), 0, 60);
+    await until(async () => mcu.tracks[1].vol < 0.7, 'Mackie fader down');
+    await mstrip('Hats').locator('.da-m').click();
+    await until(async () => mcu.tracks[2].mute && (await mstrip('Hats').locator('.da-m').getAttribute('class')).includes('on'), 'mute in the DAW and its light');
+    mcu.meter(0, 10);
+    await until(async () => (await mstrip('Kick').locator('.da-meter-fill').evaluate((e) => parseFloat(e.style.height) || 0)) > 0, 'Mackie meters');
+    await until(async () => (await mtab.locator('.da-page').textContent()) === 'Tracks 1–8', 'the pager');
+    await shot('mackie-desk');
+    await mtab.locator('.da-next').click();
+    await until(async () => (await mtab.locator('.da-name').allTextContents()).join() === 'Choir,FX,Master', 'the next bank');
+    await mtab.locator('.da-prev').click();
+    await until(async () => (await mtab.locator('.da-name').first().textContent()) === 'Kick', 'the first bank again');
+    ok('Mackie Control tab: the DAW\'s bank, fader, mute and its light, meters, banks of eight');
+
     assert.deepStrictEqual(errors, []);
     ok('no page errors');
   } finally {
@@ -500,6 +529,7 @@ async function main() {
     ard.close();
     cub.close();
     await fl.close();
+    mcu.close();
     bw.close();
     live.close();
   }

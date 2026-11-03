@@ -90,7 +90,7 @@ async function main() {
     // --- REAPER: the /_/ proxy ---------------------------------------------------------------
     const rtab = page.locator('section[data-tab=reaper]');
     await rtab.locator('[data-connect]').waitFor({ timeout: 30000 });
-    assert.deepStrictEqual(await page.locator('#tabs button').allTextContents(), ['REAPER', 'Ardour', 'Bitwig', 'Ableton', 'Cubase', 'FL Studio', 'Settings']);
+    assert.deepStrictEqual(await page.locator('#tabs button').allTextContents(), ['REAPER', 'Ardour', 'Bitwig', 'Ableton', 'Cubase', 'FL Studio', 'Mackie', 'Settings']);
     ok('Remote for DAWs starts on its REAPER tab');
     await shot('daws-connect');
 

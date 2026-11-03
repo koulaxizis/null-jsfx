@@ -1,4 +1,4 @@
-Remote for DAWs puts your DAW's mixer and transport, and the controls of every NULL JSFX plugin, on your Android phone or tablet, over your local Wi-Fi. It works with REAPER, Ardour and Mixbus, Bitwig Studio, Ableton Live, Cubase and FL Studio.
+Remote for DAWs puts your DAW's mixer and transport, and the controls of every NULL JSFX plugin, on your Android phone or tablet, over your local Wi-Fi. It works with REAPER, Ardour and Mixbus, Bitwig Studio, Ableton Live, Cubase and FL Studio, and, as a Mackie Control surface (beta), with other DAWs such as Logic Pro, Studio One, Pro Tools, Cakewalk and Reason.
 
 <b>What it does</b>
 <ul>
@@ -15,4 +15,7 @@ Turn on REAPER's web interface (Preferences > Control/OSC/web). For the FX, run 
 <b>The other DAWs</b>
 Ardour and Mixbus: turn on their OSC control surface. Bitwig Studio, Ableton Live, Cubase and FL Studio: install the small script for it that comes with NULL JSFX (Remote folder). Cubase and FL Studio are reached over network MIDI: a network MIDI session on the computer (built into macOS; rtpMIDI on Windows).
 
-Part of NULL JSFX (https://nulljsfx.tech): free, MIT licensed, no ads, no tracking, no account. REAPER, Ardour, Mixbus, Bitwig Studio, Ableton Live, Cubase and FL Studio are trademarks of their owners; this app is independent and is not made or endorsed by them.
+<b>Mackie Control (beta)</b>
+For any other DAW that supports a Mackie Control: the app plays one over network MIDI, with nothing to install in the DAW. Eight tracks at a time with banks, the master fader, mute, solo, record arm, pan, meters, the transport and the time; no plugins. Not yet tried with every DAW.
+
+Part of NULL JSFX (https://nulljsfx.tech): free, MIT licensed, no ads, no tracking, no account. REAPER, Ardour, Mixbus, Bitwig Studio, Ableton Live, Cubase, FL Studio, Mackie Control, Logic Pro, Studio One, Pro Tools, Cakewalk and Reason are trademarks of their owners; this app is independent and is not made or endorsed by them.
