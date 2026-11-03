@@ -1972,3 +1972,11 @@ entry and the Bible delta.
 - **Tests (run on Linux):** `node tests/mixers/mixers_test.cjs` (37 of 37, four new for Yamaha; six runs in a row: an earlier draft failed three runs in four, a late query after a disconnect reading the profile's address map after the next test had remade it for another model, fixed by the session keeping its own addresses), `node tests/mixers/ui_test.cjs` (passes with the new Yamaha TF5 section; the other sections still pass), `python3 tests/bible_order.py`, `python3 tools/build_bible.py --check`, `python3 tests/lint.py`. Not run: a real CL, QL, TF or DM7 (C25), the app on a phone.
 - **Version:** v3.1 (no change).
 - **Next:** a generic Mackie Control mode (B16), later; Yamaha meters once a console can be checked.
+
+### 2026-11-03 — site (no version change) — Yamaha CL, QL, TF and DM7 on the Remote for Mixers card, beta
+- **Why:** the Yamaha profile (#137) is merged into Remote for Mixers but has not met a real console (C25); finished work goes on the site, unconfirmed work as beta (Part VII).
+- **Changes:** the `#mixers-remote` card in `index.html` and `llms.txt` add Yamaha CL, QL, TF and DM7 as beta from the next release, with "no meters yet" (and, on the card, "connect by IP address": no Scan).
+- **Files:** `index.html`, `llms.txt`, this Bible.
+- **Tests (run on Linux):** `python3 tests/lint.py` on the plugins, `python3 tools/build_site.py --check`, `python3 tests/bible_order.py`, `python3 tools/build_bible.py --check`.
+- **Version:** v3.1 (no change).
+
