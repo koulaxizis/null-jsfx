@@ -15,6 +15,7 @@ const wingSim = require('./wing_sim.cjs');
 const sqSim = require('./sq_sim.cjs');
 const quSim = require('./qu_sim.cjs');
 const dliveSim = require('./dlive_sim.cjs');
+const yamahaSim = require('./yamaha_sim.cjs');
 const quProfile = require('../../android/web/mixers/qu/profile.js');
 const cqProfile = require('../../android/web/mixers/cq/profile.js');
 const net = require('net');
@@ -43,6 +44,7 @@ async function main() {
   const qu = await quSim.start({ model: 'Qu-16' });
   const cq = await sqSim.start({ profile: cqProfile });
   const dl = await dliveSim.start({ model: 'dLive', channel: 11, mixes: ['aux1', 'aux2', 'saux1'] });
+  const ya = await yamahaSim.start({ model: 'TF5' });
   const server = await serve();
   const browser = await chromium.launch();
   const page = await browser.newPage({ viewport: { width: 1280, height: 800 } });
@@ -70,11 +72,14 @@ async function main() {
   });
 
   // the TCP bridge: a connection to port 51325 goes to the Qu simulator at 127.0.0.5, the CQ
-  // simulator at 127.0.0.6, the dLive simulator at 127.0.0.7, else to the SQ simulator
+  // simulator at 127.0.0.6, the dLive simulator at 127.0.0.7, else to the SQ simulator; port
+  // 49280 at 127.0.0.8 goes to the Yamaha simulator (which has no port 51325)
   const tcps = new Map();
   const tcpToPage = (m) => page.evaluate((x) => window.__nmDeliver(x), m).catch(() => {});
   await page.exposeFunction('nmTcpOpen', (id, host, port) => {
-    const c = net.connect(port !== 51325 ? 1 : host === '127.0.0.5' ? qu.port : host === '127.0.0.6' ? cq.port : host === '127.0.0.7' ? dl.port : sq.port, '127.0.0.1');
+    const to = port === 49280 ? (host === '127.0.0.8' ? ya.port : 1)
+      : port !== 51325 || host === '127.0.0.8' ? 1 : host === '127.0.0.5' ? qu.port : host === '127.0.0.6' ? cq.port : host === '127.0.0.7' ? dl.port : sq.port;
+    const c = net.connect(to, '127.0.0.1');
     tcps.set(id, c);
     c.on('connect', () => tcpToPage({ type: 'tcpopen', id }));
     c.on('data', (d) => tcpToPage({ type: 'tcp', id, data: d.toString('base64') }));
@@ -397,6 +402,37 @@ async function main() {
     await page.locator('.nm-bar button', { hasText: 'Disconnect' }).click();
     await page.locator('.nm-connect').waitFor();
 
+    // a Yamaha TF5 by its typed address: nothing on the Allen & Heath port, RCP on 49280 gives
+    // the model; names, colours, levels, sends, stereo inputs and FX returns, DCAs, mute groups
+    await page.locator('.nm-connect input').fill('127.0.0.8');
+    await page.locator('.nm-connect button', { hasText: 'Connect' }).click();
+    await page.locator('.nm-desk').waitFor({ timeout: 15000 });
+    assert.match(await page.locator('.nm-console').innerText(), /FOH TF5 • TF5/);
+    assert.strictEqual(await page.locator('.nm-strips .nm-strip').count(), 42, '40 mono and 2 stereo inputs');
+    assert.strictEqual(await page.locator('button.mg').count(), 6, 'six mute groups');
+    assert.match(await strip('Kick').locator('.nm-db').innerText(), /^0\.0/, 'Kick at 0 dB, named by the TF');
+    await strip('ch 2').locator('button.mute').click();
+    await until(() => ya.values.get('MIXER:Current/InCh/Fader/On 1 0') === 0, 'ch 2 off on the TF');
+    await strip('Kick').scrollIntoViewIfNeeded();
+    await drag(strip('Kick').locator('.nm-fader'), 80);
+    await until(() => ya.values.get('MIXER:Current/InCh/Fader/Level 0 0') < -300, 'Kick fader down on the TF');
+    ya.change('MIXER:Current/InCh/Fader/Level 2 0', 1000);
+    await until(async () => (await strip('ch 3').locator('.nm-db').innerText()).startsWith('+10'), 'a change on the TF shows');
+    await page.locator('.nm-bar button', { hasText: 'Wedge' }).click();
+    await strip('Kick').scrollIntoViewIfNeeded();
+    await drag(strip('Kick').locator('.nm-fader'), -150);
+    await until(() => ya.values.get('MIXER:Current/InCh/ToMix/Level 0 0') > -6000, 'send to the Wedge on the TF');
+    await page.locator('.nm-bar button', { hasText: 'Stereo' }).first().click();
+    await page.locator('.nm-bar button', { hasText: 'FX Returns' }).click();
+    assert.strictEqual(await page.locator('.nm-strips .nm-strip').count(), 2, 'two FX returns');
+    await page.locator('.nm-bar button', { hasText: 'DCA' }).click();
+    assert.strictEqual(await page.locator('.nm-strips .nm-strip').count(), 8, 'eight DCAs');
+    await page.locator('.nm-bar button', { hasText: 'Inputs' }).click();
+    await shot('mixers-yamaha-tablet', { width: 1280, height: 800 });
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await page.locator('.nm-bar button', { hasText: 'Disconnect' }).click();
+    await page.locator('.nm-connect').waitFor();
+
     // inside the real shell page (android/web/core/index.html) of the mixers app, with a
     // stand-in for Shell.kt's NullShellNative: header, tab bar, and the same session
     const app = await browser.newContext({ viewport: { width: 412, height: 860 }, hasTouch: true, isMobile: true });
@@ -443,6 +479,7 @@ async function main() {
     sq.close();
     qu.close();
     cq.close();
+    ya.close();
     dl.close();
   }
 }
