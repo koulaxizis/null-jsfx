@@ -91,10 +91,14 @@ jobs:
 
   check:
     needs: [native, hub, android]
+    # a draft is visible only to a token that may write the repository's contents (with
+    # contents: read, `gh release view` answered "release not found" on 3.2)
+    permissions:
+      contents: write
     timeout-minutes: 10
     runs-on: ubuntu-latest
     steps:
-      - name: All 17 assets, and the new footer
+      - name: All 17 assets (the APKs come on top), and the new footer
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}

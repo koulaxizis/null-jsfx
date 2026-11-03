@@ -2022,3 +2022,11 @@ entry and the Bible delta.
 - **Next:** Christos runs the Release workflow with 3.2 and publishes; Claude checks the 19 assets, `release_smoke.sh 3.2`, the site links, the F-Droid repository (3.2 of both apps, "NULL JSFX" as author) and adds the 3.2 row to Part VI.3.
 - **Version:** v3.2.
 
+### 2026-11-03 — Release workflow: the final check can see the draft (no version change)
+- **Why:** the 3.2 run built all 19 assets, but its `check` job failed with "release not found": the workflow's default token is `contents: read`, and a draft release is visible only to a token that may write contents. In 3.1 the job had been skipped (a cancelled macOS job), so the fault never showed.
+- **Changes:** `release.yml`: `check` gets `permissions: contents: write`. The 3.2 draft was checked by hand meanwhile: 19 assets, the JSFX zip carries the v3.2 footer, target 9fd6abca (#142 plus the download counter).
+- **Also (2026-11-03):** Christos asked Claude to run and publish releases from now on. Claude can start the Release workflow, but the session cannot write releases (HTTP 403 "not permitted for this session type"), so publishing the draft stays with Christos until he decides otherwise.
+- **Files:** `.github/workflows/release.yml`, this Bible.
+- **Tests:** the workflow parsed as YAML; `python3 tests/bible_order.py`, `python3 tools/build_bible.py --check`. The fixed job runs with the next release.
+- **Version:** v3.2 (no change).
+
