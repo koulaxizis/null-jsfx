@@ -1948,15 +1948,6 @@ entry and the Bible delta.
 - **Version:** v3.1 (no change).
 - **Next:** if attaching still fails after three tries, look at the WebView's DevTools socket on the emulator.
 
-<<<<<<< HEAD
-### 2026-11-03 — site (no version change) — Allen & Heath CQ, dLive and Avantis on the Remote for Mixers card, beta
-- **Why:** the CQ (#134) and dLive/Avantis (#135) profiles were merged into Remote for Mixers but have not met a real console (C23, C24); Christos's rule: finished work goes on the site, unconfirmed work is marked beta (Part VII).
-- **Changes:** `index.html` (the `#mixers-remote` card) and `llms.txt` name the Allen & Heath CQ (CQ-12T, CQ-18T, CQ-20B), dLive and Avantis as beta, "from the next release", since the 3.1 APK behind the download links does not carry it. The 3.1 release notes stay as published.
-- **Files:** `index.html`, `llms.txt`, this Bible.
-- **Tests (run on Linux):** `python3 tests/lint.py` on the plugins (with the version checks of `llms.txt` and `index.html`), `python3 tools/build_site.py --check`, `python3 tests/bible_order.py`, `python3 tools/build_bible.py --check`.
-- **Version:** v3.1 (no change).
-
-=======
 ### 2026-11-03 — Remote for Mixers: Allen & Heath dLive and Avantis (no version change)
 - **Why:** B16, the last Allen & Heath consoles after the CQ (the coordinator's next wave, on Christos's standing order).
 - **What:** `android/web/mixers/dlive/profile.js` (II.11): the dLive and the Avantis, one MIDI scheme with a MIDI channel per channel type, from Allen & Heath's MIDI over TCP/IP documents (dLive V1.9, Avantis V1.10): the base channel and the model found by name requests on every channel, names, colours, 7-bit faders, note-on mutes, sends in System Exclusive to the aux mixes set up on the console, Main 1, DCAs and 8 mute groups. `core/nrpn.js` takes the hooks it needs (`sevenBit`, `channels`, the MIDI channel in `key` and `noteKey`, `isLate` and `prune`, the base in `fromSysex`, a hello with no push), stops asking once disconnected, and skips a path whose query is gone; the SQ, Qu and CQ are unchanged. A typed address is tried as a Qu, then a dLive/Avantis, then an SQ or CQ. Store text names the dLive and Avantis.
@@ -1964,4 +1955,11 @@ entry and the Bible delta.
 - **Tests (run on Linux):** `node tests/mixers/mixers_test.cjs` (33 of 33, three new for the dLive and Avantis), `node tests/mixers/ui_test.cjs` (passes with the new dLive section; the SQ, Qu and CQ sections still pass), `python3 tests/bible_order.py`, `python3 tools/build_bible.py --check`, `python3 tests/lint.py`. Not run: a real dLive or Avantis (C24), the app on a phone.
 - **Version:** v3.1 (no change).
 - **Next:** Yamaha (RCP, TCP 49280) as its own session (B16).
->>>>>>> origin/main
+
+### 2026-11-03 — site (no version change) — Allen & Heath CQ, dLive and Avantis on the Remote for Mixers card, beta
+- **Why:** the CQ (#134) and dLive/Avantis (#135) profiles were merged into Remote for Mixers but have not met a real console (C23, C24); Christos's rule: finished work goes on the site, unconfirmed work is marked beta (Part VII).
+- **Changes:** `index.html` (the `#mixers-remote` card) and `llms.txt` name the Allen & Heath CQ (CQ-12T, CQ-18T, CQ-20B), dLive and Avantis as beta, "from the next release", since the 3.1 APK behind the download links does not carry it. The 3.1 release notes stay as published.
+- **Files:** `index.html`, `llms.txt`, this Bible.
+- **Tests (run on Linux):** `python3 tests/lint.py` on the plugins (with the version checks of `llms.txt` and `index.html`), `python3 tools/build_site.py --check`, `python3 tests/bible_order.py`, `python3 tools/build_bible.py --check`.
+- **Version:** v3.1 (no change).
+
