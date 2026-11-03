@@ -817,6 +817,7 @@ Since 2026-11-01 a release is built as a **draft** and published only when every
 | 2.9 | 2026-10-31 19:56 | Assisted category as beta (B13): Assisted EQ, Comp, Reverb and Delay, set by Learn from fixed rules (no AI); 137 plugins |
 | 3.0 | 2026-11-01 12:23 | vendor research launch (B12): 13 new plugins (Kick, Drum Trigger, Transient Split, Euclid, Pitch to MIDI, Note Echo, Granular, Multi-Tap Delay, Bitcrusher, Passive EQ, Speaker Sim, Oscilloscope, Test Signal), MPE in four instruments, upgrades to 11 plugins, four FX chains; 150 plugins |
 | 3.1 | 2026-11-02 21:22 | Modal Piano, String Ensemble, Binaural Panner, Room Tone (154 plugins); Audio Unit on macOS; ARM64 builds and installers for Windows and Linux; Remote for DAWs and Remote for Mixers APKs (beta); hidden cursor on GFX knob drags, Drum Machine note names. The Hub was attached later by a manual `hub.yml` run (the release run's macOS Hub test was cancelled, so its build was skipped) |
+| 3.2 | 2026-11-03 12:18 | F-Droid repo author "NULL JSFX" and its own index key; separate DAWs and Mixers app icons; Mixers remote: CQ, dLive/Avantis, Yamaha CL/QL/TF/DM7 (beta); DAWs remote: Mackie Control (beta). First release run by Claude (notes, dispatch, asset check, smoke test); Christos clicked Publish. Release check job needed `contents: write` to see the draft (#144) |
 | media | 2026-10-19 (pre-release) | the videos, not a plugin release |
 
 ### VI.4 Hub rollback and updates
