@@ -2045,7 +2045,8 @@ const guides = {
       { name: 'Voice 3 Interval', range: '−12 to +12 semitones', desc: 'Interval of voice 3 (Voices 3 or 4)' },
       { name: 'Voice 4 Interval', range: '−12 to +12 semitones', desc: 'Interval of voice 4 (Voices 4)' },
       { name: 'Voice 3 Level', range: '−48 to 0 dB', desc: 'Level of voice 3' },
-      { name: 'Voice 4 Level', range: '−48 to 0 dB', desc: 'Level of voice 4' }
+      { name: 'Voice 4 Level', range: '−48 to 0 dB', desc: 'Level of voice 4' },
+      { name: 'Sustain Pedal', range: 'Off / On', desc: 'MIDI mode: with On, the sustain pedal (CC 64) keeps the voices of released keys singing until the pedal comes up, for smooth chord changes; Off ignores the pedal' }
     ],
     uses: ['Instant backing vocal harmonies', 'Thirds and fifths on lead lines', 'Octave doubling on guitars and synths', 'Wide stereo harmony beds'],
     properties: 'Signal chain: Input (summed to mono) → 2 to 4 Crossfading Delay-Line Pitch Shifters (50 ms window) → Detune + Delay → Equal-Power Spread → Equal-Power Dry/Wet Mix → Output. Fixed intervals (no key detection); Mix at 100% outputs only the harmony for printing to its own track; zero latency.',

@@ -27,6 +27,7 @@ static const NullKnobsUI::Control kControls[] = {
     { 14, NullKnobsUI::kKnob, "VOICE 4", 2, -1, true },
     { 15, NullKnobsUI::kKnob, "LEVEL 3", 2, -1, false },
     { 16, NullKnobsUI::kKnob, "LEVEL 4", 2, -1, false },
+    { 17, NullKnobsUI::kSelect, "SUSTAIN", 2, -1, false },
 };
 
 class UIHarmonizer : public NullKnobsUI

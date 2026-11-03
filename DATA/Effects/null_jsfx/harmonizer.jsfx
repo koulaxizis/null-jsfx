@@ -21,6 +21,7 @@ slider14:12<-12,12,1>Voice 3 Interval (semitones)
 slider15:-12<-12,12,1>Voice 4 Interval (semitones)
 slider16:-6<-48,0,0.5>Voice 3 Level (dB)
 slider17:-6<-48,0,0.5>Voice 4 Level (dB)
+slider18:0<0,1,1{Off,On}>Sustain Pedal
 
 in_pin:Left
 in_pin:Right
@@ -39,6 +40,11 @@ out_pin:Right
   // x1.71 and x2.09; Spread pans them halfway, voice 3 left and voice 4 right). In Mode
   // Scale their Intervals are degrees too; in Mode MIDI they sing the third and fourth
   // latest held notes. At Voices 2 they are skipped.
+  // Sustain Pedal On (Mode MIDI): while the sustain pedal (CC 64, any channel) is down, a
+  // released key keeps its voice, and pedal up lets go of every key it held; a sustained key
+  // struck again counts as the latest note. The voices still sing the 2 to 4 latest notes, so a
+  // new chord takes over while the pedal stays down. Off (the default) ignores the pedal as
+  // before. CC 120/123 clear the held notes and the pedal.
   win = floor(srate * 0.05);
   buf_size = ceil(srate * 0.2) + win;
   buf = 0;
@@ -101,8 +107,9 @@ out_pin:Right
   amk = cmn + 512;                   // ring of the last 64 analysis marks
   held = amk + 64;                   // MIDI: when each note was pressed (0 = not held)
   evq = held + 128;                  // this block's MIDI events
-  memset(in_m, 0, evq + 1024 - in_m);
-  freembuf(evq + 1024);
+  pend = evq + 1024;                 // Sustain Pedal: released keys the pedal still holds
+  memset(in_m, 0, pend + 128 - in_m);
+  freembuf(pend + 128);
 
   hold_n = floor(0.06 / hop_s) + 1;  // keep the intervals through ~60 ms dropouts
   t_uv = floor(srate / 200);         // grain period for unvoiced sounds
@@ -130,6 +137,7 @@ out_pin:Right
   ht3 = ht4 = hs3 = hs4 = 0; hgt3 = hgt4 = hg3 = hg4 = 0; sn3 = sn4 = 0;
   hk = 1 - exp(-1 / (srate * 0.01)); // the voices' 10 ms glide
   stamp = 0; mn1 = mn2 = mn3 = mn4 = -1;
+  sus = 0;                           // the sustain pedal is down
   m_ofs = m_1 = m_2 = m_3 = 0;
 
   // YIN on the last 2 * tmax decimated samples: sets voiced and tf (period, decimated samples)
@@ -230,6 +238,16 @@ out_pin:Right
     mn4 >= 0 ? ht4 = max(-36, min(36, mn4 - det)) - slider5 / 200;
   );
 
+  // Sustain Pedal: pedal up (or the slider Off) lets go of the keys the pedal held
+  function sus_up() local(k)
+  (
+    k = 0;
+    loop(128,
+      pend[k] ? ( held[k] = 0; pend[k] = 0; );
+      k += 1;
+    );
+  );
+
   // pitch -> period for the marks, and the intervals of Mode Scale and MIDI
   function control() local(k, dd, bd, best)
   (
@@ -328,6 +346,8 @@ out_pin:Right
   );
 
 @slider
+  sped = slider18 >= 0.5;
+  !sped ? sus_up();
   r1 = 2 ^ ((slider1 + slider5 / 100) / 12);
   r2 = 2 ^ ((slider2 - slider5 / 100) / 12);
   g1 = 10 ^ (slider3 / 20);
@@ -385,17 +405,23 @@ out_pin:Right
   si = 0;
 
 @sample
-  // MIDI notes due now: held / released, all notes off
+  // MIDI notes due now: held / released, the sustain pedal, all notes off
   while (mq_i < mq_n && evq[mq_i * 4] <= si) (
     m_st = evq[mq_i * 4 + 1] & 0xF0;
     m_n = evq[mq_i * 4 + 2];
     m_st == 0x90 && evq[mq_i * 4 + 3] > 0 ? (
       stamp += 1;
       held[m_n] = stamp;
+      pend[m_n] = 0;
     ) : m_st == 0x80 || m_st == 0x90 ? (
-      held[m_n] = 0;
+      sped && sus && held[m_n] > 0 ? ( pend[m_n] = 1; ) : ( held[m_n] = 0; );
     ) : m_st == 0xB0 && (m_n == 120 || m_n == 123) ? (
       memset(held, 0, 128);
+      memset(pend, 0, 128);
+      sus = 0;
+    ) : m_st == 0xB0 && m_n == 64 ? (
+      sus = evq[mq_i * 4 + 3] >= 64;
+      !sus ? sus_up();
     );
     hmode == 2 ? midi_iv();
     mq_i += 1;

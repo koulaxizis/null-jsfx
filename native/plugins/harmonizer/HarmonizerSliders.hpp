@@ -16,7 +16,7 @@ static const char* const kScaleOptions[] = { "MAJOR", "MINOR", "DORIAN", "MIXOLY
 static const char* const kOffOn[] = { "OFF", "ON" };
 static const char* const kVoicesOptions[] = { "2", "3", "4" };
 
-// slider1..slider17 of harmonizer.jsfx, in order
+// slider1..slider18 of harmonizer.jsfx, in order
 static const DISTRHO::SliderInfo kSliders[] = {
     { "Voice 1 Interval", "interval1", -12.0f, 12.0f, 4.0f, "st", 1.0f },
     { "Voice 2 Interval", "interval2", -12.0f, 12.0f, 7.0f, "st", 1.0f },
@@ -35,6 +35,7 @@ static const DISTRHO::SliderInfo kSliders[] = {
     { "Voice 4 Interval", "interval4", -12.0f, 12.0f, -12.0f, "st", 1.0f },
     { "Voice 3 Level", "level3", -48.0f, 0.0f, -6.0f, "dB", 0.5f },
     { "Voice 4 Level", "level4", -48.0f, 0.0f, -6.0f, "dB", 0.5f },
+    { "Sustain Pedal", "sustain", 0.0f, 1.0f, 0.0f, "", 1.0f, kOffOn },
 };
 static constexpr uint32_t kNumSliders = sizeof(kSliders) / sizeof(kSliders[0]);
 

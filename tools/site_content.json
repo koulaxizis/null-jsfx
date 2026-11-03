@@ -1451,7 +1451,8 @@
       "Interval of voice 3 (Voices 3 or 4)",
       "Interval of voice 4 (Voices 4)",
       "Level of voice 3",
-      "Level of voice 4"
+      "Level of voice 4",
+      "MIDI mode: with On, the sustain pedal (CC 64) keeps the voices of released keys singing until the pedal comes up, for smooth chord changes; Off ignores the pedal"
     ],
     "uses": [
       "Instant backing vocal harmonies",
