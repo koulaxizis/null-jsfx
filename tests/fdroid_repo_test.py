@@ -23,6 +23,7 @@ with tempfile.TemporaryDirectory() as d:
     for p in pkgs:
         yml = open(os.path.join(d, "metadata", p + ".yml"), encoding="utf-8").read()
         check("License: MIT" in yml and "https://ko-fi.com/koulaxizis" in yml, p + ": MIT and Ko-fi")
+        check("AuthorName: NULL JSFX\n" in yml, p + ": F-Droid lists it under NULL JSFX")
         loc = os.path.join(d, "metadata", p, "en-US")
         for f in ("title.txt", "short_description.txt", "full_description.txt", "images/icon.png"):
             check(os.path.getsize(os.path.join(loc, f)) > 0, p + ": " + f)

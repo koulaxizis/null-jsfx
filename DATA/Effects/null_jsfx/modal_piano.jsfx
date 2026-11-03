@@ -2,7 +2,7 @@ desc:NULL Modal Piano
 author: Christos Koulaxizis
 tags: instrument piano acoustic grand modal physical model hammer strings inharmonic sustain pedal una corda polyphonic midi
 //category: Instruments
-//NULL JSFX v3.1 • https://nulljsfx.tech • MIT License
+//NULL JSFX v3.2 • https://nulljsfx.tech • MIT License
 
 slider1:50<0,100,1>Hardness (%)
 slider2:100<25,400,1>Decay (%)

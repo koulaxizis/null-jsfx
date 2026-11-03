@@ -30,7 +30,7 @@ APPS = {
 }
 
 COMMON = """License: MIT
-AuthorName: Christos Koulaxizis
+AuthorName: NULL JSFX
 WebSite: https://nulljsfx.tech
 SourceCode: https://github.com/koulaxizis/null-jsfx
 IssueTracker: https://github.com/koulaxizis/null-jsfx/issues

@@ -2,7 +2,7 @@ desc:NULL Binaural Panner
 author: Christos Koulaxizis
 tags: binaural panner headphones 3d spatial hrtf itd ild head shadow elevation distance immersive
 //category: Advanced
-//NULL JSFX v3.1 • https://nulljsfx.tech • MIT License
+//NULL JSFX v3.2 • https://nulljsfx.tech • MIT License
 
 slider1:0<-180,180,1>Azimuth (deg)
 slider2:0<-40,90,1>Elevation (deg)
