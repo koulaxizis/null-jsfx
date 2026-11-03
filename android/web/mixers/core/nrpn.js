@@ -10,16 +10,25 @@
 // The parameter address is MSB·128 + LSB and the value VC·128 + VF (14 bits). The profile maps
 // the tab's paths to addresses and values (address, toValue, fromValue).
 // A profile may change how the session talks (the Qu does; every hook is optional, the SQ has none):
-//   key(msb, lsb, vc, vf) -> {addr, raw}     an NRPN message's address and value (default: MSB·128
-//                                            + LSB, VC·128 + VF)
-//   noteKey(note, velocity) -> {addr, raw}   a note on (velocity > 0) as a value (Qu: mutes)
+//   key(msb, lsb, vc, vf, ch, base) -> {addr, raw}   an NRPN message's address and value
+//                                            (default: MSB·128 + LSB, VC·128 + VF); ch the MIDI
+//                                            channel it came on, base the session's
+//   noteKey(note, velocity, ch, base) -> {addr, raw}  a note on (velocity > 0) as a value (Qu,
+//                                            dLive: mutes)
+//   sevenBit                                 an NRPN value ends at CC 6 (VC only; dLive faders)
+//   channels                                 values come on this many MIDI channels from the
+//                                            session's (dLive: 5, one per channel type)
 //   encode(channel, path, raw) -> bytes      what a set sends (default: the NRPN set above)
 //   hello() -> bytes, helloReply(sysex) -> {channel, model} or null, syncEnd(sysex) -> bool:
-//                                            the console pushes its whole state after a hello, so
-//                                            nothing is asked one by one; connect waits for the
-//                                            reply, then for the end of the push
+//                                            connect waits for the hello's reply; with syncEnd
+//                                            the console pushes its whole state after it (Qu),
+//                                            then the session asks what only a query gives
+//   isLate(path), prune(layout, has(path)) -> layout: ask the late paths (dLive: sends) only
+//                                            after the rest, on the layout prune leaves (dLive:
+//                                            the mixes whose names answered)
 //   query(path) -> bytes or null             ask one value (default: the NRPN get above; Qu: names)
-//   fromSysex(sysex) -> [{addr, raw}]        values in System Exclusive messages (Qu: names)
+//   fromSysex(sysex, base) -> [{addr, raw}]  values in System Exclusive messages (Qu: names;
+//                                            dLive: names, colours, sends)
 //   layoutFor(model)                         the layout once the console has said what it is
 //   keepAliveMs                              send Active Sensing (FE) this often
 //   meterRequest(channel, on) -> bytes, parseMeters(sysex, model) -> {address, db} or null,
@@ -53,8 +62,10 @@
    *  them for a profile that reads them its own way. */
   class Parser {
     // onNote(channel, note, velocity) for a note on, onSysex(bytes F0..F7): both optional
-    constructor(onValue, onNote, onSysex) {
+    // opts.sevenBit: a value ends at CC 6 (no CC 38)
+    constructor(onValue, onNote, onSysex, opts) {
       this.onValue = onValue;
+      this.sevenBit = !!(opts && opts.sevenBit);
       this.onNote = onNote || null;
       this.onSysex = onSysex || null;
       this.sx = null; // a System Exclusive message being read
@@ -83,7 +94,9 @@
     cc(ch, num, v) {
       let s = this.ch.get(ch);
       if (!s) this.ch.set(ch, (s = { msb: -1, lsb: -1, vc: -1 }));
-      if (num === 0x63) { s.msb = v; s.vc = -1; } else if (num === 0x62) { s.lsb = v; s.vc = -1; } else if (num === 0x06) s.vc = v;
+      if (num === 0x63) { s.msb = v; s.vc = -1; } else if (num === 0x62) { s.lsb = v; s.vc = -1; } else if (num === 0x06 && this.sevenBit) {
+        if (s.msb >= 0 && s.lsb >= 0) this.onValue(ch, s.msb * 128 + s.lsb, v, s.msb, s.lsb, v, -1);
+      } else if (num === 0x06) s.vc = v;
       else if (num === 0x26 && s.msb >= 0 && s.lsb >= 0 && s.vc >= 0) this.onValue(ch, s.msb * 128 + s.lsb, s.vc * 128 + v, s.msb, s.lsb, s.vc, v);
     }
   }
@@ -110,11 +123,12 @@
       const P = profile;
       this.parser = new Parser(
         (ch, addr, raw, msb, lsb, vc, vf) => {
-          const k = P.key ? P.key(msb, lsb, vc, vf) : { addr, raw };
+          const k = P.key ? P.key(msb, lsb, vc, vf, ch, this.channel) : { addr, raw };
           if (k) this._rx(ch, k.addr, k.raw);
         },
-        P.noteKey ? (ch, note, vel) => { const k = P.noteKey(note, vel); if (k) this._rx(ch, k.addr, k.raw); } : null,
-        (sx) => this._sysex(sx));
+        P.noteKey ? (ch, note, vel) => { const k = P.noteKey(note, vel, ch, this.channel); if (k) this._rx(ch, k.addr, k.raw); } : null,
+        (sx) => this._sysex(sx),
+        { sevenBit: P.sevenBit });
     }
 
     connect(host, port, timeoutMs = 3000) {
@@ -218,7 +232,8 @@
     _tx(bytes) { if (this.conn) this.conn.send(Uint8Array.from(bytes)); }
 
     _rx(ch, addr, raw) {
-      if (ch !== this.channel) return;
+      const off = (ch - this.channel + 16) % 16;
+      if (off >= (this.profile.channels || 1)) return;
       const path = this.byAddr.get(addr);
       if (!path) return;
       const p = this.pending.get(path);
@@ -283,13 +298,13 @@
         if (r) { this.helloWaiter(r); return; }
       }
       if (this.syncWaiter && P.syncEnd && P.syncEnd(sx)) { this.syncWaiter(); return; }
-      if (P.fromSysex) for (const k of P.fromSysex(sx) || []) this._rx(this.channel, k.addr, k.raw);
+      if (P.fromSysex) for (const k of P.fromSysex(sx, this.channel) || []) this._rx(this.channel, k.addr, k.raw);
     }
 
     // read the console's state: a hello and its push (Qu), or every parameter asked (SQ)
     _sync(ms) {
       const P = this.profile;
-      if (!P.hello) return this._queryAll();
+      if (!P.hello) return this._readAll();
       return new Promise((resolve, reject) => {
         const t = setTimeout(() => { this.helloWaiter = null; reject(new Error('No answer from the ' + P.family.replace(/^Allen & Heath /, '') + ' at ' + this.host)); }, ms);
         this.helloWaiter = (r) => {
@@ -303,8 +318,9 @@
             this.syncWaiter = null;
             clearTimeout(this.syncTimer);
             this._meters(true);
-            this._queryAll(1500).then(resolve);
+            this._readAll(1500).then(resolve);
           };
+          if (!P.syncEnd) { done(); return; } // no push: ask everything
           this.syncWaiter = done;
           this.syncTimer = setTimeout(done, 4000);
         };
@@ -318,17 +334,29 @@
       for (const cb of this.anyListeners) cb(path, value, local);
     }
 
-    // ask every parameter (the profile's query: only those it can ask), paced; resolves when all
-    // have answered or after a timeout
-    _queryAll(ms = 2500) {
+    // ask everything: the late paths after the rest, on the layout the profile prunes to
+    _readAll(ms) {
+      const P = this.profile;
+      const all = () => this.layout.params.map((p) => p.path);
+      if (!P.isLate) return this._queryAll(ms);
+      return this._queryAll(ms, all().filter((p) => !P.isLate(p))).then(() => {
+        if (P.prune) this._useLayout(P.prune(this.layout, (p) => this.values.has(p)));
+        return this._queryAll(ms, all().filter((p) => P.isLate(p)));
+      });
+    }
+
+    // ask every parameter (or those of `only`; the profile's query: only those it can ask), paced;
+    // resolves when all have answered or after a timeout
+    _queryAll(ms = 2500, only) {
       const P = this.profile;
       const ask = (path) => (P.query ? P.query(this.channel, path) : getMessage(this.channel, P.address(path)));
-      const paths = this.layout.params.map((p) => p.path).filter((path) => ask(path));
+      const paths = (only || this.layout.params.map((p) => p.path)).filter((path) => ask(path));
       const want = this.values.size + paths.filter((path) => !this.values.has(path)).length;
       let i = 0;
       const tick = () => {
+        if (this.closed) return; // disconnected meanwhile
         const out = [];
-        for (let n = 0; n < QUERY_BATCH && i < paths.length; n++, i++) out.push(...ask(paths[i]));
+        for (let n = 0; n < QUERY_BATCH && i < paths.length; n++, i++) out.push(...(ask(paths[i]) || []));
         if (out.length) this._tx(out);
         if (i < paths.length) setTimeout(tick, QUERY_TICK_MS);
       };

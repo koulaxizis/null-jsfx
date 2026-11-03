@@ -14,6 +14,7 @@ const sim = require('./xair_sim.cjs');
 const wingSim = require('./wing_sim.cjs');
 const sqSim = require('./sq_sim.cjs');
 const quSim = require('./qu_sim.cjs');
+const dliveSim = require('./dlive_sim.cjs');
 const quProfile = require('../../android/web/mixers/qu/profile.js');
 const cqProfile = require('../../android/web/mixers/cq/profile.js');
 const net = require('net');
@@ -41,6 +42,7 @@ async function main() {
   const sq = await sqSim.start();
   const qu = await quSim.start({ model: 'Qu-16' });
   const cq = await sqSim.start({ profile: cqProfile });
+  const dl = await dliveSim.start({ model: 'dLive', channel: 11, mixes: ['aux1', 'aux2', 'saux1'] });
   const server = await serve();
   const browser = await chromium.launch();
   const page = await browser.newPage({ viewport: { width: 1280, height: 800 } });
@@ -68,11 +70,11 @@ async function main() {
   });
 
   // the TCP bridge: a connection to port 51325 goes to the Qu simulator at 127.0.0.5, the CQ
-  // simulator at 127.0.0.6, else to the SQ simulator
+  // simulator at 127.0.0.6, the dLive simulator at 127.0.0.7, else to the SQ simulator
   const tcps = new Map();
   const tcpToPage = (m) => page.evaluate((x) => window.__nmDeliver(x), m).catch(() => {});
   await page.exposeFunction('nmTcpOpen', (id, host, port) => {
-    const c = net.connect(port !== 51325 ? 1 : host === '127.0.0.5' ? qu.port : host === '127.0.0.6' ? cq.port : sq.port, '127.0.0.1');
+    const c = net.connect(port !== 51325 ? 1 : host === '127.0.0.5' ? qu.port : host === '127.0.0.6' ? cq.port : host === '127.0.0.7' ? dl.port : sq.port, '127.0.0.1');
     tcps.set(id, c);
     c.on('connect', () => tcpToPage({ type: 'tcpopen', id }));
     c.on('data', (d) => tcpToPage({ type: 'tcp', id, data: d.toString('base64') }));
@@ -364,6 +366,37 @@ async function main() {
     await page.locator('.nm-bar button', { hasText: 'Disconnect' }).click();
     await page.locator('.nm-connect').waitFor();
 
+    // an Allen & Heath dLive by its typed address: no Qu hello, a name answer on MIDI channel 12,
+    // Input 65 answered so a dLive; names and colours from it; only the mixes set up on it
+    await page.locator('.nm-connect input').fill('127.0.0.7');
+    await page.locator('.nm-connect button', { hasText: 'Connect' }).click();
+    await page.locator('.nm-desk').waitFor({ timeout: 15000 });
+    assert.match(await page.locator('.nm-console').innerText(), /127\.0\.0\.7 • dLive/);
+    assert.strictEqual(await page.locator('.nm-strips .nm-strip').count(), 128, '128 inputs');
+    assert.strictEqual(await page.locator('button.mg').count(), 8, 'eight mute groups');
+    assert.match(await strip('Kick').locator('.nm-db').innerText(), /^0\.0/, 'Kick at 0 dB, named by the dLive');
+    await strip('Vox').locator('button.mute').click();
+    await until(() => dl.chans.get('0/1').mute === 1, 'mute Vox on the dLive');
+    await strip('Kick').scrollIntoViewIfNeeded();
+    await drag(strip('Kick').locator('.nm-fader'), 80);
+    await until(() => dl.chans.get('0/0').fader < 0x6b - 3, 'Kick fader down on the dLive');
+    dl.fader('0/2', 0x7f);
+    await until(async () => (await strip('Ip 3').locator('.nm-db').innerText()).startsWith('+10'), 'a change on the dLive shows');
+    assert.strictEqual(await page.locator('.nm-bar button', { hasText: 'IEM Drums' }).count(), 1, 'a stereo aux set up on the console');
+    assert.strictEqual(await page.locator('.nm-bar button', { hasText: 'Aux 3' }).count(), 0, 'not a mix that is not set up');
+    await page.locator('.nm-bar button', { hasText: 'Wedge' }).click();
+    await strip('Kick').scrollIntoViewIfNeeded();
+    await drag(strip('Kick').locator('.nm-fader'), -150);
+    await until(() => (dl.sends.get('0/0>2/0') || 0) > 10, 'send to the Wedge on the dLive');
+    await page.locator('.nm-bar button', { hasText: 'Main' }).first().click();
+    await page.locator('.nm-bar button', { hasText: 'DCA' }).click();
+    assert.strictEqual(await page.locator('.nm-strips .nm-strip').count(), 24, '24 DCAs');
+    await page.locator('.nm-bar button', { hasText: 'Inputs' }).click();
+    await shot('mixers-dlive-tablet', { width: 1280, height: 800 });
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await page.locator('.nm-bar button', { hasText: 'Disconnect' }).click();
+    await page.locator('.nm-connect').waitFor();
+
     // inside the real shell page (android/web/core/index.html) of the mixers app, with a
     // stand-in for Shell.kt's NullShellNative: header, tab bar, and the same session
     const app = await browser.newContext({ viewport: { width: 412, height: 860 }, hasTouch: true, isMobile: true });
@@ -410,6 +443,7 @@ async function main() {
     sq.close();
     qu.close();
     cq.close();
+    dl.close();
   }
 }
 
