@@ -2006,3 +2006,11 @@ entry and the Bible delta.
 - **Tests (run on Linux):** `node tests/daws/mackie_test.cjs` (6 of 6), `node tests/daws/ui_test.cjs` (30 of 30, the new Mackie section; Chromium 1243 by `CHROMIUM`), the tab bar at 360 px wide in Chromium (scrolls, no page overflow), `node tests/remote/android_test.cjs`, `node tests/mixers/ui_test.cjs`, `node tests/daws/{rtpmidi,cubase}_test.cjs`, `python3 tests/bible_order.py`, `python3 tests/lint.py`. Not run here: the emulator job `daws-device` (CI), a real DAW (C26).
 - **Version:** v3.1 (no change).
 - **Next:** C26 on real DAWs; the Mackie Control extender (XT, eight more strips per port) and the plugin assignment if a DAW's use of it proves common.
+
+### 2026-11-03 — site (no version change) — Mackie Control on the Remote for DAWs card, beta
+- **Why:** the Mackie tab of Remote for DAWs (#140) is merged but has not met a real DAW (C26); finished work goes on the site, unconfirmed work as beta (Part VII).
+- **Changes:** the `#daws-remote` card in `index.html` and `llms.txt` add "Mackie Control (beta, from the next release)": mixer, transport, meters and time display for Logic Pro, Studio One, Pro Tools, Cakewalk, Reason and other Mackie Control DAWs, without plugins.
+- **Files:** `index.html`, `llms.txt`, this Bible.
+- **Tests (run on Linux):** `python3 tests/lint.py` on the plugins, `python3 tools/build_site.py --check`, `python3 tests/bible_order.py`, `python3 tools/build_bible.py --check`.
+- **Version:** v3.1 (no change).
+
