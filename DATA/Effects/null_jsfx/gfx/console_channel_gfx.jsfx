@@ -2,7 +2,7 @@ desc:NULL Console Channel GFX
 author: Christos Koulaxizis
 tags: console channel analog mixer summing saturation colour warm punchy bright drive harmonics gui
 //category: Advanced
-//NULL JSFX v3.1 • https://nulljsfx.tech • MIT License
+//NULL JSFX v3.2 • https://nulljsfx.tech • MIT License
 
 import null_gfx.jsfx-inc
 
