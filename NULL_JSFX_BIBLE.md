@@ -75,6 +75,8 @@
 
   What each run covers, area by area, is the checklist in Part V.3, which grows with the suite. The full report is a Claude Doc, with a short summary in the thread "Διμηνιαίος έλεγχος σουίτας". Findings come as a numbered list in Greek, and Christos decides. If the usage limit is hit, the audit continues right after the reset. It runs from a recurring scheduled task; a run does not schedule the next one (2026-10-26, 2026-10-27) [memory].
 - **Memory export.** Every quarter, on the 10th of January, April, July and October at 12:00 Athens time, Claude exports the project memory that changed since the previous export, with proposed text for the project Goal and Instructions, which Christos pastes. It runs from a recurring scheduled task, in the thread "Μηνιαία εξαγωγή μνήμης" (2026-10-26) [memory].
+- **Issues.** Every day at 08:23 Athens time (chosen so it clashes with no other project's scheduled task), Claude reads the new GitHub issues and issue comments since the previous run, checks each against the repo (exists, done, planned, rejected, duplicate, reproducible bug) and posts a short Greek summary with numbered proposals in the thread "Πρόσθεσε καθημερινό έλεγχο των issues"; with nothing new it posts nothing. It never replies on, labels or closes an issue without Christos's OK, and a confirmed bug gets its own fix thread. It runs from a recurring scheduled task with its state in the project files (2026-11-03) [memory].
+- **Push.** Every scheduled task sends a push notification when a run starts and when it ends, also when it ends without a message or stops early; only a day skipped by a date check sends nothing (2026-11-03) [memory].
 - **Project instructions.** When a lasting decision is made, Claude proposes the text for the project instructions. Christos pastes it.
 
 ---
@@ -2030,6 +2032,11 @@ entry and the Bible delta.
 - **Files:** `.github/workflows/release.yml`, `release-notes/3.2.md` (new), this Bible (VI.2).
 - **Tests:** the workflow parsed as YAML; `python3 tests/bible_order.py`, `python3 tools/build_bible.py --check`. The fixed job runs with the next release.
 - **Version:** v3.2 (no change).
+
+### 2026-11-03 — Bible only (no version change) — daily GitHub issues routine; push rule for scheduled tasks
+- **Why:** Christos, 2026-11-03: add a daily check of the repo's GitHub issues at a time that does not clash with the other projects' scheduled tasks, with the push rule of the same day.
+- **Changes:** 0.5 gains the daily issues routine (08:23 Athens; no replies, labels or closing without Christos's OK; confirmed bugs get a fix thread) and the push rule for every scheduled task. The audit checklist's issues item comes with the audit update (V.3).
+- **Files:** this Bible.
 
 ### 2026-11-03 — audit checklist (no version change) — AU, Android, F-Droid, releases, rule 32, issues
 - **Why:** Christos asked to bring the bimonthly audit up to date with the latest changes.
