@@ -250,6 +250,14 @@ local function loop()
   r.defer(loop)
 end
 
+-- One copy at a time. REAPER may start this script from Scripts/__startup.lua (the installers
+-- and the Hub add that, remote/startup.lua) while the user also runs it from the action list; a
+-- second copy would run the run-once commands twice, so it leaves while another one is alive.
+do
+  local t = tonumber(r.GetExtState(SEC, "alive"):match("|([%d%.]+)$") or "")
+  if t and r.time_precise() - t < 2 then return end
+end
+
 skip_old_requests()
 r.atexit(function()
   r.DeleteExtState(SEC, "alive", false)

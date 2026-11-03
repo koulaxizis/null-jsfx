@@ -14,6 +14,10 @@ the releases): it carries this page itself, so step 2 is not needed, and it find
 the network. Steps 3 to 5 still apply.
 
 Install (once)
+    The NULL JSFX installers and the Hub do steps 1 to 3 and 5 for you when you pick the tablet
+    remote, and start the bridge with REAPER (see "Every session"): restart REAPER once, then
+    do step 4.
+
     1. In REAPER: Options > Show REAPER resource path in explorer/finder.
     2. Copy reaper_www_root/null_jsfx.html into the reaper_www_root folder there
        (create the folder if it is missing).
@@ -28,11 +32,15 @@ Install (once)
        null_jsfx_remote_bridge.lua.
 
 Every session
-    Run "Script: null_jsfx_remote_bridge.lua" from the action list (or a toolbar button)
-    so the tablet can reach the FX. The mixer works without it.
-    To start it together with REAPER, add this line to Scripts/__startup.lua (create the
-    file if it is missing):
+    The bridge has to run so the tablet can reach the FX (the mixer works without it).
+    Installed with the NULL JSFX installer or the Hub, it starts with REAPER by itself: they
+    add a few lines, marked "NULL JSFX Remote", to the end of Scripts/__startup.lua, after
+    your own lines, and take them out again when the remote is removed.
+    Installed by hand, run "Script: null_jsfx_remote_bridge.lua" from the action list (or a
+    toolbar button), or add this line to Scripts/__startup.lua (create the file if it is
+    missing) to start it together with REAPER:
         dofile(reaper.GetResourcePath() .. "/Scripts/null_jsfx_remote_bridge.lua")
+    Only one copy runs at a time: started again, it leaves at once.
 
 On the tablet
     Connect to the same network as the computer and open the address from step 4.
