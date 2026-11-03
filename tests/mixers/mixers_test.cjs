@@ -19,6 +19,7 @@ const sq = require(path.join(web, 'sq/profile.js'));
 const Nrpn = require(path.join(web, 'core/nrpn.js'));
 const sqSim = require('./sq_sim.cjs');
 const qu = require(path.join(web, 'qu/profile.js'));
+const cq = require(path.join(web, 'cq/profile.js'));
 const quSim = require('./qu_sim.cjs');
 
 let failures = 0;
@@ -744,6 +745,80 @@ test('Qu: an SQ (or anything without the Qu hello) is not taken for a Qu', async
   try {
     await assert.rejects(s.connect('127.0.0.1', sim.port, 800), /No answer from the Qu/);
     assert.strictEqual(s.status, 'failed');
+  } finally { s.disconnect(); sim.close(); }
+});
+
+// --- Allen & Heath CQ (the SQ's scheme on fewer channels, core/nrpn.js with no hooks) --------
+
+test('CQ addresses and values as the protocol document gives them', () => {
+  const ad = (p) => { const a = cq.address(p); return hx([a >> 7, a & 127]); };
+  // mutes
+  assert.strictEqual(ad('/ip/1/mute'), '00 00');
+  assert.strictEqual(ad('/st/1/mute'), '00 18');
+  assert.strictEqual(ad('/bt/1/mute'), '00 1E');
+  assert.strictEqual(ad('/lr/mute'), '00 44');
+  assert.strictEqual(ad('/out/6/mute'), '00 4A');
+  assert.strictEqual(ad('/dca/4/mute'), '02 03');
+  assert.strictEqual(ad('/mgrp/1'), '04 00');
+  // levels: to LR, to the outputs, masters
+  assert.strictEqual(ad('/usb/1/lr'), '40 1C');
+  assert.strictEqual(ad('/fx/4/lr'), '40 3F');
+  assert.strictEqual(ad('/ip/16/out/6'), '41 7D');
+  assert.strictEqual(ad('/st/1/out/1'), '42 64');
+  assert.strictEqual(ad('/st/2/out/5'), '43 00');
+  assert.strictEqual(ad('/bt/1/out/1'), '43 2C');
+  assert.strictEqual(ad('/fx/1/out/1'), '46 14');
+  assert.strictEqual(ad('/fx/4/out/6'), '46 3D');
+  assert.strictEqual(ad('/lr/lvl'), '4F 00');
+  assert.strictEqual(ad('/out/1/lvl'), '4F 01');
+  assert.strictEqual(ad('/dca/1/lvl'), '4F 20');
+  // pan to LR
+  assert.strictEqual(ad('/st/2/pan'), '50 1A');
+  assert.strictEqual(ad('/fx/1/pan'), '50 3C');
+  // the document's values: -inf 00 00, 0 dB 62 00, +10 dB 7F 40; pan 00 00, 40 00, 7F 7F; mute VF 01
+  assert.strictEqual(cq.toValue('/ip/1/lr', 0), 0);
+  assert.strictEqual(cq.toValue('/ip/1/lr', 0.75), 0x62 * 128);
+  assert.strictEqual(cq.toValue('/ip/1/lr', 1), 0x7f * 128 + 0x40);
+  assert.strictEqual(cq.fromValue('/ip/1/lr', 16383), 1, 'above +10 dB reads as the top');
+  for (const f of [0, 0.1, 0.5, 0.75, 0.9, 1]) assert.ok(Math.abs(cq.fromValue('/lr/lvl', cq.toValue('/lr/lvl', f)) - f) < 1e-4, 'round trip ' + f);
+  assert.strictEqual(cq.toValue('/ip/1/pan', 0.5), 0x40 * 128, 'centre 40 00');
+  assert.strictEqual(cq.toValue('/ip/1/pan', 1), 16383);
+  assert.strictEqual(cq.fromValue('/ip/1/pan', 0x40 * 128), 0.5);
+  assert.strictEqual(cq.toValue('/ip/1/mute', 0), 1, 'muted: VF 01');
+  assert.deepStrictEqual(Nrpn.setMessage(0, cq.address('/ip/1/mute'), 1), [0xb0, 0x63, 0, 0xb0, 0x62, 0, 0xb0, 6, 0, 0xb0, 0x26, 1], 'Ip1 mute on, as written');
+  const L = cq.layout();
+  assert.deepStrictEqual(L.inputs.map((s) => s.label), ['Ip 1', 'Ip 2', 'Ip 3', 'Ip 4', 'Ip 5', 'Ip 6', 'Ip 7', 'Ip 8', 'Ip 9', 'Ip 10', 'Ip 11', 'Ip 12', 'Ip 13', 'Ip 14', 'Ip 15', 'Ip 16', 'ST 1', 'ST 2', 'USB', 'BT']);
+  assert.strictEqual(L.targets.length, 6);
+  assert.strictEqual(L.dcas.length, 4);
+  assert.ok(L.returns.every((r) => r.on === null), 'no FX return mute in the document');
+  const addrs = L.params.map((p) => cq.address(p.path));
+  assert.strictEqual(new Set(addrs).size, addrs.length, 'every parameter has its own address');
+  assert.ok(!addrs.includes(cq.sqOnlyAddress), 'the SQ-only address is not a CQ parameter');
+  assert.ok(sq.layout().params.some((p) => sq.address(p.path) === cq.sqOnlyAddress), 'it is an SQ parameter (Aux 12 mute)');
+});
+
+test('CQ: connect over TCP, read everything, both directions', async () => {
+  const sim = await sqSim.start({ profile: cq });
+  const s = new Nrpn.Session(cq, nodeTcp);
+  try {
+    const info = await s.connect('127.0.0.1', sim.port);
+    assert.strictEqual(info.model, 'CQ');
+    assert.strictEqual(s.values.size, s.layout.params.length, 'every parameter answered');
+    assert.strictEqual(s.get('/st/2/lr'), 0.75, '0 dB');
+    assert.strictEqual(s.get('/bt/1/pan'), 0.5, 'centre');
+    assert.strictEqual(s.get('/dca/3/mute'), 1);
+    s.set('/usb/1/out/4', 0.75);
+    s.set('/dca/2/lvl', 1);
+    s.set('/out/6/mute', 0);
+    await until(() => sim.state.get('/usb/1/out/4') === 0x62 * 128 && sim.state.get('/dca/2/lvl') === 0x7f * 128 + 0x40 && sim.state.get('/out/6/mute') === 1, 1000, 'sets reach the CQ');
+    sim.change('/ip/9/pan', 0);
+    await until(() => s.get('/ip/9/pan') === 0, 1000, "the console's change");
+    // an SQ session on a CQ: everything the two share answers, the SQ-only address does not
+    const probe = new Nrpn.Session(sq, nodeTcp);
+    await probe.connect('127.0.0.1', sim.port);
+    const sqOnly = probe.layout.params.find((p) => sq.address(p.path) === cq.sqOnlyAddress).path;
+    assert.ok(probe.values.size > 0 && !probe.values.has(sqOnly), 'tells a CQ from an SQ');
+    probe.disconnect();
   } finally { s.disconnect(); sim.close(); }
 });
 

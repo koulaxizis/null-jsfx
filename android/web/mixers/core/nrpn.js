@@ -1,5 +1,5 @@
 // NULL Remote, Mixers: a console that speaks MIDI NRPN over TCP (Allen & Heath SQ, sq/profile.js;
-// Allen & Heath Qu, qu/profile.js).
+// Allen & Heath Qu, qu/profile.js; Allen & Heath CQ, cq/profile.js).
 // The same interface as the OSC session in core/mixer.js (connect, disconnect, get, set, on,
 // onAny, onMeters, onStatus, action, layout, info, profile, status), so the tab (mixers.js) does
 // not care which one it drives.

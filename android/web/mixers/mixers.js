@@ -8,7 +8,7 @@
   'use strict';
 
   const here = (document.currentScript && document.currentScript.src) || location.href;
-  const FILES = ['core/osc.js', 'core/levels.js', 'core/transport.js', 'core/mixer.js', 'xair/profile.js', 'x32/profile.js', 'wing/profile.js', 'core/nrpn.js', 'sq/profile.js', 'qu/profile.js'];
+  const FILES = ['core/osc.js', 'core/levels.js', 'core/transport.js', 'core/mixer.js', 'xair/profile.js', 'x32/profile.js', 'wing/profile.js', 'core/nrpn.js', 'sq/profile.js', 'qu/profile.js', 'cq/profile.js'];
   const HOLD_MS = 1500;
   const STORE = 'null-remote-mixers';
 
@@ -99,8 +99,8 @@
     }
 
     // every console family the tab knows; the connected one is this.profile
-    get profiles() { const P = window.NullMixerProfiles; return [P.xair, P.x32, P.wing, P.sq, P.qu]; }
-    // the OSC families, which answer a scan and an info request (the SQ and the Qu do neither)
+    get profiles() { const P = window.NullMixerProfiles; return [P.xair, P.x32, P.wing, P.sq, P.qu, P.cq]; }
+    // the OSC families, which answer a scan and an info request (the SQ, Qu and CQ do neither)
     get oscProfiles() { return this.profiles.filter((P) => P.session !== 'nrpn'); }
     get profile() { return (this.session && this.session.profile) || this.profiles[0]; }
 
@@ -122,7 +122,7 @@
         err,
         h('h2', { style: 'margin-top:16px' }, 'HOW TO CONNECT'),
         this.profiles.flatMap((P) => [h('div', { class: 'nm-sub' }, P.family), h('ol', { class: 'nm-help' }, P.connectHelp.map((t) => h('li', null, t)))]),
-        h('div', { class: 'nm-note' }, 'X AIR, X32, M32, WING, Allen & Heath, SQ and Qu are trademarks of their owners. Remote for Mixers is an independent free app from NULL JSFX and is not made or endorsed by them.'));
+        h('div', { class: 'nm-note' }, 'X AIR, X32, M32, WING, Allen & Heath, SQ, Qu and CQ are trademarks of their owners. Remote for Mixers is an independent free app from NULL JSFX and is not made or endorsed by them.'));
       this.root.replaceChildren(ui);
       this.root.className = 'nm';
       if (this.transportFactory || window.NullMixerTransport.available()) this.scan(found, err, scan);
@@ -159,7 +159,8 @@
       try {
         const tr = await this.ensureTransport();
         // a typed address: ask it on every OSC family's port which console it is; no answer
-        // there, then the Allen & Heath MIDI port (TCP 51325): a Qu answers its hello, else an SQ
+        // there, then the Allen & Heath MIDI port (TCP 51325): a Qu answers its hello, else an SQ,
+        // unless it answers the SQ's parameters but not one only an SQ has: then a CQ
         if (!profile) {
           profile = await window.NullMixer.identify(this.oscProfiles, tr, host).then((w) => w.profile, () => null);
         }
@@ -171,6 +172,13 @@
           try { await s.connect(host, P.qu.port, 1500); } catch (e) {
             s = new window.NullNrpn.Session(P.sq, tcp);
             await s.connect(host, P.sq.port);
+            const sqOnly = s.layout.params.find((x) => P.sq.address(x.path) === P.cq.sqOnlyAddress);
+            if (s.values.size && sqOnly && !s.values.has(sqOnly.path)) {
+              s.disconnect();
+              await new Promise((r) => setTimeout(r, 300)); // the CQ takes one connection at a time
+              s = new window.NullNrpn.Session(P.cq, tcp);
+              await s.connect(host, P.cq.port);
+            }
           }
         } else {
           s = profile.session === 'nrpn' ? new window.NullNrpn.Session(profile, tcp) : new window.NullMixer.Session(profile, tr);
