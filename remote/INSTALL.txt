@@ -64,4 +64,7 @@ Bitwig Studio, Ableton Live, Cubase and FL Studio
     see ableton/INSTALL.txt; Cubase (tab Cubase) through a MIDI Remote script over
     network MIDI: see cubase/INSTALL.txt; and FL Studio (tab FL Studio) through a MIDI
     script over network MIDI: see flstudio/INSTALL.txt. Ardour and Mixbus (tab Ardour)
-    need nothing installed; their own OSC surface is enough.
+    need nothing installed; their own OSC surface is enough. Any other DAW with Mackie
+    Control support (tab Mackie, beta): open a network MIDI session "NULL Remote" and add
+    a Mackie Control in the DAW with it as input and output; nothing to install. The
+    mixer and transport only, no plugins.

@@ -1,4 +1,5 @@
-// Remote for DAWs: the desk every DAW tab other than REAPER shares (Ardour/Mixbus, Bitwig).
+// Remote for DAWs: the desk every DAW tab other than REAPER shares (Ardour/Mixbus, Bitwig, Ableton,
+// Cubase, FL Studio, Mackie Control).
 // NULL JSFX • https://nulljsfx.tech • MIT License
 //
 // Connect (address and port, Recent, how to set the DAW up), then the desk: transport and
@@ -144,6 +145,7 @@
    *   kind(s) -> label under the name, isMaster(s), hasFx(s), hasPan(s),
    *   meter(s) -> {h (0..1), hot}, dbText(s, session), unity (fader position of 0 dB)
    *   noBypass (true: the DAW has no switch per plugin, so no ON/OFF button; FL Studio)
+   *   hasButtons(s) (optional, false: no mute and solo on this strip; the Mackie master)
    * }
    */
   function register(P) {
@@ -412,6 +414,7 @@
         const solo = el('button', 'da-s', 'S');
         solo.onclick = () => { session.setSolo(ssid, !cur().solo); updateStrip(cur()); };
         btns.append(mute, solo);
+        if (P.hasButtons && !P.hasButtons(first)) btns.style.visibility = 'hidden';
         if (first.canRec) {
           const rec = el('button', 'da-r', 'R');
           rec.onclick = () => { session.setRec(ssid, !cur().rec); updateStrip(cur()); };

@@ -85,8 +85,9 @@ jobs:
     # script (remote/bitwig) in a software Bitwig and against our control surface for Live
     # (remote/ableton, the runner's python3) in a software Live over TCP, network MIDI and our
     # MIDI Remote script for Cubase (remote/cubase) in a software Cubase, our MIDI script for FL
-    # Studio (remote/flstudio, the runner's python3) in a software FL Studio, then the tabs in a real
-    # browser with the plugins' own GFX
+    # Studio (remote/flstudio, the runner's python3) in a software FL Studio, the Mackie Control
+    # session against a software DAW driving a Mackie Control, then the tabs in a real browser with
+    # the plugins' own GFX
     timeout-minutes: 15
     # tests/daws is still on Playwright 1.56, which has no Chromium for newer Ubuntu images
     runs-on: ubuntu-24.04
@@ -105,6 +106,7 @@ jobs:
       - run: node tests/daws/rtpmidi_test.cjs
       - run: node tests/daws/cubase_test.cjs
       - run: node tests/daws/fl_test.cjs
+      - run: node tests/daws/mackie_test.cjs
       - run: node tests/daws/ui_test.cjs
 
   media:
