@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Remote for DAWs: a play triangle in the stroke of the NULL JSFX "N" (main/res), so the two
+     remotes look like one family and still tell apart. Store icon: android/fdroid/icon-daws.svg -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <path
+        android:pathData="M42,32L77,54L42,76Z"
+        android:strokeWidth="7"
+        android:strokeColor="#AAAAAA"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:fillColor="#00000000" />
+</vector>

@@ -48,12 +48,16 @@ def fastlane_dir(app):
 
 def write_meta(out):
     """metadata/<pkg>.yml plus metadata/<pkg>/<locale>/ (title, short and full description,
-    icon), the layout `fdroid update` reads for a repository of ready APKs."""
+    icon of each app), the layout `fdroid update` reads for a repository of ready APKs."""
     meta = os.path.join(out, "metadata")
     os.makedirs(meta, exist_ok=True)
-    icon = os.path.join(ROOT, "android", "fdroid", "icon.png")
     for app, pkg in APPS.items():
         src = fastlane_dir(app)
+        # each app has its own icon (fastlane's images/icon.png, rendered from
+        # android/fdroid/icon-<app>.svg); the repository keeps the NULL JSFX one
+        icon = os.path.join(src, "en-US", "images", "icon.png")
+        if not os.path.isfile(icon):
+            raise SystemExit(f"{app}: no icon in {icon}")
         locales = sorted(d for d in os.listdir(src) if os.path.isdir(os.path.join(src, d)))
         if "en-US" not in locales:
             raise SystemExit(f"{app}: no en-US store texts in {src}")
@@ -71,7 +75,8 @@ def write_meta(out):
                     raise SystemExit(f"{app}/{loc}: title has {len(text)} characters (F-Droid allows 50)")
                 with open(os.path.join(dst, f), "w", encoding="utf-8") as o:
                     o.write(text + "\n")
-            shutil.copyfile(icon, os.path.join(dst, "images", "icon.png"))
+            own = os.path.join(src, loc, "images", "icon.png")
+            shutil.copyfile(own if os.path.isfile(own) else icon, os.path.join(dst, "images", "icon.png"))
         with open(os.path.join(meta, pkg + ".yml"), "w", encoding="utf-8") as o:
             o.write(COMMON)
     return sorted(APPS.values())

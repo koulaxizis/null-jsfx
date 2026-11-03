@@ -1,0 +1,11 @@
+<!-- Remote for DAWs store icon (F-Droid). Rendered to app/src/daws/fastlane/metadata/android/en-US/images/icon.png (android/README.md). -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <defs>
+    <linearGradient id="fGrad" gradientUnits="userSpaceOnUse" x1="0" y1="48" x2="0" y2="16">
+      <stop offset="0%" stop-color="#888888"/>
+      <stop offset="100%" stop-color="#aaaaaa"/>
+    </linearGradient>
+  </defs>
+  <rect x="0" y="0" width="64" height="64" rx="9" fill="#2d2d2d" stroke="#4a4a4a" stroke-width="1"/>
+  <path d="M 23,16 L 48,32 L 23,48 Z" stroke="url(#fGrad)" stroke-width="4.5" stroke-linejoin="round" stroke-linecap="round" fill="none"/>
+</svg>

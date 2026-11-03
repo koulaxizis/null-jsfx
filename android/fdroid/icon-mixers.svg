@@ -1,0 +1,12 @@
+<!-- Remote for Mixers store icon (F-Droid). Rendered to app/src/mixers/fastlane/metadata/android/en-US/images/icon.png (android/README.md). -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <defs>
+    <linearGradient id="fGrad" gradientUnits="userSpaceOnUse" x1="0" y1="48" x2="0" y2="16">
+      <stop offset="0%" stop-color="#888888"/>
+      <stop offset="100%" stop-color="#aaaaaa"/>
+    </linearGradient>
+  </defs>
+  <rect x="0" y="0" width="64" height="64" rx="9" fill="#2d2d2d" stroke="#4a4a4a" stroke-width="1"/>
+  <path d="M 18,16 L 18,48 M 32,16 L 32,48 M 46,16 L 46,48" stroke="#666666" stroke-width="2" stroke-linecap="round" fill="none"/>
+  <path d="M 13,40 L 23,40 M 27,22 L 37,22 M 41,32 L 51,32" stroke="url(#fGrad)" stroke-width="4.5" stroke-linecap="round" fill="none"/>
+</svg>
