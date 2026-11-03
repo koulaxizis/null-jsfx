@@ -48,7 +48,7 @@ EXTRAS = [
     {"id": "presets", "name": "Factory presets", "formats": ["jsfx", "gfx"],
      "desc": "The factory presets in REAPER's preset menu of each JSFX and GFX version, added after your own presets. Turning this off takes out only the factory presets you did not change."},
     {"id": "remote", "name": "Tablet remote", "formats": ["jsfx", "gfx"],
-     "desc": "Control REAPER's mixer and the NULL JSFX plugins from a tablet. Needs a few steps in REAPER after."},
+     "desc": "Control REAPER's mixer and the NULL JSFX plugins from a tablet or the Remote for DAWs app. Its bridge starts with REAPER; a few steps in REAPER after."},
     {"id": "fonts", "name": "Noto Sans font", "formats": ["gfx"],
      "desc": "The font of the GFX versions, for their exact look."},
 ]

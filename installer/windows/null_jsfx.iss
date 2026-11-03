@@ -64,7 +64,7 @@ Name: fmt\clap; Description: "CLAP: any DAW"; Types: full daw
 Name: extra; Description: "Extras"; Types: full reaper daw
 Name: extra\chains; Description: "FX chains for REAPER (added when their plugins are)"; Types: full reaper
 Name: extra\rack; Description: "Rack: up to 8 NULL JSFX effects in one VST3/CLAP"; Types: full daw
-Name: extra\remote; Description: "Tablet remote for REAPER (a few steps in REAPER after)"; Types: full
+Name: extra\remote; Description: "Tablet remote for REAPER (its bridge starts with REAPER; a few steps in REAPER after)"; Types: full
 Name: extra\fonts; Description: "Noto Sans font, for the exact look of the GFX versions"; Types: full reaper
 Name: fx; Description: "Plugins"; Types: full reaper daw
 
@@ -180,6 +180,127 @@ begin
   SetIniInt('General', 'NbPresets', N, Dst);
 end;
 
+{ The remote's bridge starts with REAPER: AddStartup puts our lines (Remote-startup.lua, from
+  remote/startup.lua, a block from "-- BEGIN NULL JSFX Remote" to "-- END NULL JSFX Remote") at the
+  end of REAPER's Scripts\__startup.lua; the uninstaller takes them out. The user's own lines stay
+  byte for byte: the file is handled as raw bytes (AnsiString) and only our ASCII block is cut. }
+const
+  StartupBegin = '-- BEGIN NULL JSFX Remote';
+  StartupEnd = '-- END NULL JSFX Remote';
+
+{ The position of the ASCII text Sub in the bytes S from From on, or 0. }
+function FindBytes(const S: AnsiString; const Sub: String; From: Integer): Integer;
+var
+  I, J: Integer;
+  Same: Boolean;
+begin
+  Result := 0;
+  for I := From to Length(S) - Length(Sub) + 1 do
+  begin
+    Same := True;
+    for J := 1 to Length(Sub) do
+      if Ord(S[I + J - 1]) <> Ord(Sub[J]) then
+      begin
+        Same := False;
+        break;
+      end;
+    if Same then
+    begin
+      Result := I;
+      exit;
+    end;
+  end;
+end;
+
+{ S without our block(s), each up to the end of its END line. }
+function StripStartup(S: AnsiString): AnsiString;
+var
+  B, E: Integer;
+begin
+  Result := S;
+  B := FindBytes(Result, StartupBegin, 1);
+  while B > 0 do
+  begin
+    E := FindBytes(Result, StartupEnd, B);
+    if E = 0 then
+      E := Length(Result)
+    else
+    begin
+      E := E + Length(StartupEnd) - 1;
+      while (E < Length(Result)) and (Ord(Result[E + 1]) <> 10) do
+        E := E + 1;
+      if E < Length(Result) then
+        E := E + 1;
+    end;
+    Result := Copy(Result, 1, B - 1) + Copy(Result, E + 1, Length(Result) - E);
+    B := FindBytes(Result, StartupBegin, 1);
+  end;
+end;
+
+{ True when S holds anything but spaces and line breaks. }
+function HasText(const S: AnsiString): Boolean;
+var
+  I: Integer;
+begin
+  Result := False;
+  for I := 1 to Length(S) do
+    if Ord(S[I]) > 32 then
+    begin
+      Result := True;
+      exit;
+    end;
+end;
+
+function StartupNote: String;
+begin
+  Result := ExpandConstant('{app}\Remote-startup-path.txt');
+end;
+
+procedure AddStartup(Src, Dst: String);
+var
+  Text, Ours: AnsiString;
+  Note: TArrayOfString;
+begin
+  if not LoadStringFromFile(Src, Ours) then
+    exit;
+  if not LoadStringFromFile(Dst, Text) then
+    Text := '';
+  Text := StripStartup(Text);
+  if (Length(Text) > 0) and (Ord(Text[Length(Text)]) <> 10) then
+    Text := Text + #13#10;
+  ForceDirectories(ExtractFileDir(Dst));
+  if SaveStringToFile(Dst, Text + Ours, False) then
+  begin
+    SetArrayLength(Note, 1);
+    Note[0] := Dst;
+    SaveStringsToUTF8File(StartupNote, Note, False);
+  end;
+end;
+
+procedure RemoveStartup;
+var
+  Note: TArrayOfString;
+  Text: AnsiString;
+begin
+  if not LoadStringsFromFile(StartupNote, Note) or (GetArrayLength(Note) = 0) then
+    exit;
+  if LoadStringFromFile(Note[0], Text) then
+  begin
+    Text := StripStartup(Text);
+    if HasText(Text) then
+      SaveStringToFile(Note[0], Text, False)
+    else
+      DeleteFile(Note[0]);
+  end;
+  DeleteFile(StartupNote);
+end;
+
+procedure CurUninstallStepChanged(CurUninstallStep: TUninstallStep);
+begin
+  if CurUninstallStep = usUninstall then
+    RemoveStartup;
+end;
+
 procedure CurStepChanged(CurStep: TSetupStep);
 var
   Find: TFindRec;
@@ -199,6 +320,9 @@ begin
       FindClose(Find);
     end;
   end;
+  { the remote's bridge starts with REAPER }
+  if (CurStep = ssPostInstall) and WizardIsComponentSelected('extra\remote') then
+    AddStartup(ExpandConstant('{app}\Remote-startup.lua'), ReaperDir('') + '\Scripts\__startup.lua');
 end;
 
 function ShouldSkipPage(PageID: Integer): Boolean;

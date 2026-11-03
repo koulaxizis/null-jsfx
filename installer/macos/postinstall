@@ -70,9 +70,25 @@ if [ -f "$S/chains/chains.txt" ]; then
   done < "$S/chains/chains.txt"
 fi
 
+# the remote: its bridge starts with REAPER. Our block (remote/startup.lua) goes at the end of
+# Scripts/__startup.lua, after the user's own lines, which stay; a block from before is replaced.
+if [ -f "$S/remote/startup.lua" ]; then
+  su="$R/Scripts/__startup.lua"
+  mkdir -p "$R/Scripts"
+  if [ -f "$su" ]; then
+    awk '/^-- BEGIN NULL JSFX Remote/ { s = 1 } !s { print } /^-- END NULL JSFX Remote/ { s = 0 }' "$su" > "$S/startup"
+  else
+    : > "$S/startup"
+  fi
+  if [ -s "$S/startup" ] && [ -n "$(tail -c 1 "$S/startup")" ]; then echo >> "$S/startup"; fi
+  cat "$S/remote/startup.lua" >> "$S/startup"
+  cp "$S/startup" "$su"
+  printf '%s\n' "$su" > "$N/startup.txt"
+fi
+
 rm -rf "$S"
 # run by root (some Macs): what this made belongs to the user
 if [ "$(id -u)" = 0 ] && [ "$(uname -s)" = Darwin ] && owner="$(stat -f %u "$base")" && [ "$owner" != 0 ]; then
-  chown -R "$owner" "$N" "$R/presets" "$R/FXChains" 2>/dev/null || true
+  chown -R "$owner" "$N" "$R/presets" "$R/FXChains" "$R/Scripts" 2>/dev/null || true
 fi
 exit 0

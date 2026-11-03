@@ -244,10 +244,27 @@ const num = expr => parseFloat(q(expr));
   }
   check('controls for every slider', !bad.length, bad.join('; '));
 
+  // started with REAPER: the lines the installers and the Hub put into Scripts/__startup.lua
+  // (remote/startup.lua). While this bridge is alive a second copy leaves at once; with none
+  // alive (REAPER just started) the lines start one.
+  run(`resource_path = ${luaVal(path.join(root, 'remote'))}`);
+  const startup = fs.readFileSync(path.join(root, 'remote/startup.lua'), 'utf8');
+  check('startup lines are one marked block', /^-- BEGIN NULL JSFX Remote/.test(startup) && /\n-- END NULL JSFX Remote\n$/.test(startup));
+  const loops = () => parseInt(q('deferred_count()'), 10);
+  check('one bridge running', loops() === 1, loops());
+  run(startup, '__startup.lua');
+  check('a second copy leaves while the first is alive', loops() === 1, loops());
+  check('and the page still reaches the first', q('#console') === '0', q('console[1]'));
+  clearInterval(ticker);
+  run('stop_scripts()');
+  check('nothing runs after REAPER closed', loops() === 0, loops());
+  run(startup, '__startup.lua');
+  run('tick()');
+  check('the startup lines start the bridge', loops() === 1 && /^1\|/.test(q('reaper.GetExtState("NULL_JSFX_REMOTE", "alive")')), loops());
+
   check('no page errors', !errors.length, errors.join('; '));
   check('no bridge errors', q('#console') === '0', q('console[1]'));
   await browser.close();
-  clearInterval(ticker);
   server.close();
   console.log(failed ? `${failed} remote check(s) failed` : 'remote: all checks passed');
   process.exit(failed ? 1 : 0);

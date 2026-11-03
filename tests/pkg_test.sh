@@ -71,7 +71,7 @@ install() {  # install HOME PART...: those parts and not the rest; "default": as
 uninstall() {
   echo y | HOME="$1" bash "$1/$N/Uninstall NULL JSFX.command" > "$work/uninstall.log" || { cat "$work/uninstall.log"; fail "uninstall"; }
   for d in "$R/Effects/null_jsfx" "$R/FXChains/NULL JSFX" "$R/FXChains/NULL JSFX GFX" "$V" "$C" "$N" \
-           "$R/reaper_www_root/null_jsfx.html" "$R/Scripts/null_jsfx_remote_bridge.lua"; do
+           "$R/reaper_www_root/null_jsfx.html" "$R/Scripts/null_jsfx_remote_bridge.lua" "$R/Scripts/__startup.lua"; do
     [ ! -e "$1/$d" ] || fail "left after uninstalling: $d"
   done
   [ "$(count "$1/$A" 'null_jsfx_*.component')" = 0 ] || fail "left after uninstalling: Audio Units"
@@ -103,6 +103,7 @@ expect "all: CLAP (with Rack)" "$(count "$h/$C" '*.clap')" "$((natives + 1))"
 expect "all: AU (with Rack)" "$(count "$h/$A" 'null_jsfx_*.component')" "$aus"
 [ -f "$h/$R/Effects/null_jsfx/gfx/null_gfx.jsfx-inc" ] || fail "all: null_gfx.jsfx-inc missing"
 [ ! -e "$h/$R/reaper_www_root/null_jsfx.html" ] || fail "all: the remote is off unless picked"
+[ ! -e "$h/$R/Scripts/__startup.lua" ] || fail "all: __startup.lua without the remote"
 [ -f "$h/Library/Fonts/NotoSans-Regular.ttf" ] || fail "all: font missing"
 [ ! -e "$h/$N/staging" ] || fail "all: staging folder left"
 chains=$(count "$h/$R/FXChains/NULL JSFX" '*.RfxChain')
@@ -131,6 +132,8 @@ expect "some: AU" "$(count "$h/$A" 'null_jsfx_*.component')" 0
 [ "$(count "$h/$V" '*.vst3')" -gt 0 ] || fail "some: no VST3"
 [ ! -e "$h/$V/null_jsfx_rack.vst3" ] || fail "some: Rack not picked"
 [ -f "$h/$R/reaper_www_root/null_jsfx.html" ] || fail "some: remote page missing"
+cmp -s "$h/$R/Scripts/__startup.lua" "$(dirname "$0")/../remote/startup.lua" || fail "some: __startup.lua is not our block"
+echo "ok   some: the bridge starts with REAPER (__startup.lua)"
 expect "some: GFX chains" "$(count "$h/$R/FXChains/NULL JSFX GFX" '*.RfxChain')" 0
 some=$(count "$h/$R/FXChains/NULL JSFX" '*.RfxChain')
 [ "$some" -lt "$chains" ] || fail "some: $some FX chains, all of them"

@@ -494,6 +494,32 @@ impl Hub {
                 None => ops.push(Op::Remove { path: dest.clone(), keep: dest.parent().map(Path::to_path_buf) }),
             }
         }
+        if let Some(add) = plan.startup {
+            // our block in REAPER's Scripts/__startup.lua; the user's own lines stay as they are,
+            // and a file that is not UTF-8 text is left alone
+            n += 1;
+            let dest = extras::startup_file(&t);
+            let theirs = match fs::read(&dest) {
+                Ok(b) => String::from_utf8(b).ok(),
+                Err(_) => Some(String::new()),
+            };
+            if let Some(theirs) = theirs {
+                let tmp = staging.join(n.to_string()).join("__startup.lua");
+                let new = if add { Some(extras::startup_add(&theirs)) } else { extras::startup_remove(&theirs) };
+                match new {
+                    Some(text) if text == theirs => {}
+                    Some(text) => {
+                        if let Some(d) = tmp.parent() {
+                            fs::create_dir_all(d).map_err(|e| e.to_string())?;
+                        }
+                        fs::write(&tmp, text).map_err(|e| e.to_string())?;
+                        ops.push(Op::Copy { from: tmp, to: dest });
+                    }
+                    None if dest.is_file() => ops.push(Op::Remove { path: dest.clone(), keep: dest.parent().map(Path::to_path_buf) }),
+                    None => {}
+                }
+            }
+        }
         for path in &plan.removes {
             // an emptied NULL JSFX chain folder goes too; REAPER's own folders stay
             let chains = t.reaper.join("FXChains");
@@ -698,12 +724,16 @@ impl Hub {
                 plan.records.push((id.into(), Some(files.into_iter().map(|(d, _)| d).collect())));
                 plan.fonts_changed |= id == extras::FONTS;
                 if id == extras::REMOTE {
-                    // the steps left to do in REAPER
+                    // the steps left to do in REAPER, and the bridge starts with REAPER
                     plan.copies.push((self.data.join("Remote-INSTALL.txt"), "Remote/INSTALL.txt".into()));
+                    plan.startup = Some(true);
                 }
             } else if req.extras_remove.iter().any(|e| e == id) {
                 plan.removes.extend(files.into_iter().map(|(d, _)| d));
                 plan.records.push((id.into(), None));
+                if id == extras::REMOTE {
+                    plan.startup = Some(false);
+                }
                 plan.fonts_changed |= id == extras::FONTS;
             }
         }
@@ -830,6 +860,9 @@ struct ExtrasPlan {
     /// REAPER preset files to take our unchanged presets out of: (place, path in the JSFX package)
     unmerges: Vec<(PathBuf, String)>,
     removes: Vec<PathBuf>,
+    /// the remote's bridge in REAPER's Scripts/__startup.lua: Some(true) adds our block, Some(false)
+    /// takes it out
+    startup: Option<bool>,
     /// extra id -> Some(the files it now has) or None (no longer installed)
     records: Vec<(String, Option<Vec<PathBuf>>)>,
     fonts_changed: bool,

@@ -48,6 +48,52 @@ pub fn remote_files(t: &Targets) -> Vec<File> {
     ]
 }
 
+/// The lines that start the remote's bridge with REAPER (remote/startup.lua, the same block every
+/// installer adds), from "-- BEGIN NULL JSFX Remote" to "-- END NULL JSFX Remote".
+pub const STARTUP: &str = include_str!("../../../remote/startup.lua");
+const STARTUP_BEGIN: &str = "-- BEGIN NULL JSFX Remote";
+const STARTUP_END: &str = "-- END NULL JSFX Remote";
+
+/// REAPER's Scripts/__startup.lua, which REAPER runs when it starts.
+pub fn startup_file(t: &Targets) -> PathBuf {
+    t.reaper.join("Scripts/__startup.lua")
+}
+
+/// `theirs` (the user's __startup.lua) without our block, every other byte as it was.
+fn strip_startup(theirs: &str) -> String {
+    let mut out = String::with_capacity(theirs.len());
+    let mut skip = false;
+    for line in theirs.split_inclusive('\n') {
+        if line.starts_with(STARTUP_BEGIN) {
+            skip = true;
+        }
+        if !skip {
+            out.push_str(line);
+        }
+        if line.starts_with(STARTUP_END) {
+            skip = false;
+        }
+    }
+    out
+}
+
+/// The user's __startup.lua with our block at its end: their lines stay first and untouched, and
+/// a block from before is replaced, so adding twice changes nothing.
+pub fn startup_add(theirs: &str) -> String {
+    let mut out = strip_startup(theirs);
+    if !out.is_empty() && !out.ends_with('\n') {
+        out.push_str(if out.contains("\r\n") { "\r\n" } else { "\n" });
+    }
+    out + STARTUP
+}
+
+/// Takes our block back out of the user's __startup.lua. None when nothing else is in it, so the
+/// file can go.
+pub fn startup_remove(theirs: &str) -> Option<String> {
+    let out = strip_startup(theirs);
+    (!out.trim().is_empty()).then_some(out)
+}
+
 pub fn font_files(t: &Targets) -> Vec<File> {
     ["NotoSans-Regular.ttf", "NotoSans-Bold.ttf"].iter().map(|f| (t.fonts.join(f), format!("fonts/{f}"))).collect()
 }
@@ -169,6 +215,22 @@ pub fn unmerge_presets(theirs: &str, ours: &str) -> Option<String> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn startup_keeps_the_users_lines() {
+        assert!(STARTUP.starts_with(STARTUP_BEGIN) && STARTUP.trim_end().ends_with(STARTUP_END));
+        assert!(STARTUP.contains("null_jsfx_remote_bridge.lua"));
+        assert_eq!(startup_add(""), STARTUP);
+        assert_eq!(startup_remove(STARTUP), None);
+        let mine = "-- \u{3b3}\u{3b5}\u{3b9}\u{3ac}\r\nreaper.ShowConsoleMsg(\"hi\")";
+        let added = startup_add(mine);
+        assert_eq!(added, format!("{mine}\r\n{STARTUP}"));
+        assert_eq!(startup_add(&added), added, "adding twice changes nothing");
+        assert_eq!(startup_remove(&added).as_deref(), Some(format!("{mine}\r\n").as_str()));
+        // lines the user put after ours stay too
+        let later = format!("{added}print(1)\n");
+        assert_eq!(startup_remove(&later), Some(format!("{mine}\r\nprint(1)\n")));
+    }
 
     #[test]
     fn presets_keep_the_users_first() {

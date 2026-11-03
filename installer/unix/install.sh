@@ -23,6 +23,9 @@ PLUGINS='@@PLUGINS@@'
 # folder|file|plugins it uses
 CHAINS='@@CHAINS@@'
 
+# the lines that start the remote's bridge with REAPER, for Scripts/__startup.lua (remote/startup.lua)
+STARTUP='@@STARTUP@@'
+
 GROUP_KEYS='one-slider essentials advanced assisted instruments midi'
 FORMAT_KEYS='jsfx gfx vst3 clap'
 EXTRA_KEYS='chains rack remote fonts'
@@ -136,6 +139,17 @@ while [ $# -gt 0 ]; do
 done
 
 MANIFEST="$DATA_DIR/installed.txt"
+STARTUP_NOTE="$DATA_DIR/startup.txt"  # the __startup.lua our lines went into
+
+# startup_strip FILE: prints FILE without our block (BEGIN to END NULL JSFX Remote)
+startup_strip() { awk '/^-- BEGIN NULL JSFX Remote/ { s = 1 } !s { print } /^-- END NULL JSFX Remote/ { s = 0 }' "$1"; }
+
+# startup_out FILE: takes our block out of FILE, and FILE too when nothing else is left in it
+startup_out() {
+  [ -f "$1" ] || return 0
+  startup_strip "$1" > "$1.null-jsfx"
+  if grep -q '[^[:space:]]' "$1.null-jsfx"; then mv "$1.null-jsfx" "$1"; else rm -f "$1.null-jsfx" "$1"; fi
+}
 
 # --- uninstall -----------------------------------------------------------------------------
 if [ "$uninstall" = 1 ]; then
@@ -145,6 +159,7 @@ if [ "$uninstall" = 1 ]; then
     [ -n "$path" ] || continue
     if [ -e "$path" ] || [ -L "$path" ]; then rm -rf "$path"; n=$((n + 1)); fi
   done < "$MANIFEST"
+  if [ -f "$STARTUP_NOTE" ]; then startup_out "$(cat "$STARTUP_NOTE")"; rm -f "$STARTUP_NOTE"; fi
   for d in "$REAPER_DIR/Effects/null_jsfx/gfx" "$REAPER_DIR/Effects/null_jsfx" \
            "$REAPER_DIR/FXChains/NULL JSFX" "$REAPER_DIR/FXChains/NULL JSFX GFX" \
            "$VST3_DIR/NULL JSFX" "$CLAP_DIR/NULL JSFX" ${LV2_DIR:+"$LV2_DIR/NULL JSFX"}; do
@@ -356,7 +371,7 @@ if [ "$extras_set" = 0 ]; then
     EXTRAS="$(checklist "Extras" "Anything else?" "chains rack fonts" \
       chains "FX chains for REAPER (installed when their plugins are)" \
       rack "Rack: up to 8 NULL JSFX effects in one VST3/CLAP" \
-      remote "Tablet remote for REAPER (needs a few steps in REAPER)" \
+      remote "Tablet remote for REAPER (starts with REAPER; a few steps in REAPER)" \
       fonts "Noto Sans font, for the exact look of the GFX versions")"
   else EXTRAS=all; fi
 fi
@@ -504,6 +519,15 @@ if has "$EXTRAS" remote; then
   put "$tmp/jsfx/Remote/reaper_www_root/null_jsfx.html" "$REAPER_DIR/reaper_www_root/null_jsfx.html"
   put "$tmp/jsfx/Remote/Scripts/null_jsfx_remote_bridge.lua" "$REAPER_DIR/Scripts/null_jsfx_remote_bridge.lua"
   cp "$tmp/jsfx/Remote/INSTALL.txt" "$DATA_DIR/Remote-INSTALL.txt"
+  # the bridge starts with REAPER: our block at the end of Scripts/__startup.lua, after the
+  # user's own lines, which stay as they are (a block from before is replaced)
+  su="$REAPER_DIR/Scripts/__startup.lua"
+  mkdir -p "$REAPER_DIR/Scripts"
+  if [ -f "$su" ]; then startup_strip "$su" > "$tmp/startup"; else : > "$tmp/startup"; fi
+  if [ -s "$tmp/startup" ] && [ -n "$(tail -c 1 "$tmp/startup")" ]; then echo >> "$tmp/startup"; fi
+  printf '%s\n' "$STARTUP" >> "$tmp/startup"
+  cp "$tmp/startup" "$su"
+  printf '%s\n' "$su" > "$STARTUP_NOTE"
 fi
 if has "$EXTRAS" fonts && has "$FORMATS" gfx; then
   for f in "$tmp/jsfx/fonts/"*.ttf; do put "$f" "$FONT_DIR/$(basename "$f")"; done
@@ -531,7 +555,7 @@ fi
 if has "$FORMATS" au; then
   say "Logic checks new Audio Units when it starts (Settings > Plug-in Manager, under NULL JSFX)."
 fi
-has "$EXTRAS" remote && say "Tablet remote: finish the steps in $DATA_DIR/Remote-INSTALL.txt (from step 4)."
+has "$EXTRAS" remote && say "Tablet remote: its bridge starts with REAPER (restart REAPER once); finish step 4 in $DATA_DIR/Remote-INSTALL.txt."
 say "Remove it all later with: bash $(basename "$0") --uninstall"
 say "Try the effects in a browser too, as web plugins in orOS Studio: $STUDIO"
 say ""

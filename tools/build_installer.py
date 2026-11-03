@@ -36,6 +36,9 @@ import tarfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
+# the lines that start the remote's bridge with REAPER: every installer adds them to the user's
+# Scripts/__startup.lua with the remote, and takes them out again
+STARTUP = ROOT / "remote/startup.lua"
 BS = "\\"
 GROUPS = [("One Slider", "oneslider", "one-slider"), ("Essentials", "essentials", "essentials"),
           ("Advanced", "advanced", "advanced"), ("Assisted", "assisted", "assisted"), ("Instruments", "instruments", "instruments"),
@@ -140,6 +143,10 @@ def windows(args, plugs, chain_list):
                  "Components: extra\\remote; Flags: ignoreversion")
     files.append(f"Source: {src(jsfx / 'Remote/INSTALL.txt')}; DestDir: \"{{app}}\"; DestName: Remote-INSTALL.txt; "
                  "Components: extra\\remote; Flags: ignoreversion")
+    # the lines null_jsfx.iss adds to REAPER's Scripts\__startup.lua (AddStartup), so the bridge
+    # starts with REAPER
+    files.append(f"Source: {src(STARTUP)}; DestDir: \"{{app}}\"; DestName: Remote-startup.lua; "
+                 "Components: extra\\remote; Flags: ignoreversion")
     for font, face in (("NotoSans-Regular.ttf", "Noto Sans"), ("NotoSans-Bold.ttf", "Noto Sans Bold")):
         files.append(f"Source: {src(jsfx / 'fonts' / font)}; DestDir: \"{{autofonts}}\"; FontInstall: {q(face)}; "
                      "Components: extra\\fonts; Flags: onlyifdoesntexist uninsneveruninstall")
@@ -180,11 +187,12 @@ def unix(args, plugs, chain_list):
     args.out.mkdir(parents=True, exist_ok=True)
     rows = "\n".join(f"{s}|{n}|{group_key(g, 2)}|{int(gfx)}|{int(nat)}" for s, n, g, gfx, nat in plugs)
     crow = "\n".join(f"{folder}|{name}|{' '.join(uses)}" for folder, name, uses in chain_list)
-    for text in (rows, crow):
+    startup = STARTUP.read_text(encoding="utf-8").rstrip("\n")
+    for text in (rows, crow, startup):
         if "'" in text:
-            sys.exit("build_installer: a plugin or chain name has a ' in it")
+            sys.exit("build_installer: a plugin or chain name, or remote/startup.lua, has a ' in it")
     script = (ROOT / "installer/unix/install.sh").read_text(encoding="utf-8")
-    for key, value in (("@@PLUGINS@@", rows), ("@@CHAINS@@", crow), ("@@VERSION@@", args.version), ("@@OS@@", args.os),
+    for key, value in (("@@PLUGINS@@", rows), ("@@CHAINS@@", crow), ("@@STARTUP@@", startup), ("@@VERSION@@", args.version), ("@@OS@@", args.os),
                        ("@@ARCH@@", {"x64": "x86_64", "arm64": "aarch64", "universal": ""}[args.arch]),
                        ("@@SUFFIX@@", arch_suffix(args))):
         script = script.replace(key, value)
@@ -294,10 +302,12 @@ def pkg_parts(args, plugs, chain_list, base):
         if parts:
             tree.append((ftitle, parts))
     extras = []
-    part = Part(base, "remote", "Tablet remote for REAPER", "Control the NULL JSFX plugins from a tablet or phone", on=False)
+    part = Part(base, "remote", "Tablet remote for REAPER", "Control the NULL JSFX plugins from a tablet or phone; its bridge starts with REAPER", on=False)
     part.put(jsfx / "Remote/reaper_www_root/null_jsfx.html", f"{REAPER_REL}/reaper_www_root/null_jsfx.html")
     part.put(jsfx / "Remote/Scripts/null_jsfx_remote_bridge.lua", f"{REAPER_REL}/Scripts/null_jsfx_remote_bridge.lua")
     part.put(jsfx / "Remote/INSTALL.txt", f"{DATA_REL}/Remote-INSTALL.txt")
+    # postinstall adds these lines to REAPER's Scripts/__startup.lua, so the bridge starts with REAPER
+    part.stage(STARTUP, "remote/startup.lua")
     extras.append(part)
     part = Part(base, "fonts", "Noto Sans", "The font of the NULL look, for the GFX versions")
     for font in ("NotoSans-Regular.ttf", "NotoSans-Bold.ttf"):

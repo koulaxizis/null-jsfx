@@ -45,6 +45,13 @@ reaper = {}
 local r = reaper
 function r.time_precise() return now end
 function r.defer(f) deferred[#deferred + 1] = f end
+function deferred_count() return #deferred end
+-- REAPER closing: every script stops and its atexit runs (the bridge's clears its ExtState)
+function stop_scripts() deferred = {}; extstate = {} end
+-- the test sets the resource path (remote/, which holds Scripts/null_jsfx_remote_bridge.lua)
+resource_path = "."
+function r.GetResourcePath() return resource_path end
+function r.file_exists(p) return loadfile(p) ~= nil end
 function r.atexit(f) end
 function r.ShowConsoleMsg(s) console[#console + 1] = s end
 function r.GetExtState(sec, key) return extstate[sec .. "/" .. key] or "" end
