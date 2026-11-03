@@ -1945,3 +1945,11 @@ entry and the Bible delta.
 - **Tests:** `node --check` of the three files; `open` against a stand-in device whose first `page()` never answers: the second try attaches (run here). The emulator jobs run in CI on this PR (no emulator here).
 - **Version:** v3.1 (no change).
 - **Next:** if attaching still fails after three tries, look at the WebView's DevTools socket on the emulator.
+
+### 2026-11-03 — site (no version change) — Allen & Heath CQ on the Remote for Mixers card, beta
+- **Why:** the CQ profile was merged into Remote for Mixers (#134) but has not met a real console (C23); Christos's rule: finished work goes on the site, unconfirmed work is marked beta (Part VII).
+- **Changes:** `index.html` (the `#mixers-remote` card) and `llms.txt` name the Allen & Heath CQ (CQ-12T, CQ-18T, CQ-20B) as beta, "from the next release", since the 3.1 APK behind the download links does not carry it. The 3.1 release notes stay as published.
+- **Files:** `index.html`, `llms.txt`, this Bible.
+- **Tests (run on Linux):** `python3 tests/lint.py` on the plugins (with the version checks of `llms.txt` and `index.html`), `python3 tools/build_site.py --check`, `python3 tests/bible_order.py`, `python3 tools/build_bible.py --check`.
+- **Version:** v3.1 (no change).
+
