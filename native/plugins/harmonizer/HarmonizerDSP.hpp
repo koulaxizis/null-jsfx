@@ -13,7 +13,8 @@
  * two-period grains) instead of the two-tap shifters. Mode Semitones with Formant Preserve Off
  * runs the original code only. Voices 3 or 4 adds voice 3 and 4 (Detune +-half, Delay x1.71 and
  * x2.09, panned halfway; in Mode MIDI the third and fourth latest held notes); at Voices 2 they
- * are skipped.
+ * are skipped. Sustain Pedal On (Mode MIDI): while CC 64 is down a released key stays held, and
+ * pedal up (or the slider Off) lets go of them; Off ignores the pedal.
  */
 
 #pragma once
@@ -62,6 +63,7 @@ public:
         std::fill(std::begin(fCmn), std::end(fCmn), 0.0);
         std::fill(std::begin(fAmk), std::end(fAmk), 0.0);
         std::fill(std::begin(fHeld), std::end(fHeld), 0.0);
+        std::fill(std::begin(fPend), std::end(fPend), 0.0);
 
         fHoldN = std::floor(0.06 / fHopS) + 1.0;
         fTuv = std::floor(sr / 200.0);
@@ -88,11 +90,15 @@ public:
         fHt3 = fHt4 = fHs3 = fHs4 = 0.0; fHgt3 = fHgt4 = fHg3 = fHg4 = 0.0; fSn3 = fSn4 = 0.0;
         fHk = 1.0 - std::exp(-1.0 / (sr * 0.01));
         fStamp = 0.0; fMn1 = fMn2 = fMn3 = fMn4 = -1;
+        fSus = false;
     }
 
-    // @slider; s[0..16] = slider1..slider17
+    // @slider; s[0..17] = slider1..slider18
     void setParams(const double* s)
     {
+        fSped = s[17] >= 0.5;
+        if (!fSped)
+            susUp();
         fR1 = std::pow(2.0, (s[0] + s[4] / 100.0) / 12.0);
         fR2 = std::pow(2.0, (s[1] - s[4] / 100.0) / 12.0);
         fG1 = std::pow(10.0, s[2] / 20.0);
@@ -141,7 +147,8 @@ public:
         }
     }
 
-    // a MIDI message due now (the JSFX's @sample queue): notes held / released, all notes off
+    // a MIDI message due now (the JSFX's @sample queue): notes held / released, the sustain
+    // pedal, all notes off
     void midi(uint8_t status, uint8_t d1, uint8_t d2) noexcept
     {
         const int st = status & 0xF0, n = d1 & 0x7F;
@@ -149,11 +156,27 @@ public:
         {
             fStamp += 1.0;
             fHeld[n] = fStamp;
+            fPend[n] = 0.0;
         }
         else if (st == 0x80 || st == 0x90)
-            fHeld[n] = 0.0;
+        {
+            if (fSped && fSus && fHeld[n] > 0.0)
+                fPend[n] = 1.0;
+            else
+                fHeld[n] = 0.0;
+        }
         else if (st == 0xB0 && (n == 120 || n == 123))
+        {
             std::fill(std::begin(fHeld), std::end(fHeld), 0.0);
+            std::fill(std::begin(fPend), std::end(fPend), 0.0);
+            fSus = false;
+        }
+        else if (st == 0xB0 && n == 64)
+        {
+            fSus = d2 >= 64;
+            if (!fSus)
+                susUp();
+        }
         if (fMode == 2)
             midiIv();
     }
@@ -421,6 +444,17 @@ private:
         fHt2 = (deg(fCur, fS2) - fCur) - fS5 / 100.0;
         fHt3 = (deg(fCur, fS14) - fCur) + fS5 / 200.0;
         fHt4 = (deg(fCur, fS15) - fCur) - fS5 / 200.0;
+    }
+
+    // Sustain Pedal: pedal up (or the slider Off) lets go of the keys the pedal held
+    void susUp() noexcept
+    {
+        for (int k = 0; k < 128; ++k)
+            if (fPend[k] != 0.0)
+            {
+                fHeld[k] = 0.0;
+                fPend[k] = 0.0;
+            }
     }
 
     // Mode MIDI: voice 1 sings the latest held note, voice 2 the one held before it, voices 3
@@ -692,6 +726,10 @@ private:
     double fHt1 = 0.0, fHt2 = 0.0, fHs1 = 0.0, fHs2 = 0.0, fHgt1 = 0.0, fHgt2 = 0.0, fHg1 = 0.0, fHg2 = 0.0, fHk = 0.0;
     double fStamp = 0.0;
     int fMn1 = -1, fMn2 = -1;
+
+    // Sustain Pedal: the slider is On, the pedal is down, released keys the pedal still holds
+    bool fSped = false, fSus = false;
+    double fPend[128] = {};
 };
 
 } // namespace nullharmonizer

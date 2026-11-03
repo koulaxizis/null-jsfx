@@ -1300,8 +1300,8 @@
    ],
    "ins": 2,
    "outs": 2,
-   "sliders": 17,
-   "bytes": 100962
+   "sliders": 18,
+   "bytes": 104099
   },
   {
    "id": "kick_shaper",
