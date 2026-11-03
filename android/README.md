@@ -62,7 +62,16 @@ key as the APKs on the release (so a phone can move between the two without rein
 publishes them with `fdroid update` to `koulaxizis/null-jsfx-fdroid` (GitHub Pages), keeping the
 newest 3 versions of each app. The index is signed with a key of its own (`FDROID_KEYSTORE`):
 F-Droid knows a repository by its index key, and the APK key also signs the Noxpress repository.
-Store texts and the icon come from `app/src/<app>/fastlane/` and `fdroid/icon.png`. Secrets: the
+Store texts and each app's icon come from `app/src/<app>/fastlane/`; `fdroid/icon.png` is the
+repository's own icon.
+
+**Icons.** Each app has its own launcher icon in the NULL JSFX style (silver strokes on #2D2D2D):
+Remote for DAWs a play triangle, Remote for Mixers three faders
+(`app/src/<app>/res/drawable/ic_launcher_foreground.xml`, overriding the "N" in `main`). The store
+icons are drawn in `fdroid/icon-<app>.svg` and rendered at 512 px to
+`app/src/<app>/fastlane/metadata/android/en-US/images/icon.png` with headless Chromium (Playwright
+screenshot of the SVG at 512 × 512, transparent background), the same way `fdroid/icon.png` was made
+from `assets/img/favicon.svg`; render again after changing an SVG. Secrets: the
 four `ANDROID_*` of Signing, `FDROID_KEYSTORE` and `FDROID_KEYSTORE_PASSWORD` (a PKCS12 keystore
 with one key, base64), and `FDROID_DEPLOY_TOKEN`; without them a release run fails and publishes
 nothing.
