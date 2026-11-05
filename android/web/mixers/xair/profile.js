@@ -134,9 +134,10 @@
     family: 'X AIR',
     port: 10024,
     infoAddress: '/xinfo',
-    keepAliveMs: 8000,
+    keepAliveMs: 4000,
     // /xremote: the console pushes every change for the next 10 s; /meters starts the meter
-    // stream for 10 s too, so both are renewed every 8 s.
+    // stream for 10 s too. Both are renewed every 4 s, so one lost renewal still leaves the next
+    // one in time.
     keepAlive: () => [['/xremote', []], ['/meters', [{ t: 's', v: '/meters/1' }]]],
     isMeter: (a) => a.startsWith('/meters/'),
     models: Object.keys(MODELS),
@@ -150,6 +151,7 @@
       'Connect this phone or tablet to the same network as the mixer: the mixer’s own Wi-Fi (access point mode, the mixer is then at 192.168.1.1), or the router the mixer is cabled or joined to.',
       'Tap Scan. Mixers on the network appear by name and model. If none appear (some routers block broadcasts), type the mixer’s IP address and tap Connect.',
       'Close other apps that control the same mixer only if you see lag: the mixer serves several remotes at once.',
+      'A VPN app on the phone (Proton, NordVPN, WireGuard…) can hide the mixer or slow the link: in the VPN app, exclude Remote for Mixers (split tunnelling) or allow LAN connections.',
     ],
   };
 });

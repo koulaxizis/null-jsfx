@@ -155,8 +155,9 @@
     family: 'X32/M32',
     port: 10023,
     infoAddress: '/xinfo',
-    keepAliveMs: 8000,
-    // /xremote and each /meters request last 10 s on the console, so all are renewed every 8 s
+    keepAliveMs: 4000,
+    // /xremote and each /meters request last 10 s on the console; renewed every 4 s, so one lost
+    // renewal (a VPN, busy Wi-Fi) still leaves the next one in time
     keepAlive: () => [['/xremote', []]].concat(METERS.map((m) => ['/meters', [{ t: 's', v: m.address }]])),
     isMeter: (a) => a.startsWith('/meters/'),
     models: ['X32', 'X32 Compact', 'X32 Producer', 'X32 Rack', 'X32 Core', 'M32', 'M32R', 'M32C'],
@@ -172,6 +173,7 @@
       'An X32 or M32 has no Wi-Fi of its own: cable its Ethernet port to a router or access point and put this phone or tablet on that network.',
       'Tap Scan. Mixers on the network appear by name and model. If none appear (some routers block broadcasts), type the mixer’s IP address (Setup > Network on the console) and tap Connect.',
       'The console serves four remotes at once (X32-Edit and other apps count).',
+      'A VPN app on the phone (Proton, NordVPN, WireGuard…) can hide the mixer or slow the link: in the VPN app, exclude Remote for Mixers (split tunnelling) or allow LAN connections.',
     ],
   };
 });

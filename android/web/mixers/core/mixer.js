@@ -1,8 +1,11 @@
 // NULL Remote, Mixers: one live session with an OSC console, independent of the model family.
 // A profile (xair/, x32/, wing/profile.js) supplies the port, discovery and info messages,
 // the keep-alive messages and the layout (strips and the typed OSC parameters); this file keeps
-// the state, queries every parameter on connect, applies updates the console pushes, sends
-// changes (coalesced per parameter), renews subscriptions and watches the link.
+// the state, queries every parameter on connect (and again after a lost link comes back), applies
+// updates the console pushes, sends changes (coalesced per parameter), renews subscriptions and
+// watches the link. Made for lossy links too (a VPN, busy Wi-Fi): the query keeps a few questions
+// in flight and asks each one again until it is answered, and a quiet link is pinged before it
+// counts as lost.
 // NULL JSFX • https://nulljsfx.tech • MIT License
 (function (root, factory) {
   const api = factory(root);
@@ -15,9 +18,14 @@
   const Levels = typeof module === 'object' && module.exports ? require('./levels.js') : root.NullLevels;
 
   const SEND_GAP_MS = 20;     // at most one message per parameter every 20 ms while dragging
-  const QUERY_BATCH = 24;     // parameters queried per tick on connect
-  const QUERY_TICK_MS = 8;
+  const QUERY_WINDOW = 64;    // questions in flight at once while loading the state: each answer
+                              // lets the next one go, so the pace follows the link and the console
+  const QUERY_RETRY_MS = 150; // a question unanswered for 3 round trips (at least this long) is
+  const QUERY_TRIES = 12;     // asked again, up to this many times, then left empty
+  const QUERY_TICK_MS = 50;
+  const PING_AFTER_MS = 1500; // no packet for this long: ask the console who it is, once a second
   const LOST_AFTER_MS = 5000; // no packet for this long: the link is lost
+  const WATCH_MS = 500;
 
   // Ask every console on the LAN who it is. Resolves to [{host, port, name, model, version}].
   function discover(profile, transport, ms = 1500) {
@@ -86,6 +94,8 @@
       this.info = null;
       this.layout = null;
       this.lastRx = 0;
+      this.lastPing = 0;
+      this.query = null;            // the state load in progress: {waiting, queue, finish}
       this.timers = [];
       this.offPacket = transport.onPacket((bytes, host) => this._rx(bytes, host));
     }
@@ -111,7 +121,7 @@
       for (const p of this.layout.params) this.params.set(p.path, p.type);
       this._keepAlive();
       this.timers.push(setInterval(() => this._keepAlive(), this.profile.keepAliveMs));
-      this.timers.push(setInterval(() => this._watch(), 1000));
+      this.timers.push(setInterval(() => this._watch(), WATCH_MS));
       await this._queryAll();
       this._setStatus('online');
       return info;
@@ -120,6 +130,7 @@
     disconnect() {
       for (const t of this.timers) clearInterval(t);
       this.timers = [];
+      if (this.query) this.query.finish();
       for (const p of this.pending.values()) clearTimeout(p.timer);
       this.pending.clear();
       if (this.offPacket) this.offPacket();
@@ -168,7 +179,14 @@
       let msgs;
       try { msgs = Osc.decode(bytes); } catch (_) { return; }
       this.lastRx = Date.now();
-      if (this.status === 'lost') this._setStatus('online');
+      if (this.status === 'lost') {
+        // back after a gap: renew the subscriptions now and read everything again, since the
+        // console pushed nothing to us while the link was down
+        this._setStatus('online');
+        this._keepAlive();
+        if (!this.query) this._queryAll();
+      }
+      const q = this.query;
       for (const m of msgs) {
         if (m.address === this.profile.infoAddress) {
           const inf = this.profile.parseInfo(m.args);
@@ -183,6 +201,7 @@
           continue;
         }
         if (!this.params.has(m.address) || !m.args.length) continue;
+        if (q) q.answer(m.address);
         // a value the user is dragging right now wins over an echo of an older one
         const p = this.pending.get(m.address);
         if (p && p.timer) continue;
@@ -192,7 +211,7 @@
         this.values.set(m.address, v);
         this._emit(m.address, v, false);
       }
-      if (this.queryWaiter && this.layout && this.values.size >= this.layout.params.length) this.queryWaiter();
+      if (q) q.pump();
     }
 
     _emit(path, value, local) {
@@ -203,34 +222,68 @@
 
     _keepAlive() { for (const [a, args] of this.profile.keepAlive()) this._tx(a, args); }
 
+    // Ping a quiet link before calling it lost: a meter stream can stop for a moment when one
+    // renewal is lost on the way, and a console with nothing changing sends nothing else. While
+    // lost, the subscriptions are renewed with every ping so the stream starts again at once.
     _watch() {
-      if (this.status === 'online' && Date.now() - this.lastRx > LOST_AFTER_MS) {
-        this._setStatus('lost');
+      const now = Date.now();
+      const quiet = now - this.lastRx;
+      if (this.status === 'online' && quiet > LOST_AFTER_MS) this._setStatus('lost');
+      if (quiet > PING_AFTER_MS && now - this.lastPing >= 1000) {
+        this.lastPing = now;
         this._tx(this.profile.infoAddress, []);
+        if (this.status === 'lost') this._keepAlive();
       }
     }
 
-    // Query every parameter, paced so the console's UDP buffer is not flooded; resolves when all
-    // have answered, or after a timeout (missing ones are asked once more, then left empty).
+    // Load the value of every parameter. At most QUERY_WINDOW questions are in flight: each
+    // answer lets the next one go, an unanswered one is asked again after three round trips (at
+    // least QUERY_RETRY_MS), up to QUERY_TRIES times. Resolves when every parameter has answered
+    // or given up, or when the link has been quiet for LOST_AFTER_MS (the watch then reports it
+    // lost, and the load runs again when the console is back).
     _queryAll() {
-      const paths = this.layout.params.map((p) => p.path);
-      const sendSome = (list) => new Promise((resolve) => {
-        let i = 0;
-        const tick = () => {
-          for (let n = 0; n < QUERY_BATCH && i < list.length; n++, i++) this._tx(list[i], []);
-          if (i < list.length) setTimeout(tick, QUERY_TICK_MS); else resolve();
+      const queue = this.layout.params.map((p) => p.path);
+      const waiting = new Map(); // path -> {tries, at}
+      let rtt = 0;               // smoothed round trip of first answers, for the retry time
+      return new Promise((resolve) => {
+        let timer = null;
+        const q = {
+          answer: (path) => {
+            const w = waiting.get(path);
+            if (!w) return;
+            waiting.delete(path);
+            if (w.tries === 1) { const t = Date.now() - w.at; rtt = rtt ? 0.875 * rtt + 0.125 * t : t; }
+          },
+          finish: () => {
+            if (this.query !== q) return;
+            this.query = null;
+            clearInterval(timer);
+            resolve();
+          },
+          pump: () => {
+            if (this.query !== q) return;
+            const now = Date.now();
+            if (now - this.lastRx > LOST_AFTER_MS) { q.finish(); return; }
+            const retry = Math.max(QUERY_RETRY_MS, 3 * rtt);
+            for (const [path, w] of waiting) {
+              if (now - w.at < retry) continue;
+              if (w.tries >= QUERY_TRIES) { waiting.delete(path); continue; }
+              w.tries++;
+              w.at = now;
+              this._tx(path, []);
+            }
+            while (waiting.size < QUERY_WINDOW && queue.length) {
+              const path = queue.shift();
+              waiting.set(path, { tries: 1, at: now });
+              this._tx(path, []);
+            }
+            if (!waiting.size && !queue.length) q.finish();
+          },
         };
-        tick();
-      });
-      const wait = (ms) => new Promise((resolve) => {
-        if (this.values.size >= paths.length) { resolve(); return; }
-        const t = setTimeout(() => { this.queryWaiter = null; resolve(); }, ms);
-        this.queryWaiter = () => { clearTimeout(t); this.queryWaiter = null; resolve(); };
-      });
-      return sendSome(paths).then(() => wait(1500)).then(() => {
-        const missing = paths.filter((p) => !this.values.has(p));
-        if (!missing.length) return;
-        return sendSome(missing).then(() => wait(1000));
+        if (this.query) this.query.finish();
+        this.query = q;
+        timer = setInterval(q.pump, QUERY_TICK_MS);
+        q.pump();
       });
     }
 

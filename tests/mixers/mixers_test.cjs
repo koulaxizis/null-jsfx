@@ -347,6 +347,60 @@ test('X32: identify a typed address, connect, both directions, both meter blocks
   } finally { tr.close(); xr.close(); mx.close(); }
 });
 
+// a link like a VPN or busy Wi-Fi in front of a transport: drops a share of the packets each way
+// (seeded, so every run drops the same ones), delays the rest, and can be cut off completely
+function lossyTransport(inner, opts) {
+  let seed = opts.seed || 12345;
+  const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+  const link = { loss: opts.loss, cut: false, closed: false };
+  const pass = () => !link.cut && rnd() >= link.loss;
+  return Object.assign(link, {
+    send(host, port, bytes) { if (pass()) setTimeout(() => { if (!link.closed) inner.send(host, port, bytes); }, opts.delay); },
+    broadcast(port, bytes) { inner.broadcast(port, bytes); },
+    onPacket(cb) { return inner.onPacket((b, h, p) => { if (pass()) setTimeout(() => { if (!link.closed) cb(b, h, p); }, opts.delay); }); },
+    close() { link.closed = true; inner.close(); },
+  });
+}
+
+test('X32 over a lossy, slow link (a VPN): every value read, a quiet link not lost, a gap read again', async () => {
+  const mx = await sim.start({ profile: 'x32', model: 'X32' });
+  const inner = nodeTransport();
+  await inner.ready;
+  const tr = lossyTransport(inner, { loss: 0.2, delay: 30 });
+  // no meter stream: a console where nothing moves sends nothing unless asked
+  const pX = Object.assign({}, x32, { port: mx.port, keepAlive: () => [['/xremote', []]] });
+  // the console's state before we connect, away from the simulator's defaults
+  mx.state.set('/ch/17/mix/fader', 0.3);
+  mx.state.set('/ch/30/mix/on', 0);
+  mx.state.set('/ch/05/mix/03/level', 0.42);
+  mx.state.set('/bus/05/mix/fader', 0.6);
+  mx.state.set('/dca/2/config/name', 'Drums');
+  const same = (a, b) => (typeof b === 'number' ? Math.abs(a - Math.fround(b)) < 1e-6 : a === b);
+  const s = new Mixer.Session(pX, tr);
+  try {
+    await s.connect('127.0.0.1', mx.port);
+    // a fifth of the packets lost each way, and still every value arrives, equal to the console's
+    assert.strictEqual(s.values.size, s.layout.params.length, 'values read over the lossy link');
+    const wrong = s.layout.params.filter((p) => !same(s.get(p.path), mx.state.get(p.path))).map((p) => p.path);
+    assert.deepStrictEqual(wrong, [], 'values that differ from the console');
+    // nothing moves for longer than the lost limit: the session pings and stays online
+    tr.loss = 0;
+    const states = [];
+    s.onStatus((st) => states.push(st));
+    await sleep(6500);
+    assert.deepStrictEqual(states, [], 'a quiet console is not a lost link');
+    assert.strictEqual(s.status, 'online');
+    // the link goes down, the console changes meanwhile, the link comes back: read again
+    tr.cut = true;
+    mx.change('/ch/12/mix/fader', 0.2);
+    mx.change('/main/st/mix/on', 0);
+    await until(() => s.status === 'lost', 7000, 'lost');
+    tr.cut = false;
+    await until(() => s.status === 'online', 3000, 'back online');
+    await until(() => same(s.get('/ch/12/mix/fader'), 0.2) && s.get('/main/st/mix/on') === 0, 5000, 'the changes made while the link was down');
+  } finally { s.disconnect(); tr.close(); mx.close(); }
+});
+
 // --- WING ---------------------------------------------------------------------------------------
 
 test('WING layout and info: paths not zero padded, every model the same tree, other families refused', () => {

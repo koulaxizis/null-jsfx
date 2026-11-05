@@ -3,6 +3,7 @@ package tech.nulljsfx.remote
 import android.content.Context
 import android.content.Intent
 import android.net.ConnectivityManager
+import android.net.NetworkCapabilities
 import android.net.Uri
 import android.net.wifi.WifiManager
 import android.util.Base64
@@ -99,10 +100,20 @@ class Shell(
         -1
     }
 
-    /** The phone's own IPv4 address and prefix length on the active network. */
+    /**
+     * The phone's own IPv4 address and prefix length on the local network: Wi-Fi or Ethernet
+     * before the active network, because with a VPN app on (Proton, WireGuard, ...) the active
+     * network is the tunnel, and a scan of the tunnel's subnet finds nothing on the LAN.
+     */
+    @Suppress("DEPRECATION") // allNetworks: still the simplest way to list the networks
     private fun localIpv4(): Pair<Int, Int>? {
         val cm = context.getSystemService(ConnectivityManager::class.java) ?: return null
-        val lp = cm.getLinkProperties(cm.activeNetwork) ?: return null
+        val lan = cm.allNetworks.firstOrNull { n ->
+            val c = cm.getNetworkCapabilities(n) ?: return@firstOrNull false
+            !c.hasTransport(NetworkCapabilities.TRANSPORT_VPN) &&
+                (c.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) || c.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET))
+        }
+        val lp = cm.getLinkProperties(lan ?: cm.activeNetwork) ?: return null
         val la = lp.linkAddresses.firstOrNull { it.address is Inet4Address } ?: return null
         val b = la.address.address
         val ip = ((b[0].toInt() and 0xff) shl 24) or ((b[1].toInt() and 0xff) shl 16) or
