@@ -62,10 +62,10 @@
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                     <span class="btn-text">Download</span>
                     <div class="download-meta">
-                        <span><b id="release-version">v3.2</b></span>
+                        <span><b id="release-version">v3.3</b></span>
                         <span class="release-new" id="release-new" hidden>NEW</span>
                         <span class="sep">&bull;</span>
-                        <span id="last-update">Released: 03/11/26</span>
+                        <span id="last-update">Released: 05/11/26</span>
                     </div>
                 </div>
             </a>
@@ -224,7 +224,7 @@
             <div class="modal-content modal-download">
                 <button class="modal-close" onclick="closeDownload()">&times;</button>
                 <div class="changelog-header">
-                    <h3>Download NULL JSFX v3.2</h3>
+                    <h3>Download NULL JSFX v3.3</h3>
                     <p class="changelog-date">Free and open source. Pick what you need.</p>
                 </div>
                 <div class="download-support" id="download-support" hidden>
@@ -289,10 +289,20 @@
             <div class="modal-content modal-changelog">
                 <button class="modal-close" onclick="closeChangelog()">&times;</button>
                 <div class="changelog-header">
-                    <h3>Release Notes v3.2</h3>
+                    <h3>Release Notes v3.3</h3>
                     <p class="changelog-date">November 2026</p>
                 </div>
                 <div class="changelog-body">
+                    <div class="changelog-section">
+                        <h4 class="changelog-title">3.3: STEADIER REMOTES</h4>
+                        <ul>
+                            <li><strong>REMOTE FOR MIXERS</strong> (beta): the X32, M32 and X AIR read every fader, send and setting on connect, also over a slow or lossy network, and read them again after a dropout; the link no longer drops when a single packet is lost; Scan finds mixers with a VPN app on</li>
+                            <li>WING, Allen &amp; Heath and Yamaha: steadier links; a connection that dies silently (Wi-Fi gone, a VPN reconnecting) is noticed and reconnected, with everything read again</li>
+                            <li><strong>REMOTE FOR DAWS</strong>: Bitwig, Ableton Live, Cubase and FL Studio notice a dead link and reconnect; Ardour and Mixbus ask once more for what a lossy network dropped</li>
+                            <li><strong>HARMONIZER</strong>: a Sustain Pedal option for Mode MIDI (off by default)</li>
+                            <li>The plugins sound exactly as in 3.2</li>
+                        </ul>
+                    </div>
                     <div class="changelog-section">
                         <h4 class="changelog-title">3.2: MORE CONSOLES AND DAWS ON YOUR PHONE</h4>
                         <ul>

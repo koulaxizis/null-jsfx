@@ -2,7 +2,7 @@ desc:NULL Binaural Panner GFX
 author: Christos Koulaxizis
 tags: binaural panner headphones 3d spatial hrtf itd ild head shadow elevation distance immersive gui
 //category: Advanced
-//NULL JSFX v3.2 • https://nulljsfx.tech • MIT License
+//NULL JSFX v3.3 • https://nulljsfx.tech • MIT License
 
 import null_gfx.jsfx-inc
 
