@@ -296,7 +296,44 @@ async function containers() {
   }
 }
 
+// a link that goes quiet: hello again after 10 s, dropped and dialled again after 25 s (fake time)
+function quietLink() {
+  let now = 0;
+  let tick = null;
+  const dials = [];
+  const s = new BW.Session({
+    now: () => now,
+    timers: { set: (fn) => { tick = fn; return 1; }, clear: () => {} },
+    dial: (cb) => { const c = { cb, sent: [], closed: false, send(b) { this.sent.push(b); }, close() { this.closed = true; } }; dials.push(c); return c; },
+  });
+  const links = [];
+  s.on('link', (up) => links.push(up));
+  s.connect();
+  const c = dials[0];
+  c.cb.onOpen();
+  const hellos = () => c.sent.map((b) => new TextDecoder().decode(b)).filter((t) => t.includes('"hello"')).length;
+  assert.strictEqual(hellos(), 1);
+  c.cb.onData(BW.frame({ t: 'hello', proto: 1, size: 8 }));
+  assert.deepStrictEqual(links, [true]);
+  now = 9000; tick();
+  assert.strictEqual(hellos(), 1, 'no hello while the link is fresh');
+  now = 10500; tick();
+  assert.strictEqual(hellos(), 2, 'hello again on a quiet link');
+  c.cb.onData(BW.frame({ t: 'time', s: '1.1.1' }));
+  now = 30000; tick();
+  assert.strictEqual(c.closed, false, 'an answer keeps the link');
+  now = 36000; tick();
+  assert.ok(c.closed && links[links.length - 1] === false, 'a link quiet for 25 s is dropped');
+  c.cb.onClose('');
+  assert.deepStrictEqual(links, [true, false], 'the late close of a dropped link changes nothing');
+  now = 38500; tick();
+  assert.strictEqual(dials.length, 2, 'dialled again');
+  s.close();
+  ok('a quiet link: hello again after 10 s, dropped and dialled again after 25 s without an answer');
+}
+
 async function main() {
+  quietLink();
   scriptChecks();
   readerChecks();
   await run(false);

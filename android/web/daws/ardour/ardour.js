@@ -43,6 +43,7 @@
   const GAINMODE = 2; // fader position 0..1 and gain in dB
   const SEND_EVERY = 25; // ms: at most one message per control while a finger drags it
   const LINK_TIMEOUT = 4000; // ms without any packet: Ardour is gone (the heartbeat is ~1 s)
+  const REASK = 1500; // ms after the link comes up: ask for the strips once more
   const POLL_PARAMS = 800; // ms between re-reads of the open plugin
 
   const FLAG = { ENUM: 1, INTEGER: 2, LOG: 4, TOGGLE: 64, INPUT: 0x80, HIDDEN: 0x100 };
@@ -190,7 +191,11 @@
       if (alive !== this.up) {
         this.up = alive;
         this.emit('link', alive);
+        // Ardour sends every strip's state once, as UDP: ask once more a moment after the link
+        // comes up, so what a lossy network (a VPN, busy Wi-Fi) dropped arrives the second time
+        if (alive) this.askAgainAt = now + REASK;
       }
+      if (this.askAgainAt && now >= this.askAgainAt) { this.askAgainAt = 0; this.connect(); }
       // not answered yet (Ardour started later, or the surface is off): ask again
       if (!alive && this.asked && now - this.asked > 2000) this.connect();
       if (this.open && now - this.lastPoll >= POLL_PARAMS && !this.reading.has(this.open.ssid + '/' + this.open.piid)) {

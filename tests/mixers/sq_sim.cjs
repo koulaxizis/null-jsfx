@@ -38,7 +38,7 @@ function start(opts = {}) {
   let gets = 0;
 
   const send = (sock, p) => sock.write(Buffer.from(setMessage(ch, profile.address(p), state.get(p))));
-  function changed(p, from) { for (const c of clients) if (c !== from) send(c, p); }
+  function changed(p, from) { if (frozen) return; for (const c of clients) if (c !== from) send(c, p); }
 
   function reader(sock) {
     let status = 0;
@@ -70,10 +70,11 @@ function start(opts = {}) {
     };
   }
 
+  let frozen = false;
   const server = net.createServer((sock) => {
     clients.add(sock);
     const read = reader(sock);
-    sock.on('data', read);
+    sock.on('data', (b) => { if (!frozen) read(b); });
     sock.on('error', () => {});
     sock.on('close', () => clients.delete(sock));
   });
@@ -89,6 +90,8 @@ function start(opts = {}) {
         change(p, raw) { state.set(p, raw); changed(p, null); },
         // the console goes away: every connection drops
         drop() { for (const c of clients) c.destroy(); },
+        // the link dies without closing (Wi-Fi gone, a VPN reconnecting): nothing in, nothing out
+        freeze(on) { frozen = on !== false; },
         close() { for (const c of clients) c.destroy(); server.close(); },
       });
     });

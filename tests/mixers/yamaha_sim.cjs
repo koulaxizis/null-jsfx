@@ -61,7 +61,7 @@ function start(opts = {}) {
 
   const fmt = (k) => { const v = values.get(k); return typeof v === 'string' ? '"' + v.replace(/["\\]/g, '\\$&') + '"' : String(v); };
   const write = (sock, line) => { if (sock && !sock.destroyed) sock.write(line + '\n'); };
-  const others = (from, line) => { for (const c of clients) if (c !== from) write(c, line); };
+  const others = (from, line) => { if (frozen) return; for (const c of clients) if (c !== from) write(c, line); };
 
   function line(sock, text) {
     const w = text.match(/"(?:[^"\\]|\\.)*"|\S+/g) || [];
@@ -73,7 +73,7 @@ function start(opts = {}) {
       return;
     }
     if (cmd === 'scpmode') { write(sock, 'OK scpmode ' + w.slice(1).join(' ')); return; }
-    if (cmd === 'devstatus') { write(sock, 'OK devstatus runmode "normal"'); return; }
+    if (cmd === 'devstatus') { pings++; write(sock, 'OK devstatus runmode "normal"'); return; }
     if (cmd !== 'get' && cmd !== 'set') { write(sock, 'ERROR ' + (cmd || '') + ' UnknownCommand'); return; }
     const d = defs.get(w[1]);
     const x = +w[2];
@@ -91,11 +91,14 @@ function start(opts = {}) {
     others(sock, 'NOTIFY set ' + k + ' ' + fmt(k));
   }
 
+  let frozen = false;
+  let pings = 0;
   const server = net.createServer((sock) => {
     clients.add(sock);
     let rest = '';
     sock.setEncoding('utf8');
     sock.on('data', (s) => {
+      if (frozen) return;
       const lines = (rest + s).split('\n');
       rest = lines.pop();
       for (const l of lines) if (l.trim()) line(sock, l.trim());
@@ -109,10 +112,13 @@ function start(opts = {}) {
         port: server.address().port,
         model, values, received,
         get gets() { return gets; },
+        get pings() { return pings; },
         clients: () => clients.size,
         // a change on the console's own surface: "MIXER:Current/... x y" and the value
         change(k, v) { values.set(k, v); others(null, 'NOTIFY set ' + k + ' ' + fmt(k)); },
         drop() { for (const c of clients) c.destroy(); },
+        // the link dies without closing (Wi-Fi gone, a VPN reconnecting): nothing in, nothing out
+        freeze(on) { frozen = on !== false; },
         close() { for (const c of clients) c.destroy(); server.close(); },
       });
     });
