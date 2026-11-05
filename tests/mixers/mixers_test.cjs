@@ -621,6 +621,25 @@ test('SQ: connect over TCP, read everything, both directions, a second remote, r
   } finally { s.disconnect(); other.disconnect(); sim.close(); }
 });
 
+test('SQ: a link that dies without closing is found by the probe and dialled again', async () => {
+  const sim = await sqSim.start();
+  const s = new Nrpn.Session(sq, nodeTcp);
+  try {
+    await s.connect('127.0.0.1', sim.port);
+    const gets = sim.gets;
+    await until(() => sim.gets > gets, 5000, 'a probe on the quiet link');
+    await sleep(200);
+    const states = [];
+    s.onStatus((x) => states.push(x));
+    sim.freeze();
+    sim.change('/ip/9/lr', 0); // made while the link is dead: read again after the redial
+    await until(() => states.includes('lost'), 13000, 'lost');
+    sim.freeze(false);
+    await until(() => s.status === 'online', 6000, 'back online');
+    await until(() => s.get('/ip/9/lr') === 0, 3000, 'the change read again');
+  } finally { s.disconnect(); sim.close(); }
+});
+
 test('SQ: nobody on the port fails cleanly', async () => {
   const srv = net.createServer();
   await new Promise((r) => srv.listen(0, '127.0.0.1', r));
@@ -1039,6 +1058,24 @@ test('Yamaha: RCP lines, addresses, values and the model sizes', () => {
   assert.strictEqual(yamaha.fromValue('/ch/1/col', 'SkyBlue'), yamaha.colors.indexOf('SkyBlue'));
   assert.strictEqual(yamaha.fromValue('/ch/1/col', 'Unknown'), 0);
   yamaha.layoutFor('CL5');
+});
+
+test('Yamaha: the keep-alive goes every 4 s; a link that dies without closing is dialled again', async () => {
+  const sim = await yamahaSim.start({ model: 'TF5' });
+  const s = new Rcp.Session(yamaha, nodeTcp);
+  try {
+    await s.connect('127.0.0.1', sim.port);
+    await until(() => sim.pings >= 1, 5000, 'the first keep-alive within 5 s');
+    await sleep(200);
+    const states = [];
+    s.onStatus((x) => states.push(x));
+    sim.freeze();
+    sim.change('MIXER:Current/InCh/Fader/Level 8 0', -32768);
+    await until(() => states.includes('lost'), 15000, 'lost');
+    sim.freeze(false);
+    await until(() => s.status === 'online', 8000, 'back online');
+    await until(() => s.get('/ch/9/lvl') === 0, 8000, 'the change read again');
+  } finally { s.disconnect(); sim.close(); }
 });
 
 for (const model of ['TF5', 'CL5', 'DM7']) {

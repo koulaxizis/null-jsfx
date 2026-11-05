@@ -25,6 +25,12 @@
   const PROTO = 1;
   const SEND_EVERY = 25; // ms: at most one message per control while a finger drags it
   const REDIAL = 2000; // ms between tries while Bitwig is not there
+  // A link that dies without closing (Wi-Fi gone, a VPN reconnecting) can look open for minutes,
+  // and a DAW where nothing moves sends nothing. Quiet for QUIET_HELLO: say hello again (the
+  // script answers with everything, which also mends what a lossy network MIDI link lost);
+  // quiet for QUIET_DEAD after the script has answered: drop the link and dial again.
+  const QUIET_HELLO = 10000;
+  const QUIET_DEAD = 25000;
   const KEEP_LOCAL = 500; // ms a control the user moved ignores older values coming back
   const UNITY = 0.7937; // Bitwig's volume position for 0 dB (only until Bitwig reports it)
   const INPUT = 0x80; // the desk's parameter flag for a control input
@@ -148,11 +154,14 @@
       this.closed = false;
       if (this.conn) return;
       this.reader = new Reader((m) => this.handle(m));
-      this.conn = this.dial({
-        onOpen: () => { this.open = true; this.send({ t: 'hello' }); },
-        onData: (bytes) => this.reader.push(bytes),
-        onClose: () => this.dropped(),
+      let conn = null;
+      conn = this.dial({
+        onOpen: () => { this.open = true; this.lastRx = this.lastHello = this.now(); this.send({ t: 'hello' }); },
+        onData: (bytes) => { this.lastRx = this.now(); this.reader.push(bytes); },
+        // a link this session already dropped (no answer) closing late changes nothing
+        onClose: () => { if (this.conn === conn) this.dropped(); },
       });
+      this.conn = conn;
     }
 
     dropped() {
@@ -213,6 +222,17 @@
         } else {
           const st = this.strips.get(Number(rest));
           if (st) { st[kind === 'vol' ? 'fader' : 'pan'] = v; this.emit('strip', st); }
+        }
+      }
+      if (this.conn && this.open && this.up) {
+        const quiet = now - this.lastRx;
+        if (quiet > QUIET_DEAD) {
+          const c = this.conn;
+          this.dropped();
+          c.close();
+        } else if (quiet > QUIET_HELLO && now - this.lastHello > QUIET_HELLO) {
+          this.lastHello = now;
+          this.send({ t: 'hello' });
         }
       }
       if (!this.conn && !this.closed && now >= this.retryAt) this.connect();

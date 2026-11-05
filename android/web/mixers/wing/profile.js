@@ -141,8 +141,9 @@
     family: 'WING',
     port: 2223,
     infoAddress: '/?',
-    keepAliveMs: 8000,
-    // the subscription lasts 10 s, and only the newest subscriber gets the events
+    keepAliveMs: 4000,
+    // the subscription lasts 10 s, and only the newest subscriber gets the events; renewed every
+    // 4 s, so one lost renewal (a VPN, busy Wi-Fi) still leaves the next one in time
     keepAlive: () => [['/*S', []]],
     isMeter: () => false,
     models: ['WING', 'WING Compact', 'WING Rack'],

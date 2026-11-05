@@ -10,7 +10,7 @@
 //           its text after it ("-10.00"); a request the console does not know: ERROR ...
 //   Device: devinfo productname -> OK devinfo productname "CL5" (the model);
 //           devinfo devicename -> its name; scpmode keepalive 10000 and devstatus runmode every
-//           10 s keep the connection open.
+//           4 s keep the connection open (and show a dead one: core/rcp.js DEAD_MS).
 // The profile maps the tab's paths to addresses (key: "ADDRESS X Y"), what a set sends (encode:
 // lines) and the values (toValue, fromValue). Written from the open Companion module for Yamaha
 // RCP (bitfocus/companion-module-yamaha-rcp, MIT License): it reads, not Yamaha's own
@@ -27,7 +27,11 @@
   const QUERY_BATCH = 4; // get lines sent together (about 400 a second)
   const QUERY_TICK_MS = 10;
   const REDIAL_MS = 2000;
-  const KEEPALIVE_MS = 10000;
+  const KEEPALIVE_MS = 10000; // the console closes a link quiet for this long (scpmode keepalive)
+  const PING_MS = 4000;       // so devstatus runmode goes every 4 s: one late timer or a slow
+                              // link (a VPN) no longer gets us dropped (it went every 10 s)
+  const DEAD_MS = 12000;      // no byte for this long after the console has answered a ping on
+                              // this connection: the link is dead though still open; redial
 
   /** Splits a line into words; a word in double quotes keeps its spaces (and \" inside it). */
   function words(line) {
@@ -101,19 +105,39 @@
       let up = false;
       this.rest = '';
       this.decoder = new TextDecoder();
-      this.conn = this.dial(this.host, this.port)({
-        onOpen: () => { up = true; onUp(); },
-        onData: (bytes) => this._data(bytes),
-        onClose: (why) => {
-          this.conn = null;
-          clearInterval(this.alive);
-          if (!up) { if (onFail) onFail(why); return; }
-          if (this.closed) return;
-          // the link went away: try again until it is back, then read everything again
-          this._setStatus('lost');
-          this._redial();
+      let ended = false;
+      const end = (why) => {
+        if (ended) return;
+        ended = true;
+        this.conn = null;
+        clearInterval(this.alive);
+        clearInterval(this.dog);
+        if (!up) { if (onFail) onFail(why); return; }
+        if (this.closed) return;
+        // the link went away: try again until it is back, then read everything again
+        this._setStatus('lost');
+        this._redial();
+      };
+      const conn = this.dial(this.host, this.port)({
+        onOpen: () => {
+          up = true;
+          this.lastRx = Date.now();
+          this.pingAt = 0;
+          this.pingOk = false;
+          clearInterval(this.dog);
+          this.dog = setInterval(() => {
+            if (this.conn === conn && this.pingOk && Date.now() - this.lastRx > DEAD_MS) { conn.close(); end('no answer'); }
+          }, 1000);
+          onUp();
         },
+        onData: (bytes) => {
+          this.lastRx = Date.now();
+          if (this.pingAt && this.lastRx - this.pingAt < 2000) this.pingOk = true;
+          this._data(bytes);
+        },
+        onClose: end,
       });
+      this.conn = conn;
     }
     _redial() {
       this.redial = setTimeout(() => {
@@ -126,6 +150,7 @@
       this.closed = true;
       clearTimeout(this.redial);
       clearInterval(this.alive);
+      clearInterval(this.dog);
       clearTimeout(this.queryTimer);
       for (const p of this.pending.values()) clearTimeout(p.timer);
       this.pending.clear();
@@ -231,7 +256,7 @@
           this._useLayout(P.layoutFor(this.info.model));
           this._lines(['devinfo devicename', 'scpmode keepalive ' + KEEPALIVE_MS]);
           clearInterval(this.alive);
-          this.alive = setInterval(() => this._lines(['devstatus runmode']), KEEPALIVE_MS);
+          this.alive = setInterval(() => { this.pingAt = Date.now(); this._lines(['devstatus runmode']); }, PING_MS);
           const all = this.layout.params.map((p) => p.path);
           const late = P.isLate ? all.filter((p) => P.isLate(p)) : [];
           this._queryAll(all.filter((p) => !P.isLate || !P.isLate(p)), Math.max(ms, 8000)).then(() => {

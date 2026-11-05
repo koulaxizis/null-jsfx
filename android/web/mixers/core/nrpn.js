@@ -47,6 +47,13 @@
   const QUERY_BATCH = 24; // get requests sent together
   const QUERY_TICK_MS = 15;
   const REDIAL_MS = 2000;
+  // A TCP link that dies without closing (Wi-Fi gone, a VPN reconnecting, the console switched
+  // off) can look open for minutes. A link quiet for PROBE_MS is asked one value; once such a
+  // probe has been answered on this connection, PROBE_DEAD_MS without a byte closes and redials
+  // it (the redial reads everything again). A console that never answers the probe is never
+  // closed for being quiet; one that sends Active Sensing (keepAliveMs, the Qu) needs no probe.
+  const PROBE_MS = 3000;
+  const PROBE_DEAD_MS = 10000;
 
   function setMessage(ch, addr, value) {
     const b = 0xb0 | (ch & 15);
@@ -151,25 +158,59 @@
 
     _open(onUp, onFail) {
       let up = false;
-      this.conn = this.dial(this.host, this.port)({
+      let ended = false;
+      const ended_ = (why) => {
+        if (ended) return;
+        ended = true;
+        this.conn = null;
+        clearInterval(this.alive);
+        clearInterval(this.dog);
+        this._stopMeters();
+        if (!up) { if (onFail) onFail(why); return; }
+        if (this.closed) return;
+        // the link went away: try again until it is back, then read everything again
+        this._setStatus('lost');
+        this._redial();
+      };
+      const conn = this.dial(this.host, this.port)({
         onOpen: () => {
           up = true;
           clearInterval(this.alive);
           if (this.profile.keepAliveMs) this.alive = setInterval(() => this._tx([0xfe]), this.profile.keepAliveMs);
+          this.lastRx = Date.now();
+          this.probeAt = 0;
+          this.probe = undefined;
+          this.probeOk = !!this.profile.keepAliveMs;
+          clearInterval(this.dog);
+          this.dog = setInterval(() => this._watch(conn, ended_), 1000);
           onUp();
         },
-        onData: (bytes) => this.parser.push(bytes),
-        onClose: (why) => {
-          this.conn = null;
-          clearInterval(this.alive);
-          this._stopMeters();
-          if (!up) { if (onFail) onFail(why); return; }
-          if (this.closed) return;
-          // the link went away: try again until it is back, then read everything again
-          this._setStatus('lost');
-          this._redial();
+        onData: (bytes) => {
+          this.lastRx = Date.now();
+          // the first bytes within 2 s of a probe sent on a quiet link: the console answers it
+          if (this.probeAt && this.lastRx - this.probeAt < 2000) this.probeOk = true;
+          this.parser.push(bytes);
         },
+        onClose: ended_,
       });
+      this.conn = conn;
+    }
+
+    // the dead-link watch (PROBE_MS above)
+    _watch(conn, end) {
+      if (this.conn !== conn) return;
+      const now = Date.now();
+      const quiet = now - this.lastRx;
+      if (this.probeOk && quiet > PROBE_DEAD_MS) { conn.close(); end('no answer'); return; }
+      if (quiet > PROBE_MS && now - this.probeAt >= PROBE_MS) {
+        if (this.probe === undefined) {
+          const P = this.profile;
+          const ask = (path) => (P.query ? P.query(this.channel, path) : getMessage(this.channel, P.address(path)));
+          const first = this.layout.params.find((x) => ask(x.path));
+          this.probe = first ? ask(first.path) : null;
+        }
+        if (this.probe) { this.probeAt = now; this._tx(this.probe); }
+      }
     }
     _redial() {
       this.redial = setTimeout(() => {
@@ -184,6 +225,7 @@
       this.closed = true;
       clearTimeout(this.redial);
       clearInterval(this.alive);
+      clearInterval(this.dog);
       for (const p of this.pending.values()) clearTimeout(p.timer);
       this.pending.clear();
       if (this.conn) { const c = this.conn; this.conn = null; c.close(); }
@@ -246,6 +288,7 @@
     }
 
     _useLayout(layout) {
+      this.probe = undefined; // the probe asks the layout's first askable parameter
       this.layout = layout;
       this.params.clear();
       this.byAddr.clear();
