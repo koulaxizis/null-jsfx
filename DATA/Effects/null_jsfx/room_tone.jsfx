@@ -2,7 +2,7 @@ desc:NULL Room Tone
 author: Christos Koulaxizis
 tags: room tone ambience fill gaps dialogue edit post production noise bed adr restoration fft
 //category: Essentials
-//NULL JSFX v3.2 • https://nulljsfx.tech • MIT License
+//NULL JSFX v3.3 • https://nulljsfx.tech • MIT License
 
 slider1:0<0,1,1{Off,On}>Learn
 slider2:-50<-80,-20,1>Threshold (dB)

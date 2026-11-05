@@ -2,7 +2,7 @@ desc:NULL Pitch to MIDI GFX
 author: Christos Koulaxizis
 tags: midi pitch to midi audio to midi convert tracker detection yin monophonic bass vocal guitar melody note pitch bend gui
 //category: MIDI
-//NULL JSFX v3.2 • https://nulljsfx.tech • MIT License
+//NULL JSFX v3.3 • https://nulljsfx.tech • MIT License
 
 import null_gfx.jsfx-inc
 

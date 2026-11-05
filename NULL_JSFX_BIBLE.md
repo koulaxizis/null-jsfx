@@ -761,7 +761,7 @@ The bimonthly audit (0.5) works through this list. It names no fixed plugin list
 
 ### VI.1 Where the version lives
 
-This list was checked against the 2.6 bump (`bc60d15`, PR #47) and its follow-up (#48, llms.txt) [verified 2026-10-26], and again against the 2.7 bump [verified 2026-10-28] the 2.9 bump [verified 2026-10-31], the 3.0 bump [verified 2026-11-01] and the 3.1 bump [verified 2026-11-02]. Change everything in it in one PR (R19).
+This list was checked against the 2.6 bump (`bc60d15`, PR #47) and its follow-up (#48, llms.txt) [verified 2026-10-26], and again against the 2.7 bump [verified 2026-10-28] the 2.9 bump [verified 2026-10-31], the 3.0 bump [verified 2026-11-01], the 3.1 bump [verified 2026-11-02] and the 3.3 bump [verified 2026-11-05]. Change everything in it in one PR (R19).
 
 | Place | What to change |
 |---|---|
@@ -2068,4 +2068,12 @@ entry and the Bible delta.
 - **Files:** `android/web/mixers/core/{nrpn.js,rcp.js}`, `android/web/mixers/wing/profile.js`, `android/web/daws/bitwig/bitwig.js`, `android/web/daws/ardour/ardour.js`, `tests/mixers/{mixers_test.cjs,sq_sim.cjs,yamaha_sim.cjs}`, `tests/daws/bitwig_test.cjs`, this Bible (II.11, II.12, II.13).
 - **Tests (run on Linux):** `node tests/mixers/mixers_test.cjs` (40 of 40, two new: an SQ link that dies without closing is found by the probe, redialled and read again; Yamaha's keep-alive within 5 s and a dead link redialled and read again), `node tests/mixers/ui_test.cjs`, `node tests/daws/{ardour,bitwig,ableton,rtpmidi,cubase,fl,mackie}_test.cjs` (bitwig one new: hello after 10 s of quiet, dropped and redialled after 25 s, in fake time), `node tests/daws/ui_test.cjs`. Not tried on real consoles or DAWs; that the SQ, CQ, dLive and Avantis answer the probe's get is our reading of their documents (the redial only arms once one is answered).
 - **Version:** v3.2 (no change; ships with the next release).
+
+### 2026-11-05 — 3.3 — version step for the steadier remotes
+- **Why:** Christos asked when the fixed Remote for Mixers APK would be available; the APK ships only with a release, and he approved 3.3 for everyone (2026-11-05). It carries the link fixes of both entries above and the Harmonizer's Sustain Pedal (#147). 3.3, as each step since 3.0 (the series has used no patch tags).
+- **Changes:** the version is 3.3 everywhere in Part VI.1: every plain and GFX footer and `null_gfx.jsfx-inc`, `FOOTER` and the docstring in `tests/lint.py` (so the Android `versionName` 3.3), `web/tools/eel2js.js` (then `node web/tools/build.js`), the remote bridge and page, `native/CMakeLists.txt` (3.3.0), `hub/Cargo.toml` and both Hub entries in `hub/Cargo.lock`, the doc comment in `hub/core/src/lib.rs`, `llms.txt`, and `index.html` (version, "Released: 05/11/26", headings, and a new "3.3: STEADIER REMOTES" section); `build_site.py` regenerated the plugin pages and the sitemap. `release-notes/3.3.md` holds the notes the Release workflow puts into the draft.
+- **Files:** `DATA/Effects/null_jsfx/*.jsfx`, `DATA/Effects/null_jsfx/gfx/*`, `web/fx/*.js`, `tests/lint.py`, `web/tools/eel2js.js`, `remote/Scripts/null_jsfx_remote_bridge.lua`, `remote/reaper_www_root/null_jsfx.html`, `native/CMakeLists.txt`, `hub/Cargo.toml`, `hub/Cargo.lock`, `hub/core/src/lib.rs`, `llms.txt`, `index.html`, `plugins/*/index.html`, `sitemap.xml`, `release-notes/3.3.md`, this Bible.
+- **Tests (run on Linux):** `tests/lint.py` on all 308 JSFX and GFX (0 errors, with the version checks), `node web/tools/build.js`, `tools/build_site.py --check`, `tools/build_catalog.py --check`, `tools/build_remote.py --check`, `tools/build_presets.py --check`, `tools/build_chains.py --check`, `tools/build_bible.py --check`, `tests/fdroid_repo_test.py`, `tests/bible_order.py`. Full CI on the PR.
+- **Next:** Claude runs the Release workflow with 3.3; Christos publishes the draft; Claude checks the 19 assets, `release_smoke.sh 3.3`, the site links, the F-Droid repository and adds the 3.3 row to Part VI.3.
+- **Version:** v3.3.
 
