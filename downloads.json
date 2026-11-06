@@ -1,8 +1,8 @@
 {
   "display": 2500,
-  "total": 3216,
+  "total": 3308,
   "offset": 0,
-  "updated": "2026-11-05",
+  "updated": "2026-11-06",
   "assets": {
     "489296831": {
       "file": "1.0/null_jsfx.zip",
@@ -670,7 +670,7 @@
     },
     "705224962": {
       "file": "3.2/NULL-JSFX-JSFX.zip",
-      "count": 59
+      "count": 63
     },
     "705233994": {
       "file": "3.2/NULL-JSFX-Remote-DAWs-Android.apk",
@@ -710,7 +710,7 @@
     },
     "705349891": {
       "file": "3.2/NULL-JSFX-VST3-CLAP-Linux.zip",
-      "count": 57
+      "count": 61
     },
     "705412194": {
       "file": "3.2/NULL-JSFX-VST3-CLAP-macOS.zip",
@@ -746,7 +746,7 @@
     },
     "713511257": {
       "file": "3.3/NULL-JSFX-JSFX.zip",
-      "count": 0
+      "count": 30
     },
     "713512481": {
       "file": "3.3/NULL-JSFX-Catalog.json",
@@ -754,71 +754,75 @@
     },
     "713518706": {
       "file": "3.3/NULL-JSFX-Remote-DAWs-Android.apk",
-      "count": 0
+      "count": 2
     },
     "713518707": {
       "file": "3.3/NULL-JSFX-Remote-Mixers-Android.apk",
-      "count": 0
+      "count": 2
     },
     "713531060": {
       "file": "3.3/NULL-JSFX-Hub-Windows-Setup.exe",
-      "count": 0
+      "count": 1
     },
     "713534445": {
       "file": "3.3/NULL-JSFX-Hub-Linux.AppImage",
-      "count": 0
+      "count": 2
     },
     "713534448": {
       "file": "3.3/NULL-JSFX-Hub-Linux.deb",
-      "count": 0
+      "count": 1
     },
     "713536915": {
       "file": "3.3/NULL-JSFX-VST3-CLAP-Linux-ARM64.zip",
-      "count": 0
+      "count": 1
     },
     "713541899": {
       "file": "3.3/NULL-JSFX-VST3-CLAP-Windows-ARM64.zip",
-      "count": 0
+      "count": 1
     },
     "713547192": {
       "file": "3.3/NULL-JSFX-Hub-macOS.dmg",
-      "count": 0
+      "count": 2
     },
     "713547320": {
       "file": "3.3/NULL-JSFX-VST3-CLAP-Windows.zip",
-      "count": 0
+      "count": 1
     },
     "713646531": {
       "file": "3.3/NULL-JSFX-VST3-CLAP-Linux.zip",
-      "count": 0
+      "count": 29
     },
     "713703559": {
       "file": "3.3/NULL-JSFX-VST3-CLAP-macOS.zip",
-      "count": 0
+      "count": 2
     },
     "713718467": {
       "file": "3.3/NULL-JSFX-Installer-Windows.exe",
-      "count": 0
+      "count": 2
     },
     "713720447": {
       "file": "3.3/NULL-JSFX-Installer-Windows-ARM64.exe",
-      "count": 0
+      "count": 1
     },
     "713722372": {
       "file": "3.3/NULL-JSFX-Installer-Linux-ARM64.sh",
-      "count": 0
+      "count": 1
     },
     "713726970": {
       "file": "3.3/NULL-JSFX-Installer-Linux.sh",
-      "count": 0
+      "count": 1
     },
     "713758925": {
       "file": "3.3/NULL-JSFX-Installer-macOS.pkg",
-      "count": 0
+      "count": 2
     },
     "713758926": {
       "file": "3.3/NULL-JSFX-Installer-macOS.sh",
-      "count": 0
+      "count": 1
+    },
+    "713815504": {
+      "file": "3.3/NULL-JSFX-Catalog.json",
+      "count": 2
     }
   }
 }
