@@ -140,7 +140,7 @@
    * profile: {
    *   id, title, order, header, prefsKey, port, portLabel, files (scripts to load first),
    *   connectTitle, setupTitle, setup [[text, bold, text]...], noAnswer(c), noTracks, noPlugins,
-   *   followNote, needsApp,
+   *   followNote, needsApp, pairHint (where the DAW shows the pairing code, for scripts that pair),
    *   open(c) -> session (after files are loaded; may throw with a message for the user),
    *   kind(s) -> label under the name, isMaster(s), hasFx(s), hasPan(s),
    *   meter(s) -> {h (0..1), hot}, dbText(s, session), unity (fader position of 0 dB)
@@ -150,7 +150,7 @@
    */
   function register(P) {
     const { el, prefs, header } = NullRemote;
-    let root, connectView, desk, msg, session = null, conn = null;
+    let root, connectView, connectCard, desk, msg, pairBox, pairCode, pairMsg, session = null, conn = null;
     let strips, clock, transportBtns, sheet, sheetBody, sheetTitle, pager, mixsel;
     let mix = -1; // what the faders move: -1 the volume, k send k
     let view = null; // the open sheet: {kind: 'list' | 'plugin', ssid, ...}
@@ -163,6 +163,15 @@
     // --- connect -----------------------------------------------------------------------------
 
     function saved() { return prefs.get(P.prefsKey, []); }
+    // this phone's pairing keys, one per computer (host:port)
+    function keysFor(c) {
+      const name = P.prefsKey + '-keys';
+      const at = c.host + ':' + c.port;
+      return {
+        get: () => (prefs.get(name, {}) || {})[at] || '',
+        set: (key) => { const all = prefs.get(name, {}) || {}; all[at] = key; prefs.set(name, all); },
+      };
+    }
     function remember(c) {
       const list = saved().filter((x) => !(x.host === c.host && x.port === c.port));
       list.unshift(c);
@@ -190,6 +199,7 @@
       go.onclick = () => connect({ host: host.value, port: port.value });
       msg = el('div', 'msg');
       card.append(row, go, msg);
+      connectCard = card;
       const list = el('div', 'list');
       for (const c of saved()) {
         const b = el('button');
@@ -213,10 +223,54 @@
       return connectView;
     }
 
+    // the pairing code, for a DAW script that asks for one (Live, Bitwig); built when asked
+    function buildPair() {
+      pairBox = el('div', 'da-pair');
+      pairMsg = el('div', 'msg');
+      const prow = el('div', 'row');
+      pairCode = el('input');
+      pairCode.inputMode = 'numeric';
+      pairCode.autocomplete = 'one-time-code';
+      pairCode.maxLength = 7;
+      pairCode.placeholder = '6-digit code';
+      pairCode.setAttribute('aria-label', 'Pairing code');
+      const pgo = el('button', 'primary', 'Pair');
+      const doPair = () => {
+        const code = pairCode.value.replace(/\D/g, '');
+        if (code.length !== 6) return sayPair('Type the 6 digits the computer shows.', true);
+        if (session) session.pair(code);
+        sayPair('Pairing…');
+      };
+      pgo.onclick = doPair;
+      pairCode.addEventListener('keydown', (e) => { if (e.key === 'Enter') doPair(); });
+      prow.append(pairCode, pgo);
+      pairBox.append(el('h2', '', 'Pair this phone'), pairMsg, prow);
+      connectCard.insertBefore(pairBox, msg.nextSibling);
+    }
+
+    function sayPair(text, err) {
+      pairMsg.textContent = text || '';
+      pairMsg.className = 'msg' + (err ? ' err' : '');
+    }
+
+    function onAuth(a) {
+      if (!a) { if (pairBox) { pairBox.hidden = true; pairCode.value = ''; } return; }
+      if (!pairBox) buildPair();
+      pairBox.hidden = false;
+      if (desk && !desk.hidden) { desk.hidden = true; connectView.hidden = false; }
+      say('');
+      const where = P.pairHint || `${P.title} shows`;
+      if (a.need === 'wait') sayPair(`Too many wrong codes. Try again in ${a.s || 30} s.`, true);
+      else if (a.wrong) sayPair(`That is not the code. Look at the one ${P.title} shows now and type it again.`, true);
+      else sayPair(`${where} a 6-digit code. Type it here once: this phone is then remembered on that computer.`);
+      if (a.need !== 'wait') pairCode.focus();
+    }
+
     async function connect(c) {
       c = { host: String(c.host || '').trim(), port: parseInt(c.port, 10) || P.port };
       if (!c.host) return say(`Type the address of the computer that runs ${P.title}.`, true);
       say(`Connecting to ${c.host}:${c.port}…`);
+      c.keys = keysFor(c);
       let s;
       try {
         await loadAll(P.files);
@@ -229,12 +283,15 @@
       mix = -1;
       drawMixSelector();
       let answered = false;
+      let asked = false;
+      if (pairBox) pairBox.hidden = true;
+      session.on('auth', (a) => { if (session !== s) return; asked = true; onAuth(a); if (!a && answered) showDesk(); });
       session.on('strips', (list) => {
         if (session !== s) return;
         if (!answered) {
           answered = true;
-          conn = c;
-          remember(c);
+          conn = { host: c.host, port: c.port };
+          remember(conn);
           say('');
           showDesk();
         }
@@ -250,7 +307,7 @@
       session.on('params', onParams);
       session.connect();
       setTimeout(() => {
-        if (!answered && session === s) say(P.noAnswer(c), true);
+        if (!answered && !asked && session === s) say(P.noAnswer(c), true);
       }, 4000);
       return true;
     }

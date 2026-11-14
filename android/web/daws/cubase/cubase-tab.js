@@ -15,7 +15,7 @@
     setup: [
       ['From NULL-JSFX-JSFX.zip (nulljsfx.tech, Download) take the folder ', 'Remote/cubase/nulljsfx', '.'],
       ['Copy it into ', 'Documents/Steinberg/Cubase/MIDI Remote/Driver Scripts/Local', '.'],
-      ['Open a network MIDI session named ', 'NULL Remote', ': on a Mac in Audio MIDI Setup > MIDI Studio > Network; on Windows with the free rtpMIDI (Tobias Erichsen), "Who may connect: Anyone".'],
+      ['Open a network MIDI session named ', 'NULL Remote', ': on a Mac in Audio MIDI Setup > MIDI Studio > Network; on Windows with the free rtpMIDI (Tobias Erichsen). Set "Who may connect" to the directory only and add this phone\'s address (Android Settings > Wi-Fi > your network) to it.'],
       ['Restart Cubase. It finds the port and lists ', 'NULL JSFX Remote for DAWs', ' in the MIDI Remote Manager.'],
       ['Load the NULL JSFX plugins as ', 'VST3', ' inserts; they open here with their own interface.'],
       ['Type the computer\'s address above (port 5004 unless the session uses another). Allow ', 'UDP 5004 and 5005', ' through its firewall.'],

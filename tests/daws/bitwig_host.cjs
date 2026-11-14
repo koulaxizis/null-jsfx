@@ -113,6 +113,15 @@ class Host {
     this.meters = [];
     this.position = 0;
     this.transport = { play: false, rec: false, loop: false };
+    this.keys = opts.keys || ''; // Settings > Controllers > Paired phones
+  }
+  /** The pairing code of the last notification, or ''. */
+  code() {
+    for (let k = this.log.length - 1; k >= 0; k--) {
+      const m = /^popup NULL JSFX Remote: pairing code (\d{3}) (\d{3})$/.exec(this.log[k]);
+      if (m) return m[1] + m[2];
+    }
+    return '';
   }
   track(slot) { return this.doc.tracks[this.scroll + slot]; }
   device() {
@@ -319,7 +328,11 @@ function api(H) {
     defineMidiPorts() {},
     getPreferences: () => ({
       getNumberSetting: (label, cat, min, max, step, unit, init) => V(() => H.opts.port ?? init),
+      // the paired phones (comma-separated key hashes) and "Forget all phones"
+      getStringSetting: (label, cat, n, init) => V(() => H.keys, (v) => { H.keys = String(v).slice(0, n); }),
+      getSignalSetting: () => ({ addSignalObserver(cb) { H.forget = cb; } }),
     }),
+    showPopupNotification: (s) => H.log.push('popup ' + s),
     createTransport: () => {
       const tr = H.transport;
       const pos = V(() => H.position, (v) => { H.position = v; H.log.push('position ' + v); });
@@ -381,9 +394,16 @@ function api(H) {
 }
 
 /** Starts the script and its TCP socket. Returns { port, host (the stand-in), doc, close() }. */
+// a phone already paired with this computer (the tests that are not about pairing use it)
+const TEST_KEY = 'a1'.repeat(32);
+const testKeys = () => ({ get: () => TEST_KEY, set() {} });
+const keyHash = (k) => require('crypto').createHash('sha256').update(k).digest('hex').slice(0, 32);
+
 async function start(opts = {}) {
   const doc = opts.doc || defaultDocument();
-  const H = new Host(doc, { port: 0, headerOut: false, ...opts });
+  // opts.keys: the raw keys of the phones paired before (default TEST_KEY)
+  const keys = (opts.keys || [TEST_KEY]).map(keyHash).join(',');
+  const H = new Host(doc, { port: 0, headerOut: false, ...opts, keys });
   const hostApi = api(H);
   const ctx = {
     host: hostApi,
@@ -466,7 +486,7 @@ async function start(opts = {}) {
   };
 }
 
-module.exports = { start, defaultDocument, nullPlugin, UNITY };
+module.exports = { start, defaultDocument, nullPlugin, UNITY, TEST_KEY, testKeys };
 
 if (require.main === module) {
   start({ port: parseInt(process.argv[2], 10) || 8818, headerOut: process.argv.includes('--header') })

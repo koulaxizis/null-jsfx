@@ -19,6 +19,9 @@ Install (once)
 
 On the phone
     Remote for DAWs > Bitwig: type the computer's address (port 8818) and Connect.
+    The first time, Bitwig shows a 6-digit pairing code in a notification: type it on the
+    phone. Only paired phones can control Bitwig; the phone is remembered from then on.
+    Settings > Controllers > NULL JSFX > Paired phones > "Forget all phones" unpairs them.
 
 Another port
     Settings > Controllers > NULL JSFX Remote for DAWs > Port; then switch the controller

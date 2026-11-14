@@ -80,7 +80,7 @@ test('our JSON in System Exclusive: ASCII only, every character back', () => {
   assert.strictEqual(R.fromSysex([0xf0, 0x43, 1, 2, 3, 0xf7]), null, 'another maker\'s message');
 });
 
-test('a session: invitation on both ports, clock sync, MIDI both ways, long messages, BY', async () => {
+test('a session: invitation on both ports, clock sync, MIDI both ways, long messages, only the computer heard, BY', async () => {
   const peer = await Peer.start();
   const s = new R.Session({ udp: nodeUdp, name: 'NULL Remote', syncEvery: [50] });
   try {
@@ -104,6 +104,18 @@ test('a session: invitation on both ports, clock sync, MIDI both ways, long mess
     assert.deepStrictEqual(heard, [[0xb0, 7, 99], big]);
     let why = null;
     s.onClose((w) => { why = w; });
+    // another device on the network: its BY and its MIDI are not the computer's
+    const dgram = require('dgram');
+    const other = dgram.createSocket('udp4');
+    await new Promise((r) => other.bind(0, '127.0.0.2', r));
+    const ph = peer.phone;
+    other.send(R.control(0x4259, 0, 0x5eed), ph.ctl, '127.0.0.1');
+    other.send(R.rtp(1, 0, 0x5eed, [[0xb0, 7, 1]]), ph.data, '127.0.0.1');
+    await sleep(150);
+    other.close();
+    assert.strictEqual(why, null, 'a stranger cannot end the session');
+    assert.strictEqual(heard.length, 2, "a stranger's MIDI is not heard");
+    assert.strictEqual(s.up, true);
     peer.bye();
     await until(() => why !== null, 1000, 'BY');
     assert.match(why, /ended/);

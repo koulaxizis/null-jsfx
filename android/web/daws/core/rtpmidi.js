@@ -211,8 +211,11 @@
       this.host = host;
       this.port = port;
       [this.ctl, this.data] = await this._sockets();
-      this.ctl.onPacket((b) => this._control(b, 'ctl'));
-      this.data.onPacket((b) => {
+      // only the computer's packets: nobody else on the network may end the session or feed it
+      const theirs = (from) => from == null || from === host;
+      this.ctl.onPacket((b, from) => { if (theirs(from)) this._control(b, 'ctl'); });
+      this.data.onPacket((b, from) => {
+        if (!theirs(from)) return;
         if (b[0] === 0xff && b[1] === 0xff) this._control(b, 'data');
         else parseRtp(b, this.state, (m) => { for (const cb of this.listeners) cb(m); });
       });

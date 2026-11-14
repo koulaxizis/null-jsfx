@@ -1,4 +1,8 @@
 /* Remote for DAWs: the desk the DAW tabs share (core/desk.js): strips, transport and plugins. NULL JSFX palette (core/style.css). */
+/* pairing with a DAW script that asks for a code (Live, Bitwig) */
+.da-pair { display: flex; flex-direction: column; gap: 12px; border-top: 1px solid var(--border); padding-top: 12px; }
+.da-pair[hidden] { display: none; }
+.da-pair input { font-size: 22px; letter-spacing: 6px; text-align: center; font-variant-numeric: tabular-nums; }
 .da-desk { flex: 1; display: flex; flex-direction: column; min-height: 0; position: relative; }
 .da-desk.da-down .da-strips { opacity: .45; }
 .da-desk.da-down .da-clock::after { content: " · offline"; color: var(--clip); }

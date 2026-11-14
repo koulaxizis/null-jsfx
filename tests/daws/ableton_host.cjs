@@ -4,12 +4,18 @@
 // slider), and returns { port, get(), set(path, value), call(path), close() }.
 // NULL JSFX • https://nulljsfx.tech • MIT License
 'use strict';
+const fs = require('fs');
+const os = require('os');
 const path = require('path');
+const crypto = require('crypto');
 const { spawn, spawnSync } = require('child_process');
 
 const LIVE = path.join(__dirname, 'ableton_live.py');
 const UNITY = 0.85; // Live's volume position for 0 dB
 const PYTHON = process.env.PYTHON || 'python3';
+// a phone already paired with this computer (the tests that are not about pairing use it)
+const TEST_KEY = 'a1'.repeat(32);
+const testKeys = () => ({ get: () => TEST_KEY, set() {} });
 
 function nullPlugin(id) {
   require(path.join(__dirname, '../../web/fx', id + '.js'));
@@ -53,7 +59,14 @@ function syntaxCheck() {
 
 async function start(opts = {}) {
   const doc = opts.doc || defaultDocument();
-  const py = spawn(PYTHON, ['-B', LIVE, String(opts.port || 0)], { stdio: ['pipe', 'pipe', 'pipe'] });
+  // the paired phones' key hashes, in a file of this run (opts.keys: raw keys; default TEST_KEY)
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'null-live-'));
+  const keysFile = path.join(dir, 'keys.json');
+  const keys = opts.keys || [TEST_KEY];
+  fs.writeFileSync(keysFile, JSON.stringify({ keys: keys.map((k) => crypto.createHash('sha256').update(k).digest('hex')) }));
+  const py = spawn(PYTHON, ['-B', LIVE, String(opts.port || 0)], {
+    stdio: ['pipe', 'pipe', 'pipe'], env: { ...process.env, NULL_REMOTE_KEYS_FILE: keysFile },
+  });
   const log = [];
   py.stderr.on('data', (d) => log.push(String(d)));
   let buf = '';
@@ -85,15 +98,25 @@ async function start(opts = {}) {
   return {
     port: await port,
     log,
+    keysFile,
+    /** The pairing code Live's status bar shows last, or ''. */
+    code() {
+      const all = log.join('').split('\n');
+      for (let k = all.length - 1; k >= 0; k--) {
+        const m = /\[status\] NULL JSFX Remote: pairing code (\d{3}) (\d{3})$/.exec(all[k]);
+        if (m) return m[1] + m[2];
+      }
+      return '';
+    },
     get: () => ask({ op: 'get' }),
     set: (p, value) => ask({ op: 'set', path: p, value }),
     call: (p) => ask({ op: 'call', path: p }),
     remove: (p) => ask({ op: 'remove', path: p }),
-    close() { try { py.stdin.end(); } catch (e) { /* gone */ } py.kill(); },
+    close() { try { py.stdin.end(); } catch (e) { /* gone */ } py.kill(); fs.rmSync(dir, { recursive: true, force: true }); },
   };
 }
 
-module.exports = { start, defaultDocument, syntaxCheck, UNITY };
+module.exports = { start, defaultDocument, syntaxCheck, UNITY, TEST_KEY, testKeys };
 
 if (require.main === module) {
   start({ port: parseInt(process.argv[2], 10) || 8819 }).then((l) => console.log(`software Live with the NULL JSFX surface on TCP ${l.port}`));

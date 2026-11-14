@@ -111,6 +111,7 @@ jobs:
       - run: node tests/daws/ardour_test.cjs
       - run: node tests/daws/bitwig_test.cjs
       - run: node tests/daws/ableton_test.cjs
+      - run: node tests/daws/pairing_test.cjs
       - run: node tests/daws/rtpmidi_test.cjs
       - run: node tests/daws/cubase_test.cjs
       - run: node tests/daws/fl_test.cjs

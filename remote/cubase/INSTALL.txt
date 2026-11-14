@@ -17,9 +17,16 @@ Install (once)
        (so that .../Local/nulljsfx/remotefordaws/nulljsfx_remotefordaws.js exists).
     2. Open a network MIDI session named NULL Remote:
          macOS     Audio MIDI Setup > Window > Show MIDI Studio > Network: add a session,
-                   name it NULL Remote, tick it, "Who may connect to me: Anyone".
+                   name it NULL Remote, tick it, "Who may connect to me: Only hosts in my
+                   directory", and add the phone to the directory (+ under Directory: any
+                   name, the phone's address, port 5004).
          Windows   install rtpMIDI (free, Tobias Erichsen, tobias-erichsen.de), add a
-                   session named NULL Remote, enable it, "Who may connect to me: Anyone".
+                   session named NULL Remote, enable it, "Who may connect to me: Only
+                   computers/devices in my directory", and add the phone to the directory
+                   (+ under Directory: any name, the phone's address, port 5004).
+       The phone's address: Android Settings > Wi-Fi > your network > IP address (give the
+       phone a fixed address in the router, or update the directory when it changes).
+       Then only the phones in the directory can join the session.
        The session's port is 5004 unless you change it.
     3. Start (or restart) Cubase. It finds the port NULL Remote and lists "NULL JSFX Remote
        for DAWs" in Studio > MIDI Remote Manager. In Studio > Studio Setup > MIDI Port Setup,

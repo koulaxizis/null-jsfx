@@ -249,7 +249,20 @@ async function main() {
     await shot('bitwig-connect');
     await btab.locator('input').first().fill('127.0.0.1');
     await btab.locator('button.primary').click();
+    // a phone the script does not know: the code Bitwig shows pairs it
+    await until(async () => btab.locator('.da-pair').isVisible(), 'Bitwig asks for its pairing code');
+    assert.strictEqual(await btab.locator('.da-strip').count(), 0);
+    await until(async () => bw.host.code().length === 6, 'a code in a Bitwig notification');
+    await btab.locator('.da-pair input').fill('000000' === bw.host.code() ? '111111' : '000000');
+    await btab.locator('.da-pair button').click();
+    await until(async () => /not the code/.test(await btab.locator('.da-pair .msg').textContent()), 'a wrong code is refused');
+    await shot('bitwig-pair');
+    await btab.locator('.da-pair input').fill(bw.host.code());
+    await btab.locator('.da-pair button').click();
     await until(async () => (await btab.locator('.da-strip').count()) === 4, 'four Bitwig strips');
+    assert(await btab.locator('.da-pair').isHidden());
+    assert.match(await page.evaluate(() => Object.values(JSON.parse(localStorage.getItem('null-remote-bitwig-hosts-keys') || 'null') || {})[0] || ''), /^[0-9a-f]{64}$/);
+    ok('Bitwig tab: pairs with the code Bitwig shows (a wrong one refused), the key kept');
     assert.deepStrictEqual(await btab.locator('.da-name').allTextContents(), ['Vocal', 'Synth', 'FX 1', 'Master']);
     assert.deepStrictEqual(await btab.locator('.da-kind').allTextContents(), ['Audio', 'Instrument', 'Effect', 'Master']);
     assert(await bstrip('Master').evaluate((e) => e.classList.contains('da-master')));
@@ -379,6 +392,10 @@ async function main() {
     await shot('ableton-connect');
     await atab.locator('input').first().fill('127.0.0.1');
     await atab.locator('button.primary').click();
+    await until(async () => atab.locator('.da-pair').isVisible(), 'Live asks for its pairing code');
+    await until(async () => live.code().length === 6, "a code in Live's status bar");
+    await atab.locator('.da-pair input').fill(live.code());
+    await atab.locator('.da-pair input').press('Enter');
     await until(async () => (await atab.locator('.da-strip').count()) === 4, 'four Live strips');
     assert.deepStrictEqual(await atab.locator('.da-name').allTextContents(), ['Vocal', 'Synth', 'FX 1', 'Master']);
     assert.deepStrictEqual(await atab.locator('.da-kind').allTextContents(), ['Audio', 'MIDI', 'Return', 'Master']);
