@@ -18,14 +18,15 @@ name: F-Droid repository
 #                            the index key: a PKCS12 keystore with one key (base64, one line);
 #                            its key password is the keystore password, its alias is read from it
 #   FDROID_DEPLOY_TOKEN      fine-grained token: koulaxizis/null-jsfx-fdroid, Contents read/write
-# Without them a release or manual run fails and publishes nothing (a pull request only skips).
+# Without them a release or manual run fails and publishes nothing; a pull request never gets them.
 # A new key means every phone has to add the repository again (and reinstall the apps).
 
 on:
   release:
     types: [published]
-  # a change to this workflow or its tool: the whole run on the PR's own commit with the real
-  # keys, but nothing pushed (a dry run; the repository is kept as a workflow artifact)
+  # a change to this workflow or its tool: the whole run on the PR's own commit, signed with
+  # throwaway keys made in the job (the real keys and the token never reach a pull request),
+  # nothing pushed (a dry run; the repository is kept as a workflow artifact)
   pull_request:
     paths: [".github/workflows/fdroid-repo.yml", "tools/fdroid_repo.py", "android/fdroid/**"]
   workflow_dispatch:
@@ -54,52 +55,66 @@ jobs:
         id: pre
         env:
           GH_TOKEN: ${{ github.token }}
-          HAS: ${{ secrets.ANDROID_KEYSTORE != '' && secrets.FDROID_KEYSTORE != '' && secrets.FDROID_DEPLOY_TOKEN != '' }}
+          HAS: ${{ github.event_name != 'pull_request' && secrets.ANDROID_KEYSTORE != '' && secrets.FDROID_KEYSTORE != '' && secrets.FDROID_DEPLOY_TOKEN != '' }}
           TAG: ${{ github.event.release.tag_name || inputs.release_tag }}
         run: |
-          if [ "$HAS" != "true" ]; then
-            # a pull request from a fork gets no secrets: it skips. A release or a run by hand
-            # fails, so a missing secret is never a green run that published nothing (3.1).
-            if [ "$GITHUB_EVENT_NAME" = pull_request ]; then
-              echo "::notice::A secret is missing (ANDROID_KEYSTORE, FDROID_KEYSTORE or FDROID_DEPLOY_TOKEN): dry run skipped."
-              echo "go=0" >> "$GITHUB_OUTPUT"; exit 0
-            fi
-            echo "::error::A secret is missing (ANDROID_KEYSTORE, FDROID_KEYSTORE or FDROID_DEPLOY_TOKEN): nothing published."
-            exit 1
-          fi
           if [ "$GITHUB_EVENT_NAME" = pull_request ]; then
             echo "dry=1" >> "$GITHUB_OUTPUT"
             echo "tag=$GITHUB_SHA" >> "$GITHUB_OUTPUT"
             echo "go=1" >> "$GITHUB_OUTPUT"; exit 0
           fi
+          if [ "$HAS" != "true" ]; then
+            # a release or a run by hand fails, so a missing secret is never a green run that
+            # published nothing (3.1)
+            echo "::error::A secret is missing (ANDROID_KEYSTORE, FDROID_KEYSTORE or FDROID_DEPLOY_TOKEN): nothing published."
+            exit 1
+          fi
           [ -n "$TAG" ] || TAG=$(gh release view --repo "$GITHUB_REPOSITORY" --json tagName --jq .tagName)
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
           echo "go=1" >> "$GITHUB_OUTPUT"
 
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         if: steps.pre.outputs.go == '1'
         with:
+          persist-credentials: false
           ref: ${{ steps.pre.outputs.tag }}
-      - uses: actions/setup-java@v5
+      - uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5
         if: steps.pre.outputs.go == '1'
         with:
           distribution: temurin
           java-version: 17
-      - uses: gradle/actions/setup-gradle@v5
+      - uses: gradle/actions/setup-gradle@0723195856401067f7a2779048b490ace7a47d7c # v5
         if: steps.pre.outputs.go == '1'
-      - uses: actions/setup-python@v6
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
         if: steps.pre.outputs.go == '1'
         with:
           python-version: "3.12"
+
+      # a pull request signs with keys made here and thrown away with the runner
+      - name: Throwaway keys (pull request)
+        if: steps.pre.outputs.go == '1' && steps.pre.outputs.dry == '1'
+        run: |
+          set -e
+          pass=$(openssl rand -hex 16)
+          for k in apk index; do
+            keytool -genkeypair -keystore "$RUNNER_TEMP/$k.p12" -storetype PKCS12 -storepass "$pass" -keypass "$pass" \
+              -alias "dry$k" -keyalg RSA -keysize 2048 -validity 2 -dname "CN=NULL JSFX dry run $k" > /dev/null 2>&1
+          done
+          {
+            echo "DRY_APK_KS=$(base64 -w0 "$RUNNER_TEMP/apk.p12")"
+            echo "DRY_INDEX_KS=$(base64 -w0 "$RUNNER_TEMP/index.p12")"
+            echo "DRY_PASS=$pass"
+          } >> "$GITHUB_ENV"
+          rm -f "$RUNNER_TEMP/apk.p12" "$RUNNER_TEMP/index.p12"
 
       - name: Signed fdroid-flavor APKs
         if: steps.pre.outputs.go == '1'
         working-directory: android
         env:
-          NULL_REMOTE_KEYSTORE: ${{ secrets.ANDROID_KEYSTORE }}
-          NULL_REMOTE_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
-          NULL_REMOTE_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
-          NULL_REMOTE_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          NULL_REMOTE_KEYSTORE: ${{ steps.pre.outputs.dry == '1' && env.DRY_APK_KS || secrets.ANDROID_KEYSTORE }}
+          NULL_REMOTE_KEYSTORE_PASSWORD: ${{ steps.pre.outputs.dry == '1' && env.DRY_PASS || secrets.ANDROID_KEYSTORE_PASSWORD }}
+          NULL_REMOTE_KEY_ALIAS: ${{ steps.pre.outputs.dry == '1' && 'dryapk' || secrets.ANDROID_KEY_ALIAS }}
+          NULL_REMOTE_KEY_PASSWORD: ${{ steps.pre.outputs.dry == '1' && env.DRY_PASS || secrets.ANDROID_KEY_PASSWORD }}
         run: |
           set -e
           apps=$(python3 -c 'import sys; sys.path.insert(0, "../tools"); import fdroid_repo; print(" ".join(fdroid_repo.APPS))')
@@ -118,9 +133,9 @@ jobs:
       - name: Build the repository
         if: steps.pre.outputs.go == '1'
         env:
-          KS_B64: ${{ secrets.FDROID_KEYSTORE }}
-          KS_PASS: ${{ secrets.FDROID_KEYSTORE_PASSWORD }}
-          APK_KS_B64: ${{ secrets.ANDROID_KEYSTORE }}
+          KS_B64: ${{ steps.pre.outputs.dry == '1' && env.DRY_INDEX_KS || secrets.FDROID_KEYSTORE }}
+          KS_PASS: ${{ steps.pre.outputs.dry == '1' && env.DRY_PASS || secrets.FDROID_KEYSTORE_PASSWORD }}
+          APK_KS_B64: ${{ steps.pre.outputs.dry == '1' && env.DRY_APK_KS || secrets.ANDROID_KEYSTORE }}
         run: |
           set -e
           pip install --quiet fdroidserver==2.4.5
@@ -183,7 +198,7 @@ jobs:
       - name: Publish to koulaxizis/null-jsfx-fdroid
         if: steps.pre.outputs.go == '1'
         env:
-          TOKEN: ${{ secrets.FDROID_DEPLOY_TOKEN }}
+          TOKEN: ${{ steps.pre.outputs.dry != '1' && secrets.FDROID_DEPLOY_TOKEN || '' }}
           TAG: ${{ steps.pre.outputs.tag }}
           DRY: ${{ steps.pre.outputs.dry }}
         run: |
@@ -207,19 +222,17 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -A
           git commit -q -m "NULL JSFX F-Droid repository from release $TAG"
-          url="https://x-access-token:$TOKEN@github.com/$DEST.git"
           if [ "$DRY" = 1 ]; then
-            # the token can reach the repository; nothing is sent
-            git ls-remote "$url" > /dev/null
-            git push --dry-run --force "$url" main
+            # no token in a pull request: nothing is sent
             echo "Dry run: $(ls repo/*.apk | wc -l) APKs, not published"; exit 0
           fi
+          url="https://x-access-token:$TOKEN@github.com/$DEST.git"
           # one commit, replaced each time: the APKs never pile up in history
           git push -q --force "$url" main
           echo "Published $(ls repo/*.apk | wc -l) APKs to $SITE/repo"
       - name: Keep the repository (dry run)
         if: steps.pre.outputs.go == '1' && steps.pre.outputs.dry == '1'
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: NULL-JSFX-F-Droid-repository
           path: ${{ runner.temp }}/site/

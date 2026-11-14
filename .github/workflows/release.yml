@@ -33,7 +33,9 @@ jobs:
     timeout-minutes: 10
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
       - name: Create the draft release
         env:
           GH_TOKEN: ${{ github.token }}
@@ -92,7 +94,12 @@ jobs:
     with:
       release_tag: ${{ inputs.version }}
       checkout_ref: ${{ github.sha }}
-    secrets: inherit
+    # only the APK key, never every secret of the repository
+    secrets:
+      ANDROID_KEYSTORE: ${{ secrets.ANDROID_KEYSTORE }}
+      ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+      ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+      ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
 
   check:
     needs: [native, hub, android]

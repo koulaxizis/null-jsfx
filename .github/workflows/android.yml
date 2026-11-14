@@ -45,6 +45,15 @@ on:
         type: string
         required: false
         default: ""
+    secrets:
+      ANDROID_KEYSTORE:
+        required: false
+      ANDROID_KEYSTORE_PASSWORD:
+        required: false
+      ANDROID_KEY_ALIAS:
+        required: false
+      ANDROID_KEY_PASSWORD:
+        required: false
 
 # A fixed group name, as in native.yml: github.workflow is the caller's name in a called workflow.
 concurrency:
@@ -65,8 +74,10 @@ jobs:
     # Playwright 1.64 (tests/remote) has a Chromium for ubuntu-latest, as in test.yml's job remote
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-node@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
         with:
           node-version: 22
       - run: npm ci
@@ -79,16 +90,18 @@ jobs:
     timeout-minutes: 30
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-java@v5
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5
         with:
           distribution: temurin
           java-version: 17
-      - uses: gradle/actions/setup-gradle@v5
+      - uses: gradle/actions/setup-gradle@0723195856401067f7a2779048b490ace7a47d7c # v5
       - name: Unit tests, lint and the debug APKs
         working-directory: android
         run: ./gradlew --no-daemon testDawsGithubDebugUnitTest lintDawsGithubDebug lintMixersGithubDebug assembleDebug
-      - uses: actions/upload-artifact@v7
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         if: always()
         with:
           name: NULL-JSFX-Android-debug
@@ -101,13 +114,15 @@ jobs:
     timeout-minutes: 30
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-java@v5
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5
         with:
           distribution: temurin
           java-version: 17
-      - uses: gradle/actions/setup-gradle@v5
-      - uses: actions/setup-node@v7
+      - uses: gradle/actions/setup-gradle@0723195856401067f7a2779048b490ace7a47d7c # v5
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
         with:
           node-version: 22
       - run: npm ci
@@ -123,7 +138,7 @@ jobs:
       - name: The app in an emulator against the X AIR simulator
         # the test bounds each of its steps (6 min in all); this bounds the emulator's boot too
         timeout-minutes: 15
-        uses: reactivecircus/android-emulator-runner@v2
+        uses: reactivecircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d # v2
         with:
           api-level: 34
           arch: x86_64
@@ -131,7 +146,7 @@ jobs:
           disable-animations: true
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -no-snapshot
           script: node tests/mixers/device_test.cjs android/app/build/outputs/apk/mixersGithub/debug/app-mixers-github-debug.apk device-shots
-      - uses: actions/upload-artifact@v7
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         if: always()
         with:
           name: Remote-for-Mixers-emulator
@@ -142,13 +157,15 @@ jobs:
     timeout-minutes: 30
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-java@v5
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5
         with:
           distribution: temurin
           java-version: 17
-      - uses: gradle/actions/setup-gradle@v5
-      - uses: actions/setup-node@v7
+      - uses: gradle/actions/setup-gradle@0723195856401067f7a2779048b490ace7a47d7c # v5
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
         with:
           node-version: 22
       - run: npm ci
@@ -164,7 +181,7 @@ jobs:
       - name: The app in an emulator against REAPER, Ardour and Bitwig stand-ins
         # the test bounds each of its steps (12 min in all); this bounds the emulator's boot too
         timeout-minutes: 20
-        uses: reactivecircus/android-emulator-runner@v2
+        uses: reactivecircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d # v2
         with:
           api-level: 34
           arch: x86_64
@@ -172,7 +189,7 @@ jobs:
           disable-animations: true
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -no-snapshot
           script: node tests/remote/device_test.cjs android/app/build/outputs/apk/dawsGithub/debug/app-daws-github-debug.apk device-shots
-      - uses: actions/upload-artifact@v7
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         if: always()
         with:
           name: Remote-for-DAWs-emulator
@@ -187,14 +204,15 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
+          persist-credentials: false
           ref: ${{ inputs.checkout_ref || env.TAG }}
-      - uses: actions/setup-java@v5
+      - uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5
         with:
           distribution: temurin
           java-version: 17
-      - uses: gradle/actions/setup-gradle@v5
+      - uses: gradle/actions/setup-gradle@0723195856401067f7a2779048b490ace7a47d7c # v5
       # Says which secret is wrong without printing any of them (they are masked anyway). It reads
       # them exactly as android/app/build.gradle.kts does: java.util.Base64 on the trimmed
       # keystore, KeyStore.getInstance(file, store password), getKey(alias, key password).
@@ -304,7 +322,7 @@ jobs:
           done
       - name: Keep the APKs (sign check)
         if: steps.apks.outputs.skip != '1' && env.TAG == ''
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: NULL-JSFX-Android-signed
           path: android/out/

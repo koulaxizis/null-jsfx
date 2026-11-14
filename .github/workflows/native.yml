@@ -45,14 +45,12 @@ concurrency:
   group: vst3-clap-${{ github.event_name == 'pull_request' && github.ref || github.run_id }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
-# Read-only by default; only the jobs that attach packages to a release may write.
+# Read-only by default; only the attach job, which runs no repository code, may write.
 permissions:
   contents: read
 
 jobs:
   build:
-    permissions:
-      contents: write
     timeout-minutes: 120
     strategy:
       fail-fast: false
@@ -72,10 +70,12 @@ jobs:
       run:
         shell: bash
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
 
       # ysfx for the comparison tests (built by tests/run.sh --build-only), per OS image
-      - uses: actions/cache@v6
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
         if: matrix.test != ''
         with:
           path: tests/.build/ysfx
@@ -113,7 +113,7 @@ jobs:
         if: runner.os == 'macOS'
         run: native/scripts/auval.sh native/dist reports
 
-      - uses: actions/upload-artifact@v7
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         if: runner.os == 'macOS' && !cancelled()
         with:
           name: NULL-JSFX-Validation-AU-macOS
@@ -130,16 +130,14 @@ jobs:
           if [ -d native/dist/AU ]; then cp -R native/dist/AU "$out/"; fi
           cp native/INSTALL.txt "$out/"
 
-      - uses: actions/upload-artifact@v7
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: NULL-JSFX-VST3-CLAP-${{ matrix.name }}
           path: NULL-JSFX-VST3-CLAP-${{ matrix.name }}
           retention-days: 14
 
-      - name: Attach to the release
+      - name: Zip for the release
         if: inputs.release_tag != ''
-        env:
-          GH_TOKEN: ${{ github.token }}
         run: |
           out="NULL-JSFX-VST3-CLAP-${{ matrix.name }}"
           if [ "$RUNNER_OS" = Windows ]; then
@@ -150,15 +148,23 @@ jobs:
             zip -qry "$out.zip" "$out"
           fi
           ${{ runner.os == 'Windows' && 'python' || 'python3' }} -c "import sys, zipfile; bad = [n for n in zipfile.ZipFile(sys.argv[1]).namelist() if '\\\\' in n]; sys.exit(f'backslash in {bad[:3]}' if bad else 0)" "$out.zip"
-          for i in 1 2 3 4 5; do gh release upload "${{ inputs.release_tag }}" "$out.zip" --clobber && exit 0; sleep $((i * 30)); done; exit 1
+
+      # zipped here, where the bundles keep their file modes; the attach job uploads it
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        if: inputs.release_tag != ''
+        with:
+          name: release-NULL-JSFX-VST3-CLAP-${{ matrix.name }}
+          path: NULL-JSFX-VST3-CLAP-${{ matrix.name }}.zip
+          compression-level: 0
+          retention-days: 3
 
   jsfx:
-    permissions:
-      contents: write
     timeout-minutes: 15
     runs-on: ubuntu-22.04
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
 
       - name: Package
         run: |
@@ -176,24 +182,26 @@ jobs:
           mkdir -p "$out/Remote"
           cp -R remote/reaper_www_root remote/Scripts remote/INSTALL.txt remote/bitwig remote/ableton remote/cubase remote/flstudio "$out/Remote/"
 
-      - uses: actions/upload-artifact@v7
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: NULL-JSFX-JSFX
           path: NULL-JSFX-JSFX
           retention-days: 14
 
-      - name: Attach to the release
+      - name: Zip for the release
         if: inputs.release_tag != ''
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          zip -qry NULL-JSFX-JSFX.zip NULL-JSFX-JSFX
-          for i in 1 2 3 4 5; do gh release upload "${{ inputs.release_tag }}" NULL-JSFX-JSFX.zip --clobber && exit 0; sleep $((i * 30)); done; exit 1
+        run: zip -qry NULL-JSFX-JSFX.zip NULL-JSFX-JSFX
+
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        if: inputs.release_tag != ''
+        with:
+          name: release-NULL-JSFX-JSFX
+          path: NULL-JSFX-JSFX.zip
+          compression-level: 0
+          retention-days: 3
 
   installer-windows:
     needs: [build, jsfx]
-    permissions:
-      contents: write
     timeout-minutes: 30
     strategy:
       fail-fast: false
@@ -206,22 +214,25 @@ jobs:
       run:
         shell: bash
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
 
-      - uses: actions/download-artifact@v8
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
         with:
           name: NULL-JSFX-JSFX
           path: pkg/NULL-JSFX-JSFX
 
-      - uses: actions/download-artifact@v8
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
         with:
           name: NULL-JSFX-VST3-CLAP-${{ matrix.name }}
           path: pkg/NULL-JSFX-VST3-CLAP-${{ matrix.name }}
 
       - name: Build
+        env:
+          TAG: ${{ inputs.release_tag }}
         run: |
-          version="${{ inputs.release_tag }}"
-          version="${version:-dev}"
+          version="${TAG:-dev}"
           python tools/build_installer.py --os Windows --arch ${{ matrix.arch }} --jsfx pkg/NULL-JSFX-JSFX \
             --native pkg/NULL-JSFX-VST3-CLAP-${{ matrix.name }} --version "$version" --out build-installer
           iscc="/c/Program Files (x86)/Inno Setup 6/ISCC.exe"
@@ -282,22 +293,22 @@ jobs:
           if (Compare-Object $left $userLua -SyncWindow 0) { throw "uninstall did not give back the user's __startup.lua as it was: $([System.Text.Encoding]::UTF8.GetString($left))" }
           "installed and removed cleanly"
 
-      - uses: actions/upload-artifact@v7
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: NULL-JSFX-Installer-${{ matrix.name }}
           path: build-installer/NULL-JSFX-Installer-${{ matrix.name }}.exe
           retention-days: 14
 
-      - name: Attach to the release
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         if: inputs.release_tag != ''
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: for i in 1 2 3 4 5; do gh release upload "${{ inputs.release_tag }}" build-installer/NULL-JSFX-Installer-${{ matrix.name }}.exe --clobber && exit 0; sleep $((i * 30)); done; exit 1
+        with:
+          name: release-NULL-JSFX-Installer-${{ matrix.name }}
+          path: build-installer/NULL-JSFX-Installer-${{ matrix.name }}.exe
+          compression-level: 0
+          retention-days: 3
 
   installer-unix:
     needs: [build, jsfx]
-    permissions:
-      contents: write
     timeout-minutes: 30
     strategy:
       fail-fast: false
@@ -308,21 +319,25 @@ jobs:
           - { os: ubuntu-22.04-arm, name: Linux-ARM64, os_name: Linux, arch: arm64 }
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
 
-      - uses: actions/download-artifact@v8
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
         with:
           name: NULL-JSFX-JSFX
           path: pkg/NULL-JSFX-JSFX
 
-      - uses: actions/download-artifact@v8
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
         with:
           name: NULL-JSFX-VST3-CLAP-${{ matrix.name }}
           path: pkg/NULL-JSFX-VST3-CLAP-${{ matrix.name }}
 
       - name: Build
+        env:
+          TAG: ${{ inputs.release_tag }}
         run: |
-          version="${{ inputs.release_tag }}"
+          version="$TAG"
           python3 tools/build_installer.py --os ${{ matrix.os_name }} --arch ${{ matrix.arch }} --jsfx pkg/NULL-JSFX-JSFX \
             --native pkg/NULL-JSFX-VST3-CLAP-${{ matrix.name }} --version "${version:-dev}" --out build-installer
 
@@ -334,17 +349,51 @@ jobs:
         if: matrix.name == 'macOS'
         run: /bin/bash tests/pkg_test.sh build-installer/pkg-build build-installer/NULL-JSFX-Installer-macOS.pkg
 
-      - uses: actions/upload-artifact@v7
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: NULL-JSFX-Installer-${{ matrix.name }}
           path: build-installer/NULL-JSFX-Installer-${{ matrix.name }}.*
           retention-days: 14
 
-      - name: Attach to the release
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         if: inputs.release_tag != ''
+        with:
+          name: release-NULL-JSFX-Installer-${{ matrix.name }}
+          path: build-installer/NULL-JSFX-Installer-${{ matrix.name }}.*
+          compression-level: 0
+          retention-days: 3
+
+  # The only job that may write: it attaches what the build jobs made to the release. The
+  # build jobs run the repository's code with a read-only token (pull requests too).
+  attach:
+    needs: [build, jsfx, installer-windows, installer-unix]
+    if: ${{ !cancelled() && inputs.release_tag != '' }}
+    permissions:
+      contents: write
+    timeout-minutes: 30
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
+        with:
+          pattern: release-*
+          merge-multiple: true
+          path: assets
+      - name: Attach to the release
         env:
           GH_TOKEN: ${{ github.token }}
-        run: for i in 1 2 3 4 5; do gh release upload "${{ inputs.release_tag }}" build-installer/NULL-JSFX-Installer-${{ matrix.name }}.* --clobber && exit 0; sleep $((i * 30)); done; exit 1
+          TAG: ${{ inputs.release_tag }}
+        run: |
+          set -e
+          [[ "$TAG" =~ ^[0-9]+(\.[0-9]+)+$ ]] || { echo "::error::release_tag '$TAG' is not a version"; exit 1; }
+          ls -l assets
+          for f in assets/*; do
+            ok=0
+            for i in 1 2 3 4 5; do
+              if gh release upload "$TAG" "$f" --clobber --repo "$GITHUB_REPOSITORY"; then ok=1; break; fi
+              sleep $((i * 30))
+            done
+            [ "$ok" = 1 ] || { echo "::error::could not attach $f"; exit 1; }
+          done
 
   validate:
     # The official validators on every built plugin: pluginval on each VST3 and clap-validator on
@@ -375,9 +424,11 @@ jobs:
       CLAP_VALIDATOR_REV: b2f1d9b79b1d264a5747f46707d72b1aa40a02ef
       PYTHON: ${{ matrix.python }}
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
 
-      - uses: actions/download-artifact@v8
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
         with:
           name: NULL-JSFX-VST3-CLAP-${{ matrix.name }}
           path: pkg
@@ -401,7 +452,7 @@ jobs:
           validators/pluginval${{ matrix.exe }} --version
           echo "PLUGINVAL=$PWD/validators/pluginval${{ matrix.exe }}" >> "$GITHUB_ENV"
 
-      - uses: actions/cache@v6
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
         if: ${{ !cancelled() }}
         with:
           path: clap-validator
@@ -424,7 +475,7 @@ jobs:
         if: ${{ !cancelled() }}
         run: native/scripts/validate.sh clap pkg reports
 
-      - uses: actions/upload-artifact@v7
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         if: ${{ !cancelled() }}
         with:
           name: NULL-JSFX-Validation-${{ matrix.name }}

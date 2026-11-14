@@ -89,7 +89,9 @@ jobs:
         os: [ubuntu-22.04, windows-2022, macos-15]
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
       - uses: dtolnay/rust-toolchain@b725eda525362e7cf34af9a7243cac1e3f01a7ec # stable
         with:
           toolchain: stable
@@ -106,8 +108,10 @@ jobs:
     # 2026-11-01 this job was pinned to 24.04
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-node@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
         with:
           node-version: 22
       - run: python3 tools/build_catalog.py --check
@@ -117,7 +121,7 @@ jobs:
         working-directory: hub
       - run: node tests/ui_test.cjs shots
         working-directory: hub
-      - uses: actions/upload-artifact@v7
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         if: always()
         with:
           name: hub-screenshots
@@ -130,7 +134,9 @@ jobs:
     timeout-minutes: 30
     runs-on: ubuntu-22.04
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
       - uses: dtolnay/rust-toolchain@b725eda525362e7cf34af9a7243cac1e3f01a7ec # stable
         with:
           toolchain: stable
@@ -141,8 +147,6 @@ jobs:
 
   build:
     needs: [core, ui]
-    permissions:
-      contents: write
     timeout-minutes: 60
     strategy:
       fail-fast: false
@@ -156,8 +160,10 @@ jobs:
       run:
         shell: bash
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-node@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
         with:
           node-version: 22
       - uses: dtolnay/rust-toolchain@b725eda525362e7cf34af9a7243cac1e3f01a7ec # stable
@@ -243,18 +249,43 @@ jobs:
           if (-not (Get-Process null-jsfx-hub -ErrorAction SilentlyContinue)) { throw "the new Hub did not start" }
           Stop-Process -Name null-jsfx-hub -Force
 
-      - uses: actions/upload-artifact@v7
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: NULL-JSFX-Hub-${{ matrix.name }}
           path: out/*
           retention-days: 14
 
-      - name: Attach to the release
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         if: env.TAG != ''
+        with:
+          name: release-NULL-JSFX-Hub-${{ matrix.name }}
+          path: out/*
+          compression-level: 0
+          retention-days: 3
+
+  # The only job of the build that may write: it attaches the Hubs to the release and runs no
+  # repository code (the build jobs, pull requests too, have a read-only token).
+  attach:
+    needs: build
+    if: ${{ !cancelled() && needs.build.result != 'skipped' && (github.event_name == 'release' || inputs.release_tag != '') }}
+    permissions:
+      contents: write
+    timeout-minutes: 30
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
+        with:
+          pattern: release-NULL-JSFX-Hub-*
+          merge-multiple: true
+          path: out
+      - name: Attach to the release
         env:
           GH_TOKEN: ${{ github.token }}
         # retried: the upload endpoint can answer HTTP 500 for a while (2.6 release)
-        run: for i in 1 2 3 4 5; do gh release upload "$TAG" out/* --clobber && exit 0; sleep $((i * 30)); done; exit 1
+        run: |
+          [[ "$TAG" =~ ^[0-9]+(\.[0-9]+)+$ ]] || { echo "::error::'$TAG' is not a version"; exit 1; }
+          ls -l out
+          for i in 1 2 3 4 5; do gh release upload "$TAG" out/* --clobber --repo "$GITHUB_REPOSITORY" && exit 0; sleep $((i * 30)); done; exit 1
 
   catalog:
     if: github.event_name == 'release' || inputs.release_tag != ''
@@ -263,7 +294,9 @@ jobs:
     timeout-minutes: 15
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
       - name: Build and attach NULL-JSFX-Catalog.json
         env:
           GH_TOKEN: ${{ github.token }}
