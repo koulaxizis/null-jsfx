@@ -2242,7 +2242,7 @@ dependencies = [
 
 [[package]]
 name = "null-jsfx-hub"
-version = "3.3.0"
+version = "3.3.1"
 dependencies = [
  "dirs 6.0.0",
  "null_hub_core",
@@ -2258,7 +2258,7 @@ dependencies = [
 
 [[package]]
 name = "null_hub_core"
-version = "3.3.0"
+version = "3.3.1"
 dependencies = [
  "dirs 6.0.0",
  "flate2",
