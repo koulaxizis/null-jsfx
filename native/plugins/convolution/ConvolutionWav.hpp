@@ -23,6 +23,19 @@ struct IrFile {
     double sampleRate = 0.0;
 };
 
+// Skips n bytes forward, in steps that fit a 32-bit long (Windows); false when a seek fails.
+inline bool skipBytes(std::FILE* f, uint64_t n)
+{
+    while (n > 0)
+    {
+        const uint64_t step = n < 0x40000000u ? n : 0x40000000u;
+        if (std::fseek(f, long(step), SEEK_CUR) != 0)
+            return false;
+        n -= step;
+    }
+    return true;
+}
+
 inline bool readWav(const char* path, IrFile& out, size_t maxValues = size_t(1) << 24)
 {
     out = IrFile();
@@ -60,10 +73,11 @@ inline bool readWav(const char* path, IrFile& out, size_t maxValues = size_t(1) 
             if (format == 0xFFFE && n >= 26)
                 format = u16(fmt + 24); // the sub-format GUID starts with the format tag
             haveFmt = true;
-            if (size > n)
-                std::fseek(f, long(size - n + (size & 1)), SEEK_CUR);
-            else if (size & 1)
-                std::fseek(f, 1, SEEK_CUR);
+            if (!skipBytes(f, uint64_t(size - n) + (size & 1)))
+            {
+                ok = false;
+                break;
+            }
         }
         else if (!std::memcmp(ch, "data", 4))
         {
@@ -111,8 +125,11 @@ inline bool readWav(const char* path, IrFile& out, size_t maxValues = size_t(1) 
             out.sampleRate = double(rate);
             break;
         }
-        else
-            std::fseek(f, long(size + (size & 1)), SEEK_CUR);
+        else if (!skipBytes(f, uint64_t(size) + (size & 1)))
+        {
+            ok = false;
+            break;
+        }
     }
     std::fclose(f);
     if (!ok || out.channels == 0)

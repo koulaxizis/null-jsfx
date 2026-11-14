@@ -102,6 +102,19 @@ inline float wavPcmToF32(const unsigned char* p, uint32_t bytes)
     return float(int64_t(sample) / 9223372036854775807.0);
 }
 
+// Skips n bytes forward, in steps that fit a 32-bit long (Windows); false when a seek fails.
+inline bool skipBytes(std::FILE* f, uint64_t n)
+{
+    while (n > 0)
+    {
+        const uint64_t step = n < 0x40000000u ? n : 0x40000000u;
+        if (std::fseek(f, long(step), SEEK_CUR) != 0)
+            return false;
+        n -= step;
+    }
+    return true;
+}
+
 // a RIFF/WAVE file; at most maxValues values (a whole number of frames)
 inline bool readWavF32(const char* path, SampleFile& out, size_t maxValues)
 {
@@ -140,10 +153,11 @@ inline bool readWavF32(const char* path, SampleFile& out, size_t maxValues)
             if (format == 0xFFFE && n >= 26)
                 format = u16(fmt + 24); // the sub-format GUID starts with the format tag
             haveFmt = true;
-            if (size > n)
-                std::fseek(f, long(size - n + (size & 1)), SEEK_CUR);
-            else if (size & 1)
-                std::fseek(f, 1, SEEK_CUR);
+            if (!skipBytes(f, uint64_t(size - n) + (size & 1)))
+            {
+                ok = false;
+                break;
+            }
         }
         else if (!std::memcmp(ch, "data", 4))
         {
@@ -181,8 +195,11 @@ inline bool readWavF32(const char* path, SampleFile& out, size_t maxValues)
             out.sampleRate = double(rate);
             done = true;
         }
-        else
-            std::fseek(f, long(size + (size & 1)), SEEK_CUR);
+        else if (!skipBytes(f, uint64_t(size) + (size & 1)))
+        {
+            ok = false;
+            break;
+        }
     }
     std::fclose(f);
     return ok && done;
