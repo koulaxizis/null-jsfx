@@ -13,6 +13,12 @@
 //
 // Runs in the WebView and in Node (tests). opts.dial({onOpen, onData(bytes), onClose}) opens
 // a connection and returns {send(bytes), close()}: shellDial() in the app, net in the tests.
+//
+// Pairing (scripts 1.3, Live and Bitwig): opts.keys {get(), set(key)} holds this phone's key for
+// the computer. hello carries it; a script that does not know it answers only 'auth' (emitted
+// as 'auth' {need: 'code'|'wait', wrong, s}) until pair(code) sends the code the DAW shows with
+// a new random key, which is kept once the script says 'paired' (then 'auth' null). Scripts
+// without pairing (Cubase, FL Studio, older ones) ignore the key.
 // NULL JSFX • https://nulljsfx.tech • MIT License
 (function (root, factory) {
   const api = factory(root);
@@ -39,6 +45,14 @@
   const dec = typeof TextDecoder !== 'undefined' ? new TextDecoder() : null;
   const utf8 = (s) => enc.encode(s);
   const text = (b) => dec.decode(b);
+
+  /** A new random key: 32 bytes as hex. */
+  function newKey() {
+    const c = root.crypto || (typeof require === 'function' ? require('crypto').webcrypto : null);
+    const b = new Uint8Array(32);
+    c.getRandomValues(b);
+    return Array.from(b, (x) => x.toString(16).padStart(2, '0')).join('');
+  }
 
   /** One message to Bitwig: 4-byte big-endian length, then the JSON. */
   function frame(obj) {
@@ -112,6 +126,9 @@
   class Session {
     constructor(opts) {
       this.dial = opts.dial;
+      this.keys = opts.keys || null; // {get(), set(key)}: this phone's key for the computer
+      this.newKey = ''; // the key sent with the last pair()
+      this.auth = null; // the script's last 'auth', until it says 'paired'
       this.now = opts.now || (() => Date.now());
       this.timers = opts.timers || { set: (fn, ms) => setInterval(fn, ms), clear: (h) => clearInterval(h) };
       this.handlers = new Map();
@@ -156,7 +173,7 @@
       this.reader = new Reader((m) => this.handle(m));
       let conn = null;
       conn = this.dial({
-        onOpen: () => { this.open = true; this.lastRx = this.lastHello = this.now(); this.send({ t: 'hello' }); },
+        onOpen: () => { this.open = true; this.lastRx = this.lastHello = this.now(); this.hello(); },
         onData: (bytes) => { this.lastRx = this.now(); this.reader.push(bytes); },
         // a link this session already dropped (no answer) closing late changes nothing
         onClose: () => { if (this.conn === conn) this.dropped(); },
@@ -179,6 +196,15 @@
 
     send(obj) {
       if (this.conn && this.open) this.conn.send(frame(obj));
+    }
+    hello() {
+      const key = this.keys && this.keys.get();
+      this.send(key ? { t: 'hello', key } : { t: 'hello' });
+    }
+    /** The pairing code the DAW shows; the session sends it with a new key. */
+    pair(code) {
+      this.newKey = newKey();
+      this.send({ t: 'pair', code: String(code).replace(/\D/g, ''), key: this.newKey });
     }
     // a control a finger is dragging: the newest value goes out at most every SEND_EVERY ms
     sendSoon(key, obj) {
@@ -232,7 +258,7 @@
           c.close();
         } else if (quiet > QUIET_HELLO && now - this.lastHello > QUIET_HELLO) {
           this.lastHello = now;
-          this.send({ t: 'hello' });
+          this.hello();
         }
       }
       if (!this.conn && !this.closed && now >= this.retryAt) this.connect();
@@ -242,6 +268,18 @@
     // --- from Bitwig ------------------------------------------------------------------------
 
     handle(m) {
+      if (m.t === 'auth') {
+        this.auth = { need: String(m.need || 'code'), wrong: !!m.wrong, s: Number(m.s) || 0 };
+        this.emit('auth', this.auth);
+        return;
+      }
+      if (m.t === 'paired') {
+        if (this.newKey && this.keys) this.keys.set(this.newKey);
+        this.newKey = '';
+        this.auth = null;
+        this.emit('auth', null);
+        return;
+      }
       // any message means the script is there (a flush can overtake the answer to hello)
       if (!this.up) { this.up = true; this.emit('link', true); }
       switch (m.t) {
@@ -363,7 +401,7 @@
 
     // --- to Bitwig --------------------------------------------------------------------------
 
-    listStrips() { this.send({ t: 'hello' }); }
+    listStrips() { this.hello(); }
     /** Moves the script's window so that track `from` of the document comes first (the last
      *  page may hold fewer tracks than the window). */
     scroll(from) {

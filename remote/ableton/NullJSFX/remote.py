@@ -15,6 +15,14 @@
 # 0 is Live's "Device On", which the phone sees as the device's bypass), and values are
 # normalized 0..1 over each parameter's own min and max.
 #
+# Pairing (1.3): a phone talks to the script only once it holds a key this computer knows. Until
+# then the script answers nothing but {"t": "auth"}, carries out nothing, and shows a 6-digit
+# code in Live's status bar; the phone sends that code once with a new random key ({"t": "pair",
+# "code", "key"}), and the script keeps a hash of the key in KEYS_FILE (delete the file to forget
+# every phone). A code lives 2 minutes; after 5 wrong codes there is a new one and a pause of
+# 30 s. Messages per connection are limited, and so are connections. The protocol's pairing
+# messages are written out in the Bitwig script.
+#
 # Live calls update_display() about ten times a second on its main thread. Everything
 # happens there: the sockets are non-blocking, the commands are carried out, and the
 # document is read and compared with what the phones already have, so only changes go out.
@@ -24,9 +32,14 @@
 from __future__ import absolute_import
 
 import errno
+import hashlib
+import hmac
 import json
+import os
+import random
 import socket
 import struct
+import time
 
 import Live
 
@@ -36,7 +49,7 @@ except ImportError:  # older Live
     from _Framework.ControlSurface import ControlSurface
 
 PROTO = 1
-VERSION = '1.2'  # 1.1: sends; 1.2: devices inside racks
+VERSION = '1.3'  # 1.1: sends; 1.2: devices inside racks; 1.3: pairing
 PORT = 8819
 SIZE = 32  # tracks in the window
 DEVICES = 16  # top-level devices per track
@@ -47,6 +60,15 @@ PARAMS = 256  # parameters of the open device
 MAX_IN = 1 << 20  # bytes of one message from a phone
 MAX_OUT = 8 << 20  # bytes waiting for a phone that does not read
 RELISTEN = 20  # update_display calls between tries to open the port
+KEYS_FILE = os.path.join(os.path.expanduser('~'), '.nulljsfx', 'live-remote-keys.json')
+CODE_LIFE = 120.0  # s a pairing code is valid
+TRIES = 5  # wrong codes before a new one and a pause
+PAUSE = 30.0  # s
+UNPAIRED_LIFE = 180.0  # s a connection may stay without pairing
+MAX_CLIENTS = 8
+RATE = 400  # messages per second and connection; more are dropped
+MAX_KEYS = 16  # phones remembered
+_random = random.SystemRandom()
 
 PLUGIN_CLASSES = ('PluginDevice', 'AuPluginDevice')
 TRACK_FIELDS = ('vol', 'volText', 'pan', 'panText', 'mute', 'solo', 'arm', 'color', 'sends', 'sendTexts')
@@ -104,6 +126,11 @@ class _Client(object):
         self.out = bytearray()
         self.fresh = False  # asked for hello: gets everything at the next update
         self.dead = False
+        self.paired = False
+        self.asked = False  # said hello without a known key: the code stays on screen
+        self.born = time.time()
+        self.second = 0
+        self.count = 0
 
 
 class Remote(ControlSurface):
@@ -117,6 +144,8 @@ class Remote(ControlSurface):
         self._from = 0
         self._open = None  # {'i', 'd', 'dev'}: the device whose parameters the phones see
         self._sent = None  # what the phones have, see _snapshot()
+        self._keys = self._load_keys()
+        self._code = {'value': '', 'until': 0.0, 'tries': 0, 'pause': 0.0, 'shown': 0.0}
         self._listen()
 
     # --- Live -----------------------------------------------------------------------------
@@ -178,6 +207,17 @@ class Remote(ControlSurface):
                 if e.args and e.args[0] not in _AGAIN:
                     self._say('accept: %s' % (e,))
                 return
+            if len(self._clients) >= MAX_CLIENTS:
+                # full: the oldest connection that never paired makes room, else the new one goes
+                waiting = [c for c in self._clients if not c.paired]
+                if not waiting:
+                    try:
+                        sock.close()
+                    except Exception:
+                        pass
+                    continue
+                self._drop(waiting[0])
+                self._clients.remove(waiting[0])
             sock.setblocking(False)
             try:
                 sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
@@ -206,13 +246,22 @@ class Remote(ControlSurface):
                     break
                 body = c.inbuf[4:4 + n]
                 c.inbuf = c.inbuf[4 + n:]
+                second = int(time.time())
+                if second != c.second:
+                    c.second, c.count = second, 0
+                c.count += 1
+                if c.count > RATE:
+                    continue
                 try:
                     m = json.loads(body.decode('utf-8'))
                 except ValueError:
                     continue
                 if isinstance(m, dict):
                     try:
-                        self._handle(c, m)
+                        if c.paired:
+                            self._handle(c, m)
+                        else:
+                            self._pairing(c, m)
                     except Exception as e:
                         self._say('%s: %r' % (m.get('t'), e))
 
@@ -247,13 +296,28 @@ class Remote(ControlSurface):
         self._accept()
         for c in self._clients:
             self._read(c)
-        if not self._clients:
+        t = time.time()
+        for c in self._clients:
+            if not c.paired:
+                if t - c.born > UNPAIRED_LIFE:
+                    c.dead = True
+                elif c.asked and t >= self._code['pause']:
+                    self._show_code(t)
+                self._write(c)
+        paired = [c for c in self._clients if c.paired and not c.dead]
+        if not paired:
             self._sent = None
-            return
+        else:
+            self._push(paired)
+        for c in [c for c in self._clients if c.dead]:
+            self._drop(c)
+            self._clients.remove(c)
+
+    def _push(self, paired):
         now = self._snapshot()
         diff = self._diff(self._sent, now)
         full = None
-        for c in self._clients:
+        for c in paired:
             if c.fresh:
                 c.fresh = False
                 if full is None:
@@ -263,9 +327,97 @@ class Remote(ControlSurface):
                 self._queue(c, diff)
             self._write(c)
         self._sent = now
-        for c in [c for c in self._clients if c.dead]:
-            self._drop(c)
-            self._clients.remove(c)
+
+    # --- pairing ---------------------------------------------------------------------------
+
+    def _load_keys(self):
+        try:
+            with open(KEYS_FILE) as f:
+                keys = json.load(f).get('keys', [])
+            return [k for k in keys if isinstance(k, str) and len(k) == 64][-MAX_KEYS:]
+        except Exception:
+            return []
+
+    def _save_keys(self):
+        try:
+            folder = os.path.dirname(KEYS_FILE)
+            if not os.path.isdir(folder):
+                os.makedirs(folder)
+            tmp = KEYS_FILE + '.tmp'
+            with open(tmp, 'w') as f:
+                json.dump({'keys': self._keys}, f)
+            os.replace(tmp, KEYS_FILE)
+        except Exception as e:
+            self._say('cannot keep the paired phones (%s); they pair again after a restart' % (e,))
+
+    @staticmethod
+    def _valid_key(k):
+        return isinstance(k, str) and 32 <= len(k) <= 128 and all(ch in '0123456789abcdef' for ch in k)
+
+    @staticmethod
+    def _hash(k):
+        return hashlib.sha256(k.encode('ascii')).hexdigest()
+
+    def _known(self, k):
+        if not self._valid_key(k):
+            return False
+        h = self._hash(k)
+        hit = False
+        for x in self._keys:
+            hit = hmac.compare_digest(x, h) or hit
+        return hit
+
+    def _show_code(self, t):
+        code = self._code
+        if not code['value'] or t >= code['until']:
+            code.update(value='%06d' % _random.randrange(1000000), until=t + CODE_LIFE, tries=0, shown=0.0)
+        if t - code['shown'] >= 5.0:
+            code['shown'] = t
+            try:
+                self._c.show_message('NULL JSFX Remote: pairing code %s %s' % (code['value'][:3], code['value'][3:]))
+            except Exception:
+                pass
+
+    def _welcome(self, c):
+        c.paired = True
+        c.fresh = True
+        self._queue(c, [_line({'t': 'paired'})])
+
+    def _pairing(self, c, m):
+        t = time.time()
+        code = self._code
+        kind = m.get('t')
+        if kind == 'hello':
+            if self._known(m.get('key')):
+                return self._welcome(c)
+            c.asked = True
+        elif kind == 'pair':
+            if t < code['pause']:
+                return self._queue(c, [_line({'t': 'auth', 'need': 'wait', 's': int(code['pause'] - t + 0.999)})])
+            given = ''.join(ch for ch in str(m.get('code', ''))[:16] if ch.isdigit())
+            if code['value'] and t < code['until'] and self._valid_key(m.get('key')) \
+                    and hmac.compare_digest(given, code['value']):
+                code['value'] = ''
+                self._keys = (self._keys + [self._hash(m['key'])])[-MAX_KEYS:]
+                self._save_keys()
+                try:
+                    self._c.show_message('NULL JSFX Remote: phone paired')
+                except Exception:
+                    pass
+                return self._welcome(c)
+            code['tries'] += 1
+            if code['tries'] >= TRIES:
+                code['value'] = ''
+                code['pause'] = t + PAUSE
+                return self._queue(c, [_line({'t': 'auth', 'need': 'wait', 's': int(PAUSE)})])
+            self._show_code(t)
+            return self._queue(c, [_line({'t': 'auth', 'need': 'code', 'wrong': True})])
+        else:
+            return  # nothing else before pairing
+        if t < code['pause']:
+            return self._queue(c, [_line({'t': 'auth', 'need': 'wait', 's': int(code['pause'] - t + 0.999)})])
+        self._show_code(t)
+        self._queue(c, [_line({'t': 'auth', 'need': 'code'})])
 
     # --- the document as the phone sees it -------------------------------------------------------
 

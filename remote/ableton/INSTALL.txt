@@ -22,6 +22,9 @@ Install (once)
 
 On the phone
     Remote for DAWs > Ableton: type the computer's address (port 8819) and Connect.
+    The first time, Live's status bar shows a 6-digit pairing code: type it on the phone.
+    Only paired phones can control Live; the phone is remembered from then on. To unpair
+    every phone, delete the file .nulljsfx/live-remote-keys.json in your home folder.
 
 What it covers
     The first 32 tracks (tracks, then return tracks, then the master), 16 devices on each,

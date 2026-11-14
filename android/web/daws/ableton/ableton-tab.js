@@ -18,14 +18,16 @@
       ['Live: Settings > Link, Tempo & MIDI > Control Surface: ', 'NullJSFX', ' (Input and Output: None).'],
       ['Load the NULL JSFX plugins as ', 'VST3', '; they open here with their own interface.'],
       ['Put the phone on the same network and type the computer\'s address above. Allow ', 'TCP 8819', ' through its firewall.'],
+      ['The first time, Live shows a 6-digit code in its status bar: type it here to ', 'pair the phone', '. Only paired phones can control it.'],
     ],
     noAnswer: (c) => `No answer from ${c.host}:${c.port}. Is NullJSFX chosen as a Control Surface in Live (Settings > Link, Tempo & MIDI), and are the phone and the computer on the same network?`,
+    pairHint: 'Live shows, in the status bar at the bottom of its window,',
     noTracks: 'The Set has no tracks yet.',
     noPlugins: 'No devices on this track. Add the NULL JSFX plugins in Live (VST3) and they show here.',
     followNote: 'Drag the controls as in the plugin. Changes made in Live show here within a tenth of a second.',
 
     async open(c) {
-      return new NullBitwig.Session({ dial: NullBitwig.shellDial(c.host, c.port) });
+      return new NullBitwig.Session({ dial: NullBitwig.shellDial(c.host, c.port), keys: c.keys });
     },
     kind: (s) => s.type,
     isMaster: (s) => s.type === 'Master',

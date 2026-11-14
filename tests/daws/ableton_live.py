@@ -263,6 +263,7 @@ def main():
     import NullJSFX
     import NullJSFX.remote as remote
     remote.PORT = port
+    remote.KEYS_FILE = os.environ.get('NULL_REMOTE_KEYS_FILE', remote.KEYS_FILE)
     surface = NullJSFX.create_instance(CInstance())
     print(json.dumps({'port': surface._port}), flush=True)
 

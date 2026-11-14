@@ -23,6 +23,8 @@
 //       send  i k v(0..1)                  send k of track i (to effect track k)
 //       list  i                            track i's devices with those inside containers (1.2)
 //       reset  i what("send") k            send k back to its default
+//       hello  key                         key (1.3): the phone's key for this computer, if any
+//       pair  code key                     the 6-digit code shown here, and the phone's new key
 //   Bitwig -> phone: one object per line ("\n"); a send holds one or more lines. (If Bitwig puts
 //   its length header in front of a send as well, the phone skips it.)
 //       hello  proto ext size              size = tracks in the window
@@ -39,16 +41,26 @@
 //       device  i d name plugin exists      the open device (where the cursor really is)
 //       pids  ids[]                         its parameters, in order
 //       pname  id n,  pval  id v(0..1),  pdisp  id s
+//       auth  need("code"|"wait") wrong s   (1.3) the phone must pair first: Bitwig shows a code;
+//                                          wrong: the last code was not it; wait: s seconds
+//       paired                             (1.3) the key is kept; everything follows as for hello
+//
+// Pairing (1.3): a phone talks to the script only once it holds a key this computer knows.
+// Until then the script answers nothing but auth, carries out nothing, and shows a 6-digit code
+// in a Bitwig notification; the phone sends that code once with a new random key, and the
+// script keeps a hash of the key in its preferences (Settings > Controllers, "Paired phones",
+// where "Forget all phones" clears them). A code lives 2 minutes; after 5 wrong codes there is
+// a new one and a pause of 30 s. Messages per connection are limited, and so are connections.
 //
 // Written for Bitwig's script engine: ES5 only (var, function, no arrows or template strings).
 
 loadAPI(10);
 host.setShouldFailOnDeprecatedUse(false);
-host.defineController('NULL JSFX', 'Remote for DAWs', '1.2', 'cfc6570f-19fc-4fe2-86ee-bebc547acd68', 'NULL JSFX');
+host.defineController('NULL JSFX', 'Remote for DAWs', '1.3', 'cfc6570f-19fc-4fe2-86ee-bebc547acd68', 'NULL JSFX');
 host.defineMidiPorts(0, 0);
 
 var PROTO = 1;
-var VERSION = '1.2'; // 1.1: sends; 1.2: devices inside containers
+var VERSION = '1.3'; // 1.1: sends; 1.2: devices inside containers; 1.3: pairing
 var DEFAULT_PORT = 8818;
 var SIZE = 32; // tracks in the window
 var DEVICES = 16; // devices per track
@@ -56,6 +68,13 @@ var TICK = 40; // ms between meter and clock updates
 var SENDS = 8; // sends per track, to the first effect tracks
 var LAYERS = 4; // layers of a container shown (FX Layer, Instrument Layer, Selectors, ...)
 var INNER = 8; // devices per layer or slot shown
+var CODE_LIFE = 120000; // ms a pairing code is valid
+var TRIES = 5; // wrong codes before a new one and a pause
+var PAUSE = 30000; // ms
+var UNPAIRED_LIFE = 180000; // ms a connection may stay without pairing
+var MAX_CLIENTS = 8;
+var RATE = 400; // messages per second and connection; more are dropped
+var MAX_KEYS = 16; // phones remembered
 
 var bank, fxBank, cursorTrack, cursorDevice, transport, formatter, displays;
 var sendNames = []; // per send slot: the effect track's name, or null
@@ -88,6 +107,9 @@ var pids = [];
 var pnames = {};
 var pvals = {};
 var pdisps = {};
+var keySetting = null; // the hashes of the paired phones' keys, comma separated
+var keys = [];
+var code = { value: '', until: 0, tries: 0, pauseUntil: 0, shown: 0 };
 
 function init() {
   var port = DEFAULT_PORT;
@@ -97,6 +119,12 @@ function init() {
     var raw = setting.getRaw();
     if (raw >= 1024 && raw <= 65535) port = Math.round(raw);
   } catch (e) { /* older hosts: the default port */ }
+  try {
+    keySetting = host.getPreferences().getStringSetting('Keys', 'Paired phones', 600, '');
+    keySetting.addValueObserver(function (v) { keys = String(v || '').split(',').filter(function (k) { return /^[0-9a-f]{32}$/.test(k); }); });
+    var forget = host.getPreferences().getSignalSetting('Forget', 'Paired phones', 'Forget all phones');
+    forget.addSignalObserver(function () { setKeys([]); dropAll(); });
+  } catch (e) { /* older hosts: phones pair again after every restart */ }
 
   transport = host.createTransport();
   formatter = host.createBeatTimeFormatter(':', 3, 1, 1, 0);
@@ -357,7 +385,7 @@ function openOut() {
 }
 
 function queue(m) {
-  if (!clients.length) return;
+  if (!paired()) return;
   out.push(JSON.stringify(m));
   host.requestFlush();
 }
@@ -385,7 +413,7 @@ function hello(c) {
 }
 
 function flush() {
-  if (!clients.length) {
+  if (!paired()) {
     dirtyTracks = false;
     dirtyTrack = {};
     dirtyDevices = {};
@@ -431,7 +459,8 @@ function flush() {
 }
 
 function tick() {
-  if (clients.length) {
+  expire();
+  if (paired()) {
     var lines = [];
     var v = [];
     var moved = false;
@@ -454,21 +483,182 @@ function tick() {
 // --- connections -------------------------------------------------------------------------------
 
 function addClient(c) {
-  var client = { c: c, buf: [] };
+  if (clients.length >= MAX_CLIENTS) {
+    // full: the oldest connection that never paired makes room, else the new one goes
+    var w = -1;
+    for (var j = 0; j < clients.length && w < 0; j++) if (!clients[j].paired) w = j;
+    if (w < 0) {
+      try { c.disconnect(); } catch (e) { /* gone */ }
+      return;
+    }
+    var old = clients.splice(w, 1)[0];
+    try { old.c.disconnect(); } catch (e3) { /* gone */ }
+  }
+  var client = { c: c, buf: [], paired: false, born: Date.now(), second: 0, count: 0 };
   clients.push(client);
   c.setDisconnectCallback(function () {
     for (var k = 0; k < clients.length; k++) if (clients[k] === client) clients.splice(k, 1);
   });
   c.setReceiveCallback(function (data) {
+    var now = Date.now();
+    var second = Math.floor(now / 1000);
+    if (second !== client.second) { client.second = second; client.count = 0; }
+    if (++client.count > RATE) return;
+    if (data.length > 65536) return;
     var text = utf8Decode(data);
     var m;
     try { m = JSON.parse(text); } catch (e) { return; }
-    try { handle(client, m); } catch (e2) { println('NULL JSFX Remote: ' + e2); }
+    if (!m || typeof m !== 'object') return;
+    try {
+      if (client.paired) handle(client, m);
+      else pairing(client, m, now);
+    } catch (e2) { println('NULL JSFX Remote: ' + e2); }
   });
 }
 
+function paired() {
+  for (var k = 0; k < clients.length; k++) if (clients[k].paired) return true;
+  return false;
+}
+
 function broadcast(lines) {
-  for (var k = 0; k < clients.length; k++) sendTo(clients[k], lines);
+  for (var k = 0; k < clients.length; k++) if (clients[k].paired) sendTo(clients[k], lines);
+}
+
+// --- pairing -----------------------------------------------------------------------------------
+
+function validKey(k) { return typeof k === 'string' && /^[0-9a-f]{32,128}$/.test(k); }
+function keyHash(k) { return sha256(k).slice(0, 32); }
+
+function setKeys(list) {
+  keys = list.slice(-MAX_KEYS);
+  if (keySetting) keySetting.set(keys.join(','));
+}
+
+function known(k) {
+  if (!validKey(k)) return false;
+  var h = keyHash(k);
+  var hit = false;
+  for (var i = 0; i < keys.length; i++) if (keys[i] === h) hit = true;
+  return hit;
+}
+
+function showCode(now) {
+  if (!code.value || now >= code.until) {
+    code.value = String(100000 + Math.floor(Math.random() * 900000)).slice(-6);
+    code.until = now + CODE_LIFE;
+    code.tries = 0;
+    code.shown = 0;
+  }
+  if (now - code.shown >= 10000) {
+    code.shown = now;
+    host.showPopupNotification('NULL JSFX Remote: pairing code ' + code.value.slice(0, 3) + ' ' + code.value.slice(3));
+  }
+}
+
+function welcome(client) {
+  client.paired = true;
+  sendTo(client, [JSON.stringify({ t: 'paired' })]);
+  hello(client);
+}
+
+function pairing(client, m, now) {
+  if (m.t === 'hello') {
+    if (known(m.key)) return welcome(client);
+    client.asked = true;
+  } else if (m.t === 'pair') {
+    if (now < code.pauseUntil) {
+      return sendTo(client, [JSON.stringify({ t: 'auth', need: 'wait', s: Math.ceil((code.pauseUntil - now) / 1000) })]);
+    }
+    if (code.value && now < code.until && validKey(m.key) && String(m.code).replace(/\D/g, '') === code.value) {
+      code.value = '';
+      setKeys(keys.concat([keyHash(m.key)]));
+      host.showPopupNotification('NULL JSFX Remote: phone paired');
+      return welcome(client);
+    }
+    if (++code.tries >= TRIES) {
+      code.value = '';
+      code.pauseUntil = now + PAUSE;
+      return sendTo(client, [JSON.stringify({ t: 'auth', need: 'wait', s: PAUSE / 1000 })]);
+    }
+    showCode(now);
+    return sendTo(client, [JSON.stringify({ t: 'auth', need: 'code', wrong: true })]);
+  } else {
+    return; // nothing else before pairing
+  }
+  if (now < code.pauseUntil) {
+    return sendTo(client, [JSON.stringify({ t: 'auth', need: 'wait', s: Math.ceil((code.pauseUntil - now) / 1000) })]);
+  }
+  showCode(now);
+  sendTo(client, [JSON.stringify({ t: 'auth', need: 'code' })]);
+}
+
+// connections that never paired go after a while
+function expire() {
+  var now = Date.now();
+  for (var k = clients.length - 1; k >= 0; k--) {
+    var client = clients[k];
+    if (!client.paired && now - client.born > UNPAIRED_LIFE) {
+      clients.splice(k, 1);
+      try { client.c.disconnect(); } catch (e) { /* gone */ }
+    } else if (!client.paired && client.asked && now >= code.pauseUntil) {
+      showCode(now);
+    }
+  }
+}
+
+function dropAll() {
+  var all = clients;
+  clients = [];
+  for (var k = 0; k < all.length; k++) {
+    try { all[k].c.disconnect(); } catch (e) { /* gone */ }
+  }
+}
+
+// SHA-256 of an ASCII string, as lowercase hex (FIPS 180-4); only the keys are hashed
+function sha256(ascii) {
+  var K = [
+    0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5, 0x3956c25b, 0x59f111f1, 0x923f82a4, 0xab1c5ed5,
+    0xd807aa98, 0x12835b01, 0x243185be, 0x550c7dc3, 0x72be5d74, 0x80deb1fe, 0x9bdc06a7, 0xc19bf174,
+    0xe49b69c1, 0xefbe4786, 0x0fc19dc6, 0x240ca1cc, 0x2de92c6f, 0x4a7484aa, 0x5cb0a9dc, 0x76f988da,
+    0x983e5152, 0xa831c66d, 0xb00327c8, 0xbf597fc7, 0xc6e00bf3, 0xd5a79147, 0x06ca6351, 0x14292967,
+    0x27b70a85, 0x2e1b2138, 0x4d2c6dfc, 0x53380d13, 0x650a7354, 0x766a0abb, 0x81c2c92e, 0x92722c85,
+    0xa2bfe8a1, 0xa81a664b, 0xc24b8b70, 0xc76c51a3, 0xd192e819, 0xd6990624, 0xf40e3585, 0x106aa070,
+    0x19a4c116, 0x1e376c08, 0x2748774c, 0x34b0bcb5, 0x391c0cb3, 0x4ed8aa4a, 0x5b9cca4f, 0x682e6ff3,
+    0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208, 0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2];
+  var H = [0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a, 0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19];
+  var bytes = [];
+  for (var i = 0; i < ascii.length; i++) bytes.push(ascii.charCodeAt(i) & 0xff);
+  var bits = bytes.length * 8;
+  bytes.push(0x80);
+  while (bytes.length % 64 !== 56) bytes.push(0);
+  for (var s = 56; s >= 0; s -= 8) bytes.push(s >= 32 ? 0 : (bits >>> s) & 0xff);
+  var rotr = function (x, n) { return (x >>> n) | (x << (32 - n)); };
+  var W = [];
+  for (var off = 0; off < bytes.length; off += 64) {
+    for (var t = 0; t < 64; t++) {
+      if (t < 16) {
+        W[t] = (bytes[off + 4 * t] << 24) | (bytes[off + 4 * t + 1] << 16) | (bytes[off + 4 * t + 2] << 8) | bytes[off + 4 * t + 3];
+      } else {
+        var s0 = rotr(W[t - 15], 7) ^ rotr(W[t - 15], 18) ^ (W[t - 15] >>> 3);
+        var s1 = rotr(W[t - 2], 17) ^ rotr(W[t - 2], 19) ^ (W[t - 2] >>> 10);
+        W[t] = (W[t - 16] + s0 + W[t - 7] + s1) | 0;
+      }
+    }
+    var a = H[0], b = H[1], c = H[2], d = H[3], e = H[4], f = H[5], g = H[6], h = H[7];
+    for (var r = 0; r < 64; r++) {
+      var S1 = rotr(e, 6) ^ rotr(e, 11) ^ rotr(e, 25);
+      var t1 = (h + S1 + ((e & f) ^ (~e & g)) + K[r] + W[r]) | 0;
+      var S0 = rotr(a, 2) ^ rotr(a, 13) ^ rotr(a, 22);
+      var t2 = (S0 + ((a & b) ^ (a & c) ^ (b & c))) | 0;
+      h = g; g = f; f = e; e = (d + t1) | 0; d = c; c = b; b = a; a = (t1 + t2) | 0;
+    }
+    H[0] = (H[0] + a) | 0; H[1] = (H[1] + b) | 0; H[2] = (H[2] + c) | 0; H[3] = (H[3] + d) | 0;
+    H[4] = (H[4] + e) | 0; H[5] = (H[5] + f) | 0; H[6] = (H[6] + g) | 0; H[7] = (H[7] + h) | 0;
+  }
+  var hex = '';
+  for (var q = 0; q < 8; q++) hex += ('0000000' + (H[q] >>> 0).toString(16)).slice(-8);
+  return hex;
 }
 
 function sendTo(client, lines) {

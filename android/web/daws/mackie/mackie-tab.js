@@ -14,7 +14,7 @@
     setupTitle: 'Set up the DAW (once)',
     setup: [
       ['For the DAWs without a tab here: Logic Pro, Studio One, Pro Tools, Cakewalk, Reason, Digital Performer and others that support a ', 'Mackie Control', ' surface. Beta: not yet tried with every DAW.'],
-      ['Open a network MIDI session named ', 'NULL Remote', ': on a Mac in Audio MIDI Setup > MIDI Studio > Network; on Windows with the free rtpMIDI (Tobias Erichsen), "Who may connect: Anyone".'],
+      ['Open a network MIDI session named ', 'NULL Remote', ': on a Mac in Audio MIDI Setup > MIDI Studio > Network; on Windows with the free rtpMIDI (Tobias Erichsen). Set "Who may connect" to the directory only and add this phone\'s address (Android Settings > Wi-Fi > your network) to it.'],
       ['In the DAW add a ', 'Mackie Control', ' (not Mackie Control XT, not HUI) with NULL Remote as its MIDI input and output: Logic Pro: Control Surfaces > Setup > New > Install; Studio One: Studio One > Options > External Devices > Add; Pro Tools: Setup > Peripherals > MIDI Controllers; Cakewalk: Edit > Preferences > Control Surfaces; Reason: Preferences > Control Surfaces > Add.'],
       ['Type the computer\'s address above (port 5004 unless the session uses another) and connect; the DAW then fills the strips. Allow ', 'UDP 5004 and 5005', ' through its firewall.'],
       ['Mackie Control shows the mixer and the transport only. For the NULL JSFX plugins with their own interface use the ', 'REAPER, Ardour, Bitwig, Ableton, Cubase or FL Studio', ' tab.'],

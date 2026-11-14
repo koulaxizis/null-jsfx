@@ -42,7 +42,7 @@ async function main() {
 
   const L = await live.start();
   const stats = { sent: 0 };
-  const s = new BW.Session({ dial: nodeDial(L.port, stats) });
+  const s = new BW.Session({ dial: nodeDial(L.port, stats), keys: live.testKeys() });
   const events = { link: [], plugins: [], params: [], strip: 0, meter: 0, time: [] };
   s.on('link', (up) => events.link.push(up));
   s.on('strip', () => events.strip++);
@@ -170,7 +170,7 @@ async function main() {
     ok('bypass, transport, clock');
 
     // a second phone at the same time gets everything, the first one keeps going
-    const s2 = new BW.Session({ dial: nodeDial(L.port) });
+    const s2 = new BW.Session({ dial: nodeDial(L.port), keys: live.testKeys() });
     try {
       s2.connect();
       await until(() => s2.strips.size === 4 && s2.strips.get(0).name === 'Φωνή', 'second phone');
@@ -209,7 +209,7 @@ async function main() {
 // sends: one per return track; the master has none, a return none to itself
 async function sends() {
   const L = await live.start();
-  const s = new BW.Session({ dial: nodeDial(L.port) });
+  const s = new BW.Session({ dial: nodeDial(L.port), keys: live.testKeys() });
   try {
     s.connect();
     await until(() => s.strips.size === 4 && s.sendNames.length === 1, 'strips and send names');
@@ -247,7 +247,7 @@ async function racks() {
     ],
   }, { name: 'Saturator', class_name: 'Saturator', on: true, params: [{ name: 'Drive', value: 0, min: 0, max: 36 }] }];
   const L = await live.start({ doc });
-  const s = new BW.Session({ dial: nodeDial(L.port) });
+  const s = new BW.Session({ dial: nodeDial(L.port), keys: live.testKeys() });
   const events = [];
   s.on('params', (ssid, piid, list) => events.push([ssid, piid, list]));
   try {
@@ -283,7 +283,7 @@ async function paging() {
   const doc = live.defaultDocument();
   for (let k = doc.tracks.length + 1; doc.tracks.length < 40; k++) doc.tracks.push({ name: 'Track ' + k, kind: 'audio', vol: live.UNITY, pan: 0, color: 0x666666, devices: [] });
   const L = await live.start({ doc });
-  const s = new BW.Session({ dial: nodeDial(L.port) });
+  const s = new BW.Session({ dial: nodeDial(L.port), keys: live.testKeys() });
   try {
     s.connect();
     // 40 tracks, a return and the master

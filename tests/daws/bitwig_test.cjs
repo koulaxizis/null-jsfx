@@ -72,7 +72,7 @@ async function run(headerOut) {
   const tag = headerOut ? ' (Bitwig adds a header)' : '';
   const bw = await host.start({ headerOut });
   const stats = { sent: 0 };
-  const s = new BW.Session({ dial: nodeDial(bw.port, stats) });
+  const s = new BW.Session({ dial: nodeDial(bw.port, stats), keys: host.testKeys() });
   const events = { strips: 0, meter: 0, link: [], plugins: [], params: [], strip: 0, time: [] };
   s.on('strips', () => events.strips++);
   s.on('strip', () => events.strip++);
@@ -203,7 +203,7 @@ async function paging() {
   }
   doc.tracks.push(master);
   const bw = await host.start({ doc });
-  const s = new BW.Session({ dial: nodeDial(bw.port) });
+  const s = new BW.Session({ dial: nodeDial(bw.port), keys: host.testKeys() });
   try {
     s.connect();
     await until(() => s.strips.size === 32 && s.total === 41 && s.size === 32, 'a window of 32 of 41 tracks');
@@ -230,7 +230,7 @@ async function paging() {
 // sends: one per effect track, on every track that has them
 async function sends() {
   const bw = await host.start();
-  const s = new BW.Session({ dial: nodeDial(bw.port) });
+  const s = new BW.Session({ dial: nodeDial(bw.port), keys: host.testKeys() });
   const names = [];
   s.on('sends', (l) => names.push(l.slice()));
   try {
@@ -267,7 +267,7 @@ async function containers() {
     { name: 'Chain', enabled: true, plugin: false, params: [], slots: [{ name: 'CHAIN', devices: [eq] }] },
   ];
   const bw = await host.start({ doc });
-  const s = new BW.Session({ dial: nodeDial(bw.port) });
+  const s = new BW.Session({ dial: nodeDial(bw.port), keys: host.testKeys() });
   const events = [];
   s.on('params', (ssid, piid, list) => events.push([ssid, piid, list]));
   try {

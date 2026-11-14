@@ -158,6 +158,11 @@ async function main() {
     await tabButton('Bitwig').click();
     await btab.locator('input').first().fill(HOST);
     await btab.locator('button.primary').click();
+    // pairing in the app: the key comes from the WebView's crypto, kept in its storage
+    await until(async () => btab.locator('.da-pair').isVisible(), 'Bitwig asks for its pairing code', 20000);
+    await until(async () => bw.host.code().length === 6, 'a code in a Bitwig notification');
+    await btab.locator('.da-pair input').fill(bw.host.code());
+    await btab.locator('.da-pair button').click();
     await until(async () => (await btab.locator('.da-strip').count()) === 4, 'four Bitwig strips', 20000);
     assert.deepStrictEqual(await btab.locator('.da-name').allTextContents(), ['Vocal', 'Synth', 'FX 1', 'Master']);
     await bstrip('Vocal').locator('.da-m').click();

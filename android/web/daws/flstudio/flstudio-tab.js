@@ -16,7 +16,7 @@
     setup: [
       ['From NULL-JSFX-JSFX.zip (nulljsfx.tech, Download) take the folder ', 'Remote/flstudio/NULL JSFX', '.'],
       ['Copy it into ', 'Documents/Image-Line/FL Studio/Settings/Hardware', '.'],
-      ['Open a network MIDI session named ', 'NULL Remote', ': on a Mac in Audio MIDI Setup > MIDI Studio > Network; on Windows with the free rtpMIDI (Tobias Erichsen), "Who may connect: Anyone".'],
+      ['Open a network MIDI session named ', 'NULL Remote', ': on a Mac in Audio MIDI Setup > MIDI Studio > Network; on Windows with the free rtpMIDI (Tobias Erichsen). Set "Who may connect" to the directory only and add this phone\'s address (Android Settings > Wi-Fi > your network) to it.'],
       ['FL Studio: Options > MIDI settings. Select the input NULL Remote, enable it, set Controller type to ', 'NULL JSFX Remote for DAWs (user)', ' and give it a port number; give the output NULL Remote the same port number.'],
       ['Load the NULL JSFX plugins as ', 'VST3', ' in the mixer\'s effect slots; they open here with their own interface.'],
       ['Type the computer\'s address above (port 5004 unless the session uses another). Allow ', 'UDP 5004 and 5005', ' through its firewall.'],
