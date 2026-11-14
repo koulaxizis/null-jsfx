@@ -76,7 +76,8 @@ usage() {
 NULL JSFX $VERSION installer for $TARGET_OS
 
 Without options it asks what to install. With any of these it asks only about the rest,
-and with --yes it asks nothing (everything not given is installed in full).
+and with --yes it asks nothing (everything not given is installed in full, but the tablet
+remote only when asked for: --extras remote or --all).
 
   --formats LIST    $fmts or all       e.g. --formats vst3,clap
   --groups LIST     one-slider, essentials, advanced, assisted, instruments, midi or all
@@ -373,7 +374,8 @@ if [ "$extras_set" = 0 ]; then
       rack "Rack: up to 8 NULL JSFX effects in one VST3/CLAP" \
       remote "Tablet remote for REAPER (starts with REAPER; a few steps in REAPER)" \
       fonts "Noto Sans font, for the exact look of the GFX versions")"
-  else EXTRAS=all; fi
+  # the tablet remote opens REAPER to the network, so only when asked for
+  else EXTRAS='chains rack fonts'; fi
 fi
 [ "$EXTRAS" = all ] && EXTRAS="$EXTRA_KEYS"
 [ "$EXTRAS" = none ] && EXTRAS=''

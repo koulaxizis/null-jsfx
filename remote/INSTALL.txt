@@ -25,7 +25,8 @@ Install (once)
     4. Options > Preferences > Control/OSC/web > Add > Web browser interface:
          Default interface: null_jsfx.html
          Port: 8080 (or any free port)
-         Username/password: optional, recommended on shared networks
+         Username/password: set both (anyone who can reach the port can control
+         REAPER without them)
        OK. REAPER shows the address of the page (e.g. http://192.168.1.20:8080).
        Allow REAPER through the firewall on private networks if Windows asks.
     5. Actions > Show action list > New action > Load ReaScript... and choose
