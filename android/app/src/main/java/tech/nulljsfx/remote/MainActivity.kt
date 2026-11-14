@@ -66,7 +66,11 @@ class MainActivity : Activity(), Shell.Ui {
             override fun shouldInterceptRequest(view: WebView, req: WebResourceRequest): WebResourceResponse? {
                 val url = req.url
                 if (url.host == HOST && (url.encodedPath ?: "").startsWith("/_/")) return reaper(url.toString())
-                return assets.shouldInterceptRequest(url)
+                if (url.host == HOST) return assets.shouldInterceptRequest(url) ?: text(404, "Not Found", "")
+                // nothing from anywhere else loads (frames, scripts, pictures), so only the app's
+                // own pages ever reach NullShellNative; the update check is the one exception
+                if (Net.allowedOutside(url.scheme, url.host, req.method)) return null
+                return text(403, "Forbidden", "")
             }
 
             // only the app's own pages load in the WebView; any other link opens in the browser

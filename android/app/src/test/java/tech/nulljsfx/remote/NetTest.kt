@@ -51,4 +51,13 @@ class NetTest {
         assertFalse(Net.newer("3.0", "3.0"))
         assertFalse(Net.newer("2.9", "3.0"))
     }
+
+    @Test fun onlyTheUpdateCheckLoadsFromOutside() {
+        assertTrue(Net.allowedOutside("https", "api.github.com", "GET"))
+        assertFalse(Net.allowedOutside("http", "api.github.com", "GET"))
+        assertFalse(Net.allowedOutside("https", "api.github.com", "POST"))
+        assertFalse(Net.allowedOutside("https", "example.com", "GET"))
+        assertFalse(Net.allowedOutside("https", "api.github.com.example.com", "GET"))
+        assertFalse(Net.allowedOutside(null, null, null))
+    }
 }

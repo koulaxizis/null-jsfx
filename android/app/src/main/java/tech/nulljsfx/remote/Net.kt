@@ -72,4 +72,9 @@ object Net {
         }
         return false
     }
+
+    /** What the WebView may load from outside the app's own pages: only the update check (a
+     *  GET to GitHub's API over https). Everything else is refused, frames and scripts included. */
+    fun allowedOutside(scheme: String?, host: String?, method: String?): Boolean =
+        scheme == "https" && host == "api.github.com" && (method == "GET" || method == "OPTIONS")
 }

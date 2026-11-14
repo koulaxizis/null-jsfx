@@ -8,6 +8,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
 <meta name="color-scheme" content="dark">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self' https://api.github.com; frame-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
 <title>NULL JSFX Remote</title>
 <link rel="stylesheet" href="style.css">
 </head>
@@ -29,8 +30,8 @@
 <script src="../daws/cubase/cubase-tab.js"></script>
 <script src="../daws/flstudio/flstudio-tab.js"></script>
 <script src="../daws/mackie/mackie-tab.js"></script>
-<script src="../mixers/mixers.js" onerror="this.remove()"></script>
+<script src="../mixers/mixers.js"></script>
 <script src="settings.js"></script>
-<script>NullRemote.start();</script>
+<script src="start.js"></script>
 </body>
 </html>
