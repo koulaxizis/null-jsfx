@@ -777,7 +777,7 @@ Defensive only: the repository and local runs (tests, emulator, local DAWs), nev
 
 ### VI.1 Where the version lives
 
-This list was checked against the 2.6 bump (`bc60d15`, PR #47) and its follow-up (#48, llms.txt) [verified 2026-10-26], and again against the 2.7 bump [verified 2026-10-28] the 2.9 bump [verified 2026-10-31], the 3.0 bump [verified 2026-11-01], the 3.1 bump [verified 2026-11-02] and the 3.3 bump [verified 2026-11-05]. Change everything in it in one PR (R19).
+This list was checked against the 2.6 bump (`bc60d15`, PR #47) and its follow-up (#48, llms.txt) [verified 2026-10-26], and again against the 2.7 bump [verified 2026-10-28] the 2.9 bump [verified 2026-10-31], the 3.0 bump [verified 2026-11-01], the 3.1 bump [verified 2026-11-02], the 3.3 bump [verified 2026-11-05] and the 3.3.1 bump [verified 2026-11-14]. Change everything in it in one PR (R19).
 
 | Place | What to change |
 |---|---|
@@ -2146,3 +2146,11 @@ entry and the Bible delta.
 - **Files:** `android/app/src/main/{AndroidManifest.xml,java/tech/nulljsfx/remote/MainActivity.kt,java/tech/nulljsfx/remote/Net.kt,res/xml/data_extraction_rules.xml (new)}`, `android/app/src/test/java/tech/nulljsfx/remote/NetTest.kt`, `android/gradle/wrapper/gradle-wrapper.properties`, `android/web/core/{index.html,start.js (new)}`, this Bible (II.10).
 - **Tests (run on Linux):** `tests/daws/ui_test.cjs` (31 of 31), `tests/mixers/ui_test.cjs`, `tests/remote/android_test.cjs` (all pass); the start page in Chromium shows every tab with no CSP report or page error. The Gradle wrapper's checksum is the one gradle.org lists for 8.14.3 (and the wrapper jar matches its listed sum). Only in CI: `NetTest` (new `onlyTheUpdateCheckLoadsFromOutside`), Android lint and the APK builds, the emulator tests (no Android SDK in the container).
 - **Version:** v3.3 (no change; ships with the next release).
+
+### 2026-11-14 — 3.3.1 — version step for the security fixes
+- **Why:** the security fixes of 2026-11-14 (the five entries above) reach users only with a release; Christos chose 3.3.1 on a decision card (2026-11-14). The release notes say "security fixes" and what Bitwig and Live users do (new scripts, one code); the details stay in the project files until users have updated.
+- **Changes:** the version is 3.3.1 everywhere in Part VI.1: every plain and GFX footer and `null_gfx.jsfx-inc`, `FOOTER` and the docstring in `tests/lint.py` (so the Android `versionName` 3.3.1, `versionCode` 30301), `web/tools/eel2js.js` (then `node web/tools/build.js`), the remote bridge and page, `native/CMakeLists.txt` (3.3.1), `hub/Cargo.toml` and `hub/Cargo.lock` (3.3.1), the doc comment in `hub/core/src/lib.rs`, `llms.txt`, `index.html` (version, date, download heading, release notes with a 3.3.1 section), the site pages and `sitemap.xml` (`tools/build_site.py`), and `release-notes/3.3.1.md`.
+- **Files:** `DATA/Effects/null_jsfx/*.jsfx`, `DATA/Effects/null_jsfx/gfx/*`, `web/fx/*.js`, `tests/lint.py`, `web/tools/eel2js.js`, `remote/Scripts/null_jsfx_remote_bridge.lua`, `remote/reaper_www_root/null_jsfx.html`, `native/CMakeLists.txt`, `hub/Cargo.toml`, `hub/Cargo.lock`, `hub/core/src/lib.rs`, `llms.txt`, `index.html`, `plugins/*/index.html`, `sitemap.xml`, `release-notes/3.3.1.md` (new), this Bible (VI.1, Part X).
+- **Tests (run on Linux):** `tests/lint.py` on all 308 JSFX and GFX (0 errors, with the version checks), `node web/tools/build.js`, `tools/build_site.py --check`, `tools/build_catalog.py --check`, `tools/build_remote.py --check`, `tools/build_presets.py --check`, `tools/build_chains.py --check`, `cargo test -p null_hub_core`, `tests/bible_order.py`.
+- **Next:** Claude runs the Release workflow with 3.3.1; Christos publishes the draft; Claude checks the 19 assets, `release_smoke.sh 3.3.1`, the site links, the F-Droid repository and adds the 3.3.1 row to Part VI.3.
+- **Version:** v3.3.1.
