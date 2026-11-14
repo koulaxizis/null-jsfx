@@ -242,7 +242,11 @@ public:
         for (uint32_t i = 0; i < kNumParams; ++i)
         {
             char n[32], s[32];
-            fParams[i].store(paramInfo(i, n, sizeof(n), s, sizeof(s)).def, std::memory_order_relaxed);
+            const DISTRHO::SliderInfo in = paramInfo(i, n, sizeof(n), s, sizeof(s));
+            fMin[i] = in.min;
+            fMax[i] = in.max;
+            fDef[i] = in.def;
+            fParams[i].store(in.def, std::memory_order_relaxed);
         }
         for (Slot& s : fSlot)
         {
@@ -283,8 +287,12 @@ public:
     float param(uint32_t i) const { return i < kNumParams ? fParams[i].load(std::memory_order_relaxed) : 0.0f; }
     void setParam(uint32_t i, float v)
     {
-        if (i < kNumParams)
-            fParams[i].store(v, std::memory_order_relaxed);
+        // held in the parameter's range; NaN becomes the default (in-range values pass unchanged)
+        if (i >= kNumParams)
+            return;
+        if (!std::isfinite(v))
+            v = fDef[i];
+        fParams[i].store(v < fMin[i] ? fMin[i] : (v > fMax[i] ? fMax[i] : v), std::memory_order_relaxed);
     }
 
     // ---- setup (never on the audio thread) ---------------------------------------------------
@@ -1151,6 +1159,7 @@ private:
     SpinLock fLock;
     double fSampleRate = 44100.0;
     std::atomic<float> fParams[kNumParams];
+    float fMin[kNumParams], fMax[kNumParams], fDef[kNumParams]; // the ranges, for setParam
     Slot fSlot[kSlots];
     Route fRoutes[kMaxRoutes];
     uint32_t fNumRoutes = 0;

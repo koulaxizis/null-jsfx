@@ -23,6 +23,7 @@
 #include "NullTaps.hpp"
 
 #include <atomic>
+#include <cmath>
 #include <cstdint>
 
 // the suite's version, from project(... VERSION) in native/CMakeLists.txt
@@ -71,7 +72,8 @@ protected:
     {
         applyChangedParameters();
         tick(frames);
-        process(inputs, outputs, frames, midiEvents, midiEventCount);
+        const uint32_t n = cleanMidi(midiEvents, midiEventCount);
+        process(inputs, outputs, frames, fMidiIn, n);
     }
 #else
     void run(const float** inputs, float** outputs, uint32_t frames) final
@@ -107,6 +109,16 @@ protected:
 
     virtual void applyParameter(uint32_t index) = 0;
 
+    // A value from the host (an edit, automation or a saved state), held in the slider's range
+    // as the JSFX's own sliders are; a value that is not a number becomes the default. In-range
+    // values pass unchanged, so the sound does not move (R17).
+    static float sanitize(const SliderInfo& in, float v) noexcept
+    {
+        if (!std::isfinite(v))
+            return in.def;
+        return v < in.min ? in.min : (v > in.max ? in.max : v);
+    }
+
     static void fillParameter(Parameter& p, const SliderInfo& in)
     {
         p.hints      = kParameterIsAutomatable;
@@ -135,6 +147,28 @@ protected:
     }
 
 private:
+#if DISTRHO_PLUGIN_WANT_MIDI_INPUT
+    // DPF hands over at most 512 events per block (kMaxMidiEvents in every wrapper)
+    static constexpr uint32_t kMaxMidi = 512;
+    MidiEvent fMidiIn[kMaxMidi];
+
+    // The block's MIDI as the plugins read it: a data byte of a short message has 7 bits, as
+    // MIDI defines it. System exclusive stays as it is.
+    uint32_t cleanMidi(const MidiEvent* in, uint32_t count) noexcept
+    {
+        const uint32_t n = count < kMaxMidi ? count : kMaxMidi;
+        for (uint32_t i = 0; i < n; ++i)
+        {
+            MidiEvent& e = fMidiIn[i];
+            e = in[i];
+            if (e.size <= MidiEvent::kDataSize && e.data[0] != 0xF0 && e.data[0] != 0xF7)
+                for (uint32_t k = 1; k < e.size; ++k)
+                    e.data[k] &= 0x7F;
+        }
+        return n;
+    }
+#endif
+
     void tick(uint32_t frames)
     {
 #if DISTRHO_PLUGIN_WANT_TIMEPOS
@@ -176,7 +210,7 @@ protected:
     {
         if (index != 0)
             return;
-        fValue.store(v, std::memory_order_relaxed);
+        fValue.store(sanitize(fInfo, v), std::memory_order_relaxed);
         markChanged(0);
     }
 
@@ -229,7 +263,7 @@ protected:
     {
         if (index >= fCount)
             return;
-        fValues[index].store(v, std::memory_order_relaxed);
+        fValues[index].store(sanitize(fInfos[index], v), std::memory_order_relaxed);
         markChanged(index);
     }
 

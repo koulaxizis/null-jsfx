@@ -255,12 +255,13 @@ inline bool isSlotParam(uint32_t index, uint32_t* slot = nullptr)
 
 // ---- slider mapping --------------------------------------------------------------------------
 
-inline float clamp01(float v) { return v < 0.0f ? 0.0f : (v > 1.0f ? 1.0f : v); }
+// NaN becomes 0
+inline float clamp01(float v) { return v > 0.0f ? (v < 1.0f ? v : 1.0f) : 0.0f; }
 
 // the slider's value snapped to its step (in double, so 0.1 steps land on the JSFX grid)
 inline float snapToStep(const DISTRHO::SliderInfo& in, double v)
 {
-    if (v < in.min) v = in.min;
+    if (!(v >= in.min)) v = in.min; // also NaN
     if (v > in.max) v = in.max;
     double st = in.step;
     if (in.options && st < 1.0)
@@ -338,7 +339,7 @@ inline uint32_t parseRoutes(const char* s, Route* out)
                 int slot = 0, value = 0;
                 float depth = 0.0f;
                 const int src = sourceFromSymbol(buf);
-                if (src >= 0 && std::sscanf(gt + 1, "%d.%d:%f", &slot, &value, &depth) == 3 && slot >= 1 &&
+                if (src >= 0 && std::sscanf(gt + 1, "%d.%d:%f", &slot, &value, &depth) == 3 && std::isfinite(depth) && slot >= 1 &&
                     slot <= int(kSlots) && value >= 1 && value <= int(kValues))
                 {
                     out[n].source = src;
