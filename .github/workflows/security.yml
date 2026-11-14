@@ -1,0 +1,193 @@
+name: Security scan
+
+# Level 1 of the security checks (Bible V.4): static scanners on every pull request, once a
+# week and by hand. Report-only: every scanner may find something and the run stays green; the
+# findings go to the job summary and the artifact NULL-JSFX-Security-<scanner>, and Claude reads
+# them in the bimonthly audit (V.3). It runs beside test.yml and native.yml on its own runners,
+# so it never makes them longer. Every tool is pinned to a version (and a SHA-256 for downloads).
+#   secrets      gitleaks over the whole history
+#   workflows    zizmor and actionlint over .github/workflows
+#   code         semgrep: C/C++, Rust, JavaScript, Kotlin/Java, GitHub Actions rules
+#   deps         osv-scanner over hub/Cargo.lock and every package-lock.json
+#   android      mobsfscan over android/
+
+on:
+  pull_request:
+  schedule:
+    - cron: "17 4 * * 1" # Mondays 04:17 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: security-${{ github.event_name == 'pull_request' && github.ref || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  GITLEAKS_VERSION: "8.30.1"
+  GITLEAKS_SHA256: 551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb
+  OSV_VERSION: "2.7.1"
+  OSV_SHA256: fb7dab19a8bd9bbe5c3189f09d4b7ee1820c9553a23bac202648a56efd2f6ee8
+  ACTIONLINT_VERSION: "1.7.12"
+  ACTIONLINT_SHA256: 8aca8db96f1b94770f1b0d72b6dddcb1ebb8123cb3712530b08cc387b349a3d8
+  ZIZMOR_VERSION: "1.32.0"
+  SEMGREP_VERSION: "1.172.0"
+  MOBSFSCAN_VERSION: "1.1.0"
+
+jobs:
+  secrets:
+    timeout-minutes: 10
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: gitleaks
+        run: |
+          set -o pipefail
+          curl -sSfL -o gl.tgz "https://github.com/gitleaks/gitleaks/releases/download/v$GITLEAKS_VERSION/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz"
+          echo "$GITLEAKS_SHA256  gl.tgz" | sha256sum -c -
+          tar -xzf gl.tgz gitleaks
+          mkdir -p report
+          # --redact: a finding shows where, never the secret itself
+          rc=0; ./gitleaks git . --redact --no-banner --report-format json --report-path report/gitleaks.json || rc=$?
+          n=$(python3 -c 'import json,sys; print(len(json.load(open(sys.argv[1]))))' report/gitleaks.json 2>/dev/null || echo "?")
+          { echo "### gitleaks"; echo "$n finding(s) over the whole history (exit $rc)"; } >> "$GITHUB_STEP_SUMMARY"
+          python3 - report/gitleaks.json >> "$GITHUB_STEP_SUMMARY" <<'PY' || true
+          import json, sys
+          for f in json.load(open(sys.argv[1]))[:50]:
+              print(f"- `{f['File']}:{f['StartLine']}` {f['RuleID']} (commit {f['Commit'][:8]})")
+          PY
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        if: ${{ !cancelled() }}
+        with:
+          name: NULL-JSFX-Security-gitleaks
+          path: report
+          retention-days: 14
+
+  workflows:
+    timeout-minutes: 10
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: "3.12"
+      - name: zizmor and actionlint
+        run: |
+          mkdir -p report
+          pip install --quiet "zizmor==$ZIZMOR_VERSION"
+          curl -sSfL -o al.tgz "https://github.com/rhysd/actionlint/releases/download/v$ACTIONLINT_VERSION/actionlint_${ACTIONLINT_VERSION}_linux_amd64.tar.gz"
+          echo "$ACTIONLINT_SHA256  al.tgz" | sha256sum -c -
+          tar -xzf al.tgz actionlint
+          zizmor --offline --format plain .github/workflows > report/zizmor.txt 2>&1 || true
+          ./actionlint -no-color > report/actionlint.txt 2>&1 || true
+          {
+            echo "### zizmor"; echo '```'; tail -n 60 report/zizmor.txt; echo '```'
+            echo "### actionlint"; echo '```'; head -n 60 report/actionlint.txt; echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        if: ${{ !cancelled() }}
+        with:
+          name: NULL-JSFX-Security-workflows
+          path: report
+          retention-days: 14
+
+  code:
+    timeout-minutes: 20
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: "3.12"
+      - name: semgrep
+        run: |
+          mkdir -p report
+          pip install --quiet "semgrep==$SEMGREP_VERSION"
+          # our code only: the vendored SDKs, generated web effects and the media stay out
+          semgrep scan --metrics=off --quiet --timeout 30 --max-target-bytes 1000000 \
+            --config p/c --config p/rust --config p/javascript --config p/kotlin --config p/java \
+            --config p/github-actions --config p/secrets \
+            --exclude native/third_party --exclude 'native/plugins/sampler/dr_flac.h' --exclude web/fx \
+            --exclude /assets --exclude /media-kit --exclude node_modules --exclude /plugins \
+            --sarif --output report/semgrep.sarif . || true
+          python3 - report/semgrep.sarif >> "$GITHUB_STEP_SUMMARY" <<'PY' || true
+          import json, sys
+          runs = json.load(open(sys.argv[1]))["runs"]
+          res = [r for run in runs for r in run["results"]]
+          print(f"### semgrep\n{len(res)} finding(s)")
+          for r in res[:80]:
+              loc = r["locations"][0]["physicalLocation"]
+              print(f"- `{loc['artifactLocation']['uri']}:{loc['region']['startLine']}` {r['ruleId'].split('.')[-1]}")
+          PY
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        if: ${{ !cancelled() }}
+        with:
+          name: NULL-JSFX-Security-semgrep
+          path: report
+          retention-days: 14
+
+  deps:
+    timeout-minutes: 10
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - name: osv-scanner
+        run: |
+          mkdir -p report
+          curl -sSfL -o osv-scanner "https://github.com/google/osv-scanner/releases/download/v$OSV_VERSION/osv-scanner_linux_amd64"
+          echo "$OSV_SHA256  osv-scanner" | sha256sum -c -
+          chmod +x osv-scanner
+          args=(--lockfile hub/Cargo.lock)
+          while IFS= read -r f; do args+=(--lockfile "$f"); done < <(git ls-files '*package-lock.json')
+          ./osv-scanner scan source "${args[@]}" --format markdown > report/osv.md 2>&1 || true
+          { echo "### osv-scanner"; head -n 120 report/osv.md; } >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        if: ${{ !cancelled() }}
+        with:
+          name: NULL-JSFX-Security-deps
+          path: report
+          retention-days: 14
+
+  android:
+    timeout-minutes: 10
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: "3.12"
+      - name: mobsfscan
+        run: |
+          mkdir -p report
+          pip install --quiet "mobsfscan==$MOBSFSCAN_VERSION"
+          mobsfscan android/ --json -o report/mobsfscan.json > /dev/null 2>&1 || true
+          python3 - report/mobsfscan.json >> "$GITHUB_STEP_SUMMARY" <<'PY' || true
+          import json, sys
+          r = json.load(open(sys.argv[1])).get("results", {})
+          print(f"### mobsfscan\n{len(r)} rule(s) matched")
+          for k, v in r.items():
+              print(f"- {v.get('metadata', {}).get('severity', '?')} {k}")
+          PY
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        if: ${{ !cancelled() }}
+        with:
+          name: NULL-JSFX-Security-android
+          path: report
+          retention-days: 14

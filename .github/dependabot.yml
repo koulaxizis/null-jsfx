@@ -1,0 +1,11 @@
+# Keeps the GitHub Actions of .github/workflows on their newest release: every action is pinned
+# to a commit SHA with its tag in a comment (Bible V.2), and Dependabot moves both together.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+    groups:
+      actions:
+        patterns: ["*"]
