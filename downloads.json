@@ -1,8 +1,8 @@
 {
-  "display": 2500,
-  "total": 3308,
+  "display": 3407,
+  "total": 3407,
   "offset": 0,
-  "updated": "2026-11-06",
+  "updated": "2026-11-14",
   "assets": {
     "489296831": {
       "file": "1.0/null_jsfx.zip",
@@ -746,7 +746,7 @@
     },
     "713511257": {
       "file": "3.3/NULL-JSFX-JSFX.zip",
-      "count": 30
+      "count": 42
     },
     "713512481": {
       "file": "3.3/NULL-JSFX-Catalog.json",
@@ -754,23 +754,23 @@
     },
     "713518706": {
       "file": "3.3/NULL-JSFX-Remote-DAWs-Android.apk",
-      "count": 2
+      "count": 22
     },
     "713518707": {
       "file": "3.3/NULL-JSFX-Remote-Mixers-Android.apk",
-      "count": 2
+      "count": 20
     },
     "713531060": {
       "file": "3.3/NULL-JSFX-Hub-Windows-Setup.exe",
-      "count": 1
+      "count": 10
     },
     "713534445": {
       "file": "3.3/NULL-JSFX-Hub-Linux.AppImage",
-      "count": 2
+      "count": 5
     },
     "713534448": {
       "file": "3.3/NULL-JSFX-Hub-Linux.deb",
-      "count": 1
+      "count": 2
     },
     "713536915": {
       "file": "3.3/NULL-JSFX-VST3-CLAP-Linux-ARM64.zip",
@@ -782,23 +782,23 @@
     },
     "713547192": {
       "file": "3.3/NULL-JSFX-Hub-macOS.dmg",
-      "count": 2
+      "count": 3
     },
     "713547320": {
       "file": "3.3/NULL-JSFX-VST3-CLAP-Windows.zip",
-      "count": 1
+      "count": 4
     },
     "713646531": {
       "file": "3.3/NULL-JSFX-VST3-CLAP-Linux.zip",
-      "count": 29
+      "count": 40
     },
     "713703559": {
       "file": "3.3/NULL-JSFX-VST3-CLAP-macOS.zip",
-      "count": 2
+      "count": 5
     },
     "713718467": {
       "file": "3.3/NULL-JSFX-Installer-Windows.exe",
-      "count": 2
+      "count": 7
     },
     "713720447": {
       "file": "3.3/NULL-JSFX-Installer-Windows-ARM64.exe",
@@ -806,11 +806,11 @@
     },
     "713722372": {
       "file": "3.3/NULL-JSFX-Installer-Linux-ARM64.sh",
-      "count": 1
+      "count": 2
     },
     "713726970": {
       "file": "3.3/NULL-JSFX-Installer-Linux.sh",
-      "count": 1
+      "count": 3
     },
     "713758925": {
       "file": "3.3/NULL-JSFX-Installer-macOS.pkg",
@@ -822,7 +822,7 @@
     },
     "713815504": {
       "file": "3.3/NULL-JSFX-Catalog.json",
-      "count": 2
+      "count": 12
     }
   }
 }
