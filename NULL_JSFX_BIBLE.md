@@ -725,7 +725,7 @@ The ysfx engine is pinned at `8077347ccf4115567aed81400281dca57acbb0cc` (in `tes
 | `media.yml` "Media" | push to main under `assets/video/`; manual | uploads the videos to the `media` pre-release |
 | `media-kit.yml` "Media kit" | push to main under `tools/media_kit/`; manual | `tools/media_kit/build.py`, then replaces the 8 zips on the `media-kit` pre-release (created if missing) |
 | `release.yml` "Release" | manual with `version` (Christos) | creates the draft release, calls `native.yml` and `hub.yml` with it, then checks the 17 assets and the JSFX footer (VI.2) |
-| `downloads.yml` "Count downloads" | daily at 03:00 UTC; release published; after a manual "VST3 and CLAP" run; manual | `count_downloads.py`, then commits `downloads.json` to main if the shown figure changed |
+| `downloads.yml` "Count downloads" | daily at 03:00 UTC; release published; after a manual "VST3 and CLAP" run; manual | `count_downloads.py`, then commits `downloads.json` to main if the total changed or a new asset appeared |
 | `stress.yml` "Stress test" | daily at 02:30 UTC; manual; PRs that change a plain or GFX `.jsfx` or the test | `tests/stress.sh`: every plugin, or on a PR only the plain plugins it changes (all when the test changes) |
 
 Pushes run these four workflows only on main, so a branch with a PR is built once, by its PR (until 2026-10-26 every branch push ran them a second time, and the macOS queue reached about 45 runs). A branch without a PR gets no CI: open the PR, or run the workflow by hand. Their `concurrency` group (named after the workflow by a fixed word, `vst3-clap-`, `hub-`, since `github.workflow` is the caller's name when `release.yml` calls them) is per PR for pull requests, with `cancel-in-progress`, so a new push cancels the older run of that PR; every other run (main, release, manual) gets its own group from `run_id`, so it is never cancelled or queued behind another, and release uploads always finish.
@@ -834,8 +834,8 @@ Since 2026-11-01 a release is built as a **draft** and published only when every
 
 - `tools/count_downloads.py` (run by `downloads.yml`) adds the public `download_count` of every asset of releases tagged `^[0-9]` to a ledger in `downloads.json`.
 - The ledger is keyed by asset id and never lowers a count, so deleting a release does not lower the total.
-- The site shows `display`, which is `total` rounded down to 1, 5, 10, 25, 50, 100, 250, 500, 1,000, 2,500 and so on.
-- The file is committed only when `display` changes or a new asset appears.
+- The site shows `display` as "N downloads" under the Download button. Since 2026-11-14 `display` is the exact `total` (Christos asked for the exact figure once the downloads had grown); before, it was `total` rounded down to 1, 5, 10, 25, 50, 100, 250, 500, 1,000, 2,500 and so on, shown as "More than N downloads". The key kept its name.
+- The file is committed only when `display` changes or a new asset appears, so now at most once per run (about once a day, plus a run when a release is published).
 - `--offset` subtracts our own downloads. It is 0 today.
 - State on 2026-10-26: total 926, display 500.
 - `assets/js/downloads.js` reads it.
@@ -2078,3 +2078,9 @@ entry and the Bible delta.
 - **Next:** Claude runs the Release workflow with 3.3; Christos publishes the draft; Claude checks the 19 assets, `release_smoke.sh 3.3`, the site links, the F-Droid repository and adds the 3.3 row to Part VI.3.
 - **Version:** v3.3.
 
+### 2026-11-14 — site (no version change) — exact download count
+- **Why:** Christos asked to replace "More than N downloads" under the site's Download button with the exact number, now that the downloads have grown (2026-11-14).
+- **Changes:** `tools/count_downloads.py` sets `display` to the exact total (the rounding steps are gone; the key keeps its name and meaning "the figure the site shows"); `assets/js/downloads.js` writes "<strong>N</strong> downloads"; the comment in `downloads.yml` says so. Since the total moves almost every day, the bot now commits `downloads.json` about once a day (V.2 note on rebasing applies). `downloads.json` itself is left to the bot: after the merge, a manual run of "Count downloads" writes the exact figure.
+- **Files:** `tools/count_downloads.py`, `assets/js/downloads.js`, `.github/workflows/downloads.yml`, this Bible (V table row of `downloads.yml`, VI.5).
+- **Tests (run on Linux):** `tools/count_downloads.py` against the live releases on a copy of `downloads.json` (printed "changed" with display = total = 3407, then "unchanged" on a second run), `tools/build_site.py --check`, `tests/lint.py`, `tests/bible_order.py`. The page text was only read, not rendered.
+- **Version:** v3.3 (no change).
