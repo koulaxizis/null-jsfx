@@ -136,6 +136,57 @@ fn install_update_remove() {
         round(ranges);
     }
     extras_round();
+    checksum_round();
+}
+
+/// A package downloaded whole must match the release's SHA-256 in the catalog: a different
+/// file is refused and nothing is installed; the right one installs.
+fn checksum_round() {
+    use sha2::Digest;
+    let files: Files = Default::default();
+    publish(&files, "2.1");
+    std::env::set_var("NULL_JSFX_HUB_RELEASES", serve(files.clone(), false));
+    let real = {
+        let f = files.lock().unwrap();
+        let z = &f["/download/2.1/NULL-JSFX-JSFX.zip"];
+        sha2::Sha256::digest(z).iter().map(|b| format!("{b:02x}")).collect::<String>()
+    };
+    let with_sum = |sum: &str| {
+        let mut f = files.lock().unwrap();
+        let c = f.get_mut("/latest/download/NULL-JSFX-Catalog.json").unwrap();
+        let text = String::from_utf8(c.clone()).unwrap();
+        let start = text.find(r#""sha256""#).map(|i| (i, text[i..].find('}').unwrap() + i + 2));
+        let text = match start {
+            Some((a, z)) => format!("{}{}", &text[..a], &text[z..]),
+            None => text,
+        };
+        *c = text.replacen(r#"{"schema":1,"#, &format!(r#"{{"schema":1,"sha256":{{"NULL-JSFX-JSFX.zip":"{sum}"}},"#), 1).into_bytes();
+    };
+    let tmp = tempfile::tempdir().unwrap();
+    let mut h = hub(tmp.path());
+    let req = Request { install: vec![("tilt".into(), Format::Jsfx)], ..Default::default() };
+
+    with_sum(&"0".repeat(64));
+    let cat = h.fetch_catalog().unwrap();
+    let err = h.apply(&cat, &req, &mut |_| {}).unwrap_err();
+    assert!(err.contains("checksum"), "{err}");
+    assert!(!tmp.path().join("REAPER/Effects/null_jsfx/tilt.jsfx").exists());
+
+    with_sum(&real);
+    let cat = h.fetch_catalog().unwrap();
+    h.apply(&cat, &req, &mut |_| {}).unwrap();
+    assert!(tmp.path().join("REAPER/Effects/null_jsfx/tilt.jsfx").is_file());
+}
+
+/// A catalog whose names would reach outside the folders it installs into is refused whole,
+/// before anything is downloaded or written.
+#[test]
+fn catalog_with_paths_outside_is_refused() {
+    let cat = r#"{"schema":1,"version":"9.9","repo":"r","packages":{"jsfx":"J.zip","native":{}},
+      "hub":{"version":"0.0.1"},
+      "plugins":[{"id":"../../../../home/evil","name":"E","group":"g","formats":["jsfx"]}],
+      "chains":[{"name":"c","file":"../../../../home/Documents","plugins":[],"folders":{"jsfx":"x"}}]}"#;
+    assert!(Catalog::parse(cat).unwrap_err().contains("not allowed"));
 }
 
 /// FX chains follow the plugins, presets merge into the user's own, remote and fonts come and go.

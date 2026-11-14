@@ -21,7 +21,8 @@ pub fn run(catalog: &Catalog, data: &Path, progress: &mut dyn FnMut(Progress)) -
     let _ = std::fs::remove_dir_all(data.join("hub-update"));
     let dest = dir.join(file);
     let url = package::asset_url(&catalog.version, file);
-    package::download(&url, &dest, &mut |done, total| progress(Progress { stage: "download", text: file.clone(), done, total }))?;
+    let sha = catalog.sha256_of(file);
+    package::download(&url, &dest, sha.as_deref(), &mut |done, total| progress(Progress { stage: "download", text: file.clone(), done, total }))?;
     progress(Progress { stage: "hub", text: "Installing the new NULL JSFX Hub".into(), done: 0, total: 0 });
     install(&dest)
 }

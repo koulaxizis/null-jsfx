@@ -110,13 +110,16 @@ pub fn run_elevated(ops: &[Op], work: &Path) -> Result<(), String> {
     let plan = work.join("elevated-ops.json");
     let result = work.join("elevated-ops.result");
     let _ = fs::remove_file(&result);
-    fs::write(&plan, serde_json::to_vec(ops).unwrap()).map_err(|e| e.to_string())?;
+    let bytes = serde_json::to_vec(ops).unwrap();
+    fs::write(&plan, &bytes).map_err(|e| e.to_string())?;
     let exe = std::env::current_exe().map_err(|e| e.to_string())?;
     let q = |p: &Path| p.to_string_lossy().replace('\'', "''");
+    // the elevated copy runs the plan only if it still has this checksum
     let script = format!(
-        "$p = Start-Process -FilePath '{}' -ArgumentList '--apply-ops','\"{}\"' -Verb RunAs -Wait -PassThru -WindowStyle Hidden; exit $p.ExitCode",
+        "$p = Start-Process -FilePath '{}' -ArgumentList '--apply-ops','\"{}\"','{}' -Verb RunAs -Wait -PassThru -WindowStyle Hidden; exit $p.ExitCode",
         q(&exe),
-        q(&plan)
+        q(&plan),
+        plan_sum(&bytes)
     );
     use std::os::windows::process::CommandExt;
     let status = Command::new("powershell")
@@ -143,11 +146,34 @@ pub fn run_elevated(_ops: &[Op], _work: &Path) -> Result<(), String> {
     Err("No permission to write there. Pick a folder you own in Settings.".into())
 }
 
-/// The elevated side of `run_elevated`: `<hub> --apply-ops <plan.json>`. Writes "ok" or the
-/// errors next to the plan and returns the exit code.
-pub fn main_apply_ops(plan: &Path) -> i32 {
+/// The SHA-256 of a plan, in hex.
+pub fn plan_sum(bytes: &[u8]) -> String {
+    use sha2::{Digest, Sha256};
+    Sha256::digest(bytes).iter().map(|b| format!("{b:02x}")).collect()
+}
+
+/// A plan the elevated copy may run: every path absolute and without "..", and every copy taken
+/// from the folder the plan sits in (the Hub's staging folder).
+pub fn plan_ok(ops: &[Op], staging: &Path) -> bool {
+    let plain = |p: &Path| p.is_absolute() && !p.components().any(|c| matches!(c, std::path::Component::ParentDir));
+    ops.iter().all(|op| match op {
+        Op::Copy { from, to } => plain(from) && plain(to) && from.starts_with(staging),
+        Op::Remove { path, keep } => plain(path) && keep.as_deref().map_or(true, plain),
+    })
+}
+
+/// The elevated side of `run_elevated`: `<hub> --apply-ops <plan.json> <sha256>`. Runs the plan
+/// only if it still has the checksum the Hub gave, writes "ok" or the errors next to the plan
+/// and returns the exit code.
+pub fn main_apply_ops(plan: &Path, sum: &str) -> i32 {
     let result = plan.with_extension("result");
-    let ops: Vec<Op> = match fs::read(plan).ok().and_then(|b| serde_json::from_slice(&b).ok()) {
+    let staging = plan.parent().unwrap_or(Path::new(""));
+    let ops: Vec<Op> = match fs::read(plan)
+        .ok()
+        .filter(|b| plan_sum(b) == sum.to_ascii_lowercase())
+        .and_then(|b| serde_json::from_slice(&b).ok())
+        .filter(|ops: &Vec<Op>| plan_ok(ops, staging))
+    {
         Some(ops) => ops,
         None => {
             let _ = fs::write(&result, "could not read the list of steps");
@@ -168,6 +194,30 @@ pub fn main_apply_ops(plan: &Path) -> i32 {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn the_elevated_copy_runs_only_the_plan_it_was_given() {
+        let dir = std::env::temp_dir().join(format!("null-hub-plan-{}", std::process::id()));
+        let _ = fs::remove_dir_all(&dir);
+        fs::create_dir_all(dir.join("in")).unwrap();
+        fs::write(dir.join("in").join("a.txt"), b"a").unwrap();
+        let ops = vec![Op::Copy { from: dir.join("in").join("a.txt"), to: dir.join("out").join("a.txt") }];
+        let plan = dir.join("elevated-ops.json");
+        let bytes = serde_json::to_vec(&ops).unwrap();
+        fs::write(&plan, &bytes).unwrap();
+        // changed after the Hub wrote it: refused, nothing copied
+        assert_eq!(main_apply_ops(&plan, &plan_sum(b"something else")), 2);
+        assert!(!dir.join("out").exists());
+        assert_eq!(main_apply_ops(&plan, &plan_sum(&bytes)), 0);
+        assert_eq!(fs::read(dir.join("out").join("a.txt")).unwrap(), b"a");
+        // a copy from outside the staging folder, or a path with "..", is refused
+        let outside = vec![Op::Copy { from: std::env::temp_dir().join("x"), to: dir.join("y") }];
+        assert!(!plan_ok(&outside, &dir));
+        let up = vec![Op::Remove { path: dir.join("..").join("z"), keep: None }];
+        assert!(!plan_ok(&up, &dir));
+        assert!(plan_ok(&ops, &dir));
+        let _ = fs::remove_dir_all(&dir);
+    }
 
     #[test]
     fn copy_replaces_bundle_and_remove_prunes_empty_folders() {

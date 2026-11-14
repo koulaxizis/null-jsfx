@@ -221,6 +221,20 @@ def catalog(version, notes, date):
     }
 
 
+def digests(text):
+    """{asset name: sha256 hex} from `gh api .../releases/tags/T --jq '.assets[] | {name, digest}'`.
+    The catalog itself is left out (it is built after them), and so is an asset without a digest."""
+    out = {}
+    for line in text.splitlines():
+        if not line.strip():
+            continue
+        a = json.loads(line)
+        d = a.get("digest") or ""
+        if a["name"] != "NULL-JSFX-Catalog.json" and re.fullmatch(r"sha256:[0-9a-f]{64}", d):
+            out[a["name"]] = d[len("sha256:"):]
+    return dict(sorted(out.items()))
+
+
 def check(cat):
     errors = []
     ids = [p["id"] for p in cat["plugins"]]
@@ -244,9 +258,14 @@ def main():
     ap.add_argument("--date", default=datetime.date.today().isoformat())
     ap.add_argument("--out", type=Path)
     ap.add_argument("--check", action="store_true")
+    ap.add_argument("--digests", type=Path,
+                    help="the release's assets as JSON lines {name, digest} (GitHub's \"sha256:...\"); "
+                         "the Hub checks every whole download against them")
     args = ap.parse_args()
     notes = args.notes.read_text(encoding="utf-8") if args.notes and args.notes.exists() else ""
     cat = catalog(args.version, notes, args.date)
+    if args.digests:
+        cat["sha256"] = digests(args.digests.read_text(encoding="utf-8"))
     check(cat)
     if args.check:
         print(f"build_catalog: ok, {len(cat['plugins'])} plugins, {len(cat['chains'])} FX chains")
