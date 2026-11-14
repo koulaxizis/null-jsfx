@@ -307,5 +307,8 @@ jobs:
           # a draft has no publish date yet: today's, until the catalog is built again on publish
           date="$(gh release view "$TAG" --json isDraft,publishedAt --jq 'if .isDraft then "" else .publishedAt[:10] end')"
           date="${date:-$(date -u +%F)}"
-          python3 tools/build_catalog.py --version "$TAG" --notes notes.md --date "$date" --out NULL-JSFX-Catalog.json
+          # the checksum of every asset, which the Hub checks each whole download against (the
+          # list of releases, because releases/tags/<tag> does not find a draft)
+          gh api "repos/$GITHUB_REPOSITORY/releases?per_page=30" --jq ".[] | select(.tag_name == \"$TAG\") | .assets[] | {name, digest}" > digests.jsonl
+          python3 tools/build_catalog.py --version "$TAG" --notes notes.md --date "$date" --digests digests.jsonl --out NULL-JSFX-Catalog.json
           for i in 1 2 3 4 5; do gh release upload "$TAG" NULL-JSFX-Catalog.json --clobber && exit 0; sleep $((i * 30)); done; exit 1

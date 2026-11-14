@@ -177,6 +177,29 @@ pub struct Catalog {
     pub chains: Vec<Chain>,
     #[serde(default)]
     pub extras: Vec<Extra>,
+    /// release file name -> its SHA-256 (hex), from GitHub's digests of the release's assets;
+    /// a file downloaded whole is checked against it (catalogs before 3.3.1 have none)
+    #[serde(default)]
+    pub sha256: BTreeMap<String, String>,
+}
+
+/// An id as `tools/build_catalog.py` makes them: lowercase letters, digits, `_` and `-`.
+pub fn is_id(s: &str) -> bool {
+    !s.is_empty() && s.len() <= 64 && s.bytes().all(|b| b.is_ascii_lowercase() || b.is_ascii_digit() || b == b'_' || b == b'-')
+}
+
+/// A release version: numbers with dots (2.10, 3.3.1), or "dev" for a build from a branch.
+pub fn is_version(s: &str) -> bool {
+    s == "dev" || (!s.is_empty() && s.len() <= 32 && s.split('.').all(|p| !p.is_empty() && p.bytes().all(|b| b.is_ascii_digit())))
+}
+
+/// One plain file or folder name: no separators, no drive, nothing that walks up or hides.
+pub fn is_file_name(s: &str) -> bool {
+    !s.is_empty()
+        && s.len() <= 128
+        && !s.starts_with('.')
+        && !s.ends_with([' ', '.'])
+        && s.chars().all(|c| c.is_ascii_alphanumeric() || matches!(c, ' ' | '.' | '_' | '-' | '+' | '(' | ')'))
 }
 
 impl Catalog {
@@ -189,6 +212,7 @@ impl Catalog {
             ));
         }
         let mut catalog: Catalog = serde_json::from_value(probe).map_err(|e| format!("catalog: {e}"))?;
+        catalog.check()?;
         if catalog.packages.lv2.iter().any(|os| os == crate::paths::os_name()) {
             for p in &mut catalog.plugins {
                 if p.formats.contains(&Format::Vst3) && !p.formats.contains(&Format::Lv2) {
@@ -205,6 +229,64 @@ impl Catalog {
             }
         }
         Ok(catalog)
+    }
+
+    /// Every name the Hub turns into a path or a download address must be a plain name: ids,
+    /// versions, package and chain file names, chain folders. Anything else is refused whole.
+    fn check(&self) -> Result<(), String> {
+        let bad = |what: &str, v: &str| Err(format!("catalog: {what} {v:?} is not allowed; the catalog may be damaged"));
+        for v in std::iter::once(&self.version).chain(&self.previous).chain(std::iter::once(&self.hub.version)) {
+            if !is_version(v) {
+                return bad("version", v);
+            }
+        }
+        for p in &self.plugins {
+            if !is_id(&p.id) {
+                return bad("plugin id", &p.id);
+            }
+        }
+        for g in &self.groups {
+            if !is_id(&g.id) {
+                return bad("group id", &g.id);
+            }
+        }
+        for e in &self.extras {
+            if !is_id(&e.id) {
+                return bad("extra id", &e.id);
+            }
+        }
+        let files = std::iter::once(&self.packages.jsfx).chain(self.packages.native.values()).chain(self.hub.assets.values());
+        for f in files {
+            if !is_file_name(f) {
+                return bad("file", f);
+            }
+        }
+        for c in &self.chains {
+            if !is_file_name(&c.file) {
+                return bad("FX chain file", &c.file);
+            }
+            for folder in c.folders.values() {
+                if !is_file_name(folder) {
+                    return bad("FX chain folder", folder);
+                }
+            }
+            for id in &c.plugins {
+                if !is_id(id) {
+                    return bad("plugin id", id);
+                }
+            }
+        }
+        for (name, hex) in &self.sha256 {
+            if !is_file_name(name) || hex.len() != 64 || !hex.bytes().all(|b| b.is_ascii_hexdigit()) {
+                return bad("checksum of", name);
+            }
+        }
+        Ok(())
+    }
+
+    /// The SHA-256 the release lists for one of its files (lowercase hex), if any.
+    pub fn sha256_of(&self, file: &str) -> Option<String> {
+        self.sha256.get(file).map(|h| h.to_ascii_lowercase())
     }
 
     pub fn plugin(&self, id: &str) -> Option<&Plugin> {
@@ -241,6 +323,39 @@ mod tests {
         assert_eq!(compare_versions("2.1", "2.1.0"), Ordering::Equal);
         assert_eq!(compare_versions("v2.2", "2.1"), Ordering::Greater);
         assert_eq!(compare_versions("dev", "2.1"), Ordering::Less);
+    }
+
+    fn minimal(plugin_id: &str, chain_file: &str, folder: &str, version: &str, jsfx: &str) -> String {
+        format!(
+            r#"{{"schema": 1, "version": "{version}", "repo": "r", "packages": {{"jsfx": "{jsfx}", "native": {{"Linux": "N.zip"}}}},
+            "hub": {{"version": "3.3", "assets": {{"Linux": "NULL-JSFX-Hub-Linux.AppImage"}}}},
+            "plugins": [{{"id": "{plugin_id}", "name": "T", "group": "one-slider", "formats": ["jsfx"]}}],
+            "chains": [{{"name": "c", "file": "{chain_file}", "plugins": ["tilt"], "folders": {{"jsfx": "{folder}"}}}}]}}"#
+        )
+    }
+
+    #[test]
+    fn names_that_would_leave_their_folder_are_refused() {
+        let ok = minimal("tilt", "Mastering.RfxChain", "NULL JSFX", "3.3", "NULL-JSFX-JSFX.zip");
+        assert!(Catalog::parse(&ok).is_ok());
+        for (id, file, folder, version, jsfx) in [
+            ("../../../../home/evil", "a.RfxChain", "NULL JSFX", "3.3", "J.zip"),
+            ("Tilt", "a.RfxChain", "NULL JSFX", "3.3", "J.zip"),
+            ("tilt", "../../../../home/Documents", "NULL JSFX", "3.3", "J.zip"),
+            ("tilt", "a.RfxChain", "../..", "3.3", "J.zip"),
+            ("tilt", "a.RfxChain", "x/y", "3.3", "J.zip"),
+            ("tilt", "a.RfxChain", "C:", "3.3", "J.zip"),
+            ("tilt", "a.RfxChain", "NULL JSFX", "3.3/../../x", "J.zip"),
+            ("tilt", "a.RfxChain", "NULL JSFX", "3.3", "..\\\\J.zip"),
+            ("tilt", "a.RfxChain", "NULL JSFX", "3.3", ".hidden"),
+        ] {
+            let text = minimal(id, file, folder, version, jsfx);
+            assert!(Catalog::parse(&text).unwrap_err().contains("not allowed"), "{id} {file} {folder} {version} {jsfx}");
+        }
+        let bad_sum = ok.replacen("\"schema\": 1,", "\"schema\": 1, \"sha256\": {\"J.zip\": \"xyz\"},", 1);
+        assert!(Catalog::parse(&bad_sum).is_err());
+        let good_sum = ok.replacen("\"schema\": 1,", &format!("\"schema\": 1, \"sha256\": {{\"J.zip\": \"{}\"}},", "A".repeat(64)), 1);
+        assert_eq!(Catalog::parse(&good_sum).unwrap().sha256_of("J.zip").unwrap(), "a".repeat(64));
     }
 
     #[test]

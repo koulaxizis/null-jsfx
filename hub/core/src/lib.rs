@@ -405,7 +405,7 @@ impl Hub {
             // only presets to take out (plugins installed before their copies were kept): fetch
             // them if we can, but a removal goes ahead without them, leaving the presets file
             let only_unmerges = req.install.iter().all(|(_, f)| f.is_native()) && plan.copies.is_empty() && plan.merges.is_empty();
-            match self.package(&release, &catalog.packages.jsfx, &want, &cache, progress) {
+            match self.package(catalog, &release, &catalog.packages.jsfx, &want, &cache, progress) {
                 Ok(p) => jsfx = Some(p),
                 Err(_) if only_unmerges => plan.unmerges.retain(|(d, _)| kept_copy(d).is_file()),
                 Err(e) => return Err(e),
@@ -416,7 +416,7 @@ impl Hub {
             // an earlier release (rolling back) may predate the ARM64 packages: it gets the x64 one
             let os = if release == catalog.version { paths::native_key(&catalog.packages.native) } else { paths::os_name().to_string() };
             let name = catalog.packages.native.get(&os).ok_or_else(|| format!("This release has no VST3/CLAP package for {os}"))?;
-            native = Some(self.package(&release, name, &want, &cache, progress)?);
+            native = Some(self.package(catalog, &release, name, &want, &cache, progress)?);
         }
         self.prune_cache(&cache);
 
@@ -634,7 +634,7 @@ impl Hub {
                 } else {
                     &catalog.packages.jsfx
                 };
-                *slot = Some(self.package(&catalog.version, file, &[], &cache, progress)?);
+                *slot = Some(self.package(catalog, &catalog.version, file, &[], &cache, progress)?);
             }
             let (dest, src) = paths::plugin_paths(t, id, *f);
             let files = slot.as_mut().unwrap().files(&src);
@@ -772,9 +772,11 @@ impl Hub {
 
     /// A release package: the copy in the cache, or when the request needs only a small part of
     /// it, just those parts over range requests; otherwise the whole zip, kept for next time.
-    fn package(&self, release: &str, name: &str, want: &[String], cache: &Path, progress: &mut dyn FnMut(Progress)) -> Result<Source, String> {
+    fn package(&self, catalog: &Catalog, release: &str, name: &str, want: &[String], cache: &Path, progress: &mut dyn FnMut(Progress)) -> Result<Source, String> {
         let dest = cache.join(name);
         let url = package::asset_url(release, name);
+        // the catalog's checksums are those of its own release, not of the earlier ones
+        let sha = if release == catalog.version { catalog.sha256_of(name) } else { None };
         if !dest.is_file() {
             progress(Progress { stage: "download", text: name.to_string(), done: 0, total: 0 });
             if let Some(remote) = RemoteZip::open(&url)? {
@@ -785,13 +787,13 @@ impl Hub {
             }
         }
         let mut report = |done, total| progress(Progress { stage: "download", text: name.to_string(), done, total });
-        package::download(&url, &dest, &mut report)?;
+        package::download(&url, &dest, sha.as_deref(), &mut report)?;
         match Package::open(&dest) {
             Ok(p) => Ok(Source::Local(p)),
             Err(_) => {
                 // a damaged copy: fetch it once more
                 let _ = fs::remove_file(&dest);
-                package::download(&url, &dest, &mut report)?;
+                package::download(&url, &dest, sha.as_deref(), &mut report)?;
                 Package::open(&dest).map(Source::Local)
             }
         }

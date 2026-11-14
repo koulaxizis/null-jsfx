@@ -24,6 +24,13 @@ let detailId = null;
 function esc(s) {
   return String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 }
+/** a link or media address from the catalog: https only, anything else gives `fallback` */
+function safeUrl(u, fallback = "") {
+  try {
+    const x = new URL(String(u ?? ""));
+    return x.protocol === "https:" && !x.username && !x.password ? x.href : fallback;
+  } catch (e) { return fallback; }
+}
 
 function plugins() { return V?.catalog?.plugins ?? []; }
 /** the effects; the Rack (group "extras") is listed under Extras */
@@ -175,9 +182,10 @@ function shown() {
 
 function shotHtml(p, big) {
   // the plugin page plays the presentation video, with its poster until it starts
-  if (big && p.video) return `<video src="${esc(p.video)}" poster="${esc(p.video.replace(/\.mp4$/, ".jpg"))}" controls playsinline preload="none"></video>`;
-  return p.shot
-    ? `<img src="${esc(p.shot)}" alt="" ${big ? "" : 'loading="lazy"'}>`
+  const video = safeUrl(p.video), shot = safeUrl(p.shot);
+  if (big && video) return `<video src="${esc(video)}" poster="${esc(video.replace(/\.mp4$/, ".jpg"))}" controls playsinline preload="none"></video>`;
+  return shot
+    ? `<img src="${esc(shot)}" alt="" ${big ? "" : 'loading="lazy"'}>`
     : "NULL";
 }
 
@@ -188,18 +196,18 @@ function chips(p) {
       const x = s[f] || {};
       const cls = x.outdated ? "chip old" : x.installed ? "chip on" : "chip";
       const title = `${label}: ${x.outdated ? tr("update available") : x.held ? tr("kept at {v}", { v: x.version }) : x.installed ? tr("installed") : tr("not installed")}`;
-      return `<span class="${cls}" title="${title}">${label}</span>`;
+      return `<span class="${cls}" title="${esc(title)}">${label}</span>`;
     })
     .join("");
 }
 
 function cardButton(p) {
-  const remove = isInstalled(p.id) ? `<button class="ghost mini" data-act="remove" data-id="${p.id}" title="${esc(tr("Remove {name} (every installed format)", { name: p.name }))}" aria-label="${esc(tr("Remove {name}", { name: p.name }))}">&times;</button>` : "";
-  if (outdatedFormats(p.id).length) return `${remove}<button data-act="update" data-id="${p.id}">${tr("Update")}</button>`;
+  const remove = isInstalled(p.id) ? `<button class="ghost mini" data-act="remove" data-id="${esc(p.id)}" title="${esc(tr("Remove {name} (every installed format)", { name: p.name }))}" aria-label="${esc(tr("Remove {name}", { name: p.name }))}">&times;</button>` : "";
+  if (outdatedFormats(p.id).length) return `${remove}<button data-act="update" data-id="${esc(p.id)}">${tr("Update")}</button>`;
   const add = missing(p);
-  if (add.length && isInstalled(p.id)) return `${remove}<button data-act="install" data-id="${p.id}" title="${esc(tr("Install the {formats} version", { formats: add.map(label).join(tr(" and ")) }))}">+ ${add.map(label).join(" ")}</button>`;
-  if (add.length) return `<button data-act="install" data-id="${p.id}">${tr("Install")}</button>`;
-  return `${remove}<button class="done" data-act="open" data-id="${p.id}">${tr("Installed")}</button>`;
+  if (add.length && isInstalled(p.id)) return `${remove}<button data-act="install" data-id="${esc(p.id)}" title="${esc(tr("Install the {formats} version", { formats: add.map(label).join(tr(" and ")) }))}">+ ${add.map(label).join(" ")}</button>`;
+  if (add.length) return `<button data-act="install" data-id="${esc(p.id)}">${tr("Install")}</button>`;
+  return `${remove}<button class="done" data-act="open" data-id="${esc(p.id)}">${tr("Installed")}</button>`;
 }
 
 function render() {
@@ -218,7 +226,7 @@ function render() {
   $("n-new").textContent = fresh || "";
   const hu = $("hub-update");
   hu.hidden = !V.hubUpdate;
-  if (V.hubUpdate) hu.innerHTML = `<span>${esc(tr("A new NULL JSFX Hub ({v}) is out.", { v: V.hubUpdate[0] }))}</span><button id="hub-self" class="primary" ${busy ? "disabled" : ""}>${tr("Update the Hub")}</button><a href="${esc(V.hubUpdate[1])}" data-ext>${tr("or download it")}</a>`;
+  if (V.hubUpdate) hu.innerHTML = `<span>${esc(tr("A new NULL JSFX Hub ({v}) is out.", { v: V.hubUpdate[0] }))}</span><button id="hub-self" class="primary" ${busy ? "disabled" : ""}>${tr("Update the Hub")}</button><a href="${esc(safeUrl(V.hubUpdate[1], "https://nulljsfx.tech"))}" data-ext>${tr("or download it")}</a>`;
   $("release").textContent = cat ? `${tr("Release {v}", { v: cat.version })} · ${upd ? tr("{n} to update", { n: upd }) : tr("up to date")}` : tr("Offline");
   $("release").classList.toggle("hot", upd > 0);
   const ua = $("update-all");
@@ -227,7 +235,7 @@ function render() {
   ua.textContent = tr("Update all ({n})", { n: upd });
 
   $("nav-groups").innerHTML = (cat?.groups ?? [])
-    .map((g) => `<button data-view="group:${g.id}">${esc(tr(g.name))} <b>${plugins().filter((p) => p.group === g.id).length}</b></button>`)
+    .map((g) => `<button data-view="group:${esc(g.id)}">${esc(tr(g.name))} <b>${plugins().filter((p) => p.group === g.id).length}</b></button>`)
     .join("");
   document.querySelectorAll("#nav button").forEach((b) => b.classList.toggle("active", b.dataset.view === view));
 
@@ -260,7 +268,7 @@ function render() {
 
   $("grid").innerHTML = list
     .map(
-      (p) => `<article class="card" data-id="${p.id}" tabindex="0">
+      (p) => `<article class="card" data-id="${esc(p.id)}" tabindex="0">
         <div class="shot">${shotHtml(p)}</div>
         <div class="card-body">
           <div class="card-name">${esc(p.name)}</div>
@@ -420,10 +428,10 @@ function renderExtras() {
       const s = extraSt(x.id);
       const status = s.outdated ? `${tr("update")}: ${s.version ? `${esc(s.version)} → ` : ""}${esc(V.catalog.version)}` : s.installed ? `${tr("on")}${s.version ? ` · ${esc(s.version)}` : ""}` : tr("off");
       const buttons = s.installed
-        ? `${s.outdated ? `<button data-extra="${x.id}" data-do="add">${tr("Update")}</button>` : ""}<button class="ghost" data-extra="${x.id}" data-do="remove">${tr("Turn off")}</button>`
-        : `<button data-extra="${x.id}" data-do="add">${tr("Turn on")}</button>`;
+        ? `${s.outdated ? `<button data-extra="${esc(x.id)}" data-do="add">${tr("Update")}</button>` : ""}<button class="ghost" data-extra="${esc(x.id)}" data-do="remove">${tr("Turn off")}</button>`
+        : `<button data-extra="${esc(x.id)}" data-do="add">${tr("Turn on")}</button>`;
       const steps = x.id === "remote" && s.installed ? `<button class="ghost" data-steps>${tr("Setup steps in REAPER")}</button>` : "";
-      return `<div class="extra" data-id="${x.id}">
+      return `<div class="extra" data-id="${esc(x.id)}">
         <div class="extra-head"><span class="extra-name">${esc(tr(x.name))}</span><span class="st ${s.outdated ? "old" : ""}">${status}</span></div>
         <p>${esc(tr(x.desc))}</p>
         <div class="extra-actions">${buttons}${steps}</div>
@@ -521,11 +529,12 @@ function stopDemo() {
 function setDemo(p) {
   stopDemo();
   const d = p.demo;
-  $("d-demo").hidden = !d || !V.catalog.demo_dry;
+  const wet = safeUrl(d?.url), dry = safeUrl(V.catalog.demo_dry);
+  $("d-demo").hidden = !wet || !dry;
   if ($("d-demo").hidden) return;
-  if (demo.wet.src !== d.url) {
-    demo.wet.src = d.url;
-    demo.dry.src = V.catalog.demo_dry;
+  if (demo.wet.src !== wet) {
+    demo.wet.src = wet;
+    demo.dry.src = dry;
     demo.wet.currentTime = demo.dry.currentTime = 0;
   }
   pickDemo("wet");
@@ -562,12 +571,12 @@ function openDetail(id) {
   $("d-shot").innerHTML = shotHtml(p, true);
   // the video and the demo never play over each other
   $("d-shot").querySelector("video")?.addEventListener("play", () => { demo.wet.pause(); demo.dry.pause(); $("d-play").textContent = tr("Play"); });
-  $("d-guide").href = p.guide || "https://nulljsfx.tech";
+  $("d-guide").href = safeUrl(p.guide, "https://nulljsfx.tech");
   const s = st(id);
   $("d-formats").innerHTML = formats().filter(([f]) => p.formats.includes(f))
     .map(([f, label, desc]) => {
       const x = s[f] || {};
-      const status = x.outdated ? `${tr("update")}: ${x.version ? `${x.version} → ` : ""}${V.catalog.version}` : x.held ? tr("kept at {v}", { v: x.version }) : x.installed ? `${tr("installed")} ${x.version ?? ""}` : tr("not installed");
+      const status = esc(x.outdated ? `${tr("update")}: ${x.version ? `${x.version} → ` : ""}${V.catalog.version}` : x.held ? tr("kept at {v}", { v: x.version }) : x.installed ? `${tr("installed")} ${x.version ?? ""}` : tr("not installed"));
       return `<label><input type="checkbox" data-f="${f}" ${x.installed ? "checked" : ""} ${busy ? "disabled" : ""}> ${label}</label>
         <span class="desc">${esc(tr(desc))}</span><span class="st ${x.outdated ? "old" : ""}">${status}</span>`;
     })
@@ -623,7 +632,8 @@ document.addEventListener("click", (e) => {
   const ext = e.target.closest("a[data-ext]");
   if (ext) {
     e.preventDefault();
-    T.opener.openUrl(ext.href);
+    const url = safeUrl(ext.getAttribute("href"));
+    if (url) T.opener.openUrl(url);
     return;
   }
   if (e.target.closest("#hub-self")) return selfUpdate();

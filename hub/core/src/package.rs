@@ -34,6 +34,32 @@ fn agent() -> ureq::Agent {
         .into()
 }
 
+/// scheme://host[:port] of an address
+fn origin(url: &str) -> &str {
+    let start = url.find("://").map(|i| i + 3).unwrap_or(0);
+    let end = url[start..].find(['/', '?', '#']).map(|j| start + j).unwrap_or(url.len());
+    &url[..end]
+}
+
+fn host(url: &str) -> &str {
+    let o = origin(url);
+    let h = o.split_once("://").map(|(_, h)| h).unwrap_or(o);
+    let h = h.rsplit_once('@').map(|(_, h)| h).unwrap_or(h);
+    h.split(':').next().unwrap_or(h)
+}
+
+/// Where a download may go: GitHub's own hosts over HTTPS, or where the releases are (a test
+/// server when NULL_JSFX_HUB_RELEASES says so).
+pub fn allowed(url: &str) -> bool {
+    if origin(url) == origin(&releases_base()) {
+        return true;
+    }
+    let h = host(url).to_ascii_lowercase();
+    url.starts_with("https://")
+        && !origin(url).contains('@')
+        && (h == "github.com" || h.ends_with(".github.com") || h == "githubusercontent.com" || h.ends_with(".githubusercontent.com"))
+}
+
 /// GET with redirects followed by hand, without reading the redirect pages (GitHub sends the
 /// release files from another host, and some proxies garble those small pages).
 fn get(url: &str, range: Option<(u64, u64)>) -> Result<ureq::http::Response<ureq::Body>, String> {
@@ -47,12 +73,16 @@ fn get(url: &str, range: Option<(u64, u64)>) -> Result<ureq::http::Response<ureq
         let status = res.status().as_u16();
         if (300..400).contains(&status) {
             let next = res.headers().get("location").and_then(|v| v.to_str().ok()).ok_or_else(|| format!("{url}: redirect without a target"))?;
-            at = if next.starts_with("http") {
+            at = if next.starts_with("http://") || next.starts_with("https://") {
                 next.to_string()
+            } else if next.starts_with('/') && !next.starts_with("//") {
+                format!("{}{}", origin(&at), next)
             } else {
-                let host_end = at.find("://").map(|i| i + 3).and_then(|i| at[i..].find('/').map(|j| i + j)).unwrap_or(at.len());
-                format!("{}{}", &at[..host_end], next)
+                return Err(format!("{url}: redirect to an unexpected place"));
             };
+            if !allowed(&at) {
+                return Err(format!("{url}: redirect to {} refused (only GitHub over HTTPS)", host(&at)));
+            }
             continue;
         }
         if status == 404 {
@@ -76,11 +106,37 @@ fn net_error(url: &str, e: ureq::Error) -> String {
     format!("Could not reach {}: {e}", url.split('/').nth(2).unwrap_or(url))
 }
 
+/// The SHA-256 of a file, lowercase hex.
+pub fn sha256_file(path: &Path) -> Option<String> {
+    use sha2::Digest;
+    let mut file = File::open(path).ok()?;
+    let mut h = sha2::Sha256::new();
+    let mut buf = vec![0u8; 1 << 16];
+    loop {
+        match file.read(&mut buf) {
+            Ok(0) => break,
+            Ok(n) => h.update(&buf[..n]),
+            Err(_) => return None,
+        }
+    }
+    Some(hex(&h.finalize()))
+}
+
+fn hex(b: &[u8]) -> String {
+    b.iter().map(|x| format!("{x:02x}")).collect()
+}
+
 /// Downloads `url` to `dest` unless it is already there, through a .part file so a broken
-/// download is never taken for a whole one. `progress(done, total)` follows the bytes.
-pub fn download(url: &str, dest: &Path, progress: &mut dyn FnMut(u64, u64)) -> Result<PathBuf, String> {
+/// download is never taken for a whole one. `progress(done, total)` follows the bytes. With
+/// `sha256` (the release's checksum of the file) a copy that does not match is never kept: a
+/// cached one is fetched again, a new one is refused.
+pub fn download(url: &str, dest: &Path, sha256: Option<&str>, progress: &mut dyn FnMut(u64, u64)) -> Result<PathBuf, String> {
+    use sha2::Digest;
     if dest.is_file() {
-        return Ok(dest.to_path_buf());
+        if sha256.is_none_or(|want| sha256_file(dest).as_deref() == Some(want)) {
+            return Ok(dest.to_path_buf());
+        }
+        let _ = fs::remove_file(dest);
     }
     if let Some(dir) = dest.parent() {
         fs::create_dir_all(dir).map_err(|e| format!("{}: {e}", dir.display()))?;
@@ -92,11 +148,13 @@ pub fn download(url: &str, dest: &Path, progress: &mut dyn FnMut(u64, u64)) -> R
     let mut out = File::create(&part).map_err(|e| format!("{}: {e}", part.display()))?;
     let mut buf = vec![0u8; 1 << 16];
     let mut done = 0u64;
+    let mut sum = sha2::Sha256::new();
     loop {
         let n = body.read(&mut buf).map_err(|e| format!("Download of {url} broke off: {e}"))?;
         if n == 0 {
             break;
         }
+        sum.update(&buf[..n]);
         out.write_all(&buf[..n]).map_err(|e| format!("{}: {e}", part.display()))?;
         done += n as u64;
         progress(done, total);
@@ -106,8 +164,21 @@ pub fn download(url: &str, dest: &Path, progress: &mut dyn FnMut(u64, u64)) -> R
         let _ = fs::remove_file(&part);
         return Err(format!("Download of {url} was cut short ({done} of {total} bytes)"));
     }
+    if let Some(want) = sha256 {
+        if hex(&sum.finalize()) != want {
+            let _ = fs::remove_file(&part);
+            return Err(format!("The download of {} does not match the release's checksum; nothing was changed. Try again later.", dest.file_name().unwrap_or_default().to_string_lossy()));
+        }
+    }
     fs::rename(&part, dest).map_err(|e| format!("{}: {e}", dest.display()))?;
     Ok(dest.to_path_buf())
+}
+
+/// True for a path inside a package entry that stays below where it is unpacked: plain names
+/// only, on every system (no "..", no "C:" or other drive, no leading slash, no empty parts).
+pub fn safe_rel(rel: &str) -> bool {
+    rel.is_empty()
+        || rel.split('/').all(|c| !c.is_empty() && c != "." && c != ".." && !c.contains([':', '\\', '\0']))
 }
 
 /// A release zip, with entry names normalised: forward slashes and without the top folder
@@ -153,7 +224,7 @@ impl Package {
         }
         for (name, i) in entries {
             let rel = &name[path.len()..].trim_start_matches('/');
-            if rel.split('/').any(|c| c == "..") {
+            if !safe_rel(rel) {
                 return Err(format!("unsafe path in package: {name}"));
             }
             let target = if rel.is_empty() { dest.to_path_buf() } else { dest.join(rel) };
@@ -287,7 +358,9 @@ impl RemoteZip {
             cd_size = le64(&z64, 40);
             cd_off = le64(&z64, 48);
         }
-        let (cd, _) = range(url, cd_off, cd_off + cd_size)?.ok_or("range requests stopped working")?;
+        // a directory that does not fit in the file (or is absurdly big) is a damaged package
+        let cd_end = cd_off.checked_add(cd_size).filter(|&e| e <= size && cd_size <= 64 << 20).ok_or("damaged package (directory)")?;
+        let (cd, _) = range(url, cd_off, cd_end)?.ok_or("range requests stopped working")?;
         let mut entries = BTreeMap::new();
         let mut i = 0usize;
         while i + 46 <= cd.len() && cd[i..i + 4] == [0x50, 0x4b, 0x01, 0x02] {
@@ -297,6 +370,9 @@ impl RemoteZip {
             let mut comp = le32(&cd, i + 20);
             let mut usize_ = le32(&cd, i + 24);
             let (nlen, xlen, clen) = (le16(&cd, i + 28) as usize, le16(&cd, i + 30) as usize, le16(&cd, i + 32) as usize);
+            if i + 46 + nlen + xlen + clen > cd.len() {
+                return Err("damaged package (directory)".into());
+            }
             let attrs = le32(&cd, i + 38);
             let mut offset = le32(&cd, i + 42);
             let name = String::from_utf8_lossy(&cd[i + 46..i + 46 + nlen]).replace('\\', "/");
@@ -305,6 +381,9 @@ impl RemoteZip {
             let xend = x + xlen;
             while x + 4 <= xend {
                 let (id, len) = (le16(&cd, x), le16(&cd, x + 2) as usize);
+                if x + 4 + len > xend {
+                    break;
+                }
                 if id == 1 {
                     let mut p = x + 4;
                     for field in [&mut usize_, &mut comp, &mut offset] {
@@ -357,11 +436,11 @@ impl RemoteZip {
         let files: Vec<&(String, RemoteEntry)> = list.iter().filter(|(_, e)| !e.dir).collect();
         // the entries of one bundle sit together in the zip: fetch them in one go
         let start = files.iter().map(|(_, e)| e.offset).min().unwrap_or(0);
-        let end = files.iter().map(|(_, e)| e.offset + 30 + 1024 + e.comp).max().unwrap_or(0).min(self.size);
+        let end = files.iter().map(|(_, e)| e.offset.saturating_add(30 + 1024).saturating_add(e.comp)).max().unwrap_or(0).min(self.size);
         let block = if files.is_empty() { Vec::new() } else { range(&self.url, start, end)?.ok_or("range requests stopped working")?.0 };
         for (name, e) in &list {
             let rel = name[path.len()..].trim_start_matches('/');
-            if rel.split('/').any(|c| c == "..") {
+            if !safe_rel(rel) {
                 return Err(format!("unsafe path in package: {name}"));
             }
             let target = if rel.is_empty() { dest.to_path_buf() } else { dest.join(rel) };
@@ -369,17 +448,18 @@ impl RemoteZip {
                 fs::create_dir_all(&target).map_err(|err| format!("{}: {err}", target.display()))?;
                 continue;
             }
-            let at = (e.offset - start) as usize;
+            let at = (e.offset - start) as usize; // start is the smallest offset
             if block.len() < at + 30 || block[at..at + 4] != [0x50, 0x4b, 0x03, 0x04] {
                 return Err(format!("{name}: damaged package"));
             }
             let data_at = at + 30 + le16(&block, at + 26) as usize + le16(&block, at + 28) as usize;
-            let data = block.get(data_at..data_at + e.comp as usize).ok_or_else(|| format!("{name}: damaged package"))?;
+            let data = block.get(data_at..data_at.saturating_add(e.comp as usize)).ok_or_else(|| format!("{name}: damaged package"))?;
             let bytes = match e.method {
                 0 => data.to_vec(),
                 8 => {
-                    let mut out = Vec::with_capacity(e.size as usize);
-                    flate2::read::DeflateDecoder::new(data).read_to_end(&mut out).map_err(|err| format!("{name}: {err}"))?;
+                    let mut out = Vec::with_capacity((e.size as usize).min(64 << 20));
+                    // never more than the directory says (a damaged entry cannot fill the memory)
+                    flate2::read::DeflateDecoder::new(data).take(e.size.saturating_add(1)).read_to_end(&mut out).map_err(|err| format!("{name}: {err}"))?;
                     out
                 }
                 m => return Err(format!("{name}: unsupported compression {m}")),
@@ -442,4 +522,37 @@ pub fn file_matches(path: &Path, crc: u32, size: u64) -> bool {
         }
     }
     sum.sum() == crc
+}
+
+#[cfg(test)]
+mod tests {
+    use super::safe_rel;
+
+    #[test]
+    fn downloads_stay_on_github_over_https() {
+        use super::allowed;
+        assert!(allowed("https://github.com/koulaxizis/null-jsfx/releases/download/3.3/a.zip"));
+        assert!(allowed("https://release-assets.githubusercontent.com/github-production-release-asset/1?x=y"));
+        assert!(allowed("https://objects.githubusercontent.com/a"));
+        for bad in [
+            "http://github.com/a",
+            "https://evil.example/a",
+            "https://github.com.evil.example/a",
+            "https://evilgithubusercontent.com/a",
+            "https://github.com@evil.example/a",
+            "ftp://github.com/a",
+        ] {
+            assert!(!allowed(bad), "{bad}");
+        }
+    }
+
+    #[test]
+    fn only_plain_names_inside_a_package() {
+        for ok in ["", "a", "Contents/x64-win/null_jsfx_tilt.vst3", "a b/c.d"] {
+            assert!(safe_rel(ok), "{ok}");
+        }
+        for bad in ["..", "a/../b", "/etc/passwd", "C:/Users/x/Startup/a.bat", "a/C:x", "a//b", "./a", "a\\b", "a/"] {
+            assert!(!safe_rel(bad), "{bad}");
+        }
+    }
 }

@@ -268,8 +268,8 @@ fn update_tray(handle: &AppHandle) {
 fn main() {
     let args: Vec<String> = std::env::args().collect();
     // the administrator copy started by fileops::run_elevated (Windows)
-    if args.len() == 3 && args[1] == "--apply-ops" {
-        std::process::exit(null_hub_core::fileops::main_apply_ops(std::path::Path::new(&args[2])));
+    if args.len() == 4 && args[1] == "--apply-ops" {
+        std::process::exit(null_hub_core::fileops::main_apply_ops(std::path::Path::new(&args[2]), &args[3]));
     }
     let hidden = args.iter().any(|a| a == HIDDEN);
 

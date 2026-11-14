@@ -18,6 +18,10 @@ const catalog = JSON.parse(fs.readFileSync(catalogFile, 'utf8'));
 catalog.previous = ['2.1'];
 catalog.notes = '## New\n- **NULL JSFX Hub**: install and update from one place\n- Faster `Delay`\n\nThanks for using NULL JSFX.';
 
+// a catalog link or media address that is not https is never used
+const odd = catalog.plugins.find((p) => p.id === 'chorus');
+Object.assign(odd, { guide: 'javascript:alert(1)', shot: 'http://example.invalid/x.png', video: 'file:///C:/x.mp4', demo: { url: 'data:audio/mp3,', preset: 'x' } });
+
 const { mock } = require('./mock.cjs');
 
 // --- checks ----------------------------------------------------------------------------------
@@ -104,6 +108,16 @@ function check(cond, what) {
   check((await page.textContent('#d-apply')) === 'Remove 1', 'unticking an installed format removes it');
   await page.keyboard.press('Escape');
   check((await page.textContent('#d-play')) === 'Play', 'closing the plugin page stops the demo');
+
+  // links and media from the catalog are https only
+  await page.click('.card[data-id="chorus"]');
+  await page.waitForSelector('#detail:not([hidden])');
+  check((await page.getAttribute('#d-guide', 'href')) === 'https://nulljsfx.tech', 'a guide link that is not https falls back to the site');
+  check((await page.locator('#d-shot video, #d-shot img').count()) === 0, 'a picture or video that is not https is left out');
+  check(await page.isHidden('#d-demo'), 'a demo that is not https is left out');
+  await page.click('#d-guide');
+  check((await calls()).filter(([c]) => c === 'open').pop()?.[1] === 'https://nulljsfx.tech/', 'the guide opens the site');
+  await page.keyboard.press('Escape');
 
   // Settings: drop CLAP
   await page.click('#nav button[data-view="settings"]');
