@@ -50,7 +50,7 @@ WizardStyle=modern
 WizardSizePercent=120
 
 [Types]
-Name: full; Description: "Everything"
+Name: full; Description: "Everything but the tablet remote"
 Name: reaper; Description: "REAPER only (JSFX and JSFX GFX)"
 Name: daw; Description: "Any DAW (VST3 and CLAP)"
 Name: custom; Description: "Custom"; Flags: iscustom
@@ -64,7 +64,7 @@ Name: fmt\clap; Description: "CLAP: any DAW"; Types: full daw
 Name: extra; Description: "Extras"; Types: full reaper daw
 Name: extra\chains; Description: "FX chains for REAPER (added when their plugins are)"; Types: full reaper
 Name: extra\rack; Description: "Rack: up to 8 NULL JSFX effects in one VST3/CLAP"; Types: full daw
-Name: extra\remote; Description: "Tablet remote for REAPER (its bridge starts with REAPER; a few steps in REAPER after)"; Types: full
+Name: extra\remote; Description: "Tablet remote for REAPER (its bridge starts with REAPER; a few steps in REAPER after)"
 Name: extra\fonts; Description: "Noto Sans font, for the exact look of the GFX versions"; Types: full reaper
 Name: fx; Description: "Plugins"; Types: full reaper daw
 

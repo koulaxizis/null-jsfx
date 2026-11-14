@@ -68,6 +68,12 @@ find "$h" -type f ! -path "$h/.cache/*" ! -name .uuid | sed "s|^$h/|left: |"
 left=$(find "$h" -type f ! -path "$h/.cache/*" ! -name .uuid | wc -l | tr -d ' ')
 expect "all: files left after --uninstall" "$left" 0
 
+# --yes without --extras leaves the tablet remote out (it opens REAPER to the network)
+run noremote --formats jsfx --plugins tilt --yes
+[ -e "$h/$reaper/Scripts/null_jsfx_remote_bridge.lua" ] && fail "noremote: the remote bridge was installed"
+[ -e "$h/$reaper/Scripts/__startup.lua" ] && fail "noremote: the bridge starts with REAPER"
+echo "ok   noremote: --yes leaves the tablet remote out unless asked for"
+
 # presets the user saved stay, ours are added after them, and they stay after --uninstall
 h="$work/merge" ini="js-null_jsfx_tilt_jsfx.ini"
 mkdir -p "$h/$reaper/presets"

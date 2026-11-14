@@ -15,6 +15,12 @@ A="$base/Library/Application Support"
 N="$A/NULL JSFX"
 S="$N/staging"
 R="$A/REAPER"
+# this can run as root: it never writes through a symbolic link in the home, so a link put
+# there cannot send a file anywhere else
+for d in "$base/Library" "$A" "$N" "$N/receipts" "$S" "$R" "$R/presets" "$R/FXChains" "$R/Scripts" "$R/Scripts/__startup.lua" "$N/startup.txt"; do
+  if [ -L "$d" ]; then echo "NULL JSFX: $d is a symbolic link, left alone" >&2; exit 0; fi
+done
+link() { [ -L "$1" ] && echo "NULL JSFX: $1 is a symbolic link, left alone" >&2; }
 mkdir -p "$N/receipts"
 note() { printf '%s\n' "${1#"$base"/}" >> "$N/receipts/$2.txt"; }
 
@@ -22,6 +28,7 @@ note() { printf '%s\n' "${1#"$base"/}" >> "$N/receipts/$2.txt"; }
 for f in "$S"/presets/*.ini; do
   [ -f "$f" ] || continue
   dest="$R/presets/$(basename "$f")"
+  link "$dest" && continue
   mkdir -p "$R/presets"
   if [ ! -s "$dest" ]; then
     cp "$f" "$dest"
@@ -64,6 +71,8 @@ if [ -f "$S/chains/chains.txt" ]; then
       esac
     done
     [ "$ok" = 1 ] || continue
+    link "$R/FXChains/$folder" && continue
+    link "$R/FXChains/$folder/$file" && continue
     mkdir -p "$R/FXChains/$folder"
     cp "$S/chains/$folder/$file" "$R/FXChains/$folder/$file"
     note "$R/FXChains/$folder/$file" chains
@@ -89,6 +98,6 @@ fi
 rm -rf "$S"
 # run by root (some Macs): what this made belongs to the user
 if [ "$(id -u)" = 0 ] && [ "$(uname -s)" = Darwin ] && owner="$(stat -f %u "$base")" && [ "$owner" != 0 ]; then
-  chown -R "$owner" "$N" "$R/presets" "$R/FXChains" "$R/Scripts" 2>/dev/null || true
+  chown -R -P "$owner" "$N" "$R/presets" "$R/FXChains" "$R/Scripts" 2>/dev/null || true
 fi
 exit 0
