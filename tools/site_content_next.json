@@ -182,5 +182,24 @@
     "properties": "MIDI in → the held keys (collected over Collect) are sorted by pitch and played string by string, Speed apart, lowest first down and highest first up; velocity falls by Velocity Spread over the strings, up strokes at Upstroke Velocity, Humanize by an exact Park-Miller step. Once: one strum per chord, notes held with their keys; rhythms: strums on the tempo, each Gate of its step. A key's note-off ends its note and drops its waiting strings. Other MIDI passes through at its own sample. Audio passes through.",
     "beta": true,
     "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-strum\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><path d=\"M 8,14 L 56,14 M 8,24 L 56,24 M 8,34 L 56,34 M 8,44 L 56,44\" stroke=\"url(#icon-strum)\" stroke-width=\"2\" fill=\"none\" opacity=\"0.6\"/><path d=\"M 22,8 L 30,50 M 24,44 L 30,50 L 35,43\" stroke=\"url(#icon-strum)\" stroke-width=\"3\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/></svg>"
+  },
+  "midi_monitor": {
+    "card_desc": "See the MIDI That Passes",
+    "keywords": "midi monitor viewer inspector debug log notes cc controller pitch bend pressure aftertouch mpe channel keyboard",
+    "slider_desc": [
+      "Shows one channel only, or every channel (Omni)",
+      "Shows every message, or only notes, controllers (CC, pressure, pitch bend) or the rest (program changes)",
+      "Holds the list as it is, so a burst of messages can be read",
+      "Names note 60 C4 (as REAPER) or C3"
+    ],
+    "uses": [
+      "Checking what a keyboard, controller or MIDI effect really sends",
+      "Finding a stuck note or a missing note-off",
+      "Reading MPE: every channel's notes, bend and pressure",
+      "Learning which CC a knob sends before mapping it"
+    ],
+    "properties": "MIDI in → out unchanged, every message at its own sample (the VST3/CLAP passes SysEx too); the audio passes through. The interface lists the latest 64 messages with their time, channel and values, shows the held notes on a 128-key keyboard and every channel's notes, pitch bend and pressure. Channel and Show filter what is shown, Freeze holds the list.",
+    "beta": true,
+    "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-midi_monitor\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><rect x=\"8\" y=\"10\" width=\"48\" height=\"18\" rx=\"2\" fill=\"none\" stroke=\"url(#icon-midi_monitor)\" stroke-width=\"2\"/><path d=\"M 16,10 L 16,22 M 24,10 L 24,22 M 40,10 L 40,22 M 48,10 L 48,22\" stroke=\"url(#icon-midi_monitor)\" stroke-width=\"3\"/><path d=\"M 8,36 L 56,36 M 8,44 L 44,44 M 8,52 L 50,52\" stroke=\"url(#icon-midi_monitor)\" stroke-width=\"2.5\" stroke-linecap=\"round\" opacity=\"0.7\"/></svg>"
   }
 }

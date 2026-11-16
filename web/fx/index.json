@@ -2204,6 +2204,20 @@
    "bytes": 61325
   },
   {
+   "id": "midi_monitor",
+   "name": "MIDI Monitor",
+   "category": "MIDI",
+   "tags": "midi monitor viewer inspector debug log notes cc controller pitch bend pressure aftertouch mpe channel keyboard gui",
+   "gfx": [
+    480,
+    434
+   ],
+   "ins": 2,
+   "outs": 2,
+   "sliders": 4,
+   "bytes": 43593
+  },
+  {
    "id": "midi_utility",
    "name": "MIDI Utility",
    "category": "MIDI",
