@@ -3302,6 +3302,7 @@ static const LogSlider kLogSliders[] = {
     { "octaver", 5 },
     { "oscilloscope", 0 },
     { "phase_align", 6 },
+    { "phase_distortion", 1 },
     { "phaser", 5 },
     { "pluck", 4 },
     { "resonance_suppressor", 3 },

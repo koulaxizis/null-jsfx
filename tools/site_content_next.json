@@ -66,5 +66,28 @@
     "properties": "Input → mono sum → power envelope (2 ms / 80 ms) → four band-pass detectors (2, 3.15, 5, 8 kHz, Q 2) with their own envelopes → each band's share of the whole signal in dB → cut = (share - threshold) × Amount, up to 10 dB → the four bands taken out of each channel one after another (x - band × (1 - gain)) → Output. Zero latency.",
     "beta": true,
     "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-smoother\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><path d=\"M 6,24 L 24,24 L 30,14 L 34,34 L 38,16 L 42,30 L 46,24 L 58,24\" stroke=\"url(#icon-smoother)\" stroke-width=\"1.5\" fill=\"none\" stroke-linejoin=\"round\" opacity=\"0.4\"/><path d=\"M 6,42 L 24,42 C 30,42 32,38 36,38 C 40,38 42,42 48,42 L 58,42\" stroke=\"url(#icon-smoother)\" stroke-width=\"2.5\" fill=\"none\" stroke-linecap=\"round\"/></svg>"
+  },
+  "phase_distortion": {
+    "card_desc": "Signal-Driven Phase Bending",
+    "keywords": "phase distortion pd modulation delay fm self sidechain keyed bright digital grit sound design bass lead",
+    "slider_desc": [
+      "How far the delay moves, up to 3 ms (on a square curve, so the low half stays subtle)",
+      "Low-pass on the signal that moves the delay: lower values make a smoother, darker bend, higher values a brighter, more ragged one",
+      "Offset added to the moving signal: the bend becomes asymmetric (even harmonics)",
+      "Turns the right channel's movement the other way, for width",
+      "What moves the delay: the track itself (Self) or the sidechain on channels 3/4",
+      "Blend with the dry signal, which is delayed by the same centre time so the blend does not comb",
+      "Output level"
+    ],
+    "uses": [
+      "Bright, clean grit on bass and leads",
+      "Asymmetric harmonics without clipping",
+      "Cross-modulation: one track bends another through the sidechain",
+      "Wide, shimmering texture on guitars and pads",
+      "Sound design: metallic and digital tones"
+    ],
+    "properties": "Input → stereo delay line (8 ms) → read with linear interpolation at 1 + depth × (1 + clamp(low-passed source + bias, -1, 1)) samples, the right source scaled by 1 - 2 × spread → mixed with the dry signal read at the centre time 1 + depth → Output gain. The source is the track or the sidechain (pins 3/4). No clipping stage; latency up to 3 ms of centre delay, not reported.",
+    "beta": true,
+    "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-phase_distortion\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><path d=\"M 6,32 C 12,14 18,14 22,32 C 26,50 32,50 38,32 C 42,20 44,14 48,14 C 52,14 54,50 58,32\" stroke=\"url(#icon-phase_distortion)\" stroke-width=\"2.5\" fill=\"none\" stroke-linecap=\"round\"/></svg>"
   }
 }

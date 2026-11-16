@@ -1,0 +1,75 @@
+desc:NULL Phase Distortion
+author: Christos Koulaxizis
+tags: phase distortion pd modulation delay fm self sidechain keyed bright digital grit sound design
+//category: Advanced
+//NULL JSFX v3.3.1 • https://nulljsfx.tech • MIT License
+
+slider1:50<0,100,1>Drive (%)
+slider2:2000<100,20000,1:log>Tone (Hz)
+slider3:0<-100,100,1>Bias (%)
+slider4:0<0,100,1>Spread (%)
+slider5:0<0,1,1{Self,Sidechain}>Source
+slider6:100<0,100,1>Mix (%)
+slider7:0<-24,12,0.1>Output (dB)
+
+in_pin:Left
+in_pin:Right
+in_pin:Sidechain Left
+in_pin:Sidechain Right
+out_pin:Left
+out_pin:Right
+
+@init
+  ext_noinit = 1;              // play and seek keep tails and state, as in the VST3/CLAP
+  // Phase distortion: a very short delay whose time follows a signal, the track itself (Self)
+  // or the sidechain on channels 3/4. Moving the delay bends the phase of the sound, a bright,
+  // "digital" distortion that never clips. Drive sets how far the delay moves (up to 3 ms),
+  // Tone low-passes the signal that moves it, Bias offsets it (asymmetry), Spread turns the
+  // right channel's movement the other way (width), Mix blends with the dry signal, which is
+  // delayed by the same centre time so the blend does not comb.
+  pd_n = ceil(srate * 0.008) + 8;
+  pd_bl = 0;
+  pd_br = pd_n;
+  memset(0, 0, pd_n * 2); freembuf(pd_n * 2);
+  pd_wp = 0;
+  pd_ml = pd_mr = 0;
+
+  // the value delay samples behind the write position in the buffer at b, interpolated
+  function pd_read(b, d) local(rp, i0, i1, fr)
+  (
+    rp = pd_wp - d;
+    rp < 0 ? rp += pd_n;
+    i0 = floor(rp);
+    fr = rp - i0;
+    i1 = i0 + 1;
+    i1 >= pd_n ? i1 = 0;
+    b[i0] + (b[i1] - b[i0]) * fr;
+  );
+
+@slider
+  pd_depth = (slider1 / 100) ^ 2 * 0.003 * srate;
+  pd_tc = 1 - exp(-2 * $pi * min(slider2, 0.45 * srate) / srate);
+  pd_bias = slider3 / 100;
+  pd_sp = 1 - 2 * slider4 / 100;
+  pd_key = slider5;
+  pd_mix = slider6 / 100;
+  pd_out = 10 ^ (slider7 / 20);
+
+@sample
+  pd_xl = spl0;
+  pd_xr = spl1;
+  pd_bl[pd_wp] = pd_xl;
+  pd_br[pd_wp] = pd_xr;
+  pd_ml += ((pd_key ? spl2 : pd_xl) - pd_ml) * pd_tc;
+  pd_mr += ((pd_key ? spl3 : pd_xr) - pd_mr) * pd_tc;
+  pd_dl = 1 + pd_depth * (1 + min(1, max(-1, pd_ml + pd_bias)));
+  pd_dr = 1 + pd_depth * (1 + min(1, max(-1, pd_mr * pd_sp + pd_bias)));
+  pd_c = 1 + pd_depth;
+  pd_wl = pd_read(pd_bl, pd_dl);
+  pd_wr = pd_read(pd_br, pd_dr);
+  pd_yl = pd_read(pd_bl, pd_c);
+  pd_yr = pd_read(pd_br, pd_c);
+  pd_wp += 1;
+  pd_wp >= pd_n ? pd_wp = 0;
+  spl0 = (pd_yl + (pd_wl - pd_yl) * pd_mix) * pd_out;
+  spl1 = (pd_yr + (pd_wr - pd_yr) * pd_mix) * pd_out;

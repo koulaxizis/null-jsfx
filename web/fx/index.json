@@ -1458,6 +1458,20 @@
    "bytes": 52938
   },
   {
+   "id": "phase_distortion",
+   "name": "Phase Distortion",
+   "category": "Advanced",
+   "tags": "phase distortion pd modulation delay fm self sidechain keyed bright digital grit sound design gui",
+   "gfx": [
+    480,
+    380
+   ],
+   "ins": 4,
+   "outs": 2,
+   "sliders": 7,
+   "bytes": 49115
+  },
+  {
    "id": "pitch_correction",
    "name": "Pitch Correction",
    "category": "Advanced",
