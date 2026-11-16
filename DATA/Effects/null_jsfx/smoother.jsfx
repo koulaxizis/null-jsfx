@@ -1,0 +1,75 @@
+desc:NULL Smoother
+author: Christos Koulaxizis
+tags: smoother smooth harsh harshness resonance dynamic eq soothe tame sibilance upper mids one knob
+//category: One Slider
+//NULL JSFX v3.3.1 • https://nulljsfx.tech • MIT License
+
+slider1:40<0,100,1>Amount
+
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
+
+@init
+  ext_noinit = 1;              // play and seek keep tails and state, as in the VST3/CLAP
+  // One knob that softens harsh frequencies only while they poke out: four bands (2, 3.15, 5
+  // and 8 kHz, Q 2) watch their share of the whole signal (mono sum, 2 ms attack, 80 ms
+  // release). A band whose share rises above a threshold (-14 dB at 0, -20 dB at 100) is cut
+  // by what it rises over it, as far as 10 dB at 100. Quiet, balanced material passes untouched.
+  sm_att = 1 - exp(-1 / (0.002 * srate));
+  sm_rel = 1 - exp(-1 / (0.08 * srate));
+  // band k (0 to 3): band-pass biquad with 0 dB at its peak, coefficients at sm_c + 4 * k
+  sm_c = 0;
+  sm_k = 0;
+  loop(4,
+    sm_f = min(sm_k == 0 ? 2000 : sm_k == 1 ? 3150 : sm_k == 2 ? 5000 : 8000, 0.45 * srate);
+    sm_w = 2 * $pi * sm_f / srate;
+    sm_al = sin(sm_w) / (2 * 2);
+    sm_c[4 * sm_k] = sm_al / (1 + sm_al);
+    sm_c[4 * sm_k + 1] = -2 * cos(sm_w) / (1 + sm_al);
+    sm_c[4 * sm_k + 2] = (1 - sm_al) / (1 + sm_al);
+    sm_k += 1;
+  );
+  // filter states, 4 per filter: detection at 16, left at 32, right at 48 (+ 4 * band)
+  memset(16, 0, 48);
+  sm_e = 0;
+  memset(64, 0, 4);            // band envelopes
+  freembuf(68);
+
+  // band k on the state at s: y = b0 x - b0 x2 - a1 y1 - a2 y2
+  function sm_bp(s, k, x) local(y)
+  (
+    y = sm_c[4 * k] * (x - s[1]) - sm_c[4 * k + 1] * s[2] - sm_c[4 * k + 2] * s[3];
+    s[1] = s[0]; s[0] = x;
+    s[3] = s[2]; s[2] = y;
+    y;
+  );
+
+@slider
+  sm_a = slider1 / 100;
+  sm_thr = -14 - 6 * sm_a;
+  sm_max = 10 * sm_a;
+
+@sample
+  sm_m = (spl0 + spl1) * 0.5;
+  sm_p = sm_m * sm_m;
+  sm_e += (sm_p - sm_e) * (sm_p > sm_e ? sm_att : sm_rel);
+  sm_l = spl0;
+  sm_r = spl1;
+  sm_k = 0;
+  loop(4,
+    sm_b = sm_bp(16 + 4 * sm_k, sm_k, sm_m);
+    sm_b *= sm_b;
+    sm_eb = 64[sm_k];
+    sm_eb += (sm_b - sm_eb) * (sm_b > sm_eb ? sm_att : sm_rel);
+    64[sm_k] = sm_eb;
+    sm_rel_db = 10 * log10(max(sm_eb, 0.0000000001) / max(sm_e, 0.0000000001));
+    sm_red = min(sm_max, max(0, (sm_rel_db - sm_thr) * sm_a));
+    sm_g = 1 - 10 ^ (-sm_red / 20);
+    sm_l -= sm_bp(32 + 4 * sm_k, sm_k, sm_l) * sm_g;
+    sm_r -= sm_bp(48 + 4 * sm_k, sm_k, sm_r) * sm_g;
+    sm_k += 1;
+  );
+  spl0 = sm_l;
+  spl1 = sm_r;

@@ -1,0 +1,144 @@
+desc:NULL Spectral Blur
+author: Christos Koulaxizis
+tags: spectral blur smear shift frequency shifter tilt spectral gate fft texture ambient sound design
+//category: Advanced
+//NULL JSFX v3.3.1 • https://nulljsfx.tech • MIT License
+
+slider1:30<0,100,1>Smear (%)
+slider2:0<-2000,2000,1>Shift (Hz)
+slider3:0<-6,6,0.1>Tilt (dB/oct)
+slider4:-90<-90,0,1>Gate (dB)
+slider5:100<0,100,1>Mix (%)
+slider6:0<-24,12,0.1>Output (dB)
+
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
+
+@init
+  ext_noinit = 1;              // play and seek keep tails and state, as in the VST3/CLAP
+  // Blurs the sound in the frequency domain (2048-point FFT, Hann windows, 4x overlap). Each
+  // bin's magnitude is smoothed over time (Smear: up to 150 ms on the way up, 3 s on the way
+  // down): rising bins keep their own phase, fading bins keep turning at their own speed
+  // with a little random drift, so a tail grows out of the sound. Shift moves every bin up or
+  // down by a fixed number of Hz (an inharmonic, metallic frequency shift), Tilt leans the
+  // spectrum around 1 kHz (flat below 100 Hz and above 10 kHz, so 20 dB at most), Gate pushes
+  // down the bins below it (a 1:3 expander per bin, off at -90). With Smear, Shift, Tilt and
+  // Gate at zero the sound comes back unchanged, 2047 samples late; the dry signal of Mix is
+  // delayed to match and the delay is reported to REAPER.
+  sp_n = 2048; sp_h = sp_n / 4; sp_nb = sp_n / 2 + 1;
+  sp_fft = 0;                        // 2N slots, aligned so it never crosses 65536
+  sp_win = 2 * sp_n;
+  sp_il = sp_win + sp_n; sp_ir = sp_il + sp_n;
+  sp_ol = sp_ir + sp_n; sp_or = sp_ol + sp_n;
+  sp_sl = sp_or + sp_n; sp_sr = sp_sl + sp_nb;
+  sp_pl = sp_sr + sp_nb; sp_pr = sp_pl + sp_nb;
+  sp_mi = sp_pr + sp_nb; sp_pi = sp_mi + sp_nb;
+  sp_tg = sp_pi + sp_nb;
+  freembuf(sp_tg + sp_nb);
+  memset(sp_win, 0, sp_tg + sp_nb - sp_win);
+  sp_i = 0;
+  loop(sp_n, sp_win[sp_i] = 0.5 - 0.5 * cos(2 * $pi * sp_i / sp_n); sp_i += 1);
+  // Park-Miller generator in exact double arithmetic (0 < value < 1), so every CPU and the
+  // VST3/CLAP version drift the same way
+  sp_seed = 12345;
+  function sp_rand()
+  (
+    sp_seed *= 16807; sp_seed -= floor(sp_seed / 2147483647) * 2147483647;
+    sp_seed / 2147483647;
+  );
+  sp_ip = 0; sp_op = 0; sp_cnt = 0;
+  sp_rq = 0;                         // shift rotation in quarter turns (H = N/4)
+  pdc_bot_ch = 0;
+  pdc_top_ch = 2;
+  pdc_delay = sp_n - 1;
+
+  // one frame of one channel: analyse the last N samples, blur, shift, tilt, gate, overlap-add
+  function sp_frame(inb, smb, phb, outb) local(i, j, re, im, m, p, s, r, g)
+  (
+    i = 0;
+    loop(sp_n,
+      sp_fft[2 * i] = inb[(sp_ip + i) % sp_n] * sp_win[i];
+      sp_fft[2 * i + 1] = 0;
+      i += 1;
+    );
+    fft(sp_fft, sp_n);
+    fft_permute(sp_fft, sp_n);
+    i = 0;
+    loop(sp_nb,
+      re = sp_fft[2 * i]; im = sp_fft[2 * i + 1];
+      sp_mi[i] = sqrt(re * re + im * im);
+      sp_pi[i] = atan2(im, re);
+      i += 1;
+    );
+    i = 0;
+    loop(sp_nb,
+      j = i - sp_sb;
+      j >= 0 && j < sp_nb ? (
+        m = sp_mi[j] * sp_tg[i];
+        p = sp_pi[j] + sp_rq * 0.5 * $pi;
+      ) : (
+        m = 0;
+        p = 0;
+      );
+      s = smb[i];
+      s += (m - s) * (m > s ? sp_sa : sp_sc);
+      smb[i] = s;
+      r = sp_rand() * 2 - 1;
+      m < 0.5 * s ? p = phb[i] + 2 * $pi * i * sp_h / sp_n + r * 0.5 * $pi;
+      p -= floor(p / (2 * $pi)) * 2 * $pi;
+      phb[i] = p;
+      g = s < sp_gl ? s * (s / sp_gl) * (s / sp_gl) : s;
+      sp_fft[2 * i] = g * cos(p);
+      sp_fft[2 * i + 1] = g * sin(p);
+      i > 0 && i < sp_n / 2 ? (
+        sp_fft[2 * (sp_n - i)] = g * cos(p);
+        sp_fft[2 * (sp_n - i) + 1] = -g * sin(p);
+      );
+      i += 1;
+    );
+    sp_fft[1] = 0; sp_fft[sp_n + 1] = 0;
+    fft_ipermute(sp_fft, sp_n);
+    ifft(sp_fft, sp_n);
+    i = 0;
+    loop(sp_n,
+      // synthesis window: Hann squared overlap-adds to 1.5 at 4x
+      outb[(sp_op + i) % sp_n] += sp_fft[2 * i] * sp_win[i] / (sp_n * 1.5);
+      i += 1;
+    );
+  );
+
+@slider
+  sp_s = slider1 / 100;
+  sp_sa = 1 - exp(-sp_h / max(1, 0.15 * sp_s * sp_s * srate));
+  sp_sc = 1 - exp(-sp_h / max(1, 3 * sp_s * sp_s * srate));
+  sp_sb = floor(slider2 * sp_n / srate + 0.5);
+  sp_te = slider3 / (20 * log10(2));
+  sp_i = 0;
+  loop(sp_nb,
+    sp_tg[sp_i] = (min(10000, max(100, sp_i * srate / sp_n)) / 1000) ^ sp_te;
+    sp_i += 1;
+  );
+  sp_gl = slider4 <= -90 ? 0 : 10 ^ (slider4 / 20) * sp_n / 4;
+  sp_mix = slider5 / 100;
+  sp_out = 10 ^ (slider6 / 20);
+
+@sample
+  sp_il[sp_ip] = spl0;
+  sp_ir[sp_ip] = spl1;
+  sp_ip += 1; sp_ip >= sp_n ? sp_ip = 0;
+  sp_dl = sp_il[sp_ip];
+  sp_dr = sp_ir[sp_ip];
+  sp_cnt += 1;
+  sp_cnt >= sp_h ? (
+    sp_cnt = 0;
+    sp_frame(sp_il, sp_sl, sp_pl, sp_ol);
+    sp_frame(sp_ir, sp_sr, sp_pr, sp_or);
+    sp_rq += sp_sb; sp_rq -= floor(sp_rq / 4) * 4;
+  );
+  sp_wl = sp_ol[sp_op]; sp_ol[sp_op] = 0;
+  sp_wr = sp_or[sp_op]; sp_or[sp_op] = 0;
+  sp_op += 1; sp_op >= sp_n ? sp_op = 0;
+  spl0 = (sp_dl + (sp_wl - sp_dl) * sp_mix) * sp_out;
+  spl1 = (sp_dr + (sp_wr - sp_dr) * sp_mix) * sp_out;

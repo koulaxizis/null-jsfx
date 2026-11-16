@@ -1,0 +1,95 @@
+desc:NULL Lo-Fi Comp
+author: Christos Koulaxizis
+tags: lofi lo-fi compressor pumping squash sample rate reduction bitcrusher wow drift beats vintage sampler
+//category: Essentials
+//NULL JSFX v3.3.1 • https://nulljsfx.tech • MIT License
+
+slider1:50<0,100,1>Squash (%)
+slider2:150<20,1000,1>Release (ms)
+slider3:32000<4000,48000,10>Sample Rate (Hz)
+slider4:12<4,16,1>Bits
+slider5:20<0,100,1>Wow (%)
+slider6:100<0,100,1>Mix (%)
+slider7:0<-24,12,0.1>Output (dB)
+
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
+
+@init
+  ext_noinit = 1;              // play and seek keep tails and state, as in the VST3/CLAP
+  // The lo-fi beat sound in one effect: an over-the-top pumping compressor (threshold -10 to
+  // -40 dBFS, ratio 2:1 to 20:1, 1 ms attack, its own make-up), then a slow pitch drift (Wow:
+  // two slow LFOs move a short delay, up to 4 ms), then an old sampler: a low-pass and a
+  // sample-and-hold at Sample Rate (off at or above the project rate) and quantising to Bits.
+  lf_n = ceil(srate * 0.01) + 4;
+  lf_bl = 0;
+  lf_br = lf_n;
+  memset(0, 0, lf_n * 2); freembuf(lf_n * 2);
+  lf_wp = 0;
+  lf_att = 1 - exp(-1 / (0.001 * srate));
+  lf_e = 0;
+  lf_p1 = lf_p2 = 0;
+  lf_ph = 1;
+  lf_hl = lf_hr = 0;
+  lf_al = lf_ar = 0;
+
+  // the value d samples behind the write position (0 = the sample just written), interpolated
+  function lf_read(b, d) local(rp, i0, i1, fr)
+  (
+    rp = lf_wp - d;
+    rp < 0 ? rp += lf_n;
+    rp >= lf_n ? rp -= lf_n;     // a tiny negative rp can round up to lf_n
+    i0 = floor(rp);
+    fr = rp - i0;
+    i1 = i0 + 1;
+    i1 >= lf_n ? i1 = 0;
+    b[i0] + (b[i1] - b[i0]) * fr;
+  );
+
+@slider
+  lf_s = slider1 / 100;
+  lf_thr = -10 - 30 * lf_s;
+  lf_ratio = 2 + 18 * lf_s;
+  lf_mu = 10 ^ (-lf_thr * (1 - 1 / lf_ratio) * (0.35 + 0.35 * lf_s) / 20);
+  lf_rel = 1 - exp(-1 / (slider2 * 0.001 * srate));
+  lf_on = slider3 < srate;
+  lf_step = slider3 / srate;
+  lf_lpc = 1 - exp(-2 * $pi * min(0.45 * slider3, 0.45 * srate) / srate);
+  lf_q = 2 ^ (slider4 - 1);
+  lf_depth = slider5 / 100 * 0.002 * srate;
+  lf_mix = slider6 / 100;
+  lf_out = 10 ^ (slider7 / 20);
+
+@sample
+  lf_xl = spl0;
+  lf_xr = spl1;
+  // compressor (stereo-linked peak detector)
+  lf_in = max(abs(lf_xl), abs(lf_xr));
+  lf_e += (lf_in - lf_e) * (lf_in > lf_e ? lf_att : lf_rel);
+  lf_over = 20 * log10(max(lf_e, 0.000001)) - lf_thr;
+  lf_g = (lf_over > 0 ? 10 ^ (-lf_over * (1 - 1 / lf_ratio) / 20) : 1) * lf_mu;
+  // wow: two slow LFOs (0.6 and 0.17 Hz) move a short delay
+  lf_bl[lf_wp] = lf_xl * lf_g;
+  lf_br[lf_wp] = lf_xr * lf_g;
+  lf_p1 += 0.6 / srate; lf_p1 >= 1 ? lf_p1 -= 1;
+  lf_p2 += 0.17 / srate; lf_p2 >= 1 ? lf_p2 -= 1;
+  lf_d = lf_depth * (1 + 0.6 * sin(2 * $pi * lf_p1) + 0.4 * sin(2 * $pi * lf_p2));
+  lf_l = lf_read(lf_bl, lf_d);
+  lf_r = lf_read(lf_br, lf_d);
+  lf_wp += 1;
+  lf_wp >= lf_n ? lf_wp = 0;
+  // old sampler: low-pass, sample-and-hold, bits
+  lf_on ? (
+    lf_al += (lf_l - lf_al) * lf_lpc;
+    lf_ar += (lf_r - lf_ar) * lf_lpc;
+    lf_ph += lf_step;
+    lf_ph >= 1 ? ( lf_ph -= 1; lf_hl = lf_al; lf_hr = lf_ar; );
+    lf_l = lf_hl;
+    lf_r = lf_hr;
+  );
+  lf_l = floor(lf_l * lf_q + 0.5) / lf_q;
+  lf_r = floor(lf_r * lf_q + 0.5) / lf_q;
+  spl0 = (lf_xl + (lf_l - lf_xl) * lf_mix) * lf_out;
+  spl1 = (lf_xr + (lf_r - lf_xr) * lf_mix) * lf_out;

@@ -1,0 +1,13 @@
+[
+  ["Soft Slapback", {"Amount": 10}],
+  ["Vocal Slap", {"Amount": 18}],
+  ["Eighth Echo", {"Amount": 30}],
+  ["Guitar Eighths", {"Amount": 42}],
+  ["Dotted Lead", {"Amount": 55}],
+  ["Dotted Wide", {"Amount": 68}],
+  ["Quarter Ping-Pong", {"Amount": 78}],
+  ["Dub Throw", {"Amount": 90}],
+  ["Long Wash", {"Amount": 100}],
+  ["Drum Room Echo", {"Amount": 6}],
+  ["Synth Bounce", {"Amount": 62}]
+]

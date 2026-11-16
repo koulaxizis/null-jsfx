@@ -1,0 +1,115 @@
+desc:NULL Bloom Delay
+author: Christos Koulaxizis
+tags: bloom delay diffusion diffused echo reverb ambient modulation tempo sync feedback infinite pad wash
+//category: Advanced
+//NULL JSFX v3.3.1 • https://nulljsfx.tech • MIT License
+
+slider1:375<20,2000,1:log>Time (ms)
+slider2:0<0,7,1{Off,1/16,1/8,1/8 Dotted,1/4,1/4 Dotted,1/2,1/1}>Sync
+slider3:45<0,100,1>Feedback (%)
+slider4:50<0,100,1>Bloom (%)
+slider5:20<0,100,1>Mod (%)
+slider6:7000<1000,20000,1:log>Damping (Hz)
+slider7:100<0,100,1>Width (%)
+slider8:35<0,100,1>Mix (%)
+slider9:0<-24,12,0.1>Output (dB)
+
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
+
+@init
+  ext_noinit = 1;              // play and seek keep tails and state, as in the VST3/CLAP
+  // A delay whose repeats bloom into a reverb: in the loop, after the delay line, a low-pass
+  // (Damping), a 30 Hz high-pass and four allpass diffusers (different lengths per side) that
+  // Bloom blends in, so each repeat comes back softer and more smeared than the last. The
+  // feedback goes through a soft tanh curve, so even 100% (a near-endless wash) never blows up.
+  // Mod sweeps the delay time with a slow LFO (0.35 Hz, up to 4 ms, the sides a quarter turn
+  // apart); Sync locks the time to the project tempo (120 bpm when the host gives none) and
+  // the time glides (80 ms) to a new value. Width narrows the wet signal towards mono.
+  bd_n = ceil(srate * 4) + 8;  // 4 s per channel: a 1/1 note at 60 bpm
+  bd_bl = 0;
+  bd_br = bd_n;
+  bd_wp = 0;
+  bd_dt = -1;                  // the delay time in samples; -1 until the first sample sets it
+  bd_glide = 1 - exp(-1 / (0.08 * srate));
+  bd_hpc = 1 - exp(-2 * $pi * 30 / srate);
+  bd_g = 0.6;
+  bd_lfo = 0;
+  bd_lpl = bd_lpr = bd_hpl = bd_hpr = 0;
+  bd_ol = bd_or = 0;
+
+  // allpass k (0 to 7, left 0-3, right 4-7) at base b with n samples
+  bd_m = 2 * bd_n;
+  function bd_ap_init(ms) ( this.b = bd_m; this.n = max(1, floor(ms * 0.001 * srate + 0.5)); this.p = 0; bd_m += this.n; );
+  a0.bd_ap_init(4.77); a1.bd_ap_init(3.59); a2.bd_ap_init(12.73); a3.bd_ap_init(9.30);
+  a4.bd_ap_init(5.21); a5.bd_ap_init(3.97); a6.bd_ap_init(11.83); a7.bd_ap_init(8.71);
+  memset(0, 0, bd_m); freembuf(bd_m);
+  function bd_ap(x) local(z, w)
+  (
+    z = this.b[this.p];
+    w = x - bd_g * z;
+    this.b[this.p] = w;
+    this.p += 1;
+    this.p >= this.n ? this.p = 0;
+    z + bd_g * w;
+  );
+  function bd_sat(x) local(e) ( e = exp(2 * max(-20, min(20, x))); (e - 1) / (e + 1); );
+  // the value d samples behind the write position in the line at b, interpolated
+  function bd_read(b, d) local(rp, i0, i1, fr)
+  (
+    rp = bd_wp - d;
+    rp < 0 ? rp += bd_n;
+    rp >= bd_n ? rp -= bd_n;     // a tiny negative rp can round up to bd_n
+    i0 = floor(rp);
+    fr = rp - i0;
+    i1 = i0 + 1;
+    i1 >= bd_n ? i1 = 0;
+    b[i0] + (b[i1] - b[i0]) * fr;
+  );
+  // the note length (beats) of Sync 1 to 7
+  function bd_beats(v) ( v == 1 ? 0.25 : v == 2 ? 0.5 : v == 3 ? 0.75 : v == 4 ? 1 : v == 5 ? 1.5 : v == 6 ? 2 : 4; );
+
+@slider
+  bd_sync = slider2;
+  bd_note = bd_beats(slider2);
+  bd_ms = slider1;
+  bd_fb = slider3 / 100;
+  bd_bloom = slider4 / 100;
+  bd_depth = slider5 / 100 * 0.002 * srate;
+  bd_lpc = 1 - exp(-2 * $pi * min(slider6, 0.45 * srate) / srate);
+  bd_w = slider7 / 100;
+  bd_mix = slider8 / 100;
+  bd_out = 10 ^ (slider9 / 20);
+
+@sample
+  bd_xl = spl0;
+  bd_xr = spl1;
+  bd_t = bd_sync ? bd_note * 60 / (tempo > 0 ? tempo : 120) * srate : bd_ms * 0.001 * srate;
+  bd_t = min(bd_n - 2 * bd_depth - 4, max(1, bd_t));
+  bd_dt < 0 ? bd_dt = bd_t : bd_dt += (bd_t - bd_dt) * bd_glide;
+  bd_lfo += 0.35 / srate; bd_lfo >= 1 ? bd_lfo -= 1;
+  bd_yl = bd_read(bd_bl, bd_dt + bd_depth * (1 + sin(2 * $pi * bd_lfo)));
+  bd_yr = bd_read(bd_br, bd_dt + bd_depth * (1 + cos(2 * $pi * bd_lfo)));
+  // the loop: damping low-pass, 30 Hz high-pass, diffusers blended in by Bloom
+  bd_lpl += (bd_yl - bd_lpl) * bd_lpc;
+  bd_lpr += (bd_yr - bd_lpr) * bd_lpc;
+  bd_hpl += (bd_lpl - bd_hpl) * bd_hpc;
+  bd_hpr += (bd_lpr - bd_hpr) * bd_hpc;
+  bd_fl = bd_lpl - bd_hpl;
+  bd_fr = bd_lpr - bd_hpr;
+  bd_dl = a3.bd_ap(a2.bd_ap(a1.bd_ap(a0.bd_ap(bd_fl))));
+  bd_dr = a7.bd_ap(a6.bd_ap(a5.bd_ap(a4.bd_ap(bd_fr))));
+  bd_ol = bd_fl + (bd_dl - bd_fl) * bd_bloom;
+  bd_or = bd_fr + (bd_dr - bd_fr) * bd_bloom;
+  bd_bl[bd_wp] = bd_xl + bd_sat(bd_ol * bd_fb);
+  bd_br[bd_wp] = bd_xr + bd_sat(bd_or * bd_fb);
+  bd_wp += 1;
+  bd_wp >= bd_n ? bd_wp = 0;
+  // the wet signal, narrowed towards mono by Width
+  bd_mm = (bd_ol + bd_or) * 0.5;
+  bd_wl = bd_mm + (bd_ol - bd_mm) * bd_w;
+  bd_wr = bd_mm + (bd_or - bd_mm) * bd_w;
+  spl0 = (bd_xl + (bd_wl - bd_xl) * bd_mix) * bd_out;
+  spl1 = (bd_xr + (bd_wr - bd_xr) * bd_mix) * bd_out;

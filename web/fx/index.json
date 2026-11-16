@@ -44,6 +44,20 @@
    "bytes": 36065
   },
   {
+   "id": "closer",
+   "name": "Closer",
+   "category": "One Slider",
+   "tags": "closer vocal voice presence proximity upfront forward compression dialogue podcast one knob gui",
+   "gfx": [
+    360,
+    240
+   ],
+   "ins": 2,
+   "outs": 2,
+   "sliders": 1,
+   "bytes": 37264
+  },
+  {
    "id": "crunch",
    "name": "Crunch",
    "category": "One Slider",
@@ -98,6 +112,20 @@
    "outs": 2,
    "sliders": 1,
    "bytes": 33896
+  },
+  {
+   "id": "echo_one",
+   "name": "Echo One",
+   "category": "One Slider",
+   "tags": "delay echo slapback ping-pong tempo sync repeats filtered tape gui",
+   "gfx": [
+    360,
+    240
+   ],
+   "ins": 2,
+   "outs": 2,
+   "sliders": 1,
+   "bytes": 37066
   },
   {
    "id": "exciter",
@@ -226,6 +254,20 @@
    "bytes": 38730
   },
   {
+   "id": "smoother",
+   "name": "Smoother",
+   "category": "One Slider",
+   "tags": "smoother smooth harsh harshness resonance dynamic eq soothe tame sibilance upper mids one knob gui",
+   "gfx": [
+    360,
+    240
+   ],
+   "ins": 2,
+   "outs": 2,
+   "sliders": 1,
+   "bytes": 40025
+  },
+  {
    "id": "snappy",
    "name": "Snappy",
    "category": "One Slider",
@@ -294,6 +336,20 @@
    "outs": 2,
    "sliders": 1,
    "bytes": 34356
+  },
+  {
+   "id": "warmer",
+   "name": "Warmer",
+   "category": "One Slider",
+   "tags": "warm warmth tape tube saturation analog low mids soft top mix bus one knob gui",
+   "gfx": [
+    360,
+    240
+   ],
+   "ins": 2,
+   "outs": 2,
+   "sliders": 1,
+   "bytes": 35691
   },
   {
    "id": "wetter",
@@ -672,6 +728,20 @@
    "outs": 2,
    "sliders": 7,
    "bytes": 56069
+  },
+  {
+   "id": "lofi_comp",
+   "name": "Lo-Fi Comp",
+   "category": "Essentials",
+   "tags": "lofi lo-fi compressor pumping squash sample rate reduction bitcrusher wow drift beats vintage sampler gui",
+   "gfx": [
+    480,
+    380
+   ],
+   "ins": 2,
+   "outs": 2,
+   "sliders": 7,
+   "bytes": 48110
   },
   {
    "id": "maximizer",
@@ -1150,6 +1220,20 @@
    "bytes": 60589
   },
   {
+   "id": "bloom_delay",
+   "name": "Bloom Delay",
+   "category": "Advanced",
+   "tags": "bloom delay diffusion diffused echo reverb ambient modulation tempo sync feedback infinite pad wash gui",
+   "gfx": [
+    480,
+    380
+   ],
+   "ins": 2,
+   "outs": 2,
+   "sliders": 9,
+   "bytes": 59521
+  },
+  {
    "id": "comb_filter",
    "name": "Comb Filter",
    "category": "Advanced",
@@ -1402,6 +1486,20 @@
    "bytes": 52938
   },
   {
+   "id": "phase_distortion",
+   "name": "Phase Distortion",
+   "category": "Advanced",
+   "tags": "phase distortion pd modulation delay fm self sidechain keyed bright digital grit sound design gui",
+   "gfx": [
+    480,
+    380
+   ],
+   "ins": 4,
+   "outs": 2,
+   "sliders": 7,
+   "bytes": 49115
+  },
+  {
    "id": "pitch_correction",
    "name": "Pitch Correction",
    "category": "Advanced",
@@ -1526,6 +1624,20 @@
    "outs": 2,
    "sliders": 8,
    "bytes": 60791
+  },
+  {
+   "id": "spectral_blur",
+   "name": "Spectral Blur",
+   "category": "Advanced",
+   "tags": "spectral blur smear shift frequency shifter tilt spectral gate fft texture ambient sound design gui",
+   "gfx": [
+    480,
+    294
+   ],
+   "ins": 2,
+   "outs": 2,
+   "sliders": 6,
+   "bytes": 51691
   },
   {
    "id": "spectral_ducker",

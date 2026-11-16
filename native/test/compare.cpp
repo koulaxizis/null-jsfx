@@ -790,8 +790,14 @@ int main(int argc, char** argv)
                 }
                 seed = seed * 1664525u + 1013904223u;
                 double v = s.min + (s.max - s.min) * ((seed >> 8) / 16777216.0);
-                if (s.inc > 0)
+                if (s.inc > 0) {
                     v = std::fmin(s.max, s.min + std::round((v - s.min) / s.inc) * s.inc);
+                    // the decimal the JSFX would hold ("-47.2", not -47.199999999999996), as the
+                    // plugins' jsfxValue() and native/test/lv2_test.py make it
+                    char dec[32];
+                    std::snprintf(dec, sizeof(dec), "%.12g", v);
+                    v = std::strtod(dec, nullptr);
+                }
                 set.push_back(v);
             }
             sets.push_back(set);

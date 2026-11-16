@@ -1,0 +1,14 @@
+[
+  ["Subtle Edge", {"Drive": 25, "Tone": 3000, "Mix": 60}],
+  ["Bright Bass Grit", {"Drive": 60, "Tone": 800, "Bias": 20}],
+  ["Digital Lead", {"Drive": 75, "Tone": 5000, "Bias": 10}],
+  ["Wide Shimmer", {"Drive": 45, "Tone": 6000, "Spread": 100, "Mix": 70}],
+  ["Asymmetric Bite", {"Drive": 55, "Tone": 2000, "Bias": 60}],
+  ["Dark Warp", {"Drive": 70, "Tone": 200, "Bias": -30}],
+  ["Drum Bus Crunch", {"Drive": 40, "Tone": 1500, "Mix": 40}],
+  ["Vocal Sparkle", {"Drive": 20, "Tone": 8000, "Spread": 50, "Mix": 35}],
+  ["Keyed Kick Warp", {"Drive": 65, "Tone": 400, "Source": "Sidechain"}],
+  ["Keyed Cross Mod", {"Drive": 80, "Tone": 6000, "Source": "Sidechain", "Spread": 60}],
+  ["Extreme Bend", {"Drive": 100, "Tone": 12000, "Bias": 40}],
+  ["Guitar Glass", {"Drive": 50, "Tone": 4000, "Spread": 30, "Mix": 80}]
+]

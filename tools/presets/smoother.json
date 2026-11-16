@@ -1,0 +1,13 @@
+[
+  ["Light Polish", {"Amount": 15}],
+  ["Vocal Smooth", {"Amount": 45}],
+  ["Harsh Vocal Fix", {"Amount": 70}],
+  ["Cymbal Tamer", {"Amount": 55}],
+  ["Guitar Fizz Softener", {"Amount": 60}],
+  ["Bright Mix Bus", {"Amount": 25}],
+  ["Master Silk", {"Amount": 20}],
+  ["Brass Edge Off", {"Amount": 50}],
+  ["Strings Softener", {"Amount": 35}],
+  ["Maximum Smooth", {"Amount": 100}],
+  ["Podcast De-Harsh", {"Amount": 65}]
+]

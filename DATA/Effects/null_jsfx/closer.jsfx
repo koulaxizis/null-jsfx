@@ -1,0 +1,60 @@
+desc:NULL Closer
+author: Christos Koulaxizis
+tags: closer vocal voice presence proximity upfront forward compression dialogue podcast one knob
+//category: One Slider
+//NULL JSFX v3.3.1 • https://nulljsfx.tech • MIT License
+
+slider1:40<0,100,1>Amount
+
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
+
+@init
+  ext_noinit = 1;              // play and seek keep tails and state, as in the VST3/CLAP
+  // One knob that brings a voice forward: a light compressor (threshold -24 dBFS, ratio up to
+  // 3:1, 5 ms attack, 120 ms release, up to +3 dB make-up), a presence lift around 3.5 kHz (up to
+  // +5 dB) that eases off by up to half while the compressor works hard (so loud words do not
+  // get harsh), and a proximity lift below 180 Hz (up to +2.5 dB). At 0 it is untouched.
+  cl_f = min(3500, 0.45 * srate);
+  cl_w = 2 * $pi * cl_f / srate;
+  cl_al = sin(cl_w) / (2 * 0.9);
+  cl_a0 = 1 + cl_al;
+  cl_b0 = cl_al / cl_a0;
+  cl_b2 = -cl_al / cl_a0;
+  cl_a1 = -2 * cos(cl_w) / cl_a0;
+  cl_a2 = (1 - cl_al) / cl_a0;
+  cl_lc = 1 - exp(-2 * $pi * min(180, 0.45 * srate) / srate);
+  cl_att = 1 - exp(-1 / (0.005 * srate));
+  cl_rel = 1 - exp(-1 / (0.12 * srate));
+  cl_thr = -24;
+  cl_e = 0;
+  // the presence band: a band-pass biquad with 0 dB at its peak
+  function bp(x) local(y)
+  (
+    y = cl_b0 * x + cl_b2 * this.x2 - cl_a1 * this.y1 - cl_a2 * this.y2;
+    this.x2 = this.x1; this.x1 = x;
+    this.y2 = this.y1; this.y1 = y;
+    y;
+  );
+  function lp(x) ( this.y += (x - this.y) * cl_lc; );
+
+@slider
+  cl_a = slider1 / 100;
+  cl_ratio = 1 + 2 * cl_a;
+  cl_kp = 10 ^ (cl_a * 5 / 20) - 1;
+  cl_kl = 10 ^ (cl_a * 2.5 / 20) - 1;
+  cl_mu = 10 ^ (cl_a * 3 / 20);
+
+@sample
+  cl_in = max(abs(spl0), abs(spl1));
+  cl_e += (cl_in - cl_e) * (cl_in > cl_e ? cl_att : cl_rel);
+  cl_over = 20 * log10(max(cl_e, 0.000001)) - cl_thr;
+  cl_gr = cl_over > 0 ? cl_over * (1 - 1 / cl_ratio) : 0;
+  cl_g = 10 ^ (-cl_gr / 20) * cl_mu;
+  cl_p = cl_kp * (1 - 0.5 * min(1, cl_gr / 6));
+  cl_l = spl0 * cl_g;
+  cl_r = spl1 * cl_g;
+  spl0 = cl_l + bl.bp(cl_l) * cl_p + ll.lp(cl_l) * cl_kl;
+  spl1 = cl_r + br.bp(cl_r) * cl_p + lr.lp(cl_r) * cl_kl;

@@ -1,0 +1,71 @@
+desc:NULL Echo One
+author: Christos Koulaxizis
+tags: delay echo slapback ping-pong tempo sync repeats filtered tape
+//category: One Slider
+//NULL JSFX v3.3.1 • https://nulljsfx.tech • MIT License
+
+slider1:40<0,100,1>Amount
+
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
+
+@init
+  ext_noinit = 1;              // play and seek keep tails and state, as in the VST3/CLAP
+  // One-knob delay locked to the project tempo (120 bpm when the host gives none). Amount moves
+  // from a soft 1/16 slapback through 1/8 and dotted 1/8 to a long 1/4 ping-pong: the time
+  // steps up, the feedback, the wet level and the ping-pong spread rise, and the repeats get
+  // darker (a low-pass falling from 7 to 3 kHz and a 150 Hz high-pass in the loop). The delay
+  // time glides (80 ms) to its new value, so a change sounds like tape, never a click.
+  ec_n = ceil(srate * 2) + 4;  // 2 s per channel: a 1/4 note down to 30 bpm
+  ec_bl = 0;
+  ec_br = ec_n;
+  memset(0, 0, ec_n * 2); freembuf(ec_n * 2);
+  ec_wp = 0;
+  ec_dt = -1;                  // the delay time in samples; -1 until the first sample sets it
+  ec_glide = 1 - exp(-1 / (0.08 * srate));
+  ec_hpc = 1 - exp(-2 * $pi * 150 / srate);
+  ec_lpl = ec_lpr = ec_hpl = ec_hpr = 0;
+
+  // the note length (beats) for an Amount from 0 to 100
+  function ec_beats(v) ( v < 25 ? 0.25 : v < 50 ? 0.5 : v < 75 ? 0.75 : 1; );
+
+@slider
+  ec_a = slider1 / 100;
+  ec_note = ec_beats(slider1);
+  ec_fb = 0.12 + ec_a * 0.5;
+  ec_wet = ec_a * 0.5;
+  ec_dry = 1 - ec_a * 0.25;
+  ec_pp = min(1, max(0, (ec_a - 0.25) * 2));
+  ec_lpc = 1 - exp(-2 * $pi * min(7000 - ec_a * 4000, 0.45 * srate) / srate);
+
+@sample
+  ec_in0 = spl0;
+  ec_in1 = spl1;
+  ec_t = min(ec_n - 3, ec_note * 60 / (tempo > 0 ? tempo : 120) * srate);
+  ec_dt < 0 ? ec_dt = ec_t : ec_dt += (ec_t - ec_dt) * ec_glide;
+  ec_rp = ec_wp - ec_dt;
+  ec_rp < 0 ? ec_rp += ec_n;
+  ec_rp >= ec_n ? ec_rp -= ec_n; // a tiny negative read point can round up to ec_n
+  ec_i0 = floor(ec_rp);
+  ec_fr = ec_rp - ec_i0;
+  ec_i1 = ec_i0 + 1;
+  ec_i1 >= ec_n ? ec_i1 = 0;
+  ec_yl = ec_bl[ec_i0] + (ec_bl[ec_i1] - ec_bl[ec_i0]) * ec_fr;
+  ec_yr = ec_br[ec_i0] + (ec_br[ec_i1] - ec_br[ec_i0]) * ec_fr;
+  // darker repeats: low-pass, then the high-pass takes the lows out
+  ec_lpl += (ec_yl - ec_lpl) * ec_lpc;
+  ec_lpr += (ec_yr - ec_lpr) * ec_lpc;
+  ec_hpl += (ec_lpl - ec_hpl) * ec_hpc;
+  ec_hpr += (ec_lpr - ec_hpr) * ec_hpc;
+  ec_fl = ec_lpl - ec_hpl;
+  ec_fr2 = ec_lpr - ec_hpr;
+  // ping-pong: the input goes in on the left and the repeats cross sides, by ec_pp
+  ec_m = (ec_in0 + ec_in1) * 0.5;
+  ec_bl[ec_wp] = ec_in0 * (1 - ec_pp) + ec_m * ec_pp + (ec_fl * (1 - ec_pp) + ec_fr2 * ec_pp) * ec_fb;
+  ec_br[ec_wp] = ec_in1 * (1 - ec_pp) + (ec_fr2 * (1 - ec_pp) + ec_fl * ec_pp) * ec_fb;
+  ec_wp += 1;
+  ec_wp >= ec_n ? ec_wp = 0;
+  spl0 = ec_in0 * ec_dry + ec_fl * ec_wet;
+  spl1 = ec_in1 * ec_dry + ec_fr2 * ec_wet;

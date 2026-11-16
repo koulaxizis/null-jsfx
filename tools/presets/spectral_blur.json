@@ -1,0 +1,14 @@
+[
+  ["Soft Blur", {"Smear": 20}],
+  ["Spectral Tail", {"Smear": 60, "Mix": 50, "Output": 1.5}],
+  ["Endless Wash", {"Smear": 100, "Mix": 60, "Output": 2}],
+  ["Ghost Pad", {"Smear": 85, "Tilt": -1, "Mix": 70, "Output": -1.5}],
+  ["Metallic Shift Up", {"Smear": 10, "Shift": 150, "Output": 1.5}],
+  ["Robot Down", {"Smear": 0, "Shift": -100, "Output": 6}],
+  ["Shimmer Smear", {"Smear": 70, "Shift": 400, "Tilt": 1, "Mix": 40, "Output": 4.5}],
+  ["Dark Blur", {"Smear": 50, "Tilt": -1.5, "Output": -5}],
+  ["Airy Blur", {"Smear": 40, "Tilt": 1.5, "Output": 4.5}],
+  ["Spectral Gate", {"Smear": 0, "Gate": -45, "Output": 2}],
+  ["Sparkle Gate", {"Smear": 30, "Gate": -50, "Tilt": 1.5, "Output": 5}],
+  ["Frozen Noise Bed", {"Smear": 100, "Gate": -60, "Mix": 100, "Output": 1}]
+]
