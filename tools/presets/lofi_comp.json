@@ -1,0 +1,14 @@
+[
+  ["Lo-Fi Drum Bus", {"Squash": 70, "Release": 120, "Sample Rate": 26000, "Bits": 12, "Wow": 10}],
+  ["Dusty Keys", {"Squash": 45, "Release": 250, "Sample Rate": 22000, "Bits": 10, "Wow": 45}],
+  ["Pumping Beat", {"Squash": 90, "Release": 80, "Sample Rate": 32000, "Bits": 14, "Wow": 0}],
+  ["SP Style Sampler", {"Squash": 55, "Release": 150, "Sample Rate": 26040, "Bits": 12, "Wow": 15}],
+  ["Cassette Drift", {"Squash": 35, "Release": 300, "Sample Rate": 48000, "Bits": 16, "Wow": 60}],
+  ["Crushed Loop", {"Squash": 80, "Release": 100, "Sample Rate": 11000, "Bits": 8, "Wow": 20}],
+  ["Vocal Chop Grit", {"Squash": 60, "Release": 180, "Sample Rate": 16000, "Bits": 10, "Wow": 10, "Mix": 70}],
+  ["Parallel Squash", {"Squash": 100, "Release": 60, "Sample Rate": 48000, "Bits": 16, "Wow": 0, "Mix": 40}],
+  ["Telephone Beat", {"Squash": 75, "Release": 120, "Sample Rate": 8000, "Bits": 8, "Wow": 5}],
+  ["Warbly Pad", {"Squash": 30, "Release": 400, "Sample Rate": 22000, "Bits": 12, "Wow": 85}],
+  ["Toy Sampler", {"Squash": 50, "Release": 150, "Sample Rate": 6000, "Bits": 6, "Wow": 25}],
+  ["Gentle Lo-Fi Master", {"Squash": 20, "Release": 200, "Sample Rate": 36000, "Bits": 14, "Wow": 8}]
+]

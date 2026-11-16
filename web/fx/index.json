@@ -730,6 +730,20 @@
    "bytes": 56069
   },
   {
+   "id": "lofi_comp",
+   "name": "Lo-Fi Comp",
+   "category": "Essentials",
+   "tags": "lofi lo-fi compressor pumping squash sample rate reduction bitcrusher wow drift beats vintage sampler gui",
+   "gfx": [
+    480,
+    380
+   ],
+   "ins": 2,
+   "outs": 2,
+   "sliders": 7,
+   "bytes": 48045
+  },
+  {
    "id": "maximizer",
    "name": "Maximizer",
    "category": "Essentials",

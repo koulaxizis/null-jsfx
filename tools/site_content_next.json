@@ -89,5 +89,28 @@
     "properties": "Input → stereo delay line (8 ms) → read with linear interpolation at 1 + depth × (1 + clamp(low-passed source + bias, -1, 1)) samples, the right source scaled by 1 - 2 × spread → mixed with the dry signal read at the centre time 1 + depth → Output gain. The source is the track or the sidechain (pins 3/4). No clipping stage; latency up to 3 ms of centre delay, not reported.",
     "beta": true,
     "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-phase_distortion\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><path d=\"M 6,32 C 12,14 18,14 22,32 C 26,50 32,50 38,32 C 42,20 44,14 48,14 C 52,14 54,50 58,32\" stroke=\"url(#icon-phase_distortion)\" stroke-width=\"2.5\" fill=\"none\" stroke-linecap=\"round\"/></svg>"
+  },
+  "lofi_comp": {
+    "card_desc": "Lo-Fi Beat Compressor",
+    "keywords": "lofi lo-fi compressor pumping squash sample rate reduction bitcrusher wow drift beats vintage sampler hip hop drums",
+    "slider_desc": [
+      "How hard it pumps: threshold from -10 to -40 dBFS and ratio from 2:1 to 20:1 together, with its own make-up gain",
+      "How fast the compressor lets go: short values pump with the beat, long values hold the sound down",
+      "Sample rate of the old sampler (low-pass and sample-and-hold); at or above the project rate it is off",
+      "Bit depth of the quantiser: lower values add grain and noise",
+      "Slow pitch drift from two slow LFOs moving a short delay (up to 4 ms)",
+      "Blend with the dry signal",
+      "Output level"
+    ],
+    "uses": [
+      "Lo-fi hip hop drums in one effect",
+      "Pumping, squashed drum busses",
+      "Dusty sampler sound on keys and loops",
+      "Wobbly, tape-like pitch drift",
+      "Parallel crunch with the Mix slider"
+    ],
+    "properties": "Input → stereo-linked peak compressor (1 ms attack, Release, threshold and ratio from Squash, make-up) → short stereo delay read with linear interpolation, moved by two LFOs (0.6 and 0.17 Hz) for wow → one-pole low-pass at 0.45 × Sample Rate and sample-and-hold at Sample Rate (off at or above the project rate) → quantise to Bits → mix with the dry signal → Output gain. No latency reported.",
+    "beta": true,
+    "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-lofi_comp\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><path d=\"M 6,46 L 6,38 L 14,38 L 14,26 L 22,26 L 22,18 L 30,18 L 30,26 L 38,26 L 38,34 L 46,34 L 46,40 L 58,40\" stroke=\"url(#icon-lofi_comp)\" stroke-width=\"2.5\" fill=\"none\" stroke-linejoin=\"round\" stroke-linecap=\"round\"/></svg>"
   }
 }
