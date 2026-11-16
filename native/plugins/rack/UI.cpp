@@ -57,6 +57,9 @@ enum HitKind {
     kHitModuleView,  // back to the module
     kHitPopupBack,   // the panel of a popup (swallows clicks)
     kHitSeqBars,     // the step sequencer's bars (click / drag to draw)
+    kHitLane,        // a: slot (left half steps down, right half up: A, B, C, D)
+    kHitLanesOpen,   // opens the lane levels
+    kHitToggle,      // a: parameter (0 / 1)
 };
 
 struct Hit {
@@ -382,13 +385,14 @@ protected:
             order[i] = order[i - 1];
         order[b] = int(a);
         std::string ids[kSlots];
-        float vals[kSlots][kSlotParams], lanes[kSlots];
+        float vals[kSlots][kSlotParams], lanes[kSlots], lanesX[kSlots];
         for (uint32_t i = 0; i < kSlots; ++i)
         {
             ids[i] = fIds[order[i]];
             for (uint32_t p = 0; p < kSlotParams; ++p)
                 vals[i][p] = fParam[slotParam(uint32_t(order[i]), p)];
             lanes[i] = fParam[laneParam(uint32_t(order[i]))];
+            lanesX[i] = fParam[laneXParam(uint32_t(order[i]))];
         }
         for (uint32_t i = 0; i < kSlots; ++i)
             fIds[i] = ids[i];
@@ -404,6 +408,8 @@ protected:
                 }
                 fParam[laneParam(i)] = -1.0f;
                 setParamGesture(laneParam(i), lanes[i]);
+                fParam[laneXParam(i)] = -1.0f;
+                setParamGesture(laneXParam(i), lanesX[i]);
             }
         int where[kSlots];
         for (int i = 0; i < int(kSlots); ++i)
@@ -473,13 +479,24 @@ protected:
 
     // ---- lanes and the feedback loop ---------------------------------------------------------
 
-    // a slot with a module on lane B: the rack runs two lanes
-    bool anyLaneB() const
+    // the lane slot i runs on (kLaneA .. kLaneD)
+    int laneOf(uint32_t i) const { return slotLane(fParam[laneParam(i)], fParam[laneXParam(i)]); }
+
+    // a slot with a module off lane A: the rack runs more than one lane
+    bool anyLanes() const
     {
         for (uint32_t i = 0; i < kSlots; ++i)
-            if (!fIds[i].empty() && fParam[laneParam(i)] >= 0.5f)
+            if (!fIds[i].empty() && laneOf(i) != kLaneA)
                 return true;
         return false;
+    }
+
+    // puts slot s on lane l (A, B: Lane; C, D: Lane C/D, with Lane back at A)
+    void setLane(uint32_t s, int l)
+    {
+        l = std::max(0, std::min(int(kLanes) - 1, l));
+        setParamGesture(laneParam(s), l == kLaneB ? 1.0f : 0.0f);
+        setParamGesture(laneXParam(s), l == kLaneC ? 1.0f : l == kLaneD ? 2.0f : 0.0f);
     }
 
     // the loop's slots (0-based, from <= to), as the engine reads them
@@ -703,6 +720,18 @@ protected:
         addHit(cx - w * 0.5f, cy - h * 0.5f, w, h, kHitSelect, int(p));
     }
 
+    // the lane of slot s as one selector over A, B, C, D (two parameters underneath)
+    void laneSelector(float cx, float cy, float w, uint32_t s, float h = 21.0f)
+    {
+        const bool lit = hovered(kHitLane, int(s));
+        panel(cx - w * 0.5f, cy - h * 0.5f, w, h, theme::kBackground, lit ? theme::kTrackHover : theme::kBorder);
+        static const char* const names[] = { "A", "B", "C", "D" };
+        fitLabel(cx, cy, ALIGN_CENTER, 8.0f, 0.5f, theme::kText, names[laneOf(s)], w - 26.0f);
+        drawArrow(cx - w * 0.5f + 7.0f, cy, -1.0f);
+        drawArrow(cx + w * 0.5f - 7.0f, cy, 1.0f);
+        addHit(cx - w * 0.5f, cy - h * 0.5f, w, h, kHitLane, int(s));
+    }
+
     // compact knob: knob on the left, label and value on its right
     void compactKnob(float x, float cy, uint32_t p, const char* name, float w = 92.0f)
     {
@@ -758,6 +787,8 @@ protected:
             drawModulePicker();
         else if (fPopup == kPopupPresets)
             drawPresetList();
+        else if (fPopup == kPopupLanes)
+            drawLanesPopup();
     }
 
     // preset, meters, crossovers, input, output, mix
@@ -928,8 +959,11 @@ protected:
         const int band = int(std::lround(fParam[slotParam(i, kSlotBand)]));
         const int chan = int(std::lround(fParam[slotParam(i, kSlotChannel)]));
         float tx = kRowX + 32.0f;
-        if (anyLaneB())
-            tx = tag(tx, cy + 7.0f, fParam[laneParam(i)] >= 0.5f ? "LANE B" : "LANE A");
+        if (anyLanes())
+        {
+            static const char* const laneTags[] = { "LANE A", "LANE B", "LANE C", "LANE D" };
+            tx = tag(tx, cy + 7.0f, laneTags[laneOf(i)]);
+        }
         if (band > 0 || chan > 0)
         {
             if (band > 0)
@@ -1054,7 +1088,7 @@ protected:
         addHit(kPanX + 10.0f, 120.0f, nw + 24.0f, 36.0f, kHitAddModule, int(s));
 
         label(kPanX + 240.0f, hy, ALIGN_RIGHT, 7.0f, 1.2f, theme::kMuted, "LANE", true);
-        selector(kPanX + 268.0f, hy, 48.0f, laneParam(s));
+        laneSelector(kPanX + 268.0f, hy, 48.0f, s);
         label(kPanX + 336.0f, hy, ALIGN_RIGHT, 7.0f, 1.2f, theme::kMuted, "BAND", true);
         selector(kPanX + 382.0f, hy, 82.0f, slotParam(s, kSlotBand));
         label(kPanX + 490.0f, hy, ALIGN_RIGHT, 7.0f, 1.2f, theme::kMuted, "CHANNEL", true);
@@ -1480,16 +1514,25 @@ protected:
         card(x, y, w, kRow2H);
         char buf[32];
 
-        // lanes: how many slots run on lane B, and the blend
+        // lanes: how many slots run on lane B (or how many lanes run), and the blend
         int onB = 0;
+        bool used[kLanes] = {};
         for (uint32_t i = 0; i < kSlots; ++i)
-            onB += !fIds[i].empty() && fParam[laneParam(i)] >= 0.5f;
+            if (!fIds[i].empty())
+            {
+                onB += laneOf(i) == kLaneB;
+                used[laneOf(i)] = true;
+            }
+        const int nLanes = 1 + int(used[kLaneB]) + int(used[kLaneC]) + int(used[kLaneD]);
         label(x + 12.0f, y + 15.0f, ALIGN_LEFT, 8.5f, 2.0f, theme::kMuted, "LANES", true);
-        if (onB)
+        if (nLanes > 2 || used[kLaneC] || used[kLaneD])
+            std::snprintf(buf, sizeof(buf), "%d LANES", nLanes);
+        else if (onB)
             std::snprintf(buf, sizeof(buf), "%d ON B", onB);
         else
             std::snprintf(buf, sizeof(buf), "ONE LANE");
-        label(x + 12.0f, y + 31.0f, ALIGN_LEFT, 6.5f, 1.2f, onB ? theme::kMuted : theme::kSlogan, buf, true);
+        label(x + 12.0f, y + 31.0f, ALIGN_LEFT, 6.5f, 1.2f, nLanes > 1 ? theme::kMuted : theme::kSlogan, buf, true);
+        button(x + 10.0f, y + 42.0f, 58.0f, 18.0f, "LEVELS", kHitLanesOpen, 0, fPopup == kPopupLanes);
         // Lane Mix as how much of lane B is heard
         char mixText[24];
         std::snprintf(mixText, sizeof(mixText), "%d%% B", int(std::lround(fParam[kLaneMix])));
@@ -1514,6 +1557,46 @@ protected:
     }
 
     // ---- popups ------------------------------------------------------------------------------
+
+    // the lane levels: Gain, Pan, Mute and Solo of lanes A to D (they act once a second lane runs)
+    void drawLanesPopup()
+    {
+        dim();
+        const float w = 456.0f, h = 220.0f, x = (float(kWidth) - w) * 0.5f, y = 300.0f;
+        beginPath();
+        roundedRect(x + 0.5f, y + 4.0f, w - 1.0f, h - 1.0f, 8.0f);
+        fillColor(Color(0, 0, 0, 0.4f));
+        fill();
+        panel(x, y, w, h, theme::kCard, theme::kTrackHover, 8.0f);
+        fPopupHit0 = int(fHits.size());
+        addHit(x, y, w, h, kHitPopupBack);
+        label(x + 16.0f, y + 20.0f, ALIGN_LEFT, 8.5f, 2.0f, theme::kMuted, "LANE LEVELS", true);
+        button(x + w - 98.0f, y + 9.0f, 82.0f, 22.0f, "CLOSE", kHitPickClose, 0);
+        bool used[kLanes] = {};
+        for (uint32_t i = 0; i < kSlots; ++i)
+            if (!fIds[i].empty())
+                used[laneOf(i)] = true;
+        const bool many = used[kLaneB] || used[kLaneC] || used[kLaneD];
+        label(x + 16.0f, y + 36.0f, ALIGN_LEFT, 6.5f, 1.2f, theme::kSlogan,
+              many ? "LANE A ALWAYS RUNS" : "ONE LANE: THESE ACT ONCE A SECOND LANE RUNS", true);
+        static const char* const names[] = { "LANE A", "LANE B", "LANE C", "LANE D" };
+        const float colW = (w - 24.0f) / float(kLanes);
+        for (uint32_t l = 0; l < kLanes; ++l)
+        {
+            const float cx = x + 12.0f + colW * (float(l) + 0.5f);
+            const bool on = l == kLaneA || used[l];
+            label(cx, y + 60.0f, ALIGN_CENTER, 8.0f, 1.5f, on ? theme::kText : theme::kMuted, names[l], true);
+            knobCell(cx - 26.0f, y + 70.0f, kLaneGain1 + l, "GAIN", 11.0f, 52.0f, 6.0f, 34.0f, 62.0f, !on);
+            knobCell(cx + 26.0f, y + 70.0f, kLanePan1 + l, "PAN", 11.0f, 52.0f, 6.0f, 34.0f, 62.0f, !on);
+            const uint32_t pm = kLaneMute1 + l, ps = kLaneSolo1 + l;
+            button(cx - 46.0f, y + 150.0f, 44.0f, 20.0f, "MUTE", kHitToggle, int(pm), fParam[pm] >= 0.5f);
+            button(cx + 2.0f, y + 150.0f, 44.0f, 20.0f, "SOLO", kHitToggle, int(ps), fParam[ps] >= 0.5f);
+            if (l > 0)
+                vline(x + 12.0f + colW * float(l), y + 54.0f, y + 176.0f);
+        }
+        label(x + 16.0f, y + 200.0f, ALIGN_LEFT, 6.5f, 1.2f, theme::kSlogan,
+              "PICK A SLOT'S LANE IN ITS PANEL. THE LANES SHARE THE OUTPUT; LANE MIX SPLITS A AND B'S SHARE.", true);
+    }
 
     void dim()
     {
@@ -1733,10 +1816,15 @@ protected:
                 applyPreset(uint32_t(h.a));
                 fPopup = kPopupNone;
             }
-            else if (h.kind == kHitPickClose || !inside)
-                fPopup = kPopupNone;
-            repaint();
-            return true;
+            else if (fPopup == kPopupLanes && hi >= fPopupHit0 && (h.kind == kHitKnob || h.kind == kHitToggle))
+                ; // handled below, like the panel's own controls
+            else
+            {
+                if (h.kind == kHitPickClose || !inside)
+                    fPopup = kPopupNone;
+                repaint();
+                return true;
+            }
         }
 
         switch (h.kind)
@@ -1757,6 +1845,15 @@ protected:
             break;
         case kHitSelect:
             stepParam(uint32_t(h.a), x < h.x + h.w * 0.5f ? -1 : 1, true);
+            break;
+        case kHitLane:
+            setLane(uint32_t(h.a), (laneOf(uint32_t(h.a)) + (x < h.x + h.w * 0.5f ? -1 : 1) + int(kLanes)) % int(kLanes));
+            break;
+        case kHitLanesOpen:
+            fPopup = kPopupLanes;
+            break;
+        case kHitToggle:
+            setParamGesture(uint32_t(h.a), fParam[h.a] >= 0.5f ? 0.0f : 1.0f);
             break;
         case kHitSlot:
             fSel = h.a;
@@ -1934,10 +2031,12 @@ protected:
         const float s = uiScale();
         const float x = float(ev.pos.getX()) / s, y = float(ev.pos.getY()) / s;
         const float d = float(ev.delta.getY()) + float(ev.delta.getX());
-        if (d == 0.0f || fPopup != kPopupNone)
+        if (d == 0.0f || (fPopup != kPopupNone && fPopup != kPopupLanes))
             return false;
         const int dir = d > 0.0f ? 1 : -1;
         const int hi = hitAt(x, y);
+        if (fPopup == kPopupLanes && hi < fPopupHit0)
+            return false;
         if (hi >= 0)
         {
             const Hit& h = fHits[hi];
@@ -1949,6 +2048,11 @@ protected:
             if (h.kind == kHitSelect)
             {
                 stepParam(uint32_t(h.a), dir, false);
+                return true;
+            }
+            if (h.kind == kHitLane)
+            {
+                setLane(uint32_t(h.a), laneOf(uint32_t(h.a)) + dir);
                 return true;
             }
             if (h.kind == kHitSeqBars)
@@ -1982,7 +2086,7 @@ protected:
     }
 
 private:
-    enum Popup { kPopupNone, kPopupModules, kPopupPresets };
+    enum Popup { kPopupNone, kPopupModules, kPopupPresets, kPopupLanes };
 
     float fParam[kNumParams] = {};
     uint32_t fEditFrame[kNumParams] = {};
@@ -1999,6 +2103,7 @@ private:
     bool fModView = false;
     int fRouteScroll = 0;
     Popup fPopup = kPopupNone;
+    int fPopupHit0 = 0; // the first hit of the lane levels popup (the ones before lie under it)
     int fPickSlot = 0;
 
     int fDragParam = -1, fDragRoute = -1;

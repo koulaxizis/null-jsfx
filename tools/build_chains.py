@@ -1066,7 +1066,9 @@ def rack_slots(name, slots, routes, globs):
 def render_rack():
     """RackPresets.hpp: Init, the CHAINS (modules the Rack has, in order) and RACK_PRESETS."""
     bands, channels = cpp_options("kBandOptions"), cpp_options("kChannelOptions")
-    lanes, sources = cpp_options("kLaneOptions"), cpp_options("kSourceSymbols")
+    # lanes A, B (Lane) and C, D (Lane C/D, PresetSlot.lane 2 and 3)
+    lanes = cpp_options("kLaneOptions") + cpp_options("kLaneXOptions")[1:]
+    sources = cpp_options("kSourceSymbols")
     presets = [("Init", "Init", [], [], {})]
     for chain, fxs in CHAINS:
         if chain in REAPER_ONLY:

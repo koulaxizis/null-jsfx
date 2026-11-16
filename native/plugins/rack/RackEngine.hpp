@@ -29,6 +29,12 @@
  *   At 0 the loop is not computed.
  * - Keyed modules (RackKeyed.hpp, Sidechain Ducker) get the rack input as their key, delayed by
  *   the latency of the slots before them in their lane.
+ * - Lanes C and D (4.0): a slot's Lane C/D moves it to lane C or D. With any slot off lane A, every
+ *   lane in use (A always; B, C, D with a slot on them) runs the rack input through its slots, the
+ *   lanes are lined up to the longest and summed with weights: A (1 - Lane Mix) x 2 / N and
+ *   B Lane Mix x 2 / N when B is in use (else A 1 / N), C and D 1 / N, N the lanes in use, so two
+ *   lanes A and B blend exactly as before. Each lane then has Gain, Pan (a balance), Mute and
+ *   Solo (any solo mutes the lanes not soloed); at 0 dB, centre, off they change nothing.
  *
  * Threads: parameters are atomics (any thread). Module changes, routes and the sample rate are
  * set off the audio thread: the new module is created and prepared there, then swapped in under
@@ -258,6 +264,8 @@ public:
         fRackDry.allocate(kRackDelay);
         fAlignA.allocate(kRackDelay);
         fAlignB.allocate(kRackDelay);
+        fAlignC.allocate(kRackDelay);
+        fAlignD.allocate(kRackDelay);
         fKey.allocate(kRackDelay);
         fFbRing.allocate(2 * kChunk);
         for (auto& v : fSourceValue)
@@ -318,6 +326,8 @@ public:
         fSeqPos = 0.0;
         fAlignA.clear();
         fAlignB.clear();
+        fAlignC.clear();
+        fAlignD.clear();
         fKey.clear();
         fFbRing.clear();
         fLanesActive = fFbActive = false;
@@ -393,6 +403,7 @@ public:
             for (uint32_t p = 0; p < kSlotParams; ++p)
                 moved[j].params[p] = param(slotParam(j, p));
             moved[j].lane = param(laneParam(j));
+            moved[j].laneX = param(laneXParam(j));
         }
         for (uint32_t i = 0; i < kSlots; ++i)
         {
@@ -408,6 +419,7 @@ public:
                     for (uint32_t p = 0; p < kSlotParams; ++p)
                         setParam(slotParam(i, p), m.params[p]);
                     setParam(laneParam(i), m.lane);
+                    setParam(laneXParam(i), m.laneX);
                     resetSlotAudio(s);
                 }
             }
@@ -518,7 +530,8 @@ public:
             out.params[slotParam(i, kSlotMix)] = ps.mix;
             out.params[slotParam(i, kSlotBand)] = float(ps.band);
             out.params[slotParam(i, kSlotChannel)] = float(ps.channel);
-            out.params[laneParam(i)] = ps.lane ? float(kLaneB) : float(kLaneA);
+            out.params[laneParam(i)] = ps.lane == kLaneB ? 1.0f : 0.0f;
+            out.params[laneXParam(i)] = ps.lane == kLaneC ? 1.0f : ps.lane == kLaneD ? 2.0f : 0.0f;
             for (uint32_t v = 0; v < d->numSliders && v < kValues; ++v)
                 out.params[valueParam(i, v)] = plainToValue(d->sliders[v], isLogSlider(d->id, v), d->sliders[v].def);
             for (uint32_t k = 0; k < ps.numValues; ++k)
@@ -680,7 +693,7 @@ private:
         const nulljsfx::ModuleDesc* desc = nullptr;
         float applied[kValues] = {};
         float params[kSlotParams] = {};
-        float lane = 0.0f;
+        float lane = 0.0f, laneX = 0.0f;
     };
 
     void resetSlotAudio(Slot& s)
@@ -868,13 +881,22 @@ private:
         // the key of keyed modules: the rack input after the input gain
         fKey.write(xl, xr, n);
 
-        bool laneB = false;
+        // the lane of each slot, and which lanes have a slot
+        bool used[kLanes] = { true, false, false, false };
+        bool lanes = false;
         for (uint32_t s = 0; s < kSlots; ++s)
-            laneB = laneB || (fSlot[s].desc && param(laneParam(s)) >= 0.5f);
+        {
+            fLaneOf[s] = slotLane(param(laneParam(s)), param(laneXParam(s)));
+            if (fSlot[s].desc && fLaneOf[s] != kLaneA)
+            {
+                used[fLaneOf[s]] = true;
+                lanes = true;
+            }
+        }
         const float fb = std::min(std::max(param(kFeedback), 0.0f), kMaxFeedback) / 100.0f;
 
         uint32_t total = 0;
-        if (!laneB && !(fb > 0.0f))
+        if (!lanes && !(fb > 0.0f))
         {
             // one serial chain, exactly as in 2.1
             fLanesActive = fFbActive = false;
@@ -886,7 +908,7 @@ private:
                 }
         }
         else
-            total = processLanes(xl, xr, n, mt, laneB, fb);
+            total = processLanes(xl, xr, n, mt, lanes, used, fb);
         fKey.advance(n);
 
         // the rack's mix against its input delayed by the whole chain's latency, then the output gain
@@ -930,15 +952,18 @@ private:
 
     // two lanes and/or the feedback loop (added after 2.1); x holds the input and gets the output. Returns
     // the latency (the longer lane's).
-    uint32_t processLanes(float* xl, float* xr, uint32_t n, const nulljsfx::ModuleTime& mt, bool laneB, float fb)
+    uint32_t processLanes(float* xl, float* xr, uint32_t n, const nulljsfx::ModuleTime& mt, bool lanes,
+                          const bool used[kLanes], float fb)
     {
-        float* yl = fLaneL;
-        float* yr = fLaneR;
-        if (laneB)
-        {
-            std::memcpy(yl, xl, n * sizeof(float));
-            std::memcpy(yr, xr, n * sizeof(float));
-        }
+        // the buffers of lanes A (x itself), B, C and D
+        float* bufL[kLanes] = { xl, fLaneL, fLaneCL, fLaneDL };
+        float* bufR[kLanes] = { xr, fLaneR, fLaneCR, fLaneDR };
+        for (uint32_t k = 1; k < kLanes; ++k)
+            if (lanes && used[k])
+            {
+                std::memcpy(bufL[k], xl, n * sizeof(float));
+                std::memcpy(bufR[k], xr, n * sizeof(float));
+            }
 
         // feedback: what left slot `to` kChunk samples ago, through the loop's filters and soft clip
         const bool fbOn = fb > 0.0f;
@@ -980,13 +1005,13 @@ private:
         else
             fFbActive = false;
 
-        uint32_t latA = 0, latB = 0;
+        uint32_t lat4[kLanes] = { 0, 0, 0, 0 };
         for (uint32_t s = 0; s < kSlots; ++s)
         {
-            const bool b = laneB && param(laneParam(s)) >= 0.5f;
-            float* bl = b ? yl : xl;
-            float* br = b ? yr : xr;
-            uint32_t& lat = b ? latB : latA;
+            const int k = lanes ? fLaneOf[s] : kLaneA;
+            float* bl = bufL[k];
+            float* br = bufR[k];
+            uint32_t& lat = lat4[k];
             if (fbOn && int(s) == from)
                 for (uint32_t i = 0; i < n; ++i)
                 {
@@ -1003,29 +1028,71 @@ private:
         }
         if (fbOn)
             fFbRing.advance(n);
-        if (!laneB)
+        if (!lanes)
         {
             fLanesActive = false;
-            return latA;
+            return lat4[kLaneA];
         }
 
-        // line the lanes up (delay the shorter one) and blend them
-        const uint32_t total = std::max(latA, latB);
-        const uint32_t dA = std::min(total - latA, fAlignA.maxDelay()), dB = std::min(total - latB, fAlignB.maxDelay());
+        // line the lanes up (delay the shorter ones) and sum them with their weights
+        uint32_t total = 0, nUsed = 0;
+        for (uint32_t k = 0; k < kLanes; ++k)
+            if (used[k])
+            {
+                total = std::max(total, lat4[k]);
+                ++nUsed;
+            }
+        DelayLine* align[kLanes] = { &fAlignA, &fAlignB, &fAlignC, &fAlignD };
+        uint32_t dl[kLanes];
+        for (uint32_t k = 0; k < kLanes; ++k)
+            dl[k] = std::min(total - lat4[k], align[k]->maxDelay());
         if (!fLanesActive)
         {
-            fAlignA.clearRecent(dA + 1);
-            fAlignB.clearRecent(dB + 1);
+            for (uint32_t k = 0; k < kLanes; ++k)
+                align[k]->clearRecent(dl[k] + 1);
             fLanesActive = true;
         }
+        for (uint32_t k = 1; k < kLanes; ++k)
+            if (!used[k] && fLaneWasUsed[k])
+                align[k]->clearRecent(dl[k] + 1); // a lane that comes back starts from silence
         const float m = clamp01(param(kLaneMix) / 100.0f);
+        bool solo = false;
+        for (uint32_t k = 0; k < kLanes; ++k)
+            solo = solo || (used[k] && param(kLaneSolo1 + k) >= 0.5f);
+        float wl[kLanes], wr[kLanes];
+        for (uint32_t k = 0; k < kLanes; ++k)
+        {
+            fLaneWasUsed[k] = used[k];
+            float w;
+            if (k == kLaneA)
+                w = used[kLaneB] ? (1.0f - m) * 2.0f / float(nUsed) : 1.0f / float(nUsed);
+            else if (k == kLaneB)
+                w = m * 2.0f / float(nUsed);
+            else
+                w = 1.0f / float(nUsed);
+            if (!used[k] || param(kLaneMute1 + k) >= 0.5f || (solo && param(kLaneSolo1 + k) < 0.5f))
+                w = 0.0f;
+            const float gdb = param(kLaneGain1 + k);
+            if (gdb != 0.0f)
+                w *= float(std::pow(10.0, double(gdb) / 20.0));
+            const float pan = clamp(param(kLanePan1 + k) / 100.0f, -1.0f, 1.0f);
+            wl[k] = pan > 0.0f ? w * (1.0f - pan) : w;
+            wr[k] = pan < 0.0f ? w * (1.0f + pan) : w;
+        }
         for (uint32_t i = 0; i < n; ++i)
         {
-            float al, ar, bl, br;
-            fAlignA.process(xl[i], xr[i], dA, al, ar);
-            fAlignB.process(yl[i], yr[i], dB, bl, br);
-            xl[i] = al * (1.0f - m) + bl * m;
-            xr[i] = ar * (1.0f - m) + br * m;
+            float ol = 0.0f, orr = 0.0f;
+            for (uint32_t k = 0; k < kLanes; ++k)
+            {
+                if (!used[k])
+                    continue;
+                float al, ar;
+                align[k]->process(bufL[k][i], bufR[k][i], dl[k], al, ar);
+                ol += al * wl[k];
+                orr += ar * wr[k];
+            }
+            xl[i] = ol;
+            xr[i] = orr;
         }
         return total;
     }
@@ -1182,7 +1249,10 @@ private:
     double fSeqPos = 0.0;
 
     // added after 2.1: lanes, feedback, keys
-    DelayLine fAlignA, fAlignB;
+    DelayLine fAlignA, fAlignB, fAlignC, fAlignD;
+    int fLaneOf[kSlots] = {};
+    bool fLaneWasUsed[kLanes] = { true, false, false, false };
+    float fLaneCL[kChunk], fLaneCR[kChunk], fLaneDL[kChunk], fLaneDR[kChunk];
     ChunkRing fKey, fFbRing;
     bool fLanesActive = false, fFbActive = false;
     double fFbDc = 0.0, fFbLc = 0.0, fFbHc = 0.0;

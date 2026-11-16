@@ -14,6 +14,9 @@
  * Feedback To, then S1..S8 Lane (A or B). At their defaults the rack sounds exactly as 2.1: no
  * slot on lane B, feedback 0, and the sequencer moves nothing without a route.
  *
+ * Appended in 4.0, 286..309: S1..S8 Lane C/D ("A/B" leaves the slot on its Lane, "C" or "D" moves
+ * it to lane C or D), then Gain, Pan, Mute and Solo of lanes A..D. At their defaults nothing moves.
+ *
  * State (strings): "slots" = 8 module ids separated by ',' (empty = empty slot), "routes" =
  * "source>slot.value:depth" separated by ';' (slot and value from 1, e.g. "lfo1>2.1:-0.25";
  * sources: kSourceSymbols, "seq" added after 2.1), "preset" = the name of the preset the rack was
@@ -49,9 +52,11 @@ static const double kSyncBeats[] = { 0.0, 16.0, 8.0, 4.0, 2.0, 1.0, 0.5, 0.25, 0
                                      4.0 / 3.0, 2.0 / 3.0, 1.0 / 3.0, 1.0 / 6.0, 3.0, 1.5, 0.75 };
 static const char* const kShapeOptions[] = { "Sine", "Triangle", "Saw Up", "Saw Down", "Square", "Random" };
 static const char* const kLaneOptions[] = { "A", "B" };
+static const char* const kLaneXOptions[] = { "A/B", "C", "D" }; // added in 4.0: lanes C and D
+static constexpr uint32_t kLanes = 4;
 
 enum Band { kBandFull = 0, kBandLow, kBandMid, kBandHigh };
-enum Lane { kLaneA = 0, kLaneB };
+enum Lane { kLaneA = 0, kLaneB, kLaneC, kLaneD };
 enum Channel { kChanStereo = 0, kChanMid, kChanSide, kChanLeft, kChanRight };
 
 // ---- modulation sources ----------------------------------------------------------------------
@@ -93,13 +98,27 @@ enum ExtParam : uint32_t {
     kLaneMix = kSeqStep1 + kSeqSteps,
     kFeedback, kFbFrom, kFbTo,
     kSlotLane1,                                      // .. kSlotLane1 + 7
-    kNumParams = kSlotLane1 + kSlots,                // 286
+    // appended in 4.0
+    kSlotLaneX1 = kSlotLane1 + kSlots,               // 286 .. 293: S1..S8 Lane C/D
+    kLaneGain1 = kSlotLaneX1 + kSlots,               // 294 .. 297: Lane A..D Gain
+    kLanePan1 = kLaneGain1 + kLanes,                 // 298 .. 301
+    kLaneMute1 = kLanePan1 + kLanes,                 // 302 .. 305
+    kLaneSolo1 = kLaneMute1 + kLanes,                // 306 .. 309
+    kNumParams = kLaneSolo1 + kLanes,                // 310
 };
 static constexpr float kMaxFeedback = 95.0f;
 
 inline constexpr uint32_t slotParam(uint32_t slot, uint32_t p) { return kNumGlobals + slot * kSlotParams + p; }
 inline constexpr uint32_t valueParam(uint32_t slot, uint32_t v) { return slotParam(slot, kSlotValue1 + v); }
 inline constexpr uint32_t laneParam(uint32_t slot) { return kSlotLane1 + slot; }
+inline constexpr uint32_t laneXParam(uint32_t slot) { return kSlotLaneX1 + slot; }
+
+// the lane a slot runs on (kLaneA..kLaneD) from its Lane and Lane C/D parameters
+inline int slotLane(float lane, float laneX)
+{
+    const int x = int(std::lround(laneX));
+    return x == 1 ? kLaneC : x == 2 ? kLaneD : (lane >= 0.5f ? kLaneB : kLaneA);
+}
 
 struct ParamInfo {
     DISTRHO::SliderInfo s;
@@ -153,6 +172,12 @@ static const ParamInfo kExtInfos[] = {
     { { "Feedback From", "fb_from", 1.0f, 8.0f, 1.0f, "", 1.0f }, false },
     { { "Feedback To", "fb_to", 1.0f, 8.0f, 8.0f, "", 1.0f }, false },
     { { "Lane", "lane", 0.0f, 1.0f, 0.0f, "", 1.0f, kLaneOptions }, false }, // x8, per slot
+    // appended in 4.0
+    { { "Lane C/D", "lanex", 0.0f, 2.0f, 0.0f, "", 1.0f, kLaneXOptions }, false }, // x8, per slot
+    { { "Gain", "gain", -24.0f, 12.0f, 0.0f, "dB", 0.1f }, false },                 // x4, per lane
+    { { "Pan", "pan", -100.0f, 100.0f, 0.0f, "%", 1.0f }, false },
+    { { "Mute", "mute", 0.0f, 1.0f, 0.0f, "", 1.0f, kOffOn }, false },
+    { { "Solo", "solo", 0.0f, 1.0f, 0.0f, "", 1.0f, kOffOn }, false },
 };
 
 // name, symbol, range, default, unit, step and options of any parameter (slot values are 0..1);
@@ -182,6 +207,20 @@ inline DISTRHO::SliderInfo paramInfo(uint32_t index, char* name, size_t nn, char
             s = kExtInfos[9].s;
             std::snprintf(name, nn, "S%u Lane", index - kSlotLane1 + 1);
             std::snprintf(sym, ns, "s%u_lane", index - kSlotLane1 + 1);
+        }
+        else if (index >= kSlotLaneX1 && index < kSlotLaneX1 + kSlots)
+        {
+            s = kExtInfos[10].s;
+            std::snprintf(name, nn, "S%u Lane C/D", index - kSlotLaneX1 + 1);
+            std::snprintf(sym, ns, "s%u_lanex", index - kSlotLaneX1 + 1);
+        }
+        else if (index >= kLaneGain1 && index < kNumParams)
+        {
+            // Lane A..D Gain, Pan, Mute, Solo
+            const uint32_t k = (index - kLaneGain1) / kLanes, lane = (index - kLaneGain1) % kLanes;
+            s = kExtInfos[11 + k].s;
+            std::snprintf(name, nn, "Lane %c %s", char('A' + lane), s.name);
+            std::snprintf(sym, ns, "lane%c_%s", char('a' + lane), s.symbol);
         }
         else
         {
@@ -218,24 +257,8 @@ inline DISTRHO::SliderInfo paramInfo(uint32_t index, char* name, size_t nn, char
     return s;
 }
 
-// the index of a global parameter (one of kGlobals, or an appended one other than a slot's
-// lane) by its symbol, -1 if there is none
-inline int globalFromSymbol(const char* sym)
-{
-    for (uint32_t i = 0; i < kNumGlobals; ++i)
-        if (std::strcmp(sym, kGlobals[i].s.symbol) == 0)
-            return int(i);
-    for (uint32_t i = kExtFirst; i < kSlotLane1; ++i)
-    {
-        char n[32], s[32];
-        paramInfo(i, n, sizeof(n), s, sizeof(s));
-        if (std::strcmp(sym, s) == 0)
-            return int(i);
-    }
-    return -1;
-}
-
 // true for the per-slot parameters: On, Mix, Band, Channel, the values and (added after 2.1) the lane
+// and (4.0) the lane C/D
 inline bool isSlotParam(uint32_t index, uint32_t* slot = nullptr)
 {
     if (index >= kNumGlobals && index < kExtFirst)
@@ -250,13 +273,40 @@ inline bool isSlotParam(uint32_t index, uint32_t* slot = nullptr)
             *slot = index - kSlotLane1;
         return true;
     }
+    if (index >= kSlotLaneX1 && index < kSlotLaneX1 + kSlots)
+    {
+        if (slot)
+            *slot = index - kSlotLaneX1;
+        return true;
+    }
     return false;
+}
+
+// the index of a global parameter (one of kGlobals, or an appended one other than a slot's
+// lane) by its symbol, -1 if there is none
+inline int globalFromSymbol(const char* sym)
+{
+    for (uint32_t i = 0; i < kNumGlobals; ++i)
+        if (std::strcmp(sym, kGlobals[i].s.symbol) == 0)
+            return int(i);
+    for (uint32_t i = kExtFirst; i < kNumParams; ++i)
+    {
+        if (isSlotParam(i))
+            continue;
+        char n[32], s[32];
+        paramInfo(i, n, sizeof(n), s, sizeof(s));
+        if (std::strcmp(sym, s) == 0)
+            return int(i);
+    }
+    return -1;
 }
 
 // ---- slider mapping --------------------------------------------------------------------------
 
 // NaN becomes 0
 inline float clamp01(float v) { return v > 0.0f ? (v < 1.0f ? v : 1.0f) : 0.0f; }
+// NaN becomes lo
+inline float clamp(float v, float lo, float hi) { return v > lo ? (v < hi ? v : hi) : lo; }
 
 // the slider's value snapped to its step (in double, so 0.1 steps land on the JSFX grid)
 inline float snapToStep(const DISTRHO::SliderInfo& in, double v)
@@ -397,7 +447,7 @@ struct PresetSlot {
     uint8_t band, channel;
     float mix;
     bool on;
-    uint8_t lane; // added after 2.1: 0 = A (the generator leaves it out), 1 = B
+    uint8_t lane; // added after 2.1: 0 = A (the generator leaves it out), 1 = B; 4.0: 2 = C, 3 = D
 };
 
 struct PresetRoute {

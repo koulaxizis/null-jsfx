@@ -20,7 +20,9 @@
  *               512 (transport playing, Macro 1 sweeping) and 300 (stopped), and again with the new
  *               parameters moved to values that must not change anything (Lane Mix, Feedback
  *               From/To, the sequencer, lane B on empty slots)
- *   lanes       two lanes with different latencies line up (impulse), Lane Mix blends them
+ *   lanes       two lanes with different latencies line up (impulse), Lane Mix blends them;
+ *               (4.0) lanes A, C and D share the output equally, Mute, Solo, Gain and Pan act,
+ *               and lane A's levels do nothing while it runs alone
  *   feedback    the loop repeats every kChunk samples and decays; 95 % on noise stays bounded
  *   sequencer   the steps, Steps, sync to the host beat and Glide
  *   keyed       Sidechain Ducker keys on the rack input delayed by the latency before it
@@ -502,9 +504,15 @@ static void testState()
         CHECK(rack::kExtFirst == 254 && std::string(rack::paramInfo(253, nm, 32, sy, 32).symbol) == "s8_v25" &&
               std::string(rack::paramInfo(rack::kSeqStep1 + 15, nm, 32, sy, 32).symbol) == "seq_step16" &&
               std::string(rack::paramInfo(rack::laneParam(7), nm, 32, sy, 32).symbol) == "s8_lane" &&
-              rack::kNumParams == 286, "parameter layout");
+              rack::kSlotLaneX1 == 286 && rack::kNumParams == 310, "parameter layout");
+        CHECK(std::string(rack::paramInfo(rack::laneXParam(7), nm, 32, sy, 32).symbol) == "s8_lanex" &&
+              std::string(rack::paramInfo(rack::kLaneGain1, nm, 32, sy, 32).symbol) == "lanea_gain" &&
+              std::string(rack::paramInfo(rack::kLaneSolo1 + 3, nm, 32, sy, 32).symbol) == "laned_solo" &&
+              std::string(nm) == "Lane D Solo", "4.0 parameter symbols");
         CHECK(rack::globalFromSymbol("feedback") == int(rack::kFeedback) && rack::globalFromSymbol("seq_step3") == int(rack::kSeqStep1 + 2) &&
-              rack::globalFromSymbol("env_gain") == int(rack::kEnvGain) && rack::globalFromSymbol("s1_lane") < 0, "global symbols");
+              rack::globalFromSymbol("env_gain") == int(rack::kEnvGain) && rack::globalFromSymbol("s1_lane") < 0 &&
+              rack::globalFromSymbol("s1_lanex") < 0 && rack::globalFromSymbol("lanec_pan") == int(rack::kLanePan1 + 2) &&
+              rack::globalFromSymbol("laned_solo") == int(rack::kLaneSolo1 + 3), "global symbols");
     }
     CHECK(rack::parseRoutes("bogus;lfo1>9.1:0.5;env>1.26:0.5;lfo2>1.1:x", back) == 0, "bad routes accepted");
     std::string ids[rack::kSlots] = { "tilt", "", "delay" };
@@ -573,7 +581,15 @@ static void neutral(RackEngine& e, const RackEngine::PresetState& st)
     e.setParam(rack::kSeqStep1 + 3, 0.9f);
     for (uint32_t s = 0; s < rack::kSlots; ++s)
         if (st.ids[s].empty())
-            e.setParam(rack::laneParam(s), 1.0f); // lane B on an empty slot: no lane B
+        {
+            e.setParam(rack::laneParam(s), 1.0f);  // lane B on an empty slot: no lane B
+            e.setParam(rack::laneXParam(s), 2.0f); // lane D on an empty slot: no lane D
+        }
+    // one lane: the lane levels do nothing
+    e.setParam(rack::kLaneGain1, -6.0f);
+    e.setParam(rack::kLanePan1 + 1, 50.0f);
+    e.setParam(rack::kLaneMute1, 1.0f);
+    e.setParam(rack::kLaneSolo1 + 2, 1.0f);
 }
 
 static bool usesNewFeatures(const RackEngine::PresetState& st)
@@ -581,7 +597,7 @@ static bool usesNewFeatures(const RackEngine::PresetState& st)
     if (st.params[rack::kFeedback] > 0.0f)
         return true;
     for (uint32_t s = 0; s < rack::kSlots; ++s)
-        if (!st.ids[s].empty() && st.params[rack::laneParam(s)] >= 0.5f)
+        if (!st.ids[s].empty() && (st.params[rack::laneParam(s)] >= 0.5f || st.params[rack::laneXParam(s)] >= 0.5f))
             return true;
     for (uint32_t r = 0; r < st.numRoutes; ++r)
         if (st.routes[r].source >= rack_v1::kNumSources)
@@ -683,6 +699,56 @@ static void testLanes()
         std::printf("  lane A 100 smp, lane B 383 smp, Lane Mix %3.0f: aligned at 383, latency %u; B muted leaves %.2f\n",
                     mixB, e->latency(), out.l[383]);
     }
+}
+
+// lanes A, C and D (no B): equal shares, aligned; Mute, Solo, Gain and Pan of a lane
+static void testLanes4()
+{
+    auto mods = allModules(true);
+    const double sr = 48000.0;
+    const size_t n = 4096;
+    Stereo in, out;
+    in.l.assign(n, 0.0f);
+    in.r.assign(n, 0.0f);
+    in.l[0] = 1.0f;
+    in.r[0] = 0.5f;
+    std::unique_ptr<RackEngine> e(new RackEngine(mods.data(), uint32_t(mods.size())));
+    e->setSampleRate(sr);
+    std::string ids[rack::kSlots] = { "identity", "identity", "identity" };
+    e->setSlots(ids);
+    e->setParam(rack::valueParam(0, 0), 100.0f / 4000.0f); // lane A: 100 samples
+    e->setParam(rack::valueParam(1, 0), 200.0f / 4000.0f); // lane C: 200
+    e->setParam(rack::valueParam(2, 0), 300.0f / 4000.0f); // lane D: 300
+    e->setParam(rack::laneXParam(1), 1.0f);
+    e->setParam(rack::laneXParam(2), 2.0f);
+    e->setParam(rack::kLaneMix, 80.0f);                     // no lane B: Lane Mix does nothing
+    auto at = [&](size_t i, float wl, float wr, const char* what) {
+        render(*e, in, out, 512);
+        size_t bad = 0;
+        for (size_t k = 0; k < n; ++k)
+            bad += std::fabs(out.l[k] - (k == i ? wl : 0.0f)) > 1e-6f || std::fabs(out.r[k] - (k == i ? wr : 0.0f)) > 1e-6f;
+        CHECK(bad == 0 && e->latency() == 300, "lanes A/C/D, %s: %zu samples off (%.4f %.4f at %zu, latency %u)", what, bad,
+              out.l[i], out.r[i], i, e->latency());
+        std::printf("  lanes A/C/D, %-14s %.4f %.4f at %zu\n", what, out.l[i], out.r[i], i);
+    };
+    const float third = 1.0f / 3.0f;
+    at(300, 3.0f * third, 1.5f * third, "equal shares");
+    e->setParam(rack::kLaneMute1 + 2, 1.0f);
+    at(300, 2.0f * third, 1.0f * third, "C muted");
+    e->setParam(rack::kLaneSolo1 + 3, 1.0f);
+    at(300, third, 0.5f * third, "D solo");
+    e->setParam(rack::kLaneGain1 + 3, 6.0f);
+    const float g = float(std::pow(10.0, 6.0 / 20.0));
+    at(300, third * g, 0.5f * third * g, "D +6 dB");
+    e->setParam(rack::kLanePan1 + 3, -100.0f);
+    at(300, third * g, 0.0f, "D panned left");
+    // back to lane A alone: the levels of A act only with a second lane
+    e->setParam(rack::laneXParam(1), 0.0f);
+    e->setParam(rack::laneXParam(2), 0.0f);
+    e->setParam(rack::kLaneMute1, 1.0f);
+    render(*e, in, out, 512);
+    CHECK(std::fabs(out.l[600] - 1.0f) < 1e-6f && e->latency() == 600, "one lane: lane A's Mute acted (%.4f, latency %u)",
+          out.l[600], e->latency());
 }
 
 // ---- feedback --------------------------------------------------------------------------------
@@ -889,6 +955,7 @@ int main()
     testIdentity();
     std::printf("lanes\n");
     testLanes();
+    testLanes4();
     std::printf("feedback\n");
     testFeedback();
     std::printf("sequencer\n");
