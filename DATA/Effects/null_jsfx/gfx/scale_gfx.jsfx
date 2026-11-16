@@ -367,8 +367,21 @@ out_pin:Right
     s;
   );
 
+  // the hint line under the controls: a short help text per slider (from tools/site_content.json)
+  function ng_hint_text(i) local(s)
+  (
+    s = "";
+    i == 1 ? s = "The key of the scale";
+    i == 2 ? s = "The scale every note is fitted to: major, natural, harmonic or melodic minor, the modes (Dorian to";
+    i == 3 ? s = "How a note outside the scale is fixed: moved to the Nearest scale note (ties go down), always Up or always";
+    i == 4 ? s = "Moves the incoming notes by semitones before they are fitted to the scale, so the result stays in key (in";
+    i == 5 ? s = "Moves the result up or down by octaves (-3 to +3)";
+    s;
+  );
+
   function ng_presets() local(i)
   (
+    ng_hint_i > 0 && !ng_pre_open ? ng_hint(ng_hint_text(ng_hint_i));
     ng_pre_req >= 0 ? ( ng_preset_load(ng_pre_req); update(); ng_pre_req = -1; );
     ng_hist() ? update();
     ng_pre_cur = ng_preset_match();

@@ -205,8 +205,24 @@ out_pin:Right
     s;
   );
 
+  // the hint line under the controls: a short help text per slider (from tools/site_content.json)
+  function ng_hint_text(i) local(s)
+  (
+    s = "";
+    i == 1 ? s = "What is aligned to what: Right to Left moves the right channel against the left, Track to Sidechain moves";
+    i == 2 ? s = "How late the moved signal plays (-10 to +10 ms)";
+    i == 3 ? s = "Sub-sample fine tuning of the delay (-1 to +1 samples), for alignment the millisecond steps cannot reach";
+    i == 4 ? s = "Flips the polarity of the left channel (of the track's left channel in Sidechain mode)";
+    i == 5 ? s = "Flips the polarity of the right channel (of the track's right channel in Sidechain mode)";
+    i == 6 ? s = "Turns the phase of the moved signal by this angle at the Focus frequency (0 to 360 degrees";
+    i == 7 ? s = "The frequency where Rotation is exact (20 to 1000 Hz): set it to the fundamental that matters, such as the";
+    i == 8 ? s = "Mono Sum plays the moved signal added to its reference, so you can hear when the two are fullest together";
+    s;
+  );
+
   function ng_presets() local(i)
   (
+    ng_hint_i > 0 && !ng_pre_open ? ng_hint(ng_hint_text(ng_hint_i));
     ng_pre_req >= 0 ? ( ng_preset_load(ng_pre_req); update(); ng_pre_req = -1; );
     ng_hist() ? update();
     ng_pre_cur = ng_preset_match();

@@ -287,8 +287,41 @@ out_pin:Right
     s;
   );
 
+  // the hint line under the controls: a short help text per slider (from tools/site_content.json)
+  function ng_hint_text(i) local(s)
+  (
+    s = "";
+    i == 1 ? s = "Centre or corner frequency of the Low band";
+    i == 2 ? s = "Boost or cut of the Low band (shelf and peaking types)";
+    i == 3 ? s = "Bandwidth or slope of the Low band";
+    i == 4 ? s = "Filter shape of the Low band";
+    i == 5 ? s = "Active, Bypass, or Solo (hear only this band's region)";
+    i == 6 ? s = "Centre or corner frequency of the Low Mid band";
+    i == 7 ? s = "Boost or cut of the Low Mid band (shelf and peaking types)";
+    i == 8 ? s = "Bandwidth or slope of the Low Mid band";
+    i == 9 ? s = "Filter shape of the Low Mid band";
+    i == 10 ? s = "Active, Bypass, or Solo (hear only this band's region)";
+    i == 11 ? s = "Centre or corner frequency of the Mid High band";
+    i == 12 ? s = "Boost or cut of the Mid High band (shelf and peaking types)";
+    i == 13 ? s = "Bandwidth or slope of the Mid High band";
+    i == 14 ? s = "Filter shape of the Mid High band";
+    i == 15 ? s = "Active, Bypass, or Solo (hear only this band's region)";
+    i == 16 ? s = "Centre or corner frequency of the High band";
+    i == 17 ? s = "Boost or cut of the High band (shelf and peaking types)";
+    i == 18 ? s = "Bandwidth or slope of the High band";
+    i == 19 ? s = "Filter shape of the High band";
+    i == 20 ? s = "Active, Bypass, or Solo (hear only this band's region)";
+    i == 21 ? s = "Centre or corner frequency of the Ultra High band";
+    i == 22 ? s = "Boost or cut of the Ultra High band (shelf and peaking types)";
+    i == 23 ? s = "Bandwidth or slope of the Ultra High band";
+    i == 24 ? s = "Filter shape of the Ultra High band";
+    i == 25 ? s = "Active, Bypass, or Solo (hear only this band's region)";
+    s;
+  );
+
   function ng_presets() local(i)
   (
+    ng_hint_i > 0 && !ng_pre_open ? ng_hint(ng_hint_text(ng_hint_i));
     ng_pre_req >= 0 ? ( ng_preset_load(ng_pre_req); update(); ng_pre_req = -1; );
     ng_hist() ? update();
     ng_pre_cur = ng_preset_match();

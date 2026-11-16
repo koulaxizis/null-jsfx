@@ -28,4 +28,17 @@ static const FactoryPreset kPresets[] = {
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 8;
 
+// the hint line under the controls: a short help text per parameter (from tools/site_content.json)
+#define NULL_UI_HINTS 1
+static const char* const kHints[] = {
+    "Noise colour: White (flat), Pink (−3 dB/oct) or Brown (−6 dB/oct)",
+    "Output level of the noise",
+    "Correlation between channels: 0% = identical mono noise, 100% = fully independent left and right",
+    "High-pass filter on the noise (12 dB/oct); 20 Hz is off",
+    "Low-pass filter on the noise (12 dB/oct); 20 kHz is off",
+    "Makes the noise level follow the input's envelope, so it breathes with the track (100% = silent when the",
+    "Pushes the noise down while the input is loud and lets it back up in the gaps; 0% is off",
+    "Replace outputs the noise alone (the input is only used for Follow Input and Ducking), Add layers the",
+};
+
 } // namespace nullpresets

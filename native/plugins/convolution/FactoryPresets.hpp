@@ -27,4 +27,16 @@ static const FactoryPreset kPresets[] = {
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 7;
 
+// the hint line under the controls: a short help text per parameter (from tools/site_content.json)
+#define NULL_UI_HINTS 1
+static const char* const kHints[] = {
+    "Built-in generated IR (Small Room, Large Room, Hall, Plate, Cathedral) or IR File",
+    "Trims the IR length",
+    "Shifts the IR later in time",
+    "One-pole low cut on the wet signal",
+    "One-pole high cut on the wet signal",
+    "Dry/wet blend",
+    "Final output level",
+};
+
 } // namespace nullpresets

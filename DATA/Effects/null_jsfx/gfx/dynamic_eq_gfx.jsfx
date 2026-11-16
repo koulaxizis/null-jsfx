@@ -187,8 +187,37 @@ out_pin:Right
     s;
   );
 
+  // the hint line under the controls: a short help text per slider (from tools/site_content.json)
+  function ng_hint_text(i) local(s)
+  (
+    s = "";
+    i == 1 ? s = "Centre frequency of band 1";
+    i == 2 ? s = "Boost or cut band 1 reaches once its level is 12 dB over the threshold";
+    i == 3 ? s = "Bandwidth of band 1";
+    i == 4 ? s = "Level at which band 1 starts to act";
+    i == 5 ? s = "Centre frequency of band 2";
+    i == 6 ? s = "Boost or cut band 2 reaches once its level is 12 dB over the threshold";
+    i == 7 ? s = "Bandwidth of band 2";
+    i == 8 ? s = "Level at which band 2 starts to act";
+    i == 9 ? s = "Centre frequency of band 3";
+    i == 10 ? s = "Boost or cut band 3 reaches once its level is 12 dB over the threshold";
+    i == 11 ? s = "Bandwidth of band 3";
+    i == 12 ? s = "Level at which band 3 starts to act";
+    i == 13 ? s = "Centre frequency of band 4";
+    i == 14 ? s = "Boost or cut band 4 reaches once its level is 12 dB over the threshold";
+    i == 15 ? s = "Bandwidth of band 4";
+    i == 16 ? s = "Level at which band 4 starts to act";
+    i == 17 ? s = "How fast each band's detector reacts to rising level";
+    i == 18 ? s = "How fast each band's detector recovers";
+    i == 19 ? s = "Output gain after all four bands";
+    i == 20 ? s = "Channels: Stereo works on the whole signal";
+    i == 21 ? s = "Listen: Output plays the result; Delta plays only what the bands change (the input minus the result";
+    s;
+  );
+
   function ng_presets() local(i)
   (
+    ng_hint_i > 0 && !ng_pre_open ? ng_hint(ng_hint_text(ng_hint_i));
     ng_pre_req >= 0 ? ( ng_preset_load(ng_pre_req); update(); ng_pre_req = -1; );
     ng_hist() ? update();
     ng_pre_cur = ng_preset_match();

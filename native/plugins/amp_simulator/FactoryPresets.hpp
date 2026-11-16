@@ -30,4 +30,21 @@ static const FactoryPreset kPresets[] = {
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 12;
 
+// the hint line under the controls: a short help text per parameter (from tools/site_content.json)
+#define NULL_UI_HINTS 1
+static const char* const kHints[] = {
+    "Amp voicing: Clean (2 stages, Fender stack), Crunch (3 stages, Marshall stack), Lead (4 stages, tight",
+    "Preamp drive into the first tube stage; the range depends on the model (up to +46 dB on Lead)",
+    "Tone stack bass control (audio taper). Bass, Mid and Treble interact like a real passive tone stack",
+    "Tone stack mid control; low values give the classic mid scoop",
+    "Tone stack treble control",
+    "Power amp presence: a high shelf at 3 kHz from -8 to +8 dB",
+    "Power amp drive and volume: higher values push the push-pull stage into saturation",
+    "Bright switch: a treble boost before the preamp that is strongest at low Gain, like a bright cap",
+    "Power supply sag: the power amp's drive drops as the level rises, for a softer, compressed feel",
+    "2x or 4x oversampling of the nonlinear stages (polyphase IIR half-band filters, no latency)",
+    "Final output level",
+    "Noise gate keyed from the input: below the threshold the amp's output fades out (6 dB hysteresis, 30 ms",
+};
+
 } // namespace nullpresets

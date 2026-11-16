@@ -135,8 +135,24 @@ out_pin:Right
     s;
   );
 
+  // the hint line under the controls: a short help text per slider (from tools/site_content.json)
+  function ng_hint_text(i) local(s)
+  (
+    s = "";
+    i == 1 ? s = "Noise colour: White (flat), Pink (−3 dB/oct) or Brown (−6 dB/oct)";
+    i == 2 ? s = "Output level of the noise";
+    i == 3 ? s = "Correlation between channels: 0% = identical mono noise, 100% = fully independent left and right";
+    i == 4 ? s = "High-pass filter on the noise (12 dB/oct); 20 Hz is off";
+    i == 5 ? s = "Low-pass filter on the noise (12 dB/oct); 20 kHz is off";
+    i == 6 ? s = "Makes the noise level follow the input's envelope, so it breathes with the track (100% = silent when the";
+    i == 7 ? s = "Pushes the noise down while the input is loud and lets it back up in the gaps; 0% is off";
+    i == 8 ? s = "Replace outputs the noise alone (the input is only used for Follow Input and Ducking), Add layers the";
+    s;
+  );
+
   function ng_presets() local(i)
   (
+    ng_hint_i > 0 && !ng_pre_open ? ng_hint(ng_hint_text(ng_hint_i));
     ng_pre_req >= 0 ? ( ng_preset_load(ng_pre_req); update(); ng_pre_req = -1; );
     ng_hist() ? update();
     ng_pre_cur = ng_preset_match();

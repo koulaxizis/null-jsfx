@@ -27,4 +27,19 @@ static const FactoryPreset kPresets[] = {
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 10;
 
+// the hint line under the controls: a short help text per parameter (from tools/site_content.json)
+#define NULL_UI_HINTS 1
+static const char* const kHints[] = {
+    "How deep the track can be cut in each band (0 to 100% = up to 24 dB)",
+    "Key level per band above which the track ducks (-60 to 0 dB); the dashed line in the display",
+    "How fast the cut follows the key (0.1 to 100 ms)",
+    "How fast the track comes back when the key stops (10 to 1000 ms)",
+    "Bands below this frequency never duck (20 Hz to 5 kHz)",
+    "Bands above this frequency never duck (200 Hz to 20 kHz)",
+    "What ducks: both channels (Stereo), only the Mid, or only the Side, which keeps the centre intact and",
+    "Blend of ducked and dry track (0 to 100%)",
+    "Level after the ducker (-12 to +12 dB)",
+    "Output plays the ducked track; Delta plays only what is taken out, to hear exactly where the ducker works",
+};
+
 } // namespace nullpresets

@@ -8,5 +8,9 @@
   ["Drum Rhythm Synth", {"Carrier": "Saw", "Carrier Pitch": 110, "Attack": 1, "Release": 20, "Sibilance": 10}],
   ["Smooth Pad Vocoder", {"Carrier": "Saw", "Carrier Pitch": 130.8, "Attack": 15, "Release": 150, "Sibilance": 15, "Stereo Width": 90}],
   ["Talkbox Bass", {"Carrier": "Saw", "Carrier Pitch": 65.4, "Attack": 2, "Release": 25, "Sibilance": 20}],
-  ["Robot Announcer", {"Carrier": "Pulse", "Carrier Pitch": 110, "Attack": 2, "Release": 30, "Sibilance": 35, "Stereo Width": 30}]
+  ["Robot Announcer", {"Carrier": "Pulse", "Carrier Pitch": 110, "Attack": 2, "Release": 30, "Sibilance": 35, "Stereo Width": 30}],
+  ["Talkbox Saw Lead", {"Mode": "Talkbox", "Carrier": "Saw", "Carrier Pitch": 220, "Sibilance": 25}],
+  ["Talkbox Sidechain Synth", {"Mode": "Talkbox", "Carrier": "Right Input", "Sibilance": 20}],
+  ["Talkbox Pulse Robot", {"Mode": "Talkbox", "Carrier": "Pulse", "Carrier Pitch": 110, "Sibilance": 30}],
+  ["Talkbox Whisper", {"Mode": "Talkbox", "Carrier": "Noise", "Sibilance": 40}]
 ]

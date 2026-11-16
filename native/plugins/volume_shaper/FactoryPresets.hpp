@@ -33,4 +33,34 @@ static const FactoryPreset kPresets[] = {
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 25;
 
+// the hint line under the controls: a short help text per parameter (from tools/site_content.json)
+#define NULL_UI_HINTS 1
+static const char* const kHints[] = {
+    "The volume curve: Pump, Pump Hard, Saw Down, Saw Up, Gate 1/16, Trance 1/8, Sine, Triangle, Half-time Pump",
+    "Length of one cycle of the shape at the host tempo (1/1 to 1/16, plus 1/4 and 1/8 triplets)",
+    "How far the shape turns the level down (0% = no effect, 100% = silence at the bottom of the curve)",
+    "Smoothing of the volume changes, to keep gates and jumps free of clicks",
+    "Moves the shape later in the cycle",
+    "Blend between the shaped and the dry signal",
+    "What starts the shape: Tempo loops it on the host tempo, MIDI plays it once from the top on every note-on",
+    "Level the sidechain signal must rise above to start the shape in Sidechain mode",
+    "Plays your own drawn shape instead of Shape (Off by default): the 16 points below, one every 1/16 of the",
+    "Point 1 of the drawn shape, at the start of the cycle (0 to 100% level)",
+    "Point 2 of the drawn shape, 1/16 of the way through the cycle (0 to 100% level)",
+    "Point 3 of the drawn shape, 2/16 of the way through the cycle (0 to 100% level)",
+    "Point 4 of the drawn shape, 3/16 of the way through the cycle (0 to 100% level)",
+    "Point 5 of the drawn shape, 4/16 of the way through the cycle (0 to 100% level)",
+    "Point 6 of the drawn shape, 5/16 of the way through the cycle (0 to 100% level)",
+    "Point 7 of the drawn shape, 6/16 of the way through the cycle (0 to 100% level)",
+    "Point 8 of the drawn shape, 7/16 of the way through the cycle (0 to 100% level)",
+    "Point 9 of the drawn shape, 8/16 of the way through the cycle (0 to 100% level)",
+    "Point 10 of the drawn shape, 9/16 of the way through the cycle (0 to 100% level)",
+    "Point 11 of the drawn shape, 10/16 of the way through the cycle (0 to 100% level)",
+    "Point 12 of the drawn shape, 11/16 of the way through the cycle (0 to 100% level)",
+    "Point 13 of the drawn shape, 12/16 of the way through the cycle (0 to 100% level)",
+    "Point 14 of the drawn shape, 13/16 of the way through the cycle (0 to 100% level)",
+    "Point 15 of the drawn shape, 14/16 of the way through the cycle (0 to 100% level)",
+    "Point 16 of the drawn shape, 15/16 of the way through the cycle (0 to 100% level)",
+};
+
 } // namespace nullpresets

@@ -197,8 +197,25 @@ out_pin:Right
     s;
   );
 
+  // the hint line under the controls: a short help text per slider (from tools/site_content.json)
+  function ng_hint_text(i) local(s)
+  (
+    s = "";
+    i == 1 ? s = "Number of samples in each analysis frame: larger sizes resolve low frequencies more finely but react more";
+    i == 2 ? s = "Tilts the display around 1 kHz so a balanced mix looks flat: 0 is a plain FFT, 3 dB/oct suits";
+    i == 3 ? s = "How quickly the curve falls after a peak; rises are instant. 0 shows every frame as it is";
+    i == 4 ? s = "Lowest level on the display, below 0 dB at the top";
+    i == 5 ? s = "Keeps a second, thinner curve at the highest level each frequency reached: for 2 s, or until the setting";
+    i == 6 ? s = "Signal analysed: Mid (L+R)/2, Left, Right or Side (L−R)/2";
+    i == 7 ? s = "Stereo passes the audio through untouched (bit-exact). Solo plays the analysed channel on both outputs, e.g";
+    i == 8 ? s = "Spectrum draws the live curve; Spectrogram draws the last seconds as a scrolling image (time left to";
+    i == 9 ? s = "On analyses the sidechain input (pins 3/4) the same way and draws it over the spectrum, to compare a mix";
+    s;
+  );
+
   function ng_presets() local(i)
   (
+    ng_hint_i > 0 && !ng_pre_open ? ng_hint(ng_hint_text(ng_hint_i));
     ng_pre_req >= 0 ? ( ng_preset_load(ng_pre_req); update(); ng_pre_req = -1; );
     ng_hist() ? update();
     ng_pre_cur = ng_preset_match();

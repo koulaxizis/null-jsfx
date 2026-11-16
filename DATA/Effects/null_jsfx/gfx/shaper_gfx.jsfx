@@ -410,8 +410,40 @@ out_pin:Right
     s;
   );
 
+  // the hint line under the controls: a short help text per slider (from tools/site_content.json)
+  function ng_hint_text(i) local(s)
+  (
+    s = "";
+    i == 1 ? s = "Picks the transfer curve: Soft, Hard, Tube, Fold, Sine, Steps and Asym are built in, Custom uses the eight";
+    i == 2 ? s = "Gain into the curve (0 to 36 dB): the harder you drive, the further up the curve the signal reaches and";
+    i == 3 ? s = "Adds a DC offset before the curve (-50 to +50%) so the two halves of the wave hit different parts of it";
+    i == 4 ? s = "Symmetric mirrors the curve for the negative half of the wave";
+    i == 5 ? s = "Runs the curve at 2x or 4x the sample rate so the harmonics it creates do not fold back as aliasing (Off =";
+    i == 6 ? s = "A low-pass filter after the curve (1 to 20 kHz, off at 20 kHz) to tame the fizz of heavy settings";
+    i == 7 ? s = "Blend of shaped and dry signal (the dry path is delayed to match), for parallel distortion";
+    i == 8 ? s = "Level after the mix (-24 to +12 dB)";
+    i == 9 ? s = "Input position of curve point 1 (0 to 1 of full scale; 0 leaves the point unused), read when Shape is Custom";
+    i == 10 ? s = "Output of curve point 1 (-1 to +1) for that input; values below the previous points fold the wave back";
+    i == 11 ? s = "Input position of curve point 2 (0 to 1 of full scale; 0 leaves the point unused), read when Shape is Custom";
+    i == 12 ? s = "Output of curve point 2 (-1 to +1) for that input; values below the previous points fold the wave back";
+    i == 13 ? s = "Input position of curve point 3 (0 to 1 of full scale; 0 leaves the point unused), read when Shape is Custom";
+    i == 14 ? s = "Output of curve point 3 (-1 to +1) for that input; values below the previous points fold the wave back";
+    i == 15 ? s = "Input position of curve point 4 (0 to 1 of full scale; 0 leaves the point unused), read when Shape is Custom";
+    i == 16 ? s = "Output of curve point 4 (-1 to +1) for that input; values below the previous points fold the wave back";
+    i == 17 ? s = "Input position of curve point 5 (0 to 1 of full scale; 0 leaves the point unused), read when Shape is Custom";
+    i == 18 ? s = "Output of curve point 5 (-1 to +1) for that input; values below the previous points fold the wave back";
+    i == 19 ? s = "Input position of curve point 6 (0 to 1 of full scale; 0 leaves the point unused), read when Shape is Custom";
+    i == 20 ? s = "Output of curve point 6 (-1 to +1) for that input; values below the previous points fold the wave back";
+    i == 21 ? s = "Input position of curve point 7 (0 to 1 of full scale; 0 leaves the point unused), read when Shape is Custom";
+    i == 22 ? s = "Output of curve point 7 (-1 to +1) for that input; values below the previous points fold the wave back";
+    i == 23 ? s = "Input position of curve point 8 (0 to 1 of full scale; 0 leaves the point unused), read when Shape is Custom";
+    i == 24 ? s = "Output of curve point 8 (-1 to +1) for that input; values below the previous points fold the wave back";
+    s;
+  );
+
   function ng_presets() local(i)
   (
+    ng_hint_i > 0 && !ng_pre_open ? ng_hint(ng_hint_text(ng_hint_i));
     ng_pre_req >= 0 ? ( ng_preset_load(ng_pre_req); update(); ng_pre_req = -1; );
     ng_hist() ? update();
     ng_pre_cur = ng_preset_match();

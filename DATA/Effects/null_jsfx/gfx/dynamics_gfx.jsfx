@@ -210,8 +210,29 @@ out_pin:Right
     s;
   );
 
+  // the hint line under the controls: a short help text per slider (from tools/site_content.json)
+  function ng_hint_text(i) local(s)
+  (
+    s = "";
+    i == 1 ? s = "Compressor reduces level above the threshold; Expander reduces level below it";
+    i == 2 ? s = "Level where gain reduction begins";
+    i == 3 ? s = "Strength of the gain change once past the threshold";
+    i == 4 ? s = "Width of the soft transition above (or below) the threshold";
+    i == 5 ? s = "How fast gain reduction is applied (0 = instant)";
+    i == 6 ? s = "How fast gain recovers (0 = instant)";
+    i == 7 ? s = "Gain added after processing";
+    i == 8 ? s = "Character of the detector: Clean is the transparent original, Bus a smooth glue compressor with auto";
+    i == 9 ? s = "High-pass filter on the detector only, so low end does not drive the gain reduction (20 Hz = off)";
+    i == 10 ? s = "Blend of compressed and dry signal for parallel compression (100% = fully compressed)";
+    i == 11 ? s = "Internal listens to the track itself; External listens to input channels 3/4 (sidechain key)";
+    i == 12 ? s = "Channels: Stereo works on the whole signal";
+    i == 13 ? s = "Listen: Output plays the result; Delta plays only what the compressor takes away (or, Upward, adds)";
+    s;
+  );
+
   function ng_presets() local(i)
   (
+    ng_hint_i > 0 && !ng_pre_open ? ng_hint(ng_hint_text(ng_hint_i));
     ng_pre_req >= 0 ? ( ng_preset_load(ng_pre_req); update(); ng_pre_req = -1; );
     ng_hist() ? update();
     ng_pre_cur = ng_preset_match();

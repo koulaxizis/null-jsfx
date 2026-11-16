@@ -236,8 +236,26 @@ out_pin:Right
     s;
   );
 
+  // the hint line under the controls: a short help text per slider (from tools/site_content.json)
+  function ng_hint_text(i) local(s)
+  (
+    s = "";
+    i == 1 ? s = "Maximum reduction per frequency";
+    i == 2 ? s = "How narrow the peaks it targets are: the spectral envelope is averaged over 2 octaves at 0% down to 1/8";
+    i == 3 ? s = "How far a frequency must rise above the envelope before it is reduced (2 to 12 dB)";
+    i == 4 ? s = "How fast the reduction grabs, per FFT frame";
+    i == 5 ? s = "How fast the reduction lets go";
+    i == 6 ? s = "Lowest frequency processed (fades out over half an octave below)";
+    i == 7 ? s = "Highest frequency processed (fades out over half an octave above)";
+    i == 8 ? s = "Soft: 2:1 with a 6 dB knee, easing into Depth. Hard: removes all of the excess, up to Depth";
+    i == 9 ? s = "Plays only what is removed, to hear what the plugin takes out";
+    i == 10 ? s = "Blend between the (latency-aligned) dry and processed signal";
+    s;
+  );
+
   function ng_presets() local(i)
   (
+    ng_hint_i > 0 && !ng_pre_open ? ng_hint(ng_hint_text(ng_hint_i));
     ng_pre_req >= 0 ? ( ng_preset_load(ng_pre_req); update(); ng_pre_req = -1; );
     ng_hist() ? update();
     ng_pre_cur = ng_preset_match();

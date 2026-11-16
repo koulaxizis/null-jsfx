@@ -29,4 +29,16 @@ static const FactoryPreset kPresets[] = {
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 7;
 
+// the hint line under the controls: a short help text per parameter (from tools/site_content.json)
+#define NULL_UI_HINTS 1
+static const char* const kHints[] = {
+    "How far the delay moves, up to 3 ms (on a square curve, so the low half stays subtle)",
+    "Low-pass on the signal that moves the delay: lower values make a smoother, darker bend, higher values a",
+    "Offset added to the moving signal: the bend becomes asymmetric (even harmonics)",
+    "Turns the right channel's movement the other way, for width",
+    "What moves the delay: the track itself (Self) or the sidechain on channels 3/4",
+    "Blend with the dry signal, which is delayed by the same centre time so the blend does not comb",
+    "Output level",
+};
+
 } // namespace nullpresets

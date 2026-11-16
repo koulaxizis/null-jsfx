@@ -17,11 +17,12 @@ static const char* const kEffectOptions[] = { "OFF", "REPEAT", "REVERSE", "FILTE
 static const char* const kLengthOptions[] = { "1/8", "1/16", "1/32", "1/8T", "1/16T" };
 static const char* const kRepeatOptions[] = { "1/16", "1/32", "1/64" };
 static const char* const kOnOff[] = { "OFF", "ON" };
+static const char* const kStyleOptions[] = { "BUILD", "GLITCH", "TAPE", "DUB", "RANDOM" };
 
 // short names for the step grid (step_fx_gfx.jsfx draws the same)
 static const char* const kEffectShort[] = { "-", "REPEAT", "REVERSE", "FILTER", "GATE", "TAPE", "PITCH -", "PITCH +", "CRUSH" };
 
-// slider1..slider25 of step_fx.jsfx, in order
+// slider1..slider29 of step_fx.jsfx, in order (26..29 appended in 4.0)
 static const DISTRHO::SliderInfo kSliders[] = {
     { "Step 1", "step1", 0.0f, 8.0f, 0.0f, "", 1.0f, kEffectOptions },
     { "Step 2", "step2", 0.0f, 8.0f, 0.0f, "", 1.0f, kEffectOptions },
@@ -48,6 +49,10 @@ static const DISTRHO::SliderInfo kSliders[] = {
     { "Pitch", "pitch", 1.0f, 12.0f, 12.0f, "semitones", 1.0f },
     { "Mix", "mix", 0.0f, 100.0f, 100.0f, "%", 1.0f },
     { "MIDI Trigger", "midi_trigger", 0.0f, 1.0f, 0.0f, "", 1.0f, kOnOff },
+    { "Generate", "generate", 0.0f, 1.0f, 0.0f, "", 1.0f, kOnOff },
+    { "Density", "density", 0.0f, 100.0f, 50.0f, "%", 1.0f },
+    { "Style", "style", 0.0f, 4.0f, 0.0f, "", 1.0f, kStyleOptions },
+    { "Seed", "seed", 1.0f, 999.0f, 1.0f, "", 1.0f },
 };
 static constexpr uint32_t kNumSliders = sizeof(kSliders) / sizeof(kSliders[0]);
 
@@ -67,6 +72,12 @@ inline Params paramsFrom(V value)
     p.pitch = std::round(double(value(22)));
     p.mix = std::round(double(value(23)));
     p.midi = value(24) >= 0.5f;
+    p.generate = value(25) >= 0.5f;
+    p.densityPct = std::round(double(value(26)));
+    p.style = int(std::lround(value(27)));
+    p.seed = std::round(double(value(28)));
+    if (p.generate)
+        generatePattern(p); // the generated steps in place of the Step sliders
     return p;
 }
 

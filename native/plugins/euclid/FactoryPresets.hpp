@@ -26,4 +26,20 @@ static const FactoryPreset kPresets[] = {
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 11;
 
+// the hint line under the controls: a short help text per parameter (from tools/site_content.json)
+#define NULL_UI_HINTS 1
+static const char* const kHints[] = {
+    "Length of the pattern in steps",
+    "How many of the steps play, spread as evenly as they go",
+    "Turns the pattern by this many steps",
+    "Length of one step at the host's tempo",
+    "The MIDI note each pulse plays",
+    "Velocity of the pulses",
+    "How much louder the pattern's first pulse is, up to 127",
+    "How long each note lasts, as a share of a step",
+    "Moves every second step later, up to 0.375 of a step",
+    "Transport plays while the host plays, locked to its beat; Always also runs while it is stopped",
+    "MIDI channel of the notes",
+};
+
 } // namespace nullpresets

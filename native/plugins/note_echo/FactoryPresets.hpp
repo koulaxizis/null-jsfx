@@ -26,4 +26,17 @@ static const FactoryPreset kPresets[] = {
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 8;
 
+// the hint line under the controls: a short help text per parameter (from tools/site_content.json)
+#define NULL_UI_HINTS 1
+static const char* const kHints[] = {
+    "How many times each note is played again",
+    "Time between echoes when Tempo Sync is Off",
+    "On uses Subdivision at the host's tempo",
+    "Time between echoes when Tempo Sync is On",
+    "How much quieter each echo is than the one before",
+    "How far each echo moves in pitch (they stop past note 0 or 127)",
+    "How long each echo lasts, as a share of the time between echoes",
+    "Off leaves out the notes that come in, so only the echoes sound",
+};
+
 } // namespace nullpresets

@@ -219,8 +219,31 @@ options:maxmem=33554432
     s;
   );
 
+  // the hint line under the controls: a short help text per slider (from tools/site_content.json)
+  function ng_hint_text(i) local(s)
+  (
+    s = "";
+    i == 1 ? s = "Delay time in free mode";
+    i == 2 ? s = "Amount of the echo fed back into the delay line, capped internally at 95%";
+    i == 3 ? s = "Blend between dry signal and echoes";
+    i == 4 ? s = "Locks the delay time to the project tempo";
+    i == 5 ? s = "Synced delay length: 1/4 = one beat; straight notes from 1/1 to 1/32 plus dotted (D) and triplet (T) values";
+    i == 6 ? s = "Stereo keeps left and right on their own delay lines";
+    i == 7 ? s = "One-pole high-pass inside the feedback loop: each repeat loses more low end. 20 Hz is off";
+    i == 8 ? s = "One-pole low-pass inside the feedback loop: each repeat gets darker, like tape or a bucket-brigade delay";
+    i == 9 ? s = "Soft saturation inside the feedback loop: repeats get rounder and compress as they build up. 0% is off";
+    i == 10 ? s = "Tape-like wow: two slow sine LFOs gently move the delay time by up to 4 ms, so the echoes waver in pitch";
+    i == 11 ? s = "A chain of short all-pass filters inside the feedback loop that smears every repeat a little more, turning";
+    i == 12 ? s = "Pushes the echoes down while the dry input is loud (10 ms attack, 250 ms release), so they bloom in the";
+    i == 13 ? s = "Holds the current echoes and repeats them forever: no new input enters the loop, feedback is 100% and the";
+    i == 14 ? s = "Plays every echo backwards, one window of the delay time at a time";
+    i == 15 ? s = "Shifts every echo up or down by this many semitones, so the repeats climb or fall (0 = off";
+    s;
+  );
+
   function ng_presets() local(i)
   (
+    ng_hint_i > 0 && !ng_pre_open ? ng_hint(ng_hint_text(ng_hint_i));
     ng_pre_req >= 0 ? ( ng_preset_load(ng_pre_req); update(); ng_pre_req = -1; );
     ng_hist() ? update();
     ng_pre_cur = ng_preset_match();

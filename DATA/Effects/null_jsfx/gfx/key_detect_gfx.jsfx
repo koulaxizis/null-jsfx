@@ -238,8 +238,20 @@ out_pin:Right
     s;
   );
 
+  // the hint line under the controls: a short help text per slider (from tools/site_content.json)
+  function ng_hint_text(i) local(s)
+  (
+    s = "";
+    i == 1 ? s = "How long the analysis remembers: short follows a key change quickly, long settles on the key of the whole song";
+    i == 2 ? s = "Frames quieter than this are ignored, so silence and noise do not move the result";
+    i == 3 ? s = "The key profiles compared with what is heard: Krumhansl-Kessler (from listening tests) or Temperley (from";
+    i == 4 ? s = "Keeps the result as it is";
+    s;
+  );
+
   function ng_presets() local(i)
   (
+    ng_hint_i > 0 && !ng_pre_open ? ng_hint(ng_hint_text(ng_hint_i));
     ng_pre_req >= 0 ? ( ng_preset_load(ng_pre_req); update(); ng_pre_req = -1; );
     ng_hist() ? update();
     ng_pre_cur = ng_preset_match();

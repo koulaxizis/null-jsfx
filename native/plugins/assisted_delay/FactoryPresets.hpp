@@ -28,4 +28,22 @@ static const FactoryPreset kPresets[] = {
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 13;
 
+// the hint line under the controls: a short help text per parameter (from tools/site_content.json)
+#define NULL_UI_HINTS 1
+static const char* const kHints[] = {
+    "Press On and play the track: it listens for 15 s of signal (or until you turn it Off, after at least 0.5",
+    "What is playing: Vocal, Drums, Bass, Instrument or Mix. Each has its own low cut, level and ducking",
+    "The sound you want: Natural, Warm, Bright, Punchy, Radio, Podcast or Lo-Fi",
+    "How much echo, 0-150% of the level the rules choose",
+    "More (+) or fewer (-) repeats: +1 doubles them, -1 halves them",
+    "Brighter (+) or darker (-) repeats: +1 moves the high cut up an octave",
+    "The echoes' level on top of the rules, in dB",
+    "Level after the delay",
+    "Hidden: whether Learn has run. Saved with the project",
+    "Hidden: the learned level of the loud parts (90th percentile of the 50 ms levels)",
+    "Hidden: the learned median level; the ducking starts above it",
+    "Hidden: the learned mean time between onsets (0 = none found)",
+    "Hidden: the learned brightness: the power above 4 kHz against the whole",
+};
+
 } // namespace nullpresets

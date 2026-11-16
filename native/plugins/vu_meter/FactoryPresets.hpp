@@ -27,4 +27,13 @@ static const FactoryPreset kPresets[] = {
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 4;
 
+// the hint line under the controls: a short help text per parameter (from tools/site_content.json)
+#define NULL_UI_HINTS 1
+static const char* const kHints[] = {
+    "VU (300 ms ballistics, average reading), PPM (EBU Type IIa peak programme meter), K-14 or K-20 (Katz RMS",
+    "The level that reads 0 in VU and PPM: a sine peaking at -24 to -8 dBFS (-18 is the EBU alignment level",
+    "How the held maximum (the silver mark) behaves: Off, held for 3 s, or held until you click the meters",
+    "Monitor: Stereo, Mono (both channels summed) or Side (the difference only), after the meters",
+};
+
 } // namespace nullpresets

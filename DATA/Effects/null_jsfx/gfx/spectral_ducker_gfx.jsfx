@@ -182,8 +182,26 @@ out_pin:Right
     s;
   );
 
+  // the hint line under the controls: a short help text per slider (from tools/site_content.json)
+  function ng_hint_text(i) local(s)
+  (
+    s = "";
+    i == 1 ? s = "How deep the track can be cut in each band (0 to 100% = up to 24 dB)";
+    i == 2 ? s = "Key level per band above which the track ducks (-60 to 0 dB); the dashed line in the display";
+    i == 3 ? s = "How fast the cut follows the key (0.1 to 100 ms)";
+    i == 4 ? s = "How fast the track comes back when the key stops (10 to 1000 ms)";
+    i == 5 ? s = "Bands below this frequency never duck (20 Hz to 5 kHz)";
+    i == 6 ? s = "Bands above this frequency never duck (200 Hz to 20 kHz)";
+    i == 7 ? s = "What ducks: both channels (Stereo), only the Mid, or only the Side, which keeps the centre intact and";
+    i == 8 ? s = "Blend of ducked and dry track (0 to 100%)";
+    i == 9 ? s = "Level after the ducker (-12 to +12 dB)";
+    i == 10 ? s = "Output plays the ducked track; Delta plays only what is taken out, to hear exactly where the ducker works";
+    s;
+  );
+
   function ng_presets() local(i)
   (
+    ng_hint_i > 0 && !ng_pre_open ? ng_hint(ng_hint_text(ng_hint_i));
     ng_pre_req >= 0 ? ( ng_preset_load(ng_pre_req); update(); ng_pre_req = -1; );
     ng_hist() ? update();
     ng_pre_cur = ng_preset_match();

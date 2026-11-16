@@ -7,7 +7,9 @@
  * state-variable filter (low pass, high pass, band pass, notch) with resonance and output gain.
  * Slope 24 dB adds a second stage (same mode, Q 0.707); Drive soft-saturates the input; the
  * cutoff moves by a sine LFO (free in Hz, or a note value at the host tempo, locked to the
- * beat while playing) and an envelope follower, both in octaves (skipped at depth 0).
+ * beat while playing) and an envelope follower, both in octaves (skipped at depth 0). Morph
+ * (4.0) blends the modes continuously, moved by the LFO and the envelope; Nonlinear (4.0)
+ * drives the input into a saturated band-pass state instead of saturating the input.
  */
 
 #pragma once
@@ -23,6 +25,8 @@ struct Coefs {
     double g = 0, R = 0.5, denom = 1, gainLin = 1;
     int mode = 0;
     bool slope24 = false;
+    bool morph = false;                 // 4.0: Morph On blends the modes with the weights w
+    double w[4] = { 1.0, 0.0, 0.0, 0.0 };
     static constexpr double R2 = 1.4142135623730951; // the second stage (Slope 24 dB): Q 0.707
 
     void compute(double cutoff, double resonance, double gainDb, int m, double sr) noexcept
@@ -50,7 +54,12 @@ struct Coefs {
     {
         const double dr = 1 - o * o, di = r * o;
         double nr, ni;
-        if (mode == 0) { nr = 1; ni = 0; }
+        if (morph)
+        {
+            nr = w[0] - w[2] * o * o + w[3] * (1 - o * o);
+            ni = w[1] * r * o;
+        }
+        else if (mode == 0) { nr = 1; ni = 0; }
         else if (mode == 1) { nr = -o * o; ni = 0; }
         else if (mode == 2) { nr = 0; ni = r * o; }
         else { nr = 1 - o * o; ni = 0; }
@@ -68,7 +77,22 @@ struct Params {
     double lfoDepth = 0.0;  // octaves
     double envDepth = 0.0;  // octaves
     double envAttack = 10.0, envRelease = 150.0; // ms
+    int morph = 0;                                // 4.0: Morph Off, On
+    double morphPos = 0.0, morphLfo = 0.0, morphEnv = 0.0; // %
+    int nonlinear = 0;                            // 4.0: Off, On
 };
+
+// flt_mw: the Morph weights of low pass, band pass, high pass and notch at position p (0..1)
+inline void morphWeights(double p, double* w) noexcept
+{
+    const double q = std::max(0.0, std::min(1.0, p)) * 3.0;
+    const double k = std::min(2.0, std::floor(q));
+    const double t = q - k;
+    w[0] = k == 0.0 ? 1.0 - t : 0.0;
+    w[1] = k == 0.0 ? t : k == 1.0 ? 1.0 - t : 0.0;
+    w[2] = k == 1.0 ? t : k == 2.0 ? 1.0 - t : 0.0;
+    w[3] = k == 2.0 ? t : 0.0;
+}
 
 // beats per LFO cycle for an LFO Sync setting
 inline double lfoBeats(int sync) noexcept
@@ -106,11 +130,14 @@ public:
     {
         fP = p;
         fP.lfoRate = snapTo(p.lfoRate, 100.0);
+        fP.morphPos = snapTo(p.morphPos, 10.0);
         apply();
     }
 
     const Coefs& coefs() const noexcept { return fK; }
     double modulatedCutoff() const noexcept { return fModOn ? fFm : fP.cutoff; }
+    // the Morph weights the filter runs with now (moved by Morph LFO and Morph Envelope)
+    const double* morphNow() const noexcept { return fMw; }
 
     // tempo for LFO Sync; while playing, beatPos (in quarter notes) locks the LFO to the beat
     template <typename T>
@@ -150,11 +177,18 @@ public:
                 fGm = std::tan(M_PI * fFm / fSr);
                 fDm = 1.0 / (1.0 + k.R * fGm + fGm * fGm);
                 fDm2 = 1.0 / (1.0 + Coefs::R2 * fGm + fGm * fGm);
+                if (fMoMod)
+                    morphWeights(fMoPos + fMoLfo * lv + fMoEnv * std::min(1.0, std::sqrt(fEnv)), fMw);
             }
             if (fDrvOn)
             {
                 xl = sat(xl * fDrvG) * fDrvC;
                 xr = sat(xr * fDrvG) * fDrvC;
+            }
+            if (fNlOn)
+            {
+                xl *= fNlG;
+                xr *= fNlG;
             }
             outL[n] = static_cast<T>(tick(xl, fIc1L, fIc2L, fIc3L, fIc4L));
             outR[n] = static_cast<T>(tick(xr, fIc1R, fIc2R, fIc3R, fIc4R));
@@ -173,20 +207,26 @@ private:
         const Coefs& k = fK;
         double v3 = (x - ic2 - (k.R + fGm) * ic1) * fDm;
         double v1 = fGm * v3 + ic1;
+        if (fNlOn)
+            v1 = sat(v1);
         double v2 = fGm * v1 + ic2;
         ic1 = v1;
         ic2 = v2;
-        double y = k.mode == 0 ? v2 : k.mode == 1 ? v3 : k.mode == 2 ? k.R * v1 : v3 + v2;
+        double y = fMoOn ? fMw[0] * v2 + fMw[1] * k.R * v1 + fMw[2] * v3 + fMw[3] * (v3 + v2)
+                 : k.mode == 0 ? v2 : k.mode == 1 ? v3 : k.mode == 2 ? k.R * v1 : v3 + v2;
         if (k.slope24)
         {
             v3 = (y - ic4 - (Coefs::R2 + fGm) * ic3) * fDm2;
             v1 = fGm * v3 + ic3;
+            if (fNlOn)
+                v1 = sat(v1);
             v2 = fGm * v1 + ic4;
             ic3 = v1;
             ic4 = v2;
-            y = k.mode == 0 ? v2 : k.mode == 1 ? v3 : k.mode == 2 ? Coefs::R2 * v1 : v3 + v2;
+            y = fMoOn ? fMw[0] * v2 + fMw[1] * Coefs::R2 * v1 + fMw[2] * v3 + fMw[3] * (v3 + v2)
+              : k.mode == 0 ? v2 : k.mode == 1 ? v3 : k.mode == 2 ? Coefs::R2 * v1 : v3 + v2;
         }
-        return y * k.gainLin;
+        return y * k.gainLin * fNlC;
     }
 
     void apply()
@@ -202,12 +242,25 @@ private:
         fDrvG = 1.0 + fP.drive * 0.07;
         fDrvC = 1.0 / std::sqrt(fDrvG);
         fBpc = lfoBeats(fP.lfoSync);
-        fEnvOn = std::fabs(fP.envDepth) >= 0.00001;
+        fEnvOn = std::fabs(fP.envDepth) >= 0.00001 || (fP.morph != 0 && std::fabs(fP.morphEnv) >= 0.00001);
         if (!fEnvOn)
             fEnv = 0.0;
         fEnvA = 1.0 - std::exp(-1.0 / (fP.envAttack * 0.001 * fSr));
         fEnvR = 1.0 - std::exp(-1.0 / (fP.envRelease * 0.001 * fSr));
-        fModOn = fP.lfoDepth > 0.0 || fEnvOn;
+        fMoOn = fP.morph != 0;
+        fMoPos = fP.morphPos / 100.0;
+        fMoLfo = fMoOn ? fP.morphLfo / 100.0 : 0.0;
+        fMoEnv = fMoOn ? fP.morphEnv / 100.0 : 0.0;
+        fMoMod = std::fabs(fMoLfo) >= 0.00001 || std::fabs(fMoEnv) >= 0.00001;
+        fNlOn = fP.nonlinear != 0;
+        if (fNlOn)
+            fDrvOn = false;
+        fNlG = 1.0 + fP.drive * 0.07;
+        fNlC = fNlOn ? 1.0 / std::sqrt(fNlG) : 1.0;
+        fModOn = fP.lfoDepth > 0.0 || fEnvOn || fMoMod;
+        morphWeights(fMoPos, fMw);
+        fK.morph = fMoOn;
+        morphWeights(fMoPos, fK.w);
         fFmax = std::min(20000.0, fSr * 0.45);
     }
 
@@ -218,6 +271,8 @@ private:
     bool fDrvOn = false, fEnvOn = false, fModOn = false;
     double fDrvG = 1.0, fDrvC = 1.0, fBpc = 1.0, fEnvA = 0.0, fEnvR = 0.0;
     double fPh = 0.0, fInc = 0.0, fEnv = 0.0;
+    bool fMoOn = false, fMoMod = false, fNlOn = false;
+    double fMoPos = 0.0, fMoLfo = 0.0, fMoEnv = 0.0, fNlG = 1.0, fNlC = 1.0, fMw[4] = { 1.0, 0.0, 0.0, 0.0 };
     double fIc1L = 0, fIc2L = 0, fIc1R = 0, fIc2R = 0, fIc3L = 0, fIc4L = 0, fIc3R = 0, fIc4R = 0;
 };
 

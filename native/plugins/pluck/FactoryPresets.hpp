@@ -32,4 +32,24 @@ static const FactoryPreset kPresets[] = {
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 15;
 
+// the hint line under the controls: a short help text per parameter (from tools/site_content.json)
+#define NULL_UI_HINTS 1
+static const char* const kHints[] = {
+    "The string instrument: Nylon Guitar, Steel Guitar, Harp, Koto, Pipa, Banjo, Muted Guitar or Dulcimer, each",
+    "Where the string is plucked, as a share of its length (5 to 50%): near the bridge it is thin and bright",
+    "How bright the pluck and the string are (0 to 100%), from a soft thumb to a hard pick",
+    "Scales how long the strings ring (10 to 300%); low strings ring longer than high ones",
+    "How fast a string is damped when its key comes up (10 ms to 2 s)",
+    "How much of the instrument's body resonance is heard (0 to 100%)",
+    "Spreads the strings across the stereo field by pitch and widens the body (0 to 100%)",
+    "How much the key velocity changes the level and the brightness of the pluck (0% plays every note the same)",
+    "Off plays every key as you press it; Down, Up, Down-Up, Folk and Offbeat strum the chord you hold in time",
+    "How often the chord is strummed: quarters, eighths, sixteenths or eighth-note triplets",
+    "The time from one string to the next within a strum (0 to 100 ms): short for a tight chop, long for a slow",
+    "The output level (-24 to +12 dB)",
+    "Pizzicato: plays plucked violins or cellos instead of the Model: a finger's soft pluck, a short decay and",
+    "MPE: On for an MPE controller: on channels 2-16 each note gets its own pitch bend (the string's length",
+    "MPE Bend Range: how far a note's own pitch bend goes (48 semitones is the MPE default)",
+};
+
 } // namespace nullpresets

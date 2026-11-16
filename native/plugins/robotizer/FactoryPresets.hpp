@@ -27,4 +27,13 @@ static const FactoryPreset kPresets[] = {
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 4;
 
+// the hint line under the controls: a short help text per parameter (from tools/site_content.json)
+#define NULL_UI_HINTS 1
+static const char* const kHints[] = {
+    "Fixed pitch of the robot voice",
+    "Tuned comb resonance at the robot pitch",
+    "Blend of 30 Hz ring modulation for a Dalek tone",
+    "Dry/wet blend",
+};
+
 } // namespace nullpresets

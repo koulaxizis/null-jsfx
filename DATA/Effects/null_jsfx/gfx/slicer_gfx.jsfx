@@ -191,8 +191,24 @@ options:maxmem=33554432
     s;
   );
 
+  // the hint line under the controls: a short help text per slider (from tools/site_content.json)
+  function ng_hint_text(i) local(s)
+  (
+    s = "";
+    i == 1 ? s = "How the previous bar's slices are rearranged: Straight keeps the order, Shuffle swaps the picked slices";
+    i == 2 ? s = "Chance that each slice is picked by the Pattern (0% = the bar plays in order, 100% = every slice is changed)";
+    i == 3 ? s = "Number that sets every random choice (1 to 999): the same Seed always gives the same pattern, and it stays";
+    i == 4 ? s = "How many equal slices the bar is cut into: 8 (eighth notes), 16 (sixteenths) or 32";
+    i == 5 ? s = "Chance that a slice plays backwards";
+    i == 6 ? s = "Chance that a slice is retriggered, playing its first half twice";
+    i == 7 ? s = "Length of each slice (100% = full); lower values cut every slice short with a fade for a choppy, gated feel";
+    i == 8 ? s = "Blend of sliced and dry signal";
+    s;
+  );
+
   function ng_presets() local(i)
   (
+    ng_hint_i > 0 && !ng_pre_open ? ng_hint(ng_hint_text(ng_hint_i));
     ng_pre_req >= 0 ? ( ng_preset_load(ng_pre_req); update(); ng_pre_req = -1; );
     ng_hist() ? update();
     ng_pre_cur = ng_preset_match();

@@ -27,4 +27,18 @@ static const FactoryPreset kPresets[] = {
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 9;
 
+// the hint line under the controls: a short help text per parameter (from tools/site_content.json)
+#define NULL_UI_HINTS 1
+static const char* const kHints[] = {
+    "Number of samples in each analysis frame: larger sizes resolve low frequencies more finely but react more",
+    "Tilts the display around 1 kHz so a balanced mix looks flat: 0 is a plain FFT, 3 dB/oct suits",
+    "How quickly the curve falls after a peak; rises are instant. 0 shows every frame as it is",
+    "Lowest level on the display, below 0 dB at the top",
+    "Keeps a second, thinner curve at the highest level each frequency reached: for 2 s, or until the setting",
+    "Signal analysed: Mid (L+R)/2, Left, Right or Side (L−R)/2",
+    "Stereo passes the audio through untouched (bit-exact). Solo plays the analysed channel on both outputs, e.g",
+    "Spectrum draws the live curve; Spectrogram draws the last seconds as a scrolling image (time left to",
+    "On analyses the sidechain input (pins 3/4) the same way and draws it over the spectrum, to compare a mix",
+};
+
 } // namespace nullpresets

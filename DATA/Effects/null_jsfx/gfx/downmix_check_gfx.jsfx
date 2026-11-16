@@ -133,8 +133,24 @@ out_pin:Rtr
     s;
   );
 
+  // the hint line under the controls: a short help text per slider (from tools/site_content.json)
+  function ng_hint_text(i) local(s)
+  (
+    s = "";
+    i == 1 ? s = "The bed coming in: 5.1, 7.1 or 7.1.4; the pins it does not use are ignored";
+    i == 2 ? s = "What you hear: the Bed as it is, folded to 5.1, to stereo Lo/Ro, or to mono (Stereo and Mono play on L and R)";
+    i == 3 ? s = "The centre in the stereo fold (-6 to 0 dB, -3 dB as ITU-R BS.775)";
+    i == 4 ? s = "The surrounds in the stereo fold (-6 to 0 dB, -3 dB as ITU-R BS.775)";
+    i == 5 ? s = "The tops folded into the ear-level speakers below them (-6 to 0 dB)";
+    i == 6 ? s = "The LFE in the stereo fold, from -60 dB (Off, as BS.775 drops it) to +10 dB";
+    i == 7 ? s = "Plays one channel of the bed alone, through the same fold";
+    i == 8 ? s = "Gain on what you hear (-24 to +12 dB)";
+    s;
+  );
+
   function ng_presets() local(i)
   (
+    ng_hint_i > 0 && !ng_pre_open ? ng_hint(ng_hint_text(ng_hint_i));
     ng_pre_req >= 0 ? ( ng_preset_load(ng_pre_req); update(); ng_pre_req = -1; );
     ng_hist() ? update();
     ng_pre_cur = ng_preset_match();

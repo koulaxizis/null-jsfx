@@ -27,4 +27,12 @@ static const FactoryPreset kPresets[] = {
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 3;
 
+// the hint line under the controls: a short help text per parameter (from tools/site_content.json)
+#define NULL_UI_HINTS 1
+static const char* const kHints[] = {
+    "Detection sensitivity: 0% flags jumps 4x the running average step, 100% only flags jumps 30x larger",
+    "Number of samples marked as damaged after each detected click and redrawn",
+    "Click finds single clicks and pops (a sample's jump against the slow running average)",
+};
+
 } // namespace nullpresets

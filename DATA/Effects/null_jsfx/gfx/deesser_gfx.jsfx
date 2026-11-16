@@ -140,8 +140,23 @@ out_pin:Right
     s;
   );
 
+  // the hint line under the controls: a short help text per slider (from tools/site_content.json)
+  function ng_hint_text(i) local(s)
+  (
+    s = "";
+    i == 1 ? s = "Centre frequency of the band-pass that isolates the sibilance";
+    i == 2 ? s = "Maximum cut applied to that band when sibilance gets loud";
+    i == 3 ? s = "Split turns down only the sibilance band; Wide turns down the whole signal by the same amount";
+    i == 4 ? s = "Auto uses the built-in detection level; Manual uses the Threshold control instead";
+    i == 5 ? s = "Level of the sibilance band above which the reduction starts (Manual only)";
+    i == 6 ? s = "Caps how far the signal is turned down, while Reduction sets how quickly it gets there (-18 dB = no cap)";
+    i == 7 ? s = "Plays only what is being removed, to tune Target and the threshold by ear";
+    s;
+  );
+
   function ng_presets() local(i)
   (
+    ng_hint_i > 0 && !ng_pre_open ? ng_hint(ng_hint_text(ng_hint_i));
     ng_pre_req >= 0 ? ( ng_preset_load(ng_pre_req); update(); ng_pre_req = -1; );
     ng_hist() ? update();
     ng_pre_cur = ng_preset_match();

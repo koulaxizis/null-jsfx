@@ -27,4 +27,15 @@ static const FactoryPreset kPresets[] = {
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 6;
 
+// the hint line under the controls: a short help text per parameter (from tools/site_content.json)
+#define NULL_UI_HINTS 1
+static const char* const kHints[] = {
+    "Loudness the readouts and the history graph are referenced to: -14 LUFS (most streaming services), -16",
+    "Vertical scale of the history graph, as in EBU Tech 3341: +9 shows 18 LU below to 9 LU above the target",
+    "Time span of the history graph: 10 s, 30 s, 1 min or 5 min of short-term (bright) and momentary (grey)",
+    "On Play clears the integrated loudness, LRA, maxima and history every time playback starts",
+    "Changing it clears the integrated loudness, LRA, true-peak and loudness maxima and the history graph",
+    "Stereo passes the audio through untouched (bit-exact). Mono folds it to mono for listening",
+};
+
 } // namespace nullpresets

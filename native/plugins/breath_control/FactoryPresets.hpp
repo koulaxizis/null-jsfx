@@ -27,4 +27,13 @@ static const FactoryPreset kPresets[] = {
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 4;
 
+// the hint line under the controls: a short help text per parameter (from tools/site_content.json)
+#define NULL_UI_HINTS 1
+static const char* const kHints[] = {
+    "Level (RMS-style, dBFS) below which the signal is treated as breath or noise and turned down",
+    "How fast the gain returns to unity when the voice comes back above Threshold",
+    "How fast the gain moves down to Range once the level falls below Threshold",
+    "How much quieter breaths get: the gain applied while the level is below Threshold",
+};
+
 } // namespace nullpresets

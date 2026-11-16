@@ -16,6 +16,11 @@ slider9:0<0,4,0.1>LFO Depth (oct)
 slider10:0<-4,4,0.1>Envelope Depth (oct)
 slider11:10<1,200,1>Env Attack (ms)
 slider12:150<10,2000,1:log>Env Release (ms)
+slider13:0<0,1,1{Off,On}>Morph
+slider14:0<0,100,0.1>Morph Position (%)
+slider15:0<-100,100,1>Morph LFO (%)
+slider16:0<-100,100,1>Morph Envelope (%)
+slider17:0<0,1,1{Off,On}>Nonlinear
 
 in_pin:Left
 in_pin:Right
@@ -32,6 +37,13 @@ out_pin:Right
   // at the host tempo with LFO Sync; locked to the beat while the transport plays) and by
   // Envelope Depth octaves with the input level (a peak follower with Env Attack and Env
   // Release; full depth at 0 dBFS). Both depths at 0 leave the cutoff fixed.
+  // Morph On (4.0) replaces Mode with a continuous blend: Morph Position 0% is low pass, 33.3%
+  // band pass, 66.7% high pass and 100% notch, each step a linear crossfade of the two; the
+  // LFO and the envelope move it by Morph LFO and Morph Envelope (100% = the whole range).
+  // Nonlinear On (4.0) moves Drive from the input into the filter: the input is driven by
+  // 1 + Drive * 0.07 and the band-pass state of each stage goes through the soft saturation,
+  // so the resonance compresses and growls instead of ringing louder; the output comes back
+  // down by the square root of the drive, as Drive does on the input.
   ic3_l = 0; ic4_l = 0;
   ic3_r = 0; ic4_r = 0;
   lfo_ph = 0;
@@ -43,6 +55,17 @@ out_pin:Right
   (
     x = max(-3, min(3, x));
     x * (27 + x * x) / (27 + 9 * x * x);
+  );
+  // the Morph weights of low pass, band pass, high pass and notch at position p (0..1)
+  function flt_mw(p) local(q, k, t)
+  (
+    q = max(0, min(1, p)) * 3;
+    k = min(2, floor(q));
+    t = q - k;
+    mw0 = k == 0 ? 1 - t : 0;
+    mw1 = k == 0 ? t : k == 1 ? 1 - t : 0;
+    mw2 = k == 1 ? t : k == 2 ? 1 - t : 0;
+    mw3 = k == 2 ? t : 0;
   );
 
 @slider
@@ -73,11 +96,21 @@ out_pin:Right
   lfo_bpc = lfo_sync == 1 ? 4 : lfo_sync == 2 ? 2 : lfo_sync == 3 ? 1 : lfo_sync == 4 ? 0.5 :
             lfo_sync == 5 ? 0.25 : lfo_sync == 6 ? 2 / 3 : lfo_sync == 7 ? 1 / 3 : lfo_sync == 8 ? 1.5 : 0.75;
   env_dep = slider10;
-  env_on = env_dep != 0;
+  env_on = env_dep != 0 || (slider13 >= 0.5 && slider16 != 0);
   !env_on ? env = 0;
   env_a = 1 - exp(-1 / (slider11 * 0.001 * srate));
   env_r = 1 - exp(-1 / (slider12 * 0.001 * srate));
-  mod_on = lfo_dep > 0 || env_on;
+  mo_on = slider13 >= 0.5;
+  mo_pos = slider14 / 100;
+  mo_lfo = mo_on ? slider15 / 100 : 0;
+  mo_env = mo_on ? slider16 / 100 : 0;
+  mo_mod = mo_lfo != 0 || mo_env != 0;
+  nl_on = slider17 >= 0.5;
+  nl_on ? drv_on = 0;
+  nl_g = 1 + slider6 * 0.07;
+  nl_c = nl_on ? 1 / sqrt(nl_g) : 1;
+  mod_on = lfo_dep > 0 || env_on || mo_mod;
+  flt_mw(mo_pos);
   fmax = min(20000, srate * 0.45);
 
 @block
@@ -103,6 +136,7 @@ out_pin:Right
     gm = tan($pi * fm / srate);
     dm = 1 / (1 + R * gm + gm * gm);
     dm2 = 1 / (1 + R2 * gm + gm * gm);
+    mo_mod ? flt_mw(mo_pos + mo_lfo * lfo_v + mo_env * min(1, sqrt(env)));
   );
   x_l = spl0;
   x_r = spl1;
@@ -110,38 +144,50 @@ out_pin:Right
     x_l = flt_sat(x_l * drv_g) * drv_c;
     x_r = flt_sat(x_r * drv_g) * drv_c;
   );
+  nl_on ? (
+    x_l *= nl_g;
+    x_r *= nl_g;
+  );
 
   // Left channel
   v3 = (x_l - ic2_l - (R + gm) * ic1_l) * dm;
   v1 = gm * v3 + ic1_l;
+  nl_on ? v1 = flt_sat(v1);
   v2 = gm * v1 + ic2_l;
   ic1_l = v1;
   ic2_l = v2;
   // v3 = high-pass, v1 = band-pass, v2 = low-pass; input = v3 + R*v1 + v2
-  y = mode == 0 ? v2 : mode == 1 ? v3 : mode == 2 ? R * v1 : v3 + v2;
+  y = mo_on ? mw0 * v2 + mw1 * R * v1 + mw2 * v3 + mw3 * (v3 + v2) :
+      mode == 0 ? v2 : mode == 1 ? v3 : mode == 2 ? R * v1 : v3 + v2;
   slope24 ? (
     v3 = (y - ic4_l - (R2 + gm) * ic3_l) * dm2;
     v1 = gm * v3 + ic3_l;
+    nl_on ? v1 = flt_sat(v1);
     v2 = gm * v1 + ic4_l;
     ic3_l = v1;
     ic4_l = v2;
-    y = mode == 0 ? v2 : mode == 1 ? v3 : mode == 2 ? R2 * v1 : v3 + v2;
+    y = mo_on ? mw0 * v2 + mw1 * R2 * v1 + mw2 * v3 + mw3 * (v3 + v2) :
+        mode == 0 ? v2 : mode == 1 ? v3 : mode == 2 ? R2 * v1 : v3 + v2;
   );
-  spl0 = y * gain_lin;
+  spl0 = y * gain_lin * nl_c;
   
   // Right channel
   v3 = (x_r - ic2_r - (R + gm) * ic1_r) * dm;
   v1 = gm * v3 + ic1_r;
+  nl_on ? v1 = flt_sat(v1);
   v2 = gm * v1 + ic2_r;
   ic1_r = v1;
   ic2_r = v2;
-  y = mode == 0 ? v2 : mode == 1 ? v3 : mode == 2 ? R * v1 : v3 + v2;
+  y = mo_on ? mw0 * v2 + mw1 * R * v1 + mw2 * v3 + mw3 * (v3 + v2) :
+      mode == 0 ? v2 : mode == 1 ? v3 : mode == 2 ? R * v1 : v3 + v2;
   slope24 ? (
     v3 = (y - ic4_r - (R2 + gm) * ic3_r) * dm2;
     v1 = gm * v3 + ic3_r;
+    nl_on ? v1 = flt_sat(v1);
     v2 = gm * v1 + ic4_r;
     ic3_r = v1;
     ic4_r = v2;
-    y = mode == 0 ? v2 : mode == 1 ? v3 : mode == 2 ? R2 * v1 : v3 + v2;
+    y = mo_on ? mw0 * v2 + mw1 * R2 * v1 + mw2 * v3 + mw3 * (v3 + v2) :
+        mode == 0 ? v2 : mode == 1 ? v3 : mode == 2 ? R2 * v1 : v3 + v2;
   );
-  spl1 = y * gain_lin;
+  spl1 = y * gain_lin * nl_c;

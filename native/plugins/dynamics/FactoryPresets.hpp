@@ -32,4 +32,22 @@ static const FactoryPreset kPresets[] = {
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 13;
 
+// the hint line under the controls: a short help text per parameter (from tools/site_content.json)
+#define NULL_UI_HINTS 1
+static const char* const kHints[] = {
+    "Compressor reduces level above the threshold; Expander reduces level below it",
+    "Level where gain reduction begins",
+    "Strength of the gain change once past the threshold",
+    "Width of the soft transition above (or below) the threshold",
+    "How fast gain reduction is applied (0 = instant)",
+    "How fast gain recovers (0 = instant)",
+    "Gain added after processing",
+    "Character of the detector: Clean is the transparent original, Bus a smooth glue compressor with auto",
+    "High-pass filter on the detector only, so low end does not drive the gain reduction (20 Hz = off)",
+    "Blend of compressed and dry signal for parallel compression (100% = fully compressed)",
+    "Internal listens to the track itself; External listens to input channels 3/4 (sidechain key)",
+    "Channels: Stereo works on the whole signal",
+    "Listen: Output plays the result; Delta plays only what the compressor takes away (or, Upward, adds)",
+};
+
 } // namespace nullpresets

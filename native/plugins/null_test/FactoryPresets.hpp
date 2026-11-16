@@ -26,4 +26,15 @@ static const FactoryPreset kPresets[] = {
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 6;
 
+// the hint line under the controls: a short help text per parameter (from tools/site_content.json)
+#define NULL_UI_HINTS 1
+static const char* const kHints[] = {
+    "What you hear: the main, the sidechain lined up with it, or the difference between them",
+    "Auto finds the delay and the gain by itself; Manual uses Offset, Trim and Polarity",
+    "How far apart the two may be in time for Auto to find them (up to 200 ms)",
+    "Manual only: delays the sidechain by this many samples (negative delays the main)",
+    "Manual only: the sidechain's gain",
+    "Manual only: inverts the sidechain",
+};
+
 } // namespace nullpresets

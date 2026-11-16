@@ -163,8 +163,23 @@ out_pin:Right
     s;
   );
 
+  // the hint line under the controls: a short help text per slider (from tools/site_content.json)
+  function ng_hint_text(i) local(s)
+  (
+    s = "";
+    i == 1 ? s = "The kind of space: Room (short, close), Chamber (dense), Hall (big and smooth) or Galaxy (huge, long and";
+    i == 2 ? s = "How big the space is, from half to twice its type's size";
+    i == 3 ? s = "How long the tail lasts: Room 0.2 to 1.5 s, Chamber 0.5 to 3 s, Hall 1 to 8 s, Galaxy 3 to 30 s";
+    i == 4 ? s = "How fast the highs die away compared with the rest of the tail";
+    i == 5 ? s = "How much the delay lines drift, for a smooth, chorused tail without metallic ringing";
+    i == 6 ? s = "Time before the reverb starts, to keep the dry sound clear";
+    i == 7 ? s = "Blend between the dry and the reverberated signal";
+    s;
+  );
+
   function ng_presets() local(i)
   (
+    ng_hint_i > 0 && !ng_pre_open ? ng_hint(ng_hint_text(ng_hint_i));
     ng_pre_req >= 0 ? ( ng_preset_load(ng_pre_req); update(); ng_pre_req = -1; );
     ng_hist() ? update();
     ng_pre_cur = ng_preset_match();

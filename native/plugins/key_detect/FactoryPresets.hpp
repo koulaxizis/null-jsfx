@@ -25,4 +25,13 @@ static const FactoryPreset kPresets[] = {
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 4;
 
+// the hint line under the controls: a short help text per parameter (from tools/site_content.json)
+#define NULL_UI_HINTS 1
+static const char* const kHints[] = {
+    "How long the analysis remembers: short follows a key change quickly, long settles on the key of the whole song",
+    "Frames quieter than this are ignored, so silence and noise do not move the result",
+    "The key profiles compared with what is heard: Krumhansl-Kessler (from listening tests) or Temperley (from",
+    "Keeps the result as it is",
+};
+
 } // namespace nullpresets

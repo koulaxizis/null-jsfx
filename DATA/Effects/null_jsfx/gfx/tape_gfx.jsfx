@@ -408,8 +408,27 @@ out_pin:Right
     s;
   );
 
+  // the hint line under the controls: a short help text per slider (from tools/site_content.json)
+  function ng_hint_text(i) local(s)
+  (
+    s = "";
+    i == 1 ? s = "Input level into the tape saturation (level-matched at -12 dBFS, so it adds colour rather than volume)";
+    i == 2 ? s = "Tape speed: sets the head bump frequency (45 / 70 / 110 Hz), the high-frequency loss and the emphasis corner";
+    i == 3 ? s = "Height of the low-frequency head bump";
+    i == 4 ? s = "Slow pitch drift of the transport (up to 2 ms delay modulation)";
+    i == 5 ? s = "Fast pitch wobble of the transport (up to 0.1 ms delay modulation)";
+    i == 6 ? s = "Tape hiss level, shaped by the tape speed";
+    i == 7 ? s = "Output level";
+    i == 8 ? s = "Dry/wet blend (the dry signal is delayed to stay aligned with the wet path)";
+    i == 9 ? s = "Tape formulation: Classic (open reel), Type I (ferric, warm, more hiss), Type II (chrome, more";
+    i == 10 ? s = "Cassette-style noise reduction: a compander that boosts quiet highs up to 10 dB before the tape and cuts";
+    i == 11 ? s = "Runs the saturation at 2x or 4x the sample rate (linear-phase halfband filters, 31 or 37 more samples of";
+    s;
+  );
+
   function ng_presets() local(i)
   (
+    ng_hint_i > 0 && !ng_pre_open ? ng_hint(ng_hint_text(ng_hint_i));
     ng_pre_req >= 0 ? ( ng_preset_load(ng_pre_req); update(); ng_pre_req = -1; );
     ng_hist() ? update();
     ng_pre_cur = ng_preset_match();

@@ -181,8 +181,23 @@ out_pin:Right
     s;
   );
 
+  // the hint line under the controls: a short help text per slider (from tools/site_content.json)
+  function ng_hint_text(i) local(s)
+  (
+    s = "";
+    i == 1 ? s = "Crossfeed: Bauer's headphone filter (bs2b)";
+    i == 2 ? s = "Crossfeed: where the other side's signal starts to roll off (300 to 2000 Hz";
+    i == 3 ? s = "Crossfeed: how far below the own side the other side arrives in the lows (1 to 15 dB";
+    i == 4 ? s = "Speakers: how far each speaker is off centre (10 to 60 degrees; 30 is the usual stereo triangle)";
+    i == 5 ? s = "Speakers: early reflections of a room (0 = none)";
+    i == 6 ? s = "Blend of the dry and processed signal";
+    i == 7 ? s = "Output level (-12 to +12 dB)";
+    s;
+  );
+
   function ng_presets() local(i)
   (
+    ng_hint_i > 0 && !ng_pre_open ? ng_hint(ng_hint_text(ng_hint_i));
     ng_pre_req >= 0 ? ( ng_preset_load(ng_pre_req); update(); ng_pre_req = -1; );
     ng_hist() ? update();
     ng_pre_cur = ng_preset_match();

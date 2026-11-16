@@ -494,8 +494,31 @@ out_pin:Right
     s;
   );
 
+  // the hint line under the controls: a short help text per slider (from tools/site_content.json)
+  function ng_hint_text(i) local(s)
+  (
+    s = "";
+    i == 1 ? s = "The string instrument: Nylon Guitar, Steel Guitar, Harp, Koto, Pipa, Banjo, Muted Guitar or Dulcimer, each";
+    i == 2 ? s = "Where the string is plucked, as a share of its length (5 to 50%): near the bridge it is thin and bright";
+    i == 3 ? s = "How bright the pluck and the string are (0 to 100%), from a soft thumb to a hard pick";
+    i == 4 ? s = "Scales how long the strings ring (10 to 300%); low strings ring longer than high ones";
+    i == 5 ? s = "How fast a string is damped when its key comes up (10 ms to 2 s)";
+    i == 6 ? s = "How much of the instrument's body resonance is heard (0 to 100%)";
+    i == 7 ? s = "Spreads the strings across the stereo field by pitch and widens the body (0 to 100%)";
+    i == 8 ? s = "How much the key velocity changes the level and the brightness of the pluck (0% plays every note the same)";
+    i == 9 ? s = "Off plays every key as you press it; Down, Up, Down-Up, Folk and Offbeat strum the chord you hold in time";
+    i == 10 ? s = "How often the chord is strummed: quarters, eighths, sixteenths or eighth-note triplets";
+    i == 11 ? s = "The time from one string to the next within a strum (0 to 100 ms): short for a tight chop, long for a slow";
+    i == 12 ? s = "The output level (-24 to +12 dB)";
+    i == 13 ? s = "Pizzicato: plays plucked violins or cellos instead of the Model: a finger's soft pluck, a short decay and";
+    i == 14 ? s = "MPE: On for an MPE controller: on channels 2-16 each note gets its own pitch bend (the string's length";
+    i == 15 ? s = "MPE Bend Range: how far a note's own pitch bend goes (48 semitones is the MPE default)";
+    s;
+  );
+
   function ng_presets() local(i)
   (
+    ng_hint_i > 0 && !ng_pre_open ? ng_hint(ng_hint_text(ng_hint_i));
     ng_pre_req >= 0 ? ( ng_preset_load(ng_pre_req); update(); ng_pre_req = -1; );
     ng_hist() ? update();
     ng_pre_cur = ng_preset_match();

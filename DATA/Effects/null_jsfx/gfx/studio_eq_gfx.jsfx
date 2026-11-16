@@ -513,8 +513,67 @@ out_pin:Right
     s;
   );
 
+  // the hint line under the controls: a short help text per slider (from tools/site_content.json)
+  function ng_hint_text(i) local(s)
+  (
+    s = "";
+    i == 1 ? s = "Band 1 shape: Off, Bell, Low Shelf, High Shelf, Low Cut, High Cut, Notch or Band Pass";
+    i == 2 ? s = "Band 1 frequency (10 Hz to 30 kHz, log scale); drag the band's node across the display";
+    i == 3 ? s = "Band 1 gain (-30 to +30 dB) for a bell or shelf; drag the node up or down";
+    i == 4 ? s = "Band 1 Q (0.1 to 18): the width of a bell, notch or band pass, the steepness of a shelf";
+    i == 5 ? s = "Band 1 slope for Low Cut and High Cut: 6, 12, 18, 24, 36, 48, 72 or 96 dB per octave";
+    i == 6 ? s = "What band 1 works on: both channels (Stereo), the Mid, the Side, only the Left or only the Right";
+    i == 7 ? s = "Band 2 shape: Off, Bell, Low Shelf, High Shelf, Low Cut, High Cut, Notch or Band Pass";
+    i == 8 ? s = "Band 2 frequency (10 Hz to 30 kHz, log scale); drag the band's node across the display";
+    i == 9 ? s = "Band 2 gain (-30 to +30 dB) for a bell or shelf; drag the node up or down";
+    i == 10 ? s = "Band 2 Q (0.1 to 18): the width of a bell, notch or band pass, the steepness of a shelf";
+    i == 11 ? s = "Band 2 slope for Low Cut and High Cut: 6, 12, 18, 24, 36, 48, 72 or 96 dB per octave";
+    i == 12 ? s = "What band 2 works on: both channels (Stereo), the Mid, the Side, only the Left or only the Right";
+    i == 13 ? s = "Band 3 shape: Off, Bell, Low Shelf, High Shelf, Low Cut, High Cut, Notch or Band Pass";
+    i == 14 ? s = "Band 3 frequency (10 Hz to 30 kHz, log scale); drag the band's node across the display";
+    i == 15 ? s = "Band 3 gain (-30 to +30 dB) for a bell or shelf; drag the node up or down";
+    i == 16 ? s = "Band 3 Q (0.1 to 18): the width of a bell, notch or band pass, the steepness of a shelf";
+    i == 17 ? s = "Band 3 slope for Low Cut and High Cut: 6, 12, 18, 24, 36, 48, 72 or 96 dB per octave";
+    i == 18 ? s = "What band 3 works on: both channels (Stereo), the Mid, the Side, only the Left or only the Right";
+    i == 19 ? s = "Band 4 shape: Off, Bell, Low Shelf, High Shelf, Low Cut, High Cut, Notch or Band Pass";
+    i == 20 ? s = "Band 4 frequency (10 Hz to 30 kHz, log scale); drag the band's node across the display";
+    i == 21 ? s = "Band 4 gain (-30 to +30 dB) for a bell or shelf; drag the node up or down";
+    i == 22 ? s = "Band 4 Q (0.1 to 18): the width of a bell, notch or band pass, the steepness of a shelf";
+    i == 23 ? s = "Band 4 slope for Low Cut and High Cut: 6, 12, 18, 24, 36, 48, 72 or 96 dB per octave";
+    i == 24 ? s = "What band 4 works on: both channels (Stereo), the Mid, the Side, only the Left or only the Right";
+    i == 25 ? s = "Band 5 shape: Off, Bell, Low Shelf, High Shelf, Low Cut, High Cut, Notch or Band Pass";
+    i == 26 ? s = "Band 5 frequency (10 Hz to 30 kHz, log scale); drag the band's node across the display";
+    i == 27 ? s = "Band 5 gain (-30 to +30 dB) for a bell or shelf; drag the node up or down";
+    i == 28 ? s = "Band 5 Q (0.1 to 18): the width of a bell, notch or band pass, the steepness of a shelf";
+    i == 29 ? s = "Band 5 slope for Low Cut and High Cut: 6, 12, 18, 24, 36, 48, 72 or 96 dB per octave";
+    i == 30 ? s = "What band 5 works on: both channels (Stereo), the Mid, the Side, only the Left or only the Right";
+    i == 31 ? s = "Band 6 shape: Off, Bell, Low Shelf, High Shelf, Low Cut, High Cut, Notch or Band Pass";
+    i == 32 ? s = "Band 6 frequency (10 Hz to 30 kHz, log scale); drag the band's node across the display";
+    i == 33 ? s = "Band 6 gain (-30 to +30 dB) for a bell or shelf; drag the node up or down";
+    i == 34 ? s = "Band 6 Q (0.1 to 18): the width of a bell, notch or band pass, the steepness of a shelf";
+    i == 35 ? s = "Band 6 slope for Low Cut and High Cut: 6, 12, 18, 24, 36, 48, 72 or 96 dB per octave";
+    i == 36 ? s = "What band 6 works on: both channels (Stereo), the Mid, the Side, only the Left or only the Right";
+    i == 37 ? s = "Band 7 shape: Off, Bell, Low Shelf, High Shelf, Low Cut, High Cut, Notch or Band Pass";
+    i == 38 ? s = "Band 7 frequency (10 Hz to 30 kHz, log scale); drag the band's node across the display";
+    i == 39 ? s = "Band 7 gain (-30 to +30 dB) for a bell or shelf; drag the node up or down";
+    i == 40 ? s = "Band 7 Q (0.1 to 18): the width of a bell, notch or band pass, the steepness of a shelf";
+    i == 41 ? s = "Band 7 slope for Low Cut and High Cut: 6, 12, 18, 24, 36, 48, 72 or 96 dB per octave";
+    i == 42 ? s = "What band 7 works on: both channels (Stereo), the Mid, the Side, only the Left or only the Right";
+    i == 43 ? s = "Band 8 shape: Off, Bell, Low Shelf, High Shelf, Low Cut, High Cut, Notch or Band Pass";
+    i == 44 ? s = "Band 8 frequency (10 Hz to 30 kHz, log scale); drag the band's node across the display";
+    i == 45 ? s = "Band 8 gain (-30 to +30 dB) for a bell or shelf; drag the node up or down";
+    i == 46 ? s = "Band 8 Q (0.1 to 18): the width of a bell, notch or band pass, the steepness of a shelf";
+    i == 47 ? s = "Band 8 slope for Low Cut and High Cut: 6, 12, 18, 24, 36, 48, 72 or 96 dB per octave";
+    i == 48 ? s = "What band 8 works on: both channels (Stereo), the Mid, the Side, only the Left or only the Right";
+    i == 49 ? s = "Level after the EQ (-24 to +24 dB)";
+    i == 50 ? s = "Auto Gain: offsets the average level change of the bell and shelf bands, so a brighter or fuller setting";
+    i == 51 ? s = "Zero Latency runs the bands as minimum-phase filters";
+    s;
+  );
+
   function ng_presets() local(i)
   (
+    ng_hint_i > 0 && !ng_pre_open ? ng_hint(ng_hint_text(ng_hint_i));
     ng_pre_req >= 0 ? ( ng_preset_load(ng_pre_req); update(); ng_pre_req = -1; );
     ng_hist() ? update();
     ng_pre_cur = ng_preset_match();

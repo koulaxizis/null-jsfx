@@ -31,4 +31,23 @@ static const FactoryPreset kPresets[] = {
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 14;
 
+// the hint line under the controls: a short help text per parameter (from tools/site_content.json)
+#define NULL_UI_HINTS 1
+static const char* const kHints[] = {
+    "Moves every note up or down (-48 to +48 semitones)",
+    "Sends everything on one MIDI channel (1 to 16); Thru keeps each message's own channel",
+    "Bends the velocity curve: above 0 lifts soft notes, below 0 lowers them",
+    "The velocity the softest note becomes (1 to 127)",
+    "The velocity the hardest note becomes (1 to 127); Min above Max turns the curve upside down",
+    "Every note plays at this velocity when above 0 (0 = off)",
+    "The lowest key that plays; notes below it are dropped (a split)",
+    "The highest key that plays; notes above it are dropped",
+    "The softest velocity that plays; softer notes are dropped (a velocity layer)",
+    "The hardest velocity that plays; harder notes are dropped",
+    "Pass or block controllers (all notes off always passes)",
+    "Pass or block pitch bend",
+    "Pass or block channel and polyphonic aftertouch",
+    "Pass or block program changes",
+};
+
 } // namespace nullpresets

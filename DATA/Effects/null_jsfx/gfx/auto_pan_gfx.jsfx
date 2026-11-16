@@ -208,8 +208,23 @@ out_pin:Right
     s;
   );
 
+  // the hint line under the controls: a short help text per slider (from tools/site_content.json)
+  function ng_hint_text(i) local(s)
+  (
+    s = "";
+    i == 1 ? s = "Speed of the sine LFO in free-running mode";
+    i == 2 ? s = "How far the LFO pushes the signal between left and right; at 0% both sides sit at half level";
+    i == 3 ? s = "Blend between the dry signal and the panned signal";
+    i == 4 ? s = "Locks the LFO rate to the project tempo instead of the Rate slider";
+    i == 5 ? s = "LFO cycle length when synced: 1/2 = one sweep every two beats, up to 1/16 = four sweeps per beat";
+    i == 6 ? s = "SINE sweeps smoothly; the step modes jump between pan positions once per LFO cycle: 2 STEPS (left, right)";
+    i == 7 ? s = "In the step modes, how much of each step is spent gliding to the new position (0% = an instant, click-free";
+    s;
+  );
+
   function ng_presets() local(i)
   (
+    ng_hint_i > 0 && !ng_pre_open ? ng_hint(ng_hint_text(ng_hint_i));
     ng_pre_req >= 0 ? ( ng_preset_load(ng_pre_req); update(); ng_pre_req = -1; );
     ng_hist() ? update();
     ng_pre_cur = ng_preset_match();

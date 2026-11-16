@@ -27,4 +27,18 @@ static const FactoryPreset kPresets[] = {
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 9;
 
+// the hint line under the controls: a short help text per parameter (from tools/site_content.json)
+#define NULL_UI_HINTS 1
+static const char* const kHints[] = {
+    "The width of the screen, from 1 ms to 2 s",
+    "Set the width from the tempo instead, from a 1/16 note to two bars",
+    "Auto waits for a crossing and draws anyway after two screens; Normal draws only on a crossing",
+    "Trigger when the signal rises or falls through the level",
+    "The level the signal must cross to start a screen",
+    "Show the mid, left and right over each other, or the side",
+    "Make the picture bigger or smaller (the trigger level follows it)",
+    "Freeze the last screen",
+    "Play what the screen shows (the mid or the side); Stereo leaves the audio untouched",
+};
+
 } // namespace nullpresets

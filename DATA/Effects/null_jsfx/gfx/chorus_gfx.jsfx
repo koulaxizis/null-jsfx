@@ -228,8 +228,25 @@ out_pin:Right
     s;
   );
 
+  // the hint line under the controls: a short help text per slider (from tools/site_content.json)
+  function ng_hint_text(i) local(s)
+  (
+    s = "";
+    i == 1 ? s = "Speed of the sine LFO modulating the delay time";
+    i == 2 ? s = "Sweep of the delay time; the delay moves between 5 ms and 5 ms + Depth, so it never runs out of range";
+    i == 3 ? s = "Blend between dry signal and modulated delay";
+    i == 4 ? s = "Number of chorus voices in Classic mode (1 to 4)";
+    i == 5 ? s = "Shifts the right channel's LFOs against the left (up to half the voice spacing) for a wider stereo image";
+    i == 6 ? s = "Amount of the wet signal fed back into the delay lines for a more resonant, flanger-like chorus. 0% is off";
+    i == 7 ? s = "Locks one LFO cycle to a note value at the project tempo (straight, triplet or dotted), following the song";
+    i == 8 ? s = "One-pole low-pass on the wet signal for a darker, vintage chorus. 20 kHz is off";
+    i == 9 ? s = "Classic is the multi-voice sine chorus; Dimension sweeps two short delays in opposite phase with a slow";
+    s;
+  );
+
   function ng_presets() local(i)
   (
+    ng_hint_i > 0 && !ng_pre_open ? ng_hint(ng_hint_text(ng_hint_i));
     ng_pre_req >= 0 ? ( ng_preset_load(ng_pre_req); update(); ng_pre_req = -1; );
     ng_hist() ? update();
     ng_pre_cur = ng_preset_match();

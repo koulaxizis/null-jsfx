@@ -27,4 +27,18 @@ static const FactoryPreset kPresets[] = {
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 9;
 
+// the hint line under the controls: a short help text per parameter (from tools/site_content.json)
+#define NULL_UI_HINTS 1
+static const char* const kHints[] = {
+    "How far back grains read from the delay line",
+    "Length of each windowed grain",
+    "Number of grains started per second",
+    "Playback pitch of each grain",
+    "Random extra delay per grain (up to 1 s)",
+    "Probability that a grain plays backwards",
+    "Grain cloud fed back into the delay line",
+    "Random stereo panning of grains",
+    "Dry/wet blend",
+};
+
 } // namespace nullpresets

@@ -28,4 +28,17 @@ static const FactoryPreset kPresets[] = {
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 8;
 
+// the hint line under the controls: a short help text per parameter (from tools/site_content.json)
+#define NULL_UI_HINTS 1
+static const char* const kHints[] = {
+    "The bed coming in: 5.1, 7.1 or 7.1.4; the pins it does not use are ignored",
+    "What you hear: the Bed as it is, folded to 5.1, to stereo Lo/Ro, or to mono (Stereo and Mono play on L and R)",
+    "The centre in the stereo fold (-6 to 0 dB, -3 dB as ITU-R BS.775)",
+    "The surrounds in the stereo fold (-6 to 0 dB, -3 dB as ITU-R BS.775)",
+    "The tops folded into the ear-level speakers below them (-6 to 0 dB)",
+    "The LFE in the stereo fold, from -60 dB (Off, as BS.775 drops it) to +10 dB",
+    "Plays one channel of the bed alone, through the same fold",
+    "Gain on what you hear (-24 to +12 dB)",
+};
+
 } // namespace nullpresets

@@ -30,4 +30,17 @@ static const FactoryPreset kPresets[] = {
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 8;
 
+// the hint line under the controls: a short help text per parameter (from tools/site_content.json)
+#define NULL_UI_HINTS 1
+static const char* const kHints[] = {
+    "Boost or cut applied to transients",
+    "Boost or cut applied to the sustain and body",
+    "Blend between dry and shaped signal",
+    "How fast the detector reacts: Medium is the original timing, Fast catches shorter clicks, Slow treats",
+    "Lower edge of the band the shaping acts on, so only that part of the signal is detected and shaped (20 Hz",
+    "Upper edge of the band the shaping acts on, e.g. 150 Hz to shape only the kick (20 kHz = off)",
+    "Soft clip on the output that rounds off boosted transients before they reach 0 dBFS",
+    "Output level after shaping (0 dB = unchanged)",
+};
+
 } // namespace nullpresets

@@ -29,4 +29,16 @@ static const FactoryPreset kPresets[] = {
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 7;
 
+// the hint line under the controls: a short help text per parameter (from tools/site_content.json)
+#define NULL_UI_HINTS 1
+static const char* const kHints[] = {
+    "The bed: 5.1, 7.1 or 7.1.4; the pins it does not use are ignored",
+    "Where the mains hand over to the sub (40 to 200 Hz, 80 Hz as most rooms are set)",
+    "Split takes the bass off the mains; Full keeps them whole and only adds their bass to the sub",
+    "The LFE channel in the sub at +10 dB, as it is played back, or 0 dB",
+    "Gain on the sub (-12 to +12 dB), to match it to the room",
+    "Plays everything, the sub alone or the mains alone",
+    "Gain on every pin (-24 to +12 dB)",
+};
+
 } // namespace nullpresets

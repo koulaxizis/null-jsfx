@@ -161,8 +161,20 @@ out_pin:Right
     s;
   );
 
+  // the hint line under the controls: a short help text per slider (from tools/site_content.json)
+  function ng_hint_text(i) local(s)
+  (
+    s = "";
+    i == 1 ? s = "The level at and above which samples count as clipped (-24 to 0 dB)";
+    i == 2 ? s = "How many samples in a row must sit at the clip level before they are rebuilt (2 to 8)";
+    i == 3 ? s = "Output level (-24 to +12 dB): the rebuilt peaks pass the clip level and often 0 dBFS, so turn down here or";
+    i == 4 ? s = "Listen: Output plays the result; Delta plays only what was added back";
+    s;
+  );
+
   function ng_presets() local(i)
   (
+    ng_hint_i > 0 && !ng_pre_open ? ng_hint(ng_hint_text(ng_hint_i));
     ng_pre_req >= 0 ? ( ng_preset_load(ng_pre_req); update(); ng_pre_req = -1; );
     ng_hist() ? update();
     ng_pre_cur = ng_preset_match();

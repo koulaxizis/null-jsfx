@@ -32,4 +32,14 @@ static const FactoryPreset kPresets[] = {
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 5;
 
+// the hint line under the controls: a short help text per parameter (from tools/site_content.json)
+#define NULL_UI_HINTS 1
+static const char* const kHints[] = {
+    "The key of the scale",
+    "The scale every note is fitted to: major, natural, harmonic or melodic minor, the modes (Dorian to",
+    "How a note outside the scale is fixed: moved to the Nearest scale note (ties go down), always Up or always",
+    "Moves the incoming notes by semitones before they are fitted to the scale, so the result stays in key (in",
+    "Moves the result up or down by octaves (-3 to +3)",
+};
+
 } // namespace nullpresets

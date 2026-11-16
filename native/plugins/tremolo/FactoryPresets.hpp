@@ -30,4 +30,16 @@ static const FactoryPreset kPresets[] = {
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 7;
 
+// the hint line under the controls: a short help text per parameter (from tools/site_content.json)
+#define NULL_UI_HINTS 1
+static const char* const kHints[] = {
+    "Speed of the LFO (when Tempo Sync is Off)",
+    "Modulation amount; the gain dips from full level down to 1 − Depth, so 100% goes fully silent at the",
+    "Blend between dry and modulated signal",
+    "LFO waveform: Sine, Triangle, Square (edges softened to avoid clicks), Saw Up or Saw Down",
+    "Locks the LFO to the host tempo at the chosen note value (straight, triplet or dotted) and to the beat",
+    "Offsets the right channel's LFO; 180 degrees turns the tremolo into an auto-pan",
+    "Classic modulates the whole signal; Harmonic splits it at about 800 Hz and moves lows and highs in",
+};
+
 } // namespace nullpresets

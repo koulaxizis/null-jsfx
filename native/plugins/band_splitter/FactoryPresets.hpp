@@ -27,4 +27,15 @@ static const FactoryPreset kPresets[] = {
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 6;
 
+// the hint line under the controls: a short help text per parameter (from tools/site_content.json)
+#define NULL_UI_HINTS 1
+static const char* const kHints[] = {
+    "Split: the input on channels 1/2 is divided into bands on channels 1-8",
+    "Number of bands (2, 3 or 4): band 1 on channels 1/2, band 2 on 3/4, band 3 on 5/6, band 4 on 7/8",
+    "Frequency between band 1 and band 2",
+    "Frequency between band 2 and band 3 (kept at least 1.5x Crossover 1)",
+    "Frequency between band 3 and band 4 (kept at least 1.5x Crossover 2)",
+    "Puts one band on channels 1/2 to hear it on its own (Split mode)",
+};
+
 } // namespace nullpresets

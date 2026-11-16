@@ -27,4 +27,13 @@ static const FactoryPreset kPresets[] = {
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 4;
 
+// the hint line under the controls: a short help text per parameter (from tools/site_content.json)
+#define NULL_UI_HINTS 1
+static const char* const kHints[] = {
+    "What you hear: the Track (your mix, channels 1/2) or the Reference (channels 3/4)",
+    "Level Match: plays the reference at your mix's short-term loudness, so the comparison is about tone and",
+    "Extra gain on the reference (-12 to +12 dB), on top of the match",
+    "Monitor: Stereo, Mono (both channels summed) or Side (the difference only), for both sources",
+};
+
 } // namespace nullpresets

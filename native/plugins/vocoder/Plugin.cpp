@@ -45,7 +45,7 @@ protected:
     void process(const float** inputs, float** outputs, uint32_t frames) override
     {
         fDsp.process(inputs[0], inputs[1], outputs[0], outputs[1], frames);
-        // the band envelopes for the display, in the first slots of the scope buffer
+        // the band envelopes (or the Talkbox model) for the display, in the first slots of the scope buffer
         for (int b = 0; b < nullvocoder::kBands; ++b)
             taps.scopeL[b] = float(fDsp.bandEnv(b));
     }
@@ -54,7 +54,7 @@ private:
     void update()
     {
         fDsp.setParams(int(std::lround(value(0))), stepped(1), stepped(2), stepped(3), value(4), value(5), value(6),
-                       stepped(7), value(8));
+                       stepped(7), value(8), int(std::lround(value(9))));
     }
 
     // a 0.1-step parameter as the JSFX slider holds it: min + k * 0.1 in double (the float

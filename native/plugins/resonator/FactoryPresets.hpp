@@ -27,4 +27,17 @@ static const FactoryPreset kPresets[] = {
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 8;
 
+// the hint line under the controls: a short help text per parameter (from tools/site_content.json)
+#define NULL_UI_HINTS 1
+static const char* const kHints[] = {
+    "Root note of the chord (C to B)",
+    "Octave of the root note (1 to 6; C3 = 130.8 Hz)",
+    "Chord the resonators are tuned to: Unison, Octaves, Fifth, Major, Minor, Sus4, Maj7 or Min7",
+    "Ring time of the fundamental (time to fall by 60 dB)",
+    "How long the upper harmonics ring compared with the fundamental (low = dark, damped strings",
+    "Stereo detune: left strings down, right strings up, by up to 15 cents",
+    "Dry/wet blend",
+    "Where the string notes come from: Chord uses Root, Octave and Chord",
+};
+
 } // namespace nullpresets

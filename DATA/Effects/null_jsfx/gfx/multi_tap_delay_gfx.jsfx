@@ -154,8 +154,27 @@ out_pin:Right
     s;
   );
 
+  // the hint line under the controls: a short help text per slider (from tools/site_content.json)
+  function ng_hint_text(i) local(s)
+  (
+    s = "";
+    i == 1 ? s = "How many echoes (1 to 8)";
+    i == 2 ? s = "Where the echoes fall: even steps, dotted, triplet, swing, speeding up, slowing down or scattered";
+    i == 3 ? s = "The step between echoes in milliseconds (when Tempo Sync is off)";
+    i == 4 ? s = "Lock the step to the host tempo";
+    i == 5 ? s = "The note value of the step when synced";
+    i == 6 ? s = "How much quieter each echo is than the one before";
+    i == 7 ? s = "How far the echoes are panned left and right in turn";
+    i == 8 ? s = "Sends the last echo back into the line for longer tails";
+    i == 9 ? s = "High-pass on the echoes";
+    i == 10 ? s = "Low-pass on the echoes";
+    i == 11 ? s = "Blend between the dry signal and the echoes";
+    s;
+  );
+
   function ng_presets() local(i)
   (
+    ng_hint_i > 0 && !ng_pre_open ? ng_hint(ng_hint_text(ng_hint_i));
     ng_pre_req >= 0 ? ( ng_preset_load(ng_pre_req); update(); ng_pre_req = -1; );
     ng_hist() ? update();
     ng_pre_cur = ng_preset_match();

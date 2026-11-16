@@ -27,4 +27,16 @@ static const FactoryPreset kPresets[] = {
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 7;
 
+// the hint line under the controls: a short help text per parameter (from tools/site_content.json)
+#define NULL_UI_HINTS 1
+static const char* const kHints[] = {
+    "Resolution: 2^(Bits - 1) steps on each side of zero (16 is nearly clean, 1 is a square)",
+    "How often a new sample is taken; lower is grittier, with more aliasing",
+    "On filters before the decimator at 0.45 x Sample Rate, for the clean sound of an old sampler",
+    "Low-pass after the decimator, from 20 kHz (0%) down to 0.45 x Sample Rate (100%), to soften the steps",
+    "Level into the crusher (more level uses more of the steps)",
+    "Blend of the crushed and the dry signal",
+    "Output level",
+};
+
 } // namespace nullpresets

@@ -42,7 +42,7 @@ FXID {2472ACFB-7FFA-5E5C-A9B7-F8B6D52FE0A8}
 WAK 0 0
 BYPASS 0 0
 <JS null_jsfx/gfx/filter_gfx.jsfx ""
-  7000 0.7 0 1 0 0 1 0 0 0 10 150 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  7000 0.7 0 1 0 0 1 0 0 0 10 150 0 0 0 0 0 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 >
 <JS_PINMAP
   6AMAABwAAADoAwAABgAAAAIAAAAQAAAAAAAAACAAAAAAAAAAHAAAAOgDAAAGAAAAAgAAABAAAAAAAAAAIAAAAAAAAAA=

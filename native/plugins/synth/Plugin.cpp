@@ -12,6 +12,11 @@
 #include "NullPlugin.hpp"
 #include "SynthDSP.hpp"
 #include "SynthSliders.hpp"
+#include "NullMailbox.hpp"
+#include "../sampler/SamplerRead.hpp"
+
+#include <cstring>
+#include <vector>
 
 START_NAMESPACE_DISTRHO
 
@@ -19,7 +24,7 @@ class PluginSynth : public NullMultiPlugin
 {
 public:
     PluginSynth()
-        : NullMultiPlugin(nullsynth::kSliders, nullsynth::kNumParams)
+        : NullMultiPlugin(nullsynth::kSliders, nullsynth::kNumParams, 1)
     {
         fDsp.setSampleRate(getSampleRate());
         update();
@@ -44,6 +49,32 @@ protected:
 
     void valueChanged(uint32_t, float) override { update(); }
 
+    // 4.0: the Wavetable File (slider48 of the JSFX) is the "wavetable" state, a file path the
+    // host saves with the project
+    void initState(uint32_t index, State& state) override
+    {
+        if (index != 0)
+            return;
+        state.hints = kStateIsFilenamePath;
+        state.key = "wavetable";
+        state.defaultValue = "";
+        state.label = "Wavetable File";
+        state.description = "WAV or FLAC wavetable the Wavetable engine plays instead of Table (none: the built-in tables)";
+    }
+
+    // the file read and turned into the user table off the audio thread (wt_user_load), handed
+    // to process() without a lock
+    void setState(const char* key, const char* value) override
+    {
+        if (std::strcmp(key, "wavetable") != 0)
+            return;
+        Pending* p = new Pending();
+        nullsmp::SampleFile file;
+        if (nullsmp::readSample(value, file, nullsynth::userFileMax(getSampleRate())))
+            p->ok = nullsynth::userTable(file.data.data(), file.data.size(), file.channels, p->table);
+        fFiles.post(p);
+    }
+
     void onActivate() override
     {
         fDsp.setSampleRate(getSampleRate());
@@ -62,6 +93,13 @@ protected:
         // JSFX never sees, passes through there as well
         for (uint32_t i = 0; i < midiCount; ++i)
             writeMidiEvent(midi[i]);
+
+        if (Pending* p = fFiles.take())
+        {
+            fUser.swap(p->table); // the old table goes back in p, freed off the audio thread
+            fDsp.setUserTable(p->ok ? fUser.data() : nullptr);
+            fFiles.giveBack(p);
+        }
 
         const TimePosition& tp = getTimePosition();
         const double tempo = tp.bbt.valid && tp.bbt.beatsPerMinute > 0.0 ? tp.bbt.beatsPerMinute : 120.0;
@@ -120,6 +158,12 @@ private:
     }
 
     nullsynth::Synth fDsp;
+    std::vector<double> fUser; // the user table the DSP reads
+    struct Pending {
+        std::vector<double> table;
+        bool ok = false;
+    };
+    nulljsfx::Mailbox<Pending> fFiles;
     nullsynth::MidiEv fEvents[nullsynth::kMaxEvents];
 
     DISTRHO_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(PluginSynth)

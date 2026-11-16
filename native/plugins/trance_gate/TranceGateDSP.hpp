@@ -11,6 +11,9 @@
  * Probability and Seed (appended in 2.4): below 100 % an "on" step opens the gate only when the
  * Park-Miller value for its position (seed + 1) * 16807^(step + 8) mod 2^31 - 1, computed exactly
  * in doubles as the JSFX does, is under Probability. At 100 % the original code runs.
+ * Generate, Density and Style (appended in 4.0): On plays a pattern made from Seed, Density and
+ * Style in place of the Step sliders (generatePattern, applied by paramsFrom so the interface
+ * shows the same steps); Off keeps the original code.
  */
 
 #pragma once
@@ -27,6 +30,9 @@ struct Params {
     double freeRate = 8.0; // steps per second
     double attackMs = 5.0, releaseMs = 40.0, depthPct = 100.0;
     double probPct = 100.0, seed = 0.0;
+    bool generate = false;
+    double densityPct = 50.0;
+    int style = 0;         // 0..4: Trance, Offbeat, Stutter, Half Time, Random
 };
 
 // (x * y) mod 2147483647, exact in doubles (y split into 16-bit halves), as the JSFX's pm_mul
@@ -57,6 +63,39 @@ inline double pmStep(double i, double sd) noexcept
         e = std::floor(e / 2.0);
     }
     return p / 2147483647.0;
+}
+
+// one Park-Miller step (x * 16807 mod 2^31 - 1, exact in doubles), as the JSFX's gen_pm
+inline double genPm(double x) noexcept
+{
+    x *= 16807.0;
+    return x - std::floor(x / 2147483647.0) * 2147483647.0;
+}
+
+// Generate: per style, the weight of each step (1..9, '.' never), as the JSFX's gen_w
+inline const char* genWeights(int st) noexcept
+{
+    static const char* const kW[] = { "9.69.69.9.69.6.9", "3.9.3.9.3.9.3.95", "99993...99993.3.", "9.6.....9.6...3.",
+                                      "5555555555555555" };
+    return kW[st < 0 ? 0 : st > 4 ? 4 : st];
+}
+
+// the generated pattern into p.steps, as the JSFX's gen_make (always 16 draws)
+inline void generatePattern(Params& p) noexcept
+{
+    const int st = p.style < 0 ? 0 : p.style > 4 ? 4 : p.style;
+    const double d = p.densityPct / 100.0;
+    double x = p.seed * 7.0 + st * 1000.0 + 12345.0;
+    for (int i = 0; i < 4; ++i)
+        x = genPm(x);
+    const char* str = genWeights(st);
+    for (int i = 0; i < 16; ++i)
+    {
+        x = genPm(x);
+        const char c = str[i];
+        const double w = c >= '1' && c <= '9' ? double(c - '0') / 9.0 : 0.0;
+        p.steps[i] = x / 2147483647.0 < std::fmin(1.0, w * 2.0 * d);
+    }
 }
 
 // The display (trance_gate_gfx.jsfx draws the same): the gain over the 16 steps as the

@@ -32,4 +32,14 @@ static const FactoryPreset kPresets[] = {
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 5;
 
+// the hint line under the controls: a short help text per parameter (from tools/site_content.json)
+#define NULL_UI_HINTS 1
+static const char* const kHints[] = {
+    "How far each note may move in time (0 to 30 ms), at random, earlier or later",
+    "How much each note's velocity may change at random (0 to 50% of its velocity), up or down",
+    "A groove applied on top of the random moves: Straight (none), Swing 8ths or Swing 16ths (the off-beat",
+    "How strong the groove is (0 to 100%): for the swings 100% is a full triplet shuffle, for Laid Back and",
+    "The start of the random sequence (1 to 9999): the same seed gives the same moves on every playback, since",
+};
+
 } // namespace nullpresets

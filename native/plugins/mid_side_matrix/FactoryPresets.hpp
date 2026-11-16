@@ -27,4 +27,12 @@ static const FactoryPreset kPresets[] = {
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 3;
 
+// the hint line under the controls: a short help text per parameter (from tools/site_content.json)
+#define NULL_UI_HINTS 1
+static const char* const kHints[] = {
+    "Level of the Mid component",
+    "Level of the Side component",
+    "Encode turns L/R into Mid (left output) and Side (right output); Decode turns Mid/Side back into L/R",
+};
+
 } // namespace nullpresets

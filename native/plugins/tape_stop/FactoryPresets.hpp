@@ -27,4 +27,12 @@ static const FactoryPreset kPresets[] = {
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 3;
 
+// the hint line under the controls: a short help text per parameter (from tools/site_content.json)
+#define NULL_UI_HINTS 1
+static const char* const kHints[] = {
+    "Set to Trigger to start a stop; returns to Idle automatically after the spin-up",
+    "Time for playback to slow to a halt",
+    "Time for playback to spin back up to normal speed",
+};
+
 } // namespace nullpresets

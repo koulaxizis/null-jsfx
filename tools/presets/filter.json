@@ -10,5 +10,9 @@
   ["Envelope Wah", {"Mode": "Band Pass", "Cutoff": 400, "Resonance": 3, "Gain": 12, "Envelope Depth": 3, "Env Attack": 5, "Env Release": 120}],
   ["Acid 24 dB", {"Mode": "Low Pass", "Cutoff": 600, "Resonance": 7, "Gain": -3, "Slope": "24 dB", "Drive": 40, "Envelope Depth": 2, "Env Attack": 2, "Env Release": 200}],
   ["Slow Sweep", {"Mode": "Low Pass", "Cutoff": 1500, "Resonance": 2, "LFO Rate": 0.1, "LFO Depth": 2}],
-  ["Quarter Note Pulse HP", {"Mode": "High Pass", "Cutoff": 300, "Resonance": 1.5, "LFO Sync": "1/4", "LFO Depth": 2}]
+  ["Quarter Note Pulse HP", {"Mode": "High Pass", "Cutoff": 300, "Resonance": 1.5, "LFO Sync": "1/4", "LFO Depth": 2}],
+  ["Morph Sweep LFO", {"Morph": "On", "Morph Position": 50, "Morph LFO": 100, "Cutoff": 900, "Resonance": 3, "Gain": -2, "LFO Rate": 0.25}],
+  ["Morph Envelope Wah", {"Morph": "On", "Morph Position": 0, "Morph Envelope": 40, "Cutoff": 1200, "Resonance": 3, "Gain": 3, "Env Attack": 5, "Env Release": 120}],
+  ["Nonlinear Acid", {"Nonlinear": "On", "Cutoff": 600, "Resonance": 8, "Gain": -3, "Slope": "24 dB", "Drive": 40, "Envelope Depth": 2, "Env Attack": 2, "Env Release": 200}],
+  ["Nonlinear Growl Bass", {"Nonlinear": "On", "Cutoff": 300, "Resonance": 6, "Gain": -3, "Drive": 70}]
 ]

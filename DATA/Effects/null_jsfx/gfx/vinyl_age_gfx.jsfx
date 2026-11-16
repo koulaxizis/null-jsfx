@@ -167,8 +167,27 @@ function update()
     s;
   );
 
+  // the hint line under the controls: a short help text per slider (from tools/site_content.json)
+  function ng_hint_text(i) local(s)
+  (
+    s = "";
+    i == 1 ? s = "Slow pitch drift (0.5 Hz delay modulation)";
+    i == 2 ? s = "Fast pitch wobble (6 Hz delay modulation)";
+    i == 3 ? s = "Amount and rate of random crackle pops";
+    i == 4 ? s = "Background hiss level";
+    i == 5 ? s = "Quantisation bit depth";
+    i == 6 ? s = "Sample-and-hold rate reduction";
+    i == 7 ? s = "Cutoff of the 12 dB/oct lowpass";
+    i == 8 ? s = "Dry/wet blend (the dry signal is delayed to stay aligned with the wet path)";
+    i == 9 ? s = "Turntable speed: sets the wow rate (33 keeps the 0.5 Hz drift, 45 and 78 run it faster), and 78 adds the";
+    i == 10 ? s = "Sparse, louder clicks and pops (a sharp tick with a softer thump) at random intervals, separate from the";
+    i == 11 ? s = "Folds the processed record signal to mono, like an old mono pressing";
+    s;
+  );
+
   function ng_presets() local(i)
   (
+    ng_hint_i > 0 && !ng_pre_open ? ng_hint(ng_hint_text(ng_hint_i));
     ng_pre_req >= 0 ? ( ng_preset_load(ng_pre_req); update(); ng_pre_req = -1; );
     ng_hist() ? update();
     ng_pre_cur = ng_preset_match();

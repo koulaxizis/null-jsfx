@@ -251,8 +251,24 @@ out_pin:Right
     s;
   );
 
+  // the hint line under the controls: a short help text per slider (from tools/site_content.json)
+  function ng_hint_text(i) local(s)
+  (
+    s = "";
+    i == 1 ? s = "Gain into the clipper (-12 to +24 dB): the more you push, the more of each peak is shaved off at the Ceiling";
+    i == 2 ? s = "The level the clipper never passes (-24 to 0 dB)";
+    i == 3 ? s = "Shape of the corner: 0% is a hard clip, higher values bend the top of the wave smoothly into the Ceiling";
+    i == 4 ? s = "Runs the clipper at 2x, 4x or 8x the sample rate so the harmonics it creates do not fold back as aliasing";
+    i == 5 ? s = "Blend of clipped and dry signal (the dry path is delayed to match), for parallel clipping";
+    i == 6 ? s = "Level after the mix (-24 to +12 dB)";
+    i == 7 ? s = "Stereo applies the same gain to both channels so the image stays put; Dual clips each channel on its own";
+    i == 8 ? s = "Listen: Output plays the result; Delta plays only what the clipper takes away (the driven input minus the";
+    s;
+  );
+
   function ng_presets() local(i)
   (
+    ng_hint_i > 0 && !ng_pre_open ? ng_hint(ng_hint_text(ng_hint_i));
     ng_pre_req >= 0 ? ( ng_preset_load(ng_pre_req); update(); ng_pre_req = -1; );
     ng_hist() ? update();
     ng_pre_cur = ng_preset_match();

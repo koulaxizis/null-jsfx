@@ -438,8 +438,26 @@ out_pin:Right
     s;
   );
 
+  // the hint line under the controls: a short help text per slider (from tools/site_content.json)
+  function ng_hint_text(i) local(s)
+  (
+    s = "";
+    i == 1 ? s = "Key (root note) of the scale the voice is tuned to";
+    i == 2 ? s = "Scale of allowed notes: Chromatic, Major, Minor, Harmonic Minor, Pentatonic Major/Minor, Blues, Dorian or";
+    i == 3 ? s = "How fast the pitch glides to the target note: 0 ms = hard, stepped “robot” tuning";
+    i == 4 ? s = "Share of the singer's own fast pitch movement (vibrato) kept around the corrected note";
+    i == 5 ? s = "Extra pitch shift in semitones, applied after the correction (formants stay in place)";
+    i == 6 ? s = "Pitch detection threshold: higher counts more of the signal as pitched (breathy voices), lower ignores";
+    i == 7 ? s = "Dry/wet blend (the dry signal is delayed to stay in time)";
+    i == 8 ? s = "What the voice is tuned to: the nearest note of Key and Scale, or the latest held MIDI note (falling back";
+    i == 9 ? s = "Speed of the added vibrato";
+    i == 10 ? s = "Width of the added vibrato, which fades in on every new note (0 = off)";
+    s;
+  );
+
   function ng_presets() local(i)
   (
+    ng_hint_i > 0 && !ng_pre_open ? ng_hint(ng_hint_text(ng_hint_i));
     ng_pre_req >= 0 ? ( ng_preset_load(ng_pre_req); update(); ng_pre_req = -1; );
     ng_hist() ? update();
     ng_pre_cur = ng_preset_match();

@@ -8,23 +8,42 @@ namespace nullpresets {
 
 struct FactoryPreset {
     const char* name;
-    float values[9];
+    float values[10];
 };
 
 static const FactoryPreset kPresets[] = {
-    { "Default", { 1.0f, 110.0f, 0.0f, 5.0f, 40.0f, 20.0f, 100.0f, 0.0f, 60.0f } },
-    { "Synth Voice Low", { 1.0f, 82.4f, 0.0f, 3.0f, 30.0f, 25.0f, 100.0f, 0.0f, 60.0f } },
-    { "Talking Synth Sidechain", { 0.0f, 110.0f, 0.0f, 3.0f, 35.0f, 30.0f, 100.0f, 6.7f, 60.0f } },
-    { "Whisper Noise", { 3.0f, 110.0f, 0.0f, 5.0f, 60.0f, 40.0f, 100.0f, 14.7f, 80.0f } },
-    { "Pulse Choir", { 2.0f, 220.0f, 2.0f, 5.0f, 80.0f, 20.0f, 100.0f, 0.0f, 100.0f } },
-    { "Deep Monster Voice", { 1.0f, 55.0f, -5.0f, 5.0f, 50.0f, 10.0f, 100.0f, 6.5f, 60.0f } },
-    { "Chipmunk Robot", { 2.0f, 440.0f, 6.0f, 5.0f, 40.0f, 30.0f, 100.0f, -9.0f, 60.0f } },
-    { "Drum Rhythm Synth", { 1.0f, 110.0f, 0.0f, 1.0f, 20.0f, 10.0f, 100.0f, 0.0f, 60.0f } },
-    { "Smooth Pad Vocoder", { 1.0f, 130.8f, 0.0f, 15.0f, 150.0f, 15.0f, 100.0f, 0.0f, 90.0f } },
-    { "Talkbox Bass", { 1.0f, 65.4f, 0.0f, 2.0f, 25.0f, 20.0f, 100.0f, 0.0f, 60.0f } },
-    { "Robot Announcer", { 2.0f, 110.0f, 0.0f, 2.0f, 30.0f, 35.0f, 100.0f, 0.0f, 30.0f } },
+    { "Default", { 1.0f, 110.0f, 0.0f, 5.0f, 40.0f, 20.0f, 100.0f, 0.0f, 60.0f, 0.0f } },
+    { "Synth Voice Low", { 1.0f, 82.4f, 0.0f, 3.0f, 30.0f, 25.0f, 100.0f, 0.0f, 60.0f, 0.0f } },
+    { "Talking Synth Sidechain", { 0.0f, 110.0f, 0.0f, 3.0f, 35.0f, 30.0f, 100.0f, 6.7f, 60.0f, 0.0f } },
+    { "Whisper Noise", { 3.0f, 110.0f, 0.0f, 5.0f, 60.0f, 40.0f, 100.0f, 14.7f, 80.0f, 0.0f } },
+    { "Pulse Choir", { 2.0f, 220.0f, 2.0f, 5.0f, 80.0f, 20.0f, 100.0f, 0.0f, 100.0f, 0.0f } },
+    { "Deep Monster Voice", { 1.0f, 55.0f, -5.0f, 5.0f, 50.0f, 10.0f, 100.0f, 6.5f, 60.0f, 0.0f } },
+    { "Chipmunk Robot", { 2.0f, 440.0f, 6.0f, 5.0f, 40.0f, 30.0f, 100.0f, -9.0f, 60.0f, 0.0f } },
+    { "Drum Rhythm Synth", { 1.0f, 110.0f, 0.0f, 1.0f, 20.0f, 10.0f, 100.0f, 0.0f, 60.0f, 0.0f } },
+    { "Smooth Pad Vocoder", { 1.0f, 130.8f, 0.0f, 15.0f, 150.0f, 15.0f, 100.0f, 0.0f, 90.0f, 0.0f } },
+    { "Talkbox Bass", { 1.0f, 65.4f, 0.0f, 2.0f, 25.0f, 20.0f, 100.0f, 0.0f, 60.0f, 0.0f } },
+    { "Robot Announcer", { 2.0f, 110.0f, 0.0f, 2.0f, 30.0f, 35.0f, 100.0f, 0.0f, 30.0f, 0.0f } },
+    { "Talkbox Saw Lead", { 1.0f, 220.0f, 0.0f, 5.0f, 40.0f, 25.0f, 100.0f, 0.0f, 60.0f, 1.0f } },
+    { "Talkbox Sidechain Synth", { 0.0f, 110.0f, 0.0f, 5.0f, 40.0f, 20.0f, 100.0f, 0.0f, 60.0f, 1.0f } },
+    { "Talkbox Pulse Robot", { 2.0f, 110.0f, 0.0f, 5.0f, 40.0f, 30.0f, 100.0f, 0.0f, 60.0f, 1.0f } },
+    { "Talkbox Whisper", { 3.0f, 110.0f, 0.0f, 5.0f, 40.0f, 40.0f, 100.0f, 0.0f, 60.0f, 1.0f } },
 };
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
-static constexpr uint32_t kNumValues = 9;
+static constexpr uint32_t kNumValues = 10;
+
+// the hint line under the controls: a short help text per parameter (from tools/site_content.json)
+#define NULL_UI_HINTS 1
+static const char* const kHints[] = {
+    "Carrier source: Right Input (route a synth there) or the built-in Saw, Pulse or Noise",
+    "Pitch of the built-in Saw and Pulse oscillators",
+    "Shifts the carrier bands up or down for smaller/bigger voices",
+    "How fast band envelopes respond to the voice",
+    "How fast band envelopes fall",
+    "Passes the voice’s highs (above ~6 kHz) for intelligibility",
+    "Dry/wet blend",
+    "Output level",
+    "Spreads the bands across the stereo field: even bands lean left, odd bands right (0% = mono)",
+    "How the voice shapes the carrier: Channel measures it in 16 bands, Talkbox models the voice's throat by",
+};
 
 } // namespace nullpresets

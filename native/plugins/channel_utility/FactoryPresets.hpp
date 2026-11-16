@@ -27,4 +27,22 @@ static const FactoryPreset kPresets[] = {
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 13;
 
+// the hint line under the controls: a short help text per parameter (from tools/site_content.json)
+#define NULL_UI_HINTS 1
+static const char* const kHints[] = {
+    "Fixed input attenuation of 0, −6 or −12 dB",
+    "Continuous input trim before all other stages",
+    "Inverts the polarity of the left channel",
+    "Inverts the polarity of the right channel",
+    "Cutoff of the one-pole DC-blocking high-pass filter",
+    "Blend between the unfiltered and the DC-blocked signal",
+    "Level offset for the left channel",
+    "Level offset for the right channel",
+    "Mutes the right channel so only the left is heard (takes priority over Solo R)",
+    "Mutes the left channel so only the right is heard",
+    "Sums both channels to mono on both outputs",
+    "Final level trim after all processing",
+    "Clips any sample above ±0.99 to protect the output",
+};
+
 } // namespace nullpresets

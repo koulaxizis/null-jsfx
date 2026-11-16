@@ -381,8 +381,30 @@ out_pin:Right
     s;
   );
 
+  // the hint line under the controls: a short help text per slider (from tools/site_content.json)
+  function ng_hint_text(i) local(s)
+  (
+    s = "";
+    i == 1 ? s = "The instrument: Tine EP, Reed EP and FM EP (electric pianos), Music Box, Celesta, Glockenspiel";
+    i == 2 ? s = "How hard the strike is (0 to 100%): more FM brightness, stronger overtones and a brighter mallet click";
+    i == 3 ? s = "The level of the model's inharmonic partials (0 to 100%, 50% is natural): the tine's bell, the ring of the";
+    i == 4 ? s = "Scales every decay time of the model (10 to 400%)";
+    i == 5 ? s = "How fast a note dies away when its key comes up (10 ms to 3 s, to -60 dB)";
+    i == 6 ? s = "How much the key velocity changes the level and the brightness (0% plays every note the same)";
+    i == 7 ? s = "The speed of the tremolo or autopan (0.5 to 12 Hz)";
+    i == 8 ? s = "The depth of the tremolo (0 to 100%); 0 turns it off";
+    i == 9 ? s = "Mono pulses the level; Stereo pans the sound from side to side, like the classic suitcase electric piano";
+    i == 10 ? s = "The overdrive of the preamp (0 to 100%), from a little bark to a growl; 0 is clean";
+    i == 11 ? s = "The amount of the built-in stereo chorus (0 to 100%)";
+    i == 12 ? s = "The output level (-24 to +12 dB)";
+    i == 13 ? s = "MPE: On for an MPE controller: on channels 2-16 each note gets its own pitch bend (the partials follow)";
+    i == 14 ? s = "MPE Bend Range: how far a note's own pitch bend goes (48 semitones is the MPE default)";
+    s;
+  );
+
   function ng_presets() local(i)
   (
+    ng_hint_i > 0 && !ng_pre_open ? ng_hint(ng_hint_text(ng_hint_i));
     ng_pre_req >= 0 ? ( ng_preset_load(ng_pre_req); update(); ng_pre_req = -1; );
     ng_hist() ? update();
     ng_pre_cur = ng_preset_match();

@@ -142,8 +142,22 @@ out_pin:Tonal Right
     s;
   );
 
+  // the hint line under the controls: a short help text per slider (from tools/site_content.json)
+  function ng_hint_text(i) local(s)
+  (
+    s = "";
+    i == 1 ? s = "Balance: both parts on channels 1/2, each with its own level";
+    i == 2 ? s = "Level of the transient part (the attack of each hit)";
+    i == 3 ? s = "Level of the tonal part (the body and the tail)";
+    i == 4 ? s = "How easily a sound counts as a transient";
+    i == 5 ? s = "How long the transient part lasts after each onset";
+    i == 6 ? s = "Output level";
+    s;
+  );
+
   function ng_presets() local(i)
   (
+    ng_hint_i > 0 && !ng_pre_open ? ng_hint(ng_hint_text(ng_hint_i));
     ng_pre_req >= 0 ? ( ng_preset_load(ng_pre_req); update(); ng_pre_req = -1; );
     ng_hist() ? update();
     ng_pre_cur = ng_preset_match();

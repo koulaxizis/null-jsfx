@@ -56,7 +56,7 @@ private:
     void update()
     {
         fDsp.setParams(int(std::lround(fV[0])), stepped(1), stepped(2), stepped(3), fV[4], fV[5], fV[6],
-                       stepped(7), fV[8]);
+                       stepped(7), fV[8], int(std::lround(fV[9])));
     }
 
     nullvocoder::VocoderProcessor fDsp;

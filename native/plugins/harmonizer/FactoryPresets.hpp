@@ -32,4 +32,27 @@ static const FactoryPreset kPresets[] = {
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 18;
 
+// the hint line under the controls: a short help text per parameter (from tools/site_content.json)
+#define NULL_UI_HINTS 1
+static const char* const kHints[] = {
+    "Interval of voice 1 in semitones",
+    "Interval of voice 2 in semitones",
+    "Level of voice 1",
+    "Level of voice 2",
+    "Opposite detune of the two voices for a natural, separate-performer feel",
+    "Delay of the voices (voice 2 is delayed 1.37× longer)",
+    "Pans voice 1 left and voice 2 right",
+    "Equal-power dry/wet: 0% = original only, 50% = both at −3 dB, 100% = harmony voices only",
+    "How the voices find their notes: Semitones uses the fixed intervals, Scale turns the intervals into steps",
+    "Key of the scale used in Scale mode",
+    "Scale used in Scale mode: Major, Minor, Dorian, Mixolydian, Harmonic Minor, Pentatonic Major or Pentatonic",
+    "Shifts the voices with pitch-synchronous grains that keep the character of the vowels instead of the",
+    "How many harmony voices sing: 2, or add voice 3 and 4 (in MIDI mode they sing the third and fourth latest",
+    "Interval of voice 3 (Voices 3 or 4)",
+    "Interval of voice 4 (Voices 4)",
+    "Level of voice 3",
+    "Level of voice 4",
+    "MIDI mode: with On, the sustain pedal (CC 64) keeps the voices of released keys singing until the pedal",
+};
+
 } // namespace nullpresets

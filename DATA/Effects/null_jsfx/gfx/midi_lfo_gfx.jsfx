@@ -207,8 +207,28 @@ out_pin:Right
     s;
   );
 
+  // the hint line under the controls: a short help text per slider (from tools/site_content.json)
+  function ng_hint_text(i) local(s)
+  (
+    s = "";
+    i == 1 ? s = "The wave: Sine, Triangle, Saw Up, Saw Down, Square, Random (holds a new value each cycle) or Smooth Random";
+    i == 2 ? s = "Free runs at Rate in Hz; Tempo takes one cycle per Length, locked to the host's beat while it plays";
+    i == 3 ? s = "Cycles per second in Free (0.01 to 20 Hz)";
+    i == 4 ? s = "The length of one cycle in Tempo, from 8 bars to 1/32, with triplets and dotted values";
+    i == 5 ? s = "Moves the start of the cycle (0 to 360 degrees)";
+    i == 6 ? s = "What it sends: a controller (CC Number), pitch bend or channel pressure";
+    i == 7 ? s = "The controller it sends (0 to 127): 1 mod wheel, 7 volume, 10 pan, 11 expression, 74 cutoff";
+    i == 8 ? s = "The MIDI channel it sends on";
+    i == 9 ? s = "The lowest value of the swing (% of the range)";
+    i == 10 ? s = "The highest value of the swing; Min above Max turns the wave upside down";
+    i == 11 ? s = "On Note starts the cycle again at every note-on (free running only)";
+    i == 12 ? s = "Picks the random sequence: the same Seed always plays the same values";
+    s;
+  );
+
   function ng_presets() local(i)
   (
+    ng_hint_i > 0 && !ng_pre_open ? ng_hint(ng_hint_text(ng_hint_i));
     ng_pre_req >= 0 ? ( ng_preset_load(ng_pre_req); update(); ng_pre_req = -1; );
     ng_hist() ? update();
     ng_pre_cur = ng_preset_match();

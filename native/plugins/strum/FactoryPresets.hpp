@@ -28,4 +28,17 @@ static const FactoryPreset kPresets[] = {
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 8;
 
+// the hint line under the controls: a short help text per parameter (from tools/site_content.json)
+#define NULL_UI_HINTS 1
+static const char* const kHints[] = {
+    "Which way the chord is strummed: Down (lowest note first), Up (highest first), Alternate, or Random",
+    "Time between one string and the next",
+    "Once strums when the chord is played; the others strum again on the tempo while keys are held: 1/4, 1/8",
+    "How long each strum lasts as a share of its step, in the rhythms",
+    "How much softer the last string is than the first",
+    "The velocity of up strokes, as a share of the keys' velocity",
+    "Moves each string a little later, by up to this many ms",
+    "Keys pressed within this time of the first one make one chord",
+};
+
 } // namespace nullpresets

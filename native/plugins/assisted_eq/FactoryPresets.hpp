@@ -30,4 +30,25 @@ static const FactoryPreset kPresets[] = {
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 16;
 
+// the hint line under the controls: a short help text per parameter (from tools/site_content.json)
+#define NULL_UI_HINTS 1
+static const char* const kHints[] = {
+    "Press On and play the track: it listens for 15 s of signal (or until you turn it Off, after at least 0.5",
+    "What is playing: Vocal, Drums, Bass, Instrument or Mix",
+    "The sound you want: Natural (only corrects), Warm, Bright, Punchy, Radio, Podcast or Lo-Fi",
+    "How much of the learned correction and target is applied, 0-150%",
+    "Your own shelf at 100 Hz on top",
+    "Your own bell at 1 kHz on top",
+    "Your own shelf at 10 kHz on top",
+    "Level after the EQ, on top of the automatic level match",
+    "Hidden: whether Learn has run. Saved with the project",
+    "Hidden: the learned level of the lows (60-120 Hz) against the reference, in dB",
+    "Hidden: the learned level of the mud region (200-500 Hz) against the reference, in dB",
+    "Hidden: the frequency where the mud peaks",
+    "Hidden: the learned level of the honk region (800 Hz-1.6 kHz) against the reference, in dB",
+    "Hidden: the learned level of the presence region (2-5 kHz) against the reference, in dB",
+    "Hidden: the learned level of the air region (8-16 kHz) against the reference, in dB",
+    "Hidden: the lowest band with real content; the learned high-pass sits below it",
+};
+
 } // namespace nullpresets

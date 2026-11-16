@@ -31,4 +31,20 @@ static const FactoryPreset kPresets[] = {
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 11;
 
+// the hint line under the controls: a short help text per parameter (from tools/site_content.json)
+#define NULL_UI_HINTS 1
+static const char* const kHints[] = {
+    "Level the signal must exceed for the gate to open",
+    "How fast the gate opens",
+    "How fast the gate closes once the signal drops",
+    "High-pass on the detector only, so low-end rumble or bleed does not open the gate (0 = off)",
+    "How far the gate turns the signal down when closed: −80 dB closes fully, higher values only duck it (0 dB",
+    "How long the gate stays open after the signal drops below the threshold, before the release starts",
+    "Delays the audio so the gate opens just before each hit and keeps the attack intact (adds that much latency",
+    "Internal listens to the track itself; External listens to input channels 3/4 (sidechain key)",
+    "Low-pass on the detector only, so hi-hats or cymbals do not open the gate (20 kHz = off)",
+    "Turns the gate into a ducker: the signal is turned down by Range while the detector is above the threshold",
+    "Tone Release: while the gate closes, the tail also gets darker, like an instrument dying away, instead of",
+};
+
 } // namespace nullpresets

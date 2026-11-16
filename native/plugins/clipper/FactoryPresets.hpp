@@ -27,4 +27,17 @@ static const FactoryPreset kPresets[] = {
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 8;
 
+// the hint line under the controls: a short help text per parameter (from tools/site_content.json)
+#define NULL_UI_HINTS 1
+static const char* const kHints[] = {
+    "Gain into the clipper (-12 to +24 dB): the more you push, the more of each peak is shaved off at the Ceiling",
+    "The level the clipper never passes (-24 to 0 dB)",
+    "Shape of the corner: 0% is a hard clip, higher values bend the top of the wave smoothly into the Ceiling",
+    "Runs the clipper at 2x, 4x or 8x the sample rate so the harmonics it creates do not fold back as aliasing",
+    "Blend of clipped and dry signal (the dry path is delayed to match), for parallel clipping",
+    "Level after the mix (-24 to +12 dB)",
+    "Stereo applies the same gain to both channels so the image stays put; Dual clips each channel on its own",
+    "Listen: Output plays the result; Delta plays only what the clipper takes away (the driven input minus the",
+};
+
 } // namespace nullpresets

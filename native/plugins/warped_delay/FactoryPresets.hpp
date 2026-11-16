@@ -27,4 +27,17 @@ static const FactoryPreset kPresets[] = {
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 8;
 
+// the hint line under the controls: a short help text per parameter (from tools/site_content.json)
+#define NULL_UI_HINTS 1
+static const char* const kHints[] = {
+    "Base delay time",
+    "Speed of the LFO wobbling the delay time",
+    "Amount of delay time modulation (limited to the delay time)",
+    "Amount of the repeats fed back",
+    "Saturation inside the feedback loop (level-compensated)",
+    "Filter type inside the loop: Off, LP, HP or BP",
+    "Filter cutoff / centre frequency",
+    "Dry/wet blend",
+};
+
 } // namespace nullpresets

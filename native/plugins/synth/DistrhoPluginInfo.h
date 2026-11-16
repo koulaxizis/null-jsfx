@@ -29,12 +29,17 @@
 #define DISTRHO_PLUGIN_WANT_MIDI_OUTPUT 1
 #define DISTRHO_PLUGIN_WANT_TIMEPOS  1
 #define DISTRHO_PLUGIN_WANT_LATENCY  0
-#define DISTRHO_PLUGIN_WANT_STATE    0
+#define DISTRHO_PLUGIN_WANT_STATE    1 // 4.0: "wavetable", the Wavetable File (a path)
 #define DISTRHO_PLUGIN_WANT_DIRECT_ACCESS 1
 #define DISTRHO_UI_USE_NANOVG        1
 #define DISTRHO_UI_USER_RESIZABLE    1
 #define DISTRHO_UI_DEFAULT_WIDTH     600
 #define DISTRHO_UI_DEFAULT_HEIGHT    438
+// 4.0: the FILE cell opens DPF's own file browser (requestStateFile) for any wavetable file;
+// it needs DGL_USE_FILE_BROWSER, which the DGL library (the UI, VST3 and CLAP targets) carries
+#ifdef DGL_USE_FILE_BROWSER
+#define DISTRHO_UI_FILE_BROWSER      1
+#endif
 
 #define DISTRHO_PLUGIN_LV2_CATEGORY    "lv2:InstrumentPlugin"
 #define DISTRHO_PLUGIN_VST3_CATEGORIES "Instrument|Synth|Stereo"

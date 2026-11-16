@@ -396,8 +396,28 @@ out_pin:Right
     s;
   );
 
+  // the hint line under the controls: a short help text per slider (from tools/site_content.json)
+  function ng_hint_text(i) local(s)
+  (
+    s = "";
+    i == 1 ? s = "The key the riff is in";
+    i == 2 ? s = "The scale the riff's notes come from (major, minor, harmonic or melodic minor, the modes, major or minor";
+    i == 3 ? s = "Picks the riff (1 to 999): every seed is a different pattern, and the same seed always plays the same";
+    i == 4 ? s = "How many of the steps play a note (0 to 100%)";
+    i == 5 ? s = "The length of the pattern in steps (4 to 32) before it repeats; more steps add to the end of the same riff";
+    i == 6 ? s = "The step length, synced to the tempo: 1/8, 1/16 or 1/32 notes, or their triplets";
+    i == 7 ? s = "How far the riff climbs above the key you hold: 1 to 3 octaves of the scale";
+    i == 8 ? s = "How long each note lasts as a share of its step (10 to 100%): short values play staccato, 100% plays legato";
+    i == 9 ? s = "Keeps a rhythm while Seed rolls new notes: 0 is Off (the rhythm follows Seed)";
+    i == 10 ? s = "How much the step velocities vary below the velocity of the key you hold (0% plays every step at it)";
+    i == 11 ? s = "The share of steps that are accented, played well above the others (0 to 100%)";
+    i == 12 ? s = "How often a step plays a new note instead of repeating the note one beat earlier (0% repeats a one-beat";
+    s;
+  );
+
   function ng_presets() local(i)
   (
+    ng_hint_i > 0 && !ng_pre_open ? ng_hint(ng_hint_text(ng_hint_i));
     ng_pre_req >= 0 ? ( ng_preset_load(ng_pre_req); update(); ng_pre_req = -1; );
     ng_hist() ? update();
     ng_pre_cur = ng_preset_match();

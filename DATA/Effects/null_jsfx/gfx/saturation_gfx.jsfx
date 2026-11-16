@@ -382,8 +382,27 @@ out_pin:Right
     s;
   );
 
+  // the hint line under the controls: a short help text per slider (from tools/site_content.json)
+  function ng_hint_text(i) local(s)
+  (
+    s = "";
+    i == 1 ? s = "Input gain into the saturation stage (up to 4x)";
+    i == 2 ? s = "Tilt EQ on the saturated signal around 800 Hz: negative values darken (lows up, highs down), positive";
+    i == 3 ? s = "Blend between dry and saturated signal";
+    i == 4 ? s = "Saturation curve: Tape, Tube, Overdrive, Fuzz, Bitcrush, Waveshaper (hard wavefolding) or Fold (sine";
+    i == 5 ? s = "Gain into the saturation stage before Drive, in dB; 0 dB is off";
+    i == 6 ? s = "Output level after the dry/wet mix, in dB; 0 dB is off";
+    i == 7 ? s = "Runs the saturation at 2x or 4x the sample rate (linear-phase halfband filters, 31 or 37 samples of";
+    i == 8 ? s = "Tilt EQ around 800 Hz before the saturation and its exact inverse after it: positive values make the highs";
+    i == 9 ? s = "Channels: Stereo works on the whole signal";
+    i == 10 ? s = "Focus: a +9 dB bell (Bass 100 Hz, Mid 1 kHz, Presence 3 kHz) before the saturation and its exact inverse";
+    i == 11 ? s = "Density: thickens the curve so quieter parts of the wave saturate too, for a denser, more compressed sound";
+    s;
+  );
+
   function ng_presets() local(i)
   (
+    ng_hint_i > 0 && !ng_pre_open ? ng_hint(ng_hint_text(ng_hint_i));
     ng_pre_req >= 0 ? ( ng_preset_load(ng_pre_req); update(); ng_pre_req = -1; );
     ng_hist() ? update();
     ng_pre_cur = ng_preset_match();

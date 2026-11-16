@@ -161,8 +161,21 @@ out_pin:Right
     s;
   );
 
+  // the hint line under the controls: a short help text per slider (from tools/site_content.json)
+  function ng_hint_text(i) local(s)
+  (
+    s = "";
+    i == 1 ? s = "Position of the source from hard left (-100) through centre (0) to hard right (100)";
+    i == 2 ? s = "Balance: plain L/R balance. Natural: a head model with interaural delay, level difference and head-shadow";
+    i == 3 ? s = "Stereo width of the source itself: 0% = mono, 100% = unchanged, 200% = twice as wide";
+    i == 4 ? s = "Delay of the far ear in Haas mode at full pan (scaled by the pan amount)";
+    i == 5 ? s = "Output level";
+    s;
+  );
+
   function ng_presets() local(i)
   (
+    ng_hint_i > 0 && !ng_pre_open ? ng_hint(ng_hint_text(ng_hint_i));
     ng_pre_req >= 0 ? ( ng_preset_load(ng_pre_req); update(); ng_pre_req = -1; );
     ng_hist() ? update();
     ng_pre_cur = ng_preset_match();

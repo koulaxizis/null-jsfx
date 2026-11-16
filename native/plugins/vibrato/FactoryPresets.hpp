@@ -27,4 +27,12 @@ static const FactoryPreset kPresets[] = {
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 3;
 
+// the hint line under the controls: a short help text per parameter (from tools/site_content.json)
+#define NULL_UI_HINTS 1
+static const char* const kHints[] = {
+    "Speed of the sine LFO",
+    "Delay sweep range, from 0.1 ms to 0.1 ms + Depth; more depth means wider pitch swing",
+    "Blend between dry and modulated signal (100% for pure vibrato, lower for chorus-like detune)",
+};
+
 } // namespace nullpresets

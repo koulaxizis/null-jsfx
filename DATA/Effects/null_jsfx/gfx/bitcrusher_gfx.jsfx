@@ -118,8 +118,23 @@ out_pin:Right
     s;
   );
 
+  // the hint line under the controls: a short help text per slider (from tools/site_content.json)
+  function ng_hint_text(i) local(s)
+  (
+    s = "";
+    i == 1 ? s = "Resolution: 2^(Bits - 1) steps on each side of zero (16 is nearly clean, 1 is a square)";
+    i == 2 ? s = "How often a new sample is taken; lower is grittier, with more aliasing";
+    i == 3 ? s = "On filters before the decimator at 0.45 x Sample Rate, for the clean sound of an old sampler";
+    i == 4 ? s = "Low-pass after the decimator, from 20 kHz (0%) down to 0.45 x Sample Rate (100%), to soften the steps";
+    i == 5 ? s = "Level into the crusher (more level uses more of the steps)";
+    i == 6 ? s = "Blend of the crushed and the dry signal";
+    i == 7 ? s = "Output level";
+    s;
+  );
+
   function ng_presets() local(i)
   (
+    ng_hint_i > 0 && !ng_pre_open ? ng_hint(ng_hint_text(ng_hint_i));
     ng_pre_req >= 0 ? ( ng_preset_load(ng_pre_req); update(); ng_pre_req = -1; );
     ng_hist() ? update();
     ng_pre_cur = ng_preset_match();

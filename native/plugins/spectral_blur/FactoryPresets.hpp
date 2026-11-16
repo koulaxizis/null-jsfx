@@ -29,4 +29,15 @@ static const FactoryPreset kPresets[] = {
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 6;
 
+// the hint line under the controls: a short help text per parameter (from tools/site_content.json)
+#define NULL_UI_HINTS 1
+static const char* const kHints[] = {
+    "How long each frequency lingers: rising bins follow within up to 150 ms, fading bins hang on for up to 3",
+    "Moves every frequency up or down by the same number of Hz: an inharmonic, metallic frequency shift",
+    "Leans the spectrum around 1 kHz, in dB per octave (flat below 100 Hz and above 10 kHz): negative is",
+    "Pushes down every frequency bin quieter than this level (a 1:3 expander per bin); at -90 it is off",
+    "Blend with the dry signal, which is delayed to match",
+    "Output level",
+};
+
 } // namespace nullpresets

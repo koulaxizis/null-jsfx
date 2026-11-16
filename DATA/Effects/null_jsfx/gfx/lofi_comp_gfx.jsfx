@@ -134,8 +134,23 @@ out_pin:Right
     s;
   );
 
+  // the hint line under the controls: a short help text per slider (from tools/site_content.json)
+  function ng_hint_text(i) local(s)
+  (
+    s = "";
+    i == 1 ? s = "How hard it pumps: threshold from -10 to -40 dBFS and ratio from 2:1 to 20:1 together, with its own";
+    i == 2 ? s = "How fast the compressor lets go: short values pump with the beat, long values hold the sound down";
+    i == 3 ? s = "Sample rate of the old sampler (low-pass and sample-and-hold); at or above the project rate it is off";
+    i == 4 ? s = "Bit depth of the quantiser: lower values add grain and noise";
+    i == 5 ? s = "Slow pitch drift from two slow LFOs moving a short delay (up to 4 ms)";
+    i == 6 ? s = "Blend with the dry signal";
+    i == 7 ? s = "Output level";
+    s;
+  );
+
   function ng_presets() local(i)
   (
+    ng_hint_i > 0 && !ng_pre_open ? ng_hint(ng_hint_text(ng_hint_i));
     ng_pre_req >= 0 ? ( ng_preset_load(ng_pre_req); update(); ng_pre_req = -1; );
     ng_hist() ? update();
     ng_pre_cur = ng_preset_match();

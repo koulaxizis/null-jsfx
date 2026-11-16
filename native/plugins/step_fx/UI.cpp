@@ -11,22 +11,27 @@
 START_NAMESPACE_DISTRHO
 
 static const NullKnobsUI::Control kControls[] = {
-    { 16, NullKnobsUI::kSelect, "NOTE", 0, -1, false },
-    { 17, NullKnobsUI::kKnob, "STEPS", 0, -1, false },
-    { 18, NullKnobsUI::kKnob, "SWING", 0, -1, false },
-    { 19, NullKnobsUI::kSelect, "REPEAT", 0, -1, false },
-    { 20, NullKnobsUI::kKnob, "FILTER", 0, -1, false, true },
-    { 21, NullKnobsUI::kKnob, "CRUSH", 0, -1, false },
-    { 22, NullKnobsUI::kKnob, "PITCH", 1, -1, false },
-    { 23, NullKnobsUI::kKnob, "MIX", 1, -1, false },
-    { 24, NullKnobsUI::kSelect, "MIDI", 1, -1, false },
+    { 16, NullKnobsUI::kSelect, "NOTE", 0, 0, false },
+    { 17, NullKnobsUI::kKnob, "STEPS", 0, 0, false },
+    { 18, NullKnobsUI::kKnob, "SWING", 0, 0, false },
+    { 19, NullKnobsUI::kSelect, "REPEAT", 0, 0, false },
+    { 20, NullKnobsUI::kKnob, "FILTER", 0, 0, false, true },
+    { 21, NullKnobsUI::kKnob, "CRUSH", 0, 0, false },
+    { 22, NullKnobsUI::kKnob, "PITCH", 1, 0, false },
+    { 23, NullKnobsUI::kKnob, "MIX", 1, 0, false },
+    { 24, NullKnobsUI::kSelect, "MIDI", 1, 0, false },
+    // GENERATE tab (appended in 4.0)
+    { 25, NullKnobsUI::kSelect, "GENERATE", 0, 1, false },
+    { 27, NullKnobsUI::kSelect, "STYLE", 0, 1, false },
+    { 26, NullKnobsUI::kKnob, "DENSITY", 0, 1, false },
+    { 28, NullKnobsUI::kKnob, "SEED", 0, 1, false },
 };
 
 class UIStepFx : public NullKnobsUI
 {
 public:
     UIStepFx()
-        : NullKnobsUI({ "STEP FX", "ADVANCED", 480, 130, nullptr, 2, nullstepfx::kSliders, nullstepfx::kNumSliders,
+        : NullKnobsUI({ "STEP FX", "ADVANCED", 480, 130, "SEQUENCE|GENERATE", 2, nullstepfx::kSliders, nullstepfx::kNumSliders,
                         kControls, sizeof(kControls) / sizeof(kControls[0]), true }) {}
 
 protected:
@@ -45,6 +50,7 @@ protected:
     }
 
     int effect(int k) const { return std::max(0, std::min(8, int(std::lround(value(uint32_t(k)))))); }
+    bool generating() const { return value(25) >= 0.5f; }
 
     // as in step_fx_gfx.jsfx: the 16 steps (click for the next effect, right-click for Off,
     // wheel to step through), the playing step marked, steps past Steps dimmed; above them the
@@ -78,7 +84,7 @@ protected:
         }
         else
         {
-            std::snprintf(l, sizeof(l), "STEP %d OF %d", cur + 1, n);
+            std::snprintf(l, sizeof(l), generating() ? "STEP %d OF %d, GENERATED" : "STEP %d OF %d", cur + 1, n);
             const int len = std::max(0, std::min(4, int(std::lround(value(16)))));
             std::snprintf(r, sizeof(r), "%s AT %d BPM", nullstepfx::kLengthOptions[len], int(std::floor(bpm + 0.5)));
         }
@@ -87,10 +93,12 @@ protected:
 
         const float cw = stepW();
         char num[8];
+        // the steps that play: the Step sliders, or with Generate On the generated pattern
+        const nullstepfx::Params p = nullstepfx::paramsFrom([this](uint32_t i) { return value(i); });
         for (int k = 0; k < 16; ++k)
         {
             const float x0 = cellX(k), y0 = cellY(k);
-            const int e = effect(k);
+            const int e = p.steps[k];
             const bool in = k < n && !midi;
             beginPath();
             rect(x0, y0, cw, 44.0f);
@@ -131,12 +139,12 @@ protected:
             fontFace("noto");
     }
 
-    // a click on a step: left = the next effect, right = Off
+    // a click on a step: left = the next effect, right = Off (not while Generate plays its own pattern)
     bool onMouse(const MouseEvent& ev) override
     {
         if (presetMouse(ev))
             return true;
-        if (ev.press && (ev.button == kMouseButtonLeft || ev.button == kMouseButtonRight))
+        if (ev.press && !generating() && (ev.button == kMouseButtonLeft || ev.button == kMouseButtonRight))
         {
             const float s = uiScale();
             const int k = cellAt(float(ev.pos.getX()) / s, float(ev.pos.getY()) / s);
@@ -155,7 +163,7 @@ protected:
     {
         const float s = uiScale();
         const int k = cellAt(float(ev.pos.getX()) / s, float(ev.pos.getY()) / s);
-        if (!presetOpen() && k >= 0 && ev.delta.getY() != 0.0f)
+        if (!presetOpen() && !generating() && k >= 0 && ev.delta.getY() != 0.0f)
         {
             const int e = effect(k);
             setGesture(uint32_t(k), float(ev.delta.getY() > 0.0f ? std::min(8, e + 1) : std::max(0, e - 1)));

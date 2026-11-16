@@ -27,4 +27,14 @@ static const FactoryPreset kPresets[] = {
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 5;
 
+// the hint line under the controls: a short help text per parameter (from tools/site_content.json)
+#define NULL_UI_HINTS 1
+static const char* const kHints[] = {
+    "Captures the current spectrum and holds it as a sustained texture",
+    "Crossfade time into and out of the frozen sound",
+    "Phase randomisation: 0% tonal and buzzy, 100% smooth and airy",
+    "Level of the frozen sound",
+    "Dry/wet blend",
+};
+
 } // namespace nullpresets

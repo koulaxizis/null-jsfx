@@ -27,4 +27,16 @@ static const FactoryPreset kPresets[] = {
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 7;
 
+// the hint line under the controls: a short help text per parameter (from tools/site_content.json)
+#define NULL_UI_HINTS 1
+static const char* const kHints[] = {
+    "While On, learns the room tone per frequency and between the channels: play a passage of room tone only",
+    "The input level below which a gap begins",
+    "Level of the fill against the learnt room tone",
+    "How fast the fill fades in and out",
+    "How long the input must stay below Threshold before a gap is filled",
+    "Fill gaps tops quiet passages up to the room tone; Constant bed adds the fill all the time",
+    "Hear the output or only the fill",
+};
+
 } // namespace nullpresets

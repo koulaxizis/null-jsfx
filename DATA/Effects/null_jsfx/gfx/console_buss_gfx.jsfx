@@ -160,8 +160,19 @@ out_pin:Right
     s;
   );
 
+  // the hint line under the controls: a short help text per slider (from tools/site_content.json)
+  function ng_hint_text(i) local(s)
+  (
+    s = "";
+    i == 1 ? s = "Clean: no emphasis, symmetric saturation. Warm: the lows saturate first, with even harmonics";
+    i == 2 ? s = "How hard the bus is driven (up to 9 or 12 dB depending on the character), and how much the sides leak into";
+    i == 3 ? s = "Output level after the console stage";
+    s;
+  );
+
   function ng_presets() local(i)
   (
+    ng_hint_i > 0 && !ng_pre_open ? ng_hint(ng_hint_text(ng_hint_i));
     ng_pre_req >= 0 ? ( ng_preset_load(ng_pre_req); update(); ng_pre_req = -1; );
     ng_hist() ? update();
     ng_pre_cur = ng_preset_match();

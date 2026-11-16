@@ -144,8 +144,21 @@ out_pin:Right
     s;
   );
 
+  // the hint line under the controls: a short help text per slider (from tools/site_content.json)
+  function ng_hint_text(i) local(s)
+  (
+    s = "";
+    i == 1 ? s = "Centre frequency of the all-pass filters; frequencies around it are delayed the most";
+    i == 2 ? s = "Number of all-pass stages (0 to 64); more stages give a longer, more dramatic chirp";
+    i == 3 ? s = "Q of the all-passes: low spreads the delay over a wide band, high concentrates it in a narrow, laser-like band";
+    i == 4 ? s = "Balance between the dry and the dispersed signal; partial mixes add phasey, comb-like colour";
+    i == 5 ? s = "Mono runs both channels at Frequency; Stereo moves left down and right up a quarter octave for width";
+    s;
+  );
+
   function ng_presets() local(i)
   (
+    ng_hint_i > 0 && !ng_pre_open ? ng_hint(ng_hint_text(ng_hint_i));
     ng_pre_req >= 0 ? ( ng_preset_load(ng_pre_req); update(); ng_pre_req = -1; );
     ng_hist() ? update();
     ng_pre_cur = ng_preset_match();

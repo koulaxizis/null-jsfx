@@ -28,4 +28,20 @@ static const FactoryPreset kPresets[] = {
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 11;
 
+// the hint line under the controls: a short help text per parameter (from tools/site_content.json)
+#define NULL_UI_HINTS 1
+static const char* const kHints[] = {
+    "Slow pitch drift (0.5 Hz delay modulation)",
+    "Fast pitch wobble (6 Hz delay modulation)",
+    "Amount and rate of random crackle pops",
+    "Background hiss level",
+    "Quantisation bit depth",
+    "Sample-and-hold rate reduction",
+    "Cutoff of the 12 dB/oct lowpass",
+    "Dry/wet blend (the dry signal is delayed to stay aligned with the wet path)",
+    "Turntable speed: sets the wow rate (33 keeps the 0.5 Hz drift, 45 and 78 run it faster), and 78 adds the",
+    "Sparse, louder clicks and pops (a sharp tick with a softer thump) at random intervals, separate from the",
+    "Folds the processed record signal to mono, like an old mono pressing",
+};
+
 } // namespace nullpresets

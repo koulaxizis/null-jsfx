@@ -31,4 +31,22 @@ static const FactoryPreset kPresets[] = {
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 13;
 
+// the hint line under the controls: a short help text per parameter (from tools/site_content.json)
+#define NULL_UI_HINTS 1
+static const char* const kHints[] = {
+    "Gain at 31 Hz (-18 to +18 dB): the sub and deep low end; drag the first point in the curve",
+    "Gain at 63 Hz (-18 to +18 dB): kick and bass weight",
+    "Gain at 125 Hz (-18 to +18 dB): bass body and warmth",
+    "Gain at 250 Hz (-18 to +18 dB): low mids, where mud and boxiness build up",
+    "Gain at 500 Hz (-18 to +18 dB): body of voices, guitars and snares",
+    "Gain at 1 kHz (-18 to +18 dB): the centre of the midrange, nasal or honky when boosted",
+    "Gain at 2 kHz (-18 to +18 dB): presence and attack",
+    "Gain at 4 kHz (-18 to +18 dB): clarity and edge, harsh if pushed",
+    "Gain at 8 kHz (-18 to +18 dB): brilliance and sibilance",
+    "Gain at 16 kHz (-18 to +18 dB): air and sparkle (left out at sample rates below 36 kHz)",
+    "How smoothly the curve flows between the points (0 to 100%): low values give each point its own defined",
+    "Level after the EQ (-18 to +18 dB), to match loudness after big boosts or cuts",
+    "Blend of equalized and dry signal (0 to 100%), for subtle or parallel tone shaping",
+};
+
 } // namespace nullpresets

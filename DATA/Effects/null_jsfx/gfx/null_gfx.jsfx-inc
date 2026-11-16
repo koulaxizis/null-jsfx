@@ -137,6 +137,24 @@ desc:NULL JSFX shared GFX library
     ng_pre_click = ng_click;
     ng_pre_was = ng_pre_open;
     ng_pre_open ? ( ng_click = 0; mouse_wheel = 0; );
+    ng_hint_i = 0;                  // the slider under the mouse (the hint line), set by the cells
+    ng_hint_ok = 0;                 // only knob layouts have room for it (ng_knobs_begin)
+  );
+
+  // the hint line: a control cell under the mouse (or being dragged) names its slider ...
+  function ng_hint_cell(idx, cx, ry)
+  (
+    ng_hint_ok && (ng_drag == ng_ctl_id || (mouse_x >= X(cx - ng_cw / 2) && mouse_x < X(cx + ng_cw / 2) &&
+      mouse_y >= Y(ry) && mouse_y < Y(ry + 86))) ? ng_hint_i = idx;
+  );
+  // ... and its text is drawn in the bottom margin of the window (NullUI.hpp draws the same)
+  function ng_hint(str)
+  (
+    strlen(str) > 0 ? (
+      ng_font(4, 7, 0);
+      ng_col(NG_MUTED, 1);
+      ng_ptxt(str, X(ng_dw / 2), Y(ng_dh - 7), 1);
+    );
   );
 
   // end a frame: remember the mouse button for click detection
@@ -605,6 +623,7 @@ desc:NULL JSFX shared GFX library
     ng_cy = cy;
     ng_rowy = cy + 8 + (tabs ? 28 : 0) - 86;
     ng_ctl_id = 100;
+    ng_hint_ok = 1;
   );
 
   // tab bar at the top of the controls card; names "A|B|C"; returns the selected tab (0..)
@@ -636,10 +655,12 @@ desc:NULL JSFX shared GFX library
   );
 
   // next row of n cells, centred
+  // a row of n controls, centred; more than 6 share the row's width (4.0)
   function ng_row(n)
   (
     ng_rowy += 86;
-    ng_cellx = 22 + (6 - n) * ng_cw / 2;
+    ng_cw = (ng_dw - 44) / max(6, n);
+    ng_cellx = 22 + (6 - min(6, n)) * ng_cw / 2;
   );
 
   // writes slider idx (1-based) when v differs, tells the host; returns 1 when it changed
@@ -662,6 +683,7 @@ desc:NULL JSFX shared GFX library
     ng_ctl_id += 1;
     cx = ng_cellx + ng_cw / 2;
     ry = ng_rowy;
+    ng_hint_cell(idx, cx, ry);
     ng_cellx += ng_cw;
     v = ng_drag == ng_ctl_id ? ng_drag_val : slider(idx);
     ng_font(1, 7.5, 1);
@@ -682,6 +704,7 @@ desc:NULL JSFX shared GFX library
     ng_ctl_id += 1;
     cx = ng_cellx + ng_cw / 2;
     ry = ng_rowy;
+    ng_hint_cell(idx, cx, ry);
     ng_cellx += ng_cw;
     lr = log(hi / lo);
     tcur = log(max(lo, slider(idx)) / lo) / lr;
@@ -705,6 +728,7 @@ desc:NULL JSFX shared GFX library
     ng_ctl_id += 1;
     cx = ng_cellx + ng_cw / 2;
     ry = ng_rowy;
+    ng_hint_cell(idx, cx, ry);
     ng_cellx += ng_cw;
     n = 1; i = 0;
     loop(strlen(options), str_getchar(options, i) == '|' ? n += 1; i += 1;);

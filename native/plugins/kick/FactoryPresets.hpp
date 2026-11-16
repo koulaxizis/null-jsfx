@@ -32,4 +32,19 @@ static const FactoryPreset kPresets[] = {
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 10;
 
+// the hint line under the controls: a short help text per parameter (from tools/site_content.json)
+#define NULL_UI_HINTS 1
+static const char* const kHints[] = {
+    "The kick's pitch, where the sweep ends",
+    "On: the kick follows the notes (C1 plays Pitch); Off: every key plays Pitch",
+    "How far above Pitch the kick starts",
+    "How fast the pitch falls to Pitch",
+    "How long the kick rings (the time to fall 60 dB)",
+    "The level of the beater click",
+    "How bright the click is",
+    "Soft clipping for a harder, louder kick",
+    "How much the key velocity changes the level",
+    "Output level",
+};
+
 } // namespace nullpresets

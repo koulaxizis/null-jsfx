@@ -27,4 +27,17 @@ static const FactoryPreset kPresets[] = {
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 8;
 
+// the hint line under the controls: a short help text per parameter (from tools/site_content.json)
+#define NULL_UI_HINTS 1
+static const char* const kHints[] = {
+    "How the previous bar's slices are rearranged: Straight keeps the order, Shuffle swaps the picked slices",
+    "Chance that each slice is picked by the Pattern (0% = the bar plays in order, 100% = every slice is changed)",
+    "Number that sets every random choice (1 to 999): the same Seed always gives the same pattern, and it stays",
+    "How many equal slices the bar is cut into: 8 (eighth notes), 16 (sixteenths) or 32",
+    "Chance that a slice plays backwards",
+    "Chance that a slice is retriggered, playing its first half twice",
+    "Length of each slice (100% = full); lower values cut every slice short with a fade for a choppy, gated feel",
+    "Blend of sliced and dry signal",
+};
+
 } // namespace nullpresets

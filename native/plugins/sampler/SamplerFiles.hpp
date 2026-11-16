@@ -28,24 +28,25 @@
 
 namespace nullsmp {
 
-inline std::vector<std::string> sampleFolders()
+// (folder: the Synth's wavetables use null_jsfx_wavetables the same way)
+inline std::vector<std::string> sampleFolders(const std::string& folder = "null_jsfx_samples")
 {
     std::vector<std::string> dirs;
 #ifdef _WIN32
     if (const char* a = std::getenv("APPDATA"))
-        dirs.push_back(std::string(a) + "\\REAPER\\Data\\null_jsfx_samples");
+        dirs.push_back(std::string(a) + "\\REAPER\\Data\\" + folder);
     if (const char* h = std::getenv("USERPROFILE"))
-        dirs.push_back(std::string(h) + "\\null_jsfx_samples");
+        dirs.push_back(std::string(h) + "\\" + folder);
 #else
     const char* h = std::getenv("HOME");
     const std::string home = h ? h : "";
 # ifdef __APPLE__
-    dirs.push_back(home + "/Library/Application Support/REAPER/Data/null_jsfx_samples");
+    dirs.push_back(home + "/Library/Application Support/REAPER/Data/" + folder);
 # else
     const char* x = std::getenv("XDG_CONFIG_HOME");
-    dirs.push_back((x && x[0] ? std::string(x) : home + "/.config") + "/REAPER/Data/null_jsfx_samples");
+    dirs.push_back((x && x[0] ? std::string(x) : home + "/.config") + "/REAPER/Data/" + folder);
 # endif
-    dirs.push_back(home + "/null_jsfx_samples");
+    dirs.push_back(home + "/" + folder);
 #endif
     return dirs;
 }
@@ -66,10 +67,10 @@ inline bool isSampleFile(const std::string& name)
 }
 
 // full paths of the sample files, sorted by file name
-inline std::vector<std::string> listSampleFiles()
+inline std::vector<std::string> listSampleFiles(const std::string& folder = "null_jsfx_samples")
 {
     std::vector<std::pair<std::string, std::string>> found; // (name, path)
-    for (const std::string& dir : sampleFolders())
+    for (const std::string& dir : sampleFolders(folder))
     {
 #ifdef _WIN32
         WIN32_FIND_DATAA fd;

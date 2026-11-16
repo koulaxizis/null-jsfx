@@ -29,4 +29,16 @@ static const FactoryPreset kPresets[] = {
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 7;
 
+// the hint line under the controls: a short help text per parameter (from tools/site_content.json)
+#define NULL_UI_HINTS 1
+static const char* const kHints[] = {
+    "The signal: sine, logarithmic sweep, pink noise, white noise or polarity pulses",
+    "The sine's frequency",
+    "The level: peak for the sine, sweep and pulses, RMS for the noises",
+    "How long one sweep from 20 Hz to 20 kHz takes",
+    "Play on both sides, or only on the left or right",
+    "Turn the right channel upside down, to hear what a wrong-polarity speaker sounds like",
+    "Off replaces the input with the signal; On adds the signal to it",
+};
+
 } // namespace nullpresets

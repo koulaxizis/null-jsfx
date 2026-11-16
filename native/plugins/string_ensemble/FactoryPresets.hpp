@@ -32,4 +32,18 @@ static const FactoryPreset kPresets[] = {
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 9;
 
+// the hint line under the controls: a short help text per parameter (from tools/site_content.json)
+#define NULL_UI_HINTS 1
+static const char* const kHints[] = {
+    "Level of the 4' register, an octave above the key",
+    "Level of the 8' register, at the key's pitch",
+    "Level of the 16' register, an octave below the key",
+    "How slowly the keys swell in",
+    "How long the keys ring after they are let go",
+    "Low-pass of the whole section, from dark to bright",
+    "How much of the three-tap ensemble chorus is heard",
+    "Classic, Wide (the taps spread to the sides) or Deep (slower and deeper)",
+    "Output level",
+};
+
 } // namespace nullpresets

@@ -32,4 +32,20 @@ static const FactoryPreset kPresets[] = {
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 11;
 
+// the hint line under the controls: a short help text per parameter (from tools/site_content.json)
+#define NULL_UI_HINTS 1
+static const char* const kHints[] = {
+    "Input gain into the saturation stage (up to 4x)",
+    "Tilt EQ on the saturated signal around 800 Hz: negative values darken (lows up, highs down), positive",
+    "Blend between dry and saturated signal",
+    "Saturation curve: Tape, Tube, Overdrive, Fuzz, Bitcrush, Waveshaper (hard wavefolding) or Fold (sine",
+    "Gain into the saturation stage before Drive, in dB; 0 dB is off",
+    "Output level after the dry/wet mix, in dB; 0 dB is off",
+    "Runs the saturation at 2x or 4x the sample rate (linear-phase halfband filters, 31 or 37 samples of",
+    "Tilt EQ around 800 Hz before the saturation and its exact inverse after it: positive values make the highs",
+    "Channels: Stereo works on the whole signal",
+    "Focus: a +9 dB bell (Bass 100 Hz, Mid 1 kHz, Presence 3 kHz) before the saturation and its exact inverse",
+    "Density: thickens the curve so quieter parts of the wave saturate too, for a denser, more compressed sound",
+};
+
 } // namespace nullpresets

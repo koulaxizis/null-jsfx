@@ -27,4 +27,15 @@ static const FactoryPreset kPresets[] = {
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 6;
 
+// the hint line under the controls: a short help text per parameter (from tools/site_content.json)
+#define NULL_UI_HINTS 1
+static const char* const kHints[] = {
+    "Boosts or softens the first milliseconds of each hit via transient detection",
+    "Bell EQ at 120 Hz for the body of the kick",
+    "Bell EQ at 55 Hz for the low-end thump",
+    "Bell EQ at 4 kHz for beater click",
+    "Tail time constant after each detected hit",
+    "Final output level",
+};
+
 } // namespace nullpresets

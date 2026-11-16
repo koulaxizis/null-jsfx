@@ -202,8 +202,24 @@ out_pin:Right
     s;
   );
 
+  // the hint line under the controls: a short help text per slider (from tools/site_content.json)
+  function ng_hint_text(i) local(s)
+  (
+    s = "";
+    i == 1 ? s = "Boost or cut applied to transients";
+    i == 2 ? s = "Boost or cut applied to the sustain and body";
+    i == 3 ? s = "Blend between dry and shaped signal";
+    i == 4 ? s = "How fast the detector reacts: Medium is the original timing, Fast catches shorter clicks, Slow treats";
+    i == 5 ? s = "Lower edge of the band the shaping acts on, so only that part of the signal is detected and shaped (20 Hz";
+    i == 6 ? s = "Upper edge of the band the shaping acts on, e.g. 150 Hz to shape only the kick (20 kHz = off)";
+    i == 7 ? s = "Soft clip on the output that rounds off boosted transients before they reach 0 dBFS";
+    i == 8 ? s = "Output level after shaping (0 dB = unchanged)";
+    s;
+  );
+
   function ng_presets() local(i)
   (
+    ng_hint_i > 0 && !ng_pre_open ? ng_hint(ng_hint_text(ng_hint_i));
     ng_pre_req >= 0 ? ( ng_preset_load(ng_pre_req); update(); ng_pre_req = -1; );
     ng_hist() ? update();
     ng_pre_cur = ng_preset_match();

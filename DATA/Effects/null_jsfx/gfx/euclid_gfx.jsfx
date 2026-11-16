@@ -139,8 +139,27 @@ out_pin:Right
     s;
   );
 
+  // the hint line under the controls: a short help text per slider (from tools/site_content.json)
+  function ng_hint_text(i) local(s)
+  (
+    s = "";
+    i == 1 ? s = "Length of the pattern in steps";
+    i == 2 ? s = "How many of the steps play, spread as evenly as they go";
+    i == 3 ? s = "Turns the pattern by this many steps";
+    i == 4 ? s = "Length of one step at the host's tempo";
+    i == 5 ? s = "The MIDI note each pulse plays";
+    i == 6 ? s = "Velocity of the pulses";
+    i == 7 ? s = "How much louder the pattern's first pulse is, up to 127";
+    i == 8 ? s = "How long each note lasts, as a share of a step";
+    i == 9 ? s = "Moves every second step later, up to 0.375 of a step";
+    i == 10 ? s = "Transport plays while the host plays, locked to its beat; Always also runs while it is stopped";
+    i == 11 ? s = "MIDI channel of the notes";
+    s;
+  );
+
   function ng_presets() local(i)
   (
+    ng_hint_i > 0 && !ng_pre_open ? ng_hint(ng_hint_text(ng_hint_i));
     ng_pre_req >= 0 ? ( ng_preset_load(ng_pre_req); update(); ng_pre_req = -1; );
     ng_hist() ? update();
     ng_pre_cur = ng_preset_match();

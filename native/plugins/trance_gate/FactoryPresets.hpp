@@ -8,26 +8,62 @@ namespace nullpresets {
 
 struct FactoryPreset {
     const char* name;
-    float values[24];
+    float values[27];
 };
 
 static const FactoryPreset kPresets[] = {
-    { "Default", { 1.0f, 1.0f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 2.0f, 8.0f, 5.0f, 40.0f, 100.0f, 100.0f, 0.0f } },
-    { "Straight Sixteenths", { 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 2.0f, 8.0f, 2.0f, 30.0f, 100.0f, 100.0f, 0.0f } },
-    { "Dotted Gallop", { 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 2.0f, 8.0f, 3.0f, 50.0f, 100.0f, 100.0f, 0.0f } },
-    { "Quarter Pulse Gate", { 1.0f, 1.0f, 1.0f, 0.0f, 1.0f, 1.0f, 1.0f, 0.0f, 1.0f, 1.0f, 1.0f, 0.0f, 1.0f, 1.0f, 1.0f, 0.0f, 0.0f, 2.0f, 8.0f, 5.0f, 40.0f, 100.0f, 100.0f, 0.0f } },
-    { "Soft Pad Pulse", { 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 2.0f, 8.0f, 20.0f, 80.0f, 70.0f, 100.0f, 0.0f } },
-    { "Thirty Second Stutter", { 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 3.0f, 8.0f, 1.0f, 10.0f, 100.0f, 100.0f, 0.0f } },
-    { "Sparse Accent Hits", { 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 2.0f, 8.0f, 2.0f, 80.0f, 100.0f, 100.0f, 0.0f } },
-    { "Offbeat Chop", { 0.0f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f, 2.0f, 8.0f, 3.0f, 30.0f, 100.0f, 100.0f, 0.0f } },
-    { "Free Rate Flutter", { 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 2.0f, 12.0f, 3.0f, 25.0f, 60.0f, 100.0f, 0.0f } },
-    { "Random Sixteenths", { 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f, 2.0f, 8.0f, 2.0f, 30.0f, 100.0f, 60.0f, 0.0f } },
-    { "Sparse Random Chop", { 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f, 2.0f, 8.0f, 1.0f, 20.0f, 100.0f, 35.0f, 17.0f } },
-    { "Humanized Pulse", { 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 2.0f, 8.0f, 3.0f, 40.0f, 100.0f, 85.0f, 5.0f } },
-    { "Glitchy Thirty Seconds", { 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f, 3.0f, 8.0f, 1.0f, 10.0f, 100.0f, 50.0f, 42.0f } },
-    { "Soft Random Pad", { 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f, 1.0f, 8.0f, 20.0f, 120.0f, 70.0f, 55.0f, 9.0f } },
+    { "Default", { 1.0f, 1.0f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 2.0f, 8.0f, 5.0f, 40.0f, 100.0f, 100.0f, 0.0f, 0.0f, 50.0f, 0.0f } },
+    { "Straight Sixteenths", { 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 2.0f, 8.0f, 2.0f, 30.0f, 100.0f, 100.0f, 0.0f, 0.0f, 50.0f, 0.0f } },
+    { "Dotted Gallop", { 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 2.0f, 8.0f, 3.0f, 50.0f, 100.0f, 100.0f, 0.0f, 0.0f, 50.0f, 0.0f } },
+    { "Quarter Pulse Gate", { 1.0f, 1.0f, 1.0f, 0.0f, 1.0f, 1.0f, 1.0f, 0.0f, 1.0f, 1.0f, 1.0f, 0.0f, 1.0f, 1.0f, 1.0f, 0.0f, 0.0f, 2.0f, 8.0f, 5.0f, 40.0f, 100.0f, 100.0f, 0.0f, 0.0f, 50.0f, 0.0f } },
+    { "Soft Pad Pulse", { 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 2.0f, 8.0f, 20.0f, 80.0f, 70.0f, 100.0f, 0.0f, 0.0f, 50.0f, 0.0f } },
+    { "Thirty Second Stutter", { 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 3.0f, 8.0f, 1.0f, 10.0f, 100.0f, 100.0f, 0.0f, 0.0f, 50.0f, 0.0f } },
+    { "Sparse Accent Hits", { 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 2.0f, 8.0f, 2.0f, 80.0f, 100.0f, 100.0f, 0.0f, 0.0f, 50.0f, 0.0f } },
+    { "Offbeat Chop", { 0.0f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f, 2.0f, 8.0f, 3.0f, 30.0f, 100.0f, 100.0f, 0.0f, 0.0f, 50.0f, 0.0f } },
+    { "Free Rate Flutter", { 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 2.0f, 12.0f, 3.0f, 25.0f, 60.0f, 100.0f, 0.0f, 0.0f, 50.0f, 0.0f } },
+    { "Random Sixteenths", { 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f, 2.0f, 8.0f, 2.0f, 30.0f, 100.0f, 60.0f, 0.0f, 0.0f, 50.0f, 0.0f } },
+    { "Sparse Random Chop", { 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f, 2.0f, 8.0f, 1.0f, 20.0f, 100.0f, 35.0f, 17.0f, 0.0f, 50.0f, 0.0f } },
+    { "Humanized Pulse", { 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 2.0f, 8.0f, 3.0f, 40.0f, 100.0f, 85.0f, 5.0f, 0.0f, 50.0f, 0.0f } },
+    { "Glitchy Thirty Seconds", { 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f, 3.0f, 8.0f, 1.0f, 10.0f, 100.0f, 50.0f, 42.0f, 0.0f, 50.0f, 0.0f } },
+    { "Soft Random Pad", { 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f, 1.0f, 8.0f, 20.0f, 120.0f, 70.0f, 55.0f, 9.0f, 0.0f, 50.0f, 0.0f } },
+    { "Generated Trance Gate", { 1.0f, 1.0f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 2.0f, 8.0f, 2.0f, 35.0f, 100.0f, 100.0f, 7.0f, 1.0f, 50.0f, 0.0f } },
+    { "Generated Offbeat Pump", { 1.0f, 1.0f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 2.0f, 8.0f, 3.0f, 60.0f, 100.0f, 100.0f, 21.0f, 1.0f, 60.0f, 1.0f } },
+    { "Generated Stutter", { 1.0f, 1.0f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 2.0f, 8.0f, 1.0f, 15.0f, 100.0f, 100.0f, 0.0f, 1.0f, 50.0f, 2.0f } },
+    { "Generated Half Time Chop", { 1.0f, 1.0f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 2.0f, 8.0f, 5.0f, 120.0f, 85.0f, 100.0f, 7.0f, 1.0f, 60.0f, 3.0f } },
 };
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
-static constexpr uint32_t kNumValues = 24;
+static constexpr uint32_t kNumValues = 27;
+
+// the hint line under the controls: a short help text per parameter (from tools/site_content.json)
+#define NULL_UI_HINTS 1
+static const char* const kHints[] = {
+    "Step 1 open or closed",
+    "Step 2 open or closed",
+    "Step 3 open or closed",
+    "Step 4 open or closed",
+    "Step 5 open or closed",
+    "Step 6 open or closed",
+    "Step 7 open or closed",
+    "Step 8 open or closed",
+    "Step 9 open or closed",
+    "Step 10 open or closed",
+    "Step 11 open or closed",
+    "Step 12 open or closed",
+    "Step 13 open or closed",
+    "Step 14 open or closed",
+    "Step 15 open or closed",
+    "Step 16 open or closed",
+    "Sync: steps follow the host tempo and lock to the bar grid while playing; Free: steps run at Free Rate",
+    "Note value of one step in Sync mode (1/16 = classic trance gate)",
+    "Steps per second in Free mode (8 Hz = 16ths at 120 BPM)",
+    "Time for the gate to ramp open",
+    "Time for the gate to ramp closed",
+    "How far closed steps are turned down (0% = no gating, 100% = silence)",
+    "Chance that an open step actually opens the gate (100% = always, as programmed)",
+    "Picks a different random variation; the same Seed always gives the same choices at the same song position",
+    "On: plays a pattern made from Seed, Density and Style instead of the 16 Step switches (they keep their",
+    "How many steps the generated pattern opens; a higher Density only adds steps, the ones already there stay",
+    "The rhythm the generated pattern follows: Trance, Offbeat, Stutter, Half Time or Random",
+};
 
 } // namespace nullpresets

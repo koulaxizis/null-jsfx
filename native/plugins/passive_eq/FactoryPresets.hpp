@@ -27,4 +27,19 @@ static const FactoryPreset kPresets[] = {
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 10;
 
+// the hint line under the controls: a short help text per parameter (from tools/site_content.json)
+#define NULL_UI_HINTS 1
+static const char* const kHints[] = {
+    "The low frequency for both low controls",
+    "Low shelf boost (up to +13.5 dB)",
+    "Gentler low shelf cut a little higher; with Low Boost it gives the classic bump with a dip above it",
+    "The frequency of the high peak",
+    "High peak boost (up to +18 dB)",
+    "Width of the high peak: 0 is sharp, 10 is broad",
+    "The frequency of the high shelf cut",
+    "High shelf cut (down to −20 dB)",
+    "Drive of the tube stage (even harmonics)",
+    "Output level",
+};
+
 } // namespace nullpresets

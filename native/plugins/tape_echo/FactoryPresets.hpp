@@ -27,4 +27,20 @@ static const FactoryPreset kPresets[] = {
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 11;
 
+// the hint line under the controls: a short help text per parameter (from tools/site_content.json)
+#define NULL_UI_HINTS 1
+static const char* const kHints[] = {
+    "Time between the record head and playback head 1 (50 to 1000 ms)",
+    "Locks head 1 to a note at the project tempo (straight, dotted or triplet); heads 2 and 3 follow at 2x and 3x",
+    "The classic 12-position selector: which playback heads you hear and feed back (1, 2, 3 and their",
+    "Feedback of the active heads into one shared loop",
+    "Low shelf at 250 Hz on the echoes (-12 to +12 dB)",
+    "High shelf at 2.5 kHz on the echoes (-12 to +12 dB)",
+    "Tape wow (two slow sines, up to 2.5 ms) and flutter (two fast sines, up to 0.15 ms) moving every head",
+    "Tape drive inside the feedback loop: 0% only rounds very loud repeats, higher values squash and colour",
+    "Level of the spring reverb, heard in the R positions of the Heads selector",
+    "Blend between the dry signal and the echoes (plus the spring)",
+    "Stops recording and loops what is on the tape (the length of the longest active head) forever, without",
+};
+
 } // namespace nullpresets

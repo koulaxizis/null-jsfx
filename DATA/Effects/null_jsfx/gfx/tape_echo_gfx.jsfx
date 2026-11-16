@@ -256,8 +256,27 @@ options:maxmem=33554432
     s;
   );
 
+  // the hint line under the controls: a short help text per slider (from tools/site_content.json)
+  function ng_hint_text(i) local(s)
+  (
+    s = "";
+    i == 1 ? s = "Time between the record head and playback head 1 (50 to 1000 ms)";
+    i == 2 ? s = "Locks head 1 to a note at the project tempo (straight, dotted or triplet); heads 2 and 3 follow at 2x and 3x";
+    i == 3 ? s = "The classic 12-position selector: which playback heads you hear and feed back (1, 2, 3 and their";
+    i == 4 ? s = "Feedback of the active heads into one shared loop";
+    i == 5 ? s = "Low shelf at 250 Hz on the echoes (-12 to +12 dB)";
+    i == 6 ? s = "High shelf at 2.5 kHz on the echoes (-12 to +12 dB)";
+    i == 7 ? s = "Tape wow (two slow sines, up to 2.5 ms) and flutter (two fast sines, up to 0.15 ms) moving every head";
+    i == 8 ? s = "Tape drive inside the feedback loop: 0% only rounds very loud repeats, higher values squash and colour";
+    i == 9 ? s = "Level of the spring reverb, heard in the R positions of the Heads selector";
+    i == 10 ? s = "Blend between the dry signal and the echoes (plus the spring)";
+    i == 11 ? s = "Stops recording and loops what is on the tape (the length of the longest active head) forever, without";
+    s;
+  );
+
   function ng_presets() local(i)
   (
+    ng_hint_i > 0 && !ng_pre_open ? ng_hint(ng_hint_text(ng_hint_i));
     ng_pre_req >= 0 ? ( ng_preset_load(ng_pre_req); update(); ng_pre_req = -1; );
     ng_hist() ? update();
     ng_pre_cur = ng_preset_match();

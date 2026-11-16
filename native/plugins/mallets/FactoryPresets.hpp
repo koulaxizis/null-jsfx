@@ -32,4 +32,20 @@ static const FactoryPreset kPresets[] = {
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 11;
 
+// the hint line under the controls: a short help text per parameter (from tools/site_content.json)
+#define NULL_UI_HINTS 1
+static const char* const kHints[] = {
+    "The instrument: Marimba, Xylophone, Vibraphone, Glockenspiel, Tubular Bells or Timpani",
+    "How hard the mallet is: soft yarn gives a round, dark tone, hard plastic a bright, clicky one",
+    "Where the mallet hits: the centre gives a pure tone, the edge brings out more overtones",
+    "How much the tube (or the timpani's kettle) under the bar reinforces the lowest note: louder and shorter",
+    "How long every note rings, from 10 % to 4 times as long",
+    "Ring lets every note ring out; Damp mutes it over Damp Time when the key comes up, unless the sustain",
+    "How fast a note is muted when Key Up is Damp",
+    "The vibraphone's motor: a tremolo at this rate (0 = off)",
+    "How much the velocity changes the level and the mallet's hardness (0 % = every note the same)",
+    "How far the notes spread across the stereo field by pitch",
+    "The output level (-24 to +12 dB)",
+};
+
 } // namespace nullpresets

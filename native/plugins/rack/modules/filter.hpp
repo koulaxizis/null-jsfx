@@ -63,6 +63,11 @@ private:
         p.envDepth = fV[9];
         p.envAttack = fV[10];
         p.envRelease = fV[11];
+        p.morph = int(std::lround(fV[12]));
+        p.morphPos = fV[13];
+        p.morphLfo = fV[14];
+        p.morphEnv = fV[15];
+        p.nonlinear = int(std::lround(fV[16]));
         fDsp.setParams(p);
     }
 

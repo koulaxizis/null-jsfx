@@ -29,4 +29,21 @@ static const FactoryPreset kPresets[] = {
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 12;
 
+// the hint line under the controls: a short help text per parameter (from tools/site_content.json)
+#define NULL_UI_HINTS 1
+static const char* const kHints[] = {
+    "The wave: Sine, Triangle, Saw Up, Saw Down, Square, Random (holds a new value each cycle) or Smooth Random",
+    "Free runs at Rate in Hz; Tempo takes one cycle per Length, locked to the host's beat while it plays",
+    "Cycles per second in Free (0.01 to 20 Hz)",
+    "The length of one cycle in Tempo, from 8 bars to 1/32, with triplets and dotted values",
+    "Moves the start of the cycle (0 to 360 degrees)",
+    "What it sends: a controller (CC Number), pitch bend or channel pressure",
+    "The controller it sends (0 to 127): 1 mod wheel, 7 volume, 10 pan, 11 expression, 74 cutoff",
+    "The MIDI channel it sends on",
+    "The lowest value of the swing (% of the range)",
+    "The highest value of the swing; Min above Max turns the wave upside down",
+    "On Note starts the cycle again at every note-on (free running only)",
+    "Picks the random sequence: the same Seed always plays the same values",
+};
+
 } // namespace nullpresets

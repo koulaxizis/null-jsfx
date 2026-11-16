@@ -29,4 +29,18 @@ static const FactoryPreset kPresets[] = {
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 9;
 
+// the hint line under the controls: a short help text per parameter (from tools/site_content.json)
+#define NULL_UI_HINTS 1
+static const char* const kHints[] = {
+    "Delay time in milliseconds, used while Sync is Off",
+    "Locks the delay to the project tempo: 1/16 to a whole note, dotted 1/8 and 1/4 too (120 bpm when the host",
+    "How much of each repeat comes back; a soft curve in the loop keeps even 100% safe, for a near-endless wash",
+    "How much of the allpass diffusion is blended into the loop: each repeat comes back softer and more",
+    "A slow sweep of the delay time (0.35 Hz, up to 4 ms) for a gentle, tape-like movement",
+    "Low-pass in the loop: lower values make every repeat darker",
+    "Stereo width of the wet signal, from mono to full",
+    "Blend with the dry signal",
+    "Output level",
+};
+
 } // namespace nullpresets

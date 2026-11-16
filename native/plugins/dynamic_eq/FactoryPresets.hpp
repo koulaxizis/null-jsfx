@@ -27,4 +27,30 @@ static const FactoryPreset kPresets[] = {
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 21;
 
+// the hint line under the controls: a short help text per parameter (from tools/site_content.json)
+#define NULL_UI_HINTS 1
+static const char* const kHints[] = {
+    "Centre frequency of band 1",
+    "Boost or cut band 1 reaches once its level is 12 dB over the threshold",
+    "Bandwidth of band 1",
+    "Level at which band 1 starts to act",
+    "Centre frequency of band 2",
+    "Boost or cut band 2 reaches once its level is 12 dB over the threshold",
+    "Bandwidth of band 2",
+    "Level at which band 2 starts to act",
+    "Centre frequency of band 3",
+    "Boost or cut band 3 reaches once its level is 12 dB over the threshold",
+    "Bandwidth of band 3",
+    "Level at which band 3 starts to act",
+    "Centre frequency of band 4",
+    "Boost or cut band 4 reaches once its level is 12 dB over the threshold",
+    "Bandwidth of band 4",
+    "Level at which band 4 starts to act",
+    "How fast each band's detector reacts to rising level",
+    "How fast each band's detector recovers",
+    "Output gain after all four bands",
+    "Channels: Stereo works on the whole signal",
+    "Listen: Output plays the result; Delta plays only what the bands change (the input minus the result",
+};
+
 } // namespace nullpresets

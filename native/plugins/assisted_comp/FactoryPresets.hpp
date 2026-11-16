@@ -29,4 +29,23 @@ static const FactoryPreset kPresets[] = {
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 14;
 
+// the hint line under the controls: a short help text per parameter (from tools/site_content.json)
+#define NULL_UI_HINTS 1
+static const char* const kHints[] = {
+    "Press On and play the track: it listens for 15 s of signal (or until you turn it Off, after at least 0.5",
+    "What is playing: Vocal, Drums, Bass, Instrument or Mix. Each has its own ratio",
+    "The sound you want: Natural, Warm, Bright, Punchy, Radio, Podcast (also brings the loudness to -16 LUFS)",
+    "How much of the target's gain reduction is applied, 0-150%",
+    "More (+) or less (-) compression than the target: moves the threshold down or up",
+    "Faster (+) or slower (-): +1 halves attack and release, -1 doubles them",
+    "Blend between the dry and the compressed signal (parallel compression)",
+    "Level after compression and makeup, on top of the automatic loudness of Podcast",
+    "Hidden: whether Learn has run. Saved with the project",
+    "Hidden: the learned level of the loud parts (90th percentile of the 50 ms levels)",
+    "Hidden: the learned median level",
+    "Hidden: the learned crest factor (peak over RMS)",
+    "Hidden: the learned mean time between onsets (0 = none found)",
+    "Hidden: the learned integrated loudness (BS.1770)",
+};
+
 } // namespace nullpresets

@@ -27,4 +27,12 @@ static const FactoryPreset kPresets[] = {
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 3;
 
+// the hint line under the controls: a short help text per parameter (from tools/site_content.json)
+#define NULL_UI_HINTS 1
+static const char* const kHints[] = {
+    "Side level: 0% = mono, 100% = unchanged, 200% = twice as wide",
+    "Blend between original and processed signal",
+    "Below this frequency the signal is made mono and the width setting only applies above it (0 = off)",
+};
+
 } // namespace nullpresets

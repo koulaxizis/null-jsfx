@@ -246,8 +246,41 @@ out_pin:Right
     s;
   );
 
+  // the hint line under the controls: a short help text per slider (from tools/site_content.json)
+  function ng_hint_text(i) local(s)
+  (
+    s = "";
+    i == 1 ? s = "The volume curve: Pump, Pump Hard, Saw Down, Saw Up, Gate 1/16, Trance 1/8, Sine, Triangle, Half-time Pump";
+    i == 2 ? s = "Length of one cycle of the shape at the host tempo (1/1 to 1/16, plus 1/4 and 1/8 triplets)";
+    i == 3 ? s = "How far the shape turns the level down (0% = no effect, 100% = silence at the bottom of the curve)";
+    i == 4 ? s = "Smoothing of the volume changes, to keep gates and jumps free of clicks";
+    i == 5 ? s = "Moves the shape later in the cycle";
+    i == 6 ? s = "Blend between the shaped and the dry signal";
+    i == 7 ? s = "What starts the shape: Tempo loops it on the host tempo, MIDI plays it once from the top on every note-on";
+    i == 8 ? s = "Level the sidechain signal must rise above to start the shape in Sidechain mode";
+    i == 9 ? s = "Plays your own drawn shape instead of Shape (Off by default): the 16 points below, one every 1/16 of the";
+    i == 10 ? s = "Point 1 of the drawn shape, at the start of the cycle (0 to 100% level)";
+    i == 11 ? s = "Point 2 of the drawn shape, 1/16 of the way through the cycle (0 to 100% level)";
+    i == 12 ? s = "Point 3 of the drawn shape, 2/16 of the way through the cycle (0 to 100% level)";
+    i == 13 ? s = "Point 4 of the drawn shape, 3/16 of the way through the cycle (0 to 100% level)";
+    i == 14 ? s = "Point 5 of the drawn shape, 4/16 of the way through the cycle (0 to 100% level)";
+    i == 15 ? s = "Point 6 of the drawn shape, 5/16 of the way through the cycle (0 to 100% level)";
+    i == 16 ? s = "Point 7 of the drawn shape, 6/16 of the way through the cycle (0 to 100% level)";
+    i == 17 ? s = "Point 8 of the drawn shape, 7/16 of the way through the cycle (0 to 100% level)";
+    i == 18 ? s = "Point 9 of the drawn shape, 8/16 of the way through the cycle (0 to 100% level)";
+    i == 19 ? s = "Point 10 of the drawn shape, 9/16 of the way through the cycle (0 to 100% level)";
+    i == 20 ? s = "Point 11 of the drawn shape, 10/16 of the way through the cycle (0 to 100% level)";
+    i == 21 ? s = "Point 12 of the drawn shape, 11/16 of the way through the cycle (0 to 100% level)";
+    i == 22 ? s = "Point 13 of the drawn shape, 12/16 of the way through the cycle (0 to 100% level)";
+    i == 23 ? s = "Point 14 of the drawn shape, 13/16 of the way through the cycle (0 to 100% level)";
+    i == 24 ? s = "Point 15 of the drawn shape, 14/16 of the way through the cycle (0 to 100% level)";
+    i == 25 ? s = "Point 16 of the drawn shape, 15/16 of the way through the cycle (0 to 100% level)";
+    s;
+  );
+
   function ng_presets() local(i)
   (
+    ng_hint_i > 0 && !ng_pre_open ? ng_hint(ng_hint_text(ng_hint_i));
     ng_pre_req >= 0 ? ( ng_preset_load(ng_pre_req); update(); ng_pre_req = -1; );
     ng_hist() ? update();
     ng_pre_cur = ng_preset_match();

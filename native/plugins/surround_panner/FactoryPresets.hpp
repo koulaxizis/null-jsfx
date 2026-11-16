@@ -29,4 +29,17 @@ static const FactoryPreset kPresets[] = {
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 8;
 
+// the hint line under the controls: a short help text per parameter (from tools/site_content.json)
+#define NULL_UI_HINTS 1
+static const char* const kHints[] = {
+    "The bed it pans into: 5.1, 7.1 or 7.1.4, on the pins L R C LFE Ls Rs Lrs Rrs Ltf Rtf Ltr Rtr (the pins a",
+    "Mono pans one source and spreads it; Stereo places the left and right inputs either side of Azimuth",
+    "Where the sound sits around the room, from -180 to 180 degrees, 0 in front, negative to the left",
+    "How high the sound sits in 7.1.4, from 0 (ear level) to 90 degrees (overhead)",
+    "Mono: how wide the source is spread (0 to 180 degrees)",
+    "How much of a front sound plays from the centre speaker",
+    "Sends the mono sum through a 120 Hz low-pass to the LFE, from -60 dB (Off) to 0 dB",
+    "Gain on every pin (-24 to +12 dB)",
+};
+
 } // namespace nullpresets

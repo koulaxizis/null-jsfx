@@ -27,4 +27,15 @@ static const FactoryPreset kPresets[] = {
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 6;
 
+// the hint line under the controls: a short help text per parameter (from tools/site_content.json)
+#define NULL_UI_HINTS 1
+static const char* const kHints[] = {
+    "Display gain of the goniometer when Auto Gain is off",
+    "Scales the goniometer to the signal level automatically",
+    "Persistence: how much recent history the goniometer shows, newest samples brightest",
+    "Time constant of the correlation, balance and width measurement",
+    "Listen to the stereo signal, its mono sum or its side signal (the meter always reads the input)",
+    "Shows the correlation in three bands, Low (below 200 Hz), Mid and High (above 2 kHz), to find which part",
+};
+
 } // namespace nullpresets
