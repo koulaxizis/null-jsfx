@@ -1612,6 +1612,20 @@
    "bytes": 60791
   },
   {
+   "id": "spectral_blur",
+   "name": "Spectral Blur",
+   "category": "Advanced",
+   "tags": "spectral blur smear shift frequency shifter tilt spectral gate fft texture ambient sound design gui",
+   "gfx": [
+    480,
+    294
+   ],
+   "ins": 2,
+   "outs": 2,
+   "sliders": 6,
+   "bytes": 51691
+  },
+  {
    "id": "spectral_ducker",
    "name": "Spectral Ducker",
    "category": "Advanced",
