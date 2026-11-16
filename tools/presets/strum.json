@@ -1,0 +1,13 @@
+[
+  ["Fast Downstroke", {"Speed (ms)": 6, "Velocity Spread (%)": 15}],
+  ["Slow Harp Roll", {"Speed (ms)": 60, "Velocity Spread (%)": 10, "Collect (ms)": 40}],
+  ["Ballad Upstroke", {"Direction": "Up", "Speed (ms)": 25, "Upstroke Velocity (%)": 90}],
+  ["Strum Alternate", {"Direction": "Alternate", "Speed (ms)": 14}],
+  ["Quarter Strum", {"Rhythm": "1/4", "Direction": "Alternate", "Gate (%)": 90}],
+  ["Eighth Chug", {"Rhythm": "1/8", "Speed (ms)": 4, "Gate (%)": 50, "Velocity Spread (%)": 10}],
+  ["Sixteenth Shimmer", {"Rhythm": "1/16", "Direction": "Alternate", "Speed (ms)": 3, "Gate (%)": 70}],
+  ["Down-Up Pop", {"Rhythm": "Down-Up 1/8", "Speed (ms)": 8, "Gate (%)": 80}],
+  ["Folk Campfire", {"Rhythm": "Folk", "Speed (ms)": 10, "Humanize (ms)": 4}],
+  ["Reggae Skank", {"Rhythm": "Offbeat", "Speed (ms)": 3, "Gate (%)": 35, "Velocity Spread (%)": 5}],
+  ["Loose Player", {"Direction": "Random", "Speed (ms)": 18, "Humanize (ms)": 8, "Velocity Spread (%)": 35}]
+]

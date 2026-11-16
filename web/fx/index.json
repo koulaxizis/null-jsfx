@@ -2272,6 +2272,20 @@
    "outs": 2,
    "sliders": 5,
    "bytes": 67289
+  },
+  {
+   "id": "strum",
+   "name": "Strum",
+   "category": "MIDI",
+   "tags": "midi strum strummer guitar chord strumming rhythm pattern down up stroke humanize velocity tempo gui",
+   "gfx": [
+    480,
+    380
+   ],
+   "ins": 2,
+   "outs": 2,
+   "sliders": 8,
+   "bytes": 59267
   }
  ]
 }

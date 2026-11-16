@@ -1,0 +1,394 @@
+desc:NULL Strum GFX
+author: Christos Koulaxizis
+tags: midi strum strummer guitar chord strumming rhythm pattern down up stroke humanize velocity tempo gui
+//category: MIDI
+//NULL JSFX v3.3.1 • https://nulljsfx.tech • MIT License
+
+import null_gfx.jsfx-inc
+
+slider1:0<0,3,1{Down,Up,Alternate,Random}>-Direction
+slider2:12<0,100,1>-Speed (ms)
+slider3:0<0,6,1{Once,1/4,1/8,1/16,Down-Up 1/8,Folk,Offbeat}>-Rhythm
+slider4:85<10,100,1>-Gate (%)
+slider5:25<0,100,1>-Velocity Spread (%)
+slider6:80<10,100,1>-Upstroke Velocity (%)
+slider7:0<0,20,1>-Humanize (ms)
+slider8:25<0,100,1>-Collect (ms)
+
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
+
+@init
+  // A MIDI effect that plays the held chord like a guitar pick. The keys pressed within Collect
+  // of the first one make the chord; it is strummed string by string, Speed apart, lowest first
+  // on a down stroke and highest first on an up stroke (Direction: Down, Up, Alternate, or Random
+  // by an exact Park-Miller step). Each string is softer than the one before, down to Velocity
+  // Spread less for the last; an up stroke plays at Upstroke Velocity; Humanize moves each string
+  // later by up to that many ms. Rhythm Once strums when the chord is played (a key added later
+  // strums the chord again) and the notes ring while their keys are held; the other rhythms strum
+  // again on the tempo while keys are held, each strum lasting Gate of its step: 1/4, 1/8 and
+  // 1/16 with Direction, Down-Up 1/8, Folk (D - D U - U D U on eighths) and Offbeat (a down stroke
+  // on every second eighth). Releasing a key ends its note and drops its strings still waiting.
+  // Other MIDI passes through at its own sample; an all notes off (CC 120/123) ends that
+  // channel's keys and notes. The audio passes through.
+  ext_noinit = 1;
+  // NULL Strum (../strum.jsfx) with its own interface: same audio code, plus @gfx.
+  Q = 0;                       // incoming messages of the block: offset, status, data 1, data 2
+  QMAX = 256;
+  qn = qi = 0;
+  E = 1024;                    // waiting notes, sorted by time: time, status, note, velocity, id, key
+  EMAX = 4096;
+  eh = et = 0;
+  SND = E + EMAX * 6;          // per channel and note: id of the note we sent that sounds (0 = none)
+  HELD = SND + 2048;           // per channel and note: the velocity of the held key (0 = up)
+  LST = HELD + 2048;           // the chord of a strum, by pitch
+  memset(SND, 0, 6144);
+  nheld = 0;
+  next_id = 1;
+  now = 0;                     // samples since the start
+  strum_at = -1;               // the time of the next strum (-1 = none)
+  running = 0;                 // a rhythm runs while keys are held
+  pat_i = 0;                   // the step of the rhythm
+  alt = 0;
+  strums = 0;
+  seed = 12345;
+
+  // Park-Miller in exact double arithmetic (0 < value < 1), as the VST3/CLAP
+  function st_rand()
+  (
+    seed *= 16807; seed -= floor(seed / 2147483647) * 2147483647;
+    seed / 2147483647;
+  );
+
+  function st_on(ofs, ch, nt, v, id) local(k)
+  (
+    k = ch * 128 + nt;
+    SND[k] ? midisend(ofs, 0x80 | ch, nt, 0);
+    midisend(ofs, 0x90 | ch, nt, v);
+    SND[k] = id;
+  );
+
+  function st_off(ofs, ch, nt, id) local(k)
+  (
+    k = ch * 128 + nt;
+    SND[k] == id ? (
+      midisend(ofs, 0x80 | ch, nt, 0);
+      SND[k] = 0;
+    );
+  );
+
+  // a waiting note, kept in time order (after the ones at the same time)
+  function st_push(t, st, nt, v, id, s) local(i)
+  (
+    et >= EMAX ? (
+      i = 0;
+      loop(et - eh, memcpy(E + i * 6, E + (eh + i) * 6, 6); i += 1;);
+      et -= eh;
+      eh = 0;
+    );
+    i = et;
+    while (i > eh && E[(i - 1) * 6] > t) (
+      memcpy(E + i * 6, E + (i - 1) * 6, 6);
+      i -= 1;
+    );
+    E[i * 6] = t; E[i * 6 + 1] = st; E[i * 6 + 2] = nt; E[i * 6 + 3] = v; E[i * 6 + 4] = id; E[i * 6 + 5] = s;
+    et += 1;
+  );
+
+  // drops the waiting notes of key s (s < 0: of channel -1 - s)
+  function st_drop(s) local(i, j)
+  (
+    i = j = eh;
+    while (i < et) (
+      (s >= 0 ? E[i * 6 + 5] != s : (E[i * 6 + 1] & 15) != -1 - s) ? (
+        j != i ? memcpy(E + j * 6, E + i * 6, 6);
+        j += 1;
+      );
+      i += 1;
+    );
+    et = j;
+  );
+
+  // the stroke of rhythm r at step i: 0 rest, 1 down, 2 up, 3 by Direction
+  function st_pat(r, i) local(k)
+  (
+    k = i % 8;
+    r == 4 ? (k % 2 == 0 ? 1 : 2) :
+    r == 5 ? (k == 0 || k == 2 || k == 6 ? 1 : k == 1 || k == 4 ? 0 : 2) :
+    r == 6 ? (k % 2 == 0 ? 0 : 1) : 3;
+  );
+
+  // a strum of the held chord at time t
+  function st_strum(t, d) local(n, nt, ch, s, k, v, j)
+  (
+    d == 3 ? (
+      dirm == 0 ? (d = 1) : dirm == 1 ? (d = 2) : dirm == 2 ? ( d = (alt ? 2 : 1); alt = 1 - alt; ) : ( d = (st_rand() < 0.5 ? 1 : 2); );
+    );
+    n = 0;
+    nt = 0;
+    loop(128,
+      ch = 0;
+      loop(16,
+        HELD[ch * 128 + nt] > 0 ? ( LST[n] = ch * 128 + nt; n += 1; );
+        ch += 1;
+      );
+      nt += 1;
+    );
+    k = 0;
+    loop(n,
+      s = LST[d == 1 ? k : n - 1 - k];
+      ch = floor(s / 128);
+      nt = s - ch * 128;
+      v = floor(HELD[s] * (1 - spread * k / max(1, n - 1)) * (d == 2 ? upv : 1) + 0.5);
+      v = max(1, min(127, v));
+      j = (hum_n > 0 ? floor(st_rand() * hum_n) : 0);
+      et - eh + 2 <= EMAX ? (
+        st_push(t + k * spd_n + j, 0x90 | ch, nt, v, next_id, s);
+        rhythm > 0 ? st_push(t + k * spd_n + j + len_n, 0x80 | ch, nt, 0, next_id, s);
+        next_id += 1;
+      );
+      k += 1;
+    );
+    n > 0 ? strums += 1;
+  );
+
+  // key s goes up: its note ends, its waiting strings are dropped
+  function st_release(ofs, s) local(ch, nt)
+  (
+    HELD[s] > 0 ? (
+      HELD[s] = 0;
+      nheld -= 1;
+      st_drop(s);
+      ch = floor(s / 128);
+      nt = s - ch * 128;
+      SND[s] ? ( midisend(ofs, 0x80 | ch, nt, 0); SND[s] = 0; );
+      nheld <= 0 ? ( nheld = 0; running = 0; strum_at = -1; );
+    );
+  );
+
+  // all notes off on channel ch: its keys go up, its notes end
+  function st_flush(ofs, ch) local(nt, s)
+  (
+    st_drop(-1 - ch);
+    nt = 0;
+    loop(128,
+      s = ch * 128 + nt;
+      HELD[s] > 0 ? ( HELD[s] = 0; nheld -= 1; );
+      SND[s] ? ( midisend(ofs, 0x80 | ch, nt, 0); SND[s] = 0; );
+      nt += 1;
+    );
+    nheld <= 0 ? ( nheld = 0; running = 0; strum_at = -1; );
+  );
+
+  gfx_ext_retina = 1;
+
+  function update()
+  (
+    dirm = slider1;
+    rhythm = slider3;
+    gate = slider4 / 100;
+    spread = slider5 / 100;
+    upv = slider6 / 100;
+  );
+
+  // ---- factory presets: generated by tools/build_presets.py, do not edit ----
+  ng_pre_n = 12;
+  strcpy(#ng_h_ix, "");
+  ng_hist_add(1); ng_hist_add(2); ng_hist_add(3); ng_hist_add(4); ng_hist_add(5); ng_hist_add(6); ng_hist_add(7); ng_hist_add(8);
+  ng_hist_init();
+
+  function ng_preset_load(p)
+  (
+    p == 0 ? ( ng_slider_set(1, 0); ng_slider_set(2, 12); ng_slider_set(3, 0); ng_slider_set(4, 85); ng_slider_set(5, 25); ng_slider_set(6, 80); ng_slider_set(7, 0); ng_slider_set(8, 25); );
+    p == 1 ? ( ng_slider_set(1, 0); ng_slider_set(2, 6); ng_slider_set(3, 0); ng_slider_set(4, 85); ng_slider_set(5, 15); ng_slider_set(6, 80); ng_slider_set(7, 0); ng_slider_set(8, 25); );
+    p == 2 ? ( ng_slider_set(1, 0); ng_slider_set(2, 60); ng_slider_set(3, 0); ng_slider_set(4, 85); ng_slider_set(5, 10); ng_slider_set(6, 80); ng_slider_set(7, 0); ng_slider_set(8, 40); );
+    p == 3 ? ( ng_slider_set(1, 1); ng_slider_set(2, 25); ng_slider_set(3, 0); ng_slider_set(4, 85); ng_slider_set(5, 25); ng_slider_set(6, 90); ng_slider_set(7, 0); ng_slider_set(8, 25); );
+    p == 4 ? ( ng_slider_set(1, 2); ng_slider_set(2, 14); ng_slider_set(3, 0); ng_slider_set(4, 85); ng_slider_set(5, 25); ng_slider_set(6, 80); ng_slider_set(7, 0); ng_slider_set(8, 25); );
+    p == 5 ? ( ng_slider_set(1, 2); ng_slider_set(2, 12); ng_slider_set(3, 1); ng_slider_set(4, 90); ng_slider_set(5, 25); ng_slider_set(6, 80); ng_slider_set(7, 0); ng_slider_set(8, 25); );
+    p == 6 ? ( ng_slider_set(1, 0); ng_slider_set(2, 4); ng_slider_set(3, 2); ng_slider_set(4, 50); ng_slider_set(5, 10); ng_slider_set(6, 80); ng_slider_set(7, 0); ng_slider_set(8, 25); );
+    p == 7 ? ( ng_slider_set(1, 2); ng_slider_set(2, 3); ng_slider_set(3, 3); ng_slider_set(4, 70); ng_slider_set(5, 25); ng_slider_set(6, 80); ng_slider_set(7, 0); ng_slider_set(8, 25); );
+    p == 8 ? ( ng_slider_set(1, 0); ng_slider_set(2, 8); ng_slider_set(3, 4); ng_slider_set(4, 80); ng_slider_set(5, 25); ng_slider_set(6, 80); ng_slider_set(7, 0); ng_slider_set(8, 25); );
+    p == 9 ? ( ng_slider_set(1, 0); ng_slider_set(2, 10); ng_slider_set(3, 5); ng_slider_set(4, 85); ng_slider_set(5, 25); ng_slider_set(6, 80); ng_slider_set(7, 4); ng_slider_set(8, 25); );
+    p == 10 ? ( ng_slider_set(1, 0); ng_slider_set(2, 3); ng_slider_set(3, 6); ng_slider_set(4, 35); ng_slider_set(5, 5); ng_slider_set(6, 80); ng_slider_set(7, 0); ng_slider_set(8, 25); );
+    p == 11 ? ( ng_slider_set(1, 3); ng_slider_set(2, 18); ng_slider_set(3, 0); ng_slider_set(4, 85); ng_slider_set(5, 35); ng_slider_set(6, 80); ng_slider_set(7, 8); ng_slider_set(8, 25); );
+  );
+
+  // the first preset every slider matches, or -1
+  function ng_preset_match() local(m)
+  (
+    m = -1;
+    m < 0 && ng_pre_eq(slider1, 0) && ng_pre_eq(slider2, 12) && ng_pre_eq(slider3, 0) && ng_pre_eq(slider4, 85) && ng_pre_eq(slider5, 25) && ng_pre_eq(slider6, 80) && ng_pre_eq(slider7, 0) && ng_pre_eq(slider8, 25) ? m = 0;
+    m < 0 && ng_pre_eq(slider1, 0) && ng_pre_eq(slider2, 6) && ng_pre_eq(slider3, 0) && ng_pre_eq(slider4, 85) && ng_pre_eq(slider5, 15) && ng_pre_eq(slider6, 80) && ng_pre_eq(slider7, 0) && ng_pre_eq(slider8, 25) ? m = 1;
+    m < 0 && ng_pre_eq(slider1, 0) && ng_pre_eq(slider2, 60) && ng_pre_eq(slider3, 0) && ng_pre_eq(slider4, 85) && ng_pre_eq(slider5, 10) && ng_pre_eq(slider6, 80) && ng_pre_eq(slider7, 0) && ng_pre_eq(slider8, 40) ? m = 2;
+    m < 0 && ng_pre_eq(slider1, 1) && ng_pre_eq(slider2, 25) && ng_pre_eq(slider3, 0) && ng_pre_eq(slider4, 85) && ng_pre_eq(slider5, 25) && ng_pre_eq(slider6, 90) && ng_pre_eq(slider7, 0) && ng_pre_eq(slider8, 25) ? m = 3;
+    m < 0 && ng_pre_eq(slider1, 2) && ng_pre_eq(slider2, 14) && ng_pre_eq(slider3, 0) && ng_pre_eq(slider4, 85) && ng_pre_eq(slider5, 25) && ng_pre_eq(slider6, 80) && ng_pre_eq(slider7, 0) && ng_pre_eq(slider8, 25) ? m = 4;
+    m < 0 && ng_pre_eq(slider1, 2) && ng_pre_eq(slider2, 12) && ng_pre_eq(slider3, 1) && ng_pre_eq(slider4, 90) && ng_pre_eq(slider5, 25) && ng_pre_eq(slider6, 80) && ng_pre_eq(slider7, 0) && ng_pre_eq(slider8, 25) ? m = 5;
+    m < 0 && ng_pre_eq(slider1, 0) && ng_pre_eq(slider2, 4) && ng_pre_eq(slider3, 2) && ng_pre_eq(slider4, 50) && ng_pre_eq(slider5, 10) && ng_pre_eq(slider6, 80) && ng_pre_eq(slider7, 0) && ng_pre_eq(slider8, 25) ? m = 6;
+    m < 0 && ng_pre_eq(slider1, 2) && ng_pre_eq(slider2, 3) && ng_pre_eq(slider3, 3) && ng_pre_eq(slider4, 70) && ng_pre_eq(slider5, 25) && ng_pre_eq(slider6, 80) && ng_pre_eq(slider7, 0) && ng_pre_eq(slider8, 25) ? m = 7;
+    m < 0 && ng_pre_eq(slider1, 0) && ng_pre_eq(slider2, 8) && ng_pre_eq(slider3, 4) && ng_pre_eq(slider4, 80) && ng_pre_eq(slider5, 25) && ng_pre_eq(slider6, 80) && ng_pre_eq(slider7, 0) && ng_pre_eq(slider8, 25) ? m = 8;
+    m < 0 && ng_pre_eq(slider1, 0) && ng_pre_eq(slider2, 10) && ng_pre_eq(slider3, 5) && ng_pre_eq(slider4, 85) && ng_pre_eq(slider5, 25) && ng_pre_eq(slider6, 80) && ng_pre_eq(slider7, 4) && ng_pre_eq(slider8, 25) ? m = 9;
+    m < 0 && ng_pre_eq(slider1, 0) && ng_pre_eq(slider2, 3) && ng_pre_eq(slider3, 6) && ng_pre_eq(slider4, 35) && ng_pre_eq(slider5, 5) && ng_pre_eq(slider6, 80) && ng_pre_eq(slider7, 0) && ng_pre_eq(slider8, 25) ? m = 10;
+    m < 0 && ng_pre_eq(slider1, 3) && ng_pre_eq(slider2, 18) && ng_pre_eq(slider3, 0) && ng_pre_eq(slider4, 85) && ng_pre_eq(slider5, 35) && ng_pre_eq(slider6, 80) && ng_pre_eq(slider7, 8) && ng_pre_eq(slider8, 25) ? m = 11;
+    m;
+  );
+
+  function ng_preset_name(p) local(s)
+  (
+    s = "";
+    p == 0 ? s = "Default";
+    p == 1 ? s = "Fast Downstroke";
+    p == 2 ? s = "Slow Harp Roll";
+    p == 3 ? s = "Ballad Upstroke";
+    p == 4 ? s = "Strum Alternate";
+    p == 5 ? s = "Quarter Strum";
+    p == 6 ? s = "Eighth Chug";
+    p == 7 ? s = "Sixteenth Shimmer";
+    p == 8 ? s = "Down-Up Pop";
+    p == 9 ? s = "Folk Campfire";
+    p == 10 ? s = "Reggae Skank";
+    p == 11 ? s = "Loose Player";
+    s;
+  );
+
+  function ng_presets() local(i)
+  (
+    ng_pre_req >= 0 ? ( ng_preset_load(ng_pre_req); update(); ng_pre_req = -1; );
+    ng_hist() ? update();
+    ng_pre_cur = ng_preset_match();
+    ng_pre_open ? (
+      ng_pre_menu_begin();
+      i = 0;
+      loop(ng_pre_n, ng_pre_item(i, ng_preset_name(i)); i += 1;);
+      ng_pre_menu_end();
+    );
+    strcpy(#ng_pre_name, ng_pre_cur >= 0 ? ng_preset_name(ng_pre_cur) : "CUSTOM");
+  );
+  // ---- end of factory presets ----
+
+@slider
+  update();
+
+@block
+  qn = qi = 0;
+  while (midirecv(ofs, m1, m2, m3)) (
+    qn < QMAX ? (
+      Q[qn * 4] = min(max(ofs, 0), samplesblock - 1);
+      Q[qn * 4 + 1] = m1;
+      Q[qn * 4 + 2] = m2;
+      Q[qn * 4 + 3] = m3;
+      qn += 1;
+    );
+  );
+  spd_n = floor(slider2 * 0.001 * srate);
+  hum_n = floor(slider7 * 0.001 * srate);
+  col_n = floor(slider8 * 0.001 * srate);
+  step_n = max(1, floor(60 / tempo * (rhythm == 1 ? 1 : rhythm == 3 ? 0.25 : 0.5) * srate));
+  len_n = max(1, floor(step_n * gate));
+  si = 0;
+
+@sample
+  // the MIDI that came in at this sample
+  while (qi < qn && Q[qi * 4] <= si) (
+    m1 = Q[qi * 4 + 1];
+    m2 = Q[qi * 4 + 2];
+    m3 = Q[qi * 4 + 3];
+    st = m1 & 0xF0;
+    ch = m1 & 15;
+    st == 0x90 && m3 > 0 ? (
+      st_release(si, ch * 128 + m2);
+      HELD[ch * 128 + m2] = m3;
+      nheld += 1;
+      rhythm == 0 ? (
+        strum_at < 0 ? strum_at = now + col_n;
+      ) : (
+        !running || strum_at < 0 ? ( running = 1; pat_i = 0; strum_at = now + col_n; );
+      );
+    ) : st == 0x80 || st == 0x90 ? (
+      st_release(si, ch * 128 + m2);
+    ) : (
+      st == 0xB0 && (m2 == 120 || m2 == 123) ? st_flush(si, ch);
+      midisend(si, m1, m2, m3);
+    );
+    qi += 1;
+  );
+  // the strum that is due
+  strum_at >= 0 && strum_at <= now ? (
+    rhythm == 0 ? (
+      st_strum(now, 3);
+      strum_at = -1;
+      running = 0;
+    ) : (
+      st_pat_d = st_pat(rhythm, pat_i);
+      st_pat_d > 0 ? st_strum(now, st_pat_d);
+      pat_i += 1;
+      strum_at += step_n;
+    );
+  );
+  // then the strings that are due
+  while (eh < et && E[eh * 6] <= now) (
+    E[eh * 6 + 1] >= 0x90 ? st_on(si, E[eh * 6 + 1] & 15, E[eh * 6 + 2], E[eh * 6 + 3], E[eh * 6 + 4])
+                          : st_off(si, E[eh * 6 + 1] & 15, E[eh * 6 + 2], E[eh * 6 + 4]);
+    eh += 1;
+  );
+  eh >= et ? eh = et = 0;
+  now += 1;
+  si += 1;
+  // the audio passes through
+  spl0 = spl0;
+  spl1 = spl1;
+
+@gfx 480 380
+  ng_knobs_begin("STRUM", "MIDI", 480, 120, 2, 0);
+
+  // display: the strokes of the rhythm (D down, U up, - rest, ? random), the one last played
+  // lit while a rhythm runs; the strums and the keys held
+  sr_px = ng_vx + 8; sr_py = ng_vy + 18; sr_pw = ng_vw - 16; sr_ph = ng_vh - 34;
+  ng_plot(sr_px, sr_py, sr_pw, sr_ph);
+  sr_n = rhythm == 0 ? 1 : 8;
+  sr_cur = rhythm > 0 && running && strum_at >= 0 && pat_i >= 1 ? (pat_i - 1) % 8 : -1;
+  ng_font(2, 14, 0);
+  sr_i = 0;
+  loop(sr_n,
+    sr_d = st_pat(rhythm, sr_i);
+    sr_d == 1 ? strcpy(#sr_l, "D") : sr_d == 2 ? strcpy(#sr_l, "U") : sr_d == 0 ? strcpy(#sr_l, "-") :
+      dirm == 0 ? strcpy(#sr_l, "D") : dirm == 1 ? strcpy(#sr_l, "U") : dirm == 2 ? strcpy(#sr_l, sr_i % 2 ? "U" : "D") : strcpy(#sr_l, "?");
+    sr_x = ng_px + ng_pw * sr_i / sr_n + 2 * ng_s;
+    sr_w = ng_pw / sr_n - 4 * ng_s;
+    sr_i == sr_cur ? ng_col(NG_ACCENT, 0.35) : ng_col(NG_BORDER, sr_d == 0 ? 0.3 : 0.6);
+    gfx_rect(sr_x, ng_py + 4 * ng_s, sr_w, ng_ph - 8 * ng_s);
+    ng_col(sr_i == sr_cur ? NG_TEXT : NG_MUTED, 1);
+    ng_ptxt(#sr_l, sr_x + sr_w / 2, ng_py + ng_ph / 2, 1);
+    sr_i += 1;
+  );
+  ng_font(1, 7, 1);
+  ng_col(NG_ACCENT, 1);
+  rhythm == 0 ? strcpy(#sr_r, "ONCE") : rhythm == 1 ? strcpy(#sr_r, "1/4") : rhythm == 2 ? strcpy(#sr_r, "1/8") :
+    rhythm == 3 ? strcpy(#sr_r, "1/16") : rhythm == 4 ? strcpy(#sr_r, "DOWN-UP") : rhythm == 5 ? strcpy(#sr_r, "FOLK") : strcpy(#sr_r, "OFFBEAT");
+  sprintf(#sr_s1, "%s   %d MS", #sr_r, slider2);
+  ng_txt(#sr_s1, sr_px, ng_vy + 8, 0, 1);
+  ng_col(NG_MUTED, 1);
+  sprintf(#sr_s2, "STRUMS %d   KEYS %d", strums, nheld);
+  ng_txt(#sr_s2, sr_px + sr_pw, ng_vy + 8, 2, 1);
+
+  ng_row(4);
+  ng_select_ctl(1, "DIRECTION", "DOWN|UP|ALTERNATE|RANDOM", 0) ? update();
+  sprintf(#sr_v2, "%d ms", slider2);
+  ng_knob_ctl(2, "SPEED", #sr_v2, 0, 100, 12, 1, 0) ? update();
+  ng_select_ctl(3, "RHYTHM", "ONCE|1/4|1/8|1/16|DOWN-UP|FOLK|OFFBEAT", 0) ? update();
+  sprintf(#sr_v4, "%d%%", slider4);
+  ng_knob_ctl(4, "GATE", #sr_v4, 10, 100, 85, 1, 0) ? update();
+  ng_row(4);
+  sprintf(#sr_v5, "%d%%", slider5);
+  ng_knob_ctl(5, "SPREAD", #sr_v5, 0, 100, 25, 1, 0) ? update();
+  sprintf(#sr_v6, "%d%%", slider6);
+  ng_knob_ctl(6, "UPSTROKE", #sr_v6, 10, 100, 80, 1, 0) ? update();
+  sprintf(#sr_v7, "%d ms", slider7);
+  ng_knob_ctl(7, "HUMANIZE", #sr_v7, 0, 20, 0, 1, 0) ? update();
+  sprintf(#sr_v8, "%d ms", slider8);
+  ng_knob_ctl(8, "COLLECT", #sr_v8, 0, 100, 25, 1, 0) ? update();
+
+  ng_end();
+
+  ng_presets(); // the preset list (generated by tools/build_presets.py)
