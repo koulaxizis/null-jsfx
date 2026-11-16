@@ -191,7 +191,7 @@ def rack_features(slots, routes, globs):
 
 
 def rack_only(name, slots, routes, globs):
-    return name in RACK_ONLY or bool(rack_features(slots, routes, globs))
+    return name in RACK_ONLY or name in RACK_ONLY_40 or bool(rack_features(slots, routes, globs))
 
 
 RACK_PRESETS = [
@@ -771,7 +771,103 @@ RACK_PRESETS = [
         slot("filter", {"Cutoff": 60, "Resonance": 0.7, "Gain": 2, "Mode": "High Pass"}),
         slot("spring_reverb", {"Decay": 3, "Mix": 12}),
     ], [("macro1", 1, "Mix", 0.3), ("macro1", 1, "Intensity", 0.25), ("macro2", 1, "Wow/Flutter", 0.4)], {}),
+    # ---- 4.0 templates (B21, wave 3): One-Knob family, bands, Mid/Side, the sequencer, the loop,
+    # lanes A to D and the split into 5 bands; Rack presets only (RACK_ONLY_40)
+    ("Vocal Polish", "Macro", [
+        slot("deesser", {"Reduction": 0}),
+        slot("glue_comp", {"Threshold": 0, "Makeup": 0}),
+        slot("air", {"Amount": 0}),
+    ], [("macro1", 1, "Reduction", -0.4), ("macro1", 2, "Threshold", -0.4), ("macro1", 2, "Makeup", 0.15),
+        ("macro1", 3, "Amount", 0.6)], {"macro1": 50}),
+    ("Drum Crush", "Macro", [
+        slot("transient_shaper", {"Attack": 0}),
+        slot("saturation", {"Drive": 0, "Mix": 100, "Mode": "Tube"}),
+        slot("glue_comp", {"Threshold": 0}),
+    ], [("macro1", 1, "Attack", 0.2), ("macro1", 2, "Drive", 0.6), ("macro1", 3, "Threshold", -0.5)], {"macro1": 50}),
+    ("Lo-Fi Fade", "Macro", [
+        slot("bitcrusher", {"Bits": 16, "Sample Rate": 48000, "Mix": 0}),
+        slot("vinyl_age", {"Mix": 0}),
+        slot("dj_filter", {"Filter": 0}),
+    ], [("macro1", 1, "Mix", 0.8), ("macro1", 1, "Bits", -0.5), ("macro1", 2, "Mix", 0.7),
+        ("macro1", 3, "Filter", -0.35)], {"macro1": 50}),
+    ("Wide Space", "Macro", [
+        slot("stereo_width", {"Width": 100}),
+        slot("space", {"Type": "Hall", "Mix": 0}),
+        slot("chorus", {"Mix": 0}),
+    ], [("macro1", 1, "Width", 0.3), ("macro1", 2, "Mix", 0.45), ("macro1", 3, "Mix", 0.3)], {"macro1": 50}),
+    ("Master Glue", "Macro", [
+        slot("glue_comp", {"Threshold": 0, "Ratio": "2"}),
+        slot("tape", {"Drive": 0, "Hiss": 0, "Wow": 0, "Flutter": 0, "Mix": 100}),
+        slot("stereo_width", {"Width": 100}),
+    ], [("macro1", 1, "Threshold", -0.4), ("macro1", 2, "Drive", 0.25), ("macro1", 3, "Width", 0.1)], {"macro1": 50}),
+    ("Breakdown Filter", "Macro", [
+        slot("filter", {"Cutoff": 20000, "Resonance": 0.9, "Mode": "Low Pass"}),
+        slot("space", {"Mix": 0}),
+    ], [("macro1", 1, "Cutoff", -0.6), ("macro1", 2, "Mix", 0.35)], {"macro1": 50}),
+    ("Tape Wobble", "Macro", [
+        slot("tape", {"Drive": 0, "Hiss": 0, "Wow": 0, "Flutter": 0, "Mix": 100}),
+        slot("filter", {"Cutoff": 20000, "Resonance": 0.7, "Mode": "Low Pass"}),
+    ], [("macro1", 1, "Wow", 0.7), ("macro1", 1, "Flutter", 0.5), ("macro1", 1, "Drive", 0.2),
+        ("macro1", 2, "Cutoff", -0.3)], {"macro1": 50}),
+    ("Dub Throw", "Macro", [
+        slot("tape_echo", {"Tempo Sync": "1/8D", "Intensity": 50, "Mix": 0}),
+        slot("space", {"Mix": 0}),
+    ], [("macro1", 1, "Mix", 0.6), ("macro1", 1, "Intensity", 0.2), ("macro1", 2, "Mix", 0.3)], {"macro1": 50}),
+    ("Multiband Transient", "Routing", [
+        slot("transient_shaper", {"Attack": -3, "Sustain": -4}, band="Low"),
+        slot("transient_shaper", {"Attack": 6}, band="Mid"),
+        slot("transient_shaper", {"Attack": -2, "Sustain": -2}, band="High"),
+    ], [], {"xover_low": 150, "xover_high": 4000}),
+    ("Mud-Free Space", "Routing", [
+        slot("delay", {"Tempo Sync": "ON", "Subdivision": "1/8", "Feedback": 35, "Mix": 30}, split=2),
+        slot("reverb", {"Room Size": 60, "Decay": 55, "Mix": 30}, split=2),
+    ], [], {"split_bands": 2, "split_f1": 250}),
+    ("Side Space", "Routing", [
+        slot("reverb", {"Room Size": 65, "Decay": 55, "Mix": 40}, channel="Side"),
+        slot("saturation", {"Drive": 30, "Mix": 60, "Mode": "Tape"}, channel="Side"),
+    ], [], {}),
+    ("Mid/Side Master", "Routing", [
+        slot("glue_comp", {"Threshold": -14}, channel="Mid"),
+        slot("tone", {"Bass": 1, "Treble": 0.5}, channel="Mid"),
+        slot("air", {"Amount": 0}, channel="Side"),
+        slot("deesser", {"Reduction": -4}, channel="Side"),
+        slot("stereo_width", {"Width": 100}),
+    ], [("macro1", 3, "Amount", 0.3), ("macro1", 5, "Width", 0.15)], {"macro1": 50}),
+    ("Melodic Glitch", "Routing", [
+        slot("pitch_shifter", {"Semitones": 0, "Mix": 100}),
+        slot("reverser", {"Buffer Length": 1, "Mix": 0}),
+    ], [("seq", 1, "Semitones", 0.5), ("seq", 2, "Mix", 0.5)],
+        {"seq_steps": 8, "seq_sync": "1/16", "seq_glide": 0,
+         "seq": [0, 0.25, 0.5833, 1, 0.4167, 0, 0.5833, 0.25]}),
+    ("Feedback Drone", "Routing", [
+        slot("resonator", {"Decay": 4, "Spread": 0, "Mix": 70}),
+        slot("frequency_shifter", {"Shift": 3, "Mix": 50}),
+        slot("reverb", {"Room Size": 85, "Decay": 80, "Mix": 60}),
+    ], [], {"feedback": 45, "fb_from": 1, "fb_to": 3, "output": 10}),
+    ("Vocal Throw Lanes", "Routing", [
+        slot("auto_leveler", {"Target": -18}),
+        slot("filter", {"Cutoff": 1500, "Resonance": 1, "Mode": "Band Pass"}, lane="B"),
+        slot("delay", {"Tempo Sync": "ON", "Subdivision": "1/4", "Feedback": 45, "Mix": 0}, lane="B"),
+        slot("reverb", {"Room Size": 70, "Decay": 60, "Mix": 0}, lane="B"),
+    ], [("macro1", 3, "Mix", 1.0), ("macro1", 4, "Mix", 0.8)], {"lane_mix": 35}),
+    ("Quad Texture", "Routing", [
+        slot("chorus", {"Mix": 50}),
+        slot("granular_delay", {"Mix": 100}, lane="B"),
+        slot("reverser", {"Mix": 100}, lane="C"),
+        slot("frequency_shifter", {"Shift": 7, "Mix": 100}, lane="D"),
+    ], [], {"lane_mix": 50, "laneb_pan": 40, "lanec_pan": -40, "output": 9}),
+    ("Multipass Master", "Routing", [
+        slot("dynamics", {"Threshold": -24, "Ratio": 3}, split=1),
+        slot("saturation", {"Drive": 20, "Mix": 50, "Mode": "Tape"}, split=2),
+        slot("glue_comp", {"Threshold": -16}, split=3),
+        slot("saturation", {"Drive": 15, "Mix": 40, "Mode": "Tube"}, split=4),
+        slot("dynamics", {"Threshold": -26, "Ratio": 2}, split=5),
+    ], [], {"split_bands": 5}),
 ]
+RACK_ONLY_40 = {"Vocal Polish", "Drum Crush", "Lo-Fi Fade", "Wide Space", "Master Glue", "Breakdown Filter",
+                "Tape Wobble", "Dub Throw", "Multiband Transient", "Mud-Free Space", "Side Space",
+                "Mid/Side Master", "Melodic Glitch", "Feedback Drone", "Vocal Throw Lanes", "Quad Texture",
+                "Multipass Master"}
 
 
 def parse_sliders(path):
