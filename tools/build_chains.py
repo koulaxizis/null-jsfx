@@ -31,6 +31,7 @@ ROOT = Path(__file__).resolve().parent.parent
 PLUGINS = ROOT / "DATA/Effects/null_jsfx"
 OUT = ROOT / "DATA/FXChains"
 RACK = ROOT / "native/plugins/rack"
+RACK_SLOTS = 8  # kSlots in RackParams.hpp: a scene value with this slot is a macro
 RACK_PRESETS_H = RACK / "RackPresets.hpp"
 FOLDERS = {"plain": "NULL JSFX", "gfx": "NULL JSFX GFX"}
 
@@ -164,9 +165,15 @@ REAPER_ONLY = {"Drum Replace", "Transient Verb"}
 # - the feedback loop: globals "feedback" (0..95 %), "fb_from" and "fb_to" (slot numbers from 1);
 # - the step sequencer: routes from source "seq"; globals "seq_steps" (1..16), "seq_sync" (an LFO
 #   sync label, "Off" = free at "seq_rate" Hz), "seq_glide" (%) and "seq" (up to 16 step values
-#   0..1, written as seq_step1..; the steps not given keep their defaults).
+#   0..1, written as seq_step1..; the steps not given keep their defaults);
+# - the MIDI sources (4.0): routes from note, velocity, gate, modwheel, pressure, bend or cc;
+# - scenes (4.0): global "scenes_list", 2..4 scenes, each a dict of changes to the preset itself:
+#   (slot number from 1, a slider name, or "Slot Mix" for the slot's own mix): value, or
+#   "macroN": value; Scene Morph moves
+#   through them in order when the global "scenes" is "On".
 # RACK_PRESETS that need what a REAPER chain cannot do (a slot's own mix, a macro on many
 # modules that REAPER would need a web of links for): Rack presets only, no .RfxChain
+MIDI_SOURCES = {"note", "velocity", "gate", "modwheel", "pressure", "bend", "cc"}
 RACK_ONLY = {"Beat Smasher", "Parallel Punch", "Bass Edge", "DJ Macro FX", "Octave Bloom",
              "Dirty Reverb", "Glitch Band"}
 
@@ -187,6 +194,10 @@ def rack_features(slots, routes, globs):
         used.append("feedback")
     if any(src == "seq" for src, *_ in routes):
         used.append("step sequencer")
+    if any(src in MIDI_SOURCES for src, *_ in routes):
+        used.append("MIDI sources")
+    if globs.get("scenes_list"):
+        used.append("scenes")
     return used
 
 
@@ -863,11 +874,33 @@ RACK_PRESETS = [
         slot("saturation", {"Drive": 15, "Mix": 40, "Mode": "Tube"}, split=4),
         slot("dynamics", {"Threshold": -26, "Ratio": 2}, split=5),
     ], [], {"split_bands": 5}),
+    # ---- 4.0 template 52 (B21, wave 4): the MIDI sources and the scenes
+    ("Keytracked Resonance", "Routing", [
+        slot("comb_filter", {"Frequency": 20, "Feedback": 0.85, "Mode": "Feed-Backward", "Gain": 0}, mix=60),
+        slot("filter", {"Cutoff": 400, "Resonance": 0.7, "Mode": "Low Pass"}),
+        slot("space", {"Type": "Chamber", "Mix": 15}),
+    ], [("note", 1, "Frequency", 1.0), ("note", 2, "Cutoff", 0.6), ("velocity", 2, "Cutoff", 0.2)], {}),
+    ("Velocity Drive", "Routing", [
+        slot("saturation", {"Drive": 10, "Mode": "Tube", "Mix": 100}),
+        slot("filter", {"Cutoff": 1500, "Resonance": 0.8, "Mode": "Low Pass"}),
+        slot("glue_comp", {"Threshold": -12}),
+    ], [("velocity", 1, "Drive", 0.6), ("velocity", 1, "Output", -0.15), ("velocity", 2, "Cutoff", 0.35),
+        ("modwheel", 2, "Cutoff", 0.25)], {}),
+    ("Scene Morph Build", "Routing", [
+        slot("filter", {"Cutoff": 20000, "Resonance": 0.9, "Mode": "Low Pass"}),
+        slot("saturation", {"Drive": 10, "Mode": "Tape", "Mix": 100}),
+        slot("space", {"Type": "Hall", "Mix": 20}),
+        slot("stereo_width", {"Width": 100}),
+    ], [], {"scenes": "On", "scene_morph": 0, "scenes_list": [
+        {(1, "Cutoff"): 900, (2, "Drive"): 10, (3, "Mix"): 35, (4, "Width"): 80},
+        {(1, "Cutoff"): 4000, (2, "Drive"): 30, (3, "Mix"): 25, (4, "Width"): 100},
+        {(1, "Cutoff"): 20000, (2, "Drive"): 45, (3, "Mix"): 12, (4, "Width"): 130},
+    ]}),
 ]
 RACK_ONLY_40 = {"Vocal Polish", "Drum Crush", "Lo-Fi Fade", "Wide Space", "Master Glue", "Breakdown Filter",
                 "Tape Wobble", "Dub Throw", "Multiband Transient", "Mud-Free Space", "Side Space",
                 "Mid/Side Master", "Melodic Glitch", "Feedback Drone", "Vocal Throw Lanes", "Quad Texture",
-                "Multipass Master"}
+                "Multipass Master", "Keytracked Resonance", "Velocity Drive", "Scene Morph Build"}
 
 
 def parse_sliders(path):
@@ -1154,6 +1187,8 @@ def rack_slots(name, slots, routes, globs):
     keep = [k for k, sl in enumerate(slots) if (RACK / "modules" / f"{sl['id']}.hpp").exists()]
     if len(keep) == len(slots):
         return slots, routes
+    if globs.get("scenes_list"):
+        sys.exit(f"build_chains: {name}: a slot that is not a Rack module in a preset with scenes")
     if globs.get("feedback", 0) > 0:
         sys.exit(f"build_chains: {name}: a slot that is not a Rack module in a preset with the feedback loop")
     out = []
@@ -1224,6 +1259,32 @@ def render_rack():
                 out.append(f"    {{ {cstr(src)}, {sn - 1}, {i}, {cfloat(depth)}, {cstr(key)} }},")
             out.append("};")
         globs = dict(globs)
+        scenes = globs.pop("scenes_list", [])
+        if scenes and not 2 <= len(scenes) <= 4:
+            sys.exit(f"build_chains: {name}: scenes_list takes 2 to 4 scenes")
+        svals = []
+        for k, changes in enumerate(scenes):
+            for key, v in changes.items():
+                if isinstance(key, str):
+                    m = re.fullmatch(r"macro([1-8])", key)
+                    if not m or not 0 <= v <= 100:
+                        sys.exit(f"build_chains: {name}: scene {k + 1}: {key!r} = {v} is not macro1..8 at 0..100")
+                    svals.append(f"    {{ {k}, {RACK_SLOTS}, {int(m.group(1)) - 1}, {cfloat(v)}, {cstr(key)} }},")
+                    continue
+                sn, slider = key
+                if not 1 <= sn <= len(slots):
+                    sys.exit(f"build_chains: {name}: scene {k + 1}: slot {sn} is empty")
+                if slider == "Slot Mix":
+                    if not 0 <= v <= 100:
+                        sys.exit(f"build_chains: {name}: scene {k + 1}: Slot Mix {v} is outside 0..100")
+                    svals.append(f"    {{ {k}, {sn - 1}, -1, {cfloat(v)}, \"Slot Mix\" }},")
+                    continue
+                ((i, pv, _),) = resolve(f"{name} scene {k + 1}", slots[sn - 1]["id"], {slider: v})
+                svals.append(f"    {{ {k}, {sn - 1}, {i}, {cfloat(pv)}, {cstr(slider)} }},")
+        sarr2 = "nullptr"
+        if svals:
+            sarr2 = f"kP{n}Scenes"
+            out += [f"static const PresetSceneValue {sarr2}[] = {{"] + svals + ["};"]
         steps = globs.pop("seq", [])
         if len(steps) > 16 or any(not 0 <= v <= 1 for v in steps):
             sys.exit(f"build_chains: {name}: seq takes up to 16 step values 0..1")
@@ -1237,8 +1298,9 @@ def render_rack():
                 else:
                     out.append(f"    {{ {cstr(sym)}, {cfloat(v)}, nullptr }},")
             out.append("};")
-        table.append(f"    {{ {cstr(name)}, {cstr(cat)}, {sarr}, {len(slots)}, {rarr}, {len(routes)}, {garr}, {len(globs)} }},")
-        if srows or routes or globs:
+        more = f", {len(scenes)}, {sarr2}, {len(svals)}" if scenes else ""  # 4.0 scenes: left out when none
+        table.append(f"    {{ {cstr(name)}, {cstr(cat)}, {sarr}, {len(slots)}, {rarr}, {len(routes)}, {garr}, {len(globs)}{more} }},")
+        if srows or routes or globs or scenes:
             out.append("")
     out += ["static const Preset kPresets[] = {"] + table + ["};",
             "static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);", "",

@@ -683,19 +683,68 @@ public:
         return ok;
     }
 
-    // Loads a preset: fresh modules in every slot, every parameter and the routes.
+    // 4.0: the scenes of preset p (resolved into st) into sc: each is the preset as resolved, with
+    // its changed values; a preset without scenes leaves all of them unused. Returns false (and
+    // the reasons in err) for a value that names no slot, slider or macro.
+    bool presetScenes(const Preset& p, const PresetState& st, Scene* sc, std::string* err = nullptr) const
+    {
+        bool ok = true;
+        for (uint32_t k = 0; k < kScenes; ++k)
+        {
+            sc[k] = Scene();
+            if (k >= p.numScenes)
+                continue;
+            sc[k].used = true;
+            for (uint32_t i = 0; i < kSlots; ++i)
+            {
+                sc[k].ids[i] = st.ids[i];
+                sc[k].vals[i][0] = st.params[slotParam(i, kSlotMix)];
+                for (uint32_t v = 0; v < kValues; ++v)
+                    sc[k].vals[i][1 + v] = st.params[valueParam(i, v)];
+            }
+            for (uint32_t m = 0; m < 8; ++m)
+                sc[k].macros[m] = st.params[kMacro1 + m];
+        }
+        for (uint32_t j = 0; j < p.numSceneValues; ++j)
+        {
+            const PresetSceneValue& v = p.sceneValues[j];
+            const nulljsfx::ModuleDesc* d = v.slot < kSlots ? find(st.ids[v.slot].c_str()) : nullptr;
+            bool good = v.scene < p.numScenes && v.scene < kScenes;
+            if (good && v.slot == kSlots)
+                good = v.value >= 0 && v.value < 8;
+            else if (good)
+                good = d && v.value >= -1 && v.value < int(std::min<uint32_t>(d->numSliders, kValues));
+            if (!good)
+            {
+                ok = false;
+                if (err)
+                    *err += (err->empty() ? "" : "; ") + std::string("bad scene value ") + v.name;
+                continue;
+            }
+            if (v.slot == kSlots)
+                sc[v.scene].macros[v.value] = v.plain;
+            else if (v.value < 0)
+                sc[v.scene].vals[v.slot][0] = v.plain;
+            else
+                sc[v.scene].vals[v.slot][1 + v.value] = plainToValue(d->sliders[v.value], isLogSlider(d->id, uint32_t(v.value)), v.plain);
+        }
+        return ok;
+    }
+
+    // Loads a preset: fresh modules in every slot, every parameter, the routes and (4.0) its scenes.
     bool loadPreset(const Preset& p, std::string* err = nullptr)
     {
         std::unique_ptr<PresetState> st(new PresetState());
-        const bool ok = resolvePreset(p, *st, err);
+        bool ok = resolvePreset(p, *st, err);
         std::string none[kSlots];
         setSlots(none);
         setSlots(st->ids);
         for (uint32_t i = 0; i < kNumParams; ++i)
             setParam(i, st->params[i]);
         setRoutes(st->routes, st->numRoutes);
-        Scene none2[kScenes];
-        setScenes(none2); // a preset has no scenes
+        std::unique_ptr<Scene[]> sc(new Scene[kScenes]);
+        ok = presetScenes(p, *st, sc.get(), err) && ok;
+        setScenes(sc.get()); // none for a preset without scenes
         fPresetName = p.name;
         return ok;
     }

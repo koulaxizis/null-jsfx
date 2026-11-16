@@ -249,6 +249,38 @@ static void testPresets()
         }
         std::printf("  %-22s %-8s %u slots %u routes  peak %.2f / %.2f  rms %.3f / %.3f  latency %u\n", pr.name,
                     pr.category, pr.numSlots, pr.numRoutes, peak[0], peak[1], rms[0], rms[1], e->latency());
+        // 4.0: a preset with routes from the MIDI sources also plays with a note held (low, middle, high)
+        bool midi = false;
+        for (uint32_t r = 0; r < pr.numRoutes; ++r)
+            midi = midi || rack::sourceFromSymbol(pr.routes[r].source) >= int(rack::kSrcNote);
+        for (int note : { 36, 60, 84 })
+        {
+            if (!midi)
+                break;
+            const double sr = 48000.0;
+            e->setSampleRate(sr);
+            e->loadPreset(pr);
+            RackEngine::MidiEvent on;
+            on.frame = 0;
+            on.size = 3;
+            on.data[0] = 0x90;
+            on.data[1] = uint8_t(note);
+            on.data[2] = 127;
+            e->setMidi(&on, 1);
+            const Stereo in = testSignal(sr, 2.0);
+            Stereo out;
+            render(*e, in, out, 512);
+            double pk = 0.0, sum = 0.0;
+            bool finite = true;
+            for (size_t i = 0; i < out.l.size(); ++i)
+            {
+                finite = finite && std::isfinite(out.l[i]) && std::isfinite(out.r[i]);
+                pk = std::max(pk, double(std::max(std::fabs(out.l[i]), std::fabs(out.r[i]))));
+                sum += double(out.l[i]) * out.l[i] + double(out.r[i]) * out.r[i];
+            }
+            CHECK(finite && pk < 4.0, "%s with note %d: peak %.2f", pr.name, note, pk);
+            std::printf("    with note %d held (velocity 127): peak %.2f  rms %.3f\n", note, pk, std::sqrt(sum / (out.l.size() * 2.0)));
+        }
     }
     for (const std::string& s : skipped)
         std::printf("  skipped (modules not in this build): %s\n", s.c_str());
@@ -843,6 +875,53 @@ static void testScenes()
     e->scenes(back.get());
     CHECK(!back[0].used && !back[2].used, "a preset kept the scenes");
     std::printf("  scenes with other modules in the slots: their own values; a preset clears the scenes\n");
+
+    // a preset with scenes (Scene Morph Build): each scene is the preset with its changes
+    for (uint32_t p = 0; p < rack::kNumPresets; ++p)
+    {
+        const rack::Preset& pr = rack::kPresets[p];
+        if (!pr.numScenes)
+            continue;
+        std::unique_ptr<RackEngine> f(new RackEngine(mods.data(), uint32_t(mods.size())));
+        bool have = true;
+        for (uint32_t s = 0; s < pr.numSlots; ++s)
+            have = have && f->find(pr.slots[s].id);
+        if (!have)
+        {
+            std::printf("  %s: modules not in this build, skipped\n", pr.name);
+            continue;
+        }
+        f->setSampleRate(sr);
+        std::string err;
+        CHECK(f->loadPreset(pr, &err), "%s: %s", pr.name, err.c_str());
+        f->scenes(back.get());
+        uint32_t used = 0;
+        for (uint32_t k = 0; k < rack::kScenes; ++k)
+            used += back[k].used;
+        CHECK(used == pr.numScenes, "%s: %u scenes, not %u", pr.name, used, pr.numScenes);
+        for (uint32_t j = 0; j < pr.numSceneValues; ++j)
+        {
+            const rack::PresetSceneValue& v = pr.sceneValues[j];
+            if (v.slot >= rack::kSlots || v.value < 0)
+                continue;
+            const nulljsfx::ModuleDesc* d = f->find(back[v.scene].ids[v.slot].c_str());
+            CHECK(d && strieq(d->sliders[v.value].name, v.name), "%s: scene value %s", pr.name, v.name);
+            const float want = rack::plainToValue(d->sliders[v.value], rack::isLogSlider(d->id, uint32_t(v.value)), v.plain);
+            CHECK(back[v.scene].vals[v.slot][1 + v.value] == want, "%s: scene %u %s", pr.name, unsigned(v.scene) + 1, v.name);
+        }
+        // Morph 0 plays scene 1, 100 the last one
+        const rack::PresetSceneValue& v0 = pr.sceneValues[0];
+        for (float morph : { 0.0f, 100.0f })
+        {
+            f->setParam(rack::kSceneMorph, morph);
+            render(*f, in, out, 512);
+            const uint32_t k = morph > 0.0f ? pr.numScenes - 1 : 0;
+            const float want = back[k].vals[v0.slot][1 + v0.value];
+            CHECK(std::fabs(f->effective(v0.slot, uint32_t(v0.value)) - want) < 1e-6f, "%s: morph %.0f", pr.name, morph);
+        }
+        std::printf("  %s: %u scenes, %u changed values, Morph 0 and 100 play the first and the last\n", pr.name,
+                    pr.numScenes, pr.numSceneValues);
+    }
 }
 
 // ---- threads ---------------------------------------------------------------------------------
@@ -1022,7 +1101,7 @@ static void neutral(RackEngine& e, const RackEngine::PresetState& st)
 
 static bool usesNewFeatures(const RackEngine::PresetState& st)
 {
-    if (st.params[rack::kFeedback] > 0.0f)
+    if (st.params[rack::kFeedback] > 0.0f || st.params[rack::kScenesOn] >= 0.5f)
         return true;
     for (uint32_t s = 0; s < rack::kSlots; ++s)
         if (!st.ids[s].empty() && (st.params[rack::laneParam(s)] >= 0.5f || st.params[rack::laneXParam(s)] >= 0.5f ||

@@ -3574,6 +3574,99 @@ static const PresetGlobal kP104Globals[] = {
     { "split_bands", 5.0f, nullptr },
 };
 
+static const PresetValue kP105S0[] = {
+    { 0, 20.0f, "Frequency" },
+    { 1, 0.85f, "Feedback" },
+    { 2, 1.0f, "Mode" },
+    { 3, 0.0f, "Gain" },
+};
+static const PresetValue kP105S1[] = {
+    { 0, 400.0f, "Cutoff" },
+    { 1, 0.7f, "Resonance" },
+    { 3, 0.0f, "Mode" },
+};
+static const PresetValue kP105S2[] = {
+    { 0, 1.0f, "Type" },
+    { 6, 15.0f, "Mix" },
+};
+static const PresetSlot kP105Slots[] = {
+    { "comb_filter", kP105S0, 4, 0, 0, 60.0f, true },
+    { "filter", kP105S1, 3, 0, 0, 100.0f, true },
+    { "space", kP105S2, 2, 0, 0, 100.0f, true },
+};
+static const PresetRoute kP105Routes[] = {
+    { "note", 0, 0, 1.0f, "Frequency" },
+    { "note", 1, 0, 0.6f, "Cutoff" },
+    { "velocity", 1, 0, 0.2f, "Cutoff" },
+};
+
+static const PresetValue kP106S0[] = {
+    { 0, 10.0f, "Drive" },
+    { 3, 1.0f, "Mode" },
+    { 2, 100.0f, "Mix" },
+};
+static const PresetValue kP106S1[] = {
+    { 0, 1500.0f, "Cutoff" },
+    { 1, 0.8f, "Resonance" },
+    { 3, 0.0f, "Mode" },
+};
+static const PresetValue kP106S2[] = {
+    { 0, -12.0f, "Threshold" },
+};
+static const PresetSlot kP106Slots[] = {
+    { "saturation", kP106S0, 3, 0, 0, 100.0f, true },
+    { "filter", kP106S1, 3, 0, 0, 100.0f, true },
+    { "glue_comp", kP106S2, 1, 0, 0, 100.0f, true },
+};
+static const PresetRoute kP106Routes[] = {
+    { "velocity", 0, 0, 0.6f, "Drive" },
+    { "velocity", 0, 5, -0.15f, "Output" },
+    { "velocity", 1, 0, 0.35f, "Cutoff" },
+    { "modwheel", 1, 0, 0.25f, "Cutoff" },
+};
+
+static const PresetValue kP107S0[] = {
+    { 0, 20000.0f, "Cutoff" },
+    { 1, 0.9f, "Resonance" },
+    { 3, 0.0f, "Mode" },
+};
+static const PresetValue kP107S1[] = {
+    { 0, 10.0f, "Drive" },
+    { 3, 0.0f, "Mode" },
+    { 2, 100.0f, "Mix" },
+};
+static const PresetValue kP107S2[] = {
+    { 0, 2.0f, "Type" },
+    { 6, 20.0f, "Mix" },
+};
+static const PresetValue kP107S3[] = {
+    { 0, 100.0f, "Width" },
+};
+static const PresetSlot kP107Slots[] = {
+    { "filter", kP107S0, 3, 0, 0, 100.0f, true },
+    { "saturation", kP107S1, 3, 0, 0, 100.0f, true },
+    { "space", kP107S2, 2, 0, 0, 100.0f, true },
+    { "stereo_width", kP107S3, 1, 0, 0, 100.0f, true },
+};
+static const PresetSceneValue kP107Scenes[] = {
+    { 0, 0, 0, 900.0f, "Cutoff" },
+    { 0, 1, 0, 10.0f, "Drive" },
+    { 0, 2, 6, 35.0f, "Mix" },
+    { 0, 3, 0, 80.0f, "Width" },
+    { 1, 0, 0, 4000.0f, "Cutoff" },
+    { 1, 1, 0, 30.0f, "Drive" },
+    { 1, 2, 6, 25.0f, "Mix" },
+    { 1, 3, 0, 100.0f, "Width" },
+    { 2, 0, 0, 20000.0f, "Cutoff" },
+    { 2, 1, 0, 45.0f, "Drive" },
+    { 2, 2, 6, 12.0f, "Mix" },
+    { 2, 3, 0, 130.0f, "Width" },
+};
+static const PresetGlobal kP107Globals[] = {
+    { "scenes", 0.0f, "On" },
+    { "scene_morph", 0.0f, nullptr },
+};
+
 static const Preset kPresets[] = {
     { "Init", "Init", nullptr, 0, nullptr, 0, nullptr, 0 },
     { "Tube EQ", "Chain", kP1Slots, 2, nullptr, 0, nullptr, 0 },
@@ -3680,6 +3773,9 @@ static const Preset kPresets[] = {
     { "Vocal Throw Lanes", "Routing", kP102Slots, 4, kP102Routes, 2, kP102Globals, 1 },
     { "Quad Texture", "Routing", kP103Slots, 4, nullptr, 0, kP103Globals, 4 },
     { "Multipass Master", "Routing", kP104Slots, 5, nullptr, 0, kP104Globals, 1 },
+    { "Keytracked Resonance", "Routing", kP105Slots, 3, kP105Routes, 3, nullptr, 0 },
+    { "Velocity Drive", "Routing", kP106Slots, 3, kP106Routes, 4, nullptr, 0 },
+    { "Scene Morph Build", "Routing", kP107Slots, 4, nullptr, 0, kP107Globals, 2, 3, kP107Scenes, 12 },
 };
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 

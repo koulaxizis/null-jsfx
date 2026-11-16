@@ -523,6 +523,8 @@ protected:
             fRoutes[i] = st->routes[i];
         fNumRoutes = st->numRoutes;
         sendRoutes();
+        e->presetScenes(kPresets[index], *st, fScenes); // 4.0: none for a preset without scenes
+        sendScenes();
         fPresetName = kPresets[index].name;
         setState("preset", fPresetName.c_str());
         for (uint32_t i = 0; i < kNumParams; ++i)

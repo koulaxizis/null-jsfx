@@ -725,6 +725,16 @@ struct PresetGlobal {
     const char* option; // enum option label, or nullptr to use value
 };
 
+// 4.0: a preset's scene is the preset itself with some values changed: in scene `scene` (0..3),
+// slot `slot` (0..7) gets `plain` for its slider `value` (from 0), or for its Mix with value -1;
+// slot kSlots is a macro (value 0..7)
+struct PresetSceneValue {
+    uint8_t scene, slot;
+    int16_t value;
+    float plain;
+    const char* name; // the slider's name, or "Mix" or "macroN"
+};
+
 struct Preset {
     const char* name;
     const char* category; // "Init", "Chain", "Routing" or "Macro"
@@ -734,6 +744,10 @@ struct Preset {
     uint32_t numRoutes;
     const PresetGlobal* globals;
     uint32_t numGlobals;
+    // 4.0: the scenes (0 = none, the generator leaves them out) and their changed values
+    uint32_t numScenes = 0;
+    const PresetSceneValue* sceneValues = nullptr;
+    uint32_t numSceneValues = 0;
 };
 
 struct LogSlider {
