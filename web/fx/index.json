@@ -100,6 +100,20 @@
    "bytes": 33896
   },
   {
+   "id": "echo_one",
+   "name": "Echo One",
+   "category": "One Slider",
+   "tags": "delay echo slapback ping-pong tempo sync repeats filtered tape gui",
+   "gfx": [
+    360,
+    240
+   ],
+   "ins": 2,
+   "outs": 2,
+   "sliders": 1,
+   "bytes": 37001
+  },
+  {
    "id": "exciter",
    "name": "Exciter",
    "category": "One Slider",
