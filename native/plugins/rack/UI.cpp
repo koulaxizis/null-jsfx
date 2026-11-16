@@ -57,6 +57,17 @@ enum HitKind {
     kHitModuleView,  // back to the module
     kHitPopupBack,   // the panel of a popup (swallows clicks)
     kHitSeqBars,     // the step sequencer's bars (click / drag to draw)
+    kHitLane,        // a: slot (left half steps down, right half up: A, B, C, D)
+    kHitLanesOpen,   // opens the lane levels
+    kHitToggle,      // a: parameter (0 / 1)
+    kHitBand,        // a: slot (left half steps down, right half up: Full, Low, Mid, High, 1..N)
+    kHitBandsOpen,   // opens the split bands
+    kHitRouteCurve,  // a: route (Remap: left half bends down, right half up)
+    kHitModsOpen,    // opens the 4.0 modulators
+    kHitScenesOpen,  // opens the scenes
+    kHitSceneStore,  // a: scene
+    kHitSceneRecall, // a: scene
+    kHitSceneClear,  // a: scene
 };
 
 struct Hit {
@@ -110,6 +121,7 @@ protected:
             for (uint32_t i = 0; i < kSlots; ++i)
                 fIds[i] = e.slotId(i);
             fNumRoutes = e.routes(fRoutes);
+            e.scenes(fScenes);
             fPresetName = e.presetName();
         }
         const uint32_t now = fFrame;
@@ -332,6 +344,57 @@ protected:
         setState("routes", formatRoutes(fRoutes, fNumRoutes).c_str());
     }
 
+    // ---- scenes (4.0) --------------------------------------------------------------------------
+
+    void sendScenes()
+    {
+        setState("scenes", formatScenes(fScenes).c_str());
+    }
+
+    // scene k := the slots, their Mix and values and the macros as they are now
+    void storeScene(uint32_t k)
+    {
+        Scene& sc = fScenes[k];
+        sc.used = true;
+        for (uint32_t i = 0; i < kSlots; ++i)
+        {
+            sc.ids[i] = fIds[i];
+            sc.vals[i][0] = fParam[slotParam(i, kSlotMix)];
+            for (uint32_t v = 0; v < kValues; ++v)
+                sc.vals[i][1 + v] = fParam[valueParam(i, v)];
+        }
+        for (uint32_t m = 0; m < 8; ++m)
+            sc.macros[m] = fParam[kMacro1 + m];
+        sendScenes();
+        markEdited();
+    }
+
+    // the parameters := scene k (the slots that hold the scene's module, and the macros)
+    void recallScene(uint32_t k)
+    {
+        const Scene& sc = fScenes[k];
+        if (!sc.used)
+            return;
+        for (uint32_t i = 0; i < kSlots; ++i)
+        {
+            if (fIds[i].empty() || sc.ids[i] != fIds[i])
+                continue;
+            setParamGesture(slotParam(i, kSlotMix), sc.vals[i][0]);
+            for (uint32_t v = 0; v < kValues; ++v)
+                setParamGesture(valueParam(i, v), sc.vals[i][1 + v]);
+        }
+        for (uint32_t m = 0; m < 8; ++m)
+            setParamGesture(kMacro1 + m, sc.macros[m]);
+        markEdited();
+    }
+
+    void clearScene(uint32_t k)
+    {
+        fScenes[k] = Scene();
+        sendScenes();
+        markEdited();
+    }
+
     void markEdited()
     {
         if (fPresetName.empty() || fPresetName.back() != '*')
@@ -382,13 +445,15 @@ protected:
             order[i] = order[i - 1];
         order[b] = int(a);
         std::string ids[kSlots];
-        float vals[kSlots][kSlotParams], lanes[kSlots];
+        float vals[kSlots][kSlotParams], lanes[kSlots], lanesX[kSlots], splits[kSlots];
         for (uint32_t i = 0; i < kSlots; ++i)
         {
             ids[i] = fIds[order[i]];
             for (uint32_t p = 0; p < kSlotParams; ++p)
                 vals[i][p] = fParam[slotParam(uint32_t(order[i]), p)];
             lanes[i] = fParam[laneParam(uint32_t(order[i]))];
+            lanesX[i] = fParam[laneXParam(uint32_t(order[i]))];
+            splits[i] = fParam[splitParam(uint32_t(order[i]))];
         }
         for (uint32_t i = 0; i < kSlots; ++i)
             fIds[i] = ids[i];
@@ -404,12 +469,17 @@ protected:
                 }
                 fParam[laneParam(i)] = -1.0f;
                 setParamGesture(laneParam(i), lanes[i]);
+                fParam[laneXParam(i)] = -1.0f;
+                setParamGesture(laneXParam(i), lanesX[i]);
+                fParam[splitParam(i)] = -1.0f;
+                setParamGesture(splitParam(i), splits[i]);
             }
         int where[kSlots];
         for (int i = 0; i < int(kSlots); ++i)
             where[order[i]] = i;
         for (uint32_t i = 0; i < fNumRoutes; ++i)
-            fRoutes[i].slot = where[fRoutes[i].slot];
+            if (fRoutes[i].slot < int(kSlots))
+                fRoutes[i].slot = where[fRoutes[i].slot];
         if (fNumRoutes)
             sendRoutes();
         // the feedback loop's ends follow their slots
@@ -473,13 +543,41 @@ protected:
 
     // ---- lanes and the feedback loop ---------------------------------------------------------
 
-    // a slot with a module on lane B: the rack runs two lanes
-    bool anyLaneB() const
+    // the lane slot i runs on (kLaneA .. kLaneD)
+    int laneOf(uint32_t i) const { return slotLane(fParam[laneParam(i)], fParam[laneXParam(i)]); }
+
+    // a slot with a module off lane A: the rack runs more than one lane
+    bool anyLanes() const
     {
         for (uint32_t i = 0; i < kSlots; ++i)
-            if (!fIds[i].empty() && fParam[laneParam(i)] >= 0.5f)
+            if (!fIds[i].empty() && laneOf(i) != kLaneA)
                 return true;
         return false;
+    }
+
+    // the number of split bands (Split Bands, 2..5)
+    int splitBands() const { return std::max(2, std::min(int(kMaxBands), int(std::lround(fParam[kSplitBands])))); }
+
+    // the band choice of slot s: 0..3 = Full, Low, Mid, High (Band), 4.. = split band 1.. (Split Band)
+    int bandOf(uint32_t s) const
+    {
+        const int sb = std::min(splitBands(), int(std::lround(fParam[splitParam(s)])));
+        return sb > 0 ? 3 + sb : int(std::lround(fParam[slotParam(s, kSlotBand)]));
+    }
+
+    void setBand(uint32_t s, int b)
+    {
+        b = std::max(0, std::min(3 + splitBands(), b));
+        setParamGesture(slotParam(s, kSlotBand), b < 4 ? float(b) : 0.0f);
+        setParamGesture(splitParam(s), b < 4 ? 0.0f : float(b - 3));
+    }
+
+    // puts slot s on lane l (A, B: Lane; C, D: Lane C/D, with Lane back at A)
+    void setLane(uint32_t s, int l)
+    {
+        l = std::max(0, std::min(int(kLanes) - 1, l));
+        setParamGesture(laneParam(s), l == kLaneB ? 1.0f : 0.0f);
+        setParamGesture(laneXParam(s), l == kLaneC ? 1.0f : l == kLaneD ? 2.0f : 0.0f);
     }
 
     // the loop's slots (0-based, from <= to), as the engine reads them
@@ -703,6 +801,30 @@ protected:
         addHit(cx - w * 0.5f, cy - h * 0.5f, w, h, kHitSelect, int(p));
     }
 
+    // the lane of slot s as one selector over A, B, C, D (two parameters underneath)
+    void laneSelector(float cx, float cy, float w, uint32_t s, float h = 21.0f)
+    {
+        const bool lit = hovered(kHitLane, int(s));
+        panel(cx - w * 0.5f, cy - h * 0.5f, w, h, theme::kBackground, lit ? theme::kTrackHover : theme::kBorder);
+        static const char* const names[] = { "A", "B", "C", "D" };
+        fitLabel(cx, cy, ALIGN_CENTER, 8.0f, 0.5f, theme::kText, names[laneOf(s)], w - 26.0f);
+        drawArrow(cx - w * 0.5f + 7.0f, cy, -1.0f);
+        drawArrow(cx + w * 0.5f - 7.0f, cy, 1.0f);
+        addHit(cx - w * 0.5f, cy - h * 0.5f, w, h, kHitLane, int(s));
+    }
+
+    // the band of slot s as one selector over Full, Low, Mid, High and split bands 1..N
+    void bandSelector(float cx, float cy, float w, uint32_t s, float h = 21.0f)
+    {
+        const bool lit = hovered(kHitBand, int(s));
+        panel(cx - w * 0.5f, cy - h * 0.5f, w, h, theme::kBackground, lit ? theme::kTrackHover : theme::kBorder);
+        static const char* const names[] = { "FULL", "LOW", "MID", "HIGH", "BAND 1", "BAND 2", "BAND 3", "BAND 4", "BAND 5" };
+        fitLabel(cx, cy, ALIGN_CENTER, 8.0f, 0.5f, theme::kText, names[std::max(0, std::min(8, bandOf(s)))], w - 26.0f);
+        drawArrow(cx - w * 0.5f + 7.0f, cy, -1.0f);
+        drawArrow(cx + w * 0.5f - 7.0f, cy, 1.0f);
+        addHit(cx - w * 0.5f, cy - h * 0.5f, w, h, kHitBand, int(s));
+    }
+
     // compact knob: knob on the left, label and value on its right
     void compactKnob(float x, float cy, uint32_t p, const char* name, float w = 92.0f)
     {
@@ -758,6 +880,14 @@ protected:
             drawModulePicker();
         else if (fPopup == kPopupPresets)
             drawPresetList();
+        else if (fPopup == kPopupLanes)
+            drawLanesPopup();
+        else if (fPopup == kPopupBands)
+            drawBandsPopup();
+        else if (fPopup == kPopupMods)
+            drawModsPopup();
+        else if (fPopup == kPopupScenes)
+            drawScenesPopup();
     }
 
     // preset, meters, crossovers, input, output, mix
@@ -925,14 +1055,21 @@ protected:
         clipLabel(kRowX + 32.0f, cy - 6.0f, ALIGN_LEFT, 8.5f, 1.0f, on ? theme::kText : theme::kMuted, name, nameW, true);
 
         // tags: band and channel, or the category
-        const int band = int(std::lround(fParam[slotParam(i, kSlotBand)]));
+        const int bandSel = bandOf(i);
+        const int band = bandSel < 4 ? bandSel : 0;
         const int chan = int(std::lround(fParam[slotParam(i, kSlotChannel)]));
         float tx = kRowX + 32.0f;
-        if (anyLaneB())
-            tx = tag(tx, cy + 7.0f, fParam[laneParam(i)] >= 0.5f ? "LANE B" : "LANE A");
-        if (band > 0 || chan > 0)
+        if (anyLanes())
         {
-            if (band > 0)
+            static const char* const laneTags[] = { "LANE A", "LANE B", "LANE C", "LANE D" };
+            tx = tag(tx, cy + 7.0f, laneTags[laneOf(i)]);
+        }
+        if (band > 0 || bandSel >= 4 || chan > 0)
+        {
+            static const char* const splitTags[] = { "BAND 1", "BAND 2", "BAND 3", "BAND 4", "BAND 5" };
+            if (bandSel >= 4)
+                tx = tag(tx, cy + 7.0f, splitTags[bandSel - 4]);
+            else if (band > 0)
                 tx = tag(tx, cy + 7.0f, band == 1 ? "LOW" : band == 2 ? "MID" : "HIGH");
             if (chan > 0)
                 tag(tx, cy + 7.0f, chan == 1 ? "MID" : chan == 2 ? "SIDE" : chan == 3 ? "LEFT" : "RIGHT");
@@ -1054,9 +1191,9 @@ protected:
         addHit(kPanX + 10.0f, 120.0f, nw + 24.0f, 36.0f, kHitAddModule, int(s));
 
         label(kPanX + 240.0f, hy, ALIGN_RIGHT, 7.0f, 1.2f, theme::kMuted, "LANE", true);
-        selector(kPanX + 268.0f, hy, 48.0f, laneParam(s));
-        label(kPanX + 336.0f, hy, ALIGN_RIGHT, 7.0f, 1.2f, theme::kMuted, "BAND", true);
-        selector(kPanX + 382.0f, hy, 82.0f, slotParam(s, kSlotBand));
+        laneSelector(kPanX + 268.0f, hy, 48.0f, s);
+        button(kPanX + 298.0f, hy - 10.5f, 40.0f, 21.0f, "SPLIT", kHitBandsOpen, 0, fPopup == kPopupBands);
+        bandSelector(kPanX + 382.0f, hy, 82.0f, s);
         label(kPanX + 490.0f, hy, ALIGN_RIGHT, 7.0f, 1.2f, theme::kMuted, "CHANNEL", true);
         selector(kPanX + 536.0f, hy, 82.0f, slotParam(s, kSlotChannel));
         compactKnob(kPanX + 580.0f, hy, slotParam(s, kSlotMix), "MIX", 70.0f);
@@ -1136,17 +1273,18 @@ protected:
         hline(kPanX + 10.0f, kPanX + kPanW - 10.0f, 158.0f, theme::kBorder);
 
         // column heads
-        const float c0 = kPanX + 14.0f, c1 = kPanX + 154.0f, c2 = kPanX + 314.0f, c3 = kPanX + 462.0f;
+        const float c0 = kPanX + 14.0f, c1 = kPanX + 130.0f, c2 = kPanX + 264.0f, c3 = kPanX + 392.0f, c4 = kPanX + 558.0f;
         label(c0, 170.0f, ALIGN_LEFT, 6.5f, 1.5f, theme::kSlogan, "SOURCE", true);
         label(c1, 170.0f, ALIGN_LEFT, 6.5f, 1.5f, theme::kSlogan, "SLOT", true);
         label(c2, 170.0f, ALIGN_LEFT, 6.5f, 1.5f, theme::kSlogan, "TARGET", true);
         label(c3, 170.0f, ALIGN_LEFT, 6.5f, 1.5f, theme::kSlogan, "DEPTH", true);
+        label(c4, 170.0f, ALIGN_LEFT, 6.5f, 1.5f, theme::kSlogan, "CURVE", true);
 
         if (fNumRoutes == 0)
         {
             label(kPanX + kPanW * 0.5f, 270.0f, ALIGN_CENTER, 8.5f, 2.0f, theme::kMuted, "NO ROUTES", true);
             label(kPanX + kPanW * 0.5f, 290.0f, ALIGN_CENTER, 7.5f, 0.5f, theme::kSlogan,
-                  "+ ROUTE sends a macro, an LFO, the envelope or the step sequencer to any value of any slot.");
+                  "+ ROUTE sends a macro, an LFO, the envelope, the step sequencer or a modulator to any value of any slot.");
             return;
         }
         const float rowH = 26.0f, y0 = 180.0f;
@@ -1158,27 +1296,42 @@ protected:
             const int i = fRouteScroll + k;
             const Route& r = fRoutes[i];
             const float y = y0 + float(k) * rowH, cy = y + 11.0f;
-            const nulljsfx::ModuleDesc* d = slotDesc(uint32_t(r.slot));
+            const nulljsfx::ModuleDesc* d = r.slot < int(kSlots) ? slotDesc(uint32_t(r.slot)) : nullptr;
 
             // source pill with its live value
             char src[24];
             upper(kSourceNames[r.source], src, sizeof(src));
-            routePill(c0, cy, 130.0f, src, kHitRouteSource, i);
+            routePill(c0, cy, 112.0f, src, kHitRouteSource, i);
             const float sv = e ? e->sourceValue(r.source) : 0.0f;
             const bool bi = r.source == kSrcLfo1 || r.source == kSrcLfo2;
-            miniBar(c0 + 130.0f - 42.0f, cy, 24.0f, bi ? sv * 0.5f + 0.5f : sv);
+            miniBar(c0 + 112.0f - 38.0f, cy, 22.0f, bi ? sv * 0.5f + 0.5f : sv);
 
-            // slot
+            // slot (or the modulator settings)
             char sl[64], mn[40];
-            upper(d ? d->name : "EMPTY", mn, sizeof(mn));
-            std::snprintf(sl, sizeof(sl), "%d  %s", r.slot + 1, mn);
-            routePill(c1, cy, 150.0f, sl, kHitRouteSlot, i);
+            if (r.slot == kModSlot)
+                std::snprintf(sl, sizeof(sl), "MODULATORS");
+            else
+            {
+                upper(d ? d->name : "EMPTY", mn, sizeof(mn));
+                std::snprintf(sl, sizeof(sl), "%d  %s", r.slot + 1, mn);
+            }
+            routePill(c1, cy, 128.0f, sl, kHitRouteSlot, i);
 
             // target value
             char tv[48] = "-";
-            if (d && uint32_t(r.value) < d->numSliders)
+            if (r.slot == kModSlot && uint32_t(r.value) < kNumModTargets)
+                upper(kModTargetNames[r.value], tv, sizeof(tv));
+            else if (d && uint32_t(r.value) < d->numSliders)
                 upper(d->sliders[r.value].name, tv, sizeof(tv));
-            routePill(c2, cy, 138.0f, tv, kHitRouteValue, i);
+            routePill(c2, cy, 122.0f, tv, kHitRouteValue, i);
+
+            // Remap curve
+            char cv[16];
+            if (r.curve == 0.0f)
+                std::snprintf(cv, sizeof(cv), "LINEAR");
+            else
+                std::snprintf(cv, sizeof(cv), "%+.2f", double(r.curve));
+            routePill(c4, cy, 76.0f, cv, kHitRouteCurve, i);
 
             // depth: a bipolar bar
             const float bx = c3 + 6.0f, bw = 104.0f;
@@ -1207,7 +1360,7 @@ protected:
             fill();
             addHit(bx - 6.0f, y, bw + 12.0f, 22.0f, kHitRouteDepth, i);
             std::snprintf(buf, sizeof(buf), r.depth > 0.0005f ? "+%.0f%%" : "%.0f%%", double(r.depth * 100.0f));
-            label(bx + bw + 50.0f, cy, ALIGN_RIGHT, 8.5f, 0.0f, theme::kText, buf);
+            label(bx + bw + 46.0f, cy, ALIGN_RIGHT, 8.5f, 0.0f, theme::kText, buf);
 
             // delete
             const float dx = kPanX + kPanW - 24.0f;
@@ -1268,6 +1421,8 @@ protected:
         char buf[48];
         std::snprintf(buf, sizeof(buf), "MOD  %u", fNumRoutes);
         button(346.0f, kBotY + 6.0f, 82.0f, 19.0f, buf, kHitModView, 0, fModView);
+        button(256.0f, kBotY + 6.0f, 82.0f, 19.0f, fParam[kScenesOn] >= 0.5f ? "SCENES ON" : "SCENES", kHitScenesOpen, 0,
+               fPopup == kPopupScenes);
         for (int m = 0; m < 8; ++m)
         {
             const float cx = 22.0f + 25.5f + float(m) * 51.0f;
@@ -1369,9 +1524,11 @@ protected:
         if (n)
         {
             char buf[16];
-            std::snprintf(buf, sizeof(buf), "%d ROUTE%s", n, n > 1 ? "S" : "");
-            label(x + w - 12.0f, y + 15.0f, ALIGN_RIGHT, 6.5f, 1.2f, theme::kMuted, buf, true);
+            std::snprintf(buf, sizeof(buf), "%dR", n);
+            label(x + w - 62.0f, y + 15.0f, ALIGN_RIGHT, 6.5f, 1.2f, theme::kMuted, buf, true);
         }
+        // the 4.0 modulators open from here
+        button(x + w - 56.0f, y + 6.0f, 44.0f, 18.0f, "MORE", kHitModsOpen, 0, fPopup == kPopupMods);
         // the follower's level (what the routes get, 0..1)
         const float v = e ? e->sourceValue(kSrcEnv) : 0.0f;
         const float bx = x + 12.0f, bw = w - 24.0f, by = y + 30.0f;
@@ -1480,16 +1637,25 @@ protected:
         card(x, y, w, kRow2H);
         char buf[32];
 
-        // lanes: how many slots run on lane B, and the blend
+        // lanes: how many slots run on lane B (or how many lanes run), and the blend
         int onB = 0;
+        bool used[kLanes] = {};
         for (uint32_t i = 0; i < kSlots; ++i)
-            onB += !fIds[i].empty() && fParam[laneParam(i)] >= 0.5f;
+            if (!fIds[i].empty())
+            {
+                onB += laneOf(i) == kLaneB;
+                used[laneOf(i)] = true;
+            }
+        const int nLanes = 1 + int(used[kLaneB]) + int(used[kLaneC]) + int(used[kLaneD]);
         label(x + 12.0f, y + 15.0f, ALIGN_LEFT, 8.5f, 2.0f, theme::kMuted, "LANES", true);
-        if (onB)
+        if (nLanes > 2 || used[kLaneC] || used[kLaneD])
+            std::snprintf(buf, sizeof(buf), "%d LANES", nLanes);
+        else if (onB)
             std::snprintf(buf, sizeof(buf), "%d ON B", onB);
         else
             std::snprintf(buf, sizeof(buf), "ONE LANE");
-        label(x + 12.0f, y + 31.0f, ALIGN_LEFT, 6.5f, 1.2f, onB ? theme::kMuted : theme::kSlogan, buf, true);
+        label(x + 12.0f, y + 31.0f, ALIGN_LEFT, 6.5f, 1.2f, nLanes > 1 ? theme::kMuted : theme::kSlogan, buf, true);
+        button(x + 10.0f, y + 42.0f, 58.0f, 18.0f, "LEVELS", kHitLanesOpen, 0, fPopup == kPopupLanes);
         // Lane Mix as how much of lane B is heard
         char mixText[24];
         std::snprintf(mixText, sizeof(mixText), "%d%% B", int(std::lround(fParam[kLaneMix])));
@@ -1514,6 +1680,221 @@ protected:
     }
 
     // ---- popups ------------------------------------------------------------------------------
+
+    // the scenes: Scenes on/off, Scene Morph, and Store, Recall, Clear for scenes 1..4
+    void drawScenesPopup()
+    {
+        dim();
+        const float w = 520.0f, h = 214.0f, x = (float(kWidth) - w) * 0.5f, y = 250.0f;
+        beginPath();
+        roundedRect(x + 0.5f, y + 4.0f, w - 1.0f, h - 1.0f, 8.0f);
+        fillColor(Color(0, 0, 0, 0.4f));
+        fill();
+        panel(x, y, w, h, theme::kCard, theme::kTrackHover, 8.0f);
+        fPopupHit0 = int(fHits.size());
+        addHit(x, y, w, h, kHitPopupBack);
+        label(x + 16.0f, y + 20.0f, ALIGN_LEFT, 8.5f, 2.0f, theme::kMuted, "SCENES", true);
+        const bool on = fParam[kScenesOn] >= 0.5f;
+        button(x + 100.0f, y + 10.0f, 60.0f, 20.0f, on ? "ON" : "OFF", kHitToggle, int(kScenesOn), on);
+        button(x + w - 98.0f, y + 9.0f, 82.0f, 22.0f, "CLOSE", kHitPickClose, 0);
+        int nu = 0;
+        for (uint32_t k = 0; k < kScenes; ++k)
+            nu += fScenes[k].used;
+        label(x + 16.0f, y + 40.0f, ALIGN_LEFT, 6.5f, 1.2f, theme::kSlogan,
+              nu == 0 ? "STORE A SCENE, THEN MORPH MOVES THROUGH THE STORED ONES IN ORDER"
+                      : on ? "MORPH PLAYS THE STORED SCENES IN PLACE OF THE KNOBS" : "SCENES ARE OFF: THE KNOBS PLAY", true);
+        knobCell(x + 60.0f, y + 60.0f, kSceneMorph, "MORPH", 16.0f, 90.0f, 6.0f, 52.0f, 92.0f, !(on && nu > 0));
+        vline(x + 114.0f, y + 56.0f, y + 176.0f);
+        const float colW = (w - 128.0f) / float(kScenes);
+        // where Morph is: between which stored scenes
+        const double pos = double(clampf(fParam[kSceneMorph] / 100.0f, 0.0f, 1.0f)) * double(std::max(0, nu - 1));
+        int idx = 0;
+        char buf[24];
+        for (uint32_t k = 0; k < kScenes; ++k)
+        {
+            const float cx = x + 120.0f + colW * (float(k) + 0.5f);
+            const bool used = fScenes[k].used;
+            float weight = 0.0f;
+            if (used)
+            {
+                weight = float(std::max(0.0, 1.0 - std::fabs(pos - double(idx))));
+                ++idx;
+            }
+            std::snprintf(buf, sizeof(buf), "SCENE %u", k + 1);
+            label(cx, y + 66.0f, ALIGN_CENTER, 8.0f, 1.5f, used ? theme::kText : theme::kMuted, buf, true);
+            label(cx, y + 80.0f, ALIGN_CENTER, 6.0f, 1.2f, theme::kSlogan, used ? "STORED" : "EMPTY", true);
+            miniBar(cx - 30.0f, y + 92.0f, 60.0f, on && used ? weight : 0.0f);
+            button(cx - 34.0f, y + 104.0f, 68.0f, 20.0f, "STORE", kHitSceneStore, int(k));
+            if (!used)
+                globalAlpha(0.4f);
+            button(cx - 34.0f, y + 128.0f, 68.0f, 20.0f, "RECALL", kHitSceneRecall, int(k));
+            button(cx - 34.0f, y + 152.0f, 68.0f, 20.0f, "CLEAR", kHitSceneClear, int(k));
+            globalAlpha(1.0f);
+        }
+        label(x + 16.0f, y + h - 18.0f, ALIGN_LEFT, 6.5f, 1.2f, theme::kSlogan,
+              "A SCENE HOLDS EVERY SLOT'S MIX AND VALUES AND THE MACROS. RECALL COPIES ONE TO THE KNOBS.", true);
+    }
+
+    // the 4.0 modulators: Random, Follower, Pitch and ADSR, each with its live value
+    void modHead(float x, float y, float w, int src, const char* title, const char* what)
+    {
+        RackEngine* e = engine();
+        label(x, y, ALIGN_LEFT, 8.0f, 1.5f, theme::kText, title, true);
+        const int n = routesFrom(src);
+        char buf[24];
+        if (n)
+            std::snprintf(buf, sizeof(buf), "%d ROUTE%s", n, n > 1 ? "S" : "");
+        else
+            std::snprintf(buf, sizeof(buf), "NO ROUTES");
+        label(x + w, y, ALIGN_RIGHT, 6.0f, 1.2f, n ? theme::kMuted : theme::kSlogan, buf, true);
+        label(x, y + 14.0f, ALIGN_LEFT, 6.0f, 1.0f, theme::kSlogan, what, true);
+        miniBar(x, y + 26.0f, w, e ? e->sourceValue(src) : 0.0f);
+    }
+
+    void drawModsPopup()
+    {
+        dim();
+        const float w = 900.0f, h = 214.0f, x = (float(kWidth) - w) * 0.5f, y = 250.0f;
+        beginPath();
+        roundedRect(x + 0.5f, y + 4.0f, w - 1.0f, h - 1.0f, 8.0f);
+        fillColor(Color(0, 0, 0, 0.4f));
+        fill();
+        panel(x, y, w, h, theme::kCard, theme::kTrackHover, 8.0f);
+        fPopupHit0 = int(fHits.size());
+        addHit(x, y, w, h, kHitPopupBack);
+        label(x + 16.0f, y + 20.0f, ALIGN_LEFT, 8.5f, 2.0f, theme::kMuted, "MODULATORS", true);
+        button(x + w - 98.0f, y + 9.0f, 82.0f, 22.0f, "CLOSE", kHitPickClose, 0);
+        const float top = y + 48.0f, kw = 66.0f;
+        // Random
+        float cx = x + 16.0f;
+        modHead(cx, top, 136.0f, kSrcRand, "RANDOM", "SMOOTH RANDOM, 0..1");
+        knobCell(cx + kw * 0.5f, top + 40.0f, kRandRate, "RATE", 11.0f, kw, 6.0f, 40.0f, 72.0f);
+        knobCell(cx + kw * 1.5f, top + 40.0f, kRandSmooth, "SMOOTH", 11.0f, kw, 6.0f, 40.0f, 72.0f);
+        vline(cx + 150.0f, top - 6.0f, top + 130.0f);
+        // Follower
+        cx += 164.0f;
+        modHead(cx, top, 206.0f, kSrcFollow, "FOLLOWER", "THE LEVEL AFTER A SLOT");
+        char buf[24];
+        std::snprintf(buf, sizeof(buf), "AFTER SLOT %d", int(std::lround(fParam[kFollowSlot])));
+        selector(cx + 103.0f, top + 48.0f, 120.0f, kFollowSlot, buf, 19.0f);
+        knobCell(cx + kw * 0.5f + 4.0f, top + 60.0f, kFollowAttack, "ATTACK", 10.0f, kw, 6.0f, 36.0f, 64.0f);
+        knobCell(cx + kw * 1.5f + 4.0f, top + 60.0f, kFollowRelease, "RELEASE", 10.0f, kw, 6.0f, 36.0f, 64.0f);
+        knobCell(cx + kw * 2.5f + 4.0f, top + 60.0f, kFollowGain, "GAIN", 10.0f, kw, 6.0f, 36.0f, 64.0f);
+        vline(cx + 220.0f, top - 6.0f, top + 130.0f);
+        // Pitch
+        cx += 234.0f;
+        modHead(cx, top, 136.0f, kSrcPitch, "PITCH", "LOW 0 .. HIGH 1 (LOG)");
+        knobCell(cx + kw * 0.5f, top + 40.0f, kPitchLow, "LOW", 11.0f, kw, 6.0f, 40.0f, 72.0f);
+        knobCell(cx + kw * 1.5f, top + 40.0f, kPitchHigh, "HIGH", 11.0f, kw, 6.0f, 40.0f, 72.0f);
+        vline(cx + 150.0f, top - 6.0f, top + 130.0f);
+        // ADSR
+        cx += 164.0f;
+        const float aw = x + w - 16.0f - cx;
+        modHead(cx, top, aw, kSrcAdsr, "ADSR", "GATED BY THE INPUT ABOVE THRESHOLD");
+        const float akw = aw / 5.0f;
+        knobCell(cx + akw * 0.5f, top + 40.0f, kAdsrAttack, "ATTACK", 11.0f, akw, 6.0f, 40.0f, 72.0f);
+        knobCell(cx + akw * 1.5f, top + 40.0f, kAdsrDecay, "DECAY", 11.0f, akw, 6.0f, 40.0f, 72.0f);
+        knobCell(cx + akw * 2.5f, top + 40.0f, kAdsrSustain, "SUSTAIN", 11.0f, akw, 6.0f, 40.0f, 72.0f);
+        knobCell(cx + akw * 3.5f, top + 40.0f, kAdsrRelease, "RELEASE", 11.0f, akw, 6.0f, 40.0f, 72.0f);
+        knobCell(cx + akw * 4.5f, top + 40.0f, kAdsrThreshold, "THRESH", 11.0f, akw, 6.0f, 40.0f, 72.0f);
+        label(x + 16.0f, y + h - 18.0f, ALIGN_LEFT, 6.5f, 1.2f, theme::kSlogan,
+              "SEND THEM IN THE ROUTES VIEW (MOD). A ROUTE TO MODULATORS MOVES A MODULATOR'S OWN SETTING.", true);
+    }
+
+    // the split into up to 5 bands: Split Bands, the crossovers, Solo and Bypass of each band
+    void drawBandsPopup()
+    {
+        dim();
+        const float w = 560.0f, h = 234.0f, x = (float(kWidth) - w) * 0.5f, y = 250.0f;
+        beginPath();
+        roundedRect(x + 0.5f, y + 4.0f, w - 1.0f, h - 1.0f, 8.0f);
+        fillColor(Color(0, 0, 0, 0.4f));
+        fill();
+        panel(x, y, w, h, theme::kCard, theme::kTrackHover, 8.0f);
+        fPopupHit0 = int(fHits.size());
+        addHit(x, y, w, h, kHitPopupBack);
+        label(x + 16.0f, y + 20.0f, ALIGN_LEFT, 8.5f, 2.0f, theme::kMuted, "SPLIT BANDS", true);
+        button(x + w - 98.0f, y + 9.0f, 82.0f, 22.0f, "CLOSE", kHitPickClose, 0);
+        char buf[32];
+        std::snprintf(buf, sizeof(buf), "%d BANDS", splitBands());
+        selector(x + 200.0f, y + 20.0f, 92.0f, kSplitBands, buf);
+        bool used[kMaxBands] = {};
+        for (uint32_t i = 0; i < kSlots; ++i)
+            if (!fIds[i].empty() && bandOf(i) >= 4)
+                used[bandOf(i) - 4] = true;
+        const int nb = splitBands();
+        label(x + 16.0f, y + 40.0f, ALIGN_LEFT, 6.5f, 1.2f, theme::kSlogan,
+              "A SLOT ON BAND 1..5 RUNS ON THAT BAND ONLY; THE REST PASSES BESIDE IT", true);
+        const float colW = (w - 24.0f) / float(kMaxBands);
+        for (uint32_t b = 0; b < kMaxBands; ++b)
+        {
+            const float cx = x + 12.0f + colW * (float(b) + 0.5f);
+            const bool on = int(b) < nb;
+            if (!on)
+                globalAlpha(0.4f);
+            std::snprintf(buf, sizeof(buf), "BAND %u", b + 1);
+            label(cx, y + 64.0f, ALIGN_CENTER, 8.0f, 1.5f, on && used[b] ? theme::kText : theme::kMuted, buf, true);
+            std::snprintf(buf, sizeof(buf), used[b] && on ? "IN USE" : "-");
+            label(cx, y + 78.0f, ALIGN_CENTER, 6.0f, 1.2f, theme::kSlogan, buf, true);
+            const uint32_t ps = kBandSolo1 + b, pb = kBandBypass1 + b;
+            button(cx - 46.0f, y + 94.0f, 44.0f, 20.0f, "SOLO", kHitToggle, int(ps), fParam[ps] >= 0.5f);
+            button(cx + 2.0f, y + 94.0f, 44.0f, 20.0f, "BYPASS", kHitToggle, int(pb), fParam[pb] >= 0.5f);
+            globalAlpha(1.0f);
+            if (b > 0)
+            {
+                const float vx = x + 12.0f + colW * float(b);
+                vline(vx, y + 56.0f, y + 120.0f);
+                // the crossover between band b and b + 1, below the line between them
+                if (int(b) < nb)
+                {
+                    std::snprintf(buf, sizeof(buf), "SPLIT %u", b);
+                    knobCell(vx, y + 128.0f, kSplitFreq1 + b - 1, buf, 11.0f, 72.0f, 6.0f, 34.0f, 62.0f);
+                }
+            }
+        }
+        label(x + 16.0f, y + 216.0f, ALIGN_LEFT, 6.5f, 1.2f, theme::kSlogan,
+              "PICK A SLOT'S BAND IN ITS PANEL. SOLO AND BYPASS ACT WHILE A SLOT RUNS ON A BAND.", true);
+    }
+
+    // the lane levels: Gain, Pan, Mute and Solo of lanes A to D (they act once a second lane runs)
+    void drawLanesPopup()
+    {
+        dim();
+        const float w = 456.0f, h = 220.0f, x = (float(kWidth) - w) * 0.5f, y = 300.0f;
+        beginPath();
+        roundedRect(x + 0.5f, y + 4.0f, w - 1.0f, h - 1.0f, 8.0f);
+        fillColor(Color(0, 0, 0, 0.4f));
+        fill();
+        panel(x, y, w, h, theme::kCard, theme::kTrackHover, 8.0f);
+        fPopupHit0 = int(fHits.size());
+        addHit(x, y, w, h, kHitPopupBack);
+        label(x + 16.0f, y + 20.0f, ALIGN_LEFT, 8.5f, 2.0f, theme::kMuted, "LANE LEVELS", true);
+        button(x + w - 98.0f, y + 9.0f, 82.0f, 22.0f, "CLOSE", kHitPickClose, 0);
+        bool used[kLanes] = {};
+        for (uint32_t i = 0; i < kSlots; ++i)
+            if (!fIds[i].empty())
+                used[laneOf(i)] = true;
+        const bool many = used[kLaneB] || used[kLaneC] || used[kLaneD];
+        label(x + 16.0f, y + 36.0f, ALIGN_LEFT, 6.5f, 1.2f, theme::kSlogan,
+              many ? "LANE A ALWAYS RUNS" : "ONE LANE: THESE ACT ONCE A SECOND LANE RUNS", true);
+        static const char* const names[] = { "LANE A", "LANE B", "LANE C", "LANE D" };
+        const float colW = (w - 24.0f) / float(kLanes);
+        for (uint32_t l = 0; l < kLanes; ++l)
+        {
+            const float cx = x + 12.0f + colW * (float(l) + 0.5f);
+            const bool on = l == kLaneA || used[l];
+            label(cx, y + 60.0f, ALIGN_CENTER, 8.0f, 1.5f, on ? theme::kText : theme::kMuted, names[l], true);
+            knobCell(cx - 26.0f, y + 70.0f, kLaneGain1 + l, "GAIN", 11.0f, 52.0f, 6.0f, 34.0f, 62.0f, !on);
+            knobCell(cx + 26.0f, y + 70.0f, kLanePan1 + l, "PAN", 11.0f, 52.0f, 6.0f, 34.0f, 62.0f, !on);
+            const uint32_t pm = kLaneMute1 + l, ps = kLaneSolo1 + l;
+            button(cx - 46.0f, y + 150.0f, 44.0f, 20.0f, "MUTE", kHitToggle, int(pm), fParam[pm] >= 0.5f);
+            button(cx + 2.0f, y + 150.0f, 44.0f, 20.0f, "SOLO", kHitToggle, int(ps), fParam[ps] >= 0.5f);
+            if (l > 0)
+                vline(x + 12.0f + colW * float(l), y + 54.0f, y + 176.0f);
+        }
+        label(x + 16.0f, y + 200.0f, ALIGN_LEFT, 6.5f, 1.2f, theme::kSlogan,
+              "PICK A SLOT'S LANE IN ITS PANEL. THE LANES SHARE THE OUTPUT; LANE MIX SPLITS A AND B'S SHARE.", true);
+    }
 
     void dim()
     {
@@ -1733,10 +2114,17 @@ protected:
                 applyPreset(uint32_t(h.a));
                 fPopup = kPopupNone;
             }
-            else if (h.kind == kHitPickClose || !inside)
-                fPopup = kPopupNone;
-            repaint();
-            return true;
+            else if ((fPopup == kPopupLanes || fPopup == kPopupBands || fPopup == kPopupMods || fPopup == kPopupScenes) && hi >= fPopupHit0 &&
+                     (h.kind == kHitKnob || h.kind == kHitToggle || h.kind == kHitSelect || h.kind == kHitSceneStore ||
+                      h.kind == kHitSceneRecall || h.kind == kHitSceneClear))
+                ; // handled below, like the panel's own controls
+            else
+            {
+                if (h.kind == kHitPickClose || !inside)
+                    fPopup = kPopupNone;
+                repaint();
+                return true;
+            }
         }
 
         switch (h.kind)
@@ -1757,6 +2145,36 @@ protected:
             break;
         case kHitSelect:
             stepParam(uint32_t(h.a), x < h.x + h.w * 0.5f ? -1 : 1, true);
+            break;
+        case kHitLane:
+            setLane(uint32_t(h.a), (laneOf(uint32_t(h.a)) + (x < h.x + h.w * 0.5f ? -1 : 1) + int(kLanes)) % int(kLanes));
+            break;
+        case kHitLanesOpen:
+            fPopup = kPopupLanes;
+            break;
+        case kHitBand:
+            setBand(uint32_t(h.a), (bandOf(uint32_t(h.a)) + (x < h.x + h.w * 0.5f ? -1 : 1) + 4 + splitBands()) % (4 + splitBands()));
+            break;
+        case kHitBandsOpen:
+            fPopup = kPopupBands;
+            break;
+        case kHitModsOpen:
+            fPopup = kPopupMods;
+            break;
+        case kHitScenesOpen:
+            fPopup = kPopupScenes;
+            break;
+        case kHitSceneStore:
+            storeScene(uint32_t(h.a));
+            break;
+        case kHitSceneRecall:
+            recallScene(uint32_t(h.a));
+            break;
+        case kHitSceneClear:
+            clearScene(uint32_t(h.a));
+            break;
+        case kHitToggle:
+            setParamGesture(uint32_t(h.a), fParam[h.a] >= 0.5f ? 0.0f : 1.0f);
             break;
         case kHitSlot:
             fSel = h.a;
@@ -1819,6 +2237,7 @@ protected:
         case kHitRouteSource:
         case kHitRouteSlot:
         case kHitRouteValue:
+        case kHitRouteCurve:
             stepRoute(h.kind, h.a, x < h.x + h.w * 0.5f ? -1 : 1);
             break;
         case kHitRouteDepth:
@@ -1858,20 +2277,33 @@ protected:
             r.source = (r.source + dir + kNumSources) % kNumSources;
         else if (kind == kHitRouteSlot)
         {
-            const int s = nextModuleSlot(r.slot, dir);
-            if (s < 0 || s == r.slot)
+            // the slots with a module, then the modulator settings (position kModSlot)
+            int s = r.slot;
+            for (int k = 0; k <= int(kSlots); ++k)
+            {
+                s = ((s + dir) % (int(kSlots) + 1) + int(kSlots) + 1) % (int(kSlots) + 1);
+                if (s == kModSlot || slotDesc(uint32_t(s)))
+                    break;
+            }
+            if (s == r.slot)
                 return;
             r.slot = s;
-            const nulljsfx::ModuleDesc* d = slotDesc(uint32_t(s));
-            if (d && uint32_t(r.value) >= d->numSliders)
+            const nulljsfx::ModuleDesc* d = s < int(kSlots) ? slotDesc(uint32_t(s)) : nullptr;
+            if (s == kModSlot ? uint32_t(r.value) >= kNumModTargets : (d && uint32_t(r.value) >= d->numSliders))
                 r.value = 0;
         }
+        else if (kind == kHitRouteCurve)
+            r.curve = clampf(std::round((r.curve + float(dir) * 0.25f) * 4.0f) / 4.0f, -1.0f, 1.0f);
         else
         {
-            const nulljsfx::ModuleDesc* d = slotDesc(uint32_t(r.slot));
-            if (!d)
-                return;
-            const int n = int(std::min<uint32_t>(d->numSliders, kValues));
+            int n = int(kNumModTargets);
+            if (r.slot != kModSlot)
+            {
+                const nulljsfx::ModuleDesc* d = slotDesc(uint32_t(r.slot));
+                if (!d)
+                    return;
+                n = int(std::min<uint32_t>(d->numSliders, kValues));
+            }
             r.value = (r.value + dir + n) % n;
         }
         sendRoutes();
@@ -1934,10 +2366,12 @@ protected:
         const float s = uiScale();
         const float x = float(ev.pos.getX()) / s, y = float(ev.pos.getY()) / s;
         const float d = float(ev.delta.getY()) + float(ev.delta.getX());
-        if (d == 0.0f || fPopup != kPopupNone)
+        if (d == 0.0f || (fPopup != kPopupNone && fPopup != kPopupLanes && fPopup != kPopupBands && fPopup != kPopupMods && fPopup != kPopupScenes))
             return false;
         const int dir = d > 0.0f ? 1 : -1;
         const int hi = hitAt(x, y);
+        if ((fPopup == kPopupLanes || fPopup == kPopupBands || fPopup == kPopupMods || fPopup == kPopupScenes) && hi < fPopupHit0)
+            return false;
         if (hi >= 0)
         {
             const Hit& h = fHits[hi];
@@ -1951,6 +2385,16 @@ protected:
                 stepParam(uint32_t(h.a), dir, false);
                 return true;
             }
+            if (h.kind == kHitLane)
+            {
+                setLane(uint32_t(h.a), laneOf(uint32_t(h.a)) + dir);
+                return true;
+            }
+            if (h.kind == kHitBand)
+            {
+                setBand(uint32_t(h.a), bandOf(uint32_t(h.a)) + dir);
+                return true;
+            }
             if (h.kind == kHitSeqBars)
             {
                 // the step under the mouse, in 5 % steps
@@ -1961,6 +2405,11 @@ protected:
                     setParamGesture(p, clampf(std::round((fParam[p] + float(dir) * 0.05f) * 100.0f) / 100.0f, 0.0f, 1.0f));
                     markEdited();
                 }
+                return true;
+            }
+            if (h.kind == kHitRouteCurve)
+            {
+                stepRoute(h.kind, h.a, dir);
                 return true;
             }
             if (h.kind == kHitRouteDepth)
@@ -1982,7 +2431,7 @@ protected:
     }
 
 private:
-    enum Popup { kPopupNone, kPopupModules, kPopupPresets };
+    enum Popup { kPopupNone, kPopupModules, kPopupPresets, kPopupLanes, kPopupBands, kPopupMods, kPopupScenes };
 
     float fParam[kNumParams] = {};
     uint32_t fEditFrame[kNumParams] = {};
@@ -1999,6 +2448,8 @@ private:
     bool fModView = false;
     int fRouteScroll = 0;
     Popup fPopup = kPopupNone;
+    Scene fScenes[kScenes];
+    int fPopupHit0 = 0; // the first hit of the lane levels or split bands popup (the ones before lie under it)
     int fPickSlot = 0;
 
     int fDragParam = -1, fDragRoute = -1;

@@ -20,11 +20,24 @@
  *               512 (transport playing, Macro 1 sweeping) and 300 (stopped), and again with the new
  *               parameters moved to values that must not change anything (Lane Mix, Feedback
  *               From/To, the sequencer, lane B on empty slots)
- *   lanes       two lanes with different latencies line up (impulse), Lane Mix blends them
+ *   lanes       two lanes with different latencies line up (impulse), Lane Mix blends them;
+ *               (4.0) lanes A, C and D share the output equally, Mute, Solo, Gain and Pan act,
+ *               and lane A's levels do nothing while it runs alone
+ *   split bands (4.0) 2..5 bands sum flat with a module on any band (also with latency), a muted
+ *               module takes only its band, Bypass brings the band back, Solo keeps only its band
+ *               and does nothing without a slot on a split band
+ *   modulators  (4.0) Smooth Random's range and smoothness, the Follower after a slot, the pitch
+ *               follower on sines, the ADSR's stages, a route to a modulator setting (LFO 1 Rate)
+ *               and the Remap curve; the 4.0 routes strings round-trip
+ *   scenes      (4.0) the scenes string round-trips, Morph moves values and macros through the
+ *               stored scenes (a gap skipped), slots with another module keep their values, a
+ *               preset clears the scenes
  *   feedback    the loop repeats every kChunk samples and decays; 95 % on noise stays bounded
  *   sequencer   the steps, Steps, sync to the host beat and Glide
  *   keyed       Sidechain Ducker keys on the rack input delayed by the latency before it
  */
+
+#include <functional>
 
 #include "NullModules.hpp"
 #include "RackEngine.hpp"
@@ -341,6 +354,72 @@ static void testBands()
         }
 }
 
+// 4.0: the split into 2..5 bands sums flat; a muted module takes only its band; Bypass and Solo
+static void testSplitBands()
+{
+    auto mods = allModules(true);
+    const double sr = 48000.0;
+    const size_t n = 16384;
+    Stereo in, out;
+    in.l.assign(n, 0.0f);
+    in.r.assign(n, 0.0f);
+    in.l[0] = in.r[0] = 1.0f;
+    // the centre of band b of 5 at the defaults 100 / 400 / 1600 / 6400 Hz
+    const double centre[5] = { 30.0, 200.0, 800.0, 3200.0, 15000.0 };
+    for (int nb = 2; nb <= 5; ++nb)
+        for (int b = 1; b <= nb; ++b)
+        {
+            std::unique_ptr<RackEngine> e(new RackEngine(mods.data(), uint32_t(mods.size())));
+            e->setSampleRate(sr);
+            e->setSlot(0, "identity");
+            e->setParam(rack::valueParam(0, 0), (b == 2 ? 333.0f : 0.0f) / 4000.0f);
+            e->setParam(rack::kSplitBands, float(nb));
+            e->setParam(rack::splitParam(0), float(b));
+            render(*e, in, out, 512);
+            double worst = 0.0;
+            for (int k = 0; k < 120; ++k)
+                worst = std::max(worst, std::fabs(magDb(out.l, 20.0 * std::pow(1000.0, k / 119.0), sr)));
+            CHECK(worst < 0.01, "%d bands, band %d: %.4f dB off flat", nb, b, worst);
+            // muted: band b is gone, a band far from it stays (for nb < 5 the top band runs from Split nb-1)
+            e->setParam(rack::valueParam(0, 1), 1.0f);
+            render(*e, in, out, 512);
+            const double fIn = b == nb ? (nb == 5 ? 15000.0 : centre[4]) : centre[b - 1];
+            const double fOut = b <= nb / 2 ? 15000.0 : 30.0;
+            const double gIn = magDb(out.l, fIn, sr), gOut = magDb(out.l, fOut, sr);
+            // (a two-octave band between LR4 slopes is down by about 19 dB at its centre)
+            CHECK(gIn < (b == 1 || b == nb ? -20.0 : -15.0) && std::fabs(gOut) < 0.1, "%d bands, band %d muted: %.1f dB in band, %.2f dB outside", nb, b, gIn, gOut);
+            // Bypass of that band: the muted module does not run, the sum is flat again
+            e->setParam(rack::kBandBypass1 + uint32_t(b - 1), 1.0f);
+            render(*e, in, out, 512);
+            double worstB = 0.0;
+            for (int k = 0; k < 120; ++k)
+                worstB = std::max(worstB, std::fabs(magDb(out.l, 20.0 * std::pow(1000.0, k / 119.0), sr)));
+            CHECK(worstB < 0.01, "%d bands, band %d bypassed: %.4f dB off flat", nb, b, worstB);
+            if (nb == 5 || nb == 2)
+                std::printf("  %d bands, band %d: max deviation %.5f dB; muted %.1f dB at %.0f Hz, %.2f dB at %.0f Hz; bypassed %.5f dB\n",
+                            nb, b, worst, gIn, fIn, gOut, fOut, worstB);
+        }
+    // Solo of band 1 (5 bands, a slot on band 3): only the lows are left
+    {
+        std::unique_ptr<RackEngine> e(new RackEngine(mods.data(), uint32_t(mods.size())));
+        e->setSampleRate(sr);
+        e->setSlot(0, "identity");
+        e->setParam(rack::splitParam(0), 3.0f);
+        e->setParam(rack::kBandSolo1, 1.0f);
+        render(*e, in, out, 512);
+        const double lo = magDb(out.l, 30.0, sr), hi = magDb(out.l, 3200.0, sr);
+        CHECK(std::fabs(lo) < 0.1 && hi < -30.0, "band 1 solo: %.2f dB at 30 Hz, %.1f dB at 3.2 kHz", lo, hi);
+        // no slot on a split band: Solo does nothing (bit for bit the input)
+        e->setParam(rack::splitParam(0), 0.0f);
+        render(*e, in, out, 512);
+        bool same = true;
+        for (size_t i = 0; i < n; ++i)
+            same = same && out.l[i] == in.l[i] && out.r[i] == in.r[i];
+        CHECK(same, "band solo without a split slot changed the sound");
+        std::printf("  band 1 solo: %.2f dB at 30 Hz, %.1f dB at 3.2 kHz; without a split slot it does nothing\n", lo, hi);
+    }
+}
+
 // ---- channels --------------------------------------------------------------------------------
 
 static void testChannels()
@@ -451,6 +530,207 @@ static void testModulation()
     }
 }
 
+// ---- the 4.0 modulators ----------------------------------------------------------------------
+
+static void testModulators()
+{
+    auto mods = allModules(true);
+    const double sr = 48000.0;
+    // runs e over n samples of in (blocks of 128), calling f after each block
+    auto run = [&](RackEngine& e, const Stereo& in, const std::function<void(size_t)>& f) {
+        std::vector<float> ol(128), orr(128);
+        for (size_t pos = 0; pos + 128 <= in.l.size(); pos += 128)
+        {
+            e.process(in.l.data() + pos, in.r.data() + pos, ol.data(), orr.data(), 128, {});
+            f(pos);
+        }
+    };
+    auto sine = [&](double hz, double amp, double secs) {
+        Stereo s;
+        const size_t n = size_t(secs * sr);
+        s.l.resize(n);
+        s.r.resize(n);
+        for (size_t i = 0; i < n; ++i)
+            s.l[i] = s.r[i] = float(amp * std::sin(2.0 * M_PI * hz * double(i) / sr));
+        return s;
+    };
+    auto route = [](int src, int slot, int value, float depth, float curve = 0.0f) {
+        rack::Route r;
+        r.source = src; r.slot = slot; r.value = value; r.depth = depth; r.curve = curve;
+        return r;
+    };
+    std::string ids[rack::kSlots] = { "identity" };
+
+    // Smooth Random: 0..1, new values at Rate, smooth at 100 %, steps at 0 %
+    for (float smooth : { 100.0f, 0.0f })
+    {
+        std::unique_ptr<RackEngine> e(new RackEngine(mods.data(), uint32_t(mods.size())));
+        e->setSampleRate(sr);
+        e->setParam(rack::kRandRate, 4.0f);
+        e->setParam(rack::kRandSmooth, smooth);
+        float lo = 1.0f, hi = 0.0f, prev = -1.0f, jump = 0.0f;
+        const Stereo in = sine(100.0, 0.1, 4.0);
+        run(*e, in, [&](size_t) {
+            const float v = e->sourceValue(rack::kSrcRand);
+            lo = std::min(lo, v);
+            hi = std::max(hi, v);
+            if (prev >= 0.0f)
+                jump = std::max(jump, std::fabs(v - prev));
+            prev = v;
+        });
+        CHECK(lo >= 0.0f && hi <= 1.0f && hi - lo > 0.3f, "random, smooth %.0f: %.3f .. %.3f", smooth, lo, hi);
+        CHECK(smooth > 0.0f ? jump < 0.06f : jump > 0.1f, "random, smooth %.0f: largest step %.3f", smooth, jump);
+        std::printf("  random 4 Hz, smooth %3.0f%%: %.3f .. %.3f, largest step between chunks %.3f\n", smooth, lo, hi, jump);
+    }
+
+    // Follower: the level after slot 1; a muted module there leaves nothing
+    for (int muted = 0; muted < 2; ++muted)
+    {
+        std::unique_ptr<RackEngine> e(new RackEngine(mods.data(), uint32_t(mods.size())));
+        e->setSampleRate(sr);
+        e->setSlots(ids);
+        e->setParam(rack::valueParam(0, 1), float(muted));
+        e->setParam(rack::kFollowSlot, 1.0f);
+        e->setParam(rack::kFollowGain, 0.0f);
+        float last = 0.0f;
+        run(*e, sine(200.0, 0.5, 1.0), [&](size_t) { last = e->sourceValue(rack::kSrcFollow); });
+        CHECK(muted ? last == 0.0f : std::fabs(last - 0.5f) < 0.05f, "follower after slot 1%s: %.3f", muted ? " (muted)" : "", last);
+        std::printf("  follower after slot 1%s: %.3f\n", muted ? " (muted)" : "        ", last);
+    }
+
+    // Pitch: a 220 Hz sine between 80 Hz and 1 kHz is at log(220/80)/log(1000/80)
+    for (double hz : { 110.0, 220.0, 660.0 })
+    {
+        std::unique_ptr<RackEngine> e(new RackEngine(mods.data(), uint32_t(mods.size())));
+        e->setSampleRate(sr);
+        e->setSlots(ids);
+        const rack::Route r = route(rack::kSrcPitch, 0, 1, 0.0f); // listens, moves nothing
+        e->setRoutes(&r, 1);
+        float last = 0.0f;
+        run(*e, sine(hz, 0.3, 1.0), [&](size_t) { last = e->sourceValue(rack::kSrcPitch); });
+        const double want = std::log(hz / 80.0) / std::log(1000.0 / 80.0);
+        CHECK(std::fabs(last - want) < 0.01, "pitch of %.0f Hz: %.4f, expected %.4f", hz, last, want);
+        std::printf("  pitch of %3.0f Hz: %.4f (expected %.4f)\n", hz, last, want);
+    }
+
+    // ADSR: input above -30 dB opens it (attack 10 ms to 1, decay 200 ms to 60 %), silence releases it
+    {
+        std::unique_ptr<RackEngine> e(new RackEngine(mods.data(), uint32_t(mods.size())));
+        e->setSampleRate(sr);
+        Stereo in = sine(300.0, 0.5, 2.0);
+        for (size_t i = in.l.size() / 2; i < in.l.size(); ++i)
+            in.l[i] = in.r[i] = 0.0f;
+        float peak = 0.0f, atHalf = 0.0f, last = 1.0f;
+        run(*e, in, [&](size_t pos) {
+            const float v = e->sourceValue(rack::kSrcAdsr);
+            if (pos < size_t(0.1 * sr))
+                peak = std::max(peak, v);
+            if (pos + 128 >= in.l.size() / 2 && pos < in.l.size() / 2)
+                atHalf = v;
+            last = v;
+        });
+        CHECK(peak == 1.0f && std::fabs(atHalf - 0.6f) < 1e-6f && last == 0.0f, "adsr: peak %.3f, sustain %.3f, end %.3f", peak, atHalf, last);
+        std::printf("  adsr: peak %.2f in the first 100 ms, sustain %.2f at 1 s, %.2f after the release\n", peak, atHalf, last);
+    }
+
+    // a route to a modulator setting: Macro 1 at 100 % moves LFO 1 Rate (1 Hz) to the top (20 Hz)
+    for (int moved = 0; moved < 2; ++moved)
+    {
+        std::unique_ptr<RackEngine> e(new RackEngine(mods.data(), uint32_t(mods.size())));
+        e->setSampleRate(sr);
+        e->setParam(rack::kMacro1, 100.0f);
+        const rack::Route r = route(rack::kSrcMacro1, rack::kModSlot, 0, moved ? 1.0f : 0.0f);
+        e->setRoutes(&r, 1);
+        int flips = 0;
+        float prev = 0.0f;
+        run(*e, sine(100.0, 0.1, 1.0), [&](size_t) {
+            const float v = e->sourceValue(rack::kSrcLfo1);
+            flips += (v >= 0.0f) != (prev >= 0.0f);
+            prev = v;
+        });
+        CHECK(moved ? flips >= 38 && flips <= 41 : flips >= 1 && flips <= 3, "LFO 1 rate %s: %d sign changes in 1 s", moved ? "moved" : "kept", flips);
+        std::printf("  LFO 1 Rate %s: %d sign changes in 1 s\n", moved ? "moved to 20 Hz by Macro 1" : "at 1 Hz                 ", flips);
+    }
+
+    // Remap: Macro 1 at 50 % through curve +1 reaches 0.5^0.25 of the depth
+    {
+        std::unique_ptr<RackEngine> e(new RackEngine(mods.data(), uint32_t(mods.size())));
+        e->setSampleRate(sr);
+        e->setSlots(ids);
+        e->setParam(rack::kMacro1, 50.0f);
+        const rack::Route r = route(rack::kSrcMacro1, 0, 0, 1.0f, 1.0f);
+        e->setRoutes(&r, 1);
+        float eff = 0.0f;
+        run(*e, sine(100.0, 0.1, 0.1), [&](size_t) { eff = e->effective(0, 0); });
+        const float want = float(std::pow(0.5, 0.25));
+        CHECK(std::fabs(eff - want) < 1e-6f && rack::remap(-0.5f, -1.0f) == -0.0625f && rack::remap(0.3f, 0.0f) == 0.3f,
+              "remap: %.6f, expected %.6f", eff, want);
+        std::printf("  remap +1: macro 50%% -> %.4f (0.5^0.25)\n", eff);
+    }
+}
+
+// ---- scenes (4.0) --------------------------------------------------------------------------------
+
+static void testScenes()
+{
+    auto mods = allModules(true);
+    const double sr = 48000.0;
+    if (!RackEngine(mods.data(), uint32_t(mods.size())).find("tilt"))
+    {
+        std::printf("  tilt not in this build, skipped\n");
+        return;
+    }
+    // the state string round-trips; malformed scenes are skipped
+    std::unique_ptr<rack::Scene[]> sc(new rack::Scene[rack::kScenes]), back(new rack::Scene[rack::kScenes]);
+    sc[0].used = true;
+    sc[0].ids[0] = "tilt";
+    sc[0].vals[0][0] = 100.0f;
+    sc[0].vals[0][1] = 0.2f;
+    sc[0].macros[0] = 10.0f;
+    sc[2] = sc[0];
+    sc[2].vals[0][1] = 0.8f;
+    sc[2].vals[0][0] = 50.0f;
+    sc[2].macros[0] = 90.0f;
+    const std::string str = rack::formatScenes(sc.get());
+    rack::parseScenes(str.c_str(), back.get());
+    CHECK(rack::formatScenes(back.get()) == str && back[2].used && !back[1].used && back[2].vals[0][1] == 0.8f, "scenes round trip");
+    rack::parseScenes("9/a,,,,,,,/1/2|x/,,,,,,,/1/2|2/,,,,,,,/1,2/3", back.get());
+    CHECK(!back[0].used && !back[1].used, "bad scenes accepted");
+    std::printf("  scenes string round-trips (%zu characters for 2 scenes)\n", str.size());
+
+    std::unique_ptr<RackEngine> e(new RackEngine(mods.data(), uint32_t(mods.size())));
+    e->setSampleRate(sr);
+    e->setSlot(0, "tilt");
+    e->setParam(rack::valueParam(0, 0), 0.4f);
+    rack::parseScenes(str.c_str(), sc.get());
+    e->setScenes(sc.get());
+    Stereo in = testSignal(sr, 0.05), out;
+    auto at = [&](float scenesOn, float morph, float wantV, float wantMacro, const char* what) {
+        e->setParam(rack::kScenesOn, scenesOn);
+        e->setParam(rack::kSceneMorph, morph);
+        render(*e, in, out, 512);
+        const float v = e->effective(0, 0), m = e->sourceValue(rack::kSrcMacro1);
+        CHECK(std::fabs(v - wantV) < 1e-6f && std::fabs(m - wantMacro) < 1e-6f, "scenes, %s: value %.4f macro %.4f", what, v, m);
+        std::printf("  scenes, %-22s value %.3f, macro 1 %.3f\n", what, v, m);
+    };
+    at(0.0f, 50.0f, 0.4f, 0.0f, "off:");
+    at(1.0f, 0.0f, 0.2f, 0.1f, "morph 0 (scene 1):");
+    at(1.0f, 50.0f, 0.5f, 0.5f, "morph 50:");
+    at(1.0f, 100.0f, 0.8f, 0.9f, "morph 100 (scene 3):");
+    // other modules than the scenes hold: the slots keep their own values (the macros still morph)
+    std::string ids[rack::kSlots] = { "identity", "tilt" };
+    e->setSlots(ids);
+    e->setParam(rack::valueParam(1, 0), 0.3f);
+    render(*e, in, out, 512);
+    CHECK(std::fabs(e->effective(1, 0) - 0.3f) < 1e-6f && std::fabs(e->sourceValue(rack::kSrcMacro1) - 0.9f) < 1e-6f, // Morph still at 100
+          "scenes with other modules: value %.4f", e->effective(1, 0));
+    // a preset clears the scenes
+    e->loadPreset(rack::kPresets[0]);
+    e->scenes(back.get());
+    CHECK(!back[0].used && !back[2].used, "a preset kept the scenes");
+    std::printf("  scenes with other modules in the slots: their own values; a preset clears the scenes\n");
+}
+
 // ---- threads ---------------------------------------------------------------------------------
 
 static void testThreads()
@@ -502,9 +782,33 @@ static void testState()
         CHECK(rack::kExtFirst == 254 && std::string(rack::paramInfo(253, nm, 32, sy, 32).symbol) == "s8_v25" &&
               std::string(rack::paramInfo(rack::kSeqStep1 + 15, nm, 32, sy, 32).symbol) == "seq_step16" &&
               std::string(rack::paramInfo(rack::laneParam(7), nm, 32, sy, 32).symbol) == "s8_lane" &&
-              rack::kNumParams == 286, "parameter layout");
+              rack::kSlotLaneX1 == 286 && rack::kSlotSplit1 == 310 && rack::kRandRate == 333 && rack::kSceneMorph == 346 && rack::kNumParams == 348, "parameter layout");
+        CHECK(std::string(rack::paramInfo(rack::laneXParam(7), nm, 32, sy, 32).symbol) == "s8_lanex" &&
+              std::string(rack::paramInfo(rack::kLaneGain1, nm, 32, sy, 32).symbol) == "lanea_gain" &&
+              std::string(rack::paramInfo(rack::kLaneSolo1 + 3, nm, 32, sy, 32).symbol) == "laned_solo" &&
+              std::string(nm) == "Lane D Solo" &&
+              std::string(rack::paramInfo(rack::splitParam(2), nm, 32, sy, 32).symbol) == "s3_split" &&
+              std::string(rack::paramInfo(rack::kSplitFreq1 + 3, nm, 32, sy, 32).symbol) == "split_f4" &&
+              rack::paramInfo(rack::kSplitFreq1 + 3, nm, 32, sy, 32).def == 6400.0f &&
+              std::string(rack::paramInfo(rack::kBandBypass1 + 4, nm, 32, sy, 32).symbol) == "band5_bypass" &&
+              std::string(rack::paramInfo(rack::kRandRate, nm, 32, sy, 32).symbol) == "rand_rate" &&
+              std::string(rack::paramInfo(rack::kAdsrThreshold, nm, 32, sy, 32).symbol) == "adsr_threshold" &&
+              rack::globalFromSymbol("follow_slot") == int(rack::kFollowSlot), "4.0 parameter symbols");
+        // 4.0 routes: to a modulator setting ("m.") and with a Remap curve ("~"); a straight route's text is as before
+        rack::Route m[2];
+        m[0].source = rack::kSrcRand; m[0].slot = rack::kModSlot; m[0].value = 0; m[0].depth = 0.5f;
+        m[1].source = rack::kSrcPitch; m[1].slot = 2; m[1].value = 4; m[1].depth = -0.25f; m[1].curve = 0.75f;
+        const std::string ms = rack::formatRoutes(m, 2);
+        rack::Route mb[rack::kMaxRoutes];
+        CHECK(ms == "rand>m.1:0.5000;pitch>3.5:-0.2500~0.7500" && rack::parseRoutes(ms.c_str(), mb) == 2 &&
+              mb[0].slot == rack::kModSlot && mb[1].curve == 0.75f && rack::formatRoutes(mb, 2) == ms, "4.0 routes: %s", ms.c_str());
+        CHECK(rack::parseRoutes("lfo1>m.11:0.5;lfo1>1.1:0.5~x;lfo1>1.1:0.5~", mb) == 0, "bad 4.0 routes accepted");
         CHECK(rack::globalFromSymbol("feedback") == int(rack::kFeedback) && rack::globalFromSymbol("seq_step3") == int(rack::kSeqStep1 + 2) &&
-              rack::globalFromSymbol("env_gain") == int(rack::kEnvGain) && rack::globalFromSymbol("s1_lane") < 0, "global symbols");
+              rack::globalFromSymbol("env_gain") == int(rack::kEnvGain) && rack::globalFromSymbol("s1_lane") < 0 &&
+              rack::globalFromSymbol("s1_lanex") < 0 && rack::globalFromSymbol("lanec_pan") == int(rack::kLanePan1 + 2) &&
+              rack::globalFromSymbol("laned_solo") == int(rack::kLaneSolo1 + 3) && rack::globalFromSymbol("s2_split") < 0 &&
+              rack::globalFromSymbol("split_bands") == int(rack::kSplitBands) &&
+              rack::globalFromSymbol("band2_solo") == int(rack::kBandSolo1 + 1), "global symbols");
     }
     CHECK(rack::parseRoutes("bogus;lfo1>9.1:0.5;env>1.26:0.5;lfo2>1.1:x", back) == 0, "bad routes accepted");
     std::string ids[rack::kSlots] = { "tilt", "", "delay" };
@@ -573,7 +877,29 @@ static void neutral(RackEngine& e, const RackEngine::PresetState& st)
     e.setParam(rack::kSeqStep1 + 3, 0.9f);
     for (uint32_t s = 0; s < rack::kSlots; ++s)
         if (st.ids[s].empty())
-            e.setParam(rack::laneParam(s), 1.0f); // lane B on an empty slot: no lane B
+        {
+            e.setParam(rack::laneParam(s), 1.0f);  // lane B on an empty slot: no lane B
+            e.setParam(rack::laneXParam(s), 2.0f); // lane D on an empty slot: no lane D
+            e.setParam(rack::splitParam(s), 2.0f); // a split band on an empty slot: no split
+        }
+    // one lane: the lane levels do nothing
+    e.setParam(rack::kLaneGain1, -6.0f);
+    e.setParam(rack::kLanePan1 + 1, 50.0f);
+    e.setParam(rack::kLaneMute1, 1.0f);
+    e.setParam(rack::kLaneSolo1 + 2, 1.0f);
+    // no slot on a split band: the split's settings do nothing
+    e.setParam(rack::kSplitBands, 3.0f);
+    e.setParam(rack::kSplitFreq1, 300.0f);
+    e.setParam(rack::kBandSolo1 + 1, 1.0f);
+    e.setParam(rack::kBandBypass1, 1.0f);
+    // no route from them: the 4.0 modulators' settings do nothing
+    e.setParam(rack::kRandRate, 7.0f);
+    e.setParam(rack::kFollowSlot, 2.0f);
+    e.setParam(rack::kPitchLow, 200.0f);
+    e.setParam(rack::kAdsrThreshold, -50.0f);
+    // no scene stored: Scenes on and Scene Morph do nothing
+    e.setParam(rack::kSceneMorph, 70.0f);
+    e.setParam(rack::kScenesOn, 1.0f);
 }
 
 static bool usesNewFeatures(const RackEngine::PresetState& st)
@@ -581,7 +907,8 @@ static bool usesNewFeatures(const RackEngine::PresetState& st)
     if (st.params[rack::kFeedback] > 0.0f)
         return true;
     for (uint32_t s = 0; s < rack::kSlots; ++s)
-        if (!st.ids[s].empty() && st.params[rack::laneParam(s)] >= 0.5f)
+        if (!st.ids[s].empty() && (st.params[rack::laneParam(s)] >= 0.5f || st.params[rack::laneXParam(s)] >= 0.5f ||
+                                   st.params[rack::splitParam(s)] >= 0.5f))
             return true;
     for (uint32_t r = 0; r < st.numRoutes; ++r)
         if (st.routes[r].source >= rack_v1::kNumSources)
@@ -683,6 +1010,56 @@ static void testLanes()
         std::printf("  lane A 100 smp, lane B 383 smp, Lane Mix %3.0f: aligned at 383, latency %u; B muted leaves %.2f\n",
                     mixB, e->latency(), out.l[383]);
     }
+}
+
+// lanes A, C and D (no B): equal shares, aligned; Mute, Solo, Gain and Pan of a lane
+static void testLanes4()
+{
+    auto mods = allModules(true);
+    const double sr = 48000.0;
+    const size_t n = 4096;
+    Stereo in, out;
+    in.l.assign(n, 0.0f);
+    in.r.assign(n, 0.0f);
+    in.l[0] = 1.0f;
+    in.r[0] = 0.5f;
+    std::unique_ptr<RackEngine> e(new RackEngine(mods.data(), uint32_t(mods.size())));
+    e->setSampleRate(sr);
+    std::string ids[rack::kSlots] = { "identity", "identity", "identity" };
+    e->setSlots(ids);
+    e->setParam(rack::valueParam(0, 0), 100.0f / 4000.0f); // lane A: 100 samples
+    e->setParam(rack::valueParam(1, 0), 200.0f / 4000.0f); // lane C: 200
+    e->setParam(rack::valueParam(2, 0), 300.0f / 4000.0f); // lane D: 300
+    e->setParam(rack::laneXParam(1), 1.0f);
+    e->setParam(rack::laneXParam(2), 2.0f);
+    e->setParam(rack::kLaneMix, 80.0f);                     // no lane B: Lane Mix does nothing
+    auto at = [&](size_t i, float wl, float wr, const char* what) {
+        render(*e, in, out, 512);
+        size_t bad = 0;
+        for (size_t k = 0; k < n; ++k)
+            bad += std::fabs(out.l[k] - (k == i ? wl : 0.0f)) > 1e-6f || std::fabs(out.r[k] - (k == i ? wr : 0.0f)) > 1e-6f;
+        CHECK(bad == 0 && e->latency() == 300, "lanes A/C/D, %s: %zu samples off (%.4f %.4f at %zu, latency %u)", what, bad,
+              out.l[i], out.r[i], i, e->latency());
+        std::printf("  lanes A/C/D, %-14s %.4f %.4f at %zu\n", what, out.l[i], out.r[i], i);
+    };
+    const float third = 1.0f / 3.0f;
+    at(300, 3.0f * third, 1.5f * third, "equal shares");
+    e->setParam(rack::kLaneMute1 + 2, 1.0f);
+    at(300, 2.0f * third, 1.0f * third, "C muted");
+    e->setParam(rack::kLaneSolo1 + 3, 1.0f);
+    at(300, third, 0.5f * third, "D solo");
+    e->setParam(rack::kLaneGain1 + 3, 6.0f);
+    const float g = float(std::pow(10.0, 6.0 / 20.0));
+    at(300, third * g, 0.5f * third * g, "D +6 dB");
+    e->setParam(rack::kLanePan1 + 3, -100.0f);
+    at(300, third * g, 0.0f, "D panned left");
+    // back to lane A alone: the levels of A act only with a second lane
+    e->setParam(rack::laneXParam(1), 0.0f);
+    e->setParam(rack::laneXParam(2), 0.0f);
+    e->setParam(rack::kLaneMute1, 1.0f);
+    render(*e, in, out, 512);
+    CHECK(std::fabs(out.l[600] - 1.0f) < 1e-6f && e->latency() == 600, "one lane: lane A's Mute acted (%.4f, latency %u)",
+          out.l[600], e->latency());
 }
 
 // ---- feedback --------------------------------------------------------------------------------
@@ -889,6 +1266,7 @@ int main()
     testIdentity();
     std::printf("lanes\n");
     testLanes();
+    testLanes4();
     std::printf("feedback\n");
     testFeedback();
     std::printf("sequencer\n");
@@ -897,10 +1275,15 @@ int main()
     testKeyed();
     std::printf("bands\n");
     testBands();
+    testSplitBands();
     std::printf("channels\n");
     testChannels();
     std::printf("modulation\n");
     testModulation();
+    std::printf("modulators\n");
+    testModulators();
+    std::printf("scenes\n");
+    testScenes();
     std::printf("threads\n");
     testThreads();
     testPresets();

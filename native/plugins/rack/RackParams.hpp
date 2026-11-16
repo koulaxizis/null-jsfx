@@ -14,6 +14,12 @@
  * Feedback To, then S1..S8 Lane (A or B). At their defaults the rack sounds exactly as 2.1: no
  * slot on lane B, feedback 0, and the sequencer moves nothing without a route.
  *
+ * Appended in 4.0, 286..309: S1..S8 Lane C/D ("A/B" leaves the slot on its Lane, "C" or "D" moves
+ * it to lane C or D), then Gain, Pan, Mute and Solo of lanes A..D. At their defaults nothing moves.
+ * Then 310..332: S1..S8 Split Band ("Off" leaves the slot on its Band; 1..5 puts it on that band of
+ * the rack's own split into up to 5 bands), Split Bands (2..5), Split 1..4 (the crossovers) and
+ * Solo and Bypass of bands 1..5. With no slot on a split band nothing moves.
+ *
  * State (strings): "slots" = 8 module ids separated by ',' (empty = empty slot), "routes" =
  * "source>slot.value:depth" separated by ';' (slot and value from 1, e.g. "lfo1>2.1:-0.25";
  * sources: kSourceSymbols, "seq" added after 2.1), "preset" = the name of the preset the rack was
@@ -49,18 +55,27 @@ static const double kSyncBeats[] = { 0.0, 16.0, 8.0, 4.0, 2.0, 1.0, 0.5, 0.25, 0
                                      4.0 / 3.0, 2.0 / 3.0, 1.0 / 3.0, 1.0 / 6.0, 3.0, 1.5, 0.75 };
 static const char* const kShapeOptions[] = { "Sine", "Triangle", "Saw Up", "Saw Down", "Square", "Random" };
 static const char* const kLaneOptions[] = { "A", "B" };
+static const char* const kLaneXOptions[] = { "A/B", "C", "D" }; // added in 4.0: lanes C and D
+static constexpr uint32_t kLanes = 4;
+static const char* const kSplitOptions[] = { "Off", "1", "2", "3", "4", "5" }; // added in 4.0
+static constexpr uint32_t kMaxBands = 5;
 
 enum Band { kBandFull = 0, kBandLow, kBandMid, kBandHigh };
-enum Lane { kLaneA = 0, kLaneB };
+enum Lane { kLaneA = 0, kLaneB, kLaneC, kLaneD };
 enum Channel { kChanStereo = 0, kChanMid, kChanSide, kChanLeft, kChanRight };
 
 // ---- modulation sources ----------------------------------------------------------------------
 
-enum Source { kSrcMacro1 = 0, kSrcLfo1 = 8, kSrcLfo2 = 9, kSrcEnv = 10, kSrcSeq = 11, kNumSources = 12 };
+// 4.0 appends Smooth Random, the follower of a slot's output ("sidechain envelope"), the pitch
+// follower and the ADSR
+enum Source { kSrcMacro1 = 0, kSrcLfo1 = 8, kSrcLfo2 = 9, kSrcEnv = 10, kSrcSeq = 11,
+              kSrcRand = 12, kSrcFollow = 13, kSrcPitch = 14, kSrcAdsr = 15, kNumSources = 16 };
 static const char* const kSourceSymbols[] = { "macro1", "macro2", "macro3", "macro4", "macro5", "macro6",
-                                              "macro7", "macro8", "lfo1", "lfo2", "env", "seq" };
+                                              "macro7", "macro8", "lfo1", "lfo2", "env", "seq",
+                                              "rand", "follow", "pitch", "adsr" };
 static const char* const kSourceNames[] = { "Macro 1", "Macro 2", "Macro 3", "Macro 4", "Macro 5", "Macro 6",
-                                            "Macro 7", "Macro 8", "LFO 1", "LFO 2", "Envelope", "Step Seq" };
+                                            "Macro 7", "Macro 8", "LFO 1", "LFO 2", "Envelope", "Step Seq",
+                                            "Random", "Follower", "Pitch", "ADSR" };
 
 inline int sourceFromSymbol(const char* s)
 {
@@ -93,13 +108,42 @@ enum ExtParam : uint32_t {
     kLaneMix = kSeqStep1 + kSeqSteps,
     kFeedback, kFbFrom, kFbTo,
     kSlotLane1,                                      // .. kSlotLane1 + 7
-    kNumParams = kSlotLane1 + kSlots,                // 286
+    // appended in 4.0
+    kSlotLaneX1 = kSlotLane1 + kSlots,               // 286 .. 293: S1..S8 Lane C/D
+    kLaneGain1 = kSlotLaneX1 + kSlots,               // 294 .. 297: Lane A..D Gain
+    kLanePan1 = kLaneGain1 + kLanes,                 // 298 .. 301
+    kLaneMute1 = kLanePan1 + kLanes,                 // 302 .. 305
+    kLaneSolo1 = kLaneMute1 + kLanes,                // 306 .. 309
+    kSlotSplit1 = kLaneSolo1 + kLanes,               // 310 .. 317: S1..S8 Split Band
+    kSplitBands = kSlotSplit1 + kSlots,              // 318
+    kSplitFreq1,                                     // 319 .. 322: Split 1..4
+    kBandSolo1 = kSplitFreq1 + kMaxBands - 1,        // 323 .. 327: Band 1..5 Solo
+    kBandBypass1 = kBandSolo1 + kMaxBands,           // 328 .. 332: Band 1..5 Bypass
+    // the 4.0 modulators
+    kRandRate = kBandBypass1 + kMaxBands,            // 333
+    kRandSmooth,
+    kFollowSlot, kFollowAttack, kFollowRelease, kFollowGain, // 335 .. 338
+    kPitchLow, kPitchHigh,                           // 339, 340
+    kAdsrAttack, kAdsrDecay, kAdsrSustain, kAdsrRelease, kAdsrThreshold, // 341 .. 345
+    // the 4.0 scenes
+    kSceneMorph,                                     // 346
+    kScenesOn,                                       // 347
+    kNumParams,                                      // 348
 };
 static constexpr float kMaxFeedback = 95.0f;
 
 inline constexpr uint32_t slotParam(uint32_t slot, uint32_t p) { return kNumGlobals + slot * kSlotParams + p; }
 inline constexpr uint32_t valueParam(uint32_t slot, uint32_t v) { return slotParam(slot, kSlotValue1 + v); }
 inline constexpr uint32_t laneParam(uint32_t slot) { return kSlotLane1 + slot; }
+inline constexpr uint32_t laneXParam(uint32_t slot) { return kSlotLaneX1 + slot; }
+inline constexpr uint32_t splitParam(uint32_t slot) { return kSlotSplit1 + slot; }
+
+// the lane a slot runs on (kLaneA..kLaneD) from its Lane and Lane C/D parameters
+inline int slotLane(float lane, float laneX)
+{
+    const int x = int(std::lround(laneX));
+    return x == 1 ? kLaneC : x == 2 ? kLaneD : (lane >= 0.5f ? kLaneB : kLaneA);
+}
 
 struct ParamInfo {
     DISTRHO::SliderInfo s;
@@ -153,7 +197,49 @@ static const ParamInfo kExtInfos[] = {
     { { "Feedback From", "fb_from", 1.0f, 8.0f, 1.0f, "", 1.0f }, false },
     { { "Feedback To", "fb_to", 1.0f, 8.0f, 8.0f, "", 1.0f }, false },
     { { "Lane", "lane", 0.0f, 1.0f, 0.0f, "", 1.0f, kLaneOptions }, false }, // x8, per slot
+    // appended in 4.0
+    { { "Lane C/D", "lanex", 0.0f, 2.0f, 0.0f, "", 1.0f, kLaneXOptions }, false }, // x8, per slot
+    { { "Gain", "gain", -24.0f, 12.0f, 0.0f, "dB", 0.1f }, false },                 // x4, per lane
+    { { "Pan", "pan", -100.0f, 100.0f, 0.0f, "%", 1.0f }, false },
+    { { "Mute", "mute", 0.0f, 1.0f, 0.0f, "", 1.0f, kOffOn }, false },
+    { { "Solo", "solo", 0.0f, 1.0f, 0.0f, "", 1.0f, kOffOn }, false },
+    { { "Split Band", "split", 0.0f, 5.0f, 0.0f, "", 1.0f, kSplitOptions }, false }, // 15: x8, per slot
+    { { "Split Bands", "split_bands", 2.0f, 5.0f, 5.0f, "", 1.0f }, false },
+    { { "Split", "split_f", 20.0f, 20000.0f, 100.0f, "Hz", 1.0f }, true },          // 17: x4, numbered
+    { { "Solo", "solo", 0.0f, 1.0f, 0.0f, "", 1.0f, kOffOn }, false },               // 18: x5, per band
+    { { "Bypass", "bypass", 0.0f, 1.0f, 0.0f, "", 1.0f, kOffOn }, false },           // 19: x5, per band
 };
+// the 4.0 modulators' settings (kRandRate .. kAdsrThreshold, in order)
+static const ParamInfo kModInfos[] = {
+    { { "Random Rate", "rand_rate", 0.02f, 20.0f, 1.0f, "Hz", 0.0f }, true },
+    { { "Random Smooth", "rand_smooth", 0.0f, 100.0f, 100.0f, "%", 1.0f }, false },
+    { { "Follower Slot", "follow_slot", 1.0f, 8.0f, 8.0f, "", 1.0f }, false },
+    { { "Follower Attack", "follow_attack", 0.1f, 500.0f, 10.0f, "ms", 0.0f }, true },
+    { { "Follower Release", "follow_release", 1.0f, 2000.0f, 150.0f, "ms", 0.0f }, true },
+    { { "Follower Gain", "follow_gain", -12.0f, 36.0f, 6.0f, "dB", 0.1f }, false },
+    { { "Pitch Low", "pitch_low", 20.0f, 2000.0f, 80.0f, "Hz", 1.0f }, true },
+    { { "Pitch High", "pitch_high", 100.0f, 8000.0f, 1000.0f, "Hz", 1.0f }, true },
+    { { "ADSR Attack", "adsr_attack", 0.1f, 5000.0f, 10.0f, "ms", 0.0f }, true },
+    { { "ADSR Decay", "adsr_decay", 1.0f, 5000.0f, 200.0f, "ms", 0.0f }, true },
+    { { "ADSR Sustain", "adsr_sustain", 0.0f, 100.0f, 60.0f, "%", 1.0f }, false },
+    { { "ADSR Release", "adsr_release", 1.0f, 5000.0f, 300.0f, "ms", 0.0f }, true },
+    { { "ADSR Threshold", "adsr_threshold", -60.0f, 0.0f, -30.0f, "dB", 0.1f }, false },
+    { { "Scene Morph", "scene_morph", 0.0f, 100.0f, 0.0f, "%", 0.0f }, false },
+    { { "Scenes", "scenes", 0.0f, 1.0f, 0.0f, "", 1.0f, kOffOn }, false },
+};
+
+// the modulator settings a route can move (4.0): a route to slot "m" moves the setting
+// kModTargets[value]; its depth is a share of the setting's range (log ones in log space)
+static const uint32_t kModTargets[] = { kLfo1Rate, kLfo2Rate, kEnvGain, kSeqRate, kRandRate, kRandSmooth,
+                                        kAdsrAttack, kAdsrDecay, kAdsrSustain, kAdsrRelease };
+static const char* const kModTargetNames[] = { "LFO 1 Rate", "LFO 2 Rate", "Env Gain", "Seq Rate", "Random Rate",
+                                               "Random Smooth", "ADSR Attack", "ADSR Decay", "ADSR Sustain",
+                                               "ADSR Release" };
+static constexpr uint32_t kNumModTargets = sizeof(kModTargets) / sizeof(kModTargets[0]);
+static constexpr int kModSlot = int(kSlots); // Route::slot of a route to a modulator setting
+
+// the defaults of Split 1..4: two octaves apart
+static const float kSplitDefaults[kMaxBands - 1] = { 100.0f, 400.0f, 1600.0f, 6400.0f };
 
 // name, symbol, range, default, unit, step and options of any parameter (slot values are 0..1);
 // name and symbol are written to the given buffers for slot, step and appended parameters
@@ -182,6 +268,57 @@ inline DISTRHO::SliderInfo paramInfo(uint32_t index, char* name, size_t nn, char
             s = kExtInfos[9].s;
             std::snprintf(name, nn, "S%u Lane", index - kSlotLane1 + 1);
             std::snprintf(sym, ns, "s%u_lane", index - kSlotLane1 + 1);
+        }
+        else if (index >= kSlotLaneX1 && index < kSlotLaneX1 + kSlots)
+        {
+            s = kExtInfos[10].s;
+            std::snprintf(name, nn, "S%u Lane C/D", index - kSlotLaneX1 + 1);
+            std::snprintf(sym, ns, "s%u_lanex", index - kSlotLaneX1 + 1);
+        }
+        else if (index >= kSlotSplit1 && index < kSlotSplit1 + kSlots)
+        {
+            s = kExtInfos[15].s;
+            std::snprintf(name, nn, "S%u Split Band", index - kSlotSplit1 + 1);
+            std::snprintf(sym, ns, "s%u_split", index - kSlotSplit1 + 1);
+        }
+        else if (index == kSplitBands)
+        {
+            s = kExtInfos[16].s;
+            std::snprintf(name, nn, "%s", s.name);
+            std::snprintf(sym, ns, "%s", s.symbol);
+        }
+        else if (index >= kSplitFreq1 && index < kBandSolo1)
+        {
+            if (log)
+                *log = true;
+            s = kExtInfos[17].s;
+            s.def = kSplitDefaults[index - kSplitFreq1];
+            std::snprintf(name, nn, "Split %u", index - kSplitFreq1 + 1);
+            std::snprintf(sym, ns, "split_f%u", index - kSplitFreq1 + 1);
+        }
+        else if (index >= kRandRate && index < kNumParams)
+        {
+            if (log)
+                *log = kModInfos[index - kRandRate].log;
+            s = kModInfos[index - kRandRate].s;
+            std::snprintf(name, nn, "%s", s.name);
+            std::snprintf(sym, ns, "%s", s.symbol);
+        }
+        else if (index >= kBandSolo1 && index < kRandRate)
+        {
+            // Band 1..5 Solo, Bypass
+            const uint32_t k = (index - kBandSolo1) / kMaxBands, band = (index - kBandSolo1) % kMaxBands;
+            s = kExtInfos[18 + k].s;
+            std::snprintf(name, nn, "Band %u %s", band + 1, s.name);
+            std::snprintf(sym, ns, "band%u_%s", band + 1, s.symbol);
+        }
+        else if (index >= kLaneGain1 && index < kSlotSplit1)
+        {
+            // Lane A..D Gain, Pan, Mute, Solo
+            const uint32_t k = (index - kLaneGain1) / kLanes, lane = (index - kLaneGain1) % kLanes;
+            s = kExtInfos[11 + k].s;
+            std::snprintf(name, nn, "Lane %c %s", char('A' + lane), s.name);
+            std::snprintf(sym, ns, "lane%c_%s", char('a' + lane), s.symbol);
         }
         else
         {
@@ -218,24 +355,8 @@ inline DISTRHO::SliderInfo paramInfo(uint32_t index, char* name, size_t nn, char
     return s;
 }
 
-// the index of a global parameter (one of kGlobals, or an appended one other than a slot's
-// lane) by its symbol, -1 if there is none
-inline int globalFromSymbol(const char* sym)
-{
-    for (uint32_t i = 0; i < kNumGlobals; ++i)
-        if (std::strcmp(sym, kGlobals[i].s.symbol) == 0)
-            return int(i);
-    for (uint32_t i = kExtFirst; i < kSlotLane1; ++i)
-    {
-        char n[32], s[32];
-        paramInfo(i, n, sizeof(n), s, sizeof(s));
-        if (std::strcmp(sym, s) == 0)
-            return int(i);
-    }
-    return -1;
-}
-
 // true for the per-slot parameters: On, Mix, Band, Channel, the values and (added after 2.1) the lane
+// and (4.0) the lane C/D and the split band
 inline bool isSlotParam(uint32_t index, uint32_t* slot = nullptr)
 {
     if (index >= kNumGlobals && index < kExtFirst)
@@ -250,13 +371,46 @@ inline bool isSlotParam(uint32_t index, uint32_t* slot = nullptr)
             *slot = index - kSlotLane1;
         return true;
     }
+    if (index >= kSlotLaneX1 && index < kSlotLaneX1 + kSlots)
+    {
+        if (slot)
+            *slot = index - kSlotLaneX1;
+        return true;
+    }
+    if (index >= kSlotSplit1 && index < kSlotSplit1 + kSlots)
+    {
+        if (slot)
+            *slot = index - kSlotSplit1;
+        return true;
+    }
     return false;
+}
+
+// the index of a global parameter (one of kGlobals, or an appended one other than a slot's
+// lane) by its symbol, -1 if there is none
+inline int globalFromSymbol(const char* sym)
+{
+    for (uint32_t i = 0; i < kNumGlobals; ++i)
+        if (std::strcmp(sym, kGlobals[i].s.symbol) == 0)
+            return int(i);
+    for (uint32_t i = kExtFirst; i < kNumParams; ++i)
+    {
+        if (isSlotParam(i))
+            continue;
+        char n[32], s[32];
+        paramInfo(i, n, sizeof(n), s, sizeof(s));
+        if (std::strcmp(sym, s) == 0)
+            return int(i);
+    }
+    return -1;
 }
 
 // ---- slider mapping --------------------------------------------------------------------------
 
 // NaN becomes 0
 inline float clamp01(float v) { return v > 0.0f ? (v < 1.0f ? v : 1.0f) : 0.0f; }
+// NaN becomes lo
+inline float clamp(float v, float lo, float hi) { return v > lo ? (v < hi ? v : hi) : lo; }
 
 // the slider's value snapped to its step (in double, so 0.1 steps land on the JSFX grid)
 inline float snapToStep(const DISTRHO::SliderInfo& in, double v)
@@ -299,10 +453,21 @@ inline float plainToValue(const DISTRHO::SliderInfo& in, bool log, float v)
 
 struct Route {
     int source = -1;  // Source, -1 = unused
-    int slot = 0;     // 0..7
-    int value = 0;    // 0..24
+    int slot = 0;     // 0..7; 4.0: kModSlot = a modulator setting
+    int value = 0;    // 0..24; for kModSlot 0..kNumModTargets-1
     float depth = 0.0f;
+    float curve = 0.0f; // 4.0: Remap, -1..1 (0 = straight; > 0 bends the source up, < 0 down)
 };
+
+// Remap (4.0): the source value through the route's curve, a power law on |v| that keeps the sign
+// (curve 1: |v|^0.25, -1: |v|^4)
+inline float remap(float v, float curve)
+{
+    if (curve == 0.0f)
+        return v;
+    const double a = std::fabs(double(v)), y = std::pow(a, std::pow(4.0, -double(curve)));
+    return float(v < 0.0f ? -y : y);
+}
 
 inline std::string formatRoutes(const Route* r, uint32_t n)
 {
@@ -312,9 +477,19 @@ inline std::string formatRoutes(const Route* r, uint32_t n)
     {
         if (r[i].source < 0 || r[i].source >= kNumSources)
             continue;
-        std::snprintf(buf, sizeof(buf), "%s%s>%d.%d:%.4f", s.empty() ? "" : ";", kSourceSymbols[r[i].source],
-                      r[i].slot + 1, r[i].value + 1, double(r[i].depth));
+        if (r[i].slot == kModSlot)
+            std::snprintf(buf, sizeof(buf), "%s%s>m.%d:%.4f", s.empty() ? "" : ";", kSourceSymbols[r[i].source],
+                          r[i].value + 1, double(r[i].depth));
+        else
+            std::snprintf(buf, sizeof(buf), "%s%s>%d.%d:%.4f", s.empty() ? "" : ";", kSourceSymbols[r[i].source],
+                          r[i].slot + 1, r[i].value + 1, double(r[i].depth));
         s += buf;
+        if (r[i].curve != 0.0f)
+        {
+            // 4.0: the Remap curve as a suffix, only when bent (a 2.x string stays as it was)
+            std::snprintf(buf, sizeof(buf), "~%.4f", double(r[i].curve));
+            s += buf;
+        }
     }
     return s;
 }
@@ -337,15 +512,33 @@ inline uint32_t parseRoutes(const char* s, Route* out)
             {
                 *gt = '\0';
                 int slot = 0, value = 0;
-                float depth = 0.0f;
+                float depth = 0.0f, curve = 0.0f;
                 const int src = sourceFromSymbol(buf);
-                if (src >= 0 && std::sscanf(gt + 1, "%d.%d:%f", &slot, &value, &depth) == 3 && std::isfinite(depth) && slot >= 1 &&
-                    slot <= int(kSlots) && value >= 1 && value <= int(kValues))
+                char* tilde = std::strchr(gt + 1, '~');
+                bool ok = true;
+                if (tilde)
+                {
+                    *tilde = '\0';
+                    char* e = nullptr;
+                    curve = std::strtof(tilde + 1, &e);
+                    ok = e != tilde + 1 && *e == '\0' && std::isfinite(curve);
+                }
+                bool parsed = false;
+                if (gt[1] == 'm' && gt[2] == '.')
+                {
+                    parsed = std::sscanf(gt + 3, "%d:%f", &value, &depth) == 2 && value >= 1 && value <= int(kNumModTargets);
+                    slot = kModSlot + 1;
+                }
+                else
+                    parsed = std::sscanf(gt + 1, "%d.%d:%f", &slot, &value, &depth) == 3 && slot >= 1 &&
+                             slot <= int(kSlots) && value >= 1 && value <= int(kValues);
+                if (src >= 0 && ok && parsed && std::isfinite(depth))
                 {
                     out[n].source = src;
                     out[n].slot = slot - 1;
                     out[n].value = value - 1;
                     out[n].depth = depth < -1.0f ? -1.0f : (depth > 1.0f ? 1.0f : depth);
+                    out[n].curve = curve < -1.0f ? -1.0f : (curve > 1.0f ? 1.0f : curve);
                     ++n;
                 }
             }
@@ -382,6 +575,106 @@ inline std::string formatSlots(const std::string ids[kSlots])
     return s;
 }
 
+// ---- scenes (4.0) ----------------------------------------------------------------------------
+
+// A scene is a snapshot of every slot's module id, Mix and values and of the 8 macros. With
+// Scenes on, Scene Morph (0..100 %) moves through the stored scenes in order and their values
+// take the place of the parameters (a slot whose module differs from the scene's keeps its own).
+// State "scenes": the stored ones separated by '|', each "n/ids/values/macros" with n from 1, ids
+// as "slots", values the 8 x (Mix + 25 values) and macros 8, comma separated ("%.6g").
+static constexpr uint32_t kScenes = 4;
+static constexpr uint32_t kSceneSlotVals = 1 + kValues; // Mix, then the values
+
+struct Scene {
+    bool used = false;
+    std::string ids[kSlots];
+    float vals[kSlots][kSceneSlotVals] = {};
+    float macros[8] = {};
+};
+
+inline std::string formatScenes(const Scene* sc)
+{
+    std::string s;
+    char buf[32];
+    for (uint32_t k = 0; k < kScenes; ++k)
+    {
+        if (!sc[k].used)
+            continue;
+        if (!s.empty())
+            s += '|';
+        std::snprintf(buf, sizeof(buf), "%u/", k + 1);
+        s += buf;
+        s += formatSlots(sc[k].ids);
+        s += '/';
+        for (uint32_t i = 0; i < kSlots; ++i)
+            for (uint32_t v = 0; v < kSceneSlotVals; ++v)
+            {
+                std::snprintf(buf, sizeof(buf), i || v ? ",%.6g" : "%.6g", double(sc[k].vals[i][v]));
+                s += buf;
+            }
+        s += '/';
+        for (uint32_t m = 0; m < 8; ++m)
+        {
+            std::snprintf(buf, sizeof(buf), m ? ",%.6g" : "%.6g", double(sc[k].macros[m]));
+            s += buf;
+        }
+    }
+    return s;
+}
+
+// a comma separated list of exactly n finite numbers
+inline bool parseFloats(const std::string& t, float* out, uint32_t n)
+{
+    const char* p = t.c_str();
+    for (uint32_t i = 0; i < n; ++i)
+    {
+        char* e = nullptr;
+        const float v = std::strtof(p, &e);
+        if (e == p || !std::isfinite(v))
+            return false;
+        out[i] = v;
+        p = e;
+        if (i + 1 < n)
+        {
+            if (*p != ',')
+                return false;
+            ++p;
+        }
+    }
+    return *p == '\0';
+}
+
+// parses the stored scenes into sc (all reset first); malformed entries are skipped
+inline void parseScenes(const char* s, Scene* sc)
+{
+    for (uint32_t k = 0; k < kScenes; ++k)
+        sc[k] = Scene();
+    const std::string all = s ? s : "";
+    size_t pos = 0;
+    while (pos < all.size())
+    {
+        size_t end = all.find('|', pos);
+        if (end == std::string::npos)
+            end = all.size();
+        const std::string e = all.substr(pos, end - pos);
+        pos = end + 1;
+        const size_t a = e.find('/'), b = a == std::string::npos ? a : e.find('/', a + 1),
+                     c = b == std::string::npos ? b : e.find('/', b + 1);
+        if (c == std::string::npos || e.find('/', c + 1) != std::string::npos)
+            continue;
+        const int k = std::atoi(e.substr(0, a).c_str());
+        if (k < 1 || k > int(kScenes) || e.substr(0, a) != std::to_string(k))
+            continue;
+        Scene t;
+        parseSlots(e.substr(a + 1, b - a - 1).c_str(), t.ids);
+        if (!parseFloats(e.substr(b + 1, c - b - 1), &t.vals[0][0], kSlots * kSceneSlotVals) ||
+            !parseFloats(e.substr(c + 1), t.macros, 8))
+            continue;
+        t.used = true;
+        sc[k - 1] = t;
+    }
+}
+
 // ---- presets (data in RackPresets.hpp, generated by tools/build_chains.py) -------------------
 
 struct PresetValue {
@@ -397,7 +690,8 @@ struct PresetSlot {
     uint8_t band, channel;
     float mix;
     bool on;
-    uint8_t lane; // added after 2.1: 0 = A (the generator leaves it out), 1 = B
+    uint8_t lane; // added after 2.1: 0 = A (the generator leaves it out), 1 = B; 4.0: 2 = C, 3 = D
+    uint8_t split; // 4.0: the split band, 0 = off (the generator leaves it out), 1..5
 };
 
 struct PresetRoute {
@@ -405,6 +699,7 @@ struct PresetRoute {
     uint8_t slot, value;
     float depth;
     const char* name;   // the target slider's name
+    float curve;        // 4.0: Remap (0 = straight, the generator leaves it out); slot kModSlot = a modulator setting
 };
 
 struct PresetGlobal {

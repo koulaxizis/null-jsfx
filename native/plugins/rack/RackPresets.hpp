@@ -3145,6 +3145,435 @@ static const PresetRoute kP87Routes[] = {
     { "macro2", 0, 6, 0.4f, "Wow/Flutter" },
 };
 
+static const PresetValue kP88S0[] = {
+    { 1, 0.0f, "Reduction" },
+};
+static const PresetValue kP88S1[] = {
+    { 0, 0.0f, "Threshold" },
+    { 4, 0.0f, "Makeup" },
+};
+static const PresetValue kP88S2[] = {
+    { 0, 0.0f, "Amount" },
+};
+static const PresetSlot kP88Slots[] = {
+    { "deesser", kP88S0, 1, 0, 0, 100.0f, true },
+    { "glue_comp", kP88S1, 2, 0, 0, 100.0f, true },
+    { "air", kP88S2, 1, 0, 0, 100.0f, true },
+};
+static const PresetRoute kP88Routes[] = {
+    { "macro1", 0, 1, -0.4f, "Reduction" },
+    { "macro1", 1, 0, -0.4f, "Threshold" },
+    { "macro1", 1, 4, 0.15f, "Makeup" },
+    { "macro1", 2, 0, 0.6f, "Amount" },
+};
+static const PresetGlobal kP88Globals[] = {
+    { "macro1", 50.0f, nullptr },
+};
+
+static const PresetValue kP89S0[] = {
+    { 0, 0.0f, "Attack" },
+};
+static const PresetValue kP89S1[] = {
+    { 0, 0.0f, "Drive" },
+    { 2, 100.0f, "Mix" },
+    { 3, 1.0f, "Mode" },
+};
+static const PresetValue kP89S2[] = {
+    { 0, 0.0f, "Threshold" },
+};
+static const PresetSlot kP89Slots[] = {
+    { "transient_shaper", kP89S0, 1, 0, 0, 100.0f, true },
+    { "saturation", kP89S1, 3, 0, 0, 100.0f, true },
+    { "glue_comp", kP89S2, 1, 0, 0, 100.0f, true },
+};
+static const PresetRoute kP89Routes[] = {
+    { "macro1", 0, 0, 0.2f, "Attack" },
+    { "macro1", 1, 0, 0.6f, "Drive" },
+    { "macro1", 2, 0, -0.5f, "Threshold" },
+};
+static const PresetGlobal kP89Globals[] = {
+    { "macro1", 50.0f, nullptr },
+};
+
+static const PresetValue kP90S0[] = {
+    { 0, 16.0f, "Bits" },
+    { 1, 48000.0f, "Sample Rate" },
+    { 5, 0.0f, "Mix" },
+};
+static const PresetValue kP90S1[] = {
+    { 7, 0.0f, "Mix" },
+};
+static const PresetValue kP90S2[] = {
+    { 0, 0.0f, "Filter" },
+};
+static const PresetSlot kP90Slots[] = {
+    { "bitcrusher", kP90S0, 3, 0, 0, 100.0f, true },
+    { "vinyl_age", kP90S1, 1, 0, 0, 100.0f, true },
+    { "dj_filter", kP90S2, 1, 0, 0, 100.0f, true },
+};
+static const PresetRoute kP90Routes[] = {
+    { "macro1", 0, 5, 0.8f, "Mix" },
+    { "macro1", 0, 0, -0.5f, "Bits" },
+    { "macro1", 1, 7, 0.7f, "Mix" },
+    { "macro1", 2, 0, -0.35f, "Filter" },
+};
+static const PresetGlobal kP90Globals[] = {
+    { "macro1", 50.0f, nullptr },
+};
+
+static const PresetValue kP91S0[] = {
+    { 0, 100.0f, "Width" },
+};
+static const PresetValue kP91S1[] = {
+    { 0, 2.0f, "Type" },
+    { 6, 0.0f, "Mix" },
+};
+static const PresetValue kP91S2[] = {
+    { 2, 0.0f, "Mix" },
+};
+static const PresetSlot kP91Slots[] = {
+    { "stereo_width", kP91S0, 1, 0, 0, 100.0f, true },
+    { "space", kP91S1, 2, 0, 0, 100.0f, true },
+    { "chorus", kP91S2, 1, 0, 0, 100.0f, true },
+};
+static const PresetRoute kP91Routes[] = {
+    { "macro1", 0, 0, 0.3f, "Width" },
+    { "macro1", 1, 6, 0.45f, "Mix" },
+    { "macro1", 2, 2, 0.3f, "Mix" },
+};
+static const PresetGlobal kP91Globals[] = {
+    { "macro1", 50.0f, nullptr },
+};
+
+static const PresetValue kP92S0[] = {
+    { 0, 0.0f, "Threshold" },
+    { 1, 0.0f, "Ratio" },
+};
+static const PresetValue kP92S1[] = {
+    { 0, 0.0f, "Drive" },
+    { 5, 0.0f, "Hiss" },
+    { 3, 0.0f, "Wow" },
+    { 4, 0.0f, "Flutter" },
+    { 7, 100.0f, "Mix" },
+};
+static const PresetValue kP92S2[] = {
+    { 0, 100.0f, "Width" },
+};
+static const PresetSlot kP92Slots[] = {
+    { "glue_comp", kP92S0, 2, 0, 0, 100.0f, true },
+    { "tape", kP92S1, 5, 0, 0, 100.0f, true },
+    { "stereo_width", kP92S2, 1, 0, 0, 100.0f, true },
+};
+static const PresetRoute kP92Routes[] = {
+    { "macro1", 0, 0, -0.4f, "Threshold" },
+    { "macro1", 1, 0, 0.25f, "Drive" },
+    { "macro1", 2, 0, 0.1f, "Width" },
+};
+static const PresetGlobal kP92Globals[] = {
+    { "macro1", 50.0f, nullptr },
+};
+
+static const PresetValue kP93S0[] = {
+    { 0, 20000.0f, "Cutoff" },
+    { 1, 0.9f, "Resonance" },
+    { 3, 0.0f, "Mode" },
+};
+static const PresetValue kP93S1[] = {
+    { 6, 0.0f, "Mix" },
+};
+static const PresetSlot kP93Slots[] = {
+    { "filter", kP93S0, 3, 0, 0, 100.0f, true },
+    { "space", kP93S1, 1, 0, 0, 100.0f, true },
+};
+static const PresetRoute kP93Routes[] = {
+    { "macro1", 0, 0, -0.6f, "Cutoff" },
+    { "macro1", 1, 6, 0.35f, "Mix" },
+};
+static const PresetGlobal kP93Globals[] = {
+    { "macro1", 50.0f, nullptr },
+};
+
+static const PresetValue kP94S0[] = {
+    { 0, 0.0f, "Drive" },
+    { 5, 0.0f, "Hiss" },
+    { 3, 0.0f, "Wow" },
+    { 4, 0.0f, "Flutter" },
+    { 7, 100.0f, "Mix" },
+};
+static const PresetValue kP94S1[] = {
+    { 0, 20000.0f, "Cutoff" },
+    { 1, 0.7f, "Resonance" },
+    { 3, 0.0f, "Mode" },
+};
+static const PresetSlot kP94Slots[] = {
+    { "tape", kP94S0, 5, 0, 0, 100.0f, true },
+    { "filter", kP94S1, 3, 0, 0, 100.0f, true },
+};
+static const PresetRoute kP94Routes[] = {
+    { "macro1", 0, 3, 0.7f, "Wow" },
+    { "macro1", 0, 4, 0.5f, "Flutter" },
+    { "macro1", 0, 0, 0.2f, "Drive" },
+    { "macro1", 1, 0, -0.3f, "Cutoff" },
+};
+static const PresetGlobal kP94Globals[] = {
+    { "macro1", 50.0f, nullptr },
+};
+
+static const PresetValue kP95S0[] = {
+    { 1, 5.0f, "Tempo Sync" },
+    { 3, 50.0f, "Intensity" },
+    { 9, 0.0f, "Mix" },
+};
+static const PresetValue kP95S1[] = {
+    { 6, 0.0f, "Mix" },
+};
+static const PresetSlot kP95Slots[] = {
+    { "tape_echo", kP95S0, 3, 0, 0, 100.0f, true },
+    { "space", kP95S1, 1, 0, 0, 100.0f, true },
+};
+static const PresetRoute kP95Routes[] = {
+    { "macro1", 0, 9, 0.6f, "Mix" },
+    { "macro1", 0, 3, 0.2f, "Intensity" },
+    { "macro1", 1, 6, 0.3f, "Mix" },
+};
+static const PresetGlobal kP95Globals[] = {
+    { "macro1", 50.0f, nullptr },
+};
+
+static const PresetValue kP96S0[] = {
+    { 0, -3.0f, "Attack" },
+    { 1, -4.0f, "Sustain" },
+};
+static const PresetValue kP96S1[] = {
+    { 0, 6.0f, "Attack" },
+};
+static const PresetValue kP96S2[] = {
+    { 0, -2.0f, "Attack" },
+    { 1, -2.0f, "Sustain" },
+};
+static const PresetSlot kP96Slots[] = {
+    { "transient_shaper", kP96S0, 2, 1, 0, 100.0f, true },
+    { "transient_shaper", kP96S1, 1, 2, 0, 100.0f, true },
+    { "transient_shaper", kP96S2, 2, 3, 0, 100.0f, true },
+};
+static const PresetGlobal kP96Globals[] = {
+    { "xover_low", 150.0f, nullptr },
+    { "xover_high", 4000.0f, nullptr },
+};
+
+static const PresetValue kP97S0[] = {
+    { 3, 1.0f, "Tempo Sync" },
+    { 4, 1.0f, "Subdivision" },
+    { 1, 35.0f, "Feedback" },
+    { 2, 30.0f, "Mix" },
+};
+static const PresetValue kP97S1[] = {
+    { 0, 60.0f, "Room Size" },
+    { 1, 55.0f, "Decay" },
+    { 3, 30.0f, "Mix" },
+};
+static const PresetSlot kP97Slots[] = {
+    { "delay", kP97S0, 4, 0, 0, 100.0f, true, 0, 2 },
+    { "reverb", kP97S1, 3, 0, 0, 100.0f, true, 0, 2 },
+};
+static const PresetGlobal kP97Globals[] = {
+    { "split_bands", 2.0f, nullptr },
+    { "split_f1", 250.0f, nullptr },
+};
+
+static const PresetValue kP98S0[] = {
+    { 0, 65.0f, "Room Size" },
+    { 1, 55.0f, "Decay" },
+    { 3, 40.0f, "Mix" },
+};
+static const PresetValue kP98S1[] = {
+    { 0, 30.0f, "Drive" },
+    { 2, 60.0f, "Mix" },
+    { 3, 0.0f, "Mode" },
+};
+static const PresetSlot kP98Slots[] = {
+    { "reverb", kP98S0, 3, 0, 2, 100.0f, true },
+    { "saturation", kP98S1, 3, 0, 2, 100.0f, true },
+};
+
+static const PresetValue kP99S0[] = {
+    { 0, -14.0f, "Threshold" },
+};
+static const PresetValue kP99S1[] = {
+    { 0, 1.0f, "Bass" },
+    { 1, 0.5f, "Treble" },
+};
+static const PresetValue kP99S2[] = {
+    { 0, 0.0f, "Amount" },
+};
+static const PresetValue kP99S3[] = {
+    { 1, -4.0f, "Reduction" },
+};
+static const PresetValue kP99S4[] = {
+    { 0, 100.0f, "Width" },
+};
+static const PresetSlot kP99Slots[] = {
+    { "glue_comp", kP99S0, 1, 0, 1, 100.0f, true },
+    { "tone", kP99S1, 2, 0, 1, 100.0f, true },
+    { "air", kP99S2, 1, 0, 2, 100.0f, true },
+    { "deesser", kP99S3, 1, 0, 2, 100.0f, true },
+    { "stereo_width", kP99S4, 1, 0, 0, 100.0f, true },
+};
+static const PresetRoute kP99Routes[] = {
+    { "macro1", 2, 0, 0.3f, "Amount" },
+    { "macro1", 4, 0, 0.15f, "Width" },
+};
+static const PresetGlobal kP99Globals[] = {
+    { "macro1", 50.0f, nullptr },
+};
+
+static const PresetValue kP100S0[] = {
+    { 1, 0.0f, "Semitones" },
+    { 3, 100.0f, "Mix" },
+};
+static const PresetValue kP100S1[] = {
+    { 0, 1.0f, "Buffer Length" },
+    { 3, 0.0f, "Mix" },
+};
+static const PresetSlot kP100Slots[] = {
+    { "pitch_shifter", kP100S0, 2, 0, 0, 100.0f, true },
+    { "reverser", kP100S1, 2, 0, 0, 100.0f, true },
+};
+static const PresetRoute kP100Routes[] = {
+    { "seq", 0, 1, 0.5f, "Semitones" },
+    { "seq", 1, 3, 0.5f, "Mix" },
+};
+static const PresetGlobal kP100Globals[] = {
+    { "seq_steps", 8.0f, nullptr },
+    { "seq_sync", 0.0f, "1/16" },
+    { "seq_glide", 0.0f, nullptr },
+    { "seq_step1", 0.0f, nullptr },
+    { "seq_step2", 0.25f, nullptr },
+    { "seq_step3", 0.5833f, nullptr },
+    { "seq_step4", 1.0f, nullptr },
+    { "seq_step5", 0.4167f, nullptr },
+    { "seq_step6", 0.0f, nullptr },
+    { "seq_step7", 0.5833f, nullptr },
+    { "seq_step8", 0.25f, nullptr },
+};
+
+static const PresetValue kP101S0[] = {
+    { 3, 4.0f, "Decay" },
+    { 5, 0.0f, "Spread" },
+    { 6, 70.0f, "Mix" },
+};
+static const PresetValue kP101S1[] = {
+    { 0, 3.0f, "Shift" },
+    { 3, 50.0f, "Mix" },
+};
+static const PresetValue kP101S2[] = {
+    { 0, 85.0f, "Room Size" },
+    { 1, 80.0f, "Decay" },
+    { 3, 60.0f, "Mix" },
+};
+static const PresetSlot kP101Slots[] = {
+    { "resonator", kP101S0, 3, 0, 0, 100.0f, true },
+    { "frequency_shifter", kP101S1, 2, 0, 0, 100.0f, true },
+    { "reverb", kP101S2, 3, 0, 0, 100.0f, true },
+};
+static const PresetGlobal kP101Globals[] = {
+    { "feedback", 45.0f, nullptr },
+    { "fb_from", 1.0f, nullptr },
+    { "fb_to", 3.0f, nullptr },
+    { "output", 10.0f, nullptr },
+};
+
+static const PresetValue kP102S0[] = {
+    { 0, -18.0f, "Target" },
+};
+static const PresetValue kP102S1[] = {
+    { 0, 1500.0f, "Cutoff" },
+    { 1, 1.0f, "Resonance" },
+    { 3, 2.0f, "Mode" },
+};
+static const PresetValue kP102S2[] = {
+    { 3, 1.0f, "Tempo Sync" },
+    { 4, 0.0f, "Subdivision" },
+    { 1, 45.0f, "Feedback" },
+    { 2, 0.0f, "Mix" },
+};
+static const PresetValue kP102S3[] = {
+    { 0, 70.0f, "Room Size" },
+    { 1, 60.0f, "Decay" },
+    { 3, 0.0f, "Mix" },
+};
+static const PresetSlot kP102Slots[] = {
+    { "auto_leveler", kP102S0, 1, 0, 0, 100.0f, true },
+    { "filter", kP102S1, 3, 0, 0, 100.0f, true, 1 },
+    { "delay", kP102S2, 4, 0, 0, 100.0f, true, 1 },
+    { "reverb", kP102S3, 3, 0, 0, 100.0f, true, 1 },
+};
+static const PresetRoute kP102Routes[] = {
+    { "macro1", 2, 2, 1.0f, "Mix" },
+    { "macro1", 3, 3, 0.8f, "Mix" },
+};
+static const PresetGlobal kP102Globals[] = {
+    { "lane_mix", 35.0f, nullptr },
+};
+
+static const PresetValue kP103S0[] = {
+    { 2, 50.0f, "Mix" },
+};
+static const PresetValue kP103S1[] = {
+    { 8, 100.0f, "Mix" },
+};
+static const PresetValue kP103S2[] = {
+    { 3, 100.0f, "Mix" },
+};
+static const PresetValue kP103S3[] = {
+    { 0, 7.0f, "Shift" },
+    { 3, 100.0f, "Mix" },
+};
+static const PresetSlot kP103Slots[] = {
+    { "chorus", kP103S0, 1, 0, 0, 100.0f, true },
+    { "granular_delay", kP103S1, 1, 0, 0, 100.0f, true, 1 },
+    { "reverser", kP103S2, 1, 0, 0, 100.0f, true, 2 },
+    { "frequency_shifter", kP103S3, 2, 0, 0, 100.0f, true, 3 },
+};
+static const PresetGlobal kP103Globals[] = {
+    { "lane_mix", 50.0f, nullptr },
+    { "laneb_pan", 40.0f, nullptr },
+    { "lanec_pan", -40.0f, nullptr },
+    { "output", 9.0f, nullptr },
+};
+
+static const PresetValue kP104S0[] = {
+    { 1, -24.0f, "Threshold" },
+    { 2, 3.0f, "Ratio" },
+};
+static const PresetValue kP104S1[] = {
+    { 0, 20.0f, "Drive" },
+    { 2, 50.0f, "Mix" },
+    { 3, 0.0f, "Mode" },
+};
+static const PresetValue kP104S2[] = {
+    { 0, -16.0f, "Threshold" },
+};
+static const PresetValue kP104S3[] = {
+    { 0, 15.0f, "Drive" },
+    { 2, 40.0f, "Mix" },
+    { 3, 1.0f, "Mode" },
+};
+static const PresetValue kP104S4[] = {
+    { 1, -26.0f, "Threshold" },
+    { 2, 2.0f, "Ratio" },
+};
+static const PresetSlot kP104Slots[] = {
+    { "dynamics", kP104S0, 2, 0, 0, 100.0f, true, 0, 1 },
+    { "saturation", kP104S1, 3, 0, 0, 100.0f, true, 0, 2 },
+    { "glue_comp", kP104S2, 1, 0, 0, 100.0f, true, 0, 3 },
+    { "saturation", kP104S3, 3, 0, 0, 100.0f, true, 0, 4 },
+    { "dynamics", kP104S4, 2, 0, 0, 100.0f, true, 0, 5 },
+};
+static const PresetGlobal kP104Globals[] = {
+    { "split_bands", 5.0f, nullptr },
+};
+
 static const Preset kPresets[] = {
     { "Init", "Init", nullptr, 0, nullptr, 0, nullptr, 0 },
     { "Tube EQ", "Chain", kP1Slots, 2, nullptr, 0, nullptr, 0 },
@@ -3234,6 +3663,23 @@ static const Preset kPresets[] = {
     { "Pusher", "Chain", kP85Slots, 4, kP85Routes, 5, nullptr, 0 },
     { "Stutter Build", "Macro", kP86Slots, 3, kP86Routes, 4, nullptr, 0 },
     { "Dub Echo Bus", "Chain", kP87Slots, 3, kP87Routes, 3, nullptr, 0 },
+    { "Vocal Polish", "Macro", kP88Slots, 3, kP88Routes, 4, kP88Globals, 1 },
+    { "Drum Crush", "Macro", kP89Slots, 3, kP89Routes, 3, kP89Globals, 1 },
+    { "Lo-Fi Fade", "Macro", kP90Slots, 3, kP90Routes, 4, kP90Globals, 1 },
+    { "Wide Space", "Macro", kP91Slots, 3, kP91Routes, 3, kP91Globals, 1 },
+    { "Master Glue", "Macro", kP92Slots, 3, kP92Routes, 3, kP92Globals, 1 },
+    { "Breakdown Filter", "Macro", kP93Slots, 2, kP93Routes, 2, kP93Globals, 1 },
+    { "Tape Wobble", "Macro", kP94Slots, 2, kP94Routes, 4, kP94Globals, 1 },
+    { "Dub Throw", "Macro", kP95Slots, 2, kP95Routes, 3, kP95Globals, 1 },
+    { "Multiband Transient", "Routing", kP96Slots, 3, nullptr, 0, kP96Globals, 2 },
+    { "Mud-Free Space", "Routing", kP97Slots, 2, nullptr, 0, kP97Globals, 2 },
+    { "Side Space", "Routing", kP98Slots, 2, nullptr, 0, nullptr, 0 },
+    { "Mid/Side Master", "Routing", kP99Slots, 5, kP99Routes, 2, kP99Globals, 1 },
+    { "Melodic Glitch", "Routing", kP100Slots, 2, kP100Routes, 2, kP100Globals, 11 },
+    { "Feedback Drone", "Routing", kP101Slots, 3, nullptr, 0, kP101Globals, 4 },
+    { "Vocal Throw Lanes", "Routing", kP102Slots, 4, kP102Routes, 2, kP102Globals, 1 },
+    { "Quad Texture", "Routing", kP103Slots, 4, nullptr, 0, kP103Globals, 4 },
+    { "Multipass Master", "Routing", kP104Slots, 5, nullptr, 0, kP104Globals, 1 },
 };
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 

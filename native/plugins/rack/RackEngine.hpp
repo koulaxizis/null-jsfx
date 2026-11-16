@@ -29,6 +29,12 @@
  *   At 0 the loop is not computed.
  * - Keyed modules (RackKeyed.hpp, Sidechain Ducker) get the rack input as their key, delayed by
  *   the latency of the slots before them in their lane.
+ * - Lanes C and D (4.0): a slot's Lane C/D moves it to lane C or D. With any slot off lane A, every
+ *   lane in use (A always; B, C, D with a slot on them) runs the rack input through its slots, the
+ *   lanes are lined up to the longest and summed with weights: A (1 - Lane Mix) x 2 / N and
+ *   B Lane Mix x 2 / N when B is in use (else A 1 / N), C and D 1 / N, N the lanes in use, so two
+ *   lanes A and B blend exactly as before. Each lane then has Gain, Pan (a balance), Mute and
+ *   Solo (any solo mutes the lanes not soloed); at 0 dB, centre, off they change nothing.
  *
  * Threads: parameters are atomics (any thread). Module changes, routes and the sample rate are
  * set off the audio thread: the new module is created and prepared there, then swapped in under
@@ -221,6 +227,60 @@ struct Split3 {
     }
 };
 
+// up to 5 bands (added in 4.0): LR4 crossovers in a cascade, each lower band passed through the
+// allpasses of the crossovers above it, so the bands sum to an allpass (flat in level)
+struct Split5 {
+    Biquad lp[kMaxBands - 1][2], hp[kMaxBands - 1][2];
+    Biquad ap[kMaxBands - 1][kMaxBands - 1]; // ap[k][j]: band k through crossover j's allpass (j > k)
+    uint32_t bands = 0;
+
+    void set(const double* f, uint32_t nb, double sr)
+    {
+        bands = nb;
+        for (uint32_t k = 0; k + 1 < nb; ++k)
+        {
+            Biquad l, h, a;
+            l.set(Biquad::kLow, f[k], sr);
+            h.set(Biquad::kHigh, f[k], sr);
+            a.set(Biquad::kAll, f[k], sr);
+            for (int i = 0; i < 2; ++i)
+            {
+                lp[k][i].copyCoefs(l);
+                hp[k][i].copyCoefs(h);
+            }
+            for (uint32_t b = 0; b < k; ++b)
+                ap[b][k].copyCoefs(a);
+        }
+    }
+    void reset()
+    {
+        for (uint32_t k = 0; k + 1 < kMaxBands; ++k)
+        {
+            for (int i = 0; i < 2; ++i)
+            {
+                lp[k][i].reset();
+                hp[k][i].reset();
+            }
+            for (uint32_t j = 0; j + 1 < kMaxBands; ++j)
+                ap[k][j].reset();
+        }
+    }
+    // the bands of x (out[0..bands-1])
+    inline void process(double x, double* out)
+    {
+        double rest = x;
+        for (uint32_t k = 0; k + 1 < bands; ++k)
+        {
+            double b = lp[k][1].process(lp[k][0].process(rest));
+            rest = hp[k][1].process(hp[k][0].process(rest));
+            for (uint32_t j = k + 1; j + 1 < bands; ++j)
+                b = ap[k][j].process(b);
+            out[k] = b;
+        }
+        out[bands - 1] = rest;
+    }
+};
+
 // ---- the engine ------------------------------------------------------------------------------
 
 class RackEngine {
@@ -242,7 +302,9 @@ public:
         for (uint32_t i = 0; i < kNumParams; ++i)
         {
             char n[32], s[32];
-            const DISTRHO::SliderInfo in = paramInfo(i, n, sizeof(n), s, sizeof(s));
+            bool lg = false;
+            const DISTRHO::SliderInfo in = paramInfo(i, n, sizeof(n), s, sizeof(s), &lg);
+            fLog[i] = lg;
             fMin[i] = in.min;
             fMax[i] = in.max;
             fDef[i] = in.def;
@@ -258,6 +320,8 @@ public:
         fRackDry.allocate(kRackDelay);
         fAlignA.allocate(kRackDelay);
         fAlignB.allocate(kRackDelay);
+        fAlignC.allocate(kRackDelay);
+        fAlignD.allocate(kRackDelay);
         fKey.allocate(kRackDelay);
         fFbRing.allocate(2 * kChunk);
         for (auto& v : fSourceValue)
@@ -307,17 +371,35 @@ public:
                 s.mod->setSampleRate(sr);
             s.split[0].reset();
             s.split[1].reset();
+            s.split5[0].reset();
+            s.split5[1].reset();
             s.dry.clear();
             s.pass.clear();
         }
         fRackDry.clear();
         fXLow = fXHigh = -1.0f;
+        fSplitKey = -1.0;
+        fOutSplit[0].reset();
+        fOutSplit[1].reset();
         fEnv = 0.0;
         fLfoPhase[0] = fLfoPhase[1] = 0.0;
         fLfoCycle[0] = fLfoCycle[1] = -1;
         fSeqPos = 0.0;
+        fRandPhase = fRandFrom = fRandTo = 0.0;
+        fRandSeed = 4242.0;
+        fFollowN = 0;
+        fFollowEnv = 0.0;
+        fAdsrLevel = fAdsrValue = fAdsrRelFrom = 0.0;
+        fAdsrStage = 0;
+        fAdsrGate = false;
+        std::memset(fPitchBuf, 0, sizeof(fPitchBuf));
+        fPitchPos = fPitchHop = fPitchAccN = 0;
+        fPitchDec = uint32_t(std::max(1.0, std::round(sr / 12000.0)));
+        fPitchAcc = fPitchTarget = fPitchOut = 0.0;
         fAlignA.clear();
         fAlignB.clear();
+        fAlignC.clear();
+        fAlignD.clear();
         fKey.clear();
         fFbRing.clear();
         fLanesActive = fFbActive = false;
@@ -393,6 +475,8 @@ public:
             for (uint32_t p = 0; p < kSlotParams; ++p)
                 moved[j].params[p] = param(slotParam(j, p));
             moved[j].lane = param(laneParam(j));
+            moved[j].laneX = param(laneXParam(j));
+            moved[j].split = param(splitParam(j));
         }
         for (uint32_t i = 0; i < kSlots; ++i)
         {
@@ -408,6 +492,8 @@ public:
                     for (uint32_t p = 0; p < kSlotParams; ++p)
                         setParam(slotParam(i, p), m.params[p]);
                     setParam(laneParam(i), m.lane);
+                    setParam(laneXParam(i), m.laneX);
+                    setParam(splitParam(i), m.split);
                     resetSlotAudio(s);
                 }
             }
@@ -454,8 +540,9 @@ public:
         fLock.lock();
         fNumRoutes = 0;
         for (uint32_t i = 0; i < n && fNumRoutes < kMaxRoutes; ++i)
-            if (r[i].source >= 0 && r[i].source < kNumSources && r[i].slot >= 0 && r[i].slot < int(kSlots) &&
-                r[i].value >= 0 && r[i].value < int(kValues))
+            if (r[i].source >= 0 && r[i].source < kNumSources && r[i].value >= 0 &&
+                ((r[i].slot >= 0 && r[i].slot < int(kSlots) && r[i].value < int(kValues)) ||
+                 (r[i].slot == kModSlot && r[i].value < int(kNumModTargets))))
                 fRoutes[fNumRoutes++] = r[i];
         fLock.unlock();
         fVersion.fetch_add(1, std::memory_order_release);
@@ -518,7 +605,9 @@ public:
             out.params[slotParam(i, kSlotMix)] = ps.mix;
             out.params[slotParam(i, kSlotBand)] = float(ps.band);
             out.params[slotParam(i, kSlotChannel)] = float(ps.channel);
-            out.params[laneParam(i)] = ps.lane ? float(kLaneB) : float(kLaneA);
+            out.params[laneParam(i)] = ps.lane == kLaneB ? 1.0f : 0.0f;
+            out.params[laneXParam(i)] = ps.lane == kLaneC ? 1.0f : ps.lane == kLaneD ? 2.0f : 0.0f;
+            out.params[splitParam(i)] = float(std::min<uint32_t>(ps.split, kMaxBands));
             for (uint32_t v = 0; v < d->numSliders && v < kValues; ++v)
                 out.params[valueParam(i, v)] = plainToValue(d->sliders[v], isLogSlider(d->id, v), d->sliders[v].def);
             for (uint32_t k = 0; k < ps.numValues; ++k)
@@ -570,7 +659,8 @@ public:
         {
             const PresetRoute& pr = p.routes[k];
             const int src = sourceFromSymbol(pr.source);
-            if (src < 0 || pr.slot >= kSlots || pr.value >= kValues)
+            const bool modTarget = pr.slot == uint32_t(kModSlot) && pr.value < kNumModTargets;
+            if (src < 0 || (!modTarget && (pr.slot >= kSlots || pr.value >= kValues)))
             {
                 fail(std::string("bad route from ") + pr.source);
                 continue;
@@ -580,6 +670,7 @@ public:
             r.slot = pr.slot;
             r.value = pr.value;
             r.depth = pr.depth;
+            r.curve = pr.curve;
         }
         return ok;
     }
@@ -595,8 +686,28 @@ public:
         for (uint32_t i = 0; i < kNumParams; ++i)
             setParam(i, st->params[i]);
         setRoutes(st->routes, st->numRoutes);
+        Scene none2[kScenes];
+        setScenes(none2); // a preset has no scenes
         fPresetName = p.name;
         return ok;
+    }
+
+    // 4.0 scenes: swapped in under the lock (strings swap without allocating)
+    void setScenes(Scene* sc)
+    {
+        fLock.lock();
+        for (uint32_t k = 0; k < kScenes; ++k)
+            std::swap(fScenes[k], sc[k]);
+        fLock.unlock();
+        fVersion.fetch_add(1, std::memory_order_release);
+    }
+
+    void scenes(Scene* out) const
+    {
+        const_cast<SpinLock&>(fLock).lock();
+        for (uint32_t k = 0; k < kScenes; ++k)
+            out[k] = fScenes[k];
+        const_cast<SpinLock&>(fLock).unlock();
     }
 
     std::string presetName() const { return fPresetName; }
@@ -670,6 +781,7 @@ private:
         bool log[kValues] = {};
         DelayLine dry, pass;
         Split3 split[2];
+        Split5 split5[2]; // added in 4.0
         std::atomic<float> eff[kValues];
         std::atomic<uint32_t> latency { 0 };
         KeyedModule* keyed = nullptr; // mod, when it takes a key
@@ -680,7 +792,7 @@ private:
         const nulljsfx::ModuleDesc* desc = nullptr;
         float applied[kValues] = {};
         float params[kSlotParams] = {};
-        float lane = 0.0f;
+        float lane = 0.0f, laneX = 0.0f, split = 0.0f;
     };
 
     void resetSlotAudio(Slot& s)
@@ -689,6 +801,8 @@ private:
         s.pass.clear();
         s.split[0].reset();
         s.split[1].reset();
+        s.split5[0].reset();
+        s.split5[1].reset();
         s.latency.store(0, std::memory_order_relaxed);
     }
 
@@ -714,10 +828,81 @@ private:
         return seed / 2147483647.0;
     }
 
+    // 4.0: with Scenes on, the values Scene Morph gives (fSceneOn false: the parameters)
+    void updateScenes()
+    {
+        fSceneOn = false;
+        if (param(kScenesOn) < 0.5f)
+            return;
+        int used[kScenes], nu = 0;
+        for (uint32_t k = 0; k < kScenes; ++k)
+            if (fScenes[k].used)
+                used[nu++] = int(k);
+        if (!nu)
+            return;
+        fSceneOn = true;
+        const double pos = double(clamp01(param(kSceneMorph) / 100.0f)) * double(nu - 1);
+        const int ia = std::min(nu - 1, int(std::floor(pos))), ib = std::min(nu - 1, ia + 1);
+        const float t = float(pos - double(ia));
+        const Scene& A = fScenes[used[ia]];
+        const Scene& B = fScenes[used[ib]];
+        for (uint32_t m = 0; m < 8; ++m)
+            fSceneMacro[m] = A.macros[m] + (B.macros[m] - A.macros[m]) * t;
+        for (uint32_t sl = 0; sl < kSlots; ++sl)
+        {
+            const nulljsfx::ModuleDesc* d = fSlot[sl].desc;
+            const bool va = d && A.ids[sl] == d->id, vb = d && B.ids[sl] == d->id;
+            fSceneSlot[sl] = va || vb;
+            if (!fSceneSlot[sl])
+                continue;
+            const Scene& a = va ? A : B;
+            const Scene& b = vb ? B : A;
+            const float tt = va && vb ? t : 0.0f;
+            fSceneVal[sl][0] = a.vals[sl][0] + (b.vals[sl][0] - a.vals[sl][0]) * tt;
+            const uint32_t nv = std::min<uint32_t>(d->numSliders, kValues);
+            for (uint32_t v = 0; v < kValues; ++v)
+            {
+                const float x = a.vals[sl][1 + v], y = b.vals[sl][1 + v];
+                // stepped sliders (options, steps of 1 or more) switch half way
+                const bool stepped = v < nv && (d->sliders[v].options || d->sliders[v].step >= 1.0f);
+                fSceneVal[sl][1 + v] = stepped ? (tt < 0.5f ? x : y) : x + (y - x) * tt;
+            }
+        }
+    }
+
+    // a slot value's base (before modulation): the scene's with Scenes on, else the parameter
+    float baseValue(uint32_t s, uint32_t v) const
+    {
+        return fSceneOn && fSceneSlot[s] ? fSceneVal[s][1 + v] : param(valueParam(s, v));
+    }
+
+    // 4.0: a modulator setting moved by the routes to it (from the sources of the chunk before):
+    // the parameter itself when no route moves it
+    float modParam(uint32_t p) const
+    {
+        for (uint32_t k = 0; k < kNumModTargets; ++k)
+            if (kModTargets[k] == p)
+            {
+                if (fModOff[k] == 0.0f)
+                    return param(p);
+                const double lo = fMin[p], hi = fMax[p], v = param(p);
+                double t = fLog[p] ? std::log(v / lo) / std::log(hi / lo) : (v - lo) / (hi - lo);
+                t = std::min(1.0, std::max(0.0, t + double(fModOff[k])));
+                return float(fLog[p] ? lo * std::pow(hi / lo, t) : lo + (hi - lo) * t);
+            }
+        return param(p);
+    }
+
     void updateSources(const float* l, const float* r, uint32_t n, const Time& t)
     {
+        for (uint32_t k = 0; k < kNumModTargets; ++k)
+            fModOff[k] = 0.0f;
+        for (uint32_t i = 0; i < fNumRoutes; ++i)
+            if (fRoutes[i].slot == kModSlot)
+                fModOff[fRoutes[i].value] += fRoutes[i].depth * remap(fSrc[fRoutes[i].source], fRoutes[i].curve);
+
         for (int m = 0; m < 8; ++m)
-            fSrc[kSrcMacro1 + m] = clamp01(param(kMacro1 + m) / 100.0f);
+            fSrc[kSrcMacro1 + m] = clamp01((fSceneOn ? fSceneMacro[m] : param(kMacro1 + m)) / 100.0f);
 
         const double tempo = t.tempo > 0.0 ? t.tempo : 120.0;
         for (int k = 0; k < 2; ++k)
@@ -750,7 +935,7 @@ private:
             if (!(beats > 0.0 && t.playing && t.valid))
             {
                 // free running: Hz, or the synced note at the host tempo while stopped
-                const double hz = beats > 0.0 ? tempo / 60.0 / beats : double(param(base));
+                const double hz = beats > 0.0 ? tempo / 60.0 / beats : double(modParam(base));
                 double next = fLfoPhase[k] + hz * double(n) / fSampleRate;
                 if (next >= 1.0)
                 {
@@ -772,7 +957,7 @@ private:
             e = x > e ? att * e + (1.0 - att) * x : rel * e + (1.0 - rel) * x;
         }
         fEnv = e < 1e-30 ? 0.0 : e;
-        const double g = std::pow(10.0, double(param(kEnvGain)) / 20.0);
+        const double g = std::pow(10.0, double(modParam(kEnvGain)) / 20.0);
         fSrc[kSrcEnv] = float(std::min(1.0, fEnv * g));
 
         // step sequencer: the position in steps, from the host's beat when synced and playing,
@@ -799,13 +984,208 @@ private:
                 fSeqPos = pos;
             else
             {
-                const double rate = beats > 0.0 ? tempo / 60.0 / beats : double(param(kSeqRate)); // steps/s
+                const double rate = beats > 0.0 ? tempo / 60.0 / beats : double(modParam(kSeqRate)); // steps/s
                 fSeqPos = std::fmod(pos + rate * double(n) / fSampleRate, double(steps));
             }
         }
 
+        updateNewSources(l, r, n);
+
         for (int s = 0; s < kNumSources; ++s)
             fSourceValue[s].store(fSrc[s], std::memory_order_relaxed);
+    }
+
+    // ---- the 4.0 modulators ------------------------------------------------------------------
+
+    void updateNewSources(const float* l, const float* r, uint32_t n)
+    {
+        const double dt = double(n) / fSampleRate;
+
+        // Smooth Random: a new random target every 1 / Rate s; Smooth glides to it (an S-curve over
+        // that share of the cycle; 0 = steps)
+        {
+            fRandPhase += double(modParam(kRandRate)) * dt;
+            if (fRandPhase >= 1.0)
+            {
+                fRandPhase -= std::floor(fRandPhase);
+                fRandFrom = fRandTo;
+                fRandTo = parkMiller(fRandSeed);
+            }
+            const double sm = std::min(1.0, std::max(0.0, double(modParam(kRandSmooth)) / 100.0));
+            double u = sm > 0.0 ? std::min(1.0, fRandPhase / sm) : 1.0;
+            u = u * u * (3.0 - 2.0 * u);
+            fSrc[kSrcRand] = float(fRandFrom + (fRandTo - fRandFrom) * u);
+        }
+
+        // Follower: the level after the slot Follower Slot, measured in the chunk before
+        {
+            const double att = std::exp(-1.0 / (std::max(0.1f, param(kFollowAttack)) * 0.001 * fSampleRate));
+            const double rel = std::exp(-1.0 / (std::max(1.0f, param(kFollowRelease)) * 0.001 * fSampleRate));
+            double e = fFollowEnv;
+            for (uint32_t i = 0; i < fFollowN; ++i)
+            {
+                const double x = fFollowBuf[i];
+                e = x > e ? att * e + (1.0 - att) * x : rel * e + (1.0 - rel) * x;
+            }
+            fFollowEnv = e < 1e-30 ? 0.0 : e;
+            fSrc[kSrcFollow] = float(std::min(1.0, fFollowEnv * std::pow(10.0, double(param(kFollowGain)) / 20.0)));
+        }
+
+        // ADSR: gated by the rack input (after the input gain) above Threshold, 3 dB of hysteresis
+        {
+            double pk = fAdsrLevel;
+            const double fall = std::exp(-1.0 / (0.05 * fSampleRate));
+            for (uint32_t i = 0; i < n; ++i)
+            {
+                const double x = std::max(std::fabs(double(l[i])), std::fabs(double(r[i])));
+                pk = x > pk ? x : pk * fall;
+            }
+            fAdsrLevel = pk < 1e-30 ? 0.0 : pk;
+            const double on = std::pow(10.0, double(param(kAdsrThreshold)) / 20.0), off = on * 0.7079457843841379;
+            if (!fAdsrGate && fAdsrLevel > on)
+            {
+                fAdsrGate = true;
+                fAdsrStage = 1;
+            }
+            else if (fAdsrGate && fAdsrLevel < off)
+            {
+                fAdsrGate = false;
+                fAdsrStage = 4;
+                fAdsrRelFrom = fAdsrValue;
+            }
+            const double sus = std::min(1.0, std::max(0.0, double(modParam(kAdsrSustain)) / 100.0));
+            double v = fAdsrValue;
+            switch (fAdsrStage)
+            {
+            case 1: // attack: up to 1
+                v += dt / (std::max(0.1f, modParam(kAdsrAttack)) * 0.001);
+                if (v >= 1.0)
+                {
+                    v = 1.0;
+                    fAdsrStage = 2;
+                }
+                break;
+            case 2: // decay: down to Sustain
+                v -= (1.0 - sus) * dt / (std::max(1.0f, modParam(kAdsrDecay)) * 0.001);
+                if (v <= sus)
+                {
+                    v = sus;
+                    fAdsrStage = 3;
+                }
+                break;
+            case 3: // sustain (follows Sustain)
+                v = sus;
+                break;
+            case 4: // release: down to 0 from where it was
+                v -= fAdsrRelFrom * dt / (std::max(1.0f, modParam(kAdsrRelease)) * 0.001);
+                if (v <= 0.0)
+                {
+                    v = 0.0;
+                    fAdsrStage = 0;
+                }
+                break;
+            default:
+                v = 0.0;
+                break;
+            }
+            fAdsrValue = v;
+            fSrc[kSrcAdsr] = float(v);
+        }
+
+        // Pitch: only while a route listens (the analysis costs)
+        bool pitchUsed = false;
+        for (uint32_t i = 0; i < fNumRoutes; ++i)
+            pitchUsed = pitchUsed || fRoutes[i].source == kSrcPitch;
+        if (pitchUsed)
+            updatePitch(l, r, n);
+        fSrc[kSrcPitch] = float(fPitchOut);
+    }
+
+    // pitch follower: the mono input averaged down to about 12 kHz, every 256 of those samples YIN
+    // (difference function, cumulative mean normalized, threshold 0.15, parabolic peak) over 512 of
+    // them; the found pitch on a log scale from Pitch Low (0) to Pitch High (1), held while
+    // unvoiced or quieter than -50 dB, smoothed over 20 ms
+    void updatePitch(const float* l, const float* r, uint32_t n)
+    {
+        for (uint32_t i = 0; i < n; ++i)
+        {
+            fPitchAcc += 0.5 * (double(l[i]) + double(r[i]));
+            if (++fPitchAccN < fPitchDec)
+                continue;
+            fPitchBuf[fPitchPos] = fPitchAcc / double(fPitchDec);
+            fPitchPos = (fPitchPos + 1) % kPitchLen;
+            fPitchAcc = 0.0;
+            fPitchAccN = 0;
+            if (++fPitchHop < kPitchHop)
+                continue;
+            fPitchHop = 0;
+            analysePitch();
+        }
+        const double a = 1.0 - std::exp(-double(n) / (0.02 * fSampleRate));
+        fPitchOut += (fPitchTarget - fPitchOut) * a;
+    }
+
+    void analysePitch()
+    {
+        const double fs = fSampleRate / double(fPitchDec);
+        const double lo = std::max(20.0, double(param(kPitchLow)));
+        const double hi = std::max(lo * 1.01, double(param(kPitchHigh)));
+        const uint32_t tmin = std::max<uint32_t>(2, uint32_t(fs / std::min(hi * 1.5, fs / 4.0)));
+        const uint32_t tmax = std::min<uint32_t>(kPitchWin - 1, uint32_t(fs / (lo / 1.5)) + 1);
+        // the last kPitchLen samples, oldest first
+        double* x = fPitchWork;
+        double energy = 0.0;
+        for (uint32_t i = 0; i < kPitchLen; ++i)
+        {
+            x[i] = fPitchBuf[(fPitchPos + i) % kPitchLen];
+            energy += x[i] * x[i];
+        }
+        if (energy / double(kPitchLen) < 1e-10) // -100 dB power, -50 dB rms
+            return;
+        double run = 0.0;
+        int best = -1;
+        double* d = fPitchDiff;
+        d[0] = 1.0;
+        for (uint32_t tau = 1; tau <= tmax; ++tau)
+        {
+            double s = 0.0;
+            for (uint32_t i = 0; i < kPitchWin; ++i)
+            {
+                const double q = x[i] - x[i + tau];
+                s += q * q;
+            }
+            run += s;
+            d[tau] = run > 0.0 ? s * double(tau) / run : 1.0;
+        }
+        for (uint32_t tau = tmin; tau + 1 <= tmax; ++tau)
+            if (d[tau] < 0.15)
+            {
+                while (tau + 1 <= tmax && d[tau + 1] < d[tau])
+                    ++tau;
+                best = int(tau);
+                break;
+            }
+        if (best < 0)
+            return;
+        double tf = double(best);
+        if (best > 1 && uint32_t(best) < tmax)
+        {
+            const double a = d[best - 1], b = d[best], c = d[best + 1], den = a - 2.0 * b + c;
+            if (den > 0.0)
+                tf += 0.5 * (a - c) / den;
+        }
+        const double f = fs / tf;
+        fPitchTarget = std::min(1.0, std::max(0.0, std::log(f / lo) / std::log(hi / lo)));
+    }
+
+    // the level after slot s (in its lane), for the Follower
+    void follow(uint32_t s, const float* xl, const float* xr, uint32_t n)
+    {
+        if (int(s) != int(std::lround(param(kFollowSlot))) - 1)
+            return;
+        for (uint32_t i = 0; i < n; ++i)
+            fFollowBuf[i] = std::max(std::fabs(xl[i]), std::fabs(xr[i]));
+        fFollowN = n;
     }
 
     // effective values -> Module::setValue where they changed
@@ -817,7 +1197,9 @@ private:
         for (uint32_t i = 0; i < fNumRoutes; ++i)
         {
             const Route& r = fRoutes[i];
-            mod[r.slot][r.value] += r.depth * fSrc[r.source];
+            if (r.slot == kModSlot)
+                continue; // a modulator setting: updateSources
+            mod[r.slot][r.value] += r.depth * remap(fSrc[r.source], r.curve);
             any[r.slot] = true;
         }
         for (uint32_t s = 0; s < kSlots; ++s)
@@ -828,7 +1210,7 @@ private:
             const uint32_t nv = std::min<uint32_t>(sl.desc->numSliders, kValues);
             for (uint32_t v = 0; v < nv; ++v)
             {
-                const float norm = clamp01(param(valueParam(s, v)) + (any[s] ? mod[s][v] : 0.0f));
+                const float norm = clamp01(baseValue(s, v) + (any[s] ? mod[s][v] : 0.0f));
                 sl.eff[v].store(norm, std::memory_order_relaxed);
                 const float plain = valueToPlain(sl.desc->sliders[v], sl.log[v], norm);
                 if (plain != sl.applied[v])
@@ -855,6 +1237,7 @@ private:
             pin = std::max(pin, std::max(std::fabs(xl[i]), std::fabs(xr[i])));
         }
 
+        updateScenes();
         updateSources(xl, xr, n, t);
         applyValues();
         updateCrossovers();
@@ -868,26 +1251,73 @@ private:
         // the key of keyed modules: the rack input after the input gain
         fKey.write(xl, xr, n);
 
-        bool laneB = false;
+        // the lane of each slot, and which lanes have a slot
+        bool used[kLanes] = { true, false, false, false };
+        bool lanes = false;
         for (uint32_t s = 0; s < kSlots; ++s)
-            laneB = laneB || (fSlot[s].desc && param(laneParam(s)) >= 0.5f);
+        {
+            fLaneOf[s] = slotLane(param(laneParam(s)), param(laneXParam(s)));
+            if (fSlot[s].desc && fLaneOf[s] != kLaneA)
+            {
+                used[fLaneOf[s]] = true;
+                lanes = true;
+            }
+        }
         const float fb = std::min(std::max(param(kFeedback), 0.0f), kMaxFeedback) / 100.0f;
 
         uint32_t total = 0;
-        if (!laneB && !(fb > 0.0f))
+        if (!lanes && !(fb > 0.0f))
         {
             // one serial chain, exactly as in 2.1
             fLanesActive = fFbActive = false;
             for (uint32_t s = 0; s < kSlots; ++s)
+            {
                 if (fSlot[s].desc)
                 {
                     const uint32_t lat = processSlot(s, xl, xr, n, mt, total);
                     total += lat;
                 }
+                follow(s, xl, xr, n);
+            }
         }
         else
-            total = processLanes(xl, xr, n, mt, laneB, fb);
+            total = processLanes(xl, xr, n, mt, lanes, used, fb);
         fKey.advance(n);
+
+        // 4.0: Band Solo, while a slot runs on a split band, keeps only the soloed bands
+        bool splitUsed = false, bandSolo = false;
+        for (uint32_t s = 0; s < kSlots; ++s)
+            splitUsed = splitUsed || (fSlot[s].desc && std::lround(param(splitParam(s))) > 0);
+        for (uint32_t k = 0; k < fSplitN; ++k)
+            bandSolo = bandSolo || param(kBandSolo1 + k) >= 0.5f;
+        if (splitUsed && bandSolo)
+        {
+            if (!fSplitUsed)
+            {
+                fOutSplit[0].reset();
+                fOutSplit[1].reset();
+                fSplitUsed = true;
+            }
+            bool keep[kMaxBands];
+            for (uint32_t k = 0; k < fSplitN; ++k)
+                keep[k] = param(kBandSolo1 + k) >= 0.5f;
+            for (uint32_t i = 0; i < n; ++i)
+            {
+                double b0[kMaxBands], b1[kMaxBands], s0 = 0.0, s1 = 0.0;
+                fOutSplit[0].process(xl[i], b0);
+                fOutSplit[1].process(xr[i], b1);
+                for (uint32_t k = 0; k < fSplitN; ++k)
+                    if (keep[k])
+                    {
+                        s0 += b0[k];
+                        s1 += b1[k];
+                    }
+                xl[i] = float(s0);
+                xr[i] = float(s1);
+            }
+        }
+        else
+            fSplitUsed = false;
 
         // the rack's mix against its input delayed by the whole chain's latency, then the output gain
         const uint32_t d = std::min(total, fRackDry.maxDelay());
@@ -919,26 +1349,59 @@ private:
         const float ny = float(fSampleRate) * 0.45f;
         f1 = std::min(std::max(f1, 20.0f), ny * 0.5f);
         f2 = std::min(std::max(f2, f1 * 1.25f), ny);
-        if (f1 == fXLow && f2 == fXHigh)
+        if (f1 != fXLow || f2 != fXHigh)
+        {
+            fXLow = f1;
+            fXHigh = f2;
+            for (Slot& s : fSlot)
+                for (Split3& sp : s.split)
+                    sp.set(f1, f2, fSampleRate);
+        }
+        updateSplit();
+    }
+
+    // the split into up to 5 bands (4.0): Split Bands and Split 1..4, each crossover at least a
+    // third of an octave (x 1.25) above the one below and under 0.45 x the sample rate
+    void updateSplit()
+    {
+        const uint32_t nb = uint32_t(std::max(2L, std::min(long(kMaxBands), std::lround(param(kSplitBands)))));
+        const double ny = fSampleRate * 0.45;
+        double f[kMaxBands - 1], key = double(nb);
+        for (uint32_t k = 0; k + 1 < nb; ++k)
+        {
+            double v = std::max(20.0, double(param(kSplitFreq1 + k)));
+            if (k > 0)
+                v = std::max(v, f[k - 1] * 1.25);
+            f[k] = std::min(v, ny / std::pow(1.25, double(nb - 2 - k)));
+            key = key * 1e6 + f[k];
+        }
+        if (key == fSplitKey)
             return;
-        fXLow = f1;
-        fXHigh = f2;
+        fSplitKey = key;
+        fSplitN = nb;
+        for (uint32_t k = 0; k + 1 < nb; ++k)
+            fSplitF[k] = f[k];
         for (Slot& s : fSlot)
-            for (Split3& sp : s.split)
-                sp.set(f1, f2, fSampleRate);
+            for (Split5& sp : s.split5)
+                sp.set(f, nb, fSampleRate);
+        for (Split5& sp : fOutSplit)
+            sp.set(f, nb, fSampleRate);
     }
 
     // two lanes and/or the feedback loop (added after 2.1); x holds the input and gets the output. Returns
     // the latency (the longer lane's).
-    uint32_t processLanes(float* xl, float* xr, uint32_t n, const nulljsfx::ModuleTime& mt, bool laneB, float fb)
+    uint32_t processLanes(float* xl, float* xr, uint32_t n, const nulljsfx::ModuleTime& mt, bool lanes,
+                          const bool used[kLanes], float fb)
     {
-        float* yl = fLaneL;
-        float* yr = fLaneR;
-        if (laneB)
-        {
-            std::memcpy(yl, xl, n * sizeof(float));
-            std::memcpy(yr, xr, n * sizeof(float));
-        }
+        // the buffers of lanes A (x itself), B, C and D
+        float* bufL[kLanes] = { xl, fLaneL, fLaneCL, fLaneDL };
+        float* bufR[kLanes] = { xr, fLaneR, fLaneCR, fLaneDR };
+        for (uint32_t k = 1; k < kLanes; ++k)
+            if (lanes && used[k])
+            {
+                std::memcpy(bufL[k], xl, n * sizeof(float));
+                std::memcpy(bufR[k], xr, n * sizeof(float));
+            }
 
         // feedback: what left slot `to` kChunk samples ago, through the loop's filters and soft clip
         const bool fbOn = fb > 0.0f;
@@ -980,13 +1443,13 @@ private:
         else
             fFbActive = false;
 
-        uint32_t latA = 0, latB = 0;
+        uint32_t lat4[kLanes] = { 0, 0, 0, 0 };
         for (uint32_t s = 0; s < kSlots; ++s)
         {
-            const bool b = laneB && param(laneParam(s)) >= 0.5f;
-            float* bl = b ? yl : xl;
-            float* br = b ? yr : xr;
-            uint32_t& lat = b ? latB : latA;
+            const int k = lanes ? fLaneOf[s] : kLaneA;
+            float* bl = bufL[k];
+            float* br = bufR[k];
+            uint32_t& lat = lat4[k];
             if (fbOn && int(s) == from)
                 for (uint32_t i = 0; i < n; ++i)
                 {
@@ -998,34 +1461,77 @@ private:
                 const uint32_t l = processSlot(s, bl, br, n, mt, lat);
                 lat += l;
             }
+            follow(s, bl, br, n);
             if (fbOn && int(s) == to)
                 fFbRing.write(bl, br, n);
         }
         if (fbOn)
             fFbRing.advance(n);
-        if (!laneB)
+        if (!lanes)
         {
             fLanesActive = false;
-            return latA;
+            return lat4[kLaneA];
         }
 
-        // line the lanes up (delay the shorter one) and blend them
-        const uint32_t total = std::max(latA, latB);
-        const uint32_t dA = std::min(total - latA, fAlignA.maxDelay()), dB = std::min(total - latB, fAlignB.maxDelay());
+        // line the lanes up (delay the shorter ones) and sum them with their weights
+        uint32_t total = 0, nUsed = 0;
+        for (uint32_t k = 0; k < kLanes; ++k)
+            if (used[k])
+            {
+                total = std::max(total, lat4[k]);
+                ++nUsed;
+            }
+        DelayLine* align[kLanes] = { &fAlignA, &fAlignB, &fAlignC, &fAlignD };
+        uint32_t dl[kLanes];
+        for (uint32_t k = 0; k < kLanes; ++k)
+            dl[k] = std::min(total - lat4[k], align[k]->maxDelay());
         if (!fLanesActive)
         {
-            fAlignA.clearRecent(dA + 1);
-            fAlignB.clearRecent(dB + 1);
+            for (uint32_t k = 0; k < kLanes; ++k)
+                align[k]->clearRecent(dl[k] + 1);
             fLanesActive = true;
         }
+        for (uint32_t k = 1; k < kLanes; ++k)
+            if (!used[k] && fLaneWasUsed[k])
+                align[k]->clearRecent(dl[k] + 1); // a lane that comes back starts from silence
         const float m = clamp01(param(kLaneMix) / 100.0f);
+        bool solo = false;
+        for (uint32_t k = 0; k < kLanes; ++k)
+            solo = solo || (used[k] && param(kLaneSolo1 + k) >= 0.5f);
+        float wl[kLanes], wr[kLanes];
+        for (uint32_t k = 0; k < kLanes; ++k)
+        {
+            fLaneWasUsed[k] = used[k];
+            float w;
+            if (k == kLaneA)
+                w = used[kLaneB] ? (1.0f - m) * 2.0f / float(nUsed) : 1.0f / float(nUsed);
+            else if (k == kLaneB)
+                w = m * 2.0f / float(nUsed);
+            else
+                w = 1.0f / float(nUsed);
+            if (!used[k] || param(kLaneMute1 + k) >= 0.5f || (solo && param(kLaneSolo1 + k) < 0.5f))
+                w = 0.0f;
+            const float gdb = param(kLaneGain1 + k);
+            if (gdb != 0.0f)
+                w *= float(std::pow(10.0, double(gdb) / 20.0));
+            const float pan = clamp(param(kLanePan1 + k) / 100.0f, -1.0f, 1.0f);
+            wl[k] = pan > 0.0f ? w * (1.0f - pan) : w;
+            wr[k] = pan < 0.0f ? w * (1.0f + pan) : w;
+        }
         for (uint32_t i = 0; i < n; ++i)
         {
-            float al, ar, bl, br;
-            fAlignA.process(xl[i], xr[i], dA, al, ar);
-            fAlignB.process(yl[i], yr[i], dB, bl, br);
-            xl[i] = al * (1.0f - m) + bl * m;
-            xr[i] = ar * (1.0f - m) + br * m;
+            float ol = 0.0f, orr = 0.0f;
+            for (uint32_t k = 0; k < kLanes; ++k)
+            {
+                if (!used[k])
+                    continue;
+                float al, ar;
+                align[k]->process(bufL[k][i], bufR[k][i], dl[k], al, ar);
+                ol += al * wl[k];
+                orr += ar * wr[k];
+            }
+            xl[i] = ol;
+            xr[i] = orr;
         }
         return total;
     }
@@ -1035,10 +1541,12 @@ private:
     uint32_t processSlot(uint32_t s, float* xl, float* xr, uint32_t n, const nulljsfx::ModuleTime& mt, uint32_t keyDelay)
     {
         Slot& sl = fSlot[s];
-        const bool on = param(slotParam(s, kSlotOn)) >= 0.5f;
-        const float mix = clamp01(param(slotParam(s, kSlotMix)) / 100.0f);
+        const float mix = clamp01((fSceneOn && fSceneSlot[s] ? fSceneVal[s][0] : param(slotParam(s, kSlotMix))) / 100.0f);
         const int band = int(std::lround(param(slotParam(s, kSlotBand))));
         const int chan = int(std::lround(param(slotParam(s, kSlotChannel))));
+        // 4.0: a split band (1..Split Bands; above it, the top band) takes the place of Band
+        const int sb = int(std::min<long>(std::lround(param(splitParam(s))), long(fSplitN)));
+        const bool on = param(slotParam(s, kSlotOn)) >= 0.5f && !(sb > 0 && param(kBandBypass1 + uint32_t(sb - 1)) >= 0.5f);
         const uint32_t lat = std::min(sl.mod->latency(), sl.dry.maxDelay());
         sl.latency.store(lat, std::memory_order_relaxed);
 
@@ -1047,12 +1555,29 @@ private:
         float* cr = fCR;
         float* pl = fPL;
         float* pr = fPR;
-        const bool split = band >= kBandLow && band <= kBandHigh;
-        const bool hasPass = split || chan != kChanStereo;
+        const bool split = sb <= 0 && band >= kBandLow && band <= kBandHigh;
+        const bool hasPass = split || sb > 0 || chan != kChanStereo;
         for (uint32_t i = 0; i < n; ++i)
         {
             float bl = xl[i], br = xr[i], rl = 0.0f, rr = 0.0f;
-            if (split)
+            if (sb > 0)
+            {
+                double b0[kMaxBands], b1[kMaxBands];
+                sl.split5[0].process(xl[i], b0);
+                sl.split5[1].process(xr[i], b1);
+                double s0 = 0.0, s1 = 0.0;
+                for (uint32_t k = 0; k < fSplitN; ++k)
+                    if (int(k) != sb - 1)
+                    {
+                        s0 += b0[k];
+                        s1 += b1[k];
+                    }
+                bl = float(b0[sb - 1]);
+                br = float(b1[sb - 1]);
+                rl = float(s0);
+                rr = float(s1);
+            }
+            else if (split)
             {
                 double lo, mi, hi, lo2, mi2, hi2;
                 sl.split[0].process(xl[i], lo, mi, hi);
@@ -1160,6 +1685,7 @@ private:
     double fSampleRate = 44100.0;
     std::atomic<float> fParams[kNumParams];
     float fMin[kNumParams], fMax[kNumParams], fDef[kNumParams]; // the ranges, for setParam
+    bool fLog[kNumParams] = {};
     Slot fSlot[kSlots];
     Route fRoutes[kMaxRoutes];
     uint32_t fNumRoutes = 0;
@@ -1167,6 +1693,31 @@ private:
 
     DelayLine fRackDry;
     float fXLow = -1.0f, fXHigh = -1.0f;
+    // added in 4.0: the split into up to 5 bands (its crossovers, and the output's split for Solo)
+    double fSplitKey = -1.0;
+    double fSplitF[kMaxBands - 1] = {};
+    uint32_t fSplitN = kMaxBands;
+    Split5 fOutSplit[2];
+    bool fSplitUsed = false; // the output's split ran in the last chunk
+    // added in 4.0: the scenes
+    Scene fScenes[kScenes];
+    bool fSceneOn = false;
+    bool fSceneSlot[kSlots] = {};
+    float fSceneVal[kSlots][kSceneSlotVals] = {};
+    float fSceneMacro[8] = {};
+    // added in 4.0: the new modulators and the moved modulator settings
+    float fModOff[kNumModTargets] = {};
+    double fRandPhase = 0.0, fRandFrom = 0.0, fRandTo = 0.0, fRandSeed = 4242.0;
+    float fFollowBuf[kChunk] = {};
+    uint32_t fFollowN = 0;
+    double fFollowEnv = 0.0;
+    double fAdsrLevel = 0.0, fAdsrValue = 0.0, fAdsrRelFrom = 0.0;
+    int fAdsrStage = 0;
+    bool fAdsrGate = false;
+    static constexpr uint32_t kPitchWin = 512, kPitchLen = 1024, kPitchHop = 256;
+    double fPitchBuf[kPitchLen] = {}, fPitchWork[kPitchLen] = {}, fPitchDiff[kPitchWin] = {};
+    uint32_t fPitchPos = 0, fPitchHop = 0, fPitchAccN = 0, fPitchDec = 4;
+    double fPitchAcc = 0.0, fPitchTarget = 0.0, fPitchOut = 0.0;
 
     float fSrc[kNumSources] = {};
     double fEnv = 0.0;
@@ -1182,7 +1733,10 @@ private:
     double fSeqPos = 0.0;
 
     // added after 2.1: lanes, feedback, keys
-    DelayLine fAlignA, fAlignB;
+    DelayLine fAlignA, fAlignB, fAlignC, fAlignD;
+    int fLaneOf[kSlots] = {};
+    bool fLaneWasUsed[kLanes] = { true, false, false, false };
+    float fLaneCL[kChunk], fLaneCR[kChunk], fLaneDL[kChunk], fLaneDR[kChunk];
     ChunkRing fKey, fFbRing;
     bool fLanesActive = false, fFbActive = false;
     double fFbDc = 0.0, fFbLc = 0.0, fFbHc = 0.0;

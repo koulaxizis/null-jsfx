@@ -20,12 +20,12 @@ class RackPluginBase : public Plugin
 {
 public:
     RackPluginBase(const nulljsfx::ModuleDesc* const* modules, uint32_t numModules)
-        : Plugin(rack::kNumParams, rack::kNumPresets, 3),
+        : Plugin(rack::kNumParams, rack::kNumPresets, 4), // 4.0: + "scenes"
           fEngine(new rack::RackEngine(modules, numModules)) {}
 
     rack::RackEngine& engine() { return *fEngine; }
 
-    // bumped whenever the slots, routes or preset name change (state, program or UI)
+    // bumped whenever the slots, routes, scenes or preset name change (state, program or UI)
     uint32_t stateVersion() const { return fStateVersion.load(std::memory_order_acquire); }
 
 protected:
