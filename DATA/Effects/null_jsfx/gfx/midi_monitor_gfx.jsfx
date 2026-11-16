@@ -46,10 +46,9 @@ out_pin:Right
   function mm_name(n) local(pc)
   (
     pc = n % 12;
-    strcpy(#mm_nn, pc == 0 ? "C" : pc == 1 ? "C#" : pc == 2 ? "D" : pc == 3 ? "D#" : pc == 4 ? "E" : pc == 5 ? "F" :
-                   pc == 6 ? "F#" : pc == 7 ? "G" : pc == 8 ? "G#" : pc == 9 ? "A" : pc == 10 ? "A#" : "B");
-    sprintf(#mm_tmp, "%d", floor(n / 12) - (slider4 ? 2 : 1));
-    strcat(#mm_nn, #mm_tmp);
+    strcpy(#mm_tmp, pc == 0 ? "C" : pc == 1 ? "C#" : pc == 2 ? "D" : pc == 3 ? "D#" : pc == 4 ? "E" : pc == 5 ? "F" :
+                    pc == 6 ? "F#" : pc == 7 ? "G" : pc == 8 ? "G#" : pc == 9 ? "A" : pc == 10 ? "A#" : "B");
+    sprintf(#mm_nn, "%s%d", #mm_tmp, floor(n / 12) - (slider4 ? 2 : 1));
   );
 
   // whether status a passes Channel and Show
