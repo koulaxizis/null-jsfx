@@ -700,7 +700,7 @@ desc:NULL JSFX shared GFX library
   // selector cell for an enum slider idx whose values run lo, lo+1, ...; options "A|B|C".
   // Click the left half for the previous option, the right half for the next (wrapping);
   // wheel steps. Returns 1 when it changed.
-  function ng_select_ctl(idx, label, options, lo) local(cx, ry, n, i, p, q, cur, pw, hover, nv)
+  function ng_select_ctl(idx, label, options, lo) local(cx, ry, n, i, p, q, cur, pw, hover, nv, tw, th)
   (
     ng_ctl_id += 1;
     cx = ng_cellx + ng_cw / 2;
@@ -726,6 +726,10 @@ desc:NULL JSFX shared GFX library
     ng_col(hover ? 0x45433f : NG_BORDER, 1);
     gfx_roundrect(X(cx - pw / 2), Y(ry + 33), pw * ng_s, 22 * ng_s, 4 * ng_s, 1);
     ng_font(1, 8, 1);
+    // a long option shrinks to fit between the arrows
+    gfx_measurestr(#ng_opt, tw, th);
+    tw += 0.5 * ng_s * max(0, strlen(#ng_opt) - 1);
+    tw > (pw - 24) * ng_s ? ng_font(1, 8 * (pw - 24) * ng_s / tw, 1);
     ng_col(NG_TEXT, 1);
     ng_txt(#ng_opt, cx, ry + 44, 1, 0.5);
     ng_col(NG_MUTED, 1);

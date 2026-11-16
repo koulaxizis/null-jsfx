@@ -62,7 +62,7 @@ static bool is_pure_meter(const char *path)
 {
     const char *base = strrchr(path, '/');
     base = base ? base + 1 : path;
-    return !strncmp(base, "multichannel_loudness", 21);
+    return !strncmp(base, "multichannel_loudness", 21) || !strncmp(base, "key_detect", 10) || !strncmp(base, "null_test", 9);
 }
 
 static bool is_midi_effect(const char *path)

@@ -1,0 +1,10 @@
+[
+  ["Quick Read", {"Window (s)": 4}],
+  ["Whole Song", {"Window (s)": 60}],
+  ["Verse or Chorus", {"Window (s)": 20}],
+  ["Quiet Sources", {"Threshold (dB)": -70}],
+  ["Loud Mix Only", {"Threshold (dB)": -30}],
+  ["Temperley Profile", {"Profile": "Temperley"}],
+  ["Pop and Rock", {"Profile": "Temperley", "Window (s)": 15}],
+  ["Classical", {"Profile": "Krumhansl", "Window (s)": 30}]
+]

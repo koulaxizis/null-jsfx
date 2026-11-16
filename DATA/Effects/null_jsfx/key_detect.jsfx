@@ -1,0 +1,181 @@
+desc:NULL Key Detect
+author: Christos Koulaxizis
+tags: key detect detection tonality scale major minor chroma krumhansl temperley analyzer meter harmonic mixing
+//category: Advanced
+//NULL JSFX v3.3.1 • https://nulljsfx.tech • MIT License
+
+slider1:10<2,60,1>Window (s)
+slider2:-50<-80,-20,1>Threshold (dB)
+slider3:0<0,1,1{Krumhansl,Temperley}>Profile
+slider4:0<0,1,1{Off,On}>Hold
+
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
+
+@init
+  // Finds the key of what it hears. Every 4096 samples the last 16384 (left and right
+  // averaged) go through a Hann window and an FFT; the bins from 65 Hz to 2.1 kHz (C2 to C7) add
+  // their magnitude to the nearest semitone (weighted by how close they are to it); each
+  // semitone then loses a third of the one 19 semitones below and a fifth of the one 28 below
+  // (its 3rd and 5th harmonics, which would pull the key towards the dominant), the semitones
+  // fold into 12 pitch classes, the frame is scaled to a peak of 1 and added to a running chroma
+  // that forgets with the time constant Window. Frames quieter than Threshold (RMS) are skipped.
+  // The chroma is compared with the 24 major and minor key profiles (Krumhansl-Kessler or
+  // Temperley) by correlation; the best is the key, its correlation the confidence, and the
+  // runner-up is shown too. Hold keeps the result. The audio passes through unchanged. The GFX
+  // version and the VST3/CLAP show the chroma, the key, and the Key and Scale to set in Scale
+  // and Pitch Correction.
+  ext_noinit = 1;
+  KD_N = 16384;
+  KD_H = 4096;
+  KD_F = 0;                    // FFT (2N)
+  KD_IN = 2 * KD_N;            // input ring (N)
+  KD_W = KD_IN + KD_N;         // Hann window (N)
+  KD_PC = KD_W + KD_N;         // per bin: semitone 0..60 = C2..C7 (-1 = not used)
+  KD_WT = KD_PC + KD_N / 2;    // per bin: weight
+  KD_C = KD_WT + KD_N / 2;     // the running chroma (12)
+  KD_FR = KD_C + 12;           // one frame's chroma (12)
+  KD_PR = KD_FR + 12;          // profiles: major (12), minor (12), Krumhansl then Temperley
+  KD_R = KD_PR + 48;           // the 24 correlations: major keys 0..11, minor keys 12..23
+  KD_SM = KD_R + 24;           // one frame's semitones C2..C7 (61)
+  freembuf(KD_SM + 61);
+  memset(KD_IN, 0, KD_SM + 61 - KD_IN);
+  kd_i = 0;
+  loop(KD_N, KD_W[kd_i] = 0.5 - 0.5 * cos(2 * $pi * kd_i / KD_N); kd_i += 1;);
+  function kd_prof(o, a, b, c, d, e, f, g, h, i, j, k, l)
+  (
+    KD_PR[o] = a; KD_PR[o + 1] = b; KD_PR[o + 2] = c; KD_PR[o + 3] = d; KD_PR[o + 4] = e; KD_PR[o + 5] = f;
+    KD_PR[o + 6] = g; KD_PR[o + 7] = h; KD_PR[o + 8] = i; KD_PR[o + 9] = j; KD_PR[o + 10] = k; KD_PR[o + 11] = l;
+  );
+  kd_prof(0, 6.35, 2.23, 3.48, 2.33, 4.38, 4.09, 2.52, 5.19, 2.39, 3.66, 2.29, 2.88);   // Krumhansl major
+  kd_prof(12, 6.33, 2.68, 3.52, 5.38, 2.60, 3.53, 2.54, 4.75, 3.98, 2.69, 3.34, 3.17);  // Krumhansl minor
+  kd_prof(24, 5, 2, 3.5, 2, 4.5, 4, 2, 4.5, 2, 3.5, 1.5, 4);                            // Temperley major
+  kd_prof(36, 5, 2, 3.5, 4.5, 2, 4, 2, 4.5, 3.5, 2, 1.5, 4);                            // Temperley minor
+  // the semitone and weight of every bin from 65 Hz to 2.1 kHz
+  kd_k = 0;
+  loop(KD_N / 2,
+    kd_fq = kd_k * srate / KD_N;
+    kd_fq >= 65 && kd_fq <= 2100 ? (
+      kd_p = 12 * log(kd_fq / 440) / log(2) + 69;
+      kd_nt = floor(kd_p + 0.5);
+      KD_PC[kd_k] = kd_nt - 36;
+      KD_WT[kd_k] = max(0, 1 - 2 * abs(kd_p - kd_nt));
+    ) : (
+      KD_PC[kd_k] = -1;
+      KD_WT[kd_k] = 0;
+    );
+    kd_k += 1;
+  );
+  kd_pos = 0;
+  kd_cnt = 0;
+  kd_key = -1;                 // the key: 0..11 major, 12..23 minor, -1 none yet
+  kd_conf = 0;
+  kd_key2 = -1;
+  kd_conf2 = 0;
+  kd_frames = 0;
+
+  // one frame: the chroma of the last N samples, then the keys
+  function kd_frame() local(i, k, e, m, re, im, mx, mean, sx, j, md, t, pm, sp, sxy, sxx, syy, r)
+  (
+    e = 0;
+    i = 0;
+    loop(KD_N,
+      m = KD_IN[(kd_pos + i) % KD_N];
+      e += m * m;
+      KD_F[2 * i] = m * KD_W[i];
+      KD_F[2 * i + 1] = 0;
+      i += 1;
+    );
+    sqrt(e / KD_N) > kd_thr ? (
+      fft(KD_F, KD_N);
+      fft_permute(KD_F, KD_N);
+      memset(KD_FR, 0, 12);
+      memset(KD_SM, 0, 61);
+      k = 0;
+      loop(KD_N / 2,
+        KD_PC[k] >= 0 ? (
+          re = KD_F[2 * k]; im = KD_F[2 * k + 1];
+          KD_SM[KD_PC[k]] += sqrt(re * re + im * im) * KD_WT[k];
+        );
+        k += 1;
+      );
+      i = 0;
+      loop(61,
+        m = KD_SM[i] - (i >= 19 ? KD_SM[i - 19] / 3 : 0) - (i >= 28 ? KD_SM[i - 28] / 5 : 0);
+        KD_FR[i % 12] += max(0, m);
+        i += 1;
+      );
+      mx = 0;
+      i = 0;
+      loop(12, mx = max(mx, KD_FR[i]); i += 1;);
+      mx > 0 ? (
+        i = 0;
+        loop(12, KD_C[i] = KD_C[i] * kd_dec + KD_FR[i] / mx; i += 1;);
+        kd_frames += 1;
+      );
+      // the correlation of the chroma with every key's profile
+      mean = 0;
+      i = 0;
+      loop(12, mean += KD_C[i]; i += 1;);
+      mean /= 12;
+      md = 0;
+      loop(2,
+        pm = 0;
+        i = 0;
+        loop(12, pm += KD_PR[kd_prof_o + md * 12 + i]; i += 1;);
+        pm /= 12;
+        t = 0;
+        loop(12,
+          sxy = sxx = syy = 0;
+          i = 0;
+          loop(12,
+            sx = KD_C[i] - mean;
+            sp = KD_PR[kd_prof_o + md * 12 + (i - t + 12) % 12] - pm;
+            sxy += sx * sp;
+            sxx += sx * sx;
+            syy += sp * sp;
+            i += 1;
+          );
+          r = (sxx > 0 && syy > 0 ? sxy / sqrt(sxx * syy) : 0);
+          KD_R[md * 12 + t] = r;
+          t += 1;
+        );
+        md += 1;
+      );
+      kd_frames > 0 ? (
+        kd_key = kd_key2 = -1;
+        kd_conf = kd_conf2 = -2;
+        j = 0;
+        loop(24,
+          KD_R[j] > kd_conf ? (
+            kd_key2 = kd_key; kd_conf2 = kd_conf;
+            kd_key = j; kd_conf = KD_R[j];
+          ) : KD_R[j] > kd_conf2 ? (
+            kd_key2 = j; kd_conf2 = KD_R[j];
+          );
+          j += 1;
+        );
+      );
+    );
+  );
+
+@slider
+  kd_dec = exp(-KD_H / (slider1 * srate));
+  kd_thr = 10 ^ (slider2 / 20);
+  kd_prof_o = slider3 * 24;
+  kd_hold = slider4;
+
+@sample
+  KD_IN[kd_pos] = (spl0 + spl1) * 0.5;
+  kd_pos += 1;
+  kd_pos >= KD_N ? kd_pos = 0;
+  kd_cnt += 1;
+  kd_cnt >= KD_H ? (
+    kd_cnt = 0;
+    !kd_hold ? kd_frame();
+  );
+  // the audio passes through
+  spl0 = spl0;
+  spl1 = spl1;

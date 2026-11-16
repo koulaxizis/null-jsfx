@@ -11,6 +11,12 @@ mkdir -p "$root/assets/img/gfx"
 for f in "$root"/DATA/Effects/null_jsfx/gfx/*_gfx.jsfx; do
   name="$(basename "$f" _gfx.jsfx)"
   read -r gw gh < <(grep -m1 '^@gfx' "$f" | awk '{print $2, $3}')
+  if [ "$name" = null_test ]; then
+    # the main is the sidechain 37 samples later at -6 dB, plus noise at about -70 dB
+    NULL_GFX_SIDECHAIN="37 0.5 0.0003" "$render" "$f" "$root/assets/img/gfx/$name.png" $(( gw * 2 )) $(( gh * 2 )) >/dev/null
+    echo "$name (defaults, with a sidechain)"
+    continue
+  fi
   if [ "$(grep -c '^slider[0-9]*:' "$f")" -gt 1 ]; then
     "$render" "$f" "$root/assets/img/gfx/$name.png" $(( gw * 2 )) $(( gh * 2 )) >/dev/null
     echo "$name (defaults)"

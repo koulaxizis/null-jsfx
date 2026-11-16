@@ -42,8 +42,17 @@ int main(int argc, char **argv)
         ysfx_slider_set_value(fx, (uint32_t)s, atof(argv[i]));
     // run ~1.2 s of a music-like stereo signal (kick every 0.5 s, bass, chord, hats) so
     // @slider/@block/@sample see the values and meters/scopes have something to show
-    std::vector<double> i0(256), i1(256), o0(256), o1(256);
-    const double *ins[2] = {i0.data(), i1.data()};
+    // NULL_GFX_SIDECHAIN="delay gain noise" also feeds the sidechain (inputs 3/4) with the
+    // signal, and the main with the signal delayed by delay samples, times gain, plus noise
+    // (Null Test's screenshot); unset, only the main is fed, as before
+    const char *sc = getenv("NULL_GFX_SIDECHAIN");
+    int scDelay = 0;
+    double scGain = 1.0, scNoise = 0.0;
+    if (sc)
+        sscanf(sc, "%d %lf %lf", &scDelay, &scGain, &scNoise);
+    std::vector<double> i0(256), i1(256), i2(256), i3(256), o0(256), o1(256);
+    std::vector<double> h0(65536), h1(65536);
+    const double *ins[4] = {i0.data(), i1.data(), i2.data(), i3.data()};
     double *outs[2] = {o0.data(), o1.data()};
     uint32_t seed = 1;
     long n = 0;
@@ -59,8 +68,17 @@ int main(int argc, char **argv)
             const double hat = 0.08 * std::exp(-th * 60) * noise;
             i0[k] = kick + bass + chordL + hat;
             i1[k] = kick + bass + chordR - 0.6 * hat;
+            if (sc) {
+                h0[n & 65535] = i0[k];
+                h1[n & 65535] = i1[k];
+                i2[k] = i0[k];
+                i3[k] = i1[k];
+                const long d = n - scDelay;
+                i0[k] = (d >= 0 ? scGain * h0[d & 65535] : 0.0) + scNoise * noise;
+                i1[k] = (d >= 0 ? scGain * h1[d & 65535] : 0.0) - scNoise * noise;
+            }
         }
-        ysfx_process_double(fx, ins, outs, 2, 2, 256);
+        ysfx_process_double(fx, ins, outs, sc ? 4 : 2, 2, 256);
     }
 
     std::vector<uint8_t> px((size_t)w * h * 4, 0);
