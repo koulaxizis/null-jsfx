@@ -392,6 +392,14 @@ public:
         fAdsrLevel = fAdsrValue = fAdsrRelFrom = 0.0;
         fAdsrStage = 0;
         fAdsrGate = false;
+        fAdsrAudioGate = false;
+        std::memset(fNoteOn, 0, sizeof(fNoteOn));
+        fNumHeld = 0;
+        fLastNote = -1;
+        fVelocity = fNoteSeen = fNoteUsed = 0.0;
+        for (int k = 0; k < 4; ++k)
+            fMidiTarget[k] = fMidiValue[k] = 0.0;
+        fMidiCount = 0;
         std::memset(fPitchBuf, 0, sizeof(fPitchBuf));
         fPitchPos = fPitchHop = fPitchAccN = 0;
         fPitchDec = uint32_t(std::max(1.0, std::round(sr / 12000.0)));
@@ -758,19 +766,43 @@ public:
                 outL[i] = l;
                 outR[i] = r;
             }
+            for (uint32_t ev = 0; ev < fMidiCount; ++ev)
+                midiEvent(fMidiEvents[ev]);
+            fMidiCount = 0;
             return;
         }
         Time t = time;
+        uint32_t ev = 0;
         for (uint32_t done = 0; done < frames;)
         {
             const uint32_t n = std::min(kChunk, frames - done);
+            // the MIDI of this chunk reaches the sources before it (chunk resolution, as all
+            // modulation)
+            for (; ev < fMidiCount && fMidiEvents[ev].frame < done + n; ++ev)
+                midiEvent(fMidiEvents[ev]);
             processChunk(inL + done, inR + done, outL + done, outR + done, n, t);
             done += n;
             const double tempo = t.tempo > 0.0 ? t.tempo : 120.0;
             if (t.playing)
                 t.beat += double(n) / fSampleRate * tempo / 60.0;
         }
+        for (; ev < fMidiCount; ++ev)
+            midiEvent(fMidiEvents[ev]);
+        fMidiCount = 0;
         fLock.unlock();
+    }
+
+    // 4.0: the MIDI input. The events of the next process() call only, in frame order; the
+    // pointer must stay valid during that call. Notes, CCs, pressure and bend feed the MIDI sources.
+    struct MidiEvent {
+        uint32_t frame;
+        uint8_t size;
+        uint8_t data[3];
+    };
+    void setMidi(const MidiEvent* events, uint32_t count)
+    {
+        fMidiEvents = events;
+        fMidiCount = events ? count : 0;
     }
 
 private:
@@ -841,7 +873,7 @@ private:
         if (!nu)
             return;
         fSceneOn = true;
-        const double pos = double(clamp01(param(kSceneMorph) / 100.0f)) * double(nu - 1);
+        const double pos = double(clamp01(modParam(kSceneMorph) / 100.0f)) * double(nu - 1);
         const int ia = std::min(nu - 1, int(std::floor(pos))), ib = std::min(nu - 1, ia + 1);
         const float t = float(pos - double(ia));
         const Scene& A = fScenes[used[ia]];
@@ -997,6 +1029,80 @@ private:
 
     // ---- the 4.0 modulators ------------------------------------------------------------------
 
+    void releaseNote(int note)
+    {
+        if (!fNoteOn[note])
+            return;
+        fNoteOn[note] = false;
+        uint32_t j = 0;
+        for (uint32_t i = 0; i < fNumHeld; ++i)
+            if (fHeld[i] != note)
+                fHeld[j++] = fHeld[i];
+        fNumHeld = j;
+        if (fNumHeld)
+            fLastNote = fHeld[fNumHeld - 1];
+    }
+
+    void allNotesOff()
+    {
+        std::memset(fNoteOn, 0, sizeof(fNoteOn));
+        fNumHeld = 0;
+    }
+
+    void midiEvent(const MidiEvent& e)
+    {
+        if (e.size < 1)
+            return;
+        const uint8_t st = e.data[0];
+        if (st < 0x80 || st >= 0xF0)
+            return;
+        const int ch = int(std::lround(param(kMidiChannel)));
+        if (ch >= 1 && ch <= 16 && (st & 0x0F) != ch - 1)
+            return;
+        const uint8_t a = e.size > 1 ? e.data[1] & 0x7F : 0, b = e.size > 2 ? e.data[2] & 0x7F : 0;
+        switch (st & 0xF0)
+        {
+        case 0x90:
+            if (b > 0)
+            {
+                if (fNoteOn[a])
+                    releaseNote(a);
+                if (fNumHeld == sizeof(fHeld))
+                    releaseNote(fHeld[0]);
+                fNoteOn[a] = true;
+                fHeld[fNumHeld++] = a;
+                fLastNote = a;
+                fVelocity = double(b) / 127.0;
+                fNoteSeen += 1.0;
+                break;
+            }
+            releaseNote(a); // a note-on at velocity 0 is a note-off
+            break;
+        case 0x80:
+            releaseNote(a);
+            break;
+        case 0xA0: // polyphonic pressure: the last value of any key
+            fMidiTarget[1] = double(b) / 127.0;
+            break;
+        case 0xB0:
+            if (a == 120 || a == 123)
+                allNotesOff();
+            if (a == 1)
+                fMidiTarget[0] = double(b) / 127.0;
+            if (int(a) == int(std::lround(param(kMidiCC))))
+                fMidiTarget[3] = double(b) / 127.0;
+            break;
+        case 0xD0:
+            fMidiTarget[1] = double(a) / 127.0;
+            break;
+        case 0xE0:
+            fMidiTarget[2] = std::max(-1.0, (double((b << 7) | a) - 8192.0) / 8191.0);
+            break;
+        default:
+            break;
+        }
+    }
+
     void updateNewSources(const float* l, const float* r, uint32_t n)
     {
         const double dt = double(n) / fSampleRate;
@@ -1042,12 +1148,23 @@ private:
             }
             fAdsrLevel = pk < 1e-30 ? 0.0 : pk;
             const double on = std::pow(10.0, double(param(kAdsrThreshold)) / 20.0), off = on * 0.7079457843841379;
-            if (!fAdsrGate && fAdsrLevel > on)
+            if (!fAdsrAudioGate && fAdsrLevel > on)
+                fAdsrAudioGate = true;
+            else if (fAdsrAudioGate && fAdsrLevel < off)
+                fAdsrAudioGate = false;
+            // Trigger (4.0): Audio (the input's level, as before), MIDI (a held note; every new
+            // note starts the attack again from where the ADSR is) or Both
+            const int trig = int(std::lround(param(kAdsrTrigger)));
+            const bool midi = trig >= 1 && fNumHeld > 0;
+            const bool gate = trig == 1 ? midi : (trig == 2 ? (midi || fAdsrAudioGate) : fAdsrAudioGate);
+            const bool retrig = trig >= 1 && fNoteSeen != fNoteUsed && midi;
+            fNoteUsed = fNoteSeen;
+            if ((!fAdsrGate && gate) || (gate && retrig))
             {
                 fAdsrGate = true;
                 fAdsrStage = 1;
             }
-            else if (fAdsrGate && fAdsrLevel < off)
+            else if (fAdsrGate && !gate)
             {
                 fAdsrGate = false;
                 fAdsrStage = 4;
@@ -1098,6 +1215,25 @@ private:
             pitchUsed = pitchUsed || fRoutes[i].source == kSrcPitch;
         if (pitchUsed)
             updatePitch(l, r, n);
+
+        // MIDI: the last held note and its velocity are held after the release; the gate is 1
+        // while a note is held; mod wheel, pressure, bend and CC glide over 10 ms
+        fSrc[kSrcNote] = fLastNote < 0 ? 0.0f : float(double(fLastNote) / 127.0);
+        fSrc[kSrcVelocity] = float(fVelocity);
+        fSrc[kSrcGate] = fNumHeld ? 1.0f : 0.0f;
+        {
+            const double a = 1.0 - std::exp(-dt / 0.01);
+            for (int k = 0; k < 4; ++k)
+            {
+                fMidiValue[k] += (fMidiTarget[k] - fMidiValue[k]) * a;
+                if (std::fabs(fMidiValue[k] - fMidiTarget[k]) < 1e-9)
+                    fMidiValue[k] = fMidiTarget[k];
+            }
+            fSrc[kSrcModWheel] = float(fMidiValue[0]);
+            fSrc[kSrcPressure] = float(fMidiValue[1]);
+            fSrc[kSrcBend] = float(fMidiValue[2]);
+            fSrc[kSrcCC] = float(fMidiValue[3]);
+        }
         fSrc[kSrcPitch] = float(fPitchOut);
     }
 
@@ -1713,11 +1849,23 @@ private:
     double fFollowEnv = 0.0;
     double fAdsrLevel = 0.0, fAdsrValue = 0.0, fAdsrRelFrom = 0.0;
     int fAdsrStage = 0;
-    bool fAdsrGate = false;
+    bool fAdsrGate = false, fAdsrAudioGate = false;
     static constexpr uint32_t kPitchWin = 512, kPitchLen = 1024, kPitchHop = 256;
     double fPitchBuf[kPitchLen] = {}, fPitchWork[kPitchLen] = {}, fPitchDiff[kPitchWin] = {};
     uint32_t fPitchPos = 0, fPitchHop = 0, fPitchAccN = 0, fPitchDec = 4;
     double fPitchAcc = 0.0, fPitchTarget = 0.0, fPitchOut = 0.0;
+    // added in 4.0: the MIDI input (written and read on the audio thread only)
+    const MidiEvent* fMidiEvents = nullptr;
+    uint32_t fMidiCount = 0;
+    uint8_t fHeld[16] = {};      // the held notes, oldest first (last note priority)
+    uint32_t fNumHeld = 0;
+    bool fNoteOn[128] = {};
+    int fLastNote = -1;
+    double fVelocity = 0.0;
+    double fMidiTarget[4] = {};  // mod wheel, pressure, bend, CC (raw)
+    double fMidiValue[4] = {};   // the same, smoothed (10 ms)
+    double fNoteSeen = 0.0;      // note-ons counted, for the ADSR's retrigger
+    double fNoteUsed = 0.0;
 
     float fSrc[kNumSources] = {};
     double fEnv = 0.0;
