@@ -1,0 +1,390 @@
+desc:NULL Null Test GFX
+author: Christos Koulaxizis
+tags: null test difference residual compare a/b phase cancel polarity latency align gain match bit identical analyzer meter gui
+//category: Advanced
+//NULL JSFX v3.3.1 • https://nulljsfx.tech • MIT License
+
+import null_gfx.jsfx-inc
+
+slider1:2<0,2,1{Main,Sidechain,Difference}>-Listen
+slider2:1<0,1,1{Manual,Auto}>-Align
+slider3:20<1,200,1>-Range (ms)
+slider4:0<-10000,10000,1>-Offset (samples)
+slider5:0<-24,24,0.01>-Trim (dB)
+slider6:0<0,1,1{Normal,Inverted}>-Polarity
+
+in_pin:Left
+in_pin:Right
+in_pin:Sidechain Left
+in_pin:Sidechain Right
+out_pin:Left
+out_pin:Right
+
+@init
+  // Null Test: how far the main input (1/2) is from the sidechain (3/4), for example a plugin's
+  // output against its input, a render against another, a bounce against the mix. The difference
+  // is main - gain * sidechain, with both lined up in time. Align Auto finds the delay every
+  // 4096 samples: the last 16384 of both (left and right averaged), zero padded, go through an
+  // FFT; their cross spectrum, each bin scaled to 1 (phase transform), is averaged over frames
+  // and transformed back, and its highest peak of either polarity within Range is the delay
+  // (kept while the peak is under a fifth of its maximum or either side is under -70 dB). The
+  // gain is the least-squares one (it follows the inversion too), from sums that forget over
+  // half a second. A new delay starts the sums and the null depth again. Align Manual uses
+  // Offset (positive delays the sidechain), Trim and Polarity instead. The side that leads is
+  // delayed, so the two are lined up; Listen plays the lined-up main, the lined-up sidechain
+  // times the gain, or the difference, with a 10 ms crossfade. The display shows the null depth
+  // (the difference's level against the main's, over about 300 ms), the difference per octave
+  // band, the delay, the gain, how sure the match is, and BIT-IDENTICAL when the difference has
+  // been exactly zero for a second.
+  ext_noinit = 1;
+  NTW = 16384;                 // the analysis window and every ring
+  NTH = 4096;
+  NTX = 0;                     // FFT buffer A (2W complex, on a 65536 boundary)
+  NTY = 65536;                 // FFT buffer B
+  NTCS = 131072;               // the averaged cross spectrum (2 * 2W)
+  NTML = NTCS + 4 * NTW;       // rings: main left, right, sidechain left, right, difference left, right
+  NTMR = NTML + NTW;
+  NTSL = NTMR + NTW;
+  NTSR = NTSL + NTW;
+  NTDL = NTSR + NTW;
+  NTDR = NTDL + NTW;
+  NTBM = NTDR + NTW;           // per band: the main's energy (10)
+  NTBD = NTBM + 10;            // the difference's energy (10)
+  NTBR = NTBD + 10;            // the difference against the main, dB (10)
+  freembuf(NTBR + 10);
+  memset(0, 0, NTBR + 10);
+  nt_wp = 0;
+  nt_cnt = 0;
+  nt_lag = 0;                  // the found delay (samples; positive: the main lags)
+  nt_conf = 0;                 // the match: the correlation at the delay, 0..1
+  nt_cand = 0;                 // a new delay, and the frames in a row it won
+  nt_cn = 0;
+  nt_sms = nt_sss = 0;         // least-squares sums
+  nt_ga = 0;                   // the found gain
+  nt_ed = nt_em = 0;           // energies for the null depth
+  nt_zc = 0;                   // samples since the difference was not exactly zero
+  nt_heard = 0;                // samples since the main was not silent
+  nt_xm = 0; nt_xs = 0; nt_xd = 1;
+  nt_xr = 1 / (0.01 * srate);
+  nt_la = exp(-1 / (0.5 * srate));
+  nt_da = exp(-1 / (0.3 * srate));
+  nt_th = 10 ^ (-70 / 20);
+  nt_e20 = 10 ^ -20;
+  nt_e30 = 10 ^ -30;
+  nt_e300 = 10 ^ -300;
+  i = 0;
+  loop(10, NTBR[i] = -150; i += 1;);
+
+  // the energy per octave band of the rings l and r (the last NTW samples) into e: left as
+  // the real part and right as the imaginary part of one FFT, so bin k and bin 2W - k together
+  // hold both channels' energy
+  function nt_bands(l, r, e) local(i, f, b, k)
+  (
+    i = 0;
+    loop(NTW,
+      k = (nt_wp + i) % NTW;
+      NTX[2 * i] = l[k];
+      NTX[2 * i + 1] = r[k];
+      i += 1;
+    );
+    memset(NTX + 2 * NTW, 0, 2 * NTW);
+    fft(NTX, 2 * NTW);
+    fft_permute(NTX, 2 * NTW);
+    memset(e, 0, 10);
+    i = 1;
+    loop(NTW - 1,
+      f = i * srate / (2 * NTW);
+      b = floor(log(f / 31.25) / log(2) + 0.5);
+      k = 2 * NTW - i;
+      b >= 0 && b < 10 ? e[b] += NTX[2 * i] * NTX[2 * i] + NTX[2 * i + 1] * NTX[2 * i + 1] + NTX[2 * k] * NTX[2 * k] + NTX[2 * k + 1] * NTX[2 * k + 1];
+      i += 1;
+    );
+  );
+
+  // one frame: the delay from the cross spectrum, the difference per band
+  function nt_frame() local(i, j, p, q, em, es, xr, xi, yr, yi, cr, ci, mg, best, bi, rng, b, lo, sxy, sxx, syy)
+  (
+    em = es = 0;
+    i = 0;
+    loop(NTW,
+      p = (nt_wp + i) % NTW;
+      NTX[2 * i] = (NTML[p] + NTMR[p]) * 0.5;
+      NTX[2 * i + 1] = 0;
+      NTY[2 * i] = (NTSL[p] + NTSR[p]) * 0.5;
+      NTY[2 * i + 1] = 0;
+      em += NTX[2 * i] * NTX[2 * i];
+      es += NTY[2 * i] * NTY[2 * i];
+      i += 1;
+    );
+    memset(NTX + 2 * NTW, 0, 2 * NTW);
+    memset(NTY + 2 * NTW, 0, 2 * NTW);
+    sqrt(em / NTW) > nt_th ? (
+      fft(NTX, 2 * NTW);
+      fft(NTY, 2 * NTW);
+      sqrt(es / NTW) > nt_th ? (
+        // the cross spectrum, each bin divided by its magnitude to the power 0.75, averaged
+        i = 0;
+        loop(2 * NTW,
+          xr = NTX[2 * i]; xi = NTX[2 * i + 1];
+          yr = NTY[2 * i]; yi = NTY[2 * i + 1];
+          cr = xr * yr + xi * yi;
+          ci = xi * yr - xr * yi;
+          mg = (cr * cr + ci * ci) ^ 0.375 + nt_e30;
+          NTCS[2 * i] = NTCS[2 * i] * 0.6 + cr / mg;
+          NTCS[2 * i + 1] = NTCS[2 * i + 1] * 0.6 + ci / mg;
+          i += 1;
+        );
+        memcpy(NTY, NTCS, 4 * NTW);
+        ifft(NTY, 2 * NTW);
+        rng = min(floor(slider3 * srate / 1000), 12000);
+        best = abs(NTY[0]);
+        bi = 0;
+        j = 1;
+        loop(rng,
+          abs(NTY[2 * j]) > best ? ( best = abs(NTY[2 * j]); bi = j; );
+          abs(NTY[2 * (2 * NTW - j)]) > best ? ( best = abs(NTY[2 * (2 * NTW - j)]); bi = -j; );
+          j += 1;
+        );
+        // the match: the correlation of the two windows at that delay
+        sxy = sxx = syy = 0;
+        i = max(0, bi);
+        loop(NTW - abs(bi),
+          p = (nt_wp + i) % NTW;
+          q = (nt_wp + i - bi) % NTW;
+          xr = (NTML[p] + NTMR[p]) * 0.5;
+          yr = (NTSL[q] + NTSR[q]) * 0.5;
+          sxy += xr * yr;
+          sxx += xr * xr;
+          syy += yr * yr;
+          i += 1;
+        );
+        nt_conf = sxx > 0 && syy > 0 ? abs(sxy) / sqrt(sxx * syy) : 0;
+        // a new delay must win two frames in a row; it starts the gain's sums and the null
+        // depth again
+        bi == nt_lag ? nt_cn = 0 : (
+          bi == nt_cand ? nt_cn += 1 : ( nt_cand = bi; nt_cn = 1; );
+          nt_cn >= 2 && nt_conf >= 0.2 ? ( nt_lag = bi; nt_cn = 0; nt_sms = nt_sss = nt_ed = nt_em = 0; );
+        );
+      );
+      // the energy per octave band of the main and of the difference, both channels
+      nt_bands(NTML, NTMR, NTBM);
+      nt_bands(NTDL, NTDR, NTBD);
+      b = 0;
+      loop(10,
+        lo = 31.25 * 2 ^ (b - 0.5);
+        lo < srate / 2 && NTBM[b] > 0 ? (
+          NTBR[b] = max(-150, 10 * log10(max(NTBD[b], nt_e300) / NTBM[b]));
+        ) : (
+          NTBR[b] = -150;
+        );
+        b += 1;
+      );
+    );
+  );
+
+  gfx_ext_retina = 1;
+
+  function update()
+  (
+    nt_auto = slider2;
+    nt_tm = slider1 == 0;
+    nt_ts = slider1 == 1;
+    nt_td = slider1 == 2;
+    nt_gm = (slider6 ? -1 : 1) * 10 ^ (slider5 / 20);
+  );
+
+  // the null depth in dB (-300: the difference is zero), or -400 while the main is silent
+  function nq_depth()
+  (
+    nt_em <= 0 || nt_heard > srate ? -400 : nt_ed > 0 ? 10 * log10(nt_ed / nt_em) : -300;
+  );
+
+  // ---- factory presets: generated by tools/build_presets.py, do not edit ----
+  ng_pre_n = 10;
+  strcpy(#ng_h_ix, "");
+  ng_hist_add(1); ng_hist_add(2); ng_hist_add(3); ng_hist_add(4); ng_hist_add(5); ng_hist_add(6);
+  ng_hist_init();
+
+  function ng_preset_load(p)
+  (
+    p == 0 ? ( ng_slider_set(1, 2); ng_slider_set(2, 1); ng_slider_set(3, 20); ng_slider_set(4, 0); ng_slider_set(5, 0); ng_slider_set(6, 0); );
+    p == 1 ? ( ng_slider_set(1, 2); ng_slider_set(2, 1); ng_slider_set(3, 20); ng_slider_set(4, 0); ng_slider_set(5, 0); ng_slider_set(6, 0); );
+    p == 2 ? ( ng_slider_set(1, 2); ng_slider_set(2, 1); ng_slider_set(3, 5); ng_slider_set(4, 0); ng_slider_set(5, 0); ng_slider_set(6, 0); );
+    p == 3 ? ( ng_slider_set(1, 2); ng_slider_set(2, 1); ng_slider_set(3, 200); ng_slider_set(4, 0); ng_slider_set(5, 0); ng_slider_set(6, 0); );
+    p == 4 ? ( ng_slider_set(1, 2); ng_slider_set(2, 0); ng_slider_set(3, 20); ng_slider_set(4, 0); ng_slider_set(5, 0); ng_slider_set(6, 0); );
+    p == 5 ? ( ng_slider_set(1, 2); ng_slider_set(2, 0); ng_slider_set(3, 20); ng_slider_set(4, 0); ng_slider_set(5, 0); ng_slider_set(6, 1); );
+    p == 6 ? ( ng_slider_set(1, 0); ng_slider_set(2, 1); ng_slider_set(3, 20); ng_slider_set(4, 0); ng_slider_set(5, 0); ng_slider_set(6, 0); );
+    p == 7 ? ( ng_slider_set(1, 1); ng_slider_set(2, 1); ng_slider_set(3, 20); ng_slider_set(4, 0); ng_slider_set(5, 0); ng_slider_set(6, 0); );
+    p == 8 ? ( ng_slider_set(1, 2); ng_slider_set(2, 0); ng_slider_set(3, 20); ng_slider_set(4, 0); ng_slider_set(5, -6); ng_slider_set(6, 0); );
+    p == 9 ? ( ng_slider_set(1, 2); ng_slider_set(2, 0); ng_slider_set(3, 20); ng_slider_set(4, 0); ng_slider_set(5, 6); ng_slider_set(6, 0); );
+  );
+
+  // the first preset every slider matches, or -1
+  function ng_preset_match() local(m)
+  (
+    m = -1;
+    m < 0 && ng_pre_eq(slider1, 2) && ng_pre_eq(slider2, 1) && ng_pre_eq(slider3, 20) && ng_pre_eq(slider4, 0) && ng_pre_eq(slider5, 0) && ng_pre_eq(slider6, 0) ? m = 0;
+    m < 0 && ng_pre_eq(slider1, 2) && ng_pre_eq(slider2, 1) && ng_pre_eq(slider3, 20) && ng_pre_eq(slider4, 0) && ng_pre_eq(slider5, 0) && ng_pre_eq(slider6, 0) ? m = 1;
+    m < 0 && ng_pre_eq(slider1, 2) && ng_pre_eq(slider2, 1) && ng_pre_eq(slider3, 5) && ng_pre_eq(slider4, 0) && ng_pre_eq(slider5, 0) && ng_pre_eq(slider6, 0) ? m = 2;
+    m < 0 && ng_pre_eq(slider1, 2) && ng_pre_eq(slider2, 1) && ng_pre_eq(slider3, 200) && ng_pre_eq(slider4, 0) && ng_pre_eq(slider5, 0) && ng_pre_eq(slider6, 0) ? m = 3;
+    m < 0 && ng_pre_eq(slider1, 2) && ng_pre_eq(slider2, 0) && ng_pre_eq(slider3, 20) && ng_pre_eq(slider4, 0) && ng_pre_eq(slider5, 0) && ng_pre_eq(slider6, 0) ? m = 4;
+    m < 0 && ng_pre_eq(slider1, 2) && ng_pre_eq(slider2, 0) && ng_pre_eq(slider3, 20) && ng_pre_eq(slider4, 0) && ng_pre_eq(slider5, 0) && ng_pre_eq(slider6, 1) ? m = 5;
+    m < 0 && ng_pre_eq(slider1, 0) && ng_pre_eq(slider2, 1) && ng_pre_eq(slider3, 20) && ng_pre_eq(slider4, 0) && ng_pre_eq(slider5, 0) && ng_pre_eq(slider6, 0) ? m = 6;
+    m < 0 && ng_pre_eq(slider1, 1) && ng_pre_eq(slider2, 1) && ng_pre_eq(slider3, 20) && ng_pre_eq(slider4, 0) && ng_pre_eq(slider5, 0) && ng_pre_eq(slider6, 0) ? m = 7;
+    m < 0 && ng_pre_eq(slider1, 2) && ng_pre_eq(slider2, 0) && ng_pre_eq(slider3, 20) && ng_pre_eq(slider4, 0) && ng_pre_eq(slider5, -6) && ng_pre_eq(slider6, 0) ? m = 8;
+    m < 0 && ng_pre_eq(slider1, 2) && ng_pre_eq(slider2, 0) && ng_pre_eq(slider3, 20) && ng_pre_eq(slider4, 0) && ng_pre_eq(slider5, 6) && ng_pre_eq(slider6, 0) ? m = 9;
+    m;
+  );
+
+  function ng_preset_name(p) local(s)
+  (
+    s = "";
+    p == 0 ? s = "Default";
+    p == 1 ? s = "Plugin Bypass Check";
+    p == 2 ? s = "Render vs Render";
+    p == 3 ? s = "Long Latency";
+    p == 4 ? s = "Sample Exact";
+    p == 5 ? s = "Polarity Check";
+    p == 6 ? s = "Listen Main";
+    p == 7 ? s = "Listen Sidechain";
+    p == 8 ? s = "Manual -6 dB";
+    p == 9 ? s = "Manual +6 dB";
+    s;
+  );
+
+  function ng_presets() local(i)
+  (
+    ng_pre_req >= 0 ? ( ng_preset_load(ng_pre_req); update(); ng_pre_req = -1; );
+    ng_hist() ? update();
+    ng_pre_cur = ng_preset_match();
+    ng_pre_open ? (
+      ng_pre_menu_begin();
+      i = 0;
+      loop(ng_pre_n, ng_pre_item(i, ng_preset_name(i)); i += 1;);
+      ng_pre_menu_end();
+    );
+    strcpy(#ng_pre_name, ng_pre_cur >= 0 ? ng_preset_name(ng_pre_cur) : "CUSTOM");
+  );
+  // ---- end of factory presets ----
+
+@slider
+  update();
+
+@sample
+  NTML[nt_wp] = spl0;
+  NTMR[nt_wp] = spl1;
+  NTSL[nt_wp] = spl2;
+  NTSR[nt_wp] = spl3;
+  // the delay: the side that leads waits
+  nt_d = max(-16000, min(16000, nt_auto ? nt_lag : slider4));
+  nt_pm = (nt_wp - max(0, -nt_d) + NTW) % NTW;
+  nt_ps = (nt_wp - max(0, nt_d) + NTW) % NTW;
+  nt_ml = NTML[nt_pm];
+  nt_mr = NTMR[nt_pm];
+  nt_sl = NTSL[nt_ps];
+  nt_sr = NTSR[nt_ps];
+  // the gain
+  nt_auto ? (
+    nt_sms = nt_sms * nt_la + (nt_ml * nt_sl + nt_mr * nt_sr);
+    nt_sss = nt_sss * nt_la + (nt_sl * nt_sl + nt_sr * nt_sr);
+    nt_sss > nt_e20 ? nt_ga = nt_sms / nt_sss;
+    nt_g = nt_ga;
+  ) : (
+    nt_g = nt_gm;
+  );
+  nt_dl = nt_ml - nt_g * nt_sl;
+  nt_dr = nt_mr - nt_g * nt_sr;
+  NTDL[nt_wp] = nt_dl;
+  NTDR[nt_wp] = nt_dr;
+  // the null depth
+  nt_ed = nt_ed * nt_da + (nt_dl * nt_dl + nt_dr * nt_dr);
+  nt_em = nt_em * nt_da + (nt_ml * nt_ml + nt_mr * nt_mr);
+  nt_dl === 0 && nt_dr === 0 ? nt_zc += 1 : nt_zc = 0;
+  nt_ml !== 0 || nt_mr !== 0 ? nt_heard = 0 : nt_heard += 1;
+  nt_wp += 1;
+  nt_wp >= NTW ? nt_wp = 0;
+  nt_cnt += 1;
+  nt_cnt >= NTH ? (
+    nt_cnt = 0;
+    nt_frame();
+  );
+  // Listen, with a 10 ms crossfade
+  nt_xm = nt_xm < nt_tm ? min(nt_tm, nt_xm + nt_xr) : max(nt_tm, nt_xm - nt_xr);
+  nt_xs = nt_xs < nt_ts ? min(nt_ts, nt_xs + nt_xr) : max(nt_ts, nt_xs - nt_xr);
+  nt_xd = nt_xd < nt_td ? min(nt_td, nt_xd + nt_xr) : max(nt_td, nt_xd - nt_xr);
+  spl0 = nt_xm * nt_ml + nt_xs * nt_g * nt_sl + nt_xd * nt_dl;
+  spl1 = nt_xm * nt_mr + nt_xs * nt_g * nt_sr + nt_xd * nt_dr;
+
+@gfx 480 374
+  ng_knobs_begin("NULL TEST", "ADVANCED", 480, 200, 1, 0);
+
+  // display: the null depth, the delay, the gain and the match; the difference per octave band
+  nq_x0 = ng_vx + 8;
+  ng_font(1, 7.5, 1);
+  ng_col(NG_MUTED, 1);
+  ng_txt("NULL DEPTH", nq_x0, ng_vy + 8, 0, 1);
+  nq_d = nq_depth();
+  nq_id = nt_zc >= srate && nt_heard < nt_zc;
+  ng_font(2, 22, 1);
+  nq_id ? (
+    ng_col(NG_TEXT, 1);
+    ng_txt("BIT-IDENTICAL", nq_x0, ng_vy + 38, 0, 1);
+  ) : nq_d <= -400 ? (
+    ng_col(NG_SLOGAN, 1);
+    ng_txt("NO SIGNAL", nq_x0, ng_vy + 38, 0, 1);
+  ) : (
+    ng_col(NG_TEXT, 1);
+    nq_d < -150 ? strcpy(#nq_s, "< -150 dB") : sprintf(#nq_s, "%.1f dB", nq_d);
+    ng_txt(#nq_s, nq_x0, ng_vy + 38, 0, 1);
+  );
+  ng_font(1, 7.5, 1);
+  ng_col(NG_ACCENT, 1);
+  nq_dl = max(-16000, min(16000, nt_auto ? nt_lag : slider4));
+  sprintf(#nq_s, "DELAY %d SAMPLES  %.2f MS", nq_dl, nq_dl * 1000 / srate);
+  ng_txt(#nq_s, nq_x0, ng_vy + 66, 0, 1);
+  ng_col(NG_MUTED, 1);
+  nq_g = abs(nt_g);
+  nq_g > 0 ? sprintf(#nq_s, "GAIN %+.2f dB%s", 20 * log10(nq_g), nt_g < 0 ? "  INVERTED" : "") : strcpy(#nq_s, "GAIN -");
+  ng_txt(#nq_s, nq_x0, ng_vy + 82, 0, 1);
+  nt_auto ? sprintf(#nq_s, "MATCH %d%%", floor(nt_conf * 100 + 0.5)) : strcpy(#nq_s, "MANUAL");
+  ng_txt(#nq_s, nq_x0, ng_vy + 98, 0, 1);
+  ng_font(1, 6.5, 1);
+  ng_col(NG_SLOGAN, 1);
+  ng_txt("MAIN ON 1/2, THE OTHER ON 3/4", nq_x0, ng_vy + 126, 0, 1);
+  ng_font(1, 7.5, 1);
+  ng_col(NG_TEXT, 1);
+  ng_txt(slider1 == 0 ? "LISTEN: MAIN" : slider1 == 1 ? "LISTEN: SIDECHAIN" : "LISTEN: DIFFERENCE", nq_x0, ng_vy + 140, 0, 1);
+
+  // the difference per octave band: 0 dB at the top, -120 dB at the bottom
+  nq_bx = ng_vx + 216; nq_bw = ng_vx + ng_vw - 8 - nq_bx; nq_by = ng_vy + 20; nq_bh = ng_vh - 40;
+  ng_font(4, 7, 0);
+  nq_i = 0;
+  loop(10,
+    nq_w = nq_bw / 10;
+    nq_x = nq_bx + nq_i * nq_w + 2;
+    nq_v = max(0, min(1, (NTBR[nq_i] + 120) / 120));
+    ng_col(NG_BORDER, 0.35);
+    gfx_rect(X(nq_x), Y(nq_by), (nq_w - 4) * ng_s, nq_bh * ng_s);
+    ng_col(NG_ACCENT, 0.4 + 0.6 * nq_v);
+    gfx_rect(X(nq_x), Y(nq_by + nq_bh * (1 - nq_v)), (nq_w - 4) * ng_s, nq_bh * nq_v * ng_s);
+    ng_col(NG_MUTED, 1);
+    ng_txt(nq_i == 0 ? "31" : nq_i == 1 ? "63" : nq_i == 2 ? "125" : nq_i == 3 ? "250" : nq_i == 4 ? "500" :
+           nq_i == 5 ? "1K" : nq_i == 6 ? "2K" : nq_i == 7 ? "4K" : nq_i == 8 ? "8K" : "16K",
+           nq_x + (nq_w - 4) / 2, nq_by + nq_bh + 10, 1, 0);
+    nq_i += 1;
+  );
+
+  ng_row(6);
+  ng_select_ctl(1, "LISTEN", "MAIN|SIDECHAIN|DIFFERENCE", 0) ? update();
+  ng_select_ctl(2, "ALIGN", "MANUAL|AUTO", 0) ? update();
+  sprintf(#nq_v3, "%d ms", slider3);
+  ng_knob_ctl(3, "RANGE", #nq_v3, 1, 200, 20, 1, 0) ? update();
+  sprintf(#nq_v4, "%d", slider4);
+  ng_knob_ctl(4, "OFFSET", #nq_v4, -10000, 10000, 0, 1, 1) ? update();
+  sprintf(#nq_v5, "%+.2f dB", slider5);
+  ng_knob_ctl(5, "TRIM", #nq_v5, -24, 24, 0, 0.01, 1) ? update();
+  ng_select_ctl(6, "POLARITY", "NORMAL|INVERTED", 0) ? update();
+
+  ng_end();
+
+  ng_presets(); // the preset list (generated by tools/build_presets.py)

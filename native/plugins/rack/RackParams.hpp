@@ -67,15 +67,21 @@ enum Channel { kChanStereo = 0, kChanMid, kChanSide, kChanLeft, kChanRight };
 // ---- modulation sources ----------------------------------------------------------------------
 
 // 4.0 appends Smooth Random, the follower of a slot's output ("sidechain envelope"), the pitch
-// follower and the ADSR
+// follower and the ADSR, then the MIDI sources: the last held note (0..127 as 0..1), its velocity,
+// the gate (1 while a note is held), the mod wheel, pressure, pitch bend (-1..1) and one CC
 enum Source { kSrcMacro1 = 0, kSrcLfo1 = 8, kSrcLfo2 = 9, kSrcEnv = 10, kSrcSeq = 11,
-              kSrcRand = 12, kSrcFollow = 13, kSrcPitch = 14, kSrcAdsr = 15, kNumSources = 16 };
+              kSrcRand = 12, kSrcFollow = 13, kSrcPitch = 14, kSrcAdsr = 15,
+              kSrcNote = 16, kSrcVelocity, kSrcGate, kSrcModWheel, kSrcPressure, kSrcBend, kSrcCC,
+              kNumSources };
 static const char* const kSourceSymbols[] = { "macro1", "macro2", "macro3", "macro4", "macro5", "macro6",
                                               "macro7", "macro8", "lfo1", "lfo2", "env", "seq",
-                                              "rand", "follow", "pitch", "adsr" };
+                                              "rand", "follow", "pitch", "adsr",
+                                              "note", "velocity", "gate", "modwheel", "pressure", "bend", "cc" };
 static const char* const kSourceNames[] = { "Macro 1", "Macro 2", "Macro 3", "Macro 4", "Macro 5", "Macro 6",
                                             "Macro 7", "Macro 8", "LFO 1", "LFO 2", "Envelope", "Step Seq",
-                                            "Random", "Follower", "Pitch", "ADSR" };
+                                            "Random", "Follower", "Pitch", "ADSR",
+                                            "Note", "Velocity", "Gate", "Mod Wheel", "Pressure", "Pitch Bend",
+                                            "MIDI CC" };
 
 inline int sourceFromSymbol(const char* s)
 {
@@ -128,7 +134,11 @@ enum ExtParam : uint32_t {
     // the 4.0 scenes
     kSceneMorph,                                     // 346
     kScenesOn,                                       // 347
-    kNumParams,                                      // 348
+    // the 4.0 MIDI input
+    kMidiChannel,                                    // 348: Omni, 1..16
+    kMidiCC,                                         // 349: the CC of the source "cc"
+    kAdsrTrigger,                                    // 350: Audio, MIDI, Both
+    kNumParams,                                      // 351
 };
 static constexpr float kMaxFeedback = 95.0f;
 
@@ -209,7 +219,10 @@ static const ParamInfo kExtInfos[] = {
     { { "Solo", "solo", 0.0f, 1.0f, 0.0f, "", 1.0f, kOffOn }, false },               // 18: x5, per band
     { { "Bypass", "bypass", 0.0f, 1.0f, 0.0f, "", 1.0f, kOffOn }, false },           // 19: x5, per band
 };
-// the 4.0 modulators' settings (kRandRate .. kAdsrThreshold, in order)
+static const char* const kMidiChannels[] = { "Omni", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11",
+                                             "12", "13", "14", "15", "16" };
+static const char* const kAdsrTriggers[] = { "Audio", "MIDI", "Both" };
+// the 4.0 modulators' settings (kRandRate .. kAdsrTrigger, in order)
 static const ParamInfo kModInfos[] = {
     { { "Random Rate", "rand_rate", 0.02f, 20.0f, 1.0f, "Hz", 0.0f }, true },
     { { "Random Smooth", "rand_smooth", 0.0f, 100.0f, 100.0f, "%", 1.0f }, false },
@@ -226,15 +239,19 @@ static const ParamInfo kModInfos[] = {
     { { "ADSR Threshold", "adsr_threshold", -60.0f, 0.0f, -30.0f, "dB", 0.1f }, false },
     { { "Scene Morph", "scene_morph", 0.0f, 100.0f, 0.0f, "%", 0.0f }, false },
     { { "Scenes", "scenes", 0.0f, 1.0f, 0.0f, "", 1.0f, kOffOn }, false },
+    { { "MIDI Channel", "midi_channel", 0.0f, 16.0f, 0.0f, "", 1.0f, kMidiChannels }, false },
+    { { "MIDI CC", "midi_cc", 0.0f, 127.0f, 74.0f, "", 1.0f }, false },
+    { { "ADSR Trigger", "adsr_trigger", 0.0f, 2.0f, 0.0f, "", 1.0f, kAdsrTriggers }, false },
 };
 
 // the modulator settings a route can move (4.0): a route to slot "m" moves the setting
 // kModTargets[value]; its depth is a share of the setting's range (log ones in log space)
 static const uint32_t kModTargets[] = { kLfo1Rate, kLfo2Rate, kEnvGain, kSeqRate, kRandRate, kRandSmooth,
-                                        kAdsrAttack, kAdsrDecay, kAdsrSustain, kAdsrRelease };
+                                        kAdsrAttack, kAdsrDecay, kAdsrSustain, kAdsrRelease,
+                                        kSceneMorph }; // Scene Morph appended with the MIDI input
 static const char* const kModTargetNames[] = { "LFO 1 Rate", "LFO 2 Rate", "Env Gain", "Seq Rate", "Random Rate",
                                                "Random Smooth", "ADSR Attack", "ADSR Decay", "ADSR Sustain",
-                                               "ADSR Release" };
+                                               "ADSR Release", "Scene Morph" };
 static constexpr uint32_t kNumModTargets = sizeof(kModTargets) / sizeof(kModTargets[0]);
 static constexpr int kModSlot = int(kSlots); // Route::slot of a route to a modulator setting
 
@@ -708,6 +725,16 @@ struct PresetGlobal {
     const char* option; // enum option label, or nullptr to use value
 };
 
+// 4.0: a preset's scene is the preset itself with some values changed: in scene `scene` (0..3),
+// slot `slot` (0..7) gets `plain` for its slider `value` (from 0), or for its Mix with value -1;
+// slot kSlots is a macro (value 0..7)
+struct PresetSceneValue {
+    uint8_t scene, slot;
+    int16_t value;
+    float plain;
+    const char* name; // the slider's name, or "Mix" or "macroN"
+};
+
 struct Preset {
     const char* name;
     const char* category; // "Init", "Chain", "Routing" or "Macro"
@@ -717,6 +744,10 @@ struct Preset {
     uint32_t numRoutes;
     const PresetGlobal* globals;
     uint32_t numGlobals;
+    // 4.0: the scenes (0 = none, the generator leaves them out) and their changed values
+    uint32_t numScenes = 0;
+    const PresetSceneValue* sceneValues = nullptr;
+    uint32_t numSceneValues = 0;
 };
 
 struct LogSlider {

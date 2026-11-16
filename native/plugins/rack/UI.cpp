@@ -523,6 +523,8 @@ protected:
             fRoutes[i] = st->routes[i];
         fNumRoutes = st->numRoutes;
         sendRoutes();
+        e->presetScenes(kPresets[index], *st, fScenes); // 4.0: none for a preset without scenes
+        sendScenes();
         fPresetName = kPresets[index].name;
         setState("preset", fPresetName.c_str());
         for (uint32_t i = 0; i < kNumParams; ++i)
@@ -1754,7 +1756,7 @@ protected:
     void drawModsPopup()
     {
         dim();
-        const float w = 900.0f, h = 214.0f, x = (float(kWidth) - w) * 0.5f, y = 250.0f;
+        const float w = 900.0f, h = 304.0f, x = (float(kWidth) - w) * 0.5f, y = 200.0f;
         beginPath();
         roundedRect(x + 0.5f, y + 4.0f, w - 1.0f, h - 1.0f, 8.0f);
         fillColor(Color(0, 0, 0, 0.4f));
@@ -1790,15 +1792,50 @@ protected:
         // ADSR
         cx += 164.0f;
         const float aw = x + w - 16.0f - cx;
-        modHead(cx, top, aw, kSrcAdsr, "ADSR", "GATED BY THE INPUT ABOVE THRESHOLD");
+        modHead(cx, top, aw, kSrcAdsr, "ADSR",
+                fParam[kAdsrTrigger] < 0.5f ? "GATED BY THE INPUT ABOVE THRESHOLD"
+                                            : (fParam[kAdsrTrigger] < 1.5f ? "GATED BY MIDI NOTES"
+                                                                           : "GATED BY MIDI NOTES OR THE INPUT"));
         const float akw = aw / 5.0f;
         knobCell(cx + akw * 0.5f, top + 40.0f, kAdsrAttack, "ATTACK", 11.0f, akw, 6.0f, 40.0f, 72.0f);
         knobCell(cx + akw * 1.5f, top + 40.0f, kAdsrDecay, "DECAY", 11.0f, akw, 6.0f, 40.0f, 72.0f);
         knobCell(cx + akw * 2.5f, top + 40.0f, kAdsrSustain, "SUSTAIN", 11.0f, akw, 6.0f, 40.0f, 72.0f);
         knobCell(cx + akw * 3.5f, top + 40.0f, kAdsrRelease, "RELEASE", 11.0f, akw, 6.0f, 40.0f, 72.0f);
         knobCell(cx + akw * 4.5f, top + 40.0f, kAdsrThreshold, "THRESH", 11.0f, akw, 6.0f, 40.0f, 72.0f);
+        // MIDI (4.0): the sources the Rack's MIDI input feeds, with the channel, the CC and the
+        // ADSR's trigger
+        hline(x + 16.0f, x + w - 16.0f, top + 136.0f, theme::kBorder);
+        const float my = top + 150.0f;
+        static const int kMidiSrc[] = { kSrcNote, kSrcVelocity, kSrcGate, kSrcModWheel, kSrcPressure, kSrcBend, kSrcCC };
+        static const char* const kMidiTitle[] = { "NOTE", "VELOCITY", "GATE", "MOD WHEEL", "PRESSURE", "PITCH BEND", "CC" };
+        static const char* const kMidiWhat[] = { "LAST NOTE, 0..127", "OF THE LAST NOTE", "WHILE A NOTE IS HELD",
+                                                 "CC 1", "CHANNEL OR KEY", "-1..1", "THE CC BELOW" };
+        RackEngine* e = engine();
+        for (int k = 0; k < 7; ++k)
+        {
+            const float mx = x + 16.0f + float(k) * 96.0f, mw = 84.0f;
+            const int src = kMidiSrc[k];
+            label(mx, my, ALIGN_LEFT, 7.5f, 1.5f, theme::kText, kMidiTitle[k], true);
+            label(mx, my + 14.0f, ALIGN_LEFT, 5.5f, 1.0f, theme::kSlogan, kMidiWhat[k], true);
+            float v = e ? e->sourceValue(src) : 0.0f;
+            if (src == kSrcBend)
+                v = (v + 1.0f) * 0.5f;
+            miniBar(mx, my + 26.0f, mw, v);
+            const int n = routesFrom(src);
+            char rb[24];
+            std::snprintf(rb, sizeof(rb), n ? "%d ROUTE%s" : "NO ROUTES", n, n > 1 ? "S" : "");
+            label(mx, my + 40.0f, ALIGN_LEFT, 5.5f, 1.0f, n ? theme::kMuted : theme::kSlogan, rb, true);
+        }
+        {
+            const float mx = x + 16.0f + 7.0f * 96.0f;
+            label(mx, my, ALIGN_LEFT, 6.5f, 1.2f, theme::kMuted, "CHANNEL", true);
+            selector(mx + 44.0f, my + 22.0f, 88.0f, kMidiChannel, nullptr, 19.0f);
+            label(mx, my + 44.0f, ALIGN_LEFT, 6.5f, 1.2f, theme::kMuted, "ADSR TRIGGER", true);
+            selector(mx + 44.0f, my + 66.0f, 88.0f, kAdsrTrigger, nullptr, 19.0f);
+            knobCell(mx + 140.0f, my - 6.0f, kMidiCC, "CC", 11.0f, 66.0f, 6.0f, 40.0f, 72.0f);
+        }
         label(x + 16.0f, y + h - 18.0f, ALIGN_LEFT, 6.5f, 1.2f, theme::kSlogan,
-              "SEND THEM IN THE ROUTES VIEW (MOD). A ROUTE TO MODULATORS MOVES A MODULATOR'S OWN SETTING.", true);
+              "SEND THEM IN THE ROUTES VIEW (MOD). A ROUTE TO MODULATORS MOVES A MODULATOR'S OWN SETTING. MIDI COMES FROM THE TRACK.", true);
     }
 
     // the split into up to 5 bands: Split Bands, the crossovers, Solo and Bypass of each band

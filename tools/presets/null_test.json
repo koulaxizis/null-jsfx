@@ -1,0 +1,11 @@
+[
+  ["Plugin Bypass Check", {"Listen": "Difference", "Align": "Auto", "Range (ms)": 20}],
+  ["Render vs Render", {"Listen": "Difference", "Align": "Auto", "Range (ms)": 5}],
+  ["Long Latency", {"Listen": "Difference", "Align": "Auto", "Range (ms)": 200}],
+  ["Sample Exact", {"Listen": "Difference", "Align": "Manual"}],
+  ["Polarity Check", {"Listen": "Difference", "Align": "Manual", "Polarity": "Inverted"}],
+  ["Listen Main", {"Listen": "Main", "Align": "Auto"}],
+  ["Listen Sidechain", {"Listen": "Sidechain", "Align": "Auto"}],
+  ["Manual -6 dB", {"Listen": "Difference", "Align": "Manual", "Trim (dB)": -6}],
+  ["Manual +6 dB", {"Listen": "Difference", "Align": "Manual", "Trim (dB)": 6}]
+]

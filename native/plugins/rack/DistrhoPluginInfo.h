@@ -30,6 +30,11 @@
 #define DISTRHO_PLUGIN_WANT_FULL_STATE 1
 #define DISTRHO_PLUGIN_WANT_DIRECT_ACCESS 1
 #define DISTRHO_PLUGIN_WANT_TIMEPOS  1
+// 4.0: a MIDI input for the MIDI modulation sources. The Audio Unit stays an effect (aufx), the
+// type 3.x shipped, so no Logic project loses it (R3); AU hosts that send no MIDI to effects
+// simply leave the MIDI sources at rest.
+#define DISTRHO_PLUGIN_WANT_MIDI_INPUT 1
+#define DISTRHO_PLUGIN_AU_TYPE aufx
 #define DISTRHO_UI_USE_NANOVG        1
 #define DISTRHO_UI_USER_RESIZABLE    1
 #define DISTRHO_UI_DEFAULT_WIDTH     960

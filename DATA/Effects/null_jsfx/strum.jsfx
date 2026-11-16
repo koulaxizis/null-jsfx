@@ -1,0 +1,256 @@
+desc:NULL Strum
+author: Christos Koulaxizis
+tags: midi strum strummer guitar chord strumming rhythm pattern down up stroke humanize velocity tempo
+//category: MIDI
+//NULL JSFX v3.3.1 • https://nulljsfx.tech • MIT License
+
+slider1:0<0,3,1{Down,Up,Alternate,Random}>Direction
+slider2:12<0,100,1>Speed (ms)
+slider3:0<0,6,1{Once,1/4,1/8,1/16,Down-Up 1/8,Folk,Offbeat}>Rhythm
+slider4:85<10,100,1>Gate (%)
+slider5:25<0,100,1>Velocity Spread (%)
+slider6:80<10,100,1>Upstroke Velocity (%)
+slider7:0<0,20,1>Humanize (ms)
+slider8:25<0,100,1>Collect (ms)
+
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
+
+@init
+  // A MIDI effect that plays the held chord like a guitar pick. The keys pressed within Collect
+  // of the first one make the chord; it is strummed string by string, Speed apart, lowest first
+  // on a down stroke and highest first on an up stroke (Direction: Down, Up, Alternate, or Random
+  // by an exact Park-Miller step). Each string is softer than the one before, down to Velocity
+  // Spread less for the last; an up stroke plays at Upstroke Velocity; Humanize moves each string
+  // later by up to that many ms. Rhythm Once strums when the chord is played (a key added later
+  // strums the chord again) and the notes ring while their keys are held; the other rhythms strum
+  // again on the tempo while keys are held, each strum lasting Gate of its step: 1/4, 1/8 and
+  // 1/16 with Direction, Down-Up 1/8, Folk (D - D U - U D U on eighths) and Offbeat (a down stroke
+  // on every second eighth). Releasing a key ends its note and drops its strings still waiting.
+  // Other MIDI passes through at its own sample; an all notes off (CC 120/123) ends that
+  // channel's keys and notes. The audio passes through.
+  ext_noinit = 1;
+  Q = 0;                       // incoming messages of the block: offset, status, data 1, data 2
+  QMAX = 256;
+  qn = qi = 0;
+  E = 1024;                    // waiting notes, sorted by time: time, status, note, velocity, id, key
+  EMAX = 4096;
+  eh = et = 0;
+  SND = E + EMAX * 6;          // per channel and note: id of the note we sent that sounds (0 = none)
+  HELD = SND + 2048;           // per channel and note: the velocity of the held key (0 = up)
+  LST = HELD + 2048;           // the chord of a strum, by pitch
+  memset(SND, 0, 6144);
+  nheld = 0;
+  next_id = 1;
+  now = 0;                     // samples since the start
+  strum_at = -1;               // the time of the next strum (-1 = none)
+  running = 0;                 // a rhythm runs while keys are held
+  pat_i = 0;                   // the step of the rhythm
+  alt = 0;
+  strums = 0;
+  seed = 12345;
+
+  // Park-Miller in exact double arithmetic (0 < value < 1), as the VST3/CLAP
+  function st_rand()
+  (
+    seed *= 16807; seed -= floor(seed / 2147483647) * 2147483647;
+    seed / 2147483647;
+  );
+
+  function st_on(ofs, ch, nt, v, id) local(k)
+  (
+    k = ch * 128 + nt;
+    SND[k] ? midisend(ofs, 0x80 | ch, nt, 0);
+    midisend(ofs, 0x90 | ch, nt, v);
+    SND[k] = id;
+  );
+
+  function st_off(ofs, ch, nt, id) local(k)
+  (
+    k = ch * 128 + nt;
+    SND[k] == id ? (
+      midisend(ofs, 0x80 | ch, nt, 0);
+      SND[k] = 0;
+    );
+  );
+
+  // a waiting note, kept in time order (after the ones at the same time)
+  function st_push(t, st, nt, v, id, s) local(i)
+  (
+    et >= EMAX ? (
+      i = 0;
+      loop(et - eh, memcpy(E + i * 6, E + (eh + i) * 6, 6); i += 1;);
+      et -= eh;
+      eh = 0;
+    );
+    i = et;
+    while (i > eh && E[(i - 1) * 6] > t) (
+      memcpy(E + i * 6, E + (i - 1) * 6, 6);
+      i -= 1;
+    );
+    E[i * 6] = t; E[i * 6 + 1] = st; E[i * 6 + 2] = nt; E[i * 6 + 3] = v; E[i * 6 + 4] = id; E[i * 6 + 5] = s;
+    et += 1;
+  );
+
+  // drops the waiting notes of key s (s < 0: of channel -1 - s)
+  function st_drop(s) local(i, j)
+  (
+    i = j = eh;
+    while (i < et) (
+      (s >= 0 ? E[i * 6 + 5] != s : (E[i * 6 + 1] & 15) != -1 - s) ? (
+        j != i ? memcpy(E + j * 6, E + i * 6, 6);
+        j += 1;
+      );
+      i += 1;
+    );
+    et = j;
+  );
+
+  // the stroke of rhythm r at step i: 0 rest, 1 down, 2 up, 3 by Direction
+  function st_pat(r, i) local(k)
+  (
+    k = i % 8;
+    r == 4 ? (k % 2 == 0 ? 1 : 2) :
+    r == 5 ? (k == 0 || k == 2 || k == 6 ? 1 : k == 1 || k == 4 ? 0 : 2) :
+    r == 6 ? (k % 2 == 0 ? 0 : 1) : 3;
+  );
+
+  // a strum of the held chord at time t
+  function st_strum(t, d) local(n, nt, ch, s, k, v, j)
+  (
+    d == 3 ? (
+      dirm == 0 ? (d = 1) : dirm == 1 ? (d = 2) : dirm == 2 ? ( d = (alt ? 2 : 1); alt = 1 - alt; ) : ( d = (st_rand() < 0.5 ? 1 : 2); );
+    );
+    n = 0;
+    nt = 0;
+    loop(128,
+      ch = 0;
+      loop(16,
+        HELD[ch * 128 + nt] > 0 ? ( LST[n] = ch * 128 + nt; n += 1; );
+        ch += 1;
+      );
+      nt += 1;
+    );
+    k = 0;
+    loop(n,
+      s = LST[d == 1 ? k : n - 1 - k];
+      ch = floor(s / 128);
+      nt = s - ch * 128;
+      v = floor(HELD[s] * (1 - spread * k / max(1, n - 1)) * (d == 2 ? upv : 1) + 0.5);
+      v = max(1, min(127, v));
+      j = (hum_n > 0 ? floor(st_rand() * hum_n) : 0);
+      et - eh + 2 <= EMAX ? (
+        st_push(t + k * spd_n + j, 0x90 | ch, nt, v, next_id, s);
+        rhythm > 0 ? st_push(t + k * spd_n + j + len_n, 0x80 | ch, nt, 0, next_id, s);
+        next_id += 1;
+      );
+      k += 1;
+    );
+    n > 0 ? strums += 1;
+  );
+
+  // key s goes up: its note ends, its waiting strings are dropped
+  function st_release(ofs, s) local(ch, nt)
+  (
+    HELD[s] > 0 ? (
+      HELD[s] = 0;
+      nheld -= 1;
+      st_drop(s);
+      ch = floor(s / 128);
+      nt = s - ch * 128;
+      SND[s] ? ( midisend(ofs, 0x80 | ch, nt, 0); SND[s] = 0; );
+      nheld <= 0 ? ( nheld = 0; running = 0; strum_at = -1; );
+    );
+  );
+
+  // all notes off on channel ch: its keys go up, its notes end
+  function st_flush(ofs, ch) local(nt, s)
+  (
+    st_drop(-1 - ch);
+    nt = 0;
+    loop(128,
+      s = ch * 128 + nt;
+      HELD[s] > 0 ? ( HELD[s] = 0; nheld -= 1; );
+      SND[s] ? ( midisend(ofs, 0x80 | ch, nt, 0); SND[s] = 0; );
+      nt += 1;
+    );
+    nheld <= 0 ? ( nheld = 0; running = 0; strum_at = -1; );
+  );
+
+@slider
+  dirm = slider1;
+  rhythm = slider3;
+  gate = slider4 / 100;
+  spread = slider5 / 100;
+  upv = slider6 / 100;
+
+@block
+  qn = qi = 0;
+  while (midirecv(ofs, m1, m2, m3)) (
+    qn < QMAX ? (
+      Q[qn * 4] = min(max(ofs, 0), samplesblock - 1);
+      Q[qn * 4 + 1] = m1;
+      Q[qn * 4 + 2] = m2;
+      Q[qn * 4 + 3] = m3;
+      qn += 1;
+    );
+  );
+  spd_n = floor(slider2 * 0.001 * srate);
+  hum_n = floor(slider7 * 0.001 * srate);
+  col_n = floor(slider8 * 0.001 * srate);
+  step_n = max(1, floor(60 / tempo * (rhythm == 1 ? 1 : rhythm == 3 ? 0.25 : 0.5) * srate));
+  len_n = max(1, floor(step_n * gate));
+  si = 0;
+
+@sample
+  // the MIDI that came in at this sample
+  while (qi < qn && Q[qi * 4] <= si) (
+    m1 = Q[qi * 4 + 1];
+    m2 = Q[qi * 4 + 2];
+    m3 = Q[qi * 4 + 3];
+    st = m1 & 0xF0;
+    ch = m1 & 15;
+    st == 0x90 && m3 > 0 ? (
+      st_release(si, ch * 128 + m2);
+      HELD[ch * 128 + m2] = m3;
+      nheld += 1;
+      rhythm == 0 ? (
+        strum_at < 0 ? strum_at = now + col_n;
+      ) : (
+        !running || strum_at < 0 ? ( running = 1; pat_i = 0; strum_at = now + col_n; );
+      );
+    ) : st == 0x80 || st == 0x90 ? (
+      st_release(si, ch * 128 + m2);
+    ) : (
+      st == 0xB0 && (m2 == 120 || m2 == 123) ? st_flush(si, ch);
+      midisend(si, m1, m2, m3);
+    );
+    qi += 1;
+  );
+  // the strum that is due
+  strum_at >= 0 && strum_at <= now ? (
+    rhythm == 0 ? (
+      st_strum(now, 3);
+      strum_at = -1;
+      running = 0;
+    ) : (
+      st_pat_d = st_pat(rhythm, pat_i);
+      st_pat_d > 0 ? st_strum(now, st_pat_d);
+      pat_i += 1;
+      strum_at += step_n;
+    );
+  );
+  // then the strings that are due
+  while (eh < et && E[eh * 6] <= now) (
+    E[eh * 6 + 1] >= 0x90 ? st_on(si, E[eh * 6 + 1] & 15, E[eh * 6 + 2], E[eh * 6 + 3], E[eh * 6 + 4])
+                          : st_off(si, E[eh * 6 + 1] & 15, E[eh * 6 + 2], E[eh * 6 + 4]);
+    eh += 1;
+  );
+  eh >= et ? eh = et = 0;
+  now += 1;
+  si += 1;
+  // the audio passes through
+  spl0 = spl0;
+  spl1 = spl1;

@@ -249,6 +249,38 @@ static void testPresets()
         }
         std::printf("  %-22s %-8s %u slots %u routes  peak %.2f / %.2f  rms %.3f / %.3f  latency %u\n", pr.name,
                     pr.category, pr.numSlots, pr.numRoutes, peak[0], peak[1], rms[0], rms[1], e->latency());
+        // 4.0: a preset with routes from the MIDI sources also plays with a note held (low, middle, high)
+        bool midi = false;
+        for (uint32_t r = 0; r < pr.numRoutes; ++r)
+            midi = midi || rack::sourceFromSymbol(pr.routes[r].source) >= int(rack::kSrcNote);
+        for (int note : { 36, 60, 84 })
+        {
+            if (!midi)
+                break;
+            const double sr = 48000.0;
+            e->setSampleRate(sr);
+            e->loadPreset(pr);
+            RackEngine::MidiEvent on;
+            on.frame = 0;
+            on.size = 3;
+            on.data[0] = 0x90;
+            on.data[1] = uint8_t(note);
+            on.data[2] = 127;
+            e->setMidi(&on, 1);
+            const Stereo in = testSignal(sr, 2.0);
+            Stereo out;
+            render(*e, in, out, 512);
+            double pk = 0.0, sum = 0.0;
+            bool finite = true;
+            for (size_t i = 0; i < out.l.size(); ++i)
+            {
+                finite = finite && std::isfinite(out.l[i]) && std::isfinite(out.r[i]);
+                pk = std::max(pk, double(std::max(std::fabs(out.l[i]), std::fabs(out.r[i]))));
+                sum += double(out.l[i]) * out.l[i] + double(out.r[i]) * out.r[i];
+            }
+            CHECK(finite && pk < 4.0, "%s with note %d: peak %.2f", pr.name, note, pk);
+            std::printf("    with note %d held (velocity 127): peak %.2f  rms %.3f\n", note, pk, std::sqrt(sum / (out.l.size() * 2.0)));
+        }
     }
     for (const std::string& s : skipped)
         std::printf("  skipped (modules not in this build): %s\n", s.c_str());
@@ -669,6 +701,120 @@ static void testModulators()
     }
 }
 
+// ---- the MIDI input (4.0) ------------------------------------------------------------------------
+
+static void testMidi()
+{
+    auto mods = allModules(true);
+    const double sr = 48000.0;
+    using Ev = RackEngine::MidiEvent;
+    std::vector<float> zl(128, 0.0f), zr(128, 0.0f), ol(128), orr(128);
+    // one block of silence with these events
+    auto block = [&](RackEngine& e, std::vector<Ev> ev) {
+        e.setMidi(ev.empty() ? nullptr : ev.data(), uint32_t(ev.size()));
+        e.process(zl.data(), zr.data(), ol.data(), orr.data(), 128, {});
+    };
+    auto ev = [](uint32_t f, uint8_t a, uint8_t b, uint8_t c) { Ev x; x.frame = f; x.size = 3; x.data[0] = a; x.data[1] = b; x.data[2] = c; return x; };
+    auto near = [](float a, double b) { return std::fabs(double(a) - b) < 1e-6; };
+
+    // notes: last note priority, the velocity of the last note-on, the gate; the note is held after the release
+    {
+        std::unique_ptr<RackEngine> e(new RackEngine(mods.data(), uint32_t(mods.size())));
+        e->setSampleRate(sr);
+        block(*e, { ev(10, 0x90, 60, 100) });
+        const bool a = near(e->sourceValue(rack::kSrcNote), 60.0 / 127.0) && near(e->sourceValue(rack::kSrcVelocity), 100.0 / 127.0) &&
+                       e->sourceValue(rack::kSrcGate) == 1.0f;
+        block(*e, { ev(0, 0x90, 72, 50) });
+        const bool b = near(e->sourceValue(rack::kSrcNote), 72.0 / 127.0) && near(e->sourceValue(rack::kSrcVelocity), 50.0 / 127.0);
+        block(*e, { ev(0, 0x80, 72, 0) });
+        const bool c = near(e->sourceValue(rack::kSrcNote), 60.0 / 127.0) && e->sourceValue(rack::kSrcGate) == 1.0f;
+        block(*e, { ev(5, 0x90, 60, 0) }); // velocity 0 = note-off
+        const bool d = near(e->sourceValue(rack::kSrcNote), 60.0 / 127.0) && e->sourceValue(rack::kSrcGate) == 0.0f;
+        CHECK(a && b && c && d, "midi notes: %d %d %d %d", a, b, c, d);
+        // an event late in a long host block reaches the chunk it falls in
+        std::vector<float> l(512, 0.0f), r(512, 0.0f), o1(512), o2(512);
+        std::vector<Ev> late = { ev(400, 0x90, 64, 127) };
+        e->setMidi(late.data(), 1);
+        e->process(l.data(), r.data(), o1.data(), o2.data(), 512, {});
+        CHECK(near(e->sourceValue(rack::kSrcNote), 64.0 / 127.0), "midi note at frame 400 of 512");
+        std::printf("  notes: last note priority, velocity, gate, a note at frame 400 of a 512 block: ok\n");
+    }
+
+    // the channel: MIDI Channel 2 ignores channel 1
+    {
+        std::unique_ptr<RackEngine> e(new RackEngine(mods.data(), uint32_t(mods.size())));
+        e->setSampleRate(sr);
+        e->setParam(rack::kMidiChannel, 2.0f);
+        block(*e, { ev(0, 0x90, 60, 100) });
+        const bool ignored = e->sourceValue(rack::kSrcGate) == 0.0f;
+        block(*e, { ev(0, 0x91, 61, 100) });
+        CHECK(ignored && near(e->sourceValue(rack::kSrcNote), 61.0 / 127.0), "midi channel 2");
+    }
+
+    // mod wheel, CC 74, pressure and bend glide to their values over 10 ms
+    {
+        std::unique_ptr<RackEngine> e(new RackEngine(mods.data(), uint32_t(mods.size())));
+        e->setSampleRate(sr);
+        block(*e, { ev(0, 0xB0, 1, 127), ev(1, 0xB0, 74, 64), ev(2, 0xD0, 32, 0), ev(3, 0xE0, 0x7F, 0x7F) });
+        const float first = e->sourceValue(rack::kSrcModWheel);
+        for (int i = 0; i < 100; ++i)
+            block(*e, {});
+        const bool v = near(e->sourceValue(rack::kSrcModWheel), 1.0) && near(e->sourceValue(rack::kSrcCC), 64.0 / 127.0) &&
+                       near(e->sourceValue(rack::kSrcPressure), 32.0 / 127.0) && near(e->sourceValue(rack::kSrcBend), 1.0);
+        block(*e, { ev(0, 0xE0, 0, 0x40) });
+        for (int i = 0; i < 100; ++i)
+            block(*e, {});
+        CHECK(first > 0.1f && first < 0.5f && v && e->sourceValue(rack::kSrcBend) == 0.0f,
+              "midi controllers: first %.3f, glided %d, bend centre %.4f", first, v, e->sourceValue(rack::kSrcBend));
+        std::printf("  controllers: mod wheel %.3f after one chunk, then 1; CC 74, pressure, bend up and centre: ok\n", first);
+    }
+
+    // the ADSR: Trigger Audio (the default) ignores notes; Trigger MIDI opens with a note and
+    // releases with its note-off; a new note starts the attack again
+    for (int trig = 0; trig < 2; ++trig)
+    {
+        std::unique_ptr<RackEngine> e(new RackEngine(mods.data(), uint32_t(mods.size())));
+        e->setSampleRate(sr);
+        e->setParam(rack::kAdsrTrigger, float(trig));
+        block(*e, { ev(0, 0x90, 60, 100) });
+        float peak = 0.0f;
+        for (int i = 0; i < 150; ++i) // 400 ms: attack 10 ms, decay 200 ms to 60 %
+        {
+            block(*e, {});
+            peak = std::max(peak, e->sourceValue(rack::kSrcAdsr));
+        }
+        const float sus = e->sourceValue(rack::kSrcAdsr);
+        block(*e, { ev(0, 0x90, 62, 100) });
+        for (int i = 0; i < 2; ++i)
+            block(*e, {});
+        const float again = e->sourceValue(rack::kSrcAdsr);
+        block(*e, { ev(0, 0x80, 60, 0), ev(1, 0x80, 62, 0) });
+        for (int i = 0; i < 200; ++i)
+            block(*e, {});
+        const float end = e->sourceValue(rack::kSrcAdsr);
+        if (trig)
+            CHECK(peak == 1.0f && near(sus, 0.6) && again > 0.7f && end == 0.0f, "adsr by midi: peak %.3f sustain %.3f again %.3f end %.3f", peak, sus, again, end);
+        else
+            CHECK(peak == 0.0f && end == 0.0f, "adsr trigger audio ignores notes: %.3f", peak);
+        if (trig)
+            std::printf("  adsr by MIDI: peak %.2f, sustain %.2f, a new note %.2f, %.2f after the release\n", peak, sus, again, end);
+    }
+
+    // a route from Note: the identity module's value 1 follows the note
+    {
+        std::unique_ptr<RackEngine> e(new RackEngine(mods.data(), uint32_t(mods.size())));
+        e->setSampleRate(sr);
+        std::string ids[rack::kSlots] = { "identity" };
+        e->setSlots(ids);
+        rack::Route r;
+        r.source = rack::kSrcNote; r.slot = 0; r.value = 0; r.depth = 1.0f;
+        e->setRoutes(&r, 1);
+        block(*e, { ev(0, 0x90, 96, 100) });
+        block(*e, {});
+        CHECK(near(e->effective(0, 0), 96.0 / 127.0), "route from note: %.4f", e->effective(0, 0));
+    }
+}
+
 // ---- scenes (4.0) --------------------------------------------------------------------------------
 
 static void testScenes()
@@ -729,6 +875,53 @@ static void testScenes()
     e->scenes(back.get());
     CHECK(!back[0].used && !back[2].used, "a preset kept the scenes");
     std::printf("  scenes with other modules in the slots: their own values; a preset clears the scenes\n");
+
+    // a preset with scenes (Scene Morph Build): each scene is the preset with its changes
+    for (uint32_t p = 0; p < rack::kNumPresets; ++p)
+    {
+        const rack::Preset& pr = rack::kPresets[p];
+        if (!pr.numScenes)
+            continue;
+        std::unique_ptr<RackEngine> f(new RackEngine(mods.data(), uint32_t(mods.size())));
+        bool have = true;
+        for (uint32_t s = 0; s < pr.numSlots; ++s)
+            have = have && f->find(pr.slots[s].id);
+        if (!have)
+        {
+            std::printf("  %s: modules not in this build, skipped\n", pr.name);
+            continue;
+        }
+        f->setSampleRate(sr);
+        std::string err;
+        CHECK(f->loadPreset(pr, &err), "%s: %s", pr.name, err.c_str());
+        f->scenes(back.get());
+        uint32_t used = 0;
+        for (uint32_t k = 0; k < rack::kScenes; ++k)
+            used += back[k].used;
+        CHECK(used == pr.numScenes, "%s: %u scenes, not %u", pr.name, used, pr.numScenes);
+        for (uint32_t j = 0; j < pr.numSceneValues; ++j)
+        {
+            const rack::PresetSceneValue& v = pr.sceneValues[j];
+            if (v.slot >= rack::kSlots || v.value < 0)
+                continue;
+            const nulljsfx::ModuleDesc* d = f->find(back[v.scene].ids[v.slot].c_str());
+            CHECK(d && strieq(d->sliders[v.value].name, v.name), "%s: scene value %s", pr.name, v.name);
+            const float want = rack::plainToValue(d->sliders[v.value], rack::isLogSlider(d->id, uint32_t(v.value)), v.plain);
+            CHECK(back[v.scene].vals[v.slot][1 + v.value] == want, "%s: scene %u %s", pr.name, unsigned(v.scene) + 1, v.name);
+        }
+        // Morph 0 plays scene 1, 100 the last one
+        const rack::PresetSceneValue& v0 = pr.sceneValues[0];
+        for (float morph : { 0.0f, 100.0f })
+        {
+            f->setParam(rack::kSceneMorph, morph);
+            render(*f, in, out, 512);
+            const uint32_t k = morph > 0.0f ? pr.numScenes - 1 : 0;
+            const float want = back[k].vals[v0.slot][1 + v0.value];
+            CHECK(std::fabs(f->effective(v0.slot, uint32_t(v0.value)) - want) < 1e-6f, "%s: morph %.0f", pr.name, morph);
+        }
+        std::printf("  %s: %u scenes, %u changed values, Morph 0 and 100 play the first and the last\n", pr.name,
+                    pr.numScenes, pr.numSceneValues);
+    }
 }
 
 // ---- threads ---------------------------------------------------------------------------------
@@ -782,7 +975,7 @@ static void testState()
         CHECK(rack::kExtFirst == 254 && std::string(rack::paramInfo(253, nm, 32, sy, 32).symbol) == "s8_v25" &&
               std::string(rack::paramInfo(rack::kSeqStep1 + 15, nm, 32, sy, 32).symbol) == "seq_step16" &&
               std::string(rack::paramInfo(rack::laneParam(7), nm, 32, sy, 32).symbol) == "s8_lane" &&
-              rack::kSlotLaneX1 == 286 && rack::kSlotSplit1 == 310 && rack::kRandRate == 333 && rack::kSceneMorph == 346 && rack::kNumParams == 348, "parameter layout");
+              rack::kSlotLaneX1 == 286 && rack::kSlotSplit1 == 310 && rack::kRandRate == 333 && rack::kSceneMorph == 346 && rack::kMidiChannel == 348 && rack::kAdsrTrigger == 350 && rack::kNumParams == 351, "parameter layout");
         CHECK(std::string(rack::paramInfo(rack::laneXParam(7), nm, 32, sy, 32).symbol) == "s8_lanex" &&
               std::string(rack::paramInfo(rack::kLaneGain1, nm, 32, sy, 32).symbol) == "lanea_gain" &&
               std::string(rack::paramInfo(rack::kLaneSolo1 + 3, nm, 32, sy, 32).symbol) == "laned_solo" &&
@@ -793,7 +986,11 @@ static void testState()
               std::string(rack::paramInfo(rack::kBandBypass1 + 4, nm, 32, sy, 32).symbol) == "band5_bypass" &&
               std::string(rack::paramInfo(rack::kRandRate, nm, 32, sy, 32).symbol) == "rand_rate" &&
               std::string(rack::paramInfo(rack::kAdsrThreshold, nm, 32, sy, 32).symbol) == "adsr_threshold" &&
-              rack::globalFromSymbol("follow_slot") == int(rack::kFollowSlot), "4.0 parameter symbols");
+              rack::globalFromSymbol("follow_slot") == int(rack::kFollowSlot) &&
+              rack::globalFromSymbol("midi_cc") == int(rack::kMidiCC) &&
+              rack::globalFromSymbol("adsr_trigger") == int(rack::kAdsrTrigger) &&
+              rack::sourceFromSymbol("note") == rack::kSrcNote && rack::sourceFromSymbol("cc") == rack::kSrcCC &&
+              rack::kNumSources == 23 && rack::kModTargets[10] == rack::kSceneMorph, "4.0 parameter symbols");
         // 4.0 routes: to a modulator setting ("m.") and with a Remap curve ("~"); a straight route's text is as before
         rack::Route m[2];
         m[0].source = rack::kSrcRand; m[0].slot = rack::kModSlot; m[0].value = 0; m[0].depth = 0.5f;
@@ -802,7 +999,7 @@ static void testState()
         rack::Route mb[rack::kMaxRoutes];
         CHECK(ms == "rand>m.1:0.5000;pitch>3.5:-0.2500~0.7500" && rack::parseRoutes(ms.c_str(), mb) == 2 &&
               mb[0].slot == rack::kModSlot && mb[1].curve == 0.75f && rack::formatRoutes(mb, 2) == ms, "4.0 routes: %s", ms.c_str());
-        CHECK(rack::parseRoutes("lfo1>m.11:0.5;lfo1>1.1:0.5~x;lfo1>1.1:0.5~", mb) == 0, "bad 4.0 routes accepted");
+        CHECK(rack::parseRoutes("lfo1>m.12:0.5;lfo1>1.1:0.5~x;lfo1>1.1:0.5~", mb) == 0, "bad 4.0 routes accepted");
         CHECK(rack::globalFromSymbol("feedback") == int(rack::kFeedback) && rack::globalFromSymbol("seq_step3") == int(rack::kSeqStep1 + 2) &&
               rack::globalFromSymbol("env_gain") == int(rack::kEnvGain) && rack::globalFromSymbol("s1_lane") < 0 &&
               rack::globalFromSymbol("s1_lanex") < 0 && rack::globalFromSymbol("lanec_pan") == int(rack::kLanePan1 + 2) &&
@@ -904,7 +1101,7 @@ static void neutral(RackEngine& e, const RackEngine::PresetState& st)
 
 static bool usesNewFeatures(const RackEngine::PresetState& st)
 {
-    if (st.params[rack::kFeedback] > 0.0f)
+    if (st.params[rack::kFeedback] > 0.0f || st.params[rack::kScenesOn] >= 0.5f)
         return true;
     for (uint32_t s = 0; s < rack::kSlots; ++s)
         if (!st.ids[s].empty() && (st.params[rack::laneParam(s)] >= 0.5f || st.params[rack::laneXParam(s)] >= 0.5f ||
@@ -1284,6 +1481,8 @@ int main()
     testModulators();
     std::printf("scenes\n");
     testScenes();
+    std::printf("midi\n");
+    testMidi();
     std::printf("threads\n");
     testThreads();
     testPresets();

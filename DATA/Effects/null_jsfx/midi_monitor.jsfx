@@ -1,0 +1,69 @@
+desc:NULL MIDI Monitor
+author: Christos Koulaxizis
+tags: midi monitor viewer inspector debug log notes cc controller pitch bend pressure aftertouch mpe channel keyboard
+//category: MIDI
+//NULL JSFX v3.3.1 • https://nulljsfx.tech • MIT License
+
+slider1:0<0,16,1{Omni,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16}>Channel
+slider2:0<0,3,1{All,Notes,Controllers,Other}>Show
+slider3:0<0,1,1{Off,On}>Freeze
+slider4:0<0,1,1{C4,C3}>Middle C
+
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
+
+@init
+  // Shows the MIDI that passes, without changing it: every message goes out at its own sample
+  // as it came in, and the audio passes through. The interface lists the latest messages
+  // (time since the start, channel, what it is) and shows the held notes on a keyboard and
+  // every channel's notes, pitch bend and pressure (so MPE shows per channel). Channel and Show
+  // filter what the list and the keyboard show; Freeze holds the list; Middle C names note 60
+  // C4 or C3. None of them changes the MIDI.
+  ext_noinit = 1;
+  LOG = 0;                     // the latest 64 messages: time (s), status, data 1, data 2
+  LOGN = 64;
+  HELD = LOG + LOGN * 4;       // per channel and note: the velocity of a held note (0 = none)
+  BEND = HELD + 2048;          // per channel: pitch bend -1..1
+  PRS = BEND + 16;             // per channel: pressure 0..1
+  memset(0, 0, PRS + 16);
+  logged = 0;                  // messages logged (the list shows the latest)
+  seen = 0;                    // messages that passed
+  now = 0;                     // samples since the start
+
+@slider
+  freeze = slider3;
+
+@block
+  while (midirecv(ofs, m1, m2, m3)) (
+    midisend(ofs, m1, m2, m3);
+    seen += 1;
+    st = m1 & 0xF0;
+    ch = m1 & 15;
+    st == 0x90 && m3 > 0 ? (
+      HELD[ch * 128 + m2] = m3;
+    ) : st == 0x80 || st == 0x90 ? (
+      HELD[ch * 128 + m2] = 0;
+    ) : st == 0xE0 ? (
+      BEND[ch] = (m3 * 128 + m2 - 8192) / 8192;
+    ) : st == 0xD0 ? (
+      PRS[ch] = m2 / 127;
+    ) : st == 0xB0 && (m2 == 120 || m2 == 123) ? (
+      memset(HELD + ch * 128, 0, 128);
+    );
+    !freeze ? (
+      mm_i = (logged % LOGN) * 4;
+      LOG[mm_i] = (now + ofs) / srate;
+      LOG[mm_i + 1] = m1;
+      LOG[mm_i + 2] = m2;
+      LOG[mm_i + 3] = m3;
+      logged += 1;
+    );
+  );
+  now += samplesblock;
+
+@sample
+  // the audio passes through
+  spl0 = spl0;
+  spl1 = spl1;

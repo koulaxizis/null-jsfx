@@ -1327,7 +1327,19 @@ protected:
                 stroke();
                 const int n = int(in.max - in.min + 0.5f) + 1;
                 const int k = std::max(0, std::min(n - 1, int(std::lround(v - in.min))));
-                label(cx, ry + 44.0f, ALIGN_CENTER, 8.0f, 0.5f, theme::kText, in.options ? in.options[k] : "", true);
+                const char* opt = in.options ? in.options[k] : "";
+                // a long option shrinks to fit between the arrows (as ng_select_ctl)
+                float fs = 8.0f;
+                fontFace("noto-bold");
+                fontSize(fs * kNotoLineToEm);
+                textLetterSpacing(0.5f);
+                Rectangle<float> tb;
+                const float tw = textBounds(0.0f, 0.0f, opt, nullptr, tb);
+                textLetterSpacing(0.0f);
+                fontFace("noto");
+                if (tw > pw - 24.0f)
+                    fs *= (pw - 24.0f) / tw;
+                label(cx, ry + 44.0f, ALIGN_CENTER, fs, 0.5f, theme::kText, opt, true);
                 drawArrow(cx - pw * 0.5f + 7.0f, ry + 44.0f, -1.0f);
                 drawArrow(cx + pw * 0.5f - 7.0f, ry + 44.0f, 1.0f);
             }

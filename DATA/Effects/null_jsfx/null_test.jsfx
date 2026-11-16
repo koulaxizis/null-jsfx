@@ -1,0 +1,233 @@
+desc:NULL Null Test
+author: Christos Koulaxizis
+tags: null test difference residual compare a/b phase cancel polarity latency align gain match bit identical analyzer meter
+//category: Advanced
+//NULL JSFX v3.3.1 • https://nulljsfx.tech • MIT License
+
+slider1:2<0,2,1{Main,Sidechain,Difference}>Listen
+slider2:1<0,1,1{Manual,Auto}>Align
+slider3:20<1,200,1>Range (ms)
+slider4:0<-10000,10000,1>Offset (samples)
+slider5:0<-24,24,0.01>Trim (dB)
+slider6:0<0,1,1{Normal,Inverted}>Polarity
+
+in_pin:Left
+in_pin:Right
+in_pin:Sidechain Left
+in_pin:Sidechain Right
+out_pin:Left
+out_pin:Right
+
+@init
+  // Null Test: how far the main input (1/2) is from the sidechain (3/4), for example a plugin's
+  // output against its input, a render against another, a bounce against the mix. The difference
+  // is main - gain * sidechain, with both lined up in time. Align Auto finds the delay every
+  // 4096 samples: the last 16384 of both (left and right averaged), zero padded, go through an
+  // FFT; their cross spectrum, each bin scaled to 1 (phase transform), is averaged over frames
+  // and transformed back, and its highest peak of either polarity within Range is the delay
+  // (kept while the peak is under a fifth of its maximum or either side is under -70 dB). The
+  // gain is the least-squares one (it follows the inversion too), from sums that forget over
+  // half a second. A new delay starts the sums and the null depth again. Align Manual uses
+  // Offset (positive delays the sidechain), Trim and Polarity instead. The side that leads is
+  // delayed, so the two are lined up; Listen plays the lined-up main, the lined-up sidechain
+  // times the gain, or the difference, with a 10 ms crossfade. The display shows the null depth
+  // (the difference's level against the main's, over about 300 ms), the difference per octave
+  // band, the delay, the gain, how sure the match is, and BIT-IDENTICAL when the difference has
+  // been exactly zero for a second.
+  ext_noinit = 1;
+  NTW = 16384;                 // the analysis window and every ring
+  NTH = 4096;
+  NTX = 0;                     // FFT buffer A (2W complex, on a 65536 boundary)
+  NTY = 65536;                 // FFT buffer B
+  NTCS = 131072;               // the averaged cross spectrum (2 * 2W)
+  NTML = NTCS + 4 * NTW;       // rings: main left, right, sidechain left, right, difference left, right
+  NTMR = NTML + NTW;
+  NTSL = NTMR + NTW;
+  NTSR = NTSL + NTW;
+  NTDL = NTSR + NTW;
+  NTDR = NTDL + NTW;
+  NTBM = NTDR + NTW;           // per band: the main's energy (10)
+  NTBD = NTBM + 10;            // the difference's energy (10)
+  NTBR = NTBD + 10;            // the difference against the main, dB (10)
+  freembuf(NTBR + 10);
+  memset(0, 0, NTBR + 10);
+  nt_wp = 0;
+  nt_cnt = 0;
+  nt_lag = 0;                  // the found delay (samples; positive: the main lags)
+  nt_conf = 0;                 // the match: the correlation at the delay, 0..1
+  nt_cand = 0;                 // a new delay, and the frames in a row it won
+  nt_cn = 0;
+  nt_sms = nt_sss = 0;         // least-squares sums
+  nt_ga = 0;                   // the found gain
+  nt_ed = nt_em = 0;           // energies for the null depth
+  nt_zc = 0;                   // samples since the difference was not exactly zero
+  nt_heard = 0;                // samples since the main was not silent
+  nt_xm = 0; nt_xs = 0; nt_xd = 1;
+  nt_xr = 1 / (0.01 * srate);
+  nt_la = exp(-1 / (0.5 * srate));
+  nt_da = exp(-1 / (0.3 * srate));
+  nt_th = 10 ^ (-70 / 20);
+  nt_e20 = 10 ^ -20;
+  nt_e30 = 10 ^ -30;
+  nt_e300 = 10 ^ -300;
+  i = 0;
+  loop(10, NTBR[i] = -150; i += 1;);
+
+  // the energy per octave band of the rings l and r (the last NTW samples) into e: left as
+  // the real part and right as the imaginary part of one FFT, so bin k and bin 2W - k together
+  // hold both channels' energy
+  function nt_bands(l, r, e) local(i, f, b, k)
+  (
+    i = 0;
+    loop(NTW,
+      k = (nt_wp + i) % NTW;
+      NTX[2 * i] = l[k];
+      NTX[2 * i + 1] = r[k];
+      i += 1;
+    );
+    memset(NTX + 2 * NTW, 0, 2 * NTW);
+    fft(NTX, 2 * NTW);
+    fft_permute(NTX, 2 * NTW);
+    memset(e, 0, 10);
+    i = 1;
+    loop(NTW - 1,
+      f = i * srate / (2 * NTW);
+      b = floor(log(f / 31.25) / log(2) + 0.5);
+      k = 2 * NTW - i;
+      b >= 0 && b < 10 ? e[b] += NTX[2 * i] * NTX[2 * i] + NTX[2 * i + 1] * NTX[2 * i + 1] + NTX[2 * k] * NTX[2 * k] + NTX[2 * k + 1] * NTX[2 * k + 1];
+      i += 1;
+    );
+  );
+
+  // one frame: the delay from the cross spectrum, the difference per band
+  function nt_frame() local(i, j, p, q, em, es, xr, xi, yr, yi, cr, ci, mg, best, bi, rng, b, lo, sxy, sxx, syy)
+  (
+    em = es = 0;
+    i = 0;
+    loop(NTW,
+      p = (nt_wp + i) % NTW;
+      NTX[2 * i] = (NTML[p] + NTMR[p]) * 0.5;
+      NTX[2 * i + 1] = 0;
+      NTY[2 * i] = (NTSL[p] + NTSR[p]) * 0.5;
+      NTY[2 * i + 1] = 0;
+      em += NTX[2 * i] * NTX[2 * i];
+      es += NTY[2 * i] * NTY[2 * i];
+      i += 1;
+    );
+    memset(NTX + 2 * NTW, 0, 2 * NTW);
+    memset(NTY + 2 * NTW, 0, 2 * NTW);
+    sqrt(em / NTW) > nt_th ? (
+      fft(NTX, 2 * NTW);
+      fft(NTY, 2 * NTW);
+      sqrt(es / NTW) > nt_th ? (
+        // the cross spectrum, each bin divided by its magnitude to the power 0.75, averaged
+        i = 0;
+        loop(2 * NTW,
+          xr = NTX[2 * i]; xi = NTX[2 * i + 1];
+          yr = NTY[2 * i]; yi = NTY[2 * i + 1];
+          cr = xr * yr + xi * yi;
+          ci = xi * yr - xr * yi;
+          mg = (cr * cr + ci * ci) ^ 0.375 + nt_e30;
+          NTCS[2 * i] = NTCS[2 * i] * 0.6 + cr / mg;
+          NTCS[2 * i + 1] = NTCS[2 * i + 1] * 0.6 + ci / mg;
+          i += 1;
+        );
+        memcpy(NTY, NTCS, 4 * NTW);
+        ifft(NTY, 2 * NTW);
+        rng = min(floor(slider3 * srate / 1000), 12000);
+        best = abs(NTY[0]);
+        bi = 0;
+        j = 1;
+        loop(rng,
+          abs(NTY[2 * j]) > best ? ( best = abs(NTY[2 * j]); bi = j; );
+          abs(NTY[2 * (2 * NTW - j)]) > best ? ( best = abs(NTY[2 * (2 * NTW - j)]); bi = -j; );
+          j += 1;
+        );
+        // the match: the correlation of the two windows at that delay
+        sxy = sxx = syy = 0;
+        i = max(0, bi);
+        loop(NTW - abs(bi),
+          p = (nt_wp + i) % NTW;
+          q = (nt_wp + i - bi) % NTW;
+          xr = (NTML[p] + NTMR[p]) * 0.5;
+          yr = (NTSL[q] + NTSR[q]) * 0.5;
+          sxy += xr * yr;
+          sxx += xr * xr;
+          syy += yr * yr;
+          i += 1;
+        );
+        nt_conf = sxx > 0 && syy > 0 ? abs(sxy) / sqrt(sxx * syy) : 0;
+        // a new delay must win two frames in a row; it starts the gain's sums and the null
+        // depth again
+        bi == nt_lag ? nt_cn = 0 : (
+          bi == nt_cand ? nt_cn += 1 : ( nt_cand = bi; nt_cn = 1; );
+          nt_cn >= 2 && nt_conf >= 0.2 ? ( nt_lag = bi; nt_cn = 0; nt_sms = nt_sss = nt_ed = nt_em = 0; );
+        );
+      );
+      // the energy per octave band of the main and of the difference, both channels
+      nt_bands(NTML, NTMR, NTBM);
+      nt_bands(NTDL, NTDR, NTBD);
+      b = 0;
+      loop(10,
+        lo = 31.25 * 2 ^ (b - 0.5);
+        lo < srate / 2 && NTBM[b] > 0 ? (
+          NTBR[b] = max(-150, 10 * log10(max(NTBD[b], nt_e300) / NTBM[b]));
+        ) : (
+          NTBR[b] = -150;
+        );
+        b += 1;
+      );
+    );
+  );
+
+@slider
+  nt_auto = slider2;
+  nt_tm = slider1 == 0;
+  nt_ts = slider1 == 1;
+  nt_td = slider1 == 2;
+  nt_gm = (slider6 ? -1 : 1) * 10 ^ (slider5 / 20);
+
+@sample
+  NTML[nt_wp] = spl0;
+  NTMR[nt_wp] = spl1;
+  NTSL[nt_wp] = spl2;
+  NTSR[nt_wp] = spl3;
+  // the delay: the side that leads waits
+  nt_d = max(-16000, min(16000, nt_auto ? nt_lag : slider4));
+  nt_pm = (nt_wp - max(0, -nt_d) + NTW) % NTW;
+  nt_ps = (nt_wp - max(0, nt_d) + NTW) % NTW;
+  nt_ml = NTML[nt_pm];
+  nt_mr = NTMR[nt_pm];
+  nt_sl = NTSL[nt_ps];
+  nt_sr = NTSR[nt_ps];
+  // the gain
+  nt_auto ? (
+    nt_sms = nt_sms * nt_la + (nt_ml * nt_sl + nt_mr * nt_sr);
+    nt_sss = nt_sss * nt_la + (nt_sl * nt_sl + nt_sr * nt_sr);
+    nt_sss > nt_e20 ? nt_ga = nt_sms / nt_sss;
+    nt_g = nt_ga;
+  ) : (
+    nt_g = nt_gm;
+  );
+  nt_dl = nt_ml - nt_g * nt_sl;
+  nt_dr = nt_mr - nt_g * nt_sr;
+  NTDL[nt_wp] = nt_dl;
+  NTDR[nt_wp] = nt_dr;
+  // the null depth
+  nt_ed = nt_ed * nt_da + (nt_dl * nt_dl + nt_dr * nt_dr);
+  nt_em = nt_em * nt_da + (nt_ml * nt_ml + nt_mr * nt_mr);
+  nt_dl === 0 && nt_dr === 0 ? nt_zc += 1 : nt_zc = 0;
+  nt_ml !== 0 || nt_mr !== 0 ? nt_heard = 0 : nt_heard += 1;
+  nt_wp += 1;
+  nt_wp >= NTW ? nt_wp = 0;
+  nt_cnt += 1;
+  nt_cnt >= NTH ? (
+    nt_cnt = 0;
+    nt_frame();
+  );
+  // Listen, with a 10 ms crossfade
+  nt_xm = nt_xm < nt_tm ? min(nt_tm, nt_xm + nt_xr) : max(nt_tm, nt_xm - nt_xr);
+  nt_xs = nt_xs < nt_ts ? min(nt_ts, nt_xs + nt_xr) : max(nt_ts, nt_xs - nt_xr);
+  nt_xd = nt_xd < nt_td ? min(nt_td, nt_xd + nt_xr) : max(nt_td, nt_xd - nt_xr);
+  spl0 = nt_xm * nt_ml + nt_xs * nt_g * nt_sl + nt_xd * nt_dl;
+  spl1 = nt_xm * nt_mr + nt_xs * nt_g * nt_sr + nt_xd * nt_dr;

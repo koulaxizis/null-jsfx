@@ -159,5 +159,87 @@
     "properties": "Input + feedback → 4 s stereo delay line read with linear interpolation (Time or Sync from the tempo, 80 ms glide, swept by a 0.35 Hz LFO with the sides a quarter turn apart) → one-pole low-pass (Damping) → 30 Hz high-pass → four allpass diffusers per side (g 0.6, 3.6 to 12.7 ms), blended in by Bloom → feedback through a tanh curve back into the line. The wet signal is narrowed by Width and mixed with the dry signal → Output gain. No latency.",
     "beta": true,
     "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-bloom_delay\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><path d=\"M 8,52 L 10,12 L 12,52 M 18,52 L 21,20 L 24,52 M 29,52 L 34,28 L 39,52 M 42,52 L 49,36 L 56,52\" stroke=\"url(#icon-bloom_delay)\" stroke-width=\"2.5\" fill=\"none\" stroke-linejoin=\"round\" stroke-linecap=\"round\"/></svg>"
+  },
+  "strum": {
+    "card_desc": "Guitar Strums From Held Chords",
+    "keywords": "midi strum strummer guitar chord strumming rhythm pattern down up stroke humanize velocity tempo",
+    "slider_desc": [
+      "Which way the chord is strummed: Down (lowest note first), Up (highest first), Alternate, or Random",
+      "Time between one string and the next",
+      "Once strums when the chord is played; the others strum again on the tempo while keys are held: 1/4, 1/8, 1/16, Down-Up eighths, Folk (D - D U - U D U) and Offbeat",
+      "How long each strum lasts as a share of its step, in the rhythms",
+      "How much softer the last string is than the first",
+      "The velocity of up strokes, as a share of the keys' velocity",
+      "Moves each string a little later, by up to this many ms",
+      "Keys pressed within this time of the first one make one chord"
+    ],
+    "uses": [
+      "Guitar-like chords from a keyboard into Pluck, Keys or any instrument",
+      "Strummed rhythm parts on the tempo from held chords",
+      "Harp rolls and slow arpeggiated chords",
+      "Pairs with Chords: one finger in, a strummed chord out"
+    ],
+    "properties": "MIDI in → the held keys (collected over Collect) are sorted by pitch and played string by string, Speed apart, lowest first down and highest first up; velocity falls by Velocity Spread over the strings, up strokes at Upstroke Velocity, Humanize by an exact Park-Miller step. Once: one strum per chord, notes held with their keys; rhythms: strums on the tempo, each Gate of its step. A key's note-off ends its note and drops its waiting strings. Other MIDI passes through at its own sample. Audio passes through.",
+    "beta": true,
+    "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-strum\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><path d=\"M 8,14 L 56,14 M 8,24 L 56,24 M 8,34 L 56,34 M 8,44 L 56,44\" stroke=\"url(#icon-strum)\" stroke-width=\"2\" fill=\"none\" opacity=\"0.6\"/><path d=\"M 22,8 L 30,50 M 24,44 L 30,50 L 35,43\" stroke=\"url(#icon-strum)\" stroke-width=\"3\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/></svg>"
+  },
+  "midi_monitor": {
+    "card_desc": "See the MIDI That Passes",
+    "keywords": "midi monitor viewer inspector debug log notes cc controller pitch bend pressure aftertouch mpe channel keyboard",
+    "slider_desc": [
+      "Shows one channel only, or every channel (Omni)",
+      "Shows every message, or only notes, controllers (CC, pressure, pitch bend) or the rest (program changes)",
+      "Holds the list as it is, so a burst of messages can be read",
+      "Names note 60 C4 (as REAPER) or C3"
+    ],
+    "uses": [
+      "Checking what a keyboard, controller or MIDI effect really sends",
+      "Finding a stuck note or a missing note-off",
+      "Reading MPE: every channel's notes, bend and pressure",
+      "Learning which CC a knob sends before mapping it"
+    ],
+    "properties": "MIDI in → out unchanged, every message at its own sample (the VST3/CLAP passes SysEx too); the audio passes through. The interface lists the latest 64 messages with their time, channel and values, shows the held notes on a 128-key keyboard and every channel's notes, pitch bend and pressure. Channel and Show filter what is shown, Freeze holds the list.",
+    "beta": true,
+    "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-midi_monitor\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><rect x=\"8\" y=\"10\" width=\"48\" height=\"18\" rx=\"2\" fill=\"none\" stroke=\"url(#icon-midi_monitor)\" stroke-width=\"2\"/><path d=\"M 16,10 L 16,22 M 24,10 L 24,22 M 40,10 L 40,22 M 48,10 L 48,22\" stroke=\"url(#icon-midi_monitor)\" stroke-width=\"3\"/><path d=\"M 8,36 L 56,36 M 8,44 L 44,44 M 8,52 L 50,52\" stroke=\"url(#icon-midi_monitor)\" stroke-width=\"2.5\" stroke-linecap=\"round\" opacity=\"0.7\"/></svg>"
+  },
+  "key_detect": {
+    "card_desc": "Find the Key of What You Hear",
+    "keywords": "key detect detection tonality scale major minor chroma krumhansl temperley analyzer meter harmonic mixing",
+    "slider_desc": [
+      "How long the analysis remembers: short follows a key change quickly, long settles on the key of the whole song",
+      "Frames quieter than this are ignored, so silence and noise do not move the result",
+      "The key profiles compared with what is heard: Krumhansl-Kessler (from listening tests) or Temperley (from scores)",
+      "Keeps the result as it is"
+    ],
+    "uses": [
+      "Finding the key of a sample, a loop or a reference track",
+      "Setting Key and Scale in Scale and Pitch Correction",
+      "Harmonic mixing: playing songs in related keys one after another",
+      "Checking that a vocal, a synth line and a sample agree"
+    ],
+    "properties": "Stereo in → out unchanged. Every 4096 samples the last 16384 go through an FFT; the bins from C2 to C7 fold into 12 pitch classes, with the 3rd and 5th harmonics of lower notes taken away so the key is not pulled towards its dominant. The running chroma is compared with the 24 major and minor key profiles by correlation: the interface shows the key, its confidence, the runner-up, the relative key and the chroma.",
+    "beta": true,
+    "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-key_detect\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><path d=\"M 10,54 L 10,40 M 18,54 L 18,22 M 26,54 L 26,34 M 34,54 L 34,12 M 42,54 L 42,30 M 50,54 L 50,26\" stroke=\"url(#icon-key_detect)\" stroke-width=\"5\" stroke-linecap=\"round\"/></svg>"
+  },
+  "null_test": {
+    "card_desc": "Hear What Really Changed",
+    "keywords": "null test difference residual compare a/b phase cancel polarity latency align gain match bit identical analyzer meter",
+    "slider_desc": [
+      "What you hear: the main, the sidechain lined up with it, or the difference between them",
+      "Auto finds the delay and the gain by itself; Manual uses Offset, Trim and Polarity",
+      "How far apart the two may be in time for Auto to find them (up to 200 ms)",
+      "Manual only: delays the sidechain by this many samples (negative delays the main)",
+      "Manual only: the sidechain's gain",
+      "Manual only: inverts the sidechain"
+    ],
+    "uses": [
+      "Hearing what a plugin really does: its output against its input",
+      "Checking that two renders, bounces or exports are the same",
+      "Finding a plugin's latency and gain, or a polarity flip",
+      "Comparing two compressors or EQs set to match each other"
+    ],
+    "properties": "Main (1/2) and sidechain (3/4) in, stereo out. Auto lines the two up: a phase-transform cross-correlation finds the delay (up to Range, either polarity) and a least-squares fit finds the gain, so a plugin's latency, level change and polarity flip are taken out. The difference is main minus the lined-up sidechain; the interface shows the null depth, the difference in 10 octave bands, the delay, the gain and BIT-IDENTICAL when nothing differs at all.",
+    "beta": true,
+    "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-null_test\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><path d=\"M 6,24 C 14,8 22,8 30,24 C 38,40 46,40 58,24\" fill=\"none\" stroke=\"url(#icon-null_test)\" stroke-width=\"2.5\" opacity=\"0.6\"/><path d=\"M 6,24 C 14,40 22,40 30,24 C 38,8 46,8 58,24\" fill=\"none\" stroke=\"url(#icon-null_test)\" stroke-width=\"2.5\" opacity=\"0.6\"/><path d=\"M 6,50 L 58,50\" stroke=\"url(#icon-null_test)\" stroke-width=\"3\" stroke-linecap=\"round\"/></svg>"
   }
 }

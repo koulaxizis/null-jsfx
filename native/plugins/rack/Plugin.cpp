@@ -169,8 +169,21 @@ protected:
     void activate() override { fEngine->setSampleRate(getSampleRate()); }
     void sampleRateChanged(double sr) override { fEngine->setSampleRate(sr); }
 
-    void run(const float** inputs, float** outputs, uint32_t frames) override
+    void run(const float** inputs, float** outputs, uint32_t frames, const MidiEvent* midi, uint32_t midiCount) override
     {
+        // 4.0: the MIDI input, short messages only, for the MIDI sources
+        uint32_t ne = 0;
+        for (uint32_t i = 0; i < midiCount && ne < kMaxMidi; ++i)
+        {
+            if (midi[i].size < 1 || midi[i].size > 3)
+                continue;
+            fMidi[ne].frame = midi[i].frame;
+            fMidi[ne].size = uint8_t(midi[i].size);
+            for (uint32_t k = 0; k < 3; ++k)
+                fMidi[ne].data[k] = k < midi[i].size ? midi[i].data[k] : 0;
+            ++ne;
+        }
+        fEngine->setMidi(fMidi, ne);
         // the transport as pumper's Plugin.cpp reads it: the BBT position when the host gives one,
         // else the frame position at the tempo while playing, else 0 (exact in LV2 too:
         // common/NullBeatClock.hpp)
@@ -198,6 +211,8 @@ protected:
 
 private:
     uint32_t fLatency = 0;
+    static constexpr uint32_t kMaxMidi = 512;
+    rack::RackEngine::MidiEvent fMidi[kMaxMidi];
 
     DISTRHO_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(PluginRack)
 };

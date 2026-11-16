@@ -5,6 +5,7 @@
 dynamics
 gate
 phase_align
+null_test          # 2026-11-16: a sidechain input like reference (left out before a first auval run)
 phase_distortion   # 2026-11-16: auval -strict -50 in AudioUnitRender, the sidechain input like the others
 reference
 sidechain_ducker

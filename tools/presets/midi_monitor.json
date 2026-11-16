@@ -1,0 +1,10 @@
+[
+  ["Notes Only", {"Show": "Notes"}],
+  ["Controllers Only", {"Show": "Controllers"}],
+  ["Program Changes", {"Show": "Other"}],
+  ["Channel 1", {"Channel": "1"}],
+  ["Drums on Channel 10", {"Channel": "10", "Show": "Notes"}],
+  ["MPE Member Channel 2", {"Channel": "2"}],
+  ["Middle C as C3", {"Middle C": "C3"}],
+  ["Frozen List", {"Freeze": "On"}]
+]
