@@ -76,13 +76,15 @@
   What each run covers, area by area, is the checklist in Part V.3, which grows with the suite. The full report is a Claude Doc, with a short summary in the thread "Διμηνιαίος έλεγχος σουίτας". Findings come as a numbered list in Greek, and Christos decides. If the usage limit is hit, the audit continues right after the reset. It runs from a recurring scheduled task; a run does not schedule the next one (2026-10-26, 2026-10-27) [memory].
 - **Memory export.** Every quarter, on the 10th of January, April, July and October at 12:00 Athens time, Claude exports the project memory that changed since the previous export, with proposed text for the project Goal and Instructions, which Christos pastes. It runs from a recurring scheduled task, in the thread "Μηνιαία εξαγωγή μνήμης" (2026-10-26) [memory].
 - **Issues.** GitHub issues of every project are checked by ONE scheduled task in the orOS project, every three days at 07:41 Athens time; it reads new issues and comments, checks each against the repo and posts a short Greek summary with numbered proposals. It never replies on, labels or closes an issue without Christos's OK, and a confirmed bug gets its own fix thread. The daily NULL JSFX issues task of 2026-11-03 is disabled for good (2026-11-12) [memory].
-- **Light routines (2026-11-16).** Six lighter, more frequent checks run between the full audits, each from its own scheduled task in its own thread, from a runbook in the project files [memory]:
+- **Light routines (2026-11-16).** Lighter, more frequent checks run between the full audits, each from its own scheduled task in its own thread, from a runbook in the project files [memory]:
   - weekly dependency check (Monday 10:47): new versions and advisories of DPF, the VST3 and CLAP SDKs, Tauri, REAPER, Android and the CI pins;
   - monthly release check (3rd, 20:13): download the latest release, open its zips and installers, check the site download links, the F-Droid index and Obtainium;
-  - monthly Ko-fi post draft (2nd, 11:07, about the previous month): a draft only; Christos approves and posts it himself;
+  - Ko-fi post drafts: since 2026-11-16 one task in Christos's koulaxizis.gr project drafts the monthly Ko-fi post for all three projects from Part X and Part VI.3; NULL JSFX's own draft task is disabled, and Christos still approves and posts every post himself;
   - weekly repo cleanup (Thursday 13:37): merged and stale branches, stuck PRs and CI runs, large files; a list for approval, nothing deleted without his OK;
   - monthly site check (22nd, 12:19): speed, SEO and mobile of nulljsfx.tech against the previous month;
   - monthly preset listening (25th, 14:41): new or changed presets rendered to audio and measured; only the suspicious ones go to Christos's ears.
+  - monthly key expiry check (14th, 12:47): validity of the APK and F-Droid signing certificates, the list of CI secrets and the expiry dates of tokens, with warnings 90 and 30 days ahead; dates and fingerprints only, never a secret value;
+  - monthly repo backup (6th, 13:43): a verified `git bundle` of the whole history plus issue, PR and release metadata in the project files, outside GitHub; old copies are deleted only after Christos approves.
 
   Every run pushes at start and end, posts at least one Greek line in its thread, gives numbered Greek findings, asks decisions on cards, opens a fix thread for any bug and changes nothing without Christos's approval. They never repeat the full audit.
 - **Push.** Every scheduled task sends a push notification when a run starts and when it ends, also when it ends without a message or stops early; only a day skipped by a date check sends nothing (2026-11-03) [memory].
@@ -2181,4 +2183,11 @@ entry and the Bible delta.
 - **Decisions:** each routine fires into its own thread and follows a runbook in the project files, so its behaviour changes without rewriting the task; slots chosen to clash with no scheduled task of any project and to avoid 16:00–19:00 Athens (Claude's choice).
 - **Files:** `NULL_JSFX_BIBLE.md`.
 - **Tests:** `python3 tests/bible_order.py`; documentation only, no plugin, DSP or site file changed.
+
+### 2026-11-16 — Process — Key expiry check and repo backup routines
+- **Why:** Christos approved two more routines on 2026-11-16 («Ναι!») for two gaps that no routine covered: nobody checked when the signing keys and CI tokens expire, and no copy of the repo existed outside GitHub.
+- **Changes:** two new Part 0.5 routines: a monthly key expiry check (14th, 12:47) and a monthly verified repo backup (6th, 13:43). The Ko-fi line now records the overlap decision of 2026-11-16: the koulaxizis.gr project's task drafts the Ko-fi posts for all three projects, and NULL JSFX's own draft task is disabled.
+- **Decisions:** the key check reads only public certificates, secret names and dates, and leaves the daily auth-failure watch to the orOS project's token task that already does it. The backup is a full `git bundle` while it stays under 1 GB, and becomes quarterly full plus monthly incremental above that (Claude's choice).
+- **Files:** `NULL_JSFX_BIBLE.md`.
+- **Tests:** `python3 tests/bible_order.py`; documentation only.
 
