@@ -1,0 +1,24 @@
+BYPASS 0 0
+<JS null_jsfx/loudness_meter.jsfx ""
+  0 0 1 0 0 0 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+>
+FXID {19319CDE-0EF0-53EF-B5BB-C9249E9C1F48}
+WAK 0 0
+BYPASS 0 0
+<JS null_jsfx/spectrum_analyzer.jsfx ""
+  2 4.5 300 2 1 0 0 0 0 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+>
+FXID {92839EB2-224F-5207-98D9-AE55E75D9F4A}
+WAK 0 0
+BYPASS 0 0
+<JS null_jsfx/stereo_scope.jsfx ""
+  0 1 50 300 0 0 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+>
+FXID {53979E63-F94A-502D-B1A0-7893315ADCF5}
+WAK 0 0
+BYPASS 0 0
+<JS null_jsfx/vu_meter.jsfx ""
+  0 -18 1 0 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+>
+FXID {858DCF39-1EBD-535B-9989-2723BEFF5B1F}
+WAK 0 0

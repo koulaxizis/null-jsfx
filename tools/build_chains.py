@@ -144,11 +144,74 @@ CHAINS = [
         ("band_splitter", {"Mode": "Merge", "Bands": 2}, ([0, 1, 2, 3, None, None, None, None],
                                                          [0, 1, None, None, None, None, None, None])),
     ]),
+    # 4.0 (B21 wave 6)
+    ("Audiobook ACX", [
+        ("noise_reduction", {"Auto": "On", "Reduction": 10, "Threshold": 3}),
+        ("deesser", {"Target": 6500, "Reduction": -5}),
+        ("studio_eq", {"Band 1 Type": "Low Cut", "Band 1 Freq": 80, "Band 4 Freq": 300, "Band 4 Gain": -1.5,
+                       "Band 6 Freq": 3500, "Band 6 Gain": 1.5}),
+        ("dynamics", {"Mode": "Compressor", "Threshold": -24, "Ratio": 3, "Knee": 6, "Attack": 10,
+                      "Release": 120, "Makeup": 6}),
+        ("limiter", {"Mode": "Limiter", "Ceiling": -3.5, "True Peak": "On"}),
+        ("loudness_meter", {"Target": "-23 LUFS"}),
+    ]),
+    ("Broadcast -23 LUFS", [
+        ("studio_eq", {"Band 1 Type": "Low Cut", "Band 1 Freq": 30}),
+        ("glue_comp", {"Threshold": -14, "Ratio": "2", "Attack": "10 ms", "Release": "Auto", "Makeup": 2}),
+        ("maximizer", {"Target": -23, "Ceiling": -1, "True Peak": "ON"}),
+        ("loudness_meter", {"Target": "-23 LUFS", "Scale": "EBU +9"}),
+    ]),
+    ("Mix Check", [
+        ("loudness_meter", {}),
+        ("spectrum_analyzer", {}),
+        ("stereo_scope", {}),
+        ("vu_meter", {}),
+    ]),
+    ("Acid Line", [
+        ("riff", {"Key": "A", "Scale": "Minor", "Seed": 303, "Density": 80, "Rate": "1/16", "Octave Range": 2,
+                  "Accent": 40}),
+        ("bass", {"Oscillator": "Saw", "Cutoff": 400, "Resonance": 75, "Env Amount": 70, "Filter Decay": 180,
+                  "Glide": 60}),
+        ("filter", {"Cutoff": 2500, "Resonance": 2, "Mode": "Low Pass", "Drive": 30, "Nonlinear": "On"}),
+        ("saturation", {"Drive": 35, "Mix": 50, "Mode": "Tube"}),
+        ("delay", {"Tempo Sync": "ON", "Subdivision": "1/8D", "Feedback": 35, "Mix": 20, "Low Cut": 300}),
+    ]),
+    ("Arp Pluck", [
+        ("arpeggiator", {"Rate": "1/16", "Pattern": "Up", "Octaves": 2, "Gate": 60}),
+        ("pluck", {"Model": "Harp", "Brightness": 60}),
+        ("delay", {"Tempo Sync": "ON", "Subdivision": "1/8D", "Feedback": 40, "Mix": 25, "Low Cut": 200}),
+        ("reverb", {"Room Size": 60, "Decay": 50, "Mix": 20}),
+    ]),
+    ("Chord Pad", [
+        ("chords", {"Mode": "Chord", "Chord Type": "9th", "Voicing": "Open"}),
+        ("string_ensemble", {"Attack": 600, "Release": 2000}),
+        ("chorus", {"Rate": 0.5, "Depth": 5, "Mix": 35}),
+        ("shimmer_reverb", {"Size": 80, "Decay": 8, "Shimmer": 35, "Mix": 35}),
+    ]),
+    ("Lo-Fi Keys", [
+        ("keys", {"Model": "Tine EP", "Tremolo Depth": 20, "Drive": 15}),
+        ("lofi_comp", {"Squash": 40, "Sample Rate": 22050, "Bits": 12, "Wow": 25}),
+        ("vinyl_age", {"Crackle": 30, "Mix": 60}),
+        ("tape", {"Speed": "7.5 ips", "Wow": 30, "Flutter": 20, "Hiss": 15}),
+        ("reverb", {"Room Size": 45, "Decay": 40, "Mix": 18}),
+    ]),
+    ("Hum to Synth", [
+        ("pitch_to_midi", {"Threshold": -45, "Stability": 50}),
+        ("synth", {}),
+    ]),
+    ("Strummed Guitar", [
+        ("chords", {"Mode": "Chord", "Chord Type": "Triad", "Voicing": "Open"}),
+        ("strum", {"Direction": "Alternate", "Rhythm": "Down-Up 1/8", "Speed": 15}),
+        ("pluck", {"Model": "Steel Guitar", "Body": 60}),
+        ("cabinet_simulator", {"Cabinet": "1x12 Open Back", "Mix": 40}),
+        ("spring_reverb", {"Mix": 20}),
+    ]),
 ]
 
 # chains whose plugins the Rack does not have (MIDI, instruments, more than two channels):
 # REAPER chains only, no Rack preset
-REAPER_ONLY = {"Drum Replace", "Transient Verb"}
+REAPER_ONLY = {"Drum Replace", "Transient Verb", "Mix Check", "Acid Line", "Arp Pluck", "Chord Pad",
+               "Lo-Fi Keys", "Hum to Synth", "Strummed Guitar"}
 
 
 # The Rack's own presets: what a REAPER chain cannot do. A slot is (module, {slider: value}) plus

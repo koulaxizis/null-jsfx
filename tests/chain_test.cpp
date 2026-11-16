@@ -5,7 +5,9 @@
 // level change from input to output. Routing works as in REAPER: REQUIRED_CHANNELS sets the track
 // channels and a plugin's JS_PINMAP the channels each pin reads or writes (a channel no output pin
 // writes passes through). MIDI flows down the chain as in REAPER: what a plugin sends reaches the
-// next one (a MIDI-to-instrument chain such as Drum Replace). Parameter modulation (PROGRAMENV) stays at its baseline, the slider value.
+// next one (a MIDI-to-instrument chain such as Drum Replace). A chain that starts with a MIDI effect
+// or an instrument also gets the track's MIDI: a C major chord (C3, E3, G3) held from the start, as
+// a player would. Parameter modulation (PROGRAMENV) stays at its baseline, the slider value.
 // Exit code is the number of chains that failed.
 #include "ysfx.h"
 #include <cmath>
@@ -114,6 +116,15 @@ static int test_chain(const std::string &file, const std::string &effects)
     if (!err.empty()) { printf("FAIL %s\n    error: %s\n", name.c_str(), err.c_str()); return 1; }
     std::string report;
     bool fail = false;
+    // the first plugin's category (line 4, //category: ...): MIDI effects and instruments play notes
+    bool notes = false;
+    {
+        std::ifstream in(effects + "/" + chain[0].path);
+        std::string line;
+        for (int k = 0; k < 4 && std::getline(in, line); ++k)
+            if (line.rfind("//category:", 0) == 0)
+                notes = line.find("MIDI") != std::string::npos || line.find("Instruments") != std::string::npos;
+    }
     for (double sr : {44100.0, 96000.0}) {
         std::vector<ysfx_t *> fxs;
         for (const Fx &f : chain) {
@@ -164,6 +175,14 @@ static int test_chain(const std::string &file, const std::string &effects)
             // the MIDI the previous plugin sent in this block (bytes copied, ysfx owns the data)
             std::vector<ysfx_midi_event_t> midi;
             std::vector<std::vector<uint8_t>> midi_bytes;
+            if (notes && n == 0)
+                for (uint8_t key : {60, 64, 67}) {
+                    midi_bytes.push_back({0x90, key, 100});
+                    ysfx_midi_event_t ev = {};
+                    ev.offset = 0;
+                    ev.size = 3;
+                    midi.push_back(ev);
+                }
             for (size_t k = 0; k < fxs.size(); ++k) {
                 ysfx_t *fx = fxs[k];
                 for (size_t e = 0; e < midi.size(); ++e) {
