@@ -1,0 +1,14 @@
+[
+  ["Quarter Bloom", {"Sync": 4, "Feedback": 50, "Bloom": 60}],
+  ["Dotted Eighth Wash", {"Sync": 3, "Feedback": 55, "Bloom": 70, "Mod": 25}],
+  ["Clean Echo", {"Time": 350, "Feedback": 35, "Bloom": 0, "Mod": 0, "Damping": 12000}],
+  ["Tape Echo", {"Time": 300, "Feedback": 45, "Bloom": 15, "Mod": 45, "Damping": 3500}],
+  ["Ambient Swell", {"Time": 600, "Feedback": 70, "Bloom": 90, "Mod": 30, "Mix": 45}],
+  ["Endless Pad", {"Time": 800, "Feedback": 100, "Bloom": 100, "Mod": 35, "Damping": 5000, "Mix": 50}],
+  ["Vocal Bloom", {"Sync": 2, "Feedback": 35, "Bloom": 50, "Damping": 6000, "Mix": 25}],
+  ["Dark Diffusion", {"Time": 450, "Feedback": 60, "Bloom": 80, "Damping": 2000, "Mix": 40}],
+  ["Shimmering Slap", {"Time": 90, "Feedback": 30, "Bloom": 40, "Mod": 60, "Mix": 30}],
+  ["Narrow Repeats", {"Sync": 4, "Feedback": 40, "Bloom": 30, "Width": 20}],
+  ["Half Note Cloud", {"Sync": 6, "Feedback": 75, "Bloom": 85, "Mod": 20, "Mix": 40}],
+  ["Reverb Only", {"Time": 40, "Feedback": 75, "Bloom": 100, "Mod": 15, "Damping": 8000, "Mix": 40}]
+]

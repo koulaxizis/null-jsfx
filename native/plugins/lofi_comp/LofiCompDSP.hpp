@@ -122,6 +122,8 @@ private:
         double rp = double(fWp) - d;
         if (rp < 0.0)
             rp += double(fN);
+        if (rp >= double(fN)) // a tiny negative rp can round up to fN
+            rp -= double(fN);
         const int i0 = int(std::floor(rp));
         const double fr = rp - double(i0);
         int i1 = i0 + 1;

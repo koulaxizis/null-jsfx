@@ -142,6 +142,7 @@ out_pin:Right
   ec_dt < 0 ? ec_dt = ec_t : ec_dt += (ec_t - ec_dt) * ec_glide;
   ec_rp = ec_wp - ec_dt;
   ec_rp < 0 ? ec_rp += ec_n;
+  ec_rp >= ec_n ? ec_rp -= ec_n; // a tiny negative read point can round up to ec_n
   ec_i0 = floor(ec_rp);
   ec_fr = ec_rp - ec_i0;
   ec_i1 = ec_i0 + 1;

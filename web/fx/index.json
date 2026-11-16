@@ -125,7 +125,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 1,
-   "bytes": 37001
+   "bytes": 37066
   },
   {
    "id": "exciter",
@@ -741,7 +741,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 7,
-   "bytes": 48045
+   "bytes": 48110
   },
   {
    "id": "maximizer",
@@ -1218,6 +1218,20 @@
    "outs": 2,
    "sliders": 8,
    "bytes": 60589
+  },
+  {
+   "id": "bloom_delay",
+   "name": "Bloom Delay",
+   "category": "Advanced",
+   "tags": "bloom delay diffusion diffused echo reverb ambient modulation tempo sync feedback infinite pad wash gui",
+   "gfx": [
+    480,
+    380
+   ],
+   "ins": 2,
+   "outs": 2,
+   "sliders": 9,
+   "bytes": 59521
   },
   {
    "id": "comb_filter",

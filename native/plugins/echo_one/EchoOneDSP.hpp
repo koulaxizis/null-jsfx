@@ -82,6 +82,8 @@ public:
             double rp = double(fWp) - fDt;
             if (rp < 0.0)
                 rp += n;
+            if (rp >= n) // a tiny negative read point can round up to n
+                rp -= n;
             const int i0 = int(std::floor(rp));
             const double fr = rp - double(i0);
             int i1 = i0 + 1;

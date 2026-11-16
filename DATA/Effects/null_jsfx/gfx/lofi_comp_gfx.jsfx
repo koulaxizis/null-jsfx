@@ -43,6 +43,7 @@ out_pin:Right
   (
     rp = lf_wp - d;
     rp < 0 ? rp += lf_n;
+    rp >= lf_n ? rp -= lf_n;     // a tiny negative rp can round up to lf_n
     i0 = floor(rp);
     fr = rp - i0;
     i1 = i0 + 1;

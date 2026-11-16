@@ -3250,6 +3250,8 @@ static const LogSlider kLogSliders[] = {
     { "bass", 13 },
     { "binaural_panner", 2 },
     { "bitcrusher", 1 },
+    { "bloom_delay", 0 },
+    { "bloom_delay", 5 },
     { "chorus", 7 },
     { "comb_filter", 0 },
     { "de_plosive", 1 },

@@ -134,5 +134,30 @@
     "properties": "Input → 2048-point FFT, Hann windows, 4x overlap → each bin shifted by Shift (rounded to the bin spacing, phase kept coherent) and tilted around 1 kHz (flat below 100 Hz and above 10 kHz) → magnitude smoothed over time (Smear: up to 150 ms rising, 3 s falling; fading bins keep turning with a little Park-Miller random drift) → per-bin 1:3 expander below Gate → inverse FFT and overlap-add → mix with the delayed dry signal → Output gain. Latency 2047 samples, reported to the host.",
     "beta": true,
     "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-spectral_blur\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><path d=\"M 6,50 L 14,44 L 20,22 L 26,40 L 32,30 L 38,42 L 44,36 L 50,46 L 58,48\" stroke=\"url(#icon-spectral_blur)\" stroke-width=\"2.5\" fill=\"none\" stroke-linejoin=\"round\" stroke-linecap=\"round\"/><path d=\"M 6,54 C 16,50 20,34 28,36 C 36,38 40,46 58,52\" stroke=\"url(#icon-spectral_blur)\" stroke-width=\"1.5\" fill=\"none\" opacity=\"0.6\" stroke-linecap=\"round\"/></svg>"
+  },
+  "bloom_delay": {
+    "card_desc": "Delay That Blooms Into Reverb",
+    "keywords": "bloom delay diffusion diffused echo reverb ambient modulation tempo sync feedback infinite pad wash shoegaze",
+    "slider_desc": [
+      "Delay time in milliseconds, used while Sync is Off",
+      "Locks the delay to the project tempo: 1/16 to a whole note, dotted 1/8 and 1/4 too (120 bpm when the host gives no tempo)",
+      "How much of each repeat comes back; a soft curve in the loop keeps even 100% safe, for a near-endless wash",
+      "How much of the allpass diffusion is blended into the loop: each repeat comes back softer and more smeared, until the echoes turn into a reverb",
+      "A slow sweep of the delay time (0.35 Hz, up to 4 ms) for a gentle, tape-like movement",
+      "Low-pass in the loop: lower values make every repeat darker",
+      "Stereo width of the wet signal, from mono to full",
+      "Blend with the dry signal",
+      "Output level"
+    ],
+    "uses": [
+      "Ambient guitars and keys: echoes that dissolve into a wash",
+      "Vocal throws that bloom instead of repeating",
+      "Endless pads and drones with Feedback at 100%",
+      "Tempo-synced dotted eighths with a reverb tail",
+      "A small diffuse space with a short Time and full Bloom"
+    ],
+    "properties": "Input + feedback → 4 s stereo delay line read with linear interpolation (Time or Sync from the tempo, 80 ms glide, swept by a 0.35 Hz LFO with the sides a quarter turn apart) → one-pole low-pass (Damping) → 30 Hz high-pass → four allpass diffusers per side (g 0.6, 3.6 to 12.7 ms), blended in by Bloom → feedback through a tanh curve back into the line. The wet signal is narrowed by Width and mixed with the dry signal → Output gain. No latency.",
+    "beta": true,
+    "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-bloom_delay\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><path d=\"M 8,52 L 10,12 L 12,52 M 18,52 L 21,20 L 24,52 M 29,52 L 34,28 L 39,52 M 42,52 L 49,36 L 56,52\" stroke=\"url(#icon-bloom_delay)\" stroke-width=\"2.5\" fill=\"none\" stroke-linejoin=\"round\" stroke-linecap=\"round\"/></svg>"
   }
 }
