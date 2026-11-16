@@ -29,6 +29,17 @@ inline double sliderDecimal(float x)
     return std::round(d * scale) / scale;
 }
 
+// a point of a slider's step grid as the decimal the JSFX holds (a preset or the header writes
+// "-47.2", not -100 + 528 * 0.1 = -47.199999999999996): 12 significant digits, as printf %.12g
+inline double gridDecimal(double x)
+{
+    if (x == 0.0 || !std::isfinite(x))
+        return x;
+    const double p = std::pow(10.0, 11.0 - std::floor(std::log10(std::fabs(x))));
+    const double r = std::round(x * p) / p;
+    return std::fabs(r - x) <= std::fabs(x) * 1e-12 ? r : x;
+}
+
 // The host passes parameters as float, the JSFX keeps the slider in double. Rebuild that double:
 // the exact min / max / default, else the nearest point of the slider's step grid.
 inline double jsfxValue(const SliderInfo& s, float v)
@@ -39,7 +50,7 @@ inline double jsfxValue(const SliderInfo& s, float v)
     if (v == s.def) return sliderDecimal(s.def);
     if (!(s.step > 0.0f)) return v;
     const double step = sliderDecimal(s.step);
-    return std::fmax(mn, std::fmin(mx, mn + std::round((double(v) - mn) / step) * step));
+    return gridDecimal(std::fmax(mn, std::fmin(mx, mn + std::round((double(v) - mn) / step) * step)));
 }
 
 } // namespace DISTRHO
