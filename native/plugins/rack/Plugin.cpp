@@ -7,7 +7,7 @@
  *
  * Parameters: RackParams.hpp (22 globals, then On/Mix/Band/Channel/Value 1-25 per slot, then,
  * appended after 2.1, the step sequencer, Lane Mix, Feedback, Feedback From/To and S1-S8 Lane).
- * State: "slots" (8 module ids), "routes" and "preset" (RackParams.hpp). The module in a slot is
+ * State: "slots" (8 module ids), "routes", "preset" and (4.0) "scenes" (RackParams.hpp). The module in a slot is
  * state, not a parameter: changing it allocates, which happens here, never on the audio thread.
  * A slot's lane is a parameter like its band and channel (appended, so 2.1 sessions load with
  * every slot on lane A).
@@ -103,8 +103,8 @@ protected:
 
     void initState(uint32_t index, State& s) override
     {
-        static const char* const keys[] = { "slots", "routes", "preset" };
-        static const char* const labels[] = { "Slots", "Routes", "Preset" };
+        static const char* const keys[] = { "slots", "routes", "preset", "scenes" };
+        static const char* const labels[] = { "Slots", "Routes", "Preset", "Scenes" };
         s.hints = kStateIsHostReadable;
         s.key = keys[index];
         s.label = labels[index];
@@ -128,6 +128,12 @@ protected:
         }
         if (std::strcmp(key, "preset") == 0)
             return String(fEngine->presetName().c_str());
+        if (std::strcmp(key, "scenes") == 0)
+        {
+            std::unique_ptr<rack::Scene[]> sc(new rack::Scene[rack::kScenes]);
+            fEngine->scenes(sc.get());
+            return String(rack::formatScenes(sc.get()).c_str());
+        }
         return String();
     }
 
@@ -147,6 +153,12 @@ protected:
         }
         else if (std::strcmp(key, "preset") == 0)
             fEngine->setPresetName(value);
+        else if (std::strcmp(key, "scenes") == 0)
+        {
+            std::unique_ptr<rack::Scene[]> sc(new rack::Scene[rack::kScenes]);
+            rack::parseScenes(value, sc.get());
+            fEngine->setScenes(sc.get());
+        }
         else
             return;
         bumpState();

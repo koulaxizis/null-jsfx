@@ -29,6 +29,9 @@
  *   modulators  (4.0) Smooth Random's range and smoothness, the Follower after a slot, the pitch
  *               follower on sines, the ADSR's stages, a route to a modulator setting (LFO 1 Rate)
  *               and the Remap curve; the 4.0 routes strings round-trip
+ *   scenes      (4.0) the scenes string round-trips, Morph moves values and macros through the
+ *               stored scenes (a gap skipped), slots with another module keep their values, a
+ *               preset clears the scenes
  *   feedback    the loop repeats every kChunk samples and decays; 95 % on noise stays bounded
  *   sequencer   the steps, Steps, sync to the host beat and Glide
  *   keyed       Sidechain Ducker keys on the rack input delayed by the latency before it
@@ -666,6 +669,68 @@ static void testModulators()
     }
 }
 
+// ---- scenes (4.0) --------------------------------------------------------------------------------
+
+static void testScenes()
+{
+    auto mods = allModules(true);
+    const double sr = 48000.0;
+    if (!RackEngine(mods.data(), uint32_t(mods.size())).find("tilt"))
+    {
+        std::printf("  tilt not in this build, skipped\n");
+        return;
+    }
+    // the state string round-trips; malformed scenes are skipped
+    std::unique_ptr<rack::Scene[]> sc(new rack::Scene[rack::kScenes]), back(new rack::Scene[rack::kScenes]);
+    sc[0].used = true;
+    sc[0].ids[0] = "tilt";
+    sc[0].vals[0][0] = 100.0f;
+    sc[0].vals[0][1] = 0.2f;
+    sc[0].macros[0] = 10.0f;
+    sc[2] = sc[0];
+    sc[2].vals[0][1] = 0.8f;
+    sc[2].vals[0][0] = 50.0f;
+    sc[2].macros[0] = 90.0f;
+    const std::string str = rack::formatScenes(sc.get());
+    rack::parseScenes(str.c_str(), back.get());
+    CHECK(rack::formatScenes(back.get()) == str && back[2].used && !back[1].used && back[2].vals[0][1] == 0.8f, "scenes round trip");
+    rack::parseScenes("9/a,,,,,,,/1/2|x/,,,,,,,/1/2|2/,,,,,,,/1,2/3", back.get());
+    CHECK(!back[0].used && !back[1].used, "bad scenes accepted");
+    std::printf("  scenes string round-trips (%zu characters for 2 scenes)\n", str.size());
+
+    std::unique_ptr<RackEngine> e(new RackEngine(mods.data(), uint32_t(mods.size())));
+    e->setSampleRate(sr);
+    e->setSlot(0, "tilt");
+    e->setParam(rack::valueParam(0, 0), 0.4f);
+    rack::parseScenes(str.c_str(), sc.get());
+    e->setScenes(sc.get());
+    Stereo in = testSignal(sr, 0.05), out;
+    auto at = [&](float scenesOn, float morph, float wantV, float wantMacro, const char* what) {
+        e->setParam(rack::kScenesOn, scenesOn);
+        e->setParam(rack::kSceneMorph, morph);
+        render(*e, in, out, 512);
+        const float v = e->effective(0, 0), m = e->sourceValue(rack::kSrcMacro1);
+        CHECK(std::fabs(v - wantV) < 1e-6f && std::fabs(m - wantMacro) < 1e-6f, "scenes, %s: value %.4f macro %.4f", what, v, m);
+        std::printf("  scenes, %-22s value %.3f, macro 1 %.3f\n", what, v, m);
+    };
+    at(0.0f, 50.0f, 0.4f, 0.0f, "off:");
+    at(1.0f, 0.0f, 0.2f, 0.1f, "morph 0 (scene 1):");
+    at(1.0f, 50.0f, 0.5f, 0.5f, "morph 50:");
+    at(1.0f, 100.0f, 0.8f, 0.9f, "morph 100 (scene 3):");
+    // other modules than the scenes hold: the slots keep their own values (the macros still morph)
+    std::string ids[rack::kSlots] = { "identity", "tilt" };
+    e->setSlots(ids);
+    e->setParam(rack::valueParam(1, 0), 0.3f);
+    render(*e, in, out, 512);
+    CHECK(std::fabs(e->effective(1, 0) - 0.3f) < 1e-6f && std::fabs(e->sourceValue(rack::kSrcMacro1) - 0.9f) < 1e-6f, // Morph still at 100
+          "scenes with other modules: value %.4f", e->effective(1, 0));
+    // a preset clears the scenes
+    e->loadPreset(rack::kPresets[0]);
+    e->scenes(back.get());
+    CHECK(!back[0].used && !back[2].used, "a preset kept the scenes");
+    std::printf("  scenes with other modules in the slots: their own values; a preset clears the scenes\n");
+}
+
 // ---- threads ---------------------------------------------------------------------------------
 
 static void testThreads()
@@ -717,7 +782,7 @@ static void testState()
         CHECK(rack::kExtFirst == 254 && std::string(rack::paramInfo(253, nm, 32, sy, 32).symbol) == "s8_v25" &&
               std::string(rack::paramInfo(rack::kSeqStep1 + 15, nm, 32, sy, 32).symbol) == "seq_step16" &&
               std::string(rack::paramInfo(rack::laneParam(7), nm, 32, sy, 32).symbol) == "s8_lane" &&
-              rack::kSlotLaneX1 == 286 && rack::kSlotSplit1 == 310 && rack::kRandRate == 333 && rack::kNumParams == 346, "parameter layout");
+              rack::kSlotLaneX1 == 286 && rack::kSlotSplit1 == 310 && rack::kRandRate == 333 && rack::kSceneMorph == 346 && rack::kNumParams == 348, "parameter layout");
         CHECK(std::string(rack::paramInfo(rack::laneXParam(7), nm, 32, sy, 32).symbol) == "s8_lanex" &&
               std::string(rack::paramInfo(rack::kLaneGain1, nm, 32, sy, 32).symbol) == "lanea_gain" &&
               std::string(rack::paramInfo(rack::kLaneSolo1 + 3, nm, 32, sy, 32).symbol) == "laned_solo" &&
@@ -832,6 +897,9 @@ static void neutral(RackEngine& e, const RackEngine::PresetState& st)
     e.setParam(rack::kFollowSlot, 2.0f);
     e.setParam(rack::kPitchLow, 200.0f);
     e.setParam(rack::kAdsrThreshold, -50.0f);
+    // no scene stored: Scenes on and Scene Morph do nothing
+    e.setParam(rack::kSceneMorph, 70.0f);
+    e.setParam(rack::kScenesOn, 1.0f);
 }
 
 static bool usesNewFeatures(const RackEngine::PresetState& st)
@@ -1214,6 +1282,8 @@ int main()
     testModulation();
     std::printf("modulators\n");
     testModulators();
+    std::printf("scenes\n");
+    testScenes();
     std::printf("threads\n");
     testThreads();
     testPresets();

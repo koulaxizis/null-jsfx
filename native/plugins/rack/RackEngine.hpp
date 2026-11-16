@@ -686,8 +686,28 @@ public:
         for (uint32_t i = 0; i < kNumParams; ++i)
             setParam(i, st->params[i]);
         setRoutes(st->routes, st->numRoutes);
+        Scene none2[kScenes];
+        setScenes(none2); // a preset has no scenes
         fPresetName = p.name;
         return ok;
+    }
+
+    // 4.0 scenes: swapped in under the lock (strings swap without allocating)
+    void setScenes(Scene* sc)
+    {
+        fLock.lock();
+        for (uint32_t k = 0; k < kScenes; ++k)
+            std::swap(fScenes[k], sc[k]);
+        fLock.unlock();
+        fVersion.fetch_add(1, std::memory_order_release);
+    }
+
+    void scenes(Scene* out) const
+    {
+        const_cast<SpinLock&>(fLock).lock();
+        for (uint32_t k = 0; k < kScenes; ++k)
+            out[k] = fScenes[k];
+        const_cast<SpinLock&>(fLock).unlock();
     }
 
     std::string presetName() const { return fPresetName; }
@@ -808,6 +828,54 @@ private:
         return seed / 2147483647.0;
     }
 
+    // 4.0: with Scenes on, the values Scene Morph gives (fSceneOn false: the parameters)
+    void updateScenes()
+    {
+        fSceneOn = false;
+        if (param(kScenesOn) < 0.5f)
+            return;
+        int used[kScenes], nu = 0;
+        for (uint32_t k = 0; k < kScenes; ++k)
+            if (fScenes[k].used)
+                used[nu++] = int(k);
+        if (!nu)
+            return;
+        fSceneOn = true;
+        const double pos = double(clamp01(param(kSceneMorph) / 100.0f)) * double(nu - 1);
+        const int ia = std::min(nu - 1, int(std::floor(pos))), ib = std::min(nu - 1, ia + 1);
+        const float t = float(pos - double(ia));
+        const Scene& A = fScenes[used[ia]];
+        const Scene& B = fScenes[used[ib]];
+        for (uint32_t m = 0; m < 8; ++m)
+            fSceneMacro[m] = A.macros[m] + (B.macros[m] - A.macros[m]) * t;
+        for (uint32_t sl = 0; sl < kSlots; ++sl)
+        {
+            const nulljsfx::ModuleDesc* d = fSlot[sl].desc;
+            const bool va = d && A.ids[sl] == d->id, vb = d && B.ids[sl] == d->id;
+            fSceneSlot[sl] = va || vb;
+            if (!fSceneSlot[sl])
+                continue;
+            const Scene& a = va ? A : B;
+            const Scene& b = vb ? B : A;
+            const float tt = va && vb ? t : 0.0f;
+            fSceneVal[sl][0] = a.vals[sl][0] + (b.vals[sl][0] - a.vals[sl][0]) * tt;
+            const uint32_t nv = std::min<uint32_t>(d->numSliders, kValues);
+            for (uint32_t v = 0; v < kValues; ++v)
+            {
+                const float x = a.vals[sl][1 + v], y = b.vals[sl][1 + v];
+                // stepped sliders (options, steps of 1 or more) switch half way
+                const bool stepped = v < nv && (d->sliders[v].options || d->sliders[v].step >= 1.0f);
+                fSceneVal[sl][1 + v] = stepped ? (tt < 0.5f ? x : y) : x + (y - x) * tt;
+            }
+        }
+    }
+
+    // a slot value's base (before modulation): the scene's with Scenes on, else the parameter
+    float baseValue(uint32_t s, uint32_t v) const
+    {
+        return fSceneOn && fSceneSlot[s] ? fSceneVal[s][1 + v] : param(valueParam(s, v));
+    }
+
     // 4.0: a modulator setting moved by the routes to it (from the sources of the chunk before):
     // the parameter itself when no route moves it
     float modParam(uint32_t p) const
@@ -834,7 +902,7 @@ private:
                 fModOff[fRoutes[i].value] += fRoutes[i].depth * remap(fSrc[fRoutes[i].source], fRoutes[i].curve);
 
         for (int m = 0; m < 8; ++m)
-            fSrc[kSrcMacro1 + m] = clamp01(param(kMacro1 + m) / 100.0f);
+            fSrc[kSrcMacro1 + m] = clamp01((fSceneOn ? fSceneMacro[m] : param(kMacro1 + m)) / 100.0f);
 
         const double tempo = t.tempo > 0.0 ? t.tempo : 120.0;
         for (int k = 0; k < 2; ++k)
@@ -1142,7 +1210,7 @@ private:
             const uint32_t nv = std::min<uint32_t>(sl.desc->numSliders, kValues);
             for (uint32_t v = 0; v < nv; ++v)
             {
-                const float norm = clamp01(param(valueParam(s, v)) + (any[s] ? mod[s][v] : 0.0f));
+                const float norm = clamp01(baseValue(s, v) + (any[s] ? mod[s][v] : 0.0f));
                 sl.eff[v].store(norm, std::memory_order_relaxed);
                 const float plain = valueToPlain(sl.desc->sliders[v], sl.log[v], norm);
                 if (plain != sl.applied[v])
@@ -1169,6 +1237,7 @@ private:
             pin = std::max(pin, std::max(std::fabs(xl[i]), std::fabs(xr[i])));
         }
 
+        updateScenes();
         updateSources(xl, xr, n, t);
         applyValues();
         updateCrossovers();
@@ -1472,7 +1541,7 @@ private:
     uint32_t processSlot(uint32_t s, float* xl, float* xr, uint32_t n, const nulljsfx::ModuleTime& mt, uint32_t keyDelay)
     {
         Slot& sl = fSlot[s];
-        const float mix = clamp01(param(slotParam(s, kSlotMix)) / 100.0f);
+        const float mix = clamp01((fSceneOn && fSceneSlot[s] ? fSceneVal[s][0] : param(slotParam(s, kSlotMix))) / 100.0f);
         const int band = int(std::lround(param(slotParam(s, kSlotBand))));
         const int chan = int(std::lround(param(slotParam(s, kSlotChannel))));
         // 4.0: a split band (1..Split Bands; above it, the top band) takes the place of Band
@@ -1630,6 +1699,12 @@ private:
     uint32_t fSplitN = kMaxBands;
     Split5 fOutSplit[2];
     bool fSplitUsed = false; // the output's split ran in the last chunk
+    // added in 4.0: the scenes
+    Scene fScenes[kScenes];
+    bool fSceneOn = false;
+    bool fSceneSlot[kSlots] = {};
+    float fSceneVal[kSlots][kSceneSlotVals] = {};
+    float fSceneMacro[8] = {};
     // added in 4.0: the new modulators and the moved modulator settings
     float fModOff[kNumModTargets] = {};
     double fRandPhase = 0.0, fRandFrom = 0.0, fRandTo = 0.0, fRandSeed = 4242.0;
