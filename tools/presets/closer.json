@@ -1,0 +1,13 @@
+[
+  ["Gentle Forward", {"Amount": 15}],
+  ["Podcast Voice", {"Amount": 50}],
+  ["Dialogue Clarity", {"Amount": 35}],
+  ["Pop Vocal Front", {"Amount": 60}],
+  ["Rap Up Front", {"Amount": 75}],
+  ["Backing Vocal Lift", {"Amount": 25}],
+  ["Voice Over Close", {"Amount": 65}],
+  ["Acoustic Guitar Front", {"Amount": 30}],
+  ["Radio Voice", {"Amount": 85}],
+  ["In Your Face", {"Amount": 100}],
+  ["Choir Presence", {"Amount": 20}]
+]

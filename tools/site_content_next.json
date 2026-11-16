@@ -32,5 +32,22 @@
     "properties": "Input → split at 600 Hz (one pole) → lows: asymmetric tanh curve, DC removed, mixed in by Amount, +0 to +2.3 dB; highs: 0 to -2 dB → one-pole low-pass 20 to 9 kHz faded in by Amount → trim → Output. Zero latency.",
     "beta": true,
     "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-warmer\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><path d=\"M 8,52 L 56,12\" stroke=\"url(#icon-warmer)\" stroke-width=\"1.5\" fill=\"none\" stroke-linecap=\"round\" opacity=\"0.4\"/><path d=\"M 8,48 C 22,46 26,36 32,32 C 38,28 42,18 56,16\" stroke=\"url(#icon-warmer)\" stroke-width=\"2.5\" fill=\"none\" stroke-linecap=\"round\"/></svg>"
+  },
+  "closer": {
+    "card_desc": "One-Knob Vocal Forward",
+    "keywords": "closer vocal voice presence proximity upfront forward compression dialogue podcast radio one knob",
+    "slider_desc": [
+      "How far forward the voice comes: 0 is untouched; higher values raise the compressor's ratio (threshold -24 dBFS, up to 3:1, 5 ms attack, 120 ms release) and its make-up (up to +3 dB), a presence lift around 3.5 kHz (up to +5 dB) that eases off by up to half while the compressor works hard, and a proximity lift below 180 Hz (up to +2.5 dB)"
+    ],
+    "uses": [
+      "Bring a vocal to the front of a mix",
+      "Podcast and dialogue clarity",
+      "Voice-over that sits close",
+      "Lift backing vocals or a choir",
+      "Acoustic guitar that needs to speak"
+    ],
+    "properties": "Input → peak envelope of both channels (5 ms / 120 ms) → gain computer (-24 dBFS, 1:1 to 3:1) and make-up → + band-pass at 3.5 kHz (Q 0.9) scaled by the presence amount, reduced while the gain reduction reaches 6 dB → + one-pole low-pass at 180 Hz scaled by the proximity amount → Output. Zero latency.",
+    "beta": true,
+    "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-closer\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><circle cx=\"32\" cy=\"32\" r=\"8\" stroke=\"url(#icon-closer)\" stroke-width=\"2.5\" fill=\"none\"/><circle cx=\"32\" cy=\"32\" r=\"16\" stroke=\"url(#icon-closer)\" stroke-width=\"1.5\" fill=\"none\" opacity=\"0.6\"/><circle cx=\"32\" cy=\"32\" r=\"24\" stroke=\"url(#icon-closer)\" stroke-width=\"1.5\" fill=\"none\" opacity=\"0.3\"/></svg>"
   }
 }

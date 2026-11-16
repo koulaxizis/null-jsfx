@@ -44,6 +44,20 @@
    "bytes": 36065
   },
   {
+   "id": "closer",
+   "name": "Closer",
+   "category": "One Slider",
+   "tags": "closer vocal voice presence proximity upfront forward compression dialogue podcast one knob gui",
+   "gfx": [
+    360,
+    240
+   ],
+   "ins": 2,
+   "outs": 2,
+   "sliders": 1,
+   "bytes": 37264
+  },
+  {
    "id": "crunch",
    "name": "Crunch",
    "category": "One Slider",
