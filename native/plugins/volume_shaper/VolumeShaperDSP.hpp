@@ -10,6 +10,7 @@
  * tempo. Smooth is a one-pole lowpass on the gain; Mix blends with the dry signal.
  * Trigger MIDI / Sidechain: the shape plays once per MIDI note-on (at its frame) or per key
  * transient over Threshold (one-shot), full level in between.
+ * Custom On (4.0): a drawn shape, Point 1..16 at 16 even steps, straight lines, back to Point 1.
  */
 
 #pragma once
@@ -21,11 +22,13 @@ namespace nullvolshaper {
 
 static constexpr int kNumShapes = 10;
 static constexpr int kHalfTime = 8; // the shape that spans two Rate notes
+static constexpr int kCustom = 10;  // 4.0: the drawn shape (Custom On), not one of Shape's options
+static constexpr int kPoints = 16;
 
 // one shape: points (x, y, curve of the segment to the next point), x from 0 to 1
 struct Shape {
-    double x[16] = {}, y[16] = {};
-    int c[16] = {};
+    double x[24] = {}, y[24] = {};
+    int c[24] = {};
     int n = 0;
     void pt(double px, double py, int pc) noexcept
     {
@@ -73,7 +76,11 @@ struct Shapes {
     // the level of shape i at cycle position p (vs_eval in the JSFX)
     double eval(int i, double p) const noexcept
     {
-        const Shape& b = s[i < 0 ? 0 : (i >= kNumShapes ? kNumShapes - 1 : i)];
+        return evalShape(s[i < 0 ? 0 : (i >= kNumShapes ? kNumShapes - 1 : i)], p);
+    }
+
+    static double evalShape(const Shape& b, double p) noexcept
+    {
         int k = 0;
         while (k < b.n - 2 && p >= b.x[k + 1])
             ++k;
@@ -110,15 +117,37 @@ struct Params {
     double depthPct = 80.0, smoothMs = 3.0, phasePct = 0.0, mixPct = 100.0;
     int trigger = kTempo;
     double thresholdDb = -20.0;
+    int custom = 0;                                                 // 4.0
+    double points[kPoints] = { 0, 40, 65, 80, 90, 96, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100 };
 };
+
+// the Custom shape of p (the JSFX's @slider): the 16 points, then Point 1 at the end
+inline Shape customShape(const Params& p) noexcept
+{
+    Shape c;
+    for (int k = 0; k < kPoints; ++k)
+        c.pt(double(k) / 16.0, p.points[k] / 100.0, 0);
+    c.pt(1.0, p.points[0] / 100.0, 0);
+    return c;
+}
+
+// the shape Params p plays: Custom, or one of the presets
+inline const Shape& playedShape(const Params& p, const Shape& custom) noexcept
+{
+    return p.custom ? custom : shapes().s[p.shape < 0 ? 0 : (p.shape >= kNumShapes ? kNumShapes - 1 : p.shape)];
+}
 
 // where a one-shot of shape i ends: the start of a short last segment (a ramp back, 5% of the
 // cycle or less), else the end of the cycle (os_end in the JSFX)
-inline double oneShotEnd(int i) noexcept
+inline double oneShotEnd(const Shape& b) noexcept
 {
-    const Shape& b = shapes().s[i < 0 ? 0 : (i >= kNumShapes ? kNumShapes - 1 : i)];
     const double x = b.x[b.n - 2];
     return 1.0 - x <= 0.05 ? x : 1.0;
+}
+
+inline double oneShotEnd(int i) noexcept
+{
+    return oneShotEnd(shapes().s[i < 0 ? 0 : (i >= kNumShapes ? kNumShapes - 1 : i)]);
 }
 
 class VolumeShaperProcessor {
@@ -141,15 +170,17 @@ public:
 
     void setParams(const Params& p) noexcept // @slider
     {
-        fShape = p.shape;
-        fCyc = cycleBeats(p.rate, p.shape);
+        fCustom = customShape(p);
+        fUseCustom = p.custom != 0;
+        fShape = p.shape < 0 ? 0 : (p.shape >= kNumShapes ? kNumShapes - 1 : p.shape);
+        fCyc = cycleBeats(p.rate, p.custom ? kCustom : p.shape);
         fDepth = p.depthPct / 100.0;
         fSm = p.smoothMs > 0.0 ? std::exp(-1.0 / (fSampleRate * p.smoothMs * 0.001)) : 0.0;
         fPhase = p.phasePct / 100.0;
         fMix = p.mixPct / 100.0;
         fTrig = p.trigger;
         fThr = std::pow(10.0, p.thresholdDb / 20.0);
-        fOsEnd = oneShotEnd(p.shape);
+        fOsEnd = oneShotEnd(played());
     }
 
     // the playhead: the cycle position, or in a one-shot mode its position (its end when idle)
@@ -165,7 +196,7 @@ public:
                  double tempo, const T* keyL = nullptr, const T* keyR = nullptr, const uint32_t* noteOns = nullptr,
                  uint32_t numNoteOns = 0) noexcept
     {
-        const Shapes& sh = shapes();
+        const Shape& sh = played();
         const double bpm = tempo > 0.0 ? tempo : 120.0;
         const double inc = bpm / 60.0 / fCyc / fSampleRate;
         if (playing)
@@ -183,7 +214,7 @@ public:
                 double p = pos + fPhase;
                 if (p >= 1.0)
                     p -= 1.0;
-                target = 1.0 - fDepth * (1.0 - sh.eval(fShape, p));
+                target = 1.0 - fDepth * (1.0 - Shapes::evalShape(sh, p));
             }
             else
             {
@@ -230,7 +261,7 @@ public:
                     double p = fOsPos + fPhase;
                     if (p >= 1.0)
                         p -= 1.0;
-                    target = 1.0 - fDepth * (1.0 - sh.eval(fShape, p));
+                    target = 1.0 - fDepth * (1.0 - Shapes::evalShape(sh, p));
                 }
                 else
                     target = 1.0;
@@ -247,6 +278,10 @@ public:
 
 private:
     double fSampleRate = 48000.0;
+    const Shape& played() const noexcept { return fUseCustom ? fCustom : shapes().s[fShape]; }
+
+    Shape fCustom;
+    bool fUseCustom = false;
     int fShape = 0;
     double fCyc = 1.0, fDepth = 0.8, fSm = 0.0, fPhase = 0.0, fMix = 1.0;
     double fPos = 0.0, fG = 1.0;

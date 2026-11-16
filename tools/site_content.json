@@ -3588,7 +3588,24 @@
       "Moves the shape later in the cycle",
       "Blend between the shaped and the dry signal",
       "What starts the shape: Tempo loops it on the host tempo, MIDI plays it once from the top on every note-on and Sidechain plays it once on every hit of the signal on inputs 3/4",
-      "Level the sidechain signal must rise above to start the shape in Sidechain mode"
+      "Level the sidechain signal must rise above to start the shape in Sidechain mode",
+      "Plays your own drawn shape instead of Shape (Off by default): the 16 points below, one every 1/16 of the cycle, joined by straight lines; drag over the display to draw them.",
+      "Point 1 of the drawn shape, at the start of the cycle (0 to 100% level); the curve also returns to it at the end, so the loop stays seamless.",
+      "Point 2 of the drawn shape, 1/16 of the way through the cycle (0 to 100% level).",
+      "Point 3 of the drawn shape, 2/16 of the way through the cycle (0 to 100% level).",
+      "Point 4 of the drawn shape, 3/16 of the way through the cycle (0 to 100% level).",
+      "Point 5 of the drawn shape, 4/16 of the way through the cycle (0 to 100% level).",
+      "Point 6 of the drawn shape, 5/16 of the way through the cycle (0 to 100% level).",
+      "Point 7 of the drawn shape, 6/16 of the way through the cycle (0 to 100% level).",
+      "Point 8 of the drawn shape, 7/16 of the way through the cycle (0 to 100% level).",
+      "Point 9 of the drawn shape, 8/16 of the way through the cycle (0 to 100% level).",
+      "Point 10 of the drawn shape, 9/16 of the way through the cycle (0 to 100% level).",
+      "Point 11 of the drawn shape, 10/16 of the way through the cycle (0 to 100% level).",
+      "Point 12 of the drawn shape, 11/16 of the way through the cycle (0 to 100% level).",
+      "Point 13 of the drawn shape, 12/16 of the way through the cycle (0 to 100% level).",
+      "Point 14 of the drawn shape, 13/16 of the way through the cycle (0 to 100% level).",
+      "Point 15 of the drawn shape, 14/16 of the way through the cycle (0 to 100% level).",
+      "Point 16 of the drawn shape, 15/16 of the way through the cycle (0 to 100% level)."
     ],
     "uses": [
       "Sidechain-style pumping without a kick or a sidechain route",
@@ -3596,7 +3613,7 @@
       "Rhythmic tremolo with saw, sine or triangle shapes",
       "Ducking a bass under the kick on every beat"
     ],
-    "properties": "Signal chain: Input → Gain × (1 − Depth × (1 − Shape)) → One-pole Smoothing → Dry/Wet Mix → Output. The shapes are breakpoint curves over one cycle; the cycle follows the host tempo and, while the transport plays, is read from the song position so it stays locked to the grid; stopped, it free-runs at the host tempo. Half-time Pump spans two Rate notes. Stereo-linked, zero latency.",
+    "properties": "Signal chain: Input → Gain × (1 − Depth × (1 − Shape)) → One-pole Smoothing → Dry/Wet Mix → Output. The shapes are breakpoint curves over one cycle; the cycle follows the host tempo and, while the transport plays, is read from the song position so it stays locked to the grid; stopped, it free-runs at the host tempo. Half-time Pump spans two Rate notes. Custom On plays a drawn shape of 16 points, edited by dragging over the display. Stereo-linked, zero latency.",
     "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-volshape\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><path d=\"M 6,46 Q 10,22 22,20 L 28,20 L 30,46 Q 34,22 46,20 L 52,20 L 54,46\" stroke=\"url(#icon-volshape)\" stroke-width=\"3\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M 6,52 L 58,52\" stroke=\"url(#icon-volshape)\" stroke-width=\"1.5\" opacity=\"0.35\"/></svg>"
   },
   "vu_meter": {

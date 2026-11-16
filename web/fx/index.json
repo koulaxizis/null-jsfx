@@ -1160,8 +1160,8 @@
    ],
    "ins": 4,
    "outs": 2,
-   "sliders": 8,
-   "bytes": 56778
+   "sliders": 25,
+   "bytes": 86697
   },
   {
    "id": "wah",
