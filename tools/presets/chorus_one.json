@@ -3,5 +3,8 @@
   ["Clean Guitar Chorus", {"Chorus Amount": 40}],
   ["Electric Piano", {"Chorus Amount": 55}],
   ["Wide Pad", {"Chorus Amount": 70}],
-  ["Lush Eighties", {"Chorus Amount": 90}]
+  ["Lush Eighties", {"Chorus Amount": 90}],
+  ["Bass Width", {"Chorus Amount": 10}],
+  ["Vocal Thicken", {"Chorus Amount": 30}],
+  ["Seasick Wobble", {"Chorus Amount": 100}]
 ]

@@ -3,5 +3,8 @@
   ["Mix Bus Glow", {"Amount": 15}],
   ["Drum Bus Glue", {"Amount": 40}],
   ["Bass Tube Weight", {"Amount": 55}],
-  ["Hot Synth Drive", {"Amount": 80}]
+  ["Hot Synth Drive", {"Amount": 80}],
+  ["Gentle Tape Warmth", {"Amount": 10}],
+  ["Guitar Crunch", {"Amount": 70}],
+  ["Heavy Overdrive", {"Amount": 85}]
 ]

@@ -4,5 +4,9 @@
   ["Laser Snare", {"Frequency": 1500, "Amount": 32, "Pinch": 70}],
   ["Synth Zap", {"Frequency": 3000, "Amount": 48, "Pinch": 80, "Mode": "Stereo"}],
   ["Soft Transients", {"Frequency": 2000, "Amount": 6, "Pinch": 30}],
-  ["Stereo Width Smear", {"Frequency": 800, "Amount": 24, "Pinch": 30, "Mode": "Stereo"}]
+  ["Stereo Width Smear", {"Frequency": 800, "Amount": 24, "Pinch": 30, "Mode": "Stereo"}],
+  ["Gentle Bass Focus", {"Frequency": 60, "Amount": 4, "Pinch": 50}],
+  ["Zap Hat", {"Frequency": 8000, "Amount": 40, "Pinch": 85, "Mix": 60}],
+  ["Chirp Drop", {"Frequency": 300, "Amount": 64, "Pinch": 90}],
+  ["Parallel Laser", {"Frequency": 1200, "Amount": 40, "Pinch": 70, "Mix": 40}]
 ]

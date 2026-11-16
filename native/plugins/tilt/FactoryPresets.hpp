@@ -18,6 +18,9 @@ static const FactoryPreset kPresets[] = {
     { "Mastering Dark Nudge", { -15.0f } },
     { "Mastering Bright Nudge", { 15.0f } },
     { "Brighten Dull Stem", { 40.0f } },
+    { "Very Bright", { 70.0f } },
+    { "Gentle Warmth", { -25.0f } },
+    { "Air Lift", { 25.0f } },
 };
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 1;

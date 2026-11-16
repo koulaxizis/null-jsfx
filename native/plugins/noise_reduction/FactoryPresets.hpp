@@ -20,6 +20,9 @@ static const FactoryPreset kPresets[] = {
     { "Fast Speech Profile", { 0.0f, 0.0f, 18.0f, 4.0f, 40.0f, 2.0f, 80.0f, 0.0f, 100.0f } },
     { "Heavy Noise Cleanup", { 0.0f, 0.0f, 30.0f, 6.0f, 70.0f, 5.0f, 250.0f, 0.0f, 100.0f } },
     { "Listen Removed Noise", { 0.0f, 1.0f, 18.0f, 3.0f, 50.0f, 10.0f, 150.0f, 1.0f, 100.0f } },
+    { "Field Recording Wind", { 0.0f, 1.0f, 8.0f, 4.0f, 70.0f, 20.0f, 300.0f, 0.0f, 100.0f } },
+    { "Guitar Amp Hiss", { 0.0f, 1.0f, 10.0f, 2.0f, 60.0f, 10.0f, 250.0f, 0.0f, 100.0f } },
+    { "Parallel Denoise", { 0.0f, 1.0f, 24.0f, 4.0f, 50.0f, 10.0f, 150.0f, 0.0f, 60.0f } },
 };
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 9;

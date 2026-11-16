@@ -4,5 +4,9 @@
   ["Bass Auto-Wah", {"Target": "Lowpass", "Attack": 5, "Release": 150, "Sensitivity": 6, "Low Freq": 150, "High Freq": 1500, "Resonance": 3}],
   ["Touch Synth Filter", {"Target": "Lowpass", "Attack": 1, "Release": 300, "Sensitivity": 0, "Low Freq": 200, "High Freq": 8000, "Resonance": 2}],
   ["Drum Filter Breathe", {"Target": "Lowpass", "Attack": 1, "Release": 80, "Sensitivity": 0, "Low Freq": 500, "High Freq": 12000, "Resonance": 1.5}],
-  ["Soft Volume Swells", {"Target": "Volume", "Attack": 80, "Release": 400, "Sensitivity": 12}]
+  ["Soft Volume Swells", {"Target": "Volume", "Attack": 80, "Release": 400, "Sensitivity": 12}],
+  ["Synth Pluck Opener", {"Target": "Lowpass", "Attack": 0.5, "Release": 200, "Sensitivity": 3, "Low Freq": 300, "High Freq": 6000, "Resonance": 3}],
+  ["High Pass Pumper", {"Target": "Highpass", "Attack": 2, "Release": 250, "Sensitivity": 0, "Low Freq": 30, "High Freq": 600, "Resonance": 1, "Direction": "Down"}],
+  ["Vocal Talk Filter", {"Target": "Bandpass", "Attack": 2, "Release": 100, "Sensitivity": 4, "Low Freq": 500, "High Freq": 3500, "Resonance": 3, "Mix": 35}],
+  ["Clav Quack", {"Target": "Bandpass", "Attack": 1, "Release": 90, "Sensitivity": 8, "Low Freq": 400, "High Freq": 4000, "Resonance": 6, "Mix": 50}]
 ]

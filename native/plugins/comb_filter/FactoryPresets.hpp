@@ -19,7 +19,10 @@ static const FactoryPreset kPresets[] = {
     { "Tuned Hat Shimmer", { 1760.0f, 0.7f, 1.0f, 3.0f } },
     { "Karplus Pluck A2", { 110.0f, 0.97f, 1.0f, 4.0f } },
     { "Tube Resonance", { 330.0f, 0.6f, 1.0f, 3.0f } },
-    { "Robotic Buzz", { 100.0f, 0.9f, 1.0f, 4.0f } },
+    { "Robotic Buzz", { 100.0f, 0.9f, 1.0f, 12.0f } },
+    { "Flanged Air", { 5000.0f, 0.5f, 0.0f, 0.0f } },
+    { "Tuned E3 Drone", { 165.0f, 0.9f, 1.0f, 6.0f } },
+    { "Low Body Comb", { 150.0f, 0.35f, 0.0f, 0.0f } },
 };
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 4;

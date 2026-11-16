@@ -22,6 +22,7 @@ static const FactoryPreset kPresets[] = {
     { "Handheld Podcast", { 65.0f, 170.0f, 24.0f, 100.0f, 0.0f } },
     { "Mic Bumps", { 70.0f, 100.0f, 30.0f, 150.0f, 0.0f } },
     { "Listen Check", { 50.0f, 150.0f, 18.0f, 80.0f, 1.0f } },
+    { "Kids Voices", { 55.0f, 240.0f, 16.0f, 70.0f, 0.0f } },
 };
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 5;

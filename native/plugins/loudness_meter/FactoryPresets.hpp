@@ -19,6 +19,10 @@ static const FactoryPreset kPresets[] = {
     { "Quick Mix Check", { 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f } },
     { "Long Form Monitor", { 1.0f, 1.0f, 3.0f, 0.0f, 0.0f, 0.0f } },
     { "Mono Fold Check", { 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f } },
+    { "Apple Music -16", { 1.0f, 0.0f, 2.0f, 1.0f, 0.0f, 0.0f } },
+    { "Club Master Check", { 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f } },
+    { "Film Trailer R128", { 2.0f, 1.0f, 1.0f, 1.0f, 0.0f, 0.0f } },
+    { "Audiobook Check", { 2.0f, 0.0f, 3.0f, 0.0f, 0.0f, 0.0f } },
 };
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 6;

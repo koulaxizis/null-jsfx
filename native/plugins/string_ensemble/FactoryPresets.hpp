@@ -15,10 +15,19 @@ static const FactoryPreset kPresets[] = {
     { "Default", { 80.0f, 100.0f, 50.0f, 250.0f, 900.0f, 55.0f, 70.0f, 0.0f, -6.0f } },
     { "Classic Strings", { 80.0f, 100.0f, 50.0f, 250.0f, 900.0f, 55.0f, 70.0f, 0.0f, -6.0f } },
     { "Wide Pad", { 80.0f, 100.0f, 50.0f, 600.0f, 1800.0f, 55.0f, 85.0f, 1.0f, -6.0f } },
-    { "Slow Swell", { 80.0f, 100.0f, 50.0f, 2000.0f, 2500.0f, 45.0f, 70.0f, 0.0f, -6.0f } },
+    { "Slow Swell", { 80.0f, 100.0f, 50.0f, 2000.0f, 2500.0f, 45.0f, 70.0f, 0.0f, 3.5f } },
     { "Cello Bed", { 0.0f, 60.0f, 100.0f, 250.0f, 900.0f, 35.0f, 70.0f, 0.0f, -6.0f } },
     { "Bright Section", { 100.0f, 80.0f, 20.0f, 80.0f, 900.0f, 80.0f, 70.0f, 0.0f, -6.0f } },
     { "Dark Wash", { 80.0f, 100.0f, 50.0f, 250.0f, 3000.0f, 25.0f, 100.0f, 2.0f, -6.0f } },
+    { "Violins Only", { 100.0f, 0.0f, 0.0f, 250.0f, 900.0f, 65.0f, 70.0f, 0.0f, -6.0f } },
+    { "Viola Section", { 0.0f, 100.0f, 20.0f, 250.0f, 900.0f, 55.0f, 70.0f, 0.0f, -6.0f } },
+    { "Full Orchestra Pad", { 90.0f, 100.0f, 90.0f, 400.0f, 1500.0f, 55.0f, 70.0f, 1.0f, -6.0f } },
+    { "Staccato Strings", { 80.0f, 100.0f, 50.0f, 10.0f, 150.0f, 60.0f, 70.0f, 0.0f, -6.0f } },
+    { "Disco Strings", { 100.0f, 70.0f, 30.0f, 40.0f, 600.0f, 75.0f, 80.0f, 0.0f, -6.0f } },
+    { "Dry Section", { 80.0f, 100.0f, 50.0f, 250.0f, 900.0f, 50.0f, 0.0f, 0.0f, -6.0f } },
+    { "Deep Choir Like", { 30.0f, 100.0f, 70.0f, 800.0f, 900.0f, 30.0f, 70.0f, 2.0f, 0.0f } },
+    { "Synthwave Pad", { 80.0f, 100.0f, 50.0f, 300.0f, 2000.0f, 70.0f, 100.0f, 1.0f, -6.0f } },
+    { "Low Cello Swell", { 0.0f, 30.0f, 100.0f, 800.0f, 2000.0f, 30.0f, 70.0f, 0.0f, 6.0f } },
 };
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 9;

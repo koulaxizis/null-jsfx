@@ -9,7 +9,7 @@
   ["Disco Octaves", {"Oscillator": "Saw", "Cutoff": 1000, "Resonance": 25, "Env Amount": 50, "Filter Decay": 120, "Sustain": 60, "Release": 40, "Glide": 0, "Phrase": "Octaves"}],
   ["Trap Glide", {"Oscillator": "808", "Sub Level": 0, "Punch": 60, "Drive": 40, "Cutoff": 4000, "Env Amount": 0, "Decay": 3000, "Sustain": 50, "Release": 200, "Glide": 120, "Phrase": "Trap"}],
   ["Rock Gallop", {"Oscillator": "Saw", "Sub Level": 20, "Punch": 40, "Drive": 50, "Cutoff": 1500, "Env Amount": 30, "Sustain": 80, "Release": 40, "Glide": 0, "Phrase": "Gallop"}],
-  ["Offbeat House", {"Oscillator": "Saw", "Sub Level": 30, "Cutoff": 800, "Resonance": 35, "Env Amount": 60, "Filter Decay": 200, "Decay": 250, "Sustain": 30, "Release": 60, "Phrase": "Offbeat"}],
+  ["Offbeat House", {"Oscillator": "Saw", "Sub Level": 30, "Cutoff": 800, "Resonance": 35, "Env Amount": 60, "Filter Decay": 200, "Decay": 250, "Sustain": 30, "Release": 60, "Phrase": "Offbeat", "Volume (dB)": 5}],
   ["Tresillo Pop", {"Oscillator": "Sub", "Punch": 40, "Decay": 600, "Sustain": 50, "Release": 100, "Phrase": "Tresillo"}],
   ["Eighths Driver", {"Oscillator": "Saw", "Drive": 30, "Cutoff": 1100, "Env Amount": 30, "Sustain": 80, "Release": 50, "Phrase": "Eighths"}],
   ["Soft Square", {"Oscillator": "Square", "Sub Level": 30, "Punch": 0, "Drive": 0, "Cutoff": 500, "Env Amount": 10, "Attack": 30, "Sustain": 100, "Release": 300}],

@@ -2,5 +2,8 @@
   ["Subtle Breathing", {"Amount": 25}],
   ["Reverb Return Groove", {"Amount": 45}],
   ["Pad Pump", {"Amount": 60}],
-  ["Heavy EDM Pump", {"Amount": 90}]
+  ["Heavy EDM Pump", {"Amount": 90}],
+  ["Gentle Groove", {"Amount": 10}],
+  ["House Pump", {"Amount": 75}],
+  ["Full Duck", {"Amount": 100}]
 ]

@@ -20,6 +20,9 @@ static const FactoryPreset kPresets[] = {
     { "Metal Beater Click", { 8.0f, -3.0f, 1.0f, 6.0f, 200.0f, -3.0f } },
     { "Soft Vintage Kick", { -6.0f, 2.0f, 0.0f, -3.0f, 350.0f, 1.0f } },
     { "Live Kick Bleed Cut", { 3.0f, 0.0f, 0.0f, 1.0f, 80.0f, 0.0f } },
+    { "Jazz Kick Round", { -3.0f, 3.0f, 1.0f, -4.0f, 300.0f, 0.0f } },
+    { "Hip Hop Knock", { 5.0f, 1.0f, 4.0f, 2.0f, 220.0f, -3.0f } },
+    { "Short Gated Kick", { 4.0f, 0.0f, 0.0f, 2.0f, 60.0f, 0.0f } },
 };
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 6;

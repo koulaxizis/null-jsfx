@@ -6,5 +6,7 @@
   ["Listen Left Only", {"Solo L": "On"}],
   ["Listen Right Only", {"Solo R": "On"}],
   ["Low Rumble Trim", {"DC Block Freq": 40}],
-  ["Safety Clip", {"Hard Limit": "On"}]
+  ["Safety Clip", {"Hard Limit": "On"}],
+  ["Trim Down 6 dB", {"Output Gain": -6}],
+  ["Quiet Source Boost", {"Input Gain": 5}]
 ]

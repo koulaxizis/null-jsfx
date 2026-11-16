@@ -2,5 +2,8 @@
   ["Gentle Lift", {"Amount": 15}],
   ["Stem Push", {"Amount": 35}],
   ["Demo Loudness", {"Amount": 50}],
-  ["Quiet Recording", {"Amount": 75}]
+  ["Quiet Recording", {"Amount": 75}],
+  ["Mastering Touch", {"Amount": 10}],
+  ["Podcast Voice", {"Amount": 60}],
+  ["Loud Demo Master", {"Amount": 90}]
 ]

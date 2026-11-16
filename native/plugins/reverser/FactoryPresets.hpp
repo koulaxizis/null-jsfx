@@ -20,6 +20,9 @@ static const FactoryPreset kPresets[] = {
     { "Telephone Reverse", { 2.0f, 2.0f, 1500.0f, 50.0f } },
     { "Long Ambient Reverse", { 10.0f, 1.0f, 4000.0f, 35.0f } },
     { "Reverse Only", { 2.0f, 0.0f, 2000.0f, 100.0f } },
+    { "Vocal Reverse Throw", { 1.5f, 3.0f, 400.0f, 35.0f } },
+    { "Guitar Backwards Solo", { 2.0f, 1.0f, 8000.0f, 70.0f } },
+    { "Subtle Reverse Glow", { 3.0f, 2.0f, 2500.0f, 15.0f } },
 };
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 4;

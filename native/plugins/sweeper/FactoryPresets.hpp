@@ -18,6 +18,9 @@ static const FactoryPreset kPresets[] = {
     { "Warm Roll Off", { 40.0f } },
     { "Intro Thin Out", { 70.0f } },
     { "High Pass Build", { 85.0f } },
+    { "Gentle Low Pass", { 10.0f } },
+    { "Breakdown Mid", { 55.0f } },
+    { "Light High Pass", { 62.0f } },
 };
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 1;

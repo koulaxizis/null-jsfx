@@ -20,6 +20,9 @@ static const FactoryPreset kPresets[] = {
     { "7.1 EBU R128", { 1.0f, 0.0f, 1.0f, 0.0f, 0.0f } },
     { "Long Program 5 min", { 2.0f, 0.0f, 3.0f, 0.0f, 0.0f } },
     { "Reset on Play", { 2.0f, 0.0f, 1.0f, 1.0f, 0.0f } },
+    { "7.1.4 Atmos Music", { 2.0f, 2.0f, 2.0f, 1.0f, 0.0f } },
+    { "5.1 ATSC Broadcast", { 0.0f, 1.0f, 3.0f, 0.0f, 0.0f } },
+    { "5.1 Streaming", { 0.0f, 3.0f, 1.0f, 0.0f, 0.0f } },
 };
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 5;

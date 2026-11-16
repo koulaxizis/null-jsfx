@@ -12,5 +12,6 @@
   ["Church Chimes", {"Model": "Tubular Bells", "Mallet": 85, "Decay": 160, "Width": 30}],
   ["Timpani", {"Model": "Timpani", "Mallet": 40, "Strike": 70, "Resonator": 55}],
   ["Timpani Roll Hits", {"Model": "Timpani", "Mallet": 25, "Strike": 80, "Decay": 70}],
-  ["Hard Timpani", {"Model": "Timpani", "Mallet": 85, "Strike": 75, "Velocity": 80}]
+  ["Hard Timpani", {"Model": "Timpani", "Mallet": 85, "Strike": 75, "Velocity": 80}],
+  ["Kalimba Like", {"Model": "Marimba", "Mallet": 60, "Strike": 30, "Resonator": 30, "Decay": 70, "Width": 40}]
 ]

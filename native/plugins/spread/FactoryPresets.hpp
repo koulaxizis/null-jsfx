@@ -18,6 +18,9 @@ static const FactoryPreset kPresets[] = {
     { "Guitar Widen", { 55.0f } },
     { "Wide Pad", { 75.0f } },
     { "Mono Synth Spread", { 90.0f } },
+    { "Subtle Width", { 10.0f } },
+    { "Keys Open", { 45.0f } },
+    { "Maximum Spread", { 100.0f } },
 };
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 1;

@@ -6,5 +6,7 @@
   ["Concert Hall", {"Type": 2, "Size (%)": 60, "Decay (%)": 55, "Damping (%)": 30, "Pre-Delay (ms)": 20, "Mix (%)": 30}],
   ["Dark Hall", {"Type": 2, "Size (%)": 70, "Decay (%)": 70, "Damping (%)": 70, "Pre-Delay (ms)": 30, "Mix (%)": 30}],
   ["Galaxy Pad", {"Type": 3, "Size (%)": 80, "Decay (%)": 70, "Damping (%)": 40, "Detune (%)": 70, "Pre-Delay (ms)": 40, "Mix (%)": 45}],
-  ["Infinite Space", {"Type": 3, "Size (%)": 100, "Decay (%)": 100, "Damping (%)": 30, "Detune (%)": 60, "Mix (%)": 50}]
+  ["Infinite Space", {"Type": 3, "Size (%)": 100, "Decay (%)": 100, "Damping (%)": 30, "Detune (%)": 60, "Mix (%)": 50}],
+  ["Vocal Plate Room", {"Type": 1, "Size (%)": 45, "Decay (%)": 45, "Damping (%)": 50, "Pre-Delay (ms)": 40, "Mix (%)": 20}],
+  ["Master Glue Room", {"Type": 0, "Size (%)": 30, "Decay (%)": 25, "Damping (%)": 50, "Detune (%)": 10, "Mix (%)": 10}]
 ]

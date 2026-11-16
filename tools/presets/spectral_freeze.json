@@ -3,5 +3,10 @@
   ["Tonal Snapshot", {"Fade": 50, "Smear": 0}],
   ["Quick Transition Hold", {"Fade": 150, "Smear": 40}],
   ["Ambient Layer", {"Fade": 1500, "Smear": 70, "Level": -6, "Mix": 50}],
-  ["Slow Swell Pad", {"Fade": 3000, "Smear": 60, "Level": -3}]
+  ["Slow Swell Pad", {"Fade": 3000, "Smear": 60, "Level": -3}],
+  ["Frozen Wash Low", {"Fade": 2000, "Smear": 80, "Level": -9, "Mix": 35}],
+  ["Glass Hold", {"Fade": 100, "Smear": 15}],
+  ["Half Frozen Blend", {"Fade": 600, "Smear": 50, "Mix": 50}],
+  ["Soft Bed", {"Fade": 1200, "Smear": 100, "Level": -12, "Mix": 40}],
+  ["Instant Stop Hold", {"Fade": 10, "Smear": 0}]
 ]

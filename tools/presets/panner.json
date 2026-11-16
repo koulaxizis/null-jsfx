@@ -6,5 +6,7 @@
   ["Haas Guitar Left", {"Pan": -70, "Mode": "Haas", "Haas Delay": 15}],
   ["Haas Guitar Right", {"Pan": 70, "Mode": "Haas", "Haas Delay": 15}],
   ["Narrow Stereo Keys", {"Pan": -25, "Mode": "Natural", "Width": 60}],
-  ["Mono Fold Center", {"Pan": 0, "Mode": "Natural", "Width": 0}]
+  ["Mono Fold Center", {"Pan": 0, "Mode": "Natural", "Width": 0}],
+  ["Haas Wide Center", {"Pan": 0, "Mode": "Haas", "Haas Delay": 8}],
+  ["Hi-Hat Right", {"Pan": 35, "Mode": "Natural", "Width": 70}]
 ]

@@ -14,14 +14,15 @@ struct FactoryPreset {
 static const FactoryPreset kPresets[] = {
     { "Default", { 0.0f, 100.0f, 0.0f, 0.0f } },
     { "Phone Check", { 0.0f, 100.0f, 0.0f, 0.0f } },
-    { "Laptop Check", { 1.0f, 100.0f, 0.0f, 0.0f } },
-    { "Earbuds Check", { 2.0f, 100.0f, 0.0f, 0.0f } },
-    { "Car Check", { 7.0f, 100.0f, 0.0f, 0.0f } },
-    { "Old Radio", { 4.0f, 100.0f, 25.0f, 0.0f } },
-    { "Phone Call Voice", { 5.0f, 100.0f, 15.0f, 3.0f } },
+    { "Laptop Check", { 1.0f, 100.0f, 0.0f, -17.2f } },
+    { "Earbuds Check", { 2.0f, 100.0f, 0.0f, -19.6f } },
+    { "Car Check", { 7.0f, 100.0f, 0.0f, -24.0f } },
+    { "Old Radio", { 4.0f, 100.0f, 25.0f, -14.6f } },
+    { "Phone Call Voice", { 5.0f, 100.0f, 15.0f, -9.1f } },
     { "Megaphone Shout", { 6.0f, 100.0f, 40.0f, 2.0f } },
-    { "Half Radio Blend", { 4.0f, 50.0f, 0.0f, 0.0f } },
-    { "TV In The Next Room", { 3.0f, 100.0f, 0.0f, -6.0f } },
+    { "Half Radio Blend", { 4.0f, 50.0f, 0.0f, -17.3f } },
+    { "TV In The Next Room", { 3.0f, 100.0f, 0.0f, -19.5f } },
+    { "Laptop Mix Blend", { 1.0f, 40.0f, 0.0f, -16.0f } },
 };
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 4;

@@ -4,7 +4,9 @@
   ["Behind", {"Azimuth (deg)": 180}],
   ["Overhead", {"Elevation (deg)": 75}],
   ["Close Whisper", {"Azimuth (deg)": 60, "Distance (m)": 0.3, "Room (%)": 5, "Output (dB)": -9}],
-  ["Far Away", {"Distance (m)": 12, "Room (%)": 60, "Output (dB)": 6}],
+  ["Far Away", {"Distance (m)": 12, "Room (%)": 60, "Output (dB)": 12}],
   ["Wide Stereo", {"Input": "Stereo", "Width (deg)": 45}],
-  ["Orbit Start", {"Azimuth (deg)": -90, "Distance (m)": 2, "Room (%)": 30}]
+  ["Orbit Start", {"Azimuth (deg)": -90, "Distance (m)": 2, "Room (%)": 30}],
+  ["Rear Left", {"Azimuth (deg)": -135, "Room (%)": 25}],
+  ["Front Center Close", {"Distance (m)": 0.6, "Room (%)": 10}]
 ]

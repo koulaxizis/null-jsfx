@@ -1,7 +1,12 @@
 [
   ["Talking Synth Ah", {"Vowel": "A", "Q": 8, "Gain": 2}],
-  ["Bright Eh Guitar", {"Vowel": "E", "Q": 9, "Gain": 2}],
-  ["Nasal Ee Lead", {"Vowel": "I", "Q": 14, "Gain": 4}],
+  ["Bright Eh Guitar", {"Vowel": "E", "Q": 9, "Gain": -7.7}],
+  ["Nasal Ee Lead", {"Vowel": "I", "Q": 14, "Gain": -12}],
   ["Vocal Drum Oh", {"Vowel": "O", "Q": 12, "Gain": 3}],
-  ["Hollow Oo Pad", {"Vowel": "U", "Q": 6, "Gain": 1}]
+  ["Hollow Oo Pad", {"Vowel": "U", "Q": 6, "Gain": -6.4}],
+  ["Soft Ah Pad", {"Vowel": "A", "Q": 6, "Gain": 1}],
+  ["Robot Ee", {"Vowel": "I", "Q": 18, "Gain": -12}],
+  ["Warm Oh Bass", {"Vowel": "O", "Q": 7, "Gain": -3}],
+  ["Whisper Eh", {"Vowel": "E", "Q": 5, "Gain": -8}],
+  ["Deep Oo Choir", {"Vowel": "U", "Q": 12, "Gain": -4}]
 ]

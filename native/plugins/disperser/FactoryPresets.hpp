@@ -19,6 +19,10 @@ static const FactoryPreset kPresets[] = {
     { "Synth Zap", { 3000.0f, 48.0f, 80.0f, 100.0f, 1.0f } },
     { "Soft Transients", { 2000.0f, 6.0f, 30.0f, 100.0f, 0.0f } },
     { "Stereo Width Smear", { 800.0f, 24.0f, 30.0f, 100.0f, 1.0f } },
+    { "Gentle Bass Focus", { 60.0f, 4.0f, 50.0f, 100.0f, 0.0f } },
+    { "Zap Hat", { 8000.0f, 40.0f, 85.0f, 60.0f, 0.0f } },
+    { "Chirp Drop", { 300.0f, 64.0f, 90.0f, 100.0f, 0.0f } },
+    { "Parallel Laser", { 1200.0f, 40.0f, 70.0f, 40.0f, 0.0f } },
 };
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 5;

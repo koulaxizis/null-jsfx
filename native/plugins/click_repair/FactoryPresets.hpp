@@ -21,6 +21,8 @@ static const FactoryPreset kPresets[] = {
     { "Archival Restore", { 25.0f, 15.0f, 0.0f } },
     { "Worn Vinyl Crackle", { 40.0f, 3.0f, 1.0f } },
     { "Light Crackle", { 60.0f, 2.0f, 1.0f } },
+    { "Gentle Vinyl Polish", { 30.0f, 4.0f, 1.0f } },
+    { "Tape Splice Pops", { 55.0f, 12.0f, 0.0f } },
 };
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 3;

@@ -1,0 +1,43 @@
+# Allowed level jumps from the Default preset, for tests/preset_test.cpp (Bible Part V).
+# Format: <plugin> <dB> [preset name]. Without a preset name the line covers the whole plugin.
+# The default allowance is 6 dB; a new preset should meet it rather than get a line here.
+
+# Generators: the level is the plugin's job
+noise_generator 40
+test_signal 20
+
+# Listening and solo presets (the delta, the removed part, one band): quiet by design
+de_clip 200 Hear What Returns
+de_clip 200 Delta at Minus 1
+de_plosive 20 Listen Check
+deesser 200 Sibilance Listen
+resonance_suppressor 32 Delta Audition
+room_tone 200 Listen to the Fill
+transient_split 21 Only Body
+
+# Presets where the drop is the sound itself (a band-pass telephone, a high-pass build, a ducked
+# bed) and the plugin has no output control, or not enough of one, to make it up. Every other
+# 3.3.1 preset was level-matched to Default in wave 1 (B21) through its Output, Volume or Gain slider.
+dj_filter 21 Telephone Highs
+envelope_follower 20 Funk Guitar Wah
+envelope_follower 8 Reverse Guitar Wah
+filter 7 Telephone Voice
+filter 12 Envelope Wah
+formant_shift 8 Giant Voice
+formant_shift 11 Cartoon Voice
+gate 11 Voice Over Ducker
+harmonizer 8 Harmony Only Print
+noise_reduction 8 Dialogue Room Tone
+noise_reduction 8 Hum Bed Reducer
+parametric_eq 10 Telephone Voice
+phase_align 10 Kick In/Out Check
+phase_align 8 Snare Bottom Mic
+riser 9 Tension Peak
+sidechain_ducker 13 Podcast Music Bed
+sweeper 20 High Pass Build
+vinyl_age 8 78 Shellac
+
+# The test phrase does not fit these presets (a reversed tail, slices and a kit mapped to other notes)
+drum_machine 16 MIDI Kit
+sampler 35 Reverse Swell
+sampler 51 Beat Slicer (16 Slices)

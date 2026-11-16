@@ -19,6 +19,10 @@ static const FactoryPreset kPresets[] = {
     { "Voice Over Duck", { -36.0f, -12.0f, 20.0f, 300.0f, 800.0f, 0.0f, 0.0f } },
     { "Podcast Music Bed", { -40.0f, -18.0f, 50.0f, 500.0f, 1500.0f, 0.0f, 0.0f } },
     { "Kick Click Keyed", { -30.0f, -8.0f, 0.5f, 10.0f, 100.0f, 0.0f, 150.0f } },
+    { "Snare Ducks Reverb", { -30.0f, -8.0f, 1.0f, 40.0f, 180.0f, 0.0f, 0.0f } },
+    { "Gentle Bass Make Room", { -24.0f, -5.0f, 2.0f, 10.0f, 90.0f, 0.0f, 0.0f } },
+    { "Self Duck Delay", { -30.0f, -12.0f, 5.0f, 80.0f, 400.0f, 1.0f, 0.0f } },
+    { "Trance Gate Pump", { -20.0f, -30.0f, 0.5f, 0.0f, 150.0f, 0.0f, 0.0f } },
 };
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 7;

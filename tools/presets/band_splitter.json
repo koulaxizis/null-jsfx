@@ -4,5 +4,9 @@
   ["Drum Bus Three Band", {"Bands": 3, "Crossover 1": 100, "Crossover 2": 4000}],
   ["Vocal Sibilance Band", {"Bands": 3, "Crossover 1": 300, "Crossover 2": 5000}],
   ["Four Band Mastering", {"Bands": 4, "Crossover 1": 100, "Crossover 2": 1000, "Crossover 3": 6000}],
-  ["Merge Bands", {"Mode": "Merge"}]
+  ["Merge Bands", {"Mode": "Merge"}],
+  ["Sub and Rest", {"Bands": 2, "Crossover 1": 80}],
+  ["Bass Guitar Split", {"Bands": 3, "Crossover 1": 250, "Crossover 2": 1500}],
+  ["Low Mids Split", {"Bands": 2, "Crossover 1": 500}],
+  ["Listen Low Band", {"Bands": 3, "Crossover 1": 150, "Crossover 2": 2000, "Listen": "Band 1"}]
 ]

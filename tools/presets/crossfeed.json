@@ -7,5 +7,6 @@
   ["Wide Speakers", {"Mode": "Speakers", "Angle": 45, "Room": 25}],
   ["Narrow Desk", {"Mode": "Speakers", "Angle": 20, "Room": 10}],
   ["Control Room", {"Mode": "Speakers", "Angle": 30, "Room": 45}],
-  ["Dry Speakers", {"Mode": "Speakers", "Angle": 30, "Room": 0}]
+  ["Dry Speakers", {"Mode": "Speakers", "Angle": 30, "Room": 0}],
+  ["Gentle Late Night", {"Cutoff": 650, "Feed": 12, "Mix": 70}]
 ]

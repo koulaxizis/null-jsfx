@@ -6,5 +6,7 @@
   ["Filter Steps", {"Step 3": "Filter", "Step 4": "Filter", "Step 7": "Filter", "Step 8": "Filter", "Step 11": "Filter", "Step 12": "Filter", "Step 14": "Filter", "Step 15": "Filter", "Step 16": "Filter", "Filter": 600, "Swing": 30}],
   ["Reverse Swells", {"Step 4": "Reverse", "Step 8": "Reverse", "Step 12": "Reverse", "Step 15": "Reverse", "Step 16": "Reverse", "Step Length": "1/8"}],
   ["Crush Fills", {"Step 4": "Crush", "Step 11": "Crush", "Step 13": "Crush", "Step 14": "Crush", "Step 15": "Crush", "Step 16": "Crush", "Crush": 75}],
-  ["Live MIDI Pads", {"MIDI Trigger": "On", "Repeat Size": "1/32", "Filter": 1000, "Step Length": "1/8"}]
+  ["Live MIDI Pads", {"MIDI Trigger": "On", "Repeat Size": "1/32", "Filter": 1000, "Step Length": "1/8"}],
+  ["Gate Chop 16ths", {"Step 2": "Gate", "Step 4": "Gate", "Step 6": "Gate", "Step 8": "Gate", "Step 10": "Gate", "Step 12": "Gate", "Step 14": "Gate", "Step 16": "Gate", "Step Length": "1/16"}],
+  ["Pitch Up Riser", {"Step 13": "Pitch Up", "Step 14": "Pitch Up", "Step 15": "Pitch Up", "Step 16": "Pitch Up", "Pitch": 7}]
 ]

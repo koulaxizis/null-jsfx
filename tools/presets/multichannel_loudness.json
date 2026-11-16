@@ -5,5 +5,8 @@
   ["5.1 EBU R128", {"Bed": "5.1"}],
   ["7.1 EBU R128", {"Bed": "7.1"}],
   ["Long Program 5 min", {"History": "5 min"}],
-  ["Reset on Play", {"Auto Reset": "On Play"}]
+  ["Reset on Play", {"Auto Reset": "On Play"}],
+  ["7.1.4 Atmos Music", {"Bed": "7.1.4", "Target": "-18 LUFS", "History": "1 min", "Auto Reset": "On Play"}],
+  ["5.1 ATSC Broadcast", {"Bed": "5.1", "Target": "-24 LUFS", "History": "5 min"}],
+  ["5.1 Streaming", {"Bed": "5.1", "Target": "-14 LUFS", "History": "30 s"}]
 ]

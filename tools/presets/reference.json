@@ -3,5 +3,10 @@
   ["Reference Raw", {"Listen": "Reference", "Level Match": "Off"}],
   ["Mono Check", {"Monitor": "Mono"}],
   ["Side Check", {"Monitor": "Side"}],
-  ["Reference Mono Check", {"Listen": "Reference", "Monitor": "Mono"}]
+  ["Reference Mono Check", {"Listen": "Reference", "Monitor": "Mono"}],
+  ["Reference Side Check", {"Listen": "Reference", "Monitor": "Side"}],
+  ["Track Trim Down", {"Trim": -3}],
+  ["Matched Mono Track", {"Monitor": "Mono", "Level Match": "On"}],
+  ["Reference Unmatched Mono", {"Listen": "Reference", "Level Match": "Off", "Monitor": "Mono"}],
+  ["Track Trim Up", {"Trim": 3}]
 ]

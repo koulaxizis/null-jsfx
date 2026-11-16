@@ -5,5 +5,8 @@
   ["Music Hiss Subtle", {"Auto": "Off", "Reduction": 6, "Threshold": 2, "Smoothing": 70, "Attack": 15, "Release": 300}],
   ["Fast Speech Profile", {"Auto": "Off", "Reduction": 18, "Threshold": 4, "Smoothing": 40, "Attack": 2, "Release": 80}],
   ["Heavy Noise Cleanup", {"Auto": "Off", "Reduction": 30, "Threshold": 6, "Smoothing": 70, "Attack": 5, "Release": 250}],
-  ["Listen Removed Noise", {"Auto": "On", "Listen": "Removed noise"}]
+  ["Listen Removed Noise", {"Auto": "On", "Listen": "Removed noise"}],
+  ["Field Recording Wind", {"Auto": "On", "Reduction": 8, "Threshold": 4, "Smoothing": 70, "Attack": 20, "Release": 300}],
+  ["Guitar Amp Hiss", {"Auto": "On", "Reduction": 10, "Threshold": 2, "Smoothing": 60, "Attack": 10, "Release": 250}],
+  ["Parallel Denoise", {"Auto": "On", "Reduction": 24, "Threshold": 4, "Smoothing": 50, "Mix": 60}]
 ]

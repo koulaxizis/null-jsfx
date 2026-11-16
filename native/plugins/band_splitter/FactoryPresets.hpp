@@ -19,6 +19,10 @@ static const FactoryPreset kPresets[] = {
     { "Vocal Sibilance Band", { 0.0f, 3.0f, 300.0f, 5000.0f, 7000.0f, 0.0f } },
     { "Four Band Mastering", { 0.0f, 4.0f, 100.0f, 1000.0f, 6000.0f, 0.0f } },
     { "Merge Bands", { 1.0f, 3.0f, 150.0f, 2000.0f, 7000.0f, 0.0f } },
+    { "Sub and Rest", { 0.0f, 2.0f, 80.0f, 2000.0f, 7000.0f, 0.0f } },
+    { "Bass Guitar Split", { 0.0f, 3.0f, 250.0f, 1500.0f, 7000.0f, 0.0f } },
+    { "Low Mids Split", { 0.0f, 2.0f, 500.0f, 2000.0f, 7000.0f, 0.0f } },
+    { "Listen Low Band", { 0.0f, 3.0f, 150.0f, 2000.0f, 7000.0f, 1.0f } },
 };
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 6;

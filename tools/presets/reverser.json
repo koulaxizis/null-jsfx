@@ -5,5 +5,8 @@
   ["Airy Reverse Layer", {"Buffer Length": 3, "Filter": "HP", "Filter Freq": 3000, "Mix": 30}],
   ["Telephone Reverse", {"Buffer Length": 2, "Filter": "BP", "Filter Freq": 1500, "Mix": 50}],
   ["Long Ambient Reverse", {"Buffer Length": 10, "Filter": "LP", "Filter Freq": 4000, "Mix": 35}],
-  ["Reverse Only", {"Buffer Length": 2, "Filter": "Off", "Mix": 100}]
+  ["Reverse Only", {"Buffer Length": 2, "Filter": "Off", "Mix": 100}],
+  ["Vocal Reverse Throw", {"Buffer Length": 1.5, "Filter": "HP", "Filter Freq": 400, "Mix": 35}],
+  ["Guitar Backwards Solo", {"Buffer Length": 2, "Filter": "LP", "Filter Freq": 8000, "Mix": 70}],
+  ["Subtle Reverse Glow", {"Buffer Length": 3, "Filter": "BP", "Filter Freq": 2500, "Mix": 15}]
 ]

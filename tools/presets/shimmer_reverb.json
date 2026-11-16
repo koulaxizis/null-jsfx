@@ -6,5 +6,7 @@
   ["Fifth Halo", {"Size": 70, "Decay": 6, "Shimmer": 40, "Pitch": "+7 (Fifth)", "Damping": 5500, "Mix": 30}],
   ["Organ Cloud", {"Size": 90, "Decay": 12, "Shimmer": 55, "Pitch": "+19 (Octave + Fifth)", "Damping": 6500, "Mix": 40}],
   ["Crystal Two Octaves", {"Size": 65, "Decay": 5, "Shimmer": 30, "Pitch": "+24 (Two Octaves)", "Damping": 9000, "Mix": 25}],
-  ["Dark Octave Down", {"Size": 85, "Decay": 8, "Shimmer": 45, "Pitch": "-12 (Octave Down)", "Damping": 3000, "Mix": 35}]
+  ["Dark Octave Down", {"Size": 85, "Decay": 8, "Shimmer": 45, "Pitch": "-12 (Octave Down)", "Damping": 3000, "Mix": 35}],
+  ["Subtle Vocal Air", {"Size": 50, "Decay": 3, "Shimmer": 15, "Pitch": "+12 (Octave)", "Damping": 8000, "Mix": 15}],
+  ["Endless Drone", {"Size": 100, "Decay": 20, "Shimmer": 70, "Pitch": "+12 (Octave)", "Damping": 5000, "Mix": 50}]
 ]

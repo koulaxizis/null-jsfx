@@ -3,5 +3,8 @@
   ["Telephone Highs", {"Filter": 60}],
   ["Muffled Low Pass", {"Filter": -50}],
   ["Next Room", {"Filter": -70}],
-  ["Sub Only", {"Filter": -90}]
+  ["Sub Only", {"Filter": -90}],
+  ["Gentle Low Cut", {"Filter": 15}],
+  ["Soft Mid Lift", {"Filter": 30}],
+  ["Warm Low Pass", {"Filter": -25}]
 ]

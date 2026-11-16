@@ -3,5 +3,8 @@
   ["Drum Room", {"Amount": 30}],
   ["Vocal Depth", {"Amount": 40}],
   ["Wide Space", {"Amount": 60}],
-  ["Big Long Tail", {"Amount": 85}]
+  ["Big Long Tail", {"Amount": 85}],
+  ["Vocal Plate", {"Amount": 25}],
+  ["Ambient Hall", {"Amount": 70}],
+  ["Maximum Wash", {"Amount": 100}]
 ]

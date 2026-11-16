@@ -6,5 +6,7 @@
   ["Master Sheen", {"Low Freq": 1, "Low Boost": 2, "Low Atten": 1, "High Freq": 6, "High Boost": 2, "Bandwidth": 8, "Tube (%)": 15}],
   ["Dark Tape", {"Low Freq": 2, "Low Boost": 1.5, "Atten Freq": 0, "High Atten": 4, "Tube (%)": 40}],
   ["Snare Crack", {"Low Freq": 3, "Low Atten": 3, "High Freq": 1, "High Boost": 4, "Bandwidth": 2.5}],
-  ["Warm Tube", {"Tube (%)": 60, "Output (dB)": -1}]
+  ["Warm Tube", {"Tube (%)": 60, "Output (dB)": -1}],
+  ["Drum Bus Thump", {"Low Freq": 2, "Low Boost": 3, "Low Atten": 1, "High Freq": 3, "High Boost": 2, "Bandwidth": 5, "Tube (%)": 25}],
+  ["Guitar Bite", {"Low Freq": 3, "Low Atten": 2.5, "High Freq": 0, "High Boost": 3, "Bandwidth": 4}]
 ]

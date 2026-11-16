@@ -17,6 +17,9 @@ static const FactoryPreset kPresets[] = {
     { "Build Middle", { 50.0f } },
     { "Tension Peak", { 75.0f } },
     { "Pre-Drop Max", { 100.0f } },
+    { "First Bars", { 10.0f } },
+    { "Pre-Chorus Lift", { 40.0f } },
+    { "Big Sweep Up", { 90.0f } },
 };
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 1;

@@ -20,6 +20,9 @@ static const FactoryPreset kPresets[] = {
     { "Noisy Location", { 0.0f, -40.0f, 0.0f, 30.0f, 60.0f, 0.0f, 0.0f } },
     { "ADR Bed", { 0.0f, -50.0f, -6.0f, 100.0f, 80.0f, 1.0f, 0.0f } },
     { "Listen to the Fill", { 0.0f, -50.0f, 0.0f, 40.0f, 80.0f, 1.0f, 1.0f } },
+    { "Interview Edits", { 0.0f, -52.0f, 0.0f, 50.0f, 100.0f, 0.0f, 0.0f } },
+    { "Music Fade Gaps", { 0.0f, -60.0f, 0.0f, 200.0f, 300.0f, 0.0f, 0.0f } },
+    { "Loud Bed Under Dialog", { 0.0f, -50.0f, -3.0f, 80.0f, 80.0f, 1.0f, 0.0f } },
 };
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 7;

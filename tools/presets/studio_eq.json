@@ -8,6 +8,6 @@
   ["Mastering Linear", {"Band 1 Type": "Low Cut", "Band 1 Freq": 20, "Band 1 Slope": "48 dB/oct", "Band 2 Type": "Low Shelf", "Band 2 Freq": 90, "Band 2 Gain": 0.8, "Band 4 Freq": 400, "Band 4 Gain": -0.7, "Band 4 Q": 0.7, "Band 7 Type": "High Shelf", "Band 7 Freq": 14000, "Band 7 Gain": 1, "Phase": "Linear Phase"}],
   ["Mono Low End", {"Band 1 Type": "Low Cut", "Band 1 Freq": 120, "Band 1 Slope": "24 dB/oct", "Band 1 Channels": "Side", "Band 7 Type": "High Shelf", "Band 7 Freq": 10000, "Band 7 Gain": 2, "Band 7 Channels": "Side"}],
   ["Wide Air", {"Band 7 Type": "High Shelf", "Band 7 Freq": 8000, "Band 7 Gain": 3, "Band 7 Channels": "Side", "Band 4 Freq": 500, "Band 4 Gain": -1.5, "Band 4 Channels": "Side", "Auto Gain": "On"}],
-  ["Telephone Voice", {"Band 1 Type": "Low Cut", "Band 1 Freq": 300, "Band 1 Slope": "48 dB/oct", "Band 4 Freq": 1000, "Band 4 Gain": 3, "Band 4 Q": 0.8, "Band 8 Type": "High Cut", "Band 8 Freq": 3400, "Band 8 Slope": "48 dB/oct"}],
+  ["Telephone Voice", {"Band 1 Type": "Low Cut", "Band 1 Freq": 300, "Band 1 Slope": "48 dB/oct", "Band 4 Freq": 1000, "Band 4 Gain": 3, "Band 4 Q": 0.8, "Band 8 Type": "High Cut", "Band 8 Freq": 3400, "Band 8 Slope": "48 dB/oct", "Output (dB)": 9.4}],
   ["Surgical Notch 60 Hz", {"Band 2 Type": "Notch", "Band 2 Freq": 60, "Band 2 Q": 12, "Band 3 Type": "Notch", "Band 3 Freq": 120, "Band 3 Q": 12, "Band 4 Type": "Notch", "Band 4 Freq": 180, "Band 4 Q": 12}]
 ]

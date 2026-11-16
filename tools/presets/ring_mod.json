@@ -4,5 +4,9 @@
   ["Sci Fi Sweep", {"Rate": 0.5, "Carrier Freq": 600, "Depth": 80, "Mix": 60}],
   ["Drum Clang", {"Rate": 3, "Carrier Freq": 1200, "Depth": 20, "Mix": 40}],
   ["Subtle Shimmer", {"Rate": 0.3, "Carrier Freq": 2000, "Depth": 10, "Mix": 15}],
-  ["Alien Warble", {"Rate": 8, "Carrier Freq": 400, "Depth": 60, "Mix": 70}]
+  ["Alien Warble", {"Rate": 8, "Carrier Freq": 400, "Depth": 60, "Mix": 70}],
+  ["Tremolo Ring", {"Rate": 6, "Carrier Freq": 150, "Depth": 100, "Mix": 50}],
+  ["Dalek Voice", {"Rate": 0.1, "Carrier Freq": 300, "Depth": 0, "Mix": 80}],
+  ["Synth Bell Pad", {"Rate": 0.2, "Carrier Freq": 1500, "Depth": 15, "Mix": 30}],
+  ["Bass Growl", {"Rate": 2, "Carrier Freq": 100, "Depth": 30, "Mix": 25}]
 ]

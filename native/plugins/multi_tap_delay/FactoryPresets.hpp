@@ -22,6 +22,7 @@ static const FactoryPreset kPresets[] = {
     { "Slapback Pair", { 2.0f, 0.0f, 90.0f, 0.0f, 1.0f, 40.0f, 80.0f, 0.0f, 20.0f, 20000.0f, 25.0f } },
     { "Dub Space", { 3.0f, 1.0f, 250.0f, 1.0f, 0.0f, 30.0f, 50.0f, 55.0f, 200.0f, 3500.0f, 35.0f } },
     { "Wide Rhythm", { 8.0f, 0.0f, 250.0f, 1.0f, 2.0f, 22.0f, 100.0f, 0.0f, 20.0f, 20000.0f, 35.0f } },
+    { "Ping Pong Sixteenths", { 6.0f, 0.0f, 250.0f, 1.0f, 2.0f, 30.0f, 100.0f, 0.0f, 20.0f, 8000.0f, 25.0f } },
 };
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 11;

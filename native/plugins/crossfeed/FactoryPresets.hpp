@@ -22,6 +22,7 @@ static const FactoryPreset kPresets[] = {
     { "Narrow Desk", { 1.0f, 700.0f, 4.5f, 20.0f, 10.0f, 100.0f, 0.0f } },
     { "Control Room", { 1.0f, 700.0f, 4.5f, 30.0f, 45.0f, 100.0f, 0.0f } },
     { "Dry Speakers", { 1.0f, 700.0f, 4.5f, 30.0f, 0.0f, 100.0f, 0.0f } },
+    { "Gentle Late Night", { 0.0f, 650.0f, 12.0f, 30.0f, 20.0f, 70.0f, 0.0f } },
 };
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 7;

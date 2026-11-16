@@ -18,9 +18,11 @@ static const FactoryPreset kPresets[] = {
     { "Behind", { 180.0f, 0.0f, 1.0f, 20.0f, 17.5f, 0.0f, 30.0f, 0.0f } },
     { "Overhead", { 0.0f, 75.0f, 1.0f, 20.0f, 17.5f, 0.0f, 30.0f, 0.0f } },
     { "Close Whisper", { 60.0f, 0.0f, 0.3f, 5.0f, 17.5f, 0.0f, 30.0f, -9.0f } },
-    { "Far Away", { 0.0f, 0.0f, 12.0f, 60.0f, 17.5f, 0.0f, 30.0f, 6.0f } },
+    { "Far Away", { 0.0f, 0.0f, 12.0f, 60.0f, 17.5f, 0.0f, 30.0f, 12.0f } },
     { "Wide Stereo", { 0.0f, 0.0f, 1.0f, 20.0f, 17.5f, 1.0f, 45.0f, 0.0f } },
     { "Orbit Start", { -90.0f, 0.0f, 2.0f, 30.0f, 17.5f, 0.0f, 30.0f, 0.0f } },
+    { "Rear Left", { -135.0f, 0.0f, 1.0f, 25.0f, 17.5f, 0.0f, 30.0f, 0.0f } },
+    { "Front Center Close", { 0.0f, 0.0f, 0.6f, 10.0f, 17.5f, 0.0f, 30.0f, 0.0f } },
 };
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 8;

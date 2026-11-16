@@ -20,6 +20,9 @@ static const FactoryPreset kPresets[] = {
     { "Voice Over Music", { 80.0f, -48.0f, 8.0f, 300.0f, 120.0f, 10000.0f, 0.0f, 100.0f, 0.0f, 0.0f } },
     { "Gentle Carve", { 25.0f, -40.0f, 10.0f, 200.0f, 20.0f, 20000.0f, 0.0f, 100.0f, 0.0f, 0.0f } },
     { "Snare Room In Reverb", { 60.0f, -36.0f, 2.0f, 150.0f, 150.0f, 10000.0f, 0.0f, 80.0f, 0.0f, 0.0f } },
+    { "Dialogue Over Score", { 70.0f, -46.0f, 6.0f, 250.0f, 150.0f, 6000.0f, 1.0f, 100.0f, 0.0f, 0.0f } },
+    { "Bass Under Kick Low", { 60.0f, -38.0f, 0.5f, 70.0f, 30.0f, 200.0f, 0.0f, 100.0f, 0.0f, 0.0f } },
+    { "Guitar Under Vocal", { 45.0f, -42.0f, 8.0f, 180.0f, 300.0f, 5000.0f, 0.0f, 100.0f, 0.0f, 0.0f } },
 };
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 10;

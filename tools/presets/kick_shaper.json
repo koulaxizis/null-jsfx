@@ -5,5 +5,8 @@
   ["Deep 808 Tail", {"Body Tone": 1, "Thump": 4, "Click": -2, "Decay": 500, "Output Gain": -3}],
   ["Metal Beater Click", {"Attack Shape": 8, "Body Tone": -3, "Thump": 1, "Click": 6, "Decay": 200, "Output Gain": -3}],
   ["Soft Vintage Kick", {"Attack Shape": -6, "Body Tone": 2, "Click": -3, "Decay": 350, "Output Gain": 1}],
-  ["Live Kick Bleed Cut", {"Attack Shape": 3, "Click": 1, "Decay": 80}]
+  ["Live Kick Bleed Cut", {"Attack Shape": 3, "Click": 1, "Decay": 80}],
+  ["Jazz Kick Round", {"Attack Shape": -3, "Body Tone": 3, "Thump": 1, "Click": -4, "Decay": 300}],
+  ["Hip Hop Knock", {"Attack Shape": 5, "Body Tone": 1, "Thump": 4, "Click": 2, "Decay": 220, "Output Gain": -3}],
+  ["Short Gated Kick", {"Attack Shape": 4, "Click": 2, "Decay": 60}]
 ]

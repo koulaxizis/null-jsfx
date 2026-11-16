@@ -4,5 +4,9 @@
   ["Punchy Drum Bus", {"Character": 2, "Drive (%)": 60}],
   ["Bright Master", {"Character": 3, "Drive (%)": 30}],
   ["Driven Bus", {"Character": 1, "Drive (%)": 90, "Output (dB)": -2}],
-  ["Subtle Glue", {"Character": 1, "Drive (%)": 15}]
+  ["Subtle Glue", {"Character": 1, "Drive (%)": 15}],
+  ["Clean Master Touch", {"Character": "Clean", "Drive (%)": 15}],
+  ["Punchy Master", {"Character": "Punchy", "Drive (%)": 25}],
+  ["Bright Pop Bus", {"Character": "Bright", "Drive (%)": 45}],
+  ["Warm Vocal Bus", {"Character": "Warm", "Drive (%)": 35}]
 ]

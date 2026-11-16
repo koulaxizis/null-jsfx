@@ -12,6 +12,6 @@
   ["Glockenspiel", {"Model": "Glockenspiel", "Release": 1200}],
   ["Vibes Motor", {"Model": "Vibraphone", "Release": 400, "Tremolo Rate": 5.5, "Tremolo Depth": 45, "Tremolo Mode": "Mono"}],
   ["Soft Vibes", {"Model": "Vibraphone", "Tone": 30, "Release": 1200, "Chorus": 15}],
-  ["Marimba", {"Model": "Marimba", "Tone": 45, "Release": 300}],
+  ["Marimba", {"Model": "Marimba", "Tone": 45, "Release": 300, "Volume (dB)": 6.4}],
   ["Kalimba", {"Model": "Kalimba", "Release": 600, "Chorus": 15}]
 ]

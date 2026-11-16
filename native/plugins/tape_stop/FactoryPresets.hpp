@@ -18,6 +18,11 @@ static const FactoryPreset kPresets[] = {
     { "Turntable Brake", { 0.0f, 350.0f, 150.0f } },
     { "Slow Wind Down", { 0.0f, 2000.0f, 1000.0f } },
     { "Long Dramatic Drop", { 0.0f, 4000.0f, 2000.0f } },
+    { "Snap Stop", { 0.0f, 50.0f, 50.0f } },
+    { "Beat Drop", { 0.0f, 600.0f, 80.0f } },
+    { "Slow Restart", { 0.0f, 300.0f, 2500.0f } },
+    { "Even Brake", { 0.0f, 1000.0f, 1000.0f } },
+    { "Power Cut", { 0.0f, 1500.0f, 50.0f } },
 };
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 3;

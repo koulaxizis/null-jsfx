@@ -19,6 +19,15 @@ static const FactoryPreset kPresets[] = {
     { "Honky Tonk", { 70.0f, 70.0f, 4.0f, 140.0f, 30.0f, 70.0f, 250.0f, 50.0f, 60.0f, -6.0f } },
     { "Upright", { 50.0f, 60.0f, 1.2f, 160.0f, 50.0f, 70.0f, 250.0f, 70.0f, 30.0f, -6.0f } },
     { "Long Sustain", { 50.0f, 250.0f, 1.2f, 100.0f, 30.0f, 70.0f, 600.0f, 50.0f, 60.0f, -6.0f } },
+    { "Ballad Grand", { 40.0f, 150.0f, 1.2f, 100.0f, 30.0f, 70.0f, 250.0f, 55.0f, 70.0f, -6.0f } },
+    { "Rock Piano", { 80.0f, 90.0f, 1.2f, 100.0f, 40.0f, 70.0f, 250.0f, 60.0f, 60.0f, -6.0f } },
+    { "Lo-Fi Keys", { 25.0f, 70.0f, 3.0f, 100.0f, 60.0f, 70.0f, 250.0f, 50.0f, 30.0f, -6.0f } },
+    { "Detuned Saloon", { 65.0f, 80.0f, 3.5f, 180.0f, 30.0f, 70.0f, 250.0f, 50.0f, 60.0f, -6.0f } },
+    { "Pure Tone Piano", { 45.0f, 100.0f, 0.5f, 20.0f, 10.0f, 70.0f, 250.0f, 50.0f, 60.0f, -6.0f } },
+    { "Staccato Keys", { 60.0f, 50.0f, 1.2f, 100.0f, 30.0f, 70.0f, 60.0f, 50.0f, 60.0f, -6.0f } },
+    { "Ambient Grand", { 30.0f, 350.0f, 1.2f, 100.0f, 30.0f, 70.0f, 900.0f, 45.0f, 100.0f, -6.0f } },
+    { "Even Velocity", { 50.0f, 100.0f, 1.2f, 100.0f, 30.0f, 0.0f, 250.0f, 50.0f, 60.0f, -6.0f } },
+    { "Wide Stage Piano", { 60.0f, 100.0f, 1.2f, 100.0f, 30.0f, 70.0f, 250.0f, 50.0f, 100.0f, -6.0f } },
 };
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 10;

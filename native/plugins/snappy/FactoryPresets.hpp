@@ -18,6 +18,9 @@ static const FactoryPreset kPresets[] = {
     { "Kick Click", { 50.0f } },
     { "Snare Crack", { 60.0f } },
     { "Room Tamer", { 80.0f } },
+    { "Gentle Attack", { 10.0f } },
+    { "Acoustic Pick", { 45.0f } },
+    { "Maximum Snap", { 100.0f } },
 };
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 1;

@@ -19,6 +19,10 @@ static const FactoryPreset kPresets[] = {
     { "K-14 Mastering", { 2.0f, -18.0f, 2.0f, 0.0f } },
     { "K-20 Film and Classical", { 3.0f, -18.0f, 2.0f, 0.0f } },
     { "Mono Check", { 0.0f, -18.0f, 1.0f, 1.0f } },
+    { "VU -18 dBFS (EBU)", { 0.0f, -18.0f, 1.0f, 0.0f } },
+    { "PPM Hold", { 1.0f, -18.0f, 2.0f, 0.0f } },
+    { "Side Check", { 0.0f, -18.0f, 1.0f, 2.0f } },
+    { "K-14 Live", { 2.0f, -18.0f, 1.0f, 0.0f } },
 };
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 4;

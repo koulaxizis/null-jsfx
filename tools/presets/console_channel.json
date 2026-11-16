@@ -4,5 +4,9 @@
   ["Punchy Drums", {"Character": 2, "Drive (%)": 60}],
   ["Bright Vocals", {"Character": 3, "Drive (%)": 40}],
   ["Hot Channel", {"Character": 1, "Drive (%)": 90, "Output (dB)": -3}],
-  ["Subtle Colour", {"Character": 1, "Drive (%)": 15}]
+  ["Subtle Colour", {"Character": 1, "Drive (%)": 15}],
+  ["Punchy Bass", {"Character": "Punchy", "Drive (%)": 45}],
+  ["Bright Acoustic", {"Character": "Bright", "Drive (%)": 30}],
+  ["Warm Keys", {"Character": "Warm", "Drive (%)": 35}],
+  ["Driven Guitar", {"Character": "Punchy", "Drive (%)": 80, "Output (dB)": -2}]
 ]

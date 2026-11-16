@@ -20,6 +20,9 @@ static const FactoryPreset kPresets[] = {
     { "Guitar Swirl", { 0.0f, 100.0f, 60.0f, 10.0f, 100.0f, 70.0f } },
     { "Keys Gentle Spin", { 0.0f, 100.0f, 55.0f, 15.0f, 90.0f, 80.0f } },
     { "Vocal Movement", { 0.0f, 100.0f, 50.0f, 0.0f, 100.0f, 40.0f } },
+    { "Stopped Cabinet", { 2.0f, 100.0f, 50.0f, 25.0f, 80.0f, 100.0f } },
+    { "Fast Spin Clean", { 1.0f, 100.0f, 50.0f, 0.0f, 100.0f, 100.0f } },
+    { "Drum Rotor Heavy", { 0.0f, 100.0f, 20.0f, 40.0f, 80.0f, 100.0f } },
 };
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 6;

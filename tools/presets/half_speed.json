@@ -3,5 +3,10 @@
   ["Halftime Beat", {"Length": "1/4", "Speed": "1/2"}],
   ["Quarter Speed Drone", {"Length": "2 Bars", "Speed": "1/4", "Tone": 6000}],
   ["Pitch-Kept Halftime", {"Length": "1 Bar", "Speed": "1/2", "Pitch Keep": "On"}],
-  ["Dark Halftime", {"Length": "1/2", "Speed": "1/2", "Tone": 2000}]
+  ["Dark Halftime", {"Length": "1/2", "Speed": "1/2", "Tone": 2000}],
+  ["Two Bar Drone", {"Length": "2 Bars", "Speed": "1/2", "Tone": 8000}],
+  ["Triplet Feel", {"Length": "1 Bar", "Speed": "2/3"}],
+  ["Parallel Halftime", {"Length": "1 Bar", "Speed": "1/2", "Mix": 50}],
+  ["Pitch-Kept Quarter", {"Length": "2 Bars", "Speed": "1/4", "Pitch Keep": "On"}],
+  ["Offbeat Halftime", {"Length": "1/2", "Speed": "1/2", "Sync Offset": 1}]
 ]

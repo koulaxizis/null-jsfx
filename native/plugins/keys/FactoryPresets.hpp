@@ -26,7 +26,7 @@ static const FactoryPreset kPresets[] = {
     { "Glockenspiel", { 5.0f, 50.0f, 50.0f, 100.0f, 1200.0f, 60.0f, 4.5f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 48.0f } },
     { "Vibes Motor", { 6.0f, 50.0f, 50.0f, 100.0f, 400.0f, 60.0f, 5.5f, 45.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 48.0f } },
     { "Soft Vibes", { 6.0f, 30.0f, 50.0f, 100.0f, 1200.0f, 60.0f, 4.5f, 0.0f, 1.0f, 0.0f, 15.0f, 0.0f, 0.0f, 48.0f } },
-    { "Marimba", { 7.0f, 45.0f, 50.0f, 100.0f, 300.0f, 60.0f, 4.5f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 48.0f } },
+    { "Marimba", { 7.0f, 45.0f, 50.0f, 100.0f, 300.0f, 60.0f, 4.5f, 0.0f, 1.0f, 0.0f, 0.0f, 6.4f, 0.0f, 48.0f } },
     { "Kalimba", { 8.0f, 50.0f, 50.0f, 100.0f, 600.0f, 60.0f, 4.5f, 0.0f, 1.0f, 0.0f, 15.0f, 0.0f, 0.0f, 48.0f } },
 };
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);

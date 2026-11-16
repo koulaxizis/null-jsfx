@@ -18,6 +18,9 @@ static const FactoryPreset kPresets[] = {
     { "Old Sampler", { 60.0f } },
     { "Radio Degrade", { 75.0f } },
     { "Chiptune Crush", { 95.0f } },
+    { "Subtle Crunch", { 10.0f } },
+    { "Cassette Sampler", { 35.0f } },
+    { "Arcade", { 85.0f } },
 };
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 1;

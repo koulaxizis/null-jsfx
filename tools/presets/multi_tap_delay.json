@@ -7,5 +7,6 @@
   ["Scatter Cloud", {"Taps": 8, "Pattern": 6, "Time (ms)": 120, "Decay (%)": 18, "Spread (%)": 100, "Feedback (%)": 20, "Mix (%)": 40}],
   ["Slapback Pair", {"Taps": 2, "Time (ms)": 90, "Decay (%)": 40, "Spread (%)": 80, "Mix (%)": 25}],
   ["Dub Space", {"Taps": 3, "Pattern": 1, "Tempo Sync": 1, "Subdivision": 0, "Feedback (%)": 55, "Low Cut (Hz)": 200, "High Cut (Hz)": 3500, "Mix (%)": 35}],
-  ["Wide Rhythm", {"Taps": 8, "Tempo Sync": 1, "Subdivision": 2, "Decay (%)": 22, "Spread (%)": 100}]
+  ["Wide Rhythm", {"Taps": 8, "Tempo Sync": 1, "Subdivision": 2, "Decay (%)": 22, "Spread (%)": 100}],
+  ["Ping Pong Sixteenths", {"Taps": 6, "Tempo Sync": 1, "Subdivision": 2, "Decay (%)": 30, "Spread (%)": 100, "High Cut (Hz)": 8000, "Mix (%)": 25}]
 ]

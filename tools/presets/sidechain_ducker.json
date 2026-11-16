@@ -4,5 +4,9 @@
   ["Lead Vocal Space", {"Threshold": -30, "Depth": -4, "Attack": 10, "Hold": 100, "Release": 300}],
   ["Voice Over Duck", {"Threshold": -36, "Depth": -12, "Attack": 20, "Hold": 300, "Release": 800}],
   ["Podcast Music Bed", {"Threshold": -40, "Depth": -18, "Attack": 50, "Hold": 500, "Release": 1500}],
-  ["Kick Click Keyed", {"Threshold": -30, "Depth": -8, "Attack": 0.5, "Hold": 10, "Release": 100, "Key High Pass": 150}]
+  ["Kick Click Keyed", {"Threshold": -30, "Depth": -8, "Attack": 0.5, "Hold": 10, "Release": 100, "Key High Pass": 150}],
+  ["Snare Ducks Reverb", {"Threshold": -30, "Depth": -8, "Attack": 1, "Hold": 40, "Release": 180}],
+  ["Gentle Bass Make Room", {"Threshold": -24, "Depth": -5, "Attack": 2, "Hold": 10, "Release": 90, "Key High Pass": 0}],
+  ["Self Duck Delay", {"Threshold": -30, "Depth": -12, "Attack": 5, "Hold": 80, "Release": 400, "Key": "Main Input"}],
+  ["Trance Gate Pump", {"Threshold": -20, "Depth": -30, "Attack": 0.5, "Hold": 0, "Release": 150}]
 ]

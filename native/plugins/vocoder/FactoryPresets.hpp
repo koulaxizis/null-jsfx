@@ -14,13 +14,15 @@ struct FactoryPreset {
 static const FactoryPreset kPresets[] = {
     { "Default", { 1.0f, 110.0f, 0.0f, 5.0f, 40.0f, 20.0f, 100.0f, 0.0f, 60.0f } },
     { "Synth Voice Low", { 1.0f, 82.4f, 0.0f, 3.0f, 30.0f, 25.0f, 100.0f, 0.0f, 60.0f } },
-    { "Talking Synth Sidechain", { 0.0f, 110.0f, 0.0f, 3.0f, 35.0f, 30.0f, 100.0f, 0.0f, 60.0f } },
-    { "Whisper Noise", { 3.0f, 110.0f, 0.0f, 5.0f, 60.0f, 40.0f, 100.0f, 0.0f, 80.0f } },
+    { "Talking Synth Sidechain", { 0.0f, 110.0f, 0.0f, 3.0f, 35.0f, 30.0f, 100.0f, 6.7f, 60.0f } },
+    { "Whisper Noise", { 3.0f, 110.0f, 0.0f, 5.0f, 60.0f, 40.0f, 100.0f, 14.7f, 80.0f } },
     { "Pulse Choir", { 2.0f, 220.0f, 2.0f, 5.0f, 80.0f, 20.0f, 100.0f, 0.0f, 100.0f } },
-    { "Deep Monster Voice", { 1.0f, 55.0f, -5.0f, 5.0f, 50.0f, 10.0f, 100.0f, 0.0f, 60.0f } },
+    { "Deep Monster Voice", { 1.0f, 55.0f, -5.0f, 5.0f, 50.0f, 10.0f, 100.0f, 6.5f, 60.0f } },
     { "Chipmunk Robot", { 2.0f, 440.0f, 6.0f, 5.0f, 40.0f, 30.0f, 100.0f, -9.0f, 60.0f } },
     { "Drum Rhythm Synth", { 1.0f, 110.0f, 0.0f, 1.0f, 20.0f, 10.0f, 100.0f, 0.0f, 60.0f } },
     { "Smooth Pad Vocoder", { 1.0f, 130.8f, 0.0f, 15.0f, 150.0f, 15.0f, 100.0f, 0.0f, 90.0f } },
+    { "Talkbox Bass", { 1.0f, 65.4f, 0.0f, 2.0f, 25.0f, 20.0f, 100.0f, 0.0f, 60.0f } },
+    { "Robot Announcer", { 2.0f, 110.0f, 0.0f, 2.0f, 30.0f, 35.0f, 100.0f, 0.0f, 30.0f } },
 };
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 9;

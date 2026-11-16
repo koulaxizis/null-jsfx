@@ -3,5 +3,8 @@
   ["Acoustic Sparkle", {"Amount": 45}],
   ["Overhead Lift", {"Amount": 55}],
   ["Bus Sheen", {"Amount": 20}],
-  ["Muffled Rescue", {"Amount": 80}]
+  ["Muffled Rescue", {"Amount": 80}],
+  ["Dull Snare Fix", {"Amount": 65}],
+  ["Master Polish", {"Amount": 10}],
+  ["Dark Room Mic", {"Amount": 95}]
 ]

@@ -21,6 +21,8 @@ static const FactoryPreset kPresets[] = {
     { "Vocal Thickener", { 0.0f, 0.0f, 12.0f, 30.0f } },
     { "Full Octave Down", { -1.0f, 0.0f, 0.0f, 100.0f } },
     { "Full Octave Up", { 1.0f, 0.0f, 0.0f, 100.0f } },
+    { "Wide Detune Pair", { 0.0f, 0.0f, -8.0f, 35.0f } },
+    { "Major Third Up", { 0.0f, 4.0f, 0.0f, 30.0f } },
 };
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 4;

@@ -19,6 +19,10 @@ static const FactoryPreset kPresets[] = {
     { "Strobe", { 440.0f, 1.0f, 0.0f, 0.0f } },
     { "Stage Mute", { 440.0f, 0.0f, 0.0f, 1.0f } },
     { "Guitar on Left", { 440.0f, 0.0f, 1.0f, 0.0f } },
+    { "Bass on Right", { 440.0f, 0.0f, 2.0f, 0.0f } },
+    { "Strobe Mute", { 440.0f, 1.0f, 0.0f, 1.0f } },
+    { "A441", { 441.0f, 0.0f, 0.0f, 0.0f } },
+    { "Strobe A432", { 432.0f, 1.0f, 0.0f, 0.0f } },
 };
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 4;

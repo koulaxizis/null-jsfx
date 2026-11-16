@@ -20,6 +20,9 @@ static const FactoryPreset kPresets[] = {
     { "Deep Synth Bass", { 200.0f, 55.0f, 2.0f, 75.0f, -2.0f } },
     { "Cinematic Rumble", { 120.0f, 70.0f, 1.0f, 70.0f, -2.0f } },
     { "Sub Only Layer", { 100.0f, 80.0f, 0.0f, 0.0f, 0.0f } },
+    { "808 Weight", { 70.0f, 35.0f, 0.0f, 100.0f, -1.0f } },
+    { "Subtle Low End", { 110.0f, 20.0f, 0.0f, 100.0f, 0.0f } },
+    { "Organ Pedal Tone", { 160.0f, 50.0f, 2.0f, 85.0f, -2.0f } },
 };
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 5;

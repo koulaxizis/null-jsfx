@@ -19,6 +19,10 @@ static const FactoryPreset kPresets[] = {
     { "Gentle Master", { -8.0f, 0.0f, 5.0f, 4.0f, 1.0f, 100.0f, 100.0f } },
     { "Vocal Group", { -16.0f, 1.0f, 3.0f, 2.0f, 3.0f, 100.0f, 0.0f } },
     { "Pumping Bus", { -24.0f, 2.0f, 3.0f, 0.0f, 6.0f, 100.0f, 0.0f } },
+    { "Piano Bus", { -14.0f, 0.0f, 4.0f, 3.0f, 2.0f, 100.0f, 0.0f } },
+    { "Room Mics Smash", { -28.0f, 2.0f, 2.0f, 1.0f, 10.0f, 50.0f, 0.0f } },
+    { "Synth Bus", { -16.0f, 1.0f, 3.0f, 4.0f, 3.0f, 100.0f, 0.0f } },
+    { "Loud Master", { -14.0f, 1.0f, 4.0f, 4.0f, 4.0f, 100.0f, 120.0f } },
 };
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 7;

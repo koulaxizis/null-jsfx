@@ -4,5 +4,9 @@
   ["Rap Vocal Tight", {"Threshold": -34, "Attack": 2, "Release": 60, "Range": -12}],
   ["Podcast Dialogue", {"Threshold": -40, "Attack": 8, "Release": 200, "Range": -12}],
   ["Voice Over Clean", {"Threshold": -45, "Attack": 5, "Release": 120, "Range": -15}],
-  ["Quiet Room Narration", {"Threshold": -50, "Attack": 5, "Release": 150, "Range": -18}]
+  ["Quiet Room Narration", {"Threshold": -50, "Attack": 5, "Release": 150, "Range": -18}],
+  ["Choir Breaths", {"Threshold": -46, "Attack": 8, "Release": 250, "Range": -6}],
+  ["Wind Instrument", {"Threshold": -44, "Attack": 10, "Release": 300, "Range": -8}],
+  ["Aggressive Removal", {"Threshold": -32, "Attack": 2, "Release": 80, "Range": -24}],
+  ["Audiobook Breaths", {"Threshold": -48, "Attack": 6, "Release": 180, "Range": -9}]
 ]

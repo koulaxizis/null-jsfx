@@ -21,6 +21,8 @@ static const FactoryPreset kPresets[] = {
     { "Reverse Swells", { 0.0f, 0.0f, 0.0f, 2.0f, 0.0f, 0.0f, 0.0f, 2.0f, 0.0f, 0.0f, 0.0f, 2.0f, 0.0f, 0.0f, 2.0f, 2.0f, 0.0f, 16.0f, 0.0f, 1.0f, 800.0f, 60.0f, 12.0f, 100.0f, 0.0f } },
     { "Crush Fills", { 0.0f, 0.0f, 0.0f, 8.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 8.0f, 0.0f, 8.0f, 8.0f, 8.0f, 8.0f, 1.0f, 16.0f, 0.0f, 1.0f, 800.0f, 75.0f, 12.0f, 100.0f, 0.0f } },
     { "Live MIDI Pads", { 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 16.0f, 0.0f, 1.0f, 1000.0f, 60.0f, 12.0f, 100.0f, 1.0f } },
+    { "Gate Chop 16ths", { 0.0f, 4.0f, 0.0f, 4.0f, 0.0f, 4.0f, 0.0f, 4.0f, 0.0f, 4.0f, 0.0f, 4.0f, 0.0f, 4.0f, 0.0f, 4.0f, 1.0f, 16.0f, 0.0f, 1.0f, 800.0f, 60.0f, 12.0f, 100.0f, 0.0f } },
+    { "Pitch Up Riser", { 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 7.0f, 7.0f, 7.0f, 7.0f, 1.0f, 16.0f, 0.0f, 1.0f, 800.0f, 60.0f, 7.0f, 100.0f, 0.0f } },
 };
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 25;

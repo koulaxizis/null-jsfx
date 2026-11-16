@@ -18,6 +18,11 @@ static const FactoryPreset kPresets[] = {
     { "Mono Check", { 0.0f, 1.0f, 0.0f, 1.0f } },
     { "Side Check", { 0.0f, 1.0f, 0.0f, 2.0f } },
     { "Reference Mono Check", { 1.0f, 1.0f, 0.0f, 1.0f } },
+    { "Reference Side Check", { 1.0f, 1.0f, 0.0f, 2.0f } },
+    { "Track Trim Down", { 0.0f, 1.0f, -3.0f, 0.0f } },
+    { "Matched Mono Track", { 0.0f, 1.0f, 0.0f, 1.0f } },
+    { "Reference Unmatched Mono", { 1.0f, 0.0f, 0.0f, 1.0f } },
+    { "Track Trim Up", { 0.0f, 1.0f, 3.0f, 0.0f } },
 };
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 4;

@@ -18,6 +18,9 @@ static const FactoryPreset kPresets[] = {
     { "Subtle Brighter", { 58.0f } },
     { "Different Singer", { 68.0f } },
     { "Cartoon Voice", { 95.0f } },
+    { "Slightly Darker", { 42.0f } },
+    { "Child Voice", { 72.0f } },
+    { "Deep Voice", { 25.0f } },
 };
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 1;

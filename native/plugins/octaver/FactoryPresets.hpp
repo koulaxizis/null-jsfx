@@ -20,6 +20,9 @@ static const FactoryPreset kPresets[] = {
     { "Sub Only Layer", { 0.0f, 80.0f, 0.0f, 0.0f, 300.0f, 200.0f } },
     { "Octave Up Lead", { 80.0f, 0.0f, 0.0f, 60.0f, 4000.0f, 600.0f } },
     { "Organ Stack", { 90.0f, 50.0f, 30.0f, 40.0f, 2500.0f, 400.0f } },
+    { "Fuzz Octave Up", { 70.0f, 0.0f, 0.0f, 90.0f, 3500.0f, 700.0f } },
+    { "Parallel Sub Blend", { 100.0f, 35.0f, 0.0f, 0.0f, 400.0f, 150.0f } },
+    { "Kick Sub Layer", { 100.0f, 50.0f, 20.0f, 0.0f, 200.0f, 120.0f } },
 };
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 6;

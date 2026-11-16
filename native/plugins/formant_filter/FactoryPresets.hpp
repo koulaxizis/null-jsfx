@@ -14,10 +14,15 @@ struct FactoryPreset {
 static const FactoryPreset kPresets[] = {
     { "Default", { 0.0f, 0.0f, 10.0f } },
     { "Talking Synth Ah", { 0.0f, 2.0f, 8.0f } },
-    { "Bright Eh Guitar", { 1.0f, 2.0f, 9.0f } },
-    { "Nasal Ee Lead", { 2.0f, 4.0f, 14.0f } },
+    { "Bright Eh Guitar", { 1.0f, -7.7f, 9.0f } },
+    { "Nasal Ee Lead", { 2.0f, -12.0f, 14.0f } },
     { "Vocal Drum Oh", { 3.0f, 3.0f, 12.0f } },
-    { "Hollow Oo Pad", { 4.0f, 1.0f, 6.0f } },
+    { "Hollow Oo Pad", { 4.0f, -6.4f, 6.0f } },
+    { "Soft Ah Pad", { 0.0f, 1.0f, 6.0f } },
+    { "Robot Ee", { 2.0f, -12.0f, 18.0f } },
+    { "Warm Oh Bass", { 3.0f, -3.0f, 7.0f } },
+    { "Whisper Eh", { 1.0f, -8.0f, 5.0f } },
+    { "Deep Oo Choir", { 4.0f, -4.0f, 12.0f } },
 };
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 3;
