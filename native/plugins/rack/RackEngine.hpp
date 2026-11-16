@@ -302,7 +302,9 @@ public:
         for (uint32_t i = 0; i < kNumParams; ++i)
         {
             char n[32], s[32];
-            const DISTRHO::SliderInfo in = paramInfo(i, n, sizeof(n), s, sizeof(s));
+            bool lg = false;
+            const DISTRHO::SliderInfo in = paramInfo(i, n, sizeof(n), s, sizeof(s), &lg);
+            fLog[i] = lg;
             fMin[i] = in.min;
             fMax[i] = in.max;
             fDef[i] = in.def;
@@ -383,6 +385,17 @@ public:
         fLfoPhase[0] = fLfoPhase[1] = 0.0;
         fLfoCycle[0] = fLfoCycle[1] = -1;
         fSeqPos = 0.0;
+        fRandPhase = fRandFrom = fRandTo = 0.0;
+        fRandSeed = 4242.0;
+        fFollowN = 0;
+        fFollowEnv = 0.0;
+        fAdsrLevel = fAdsrValue = fAdsrRelFrom = 0.0;
+        fAdsrStage = 0;
+        fAdsrGate = false;
+        std::memset(fPitchBuf, 0, sizeof(fPitchBuf));
+        fPitchPos = fPitchHop = fPitchAccN = 0;
+        fPitchDec = uint32_t(std::max(1.0, std::round(sr / 12000.0)));
+        fPitchAcc = fPitchTarget = fPitchOut = 0.0;
         fAlignA.clear();
         fAlignB.clear();
         fAlignC.clear();
@@ -527,8 +540,9 @@ public:
         fLock.lock();
         fNumRoutes = 0;
         for (uint32_t i = 0; i < n && fNumRoutes < kMaxRoutes; ++i)
-            if (r[i].source >= 0 && r[i].source < kNumSources && r[i].slot >= 0 && r[i].slot < int(kSlots) &&
-                r[i].value >= 0 && r[i].value < int(kValues))
+            if (r[i].source >= 0 && r[i].source < kNumSources && r[i].value >= 0 &&
+                ((r[i].slot >= 0 && r[i].slot < int(kSlots) && r[i].value < int(kValues)) ||
+                 (r[i].slot == kModSlot && r[i].value < int(kNumModTargets))))
                 fRoutes[fNumRoutes++] = r[i];
         fLock.unlock();
         fVersion.fetch_add(1, std::memory_order_release);
@@ -645,7 +659,8 @@ public:
         {
             const PresetRoute& pr = p.routes[k];
             const int src = sourceFromSymbol(pr.source);
-            if (src < 0 || pr.slot >= kSlots || pr.value >= kValues)
+            const bool modTarget = pr.slot == uint32_t(kModSlot) && pr.value < kNumModTargets;
+            if (src < 0 || (!modTarget && (pr.slot >= kSlots || pr.value >= kValues)))
             {
                 fail(std::string("bad route from ") + pr.source);
                 continue;
@@ -655,6 +670,7 @@ public:
             r.slot = pr.slot;
             r.value = pr.value;
             r.depth = pr.depth;
+            r.curve = pr.curve;
         }
         return ok;
     }
@@ -792,8 +808,31 @@ private:
         return seed / 2147483647.0;
     }
 
+    // 4.0: a modulator setting moved by the routes to it (from the sources of the chunk before):
+    // the parameter itself when no route moves it
+    float modParam(uint32_t p) const
+    {
+        for (uint32_t k = 0; k < kNumModTargets; ++k)
+            if (kModTargets[k] == p)
+            {
+                if (fModOff[k] == 0.0f)
+                    return param(p);
+                const double lo = fMin[p], hi = fMax[p], v = param(p);
+                double t = fLog[p] ? std::log(v / lo) / std::log(hi / lo) : (v - lo) / (hi - lo);
+                t = std::min(1.0, std::max(0.0, t + double(fModOff[k])));
+                return float(fLog[p] ? lo * std::pow(hi / lo, t) : lo + (hi - lo) * t);
+            }
+        return param(p);
+    }
+
     void updateSources(const float* l, const float* r, uint32_t n, const Time& t)
     {
+        for (uint32_t k = 0; k < kNumModTargets; ++k)
+            fModOff[k] = 0.0f;
+        for (uint32_t i = 0; i < fNumRoutes; ++i)
+            if (fRoutes[i].slot == kModSlot)
+                fModOff[fRoutes[i].value] += fRoutes[i].depth * remap(fSrc[fRoutes[i].source], fRoutes[i].curve);
+
         for (int m = 0; m < 8; ++m)
             fSrc[kSrcMacro1 + m] = clamp01(param(kMacro1 + m) / 100.0f);
 
@@ -828,7 +867,7 @@ private:
             if (!(beats > 0.0 && t.playing && t.valid))
             {
                 // free running: Hz, or the synced note at the host tempo while stopped
-                const double hz = beats > 0.0 ? tempo / 60.0 / beats : double(param(base));
+                const double hz = beats > 0.0 ? tempo / 60.0 / beats : double(modParam(base));
                 double next = fLfoPhase[k] + hz * double(n) / fSampleRate;
                 if (next >= 1.0)
                 {
@@ -850,7 +889,7 @@ private:
             e = x > e ? att * e + (1.0 - att) * x : rel * e + (1.0 - rel) * x;
         }
         fEnv = e < 1e-30 ? 0.0 : e;
-        const double g = std::pow(10.0, double(param(kEnvGain)) / 20.0);
+        const double g = std::pow(10.0, double(modParam(kEnvGain)) / 20.0);
         fSrc[kSrcEnv] = float(std::min(1.0, fEnv * g));
 
         // step sequencer: the position in steps, from the host's beat when synced and playing,
@@ -877,13 +916,208 @@ private:
                 fSeqPos = pos;
             else
             {
-                const double rate = beats > 0.0 ? tempo / 60.0 / beats : double(param(kSeqRate)); // steps/s
+                const double rate = beats > 0.0 ? tempo / 60.0 / beats : double(modParam(kSeqRate)); // steps/s
                 fSeqPos = std::fmod(pos + rate * double(n) / fSampleRate, double(steps));
             }
         }
 
+        updateNewSources(l, r, n);
+
         for (int s = 0; s < kNumSources; ++s)
             fSourceValue[s].store(fSrc[s], std::memory_order_relaxed);
+    }
+
+    // ---- the 4.0 modulators ------------------------------------------------------------------
+
+    void updateNewSources(const float* l, const float* r, uint32_t n)
+    {
+        const double dt = double(n) / fSampleRate;
+
+        // Smooth Random: a new random target every 1 / Rate s; Smooth glides to it (an S-curve over
+        // that share of the cycle; 0 = steps)
+        {
+            fRandPhase += double(modParam(kRandRate)) * dt;
+            if (fRandPhase >= 1.0)
+            {
+                fRandPhase -= std::floor(fRandPhase);
+                fRandFrom = fRandTo;
+                fRandTo = parkMiller(fRandSeed);
+            }
+            const double sm = std::min(1.0, std::max(0.0, double(modParam(kRandSmooth)) / 100.0));
+            double u = sm > 0.0 ? std::min(1.0, fRandPhase / sm) : 1.0;
+            u = u * u * (3.0 - 2.0 * u);
+            fSrc[kSrcRand] = float(fRandFrom + (fRandTo - fRandFrom) * u);
+        }
+
+        // Follower: the level after the slot Follower Slot, measured in the chunk before
+        {
+            const double att = std::exp(-1.0 / (std::max(0.1f, param(kFollowAttack)) * 0.001 * fSampleRate));
+            const double rel = std::exp(-1.0 / (std::max(1.0f, param(kFollowRelease)) * 0.001 * fSampleRate));
+            double e = fFollowEnv;
+            for (uint32_t i = 0; i < fFollowN; ++i)
+            {
+                const double x = fFollowBuf[i];
+                e = x > e ? att * e + (1.0 - att) * x : rel * e + (1.0 - rel) * x;
+            }
+            fFollowEnv = e < 1e-30 ? 0.0 : e;
+            fSrc[kSrcFollow] = float(std::min(1.0, fFollowEnv * std::pow(10.0, double(param(kFollowGain)) / 20.0)));
+        }
+
+        // ADSR: gated by the rack input (after the input gain) above Threshold, 3 dB of hysteresis
+        {
+            double pk = fAdsrLevel;
+            const double fall = std::exp(-1.0 / (0.05 * fSampleRate));
+            for (uint32_t i = 0; i < n; ++i)
+            {
+                const double x = std::max(std::fabs(double(l[i])), std::fabs(double(r[i])));
+                pk = x > pk ? x : pk * fall;
+            }
+            fAdsrLevel = pk < 1e-30 ? 0.0 : pk;
+            const double on = std::pow(10.0, double(param(kAdsrThreshold)) / 20.0), off = on * 0.7079457843841379;
+            if (!fAdsrGate && fAdsrLevel > on)
+            {
+                fAdsrGate = true;
+                fAdsrStage = 1;
+            }
+            else if (fAdsrGate && fAdsrLevel < off)
+            {
+                fAdsrGate = false;
+                fAdsrStage = 4;
+                fAdsrRelFrom = fAdsrValue;
+            }
+            const double sus = std::min(1.0, std::max(0.0, double(modParam(kAdsrSustain)) / 100.0));
+            double v = fAdsrValue;
+            switch (fAdsrStage)
+            {
+            case 1: // attack: up to 1
+                v += dt / (std::max(0.1f, modParam(kAdsrAttack)) * 0.001);
+                if (v >= 1.0)
+                {
+                    v = 1.0;
+                    fAdsrStage = 2;
+                }
+                break;
+            case 2: // decay: down to Sustain
+                v -= (1.0 - sus) * dt / (std::max(1.0f, modParam(kAdsrDecay)) * 0.001);
+                if (v <= sus)
+                {
+                    v = sus;
+                    fAdsrStage = 3;
+                }
+                break;
+            case 3: // sustain (follows Sustain)
+                v = sus;
+                break;
+            case 4: // release: down to 0 from where it was
+                v -= fAdsrRelFrom * dt / (std::max(1.0f, modParam(kAdsrRelease)) * 0.001);
+                if (v <= 0.0)
+                {
+                    v = 0.0;
+                    fAdsrStage = 0;
+                }
+                break;
+            default:
+                v = 0.0;
+                break;
+            }
+            fAdsrValue = v;
+            fSrc[kSrcAdsr] = float(v);
+        }
+
+        // Pitch: only while a route listens (the analysis costs)
+        bool pitchUsed = false;
+        for (uint32_t i = 0; i < fNumRoutes; ++i)
+            pitchUsed = pitchUsed || fRoutes[i].source == kSrcPitch;
+        if (pitchUsed)
+            updatePitch(l, r, n);
+        fSrc[kSrcPitch] = float(fPitchOut);
+    }
+
+    // pitch follower: the mono input averaged down to about 12 kHz, every 256 of those samples YIN
+    // (difference function, cumulative mean normalized, threshold 0.15, parabolic peak) over 512 of
+    // them; the found pitch on a log scale from Pitch Low (0) to Pitch High (1), held while
+    // unvoiced or quieter than -50 dB, smoothed over 20 ms
+    void updatePitch(const float* l, const float* r, uint32_t n)
+    {
+        for (uint32_t i = 0; i < n; ++i)
+        {
+            fPitchAcc += 0.5 * (double(l[i]) + double(r[i]));
+            if (++fPitchAccN < fPitchDec)
+                continue;
+            fPitchBuf[fPitchPos] = fPitchAcc / double(fPitchDec);
+            fPitchPos = (fPitchPos + 1) % kPitchLen;
+            fPitchAcc = 0.0;
+            fPitchAccN = 0;
+            if (++fPitchHop < kPitchHop)
+                continue;
+            fPitchHop = 0;
+            analysePitch();
+        }
+        const double a = 1.0 - std::exp(-double(n) / (0.02 * fSampleRate));
+        fPitchOut += (fPitchTarget - fPitchOut) * a;
+    }
+
+    void analysePitch()
+    {
+        const double fs = fSampleRate / double(fPitchDec);
+        const double lo = std::max(20.0, double(param(kPitchLow)));
+        const double hi = std::max(lo * 1.01, double(param(kPitchHigh)));
+        const uint32_t tmin = std::max<uint32_t>(2, uint32_t(fs / std::min(hi * 1.5, fs / 4.0)));
+        const uint32_t tmax = std::min<uint32_t>(kPitchWin - 1, uint32_t(fs / (lo / 1.5)) + 1);
+        // the last kPitchLen samples, oldest first
+        double* x = fPitchWork;
+        double energy = 0.0;
+        for (uint32_t i = 0; i < kPitchLen; ++i)
+        {
+            x[i] = fPitchBuf[(fPitchPos + i) % kPitchLen];
+            energy += x[i] * x[i];
+        }
+        if (energy / double(kPitchLen) < 1e-10) // -100 dB power, -50 dB rms
+            return;
+        double run = 0.0;
+        int best = -1;
+        double* d = fPitchDiff;
+        d[0] = 1.0;
+        for (uint32_t tau = 1; tau <= tmax; ++tau)
+        {
+            double s = 0.0;
+            for (uint32_t i = 0; i < kPitchWin; ++i)
+            {
+                const double q = x[i] - x[i + tau];
+                s += q * q;
+            }
+            run += s;
+            d[tau] = run > 0.0 ? s * double(tau) / run : 1.0;
+        }
+        for (uint32_t tau = tmin; tau + 1 <= tmax; ++tau)
+            if (d[tau] < 0.15)
+            {
+                while (tau + 1 <= tmax && d[tau + 1] < d[tau])
+                    ++tau;
+                best = int(tau);
+                break;
+            }
+        if (best < 0)
+            return;
+        double tf = double(best);
+        if (best > 1 && uint32_t(best) < tmax)
+        {
+            const double a = d[best - 1], b = d[best], c = d[best + 1], den = a - 2.0 * b + c;
+            if (den > 0.0)
+                tf += 0.5 * (a - c) / den;
+        }
+        const double f = fs / tf;
+        fPitchTarget = std::min(1.0, std::max(0.0, std::log(f / lo) / std::log(hi / lo)));
+    }
+
+    // the level after slot s (in its lane), for the Follower
+    void follow(uint32_t s, const float* xl, const float* xr, uint32_t n)
+    {
+        if (int(s) != int(std::lround(param(kFollowSlot))) - 1)
+            return;
+        for (uint32_t i = 0; i < n; ++i)
+            fFollowBuf[i] = std::max(std::fabs(xl[i]), std::fabs(xr[i]));
+        fFollowN = n;
     }
 
     // effective values -> Module::setValue where they changed
@@ -895,7 +1129,9 @@ private:
         for (uint32_t i = 0; i < fNumRoutes; ++i)
         {
             const Route& r = fRoutes[i];
-            mod[r.slot][r.value] += r.depth * fSrc[r.source];
+            if (r.slot == kModSlot)
+                continue; // a modulator setting: updateSources
+            mod[r.slot][r.value] += r.depth * remap(fSrc[r.source], r.curve);
             any[r.slot] = true;
         }
         for (uint32_t s = 0; s < kSlots; ++s)
@@ -966,11 +1202,14 @@ private:
             // one serial chain, exactly as in 2.1
             fLanesActive = fFbActive = false;
             for (uint32_t s = 0; s < kSlots; ++s)
+            {
                 if (fSlot[s].desc)
                 {
                     const uint32_t lat = processSlot(s, xl, xr, n, mt, total);
                     total += lat;
                 }
+                follow(s, xl, xr, n);
+            }
         }
         else
             total = processLanes(xl, xr, n, mt, lanes, used, fb);
@@ -1153,6 +1392,7 @@ private:
                 const uint32_t l = processSlot(s, bl, br, n, mt, lat);
                 lat += l;
             }
+            follow(s, bl, br, n);
             if (fbOn && int(s) == to)
                 fFbRing.write(bl, br, n);
         }
@@ -1376,6 +1616,7 @@ private:
     double fSampleRate = 44100.0;
     std::atomic<float> fParams[kNumParams];
     float fMin[kNumParams], fMax[kNumParams], fDef[kNumParams]; // the ranges, for setParam
+    bool fLog[kNumParams] = {};
     Slot fSlot[kSlots];
     Route fRoutes[kMaxRoutes];
     uint32_t fNumRoutes = 0;
@@ -1389,6 +1630,19 @@ private:
     uint32_t fSplitN = kMaxBands;
     Split5 fOutSplit[2];
     bool fSplitUsed = false; // the output's split ran in the last chunk
+    // added in 4.0: the new modulators and the moved modulator settings
+    float fModOff[kNumModTargets] = {};
+    double fRandPhase = 0.0, fRandFrom = 0.0, fRandTo = 0.0, fRandSeed = 4242.0;
+    float fFollowBuf[kChunk] = {};
+    uint32_t fFollowN = 0;
+    double fFollowEnv = 0.0;
+    double fAdsrLevel = 0.0, fAdsrValue = 0.0, fAdsrRelFrom = 0.0;
+    int fAdsrStage = 0;
+    bool fAdsrGate = false;
+    static constexpr uint32_t kPitchWin = 512, kPitchLen = 1024, kPitchHop = 256;
+    double fPitchBuf[kPitchLen] = {}, fPitchWork[kPitchLen] = {}, fPitchDiff[kPitchWin] = {};
+    uint32_t fPitchPos = 0, fPitchHop = 0, fPitchAccN = 0, fPitchDec = 4;
+    double fPitchAcc = 0.0, fPitchTarget = 0.0, fPitchOut = 0.0;
 
     float fSrc[kNumSources] = {};
     double fEnv = 0.0;

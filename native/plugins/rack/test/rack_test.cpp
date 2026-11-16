@@ -26,10 +26,15 @@
  *   split bands (4.0) 2..5 bands sum flat with a module on any band (also with latency), a muted
  *               module takes only its band, Bypass brings the band back, Solo keeps only its band
  *               and does nothing without a slot on a split band
+ *   modulators  (4.0) Smooth Random's range and smoothness, the Follower after a slot, the pitch
+ *               follower on sines, the ADSR's stages, a route to a modulator setting (LFO 1 Rate)
+ *               and the Remap curve; the 4.0 routes strings round-trip
  *   feedback    the loop repeats every kChunk samples and decays; 95 % on noise stays bounded
  *   sequencer   the steps, Steps, sync to the host beat and Glide
  *   keyed       Sidechain Ducker keys on the rack input delayed by the latency before it
  */
+
+#include <functional>
 
 #include "NullModules.hpp"
 #include "RackEngine.hpp"
@@ -522,6 +527,145 @@ static void testModulation()
     }
 }
 
+// ---- the 4.0 modulators ----------------------------------------------------------------------
+
+static void testModulators()
+{
+    auto mods = allModules(true);
+    const double sr = 48000.0;
+    // runs e over n samples of in (blocks of 128), calling f after each block
+    auto run = [&](RackEngine& e, const Stereo& in, const std::function<void(size_t)>& f) {
+        std::vector<float> ol(128), orr(128);
+        for (size_t pos = 0; pos + 128 <= in.l.size(); pos += 128)
+        {
+            e.process(in.l.data() + pos, in.r.data() + pos, ol.data(), orr.data(), 128, {});
+            f(pos);
+        }
+    };
+    auto sine = [&](double hz, double amp, double secs) {
+        Stereo s;
+        const size_t n = size_t(secs * sr);
+        s.l.resize(n);
+        s.r.resize(n);
+        for (size_t i = 0; i < n; ++i)
+            s.l[i] = s.r[i] = float(amp * std::sin(2.0 * M_PI * hz * double(i) / sr));
+        return s;
+    };
+    auto route = [](int src, int slot, int value, float depth, float curve = 0.0f) {
+        rack::Route r;
+        r.source = src; r.slot = slot; r.value = value; r.depth = depth; r.curve = curve;
+        return r;
+    };
+    std::string ids[rack::kSlots] = { "identity" };
+
+    // Smooth Random: 0..1, new values at Rate, smooth at 100 %, steps at 0 %
+    for (float smooth : { 100.0f, 0.0f })
+    {
+        std::unique_ptr<RackEngine> e(new RackEngine(mods.data(), uint32_t(mods.size())));
+        e->setSampleRate(sr);
+        e->setParam(rack::kRandRate, 4.0f);
+        e->setParam(rack::kRandSmooth, smooth);
+        float lo = 1.0f, hi = 0.0f, prev = -1.0f, jump = 0.0f;
+        const Stereo in = sine(100.0, 0.1, 4.0);
+        run(*e, in, [&](size_t) {
+            const float v = e->sourceValue(rack::kSrcRand);
+            lo = std::min(lo, v);
+            hi = std::max(hi, v);
+            if (prev >= 0.0f)
+                jump = std::max(jump, std::fabs(v - prev));
+            prev = v;
+        });
+        CHECK(lo >= 0.0f && hi <= 1.0f && hi - lo > 0.3f, "random, smooth %.0f: %.3f .. %.3f", smooth, lo, hi);
+        CHECK(smooth > 0.0f ? jump < 0.06f : jump > 0.1f, "random, smooth %.0f: largest step %.3f", smooth, jump);
+        std::printf("  random 4 Hz, smooth %3.0f%%: %.3f .. %.3f, largest step between chunks %.3f\n", smooth, lo, hi, jump);
+    }
+
+    // Follower: the level after slot 1; a muted module there leaves nothing
+    for (int muted = 0; muted < 2; ++muted)
+    {
+        std::unique_ptr<RackEngine> e(new RackEngine(mods.data(), uint32_t(mods.size())));
+        e->setSampleRate(sr);
+        e->setSlots(ids);
+        e->setParam(rack::valueParam(0, 1), float(muted));
+        e->setParam(rack::kFollowSlot, 1.0f);
+        e->setParam(rack::kFollowGain, 0.0f);
+        float last = 0.0f;
+        run(*e, sine(200.0, 0.5, 1.0), [&](size_t) { last = e->sourceValue(rack::kSrcFollow); });
+        CHECK(muted ? last == 0.0f : std::fabs(last - 0.5f) < 0.05f, "follower after slot 1%s: %.3f", muted ? " (muted)" : "", last);
+        std::printf("  follower after slot 1%s: %.3f\n", muted ? " (muted)" : "        ", last);
+    }
+
+    // Pitch: a 220 Hz sine between 80 Hz and 1 kHz is at log(220/80)/log(1000/80)
+    for (double hz : { 110.0, 220.0, 660.0 })
+    {
+        std::unique_ptr<RackEngine> e(new RackEngine(mods.data(), uint32_t(mods.size())));
+        e->setSampleRate(sr);
+        e->setSlots(ids);
+        const rack::Route r = route(rack::kSrcPitch, 0, 1, 0.0f); // listens, moves nothing
+        e->setRoutes(&r, 1);
+        float last = 0.0f;
+        run(*e, sine(hz, 0.3, 1.0), [&](size_t) { last = e->sourceValue(rack::kSrcPitch); });
+        const double want = std::log(hz / 80.0) / std::log(1000.0 / 80.0);
+        CHECK(std::fabs(last - want) < 0.01, "pitch of %.0f Hz: %.4f, expected %.4f", hz, last, want);
+        std::printf("  pitch of %3.0f Hz: %.4f (expected %.4f)\n", hz, last, want);
+    }
+
+    // ADSR: input above -30 dB opens it (attack 10 ms to 1, decay 200 ms to 60 %), silence releases it
+    {
+        std::unique_ptr<RackEngine> e(new RackEngine(mods.data(), uint32_t(mods.size())));
+        e->setSampleRate(sr);
+        Stereo in = sine(300.0, 0.5, 2.0);
+        for (size_t i = in.l.size() / 2; i < in.l.size(); ++i)
+            in.l[i] = in.r[i] = 0.0f;
+        float peak = 0.0f, atHalf = 0.0f, last = 1.0f;
+        run(*e, in, [&](size_t pos) {
+            const float v = e->sourceValue(rack::kSrcAdsr);
+            if (pos < size_t(0.1 * sr))
+                peak = std::max(peak, v);
+            if (pos + 128 >= in.l.size() / 2 && pos < in.l.size() / 2)
+                atHalf = v;
+            last = v;
+        });
+        CHECK(peak == 1.0f && std::fabs(atHalf - 0.6f) < 1e-6f && last == 0.0f, "adsr: peak %.3f, sustain %.3f, end %.3f", peak, atHalf, last);
+        std::printf("  adsr: peak %.2f in the first 100 ms, sustain %.2f at 1 s, %.2f after the release\n", peak, atHalf, last);
+    }
+
+    // a route to a modulator setting: Macro 1 at 100 % moves LFO 1 Rate (1 Hz) to the top (20 Hz)
+    for (int moved = 0; moved < 2; ++moved)
+    {
+        std::unique_ptr<RackEngine> e(new RackEngine(mods.data(), uint32_t(mods.size())));
+        e->setSampleRate(sr);
+        e->setParam(rack::kMacro1, 100.0f);
+        const rack::Route r = route(rack::kSrcMacro1, rack::kModSlot, 0, moved ? 1.0f : 0.0f);
+        e->setRoutes(&r, 1);
+        int flips = 0;
+        float prev = 0.0f;
+        run(*e, sine(100.0, 0.1, 1.0), [&](size_t) {
+            const float v = e->sourceValue(rack::kSrcLfo1);
+            flips += (v >= 0.0f) != (prev >= 0.0f);
+            prev = v;
+        });
+        CHECK(moved ? flips >= 38 && flips <= 41 : flips >= 1 && flips <= 3, "LFO 1 rate %s: %d sign changes in 1 s", moved ? "moved" : "kept", flips);
+        std::printf("  LFO 1 Rate %s: %d sign changes in 1 s\n", moved ? "moved to 20 Hz by Macro 1" : "at 1 Hz                 ", flips);
+    }
+
+    // Remap: Macro 1 at 50 % through curve +1 reaches 0.5^0.25 of the depth
+    {
+        std::unique_ptr<RackEngine> e(new RackEngine(mods.data(), uint32_t(mods.size())));
+        e->setSampleRate(sr);
+        e->setSlots(ids);
+        e->setParam(rack::kMacro1, 50.0f);
+        const rack::Route r = route(rack::kSrcMacro1, 0, 0, 1.0f, 1.0f);
+        e->setRoutes(&r, 1);
+        float eff = 0.0f;
+        run(*e, sine(100.0, 0.1, 0.1), [&](size_t) { eff = e->effective(0, 0); });
+        const float want = float(std::pow(0.5, 0.25));
+        CHECK(std::fabs(eff - want) < 1e-6f && rack::remap(-0.5f, -1.0f) == -0.0625f && rack::remap(0.3f, 0.0f) == 0.3f,
+              "remap: %.6f, expected %.6f", eff, want);
+        std::printf("  remap +1: macro 50%% -> %.4f (0.5^0.25)\n", eff);
+    }
+}
+
 // ---- threads ---------------------------------------------------------------------------------
 
 static void testThreads()
@@ -573,7 +717,7 @@ static void testState()
         CHECK(rack::kExtFirst == 254 && std::string(rack::paramInfo(253, nm, 32, sy, 32).symbol) == "s8_v25" &&
               std::string(rack::paramInfo(rack::kSeqStep1 + 15, nm, 32, sy, 32).symbol) == "seq_step16" &&
               std::string(rack::paramInfo(rack::laneParam(7), nm, 32, sy, 32).symbol) == "s8_lane" &&
-              rack::kSlotLaneX1 == 286 && rack::kSlotSplit1 == 310 && rack::kNumParams == 333, "parameter layout");
+              rack::kSlotLaneX1 == 286 && rack::kSlotSplit1 == 310 && rack::kRandRate == 333 && rack::kNumParams == 346, "parameter layout");
         CHECK(std::string(rack::paramInfo(rack::laneXParam(7), nm, 32, sy, 32).symbol) == "s8_lanex" &&
               std::string(rack::paramInfo(rack::kLaneGain1, nm, 32, sy, 32).symbol) == "lanea_gain" &&
               std::string(rack::paramInfo(rack::kLaneSolo1 + 3, nm, 32, sy, 32).symbol) == "laned_solo" &&
@@ -581,7 +725,19 @@ static void testState()
               std::string(rack::paramInfo(rack::splitParam(2), nm, 32, sy, 32).symbol) == "s3_split" &&
               std::string(rack::paramInfo(rack::kSplitFreq1 + 3, nm, 32, sy, 32).symbol) == "split_f4" &&
               rack::paramInfo(rack::kSplitFreq1 + 3, nm, 32, sy, 32).def == 6400.0f &&
-              std::string(rack::paramInfo(rack::kBandBypass1 + 4, nm, 32, sy, 32).symbol) == "band5_bypass", "4.0 parameter symbols");
+              std::string(rack::paramInfo(rack::kBandBypass1 + 4, nm, 32, sy, 32).symbol) == "band5_bypass" &&
+              std::string(rack::paramInfo(rack::kRandRate, nm, 32, sy, 32).symbol) == "rand_rate" &&
+              std::string(rack::paramInfo(rack::kAdsrThreshold, nm, 32, sy, 32).symbol) == "adsr_threshold" &&
+              rack::globalFromSymbol("follow_slot") == int(rack::kFollowSlot), "4.0 parameter symbols");
+        // 4.0 routes: to a modulator setting ("m.") and with a Remap curve ("~"); a straight route's text is as before
+        rack::Route m[2];
+        m[0].source = rack::kSrcRand; m[0].slot = rack::kModSlot; m[0].value = 0; m[0].depth = 0.5f;
+        m[1].source = rack::kSrcPitch; m[1].slot = 2; m[1].value = 4; m[1].depth = -0.25f; m[1].curve = 0.75f;
+        const std::string ms = rack::formatRoutes(m, 2);
+        rack::Route mb[rack::kMaxRoutes];
+        CHECK(ms == "rand>m.1:0.5000;pitch>3.5:-0.2500~0.7500" && rack::parseRoutes(ms.c_str(), mb) == 2 &&
+              mb[0].slot == rack::kModSlot && mb[1].curve == 0.75f && rack::formatRoutes(mb, 2) == ms, "4.0 routes: %s", ms.c_str());
+        CHECK(rack::parseRoutes("lfo1>m.11:0.5;lfo1>1.1:0.5~x;lfo1>1.1:0.5~", mb) == 0, "bad 4.0 routes accepted");
         CHECK(rack::globalFromSymbol("feedback") == int(rack::kFeedback) && rack::globalFromSymbol("seq_step3") == int(rack::kSeqStep1 + 2) &&
               rack::globalFromSymbol("env_gain") == int(rack::kEnvGain) && rack::globalFromSymbol("s1_lane") < 0 &&
               rack::globalFromSymbol("s1_lanex") < 0 && rack::globalFromSymbol("lanec_pan") == int(rack::kLanePan1 + 2) &&
@@ -671,6 +827,11 @@ static void neutral(RackEngine& e, const RackEngine::PresetState& st)
     e.setParam(rack::kSplitFreq1, 300.0f);
     e.setParam(rack::kBandSolo1 + 1, 1.0f);
     e.setParam(rack::kBandBypass1, 1.0f);
+    // no route from them: the 4.0 modulators' settings do nothing
+    e.setParam(rack::kRandRate, 7.0f);
+    e.setParam(rack::kFollowSlot, 2.0f);
+    e.setParam(rack::kPitchLow, 200.0f);
+    e.setParam(rack::kAdsrThreshold, -50.0f);
 }
 
 static bool usesNewFeatures(const RackEngine::PresetState& st)
@@ -1051,6 +1212,8 @@ int main()
     testChannels();
     std::printf("modulation\n");
     testModulation();
+    std::printf("modulators\n");
+    testModulators();
     std::printf("threads\n");
     testThreads();
     testPresets();

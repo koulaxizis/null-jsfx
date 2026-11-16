@@ -66,11 +66,16 @@ enum Channel { kChanStereo = 0, kChanMid, kChanSide, kChanLeft, kChanRight };
 
 // ---- modulation sources ----------------------------------------------------------------------
 
-enum Source { kSrcMacro1 = 0, kSrcLfo1 = 8, kSrcLfo2 = 9, kSrcEnv = 10, kSrcSeq = 11, kNumSources = 12 };
+// 4.0 appends Smooth Random, the follower of a slot's output ("sidechain envelope"), the pitch
+// follower and the ADSR
+enum Source { kSrcMacro1 = 0, kSrcLfo1 = 8, kSrcLfo2 = 9, kSrcEnv = 10, kSrcSeq = 11,
+              kSrcRand = 12, kSrcFollow = 13, kSrcPitch = 14, kSrcAdsr = 15, kNumSources = 16 };
 static const char* const kSourceSymbols[] = { "macro1", "macro2", "macro3", "macro4", "macro5", "macro6",
-                                              "macro7", "macro8", "lfo1", "lfo2", "env", "seq" };
+                                              "macro7", "macro8", "lfo1", "lfo2", "env", "seq",
+                                              "rand", "follow", "pitch", "adsr" };
 static const char* const kSourceNames[] = { "Macro 1", "Macro 2", "Macro 3", "Macro 4", "Macro 5", "Macro 6",
-                                            "Macro 7", "Macro 8", "LFO 1", "LFO 2", "Envelope", "Step Seq" };
+                                            "Macro 7", "Macro 8", "LFO 1", "LFO 2", "Envelope", "Step Seq",
+                                            "Random", "Follower", "Pitch", "ADSR" };
 
 inline int sourceFromSymbol(const char* s)
 {
@@ -114,7 +119,13 @@ enum ExtParam : uint32_t {
     kSplitFreq1,                                     // 319 .. 322: Split 1..4
     kBandSolo1 = kSplitFreq1 + kMaxBands - 1,        // 323 .. 327: Band 1..5 Solo
     kBandBypass1 = kBandSolo1 + kMaxBands,           // 328 .. 332: Band 1..5 Bypass
-    kNumParams = kBandBypass1 + kMaxBands,           // 333
+    // the 4.0 modulators
+    kRandRate = kBandBypass1 + kMaxBands,            // 333
+    kRandSmooth,
+    kFollowSlot, kFollowAttack, kFollowRelease, kFollowGain, // 335 .. 338
+    kPitchLow, kPitchHigh,                           // 339, 340
+    kAdsrAttack, kAdsrDecay, kAdsrSustain, kAdsrRelease, kAdsrThreshold, // 341 .. 345
+    kNumParams,                                      // 346
 };
 static constexpr float kMaxFeedback = 95.0f;
 
@@ -195,6 +206,33 @@ static const ParamInfo kExtInfos[] = {
     { { "Solo", "solo", 0.0f, 1.0f, 0.0f, "", 1.0f, kOffOn }, false },               // 18: x5, per band
     { { "Bypass", "bypass", 0.0f, 1.0f, 0.0f, "", 1.0f, kOffOn }, false },           // 19: x5, per band
 };
+// the 4.0 modulators' settings (kRandRate .. kAdsrThreshold, in order)
+static const ParamInfo kModInfos[] = {
+    { { "Random Rate", "rand_rate", 0.02f, 20.0f, 1.0f, "Hz", 0.0f }, true },
+    { { "Random Smooth", "rand_smooth", 0.0f, 100.0f, 100.0f, "%", 1.0f }, false },
+    { { "Follower Slot", "follow_slot", 1.0f, 8.0f, 8.0f, "", 1.0f }, false },
+    { { "Follower Attack", "follow_attack", 0.1f, 500.0f, 10.0f, "ms", 0.0f }, true },
+    { { "Follower Release", "follow_release", 1.0f, 2000.0f, 150.0f, "ms", 0.0f }, true },
+    { { "Follower Gain", "follow_gain", -12.0f, 36.0f, 6.0f, "dB", 0.1f }, false },
+    { { "Pitch Low", "pitch_low", 20.0f, 2000.0f, 80.0f, "Hz", 1.0f }, true },
+    { { "Pitch High", "pitch_high", 100.0f, 8000.0f, 1000.0f, "Hz", 1.0f }, true },
+    { { "ADSR Attack", "adsr_attack", 0.1f, 5000.0f, 10.0f, "ms", 0.0f }, true },
+    { { "ADSR Decay", "adsr_decay", 1.0f, 5000.0f, 200.0f, "ms", 0.0f }, true },
+    { { "ADSR Sustain", "adsr_sustain", 0.0f, 100.0f, 60.0f, "%", 1.0f }, false },
+    { { "ADSR Release", "adsr_release", 1.0f, 5000.0f, 300.0f, "ms", 0.0f }, true },
+    { { "ADSR Threshold", "adsr_threshold", -60.0f, 0.0f, -30.0f, "dB", 0.1f }, false },
+};
+
+// the modulator settings a route can move (4.0): a route to slot "m" moves the setting
+// kModTargets[value]; its depth is a share of the setting's range (log ones in log space)
+static const uint32_t kModTargets[] = { kLfo1Rate, kLfo2Rate, kEnvGain, kSeqRate, kRandRate, kRandSmooth,
+                                        kAdsrAttack, kAdsrDecay, kAdsrSustain, kAdsrRelease };
+static const char* const kModTargetNames[] = { "LFO 1 Rate", "LFO 2 Rate", "Env Gain", "Seq Rate", "Random Rate",
+                                               "Random Smooth", "ADSR Attack", "ADSR Decay", "ADSR Sustain",
+                                               "ADSR Release" };
+static constexpr uint32_t kNumModTargets = sizeof(kModTargets) / sizeof(kModTargets[0]);
+static constexpr int kModSlot = int(kSlots); // Route::slot of a route to a modulator setting
+
 // the defaults of Split 1..4: two octaves apart
 static const float kSplitDefaults[kMaxBands - 1] = { 100.0f, 400.0f, 1600.0f, 6400.0f };
 
@@ -253,7 +291,15 @@ inline DISTRHO::SliderInfo paramInfo(uint32_t index, char* name, size_t nn, char
             std::snprintf(name, nn, "Split %u", index - kSplitFreq1 + 1);
             std::snprintf(sym, ns, "split_f%u", index - kSplitFreq1 + 1);
         }
-        else if (index >= kBandSolo1 && index < kNumParams)
+        else if (index >= kRandRate && index < kNumParams)
+        {
+            if (log)
+                *log = kModInfos[index - kRandRate].log;
+            s = kModInfos[index - kRandRate].s;
+            std::snprintf(name, nn, "%s", s.name);
+            std::snprintf(sym, ns, "%s", s.symbol);
+        }
+        else if (index >= kBandSolo1 && index < kRandRate)
         {
             // Band 1..5 Solo, Bypass
             const uint32_t k = (index - kBandSolo1) / kMaxBands, band = (index - kBandSolo1) % kMaxBands;
@@ -402,10 +448,21 @@ inline float plainToValue(const DISTRHO::SliderInfo& in, bool log, float v)
 
 struct Route {
     int source = -1;  // Source, -1 = unused
-    int slot = 0;     // 0..7
-    int value = 0;    // 0..24
+    int slot = 0;     // 0..7; 4.0: kModSlot = a modulator setting
+    int value = 0;    // 0..24; for kModSlot 0..kNumModTargets-1
     float depth = 0.0f;
+    float curve = 0.0f; // 4.0: Remap, -1..1 (0 = straight; > 0 bends the source up, < 0 down)
 };
+
+// Remap (4.0): the source value through the route's curve, a power law on |v| that keeps the sign
+// (curve 1: |v|^0.25, -1: |v|^4)
+inline float remap(float v, float curve)
+{
+    if (curve == 0.0f)
+        return v;
+    const double a = std::fabs(double(v)), y = std::pow(a, std::pow(4.0, -double(curve)));
+    return float(v < 0.0f ? -y : y);
+}
 
 inline std::string formatRoutes(const Route* r, uint32_t n)
 {
@@ -415,9 +472,19 @@ inline std::string formatRoutes(const Route* r, uint32_t n)
     {
         if (r[i].source < 0 || r[i].source >= kNumSources)
             continue;
-        std::snprintf(buf, sizeof(buf), "%s%s>%d.%d:%.4f", s.empty() ? "" : ";", kSourceSymbols[r[i].source],
-                      r[i].slot + 1, r[i].value + 1, double(r[i].depth));
+        if (r[i].slot == kModSlot)
+            std::snprintf(buf, sizeof(buf), "%s%s>m.%d:%.4f", s.empty() ? "" : ";", kSourceSymbols[r[i].source],
+                          r[i].value + 1, double(r[i].depth));
+        else
+            std::snprintf(buf, sizeof(buf), "%s%s>%d.%d:%.4f", s.empty() ? "" : ";", kSourceSymbols[r[i].source],
+                          r[i].slot + 1, r[i].value + 1, double(r[i].depth));
         s += buf;
+        if (r[i].curve != 0.0f)
+        {
+            // 4.0: the Remap curve as a suffix, only when bent (a 2.x string stays as it was)
+            std::snprintf(buf, sizeof(buf), "~%.4f", double(r[i].curve));
+            s += buf;
+        }
     }
     return s;
 }
@@ -440,15 +507,33 @@ inline uint32_t parseRoutes(const char* s, Route* out)
             {
                 *gt = '\0';
                 int slot = 0, value = 0;
-                float depth = 0.0f;
+                float depth = 0.0f, curve = 0.0f;
                 const int src = sourceFromSymbol(buf);
-                if (src >= 0 && std::sscanf(gt + 1, "%d.%d:%f", &slot, &value, &depth) == 3 && std::isfinite(depth) && slot >= 1 &&
-                    slot <= int(kSlots) && value >= 1 && value <= int(kValues))
+                char* tilde = std::strchr(gt + 1, '~');
+                bool ok = true;
+                if (tilde)
+                {
+                    *tilde = '\0';
+                    char* e = nullptr;
+                    curve = std::strtof(tilde + 1, &e);
+                    ok = e != tilde + 1 && *e == '\0' && std::isfinite(curve);
+                }
+                bool parsed = false;
+                if (gt[1] == 'm' && gt[2] == '.')
+                {
+                    parsed = std::sscanf(gt + 3, "%d:%f", &value, &depth) == 2 && value >= 1 && value <= int(kNumModTargets);
+                    slot = kModSlot + 1;
+                }
+                else
+                    parsed = std::sscanf(gt + 1, "%d.%d:%f", &slot, &value, &depth) == 3 && slot >= 1 &&
+                             slot <= int(kSlots) && value >= 1 && value <= int(kValues);
+                if (src >= 0 && ok && parsed && std::isfinite(depth))
                 {
                     out[n].source = src;
                     out[n].slot = slot - 1;
                     out[n].value = value - 1;
                     out[n].depth = depth < -1.0f ? -1.0f : (depth > 1.0f ? 1.0f : depth);
+                    out[n].curve = curve < -1.0f ? -1.0f : (curve > 1.0f ? 1.0f : curve);
                     ++n;
                 }
             }
@@ -509,6 +594,7 @@ struct PresetRoute {
     uint8_t slot, value;
     float depth;
     const char* name;   // the target slider's name
+    float curve;        // 4.0: Remap (0 = straight, the generator leaves it out); slot kModSlot = a modulator setting
 };
 
 struct PresetGlobal {
