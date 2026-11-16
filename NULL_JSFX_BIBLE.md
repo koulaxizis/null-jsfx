@@ -75,7 +75,16 @@
 
   What each run covers, area by area, is the checklist in Part V.3, which grows with the suite. The full report is a Claude Doc, with a short summary in the thread "Διμηνιαίος έλεγχος σουίτας". Findings come as a numbered list in Greek, and Christos decides. If the usage limit is hit, the audit continues right after the reset. It runs from a recurring scheduled task; a run does not schedule the next one (2026-10-26, 2026-10-27) [memory].
 - **Memory export.** Every quarter, on the 10th of January, April, July and October at 12:00 Athens time, Claude exports the project memory that changed since the previous export, with proposed text for the project Goal and Instructions, which Christos pastes. It runs from a recurring scheduled task, in the thread "Μηνιαία εξαγωγή μνήμης" (2026-10-26) [memory].
-- **Issues.** Every day at 08:23 Athens time (chosen so it clashes with no other project's scheduled task), Claude reads the new GitHub issues and issue comments since the previous run, checks each against the repo (exists, done, planned, rejected, duplicate, reproducible bug) and posts a short Greek summary with numbered proposals in the thread "Πρόσθεσε καθημερινό έλεγχο των issues"; with nothing new it posts nothing. It never replies on, labels or closes an issue without Christos's OK, and a confirmed bug gets its own fix thread. It runs from a recurring scheduled task with its state in the project files (2026-11-03) [memory].
+- **Issues.** GitHub issues of every project are checked by ONE scheduled task in the orOS project, every three days at 07:41 Athens time; it reads new issues and comments, checks each against the repo and posts a short Greek summary with numbered proposals. It never replies on, labels or closes an issue without Christos's OK, and a confirmed bug gets its own fix thread. The daily NULL JSFX issues task of 2026-11-03 is disabled for good (2026-11-12) [memory].
+- **Light routines (2026-11-16).** Six lighter, more frequent checks run between the full audits, each from its own scheduled task in its own thread, from a runbook in the project files [memory]:
+  - weekly dependency check (Monday 10:47): new versions and advisories of DPF, the VST3 and CLAP SDKs, Tauri, REAPER, Android and the CI pins;
+  - monthly release check (3rd, 20:13): download the latest release, open its zips and installers, check the site download links, the F-Droid index and Obtainium;
+  - monthly Ko-fi post draft (2nd, 11:07, about the previous month): a draft only; Christos approves and posts it himself;
+  - weekly repo cleanup (Thursday 13:37): merged and stale branches, stuck PRs and CI runs, large files; a list for approval, nothing deleted without his OK;
+  - monthly site check (22nd, 12:19): speed, SEO and mobile of nulljsfx.tech against the previous month;
+  - monthly preset listening (25th, 14:41): new or changed presets rendered to audio and measured; only the suspicious ones go to Christos's ears.
+
+  Every run pushes at start and end, posts at least one Greek line in its thread, gives numbered Greek findings, asks decisions on cards, opens a fix thread for any bug and changes nothing without Christos's approval. They never repeat the full audit.
 - **Push.** Every scheduled task sends a push notification when a run starts and when it ends, also when it ends without a message or stops early; only a day skipped by a date check sends nothing (2026-11-03) [memory].
 - **Project instructions.** When a lasting decision is made, Claude proposes the text for the project instructions. Christos pastes it.
 
@@ -2165,3 +2174,11 @@ entry and the Bible delta.
 - **Files:** `tests/preset_test.cpp` (new), `tests/preset_levels.txt` (new), `tests/run.sh`, `tools/build_presets.py`, 111 `tools/presets/*.json`, the generated preset files (`.rpl`, GFX blocks, `FactoryPresets.hpp`, `.ini`, `web/fx`) and plugin pages, this Bible (R16, Part III, V.1, VII, B21).
 - **Tests (run on Linux):** `preset_test` on all 154 plain JSFX (1,572 presets in 132 plugins measured, 0 failed; the rest are MIDI effects, meters and surround beds); `tests/run.sh` on all plugins (lint, render, chains, preset test); `tools/build_presets.py --check` (up to date, 1,691 presets), `build_site.py`, `build_chains.py`, `build_assisted.py` and `build_bible.py --check`, `node web/tools/build.js`; `tests/bible_order.py`. Not listened to by ear. In CI: `test.yml` runs the whole `tests/run.sh`.
 - **Version:** v3.3.1 (no change; everything of B21 ships with 4.0).
+
+### 2026-11-16 — Process — Six light routines between the audits
+- **Why:** Christos approved all six routines proposed on 2026-11-16 («Ναι σε όλα»): lighter, more frequent checks so dependencies, the release, the site and the presets do not age silently between the bimonthly audits.
+- **Changes:** Part 0.5 gains the "Light routines" rule (weekly dependency check, monthly release check, monthly Ko-fi draft, weekly repo cleanup, monthly site check, monthly preset listening, with their Athens times). The "Issues" rule now states the fact of 2026-11-12: one combined issues task in the orOS project every three days at 07:41; the daily NULL JSFX task is disabled.
+- **Decisions:** each routine fires into its own thread and follows a runbook in the project files, so its behaviour changes without rewriting the task; slots chosen to clash with no scheduled task of any project and to avoid 16:00–19:00 Athens (Claude's choice).
+- **Files:** `NULL_JSFX_BIBLE.md`.
+- **Tests:** `python3 tests/bible_order.py`; documentation only, no plugin, DSP or site file changed.
+
