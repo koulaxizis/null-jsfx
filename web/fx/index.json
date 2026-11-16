@@ -310,6 +310,20 @@
    "bytes": 34356
   },
   {
+   "id": "warmer",
+   "name": "Warmer",
+   "category": "One Slider",
+   "tags": "warm warmth tape tube saturation analog low mids soft top mix bus one knob gui",
+   "gfx": [
+    360,
+    240
+   ],
+   "ins": 2,
+   "outs": 2,
+   "sliders": 1,
+   "bytes": 35691
+  },
+  {
    "id": "wetter",
    "name": "Wetter",
    "category": "One Slider",

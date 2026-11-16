@@ -1,0 +1,48 @@
+desc:NULL Warmer
+author: Christos Koulaxizis
+tags: warm warmth tape tube saturation analog low mids soft top mix bus one knob
+//category: One Slider
+//NULL JSFX v3.3.1 • https://nulljsfx.tech • MIT License
+
+slider1:40<0,100,1>Amount
+
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
+
+@init
+  ext_noinit = 1;              // play and seek keep tails and state, as in the VST3/CLAP
+  // One-knob warmth: the lows and low mids (below 600 Hz) go through a gentle, slightly
+  // asymmetric tape/tube curve (even harmonics, its DC removed) and rise a little, the top is
+  // eased down and a soft low-pass falls from 20 to 9 kHz. At 0 the signal is untouched;
+  // the level stays close to the input.
+  function sat(x) local(e) ( e = exp(2 * max(-20, min(20, x))); (e - 1) / (e + 1); );
+  function dcb(x) local(y) ( y = x - this.x1 + wm_dcr * this.y1; this.x1 = x; this.y1 = y; y; );
+  function band(x) ( this.lo += (x - this.lo) * wm_lpc; );
+  wm_lpc = 1 - exp(-2 * $pi * min(600, 0.45 * srate) / srate);
+  wm_dcr = exp(-2 * $pi * 10 / srate);
+
+@slider
+  wm_a = slider1 / 100;
+  wm_d = 1 + wm_a * 2;
+  wm_b = 0.15 * wm_a;
+  wm_z = sat(wm_b);
+  wm_norm = 1 / (wm_d * (1 - wm_z * wm_z));
+  wm_lo = 1 + 0.3 * wm_a;
+  wm_hi = 1 - 0.2 * wm_a;
+  wm_tc = 1 - exp(-2 * $pi * min(20000 - 11000 * wm_a, 0.45 * srate) / srate);
+  wm_tm = min(1, wm_a * 2);
+  wm_trim = 1 - 0.08 * wm_a;
+
+@sample
+  wm_l = bl.band(spl0);
+  wm_r = br.band(spl1);
+  wm_sl = wm_l + wm_a * (dl.dcb((sat(wm_d * wm_l + wm_b) - wm_z) * wm_norm) - wm_l);
+  wm_sr = wm_r + wm_a * (dr.dcb((sat(wm_d * wm_r + wm_b) - wm_z) * wm_norm) - wm_r);
+  wm_yl = wm_sl * wm_lo + (spl0 - wm_l) * wm_hi;
+  wm_yr = wm_sr * wm_lo + (spl1 - wm_r) * wm_hi;
+  wm_tl += (wm_yl - wm_tl) * wm_tc;
+  wm_tr += (wm_yr - wm_tr) * wm_tc;
+  spl0 = (wm_yl + (wm_tl - wm_yl) * wm_tm) * wm_trim;
+  spl1 = (wm_yr + (wm_tr - wm_yr) * wm_tm) * wm_trim;

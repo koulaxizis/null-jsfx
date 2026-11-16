@@ -1,0 +1,13 @@
+[
+  ["Touch of Warmth", {"Amount": 15}],
+  ["Vocal Warmth", {"Amount": 30}],
+  ["Acoustic Body", {"Amount": 35}],
+  ["Bass Round", {"Amount": 55}],
+  ["Drum Bus Tape", {"Amount": 50}],
+  ["Master Glow", {"Amount": 20}],
+  ["Lo-Fi Blanket", {"Amount": 85}],
+  ["Vintage Tape", {"Amount": 70}],
+  ["Soft Piano", {"Amount": 45}],
+  ["Full Warmth", {"Amount": 100}],
+  ["Synth Pad Velvet", {"Amount": 60}]
+]

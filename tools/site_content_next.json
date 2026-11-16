@@ -15,5 +15,22 @@
     "properties": "Input → tempo-locked delay per channel (host tempo, 120 bpm without one; the time glides over 80 ms; up to 2 s) → low-pass and 150 Hz high-pass in the loop → feedback, crossing sides by the ping-pong amount → mixed with dry → Output. Zero latency.",
     "beta": true,
     "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-echo_one\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><path d=\"M 10,48 L 10,16\" stroke=\"url(#icon-echo_one)\" stroke-width=\"3\" stroke-linecap=\"round\"/><path d=\"M 24,48 L 24,24\" stroke=\"url(#icon-echo_one)\" stroke-width=\"2.5\" stroke-linecap=\"round\" opacity=\"0.8\"/><path d=\"M 38,48 L 38,31\" stroke=\"url(#icon-echo_one)\" stroke-width=\"2\" stroke-linecap=\"round\" opacity=\"0.6\"/><path d=\"M 52,48 L 52,37\" stroke=\"url(#icon-echo_one)\" stroke-width=\"1.5\" stroke-linecap=\"round\" opacity=\"0.4\"/></svg>"
+  },
+  "warmer": {
+    "card_desc": "One-Knob Analog Warmth",
+    "keywords": "warmer warmth warm tape tube saturation analog low mids soft top mix bus master one knob",
+    "slider_desc": [
+      "Warmth in one move: 0 leaves the signal untouched; higher values drive the lows and low mids (below 600 Hz) into a gentle, slightly asymmetric tape/tube curve (drive x1 to x3, even harmonics) and lift them up to +2.3 dB, ease the top down by up to 2 dB and close a soft low-pass from 20 to 9 kHz, with a small trim so the level stays close to the input"
+    ],
+    "uses": [
+      "Warm up a thin vocal or acoustic guitar",
+      "Round off a DI bass",
+      "Analog glue on the drum bus",
+      "A soft glow on the master",
+      "Take the edge off bright synths"
+    ],
+    "properties": "Input → split at 600 Hz (one pole) → lows: asymmetric tanh curve, DC removed, mixed in by Amount, +0 to +2.3 dB; highs: 0 to -2 dB → one-pole low-pass 20 to 9 kHz faded in by Amount → trim → Output. Zero latency.",
+    "beta": true,
+    "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-warmer\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><path d=\"M 8,52 L 56,12\" stroke=\"url(#icon-warmer)\" stroke-width=\"1.5\" fill=\"none\" stroke-linecap=\"round\" opacity=\"0.4\"/><path d=\"M 8,48 C 22,46 26,36 32,32 C 38,28 42,18 56,16\" stroke=\"url(#icon-warmer)\" stroke-width=\"2.5\" fill=\"none\" stroke-linecap=\"round\"/></svg>"
   }
 }
