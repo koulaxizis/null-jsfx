@@ -16,6 +16,9 @@
  *
  * Appended in 4.0, 286..309: S1..S8 Lane C/D ("A/B" leaves the slot on its Lane, "C" or "D" moves
  * it to lane C or D), then Gain, Pan, Mute and Solo of lanes A..D. At their defaults nothing moves.
+ * Then 310..332: S1..S8 Split Band ("Off" leaves the slot on its Band; 1..5 puts it on that band of
+ * the rack's own split into up to 5 bands), Split Bands (2..5), Split 1..4 (the crossovers) and
+ * Solo and Bypass of bands 1..5. With no slot on a split band nothing moves.
  *
  * State (strings): "slots" = 8 module ids separated by ',' (empty = empty slot), "routes" =
  * "source>slot.value:depth" separated by ';' (slot and value from 1, e.g. "lfo1>2.1:-0.25";
@@ -54,6 +57,8 @@ static const char* const kShapeOptions[] = { "Sine", "Triangle", "Saw Up", "Saw 
 static const char* const kLaneOptions[] = { "A", "B" };
 static const char* const kLaneXOptions[] = { "A/B", "C", "D" }; // added in 4.0: lanes C and D
 static constexpr uint32_t kLanes = 4;
+static const char* const kSplitOptions[] = { "Off", "1", "2", "3", "4", "5" }; // added in 4.0
+static constexpr uint32_t kMaxBands = 5;
 
 enum Band { kBandFull = 0, kBandLow, kBandMid, kBandHigh };
 enum Lane { kLaneA = 0, kLaneB, kLaneC, kLaneD };
@@ -104,7 +109,12 @@ enum ExtParam : uint32_t {
     kLanePan1 = kLaneGain1 + kLanes,                 // 298 .. 301
     kLaneMute1 = kLanePan1 + kLanes,                 // 302 .. 305
     kLaneSolo1 = kLaneMute1 + kLanes,                // 306 .. 309
-    kNumParams = kLaneSolo1 + kLanes,                // 310
+    kSlotSplit1 = kLaneSolo1 + kLanes,               // 310 .. 317: S1..S8 Split Band
+    kSplitBands = kSlotSplit1 + kSlots,              // 318
+    kSplitFreq1,                                     // 319 .. 322: Split 1..4
+    kBandSolo1 = kSplitFreq1 + kMaxBands - 1,        // 323 .. 327: Band 1..5 Solo
+    kBandBypass1 = kBandSolo1 + kMaxBands,           // 328 .. 332: Band 1..5 Bypass
+    kNumParams = kBandBypass1 + kMaxBands,           // 333
 };
 static constexpr float kMaxFeedback = 95.0f;
 
@@ -112,6 +122,7 @@ inline constexpr uint32_t slotParam(uint32_t slot, uint32_t p) { return kNumGlob
 inline constexpr uint32_t valueParam(uint32_t slot, uint32_t v) { return slotParam(slot, kSlotValue1 + v); }
 inline constexpr uint32_t laneParam(uint32_t slot) { return kSlotLane1 + slot; }
 inline constexpr uint32_t laneXParam(uint32_t slot) { return kSlotLaneX1 + slot; }
+inline constexpr uint32_t splitParam(uint32_t slot) { return kSlotSplit1 + slot; }
 
 // the lane a slot runs on (kLaneA..kLaneD) from its Lane and Lane C/D parameters
 inline int slotLane(float lane, float laneX)
@@ -178,7 +189,14 @@ static const ParamInfo kExtInfos[] = {
     { { "Pan", "pan", -100.0f, 100.0f, 0.0f, "%", 1.0f }, false },
     { { "Mute", "mute", 0.0f, 1.0f, 0.0f, "", 1.0f, kOffOn }, false },
     { { "Solo", "solo", 0.0f, 1.0f, 0.0f, "", 1.0f, kOffOn }, false },
+    { { "Split Band", "split", 0.0f, 5.0f, 0.0f, "", 1.0f, kSplitOptions }, false }, // 15: x8, per slot
+    { { "Split Bands", "split_bands", 2.0f, 5.0f, 5.0f, "", 1.0f }, false },
+    { { "Split", "split_f", 20.0f, 20000.0f, 100.0f, "Hz", 1.0f }, true },          // 17: x4, numbered
+    { { "Solo", "solo", 0.0f, 1.0f, 0.0f, "", 1.0f, kOffOn }, false },               // 18: x5, per band
+    { { "Bypass", "bypass", 0.0f, 1.0f, 0.0f, "", 1.0f, kOffOn }, false },           // 19: x5, per band
 };
+// the defaults of Split 1..4: two octaves apart
+static const float kSplitDefaults[kMaxBands - 1] = { 100.0f, 400.0f, 1600.0f, 6400.0f };
 
 // name, symbol, range, default, unit, step and options of any parameter (slot values are 0..1);
 // name and symbol are written to the given buffers for slot, step and appended parameters
@@ -214,7 +232,36 @@ inline DISTRHO::SliderInfo paramInfo(uint32_t index, char* name, size_t nn, char
             std::snprintf(name, nn, "S%u Lane C/D", index - kSlotLaneX1 + 1);
             std::snprintf(sym, ns, "s%u_lanex", index - kSlotLaneX1 + 1);
         }
-        else if (index >= kLaneGain1 && index < kNumParams)
+        else if (index >= kSlotSplit1 && index < kSlotSplit1 + kSlots)
+        {
+            s = kExtInfos[15].s;
+            std::snprintf(name, nn, "S%u Split Band", index - kSlotSplit1 + 1);
+            std::snprintf(sym, ns, "s%u_split", index - kSlotSplit1 + 1);
+        }
+        else if (index == kSplitBands)
+        {
+            s = kExtInfos[16].s;
+            std::snprintf(name, nn, "%s", s.name);
+            std::snprintf(sym, ns, "%s", s.symbol);
+        }
+        else if (index >= kSplitFreq1 && index < kBandSolo1)
+        {
+            if (log)
+                *log = true;
+            s = kExtInfos[17].s;
+            s.def = kSplitDefaults[index - kSplitFreq1];
+            std::snprintf(name, nn, "Split %u", index - kSplitFreq1 + 1);
+            std::snprintf(sym, ns, "split_f%u", index - kSplitFreq1 + 1);
+        }
+        else if (index >= kBandSolo1 && index < kNumParams)
+        {
+            // Band 1..5 Solo, Bypass
+            const uint32_t k = (index - kBandSolo1) / kMaxBands, band = (index - kBandSolo1) % kMaxBands;
+            s = kExtInfos[18 + k].s;
+            std::snprintf(name, nn, "Band %u %s", band + 1, s.name);
+            std::snprintf(sym, ns, "band%u_%s", band + 1, s.symbol);
+        }
+        else if (index >= kLaneGain1 && index < kSlotSplit1)
         {
             // Lane A..D Gain, Pan, Mute, Solo
             const uint32_t k = (index - kLaneGain1) / kLanes, lane = (index - kLaneGain1) % kLanes;
@@ -258,7 +305,7 @@ inline DISTRHO::SliderInfo paramInfo(uint32_t index, char* name, size_t nn, char
 }
 
 // true for the per-slot parameters: On, Mix, Band, Channel, the values and (added after 2.1) the lane
-// and (4.0) the lane C/D
+// and (4.0) the lane C/D and the split band
 inline bool isSlotParam(uint32_t index, uint32_t* slot = nullptr)
 {
     if (index >= kNumGlobals && index < kExtFirst)
@@ -277,6 +324,12 @@ inline bool isSlotParam(uint32_t index, uint32_t* slot = nullptr)
     {
         if (slot)
             *slot = index - kSlotLaneX1;
+        return true;
+    }
+    if (index >= kSlotSplit1 && index < kSlotSplit1 + kSlots)
+    {
+        if (slot)
+            *slot = index - kSlotSplit1;
         return true;
     }
     return false;
@@ -448,6 +501,7 @@ struct PresetSlot {
     float mix;
     bool on;
     uint8_t lane; // added after 2.1: 0 = A (the generator leaves it out), 1 = B; 4.0: 2 = C, 3 = D
+    uint8_t split; // 4.0: the split band, 0 = off (the generator leaves it out), 1..5
 };
 
 struct PresetRoute {

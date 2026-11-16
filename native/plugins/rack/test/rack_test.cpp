@@ -23,6 +23,9 @@
  *   lanes       two lanes with different latencies line up (impulse), Lane Mix blends them;
  *               (4.0) lanes A, C and D share the output equally, Mute, Solo, Gain and Pan act,
  *               and lane A's levels do nothing while it runs alone
+ *   split bands (4.0) 2..5 bands sum flat with a module on any band (also with latency), a muted
+ *               module takes only its band, Bypass brings the band back, Solo keeps only its band
+ *               and does nothing without a slot on a split band
  *   feedback    the loop repeats every kChunk samples and decays; 95 % on noise stays bounded
  *   sequencer   the steps, Steps, sync to the host beat and Glide
  *   keyed       Sidechain Ducker keys on the rack input delayed by the latency before it
@@ -343,6 +346,72 @@ static void testBands()
         }
 }
 
+// 4.0: the split into 2..5 bands sums flat; a muted module takes only its band; Bypass and Solo
+static void testSplitBands()
+{
+    auto mods = allModules(true);
+    const double sr = 48000.0;
+    const size_t n = 16384;
+    Stereo in, out;
+    in.l.assign(n, 0.0f);
+    in.r.assign(n, 0.0f);
+    in.l[0] = in.r[0] = 1.0f;
+    // the centre of band b of 5 at the defaults 100 / 400 / 1600 / 6400 Hz
+    const double centre[5] = { 30.0, 200.0, 800.0, 3200.0, 15000.0 };
+    for (int nb = 2; nb <= 5; ++nb)
+        for (int b = 1; b <= nb; ++b)
+        {
+            std::unique_ptr<RackEngine> e(new RackEngine(mods.data(), uint32_t(mods.size())));
+            e->setSampleRate(sr);
+            e->setSlot(0, "identity");
+            e->setParam(rack::valueParam(0, 0), (b == 2 ? 333.0f : 0.0f) / 4000.0f);
+            e->setParam(rack::kSplitBands, float(nb));
+            e->setParam(rack::splitParam(0), float(b));
+            render(*e, in, out, 512);
+            double worst = 0.0;
+            for (int k = 0; k < 120; ++k)
+                worst = std::max(worst, std::fabs(magDb(out.l, 20.0 * std::pow(1000.0, k / 119.0), sr)));
+            CHECK(worst < 0.01, "%d bands, band %d: %.4f dB off flat", nb, b, worst);
+            // muted: band b is gone, a band far from it stays (for nb < 5 the top band runs from Split nb-1)
+            e->setParam(rack::valueParam(0, 1), 1.0f);
+            render(*e, in, out, 512);
+            const double fIn = b == nb ? (nb == 5 ? 15000.0 : centre[4]) : centre[b - 1];
+            const double fOut = b <= nb / 2 ? 15000.0 : 30.0;
+            const double gIn = magDb(out.l, fIn, sr), gOut = magDb(out.l, fOut, sr);
+            // (a two-octave band between LR4 slopes is down by about 19 dB at its centre)
+            CHECK(gIn < (b == 1 || b == nb ? -20.0 : -15.0) && std::fabs(gOut) < 0.1, "%d bands, band %d muted: %.1f dB in band, %.2f dB outside", nb, b, gIn, gOut);
+            // Bypass of that band: the muted module does not run, the sum is flat again
+            e->setParam(rack::kBandBypass1 + uint32_t(b - 1), 1.0f);
+            render(*e, in, out, 512);
+            double worstB = 0.0;
+            for (int k = 0; k < 120; ++k)
+                worstB = std::max(worstB, std::fabs(magDb(out.l, 20.0 * std::pow(1000.0, k / 119.0), sr)));
+            CHECK(worstB < 0.01, "%d bands, band %d bypassed: %.4f dB off flat", nb, b, worstB);
+            if (nb == 5 || nb == 2)
+                std::printf("  %d bands, band %d: max deviation %.5f dB; muted %.1f dB at %.0f Hz, %.2f dB at %.0f Hz; bypassed %.5f dB\n",
+                            nb, b, worst, gIn, fIn, gOut, fOut, worstB);
+        }
+    // Solo of band 1 (5 bands, a slot on band 3): only the lows are left
+    {
+        std::unique_ptr<RackEngine> e(new RackEngine(mods.data(), uint32_t(mods.size())));
+        e->setSampleRate(sr);
+        e->setSlot(0, "identity");
+        e->setParam(rack::splitParam(0), 3.0f);
+        e->setParam(rack::kBandSolo1, 1.0f);
+        render(*e, in, out, 512);
+        const double lo = magDb(out.l, 30.0, sr), hi = magDb(out.l, 3200.0, sr);
+        CHECK(std::fabs(lo) < 0.1 && hi < -30.0, "band 1 solo: %.2f dB at 30 Hz, %.1f dB at 3.2 kHz", lo, hi);
+        // no slot on a split band: Solo does nothing (bit for bit the input)
+        e->setParam(rack::splitParam(0), 0.0f);
+        render(*e, in, out, 512);
+        bool same = true;
+        for (size_t i = 0; i < n; ++i)
+            same = same && out.l[i] == in.l[i] && out.r[i] == in.r[i];
+        CHECK(same, "band solo without a split slot changed the sound");
+        std::printf("  band 1 solo: %.2f dB at 30 Hz, %.1f dB at 3.2 kHz; without a split slot it does nothing\n", lo, hi);
+    }
+}
+
 // ---- channels --------------------------------------------------------------------------------
 
 static void testChannels()
@@ -504,15 +573,21 @@ static void testState()
         CHECK(rack::kExtFirst == 254 && std::string(rack::paramInfo(253, nm, 32, sy, 32).symbol) == "s8_v25" &&
               std::string(rack::paramInfo(rack::kSeqStep1 + 15, nm, 32, sy, 32).symbol) == "seq_step16" &&
               std::string(rack::paramInfo(rack::laneParam(7), nm, 32, sy, 32).symbol) == "s8_lane" &&
-              rack::kSlotLaneX1 == 286 && rack::kNumParams == 310, "parameter layout");
+              rack::kSlotLaneX1 == 286 && rack::kSlotSplit1 == 310 && rack::kNumParams == 333, "parameter layout");
         CHECK(std::string(rack::paramInfo(rack::laneXParam(7), nm, 32, sy, 32).symbol) == "s8_lanex" &&
               std::string(rack::paramInfo(rack::kLaneGain1, nm, 32, sy, 32).symbol) == "lanea_gain" &&
               std::string(rack::paramInfo(rack::kLaneSolo1 + 3, nm, 32, sy, 32).symbol) == "laned_solo" &&
-              std::string(nm) == "Lane D Solo", "4.0 parameter symbols");
+              std::string(nm) == "Lane D Solo" &&
+              std::string(rack::paramInfo(rack::splitParam(2), nm, 32, sy, 32).symbol) == "s3_split" &&
+              std::string(rack::paramInfo(rack::kSplitFreq1 + 3, nm, 32, sy, 32).symbol) == "split_f4" &&
+              rack::paramInfo(rack::kSplitFreq1 + 3, nm, 32, sy, 32).def == 6400.0f &&
+              std::string(rack::paramInfo(rack::kBandBypass1 + 4, nm, 32, sy, 32).symbol) == "band5_bypass", "4.0 parameter symbols");
         CHECK(rack::globalFromSymbol("feedback") == int(rack::kFeedback) && rack::globalFromSymbol("seq_step3") == int(rack::kSeqStep1 + 2) &&
               rack::globalFromSymbol("env_gain") == int(rack::kEnvGain) && rack::globalFromSymbol("s1_lane") < 0 &&
               rack::globalFromSymbol("s1_lanex") < 0 && rack::globalFromSymbol("lanec_pan") == int(rack::kLanePan1 + 2) &&
-              rack::globalFromSymbol("laned_solo") == int(rack::kLaneSolo1 + 3), "global symbols");
+              rack::globalFromSymbol("laned_solo") == int(rack::kLaneSolo1 + 3) && rack::globalFromSymbol("s2_split") < 0 &&
+              rack::globalFromSymbol("split_bands") == int(rack::kSplitBands) &&
+              rack::globalFromSymbol("band2_solo") == int(rack::kBandSolo1 + 1), "global symbols");
     }
     CHECK(rack::parseRoutes("bogus;lfo1>9.1:0.5;env>1.26:0.5;lfo2>1.1:x", back) == 0, "bad routes accepted");
     std::string ids[rack::kSlots] = { "tilt", "", "delay" };
@@ -584,12 +659,18 @@ static void neutral(RackEngine& e, const RackEngine::PresetState& st)
         {
             e.setParam(rack::laneParam(s), 1.0f);  // lane B on an empty slot: no lane B
             e.setParam(rack::laneXParam(s), 2.0f); // lane D on an empty slot: no lane D
+            e.setParam(rack::splitParam(s), 2.0f); // a split band on an empty slot: no split
         }
     // one lane: the lane levels do nothing
     e.setParam(rack::kLaneGain1, -6.0f);
     e.setParam(rack::kLanePan1 + 1, 50.0f);
     e.setParam(rack::kLaneMute1, 1.0f);
     e.setParam(rack::kLaneSolo1 + 2, 1.0f);
+    // no slot on a split band: the split's settings do nothing
+    e.setParam(rack::kSplitBands, 3.0f);
+    e.setParam(rack::kSplitFreq1, 300.0f);
+    e.setParam(rack::kBandSolo1 + 1, 1.0f);
+    e.setParam(rack::kBandBypass1, 1.0f);
 }
 
 static bool usesNewFeatures(const RackEngine::PresetState& st)
@@ -597,7 +678,8 @@ static bool usesNewFeatures(const RackEngine::PresetState& st)
     if (st.params[rack::kFeedback] > 0.0f)
         return true;
     for (uint32_t s = 0; s < rack::kSlots; ++s)
-        if (!st.ids[s].empty() && (st.params[rack::laneParam(s)] >= 0.5f || st.params[rack::laneXParam(s)] >= 0.5f))
+        if (!st.ids[s].empty() && (st.params[rack::laneParam(s)] >= 0.5f || st.params[rack::laneXParam(s)] >= 0.5f ||
+                                   st.params[rack::splitParam(s)] >= 0.5f))
             return true;
     for (uint32_t r = 0; r < st.numRoutes; ++r)
         if (st.routes[r].source >= rack_v1::kNumSources)
@@ -964,6 +1046,7 @@ int main()
     testKeyed();
     std::printf("bands\n");
     testBands();
+    testSplitBands();
     std::printf("channels\n");
     testChannels();
     std::printf("modulation\n");

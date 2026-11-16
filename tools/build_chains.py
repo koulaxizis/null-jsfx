@@ -157,7 +157,10 @@ REAPER_ONLY = {"Drum Replace", "Transient Verb"}
 # the Rack's parameters by symbol (RackParams.hpp), enum ones by option label.
 # Rack-only features (presets that use them get no .RfxChain, like RACK_ONLY, without being listed):
 # - lane="B" on a slot: lanes A and B each run the input through their slots, blended by the
-#   global "lane_mix" (0 = A, 100 = B);
+#   global "lane_mix" (0 = A, 100 = B); lane="C" or "D" (4.0): more lanes, each used lane an equal
+#   share (lane_mix splits A and B's), globals "lanea_gain" .. "laned_solo" for their levels;
+# - split=1..5 on a slot (4.0): the slot runs on that band of the rack's split into "split_bands"
+#   bands (2..5) at "split_f1" .. "split_f4" Hz; globals "band1_solo" .. "band5_bypass";
 # - the feedback loop: globals "feedback" (0..95 %), "fb_from" and "fb_to" (slot numbers from 1);
 # - the step sequencer: routes from source "seq"; globals "seq_steps" (1..16), "seq_sync" (an LFO
 #   sync label, "Off" = free at "seq_rate" Hz), "seq_glide" (%) and "seq" (up to 16 step values
@@ -168,9 +171,9 @@ RACK_ONLY = {"Beat Smasher", "Parallel Punch", "Bass Edge", "DJ Macro FX", "Octa
              "Dirty Reverb", "Glitch Band"}
 
 
-def slot(stem, values=None, band="Full", channel="Stereo", mix=100, on=True, lane="A"):
+def slot(stem, values=None, band="Full", channel="Stereo", mix=100, on=True, lane="A", split=0):
     return {"id": stem, "values": values or {}, "band": band, "channel": channel, "mix": mix, "on": on,
-            "lane": lane}
+            "lane": lane, "split": split}
 
 
 def rack_features(slots, routes, globs):
@@ -178,6 +181,8 @@ def rack_features(slots, routes, globs):
     used = []
     if any(sl["lane"] != "A" for sl in slots):
         used.append("lanes")
+    if any(sl.get("split", 0) for sl in slots):
+        used.append("split bands")
     if globs.get("feedback", 0) > 0:
         used.append("feedback")
     if any(src == "seq" for src, *_ in routes):
@@ -1098,6 +1103,11 @@ def render_rack():
                 if sl[what] not in opts:
                     sys.exit(f"build_chains: {name}: {what} {sl[what]!r} is not one of {opts}")
             lane = f", {lanes.index(sl['lane'])}" if sl["lane"] != lanes[0] else ""  # lane A: left out
+            split = sl.get("split", 0)
+            if split not in range(6):
+                sys.exit(f"build_chains: {name}: split {split!r} is not 0..5")
+            if split:
+                lane = f", {lanes.index(sl['lane'])}, {split}"  # the split band: after the lane
             srows.append(f"    {{ {cstr(sl['id'])}, {arr}, {len(vals)}, {bands.index(sl['band'])}, "
                          f"{channels.index(sl['channel'])}, {cfloat(sl['mix'])}, {'true' if sl['on'] else 'false'}{lane} }},")
         sarr = rarr = garr = "nullptr"

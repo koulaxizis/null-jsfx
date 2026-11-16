@@ -60,6 +60,8 @@ enum HitKind {
     kHitLane,        // a: slot (left half steps down, right half up: A, B, C, D)
     kHitLanesOpen,   // opens the lane levels
     kHitToggle,      // a: parameter (0 / 1)
+    kHitBand,        // a: slot (left half steps down, right half up: Full, Low, Mid, High, 1..N)
+    kHitBandsOpen,   // opens the split bands
 };
 
 struct Hit {
@@ -385,7 +387,7 @@ protected:
             order[i] = order[i - 1];
         order[b] = int(a);
         std::string ids[kSlots];
-        float vals[kSlots][kSlotParams], lanes[kSlots], lanesX[kSlots];
+        float vals[kSlots][kSlotParams], lanes[kSlots], lanesX[kSlots], splits[kSlots];
         for (uint32_t i = 0; i < kSlots; ++i)
         {
             ids[i] = fIds[order[i]];
@@ -393,6 +395,7 @@ protected:
                 vals[i][p] = fParam[slotParam(uint32_t(order[i]), p)];
             lanes[i] = fParam[laneParam(uint32_t(order[i]))];
             lanesX[i] = fParam[laneXParam(uint32_t(order[i]))];
+            splits[i] = fParam[splitParam(uint32_t(order[i]))];
         }
         for (uint32_t i = 0; i < kSlots; ++i)
             fIds[i] = ids[i];
@@ -410,6 +413,8 @@ protected:
                 setParamGesture(laneParam(i), lanes[i]);
                 fParam[laneXParam(i)] = -1.0f;
                 setParamGesture(laneXParam(i), lanesX[i]);
+                fParam[splitParam(i)] = -1.0f;
+                setParamGesture(splitParam(i), splits[i]);
             }
         int where[kSlots];
         for (int i = 0; i < int(kSlots); ++i)
@@ -489,6 +494,23 @@ protected:
             if (!fIds[i].empty() && laneOf(i) != kLaneA)
                 return true;
         return false;
+    }
+
+    // the number of split bands (Split Bands, 2..5)
+    int splitBands() const { return std::max(2, std::min(int(kMaxBands), int(std::lround(fParam[kSplitBands])))); }
+
+    // the band choice of slot s: 0..3 = Full, Low, Mid, High (Band), 4.. = split band 1.. (Split Band)
+    int bandOf(uint32_t s) const
+    {
+        const int sb = std::min(splitBands(), int(std::lround(fParam[splitParam(s)])));
+        return sb > 0 ? 3 + sb : int(std::lround(fParam[slotParam(s, kSlotBand)]));
+    }
+
+    void setBand(uint32_t s, int b)
+    {
+        b = std::max(0, std::min(3 + splitBands(), b));
+        setParamGesture(slotParam(s, kSlotBand), b < 4 ? float(b) : 0.0f);
+        setParamGesture(splitParam(s), b < 4 ? 0.0f : float(b - 3));
     }
 
     // puts slot s on lane l (A, B: Lane; C, D: Lane C/D, with Lane back at A)
@@ -732,6 +754,18 @@ protected:
         addHit(cx - w * 0.5f, cy - h * 0.5f, w, h, kHitLane, int(s));
     }
 
+    // the band of slot s as one selector over Full, Low, Mid, High and split bands 1..N
+    void bandSelector(float cx, float cy, float w, uint32_t s, float h = 21.0f)
+    {
+        const bool lit = hovered(kHitBand, int(s));
+        panel(cx - w * 0.5f, cy - h * 0.5f, w, h, theme::kBackground, lit ? theme::kTrackHover : theme::kBorder);
+        static const char* const names[] = { "FULL", "LOW", "MID", "HIGH", "BAND 1", "BAND 2", "BAND 3", "BAND 4", "BAND 5" };
+        fitLabel(cx, cy, ALIGN_CENTER, 8.0f, 0.5f, theme::kText, names[std::max(0, std::min(8, bandOf(s)))], w - 26.0f);
+        drawArrow(cx - w * 0.5f + 7.0f, cy, -1.0f);
+        drawArrow(cx + w * 0.5f - 7.0f, cy, 1.0f);
+        addHit(cx - w * 0.5f, cy - h * 0.5f, w, h, kHitBand, int(s));
+    }
+
     // compact knob: knob on the left, label and value on its right
     void compactKnob(float x, float cy, uint32_t p, const char* name, float w = 92.0f)
     {
@@ -789,6 +823,8 @@ protected:
             drawPresetList();
         else if (fPopup == kPopupLanes)
             drawLanesPopup();
+        else if (fPopup == kPopupBands)
+            drawBandsPopup();
     }
 
     // preset, meters, crossovers, input, output, mix
@@ -956,7 +992,8 @@ protected:
         clipLabel(kRowX + 32.0f, cy - 6.0f, ALIGN_LEFT, 8.5f, 1.0f, on ? theme::kText : theme::kMuted, name, nameW, true);
 
         // tags: band and channel, or the category
-        const int band = int(std::lround(fParam[slotParam(i, kSlotBand)]));
+        const int bandSel = bandOf(i);
+        const int band = bandSel < 4 ? bandSel : 0;
         const int chan = int(std::lround(fParam[slotParam(i, kSlotChannel)]));
         float tx = kRowX + 32.0f;
         if (anyLanes())
@@ -964,9 +1001,12 @@ protected:
             static const char* const laneTags[] = { "LANE A", "LANE B", "LANE C", "LANE D" };
             tx = tag(tx, cy + 7.0f, laneTags[laneOf(i)]);
         }
-        if (band > 0 || chan > 0)
+        if (band > 0 || bandSel >= 4 || chan > 0)
         {
-            if (band > 0)
+            static const char* const splitTags[] = { "BAND 1", "BAND 2", "BAND 3", "BAND 4", "BAND 5" };
+            if (bandSel >= 4)
+                tx = tag(tx, cy + 7.0f, splitTags[bandSel - 4]);
+            else if (band > 0)
                 tx = tag(tx, cy + 7.0f, band == 1 ? "LOW" : band == 2 ? "MID" : "HIGH");
             if (chan > 0)
                 tag(tx, cy + 7.0f, chan == 1 ? "MID" : chan == 2 ? "SIDE" : chan == 3 ? "LEFT" : "RIGHT");
@@ -1089,8 +1129,8 @@ protected:
 
         label(kPanX + 240.0f, hy, ALIGN_RIGHT, 7.0f, 1.2f, theme::kMuted, "LANE", true);
         laneSelector(kPanX + 268.0f, hy, 48.0f, s);
-        label(kPanX + 336.0f, hy, ALIGN_RIGHT, 7.0f, 1.2f, theme::kMuted, "BAND", true);
-        selector(kPanX + 382.0f, hy, 82.0f, slotParam(s, kSlotBand));
+        button(kPanX + 298.0f, hy - 10.5f, 40.0f, 21.0f, "SPLIT", kHitBandsOpen, 0, fPopup == kPopupBands);
+        bandSelector(kPanX + 382.0f, hy, 82.0f, s);
         label(kPanX + 490.0f, hy, ALIGN_RIGHT, 7.0f, 1.2f, theme::kMuted, "CHANNEL", true);
         selector(kPanX + 536.0f, hy, 82.0f, slotParam(s, kSlotChannel));
         compactKnob(kPanX + 580.0f, hy, slotParam(s, kSlotMix), "MIX", 70.0f);
@@ -1558,6 +1598,61 @@ protected:
 
     // ---- popups ------------------------------------------------------------------------------
 
+    // the split into up to 5 bands: Split Bands, the crossovers, Solo and Bypass of each band
+    void drawBandsPopup()
+    {
+        dim();
+        const float w = 560.0f, h = 234.0f, x = (float(kWidth) - w) * 0.5f, y = 250.0f;
+        beginPath();
+        roundedRect(x + 0.5f, y + 4.0f, w - 1.0f, h - 1.0f, 8.0f);
+        fillColor(Color(0, 0, 0, 0.4f));
+        fill();
+        panel(x, y, w, h, theme::kCard, theme::kTrackHover, 8.0f);
+        fPopupHit0 = int(fHits.size());
+        addHit(x, y, w, h, kHitPopupBack);
+        label(x + 16.0f, y + 20.0f, ALIGN_LEFT, 8.5f, 2.0f, theme::kMuted, "SPLIT BANDS", true);
+        button(x + w - 98.0f, y + 9.0f, 82.0f, 22.0f, "CLOSE", kHitPickClose, 0);
+        char buf[32];
+        std::snprintf(buf, sizeof(buf), "%d BANDS", splitBands());
+        selector(x + 200.0f, y + 20.0f, 92.0f, kSplitBands, buf);
+        bool used[kMaxBands] = {};
+        for (uint32_t i = 0; i < kSlots; ++i)
+            if (!fIds[i].empty() && bandOf(i) >= 4)
+                used[bandOf(i) - 4] = true;
+        const int nb = splitBands();
+        label(x + 16.0f, y + 40.0f, ALIGN_LEFT, 6.5f, 1.2f, theme::kSlogan,
+              "A SLOT ON BAND 1..5 RUNS ON THAT BAND ONLY; THE REST PASSES BESIDE IT", true);
+        const float colW = (w - 24.0f) / float(kMaxBands);
+        for (uint32_t b = 0; b < kMaxBands; ++b)
+        {
+            const float cx = x + 12.0f + colW * (float(b) + 0.5f);
+            const bool on = int(b) < nb;
+            if (!on)
+                globalAlpha(0.4f);
+            std::snprintf(buf, sizeof(buf), "BAND %u", b + 1);
+            label(cx, y + 64.0f, ALIGN_CENTER, 8.0f, 1.5f, on && used[b] ? theme::kText : theme::kMuted, buf, true);
+            std::snprintf(buf, sizeof(buf), used[b] && on ? "IN USE" : "-");
+            label(cx, y + 78.0f, ALIGN_CENTER, 6.0f, 1.2f, theme::kSlogan, buf, true);
+            const uint32_t ps = kBandSolo1 + b, pb = kBandBypass1 + b;
+            button(cx - 46.0f, y + 94.0f, 44.0f, 20.0f, "SOLO", kHitToggle, int(ps), fParam[ps] >= 0.5f);
+            button(cx + 2.0f, y + 94.0f, 44.0f, 20.0f, "BYPASS", kHitToggle, int(pb), fParam[pb] >= 0.5f);
+            globalAlpha(1.0f);
+            if (b > 0)
+            {
+                const float vx = x + 12.0f + colW * float(b);
+                vline(vx, y + 56.0f, y + 120.0f);
+                // the crossover between band b and b + 1, below the line between them
+                if (int(b) < nb)
+                {
+                    std::snprintf(buf, sizeof(buf), "SPLIT %u", b);
+                    knobCell(vx, y + 128.0f, kSplitFreq1 + b - 1, buf, 11.0f, 72.0f, 6.0f, 34.0f, 62.0f);
+                }
+            }
+        }
+        label(x + 16.0f, y + 216.0f, ALIGN_LEFT, 6.5f, 1.2f, theme::kSlogan,
+              "PICK A SLOT'S BAND IN ITS PANEL. SOLO AND BYPASS ACT WHILE A SLOT RUNS ON A BAND.", true);
+    }
+
     // the lane levels: Gain, Pan, Mute and Solo of lanes A to D (they act once a second lane runs)
     void drawLanesPopup()
     {
@@ -1816,7 +1911,8 @@ protected:
                 applyPreset(uint32_t(h.a));
                 fPopup = kPopupNone;
             }
-            else if (fPopup == kPopupLanes && hi >= fPopupHit0 && (h.kind == kHitKnob || h.kind == kHitToggle))
+            else if ((fPopup == kPopupLanes || fPopup == kPopupBands) && hi >= fPopupHit0 &&
+                     (h.kind == kHitKnob || h.kind == kHitToggle || h.kind == kHitSelect))
                 ; // handled below, like the panel's own controls
             else
             {
@@ -1851,6 +1947,12 @@ protected:
             break;
         case kHitLanesOpen:
             fPopup = kPopupLanes;
+            break;
+        case kHitBand:
+            setBand(uint32_t(h.a), (bandOf(uint32_t(h.a)) + (x < h.x + h.w * 0.5f ? -1 : 1) + 4 + splitBands()) % (4 + splitBands()));
+            break;
+        case kHitBandsOpen:
+            fPopup = kPopupBands;
             break;
         case kHitToggle:
             setParamGesture(uint32_t(h.a), fParam[h.a] >= 0.5f ? 0.0f : 1.0f);
@@ -2031,11 +2133,11 @@ protected:
         const float s = uiScale();
         const float x = float(ev.pos.getX()) / s, y = float(ev.pos.getY()) / s;
         const float d = float(ev.delta.getY()) + float(ev.delta.getX());
-        if (d == 0.0f || (fPopup != kPopupNone && fPopup != kPopupLanes))
+        if (d == 0.0f || (fPopup != kPopupNone && fPopup != kPopupLanes && fPopup != kPopupBands))
             return false;
         const int dir = d > 0.0f ? 1 : -1;
         const int hi = hitAt(x, y);
-        if (fPopup == kPopupLanes && hi < fPopupHit0)
+        if ((fPopup == kPopupLanes || fPopup == kPopupBands) && hi < fPopupHit0)
             return false;
         if (hi >= 0)
         {
@@ -2053,6 +2155,11 @@ protected:
             if (h.kind == kHitLane)
             {
                 setLane(uint32_t(h.a), laneOf(uint32_t(h.a)) + dir);
+                return true;
+            }
+            if (h.kind == kHitBand)
+            {
+                setBand(uint32_t(h.a), bandOf(uint32_t(h.a)) + dir);
                 return true;
             }
             if (h.kind == kHitSeqBars)
@@ -2086,7 +2193,7 @@ protected:
     }
 
 private:
-    enum Popup { kPopupNone, kPopupModules, kPopupPresets, kPopupLanes };
+    enum Popup { kPopupNone, kPopupModules, kPopupPresets, kPopupLanes, kPopupBands };
 
     float fParam[kNumParams] = {};
     uint32_t fEditFrame[kNumParams] = {};
@@ -2103,7 +2210,7 @@ private:
     bool fModView = false;
     int fRouteScroll = 0;
     Popup fPopup = kPopupNone;
-    int fPopupHit0 = 0; // the first hit of the lane levels popup (the ones before lie under it)
+    int fPopupHit0 = 0; // the first hit of the lane levels or split bands popup (the ones before lie under it)
     int fPickSlot = 0;
 
     int fDragParam = -1, fDragRoute = -1;

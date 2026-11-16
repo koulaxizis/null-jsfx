@@ -227,6 +227,60 @@ struct Split3 {
     }
 };
 
+// up to 5 bands (added in 4.0): LR4 crossovers in a cascade, each lower band passed through the
+// allpasses of the crossovers above it, so the bands sum to an allpass (flat in level)
+struct Split5 {
+    Biquad lp[kMaxBands - 1][2], hp[kMaxBands - 1][2];
+    Biquad ap[kMaxBands - 1][kMaxBands - 1]; // ap[k][j]: band k through crossover j's allpass (j > k)
+    uint32_t bands = 0;
+
+    void set(const double* f, uint32_t nb, double sr)
+    {
+        bands = nb;
+        for (uint32_t k = 0; k + 1 < nb; ++k)
+        {
+            Biquad l, h, a;
+            l.set(Biquad::kLow, f[k], sr);
+            h.set(Biquad::kHigh, f[k], sr);
+            a.set(Biquad::kAll, f[k], sr);
+            for (int i = 0; i < 2; ++i)
+            {
+                lp[k][i].copyCoefs(l);
+                hp[k][i].copyCoefs(h);
+            }
+            for (uint32_t b = 0; b < k; ++b)
+                ap[b][k].copyCoefs(a);
+        }
+    }
+    void reset()
+    {
+        for (uint32_t k = 0; k + 1 < kMaxBands; ++k)
+        {
+            for (int i = 0; i < 2; ++i)
+            {
+                lp[k][i].reset();
+                hp[k][i].reset();
+            }
+            for (uint32_t j = 0; j + 1 < kMaxBands; ++j)
+                ap[k][j].reset();
+        }
+    }
+    // the bands of x (out[0..bands-1])
+    inline void process(double x, double* out)
+    {
+        double rest = x;
+        for (uint32_t k = 0; k + 1 < bands; ++k)
+        {
+            double b = lp[k][1].process(lp[k][0].process(rest));
+            rest = hp[k][1].process(hp[k][0].process(rest));
+            for (uint32_t j = k + 1; j + 1 < bands; ++j)
+                b = ap[k][j].process(b);
+            out[k] = b;
+        }
+        out[bands - 1] = rest;
+    }
+};
+
 // ---- the engine ------------------------------------------------------------------------------
 
 class RackEngine {
@@ -315,11 +369,16 @@ public:
                 s.mod->setSampleRate(sr);
             s.split[0].reset();
             s.split[1].reset();
+            s.split5[0].reset();
+            s.split5[1].reset();
             s.dry.clear();
             s.pass.clear();
         }
         fRackDry.clear();
         fXLow = fXHigh = -1.0f;
+        fSplitKey = -1.0;
+        fOutSplit[0].reset();
+        fOutSplit[1].reset();
         fEnv = 0.0;
         fLfoPhase[0] = fLfoPhase[1] = 0.0;
         fLfoCycle[0] = fLfoCycle[1] = -1;
@@ -404,6 +463,7 @@ public:
                 moved[j].params[p] = param(slotParam(j, p));
             moved[j].lane = param(laneParam(j));
             moved[j].laneX = param(laneXParam(j));
+            moved[j].split = param(splitParam(j));
         }
         for (uint32_t i = 0; i < kSlots; ++i)
         {
@@ -420,6 +480,7 @@ public:
                         setParam(slotParam(i, p), m.params[p]);
                     setParam(laneParam(i), m.lane);
                     setParam(laneXParam(i), m.laneX);
+                    setParam(splitParam(i), m.split);
                     resetSlotAudio(s);
                 }
             }
@@ -532,6 +593,7 @@ public:
             out.params[slotParam(i, kSlotChannel)] = float(ps.channel);
             out.params[laneParam(i)] = ps.lane == kLaneB ? 1.0f : 0.0f;
             out.params[laneXParam(i)] = ps.lane == kLaneC ? 1.0f : ps.lane == kLaneD ? 2.0f : 0.0f;
+            out.params[splitParam(i)] = float(std::min<uint32_t>(ps.split, kMaxBands));
             for (uint32_t v = 0; v < d->numSliders && v < kValues; ++v)
                 out.params[valueParam(i, v)] = plainToValue(d->sliders[v], isLogSlider(d->id, v), d->sliders[v].def);
             for (uint32_t k = 0; k < ps.numValues; ++k)
@@ -683,6 +745,7 @@ private:
         bool log[kValues] = {};
         DelayLine dry, pass;
         Split3 split[2];
+        Split5 split5[2]; // added in 4.0
         std::atomic<float> eff[kValues];
         std::atomic<uint32_t> latency { 0 };
         KeyedModule* keyed = nullptr; // mod, when it takes a key
@@ -693,7 +756,7 @@ private:
         const nulljsfx::ModuleDesc* desc = nullptr;
         float applied[kValues] = {};
         float params[kSlotParams] = {};
-        float lane = 0.0f, laneX = 0.0f;
+        float lane = 0.0f, laneX = 0.0f, split = 0.0f;
     };
 
     void resetSlotAudio(Slot& s)
@@ -702,6 +765,8 @@ private:
         s.pass.clear();
         s.split[0].reset();
         s.split[1].reset();
+        s.split5[0].reset();
+        s.split5[1].reset();
         s.latency.store(0, std::memory_order_relaxed);
     }
 
@@ -911,6 +976,41 @@ private:
             total = processLanes(xl, xr, n, mt, lanes, used, fb);
         fKey.advance(n);
 
+        // 4.0: Band Solo, while a slot runs on a split band, keeps only the soloed bands
+        bool splitUsed = false, bandSolo = false;
+        for (uint32_t s = 0; s < kSlots; ++s)
+            splitUsed = splitUsed || (fSlot[s].desc && std::lround(param(splitParam(s))) > 0);
+        for (uint32_t k = 0; k < fSplitN; ++k)
+            bandSolo = bandSolo || param(kBandSolo1 + k) >= 0.5f;
+        if (splitUsed && bandSolo)
+        {
+            if (!fSplitUsed)
+            {
+                fOutSplit[0].reset();
+                fOutSplit[1].reset();
+                fSplitUsed = true;
+            }
+            bool keep[kMaxBands];
+            for (uint32_t k = 0; k < fSplitN; ++k)
+                keep[k] = param(kBandSolo1 + k) >= 0.5f;
+            for (uint32_t i = 0; i < n; ++i)
+            {
+                double b0[kMaxBands], b1[kMaxBands], s0 = 0.0, s1 = 0.0;
+                fOutSplit[0].process(xl[i], b0);
+                fOutSplit[1].process(xr[i], b1);
+                for (uint32_t k = 0; k < fSplitN; ++k)
+                    if (keep[k])
+                    {
+                        s0 += b0[k];
+                        s1 += b1[k];
+                    }
+                xl[i] = float(s0);
+                xr[i] = float(s1);
+            }
+        }
+        else
+            fSplitUsed = false;
+
         // the rack's mix against its input delayed by the whole chain's latency, then the output gain
         const uint32_t d = std::min(total, fRackDry.maxDelay());
         const float mix = clamp01(param(kMix) / 100.0f);
@@ -941,13 +1041,43 @@ private:
         const float ny = float(fSampleRate) * 0.45f;
         f1 = std::min(std::max(f1, 20.0f), ny * 0.5f);
         f2 = std::min(std::max(f2, f1 * 1.25f), ny);
-        if (f1 == fXLow && f2 == fXHigh)
+        if (f1 != fXLow || f2 != fXHigh)
+        {
+            fXLow = f1;
+            fXHigh = f2;
+            for (Slot& s : fSlot)
+                for (Split3& sp : s.split)
+                    sp.set(f1, f2, fSampleRate);
+        }
+        updateSplit();
+    }
+
+    // the split into up to 5 bands (4.0): Split Bands and Split 1..4, each crossover at least a
+    // third of an octave (x 1.25) above the one below and under 0.45 x the sample rate
+    void updateSplit()
+    {
+        const uint32_t nb = uint32_t(std::max(2L, std::min(long(kMaxBands), std::lround(param(kSplitBands)))));
+        const double ny = fSampleRate * 0.45;
+        double f[kMaxBands - 1], key = double(nb);
+        for (uint32_t k = 0; k + 1 < nb; ++k)
+        {
+            double v = std::max(20.0, double(param(kSplitFreq1 + k)));
+            if (k > 0)
+                v = std::max(v, f[k - 1] * 1.25);
+            f[k] = std::min(v, ny / std::pow(1.25, double(nb - 2 - k)));
+            key = key * 1e6 + f[k];
+        }
+        if (key == fSplitKey)
             return;
-        fXLow = f1;
-        fXHigh = f2;
+        fSplitKey = key;
+        fSplitN = nb;
+        for (uint32_t k = 0; k + 1 < nb; ++k)
+            fSplitF[k] = f[k];
         for (Slot& s : fSlot)
-            for (Split3& sp : s.split)
-                sp.set(f1, f2, fSampleRate);
+            for (Split5& sp : s.split5)
+                sp.set(f, nb, fSampleRate);
+        for (Split5& sp : fOutSplit)
+            sp.set(f, nb, fSampleRate);
     }
 
     // two lanes and/or the feedback loop (added after 2.1); x holds the input and gets the output. Returns
@@ -1102,10 +1232,12 @@ private:
     uint32_t processSlot(uint32_t s, float* xl, float* xr, uint32_t n, const nulljsfx::ModuleTime& mt, uint32_t keyDelay)
     {
         Slot& sl = fSlot[s];
-        const bool on = param(slotParam(s, kSlotOn)) >= 0.5f;
         const float mix = clamp01(param(slotParam(s, kSlotMix)) / 100.0f);
         const int band = int(std::lround(param(slotParam(s, kSlotBand))));
         const int chan = int(std::lround(param(slotParam(s, kSlotChannel))));
+        // 4.0: a split band (1..Split Bands; above it, the top band) takes the place of Band
+        const int sb = int(std::min<long>(std::lround(param(splitParam(s))), long(fSplitN)));
+        const bool on = param(slotParam(s, kSlotOn)) >= 0.5f && !(sb > 0 && param(kBandBypass1 + uint32_t(sb - 1)) >= 0.5f);
         const uint32_t lat = std::min(sl.mod->latency(), sl.dry.maxDelay());
         sl.latency.store(lat, std::memory_order_relaxed);
 
@@ -1114,12 +1246,29 @@ private:
         float* cr = fCR;
         float* pl = fPL;
         float* pr = fPR;
-        const bool split = band >= kBandLow && band <= kBandHigh;
-        const bool hasPass = split || chan != kChanStereo;
+        const bool split = sb <= 0 && band >= kBandLow && band <= kBandHigh;
+        const bool hasPass = split || sb > 0 || chan != kChanStereo;
         for (uint32_t i = 0; i < n; ++i)
         {
             float bl = xl[i], br = xr[i], rl = 0.0f, rr = 0.0f;
-            if (split)
+            if (sb > 0)
+            {
+                double b0[kMaxBands], b1[kMaxBands];
+                sl.split5[0].process(xl[i], b0);
+                sl.split5[1].process(xr[i], b1);
+                double s0 = 0.0, s1 = 0.0;
+                for (uint32_t k = 0; k < fSplitN; ++k)
+                    if (int(k) != sb - 1)
+                    {
+                        s0 += b0[k];
+                        s1 += b1[k];
+                    }
+                bl = float(b0[sb - 1]);
+                br = float(b1[sb - 1]);
+                rl = float(s0);
+                rr = float(s1);
+            }
+            else if (split)
             {
                 double lo, mi, hi, lo2, mi2, hi2;
                 sl.split[0].process(xl[i], lo, mi, hi);
@@ -1234,6 +1383,12 @@ private:
 
     DelayLine fRackDry;
     float fXLow = -1.0f, fXHigh = -1.0f;
+    // added in 4.0: the split into up to 5 bands (its crossovers, and the output's split for Solo)
+    double fSplitKey = -1.0;
+    double fSplitF[kMaxBands - 1] = {};
+    uint32_t fSplitN = kMaxBands;
+    Split5 fOutSplit[2];
+    bool fSplitUsed = false; // the output's split ran in the last chunk
 
     float fSrc[kNumSources] = {};
     double fEnv = 0.0;
