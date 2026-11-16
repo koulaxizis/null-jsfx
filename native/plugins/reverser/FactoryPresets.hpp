@@ -27,4 +27,13 @@ static const FactoryPreset kPresets[] = {
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 4;
 
+// the hint line under the controls: a short help text per parameter (from tools/site_content.json)
+#define NULL_UI_HINTS 1
+static const char* const kHints[] = {
+    "Length of the circular buffer that is read backwards",
+    "Optional filter on the reversed signal: Off, Lowpass, Bandpass or Highpass",
+    "Cutoff / centre frequency of the filter",
+    "Dry/wet blend",
+};
+
 } // namespace nullpresets

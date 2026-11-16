@@ -399,8 +399,23 @@ options:maxmem=33554432
     s;
   );
 
+  // the hint line under the controls: a short help text per slider (from tools/site_content.json)
+  function ng_hint_text(i) local(s)
+  (
+    s = "";
+    i == 1 ? s = "Built-in generated IR (Small Room, Large Room, Hall, Plate, Cathedral) or IR File";
+    i == 3 ? s = "Trims the IR length";
+    i == 4 ? s = "Shifts the IR later in time";
+    i == 5 ? s = "One-pole low cut on the wet signal";
+    i == 6 ? s = "One-pole high cut on the wet signal";
+    i == 7 ? s = "Dry/wet blend";
+    i == 8 ? s = "Final output level";
+    s;
+  );
+
   function ng_presets() local(i)
   (
+    ng_hint_i > 0 && !ng_pre_open ? ng_hint(ng_hint_text(ng_hint_i));
     ng_pre_req >= 0 ? ( ng_preset_load(ng_pre_req); update(); ng_pre_req = -1; );
     ng_hist() ? update();
     ng_pre_cur = ng_preset_match();

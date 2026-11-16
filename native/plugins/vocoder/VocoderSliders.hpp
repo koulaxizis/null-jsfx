@@ -11,8 +11,9 @@
 namespace nullvocoder {
 
 static const char* const kCarrierOptions[] = { "RIGHT", "SAW", "PULSE", "NOISE" };
+static const char* const kModeOptions[] = { "CHANNEL", "TALKBOX" };
 
-// slider1..slider9 of vocoder.jsfx, in order
+// slider1..slider10 of vocoder.jsfx, in order
 static const DISTRHO::SliderInfo kSliders[] = {
     { "Carrier", "carrier", 0.0f, 3.0f, 1.0f, "", 1.0f, kCarrierOptions },
     { "Carrier Pitch", "pitch", 40.0f, 880.0f, 110.0f, "Hz", 0.1f },
@@ -23,6 +24,7 @@ static const DISTRHO::SliderInfo kSliders[] = {
     { "Mix", "mix", 0.0f, 100.0f, 100.0f, "%", 1.0f },
     { "Output", "output", -12.0f, 24.0f, 0.0f, "dB", 0.1f },
     { "Stereo Width", "width", 0.0f, 100.0f, 60.0f, "%", 1.0f },
+    { "Mode", "mode", 0.0f, 1.0f, 0.0f, "", 1.0f, kModeOptions },                // 4.0
 };
 static constexpr uint32_t kNumSliders = sizeof(kSliders) / sizeof(kSliders[0]);
 

@@ -27,4 +27,18 @@ static const FactoryPreset kPresets[] = {
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 9;
 
+// the hint line under the controls: a short help text per parameter (from tools/site_content.json)
+#define NULL_UI_HINTS 1
+static const char* const kHints[] = {
+    "What the envelope controls: low-pass, band-pass or high-pass filter cutoff, or the volume",
+    "How quickly the envelope follows rising level",
+    "How quickly the envelope falls back",
+    "Input gain into the detector; higher values reach the end of the sweep with softer playing",
+    "Cutoff at the quiet end of the sweep",
+    "Cutoff at the loud end of the sweep",
+    "Filter Q; higher values give a more vocal, peaky wah",
+    "Up = louder playing opens the filter; Down = louder playing closes it",
+    "Blend between dry and processed signal",
+};
+
 } // namespace nullpresets

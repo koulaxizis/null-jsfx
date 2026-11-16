@@ -88,7 +88,21 @@ public:
         double m[20] = {};
     };
 
-    Synth() : fWt(wavetables()) {}
+    Synth() : fWt(wavetables()), fTab(fWt.data()) {}
+
+    // the user table (Wavetable File, 4.0: 8 x 8192 values from userTable(), or nullptr for
+    // none); the caller keeps it alive. Table 8 replaces Table, as wt_user in the JSFX.
+    void setUserTable(const double* t) noexcept
+    {
+        fUser = t;
+        tbl = fUser ? 8 : fSlTbl;
+    }
+    bool userTable() const noexcept { return fUser != nullptr; }
+    // the table the display shows: frame fr's level-0 cycle (1024 values)
+    const double* tableFrame(int fr) const noexcept
+    {
+        return (tbl == 8 && fUser ? fUser : fWt.data() + size_t(std::min(tbl, 7)) * 65536) + size_t(fr) * 8192;
+    }
 
     // @init
     void setSampleRate(double sr)
@@ -143,7 +157,8 @@ public:
         m2 = s[5] / 100; m1 = 1 - m2;
         sub_a = s[6] / 100 * 0.8;
         noise_a = s[7] / 100 * 0.5;
-        tbl = int(std::floor(s[8] + 0.5));
+        fSlTbl = int(std::floor(s[8] + 0.5));
+        tbl = fUser ? 8 : fSlTbl;
         wt_pos = s[9] / 100;
         fmode = int(std::floor(s[10] + 0.5));
         slope = s[11] >= 0.5;
@@ -342,7 +357,7 @@ private:
         const double i0 = std::floor(x);
         const double fi = x - i0;
         const int a0 = int(i0), a1 = (a0 + 1) & 1023;
-        const double* b = fWt.data() + wt_b + size_t(lv) * 1024;
+        const double* b = fTab + wt_b + size_t(lv) * 1024;
         const double a = b[a0] + (b[a1] - b[a0]) * fi;
         b += 8192;
         const double c = b[a0] + (b[a1] - b[a0]) * fi;
@@ -622,7 +637,8 @@ private:
             const double x = std::max(0.0, std::min(1.0, wt_pos + lfo_w * lfo_v)) * 7;
             const double i = std::min(6.0, std::floor(x));
             wt_f = x - i;
-            wt_b = size_t(tbl * 8 + int(i)) * 8192;
+            fTab = tbl == 8 && fUser ? fUser : fWt.data() + size_t(std::min(tbl, 7)) * 65536;
+            wt_b = size_t(int(i)) * 8192;
         }
 
         double outl = 0, outr = 0;
@@ -740,6 +756,9 @@ private:
     double seed = 22222, nz = 0;
     double wt_f = 0;
     size_t wt_b = 0;
+    const double* fTab = nullptr;  // the table wt_b reads (a built-in one, or the user table)
+    const double* fUser = nullptr; // the user table (4.0), or none
+    int fSlTbl = 0;
 
     // effects
     static constexpr int CHN = 16384;

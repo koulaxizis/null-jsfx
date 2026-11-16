@@ -188,8 +188,20 @@ out_pin:Right
     s;
   );
 
+  // the hint line under the controls: a short help text per slider (from tools/site_content.json)
+  function ng_hint_text(i) local(s)
+  (
+    s = "";
+    i == 1 ? s = "The device: phone, laptop, earbuds, TV, radio, telephone, megaphone or car";
+    i == 2 ? s = "Blend between the dry signal and the device";
+    i == 3 ? s = "Extra clipping of the small speaker";
+    i == 4 ? s = "Output level";
+    s;
+  );
+
   function ng_presets() local(i)
   (
+    ng_hint_i > 0 && !ng_pre_open ? ng_hint(ng_hint_text(ng_hint_i));
     ng_pre_req >= 0 ? ( ng_preset_load(ng_pre_req); update(); ng_pre_req = -1; );
     ng_hist() ? update();
     ng_pre_cur = ng_preset_match();

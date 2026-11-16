@@ -32,4 +32,25 @@ static const FactoryPreset kPresets[] = {
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 16;
 
+// the hint line under the controls: a short help text per parameter (from tools/site_content.json)
+#define NULL_UI_HINTS 1
+static const char* const kHints[] = {
+    "Gain driving the signal into the limiter",
+    "Maximum peak level out of the limiter",
+    "How fast the gain recovers after a peak",
+    "How far ahead peaks are detected",
+    "Trim after limiting (cut only, −12 to 0 dB), so the output never exceeds Ceiling",
+    "ON uses one gain for both channels to keep the image stable; OFF limits each channel independently",
+    "Last in the chain: OFF, or TPDF dither and rounding to 16-bit (CD) or 24-bit",
+    "ON feeds the rounding error back (first order), moving the dither noise up the spectrum where the ear is",
+    "Shapes the signal before the limiter: CLEAN leaves it alone, PUNCHY soft-clips only the peaks above",
+    "ON splits the signal into three bands that are limited on their own (a quarter linked), so a loud bass no",
+    "Split point between the low and mid bands in Multiband mode",
+    "Split point between the mid and high bands in Multiband mode",
+    "True Peak: the limiter reacts to the peaks between the samples (4x, ITU-R BS.1770), so the output stays",
+    "Listen: Output plays the result; Delta plays only what the limiter takes away (undithered)",
+    "Target: the integrated loudness (LUFS) that Learn aims for, for example -14 for streaming or -9 for a loud",
+    "Learn: play the loudest part of the song",
+};
+
 } // namespace nullpresets

@@ -27,4 +27,13 @@ static const FactoryPreset kPresets[] = {
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 4;
 
+// the hint line under the controls: a short help text per parameter (from tools/site_content.json)
+#define NULL_UI_HINTS 1
+static const char* const kHints[] = {
+    "Fundamental of the comb; delay time is one period of this frequency, with peaks at it and its harmonics",
+    "Amount of the delayed copy added back; higher values give sharper, more resonant peaks",
+    "Feed-Forward adds a single delayed copy; Feed-Backward recirculates the delay for a ringing, pitched tone",
+    "Output level, applied after automatic level compensation",
+};
+
 } // namespace nullpresets

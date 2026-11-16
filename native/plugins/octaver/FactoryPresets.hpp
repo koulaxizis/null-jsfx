@@ -27,4 +27,15 @@ static const FactoryPreset kPresets[] = {
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 6;
 
+// the hint line under the controls: a short help text per parameter (from tools/site_content.json)
+#define NULL_UI_HINTS 1
+static const char* const kHints[] = {
+    "Level of the original signal",
+    "Level of the voice one octave below the input (square wave from a flip-flop, following the input envelope)",
+    "Level of the voice two octaves below the input",
+    "Level of the voice one octave above (full-wave rectified input)",
+    "Low-pass on the octave voices: lower is rounder and more synth-bass-like",
+    "Low-pass ahead of the pitch tracking: set it just above the fundamental of the part for stable tracking",
+};
+
 } // namespace nullpresets

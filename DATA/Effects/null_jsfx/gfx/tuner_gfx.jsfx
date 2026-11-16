@@ -222,8 +222,20 @@ out_pin:Right
     s;
   );
 
+  // the hint line under the controls: a short help text per slider (from tools/site_content.json)
+  function ng_hint_text(i) local(s)
+  (
+    s = "";
+    i == 1 ? s = "The pitch of A4 the notes are named from, 415 to 466 Hz (440 standard, 415 baroque, 442 many orchestras)";
+    i == 2 ? s = "Needle: a bar from -50 to +50 cents. Strobe: three bands that stand still in tune and move right when";
+    i == 3 ? s = "What is tuned: both channels summed, or only the left or right input";
+    i == 4 ? s = "Thru passes the audio; Mute silences it, for tuning on stage";
+    s;
+  );
+
   function ng_presets() local(i)
   (
+    ng_hint_i > 0 && !ng_pre_open ? ng_hint(ng_hint_text(ng_hint_i));
     ng_pre_req >= 0 ? ( ng_preset_load(ng_pre_req); update(); ng_pre_req = -1; );
     ng_hist() ? update();
     ng_pre_cur = ng_preset_match();

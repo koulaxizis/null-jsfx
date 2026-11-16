@@ -32,4 +32,23 @@ static const FactoryPreset kPresets[] = {
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 14;
 
+// the hint line under the controls: a short help text per parameter (from tools/site_content.json)
+#define NULL_UI_HINTS 1
+static const char* const kHints[] = {
+    "The instrument: Tine EP, Reed EP and FM EP (electric pianos), Music Box, Celesta, Glockenspiel",
+    "How hard the strike is (0 to 100%): more FM brightness, stronger overtones and a brighter mallet click",
+    "The level of the model's inharmonic partials (0 to 100%, 50% is natural): the tine's bell, the ring of the",
+    "Scales every decay time of the model (10 to 400%)",
+    "How fast a note dies away when its key comes up (10 ms to 3 s, to -60 dB)",
+    "How much the key velocity changes the level and the brightness (0% plays every note the same)",
+    "The speed of the tremolo or autopan (0.5 to 12 Hz)",
+    "The depth of the tremolo (0 to 100%); 0 turns it off",
+    "Mono pulses the level; Stereo pans the sound from side to side, like the classic suitcase electric piano",
+    "The overdrive of the preamp (0 to 100%), from a little bark to a growl; 0 is clean",
+    "The amount of the built-in stereo chorus (0 to 100%)",
+    "The output level (-24 to +12 dB)",
+    "MPE: On for an MPE controller: on channels 2-16 each note gets its own pitch bend (the partials follow)",
+    "MPE Bend Range: how far a note's own pitch bend goes (48 semitones is the MPE default)",
+};
+
 } // namespace nullpresets

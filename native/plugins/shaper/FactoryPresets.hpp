@@ -27,4 +27,33 @@ static const FactoryPreset kPresets[] = {
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 24;
 
+// the hint line under the controls: a short help text per parameter (from tools/site_content.json)
+#define NULL_UI_HINTS 1
+static const char* const kHints[] = {
+    "Picks the transfer curve: Soft, Hard, Tube, Fold, Sine, Steps and Asym are built in, Custom uses the eight",
+    "Gain into the curve (0 to 36 dB): the harder you drive, the further up the curve the signal reaches and",
+    "Adds a DC offset before the curve (-50 to +50%) so the two halves of the wave hit different parts of it",
+    "Symmetric mirrors the curve for the negative half of the wave",
+    "Runs the curve at 2x or 4x the sample rate so the harmonics it creates do not fold back as aliasing (Off =",
+    "A low-pass filter after the curve (1 to 20 kHz, off at 20 kHz) to tame the fizz of heavy settings",
+    "Blend of shaped and dry signal (the dry path is delayed to match), for parallel distortion",
+    "Level after the mix (-24 to +12 dB)",
+    "Input position of curve point 1 (0 to 1 of full scale; 0 leaves the point unused), read when Shape is Custom",
+    "Output of curve point 1 (-1 to +1) for that input; values below the previous points fold the wave back",
+    "Input position of curve point 2 (0 to 1 of full scale; 0 leaves the point unused), read when Shape is Custom",
+    "Output of curve point 2 (-1 to +1) for that input; values below the previous points fold the wave back",
+    "Input position of curve point 3 (0 to 1 of full scale; 0 leaves the point unused), read when Shape is Custom",
+    "Output of curve point 3 (-1 to +1) for that input; values below the previous points fold the wave back",
+    "Input position of curve point 4 (0 to 1 of full scale; 0 leaves the point unused), read when Shape is Custom",
+    "Output of curve point 4 (-1 to +1) for that input; values below the previous points fold the wave back",
+    "Input position of curve point 5 (0 to 1 of full scale; 0 leaves the point unused), read when Shape is Custom",
+    "Output of curve point 5 (-1 to +1) for that input; values below the previous points fold the wave back",
+    "Input position of curve point 6 (0 to 1 of full scale; 0 leaves the point unused), read when Shape is Custom",
+    "Output of curve point 6 (-1 to +1) for that input; values below the previous points fold the wave back",
+    "Input position of curve point 7 (0 to 1 of full scale; 0 leaves the point unused), read when Shape is Custom",
+    "Output of curve point 7 (-1 to +1) for that input; values below the previous points fold the wave back",
+    "Input position of curve point 8 (0 to 1 of full scale; 0 leaves the point unused), read when Shape is Custom",
+    "Output of curve point 8 (-1 to +1) for that input; values below the previous points fold the wave back",
+};
+
 } // namespace nullpresets

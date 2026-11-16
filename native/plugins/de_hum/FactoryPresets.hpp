@@ -27,4 +27,15 @@ static const FactoryPreset kPresets[] = {
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 6;
 
+// the hint line under the controls: a short help text per parameter (from tools/site_content.json)
+#define NULL_UI_HINTS 1
+static const char* const kHints[] = {
+    "Mains frequency of the hum: 50 Hz (Europe, most of the world) or 60 Hz (Americas, parts of Asia)",
+    "Number of notches: the fundamental and its multiples (1 = fundamental only, 8 = up to the 8th harmonic)",
+    "Notch width as Q: bandwidth = frequency / Q, so higher values cut narrower and leave more of the music",
+    "How deep each notch cuts, from 0 (off) to 60 dB",
+    "Fine tune of the mains frequency in Hz (±2), for hum that sits slightly off 50/60 Hz; the harmonics follow",
+    "Optional 24 dB/oct high-pass below the hum (20, 30 or 40 Hz) to clear rumble",
+};
+
 } // namespace nullpresets

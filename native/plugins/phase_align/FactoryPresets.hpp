@@ -31,4 +31,17 @@ static const FactoryPreset kPresets[] = {
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 8;
 
+// the hint line under the controls: a short help text per parameter (from tools/site_content.json)
+#define NULL_UI_HINTS 1
+static const char* const kHints[] = {
+    "What is aligned to what: Right to Left moves the right channel against the left, Track to Sidechain moves",
+    "How late the moved signal plays (-10 to +10 ms)",
+    "Sub-sample fine tuning of the delay (-1 to +1 samples), for alignment the millisecond steps cannot reach",
+    "Flips the polarity of the left channel (of the track's left channel in Sidechain mode)",
+    "Flips the polarity of the right channel (of the track's right channel in Sidechain mode)",
+    "Turns the phase of the moved signal by this angle at the Focus frequency (0 to 360 degrees",
+    "The frequency where Rotation is exact (20 to 1000 Hz): set it to the fundamental that matters, such as the",
+    "Mono Sum plays the moved signal added to its reference, so you can hear when the two are fullest together",
+};
+
 } // namespace nullpresets

@@ -27,4 +27,34 @@ static const FactoryPreset kPresets[] = {
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 25;
 
+// the hint line under the controls: a short help text per parameter (from tools/site_content.json)
+#define NULL_UI_HINTS 1
+static const char* const kHints[] = {
+    "Split between Low and LowMid bands (50–1000 Hz)",
+    "Split between LowMid and HighMid bands (500–4000 Hz, kept at least 1.5× above Crossover 1)",
+    "Split between HighMid and High bands (4–12 kHz, kept at least 1.5× above Crossover 2)",
+    "Level where the Low band starts compressing",
+    "Compression strength for the Low band",
+    "Gain added to the Low band after compression",
+    "Active compresses the Low band; Bypass passes it uncompressed (makeup still applies); Mute removes it",
+    "Level where the LowMid band starts compressing",
+    "Compression strength for the LowMid band",
+    "Gain added to the LowMid band after compression",
+    "Active compresses the LowMid band; Bypass passes it uncompressed (makeup still applies); Mute removes it",
+    "Level where the HighMid band starts compressing",
+    "Compression strength for the HighMid band",
+    "Gain added to the HighMid band after compression",
+    "Active compresses the HighMid band; Bypass passes it uncompressed (makeup still applies); Mute removes it",
+    "Level where the High band starts compressing",
+    "Compression strength for the High band",
+    "Gain added to the High band after compression",
+    "Active compresses the High band; Bypass passes it uncompressed (makeup still applies); Mute removes it",
+    "How fast gain reduction is applied in all bands",
+    "How fast gain recovers in all bands",
+    "Width of the soft knee around each threshold (100% = ±60 dB)",
+    "Overall output gain after the bands are summed",
+    "Channels: Stereo works on the whole signal",
+    "Listen: Output plays the result; Delta plays only what each band's compressor takes away, before Makeup",
+};
+
 } // namespace nullpresets

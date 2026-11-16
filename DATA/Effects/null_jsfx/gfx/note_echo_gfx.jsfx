@@ -178,8 +178,24 @@ out_pin:Right
     s;
   );
 
+  // the hint line under the controls: a short help text per slider (from tools/site_content.json)
+  function ng_hint_text(i) local(s)
+  (
+    s = "";
+    i == 1 ? s = "How many times each note is played again";
+    i == 2 ? s = "Time between echoes when Tempo Sync is Off";
+    i == 3 ? s = "On uses Subdivision at the host's tempo";
+    i == 4 ? s = "Time between echoes when Tempo Sync is On";
+    i == 5 ? s = "How much quieter each echo is than the one before";
+    i == 6 ? s = "How far each echo moves in pitch (they stop past note 0 or 127)";
+    i == 7 ? s = "How long each echo lasts, as a share of the time between echoes";
+    i == 8 ? s = "Off leaves out the notes that come in, so only the echoes sound";
+    s;
+  );
+
   function ng_presets() local(i)
   (
+    ng_hint_i > 0 && !ng_pre_open ? ng_hint(ng_hint_text(ng_hint_i));
     ng_pre_req >= 0 ? ( ng_preset_load(ng_pre_req); update(); ng_pre_req = -1; );
     ng_hist() ? update();
     ng_pre_cur = ng_preset_match();

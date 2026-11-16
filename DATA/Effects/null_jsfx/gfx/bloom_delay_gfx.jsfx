@@ -153,8 +153,25 @@ out_pin:Right
     s;
   );
 
+  // the hint line under the controls: a short help text per slider (from tools/site_content.json)
+  function ng_hint_text(i) local(s)
+  (
+    s = "";
+    i == 1 ? s = "Delay time in milliseconds, used while Sync is Off";
+    i == 2 ? s = "Locks the delay to the project tempo: 1/16 to a whole note, dotted 1/8 and 1/4 too (120 bpm when the host";
+    i == 3 ? s = "How much of each repeat comes back; a soft curve in the loop keeps even 100% safe, for a near-endless wash";
+    i == 4 ? s = "How much of the allpass diffusion is blended into the loop: each repeat comes back softer and more";
+    i == 5 ? s = "A slow sweep of the delay time (0.35 Hz, up to 4 ms) for a gentle, tape-like movement";
+    i == 6 ? s = "Low-pass in the loop: lower values make every repeat darker";
+    i == 7 ? s = "Stereo width of the wet signal, from mono to full";
+    i == 8 ? s = "Blend with the dry signal";
+    i == 9 ? s = "Output level";
+    s;
+  );
+
   function ng_presets() local(i)
   (
+    ng_hint_i > 0 && !ng_pre_open ? ng_hint(ng_hint_text(ng_hint_i));
     ng_pre_req >= 0 ? ( ng_preset_load(ng_pre_req); update(); ng_pre_req = -1; );
     ng_hist() ? update();
     ng_pre_cur = ng_preset_match();

@@ -12,9 +12,10 @@ namespace nullfilter {
 
 static const char* const kModeOptions[] = { "LO PASS", "HI PASS", "BAND", "NOTCH" };
 static const char* const kSlopeOptions[] = { "12 dB", "24 dB" };
+static const char* const kOffOn[] = { "OFF", "ON" };
 static const char* const kSyncOptions[] = { "OFF", "1/1", "1/2", "1/4", "1/8", "1/16", "1/4T", "1/8T", "1/4D", "1/8D" };
 
-// slider1..slider12 of filter.jsfx, in order (Cutoff, LFO Rate and Env Release are log-shaped
+// slider1..slider17 of filter.jsfx, in order (Cutoff, LFO Rate and Env Release are log-shaped
 // in the JSFX; the interface gives their knobs a log taper)
 static const DISTRHO::SliderInfo kSliders[] = {
     { "Cutoff", "cutoff", 20.0f, 20000.0f, 1000.0f, "Hz", 1.0f },
@@ -29,6 +30,11 @@ static const DISTRHO::SliderInfo kSliders[] = {
     { "Envelope Depth", "env_depth", -4.0f, 4.0f, 0.0f, "oct", 0.1f },
     { "Env Attack", "env_attack", 1.0f, 200.0f, 10.0f, "ms", 1.0f },
     { "Env Release", "env_release", 10.0f, 2000.0f, 150.0f, "ms", 1.0f },
+    { "Morph", "morph", 0.0f, 1.0f, 0.0f, "", 1.0f, kOffOn },                         // 4.0
+    { "Morph Position", "morph_pos", 0.0f, 100.0f, 0.0f, "%", 0.1f },
+    { "Morph LFO", "morph_lfo", -100.0f, 100.0f, 0.0f, "%", 1.0f },
+    { "Morph Envelope", "morph_env", -100.0f, 100.0f, 0.0f, "%", 1.0f },
+    { "Nonlinear", "nonlinear", 0.0f, 1.0f, 0.0f, "", 1.0f, kOffOn },
 };
 static constexpr uint32_t kNumSliders = sizeof(kSliders) / sizeof(kSliders[0]);
 

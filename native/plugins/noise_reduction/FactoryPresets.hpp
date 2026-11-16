@@ -27,4 +27,18 @@ static const FactoryPreset kPresets[] = {
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 9;
 
+// the hint line under the controls: a short help text per parameter (from tools/site_content.json)
+#define NULL_UI_HINTS 1
+static const char* const kHints[] = {
+    "While On, averages the noise per frequency into a profile: play a noise-only passage, then switch Off",
+    "Tracks the noise floor continuously (minimum statistics) instead of a learnt profile",
+    "Maximum attenuation of the noise (the gain floor)",
+    "How far above the noise estimate a sound must rise to pass untouched",
+    "Smoothing over time and across frequency against musical noise artefacts",
+    "How fast the gain opens when a sound rises above the noise",
+    "How fast the gain closes back to the floor",
+    "Hear the cleaned output or only the removed noise",
+    "Dry/wet blend",
+};
+
 } // namespace nullpresets

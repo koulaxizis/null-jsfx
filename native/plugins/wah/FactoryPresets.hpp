@@ -27,4 +27,20 @@ static const FactoryPreset kPresets[] = {
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 11;
 
+// the hint line under the controls: a short help text per parameter (from tools/site_content.json)
+#define NULL_UI_HINTS 1
+static const char* const kHints[] = {
+    "Pedal position from heel (0%) to toe (100%) in Manual mode, smoothed over 15 ms",
+    "Manual: the Pedal slider moves the filter. Auto: an envelope follower moves it with your playing dynamics",
+    "Classic: the inductor wah's narrow peak from about 400 Hz to 2.2 kHz",
+    "Sharpness of the peak: more Resonance gives a narrower, more vocal quack",
+    "Auto mode: how loud you must play to reach the toe, from 0 dBFS at 0% down to -42 dBFS at 100% (the pedal",
+    "Auto mode: how fast the envelope follower opens the filter (1 to 100 ms)",
+    "Auto mode: how fast the filter falls back after a note (20 to 1000 ms)",
+    "LFO mode: sweeps per second when Tempo Sync is off (0.1 to 10 Hz)",
+    "LFO mode: one full sweep per note at the project tempo (1/1 to 1/16), locked to the bar while the",
+    "Blend between the dry signal and the wah",
+    "Level after the wah (-12 to +12 dB); the wah is already level-matched to its input, so 0 dB sits at the",
+};
+
 } // namespace nullpresets

@@ -175,8 +175,19 @@ out_pin:Right
     s;
   );
 
+  // the hint line under the controls: a short help text per slider (from tools/site_content.json)
+  function ng_hint_text(i) local(s)
+  (
+    s = "";
+    i == 1 ? s = "Detection sensitivity: 0% flags jumps 4x the running average step, 100% only flags jumps 30x larger";
+    i == 2 ? s = "Number of samples marked as damaged after each detected click and redrawn";
+    i == 3 ? s = "Click finds single clicks and pops (a sample's jump against the slow running average)";
+    s;
+  );
+
   function ng_presets() local(i)
   (
+    ng_hint_i > 0 && !ng_pre_open ? ng_hint(ng_hint_text(ng_hint_i));
     ng_pre_req >= 0 ? ( ng_preset_load(ng_pre_req); update(); ng_pre_req = -1; );
     ng_hist() ? update();
     ng_pre_cur = ng_preset_match();

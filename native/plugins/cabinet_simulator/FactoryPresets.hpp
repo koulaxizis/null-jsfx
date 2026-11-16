@@ -29,4 +29,16 @@ static const FactoryPreset kPresets[] = {
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 7;
 
+// the hint line under the controls: a short help text per parameter (from tools/site_content.json)
+#define NULL_UI_HINTS 1
+static const char* const kHints[] = {
+    "Cabinet model: 1x12 Open Back, 2x12 Combo, 4x12 Closed Back, 1x15 Bass, Small Radio, 1x10 Tweed, 2x10 Bass",
+    "0% = centre of the cone (brighter), 100% = edge (lower roll-off and softer presence)",
+    "High-pass frequency; it never goes below the selected cabinet's own minimum (30–250 Hz)",
+    "Blend between dry and cabinet signal",
+    "Final output level",
+    "Position of a second microphone on the same cabinet, from the centre of the cone (0%, bright) to the edge",
+    "Blend between the first and the second microphone: 0% is the first mic only, 100% the second mic only",
+};
+
 } // namespace nullpresets

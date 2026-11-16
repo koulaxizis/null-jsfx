@@ -11,7 +11,8 @@
 START_NAMESPACE_DISTRHO
 
 // as filter_gfx.jsfx: tab FILTER (cutoff, resonance, gain, mode, slope, drive) and tab
-// MODULATION (LFO rate, sync, depth, envelope depth, attack, release)
+// MODULATION (LFO rate, sync, depth, envelope depth, attack, release), tab MORPH (Morph,
+// position, Morph LFO, Morph Envelope, Nonlinear)
 static const NullKnobsUI::Control kControls[] = {
     { 0, NullKnobsUI::kKnob, "CUTOFF", 0, 0, false, true },
     { 1, NullKnobsUI::kKnob, "RESONANCE", 0, 0, false },
@@ -25,13 +26,18 @@ static const NullKnobsUI::Control kControls[] = {
     { 9, NullKnobsUI::kKnob, "ENV DEPTH", 0, 1, true },
     { 10, NullKnobsUI::kKnob, "ATTACK", 0, 1, false },
     { 11, NullKnobsUI::kKnob, "RELEASE", 0, 1, false, true },
+    { 12, NullKnobsUI::kSelect, "MORPH", 0, 2, false },
+    { 13, NullKnobsUI::kKnob, "POSITION", 0, 2, false },
+    { 14, NullKnobsUI::kKnob, "MORPH LFO", 0, 2, true },
+    { 15, NullKnobsUI::kKnob, "MORPH ENV", 0, 2, true },
+    { 16, NullKnobsUI::kSelect, "NONLINEAR", 0, 2, false },
 };
 
 class UIFilter : public NullKnobsUI
 {
 public:
     UIFilter()
-        : NullKnobsUI({ "FILTER", "ESSENTIALS", 480, 120, "FILTER|MODULATION", 1, nullfilter::kSliders, nullfilter::kNumSliders,
+        : NullKnobsUI({ "FILTER", "ESSENTIALS", 480, 120, "FILTER|MODULATION|MORPH", 1, nullfilter::kSliders, nullfilter::kNumSliders,
                         kControls, sizeof(kControls) / sizeof(kControls[0]), true }) {}
 
 protected:
@@ -43,7 +49,9 @@ protected:
         setPlot(fVX + 26.0f, fVY + 4.0f, fVW - 30.0f, fVH - 20.0f);
         gridFreq(36.0f);
         const float fc = value(0), lfo = value(8), env = value(9);
-        const bool modOn = lfo > 0.0f || std::fabs(env) >= 0.05f;
+        const bool morph = value(12) >= 0.5f;
+        const bool morphMod = morph && (std::fabs(value(14)) >= 0.5f || std::fabs(value(15)) >= 0.5f);
+        const bool modOn = lfo > 0.0f || std::fabs(env) >= 0.05f || morphMod;
         if (lfo > 0.0f)
         {
             dashedV(freqX(fc * std::pow(2.0f, -lfo)), 0.25f);
@@ -54,7 +62,7 @@ protected:
         dashedV(freqX(fc));
 
         const int sync = int(std::lround(value(7)));
-        char a[24] = "", b[24] = "", line[64];
+        char a[24] = "", b[24] = "", line[96];
         if (lfo > 0.0f)
         {
             if (sync > 0)
@@ -66,6 +74,14 @@ protected:
             std::snprintf(b, sizeof(b), "ENV %+.1f OCT", double(env));
         std::snprintf(line, sizeof(line), "%s%s%s%s", value(4) >= 0.5f ? "24 DB" : "12 DB", a[0] ? "  " : "", a, b[0] ? "  " : "");
         std::strncat(line, b, sizeof(line) - std::strlen(line) - 1);
+        if (morph)
+        {
+            char m[24];
+            std::snprintf(m, sizeof(m), "  MORPH %.1f%%", double(value(13)));
+            std::strncat(line, m, sizeof(line) - std::strlen(line) - 1);
+        }
+        if (value(16) >= 0.5f)
+            std::strncat(line, "  NONLINEAR", sizeof(line) - std::strlen(line) - 1);
         label(fPX + fPW - 6.0f, fPY + 9.0f, ALIGN_RIGHT, 8.0f, 0.0f, theme::kMuted, line);
 
         double sr = getSampleRate();
@@ -76,6 +92,8 @@ protected:
         nullfilter::Coefs k;
         k.compute(value(0), value(1), value(2), int(std::lround(value(3))), sr);
         k.slope24 = value(4) >= 0.5f;
+        k.morph = morph;
+        nullfilter::morphWeights(double(value(13)) / 100.0, k.w);
         for (int i = 0; i < n; ++i)
         {
             const double f = 20.0 * std::pow(1000.0, double(i) / double(n - 1));
@@ -93,6 +111,10 @@ protected:
                 fm = fc;
             k.compute(fm, value(1), value(2), int(std::lround(value(3))), sr);
             k.slope24 = value(4) >= 0.5f;
+            if (morphMod)
+                if (nulljsfx::Taps* t = taps())
+                    for (int i = 0; i < 4; ++i)
+                        k.w[i] = double(t->aux[i].load(std::memory_order_relaxed));
             beginPath();
             for (int i = 0; i < n; ++i)
             {
@@ -133,6 +155,10 @@ protected:
             else
                 std::snprintf(buf, n, "%+.1f oct", double(v));
         }
+        else if (param == 13)
+            std::snprintf(buf, n, "%.1f%%", double(v));
+        else if (param == 14 || param == 15)
+            std::snprintf(buf, n, "%+d%%", int(std::lround(v)));
         else if (param == 10 || param == 11)
             std::snprintf(buf, n, "%d ms", int(std::lround(v)));
         else

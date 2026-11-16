@@ -128,8 +128,23 @@ out_pin:Right
     s;
   );
 
+  // the hint line under the controls: a short help text per slider (from tools/site_content.json)
+  function ng_hint_text(i) local(s)
+  (
+    s = "";
+    i == 1 ? s = "How far the delay moves, up to 3 ms (on a square curve, so the low half stays subtle)";
+    i == 2 ? s = "Low-pass on the signal that moves the delay: lower values make a smoother, darker bend, higher values a";
+    i == 3 ? s = "Offset added to the moving signal: the bend becomes asymmetric (even harmonics)";
+    i == 4 ? s = "Turns the right channel's movement the other way, for width";
+    i == 5 ? s = "What moves the delay: the track itself (Self) or the sidechain on channels 3/4";
+    i == 6 ? s = "Blend with the dry signal, which is delayed by the same centre time so the blend does not comb";
+    i == 7 ? s = "Output level";
+    s;
+  );
+
   function ng_presets() local(i)
   (
+    ng_hint_i > 0 && !ng_pre_open ? ng_hint(ng_hint_text(ng_hint_i));
     ng_pre_req >= 0 ? ( ng_preset_load(ng_pre_req); update(); ng_pre_req = -1; );
     ng_hist() ? update();
     ng_pre_cur = ng_preset_match();

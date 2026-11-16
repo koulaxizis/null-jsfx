@@ -25,4 +25,10 @@ static const FactoryPreset kPresets[] = {
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 1;
 
+// the hint line under the controls: a short help text per parameter (from tools/site_content.json)
+#define NULL_UI_HINTS 1
+static const char* const kHints[] = {
+    "Exciter intensity: 0 is untouched, higher values drive the high band harder (up to 10x) into the saturator",
+};
+
 } // namespace nullpresets

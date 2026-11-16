@@ -27,4 +27,17 @@ static const FactoryPreset kPresets[] = {
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 8;
 
+// the hint line under the controls: a short help text per parameter (from tools/site_content.json)
+#define NULL_UI_HINTS 1
+static const char* const kHints[] = {
+    "Direction around the head: 0 in front, 90 right, 180 behind, -90 left",
+    "Height of the source: below the ears to straight overhead",
+    "Distance from the head (log scale): level, air absorption and the room's share",
+    "Early reflections that place the sound outside the head",
+    "Diameter of the listener's head: sets the time difference between the ears",
+    "Mono sum places one source; Stereo places the left and right inputs as two sources",
+    "In Stereo, how far each input sits from Azimuth",
+    "Output level",
+};
+
 } // namespace nullpresets

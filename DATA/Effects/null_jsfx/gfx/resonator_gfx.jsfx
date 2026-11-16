@@ -257,8 +257,24 @@ out_pin:Right
     s;
   );
 
+  // the hint line under the controls: a short help text per slider (from tools/site_content.json)
+  function ng_hint_text(i) local(s)
+  (
+    s = "";
+    i == 1 ? s = "Root note of the chord (C to B)";
+    i == 2 ? s = "Octave of the root note (1 to 6; C3 = 130.8 Hz)";
+    i == 3 ? s = "Chord the resonators are tuned to: Unison, Octaves, Fifth, Major, Minor, Sus4, Maj7 or Min7";
+    i == 4 ? s = "Ring time of the fundamental (time to fall by 60 dB)";
+    i == 5 ? s = "How long the upper harmonics ring compared with the fundamental (low = dark, damped strings";
+    i == 6 ? s = "Stereo detune: left strings down, right strings up, by up to 15 cents";
+    i == 7 ? s = "Dry/wet blend";
+    i == 8 ? s = "Where the string notes come from: Chord uses Root, Octave and Chord";
+    s;
+  );
+
   function ng_presets() local(i)
   (
+    ng_hint_i > 0 && !ng_pre_open ? ng_hint(ng_hint_text(ng_hint_i));
     ng_pre_req >= 0 ? ( ng_preset_load(ng_pre_req); update(); ng_pre_req = -1; );
     ng_hist() ? update();
     ng_pre_cur = ng_preset_match();

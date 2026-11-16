@@ -142,8 +142,19 @@ out_pin:Right
     s;
   );
 
+  // the hint line under the controls: a short help text per slider (from tools/site_content.json)
+  function ng_hint_text(i) local(s)
+  (
+    s = "";
+    i == 1 ? s = "Selects the vowel shape (A, E, I, O, U), which sets the three formant centre frequencies";
+    i == 2 ? s = "Output level of the summed formant bands";
+    i == 3 ? s = "Bandwidth of each formant band; higher Q gives narrower, more vocal peaks";
+    s;
+  );
+
   function ng_presets() local(i)
   (
+    ng_hint_i > 0 && !ng_pre_open ? ng_hint(ng_hint_text(ng_hint_i));
     ng_pre_req >= 0 ? ( ng_preset_load(ng_pre_req); update(); ng_pre_req = -1; );
     ng_hist() ? update();
     ng_pre_cur = ng_preset_match();

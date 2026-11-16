@@ -247,8 +247,22 @@ out_pin:Right
     s;
   );
 
+  // the hint line under the controls: a short help text per slider (from tools/site_content.json)
+  function ng_hint_text(i) local(s)
+  (
+    s = "";
+    i == 1 ? s = "Loudness the readouts and the history graph are referenced to: -14 LUFS (most streaming services), -16";
+    i == 2 ? s = "Vertical scale of the history graph, as in EBU Tech 3341: +9 shows 18 LU below to 9 LU above the target";
+    i == 3 ? s = "Time span of the history graph: 10 s, 30 s, 1 min or 5 min of short-term (bright) and momentary (grey)";
+    i == 4 ? s = "On Play clears the integrated loudness, LRA, maxima and history every time playback starts";
+    i == 5 ? s = "Changing it clears the integrated loudness, LRA, true-peak and loudness maxima and the history graph";
+    i == 6 ? s = "Stereo passes the audio through untouched (bit-exact). Mono folds it to mono for listening";
+    s;
+  );
+
   function ng_presets() local(i)
   (
+    ng_hint_i > 0 && !ng_pre_open ? ng_hint(ng_hint_text(ng_hint_i));
     ng_pre_req >= 0 ? ( ng_preset_load(ng_pre_req); update(); ng_pre_req = -1; );
     ng_hist() ? update();
     ng_pre_cur = ng_preset_match();

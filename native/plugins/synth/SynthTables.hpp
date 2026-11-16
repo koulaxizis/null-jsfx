@@ -7,7 +7,8 @@
  * order (the FFT of a time-domain cycle, or harmonics filled in directly), then per octave
  * level L the bins above 512 / 2^L harmonics removed and the inverse FFT, every frame scaled
  * to a peak of 1 at level 0. 8 tables x 8 frames x 8 levels x 1024 samples, made once and
- * shared by every instance (and the interface).
+ * shared by every instance (and the interface). userTable() builds the user table (4.0) from a
+ * Wavetable File the same way as wt_user_load.
  */
 
 #pragma once
@@ -83,6 +84,103 @@ inline double wtHarm(int tb, double k, int h)
         c = j * (j + 1) / 2;
     }
     return j <= 1 && h == 1 ? 1 : c == h ? std::exp(-sqrd((j - 1 - 10 * k) / (2 + 2 * k))) * 0.8 : 0;
+}
+
+// wt_store: frame fr's spectrum ws (natural order, 2048 values) to 8 octave levels in t
+inline void wtStore(const std::vector<double>& ws, double* frame)
+{
+    std::vector<double> wb(2048);
+    double pk = 0;
+    for (int lv = 0; lv < kLevels; ++lv)
+    {
+        const int h = std::min(511, int(std::floor(512 / std::pow(2.0, lv))));
+        wb = ws;
+        wb[0] = 0;
+        wb[1] = 0;
+        for (int k2 = h + 1; k2 < h + 1 + (1023 - 2 * h); ++k2)
+        {
+            wb[size_t(2 * k2)] = 0;
+            wb[size_t(2 * k2 + 1)] = 0;
+        }
+        eelfft::fftIpermute(wb.data(), 1024);
+        eelfft::ifft(wb.data(), 1024);
+        double* base = frame + lv * 1024;
+        for (int n = 0; n < 1024; ++n)
+            base[n] = wb[size_t(2 * n)];
+        if (lv == 0)
+            for (int n = 0; n < 1024; ++n)
+                pk = std::max(pk, std::fabs(base[n]));
+    }
+    const double sc = pk > 0 ? 1 / pk : 0;
+    for (int n = 0; n < 8192; ++n)
+        frame[n] *= sc;
+}
+
+// the room the JSFX leaves for the Wavetable File at sample rate sr (UFMAX)
+inline size_t userFileMax(double sr)
+{
+    const double dln = std::ceil(3 * sr) + 2, rvn = std::ceil(0.07 * sr) + 2;
+    const double ufb = 700000 + 2 * 16384 + 2 * dln + 8 * rvn + 16;
+    return size_t(std::max(0.0, std::min(1048576.0, 8388000 - ufb)));
+}
+
+// wt_user_load: the user table (8 frames x 8 levels x 1024) from the file's values (file_mem,
+// interleaved, ch channels, already cut to a whole number of frames); false when the length
+// does not fit (the table is then not used)
+inline bool userTable(const float* data, size_t n, int ch, std::vector<double>& out)
+{
+    if (ch <= 0 || n < size_t(64 * ch))
+        return false;
+    const int nf = int(n / size_t(ch));
+    std::vector<double> mono(static_cast<size_t>(nf));
+    for (int i = 0; i < nf; ++i)
+    {
+        double x = 0;
+        for (int j = 0; j < ch; ++j)
+            x += double(data[size_t(i) * size_t(ch) + size_t(j)]);
+        mono[size_t(i)] = x / ch;
+    }
+    const int N = nf % 2048 == 0 ? 2048 : nf % 1024 == 0 ? 1024 : nf % 512 == 0 ? 512 : nf % 256 == 0 ? 256 : nf <= 4096 ? -1 : 0;
+    if (N == 0)
+        return false;
+    const int F = N > 0 ? nf / N : 1;
+    out.assign(size_t(kFrames) * 8192, 0.0);
+    std::vector<double> uft(4096), ws(2048);
+    for (int fr = 0; fr < kFrames; ++fr)
+    {
+        const int M = N > 0 ? N : 1024;
+        if (N > 0)
+        {
+            const int j = F > 1 ? int(std::floor(fr * (F - 1) / 7.0 + 0.5)) : 0;
+            for (int i = 0; i < N; ++i)
+            {
+                uft[size_t(2 * i)] = mono[size_t(j) * size_t(N) + size_t(i)];
+                uft[size_t(2 * i + 1)] = 0;
+            }
+        }
+        else
+            for (int i = 0; i < 1024; ++i)
+            {
+                const double x = double(i) * nf / 1024;
+                const int i0 = int(std::floor(x));
+                const double fi = x - i0;
+                uft[size_t(2 * i)] = mono[size_t(i0)] + (mono[size_t((i0 + 1) % nf)] - mono[size_t(i0)]) * fi;
+                uft[size_t(2 * i + 1)] = 0;
+            }
+        eelfft::fft(uft.data(), M);
+        eelfft::fftPermute(uft.data(), M);
+        std::fill(ws.begin(), ws.end(), 0.0);
+        const int hh = N > 0 ? std::min(511, N / 2 - 1) : 511;
+        for (int k = 1; k <= hh; ++k)
+        {
+            ws[size_t(2 * k)] = uft[size_t(2 * k)];
+            ws[size_t(2 * k + 1)] = uft[size_t(2 * k + 1)];
+            ws[size_t(2 * (1024 - k))] = uft[size_t(2 * (M - k))];
+            ws[size_t(2 * (1024 - k) + 1)] = uft[size_t(2 * (M - k) + 1)];
+        }
+        wtStore(ws, out.data() + size_t(fr) * 8192);
+    }
+    return true;
 }
 
 inline const std::vector<double>& wavetables()

@@ -55,6 +55,9 @@ protected:
         fDsp.process(inputs[0], inputs[1], outputs[0], outputs[1], frames, tempo, tp.playing, beatPos);
         // the cutoff the filter ends the block on, for the display
         taps.extra.store(float(fDsp.modulatedCutoff()), std::memory_order_relaxed);
+        // the Morph weights now (low, band, high pass, notch), for the moving curve
+        for (int i = 0; i < 4; ++i)
+            taps.aux[i].store(float(fDsp.morphNow()[i]), std::memory_order_relaxed);
     }
 
 private:
@@ -73,6 +76,11 @@ private:
         p.envDepth = value(9);
         p.envAttack = value(10);
         p.envRelease = value(11);
+        p.morph = int(std::lround(value(12)));
+        p.morphPos = value(13);
+        p.morphLfo = value(14);
+        p.morphEnv = value(15);
+        p.nonlinear = int(std::lround(value(16)));
         fDsp.setParams(p);
     }
 

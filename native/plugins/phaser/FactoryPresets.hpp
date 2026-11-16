@@ -32,4 +32,18 @@ static const FactoryPreset kPresets[] = {
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 9;
 
+// the hint line under the controls: a short help text per parameter (from tools/site_content.json)
+#define NULL_UI_HINTS 1
+static const char* const kHints[] = {
+    "Speed of the sine LFO sweeping the all-pass filters",
+    "Number of all-pass stages; more stages create more notches",
+    "Amount of phased signal added to the dry signal",
+    "Width of the sweep around Center; 57% is the classic sweep from 440 Hz to 1.6 kHz",
+    "Amount of the phased signal fed back into the all-pass chain: higher values sharpen the peaks, negative",
+    "Middle frequency of the sweep (1020 Hz by default, log scale from 200 Hz to 5 kHz)",
+    "Offset between the left and right LFOs: 0 deg sweeps both channels together, 180 deg sweeps them in",
+    "Locks one LFO cycle to a note value at the project tempo (and to the bar while the transport plays)",
+    "Off sweeps up and down as before; Up or Down turns the sweep into an endless rise or fall (two voices take",
+};
+
 } // namespace nullpresets

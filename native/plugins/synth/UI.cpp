@@ -5,14 +5,22 @@
  *
  * As synth_gfx.jsfx: the display shows the oscillator wave (or the table's frame at Position),
  * the filter's response and the two envelopes, with a dot per voice; the controls sit on four
- * tabs (OSC, FILTER, AMP, LFO + FX).
+ * tabs (OSC, FILTER, AMP, LFO + FX). The FILE cell (4.0) picks the Wavetable File: its arrows step
+ * through the .wav/.flac files of the null_jsfx_wavetables folder(s) and none, its middle opens
+ * a file browser. The choice is the "wavetable" state (a path).
  */
 
 #include "NullUI.hpp"
 #include "SynthSliders.hpp"
 #include "SynthTables.hpp"
+#include "../sampler/SamplerFiles.hpp"
+#include "../sampler/SamplerRead.hpp"
 
+#include <cctype>
 #include <cstdio>
+#include <cstring>
+#include <string>
+#include <vector>
 
 START_NAMESPACE_DISTRHO
 
@@ -32,6 +40,7 @@ static const NullKnobsUI::Control kControls[] = {
     { 7, K::kKnob, "NOISE", 1, 0, false },
     { 32, K::kKnob, "UNISON", 1, 0, false },
     { 33, K::kKnob, "SPREAD", 1, 0, false },
+    { 8, K::kSelect, "FILE", 1, 0, false }, // 4.0: the FILE cell (drawn over by this UI)
 
     { 10, K::kSelect, "MODE", 0, 1, false },
     { 11, K::kSelect, "SLOPE", 0, 1, false },
@@ -72,6 +81,7 @@ static const NullKnobsUI::Control kControls[] = {
     { 40, K::kKnob, "SIZE", 1, 3, false },
 };
 static constexpr uint32_t kNumControls = sizeof(kControls) / sizeof(kControls[0]);
+static constexpr uint32_t kFileCell = 12;
 
 // the sliders with the selectors' upper-case names
 static const SliderInfo* uiSliders()
@@ -196,8 +206,9 @@ protected:
         // the wave
         const bool wt = value(0) >= 0.5f;
         const int tbl = std::max(0, std::min(7, iv(8)));
+        const bool user = fUserOk;
         if (wt)
-            std::snprintf(title, sizeof(title), "TABLE  %s  %d%%", nullsynth::kTableShort[tbl], iv(9));
+            std::snprintf(title, sizeof(title), "TABLE  %s  %d%%", user ? fShort.c_str() : nullsynth::kTableShort[tbl], iv(9));
         else
             std::snprintf(title, sizeof(title), "OSC  %s + %s", kWaves[std::max(0, std::min(3, iv(1)))], kWaves[std::max(0, std::min(3, iv(2)))]);
         panel(24.0f, 176.0f, title);
@@ -214,7 +225,7 @@ protected:
             if (wt)
             {
                 const int j = int(std::floor(p * 1023.0f + 0.5f));
-                const double* b = t.data() + size_t(tbl * 8 + fi) * 8192;
+                const double* b = user ? fUser.data() + size_t(fi) * 8192 : t.data() + size_t(tbl * 8 + fi) * 8192;
                 v = float(b[j] + (b[8192 + j] - b[j]) * ff);
             }
             else
@@ -310,6 +321,118 @@ protected:
         default: NullKnobsUI::formatValue(p, v, buf, n); break;
         }
     }
+
+    // the base draws everything; then the FILE cell over its placeholder, and the preset list
+    // again on top
+    void onNanoDisplay() override
+    {
+        NullKnobsUI::onNanoDisplay();
+        if (page() != 0)
+            return;
+        resetTransform();
+        const float s = uiScale();
+        scale(s, s);
+        float cx, ry;
+        cell(kFileCell, cx, ry);
+        const float pw = cellW(kFileCell) - 10.0f;
+        beginPath();
+        roundedRect(cx - pw * 0.5f + 0.5f, ry + 33.5f, pw - 1.0f, 21.0f, 4.0f);
+        fillColor(col(theme::kBackground));
+        fill();
+        strokeColor(col(fFileHover ? theme::kTrackHover : theme::kBorder));
+        strokeWidth(1.0f);
+        stroke();
+        label(cx, ry + 44.0f, ALIGN_CENTER, 8.0f, 0.5f, fUserOk ? theme::kText : theme::kMuted,
+              fFilePath.empty() ? "NONE" : fShort.c_str(), true);
+        drawArrow(cx - pw * 0.5f + 7.0f, ry + 44.0f, -1.0f);
+        drawArrow(cx + pw * 0.5f - 7.0f, ry + 44.0f, 1.0f);
+        drawPresetMenu();
+    }
+
+    // the previous (dir -1) or next (1) file of the folder(s), none before the first
+    void stepFile(int dir)
+    {
+        std::vector<std::string> list = nullsmp::listSampleFiles("null_jsfx_wavetables");
+        list.insert(list.begin(), std::string());
+        int cur = 0;
+        for (size_t i = 0; i < list.size(); ++i)
+            if (list[i] == fFilePath)
+                cur = int(i);
+        const int n = int(list.size());
+        const int next = (cur + dir + n) % n;
+        setState("wavetable", list[size_t(next)].c_str());
+        stateChanged("wavetable", list[size_t(next)].c_str());
+    }
+
+    // the file's short name, and the table for the display (made here, as the plugin does)
+    void stateChanged(const char* key, const char* value) override
+    {
+        if (std::strcmp(key, "wavetable") != 0)
+            return;
+        fFilePath = value ? value : "";
+        std::string name = fFilePath;
+        const size_t slash = name.find_last_of("/\\");
+        if (slash != std::string::npos)
+            name = name.substr(slash + 1);
+        const size_t dot = name.find_last_of('.');
+        if (dot != std::string::npos && dot > 0)
+            name = name.substr(0, dot);
+        for (char& c : name)
+            c = char(std::toupper(static_cast<unsigned char>(c)));
+        fShort = name.size() > 9 ? name.substr(0, 7) + ".." : name;
+        nullsmp::SampleFile file;
+        fUserOk = nullsmp::readSample(fFilePath.c_str(), file, nullsynth::userFileMax(getSampleRate() > 0 ? getSampleRate() : 48000.0)) &&
+                  nullsynth::userTable(file.data.data(), file.data.size(), file.channels, fUser);
+        repaint();
+    }
+
+    bool inFileCell(float x, float y) const { return page() == 0 && hit(kFileCell, x, y); }
+
+    bool onMouse(const MouseEvent& ev) override
+    {
+        if (presetMouse(ev))
+            return true;
+        const float s = uiScale();
+        const float x = float(ev.pos.getX()) / s, y = float(ev.pos.getY()) / s;
+        if (ev.button == 1 && ev.press && inFileCell(x, y))
+        {
+            float cx, ry;
+            cell(kFileCell, cx, ry);
+            const float pw = cellW(kFileCell) - 10.0f;
+            // the arrows' quarter at each end steps, the middle opens the file browser
+            if (x < cx - pw * 0.25f)
+                stepFile(-1);
+            else if (x >= cx + pw * 0.25f)
+                stepFile(1);
+            else
+            {
+#if DISTRHO_UI_FILE_BROWSER
+                requestStateFile("wavetable");
+#else
+                stepFile(1);
+#endif
+            }
+            return true;
+        }
+        return NullKnobsUI::onMouse(ev);
+    }
+
+    bool onMotion(const MotionEvent& ev) override
+    {
+        const float s = uiScale();
+        const bool h = inFileCell(float(ev.pos.getX()) / s, float(ev.pos.getY()) / s);
+        if (h != fFileHover)
+        {
+            fFileHover = h;
+            repaint();
+        }
+        return NullKnobsUI::onMotion(ev);
+    }
+
+private:
+    std::string fFilePath, fShort;
+    std::vector<double> fUser;
+    bool fUserOk = false, fFileHover = false;
 };
 
 UI* createUI()

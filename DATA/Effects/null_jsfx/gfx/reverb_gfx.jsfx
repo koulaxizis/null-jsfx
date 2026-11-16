@@ -300,8 +300,31 @@ out_pin:Right
     s;
   );
 
+  // the hint line under the controls: a short help text per slider (from tools/site_content.json)
+  function ng_hint_text(i) local(s)
+  (
+    s = "";
+    i == 1 ? s = "Scales all delay lengths (25–100% of full size)";
+    i == 2 ? s = "Comb feedback; higher values give a longer tail (roughly 0.4 s to 4 s at default size)";
+    i == 3 ? s = "High-frequency absorption in the tail: 0% is bright, higher values make the tail progressively darker";
+    i == 4 ? s = "Blend between dry signal and reverb";
+    i == 5 ? s = "Passes the input unprocessed when set to 1";
+    i == 6 ? s = "Delays the signal feeding the reverb (0–250 ms) so the tail starts after the dry sound";
+    i == 7 ? s = "12 dB/oct high-pass on the reverb only, to keep the tail out of the low end; off at 20 Hz";
+    i == 8 ? s = "12 dB/oct low-pass on the reverb only, for a darker, less splashy tail; off at 20 kHz";
+    i == 9 ? s = "Stereo width of the reverb (mid/side): 0% is mono, 100% unchanged, 200% extra wide";
+    i == 10 ? s = "Slow, gentle movement of the internal delay lengths that smears metallic ringing and gives the tail a";
+    i == 11 ? s = "Holds the current tail forever: the loop stops losing level and no new input enters, for pads and drones";
+    i == 12 ? s = "Classic is the original room algorithm; Plate adds dense input diffusion and a brighter tail";
+    i == 13 ? s = "Dips the reverb while the dry signal is loud, so the tail fills the gaps between phrases and hits";
+    i == 14 ? s = "Gated reverb: above -80 dB the tail stays open while the input is above this level, then is cut (-80 = off)";
+    i == 15 ? s = "How long the gate stays open after the input falls under the threshold";
+    s;
+  );
+
   function ng_presets() local(i)
   (
+    ng_hint_i > 0 && !ng_pre_open ? ng_hint(ng_hint_text(ng_hint_i));
     ng_pre_req >= 0 ? ( ng_preset_load(ng_pre_req); update(); ng_pre_req = -1; );
     ng_hist() ? update();
     ng_pre_cur = ng_preset_match();

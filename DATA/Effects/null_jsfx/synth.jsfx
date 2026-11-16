@@ -51,6 +51,7 @@ slider44:0<-3,3,1>Octave
 slider45:0<-24,12,0.1>Volume (dB)
 slider46:0<0,1,1{Off,On}>MPE
 slider47:48<0,96,1>MPE Bend Range (st)
+slider48:/null_jsfx_wavetables:none:Wavetable File
 
 in_pin:none
 out_pin:Left
@@ -61,7 +62,12 @@ out_pin:Right
   //   - Analog: two oscillators (band-limited saw and square, triangle, sine), Osc 2 tuned by
   //     Semi and Detune, Osc Mix between them, plus a sine one octave below (Sub) and noise
   //   - Wavetable: both oscillators read one of eight tables made here by synthesis (each eight
-  //     frames, band-limited per octave with the FFT); Position morphs through the frames
+  //     frames, band-limited per octave with the FFT); Position morphs through the frames.
+  //     Wavetable File (4.0) replaces Table with your own table, a WAV in
+  //     Data/null_jsfx_wavetables: frames of 2048 samples (as most wavetable synths save
+  //     them), else of 1024, 512 or 256, else the whole file (up to 4096 samples) as one
+  //     cycle; channels are averaged, eight frames are picked evenly across the file, and each
+  //     goes through the same band-limiting as the built-in tables
   // then one resonant filter per voice (12 or 24 dB, low, band or high pass) with its own
   // envelope, Key Track and Velocity, an amp envelope, a global LFO (to pitch, filter and
   // Position; free or synced to the host tempo), Glide, Poly / Mono / Legato, Unison (1-4
@@ -77,7 +83,8 @@ out_pin:Right
   // info for the allocator, 3000.. held keys (mono), 3200.. MPE channel bend, pressure and
   // timbre (16 each), 3300.. the channel of each key, 2500.. per-voice phases and filter
   // states, 30000/33000 FFT work, 100000.. the tables (8 tables x 8 frames x 8 octave
-  // levels x 1024), 700000.. the chorus, delay and reverb lines.
+  // levels x 1024, then the user table), 40000.. the user table's FFT, 700000.. the chorus,
+  // delay and reverb lines, then the Wavetable File.
   ext_noinit = 1;
   ext_tail_size = -1;
   NV = 8;
@@ -202,6 +209,7 @@ out_pin:Right
     );
   );
   !wt_ready ? ( wt_make(); wt_ready = 1; );
+  wt_ufile = -1;               // the user table is read again at the next @slider
 
   // ---- building blocks ----------------------------------------------------------------------
   function blep(t, dt)
@@ -451,6 +459,68 @@ out_pin:Right
   RVL[4] = floor(47.9 * srate / 1000); RVL[5] = floor(53.3 * srate / 1000);
   RVL[6] = floor(59.1 * srate / 1000); RVL[7] = floor(67.7 * srate / 1000);
 
+  // ---- the user wavetable (4.0): table 8, read from Wavetable File ---------------------------
+  UFT = 40000;                 // one frame's FFT (up to 2 x 2048)
+  UFB = RVB + 8 * RVN + 16;    // the file
+  UFMAX = min(1048576, 8388000 - UFB);
+  function wt_user_load() local(h, ch, rt, n, nf, N, F, fr, j, i, x, i0, fi, hh, k)
+  (
+    wt_user = 0;
+    h = file_open(slider48);
+    h >= 0 ? (
+      ch = rt = 0;
+      file_riff(h, ch, rt);
+      ch > 0 ? (
+        n = min(file_avail(h), UFMAX - UFMAX % ch);
+        n -= n % ch;
+        n >= 64 * ch ? (
+          file_mem(h, UFB, n);
+          nf = n / ch;
+          i = 0;
+          loop(nf, x = 0; j = 0; loop(ch, x += UFB[i * ch + j]; j += 1;); UFB[i] = x / ch; i += 1;);
+          N = nf % 2048 == 0 ? 2048 : nf % 1024 == 0 ? 1024 : nf % 512 == 0 ? 512 : nf % 256 == 0 ? 256 : nf <= 4096 ? -1 : 0;
+          N != 0 ? (
+            F = N > 0 ? nf / N : 1;
+            fr = 0;
+            loop(8,
+              N > 0 ? (
+                j = F > 1 ? floor(fr * (F - 1) / 7 + 0.5) : 0;
+                i = 0;
+                loop(N, UFT[2 * i] = UFB[j * N + i]; UFT[2 * i + 1] = 0; i += 1;);
+                fft(UFT, N);
+                fft_permute(UFT, N);
+              ) : (
+                // one cycle of any length: linear to 1024 samples first
+                i = 0;
+                loop(1024,
+                  x = i * nf / 1024; i0 = floor(x); fi = x - i0;
+                  UFT[2 * i] = UFB[i0] + (UFB[(i0 + 1) % nf] - UFB[i0]) * fi;
+                  UFT[2 * i + 1] = 0;
+                  i += 1;
+                );
+                fft(UFT, 1024);
+                fft_permute(UFT, 1024);
+              );
+              memset(WS, 0, 2048);
+              hh = N > 0 ? min(511, N / 2 - 1) : 511;
+              k = 1;
+              loop(hh,
+                WS[2 * k] = UFT[2 * k]; WS[2 * k + 1] = UFT[2 * k + 1];
+                WS[2 * (1024 - k)] = UFT[2 * ((N > 0 ? N : 1024) - k)];
+                WS[2 * (1024 - k) + 1] = UFT[2 * ((N > 0 ? N : 1024) - k) + 1];
+                k += 1;
+              );
+              wt_store(8, fr);
+              fr += 1;
+            );
+            wt_user = 1;
+          );
+        );
+      );
+      file_close(h);
+    );
+  );
+
   function fx_clear()
   (
     memset(CHL, 0, 2 * CHN); ch_w = 0;
@@ -484,7 +554,8 @@ out_pin:Right
   m2 = slider6 / 100; m1 = 1 - m2;
   sub_a = slider7 / 100 * 0.8;
   noise_a = slider8 / 100 * 0.5;
-  tbl = floor(slider9 + 0.5);
+  slider48 != wt_ufile ? ( wt_ufile = slider48; wt_user_load(); );
+  tbl = wt_user ? 8 : floor(slider9 + 0.5);
   wt_pos = slider10 / 100;
   fmode = floor(slider11 + 0.5);
   slope = slider12 >= 0.5;

@@ -27,4 +27,15 @@ static const FactoryPreset kPresets[] = {
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 6;
 
+// the hint line under the controls: a short help text per parameter (from tools/site_content.json)
+#define NULL_UI_HINTS 1
+static const char* const kHints[] = {
+    "Balance: both parts on channels 1/2, each with its own level",
+    "Level of the transient part (the attack of each hit)",
+    "Level of the tonal part (the body and the tail)",
+    "How easily a sound counts as a transient",
+    "How long the transient part lasts after each onset",
+    "Output level",
+};
+
 } // namespace nullpresets

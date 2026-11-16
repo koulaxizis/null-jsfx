@@ -123,8 +123,22 @@ out_pin:Right
     s;
   );
 
+  // the hint line under the controls: a short help text per slider (from tools/site_content.json)
+  function ng_hint_text(i) local(s)
+  (
+    s = "";
+    i == 1 ? s = "Size of the reverb space (scales the delay lines)";
+    i == 2 ? s = "Reverb decay time";
+    i == 3 ? s = "How much of the tail is pitch-shifted back into the reverb";
+    i == 4 ? s = "Interval the shimmer climbs each round trip";
+    i == 5 ? s = "Lowpass damping inside the loop";
+    i == 6 ? s = "Dry/wet blend";
+    s;
+  );
+
   function ng_presets() local(i)
   (
+    ng_hint_i > 0 && !ng_pre_open ? ng_hint(ng_hint_text(ng_hint_i));
     ng_pre_req >= 0 ? ( ng_preset_load(ng_pre_req); update(); ng_pre_req = -1; );
     ng_hist() ? update();
     ng_pre_cur = ng_preset_match();

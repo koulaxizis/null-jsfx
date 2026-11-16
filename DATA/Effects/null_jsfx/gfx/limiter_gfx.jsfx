@@ -201,8 +201,23 @@ out_pin:Right
     s;
   );
 
+  // the hint line under the controls: a short help text per slider (from tools/site_content.json)
+  function ng_hint_text(i) local(s)
+  (
+    s = "";
+    i == 1 ? s = "Limiter = look-ahead limiting; Clipper = soft clipping with no delay";
+    i == 2 ? s = "Drive control: a signal at Threshold comes out at the Ceiling, so lower values push harder";
+    i == 3 ? s = "Maximum output level";
+    i == 4 ? s = "How fast the gain recovers after a peak";
+    i == 5 ? s = "How far ahead peaks are detected (ignored in Clipper mode)";
+    i == 6 ? s = "True Peak: the limiter reacts to the peaks between the samples (4x, ITU-R BS.1770), so the output stays";
+    i == 7 ? s = "Listen: Output plays the result; Delta plays only what the limiter or clipper takes away";
+    s;
+  );
+
   function ng_presets() local(i)
   (
+    ng_hint_i > 0 && !ng_pre_open ? ng_hint(ng_hint_text(ng_hint_i));
     ng_pre_req >= 0 ? ( ng_preset_load(ng_pre_req); update(); ng_pre_req = -1; );
     ng_hist() ? update();
     ng_pre_cur = ng_preset_match();

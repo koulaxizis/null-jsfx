@@ -27,4 +27,34 @@ static const FactoryPreset kPresets[] = {
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 25;
 
+// the hint line under the controls: a short help text per parameter (from tools/site_content.json)
+#define NULL_UI_HINTS 1
+static const char* const kHints[] = {
+    "Centre or corner frequency of the Low band",
+    "Boost or cut of the Low band (shelf and peaking types)",
+    "Bandwidth or slope of the Low band",
+    "Filter shape of the Low band",
+    "Active, Bypass, or Solo (hear only this band's region)",
+    "Centre or corner frequency of the Low Mid band",
+    "Boost or cut of the Low Mid band (shelf and peaking types)",
+    "Bandwidth or slope of the Low Mid band",
+    "Filter shape of the Low Mid band",
+    "Active, Bypass, or Solo (hear only this band's region)",
+    "Centre or corner frequency of the Mid High band",
+    "Boost or cut of the Mid High band (shelf and peaking types)",
+    "Bandwidth or slope of the Mid High band",
+    "Filter shape of the Mid High band",
+    "Active, Bypass, or Solo (hear only this band's region)",
+    "Centre or corner frequency of the High band",
+    "Boost or cut of the High band (shelf and peaking types)",
+    "Bandwidth or slope of the High band",
+    "Filter shape of the High band",
+    "Active, Bypass, or Solo (hear only this band's region)",
+    "Centre or corner frequency of the Ultra High band",
+    "Boost or cut of the Ultra High band (shelf and peaking types)",
+    "Bandwidth or slope of the Ultra High band",
+    "Filter shape of the Ultra High band",
+    "Active, Bypass, or Solo (hear only this band's region)",
+};
+
 } // namespace nullpresets

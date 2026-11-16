@@ -355,8 +355,26 @@ out_pin:Right
     s;
   );
 
+  // the hint line under the controls: a short help text per slider (from tools/site_content.json)
+  function ng_hint_text(i) local(s)
+  (
+    s = "";
+    i == 1 ? s = "Felt of the hammers, from soft and dark to hard and bright";
+    i == 2 ? s = "How long the strings ring, against a real grand";
+    i == 3 ? s = "How far apart the strings of one key are tuned: the beats and the shimmer";
+    i == 4 ? s = "Stiffness of the strings: how far the partials stretch above the harmonics";
+    i == 5 ? s = "Level of the hammer's thump";
+    i == 6 ? s = "How much the velocity changes level and tone";
+    i == 7 ? s = "How quickly a key let go falls silent";
+    i == 8 ? s = "The soundboard's low resonance and presence";
+    i == 9 ? s = "How far the keys spread from left to right, as seen from the player";
+    i == 10 ? s = "Output level";
+    s;
+  );
+
   function ng_presets() local(i)
   (
+    ng_hint_i > 0 && !ng_pre_open ? ng_hint(ng_hint_text(ng_hint_i));
     ng_pre_req >= 0 ? ( ng_preset_load(ng_pre_req); update(); ng_pre_req = -1; );
     ng_hist() ? update();
     ng_pre_cur = ng_preset_match();

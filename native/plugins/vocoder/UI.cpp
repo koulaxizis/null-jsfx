@@ -20,6 +20,7 @@ static const NullKnobsUI::Control kControls[] = {
     { 6, NullKnobsUI::kKnob, "MIX", 1, -1, false },
     { 7, NullKnobsUI::kKnob, "OUTPUT", 1, -1, false },
     { 8, NullKnobsUI::kKnob, "WIDTH", 1, -1, false },
+    { 9, NullKnobsUI::kSelect, "MODE", 1, -1, false },
 };
 
 class UIVocoder : public NullKnobsUI
@@ -31,7 +32,8 @@ public:
 
 protected:
     // as in vocoder_gfx.jsfx: the voice's level per band (0 to -60 dB) at the band centres,
-    // ticks at the bottom for the carrier bands (moved by Formant Shift)
+    // ticks at the bottom for the carrier bands (moved by Formant Shift); in Talkbox mode the
+    // voice's model at the band centres, without ticks
     void drawDisplay() override
     {
         setPlot(fVX + 26.0f, fVY + 4.0f, fVW - 30.0f, fVH - 20.0f);
@@ -57,6 +59,8 @@ protected:
                 fillColor(col(theme::kAccent));
                 fill();
             }
+            if (value(9) >= 0.5f)
+                continue;
             const float cx = std::round(freqX(f * shift)) + 0.5f;
             beginPath();
             moveTo(cx, bottom - 1.0f);

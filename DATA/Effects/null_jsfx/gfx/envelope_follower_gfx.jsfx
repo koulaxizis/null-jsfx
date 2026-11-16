@@ -157,8 +157,25 @@ out_pin:Right
     s;
   );
 
+  // the hint line under the controls: a short help text per slider (from tools/site_content.json)
+  function ng_hint_text(i) local(s)
+  (
+    s = "";
+    i == 1 ? s = "What the envelope controls: low-pass, band-pass or high-pass filter cutoff, or the volume";
+    i == 2 ? s = "How quickly the envelope follows rising level";
+    i == 3 ? s = "How quickly the envelope falls back";
+    i == 4 ? s = "Input gain into the detector; higher values reach the end of the sweep with softer playing";
+    i == 5 ? s = "Cutoff at the quiet end of the sweep";
+    i == 6 ? s = "Cutoff at the loud end of the sweep";
+    i == 7 ? s = "Filter Q; higher values give a more vocal, peaky wah";
+    i == 8 ? s = "Up = louder playing opens the filter; Down = louder playing closes it";
+    i == 9 ? s = "Blend between dry and processed signal";
+    s;
+  );
+
   function ng_presets() local(i)
   (
+    ng_hint_i > 0 && !ng_pre_open ? ng_hint(ng_hint_text(ng_hint_i));
     ng_pre_req >= 0 ? ( ng_preset_load(ng_pre_req); update(); ng_pre_req = -1; );
     ng_hist() ? update();
     ng_pre_cur = ng_preset_match();

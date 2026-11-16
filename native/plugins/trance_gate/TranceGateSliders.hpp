@@ -16,8 +16,9 @@ namespace nulltrance {
 static const char* const kOnOff[] = { "OFF", "ON" };
 static const char* const kModeOptions[] = { "SYNC", "FREE" };
 static const char* const kNoteOptions[] = { "1/4", "1/8", "1/16", "1/32" };
+static const char* const kStyleOptions[] = { "TRANCE", "OFFBEAT", "STUTTER", "HALF TIME", "RANDOM" };
 
-// slider1..slider24 of trance_gate.jsfx, in order (23 and 24 appended in 2.4)
+// slider1..slider27 of trance_gate.jsfx, in order (23 and 24 appended in 2.4, 25..27 in 4.0)
 static const DISTRHO::SliderInfo kSliders[] = {
     { "Step 1", "step1", 0.0f, 1.0f, 1.0f, "", 1.0f, kOnOff },
     { "Step 2", "step2", 0.0f, 1.0f, 1.0f, "", 1.0f, kOnOff },
@@ -43,6 +44,9 @@ static const DISTRHO::SliderInfo kSliders[] = {
     { "Gate Depth", "depth", 0.0f, 100.0f, 100.0f, "%", 1.0f },
     { "Probability", "probability", 0.0f, 100.0f, 100.0f, "%", 1.0f },
     { "Seed", "seed", 0.0f, 999.0f, 0.0f, "", 1.0f },
+    { "Generate", "generate", 0.0f, 1.0f, 0.0f, "", 1.0f, kOnOff },
+    { "Density", "density", 0.0f, 100.0f, 50.0f, "%", 1.0f },
+    { "Style", "style", 0.0f, 4.0f, 0.0f, "", 1.0f, kStyleOptions },
 };
 static constexpr uint32_t kNumSliders = sizeof(kSliders) / sizeof(kSliders[0]);
 
@@ -64,6 +68,11 @@ inline Params paramsFrom(V value)
     p.depthPct = std::round(value(21));
     p.probPct = std::round(value(22));
     p.seed = std::round(value(23));
+    p.generate = value(24) >= 0.5f;
+    p.densityPct = std::round(value(25));
+    p.style = int(std::lround(value(26)));
+    if (p.generate)
+        generatePattern(p); // the generated steps in place of the Step sliders
     return p;
 }
 

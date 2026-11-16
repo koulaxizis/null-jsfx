@@ -120,8 +120,23 @@ out_pin:Right
     s;
   );
 
+  // the hint line under the controls: a short help text per slider (from tools/site_content.json)
+  function ng_hint_text(i) local(s)
+  (
+    s = "";
+    i == 1 ? s = "The signal: sine, logarithmic sweep, pink noise, white noise or polarity pulses";
+    i == 2 ? s = "The sine's frequency";
+    i == 3 ? s = "The level: peak for the sine, sweep and pulses, RMS for the noises";
+    i == 4 ? s = "How long one sweep from 20 Hz to 20 kHz takes";
+    i == 5 ? s = "Play on both sides, or only on the left or right";
+    i == 6 ? s = "Turn the right channel upside down, to hear what a wrong-polarity speaker sounds like";
+    i == 7 ? s = "Off replaces the input with the signal; On adds the signal to it";
+    s;
+  );
+
   function ng_presets() local(i)
   (
+    ng_hint_i > 0 && !ng_pre_open ? ng_hint(ng_hint_text(ng_hint_i));
     ng_pre_req >= 0 ? ( ng_preset_load(ng_pre_req); update(); ng_pre_req = -1; );
     ng_hist() ? update();
     ng_pre_cur = ng_preset_match();

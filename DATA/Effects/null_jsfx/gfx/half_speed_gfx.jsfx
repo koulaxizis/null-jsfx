@@ -135,8 +135,22 @@ options:maxmem=33554432
     s;
   );
 
+  // the hint line under the controls: a short help text per slider (from tools/site_content.json)
+  function ng_hint_text(i) local(s)
+  (
+    s = "";
+    i == 1 ? s = "How much input is captured per cycle: a 1/4 or 1/2 note, 1 Bar or 2 Bars at the host tempo";
+    i == 2 ? s = "Playback speed of the captured audio: 1/2 is classic halftime (an octave down), 1/4 a quarter speed (two";
+    i == 3 ? s = "Off slows the audio like a tape (lower pitch)";
+    i == 4 ? s = "High cut on the slowed signal (1 to 20 kHz) to tame the dull or grainy top end; 20 kHz is off";
+    i == 5 ? s = "Blend of slowed and dry signal";
+    i == 6 ? s = "Shifts the cycle start by 0 to 3 beats from the bar line while the transport plays";
+    s;
+  );
+
   function ng_presets() local(i)
   (
+    ng_hint_i > 0 && !ng_pre_open ? ng_hint(ng_hint_text(ng_hint_i));
     ng_pre_req >= 0 ? ( ng_preset_load(ng_pre_req); update(); ng_pre_req = -1; );
     ng_hist() ? update();
     ng_pre_cur = ng_preset_match();

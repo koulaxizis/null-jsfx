@@ -32,4 +32,30 @@ static const FactoryPreset kPresets[] = {
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 21;
 
+// the hint line under the controls: a short help text per parameter (from tools/site_content.json)
+#define NULL_UI_HINTS 1
+static const char* const kHints[] = {
+    "The 16' drawbar (0 to 8): the sub-octave, one octave below the key; every step is about 3 dB",
+    "The 5 1/3' drawbar (0 to 8): the fifth above the 16', which adds a deep, hollow body",
+    "The 8' drawbar (0 to 8): the fundamental, the pitch of the key",
+    "The 4' drawbar (0 to 8): one octave above the key",
+    "The 2 2/3' drawbar (0 to 8): an octave and a fifth above the key",
+    "The 2' drawbar (0 to 8): two octaves above the key",
+    "The 1 3/5' drawbar (0 to 8): two octaves and a major third above the key",
+    "The 1 1/3' drawbar (0 to 8): two octaves and a fifth above the key",
+    "The 1' drawbar (0 to 8): three octaves above the key",
+    "Percussion On adds a decaying harmonic to the notes played while no other key is held (single trigger)",
+    "Which harmonic the percussion plays: Second (the 4', an octave up) or Third (the 2 2/3', an octave and a",
+    "How fast the percussion fades: Fast (about 0.1 s) or Slow (about 0.4 s)",
+    "The percussion's level: Normal or Soft (6 dB lower)",
+    "The level of the short click when a key goes down (and a softer one when it comes up), 0 to 100%",
+    "The vibrato scanner: V1, V2 and V3 bend the pitch more and more, C1, C2 and C3 mix that with the dry sound",
+    "The preamp's overdrive (0 to 100%), from warm to growling",
+    "The built-in rotary speaker: Slow (chorale), Fast (tremolo) or Stop, with the horn and drum speeding up",
+    "How long the rotors take to change speed (10 to 400% of the natural time",
+    "The mix of the horn (highs) and the drum (lows) of the rotary speaker; 50% is even",
+    "The output level (-24 to +12 dB)",
+    "Voice: Tonewheel is the drawbar organ; Pipe turns it into a pipe organ, the drawbars become the stops",
+};
+
 } // namespace nullpresets

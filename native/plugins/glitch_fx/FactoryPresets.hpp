@@ -28,4 +28,24 @@ static const FactoryPreset kPresets[] = {
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 15;
 
+// the hint line under the controls: a short help text per parameter (from tools/site_content.json)
+#define NULL_UI_HINTS 1
+static const char* const kHints[] = {
+    "How often a new glitch event starts (events per second)",
+    "Length of the captured slice as a note value (1/x) at the project tempo (120 BPM if none)",
+    "Loops the latest slice until the next event; off lets the other effects work on the live signal",
+    "Attenuation applied to the second half of each gate cycle",
+    "Enables the rhythmic gate chop",
+    "Playback pitch of the loop in semitones (varispeed)",
+    "Enables Pitch Shift",
+    "Probability that an event plays its slice backwards",
+    "Enables random reversal: reverses the stutter loop, or with Stutter off plays the live audio back in",
+    "How long a tape-stop event takes to slow to a halt",
+    "Enables tape stops, triggered on about 30% of events",
+    "Length of the Hann-windowed grain looped instead of the full slice",
+    "Loops a short windowed grain instead of the whole slice, or with Stutter off turns the live signal into",
+    "Dry/wet blend",
+    "What plays the effects: Auto rolls them at Rate with the switches and chances, MIDI plays them while notes",
+};
+
 } // namespace nullpresets

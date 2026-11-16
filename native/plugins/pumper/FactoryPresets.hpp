@@ -24,4 +24,10 @@ static const FactoryPreset kPresets[] = {
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 1;
 
+// the hint line under the controls: a short help text per parameter (from tools/site_content.json)
+#define NULL_UI_HINTS 1
+static const char* const kHints[] = {
+    "Depth of the dip on every beat: 0 has no effect, 100 ducks the level by up to -20 dB before it swells back",
+};
+
 } // namespace nullpresets

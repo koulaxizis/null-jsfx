@@ -159,8 +159,23 @@ out_pin:Rtr
     s;
   );
 
+  // the hint line under the controls: a short help text per slider (from tools/site_content.json)
+  function ng_hint_text(i) local(s)
+  (
+    s = "";
+    i == 1 ? s = "The bed: 5.1, 7.1 or 7.1.4; the pins it does not use are ignored";
+    i == 2 ? s = "Where the mains hand over to the sub (40 to 200 Hz, 80 Hz as most rooms are set)";
+    i == 3 ? s = "Split takes the bass off the mains; Full keeps them whole and only adds their bass to the sub";
+    i == 4 ? s = "The LFE channel in the sub at +10 dB, as it is played back, or 0 dB";
+    i == 5 ? s = "Gain on the sub (-12 to +12 dB), to match it to the room";
+    i == 6 ? s = "Plays everything, the sub alone or the mains alone";
+    i == 7 ? s = "Gain on every pin (-24 to +12 dB)";
+    s;
+  );
+
   function ng_presets() local(i)
   (
+    ng_hint_i > 0 && !ng_pre_open ? ng_hint(ng_hint_text(ng_hint_i));
     ng_pre_req >= 0 ? ( ng_preset_load(ng_pre_req); update(); ng_pre_req = -1; );
     ng_hist() ? update();
     ng_pre_cur = ng_preset_match();

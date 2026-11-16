@@ -29,4 +29,19 @@ static const FactoryPreset kPresets[] = {
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 10;
 
+// the hint line under the controls: a short help text per parameter (from tools/site_content.json)
+#define NULL_UI_HINTS 1
+static const char* const kHints[] = {
+    "Key (root note) of the scale the voice is tuned to",
+    "Scale of allowed notes: Chromatic, Major, Minor, Harmonic Minor, Pentatonic Major/Minor, Blues, Dorian or",
+    "How fast the pitch glides to the target note: 0 ms = hard, stepped “robot” tuning",
+    "Share of the singer's own fast pitch movement (vibrato) kept around the corrected note",
+    "Extra pitch shift in semitones, applied after the correction (formants stay in place)",
+    "Pitch detection threshold: higher counts more of the signal as pitched (breathy voices), lower ignores",
+    "Dry/wet blend (the dry signal is delayed to stay in time)",
+    "What the voice is tuned to: the nearest note of Key and Scale, or the latest held MIDI note (falling back",
+    "Speed of the added vibrato",
+    "Width of the added vibrato, which fades in on every new note (0 = off)",
+};
+
 } // namespace nullpresets

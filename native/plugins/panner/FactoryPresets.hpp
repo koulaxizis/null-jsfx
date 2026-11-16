@@ -27,4 +27,14 @@ static const FactoryPreset kPresets[] = {
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 5;
 
+// the hint line under the controls: a short help text per parameter (from tools/site_content.json)
+#define NULL_UI_HINTS 1
+static const char* const kHints[] = {
+    "Position of the source from hard left (-100) through centre (0) to hard right (100)",
+    "Balance: plain L/R balance. Natural: a head model with interaural delay, level difference and head-shadow",
+    "Stereo width of the source itself: 0% = mono, 100% = unchanged, 200% = twice as wide",
+    "Delay of the far ear in Haas mode at full pan (scaled by the pan amount)",
+    "Output level",
+};
+
 } // namespace nullpresets

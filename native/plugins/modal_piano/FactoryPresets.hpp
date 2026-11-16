@@ -32,4 +32,19 @@ static const FactoryPreset kPresets[] = {
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 10;
 
+// the hint line under the controls: a short help text per parameter (from tools/site_content.json)
+#define NULL_UI_HINTS 1
+static const char* const kHints[] = {
+    "Felt of the hammers, from soft and dark to hard and bright",
+    "How long the strings ring, against a real grand",
+    "How far apart the strings of one key are tuned: the beats and the shimmer",
+    "Stiffness of the strings: how far the partials stretch above the harmonics",
+    "Level of the hammer's thump",
+    "How much the velocity changes level and tone",
+    "How quickly a key let go falls silent",
+    "The soundboard's low resonance and presence",
+    "How far the keys spread from left to right, as seen from the player",
+    "Output level",
+};
+
 } // namespace nullpresets

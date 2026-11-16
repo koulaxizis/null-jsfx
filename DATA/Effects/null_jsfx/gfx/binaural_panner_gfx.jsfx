@@ -231,8 +231,24 @@ out_pin:Right
     s;
   );
 
+  // the hint line under the controls: a short help text per slider (from tools/site_content.json)
+  function ng_hint_text(i) local(s)
+  (
+    s = "";
+    i == 1 ? s = "Direction around the head: 0 in front, 90 right, 180 behind, -90 left";
+    i == 2 ? s = "Height of the source: below the ears to straight overhead";
+    i == 3 ? s = "Distance from the head (log scale): level, air absorption and the room's share";
+    i == 4 ? s = "Early reflections that place the sound outside the head";
+    i == 5 ? s = "Diameter of the listener's head: sets the time difference between the ears";
+    i == 6 ? s = "Mono sum places one source; Stereo places the left and right inputs as two sources";
+    i == 7 ? s = "In Stereo, how far each input sits from Azimuth";
+    i == 8 ? s = "Output level";
+    s;
+  );
+
   function ng_presets() local(i)
   (
+    ng_hint_i > 0 && !ng_pre_open ? ng_hint(ng_hint_text(ng_hint_i));
     ng_pre_req >= 0 ? ( ng_preset_load(ng_pre_req); update(); ng_pre_req = -1; );
     ng_hist() ? update();
     ng_pre_cur = ng_preset_match();

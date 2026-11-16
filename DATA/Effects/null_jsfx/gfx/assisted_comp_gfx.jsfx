@@ -245,8 +245,30 @@ out_pin:Right
     s;
   );
 
+  // the hint line under the controls: a short help text per slider (from tools/site_content.json)
+  function ng_hint_text(i) local(s)
+  (
+    s = "";
+    i == 1 ? s = "Press On and play the track: it listens for 15 s of signal (or until you turn it Off, after at least 0.5";
+    i == 2 ? s = "What is playing: Vocal, Drums, Bass, Instrument or Mix. Each has its own ratio";
+    i == 3 ? s = "The sound you want: Natural, Warm, Bright, Punchy, Radio, Podcast (also brings the loudness to -16 LUFS)";
+    i == 4 ? s = "How much of the target's gain reduction is applied, 0-150%";
+    i == 5 ? s = "More (+) or less (-) compression than the target: moves the threshold down or up";
+    i == 6 ? s = "Faster (+) or slower (-): +1 halves attack and release, -1 doubles them";
+    i == 7 ? s = "Blend between the dry and the compressed signal (parallel compression)";
+    i == 8 ? s = "Level after compression and makeup, on top of the automatic loudness of Podcast";
+    i == 9 ? s = "Hidden: whether Learn has run. Saved with the project";
+    i == 10 ? s = "Hidden: the learned level of the loud parts (90th percentile of the 50 ms levels)";
+    i == 11 ? s = "Hidden: the learned median level";
+    i == 12 ? s = "Hidden: the learned crest factor (peak over RMS)";
+    i == 13 ? s = "Hidden: the learned mean time between onsets (0 = none found)";
+    i == 14 ? s = "Hidden: the learned integrated loudness (BS.1770)";
+    s;
+  );
+
   function ng_presets() local(i)
   (
+    ng_hint_i > 0 && !ng_pre_open ? ng_hint(ng_hint_text(ng_hint_i));
     ng_pre_req >= 0 ? ( ng_preset_load(ng_pre_req); update(); ng_pre_req = -1; );
     ng_hist() ? update();
     ng_pre_cur = ng_preset_match();

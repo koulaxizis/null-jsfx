@@ -165,8 +165,31 @@ out_pin:Right
     s;
   );
 
+  // the hint line under the controls: a short help text per slider (from tools/site_content.json)
+  function ng_hint_text(i) local(s)
+  (
+    s = "";
+    i == 1 ? s = "How often a new glitch event starts (events per second)";
+    i == 2 ? s = "Length of the captured slice as a note value (1/x) at the project tempo (120 BPM if none)";
+    i == 3 ? s = "Loops the latest slice until the next event; off lets the other effects work on the live signal";
+    i == 4 ? s = "Attenuation applied to the second half of each gate cycle";
+    i == 5 ? s = "Enables the rhythmic gate chop";
+    i == 6 ? s = "Playback pitch of the loop in semitones (varispeed)";
+    i == 7 ? s = "Enables Pitch Shift";
+    i == 8 ? s = "Probability that an event plays its slice backwards";
+    i == 9 ? s = "Enables random reversal: reverses the stutter loop, or with Stutter off plays the live audio back in";
+    i == 10 ? s = "How long a tape-stop event takes to slow to a halt";
+    i == 11 ? s = "Enables tape stops, triggered on about 30% of events";
+    i == 12 ? s = "Length of the Hann-windowed grain looped instead of the full slice";
+    i == 13 ? s = "Loops a short windowed grain instead of the whole slice, or with Stutter off turns the live signal into";
+    i == 14 ? s = "Dry/wet blend";
+    i == 15 ? s = "What plays the effects: Auto rolls them at Rate with the switches and chances, MIDI plays them while notes";
+    s;
+  );
+
   function ng_presets() local(i)
   (
+    ng_hint_i > 0 && !ng_pre_open ? ng_hint(ng_hint_text(ng_hint_i));
     ng_pre_req >= 0 ? ( ng_preset_load(ng_pre_req); update(); ng_pre_req = -1; );
     ng_hist() ? update();
     ng_pre_cur = ng_preset_match();

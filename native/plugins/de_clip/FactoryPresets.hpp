@@ -27,4 +27,13 @@ static const FactoryPreset kPresets[] = {
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 4;
 
+// the hint line under the controls: a short help text per parameter (from tools/site_content.json)
+#define NULL_UI_HINTS 1
+static const char* const kHints[] = {
+    "The level at and above which samples count as clipped (-24 to 0 dB)",
+    "How many samples in a row must sit at the clip level before they are rebuilt (2 to 8)",
+    "Output level (-24 to +12 dB): the rebuilt peaks pass the clip level and often 0 dBFS, so turn down here or",
+    "Listen: Output plays the result; Delta plays only what was added back",
+};
+
 } // namespace nullpresets

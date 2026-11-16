@@ -27,4 +27,17 @@ static const FactoryPreset kPresets[] = {
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 8;
 
+// the hint line under the controls: a short help text per parameter (from tools/site_content.json)
+#define NULL_UI_HINTS 1
+static const char* const kHints[] = {
+    "Blend between dry signal and the compressed signal",
+    "Scales attack and release times (100% = 13.5 ms / 132 ms)",
+    "Amount of upward compression lifting quiet parts",
+    "Amount of downward compression pushing down loud parts",
+    "Gain of the low band (below 88 Hz)",
+    "Gain of the mid band (88 Hz–2.5 kHz)",
+    "Gain of the high band (above 2.5 kHz)",
+    "Final output level",
+};
+
 } // namespace nullpresets

@@ -27,4 +27,15 @@ static const FactoryPreset kPresets[] = {
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 6;
 
+// the hint line under the controls: a short help text per parameter (from tools/site_content.json)
+#define NULL_UI_HINTS 1
+static const char* const kHints[] = {
+    "Filter cutoff frequency",
+    "Feedback around the ladder; high values approach self-oscillation (capped at 3.95)",
+    "Input gain into the saturating ladder for analog growl (level-compensated)",
+    "Lowpass or Highpass 24 dB/oct response",
+    "Output level",
+    "Runs the ladder at 2x or 4x the sample rate (linear-phase halfband filters, 31 or 37 samples of latency)",
+};
+
 } // namespace nullpresets

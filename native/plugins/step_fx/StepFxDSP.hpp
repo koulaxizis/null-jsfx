@@ -10,6 +10,9 @@
  * does), free-running at the tempo (120 bpm without one) when stopped. Swing lengthens every
  * even step by sw and shortens the odd one. MIDI Trigger: held notes C3..G3 pick the effect.
  * Two voices crossfade every change of effect over 4 ms; Filter and Crush run after them.
+ * Generate, Density, Style and Seed (appended in 4.0): On plays a pattern made from them in
+ * place of the Step sliders (generatePattern, applied by paramsFrom so the interface shows the
+ * same steps); Off keeps the original code.
  */
 
 #pragma once
@@ -34,7 +37,44 @@ struct Params {
     double pitch = 12.0;   // semitones
     double mix = 100.0;    // %
     bool midi = false;
+    bool generate = false;
+    double densityPct = 50.0;
+    int style = 0;         // 0..4: Build, Glitch, Tape, Dub, Random
+    double seed = 1.0;
 };
+
+// one Park-Miller step (x * 16807 mod 2^31 - 1, exact in doubles), as the JSFX's gen_pm
+inline double genPm(double x) noexcept
+{
+    x *= 16807.0;
+    return x - std::floor(x / 2147483647.0) * 2147483647.0;
+}
+
+// the generated pattern into p.steps, as the JSFX's gen_make (always two draws per step): per
+// style the weight of each step (1..9, '.' never) and the effects it picks from
+inline void generatePattern(Params& p) noexcept
+{
+    static const char* const kW[] = { "..2...2...3.5679", "4.2.4.2.4.2.4.25", "...3...6...3...9", "......5.......69",
+                                      "5555555555555555" };
+    static const char* const kFx[] = { "11447", "11248", "5562", "3323", "12345678" };
+    const int st = p.style < 0 ? 0 : p.style > 4 ? 4 : p.style;
+    const double d = p.densityPct / 100.0;
+    double x = std::fmax(1.0, std::floor(p.seed + 0.5)) * 7.0 + st * 1000.0 + 12345.0;
+    for (int i = 0; i < 4; ++i)
+        x = genPm(x);
+    const char* fx = kFx[st];
+    const double nfx = double(std::strlen(fx));
+    for (int i = 0; i < 16; ++i)
+    {
+        x = genPm(x);
+        const double r1 = x / 2147483647.0;
+        x = genPm(x);
+        const double r2 = x / 2147483647.0;
+        const char c = kW[st][i];
+        const double w = c >= '1' && c <= '9' ? double(c - '0') / 9.0 : 0.0;
+        p.steps[i] = r1 < std::fmin(1.0, w * 2.0 * d) ? fx[int(std::floor(r2 * nfx))] - '0' : 0;
+    }
+}
 
 // steps per beat for a Step Length option (as the JSFX's spb)
 inline double stepsPerBeat(int sel) noexcept

@@ -371,8 +371,29 @@ out_pin:Right
     s;
   );
 
+  // the hint line under the controls: a short help text per slider (from tools/site_content.json)
+  function ng_hint_text(i) local(s)
+  (
+    s = "";
+    i == 1 ? s = "Gain at 31 Hz (-18 to +18 dB): the sub and deep low end; drag the first point in the curve";
+    i == 2 ? s = "Gain at 63 Hz (-18 to +18 dB): kick and bass weight";
+    i == 3 ? s = "Gain at 125 Hz (-18 to +18 dB): bass body and warmth";
+    i == 4 ? s = "Gain at 250 Hz (-18 to +18 dB): low mids, where mud and boxiness build up";
+    i == 5 ? s = "Gain at 500 Hz (-18 to +18 dB): body of voices, guitars and snares";
+    i == 6 ? s = "Gain at 1 kHz (-18 to +18 dB): the centre of the midrange, nasal or honky when boosted";
+    i == 7 ? s = "Gain at 2 kHz (-18 to +18 dB): presence and attack";
+    i == 8 ? s = "Gain at 4 kHz (-18 to +18 dB): clarity and edge, harsh if pushed";
+    i == 9 ? s = "Gain at 8 kHz (-18 to +18 dB): brilliance and sibilance";
+    i == 10 ? s = "Gain at 16 kHz (-18 to +18 dB): air and sparkle (left out at sample rates below 36 kHz)";
+    i == 11 ? s = "How smoothly the curve flows between the points (0 to 100%): low values give each point its own defined";
+    i == 12 ? s = "Level after the EQ (-18 to +18 dB), to match loudness after big boosts or cuts";
+    i == 13 ? s = "Blend of equalized and dry signal (0 to 100%), for subtle or parallel tone shaping";
+    s;
+  );
+
   function ng_presets() local(i)
   (
+    ng_hint_i > 0 && !ng_pre_open ? ng_hint(ng_hint_text(ng_hint_i));
     ng_pre_req >= 0 ? ( ng_preset_load(ng_pre_req); update(); ng_pre_req = -1; );
     ng_hist() ? update();
     ng_pre_cur = ng_preset_match();

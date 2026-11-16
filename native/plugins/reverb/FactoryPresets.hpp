@@ -32,4 +32,24 @@ static const FactoryPreset kPresets[] = {
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 15;
 
+// the hint line under the controls: a short help text per parameter (from tools/site_content.json)
+#define NULL_UI_HINTS 1
+static const char* const kHints[] = {
+    "Scales all delay lengths (25–100% of full size)",
+    "Comb feedback; higher values give a longer tail (roughly 0.4 s to 4 s at default size)",
+    "High-frequency absorption in the tail: 0% is bright, higher values make the tail progressively darker",
+    "Blend between dry signal and reverb",
+    "Passes the input unprocessed when set to 1",
+    "Delays the signal feeding the reverb (0–250 ms) so the tail starts after the dry sound",
+    "12 dB/oct high-pass on the reverb only, to keep the tail out of the low end; off at 20 Hz",
+    "12 dB/oct low-pass on the reverb only, for a darker, less splashy tail; off at 20 kHz",
+    "Stereo width of the reverb (mid/side): 0% is mono, 100% unchanged, 200% extra wide",
+    "Slow, gentle movement of the internal delay lengths that smears metallic ringing and gives the tail a",
+    "Holds the current tail forever: the loop stops losing level and no new input enters, for pads and drones",
+    "Classic is the original room algorithm; Plate adds dense input diffusion and a brighter tail",
+    "Dips the reverb while the dry signal is loud, so the tail fills the gaps between phrases and hits",
+    "Gated reverb: above -80 dB the tail stays open while the input is above this level, then is cut (-80 = off)",
+    "How long the gate stays open after the input falls under the threshold",
+};
+
 } // namespace nullpresets

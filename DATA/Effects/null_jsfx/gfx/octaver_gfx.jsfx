@@ -126,8 +126,22 @@ out_pin:Right
     s;
   );
 
+  // the hint line under the controls: a short help text per slider (from tools/site_content.json)
+  function ng_hint_text(i) local(s)
+  (
+    s = "";
+    i == 1 ? s = "Level of the original signal";
+    i == 2 ? s = "Level of the voice one octave below the input (square wave from a flip-flop, following the input envelope)";
+    i == 3 ? s = "Level of the voice two octaves below the input";
+    i == 4 ? s = "Level of the voice one octave above (full-wave rectified input)";
+    i == 5 ? s = "Low-pass on the octave voices: lower is rounder and more synth-bass-like";
+    i == 6 ? s = "Low-pass ahead of the pitch tracking: set it just above the fundamental of the part for stable tracking";
+    s;
+  );
+
   function ng_presets() local(i)
   (
+    ng_hint_i > 0 && !ng_pre_open ? ng_hint(ng_hint_text(ng_hint_i));
     ng_pre_req >= 0 ? ( ng_preset_load(ng_pre_req); update(); ng_pre_req = -1; );
     ng_hist() ? update();
     ng_pre_cur = ng_preset_match();

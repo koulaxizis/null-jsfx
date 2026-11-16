@@ -25,4 +25,17 @@ static const FactoryPreset kPresets[] = {
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 8;
 
+// the hint line under the controls: a short help text per parameter (from tools/site_content.json)
+#define NULL_UI_HINTS 1
+static const char* const kHints[] = {
+    "The MIDI note each hit plays",
+    "Level a hit must reach to trigger",
+    "Shortest time between two hits (stops double triggers)",
+    "How much the velocity follows the hit: 100% maps Threshold..0 dBFS to 1..127, 0% gives every hit 100",
+    "High-pass on the detector, to keep lower drums out",
+    "Low-pass on the detector, to keep cymbals out",
+    "How long each note lasts",
+    "MIDI channel of the notes",
+};
+
 } // namespace nullpresets

@@ -27,4 +27,20 @@ static const FactoryPreset kPresets[] = {
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 11;
 
+// the hint line under the controls: a short help text per parameter (from tools/site_content.json)
+#define NULL_UI_HINTS 1
+static const char* const kHints[] = {
+    "How many echoes (1 to 8)",
+    "Where the echoes fall: even steps, dotted, triplet, swing, speeding up, slowing down or scattered",
+    "The step between echoes in milliseconds (when Tempo Sync is off)",
+    "Lock the step to the host tempo",
+    "The note value of the step when synced",
+    "How much quieter each echo is than the one before",
+    "How far the echoes are panned left and right in turn",
+    "Sends the last echo back into the line for longer tails",
+    "High-pass on the echoes",
+    "Low-pass on the echoes",
+    "Blend between the dry signal and the echoes",
+};
+
 } // namespace nullpresets

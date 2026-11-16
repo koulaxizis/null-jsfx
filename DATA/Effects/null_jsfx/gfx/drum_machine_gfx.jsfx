@@ -893,8 +893,80 @@ out_pin:Perc Right
     s;
   );
 
+  // the hint line under the controls: a short help text per slider (from tools/site_content.json)
+  function ng_hint_text(i) local(s)
+  (
+    s = "";
+    i == 1 ? s = "The pattern the sequencer plays while the host plays: Off (MIDI only), User (the one you draw in the GFX";
+    i == 2 ? s = "Swing of the off-beat sixteenths (50% = straight, up to 75%)";
+    i == 3 ? s = "How much louder the accented steps are than the normal ones (0 to 100%)";
+    i == 4 ? s = "Soft clipping of the whole kit (0 to 100%), for weight and glue";
+    i == 5 ? s = "Lo-fi grit for the whole kit: a lower sample rate (48 kHz down to 8 kHz) and fewer bits (15 down to 4)";
+    i == 6 ? s = "The output level (-24 to +12 dB)";
+    i == 7 ? s = "Level of the kick (-40 to +6 dB)";
+    i == 8 ? s = "Tuning of the kick in semitones (-12 to +12)";
+    i == 9 ? s = "How long the kick rings (0 to 100%, 50% is its natural length)";
+    i == 10 ? s = "Tone of the kick: from a round, soft thump to a punchy kick with a click and a fast pitch sweep (0 to 100%)";
+    i == 11 ? s = "Stereo position of the kick (L100 to R100)";
+    i == 12 ? s = "Level of the snare (-40 to +6 dB)";
+    i == 13 ? s = "Tuning of the snare in semitones (-12 to +12)";
+    i == 14 ? s = "How long the snare rings (0 to 100%, 50% is its natural length)";
+    i == 15 ? s = "Tone of the snare: how much bright snare noise sits over the two drum tones (0 to 100%)";
+    i == 16 ? s = "Stereo position of the snare (L100 to R100)";
+    i == 17 ? s = "Level of the clap (-40 to +6 dB)";
+    i == 18 ? s = "Tuning of the clap in semitones (-12 to +12)";
+    i == 19 ? s = "How long the clap rings (0 to 100%, 50% is its natural length)";
+    i == 20 ? s = "Tone of the clap: from a dark to a bright, crisp clap (0 to 100%)";
+    i == 21 ? s = "Stereo position of the clap (L100 to R100)";
+    i == 22 ? s = "Level of the rim shot (-40 to +6 dB)";
+    i == 23 ? s = "Tuning of the rim shot in semitones (-12 to +12)";
+    i == 24 ? s = "How long the rim shot rings (0 to 100%, 50% is its natural length)";
+    i == 25 ? s = "Tone of the rim shot: 0% is a rim shot, 100% a wooden clave (0 to 100%)";
+    i == 26 ? s = "Stereo position of the rim shot (L100 to R100)";
+    i == 27 ? s = "Level of the closed hi-hat (-40 to +6 dB)";
+    i == 28 ? s = "Tuning of the closed hi-hat in semitones (-12 to +12)";
+    i == 29 ? s = "How long the closed hi-hat rings (0 to 100%, 50% is its natural length)";
+    i == 30 ? s = "Tone of the closed hi-hat: from a dark, dull to a bright, sizzling hat (0 to 100%)";
+    i == 31 ? s = "Stereo position of the closed hi-hat (L100 to R100)";
+    i == 32 ? s = "Level of the open hi-hat (-40 to +6 dB)";
+    i == 33 ? s = "Tuning of the open hi-hat in semitones (-12 to +12)";
+    i == 34 ? s = "How long the open hi-hat rings (0 to 100%, 50% is its natural length)";
+    i == 35 ? s = "Tone of the open hi-hat: from a dark, dull to a bright, sizzling hat (0 to 100%)";
+    i == 36 ? s = "Stereo position of the open hi-hat (L100 to R100)";
+    i == 37 ? s = "Level of the low tom (-40 to +6 dB)";
+    i == 38 ? s = "Tuning of the low tom in semitones (-12 to +12)";
+    i == 39 ? s = "How long the low tom rings (0 to 100%, 50% is its natural length)";
+    i == 40 ? s = "Tone of the low tom: how far the pitch sweeps down after the hit, from a plain tom to an electronic one (0";
+    i == 41 ? s = "Stereo position of the low tom (L100 to R100)";
+    i == 42 ? s = "Level of the high tom (-40 to +6 dB)";
+    i == 43 ? s = "Tuning of the high tom in semitones (-12 to +12)";
+    i == 44 ? s = "How long the high tom rings (0 to 100%, 50% is its natural length)";
+    i == 45 ? s = "Tone of the high tom: how far the pitch sweeps down after the hit, from a plain tom to an electronic one";
+    i == 46 ? s = "Stereo position of the high tom (L100 to R100)";
+    i == 47 ? s = "Level of the cowbell (-40 to +6 dB)";
+    i == 48 ? s = "Tuning of the cowbell in semitones (-12 to +12)";
+    i == 49 ? s = "How long the cowbell rings (0 to 100%, 50% is its natural length)";
+    i == 50 ? s = "Tone of the cowbell: from a dark to a bright, clanging cowbell (0 to 100%)";
+    i == 51 ? s = "Stereo position of the cowbell (L100 to R100)";
+    i == 52 ? s = "Level of the cymbal (-40 to +6 dB)";
+    i == 53 ? s = "Tuning of the cymbal in semitones (-12 to +12)";
+    i == 54 ? s = "How long the cymbal rings (0 to 100%, 50% is its natural length)";
+    i == 55 ? s = "Tone of the cymbal: from a dark wash to a bright, splashy cymbal (0 to 100%)";
+    i == 56 ? s = "Stereo position of the cymbal (L100 to R100)";
+    i == 57 ? s = "The chance that an unaccented step plays (accented steps always play): 100% plays every step, lower values";
+    i == 58 ? s = "The random sequence behind Probability and Generate (1 to 999): the same Seed always gives the same result";
+    i == 59 ? s = "On plays a pattern generated from Seed, Density and Style instead of the selected one";
+    i == 60 ? s = "How busy the generated pattern is (0 to 100%)";
+    i == 61 ? s = "The kind of pattern Generate makes: Four Floor, Breakbeat, Half Time, Electro, Latin or Random";
+    i == 62 ? s = "A kit moves every voice's Level, Tune, Decay and Tone by a set of offsets: Manual (none), Deep Boom, Punch";
+    i == 63 ? s = "Main mixes the whole kit on outputs 1/2; Groups puts the kick on 1/2, snare, clap and rim on 3/4, the hats";
+    i == 64 ? s = "Song plays the song instead of the Pattern: up to 8 sections in turn, each a pattern for 1 to 16 bars, set";
+    s;
+  );
+
   function ng_presets() local(i)
   (
+    ng_hint_i > 0 && !ng_pre_open ? ng_hint(ng_hint_text(ng_hint_i));
     ng_pre_req >= 0 ? ( ng_preset_load(ng_pre_req); update(); ng_pre_req = -1; );
     ng_hist() ? update();
     ng_pre_cur = ng_preset_match();

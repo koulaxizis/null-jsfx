@@ -37,13 +37,17 @@ static const NullKnobsUI::Control kControls[] = {
     { 13, NullKnobsUI::kSelect, "STEP 14", 1, 2, false },
     { 14, NullKnobsUI::kSelect, "STEP 15", 1, 2, false },
     { 15, NullKnobsUI::kSelect, "STEP 16", 1, 2, false },
+    // GENERATE tab (appended in 4.0; the pattern also uses SEED on the GATE tab)
+    { 24, NullKnobsUI::kSelect, "GENERATE", 0, 3, false },
+    { 26, NullKnobsUI::kSelect, "STYLE", 0, 3, false },
+    { 25, NullKnobsUI::kKnob, "DENSITY", 0, 3, false },
 };
 
 class UITranceGate : public NullKnobsUI
 {
 public:
     UITranceGate()
-        : NullKnobsUI({ "TRANCE GATE", "ADVANCED", 480, 120, "GATE|STEPS 1-8|STEPS 9-16", 2, nulltrance::kSliders,
+        : NullKnobsUI({ "TRANCE GATE", "ADVANCED", 480, 120, "GATE|STEPS 1-8|STEPS 9-16|GENERATE", 2, nulltrance::kSliders,
                         nulltrance::kNumSliders, kControls, sizeof(kControls) / sizeof(kControls[0]), true }) {}
 
 protected:
@@ -53,7 +57,7 @@ protected:
     float plotW() const { return float(kWidth) - 48.0f - 30.0f; }
     float plotH() const { return 120.0f - 16.0f - 20.0f; }
 
-    // as in trance_gate_gfx.jsfx: the 16 steps (click one to switch it), the playing step
+    // as in trance_gate_gfx.jsfx: the 16 steps (click one to switch it; with Generate On the generated ones), the playing step
     // marked below, and the gain over the pattern as Attack, Release and Depth shape it
     void drawDisplay() override
     {
@@ -111,12 +115,12 @@ protected:
         curve(xs, ys, n);
     }
 
-    // a click on a step in the display switches it
+    // a click on a step in the display switches it (not while Generate plays its own pattern)
     bool onMouse(const MouseEvent& ev) override
     {
         if (presetMouse(ev))
             return true;
-        if (ev.button == 1 && ev.press)
+        if (ev.button == 1 && ev.press && value(24) < 0.5f)
         {
             const float s = uiScale();
             const float x = float(ev.pos.getX()) / s, y = float(ev.pos.getY()) / s;

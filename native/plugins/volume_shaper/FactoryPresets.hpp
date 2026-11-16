@@ -8,25 +8,59 @@ namespace nullpresets {
 
 struct FactoryPreset {
     const char* name;
-    float values[8];
+    float values[25];
 };
 
 static const FactoryPreset kPresets[] = {
-    { "Default", { 0.0f, 2.0f, 80.0f, 3.0f, 0.0f, 100.0f, 0.0f, -20.0f } },
-    { "Gentle Bus Pump", { 0.0f, 2.0f, 35.0f, 5.0f, 0.0f, 100.0f, 0.0f, -20.0f } },
-    { "Hard Dance Pump", { 1.0f, 2.0f, 100.0f, 2.0f, 0.0f, 100.0f, 0.0f, -20.0f } },
-    { "Half Time Pump", { 8.0f, 2.0f, 80.0f, 3.0f, 0.0f, 100.0f, 0.0f, -20.0f } },
-    { "Trance Gate Eighths", { 5.0f, 2.0f, 100.0f, 3.0f, 0.0f, 100.0f, 0.0f, -20.0f } },
-    { "Sixteenth Gate", { 4.0f, 2.0f, 100.0f, 2.0f, 0.0f, 100.0f, 0.0f, -20.0f } },
-    { "Sine Eighth Tremolo", { 6.0f, 3.0f, 50.0f, 0.0f, 0.0f, 100.0f, 0.0f, -20.0f } },
-    { "Bar Long Swell", { 3.0f, 0.0f, 100.0f, 5.0f, 0.0f, 100.0f, 0.0f, -20.0f } },
-    { "Stutter Fill", { 9.0f, 1.0f, 100.0f, 1.0f, 0.0f, 100.0f, 0.0f, -20.0f } },
-    { "Kick Retrigger Duck", { 0.0f, 2.0f, 90.0f, 3.0f, 0.0f, 100.0f, 2.0f, -24.0f } },
-    { "Sidechain Hard Duck", { 1.0f, 3.0f, 100.0f, 2.0f, 0.0f, 100.0f, 2.0f, -18.0f } },
-    { "MIDI Note Duck", { 0.0f, 2.0f, 85.0f, 3.0f, 0.0f, 100.0f, 1.0f, -20.0f } },
-    { "MIDI Swell In", { 3.0f, 1.0f, 100.0f, 5.0f, 0.0f, 100.0f, 1.0f, -20.0f } },
+    { "Default", { 0.0f, 2.0f, 80.0f, 3.0f, 0.0f, 100.0f, 0.0f, -20.0f, 0.0f, 0.0f, 40.0f, 65.0f, 80.0f, 90.0f, 96.0f, 100.0f, 100.0f, 100.0f, 100.0f, 100.0f, 100.0f, 100.0f, 100.0f, 100.0f, 100.0f } },
+    { "Gentle Bus Pump", { 0.0f, 2.0f, 35.0f, 5.0f, 0.0f, 100.0f, 0.0f, -20.0f, 0.0f, 0.0f, 40.0f, 65.0f, 80.0f, 90.0f, 96.0f, 100.0f, 100.0f, 100.0f, 100.0f, 100.0f, 100.0f, 100.0f, 100.0f, 100.0f, 100.0f } },
+    { "Hard Dance Pump", { 1.0f, 2.0f, 100.0f, 2.0f, 0.0f, 100.0f, 0.0f, -20.0f, 0.0f, 0.0f, 40.0f, 65.0f, 80.0f, 90.0f, 96.0f, 100.0f, 100.0f, 100.0f, 100.0f, 100.0f, 100.0f, 100.0f, 100.0f, 100.0f, 100.0f } },
+    { "Half Time Pump", { 8.0f, 2.0f, 80.0f, 3.0f, 0.0f, 100.0f, 0.0f, -20.0f, 0.0f, 0.0f, 40.0f, 65.0f, 80.0f, 90.0f, 96.0f, 100.0f, 100.0f, 100.0f, 100.0f, 100.0f, 100.0f, 100.0f, 100.0f, 100.0f, 100.0f } },
+    { "Trance Gate Eighths", { 5.0f, 2.0f, 100.0f, 3.0f, 0.0f, 100.0f, 0.0f, -20.0f, 0.0f, 0.0f, 40.0f, 65.0f, 80.0f, 90.0f, 96.0f, 100.0f, 100.0f, 100.0f, 100.0f, 100.0f, 100.0f, 100.0f, 100.0f, 100.0f, 100.0f } },
+    { "Sixteenth Gate", { 4.0f, 2.0f, 100.0f, 2.0f, 0.0f, 100.0f, 0.0f, -20.0f, 0.0f, 0.0f, 40.0f, 65.0f, 80.0f, 90.0f, 96.0f, 100.0f, 100.0f, 100.0f, 100.0f, 100.0f, 100.0f, 100.0f, 100.0f, 100.0f, 100.0f } },
+    { "Sine Eighth Tremolo", { 6.0f, 3.0f, 50.0f, 0.0f, 0.0f, 100.0f, 0.0f, -20.0f, 0.0f, 0.0f, 40.0f, 65.0f, 80.0f, 90.0f, 96.0f, 100.0f, 100.0f, 100.0f, 100.0f, 100.0f, 100.0f, 100.0f, 100.0f, 100.0f, 100.0f } },
+    { "Bar Long Swell", { 3.0f, 0.0f, 100.0f, 5.0f, 0.0f, 100.0f, 0.0f, -20.0f, 0.0f, 0.0f, 40.0f, 65.0f, 80.0f, 90.0f, 96.0f, 100.0f, 100.0f, 100.0f, 100.0f, 100.0f, 100.0f, 100.0f, 100.0f, 100.0f, 100.0f } },
+    { "Stutter Fill", { 9.0f, 1.0f, 100.0f, 1.0f, 0.0f, 100.0f, 0.0f, -20.0f, 0.0f, 0.0f, 40.0f, 65.0f, 80.0f, 90.0f, 96.0f, 100.0f, 100.0f, 100.0f, 100.0f, 100.0f, 100.0f, 100.0f, 100.0f, 100.0f, 100.0f } },
+    { "Kick Retrigger Duck", { 0.0f, 2.0f, 90.0f, 3.0f, 0.0f, 100.0f, 2.0f, -24.0f, 0.0f, 0.0f, 40.0f, 65.0f, 80.0f, 90.0f, 96.0f, 100.0f, 100.0f, 100.0f, 100.0f, 100.0f, 100.0f, 100.0f, 100.0f, 100.0f, 100.0f } },
+    { "Sidechain Hard Duck", { 1.0f, 3.0f, 100.0f, 2.0f, 0.0f, 100.0f, 2.0f, -18.0f, 0.0f, 0.0f, 40.0f, 65.0f, 80.0f, 90.0f, 96.0f, 100.0f, 100.0f, 100.0f, 100.0f, 100.0f, 100.0f, 100.0f, 100.0f, 100.0f, 100.0f } },
+    { "MIDI Note Duck", { 0.0f, 2.0f, 85.0f, 3.0f, 0.0f, 100.0f, 1.0f, -20.0f, 0.0f, 0.0f, 40.0f, 65.0f, 80.0f, 90.0f, 96.0f, 100.0f, 100.0f, 100.0f, 100.0f, 100.0f, 100.0f, 100.0f, 100.0f, 100.0f, 100.0f } },
+    { "MIDI Swell In", { 3.0f, 1.0f, 100.0f, 5.0f, 0.0f, 100.0f, 1.0f, -20.0f, 0.0f, 0.0f, 40.0f, 65.0f, 80.0f, 90.0f, 96.0f, 100.0f, 100.0f, 100.0f, 100.0f, 100.0f, 100.0f, 100.0f, 100.0f, 100.0f, 100.0f } },
+    { "Custom Soft Pump", { 0.0f, 2.0f, 70.0f, 3.0f, 0.0f, 100.0f, 0.0f, -20.0f, 1.0f, 0.0f, 40.0f, 65.0f, 80.0f, 90.0f, 96.0f, 100.0f, 100.0f, 100.0f, 100.0f, 100.0f, 100.0f, 100.0f, 100.0f, 100.0f, 100.0f } },
+    { "Custom Off-Beat Swell", { 0.0f, 2.0f, 80.0f, 4.0f, 0.0f, 100.0f, 0.0f, -20.0f, 1.0f, 20.0f, 15.0f, 10.0f, 10.0f, 15.0f, 30.0f, 50.0f, 70.0f, 90.0f, 100.0f, 100.0f, 90.0f, 70.0f, 50.0f, 35.0f, 25.0f } },
+    { "Custom Gallop Gate", { 0.0f, 1.0f, 100.0f, 2.0f, 0.0f, 100.0f, 0.0f, -20.0f, 1.0f, 100.0f, 100.0f, 0.0f, 0.0f, 100.0f, 0.0f, 100.0f, 0.0f, 100.0f, 100.0f, 0.0f, 0.0f, 100.0f, 0.0f, 100.0f, 0.0f } },
+    { "Custom Long Fade In", { 0.0f, 0.0f, 90.0f, 5.0f, 0.0f, 100.0f, 0.0f, -20.0f, 1.0f, 0.0f, 7.0f, 13.0f, 20.0f, 27.0f, 33.0f, 40.0f, 47.0f, 53.0f, 60.0f, 67.0f, 73.0f, 80.0f, 87.0f, 93.0f, 100.0f } },
 };
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
-static constexpr uint32_t kNumValues = 8;
+static constexpr uint32_t kNumValues = 25;
+
+// the hint line under the controls: a short help text per parameter (from tools/site_content.json)
+#define NULL_UI_HINTS 1
+static const char* const kHints[] = {
+    "The volume curve: Pump, Pump Hard, Saw Down, Saw Up, Gate 1/16, Trance 1/8, Sine, Triangle, Half-time Pump",
+    "Length of one cycle of the shape at the host tempo (1/1 to 1/16, plus 1/4 and 1/8 triplets)",
+    "How far the shape turns the level down (0% = no effect, 100% = silence at the bottom of the curve)",
+    "Smoothing of the volume changes, to keep gates and jumps free of clicks",
+    "Moves the shape later in the cycle",
+    "Blend between the shaped and the dry signal",
+    "What starts the shape: Tempo loops it on the host tempo, MIDI plays it once from the top on every note-on",
+    "Level the sidechain signal must rise above to start the shape in Sidechain mode",
+    "Plays your own drawn shape instead of Shape (Off by default): the 16 points below, one every 1/16 of the",
+    "Point 1 of the drawn shape, at the start of the cycle (0 to 100% level)",
+    "Point 2 of the drawn shape, 1/16 of the way through the cycle (0 to 100% level)",
+    "Point 3 of the drawn shape, 2/16 of the way through the cycle (0 to 100% level)",
+    "Point 4 of the drawn shape, 3/16 of the way through the cycle (0 to 100% level)",
+    "Point 5 of the drawn shape, 4/16 of the way through the cycle (0 to 100% level)",
+    "Point 6 of the drawn shape, 5/16 of the way through the cycle (0 to 100% level)",
+    "Point 7 of the drawn shape, 6/16 of the way through the cycle (0 to 100% level)",
+    "Point 8 of the drawn shape, 7/16 of the way through the cycle (0 to 100% level)",
+    "Point 9 of the drawn shape, 8/16 of the way through the cycle (0 to 100% level)",
+    "Point 10 of the drawn shape, 9/16 of the way through the cycle (0 to 100% level)",
+    "Point 11 of the drawn shape, 10/16 of the way through the cycle (0 to 100% level)",
+    "Point 12 of the drawn shape, 11/16 of the way through the cycle (0 to 100% level)",
+    "Point 13 of the drawn shape, 12/16 of the way through the cycle (0 to 100% level)",
+    "Point 14 of the drawn shape, 13/16 of the way through the cycle (0 to 100% level)",
+    "Point 15 of the drawn shape, 14/16 of the way through the cycle (0 to 100% level)",
+    "Point 16 of the drawn shape, 15/16 of the way through the cycle (0 to 100% level)",
+};
 
 } // namespace nullpresets

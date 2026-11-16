@@ -256,8 +256,21 @@ out_pin:Right
     s;
   );
 
+  // the hint line under the controls: a short help text per slider (from tools/site_content.json)
+  function ng_hint_text(i) local(s)
+  (
+    s = "";
+    i == 1 ? s = "How far each note may move in time (0 to 30 ms), at random, earlier or later";
+    i == 2 ? s = "How much each note's velocity may change at random (0 to 50% of its velocity), up or down";
+    i == 3 ? s = "A groove applied on top of the random moves: Straight (none), Swing 8ths or Swing 16ths (the off-beat";
+    i == 4 ? s = "How strong the groove is (0 to 100%): for the swings 100% is a full triplet shuffle, for Laid Back and";
+    i == 5 ? s = "The start of the random sequence (1 to 9999): the same seed gives the same moves on every playback, since";
+    s;
+  );
+
   function ng_presets() local(i)
   (
+    ng_hint_i > 0 && !ng_pre_open ? ng_hint(ng_hint_text(ng_hint_i));
     ng_pre_req >= 0 ? ( ng_preset_load(ng_pre_req); update(); ng_pre_req = -1; );
     ng_hist() ? update();
     ng_pre_cur = ng_preset_match();

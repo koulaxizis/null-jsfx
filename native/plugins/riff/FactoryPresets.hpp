@@ -32,4 +32,21 @@ static const FactoryPreset kPresets[] = {
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 12;
 
+// the hint line under the controls: a short help text per parameter (from tools/site_content.json)
+#define NULL_UI_HINTS 1
+static const char* const kHints[] = {
+    "The key the riff is in",
+    "The scale the riff's notes come from (major, minor, harmonic or melodic minor, the modes, major or minor",
+    "Picks the riff (1 to 999): every seed is a different pattern, and the same seed always plays the same",
+    "How many of the steps play a note (0 to 100%)",
+    "The length of the pattern in steps (4 to 32) before it repeats; more steps add to the end of the same riff",
+    "The step length, synced to the tempo: 1/8, 1/16 or 1/32 notes, or their triplets",
+    "How far the riff climbs above the key you hold: 1 to 3 octaves of the scale",
+    "How long each note lasts as a share of its step (10 to 100%): short values play staccato, 100% plays legato",
+    "Keeps a rhythm while Seed rolls new notes: 0 is Off (the rhythm follows Seed)",
+    "How much the step velocities vary below the velocity of the key you hold (0% plays every step at it)",
+    "The share of steps that are accented, played well above the others (0 to 100%)",
+    "How often a step plays a new note instead of repeating the note one beat earlier (0% repeats a one-beat",
+};
+
 } // namespace nullpresets

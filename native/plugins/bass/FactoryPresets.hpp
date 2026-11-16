@@ -32,4 +32,28 @@ static const FactoryPreset kPresets[] = {
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 19;
 
+// the hint line under the controls: a short help text per parameter (from tools/site_content.json)
+#define NULL_UI_HINTS 1
+static const char* const kHints[] = {
+    "The oscillator: Sub (a sine with a little second harmonic), Saw and Square (band-limited), or 808 (a sine",
+    "Shifts the whole bass by -2 to +2 octaves",
+    "Adds a second oscillator detuned by 0 to 50 cents for a wide, beating sound (a Reese bass at 15 to 30)",
+    "The level of a sine one octave below the note (0 to 100%), for weight on small and large speakers",
+    "A short boost at the start of every note (0 to 100%), for attack that cuts through",
+    "Soft clipping after the filter (0 to 100%), from warmth to a hard distorted bass",
+    "The cutoff of the 24 dB low-pass filter (30 Hz to 12 kHz)",
+    "The filter's resonance (0 to 100%): a peak at the cutoff, up to a squelchy acid whistle",
+    "How far the filter envelope opens (positive) or closes (negative) the cutoff at every new note, up to 6",
+    "How long the filter envelope takes to fall back (5 ms to 3 s): short for plucks and acid, long for slow",
+    "The amplitude envelope's attack time (1 ms to 2 s)",
+    "The time to fall from the peak to the Sustain level (5 ms to 5 s)",
+    "The level held while the key is down (0 to 100%); at 0 every note decays away like an 808",
+    "The time the note takes to fade after the key is released (5 ms to 5 s)",
+    "Legato: a key pressed while another is held glides to its pitch without a new attack",
+    "The glide time (0 to 1000 ms); 0 jumps straight to the new pitch. Phrase slides use at least 60 ms",
+    "How much the velocity changes the level and the filter envelope (0% = every note the same)",
+    "The phrase the bass plays while a key from C2 up is held, in 16ths at the host's tempo (Eighths, Octaves",
+    "The output level (-24 to +12 dB)",
+};
+
 } // namespace nullpresets

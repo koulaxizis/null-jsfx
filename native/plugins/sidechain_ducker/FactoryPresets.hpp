@@ -27,4 +27,16 @@ static const FactoryPreset kPresets[] = {
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 7;
 
+// the hint line under the controls: a short help text per parameter (from tools/site_content.json)
+#define NULL_UI_HINTS 1
+static const char* const kHints[] = {
+    "Key level above which ducking starts",
+    "How far the track is turned down while ducked",
+    "How fast the level drops once the key crosses Threshold",
+    "How long the level stays down after the key falls below Threshold",
+    "How fast the level recovers after Hold",
+    "Key source: Sidechain (track channels 3/4) or the track's own Main Input",
+    "High-passes the key so only its attack triggers ducking (0 = off)",
+};
+
 } // namespace nullpresets

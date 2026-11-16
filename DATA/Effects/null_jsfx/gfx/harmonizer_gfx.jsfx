@@ -474,8 +474,34 @@ out_pin:Right
     s;
   );
 
+  // the hint line under the controls: a short help text per slider (from tools/site_content.json)
+  function ng_hint_text(i) local(s)
+  (
+    s = "";
+    i == 1 ? s = "Interval of voice 1 in semitones";
+    i == 2 ? s = "Interval of voice 2 in semitones";
+    i == 3 ? s = "Level of voice 1";
+    i == 4 ? s = "Level of voice 2";
+    i == 5 ? s = "Opposite detune of the two voices for a natural, separate-performer feel";
+    i == 6 ? s = "Delay of the voices (voice 2 is delayed 1.37× longer)";
+    i == 7 ? s = "Pans voice 1 left and voice 2 right";
+    i == 8 ? s = "Equal-power dry/wet: 0% = original only, 50% = both at −3 dB, 100% = harmony voices only";
+    i == 9 ? s = "How the voices find their notes: Semitones uses the fixed intervals, Scale turns the intervals into steps";
+    i == 10 ? s = "Key of the scale used in Scale mode";
+    i == 11 ? s = "Scale used in Scale mode: Major, Minor, Dorian, Mixolydian, Harmonic Minor, Pentatonic Major or Pentatonic";
+    i == 12 ? s = "Shifts the voices with pitch-synchronous grains that keep the character of the vowels instead of the";
+    i == 13 ? s = "How many harmony voices sing: 2, or add voice 3 and 4 (in MIDI mode they sing the third and fourth latest";
+    i == 14 ? s = "Interval of voice 3 (Voices 3 or 4)";
+    i == 15 ? s = "Interval of voice 4 (Voices 4)";
+    i == 16 ? s = "Level of voice 3";
+    i == 17 ? s = "Level of voice 4";
+    i == 18 ? s = "MIDI mode: with On, the sustain pedal (CC 64) keeps the voices of released keys singing until the pedal";
+    s;
+  );
+
   function ng_presets() local(i)
   (
+    ng_hint_i > 0 && !ng_pre_open ? ng_hint(ng_hint_text(ng_hint_i));
     ng_pre_req >= 0 ? ( ng_preset_load(ng_pre_req); update(); ng_pre_req = -1; );
     ng_hist() ? update();
     ng_pre_cur = ng_preset_match();

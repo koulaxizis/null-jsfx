@@ -662,8 +662,68 @@ out_pin:Right
     s;
   );
 
+  // the hint line under the controls: a short help text per slider (from tools/site_content.json)
+  function ng_hint_text(i) local(s)
+  (
+    s = "";
+    i == 1 ? s = "The groove that plays: Off (MIDI only), Salsa, Bossa, Samba, Cumbia, Afro Bell (12/8), Afrobeat, Reggaeton";
+    i == 2 ? s = "Transport plays the chosen groove in time with the host while it plays";
+    i == 3 ? s = "Swing of the off-beat sixteenths (50% = straight, up to 75%)";
+    i == 4 ? s = "How much louder the accented steps are than the normal ones, and how soft the ghost notes are (0 to 100%)";
+    i == 5 ? s = "Random timing and velocity variation of the groove's hits (0 to 100%), repeatable from play to play";
+    i == 6 ? s = "How much room ambience is added (0 to 100%)";
+    i == 7 ? s = "Size of the room, from a small booth to a large studio (0 to 100%)";
+    i == 8 ? s = "The output level (-24 to +12 dB)";
+    i == 9 ? s = "Level of the open conga (low drum of the pair) (-40 to +6 dB)";
+    i == 10 ? s = "Tuning of the open conga (low drum of the pair) in semitones (-12 to +12)";
+    i == 11 ? s = "How long the open conga (low drum of the pair) rings (0 to 100%, 50% is its natural length)";
+    i == 12 ? s = "Stereo position of the open conga (low drum of the pair) (L100 to R100)";
+    i == 13 ? s = "Level of the tumba, the deepest conga (-40 to +6 dB)";
+    i == 14 ? s = "Tuning of the tumba, the deepest conga in semitones (-12 to +12)";
+    i == 15 ? s = "How long the tumba, the deepest conga rings (0 to 100%, 50% is its natural length)";
+    i == 16 ? s = "Stereo position of the tumba, the deepest conga (L100 to R100)";
+    i == 17 ? s = "Level of the high bongo (macho) (-40 to +6 dB)";
+    i == 18 ? s = "Tuning of the high bongo (macho) in semitones (-12 to +12)";
+    i == 19 ? s = "How long the high bongo (macho) rings (0 to 100%, 50% is its natural length)";
+    i == 20 ? s = "Stereo position of the high bongo (macho) (L100 to R100)";
+    i == 21 ? s = "Level of the low bongo (hembra) (-40 to +6 dB)";
+    i == 22 ? s = "Tuning of the low bongo (hembra) in semitones (-12 to +12)";
+    i == 23 ? s = "How long the low bongo (hembra) rings (0 to 100%, 50% is its natural length)";
+    i == 24 ? s = "Stereo position of the low bongo (hembra) (L100 to R100)";
+    i == 25 ? s = "Level of the shaker (-40 to +6 dB)";
+    i == 26 ? s = "Tuning of the shaker in semitones (-12 to +12)";
+    i == 27 ? s = "How long the shaker rings (0 to 100%, 50% is its natural length)";
+    i == 28 ? s = "Stereo position of the shaker (L100 to R100)";
+    i == 29 ? s = "Level of the tambourine (-40 to +6 dB)";
+    i == 30 ? s = "Tuning of the tambourine in semitones (-12 to +12)";
+    i == 31 ? s = "How long the tambourine rings (0 to 100%, 50% is its natural length)";
+    i == 32 ? s = "Stereo position of the tambourine (L100 to R100)";
+    i == 33 ? s = "Level of the cowbell (-40 to +6 dB)";
+    i == 34 ? s = "Tuning of the cowbell in semitones (-12 to +12)";
+    i == 35 ? s = "How long the cowbell rings (0 to 100%, 50% is its natural length)";
+    i == 36 ? s = "Stereo position of the cowbell (L100 to R100)";
+    i == 37 ? s = "Level of the claves (-40 to +6 dB)";
+    i == 38 ? s = "Tuning of the claves in semitones (-12 to +12)";
+    i == 39 ? s = "How long the claves rings (0 to 100%, 50% is its natural length)";
+    i == 40 ? s = "Stereo position of the claves (L100 to R100)";
+    i == 41 ? s = "Level of the guiro (-40 to +6 dB)";
+    i == 42 ? s = "Tuning of the guiro in semitones (-12 to +12)";
+    i == 43 ? s = "How long the guiro rings (0 to 100%, 50% is its natural length)";
+    i == 44 ? s = "Stereo position of the guiro (L100 to R100)";
+    i == 45 ? s = "Level of the cabasa (-40 to +6 dB)";
+    i == 46 ? s = "Tuning of the cabasa in semitones (-12 to +12)";
+    i == 47 ? s = "How long the cabasa rings (0 to 100%, 50% is its natural length)";
+    i == 48 ? s = "Stereo position of the cabasa (L100 to R100)";
+    i == 49 ? s = "Level of the triangle (-40 to +6 dB)";
+    i == 50 ? s = "Tuning of the triangle in semitones (-12 to +12)";
+    i == 51 ? s = "How long the triangle rings (0 to 100%, 50% is its natural length)";
+    i == 52 ? s = "Stereo position of the triangle (L100 to R100)";
+    s;
+  );
+
   function ng_presets() local(i)
   (
+    ng_hint_i > 0 && !ng_pre_open ? ng_hint(ng_hint_text(ng_hint_i));
     ng_pre_req >= 0 ? ( ng_preset_load(ng_pre_req); update(); ng_pre_req = -1; );
     ng_hist() ? update();
     ng_pre_cur = ng_preset_match();

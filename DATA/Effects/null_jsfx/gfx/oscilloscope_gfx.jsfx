@@ -119,8 +119,25 @@ out_pin:Right
     s;
   );
 
+  // the hint line under the controls: a short help text per slider (from tools/site_content.json)
+  function ng_hint_text(i) local(s)
+  (
+    s = "";
+    i == 1 ? s = "The width of the screen, from 1 ms to 2 s";
+    i == 2 ? s = "Set the width from the tempo instead, from a 1/16 note to two bars";
+    i == 3 ? s = "Auto waits for a crossing and draws anyway after two screens; Normal draws only on a crossing";
+    i == 4 ? s = "Trigger when the signal rises or falls through the level";
+    i == 5 ? s = "The level the signal must cross to start a screen";
+    i == 6 ? s = "Show the mid, left and right over each other, or the side";
+    i == 7 ? s = "Make the picture bigger or smaller (the trigger level follows it)";
+    i == 8 ? s = "Freeze the last screen";
+    i == 9 ? s = "Play what the screen shows (the mid or the side); Stereo leaves the audio untouched";
+    s;
+  );
+
   function ng_presets() local(i)
   (
+    ng_hint_i > 0 && !ng_pre_open ? ng_hint(ng_hint_text(ng_hint_i));
     ng_pre_req >= 0 ? ( ng_preset_load(ng_pre_req); update(); ng_pre_req = -1; );
     ng_hist() ? update();
     ng_pre_cur = ng_preset_match();

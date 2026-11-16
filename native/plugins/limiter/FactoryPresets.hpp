@@ -27,4 +27,16 @@ static const FactoryPreset kPresets[] = {
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 7;
 
+// the hint line under the controls: a short help text per parameter (from tools/site_content.json)
+#define NULL_UI_HINTS 1
+static const char* const kHints[] = {
+    "Limiter = look-ahead limiting; Clipper = soft clipping with no delay",
+    "Drive control: a signal at Threshold comes out at the Ceiling, so lower values push harder",
+    "Maximum output level",
+    "How fast the gain recovers after a peak",
+    "How far ahead peaks are detected (ignored in Clipper mode)",
+    "True Peak: the limiter reacts to the peaks between the samples (4x, ITU-R BS.1770), so the output stays",
+    "Listen: Output plays the result; Delta plays only what the limiter or clipper takes away",
+};
+
 } // namespace nullpresets

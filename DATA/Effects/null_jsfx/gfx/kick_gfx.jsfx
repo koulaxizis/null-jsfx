@@ -164,8 +164,26 @@ out_pin:Right
     s;
   );
 
+  // the hint line under the controls: a short help text per slider (from tools/site_content.json)
+  function ng_hint_text(i) local(s)
+  (
+    s = "";
+    i == 1 ? s = "The kick's pitch, where the sweep ends";
+    i == 2 ? s = "On: the kick follows the notes (C1 plays Pitch); Off: every key plays Pitch";
+    i == 3 ? s = "How far above Pitch the kick starts";
+    i == 4 ? s = "How fast the pitch falls to Pitch";
+    i == 5 ? s = "How long the kick rings (the time to fall 60 dB)";
+    i == 6 ? s = "The level of the beater click";
+    i == 7 ? s = "How bright the click is";
+    i == 8 ? s = "Soft clipping for a harder, louder kick";
+    i == 9 ? s = "How much the key velocity changes the level";
+    i == 10 ? s = "Output level";
+    s;
+  );
+
   function ng_presets() local(i)
   (
+    ng_hint_i > 0 && !ng_pre_open ? ng_hint(ng_hint_text(ng_hint_i));
     ng_pre_req >= 0 ? ( ng_preset_load(ng_pre_req); update(); ng_pre_req = -1; );
     ng_hist() ? update();
     ng_pre_cur = ng_preset_match();

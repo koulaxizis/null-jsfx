@@ -27,4 +27,14 @@ static const FactoryPreset kPresets[] = {
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 5;
 
+// the hint line under the controls: a short help text per parameter (from tools/site_content.json)
+#define NULL_UI_HINTS 1
+static const char* const kHints[] = {
+    "The bed: 5.1, 7.1 or 7.1.4; it sets which channels are measured and their weights",
+    "The level the readout compares with: -23 LUFS (EBU R128), -24 LUFS (ATSC A/85), -18 LUFS or -14 LUFS",
+    "How much of the loudness history the graph shows",
+    "On Play starts a new measurement every time playback starts",
+    "Any change clears integrated, LRA, maxima and the history",
+};
+
 } // namespace nullpresets

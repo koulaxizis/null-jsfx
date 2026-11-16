@@ -29,6 +29,9 @@
 #else
 #define NULL_UI_PRESETS 0
 #endif
+#ifndef NULL_UI_HINTS
+#define NULL_UI_HINTS 0 // FactoryPresets.hpp defines it with the hint texts (kHints)
+#endif
 
 START_NAMESPACE_DISTRHO
 
@@ -1223,6 +1226,20 @@ protected:
 
     float cardY() const { return 54.0f + float(fL.display) + 8.0f; }
     float cellW() const { return (float(kWidth) - 44.0f) / 6.0f; }
+    // the width of control i's cell: a row of more than 6 controls shares the row's width (4.0,
+    // as ng_row in null_gfx.jsfx-inc)
+    float cellW(uint32_t i) const { return (float(kWidth) - 44.0f) / float(std::max(6, rowCount(i))); }
+
+    // the number of visible controls in control i's row
+    int rowCount(uint32_t i) const
+    {
+        const Control& c = fL.controls[i];
+        int n = 0;
+        for (uint32_t j = 0; j < fL.numControls; ++j)
+            if (visible(fL.controls[j]) && fL.controls[j].row == c.row)
+                ++n;
+        return n;
+    }
 
     bool visible(const Control& c) const { return c.page < 0 || c.page == fPage; }
 
@@ -1240,8 +1257,8 @@ protected:
                 ++k;
             ++n;
         }
-        const float cw = cellW();
-        cx = 22.0f + float(6 - n) * cw * 0.5f + (float(k) + 0.5f) * cw;
+        const float cw = (float(kWidth) - 44.0f) / float(std::max(6, n));
+        cx = 22.0f + float(6 - std::min(6, n)) * cw * 0.5f + (float(k) + 0.5f) * cw;
         ry = cardY() + 8.0f + (fL.tabs ? 28.0f : 0.0f) + float(c.row) * 86.0f;
     }
 
@@ -1252,7 +1269,7 @@ protected:
         const Control& c = fL.controls[i];
         if (c.kind == kKnob)
             return std::hypot(x - cx, y - (ry + 44.0f)) < 14.0f + 10.0f + 6.0f;
-        const float pw = cellW() - 10.0f;
+        const float pw = cellW(i) - 10.0f;
         return x >= cx - pw * 0.5f && x < cx + pw * 0.5f && std::fabs(y - (ry + 44.0f)) < 14.0f;
     }
 
@@ -1317,7 +1334,7 @@ protected:
             }
             else
             {
-                const float pw = cellW() - 10.0f;
+                const float pw = cellW(i) - 10.0f;
                 beginPath();
                 roundedRect(cx - pw * 0.5f + 0.5f, ry + 33.5f, pw - 1.0f, 21.0f, 4.0f);
                 fillColor(col(theme::kBackground));
@@ -1344,7 +1361,40 @@ protected:
                 drawArrow(cx + pw * 0.5f - 7.0f, ry + 44.0f, 1.0f);
             }
         }
+        drawHint();
         drawPresetMenu();
+    }
+
+    // the hint line in the bottom margin: the help text of the control under the mouse (or being
+    // dragged), as ng_hint in null_gfx.jsfx-inc
+    void drawHint()
+    {
+#if NULL_UI_HINTS
+        const int i = fDrag >= 0 ? fDrag : fHintCtl;
+        if (i < 0 || presetOpen() || !visible(fL.controls[i]))
+            return;
+        const uint32_t param = fL.controls[i].param;
+        if (param >= sizeof(nullpresets::kHints) / sizeof(nullpresets::kHints[0]) || !*nullpresets::kHints[param])
+            return;
+        label(float(kWidth) * 0.5f, float(kHeight) - 7.0f, ALIGN_CENTER, 7.0f, 0.0f, theme::kMuted,
+              nullpresets::kHints[param]);
+#endif
+    }
+
+    // the control whose whole cell (its column, 86 units tall) holds (x, y), for the hint line
+    int cellAt(float x, float y) const
+    {
+        for (uint32_t i = 0; i < fL.numControls; ++i)
+        {
+            if (!visible(fL.controls[i]))
+                continue;
+            float cx, ry;
+            cell(i, cx, ry);
+            const float hw = cellW(i) * 0.5f;
+            if (x >= cx - hw && x < cx + hw && y >= ry && y < ry + 86.0f)
+                return int(i);
+        }
+        return -1;
     }
 
     float presetGet(uint32_t param) const override { return value(param); }
@@ -1494,11 +1544,12 @@ protected:
             return true;
         const float s = uiScale();
         const float x = float(ev.pos.getX()) / s, y = float(ev.pos.getY()) / s;
-        const int h = controlAt(x, y), ht = tabAt(x, y);
-        if (h != fHover || ht != fHoverTab)
+        const int h = controlAt(x, y), ht = tabAt(x, y), hc = cellAt(x, y);
+        if (h != fHover || ht != fHoverTab || hc != fHintCtl)
         {
             fHover = h;
             fHoverTab = ht;
+            fHintCtl = hc;
             repaint();
         }
         if (fDrag < 0)
@@ -1534,7 +1585,7 @@ private:
     const Layout fL;
     float fValues[kMax] = {};
     int fNumTabs = 0, fPage = 0;
-    int fHover = -1, fHoverTab = -1, fDrag = -1, fLastClick = -1;
+    int fHover = -1, fHoverTab = -1, fDrag = -1, fLastClick = -1, fHintCtl = -1;
     float fDragX = 0.0f, fDragY = 0.0f, fDragValue = 0.0f;
     uint fLastClickTime = 0;
 };

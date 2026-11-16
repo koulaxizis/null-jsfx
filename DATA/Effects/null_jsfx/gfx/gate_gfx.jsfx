@@ -214,8 +214,27 @@ out_pin:Right
     s;
   );
 
+  // the hint line under the controls: a short help text per slider (from tools/site_content.json)
+  function ng_hint_text(i) local(s)
+  (
+    s = "";
+    i == 1 ? s = "Level the signal must exceed for the gate to open";
+    i == 2 ? s = "How fast the gate opens";
+    i == 3 ? s = "How fast the gate closes once the signal drops";
+    i == 4 ? s = "High-pass on the detector only, so low-end rumble or bleed does not open the gate (0 = off)";
+    i == 5 ? s = "How far the gate turns the signal down when closed: −80 dB closes fully, higher values only duck it (0 dB";
+    i == 6 ? s = "How long the gate stays open after the signal drops below the threshold, before the release starts";
+    i == 7 ? s = "Delays the audio so the gate opens just before each hit and keeps the attack intact (adds that much latency";
+    i == 8 ? s = "Internal listens to the track itself; External listens to input channels 3/4 (sidechain key)";
+    i == 9 ? s = "Low-pass on the detector only, so hi-hats or cymbals do not open the gate (20 kHz = off)";
+    i == 10 ? s = "Turns the gate into a ducker: the signal is turned down by Range while the detector is above the threshold";
+    i == 11 ? s = "Tone Release: while the gate closes, the tail also gets darker, like an instrument dying away, instead of";
+    s;
+  );
+
   function ng_presets() local(i)
   (
+    ng_hint_i > 0 && !ng_pre_open ? ng_hint(ng_hint_text(ng_hint_i));
     ng_pre_req >= 0 ? ( ng_preset_load(ng_pre_req); update(); ng_pre_req = -1; );
     ng_hist() ? update();
     ng_pre_cur = ng_preset_match();

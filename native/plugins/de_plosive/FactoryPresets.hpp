@@ -27,4 +27,14 @@ static const FactoryPreset kPresets[] = {
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 5;
 
+// the hint line under the controls: a short help text per parameter (from tools/site_content.json)
+#define NULL_UI_HINTS 1
+static const char* const kHints[] = {
+    "How easily a burst counts as a plosive: the low band must jump above the high band and its own average by",
+    "Crossover frequency (60 to 400 Hz): only the band below it is detected and turned down",
+    "The most the low band is turned down during a plosive (0 to 30 dB)",
+    "How fast the low band comes back after the pop (20 to 300 ms)",
+    "On outputs only what is being removed, to hear exactly what the detector catches",
+};
+
 } // namespace nullpresets

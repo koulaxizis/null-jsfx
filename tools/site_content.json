@@ -1123,7 +1123,12 @@
       "How far the LFO sweeps the cutoff up and down, in octaves; 0 turns it off.",
       "How far the cutoff follows the input level, in octaves (positive opens it, negative closes it on loud parts) for auto-wah effects; 0 turns it off.",
       "How fast the envelope follower reacts to rising input level.",
-      "How fast the envelope follower falls back when the input gets quieter."
+      "How fast the envelope follower falls back when the input gets quieter.",
+      "Turns Morph on (Off by default): a continuous blend of the four modes replaces Mode.",
+      "Where Morph sits: 0% low pass, 33.3% band pass, 66.7% high pass, 100% notch, with smooth crossfades in between.",
+      "How far the LFO moves the Morph Position (-100 to 100%; 100% sweeps the whole range); uses LFO Rate and LFO Sync.",
+      "How far the input level moves the Morph Position (-100 to 100%), with Env Attack and Env Release: an envelope-driven sweep from one filter type to the next.",
+      "Moves Drive inside the filter (Off by default): the resonance saturates, so it compresses and growls instead of ringing louder."
     ],
     "uses": [
       "Taking the top end off harsh sources",
@@ -1132,7 +1137,7 @@
       "Telephone and radio tones with Band Pass",
       "Cutting a single resonance with Notch"
     ],
-    "properties": "Input → 2-pole (12 dB/oct) state-variable filter (low-pass, high-pass, band-pass and notch from the same structure) → Gain → Output. Stable under fast automation; zero latency.",
+    "properties": "Input → 2-pole (12 dB/oct) state-variable filter (low-pass, high-pass, band-pass and notch from the same structure) → Gain → Output. Stable under fast automation; zero latency. Morph blends low pass, band pass, high pass and notch continuously (LFO and envelope can move it); Nonlinear soft-saturates the band-pass state of each stage, driven by Drive.",
     "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\">\n<defs><linearGradient id=\"icon-filter\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs>\n<path d=\"M 8,32 Q 20,16 32,32 Q 44,48 56,32\" stroke=\"url(#icon-filter)\" stroke-width=\"2.5\" fill=\"none\" stroke-linecap=\"round\"/>\n<path d=\"M 8,32 L 16,32 M 48,32 L 56,32\" stroke=\"url(#icon-filter)\" stroke-width=\"2\"/>\n<circle cx=\"20\" cy=\"28\" r=\"2\" fill=\"url(#icon-filter)\" opacity=\"0.5\"/>\n<circle cx=\"32\" cy=\"32\" r=\"2\" fill=\"url(#icon-filter)\" opacity=\"0.5\"/>\n<circle cx=\"44\" cy=\"28\" r=\"2\" fill=\"url(#icon-filter)\" opacity=\"0.5\"/>\n</svg>"
   },
   "flanger": {
@@ -2995,7 +3000,11 @@
       "Amount of the Crush steps: bit depth from 16 down to 4 bits and sample-rate reduction down to 1/16.",
       "Interval of the Pitch Down and Pitch Up steps (1 to 12 semitones).",
       "Blend of the processed and the dry signal.",
-      "On: the sequencer stops and held MIDI notes choose the effect instead (C3 Repeat, C#3 Reverse, D3 Filter, D#3 Gate, E3 Tape Stop, F3 Pitch Down, F#3 Pitch Up, G3 Crush); all MIDI passes through."
+      "On: the sequencer stops and held MIDI notes choose the effect instead (C3 Repeat, C#3 Reverse, D3 Filter, D#3 Gate, E3 Tape Stop, F3 Pitch Down, F#3 Pitch Up, G3 Crush); all MIDI passes through.",
+      "On: plays a pattern made from Seed, Density and Style instead of the 16 Step menus (they keep their values for when you switch back)",
+      "How many steps the generated pattern fills; a higher Density only adds steps, the ones already there stay",
+      "The kind of pattern Generate makes: Build (repeats and gates toward the bar end), Glitch (repeats, reverses, crush), Tape (tape stops), Dub (filter and reverse throws) or Random (any effect anywhere)",
+      "Picks a different generated pattern; the same Seed always gives the same pattern"
     ],
     "uses": [
       "Stutter and repeat builds into a drop",
@@ -3004,7 +3013,7 @@
       "Rhythmic filter chops on pads and loops",
       "Playing effects live from MIDI pads with MIDI Trigger"
     ],
-    "properties": "Signal chain: Input → 4 s history buffer → 16-step sequencer (or held MIDI notes C3 to G3) → two crossfading effect voices (Repeat, Reverse, Gate, Tape Stop, Pitch Down/Up via a 60 ms two-tap delay-line shifter) → resonant TPT state-variable low-pass (Filter steps, 15 ms cutoff glide) → bit and sample-rate reduction (Crush steps) → Dry/Wet Mix → Output. The step clock follows the host tempo and, while the transport plays, is read from the song position; stopped it free-runs at the tempo (120 BPM without one). Every change of effect crossfades over 4 ms, so steps switch without clicks. Fully deterministic, zero latency; MIDI passes through.",
+    "properties": "Signal chain: Input → 4 s history buffer → 16-step sequencer (or held MIDI notes C3 to G3) → two crossfading effect voices (Repeat, Reverse, Gate, Tape Stop, Pitch Down/Up via a 60 ms two-tap delay-line shifter) → resonant TPT state-variable low-pass (Filter steps, 15 ms cutoff glide) → bit and sample-rate reduction (Crush steps) → Dry/Wet Mix → Output. The step clock follows the host tempo and, while the transport plays, is read from the song position; stopped it free-runs at the tempo (120 BPM without one). Every change of effect crossfades over 4 ms, so steps switch without clicks. Generate builds the pattern from genre rules (a weight per step and a list of effects for each Style) and Seed, so the same Seed always gives the same pattern. Fully deterministic, zero latency; MIDI passes through.",
     "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-stepfx\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><g fill=\"none\" stroke=\"url(#icon-stepfx)\" stroke-width=\"1.5\" opacity=\"0.35\"><rect x=\"6\" y=\"14\" width=\"11\" height=\"15\" rx=\"2\"/><rect x=\"20\" y=\"14\" width=\"11\" height=\"15\" rx=\"2\"/><rect x=\"34\" y=\"14\" width=\"11\" height=\"15\" rx=\"2\"/><rect x=\"48\" y=\"14\" width=\"11\" height=\"15\" rx=\"2\"/><rect x=\"6\" y=\"35\" width=\"11\" height=\"15\" rx=\"2\"/><rect x=\"20\" y=\"35\" width=\"11\" height=\"15\" rx=\"2\"/><rect x=\"34\" y=\"35\" width=\"11\" height=\"15\" rx=\"2\"/><rect x=\"48\" y=\"35\" width=\"11\" height=\"15\" rx=\"2\"/></g><g fill=\"url(#icon-stepfx)\"><rect x=\"20\" y=\"14\" width=\"11\" height=\"15\" rx=\"2\"/><rect x=\"48\" y=\"14\" width=\"11\" height=\"15\" rx=\"2\"/><rect x=\"34\" y=\"35\" width=\"11\" height=\"15\" rx=\"2\"/></g><path d=\"M 6,55 L 17,55\" stroke=\"url(#icon-stepfx)\" stroke-width=\"2.5\" stroke-linecap=\"round\"/></svg>"
   },
   "stereo_scope": {
@@ -3256,7 +3265,8 @@
       "Moves the whole instrument by octaves (-3 to +3).",
       "The output level (-24 to +12 dB).",
       "MPE: On for an MPE controller (lower zone): channel 1 stays the master channel, and on channels 2-16 each note gets its own pitch bend, pressure (louder, up to +6 dB) and CC74 timbre (the cutoff, ±2 octaves); Off treats every channel alike.",
-      "MPE Bend Range: how far a note's own pitch bend goes (48 semitones is the MPE default)."
+      "MPE Bend Range: how far a note's own pitch bend goes (48 semitones is the MPE default).",
+      "Your own wavetable for the Wavetable engine, in place of Table: a WAV or FLAC file in REAPER's Data/null_jsfx_wavetables folder (frames of 2048 samples, as most wavetable synths save them, or 1024, 512, 256, or one single cycle up to 4096 samples). Position moves through eight frames picked evenly across the file."
     ],
     "uses": [
       "Warm pads and evolving wavetable pads with chorus and a long reverb",
@@ -3266,7 +3276,7 @@
       "Analog, sub and wobble basses (LFO synced to the tempo)",
       "Digital bells and organ tones from the built-in tables"
     ],
-    "properties": "An instrument: MIDI in, stereo out, no samples, 8 voices (a new note takes a silent voice, then the oldest released one, then the oldest; a sounding voice keeps its envelope and phases, so nothing clicks). Analog: PolyBLEP saw and square, triangle, sine. Wavetable: eight tables of eight frames made at load by synthesis (additive or one cycle through the FFT), band-limited per octave and read with linear interpolation between samples and frames. Per voice: a state-variable filter (12 or 24 dB, low, band or high pass), linear-attack exponential ADSRs for amp and filter. A global LFO (smoothed over 2 ms), sample-accurate MIDI with sustain pedal, mod wheel vibrato, pitch bend and all notes off, then chorus, ping-pong delay and an eight-line feedback delay network reverb. Deterministic (Park-Miller noise) and the same in the JSFX, the GFX version and the VST3/CLAP.",
+    "properties": "An instrument: MIDI in, stereo out, no samples, 8 voices (a new note takes a silent voice, then the oldest released one, then the oldest; a sounding voice keeps its envelope and phases, so nothing clicks). Analog: PolyBLEP saw and square, triangle, sine. Wavetable: eight tables of eight frames made at load by synthesis (additive or one cycle through the FFT), band-limited per octave and read with linear interpolation between samples and frames. Per voice: a state-variable filter (12 or 24 dB, low, band or high pass), linear-attack exponential ADSRs for amp and filter. A global LFO (smoothed over 2 ms), sample-accurate MIDI with sustain pedal, mod wheel vibrato, pitch bend and all notes off, then chorus, ping-pong delay and an eight-line feedback delay network reverb. Deterministic (Park-Miller noise) and the same in the JSFX, the GFX version and the VST3/CLAP. Wavetable File loads your own table (WAV or FLAC, band-limited per octave like the built-in ones).",
     "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-synth\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><path d=\"M 6,30 L 18,12 L 18,48 L 30,12 L 30,48 L 42,22 Q 50,10 58,30\" fill=\"none\" stroke=\"url(#icon-synth)\" stroke-width=\"3.5\" stroke-linejoin=\"round\" stroke-linecap=\"round\"/><path d=\"M 6,56 L 58,56\" stroke=\"url(#icon-synth)\" stroke-width=\"3\" stroke-linecap=\"round\" opacity=\"0.6\"/></svg>"
   },
   "tape": {
@@ -3420,7 +3430,10 @@
       "Time for the gate to ramp closed",
       "How far closed steps are turned down (0% = no gating, 100% = silence)",
       "Chance that an open step actually opens the gate (100% = always, as programmed); lower values thin the pattern out at random",
-      "Picks a different random variation; the same Seed always gives the same choices at the same song position"
+      "Picks a different random variation; the same Seed always gives the same choices at the same song position",
+      "On: plays a pattern made from Seed, Density and Style instead of the 16 Step switches (they keep their values for when you switch back)",
+      "How many steps the generated pattern opens; a higher Density only adds steps, the ones already there stay",
+      "The rhythm the generated pattern follows: Trance, Offbeat, Stutter, Half Time or Random"
     ],
     "uses": [
       "Classic trance-gated pads and supersaws",
@@ -3428,7 +3441,7 @@
       "Stutter-like patterns on vocals",
       "Turning drones into sequenced rhythms"
     ],
-    "properties": "Signal chain: Input → 16-Step Sequencer → Linear Attack/Release Gain Ramp × Depth → Output. In Sync mode the step clock follows the host tempo and, while the transport plays, is read from the song position so step 1 lands on every bar; when stopped it free-runs at the host tempo. Free mode runs at a fixed rate in steps per second. Stereo-linked, zero latency.",
+    "properties": "Signal chain: Input → 16-Step Sequencer → Linear Attack/Release Gain Ramp × Depth → Output. In Sync mode the step clock follows the host tempo and, while the transport plays, is read from the song position so step 1 lands on every bar; when stopped it free-runs at the host tempo. Free mode runs at a fixed rate in steps per second. Generate builds the pattern from genre rules (a weight per step for each Style) and Seed, with one Park-Miller draw per step, so the same Seed always gives the same pattern. Stereo-linked, zero latency.",
     "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-trance\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><path d=\"M 8,20 L 8,44 M 18,20 L 18,44 M 28,20 L 28,44 M 38,20 L 38,44 M 48,20 L 48,44 M 56,20 L 56,44\" stroke=\"url(#icon-trance)\" stroke-width=\"1.5\" opacity=\"0.3\"/><path d=\"M 8,20 L 8,36 M 18,20 L 18,36 M 28,28 L 28,44 M 38,20 L 38,36 M 48,20 L 48,36 M 56,28 L 56,44\" stroke=\"url(#icon-trance)\" stroke-width=\"3\" stroke-linecap=\"round\"/></svg>"
   },
   "transient_shaper": {
@@ -3566,7 +3579,8 @@
       "Passes the voice’s highs (above ~6 kHz) for intelligibility",
       "Dry/wet blend",
       "Output level",
-      "Spreads the bands across the stereo field: even bands lean left, odd bands right (0% = mono)"
+      "Spreads the bands across the stereo field: even bands lean left, odd bands right (0% = mono)",
+      "How the voice shapes the carrier: Channel measures it in 16 bands, Talkbox models the voice's throat by linear prediction, as a talkbox does, for clearer vowels (Formant Shift, Attack, Release and Stereo Width then rest)."
     ],
     "uses": [
       "Classic robot / synth-voice vocals",
@@ -3574,7 +3588,7 @@
       "Whispered noise-vocoded textures",
       "Rhythmic vocoding of drums"
     ],
-    "properties": "Signal chain: Left Input (modulator) → 16 Band-Pass Bands (100 Hz–8 kHz, log spaced) → Envelope Followers × Carrier Bands → Alternating L/R Band Panning (Stereo Width) → Sum + Centred Sibilance → Mix → Output. Modulator is the left channel; Carrier Pitch applies to the Saw and Pulse carriers only; zero latency.",
+    "properties": "Signal chain: Left Input (modulator) → 16 Band-Pass Bands (100 Hz–8 kHz, log spaced) → Envelope Followers × Carrier Bands → Alternating L/R Band Panning (Stereo Width) → Sum + Centred Sibilance → Mix → Output. Mode Talkbox: the voice's all-pole model (linear prediction, order up to 40, every 8 ms over a 32 ms window) filters the carrier, centred. Modulator is the left channel; Carrier Pitch applies to the Saw and Pulse carriers only; zero latency.",
     "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-vocoder\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><path d=\"M6,50 L58,50\" stroke=\"url(#icon-vocoder)\" stroke-width=\"1.5\" fill=\"none\" stroke-linecap=\"round\" opacity=\"0.4\"/><path d=\"M10,50 L10,38 M18,50 L18,26 M26,50 L26,32 M34,50 L34,16 M42,50 L42,28 M50,50 L50,36\" stroke=\"url(#icon-vocoder)\" stroke-width=\"2.5\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/></svg>"
   },
   "volume_shaper": {
@@ -3588,7 +3602,24 @@
       "Moves the shape later in the cycle",
       "Blend between the shaped and the dry signal",
       "What starts the shape: Tempo loops it on the host tempo, MIDI plays it once from the top on every note-on and Sidechain plays it once on every hit of the signal on inputs 3/4",
-      "Level the sidechain signal must rise above to start the shape in Sidechain mode"
+      "Level the sidechain signal must rise above to start the shape in Sidechain mode",
+      "Plays your own drawn shape instead of Shape (Off by default): the 16 points below, one every 1/16 of the cycle, joined by straight lines; drag over the display to draw them.",
+      "Point 1 of the drawn shape, at the start of the cycle (0 to 100% level); the curve also returns to it at the end, so the loop stays seamless.",
+      "Point 2 of the drawn shape, 1/16 of the way through the cycle (0 to 100% level).",
+      "Point 3 of the drawn shape, 2/16 of the way through the cycle (0 to 100% level).",
+      "Point 4 of the drawn shape, 3/16 of the way through the cycle (0 to 100% level).",
+      "Point 5 of the drawn shape, 4/16 of the way through the cycle (0 to 100% level).",
+      "Point 6 of the drawn shape, 5/16 of the way through the cycle (0 to 100% level).",
+      "Point 7 of the drawn shape, 6/16 of the way through the cycle (0 to 100% level).",
+      "Point 8 of the drawn shape, 7/16 of the way through the cycle (0 to 100% level).",
+      "Point 9 of the drawn shape, 8/16 of the way through the cycle (0 to 100% level).",
+      "Point 10 of the drawn shape, 9/16 of the way through the cycle (0 to 100% level).",
+      "Point 11 of the drawn shape, 10/16 of the way through the cycle (0 to 100% level).",
+      "Point 12 of the drawn shape, 11/16 of the way through the cycle (0 to 100% level).",
+      "Point 13 of the drawn shape, 12/16 of the way through the cycle (0 to 100% level).",
+      "Point 14 of the drawn shape, 13/16 of the way through the cycle (0 to 100% level).",
+      "Point 15 of the drawn shape, 14/16 of the way through the cycle (0 to 100% level).",
+      "Point 16 of the drawn shape, 15/16 of the way through the cycle (0 to 100% level)."
     ],
     "uses": [
       "Sidechain-style pumping without a kick or a sidechain route",
@@ -3596,7 +3627,7 @@
       "Rhythmic tremolo with saw, sine or triangle shapes",
       "Ducking a bass under the kick on every beat"
     ],
-    "properties": "Signal chain: Input → Gain × (1 − Depth × (1 − Shape)) → One-pole Smoothing → Dry/Wet Mix → Output. The shapes are breakpoint curves over one cycle; the cycle follows the host tempo and, while the transport plays, is read from the song position so it stays locked to the grid; stopped, it free-runs at the host tempo. Half-time Pump spans two Rate notes. Stereo-linked, zero latency.",
+    "properties": "Signal chain: Input → Gain × (1 − Depth × (1 − Shape)) → One-pole Smoothing → Dry/Wet Mix → Output. The shapes are breakpoint curves over one cycle; the cycle follows the host tempo and, while the transport plays, is read from the song position so it stays locked to the grid; stopped, it free-runs at the host tempo. Half-time Pump spans two Rate notes. Custom On plays a drawn shape of 16 points, edited by dragging over the display. Stereo-linked, zero latency.",
     "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-volshape\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><path d=\"M 6,46 Q 10,22 22,20 L 28,20 L 30,46 Q 34,22 46,20 L 52,20 L 54,46\" stroke=\"url(#icon-volshape)\" stroke-width=\"3\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M 6,52 L 58,52\" stroke=\"url(#icon-volshape)\" stroke-width=\"1.5\" opacity=\"0.35\"/></svg>"
   },
   "vu_meter": {

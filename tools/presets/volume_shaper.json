@@ -10,5 +10,9 @@
   ["Kick Retrigger Duck", {"Shape": "Pump", "Rate": "1/4", "Depth": 90, "Smooth": 3, "Trigger": "Sidechain", "Threshold": -24}],
   ["Sidechain Hard Duck", {"Shape": "Pump Hard", "Rate": "1/8", "Depth": 100, "Smooth": 2, "Trigger": "Sidechain", "Threshold": -18}],
   ["MIDI Note Duck", {"Shape": "Pump", "Rate": "1/4", "Depth": 85, "Smooth": 3, "Trigger": "MIDI"}],
-  ["MIDI Swell In", {"Shape": "Saw Up", "Rate": "1/2", "Depth": 100, "Smooth": 5, "Trigger": "MIDI"}]
+  ["MIDI Swell In", {"Shape": "Saw Up", "Rate": "1/2", "Depth": 100, "Smooth": 5, "Trigger": "MIDI"}],
+  ["Custom Soft Pump", {"Custom": "On", "Rate": "1/4", "Depth": 70, "Smooth": 3, "Point 1 (%)": 0, "Point 2 (%)": 40, "Point 3 (%)": 65, "Point 4 (%)": 80, "Point 5 (%)": 90, "Point 6 (%)": 96, "Point 7 (%)": 100, "Point 8 (%)": 100, "Point 9 (%)": 100, "Point 10 (%)": 100, "Point 11 (%)": 100, "Point 12 (%)": 100, "Point 13 (%)": 100, "Point 14 (%)": 100, "Point 15 (%)": 100, "Point 16 (%)": 100}],
+  ["Custom Off-Beat Swell", {"Custom": "On", "Rate": "1/4", "Depth": 80, "Smooth": 4, "Point 1 (%)": 20, "Point 2 (%)": 15, "Point 3 (%)": 10, "Point 4 (%)": 10, "Point 5 (%)": 15, "Point 6 (%)": 30, "Point 7 (%)": 50, "Point 8 (%)": 70, "Point 9 (%)": 90, "Point 10 (%)": 100, "Point 11 (%)": 100, "Point 12 (%)": 90, "Point 13 (%)": 70, "Point 14 (%)": 50, "Point 15 (%)": 35, "Point 16 (%)": 25}],
+  ["Custom Gallop Gate", {"Custom": "On", "Rate": "1/2", "Depth": 100, "Smooth": 2, "Point 1 (%)": 100, "Point 2 (%)": 100, "Point 3 (%)": 0, "Point 4 (%)": 0, "Point 5 (%)": 100, "Point 6 (%)": 0, "Point 7 (%)": 100, "Point 8 (%)": 0, "Point 9 (%)": 100, "Point 10 (%)": 100, "Point 11 (%)": 0, "Point 12 (%)": 0, "Point 13 (%)": 100, "Point 14 (%)": 0, "Point 15 (%)": 100, "Point 16 (%)": 0}],
+  ["Custom Long Fade In", {"Custom": "On", "Rate": "1/1", "Depth": 90, "Smooth": 5, "Point 1 (%)": 0, "Point 2 (%)": 7, "Point 3 (%)": 13, "Point 4 (%)": 20, "Point 5 (%)": 27, "Point 6 (%)": 33, "Point 7 (%)": 40, "Point 8 (%)": 47, "Point 9 (%)": 53, "Point 10 (%)": 60, "Point 11 (%)": 67, "Point 12 (%)": 73, "Point 13 (%)": 80, "Point 14 (%)": 87, "Point 15 (%)": 93, "Point 16 (%)": 100}]
 ]

@@ -29,4 +29,16 @@ static const FactoryPreset kPresets[] = {
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 7;
 
+// the hint line under the controls: a short help text per parameter (from tools/site_content.json)
+#define NULL_UI_HINTS 1
+static const char* const kHints[] = {
+    "How hard it pumps: threshold from -10 to -40 dBFS and ratio from 2:1 to 20:1 together, with its own",
+    "How fast the compressor lets go: short values pump with the beat, long values hold the sound down",
+    "Sample rate of the old sampler (low-pass and sample-and-hold); at or above the project rate it is off",
+    "Bit depth of the quantiser: lower values add grain and noise",
+    "Slow pitch drift from two slow LFOs moving a short delay (up to 4 ms)",
+    "Blend with the dry signal",
+    "Output level",
+};
+
 } // namespace nullpresets

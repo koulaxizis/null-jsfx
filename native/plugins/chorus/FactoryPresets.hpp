@@ -31,4 +31,18 @@ static const FactoryPreset kPresets[] = {
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 9;
 
+// the hint line under the controls: a short help text per parameter (from tools/site_content.json)
+#define NULL_UI_HINTS 1
+static const char* const kHints[] = {
+    "Speed of the sine LFO modulating the delay time",
+    "Sweep of the delay time; the delay moves between 5 ms and 5 ms + Depth, so it never runs out of range",
+    "Blend between dry signal and modulated delay",
+    "Number of chorus voices in Classic mode (1 to 4)",
+    "Shifts the right channel's LFOs against the left (up to half the voice spacing) for a wider stereo image",
+    "Amount of the wet signal fed back into the delay lines for a more resonant, flanger-like chorus. 0% is off",
+    "Locks one LFO cycle to a note value at the project tempo (straight, triplet or dotted), following the song",
+    "One-pole low-pass on the wet signal for a darker, vintage chorus. 20 kHz is off",
+    "Classic is the multi-voice sine chorus; Dimension sweeps two short delays in opposite phase with a slow",
+};
+
 } // namespace nullpresets

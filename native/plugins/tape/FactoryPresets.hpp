@@ -29,4 +29,20 @@ static const FactoryPreset kPresets[] = {
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 11;
 
+// the hint line under the controls: a short help text per parameter (from tools/site_content.json)
+#define NULL_UI_HINTS 1
+static const char* const kHints[] = {
+    "Input level into the tape saturation (level-matched at -12 dBFS, so it adds colour rather than volume)",
+    "Tape speed: sets the head bump frequency (45 / 70 / 110 Hz), the high-frequency loss and the emphasis corner",
+    "Height of the low-frequency head bump",
+    "Slow pitch drift of the transport (up to 2 ms delay modulation)",
+    "Fast pitch wobble of the transport (up to 0.1 ms delay modulation)",
+    "Tape hiss level, shaped by the tape speed",
+    "Output level",
+    "Dry/wet blend (the dry signal is delayed to stay aligned with the wet path)",
+    "Tape formulation: Classic (open reel), Type I (ferric, warm, more hiss), Type II (chrome, more",
+    "Cassette-style noise reduction: a compander that boosts quiet highs up to 10 dB before the tape and cuts",
+    "Runs the saturation at 2x or 4x the sample rate (linear-phase halfband filters, 31 or 37 more samples of",
+};
+
 } // namespace nullpresets

@@ -8,7 +8,9 @@
  * the modulator; the carrier is the right input or a saw, pulse or noise oscillator (the
  * JSFX's Park-Miller generator). Band envelopes follow the modulator with Attack/Release, the
  * carrier bands can be shifted (Formant Shift), the bands are spread across the stereo field
- * (Stereo Width) and a high-passed copy of the voice adds sibilance.
+ * (Stereo Width) and a high-passed copy of the voice adds sibilance. Mode Talkbox (4.0) uses
+ * linear prediction instead: an all-pole model of the voice (Levinson-Durbin every quarter of a
+ * 32 ms window) shapes the carrier through a lattice whose coefficients glide between frames.
  */
 
 #pragma once
@@ -16,10 +18,12 @@
 #include <algorithm>
 #include <cmath>
 #include <cstdint>
+#include <vector>
 
 namespace nullvocoder {
 
 static constexpr int kBands = 16;
+static constexpr int kMaxOrder = 40;
 
 // centre frequency of band i (100 Hz .. 8 kHz)
 inline double bandFreq(int i) noexcept { return 100.0 * std::pow(8000.0 / 100.0, double(i) / double(kBands - 1)); }
@@ -35,11 +39,33 @@ public:
         fOsc = 0.0;
         fSibX = fSibY = 0.0;
         fSeed = 12345.0;
+        // the talkbox (TBP, TBN, TBH and its memory)
+        fP = std::min(kMaxOrder, int(std::floor(sr / 1000.0)) + 2);
+        fN = int(std::floor(0.032 * sr));
+        fH = std::max(1, int(std::floor(double(fN) / 4.0)));
+        fRing.assign(size_t(fN), 0.0);
+        fWin.assign(size_t(fN), 0.0);
+        fFrame.assign(size_t(fN), 0.0);
+        fWw = 0.0;
+        for (int i = 0; i < fN; ++i)
+        {
+            fWin[size_t(i)] = 0.5 - 0.5 * std::cos(2.0 * M_PI * (double(i) + 0.5) / double(fN));
+            fWw += fWin[size_t(i)] * fWin[size_t(i)];
+        }
+        for (int i = 0; i <= kMaxOrder; ++i)
+            fK[i] = fKt[i] = fKd[i] = fB[i] = fA[i] = fT[i] = fR[i] = 0.0;
+        for (double& e : fTbE)
+            e = 0.0;
+        fWp = fCnt = 0;
+        fMx = fCx = fY = fCe = fG = fGt = fGd = 0.0;
+        fCa = std::exp(-1.0 / (0.02 * sr));
+        fE8 = std::pow(10.0, -8.0);
+        fE10 = std::pow(10.0, -10.0);
     }
 
     // @slider (filter states are kept)
     void setParams(int carrier, double pitchHz, double formantSt, double attackMs, double releaseMs, double sibPct,
-                   double mixPct, double outDb, double widthPct)
+                   double mixPct, double outDb, double widthPct, int mode = 0)
     {
         fSrc = carrier;
         fInc = pitchHz / fSr;
@@ -61,9 +87,12 @@ public:
             b.gr = std::sqrt(2.0) * std::sin(th);
         }
         fSibC = std::exp(-2.0 * M_PI * 6000.0 / fSr);
+        fTalk = mode;
+        fTout = std::pow(10.0, outDb / 20.0) * kTalkLevel;
     }
 
-    double bandEnv(int i) const noexcept { return fBands[i].env; }
+    // the display: the band envelopes, or in Talkbox the model's level at the band centres
+    double bandEnv(int i) const noexcept { return fTalk ? fTbE[i] : fBands[i].env; }
 
     template <typename T>
     void process(const T* inL, const T* inR, T* outL, T* outR, uint32_t frames)
@@ -89,7 +118,37 @@ public:
                 car = fSeed / 1073741824.0 - 1.0;
             }
 
+            fRing[size_t(fWp)] = mod - 0.97 * fMx;
+            fMx = mod;
+            fWp += 1;
+            if (fWp >= fN)
+                fWp = 0;
             double accL = 0.0, accR = 0.0;
+            if (fTalk)
+            {
+                fCnt += 1;
+                if (fCnt >= fH)
+                {
+                    fCnt = 0;
+                    frame();
+                }
+                const double c = fSrc == 3 ? car : car - 0.97 * fCx;
+                fCx = car;
+                fCe = fCa * fCe + (1.0 - fCa) * c * c;
+                double x = c / std::sqrt(std::max(fCe, fE8));
+                fG += fGd;
+                for (int j = fP; j >= 1; --j)
+                {
+                    fK[j] += fKd[j];
+                    x -= fK[j] * fB[j - 1];
+                    fB[j] = fB[j - 1] + fK[j] * x;
+                }
+                fB[0] = x;
+                fY = x * fG + 0.97 * fY;
+                accL = accR = fY * fTout;
+            }
+            else
+            {
             for (Band& b : fBands)
             {
                 const double m = bp2(b.mc, b.ms, mod);
@@ -100,16 +159,85 @@ public:
                 accL += c * b.gl;
                 accR += c * b.gr;
             }
+            accL *= fOut;
+            accR *= fOut;
+            }
             fSibY = fSibC * (fSibY + mod - fSibX);
             fSibX = mod;
-            const double wetL = accL * fOut + fSibY * fSib;
-            const double wetR = accR * fOut + fSibY * fSib;
+            const double wetL = accL + fSibY * fSib;
+            const double wetR = accR + fSibY * fSib;
             outL[n] = static_cast<T>(xl * (1.0 - fMix) + wetL * fMix);
             outR[n] = static_cast<T>(xr * (1.0 - fMix) + wetR * fMix);
         }
     }
 
 private:
+    static constexpr double kTalkLevel = 1.25; // TBL
+
+    // tb_frame: the model of the last N samples of the voice, then the steps towards it
+    void frame() noexcept
+    {
+        for (int i = 0; i < fN; ++i)
+            fFrame[size_t(i)] = fRing[size_t((fWp + i) % fN)] * fWin[size_t(i)];
+        for (int j = 0; j <= fP; ++j)
+        {
+            double acc = 0.0;
+            for (int i = j; i < fN; ++i)
+                acc += fFrame[size_t(i)] * fFrame[size_t(i - j)];
+            fR[j] = acc;
+        }
+        for (double& a : fA)
+            a = 0.0;
+        if (fR[0] > fWw * fE10)
+        {
+            double e = fR[0] * 1.0001;
+            bool stop = false;
+            for (int i = 1; i <= fP; ++i)
+            {
+                double acc = fR[i];
+                for (int j = 1; j <= i - 1; ++j)
+                    acc += fA[j] * fR[i - j];
+                // the recursion stops at the first |k| >= 0.995 (the orders above stay 0), as the JSFX
+                double k = stop ? 0.0 : -acc / e;
+                if (std::fabs(k) >= 0.995)
+                {
+                    stop = true;
+                    k = 0.0;
+                }
+                for (int j = 1; j <= i - 1; ++j)
+                    fT[j] = fA[j] + k * fA[i - j];
+                for (int j = 1; j <= i - 1; ++j)
+                    fA[j] = fT[j];
+                fA[i] = k;
+                fKt[i] = k;
+                e *= 1.0 - k * k;
+            }
+            fGt = std::sqrt(e / fWw);
+        }
+        else
+        {
+            for (double& k : fKt)
+                k = 0.0;
+            fGt = 0.0;
+        }
+        for (int i = 1; i <= fP; ++i)
+            fKd[i] = (fKt[i] - fK[i]) / double(fH);
+        fGd = (fGt - fG) / double(fH);
+        for (int i = 0; i < kBands; ++i)
+        {
+            const double f = bandFreq(i);
+            const double w = 2.0 * M_PI * std::min(f, fSr * 0.45) / fSr;
+            double re = 1.0, im = 0.0;
+            for (int j = 1; j <= fP; ++j)
+            {
+                re += fA[j] * std::cos(w * double(j));
+                im -= fA[j] * std::sin(w * double(j));
+            }
+            fTbE[i] = 0.8 * fGt / std::sqrt(std::max(re * re + im * im, fE10)) / std::sqrt(1.0 - 1.94 * std::cos(w) + 0.9409) *
+                      std::sqrt(2.0 * f / 9.0 / fSr);
+        }
+    }
+
     struct Band {
         double mc[3] = {}, cc[3] = {}; // band-pass coefficients: modulator, carrier
         double ms[8] = {}, cs[8] = {}; // two cascaded stages of state each
@@ -143,6 +271,12 @@ private:
     int fSrc = 1;
     double fInc = 0.0, fAtt = 0.0, fRel = 0.0, fSib = 0.0, fMix = 1.0, fOut = 30.0, fSibC = 0.0;
     double fOsc = 0.0, fSibX = 0.0, fSibY = 0.0, fSeed = 12345.0;
+    // the talkbox
+    int fTalk = 0, fP = 2, fN = 1, fH = 1, fWp = 0, fCnt = 0;
+    std::vector<double> fRing, fWin, fFrame;
+    double fWw = 0.0, fK[kMaxOrder + 1] = {}, fKt[kMaxOrder + 1] = {}, fKd[kMaxOrder + 1] = {}, fB[kMaxOrder + 1] = {};
+    double fA[kMaxOrder + 1] = {}, fT[kMaxOrder + 1] = {}, fR[kMaxOrder + 1] = {}, fTbE[kBands] = {};
+    double fMx = 0.0, fCx = 0.0, fY = 0.0, fCe = 0.0, fG = 0.0, fGt = 0.0, fGd = 0.0, fCa = 0.0, fTout = 1.0, fE8 = 0.0, fE10 = 0.0;
 };
 
 } // namespace nullvocoder

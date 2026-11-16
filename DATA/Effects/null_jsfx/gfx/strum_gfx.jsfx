@@ -252,8 +252,24 @@ out_pin:Right
     s;
   );
 
+  // the hint line under the controls: a short help text per slider (from tools/site_content.json)
+  function ng_hint_text(i) local(s)
+  (
+    s = "";
+    i == 1 ? s = "Which way the chord is strummed: Down (lowest note first), Up (highest first), Alternate, or Random";
+    i == 2 ? s = "Time between one string and the next";
+    i == 3 ? s = "Once strums when the chord is played; the others strum again on the tempo while keys are held: 1/4, 1/8";
+    i == 4 ? s = "How long each strum lasts as a share of its step, in the rhythms";
+    i == 5 ? s = "How much softer the last string is than the first";
+    i == 6 ? s = "The velocity of up strokes, as a share of the keys' velocity";
+    i == 7 ? s = "Moves each string a little later, by up to this many ms";
+    i == 8 ? s = "Keys pressed within this time of the first one make one chord";
+    s;
+  );
+
   function ng_presets() local(i)
   (
+    ng_hint_i > 0 && !ng_pre_open ? ng_hint(ng_hint_text(ng_hint_i));
     ng_pre_req >= 0 ? ( ng_preset_load(ng_pre_req); update(); ng_pre_req = -1; );
     ng_hist() ? update();
     ng_pre_cur = ng_preset_match();

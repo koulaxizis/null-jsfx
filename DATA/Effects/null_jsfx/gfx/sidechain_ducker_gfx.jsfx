@@ -112,8 +112,23 @@ out_pin:Right
     s;
   );
 
+  // the hint line under the controls: a short help text per slider (from tools/site_content.json)
+  function ng_hint_text(i) local(s)
+  (
+    s = "";
+    i == 1 ? s = "Key level above which ducking starts";
+    i == 2 ? s = "How far the track is turned down while ducked";
+    i == 3 ? s = "How fast the level drops once the key crosses Threshold";
+    i == 4 ? s = "How long the level stays down after the key falls below Threshold";
+    i == 5 ? s = "How fast the level recovers after Hold";
+    i == 6 ? s = "Key source: Sidechain (track channels 3/4) or the track's own Main Input";
+    i == 7 ? s = "High-passes the key so only its attack triggers ducking (0 = off)";
+    s;
+  );
+
   function ng_presets() local(i)
   (
+    ng_hint_i > 0 && !ng_pre_open ? ng_hint(ng_hint_text(ng_hint_i));
     ng_pre_req >= 0 ? ( ng_preset_load(ng_pre_req); update(); ng_pre_req = -1; );
     ng_hist() ? update();
     ng_pre_cur = ng_preset_match();

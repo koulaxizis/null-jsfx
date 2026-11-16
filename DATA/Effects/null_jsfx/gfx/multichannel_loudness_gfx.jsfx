@@ -272,8 +272,21 @@ out_pin:Rtr
     s;
   );
 
+  // the hint line under the controls: a short help text per slider (from tools/site_content.json)
+  function ng_hint_text(i) local(s)
+  (
+    s = "";
+    i == 1 ? s = "The bed: 5.1, 7.1 or 7.1.4; it sets which channels are measured and their weights";
+    i == 2 ? s = "The level the readout compares with: -23 LUFS (EBU R128), -24 LUFS (ATSC A/85), -18 LUFS or -14 LUFS";
+    i == 3 ? s = "How much of the loudness history the graph shows";
+    i == 4 ? s = "On Play starts a new measurement every time playback starts";
+    i == 5 ? s = "Any change clears integrated, LRA, maxima and the history";
+    s;
+  );
+
   function ng_presets() local(i)
   (
+    ng_hint_i > 0 && !ng_pre_open ? ng_hint(ng_hint_text(ng_hint_i));
     ng_pre_req >= 0 ? ( ng_preset_load(ng_pre_req); update(); ng_pre_req = -1; );
     ng_hist() ? update();
     ng_pre_cur = ng_preset_match();

@@ -27,4 +27,13 @@ static const FactoryPreset kPresets[] = {
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 4;
 
+// the hint line under the controls: a short help text per parameter (from tools/site_content.json)
+#define NULL_UI_HINTS 1
+static const char* const kHints[] = {
+    "Shift in whole octaves",
+    "Shift in semitones, added to the octave setting",
+    "Fine tuning in cents",
+    "Blend between dry and shifted signal",
+};
+
 } // namespace nullpresets

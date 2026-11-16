@@ -13,6 +13,7 @@ slider6:20<0,100,1>Sibilance (%)
 slider7:100<0,100,1>Mix (%)
 slider8:0<-12,24,0.1>Output (dB)
 slider9:60<0,100,1>Stereo Width (%)
+slider10:0<0,1,1{Channel,Talkbox}>Mode
 
 in_pin:Left
 in_pin:Right
@@ -29,12 +30,44 @@ out_pin:Right
   // highs (s, t, ch) through so words stay clear. Stereo Width spreads the bands:
   // even bands lean left, odd bands lean right (equal power; 0% = mono centre,
   // 100% = alternate bands hard left / hard right). The sibilance stays centred.
+  // Mode Talkbox (4.0) replaces the 16 bands with linear prediction, as a talkbox does:
+  // every quarter of a 32 ms window the voice (pre-emphasised, Hann windowed) gets an
+  // all-pole model of order srate / 1000 + 2 (at most 40) by Levinson-Durbin; the carrier
+  // (pre-emphasised unless it is the noise, and brought to a steady level) goes through that
+  // model as a lattice whose coefficients glide over the quarter, scaled to the voice's level
+  // and de-emphasised. The result is centred; Formant Shift, Attack, Release and Stereo Width
+  // shape the Channel mode only. Sibilance, Mix and Output work in both.
   nb = 16;
   // memory: 32 slots per band = modulator coefs [0..2], carrier coefs [3..5],
   // modulator filter state [8..15], carrier filter state [16..23], envelope [24],
   // left/right band gains [25..26]
-  freembuf(nb * 32);
-  memset(0, 0, nb * 32);
+  TBP = min(40, floor(srate / 1000) + 2);   // the order
+  TBN = floor(0.032 * srate);                 // the window
+  TBH = max(1, floor(TBN / 4));               // the hop
+  TBK = nb * 32;               // reflection coefficients in use (41)
+  TBG = TBK + 41;              // their targets (41)
+  TBD = TBG + 41;              // their steps (41)
+  TBB = TBD + 41;              // the lattice's backward state (41)
+  TBA = TBB + 41;              // prediction coefficients (41)
+  TBT = TBA + 41;              // scratch (41)
+  TBR = TBT + 41;              // autocorrelation (41)
+  TBE = TBR + 41;              // the model's level at the 16 band centres, for the display (16)
+  TBM = TBE + 16;              // the voice ring (N)
+  TBW = TBM + TBN;             // the Hann window (N)
+  TBF = TBW + TBN;             // one windowed frame (N)
+  freembuf(TBF + TBN);
+  memset(0, 0, TBF + TBN);
+  tb_ww = 0;
+  i = 0;
+  loop(TBN, TBW[i] = 0.5 - 0.5 * cos(2 * $pi * (i + 0.5) / TBN); tb_ww += TBW[i] * TBW[i]; i += 1;);
+  tb_wp = tb_cnt = 0;
+  tb_mx = tb_cx = tb_y = 0;    // pre-emphasis memories, the de-emphasis output
+  tb_ce = 0;                   // the carrier's power
+  tb_g = tb_gt = tb_gd = 0;    // the gain, its target and step
+  tb_ca = exp(-1 / (0.02 * srate));
+  tb_e8 = 10 ^ -8;
+  tb_e10 = 10 ^ -10;
+  TBL = 1.25;                  // the Talkbox level against the Channel mode
   osc = 0;
   sib_x = sib_y = 0;
   // noise carrier: Park-Miller generator in exact double arithmetic (same on every CPU)
@@ -58,6 +91,62 @@ out_pin:Right
     s[5] = s[4]; s[4] = x; s[7] = s[6]; s[6] = y;
     y;
   );
+  // one analysis: the model of the last N samples of the voice, then the steps towards it
+  function tb_frame() local(i, j, acc, k, e, re, im, w, f, stop)
+  (
+    i = 0;
+    loop(TBN, TBF[i] = TBM[(tb_wp + i) % TBN] * TBW[i]; i += 1;);
+    j = 0;
+    loop(TBP + 1,
+      acc = 0;
+      i = j;
+      loop(TBN - j, acc += TBF[i] * TBF[i - j]; i += 1;);
+      TBR[j] = acc;
+      j += 1;
+    );
+    memset(TBA, 0, 41);
+    TBR[0] > tb_ww * tb_e10 ? (
+      e = TBR[0] * 1.0001;
+      stop = 0;
+      i = 1;
+      loop(TBP,
+        acc = TBR[i];
+        j = 1;
+        loop(i - 1, acc += TBA[j] * TBR[i - j]; j += 1;);
+        // the recursion stops at the first |k| >= 0.995 (the orders above stay 0): clamping k
+        // instead would leave e out of step with the filter (a pure tone near Nyquist then gave
+        // a gain of 1e8)
+        k = stop ? 0 : -acc / e;
+        abs(k) >= 0.995 ? ( stop = 1; k = 0; );
+        j = 1;
+        loop(i - 1, TBT[j] = TBA[j] + k * TBA[i - j]; j += 1;);
+        j = 1;
+        loop(i - 1, TBA[j] = TBT[j]; j += 1;);
+        TBA[i] = k;
+        TBG[i] = k;
+        e *= 1 - k * k;
+        i += 1;
+      );
+      tb_gt = sqrt(e / tb_ww);
+    ) : (
+      memset(TBG, 0, 41);
+      tb_gt = 0;
+    );
+    i = 1;
+    loop(TBP, TBD[i] = (TBG[i] - TBK[i]) / TBH; i += 1;);
+    tb_gd = (tb_gt - tb_g) / TBH;
+    // the display: the model's level in each band, as the Channel mode's envelopes would read it
+    i = 0;
+    loop(nb,
+      f = 100 * (8000 / 100) ^ (i / (nb - 1));
+      w = 2 * $pi * min(f, srate * 0.45) / srate;
+      re = 1; im = 0;
+      j = 1;
+      loop(TBP, re += TBA[j] * cos(w * j); im -= TBA[j] * sin(w * j); j += 1;);
+      TBE[i] = 0.8 * tb_gt / sqrt(max(re * re + im * im, tb_e10)) / sqrt(1 - 1.94 * cos(w) + 0.9409) * sqrt(2 * f / 9 / srate);
+      i += 1;
+    );
+  );
 
 @slider
   src = slider1;
@@ -80,6 +169,8 @@ out_pin:Right
     i += 1;
   );
   sib_c = exp(-2 * $pi * 6000 / srate);
+  talk = slider10;
+  tout = 10 ^ (slider8 / 20) * TBL;
 
 @sample
   mod = spl0;
@@ -87,7 +178,33 @@ out_pin:Right
   car = src == 0 ? spl1 : src == 1 ? 2 * osc - 1 : src == 2 ? (osc < 0.5 ? 1 : -1) :
         (seed *= 16807; seed -= floor(seed / 2147483647) * 2147483647; seed / 1073741824 - 1);
 
+  // the voice ring fills in both modes, so a switch to Talkbox starts from a full window
+  TBM[tb_wp] = mod - 0.97 * tb_mx;
+  tb_mx = mod;
+  tb_wp += 1;
+  tb_wp >= TBN ? tb_wp = 0;
   acc_l = acc_r = 0;
+  talk ? (
+    tb_cnt += 1;
+    tb_cnt >= TBH ? ( tb_cnt = 0; tb_frame(); );
+    // the carrier, pre-emphasised (the noise is white already) at a steady level, through
+    // the lattice
+    c = src == 3 ? car : car - 0.97 * tb_cx;
+    tb_cx = car;
+    tb_ce = tb_ca * tb_ce + (1 - tb_ca) * c * c;
+    x = c / sqrt(max(tb_ce, tb_e8));
+    tb_g += tb_gd;
+    j = TBP;
+    loop(TBP,
+      TBK[j] += TBD[j];
+      x -= TBK[j] * TBB[j - 1];
+      TBB[j] = TBB[j - 1] + TBK[j] * x;
+      j -= 1;
+    );
+    TBB[0] = x;
+    tb_y = x * tb_g + 0.97 * tb_y;
+    acc_l = acc_r = tb_y * tout;
+  ) : (
   i = 0;
   loop(nb,
     b = i * 32;
@@ -102,9 +219,12 @@ out_pin:Right
     acc_r += c * b[26];
     i += 1;
   );
+  acc_l *= out;
+  acc_r *= out;
+  );
   // let the voice's highest frequencies through for intelligibility
   sib_y = sib_c * (sib_y + mod - sib_x); sib_x = mod;
-  wet_l = acc_l * out + sib_y * sib;
-  wet_r = acc_r * out + sib_y * sib;
+  wet_l = acc_l + sib_y * sib;
+  wet_r = acc_r + sib_y * sib;
   spl0 = spl0 * (1 - mix) + wet_l * mix;
   spl1 = spl1 * (1 - mix) + wet_r * mix;

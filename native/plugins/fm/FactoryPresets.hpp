@@ -32,4 +32,48 @@ static const FactoryPreset kPresets[] = {
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 39;
 
+// the hint line under the controls: a short help text per parameter (from tools/site_content.json)
+#define NULL_UI_HINTS 1
+static const char* const kHints[] = {
+    "Who modulates whom: Stack (4>3>2>1), Dual Mod (3+4>2>1), Branch (3>2>1 and 4>1), Pair Stack (4>3>1 and",
+    "Operator 4 modulating itself (0 to 100%): from a pure sine toward a bright saw and noise",
+    "Operator 1's frequency as a multiple of the note (0.5 to 16); whole numbers sound harmonic, others bell-like",
+    "Operator 1's level (0 to 100%): its loudness when it is heard, its modulation depth when it modulates",
+    "Operator 1's attack time (1 ms to 10 s)",
+    "Operator 1's decay time (1 ms to 10 s)",
+    "Operator 1's sustain level (0 to 100%)",
+    "Operator 1's release time (1 ms to 10 s)",
+    "How much the velocity changes operator 1's level (0 to 100%)",
+    "Operator 2's frequency as a multiple of the note (0.5 to 16)",
+    "Operator 2's level (0 to 100%)",
+    "Operator 2's attack time (1 ms to 10 s)",
+    "Operator 2's decay time (1 ms to 10 s)",
+    "Operator 2's sustain level (0 to 100%)",
+    "Operator 2's release time (1 ms to 10 s)",
+    "How much the velocity changes operator 2's level (0 to 100%); on a modulator, harder playing sounds brighter",
+    "Operator 3's frequency as a multiple of the note (0.5 to 16)",
+    "Operator 3's level (0 to 100%)",
+    "Operator 3's attack time (1 ms to 10 s)",
+    "Operator 3's decay time (1 ms to 10 s)",
+    "Operator 3's sustain level (0 to 100%)",
+    "Operator 3's release time (1 ms to 10 s)",
+    "How much the velocity changes operator 3's level (0 to 100%)",
+    "Operator 4's frequency as a multiple of the note (0.5 to 16)",
+    "Operator 4's level (0 to 100%)",
+    "Operator 4's attack time (1 ms to 10 s)",
+    "Operator 4's decay time (1 ms to 10 s)",
+    "Operator 4's sustain level (0 to 100%)",
+    "Operator 4's release time (1 ms to 10 s)",
+    "How much the velocity changes operator 4's level (0 to 100%)",
+    "Scales every modulator's depth at once (-100 to +100%): darker to brighter without touching the operators",
+    "The built-in chorus's mix (0 to 100%), the classic partner of FM pianos",
+    "The built-in reverb's mix (0 to 100%)",
+    "The reverb's size (0 to 100%)",
+    "Moves the whole instrument by octaves (-3 to +3)",
+    "The pitch bend range in semitones (0 to 24)",
+    "The output level (-24 to +12 dB)",
+    "MPE: On for an MPE controller (lower zone): channel 1 stays the master channel, and on channels 2-16 each",
+    "MPE Bend Range: how far a note's own pitch bend goes (48 semitones is the MPE default)",
+};
+
 } // namespace nullpresets

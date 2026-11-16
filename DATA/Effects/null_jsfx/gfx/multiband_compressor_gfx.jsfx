@@ -225,8 +225,41 @@ out_pin:Right
     s;
   );
 
+  // the hint line under the controls: a short help text per slider (from tools/site_content.json)
+  function ng_hint_text(i) local(s)
+  (
+    s = "";
+    i == 1 ? s = "Split between Low and LowMid bands (50–1000 Hz)";
+    i == 2 ? s = "Split between LowMid and HighMid bands (500–4000 Hz, kept at least 1.5× above Crossover 1)";
+    i == 3 ? s = "Split between HighMid and High bands (4–12 kHz, kept at least 1.5× above Crossover 2)";
+    i == 4 ? s = "Level where the Low band starts compressing";
+    i == 5 ? s = "Compression strength for the Low band";
+    i == 6 ? s = "Gain added to the Low band after compression";
+    i == 7 ? s = "Active compresses the Low band; Bypass passes it uncompressed (makeup still applies); Mute removes it";
+    i == 8 ? s = "Level where the LowMid band starts compressing";
+    i == 9 ? s = "Compression strength for the LowMid band";
+    i == 10 ? s = "Gain added to the LowMid band after compression";
+    i == 11 ? s = "Active compresses the LowMid band; Bypass passes it uncompressed (makeup still applies); Mute removes it";
+    i == 12 ? s = "Level where the HighMid band starts compressing";
+    i == 13 ? s = "Compression strength for the HighMid band";
+    i == 14 ? s = "Gain added to the HighMid band after compression";
+    i == 15 ? s = "Active compresses the HighMid band; Bypass passes it uncompressed (makeup still applies); Mute removes it";
+    i == 16 ? s = "Level where the High band starts compressing";
+    i == 17 ? s = "Compression strength for the High band";
+    i == 18 ? s = "Gain added to the High band after compression";
+    i == 19 ? s = "Active compresses the High band; Bypass passes it uncompressed (makeup still applies); Mute removes it";
+    i == 20 ? s = "How fast gain reduction is applied in all bands";
+    i == 21 ? s = "How fast gain recovers in all bands";
+    i == 22 ? s = "Width of the soft knee around each threshold (100% = ±60 dB)";
+    i == 23 ? s = "Overall output gain after the bands are summed";
+    i == 24 ? s = "Channels: Stereo works on the whole signal";
+    i == 25 ? s = "Listen: Output plays the result; Delta plays only what each band's compressor takes away, before Makeup";
+    s;
+  );
+
   function ng_presets() local(i)
   (
+    ng_hint_i > 0 && !ng_pre_open ? ng_hint(ng_hint_text(ng_hint_i));
     ng_pre_req >= 0 ? ( ng_preset_load(ng_pre_req); update(); ng_pre_req = -1; );
     ng_hist() ? update();
     ng_pre_cur = ng_preset_match();

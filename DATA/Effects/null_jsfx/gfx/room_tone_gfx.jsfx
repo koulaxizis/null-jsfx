@@ -211,8 +211,23 @@ out_pin:Right
     s;
   );
 
+  // the hint line under the controls: a short help text per slider (from tools/site_content.json)
+  function ng_hint_text(i) local(s)
+  (
+    s = "";
+    i == 1 ? s = "While On, learns the room tone per frequency and between the channels: play a passage of room tone only";
+    i == 2 ? s = "The input level below which a gap begins";
+    i == 3 ? s = "Level of the fill against the learnt room tone";
+    i == 4 ? s = "How fast the fill fades in and out";
+    i == 5 ? s = "How long the input must stay below Threshold before a gap is filled";
+    i == 6 ? s = "Fill gaps tops quiet passages up to the room tone; Constant bed adds the fill all the time";
+    i == 7 ? s = "Hear the output or only the fill";
+    s;
+  );
+
   function ng_presets() local(i)
   (
+    ng_hint_i > 0 && !ng_pre_open ? ng_hint(ng_hint_text(ng_hint_i));
     ng_pre_req >= 0 ? ( ng_preset_load(ng_pre_req); update(); ng_pre_req = -1; );
     ng_hist() ? update();
     ng_pre_cur = ng_preset_match();

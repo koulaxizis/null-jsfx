@@ -27,4 +27,15 @@ static const FactoryPreset kPresets[] = {
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 6;
 
+// the hint line under the controls: a short help text per parameter (from tools/site_content.json)
+#define NULL_UI_HINTS 1
+static const char* const kHints[] = {
+    "How much input is captured per cycle: a 1/4 or 1/2 note, 1 Bar or 2 Bars at the host tempo",
+    "Playback speed of the captured audio: 1/2 is classic halftime (an octave down), 1/4 a quarter speed (two",
+    "Off slows the audio like a tape (lower pitch)",
+    "High cut on the slowed signal (1 to 20 kHz) to tame the dull or grainy top end; 20 kHz is off",
+    "Blend of slowed and dry signal",
+    "Shifts the cycle start by 0 to 3 beats from the bar line while the transport plays",
+};
+
 } // namespace nullpresets

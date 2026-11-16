@@ -27,4 +27,19 @@ static const FactoryPreset kPresets[] = {
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 10;
 
+// the hint line under the controls: a short help text per parameter (from tools/site_content.json)
+#define NULL_UI_HINTS 1
+static const char* const kHints[] = {
+    "Maximum reduction per frequency",
+    "How narrow the peaks it targets are: the spectral envelope is averaged over 2 octaves at 0% down to 1/8",
+    "How far a frequency must rise above the envelope before it is reduced (2 to 12 dB)",
+    "How fast the reduction grabs, per FFT frame",
+    "How fast the reduction lets go",
+    "Lowest frequency processed (fades out over half an octave below)",
+    "Highest frequency processed (fades out over half an octave above)",
+    "Soft: 2:1 with a 6 dB knee, easing into Depth. Hard: removes all of the excess, up to Depth",
+    "Plays only what is removed, to hear what the plugin takes out",
+    "Blend between the (latency-aligned) dry and processed signal",
+};
+
 } // namespace nullpresets

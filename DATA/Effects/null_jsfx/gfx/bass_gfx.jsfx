@@ -356,8 +356,35 @@ out_pin:Right
     s;
   );
 
+  // the hint line under the controls: a short help text per slider (from tools/site_content.json)
+  function ng_hint_text(i) local(s)
+  (
+    s = "";
+    i == 1 ? s = "The oscillator: Sub (a sine with a little second harmonic), Saw and Square (band-limited), or 808 (a sine";
+    i == 2 ? s = "Shifts the whole bass by -2 to +2 octaves";
+    i == 3 ? s = "Adds a second oscillator detuned by 0 to 50 cents for a wide, beating sound (a Reese bass at 15 to 30)";
+    i == 4 ? s = "The level of a sine one octave below the note (0 to 100%), for weight on small and large speakers";
+    i == 5 ? s = "A short boost at the start of every note (0 to 100%), for attack that cuts through";
+    i == 6 ? s = "Soft clipping after the filter (0 to 100%), from warmth to a hard distorted bass";
+    i == 7 ? s = "The cutoff of the 24 dB low-pass filter (30 Hz to 12 kHz)";
+    i == 8 ? s = "The filter's resonance (0 to 100%): a peak at the cutoff, up to a squelchy acid whistle";
+    i == 9 ? s = "How far the filter envelope opens (positive) or closes (negative) the cutoff at every new note, up to 6";
+    i == 10 ? s = "How long the filter envelope takes to fall back (5 ms to 3 s): short for plucks and acid, long for slow";
+    i == 11 ? s = "The amplitude envelope's attack time (1 ms to 2 s)";
+    i == 12 ? s = "The time to fall from the peak to the Sustain level (5 ms to 5 s)";
+    i == 13 ? s = "The level held while the key is down (0 to 100%); at 0 every note decays away like an 808";
+    i == 14 ? s = "The time the note takes to fade after the key is released (5 ms to 5 s)";
+    i == 15 ? s = "Legato: a key pressed while another is held glides to its pitch without a new attack";
+    i == 16 ? s = "The glide time (0 to 1000 ms); 0 jumps straight to the new pitch. Phrase slides use at least 60 ms";
+    i == 17 ? s = "How much the velocity changes the level and the filter envelope (0% = every note the same)";
+    i == 18 ? s = "The phrase the bass plays while a key from C2 up is held, in 16ths at the host's tempo (Eighths, Octaves";
+    i == 19 ? s = "The output level (-24 to +12 dB)";
+    s;
+  );
+
   function ng_presets() local(i)
   (
+    ng_hint_i > 0 && !ng_pre_open ? ng_hint(ng_hint_text(ng_hint_i));
     ng_pre_req >= 0 ? ( ng_preset_load(ng_pre_req); update(); ng_pre_req = -1; );
     ng_hist() ? update();
     ng_pre_cur = ng_preset_match();

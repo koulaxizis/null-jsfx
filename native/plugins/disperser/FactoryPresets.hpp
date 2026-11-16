@@ -27,4 +27,14 @@ static const FactoryPreset kPresets[] = {
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 5;
 
+// the hint line under the controls: a short help text per parameter (from tools/site_content.json)
+#define NULL_UI_HINTS 1
+static const char* const kHints[] = {
+    "Centre frequency of the all-pass filters; frequencies around it are delayed the most",
+    "Number of all-pass stages (0 to 64); more stages give a longer, more dramatic chirp",
+    "Q of the all-passes: low spreads the delay over a wide band, high concentrates it in a narrow, laser-like band",
+    "Balance between the dry and the dispersed signal; partial mixes add phasey, comb-like colour",
+    "Mono runs both channels at Frequency; Stereo moves left down and right up a quarter octave for width",
+};
+
 } // namespace nullpresets

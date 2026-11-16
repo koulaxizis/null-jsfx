@@ -32,4 +32,20 @@ static const FactoryPreset kPresets[] = {
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 11;
 
+// the hint line under the controls: a short help text per parameter (from tools/site_content.json)
+#define NULL_UI_HINTS 1
+static const char* const kHints[] = {
+    "Chord plays a chord on every key; Progression lets the white keys from C play the steps of the chosen",
+    "The key the chords (or the progression) are in",
+    "The scale the chords are built from in Chord mode (major, minor, harmonic or melodic minor and the modes)",
+    "What every key plays: a triad, a 7th or 9th chord stacked in the scale, a sus2 or sus4 chord, or a power",
+    "Moves the lowest notes of the chord up an octave: root position, first, second or third inversion",
+    "Spreads the chord: Close keeps it within an octave, Drop 2 drops the second-highest note an octave, Open",
+    "Moves every chord up or down by octaves (-2 to +2)",
+    "Plays the notes of each chord one after another, this far apart (0 to 200 ms), like a strummed guitar or a",
+    "The order of the strum: upward, downward, or alternating with every chord",
+    "Shapes the velocity of the chord notes: positive values play soft touches louder, negative values make",
+    "The chord progression of Progression mode: C, D, E, F, G, A and B play its steps in turn (I-V-vi-IV",
+};
+
 } // namespace nullpresets

@@ -32,4 +32,18 @@ static const FactoryPreset kPresets[] = {
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 9;
 
+// the hint line under the controls: a short help text per parameter (from tools/site_content.json)
+#define NULL_UI_HINTS 1
+static const char* const kHints[] = {
+    "Speed of the sine LFO",
+    "Sweep range of the delay, from Manual up to Manual + Depth",
+    "Amount of delayed signal fed back for a stronger, more resonant comb (capped internally at 70%)",
+    "Blend between dry signal and flanged signal",
+    "Shortest delay of the sweep (its starting point); the delay moves from Manual up to Manual + Depth",
+    "Locks one LFO cycle to a note value at the project tempo (straight, triplet or dotted), following the song",
+    "Offsets the right channel's LFO against the left, from 0 (mono sweep) to 180 degrees (opposite sweeps for",
+    "Through-zero flanging: the dry signal is delayed by the middle of the sweep and the swept signal is",
+    "Off sweeps up and down as before; Up or Down reads the delay on a ramp with two crossfading taps, so the",
+};
+
 } // namespace nullpresets

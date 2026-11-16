@@ -8,23 +8,61 @@ namespace nullpresets {
 
 struct FactoryPreset {
     const char* name;
-    float values[25];
+    float values[29];
 };
 
 static const FactoryPreset kPresets[] = {
-    { "Default", { 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 16.0f, 0.0f, 1.0f, 800.0f, 60.0f, 12.0f, 100.0f, 0.0f } },
-    { "Stutter Build", { 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 16.0f, 0.0f, 1.0f, 800.0f, 60.0f, 12.0f, 100.0f, 0.0f } },
-    { "Half-Time Break", { 6.0f, 6.0f, 6.0f, 6.0f, 6.0f, 6.0f, 6.0f, 5.0f, 6.0f, 6.0f, 6.0f, 6.0f, 6.0f, 6.0f, 6.0f, 5.0f, 0.0f, 16.0f, 0.0f, 1.0f, 800.0f, 60.0f, 12.0f, 100.0f, 0.0f } },
-    { "Glitch Groove", { 0.0f, 1.0f, 0.0f, 0.0f, 2.0f, 0.0f, 0.0f, 8.0f, 0.0f, 4.0f, 1.0f, 0.0f, 0.0f, 7.0f, 0.0f, 5.0f, 1.0f, 16.0f, 20.0f, 2.0f, 800.0f, 50.0f, 12.0f, 100.0f, 0.0f } },
-    { "Tape Stop Ends", { 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 5.0f, 0.0f, 16.0f, 0.0f, 1.0f, 800.0f, 60.0f, 12.0f, 100.0f, 0.0f } },
-    { "Filter Steps", { 0.0f, 0.0f, 3.0f, 3.0f, 0.0f, 0.0f, 3.0f, 3.0f, 0.0f, 0.0f, 3.0f, 3.0f, 0.0f, 3.0f, 3.0f, 3.0f, 1.0f, 16.0f, 30.0f, 1.0f, 600.0f, 60.0f, 12.0f, 100.0f, 0.0f } },
-    { "Reverse Swells", { 0.0f, 0.0f, 0.0f, 2.0f, 0.0f, 0.0f, 0.0f, 2.0f, 0.0f, 0.0f, 0.0f, 2.0f, 0.0f, 0.0f, 2.0f, 2.0f, 0.0f, 16.0f, 0.0f, 1.0f, 800.0f, 60.0f, 12.0f, 100.0f, 0.0f } },
-    { "Crush Fills", { 0.0f, 0.0f, 0.0f, 8.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 8.0f, 0.0f, 8.0f, 8.0f, 8.0f, 8.0f, 1.0f, 16.0f, 0.0f, 1.0f, 800.0f, 75.0f, 12.0f, 100.0f, 0.0f } },
-    { "Live MIDI Pads", { 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 16.0f, 0.0f, 1.0f, 1000.0f, 60.0f, 12.0f, 100.0f, 1.0f } },
-    { "Gate Chop 16ths", { 0.0f, 4.0f, 0.0f, 4.0f, 0.0f, 4.0f, 0.0f, 4.0f, 0.0f, 4.0f, 0.0f, 4.0f, 0.0f, 4.0f, 0.0f, 4.0f, 1.0f, 16.0f, 0.0f, 1.0f, 800.0f, 60.0f, 12.0f, 100.0f, 0.0f } },
-    { "Pitch Up Riser", { 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 7.0f, 7.0f, 7.0f, 7.0f, 1.0f, 16.0f, 0.0f, 1.0f, 800.0f, 60.0f, 7.0f, 100.0f, 0.0f } },
+    { "Default", { 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 16.0f, 0.0f, 1.0f, 800.0f, 60.0f, 12.0f, 100.0f, 0.0f, 0.0f, 50.0f, 0.0f, 1.0f } },
+    { "Stutter Build", { 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 16.0f, 0.0f, 1.0f, 800.0f, 60.0f, 12.0f, 100.0f, 0.0f, 0.0f, 50.0f, 0.0f, 1.0f } },
+    { "Half-Time Break", { 6.0f, 6.0f, 6.0f, 6.0f, 6.0f, 6.0f, 6.0f, 5.0f, 6.0f, 6.0f, 6.0f, 6.0f, 6.0f, 6.0f, 6.0f, 5.0f, 0.0f, 16.0f, 0.0f, 1.0f, 800.0f, 60.0f, 12.0f, 100.0f, 0.0f, 0.0f, 50.0f, 0.0f, 1.0f } },
+    { "Glitch Groove", { 0.0f, 1.0f, 0.0f, 0.0f, 2.0f, 0.0f, 0.0f, 8.0f, 0.0f, 4.0f, 1.0f, 0.0f, 0.0f, 7.0f, 0.0f, 5.0f, 1.0f, 16.0f, 20.0f, 2.0f, 800.0f, 50.0f, 12.0f, 100.0f, 0.0f, 0.0f, 50.0f, 0.0f, 1.0f } },
+    { "Tape Stop Ends", { 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 5.0f, 0.0f, 16.0f, 0.0f, 1.0f, 800.0f, 60.0f, 12.0f, 100.0f, 0.0f, 0.0f, 50.0f, 0.0f, 1.0f } },
+    { "Filter Steps", { 0.0f, 0.0f, 3.0f, 3.0f, 0.0f, 0.0f, 3.0f, 3.0f, 0.0f, 0.0f, 3.0f, 3.0f, 0.0f, 3.0f, 3.0f, 3.0f, 1.0f, 16.0f, 30.0f, 1.0f, 600.0f, 60.0f, 12.0f, 100.0f, 0.0f, 0.0f, 50.0f, 0.0f, 1.0f } },
+    { "Reverse Swells", { 0.0f, 0.0f, 0.0f, 2.0f, 0.0f, 0.0f, 0.0f, 2.0f, 0.0f, 0.0f, 0.0f, 2.0f, 0.0f, 0.0f, 2.0f, 2.0f, 0.0f, 16.0f, 0.0f, 1.0f, 800.0f, 60.0f, 12.0f, 100.0f, 0.0f, 0.0f, 50.0f, 0.0f, 1.0f } },
+    { "Crush Fills", { 0.0f, 0.0f, 0.0f, 8.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 8.0f, 0.0f, 8.0f, 8.0f, 8.0f, 8.0f, 1.0f, 16.0f, 0.0f, 1.0f, 800.0f, 75.0f, 12.0f, 100.0f, 0.0f, 0.0f, 50.0f, 0.0f, 1.0f } },
+    { "Live MIDI Pads", { 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 16.0f, 0.0f, 1.0f, 1000.0f, 60.0f, 12.0f, 100.0f, 1.0f, 0.0f, 50.0f, 0.0f, 1.0f } },
+    { "Gate Chop 16ths", { 0.0f, 4.0f, 0.0f, 4.0f, 0.0f, 4.0f, 0.0f, 4.0f, 0.0f, 4.0f, 0.0f, 4.0f, 0.0f, 4.0f, 0.0f, 4.0f, 1.0f, 16.0f, 0.0f, 1.0f, 800.0f, 60.0f, 12.0f, 100.0f, 0.0f, 0.0f, 50.0f, 0.0f, 1.0f } },
+    { "Pitch Up Riser", { 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 7.0f, 7.0f, 7.0f, 7.0f, 1.0f, 16.0f, 0.0f, 1.0f, 800.0f, 60.0f, 7.0f, 100.0f, 0.0f, 0.0f, 50.0f, 0.0f, 1.0f } },
+    { "Generated Build", { 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 16.0f, 0.0f, 1.0f, 800.0f, 60.0f, 12.0f, 100.0f, 0.0f, 1.0f, 60.0f, 0.0f, 12.0f } },
+    { "Generated Glitch", { 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 16.0f, 0.0f, 1.0f, 800.0f, 60.0f, 12.0f, 100.0f, 0.0f, 1.0f, 60.0f, 1.0f, 1.0f } },
+    { "Generated Tape Stops", { 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 16.0f, 0.0f, 1.0f, 800.0f, 60.0f, 12.0f, 100.0f, 0.0f, 1.0f, 70.0f, 2.0f, 1.0f } },
+    { "Generated Dub Throws", { 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 16.0f, 0.0f, 1.0f, 600.0f, 60.0f, 12.0f, 100.0f, 0.0f, 1.0f, 50.0f, 3.0f, 5.0f } },
 };
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
-static constexpr uint32_t kNumValues = 25;
+static constexpr uint32_t kNumValues = 29;
+
+// the hint line under the controls: a short help text per parameter (from tools/site_content.json)
+#define NULL_UI_HINTS 1
+static const char* const kHints[] = {
+    "Effect on step 1: Off (dry), Repeat, Reverse, Filter, Gate, Tape Stop, Pitch Down, Pitch Up or Crush",
+    "Effect on step 2 (same choices as Step 1)",
+    "Effect on step 3 (same choices as Step 1)",
+    "Effect on step 4 (same choices as Step 1)",
+    "Effect on step 5 (same choices as Step 1)",
+    "Effect on step 6 (same choices as Step 1)",
+    "Effect on step 7 (same choices as Step 1)",
+    "Effect on step 8 (same choices as Step 1)",
+    "Effect on step 9 (same choices as Step 1)",
+    "Effect on step 10 (same choices as Step 1)",
+    "Effect on step 11 (same choices as Step 1)",
+    "Effect on step 12 (same choices as Step 1)",
+    "Effect on step 13 (same choices as Step 1)",
+    "Effect on step 14 (same choices as Step 1)",
+    "Effect on step 15 (same choices as Step 1)",
+    "Effect on step 16 (same choices as Step 1)",
+    "Note value of one step at the host tempo: 1/8, 1/16, 1/32 or the triplets 1/8T and 1/16T",
+    "Length of the sequence (1 to 16 steps); the steps past it are skipped and the pattern loops sooner",
+    "Delays every second step for a shuffle feel (0% = straight, 50% = triplet shuffle, 75% = dotted)",
+    "Slice length the Repeat steps loop (the first slice of the step plays, then repeats) and the rate the Gate",
+    "Cutoff of the resonant low-pass on Filter steps (200 Hz to 8 kHz)",
+    "Amount of the Crush steps: bit depth from 16 down to 4 bits and sample-rate reduction down to 1/16",
+    "Interval of the Pitch Down and Pitch Up steps (1 to 12 semitones)",
+    "Blend of the processed and the dry signal",
+    "On: the sequencer stops and held MIDI notes choose the effect instead (C3 Repeat, C#3 Reverse, D3 Filter",
+    "On: plays a pattern made from Seed, Density and Style instead of the 16 Step menus (they keep their values",
+    "How many steps the generated pattern fills; a higher Density only adds steps, the ones already there stay",
+    "The kind of pattern Generate makes: Build (repeats and gates toward the bar end), Glitch (repeats",
+    "Picks a different generated pattern; the same Seed always gives the same pattern",
+};
 
 } // namespace nullpresets

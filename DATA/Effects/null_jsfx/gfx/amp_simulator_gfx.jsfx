@@ -398,8 +398,28 @@ out_pin:Right
     s;
   );
 
+  // the hint line under the controls: a short help text per slider (from tools/site_content.json)
+  function ng_hint_text(i) local(s)
+  (
+    s = "";
+    i == 1 ? s = "Amp voicing: Clean (2 stages, Fender stack), Crunch (3 stages, Marshall stack), Lead (4 stages, tight";
+    i == 2 ? s = "Preamp drive into the first tube stage; the range depends on the model (up to +46 dB on Lead)";
+    i == 3 ? s = "Tone stack bass control (audio taper). Bass, Mid and Treble interact like a real passive tone stack";
+    i == 4 ? s = "Tone stack mid control; low values give the classic mid scoop";
+    i == 5 ? s = "Tone stack treble control";
+    i == 6 ? s = "Power amp presence: a high shelf at 3 kHz from -8 to +8 dB";
+    i == 7 ? s = "Power amp drive and volume: higher values push the push-pull stage into saturation";
+    i == 8 ? s = "Bright switch: a treble boost before the preamp that is strongest at low Gain, like a bright cap";
+    i == 9 ? s = "Power supply sag: the power amp's drive drops as the level rises, for a softer, compressed feel";
+    i == 10 ? s = "2x or 4x oversampling of the nonlinear stages (polyphase IIR half-band filters, no latency)";
+    i == 11 ? s = "Final output level";
+    i == 12 ? s = "Noise gate keyed from the input: below the threshold the amp's output fades out (6 dB hysteresis, 30 ms";
+    s;
+  );
+
   function ng_presets() local(i)
   (
+    ng_hint_i > 0 && !ng_pre_open ? ng_hint(ng_hint_text(ng_hint_i));
     ng_pre_req >= 0 ? ( ng_preset_load(ng_pre_req); update(); ng_pre_req = -1; );
     ng_hist() ? update();
     ng_pre_cur = ng_preset_match();

@@ -27,4 +27,16 @@ static const FactoryPreset kPresets[] = {
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 7;
 
+// the hint line under the controls: a short help text per parameter (from tools/site_content.json)
+#define NULL_UI_HINTS 1
+static const char* const kHints[] = {
+    "Crossfeed: Bauer's headphone filter (bs2b)",
+    "Crossfeed: where the other side's signal starts to roll off (300 to 2000 Hz",
+    "Crossfeed: how far below the own side the other side arrives in the lows (1 to 15 dB",
+    "Speakers: how far each speaker is off centre (10 to 60 degrees; 30 is the usual stereo triangle)",
+    "Speakers: early reflections of a room (0 = none)",
+    "Blend of the dry and processed signal",
+    "Output level (-12 to +12 dB)",
+};
+
 } // namespace nullpresets

@@ -32,4 +32,24 @@ static const FactoryPreset kPresets[] = {
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 15;
 
+// the hint line under the controls: a short help text per parameter (from tools/site_content.json)
+#define NULL_UI_HINTS 1
+static const char* const kHints[] = {
+    "Delay time in free mode",
+    "Amount of the echo fed back into the delay line, capped internally at 95%",
+    "Blend between dry signal and echoes",
+    "Locks the delay time to the project tempo",
+    "Synced delay length: 1/4 = one beat; straight notes from 1/1 to 1/32 plus dotted (D) and triplet (T) values",
+    "Stereo keeps left and right on their own delay lines",
+    "One-pole high-pass inside the feedback loop: each repeat loses more low end. 20 Hz is off",
+    "One-pole low-pass inside the feedback loop: each repeat gets darker, like tape or a bucket-brigade delay",
+    "Soft saturation inside the feedback loop: repeats get rounder and compress as they build up. 0% is off",
+    "Tape-like wow: two slow sine LFOs gently move the delay time by up to 4 ms, so the echoes waver in pitch",
+    "A chain of short all-pass filters inside the feedback loop that smears every repeat a little more, turning",
+    "Pushes the echoes down while the dry input is loud (10 ms attack, 250 ms release), so they bloom in the",
+    "Holds the current echoes and repeats them forever: no new input enters the loop, feedback is 100% and the",
+    "Plays every echo backwards, one window of the delay time at a time",
+    "Shifts every echo up or down by this many semitones, so the repeats climb or fall (0 = off",
+};
+
 } // namespace nullpresets

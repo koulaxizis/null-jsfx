@@ -32,4 +32,22 @@ static const FactoryPreset kPresets[] = {
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 13;
 
+// the hint line under the controls: a short help text per parameter (from tools/site_content.json)
+#define NULL_UI_HINTS 1
+static const char* const kHints[] = {
+    "Where in the sound the grains are taken from",
+    "How far around Position the grains scatter",
+    "Moves the position while a key is held, forwards or backwards",
+    "How long each grain is",
+    "How many grains each key starts per second",
+    "How far each grain's pitch may wander up or down",
+    "How far the grains spread across the stereo field",
+    "The chance that a grain plays backwards",
+    "The key that plays the sound at its own pitch",
+    "How slowly a note fades in",
+    "How long a note rings after the key",
+    "How much the key velocity changes the level",
+    "Output level",
+};
+
 } // namespace nullpresets

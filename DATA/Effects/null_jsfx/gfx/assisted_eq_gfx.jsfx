@@ -367,8 +367,32 @@ out_pin:Right
     s;
   );
 
+  // the hint line under the controls: a short help text per slider (from tools/site_content.json)
+  function ng_hint_text(i) local(s)
+  (
+    s = "";
+    i == 1 ? s = "Press On and play the track: it listens for 15 s of signal (or until you turn it Off, after at least 0.5";
+    i == 2 ? s = "What is playing: Vocal, Drums, Bass, Instrument or Mix";
+    i == 3 ? s = "The sound you want: Natural (only corrects), Warm, Bright, Punchy, Radio, Podcast or Lo-Fi";
+    i == 4 ? s = "How much of the learned correction and target is applied, 0-150%";
+    i == 5 ? s = "Your own shelf at 100 Hz on top";
+    i == 6 ? s = "Your own bell at 1 kHz on top";
+    i == 7 ? s = "Your own shelf at 10 kHz on top";
+    i == 8 ? s = "Level after the EQ, on top of the automatic level match";
+    i == 9 ? s = "Hidden: whether Learn has run. Saved with the project";
+    i == 10 ? s = "Hidden: the learned level of the lows (60-120 Hz) against the reference, in dB";
+    i == 11 ? s = "Hidden: the learned level of the mud region (200-500 Hz) against the reference, in dB";
+    i == 12 ? s = "Hidden: the frequency where the mud peaks";
+    i == 13 ? s = "Hidden: the learned level of the honk region (800 Hz-1.6 kHz) against the reference, in dB";
+    i == 14 ? s = "Hidden: the learned level of the presence region (2-5 kHz) against the reference, in dB";
+    i == 15 ? s = "Hidden: the learned level of the air region (8-16 kHz) against the reference, in dB";
+    i == 16 ? s = "Hidden: the lowest band with real content; the learned high-pass sits below it";
+    s;
+  );
+
   function ng_presets() local(i)
   (
+    ng_hint_i > 0 && !ng_pre_open ? ng_hint(ng_hint_text(ng_hint_i));
     ng_pre_req >= 0 ? ( ng_preset_load(ng_pre_req); update(); ng_pre_req = -1; );
     ng_hist() ? update();
     ng_pre_cur = ng_preset_match();

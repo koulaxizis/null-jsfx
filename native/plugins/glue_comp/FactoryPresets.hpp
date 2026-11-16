@@ -27,4 +27,16 @@ static const FactoryPreset kPresets[] = {
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 7;
 
+// the hint line under the controls: a short help text per parameter (from tools/site_content.json)
+#define NULL_UI_HINTS 1
+static const char* const kHints[] = {
+    "Level above which the compressor starts to work (4 dB soft knee around it)",
+    "Compression ratio: 2:1 for gentle glue, 4:1 for control, 10:1 for heavy squash",
+    "How fast the gain reduction sets in; slower attacks let transients through",
+    "How fast the gain recovers; Auto follows the program (fast after peaks, slow under dense passages)",
+    "Gain after compression",
+    "Blend between the dry and the compressed signal (parallel compression)",
+    "High-pass on the detector only, so bass does not pump the mix (0 = off)",
+};
+
 } // namespace nullpresets

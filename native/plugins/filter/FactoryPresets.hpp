@@ -8,25 +8,51 @@ namespace nullpresets {
 
 struct FactoryPreset {
     const char* name;
-    float values[12];
+    float values[17];
 };
 
 static const FactoryPreset kPresets[] = {
-    { "Default", { 1000.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 10.0f, 150.0f } },
-    { "Rumble Cut", { 80.0f, 0.7f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 10.0f, 150.0f } },
-    { "Vocal Clean Up", { 120.0f, 0.7f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 10.0f, 150.0f } },
-    { "Warm Top Roll-Off", { 8000.0f, 0.7f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 10.0f, 150.0f } },
-    { "Next Room Muffle", { 400.0f, 0.7f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 10.0f, 150.0f } },
-    { "Telephone Voice", { 1200.0f, 1.2f, 12.0f, 2.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 10.0f, 150.0f } },
-    { "Resonant Sweep Start", { 600.0f, 5.0f, -4.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 10.0f, 150.0f } },
-    { "Resonance Notch", { 1000.0f, 8.0f, 0.0f, 3.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 10.0f, 150.0f } },
-    { "Wobble Filter", { 400.0f, 4.0f, 0.0f, 0.0f, 1.0f, 20.0f, 1.0f, 4.0f, 2.5f, 0.0f, 10.0f, 150.0f } },
-    { "Envelope Wah", { 400.0f, 3.0f, 12.0f, 2.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 3.0f, 5.0f, 120.0f } },
-    { "Acid 24 dB", { 600.0f, 7.0f, -3.0f, 0.0f, 1.0f, 40.0f, 1.0f, 0.0f, 0.0f, 2.0f, 2.0f, 200.0f } },
-    { "Slow Sweep", { 1500.0f, 2.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.1f, 0.0f, 2.0f, 0.0f, 10.0f, 150.0f } },
-    { "Quarter Note Pulse HP", { 300.0f, 1.5f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 3.0f, 2.0f, 0.0f, 10.0f, 150.0f } },
+    { "Default", { 1000.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 10.0f, 150.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f } },
+    { "Rumble Cut", { 80.0f, 0.7f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 10.0f, 150.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f } },
+    { "Vocal Clean Up", { 120.0f, 0.7f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 10.0f, 150.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f } },
+    { "Warm Top Roll-Off", { 8000.0f, 0.7f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 10.0f, 150.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f } },
+    { "Next Room Muffle", { 400.0f, 0.7f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 10.0f, 150.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f } },
+    { "Telephone Voice", { 1200.0f, 1.2f, 12.0f, 2.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 10.0f, 150.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f } },
+    { "Resonant Sweep Start", { 600.0f, 5.0f, -4.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 10.0f, 150.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f } },
+    { "Resonance Notch", { 1000.0f, 8.0f, 0.0f, 3.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 10.0f, 150.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f } },
+    { "Wobble Filter", { 400.0f, 4.0f, 0.0f, 0.0f, 1.0f, 20.0f, 1.0f, 4.0f, 2.5f, 0.0f, 10.0f, 150.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f } },
+    { "Envelope Wah", { 400.0f, 3.0f, 12.0f, 2.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 3.0f, 5.0f, 120.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f } },
+    { "Acid 24 dB", { 600.0f, 7.0f, -3.0f, 0.0f, 1.0f, 40.0f, 1.0f, 0.0f, 0.0f, 2.0f, 2.0f, 200.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f } },
+    { "Slow Sweep", { 1500.0f, 2.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.1f, 0.0f, 2.0f, 0.0f, 10.0f, 150.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f } },
+    { "Quarter Note Pulse HP", { 300.0f, 1.5f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 3.0f, 2.0f, 0.0f, 10.0f, 150.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f } },
+    { "Morph Sweep LFO", { 900.0f, 3.0f, -2.0f, 0.0f, 0.0f, 0.0f, 0.25f, 0.0f, 0.0f, 0.0f, 10.0f, 150.0f, 1.0f, 50.0f, 100.0f, 0.0f, 0.0f } },
+    { "Morph Envelope Wah", { 1200.0f, 3.0f, 3.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 5.0f, 120.0f, 1.0f, 0.0f, 0.0f, 40.0f, 0.0f } },
+    { "Nonlinear Acid", { 600.0f, 8.0f, -3.0f, 0.0f, 1.0f, 40.0f, 1.0f, 0.0f, 0.0f, 2.0f, 2.0f, 200.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f } },
+    { "Nonlinear Growl Bass", { 300.0f, 6.0f, -3.0f, 0.0f, 0.0f, 70.0f, 1.0f, 0.0f, 0.0f, 0.0f, 10.0f, 150.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f } },
 };
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
-static constexpr uint32_t kNumValues = 12;
+static constexpr uint32_t kNumValues = 17;
+
+// the hint line under the controls: a short help text per parameter (from tools/site_content.json)
+#define NULL_UI_HINTS 1
+static const char* const kHints[] = {
+    "Cutoff (or centre) frequency of the filter",
+    "Q of the filter; higher values add a resonant peak at the cutoff (narrower band in Band Pass and Notch)",
+    "Output level after the filter",
+    "Filter response: Low Pass, High Pass, Band Pass (unity peak) or Notch",
+    "Filter steepness: 12 dB/oct (one state-variable stage) or 24 dB/oct (a second Butterworth stage in the",
+    "Soft saturation of the input before the filter, for a warmer, growlier sound; 0% is off",
+    "Speed of the cutoff LFO in Hz when LFO Sync is off",
+    "Locks the LFO to the host tempo as a note value (1/1 to 1/16, triplet or dotted)",
+    "How far the LFO sweeps the cutoff up and down, in octaves; 0 turns it off",
+    "How far the cutoff follows the input level, in octaves (positive opens it, negative closes it on loud",
+    "How fast the envelope follower reacts to rising input level",
+    "How fast the envelope follower falls back when the input gets quieter",
+    "Turns Morph on (Off by default): a continuous blend of the four modes replaces Mode",
+    "Where Morph sits: 0% low pass, 33.3% band pass, 66.7% high pass, 100% notch, with smooth crossfades in",
+    "How far the LFO moves the Morph Position (-100 to 100%; 100% sweeps the whole range)",
+    "How far the input level moves the Morph Position (-100 to 100%), with Env Attack and Env Release: an",
+    "Moves Drive inside the filter (Off by default): the resonance saturates, so it compresses and growls",
+};
 
 } // namespace nullpresets

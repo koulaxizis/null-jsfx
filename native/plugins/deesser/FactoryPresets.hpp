@@ -30,4 +30,16 @@ static const FactoryPreset kPresets[] = {
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 7;
 
+// the hint line under the controls: a short help text per parameter (from tools/site_content.json)
+#define NULL_UI_HINTS 1
+static const char* const kHints[] = {
+    "Centre frequency of the band-pass that isolates the sibilance",
+    "Maximum cut applied to that band when sibilance gets loud",
+    "Split turns down only the sibilance band; Wide turns down the whole signal by the same amount",
+    "Auto uses the built-in detection level; Manual uses the Threshold control instead",
+    "Level of the sibilance band above which the reduction starts (Manual only)",
+    "Caps how far the signal is turned down, while Reduction sets how quickly it gets there (-18 dB = no cap)",
+    "Plays only what is being removed, to tune Target and the threshold by ear",
+};
+
 } // namespace nullpresets

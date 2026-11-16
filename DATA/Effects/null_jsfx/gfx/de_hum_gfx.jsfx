@@ -178,8 +178,22 @@ out_pin:Right
     s;
   );
 
+  // the hint line under the controls: a short help text per slider (from tools/site_content.json)
+  function ng_hint_text(i) local(s)
+  (
+    s = "";
+    i == 1 ? s = "Mains frequency of the hum: 50 Hz (Europe, most of the world) or 60 Hz (Americas, parts of Asia)";
+    i == 2 ? s = "Number of notches: the fundamental and its multiples (1 = fundamental only, 8 = up to the 8th harmonic)";
+    i == 3 ? s = "Notch width as Q: bandwidth = frequency / Q, so higher values cut narrower and leave more of the music";
+    i == 4 ? s = "How deep each notch cuts, from 0 (off) to 60 dB";
+    i == 5 ? s = "Fine tune of the mains frequency in Hz (±2), for hum that sits slightly off 50/60 Hz; the harmonics follow";
+    i == 6 ? s = "Optional 24 dB/oct high-pass below the hum (20, 30 or 40 Hz) to clear rumble";
+    s;
+  );
+
   function ng_presets() local(i)
   (
+    ng_hint_i > 0 && !ng_pre_open ? ng_hint(ng_hint_text(ng_hint_i));
     ng_pre_req >= 0 ? ( ng_preset_load(ng_pre_req); update(); ng_pre_req = -1; );
     ng_hist() ? update();
     ng_pre_cur = ng_preset_match();

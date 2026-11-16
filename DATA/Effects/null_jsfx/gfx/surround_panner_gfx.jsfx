@@ -229,8 +229,24 @@ out_pin:Rtr
     s;
   );
 
+  // the hint line under the controls: a short help text per slider (from tools/site_content.json)
+  function ng_hint_text(i) local(s)
+  (
+    s = "";
+    i == 1 ? s = "The bed it pans into: 5.1, 7.1 or 7.1.4, on the pins L R C LFE Ls Rs Lrs Rrs Ltf Rtf Ltr Rtr (the pins a";
+    i == 2 ? s = "Mono pans one source and spreads it; Stereo places the left and right inputs either side of Azimuth";
+    i == 3 ? s = "Where the sound sits around the room, from -180 to 180 degrees, 0 in front, negative to the left";
+    i == 4 ? s = "How high the sound sits in 7.1.4, from 0 (ear level) to 90 degrees (overhead)";
+    i == 5 ? s = "Mono: how wide the source is spread (0 to 180 degrees)";
+    i == 6 ? s = "How much of a front sound plays from the centre speaker";
+    i == 7 ? s = "Sends the mono sum through a 120 Hz low-pass to the LFE, from -60 dB (Off) to 0 dB";
+    i == 8 ? s = "Gain on every pin (-24 to +12 dB)";
+    s;
+  );
+
   function ng_presets() local(i)
   (
+    ng_hint_i > 0 && !ng_pre_open ? ng_hint(ng_hint_text(ng_hint_i));
     ng_pre_req >= 0 ? ( ng_preset_load(ng_pre_req); update(); ng_pre_req = -1; );
     ng_hist() ? update();
     ng_pre_cur = ng_preset_match();

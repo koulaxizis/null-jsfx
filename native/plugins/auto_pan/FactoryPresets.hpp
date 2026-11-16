@@ -29,4 +29,16 @@ static const FactoryPreset kPresets[] = {
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 7;
 
+// the hint line under the controls: a short help text per parameter (from tools/site_content.json)
+#define NULL_UI_HINTS 1
+static const char* const kHints[] = {
+    "Speed of the sine LFO in free-running mode",
+    "How far the LFO pushes the signal between left and right; at 0% both sides sit at half level",
+    "Blend between the dry signal and the panned signal",
+    "Locks the LFO rate to the project tempo instead of the Rate slider",
+    "LFO cycle length when synced: 1/2 = one sweep every two beats, up to 1/16 = four sweeps per beat",
+    "SINE sweeps smoothly; the step modes jump between pan positions once per LFO cycle: 2 STEPS (left, right)",
+    "In the step modes, how much of each step is spent gliding to the new position (0% = an instant, click-free",
+};
+
 } // namespace nullpresets

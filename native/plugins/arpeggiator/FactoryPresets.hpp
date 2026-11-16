@@ -32,4 +32,33 @@ static const FactoryPreset kPresets[] = {
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 24;
 
+// the hint line under the controls: a short help text per parameter (from tools/site_content.json)
+#define NULL_UI_HINTS 1
+static const char* const kHints[] = {
+    "The length of each step, locked to the tempo: 1/4 to 1/32 notes, with dotted (D) and triplet (T) values",
+    "The order the held notes play in: Up, Down, Up-Down, Down-Up, in the order they were played, Random, or",
+    "How many octaves the pattern climbs through (1 to 4): the held notes, then the same notes an octave up",
+    "How long each note sounds, as a share of its step (5 to 200%): short values give staccato plucks, 100% is",
+    "Moves every second step later (0 to 100%) for a shuffle feel; 100% is a full triplet swing",
+    "On: the arpeggio keeps playing after you let go of the keys, until you play a new chord",
+    "How many steps of the velocity lane are used (1 to 16) before it repeats, for accent patterns that cross",
+    "The start of the Random pattern's sequence (1 to 9999): the same seed always plays the same random order",
+    "Step 1 of the velocity lane: each note on this step plays at the played velocity times this value (0 to",
+    "Step 2 of the velocity lane (0 to 100% of the played velocity, 0% = a rest)",
+    "Step 3 of the velocity lane (0 to 100% of the played velocity, 0% = a rest)",
+    "Step 4 of the velocity lane (0 to 100% of the played velocity, 0% = a rest)",
+    "Step 5 of the velocity lane (0 to 100% of the played velocity, 0% = a rest)",
+    "Step 6 of the velocity lane (0 to 100% of the played velocity, 0% = a rest)",
+    "Step 7 of the velocity lane (0 to 100% of the played velocity, 0% = a rest)",
+    "Step 8 of the velocity lane (0 to 100% of the played velocity, 0% = a rest)",
+    "Step 9 of the velocity lane (0 to 100% of the played velocity, 0% = a rest)",
+    "Step 10 of the velocity lane (0 to 100% of the played velocity, 0% = a rest)",
+    "Step 11 of the velocity lane (0 to 100% of the played velocity, 0% = a rest)",
+    "Step 12 of the velocity lane (0 to 100% of the played velocity, 0% = a rest)",
+    "Step 13 of the velocity lane (0 to 100% of the played velocity, 0% = a rest)",
+    "Step 14 of the velocity lane (0 to 100% of the played velocity, 0% = a rest)",
+    "Step 15 of the velocity lane (0 to 100% of the played velocity, 0% = a rest)",
+    "Step 16 of the velocity lane (0 to 100% of the played velocity, 0% = a rest)",
+};
+
 } // namespace nullpresets

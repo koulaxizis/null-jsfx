@@ -27,4 +27,16 @@ static const FactoryPreset kPresets[] = {
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 7;
 
+// the hint line under the controls: a short help text per parameter (from tools/site_content.json)
+#define NULL_UI_HINTS 1
+static const char* const kHints[] = {
+    "The kind of space: Room (short, close), Chamber (dense), Hall (big and smooth) or Galaxy (huge, long and",
+    "How big the space is, from half to twice its type's size",
+    "How long the tail lasts: Room 0.2 to 1.5 s, Chamber 0.5 to 3 s, Hall 1 to 8 s, Galaxy 3 to 30 s",
+    "How fast the highs die away compared with the rest of the tail",
+    "How much the delay lines drift, for a smooth, chorused tail without metallic ringing",
+    "Time before the reverb starts, to keep the dry sound clear",
+    "Blend between the dry and the reverberated signal",
+};
+
 } // namespace nullpresets

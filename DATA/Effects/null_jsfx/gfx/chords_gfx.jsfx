@@ -486,8 +486,27 @@ out_pin:Right
     s;
   );
 
+  // the hint line under the controls: a short help text per slider (from tools/site_content.json)
+  function ng_hint_text(i) local(s)
+  (
+    s = "";
+    i == 1 ? s = "Chord plays a chord on every key; Progression lets the white keys from C play the steps of the chosen";
+    i == 2 ? s = "The key the chords (or the progression) are in";
+    i == 3 ? s = "The scale the chords are built from in Chord mode (major, minor, harmonic or melodic minor and the modes)";
+    i == 4 ? s = "What every key plays: a triad, a 7th or 9th chord stacked in the scale, a sus2 or sus4 chord, or a power";
+    i == 5 ? s = "Moves the lowest notes of the chord up an octave: root position, first, second or third inversion";
+    i == 6 ? s = "Spreads the chord: Close keeps it within an octave, Drop 2 drops the second-highest note an octave, Open";
+    i == 7 ? s = "Moves every chord up or down by octaves (-2 to +2)";
+    i == 8 ? s = "Plays the notes of each chord one after another, this far apart (0 to 200 ms), like a strummed guitar or a";
+    i == 9 ? s = "The order of the strum: upward, downward, or alternating with every chord";
+    i == 10 ? s = "Shapes the velocity of the chord notes: positive values play soft touches louder, negative values make";
+    i == 11 ? s = "The chord progression of Progression mode: C, D, E, F, G, A and B play its steps in turn (I-V-vi-IV";
+    s;
+  );
+
   function ng_presets() local(i)
   (
+    ng_hint_i > 0 && !ng_pre_open ? ng_hint(ng_hint_text(ng_hint_i));
     ng_pre_req >= 0 ? ( ng_preset_load(ng_pre_req); update(); ng_pre_req = -1; );
     ng_hist() ? update();
     ng_pre_cur = ng_preset_match();

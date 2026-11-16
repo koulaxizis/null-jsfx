@@ -32,4 +32,31 @@ static const FactoryPreset kPresets[] = {
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 22;
 
+// the hint line under the controls: a short help text per parameter (from tools/site_content.json)
+#define NULL_UI_HINTS 1
+static const char* const kHints[] = {
+    "One-shot plays every key at the sample's own pitch to its end (note-offs and Loop are ignored)",
+    "The key at which the sample plays at its original pitch in Chromatic mode (0 to 127, C4 = 60)",
+    "Transposes every note (-24 to +24 semitones)",
+    "Fine tuning (-100 to +100 cents)",
+    "Attack time of the level envelope (1 ms to 5 s)",
+    "Decay time towards the Sustain level (1 ms to 5 s)",
+    "Sustain level of the envelope (0 to 100%); at 0% a note ends after its decay",
+    "Release time after the key (and the pedal) let go (1 ms to 5 s)",
+    "Cutoff of the 12 dB/octave low-pass filter (20 Hz to 20 kHz; at 20 kHz with no Filter Env the filter is off)",
+    "Resonance of the filter at the cutoff (0 to 100%)",
+    "How far the filter envelope moves the cutoff at the note's start (-100 to +100%, up to 6 octaves up or down)",
+    "How long the filter envelope takes to come back (1 ms to 5 s)",
+    "Loop On repeats Loop Start..Loop End while a note sounds (Chromatic only)",
+    "Where the loop starts, as a share of the sample (0 to 100%)",
+    "Where the loop ends, as a share of the sample (0 to 100%)",
+    "Skips into the sample: where every note starts (0 to 100%)",
+    "Plays the sample backwards (Start and the loop then count from its end)",
+    "How much the key velocity changes the level (0% plays every note the same)",
+    "Pitch-bend range (0 to 24 semitones)",
+    "The output level (-24 to +12 dB)",
+    "Cuts the sample into 4 to 64 equal slices, one per key, for chopping beats and phrases (Off: the whole",
+    "The key that plays the first slice; each key above it plays the next one",
+};
+
 } // namespace nullpresets

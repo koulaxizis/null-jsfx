@@ -463,8 +463,38 @@ out_pin:Right
     s;
   );
 
+  // the hint line under the controls: a short help text per slider (from tools/site_content.json)
+  function ng_hint_text(i) local(s)
+  (
+    s = "";
+    i == 2 ? s = "One-shot plays every key at the sample's own pitch to its end (note-offs and Loop are ignored)";
+    i == 3 ? s = "The key at which the sample plays at its original pitch in Chromatic mode (0 to 127, C4 = 60)";
+    i == 4 ? s = "Transposes every note (-24 to +24 semitones)";
+    i == 5 ? s = "Fine tuning (-100 to +100 cents)";
+    i == 6 ? s = "Attack time of the level envelope (1 ms to 5 s)";
+    i == 7 ? s = "Decay time towards the Sustain level (1 ms to 5 s)";
+    i == 8 ? s = "Sustain level of the envelope (0 to 100%); at 0% a note ends after its decay";
+    i == 9 ? s = "Release time after the key (and the pedal) let go (1 ms to 5 s)";
+    i == 10 ? s = "Cutoff of the 12 dB/octave low-pass filter (20 Hz to 20 kHz; at 20 kHz with no Filter Env the filter is off)";
+    i == 11 ? s = "Resonance of the filter at the cutoff (0 to 100%)";
+    i == 12 ? s = "How far the filter envelope moves the cutoff at the note's start (-100 to +100%, up to 6 octaves up or down)";
+    i == 13 ? s = "How long the filter envelope takes to come back (1 ms to 5 s)";
+    i == 14 ? s = "Loop On repeats Loop Start..Loop End while a note sounds (Chromatic only)";
+    i == 15 ? s = "Where the loop starts, as a share of the sample (0 to 100%)";
+    i == 16 ? s = "Where the loop ends, as a share of the sample (0 to 100%)";
+    i == 17 ? s = "Skips into the sample: where every note starts (0 to 100%)";
+    i == 18 ? s = "Plays the sample backwards (Start and the loop then count from its end)";
+    i == 19 ? s = "How much the key velocity changes the level (0% plays every note the same)";
+    i == 20 ? s = "Pitch-bend range (0 to 24 semitones)";
+    i == 21 ? s = "The output level (-24 to +12 dB)";
+    i == 22 ? s = "Cuts the sample into 4 to 64 equal slices, one per key, for chopping beats and phrases (Off: the whole";
+    i == 23 ? s = "The key that plays the first slice; each key above it plays the next one";
+    s;
+  );
+
   function ng_presets() local(i)
   (
+    ng_hint_i > 0 && !ng_pre_open ? ng_hint(ng_hint_text(ng_hint_i));
     ng_pre_req >= 0 ? ( ng_preset_load(ng_pre_req); update(); ng_pre_req = -1; );
     ng_hist() ? update();
     ng_pre_cur = ng_preset_match();
