@@ -96,7 +96,7 @@ out_pin:Right
     y;
   );
   // one analysis: the model of the last N samples of the voice, then the steps towards it
-  function tb_frame() local(i, j, acc, k, e, re, im, w, f)
+  function tb_frame() local(i, j, acc, k, e, re, im, w, f, stop)
   (
     i = 0;
     loop(TBN, TBF[i] = TBM[(tb_wp + i) % TBN] * TBW[i]; i += 1;);
@@ -111,12 +111,17 @@ out_pin:Right
     memset(TBA, 0, 41);
     TBR[0] > tb_ww * tb_e10 ? (
       e = TBR[0] * 1.0001;
+      stop = 0;
       i = 1;
       loop(TBP,
         acc = TBR[i];
         j = 1;
         loop(i - 1, acc += TBA[j] * TBR[i - j]; j += 1;);
-        k = max(-0.995, min(0.995, -acc / e));
+        // the recursion stops at the first |k| >= 0.995 (the orders above stay 0): clamping k
+        // instead would leave e out of step with the filter (a pure tone near Nyquist then gave
+        // a gain of 1e8)
+        k = stop ? 0 : -acc / e;
+        abs(k) >= 0.995 ? ( stop = 1; k = 0; );
         j = 1;
         loop(i - 1, TBT[j] = TBA[j] + k * TBA[i - j]; j += 1;);
         j = 1;

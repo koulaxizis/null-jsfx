@@ -1861,7 +1861,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 10,
-   "bytes": 70236
+   "bytes": 70364
   },
   {
    "id": "vu_meter",

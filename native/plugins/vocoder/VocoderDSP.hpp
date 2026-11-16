@@ -191,12 +191,19 @@ private:
         if (fR[0] > fWw * fE10)
         {
             double e = fR[0] * 1.0001;
+            bool stop = false;
             for (int i = 1; i <= fP; ++i)
             {
                 double acc = fR[i];
                 for (int j = 1; j <= i - 1; ++j)
                     acc += fA[j] * fR[i - j];
-                const double k = std::max(-0.995, std::min(0.995, -acc / e));
+                // the recursion stops at the first |k| >= 0.995 (the orders above stay 0), as the JSFX
+                double k = stop ? 0.0 : -acc / e;
+                if (std::fabs(k) >= 0.995)
+                {
+                    stop = true;
+                    k = 0.0;
+                }
                 for (int j = 1; j <= i - 1; ++j)
                     fT[j] = fA[j] + k * fA[i - j];
                 for (int j = 1; j <= i - 1; ++j)
