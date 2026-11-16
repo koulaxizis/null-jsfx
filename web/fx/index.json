@@ -254,6 +254,20 @@
    "bytes": 38730
   },
   {
+   "id": "smoother",
+   "name": "Smoother",
+   "category": "One Slider",
+   "tags": "smoother smooth harsh harshness resonance dynamic eq soothe tame sibilance upper mids one knob gui",
+   "gfx": [
+    360,
+    240
+   ],
+   "ins": 2,
+   "outs": 2,
+   "sliders": 1,
+   "bytes": 40025
+  },
+  {
    "id": "snappy",
    "name": "Snappy",
    "category": "One Slider",
