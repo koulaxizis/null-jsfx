@@ -6,5 +6,7 @@
   ["Barber Pole Rise", {"Shift": 4, "Feedback": 70, "Mix": 50}],
   ["Barber Pole Fall", {"Shift": -4, "Feedback": 70, "Mix": 50}],
   ["Sci-Fi Radio", {"Shift": -350, "Stereo Offset": 40, "Feedback": 30, "Mix": 100}],
-  ["Spiral Echo", {"Shift": 30, "Feedback": 70, "Mix": 50, "Feedback Delay": 250}]
+  ["Spiral Echo", {"Shift": 30, "Feedback": 70, "Mix": 50, "Feedback Delay": 250}],
+  ["Ring Bell Drums", {"Shift": -90, "Mix": 40}],
+  ["Chorus Free Width", {"Shift": 0.8, "Stereo Offset": -1.6, "Mix": 40}]
 ]

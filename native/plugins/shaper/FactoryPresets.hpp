@@ -20,6 +20,9 @@ static const FactoryPreset kPresets[] = {
     { "Bit Steps", { 6.0f, 3.0f, 0.0f, 0.0f, 0.0f, 20000.0f, 100.0f, -2.0f, 0.1f, 0.205f, 0.25f, 0.479f, 0.4f, 0.689f, 0.6f, 0.865f, 0.8f, 0.956f, 1.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f } },
     { "Even Harmonics", { 7.0f, 8.0f, 15.0f, 0.0f, 1.0f, 20000.0f, 70.0f, -5.0f, 0.1f, 0.205f, 0.25f, 0.479f, 0.4f, 0.689f, 0.6f, 0.865f, 0.8f, 0.956f, 1.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f } },
     { "Custom S-Curve", { 0.0f, 6.0f, 0.0f, 0.0f, 1.0f, 20000.0f, 100.0f, -4.0f, 0.2f, 0.08f, 0.4f, 0.35f, 0.6f, 0.75f, 0.8f, 0.93f, 1.0f, 0.98f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f } },
+    { "Gentle Soft Clip", { 1.0f, 3.0f, 0.0f, 0.0f, 1.0f, 20000.0f, 100.0f, -3.0f, 0.1f, 0.205f, 0.25f, 0.479f, 0.4f, 0.689f, 0.6f, 0.865f, 0.8f, 0.956f, 1.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f } },
+    { "Parallel Fold", { 4.0f, 10.0f, 0.0f, 0.0f, 1.0f, 8000.0f, 35.0f, -4.0f, 0.1f, 0.205f, 0.25f, 0.479f, 0.4f, 0.689f, 0.6f, 0.865f, 0.8f, 0.956f, 1.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f } },
+    { "Asym Tube Drive", { 3.0f, 15.0f, 20.0f, 1.0f, 1.0f, 10000.0f, 100.0f, -10.0f, 0.1f, 0.205f, 0.25f, 0.479f, 0.4f, 0.689f, 0.6f, 0.865f, 0.8f, 0.956f, 1.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f } },
 };
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 24;

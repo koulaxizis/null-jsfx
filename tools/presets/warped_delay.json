@@ -6,5 +6,7 @@
   ["Seasick Chorus", {"Time": 25, "Mod Rate": 3, "Mod Depth": 5, "Feedback": 10, "Distortion": 10, "Filter": "Off", "Mix": 50}],
   ["Telephone Echo", {"Time": 300, "Mod Rate": 0.6, "Mod Depth": 1, "Feedback": 50, "Distortion": 50, "Filter": "BP", "Filter Freq": 1200, "Mix": 35}],
   ["Thin Highpass Repeats", {"Time": 220, "Mod Rate": 1.2, "Mod Depth": 1.5, "Feedback": 55, "Distortion": 20, "Filter": "HP", "Filter Freq": 800, "Mix": 30}],
-  ["Broken Tape Chaos", {"Time": 500, "Mod Rate": 4, "Mod Depth": 20, "Feedback": 75, "Distortion": 60, "Filter": "LP", "Filter Freq": 2500, "Mix": 40}]
+  ["Broken Tape Chaos", {"Time": 500, "Mod Rate": 4, "Mod Depth": 20, "Feedback": 75, "Distortion": 60, "Filter": "LP", "Filter Freq": 2500, "Mix": 40}],
+  ["Vocal Space Echo", {"Time": 250, "Mod Rate": 0.7, "Mod Depth": 1, "Feedback": 30, "Distortion": 10, "Filter": "LP", "Filter Freq": 5000, "Mix": 20}],
+  ["Drum Bus Slap", {"Time": 90, "Mod Rate": 0.5, "Mod Depth": 0.5, "Feedback": 20, "Distortion": 20, "Filter": "HP", "Filter Freq": 400, "Mix": 20}]
 ]

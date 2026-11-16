@@ -21,6 +21,8 @@ static const FactoryPreset kPresets[] = {
     { "Snare Soft Clip", { 1.0f, -5.0f, -1.0f, 200.0f, 2.0f, 0.0f, 0.0f } },
     { "Streaming Brickwall", { 2.0f, -3.0f, -1.0f, 250.0f, 5.0f, 0.0f, 0.0f } },
     { "Broadcast Brickwall", { 2.0f, -4.0f, -2.0f, 400.0f, 5.0f, 0.0f, 0.0f } },
+    { "Podcast Ceiling", { 0.0f, -3.0f, -1.0f, 250.0f, 3.0f, 1.0f, 0.0f } },
+    { "True Peak Master", { 0.0f, -4.0f, -1.0f, 200.0f, 5.0f, 1.0f, 0.0f } },
 };
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 7;

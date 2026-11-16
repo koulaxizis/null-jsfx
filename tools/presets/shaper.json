@@ -5,7 +5,8 @@
   ["Sine Fuzz", {"Shape": "Sine", "Drive": 18, "Tone": 9000, "Output": -12}],
   ["Bit Steps", {"Shape": "Steps", "Drive": 3, "Oversampling": "Off", "Output": -2}],
   ["Even Harmonics", {"Shape": "Asym", "Drive": 8, "Bias": 15, "Mix": 70, "Output": -5}],
-  ["Custom S-Curve", {"Shape": "Custom", "Drive": 6, "Output": -4,
-    "P1 X": 0.2, "P1 Y": 0.08, "P2 X": 0.4, "P2 Y": 0.35, "P3 X": 0.6, "P3 Y": 0.75,
-    "P4 X": 0.8, "P4 Y": 0.93, "P5 X": 1, "P5 Y": 0.98, "P6 X": 0, "P6 Y": 0}]
+  ["Custom S-Curve", {"Shape": "Custom", "Drive": 6, "Output": -4, "P1 X": 0.2, "P1 Y": 0.08, "P2 X": 0.4, "P2 Y": 0.35, "P3 X": 0.6, "P3 Y": 0.75, "P4 X": 0.8, "P4 Y": 0.93, "P5 X": 1, "P5 Y": 0.98, "P6 X": 0, "P6 Y": 0}],
+  ["Gentle Soft Clip", {"Shape": "Soft", "Drive": 3, "Output": -3}],
+  ["Parallel Fold", {"Shape": "Fold", "Drive": 10, "Tone": 8000, "Mix": 35, "Output": -4}],
+  ["Asym Tube Drive", {"Shape": "Tube", "Drive": 15, "Bias": 20, "Symmetry": "Asymmetric", "Tone": 10000, "Output": -10}]
 ]

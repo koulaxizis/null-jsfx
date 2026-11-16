@@ -21,6 +21,8 @@ static const FactoryPreset kPresets[] = {
     { "Listen Right Only", { 0.0f, 0.0f, 0.0f, 0.0f, 20.0f, 100.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f } },
     { "Low Rumble Trim", { 0.0f, 0.0f, 0.0f, 0.0f, 40.0f, 100.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f } },
     { "Safety Clip", { 0.0f, 0.0f, 0.0f, 0.0f, 20.0f, 100.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f } },
+    { "Trim Down 6 dB", { 0.0f, 0.0f, 0.0f, 0.0f, 20.0f, 100.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, -6.0f, 0.0f } },
+    { "Quiet Source Boost", { 0.0f, 5.0f, 0.0f, 0.0f, 20.0f, 100.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f } },
 };
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 13;

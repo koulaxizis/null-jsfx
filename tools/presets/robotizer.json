@@ -5,5 +5,8 @@
   ["Flat Monotone", {"Pitch": 140, "Metallic": 0}],
   ["Ring Mod Alien", {"Pitch": 100, "Metallic": 30, "Ring": 80}],
   ["Metallic Drum Buzz", {"Pitch": 200, "Metallic": 70, "Mix": 50}],
-  ["Subtle Robot Blend", {"Pitch": 120, "Metallic": 25, "Mix": 40}]
+  ["Subtle Robot Blend", {"Pitch": 120, "Metallic": 25, "Mix": 40}],
+  ["Low Monster", {"Pitch": 55, "Metallic": 50, "Ring": 20}],
+  ["Robot Choir", {"Pitch": 220, "Metallic": 10, "Mix": 60}],
+  ["Vocoder-Like Lead", {"Pitch": 180, "Metallic": 35, "Ring": 10, "Mix": 80}]
 ]

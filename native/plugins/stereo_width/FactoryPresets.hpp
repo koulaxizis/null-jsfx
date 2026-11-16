@@ -20,6 +20,9 @@ static const FactoryPreset kPresets[] = {
     { "Master Mono Lows", { 100.0f, 100.0f, 120.0f } },
     { "Mono Bass Wide Top", { 130.0f, 100.0f, 150.0f } },
     { "Extra Wide Synths", { 180.0f, 100.0f, 250.0f } },
+    { "Narrow Mono Lows", { 85.0f, 100.0f, 200.0f } },
+    { "Wide Backing Vocals", { 140.0f, 100.0f, 180.0f } },
+    { "Half Width Blend", { 200.0f, 50.0f, 0.0f } },
 };
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 3;

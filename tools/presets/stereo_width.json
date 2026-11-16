@@ -5,5 +5,8 @@
   ["Narrow Overheads", {"Width": 70}],
   ["Master Mono Lows", {"Width": 100, "Crossover": 120}],
   ["Mono Bass Wide Top", {"Width": 130, "Crossover": 150}],
-  ["Extra Wide Synths", {"Width": 180, "Crossover": 250}]
+  ["Extra Wide Synths", {"Width": 180, "Crossover": 250}],
+  ["Narrow Mono Lows", {"Width": 85, "Crossover": 200}],
+  ["Wide Backing Vocals", {"Width": 140, "Crossover": 180}],
+  ["Half Width Blend", {"Width": 200, "Mix": 50}]
 ]

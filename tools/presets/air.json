@@ -3,5 +3,8 @@
   ["Gentle Sheen", {"Amount": 25}],
   ["Vocal Air", {"Amount": 45}],
   ["Bright Acoustic", {"Amount": 60}],
-  ["Maximum Air", {"Amount": 100}]
+  ["Maximum Air", {"Amount": 100}],
+  ["Drum Overheads", {"Amount": 35}],
+  ["Piano Lid Open", {"Amount": 50}],
+  ["Synth Pad Shine", {"Amount": 75}]
 ]

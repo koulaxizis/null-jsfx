@@ -20,6 +20,9 @@ static const FactoryPreset kPresets[] = {
     { "Piano Resonance Tamer", { 200.0f, 0.0f, 1.0f, -12.0f, 800.0f, -3.0f, 3.0f, -24.0f, 2000.0f, -3.0f, 3.0f, -24.0f, 6000.0f, 0.0f, 1.0f, -12.0f, 2.0f, 150.0f, 0.0f, 0.0f, 0.0f } },
     { "Mix Bus Harshness", { 200.0f, 0.0f, 1.0f, -12.0f, 1000.0f, 0.0f, 1.0f, -12.0f, 2500.0f, -3.0f, 1.0f, -20.0f, 7000.0f, -2.0f, 1.0f, -24.0f, 1.0f, 100.0f, 0.0f, 0.0f, 0.0f } },
     { "Drum Bus Punch Lift", { 60.0f, 3.0f, 1.0f, -24.0f, 1000.0f, 0.0f, 1.0f, -12.0f, 3000.0f, 2.0f, 1.0f, -24.0f, 6000.0f, 0.0f, 1.0f, -12.0f, 3.0f, 80.0f, 0.0f, 0.0f, 0.0f } },
+    { "Kick Bass Clash", { 100.0f, -4.0f, 1.5f, -24.0f, 1000.0f, 0.0f, 1.0f, -12.0f, 2000.0f, 0.0f, 1.0f, -12.0f, 6000.0f, 0.0f, 1.0f, -12.0f, 3.0f, 90.0f, 0.0f, 0.0f, 0.0f } },
+    { "Guitar Harsh Peaks", { 200.0f, 0.0f, 1.0f, -12.0f, 1000.0f, 0.0f, 1.0f, -12.0f, 3500.0f, -5.0f, 2.0f, -26.0f, 6000.0f, 0.0f, 1.0f, -12.0f, 1.0f, 80.0f, 0.0f, 0.0f, 0.0f } },
+    { "Side Harshness Master", { 200.0f, 0.0f, 1.0f, -12.0f, 1000.0f, 0.0f, 1.0f, -12.0f, 3000.0f, -3.0f, 1.2f, -24.0f, 8000.0f, -3.0f, 1.0f, -28.0f, 1.0f, 100.0f, 0.0f, 2.0f, 0.0f } },
 };
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 21;

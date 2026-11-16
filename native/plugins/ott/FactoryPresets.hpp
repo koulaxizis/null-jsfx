@@ -21,6 +21,8 @@ static const FactoryPreset kPresets[] = {
     { "Downward Only Tame", { 60.0f, 100.0f, 0.0f, 100.0f, 0.0f, 0.0f, 0.0f, -3.0f } },
     { "Bright Air Squash", { 70.0f, 80.0f, 100.0f, 100.0f, -2.0f, 0.0f, 2.0f, -1.0f } },
     { "Slow Pad Bloom", { 50.0f, 300.0f, 100.0f, 70.0f, 0.0f, 0.0f, 0.0f, 0.0f } },
+    { "Gentle Master Lift", { 15.0f, 150.0f, 100.0f, 100.0f, 0.0f, 0.0f, 0.0f, -0.5f } },
+    { "Bass Growl", { 80.0f, 70.0f, 100.0f, 100.0f, -2.0f, 0.0f, 0.0f, -2.0f } },
 };
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 8;

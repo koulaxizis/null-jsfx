@@ -3,5 +3,8 @@
   ["Vocal Double", {"Amount": 40}],
   ["Backing Vocal Stack", {"Amount": 60}],
   ["Wide Mono Guitar", {"Amount": 75}],
-  ["Synth Spread", {"Amount": 90}]
+  ["Synth Spread", {"Amount": 90}],
+  ["Subtle Double", {"Amount": 10}],
+  ["Rhythm Guitar Pair", {"Amount": 50}],
+  ["Huge Chorus Stack", {"Amount": 100}]
 ]

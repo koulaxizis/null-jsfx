@@ -6,5 +6,7 @@
   ["Boxy Low Mids", {"Depth": 6, "Sharpness": 50, "Selectivity": 50, "Attack": 15, "Release": 150, "Low Freq": 150, "High Freq": 1000}],
   ["Piano Ring Control", {"Depth": 4, "Sharpness": 80, "Selectivity": 65, "Attack": 20, "Release": 250, "Low Freq": 200, "High Freq": 8000}],
   ["Aggressive Hard Clean", {"Depth": 12, "Sharpness": 80, "Selectivity": 30, "Attack": 5, "Release": 100, "Mode": "Hard"}],
-  ["Delta Audition", {"Delta": "On"}]
+  ["Delta Audition", {"Delta": "On"}],
+  ["Drum Room Ring", {"Depth": 6, "Sharpness": 70, "Selectivity": 55, "Attack": 10, "Release": 150, "Low Freq": 200, "High Freq": 6000}],
+  ["Master Gentle Soft", {"Depth": 2, "Sharpness": 40, "Selectivity": 60, "Attack": 30, "Release": 250, "Low Freq": 100, "High Freq": 18000, "Mix": 70}]
 ]

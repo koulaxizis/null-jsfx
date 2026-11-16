@@ -5,5 +5,8 @@
   ["Amp Buzz 60 Hz", {"Frequency": "60 Hz", "Harmonics": 8, "Q": 30, "Depth": 35}],
   ["Vocal Safe 50 Hz", {"Frequency": "50 Hz", "Harmonics": 3, "Q": 60, "Depth": 30}],
   ["Vocal Safe 60 Hz", {"Frequency": "60 Hz", "Harmonics": 3, "Q": 60, "Depth": 30}],
-  ["Heavy Hum And Rumble", {"Frequency": "50 Hz", "Harmonics": 4, "Q": 25, "Depth": 50, "Low Cut": "40 Hz"}]
+  ["Heavy Hum And Rumble", {"Frequency": "50 Hz", "Harmonics": 4, "Q": 25, "Depth": 50, "Low Cut": "40 Hz"}],
+  ["Guitar Pickup 50 Hz", {"Frequency": "50 Hz", "Harmonics": 5, "Q": 50, "Depth": 35}],
+  ["Guitar Pickup 60 Hz", {"Frequency": "60 Hz", "Harmonics": 5, "Q": 50, "Depth": 35}],
+  ["Heavy Hum 60 Hz", {"Frequency": "60 Hz", "Harmonics": 4, "Q": 25, "Depth": 50, "Low Cut": "40 Hz"}]
 ]

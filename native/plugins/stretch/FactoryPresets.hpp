@@ -18,6 +18,9 @@ static const FactoryPreset kPresets[] = {
     { "Grain Smear Texture", { -30.0f } },
     { "Fifth Up", { 58.0f } },
     { "Octave Up", { 100.0f } },
+    { "Fourth Down", { -42.0f } },
+    { "Dreamy Drift", { -15.0f } },
+    { "Chipmunk", { 80.0f } },
 };
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 1;

@@ -20,6 +20,9 @@ static const FactoryPreset kPresets[] = {
     { "Reverse Swells", { 400.0f, 250.0f, 12.0f, 0.0f, 20.0f, 100.0f, 45.0f, 70.0f, 40.0f } },
     { "Scattered Echoes", { 350.0f, 40.0f, 10.0f, 0.0f, 80.0f, 0.0f, 30.0f, 100.0f, 35.0f } },
     { "Glitchy Grains", { 120.0f, 20.0f, 60.0f, 0.0f, 50.0f, 30.0f, 20.0f, 70.0f, 40.0f } },
+    { "Vocal Halo", { 220.0f, 120.0f, 25.0f, 12.0f, 25.0f, 0.0f, 35.0f, 70.0f, 25.0f } },
+    { "Frozen Drone", { 1200.0f, 400.0f, 40.0f, 0.0f, 70.0f, 0.0f, 85.0f, 70.0f, 50.0f } },
+    { "Detuned Doubler", { 30.0f, 60.0f, 50.0f, 0.2f, 10.0f, 0.0f, 0.0f, 70.0f, 35.0f } },
 };
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 9;

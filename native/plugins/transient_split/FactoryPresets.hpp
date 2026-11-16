@@ -16,11 +16,13 @@ static const FactoryPreset kPresets[] = {
     { "More Attack", { 0.0f, 6.0f, 0.0f, 50.0f, 60.0f, 0.0f } },
     { "Less Room", { 0.0f, 0.0f, -6.0f, 50.0f, 120.0f, 0.0f } },
     { "Snappy Drums", { 0.0f, 4.0f, -2.0f, 70.0f, 40.0f, 0.0f } },
-    { "Soft Hits", { 0.0f, -8.0f, 0.0f, 60.0f, 60.0f, 0.0f } },
+    { "Soft Hits", { 0.0f, -8.0f, 0.0f, 60.0f, 60.0f, 6.3f } },
     { "Only Transients", { 0.0f, 0.0f, -24.0f, 80.0f, 30.0f, 0.0f } },
     { "Only Body", { 0.0f, -24.0f, 0.0f, 80.0f, 80.0f, 0.0f } },
     { "Split For Reverb", { 1.0f, 0.0f, 0.0f, 50.0f, 80.0f, 0.0f } },
     { "Split Tight", { 1.0f, 0.0f, 0.0f, 75.0f, 25.0f, 0.0f } },
+    { "Tighter Kick", { 0.0f, 3.0f, -4.0f, 65.0f, 50.0f, 0.0f } },
+    { "Acoustic Guitar Soft", { 0.0f, -4.0f, 0.0f, 55.0f, 40.0f, 0.0f } },
 };
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 6;

@@ -4,5 +4,9 @@
   ["Decode Wide Mix", {"Mode": "Decode", "Mid Gain": -1, "Side Gain": 4}],
   ["Decode Center Focus", {"Mode": "Decode", "Mid Gain": 2, "Side Gain": -3}],
   ["MS Mic Wide Decode", {"Mode": "Decode", "Mid Gain": -1.5, "Side Gain": 6}],
-  ["MS Mic Narrow Decode", {"Mode": "Decode", "Side Gain": -6}]
+  ["MS Mic Narrow Decode", {"Mode": "Decode", "Side Gain": -6}],
+  ["Encode Side Lift", {"Mode": "Encode", "Side Gain": 3}],
+  ["Encode Mid Focus", {"Mode": "Encode", "Mid Gain": 3, "Side Gain": -3}],
+  ["Decode Mono Safe", {"Mode": "Decode", "Side Gain": -2}],
+  ["Decode Max Width", {"Mode": "Decode", "Mid Gain": -3, "Side Gain": 6}]
 ]

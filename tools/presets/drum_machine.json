@@ -5,7 +5,7 @@
   ["Minimal Techno", {"Pattern": "Techno", "Swing": 54, "Kick Decay": 30, "Kick Tone": 80, "Rim Tone": 100, "Rim Tune": 3, "Cymbal Tone": 0, "Cymbal Level": -6}],
   ["Boom Bap Dusty", {"Pattern": "Boom Bap", "Swing": 62, "Grit": 55, "Drive": 15, "Kick Decay": 35, "Kick Tone": 60, "Snare Tune": -2, "Snare Tone": 60}],
   ["Generated Breaks", {"Generate": "On", "Style": "Breakbeat", "Density": 60, "Seed": 42, "Swing": 56, "Kit": "Lo-Fi Dust", "Grit": 40, "Drive": 15}],
-  ["Garage Shuffle", {"Pattern": "UK Garage", "Swing": 62, "Probability": 85, "Seed": 7, "Kit": "Minimal"}],
+  ["Garage Shuffle", {"Pattern": "UK Garage", "Swing": 62, "Probability": 85, "Seed": 7, "Kit": "Minimal", "Volume (dB)": 3}],
   ["Breaks", {"Pattern": "Breakbeat", "Swing": 54, "Grit": 25, "Snare Tone": 65, "Snare Decay": 60, "Cymbal Tone": 80}],
   ["Trap 808", {"Pattern": "Trap", "Kick Decay": 100, "Kick Tone": 10, "Kick Tune": -3, "Snare Tone": 80, "Clap Tone": 70, "Closed Hat Decay": 25, "Closed Hat Tone": 40}],
   ["Disco Night", {"Pattern": "Disco", "Kick Tone": 60, "Open Hat Decay": 35, "Open Hat Tone": 60, "Low Tom Tone": 60, "High Tom Tone": 60}],

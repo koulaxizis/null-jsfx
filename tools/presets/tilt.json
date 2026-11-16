@@ -3,5 +3,8 @@
   ["Darken Harsh Take", {"Amount": -40}],
   ["Mastering Dark Nudge", {"Amount": -15}],
   ["Mastering Bright Nudge", {"Amount": 15}],
-  ["Brighten Dull Stem", {"Amount": 40}]
+  ["Brighten Dull Stem", {"Amount": 40}],
+  ["Very Bright", {"Amount": 70}],
+  ["Gentle Warmth", {"Amount": -25}],
+  ["Air Lift", {"Amount": 25}]
 ]

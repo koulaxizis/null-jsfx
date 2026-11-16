@@ -5,5 +5,8 @@
   ["Tuned Hat Shimmer", {"Frequency": 1760, "Feedback": 0.7, "Mode": "Feed-Backward", "Gain": 3}],
   ["Karplus Pluck A2", {"Frequency": 110, "Feedback": 0.97, "Mode": "Feed-Backward", "Gain": 4}],
   ["Tube Resonance", {"Frequency": 330, "Feedback": 0.6, "Mode": "Feed-Backward", "Gain": 3}],
-  ["Robotic Buzz", {"Frequency": 100, "Feedback": 0.9, "Mode": "Feed-Backward", "Gain": 4}]
+  ["Robotic Buzz", {"Frequency": 100, "Feedback": 0.9, "Mode": "Feed-Backward", "Gain": 12}],
+  ["Flanged Air", {"Frequency": 5000, "Feedback": 0.5, "Mode": "Feed-Forward"}],
+  ["Tuned E3 Drone", {"Frequency": 165, "Feedback": 0.9, "Mode": "Feed-Backward", "Gain": 6}],
+  ["Low Body Comb", {"Frequency": 150, "Feedback": 0.35, "Mode": "Feed-Forward"}]
 ]

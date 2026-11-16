@@ -6,7 +6,7 @@
   ["Low End Weight", {"31 Hz": 3.5, "63 Hz": 4, "125 Hz": 2, "250 Hz": -1}],
   ["Mud Cut", {"125 Hz": -1, "250 Hz": -3.5, "500 Hz": -2.5, "1 kHz": -0.5}],
   ["Vocal Presence", {"63 Hz": -3, "125 Hz": -1.5, "250 Hz": -1, "2 kHz": 1.5, "4 kHz": 3, "8 kHz": 1.5, "16 kHz": 2}],
-  ["Telephone", {"31 Hz": -18, "63 Hz": -18, "125 Hz": -12, "250 Hz": -4, "1 kHz": 4, "2 kHz": 3, "4 kHz": -6, "8 kHz": -18, "16 kHz": -18, "Smoothness": 30}],
+  ["Telephone", {"31 Hz": -18, "63 Hz": -18, "125 Hz": -12, "250 Hz": -4, "1 kHz": 4, "2 kHz": 3, "4 kHz": -6, "8 kHz": -18, "16 kHz": -18, "Smoothness": 30, "Output (dB)": 8}],
   ["Old Radio", {"31 Hz": -18, "63 Hz": -15, "125 Hz": -8, "250 Hz": -1, "500 Hz": 3, "1 kHz": 4, "2 kHz": 1, "4 kHz": -5, "8 kHz": -14, "16 kHz": -18}],
   ["Scooped Guitar", {"63 Hz": -6, "125 Hz": 2, "250 Hz": 1, "500 Hz": -3, "1 kHz": -4, "2 kHz": -1, "4 kHz": 2.5, "8 kHz": 1, "16 kHz": -4}],
   ["Kick Shape", {"31 Hz": 2, "63 Hz": 5, "125 Hz": 1, "250 Hz": -4, "500 Hz": -2, "2 kHz": 1, "4 kHz": 3, "8 kHz": 0.5}],

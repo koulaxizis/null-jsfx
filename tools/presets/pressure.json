@@ -3,5 +3,8 @@
   ["Bus Glue", {"Amount": 30}],
   ["Vocal Leveler", {"Amount": 40}],
   ["Bass Even", {"Amount": 50}],
-  ["Room Mic Squash", {"Amount": 85}]
+  ["Room Mic Squash", {"Amount": 85}],
+  ["Gentle Leveling", {"Amount": 5}],
+  ["Drum Smash", {"Amount": 70}],
+  ["Full Squash", {"Amount": 100}]
 ]

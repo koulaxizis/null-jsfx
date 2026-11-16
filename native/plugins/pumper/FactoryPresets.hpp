@@ -17,6 +17,9 @@ static const FactoryPreset kPresets[] = {
     { "Reverb Return Groove", { 45.0f } },
     { "Pad Pump", { 60.0f } },
     { "Heavy EDM Pump", { 90.0f } },
+    { "Gentle Groove", { 10.0f } },
+    { "House Pump", { 75.0f } },
+    { "Full Duck", { 100.0f } },
 };
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 1;

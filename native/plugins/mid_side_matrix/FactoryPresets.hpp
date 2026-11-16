@@ -19,6 +19,10 @@ static const FactoryPreset kPresets[] = {
     { "Decode Center Focus", { 2.0f, -3.0f, 1.0f } },
     { "MS Mic Wide Decode", { -1.5f, 6.0f, 1.0f } },
     { "MS Mic Narrow Decode", { 0.0f, -6.0f, 1.0f } },
+    { "Encode Side Lift", { 0.0f, 3.0f, 0.0f } },
+    { "Encode Mid Focus", { 3.0f, -3.0f, 0.0f } },
+    { "Decode Mono Safe", { 0.0f, -2.0f, 1.0f } },
+    { "Decode Max Width", { -3.0f, 6.0f, 1.0f } },
 };
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 3;

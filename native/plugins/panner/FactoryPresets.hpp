@@ -21,6 +21,8 @@ static const FactoryPreset kPresets[] = {
     { "Haas Guitar Right", { 70.0f, 2.0f, 100.0f, 15.0f, 0.0f } },
     { "Narrow Stereo Keys", { -25.0f, 1.0f, 60.0f, 12.0f, 0.0f } },
     { "Mono Fold Center", { 0.0f, 1.0f, 0.0f, 12.0f, 0.0f } },
+    { "Haas Wide Center", { 0.0f, 2.0f, 100.0f, 8.0f, 0.0f } },
+    { "Hi-Hat Right", { 35.0f, 1.0f, 70.0f, 12.0f, 0.0f } },
 };
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 5;

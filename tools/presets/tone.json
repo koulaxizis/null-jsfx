@@ -5,5 +5,8 @@
   ["Thin Out Lows", {"Bass (dB)": -6, "Bass Freq (Hz)": 200}],
   ["Tame Highs", {"Treble (dB)": -4, "Treble Freq (Hz)": 5000}],
   ["Telephone Lite", {"Bass (dB)": -12, "Treble (dB)": -9, "Bass Freq (Hz)": 400, "Treble Freq (Hz)": 3000, "Output (dB)": 4}],
-  ["Sub Weight", {"Bass (dB)": 4, "Bass Freq (Hz)": 60}]
+  ["Sub Weight", {"Bass (dB)": 4, "Bass Freq (Hz)": 60}],
+  ["Vocal Air", {"Bass (dB)": -2, "Treble (dB)": 3, "Bass Freq (Hz)": 150, "Treble Freq (Hz)": 10000}],
+  ["Drum Bus Punch", {"Bass (dB)": 2.5, "Treble (dB)": 1.5, "Bass Freq (Hz)": 80, "Treble Freq (Hz)": 8000, "Output (dB)": -1.5}],
+  ["Master Smile", {"Bass (dB)": 1.5, "Treble (dB)": 1.5, "Bass Freq (Hz)": 60, "Treble Freq (Hz)": 12000, "Output (dB)": -1}]
 ]

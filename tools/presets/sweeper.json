@@ -3,5 +3,8 @@
   ["Low Pass Breakdown", {"Amount": 30}],
   ["Warm Roll Off", {"Amount": 40}],
   ["Intro Thin Out", {"Amount": 70}],
-  ["High Pass Build", {"Amount": 85}]
+  ["High Pass Build", {"Amount": 85}],
+  ["Gentle Low Pass", {"Amount": 10}],
+  ["Breakdown Mid", {"Amount": 55}],
+  ["Light High Pass", {"Amount": 62}]
 ]

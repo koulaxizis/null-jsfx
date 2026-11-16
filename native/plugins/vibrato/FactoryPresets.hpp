@@ -20,6 +20,9 @@ static const FactoryPreset kPresets[] = {
     { "Lo-Fi Wobble", { 2.5f, 8.0f, 100.0f } },
     { "Chorus Detune", { 1.2f, 6.0f, 50.0f } },
     { "Subtle Thickener", { 0.5f, 3.0f, 30.0f } },
+    { "Guitar Warble", { 4.0f, 2.0f, 100.0f } },
+    { "Organ Vibrato", { 6.8f, 0.8f, 100.0f } },
+    { "Seasick Pad", { 0.6f, 12.0f, 60.0f } },
 };
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 3;

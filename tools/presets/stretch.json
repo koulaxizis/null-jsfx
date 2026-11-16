@@ -3,5 +3,8 @@
   ["Slow Motion Tape", {"Amount": -50}],
   ["Grain Smear Texture", {"Amount": -30}],
   ["Fifth Up", {"Amount": 58}],
-  ["Octave Up", {"Amount": 100}]
+  ["Octave Up", {"Amount": 100}],
+  ["Fourth Down", {"Amount": -42}],
+  ["Dreamy Drift", {"Amount": -15}],
+  ["Chipmunk", {"Amount": 80}]
 ]

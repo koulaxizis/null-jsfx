@@ -6,5 +6,7 @@
   ["Short Vocal Ambience", {"Source": "Large Room", "Length": 40, "Pre-Delay": 15, "Low Cut": 250, "High Cut": 8000, "Mix": 15}],
   ["Snare Plate", {"Source": "Plate", "Length": 60, "Pre-Delay": 5, "Low Cut": 300, "High Cut": 12000, "Mix": 25}],
   ["Piano Hall", {"Source": "Hall", "Length": 80, "Pre-Delay": 15, "Low Cut": 60, "High Cut": 9000, "Mix": 22}],
-  ["Cathedral Wash", {"Source": "Cathedral", "Pre-Delay": 40, "Low Cut": 120, "High Cut": 7000, "Mix": 40}]
+  ["Cathedral Wash", {"Source": "Cathedral", "Pre-Delay": 40, "Low Cut": 120, "High Cut": 7000, "Mix": 40}],
+  ["Guitar Room", {"Source": "Small Room", "Length": 70, "Pre-Delay": 8, "Low Cut": 120, "High Cut": 9000, "Mix": 18}],
+  ["Dark Hall Pad", {"Source": "Hall", "Pre-Delay": 30, "Low Cut": 100, "High Cut": 5000, "Mix": 35}]
 ]

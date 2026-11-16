@@ -5,5 +5,8 @@
   ["Hot Master View", {"Auto Gain": "Off", "Scope Gain": -6, "Decay": 40}],
   ["Mono Check", {"Monitor": "Mono"}],
   ["Side Listen", {"Monitor": "Side"}],
-  ["Band Phase Check", {"Integration": 600, "Band Correlation": "On"}]
+  ["Band Phase Check", {"Integration": 600, "Band Correlation": "On"}],
+  ["Mix Bus Check", {"Decay": 50, "Integration": 400, "Band Correlation": "On"}],
+  ["Live Overview", {"Decay": 30, "Integration": 200}],
+  ["Mastering Long Avg", {"Decay": 90, "Integration": 3000, "Band Correlation": "On"}]
 ]

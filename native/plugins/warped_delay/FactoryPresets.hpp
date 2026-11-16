@@ -21,6 +21,8 @@ static const FactoryPreset kPresets[] = {
     { "Telephone Echo", { 300.0f, 0.6f, 1.0f, 50.0f, 50.0f, 3.0f, 1200.0f, 35.0f } },
     { "Thin Highpass Repeats", { 220.0f, 1.2f, 1.5f, 55.0f, 20.0f, 2.0f, 800.0f, 30.0f } },
     { "Broken Tape Chaos", { 500.0f, 4.0f, 20.0f, 75.0f, 60.0f, 1.0f, 2500.0f, 40.0f } },
+    { "Vocal Space Echo", { 250.0f, 0.7f, 1.0f, 30.0f, 10.0f, 1.0f, 5000.0f, 20.0f } },
+    { "Drum Bus Slap", { 90.0f, 0.5f, 0.5f, 20.0f, 20.0f, 2.0f, 400.0f, 20.0f } },
 };
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 8;

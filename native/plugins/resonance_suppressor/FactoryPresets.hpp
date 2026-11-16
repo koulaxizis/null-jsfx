@@ -21,6 +21,8 @@ static const FactoryPreset kPresets[] = {
     { "Piano Ring Control", { 4.0f, 80.0f, 65.0f, 20.0f, 250.0f, 200.0f, 8000.0f, 0.0f, 0.0f, 100.0f } },
     { "Aggressive Hard Clean", { 12.0f, 80.0f, 30.0f, 5.0f, 100.0f, 100.0f, 18000.0f, 1.0f, 0.0f, 100.0f } },
     { "Delta Audition", { 6.0f, 50.0f, 50.0f, 10.0f, 120.0f, 100.0f, 18000.0f, 0.0f, 1.0f, 100.0f } },
+    { "Drum Room Ring", { 6.0f, 70.0f, 55.0f, 10.0f, 150.0f, 200.0f, 6000.0f, 0.0f, 0.0f, 100.0f } },
+    { "Master Gentle Soft", { 2.0f, 40.0f, 60.0f, 30.0f, 250.0f, 100.0f, 18000.0f, 0.0f, 0.0f, 70.0f } },
 };
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 10;

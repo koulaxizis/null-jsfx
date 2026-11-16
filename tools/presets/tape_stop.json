@@ -3,5 +3,10 @@
   ["Quick Brake", {"Stop Time": 200, "Start Time": 300}],
   ["Turntable Brake", {"Stop Time": 350, "Start Time": 150}],
   ["Slow Wind Down", {"Stop Time": 2000, "Start Time": 1000}],
-  ["Long Dramatic Drop", {"Stop Time": 4000, "Start Time": 2000}]
+  ["Long Dramatic Drop", {"Stop Time": 4000, "Start Time": 2000}],
+  ["Snap Stop", {"Stop Time": 50, "Start Time": 50}],
+  ["Beat Drop", {"Stop Time": 600, "Start Time": 80}],
+  ["Slow Restart", {"Stop Time": 300, "Start Time": 2500}],
+  ["Even Brake", {"Stop Time": 1000, "Start Time": 1000}],
+  ["Power Cut", {"Stop Time": 1500, "Start Time": 50}]
 ]

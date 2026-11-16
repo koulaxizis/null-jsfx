@@ -3,7 +3,7 @@
 (function (g) {
 "use strict";
 var FX = {"id":"de_clip","name":"De-Clip","desc":"NULL De-Clip GFX","category":"Essentials","tags":"de-clip declip clipping repair restoration reconstruct peaks overload distortion gui","sliders":[{"i":1,"name":"Clip Level (dB)","def":-0.3,"min":-24,"max":0,"inc":0.1,"hidden":true},{"i":2,"name":"Min Length (Samples)","def":3,"min":2,"max":8,"inc":1,"hidden":true},{"i":3,"name":"Output (dB)","def":0,"min":-24,"max":12,"inc":0.1,"hidden":true},{"i":4,"name":"Listen","def":0,"min":0,"max":1,"inc":1,"enums":["Output","Delta"],"hidden":true}],"inPins":["Left","Right"],"outPins":["Left","Right"],"gfx":{"w":480,"h":294},"usesRand":false,"usesFile":false};
-FX.strings = ["Noto Sans","","Hg","NULL JSFX","AUDIO WITHOUT NOISE","A","B","B>A","A>B","DE-CLIP","ESSENTIALS","RUNS REBUILT %d","LATENCY %d SAMPLES (%.2f ms)","%.1f dB","CLIP LEVEL","%d smp","MIN LENGTH","%+.1f dB","OUTPUT","LISTEN","OUTPUT|DELTA","Default","Hard Clipped Master","Normalized Clip","Clipped Recorder","Gentle","Hear What Returns","CUSTOM"];
+FX.strings = ["Noto Sans","","Hg","NULL JSFX","AUDIO WITHOUT NOISE","A","B","B>A","A>B","DE-CLIP","ESSENTIALS","RUNS REBUILT %d","LATENCY %d SAMPLES (%.2f ms)","%.1f dB","CLIP LEVEL","%d smp","MIN LENGTH","%+.1f dB","OUTPUT","LISTEN","OUTPUT|DELTA","Default","Hard Clipped Master","Normalized Clip","Clipped Recorder","Gentle","Hear What Returns","Overloaded Interview","Clipped Drum Room","Soft Clipped Mix","Delta at Minus 1","Field Recorder Peaks","CUSTOM"];
 FX.live = ["dc_runs","ng_tw"];
 FX.vars = ["ng_bg","ng_bg2","ng_card","ng_border","ng_text","ng_muted","ng_slogan","ng_accent","ng_icon_a","ng_icon_b","ng_logo_bg","ng_logo_ed","ng_font","ng_pre_n","ng_pre_cur","ng_pre_open","ng_pre_req","ng_pre_w","ng_pre_row","ng_h_n","ng_h_req","ng_h_pend","ext_noinit","dc_r","dc_l","dc_xl","dc_xr","dc_yl","dc_yr","dc_w","dc_runs","pdc_delay","pdc_bot_ch","pdc_top_ch","gfx_ext_retina","ng_tb","ng_tl","ng_tw","__l3.n","ng_h_d","ng_h_uc","ng_h_up","ng_h_rc","ng_h_rp","ng_h_ab","ng_h_bh","slider1","dc_thr","slider2","dc_min","slider3","dc_gain","slider4","dc_delta","spl0","spl1","__l8.c","__l8.s","__l8.m","__l8.k","__l8.sg","__l8.a0","__l8.a1","__l8.b0","__l8.b1","__l8.t","__l8.v","__l8.d0","__l8.d1","dc_o","dc_o2","__l10.h","__l10.cy","ng_dw","ng_dh","ng_pre_h","gfx_w","gfx_h","ng_s","ng_ox","ng_oy","gfx_r","gfx_g","gfx_b","gfx_a","mouse_cap","ng_lmb","ng_prev_lmb","ng_click","ng_now","ng_pre_click","ng_pre_was","mouse_wheel","__l14.px","__l14.py","__l14.sz","__l14.k","__l14.n","__l14.th","__l14.i","__l18.w","__l18.h","gfx_texth","__l19.n","__l19.i","__l19.w","__l19.cw","__l19.chh","__l19.tr","gfx_x","gfx_y","__l20.r","__l21.hover","mouse_x","mouse_y","__l22.cx","__l23.y0","__l23.hover","ng_pre_x","ng_vx","ng_vy","ng_vw","ng_vh","ng_cw","ng_cy","ng_rowy","ng_ctl_id","ng_px","ng_py","ng_pw","ng_ph","__l27.i","__l27.xx","__l27.yy","dg_y","dg_x","__l28.i","__l28.j","__l28.k","__l28.n","__l28.per","__l28.v","__l28.mn","__l28.mx","__l28.xx","__l29.w","__l29.h","srate","ng_cellx","__l31.cx","__l31.ry","__l31.v","__l31.hover","__l31.nv","ng_drag","ng_drag_val","__l32.kx","__l32.ky","__l32.kr","__l32.tr","__l32.amax","__l32.ang","__l32.a0","__l32.hover","__l32.i","__l32.n","__l32.px1","__l32.py1","__l32.px2","__l32.py2","__l32.k","__l32.dx","__l32.dy","__l33.k","__l33.n","__l34.sens","__l34.nv","__l34.mv","ng_last_click","ng_last_id","ng_lx","ng_ly","__l35.changed","__l37.i","__l38.cx","__l38.ry","__l38.n","__l38.i","__l38.p","__l38.q","__l38.cur","__l38.pw","__l38.hover","__l38.nv","__l40.i","__l42.ch","__l43.i","__l43.m","__l44.i","__l45.i","__l47.i","__l47.j","__l47.v","__l50.m","__l52.x0","ng_pre_rows","ng_pre_cols","ng_pre_mx","__l53.x","__l53.y","__l53.hover","__l54.s","samplesblock","num_ch","tempo","play_state","play_position","beat_position","ts_num","ts_denom","pdc_midi","trigger","ext_nodenorm","ext_tail_size","ext_gr_meter","gfx_a2","gfx_mode","gfx_clear","gfx_dest","gfx_ext_flags","mouse_hwheel"];
 FX.create = function (R, H, G) {
@@ -570,31 +570,31 @@ function f38_ng_end() {
 return (V[92] = 0);
 }
 function f39_ng_presets() {
-var t69, t86, t89;
+var t74, t91, t94;
 if (R.t(((V[16] >= 0) ? 1 : 0))) {
 f40_ng_preset_load(V[16]);
 f6_update();
-t69 = (V[16] = (-1));
+t74 = (V[16] = (-1));
 } else {
-t69 = 0;
+t74 = 0;
 }
 (R.t(f41_ng_hist()) ? f6_update() : 0);
 (V[14] = R.d(f49_ng_preset_match()));
 if (R.t(V[15])) {
 f51_ng_pre_menu_begin();
 (V[194] = 0);
-for (t86 = R.loopCount(V[13]); t86 > 0; t86--) {
+for (t91 = R.loopCount(V[13]); t91 > 0; t91--) {
 f52_ng_pre_item(V[194], f53_ng_preset_name(V[194]));
 (V[194] = V[194] + 1);
 }
-t89 = f54_ng_pre_menu_end();
+t94 = f54_ng_pre_menu_end();
 } else {
-t89 = 0;
+t94 = 0;
 }
-return S.cpy(90006, (R.t(((V[14] >= 0) ? 1 : 0)) ? f53_ng_preset_name(V[14]) : 10027));
+return S.cpy(90006, (R.t(((V[14] >= 0) ? 1 : 0)) ? f53_ng_preset_name(V[14]) : 10032));
 }
 function f40_ng_preset_load(p0_p) {
-var t63, t64, t65, t66, t67, t68;
+var t63, t64, t65, t66, t67, t68, t69, t70, t71, t72, t73;
 if (R.t((R.eq(p0_p, 0) ? 1 : 0))) {
 f34_ng_slider_set(1, (-0.3));
 f34_ng_slider_set(2, 3);
@@ -643,38 +643,78 @@ t68 = f34_ng_slider_set(4, 1);
 } else {
 t68 = 0;
 }
-return t68;
+if (R.t((R.eq(p0_p, 6) ? 1 : 0))) {
+f34_ng_slider_set(1, (-2));
+f34_ng_slider_set(2, 3);
+f34_ng_slider_set(3, (-4));
+t69 = f34_ng_slider_set(4, 0);
+} else {
+t69 = 0;
+}
+if (R.t((R.eq(p0_p, 7) ? 1 : 0))) {
+f34_ng_slider_set(1, (-0.5));
+f34_ng_slider_set(2, 2);
+f34_ng_slider_set(3, (-4));
+t70 = f34_ng_slider_set(4, 0);
+} else {
+t70 = 0;
+}
+if (R.t((R.eq(p0_p, 8) ? 1 : 0))) {
+f34_ng_slider_set(1, (-3));
+f34_ng_slider_set(2, 4);
+f34_ng_slider_set(3, (-2));
+t71 = f34_ng_slider_set(4, 0);
+} else {
+t71 = 0;
+}
+if (R.t((R.eq(p0_p, 9) ? 1 : 0))) {
+f34_ng_slider_set(1, (-1));
+f34_ng_slider_set(2, 3);
+f34_ng_slider_set(3, 0);
+t72 = f34_ng_slider_set(4, 1);
+} else {
+t72 = 0;
+}
+if (R.t((R.eq(p0_p, 10) ? 1 : 0))) {
+f34_ng_slider_set(1, (-0.2));
+f34_ng_slider_set(2, 5);
+f34_ng_slider_set(3, (-3));
+t73 = f34_ng_slider_set(4, 0);
+} else {
+t73 = 0;
+}
+return t73;
 }
 function f41_ng_hist() {
-var t72, t73, t78, t79, t80, t81, t82, t83, t84, t85;
+var t77, t78, t83, t84, t85, t86, t87, t88, t89, t90;
 (V[195] = 0);
 if (R.t(((V[19] > 0) ? 1 : 0))) {
 if (R.t((R.t(V[21]) && R.t((R.t(V[86]) ? 0 : 1)) ? 1 : 0))) {
 if (R.t((R.t(f42_ng_h_same(90003, 0)) ? 0 : 1))) {
 f43_ng_h_push(90002);
-t72 = (V[42] = 0);
+t77 = (V[42] = 0);
 } else {
-t72 = 0;
+t77 = 0;
 }
-t73 = (V[21] = 0);
+t78 = (V[21] = 0);
 } else {
-t73 = 0;
+t78 = 0;
 }
 if (R.t(V[20])) {
 f36_ng_h_store(90003, 0);
 if (R.t((R.t((R.eq(V[20], 1) ? 1 : 0)) && R.t(((V[40] > 0) ? 1 : 0)) ? 1 : 0))) {
 f44_ng_h_push(90004);
 f45_ng_h_pop(90002);
-t78 = (V[195] = 1);
+t83 = (V[195] = 1);
 } else {
-t78 = 0;
+t83 = 0;
 }
 if (R.t((R.t((R.eq(V[20], 2) ? 1 : 0)) && R.t(((V[42] > 0) ? 1 : 0)) ? 1 : 0))) {
 f43_ng_h_push(90002);
 f47_ng_h_pop(90004);
-t79 = (V[195] = 1);
+t84 = (V[195] = 1);
 } else {
-t79 = 0;
+t84 = 0;
 }
 if (R.t((R.t((R.t((R.eq(V[20], 3) ? 1 : 0)) || R.t((R.eq(V[20], 4) ? 1 : 0)) ? 1 : 0)) && R.t((R.eq((V[20] - 3), V[44]) ? 0 : 1)) ? 1 : 0))) {
 f36_ng_h_store(90003, (1 + V[44]));
@@ -684,49 +724,49 @@ f46_ng_h_load(90003, (1 + V[44]));
 if (R.t((R.t(f42_ng_h_same(90003, 0)) ? 0 : 1))) {
 f43_ng_h_push(90002);
 (V[42] = 0);
-t80 = (V[195] = 1);
+t85 = (V[195] = 1);
 } else {
-t80 = 0;
+t85 = 0;
 }
-t81 = t80;
+t86 = t85;
 } else {
-t81 = (V[45] = 1);
+t86 = (V[45] = 1);
 }
-t82 = t81;
+t87 = t86;
 } else {
-t82 = 0;
+t87 = 0;
 }
 if (R.t((R.eq(V[20], 5) ? 1 : 0))) {
 f36_ng_h_store(90003, (2 - V[44]));
-t83 = (V[45] = 1);
+t88 = (V[45] = 1);
 } else {
-t83 = 0;
+t88 = 0;
 }
 (V[20] = 0);
-t84 = (V[21] = 0);
+t89 = (V[21] = 0);
 } else {
-t84 = 0;
+t89 = 0;
 }
-t85 = f48_ng_h_save();
+t90 = f48_ng_h_save();
 } else {
-t85 = 0;
+t90 = 0;
 }
 return V[195];
 }
 function f42_ng_h_same(p0_s, p1_k) {
-var t70;
+var t75;
 (V[197] = 1);
 (V[196] = 0);
-for (t70 = R.loopCount(V[19]); t70 > 0; t70--) {
+for (t75 = R.loopCount(V[19]); t75 > 0; t75--) {
 (R.t((R.eq(f3_ng_h_get(p0_s, ((p1_k * V[19]) + V[196])), IO.getSlider(S.getchar(90000, (V[196] * 2), 30067))) ? 0 : 1)) ? (V[197] = 0) : 0);
 (V[196] = V[196] + 1);
 }
 return V[197];
 }
 function f43_ng_h_push(p0_s) {
-var t71;
+var t76;
 (V[198] = 0);
-for (t71 = R.loopCount(V[19]); t71 > 0; t71--) {
+for (t76 = R.loopCount(V[19]); t76 > 0; t76--) {
 f5_ng_h_put(p0_s, ((V[41] * V[19]) + V[198]), f3_ng_h_get(90003, V[198]));
 (V[198] = V[198] + 1);
 }
@@ -734,9 +774,9 @@ f5_ng_h_put(p0_s, ((V[41] * V[19]) + V[198]), f3_ng_h_get(90003, V[198]));
 return (V[40] = R.min((V[40] + 1), V[39]));
 }
 function f44_ng_h_push(p0_s) {
-var t74;
+var t79;
 (V[199] = 0);
-for (t74 = R.loopCount(V[19]); t74 > 0; t74--) {
+for (t79 = R.loopCount(V[19]); t79 > 0; t79--) {
 f5_ng_h_put(p0_s, ((V[43] * V[19]) + V[199]), f3_ng_h_get(90003, V[199]));
 (V[199] = V[199] + 1);
 }
@@ -749,18 +789,18 @@ function f45_ng_h_pop(p0_s) {
 return f46_ng_h_load(p0_s, V[41]);
 }
 function f46_ng_h_load(p0_s, p1_k) {
-var t75, t76, t77;
+var t80, t81, t82;
 (V[200] = 0);
-for (t75 = R.loopCount(V[19]); t75 > 0; t75--) {
+for (t80 = R.loopCount(V[19]); t80 > 0; t80--) {
 (V[201] = R.d(S.getchar(90000, (V[200] * 2), 30067)));
 (V[202] = R.d(f3_ng_h_get(p0_s, ((p1_k * V[19]) + V[200]))));
 if (R.t((R.eq(V[202], IO.getSlider(V[201])) ? 0 : 1))) {
-t76 = V[201];
-IO.setSlider(t76, V[202]);
+t81 = V[201];
+IO.setSlider(t81, V[202]);
 H.sliderChange(Math.round(Math.abs(R.pow(2, (V[201] - 1)))));
-t77 = H.sliderAutomate(Math.round(Math.abs(R.pow(2, (V[201] - 1)))));
+t82 = H.sliderAutomate(Math.round(Math.abs(R.pow(2, (V[201] - 1)))));
 } else {
-t77 = 0;
+t82 = 0;
 }
 (V[200] = V[200] + 1);
 }
@@ -787,6 +827,11 @@ function f49_ng_preset_match() {
 (R.t((R.t((R.t((R.t((R.t(((V[203] < 0) ? 1 : 0)) && R.t(f50_ng_pre_eq(V[46], (-0.5))) ? 1 : 0)) && R.t(f50_ng_pre_eq(V[48], 3)) ? 1 : 0)) && R.t(f50_ng_pre_eq(V[50], (-3))) ? 1 : 0)) && R.t(f50_ng_pre_eq(V[52], 0)) ? 1 : 0)) ? (V[203] = 3) : 0);
 (R.t((R.t((R.t((R.t((R.t(((V[203] < 0) ? 1 : 0)) && R.t(f50_ng_pre_eq(V[46], (-0.1))) ? 1 : 0)) && R.t(f50_ng_pre_eq(V[48], 4)) ? 1 : 0)) && R.t(f50_ng_pre_eq(V[50], 0)) ? 1 : 0)) && R.t(f50_ng_pre_eq(V[52], 0)) ? 1 : 0)) ? (V[203] = 4) : 0);
 (R.t((R.t((R.t((R.t((R.t(((V[203] < 0) ? 1 : 0)) && R.t(f50_ng_pre_eq(V[46], (-0.3))) ? 1 : 0)) && R.t(f50_ng_pre_eq(V[48], 3)) ? 1 : 0)) && R.t(f50_ng_pre_eq(V[50], 0)) ? 1 : 0)) && R.t(f50_ng_pre_eq(V[52], 1)) ? 1 : 0)) ? (V[203] = 5) : 0);
+(R.t((R.t((R.t((R.t((R.t(((V[203] < 0) ? 1 : 0)) && R.t(f50_ng_pre_eq(V[46], (-2))) ? 1 : 0)) && R.t(f50_ng_pre_eq(V[48], 3)) ? 1 : 0)) && R.t(f50_ng_pre_eq(V[50], (-4))) ? 1 : 0)) && R.t(f50_ng_pre_eq(V[52], 0)) ? 1 : 0)) ? (V[203] = 6) : 0);
+(R.t((R.t((R.t((R.t((R.t(((V[203] < 0) ? 1 : 0)) && R.t(f50_ng_pre_eq(V[46], (-0.5))) ? 1 : 0)) && R.t(f50_ng_pre_eq(V[48], 2)) ? 1 : 0)) && R.t(f50_ng_pre_eq(V[50], (-4))) ? 1 : 0)) && R.t(f50_ng_pre_eq(V[52], 0)) ? 1 : 0)) ? (V[203] = 7) : 0);
+(R.t((R.t((R.t((R.t((R.t(((V[203] < 0) ? 1 : 0)) && R.t(f50_ng_pre_eq(V[46], (-3))) ? 1 : 0)) && R.t(f50_ng_pre_eq(V[48], 4)) ? 1 : 0)) && R.t(f50_ng_pre_eq(V[50], (-2))) ? 1 : 0)) && R.t(f50_ng_pre_eq(V[52], 0)) ? 1 : 0)) ? (V[203] = 8) : 0);
+(R.t((R.t((R.t((R.t((R.t(((V[203] < 0) ? 1 : 0)) && R.t(f50_ng_pre_eq(V[46], (-1))) ? 1 : 0)) && R.t(f50_ng_pre_eq(V[48], 3)) ? 1 : 0)) && R.t(f50_ng_pre_eq(V[50], 0)) ? 1 : 0)) && R.t(f50_ng_pre_eq(V[52], 1)) ? 1 : 0)) ? (V[203] = 9) : 0);
+(R.t((R.t((R.t((R.t((R.t(((V[203] < 0) ? 1 : 0)) && R.t(f50_ng_pre_eq(V[46], (-0.2))) ? 1 : 0)) && R.t(f50_ng_pre_eq(V[48], 5)) ? 1 : 0)) && R.t(f50_ng_pre_eq(V[50], (-3))) ? 1 : 0)) && R.t(f50_ng_pre_eq(V[52], 0)) ? 1 : 0)) ? (V[203] = 10) : 0);
 return V[203];
 }
 function f50_ng_pre_eq(p0_a, p1_b) {
@@ -804,24 +849,24 @@ f11_ng_col(4539199, 1);
 return G.roundrect(f14_X(V[204]), f15_Y(40), ((V[206] * V[17]) * V[78]), (((V[205] * V[18]) + 8) * V[78]), (4 * V[78]), 1);
 }
 function f52_ng_pre_item(p0_i, p1_name) {
-var t87, t88;
+var t92, t93;
 (V[208] = R.d((V[207] + (Math.floor((p0_i / V[205])) * V[17]))));
 (V[209] = (44 + (R.mod(p0_i, V[205]) * V[18])));
 (V[210] = (R.t((R.t((R.t(((V[113] >= f14_X(V[208])) ? 1 : 0)) && R.t(((V[113] < f14_X((V[208] + V[17]))) ? 1 : 0)) ? 1 : 0)) && R.t(((V[114] >= f15_Y(V[209])) ? 1 : 0)) ? 1 : 0)) && R.t(((V[114] < f15_Y((V[209] + V[18]))) ? 1 : 0)) ? 1 : 0));
 if (R.t(V[210])) {
 f11_ng_col(2960168, 1);
-t87 = G.rect(f14_X((V[208] + 2)), f15_Y(V[209]), ((V[17] - 4) * V[78]), (V[18] * V[78]));
+t92 = G.rect(f14_X((V[208] + 2)), f15_Y(V[209]), ((V[17] - 4) * V[78]), (V[18] * V[78]));
 } else {
-t87 = 0;
+t92 = 0;
 }
 f17_ng_font(1, 7.5, 1);
 f11_ng_col((R.t((R.t((R.eq(p0_i, V[14]) ? 1 : 0)) || R.t(V[210]) ? 1 : 0)) ? V[4] : V[5]), 1);
 f18_ng_txt(p1_name, (V[208] + 12), (V[209] + (V[18] / 2)), 0, 0.3);
 if (R.t((R.eq(p0_i, V[14]) ? 1 : 0))) {
 f11_ng_col(V[7], 1);
-t88 = G.rect(f14_X((V[208] + 4)), f15_Y((V[209] + ((V[18] / 2) - 1.5))), (3 * V[78]), (3 * V[78]));
+t93 = G.rect(f14_X((V[208] + 4)), f15_Y((V[209] + ((V[18] / 2) - 1.5))), (3 * V[78]), (3 * V[78]));
 } else {
-t88 = 0;
+t93 = 0;
 }
 return (R.t((R.t((R.t(V[210]) && R.t(V[91]) ? 1 : 0)) && R.t(V[90]) ? 1 : 0)) ? (V[16] = p0_i) : 0);
 }
@@ -833,6 +878,11 @@ function f53_ng_preset_name(p0_p) {
 (R.t((R.eq(p0_p, 3) ? 1 : 0)) ? (V[211] = 10024) : 0);
 (R.t((R.eq(p0_p, 4) ? 1 : 0)) ? (V[211] = 10025) : 0);
 (R.t((R.eq(p0_p, 5) ? 1 : 0)) ? (V[211] = 10026) : 0);
+(R.t((R.eq(p0_p, 6) ? 1 : 0)) ? (V[211] = 10027) : 0);
+(R.t((R.eq(p0_p, 7) ? 1 : 0)) ? (V[211] = 10028) : 0);
+(R.t((R.eq(p0_p, 8) ? 1 : 0)) ? (V[211] = 10029) : 0);
+(R.t((R.eq(p0_p, 9) ? 1 : 0)) ? (V[211] = 10030) : 0);
+(R.t((R.eq(p0_p, 10) ? 1 : 0)) ? (V[211] = 10031) : 0);
 return V[211];
 }
 function f54_ng_pre_menu_end() {
@@ -886,7 +936,7 @@ MEM.set(0, 0, (V[28] + V[23]));
 (V[33] = 2);
 (V[34] = 1);
 f0_ng_tap_init(4000000, 2048);
-(V[13] = 6);
+(V[13] = 11);
 S.cpy(90000, 10001);
 f1_ng_hist_add(1);
 f1_ng_hist_add(2);

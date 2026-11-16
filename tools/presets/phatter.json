@@ -3,5 +3,8 @@
   ["Bass Fatten", {"Amount": 30}],
   ["Kick Weight", {"Amount": 40}],
   ["Small Synth Body", {"Amount": 50}],
-  ["Thin Sample Fix", {"Amount": 65}]
+  ["Thin Sample Fix", {"Amount": 65}],
+  ["Subtle Weight", {"Amount": 10}],
+  ["808 Body", {"Amount": 80}],
+  ["Maximum Fat", {"Amount": 100}]
 ]

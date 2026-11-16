@@ -20,6 +20,9 @@ static const FactoryPreset kPresets[] = {
     { "Mono Check", { 0.0f, 1.0f, 50.0f, 300.0f, 1.0f, 0.0f } },
     { "Side Listen", { 0.0f, 1.0f, 50.0f, 300.0f, 2.0f, 0.0f } },
     { "Band Phase Check", { 0.0f, 1.0f, 50.0f, 600.0f, 0.0f, 1.0f } },
+    { "Mix Bus Check", { 0.0f, 1.0f, 50.0f, 400.0f, 0.0f, 1.0f } },
+    { "Live Overview", { 0.0f, 1.0f, 30.0f, 200.0f, 0.0f, 0.0f } },
+    { "Mastering Long Avg", { 0.0f, 1.0f, 90.0f, 3000.0f, 0.0f, 1.0f } },
 };
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 6;

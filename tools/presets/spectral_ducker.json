@@ -5,5 +5,8 @@
   ["Lead Over Pads", {"Amount": 55, "Threshold": -45, "Attack": 10, "Release": 250, "Low Cut": 200, "High Cut": 12000}],
   ["Voice Over Music", {"Amount": 80, "Threshold": -48, "Attack": 8, "Release": 300, "Low Cut": 120, "High Cut": 10000}],
   ["Gentle Carve", {"Amount": 25, "Threshold": -40, "Attack": 10, "Release": 200}],
-  ["Snare Room In Reverb", {"Amount": 60, "Threshold": -36, "Attack": 2, "Release": 150, "Low Cut": 150, "High Cut": 10000, "Mix": 80}]
+  ["Snare Room In Reverb", {"Amount": 60, "Threshold": -36, "Attack": 2, "Release": 150, "Low Cut": 150, "High Cut": 10000, "Mix": 80}],
+  ["Dialogue Over Score", {"Amount": 70, "Threshold": -46, "Attack": 6, "Release": 250, "Low Cut": 150, "High Cut": 6000, "Channels": "Mid"}],
+  ["Bass Under Kick Low", {"Amount": 60, "Threshold": -38, "Attack": 0.5, "Release": 70, "Low Cut": 30, "High Cut": 200}],
+  ["Guitar Under Vocal", {"Amount": 45, "Threshold": -42, "Attack": 8, "Release": 180, "Low Cut": 300, "High Cut": 5000}]
 ]

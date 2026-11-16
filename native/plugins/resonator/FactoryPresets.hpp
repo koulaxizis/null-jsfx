@@ -22,6 +22,7 @@ static const FactoryPreset kPresets[] = {
     { "Noise To Min7 Chords", { 0.0f, 3.0f, 7.0f, 1.2f, 55.0f, 30.0f, 70.0f, 0.0f } },
     { "MIDI Played Strings", { 0.0f, 3.0f, 3.0f, 3.0f, 45.0f, 35.0f, 55.0f, 1.0f } },
     { "MIDI Bright Shimmer", { 0.0f, 3.0f, 3.0f, 6.0f, 80.0f, 60.0f, 40.0f, 1.0f } },
+    { "E Minor Drone", { 4.0f, 2.0f, 4.0f, 5.0f, 40.0f, 50.0f, 40.0f, 0.0f } },
 };
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 8;

@@ -5,7 +5,7 @@
   ["Steel Folk Strum", {"Model": "Steel Guitar", "Strum": "Folk", "Strum Rate": "Eighths", "Strum Spread": 22, "Volume": -2}],
   ["Funk Sixteenths", {"Model": "Steel Guitar", "Decay": 40, "Release": 60, "Brightness": 65, "Strum": "Down-Up", "Strum Rate": "Sixteenths", "Strum Spread": 8}],
   ["Reggae Skank", {"Model": "Steel Guitar", "Decay": 30, "Release": 60, "Brightness": 65, "Strum": "Offbeat", "Strum Rate": "Eighths", "Strum Spread": 6}],
-  ["Muted Pluck", {"Model": "Muted Guitar"}],
+  ["Muted Pluck", {"Model": "Muted Guitar", "Volume (dB)": 7.1}],
   ["Harp", {"Model": "Harp", "Width": 80}],
   ["Harp Rolls", {"Model": "Harp", "Width": 80, "Strum": "Up", "Strum Rate": "Quarters", "Strum Spread": 60}],
   ["Koto", {"Model": "Koto"}],

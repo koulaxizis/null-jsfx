@@ -4,5 +4,14 @@
   ["Bright Pop", {"Hardness (%)": 85, "Decay (%)": 80, "Body (%)": 70}],
   ["Honky Tonk", {"Hardness (%)": 70, "Unison (cents)": 4, "Inharmonicity (%)": 140, "Decay (%)": 70}],
   ["Upright", {"Decay (%)": 60, "Inharmonicity (%)": 160, "Hammer Noise (%)": 50, "Body (%)": 70, "Width (%)": 30}],
-  ["Long Sustain", {"Decay (%)": 250, "Damper (ms)": 600}]
+  ["Long Sustain", {"Decay (%)": 250, "Damper (ms)": 600}],
+  ["Ballad Grand", {"Hardness (%)": 40, "Decay (%)": 150, "Body (%)": 55, "Width (%)": 70}],
+  ["Rock Piano", {"Hardness (%)": 80, "Decay (%)": 90, "Hammer Noise (%)": 40, "Body (%)": 60}],
+  ["Lo-Fi Keys", {"Hardness (%)": 25, "Unison (cents)": 3, "Hammer Noise (%)": 60, "Decay (%)": 70, "Width (%)": 30}],
+  ["Detuned Saloon", {"Hardness (%)": 65, "Unison (cents)": 3.5, "Inharmonicity (%)": 180, "Decay (%)": 80}],
+  ["Pure Tone Piano", {"Inharmonicity (%)": 20, "Hammer Noise (%)": 10, "Unison (cents)": 0.5, "Hardness (%)": 45}],
+  ["Staccato Keys", {"Decay (%)": 50, "Damper (ms)": 60, "Hardness (%)": 60}],
+  ["Ambient Grand", {"Hardness (%)": 30, "Decay (%)": 350, "Damper (ms)": 900, "Width (%)": 100, "Body (%)": 45}],
+  ["Even Velocity", {"Velocity (%)": 0}],
+  ["Wide Stage Piano", {"Hardness (%)": 60, "Width (%)": 100, "Body (%)": 50}]
 ]

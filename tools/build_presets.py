@@ -37,7 +37,7 @@ ROOT = Path(__file__).resolve().parent.parent
 PLUGINS = ROOT / "DATA/Effects/null_jsfx"
 NATIVE = ROOT / "native/plugins"
 SOURCE = ROOT / "tools/presets"
-MAX_PRESETS = 16
+MAX_PRESETS = 32  # at most, Default included; a small window holds fewer (menu_capacity)
 MAX_NAME = 24
 
 
@@ -63,6 +63,29 @@ def steps(stem):
     return out
 
 
+def window(stem):
+    """(width, height) of the plugin's interface: the @gfx size of its GFX version (the native UI has the
+    same size, R10), or None."""
+    path = PLUGINS / "gfx" / f"{stem}_gfx.jsfx"
+    if not path.exists():
+        return None
+    m = re.search(r"^@gfx\s+(\d+)\s+(\d+)", path.read_text(encoding="utf-8"), re.M)
+    return (int(m.group(1)), int(m.group(2))) if m else None
+
+
+def menu_capacity(size):
+    """How many presets the header's preset list can show in a window of this size. The list opens below
+    the preset box (at x = width - 164, 150 wide) in columns of (height - 54) / 15 rows, growing to the
+    left (ng_pre_menu_begin in null_gfx.jsfx-inc, presetRows/presetCols in NullUI.hpp): every column
+    must stay inside the window. A 360x240 One Slider window holds 24, a 480x294 one 32."""
+    if size is None:
+        return MAX_PRESETS
+    w, h = size
+    rows = max(1, (h - 54) // 15)
+    cols = max(1, (w - 164) // 150 + 1)
+    return min(MAX_PRESETS, rows * cols)
+
+
 def load(stem):
     """[(name, [value per slider])] for a plugin: Default first, then tools/presets/<stem>.json."""
     sliders = parse_sliders(PLUGINS / f"{stem}.jsfx")
@@ -82,8 +105,9 @@ def load(stem):
                         sys.exit(f"build_presets: {stem}: preset {name!r}: {key} = {v} is not on the slider's step {fmt(grid[i][1])}")
                 vals[i] = v
             out.append((name, vals))
-    if len(out) > MAX_PRESETS:
-        sys.exit(f"build_presets: {stem}: more than {MAX_PRESETS} presets")
+    cap = menu_capacity(window(stem))
+    if len(out) > cap:
+        sys.exit(f"build_presets: {stem}: {len(out)} presets with Default, but its preset list holds {cap}")
     return out
 
 

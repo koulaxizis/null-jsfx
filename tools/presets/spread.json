@@ -3,5 +3,8 @@
   ["Vocal Bus Open", {"Amount": 30}],
   ["Guitar Widen", {"Amount": 55}],
   ["Wide Pad", {"Amount": 75}],
-  ["Mono Synth Spread", {"Amount": 90}]
+  ["Mono Synth Spread", {"Amount": 90}],
+  ["Subtle Width", {"Amount": 10}],
+  ["Keys Open", {"Amount": 45}],
+  ["Maximum Spread", {"Amount": 100}]
 ]

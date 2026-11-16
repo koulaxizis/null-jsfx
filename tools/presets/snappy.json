@@ -3,5 +3,8 @@
   ["Pluck Bite", {"Amount": 35}],
   ["Kick Click", {"Amount": 50}],
   ["Snare Crack", {"Amount": 60}],
-  ["Room Tamer", {"Amount": 80}]
+  ["Room Tamer", {"Amount": 80}],
+  ["Gentle Attack", {"Amount": 10}],
+  ["Acoustic Pick", {"Amount": 45}],
+  ["Maximum Snap", {"Amount": 100}]
 ]

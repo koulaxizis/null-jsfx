@@ -3,5 +3,8 @@
   ["Master Low End", {"Amount": 50}],
   ["Tight Kick and Bass", {"Amount": 60}],
   ["Wide Synth Fix", {"Amount": 70}],
-  ["Vinyl Safe", {"Amount": 80}]
+  ["Vinyl Safe", {"Amount": 80}],
+  ["Gentle Bass Focus", {"Amount": 15}],
+  ["Club Ready", {"Amount": 40}],
+  ["Full Mono Lows", {"Amount": 100}]
 ]

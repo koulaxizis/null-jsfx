@@ -3,6 +3,10 @@
   ["Auto Quack", {"Mode": "Auto", "Model": "Classic", "Resonance": 85, "Sensitivity": 75, "Attack": 2, "Release": 60}],
   ["Synced Wah", {"Mode": "LFO", "Model": "Classic", "Resonance": 65, "Tempo Sync": "1/8"}],
   ["Vocal Talk", {"Mode": "Auto", "Model": "Vocal", "Resonance": 70, "Sensitivity": 55, "Attack": 15, "Release": 200}],
-  ["Slow Sweep", {"Mode": "LFO", "Model": "Wide", "Resonance": 55, "Rate": 0.2, "Mix": 85}],
-  ["Half-Cocked", {"Pedal": 42, "Mode": "Manual", "Model": "Classic", "Resonance": 75}]
+  ["Slow Sweep", {"Mode": "LFO", "Model": "Wide", "Resonance": 55, "Rate": 0.2, "Mix": 85, "Output (dB)": 6.2}],
+  ["Half-Cocked", {"Pedal": 42, "Mode": "Manual", "Model": "Classic", "Resonance": 75}],
+  ["Slow Funk Pedal", {"Mode": "Auto", "Model": "Wide", "Resonance": 60, "Sensitivity": 45, "Attack": 20, "Release": 300}],
+  ["Bass Envelope", {"Mode": "Auto", "Model": "Classic", "Resonance": 75, "Sensitivity": 70, "Attack": 5, "Release": 120, "Mix": 80}],
+  ["Synth Quarter Sweep", {"Mode": "LFO", "Model": "Vocal", "Resonance": 70, "Tempo Sync": "1/4"}],
+  ["Parked Treble", {"Pedal": 75, "Mode": "Manual", "Model": "Classic", "Resonance": 55}]
 ]

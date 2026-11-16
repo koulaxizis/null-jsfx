@@ -20,6 +20,9 @@ static const FactoryPreset kPresets[] = {
     { "Lo-Fi Keys Tank", { 2.5f, 50.0f, 2500.0f, 35.0f, 5.0f, 30.0f } },
     { "Short Dark Spring", { 1.0f, 40.0f, 2000.0f, 15.0f, 0.0f, 25.0f } },
     { "Boing Sound Design", { 3.0f, 90.0f, 6500.0f, 70.0f, 0.0f, 35.0f } },
+    { "Drum Room Spring", { 1.2f, 65.0f, 5000.0f, 20.0f, 0.0f, 15.0f } },
+    { "Reggae Organ", { 3.0f, 60.0f, 3000.0f, 55.0f, 15.0f, 30.0f } },
+    { "Bright Long Spring", { 5.0f, 70.0f, 7000.0f, 45.0f, 20.0f, 30.0f } },
 };
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 6;

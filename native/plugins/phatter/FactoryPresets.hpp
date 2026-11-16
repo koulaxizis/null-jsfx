@@ -18,6 +18,9 @@ static const FactoryPreset kPresets[] = {
     { "Kick Weight", { 40.0f } },
     { "Small Synth Body", { 50.0f } },
     { "Thin Sample Fix", { 65.0f } },
+    { "Subtle Weight", { 10.0f } },
+    { "808 Body", { 80.0f } },
+    { "Maximum Fat", { 100.0f } },
 };
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 1;

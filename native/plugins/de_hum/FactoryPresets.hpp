@@ -20,6 +20,9 @@ static const FactoryPreset kPresets[] = {
     { "Vocal Safe 50 Hz", { 0.0f, 3.0f, 60.0f, 30.0f, 0.0f, 0.0f } },
     { "Vocal Safe 60 Hz", { 1.0f, 3.0f, 60.0f, 30.0f, 0.0f, 0.0f } },
     { "Heavy Hum And Rumble", { 0.0f, 4.0f, 25.0f, 50.0f, 0.0f, 3.0f } },
+    { "Guitar Pickup 50 Hz", { 0.0f, 5.0f, 50.0f, 35.0f, 0.0f, 0.0f } },
+    { "Guitar Pickup 60 Hz", { 1.0f, 5.0f, 50.0f, 35.0f, 0.0f, 0.0f } },
+    { "Heavy Hum 60 Hz", { 1.0f, 4.0f, 25.0f, 50.0f, 0.0f, 3.0f } },
 };
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 6;

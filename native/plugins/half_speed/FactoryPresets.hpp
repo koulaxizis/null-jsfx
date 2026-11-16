@@ -18,6 +18,11 @@ static const FactoryPreset kPresets[] = {
     { "Quarter Speed Drone", { 3.0f, 1.0f, 0.0f, 6000.0f, 100.0f, 0.0f } },
     { "Pitch-Kept Halftime", { 2.0f, 0.0f, 1.0f, 20000.0f, 100.0f, 0.0f } },
     { "Dark Halftime", { 1.0f, 0.0f, 0.0f, 2000.0f, 100.0f, 0.0f } },
+    { "Two Bar Drone", { 3.0f, 0.0f, 0.0f, 8000.0f, 100.0f, 0.0f } },
+    { "Triplet Feel", { 2.0f, 2.0f, 0.0f, 20000.0f, 100.0f, 0.0f } },
+    { "Parallel Halftime", { 2.0f, 0.0f, 0.0f, 20000.0f, 50.0f, 0.0f } },
+    { "Pitch-Kept Quarter", { 3.0f, 1.0f, 1.0f, 20000.0f, 100.0f, 0.0f } },
+    { "Offbeat Halftime", { 1.0f, 0.0f, 0.0f, 20000.0f, 100.0f, 1.0f } },
 };
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 6;

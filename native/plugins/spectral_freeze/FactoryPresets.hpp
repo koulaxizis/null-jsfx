@@ -18,6 +18,11 @@ static const FactoryPreset kPresets[] = {
     { "Quick Transition Hold", { 0.0f, 150.0f, 40.0f, 0.0f, 100.0f } },
     { "Ambient Layer", { 0.0f, 1500.0f, 70.0f, -6.0f, 50.0f } },
     { "Slow Swell Pad", { 0.0f, 3000.0f, 60.0f, -3.0f, 100.0f } },
+    { "Frozen Wash Low", { 0.0f, 2000.0f, 80.0f, -9.0f, 35.0f } },
+    { "Glass Hold", { 0.0f, 100.0f, 15.0f, 0.0f, 100.0f } },
+    { "Half Frozen Blend", { 0.0f, 600.0f, 50.0f, 0.0f, 50.0f } },
+    { "Soft Bed", { 0.0f, 1200.0f, 100.0f, -12.0f, 40.0f } },
+    { "Instant Stop Hold", { 0.0f, 10.0f, 0.0f, 0.0f, 100.0f } },
 };
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 5;

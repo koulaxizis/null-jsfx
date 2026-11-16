@@ -27,6 +27,7 @@ static const FactoryPreset kPresets[] = {
     { "Timpani", { 5.0f, 40.0f, 70.0f, 55.0f, 100.0f, 0.0f, 150.0f, 0.0f, 60.0f, 50.0f, 0.0f } },
     { "Timpani Roll Hits", { 5.0f, 25.0f, 80.0f, 50.0f, 70.0f, 0.0f, 150.0f, 0.0f, 60.0f, 50.0f, 0.0f } },
     { "Hard Timpani", { 5.0f, 85.0f, 75.0f, 50.0f, 100.0f, 0.0f, 150.0f, 0.0f, 80.0f, 50.0f, 0.0f } },
+    { "Kalimba Like", { 0.0f, 60.0f, 30.0f, 30.0f, 70.0f, 0.0f, 150.0f, 0.0f, 60.0f, 40.0f, 0.0f } },
 };
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 11;

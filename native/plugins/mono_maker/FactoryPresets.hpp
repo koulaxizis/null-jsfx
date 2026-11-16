@@ -18,6 +18,9 @@ static const FactoryPreset kPresets[] = {
     { "Tight Kick and Bass", { 60.0f } },
     { "Wide Synth Fix", { 70.0f } },
     { "Vinyl Safe", { 80.0f } },
+    { "Gentle Bass Focus", { 15.0f } },
+    { "Club Ready", { 40.0f } },
+    { "Full Mono Lows", { 100.0f } },
 };
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 1;

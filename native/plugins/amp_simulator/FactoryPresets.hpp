@@ -13,15 +13,15 @@ struct FactoryPreset {
 
 static const FactoryPreset kPresets[] = {
     { "Default", { 1.0f, 5.0f, 5.0f, 5.0f, 5.0f, 5.0f, 5.0f, 0.0f, 30.0f, 1.0f, 0.0f, -90.0f } },
-    { "Sparkling Clean", { 0.0f, 3.5f, 4.5f, 4.0f, 6.5f, 6.0f, 5.0f, 1.0f, 20.0f, 1.0f, 0.0f, -90.0f } },
-    { "Warm Jazz Clean", { 0.0f, 3.0f, 6.0f, 5.5f, 3.5f, 3.5f, 5.0f, 0.0f, 25.0f, 1.0f, 0.0f, -90.0f } },
+    { "Sparkling Clean", { 0.0f, 3.5f, 4.5f, 4.0f, 6.5f, 6.0f, 5.0f, 1.0f, 20.0f, 1.0f, 6.3f, -90.0f } },
+    { "Warm Jazz Clean", { 0.0f, 3.0f, 6.0f, 5.5f, 3.5f, 3.5f, 5.0f, 0.0f, 25.0f, 1.0f, 6.8f, -90.0f } },
     { "Blues Edge", { 1.0f, 3.5f, 5.0f, 6.5f, 5.5f, 5.0f, 5.0f, 0.0f, 45.0f, 1.0f, 0.0f, -90.0f } },
     { "Classic Rock Crunch", { 1.0f, 6.5f, 5.0f, 6.0f, 6.0f, 6.0f, 6.0f, 0.0f, 30.0f, 1.0f, 0.0f, -90.0f } },
     { "Tight Metal Rhythm", { 2.0f, 7.0f, 6.0f, 3.5f, 6.5f, 6.5f, 5.0f, 0.0f, 10.0f, 1.0f, 0.0f, -90.0f } },
     { "Singing Lead", { 2.0f, 8.0f, 5.0f, 7.0f, 5.0f, 5.5f, 5.0f, 0.0f, 40.0f, 1.0f, 0.0f, -90.0f } },
     { "Round Bass", { 3.0f, 3.0f, 6.5f, 4.5f, 4.5f, 4.0f, 5.0f, 0.0f, 35.0f, 1.0f, 0.0f, -90.0f } },
     { "Growling Bass", { 3.0f, 7.0f, 5.5f, 6.5f, 6.0f, 6.0f, 5.0f, 0.0f, 25.0f, 1.0f, 0.0f, -90.0f } },
-    { "Jazz Box", { 4.0f, 4.0f, 6.0f, 5.0f, 3.5f, 4.0f, 5.0f, 0.0f, 20.0f, 1.0f, 0.0f, -90.0f } },
+    { "Jazz Box", { 4.0f, 4.0f, 6.0f, 5.0f, 3.5f, 4.0f, 5.0f, 0.0f, 20.0f, 1.0f, 9.3f, -90.0f } },
     { "British Crunch", { 5.0f, 6.0f, 5.0f, 7.0f, 6.5f, 6.0f, 6.5f, 0.0f, 40.0f, 1.0f, 0.0f, -90.0f } },
     { "Modern Chug", { 6.0f, 7.0f, 6.0f, 3.0f, 6.5f, 6.5f, 5.0f, 0.0f, 10.0f, 1.0f, 0.0f, -50.0f } },
     { "Vintage Fuzz", { 7.0f, 7.0f, 6.0f, 4.0f, 5.5f, 5.0f, 5.0f, 0.0f, 50.0f, 1.0f, 0.0f, -90.0f } },

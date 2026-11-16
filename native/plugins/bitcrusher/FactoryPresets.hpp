@@ -22,6 +22,7 @@ static const FactoryPreset kPresets[] = {
     { "Soft Steps", { 6.0f, 16000.0f, 0.0f, 70.0f, 0.0f, 100.0f, 0.0f } },
     { "Parallel Crunch", { 5.0f, 9000.0f, 0.0f, 0.0f, 6.0f, 35.0f, 0.0f } },
     { "Broken Toy", { 3.0f, 2500.0f, 0.0f, 0.0f, 9.0f, 100.0f, -6.0f } },
+    { "Gentle 16-Bit Grain", { 10.0f, 32000.0f, 1.0f, 0.0f, 0.0f, 50.0f, 0.0f } },
 };
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 7;

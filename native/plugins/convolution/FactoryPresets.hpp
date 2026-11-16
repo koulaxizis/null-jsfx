@@ -21,6 +21,8 @@ static const FactoryPreset kPresets[] = {
     { "Snare Plate", { 3.0f, 60.0f, 5.0f, 300.0f, 12000.0f, 25.0f, 0.0f } },
     { "Piano Hall", { 2.0f, 80.0f, 15.0f, 60.0f, 9000.0f, 22.0f, 0.0f } },
     { "Cathedral Wash", { 4.0f, 100.0f, 40.0f, 120.0f, 7000.0f, 40.0f, 0.0f } },
+    { "Guitar Room", { 0.0f, 70.0f, 8.0f, 120.0f, 9000.0f, 18.0f, 0.0f } },
+    { "Dark Hall Pad", { 2.0f, 100.0f, 30.0f, 100.0f, 5000.0f, 35.0f, 0.0f } },
 };
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 7;

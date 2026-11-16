@@ -5,5 +5,8 @@
   ["Deep Synth Bass", {"Dry": 80, "Oct -1": 60, "Oct -2": 50, "Up": 0, "Tone": 400, "Tracking": 150}],
   ["Sub Only Layer", {"Dry": 0, "Oct -1": 80, "Oct -2": 0, "Up": 0, "Tone": 300, "Tracking": 200}],
   ["Octave Up Lead", {"Dry": 80, "Oct -1": 0, "Oct -2": 0, "Up": 60, "Tone": 4000, "Tracking": 600}],
-  ["Organ Stack", {"Dry": 90, "Oct -1": 50, "Oct -2": 30, "Up": 40, "Tone": 2500, "Tracking": 400}]
+  ["Organ Stack", {"Dry": 90, "Oct -1": 50, "Oct -2": 30, "Up": 40, "Tone": 2500, "Tracking": 400}],
+  ["Fuzz Octave Up", {"Dry": 70, "Oct -1": 0, "Oct -2": 0, "Up": 90, "Tone": 3500, "Tracking": 700}],
+  ["Parallel Sub Blend", {"Dry": 100, "Oct -1": 35, "Oct -2": 0, "Up": 0, "Tone": 400, "Tracking": 150}],
+  ["Kick Sub Layer", {"Dry": 100, "Oct -1": 50, "Oct -2": 20, "Up": 0, "Tone": 200, "Tracking": 120}]
 ]

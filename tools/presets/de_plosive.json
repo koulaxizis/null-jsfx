@@ -7,5 +7,6 @@
   ["Female Vocal", {"Sensitivity": 50, "Frequency": 200, "Max Reduction": 15, "Release": 70}],
   ["Handheld Podcast", {"Sensitivity": 65, "Frequency": 170, "Max Reduction": 24, "Release": 100}],
   ["Mic Bumps", {"Sensitivity": 70, "Frequency": 100, "Max Reduction": 30, "Release": 150}],
-  ["Listen Check", {"Listen": "On"}]
+  ["Listen Check", {"Listen": "On"}],
+  ["Kids Voices", {"Sensitivity": 55, "Frequency": 240, "Max Reduction": 16, "Release": 70}]
 ]

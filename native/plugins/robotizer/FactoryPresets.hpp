@@ -20,6 +20,9 @@ static const FactoryPreset kPresets[] = {
     { "Ring Mod Alien", { 100.0f, 30.0f, 80.0f, 100.0f } },
     { "Metallic Drum Buzz", { 200.0f, 70.0f, 0.0f, 50.0f } },
     { "Subtle Robot Blend", { 120.0f, 25.0f, 0.0f, 40.0f } },
+    { "Low Monster", { 55.0f, 50.0f, 20.0f, 100.0f } },
+    { "Robot Choir", { 220.0f, 10.0f, 0.0f, 60.0f } },
+    { "Vocoder-Like Lead", { 180.0f, 35.0f, 10.0f, 80.0f } },
 };
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 4;

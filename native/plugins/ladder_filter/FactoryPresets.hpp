@@ -18,8 +18,11 @@ static const FactoryPreset kPresets[] = {
     { "Dark Drum Bus", { 4000.0f, 0.3f, 35.0f, 0.0f, 0.0f, 0.0f } },
     { "Digital Tamer", { 9000.0f, 0.2f, 10.0f, 0.0f, 0.0f, 0.0f } },
     { "Filter Build Start", { 300.0f, 1.8f, 20.0f, 0.0f, 0.0f, 0.0f } },
-    { "Resonant HP Sweep", { 400.0f, 2.5f, 0.0f, 1.0f, -2.0f, 0.0f } },
+    { "Resonant HP Sweep", { 400.0f, 2.5f, 0.0f, 1.0f, 7.0f, 0.0f } },
     { "Thin Out Highpass", { 150.0f, 0.5f, 0.0f, 1.0f, 0.0f, 0.0f } },
+    { "Gentle Warm Top", { 12000.0f, 0.3f, 15.0f, 0.0f, 0.0f, 0.0f } },
+    { "Squelchy Lead", { 1500.0f, 2.8f, 60.0f, 0.0f, -3.0f, 1.0f } },
+    { "Sub Rumble Only", { 120.0f, 0.6f, 10.0f, 0.0f, 6.0f, 0.0f } },
 };
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 6;

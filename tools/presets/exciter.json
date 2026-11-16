@@ -3,5 +3,8 @@
   ["Vocal Sparkle", {"Amount": 30}],
   ["Acoustic Presence", {"Amount": 40}],
   ["Cymbal Forward", {"Amount": 55}],
-  ["Lo-Fi Revival", {"Amount": 75}]
+  ["Lo-Fi Revival", {"Amount": 75}],
+  ["Dull Vocal Rescue", {"Amount": 50}],
+  ["Snare Presence", {"Amount": 65}],
+  ["Maximum Shine", {"Amount": 100}]
 ]

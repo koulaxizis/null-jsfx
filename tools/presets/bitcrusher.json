@@ -7,5 +7,6 @@
   ["Aliasing Hash", {"Bits": 16, "Sample Rate (Hz)": 3000}],
   ["Soft Steps", {"Bits": 6, "Sample Rate (Hz)": 16000, "Smooth (%)": 70}],
   ["Parallel Crunch", {"Bits": 5, "Sample Rate (Hz)": 9000, "Drive (dB)": 6, "Mix (%)": 35}],
-  ["Broken Toy", {"Bits": 3, "Sample Rate (Hz)": 2500, "Drive (dB)": 9, "Output (dB)": -6}]
+  ["Broken Toy", {"Bits": 3, "Sample Rate (Hz)": 2500, "Drive (dB)": 9, "Output (dB)": -6}],
+  ["Gentle 16-Bit Grain", {"Bits": 10, "Sample Rate (Hz)": 32000, "Anti Alias": "On", "Mix (%)": 50}]
 ]

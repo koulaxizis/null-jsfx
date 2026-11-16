@@ -19,6 +19,10 @@ static const FactoryPreset kPresets[] = {
     { "Touch Synth Filter", { 0.0f, 1.0f, 300.0f, 0.0f, 200.0f, 8000.0f, 2.0f, 0.0f, 100.0f } },
     { "Drum Filter Breathe", { 0.0f, 1.0f, 80.0f, 0.0f, 500.0f, 12000.0f, 1.5f, 0.0f, 100.0f } },
     { "Soft Volume Swells", { 3.0f, 80.0f, 400.0f, 12.0f, 200.0f, 3000.0f, 3.0f, 0.0f, 100.0f } },
+    { "Synth Pluck Opener", { 0.0f, 0.5f, 200.0f, 3.0f, 300.0f, 6000.0f, 3.0f, 0.0f, 100.0f } },
+    { "High Pass Pumper", { 2.0f, 2.0f, 250.0f, 0.0f, 30.0f, 600.0f, 1.0f, 1.0f, 100.0f } },
+    { "Vocal Talk Filter", { 1.0f, 2.0f, 100.0f, 4.0f, 500.0f, 3500.0f, 3.0f, 0.0f, 35.0f } },
+    { "Clav Quack", { 1.0f, 1.0f, 90.0f, 8.0f, 400.0f, 4000.0f, 6.0f, 0.0f, 50.0f } },
 };
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 9;

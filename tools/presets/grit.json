@@ -3,5 +3,8 @@
   ["Lo-Fi Drums", {"Grit Intensity": 45}],
   ["Old Sampler", {"Grit Intensity": 60}],
   ["Radio Degrade", {"Grit Intensity": 75}],
-  ["Chiptune Crush", {"Grit Intensity": 95}]
+  ["Chiptune Crush", {"Grit Intensity": 95}],
+  ["Subtle Crunch", {"Grit Intensity": 10}],
+  ["Cassette Sampler", {"Grit Intensity": 35}],
+  ["Arcade", {"Grit Intensity": 85}]
 ]

@@ -21,6 +21,8 @@ static const FactoryPreset kPresets[] = {
     { "Drum Bus Punch", { 120.0f, 1000.0f, 6000.0f, -22.0f, 3.0f, 2.0f, 0.0f, -24.0f, 2.5f, 2.0f, 0.0f, -24.0f, 3.0f, 2.0f, 0.0f, -26.0f, 2.0f, 1.0f, 0.0f, 30.0f, 100.0f, 10.0f, 0.0f, 0.0f, 0.0f } },
     { "Bass Guitar Even", { 100.0f, 700.0f, 6000.0f, -24.0f, 4.0f, 3.0f, 0.0f, -24.0f, 3.0f, 2.0f, 0.0f, -20.0f, 3.0f, 0.0f, 1.0f, -20.0f, 3.0f, 0.0f, 1.0f, 15.0f, 150.0f, 10.0f, 0.0f, 0.0f, 0.0f } },
     { "Broadcast Dense", { 120.0f, 1000.0f, 6000.0f, -30.0f, 4.0f, 4.0f, 0.0f, -30.0f, 4.0f, 4.0f, 0.0f, -30.0f, 4.0f, 4.0f, 0.0f, -30.0f, 4.0f, 4.0f, 0.0f, 5.0f, 200.0f, 20.0f, 0.0f, 0.0f, 0.0f } },
+    { "Side Highs Control", { 120.0f, 1000.0f, 5000.0f, -20.0f, 3.0f, 0.0f, 1.0f, -20.0f, 3.0f, 0.0f, 1.0f, -20.0f, 3.0f, 0.0f, 1.0f, -28.0f, 3.0f, 0.0f, 0.0f, 5.0f, 100.0f, 10.0f, 0.0f, 2.0f, 0.0f } },
+    { "Acoustic Guitar Even", { 150.0f, 900.0f, 5000.0f, -24.0f, 3.0f, 0.0f, 0.0f, -22.0f, 2.0f, 0.0f, 0.0f, -24.0f, 2.0f, 0.0f, 0.0f, -20.0f, 3.0f, 0.0f, 1.0f, 10.0f, 120.0f, 15.0f, 1.0f, 0.0f, 0.0f } },
 };
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 25;
