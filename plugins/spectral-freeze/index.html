@@ -41,6 +41,12 @@
                 <section class="guide-section">
                     <h2>Listen</h2>
                     <div class="demo demo-big" data-demo="spectral_freeze"><button type="button" class="demo-play" aria-label="Listen: with and without the plugin" title="Listen"><svg class="i-play" width="12" height="12" viewBox="0 0 24 24" aria-hidden="true"><polygon points="6 4 20 12 6 20" fill="currentColor"/></svg><svg class="i-stop" width="12" height="12" viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="6" width="12" height="12" fill="currentColor"/></svg></button><button type="button" class="demo-ab" title="Switch between the plugin and the dry sound"><span class="on">ON</span><span class="off">BYPASS</span></button><span class="demo-note">The same music with the <b>Smooth Drone</b> preset and without the plugin. Switch while it plays.</span></div>
+                    <div class="live demo-big" data-live="spectral_freeze" data-presets="{&quot;d&quot;:{&quot;2&quot;:300,&quot;3&quot;:40,&quot;4&quot;:0,&quot;5&quot;:100},&quot;p&quot;:[[&quot;Default&quot;,{}],[&quot;Smooth Drone&quot;,{&quot;2&quot;:800,&quot;3&quot;:90}],[&quot;Tonal Snapshot&quot;,{&quot;2&quot;:50,&quot;3&quot;:0}],[&quot;Quick Transition Hold&quot;,{&quot;2&quot;:150}],[&quot;Ambient Layer&quot;,{&quot;2&quot;:1500,&quot;3&quot;:70,&quot;4&quot;:-6,&quot;5&quot;:50}],[&quot;Slow Swell Pad&quot;,{&quot;2&quot;:3000,&quot;3&quot;:60,&quot;4&quot;:-3}],[&quot;Frozen Wash Low&quot;,{&quot;2&quot;:2000,&quot;3&quot;:80,&quot;4&quot;:-9,&quot;5&quot;:35}],[&quot;Glass Hold&quot;,{&quot;2&quot;:100,&quot;3&quot;:15}],[&quot;Half Frozen Blend&quot;,{&quot;2&quot;:600,&quot;3&quot;:50,&quot;5&quot;:50}],[&quot;Soft Bed&quot;,{&quot;2&quot;:1200,&quot;3&quot;:100,&quot;4&quot;:-12,&quot;5&quot;:40}],[&quot;Instant Stop Hold&quot;,{&quot;2&quot;:10,&quot;3&quot;:0}]]}"><button type="button" class="live-play" aria-label="Play live: the loop through the plugin" title="Play live"><svg class="i-play" width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><polygon points="6 4 20 12 6 20" fill="currentColor"/></svg><svg class="i-stop" width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="6" width="12" height="12" fill="currentColor"/></svg></button><button type="button" class="live-ab" aria-pressed="false" title="Switch between the plugin and the dry loop"><span class="on">ON</span><span class="off">BYPASS</span></button>
+                        <label class="live-field">Loop <select class="live-loop"><option value="band">Band</option><option value="drums">Drums</option><option value="keys">Keys and bass</option></select></label>
+                        <label class="live-field">Preset <select class="live-preset"><option value="0">Default</option><option value="1">Smooth Drone</option><option value="2">Tonal Snapshot</option><option value="3">Quick Transition Hold</option><option value="4">Ambient Layer</option><option value="5">Slow Swell Pad</option><option value="6">Frozen Wash Low</option><option value="7">Glass Hold</option><option value="8">Half Frozen Blend</option><option value="9">Soft Bed</option><option value="10">Instant Stop Hold</option></select></label>
+                        <span class="demo-note">Live: the plugin itself runs in your browser on a loop of NULL JSFX instruments. Change the preset or bypass it while it plays.</span>
+                        <span class="live-status demo-note" role="status"></span>
+                    </div>
                 </section>
                 <section class="guide-section">
                     <h2>Controls</h2>
@@ -97,5 +103,6 @@
     </button>
     <script src="/assets/js/theme.js"></script>
     <script src="/assets/js/demo.js"></script>
+    <script src="/assets/js/live.js"></script>
 </body>
 </html>

@@ -41,6 +41,12 @@
                 <section class="guide-section">
                     <h2>Listen</h2>
                     <div class="demo demo-big" data-demo="disperser"><button type="button" class="demo-play" aria-label="Listen: with and without the plugin" title="Listen"><svg class="i-play" width="12" height="12" viewBox="0 0 24 24" aria-hidden="true"><polygon points="6 4 20 12 6 20" fill="currentColor"/></svg><svg class="i-stop" width="12" height="12" viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="6" width="12" height="12" fill="currentColor"/></svg></button><button type="button" class="demo-ab" title="Switch between the plugin and the dry sound"><span class="on">ON</span><span class="off">BYPASS</span></button><span class="demo-note">The same music with the <b>Kick Punch Focus</b> preset and without the plugin. Switch while it plays.</span></div>
+                    <div class="live demo-big" data-live="disperser" data-presets="{&quot;d&quot;:{&quot;1&quot;:1000,&quot;2&quot;:16,&quot;3&quot;:50,&quot;4&quot;:100,&quot;5&quot;:0},&quot;p&quot;:[[&quot;Default&quot;,{}],[&quot;Kick Punch Focus&quot;,{&quot;1&quot;:80,&quot;2&quot;:8,&quot;3&quot;:60}],[&quot;Bass Phase Smear&quot;,{&quot;1&quot;:120,&quot;3&quot;:40}],[&quot;Laser Snare&quot;,{&quot;1&quot;:1500,&quot;2&quot;:32,&quot;3&quot;:70}],[&quot;Synth Zap&quot;,{&quot;1&quot;:3000,&quot;2&quot;:48,&quot;3&quot;:80,&quot;5&quot;:1}],[&quot;Soft Transients&quot;,{&quot;1&quot;:2000,&quot;2&quot;:6,&quot;3&quot;:30}],[&quot;Stereo Width Smear&quot;,{&quot;1&quot;:800,&quot;2&quot;:24,&quot;3&quot;:30,&quot;5&quot;:1}],[&quot;Gentle Bass Focus&quot;,{&quot;1&quot;:60,&quot;2&quot;:4}],[&quot;Zap Hat&quot;,{&quot;1&quot;:8000,&quot;2&quot;:40,&quot;3&quot;:85,&quot;4&quot;:60}],[&quot;Chirp Drop&quot;,{&quot;1&quot;:300,&quot;2&quot;:64,&quot;3&quot;:90}],[&quot;Parallel Laser&quot;,{&quot;1&quot;:1200,&quot;2&quot;:40,&quot;3&quot;:70,&quot;4&quot;:40}]]}"><button type="button" class="live-play" aria-label="Play live: the loop through the plugin" title="Play live"><svg class="i-play" width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><polygon points="6 4 20 12 6 20" fill="currentColor"/></svg><svg class="i-stop" width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="6" width="12" height="12" fill="currentColor"/></svg></button><button type="button" class="live-ab" aria-pressed="false" title="Switch between the plugin and the dry loop"><span class="on">ON</span><span class="off">BYPASS</span></button>
+                        <label class="live-field">Loop <select class="live-loop"><option value="band">Band</option><option value="drums">Drums</option><option value="keys">Keys and bass</option></select></label>
+                        <label class="live-field">Preset <select class="live-preset"><option value="0">Default</option><option value="1">Kick Punch Focus</option><option value="2">Bass Phase Smear</option><option value="3">Laser Snare</option><option value="4">Synth Zap</option><option value="5">Soft Transients</option><option value="6">Stereo Width Smear</option><option value="7">Gentle Bass Focus</option><option value="8">Zap Hat</option><option value="9">Chirp Drop</option><option value="10">Parallel Laser</option></select></label>
+                        <span class="demo-note">Live: the plugin itself runs in your browser on a loop of NULL JSFX instruments. Change the preset or bypass it while it plays.</span>
+                        <span class="live-status demo-note" role="status"></span>
+                    </div>
                 </section>
                 <section class="guide-section">
                     <h2>Controls</h2>
@@ -92,5 +98,6 @@
     </button>
     <script src="/assets/js/theme.js"></script>
     <script src="/assets/js/demo.js"></script>
+    <script src="/assets/js/live.js"></script>
 </body>
 </html>

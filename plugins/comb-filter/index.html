@@ -41,6 +41,12 @@
                 <section class="guide-section">
                     <h2>Listen</h2>
                     <div class="demo demo-big" data-demo="comb_filter"><button type="button" class="demo-play" aria-label="Listen: with and without the plugin" title="Listen"><svg class="i-play" width="12" height="12" viewBox="0 0 24 24" aria-hidden="true"><polygon points="6 4 20 12 6 20" fill="currentColor"/></svg><svg class="i-stop" width="12" height="12" viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="6" width="12" height="12" fill="currentColor"/></svg></button><button type="button" class="demo-ab" title="Switch between the plugin and the dry sound"><span class="on">ON</span><span class="off">BYPASS</span></button><span class="demo-note">The same music with the <b>Hollow Pad Color</b> preset and without the plugin. Switch while it plays.</span></div>
+                    <div class="live demo-big" data-live="comb_filter" data-presets="{&quot;d&quot;:{&quot;1&quot;:500,&quot;2&quot;:0.5,&quot;3&quot;:0,&quot;4&quot;:0},&quot;p&quot;:[[&quot;Default&quot;,{}],[&quot;Hollow Pad Color&quot;,{&quot;1&quot;:800,&quot;2&quot;:0.4,&quot;4&quot;:2}],[&quot;Subtle Phasey Tone&quot;,{&quot;1&quot;:2500,&quot;2&quot;:0.3,&quot;4&quot;:1.5}],[&quot;Metallic Snare Ring&quot;,{&quot;1&quot;:220,&quot;2&quot;:0.85,&quot;3&quot;:1,&quot;4&quot;:4}],[&quot;Tuned Hat Shimmer&quot;,{&quot;1&quot;:1760,&quot;2&quot;:0.7,&quot;3&quot;:1,&quot;4&quot;:3}],[&quot;Karplus Pluck A2&quot;,{&quot;1&quot;:110,&quot;2&quot;:0.97,&quot;3&quot;:1,&quot;4&quot;:4}],[&quot;Tube Resonance&quot;,{&quot;1&quot;:330,&quot;2&quot;:0.6,&quot;3&quot;:1,&quot;4&quot;:3}],[&quot;Robotic Buzz&quot;,{&quot;1&quot;:100,&quot;2&quot;:0.9,&quot;3&quot;:1,&quot;4&quot;:12}],[&quot;Flanged Air&quot;,{&quot;1&quot;:5000}],[&quot;Tuned E3 Drone&quot;,{&quot;1&quot;:165,&quot;2&quot;:0.9,&quot;3&quot;:1,&quot;4&quot;:6}],[&quot;Low Body Comb&quot;,{&quot;1&quot;:150,&quot;2&quot;:0.35}]]}"><button type="button" class="live-play" aria-label="Play live: the loop through the plugin" title="Play live"><svg class="i-play" width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><polygon points="6 4 20 12 6 20" fill="currentColor"/></svg><svg class="i-stop" width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="6" width="12" height="12" fill="currentColor"/></svg></button><button type="button" class="live-ab" aria-pressed="false" title="Switch between the plugin and the dry loop"><span class="on">ON</span><span class="off">BYPASS</span></button>
+                        <label class="live-field">Loop <select class="live-loop"><option value="band">Band</option><option value="drums">Drums</option><option value="keys">Keys and bass</option></select></label>
+                        <label class="live-field">Preset <select class="live-preset"><option value="0">Default</option><option value="1">Hollow Pad Color</option><option value="2">Subtle Phasey Tone</option><option value="3">Metallic Snare Ring</option><option value="4">Tuned Hat Shimmer</option><option value="5">Karplus Pluck A2</option><option value="6">Tube Resonance</option><option value="7">Robotic Buzz</option><option value="8">Flanged Air</option><option value="9">Tuned E3 Drone</option><option value="10">Low Body Comb</option></select></label>
+                        <span class="demo-note">Live: the plugin itself runs in your browser on a loop of NULL JSFX instruments. Change the preset or bypass it while it plays.</span>
+                        <span class="live-status demo-note" role="status"></span>
+                    </div>
                 </section>
                 <section class="guide-section">
                     <h2>Controls</h2>
@@ -97,5 +103,6 @@
     </button>
     <script src="/assets/js/theme.js"></script>
     <script src="/assets/js/demo.js"></script>
+    <script src="/assets/js/live.js"></script>
 </body>
 </html>

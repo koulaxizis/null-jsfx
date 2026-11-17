@@ -76,6 +76,33 @@ const EL = {
   "NULL JSFX plugin": "NULL JSFX plugin",
   "NULL JSFX plugins": "NULL JSFX plugins",
 
+  // starter profiles (names and texts from the catalog, tools/hub_profiles.json)
+  "Starter profiles": "Έτοιμα προφίλ",
+  "Install adds the formats picked above (the Rack as VST3 or CLAP) and turns on the FX chains and factory presets. You can remove any of them later.":
+    "Η Εγκατάσταση προσθέτει τις μορφές που διάλεξες πάνω (το Rack ως VST3 ή CLAP) και ανοίγει τις αλυσίδες FX και τα εργοστασιακά presets. Μπορείς να αφαιρέσεις οτιδήποτε αργότερα.",
+  "Install the {name} profile ({files})": "Εγκατάσταση του προφίλ {name} ({files})",
+  "Installs the plugins of this profile that are missing here, in the formats picked on the left, with its extras":
+    "Εγκαθιστά τα plugins του προφίλ που λείπουν εδώ, στις μορφές που διάλεξες αριστερά, μαζί με τα επιπλέον του",
+  "Installed the {name} profile": "Εγκαταστάθηκε το προφίλ {name}",
+  "Podcast": "Podcast",
+  "Clean speech for podcasts, voice-overs and audiobooks: repair, level, tone and loudness.":
+    "Καθαρός λόγος για podcasts, εκφωνήσεις και audiobooks: επιδιόρθωση, στάθμη, χροιά και loudness.",
+  "Beatmaking": "Beatmaking",
+  "Drums, bass, chords and synths to make beats, with the effects that glue and pump them.":
+    "Ντραμς, μπάσο, συγχορδίες και synths για beats, με τα εφέ που τα δένουν και τα κάνουν να «αναπνέουν».",
+  "Mixing": "Μίξη",
+  "The everyday mixing kit: EQ, compression, console colour, space, width and meters, and the Rack for other DAWs.":
+    "Τα καθημερινά της μίξης: EQ, συμπίεση, χρώμα κονσόλας, χώρος, εύρος και μετρητές, και το Rack για άλλα DAW.",
+  "Mastering": "Mastering",
+  "Finish a mix: tone, multiband and bus compression, width, limiting, loudness and a reference to compare with.":
+    "Το τελείωμα μιας μίξης: χροιά, πολυζωνική συμπίεση και συμπίεση bus, εύρος, limiting, loudness και ένα reference για σύγκριση.",
+  "Guitar": "Κιθάρα",
+  "A guitar rig: tuner, gate, drive, amp and cabinet, and the classic pedals.":
+    "Ένα σετ για κιθάρα: κουρδιστήρι, gate, drive, ενισχυτής και καμπίνα, και τα κλασικά πεταλάκια.",
+  "Sound Design": "Sound Design",
+  "Turn sounds into new ones: granular, spectral, pitch and frequency tricks, resonators and long spaces.":
+    "Κάνε τους ήχους καινούργιους: granular, φασματικά, κόλπα με τονικότητα και συχνότητα, αντηχεία και μεγάλοι χώροι.",
+
   // groups and extras (from the catalog)
   "One Slider": "Ένα Slider",
   "One control, instant result. Turn it up until it sounds right.": "Ένας έλεγχος, άμεσο αποτέλεσμα. Ανέβασέ τον μέχρι να ακούγεται σωστά.",

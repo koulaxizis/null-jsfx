@@ -39,6 +39,15 @@
             </div>
             <div class="guide-body">
                 <section class="guide-section">
+                    <h2>Listen</h2>
+                    <div class="live demo-big" data-live="stereo_width" data-presets="{&quot;d&quot;:{&quot;1&quot;:100,&quot;2&quot;:100,&quot;3&quot;:0},&quot;p&quot;:[[&quot;Default&quot;,{}],[&quot;Mono Check&quot;,{&quot;1&quot;:0}],[&quot;Gentle Widen&quot;,{&quot;1&quot;:115}],[&quot;Wide Pads&quot;,{&quot;1&quot;:150}],[&quot;Narrow Overheads&quot;,{&quot;1&quot;:70}],[&quot;Master Mono Lows&quot;,{&quot;3&quot;:120}],[&quot;Mono Bass Wide Top&quot;,{&quot;1&quot;:130,&quot;3&quot;:150}],[&quot;Extra Wide Synths&quot;,{&quot;1&quot;:180,&quot;3&quot;:250}],[&quot;Narrow Mono Lows&quot;,{&quot;1&quot;:85,&quot;3&quot;:200}],[&quot;Wide Backing Vocals&quot;,{&quot;1&quot;:140,&quot;3&quot;:180}],[&quot;Half Width Blend&quot;,{&quot;1&quot;:200,&quot;2&quot;:50}]]}"><button type="button" class="live-play" aria-label="Play live: the loop through the plugin" title="Play live"><svg class="i-play" width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><polygon points="6 4 20 12 6 20" fill="currentColor"/></svg><svg class="i-stop" width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="6" width="12" height="12" fill="currentColor"/></svg></button><button type="button" class="live-ab" aria-pressed="false" title="Switch between the plugin and the dry loop"><span class="on">ON</span><span class="off">BYPASS</span></button>
+                        <label class="live-field">Loop <select class="live-loop"><option value="band">Band</option><option value="drums">Drums</option><option value="keys">Keys and bass</option></select></label>
+                        <label class="live-field">Preset <select class="live-preset"><option value="0">Default</option><option value="1">Mono Check</option><option value="2">Gentle Widen</option><option value="3">Wide Pads</option><option value="4">Narrow Overheads</option><option value="5">Master Mono Lows</option><option value="6">Mono Bass Wide Top</option><option value="7">Extra Wide Synths</option><option value="8">Narrow Mono Lows</option><option value="9">Wide Backing Vocals</option><option value="10">Half Width Blend</option></select></label>
+                        <span class="demo-note">Live: the plugin itself runs in your browser on a loop of NULL JSFX instruments. Change the preset or bypass it while it plays.</span>
+                        <span class="live-status demo-note" role="status"></span>
+                    </div>
+                </section>
+                <section class="guide-section">
                     <h2>Controls</h2>
                     <ul class="guide-sliders"><li><span class="slider-name">Width</span><span class="slider-desc">0 to 200% — Side level: 0% = mono, 100% = unchanged, 200% = twice as wide.</span></li><li><span class="slider-name">Mix</span><span class="slider-desc">0 to 100% — Blend between original and processed signal.</span></li><li><span class="slider-name">Crossover</span><span class="slider-desc">0 to 500 Hz — Below this frequency the signal is made mono and the width setting only applies above it (0 = off).</span></li></ul>
                 </section>
@@ -93,5 +102,6 @@
     </button>
     <script src="/assets/js/theme.js"></script>
     <script src="/assets/js/demo.js"></script>
+    <script src="/assets/js/live.js"></script>
 </body>
 </html>

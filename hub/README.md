@@ -59,6 +59,9 @@ Things worth knowing:
 - **Another computer** (Settings). "Save the list" writes `NULL-JSFX-Selection.json` (`Selection`:
   plugins with their formats, and the extras; no folders) to Downloads; "Install from a list" on
   the other computer installs what is missing there.
+- **Starter profiles** (menu, 4.0 on). The catalog's `profiles` (`tools/hub_profiles.json`):
+  plugins and extras for one kind of work. A profile's page shows its plugins and one button
+  installs the missing ones in the formats picked in the bar, with its extras that are off.
 - **Languages** (`ui/i18n.js`): English and Greek. The English text is the key and `EL` holds
   its Greek; the first start follows the computer's language, Settings > Language changes it.
   The tray menu and the notifications follow it too (`Settings::language`). Plugin texts come

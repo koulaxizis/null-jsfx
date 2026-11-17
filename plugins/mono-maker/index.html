@@ -39,6 +39,15 @@
             </div>
             <div class="guide-body">
                 <section class="guide-section">
+                    <h2>Listen</h2>
+                    <div class="live demo-big" data-live="mono_maker" data-presets="{&quot;d&quot;:{&quot;1&quot;:50},&quot;p&quot;:[[&quot;Default&quot;,{}],[&quot;Sub Only Mono&quot;,{&quot;1&quot;:30}],[&quot;Master Low End&quot;,{}],[&quot;Tight Kick and Bass&quot;,{&quot;1&quot;:60}],[&quot;Wide Synth Fix&quot;,{&quot;1&quot;:70}],[&quot;Vinyl Safe&quot;,{&quot;1&quot;:80}],[&quot;Gentle Bass Focus&quot;,{&quot;1&quot;:15}],[&quot;Club Ready&quot;,{&quot;1&quot;:40}],[&quot;Full Mono Lows&quot;,{&quot;1&quot;:100}]]}"><button type="button" class="live-play" aria-label="Play live: the loop through the plugin" title="Play live"><svg class="i-play" width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><polygon points="6 4 20 12 6 20" fill="currentColor"/></svg><svg class="i-stop" width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="6" width="12" height="12" fill="currentColor"/></svg></button><button type="button" class="live-ab" aria-pressed="false" title="Switch between the plugin and the dry loop"><span class="on">ON</span><span class="off">BYPASS</span></button>
+                        <label class="live-field">Loop <select class="live-loop"><option value="band">Band</option><option value="drums">Drums</option><option value="keys">Keys and bass</option></select></label>
+                        <label class="live-field">Preset <select class="live-preset"><option value="0">Default</option><option value="1">Sub Only Mono</option><option value="2">Master Low End</option><option value="3">Tight Kick and Bass</option><option value="4">Wide Synth Fix</option><option value="5">Vinyl Safe</option><option value="6">Gentle Bass Focus</option><option value="7">Club Ready</option><option value="8">Full Mono Lows</option></select></label>
+                        <span class="demo-note">Live: the plugin itself runs in your browser on a loop of NULL JSFX instruments. Change the preset or bypass it while it plays.</span>
+                        <span class="live-status demo-note" role="status"></span>
+                    </div>
+                </section>
+                <section class="guide-section">
                     <h2>Controls</h2>
                     <ul class="guide-sliders"><li><span class="slider-name">Amount</span><span class="slider-desc">0 to 100 — Crossover frequency below which the side signal is removed: 0 is off, 100 makes everything under 400 Hz mono (exponential 20–400 Hz sweep)</span></li></ul>
                 </section>
@@ -93,5 +102,6 @@
     </button>
     <script src="/assets/js/theme.js"></script>
     <script src="/assets/js/demo.js"></script>
+    <script src="/assets/js/live.js"></script>
 </body>
 </html>

@@ -65,6 +65,8 @@ jobs:
       - run: npx playwright install --with-deps chromium
         working-directory: tests/remote
       - run: node tests/remote/remote_test.cjs
+      # the live player of the plugin pages (assets/js/live.js), with the same Playwright
+      - run: node tests/site/live_test.cjs
 
   mixers:
     # the Mixers tab of NULL Remote (android/web/mixers/): OSC codec, laws, the X AIR profile and a

@@ -34,6 +34,16 @@ STUDIO_FX = ROOT / "web/fx/index.json"  # the effects orOS Studio runs (web vers
 CHAIN_TEXT = ROOT / "tools/site_chains.json"
 PAGES = ROOT / "plugins"  # one page per plugin: plugins/<key>/index.html
 DEMOS = ROOT / "assets/audio/demos"  # before/after audio, made by tools/render_demos.py
+LOOPS = ROOT / "assets/audio/loops"  # the live player's loops, made by tools/render_loops.js
+WEB_FX = ROOT / "web/fx"
+# the live player (assets/js/live.js) leaves out what makes no sound worth hearing on a loop or
+# needs a file, a sidechain or more outputs: analyzers, generators, the band splitter
+LIVE_SKIP = {
+    "loudness_meter", "multichannel_loudness", "spectrum_analyzer", "stereo_scope", "oscilloscope", "vu_meter",
+    "tuner", "downmix_check", "test_signal", "noise_generator", "band_splitter", "reference", "phase_align",
+    "bass_management", "surround_panner", "room_tone", "noise_reduction",
+}
+LOOP_NAMES = (("band", "Band"), ("drums", "Drums"), ("keys", "Keys and bass"))
 PRESETS = ROOT / "tools/presets"
 SITEMAP = ROOT / "sitemap.xml"
 SITE = "https://nulljsfx.tech/"
@@ -127,6 +137,23 @@ def formats(stem):
     return out
 
 
+def live_presets(stem, category, in_studio):
+    """What the live player of the plugin's page plays: {"d": defaults, "p": [[name, values]]},
+    values {slider number: value} for the sliders a preset changes; None when it gets no player."""
+    fx = WEB_FX / f"{stem}.js"
+    if category in ("Instruments", "MIDI") or stem in LIVE_SKIP or not in_studio or not fx.exists() \
+            or '"usesFile":true' in fx.read_text(encoding="utf-8")[:20000] or not all((LOOPS / f"{n}.mp3").exists() for n, _ in LOOP_NAMES):
+        return None
+    from build_presets import load as preset_values, file_sliders  # noqa: E402 (tools/ on sys.path)
+    presets = preset_values(stem)
+    skip = file_sliders(stem)
+    defaults = presets[0][1]
+    used = sorted({i for _, vals in presets for i, v in enumerate(vals) if v != defaults[i] and i not in skip})
+    num = lambda v: int(v) if float(v).is_integer() else round(v, 6)  # noqa: E731
+    return {"d": {str(i + 1): num(defaults[i]) for i in used},
+            "p": [[name, {str(i + 1): num(vals[i]) for i in used if vals[i] != defaults[i]}] for name, vals in presets]}
+
+
 def load():
     content = json.loads(CONTENT.read_text(encoding="utf-8"))
     plugins, errors = [], []
@@ -158,6 +185,7 @@ def load():
             "video": f"assets/video/{stem}.mp4" if (VIDEOS / f"{stem}.mp4").exists() else None,
             "studio": stem in studio,
             "demo": demo_index.get(stem),
+            "live": live_presets(stem, category, stem in studio),
             "presets": [n for n, _ in json.loads((PRESETS / f"{stem}.json").read_text(encoding="utf-8"))]
             if (PRESETS / f"{stem}.json").exists() else [],
             "page": f"plugins/{stem.replace('_', '-')}/",
@@ -184,6 +212,13 @@ DEMO_BUTTONS = ("""<button type="button" class="demo-play" aria-label="Listen: w
                 """<svg class="i-play" width="12" height="12" viewBox="0 0 24 24" aria-hidden="true"><polygon points="6 4 20 12 6 20" fill="currentColor"/></svg>"""
                 """<svg class="i-stop" width="12" height="12" viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="6" width="12" height="12" fill="currentColor"/></svg></button>"""
                 """<button type="button" class="demo-ab" title="Switch between the plugin and the dry sound">"""
+                """<span class="on">ON</span><span class="off">BYPASS</span></button>""")
+
+
+LIVE_BUTTONS = ("""<button type="button" class="live-play" aria-label="Play live: the loop through the plugin" title="Play live">"""
+                """<svg class="i-play" width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><polygon points="6 4 20 12 6 20" fill="currentColor"/></svg>"""
+                """<svg class="i-stop" width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="6" width="12" height="12" fill="currentColor"/></svg></button>"""
+                """<button type="button" class="live-ab" aria-pressed="false" title="Switch between the plugin and the dry loop">"""
                 """<span class="on">ON</span><span class="off">BYPASS</span></button>""")
 
 
@@ -418,11 +453,23 @@ def page(p, plugins):
                       for n, r, d in p["sliders"])
     uses = "".join(f"<li>{e(u)}</li>" for u in p["uses"])
     formats = "".join(f'<li><span class="format-tag">{f}</span>{e(FORMAT_NAMES[f])}</li>' for f in p["formats"])
+    before_after = f"""
+                    <div class="demo demo-big" data-demo="{p['stem']}">{DEMO_BUTTONS}<span class="demo-note">The same music with the <b>{e(p['demo'])}</b> preset and without the plugin. Switch while it plays.</span></div>""" if p["demo"] else ""
+    live = ""
+    if p["live"]:
+        options = "".join(f'<option value="{k}">{e(name)}</option>' for k, (name, _) in enumerate(p["live"]["p"]))
+        loops = "".join(f'<option value="{k}">{e(v)}</option>' for k, v in LOOP_NAMES)
+        live = f"""
+                    <div class="live demo-big" data-live="{p['stem']}" data-presets="{e(json.dumps(p['live'], separators=(',', ':')))}">{LIVE_BUTTONS}
+                        <label class="live-field">Loop <select class="live-loop">{loops}</select></label>
+                        <label class="live-field">Preset <select class="live-preset">{options}</select></label>
+                        <span class="demo-note">Live: the plugin itself runs in your browser on a loop of NULL JSFX instruments. Change the preset or bypass it while it plays.</span>
+                        <span class="live-status demo-note" role="status"></span>
+                    </div>"""
     demo = f"""
                 <section class="guide-section">
-                    <h2>Listen</h2>
-                    <div class="demo demo-big" data-demo="{p['stem']}">{DEMO_BUTTONS}<span class="demo-note">The same music with the <b>{e(p['demo'])}</b> preset and without the plugin. Switch while it plays.</span></div>
-                </section>""" if p["demo"] else ""
+                    <h2>Listen</h2>{before_after}{live}
+                </section>""" if before_after or live else ""
     presets = f"""
                 <section class="guide-section">
                     <h2>Factory presets</h2>
@@ -446,6 +493,8 @@ def page(p, plugins):
     near = sorted((q for q in plugins if q is not p),
                   key=lambda q: (-(q["category"] == p["category"]) - len(shared & set(q["tags"])), q["name"].lower()))[:6]
     related = "".join(f'<a class="related-card" href="/{q["page"]}"><b>{e(q["name"])}</b><small>{e(q["card_desc"])}</small></a>' for q in near)
+    live_js = """
+    <script src="/assets/js/live.js"></script>""" if p["live"] else ""
     return f"""<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -527,7 +576,7 @@ def page(p, plugins):
         <svg class="moon-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none;"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
     </button>
     <script src="/assets/js/theme.js"></script>
-    <script src="/assets/js/demo.js"></script>
+    <script src="/assets/js/demo.js"></script>{live_js}
 </body>
 </html>
 """

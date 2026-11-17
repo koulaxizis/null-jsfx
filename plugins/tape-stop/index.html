@@ -41,6 +41,12 @@
                 <section class="guide-section">
                     <h2>Listen</h2>
                     <div class="demo demo-big" data-demo="tape_stop"><button type="button" class="demo-play" aria-label="Listen: with and without the plugin" title="Listen"><svg class="i-play" width="12" height="12" viewBox="0 0 24 24" aria-hidden="true"><polygon points="6 4 20 12 6 20" fill="currentColor"/></svg><svg class="i-stop" width="12" height="12" viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="6" width="12" height="12" fill="currentColor"/></svg></button><button type="button" class="demo-ab" title="Switch between the plugin and the dry sound"><span class="on">ON</span><span class="off">BYPASS</span></button><span class="demo-note">The same music with the <b>Stutter Spin</b> preset and without the plugin. Switch while it plays.</span></div>
+                    <div class="live demo-big" data-live="tape_stop" data-presets="{&quot;d&quot;:{&quot;2&quot;:500,&quot;3&quot;:500},&quot;p&quot;:[[&quot;Default&quot;,{}],[&quot;Stutter Spin&quot;,{&quot;2&quot;:100,&quot;3&quot;:100}],[&quot;Quick Brake&quot;,{&quot;2&quot;:200,&quot;3&quot;:300}],[&quot;Turntable Brake&quot;,{&quot;2&quot;:350,&quot;3&quot;:150}],[&quot;Slow Wind Down&quot;,{&quot;2&quot;:2000,&quot;3&quot;:1000}],[&quot;Long Dramatic Drop&quot;,{&quot;2&quot;:4000,&quot;3&quot;:2000}],[&quot;Snap Stop&quot;,{&quot;2&quot;:50,&quot;3&quot;:50}],[&quot;Beat Drop&quot;,{&quot;2&quot;:600,&quot;3&quot;:80}],[&quot;Slow Restart&quot;,{&quot;2&quot;:300,&quot;3&quot;:2500}],[&quot;Even Brake&quot;,{&quot;2&quot;:1000,&quot;3&quot;:1000}],[&quot;Power Cut&quot;,{&quot;2&quot;:1500,&quot;3&quot;:50}]]}"><button type="button" class="live-play" aria-label="Play live: the loop through the plugin" title="Play live"><svg class="i-play" width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><polygon points="6 4 20 12 6 20" fill="currentColor"/></svg><svg class="i-stop" width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="6" width="12" height="12" fill="currentColor"/></svg></button><button type="button" class="live-ab" aria-pressed="false" title="Switch between the plugin and the dry loop"><span class="on">ON</span><span class="off">BYPASS</span></button>
+                        <label class="live-field">Loop <select class="live-loop"><option value="band">Band</option><option value="drums">Drums</option><option value="keys">Keys and bass</option></select></label>
+                        <label class="live-field">Preset <select class="live-preset"><option value="0">Default</option><option value="1">Stutter Spin</option><option value="2">Quick Brake</option><option value="3">Turntable Brake</option><option value="4">Slow Wind Down</option><option value="5">Long Dramatic Drop</option><option value="6">Snap Stop</option><option value="7">Beat Drop</option><option value="8">Slow Restart</option><option value="9">Even Brake</option><option value="10">Power Cut</option></select></label>
+                        <span class="demo-note">Live: the plugin itself runs in your browser on a loop of NULL JSFX instruments. Change the preset or bypass it while it plays.</span>
+                        <span class="live-status demo-note" role="status"></span>
+                    </div>
                 </section>
                 <section class="guide-section">
                     <h2>Controls</h2>
@@ -97,5 +103,6 @@
     </button>
     <script src="/assets/js/theme.js"></script>
     <script src="/assets/js/demo.js"></script>
+    <script src="/assets/js/live.js"></script>
 </body>
 </html>

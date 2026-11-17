@@ -30,6 +30,7 @@ SITE = "https://nulljsfx.tech/"
 REPO = "koulaxizis/null-jsfx"
 CHAINS_DIR = ROOT / "DATA/FXChains"
 CHAIN_TEXT = ROOT / "tools/site_chains.json"
+PROFILES = ROOT / "tools/hub_profiles.json"
 PRESETS = ROOT / "tools/presets"
 CHAIN_JS = re.compile(r"^<JS null_jsfx/(?:gfx/)?(\w+?)(?:_gfx)?\.jsfx\b", re.M)
 SCHEMA = 1
@@ -187,6 +188,20 @@ def chains(stems):
     return sorted(by_name.values(), key=lambda c: c["name"].lower())
 
 
+def profiles(ids):
+    """The Hub's starter profiles (tools/hub_profiles.json): ready-made picks of plugins and extras.
+    A plugin that still waits off the site (site_content_next.json) is left out until it is on it."""
+    extras = {x["id"] for x in EXTRAS}
+    out = []
+    for prof in json.loads(PROFILES.read_text(encoding="utf-8")):
+        wrong = [x for x in prof["plugins"] if x not in ids and not (ROOT / "DATA/Effects/null_jsfx" / f"{x}.jsfx").exists()]
+        bad = [x for x in prof["extras"] if x not in extras]
+        if wrong or bad or len(set(prof["plugins"])) != len(prof["plugins"]):
+            sys.exit(f"build_catalog: profile {prof['id']}: unknown or repeated plugins or extras: {' '.join(wrong + bad) or 'repeated'}")
+        out.append({**prof, "plugins": [x for x in prof["plugins"] if x in ids]})
+    return out
+
+
 def catalog(version, notes, date):
     plugs = plugins()
     if any(p["id"] == "rack" for p in plugs):
@@ -218,6 +233,8 @@ def catalog(version, notes, date):
         "plugins": plugs + [rack()],
         "chains": chains({p["id"] for p in plugs}),
         "extras": EXTRAS,
+        # starter profiles: one click installs a set of plugins for a kind of work, with extras
+        "profiles": profiles({p["id"] for p in plugs} | {"rack"}),
     }
 
 
@@ -245,6 +262,9 @@ def check(cat):
             errors.append(f"{p['id']}: id must be [a-z0-9_]")
         if not p["formats"] or (p["group"] != "extras" and p["formats"][0] != "jsfx"):
             errors.append(f"{p['id']}: formats must start with jsfx")
+    for prof in cat["profiles"]:
+        if not re.fullmatch(r"[a-z0-9-]+", prof["id"]) or len(prof["plugins"]) < 5:
+            errors.append(f"profile {prof['id']}: id must be [a-z0-9-] and hold at least 5 plugins")
     if not cat["chains"]:
         errors.append("no FX chains")
     if errors:
@@ -268,7 +288,7 @@ def main():
         cat["sha256"] = digests(args.digests.read_text(encoding="utf-8"))
     check(cat)
     if args.check:
-        print(f"build_catalog: ok, {len(cat['plugins'])} plugins, {len(cat['chains'])} FX chains")
+        print(f"build_catalog: ok, {len(cat['plugins'])} plugins, {len(cat['chains'])} FX chains, {len(cat['profiles'])} starter profiles")
         return
     if not args.out:
         sys.exit("build_catalog: --out or --check")

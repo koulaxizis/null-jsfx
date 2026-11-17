@@ -41,6 +41,12 @@
                 <section class="guide-section">
                     <h2>Listen</h2>
                     <div class="demo demo-big" data-demo="clipper"><button type="button" class="demo-play" aria-label="Listen: with and without the plugin" title="Listen"><svg class="i-play" width="12" height="12" viewBox="0 0 24 24" aria-hidden="true"><polygon points="6 4 20 12 6 20" fill="currentColor"/></svg><svg class="i-stop" width="12" height="12" viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="6" width="12" height="12" fill="currentColor"/></svg></button><button type="button" class="demo-ab" title="Switch between the plugin and the dry sound"><span class="on">ON</span><span class="off">BYPASS</span></button><span class="demo-note">The same music with the <b>Gentle Safety</b> preset and without the plugin. Switch while it plays.</span></div>
+                    <div class="live demo-big" data-live="clipper" data-presets="{&quot;d&quot;:{&quot;1&quot;:0,&quot;2&quot;:-0.1,&quot;3&quot;:0,&quot;4&quot;:2,&quot;5&quot;:100,&quot;6&quot;:0,&quot;7&quot;:1},&quot;p&quot;:[[&quot;Default&quot;,{}],[&quot;Gentle Safety&quot;,{&quot;2&quot;:-0.3,&quot;3&quot;:30}],[&quot;Drum Bus Clip&quot;,{&quot;1&quot;:4,&quot;2&quot;:-1,&quot;3&quot;:10}],[&quot;Loud Master&quot;,{&quot;1&quot;:6,&quot;2&quot;:-0.3,&quot;3&quot;:20,&quot;4&quot;:3,&quot;7&quot;:0}],[&quot;808 Smash&quot;,{&quot;1&quot;:12,&quot;2&quot;:-3,&quot;4&quot;:1,&quot;6&quot;:-10.2}],[&quot;Soft Saturate&quot;,{&quot;1&quot;:6,&quot;2&quot;:-6,&quot;3&quot;:100,&quot;5&quot;:60,&quot;6&quot;:3}],[&quot;Snare Crack&quot;,{&quot;1&quot;:8,&quot;2&quot;:-2,&quot;3&quot;:15,&quot;6&quot;:-7.6}],[&quot;Parallel Crush&quot;,{&quot;1&quot;:18,&quot;2&quot;:-6,&quot;5&quot;:35}],[&quot;Hard Ceiling&quot;,{&quot;2&quot;:-1,&quot;4&quot;:3,&quot;7&quot;:0}],[&quot;Bass Round&quot;,{&quot;1&quot;:6,&quot;2&quot;:-3,&quot;3&quot;:60,&quot;6&quot;:-5.5}],[&quot;Lo-Fi Aliased&quot;,{&quot;1&quot;:10,&quot;2&quot;:-4,&quot;4&quot;:0,&quot;6&quot;:-8.6}]]}"><button type="button" class="live-play" aria-label="Play live: the loop through the plugin" title="Play live"><svg class="i-play" width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><polygon points="6 4 20 12 6 20" fill="currentColor"/></svg><svg class="i-stop" width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="6" width="12" height="12" fill="currentColor"/></svg></button><button type="button" class="live-ab" aria-pressed="false" title="Switch between the plugin and the dry loop"><span class="on">ON</span><span class="off">BYPASS</span></button>
+                        <label class="live-field">Loop <select class="live-loop"><option value="band">Band</option><option value="drums">Drums</option><option value="keys">Keys and bass</option></select></label>
+                        <label class="live-field">Preset <select class="live-preset"><option value="0">Default</option><option value="1">Gentle Safety</option><option value="2">Drum Bus Clip</option><option value="3">Loud Master</option><option value="4">808 Smash</option><option value="5">Soft Saturate</option><option value="6">Snare Crack</option><option value="7">Parallel Crush</option><option value="8">Hard Ceiling</option><option value="9">Bass Round</option><option value="10">Lo-Fi Aliased</option></select></label>
+                        <span class="demo-note">Live: the plugin itself runs in your browser on a loop of NULL JSFX instruments. Change the preset or bypass it while it plays.</span>
+                        <span class="live-status demo-note" role="status"></span>
+                    </div>
                 </section>
                 <section class="guide-section">
                     <h2>Controls</h2>
@@ -97,5 +103,6 @@
     </button>
     <script src="/assets/js/theme.js"></script>
     <script src="/assets/js/demo.js"></script>
+    <script src="/assets/js/live.js"></script>
 </body>
 </html>

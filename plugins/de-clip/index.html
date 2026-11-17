@@ -39,6 +39,15 @@
             </div>
             <div class="guide-body">
                 <section class="guide-section">
+                    <h2>Listen</h2>
+                    <div class="live demo-big" data-live="de_clip" data-presets="{&quot;d&quot;:{&quot;1&quot;:-0.3,&quot;2&quot;:3,&quot;3&quot;:0,&quot;4&quot;:0},&quot;p&quot;:[[&quot;Default&quot;,{}],[&quot;Hard Clipped Master&quot;,{&quot;1&quot;:-0.1,&quot;2&quot;:2,&quot;3&quot;:-6}],[&quot;Normalized Clip&quot;,{&quot;1&quot;:-1,&quot;3&quot;:-6}],[&quot;Clipped Recorder&quot;,{&quot;1&quot;:-0.5,&quot;3&quot;:-3}],[&quot;Gentle&quot;,{&quot;1&quot;:-0.1,&quot;2&quot;:4}],[&quot;Hear What Returns&quot;,{&quot;4&quot;:1}],[&quot;Overloaded Interview&quot;,{&quot;1&quot;:-2,&quot;3&quot;:-4}],[&quot;Clipped Drum Room&quot;,{&quot;1&quot;:-0.5,&quot;2&quot;:2,&quot;3&quot;:-4}],[&quot;Soft Clipped Mix&quot;,{&quot;1&quot;:-3,&quot;2&quot;:4,&quot;3&quot;:-2}],[&quot;Delta at Minus 1&quot;,{&quot;1&quot;:-1,&quot;4&quot;:1}],[&quot;Field Recorder Peaks&quot;,{&quot;1&quot;:-0.2,&quot;2&quot;:5,&quot;3&quot;:-3}]]}"><button type="button" class="live-play" aria-label="Play live: the loop through the plugin" title="Play live"><svg class="i-play" width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><polygon points="6 4 20 12 6 20" fill="currentColor"/></svg><svg class="i-stop" width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="6" width="12" height="12" fill="currentColor"/></svg></button><button type="button" class="live-ab" aria-pressed="false" title="Switch between the plugin and the dry loop"><span class="on">ON</span><span class="off">BYPASS</span></button>
+                        <label class="live-field">Loop <select class="live-loop"><option value="band">Band</option><option value="drums">Drums</option><option value="keys">Keys and bass</option></select></label>
+                        <label class="live-field">Preset <select class="live-preset"><option value="0">Default</option><option value="1">Hard Clipped Master</option><option value="2">Normalized Clip</option><option value="3">Clipped Recorder</option><option value="4">Gentle</option><option value="5">Hear What Returns</option><option value="6">Overloaded Interview</option><option value="7">Clipped Drum Room</option><option value="8">Soft Clipped Mix</option><option value="9">Delta at Minus 1</option><option value="10">Field Recorder Peaks</option></select></label>
+                        <span class="demo-note">Live: the plugin itself runs in your browser on a loop of NULL JSFX instruments. Change the preset or bypass it while it plays.</span>
+                        <span class="live-status demo-note" role="status"></span>
+                    </div>
+                </section>
+                <section class="guide-section">
                     <h2>Controls</h2>
                     <ul class="guide-sliders"><li><span class="slider-name">Clip Level</span><span class="slider-desc">−24 to 0 dB — The level at and above which samples count as clipped (-24 to 0 dB); set it just under where the waveform flattens.</span></li><li><span class="slider-name">Min Length</span><span class="slider-desc">2 to 8 Samples — How many samples in a row must sit at the clip level before they are rebuilt (2 to 8); higher leaves natural peaks alone.</span></li><li><span class="slider-name">Output</span><span class="slider-desc">−24 to +12 dB — Output level (-24 to +12 dB): the rebuilt peaks pass the clip level and often 0 dBFS, so turn down here or limit after.</span></li><li><span class="slider-name">Listen</span><span class="slider-desc">Output / Delta — Listen: Output plays the result; Delta plays only what was added back.</span></li></ul>
                 </section>
@@ -88,5 +97,6 @@
     </button>
     <script src="/assets/js/theme.js"></script>
     <script src="/assets/js/demo.js"></script>
+    <script src="/assets/js/live.js"></script>
 </body>
 </html>

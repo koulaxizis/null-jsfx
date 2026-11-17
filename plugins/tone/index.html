@@ -39,6 +39,15 @@
             </div>
             <div class="guide-body">
                 <section class="guide-section">
+                    <h2>Listen</h2>
+                    <div class="live demo-big" data-live="tone" data-presets="{&quot;d&quot;:{&quot;1&quot;:0,&quot;2&quot;:0,&quot;3&quot;:100,&quot;4&quot;:8000,&quot;5&quot;:0},&quot;p&quot;:[[&quot;Default&quot;,{}],[&quot;Warm&quot;,{&quot;1&quot;:3,&quot;2&quot;:-2}],[&quot;Bright&quot;,{&quot;2&quot;:4,&quot;4&quot;:6000}],[&quot;Loudness&quot;,{&quot;1&quot;:6,&quot;2&quot;:3,&quot;3&quot;:120,&quot;4&quot;:6000,&quot;5&quot;:-3}],[&quot;Thin Out Lows&quot;,{&quot;1&quot;:-6,&quot;3&quot;:200}],[&quot;Tame Highs&quot;,{&quot;2&quot;:-4,&quot;4&quot;:5000}],[&quot;Telephone Lite&quot;,{&quot;1&quot;:-12,&quot;2&quot;:-9,&quot;3&quot;:400,&quot;4&quot;:3000,&quot;5&quot;:4}],[&quot;Sub Weight&quot;,{&quot;1&quot;:4,&quot;3&quot;:60}],[&quot;Vocal Air&quot;,{&quot;1&quot;:-2,&quot;2&quot;:3,&quot;3&quot;:150,&quot;4&quot;:10000}],[&quot;Drum Bus Punch&quot;,{&quot;1&quot;:2.5,&quot;2&quot;:1.5,&quot;3&quot;:80,&quot;5&quot;:-1.5}],[&quot;Master Smile&quot;,{&quot;1&quot;:1.5,&quot;2&quot;:1.5,&quot;3&quot;:60,&quot;4&quot;:12000,&quot;5&quot;:-1}]]}"><button type="button" class="live-play" aria-label="Play live: the loop through the plugin" title="Play live"><svg class="i-play" width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><polygon points="6 4 20 12 6 20" fill="currentColor"/></svg><svg class="i-stop" width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="6" width="12" height="12" fill="currentColor"/></svg></button><button type="button" class="live-ab" aria-pressed="false" title="Switch between the plugin and the dry loop"><span class="on">ON</span><span class="off">BYPASS</span></button>
+                        <label class="live-field">Loop <select class="live-loop"><option value="band">Band</option><option value="drums">Drums</option><option value="keys">Keys and bass</option></select></label>
+                        <label class="live-field">Preset <select class="live-preset"><option value="0">Default</option><option value="1">Warm</option><option value="2">Bright</option><option value="3">Loudness</option><option value="4">Thin Out Lows</option><option value="5">Tame Highs</option><option value="6">Telephone Lite</option><option value="7">Sub Weight</option><option value="8">Vocal Air</option><option value="9">Drum Bus Punch</option><option value="10">Master Smile</option></select></label>
+                        <span class="demo-note">Live: the plugin itself runs in your browser on a loop of NULL JSFX instruments. Change the preset or bypass it while it plays.</span>
+                        <span class="live-status demo-note" role="status"></span>
+                    </div>
+                </section>
+                <section class="guide-section">
                     <h2>Controls</h2>
                     <ul class="guide-sliders"><li><span class="slider-name">Bass</span><span class="slider-desc">−12 to +12 dB — Low shelf gain, ±12 dB.</span></li><li><span class="slider-name">Treble</span><span class="slider-desc">−12 to +12 dB — High shelf gain, ±12 dB.</span></li><li><span class="slider-name">Bass Freq</span><span class="slider-desc">40 to 400 Hz — Corner of the low shelf.</span></li><li><span class="slider-name">Treble Freq</span><span class="slider-desc">2000 to 16000 Hz — Corner of the high shelf.</span></li><li><span class="slider-name">Output</span><span class="slider-desc">−12 to +12 dB — Output level after the shelves.</span></li></ul>
                 </section>
@@ -93,5 +102,6 @@
     </button>
     <script src="/assets/js/theme.js"></script>
     <script src="/assets/js/demo.js"></script>
+    <script src="/assets/js/live.js"></script>
 </body>
 </html>
