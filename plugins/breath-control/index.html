@@ -39,6 +39,15 @@
             </div>
             <div class="guide-body">
                 <section class="guide-section">
+                    <h2>Listen</h2>
+                    <div class="live demo-big" data-live="breath_control" data-presets="{&quot;d&quot;:{&quot;1&quot;:-40,&quot;2&quot;:5,&quot;3&quot;:120,&quot;4&quot;:-12},&quot;p&quot;:[[&quot;Default&quot;,{}],[&quot;Gentle Vocal Breaths&quot;,{&quot;1&quot;:-42,&quot;3&quot;:150,&quot;4&quot;:-6}],[&quot;Pop Vocal&quot;,{&quot;1&quot;:-38,&quot;2&quot;:3,&quot;3&quot;:100,&quot;4&quot;:-10}],[&quot;Rap Vocal Tight&quot;,{&quot;1&quot;:-34,&quot;2&quot;:2,&quot;3&quot;:60}],[&quot;Podcast Dialogue&quot;,{&quot;2&quot;:8,&quot;3&quot;:200}],[&quot;Voice Over Clean&quot;,{&quot;1&quot;:-45,&quot;4&quot;:-15}],[&quot;Quiet Room Narration&quot;,{&quot;1&quot;:-50,&quot;3&quot;:150,&quot;4&quot;:-18}],[&quot;Choir Breaths&quot;,{&quot;1&quot;:-46,&quot;2&quot;:8,&quot;3&quot;:250,&quot;4&quot;:-6}],[&quot;Wind Instrument&quot;,{&quot;1&quot;:-44,&quot;2&quot;:10,&quot;3&quot;:300,&quot;4&quot;:-8}],[&quot;Aggressive Removal&quot;,{&quot;1&quot;:-32,&quot;2&quot;:2,&quot;3&quot;:80,&quot;4&quot;:-24}],[&quot;Audiobook Breaths&quot;,{&quot;1&quot;:-48,&quot;2&quot;:6,&quot;3&quot;:180,&quot;4&quot;:-9}]]}"><button type="button" class="live-play" aria-label="Play live: the loop through the plugin" title="Play live"><svg class="i-play" width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><polygon points="6 4 20 12 6 20" fill="currentColor"/></svg><svg class="i-stop" width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="6" width="12" height="12" fill="currentColor"/></svg></button><button type="button" class="live-ab" aria-pressed="false" title="Switch between the plugin and the dry loop"><span class="on">ON</span><span class="off">BYPASS</span></button>
+                        <label class="live-field">Loop <select class="live-loop"><option value="band">Band</option><option value="drums">Drums</option><option value="keys">Keys and bass</option></select></label>
+                        <label class="live-field">Preset <select class="live-preset"><option value="0">Default</option><option value="1">Gentle Vocal Breaths</option><option value="2">Pop Vocal</option><option value="3">Rap Vocal Tight</option><option value="4">Podcast Dialogue</option><option value="5">Voice Over Clean</option><option value="6">Quiet Room Narration</option><option value="7">Choir Breaths</option><option value="8">Wind Instrument</option><option value="9">Aggressive Removal</option><option value="10">Audiobook Breaths</option></select></label>
+                        <span class="demo-note">Live: the plugin itself runs in your browser on a loop of NULL JSFX instruments. Change the preset or bypass it while it plays.</span>
+                        <span class="live-status demo-note" role="status"></span>
+                    </div>
+                </section>
+                <section class="guide-section">
                     <h2>Controls</h2>
                     <ul class="guide-sliders"><li><span class="slider-name">Threshold</span><span class="slider-desc">−70 to 0 dB — Level (RMS-style, dBFS) below which the signal is treated as breath or noise and turned down; above it the voice passes at full level.</span></li><li><span class="slider-name">Attack</span><span class="slider-desc">1 to 50 ms — How fast the gain returns to unity when the voice comes back above Threshold.</span></li><li><span class="slider-name">Release</span><span class="slider-desc">20 to 1000 ms — How fast the gain moves down to Range once the level falls below Threshold.</span></li><li><span class="slider-name">Range</span><span class="slider-desc">−24 to 0 dB — How much quieter breaths get: the gain applied while the level is below Threshold.</span></li></ul>
                 </section>
@@ -93,5 +102,6 @@
     </button>
     <script src="/assets/js/theme.js"></script>
     <script src="/assets/js/demo.js"></script>
+    <script src="/assets/js/live.js"></script>
 </body>
 </html>

@@ -284,6 +284,20 @@ function check(cond, what) {
   const imp = await nextApply(14);
   check(JSON.stringify(imp.install) === '[["tilt","jsfx"],["tilt","clap"]]' && JSON.stringify(imp.extras) === '["fonts"]', 'installs the missing plugin files and extras from the list');
 
+  // Starter profiles: a ready-made pick of plugins and extras, installed with one button
+  check(catalog.profiles.length === 6 && (await page.locator('#nav-profiles button').count()) === 6, 'the six starter profiles are in the menu');
+  const mix = catalog.profiles.find((x) => x.id === 'mixing');
+  await page.click('#nav button[data-view="profile:mixing"]');
+  check((await page.locator('.card').count()) === mix.plugins.length && (await page.locator('.card[data-id="rack"]').count()) === 1, 'a profile lists its plugins, the Rack too');
+  check((await page.textContent('#bulk')).startsWith('Install the Mixing profile ('), 'the profile has one install button');
+  if (shots) await page.screenshot({ path: path.join(shots, 'hub-profile.png') });
+  await page.click('#bulk');
+  const prof = await nextApply(15);
+  check(prof.install.some(([id, f]) => id === 'rack' && (f === 'vst3' || f === 'clap')) && prof.install.some(([id]) => id === 'parametric_eq') && prof.install.every(([id]) => mix.plugins.includes(id)), 'installs the missing plugins of the profile, the Rack as VST3 or CLAP');
+  check(prof.extras.includes('presets') && prof.extras.every((x) => mix.extras.includes(x)) && !prof.extras.includes('fonts'), 'and turns on the extras of the profile that are off (fonts are on from the list)');
+  await page.click('#nav button[data-view="profile:mixing"]');
+  check(await page.isHidden('#bulk'), 'a profile that is all installed has nothing left to install');
+
   // Greek: every part of the page, with nothing left untranslated
   check((await calls()).some(([c, a]) => c === 'hub_save_settings' && a.settings.language === 'en'), 'the first start saves the computer\'s language (English here)');
   await page.click('#nav button[data-view="settings"]');
@@ -292,7 +306,7 @@ function check(cond, what) {
   check((await calls()).some(([c, a]) => c === 'hub_save_settings' && a.settings.language === 'el'), 'the language is saved');
   check((await page.textContent('#view-settings h2')) === 'Ρυθμίσεις' && (await page.textContent('#verify')) === 'Έλεγχος εγκατεστημένων αρχείων', 'Settings in Greek');
   check((await page.getAttribute('#search', 'placeholder')).startsWith('Αναζήτηση'), 'the search box in Greek');
-  for (const v of ['all', 'installed', 'extras', 'group:one-slider', 'news', 'settings']) await page.click(`#nav button[data-view="${v}"]`);
+  for (const v of ['all', 'installed', 'extras', 'group:one-slider', 'profile:podcast', 'profile:mixing', 'profile:sound-design', 'news', 'settings']) await page.click(`#nav button[data-view="${v}"]`);
   await page.click('#nav button[data-view="all"]');
   check((await page.textContent('.card[data-id="amp_simulator"] .card-foot button')) === 'Εγκατάσταση', 'card buttons in Greek');
   await page.click('.card[data-id="tilt"]');

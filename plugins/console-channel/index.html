@@ -39,6 +39,15 @@
             </div>
             <div class="guide-body">
                 <section class="guide-section">
+                    <h2>Listen</h2>
+                    <div class="live demo-big" data-live="console_channel" data-presets="{&quot;d&quot;:{&quot;1&quot;:1,&quot;2&quot;:30,&quot;3&quot;:0},&quot;p&quot;:[[&quot;Default&quot;,{}],[&quot;Clean Desk&quot;,{&quot;1&quot;:0,&quot;2&quot;:40}],[&quot;Warm Tracks&quot;,{&quot;2&quot;:50}],[&quot;Punchy Drums&quot;,{&quot;1&quot;:2,&quot;2&quot;:60}],[&quot;Bright Vocals&quot;,{&quot;1&quot;:3,&quot;2&quot;:40}],[&quot;Hot Channel&quot;,{&quot;2&quot;:90,&quot;3&quot;:-3}],[&quot;Subtle Colour&quot;,{&quot;2&quot;:15}],[&quot;Punchy Bass&quot;,{&quot;1&quot;:2,&quot;2&quot;:45}],[&quot;Bright Acoustic&quot;,{&quot;1&quot;:3}],[&quot;Warm Keys&quot;,{&quot;2&quot;:35}],[&quot;Driven Guitar&quot;,{&quot;1&quot;:2,&quot;2&quot;:80,&quot;3&quot;:-2}]]}"><button type="button" class="live-play" aria-label="Play live: the loop through the plugin" title="Play live"><svg class="i-play" width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><polygon points="6 4 20 12 6 20" fill="currentColor"/></svg><svg class="i-stop" width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="6" width="12" height="12" fill="currentColor"/></svg></button><button type="button" class="live-ab" aria-pressed="false" title="Switch between the plugin and the dry loop"><span class="on">ON</span><span class="off">BYPASS</span></button>
+                        <label class="live-field">Loop <select class="live-loop"><option value="band">Band</option><option value="drums">Drums</option><option value="keys">Keys and bass</option></select></label>
+                        <label class="live-field">Preset <select class="live-preset"><option value="0">Default</option><option value="1">Clean Desk</option><option value="2">Warm Tracks</option><option value="3">Punchy Drums</option><option value="4">Bright Vocals</option><option value="5">Hot Channel</option><option value="6">Subtle Colour</option><option value="7">Punchy Bass</option><option value="8">Bright Acoustic</option><option value="9">Warm Keys</option><option value="10">Driven Guitar</option></select></label>
+                        <span class="demo-note">Live: the plugin itself runs in your browser on a loop of NULL JSFX instruments. Change the preset or bypass it while it plays.</span>
+                        <span class="live-status demo-note" role="status"></span>
+                    </div>
+                </section>
+                <section class="guide-section">
                     <h2>Controls</h2>
                     <ul class="guide-sliders"><li><span class="slider-name">Character</span><span class="slider-desc">Clean / Warm / Punchy / Bright — Clean: no emphasis, symmetric saturation. Warm: the lows saturate first, with even harmonics. Punchy: the deep lows saturate first, with more drive. Bright: the highs saturate first.</span></li><li><span class="slider-name">Drive</span><span class="slider-desc">0 to 100% — How hard the channel is driven: up to 12, 15 or 18 dB depending on the character; small signals stay clean.</span></li><li><span class="slider-name">Output</span><span class="slider-desc">−12 to +12 dB — Output level after the console stage.</span></li></ul>
                 </section>
@@ -88,5 +97,6 @@
     </button>
     <script src="/assets/js/theme.js"></script>
     <script src="/assets/js/demo.js"></script>
+    <script src="/assets/js/live.js"></script>
 </body>
 </html>

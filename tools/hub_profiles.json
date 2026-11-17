@@ -1,0 +1,20 @@
+[
+ {"id": "podcast", "name": "Podcast", "desc": "Clean speech for podcasts, voice-overs and audiobooks: repair, level, tone and loudness.",
+  "plugins": ["noise_reduction", "de_hum", "de_plosive", "click_repair", "de_clip", "deesser", "breath_control", "auto_leveler", "dynamics", "studio_eq", "room_tone", "limiter", "loudness_meter"],
+  "extras": ["chains", "presets"]},
+ {"id": "beatmaking", "name": "Beatmaking", "desc": "Drums, bass, chords and synths to make beats, with the effects that glue and pump them.",
+  "plugins": ["drum_machine", "kick", "bass", "synth", "sampler", "chords", "arpeggiator", "riff", "glue_comp", "transient_shaper", "sidechain_ducker", "saturation", "bitcrusher", "tape_stop", "reverb", "delay"],
+  "extras": ["chains", "presets"]},
+ {"id": "mixing", "name": "Mixing", "desc": "The everyday mixing kit: EQ, compression, console colour, space, width and meters, and the Rack for other DAWs.",
+  "plugins": ["parametric_eq", "dynamic_eq", "glue_comp", "console_channel", "console_buss", "saturation", "transient_shaper", "deesser", "reverb", "delay", "stereo_width", "spectrum_analyzer", "vu_meter", "rack"],
+  "extras": ["chains", "presets"]},
+ {"id": "mastering", "name": "Mastering", "desc": "Finish a mix: tone, multiband and bus compression, width, limiting, loudness and a reference to compare with.",
+  "plugins": ["studio_eq", "passive_eq", "multiband_compressor", "glue_comp", "tape", "mid_side_matrix", "stereo_width", "maximizer", "limiter", "loudness_meter", "spectrum_analyzer", "reference", "rack"],
+  "extras": ["chains", "presets"]},
+ {"id": "guitar", "name": "Guitar", "desc": "A guitar rig: tuner, gate, drive, amp and cabinet, and the classic pedals.",
+  "plugins": ["tuner", "gate", "driver", "crunch", "amp_simulator", "cabinet_simulator", "octaver", "wah", "chorus", "phaser", "flanger", "tremolo", "tape_echo", "spring_reverb"],
+  "extras": ["chains", "presets"]},
+ {"id": "sound-design", "name": "Sound Design", "desc": "Turn sounds into new ones: granular, spectral, pitch and frequency tricks, resonators and long spaces.",
+  "plugins": ["granular", "spectral_freeze", "spectral_blur", "frequency_shifter", "ring_mod", "resonator", "pitch_shifter", "reverser", "glitch_fx", "phase_distortion", "convolution", "shimmer_reverb", "bloom_delay", "noise_generator", "rack"],
+  "extras": ["chains", "presets"]}
+]

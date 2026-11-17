@@ -39,6 +39,15 @@
             </div>
             <div class="guide-body">
                 <section class="guide-section">
+                    <h2>Listen</h2>
+                    <div class="live demo-big" data-live="speaker_sim" data-presets="{&quot;d&quot;:{&quot;1&quot;:0,&quot;2&quot;:100,&quot;3&quot;:0,&quot;4&quot;:0},&quot;p&quot;:[[&quot;Default&quot;,{}],[&quot;Phone Check&quot;,{}],[&quot;Laptop Check&quot;,{&quot;1&quot;:1,&quot;4&quot;:-17.2}],[&quot;Earbuds Check&quot;,{&quot;1&quot;:2,&quot;4&quot;:-19.6}],[&quot;Car Check&quot;,{&quot;1&quot;:7,&quot;4&quot;:-24}],[&quot;Old Radio&quot;,{&quot;1&quot;:4,&quot;3&quot;:25,&quot;4&quot;:-14.6}],[&quot;Phone Call Voice&quot;,{&quot;1&quot;:5,&quot;3&quot;:15,&quot;4&quot;:-9.1}],[&quot;Megaphone Shout&quot;,{&quot;1&quot;:6,&quot;3&quot;:40,&quot;4&quot;:2}],[&quot;Half Radio Blend&quot;,{&quot;1&quot;:4,&quot;2&quot;:50,&quot;4&quot;:-17.3}],[&quot;TV In The Next Room&quot;,{&quot;1&quot;:3,&quot;4&quot;:-19.5}],[&quot;Laptop Mix Blend&quot;,{&quot;1&quot;:1,&quot;2&quot;:40,&quot;4&quot;:-16}]]}"><button type="button" class="live-play" aria-label="Play live: the loop through the plugin" title="Play live"><svg class="i-play" width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><polygon points="6 4 20 12 6 20" fill="currentColor"/></svg><svg class="i-stop" width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="6" width="12" height="12" fill="currentColor"/></svg></button><button type="button" class="live-ab" aria-pressed="false" title="Switch between the plugin and the dry loop"><span class="on">ON</span><span class="off">BYPASS</span></button>
+                        <label class="live-field">Loop <select class="live-loop"><option value="band">Band</option><option value="drums">Drums</option><option value="keys">Keys and bass</option></select></label>
+                        <label class="live-field">Preset <select class="live-preset"><option value="0">Default</option><option value="1">Phone Check</option><option value="2">Laptop Check</option><option value="3">Earbuds Check</option><option value="4">Car Check</option><option value="5">Old Radio</option><option value="6">Phone Call Voice</option><option value="7">Megaphone Shout</option><option value="8">Half Radio Blend</option><option value="9">TV In The Next Room</option><option value="10">Laptop Mix Blend</option></select></label>
+                        <span class="demo-note">Live: the plugin itself runs in your browser on a loop of NULL JSFX instruments. Change the preset or bypass it while it plays.</span>
+                        <span class="live-status demo-note" role="status"></span>
+                    </div>
+                </section>
+                <section class="guide-section">
                     <h2>Controls</h2>
                     <ul class="guide-sliders"><li><span class="slider-name">Device</span><span class="slider-desc">Phone / Laptop / Earbuds / TV / Radio / Telephone / Megaphone / Car — The device: phone, laptop, earbuds, TV, radio, telephone, megaphone or car.</span></li><li><span class="slider-name">Mix</span><span class="slider-desc">0 to 100% — Blend between the dry signal and the device.</span></li><li><span class="slider-name">Drive</span><span class="slider-desc">0 to 100% — Extra clipping of the small speaker.</span></li><li><span class="slider-name">Output</span><span class="slider-desc">−24 to +12 dB — Output level.</span></li></ul>
                 </section>
@@ -93,5 +102,6 @@
     </button>
     <script src="/assets/js/theme.js"></script>
     <script src="/assets/js/demo.js"></script>
+    <script src="/assets/js/live.js"></script>
 </body>
 </html>

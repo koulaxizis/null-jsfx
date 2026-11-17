@@ -2190,3 +2190,98 @@ a.download-option:hover {
     font-size: 12px;
     color: var(--muted);
 }
+
+/* Live player of a plugin page (assets/js/live.js): play / stop, bypass, loop and preset */
+.live {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 10px;
+    margin-top: 14px;
+}
+
+.live-play {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    padding: 0;
+    border: 1px solid var(--border);
+    border-radius: 50%;
+    background: var(--card-bg);
+    color: var(--muted);
+    cursor: pointer;
+    transition: color 0.2s, border-color 0.2s;
+}
+
+.live-play:hover,
+.live.demo-playing .live-play {
+    color: var(--text);
+    border-color: #c4c4c4;
+}
+
+.live-play .i-stop,
+.live.demo-playing .live-play .i-play {
+    display: none;
+}
+
+.live.demo-playing .live-play .i-stop {
+    display: block;
+}
+
+.live-ab {
+    font: inherit;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    padding: 6px 10px;
+    border-radius: 4px;
+    border: 1px solid #c4c4c4;
+    background: #c4c4c4;
+    color: #1b1a18;
+    cursor: pointer;
+}
+
+.live-ab .off,
+.live.demo-bypass .live-ab .on {
+    display: none;
+}
+
+.live.demo-bypass .live-ab {
+    background: transparent;
+    color: var(--muted);
+    border-color: var(--border);
+}
+
+.live.demo-bypass .live-ab .off {
+    display: inline;
+}
+
+.live-field {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: var(--muted);
+}
+
+.live-field select {
+    font: inherit;
+    font-size: 12px;
+    color: var(--text);
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 4px 6px;
+    max-width: 220px;
+}
+
+.live .demo-note {
+    flex-basis: 100%;
+    margin-left: 0;
+}
+
+.live-status:empty {
+    display: none;
+}

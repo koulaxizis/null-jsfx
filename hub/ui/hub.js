@@ -167,9 +167,16 @@ function updateReq(list, extras = []) {
 
 // --- rendering -------------------------------------------------------------------------------
 
+/** the starter profile shown, if any (view "profile:<id>") */
+function profile() { return view.startsWith("profile:") ? (V?.catalog?.profiles ?? []).find((x) => x.id === view.slice(8)) : null; }
+/** a profile's plugins in its own order (the Rack too), and its extras not turned on yet */
+function profilePlugins(pr) { return pr.plugins.map((id) => plugins().find((p) => p.id === id)).filter(Boolean); }
+function profileExtras(pr) { return (pr.extras || []).filter((x) => (V.catalog.extras || []).some((e) => e.id === x) && !extraSt(x).installed); }
+
 function shown() {
   const q = $("search").value.trim().toLowerCase();
-  return (view === "extras" || view === "installed" || view === "updates" ? plugins() : effects()).filter((p) => {
+  const pr = profile();
+  return (pr ? profilePlugins(pr) : view === "extras" || view === "installed" || view === "updates" ? plugins() : effects()).filter((p) => {
     if (view === "extras" && p.group !== "extras") return false;
     if (view === "installed" && !isInstalled(p.id)) return false;
     if (view === "updates" && !outdatedFormats(p.id).length) return false;
@@ -237,6 +244,11 @@ function render() {
   $("nav-groups").innerHTML = (cat?.groups ?? [])
     .map((g) => `<button data-view="group:${esc(g.id)}">${esc(tr(g.name))} <b>${plugins().filter((p) => p.group === g.id).length}</b></button>`)
     .join("");
+  const profs = cat?.profiles ?? [];
+  $("nav-profiles-label").hidden = !profs.length;
+  $("nav-profiles").innerHTML = profs
+    .map((x) => `<button data-view="profile:${esc(x.id)}">${esc(tr(x.name))} <b>${profilePlugins(x).length}</b></button>`)
+    .join("");
   document.querySelectorAll("#nav button").forEach((b) => b.classList.toggle("active", b.dataset.view === view));
 
   for (const id of ["plugins", "news", "settings"]) $(`view-${id}`).hidden = true;
@@ -245,8 +257,9 @@ function render() {
   $("view-plugins").hidden = false;
 
   const group = view.startsWith("group:") ? cat?.groups.find((g) => g.id === view.slice(6)) : null;
+  const pr = profile();
   renderExtras();
-  $("group-desc").textContent = view === "extras" ? tr("The Rack for any DAW, and the extras for REAPER. They follow your plugins: an FX chain is added once all its plugins are installed.") : group ? tr(group.desc) : view === "updates" ? tr("Plugins with a newer version in the latest release.") : view === "new" ? tr("Plugins added in release {v}.", { v: cat?.version }) : "";
+  $("group-desc").textContent = pr ? `${tr(pr.desc)} ${tr("Install adds the formats picked above (the Rack as VST3 or CLAP) and turns on the FX chains and factory presets. You can remove any of them later.")}` : view === "extras" ? tr("The Rack for any DAW, and the extras for REAPER. They follow your plugins: an FX chain is added once all its plugins are installed.") : group ? tr(group.desc) : view === "updates" ? tr("Plugins with a newer version in the latest release.") : view === "new" ? tr("Plugins added in release {v}.", { v: cat?.version }) : "";
   const list = shown();
   renderPick();
   // bulk install: every shown plugin that misses one of the formats picked in the bar
@@ -257,6 +270,14 @@ function render() {
   bulk.textContent = tr("Install {plugins} ({files})", { plugins: plural(toAdd.length, "plugin", "plugins"), files: plural(nAdd, "file", "files") });
   bulk.title = tr("Installs the formats picked on the left in every plugin shown that does not have them yet");
   bulk.onclick = () => run(installReq(toAdd), tr("Installed {what}", { what: plural(nAdd, "plugin file", "plugin files") }));
+  if (pr) {
+    // a profile installs what it misses, even one plugin, with its extras
+    const extras = profileExtras(pr);
+    bulk.hidden = !toAdd.length && !extras.length;
+    bulk.textContent = tr("Install the {name} profile ({files})", { name: tr(pr.name), files: plural(nAdd, "file", "files") });
+    bulk.title = tr("Installs the plugins of this profile that are missing here, in the formats picked on the left, with its extras");
+    bulk.onclick = () => run({ ...installReq(toAdd), extras, extras_remove: [] }, tr("Installed the {name} profile", { name: tr(pr.name) }));
+  }
   bulk.disabled = busy;
   // bulk remove: every shown plugin that is installed, in all its formats
   const toRemove = list.filter((p) => isInstalled(p.id));

@@ -81,7 +81,7 @@ button.ghost { background: transparent; }
 .side button:hover { color: var(--text); background: var(--card); }
 .side button.active { color: var(--text); background: var(--card-hi); }
 .side b { font-weight: 400; font-size: 12px; }
-#nav-groups { display: flex; flex-direction: column; gap: 2px; }
+#nav-groups, #nav-profiles { display: flex; flex-direction: column; gap: 2px; }
 .side b.hot:not(:empty) { color: #151413; background: var(--accent); border-radius: 99px; padding: 0 7px; }
 .side-label { font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; color: #6f6f6f; margin: 14px 10px 4px; }
 .side-foot { margin-top: auto; padding: 12px 10px 0; display: flex; flex-direction: column; gap: 4px; font-size: 12px; }

@@ -39,6 +39,15 @@
             </div>
             <div class="guide-body">
                 <section class="guide-section">
+                    <h2>Listen</h2>
+                    <div class="live demo-big" data-live="de_plosive" data-presets="{&quot;d&quot;:{&quot;1&quot;:50,&quot;2&quot;:150,&quot;3&quot;:18,&quot;4&quot;:80,&quot;5&quot;:0},&quot;p&quot;:[[&quot;Default&quot;,{}],[&quot;Gentle&quot;,{&quot;1&quot;:35,&quot;2&quot;:120,&quot;3&quot;:10,&quot;4&quot;:100}],[&quot;Close Mic Vocal&quot;,{&quot;1&quot;:60,&quot;2&quot;:160}],[&quot;Spoken Word&quot;,{&quot;1&quot;:55,&quot;2&quot;:180,&quot;3&quot;:20,&quot;4&quot;:90}],[&quot;Aggressive&quot;,{&quot;1&quot;:80,&quot;2&quot;:220,&quot;3&quot;:28,&quot;4&quot;:120}],[&quot;Male Vocal&quot;,{&quot;2&quot;:130}],[&quot;Female Vocal&quot;,{&quot;2&quot;:200,&quot;3&quot;:15,&quot;4&quot;:70}],[&quot;Handheld Podcast&quot;,{&quot;1&quot;:65,&quot;2&quot;:170,&quot;3&quot;:24,&quot;4&quot;:100}],[&quot;Mic Bumps&quot;,{&quot;1&quot;:70,&quot;2&quot;:100,&quot;3&quot;:30,&quot;4&quot;:150}],[&quot;Listen Check&quot;,{&quot;5&quot;:1}],[&quot;Kids Voices&quot;,{&quot;1&quot;:55,&quot;2&quot;:240,&quot;3&quot;:16,&quot;4&quot;:70}]]}"><button type="button" class="live-play" aria-label="Play live: the loop through the plugin" title="Play live"><svg class="i-play" width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><polygon points="6 4 20 12 6 20" fill="currentColor"/></svg><svg class="i-stop" width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="6" width="12" height="12" fill="currentColor"/></svg></button><button type="button" class="live-ab" aria-pressed="false" title="Switch between the plugin and the dry loop"><span class="on">ON</span><span class="off">BYPASS</span></button>
+                        <label class="live-field">Loop <select class="live-loop"><option value="band">Band</option><option value="drums">Drums</option><option value="keys">Keys and bass</option></select></label>
+                        <label class="live-field">Preset <select class="live-preset"><option value="0">Default</option><option value="1">Gentle</option><option value="2">Close Mic Vocal</option><option value="3">Spoken Word</option><option value="4">Aggressive</option><option value="5">Male Vocal</option><option value="6">Female Vocal</option><option value="7">Handheld Podcast</option><option value="8">Mic Bumps</option><option value="9">Listen Check</option><option value="10">Kids Voices</option></select></label>
+                        <span class="demo-note">Live: the plugin itself runs in your browser on a loop of NULL JSFX instruments. Change the preset or bypass it while it plays.</span>
+                        <span class="live-status demo-note" role="status"></span>
+                    </div>
+                </section>
+                <section class="guide-section">
                     <h2>Controls</h2>
                     <ul class="guide-sliders"><li><span class="slider-name">Sensitivity</span><span class="slider-desc">0 to 100% — How easily a burst counts as a plosive: the low band must jump above the high band and its own average by 12 dB at 0% down to 0 dB at 100% (6 dB at the default 50%).</span></li><li><span class="slider-name">Frequency</span><span class="slider-desc">60 to 400 Hz — Crossover frequency (60 to 400 Hz): only the band below it is detected and turned down.</span></li><li><span class="slider-name">Max Reduction</span><span class="slider-desc">0 to 30 dB — The most the low band is turned down during a plosive (0 to 30 dB).</span></li><li><span class="slider-name">Release</span><span class="slider-desc">20 to 300 ms — How fast the low band comes back after the pop (20 to 300 ms).</span></li><li><span class="slider-name">Listen</span><span class="slider-desc">Off / On — On outputs only what is being removed, to hear exactly what the detector catches.</span></li></ul>
                 </section>
@@ -93,5 +102,6 @@
     </button>
     <script src="/assets/js/theme.js"></script>
     <script src="/assets/js/demo.js"></script>
+    <script src="/assets/js/live.js"></script>
 </body>
 </html>

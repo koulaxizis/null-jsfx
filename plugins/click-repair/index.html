@@ -41,6 +41,12 @@
                 <section class="guide-section">
                     <h2>Listen</h2>
                     <div class="demo demo-big" data-demo="click_repair"><button type="button" class="demo-play" aria-label="Listen: with and without the plugin" title="Listen"><svg class="i-play" width="12" height="12" viewBox="0 0 24 24" aria-hidden="true"><polygon points="6 4 20 12 6 20" fill="currentColor"/></svg><svg class="i-stop" width="12" height="12" viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="6" width="12" height="12" fill="currentColor"/></svg></button><button type="button" class="demo-ab" title="Switch between the plugin and the dry sound"><span class="on">ON</span><span class="off">BYPASS</span></button><span class="demo-note">The same music with the <b>Vinyl Crackle</b> preset and without the plugin. Switch while it plays.</span></div>
+                    <div class="live demo-big" data-live="click_repair" data-presets="{&quot;d&quot;:{&quot;1&quot;:50,&quot;2&quot;:10,&quot;3&quot;:0},&quot;p&quot;:[[&quot;Default&quot;,{}],[&quot;Vinyl Crackle&quot;,{&quot;1&quot;:35,&quot;2&quot;:8}],[&quot;Heavy Vinyl Pops&quot;,{&quot;2&quot;:30}],[&quot;Digital Spikes&quot;,{&quot;1&quot;:70,&quot;2&quot;:3}],[&quot;Edit Click Fix&quot;,{&quot;1&quot;:60,&quot;2&quot;:6}],[&quot;Mouth Clicks&quot;,{&quot;1&quot;:45,&quot;2&quot;:20}],[&quot;Archival Restore&quot;,{&quot;1&quot;:25,&quot;2&quot;:15}],[&quot;Worn Vinyl Crackle&quot;,{&quot;1&quot;:40,&quot;2&quot;:3,&quot;3&quot;:1}],[&quot;Light Crackle&quot;,{&quot;1&quot;:60,&quot;2&quot;:2,&quot;3&quot;:1}],[&quot;Gentle Vinyl Polish&quot;,{&quot;1&quot;:30,&quot;2&quot;:4,&quot;3&quot;:1}],[&quot;Tape Splice Pops&quot;,{&quot;1&quot;:55,&quot;2&quot;:12}]]}"><button type="button" class="live-play" aria-label="Play live: the loop through the plugin" title="Play live"><svg class="i-play" width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><polygon points="6 4 20 12 6 20" fill="currentColor"/></svg><svg class="i-stop" width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="6" width="12" height="12" fill="currentColor"/></svg></button><button type="button" class="live-ab" aria-pressed="false" title="Switch between the plugin and the dry loop"><span class="on">ON</span><span class="off">BYPASS</span></button>
+                        <label class="live-field">Loop <select class="live-loop"><option value="band">Band</option><option value="drums">Drums</option><option value="keys">Keys and bass</option></select></label>
+                        <label class="live-field">Preset <select class="live-preset"><option value="0">Default</option><option value="1">Vinyl Crackle</option><option value="2">Heavy Vinyl Pops</option><option value="3">Digital Spikes</option><option value="4">Edit Click Fix</option><option value="5">Mouth Clicks</option><option value="6">Archival Restore</option><option value="7">Worn Vinyl Crackle</option><option value="8">Light Crackle</option><option value="9">Gentle Vinyl Polish</option><option value="10">Tape Splice Pops</option></select></label>
+                        <span class="demo-note">Live: the plugin itself runs in your browser on a loop of NULL JSFX instruments. Change the preset or bypass it while it plays.</span>
+                        <span class="live-status demo-note" role="status"></span>
+                    </div>
                 </section>
                 <section class="guide-section">
                     <h2>Controls</h2>
@@ -92,5 +98,6 @@
     </button>
     <script src="/assets/js/theme.js"></script>
     <script src="/assets/js/demo.js"></script>
+    <script src="/assets/js/live.js"></script>
 </body>
 </html>

@@ -126,6 +126,18 @@ pub struct Extra {
     pub formats: Vec<Format>,
 }
 
+/// A starter profile: plugins (and extras) for one kind of work, installed with one click.
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct Profile {
+    pub id: String,
+    pub name: String,
+    #[serde(default)]
+    pub desc: String,
+    pub plugins: Vec<String>,
+    #[serde(default)]
+    pub extras: Vec<String>,
+}
+
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Packages {
     pub jsfx: String,
@@ -177,6 +189,9 @@ pub struct Catalog {
     pub chains: Vec<Chain>,
     #[serde(default)]
     pub extras: Vec<Extra>,
+    /// starter profiles (4.0 on); a catalog without them shows none
+    #[serde(default)]
+    pub profiles: Vec<Profile>,
     /// release file name -> its SHA-256 (hex), from GitHub's digests of the release's assets;
     /// a file downloaded whole is checked against it (catalogs before 3.3.1 have none)
     #[serde(default)]
@@ -276,6 +291,11 @@ impl Catalog {
                 }
             }
         }
+        for pr in &self.profiles {
+            if let Some(id) = std::iter::once(&pr.id).chain(&pr.plugins).chain(&pr.extras).find(|id| !is_id(id)) {
+                return bad("starter profile id", id);
+            }
+        }
         for (name, hex) in &self.sha256 {
             if !is_file_name(name) || hex.len() != 64 || !hex.bytes().all(|b| b.is_ascii_hexdigit()) {
                 return bad("checksum of", name);
@@ -356,6 +376,10 @@ mod tests {
         assert!(Catalog::parse(&bad_sum).is_err());
         let good_sum = ok.replacen("\"schema\": 1,", &format!("\"schema\": 1, \"sha256\": {{\"J.zip\": \"{}\"}},", "A".repeat(64)), 1);
         assert_eq!(Catalog::parse(&good_sum).unwrap().sha256_of("J.zip").unwrap(), "a".repeat(64));
+        let profile = |plugin: &str| ok.replacen("\"schema\": 1,", &format!("\"schema\": 1, \"profiles\": [{{\"id\": \"mixing\", \"name\": \"Mixing\", \"plugins\": [\"{plugin}\"], \"extras\": [\"chains\"]}}],"), 1);
+        assert_eq!(Catalog::parse(&profile("tilt")).unwrap().profiles[0].plugins, ["tilt"]);
+        assert!(Catalog::parse(&profile("../x")).unwrap_err().contains("starter profile"));
+        assert!(Catalog::parse(&ok).unwrap().profiles.is_empty());
     }
 
     #[test]

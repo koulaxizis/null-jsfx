@@ -39,6 +39,15 @@
             </div>
             <div class="guide-body">
                 <section class="guide-section">
+                    <h2>Listen</h2>
+                    <div class="live demo-big" data-live="crossfeed" data-presets="{&quot;d&quot;:{&quot;1&quot;:0,&quot;2&quot;:700,&quot;3&quot;:4.5,&quot;4&quot;:30,&quot;5&quot;:20,&quot;6&quot;:100},&quot;p&quot;:[[&quot;Default&quot;,{}],[&quot;Chu Moy&quot;,{&quot;3&quot;:6}],[&quot;Jan Meier&quot;,{&quot;2&quot;:650,&quot;3&quot;:9.5}],[&quot;Subtle&quot;,{&quot;3&quot;:10}],[&quot;Strong&quot;,{&quot;2&quot;:800,&quot;3&quot;:3}],[&quot;Near-Field Speakers&quot;,{&quot;1&quot;:1,&quot;5&quot;:15}],[&quot;Wide Speakers&quot;,{&quot;1&quot;:1,&quot;4&quot;:45,&quot;5&quot;:25}],[&quot;Narrow Desk&quot;,{&quot;1&quot;:1,&quot;4&quot;:20,&quot;5&quot;:10}],[&quot;Control Room&quot;,{&quot;1&quot;:1,&quot;5&quot;:45}],[&quot;Dry Speakers&quot;,{&quot;1&quot;:1,&quot;5&quot;:0}],[&quot;Gentle Late Night&quot;,{&quot;2&quot;:650,&quot;3&quot;:12,&quot;6&quot;:70}]]}"><button type="button" class="live-play" aria-label="Play live: the loop through the plugin" title="Play live"><svg class="i-play" width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><polygon points="6 4 20 12 6 20" fill="currentColor"/></svg><svg class="i-stop" width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="6" width="12" height="12" fill="currentColor"/></svg></button><button type="button" class="live-ab" aria-pressed="false" title="Switch between the plugin and the dry loop"><span class="on">ON</span><span class="off">BYPASS</span></button>
+                        <label class="live-field">Loop <select class="live-loop"><option value="band">Band</option><option value="drums">Drums</option><option value="keys">Keys and bass</option></select></label>
+                        <label class="live-field">Preset <select class="live-preset"><option value="0">Default</option><option value="1">Chu Moy</option><option value="2">Jan Meier</option><option value="3">Subtle</option><option value="4">Strong</option><option value="5">Near-Field Speakers</option><option value="6">Wide Speakers</option><option value="7">Narrow Desk</option><option value="8">Control Room</option><option value="9">Dry Speakers</option><option value="10">Gentle Late Night</option></select></label>
+                        <span class="demo-note">Live: the plugin itself runs in your browser on a loop of NULL JSFX instruments. Change the preset or bypass it while it plays.</span>
+                        <span class="live-status demo-note" role="status"></span>
+                    </div>
+                </section>
+                <section class="guide-section">
                     <h2>Controls</h2>
                     <ul class="guide-sliders"><li><span class="slider-name">Mode</span><span class="slider-desc">Crossfeed / Speakers — Crossfeed: Bauer&#x27;s headphone filter (bs2b). Speakers: two speakers in front of you, with head shadow, the time between the ears and a room.</span></li><li><span class="slider-name">Cutoff</span><span class="slider-desc">300 to 2000 Hz — Crossfeed: where the other side&#x27;s signal starts to roll off (300 to 2000 Hz; 700 is the bs2b default, 650 Jan Meier).</span></li><li><span class="slider-name">Feed</span><span class="slider-desc">1 to 15 dB — Crossfeed: how far below the own side the other side arrives in the lows (1 to 15 dB; 4.5 bs2b default, 6 Chu Moy, 9.5 Jan Meier).</span></li><li><span class="slider-name">Angle</span><span class="slider-desc">10 to 60 deg — Speakers: how far each speaker is off centre (10 to 60 degrees; 30 is the usual stereo triangle).</span></li><li><span class="slider-name">Room</span><span class="slider-desc">0 to 100% — Speakers: early reflections of a room (0 = none).</span></li><li><span class="slider-name">Mix</span><span class="slider-desc">0 to 100% — Blend of the dry and processed signal.</span></li><li><span class="slider-name">Output</span><span class="slider-desc">−12 to +12 dB — Output level (-12 to +12 dB).</span></li></ul>
                 </section>
@@ -88,5 +97,6 @@
     </button>
     <script src="/assets/js/theme.js"></script>
     <script src="/assets/js/demo.js"></script>
+    <script src="/assets/js/live.js"></script>
 </body>
 </html>
