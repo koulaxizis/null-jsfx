@@ -2,7 +2,7 @@ desc:NULL Strum
 author: Christos Koulaxizis
 tags: midi strum strummer guitar chord strumming rhythm pattern down up stroke humanize velocity tempo
 //category: MIDI
-//NULL JSFX v3.3.1 • https://nulljsfx.tech • MIT License
+//NULL JSFX v4.0 • https://nulljsfx.tech • MIT License
 
 slider1:0<0,3,1{Down,Up,Alternate,Random}>Direction
 slider2:12<0,100,1>Speed (ms)

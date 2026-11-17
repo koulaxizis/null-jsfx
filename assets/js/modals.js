@@ -49,6 +49,21 @@ const guides = {
     demo: 'chorus_one',
     page: 'plugins/chorus-one/'
   },
+  'closer': {
+    title: 'CLOSER',
+    subtitle: 'One-Knob Vocal Forward',
+    category: 'One Slider',
+    sliders: [
+      { name: 'Amount', range: '0 to 100', desc: 'How far forward the voice comes: 0 is untouched; higher values raise the compressor\'s ratio (threshold -24 dBFS, up to 3:1, 5 ms attack, 120 ms release) and its make-up (up to +3 dB), a presence lift around 3.5 kHz (up to +5 dB) that eases off by up to half while the compressor works hard, and a proximity lift below 180 Hz (up to +2.5 dB)' }
+    ],
+    uses: ['Bring a vocal to the front of a mix', 'Podcast and dialogue clarity', 'Voice-over that sits close', 'Lift backing vocals or a choir', 'Acoustic guitar that needs to speak'],
+    properties: 'Input → peak envelope of both channels (5 ms / 120 ms) → gain computer (-24 dBFS, 1:1 to 3:1) and make-up → + band-pass at 3.5 kHz (Q 0.9) scaled by the presence amount, reduced while the gain reduction reaches 6 dB → + one-pole low-pass at 180 Hz scaled by the proximity amount → Output. Zero latency.',
+    formats: ['JSFX', 'GFX', 'VST3', 'CLAP', 'LV2'],
+    shot: 'assets/img/gfx/closer.png',
+    studio: true,
+    beta: 'Beta: its rules have been tested on test signals so far and may still be tuned from your feedback, so a project saved now can sound a little different after an update.',
+    page: 'plugins/closer/'
+  },
   'crunch': {
     title: 'CRUNCH',
     subtitle: 'One-Knob Hard Distortion',
@@ -112,6 +127,21 @@ const guides = {
     studio: true,
     demo: 'driver',
     page: 'plugins/driver/'
+  },
+  'echo-one': {
+    title: 'ECHO ONE',
+    subtitle: 'One-Knob Tempo Delay',
+    category: 'One Slider',
+    sliders: [
+      { name: 'Amount', range: '0 to 100', desc: 'Delay amount in one move: 0 to 24 is a soft 1/16 slapback, 25 to 49 a 1/8 echo, 50 to 74 a dotted 1/8 and 75 to 100 a 1/4 note; feedback rises from 12% to 62%, the wet level to 50%, the ping-pong spread from 25 up, and the repeats get darker (low-pass 7 to 3 kHz). The time glides to each new value' }
+    ],
+    uses: ['Slapback on vocals and guitars', 'Tempo echoes on leads and synths', 'Ping-pong throws on the end of a phrase', 'Dub-style long repeats', 'Quick delay sketches with one control'],
+    properties: 'Input → tempo-locked delay per channel (host tempo, 120 bpm without one; the time glides over 80 ms; up to 2 s) → low-pass and 150 Hz high-pass in the loop → feedback, crossing sides by the ping-pong amount → mixed with dry → Output. Zero latency.',
+    formats: ['JSFX', 'GFX', 'VST3', 'CLAP', 'LV2'],
+    shot: 'assets/img/gfx/echo_one.png',
+    studio: true,
+    beta: 'Beta: its rules have been tested on test signals so far and may still be tuned from your feedback, so a project saved now can sound a little different after an update.',
+    page: 'plugins/echo-one/'
   },
   'exciter': {
     title: 'EXCITER',
@@ -256,6 +286,21 @@ const guides = {
     demo: 'riser',
     page: 'plugins/riser/'
   },
+  'smoother': {
+    title: 'SMOOTHER',
+    subtitle: 'One-Knob Harshness Softener',
+    category: 'One Slider',
+    sliders: [
+      { name: 'Amount', range: '0 to 100', desc: 'How much harshness to soften: 0 is off; higher values lower the threshold (-14 to -20 dB of a band\'s share of the whole signal) and deepen the cuts (up to 10 dB) of four bands at 2, 3.15, 5 and 8 kHz. A band is cut only while it pokes out of the mix, by what it rises over the threshold' }
+    ],
+    uses: ['Tame a harsh vocal without dulling it', 'Soften cymbals and hi-hats', 'Take the fizz off distorted guitars', 'Polish a bright mix bus or master', 'De-harsh a podcast voice'],
+    properties: 'Input → mono sum → power envelope (2 ms / 80 ms) → four band-pass detectors (2, 3.15, 5, 8 kHz, Q 2) with their own envelopes → each band\'s share of the whole signal in dB → cut = (share - threshold) × Amount, up to 10 dB → the four bands taken out of each channel one after another (x - band × (1 - gain)) → Output. Zero latency.',
+    formats: ['JSFX', 'GFX', 'VST3', 'CLAP', 'LV2'],
+    shot: 'assets/img/gfx/smoother.png',
+    studio: true,
+    beta: 'Beta: its rules have been tested on test signals so far and may still be tuned from your feedback, so a project saved now can sound a little different after an update.',
+    page: 'plugins/smoother/'
+  },
   'snappy': {
     title: 'SNAPPY',
     subtitle: 'One-Knob Transient Shaper',
@@ -335,6 +380,21 @@ const guides = {
     studio: true,
     demo: 'tilt',
     page: 'plugins/tilt/'
+  },
+  'warmer': {
+    title: 'WARMER',
+    subtitle: 'One-Knob Analog Warmth',
+    category: 'One Slider',
+    sliders: [
+      { name: 'Amount', range: '0 to 100', desc: 'Warmth in one move: 0 leaves the signal untouched; higher values drive the lows and low mids (below 600 Hz) into a gentle, slightly asymmetric tape/tube curve (drive x1 to x3, even harmonics) and lift them up to +2.3 dB, ease the top down by up to 2 dB and close a soft low-pass from 20 to 9 kHz, with a small trim so the level stays close to the input' }
+    ],
+    uses: ['Warm up a thin vocal or acoustic guitar', 'Round off a DI bass', 'Analog glue on the drum bus', 'A soft glow on the master', 'Take the edge off bright synths'],
+    properties: 'Input → split at 600 Hz (one pole) → lows: asymmetric tanh curve, DC removed, mixed in by Amount, +0 to +2.3 dB; highs: 0 to -2 dB → one-pole low-pass 20 to 9 kHz faded in by Amount → trim → Output. Zero latency.',
+    formats: ['JSFX', 'GFX', 'VST3', 'CLAP', 'LV2'],
+    shot: 'assets/img/gfx/warmer.png',
+    studio: true,
+    beta: 'Beta: its rules have been tested on test signals so far and may still be tuned from your feedback, so a project saved now can sound a little different after an update.',
+    page: 'plugins/warmer/'
   },
   'wetter': {
     title: 'WETTER',
@@ -957,6 +1017,27 @@ const guides = {
     studio: true,
     demo: 'limiter',
     page: 'plugins/limiter/'
+  },
+  'lofi-comp': {
+    title: 'LO-FI COMP',
+    subtitle: 'Lo-Fi Beat Compressor',
+    category: 'Essentials',
+    sliders: [
+      { name: 'Squash', range: '0 to 100%', desc: 'How hard it pumps: threshold from -10 to -40 dBFS and ratio from 2:1 to 20:1 together, with its own make-up gain' },
+      { name: 'Release', range: '20 to 1000 ms', desc: 'How fast the compressor lets go: short values pump with the beat, long values hold the sound down' },
+      { name: 'Sample Rate', range: '4000 to 48000 Hz', desc: 'Sample rate of the old sampler (low-pass and sample-and-hold); at or above the project rate it is off' },
+      { name: 'Bits', range: '4 to 16', desc: 'Bit depth of the quantiser: lower values add grain and noise' },
+      { name: 'Wow', range: '0 to 100%', desc: 'Slow pitch drift from two slow LFOs moving a short delay (up to 4 ms)' },
+      { name: 'Mix', range: '0 to 100%', desc: 'Blend with the dry signal' },
+      { name: 'Output', range: '−24 to +12 dB', desc: 'Output level' }
+    ],
+    uses: ['Lo-fi hip hop drums in one effect', 'Pumping, squashed drum busses', 'Dusty sampler sound on keys and loops', 'Wobbly, tape-like pitch drift', 'Parallel crunch with the Mix slider'],
+    properties: 'Input → stereo-linked peak compressor (1 ms attack, Release, threshold and ratio from Squash, make-up) → short stereo delay read with linear interpolation, moved by two LFOs (0.6 and 0.17 Hz) for wow → one-pole low-pass at 0.45 × Sample Rate and sample-and-hold at Sample Rate (off at or above the project rate) → quantise to Bits → mix with the dry signal → Output gain. No latency reported.',
+    formats: ['JSFX', 'GFX', 'VST3', 'CLAP', 'LV2'],
+    shot: 'assets/img/gfx/lofi_comp.png',
+    studio: true,
+    beta: 'Beta: its rules have been tested on test signals so far and may still be tuned from your feedback, so a project saved now can sound a little different after an update.',
+    page: 'plugins/lofi-comp/'
   },
   'maximizer': {
     title: 'MAXIMIZER',
@@ -1835,6 +1916,29 @@ const guides = {
     studio: true,
     page: 'plugins/binaural-panner/'
   },
+  'bloom-delay': {
+    title: 'BLOOM DELAY',
+    subtitle: 'Delay That Blooms Into Reverb',
+    category: 'Advanced',
+    sliders: [
+      { name: 'Time', range: '20 to 2000 ms', desc: 'Delay time in milliseconds, used while Sync is Off' },
+      { name: 'Sync', range: 'Off / 1/16 / 1/8 / 1/8 Dotted / 1/4 / 1/4 Dotted / 1/2 / 1/1', desc: 'Locks the delay to the project tempo: 1/16 to a whole note, dotted 1/8 and 1/4 too (120 bpm when the host gives no tempo)' },
+      { name: 'Feedback', range: '0 to 100%', desc: 'How much of each repeat comes back; a soft curve in the loop keeps even 100% safe, for a near-endless wash' },
+      { name: 'Bloom', range: '0 to 100%', desc: 'How much of the allpass diffusion is blended into the loop: each repeat comes back softer and more smeared, until the echoes turn into a reverb' },
+      { name: 'Mod', range: '0 to 100%', desc: 'A slow sweep of the delay time (0.35 Hz, up to 4 ms) for a gentle, tape-like movement' },
+      { name: 'Damping', range: '1000 to 20000 Hz', desc: 'Low-pass in the loop: lower values make every repeat darker' },
+      { name: 'Width', range: '0 to 100%', desc: 'Stereo width of the wet signal, from mono to full' },
+      { name: 'Mix', range: '0 to 100%', desc: 'Blend with the dry signal' },
+      { name: 'Output', range: '−24 to +12 dB', desc: 'Output level' }
+    ],
+    uses: ['Ambient guitars and keys: echoes that dissolve into a wash', 'Vocal throws that bloom instead of repeating', 'Endless pads and drones with Feedback at 100%', 'Tempo-synced dotted eighths with a reverb tail', 'A small diffuse space with a short Time and full Bloom'],
+    properties: 'Input + feedback → 4 s stereo delay line read with linear interpolation (Time or Sync from the tempo, 80 ms glide, swept by a 0.35 Hz LFO with the sides a quarter turn apart) → one-pole low-pass (Damping) → 30 Hz high-pass → four allpass diffusers per side (g 0.6, 3.6 to 12.7 ms), blended in by Bloom → feedback through a tanh curve back into the line. The wet signal is narrowed by Width and mixed with the dry signal → Output gain. No latency.',
+    formats: ['JSFX', 'GFX', 'VST3', 'CLAP', 'LV2'],
+    shot: 'assets/img/gfx/bloom_delay.png',
+    studio: true,
+    beta: 'Beta: its rules have been tested on test signals so far and may still be tuned from your feedback, so a project saved now can sound a little different after an update.',
+    page: 'plugins/bloom-delay/'
+  },
   'comb-filter': {
     title: 'COMB FILTER',
     subtitle: 'Resonant Delay Comb',
@@ -2079,6 +2183,24 @@ const guides = {
     demo: 'harmonizer',
     page: 'plugins/harmonizer/'
   },
+  'key-detect': {
+    title: 'KEY DETECT',
+    subtitle: 'Find the Key of What You Hear',
+    category: 'Advanced',
+    sliders: [
+      { name: 'Window', range: '2 to 60 s', desc: 'How long the analysis remembers: short follows a key change quickly, long settles on the key of the whole song' },
+      { name: 'Threshold', range: '−80 to −20 dB', desc: 'Frames quieter than this are ignored, so silence and noise do not move the result' },
+      { name: 'Profile', range: 'Krumhansl / Temperley', desc: 'The key profiles compared with what is heard: Krumhansl-Kessler (from listening tests) or Temperley (from scores)' },
+      { name: 'Hold', range: 'Off / On', desc: 'Keeps the result as it is' }
+    ],
+    uses: ['Finding the key of a sample, a loop or a reference track', 'Setting Key and Scale in Scale and Pitch Correction', 'Harmonic mixing: playing songs in related keys one after another', 'Checking that a vocal, a synth line and a sample agree'],
+    properties: 'Stereo in → out unchanged. Every 4096 samples the last 16384 go through an FFT; the bins from C2 to C7 fold into 12 pitch classes, with the 3rd and 5th harmonics of lower notes taken away so the key is not pulled towards its dominant. The running chroma is compared with the 24 major and minor key profiles by correlation: the interface shows the key, its confidence, the runner-up, the relative key and the chroma.',
+    formats: ['JSFX', 'GFX', 'VST3', 'CLAP', 'LV2'],
+    shot: 'assets/img/gfx/key_detect.png',
+    studio: true,
+    beta: 'Beta: its rules have been tested on test signals so far and may still be tuned from your feedback, so a project saved now can sound a little different after an update.',
+    page: 'plugins/key-detect/'
+  },
   'kick-shaper': {
     title: 'KICK SHAPER',
     subtitle: 'Kick Drum Sculptor',
@@ -2184,6 +2306,26 @@ const guides = {
     demo: 'noise_reduction',
     page: 'plugins/noise-reduction/'
   },
+  'null-test': {
+    title: 'NULL TEST',
+    subtitle: 'Hear What Really Changed',
+    category: 'Advanced',
+    sliders: [
+      { name: 'Listen', range: 'Main / Sidechain / Difference', desc: 'What you hear: the main, the sidechain lined up with it, or the difference between them' },
+      { name: 'Align', range: 'Manual / Auto', desc: 'Auto finds the delay and the gain by itself; Manual uses Offset, Trim and Polarity' },
+      { name: 'Range', range: '1 to 200 ms', desc: 'How far apart the two may be in time for Auto to find them (up to 200 ms)' },
+      { name: 'Offset', range: '−10000 to +10000 samples', desc: 'Manual only: delays the sidechain by this many samples (negative delays the main)' },
+      { name: 'Trim', range: '−24 to +24 dB', desc: 'Manual only: the sidechain\'s gain' },
+      { name: 'Polarity', range: 'Normal / Inverted', desc: 'Manual only: inverts the sidechain' }
+    ],
+    uses: ['Hearing what a plugin really does: its output against its input', 'Checking that two renders, bounces or exports are the same', 'Finding a plugin\'s latency and gain, or a polarity flip', 'Comparing two compressors or EQs set to match each other'],
+    properties: 'Main (1/2) and sidechain (3/4) in, stereo out. Auto lines the two up: a phase-transform cross-correlation finds the delay (up to Range, either polarity) and a least-squares fit finds the gain, so a plugin\'s latency, level change and polarity flip are taken out. The difference is main minus the lined-up sidechain; the interface shows the null depth, the difference in 10 octave bands, the delay, the gain and BIT-IDENTICAL when nothing differs at all.',
+    formats: ['JSFX', 'GFX', 'VST3', 'CLAP', 'LV2'],
+    shot: 'assets/img/gfx/null_test.png',
+    studio: true,
+    beta: 'Beta: its rules have been tested on test signals so far and may still be tuned from your feedback, so a project saved now can sound a little different after an update.',
+    page: 'plugins/null-test/'
+  },
   'oscilloscope': {
     title: 'OSCILLOSCOPE',
     subtitle: 'Triggered Waveform Display',
@@ -2229,6 +2371,27 @@ const guides = {
     studio: true,
     demo: 'ott',
     page: 'plugins/ott/'
+  },
+  'phase-distortion': {
+    title: 'PHASE DISTORTION',
+    subtitle: 'Signal-Driven Phase Bending',
+    category: 'Advanced',
+    sliders: [
+      { name: 'Drive', range: '0 to 100%', desc: 'How far the delay moves, up to 3 ms (on a square curve, so the low half stays subtle)' },
+      { name: 'Tone', range: '100 to 20000 Hz', desc: 'Low-pass on the signal that moves the delay: lower values make a smoother, darker bend, higher values a brighter, more ragged one' },
+      { name: 'Bias', range: '−100 to +100%', desc: 'Offset added to the moving signal: the bend becomes asymmetric (even harmonics)' },
+      { name: 'Spread', range: '0 to 100%', desc: 'Turns the right channel\'s movement the other way, for width' },
+      { name: 'Source', range: 'Self / Sidechain', desc: 'What moves the delay: the track itself (Self) or the sidechain on channels 3/4' },
+      { name: 'Mix', range: '0 to 100%', desc: 'Blend with the dry signal, which is delayed by the same centre time so the blend does not comb' },
+      { name: 'Output', range: '−24 to +12 dB', desc: 'Output level' }
+    ],
+    uses: ['Bright, clean grit on bass and leads', 'Asymmetric harmonics without clipping', 'Cross-modulation: one track bends another through the sidechain', 'Wide, shimmering texture on guitars and pads', 'Sound design: metallic and digital tones'],
+    properties: 'Input → stereo delay line (8 ms) → read with linear interpolation at 1 + depth × (1 + clamp(low-passed source + bias, -1, 1)) samples, the right source scaled by 1 - 2 × spread → mixed with the dry signal read at the centre time 1 + depth → Output gain. The source is the track or the sidechain (pins 3/4). No clipping stage; latency up to 3 ms of centre delay, not reported.',
+    formats: ['JSFX', 'GFX', 'VST3', 'CLAP', 'LV2'],
+    shot: 'assets/img/gfx/phase_distortion.png',
+    studio: true,
+    beta: 'Beta: its rules have been tested on test signals so far and may still be tuned from your feedback, so a project saved now can sound a little different after an update.',
+    page: 'plugins/phase-distortion/'
   },
   'pitch-correction': {
     title: 'PITCH CORRECTION',
@@ -2423,6 +2586,26 @@ const guides = {
     studio: true,
     demo: 'slicer',
     page: 'plugins/slicer/'
+  },
+  'spectral-blur': {
+    title: 'SPECTRAL BLUR',
+    subtitle: 'Spectral Smear, Shift and Gate',
+    category: 'Advanced',
+    sliders: [
+      { name: 'Smear', range: '0 to 100%', desc: 'How long each frequency lingers: rising bins follow within up to 150 ms, fading bins hang on for up to 3 s, so a soft spectral tail grows out of the sound' },
+      { name: 'Shift', range: '−2000 to +2000 Hz', desc: 'Moves every frequency up or down by the same number of Hz: an inharmonic, metallic frequency shift' },
+      { name: 'Tilt', range: '−6 to +6 dB/oct', desc: 'Leans the spectrum around 1 kHz, in dB per octave (flat below 100 Hz and above 10 kHz): negative is darker, positive brighter' },
+      { name: 'Gate', range: '−90 to 0 dB', desc: 'Pushes down every frequency bin quieter than this level (a 1:3 expander per bin); at -90 it is off' },
+      { name: 'Mix', range: '0 to 100%', desc: 'Blend with the dry signal, which is delayed to match' },
+      { name: 'Output', range: '−24 to +12 dB', desc: 'Output level' }
+    ],
+    uses: ['Soft spectral tails and washes on vocals, guitars and keys', 'Pads and drones from any sound', 'Metallic, robotic or bell-like tones with Shift', 'Spectral gating: only the strongest partials survive', 'Sound design and transitions'],
+    properties: 'Input → 2048-point FFT, Hann windows, 4x overlap → each bin shifted by Shift (rounded to the bin spacing, phase kept coherent) and tilted around 1 kHz (flat below 100 Hz and above 10 kHz) → magnitude smoothed over time (Smear: up to 150 ms rising, 3 s falling; fading bins keep turning with a little Park-Miller random drift) → per-bin 1:3 expander below Gate → inverse FFT and overlap-add → mix with the delayed dry signal → Output gain. Latency 2047 samples, reported to the host.',
+    formats: ['JSFX', 'GFX', 'VST3', 'CLAP', 'LV2'],
+    shot: 'assets/img/gfx/spectral_blur.png',
+    studio: true,
+    beta: 'Beta: its rules have been tested on test signals so far and may still be tuned from your feedback, so a project saved now can sound a little different after an update.',
+    page: 'plugins/spectral-blur/'
   },
   'spectral-ducker': {
     title: 'SPECTRAL DUCKER',
@@ -2960,6 +3143,34 @@ const guides = {
     video: 'assets/video/bass.mp4',
     page: 'plugins/bass/'
   },
+  'choir': {
+    title: 'CHOIR',
+    subtitle: 'A Synthetic Choir With Vowels',
+    category: 'Instruments',
+    sliders: [
+      { name: 'Vowel', range: '0 to 4', desc: 'The vowel sung: A, E, I, O, U and every blend between (the mod wheel moves it towards U)' },
+      { name: 'Voices', range: '1 to 8', desc: 'How many singers each key has, from a soloist to a section of eight' },
+      { name: 'Detune', range: '0 to 40 ct', desc: 'How far the singers of a key are spread around its pitch' },
+      { name: 'Breath', range: '0 to 100%', desc: 'Breath noise in each singer\'s voice, pulsed with its vocal cords' },
+      { name: 'Vibrato', range: '0 to 100%', desc: 'Depth of the singers\' vibrato, which fades in a quarter second after the key' },
+      { name: 'Vibrato Rate', range: '3 to 8 Hz', desc: 'Speed of the vibrato; every singer is a little faster or slower' },
+      { name: 'Section', range: 'Auto / Soprano / Alto / Tenor / Bass', desc: 'Auto lets each key sing in the voices nearest its pitch; the others pick soprano, alto, tenor or bass' },
+      { name: 'Attack', range: '5 to 3000 ms', desc: 'How slowly the keys swell in' },
+      { name: 'Release', range: '20 to 5000 ms', desc: 'How long the keys ring after they are let go' },
+      { name: 'Brightness', range: '0 to 100%', desc: 'The vocal tone, from dark to bright, before the formants' },
+      { name: 'Velocity', range: '0 to 100%', desc: 'How much velocity changes the level and the tone; 0% sings every key at full velocity' },
+      { name: 'Stereo', range: '0 to 100%', desc: 'How far the singers spread across the stereo field' },
+      { name: 'MPE', range: 'Off / On', desc: 'On: pitch bend, pressure and CC74 timbre of channels 2-16 belong to the key played there' },
+      { name: 'MPE Bend Range', range: '0 to 96 st', desc: 'Pitch bend range of the MPE channels' },
+      { name: 'Volume', range: '−24 to +12 dB', desc: 'Output level' }
+    ],
+    uses: ['Aah and Ooh pads under a song or a film cue', 'A soft solo voice line, or a bass section humming the roots', 'Vowel sweeps from the mod wheel for movement in a held chord', 'Expressive voices from an MPE controller'],
+    properties: 'MIDI in → every key sings with 1 to 8 singers (PolyBLEP sawtooths, each with its own detune, slow drift and delayed vibrato, plus breath noise pulsed by its glottal cycle, by an exact Park-Miller step), spread across the stereo field; a one-pole glottal tilt per key (darker when soft), then seven banks of five formant resonators per channel (soprano, alto, tenor, bass and three between, for the vowel A-E-I-O-U and its blends). Auto sends a key to the two banks nearest its pitch. One attack/release envelope per key, sustain pedal, mod wheel to the vowel, pitch bend +-2 st, MPE bend, pressure and timbre. No samples. Every MIDI message passes on.',
+    formats: ['JSFX', 'GFX', 'VST3', 'CLAP', 'LV2'],
+    shot: 'assets/img/gfx/choir.png',
+    beta: 'Beta: its rules have been tested on test signals so far and may still be tuned from your feedback, so a project saved now can sound a little different after an update.',
+    page: 'plugins/choir/'
+  },
   'drum-machine': {
     title: 'DRUM MACHINE',
     subtitle: 'Drum Synth with 16-Step Sequencer',
@@ -3459,6 +3670,31 @@ const guides = {
     video: 'assets/video/synth.mp4',
     page: 'plugins/synth/'
   },
+  'wind': {
+    title: 'WIND',
+    subtitle: 'Flute, Clarinet, Sax and Brass by Physics',
+    category: 'Instruments',
+    sliders: [
+      { name: 'Model', range: 'Flute / Clarinet / Saxophone / Brass', desc: 'The instrument: Flute, Clarinet, Saxophone or Brass, each a waveguide model with its own range' },
+      { name: 'Breath Source', range: 'Velocity / Mod Wheel / Breath CC 2 / Aftertouch / Expression CC 11', desc: 'What drives the breath: each note\'s velocity, or a controller (mod wheel, breath CC 2, aftertouch, expression CC 11)' },
+      { name: 'Breath', range: '0 to 100%', desc: 'How hard the player blows at the source\'s full value' },
+      { name: 'Noise', range: '0 to 100%', desc: 'The air in the breath; 50% is the model\'s own, 0% a pure tone' },
+      { name: 'Tone', range: '0 to 100%', desc: 'A low-pass on the output, from muffled to fully open' },
+      { name: 'Vibrato', range: '0 to 100%', desc: 'Depth of the breath vibrato' },
+      { name: 'Vibrato Rate', range: '3 to 8 Hz', desc: 'Speed of the vibrato' },
+      { name: 'Vibrato Delay', range: '0 to 2000 ms', desc: 'How long after a new note the vibrato begins to fade in' },
+      { name: 'Attack', range: '1 to 1000 ms', desc: 'How quickly the breath comes in at a key' },
+      { name: 'Release', range: '5 to 2000 ms', desc: 'How quickly the breath stops after the last key is let go' },
+      { name: 'Glide', range: '0 to 500 ms', desc: 'Time to slide to a key played while another is held' },
+      { name: 'Volume', range: '−24 to +12 dB', desc: 'Output level' }
+    ],
+    uses: ['Solo flute, clarinet, sax or trumpet lines from a keyboard', 'Expressive playing with a breath controller, the mod wheel or aftertouch', 'Legato leads that glide between held notes', 'Soft wind pads and textures under a mix'],
+    properties: 'MIDI in → one voice (the latest key held; a key over another glides to it). Digital waveguides after STK: Flute (a bore of two periods, a jet a quarter of it, cubic jet, high-passed air noise), Clarinet (a bore of half a period, reed table), Saxophone (one period in two delays, the reed between, a narrow pressure range so it holds its register), Brass (a bore and a lip resonator, tuned per note); each bore length set exactly for its pitch (tools/tune_wind.js keeps it within 12 cents at 44.1, 48 and 96 kHz). Breath from velocity or a controller, with attack, release, vibrato after a delay and noise by an exact Park-Miller step; notes outside a model\'s range sound an octave in. No samples. Every MIDI message passes on.',
+    formats: ['JSFX', 'GFX', 'VST3', 'CLAP', 'LV2'],
+    shot: 'assets/img/gfx/wind.png',
+    beta: 'Beta: its rules have been tested on test signals so far and may still be tuned from your feedback, so a project saved now can sound a little different after an update.',
+    page: 'plugins/wind/'
+  },
 
   // ─── MIDI ───
   'arpeggiator': {
@@ -3610,6 +3846,23 @@ const guides = {
     video: 'assets/video/midi_lfo.mp4',
     page: 'plugins/midi-lfo/'
   },
+  'midi-monitor': {
+    title: 'MIDI MONITOR',
+    subtitle: 'See the MIDI That Passes',
+    category: 'MIDI',
+    sliders: [
+      { name: 'Channel', range: 'Omni / 1 / 2 / 3 / 4 / 5 / 6 / 7 / 8 / 9 / 10 / 11 / 12 / 13 / 14 / 15 / 16', desc: 'Shows one channel only, or every channel (Omni)' },
+      { name: 'Show', range: 'All / Notes / Controllers / Other', desc: 'Shows every message, or only notes, controllers (CC, pressure, pitch bend) or the rest (program changes)' },
+      { name: 'Freeze', range: 'Off / On', desc: 'Holds the list as it is, so a burst of messages can be read' },
+      { name: 'Middle C', range: 'C4 / C3', desc: 'Names note 60 C4 (as REAPER) or C3' }
+    ],
+    uses: ['Checking what a keyboard, controller or MIDI effect really sends', 'Finding a stuck note or a missing note-off', 'Reading MPE: every channel\'s notes, bend and pressure', 'Learning which CC a knob sends before mapping it'],
+    properties: 'MIDI in → out unchanged, every message at its own sample (the VST3/CLAP passes SysEx too); the audio passes through. The interface lists the latest 64 messages with their time, channel and values, shows the held notes on a 128-key keyboard and every channel\'s notes, pitch bend and pressure. Channel and Show filter what is shown, Freeze holds the list.',
+    formats: ['JSFX', 'GFX', 'VST3', 'CLAP', 'LV2'],
+    shot: 'assets/img/gfx/midi_monitor.png',
+    beta: 'Beta: its rules have been tested on test signals so far and may still be tuned from your feedback, so a project saved now can sound a little different after an update.',
+    page: 'plugins/midi-monitor/'
+  },
   'midi-utility': {
     title: 'MIDI UTILITY',
     subtitle: 'Transpose, Velocity, Splits, Filters',
@@ -3722,6 +3975,27 @@ const guides = {
     shot: 'assets/img/gfx/scale.png',
     video: 'assets/video/scale.mp4',
     page: 'plugins/scale/'
+  },
+  'strum': {
+    title: 'STRUM',
+    subtitle: 'Guitar Strums From Held Chords',
+    category: 'MIDI',
+    sliders: [
+      { name: 'Direction', range: 'Down / Up / Alternate / Random', desc: 'Which way the chord is strummed: Down (lowest note first), Up (highest first), Alternate, or Random' },
+      { name: 'Speed', range: '0 to 100 ms', desc: 'Time between one string and the next' },
+      { name: 'Rhythm', range: 'Once / 1/4 / 1/8 / 1/16 / Down-Up 1/8 / Folk / Offbeat', desc: 'Once strums when the chord is played; the others strum again on the tempo while keys are held: 1/4, 1/8, 1/16, Down-Up eighths, Folk (D - D U - U D U) and Offbeat' },
+      { name: 'Gate', range: '10 to 100%', desc: 'How long each strum lasts as a share of its step, in the rhythms' },
+      { name: 'Velocity Spread', range: '0 to 100%', desc: 'How much softer the last string is than the first' },
+      { name: 'Upstroke Velocity', range: '10 to 100%', desc: 'The velocity of up strokes, as a share of the keys\' velocity' },
+      { name: 'Humanize', range: '0 to 20 ms', desc: 'Moves each string a little later, by up to this many ms' },
+      { name: 'Collect', range: '0 to 100 ms', desc: 'Keys pressed within this time of the first one make one chord' }
+    ],
+    uses: ['Guitar-like chords from a keyboard into Pluck, Keys or any instrument', 'Strummed rhythm parts on the tempo from held chords', 'Harp rolls and slow arpeggiated chords', 'Pairs with Chords: one finger in, a strummed chord out'],
+    properties: 'MIDI in → the held keys (collected over Collect) are sorted by pitch and played string by string, Speed apart, lowest first down and highest first up; velocity falls by Velocity Spread over the strings, up strokes at Upstroke Velocity, Humanize by an exact Park-Miller step. Once: one strum per chord, notes held with their keys; rhythms: strums on the tempo, each Gate of its step. A key\'s note-off ends its note and drops its waiting strings. Other MIDI passes through at its own sample. Audio passes through.',
+    formats: ['JSFX', 'GFX', 'VST3', 'CLAP', 'LV2'],
+    shot: 'assets/img/gfx/strum.png',
+    beta: 'Beta: its rules have been tested on test signals so far and may still be tuned from your feedback, so a project saved now can sound a little different after an update.',
+    page: 'plugins/strum/'
   }
 };
 // END GUIDES

@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lo-Fi Comp: free plugin for REAPER, VST3, CLAP | NULL JSFX</title>
+    <meta name="description" content="Lo-Fi Comp: Lo-Fi Beat Compressor. Free, open source audio plugin for REAPER (JSFX) and any DAW (VST3, CLAP, LV2) on Windows, macOS and Linux.">
+    <link rel="canonical" href="https://nulljsfx.tech/plugins/lofi-comp/">
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Lo-Fi Comp: Lo-Fi Beat Compressor">
+    <meta property="og:description" content="Lo-Fi Comp: Lo-Fi Beat Compressor. Free, open source audio plugin for REAPER (JSFX) and any DAW (VST3, CLAP, LV2) on Windows, macOS and Linux.">
+    <meta property="og:url" content="https://nulljsfx.tech/plugins/lofi-comp/">
+    <meta property="og:image" content="https://nulljsfx.tech/assets/img/social-preview.jpg">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Lo-Fi Comp: Lo-Fi Beat Compressor">
+    <meta name="twitter:description" content="Lo-Fi Comp: Lo-Fi Beat Compressor. Free, open source audio plugin for REAPER (JSFX) and any DAW (VST3, CLAP, LV2) on Windows, macOS and Linux.">
+    <meta name="twitter:image" content="https://nulljsfx.tech/assets/img/social-preview.jpg">
+    <link rel="icon" type="image/svg+xml" href="/assets/img/favicon.svg">
+    <link rel="stylesheet" href="/assets/css/style.css">
+    <script type="application/ld+json">{"@context": "https://schema.org", "@type": "SoftwareApplication", "name": "NULL Lo-Fi Comp", "description": "Lo-Fi Beat Compressor", "url": "https://nulljsfx.tech/plugins/lofi-comp/", "image": "https://nulljsfx.tech/assets/img/social-preview.jpg", "applicationCategory": "MultimediaApplication", "applicationSubCategory": "Audio audio plugin", "operatingSystem": "Windows, macOS, Linux", "softwareVersion": "4.0", "license": "https://opensource.org/licenses/MIT", "offers": {"@type": "Offer", "price": "0", "priceCurrency": "EUR"}, "author": {"@type": "Person", "name": "Christos Koulaxizis"}, "isPartOf": {"@type": "SoftwareApplication", "name": "NULL JSFX", "url": "https://nulljsfx.tech/"}}</script>
+    <script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "NULL JSFX", "item": "https://nulljsfx.tech/"}, {"@type": "ListItem", "position": 2, "name": "Essentials", "item": "https://nulljsfx.tech/#effects"}, {"@type": "ListItem", "position": 3, "name": "Lo-Fi Comp", "item": "https://nulljsfx.tech/plugins/lofi-comp/"}]}</script>
+</head>
+<body class="plugin-page">
+    <main>
+        <nav class="page-crumbs" aria-label="Breadcrumb">
+            <a href="/" class="page-home"><img src="/assets/img/favicon.svg" alt="NULL JSFX" width="28" height="28"></a>
+            <a href="/">NULL JSFX</a> <span>/</span> <a href="/">Effects</a> <span>/</span> <span>Lo-Fi Comp</span>
+        </nav>
+        <article class="page-plugin">
+            <header class="guide-header page-header">
+                <span class="guide-category">Essentials</span>
+                <h1>LO-FI COMP <span class="beta-badge">BETA</span></h1>
+                <p>Lo-Fi Beat Compressor</p>
+                <p class="beta-note">Beta: its rules have been tested on test signals so far and may still be tuned from your feedback, so a project saved now can sound a little different after an update.</p>
+            </header>
+            <img class="guide-shot" src="/assets/img/gfx/lofi_comp.png" alt="Lo-Fi Comp interface" width="720" height="480">
+            <div class="page-actions">
+                <a class="featured-btn" href="/#download"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg><span>Download free</span></a>
+                <small>Part of NULL JSFX 4.0: 168 plugins, free and open source (MIT). Easiest with <a href="/#hub">NULL JSFX Hub</a>.</small>
+            </div>
+            <div class="guide-body">
+                <section class="guide-section">
+                    <h2>Listen</h2>
+                    <div class="live demo-big" data-live="lofi_comp" data-presets="{&quot;d&quot;:{&quot;1&quot;:50,&quot;2&quot;:150,&quot;3&quot;:32000,&quot;4&quot;:12,&quot;5&quot;:20,&quot;6&quot;:100},&quot;p&quot;:[[&quot;Default&quot;,{}],[&quot;Lo-Fi Drum Bus&quot;,{&quot;1&quot;:70,&quot;2&quot;:120,&quot;3&quot;:26000,&quot;5&quot;:10}],[&quot;Dusty Keys&quot;,{&quot;1&quot;:45,&quot;2&quot;:250,&quot;3&quot;:22000,&quot;4&quot;:10,&quot;5&quot;:45}],[&quot;Pumping Beat&quot;,{&quot;1&quot;:90,&quot;2&quot;:80,&quot;4&quot;:14,&quot;5&quot;:0}],[&quot;SP Style Sampler&quot;,{&quot;1&quot;:55,&quot;3&quot;:26040,&quot;5&quot;:15}],[&quot;Cassette Drift&quot;,{&quot;1&quot;:35,&quot;2&quot;:300,&quot;3&quot;:48000,&quot;4&quot;:16,&quot;5&quot;:60}],[&quot;Crushed Loop&quot;,{&quot;1&quot;:80,&quot;2&quot;:100,&quot;3&quot;:11000,&quot;4&quot;:8}],[&quot;Vocal Chop Grit&quot;,{&quot;1&quot;:60,&quot;2&quot;:180,&quot;3&quot;:16000,&quot;4&quot;:10,&quot;5&quot;:10,&quot;6&quot;:70}],[&quot;Parallel Squash&quot;,{&quot;1&quot;:100,&quot;2&quot;:60,&quot;3&quot;:48000,&quot;4&quot;:16,&quot;5&quot;:0,&quot;6&quot;:40}],[&quot;Telephone Beat&quot;,{&quot;1&quot;:75,&quot;2&quot;:120,&quot;3&quot;:8000,&quot;4&quot;:8,&quot;5&quot;:5}],[&quot;Warbly Pad&quot;,{&quot;1&quot;:30,&quot;2&quot;:400,&quot;3&quot;:22000,&quot;5&quot;:85}],[&quot;Toy Sampler&quot;,{&quot;3&quot;:6000,&quot;4&quot;:6,&quot;5&quot;:25}],[&quot;Gentle Lo-Fi Master&quot;,{&quot;1&quot;:20,&quot;2&quot;:200,&quot;3&quot;:36000,&quot;4&quot;:14,&quot;5&quot;:8}]]}"><button type="button" class="live-play" aria-label="Play live: the loop through the plugin" title="Play live"><svg class="i-play" width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><polygon points="6 4 20 12 6 20" fill="currentColor"/></svg><svg class="i-stop" width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="6" width="12" height="12" fill="currentColor"/></svg></button><button type="button" class="live-ab" aria-pressed="false" title="Switch between the plugin and the dry loop"><span class="on">ON</span><span class="off">BYPASS</span></button>
+                        <label class="live-field">Loop <select class="live-loop"><option value="band">Band</option><option value="drums">Drums</option><option value="keys">Keys and bass</option></select></label>
+                        <label class="live-field">Preset <select class="live-preset"><option value="0">Default</option><option value="1">Lo-Fi Drum Bus</option><option value="2">Dusty Keys</option><option value="3">Pumping Beat</option><option value="4">SP Style Sampler</option><option value="5">Cassette Drift</option><option value="6">Crushed Loop</option><option value="7">Vocal Chop Grit</option><option value="8">Parallel Squash</option><option value="9">Telephone Beat</option><option value="10">Warbly Pad</option><option value="11">Toy Sampler</option><option value="12">Gentle Lo-Fi Master</option></select></label>
+                        <span class="demo-note">Live: the plugin itself runs in your browser on a loop of NULL JSFX instruments. Change the preset or bypass it while it plays.</span>
+                        <span class="live-status demo-note" role="status"></span>
+                    </div>
+                </section>
+                <section class="guide-section">
+                    <h2>Controls</h2>
+                    <ul class="guide-sliders"><li><span class="slider-name">Squash</span><span class="slider-desc">0 to 100% — How hard it pumps: threshold from -10 to -40 dBFS and ratio from 2:1 to 20:1 together, with its own make-up gain</span></li><li><span class="slider-name">Release</span><span class="slider-desc">20 to 1000 ms — How fast the compressor lets go: short values pump with the beat, long values hold the sound down</span></li><li><span class="slider-name">Sample Rate</span><span class="slider-desc">4000 to 48000 Hz — Sample rate of the old sampler (low-pass and sample-and-hold); at or above the project rate it is off</span></li><li><span class="slider-name">Bits</span><span class="slider-desc">4 to 16 — Bit depth of the quantiser: lower values add grain and noise</span></li><li><span class="slider-name">Wow</span><span class="slider-desc">0 to 100% — Slow pitch drift from two slow LFOs moving a short delay (up to 4 ms)</span></li><li><span class="slider-name">Mix</span><span class="slider-desc">0 to 100% — Blend with the dry signal</span></li><li><span class="slider-name">Output</span><span class="slider-desc">−24 to +12 dB — Output level</span></li></ul>
+                </section>
+                <section class="guide-section">
+                    <h2>Best uses</h2>
+                    <ul class="use-cases"><li>Lo-fi hip hop drums in one effect</li><li>Pumping, squashed drum busses</li><li>Dusty sampler sound on keys and loops</li><li>Wobbly, tape-like pitch drift</li><li>Parallel crunch with the Mix slider</li></ul>
+                </section>
+                <section class="guide-section">
+                    <h2>Properties</h2>
+                    <p class="page-props">Input → stereo-linked peak compressor (1 ms attack, Release, threshold and ratio from Squash, make-up) → short stereo delay read with linear interpolation, moved by two LFOs (0.6 and 0.17 Hz) for wow → one-pole low-pass at 0.45 × Sample Rate and sample-and-hold at Sample Rate (off at or above the project rate) → quantise to Bits → mix with the dry signal → Output gain. No latency reported.</p>
+                </section>
+                <section class="guide-section">
+                    <h2>Formats</h2>
+                    <ul class="guide-formats"><li><span class="format-tag">JSFX</span>JSFX for REAPER, with REAPER&#x27;s own sliders</li><li><span class="format-tag">GFX</span>JSFX GFX for REAPER, with its own interface</li><li><span class="format-tag">VST3</span>VST3 for any DAW</li><li><span class="format-tag">CLAP</span>CLAP for any DAW</li><li><span class="format-tag">LV2</span>LV2 for Linux DAWs such as Ardour, Carla and Qtractor</li></ul>
+                </section>
+                <section class="guide-section">
+                    <h2>Factory presets</h2>
+                    <p class="page-list">Lo-Fi Drum Bus · Dusty Keys · Pumping Beat · SP Style Sampler · Cassette Drift · Crushed Loop · Vocal Chop Grit · Parallel Squash · Telephone Beat · Warbly Pad · Toy Sampler · Gentle Lo-Fi Master</p>
+                </section>
+                <section class="guide-section">
+                    <h2>In the FX chains and Rack presets</h2>
+                    <p class="page-list">Lo-Fi Keys</p>
+                    <p class="page-more"><a href="/#fx-chains">See every FX chain</a></p>
+                </section>
+                <section class="guide-section">
+                    <h2>Try it</h2>
+                    <a class="try-studio guide-studio" href="https://useoros.online/studio/" target="_blank" rel="noopener"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8" fill="currentColor"/></svg><span class="try-studio-text"><b>Try it on orOS Studio</b><small>Add it to a track in your browser, with its own interface. Nothing to install.</small></span></a>
+                </section>
+            </div>
+        </article>
+        <section class="page-related">
+            <h2 class="section-title">Goes well with</h2>
+            <div class="related-grid"><a class="related-card" href="/plugins/bitcrusher/"><b>Bitcrusher</b><small>Bits and Sample Rate Lo-Fi</small></a><a class="related-card" href="/plugins/clipper/"><b>Clipper</b><small>Oversampled Hard &amp; Soft Clipper</small></a><a class="related-card" href="/plugins/passive-eq/"><b>Passive EQ</b><small>Passive-Style Program EQ</small></a><a class="related-card" href="/plugins/shaper/"><b>Shaper</b><small>Waveshaper with a Drawable Curve</small></a><a class="related-card" href="/plugins/tape/"><b>Tape</b><small>Analog Tape Machine</small></a><a class="related-card" href="/plugins/assisted-delay/"><b>Assisted Delay</b><small>Delay that sets itself from the track</small></a></div>
+            <p class="page-more"><a href="/">All 168 NULL JSFX plugins</a></p>
+        </section>
+    </main>
+    <footer class="site-footer">
+        <div class="footer-content">
+            Designed with &#9825; by <a href="https://koulaxizis.gr" target="_blank" rel="noopener">Christos Koulaxizis</a>.
+            <div class="footer-links">
+                <a href="https://ko-fi.com/koulaxizis" target="_blank" rel="noopener">Support on Ko-fi</a>
+                <span class="sep">&bull;</span>
+                <a href="https://github.com/koulaxizis/null-jsfx" target="_blank" rel="noopener">GitHub</a>
+                <span class="sep">&bull;</span>
+                <a href="/">nulljsfx.tech</a>
+            </div>
+        </div>
+    </footer>
+    <button id="theme-toggle" class="theme-toggle-floating" aria-label="Toggle color theme" title="Switch between light/dark theme">
+        <svg class="sun-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2 M12 21v2 M4.22 4.22l1.42 1.42 M18.36 18.36l1.42 1.42 M1 12h2 M21 12h2 M4.22 19.78l1.42-1.42 M18.36 5.64l1.42-1.42"/></svg>
+        <svg class="moon-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none;"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+    </button>
+    <script src="/assets/js/theme.js"></script>
+    <script src="/assets/js/demo.js"></script>
+    <script src="/assets/js/live.js"></script>
+</body>
+</html>

@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spectral Blur: free audio plugin for REAPER | NULL JSFX</title>
+    <meta name="description" content="Spectral Blur: Spectral Smear, Shift and Gate. Free, open source audio plugin for REAPER (JSFX) and any DAW (VST3, CLAP, LV2) on Windows, macOS and Linux.">
+    <link rel="canonical" href="https://nulljsfx.tech/plugins/spectral-blur/">
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Spectral Blur: Spectral Smear, Shift and Gate">
+    <meta property="og:description" content="Spectral Blur: Spectral Smear, Shift and Gate. Free, open source audio plugin for REAPER (JSFX) and any DAW (VST3, CLAP, LV2) on Windows, macOS and Linux.">
+    <meta property="og:url" content="https://nulljsfx.tech/plugins/spectral-blur/">
+    <meta property="og:image" content="https://nulljsfx.tech/assets/img/social-preview.jpg">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Spectral Blur: Spectral Smear, Shift and Gate">
+    <meta name="twitter:description" content="Spectral Blur: Spectral Smear, Shift and Gate. Free, open source audio plugin for REAPER (JSFX) and any DAW (VST3, CLAP, LV2) on Windows, macOS and Linux.">
+    <meta name="twitter:image" content="https://nulljsfx.tech/assets/img/social-preview.jpg">
+    <link rel="icon" type="image/svg+xml" href="/assets/img/favicon.svg">
+    <link rel="stylesheet" href="/assets/css/style.css">
+    <script type="application/ld+json">{"@context": "https://schema.org", "@type": "SoftwareApplication", "name": "NULL Spectral Blur", "description": "Spectral Smear, Shift and Gate", "url": "https://nulljsfx.tech/plugins/spectral-blur/", "image": "https://nulljsfx.tech/assets/img/social-preview.jpg", "applicationCategory": "MultimediaApplication", "applicationSubCategory": "Audio audio plugin", "operatingSystem": "Windows, macOS, Linux", "softwareVersion": "4.0", "license": "https://opensource.org/licenses/MIT", "offers": {"@type": "Offer", "price": "0", "priceCurrency": "EUR"}, "author": {"@type": "Person", "name": "Christos Koulaxizis"}, "isPartOf": {"@type": "SoftwareApplication", "name": "NULL JSFX", "url": "https://nulljsfx.tech/"}}</script>
+    <script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "NULL JSFX", "item": "https://nulljsfx.tech/"}, {"@type": "ListItem", "position": 2, "name": "Advanced", "item": "https://nulljsfx.tech/#effects"}, {"@type": "ListItem", "position": 3, "name": "Spectral Blur", "item": "https://nulljsfx.tech/plugins/spectral-blur/"}]}</script>
+</head>
+<body class="plugin-page">
+    <main>
+        <nav class="page-crumbs" aria-label="Breadcrumb">
+            <a href="/" class="page-home"><img src="/assets/img/favicon.svg" alt="NULL JSFX" width="28" height="28"></a>
+            <a href="/">NULL JSFX</a> <span>/</span> <a href="/">Effects</a> <span>/</span> <span>Spectral Blur</span>
+        </nav>
+        <article class="page-plugin">
+            <header class="guide-header page-header">
+                <span class="guide-category">Advanced</span>
+                <h1>SPECTRAL BLUR <span class="beta-badge">BETA</span></h1>
+                <p>Spectral Smear, Shift and Gate</p>
+                <p class="beta-note">Beta: its rules have been tested on test signals so far and may still be tuned from your feedback, so a project saved now can sound a little different after an update.</p>
+            </header>
+            <img class="guide-shot" src="/assets/img/gfx/spectral_blur.png" alt="Spectral Blur interface" width="720" height="480">
+            <div class="page-actions">
+                <a class="featured-btn" href="/#download"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg><span>Download free</span></a>
+                <small>Part of NULL JSFX 4.0: 168 plugins, free and open source (MIT). Easiest with <a href="/#hub">NULL JSFX Hub</a>.</small>
+            </div>
+            <div class="guide-body">
+                <section class="guide-section">
+                    <h2>Listen</h2>
+                    <div class="live demo-big" data-live="spectral_blur" data-presets="{&quot;d&quot;:{&quot;1&quot;:30,&quot;2&quot;:0,&quot;3&quot;:0,&quot;4&quot;:-90,&quot;5&quot;:100,&quot;6&quot;:0},&quot;p&quot;:[[&quot;Default&quot;,{}],[&quot;Soft Blur&quot;,{&quot;1&quot;:20}],[&quot;Spectral Tail&quot;,{&quot;1&quot;:60,&quot;5&quot;:50,&quot;6&quot;:1.5}],[&quot;Endless Wash&quot;,{&quot;1&quot;:100,&quot;5&quot;:60,&quot;6&quot;:2}],[&quot;Ghost Pad&quot;,{&quot;1&quot;:85,&quot;3&quot;:-1,&quot;5&quot;:70,&quot;6&quot;:-1.5}],[&quot;Metallic Shift Up&quot;,{&quot;1&quot;:10,&quot;2&quot;:150,&quot;6&quot;:1.5}],[&quot;Robot Down&quot;,{&quot;1&quot;:0,&quot;2&quot;:-100,&quot;6&quot;:6}],[&quot;Shimmer Smear&quot;,{&quot;1&quot;:70,&quot;2&quot;:400,&quot;3&quot;:1,&quot;5&quot;:40,&quot;6&quot;:4.5}],[&quot;Dark Blur&quot;,{&quot;1&quot;:50,&quot;3&quot;:-1.5,&quot;6&quot;:-5}],[&quot;Airy Blur&quot;,{&quot;1&quot;:40,&quot;3&quot;:1.5,&quot;6&quot;:4.5}],[&quot;Spectral Gate&quot;,{&quot;1&quot;:0,&quot;4&quot;:-45,&quot;6&quot;:2}],[&quot;Sparkle Gate&quot;,{&quot;3&quot;:1.5,&quot;4&quot;:-50,&quot;6&quot;:5}],[&quot;Frozen Noise Bed&quot;,{&quot;1&quot;:100,&quot;4&quot;:-60,&quot;6&quot;:1}]]}"><button type="button" class="live-play" aria-label="Play live: the loop through the plugin" title="Play live"><svg class="i-play" width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><polygon points="6 4 20 12 6 20" fill="currentColor"/></svg><svg class="i-stop" width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="6" width="12" height="12" fill="currentColor"/></svg></button><button type="button" class="live-ab" aria-pressed="false" title="Switch between the plugin and the dry loop"><span class="on">ON</span><span class="off">BYPASS</span></button>
+                        <label class="live-field">Loop <select class="live-loop"><option value="band">Band</option><option value="drums">Drums</option><option value="keys">Keys and bass</option></select></label>
+                        <label class="live-field">Preset <select class="live-preset"><option value="0">Default</option><option value="1">Soft Blur</option><option value="2">Spectral Tail</option><option value="3">Endless Wash</option><option value="4">Ghost Pad</option><option value="5">Metallic Shift Up</option><option value="6">Robot Down</option><option value="7">Shimmer Smear</option><option value="8">Dark Blur</option><option value="9">Airy Blur</option><option value="10">Spectral Gate</option><option value="11">Sparkle Gate</option><option value="12">Frozen Noise Bed</option></select></label>
+                        <span class="demo-note">Live: the plugin itself runs in your browser on a loop of NULL JSFX instruments. Change the preset or bypass it while it plays.</span>
+                        <span class="live-status demo-note" role="status"></span>
+                    </div>
+                </section>
+                <section class="guide-section">
+                    <h2>Controls</h2>
+                    <ul class="guide-sliders"><li><span class="slider-name">Smear</span><span class="slider-desc">0 to 100% — How long each frequency lingers: rising bins follow within up to 150 ms, fading bins hang on for up to 3 s, so a soft spectral tail grows out of the sound</span></li><li><span class="slider-name">Shift</span><span class="slider-desc">−2000 to +2000 Hz — Moves every frequency up or down by the same number of Hz: an inharmonic, metallic frequency shift</span></li><li><span class="slider-name">Tilt</span><span class="slider-desc">−6 to +6 dB/oct — Leans the spectrum around 1 kHz, in dB per octave (flat below 100 Hz and above 10 kHz): negative is darker, positive brighter</span></li><li><span class="slider-name">Gate</span><span class="slider-desc">−90 to 0 dB — Pushes down every frequency bin quieter than this level (a 1:3 expander per bin); at -90 it is off</span></li><li><span class="slider-name">Mix</span><span class="slider-desc">0 to 100% — Blend with the dry signal, which is delayed to match</span></li><li><span class="slider-name">Output</span><span class="slider-desc">−24 to +12 dB — Output level</span></li></ul>
+                </section>
+                <section class="guide-section">
+                    <h2>Best uses</h2>
+                    <ul class="use-cases"><li>Soft spectral tails and washes on vocals, guitars and keys</li><li>Pads and drones from any sound</li><li>Metallic, robotic or bell-like tones with Shift</li><li>Spectral gating: only the strongest partials survive</li><li>Sound design and transitions</li></ul>
+                </section>
+                <section class="guide-section">
+                    <h2>Properties</h2>
+                    <p class="page-props">Input → 2048-point FFT, Hann windows, 4x overlap → each bin shifted by Shift (rounded to the bin spacing, phase kept coherent) and tilted around 1 kHz (flat below 100 Hz and above 10 kHz) → magnitude smoothed over time (Smear: up to 150 ms rising, 3 s falling; fading bins keep turning with a little Park-Miller random drift) → per-bin 1:3 expander below Gate → inverse FFT and overlap-add → mix with the delayed dry signal → Output gain. Latency 2047 samples, reported to the host.</p>
+                </section>
+                <section class="guide-section">
+                    <h2>Formats</h2>
+                    <ul class="guide-formats"><li><span class="format-tag">JSFX</span>JSFX for REAPER, with REAPER&#x27;s own sliders</li><li><span class="format-tag">GFX</span>JSFX GFX for REAPER, with its own interface</li><li><span class="format-tag">VST3</span>VST3 for any DAW</li><li><span class="format-tag">CLAP</span>CLAP for any DAW</li><li><span class="format-tag">LV2</span>LV2 for Linux DAWs such as Ardour, Carla and Qtractor</li></ul>
+                </section>
+                <section class="guide-section">
+                    <h2>Factory presets</h2>
+                    <p class="page-list">Soft Blur · Spectral Tail · Endless Wash · Ghost Pad · Metallic Shift Up · Robot Down · Shimmer Smear · Dark Blur · Airy Blur · Spectral Gate · Sparkle Gate · Frozen Noise Bed</p>
+                </section>
+                <section class="guide-section">
+                    <h2>Try it</h2>
+                    <a class="try-studio guide-studio" href="https://useoros.online/studio/" target="_blank" rel="noopener"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8" fill="currentColor"/></svg><span class="try-studio-text"><b>Try it on orOS Studio</b><small>Add it to a track in your browser, with its own interface. Nothing to install.</small></span></a>
+                </section>
+            </div>
+        </article>
+        <section class="page-related">
+            <h2 class="section-title">Goes well with</h2>
+            <div class="related-grid"><a class="related-card" href="/plugins/bloom-delay/"><b>Bloom Delay</b><small>Delay That Blooms Into Reverb</small></a><a class="related-card" href="/plugins/granular-delay/"><b>Granular Delay</b><small>Grain Cloud Delay</small></a><a class="related-card" href="/plugins/reverser/"><b>Reverser</b><small>Real-Time Reverse Buffer</small></a><a class="related-card" href="/plugins/amp-simulator/"><b>Amp Simulator</b><small>Guitar &amp; Bass Amp, No Cabinet</small></a><a class="related-card" href="/plugins/echo-one/"><b>Echo One</b><small>One-Knob Tempo Delay</small></a><a class="related-card" href="/plugins/formant-filter/"><b>Formant Filter</b><small>Vowel Formant Filter</small></a></div>
+            <p class="page-more"><a href="/">All 168 NULL JSFX plugins</a></p>
+        </section>
+    </main>
+    <footer class="site-footer">
+        <div class="footer-content">
+            Designed with &#9825; by <a href="https://koulaxizis.gr" target="_blank" rel="noopener">Christos Koulaxizis</a>.
+            <div class="footer-links">
+                <a href="https://ko-fi.com/koulaxizis" target="_blank" rel="noopener">Support on Ko-fi</a>
+                <span class="sep">&bull;</span>
+                <a href="https://github.com/koulaxizis/null-jsfx" target="_blank" rel="noopener">GitHub</a>
+                <span class="sep">&bull;</span>
+                <a href="/">nulljsfx.tech</a>
+            </div>
+        </div>
+    </footer>
+    <button id="theme-toggle" class="theme-toggle-floating" aria-label="Toggle color theme" title="Switch between light/dark theme">
+        <svg class="sun-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2 M12 21v2 M4.22 4.22l1.42 1.42 M18.36 18.36l1.42 1.42 M1 12h2 M21 12h2 M4.22 19.78l1.42-1.42 M18.36 5.64l1.42-1.42"/></svg>
+        <svg class="moon-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none;"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+    </button>
+    <script src="/assets/js/theme.js"></script>
+    <script src="/assets/js/demo.js"></script>
+    <script src="/assets/js/live.js"></script>
+</body>
+</html>
