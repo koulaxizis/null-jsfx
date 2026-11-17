@@ -248,7 +248,7 @@
                     </a>
                     <a class="download-option" id="dl-jsfx" href="https://github.com/koulaxizis/null-jsfx/releases/latest/download/NULL-JSFX-JSFX.zip">
                         <span class="download-option-title">JSFX for REAPER</span>
-                        <span class="download-option-desc">All 154 plugins, the GFX versions with their own interface and 77 ready-made FX chains. One package for Windows, macOS and Linux.</span>
+                        <span class="download-option-desc">All 154 plugins, the GFX versions with their own interface and 84 ready-made FX chains. One package for Windows, macOS and Linux.</span>
                         <span class="download-option-file">NULL-JSFX-JSFX.zip</span>
                     </a>
                     <a class="download-option" id="dl-native" href="https://github.com/koulaxizis/null-jsfx/releases/latest/download/NULL-JSFX-VST3-CLAP-Windows.zip">
@@ -457,7 +457,7 @@
                             <li><strong>NEW</strong>: Clipper, De-Plosive, Step FX, Tape Echo, Wah, Half Speed, Slicer, Shaper, Draw EQ and Phase Align</li>
                             <li><strong>UPGRADED</strong>: new controls in Reverb, Delay, Chorus, Phaser, Flanger, Tremolo, Dynamics and 20 more; Parametric EQ shows a live spectrum. At their default settings they sound exactly as in 2.4</li>
                             <li><strong>RACK</strong>: two lanes, a feedback loop, a step sequencer, and Sidechain Ducker and Convolution modules</li>
-                            <li><strong>CHAINS</strong>: 77 ready-made FX chains, 29 more than before</li>
+                            <li><strong>CHAINS</strong>: 84 ready-made FX chains, 29 more than before</li>
                             <li><strong>BROWSER</strong>: instruments and MIDI tools also run on the website</li>
                             <li>Every plugin has a presentation video</li>
                         </ul>
@@ -624,7 +624,7 @@
                 <button type="button" class="plugin-tab active" role="tab" aria-selected="true" aria-controls="tab-effects" id="tab-btn-effects" data-tab="effects">Effects <span class="category-count">129</span></button>
                 <button type="button" class="plugin-tab" role="tab" aria-selected="false" aria-controls="tab-instruments" id="tab-btn-instruments" data-tab="instruments">Instruments <span class="category-count">14</span></button>
                 <button type="button" class="plugin-tab" role="tab" aria-selected="false" aria-controls="tab-midi" id="tab-btn-midi" data-tab="midi">MIDI <span class="category-count">11</span></button>
-                <button type="button" class="plugin-tab" role="tab" aria-selected="false" aria-controls="tab-chains" id="tab-btn-chains" data-tab="chains">FX Chains <span class="category-count">77</span></button>
+                <button type="button" class="plugin-tab" role="tab" aria-selected="false" aria-controls="tab-chains" id="tab-btn-chains" data-tab="chains">FX Chains <span class="category-count">84</span></button>
             </div>
             <div class="tab-panel tab-plugins" id="tab-effects" role="tabpanel" aria-labelledby="tab-btn-effects">
             <div class="plugin-category" id="one-slider">
@@ -2582,6 +2582,12 @@
                     <div class="plugin-formats"><span>JSFX</span><span>GFX</span><span>MODULATION</span></div>
                 </article>
                 <article class="chain-card">
+                    <h3>ACID LINE</h3>
+                    <p class="plugin-desc">A ready acid line on one track: Riff writes the notes from Key, Scale and Seed, the Bass plays them with glide and a resonant envelope, then a driven filter, tube saturation and a dotted-eighth delay.</p>
+                    <div class="chain-steps"><button type="button" class="chain-step" onclick="openGuide('riff')">Riff</button><span class="chain-arrow" aria-hidden="true">&#8594;</span><button type="button" class="chain-step" onclick="openGuide('bass')">Bass</button><span class="chain-arrow" aria-hidden="true">&#8594;</span><button type="button" class="chain-step" onclick="openGuide('filter')">Filter</button><span class="chain-arrow" aria-hidden="true">&#8594;</span><button type="button" class="chain-step" onclick="openGuide('saturation')">Saturation</button><span class="chain-arrow" aria-hidden="true">&#8594;</span><button type="button" class="chain-step" onclick="openGuide('delay')">Delay</button></div>
+                    <div class="plugin-formats"><span>JSFX</span><span>GFX</span></div>
+                </article>
+                <article class="chain-card">
                     <h3>AIRY BALLAD</h3>
                     <p class="plugin-desc">Smooth opto compression, sparkle, a ducked ping-pong delay and a shimmer for soft ballad vocals; Amount adds delay and shimmer, Air brightens.</p>
                     <div class="chain-steps"><button type="button" class="chain-step" onclick="openGuide('dynamics')">Dynamics</button><span class="chain-arrow" aria-hidden="true">&#8594;</span><button type="button" class="chain-step" onclick="openGuide('exciter')">Exciter</button><span class="chain-arrow" aria-hidden="true">&#8594;</span><button type="button" class="chain-step" onclick="openGuide('delay')">Delay</button><span class="chain-arrow" aria-hidden="true">&#8594;</span><button type="button" class="chain-step" onclick="openGuide('shimmer-reverb')">Shimmer Reverb</button></div>
@@ -2600,6 +2606,18 @@
                     <div class="plugin-formats"><span>JSFX</span><span>GFX</span></div>
                 </article>
                 <article class="chain-card">
+                    <h3>ARP PLUCK</h3>
+                    <p class="plugin-desc">Hold a chord and hear an arpeggio: the Arpeggiator plays sixteenths over two octaves on a plucked harp, into a dotted delay and a room.</p>
+                    <div class="chain-steps"><button type="button" class="chain-step" onclick="openGuide('arpeggiator')">Arpeggiator</button><span class="chain-arrow" aria-hidden="true">&#8594;</span><button type="button" class="chain-step" onclick="openGuide('pluck')">Pluck</button><span class="chain-arrow" aria-hidden="true">&#8594;</span><button type="button" class="chain-step" onclick="openGuide('delay')">Delay</button><span class="chain-arrow" aria-hidden="true">&#8594;</span><button type="button" class="chain-step" onclick="openGuide('reverb')">Reverb</button></div>
+                    <div class="plugin-formats"><span>JSFX</span><span>GFX</span></div>
+                </article>
+                <article class="chain-card">
+                    <h3>AUDIOBOOK ACX</h3>
+                    <p class="plugin-desc">Narration for audiobooks: noise reduction, de-essing, a voice EQ, gentle compression and a true-peak limiter at -3.5 dB, with the loudness meter to keep the level between the ACX limits (RMS -23 to -18 dB, peaks at -3 dB or below).</p>
+                    <div class="chain-steps"><button type="button" class="chain-step" onclick="openGuide('noise-reduction')">Noise Reduction</button><span class="chain-arrow" aria-hidden="true">&#8594;</span><button type="button" class="chain-step" onclick="openGuide('deesser')">DeEsser</button><span class="chain-arrow" aria-hidden="true">&#8594;</span><button type="button" class="chain-step" onclick="openGuide('studio-eq')">Studio EQ</button><span class="chain-arrow" aria-hidden="true">&#8594;</span><button type="button" class="chain-step" onclick="openGuide('dynamics')">Dynamics</button><span class="chain-arrow" aria-hidden="true">&#8594;</span><button type="button" class="chain-step" onclick="openGuide('limiter')">Limiter</button><span class="chain-arrow" aria-hidden="true">&#8594;</span><button type="button" class="chain-step" onclick="openGuide('loudness-meter')">Loudness Meter</button></div>
+                    <div class="plugin-formats"><span>JSFX</span><span>GFX</span></div>
+                </article>
+                <article class="chain-card">
                     <h3>AUTO FILTER</h3>
                     <p class="plugin-desc">A resonant low-pass swept by an LFO.</p>
                     <div class="chain-steps"><button type="button" class="chain-step" onclick="openGuide('filter')">Filter</button></div>
@@ -2615,6 +2633,12 @@
                     <h3>BASS ENHANCER</h3>
                     <p class="plugin-desc">Adds a sub octave and warmth, then keeps the low end mono.</p>
                     <div class="chain-steps"><button type="button" class="chain-step" onclick="openGuide('sub-bloom')">Sub Bloom</button><span class="chain-arrow" aria-hidden="true">&#8594;</span><button type="button" class="chain-step" onclick="openGuide('saturation')">Saturation</button><span class="chain-arrow" aria-hidden="true">&#8594;</span><button type="button" class="chain-step" onclick="openGuide('mono-maker')">Mono Maker</button></div>
+                    <div class="plugin-formats"><span>JSFX</span><span>GFX</span></div>
+                </article>
+                <article class="chain-card">
+                    <h3>BROADCAST -23 LUFS</h3>
+                    <p class="plugin-desc">Television and video to EBU R128: a low cut, glue compression and the Maximizer aiming at -23 LUFS with true peaks under -1 dB, checked on the loudness meter.</p>
+                    <div class="chain-steps"><button type="button" class="chain-step" onclick="openGuide('studio-eq')">Studio EQ</button><span class="chain-arrow" aria-hidden="true">&#8594;</span><button type="button" class="chain-step" onclick="openGuide('glue-comp')">Glue Comp</button><span class="chain-arrow" aria-hidden="true">&#8594;</span><button type="button" class="chain-step" onclick="openGuide('maximizer')">Maximizer</button><span class="chain-arrow" aria-hidden="true">&#8594;</span><button type="button" class="chain-step" onclick="openGuide('loudness-meter')">Loudness Meter</button></div>
                     <div class="plugin-formats"><span>JSFX</span><span>GFX</span></div>
                 </article>
                 <article class="chain-card">
@@ -2646,6 +2670,12 @@
                     <p class="plugin-desc">A fifth above and an octave below, a deeper formant, a wide chorus and a shimmer turn one voice into a choir pad; Amount brings up the voices, Voice deepens them.</p>
                     <div class="chain-steps"><button type="button" class="chain-step" onclick="openGuide('harmonizer')">Harmonizer</button><span class="chain-arrow" aria-hidden="true">&#8594;</span><button type="button" class="chain-step" onclick="openGuide('formant-shift')">Formant Shift</button><span class="chain-arrow" aria-hidden="true">&#8594;</span><button type="button" class="chain-step" onclick="openGuide('chorus')">Chorus</button><span class="chain-arrow" aria-hidden="true">&#8594;</span><button type="button" class="chain-step" onclick="openGuide('shimmer-reverb')">Shimmer Reverb</button></div>
                     <div class="plugin-formats"><span>JSFX</span><span>GFX</span><span>MODULATION</span></div>
+                </article>
+                <article class="chain-card">
+                    <h3>CHORD PAD</h3>
+                    <p class="plugin-desc">One key, a whole pad: Chords turns each note into an open ninth chord for the String Ensemble, widened by chorus and lifted by a shimmer reverb.</p>
+                    <div class="chain-steps"><button type="button" class="chain-step" onclick="openGuide('chords')">Chords</button><span class="chain-arrow" aria-hidden="true">&#8594;</span><button type="button" class="chain-step" onclick="openGuide('string-ensemble')">String Ensemble</button><span class="chain-arrow" aria-hidden="true">&#8594;</span><button type="button" class="chain-step" onclick="openGuide('chorus')">Chorus</button><span class="chain-arrow" aria-hidden="true">&#8594;</span><button type="button" class="chain-step" onclick="openGuide('shimmer-reverb')">Shimmer Reverb</button></div>
+                    <div class="plugin-formats"><span>JSFX</span><span>GFX</span></div>
                 </article>
                 <article class="chain-card">
                     <h3>CLASSIC WAH RIG</h3>
@@ -2762,6 +2792,12 @@
                     <div class="plugin-formats"><span>JSFX</span><span>GFX</span><span>MODULATION</span></div>
                 </article>
                 <article class="chain-card">
+                    <h3>HUM TO SYNTH</h3>
+                    <p class="plugin-desc">Hum, sing or play a melody and hear it from the Synth: Pitch to MIDI turns the notes into MIDI for the instrument. Good for doubling a voice or a bass line.</p>
+                    <div class="chain-steps"><button type="button" class="chain-step" onclick="openGuide('pitch-to-midi')">Pitch to MIDI</button><span class="chain-arrow" aria-hidden="true">&#8594;</span><button type="button" class="chain-step" onclick="openGuide('synth')">Synth</button></div>
+                    <div class="plugin-formats"><span>JSFX</span><span>GFX</span></div>
+                </article>
+                <article class="chain-card">
                     <h3>JET FLANGE</h3>
                     <p class="plugin-desc">A tempo-synced, high-feedback flanger sweep into tape warmth; Amount makes the jet stronger, Manual shifts where the sweep sits.</p>
                     <div class="chain-steps"><button type="button" class="chain-step" onclick="openGuide('flanger')">Flanger</button><span class="chain-arrow" aria-hidden="true">&#8594;</span><button type="button" class="chain-step" onclick="openGuide('saturation')">Saturation</button></div>
@@ -2832,6 +2868,12 @@
                     <p class="plugin-desc">High-pass, glue, gentle multiband, a push EQ, wider highs, mono lows, a touch of OTT and a limiter for a mix bus.</p>
                     <div class="chain-steps"><button type="button" class="chain-step" onclick="openGuide('filter')">Filter</button><span class="chain-arrow" aria-hidden="true">&#8594;</span><button type="button" class="chain-step" onclick="openGuide('dynamics')">Dynamics</button><span class="chain-arrow" aria-hidden="true">&#8594;</span><button type="button" class="chain-step" onclick="openGuide('multiband-compressor')">Multiband Comp</button><span class="chain-arrow" aria-hidden="true">&#8594;</span><button type="button" class="chain-step" onclick="openGuide('parametric-eq')">Parametric EQ</button><span class="chain-arrow" aria-hidden="true">&#8594;</span><button type="button" class="chain-step" onclick="openGuide('stereo-width')">Stereo Width <small>High</small></button><span class="chain-arrow" aria-hidden="true">&#8594;</span><button type="button" class="chain-step" onclick="openGuide('mono-maker')">Mono Maker <small>Low</small></button><span class="chain-arrow" aria-hidden="true">&#8594;</span><button type="button" class="chain-step" onclick="openGuide('ott')">OTT</button><span class="chain-arrow" aria-hidden="true">&#8594;</span><button type="button" class="chain-step" onclick="openGuide('limiter')">Limiter</button></div>
                     <div class="plugin-formats"><span>JSFX</span><span>GFX</span><span>PIN ROUTING</span><span>MODULATION</span></div>
+                </article>
+                <article class="chain-card">
+                    <h3>MIX CHECK</h3>
+                    <p class="plugin-desc">Meters only, for the end of the master: loudness, spectrum, stereo image and VU. The sound passes untouched.</p>
+                    <div class="chain-steps"><button type="button" class="chain-step" onclick="openGuide('loudness-meter')">Loudness Meter</button><span class="chain-arrow" aria-hidden="true">&#8594;</span><button type="button" class="chain-step" onclick="openGuide('spectrum-analyzer')">Spectrum Analyzer</button><span class="chain-arrow" aria-hidden="true">&#8594;</span><button type="button" class="chain-step" onclick="openGuide('stereo-scope')">Stereo Scope</button><span class="chain-arrow" aria-hidden="true">&#8594;</span><button type="button" class="chain-step" onclick="openGuide('vu-meter')">VU Meter</button></div>
+                    <div class="plugin-formats"><span>JSFX</span><span>GFX</span></div>
                 </article>
                 <article class="chain-card">
                     <h3>MOTION PAD</h3>

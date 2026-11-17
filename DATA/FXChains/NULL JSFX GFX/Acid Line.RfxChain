@@ -1,0 +1,30 @@
+BYPASS 0 0
+<JS null_jsfx/gfx/riff_gfx.jsfx ""
+  9 1 303 80 16 1 2 80 0 30 40 50 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+>
+FXID {D9A96B4A-1958-5F6D-9811-F4EC1BC9F46F}
+WAK 0 0
+BYPASS 0 0
+<JS null_jsfx/gfx/bass_gfx.jsfx ""
+  1 0 0 30 30 10 400 75 70 180 2 400 70 80 0 60 50 0 0 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+>
+FXID {32C4CC89-67BD-54C6-B2F5-4ECEADD96010}
+WAK 0 0
+BYPASS 0 0
+<JS null_jsfx/gfx/filter_gfx.jsfx ""
+  2500 2 0 0 0 30 1 0 0 0 10 150 0 0 0 0 1 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+>
+FXID {547C5214-3C63-53B5-B74E-B08AD0DD1ADC}
+WAK 0 0
+BYPASS 0 0
+<JS null_jsfx/gfx/saturation_gfx.jsfx ""
+  35 0 50 1 0 0 0 0 0 0 0 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+>
+FXID {DED1E02C-27F7-5C74-A47F-DF166A821A12}
+WAK 0 0
+BYPASS 0 0
+<JS null_jsfx/gfx/delay_gfx.jsfx ""
+  250 35 20 1 7 0 300 20000 0 0 0 0 0 0 0 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+>
+FXID {789147BA-66E3-5CD9-9BF6-4AE4303EAEAC}
+WAK 0 0

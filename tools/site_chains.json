@@ -75,5 +75,14 @@
   "Ambient Wash": "A shimmering reverb into drifting grains and a vast detuned space, for pads and evolving textures.",
   "Drum Replace": "Each hit of a recorded kick plays the Drum Machine's kick instead, with the hit's own dynamics.",
   "Phone Vocal": "A telephone voice with a little grit and a short slap echo.",
-  "Transient Verb": "Reverb on the tail of each sound only, so the attack stays dry and close."
+  "Transient Verb": "Reverb on the tail of each sound only, so the attack stays dry and close.",
+  "Audiobook ACX": "Narration for audiobooks: noise reduction, de-essing, a voice EQ, gentle compression and a true-peak limiter at -3.5 dB, with the loudness meter to keep the level between the ACX limits (RMS -23 to -18 dB, peaks at -3 dB or below).",
+  "Broadcast -23 LUFS": "Television and video to EBU R128: a low cut, glue compression and the Maximizer aiming at -23 LUFS with true peaks under -1 dB, checked on the loudness meter.",
+  "Mix Check": "Meters only, for the end of the master: loudness, spectrum, stereo image and VU. The sound passes untouched.",
+  "Acid Line": "A ready acid line on one track: Riff writes the notes from Key, Scale and Seed, the Bass plays them with glide and a resonant envelope, then a driven filter, tube saturation and a dotted-eighth delay.",
+  "Arp Pluck": "Hold a chord and hear an arpeggio: the Arpeggiator plays sixteenths over two octaves on a plucked harp, into a dotted delay and a room.",
+  "Chord Pad": "One key, a whole pad: Chords turns each note into an open ninth chord for the String Ensemble, widened by chorus and lifted by a shimmer reverb.",
+  "Lo-Fi Keys": "A lo-fi electric piano for beats: tine keys with a little tremolo, squashed and bit-reduced by Lo-Fi Comp, then vinyl crackle, worn tape and a small room.",
+  "Hum to Synth": "Hum, sing or play a melody and hear it from the Synth: Pitch to MIDI turns the notes into MIDI for the instrument. Good for doubling a voice or a bass line.",
+  "Strummed Guitar": "A strummed guitar in time: Chords builds the chord, Strum plays it down and up in eighths, a steel-string Pluck sounds it, through an open-back cabinet and a spring reverb."
 }

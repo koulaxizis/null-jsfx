@@ -1,0 +1,30 @@
+BYPASS 0 0
+<JS null_jsfx/gfx/chords_gfx.jsfx ""
+  0 0 0 0 0 2 0 0 0 0 0 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+>
+FXID {7A779AE7-527D-5CE1-9397-09074E22475D}
+WAK 0 0
+BYPASS 0 0
+<JS null_jsfx/gfx/strum_gfx.jsfx ""
+  2 15 4 85 25 80 0 25 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+>
+FXID {1F93E553-2AA4-5E94-9E0F-3A356B0382FE}
+WAK 0 0
+BYPASS 0 0
+<JS null_jsfx/gfx/pluck_gfx.jsfx ""
+  1 18 50 100 150 60 50 60 0 1 20 0 0 0 48 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+>
+FXID {B2C184FB-CE4D-576F-AE68-734DB2A8C12E}
+WAK 0 0
+BYPASS 0 0
+<JS null_jsfx/gfx/cabinet_simulator_gfx.jsfx ""
+  0 30 80 40 0 70 0 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+>
+FXID {7A37BE76-41D0-5DE1-97CB-BE8E64973583}
+WAK 0 0
+BYPASS 0 0
+<JS null_jsfx/gfx/spring_reverb_gfx.jsfx ""
+  2.5 60 4000 40 0 20 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+>
+FXID {1EE1AF48-614A-5F6F-B2CE-AF95880C51CA}
+WAK 0 0
