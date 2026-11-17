@@ -1,6 +1,6 @@
 {
-  "display": 3939,
-  "total": 3939,
+  "display": 3977,
+  "total": 3977,
   "offset": 0,
   "updated": "2026-11-17",
   "assets": {
@@ -746,7 +746,7 @@
     },
     "713511257": {
       "file": "3.3/NULL-JSFX-JSFX.zip",
-      "count": 80
+      "count": 85
     },
     "713512481": {
       "file": "3.3/NULL-JSFX-Catalog.json",
@@ -790,7 +790,7 @@
     },
     "713646531": {
       "file": "3.3/NULL-JSFX-VST3-CLAP-Linux.zip",
-      "count": 74
+      "count": 79
     },
     "713703559": {
       "file": "3.3/NULL-JSFX-VST3-CLAP-macOS.zip",
@@ -842,11 +842,11 @@
     },
     "748875913": {
       "file": "3.3.1/NULL-JSFX-Hub-Windows-Setup.exe",
-      "count": 32
+      "count": 35
     },
     "748875964": {
       "file": "3.3.1/NULL-JSFX-Hub-macOS.dmg",
-      "count": 8
+      "count": 9
     },
     "748876004": {
       "file": "3.3.1/NULL-JSFX-Installer-Linux-ARM64.sh",
@@ -854,7 +854,7 @@
     },
     "748876476": {
       "file": "3.3.1/NULL-JSFX-Installer-Linux.sh",
-      "count": 1
+      "count": 2
     },
     "748877177": {
       "file": "3.3.1/NULL-JSFX-Installer-Windows-ARM64.exe",
@@ -862,11 +862,11 @@
     },
     "748877234": {
       "file": "3.3.1/NULL-JSFX-Installer-Windows.exe",
-      "count": 26
+      "count": 27
     },
     "748877299": {
       "file": "3.3.1/NULL-JSFX-Installer-macOS.pkg",
-      "count": 8
+      "count": 9
     },
     "748878581": {
       "file": "3.3.1/NULL-JSFX-Installer-macOS.sh",
@@ -874,7 +874,7 @@
     },
     "748879687": {
       "file": "3.3.1/NULL-JSFX-JSFX.zip",
-      "count": 114
+      "count": 122
     },
     "748879726": {
       "file": "3.3.1/NULL-JSFX-VST3-CLAP-Linux-ARM64.zip",
@@ -882,7 +882,7 @@
     },
     "748880477": {
       "file": "3.3.1/NULL-JSFX-VST3-CLAP-Linux.zip",
-      "count": 115
+      "count": 120
     },
     "748881482": {
       "file": "3.3.1/NULL-JSFX-VST3-CLAP-Windows-ARM64.zip",
@@ -890,15 +890,87 @@
     },
     "748882118": {
       "file": "3.3.1/NULL-JSFX-VST3-CLAP-Windows.zip",
-      "count": 31
+      "count": 33
     },
     "748882647": {
       "file": "3.3.1/NULL-JSFX-VST3-CLAP-macOS.zip",
-      "count": 13
+      "count": 15
     },
     "749786308": {
       "file": "3.3.1/NULL-JSFX-Catalog.json",
-      "count": 41
+      "count": 44
+    },
+    "759237384": {
+      "file": "4.0/NULL-JSFX-Remote-DAWs-Android.apk",
+      "count": 0
+    },
+    "759237390": {
+      "file": "4.0/NULL-JSFX-Remote-Mixers-Android.apk",
+      "count": 0
+    },
+    "759508071": {
+      "file": "4.0/NULL-JSFX-Hub-Linux.AppImage",
+      "count": 0
+    },
+    "759508308": {
+      "file": "4.0/NULL-JSFX-Hub-Linux.deb",
+      "count": 0
+    },
+    "759508408": {
+      "file": "4.0/NULL-JSFX-Hub-Windows-Setup.exe",
+      "count": 0
+    },
+    "759508494": {
+      "file": "4.0/NULL-JSFX-Hub-macOS.dmg",
+      "count": 0
+    },
+    "759508617": {
+      "file": "4.0/NULL-JSFX-Installer-Linux-ARM64.sh",
+      "count": 0
+    },
+    "759510452": {
+      "file": "4.0/NULL-JSFX-Installer-Linux.sh",
+      "count": 0
+    },
+    "759512044": {
+      "file": "4.0/NULL-JSFX-Installer-Windows-ARM64.exe",
+      "count": 0
+    },
+    "759512189": {
+      "file": "4.0/NULL-JSFX-Installer-Windows.exe",
+      "count": 0
+    },
+    "759512385": {
+      "file": "4.0/NULL-JSFX-Installer-macOS.pkg",
+      "count": 0
+    },
+    "759517231": {
+      "file": "4.0/NULL-JSFX-Installer-macOS.sh",
+      "count": 0
+    },
+    "759522561": {
+      "file": "4.0/NULL-JSFX-JSFX.zip",
+      "count": 1
+    },
+    "759522670": {
+      "file": "4.0/NULL-JSFX-VST3-CLAP-Linux-ARM64.zip",
+      "count": 0
+    },
+    "759524396": {
+      "file": "4.0/NULL-JSFX-VST3-CLAP-Linux.zip",
+      "count": 0
+    },
+    "759526582": {
+      "file": "4.0/NULL-JSFX-VST3-CLAP-Windows-ARM64.zip",
+      "count": 0
+    },
+    "759528402": {
+      "file": "4.0/NULL-JSFX-VST3-CLAP-Windows.zip",
+      "count": 0
+    },
+    "759529159": {
+      "file": "4.0/NULL-JSFX-VST3-CLAP-macOS.zip",
+      "count": 0
     }
   }
 }
