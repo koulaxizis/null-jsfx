@@ -1,0 +1,283 @@
+desc:NULL Wind
+author: Christos Koulaxizis
+tags: instrument wind woodwind brass flute clarinet saxophone sax trumpet physical model waveguide breath controller mono synth midi
+//category: Instruments
+//NULL JSFX v3.3.1 • https://nulljsfx.tech • MIT License
+
+slider1:0<0,3,1{Flute,Clarinet,Saxophone,Brass}>Model
+slider2:0<0,4,1{Velocity,Mod Wheel,Breath CC 2,Aftertouch,Expression CC 11}>Breath Source
+slider3:90<0,100,1>Breath (%)
+slider4:50<0,100,1>Noise (%)
+slider5:100<0,100,1>Tone (%)
+slider6:30<0,100,1>Vibrato (%)
+slider7:5.3<3,8,0.1>Vibrato Rate (Hz)
+slider8:250<0,2000,1>Vibrato Delay (ms)
+slider9:30<1,1000,1:log>Attack (ms)
+slider10:100<5,2000,1:log>Release (ms)
+slider11:40<0,500,1>Glide (ms)
+slider12:0<-24,12,0.1>Volume (dB)
+
+in_pin:none
+out_pin:Left
+out_pin:Right
+
+@init
+  // Wind instruments by physical modelling (digital waveguides after Cook and Scavone's STK, no
+  // samples), monophonic: the latest key held sounds, a key played while another is held glides
+  // to it (Glide) without starting again. Flute: a bore of two periods and a jet a quarter of it
+  // long, with a cubic jet (C4 to C7). Clarinet: a cylindrical bore of half a period closed by a
+  // reed (D3 to G6). Saxophone: a conical bore of one period in two delays with the reed between
+  // (C#3 to A5; the breath moves the reed's pressure only a little, so it never jumps an
+  // octave). Brass: a bore
+  // and a lip resonator at the note (E2 to E6, tuned per note). Notes outside a model's range
+  // sound an octave in. The breath drives each model: Velocity (each note's velocity), or a
+  // controller (the mod wheel CC 1, breath CC 2, channel or key aftertouch, expression CC 11),
+  // times Breath, shaped by Attack and Release around the keys (the sustain pedal, CC 64, holds
+  // them). Noise is the air in the breath (50%: the model's own), Vibrato a breath vibrato at
+  // Vibrato Rate that fades in after Vibrato Delay, Tone a one-pole low-pass on the output (500 Hz
+  // to 20 kHz; 100%: about 20 kHz). Pitch bend: +-2 semitones. All notes off (CC 123/120) releases.
+  //
+  // Memory: 0.. the MIDI of the block (4 per message), 2048.. keys held (the order they came),
+  // 2200.. the brass tuning table, 4096.. two delay lines.
+  ext_noinit = 1;
+  ext_tail_size = -1;
+  MQ = 0;
+  KH = 2048; BT = 2200;
+  DL = ceil(srate * 0.06) + 16;
+  DA = 4096; DB = DA + DL;
+  freembuf(DB + DL);
+  memset(0, 0, DB + DL);
+  tpi = 2 * $pi;
+  seed = 12345;
+  held = 0; korder = 0; sus = 0; gate = 0;
+  ncur = -1; ntgt = 60; vel = 0; ctrl_v = 0; lev = 0; env = 0; br = 0;
+  bendv = 0; cc1 = cc2 = cc11 = at = 0;
+  tn = 0; vph = 0; nz = nz1 = 0;
+  wa = wb = 0;
+  model_was = -1;
+  tone_y = 0;
+  // brass: cents the bore is made longer by, per note from E2 (40) every 4 semitones to E6 (88)
+  // (measured with tools/tune_wind.js)
+  BT[0] = 115.5; BT[1] = 99.7; BT[2] = 86.4; BT[3] = 76.3; BT[4] = 68.6; BT[5] = 35.8; BT[6] = 18.3;
+  BT[7] = 16.8; BT[8] = 19.6; BT[9] = 35.4; BT[10] = 41.1; BT[11] = 33.3; BT[12] = 27.6;
+
+  // Park-Miller in exact double arithmetic, uniform in (-1, 1)
+  function noise()
+  (
+    seed *= 16807; seed -= floor(seed / 2147483647) * 2147483647;
+    seed / 1073741823.5 - 1;
+  );
+
+  // a read between samples of line b (write position w), d samples back
+  function rd(b, w, d) local(p, i, f, j)
+  (
+    p = w - d;
+    p < 0 ? p += DL;
+    i = floor(p); f = p - i;
+    j = i + 1; j >= DL ? j = 0;
+    b[i] + (b[j] - b[i]) * f;
+  );
+
+  // the models' state, from silence
+  function reset_model()
+  (
+    memset(DA, 0, 2 * DL);
+    wa = wb = 0;
+    lp = 0; dc_x = dc_y = 0; z1 = 0;
+    ly1 = ly2 = 0;
+  );
+
+  // the note a key plays on the model: folded by octaves into its range
+  function fold(n)
+  (
+    while (n < n_lo) ( n += 12; );
+    while (n > n_hi) ( n -= 12; );
+    n;
+  );
+
+  function key_on(n, v)
+  (
+    korder += 1;
+    KH[n] = korder;
+    held += 1;
+    ntgt = fold(n);
+    breath_src == 0 ? lev = v;
+    // a key from silence starts the note (no glide, the vibrato again); a key over another glides
+    !gate || ncur < 0 ? ( ncur = ntgt; tn = 0; );
+    gate = 1;
+  );
+  function key_off(n) local(i, best, bo)
+  (
+    KH[n] > 0 ? ( KH[n] = 0; held -= 1; );
+    best = -1; bo = 0;
+    i = 0;
+    loop(128, KH[i] > bo ? ( bo = KH[i]; best = i; ); i += 1;);
+    best >= 0 ? ntgt = fold(best) : !sus ? gate = 0;
+  );
+  function all_off()
+  (
+    memset(KH, 0, 128);
+    held = 0; sus = 0; gate = 0;
+  );
+  function midi_ev(st, d1, d2) local(t)
+  (
+    t = st & 0xF0;
+    t == 0x90 && d2 > 0 ? key_on(d1, d2 / 127) :
+    t == 0x80 || t == 0x90 ? key_off(d1) :
+    t == 0xE0 ? bendv = (d2 * 128 + d1 - 8192) / 8192 :
+    t == 0xD0 ? at = d1 / 127 :
+    t == 0xA0 ? ( KH[d1] > 0 ? at = d2 / 127; ) :
+    t == 0xB0 ? (
+      d1 == 1 ? cc1 = d2 / 127 :
+      d1 == 2 ? cc2 = d2 / 127 :
+      d1 == 11 ? cc11 = d2 / 127 :
+      d1 == 64 ? ( d2 >= 64 ? sus = 1 : ( sus = 0; held <= 0 ? gate = 0; ); ) :
+      d1 == 123 || d1 == 120 ? all_off();
+    );
+  );
+
+@slider
+  model = max(0, min(3, floor(slider1 + 0.5)));
+  breath_src = max(0, min(4, floor(slider2 + 0.5)));
+  amt = slider3 / 100;
+  nf = slider4 / 50;
+  tone_a = exp(-tpi * min(500 * 40 ^ (slider5 / 100), 0.45 * srate) / srate);
+  vib = slider6 / 40;
+  vrate = slider7;
+  vdel = slider8 * 0.001 * srate;
+  vfade = 0.3 * srate;
+  ka = 1 - exp(-4.6 / (slider9 * 0.001 * srate));
+  kr = 1 - exp(-4.6 / (slider10 * 0.001 * srate));
+  kg = slider11 > 0 ? 1 - exp(-4.6 / (slider11 * 0.001 * srate)) : 1;
+  ksm = 1 - exp(-1000 / (10 * srate));
+  vol = 10 ^ (slider12 / 20);
+  model == 0 ? ( n_lo = 60; n_hi = 96; ) :
+  model == 1 ? ( n_lo = 50; n_hi = 91; ) :
+  model == 2 ? ( n_lo = 49; n_hi = 81; ) :
+               ( n_lo = 40; n_hi = 88; );
+  model != model_was ? ( reset_model(); ncur >= 0 ? ( ncur = fold(ncur); ntgt = fold(ntgt); ); );
+  model_was = model;
+  // the brass lip: 46 Hz wide at any sample rate; the bore 62.5 us longer
+  lip_r = exp(-$pi * 45.9 / srate);
+  b_ofs = 0.0000625 * srate;
+  dc_r = exp(-tpi * 38.3 / srate);
+
+@block
+  // the MIDI of this block, played at its offsets in @sample
+  mq_n = 0;
+  while (midirecv(m_ofs, m_1, m_2, m_3)) (
+    // every message goes on to the next plugin too, so instruments can be layered
+    midisend(m_ofs, m_1, m_2, m_3);
+    mq_n < 512 ? (
+      MQ[mq_n * 4] = m_ofs;
+      MQ[mq_n * 4 + 1] = m_1;
+      MQ[mq_n * 4 + 2] = m_2;
+      MQ[mq_n * 4 + 3] = m_3;
+      mq_n += 1;
+    );
+  );
+  mq_i = 0;
+  si = 0;
+
+@sample
+  while (mq_i < mq_n && MQ[mq_i * 4] <= si) (
+    midi_ev(MQ[mq_i * 4 + 1], MQ[mq_i * 4 + 2], MQ[mq_i * 4 + 3]);
+    mq_i += 1;
+  );
+  si += 1;
+
+  // the breath: the source (a controller smoothed over 10 ms) times Breath, around the keys
+  breath_src > 0 ? (
+    ctrl_t = breath_src == 1 ? cc1 : breath_src == 2 ? cc2 : breath_src == 3 ? at : cc11;
+    lev += (ctrl_t - lev) * ksm;
+  );
+  gate ? env += ka * (1 - env) : ( env -= kr * env; env < 0.00001 ? env = 0; );
+  br = min(1, env * lev * amt);
+  // the reeds' onset: the pressure is let in within a millisecond of a key (a slow start makes
+  // the reed choose the octave), the breath source still has to be there
+  ge = min(1, env * 20) * min(1, lev * amt * 20);
+
+  y = 0;
+  ncur >= 0 ? (
+    // the pitch: the glide, the bend, the bore's length for it
+    ncur += (ntgt - ncur) * kg;
+    np = ncur + 2 * bendv;
+    f = 440 * 2 ^ ((np - 69) / 12);
+    nz1 = nz;
+    nz = noise() * nf;
+    vph += vrate / srate; vph -= floor(vph);
+    vb = sin(tpi * vph) * min(1, br * 1.2) * vib * max(0, min(1, (tn - vdel) / vfade));
+    tn += 1;
+
+    model == 0 ? (
+      // flute: bore (line A) of two periods, jet (line B) a quarter of the bore
+      d = max(2, 2 * srate / f - 0.6);
+      gt = min(1, br * 60);
+      p = gt * (1 + 0.3 * br);
+      // the air noise high-passed (a first difference), so it colours the tone without moving
+      // the jet to another register
+      rp = 0.06 * (nz - nz1) * p + p * 0.08 * vb;
+      t = rd(DA, wa, d);
+      lp = 0.35 * t + 0.65 * lp;
+      t = lp - dc_x + dc_r * dc_y; dc_x = lp; dc_y = t;
+      pd = p + rp - 0.5 * t;
+      DB[wb] = pd; wb += 1; wb >= DL ? wb = 0;
+      pd = rd(DB, wb, d * 0.25);
+      j = max(-1, min(1, pd * (pd * pd - 1)));
+      DA[wa] = j + 0.5 * t; wa += 1; wa >= DL ? wa = 0;
+      y = 0.176 * t * (0.35 + 0.65 * br);
+    ) :
+    model == 1 ? (
+      // clarinet: bore of half a period, reed table 0.7 - 0.3 x
+      d = max(1, 0.5 * srate / f - 0.5);
+      p = (0.55 + 0.42 * br) * ge;
+      p += p * (0.12 * nz + 0.05 * vb);
+      o = rd(DA, wa, d);
+      fl = 0.5 * (o + z1); z1 = o;
+      pd = -0.95 * fl - p;
+      r = max(-1, min(1, 0.7 - 0.3 * pd));
+      DA[wa] = p + pd * r; wa += 1; wa >= DL ? wa = 0;
+      y = o * 0.366 * (0.25 + 0.75 * br);
+    ) :
+    model == 2 ? (
+      // saxophone: a conical bore of one period in two delays, the reed 0.2 of the way in
+      d = max(2, srate / f - 0.5);
+      // the reed jumps an octave at some pressures, so the breath moves it only between 0.75
+      // and 0.85, where every note holds its register; the level follows the breath
+      p = (0.75 + 0.1 * br) * ge;
+      p += p * (0.05 * (nz - nz1) + 0.05 * vb);
+      a = rd(DA, wa, 0.8 * d);
+      fl = 0.5 * (a + z1); z1 = a;
+      t = -0.95 * fl;
+      o = t - rd(DB, wb, 0.2 * d);
+      pd = p - o;
+      r = max(-1, min(1, 0.7 + 0.3 * pd));
+      DB[wb] = t; wb += 1; wb >= DL ? wb = 0;
+      DA[wa] = p - pd * r - t; wa += 1; wa >= DL ? wa = 0;
+      y = o * 0.3 * (0.25 + 0.75 * br);
+    ) : (
+      // brass: the bore and a lip resonator at the note, its transmission squared
+      bi = max(0, min(11.999, (np - 40) / 4));
+      bk = floor(bi);
+      d = (2.15 * srate / f + b_ofs) * 2 ^ ((BT[bk] + (BT[bk + 1] - BT[bk]) * (bi - bk)) / 1200);
+      w = tpi * min(f, 0.45 * srate) / srate;
+      lc = 2 * lip_r * cos(w);
+      lg = 3 * (1 - lc + lip_r * lip_r);
+      gt = ge;
+      bb = gt * (0.5 + 0.5 * br);
+      mp = 0.3 * (bb + 0.02 * vb + 0.01 * nz * bb);
+      bp = 0.85 * rd(DA, wa, d);
+      dp = mp - bp;
+      lpy = lg * dp + lc * ly1 - lip_r * lip_r * ly2;
+      ly2 = ly1; ly1 = lpy;
+      q = min(1, lpy * lpy);
+      o = q * mp + (1 - q) * bp;
+      t = o - dc_x + dc_r * dc_y; dc_x = o; dc_y = t;
+      DA[wa] = t; wa += 1; wa >= DL ? wa = 0;
+      y = bp * 2.23 * (0.4 + 0.6 * br);
+    );
+  );
+
+  // Tone, the output
+  tone_y = y * (1 - tone_a) + tone_a * tone_y;
+  spl0 = spl1 = tone_y * vol;

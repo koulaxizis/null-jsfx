@@ -41,3 +41,10 @@ vinyl_age 8 78 Shellac
 drum_machine 16 MIDI Kit
 sampler 35 Reverse Swell
 sampler 51 Beat Slicer (16 Slices)
+
+# Wind's controller presets: the breath comes from a controller the test does not send (silent
+# until the mod wheel, breath CC 2, aftertouch or expression moves)
+wind 200 Mod Wheel Breath
+wind 200 Breath Controller
+wind 200 Aftertouch Swell
+wind 200 Expression Pedal

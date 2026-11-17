@@ -1,0 +1,19 @@
+[
+  ["Concert Flute", {"Model": "Flute", "Vibrato": 35, "Vibrato Delay": 200}],
+  ["Breathy Flute", {"Model": "Flute", "Noise": 100, "Vibrato": 25, "Tone": 80}],
+  ["Pan Flute Air", {"Model": "Flute", "Noise": 90, "Vibrato": 0, "Attack": 60, "Release": 300, "Tone": 70}],
+  ["Soft Clarinet", {"Model": "Clarinet", "Breath": 70, "Vibrato": 10, "Tone": 70, "Volume": 3}],
+  ["Jazz Clarinet", {"Model": "Clarinet", "Vibrato": 45, "Vibrato Rate": 5.8, "Glide": 70}],
+  ["Tenor Sax", {"Model": "Saxophone", "Vibrato": 35, "Vibrato Delay": 300, "Glide": 50}],
+  ["Smooth Sax", {"Model": "Saxophone", "Breath": 75, "Tone": 65, "Vibrato": 40, "Attack": 60, "Release": 200, "Volume": 2}],
+  ["Growl Sax", {"Model": "Saxophone", "Noise": 100, "Breath": 100, "Vibrato": 15}],
+  ["Trumpet", {"Model": "Brass", "Vibrato": 20, "Vibrato Delay": 400, "Attack": 20}],
+  ["Muted Brass", {"Model": "Brass", "Tone": 45, "Breath": 70, "Vibrato": 10, "Volume": 4}],
+  ["Brass Swell", {"Model": "Brass", "Attack": 600, "Release": 300, "Vibrato": 25}],
+  ["Mod Wheel Breath", {"Breath Source": "Mod Wheel", "Breath": 100, "Attack": 10, "Release": 60}],
+  ["Breath Controller", {"Breath Source": "Breath CC 2", "Breath": 100, "Attack": 5, "Release": 40, "Vibrato": 0}],
+  ["Aftertouch Swell", {"Breath Source": "Aftertouch", "Model": "Clarinet", "Breath": 100, "Attack": 10}],
+  ["Expression Pedal", {"Breath Source": "Expression CC 11", "Model": "Saxophone", "Breath": 100, "Attack": 10}],
+  ["Legato Lead", {"Model": "Saxophone", "Glide": 120, "Vibrato": 50, "Vibrato Delay": 150, "Tone": 85}],
+  ["Dark Pad Flute", {"Model": "Flute", "Attack": 400, "Release": 1200, "Tone": 40, "Vibrato": 20, "Volume": 4}]
+]
