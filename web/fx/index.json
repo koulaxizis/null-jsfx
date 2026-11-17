@@ -1964,6 +1964,20 @@
    "bytes": 94423
   },
   {
+   "id": "choir",
+   "name": "Choir",
+   "category": "Instruments",
+   "tags": "instrument choir vocal voices aah ooh formant vowel ensemble pad polyphonic synth mpe midi gui",
+   "gfx": [
+    560,
+    502
+   ],
+   "ins": 0,
+   "outs": 2,
+   "sliders": 15,
+   "bytes": 105564
+  },
+  {
    "id": "drum_machine",
    "name": "Drum Machine",
    "category": "Instruments",
@@ -2144,6 +2158,20 @@
    "outs": 2,
    "sliders": 48,
    "bytes": 259050
+  },
+  {
+   "id": "wind",
+   "name": "Wind",
+   "category": "Instruments",
+   "tags": "instrument wind woodwind brass flute clarinet saxophone sax trumpet physical model waveguide breath controller mono synth midi gui",
+   "gfx": [
+    560,
+    416
+   ],
+   "ins": 0,
+   "outs": 2,
+   "sliders": 12,
+   "bytes": 80874
   }
  ],
  "midi": [

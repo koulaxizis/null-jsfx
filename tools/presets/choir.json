@@ -1,0 +1,18 @@
+[
+  ["Aah Choir", {"Vowel": 0, "Voices": 8, "Breath": 25, "Vibrato": 35}],
+  ["Ooh Pad", {"Vowel": 3.6, "Voices": 8, "Attack": 600, "Release": 1500, "Brightness": 35, "Breath": 30}],
+  ["Eeh Bright", {"Vowel": 1.2, "Voices": 6, "Brightness": 65, "Vibrato": 30}],
+  ["Soft Ooh Solo", {"Vowel": 3.6, "Voices": 1, "Vibrato": 60, "Attack": 120, "Release": 400, "Breath": 20, "Volume": -1}],
+  ["Soprano Line", {"Section": "Soprano", "Vowel": 0.4, "Voices": 4, "Vibrato": 50, "Attack": 150, "Volume": 3}],
+  ["Male Ooh", {"Section": "Bass", "Vowel": 3.2, "Voices": 6, "Breath": 55, "Brightness": 40, "Attack": 400}],
+  ["Tenor Section", {"Section": "Tenor", "Vowel": 0.3, "Voices": 6, "Vibrato": 40}],
+  ["Breathy Whisper", {"Vowel": 3.0, "Voices": 8, "Breath": 100, "Vibrato": 10, "Brightness": 60, "Attack": 500, "Volume": 3}],
+  ["Vowel Morph Pad", {"Vowel": 1.5, "Voices": 8, "Attack": 1200, "Release": 2500, "Detune": 16, "Brightness": 45}],
+  ["Wide Ensemble", {"Voices": 8, "Detune": 24, "Stereo": 100, "Vibrato": 25}],
+  ["Mono Chant", {"Vowel": 3.4, "Voices": 8, "Detune": 6, "Vibrato": 5, "Stereo": 0, "Attack": 300, "Brightness": 40}],
+  ["Fast Staccato", {"Vowel": 0.2, "Voices": 6, "Attack": 15, "Release": 120, "Vibrato": 0, "Velocity": 100}],
+  ["Dark Cathedral", {"Vowel": 3.8, "Voices": 8, "Brightness": 15, "Attack": 900, "Release": 4000, "Breath": 35, "Volume": -2}],
+  ["Synth Voices", {"Vowel": 0.8, "Voices": 3, "Detune": 30, "Breath": 0, "Vibrato": 0, "Brightness": 80, "Velocity": 0}],
+  ["MPE Voices", {"MPE": "On", "Voices": 4, "Vibrato": 15, "Attack": 80}],
+  ["Lo-Fi Choir", {"Vowel": 0.5, "Voices": 2, "Detune": 35, "Brightness": 25, "Breath": 45, "Vibrato": 70, "Vibrato Rate": 4}]
+]

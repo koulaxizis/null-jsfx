@@ -3843,6 +3843,8 @@ static const LogSlider kLogSliders[] = {
     { "bitcrusher", 1 },
     { "bloom_delay", 0 },
     { "bloom_delay", 5 },
+    { "choir", 7 },
+    { "choir", 8 },
     { "chorus", 7 },
     { "comb_filter", 0 },
     { "de_plosive", 1 },
@@ -3948,6 +3950,8 @@ static const LogSlider kLogSliders[] = {
     { "tone", 3 },
     { "transient_shaper", 4 },
     { "transient_shaper", 5 },
+    { "wind", 8 },
+    { "wind", 9 },
 };
 static constexpr uint32_t kNumLogSliders = sizeof(kLogSliders) / sizeof(kLogSliders[0]);
 

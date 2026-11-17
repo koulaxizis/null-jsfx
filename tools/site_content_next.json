@@ -241,5 +241,62 @@
     "properties": "Main (1/2) and sidechain (3/4) in, stereo out. Auto lines the two up: a phase-transform cross-correlation finds the delay (up to Range, either polarity) and a least-squares fit finds the gain, so a plugin's latency, level change and polarity flip are taken out. The difference is main minus the lined-up sidechain; the interface shows the null depth, the difference in 10 octave bands, the delay, the gain and BIT-IDENTICAL when nothing differs at all.",
     "beta": true,
     "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-null_test\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><path d=\"M 6,24 C 14,8 22,8 30,24 C 38,40 46,40 58,24\" fill=\"none\" stroke=\"url(#icon-null_test)\" stroke-width=\"2.5\" opacity=\"0.6\"/><path d=\"M 6,24 C 14,40 22,40 30,24 C 38,8 46,8 58,24\" fill=\"none\" stroke=\"url(#icon-null_test)\" stroke-width=\"2.5\" opacity=\"0.6\"/><path d=\"M 6,50 L 58,50\" stroke=\"url(#icon-null_test)\" stroke-width=\"3\" stroke-linecap=\"round\"/></svg>"
+  },
+  "choir": {
+    "card_desc": "A Synthetic Choir With Vowels",
+    "keywords": "instrument choir vocal voices aah ooh formant vowel morph ensemble pad soprano alto tenor bass breath vibrato mpe synth",
+    "slider_desc": [
+      "The vowel sung: A, E, I, O, U and every blend between (the mod wheel moves it towards U)",
+      "How many singers each key has, from a soloist to a section of eight",
+      "How far the singers of a key are spread around its pitch",
+      "Breath noise in each singer's voice, pulsed with its vocal cords",
+      "Depth of the singers' vibrato, which fades in a quarter second after the key",
+      "Speed of the vibrato; every singer is a little faster or slower",
+      "Auto lets each key sing in the voices nearest its pitch; the others pick soprano, alto, tenor or bass",
+      "How slowly the keys swell in",
+      "How long the keys ring after they are let go",
+      "The vocal tone, from dark to bright, before the formants",
+      "How much velocity changes the level and the tone; 0% sings every key at full velocity",
+      "How far the singers spread across the stereo field",
+      "On: pitch bend, pressure and CC74 timbre of channels 2-16 belong to the key played there",
+      "Pitch bend range of the MPE channels",
+      "Output level"
+    ],
+    "uses": [
+      "Aah and Ooh pads under a song or a film cue",
+      "A soft solo voice line, or a bass section humming the roots",
+      "Vowel sweeps from the mod wheel for movement in a held chord",
+      "Expressive voices from an MPE controller"
+    ],
+    "properties": "MIDI in → every key sings with 1 to 8 singers (PolyBLEP sawtooths, each with its own detune, slow drift and delayed vibrato, plus breath noise pulsed by its glottal cycle, by an exact Park-Miller step), spread across the stereo field; a one-pole glottal tilt per key (darker when soft), then seven banks of five formant resonators per channel (soprano, alto, tenor, bass and three between, for the vowel A-E-I-O-U and its blends). Auto sends a key to the two banks nearest its pitch. One attack/release envelope per key, sustain pedal, mod wheel to the vowel, pitch bend +-2 st, MPE bend, pressure and timbre. No samples. Every MIDI message passes on.",
+    "beta": true,
+    "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-choir\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><circle cx=\"18\" cy=\"26\" r=\"6\" stroke=\"url(#icon-choir)\" stroke-width=\"3\" fill=\"none\" opacity=\"0.6\"/><circle cx=\"46\" cy=\"26\" r=\"6\" stroke=\"url(#icon-choir)\" stroke-width=\"3\" fill=\"none\" opacity=\"0.6\"/><circle cx=\"32\" cy=\"20\" r=\"7\" stroke=\"url(#icon-choir)\" stroke-width=\"3\" fill=\"none\"/><ellipse cx=\"32\" cy=\"21\" rx=\"2.5\" ry=\"3.5\" fill=\"url(#icon-choir)\"/><path d=\"M 8,54 C 10,40 26,40 28,54 M 36,54 C 38,40 54,40 56,54 M 20,56 C 22,36 42,36 44,56\" stroke=\"url(#icon-choir)\" stroke-width=\"3\" fill=\"none\" stroke-linecap=\"round\"/></svg>"
+  },
+  "wind": {
+    "card_desc": "Flute, Clarinet, Sax and Brass by Physics",
+    "keywords": "instrument wind woodwind brass flute clarinet saxophone sax trumpet physical modelling waveguide breath controller aftertouch expression mono legato synth",
+    "slider_desc": [
+      "The instrument: Flute, Clarinet, Saxophone or Brass, each a waveguide model with its own range",
+      "What drives the breath: each note's velocity, or a controller (mod wheel, breath CC 2, aftertouch, expression CC 11)",
+      "How hard the player blows at the source's full value",
+      "The air in the breath; 50% is the model's own, 0% a pure tone",
+      "A low-pass on the output, from muffled to fully open",
+      "Depth of the breath vibrato",
+      "Speed of the vibrato",
+      "How long after a new note the vibrato begins to fade in",
+      "How quickly the breath comes in at a key",
+      "How quickly the breath stops after the last key is let go",
+      "Time to slide to a key played while another is held",
+      "Output level"
+    ],
+    "uses": [
+      "Solo flute, clarinet, sax or trumpet lines from a keyboard",
+      "Expressive playing with a breath controller, the mod wheel or aftertouch",
+      "Legato leads that glide between held notes",
+      "Soft wind pads and textures under a mix"
+    ],
+    "properties": "MIDI in → one voice (the latest key held; a key over another glides to it). Digital waveguides after STK: Flute (a bore of two periods, a jet a quarter of it, cubic jet, high-passed air noise), Clarinet (a bore of half a period, reed table), Saxophone (one period in two delays, the reed between, a narrow pressure range so it holds its register), Brass (a bore and a lip resonator, tuned per note); each bore length set exactly for its pitch (tools/tune_wind.js keeps it within 12 cents at 44.1, 48 and 96 kHz). Breath from velocity or a controller, with attack, release, vibrato after a delay and noise by an exact Park-Miller step; notes outside a model's range sound an octave in. No samples. Every MIDI message passes on.",
+    "beta": true,
+    "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-wind\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><path d=\"M 6,40 L 46,18\" stroke=\"url(#icon-wind)\" stroke-width=\"6\" stroke-linecap=\"round\" fill=\"none\"/><circle cx=\"20\" cy=\"32\" r=\"1.8\" fill=\"#1a1a1a\"/><circle cx=\"28\" cy=\"27.6\" r=\"1.8\" fill=\"#1a1a1a\"/><circle cx=\"36\" cy=\"23.2\" r=\"1.8\" fill=\"#1a1a1a\"/><path d=\"M 44,36 C 50,34 52,40 58,38 M 40,44 C 47,42 50,48 58,46\" stroke=\"url(#icon-wind)\" stroke-width=\"2.5\" fill=\"none\" stroke-linecap=\"round\" opacity=\"0.6\"/></svg>"
   }
 }
