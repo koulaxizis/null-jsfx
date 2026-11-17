@@ -2,7 +2,7 @@ desc:NULL MIDI Monitor
 author: Christos Koulaxizis
 tags: midi monitor viewer inspector debug log notes cc controller pitch bend pressure aftertouch mpe channel keyboard
 //category: MIDI
-//NULL JSFX v3.3.1 • https://nulljsfx.tech • MIT License
+//NULL JSFX v4.0 • https://nulljsfx.tech • MIT License
 
 slider1:0<0,16,1{Omni,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16}>Channel
 slider2:0<0,3,1{All,Notes,Controllers,Other}>Show

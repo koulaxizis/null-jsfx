@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wind: free instrument for REAPER, VST3, CLAP | NULL JSFX</title>
+    <meta name="description" content="Wind: Flute, Clarinet, Sax and Brass by Physics. Free, open source instrument for REAPER (JSFX) and any DAW (VST3, CLAP, LV2) on Windows, macOS and Linux.">
+    <link rel="canonical" href="https://nulljsfx.tech/plugins/wind/">
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Wind: Flute, Clarinet, Sax and Brass by Physics">
+    <meta property="og:description" content="Wind: Flute, Clarinet, Sax and Brass by Physics. Free, open source instrument for REAPER (JSFX) and any DAW (VST3, CLAP, LV2) on Windows, macOS and Linux.">
+    <meta property="og:url" content="https://nulljsfx.tech/plugins/wind/">
+    <meta property="og:image" content="https://nulljsfx.tech/assets/video/wind.jpg">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Wind: Flute, Clarinet, Sax and Brass by Physics">
+    <meta name="twitter:description" content="Wind: Flute, Clarinet, Sax and Brass by Physics. Free, open source instrument for REAPER (JSFX) and any DAW (VST3, CLAP, LV2) on Windows, macOS and Linux.">
+    <meta name="twitter:image" content="https://nulljsfx.tech/assets/video/wind.jpg">
+    <link rel="icon" type="image/svg+xml" href="/assets/img/favicon.svg">
+    <link rel="stylesheet" href="/assets/css/style.css">
+    <script type="application/ld+json">{"@context": "https://schema.org", "@type": "SoftwareApplication", "name": "NULL Wind", "description": "Flute, Clarinet, Sax and Brass by Physics", "url": "https://nulljsfx.tech/plugins/wind/", "image": "https://nulljsfx.tech/assets/video/wind.jpg", "applicationCategory": "MultimediaApplication", "applicationSubCategory": "Audio instrument", "operatingSystem": "Windows, macOS, Linux", "softwareVersion": "4.0", "license": "https://opensource.org/licenses/MIT", "offers": {"@type": "Offer", "price": "0", "priceCurrency": "EUR"}, "author": {"@type": "Person", "name": "Christos Koulaxizis"}, "isPartOf": {"@type": "SoftwareApplication", "name": "NULL JSFX", "url": "https://nulljsfx.tech/"}}</script>
+    <script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "NULL JSFX", "item": "https://nulljsfx.tech/"}, {"@type": "ListItem", "position": 2, "name": "Instruments", "item": "https://nulljsfx.tech/#instruments"}, {"@type": "ListItem", "position": 3, "name": "Wind", "item": "https://nulljsfx.tech/plugins/wind/"}]}</script>
+</head>
+<body class="plugin-page">
+    <main>
+        <nav class="page-crumbs" aria-label="Breadcrumb">
+            <a href="/" class="page-home"><img src="/assets/img/favicon.svg" alt="NULL JSFX" width="28" height="28"></a>
+            <a href="/">NULL JSFX</a> <span>/</span> <a href="/#instruments">Instruments</a> <span>/</span> <span>Wind</span>
+        </nav>
+        <article class="page-plugin">
+            <header class="guide-header page-header">
+                <span class="guide-category">Instruments</span>
+                <h1>WIND <span class="beta-badge">BETA</span></h1>
+                <p>Flute, Clarinet, Sax and Brass by Physics</p>
+                <p class="beta-note">Beta: its rules have been tested on test signals so far and may still be tuned from your feedback, so a project saved now can sound a little different after an update.</p>
+            </header>
+            <video class="guide-shot guide-video" poster="/assets/video/wind.jpg" controls playsinline preload="none" width="1280" height="720" aria-label="Wind presentation video"><source src="https://github.com/koulaxizis/null-jsfx/releases/download/media/wind.mp4" type="video/mp4"><source src="/assets/video/wind.mp4" type="video/mp4"></video>
+            <div class="page-actions">
+                <a class="featured-btn" href="/#download"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg><span>Download free</span></a>
+                <small>Part of NULL JSFX 4.0: 168 plugins, free and open source (MIT). Easiest with <a href="/#hub">NULL JSFX Hub</a>.</small>
+            </div>
+            <div class="guide-body">
+                <section class="guide-section">
+                    <h2>Controls</h2>
+                    <ul class="guide-sliders"><li><span class="slider-name">Model</span><span class="slider-desc">Flute / Clarinet / Saxophone / Brass — The instrument: Flute, Clarinet, Saxophone or Brass, each a waveguide model with its own range</span></li><li><span class="slider-name">Breath Source</span><span class="slider-desc">Velocity / Mod Wheel / Breath CC 2 / Aftertouch / Expression CC 11 — What drives the breath: each note&#x27;s velocity, or a controller (mod wheel, breath CC 2, aftertouch, expression CC 11)</span></li><li><span class="slider-name">Breath</span><span class="slider-desc">0 to 100% — How hard the player blows at the source&#x27;s full value</span></li><li><span class="slider-name">Noise</span><span class="slider-desc">0 to 100% — The air in the breath; 50% is the model&#x27;s own, 0% a pure tone</span></li><li><span class="slider-name">Tone</span><span class="slider-desc">0 to 100% — A low-pass on the output, from muffled to fully open</span></li><li><span class="slider-name">Vibrato</span><span class="slider-desc">0 to 100% — Depth of the breath vibrato</span></li><li><span class="slider-name">Vibrato Rate</span><span class="slider-desc">3 to 8 Hz — Speed of the vibrato</span></li><li><span class="slider-name">Vibrato Delay</span><span class="slider-desc">0 to 2000 ms — How long after a new note the vibrato begins to fade in</span></li><li><span class="slider-name">Attack</span><span class="slider-desc">1 to 1000 ms — How quickly the breath comes in at a key</span></li><li><span class="slider-name">Release</span><span class="slider-desc">5 to 2000 ms — How quickly the breath stops after the last key is let go</span></li><li><span class="slider-name">Glide</span><span class="slider-desc">0 to 500 ms — Time to slide to a key played while another is held</span></li><li><span class="slider-name">Volume</span><span class="slider-desc">−24 to +12 dB — Output level</span></li></ul>
+                </section>
+                <section class="guide-section">
+                    <h2>Best uses</h2>
+                    <ul class="use-cases"><li>Solo flute, clarinet, sax or trumpet lines from a keyboard</li><li>Expressive playing with a breath controller, the mod wheel or aftertouch</li><li>Legato leads that glide between held notes</li><li>Soft wind pads and textures under a mix</li></ul>
+                </section>
+                <section class="guide-section">
+                    <h2>Properties</h2>
+                    <p class="page-props">MIDI in → one voice (the latest key held; a key over another glides to it). Digital waveguides after STK: Flute (a bore of two periods, a jet a quarter of it, cubic jet, high-passed air noise), Clarinet (a bore of half a period, reed table), Saxophone (one period in two delays, the reed between, a narrow pressure range so it holds its register), Brass (a bore and a lip resonator, tuned per note); each bore length set exactly for its pitch (tools/tune_wind.js keeps it within 12 cents at 44.1, 48 and 96 kHz). Breath from velocity or a controller, with attack, release, vibrato after a delay and noise by an exact Park-Miller step; notes outside a model&#x27;s range sound an octave in. No samples. Every MIDI message passes on.</p>
+                </section>
+                <section class="guide-section">
+                    <h2>Formats</h2>
+                    <ul class="guide-formats"><li><span class="format-tag">JSFX</span>JSFX for REAPER, with REAPER&#x27;s own sliders</li><li><span class="format-tag">GFX</span>JSFX GFX for REAPER, with its own interface</li><li><span class="format-tag">VST3</span>VST3 for any DAW</li><li><span class="format-tag">CLAP</span>CLAP for any DAW</li><li><span class="format-tag">LV2</span>LV2 for Linux DAWs such as Ardour, Carla and Qtractor</li></ul>
+                </section>
+                <section class="guide-section">
+                    <h2>Factory presets</h2>
+                    <p class="page-list">Concert Flute · Breathy Flute · Pan Flute Air · Soft Clarinet · Jazz Clarinet · Tenor Sax · Smooth Sax · Growl Sax · Trumpet · Muted Brass · Brass Swell · Mod Wheel Breath · Breath Controller · Aftertouch Swell · Expression Pedal · Legato Lead · Dark Pad Flute</p>
+                </section>
+            </div>
+        </article>
+        <section class="page-related">
+            <h2 class="section-title">Goes well with</h2>
+            <div class="related-grid"><a class="related-card" href="/plugins/bass/"><b>Bass</b><small>Synth Bass &amp; 808 with Phrase Player</small></a><a class="related-card" href="/plugins/choir/"><b>Choir</b><small>A Synthetic Choir With Vowels</small></a><a class="related-card" href="/plugins/granular/"><b>Granular</b><small>Clouds of Grains from Your Samples</small></a><a class="related-card" href="/plugins/keys/"><b>Keys</b><small>Electric Piano, Music Box and Mallets</small></a><a class="related-card" href="/plugins/pitch-correction/"><b>Pitch Correction</b><small>Auto-Tune Style Vocal Pitch Correction</small></a><a class="related-card" href="/plugins/pitch-to-midi/"><b>Pitch to MIDI</b><small>Audio to MIDI for Monophonic Lines</small></a></div>
+            <p class="page-more"><a href="/#instruments">All 168 NULL JSFX plugins</a></p>
+        </section>
+    </main>
+    <footer class="site-footer">
+        <div class="footer-content">
+            Designed with &#9825; by <a href="https://koulaxizis.gr" target="_blank" rel="noopener">Christos Koulaxizis</a>.
+            <div class="footer-links">
+                <a href="https://ko-fi.com/koulaxizis" target="_blank" rel="noopener">Support on Ko-fi</a>
+                <span class="sep">&bull;</span>
+                <a href="https://github.com/koulaxizis/null-jsfx" target="_blank" rel="noopener">GitHub</a>
+                <span class="sep">&bull;</span>
+                <a href="/">nulljsfx.tech</a>
+            </div>
+        </div>
+    </footer>
+    <button id="theme-toggle" class="theme-toggle-floating" aria-label="Toggle color theme" title="Switch between light/dark theme">
+        <svg class="sun-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2 M12 21v2 M4.22 4.22l1.42 1.42 M18.36 18.36l1.42 1.42 M1 12h2 M21 12h2 M4.22 19.78l1.42-1.42 M18.36 5.64l1.42-1.42"/></svg>
+        <svg class="moon-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none;"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+    </button>
+    <script src="/assets/js/theme.js"></script>
+    <script src="/assets/js/demo.js"></script>
+</body>
+</html>

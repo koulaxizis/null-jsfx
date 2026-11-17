@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Strum: free MIDI tool for REAPER, VST3, CLAP | NULL JSFX</title>
+    <meta name="description" content="Strum: Guitar Strums From Held Chords. Free, open source MIDI tool for REAPER (JSFX) and any DAW (VST3, CLAP, LV2) on Windows, macOS and Linux.">
+    <link rel="canonical" href="https://nulljsfx.tech/plugins/strum/">
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Strum: Guitar Strums From Held Chords">
+    <meta property="og:description" content="Strum: Guitar Strums From Held Chords. Free, open source MIDI tool for REAPER (JSFX) and any DAW (VST3, CLAP, LV2) on Windows, macOS and Linux.">
+    <meta property="og:url" content="https://nulljsfx.tech/plugins/strum/">
+    <meta property="og:image" content="https://nulljsfx.tech/assets/video/strum.jpg">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Strum: Guitar Strums From Held Chords">
+    <meta name="twitter:description" content="Strum: Guitar Strums From Held Chords. Free, open source MIDI tool for REAPER (JSFX) and any DAW (VST3, CLAP, LV2) on Windows, macOS and Linux.">
+    <meta name="twitter:image" content="https://nulljsfx.tech/assets/video/strum.jpg">
+    <link rel="icon" type="image/svg+xml" href="/assets/img/favicon.svg">
+    <link rel="stylesheet" href="/assets/css/style.css">
+    <script type="application/ld+json">{"@context": "https://schema.org", "@type": "SoftwareApplication", "name": "NULL Strum", "description": "Guitar Strums From Held Chords", "url": "https://nulljsfx.tech/plugins/strum/", "image": "https://nulljsfx.tech/assets/video/strum.jpg", "applicationCategory": "MultimediaApplication", "applicationSubCategory": "Audio MIDI tool", "operatingSystem": "Windows, macOS, Linux", "softwareVersion": "4.0", "license": "https://opensource.org/licenses/MIT", "offers": {"@type": "Offer", "price": "0", "priceCurrency": "EUR"}, "author": {"@type": "Person", "name": "Christos Koulaxizis"}, "isPartOf": {"@type": "SoftwareApplication", "name": "NULL JSFX", "url": "https://nulljsfx.tech/"}}</script>
+    <script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "NULL JSFX", "item": "https://nulljsfx.tech/"}, {"@type": "ListItem", "position": 2, "name": "MIDI", "item": "https://nulljsfx.tech/#midi"}, {"@type": "ListItem", "position": 3, "name": "Strum", "item": "https://nulljsfx.tech/plugins/strum/"}]}</script>
+</head>
+<body class="plugin-page">
+    <main>
+        <nav class="page-crumbs" aria-label="Breadcrumb">
+            <a href="/" class="page-home"><img src="/assets/img/favicon.svg" alt="NULL JSFX" width="28" height="28"></a>
+            <a href="/">NULL JSFX</a> <span>/</span> <a href="/#midi">MIDI</a> <span>/</span> <span>Strum</span>
+        </nav>
+        <article class="page-plugin">
+            <header class="guide-header page-header">
+                <span class="guide-category">MIDI</span>
+                <h1>STRUM <span class="beta-badge">BETA</span></h1>
+                <p>Guitar Strums From Held Chords</p>
+                <p class="beta-note">Beta: its rules have been tested on test signals so far and may still be tuned from your feedback, so a project saved now can sound a little different after an update.</p>
+            </header>
+            <video class="guide-shot guide-video" poster="/assets/video/strum.jpg" controls playsinline preload="none" width="1280" height="720" aria-label="Strum presentation video"><source src="https://github.com/koulaxizis/null-jsfx/releases/download/media/strum.mp4" type="video/mp4"><source src="/assets/video/strum.mp4" type="video/mp4"></video>
+            <div class="page-actions">
+                <a class="featured-btn" href="/#download"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg><span>Download free</span></a>
+                <small>Part of NULL JSFX 4.0: 168 plugins, free and open source (MIT). Easiest with <a href="/#hub">NULL JSFX Hub</a>.</small>
+            </div>
+            <div class="guide-body">
+                <section class="guide-section">
+                    <h2>Controls</h2>
+                    <ul class="guide-sliders"><li><span class="slider-name">Direction</span><span class="slider-desc">Down / Up / Alternate / Random — Which way the chord is strummed: Down (lowest note first), Up (highest first), Alternate, or Random</span></li><li><span class="slider-name">Speed</span><span class="slider-desc">0 to 100 ms — Time between one string and the next</span></li><li><span class="slider-name">Rhythm</span><span class="slider-desc">Once / 1/4 / 1/8 / 1/16 / Down-Up 1/8 / Folk / Offbeat — Once strums when the chord is played; the others strum again on the tempo while keys are held: 1/4, 1/8, 1/16, Down-Up eighths, Folk (D - D U - U D U) and Offbeat</span></li><li><span class="slider-name">Gate</span><span class="slider-desc">10 to 100% — How long each strum lasts as a share of its step, in the rhythms</span></li><li><span class="slider-name">Velocity Spread</span><span class="slider-desc">0 to 100% — How much softer the last string is than the first</span></li><li><span class="slider-name">Upstroke Velocity</span><span class="slider-desc">10 to 100% — The velocity of up strokes, as a share of the keys&#x27; velocity</span></li><li><span class="slider-name">Humanize</span><span class="slider-desc">0 to 20 ms — Moves each string a little later, by up to this many ms</span></li><li><span class="slider-name">Collect</span><span class="slider-desc">0 to 100 ms — Keys pressed within this time of the first one make one chord</span></li></ul>
+                </section>
+                <section class="guide-section">
+                    <h2>Best uses</h2>
+                    <ul class="use-cases"><li>Guitar-like chords from a keyboard into Pluck, Keys or any instrument</li><li>Strummed rhythm parts on the tempo from held chords</li><li>Harp rolls and slow arpeggiated chords</li><li>Pairs with Chords: one finger in, a strummed chord out</li></ul>
+                </section>
+                <section class="guide-section">
+                    <h2>Properties</h2>
+                    <p class="page-props">MIDI in → the held keys (collected over Collect) are sorted by pitch and played string by string, Speed apart, lowest first down and highest first up; velocity falls by Velocity Spread over the strings, up strokes at Upstroke Velocity, Humanize by an exact Park-Miller step. Once: one strum per chord, notes held with their keys; rhythms: strums on the tempo, each Gate of its step. A key&#x27;s note-off ends its note and drops its waiting strings. Other MIDI passes through at its own sample. Audio passes through.</p>
+                </section>
+                <section class="guide-section">
+                    <h2>Formats</h2>
+                    <ul class="guide-formats"><li><span class="format-tag">JSFX</span>JSFX for REAPER, with REAPER&#x27;s own sliders</li><li><span class="format-tag">GFX</span>JSFX GFX for REAPER, with its own interface</li><li><span class="format-tag">VST3</span>VST3 for any DAW</li><li><span class="format-tag">CLAP</span>CLAP for any DAW</li><li><span class="format-tag">LV2</span>LV2 for Linux DAWs such as Ardour, Carla and Qtractor</li></ul>
+                </section>
+                <section class="guide-section">
+                    <h2>Factory presets</h2>
+                    <p class="page-list">Fast Downstroke · Slow Harp Roll · Ballad Upstroke · Strum Alternate · Quarter Strum · Eighth Chug · Sixteenth Shimmer · Down-Up Pop · Folk Campfire · Reggae Skank · Loose Player</p>
+                </section>
+                <section class="guide-section">
+                    <h2>In the FX chains and Rack presets</h2>
+                    <p class="page-list">Strummed Guitar</p>
+                    <p class="page-more"><a href="/#fx-chains">See every FX chain</a></p>
+                </section>
+            </div>
+        </article>
+        <section class="page-related">
+            <h2 class="section-title">Goes well with</h2>
+            <div class="related-grid"><a class="related-card" href="/plugins/pitch-to-midi/"><b>Pitch to MIDI</b><small>Audio to MIDI for Monophonic Lines</small></a><a class="related-card" href="/plugins/amp-simulator/"><b>Amp Simulator</b><small>Guitar &amp; Bass Amp, No Cabinet</small></a><a class="related-card" href="/plugins/arpeggiator/"><b>Arpeggiator</b><small>Tempo-Synced Arpeggiator with Velocity Lane (MIDI)</small></a><a class="related-card" href="/plugins/auto-pan/"><b>Auto Pan</b><small>LFO Stereo Panner</small></a><a class="related-card" href="/plugins/bloom-delay/"><b>Bloom Delay</b><small>Delay That Blooms Into Reverb</small></a><a class="related-card" href="/plugins/chords/"><b>Chords</b><small>One-Key Chords &amp; Progressions (MIDI)</small></a></div>
+            <p class="page-more"><a href="/#midi">All 168 NULL JSFX plugins</a></p>
+        </section>
+    </main>
+    <footer class="site-footer">
+        <div class="footer-content">
+            Designed with &#9825; by <a href="https://koulaxizis.gr" target="_blank" rel="noopener">Christos Koulaxizis</a>.
+            <div class="footer-links">
+                <a href="https://ko-fi.com/koulaxizis" target="_blank" rel="noopener">Support on Ko-fi</a>
+                <span class="sep">&bull;</span>
+                <a href="https://github.com/koulaxizis/null-jsfx" target="_blank" rel="noopener">GitHub</a>
+                <span class="sep">&bull;</span>
+                <a href="/">nulljsfx.tech</a>
+            </div>
+        </div>
+    </footer>
+    <button id="theme-toggle" class="theme-toggle-floating" aria-label="Toggle color theme" title="Switch between light/dark theme">
+        <svg class="sun-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2 M12 21v2 M4.22 4.22l1.42 1.42 M18.36 18.36l1.42 1.42 M1 12h2 M21 12h2 M4.22 19.78l1.42-1.42 M18.36 5.64l1.42-1.42"/></svg>
+        <svg class="moon-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none;"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+    </button>
+    <script src="/assets/js/theme.js"></script>
+    <script src="/assets/js/demo.js"></script>
+</body>
+</html>

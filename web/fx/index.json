@@ -13,7 +13,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 1,
-   "bytes": 36260
+   "bytes": 36258
   },
   {
    "id": "brighter",
@@ -27,7 +27,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 1,
-   "bytes": 35361
+   "bytes": 35359
   },
   {
    "id": "chorus_one",
@@ -41,7 +41,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 1,
-   "bytes": 37055
+   "bytes": 37053
   },
   {
    "id": "closer",
@@ -55,7 +55,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 1,
-   "bytes": 38199
+   "bytes": 38197
   },
   {
    "id": "crunch",
@@ -69,7 +69,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 1,
-   "bytes": 34715
+   "bytes": 34713
   },
   {
    "id": "dj_filter",
@@ -83,7 +83,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 1,
-   "bytes": 43801
+   "bytes": 43799
   },
   {
    "id": "doubler",
@@ -97,7 +97,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 1,
-   "bytes": 35722
+   "bytes": 35720
   },
   {
    "id": "driver",
@@ -111,7 +111,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 1,
-   "bytes": 34877
+   "bytes": 34875
   },
   {
    "id": "echo_one",
@@ -125,7 +125,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 1,
-   "bytes": 38063
+   "bytes": 38061
   },
   {
    "id": "exciter",
@@ -139,7 +139,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 1,
-   "bytes": 36069
+   "bytes": 36067
   },
   {
    "id": "formant_shift",
@@ -153,7 +153,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 1,
-   "bytes": 39488
+   "bytes": 39486
   },
   {
    "id": "grit",
@@ -167,7 +167,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 1,
-   "bytes": 34435
+   "bytes": 34433
   },
   {
    "id": "louder",
@@ -181,7 +181,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 1,
-   "bytes": 36711
+   "bytes": 36709
   },
   {
    "id": "mono_maker",
@@ -195,7 +195,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 1,
-   "bytes": 36315
+   "bytes": 36313
   },
   {
    "id": "phatter",
@@ -209,7 +209,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 1,
-   "bytes": 35246
+   "bytes": 35244
   },
   {
    "id": "pressure",
@@ -223,7 +223,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 1,
-   "bytes": 36873
+   "bytes": 36871
   },
   {
    "id": "pumper",
@@ -237,7 +237,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 1,
-   "bytes": 34663
+   "bytes": 34661
   },
   {
    "id": "riser",
@@ -251,7 +251,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 1,
-   "bytes": 39716
+   "bytes": 39714
   },
   {
    "id": "smoother",
@@ -265,7 +265,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 1,
-   "bytes": 41025
+   "bytes": 41023
   },
   {
    "id": "snappy",
@@ -279,7 +279,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 1,
-   "bytes": 36515
+   "bytes": 36513
   },
   {
    "id": "spread",
@@ -293,7 +293,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 1,
-   "bytes": 35530
+   "bytes": 35528
   },
   {
    "id": "stretch",
@@ -307,7 +307,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 1,
-   "bytes": 37164
+   "bytes": 37162
   },
   {
    "id": "sweeper",
@@ -321,7 +321,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 1,
-   "bytes": 36434
+   "bytes": 36432
   },
   {
    "id": "tilt",
@@ -335,7 +335,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 1,
-   "bytes": 35351
+   "bytes": 35349
   },
   {
    "id": "warmer",
@@ -349,7 +349,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 1,
-   "bytes": 36622
+   "bytes": 36620
   },
   {
    "id": "wetter",
@@ -363,7 +363,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 1,
-   "bytes": 43791
+   "bytes": 43789
   },
   {
    "id": "auto_pan",
@@ -377,7 +377,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 7,
-   "bytes": 52507
+   "bytes": 52505
   },
   {
    "id": "auto_leveler",
@@ -391,7 +391,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 5,
-   "bytes": 44725
+   "bytes": 44723
   },
   {
    "id": "band_splitter",
@@ -405,7 +405,7 @@
    "ins": 8,
    "outs": 8,
    "sliders": 6,
-   "bytes": 70680
+   "bytes": 70678
   },
   {
    "id": "bitcrusher",
@@ -419,7 +419,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 7,
-   "bytes": 50645
+   "bytes": 50643
   },
   {
    "id": "breath_control",
@@ -433,7 +433,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 4,
-   "bytes": 44121
+   "bytes": 44119
   },
   {
    "id": "cabinet_simulator",
@@ -447,7 +447,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 7,
-   "bytes": 95330
+   "bytes": 95328
   },
   {
    "id": "channel_utility",
@@ -461,7 +461,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 13,
-   "bytes": 58486
+   "bytes": 58484
   },
   {
    "id": "chorus",
@@ -475,7 +475,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 9,
-   "bytes": 61471
+   "bytes": 61469
   },
   {
    "id": "click_repair",
@@ -489,7 +489,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 3,
-   "bytes": 50281
+   "bytes": 50279
   },
   {
    "id": "clipper",
@@ -503,7 +503,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 8,
-   "bytes": 67877
+   "bytes": 67875
   },
   {
    "id": "crossfeed",
@@ -517,7 +517,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 7,
-   "bytes": 57957
+   "bytes": 57955
   },
   {
    "id": "de_clip",
@@ -531,7 +531,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 4,
-   "bytes": 48399
+   "bytes": 48397
   },
   {
    "id": "de_hum",
@@ -545,7 +545,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 6,
-   "bytes": 56505
+   "bytes": 56503
   },
   {
    "id": "de_plosive",
@@ -559,7 +559,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 5,
-   "bytes": 56152
+   "bytes": 56150
   },
   {
    "id": "deesser",
@@ -573,7 +573,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 7,
-   "bytes": 53984
+   "bytes": 53982
   },
   {
    "id": "delay",
@@ -587,7 +587,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 15,
-   "bytes": 84167
+   "bytes": 84165
   },
   {
    "id": "disperser",
@@ -601,7 +601,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 5,
-   "bytes": 52648
+   "bytes": 52646
   },
   {
    "id": "draw_eq",
@@ -615,7 +615,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 13,
-   "bytes": 84561
+   "bytes": 84559
   },
   {
    "id": "dynamic_eq",
@@ -629,7 +629,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 21,
-   "bytes": 78858
+   "bytes": 78856
   },
   {
    "id": "dynamics",
@@ -643,7 +643,7 @@
    "ins": 4,
    "outs": 2,
    "sliders": 13,
-   "bytes": 74634
+   "bytes": 74632
   },
   {
    "id": "envelope_follower",
@@ -657,7 +657,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 9,
-   "bytes": 55546
+   "bytes": 55544
   },
   {
    "id": "filter",
@@ -671,7 +671,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 17,
-   "bytes": 83044
+   "bytes": 83042
   },
   {
    "id": "flanger",
@@ -685,7 +685,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 9,
-   "bytes": 62201
+   "bytes": 62199
   },
   {
    "id": "gate",
@@ -699,7 +699,7 @@
    "ins": 4,
    "outs": 2,
    "sliders": 11,
-   "bytes": 66064
+   "bytes": 66062
   },
   {
    "id": "glue_comp",
@@ -713,7 +713,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 7,
-   "bytes": 51238
+   "bytes": 51236
   },
   {
    "id": "limiter",
@@ -727,7 +727,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 7,
-   "bytes": 58260
+   "bytes": 58258
   },
   {
    "id": "lofi_comp",
@@ -741,7 +741,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 7,
-   "bytes": 49992
+   "bytes": 49990
   },
   {
    "id": "maximizer",
@@ -755,7 +755,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 16,
-   "bytes": 105236
+   "bytes": 105234
   },
   {
    "id": "mid_side_matrix",
@@ -769,7 +769,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 3,
-   "bytes": 43392
+   "bytes": 43390
   },
   {
    "id": "multi_tap_delay",
@@ -783,7 +783,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 11,
-   "bytes": 58463
+   "bytes": 58461
   },
   {
    "id": "multiband_compressor",
@@ -797,7 +797,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 25,
-   "bytes": 83415
+   "bytes": 83413
   },
   {
    "id": "noise_generator",
@@ -811,7 +811,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 8,
-   "bytes": 56443
+   "bytes": 56441
   },
   {
    "id": "octaver",
@@ -825,7 +825,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 6,
-   "bytes": 50652
+   "bytes": 50650
   },
   {
    "id": "panner",
@@ -839,7 +839,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 5,
-   "bytes": 50712
+   "bytes": 50710
   },
   {
    "id": "parametric_eq",
@@ -853,7 +853,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 25,
-   "bytes": 101981
+   "bytes": 101979
   },
   {
    "id": "passive_eq",
@@ -867,7 +867,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 10,
-   "bytes": 66516
+   "bytes": 66514
   },
   {
    "id": "phase_align",
@@ -881,7 +881,7 @@
    "ins": 4,
    "outs": 2,
    "sliders": 8,
-   "bytes": 60228
+   "bytes": 60226
   },
   {
    "id": "phaser",
@@ -895,7 +895,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 9,
-   "bytes": 69226
+   "bytes": 69224
   },
   {
    "id": "pitch_shifter",
@@ -909,7 +909,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 4,
-   "bytes": 43996
+   "bytes": 43994
   },
   {
    "id": "reverb",
@@ -923,7 +923,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 15,
-   "bytes": 93547
+   "bytes": 93545
   },
   {
    "id": "ring_mod",
@@ -937,7 +937,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 4,
-   "bytes": 41247
+   "bytes": 41245
   },
   {
    "id": "room_tone",
@@ -951,7 +951,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 7,
-   "bytes": 60724
+   "bytes": 60722
   },
   {
    "id": "saturation",
@@ -965,7 +965,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 11,
-   "bytes": 80724
+   "bytes": 80722
   },
   {
    "id": "shaper",
@@ -979,7 +979,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 24,
-   "bytes": 105652
+   "bytes": 105650
   },
   {
    "id": "sidechain_ducker",
@@ -993,7 +993,7 @@
    "ins": 4,
    "outs": 2,
    "sliders": 7,
-   "bytes": 49934
+   "bytes": 49932
   },
   {
    "id": "space",
@@ -1007,7 +1007,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 7,
-   "bytes": 62592
+   "bytes": 62590
   },
   {
    "id": "speaker_sim",
@@ -1021,7 +1021,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 4,
-   "bytes": 73824
+   "bytes": 73822
   },
   {
    "id": "stereo_width",
@@ -1035,7 +1035,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 3,
-   "bytes": 42378
+   "bytes": 42376
   },
   {
    "id": "studio_eq",
@@ -1049,7 +1049,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 51,
-   "bytes": 151816
+   "bytes": 151814
   },
   {
    "id": "tape",
@@ -1063,7 +1063,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 11,
-   "bytes": 85420
+   "bytes": 85418
   },
   {
    "id": "tape_echo",
@@ -1077,7 +1077,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 11,
-   "bytes": 75168
+   "bytes": 75166
   },
   {
    "id": "test_signal",
@@ -1091,7 +1091,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 7,
-   "bytes": 52885
+   "bytes": 52883
   },
   {
    "id": "tone",
@@ -1105,7 +1105,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 5,
-   "bytes": 44270
+   "bytes": 44268
   },
   {
    "id": "transient_shaper",
@@ -1119,7 +1119,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 8,
-   "bytes": 60655
+   "bytes": 60653
   },
   {
    "id": "tremolo",
@@ -1133,7 +1133,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 7,
-   "bytes": 54251
+   "bytes": 54249
   },
   {
    "id": "vibrato",
@@ -1147,7 +1147,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 3,
-   "bytes": 41891
+   "bytes": 41889
   },
   {
    "id": "volume_shaper",
@@ -1161,7 +1161,7 @@
    "ins": 4,
    "outs": 2,
    "sliders": 25,
-   "bytes": 91571
+   "bytes": 91569
   },
   {
    "id": "wah",
@@ -1175,7 +1175,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 11,
-   "bytes": 60869
+   "bytes": 60867
   },
   {
    "id": "amp_simulator",
@@ -1189,7 +1189,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 12,
-   "bytes": 90435
+   "bytes": 90433
   },
   {
    "id": "bass_management",
@@ -1203,7 +1203,7 @@
    "ins": 12,
    "outs": 12,
    "sliders": 7,
-   "bytes": 57729
+   "bytes": 57727
   },
   {
    "id": "binaural_panner",
@@ -1217,7 +1217,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 8,
-   "bytes": 63245
+   "bytes": 63243
   },
   {
    "id": "bloom_delay",
@@ -1231,7 +1231,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 9,
-   "bytes": 62000
+   "bytes": 61998
   },
   {
    "id": "comb_filter",
@@ -1245,7 +1245,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 4,
-   "bytes": 46330
+   "bytes": 46328
   },
   {
    "id": "console_buss",
@@ -1259,7 +1259,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 3,
-   "bytes": 46952
+   "bytes": 46950
   },
   {
    "id": "console_channel",
@@ -1273,7 +1273,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 3,
-   "bytes": 46041
+   "bytes": 46039
   },
   {
    "id": "convolution",
@@ -1287,7 +1287,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 8,
-   "bytes": 66708
+   "bytes": 66706
   },
   {
    "id": "downmix_check",
@@ -1301,7 +1301,7 @@
    "ins": 12,
    "outs": 12,
    "sliders": 8,
-   "bytes": 58530
+   "bytes": 58528
   },
   {
    "id": "formant_filter",
@@ -1315,7 +1315,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 3,
-   "bytes": 48105
+   "bytes": 48103
   },
   {
    "id": "frequency_shifter",
@@ -1329,7 +1329,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 5,
-   "bytes": 48556
+   "bytes": 48554
   },
   {
    "id": "glitch_fx",
@@ -1343,7 +1343,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 15,
-   "bytes": 72848
+   "bytes": 72846
   },
   {
    "id": "granular_delay",
@@ -1357,7 +1357,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 9,
-   "bytes": 52043
+   "bytes": 52041
   },
   {
    "id": "half_speed",
@@ -1371,7 +1371,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 6,
-   "bytes": 51748
+   "bytes": 51746
   },
   {
    "id": "harmonizer",
@@ -1385,7 +1385,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 18,
-   "bytes": 107481
+   "bytes": 107479
   },
   {
    "id": "key_detect",
@@ -1399,7 +1399,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 4,
-   "bytes": 54601
+   "bytes": 54599
   },
   {
    "id": "kick_shaper",
@@ -1413,7 +1413,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 6,
-   "bytes": 51097
+   "bytes": 51095
   },
   {
    "id": "ladder_filter",
@@ -1427,7 +1427,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 6,
-   "bytes": 64566
+   "bytes": 64564
   },
   {
    "id": "loudness_meter",
@@ -1441,7 +1441,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 6,
-   "bytes": 58043
+   "bytes": 58041
   },
   {
    "id": "multichannel_loudness",
@@ -1455,7 +1455,7 @@
    "ins": 12,
    "outs": 12,
    "sliders": 5,
-   "bytes": 61645
+   "bytes": 61643
   },
   {
    "id": "noise_reduction",
@@ -1469,7 +1469,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 9,
-   "bytes": 67921
+   "bytes": 67919
   },
   {
    "id": "null_test",
@@ -1483,7 +1483,7 @@
    "ins": 4,
    "outs": 2,
    "sliders": 6,
-   "bytes": 61103
+   "bytes": 61101
   },
   {
    "id": "oscilloscope",
@@ -1497,7 +1497,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 9,
-   "bytes": 56833
+   "bytes": 56831
   },
   {
    "id": "ott",
@@ -1511,7 +1511,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 8,
-   "bytes": 54755
+   "bytes": 54753
   },
   {
    "id": "phase_distortion",
@@ -1525,7 +1525,7 @@
    "ins": 4,
    "outs": 2,
    "sliders": 7,
-   "bytes": 51392
+   "bytes": 51390
   },
   {
    "id": "pitch_correction",
@@ -1539,7 +1539,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 10,
-   "bytes": 77636
+   "bytes": 77634
   },
   {
    "id": "reference",
@@ -1553,7 +1553,7 @@
    "ins": 4,
    "outs": 2,
    "sliders": 4,
-   "bytes": 54745
+   "bytes": 54743
   },
   {
    "id": "resonance_suppressor",
@@ -1567,7 +1567,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 10,
-   "bytes": 68254
+   "bytes": 68252
   },
   {
    "id": "resonator",
@@ -1581,7 +1581,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 8,
-   "bytes": 65107
+   "bytes": 65105
   },
   {
    "id": "reverser",
@@ -1595,7 +1595,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 4,
-   "bytes": 48537
+   "bytes": 48535
   },
   {
    "id": "robotizer",
@@ -1609,7 +1609,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 4,
-   "bytes": 46355
+   "bytes": 46353
   },
   {
    "id": "rotary_speaker",
@@ -1623,7 +1623,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 6,
-   "bytes": 49951
+   "bytes": 49949
   },
   {
    "id": "shimmer_reverb",
@@ -1637,7 +1637,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 6,
-   "bytes": 50264
+   "bytes": 50262
   },
   {
    "id": "slicer",
@@ -1651,7 +1651,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 8,
-   "bytes": 63569
+   "bytes": 63567
   },
   {
    "id": "spectral_blur",
@@ -1665,7 +1665,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 6,
-   "bytes": 53518
+   "bytes": 53516
   },
   {
    "id": "spectral_ducker",
@@ -1679,7 +1679,7 @@
    "ins": 4,
    "outs": 2,
    "sliders": 10,
-   "bytes": 64362
+   "bytes": 64360
   },
   {
    "id": "spectral_freeze",
@@ -1693,7 +1693,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 5,
-   "bytes": 52471
+   "bytes": 52469
   },
   {
    "id": "spectrum_analyzer",
@@ -1707,7 +1707,7 @@
    "ins": 4,
    "outs": 2,
    "sliders": 9,
-   "bytes": 63204
+   "bytes": 63202
   },
   {
    "id": "spring_reverb",
@@ -1721,7 +1721,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 6,
-   "bytes": 45771
+   "bytes": 45769
   },
   {
    "id": "step_fx",
@@ -1735,7 +1735,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 29,
-   "bytes": 107850
+   "bytes": 107848
   },
   {
    "id": "stereo_scope",
@@ -1749,7 +1749,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 6,
-   "bytes": 64876
+   "bytes": 64874
   },
   {
    "id": "sub_bloom",
@@ -1763,7 +1763,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 5,
-   "bytes": 61742
+   "bytes": 61740
   },
   {
    "id": "surround_panner",
@@ -1777,7 +1777,7 @@
    "ins": 2,
    "outs": 12,
    "sliders": 8,
-   "bytes": 69881
+   "bytes": 69879
   },
   {
    "id": "tape_stop",
@@ -1791,7 +1791,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 3,
-   "bytes": 45034
+   "bytes": 45032
   },
   {
    "id": "trance_gate",
@@ -1805,7 +1805,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 27,
-   "bytes": 94361
+   "bytes": 94359
   },
   {
    "id": "transient_split",
@@ -1819,7 +1819,7 @@
    "ins": 2,
    "outs": 4,
    "sliders": 6,
-   "bytes": 48927
+   "bytes": 48925
   },
   {
    "id": "tuner",
@@ -1833,7 +1833,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 4,
-   "bytes": 52590
+   "bytes": 52588
   },
   {
    "id": "vinyl_age",
@@ -1847,7 +1847,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 11,
-   "bytes": 69613
+   "bytes": 69611
   },
   {
    "id": "vocoder",
@@ -1861,7 +1861,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 10,
-   "bytes": 70364
+   "bytes": 70362
   },
   {
    "id": "vu_meter",
@@ -1875,7 +1875,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 4,
-   "bytes": 49660
+   "bytes": 49658
   },
   {
    "id": "warped_delay",
@@ -1889,7 +1889,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 8,
-   "bytes": 51422
+   "bytes": 51420
   },
   {
    "id": "assisted_comp",
@@ -1903,7 +1903,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 14,
-   "bytes": 76296
+   "bytes": 76294
   },
   {
    "id": "assisted_delay",
@@ -1917,7 +1917,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 13,
-   "bytes": 75220
+   "bytes": 75218
   },
   {
    "id": "assisted_eq",
@@ -1931,7 +1931,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 16,
-   "bytes": 102657
+   "bytes": 102655
   },
   {
    "id": "assisted_reverb",
@@ -1945,7 +1945,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 13,
-   "bytes": 86930
+   "bytes": 86928
   }
  ],
  "instruments": [
@@ -1961,7 +1961,7 @@
    "ins": 0,
    "outs": 2,
    "sliders": 19,
-   "bytes": 94423
+   "bytes": 94421
   },
   {
    "id": "choir",
@@ -1975,7 +1975,7 @@
    "ins": 0,
    "outs": 2,
    "sliders": 15,
-   "bytes": 105564
+   "bytes": 105562
   },
   {
    "id": "drum_machine",
@@ -1989,7 +1989,7 @@
    "ins": 0,
    "outs": 8,
    "sliders": 64,
-   "bytes": 214001
+   "bytes": 213999
   },
   {
    "id": "fm",
@@ -2003,7 +2003,7 @@
    "ins": 0,
    "outs": 2,
    "sliders": 39,
-   "bytes": 257755
+   "bytes": 257753
   },
   {
    "id": "granular",
@@ -2017,7 +2017,7 @@
    "ins": 0,
    "outs": 2,
    "sliders": 14,
-   "bytes": 81462
+   "bytes": 81460
   },
   {
    "id": "keys",
@@ -2031,7 +2031,7 @@
    "ins": 0,
    "outs": 2,
    "sliders": 14,
-   "bytes": 107251
+   "bytes": 107249
   },
   {
    "id": "kick",
@@ -2045,7 +2045,7 @@
    "ins": 0,
    "outs": 2,
    "sliders": 10,
-   "bytes": 66281
+   "bytes": 66279
   },
   {
    "id": "mallets",
@@ -2059,7 +2059,7 @@
    "ins": 0,
    "outs": 2,
    "sliders": 11,
-   "bytes": 86139
+   "bytes": 86137
   },
   {
    "id": "modal_piano",
@@ -2073,7 +2073,7 @@
    "ins": 0,
    "outs": 2,
    "sliders": 10,
-   "bytes": 86234
+   "bytes": 86232
   },
   {
    "id": "organ",
@@ -2087,7 +2087,7 @@
    "ins": 0,
    "outs": 2,
    "sliders": 21,
-   "bytes": 111143
+   "bytes": 111141
   },
   {
    "id": "percussion",
@@ -2101,7 +2101,7 @@
    "ins": 0,
    "outs": 2,
    "sliders": 52,
-   "bytes": 178059
+   "bytes": 178057
   },
   {
    "id": "pluck",
@@ -2115,7 +2115,7 @@
    "ins": 0,
    "outs": 2,
    "sliders": 15,
-   "bytes": 114783
+   "bytes": 114781
   },
   {
    "id": "sampler",
@@ -2129,7 +2129,7 @@
    "ins": 0,
    "outs": 2,
    "sliders": 23,
-   "bytes": 114802
+   "bytes": 114800
   },
   {
    "id": "string_ensemble",
@@ -2143,7 +2143,7 @@
    "ins": 0,
    "outs": 2,
    "sliders": 9,
-   "bytes": 71356
+   "bytes": 71354
   },
   {
    "id": "synth",
@@ -2157,7 +2157,7 @@
    "ins": 0,
    "outs": 2,
    "sliders": 48,
-   "bytes": 259050
+   "bytes": 259048
   },
   {
    "id": "wind",
@@ -2171,7 +2171,7 @@
    "ins": 0,
    "outs": 2,
    "sliders": 12,
-   "bytes": 80874
+   "bytes": 80872
   }
  ],
  "midi": [
@@ -2187,7 +2187,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 24,
-   "bytes": 108715
+   "bytes": 108713
   },
   {
    "id": "chords",
@@ -2201,7 +2201,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 11,
-   "bytes": 95079
+   "bytes": 95077
   },
   {
    "id": "drum_trigger",
@@ -2215,7 +2215,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 8,
-   "bytes": 52592
+   "bytes": 52590
   },
   {
    "id": "euclid",
@@ -2229,7 +2229,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 11,
-   "bytes": 53683
+   "bytes": 53681
   },
   {
    "id": "humanize",
@@ -2243,7 +2243,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 5,
-   "bytes": 60477
+   "bytes": 60475
   },
   {
    "id": "midi_lfo",
@@ -2257,7 +2257,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 12,
-   "bytes": 64562
+   "bytes": 64560
   },
   {
    "id": "midi_monitor",
@@ -2271,7 +2271,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 4,
-   "bytes": 45697
+   "bytes": 45695
   },
   {
    "id": "midi_utility",
@@ -2285,7 +2285,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 14,
-   "bytes": 78420
+   "bytes": 78418
   },
   {
    "id": "note_echo",
@@ -2299,7 +2299,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 8,
-   "bytes": 55714
+   "bytes": 55712
   },
   {
    "id": "pitch_to_midi",
@@ -2313,7 +2313,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 9,
-   "bytes": 60363
+   "bytes": 60361
   },
   {
    "id": "riff",
@@ -2327,7 +2327,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 12,
-   "bytes": 74833
+   "bytes": 74831
   },
   {
    "id": "scale",
@@ -2341,7 +2341,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 5,
-   "bytes": 69634
+   "bytes": 69632
   },
   {
    "id": "strum",
@@ -2355,7 +2355,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 8,
-   "bytes": 61588
+   "bytes": 61586
   }
  ]
 }
