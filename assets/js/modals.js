@@ -60,6 +60,7 @@ const guides = {
     properties: 'Input → peak envelope of both channels (5 ms / 120 ms) → gain computer (-24 dBFS, 1:1 to 3:1) and make-up → + band-pass at 3.5 kHz (Q 0.9) scaled by the presence amount, reduced while the gain reduction reaches 6 dB → + one-pole low-pass at 180 Hz scaled by the proximity amount → Output. Zero latency.',
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP', 'LV2'],
     shot: 'assets/img/gfx/closer.png',
+    video: 'assets/video/closer.mp4',
     studio: true,
     beta: 'Beta: its rules have been tested on test signals so far and may still be tuned from your feedback, so a project saved now can sound a little different after an update.',
     page: 'plugins/closer/'
@@ -139,6 +140,7 @@ const guides = {
     properties: 'Input → tempo-locked delay per channel (host tempo, 120 bpm without one; the time glides over 80 ms; up to 2 s) → low-pass and 150 Hz high-pass in the loop → feedback, crossing sides by the ping-pong amount → mixed with dry → Output. Zero latency.',
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP', 'LV2'],
     shot: 'assets/img/gfx/echo_one.png',
+    video: 'assets/video/echo_one.mp4',
     studio: true,
     beta: 'Beta: its rules have been tested on test signals so far and may still be tuned from your feedback, so a project saved now can sound a little different after an update.',
     page: 'plugins/echo-one/'
@@ -297,6 +299,7 @@ const guides = {
     properties: 'Input → mono sum → power envelope (2 ms / 80 ms) → four band-pass detectors (2, 3.15, 5, 8 kHz, Q 2) with their own envelopes → each band\'s share of the whole signal in dB → cut = (share - threshold) × Amount, up to 10 dB → the four bands taken out of each channel one after another (x - band × (1 - gain)) → Output. Zero latency.',
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP', 'LV2'],
     shot: 'assets/img/gfx/smoother.png',
+    video: 'assets/video/smoother.mp4',
     studio: true,
     beta: 'Beta: its rules have been tested on test signals so far and may still be tuned from your feedback, so a project saved now can sound a little different after an update.',
     page: 'plugins/smoother/'
@@ -392,6 +395,7 @@ const guides = {
     properties: 'Input → split at 600 Hz (one pole) → lows: asymmetric tanh curve, DC removed, mixed in by Amount, +0 to +2.3 dB; highs: 0 to -2 dB → one-pole low-pass 20 to 9 kHz faded in by Amount → trim → Output. Zero latency.',
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP', 'LV2'],
     shot: 'assets/img/gfx/warmer.png',
+    video: 'assets/video/warmer.mp4',
     studio: true,
     beta: 'Beta: its rules have been tested on test signals so far and may still be tuned from your feedback, so a project saved now can sound a little different after an update.',
     page: 'plugins/warmer/'
@@ -1035,6 +1039,7 @@ const guides = {
     properties: 'Input → stereo-linked peak compressor (1 ms attack, Release, threshold and ratio from Squash, make-up) → short stereo delay read with linear interpolation, moved by two LFOs (0.6 and 0.17 Hz) for wow → one-pole low-pass at 0.45 × Sample Rate and sample-and-hold at Sample Rate (off at or above the project rate) → quantise to Bits → mix with the dry signal → Output gain. No latency reported.',
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP', 'LV2'],
     shot: 'assets/img/gfx/lofi_comp.png',
+    video: 'assets/video/lofi_comp.mp4',
     studio: true,
     beta: 'Beta: its rules have been tested on test signals so far and may still be tuned from your feedback, so a project saved now can sound a little different after an update.',
     page: 'plugins/lofi-comp/'
@@ -1935,6 +1940,7 @@ const guides = {
     properties: 'Input + feedback → 4 s stereo delay line read with linear interpolation (Time or Sync from the tempo, 80 ms glide, swept by a 0.35 Hz LFO with the sides a quarter turn apart) → one-pole low-pass (Damping) → 30 Hz high-pass → four allpass diffusers per side (g 0.6, 3.6 to 12.7 ms), blended in by Bloom → feedback through a tanh curve back into the line. The wet signal is narrowed by Width and mixed with the dry signal → Output gain. No latency.',
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP', 'LV2'],
     shot: 'assets/img/gfx/bloom_delay.png',
+    video: 'assets/video/bloom_delay.mp4',
     studio: true,
     beta: 'Beta: its rules have been tested on test signals so far and may still be tuned from your feedback, so a project saved now can sound a little different after an update.',
     page: 'plugins/bloom-delay/'
@@ -2197,6 +2203,7 @@ const guides = {
     properties: 'Stereo in → out unchanged. Every 4096 samples the last 16384 go through an FFT; the bins from C2 to C7 fold into 12 pitch classes, with the 3rd and 5th harmonics of lower notes taken away so the key is not pulled towards its dominant. The running chroma is compared with the 24 major and minor key profiles by correlation: the interface shows the key, its confidence, the runner-up, the relative key and the chroma.',
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP', 'LV2'],
     shot: 'assets/img/gfx/key_detect.png',
+    video: 'assets/video/key_detect.mp4',
     studio: true,
     beta: 'Beta: its rules have been tested on test signals so far and may still be tuned from your feedback, so a project saved now can sound a little different after an update.',
     page: 'plugins/key-detect/'
@@ -2322,6 +2329,7 @@ const guides = {
     properties: 'Main (1/2) and sidechain (3/4) in, stereo out. Auto lines the two up: a phase-transform cross-correlation finds the delay (up to Range, either polarity) and a least-squares fit finds the gain, so a plugin\'s latency, level change and polarity flip are taken out. The difference is main minus the lined-up sidechain; the interface shows the null depth, the difference in 10 octave bands, the delay, the gain and BIT-IDENTICAL when nothing differs at all.',
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP', 'LV2'],
     shot: 'assets/img/gfx/null_test.png',
+    video: 'assets/video/null_test.mp4',
     studio: true,
     beta: 'Beta: its rules have been tested on test signals so far and may still be tuned from your feedback, so a project saved now can sound a little different after an update.',
     page: 'plugins/null-test/'
@@ -2389,6 +2397,7 @@ const guides = {
     properties: 'Input → stereo delay line (8 ms) → read with linear interpolation at 1 + depth × (1 + clamp(low-passed source + bias, -1, 1)) samples, the right source scaled by 1 - 2 × spread → mixed with the dry signal read at the centre time 1 + depth → Output gain. The source is the track or the sidechain (pins 3/4). No clipping stage; latency up to 3 ms of centre delay, not reported.',
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP', 'LV2'],
     shot: 'assets/img/gfx/phase_distortion.png',
+    video: 'assets/video/phase_distortion.mp4',
     studio: true,
     beta: 'Beta: its rules have been tested on test signals so far and may still be tuned from your feedback, so a project saved now can sound a little different after an update.',
     page: 'plugins/phase-distortion/'
@@ -2603,6 +2612,7 @@ const guides = {
     properties: 'Input → 2048-point FFT, Hann windows, 4x overlap → each bin shifted by Shift (rounded to the bin spacing, phase kept coherent) and tilted around 1 kHz (flat below 100 Hz and above 10 kHz) → magnitude smoothed over time (Smear: up to 150 ms rising, 3 s falling; fading bins keep turning with a little Park-Miller random drift) → per-bin 1:3 expander below Gate → inverse FFT and overlap-add → mix with the delayed dry signal → Output gain. Latency 2047 samples, reported to the host.',
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP', 'LV2'],
     shot: 'assets/img/gfx/spectral_blur.png',
+    video: 'assets/video/spectral_blur.mp4',
     studio: true,
     beta: 'Beta: its rules have been tested on test signals so far and may still be tuned from your feedback, so a project saved now can sound a little different after an update.',
     page: 'plugins/spectral-blur/'
@@ -3168,6 +3178,7 @@ const guides = {
     properties: 'MIDI in → every key sings with 1 to 8 singers (PolyBLEP sawtooths, each with its own detune, slow drift and delayed vibrato, plus breath noise pulsed by its glottal cycle, by an exact Park-Miller step), spread across the stereo field; a one-pole glottal tilt per key (darker when soft), then seven banks of five formant resonators per channel (soprano, alto, tenor, bass and three between, for the vowel A-E-I-O-U and its blends). Auto sends a key to the two banks nearest its pitch. One attack/release envelope per key, sustain pedal, mod wheel to the vowel, pitch bend +-2 st, MPE bend, pressure and timbre. No samples. Every MIDI message passes on.',
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP', 'LV2'],
     shot: 'assets/img/gfx/choir.png',
+    video: 'assets/video/choir.mp4',
     beta: 'Beta: its rules have been tested on test signals so far and may still be tuned from your feedback, so a project saved now can sound a little different after an update.',
     page: 'plugins/choir/'
   },
@@ -3692,6 +3703,7 @@ const guides = {
     properties: 'MIDI in → one voice (the latest key held; a key over another glides to it). Digital waveguides after STK: Flute (a bore of two periods, a jet a quarter of it, cubic jet, high-passed air noise), Clarinet (a bore of half a period, reed table), Saxophone (one period in two delays, the reed between, a narrow pressure range so it holds its register), Brass (a bore and a lip resonator, tuned per note); each bore length set exactly for its pitch (tools/tune_wind.js keeps it within 12 cents at 44.1, 48 and 96 kHz). Breath from velocity or a controller, with attack, release, vibrato after a delay and noise by an exact Park-Miller step; notes outside a model\'s range sound an octave in. No samples. Every MIDI message passes on.',
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP', 'LV2'],
     shot: 'assets/img/gfx/wind.png',
+    video: 'assets/video/wind.mp4',
     beta: 'Beta: its rules have been tested on test signals so far and may still be tuned from your feedback, so a project saved now can sound a little different after an update.',
     page: 'plugins/wind/'
   },
@@ -3860,6 +3872,7 @@ const guides = {
     properties: 'MIDI in → out unchanged, every message at its own sample (the VST3/CLAP passes SysEx too); the audio passes through. The interface lists the latest 64 messages with their time, channel and values, shows the held notes on a 128-key keyboard and every channel\'s notes, pitch bend and pressure. Channel and Show filter what is shown, Freeze holds the list.',
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP', 'LV2'],
     shot: 'assets/img/gfx/midi_monitor.png',
+    video: 'assets/video/midi_monitor.mp4',
     beta: 'Beta: its rules have been tested on test signals so far and may still be tuned from your feedback, so a project saved now can sound a little different after an update.',
     page: 'plugins/midi-monitor/'
   },
@@ -3994,6 +4007,7 @@ const guides = {
     properties: 'MIDI in → the held keys (collected over Collect) are sorted by pitch and played string by string, Speed apart, lowest first down and highest first up; velocity falls by Velocity Spread over the strings, up strokes at Upstroke Velocity, Humanize by an exact Park-Miller step. Once: one strum per chord, notes held with their keys; rhythms: strums on the tempo, each Gate of its step. A key\'s note-off ends its note and drops its waiting strings. Other MIDI passes through at its own sample. Audio passes through.',
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP', 'LV2'],
     shot: 'assets/img/gfx/strum.png',
+    video: 'assets/video/strum.mp4',
     beta: 'Beta: its rules have been tested on test signals so far and may still be tuned from your feedback, so a project saved now can sound a little different after an update.',
     page: 'plugins/strum/'
   }
