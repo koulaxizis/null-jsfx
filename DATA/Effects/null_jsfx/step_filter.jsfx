@@ -2,7 +2,7 @@ desc:NULL Step Filter
 author: Christos Koulaxizis
 tags: step filter 16-step sequencer motion cutoff resonance glide tempo sync seed random generative
 //category: Essentials
-//NULL JSFX v4.0 • https://nulljsfx.tech • MIT License
+//NULL JSFX v4.1 • https://nulljsfx.tech • MIT License
 
 slider1:100<0,100,1>Step 1 (%)
 slider2:20<0,100,1>Step 2 (%)

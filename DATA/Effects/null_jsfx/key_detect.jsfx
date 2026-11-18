@@ -2,7 +2,7 @@ desc:NULL Key Detect
 author: Christos Koulaxizis
 tags: key detect detection tonality scale major minor chroma krumhansl temperley analyzer meter harmonic mixing
 //category: Advanced
-//NULL JSFX v4.0 • https://nulljsfx.tech • MIT License
+//NULL JSFX v4.1 • https://nulljsfx.tech • MIT License
 
 slider1:10<2,60,1>Window (s)
 slider2:-50<-80,-20,1>Threshold (dB)

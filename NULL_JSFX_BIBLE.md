@@ -814,7 +814,7 @@ Defensive only: the repository and local runs (tests, emulator, local DAWs), nev
 
 ### VI.1 Where the version lives
 
-This list was checked against the 2.6 bump (`bc60d15`, PR #47) and its follow-up (#48, llms.txt) [verified 2026-10-26], and again against the 2.7 bump [verified 2026-10-28] the 2.9 bump [verified 2026-10-31], the 3.0 bump [verified 2026-11-01], the 3.1 bump [verified 2026-11-02], the 3.3 bump [verified 2026-11-05], the 3.3.1 bump [verified 2026-11-14] and the 4.0 bump [verified 2026-11-17]. Change everything in it in one PR (R19).
+This list was checked against the 2.6 bump (`bc60d15`, PR #47) and its follow-up (#48, llms.txt) [verified 2026-10-26], and again against the 2.7 bump [verified 2026-10-28] the 2.9 bump [verified 2026-10-31], the 3.0 bump [verified 2026-11-01], the 3.1 bump [verified 2026-11-02], the 3.3 bump [verified 2026-11-05], the 3.3.1 bump [verified 2026-11-14], the 4.0 bump [verified 2026-11-17] and the 4.1 bump [verified 2026-11-18]. Change everything in it in one PR (R19).
 
 | Place | What to change |
 |---|---|
@@ -2486,3 +2486,11 @@ entry and the Bible delta.
 - **Tests (run on Linux):** `tests/run.sh` in full (GFX vs plain tolerance 0); `web/test/run.sh`; `tools/build_site.py --check`, `tools/build_catalog.py --check`, `node web/tools/build.js --check`; `tests/bible_order.py`; the Rack JACK standalone built and run (it compiles `NullUI.hpp`); the new screenshots, the Rack picture, the social image and frames of the Rack video looked at. Not run here: `native/scripts/build.sh --test` for every plugin (CI), the Windows build (CI).
 - **Files:** `DATA/Effects/null_jsfx/gfx/null_gfx.jsfx-inc`, `native/common/NullUI.hpp`, the generated files above, this Bible (R8, VII).
 - **Version:** v4.0 (no change; Christos, decision card: it ships with the next release).
+
+### 2026-11-18 · 4.1 — version step
+- **Why:** the Audiomodern (#175, B22) and Klevgrand (#177, B23) plugins and the mirrored N (#178) are merged but reach the Hub and orOS Studio only with a release. Christos chose 4.1 on a decision card (2026-11-18), after asking why the Hub did not show them yet.
+- **Version:** 4.1 everywhere in Part VI.1: every plain and GFX footer and `null_gfx.jsfx-inc`, `FOOTER` and the docstring in `tests/lint.py` (so the Android `versionName` 4.1), `web/tools/eel2js.js` (then `node web/tools/build.js`), the remote bridge and page, `native/CMakeLists.txt` (4.1.0), `hub/Cargo.toml` and `hub/Cargo.lock` (4.1.0), the doc comment in `hub/core/src/lib.rs`, `llms.txt`, `index.html` (version, date 18/11/26, download heading, release notes with a 4.1 section), and `release-notes/4.1.md` (new). `build_site.py` regenerated the plugin pages and `sitemap.xml`; `build_remote.py` the remote.
+- **What 4.1 carries:** 6 new plugins (Step Filter, Beat Gen, Band Spin, Hit Layer, Bass Presence, Music Box; all beta), 174 plugins in all; the dice in every header; the generative upgrades and the Klevgrand upgrades; 89 FX chains; the mirrored N.
+- **Tests (run on Linux):** `tests/lint.py` on all 348 JSFX and GFX (0 errors, with the version checks), `node web/tools/build.js --check`, `tools/build_site.py --check`, `tools/build_catalog.py --check` (175 entries with the Rack, 89 FX chains, 6 starter profiles), `tools/build_remote.py --check`, `tools/build_presets.py --check`, `tools/build_chains.py --check`, `cargo metadata --locked` in `hub/`, `tools/build_bible.py --check`, `tests/bible_order.py`.
+- **Next:** Claude runs the Release workflow with 4.1 once this is merged; Christos publishes the draft; Claude checks the assets, `release_smoke.sh 4.1`, the site links and the F-Droid repository and adds the 4.1 row to Part VI.3.
+- **Version:** v4.1.

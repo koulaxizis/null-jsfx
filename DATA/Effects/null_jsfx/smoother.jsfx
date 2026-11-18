@@ -2,7 +2,7 @@ desc:NULL Smoother
 author: Christos Koulaxizis
 tags: smoother smooth harsh harshness resonance dynamic eq soothe tame sibilance upper mids one knob
 //category: One Slider
-//NULL JSFX v4.0 • https://nulljsfx.tech • MIT License
+//NULL JSFX v4.1 • https://nulljsfx.tech • MIT License
 
 slider1:40<0,100,1>Amount
 
