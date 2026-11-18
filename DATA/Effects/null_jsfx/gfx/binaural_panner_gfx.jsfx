@@ -180,6 +180,7 @@ out_pin:Right
   strcpy(#ng_h_ix, "");
   ng_hist_add(1); ng_hist_add(2); ng_hist_add(3); ng_hist_add(4); ng_hist_add(5); ng_hist_add(6); ng_hist_add(7); ng_hist_add(8);
   ng_hist_init();
+  ng_dice_add(1, -180, 180, 1, 0); ng_dice_add(2, -40, 90, 1, 0); ng_dice_add(3, 0.25, 20, 0.01, 1); ng_dice_add(4, 0, 100, 1, 0); ng_dice_add(5, 14, 20, 0.1, 0); ng_dice_add(7, 0, 90, 1, 0);
 
   function ng_preset_load(p)
   (

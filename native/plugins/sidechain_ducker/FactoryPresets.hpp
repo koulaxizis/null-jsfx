@@ -39,4 +39,22 @@ static const char* const kHints[] = {
     "High-passes the key so only its attack triggers ducking (0 = off)",
 };
 
+// the parameters the header's dice moves (tools/build_presets.py dice()): index, range, step, log scale
+#define NULL_UI_DICE 1
+struct DiceParam {
+    uint32_t index;
+    float lo, hi, step;
+    bool log;
+};
+static const DiceParam kDice[] = {
+    { 0, -60.0f, 0.0f, 0.1f, false },
+    { 1, -40.0f, 0.0f, 0.1f, false },
+    { 2, 0.1f, 50.0f, 0.1f, false },
+    { 3, 0.0f, 500.0f, 1.0f, false },
+    { 4, 10.0f, 2000.0f, 1.0f, false },
+    { 5, 0.0f, 1.0f, 1.0f, false },
+    { 6, 0.0f, 500.0f, 1.0f, false },
+};
+static constexpr uint32_t kNumDice = sizeof(kDice) / sizeof(kDice[0]);
+
 } // namespace nullpresets

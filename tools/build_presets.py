@@ -95,6 +95,30 @@ def steps(stem):
     return out
 
 
+DICE_SKIP = re.compile(r"\b(mix|dry|wet|output|out|volume|gain|level|trim|ceiling|channel|run|bypass|oversampling|"
+                       r"midi|input|latency|quality|sidechain)\b", re.I)
+
+
+def dice(stem, files):
+    """[(slider index from 0, lo, hi, step, log)] that the header's dice moves (null_gfx.jsfx-inc
+    ng_dice_add, NullUI kDice): every slider but the file sliders and those whose name holds a word of
+    DICE_SKIP (the mix, the output, the gain, the MIDI channel: what sets the level or the routing)."""
+    text = (PLUGINS / f"{stem}.jsfx").read_text(encoding="utf-8")
+    out = []
+    for m in re.finditer(r"^slider(\d+):[^<\n]*<([^>]*)>(.*)$", text, re.M):
+        i = int(m.group(1)) - 1
+        if i in files or DICE_SKIP.search(m.group(3)):
+            continue
+        rng = m.group(2)
+        parts = rng.split("{")[0].split(",")
+        lo, hi = float(parts[0]), float(parts[1])
+        step = parts[2].split(":")[0].strip() if len(parts) >= 3 else ""
+        lg = ":log" in rng and lo > 0
+        if hi > lo:
+            out.append((i, lo, hi, float(step) if step else 0.0, lg))
+    return out
+
+
 def window(stem):
     """(width, height) of the plugin's interface: the @gfx size of its GFX version (the native UI has the
     same size, R10), or None."""
@@ -201,6 +225,23 @@ def header(stem, presets, files):
     n = len(presets[0][1]) - len(files)
     tips = [h for i, h in enumerate(hints(stem, len(presets[0][1]))) if i not in files]
     hrows = "\n".join("    " + json.dumps(h, ensure_ascii=False) + "," for h in tips)
+    pos = [i for i in range(len(presets[0][1])) if i not in files]  # slider index -> parameter
+    roll = dice(stem, files)
+    drows = "\n".join(f"    {{ {pos.index(i)}, {cfloat(lo)}, {cfloat(hi)}, {cfloat(st)}, {'true' if lg else 'false'} }},"
+                      for i, lo, hi, st, lg in roll)
+    dblock = "" if not roll else f"""
+// the parameters the header's dice moves (tools/build_presets.py dice()): index, range, step, log scale
+#define NULL_UI_DICE 1
+struct DiceParam {{
+    uint32_t index;
+    float lo, hi, step;
+    bool log;
+}};
+static const DiceParam kDice[] = {{
+{drows}
+}};
+static constexpr uint32_t kNumDice = sizeof(kDice) / sizeof(kDice[0]);
+"""
     rows = "\n".join("    { " + json.dumps(name) + ", { "
                      + ", ".join(cfloat(v) for i, v in enumerate(vals) if i not in files) + " } },"
                      for name, vals in presets)
@@ -228,7 +269,7 @@ static constexpr uint32_t kNumValues = {n};
 static const char* const kHints[] = {{
 {hrows}
 }};
-
+{dblock}
 }} // namespace nullpresets
 """
 
@@ -240,7 +281,12 @@ def gfx_block(stem, presets, files):
     out = [GFX_BEGIN, f"  ng_pre_n = {len(presets)};",
            '  strcpy(#ng_h_ix, "");',
            "  " + " ".join(f"ng_hist_add({i + 1});" for i in idx),
-           "  ng_hist_init();", "",
+           "  ng_hist_init();"]
+    roll = dice(stem, files)
+    if roll:
+        out.append("  " + " ".join(f"ng_dice_add({i + 1}, {fmt(lo)}, {fmt(hi)}, {fmt(st)}, {1 if lg else 0});"
+                                   for i, lo, hi, st, lg in roll))
+    out += ["",
            "  function ng_preset_load(p)", "  ("]
     for k, (_, vals) in enumerate(presets):
         out.append(f"    p == {k} ? ( " + " ".join(f"ng_slider_set({i + 1}, {fmt(vals[i])});" for i in idx) + " );")

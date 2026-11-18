@@ -53,4 +53,28 @@ static const char* const kHints[] = {
     "Learn: play the loudest part of the song",
 };
 
+// the parameters the header's dice moves (tools/build_presets.py dice()): index, range, step, log scale
+#define NULL_UI_DICE 1
+struct DiceParam {
+    uint32_t index;
+    float lo, hi, step;
+    bool log;
+};
+static const DiceParam kDice[] = {
+    { 2, 10.0f, 200.0f, 1.0f, false },
+    { 3, 0.0f, 5.0f, 1.0f, false },
+    { 5, 0.0f, 1.0f, 1.0f, false },
+    { 6, 0.0f, 2.0f, 1.0f, false },
+    { 7, 0.0f, 1.0f, 1.0f, false },
+    { 8, 0.0f, 2.0f, 1.0f, false },
+    { 9, 0.0f, 1.0f, 1.0f, false },
+    { 10, 50.0f, 500.0f, 10.0f, false },
+    { 11, 1000.0f, 12000.0f, 100.0f, false },
+    { 12, 0.0f, 1.0f, 1.0f, false },
+    { 13, 0.0f, 1.0f, 1.0f, false },
+    { 14, -24.0f, -6.0f, 0.5f, false },
+    { 15, 0.0f, 1.0f, 1.0f, false },
+};
+static constexpr uint32_t kNumDice = sizeof(kDice) / sizeof(kDice[0]);
+
 } // namespace nullpresets

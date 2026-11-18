@@ -41,6 +41,26 @@ inline double stepValue(int m, double k) noexcept
 // steps in the pattern of step mode m
 inline int stepCount(int m) noexcept { return m == 1 ? 2 : m == 2 ? 4 : m == 3 ? 8 : 3; }
 
+// Pattern (appended 2026-11-18, the JSFX's ap_gen): 16 pan positions from the seed, a Park-Miller
+// stream in exact doubles; nine positions from L to R, never the same one twice in a row
+inline void patternPositions(double seed, double* pp) noexcept
+{
+    double x = seed * 48271.0 + 11.0;
+    auto pm = [](double v) { v *= 16807.0; return v - std::floor(v / 2147483647.0) * 2147483647.0; };
+    for (int k = 0; k < 4; ++k)
+        x = pm(x);
+    double prev = 2.0;
+    for (int i = 0; i < 16; ++i)
+    {
+        x = pm(x);
+        double v = std::floor(x / 2147483647.0 * 9.0) / 4.0 - 1.0;
+        if (std::fabs(v - prev) < 0.00001) // EEL2 == is fuzzy
+            v = prev > 0.0 ? prev - 0.5 : prev + 0.5;
+        pp[i] = v;
+        prev = v;
+    }
+}
+
 class AutoPanProcessor {
 public:
     // @init
@@ -58,11 +78,17 @@ public:
 
     // @slider
     void setParams(double rateHz, double depthPct, double mixPct, bool sync, int subdivision, int mode = 0,
-                   double smoothingPct = 20.0)
+                   double smoothingPct = 20.0, bool pattern = false, int patternSteps = 8, double patternSeed = 1.0)
     {
         fMode = mode;
         fSmooth = smoothingPct / 100.0;
         fN = stepCount(mode);
+        if (pattern)
+        {
+            patternPositions(patternSeed, fPP);
+            fMode = 6;
+            fN = patternSteps;
+        }
         if (fStep >= fN)
             fStep = 0.0;
         fDepth = depthPct / 100.0;
@@ -105,10 +131,10 @@ public:
             {
                 // step mode: glide from the last step's position over the first Smoothing share
                 const double t = fPhase / kTwoPi / std::max(fSmooth, 0.001 * fRate);
-                const double c = stepValue(fMode, fStep);
+                const double c = val(fStep);
                 if (t < 1.0)
                 {
-                    const double p = stepValue(fMode, fStep > 0.0 ? fStep - 1.0 : double(fN - 1));
+                    const double p = val(fStep > 0.0 ? fStep - 1.0 : double(fN - 1));
                     lfo = p + (c - p) * (0.5 - 0.5 * std::cos(3.141592653589793 * t));
                 }
                 else
@@ -125,7 +151,11 @@ public:
         }
     }
 
+    int mode() const noexcept { return fMode; }               // the step mode played (6 = Pattern)
+    double val(double k) const noexcept { return fMode == 6 ? fPP[int(k)] : stepValue(fMode, k); }
+
 private:
+    double fPP[16] = {};
     double fSr = 48000.0, fPhase = 0.0, fRate = 2.0, fPhaseInc = 0.0, fMult = 0.5;
     double fDepth = 0.5, fMix = 0.4, fSmooth = 0.2, fStep = 0.0;
     int fMode = 0, fN = 2;

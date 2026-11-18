@@ -8,5 +8,7 @@
   ["Drum Bus Variation", {"Pattern": "Shuffle", "Variation": 35, "Seed": 11, "Repeat Chance": 15, "Mix": 60}],
   ["Backspin Ending", {"Pattern": "Backspin", "Variation": 60, "Seed": 5, "Repeat Chance": 10}],
   ["Vocal Chop 16ths", {"Pattern": "Stutter", "Variation": 30, "Slices": "16", "Repeat Chance": 35, "Gate": 80}],
-  ["Glitch Reverse", {"Pattern": "Random", "Variation": 60, "Seed": 42, "Slices": "32", "Reverse Chance": 50, "Repeat Chance": 30}]
+  ["Glitch Reverse", {"Pattern": "Random", "Variation": 60, "Seed": 42, "Slices": "32", "Reverse Chance": 50, "Repeat Chance": 30}],
+  ["Generative Reroll Bars", {"Pattern": "Random", "Seed": 9, "Reroll": "Every Bar", "Variation": 60}],
+  ["Generative Speed Chops", {"Pattern": "Shuffle", "Seed": 21, "Reroll": "Every 2 Bars", "Speed Chance": 35}]
 ]

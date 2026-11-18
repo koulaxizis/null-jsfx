@@ -1,0 +1,12 @@
+[
+  ["House Groove", {"Style": "Four on Floor", "Seed": 3, "Kick Density": 50, "Closed Hat Density": 60, "Open Hat Density": 50, "Clap Density": 50, "Snare Density": 0, "Swing": 10}],
+  ["Breakbeat Seed 12", {"Style": "Breakbeat", "Seed": 12, "Kick Density": 60, "Snare Density": 55, "Closed Hat Density": 45, "Perc Density": 20}],
+  ["Boom Bap", {"Style": "Hip Hop", "Seed": 5, "Kick Density": 55, "Snare Density": 50, "Closed Hat Density": 50, "Swing": 30, "Velocity Range": 40}],
+  ["Trap Rolls", {"Style": "Trap", "Seed": 9, "Closed Hat Density": 90, "Tom Density": 40, "Rate": "1/16", "Velocity Range": 50}],
+  ["Polymeter Drift", {"Style": "Random", "Seed": 21, "Kick Density": 35, "Snare Density": 25, "Closed Hat Density": 50, "Perc Density": 30, "Kick Steps": 16, "Snare Steps": 12, "Closed Hat Steps": 10, "Perc Steps": 7}],
+  ["Mutating House", {"Style": "Four on Floor", "Seed": 7, "Mutate": 30, "Mutate Every": "2 Cycles", "Kick Lock": "On", "Clap Density": 40, "Open Hat Density": 40}],
+  ["Evolving Breaks", {"Style": "Breakbeat", "Seed": 33, "Mutate": 45, "Mutate Every": "1 Cycle", "Kick Lock": "On", "Snare Lock": "On", "Perc Density": 35}],
+  ["Sparse Percussion", {"Style": "Random", "Seed": 4, "Kick Density": 15, "Snare Density": 10, "Closed Hat Density": 20, "Open Hat Density": 0, "Clap Density": 0, "Perc Density": 25, "Tom Density": 15, "Velocity Range": 60}],
+  ["Half Speed Eighths", {"Style": "Hip Hop", "Seed": 18, "Rate": "1/8", "Closed Hat Density": 70, "Gate": 80}],
+  ["Free Running Jam", {"Style": "Breakbeat", "Seed": 64, "Run": "Always", "Mutate": 25}]
+]

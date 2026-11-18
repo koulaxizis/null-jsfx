@@ -15,5 +15,7 @@
   ["Generated Trance Gate", {"Generate": "On", "Style": "Trance", "Seed": 7, "Density": 50, "Attack": 2, "Release": 35}],
   ["Generated Offbeat Pump", {"Generate": "On", "Style": "Offbeat", "Seed": 21, "Density": 60, "Attack": 3, "Release": 60}],
   ["Generated Stutter", {"Generate": "On", "Style": "Stutter", "Seed": 0, "Density": 50, "Attack": 1, "Release": 15}],
-  ["Generated Half Time Chop", {"Generate": "On", "Style": "Half Time", "Seed": 7, "Density": 60, "Attack": 5, "Release": 120, "Gate Depth": 85}]
+  ["Generated Half Time Chop", {"Generate": "On", "Style": "Half Time", "Seed": 7, "Density": 60, "Attack": 5, "Release": 120, "Gate Depth": 85}],
+  ["Generative Flow Gate", {"Generate": "On", "Style": "Trance", "Seed": 11, "Shape": "Flow", "Density": 55}],
+  ["Generative Mutate Gate", {"Generate": "On", "Style": "Offbeat", "Seed": 31, "Mutate": 35, "Mutate Every": "1 Cycle", "Attack": 2, "Release": 30}]
 ]

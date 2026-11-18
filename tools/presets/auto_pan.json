@@ -10,5 +10,6 @@
   ["L-C-R Eighths", {"Mode": "L-C-R", "Tempo Sync": "ON", "Subdivision": "1/8", "Depth": 100, "Mix": 100, "Smoothing": 15}],
   ["Stepped Sweep Sixteenths", {"Mode": "8 STEPS", "Tempo Sync": "ON", "Subdivision": "1/16", "Depth": 100, "Mix": 100, "Smoothing": 30}],
   ["Four Step Bounce", {"Mode": "4 STEPS", "Tempo Sync": "ON", "Subdivision": "1/8", "Depth": 80, "Mix": 70, "Smoothing": 20}],
-  ["Slow Path Drift", {"Mode": "R-C-L", "Rate": 0.5, "Depth": 70, "Mix": 60, "Smoothing": 80}]
+  ["Slow Path Drift", {"Mode": "R-C-L", "Rate": 0.5, "Depth": 70, "Mix": 60, "Smoothing": 80}],
+  ["Generative Pan Pattern", {"Pattern": "ON", "Pattern Steps": 8, "Pattern Seed": 7, "Tempo Sync": "ON", "Subdivision": "1/8", "Depth": 70}]
 ]

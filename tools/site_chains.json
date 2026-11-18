@@ -84,5 +84,8 @@
   "Chord Pad": "One key, a whole pad: Chords turns each note into an open ninth chord for the String Ensemble, widened by chorus and lifted by a shimmer reverb.",
   "Lo-Fi Keys": "A lo-fi electric piano for beats: tine keys with a little tremolo, squashed and bit-reduced by Lo-Fi Comp, then vinyl crackle, worn tape and a small room.",
   "Hum to Synth": "Hum, sing or play a melody and hear it from the Synth: Pitch to MIDI turns the notes into MIDI for the instrument. Good for doubling a voice or a bass line.",
-  "Strummed Guitar": "A strummed guitar in time: Chords builds the chord, Strum plays it down and up in eighths, a steel-string Pluck sounds it, through an open-back cabinet and a spring reverb."
+  "Strummed Guitar": "A strummed guitar in time: Chords builds the chord, Strum plays it down and up in eighths, a steel-string Pluck sounds it, through an open-back cabinet and a spring reverb.",
+  "Generative Beat": "Beat Gen draws a breakbeat that mutates every two bars while the kick stays put, played by Drum Machine with tape and glue.",
+  "Generative Riff": "Riff writes a Dorian line that mutates as it plays, a gliding saw bass sings it and Step Filter moves its tone.",
+  "Chord Jam": "Chords generates a minor progression that advances every bar on its own, played by strings with chorus and reverb."
 }

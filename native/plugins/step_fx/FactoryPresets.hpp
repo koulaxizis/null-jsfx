@@ -27,6 +27,7 @@ static const FactoryPreset kPresets[] = {
     { "Generated Glitch", { 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 16.0f, 0.0f, 1.0f, 800.0f, 60.0f, 12.0f, 100.0f, 0.0f, 1.0f, 60.0f, 1.0f, 1.0f } },
     { "Generated Tape Stops", { 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 16.0f, 0.0f, 1.0f, 800.0f, 60.0f, 12.0f, 100.0f, 0.0f, 1.0f, 70.0f, 2.0f, 1.0f } },
     { "Generated Dub Throws", { 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 16.0f, 0.0f, 1.0f, 600.0f, 60.0f, 12.0f, 100.0f, 0.0f, 1.0f, 50.0f, 3.0f, 5.0f } },
+    { "Generative Seed 77", { 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 16.0f, 0.0f, 1.0f, 800.0f, 60.0f, 12.0f, 100.0f, 0.0f, 1.0f, 40.0f, 1.0f, 77.0f } },
 };
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 static constexpr uint32_t kNumValues = 29;
@@ -64,5 +65,43 @@ static const char* const kHints[] = {
     "The kind of pattern Generate makes: Build (repeats and gates toward the bar end), Glitch (repeats",
     "Picks a different generated pattern; the same Seed always gives the same pattern",
 };
+
+// the parameters the header's dice moves (tools/build_presets.py dice()): index, range, step, log scale
+#define NULL_UI_DICE 1
+struct DiceParam {
+    uint32_t index;
+    float lo, hi, step;
+    bool log;
+};
+static const DiceParam kDice[] = {
+    { 0, 0.0f, 8.0f, 1.0f, false },
+    { 1, 0.0f, 8.0f, 1.0f, false },
+    { 2, 0.0f, 8.0f, 1.0f, false },
+    { 3, 0.0f, 8.0f, 1.0f, false },
+    { 4, 0.0f, 8.0f, 1.0f, false },
+    { 5, 0.0f, 8.0f, 1.0f, false },
+    { 6, 0.0f, 8.0f, 1.0f, false },
+    { 7, 0.0f, 8.0f, 1.0f, false },
+    { 8, 0.0f, 8.0f, 1.0f, false },
+    { 9, 0.0f, 8.0f, 1.0f, false },
+    { 10, 0.0f, 8.0f, 1.0f, false },
+    { 11, 0.0f, 8.0f, 1.0f, false },
+    { 12, 0.0f, 8.0f, 1.0f, false },
+    { 13, 0.0f, 8.0f, 1.0f, false },
+    { 14, 0.0f, 8.0f, 1.0f, false },
+    { 15, 0.0f, 8.0f, 1.0f, false },
+    { 16, 0.0f, 4.0f, 1.0f, false },
+    { 17, 1.0f, 16.0f, 1.0f, false },
+    { 18, 0.0f, 75.0f, 1.0f, false },
+    { 19, 0.0f, 2.0f, 1.0f, false },
+    { 20, 200.0f, 8000.0f, 1.0f, true },
+    { 21, 0.0f, 100.0f, 1.0f, false },
+    { 22, 1.0f, 12.0f, 1.0f, false },
+    { 25, 0.0f, 1.0f, 1.0f, false },
+    { 26, 0.0f, 100.0f, 1.0f, false },
+    { 27, 0.0f, 4.0f, 1.0f, false },
+    { 28, 1.0f, 999.0f, 1.0f, false },
+};
+static constexpr uint32_t kNumDice = sizeof(kDice) / sizeof(kDice[0]);
 
 } // namespace nullpresets

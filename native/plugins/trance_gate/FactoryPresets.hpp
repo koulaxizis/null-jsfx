@@ -8,31 +8,33 @@ namespace nullpresets {
 
 struct FactoryPreset {
     const char* name;
-    float values[27];
+    float values[30];
 };
 
 static const FactoryPreset kPresets[] = {
-    { "Default", { 1.0f, 1.0f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 2.0f, 8.0f, 5.0f, 40.0f, 100.0f, 100.0f, 0.0f, 0.0f, 50.0f, 0.0f } },
-    { "Straight Sixteenths", { 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 2.0f, 8.0f, 2.0f, 30.0f, 100.0f, 100.0f, 0.0f, 0.0f, 50.0f, 0.0f } },
-    { "Dotted Gallop", { 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 2.0f, 8.0f, 3.0f, 50.0f, 100.0f, 100.0f, 0.0f, 0.0f, 50.0f, 0.0f } },
-    { "Quarter Pulse Gate", { 1.0f, 1.0f, 1.0f, 0.0f, 1.0f, 1.0f, 1.0f, 0.0f, 1.0f, 1.0f, 1.0f, 0.0f, 1.0f, 1.0f, 1.0f, 0.0f, 0.0f, 2.0f, 8.0f, 5.0f, 40.0f, 100.0f, 100.0f, 0.0f, 0.0f, 50.0f, 0.0f } },
-    { "Soft Pad Pulse", { 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 2.0f, 8.0f, 20.0f, 80.0f, 70.0f, 100.0f, 0.0f, 0.0f, 50.0f, 0.0f } },
-    { "Thirty Second Stutter", { 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 3.0f, 8.0f, 1.0f, 10.0f, 100.0f, 100.0f, 0.0f, 0.0f, 50.0f, 0.0f } },
-    { "Sparse Accent Hits", { 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 2.0f, 8.0f, 2.0f, 80.0f, 100.0f, 100.0f, 0.0f, 0.0f, 50.0f, 0.0f } },
-    { "Offbeat Chop", { 0.0f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f, 2.0f, 8.0f, 3.0f, 30.0f, 100.0f, 100.0f, 0.0f, 0.0f, 50.0f, 0.0f } },
-    { "Free Rate Flutter", { 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 2.0f, 12.0f, 3.0f, 25.0f, 60.0f, 100.0f, 0.0f, 0.0f, 50.0f, 0.0f } },
-    { "Random Sixteenths", { 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f, 2.0f, 8.0f, 2.0f, 30.0f, 100.0f, 60.0f, 0.0f, 0.0f, 50.0f, 0.0f } },
-    { "Sparse Random Chop", { 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f, 2.0f, 8.0f, 1.0f, 20.0f, 100.0f, 35.0f, 17.0f, 0.0f, 50.0f, 0.0f } },
-    { "Humanized Pulse", { 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 2.0f, 8.0f, 3.0f, 40.0f, 100.0f, 85.0f, 5.0f, 0.0f, 50.0f, 0.0f } },
-    { "Glitchy Thirty Seconds", { 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f, 3.0f, 8.0f, 1.0f, 10.0f, 100.0f, 50.0f, 42.0f, 0.0f, 50.0f, 0.0f } },
-    { "Soft Random Pad", { 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f, 1.0f, 8.0f, 20.0f, 120.0f, 70.0f, 55.0f, 9.0f, 0.0f, 50.0f, 0.0f } },
-    { "Generated Trance Gate", { 1.0f, 1.0f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 2.0f, 8.0f, 2.0f, 35.0f, 100.0f, 100.0f, 7.0f, 1.0f, 50.0f, 0.0f } },
-    { "Generated Offbeat Pump", { 1.0f, 1.0f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 2.0f, 8.0f, 3.0f, 60.0f, 100.0f, 100.0f, 21.0f, 1.0f, 60.0f, 1.0f } },
-    { "Generated Stutter", { 1.0f, 1.0f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 2.0f, 8.0f, 1.0f, 15.0f, 100.0f, 100.0f, 0.0f, 1.0f, 50.0f, 2.0f } },
-    { "Generated Half Time Chop", { 1.0f, 1.0f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 2.0f, 8.0f, 5.0f, 120.0f, 85.0f, 100.0f, 7.0f, 1.0f, 60.0f, 3.0f } },
+    { "Default", { 1.0f, 1.0f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 2.0f, 8.0f, 5.0f, 40.0f, 100.0f, 100.0f, 0.0f, 0.0f, 50.0f, 0.0f, 0.0f, 0.0f, 1.0f } },
+    { "Straight Sixteenths", { 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 2.0f, 8.0f, 2.0f, 30.0f, 100.0f, 100.0f, 0.0f, 0.0f, 50.0f, 0.0f, 0.0f, 0.0f, 1.0f } },
+    { "Dotted Gallop", { 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 2.0f, 8.0f, 3.0f, 50.0f, 100.0f, 100.0f, 0.0f, 0.0f, 50.0f, 0.0f, 0.0f, 0.0f, 1.0f } },
+    { "Quarter Pulse Gate", { 1.0f, 1.0f, 1.0f, 0.0f, 1.0f, 1.0f, 1.0f, 0.0f, 1.0f, 1.0f, 1.0f, 0.0f, 1.0f, 1.0f, 1.0f, 0.0f, 0.0f, 2.0f, 8.0f, 5.0f, 40.0f, 100.0f, 100.0f, 0.0f, 0.0f, 50.0f, 0.0f, 0.0f, 0.0f, 1.0f } },
+    { "Soft Pad Pulse", { 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 2.0f, 8.0f, 20.0f, 80.0f, 70.0f, 100.0f, 0.0f, 0.0f, 50.0f, 0.0f, 0.0f, 0.0f, 1.0f } },
+    { "Thirty Second Stutter", { 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 3.0f, 8.0f, 1.0f, 10.0f, 100.0f, 100.0f, 0.0f, 0.0f, 50.0f, 0.0f, 0.0f, 0.0f, 1.0f } },
+    { "Sparse Accent Hits", { 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 2.0f, 8.0f, 2.0f, 80.0f, 100.0f, 100.0f, 0.0f, 0.0f, 50.0f, 0.0f, 0.0f, 0.0f, 1.0f } },
+    { "Offbeat Chop", { 0.0f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f, 2.0f, 8.0f, 3.0f, 30.0f, 100.0f, 100.0f, 0.0f, 0.0f, 50.0f, 0.0f, 0.0f, 0.0f, 1.0f } },
+    { "Free Rate Flutter", { 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 2.0f, 12.0f, 3.0f, 25.0f, 60.0f, 100.0f, 0.0f, 0.0f, 50.0f, 0.0f, 0.0f, 0.0f, 1.0f } },
+    { "Random Sixteenths", { 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f, 2.0f, 8.0f, 2.0f, 30.0f, 100.0f, 60.0f, 0.0f, 0.0f, 50.0f, 0.0f, 0.0f, 0.0f, 1.0f } },
+    { "Sparse Random Chop", { 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f, 2.0f, 8.0f, 1.0f, 20.0f, 100.0f, 35.0f, 17.0f, 0.0f, 50.0f, 0.0f, 0.0f, 0.0f, 1.0f } },
+    { "Humanized Pulse", { 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 2.0f, 8.0f, 3.0f, 40.0f, 100.0f, 85.0f, 5.0f, 0.0f, 50.0f, 0.0f, 0.0f, 0.0f, 1.0f } },
+    { "Glitchy Thirty Seconds", { 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f, 3.0f, 8.0f, 1.0f, 10.0f, 100.0f, 50.0f, 42.0f, 0.0f, 50.0f, 0.0f, 0.0f, 0.0f, 1.0f } },
+    { "Soft Random Pad", { 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f, 1.0f, 8.0f, 20.0f, 120.0f, 70.0f, 55.0f, 9.0f, 0.0f, 50.0f, 0.0f, 0.0f, 0.0f, 1.0f } },
+    { "Generated Trance Gate", { 1.0f, 1.0f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 2.0f, 8.0f, 2.0f, 35.0f, 100.0f, 100.0f, 7.0f, 1.0f, 50.0f, 0.0f, 0.0f, 0.0f, 1.0f } },
+    { "Generated Offbeat Pump", { 1.0f, 1.0f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 2.0f, 8.0f, 3.0f, 60.0f, 100.0f, 100.0f, 21.0f, 1.0f, 60.0f, 1.0f, 0.0f, 0.0f, 1.0f } },
+    { "Generated Stutter", { 1.0f, 1.0f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 2.0f, 8.0f, 1.0f, 15.0f, 100.0f, 100.0f, 0.0f, 1.0f, 50.0f, 2.0f, 0.0f, 0.0f, 1.0f } },
+    { "Generated Half Time Chop", { 1.0f, 1.0f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 2.0f, 8.0f, 5.0f, 120.0f, 85.0f, 100.0f, 7.0f, 1.0f, 60.0f, 3.0f, 0.0f, 0.0f, 1.0f } },
+    { "Generative Flow Gate", { 1.0f, 1.0f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 2.0f, 8.0f, 5.0f, 40.0f, 100.0f, 100.0f, 11.0f, 1.0f, 55.0f, 0.0f, 1.0f, 0.0f, 1.0f } },
+    { "Generative Mutate Gate", { 1.0f, 1.0f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 2.0f, 8.0f, 2.0f, 30.0f, 100.0f, 100.0f, 31.0f, 1.0f, 50.0f, 1.0f, 0.0f, 35.0f, 0.0f } },
 };
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
-static constexpr uint32_t kNumValues = 27;
+static constexpr uint32_t kNumValues = 30;
 
 // the hint line under the controls: a short help text per parameter (from tools/site_content.json)
 #define NULL_UI_HINTS 1
@@ -64,6 +66,50 @@ static const char* const kHints[] = {
     "On: plays a pattern made from Seed, Density and Style instead of the 16 Step switches (they keep their",
     "How many steps the generated pattern opens; a higher Density only adds steps, the ones already there stay",
     "The rhythm the generated pattern follows: Trance, Offbeat, Stutter, Half Time or Random",
+    "Hard: each step holds its level; Flow: the gain glides from each step to the next for a smooth, pulsing gate",
+    "How much of the pattern is drawn anew every Mutate Every cycles (0% = the pattern stays as it is)",
+    "How often Mutate draws a new variation, in cycles of 16 steps",
 };
+
+// the parameters the header's dice moves (tools/build_presets.py dice()): index, range, step, log scale
+#define NULL_UI_DICE 1
+struct DiceParam {
+    uint32_t index;
+    float lo, hi, step;
+    bool log;
+};
+static const DiceParam kDice[] = {
+    { 0, 0.0f, 1.0f, 1.0f, false },
+    { 1, 0.0f, 1.0f, 1.0f, false },
+    { 2, 0.0f, 1.0f, 1.0f, false },
+    { 3, 0.0f, 1.0f, 1.0f, false },
+    { 4, 0.0f, 1.0f, 1.0f, false },
+    { 5, 0.0f, 1.0f, 1.0f, false },
+    { 6, 0.0f, 1.0f, 1.0f, false },
+    { 7, 0.0f, 1.0f, 1.0f, false },
+    { 8, 0.0f, 1.0f, 1.0f, false },
+    { 9, 0.0f, 1.0f, 1.0f, false },
+    { 10, 0.0f, 1.0f, 1.0f, false },
+    { 11, 0.0f, 1.0f, 1.0f, false },
+    { 12, 0.0f, 1.0f, 1.0f, false },
+    { 13, 0.0f, 1.0f, 1.0f, false },
+    { 14, 0.0f, 1.0f, 1.0f, false },
+    { 15, 0.0f, 1.0f, 1.0f, false },
+    { 16, 0.0f, 1.0f, 1.0f, false },
+    { 17, 0.0f, 3.0f, 1.0f, false },
+    { 18, 0.5f, 40.0f, 0.1f, false },
+    { 19, 1.0f, 100.0f, 1.0f, false },
+    { 20, 10.0f, 500.0f, 1.0f, false },
+    { 21, 0.0f, 100.0f, 1.0f, false },
+    { 22, 0.0f, 100.0f, 1.0f, false },
+    { 23, 0.0f, 999.0f, 1.0f, false },
+    { 24, 0.0f, 1.0f, 1.0f, false },
+    { 25, 0.0f, 100.0f, 1.0f, false },
+    { 26, 0.0f, 4.0f, 1.0f, false },
+    { 27, 0.0f, 1.0f, 1.0f, false },
+    { 28, 0.0f, 100.0f, 1.0f, false },
+    { 29, 0.0f, 3.0f, 1.0f, false },
+};
+static constexpr uint32_t kNumDice = sizeof(kDice) / sizeof(kDice[0]);
 
 } // namespace nullpresets

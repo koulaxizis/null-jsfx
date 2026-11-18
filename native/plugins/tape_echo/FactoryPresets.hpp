@@ -43,4 +43,25 @@ static const char* const kHints[] = {
     "Stops recording and loops what is on the tape (the length of the longest active head) forever, without",
 };
 
+// the parameters the header's dice moves (tools/build_presets.py dice()): index, range, step, log scale
+#define NULL_UI_DICE 1
+struct DiceParam {
+    uint32_t index;
+    float lo, hi, step;
+    bool log;
+};
+static const DiceParam kDice[] = {
+    { 0, 50.0f, 1000.0f, 1.0f, false },
+    { 1, 0.0f, 7.0f, 1.0f, false },
+    { 2, 0.0f, 11.0f, 1.0f, false },
+    { 3, 0.0f, 110.0f, 1.0f, false },
+    { 4, -12.0f, 12.0f, 0.1f, false },
+    { 5, -12.0f, 12.0f, 0.1f, false },
+    { 6, 0.0f, 100.0f, 1.0f, false },
+    { 7, 0.0f, 100.0f, 1.0f, false },
+    { 8, 0.0f, 100.0f, 1.0f, false },
+    { 10, 0.0f, 1.0f, 1.0f, false },
+};
+static constexpr uint32_t kNumDice = sizeof(kDice) / sizeof(kDice[0]);
+
 } // namespace nullpresets

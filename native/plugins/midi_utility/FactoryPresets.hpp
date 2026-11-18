@@ -50,4 +50,28 @@ static const char* const kHints[] = {
     "Pass or block program changes",
 };
 
+// the parameters the header's dice moves (tools/build_presets.py dice()): index, range, step, log scale
+#define NULL_UI_DICE 1
+struct DiceParam {
+    uint32_t index;
+    float lo, hi, step;
+    bool log;
+};
+static const DiceParam kDice[] = {
+    { 0, -48.0f, 48.0f, 1.0f, false },
+    { 2, -100.0f, 100.0f, 1.0f, false },
+    { 3, 1.0f, 127.0f, 1.0f, false },
+    { 4, 1.0f, 127.0f, 1.0f, false },
+    { 5, 0.0f, 127.0f, 1.0f, false },
+    { 6, 0.0f, 127.0f, 1.0f, false },
+    { 7, 0.0f, 127.0f, 1.0f, false },
+    { 8, 1.0f, 127.0f, 1.0f, false },
+    { 9, 1.0f, 127.0f, 1.0f, false },
+    { 10, 0.0f, 1.0f, 1.0f, false },
+    { 11, 0.0f, 1.0f, 1.0f, false },
+    { 12, 0.0f, 1.0f, 1.0f, false },
+    { 13, 0.0f, 1.0f, 1.0f, false },
+};
+static constexpr uint32_t kNumDice = sizeof(kDice) / sizeof(kDice[0]);
+
 } // namespace nullpresets

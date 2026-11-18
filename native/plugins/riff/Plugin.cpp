@@ -6,7 +6,7 @@
  * A MIDI effect: the audio passes through, the MIDI goes through RiffProcessor (riff.jsfx's
  * @block). SysEx, which the JSFX never sees, passes through at its frame. For the display:
  * extra = 1 + the step playing (0 = no riff), aux[0] = 1 + the leading key, aux[1] = 1 + the
- * note sounding (0 = none).
+ * note sounding (0 = none), aux[2] = the mutations made since the pattern was generated.
  */
 
 #include "NullPlugin.hpp"
@@ -29,7 +29,7 @@ protected:
     const char* getLabel() const override { return "Riff"; }
     const char* getDescription() const override
     {
-        return "MIDI effect: holding a key plays a tempo-synced riff generated from a seed, in the chosen key and scale and starting from the key held, with density, steps, rate, octave range, note length, accents, velocity range, variation and a rhythm lock.";
+        return "MIDI effect: holding a key plays a tempo-synced riff generated from a seed, in the chosen key and scale and starting from the key held, with density, steps, rate, octave range, note length, accents, velocity range, variation, a rhythm lock, Mutate, Legato and a Held Chord pitch source.";
     }
     int64_t getUniqueId() const override { return d_cconst('N', 'R', 'i', 'f'); }
 
@@ -65,6 +65,7 @@ protected:
         taps.extra.store(float(fDsp.step() + 1), std::memory_order_relaxed);
         taps.aux[0].store(float(fDsp.root() + 1), std::memory_order_relaxed);
         taps.aux[1].store(float(fDsp.sounding() + 1), std::memory_order_relaxed);
+        taps.aux[2].store(float(fDsp.mutations()), std::memory_order_relaxed);
     }
 
 private:
@@ -93,6 +94,10 @@ private:
         p.vrng = double(iv(9)) / 100.0;
         p.acc = double(iv(10)) / 100.0;
         p.vari = double(iv(11)) / 100.0;
+        p.mut = double(iv(12)) / 100.0;
+        p.mevery = nullriff::everyCycles(iv(13));
+        p.leg = iv(14) != 0;
+        p.chord = iv(15) != 0;
         fDsp.setParams(p);
     }
 

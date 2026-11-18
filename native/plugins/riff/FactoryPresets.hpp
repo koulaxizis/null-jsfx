@@ -8,29 +8,32 @@ namespace nullpresets {
 
 struct FactoryPreset {
     const char* name;
-    float values[12];
+    float values[16];
 };
 
 static const FactoryPreset kPresets[] = {
-    { "Default", { 0.0f, 0.0f, 1.0f, 75.0f, 16.0f, 1.0f, 1.0f, 80.0f, 0.0f, 30.0f, 25.0f, 50.0f } },
-    { "Driving Bassline", { 0.0f, 1.0f, 7.0f, 90.0f, 16.0f, 1.0f, 1.0f, 60.0f, 0.0f, 30.0f, 35.0f, 30.0f } },
-    { "Sparse Groove", { 0.0f, 10.0f, 21.0f, 45.0f, 16.0f, 1.0f, 1.0f, 70.0f, 0.0f, 40.0f, 25.0f, 50.0f } },
-    { "Acid Line", { 0.0f, 5.0f, 303.0f, 85.0f, 16.0f, 1.0f, 2.0f, 50.0f, 0.0f, 30.0f, 45.0f, 60.0f } },
-    { "Pentatonic Lead", { 0.0f, 9.0f, 42.0f, 70.0f, 16.0f, 1.0f, 2.0f, 80.0f, 0.0f, 30.0f, 25.0f, 70.0f } },
-    { "Blues Shuffle", { 0.0f, 11.0f, 12.0f, 80.0f, 12.0f, 3.0f, 1.0f, 90.0f, 0.0f, 30.0f, 25.0f, 50.0f } },
-    { "Eighth Note Riff", { 0.0f, 0.0f, 5.0f, 85.0f, 8.0f, 0.0f, 1.0f, 90.0f, 0.0f, 30.0f, 25.0f, 20.0f } },
-    { "Fast Arp Run", { 0.0f, 0.0f, 64.0f, 100.0f, 32.0f, 2.0f, 3.0f, 70.0f, 0.0f, 30.0f, 15.0f, 80.0f } },
-    { "Triplet Rolls", { 0.0f, 4.0f, 99.0f, 75.0f, 24.0f, 4.0f, 2.0f, 80.0f, 0.0f, 30.0f, 25.0f, 50.0f } },
-    { "Dorian Funk", { 0.0f, 4.0f, 133.0f, 65.0f, 16.0f, 1.0f, 1.0f, 40.0f, 0.0f, 50.0f, 40.0f, 50.0f } },
-    { "Minor Hook", { 0.0f, 2.0f, 77.0f, 80.0f, 8.0f, 1.0f, 1.0f, 80.0f, 0.0f, 30.0f, 25.0f, 0.0f } },
-    { "Wide Melody", { 0.0f, 6.0f, 250.0f, 60.0f, 32.0f, 1.0f, 3.0f, 100.0f, 0.0f, 30.0f, 25.0f, 90.0f } },
-    { "Staccato Pulse", { 0.0f, 7.0f, 8.0f, 95.0f, 16.0f, 1.0f, 1.0f, 20.0f, 0.0f, 20.0f, 50.0f, 50.0f } },
-    { "Steady Repeat", { 0.0f, 0.0f, 3.0f, 75.0f, 16.0f, 1.0f, 1.0f, 80.0f, 0.0f, 0.0f, 0.0f, 0.0f } },
-    { "Locked Groove", { 0.0f, 1.0f, 58.0f, 70.0f, 16.0f, 1.0f, 1.0f, 80.0f, 11.0f, 30.0f, 30.0f, 50.0f } },
-    { "Ambient Drift", { 0.0f, 9.0f, 500.0f, 40.0f, 16.0f, 0.0f, 3.0f, 100.0f, 0.0f, 60.0f, 0.0f, 100.0f } },
+    { "Default", { 0.0f, 0.0f, 1.0f, 75.0f, 16.0f, 1.0f, 1.0f, 80.0f, 0.0f, 30.0f, 25.0f, 50.0f, 0.0f, 1.0f, 0.0f, 0.0f } },
+    { "Driving Bassline", { 0.0f, 1.0f, 7.0f, 90.0f, 16.0f, 1.0f, 1.0f, 60.0f, 0.0f, 30.0f, 35.0f, 30.0f, 0.0f, 1.0f, 0.0f, 0.0f } },
+    { "Sparse Groove", { 0.0f, 10.0f, 21.0f, 45.0f, 16.0f, 1.0f, 1.0f, 70.0f, 0.0f, 40.0f, 25.0f, 50.0f, 0.0f, 1.0f, 0.0f, 0.0f } },
+    { "Acid Line", { 0.0f, 5.0f, 303.0f, 85.0f, 16.0f, 1.0f, 2.0f, 50.0f, 0.0f, 30.0f, 45.0f, 60.0f, 0.0f, 1.0f, 0.0f, 0.0f } },
+    { "Pentatonic Lead", { 0.0f, 9.0f, 42.0f, 70.0f, 16.0f, 1.0f, 2.0f, 80.0f, 0.0f, 30.0f, 25.0f, 70.0f, 0.0f, 1.0f, 0.0f, 0.0f } },
+    { "Blues Shuffle", { 0.0f, 11.0f, 12.0f, 80.0f, 12.0f, 3.0f, 1.0f, 90.0f, 0.0f, 30.0f, 25.0f, 50.0f, 0.0f, 1.0f, 0.0f, 0.0f } },
+    { "Eighth Note Riff", { 0.0f, 0.0f, 5.0f, 85.0f, 8.0f, 0.0f, 1.0f, 90.0f, 0.0f, 30.0f, 25.0f, 20.0f, 0.0f, 1.0f, 0.0f, 0.0f } },
+    { "Fast Arp Run", { 0.0f, 0.0f, 64.0f, 100.0f, 32.0f, 2.0f, 3.0f, 70.0f, 0.0f, 30.0f, 15.0f, 80.0f, 0.0f, 1.0f, 0.0f, 0.0f } },
+    { "Triplet Rolls", { 0.0f, 4.0f, 99.0f, 75.0f, 24.0f, 4.0f, 2.0f, 80.0f, 0.0f, 30.0f, 25.0f, 50.0f, 0.0f, 1.0f, 0.0f, 0.0f } },
+    { "Dorian Funk", { 0.0f, 4.0f, 133.0f, 65.0f, 16.0f, 1.0f, 1.0f, 40.0f, 0.0f, 50.0f, 40.0f, 50.0f, 0.0f, 1.0f, 0.0f, 0.0f } },
+    { "Minor Hook", { 0.0f, 2.0f, 77.0f, 80.0f, 8.0f, 1.0f, 1.0f, 80.0f, 0.0f, 30.0f, 25.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f } },
+    { "Wide Melody", { 0.0f, 6.0f, 250.0f, 60.0f, 32.0f, 1.0f, 3.0f, 100.0f, 0.0f, 30.0f, 25.0f, 90.0f, 0.0f, 1.0f, 0.0f, 0.0f } },
+    { "Staccato Pulse", { 0.0f, 7.0f, 8.0f, 95.0f, 16.0f, 1.0f, 1.0f, 20.0f, 0.0f, 20.0f, 50.0f, 50.0f, 0.0f, 1.0f, 0.0f, 0.0f } },
+    { "Steady Repeat", { 0.0f, 0.0f, 3.0f, 75.0f, 16.0f, 1.0f, 1.0f, 80.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f } },
+    { "Locked Groove", { 0.0f, 1.0f, 58.0f, 70.0f, 16.0f, 1.0f, 1.0f, 80.0f, 11.0f, 30.0f, 30.0f, 50.0f, 0.0f, 1.0f, 0.0f, 0.0f } },
+    { "Ambient Drift", { 0.0f, 9.0f, 500.0f, 40.0f, 16.0f, 0.0f, 3.0f, 100.0f, 0.0f, 60.0f, 0.0f, 100.0f, 0.0f, 1.0f, 0.0f, 0.0f } },
+    { "Generative Mutating Riff", { 0.0f, 0.0f, 17.0f, 70.0f, 16.0f, 1.0f, 1.0f, 80.0f, 0.0f, 30.0f, 25.0f, 50.0f, 30.0f, 1.0f, 0.0f, 0.0f } },
+    { "Generative Chord Follow", { 0.0f, 0.0f, 5.0f, 75.0f, 16.0f, 1.0f, 1.0f, 80.0f, 0.0f, 30.0f, 25.0f, 50.0f, 20.0f, 1.0f, 1.0f, 1.0f } },
+    { "Generative Legato Line", { 0.0f, 0.0f, 88.0f, 75.0f, 16.0f, 0.0f, 1.0f, 100.0f, 0.0f, 30.0f, 25.0f, 50.0f, 15.0f, 2.0f, 1.0f, 0.0f } },
 };
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
-static constexpr uint32_t kNumValues = 12;
+static constexpr uint32_t kNumValues = 16;
 
 // the hint line under the controls: a short help text per parameter (from tools/site_content.json)
 #define NULL_UI_HINTS 1
@@ -47,6 +50,37 @@ static const char* const kHints[] = {
     "How much the step velocities vary below the velocity of the key you hold (0% plays every step at it)",
     "The share of steps that are accented, played well above the others (0 to 100%)",
     "How often a step plays a new note instead of repeating the note one beat earlier (0% repeats a one-beat",
+    "How much of the riff is drawn anew every Mutate Every cycles (0% = the riff stays as it is)",
+    "How often Mutate draws a new variation, in cycles of the riff's Steps",
+    "On: each note runs into the next one (the new note starts before the old one ends, and a repeated pitch is",
+    "Scale: the riff's pitches come from Key and Scale",
 };
+
+// the parameters the header's dice moves (tools/build_presets.py dice()): index, range, step, log scale
+#define NULL_UI_DICE 1
+struct DiceParam {
+    uint32_t index;
+    float lo, hi, step;
+    bool log;
+};
+static const DiceParam kDice[] = {
+    { 0, 0.0f, 11.0f, 1.0f, false },
+    { 1, 0.0f, 11.0f, 1.0f, false },
+    { 2, 1.0f, 999.0f, 1.0f, false },
+    { 3, 0.0f, 100.0f, 1.0f, false },
+    { 4, 4.0f, 32.0f, 1.0f, false },
+    { 5, 0.0f, 5.0f, 1.0f, false },
+    { 6, 1.0f, 3.0f, 1.0f, false },
+    { 7, 10.0f, 100.0f, 1.0f, false },
+    { 8, 0.0f, 999.0f, 1.0f, false },
+    { 9, 0.0f, 100.0f, 1.0f, false },
+    { 10, 0.0f, 100.0f, 1.0f, false },
+    { 11, 0.0f, 100.0f, 1.0f, false },
+    { 12, 0.0f, 100.0f, 1.0f, false },
+    { 13, 0.0f, 3.0f, 1.0f, false },
+    { 14, 0.0f, 1.0f, 1.0f, false },
+    { 15, 0.0f, 1.0f, 1.0f, false },
+};
+static constexpr uint32_t kNumDice = sizeof(kDice) / sizeof(kDice[0]);
 
 } // namespace nullpresets

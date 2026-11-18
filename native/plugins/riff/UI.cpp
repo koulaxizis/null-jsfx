@@ -10,21 +10,25 @@
 
 START_NAMESPACE_DISTRHO
 
-// as riff_gfx.jsfx: key, scale, rate, steps, octaves, seed / density, length, variation,
-// accent, velocity range, rhythm lock
+// as riff_gfx.jsfx: PATTERN tab: key, scale, rate, steps, octaves, seed / density, length,
+// variation, accent, velocity range, rhythm lock; EVOLVE tab: mutate, every, legato, pitch
 static const NullKnobsUI::Control kControls[] = {
-    { 0, NullKnobsUI::kSelect, "KEY", 0, -1, false },
-    { 1, NullKnobsUI::kSelect, "SCALE", 0, -1, false },
-    { 5, NullKnobsUI::kSelect, "RATE", 0, -1, false },
-    { 4, NullKnobsUI::kKnob, "STEPS", 0, -1, false },
-    { 6, NullKnobsUI::kKnob, "OCTAVES", 0, -1, false },
-    { 2, NullKnobsUI::kKnob, "SEED", 0, -1, false },
-    { 3, NullKnobsUI::kKnob, "DENSITY", 1, -1, false },
-    { 7, NullKnobsUI::kKnob, "LENGTH", 1, -1, false },
-    { 11, NullKnobsUI::kKnob, "VARIATION", 1, -1, false },
-    { 10, NullKnobsUI::kKnob, "ACCENT", 1, -1, false },
-    { 9, NullKnobsUI::kKnob, "VEL RANGE", 1, -1, false },
-    { 8, NullKnobsUI::kKnob, "RHYTHM LOCK", 1, -1, false },
+    { 0, NullKnobsUI::kSelect, "KEY", 0, 0, false },
+    { 1, NullKnobsUI::kSelect, "SCALE", 0, 0, false },
+    { 5, NullKnobsUI::kSelect, "RATE", 0, 0, false },
+    { 4, NullKnobsUI::kKnob, "STEPS", 0, 0, false },
+    { 6, NullKnobsUI::kKnob, "OCTAVES", 0, 0, false },
+    { 2, NullKnobsUI::kKnob, "SEED", 0, 0, false },
+    { 3, NullKnobsUI::kKnob, "DENSITY", 1, 0, false },
+    { 7, NullKnobsUI::kKnob, "LENGTH", 1, 0, false },
+    { 11, NullKnobsUI::kKnob, "VARIATION", 1, 0, false },
+    { 10, NullKnobsUI::kKnob, "ACCENT", 1, 0, false },
+    { 9, NullKnobsUI::kKnob, "VEL RANGE", 1, 0, false },
+    { 8, NullKnobsUI::kKnob, "RHYTHM LOCK", 1, 0, false },
+    { 12, NullKnobsUI::kKnob, "MUTATE", 0, 1, false },
+    { 13, NullKnobsUI::kSelect, "EVERY", 0, 1, false },
+    { 14, NullKnobsUI::kSelect, "LEGATO", 0, 1, false },
+    { 15, NullKnobsUI::kSelect, "PITCH", 0, 1, false },
 };
 
 static const char* const kNoteNames[12] = { "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B" };
@@ -40,7 +44,7 @@ class UIRiff : public NullKnobsUI
 {
 public:
     UIRiff()
-        : NullKnobsUI({ "RIFF", "MIDI", 480, 160, nullptr, 2, nullriff::kUiSliders, nullriff::kNumSliders,
+        : NullKnobsUI({ "RIFF", "MIDI", 480, 160, "PATTERN|EVOLVE", 2, nullriff::kUiSliders, nullriff::kNumSliders,
                         kControls, sizeof(kControls) / sizeof(kControls[0]), true }) {}
 
 protected:
@@ -52,6 +56,7 @@ protected:
         p.key = iv(0); p.scale = iv(1); p.seed = iv(2); p.dens = iv(3) / 100.0; p.steps = iv(4); p.rate = iv(5);
         p.octs = iv(6); p.nlen = iv(7) / 100.0; p.lock = iv(8); p.vrng = iv(9) / 100.0; p.acc = iv(10) / 100.0;
         p.vari = iv(11) / 100.0;
+        p.mut = iv(12) / 100.0; p.mevery = nullriff::everyCycles(iv(13)); p.leg = iv(14) != 0; p.chord = iv(15) != 0;
         return p;
     }
 
@@ -82,14 +87,19 @@ protected:
     {
         using namespace nullriff;
         const Params p = params();
-        int step = -1, root = -1, sounding = -1;
+        int step = -1, root = -1, sounding = -1, mutations = 0;
         if (nulljsfx::Taps* t = taps())
         {
             step = int(std::lround(t->extra.load(std::memory_order_relaxed))) - 1;
             root = int(std::lround(t->aux[0].load(std::memory_order_relaxed))) - 1;
             sounding = int(std::lround(t->aux[1].load(std::memory_order_relaxed))) - 1;
+            mutations = int(std::lround(t->aux[2].load(std::memory_order_relaxed)));
         }
+        // the pattern as it plays: the seed's, then the mutations made since (the same stream)
         generate(p, fPat);
+        if (p.mut > 0.0)
+            for (int k = 0; k < mutations; ++k)
+                mutate(p, fPat);
 
         char line[96];
         std::snprintf(line, sizeof(line), "%s %s", kNoteNames[p.key], kScaleNames[p.scale]);
@@ -152,7 +162,7 @@ protected:
         const int i = int(std::lround(v));
         if (param == 6)
             std::snprintf(buf, n, "%d OCT", i);
-        else if (param == 8 && i <= 0)
+        else if ((param == 8 || param == 12) && i <= 0)
             std::snprintf(buf, n, "OFF");
         else
             NullKnobsUI::formatValue(param, v, buf, n);

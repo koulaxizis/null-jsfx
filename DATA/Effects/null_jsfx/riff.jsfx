@@ -16,6 +16,10 @@ slider9:0<0,999,1>Rhythm Lock
 slider10:30<0,100,1>Velocity Range (%)
 slider11:25<0,100,1>Accent (%)
 slider12:50<0,100,1>Variation (%)
+slider13:0<0,100,1>Mutate (%)
+slider14:1<0,3,1{1 Cycle,2 Cycles,4 Cycles,8 Cycles}>Mutate Every
+slider15:0<0,1,1{Off,On}>Legato
+slider16:0<0,1,1{Scale,Held Chord}>Pitch Source
 
 in_pin:Left
 in_pin:Right
@@ -32,6 +36,12 @@ out_pin:Right
   // Lock (a seed for the rhythm alone, 0 = Off) keeps the rhythm while Seed rolls new notes. One
   // note sounds at a time and every note-on gets its note-off; the transport stopping or all
   // notes off ends it. The audio passes through untouched.
+  // Mutate (0 = Off) lets the riff evolve: every Mutate Every cycles of the pattern, a third
+  // Park-Miller stream re-draws that share of the steps (whether they play, and their note); a
+  // change of any setting starts again from the pattern of the seed. Legato holds each note until
+  // the next one starts, sending the new note-on before the old note-off (a repeated pitch is
+  // held), for mono synths that glide. Pitch Source Held Chord plays the degrees on the keys held
+  // (lowest first, then the octaves above) instead of the scale.
   ext_noinit = 1;
   STK = 0;      // the keys held, in the order pressed: input channel * 128 + note
   STV = 128;    // their velocities
@@ -41,7 +51,10 @@ out_pin:Right
   PVR = 320;    // its velocity draw (0..1)
   PAC = 352;    // 1 when accented
   SCL = 400;    // scales: 8 per scale, [0] = size, then the semitones
-  memset(0, 0, 500);
+  CHD = 500;    // the keys held for Held Chord, lowest first, without repeats
+  memset(0, 0, 640);
+  cyc = 0;          // pattern cycles counted for Mutate
+  mcount = 0;       // mutations made since the pattern was generated (for the display)
   stn = 0;          // keys held
   run = 0;          // 1 while the riff plays
   cur_note = -1;    // the note sounding (-1 = none), its channel and when it ends
@@ -85,6 +98,7 @@ out_pin:Right
   // the two Park-Miller streams in exact doubles: rhythm and pitch, each in [0, 1)
   function rf_rr() ( rs *= 16807; rs -= floor(rs / 2147483647) * 2147483647; rs / 2147483648; );
   function rf_pr() ( ps *= 16807; ps -= floor(ps / 2147483647) * 2147483647; ps / 2147483648; );
+  function rf_mr() ( ms *= 16807; ms -= floor(ms / 2147483647) * 2147483647; ms / 2147483648; );
 
   // the pattern: always 32 steps (Steps plays the first ones, so more steps add to the end)
   function rf_gen() local(i, g, v, a, p1, p2, p3, p4, m, sz, top, d, prev)
@@ -125,6 +139,50 @@ out_pin:Right
       prev = PDG[i];
       i += 1;
     );
+    ms = seed * 48271 + 29;
+    loop(4, rf_mr(););
+    cyc = 0;
+    mcount = 0;
+  );
+
+  // one mutation: every step but the first draws three values, and Mutate's share of them
+  // plays or rests anew and takes a new note of the range
+  function rf_mut() local(i, r, g, d, top)
+  (
+    top = SCL[scale * 8] * octs;
+    i = 1;
+    loop(31,
+      r = rf_mr(); g = rf_mr(); d = rf_mr();
+      r < mut ? (
+        PON[i] = g < dens;
+        PDG[i] = min(top, floor(d * (top + 1)));
+      );
+      i += 1;
+    );
+    mcount += 1;
+  );
+
+  // Held Chord: degree g on the keys held, lowest first, then the octaves above (the range of
+  // the scale's degrees spread over the keys)
+  function rf_chord(g) local(i, j, k, n, ins, gg)
+  (
+    k = 0;
+    i = 0;
+    loop(stn,
+      n = STK[i] & 127;
+      ins = 1;
+      j = 0;
+      while (ins && j < k) ( CHD[j] == n ? ins = 0; j += 1; );
+      ins ? (
+        j = k;
+        while (j > 0 && CHD[j - 1] > n) ( CHD[j] = CHD[j - 1]; j -= 1; );
+        CHD[j] = n;
+        k += 1;
+      );
+      i += 1;
+    );
+    gg = floor(g * k / SCL[scale * 8]);
+    CHD[gg % k] + 12 * floor(gg / k);
   );
 
   // the note degree g above the root plays when key n leads: the root is the scale note at or below n
@@ -162,21 +220,37 @@ out_pin:Right
   );
 
   // the next step, at time t (ex: its exact time)
-  function rf_step(t, ex) local(i, s, n)
+  function rf_step(t, ex) local(i, s, n, on0, ch0)
   (
     i = nk - steps * floor(nk / steps);
+    i == 0 && nk > 0 ? (
+      cyc += 1;
+      mut > 0 && cyc % mevery == 0 ? rf_mut();
+    );
     run ? (
       cur_step = i;
-      rf_off(t);
+      !leg ? rf_off(t);
       PON[i] ? (
         s = STK[stn - 1];
-        n = rf_note(s & 127, PDG[i]);
+        n = src ? rf_chord(PDG[i]) : rf_note(s & 127, PDG[i]);
         n >= 0 && n <= 127 ? (
-          cur_ch = floor(s / 128);
-          cur_note = n;
-          midisend(t - bpos, 0x90 | cur_ch, n, rf_vel(STV[stn - 1], i));
-          cur_off = max(t + 1, floor(ex + sl * nlen + 0.001));
+          leg && cur_note == n && cur_ch == floor(s / 128) ? (
+            // Legato: the same pitch is held
+            cur_off = NEVER;
+          ) : (
+            on0 = cur_note;
+            ch0 = cur_ch;
+            cur_ch = floor(s / 128);
+            cur_note = n;
+            midisend(t - bpos, 0x90 | cur_ch, n, rf_vel(STV[stn - 1], i));
+            leg && on0 >= 0 ? midisend(t - bpos, 0x80 | ch0, on0, 0);
+            cur_off = leg ? NEVER : max(t + 1, floor(ex + sl * nlen + 0.001));
+          );
+        ) : (
+          leg ? rf_off(t);
         );
+      ) : (
+        leg ? rf_off(t);
       );
     );
     last_k = nk;
@@ -263,6 +337,10 @@ out_pin:Right
   vrng = slider10 / 100;
   acc = slider11 / 100;
   vari = slider12 / 100;
+  mut = slider13 / 100;
+  mevery = slider14 == 0 ? 1 : slider14 == 1 ? 2 : slider14 == 2 ? 4 : 8;
+  leg = slider15;
+  src = slider16;
   rf_gen();
 
 @block

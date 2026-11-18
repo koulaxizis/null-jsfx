@@ -16,8 +16,10 @@ namespace nullslicer {
 static const char* const kPatternOptions[] = { "Straight", "Shuffle", "Reverse Pairs", "Stutter", "Backspin", "Random" };
 static const char* const kPatternShort[] = { "STRAIGHT", "SHUFFLE", "PAIRS", "STUTTER", "BACKSPIN", "RANDOM" };
 static const char* const kSliceOptions[] = { "8", "16", "32" };
+static const char* const kRerollOptions[] = { "Off", "Every Bar", "Every 2 Bars", "Every 4 Bars" };
+static const char* const kRerollShort[] = { "OFF", "1 BAR", "2 BARS", "4 BARS" };
 
-// slider1..slider8 of slicer.jsfx, in order
+// slider1..slider10 of slicer.jsfx, in order (9 and 10 appended 2026-11-18)
 static const DISTRHO::SliderInfo kSliders[] = {
     { "Pattern", "pattern", 0.0f, 5.0f, 1.0f, "", 1.0f, kPatternOptions },
     { "Variation", "variation", 0.0f, 100.0f, 50.0f, "%", 1.0f },
@@ -27,6 +29,8 @@ static const DISTRHO::SliderInfo kSliders[] = {
     { "Repeat Chance", "repeat", 0.0f, 100.0f, 25.0f, "%", 1.0f },
     { "Gate", "gate", 0.0f, 100.0f, 100.0f, "%", 1.0f },
     { "Mix", "mix", 0.0f, 100.0f, 100.0f, "%", 1.0f },
+    { "Reroll", "reroll", 0.0f, 3.0f, 0.0f, "", 1.0f, kRerollOptions },
+    { "Speed Chance", "speed", 0.0f, 100.0f, 0.0f, "%", 1.0f },
 };
 static constexpr uint32_t kNumSliders = sizeof(kSliders) / sizeof(kSliders[0]);
 
@@ -34,6 +38,8 @@ static constexpr uint32_t kNumSliders = sizeof(kSliders) / sizeof(kSliders[0]);
 static const DISTRHO::SliderInfo kUiSliders[] = {
     { "Pattern", "pattern", 0.0f, 5.0f, 1.0f, "", 1.0f, kPatternShort },
     kSliders[1], kSliders[2], kSliders[3], kSliders[4], kSliders[5], kSliders[6], kSliders[7],
+    { "Reroll", "reroll", 0.0f, 3.0f, 0.0f, "", 1.0f, kRerollShort },
+    kSliders[9],
 };
 
 // the parameter values as DSP settings
@@ -49,6 +55,8 @@ inline Params paramsFrom(V value)
     p.repeatPct = std::round(value(5));
     p.gatePct = std::round(value(6));
     p.mixPct = std::round(value(7));
+    p.reroll = int(std::lround(value(8)));
+    p.speedPct = std::round(value(9));
     return p;
 }
 

@@ -116,6 +116,7 @@ out_pin:Right
   strcpy(#ng_h_ix, "");
   ng_hist_add(1); ng_hist_add(2); ng_hist_add(3); ng_hist_add(4); ng_hist_add(5); ng_hist_add(6); ng_hist_add(7); ng_hist_add(8); ng_hist_add(9);
   ng_hist_init();
+  ng_dice_add(1, 0.1, 5, 0.1, 0); ng_dice_add(2, 1, 8, 1, 0); ng_dice_add(4, 0, 100, 1, 0); ng_dice_add(5, -95, 95, 1, 0); ng_dice_add(6, 200, 5000, 1, 1); ng_dice_add(7, 0, 180, 1, 0); ng_dice_add(8, 0, 11, 1, 0); ng_dice_add(9, 0, 2, 1, 0);
 
   function ng_preset_load(p)
   (

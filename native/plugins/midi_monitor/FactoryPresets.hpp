@@ -34,4 +34,18 @@ static const char* const kHints[] = {
     "Names note 60 C4 (as REAPER) or C3",
 };
 
+// the parameters the header's dice moves (tools/build_presets.py dice()): index, range, step, log scale
+#define NULL_UI_DICE 1
+struct DiceParam {
+    uint32_t index;
+    float lo, hi, step;
+    bool log;
+};
+static const DiceParam kDice[] = {
+    { 1, 0.0f, 3.0f, 1.0f, false },
+    { 2, 0.0f, 1.0f, 1.0f, false },
+    { 3, 0.0f, 1.0f, 1.0f, false },
+};
+static constexpr uint32_t kNumDice = sizeof(kDice) / sizeof(kDice[0]);
+
 } // namespace nullpresets

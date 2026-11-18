@@ -101,4 +101,68 @@ static const char* const kHints[] = {
     "Song plays the song instead of the Pattern: up to 8 sections in turn, each a pattern for 1 to 16 bars, set",
 };
 
+// the parameters the header's dice moves (tools/build_presets.py dice()): index, range, step, log scale
+#define NULL_UI_DICE 1
+struct DiceParam {
+    uint32_t index;
+    float lo, hi, step;
+    bool log;
+};
+static const DiceParam kDice[] = {
+    { 0, 0.0f, 19.0f, 1.0f, false },
+    { 1, 50.0f, 75.0f, 1.0f, false },
+    { 2, 0.0f, 100.0f, 1.0f, false },
+    { 3, 0.0f, 100.0f, 1.0f, false },
+    { 4, 0.0f, 100.0f, 1.0f, false },
+    { 7, -12.0f, 12.0f, 0.1f, false },
+    { 8, 0.0f, 100.0f, 1.0f, false },
+    { 9, 0.0f, 100.0f, 1.0f, false },
+    { 10, -100.0f, 100.0f, 1.0f, false },
+    { 12, -12.0f, 12.0f, 0.1f, false },
+    { 13, 0.0f, 100.0f, 1.0f, false },
+    { 14, 0.0f, 100.0f, 1.0f, false },
+    { 15, -100.0f, 100.0f, 1.0f, false },
+    { 17, -12.0f, 12.0f, 0.1f, false },
+    { 18, 0.0f, 100.0f, 1.0f, false },
+    { 19, 0.0f, 100.0f, 1.0f, false },
+    { 20, -100.0f, 100.0f, 1.0f, false },
+    { 22, -12.0f, 12.0f, 0.1f, false },
+    { 23, 0.0f, 100.0f, 1.0f, false },
+    { 24, 0.0f, 100.0f, 1.0f, false },
+    { 25, -100.0f, 100.0f, 1.0f, false },
+    { 27, -12.0f, 12.0f, 0.1f, false },
+    { 28, 0.0f, 100.0f, 1.0f, false },
+    { 29, 0.0f, 100.0f, 1.0f, false },
+    { 30, -100.0f, 100.0f, 1.0f, false },
+    { 32, -12.0f, 12.0f, 0.1f, false },
+    { 33, 0.0f, 100.0f, 1.0f, false },
+    { 34, 0.0f, 100.0f, 1.0f, false },
+    { 35, -100.0f, 100.0f, 1.0f, false },
+    { 37, -12.0f, 12.0f, 0.1f, false },
+    { 38, 0.0f, 100.0f, 1.0f, false },
+    { 39, 0.0f, 100.0f, 1.0f, false },
+    { 40, -100.0f, 100.0f, 1.0f, false },
+    { 42, -12.0f, 12.0f, 0.1f, false },
+    { 43, 0.0f, 100.0f, 1.0f, false },
+    { 44, 0.0f, 100.0f, 1.0f, false },
+    { 45, -100.0f, 100.0f, 1.0f, false },
+    { 47, -12.0f, 12.0f, 0.1f, false },
+    { 48, 0.0f, 100.0f, 1.0f, false },
+    { 49, 0.0f, 100.0f, 1.0f, false },
+    { 50, -100.0f, 100.0f, 1.0f, false },
+    { 52, -12.0f, 12.0f, 0.1f, false },
+    { 53, 0.0f, 100.0f, 1.0f, false },
+    { 54, 0.0f, 100.0f, 1.0f, false },
+    { 55, -100.0f, 100.0f, 1.0f, false },
+    { 56, 0.0f, 100.0f, 1.0f, false },
+    { 57, 1.0f, 999.0f, 1.0f, false },
+    { 58, 0.0f, 1.0f, 1.0f, false },
+    { 59, 0.0f, 100.0f, 1.0f, false },
+    { 60, 0.0f, 5.0f, 1.0f, false },
+    { 61, 0.0f, 8.0f, 1.0f, false },
+    { 62, 0.0f, 1.0f, 1.0f, false },
+    { 63, 0.0f, 1.0f, 1.0f, false },
+};
+static constexpr uint32_t kNumDice = sizeof(kDice) / sizeof(kDice[0]);
+
 } // namespace nullpresets
