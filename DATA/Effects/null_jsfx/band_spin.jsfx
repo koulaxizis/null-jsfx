@@ -1,0 +1,176 @@
+desc:NULL Band Spin
+author: Christos Koulaxizis
+tags: band spin multiband rotary rotor spin pan tremolo doppler motion movement follow crossover
+//category: Advanced
+//NULL JSFX v4.0 • https://nulljsfx.tech • MIT License
+
+slider1:200<30,1000,1:log>Crossover 1 (Hz)
+slider2:1200<200,6000,1:log>Crossover 2 (Hz)
+slider3:5000<1000,16000,1:log>Crossover 3 (Hz)
+slider4:0.6<0.05,10,0.01:log>Speed 1 (Hz)
+slider5:1.1<0.05,10,0.01:log>Speed 2 (Hz)
+slider6:2.3<0.05,10,0.01:log>Speed 3 (Hz)
+slider7:4.7<0.05,10,0.01:log>Speed 4 (Hz)
+slider8:40<0,100,1>Volume (%)
+slider9:60<0,100,1>Pan (%)
+slider10:20<0,100,1>Doppler (%)
+slider11:0<0,100,1>Follow (%)
+slider12:100<0,100,1>Mix (%)
+
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
+
+@init
+  ext_noinit = 1;              // play and seek keep tails and state, as in the VST3/CLAP
+  // Four bands, each on its own rotor. A Linkwitz-Riley 4th-order crossover (as in Band
+  // Splitter, with the allpasses that keep the bands in phase) splits the input at the three
+  // Crossovers; each band turns at its own Speed (the rotors start a quarter turn apart).
+  // A rotor moves its band around the listener: Pan swings it left and right (sin of the
+  // angle, a constant-power law with the centre at unity), Volume dips it as it turns away
+  // (to 1 - Volume at the back, scaled so the turn's average gain is unity) and Doppler
+  // delays it with the distance (up to 1 ms at the back, linear interpolation), which bends
+  // the pitch as it comes and goes.
+  // Follow makes each rotor speed up with its band's level (an envelope, 10 ms up, 300 ms
+  // down, from -48 dB to 0 dB): up to three times its Speed at 100%. The rotors have some
+  // inertia (0.3 s), so speed changes glide. Mix blends with the bands summed without motion
+  // (the same phase as the wet signal, so a partial Mix never combs).
+  K2 = sqrt(2);
+
+  // one TPT state-variable filter step with coefficients a1..a3; leaves bp in v1, lp in v2
+  function svf(x, a1, a2, a3) instance(ic1, ic2, v1, v2) local(v3)
+  (
+    v3 = x - ic2;
+    v1 = a1 * ic1 + a2 * v3;
+    v2 = ic2 + a2 * ic1 + a3 * v3;
+    ic1 = 2 * v1 - ic1;
+    ic2 = 2 * v2 - ic2;
+  );
+
+  // coefficients of a Butterworth SVF at f Hz (held below 0.45 x srate) into c[0..2]
+  function svf_coefs(c, f) local(g)
+  (
+    g = tan($pi * min(f, 0.45 * srate) / srate);
+    c[0] = 1 / (1 + g * (g + K2));
+    c[1] = g * c[0];
+    c[2] = g * c[1];
+  );
+
+  // one LR4 crossover on x with coefficients c: the lowpass into lo, the highpass into hi
+  function lr4(x, c) instance(s, l, h, lo, hi) local(hp)
+  (
+    s.svf(x, c[0], c[1], c[2]);
+    hp = x - K2 * s.v1 - s.v2;
+    l.svf(s.v2, c[0], c[1], c[2]);
+    lo = l.v2;
+    h.svf(hp, c[0], c[1], c[2]);
+    hi = hp - K2 * h.v1 - h.v2;
+  );
+
+  // second-order allpass (Q 0.707) on x: the phase of an LR4 crossover at the same frequency
+  function ap(x, c) instance(s)
+  (
+    s.svf(x, c[0], c[1], c[2]);
+    x - 2 * K2 * s.v1;
+  );
+
+  // one channel into four bands at o[0..3]
+  function split(x, o) instance(x1, x2, x3, p2, p3a, p3b) local(a2)
+  (
+    x1.lr4(x, C1);
+    x2.lr4(x1.hi, C2);
+    x3.lr4(x2.hi, C3);
+    a2 = p2.ap(x1.lo, C2);
+    o[0] = p3a.ap(a2, C3);
+    o[1] = p3b.ap(x2.lo, C3);
+    o[2] = x3.lo;
+    o[3] = x3.hi;
+  );
+
+  C1 = 0; C2 = 4; C3 = 8;      // coefficient slots
+  BL = 16; BR = 20;            // the bands of this sample, left and right
+  SP = 24; FQ = 28; PH = 32; EV = 36;   // speed set, speed now, rotor phase, level envelope
+  BS_N = 2048;                 // each delay line (far more than 1 ms at any sample rate in use)
+  BUF = 64;                    // 8 delay lines: band b left at BUF + 2b x BS_N, right after it
+  memset(BUF, 0, 8 * BS_N);
+  wpos = 0;
+  L.x1.s.ic1 = L.x1.s.ic2 = L.x1.l.ic1 = L.x1.l.ic2 = L.x1.h.ic1 = L.x1.h.ic2 = 0;
+  L.x2.s.ic1 = L.x2.s.ic2 = L.x2.l.ic1 = L.x2.l.ic2 = L.x2.h.ic1 = L.x2.h.ic2 = 0;
+  L.x3.s.ic1 = L.x3.s.ic2 = L.x3.l.ic1 = L.x3.l.ic2 = L.x3.h.ic1 = L.x3.h.ic2 = 0;
+  L.p2.s.ic1 = L.p2.s.ic2 = L.p3a.s.ic1 = L.p3a.s.ic2 = L.p3b.s.ic1 = L.p3b.s.ic2 = 0;
+  R.x1.s.ic1 = R.x1.s.ic2 = R.x1.l.ic1 = R.x1.l.ic2 = R.x1.h.ic1 = R.x1.h.ic2 = 0;
+  R.x2.s.ic1 = R.x2.s.ic2 = R.x2.l.ic1 = R.x2.l.ic2 = R.x2.h.ic1 = R.x2.h.ic2 = 0;
+  R.x3.s.ic1 = R.x3.s.ic2 = R.x3.l.ic1 = R.x3.l.ic2 = R.x3.h.ic1 = R.x3.h.ic2 = 0;
+  R.p2.s.ic1 = R.p2.s.ic2 = R.p3a.s.ic1 = R.p3a.s.ic2 = R.p3b.s.ic1 = R.p3b.s.ic2 = 0;
+  // the rotors start still, a quarter turn apart, and spin up to their speeds (inertia)
+  FQ[0] = FQ[1] = FQ[2] = FQ[3] = 0;
+  PH[0] = 0; PH[1] = 0.25; PH[2] = 0.5; PH[3] = 0.75;
+  EV[0] = EV[1] = EV[2] = EV[3] = 0;
+  bs_ea = exp(-1 / (0.01 * srate));
+  bs_er = exp(-1 / (0.3 * srate));
+  bs_ic = exp(-1 / (0.3 * srate));
+
+@slider
+  // each crossover at least 1.5x the one below it, the top one below 0.45 x srate (as in
+  // Band Splitter)
+  xo1 = max(30, min(1000, slider1));
+  xo2 = max(xo1 * 1.5, max(200, min(6000, slider2)));
+  xo3 = min(max(xo2 * 1.5, max(1000, min(16000, slider3))), 0.45 * srate);
+  svf_coefs(C1, xo1);
+  svf_coefs(C2, xo2);
+  svf_coefs(C3, xo3);
+  SP[0] = slider4; SP[1] = slider5; SP[2] = slider6; SP[3] = slider7;
+  vol = slider8 / 100;
+  vol_k = 1 / (1 - 0.5 * vol);   // keeps the average gain of the turn at unity
+  pan = slider9 / 100;
+  dmax = min(slider10 / 100 * 0.001 * srate, BS_N - 4);
+  fol = slider11 / 100;
+  mix = slider12 / 100;
+
+@sample
+  L.split(spl0, BL);
+  R.split(spl1, BR);
+  dl = dr = wl = wr = 0;
+  b = 0;
+  loop(4,
+    xl = BL[b]; xr = BR[b];
+    dl += xl; dr += xr;
+    fol > 0 ? (
+      ex = max(abs(xl), abs(xr));
+      e = EV[b];
+      e = ex > e ? bs_ea * e + (1 - bs_ea) * ex : bs_er * e + (1 - bs_er) * ex;
+      EV[b] = e;
+      ee = e > 0.00001 ? max(0, min(1, (20 * log10(e) + 48) / 48)) : 0;
+      tgt = SP[b] * (1 + 2 * fol * ee);
+    ) : tgt = SP[b];
+    FQ[b] = bs_ic * FQ[b] + (1 - bs_ic) * tgt;
+    rph = PH[b] + FQ[b] / srate;
+    rph >= 1 ? rph -= 1;
+    PH[b] = rph;
+    a = 2 * $pi * rph;
+    cs = cos(a);
+    dmax > 0 ? (
+      bufl = BUF + 2 * b * BS_N;
+      bufr = bufl + BS_N;
+      bufl[wpos] = xl;
+      bufr[wpos] = xr;
+      rp = wpos - dmax * 0.5 * (1 + cs);
+      rp < 0 ? rp += BS_N;
+      i0 = floor(rp);
+      fr = rp - i0;
+      i1 = i0 + 1;
+      i1 >= BS_N ? i1 = 0;
+      xl = bufl[i0] + (bufl[i1] - bufl[i0]) * fr;
+      xr = bufr[i0] + (bufr[i1] - bufr[i0]) * fr;
+    );
+    g = (1 - vol * 0.5 * (1 + cs)) * vol_k;
+    p = pan * sin(a);
+    wl += xl * g * sqrt(1 - p);
+    wr += xr * g * sqrt(1 + p);
+    b += 1;
+  );
+  wpos += 1;
+  wpos >= BS_N ? wpos = 0;
+  spl0 = dl + (wl - dl) * mix;
+  spl1 = dr + (wr - dr) * mix;
