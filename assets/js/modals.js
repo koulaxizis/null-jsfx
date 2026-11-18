@@ -3847,6 +3847,7 @@ const guides = {
     properties: 'MIDI effect: 8 lanes of up to 16 steps drawn from a style\'s weights, the lane\'s Density and Seed with an exact Park-Miller generator (two draws per step: hit and velocity), so the same Seed always gives the same pattern in every format. Steps run at the host tempo and lock to the song position while the transport plays; Mutate redraws a share of the unlocked lanes per cycle from the song position, so a loop always plays the same variation. Incoming MIDI passes through; the audio passes through untouched.',
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP', 'LV2'],
     shot: 'assets/img/gfx/beat_gen.png',
+    video: 'assets/video/beat_gen.mp4',
     beta: 'Beta: its rules have been tested on test signals so far and may still be tuned from your feedback, so a project saved now can sound a little different after an update.',
     page: 'plugins/beat-gen/'
   },
