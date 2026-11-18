@@ -56,4 +56,36 @@ static const char* const kHints[] = {
     "Output of curve point 8 (-1 to +1) for that input; values below the previous points fold the wave back",
 };
 
+// the parameters the header's dice moves (tools/build_presets.py dice()): index, range, step, log scale
+#define NULL_UI_DICE 1
+struct DiceParam {
+    uint32_t index;
+    float lo, hi, step;
+    bool log;
+};
+static const DiceParam kDice[] = {
+    { 0, 0.0f, 7.0f, 1.0f, false },
+    { 1, 0.0f, 36.0f, 0.1f, false },
+    { 2, -50.0f, 50.0f, 1.0f, false },
+    { 3, 0.0f, 1.0f, 1.0f, false },
+    { 5, 1000.0f, 20000.0f, 1.0f, true },
+    { 8, 0.0f, 1.0f, 0.001f, false },
+    { 9, -1.0f, 1.0f, 0.001f, false },
+    { 10, 0.0f, 1.0f, 0.001f, false },
+    { 11, -1.0f, 1.0f, 0.001f, false },
+    { 12, 0.0f, 1.0f, 0.001f, false },
+    { 13, -1.0f, 1.0f, 0.001f, false },
+    { 14, 0.0f, 1.0f, 0.001f, false },
+    { 15, -1.0f, 1.0f, 0.001f, false },
+    { 16, 0.0f, 1.0f, 0.001f, false },
+    { 17, -1.0f, 1.0f, 0.001f, false },
+    { 18, 0.0f, 1.0f, 0.001f, false },
+    { 19, -1.0f, 1.0f, 0.001f, false },
+    { 20, 0.0f, 1.0f, 0.001f, false },
+    { 21, -1.0f, 1.0f, 0.001f, false },
+    { 22, 0.0f, 1.0f, 0.001f, false },
+    { 23, -1.0f, 1.0f, 0.001f, false },
+};
+static constexpr uint32_t kNumDice = sizeof(kDice) / sizeof(kDice[0]);
+
 } // namespace nullpresets

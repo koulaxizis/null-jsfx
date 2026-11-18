@@ -224,7 +224,10 @@
       "Locks the LFO rate to the project tempo instead of the Rate slider.",
       "LFO cycle length when synced: 1/2 = one sweep every two beats, up to 1/16 = four sweeps per beat.",
       "SINE sweeps smoothly; the step modes jump between pan positions once per LFO cycle: 2 STEPS (left, right), 4 STEPS (left, center, right, center), 8 STEPS (a stepped sweep) or the L-C-R and R-C-L paths.",
-      "In the step modes, how much of each step is spent gliding to the new position (0% = an instant, click-free jump)."
+      "In the step modes, how much of each step is spent gliding to the new position (0% = an instant, click-free jump).",
+      "On: pans along a stepped pattern drawn from Pattern Seed instead of the Mode shape",
+      "How many positions the pattern has before it repeats",
+      "Picks a different pan pattern; the same seed always gives the same positions"
     ],
     "uses": [
       "Moving pads and synth beds",
@@ -309,6 +312,64 @@
     ],
     "properties": "4th-order Linkwitz-Riley crossover: the high-pass on every main channel and the low-pass on their sum add up flat (measured within 0.0001 dB from 20 Hz to 10 kHz), so the managed system sums like the full-range one, with the crossover's phase turn. The sub plays on the LFE pin. No latency. In REAPER set the track to 12 channels and route the pins to your bed. The player on this site plays pins 1 and 2 only.",
     "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-bass_management\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><path d=\"M 6,18 C 24,18 28,20 32,32 C 36,44 40,52 58,52\" stroke=\"url(#icon-bass_management)\" stroke-width=\"2.5\" fill=\"none\"/><path d=\"M 6,52 C 24,52 28,44 32,32 C 36,20 40,18 58,18\" stroke=\"url(#icon-bass_management)\" stroke-width=\"2.5\" fill=\"none\" opacity=\"0.5\"/><circle cx=\"32\" cy=\"32\" r=\"3\" fill=\"url(#icon-bass_management)\"/></svg>"
+  },
+  "beat_gen": {
+    "card_desc": "Generative Drum Patterns as MIDI",
+    "keywords": "beat generator generative drums drum pattern midi sequencer random beat seed mutate polymeter lock kick snare hi hat four on the floor breakbeat hip hop trap",
+    "slider_desc": [
+      "How often the kick plays where the style allows it; a higher value only adds hits",
+      "How often the snare plays where the style allows it; a higher value only adds hits",
+      "How often the closed hat plays where the style allows it; a higher value only adds hits",
+      "How often the open hat plays where the style allows it; a higher value only adds hits",
+      "How often the clap plays where the style allows it; a higher value only adds hits",
+      "How often the tom plays where the style allows it; a higher value only adds hits",
+      "How often the perc plays where the style allows it; a higher value only adds hits",
+      "How often the cymbal plays where the style allows it; a higher value only adds hits",
+      "Length of the kick lane in steps; lanes of different lengths drift against each other (polymeter)",
+      "Length of the snare lane in steps; lanes of different lengths drift against each other (polymeter)",
+      "Length of the closed hat lane in steps; lanes of different lengths drift against each other (polymeter)",
+      "Length of the open hat lane in steps; lanes of different lengths drift against each other (polymeter)",
+      "Length of the clap lane in steps; lanes of different lengths drift against each other (polymeter)",
+      "Length of the tom lane in steps; lanes of different lengths drift against each other (polymeter)",
+      "Length of the perc lane in steps; lanes of different lengths drift against each other (polymeter)",
+      "Length of the cymbal lane in steps; lanes of different lengths drift against each other (polymeter)",
+      "MIDI note the kick lane sends (General MIDI drum map by default)",
+      "MIDI note the snare lane sends (General MIDI drum map by default)",
+      "MIDI note the closed hat lane sends (General MIDI drum map by default)",
+      "MIDI note the open hat lane sends (General MIDI drum map by default)",
+      "MIDI note the clap lane sends (General MIDI drum map by default)",
+      "MIDI note the tom lane sends (General MIDI drum map by default)",
+      "MIDI note the perc lane sends (General MIDI drum map by default)",
+      "MIDI note the cymbal lane sends (General MIDI drum map by default)",
+      "On: Mutate leaves the kick lane as it is",
+      "On: Mutate leaves the snare lane as it is",
+      "On: Mutate leaves the closed hat lane as it is",
+      "On: Mutate leaves the open hat lane as it is",
+      "On: Mutate leaves the clap lane as it is",
+      "On: Mutate leaves the tom lane as it is",
+      "On: Mutate leaves the perc lane as it is",
+      "On: Mutate leaves the cymbal lane as it is",
+      "The rhythm the lanes follow: Four on Floor, Breakbeat, Hip Hop, Trap or Random",
+      "Picks a different pattern; the same Seed always gives the same pattern",
+      "Note value of one step at the host tempo",
+      "How much of the unlocked lanes is drawn anew every Mutate Every cycles (0% = the pattern stays as it is)",
+      "How often Mutate draws a new variation, in cycles of 16 steps",
+      "Velocity of the loudest hits",
+      "How far the drawn velocities can fall below Velocity",
+      "Moves every second step later for a shuffled feel",
+      "Length of each note as a share of a step",
+      "Transport: plays while the host plays, locked to its beat; Always: also runs while stopped",
+      "MIDI channel of the notes (10 = drums)"
+    ],
+    "uses": [
+      "Fresh drum ideas for any NULL or third-party drum instrument",
+      "Evolving grooves that change every few bars but keep the kick steady",
+      "Polymetric percussion layers",
+      "A quick beat to write over"
+    ],
+    "properties": "MIDI effect: 8 lanes of up to 16 steps drawn from a style's weights, the lane's Density and Seed with an exact Park-Miller generator (two draws per step: hit and velocity), so the same Seed always gives the same pattern in every format. Steps run at the host tempo and lock to the song position while the transport plays; Mutate redraws a share of the unlocked lanes per cycle from the song position, so a loop always plays the same variation. Incoming MIDI passes through; the audio passes through untouched.",
+    "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-beatgen\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><g fill=\"url(#icon-beatgen)\"><rect x=\"8\" y=\"12\" width=\"8\" height=\"8\" rx=\"1.5\"/><rect x=\"40\" y=\"12\" width=\"8\" height=\"8\" rx=\"1.5\"/><rect x=\"24\" y=\"28\" width=\"8\" height=\"8\" rx=\"1.5\"/><rect x=\"52\" y=\"28\" width=\"6\" height=\"8\" rx=\"1.5\"/><rect x=\"8\" y=\"44\" width=\"8\" height=\"8\" rx=\"1.5\"/><rect x=\"24\" y=\"44\" width=\"8\" height=\"8\" rx=\"1.5\"/><rect x=\"40\" y=\"44\" width=\"8\" height=\"8\" rx=\"1.5\"/></g><g fill=\"url(#icon-beatgen)\" opacity=\"0.3\"><rect x=\"24\" y=\"12\" width=\"8\" height=\"8\" rx=\"1.5\"/><rect x=\"8\" y=\"28\" width=\"8\" height=\"8\" rx=\"1.5\"/><rect x=\"40\" y=\"28\" width=\"8\" height=\"8\" rx=\"1.5\"/><rect x=\"52\" y=\"44\" width=\"6\" height=\"8\" rx=\"1.5\"/></g></svg>",
+    "beta": true
   },
   "binaural_panner": {
     "card_desc": "3D Headphone Panner",
@@ -505,7 +566,12 @@
       "Plays the notes of each chord one after another, this far apart (0 to 200 ms), like a strummed guitar or a harp; notes not yet played when the key is released are skipped.",
       "The order of the strum: upward, downward, or alternating with every chord.",
       "Shapes the velocity of the chord notes: positive values play soft touches louder, negative values make them softer (0% passes it unchanged).",
-      "The chord progression of Progression mode: C, D, E, F, G, A and B play its steps in turn (I-V-vi-IV, I-vi-IV-V, vi-IV-I-V, I-IV-vi-V, ii-V-I, Pachelbel's Canon, i-VI-III-VII, i-VII-VI-V and i-iv-V-i)."
+      "The chord progression of Progression mode: C, D, E, F, G, A and B play its steps in turn (I-V-vi-IV, I-vi-IV-V, vi-IV-I-V, I-IV-vi-V, ii-V-I, Pachelbel's Canon, i-VI-III-VII, i-VII-VI-V and i-iv-V-i).",
+      "On: plays a progression made from Generate Seed, Length and Mood instead of the Progression list (Mode Progression)",
+      "Picks a different generated progression; the same seed always gives the same chords",
+      "How many chords the generated progression has: 4 or 8 (the last one always leads home)",
+      "Major or minor harmony for the generated progression",
+      "Moves to the next chord of the progression on its own, locked to the host's beat, while you hold the keys (Off = every new key press advances)"
     ],
     "uses": [
       "Play full chords with one finger on any MIDI instrument, always in key",
@@ -2718,7 +2784,11 @@
       "Keeps a rhythm while Seed rolls new notes: 0 is Off (the rhythm follows Seed); any other value plays the rhythm of that seed (the LOCK RHYTHM switch in the display sets it to the current seed).",
       "How much the step velocities vary below the velocity of the key you hold (0% plays every step at it).",
       "The share of steps that are accented, played well above the others (0 to 100%).",
-      "How often a step plays a new note instead of repeating the note one beat earlier (0% repeats a one-beat motif, 100% is all new notes)."
+      "How often a step plays a new note instead of repeating the note one beat earlier (0% repeats a one-beat motif, 100% is all new notes).",
+      "How much of the riff is drawn anew every Mutate Every cycles (0% = the riff stays as it is); the same Seed always plays the same variations at the same song position",
+      "How often Mutate draws a new variation, in cycles of the riff's Steps",
+      "On: each note runs into the next one (the new note starts before the old one ends, and a repeated pitch is held), for gliding synths and basses",
+      "Scale: the riff's pitches come from Key and Scale; Held Chord: from the keys you hold, so the riff follows your chords"
     ],
     "uses": [
       "Hold one key and get basslines, leads or hooks that are always in key",
@@ -2996,7 +3066,9 @@
       "Chance that a slice plays backwards.",
       "Chance that a slice is retriggered, playing its first half twice.",
       "Length of each slice (100% = full); lower values cut every slice short with a fade for a choppy, gated feel.",
-      "Blend of sliced and dry signal."
+      "Blend of sliced and dry signal.",
+      "Draws a new slice order every bar, 2 bars or 4 bars from Seed and the bar number, so the pattern keeps changing but plays the same at the same song position",
+      "Chance that a slice plays at half or double speed"
     ],
     "uses": [
       "Live breakbeat-style rearrangements of drum loops",
@@ -3204,6 +3276,46 @@
     ],
     "properties": "Signal chain: Input (summed to mono) → 120 Hz Highpass → Pre-Delay → Two Springs (40-stage dispersive allpass chains in feedback loops, 43.7 / 53.1 ms) → Tone Lowpass + Drip → Mix → Output. Left and right springs differ in length for stereo; zero latency.",
     "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-spring-reverb\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><path d=\"M6,32 L10,32 L14,20 L18,44 L22,20 L26,44 L30,20 L34,44 L38,20 L42,44 L46,20 L50,44 L54,32 L58,32\" stroke=\"url(#icon-spring-reverb)\" stroke-width=\"2.5\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><circle cx=\"6\" cy=\"32\" r=\"2\" stroke=\"url(#icon-spring-reverb)\" stroke-width=\"1.5\" fill=\"none\" stroke-linecap=\"round\" opacity=\"0.4\"/><circle cx=\"58\" cy=\"32\" r=\"2\" stroke=\"url(#icon-spring-reverb)\" stroke-width=\"1.5\" fill=\"none\" stroke-linecap=\"round\" opacity=\"0.4\"/></svg>"
+  },
+  "step_filter": {
+    "card_desc": "Filter Moved by a 16-Step Sequence",
+    "keywords": "step filter sequenced filter motion filter rhythmic filter 16 step cutoff sequencer tempo sync glide resonance low pass band pass high pass seed generative random",
+    "slider_desc": [
+      "Step 1 position between Low (0%) and High (100%) on a musical scale",
+      "Step 2 position between Low (0%) and High (100%) on a musical scale",
+      "Step 3 position between Low (0%) and High (100%) on a musical scale",
+      "Step 4 position between Low (0%) and High (100%) on a musical scale",
+      "Step 5 position between Low (0%) and High (100%) on a musical scale",
+      "Step 6 position between Low (0%) and High (100%) on a musical scale",
+      "Step 7 position between Low (0%) and High (100%) on a musical scale",
+      "Step 8 position between Low (0%) and High (100%) on a musical scale",
+      "Step 9 position between Low (0%) and High (100%) on a musical scale",
+      "Step 10 position between Low (0%) and High (100%) on a musical scale",
+      "Step 11 position between Low (0%) and High (100%) on a musical scale",
+      "Step 12 position between Low (0%) and High (100%) on a musical scale",
+      "Step 13 position between Low (0%) and High (100%) on a musical scale",
+      "Step 14 position between Low (0%) and High (100%) on a musical scale",
+      "Step 15 position between Low (0%) and High (100%) on a musical scale",
+      "Step 16 position between Low (0%) and High (100%) on a musical scale",
+      "How many of the 16 steps play before the sequence repeats (odd counts drift against the bar)",
+      "Note value of one step at the host tempo",
+      "Cutoff of a step at 0%",
+      "Cutoff of a step at 100% (below Low turns the sweep upside down)",
+      "Resonance at the cutoff (0% = smooth, 100% = sharp and vocal)",
+      "Low Pass, Band Pass or High Pass",
+      "How much of each step the cutoff spends gliding from the previous value (0% = hard steps)",
+      "0: the Step sliders play; any other value plays a sequence drawn from it (the same Seed always gives the same steps)",
+      "Blend of the filtered and the dry signal"
+    ],
+    "uses": [
+      "Rhythmic filter motion on pads and chords",
+      "Acid-style cutoff patterns on a bass line",
+      "Pulsing band-pass movement on drums or noise",
+      "Generated filter sequences to try ideas quickly"
+    ],
+    "properties": "Signal chain: Input → state-variable filter (TPT, per channel) → Mix → Output. Up to 16 steps, one per Step Length at the host tempo and locked to the song position while the transport plays; each step sets the cutoff on a log scale between Low and High, with an optional raised-cosine glide. Seed draws 16 values with an exact Park-Miller generator, so the same Seed always plays the same sequence in every format. Resonance maps to Q 0.5-12; the cutoff stays below 0.45 of the sample rate. Stereo, zero latency.",
+    "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-stepf\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><path d=\"M 8,48 L 8,18 M 20,48 L 20,38 M 32,48 L 32,26 M 44,48 L 44,40 M 56,48 L 56,22\" stroke=\"url(#icon-stepf)\" stroke-width=\"6\" opacity=\"0.35\"/><path d=\"M 6,18 L 12,18 Q 15,38 20,38 L 28,38 Q 30,26 34,26 L 40,26 Q 42,40 46,40 L 52,40 Q 54,22 58,22\" fill=\"none\" stroke=\"url(#icon-stepf)\" stroke-width=\"3\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/></svg>",
+    "beta": true
   },
   "step_fx": {
     "card_desc": "16-Step Effect Sequencer",
@@ -3689,7 +3801,10 @@
       "Picks a different random variation; the same Seed always gives the same choices at the same song position",
       "On: plays a pattern made from Seed, Density and Style instead of the 16 Step switches (they keep their values for when you switch back)",
       "How many steps the generated pattern opens; a higher Density only adds steps, the ones already there stay",
-      "The rhythm the generated pattern follows: Trance, Offbeat, Stutter, Half Time or Random"
+      "The rhythm the generated pattern follows: Trance, Offbeat, Stutter, Half Time or Random",
+      "Hard: each step holds its level; Flow: the gain glides from each step to the next for a smooth, pulsing gate",
+      "How much of the pattern is drawn anew every Mutate Every cycles (0% = the pattern stays as it is)",
+      "How often Mutate draws a new variation, in cycles of 16 steps"
     ],
     "uses": [
       "Classic trance-gated pads and supersaws",

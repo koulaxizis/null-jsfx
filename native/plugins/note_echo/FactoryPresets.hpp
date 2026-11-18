@@ -39,4 +39,22 @@ static const char* const kHints[] = {
     "Off leaves out the notes that come in, so only the echoes sound",
 };
 
+// the parameters the header's dice moves (tools/build_presets.py dice()): index, range, step, log scale
+#define NULL_UI_DICE 1
+struct DiceParam {
+    uint32_t index;
+    float lo, hi, step;
+    bool log;
+};
+static const DiceParam kDice[] = {
+    { 0, 1.0f, 16.0f, 1.0f, false },
+    { 1, 10.0f, 2000.0f, 1.0f, false },
+    { 2, 0.0f, 1.0f, 1.0f, false },
+    { 3, 0.0f, 7.0f, 1.0f, false },
+    { 4, 0.0f, 100.0f, 1.0f, false },
+    { 5, -12.0f, 12.0f, 1.0f, false },
+    { 6, 5.0f, 95.0f, 1.0f, false },
+};
+static constexpr uint32_t kNumDice = sizeof(kDice) / sizeof(kDice[0]);
+
 } // namespace nullpresets

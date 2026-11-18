@@ -38,4 +38,20 @@ static const char* const kHints[] = {
     "Low-pass ahead of the pitch tracking: set it just above the fundamental of the part for stable tracking",
 };
 
+// the parameters the header's dice moves (tools/build_presets.py dice()): index, range, step, log scale
+#define NULL_UI_DICE 1
+struct DiceParam {
+    uint32_t index;
+    float lo, hi, step;
+    bool log;
+};
+static const DiceParam kDice[] = {
+    { 1, 0.0f, 100.0f, 1.0f, false },
+    { 2, 0.0f, 100.0f, 1.0f, false },
+    { 3, 0.0f, 100.0f, 1.0f, false },
+    { 4, 100.0f, 5000.0f, 1.0f, true },
+    { 5, 60.0f, 1000.0f, 1.0f, true },
+};
+static constexpr uint32_t kNumDice = sizeof(kDice) / sizeof(kDice[0]);
+
 } // namespace nullpresets

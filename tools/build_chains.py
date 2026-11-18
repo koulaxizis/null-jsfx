@@ -206,12 +206,32 @@ CHAINS = [
         ("cabinet_simulator", {"Cabinet": "1x12 Open Back", "Mix": 40}),
         ("spring_reverb", {"Mix": 20}),
     ]),
+    # 2026-11-18 (Audiomodern-inspired generative tools)
+    ("Generative Beat", [
+        ("beat_gen", {"Style": "Breakbeat", "Seed": 12, "Mutate": 20, "Kick Lock": "On", "Swing": 15}),
+        ("drum_machine", {"Pattern": "Off"}),
+        ("saturation", {"Drive": 20, "Mix": 40, "Mode": "Tape"}),
+        ("glue_comp", {"Threshold": -14, "Ratio": "2"}),
+    ]),
+    ("Generative Riff", [
+        ("riff", {"Key": "D", "Scale": "Dorian", "Seed": 77, "Mutate": 25, "Mutate Every": "2 Cycles", "Legato": "On"}),
+        ("bass", {"Oscillator": "Saw", "Cutoff": 1200, "Resonance": 40, "Glide": 40}),
+        ("step_filter", {"Seed": 7, "Resonance": 50, "Glide": 30, "Low": 300, "High": 4000}),
+        ("delay", {"Tempo Sync": "ON", "Subdivision": "1/8D", "Feedback": 30, "Mix": 20, "Low Cut": 300}),
+    ]),
+    ("Chord Jam", [
+        ("chords", {"Generate": "On", "Generate Seed": 42, "Generate Mood": "Minor", "Auto Advance": "Every 4 Beats",
+                    "Chord Type": "7th", "Voicing": "Open"}),
+        ("string_ensemble", {"Attack": 300, "Release": 1500}),
+        ("chorus", {"Rate": 0.5, "Depth": 4, "Mix": 30}),
+        ("reverb", {"Room Size": 70, "Decay": 60, "Mix": 25}),
+    ]),
 ]
 
 # chains whose plugins the Rack does not have (MIDI, instruments, more than two channels):
 # REAPER chains only, no Rack preset
 REAPER_ONLY = {"Drum Replace", "Transient Verb", "Mix Check", "Acid Line", "Arp Pluck", "Chord Pad",
-               "Lo-Fi Keys", "Hum to Synth", "Strummed Guitar"}
+               "Lo-Fi Keys", "Hum to Synth", "Strummed Guitar", "Generative Beat", "Generative Riff", "Chord Jam"}
 
 
 # The Rack's own presets: what a REAPER chain cannot do. A slot is (module, {slider: value}) plus
@@ -959,6 +979,19 @@ RACK_PRESETS = [
         {(1, "Cutoff"): 4000, (2, "Drive"): 30, (3, "Mix"): 25, (4, "Width"): 100},
         {(1, "Cutoff"): 20000, (2, "Drive"): 45, (3, "Mix"): 12, (4, "Width"): 130},
     ]}),
+    # ---- 2026-11-18: the step sequencer as a step filter and a step panner
+    ("Sequenced Filter", "Routing", [
+        slot("filter", {"Cutoff": 300, "Resonance": 3, "Mode": "Low Pass"}),
+        slot("saturation", {"Drive": 15, "Mix": 40, "Mode": "Tape"}),
+    ], [("seq", 1, "Cutoff", 0.55)],
+        {"seq_steps": 16, "seq_sync": "1/16", "seq_glide": 25,
+         "seq": [1, 0.2, 0.6, 0.2, 0.8, 0.2, 0.5, 0.3, 1, 0.2, 0.6, 0.2, 0.9, 0.4, 0.7, 0.1]}),
+    ("Sequenced Panner", "Routing", [
+        slot("panner", {"Pan": -100}),
+        slot("delay", {"Tempo Sync": "ON", "Subdivision": "1/8", "Feedback": 25, "Mix": 15}),
+    ], [("seq", 1, "Pan", 1.0)],
+        {"seq_steps": 8, "seq_sync": "1/8", "seq_glide": 40,
+         "seq": [0, 1, 0.25, 0.75, 0.5, 1, 0, 0.5]}),
 ]
 RACK_ONLY_40 = {"Vocal Polish", "Drum Crush", "Lo-Fi Fade", "Wide Space", "Master Glue", "Breakdown Filter",
                 "Tape Wobble", "Dub Throw", "Multiband Transient", "Mud-Free Space", "Side Space",

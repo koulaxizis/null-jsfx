@@ -104,6 +104,7 @@ out_pin:Right
   strcpy(#ng_h_ix, "");
   ng_hist_add(1); ng_hist_add(2); ng_hist_add(3); ng_hist_add(4); ng_hist_add(5); ng_hist_add(6); ng_hist_add(7); ng_hist_add(8); ng_hist_add(9); ng_hist_add(10); ng_hist_add(11); ng_hist_add(12); ng_hist_add(13); ng_hist_add(14); ng_hist_add(15); ng_hist_add(16); ng_hist_add(17); ng_hist_add(18); ng_hist_add(19); ng_hist_add(20); ng_hist_add(21); ng_hist_add(22); ng_hist_add(23); ng_hist_add(24); ng_hist_add(25);
   ng_hist_init();
+  ng_dice_add(1, 0, 100, 1, 0); ng_dice_add(2, 0, 100, 1, 0); ng_dice_add(3, 0, 100, 1, 0); ng_dice_add(4, 0, 100, 1, 0); ng_dice_add(5, 0, 100, 1, 0); ng_dice_add(6, 0, 100, 1, 0); ng_dice_add(7, 0, 100, 1, 0); ng_dice_add(8, 0, 100, 1, 0); ng_dice_add(9, 0, 100, 1, 0); ng_dice_add(10, 0, 100, 1, 0); ng_dice_add(11, 0, 100, 1, 0); ng_dice_add(12, 0, 100, 1, 0); ng_dice_add(13, 0, 100, 1, 0); ng_dice_add(14, 0, 100, 1, 0); ng_dice_add(15, 0, 100, 1, 0); ng_dice_add(16, 0, 100, 1, 0); ng_dice_add(17, 1, 16, 1, 0); ng_dice_add(18, 0, 3, 1, 0); ng_dice_add(19, 20, 20000, 1, 1); ng_dice_add(20, 20, 20000, 1, 1); ng_dice_add(21, 0, 100, 1, 0); ng_dice_add(22, 0, 2, 1, 0); ng_dice_add(23, 0, 100, 1, 0); ng_dice_add(24, 0, 999, 1, 0);
 
   function ng_preset_load(p)
   (
@@ -159,6 +160,31 @@ out_pin:Right
   function ng_hint_text(i) local(s)
   (
     s = "";
+    i == 1 ? s = "Step 1 position between Low (0%) and High (100%) on a musical scale";
+    i == 2 ? s = "Step 2 position between Low (0%) and High (100%) on a musical scale";
+    i == 3 ? s = "Step 3 position between Low (0%) and High (100%) on a musical scale";
+    i == 4 ? s = "Step 4 position between Low (0%) and High (100%) on a musical scale";
+    i == 5 ? s = "Step 5 position between Low (0%) and High (100%) on a musical scale";
+    i == 6 ? s = "Step 6 position between Low (0%) and High (100%) on a musical scale";
+    i == 7 ? s = "Step 7 position between Low (0%) and High (100%) on a musical scale";
+    i == 8 ? s = "Step 8 position between Low (0%) and High (100%) on a musical scale";
+    i == 9 ? s = "Step 9 position between Low (0%) and High (100%) on a musical scale";
+    i == 10 ? s = "Step 10 position between Low (0%) and High (100%) on a musical scale";
+    i == 11 ? s = "Step 11 position between Low (0%) and High (100%) on a musical scale";
+    i == 12 ? s = "Step 12 position between Low (0%) and High (100%) on a musical scale";
+    i == 13 ? s = "Step 13 position between Low (0%) and High (100%) on a musical scale";
+    i == 14 ? s = "Step 14 position between Low (0%) and High (100%) on a musical scale";
+    i == 15 ? s = "Step 15 position between Low (0%) and High (100%) on a musical scale";
+    i == 16 ? s = "Step 16 position between Low (0%) and High (100%) on a musical scale";
+    i == 17 ? s = "How many of the 16 steps play before the sequence repeats (odd counts drift against the bar)";
+    i == 18 ? s = "Note value of one step at the host tempo";
+    i == 19 ? s = "Cutoff of a step at 0%";
+    i == 20 ? s = "Cutoff of a step at 100% (below Low turns the sweep upside down)";
+    i == 21 ? s = "Resonance at the cutoff (0% = smooth, 100% = sharp and vocal)";
+    i == 22 ? s = "Low Pass, Band Pass or High Pass";
+    i == 23 ? s = "How much of each step the cutoff spends gliding from the previous value (0% = hard steps)";
+    i == 24 ? s = "0: the Step sliders play; any other value plays a sequence drawn from it (the same Seed always gives the";
+    i == 25 ? s = "Blend of the filtered and the dry signal";
     s;
   );
 

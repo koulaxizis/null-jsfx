@@ -8,26 +8,27 @@ namespace nullpresets {
 
 struct FactoryPreset {
     const char* name;
-    float values[7];
+    float values[10];
 };
 
 static const FactoryPreset kPresets[] = {
-    { "Default", { 2.0f, 50.0f, 40.0f, 0.0f, 0.0f, 0.0f, 20.0f } },
-    { "Slow Pad Drift", { 0.2f, 60.0f, 50.0f, 0.0f, 0.0f, 0.0f, 20.0f } },
-    { "Ambience Motion", { 0.5f, 40.0f, 30.0f, 0.0f, 0.0f, 0.0f, 20.0f } },
-    { "Fast Keys Tremolo", { 5.0f, 80.0f, 60.0f, 0.0f, 0.0f, 0.0f, 20.0f } },
-    { "Quarter Note Pan", { 2.0f, 70.0f, 60.0f, 1.0f, 1.0f, 0.0f, 20.0f } },
-    { "Eighth Note Guitar", { 2.0f, 60.0f, 50.0f, 1.0f, 2.0f, 0.0f, 20.0f } },
-    { "Sixteenth Percussion", { 2.0f, 50.0f, 40.0f, 1.0f, 3.0f, 0.0f, 20.0f } },
-    { "Ping Pong Quarters", { 2.0f, 100.0f, 100.0f, 1.0f, 1.0f, 1.0f, 10.0f } },
-    { "Hard Ping Pong Eighths", { 2.0f, 90.0f, 80.0f, 1.0f, 2.0f, 1.0f, 0.0f } },
-    { "L-C-R Eighths", { 2.0f, 100.0f, 100.0f, 1.0f, 2.0f, 4.0f, 15.0f } },
-    { "Stepped Sweep Sixteenths", { 2.0f, 100.0f, 100.0f, 1.0f, 3.0f, 3.0f, 30.0f } },
-    { "Four Step Bounce", { 2.0f, 80.0f, 70.0f, 1.0f, 2.0f, 2.0f, 20.0f } },
-    { "Slow Path Drift", { 0.5f, 70.0f, 60.0f, 0.0f, 0.0f, 5.0f, 80.0f } },
+    { "Default", { 2.0f, 50.0f, 40.0f, 0.0f, 0.0f, 0.0f, 20.0f, 0.0f, 8.0f, 1.0f } },
+    { "Slow Pad Drift", { 0.2f, 60.0f, 50.0f, 0.0f, 0.0f, 0.0f, 20.0f, 0.0f, 8.0f, 1.0f } },
+    { "Ambience Motion", { 0.5f, 40.0f, 30.0f, 0.0f, 0.0f, 0.0f, 20.0f, 0.0f, 8.0f, 1.0f } },
+    { "Fast Keys Tremolo", { 5.0f, 80.0f, 60.0f, 0.0f, 0.0f, 0.0f, 20.0f, 0.0f, 8.0f, 1.0f } },
+    { "Quarter Note Pan", { 2.0f, 70.0f, 60.0f, 1.0f, 1.0f, 0.0f, 20.0f, 0.0f, 8.0f, 1.0f } },
+    { "Eighth Note Guitar", { 2.0f, 60.0f, 50.0f, 1.0f, 2.0f, 0.0f, 20.0f, 0.0f, 8.0f, 1.0f } },
+    { "Sixteenth Percussion", { 2.0f, 50.0f, 40.0f, 1.0f, 3.0f, 0.0f, 20.0f, 0.0f, 8.0f, 1.0f } },
+    { "Ping Pong Quarters", { 2.0f, 100.0f, 100.0f, 1.0f, 1.0f, 1.0f, 10.0f, 0.0f, 8.0f, 1.0f } },
+    { "Hard Ping Pong Eighths", { 2.0f, 90.0f, 80.0f, 1.0f, 2.0f, 1.0f, 0.0f, 0.0f, 8.0f, 1.0f } },
+    { "L-C-R Eighths", { 2.0f, 100.0f, 100.0f, 1.0f, 2.0f, 4.0f, 15.0f, 0.0f, 8.0f, 1.0f } },
+    { "Stepped Sweep Sixteenths", { 2.0f, 100.0f, 100.0f, 1.0f, 3.0f, 3.0f, 30.0f, 0.0f, 8.0f, 1.0f } },
+    { "Four Step Bounce", { 2.0f, 80.0f, 70.0f, 1.0f, 2.0f, 2.0f, 20.0f, 0.0f, 8.0f, 1.0f } },
+    { "Slow Path Drift", { 0.5f, 70.0f, 60.0f, 0.0f, 0.0f, 5.0f, 80.0f, 0.0f, 8.0f, 1.0f } },
+    { "Generative Pan Pattern", { 2.0f, 70.0f, 40.0f, 1.0f, 2.0f, 0.0f, 20.0f, 1.0f, 8.0f, 7.0f } },
 };
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
-static constexpr uint32_t kNumValues = 7;
+static constexpr uint32_t kNumValues = 10;
 
 // the hint line under the controls: a short help text per parameter (from tools/site_content.json)
 #define NULL_UI_HINTS 1
@@ -39,6 +40,29 @@ static const char* const kHints[] = {
     "LFO cycle length when synced: 1/2 = one sweep every two beats, up to 1/16 = four sweeps per beat",
     "SINE sweeps smoothly; the step modes jump between pan positions once per LFO cycle: 2 STEPS (left, right)",
     "In the step modes, how much of each step is spent gliding to the new position (0% = an instant, click-free",
+    "On: pans along a stepped pattern drawn from Pattern Seed instead of the Mode shape",
+    "How many positions the pattern has before it repeats",
+    "Picks a different pan pattern; the same seed always gives the same positions",
 };
+
+// the parameters the header's dice moves (tools/build_presets.py dice()): index, range, step, log scale
+#define NULL_UI_DICE 1
+struct DiceParam {
+    uint32_t index;
+    float lo, hi, step;
+    bool log;
+};
+static const DiceParam kDice[] = {
+    { 0, 0.1f, 10.0f, 0.1f, false },
+    { 1, 0.0f, 100.0f, 1.0f, false },
+    { 3, 0.0f, 1.0f, 1.0f, false },
+    { 4, 0.0f, 3.0f, 1.0f, false },
+    { 5, 0.0f, 5.0f, 1.0f, false },
+    { 6, 0.0f, 100.0f, 1.0f, false },
+    { 7, 0.0f, 1.0f, 1.0f, false },
+    { 8, 2.0f, 16.0f, 1.0f, false },
+    { 9, 1.0f, 999.0f, 1.0f, false },
+};
+static constexpr uint32_t kNumDice = sizeof(kDice) / sizeof(kDice[0]);
 
 } // namespace nullpresets

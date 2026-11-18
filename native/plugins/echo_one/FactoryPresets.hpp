@@ -34,4 +34,16 @@ static const char* const kHints[] = {
     "Delay amount in one move: 0 to 24 is a soft 1/16 slapback, 25 to 49 a 1/8 echo, 50 to 74 a dotted 1/8 and",
 };
 
+// the parameters the header's dice moves (tools/build_presets.py dice()): index, range, step, log scale
+#define NULL_UI_DICE 1
+struct DiceParam {
+    uint32_t index;
+    float lo, hi, step;
+    bool log;
+};
+static const DiceParam kDice[] = {
+    { 0, 0.0f, 100.0f, 1.0f, false },
+};
+static constexpr uint32_t kNumDice = sizeof(kDice) / sizeof(kDice[0]);
+
 } // namespace nullpresets

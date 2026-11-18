@@ -308,7 +308,7 @@ protected:
             repaint();
             return true;
         }
-        if (ev.button == 1 && histClick(x, y))
+        if (ev.button == 1 && histClick(x, y, (ev.mod & kModifierShift) != 0))
             return true;
         if (ev.button != 1 || !inPresetBox(x, y))
             return false;
@@ -438,8 +438,52 @@ protected:
         histApply(list[pos]);
     }
 
-    // a click on the buttons: 1 undo, 2 redo, 3 A, 4 B, 5 copy
-    void histRequest(int req)
+    static uint32_t numDice()
+    {
+#if NULL_UI_PRESETS && defined(NULL_UI_DICE)
+        return nullpresets::kNumDice;
+#else
+        return 0;
+#endif
+    }
+
+    // a number in [0, 1) for the dice (the interface only, so it need not match the JSFX's rand)
+    double diceRand()
+    {
+        fDiceState = fDiceState * 6364136223846793005ull + 1442695040888963407ull;
+        return double(fDiceState >> 11) * (1.0 / 9007199254740992.0);
+    }
+
+    // the dice, as ng_dice_roll in null_gfx.jsfx-inc: every listed parameter moves by up to a quarter
+    // of its range (full: anywhere in it; a log one on its log scale), snapped to its step
+    void diceRoll(bool full)
+    {
+#if NULL_UI_PRESETS && defined(NULL_UI_DICE)
+        fHistApplying = true;
+        for (uint32_t k = 0; k < nullpresets::kNumDice; ++k)
+        {
+            const nullpresets::DiceParam& d = nullpresets::kDice[k];
+            const double lo = d.lo, hi = d.hi, cur = presetGet(d.index);
+            double t = d.log ? std::log(std::max(lo, cur) / lo) / std::log(hi / lo) : (cur - lo) / (hi - lo);
+            t = full ? diceRand() : std::max(0.0, std::min(1.0, t + (diceRand() * 2.0 - 1.0) * 0.25));
+            double v = d.log ? lo * std::exp(t * std::log(hi / lo)) : lo + t * (hi - lo);
+            if (d.step > 0.0f)
+                v = lo + std::floor((v - lo) / d.step + 0.5) * d.step;
+            const float f = float(std::max(lo, std::min(hi, v)));
+            if (f == presetGet(d.index))
+                continue;
+            editParameter(d.index, true);
+            presetSet(d.index, f);
+            editParameter(d.index, false);
+        }
+        fHistApplying = false;
+#else
+        (void)full;
+#endif
+    }
+
+    // a click on the buttons: 1 undo, 2 redo, 3 A, 4 B, 5 copy, 6 dice (Shift: full)
+    void histRequest(int req, bool shift = false)
     {
         fHistPending = false;
         std::vector<float> cur;
@@ -475,6 +519,15 @@ protected:
             fHistSlot[1 - fHistAB] = cur;
             fHistHasB = true;
         }
+        else if (req == 6)
+        {
+            diceRoll(shift);
+            if (!histSame(cur))
+            {
+                histPush(fHistUndo, fHistUndoCount, fHistUndoPos, cur);
+                fHistRedoCount = 0;
+            }
+        }
         repaint();
     }
 
@@ -482,28 +535,29 @@ protected:
     static constexpr float kHistY = 9.5f, kHistH = 11.0f;
     float histX(int b) const
     {
-        static const float off[5] = { 88.0f, 72.0f, 52.0f, 36.0f, 20.0f };
+        static const float off[6] = { 88.0f, 72.0f, 52.0f, 36.0f, 20.0f, 106.0f };
         return float(kWidth) - 143.0f - off[b];
     }
     static float histW(int b) { return b == 4 ? 20.0f : 14.0f; }
     bool histOn(int b) const { return b == 0 ? fHistUndoCount > 0 : b == 1 ? fHistRedoCount > 0 : true; }
+    static int histButtons() { return numDice() > 0 ? 6 : 5; }
 
     int histAt(float x, float y) const
     {
         if (numPresets() == 0 || histCount() == 0 || y < kHistY || y >= kHistY + kHistH)
             return -1;
-        for (int b = 0; b < 5; ++b)
+        for (int b = 0; b < histButtons(); ++b)
             if (histOn(b) && x >= histX(b) && x < histX(b) + histW(b))
                 return b;
         return -1;
     }
 
-    bool histClick(float x, float y)
+    bool histClick(float x, float y, bool shift = false)
     {
         const int b = histAt(x, y);
         if (b < 0)
             return false;
-        histRequest(b + 1);
+        histRequest(b + 1, shift);
         return true;
     }
 
@@ -528,7 +582,7 @@ protected:
     {
         if (histCount() == 0)
             return;
-        for (int b = 0; b < 5; ++b)
+        for (int b = 0; b < histButtons(); ++b)
         {
             const float x = histX(b), w = histW(b);
             const bool on = histOn(b), hover = on && b == fHistHover;
@@ -541,7 +595,23 @@ protected:
             strokeWidth(1.0f);
             stroke();
             const uint32_t fg = !on ? theme::kLogoEdge : lit || hover ? theme::kText : theme::kMuted;
-            if (b < 2)
+            if (b == 5)
+            {
+                // the dice: a die face with three pips, like ng_h_bar
+                beginPath();
+                roundedRect(x + 3.0f, 11.5f, 8.0f, 7.0f, 1.5f);
+                strokeColor(col(fg));
+                strokeWidth(1.0f);
+                stroke();
+                for (int k = 0; k < 3; ++k)
+                {
+                    beginPath();
+                    circle(x + 5.0f + 2.0f * float(k), 13.3f + 1.7f * float(k), 0.75f);
+                    fillColor(col(fg));
+                    fill();
+                }
+            }
+            else if (b < 2)
                 drawHistArrow(x + 7.0f, b == 0 ? -1.0f : 1.0f, fg);
             else
                 label(x + w * 0.5f, 15.0f, ALIGN_CENTER, 7.0f, 0.0f, fg,
@@ -902,6 +972,7 @@ private:
     std::vector<std::vector<float>> fHistUndo, fHistRedo;
     uint32_t fHistUndoCount = 0, fHistUndoPos = 0, fHistRedoCount = 0, fHistRedoPos = 0;
     int fHistAB = 0, fHistHover = -1;
+    uint64_t fDiceState = 0x9E3779B97F4A7C15ull;
     bool fHistHasB = false, fHistPending = false, fHistApplying = false;
 };
 

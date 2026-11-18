@@ -12,7 +12,7 @@ slider5:0<0,100,1>Reverse Chance (%)
 slider6:25<0,100,1>Repeat Chance (%)
 slider7:100<0,100,1>Gate (%)
 slider8:100<0,100,1>Mix (%)
-slider9:0<0,3,1{Off,Every Bar,Every 2 Bars,Every 4 Bars}>Re-roll
+slider9:0<0,3,1{Off,Every Bar,Every 2 Bars,Every 4 Bars}>Reroll
 slider10:0<0,100,1>Speed Chance (%)
 
 in_pin:Left
@@ -35,7 +35,7 @@ options:maxmem=33554432
   // Gate shortens every slice; each cut gets 2.5 ms fades, slices that continue the audio
   // seamlessly are not faded. While the transport plays the bar is locked to
   // the song position; stopped, it free-runs at the host tempo. Tempo is clamped to 40..300 bpm.
-  // Re-roll and Speed Chance (appended 2026-11-18): Re-roll makes a new order every 1, 2 or 4
+  // Reroll and Speed Chance (appended 2026-11-18): Reroll makes a new order every 1, 2 or 4
   // bars from Seed and the bar's position (the song's bar while it plays; the bars played since
   // the start while stopped), the first block of bars keeping Seed's own order. Speed Chance lets
   // each plain slice (not a repeat or a backspin) play at half speed (an octave down, its first
@@ -49,7 +49,7 @@ options:maxmem=33554432
   us = pa + 384; uh = pa + 416; spd = pa + 448;
   memset(0, 0, pa + 480);
   freembuf(pa + 480);
-  barc = 0;    // bars played (Re-roll)
+  barc = 0;    // bars played (Reroll)
   blk_last = -0.5;
   n = 0;       // sample within the bar
   cur = 0;     // bar buffer being recorded (the other one plays)
@@ -177,7 +177,7 @@ options:maxmem=33554432
 @sample
   n >= bl ? (n = 0; cur = 1 - cur; full = 1; barc += 1;);
   rroll ? (
-    // Re-roll: a new order for every block of bars
+    // Reroll: a new order for every block of bars
     blk = floor(barc / rrn);
     blk != blk_last ? (
       blk_last = blk;

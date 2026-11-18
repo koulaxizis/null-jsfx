@@ -13,5 +13,8 @@
   ["Staccato Pulse", {"Scale": "Mixolydian", "Seed": 8, "Density": 95, "Note Length": 20, "Velocity Range": 20, "Accent": 50}],
   ["Steady Repeat", {"Seed": 3, "Steps": 16, "Density": 75, "Variation": 0, "Velocity Range": 0, "Accent": 0}],
   ["Locked Groove", {"Scale": "Minor", "Seed": 58, "Rhythm Lock": 11, "Density": 70, "Accent": 30}],
-  ["Ambient Drift", {"Scale": "Major Pentatonic", "Rate": "1/8", "Steps": 16, "Seed": 500, "Density": 40, "Octave Range": 3, "Note Length": 100, "Velocity Range": 60, "Accent": 0, "Variation": 100}]
+  ["Ambient Drift", {"Scale": "Major Pentatonic", "Rate": "1/8", "Steps": 16, "Seed": 500, "Density": 40, "Octave Range": 3, "Note Length": 100, "Velocity Range": 60, "Accent": 0, "Variation": 100}],
+  ["Generative Mutating Riff", {"Seed": 17, "Mutate": 30, "Mutate Every": "2 Cycles", "Density": 70}],
+  ["Generative Chord Follow", {"Seed": 5, "Pitch Source": "Held Chord", "Mutate": 20, "Legato": "On"}],
+  ["Generative Legato Line", {"Seed": 88, "Legato": "On", "Rate": "1/8", "Note Length": 100, "Mutate": 15, "Mutate Every": "4 Cycles"}]
 ]

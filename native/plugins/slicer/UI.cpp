@@ -56,7 +56,7 @@ protected:
             if (prm.reroll != 0)
                 sd = double(t->aux[1].load(std::memory_order_relaxed));
         }
-        // the order playing (Re-roll: the seed of the bars playing)
+        // the order playing (Reroll: the seed of the bars playing)
         const nullslicer::Pattern pat = nullslicer::makePattern(prm, sd);
         const int ns = pat.ns;
         const float cw = 420.0f / ns;

@@ -84,4 +84,57 @@ static const char* const kHints[] = {
     "MPE Bend Range: how far a note's own pitch bend goes (48 semitones is the MPE default)",
 };
 
+// the parameters the header's dice moves (tools/build_presets.py dice()): index, range, step, log scale
+#define NULL_UI_DICE 1
+struct DiceParam {
+    uint32_t index;
+    float lo, hi, step;
+    bool log;
+};
+static const DiceParam kDice[] = {
+    { 0, 0.0f, 1.0f, 1.0f, false },
+    { 1, 0.0f, 3.0f, 1.0f, false },
+    { 2, 0.0f, 3.0f, 1.0f, false },
+    { 3, -24.0f, 24.0f, 1.0f, false },
+    { 4, -50.0f, 50.0f, 1.0f, false },
+    { 6, 0.0f, 100.0f, 1.0f, false },
+    { 7, 0.0f, 100.0f, 1.0f, false },
+    { 8, 0.0f, 7.0f, 1.0f, false },
+    { 9, 0.0f, 100.0f, 1.0f, false },
+    { 10, 0.0f, 2.0f, 1.0f, false },
+    { 11, 0.0f, 1.0f, 1.0f, false },
+    { 12, 20.0f, 20000.0f, 1.0f, true },
+    { 13, 0.0f, 100.0f, 1.0f, false },
+    { 14, -100.0f, 100.0f, 1.0f, false },
+    { 15, 0.0f, 100.0f, 1.0f, false },
+    { 16, 1.0f, 10000.0f, 1.0f, true },
+    { 17, 1.0f, 10000.0f, 1.0f, true },
+    { 18, 0.0f, 100.0f, 1.0f, false },
+    { 19, 1.0f, 10000.0f, 1.0f, true },
+    { 20, 1.0f, 10000.0f, 1.0f, true },
+    { 21, 1.0f, 10000.0f, 1.0f, true },
+    { 22, 0.0f, 100.0f, 1.0f, false },
+    { 23, 1.0f, 10000.0f, 1.0f, true },
+    { 24, 0.0f, 4.0f, 1.0f, false },
+    { 25, 0.05f, 20.0f, 0.01f, true },
+    { 26, 0.0f, 9.0f, 1.0f, false },
+    { 27, 0.0f, 12.0f, 0.01f, false },
+    { 28, 0.0f, 4.0f, 0.1f, false },
+    { 29, 0.0f, 100.0f, 1.0f, false },
+    { 30, 0.0f, 2000.0f, 1.0f, false },
+    { 31, 0.0f, 2.0f, 1.0f, false },
+    { 32, 1.0f, 4.0f, 1.0f, false },
+    { 33, 0.0f, 100.0f, 1.0f, false },
+    { 34, 0.0f, 100.0f, 1.0f, false },
+    { 37, 0.0f, 7.0f, 1.0f, false },
+    { 38, 0.0f, 90.0f, 1.0f, false },
+    { 40, 0.0f, 100.0f, 1.0f, false },
+    { 41, 0.0f, 100.0f, 1.0f, false },
+    { 42, 0.0f, 24.0f, 1.0f, false },
+    { 43, -3.0f, 3.0f, 1.0f, false },
+    { 45, 0.0f, 1.0f, 1.0f, false },
+    { 46, 0.0f, 96.0f, 1.0f, false },
+};
+static constexpr uint32_t kNumDice = sizeof(kDice) / sizeof(kDice[0]);
+
 } // namespace nullpresets

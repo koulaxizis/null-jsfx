@@ -12,5 +12,6 @@
   ["Generated Build", {"Generate": "On", "Style": "Build", "Seed": 12, "Density": 60}],
   ["Generated Glitch", {"Generate": "On", "Style": "Glitch", "Seed": 1, "Density": 60, "Repeat Size": "1/32"}],
   ["Generated Tape Stops", {"Generate": "On", "Style": "Tape", "Seed": 1, "Density": 70}],
-  ["Generated Dub Throws", {"Generate": "On", "Style": "Dub", "Seed": 5, "Density": 50, "Filter": 600}]
+  ["Generated Dub Throws", {"Generate": "On", "Style": "Dub", "Seed": 5, "Density": 50, "Filter": 600}],
+  ["Generative Seed 77", {"Generate": "On", "Style": "Glitch", "Seed": 77, "Density": 40}]
 ]

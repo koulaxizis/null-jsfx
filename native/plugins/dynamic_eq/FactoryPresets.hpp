@@ -53,4 +53,32 @@ static const char* const kHints[] = {
     "Listen: Output plays the result; Delta plays only what the bands change (the input minus the result",
 };
 
+// the parameters the header's dice moves (tools/build_presets.py dice()): index, range, step, log scale
+#define NULL_UI_DICE 1
+struct DiceParam {
+    uint32_t index;
+    float lo, hi, step;
+    bool log;
+};
+static const DiceParam kDice[] = {
+    { 0, 20.0f, 1000.0f, 10.0f, false },
+    { 2, 0.5f, 4.0f, 0.1f, false },
+    { 3, -36.0f, 0.0f, 1.0f, false },
+    { 4, 200.0f, 4000.0f, 100.0f, false },
+    { 6, 0.5f, 4.0f, 0.1f, false },
+    { 7, -36.0f, 0.0f, 1.0f, false },
+    { 8, 500.0f, 8000.0f, 100.0f, false },
+    { 10, 0.5f, 4.0f, 0.1f, false },
+    { 11, -36.0f, 0.0f, 1.0f, false },
+    { 12, 2000.0f, 15000.0f, 500.0f, false },
+    { 14, 0.5f, 4.0f, 0.1f, false },
+    { 15, -36.0f, 0.0f, 1.0f, false },
+    { 16, 0.1f, 10.0f, 0.1f, false },
+    { 17, 1.0f, 500.0f, 1.0f, false },
+    { 18, 0.0f, 24.0f, 1.0f, false },
+    { 19, 0.0f, 2.0f, 1.0f, false },
+    { 20, 0.0f, 1.0f, 1.0f, false },
+};
+static constexpr uint32_t kNumDice = sizeof(kDice) / sizeof(kDice[0]);
+
 } // namespace nullpresets

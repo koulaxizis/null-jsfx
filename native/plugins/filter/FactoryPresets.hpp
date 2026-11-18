@@ -55,4 +55,31 @@ static const char* const kHints[] = {
     "Moves Drive inside the filter (Off by default): the resonance saturates, so it compresses and growls",
 };
 
+// the parameters the header's dice moves (tools/build_presets.py dice()): index, range, step, log scale
+#define NULL_UI_DICE 1
+struct DiceParam {
+    uint32_t index;
+    float lo, hi, step;
+    bool log;
+};
+static const DiceParam kDice[] = {
+    { 0, 20.0f, 20000.0f, 1.0f, true },
+    { 1, 0.1f, 10.0f, 0.1f, false },
+    { 3, 0.0f, 3.0f, 1.0f, false },
+    { 4, 0.0f, 1.0f, 1.0f, false },
+    { 5, 0.0f, 100.0f, 1.0f, false },
+    { 6, 0.05f, 20.0f, 0.01f, true },
+    { 7, 0.0f, 9.0f, 1.0f, false },
+    { 8, 0.0f, 4.0f, 0.1f, false },
+    { 9, -4.0f, 4.0f, 0.1f, false },
+    { 10, 1.0f, 200.0f, 1.0f, false },
+    { 11, 10.0f, 2000.0f, 1.0f, true },
+    { 12, 0.0f, 1.0f, 1.0f, false },
+    { 13, 0.0f, 100.0f, 0.1f, false },
+    { 14, -100.0f, 100.0f, 1.0f, false },
+    { 15, -100.0f, 100.0f, 1.0f, false },
+    { 16, 0.0f, 1.0f, 1.0f, false },
+};
+static constexpr uint32_t kNumDice = sizeof(kDice) / sizeof(kDice[0]);
+
 } // namespace nullpresets

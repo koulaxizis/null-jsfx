@@ -51,4 +51,28 @@ static const char* const kHints[] = {
     "MPE Bend Range: how far a note's own pitch bend goes (48 semitones is the MPE default)",
 };
 
+// the parameters the header's dice moves (tools/build_presets.py dice()): index, range, step, log scale
+#define NULL_UI_DICE 1
+struct DiceParam {
+    uint32_t index;
+    float lo, hi, step;
+    bool log;
+};
+static const DiceParam kDice[] = {
+    { 0, 0.0f, 8.0f, 1.0f, false },
+    { 1, 0.0f, 100.0f, 1.0f, false },
+    { 2, 0.0f, 100.0f, 1.0f, false },
+    { 3, 10.0f, 400.0f, 1.0f, false },
+    { 4, 10.0f, 3000.0f, 1.0f, true },
+    { 5, 0.0f, 100.0f, 1.0f, false },
+    { 6, 0.5f, 12.0f, 0.1f, false },
+    { 7, 0.0f, 100.0f, 1.0f, false },
+    { 8, 0.0f, 1.0f, 1.0f, false },
+    { 9, 0.0f, 100.0f, 1.0f, false },
+    { 10, 0.0f, 100.0f, 1.0f, false },
+    { 12, 0.0f, 1.0f, 1.0f, false },
+    { 13, 0.0f, 96.0f, 1.0f, false },
+};
+static constexpr uint32_t kNumDice = sizeof(kDice) / sizeof(kDice[0]);
+
 } // namespace nullpresets

@@ -37,4 +37,19 @@ static const char* const kHints[] = {
     "Output level after the shelves",
 };
 
+// the parameters the header's dice moves (tools/build_presets.py dice()): index, range, step, log scale
+#define NULL_UI_DICE 1
+struct DiceParam {
+    uint32_t index;
+    float lo, hi, step;
+    bool log;
+};
+static const DiceParam kDice[] = {
+    { 0, -12.0f, 12.0f, 0.1f, false },
+    { 1, -12.0f, 12.0f, 0.1f, false },
+    { 2, 40.0f, 400.0f, 1.0f, true },
+    { 3, 2000.0f, 16000.0f, 10.0f, true },
+};
+static constexpr uint32_t kNumDice = sizeof(kDice) / sizeof(kDice[0]);
+
 } // namespace nullpresets

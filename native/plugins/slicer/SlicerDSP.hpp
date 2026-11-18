@@ -40,7 +40,7 @@ struct Pattern {
     double spd[32] = {}; // Speed: 0 none, 1 half, 2 double
 };
 
-// the seed Re-roll uses for block blk of bars (blk 0: the Seed itself), as the JSFX
+// the seed Reroll uses for block blk of bars (blk 0: the Seed itself), as the JSFX
 inline double rerollSeed(double seed, double blk)
 {
     return seed + 1009.0 * (blk - 1000.0 * std::floor(blk / 1000.0));
@@ -202,7 +202,7 @@ public:
     // for the display: the position in the bar (0..1) and whether a whole bar was recorded
     double barPos() const noexcept { return fN / std::fmax(1.0, fBl); }
     bool full() const noexcept { return fFull != 0.0; }
-    double seedPlaying() const noexcept { return fSeedNow; } // the seed of the order playing (Re-roll)
+    double seedPlaying() const noexcept { return fSeedNow; } // the seed of the order playing (Reroll)
 
     template <typename T>
     void process(const T* inL, const T* inR, T* outL, T* outR, uint32_t frames, double tempo, bool playing,
@@ -253,7 +253,7 @@ public:
             }
             if (fP.reroll != 0)
             {
-                // Re-roll: a new order for every block of bars
+                // Reroll: a new order for every block of bars
                 const double blk = std::floor(fBarc / fRrn);
                 if (std::fabs(blk - fBlkLast) >= 0.00001) // EEL2 != is fuzzy
                 {

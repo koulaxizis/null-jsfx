@@ -29,7 +29,7 @@ static const DISTRHO::SliderInfo kSliders[] = {
     { "Repeat Chance", "repeat", 0.0f, 100.0f, 25.0f, "%", 1.0f },
     { "Gate", "gate", 0.0f, 100.0f, 100.0f, "%", 1.0f },
     { "Mix", "mix", 0.0f, 100.0f, 100.0f, "%", 1.0f },
-    { "Re-roll", "reroll", 0.0f, 3.0f, 0.0f, "", 1.0f, kRerollOptions },
+    { "Reroll", "reroll", 0.0f, 3.0f, 0.0f, "", 1.0f, kRerollOptions },
     { "Speed Chance", "speed", 0.0f, 100.0f, 0.0f, "%", 1.0f },
 };
 static constexpr uint32_t kNumSliders = sizeof(kSliders) / sizeof(kSliders[0]);
@@ -38,7 +38,7 @@ static constexpr uint32_t kNumSliders = sizeof(kSliders) / sizeof(kSliders[0]);
 static const DISTRHO::SliderInfo kUiSliders[] = {
     { "Pattern", "pattern", 0.0f, 5.0f, 1.0f, "", 1.0f, kPatternShort },
     kSliders[1], kSliders[2], kSliders[3], kSliders[4], kSliders[5], kSliders[6], kSliders[7],
-    { "Re-roll", "reroll", 0.0f, 3.0f, 0.0f, "", 1.0f, kRerollShort },
+    { "Reroll", "reroll", 0.0f, 3.0f, 0.0f, "", 1.0f, kRerollShort },
     kSliders[9],
 };
 

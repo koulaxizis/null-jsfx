@@ -60,6 +60,7 @@ out_pin:Right
   strcpy(#ng_h_ix, "");
   ng_hist_add(1); ng_hist_add(2); ng_hist_add(3); ng_hist_add(4); ng_hist_add(5);
   ng_hist_init();
+  ng_dice_add(1, -12, 12, 0.1, 0); ng_dice_add(2, -12, 12, 0.1, 0); ng_dice_add(3, 40, 400, 1, 1); ng_dice_add(4, 2000, 16000, 10, 1);
 
   function ng_preset_load(p)
   (
