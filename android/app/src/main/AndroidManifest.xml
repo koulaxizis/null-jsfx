@@ -8,6 +8,12 @@
     <!-- some phones drop broadcast replies (mixer discovery) without a multicast lock -->
     <uses-permission android:name="android.permission.CHANGE_WIFI_MULTICAST_STATE" />
 
+    <!-- only to see whether Koulaxizis Apps (our app manager) is on the phone: then it
+         announces our updates and the app's own update notice stays quiet -->
+    <queries>
+        <package android:name="gr.koulaxizis.apps" />
+    </queries>
+
     <application
         android:allowBackup="false"
         android:dataExtractionRules="@xml/data_extraction_rules"
