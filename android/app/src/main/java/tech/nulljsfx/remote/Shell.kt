@@ -2,6 +2,7 @@ package tech.nulljsfx.remote
 
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import android.net.Uri
@@ -21,6 +22,9 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
+
+/** Koulaxizis Apps, our app manager for every project's Android apps (orOS Bible APPS-M2). */
+private const val MANAGER = "gr.koulaxizis.apps"
 
 /**
  * What the pages can ask of the phone, as window.NullShellNative (android/web/core/shell.js
@@ -276,9 +280,20 @@ class Shell(
         .put("version", BuildConfig.VERSION_NAME)
         .put("code", BuildConfig.VERSION_CODE)
         .put("flavor", BuildConfig.FLAVOR_store)
-        .put("updateCheck", BuildConfig.UPDATE_CHECK)
+        .put("updateCheck", BuildConfig.UPDATE_CHECK && !managed())
         .put("sdk", android.os.Build.VERSION.SDK_INT)
         .toString()
+
+    /**
+     * True when Koulaxizis Apps (our app manager, `gr.koulaxizis.apps`) is on the phone: it
+     * checks and installs our updates, so the app's own notice stays quiet (II, Shell).
+     */
+    private fun managed(): Boolean = try {
+        context.packageManager.getPackageInfo(MANAGER, 0)
+        true
+    } catch (e: PackageManager.NameNotFoundException) {
+        false
+    }
 
     @JavascriptInterface
     fun keepAwake(on: Boolean) = ui.keepAwake(on)
