@@ -2432,3 +2432,10 @@ entry and the Bible delta.
 - **Files:** `android/app/src/main/java/tech/nulljsfx/remote/Shell.kt`, `android/app/src/main/AndroidManifest.xml`, this Bible (II Shell, Part X).
 - **Tests:** only read here (no Android SDK in the container); the Kotlin build, lint and the emulator tests run in `android.yml` on the PR. `tests/bible_order.py`.
 - **Version:** no change.
+
+### 2026-11-18 — tools (no version change) — Media kit: iPhone size, LinkedIn company banner, Android remotes in the press release
+- **Changes:** three proposals of the monthly media kit check, approved by Christos on 2026-11-18. The iPhone wallpapers are 1320×2868 (iPhone 16/17 Pro Max) instead of 1290×2796. Every kit gains a LinkedIn company page banner, 4200×700, next to the profile banner (READMEs list both). The NULL JSFX press release (EN and EL) names the two Android apps, Remote for DAWs and Remote for Mixers (beta), as `llms.txt` does. A Glarolykoi kit was tried and dropped: Christos moves it to its own project (samples and patch in `/mnt/project-files/media-kit/glarolykoi-samples-2026-11-18/`).
+- **Files:** `tools/media_kit/build.py`, `tools/media_kit/text/README-*.md`, `tools/media_kit/text/press/null-jsfx-press-release.*.md`, `NULL_JSFX_BIBLE.md` (this entry).
+- **Tests (run on Linux):** `python3 tools/media_kit/build.py` with `--previews`: all 8 zips built (the kits grow by 0.5–2.2 MB, so the size labels on the three pages stay within 10%), the new banners and iPhone wallpapers checked by eye; the page previews use the 4K and Android files, which did not change. `python3 tests/bible_order.py`.
+- **Next:** `media-kit.yml` rebuilds the 8 zips on merge.
+
