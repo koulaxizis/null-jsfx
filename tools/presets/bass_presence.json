@@ -1,0 +1,13 @@
+[
+  ["Laptop Bass", {"Amount": 50}],
+  ["Phone Speaker", {"Amount": 75}],
+  ["Subtle Lift", {"Amount": 20}],
+  ["Earbud Check", {"Amount": 35}],
+  ["808 Presence", {"Amount": 65}],
+  ["Bass Guitar Growl", {"Amount": 45}],
+  ["Synth Bass Edge", {"Amount": 55}],
+  ["Kick Readable", {"Amount": 40}],
+  ["Mix Bus Touch", {"Amount": 15}],
+  ["Small Radio", {"Amount": 90}],
+  ["Full Harmonics", {"Amount": 100}]
+]

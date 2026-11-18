@@ -8,24 +8,24 @@ namespace nullpresets {
 
 struct FactoryPreset {
     const char* name;
-    float values[6];
+    float values[7];
 };
 
 static const FactoryPreset kPresets[] = {
-    { "Default", { 0.0f, 100.0f, 50.0f, 20.0f, 80.0f, 100.0f } },
-    { "Organ Chorale", { 0.0f, 100.0f, 50.0f, 25.0f, 80.0f, 100.0f } },
-    { "Organ Fast Tremolo", { 1.0f, 100.0f, 50.0f, 30.0f, 80.0f, 100.0f } },
-    { "Gritty Rock Organ", { 1.0f, 100.0f, 50.0f, 70.0f, 80.0f, 100.0f } },
-    { "Slow Ramp Transitions", { 0.0f, 300.0f, 50.0f, 25.0f, 80.0f, 100.0f } },
-    { "Guitar Swirl", { 0.0f, 100.0f, 60.0f, 10.0f, 100.0f, 70.0f } },
-    { "Keys Gentle Spin", { 0.0f, 100.0f, 55.0f, 15.0f, 90.0f, 80.0f } },
-    { "Vocal Movement", { 0.0f, 100.0f, 50.0f, 0.0f, 100.0f, 40.0f } },
-    { "Stopped Cabinet", { 2.0f, 100.0f, 50.0f, 25.0f, 80.0f, 100.0f } },
-    { "Fast Spin Clean", { 1.0f, 100.0f, 50.0f, 0.0f, 100.0f, 100.0f } },
-    { "Drum Rotor Heavy", { 0.0f, 100.0f, 20.0f, 40.0f, 80.0f, 100.0f } },
+    { "Default", { 0.0f, 100.0f, 50.0f, 20.0f, 80.0f, 100.0f, 0.0f } },
+    { "Organ Chorale", { 0.0f, 100.0f, 50.0f, 25.0f, 80.0f, 100.0f, 0.0f } },
+    { "Organ Fast Tremolo", { 1.0f, 100.0f, 50.0f, 30.0f, 80.0f, 100.0f, 0.0f } },
+    { "Gritty Rock Organ", { 1.0f, 100.0f, 50.0f, 70.0f, 80.0f, 100.0f, 0.0f } },
+    { "Slow Ramp Transitions", { 0.0f, 300.0f, 50.0f, 25.0f, 80.0f, 100.0f, 0.0f } },
+    { "Guitar Swirl", { 0.0f, 100.0f, 60.0f, 10.0f, 100.0f, 70.0f, 0.0f } },
+    { "Keys Gentle Spin", { 0.0f, 100.0f, 55.0f, 15.0f, 90.0f, 80.0f, 0.0f } },
+    { "Vocal Movement", { 0.0f, 100.0f, 50.0f, 0.0f, 100.0f, 40.0f, 0.0f } },
+    { "Stopped Cabinet", { 2.0f, 100.0f, 50.0f, 25.0f, 80.0f, 100.0f, 0.0f } },
+    { "Fast Spin Clean", { 1.0f, 100.0f, 50.0f, 0.0f, 100.0f, 100.0f, 0.0f } },
+    { "Drum Rotor Heavy", { 0.0f, 100.0f, 20.0f, 40.0f, 80.0f, 100.0f, 0.0f } },
 };
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
-static constexpr uint32_t kNumValues = 6;
+static constexpr uint32_t kNumValues = 7;
 
 // the hint line under the controls: a short help text per parameter (from tools/site_content.json)
 #define NULL_UI_HINTS 1
@@ -36,6 +36,7 @@ static const char* const kHints[] = {
     "Tube-amp style overdrive before the rotors",
     "Angle between the virtual left/right mics",
     "Dry/wet blend",
+    "",
 };
 
 // the parameters the header's dice moves (tools/build_presets.py dice()): index, range, step, log scale
@@ -51,6 +52,7 @@ static const DiceParam kDice[] = {
     { 2, 0.0f, 100.0f, 1.0f, false },
     { 3, 0.0f, 100.0f, 1.0f, false },
     { 4, 0.0f, 100.0f, 1.0f, false },
+    { 6, 0.0f, 100.0f, 1.0f, false },
 };
 static constexpr uint32_t kNumDice = sizeof(kDice) / sizeof(kDice[0]);
 
