@@ -19,16 +19,18 @@ static const NullKnobsUI::Control kControls[] = {
     { 10, NullKnobsUI::kSelect, "OVERSAMPLE", 0, -1, false },
     { 3, NullKnobsUI::kKnob, "WOW", 1, -1, false },
     { 4, NullKnobsUI::kKnob, "FLUTTER", 1, -1, false },
-    { 9, NullKnobsUI::kSelect, "NOISE RED", 1, -1, false },
-    { 6, NullKnobsUI::kKnob, "OUTPUT", 1, -1, true },
-    { 7, NullKnobsUI::kKnob, "MIX", 1, -1, false },
+    { 11, NullKnobsUI::kKnob, "AZIMUTH", 1, -1, false },
+    { 12, NullKnobsUI::kKnob, "DROPOUTS", 1, -1, false },
+    { 9, NullKnobsUI::kSelect, "NOISE RED", 2, -1, false },
+    { 6, NullKnobsUI::kKnob, "OUTPUT", 2, -1, true },
+    { 7, NullKnobsUI::kKnob, "MIX", 2, -1, false },
 };
 
 class UITape : public NullKnobsUI
 {
 public:
     UITape()
-        : NullKnobsUI({ "TAPE", "ESSENTIALS", 480, 120, nullptr, 2, nulltape::kSliders, nulltape::kNumSliders,
+        : NullKnobsUI({ "TAPE", "ESSENTIALS", 480, 120, nullptr, 3, nulltape::kSliders, nulltape::kNumSliders,
                         kControls, sizeof(kControls) / sizeof(kControls[0]), false }) {}
 
 protected:

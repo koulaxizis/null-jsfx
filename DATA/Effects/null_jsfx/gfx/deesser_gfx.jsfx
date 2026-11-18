@@ -13,6 +13,9 @@ slider4:0<0,1,1{Auto,Manual}>-Threshold Mode
 slider5:-30<-60,0,0.1>-Threshold (dB)
 slider6:-18<-18,0,0.1>-Range (dB)
 slider7:0<0,1,1{Off,On}>-Listen
+slider8:0<0,16000,100>-Suppress Freq (Hz)
+slider9:2<0.5,8,0.1>-Suppress Q
+slider10:0<0,1,1{Band,Shelf}>-Suppress Shape
 
 in_pin:Left
 in_pin:Right
@@ -26,7 +29,10 @@ out_pin:Right
   // follower measures it, and only that band is turned down (by up to Reduction dB)
   // when it gets loud, so the rest of the voice is untouched. Wide turns the whole signal down
   // instead; Manual sets the threshold (Auto: -30 dB); Range caps the reduction; Listen plays
-  // only what is removed.
+  // only what is removed. The band that is turned down can differ from the one that is
+  // measured: Suppress Freq (0 = Target), Suppress Q and Suppress Shape (Band: a band-pass;
+  // Shelf: everything above Suppress Freq, a high-pass). At their defaults the measured band is
+  // also the one turned down, as before.
   threshold = 10 ^ (-30 / 20);
   thr_auto = threshold;
   att = exp(-1 / (0.0005 * srate));
@@ -34,6 +40,8 @@ out_pin:Right
   env = 0;
   x1l = x2l = y1l = y2l = 0;
   x1r = x2r = y1r = y2r = 0;
+  sx1l = sx2l = sy1l = sy2l = 0;
+  sx1r = sx2r = sy1r = sy2r = 0;
   gfx_ext_retina = 1;
   // interface only: output peak meter, 300 ms release
   ds_rel = exp(-1 / (0.3 * srate));
@@ -55,16 +63,38 @@ out_pin:Right
     rng_on = slider6 > slider2;          // a Range below Reduction never limits
     rng_cut = 1 - 10 ^ (slider6 / 20);
     listen = slider7 >= 0.5;
+    own = slider8 > 0 || slider9 != 2 || slider10 >= 0.5;
+    own ? (
+      sw0 = 2 * $pi * min(slider8 > 0 ? slider8 : slider1, srate * 0.45) / srate;
+      salpha = sin(sw0) / (2 * slider9);
+      sa0 = 1 + salpha;
+      slider10 >= 0.5 ? (
+        sb0 = (1 + cos(sw0)) / 2 / sa0;
+        sb1 = -(1 + cos(sw0)) / sa0;
+        sb2 = sb0;
+      ) : (
+        sb0 = salpha / sa0;
+        sb1 = 0;
+        sb2 = -salpha / sa0;
+      );
+      sa1 = -2 * cos(sw0) / sa0;
+      sa2 = (1 - salpha) / sa0;
+    );
   );
 
-  // response in dB at f of the output x - c * bandpass(x)
+  // response in dB at f of the output x - c * bandpass(x) (or the suppress filter of its own)
   // (Wide: the whole signal, a flat line)
   function ds_resp(f, c) local(w, nr, ni, dr, di, dd, br, bi, hr, hi)
   (
     wide ? 20 * log10(max(1 - c, 0.00001)) : (
     w = 2 * $pi * f / srate;
-    nr = b0 + b2 * cos(2 * w); ni = -b2 * sin(2 * w);
-    dr = 1 + a1 * cos(w) + a2 * cos(2 * w); di = -(a1 * sin(w) + a2 * sin(2 * w));
+    own ? (
+      nr = sb0 + sb1 * cos(w) + sb2 * cos(2 * w); ni = -(sb1 * sin(w) + sb2 * sin(2 * w));
+      dr = 1 + sa1 * cos(w) + sa2 * cos(2 * w); di = -(sa1 * sin(w) + sa2 * sin(2 * w));
+    ) : (
+      nr = b0 + b2 * cos(2 * w); ni = -b2 * sin(2 * w);
+      dr = 1 + a1 * cos(w) + a2 * cos(2 * w); di = -(a1 * sin(w) + a2 * sin(2 * w));
+    );
     dd = dr * dr + di * di;
     br = (nr * dr + ni * di) / dd; bi = (ni * dr - nr * di) / dd;
     hr = 1 - c * br; hi = -c * bi;
@@ -179,6 +209,12 @@ out_pin:Right
   x2l = x1l; x1l = spl0; y2l = y1l; y1l = bl;
   br = b0 * spl1 + b2 * x2r - a1 * y1r - a2 * y2r;
   x2r = x1r; x1r = spl1; y2r = y1r; y1r = br;
+  own ? (
+    s_l = sb0 * spl0 + sb1 * sx1l + sb2 * sx2l - sa1 * sy1l - sa2 * sy2l;
+    sx2l = sx1l; sx1l = spl0; sy2l = sy1l; sy1l = s_l;
+    s_r = sb0 * spl1 + sb1 * sx1r + sb2 * sx2r - sa1 * sy1r - sa2 * sy2r;
+    sx2r = sx1r; sx1r = spl1; sy2r = sy1r; sy1r = s_r;
+  );
 
   level = max(abs(bl), abs(br));
   env = level > env ? att * env + (1 - att) * level : rel * env + (1 - rel) * level;
@@ -191,6 +227,9 @@ out_pin:Right
   wide ? (
     rm_l = spl0 * cut;
     rm_r = spl1 * cut;
+  ) : own ? (
+    rm_l = s_l * cut;
+    rm_r = s_r * cut;
   ) : (
     rm_l = bl * cut;
     rm_r = br * cut;
@@ -279,11 +318,16 @@ out_pin:Right
   slider6 <= -18 ? strcpy(#v6, "FULL") : sprintf(#v6, "%.1f dB", slider6);
   ng_knob_ctl(6, "RANGE", #v6, -18, 0, -18, 0.1, 0) ? update();
   ng_select_ctl(3, "MODE", "SPLIT|WIDE", 0) ? update();
-  ng_row(3);
+  ng_row(6);
   ng_select_ctl(4, "DETECTION", "AUTO|MANUAL", 0) ? update();
   sprintf(#v5, "%.1f dB", slider5);
   ng_knob_ctl(5, "THRESHOLD", #v5, -60, 0, -30, 0.1, 0) ? update();
   ng_select_ctl(7, "LISTEN", "OFF|ON", 0) ? update();
+  slider8 > 0 ? sprintf(#v8, "%.1f kHz", slider8 / 1000) : strcpy(#v8, "TARGET");
+  ng_knob_ctl(8, "SUPPRESS", #v8, 0, 16000, 0, 100, 0) ? update();
+  sprintf(#v9, "%.1f", slider9);
+  ng_knob_ctl(9, "SUPP. Q", #v9, 0.5, 8, 2, 0.1, 0) ? update();
+  ng_select_ctl(10, "SHAPE", "BAND|SHELF", 0) ? update();
 
   ng_end();
 

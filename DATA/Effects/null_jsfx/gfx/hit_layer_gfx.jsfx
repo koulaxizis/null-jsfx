@@ -1,0 +1,213 @@
+desc:NULL Hit Layer GFX
+author: Christos Koulaxizis
+tags: hit layer drum transient trigger enhancer snare kick tom sub tone noise body sizzle reinforce augment gui
+//category: Essentials
+//NULL JSFX v4.0 • https://nulljsfx.tech • MIT License
+
+import null_gfx.jsfx-inc
+
+slider1:-24<-60,0,0.1>-Threshold (dB)
+slider2:60<30,2000,1:log>-Tone (Hz)
+slider3:50<0,100,1>-Tone Level (%)
+slider4:200<10,2000,1:log>-Tone Decay (ms)
+slider5:12<0,24,0.1>-Pitch Drop (semitones)
+slider6:30<0,100,1>-Noise Level (%)
+slider7:80<5,1000,1:log>-Noise Decay (ms)
+slider8:4000<200,16000,1:log>-Noise Color (Hz)
+slider9:50<0,100,1>-Follow (%)
+slider10:0<0,100,1>-Width (%)
+slider11:100<0,100,1>-Dry (%)
+slider12:0<-24,12,0.1>-Output (dB)
+
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
+
+@init
+  ext_noinit = 1;              // play and seek keep tails and state, as in the VST3/CLAP
+  // NULL Hit Layer (../hit_layer.jsfx) with its own interface: same audio code, plus @gfx.
+  // A layer under every hit: a transient detector (a fast and a slow envelope of the mono sum;
+  // a hit is the fast one rising 6 dB over the slow one above Threshold, then 30 ms before the
+  // next) starts a tuned tone and a burst of coloured noise, added to the dry signal. The tone
+  // is a sine at Tone that starts Pitch Drop semitones higher and falls to Tone in about a
+  // third of Tone Decay (a kick's thump, a tom's body); it fades by 60 dB over Tone Decay.
+  // The noise is white noise (exact Park-Miller) through a band-pass at Noise Color (Q 1.2):
+  // a snare's wires or a clap's air; it fades by 60 dB over Noise Decay. Follow sets how much
+  // the layer follows the strength of the hit (0 to 24 dB above Threshold); at 0% every hit
+  // plays the same. Width gives the noise a second, independent noise on the right channel.
+  // Dry sets how much of the input is kept (0 = the layer alone).
+  hl_fast = hl_slow = 0;
+  hl_armed = 1;
+  hl_hold = 0;
+  hl_te = hl_ne = hl_pe = 0;
+  hl_ph = 0;
+  hl_lv = 0;
+  hl_seed1 = 12345;
+  hl_seed2 = 54321;
+  hl_ic1l = hl_ic2l = hl_ic1r = hl_ic2r = 0;
+  hl_flash = 0;                // display only: set on a hit, falls off
+  hl_fa = exp(-1 / (0.0001 * srate));
+  hl_fr = exp(-1 / (0.005 * srate));
+  hl_sa = exp(-1 / (0.01 * srate));
+  hl_sr = exp(-1 / (0.1 * srate));
+
+  function hl_pm(x)
+  (
+    x *= 16807;
+    x - floor(x / 2147483647) * 2147483647;
+  );
+  gfx_ext_retina = 1;
+  // interface only: detector and layer peak meters, 300 ms release
+  hl_mrel = exp(-1 / (0.3 * srate));
+  hl_dm = hl_lm = 0;
+
+  function update()
+  (
+    hl_thr = 10 ^ (slider1 / 20);
+    hl_tone = slider2;
+    hl_tl = slider3 / 100;
+    hl_tc = exp(-6.907755 / (slider4 / 1000 * srate));
+    hl_pc = exp(-1 / (slider4 / 3000 * srate));
+    hl_drop = slider5;
+    hl_nl = slider6 / 100;
+    hl_nc = exp(-6.907755 / (slider7 / 1000 * srate));
+    hl_g = tan($pi * min(slider8, 0.45 * srate) / srate);
+    hl_k = 1 / 1.2;
+    hl_a1 = 1 / (1 + hl_g * (hl_g + hl_k));
+    hl_a2 = hl_g * hl_a1;
+    hl_a3 = hl_g * hl_a2;
+    hl_fol = slider9 / 100;
+    hl_w = slider10 / 100;
+    hl_dry = slider11 / 100;
+    hl_out = 10 ^ (slider12 / 20);
+  );
+
+  // the layer's two envelopes at time t (s): the tone's and the noise's, 0..1, as in @sample
+  function hl_env_t(t) ( exp(-6.907755 * t / (slider4 / 1000)); );
+  function hl_env_n(t) ( exp(-6.907755 * t / (slider7 / 1000)); );
+
+@slider
+  update();
+
+@sample
+  // the detector
+  hl_x = abs(spl0 + spl1) * 0.5;
+  hl_fast = hl_x > hl_fast ? hl_fa * hl_fast + (1 - hl_fa) * hl_x : hl_fr * hl_fast + (1 - hl_fr) * hl_x;
+  hl_slow = hl_x > hl_slow ? hl_sa * hl_slow + (1 - hl_sa) * hl_x : hl_sr * hl_slow + (1 - hl_sr) * hl_x;
+  hl_hold > 0 ? hl_hold -= 1;
+  !hl_armed && hl_hold <= 0 && hl_fast < 1.5 * hl_slow ? hl_armed = 1;
+  hl_armed && hl_fast > hl_thr && hl_fast > 2 * hl_slow ? (
+    hl_armed = 0;
+    hl_hold = floor(0.03 * srate);
+    hl_st = max(0, min(1, 20 * log10(hl_fast / hl_thr) / 24));
+    hl_lv = (1 - hl_fol) + hl_fol * (0.25 + 0.75 * hl_st);
+    hl_te = 1; hl_ne = 1; hl_pe = 1;
+    hl_ph = 0;
+    hl_flash = 1;
+  );
+
+  // the tone: a sine falling from Pitch Drop above Tone to Tone
+  hl_f = hl_tone * 2 ^ (hl_drop * hl_pe / 12);
+  hl_ph += hl_f / srate;
+  hl_ph >= 1 ? hl_ph -= 1;
+  hl_t = sin(2 * $pi * hl_ph) * hl_te * hl_tl;
+  hl_te *= hl_tc;
+  hl_pe *= hl_pc;
+  hl_te < 0.0000001 ? hl_te = 0;
+  hl_pe < 0.0000001 ? hl_pe = 0;
+
+  // the noise: band-passed white noise (state-variable filter per channel)
+  hl_seed1 = hl_pm(hl_seed1);
+  hl_seed2 = hl_pm(hl_seed2);
+  hl_n1 = hl_seed1 / 1073741824 - 1;
+  hl_n2 = hl_n1 + (hl_seed2 / 1073741824 - 1 - hl_n1) * hl_w;
+  hl_v3 = hl_n1 - hl_ic2l;
+  hl_v1 = hl_a1 * hl_ic1l + hl_a2 * hl_v3;
+  hl_v2 = hl_ic2l + hl_a2 * hl_ic1l + hl_a3 * hl_v3;
+  hl_ic1l = 2 * hl_v1 - hl_ic1l;
+  hl_ic2l = 2 * hl_v2 - hl_ic2l;
+  hl_bl = hl_k * hl_v1;
+  hl_v3 = hl_n2 - hl_ic2r;
+  hl_v1 = hl_a1 * hl_ic1r + hl_a2 * hl_v3;
+  hl_v2 = hl_ic2r + hl_a2 * hl_ic1r + hl_a3 * hl_v3;
+  hl_ic1r = 2 * hl_v1 - hl_ic1r;
+  hl_ic2r = 2 * hl_v2 - hl_ic2r;
+  hl_br = hl_k * hl_v1;
+  hl_nk = hl_ne * hl_nl;
+  hl_ne *= hl_nc;
+  hl_ne < 0.0000001 ? hl_ne = 0;
+
+  hl_ll = (hl_t + hl_bl * hl_nk) * hl_lv;
+  hl_lr = (hl_t + hl_br * hl_nk) * hl_lv;
+  spl0 = (spl0 * hl_dry + hl_ll) * hl_out;
+  spl1 = (spl1 * hl_dry + hl_lr) * hl_out;
+
+  // display only (reads the detector and the layer, never changes the output)
+  hl_dm = hl_fast > hl_dm ? hl_fast : hl_dm * hl_mrel;
+  hl_x = max(abs(hl_ll), abs(hl_lr));
+  hl_lm = hl_x > hl_lm ? hl_x : hl_lm * hl_mrel;
+
+@gfx 480 380
+  ng_knobs_begin("HIT LAYER", "ESSENTIALS", 480, 120, 2, 0);
+
+  // display, left: the layer's envelopes over the longer decay (tone bright, noise dim);
+  // right: a lamp for each hit, the detector level with the threshold, and the layer level
+  ng_plot(56, 66, 260, 78);
+  ng_grid(4, 4, 0);
+  hl_T = max(slider4, slider7) / 1000;
+  ng_font(4, 8, 0);
+  ng_col(NG_MUTED, 1);
+  ng_ptxt("0", ng_px, ng_py + ng_ph + 10 * ng_s, 1);
+  hl_T >= 1 ? sprintf(#hl_l, "%.1f s", hl_T) : sprintf(#hl_l, "%d ms", floor(hl_T * 1000 + 0.5));
+  ng_ptxt(#hl_l, ng_px + ng_pw, ng_py + ng_ph + 10 * ng_s, 1);
+  ng_ptxt("NOISE", ng_px + ng_pw * 0.5, ng_py + ng_ph + 10 * ng_s, 1);
+  ng_col(NG_ACCENT, 0.5);
+  hl_i = 0;
+  loop(floor(ng_pw) + 1,
+    hl_y = ng_lin_y(hl_env_n(hl_T * hl_i / ng_pw) * slider6 / 100, 0, 1);
+    hl_i == 0 ? ng_line_start(ng_px, hl_y) : ng_line_to(ng_px + hl_i, hl_y);
+    hl_i += 1;
+  );
+  ng_col(NG_ACCENT, 1);
+  hl_i = 0;
+  loop(floor(ng_pw) + 1,
+    hl_y = ng_lin_y(hl_env_t(hl_T * hl_i / ng_pw) * slider3 / 100, 0, 1);
+    hl_i == 0 ? ng_line_start(ng_px, hl_y) : ng_line_to(ng_px + hl_i, hl_y);
+    hl_i += 1;
+  );
+  ng_font(1, 7, 1);
+  ng_col(NG_ACCENT, hl_flash > 0.05 ? hl_flash : 0.25);
+  ng_txt("HIT", 336, 66, 0, 1);
+  hl_flash *= 0.8;
+  ng_meter(336, 82, 112, 10, "IN", ng_to_db(hl_dm), slider1, -60);
+  ng_meter(336, 106, 112, 10, "LAYER", ng_to_db(hl_lm), -140, -60);
+
+  ng_row(6);
+  sprintf(#v1, "%.1f dB", slider1);
+  ng_knob_ctl(1, "THRESHOLD", #v1, -60, 0, -24, 0.1, 0) ? update();
+  sprintf(#v2, "%d Hz", slider2);
+  ng_knob_ctl_log(2, "TONE", #v2, 30, 2000, 60, 1) ? update();
+  sprintf(#v3, "%d%%", slider3);
+  ng_knob_ctl(3, "TONE LVL", #v3, 0, 100, 50, 1, 0) ? update();
+  sprintf(#v4, "%d ms", slider4);
+  ng_knob_ctl_log(4, "TONE DECAY", #v4, 10, 2000, 200, 1) ? update();
+  sprintf(#v5, "%.1f st", slider5);
+  ng_knob_ctl(5, "DROP", #v5, 0, 24, 12, 0.1, 0) ? update();
+  sprintf(#v9, "%d%%", slider9);
+  ng_knob_ctl(9, "FOLLOW", #v9, 0, 100, 50, 1, 0) ? update();
+  ng_row(6);
+  sprintf(#v6, "%d%%", slider6);
+  ng_knob_ctl(6, "NOISE LVL", #v6, 0, 100, 30, 1, 0) ? update();
+  sprintf(#v7, "%d ms", slider7);
+  ng_knob_ctl_log(7, "NOISE DECAY", #v7, 5, 1000, 80, 1) ? update();
+  slider8 >= 1000 ? sprintf(#v8, "%.1f kHz", slider8 / 1000) : sprintf(#v8, "%d Hz", slider8);
+  ng_knob_ctl_log(8, "COLOR", #v8, 200, 16000, 4000, 1) ? update();
+  sprintf(#v10, "%d%%", slider10);
+  ng_knob_ctl(10, "WIDTH", #v10, 0, 100, 0, 1, 0) ? update();
+  sprintf(#v11, "%d%%", slider11);
+  ng_knob_ctl(11, "DRY", #v11, 0, 100, 100, 1, 0) ? update();
+  sprintf(#v12, "%+.1f dB", slider12);
+  ng_knob_ctl(12, "OUTPUT", #v12, -24, 12, 0, 0.1, 1) ? update();
+
+  ng_end();

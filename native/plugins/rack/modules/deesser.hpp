@@ -48,7 +48,8 @@ public:
     }
 
 private:
-    void update() { fDsp.setParams(fV[0], fV[1], fV[2] >= 0.5f, fV[3] >= 0.5f, fV[4], fV[5], fV[6] >= 0.5f); }
+    void update() { fDsp.setParams(fV[0], fV[1], fV[2] >= 0.5f, fV[3] >= 0.5f, fV[4], fV[5], fV[6] >= 0.5f, fV[7],
+                                  std::round(double(fV[8]) * 10.0) / 10.0, fV[9] >= 0.5f); }
 
     nulldeesser::DeEsserProcessor fDsp;
     float fV[nulldeesser::kNumSliders];

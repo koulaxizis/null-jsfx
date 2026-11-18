@@ -9,6 +9,8 @@ import null_gfx.jsfx-inc
 slider1:100<0,200,1>-Width (%)
 slider2:100<0,100,1>-Mix (%)
 slider3:0<0,500,1>-Crossover (Hz)
+slider4:0<0,16000,10>-High Crossover (Hz)
+slider5:100<0,200,1>-High Width (%)
 
 in_pin:Left
 in_pin:Right
@@ -24,6 +26,9 @@ out_pin:Right
   lp_mid_l = 0;
   lp_mid_r = 0;
   lp_side = 0;
+  lp_hs = 0;
+  // High Crossover above 0 Hz splits the widened side once more (one pole): above it the side
+  // gets High Width instead of Width. At 0 Hz (the default) the plugin is as before.
   gfx_ext_retina = 1;
   // display only: vectorscope taps of the output
   ng_tap_init(4000000, 2048);
@@ -37,26 +42,44 @@ out_pin:Right
     xover_freq > 0 ? (
       xover_coef = 1 - exp(-2 * 3.14159265358979 * xover_freq / srate);
     ) : xover_coef = 0;
+    hx_freq = slider4;
+    hw_pct = slider5 / 100;
+    hx_freq > 0 ? (
+      hx_coef = 1 - exp(-2 * 3.14159265358979 * min(hx_freq, 0.45 * srate) / srate);
+    ) : hx_coef = 0;
   );
 
   // side gain (1 = unchanged) at frequency f: dry side plus the widened side above the
   // one-pole crossover of @sample, |(1 - mix) + mix * width * HP(f)|; mid is untouched
-  function sw_side(f) local(w, b, dr, di, dd, hr, hi, tr)
+  // one-pole high-pass of coefficient c at frequency f: sw_hr + j sw_hi (1 when c = 0)
+  function sw_hp(f, c) local(w, b, dr, di, dd)
   (
-    xover_freq > 0 ? (
+    c > 0 ? (
       w = 2 * $pi * min(f, srate * 0.499) / srate;
-      b = 1 - xover_coef;
+      b = 1 - c;
       dr = 1 - b * cos(w);
       di = b * sin(w);
       dd = dr * dr + di * di;
-      hr = 1 - xover_coef * dr / dd;
-      hi = xover_coef * di / dd;
+      sw_hr = 1 - c * dr / dd;
+      sw_hi = c * di / dd;
     ) : (
-      hr = 1; hi = 0;
+      sw_hr = 1; sw_hi = 0;
     );
-    tr = (1 - mix_amt) + mix_amt * width_pct * hr;
-    hi *= mix_amt * width_pct;
-    sqrt(tr * tr + hi * hi);
+  );
+  // with the high band: |(1 - mix) + mix * HP1 * (width + (high width - width) * HP2)|
+  function sw_side(f) local(hr, hi, gr, gi, tr, ti)
+  (
+    sw_hp(f, xover_coef);
+    hr = sw_hr; hi = sw_hi;
+    gr = width_pct; gi = 0;
+    hx_freq > 0 ? (
+      sw_hp(f, hx_coef);
+      gr += (hw_pct - width_pct) * sw_hr;
+      gi = (hw_pct - width_pct) * sw_hi;
+    );
+    tr = (1 - mix_amt) + mix_amt * (hr * gr - hi * gi);
+    ti = mix_amt * (hr * gi + hi * gr);
+    sqrt(tr * tr + ti * ti);
   );
 
   // log-frequency grid (20 Hz to 20 kHz) without dB lines, for the plot set by ng_plot
@@ -193,6 +216,14 @@ out_pin:Right
     out_l = mid + side * width_pct;
     out_r = mid - side * width_pct;
   );
+  hx_freq > 0 ? (
+    // High band: the side above High Crossover gets High Width instead of Width
+    hb_in = xover_freq > 0 ? hp_side : side;
+    lp_hs = lp_hs + hx_coef * (hb_in - lp_hs);
+    hb_side = (hb_in - lp_hs) * (hw_pct - width_pct);
+    out_l += hb_side;
+    out_r -= hb_side;
+  );
   
   spl0 = spl0 * (1 - mix_amt) + out_l * mix_amt;
   spl1 = spl1 * (1 - mix_amt) + out_r * mix_amt;
@@ -231,6 +262,16 @@ out_pin:Right
       sw_y < ng_py + ng_ph;
     );
   );
+  hx_freq > 0 ? (
+    sw_x = floor(ng_freq_x(min(hx_freq, 20000))) + 0.5;
+    ng_col(NG_ACCENT, 0.5);
+    sw_y = ng_py;
+    while(
+      gfx_line(sw_x, sw_y, sw_x, min(sw_y + 3 * ng_s, ng_py + ng_ph), 0);
+      sw_y += 6 * ng_s;
+      sw_y < ng_py + ng_ph;
+    );
+  );
   sw_z = ng_lin_y(0, 0, 2);
   ng_col(NG_ACCENT, 0.10);
   sw_i = 0;
@@ -246,13 +287,19 @@ out_pin:Right
     sw_i += 1;
   );
 
-  ng_row(3);
+  ng_row(5);
   sprintf(#sw_v1, "%d%%", slider1);
   ng_knob_ctl(1, "WIDTH", #sw_v1, 0, 200, 100, 1, 1) ? update();
   sprintf(#sw_v2, "%d%%", slider2);
   ng_knob_ctl(2, "MIX", #sw_v2, 0, 100, 100, 1, 0) ? update();
   slider3 > 0 ? sprintf(#sw_v3, "%d Hz", slider3) : sprintf(#sw_v3, "OFF");
   ng_knob_ctl(3, "CROSSOVER", #sw_v3, 0, 500, 0, 1, 0) ? update();
+  slider4 > 0 ? (
+    slider4 >= 1000 ? sprintf(#sw_v4, "%.1f kHz", slider4 / 1000) : sprintf(#sw_v4, "%d Hz", slider4);
+  ) : sprintf(#sw_v4, "OFF");
+  ng_knob_ctl(4, "HIGH XOVER", #sw_v4, 0, 16000, 0, 10, 0) ? update();
+  sprintf(#sw_v5, "%d%%", slider5);
+  ng_knob_ctl(5, "HIGH WIDTH", #sw_v5, 0, 200, 100, 1, 1) ? update();
 
   ng_end();
 

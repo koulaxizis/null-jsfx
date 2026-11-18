@@ -68,7 +68,8 @@ private:
         fOut.setup(sr);
     }
 
-    void update() { fDsp.setParams(value(0), value(1), value(2) >= 0.5f, value(3) >= 0.5f, value(4), value(5), value(6) >= 0.5f); }
+    void update() { fDsp.setParams(value(0), value(1), value(2) >= 0.5f, value(3) >= 0.5f, value(4), value(5), value(6) >= 0.5f,
+                                  value(7), std::round(double(value(8)) * 10.0) / 10.0, value(9) >= 0.5f); }
 
     nulldeesser::DeEsserProcessor fDsp;
     nulljsfx::PeakFollower fOut;

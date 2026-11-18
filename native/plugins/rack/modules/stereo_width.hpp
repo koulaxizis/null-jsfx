@@ -45,7 +45,7 @@ public:
 private:
     void update()
     {
-        fDsp.setParams(nullstereowidth::paramsFor(fV[0], fV[1], fV[2], fSr));
+        fDsp.setParams(nullstereowidth::paramsFor(fV[0], fV[1], fV[2], fSr, fV[3], fV[4]));
     }
 
     nullstereowidth::StereoWidthProcessor fDsp;

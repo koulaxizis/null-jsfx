@@ -7,6 +7,9 @@
  * shelf boost at 1.2 x Low Freq, a gentler low shelf cut at 2.2 x Low Freq, a peaking boost at
  * High Freq (width from Bandwidth) and a high shelf cut at Atten Freq (RBJ biquads, each skipped
  * at 0), then the Tube stage (asymmetric tanh with a 10 Hz DC blocker, skipped at 0 %) and Output.
+ * Low Dynamic and High Dynamic (off at 0 %) scale back what Low Boost and High Boost add once
+ * that part rises above Dynamic Threshold (5 ms / 120 ms follower, the louder channel), by the
+ * Dynamic share at 12 dB above it, one sample later, as the JSFX does.
  */
 
 #pragma once
@@ -21,6 +24,7 @@ static constexpr double kPi = 3.141592653589793; // EEL2 $pi
 struct Params {
     int lowFreq = 2, highFreq = 3, attenFreq = 1;
     double lowBoost = 0.0, lowAtten = 0.0, highBoost = 0.0, bandwidth = 5.0, highAtten = 0.0, tube = 0.0, output = 0.0;
+    double lowDyn = 0.0, highDyn = 0.0, dynThreshold = -24.0;
 };
 
 struct Biquad {
@@ -92,6 +96,7 @@ struct Coeffs {
     Biquad lb, la, hb, ha;
     bool lbOn = false, laOn = false, hbOn = false, haOn = false;
     double tube = 0.0, tk = 1.0, tb = 0.0, tz = 0.0, dca = 0.0, og = 1.0;
+    double dyLo = 0.0, dyHi = 0.0, dyThr = 0.0, dyAt = 0.0, dyRl = 0.0;
 };
 
 inline double lowFreqHz(int i) noexcept { return i == 0 ? 20.0 : i == 1 ? 30.0 : i == 2 ? 60.0 : 100.0; }
@@ -120,6 +125,11 @@ inline Coeffs coeffsFor(const Params& p, double sr) noexcept
     c.tz = eelTanh(c.tb);
     c.dca = std::exp(-2.0 * kPi * 10.0 / sr);
     c.og = std::pow(10.0, p.output / 20.0);
+    c.dyLo = p.lowDyn / 100.0;
+    c.dyHi = p.highDyn / 100.0;
+    c.dyThr = std::pow(10.0, p.dynThreshold / 20.0);
+    c.dyAt = std::exp(-1.0 / (0.005 * sr));
+    c.dyRl = std::exp(-1.0 / (0.12 * sr));
     return c;
 }
 
@@ -154,7 +164,14 @@ public:
         for (double& s : fSt)
             s = 0.0;
         fDcl = fDcr = fDxl = fDxr = 0.0;
+        fEl = fEh = 0.0;
+        fKl = fKh = 1.0;
+        fDl[0] = fDl[1] = fDh[0] = fDh[1] = 0.0;
     }
+
+    // the boosts' dynamic scale now (1 = full boost), for the display
+    double lowScale() const noexcept { return fKl; }
+    double highScale() const noexcept { return fKh; }
 
     const Coeffs& coeffs() const noexcept { return fC; }
 
@@ -163,6 +180,18 @@ public:
         const Coeffs& c = fC;
         l = chain(l, 0);
         r = chain(r, 1);
+        if (c.dyLo > 0.0 && c.lbOn)
+        {
+            const double x = std::fmax(std::fabs(fDl[0]), std::fabs(fDl[1]));
+            fEl = x > fEl ? c.dyAt * fEl + (1.0 - c.dyAt) * x : c.dyRl * fEl + (1.0 - c.dyRl) * x;
+            fKl = 1.0 - c.dyLo * (fEl > c.dyThr ? std::fmin(std::log(fEl / c.dyThr) / std::log(4.0), 1.0) : 0.0);
+        }
+        if (c.dyHi > 0.0 && c.hbOn)
+        {
+            const double x = std::fmax(std::fabs(fDh[0]), std::fabs(fDh[1]));
+            fEh = x > fEh ? c.dyAt * fEh + (1.0 - c.dyAt) * x : c.dyRl * fEh + (1.0 - c.dyRl) * x;
+            fKh = 1.0 - c.dyHi * (fEh > c.dyThr ? std::fmin(std::log(fEh / c.dyThr) / std::log(4.0), 1.0) : 0.0);
+        }
         if (c.tube > 0.0)
         {
             l = (eelTanh(c.tk * l + c.tb) - c.tz) / c.tk;
@@ -192,9 +221,29 @@ private:
     double chain(double x, int ch) noexcept
     {
         const Coeffs& c = fC;
-        if (c.lbOn) x = run(c.lb, x, ch * 8);
+        if (c.lbOn)
+        {
+            if (c.dyLo > 0.0)
+            {
+                const double d = run(c.lb, x, ch * 8) - x;
+                fDl[ch] = d;
+                x += d * fKl;
+            }
+            else
+                x = run(c.lb, x, ch * 8);
+        }
         if (c.laOn) x = run(c.la, x, ch * 8 + 2);
-        if (c.hbOn) x = run(c.hb, x, ch * 8 + 4);
+        if (c.hbOn)
+        {
+            if (c.dyHi > 0.0)
+            {
+                const double d = run(c.hb, x, ch * 8 + 4) - x;
+                fDh[ch] = d;
+                x += d * fKh;
+            }
+            else
+                x = run(c.hb, x, ch * 8 + 4);
+        }
         if (c.haOn) x = run(c.ha, x, ch * 8 + 6);
         return x;
     }
@@ -204,6 +253,7 @@ private:
     Coeffs fC = coeffsFor(Params(), 48000.0);
     double fSt[16] = {};
     double fDcl = 0.0, fDcr = 0.0, fDxl = 0.0, fDxr = 0.0;
+    double fEl = 0.0, fEh = 0.0, fKl = 1.0, fKh = 1.0, fDl[2] = {}, fDh[2] = {};
 };
 
 } // namespace nullpassiveeq

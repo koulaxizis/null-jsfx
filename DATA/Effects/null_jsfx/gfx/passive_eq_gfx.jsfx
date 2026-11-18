@@ -16,6 +16,9 @@ slider7:1<0,2,1{5 kHz,10 kHz,20 kHz}>-Atten Freq
 slider8:0<0,10,0.1>-High Atten
 slider9:0<0,100,1>-Tube (%)
 slider10:0<-12,12,0.1>-Output (dB)
+slider11:0<0,100,1>-Low Dynamic (%)
+slider12:0<0,100,1>-High Dynamic (%)
+slider13:-24<-60,0,0.1>-Dynamic Threshold (dB)
 
 in_pin:Left
 in_pin:Right
@@ -32,9 +35,17 @@ out_pin:Right
   // +18 dB) whose width is Bandwidth (0 sharp, 10 broad); High Atten is a high shelf at Atten
   // Freq (down to -20 dB). Tube drives a slightly asymmetric tanh stage (even harmonics) with
   // a 10 Hz DC blocker after it. Every band at 0 and Tube at 0 % leave the sound untouched.
+  // Low Dynamic and High Dynamic make Low Boost and High Boost dynamic: the part each boost
+  // adds is measured (5 ms up, 120 ms down, the louder channel) and, once it rises above
+  // Dynamic Threshold, the boost is scaled back, by the Dynamic share at 12 dB above it. So a
+  // boost fills in quiet passages and backs off when the band gets loud. At 0 % (the
+  // default) a boost is static, as before.
   ST = 0;                      // filter state: 4 biquads x 2 channels x 2 values
   memset(ST, 0, 16);
   dcl = dcr = dxl = dxr = 0;
+  dy_el = dy_eh = 0;
+  dy_kl = dy_kh = 1;
+  dy_dl0 = dy_dl1 = dy_dh0 = dy_dh1 = 0;
 
   // tanh (EEL2 has none): (e^2x - 1) / (e^2x + 1), clamped
   function pe_tanh(x) local(e)
@@ -88,9 +99,21 @@ out_pin:Right
 
   function pe_chain(x, c)
   (
-    lb_on ? x = lb.pe_run(x, c * 8);
+    lb_on ? (
+      dy_lo > 0 ? (
+        dy_d = lb.pe_run(x, c * 8) - x;
+        c == 0 ? dy_dl0 = dy_d : dy_dl1 = dy_d;
+        x += dy_d * dy_kl;
+      ) : x = lb.pe_run(x, c * 8);
+    );
     la_on ? x = la.pe_run(x, c * 8 + 2);
-    hb_on ? x = hb.pe_run(x, c * 8 + 4);
+    hb_on ? (
+      dy_hi > 0 ? (
+        dy_d = hb.pe_run(x, c * 8 + 4) - x;
+        c == 0 ? dy_dh0 = dy_d : dy_dh1 = dy_d;
+        x += dy_d * dy_kh;
+      ) : x = hb.pe_run(x, c * 8 + 4);
+    );
     ha_on ? x = ha.pe_run(x, c * 8 + 6);
     x;
   );
@@ -116,6 +139,11 @@ out_pin:Right
     tz = pe_tanh(tb);
     dca = exp(-2 * $pi * 10 / srate);
     og = 10 ^ (slider10 / 20);
+    dy_lo = slider11 / 100;
+    dy_hi = slider12 / 100;
+    dy_thr = 10 ^ (slider13 / 20);
+    dy_at = exp(-1 / (0.005 * srate));
+    dy_rl = exp(-1 / (0.12 * srate));
   );
 
   // |H|^2 of this biquad at angular frequency w
@@ -237,6 +265,16 @@ out_pin:Right
 @sample
   l = pe_chain(spl0, 0);
   r = pe_chain(spl1, 1);
+  dy_lo > 0 && lb_on ? (
+    dy_x = max(abs(dy_dl0), abs(dy_dl1));
+    dy_el = dy_x > dy_el ? dy_at * dy_el + (1 - dy_at) * dy_x : dy_rl * dy_el + (1 - dy_rl) * dy_x;
+    dy_kl = 1 - dy_lo * (dy_el > dy_thr ? min(log(dy_el / dy_thr) / log(4), 1) : 0);
+  );
+  dy_hi > 0 && hb_on ? (
+    dy_x = max(abs(dy_dh0), abs(dy_dh1));
+    dy_eh = dy_x > dy_eh ? dy_at * dy_eh + (1 - dy_at) * dy_x : dy_rl * dy_eh + (1 - dy_rl) * dy_x;
+    dy_kh = 1 - dy_hi * (dy_eh > dy_thr ? min(log(dy_eh / dy_thr) / log(4), 1) : 0);
+  );
   tube > 0 ? (
     l = (pe_tanh(tk * l + tb) - tz) / tk;
     r = (pe_tanh(tk * r + tb) - tz) / tk;
@@ -253,8 +291,8 @@ out_pin:Right
   spl0 = l * og;
   spl1 = r * og;
 
-@gfx 480 380
-  ng_knobs_begin("PASSIVE EQ", "ESSENTIALS", 480, 120, 2, 0);
+@gfx 480 466
+  ng_knobs_begin("PASSIVE EQ", "ESSENTIALS", 480, 120, 3, 0);
 
   // display: the response from 20 Hz to 20 kHz (Output included), the three frequencies dashed
   pq_px = ng_vx + 26; pq_py = ng_vy + 4; pq_pw = ng_vw - 30; pq_ph = ng_vh - 20;
@@ -306,6 +344,13 @@ out_pin:Right
   ng_knob_ctl(9, "TUBE", #pq_v9, 0, 100, 0, 1, 0) ? update();
   sprintf(#pq_v10, "%+.1f dB", slider10);
   ng_knob_ctl(10, "OUTPUT", #pq_v10, -12, 12, 0, 0.1, 1) ? update();
+  ng_row(3);
+  slider11 > 0 ? sprintf(#pq_v11, "%d%%", slider11) : strcpy(#pq_v11, "STATIC");
+  ng_knob_ctl(11, "LOW DYN", #pq_v11, 0, 100, 0, 1, 0) ? update();
+  slider12 > 0 ? sprintf(#pq_v12, "%d%%", slider12) : strcpy(#pq_v12, "STATIC");
+  ng_knob_ctl(12, "HIGH DYN", #pq_v12, 0, 100, 0, 1, 0) ? update();
+  sprintf(#pq_v13, "%.1f dB", slider13);
+  ng_knob_ctl(13, "DYN THRESH", #pq_v13, -60, 0, -24, 0.1, 0) ? update();
 
   ng_end();
 
