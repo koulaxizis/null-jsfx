@@ -3,7 +3,7 @@
 (function (g) {
 "use strict";
 var FX = {"id":"hit_layer","name":"Hit Layer","desc":"NULL Hit Layer GFX","category":"Essentials","tags":"hit layer drum transient trigger enhancer snare kick tom sub tone noise body sizzle reinforce augment gui","sliders":[{"i":1,"name":"Threshold (dB)","def":-24,"min":-60,"max":0,"inc":0.1,"hidden":true},{"i":2,"name":"Tone (Hz)","def":60,"min":30,"max":2000,"inc":1,"shape":"log","hidden":true},{"i":3,"name":"Tone Level (%)","def":50,"min":0,"max":100,"inc":1,"hidden":true},{"i":4,"name":"Tone Decay (ms)","def":200,"min":10,"max":2000,"inc":1,"shape":"log","hidden":true},{"i":5,"name":"Pitch Drop (semitones)","def":12,"min":0,"max":24,"inc":0.1,"hidden":true},{"i":6,"name":"Noise Level (%)","def":30,"min":0,"max":100,"inc":1,"hidden":true},{"i":7,"name":"Noise Decay (ms)","def":80,"min":5,"max":1000,"inc":1,"shape":"log","hidden":true},{"i":8,"name":"Noise Color (Hz)","def":4000,"min":200,"max":16000,"inc":1,"shape":"log","hidden":true},{"i":9,"name":"Follow (%)","def":50,"min":0,"max":100,"inc":1,"hidden":true},{"i":10,"name":"Width (%)","def":0,"min":0,"max":100,"inc":1,"hidden":true},{"i":11,"name":"Dry (%)","def":100,"min":0,"max":100,"inc":1,"hidden":true},{"i":12,"name":"Output (dB)","def":0,"min":-24,"max":12,"inc":0.1,"hidden":true}],"inPins":["Left","Right"],"outPins":["Left","Right"],"gfx":{"w":480,"h":380},"usesRand":true,"usesFile":false};
-FX.strings = ["Noto Sans","","Hg","NULL JSFX","AUDIO WITHOUT NOISE","A","B","B>A","A>B","HIT LAYER","ESSENTIALS","0","%.1f s","%d ms","NOISE","HIT","IN","LAYER","%.1f dB","THRESHOLD","%d Hz","TONE","%d%%","TONE LVL","TONE DECAY","%.1f st","DROP","FOLLOW","NOISE LVL","NOISE DECAY","%.1f kHz","COLOR","WIDTH","DRY","%+.1f dB","OUTPUT","Default","Kick Sub Thump","Kick 808 Tail","Kick Click","Snare Body","Snare Wires","Snare Fat","Tom Boom","Floor Tom Deep","Clap Air","Rim Ping","Layer Only","Even Hits","Dynamic Hits","Wide Sizzle","CUSTOM"];
+FX.strings = ["Noto Sans","","Hg","NULL JSFX","AUDIO WITHOUT NOISE","A","B","B>A","A>B","HIT LAYER","ESSENTIALS","0","%.1f s","%d ms","NOISE","HIT","IN","LAYER","%.1f dB","THRESHOLD","%d Hz","TONE","%d%%","TONE LVL","TONE DECAY","%.1f st","DROP","FOLLOW","NOISE LVL","NOISE DECAY","%.1f kHz","COLOR","WIDTH","DRY","%+.1f dB","OUTPUT","Level a hit must pass to trigger the layer","Pitch of the tone the layer settles on","Level of the tone","Time the tone takes to fade by 60 dB","How far above Tone the tone starts (it falls to Tone in about a third of Tone Decay)","Level of the noise burst","Time the noise takes to fade by 60 dB","Centre of the noise's band-pass (low = body, high = air and wires)","How much the layer follows the strength of each hit (0% = every hit the same)","Gives the noise an independent right channel (0% = mono noise)","How much of the input is kept (0% = the layer alone)","Output level","Default","Kick Sub Thump","Kick 808 Tail","Kick Click","Snare Body","Snare Wires","Snare Fat","Tom Boom","Floor Tom Deep","Clap Air","Rim Ping","Layer Only","Even Hits","Dynamic Hits","Wide Sizzle","CUSTOM"];
 FX.live = ["hl_dm","hl_flash","hl_lm","hl_t"];
 FX.vars = ["ng_bg","ng_bg2","ng_card","ng_border","ng_text","ng_muted","ng_slogan","ng_accent","ng_icon_a","ng_icon_b","ng_logo_bg","ng_logo_ed","ng_font","ng_pre_n","ng_pre_cur","ng_pre_open","ng_pre_req","ng_pre_w","ng_pre_row","ng_h_n","ng_h_req","ng_h_pend","ng_dz_n","ng_dz_full","ext_noinit","hl_slow","hl_fast","hl_armed","hl_hold","hl_pe","hl_ne","hl_te","hl_ph","hl_lv","hl_seed1","hl_seed2","hl_ic2r","hl_ic1r","hl_ic2l","hl_ic1l","hl_flash","srate","hl_fa","hl_fr","hl_sa","hl_sr","gfx_ext_retina","hl_mrel","hl_lm","hl_dm","__l2.n","ng_h_d","ng_h_uc","ng_h_up","ng_h_rc","ng_h_rp","ng_h_ab","ng_h_bh","slider1","hl_thr","slider2","hl_tone","slider3","hl_tl","slider4","hl_tc","hl_pc","slider5","hl_drop","slider6","hl_nl","slider7","hl_nc","slider8","hl_g","hl_k","hl_a1","hl_a2","hl_a3","slider9","hl_fol","slider10","hl_w","slider11","hl_dry","slider12","hl_out","spl0","spl1","hl_x","hl_st","hl_f","hl_t","hl_n1","hl_n2","hl_v3","hl_v1","hl_v2","hl_bl","hl_br","hl_nk","hl_ll","hl_lr","__l9.h","__l9.cy","ng_dw","ng_dh","ng_pre_h","gfx_w","gfx_h","ng_s","ng_ox","ng_oy","gfx_r","gfx_g","gfx_b","gfx_a","mouse_cap","ng_lmb","ng_prev_lmb","ng_click","ng_now","ng_pre_click","ng_pre_was","mouse_wheel","ng_hint_i","ng_hint_ok","__l13.px","__l13.py","__l13.sz","__l13.k","__l13.n","__l13.th","__l13.i","__l17.w","__l17.h","gfx_texth","__l18.n","__l18.i","__l18.w","__l18.cw","__l18.chh","__l18.tr","gfx_x","gfx_y","__l19.r","__l20.hover","mouse_x","mouse_y","__l21.cx","__l22.y0","__l22.hover","ng_pre_x","ng_vx","ng_vy","ng_vw","ng_vh","ng_cw","ng_cy","ng_rowy","ng_ctl_id","ng_px","ng_py","ng_pw","ng_ph","__l26.i","__l26.xx","__l26.yy","__l27.w","__l27.h","hl_i","hl_y","ng_lx_","ng_ly_","__l33.bx","__l33.bw","__l33.f","__l33.p","ng_cellx","__l37.cx","__l37.ry","__l37.v","__l37.hover","__l37.nv","ng_drag","ng_drag_val","__l39.kx","__l39.ky","__l39.kr","__l39.tr","__l39.amax","__l39.ang","__l39.a0","__l39.hover","__l39.i","__l39.n","__l39.px1","__l39.py1","__l39.px2","__l39.py2","__l39.k","__l39.dx","__l39.dy","__l40.k","__l40.n","__l41.sens","__l41.nv","__l41.mv","ng_last_click","ng_last_id","ng_lx","ng_ly","__l42.changed","__l44.i","__l45.cx","__l45.ry","__l45.lr","__l45.t","__l45.tcur","__l45.nt","__l45.hover","__l47.i","__l49.s","__l51.ch","__l52.i","__l52.m","__l53.i","__l54.i","__l56.i","__l56.j","__l56.v","__l58.k","__l58.j","__l58.lo","__l58.hi","__l58.st","__l58.lg","__l58.t","__l58.v","__l60.m","__l62.x0","ng_pre_rows","ng_pre_cols","ng_pre_mx","__l63.x","__l63.y","__l63.hover","__l64.s","samplesblock","num_ch","tempo","play_state","play_position","beat_position","ts_num","ts_denom","pdc_delay","pdc_bot_ch","pdc_top_ch","pdc_midi","trigger","ext_nodenorm","ext_tail_size","ext_gr_meter","gfx_a2","gfx_mode","gfx_clear","gfx_dest","gfx_ext_flags","mouse_hwheel"];
 FX.create = function (R, H, G) {
@@ -574,7 +574,7 @@ t69 = f64_ng_pre_menu_end();
 } else {
 t69 = 0;
 }
-return S.cpy(90007, (R.t(((V[14] >= 0) ? 1 : 0)) ? f63_ng_preset_name(V[14]) : 10051));
+return S.cpy(90007, (R.t(((V[14] >= 0) ? 1 : 0)) ? f63_ng_preset_name(V[14]) : 10063));
 }
 function f47_ng_hint(p0_str) {
 var t28;
@@ -589,6 +589,18 @@ return t28;
 }
 function f48_ng_hint_text(p0_i) {
 (V[222] = 10001);
+(R.t((R.eq(p0_i, 1) ? 1 : 0)) ? (V[222] = 10036) : 0);
+(R.t((R.eq(p0_i, 2) ? 1 : 0)) ? (V[222] = 10037) : 0);
+(R.t((R.eq(p0_i, 3) ? 1 : 0)) ? (V[222] = 10038) : 0);
+(R.t((R.eq(p0_i, 4) ? 1 : 0)) ? (V[222] = 10039) : 0);
+(R.t((R.eq(p0_i, 5) ? 1 : 0)) ? (V[222] = 10040) : 0);
+(R.t((R.eq(p0_i, 6) ? 1 : 0)) ? (V[222] = 10041) : 0);
+(R.t((R.eq(p0_i, 7) ? 1 : 0)) ? (V[222] = 10042) : 0);
+(R.t((R.eq(p0_i, 8) ? 1 : 0)) ? (V[222] = 10043) : 0);
+(R.t((R.eq(p0_i, 9) ? 1 : 0)) ? (V[222] = 10044) : 0);
+(R.t((R.eq(p0_i, 10) ? 1 : 0)) ? (V[222] = 10045) : 0);
+(R.t((R.eq(p0_i, 11) ? 1 : 0)) ? (V[222] = 10046) : 0);
+(R.t((R.eq(p0_i, 12) ? 1 : 0)) ? (V[222] = 10047) : 0);
 return V[222];
 }
 function f49_ng_preset_load(p0_p) {
@@ -1065,21 +1077,21 @@ return (R.t((R.t((R.t(V[246]) && R.t(V[123]) ? 1 : 0)) && R.t(V[122]) ? 1 : 0)) 
 }
 function f63_ng_preset_name(p0_p) {
 (V[247] = 10001);
-(R.t((R.eq(p0_p, 0) ? 1 : 0)) ? (V[247] = 10036) : 0);
-(R.t((R.eq(p0_p, 1) ? 1 : 0)) ? (V[247] = 10037) : 0);
-(R.t((R.eq(p0_p, 2) ? 1 : 0)) ? (V[247] = 10038) : 0);
-(R.t((R.eq(p0_p, 3) ? 1 : 0)) ? (V[247] = 10039) : 0);
-(R.t((R.eq(p0_p, 4) ? 1 : 0)) ? (V[247] = 10040) : 0);
-(R.t((R.eq(p0_p, 5) ? 1 : 0)) ? (V[247] = 10041) : 0);
-(R.t((R.eq(p0_p, 6) ? 1 : 0)) ? (V[247] = 10042) : 0);
-(R.t((R.eq(p0_p, 7) ? 1 : 0)) ? (V[247] = 10043) : 0);
-(R.t((R.eq(p0_p, 8) ? 1 : 0)) ? (V[247] = 10044) : 0);
-(R.t((R.eq(p0_p, 9) ? 1 : 0)) ? (V[247] = 10045) : 0);
-(R.t((R.eq(p0_p, 10) ? 1 : 0)) ? (V[247] = 10046) : 0);
-(R.t((R.eq(p0_p, 11) ? 1 : 0)) ? (V[247] = 10047) : 0);
-(R.t((R.eq(p0_p, 12) ? 1 : 0)) ? (V[247] = 10048) : 0);
-(R.t((R.eq(p0_p, 13) ? 1 : 0)) ? (V[247] = 10049) : 0);
-(R.t((R.eq(p0_p, 14) ? 1 : 0)) ? (V[247] = 10050) : 0);
+(R.t((R.eq(p0_p, 0) ? 1 : 0)) ? (V[247] = 10048) : 0);
+(R.t((R.eq(p0_p, 1) ? 1 : 0)) ? (V[247] = 10049) : 0);
+(R.t((R.eq(p0_p, 2) ? 1 : 0)) ? (V[247] = 10050) : 0);
+(R.t((R.eq(p0_p, 3) ? 1 : 0)) ? (V[247] = 10051) : 0);
+(R.t((R.eq(p0_p, 4) ? 1 : 0)) ? (V[247] = 10052) : 0);
+(R.t((R.eq(p0_p, 5) ? 1 : 0)) ? (V[247] = 10053) : 0);
+(R.t((R.eq(p0_p, 6) ? 1 : 0)) ? (V[247] = 10054) : 0);
+(R.t((R.eq(p0_p, 7) ? 1 : 0)) ? (V[247] = 10055) : 0);
+(R.t((R.eq(p0_p, 8) ? 1 : 0)) ? (V[247] = 10056) : 0);
+(R.t((R.eq(p0_p, 9) ? 1 : 0)) ? (V[247] = 10057) : 0);
+(R.t((R.eq(p0_p, 10) ? 1 : 0)) ? (V[247] = 10058) : 0);
+(R.t((R.eq(p0_p, 11) ? 1 : 0)) ? (V[247] = 10059) : 0);
+(R.t((R.eq(p0_p, 12) ? 1 : 0)) ? (V[247] = 10060) : 0);
+(R.t((R.eq(p0_p, 13) ? 1 : 0)) ? (V[247] = 10061) : 0);
+(R.t((R.eq(p0_p, 14) ? 1 : 0)) ? (V[247] = 10062) : 0);
 return V[247];
 }
 function f64_ng_pre_menu_end() {

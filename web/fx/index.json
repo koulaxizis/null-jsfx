@@ -27,7 +27,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 1,
-   "bytes": 42144
+   "bytes": 42254
   },
   {
    "id": "brighter",
@@ -587,7 +587,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 10,
-   "bytes": 62836
+   "bytes": 63221
   },
   {
    "id": "delay",
@@ -741,7 +741,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 12,
-   "bytes": 62494
+   "bytes": 63740
   },
   {
    "id": "limiter",
@@ -895,7 +895,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 13,
-   "bytes": 74888
+   "bytes": 75296
   },
   {
    "id": "phase_align",
@@ -1077,7 +1077,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 5,
-   "bytes": 48769
+   "bytes": 49064
   },
   {
    "id": "studio_eq",
@@ -1105,7 +1105,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 13,
-   "bytes": 92488
+   "bytes": 92805
   },
   {
    "id": "tape_echo",
@@ -1245,7 +1245,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 12,
-   "bytes": 84000
+   "bytes": 85337
   },
   {
    "id": "bass_management",
@@ -1679,7 +1679,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 7,
-   "bytes": 54557
+   "bytes": 54693
   },
   {
    "id": "shimmer_reverb",
@@ -2143,7 +2143,7 @@
    "ins": 0,
    "outs": 2,
    "sliders": 9,
-   "bytes": 82237
+   "bytes": 83295
   },
   {
    "id": "organ",

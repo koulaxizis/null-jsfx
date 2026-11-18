@@ -3,7 +3,7 @@
 (function (g) {
 "use strict";
 var FX = {"id":"music_box","name":"Music Box","desc":"NULL Music Box GFX","category":"Instruments","tags":"instrument music box musicbox comb tine pin cylinder lullaby celesta toy bell mechanism wind down modal synthesis midi gui","sliders":[{"i":1,"name":"Decay (%)","def":100,"min":25,"max":400,"inc":1,"hidden":true},{"i":2,"name":"Brightness (%)","def":50,"min":0,"max":100,"inc":1,"hidden":true},{"i":3,"name":"Body (%)","def":50,"min":0,"max":100,"inc":1,"hidden":true},{"i":4,"name":"Box Size (%)","def":50,"min":0,"max":100,"inc":1,"hidden":true},{"i":5,"name":"Mechanism (%)","def":30,"min":0,"max":100,"inc":1,"hidden":true},{"i":6,"name":"Wind Down (%)","def":0,"min":0,"max":100,"inc":1,"hidden":true},{"i":7,"name":"Velocity (%)","def":60,"min":0,"max":100,"inc":1,"hidden":true},{"i":8,"name":"Width (%)","def":50,"min":0,"max":100,"inc":1,"hidden":true},{"i":9,"name":"Volume (dB)","def":0,"min":-24,"max":12,"inc":0.1,"hidden":true}],"inPins":[],"outPins":["Left","Right"],"gfx":{"w":560,"h":416},"usesRand":true,"usesFile":false,"usesMidi":true};
-FX.strings = ["Noto Sans","","Hg","NULL JSFX","AUDIO WITHOUT NOISE","A","B","B>A","A>B","MUSIC BOX","INSTRUMENTS","C%d","TINES %d / 32","SPRING RUN DOWN","SPRING %d%%","SPRING WOUND","%s   MECHANISM %d%%","%d%%","DECAY","BRIGHT","BODY","BOX SIZE","VELOCITY","MECHANISM","OFF","WIND DOWN","WIDTH","%+.1f dB","VOLUME","Default","Lullaby","Clean Comb","Antique Box","Big Wooden Box","Tiny Trinket","Glass Bright","Dark Velvet","Long Ring","Short Pluck","Clockwork","Winding Down","Last Turn","Soft Hands","Even Pins","Wide Comb","Mono Box","CUSTOM"];
+FX.strings = ["Noto Sans","","Hg","NULL JSFX","AUDIO WITHOUT NOISE","A","B","B>A","A>B","MUSIC BOX","INSTRUMENTS","C%d","TINES %d / 32","SPRING RUN DOWN","SPRING %d%%","SPRING WOUND","%s   MECHANISM %d%%","%d%%","DECAY","BRIGHT","BODY","BOX SIZE","VELOCITY","MECHANISM","OFF","WIND DOWN","WIDTH","%+.1f dB","VOLUME","How long the tines ring (100% = 3.2 s for the lowest mode at C5)","Level of the upper modes (bright and glassy up, soft and round down)","How much of the wooden box's resonance is heard","Size of the box: its resonances move an octave down (big) or up (small)","The pin's click and the spring governor's whirr, and the buzz of a ringing tine plucked again","The spring running out: every note comes a little later until the box stops (0% = off)","How much the velocity changes the level and the brightness","How far the tines are spread by pitch","Output level","Default","Lullaby","Clean Comb","Antique Box","Big Wooden Box","Tiny Trinket","Glass Bright","Dark Velvet","Long Ring","Short Pluck","Clockwork","Winding Down","Last Turn","Soft Hands","Even Pins","Wide Comb","Mono Box","CUSTOM"];
 FX.live = ["wd_d","wd_dead"];
 FX.vars = ["ng_bg","ng_bg2","ng_card","ng_border","ng_text","ng_muted","ng_slogan","ng_accent","ng_icon_a","ng_icon_b","ng_logo_bg","ng_logo_ed","ng_font","ng_pre_n","ng_pre_cur","ng_pre_open","ng_pre_req","ng_pre_w","ng_pre_row","ng_h_n","ng_h_req","ng_h_pend","ng_dz_n","ng_dz_full","ext_noinit","ext_tail_size","nv","nm","mq","wq","v_note","v_f","v_buzz","v_bph","v_gl","v_gr","v_dmp","v_lf","p_s1","p_s2","p_cf","p_df","p_e","p_r","tpi","v","wq_n","wd_d","wd_dead","wd_idle","cnt","st_idle","ck","gov","wh_g","seed_c","seed_w","m_3","m_2","m_1","m_ofs","bl4.z2","bl4.z1","bl3.z2","bl3.z1","bl2.z2","bl2.z1","bl1.z2","bl1.z1","br4.z2","br4.z1","br3.z2","br3.z1","br2.z2","br2.z1","br1.z2","br1.z1","hw.z2","hw.z1","hc.z2","hc.z1","__l1.w","__l1.al","srate","hc.b0","hc.b1","hc.b2","hc.a1","hc.a2","__l2.w","__l2.al","hw.b0","hw.b1","hw.b2","hw.a1","hw.a2","ck_c","bz_c","dm_c","wh_c","gfx_ext_retina","__l4.n","ng_h_d","ng_h_uc","ng_h_up","ng_h_rc","ng_h_rp","ng_h_ab","ng_h_bh","slider1","dsc","slider2","bri","slider3","body","slider4","bx","__l10.w","__l10.al","bl1.b0","bl1.b1","bl1.b2","bl1.a1","bl1.a2","__l11.w","__l11.al","bl2.b0","bl2.b1","bl2.b2","bl2.a1","bl2.a2","__l12.w","__l12.al","bl3.b0","bl3.b1","bl3.b2","bl3.a1","bl3.a2","__l13.w","__l13.al","bl4.b0","bl4.b1","bl4.b2","bl4.a1","bl4.a2","__l14.w","__l14.al","br1.b0","br1.b1","br1.b2","br1.a1","br1.a2","__l15.w","__l15.al","br2.b0","br2.b1","br2.b2","br2.a1","br2.a2","__l16.w","__l16.al","br3.b0","br3.b1","br3.b2","br3.a1","br3.a2","__l17.w","__l17.al","br4.b0","br4.b1","br4.b2","br4.a1","br4.a2","slider5","mech","slider6","wd_amt","slider7","vs","slider8","wd","slider9","vol","mq_n","mq_i","si","__l18.t","__l20.v","__l20.f","__l20.ba","__l20.ring","__l20.oc","__l20.vn","__l20.g","__l20.k","__l20.b","__l20.fr","__l20.t","__l20.rr","__l20.w","__l20.a","__l21.v","q","sl","sr","y","life","b","r","__l22.y","__l23.y","__l24.y","__l25.y","bxl","__l26.y","__l27.y","__l28.y","__l29.y","bxr","__l31.y","c","__l32.y","wh","spl0","spl1","__l33.h","__l33.cy","ng_dw","ng_dh","ng_pre_h","gfx_w","gfx_h","ng_s","ng_ox","ng_oy","gfx_r","gfx_g","gfx_b","gfx_a","mouse_cap","ng_lmb","ng_prev_lmb","ng_click","ng_now","ng_pre_click","ng_pre_was","mouse_wheel","ng_hint_i","ng_hint_ok","__l37.px","__l37.py","__l37.sz","__l37.k","__l37.n","__l37.th","__l37.i","__l41.w","__l41.h","gfx_texth","__l42.n","__l42.i","__l42.w","__l42.cw","__l42.chh","__l42.tr","gfx_x","gfx_y","__l43.r","__l44.hover","mouse_x","mouse_y","__l45.cx","__l46.y0","__l46.hover","ng_pre_x","ng_vx","ng_vy","ng_vw","ng_vh","ng_cw","ng_cy","ng_rowy","ng_ctl_id","mx_w","mx_i","mx_x","mx_h","__l49.v","__l49.on","mx_n","ng_cellx","__l51.cx","__l51.ry","__l51.v","__l51.hover","__l51.nv","ng_drag","ng_drag_val","__l53.kx","__l53.ky","__l53.kr","__l53.tr","__l53.amax","__l53.ang","__l53.a0","__l53.hover","__l53.i","__l53.n","__l53.px1","__l53.py1","__l53.px2","__l53.py2","__l53.k","__l53.dx","__l53.dy","__l54.k","__l54.n","__l55.sens","__l55.nv","__l55.mv","ng_last_click","ng_last_id","ng_lx","ng_ly","__l56.changed","__l58.i","__l60.i","__l62.w","__l62.h","__l63.s","__l65.ch","__l66.i","__l66.m","__l67.i","__l68.i","__l70.i","__l70.j","__l70.v","__l72.k","__l72.j","__l72.lo","__l72.hi","__l72.st","__l72.lg","__l72.t","__l72.v","__l74.m","__l76.x0","ng_pre_rows","ng_pre_cols","ng_pre_mx","__l77.x","__l77.y","__l77.hover","__l78.s","samplesblock","num_ch","tempo","play_state","play_position","beat_position","ts_num","ts_denom","pdc_delay","pdc_bot_ch","pdc_top_ch","pdc_midi","trigger","ext_nodenorm","ext_gr_meter","gfx_a2","gfx_mode","gfx_clear","gfx_dest","gfx_ext_flags","mouse_hwheel"];
 FX.create = function (R, H, G) {
@@ -818,7 +818,7 @@ t192 = f78_ng_pre_menu_end();
 } else {
 t192 = 0;
 }
-return S.cpy(90007, (R.t(((V[14] >= 0) ? 1 : 0)) ? f77_ng_preset_name(V[14]) : 10046));
+return S.cpy(90007, (R.t(((V[14] >= 0) ? 1 : 0)) ? f77_ng_preset_name(V[14]) : 10055));
 }
 function f60_ng_hint(p0_str) {
 var t149;
@@ -839,6 +839,15 @@ return G.drawstr(p0_str);
 }
 function f62_ng_hint_text(p0_i) {
 (V[329] = 10001);
+(R.t((R.eq(p0_i, 1) ? 1 : 0)) ? (V[329] = 10029) : 0);
+(R.t((R.eq(p0_i, 2) ? 1 : 0)) ? (V[329] = 10030) : 0);
+(R.t((R.eq(p0_i, 3) ? 1 : 0)) ? (V[329] = 10031) : 0);
+(R.t((R.eq(p0_i, 4) ? 1 : 0)) ? (V[329] = 10032) : 0);
+(R.t((R.eq(p0_i, 5) ? 1 : 0)) ? (V[329] = 10033) : 0);
+(R.t((R.eq(p0_i, 6) ? 1 : 0)) ? (V[329] = 10034) : 0);
+(R.t((R.eq(p0_i, 7) ? 1 : 0)) ? (V[329] = 10035) : 0);
+(R.t((R.eq(p0_i, 8) ? 1 : 0)) ? (V[329] = 10036) : 0);
+(R.t((R.eq(p0_i, 9) ? 1 : 0)) ? (V[329] = 10037) : 0);
 return V[329];
 }
 function f63_ng_preset_load(p0_p) {
@@ -1298,23 +1307,23 @@ return (R.t((R.t((R.t(V[353]) && R.t(V[245]) ? 1 : 0)) && R.t(V[244]) ? 1 : 0)) 
 }
 function f77_ng_preset_name(p0_p) {
 (V[354] = 10001);
-(R.t((R.eq(p0_p, 0) ? 1 : 0)) ? (V[354] = 10029) : 0);
-(R.t((R.eq(p0_p, 1) ? 1 : 0)) ? (V[354] = 10030) : 0);
-(R.t((R.eq(p0_p, 2) ? 1 : 0)) ? (V[354] = 10031) : 0);
-(R.t((R.eq(p0_p, 3) ? 1 : 0)) ? (V[354] = 10032) : 0);
-(R.t((R.eq(p0_p, 4) ? 1 : 0)) ? (V[354] = 10033) : 0);
-(R.t((R.eq(p0_p, 5) ? 1 : 0)) ? (V[354] = 10034) : 0);
-(R.t((R.eq(p0_p, 6) ? 1 : 0)) ? (V[354] = 10035) : 0);
-(R.t((R.eq(p0_p, 7) ? 1 : 0)) ? (V[354] = 10036) : 0);
-(R.t((R.eq(p0_p, 8) ? 1 : 0)) ? (V[354] = 10037) : 0);
-(R.t((R.eq(p0_p, 9) ? 1 : 0)) ? (V[354] = 10038) : 0);
-(R.t((R.eq(p0_p, 10) ? 1 : 0)) ? (V[354] = 10039) : 0);
-(R.t((R.eq(p0_p, 11) ? 1 : 0)) ? (V[354] = 10040) : 0);
-(R.t((R.eq(p0_p, 12) ? 1 : 0)) ? (V[354] = 10041) : 0);
-(R.t((R.eq(p0_p, 13) ? 1 : 0)) ? (V[354] = 10042) : 0);
-(R.t((R.eq(p0_p, 14) ? 1 : 0)) ? (V[354] = 10043) : 0);
-(R.t((R.eq(p0_p, 15) ? 1 : 0)) ? (V[354] = 10044) : 0);
-(R.t((R.eq(p0_p, 16) ? 1 : 0)) ? (V[354] = 10045) : 0);
+(R.t((R.eq(p0_p, 0) ? 1 : 0)) ? (V[354] = 10038) : 0);
+(R.t((R.eq(p0_p, 1) ? 1 : 0)) ? (V[354] = 10039) : 0);
+(R.t((R.eq(p0_p, 2) ? 1 : 0)) ? (V[354] = 10040) : 0);
+(R.t((R.eq(p0_p, 3) ? 1 : 0)) ? (V[354] = 10041) : 0);
+(R.t((R.eq(p0_p, 4) ? 1 : 0)) ? (V[354] = 10042) : 0);
+(R.t((R.eq(p0_p, 5) ? 1 : 0)) ? (V[354] = 10043) : 0);
+(R.t((R.eq(p0_p, 6) ? 1 : 0)) ? (V[354] = 10044) : 0);
+(R.t((R.eq(p0_p, 7) ? 1 : 0)) ? (V[354] = 10045) : 0);
+(R.t((R.eq(p0_p, 8) ? 1 : 0)) ? (V[354] = 10046) : 0);
+(R.t((R.eq(p0_p, 9) ? 1 : 0)) ? (V[354] = 10047) : 0);
+(R.t((R.eq(p0_p, 10) ? 1 : 0)) ? (V[354] = 10048) : 0);
+(R.t((R.eq(p0_p, 11) ? 1 : 0)) ? (V[354] = 10049) : 0);
+(R.t((R.eq(p0_p, 12) ? 1 : 0)) ? (V[354] = 10050) : 0);
+(R.t((R.eq(p0_p, 13) ? 1 : 0)) ? (V[354] = 10051) : 0);
+(R.t((R.eq(p0_p, 14) ? 1 : 0)) ? (V[354] = 10052) : 0);
+(R.t((R.eq(p0_p, 15) ? 1 : 0)) ? (V[354] = 10053) : 0);
+(R.t((R.eq(p0_p, 16) ? 1 : 0)) ? (V[354] = 10054) : 0);
 return V[354];
 }
 function f78_ng_pre_menu_end() {

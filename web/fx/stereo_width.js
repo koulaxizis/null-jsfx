@@ -3,7 +3,7 @@
 (function (g) {
 "use strict";
 var FX = {"id":"stereo_width","name":"Stereo Width","desc":"NULL Stereo Width GFX","category":"Essentials","tags":"stereo width mid side widening narrowing spread image crossover gui","sliders":[{"i":1,"name":"Width (%)","def":100,"min":0,"max":200,"inc":1,"hidden":true},{"i":2,"name":"Mix (%)","def":100,"min":0,"max":100,"inc":1,"hidden":true},{"i":3,"name":"Crossover (Hz)","def":0,"min":0,"max":500,"inc":1,"hidden":true},{"i":4,"name":"High Crossover (Hz)","def":0,"min":0,"max":16000,"inc":10,"hidden":true},{"i":5,"name":"High Width (%)","def":100,"min":0,"max":200,"inc":1,"hidden":true}],"inPins":["Left","Right"],"outPins":["Left","Right"],"gfx":{"w":480,"h":294},"usesRand":true,"usesFile":false};
-FX.strings = ["Noto Sans","","Hg","NULL JSFX","AUDIO WITHOUT NOISE","A","B","B>A","A>B","STEREO WIDTH","ESSENTIALS","100","1k","10k","200%","100%","0%","%d%%","WIDTH","MIX","%d Hz","OFF","CROSSOVER","%.1f kHz","HIGH XOVER","HIGH WIDTH","Side level: 0% = mono, 100% = unchanged, 200% = twice as wide","Blend between original and processed signal","Below this frequency the signal is made mono and the width setting only applies above it (0 = off)","Default","Mono Check","Gentle Widen","Wide Pads","Narrow Overheads","Master Mono Lows","Mono Bass Wide Top","Extra Wide Synths","Narrow Mono Lows","Wide Backing Vocals","Half Width Blend","CUSTOM"];
+FX.strings = ["Noto Sans","","Hg","NULL JSFX","AUDIO WITHOUT NOISE","A","B","B>A","A>B","STEREO WIDTH","ESSENTIALS","100","1k","10k","200%","100%","0%","%d%%","WIDTH","MIX","%d Hz","OFF","CROSSOVER","%.1f kHz","HIGH XOVER","HIGH WIDTH","Side level: 0% = mono, 100% = unchanged, 200% = twice as wide","Blend between original and processed signal","Below this frequency the signal is made mono and the width setting only applies above it (0 = off)","Above this frequency the highs get their own width (0 = off, one width for everything)","Width of the band above High Crossover (100% = unchanged, 0% = mono highs, 200% = extra wide)","Default","Mono Check","Gentle Widen","Wide Pads","Narrow Overheads","Master Mono Lows","Mono Bass Wide Top","Extra Wide Synths","Narrow Mono Lows","Wide Backing Vocals","Half Width Blend","CUSTOM"];
 FX.live = ["ng_tw"];
 FX.vars = ["ng_bg","ng_bg2","ng_card","ng_border","ng_text","ng_muted","ng_slogan","ng_accent","ng_icon_a","ng_icon_b","ng_logo_bg","ng_logo_ed","ng_font","ng_pre_n","ng_pre_cur","ng_pre_open","ng_pre_req","ng_pre_w","ng_pre_row","ng_h_n","ng_h_req","ng_h_pend","ng_dz_n","ng_dz_full","ext_noinit","width_pct","mix_amt","xover_freq","lp_mid_l","lp_mid_r","lp_side","lp_hs","gfx_ext_retina","ng_tb","ng_tl","ng_tw","__l3.n","ng_h_d","ng_h_uc","ng_h_up","ng_h_rc","ng_h_rp","ng_h_ab","ng_h_bh","slider1","slider2","slider3","srate","xover_coef","slider4","hx_freq","slider5","hw_pct","hx_coef","spl0","spl1","mid","side","hp_mid","hp_side","out_l","out_r","hb_in","hb_side","__l10.h","__l10.cy","ng_dw","ng_dh","ng_pre_h","gfx_w","gfx_h","ng_s","ng_ox","ng_oy","gfx_r","gfx_g","gfx_b","gfx_a","mouse_cap","ng_lmb","ng_prev_lmb","ng_click","ng_now","ng_pre_click","ng_pre_was","mouse_wheel","ng_hint_i","ng_hint_ok","__l14.px","__l14.py","__l14.sz","__l14.k","__l14.n","__l14.th","__l14.i","__l18.w","__l18.h","gfx_texth","__l19.n","__l19.i","__l19.w","__l19.cw","__l19.chh","__l19.tr","gfx_x","gfx_y","__l20.r","__l21.hover","mouse_x","mouse_y","__l22.cx","__l23.y0","__l23.hover","ng_pre_x","ng_vx","ng_vy","ng_vw","ng_vh","ng_cw","ng_cy","ng_rowy","ng_ctl_id","ng_px","ng_py","ng_pw","ng_ph","__l27.i","__l27.k","__l27.l","__l27.r","__l27.m","__l27.sd","__l27.cx","__l27.cy","__l27.rad","__l27.xx","__l27.yy","__l28.d","__l28.m","__l28.f","__l28.xx","__l30.w","__l30.h","sw_i","sw_y","sw_x","sw_z","__l32.hr","__l32.hi","__l32.gr","__l32.gi","__l32.tr","__l32.ti","__l33.w","__l33.b","__l33.dr","__l33.di","__l33.dd","sw_hr","sw_hi","ng_lx_","ng_ly_","ng_cellx","__l37.cx","__l37.ry","__l37.v","__l37.hover","__l37.nv","ng_drag","ng_drag_val","__l39.kx","__l39.ky","__l39.kr","__l39.tr","__l39.amax","__l39.ang","__l39.a0","__l39.hover","__l39.i","__l39.n","__l39.px1","__l39.py1","__l39.px2","__l39.py2","__l39.k","__l39.dx","__l39.dy","__l40.k","__l40.n","__l41.sens","__l41.nv","__l41.mv","ng_last_click","ng_last_id","ng_lx","ng_ly","__l42.changed","__l44.i","__l46.i","__l48.s","__l50.ch","__l51.i","__l51.m","__l52.i","__l53.i","__l55.i","__l55.j","__l55.v","__l57.k","__l57.j","__l57.lo","__l57.hi","__l57.st","__l57.lg","__l57.t","__l57.v","__l59.m","__l61.x0","ng_pre_rows","ng_pre_cols","ng_pre_mx","__l62.x","__l62.y","__l62.hover","__l63.s","samplesblock","num_ch","tempo","play_state","play_position","beat_position","ts_num","ts_denom","pdc_delay","pdc_bot_ch","pdc_top_ch","pdc_midi","trigger","ext_nodenorm","ext_tail_size","ext_gr_meter","gfx_a2","gfx_mode","gfx_clear","gfx_dest","gfx_ext_flags","mouse_hwheel"];
 FX.create = function (R, H, G) {
@@ -588,7 +588,7 @@ t78 = f63_ng_pre_menu_end();
 } else {
 t78 = 0;
 }
-return S.cpy(90007, (R.t(((V[14] >= 0) ? 1 : 0)) ? f62_ng_preset_name(V[14]) : 10040));
+return S.cpy(90007, (R.t(((V[14] >= 0) ? 1 : 0)) ? f62_ng_preset_name(V[14]) : 10042));
 }
 function f46_ng_hint(p0_str) {
 var t41;
@@ -606,6 +606,8 @@ function f47_ng_hint_text(p0_i) {
 (R.t((R.eq(p0_i, 1) ? 1 : 0)) ? (V[199] = 10026) : 0);
 (R.t((R.eq(p0_i, 2) ? 1 : 0)) ? (V[199] = 10027) : 0);
 (R.t((R.eq(p0_i, 3) ? 1 : 0)) ? (V[199] = 10028) : 0);
+(R.t((R.eq(p0_i, 4) ? 1 : 0)) ? (V[199] = 10029) : 0);
+(R.t((R.eq(p0_i, 5) ? 1 : 0)) ? (V[199] = 10030) : 0);
 return V[199];
 }
 function f48_ng_preset_load(p0_p) {
@@ -937,17 +939,17 @@ return (R.t((R.t((R.t(V[223]) && R.t(V[84]) ? 1 : 0)) && R.t(V[83]) ? 1 : 0)) ? 
 }
 function f62_ng_preset_name(p0_p) {
 (V[224] = 10001);
-(R.t((R.eq(p0_p, 0) ? 1 : 0)) ? (V[224] = 10029) : 0);
-(R.t((R.eq(p0_p, 1) ? 1 : 0)) ? (V[224] = 10030) : 0);
-(R.t((R.eq(p0_p, 2) ? 1 : 0)) ? (V[224] = 10031) : 0);
-(R.t((R.eq(p0_p, 3) ? 1 : 0)) ? (V[224] = 10032) : 0);
-(R.t((R.eq(p0_p, 4) ? 1 : 0)) ? (V[224] = 10033) : 0);
-(R.t((R.eq(p0_p, 5) ? 1 : 0)) ? (V[224] = 10034) : 0);
-(R.t((R.eq(p0_p, 6) ? 1 : 0)) ? (V[224] = 10035) : 0);
-(R.t((R.eq(p0_p, 7) ? 1 : 0)) ? (V[224] = 10036) : 0);
-(R.t((R.eq(p0_p, 8) ? 1 : 0)) ? (V[224] = 10037) : 0);
-(R.t((R.eq(p0_p, 9) ? 1 : 0)) ? (V[224] = 10038) : 0);
-(R.t((R.eq(p0_p, 10) ? 1 : 0)) ? (V[224] = 10039) : 0);
+(R.t((R.eq(p0_p, 0) ? 1 : 0)) ? (V[224] = 10031) : 0);
+(R.t((R.eq(p0_p, 1) ? 1 : 0)) ? (V[224] = 10032) : 0);
+(R.t((R.eq(p0_p, 2) ? 1 : 0)) ? (V[224] = 10033) : 0);
+(R.t((R.eq(p0_p, 3) ? 1 : 0)) ? (V[224] = 10034) : 0);
+(R.t((R.eq(p0_p, 4) ? 1 : 0)) ? (V[224] = 10035) : 0);
+(R.t((R.eq(p0_p, 5) ? 1 : 0)) ? (V[224] = 10036) : 0);
+(R.t((R.eq(p0_p, 6) ? 1 : 0)) ? (V[224] = 10037) : 0);
+(R.t((R.eq(p0_p, 7) ? 1 : 0)) ? (V[224] = 10038) : 0);
+(R.t((R.eq(p0_p, 8) ? 1 : 0)) ? (V[224] = 10039) : 0);
+(R.t((R.eq(p0_p, 9) ? 1 : 0)) ? (V[224] = 10040) : 0);
+(R.t((R.eq(p0_p, 10) ? 1 : 0)) ? (V[224] = 10041) : 0);
 return V[224];
 }
 function f63_ng_pre_menu_end() {

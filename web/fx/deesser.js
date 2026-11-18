@@ -3,7 +3,7 @@
 (function (g) {
 "use strict";
 var FX = {"id":"deesser","name":"DeEsser","desc":"NULL DeEsser GFX","category":"Essentials","tags":"deess sibilance sibilants hiss vocal harshness frequency wideband listen gui","sliders":[{"i":1,"name":"Target (Hz)","def":6000,"min":4000,"max":10000,"inc":100,"hidden":true},{"i":2,"name":"Reduction (dB)","def":-6,"min":-18,"max":0,"inc":0.1,"hidden":true},{"i":3,"name":"Mode","def":0,"min":0,"max":1,"inc":1,"enums":["Split","Wide"],"hidden":true},{"i":4,"name":"Threshold Mode","def":0,"min":0,"max":1,"inc":1,"enums":["Auto","Manual"],"hidden":true},{"i":5,"name":"Threshold (dB)","def":-30,"min":-60,"max":0,"inc":0.1,"hidden":true},{"i":6,"name":"Range (dB)","def":-18,"min":-18,"max":0,"inc":0.1,"hidden":true},{"i":7,"name":"Listen","def":0,"min":0,"max":1,"inc":1,"enums":["Off","On"],"hidden":true},{"i":8,"name":"Suppress Freq (Hz)","def":0,"min":0,"max":16000,"inc":100,"hidden":true},{"i":9,"name":"Suppress Q","def":2,"min":0.5,"max":8,"inc":0.1,"hidden":true},{"i":10,"name":"Suppress Shape","def":0,"min":0,"max":1,"inc":1,"enums":["Band","Shelf"],"hidden":true}],"inPins":["Left","Right"],"outPins":["Left","Right"],"gfx":{"w":480,"h":380},"usesRand":true,"usesFile":false};
-FX.strings = ["Noto Sans","","Hg","NULL JSFX","AUDIO WITHOUT NOISE","A","B","B>A","A>B","DEESSER","ESSENTIALS","%d","1k","2k","5k","10k","20k","WIDE","SPLIT","LISTEN","SIB","GR","OUT","%.1f kHz","FREQUENCY","%.1f dB","REDUCTION","FULL","RANGE","MODE","SPLIT|WIDE","DETECTION","AUTO|MANUAL","THRESHOLD","OFF|ON","TARGET","SUPPRESS","%.1f","SUPP. Q","SHAPE","BAND|SHELF","Centre frequency of the band-pass that isolates the sibilance","Maximum cut applied to that band when sibilance gets loud","Split turns down only the sibilance band; Wide turns down the whole signal by the same amount","Auto uses the built-in detection level; Manual uses the Threshold control instead","Level of the sibilance band above which the reduction starts (Manual only)","Caps how far the signal is turned down, while Reduction sets how quickly it gets there (-18 dB = no cap)","Plays only what is being removed, to tune Target and the threshold by ear","Default","Male Vocal","Female Vocal","Podcast Speech","Gentle Sibilance","Harsh Sibilance","Cymbal Splash Tamer","Acoustic Guitar Glare","Gentle Vocal","Harsh Cymbals","Wide Vocal De-Ess","Quiet Voice","Broadcast Voice","Sibilance Listen","CUSTOM"];
+FX.strings = ["Noto Sans","","Hg","NULL JSFX","AUDIO WITHOUT NOISE","A","B","B>A","A>B","DEESSER","ESSENTIALS","%d","1k","2k","5k","10k","20k","WIDE","SPLIT","LISTEN","SIB","GR","OUT","%.1f kHz","FREQUENCY","%.1f dB","REDUCTION","FULL","RANGE","MODE","SPLIT|WIDE","DETECTION","AUTO|MANUAL","THRESHOLD","OFF|ON","TARGET","SUPPRESS","%.1f","SUPP. Q","SHAPE","BAND|SHELF","Centre frequency of the band-pass that isolates the sibilance","Maximum cut applied to that band when sibilance gets loud","Split turns down only the sibilance band; Wide turns down the whole signal by the same amount","Auto uses the built-in detection level; Manual uses the Threshold control instead","Level of the sibilance band above which the reduction starts (Manual only)","Caps how far the signal is turned down, while Reduction sets how quickly it gets there (-18 dB = no cap)","Plays only what is being removed, to tune Target and the threshold by ear","Centre of the band that is turned down (0 = the Target frequency, as before)","Width of the suppress band (narrow at 8, wide at 0.5)","Band turns down a band around Suppress Freq; Shelf turns down everything above it","Default","Male Vocal","Female Vocal","Podcast Speech","Gentle Sibilance","Harsh Sibilance","Cymbal Splash Tamer","Acoustic Guitar Glare","Gentle Vocal","Harsh Cymbals","Wide Vocal De-Ess","Quiet Voice","Broadcast Voice","Sibilance Listen","CUSTOM"];
 FX.live = ["cut","ds_out","env"];
 FX.vars = ["ng_bg","ng_bg2","ng_card","ng_border","ng_text","ng_muted","ng_slogan","ng_accent","ng_icon_a","ng_icon_b","ng_logo_bg","ng_logo_ed","ng_font","ng_pre_n","ng_pre_cur","ng_pre_open","ng_pre_req","ng_pre_w","ng_pre_row","ng_h_n","ng_h_req","ng_h_pend","ng_dz_n","ng_dz_full","ext_noinit","threshold","thr_auto","srate","att","rel","env","y2l","y1l","x2l","x1l","y2r","y1r","x2r","x1r","sy2l","sy1l","sx2l","sx1l","sy2r","sy1r","sx2r","sx1r","gfx_ext_retina","ds_rel","ds_out","__l2.n","ng_h_d","ng_h_uc","ng_h_up","ng_h_rc","ng_h_rp","ng_h_ab","ng_h_bh","slider1","w0","q","alpha","a0","b0","b2","a1","a2","slider2","max_cut","slider3","wide","slider4","slider5","slider6","rng_on","rng_cut","slider7","listen","slider8","slider9","slider10","own","sw0","salpha","sa0","sb0","sb1","sb2","sa1","sa2","spl0","bl","spl1","br","s_l","s_r","level","over","cut","rm_l","rm_r","ds_lv","__l8.h","__l8.cy","ng_dw","ng_dh","ng_pre_h","gfx_w","gfx_h","ng_s","ng_ox","ng_oy","gfx_r","gfx_g","gfx_b","gfx_a","mouse_cap","ng_lmb","ng_prev_lmb","ng_click","ng_now","ng_pre_click","ng_pre_was","mouse_wheel","ng_hint_i","ng_hint_ok","__l12.px","__l12.py","__l12.sz","__l12.k","__l12.n","__l12.th","__l12.i","__l16.w","__l16.h","gfx_texth","__l17.n","__l17.i","__l17.w","__l17.cw","__l17.chh","__l17.tr","gfx_x","gfx_y","__l18.r","__l19.hover","mouse_x","mouse_y","__l20.cx","__l21.y0","__l21.hover","ng_pre_x","ng_vx","ng_vy","ng_vw","ng_vh","ng_cw","ng_cy","ng_rowy","ng_ctl_id","ds_mc","ng_px","ng_py","ng_pw","ng_ph","ds_d","ds_m","ds_f","ds_xx","ds_i","ds_yy","__l27.w","__l27.h","__l28.w","__l28.nr","__l28.ni","__l28.dr","__l28.di","__l28.dd","__l28.br","__l28.bi","__l28.hr","__l28.hi","ds_px","ds_py","ng_lx_","ng_ly_","__l31.bx","__l31.bw","__l31.f","__l31.p","__l34.bx","__l34.bw","__l34.f","ng_cellx","__l36.cx","__l36.ry","__l36.v","__l36.hover","__l36.nv","ng_drag","ng_drag_val","__l38.kx","__l38.ky","__l38.kr","__l38.tr","__l38.amax","__l38.ang","__l38.a0","__l38.hover","__l38.i","__l38.n","__l38.px1","__l38.py1","__l38.px2","__l38.py2","__l38.k","__l38.dx","__l38.dy","__l39.k","__l39.n","__l40.sens","__l40.nv","__l40.mv","ng_last_click","ng_last_id","ng_lx","ng_ly","__l41.changed","__l43.i","__l44.cx","__l44.ry","__l44.n","__l44.i","__l44.p","__l44.q","__l44.cur","__l44.pw","__l44.hover","__l44.nv","__l44.tw","__l44.th","__l46.i","__l48.s","__l50.ch","__l51.i","__l51.m","__l52.i","__l53.i","__l55.i","__l55.j","__l55.v","__l57.k","__l57.j","__l57.lo","__l57.hi","__l57.st","__l57.lg","__l57.t","__l57.v","__l59.m","__l61.x0","ng_pre_rows","ng_pre_cols","ng_pre_mx","__l62.x","__l62.y","__l62.hover","__l63.s","samplesblock","num_ch","tempo","play_state","play_position","beat_position","ts_num","ts_denom","pdc_delay","pdc_bot_ch","pdc_top_ch","pdc_midi","trigger","ext_nodenorm","ext_tail_size","ext_gr_meter","gfx_a2","gfx_mode","gfx_clear","gfx_dest","gfx_ext_flags","mouse_hwheel"];
 FX.create = function (R, H, G) {
@@ -639,7 +639,7 @@ t81 = f63_ng_pre_menu_end();
 } else {
 t81 = 0;
 }
-return S.cpy(90007, (R.t(((V[14] >= 0) ? 1 : 0)) ? f62_ng_preset_name(V[14]) : 10062));
+return S.cpy(90007, (R.t(((V[14] >= 0) ? 1 : 0)) ? f62_ng_preset_name(V[14]) : 10065));
 }
 function f46_ng_hint(p0_str) {
 var t41;
@@ -661,6 +661,9 @@ function f47_ng_hint_text(p0_i) {
 (R.t((R.eq(p0_i, 5) ? 1 : 0)) ? (V[243] = 10045) : 0);
 (R.t((R.eq(p0_i, 6) ? 1 : 0)) ? (V[243] = 10046) : 0);
 (R.t((R.eq(p0_i, 7) ? 1 : 0)) ? (V[243] = 10047) : 0);
+(R.t((R.eq(p0_i, 8) ? 1 : 0)) ? (V[243] = 10048) : 0);
+(R.t((R.eq(p0_i, 9) ? 1 : 0)) ? (V[243] = 10049) : 0);
+(R.t((R.eq(p0_i, 10) ? 1 : 0)) ? (V[243] = 10050) : 0);
 return V[243];
 }
 function f48_ng_preset_load(p0_p) {
@@ -1092,20 +1095,20 @@ return (R.t((R.t((R.t(V[267]) && R.t(V[122]) ? 1 : 0)) && R.t(V[121]) ? 1 : 0)) 
 }
 function f62_ng_preset_name(p0_p) {
 (V[268] = 10001);
-(R.t((R.eq(p0_p, 0) ? 1 : 0)) ? (V[268] = 10048) : 0);
-(R.t((R.eq(p0_p, 1) ? 1 : 0)) ? (V[268] = 10049) : 0);
-(R.t((R.eq(p0_p, 2) ? 1 : 0)) ? (V[268] = 10050) : 0);
-(R.t((R.eq(p0_p, 3) ? 1 : 0)) ? (V[268] = 10051) : 0);
-(R.t((R.eq(p0_p, 4) ? 1 : 0)) ? (V[268] = 10052) : 0);
-(R.t((R.eq(p0_p, 5) ? 1 : 0)) ? (V[268] = 10053) : 0);
-(R.t((R.eq(p0_p, 6) ? 1 : 0)) ? (V[268] = 10054) : 0);
-(R.t((R.eq(p0_p, 7) ? 1 : 0)) ? (V[268] = 10055) : 0);
-(R.t((R.eq(p0_p, 8) ? 1 : 0)) ? (V[268] = 10056) : 0);
-(R.t((R.eq(p0_p, 9) ? 1 : 0)) ? (V[268] = 10057) : 0);
-(R.t((R.eq(p0_p, 10) ? 1 : 0)) ? (V[268] = 10058) : 0);
-(R.t((R.eq(p0_p, 11) ? 1 : 0)) ? (V[268] = 10059) : 0);
-(R.t((R.eq(p0_p, 12) ? 1 : 0)) ? (V[268] = 10060) : 0);
-(R.t((R.eq(p0_p, 13) ? 1 : 0)) ? (V[268] = 10061) : 0);
+(R.t((R.eq(p0_p, 0) ? 1 : 0)) ? (V[268] = 10051) : 0);
+(R.t((R.eq(p0_p, 1) ? 1 : 0)) ? (V[268] = 10052) : 0);
+(R.t((R.eq(p0_p, 2) ? 1 : 0)) ? (V[268] = 10053) : 0);
+(R.t((R.eq(p0_p, 3) ? 1 : 0)) ? (V[268] = 10054) : 0);
+(R.t((R.eq(p0_p, 4) ? 1 : 0)) ? (V[268] = 10055) : 0);
+(R.t((R.eq(p0_p, 5) ? 1 : 0)) ? (V[268] = 10056) : 0);
+(R.t((R.eq(p0_p, 6) ? 1 : 0)) ? (V[268] = 10057) : 0);
+(R.t((R.eq(p0_p, 7) ? 1 : 0)) ? (V[268] = 10058) : 0);
+(R.t((R.eq(p0_p, 8) ? 1 : 0)) ? (V[268] = 10059) : 0);
+(R.t((R.eq(p0_p, 9) ? 1 : 0)) ? (V[268] = 10060) : 0);
+(R.t((R.eq(p0_p, 10) ? 1 : 0)) ? (V[268] = 10061) : 0);
+(R.t((R.eq(p0_p, 11) ? 1 : 0)) ? (V[268] = 10062) : 0);
+(R.t((R.eq(p0_p, 12) ? 1 : 0)) ? (V[268] = 10063) : 0);
+(R.t((R.eq(p0_p, 13) ? 1 : 0)) ? (V[268] = 10064) : 0);
 return V[268];
 }
 function f63_ng_pre_menu_end() {

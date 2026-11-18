@@ -3,7 +3,7 @@
 (function (g) {
 "use strict";
 var FX = {"id":"rotary_speaker","name":"Rotary Speaker","desc":"NULL Rotary Speaker GFX","category":"Advanced","tags":"rotary leslie organ speaker doppler tremolo chorale horn drum gui","sliders":[{"i":1,"name":"Speed","def":0,"min":0,"max":2,"inc":1,"enums":["Slow (Chorale)","Fast (Tremolo)","Stop"],"hidden":true},{"i":2,"name":"Acceleration (%)","def":100,"min":10,"max":400,"inc":1,"hidden":true},{"i":3,"name":"Horn/Drum Balance (%)","def":50,"min":0,"max":100,"inc":1,"hidden":true},{"i":4,"name":"Drive (%)","def":20,"min":0,"max":100,"inc":1,"hidden":true},{"i":5,"name":"Width (%)","def":80,"min":0,"max":100,"inc":1,"hidden":true},{"i":6,"name":"Mix (%)","def":100,"min":0,"max":100,"inc":1,"hidden":true},{"i":7,"name":"Speed Follow (%)","def":0,"min":0,"max":100,"inc":1,"hidden":true}],"inPins":["Left","Right"],"outPins":["Left","Right"],"gfx":{"w":480,"h":380},"usesRand":true,"usesFile":false};
-FX.strings = ["Noto Sans","","Hg","NULL JSFX","AUDIO WITHOUT NOISE","A","B","B>A","A>B","ROTARY SPEAKER","ADVANCED","L","R","%s %.1f Hz","HORN","DRUM","+1","0","-1","AMP CURVE","SPEED","SLOW|FAST|STOP","%d%%","ACCEL","BALANCE","DRIVE","WIDTH","MIX","FOLLOW","Rotor speed: Slow (Chorale), Fast (Tremolo) or Stop","Scales how long the rotors take to change speed","Balance between the horn (highs) and drum (lows)","Tube-amp style overdrive before the rotors","Angle between the virtual left/right mics","Dry/wet blend","Default","Organ Chorale","Organ Fast Tremolo","Gritty Rock Organ","Slow Ramp Transitions","Guitar Swirl","Keys Gentle Spin","Vocal Movement","Stopped Cabinet","Fast Spin Clean","Drum Rotor Heavy","CUSTOM"];
+FX.strings = ["Noto Sans","","Hg","NULL JSFX","AUDIO WITHOUT NOISE","A","B","B>A","A>B","ROTARY SPEAKER","ADVANCED","L","R","%s %.1f Hz","HORN","DRUM","+1","0","-1","AMP CURVE","SPEED","SLOW|FAST|STOP","%d%%","ACCEL","BALANCE","DRIVE","WIDTH","MIX","FOLLOW","Rotor speed: Slow (Chorale), Fast (Tremolo) or Stop","Scales how long the rotors take to change speed","Balance between the horn (highs) and drum (lows)","Tube-amp style overdrive before the rotors","Angle between the virtual left/right mics","Dry/wet blend","How much the rotors speed up with the input level (0% = only the Speed switch)","Default","Organ Chorale","Organ Fast Tremolo","Gritty Rock Organ","Slow Ramp Transitions","Guitar Swirl","Keys Gentle Spin","Vocal Movement","Stopped Cabinet","Fast Spin Clean","Drum Rotor Heavy","CUSTOM"];
 FX.live = ["drum_f","drum_ph","horn_f","horn_ph"];
 FX.vars = ["ng_bg","ng_bg2","ng_card","ng_border","ng_text","ng_muted","ng_slogan","ng_accent","ng_icon_a","ng_icon_b","ng_logo_bg","ng_logo_ed","ng_font","ng_pre_n","ng_pre_cur","ng_pre_open","ng_pre_req","ng_pre_w","ng_pre_row","ng_h_n","ng_h_req","ng_h_pend","ng_dz_n","ng_dz_full","ext_noinit","srate","buf_size","hl","hr","dl","dr","wpos","horn_ph","drum_ph","horn_f","drum_f","lp2","lp1","sf_env","gfx_ext_retina","__l2.n","ng_h_d","ng_h_uc","ng_h_up","ng_h_rc","ng_h_rp","ng_h_ab","ng_h_bh","slider1","speed","horn_target","drum_target","slider2","acc","horn_c","drum_c","slider3","bal","slider4","drive","slider5","width","slider6","mix","slider7","follow","sf_a","sf_r","xc","spl0","spl1","x","low","high","sf_x","sf_e","off","h_a","d_a","__l8.rp","__l8.i","__l8.f","__l8.i2","h_l","h_r","d_l","d_r","hg","dg","w_l","w_r","__l9.h","__l9.cy","ng_dw","ng_dh","ng_pre_h","gfx_w","gfx_h","ng_s","ng_ox","ng_oy","gfx_r","gfx_g","gfx_b","gfx_a","mouse_cap","ng_lmb","ng_prev_lmb","ng_click","ng_now","ng_pre_click","ng_pre_was","mouse_wheel","ng_hint_i","ng_hint_ok","__l13.px","__l13.py","__l13.sz","__l13.k","__l13.n","__l13.th","__l13.i","__l17.w","__l17.h","gfx_texth","__l18.n","__l18.i","__l18.w","__l18.cw","__l18.chh","__l18.tr","gfx_x","gfx_y","__l19.r","__l20.hover","mouse_x","mouse_y","__l21.cx","__l22.y0","__l22.hover","ng_pre_x","ng_vx","ng_vy","ng_vw","ng_vh","ng_cw","ng_cy","ng_rowy","ng_ctl_id","__l25.a","__l25.off","__l25.k","__l26.w","__l26.h","ng_lx_","ng_ly_","ng_px","ng_py","ng_pw","ng_ph","__l30.i","__l30.xx","__l30.yy","rs_d","rs_i","rs_x","rs_y","ng_cellx","__l33.cx","__l33.ry","__l33.n","__l33.i","__l33.p","__l33.q","__l33.cur","__l33.pw","__l33.hover","__l33.nv","__l33.tw","__l33.th","ng_drag","__l35.changed","__l37.i","__l38.cx","__l38.ry","__l38.v","__l38.hover","__l38.nv","ng_drag_val","__l39.kx","__l39.ky","__l39.kr","__l39.tr","__l39.amax","__l39.ang","__l39.a0","__l39.hover","__l39.i","__l39.n","__l39.px1","__l39.py1","__l39.px2","__l39.py2","__l39.k","__l39.dx","__l39.dy","__l40.k","__l40.n","__l41.sens","__l41.nv","__l41.mv","ng_last_click","ng_last_id","ng_lx","ng_ly","__l43.i","__l45.s","__l47.ch","__l48.i","__l48.m","__l49.i","__l50.i","__l52.i","__l52.j","__l52.v","__l54.k","__l54.j","__l54.lo","__l54.hi","__l54.st","__l54.lg","__l54.t","__l54.v","__l56.m","__l58.x0","ng_pre_rows","ng_pre_cols","ng_pre_mx","__l59.x","__l59.y","__l59.hover","__l60.s","samplesblock","num_ch","tempo","play_state","play_position","beat_position","ts_num","ts_denom","pdc_delay","pdc_bot_ch","pdc_top_ch","pdc_midi","trigger","ext_nodenorm","ext_tail_size","ext_gr_meter","gfx_a2","gfx_mode","gfx_clear","gfx_dest","gfx_ext_flags","mouse_hwheel"];
 FX.create = function (R, H, G) {
@@ -599,7 +599,7 @@ t74 = f60_ng_pre_menu_end();
 } else {
 t74 = 0;
 }
-return S.cpy(90007, (R.t(((V[14] >= 0) ? 1 : 0)) ? f59_ng_preset_name(V[14]) : 10046));
+return S.cpy(90007, (R.t(((V[14] >= 0) ? 1 : 0)) ? f59_ng_preset_name(V[14]) : 10047));
 }
 function f43_ng_hint(p0_str) {
 var t37;
@@ -620,6 +620,7 @@ function f44_ng_hint_text(p0_i) {
 (R.t((R.eq(p0_i, 4) ? 1 : 0)) ? (V[216] = 10032) : 0);
 (R.t((R.eq(p0_i, 5) ? 1 : 0)) ? (V[216] = 10033) : 0);
 (R.t((R.eq(p0_i, 6) ? 1 : 0)) ? (V[216] = 10034) : 0);
+(R.t((R.eq(p0_i, 7) ? 1 : 0)) ? (V[216] = 10035) : 0);
 return V[216];
 }
 function f45_ng_preset_load(p0_p) {
@@ -973,17 +974,17 @@ return (R.t((R.t((R.t(V[240]) && R.t(V[111]) ? 1 : 0)) && R.t(V[110]) ? 1 : 0)) 
 }
 function f59_ng_preset_name(p0_p) {
 (V[241] = 10001);
-(R.t((R.eq(p0_p, 0) ? 1 : 0)) ? (V[241] = 10035) : 0);
-(R.t((R.eq(p0_p, 1) ? 1 : 0)) ? (V[241] = 10036) : 0);
-(R.t((R.eq(p0_p, 2) ? 1 : 0)) ? (V[241] = 10037) : 0);
-(R.t((R.eq(p0_p, 3) ? 1 : 0)) ? (V[241] = 10038) : 0);
-(R.t((R.eq(p0_p, 4) ? 1 : 0)) ? (V[241] = 10039) : 0);
-(R.t((R.eq(p0_p, 5) ? 1 : 0)) ? (V[241] = 10040) : 0);
-(R.t((R.eq(p0_p, 6) ? 1 : 0)) ? (V[241] = 10041) : 0);
-(R.t((R.eq(p0_p, 7) ? 1 : 0)) ? (V[241] = 10042) : 0);
-(R.t((R.eq(p0_p, 8) ? 1 : 0)) ? (V[241] = 10043) : 0);
-(R.t((R.eq(p0_p, 9) ? 1 : 0)) ? (V[241] = 10044) : 0);
-(R.t((R.eq(p0_p, 10) ? 1 : 0)) ? (V[241] = 10045) : 0);
+(R.t((R.eq(p0_p, 0) ? 1 : 0)) ? (V[241] = 10036) : 0);
+(R.t((R.eq(p0_p, 1) ? 1 : 0)) ? (V[241] = 10037) : 0);
+(R.t((R.eq(p0_p, 2) ? 1 : 0)) ? (V[241] = 10038) : 0);
+(R.t((R.eq(p0_p, 3) ? 1 : 0)) ? (V[241] = 10039) : 0);
+(R.t((R.eq(p0_p, 4) ? 1 : 0)) ? (V[241] = 10040) : 0);
+(R.t((R.eq(p0_p, 5) ? 1 : 0)) ? (V[241] = 10041) : 0);
+(R.t((R.eq(p0_p, 6) ? 1 : 0)) ? (V[241] = 10042) : 0);
+(R.t((R.eq(p0_p, 7) ? 1 : 0)) ? (V[241] = 10043) : 0);
+(R.t((R.eq(p0_p, 8) ? 1 : 0)) ? (V[241] = 10044) : 0);
+(R.t((R.eq(p0_p, 9) ? 1 : 0)) ? (V[241] = 10045) : 0);
+(R.t((R.eq(p0_p, 10) ? 1 : 0)) ? (V[241] = 10046) : 0);
 return V[241];
 }
 function f60_ng_pre_menu_end() {

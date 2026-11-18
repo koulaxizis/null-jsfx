@@ -3,7 +3,7 @@
 (function (g) {
 "use strict";
 var FX = {"id":"passive_eq","name":"Passive EQ","desc":"NULL Passive EQ GFX","category":"Essentials","tags":"eq equalizer passive program tube vintage low boost attenuate shelf air bandwidth mastering color gui","sliders":[{"i":1,"name":"Low Freq","def":2,"min":0,"max":3,"inc":1,"enums":["20 Hz","30 Hz","60 Hz","100 Hz"],"hidden":true},{"i":2,"name":"Low Boost","def":0,"min":0,"max":10,"inc":0.1,"hidden":true},{"i":3,"name":"Low Atten","def":0,"min":0,"max":10,"inc":0.1,"hidden":true},{"i":4,"name":"High Freq","def":3,"min":0,"max":6,"inc":1,"enums":["3 kHz","4 kHz","5 kHz","8 kHz","10 kHz","12 kHz","16 kHz"],"hidden":true},{"i":5,"name":"High Boost","def":0,"min":0,"max":10,"inc":0.1,"hidden":true},{"i":6,"name":"Bandwidth","def":5,"min":0,"max":10,"inc":0.1,"hidden":true},{"i":7,"name":"Atten Freq","def":1,"min":0,"max":2,"inc":1,"enums":["5 kHz","10 kHz","20 kHz"],"hidden":true},{"i":8,"name":"High Atten","def":0,"min":0,"max":10,"inc":0.1,"hidden":true},{"i":9,"name":"Tube (%)","def":0,"min":0,"max":100,"inc":1,"hidden":true},{"i":10,"name":"Output (dB)","def":0,"min":-12,"max":12,"inc":0.1,"hidden":true},{"i":11,"name":"Low Dynamic (%)","def":0,"min":0,"max":100,"inc":1,"hidden":true},{"i":12,"name":"High Dynamic (%)","def":0,"min":0,"max":100,"inc":1,"hidden":true},{"i":13,"name":"Dynamic Threshold (dB)","def":-24,"min":-60,"max":0,"inc":0.1,"hidden":true}],"inPins":["Left","Right"],"outPins":["Left","Right"],"gfx":{"w":480,"h":466},"usesRand":true,"usesFile":false};
-FX.strings = ["Noto Sans","","Hg","NULL JSFX","AUDIO WITHOUT NOISE","A","B","B>A","A>B","PASSIVE EQ","ESSENTIALS","+%d","%d","100","1k","10k","LOW FREQ","20|30|60|100","%.1f","LOW BOOST","LOW ATTEN","HIGH FREQ","3K|4K|5K|8K|10K|12K|16K","HIGH BOOST","BANDWIDTH","ATTEN FREQ","5K|10K|20K","HIGH ATTEN","%d%%","TUBE","%+.1f dB","OUTPUT","STATIC","LOW DYN","HIGH DYN","%.1f dB","DYN THRESH","The low frequency for both low controls","Low shelf boost (up to +13.5 dB)","Gentler low shelf cut a little higher; with Low Boost it gives the classic bump with a dip above it","The frequency of the high peak","High peak boost (up to +18 dB)","Width of the high peak: 0 is sharp, 10 is broad","The frequency of the high shelf cut","High shelf cut (down to −20 dB)","Drive of the tube stage (even harmonics)","Output level","Default","Kick Weight","Bass Body","Vocal Air","Vocal Presence","Master Sheen","Dark Tape","Snare Crack","Warm Tube","Drum Bus Thump","Guitar Bite","CUSTOM"];
+FX.strings = ["Noto Sans","","Hg","NULL JSFX","AUDIO WITHOUT NOISE","A","B","B>A","A>B","PASSIVE EQ","ESSENTIALS","+%d","%d","100","1k","10k","LOW FREQ","20|30|60|100","%.1f","LOW BOOST","LOW ATTEN","HIGH FREQ","3K|4K|5K|8K|10K|12K|16K","HIGH BOOST","BANDWIDTH","ATTEN FREQ","5K|10K|20K","HIGH ATTEN","%d%%","TUBE","%+.1f dB","OUTPUT","STATIC","LOW DYN","HIGH DYN","%.1f dB","DYN THRESH","The low frequency for both low controls","Low shelf boost (up to +13.5 dB)","Gentler low shelf cut a little higher; with Low Boost it gives the classic bump with a dip above it","The frequency of the high peak","High peak boost (up to +18 dB)","Width of the high peak: 0 is sharp, 10 is broad","The frequency of the high shelf cut","High shelf cut (down to −20 dB)","Drive of the tube stage (even harmonics)","Output level","How much the low boost backs off when its band gets loud (0% = static, as a classic passive EQ)","How much the high boost backs off when its band gets loud (0% = static)","Level of the boosted band above which the dynamic boosts back off","Default","Kick Weight","Bass Body","Vocal Air","Vocal Presence","Master Sheen","Dark Tape","Snare Crack","Warm Tube","Drum Bus Thump","Guitar Bite","CUSTOM"];
 FX.live = [];
 FX.vars = ["ng_bg","ng_bg2","ng_card","ng_border","ng_text","ng_muted","ng_slogan","ng_accent","ng_icon_a","ng_icon_b","ng_logo_bg","ng_logo_ed","ng_font","ng_pre_n","ng_pre_cur","ng_pre_open","ng_pre_req","ng_pre_w","ng_pre_row","ng_h_n","ng_h_req","ng_h_pend","ng_dz_n","ng_dz_full","ext_noinit","st","dxr","dxl","dcr","dcl","dy_eh","dy_el","dy_kh","dy_kl","dy_dh1","dy_dh0","dy_dl1","dy_dl0","gfx_ext_retina","__l2.n","ng_h_d","ng_h_uc","ng_h_up","ng_h_rc","ng_h_rp","ng_h_ab","ng_h_bh","slider1","lf","slider4","hf","slider7","af","slider2","lb_on","slider3","la_on","slider5","hb_on","slider8","ha_on","__l8.w0","__l8.cw","__l8.sw","__l8.a","__l8.al","__l8.a0","__l8.b2a","srate","lb.b0","lb.b1","lb.b2","lb.a1","lb.a2","__l9.w0","__l9.cw","__l9.sw","__l9.a","__l9.al","__l9.a0","__l9.b2a","la.b0","la.b1","la.b2","la.a1","la.a2","__l10.w0","__l10.cw","__l10.sw","__l10.a","__l10.al","__l10.a0","__l10.b2a","hb.b0","hb.b1","hb.b2","hb.a1","hb.a2","slider6","__l11.w0","__l11.cw","__l11.sw","__l11.a","__l11.al","__l11.a0","__l11.b2a","ha.b0","ha.b1","ha.b2","ha.a1","ha.a2","slider9","tube","tk","tb","__l12.e","tz","dca","slider10","og","slider11","dy_lo","slider12","dy_hi","slider13","dy_thr","dy_at","dy_rl","__l14.y","dy_d","__l15.y","__l16.y","__l17.y","spl0","l","spl1","r","dy_x","yl","yr","__l18.h","__l18.cy","ng_dw","ng_dh","ng_pre_h","gfx_w","gfx_h","ng_s","ng_ox","ng_oy","gfx_r","gfx_g","gfx_b","gfx_a","mouse_cap","ng_lmb","ng_prev_lmb","ng_click","ng_now","ng_pre_click","ng_pre_was","mouse_wheel","ng_hint_i","ng_hint_ok","__l22.px","__l22.py","__l22.sz","__l22.k","__l22.n","__l22.th","__l22.i","__l26.w","__l26.h","gfx_texth","__l27.n","__l27.i","__l27.w","__l27.cw","__l27.chh","__l27.tr","gfx_x","gfx_y","__l28.r","__l29.hover","mouse_x","mouse_y","__l30.cx","__l31.y0","__l31.hover","ng_pre_x","ng_vx","ng_vy","ng_vw","ng_vh","ng_cw","ng_cy","ng_rowy","ng_ctl_id","pq_px","pq_py","pq_pw","pq_ph","ng_px","ng_py","ng_pw","ng_ph","__l35.d","__l35.m","__l35.f","__l35.xx","__l35.db","__l35.yy","ng_tw_","ng_th_","pq_k","pq_xx","pq_yy","pq_zy","pq_i","__l38.w","__l38.p","__l39.c1","__l39.s1","__l39.c2","__l39.s2","__l39.nr","__l39.ni","__l39.dr","__l39.di","__l40.c1","__l40.s1","__l40.c2","__l40.s2","__l40.nr","__l40.ni","__l40.dr","__l40.di","__l41.c1","__l41.s1","__l41.c2","__l41.s2","__l41.nr","__l41.ni","__l41.dr","__l41.di","__l42.c1","__l42.s1","__l42.c2","__l42.s2","__l42.nr","__l42.ni","__l42.dr","__l42.di","ng_lx_","ng_ly_","ng_cellx","__l46.cx","__l46.ry","__l46.n","__l46.i","__l46.p","__l46.q","__l46.cur","__l46.pw","__l46.hover","__l46.nv","__l46.tw","__l46.th","ng_drag","__l48.changed","__l50.i","__l51.cx","__l51.ry","__l51.v","__l51.hover","__l51.nv","ng_drag_val","__l52.kx","__l52.ky","__l52.kr","__l52.tr","__l52.amax","__l52.ang","__l52.a0","__l52.hover","__l52.i","__l52.n","__l52.px1","__l52.py1","__l52.px2","__l52.py2","__l52.k","__l52.dx","__l52.dy","__l53.k","__l53.n","__l54.sens","__l54.nv","__l54.mv","ng_last_click","ng_last_id","ng_lx","ng_ly","__l56.i","__l58.w","__l58.h","__l59.s","__l61.ch","__l62.i","__l62.m","__l63.i","__l64.i","__l66.i","__l66.j","__l66.v","__l68.k","__l68.j","__l68.lo","__l68.hi","__l68.st","__l68.lg","__l68.t","__l68.v","__l70.m","__l72.x0","ng_pre_rows","ng_pre_cols","ng_pre_mx","__l73.x","__l73.y","__l73.hover","__l74.s","samplesblock","num_ch","tempo","play_state","play_position","beat_position","ts_num","ts_denom","pdc_delay","pdc_bot_ch","pdc_top_ch","pdc_midi","trigger","ext_nodenorm","ext_tail_size","ext_gr_meter","gfx_a2","gfx_mode","gfx_clear","gfx_dest","gfx_ext_flags","mouse_hwheel"];
 FX.create = function (R, H, G) {
@@ -875,7 +875,7 @@ t105 = f74_ng_pre_menu_end();
 } else {
 t105 = 0;
 }
-return S.cpy(90007, (R.t(((V[14] >= 0) ? 1 : 0)) ? f73_ng_preset_name(V[14]) : 10058));
+return S.cpy(90007, (R.t(((V[14] >= 0) ? 1 : 0)) ? f73_ng_preset_name(V[14]) : 10061));
 }
 function f56_ng_hint(p0_str) {
 var t68;
@@ -906,6 +906,9 @@ function f58_ng_hint_text(p0_i) {
 (R.t((R.eq(p0_i, 8) ? 1 : 0)) ? (V[306] = 10044) : 0);
 (R.t((R.eq(p0_i, 9) ? 1 : 0)) ? (V[306] = 10045) : 0);
 (R.t((R.eq(p0_i, 10) ? 1 : 0)) ? (V[306] = 10046) : 0);
+(R.t((R.eq(p0_i, 11) ? 1 : 0)) ? (V[306] = 10047) : 0);
+(R.t((R.eq(p0_i, 12) ? 1 : 0)) ? (V[306] = 10048) : 0);
+(R.t((R.eq(p0_i, 13) ? 1 : 0)) ? (V[306] = 10049) : 0);
 return V[306];
 }
 function f59_ng_preset_load(p0_p) {
@@ -1325,17 +1328,17 @@ return (R.t((R.t((R.t(V[330]) && R.t(V[160]) ? 1 : 0)) && R.t(V[159]) ? 1 : 0)) 
 }
 function f73_ng_preset_name(p0_p) {
 (V[331] = 10001);
-(R.t((R.eq(p0_p, 0) ? 1 : 0)) ? (V[331] = 10047) : 0);
-(R.t((R.eq(p0_p, 1) ? 1 : 0)) ? (V[331] = 10048) : 0);
-(R.t((R.eq(p0_p, 2) ? 1 : 0)) ? (V[331] = 10049) : 0);
-(R.t((R.eq(p0_p, 3) ? 1 : 0)) ? (V[331] = 10050) : 0);
-(R.t((R.eq(p0_p, 4) ? 1 : 0)) ? (V[331] = 10051) : 0);
-(R.t((R.eq(p0_p, 5) ? 1 : 0)) ? (V[331] = 10052) : 0);
-(R.t((R.eq(p0_p, 6) ? 1 : 0)) ? (V[331] = 10053) : 0);
-(R.t((R.eq(p0_p, 7) ? 1 : 0)) ? (V[331] = 10054) : 0);
-(R.t((R.eq(p0_p, 8) ? 1 : 0)) ? (V[331] = 10055) : 0);
-(R.t((R.eq(p0_p, 9) ? 1 : 0)) ? (V[331] = 10056) : 0);
-(R.t((R.eq(p0_p, 10) ? 1 : 0)) ? (V[331] = 10057) : 0);
+(R.t((R.eq(p0_p, 0) ? 1 : 0)) ? (V[331] = 10050) : 0);
+(R.t((R.eq(p0_p, 1) ? 1 : 0)) ? (V[331] = 10051) : 0);
+(R.t((R.eq(p0_p, 2) ? 1 : 0)) ? (V[331] = 10052) : 0);
+(R.t((R.eq(p0_p, 3) ? 1 : 0)) ? (V[331] = 10053) : 0);
+(R.t((R.eq(p0_p, 4) ? 1 : 0)) ? (V[331] = 10054) : 0);
+(R.t((R.eq(p0_p, 5) ? 1 : 0)) ? (V[331] = 10055) : 0);
+(R.t((R.eq(p0_p, 6) ? 1 : 0)) ? (V[331] = 10056) : 0);
+(R.t((R.eq(p0_p, 7) ? 1 : 0)) ? (V[331] = 10057) : 0);
+(R.t((R.eq(p0_p, 8) ? 1 : 0)) ? (V[331] = 10058) : 0);
+(R.t((R.eq(p0_p, 9) ? 1 : 0)) ? (V[331] = 10059) : 0);
+(R.t((R.eq(p0_p, 10) ? 1 : 0)) ? (V[331] = 10060) : 0);
 return V[331];
 }
 function f74_ng_pre_menu_end() {

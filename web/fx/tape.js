@@ -3,7 +3,7 @@
 (function (g) {
 "use strict";
 var FX = {"id":"tape","name":"Tape","desc":"NULL Tape GFX","category":"Essentials","tags":"tape saturation analog warmth head bump wow flutter hiss machine gui","sliders":[{"i":1,"name":"Drive (dB)","def":3,"min":0,"max":24,"inc":0.1,"hidden":true},{"i":2,"name":"Speed","def":1,"min":0,"max":2,"inc":1,"enums":["7.5 ips","15 ips","30 ips"],"hidden":true},{"i":3,"name":"Head Bump (dB)","def":3,"min":0,"max":9,"inc":0.1,"hidden":true},{"i":4,"name":"Wow (%)","def":10,"min":0,"max":100,"inc":1,"hidden":true},{"i":5,"name":"Flutter (%)","def":10,"min":0,"max":100,"inc":1,"hidden":true},{"i":6,"name":"Hiss (%)","def":10,"min":0,"max":100,"inc":1,"hidden":true},{"i":7,"name":"Output (dB)","def":0,"min":-12,"max":12,"inc":0.1,"hidden":true},{"i":8,"name":"Mix (%)","def":100,"min":0,"max":100,"inc":1,"hidden":true},{"i":9,"name":"Tape Type","def":0,"min":0,"max":3,"inc":1,"enums":["Classic","Type I","Type II","Type IV"],"hidden":true},{"i":10,"name":"Noise Reduction","def":0,"min":0,"max":1,"inc":1,"enums":["Off","On"],"hidden":true},{"i":11,"name":"Oversampling","def":0,"min":0,"max":2,"inc":1,"enums":["Off","2x","4x"],"hidden":true},{"i":12,"name":"Azimuth (%)","def":0,"min":0,"max":100,"inc":1,"hidden":true},{"i":13,"name":"Dropouts (%)","def":0,"min":0,"max":100,"inc":1,"hidden":true}],"inPins":["Left","Right"],"outPins":["Left","Right"],"gfx":{"w":480,"h":466},"usesRand":true,"usesFile":false};
-FX.strings = ["Noto Sans","","Hg","NULL JSFX","AUDIO WITHOUT NOISE","A","B","B>A","A>B","TAPE","ESSENTIALS","+%d","%d","100","1k","10k","TRANSFER","%.1f dB","DRIVE","SPEED","7.5 IPS|15 IPS|30 IPS","TAPE TYPE","CLASSIC|TYPE I|TYPE II|TYPE IV","BUMP","%d%%","HISS","OVERSAMPLE","OFF|2X|4X","WOW","FLUTTER","AZIMUTH","DROPOUTS","NOISE RED","OFF|ON","%+.1f dB","OUTPUT","MIX","Input level into the tape saturation (level-matched at -12 dBFS, so it adds colour rather than volume)","Tape speed: sets the head bump frequency (45 / 70 / 110 Hz), the high-frequency loss and the emphasis corner","Height of the low-frequency head bump","Slow pitch drift of the transport (up to 2 ms delay modulation)","Fast pitch wobble of the transport (up to 0.1 ms delay modulation)","Tape hiss level, shaped by the tape speed","Output level","Dry/wet blend (the dry signal is delayed to stay aligned with the wet path)","Tape formulation: Classic (open reel), Type I (ferric, warm, more hiss), Type II (chrome, more","Cassette-style noise reduction: a compander that boosts quiet highs up to 10 dB before the tape and cuts","Runs the saturation at 2x or 4x the sample rate (linear-phase halfband filters, 31 or 37 more samples of","Default","Clean Mastering Tape","Warm Mix Bus","Vocal Tape Sheen","Drum Tape Squash","Bass Thickener","Cassette Lo-Fi","Worn Tape Warble","Parallel Tape Color","Cassette Type II","Chrome With NR","Ferric Demo Tape","Metal Cassette Master","CUSTOM"];
+FX.strings = ["Noto Sans","","Hg","NULL JSFX","AUDIO WITHOUT NOISE","A","B","B>A","A>B","TAPE","ESSENTIALS","+%d","%d","100","1k","10k","TRANSFER","%.1f dB","DRIVE","SPEED","7.5 IPS|15 IPS|30 IPS","TAPE TYPE","CLASSIC|TYPE I|TYPE II|TYPE IV","BUMP","%d%%","HISS","OVERSAMPLE","OFF|2X|4X","WOW","FLUTTER","AZIMUTH","DROPOUTS","NOISE RED","OFF|ON","%+.1f dB","OUTPUT","MIX","Input level into the tape saturation (level-matched at -12 dBFS, so it adds colour rather than volume)","Tape speed: sets the head bump frequency (45 / 70 / 110 Hz), the high-frequency loss and the emphasis corner","Height of the low-frequency head bump","Slow pitch drift of the transport (up to 2 ms delay modulation)","Fast pitch wobble of the transport (up to 0.1 ms delay modulation)","Tape hiss level, shaped by the tape speed","Output level","Dry/wet blend (the dry signal is delayed to stay aligned with the wet path)","Tape formulation: Classic (open reel), Type I (ferric, warm, more hiss), Type II (chrome, more","Cassette-style noise reduction: a compander that boosts quiet highs up to 10 dB before the tape and cuts","Runs the saturation at 2x or 4x the sample rate (linear-phase halfband filters, 31 or 37 more samples of","How far the right channel's head is tilted against the left (a tiny moving delay: the highs smear and move","How often and how deeply the level and the highs drop out, as on a worn cassette (0% = never)","Default","Clean Mastering Tape","Warm Mix Bus","Vocal Tape Sheen","Drum Tape Squash","Bass Thickener","Cassette Lo-Fi","Worn Tape Warble","Parallel Tape Color","Cassette Type II","Chrome With NR","Ferric Demo Tape","Metal Cassette Master","CUSTOM"];
 FX.live = ["chl.pw","chr.pw"];
 FX.vars = ["ng_bg","ng_bg2","ng_card","ng_border","ng_text","ng_muted","ng_slogan","ng_accent","ng_icon_a","ng_icon_b","ng_logo_bg","ng_logo_ed","ng_font","ng_pre_n","ng_pre_cur","ng_pre_open","ng_pre_req","ng_pre_w","ng_pre_row","ng_h_n","ng_h_req","ng_h_pend","ng_dz_n","ng_dz_full","ext_noinit","buf_size","srate","base","pdc_bot_ch","pdc_top_ch","pdc_delay","buf_l","buf_r","e1","d1","e2","d2","os_prev","wpos","wow_p1","wow_p2","flt_p1","flt_p2","seed_l","seed_r","seed_d","do_e","do_t","do_n","do_c","do_lp_r","do_lp_l","sat_b","sat_a","sat_y_r","sat_u_r","sat_y_l","sat_u_l","nz_r","nz_l","de_l","dh_l","dx_l","ee_l","eh_l","ex_l","de_r","dh_r","dx_r","ee_r","eh_r","ex_r","__l1.c","__l1.i","__l1.dd","__l1.a","__l1.sg","__l1.r","__l1.w","__l1.s","__l2.s","__l2.t","__l2.k","__l2.q","chl.u1","chl.u2","chl.d1","chl.d2","chl.a1","chl.a2","chl.pd","chl.dr","chr.u1","chr.u2","chr.d1","chr.d2","chr.a1","chr.a2","chr.pd","chr.dr","gfx_ext_retina","__l6.n","ng_h_d","ng_h_uc","ng_h_up","ng_h_rc","ng_h_rp","ng_h_ab","ng_h_bh","slider1","drive","slider2","speed","slider3","bump_db","slider4","wow","slider5","flutter","slider6","hiss","slider9","tape_type","slider10","nr_on","em_g","tt_hf","tt_hiss","nc_t","slider7","out_gain","slider8","mix","bump_f","hf_f","__l12.wc","__l12.k","em_b0","em_b1","em_a1","__l13.w","__l13.al","hp_l.b0","hp_l.b1","hp_l.b2","hp_l.a1","hp_l.a2","__l14.w","__l14.al","hp_r.b0","hp_r.b1","hp_r.b2","hp_r.a1","hp_r.a2","__l15.w","__l15.al","__l15.a","pk_l.b0","pk_l.b1","pk_l.b2","pk_l.a1","pk_l.a2","__l16.w","__l16.al","__l16.a","pk_r.b0","pk_r.b1","pk_r.b2","pk_r.a1","pk_r.a2","__l17.w","__l17.al","lp_l.b0","lp_l.b1","lp_l.b2","lp_l.a1","lp_l.a2","__l18.w","__l18.al","lp_r.b0","lp_r.b1","lp_r.b2","lp_r.a1","lp_r.a2","sat_comp","wow_depth","slider12","az_d","slider13","do_amt","do_k","do_lc","flt_depth","nc_a","nr_a","nr_at","nr_rt","nr_max","slider11","os","osf","lat","pad","chr.pw","chl.pw","dly","__l21.rp","__l21.i","__l21.fr","__l21.xm1","__l21.x0","__l21.x1","__l21.x2","__l21.c1","__l21.c2","__l21.c3","x_l","x_r","dry_l","dry_r","spl0","spl1","nr_g","nr_h","__l22.y","pre_l.x1","pre_l.y1","u_l","__l23.y","pre_r.x1","pre_r.y1","u_r","__l24.i","__l24.t","__l24.v","__l24.y","__l25.p","__l25.q","__l25.acc","__l25.i","hb_o0","hb_o1","__l26.p","__l26.q","__l26.acc","__l26.i","__l26.o","y_l","__l27.i","__l27.t","__l27.v","__l27.y","y_r","__l28.y","de_l.x1","de_l.y1","w_l","__l29.y","de_r.x1","de_r.y1","w_r","__l30.y","pk_l.z1","pk_l.z2","__l31.y","hp_l.z1","hp_l.z2","__l32.y","pk_r.z1","pk_r.z2","__l33.y","hp_r.z1","hp_r.z2","n_l","n_r","__l34.y","lp_l.z1","lp_l.z2","__l35.y","lp_r.z1","lp_r.z2","__l36.h","__l36.cy","ng_dw","ng_dh","ng_pre_h","gfx_w","gfx_h","ng_s","ng_ox","ng_oy","gfx_r","gfx_g","gfx_b","gfx_a","mouse_cap","ng_lmb","ng_prev_lmb","ng_click","ng_now","ng_pre_click","ng_pre_was","mouse_wheel","ng_hint_i","ng_hint_ok","__l40.px","__l40.py","__l40.sz","__l40.k","__l40.n","__l40.th","__l40.i","__l44.w","__l44.h","gfx_texth","__l45.n","__l45.i","__l45.w","__l45.cw","__l45.chh","__l45.tr","gfx_x","gfx_y","__l46.r","__l47.hover","mouse_x","mouse_y","__l48.cx","__l49.y0","__l49.hover","ng_pre_x","ng_vx","ng_vy","ng_vw","ng_vh","ng_cw","ng_cy","ng_rowy","ng_ctl_id","ng_px","ng_py","ng_pw","ng_ph","__l53.d","__l53.m","__l53.f","__l53.xx","__l53.db","__l53.yy","ng_tw_","ng_th_","tp_zy","tp_i","__l56.w","__l57.nr","__l57.ni","__l57.dr","__l57.di","__l58.nr","__l58.ni","__l58.dr","__l58.di","__l59.nr","__l59.ni","__l59.dr","__l59.di","tp_y","ng_lx_","ng_ly_","__l62.i","__l62.xx","__l62.yy","__l63.w","__l63.h","tp_x","ng_cellx","__l65.cx","__l65.ry","__l65.v","__l65.hover","__l65.nv","ng_drag","ng_drag_val","__l67.kx","__l67.ky","__l67.kr","__l67.tr","__l67.amax","__l67.ang","__l67.a0","__l67.hover","__l67.i","__l67.n","__l67.px1","__l67.py1","__l67.px2","__l67.py2","__l67.k","__l67.dx","__l67.dy","__l68.k","__l68.n","__l69.sens","__l69.nv","__l69.mv","ng_last_click","ng_last_id","ng_lx","ng_ly","__l70.changed","__l72.i","__l73.cx","__l73.ry","__l73.n","__l73.i","__l73.p","__l73.q","__l73.cur","__l73.pw","__l73.hover","__l73.nv","__l73.tw","__l73.th","__l75.i","__l77.s","__l79.ch","__l80.i","__l80.m","__l81.i","__l82.i","__l84.i","__l84.j","__l84.v","__l86.k","__l86.j","__l86.lo","__l86.hi","__l86.st","__l86.lg","__l86.t","__l86.v","__l88.m","__l90.x0","ng_pre_rows","ng_pre_cols","ng_pre_mx","__l91.x","__l91.y","__l91.hover","__l92.s","samplesblock","num_ch","tempo","play_state","play_position","beat_position","ts_num","ts_denom","pdc_midi","trigger","ext_nodenorm","ext_tail_size","ext_gr_meter","gfx_a2","gfx_mode","gfx_clear","gfx_dest","gfx_ext_flags","mouse_hwheel"];
 FX.create = function (R, H, G) {
@@ -1087,7 +1087,7 @@ t166 = f92_ng_pre_menu_end();
 } else {
 t166 = 0;
 }
-return S.cpy(90007, (R.t(((V[14] >= 0) ? 1 : 0)) ? f91_ng_preset_name(V[14]) : 10061));
+return S.cpy(90007, (R.t(((V[14] >= 0) ? 1 : 0)) ? f91_ng_preset_name(V[14]) : 10063));
 }
 function f75_ng_hint(p0_str) {
 var t127;
@@ -1113,6 +1113,8 @@ function f76_ng_hint_text(p0_i) {
 (R.t((R.eq(p0_i, 9) ? 1 : 0)) ? (V[424] = 10045) : 0);
 (R.t((R.eq(p0_i, 10) ? 1 : 0)) ? (V[424] = 10046) : 0);
 (R.t((R.eq(p0_i, 11) ? 1 : 0)) ? (V[424] = 10047) : 0);
+(R.t((R.eq(p0_i, 12) ? 1 : 0)) ? (V[424] = 10048) : 0);
+(R.t((R.eq(p0_i, 13) ? 1 : 0)) ? (V[424] = 10049) : 0);
 return V[424];
 }
 function f77_ng_preset_load(p0_p) {
@@ -1568,19 +1570,19 @@ return (R.t((R.t((R.t(V[448]) && R.t(V[301]) ? 1 : 0)) && R.t(V[300]) ? 1 : 0)) 
 }
 function f91_ng_preset_name(p0_p) {
 (V[449] = 10001);
-(R.t((R.eq(p0_p, 0) ? 1 : 0)) ? (V[449] = 10048) : 0);
-(R.t((R.eq(p0_p, 1) ? 1 : 0)) ? (V[449] = 10049) : 0);
-(R.t((R.eq(p0_p, 2) ? 1 : 0)) ? (V[449] = 10050) : 0);
-(R.t((R.eq(p0_p, 3) ? 1 : 0)) ? (V[449] = 10051) : 0);
-(R.t((R.eq(p0_p, 4) ? 1 : 0)) ? (V[449] = 10052) : 0);
-(R.t((R.eq(p0_p, 5) ? 1 : 0)) ? (V[449] = 10053) : 0);
-(R.t((R.eq(p0_p, 6) ? 1 : 0)) ? (V[449] = 10054) : 0);
-(R.t((R.eq(p0_p, 7) ? 1 : 0)) ? (V[449] = 10055) : 0);
-(R.t((R.eq(p0_p, 8) ? 1 : 0)) ? (V[449] = 10056) : 0);
-(R.t((R.eq(p0_p, 9) ? 1 : 0)) ? (V[449] = 10057) : 0);
-(R.t((R.eq(p0_p, 10) ? 1 : 0)) ? (V[449] = 10058) : 0);
-(R.t((R.eq(p0_p, 11) ? 1 : 0)) ? (V[449] = 10059) : 0);
-(R.t((R.eq(p0_p, 12) ? 1 : 0)) ? (V[449] = 10060) : 0);
+(R.t((R.eq(p0_p, 0) ? 1 : 0)) ? (V[449] = 10050) : 0);
+(R.t((R.eq(p0_p, 1) ? 1 : 0)) ? (V[449] = 10051) : 0);
+(R.t((R.eq(p0_p, 2) ? 1 : 0)) ? (V[449] = 10052) : 0);
+(R.t((R.eq(p0_p, 3) ? 1 : 0)) ? (V[449] = 10053) : 0);
+(R.t((R.eq(p0_p, 4) ? 1 : 0)) ? (V[449] = 10054) : 0);
+(R.t((R.eq(p0_p, 5) ? 1 : 0)) ? (V[449] = 10055) : 0);
+(R.t((R.eq(p0_p, 6) ? 1 : 0)) ? (V[449] = 10056) : 0);
+(R.t((R.eq(p0_p, 7) ? 1 : 0)) ? (V[449] = 10057) : 0);
+(R.t((R.eq(p0_p, 8) ? 1 : 0)) ? (V[449] = 10058) : 0);
+(R.t((R.eq(p0_p, 9) ? 1 : 0)) ? (V[449] = 10059) : 0);
+(R.t((R.eq(p0_p, 10) ? 1 : 0)) ? (V[449] = 10060) : 0);
+(R.t((R.eq(p0_p, 11) ? 1 : 0)) ? (V[449] = 10061) : 0);
+(R.t((R.eq(p0_p, 12) ? 1 : 0)) ? (V[449] = 10062) : 0);
 return V[449];
 }
 function f92_ng_pre_menu_end() {
