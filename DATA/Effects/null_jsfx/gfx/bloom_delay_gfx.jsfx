@@ -2,7 +2,7 @@ desc:NULL Bloom Delay GFX
 author: Christos Koulaxizis
 tags: bloom delay diffusion diffused echo reverb ambient modulation tempo sync feedback infinite pad wash gui
 //category: Advanced
-//NULL JSFX v4.0 • https://nulljsfx.tech • MIT License
+//NULL JSFX v4.1 • https://nulljsfx.tech • MIT License
 
 import null_gfx.jsfx-inc
 

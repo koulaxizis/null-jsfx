@@ -2,7 +2,7 @@ desc:NULL Choir GFX
 author: Christos Koulaxizis
 tags: instrument choir vocal voices aah ooh formant vowel ensemble pad polyphonic synth mpe midi gui
 //category: Instruments
-//NULL JSFX v4.0 • https://nulljsfx.tech • MIT License
+//NULL JSFX v4.1 • https://nulljsfx.tech • MIT License
 
 import null_gfx.jsfx-inc
 

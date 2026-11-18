@@ -2,7 +2,7 @@ desc:NULL Warmer
 author: Christos Koulaxizis
 tags: warm warmth tape tube saturation analog low mids soft top mix bus one knob
 //category: One Slider
-//NULL JSFX v4.0 • https://nulljsfx.tech • MIT License
+//NULL JSFX v4.1 • https://nulljsfx.tech • MIT License
 
 slider1:40<0,100,1>Amount
 
