@@ -2455,6 +2455,12 @@ entry and the Bible delta.
 - **Next:** orOS Studio gets this with the next null-jsfx release through `sync-nullfx.yml`.
 - **Version:** v4.0 (no change).
 
+### 2026-11-18 — tools (no version change) — Media kit: iPhone size, LinkedIn company banner, Android remotes in the press release
+- **Changes:** three proposals of the monthly media kit check, approved by Christos on 2026-11-18. The iPhone wallpapers are 1320×2868 (iPhone 16/17 Pro Max) instead of 1290×2796. Every kit gains a LinkedIn company page banner, 4200×700, next to the profile banner (READMEs list both). The NULL JSFX press release (EN and EL) names the two Android apps, Remote for DAWs and Remote for Mixers (beta), as `llms.txt` does. A Glarolykoi kit was tried and dropped: Christos moves it to its own project (samples and patch in `/mnt/project-files/media-kit/glarolykoi-samples-2026-11-18/`).
+- **Files:** `tools/media_kit/build.py`, `tools/media_kit/text/README-*.md`, `tools/media_kit/text/press/null-jsfx-press-release.*.md`, `NULL_JSFX_BIBLE.md` (this entry).
+- **Tests (run on Linux):** `python3 tools/media_kit/build.py` with `--previews`: all 8 zips built (the kits grow by 0.5–2.2 MB, so the size labels on the three pages stay within 10%), the new banners and iPhone wallpapers checked by eye; the page previews use the 4K and Android files, which did not change. `python3 tests/bible_order.py`.
+- **Next:** `media-kit.yml` rebuilds the 8 zips on merge.
+
 ### 2026-11-18 — plugins, tools (no version change) — Klevgrand-inspired plugins and upgrades
 - **Why:** Christos approved all 10 proposals of the Klevgrand research ("Ναι σε όλα, σύμφωνα με το πλάνο σου", 2026-11-18), as one PR after #175, merged when the Windows and Linux CI pass, and working in orOS Studio too; the Music Box sound sample was approved first ("Εγκρίνω! Συνέχισε!") (Part VII 2026-11-18, B23).
 - **New plugins (beta):**

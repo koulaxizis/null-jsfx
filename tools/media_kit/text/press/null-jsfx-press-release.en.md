@@ -11,6 +11,8 @@ Every plugin ships in several forms that sound identical, checked by automated t
 - native VST3 and CLAP plugins for any DAW on Windows, Linux and macOS (also for ARM64 on Windows and Linux), and LV2 on Linux;
 - Rack modules, factory presets and ready-made REAPER FX chains.
 
+Two free Android apps (beta) come with the suite: Remote for DAWs controls REAPER, Ardour/Mixbus, Bitwig Studio, Ableton Live, Cubase and FL Studio, with every NULL JSFX plugin on its own screen, and Remote for Mixers controls digital mixers from Behringer, Midas, Allen & Heath and Yamaha. Both are on F-Droid and Obtainium too.
+
 The NULL JSFX Hub installs, updates and removes the suite with one click, and installers are available for each operating system. Everything downloads from the project's GitHub releases. There are no accounts, licence keys, ads or paid tiers.
 
 > "I wanted a complete set of studio tools that anyone can use and study, without paywalls. NULL JSFX stays free, and the code stays open." (Christos Koulaxizis, creator)
