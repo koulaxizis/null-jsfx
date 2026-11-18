@@ -35,4 +35,16 @@ static const char* const kHints[] = {
     "Encode turns L/R into Mid (left output) and Side (right output); Decode turns Mid/Side back into L/R",
 };
 
+// the parameters the header's dice moves (tools/build_presets.py dice()): index, range, step, log scale
+#define NULL_UI_DICE 1
+struct DiceParam {
+    uint32_t index;
+    float lo, hi, step;
+    bool log;
+};
+static const DiceParam kDice[] = {
+    { 2, 0.0f, 1.0f, 1.0f, false },
+};
+static constexpr uint32_t kNumDice = sizeof(kDice) / sizeof(kDice[0]);
+
 } // namespace nullpresets

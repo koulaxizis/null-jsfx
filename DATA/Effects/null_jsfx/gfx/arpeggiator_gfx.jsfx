@@ -425,6 +425,7 @@ out_pin:Right
   strcpy(#ng_h_ix, "");
   ng_hist_add(1); ng_hist_add(2); ng_hist_add(3); ng_hist_add(4); ng_hist_add(5); ng_hist_add(6); ng_hist_add(7); ng_hist_add(8); ng_hist_add(9); ng_hist_add(10); ng_hist_add(11); ng_hist_add(12); ng_hist_add(13); ng_hist_add(14); ng_hist_add(15); ng_hist_add(16); ng_hist_add(17); ng_hist_add(18); ng_hist_add(19); ng_hist_add(20); ng_hist_add(21); ng_hist_add(22); ng_hist_add(23); ng_hist_add(24);
   ng_hist_init();
+  ng_dice_add(1, 0, 9, 1, 0); ng_dice_add(2, 0, 6, 1, 0); ng_dice_add(3, 1, 4, 1, 0); ng_dice_add(4, 5, 200, 1, 0); ng_dice_add(5, 0, 100, 1, 0); ng_dice_add(6, 0, 1, 1, 0); ng_dice_add(7, 1, 16, 1, 0); ng_dice_add(8, 1, 9999, 1, 0); ng_dice_add(9, 0, 100, 1, 0); ng_dice_add(10, 0, 100, 1, 0); ng_dice_add(11, 0, 100, 1, 0); ng_dice_add(12, 0, 100, 1, 0); ng_dice_add(13, 0, 100, 1, 0); ng_dice_add(14, 0, 100, 1, 0); ng_dice_add(15, 0, 100, 1, 0); ng_dice_add(16, 0, 100, 1, 0); ng_dice_add(17, 0, 100, 1, 0); ng_dice_add(18, 0, 100, 1, 0); ng_dice_add(19, 0, 100, 1, 0); ng_dice_add(20, 0, 100, 1, 0); ng_dice_add(21, 0, 100, 1, 0); ng_dice_add(22, 0, 100, 1, 0); ng_dice_add(23, 0, 100, 1, 0); ng_dice_add(24, 0, 100, 1, 0);
 
   function ng_preset_load(p)
   (

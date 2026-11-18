@@ -88,6 +88,7 @@ out_pin:Right
   strcpy(#ng_h_ix, "");
   ng_hist_add(1); ng_hist_add(2); ng_hist_add(3);
   ng_hist_init();
+  ng_dice_add(1, 0, 200, 1, 0); ng_dice_add(3, 0, 500, 1, 0);
 
   function ng_preset_load(p)
   (

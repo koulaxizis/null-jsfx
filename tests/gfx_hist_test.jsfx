@@ -1,7 +1,9 @@
 desc:NULL GFX history test
 //NULL JSFX test • not a plugin
 // Checks A/B and undo/redo in null_gfx.jsfx-inc (ng_hist*) without a window: edits, a drag
-// as one step, untracked sliders, undo/redo, A/B, copy, the 32-step ring and a new @init.
+// as one step, untracked sliders, undo/redo, A/B, copy, the 32-step ring, a new @init and the
+// dice (2026-11-18: moves only its sliders, by a quarter of the range or anywhere with Shift,
+// on the step, as one undo step).
 // tests/run.sh renders it with tests/jsfx_test: the output is half the input when every
 // check passes and NaN (a failure) when one does not; fail_step names the first.
 
@@ -44,6 +46,30 @@ import ../DATA/Effects/null_jsfx/gfx/null_gfx.jsfx-inc
     loop(32, ng_h_req = 1; ng_hist();); chk(ng_h_uc == 0 && abs(slider1 - 0.7) < 0.000000001);
     // state survives a new init with the same strings
     uc0 = ng_h_rc; ng_h_rc = 0; strcpy(#ng_h_ix, ""); ng_hist_add(1); ng_hist_add(3); ng_hist_init(); chk(ng_h_rc == uc0);
+    // dice: slider 1 only (slider 3 is tracked but not listed)
+    ng_dz_n = 0; ng_dice_add(1, 0, 10, 0.5, 0);
+    edit(1, 5); edit(3, 4); uc0 = ng_h_uc;
+    d_ok = 1; d_moved = 0;
+    loop(50,
+      ng_dz_full = 0; ng_h_req = 6; ng_hist();
+      d = slider1;
+      d < 0 || d > 10 || abs(d * 2 - floor(d * 2 + 0.5)) > 0.000001 || slider3 != 4 ? d_ok = 0;
+      d != 5 ? d_moved = 1;
+      // a roll that changed something is one undo step, and undo puts it back
+      ng_h_uc == uc0 + 1 ? ( ng_h_req = 1; ng_hist(); ) : d != 5 ? d_ok = 0;
+      slider1 != 5 || ng_h_uc != uc0 ? d_ok = 0;
+    );
+    chk(d_ok && d_moved);
+    // a quarter of the range at most: from 5, within 2.5 .. 7.5
+    d_ok = 1; loop(50, ng_h_req = 6; ng_hist(); abs(slider1 - 5) > 2.5 ? d_ok = 0; ng_h_uc > uc0 ? ( ng_h_req = 1; ng_hist(); ););
+    chk(d_ok);
+    // Shift: anywhere, so 50 rolls reach beyond the quarter at least once
+    d_far = 0; loop(50, ng_dz_full = 1; ng_h_req = 6; ng_hist(); abs(slider1 - 5) > 2.5 ? d_far = 1; ng_h_uc > uc0 ? ( ng_h_req = 1; ng_hist(); ););
+    chk(d_far && ng_h_uc == uc0);
+    // a log slider stays in its range
+    ng_dz_n = 0; ng_dice_add(1, 1, 10, 0, 1); d_ok = 1;
+    loop(50, ng_dz_full = 1; ng_h_req = 6; ng_hist(); slider1 < 1 || slider1 > 10 ? d_ok = 0;);
+    chk(d_ok);
   );
 
 @sample

@@ -41,4 +41,20 @@ static const char* const kHints[] = {
     "Blend between the first and the second microphone: 0% is the first mic only, 100% the second mic only",
 };
 
+// the parameters the header's dice moves (tools/build_presets.py dice()): index, range, step, log scale
+#define NULL_UI_DICE 1
+struct DiceParam {
+    uint32_t index;
+    float lo, hi, step;
+    bool log;
+};
+static const DiceParam kDice[] = {
+    { 0, 0.0f, 7.0f, 1.0f, false },
+    { 1, 0.0f, 100.0f, 1.0f, false },
+    { 2, 20.0f, 300.0f, 1.0f, false },
+    { 5, 0.0f, 100.0f, 1.0f, false },
+    { 6, 0.0f, 100.0f, 1.0f, false },
+};
+static constexpr uint32_t kNumDice = sizeof(kDice) / sizeof(kDice[0]);
+
 } // namespace nullpresets

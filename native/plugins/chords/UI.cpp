@@ -10,20 +10,25 @@
 
 START_NAMESPACE_DISTRHO
 
-// as chords_gfx.jsfx: mode, key, scale, chord, inversion, voicing / octave, strum, direction,
-// velocity, progression
+// as chords_gfx.jsfx: CHORDS tab: mode, key, scale, chord, inversion, voicing / octave, strum,
+// direction, velocity, progression; GENERATE tab: generate, seed, length, mood, advance
 static const NullKnobsUI::Control kControls[] = {
-    { 0, NullKnobsUI::kSelect, "MODE", 0, -1, false },
-    { 1, NullKnobsUI::kSelect, "KEY", 0, -1, false },
-    { 2, NullKnobsUI::kSelect, "SCALE", 0, -1, false },
-    { 3, NullKnobsUI::kSelect, "CHORD", 0, -1, false },
-    { 4, NullKnobsUI::kSelect, "INVERSION", 0, -1, false },
-    { 5, NullKnobsUI::kSelect, "VOICING", 0, -1, false },
-    { 6, NullKnobsUI::kKnob, "OCTAVE", 1, -1, true },
-    { 7, NullKnobsUI::kKnob, "STRUM", 1, -1, false },
-    { 8, NullKnobsUI::kSelect, "DIRECTION", 1, -1, false },
-    { 9, NullKnobsUI::kKnob, "VELOCITY", 1, -1, true },
-    { 10, NullKnobsUI::kSelect, "PROGRESSION", 1, -1, false },
+    { 0, NullKnobsUI::kSelect, "MODE", 0, 0, false },
+    { 1, NullKnobsUI::kSelect, "KEY", 0, 0, false },
+    { 2, NullKnobsUI::kSelect, "SCALE", 0, 0, false },
+    { 3, NullKnobsUI::kSelect, "CHORD", 0, 0, false },
+    { 4, NullKnobsUI::kSelect, "INVERSION", 0, 0, false },
+    { 5, NullKnobsUI::kSelect, "VOICING", 0, 0, false },
+    { 6, NullKnobsUI::kKnob, "OCTAVE", 1, 0, true },
+    { 7, NullKnobsUI::kKnob, "STRUM", 1, 0, false },
+    { 8, NullKnobsUI::kSelect, "DIRECTION", 1, 0, false },
+    { 9, NullKnobsUI::kKnob, "VELOCITY", 1, 0, true },
+    { 10, NullKnobsUI::kSelect, "PROGRESSION", 1, 0, false },
+    { 11, NullKnobsUI::kSelect, "GENERATE", 0, 1, false },
+    { 12, NullKnobsUI::kKnob, "SEED", 0, 1, false },
+    { 13, NullKnobsUI::kSelect, "LENGTH", 0, 1, false },
+    { 14, NullKnobsUI::kSelect, "MOOD", 0, 1, false },
+    { 15, NullKnobsUI::kSelect, "ADVANCE", 0, 1, false },
 };
 
 static const char* const kScaleNames[] = { "MAJOR", "MINOR", "HARMONIC MINOR", "MELODIC MINOR", "DORIAN", "PHRYGIAN",
@@ -33,7 +38,7 @@ class UIChords : public NullKeyboardUI
 {
 public:
     UIChords()
-        : NullKeyboardUI({ "CHORDS", "MIDI", 480, 140, nullptr, 2, nullchords::kUiSliders, nullchords::kNumSliders,
+        : NullKeyboardUI({ "CHORDS", "MIDI", 480, 140, "CHORDS|GENERATE", 2, nullchords::kUiSliders, nullchords::kNumSliders,
                            kControls, sizeof(kControls) / sizeof(kControls[0]), true }) {}
 
 protected:
@@ -44,6 +49,9 @@ protected:
         nullchords::Params p;
         p.mode = iv(0); p.key = iv(1); p.scale = iv(2); p.type = iv(3); p.inv = iv(4); p.voicing = iv(5);
         p.octave = iv(6); p.strumMs = iv(7); p.dir = iv(8); p.curve = iv(9); p.prog = iv(10);
+        p.gen = iv(11) != 0; p.gseed = iv(12); p.glen = iv(13); p.gmood = iv(14); p.aa = iv(15);
+        if (p.gen)
+            p.genProg = nullchords::generateProgression(p.gseed, p.glen, p.gmood);
         return p;
     }
 
@@ -54,17 +62,20 @@ protected:
     void drawDisplay() override
     {
         using namespace nullchords;
-        const Params p = params();
+        Params p = params();
         int last = -1;
         if (nulljsfx::Taps* t = taps())
+        {
             last = int(std::lround(t->extra.load(std::memory_order_relaxed))) - 1;
+            p.adv = int(std::lround(t->gr.load(std::memory_order_relaxed)));
+        }
         readNotes();
         const int n = last >= 0 ? last : p.mode ? 60 : 60 + p.key;
         const Chord c = build(n, p);
         std::memset(fPreview, 0, sizeof(fPreview));
         for (int i = 0; i < c.count; ++i)
             fPreview[c.notes[i]] = true;
-        const int gs = p.mode ? kProgressions[p.prog].scale[0] : p.scale;
+        const int gs = p.mode ? progression(p).scale[0] : p.scale;
         std::memset(fInScale, 0, sizeof(fInScale));
         for (int i = 0; i < 7; ++i)
             fInScale[kScales[gs][i]] = true;
@@ -78,7 +89,7 @@ protected:
         label(30.0f, 103.0f, ALIGN_LEFT, 8.0f, 1.2f, theme::kMuted, line, true);
 
         // the chips: the 7 degrees, or the steps
-        const Progression& pr = kProgressions[p.prog];
+        const Progression& pr = progression(p);
         const int count = p.mode ? pr.steps : 7;
         int hi = -1;
         if (p.mode)
@@ -86,7 +97,7 @@ protected:
             const int pc = n % 12;
             const int w = pc == 0 ? 0 : pc == 2 ? 1 : pc == 4 ? 2 : pc == 5 ? 3 : pc == 7 ? 4 : pc == 9 ? 5 : pc == 11 ? 6 : -1;
             if (w >= 0)
-                hi = w % count;
+                hi = (w + p.adv) % count;
         }
         else if (c.count)
             hi = c.degree;

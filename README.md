@@ -1,6 +1,6 @@
 # NULL JSFX — Audio Without Noise
 
-168 professional audio plugins for Cockos Reaper. Pure EEL2 scripting, native sliders, zero dependencies. Free and open source.
+170 professional audio plugins for Cockos Reaper. Pure EEL2 scripting, native sliders, zero dependencies. Free and open source.
 
 Every plugin also comes as **GFX** JSFX with its own interface, as **VST3 / CLAP** for any DAW (Windows, macOS, Linux), as **LV2** on Linux, and most effects also as a module of the **Rack**. All versions of a plugin sound the same.
 
@@ -19,11 +19,11 @@ Each plugin belongs to one of six categories, written on line 4 of its file:
 | Category | Plugins |
 |----------|---------|
 | **One Slider** (26) | Air, Brighter, Chorus One, Closer (beta), Crunch, DJ Filter, Doubler, Driver, Echo One (beta), Exciter, Formant Shift, Grit, Louder, Mono Maker, Phatter, Pressure, Pumper, Riser, Smoother (beta), Snappy, Spread, Stretch, Sweeper, Tilt, Warmer (beta), Wetter |
-| **Essentials** (58) | Auto Pan, Auto-Leveler, Band Splitter, Bitcrusher, Breath Control, Cabinet Simulator, Channel Utility, Chorus, Click Repair, Clipper, Crossfeed, De-Clip, De-Hum, De-Plosive, DeEsser, Delay, Disperser, Draw EQ, Dynamic EQ, Dynamics, Envelope Follower, Filter, Flanger, Gate, Glue Comp, Limiter, Lo-Fi Comp (beta), Maximizer, Mid/Side Matrix, Multi-Tap Delay, Multiband Comp, Noise Generator, Octaver, Panner, Parametric EQ, Passive EQ, Phase Align, Phaser, Pitch Shifter, Reverb, Ring Mod, Room Tone, Saturation, Shaper, Sidechain Ducker, Space, Speaker Sim, Stereo Width, Studio EQ, Tape, Tape Echo, Test Signal, Tone, Transient Shaper, Tremolo, Vibrato, Volume Shaper, Wah |
+| **Essentials** (59) | Auto Pan, Auto-Leveler, Band Splitter, Bitcrusher, Breath Control, Cabinet Simulator, Channel Utility, Chorus, Click Repair, Clipper, Crossfeed, De-Clip, De-Hum, De-Plosive, DeEsser, Delay, Disperser, Draw EQ, Dynamic EQ, Dynamics, Envelope Follower, Filter, Flanger, Gate, Glue Comp, Limiter, Lo-Fi Comp (beta), Maximizer, Mid/Side Matrix, Multi-Tap Delay, Multiband Comp, Noise Generator, Octaver, Panner, Parametric EQ, Passive EQ, Phase Align, Phaser, Pitch Shifter, Reverb, Ring Mod, Room Tone, Saturation, Shaper, Sidechain Ducker, Space, Speaker Sim, Step Filter (beta), Stereo Width, Studio EQ, Tape, Tape Echo, Test Signal, Tone, Transient Shaper, Tremolo, Vibrato, Volume Shaper, Wah |
 | **Advanced** (51) | Amp Simulator, Bass Management, Binaural Panner, Bloom Delay (beta), Comb Filter, Console Buss, Console Channel, Convolution, Downmix Check, Formant Filter, Frequency Shifter, Glitch FX, Granular Delay, Half Speed, Harmonizer, Key Detect (beta), Kick Shaper, Ladder Filter, Loudness Meter, Multichannel Loudness, Noise Reduction, Null Test (beta), Oscilloscope, OTT, Phase Distortion (beta), Pitch Correction, Reference, Resonance Suppressor, Resonator, Reverser, Robotizer, Rotary Speaker, Shimmer Reverb, Slicer, Spectral Blur (beta), Spectral Ducker, Spectral Freeze, Spectrum Analyzer, Spring Reverb, Step FX, Stereo Scope, Sub Bloom, Surround Panner, Tape Stop, Trance Gate, Transient Split, Tuner, Vinyl Age, Vocoder, VU Meter, Warped Delay |
 | **Assisted** (4) | Assisted Comp (beta), Assisted Delay (beta), Assisted EQ (beta), Assisted Reverb (beta) |
 | **Instruments** (16) | Bass, Choir (beta), Drum Machine, FM, Granular, Keys, Kick, Mallets, Modal Piano, Organ, Percussion, Pluck, Sampler, String Ensemble, Synth, Wind (beta) |
-| **MIDI** (13) | Arpeggiator, Chords, Drum Trigger, Euclid, Humanize, MIDI LFO, MIDI Monitor (beta), MIDI Utility, Note Echo, Pitch to MIDI, Riff, Scale, Strum (beta) |
+| **MIDI** (14) | Arpeggiator, Beat Gen (beta), Chords, Drum Trigger, Euclid, Humanize, MIDI LFO, MIDI Monitor (beta), MIDI Utility, Note Echo, Pitch to MIDI, Riff, Scale, Strum (beta) |
 <!-- END PLUGIN LIST -->
 
 ## Installation

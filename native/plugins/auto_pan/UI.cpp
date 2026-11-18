@@ -18,6 +18,10 @@ static const NullKnobsUI::Control kControls[] = {
     { 4, NullKnobsUI::kSelect, "NOTE", 0, -1, false },
     { 5, NullKnobsUI::kSelect, "MODE", 1, -1, false },
     { 6, NullKnobsUI::kKnob, "SMOOTHING", 1, -1, false },
+    // Pattern (appended 2026-11-18)
+    { 7, NullKnobsUI::kSelect, "PATTERN", 1, -1, false },
+    { 8, NullKnobsUI::kKnob, "STEPS", 1, -1, false },
+    { 9, NullKnobsUI::kKnob, "SEED", 1, -1, false },
 };
 
 class UIAutoPan : public NullKnobsUI
@@ -46,8 +50,12 @@ protected:
     {
         char buf[40];
         const double r = rate();
-        const int mode = int(std::lround(value(5)));
-        const int n = nullautopan::stepCount(mode);
+        const bool pattern = value(7) >= 0.5f;
+        const int mode = pattern ? 6 : int(std::lround(value(5)));
+        const int n = pattern ? int(std::lround(value(8))) : nullautopan::stepCount(mode);
+        double pp[16];
+        nullautopan::patternPositions(std::round(value(9)), pp);
+        auto val = [&](double k) { return mode == 6 ? pp[int(k)] : nullautopan::stepValue(mode, k); };
         if (mode != 0)
             std::snprintf(buf, sizeof(buf), "%d STEPS AT %.2f Hz", n, r);
         else
@@ -68,8 +76,8 @@ protected:
                     const double p = std::min(u * n, n - 0.000001);
                     const double k = std::floor(p);
                     const double t = (p - k) / smooth;
-                    const double c = nullautopan::stepValue(mode, k);
-                    const double q = nullautopan::stepValue(mode, k > 0.0 ? k - 1.0 : double(n - 1));
+                    const double c = val(k);
+                    const double q = val(k > 0.0 ? k - 1.0 : double(n - 1));
                     lfo = t < 1.0 ? q + (c - q) * (0.5 - 0.5 * std::cos(M_PI * t)) : c;
                 }
                 else

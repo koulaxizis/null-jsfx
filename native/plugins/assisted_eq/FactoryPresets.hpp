@@ -51,4 +51,27 @@ static const char* const kHints[] = {
     "Hidden: the lowest band with real content; the learned high-pass sits below it",
 };
 
+// the parameters the header's dice moves (tools/build_presets.py dice()): index, range, step, log scale
+#define NULL_UI_DICE 1
+struct DiceParam {
+    uint32_t index;
+    float lo, hi, step;
+    bool log;
+};
+static const DiceParam kDice[] = {
+    { 0, 0.0f, 1.0f, 1.0f, false },
+    { 1, 0.0f, 4.0f, 1.0f, false },
+    { 2, 0.0f, 6.0f, 1.0f, false },
+    { 3, 0.0f, 150.0f, 1.0f, false },
+    { 8, 0.0f, 1.0f, 1.0f, false },
+    { 9, -24.0f, 24.0f, 0.1f, false },
+    { 10, -24.0f, 24.0f, 0.1f, false },
+    { 11, 200.0f, 500.0f, 1.0f, false },
+    { 12, -24.0f, 24.0f, 0.1f, false },
+    { 13, -24.0f, 24.0f, 0.1f, false },
+    { 14, -24.0f, 24.0f, 0.1f, false },
+    { 15, 20.0f, 500.0f, 1.0f, false },
+};
+static constexpr uint32_t kNumDice = sizeof(kDice) / sizeof(kDice[0]);
+
 } // namespace nullpresets

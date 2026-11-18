@@ -1,0 +1,12 @@
+[
+  ["Sixteenth Sweep", {"Step 1": 0, "Step 2": 7, "Step 3": 13, "Step 4": 20, "Step 5": 27, "Step 6": 33, "Step 7": 40, "Step 8": 47, "Step 9": 53, "Step 10": 60, "Step 11": 67, "Step 12": 73, "Step 13": 80, "Step 14": 87, "Step 15": 93, "Step 16": 100, "Glide": 60, "Resonance": 45}],
+  ["Acid Steps", {"Step 1": 90, "Step 2": 10, "Step 3": 60, "Step 4": 10, "Step 5": 100, "Step 6": 30, "Step 7": 10, "Step 8": 70, "Step 9": 90, "Step 10": 10, "Step 11": 40, "Step 12": 10, "Step 13": 100, "Step 14": 50, "Step 15": 20, "Step 16": 80, "Low": 150, "High": 4000, "Resonance": 75, "Glide": 10}],
+  ["Eighth Note Wah", {"Step Length": "1/8", "Steps": 8, "Step 1": 20, "Step 2": 80, "Step 3": 30, "Step 4": 90, "Step 5": 20, "Step 6": 70, "Step 7": 40, "Step 8": 100, "Low": 500, "High": 6000, "Resonance": 60, "Glide": 50}],
+  ["Hi Pass Pump", {"Type": "High Pass", "Steps": 4, "Step Length": "1/4", "Step 1": 100, "Step 2": 20, "Step 3": 50, "Step 4": 20, "Low": 30, "High": 600, "Resonance": 20, "Glide": 70}],
+  ["Triplet Feel Five", {"Steps": 5, "Step 1": 100, "Step 2": 30, "Step 3": 60, "Step 4": 10, "Step 5": 80, "Resonance": 40, "Glide": 25}],
+  ["Slow Quarter Motion", {"Step Length": "1/4", "Steps": 8, "Step 1": 10, "Step 2": 40, "Step 3": 70, "Step 4": 100, "Step 5": 80, "Step 6": 50, "Step 7": 30, "Step 8": 20, "Glide": 100, "Resonance": 25}],
+  ["Generative Seed 7", {"Seed": 7, "Resonance": 50, "Glide": 30}],
+  ["Generative Seed 42", {"Seed": 42, "Low": 400, "High": 7000, "Resonance": 55, "Glide": 20}],
+  ["Generative 32nds", {"Seed": 101, "Step Length": "1/32", "Resonance": 65, "Glide": 0, "Low": 250, "High": 8000}],
+  ["Half Mix Motion", {"Mix": 50, "Resonance": 40, "Glide": 40}]
+]

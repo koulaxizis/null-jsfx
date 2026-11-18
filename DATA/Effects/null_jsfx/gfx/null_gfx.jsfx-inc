@@ -257,7 +257,39 @@ desc:NULL JSFX shared GFX library
   // are steps like an edit. The lists are doubles in strings (#ng_h_*), so they take no plugin
   // memory; nothing is saved with the project. Up to 32 steps (fewer when 32 would not fit in
   // 16000 bytes). The C++ twin is in NullUI (history).
-  ng_h_n = 0; ng_h_req = 0; ng_h_pend = 0;
+  // The dice left of undo (2026-11-18) moves every slider build_presets.py lists with
+  // ng_dice_add(slider, lo, hi, step, log) (not Mix, Output, Gain and the like) by up to a
+  // quarter of its range from where it is, or, with Shift, anywhere in its range (a log slider
+  // on its log scale), snapped to the slider's step. It is one step on the undo list, like an
+  // edit; the sound only changes through the sliders.
+  ng_h_n = 0; ng_h_req = 0; ng_h_pend = 0; ng_dz_n = 0; ng_dz_full = 0;
+
+  function ng_dice_add(i, lo, hi, step, lg)
+  (
+    ng_dz_n == 0 ? strcpy(#ng_dz, "");
+    str_setchar(#ng_dz, ng_dz_n * 40, i, 'd'); str_setchar(#ng_dz, ng_dz_n * 40 + 8, lo, 'd');
+    str_setchar(#ng_dz, ng_dz_n * 40 + 16, hi, 'd'); str_setchar(#ng_dz, ng_dz_n * 40 + 24, step, 'd');
+    str_setchar(#ng_dz, ng_dz_n * 40 + 32, lg, 'd');
+    ng_dz_n += 1;
+  );
+
+  // the dice: the new values straight into the sliders (as ng_h_load does)
+  function ng_dice_roll() local(k, j, lo, hi, st, lg, t, v)
+  (
+    k = 0;
+    loop(ng_dz_n,
+      j = str_getchar(#ng_dz, k * 40, 'd'); lo = str_getchar(#ng_dz, k * 40 + 8, 'd');
+      hi = str_getchar(#ng_dz, k * 40 + 16, 'd'); st = str_getchar(#ng_dz, k * 40 + 24, 'd');
+      lg = str_getchar(#ng_dz, k * 40 + 32, 'd');
+      t = lg ? log(max(lo, slider(j)) / lo) / log(hi / lo) : (slider(j) - lo) / (hi - lo);
+      t = ng_dz_full ? rand(1) : max(0, min(1, t + (rand(1) * 2 - 1) * 0.25));
+      v = lg ? lo * exp(t * log(hi / lo)) : lo + t * (hi - lo);
+      st > 0 ? v = lo + floor((v - lo) / st + 0.5) * st;
+      v = max(lo, min(hi, v));
+      v != slider(j) ? ( slider(j) = v; sliderchange(2 ^ (j - 1)); slider_automate(2 ^ (j - 1)); );
+      k += 1;
+    );
+  );
 
   function ng_hist_add(i) ( str_setchar(#ng_h_ix, strlen(#ng_h_ix), i, 'us'); );
   function ng_h_get(s, k) ( str_getchar(s, k * 8, 'd'); );
@@ -344,6 +376,10 @@ desc:NULL JSFX shared GFX library
           ) : ng_h_bh = 1;
         );
         ng_h_req == 5 ? ( ng_h_store(#ng_h_v, 2 - ng_h_ab); ng_h_bh = 1; );
+        ng_h_req == 6 ? (
+          ng_dice_roll();
+          !ng_h_same(#ng_h_v, 0) ? ( ng_h_push(#ng_h_u, ng_h_uc, ng_h_up); ng_h_rc = 0; ch = 1; );
+        );
         ng_h_req = 0;
         ng_h_pend = 0;
       );
@@ -362,7 +398,7 @@ desc:NULL JSFX shared GFX library
     gfx_rect(X(x) + 1, Y(9.5) + 1, w * ng_s - 1, 11 * ng_s - 1);
     ng_col(lit ? NG_ACCENT : hover ? 0x45433f : NG_BORDER, 1);
     gfx_roundrect(X(x), Y(9.5), w * ng_s, 11 * ng_s, 3 * ng_s, 1);
-    hover && ng_click ? ( ng_h_req = req; ng_click = 0; );
+    hover && ng_click ? ( ng_h_req = req; ng_dz_full = (mouse_cap & 8) ? 1 : 0; ng_click = 0; );
     ng_col(!on ? NG_LOGO_ED : lit || hover ? NG_TEXT : NG_MUTED, 1);
   );
 
@@ -379,6 +415,14 @@ desc:NULL JSFX shared GFX library
   function ng_h_bar() local(r)
   (
     r = ng_dw - 143;
+    ng_dz_n > 0 ? (
+      // the dice: a die face with three pips
+      ng_h_btn(r - 106, 14, 0, 1, 6);
+      gfx_roundrect(X(r - 103), Y(11.5), 8 * ng_s, 7 * ng_s, 1.5 * ng_s, 1);
+      gfx_circle(X(r - 101), Y(13.3), 0.75 * ng_s, 1, 1);
+      gfx_circle(X(r - 99), Y(15), 0.75 * ng_s, 1, 1);
+      gfx_circle(X(r - 97), Y(16.7), 0.75 * ng_s, 1, 1);
+    );
     ng_h_btn(r - 88, 14, 0, ng_h_uc > 0, 1);
     ng_h_arrow(r - 81, -1);
     ng_h_btn(r - 72, 14, 0, ng_h_rc > 0, 2);

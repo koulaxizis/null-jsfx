@@ -13,5 +13,8 @@
   ["Jazz ii-V-I", {"Mode": "Progression", "Progression": "ii-V-I", "Chord Type": "9th", "Voicing": "Drop 2"}],
   ["Canon Roll", {"Mode": "Progression", "Progression": "Canon", "Voicing": "Open", "Strum": 120}],
   ["Epic Minor", {"Mode": "Progression", "Progression": "i-VI-III-VII", "Key": "A", "Voicing": "Wide", "Velocity Curve": 30}],
-  ["Spanish Cadence", {"Mode": "Progression", "Progression": "i-VII-VI-V", "Key": "A", "Strum": 40, "Strum Direction": "Down"}]
+  ["Spanish Cadence", {"Mode": "Progression", "Progression": "i-VII-VI-V", "Key": "A", "Strum": 40, "Strum Direction": "Down"}],
+  ["Generative Major Loop", {"Generate": "On", "Generate Seed": 7, "Generate Mood": "Major", "Auto Advance": "Every 4 Beats"}],
+  ["Generative Minor Eight", {"Generate": "On", "Generate Seed": 42, "Generate Length": "8 Chords", "Generate Mood": "Minor", "Auto Advance": "Every 4 Beats", "Chord Type": "7th"}],
+  ["Generative Fast Changes", {"Generate": "On", "Generate Seed": 123, "Auto Advance": "Every 2 Beats", "Voicing": "Open"}]
 ]

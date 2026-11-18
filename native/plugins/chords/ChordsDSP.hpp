@@ -9,6 +9,7 @@
 
 #include "NullMidiNotes.hpp"
 
+#include <algorithm>
 #include <cmath>
 #include <cstdio>
 #include <cstring>
@@ -45,7 +46,89 @@ static const Progression kProgressions[9] = {
 struct Params {
     int mode = 0, key = 0, scale = 0, type = 0, inv = 0, voicing = 0, octave = 0, dir = 0, prog = 0;
     double strumMs = 0.0, curve = 0.0;
+    bool gen = false;          // Generate
+    int gseed = 1, glen = 0, gmood = 0; // Generate Seed, Length (0 = 4, 1 = 8 chords), Mood (0 Major, 1 Minor)
+    int aa = 0;                // Auto Advance: 0 Off, 1 every 4 beats, 2 every 2, 3 every beat
+    int adv = 0;               // the steps Auto Advance has moved on (set by the processor)
+    Progression genProg = {};  // the generated progression (generateProgression)
 };
+
+// the progression Progression mode plays
+static const Progression& progression(const Params& p) { return p.gen ? p.genProg : kProgressions[p.prog]; }
+
+// one Park-Miller step in exact doubles, a value in [0, 1)
+static double pm(double& x)
+{
+    x *= 16807.0;
+    x -= std::floor(x / 2147483647.0) * 2147483647.0;
+    return x / 2147483648.0;
+}
+
+// the chord after degree d (cd_next): weighted pulls of functional harmony, as degree * 4 + scale
+static int nextChord(int m, int d, double& gs)
+{
+    const double r = pm(gs);
+    int n;
+    if (m == 0)
+    {
+        n = d == 0 ? (r < 3.0 / 12.0 ? 3 : r < 6.0 / 12.0 ? 4 : r < 9.0 / 12.0 ? 5 : r < 11.0 / 12.0 ? 1 : 2)
+          : d == 1 ? (r < 4.0 / 6.0 ? 4 : r < 5.0 / 6.0 ? 3 : 5)
+          : d == 2 ? (r < 3.0 / 5.0 ? 5 : 3)
+          : d == 3 ? (r < 3.0 / 8.0 ? 4 : r < 6.0 / 8.0 ? 0 : r < 7.0 / 8.0 ? 1 : 5)
+          : d == 4 ? (r < 4.0 / 8.0 ? 0 : r < 7.0 / 8.0 ? 5 : 3)
+          : (r < 3.0 / 8.0 ? 3 : r < 5.0 / 8.0 ? 1 : r < 7.0 / 8.0 ? 4 : 2);
+        return n * 4;
+    }
+    n = d == 0 ? (r < 3.0 / 12.0 ? 3 : r < 6.0 / 12.0 ? 5 : r < 9.0 / 12.0 ? 6 : r < 11.0 / 12.0 ? 2 : 4)
+      : d == 2 ? (r < 3.0 / 7.0 ? 5 : r < 5.0 / 7.0 ? 6 : 3)
+      : d == 3 ? (r < 2.0 / 7.0 ? 4 : r < 4.0 / 7.0 ? 0 : r < 6.0 / 7.0 ? 6 : 5)
+      : d == 4 ? (r < 4.0 / 6.0 ? 0 : 5)
+      : d == 5 ? (r < 3.0 / 8.0 ? 6 : r < 5.0 / 8.0 ? 3 : r < 7.0 / 8.0 ? 2 : 0)
+      : (r < 3.0 / 7.0 ? 0 : r < 6.0 / 7.0 ? 2 : 5);
+    return n * 4 + (n == 4 ? 2 : 1);
+}
+
+// Generate (cd_gen): from the tonic, each next chord by nextChord, the last one leading home
+static Progression generateProgression(int gseed, int glen, int gmood)
+{
+    Progression o = {};
+    double gs = double(gseed) * 69621.0 + 17.0;
+    for (int k = 0; k < 4; ++k)
+        pm(gs);
+    const int n = glen ? 8 : 4;
+    o.steps = n;
+    o.deg[0] = 0;
+    o.scale[0] = gmood ? 1 : 0;
+    int d = 0;
+    for (int k = 1; k < n; ++k)
+    {
+        int e;
+        if (k == n - 1)
+        {
+            const double r = pm(gs);
+            if (gmood == 0)
+            {
+                e = r < 0.5 ? 3 : 4;
+                if (e == d)
+                    e = 7 - e;
+                e = e * 4;
+            }
+            else
+            {
+                e = r < 0.5 ? 4 : 6;
+                if (e == d)
+                    e = 10 - e;
+                e = e * 4 + (e == 4 ? 2 : 1);
+            }
+        }
+        else
+            e = nextChord(gmood, d, gs);
+        d = e / 4;
+        o.deg[k] = d;
+        o.scale[k] = e - d * 4;
+    }
+    return o;
+}
 
 // the chord of one key (cd_build's o[]): notes ascending, how many, root, degree, scale, and
 // the root-position intervals of the third, fifth, seventh and ninth
@@ -92,8 +175,8 @@ static Chord build(int n, const Params& p)
         const int w = pc == 0 ? 0 : pc == 2 ? 1 : pc == 4 ? 2 : pc == 5 ? 3 : pc == 7 ? 4 : pc == 9 ? 5 : pc == 11 ? 6 : -1;
         if (w >= 0)
         {
-            const Progression& pr = kProgressions[p.prog];
-            const int k = w % pr.steps;
+            const Progression& pr = progression(p);
+            const int k = (w + p.adv) % pr.steps;
             d = pr.deg[k];
             s = pr.scale[k];
             root = n - pc + p.key + kScales[s][d];
@@ -214,49 +297,94 @@ static void numeral(const Chord& c, const Params& p, char* buf, size_t n)
 class ChordsProcessor
 {
 public:
+    static constexpr int kKeys = 2048;
+
     void setSampleRate(double sr) { fSr = sr; }
 
-    // @init
     void reset()
     {
         fNotes.reset();
         fAlt = 0;
         fLast = -1;
+        fP.adv = 0;
+        fWasPlay = false;
+        fPlay = false;
+        fNk = 0.0;
+        fNst = 0.0;
+        fLastK = -1000000000.0;
+        fRun = false;
+        for (int i = 0; i < kKeys; ++i)
+            fVel[i] = 0;
     }
 
     void setParams(const Params& p)
     {
+        const int adv = fP.adv;
         fP = p;
+        fP.adv = adv;
+        if (fP.gen)
+            fP.genProg = generateProgression(p.gseed, p.glen, p.gmood);
         fVexp = std::pow(2.0, -p.curve / 50.0);
     }
 
-    // @block: the messages of one block (offset, status, d1, d2), then what goes out
-    void begin() { fStrum = std::floor(fP.strumMs * fSr / 1000.0 + 0.5); }
+    // the start of @block: the strum, then Auto Advance's clock (the host's tempo, whether it
+    // plays and its beat position)
+    void begin(double tempo = 120.0, bool playing = false, double beat = 0.0)
+    {
+        fStrum = std::floor(fP.strumMs * fSr / 1000.0 + 0.5);
+        fOn = fP.aa > 0;
+        fPb = fP.aa == 1 ? 4.0 : fP.aa == 2 ? 2.0 : 1.0;
+        fSpb = fSr * 60.0 / std::max(tempo, 1.0);
+        fPlay = playing;
+        if (fPlay && !fWasPlay)
+            fLastK = -1000000000.0;
+        if (!fPlay && fWasPlay)
+        {
+            fRun = any();
+            fNk = 0.0;
+            fNst = fNotes.position() + fPb * fSpb;
+        }
+        fWasPlay = fPlay;
+        if (fPlay)
+        {
+            fB0 = beat;
+            fNk = std::ceil(fB0 / fPb - 0.000001);
+            if (fNk == fLastK)
+                fNk += 1.0;
+            fNst = fNotes.position() + (fNk * fPb - fB0) * fSpb;
+        }
+    }
 
     void input(uint32_t ofs, int a, int b, int c)
     {
-        fNotes.input(fNotes.position() + ofs, a, b, c, [this](double t, int, int n, int v, int s) {
-            const Chord ch = build(n, fP);
-            int notes[8];
-            const int cnt = ch.count;
-            if (cnt > 0)
+        const double t = fNotes.position() + ofs;
+        advanceTo(t);
+        const int st = a & 0xF0, ch = a & 0x0F, s = ch * 128 + b;
+        if (st == 0x90 && c > 0)
+        {
+            if (fOn && !fPlay && !any())
             {
-                fLast = n;
-                const int vo = vel(v);
-                const bool down = fP.dir == 1 || (fP.dir == 2 && fAlt);
-                if (fP.dir == 2)
-                    fAlt = 1 - fAlt;
-                for (int i = 0; i < cnt; ++i)
-                    notes[i] = ch.notes[down ? cnt - 1 - i : i];
-                fNotes.start(t, s, notes, cnt, vo, fStrum);
+                fRun = true;
+                fNk = 0.0;
+                fNst = t + fPb * fSpb;
             }
-            else
-                fNotes.start(t, s, notes, 0, 0, fStrum);
-        });
+            fVel[s] = c;
+        }
+        fNotes.input(t, a, b, c, [this](double tt, int, int n, int v, int s) { onNote(tt, n, v, s); });
+        const bool release = st == 0x80 || st == 0x90 || (st == 0xB0 && (b == 120 || b == 123));
+        if (release && !(st == 0x90 && c > 0) && !any())
+        {
+            fP.adv = 0;
+            fRun = false;
+        }
     }
 
     template <class Send>
-    void end(uint32_t frames, Send&& send) { fNotes.emit(frames, send); }
+    void end(uint32_t frames, Send&& send)
+    {
+        advanceTo(fNotes.position() + frames);
+        fNotes.emit(frames, send);
+    }
 
     int vel(int v) const
     {
@@ -265,13 +393,70 @@ public:
     }
 
     int lastNote() const { return fLast; }
+    int advanced() const { return fP.adv; }
     const nulljsfx::MidiNotes& notes() const { return fNotes; }
 
 private:
+    // cd_note_on after the release: the chord of key n
+    void onNote(double t, int n, int v, int s)
+    {
+        const Chord ch = build(n, fP);
+        int notes[8];
+        const int cnt = ch.count;
+        if (cnt > 0)
+        {
+            fLast = n;
+            const int vo = vel(v);
+            const bool down = fP.dir == 1 || (fP.dir == 2 && fAlt);
+            if (fP.dir == 2)
+                fAlt = 1 - fAlt;
+            for (int i = 0; i < cnt; ++i)
+                notes[i] = ch.notes[down ? cnt - 1 - i : i];
+            fNotes.start(t, s, notes, cnt, vo, fStrum);
+        }
+        else
+            fNotes.start(t, s, notes, 0, 0, fStrum);
+    }
+
+    bool any() const
+    {
+        for (int i = 0; i < kKeys; ++i)
+            if (fNotes.held(i))
+                return true;
+        return false;
+    }
+
+    // the Auto Advance boundaries before time tend (cd_adv_to)
+    void advanceTo(double tend)
+    {
+        const double never = 1152921504606846976.0; // 2^60
+        for (;;)
+        {
+            const double ts = fOn && (fPlay || fRun) ? std::max(fNotes.position(), std::floor(fNst + 0.001)) : never;
+            if (!(ts < tend))
+                break;
+            if (fP.mode == 1 && any())
+            {
+                // every key held plays the next step (cd_advance)
+                ++fP.adv;
+                for (int i = 0; i < kKeys; ++i)
+                    if (fNotes.held(i))
+                        fNotes.input(ts, 0x90 | (i / 128), i % 128, fVel[i],
+                                     [this](double tt, int, int n, int v, int s) { onNote(tt, n, v, s); });
+            }
+            fLastK = fNk;
+            fNk += 1.0;
+            fNst = fPlay ? fNotes.position() + (fNk * fPb - fB0) * fSpb : fNst + fPb * fSpb;
+        }
+    }
+
     nulljsfx::MidiNotes fNotes;
     Params fP;
     double fSr = 44100.0, fVexp = 1.0, fStrum = 0.0;
     int fAlt = 0, fLast = -1;
+    int fVel[kKeys] = {};
+    bool fOn = false, fPlay = false, fWasPlay = false, fRun = false;
+    double fPb = 4.0, fSpb = 0.0, fB0 = 0.0, fNk = 0.0, fNst = 0.0, fLastK = -1000000000.0;
 };
 
 } // namespace nullchords

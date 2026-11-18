@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Step Filter: free plugin for REAPER, VST3, CLAP | NULL JSFX</title>
+    <meta name="description" content="Step Filter: Filter Moved by a 16-Step Sequence. Free, open source audio plugin for REAPER (JSFX) and any DAW (VST3, CLAP, LV2) on Windows, macOS and Linux.">
+    <link rel="canonical" href="https://nulljsfx.tech/plugins/step-filter/">
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Step Filter: Filter Moved by a 16-Step Sequence">
+    <meta property="og:description" content="Step Filter: Filter Moved by a 16-Step Sequence. Free, open source audio plugin for REAPER (JSFX) and any DAW (VST3, CLAP, LV2) on Windows, macOS and Linux.">
+    <meta property="og:url" content="https://nulljsfx.tech/plugins/step-filter/">
+    <meta property="og:image" content="https://nulljsfx.tech/assets/video/step_filter.jpg">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Step Filter: Filter Moved by a 16-Step Sequence">
+    <meta name="twitter:description" content="Step Filter: Filter Moved by a 16-Step Sequence. Free, open source audio plugin for REAPER (JSFX) and any DAW (VST3, CLAP, LV2) on Windows, macOS and Linux.">
+    <meta name="twitter:image" content="https://nulljsfx.tech/assets/video/step_filter.jpg">
+    <link rel="icon" type="image/svg+xml" href="/assets/img/favicon.svg">
+    <link rel="stylesheet" href="/assets/css/style.css">
+    <script type="application/ld+json">{"@context": "https://schema.org", "@type": "SoftwareApplication", "name": "NULL Step Filter", "description": "Filter Moved by a 16-Step Sequence", "url": "https://nulljsfx.tech/plugins/step-filter/", "image": "https://nulljsfx.tech/assets/video/step_filter.jpg", "applicationCategory": "MultimediaApplication", "applicationSubCategory": "Audio audio plugin", "operatingSystem": "Windows, macOS, Linux", "softwareVersion": "4.0", "license": "https://opensource.org/licenses/MIT", "offers": {"@type": "Offer", "price": "0", "priceCurrency": "EUR"}, "author": {"@type": "Person", "name": "Christos Koulaxizis"}, "isPartOf": {"@type": "SoftwareApplication", "name": "NULL JSFX", "url": "https://nulljsfx.tech/"}}</script>
+    <script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "NULL JSFX", "item": "https://nulljsfx.tech/"}, {"@type": "ListItem", "position": 2, "name": "Essentials", "item": "https://nulljsfx.tech/#effects"}, {"@type": "ListItem", "position": 3, "name": "Step Filter", "item": "https://nulljsfx.tech/plugins/step-filter/"}]}</script>
+</head>
+<body class="plugin-page">
+    <main>
+        <nav class="page-crumbs" aria-label="Breadcrumb">
+            <a href="/" class="page-home"><img src="/assets/img/favicon.svg" alt="NULL JSFX" width="28" height="28"></a>
+            <a href="/">NULL JSFX</a> <span>/</span> <a href="/">Effects</a> <span>/</span> <span>Step Filter</span>
+        </nav>
+        <article class="page-plugin">
+            <header class="guide-header page-header">
+                <span class="guide-category">Essentials</span>
+                <h1>STEP FILTER <span class="beta-badge">BETA</span></h1>
+                <p>Filter Moved by a 16-Step Sequence</p>
+                <p class="beta-note">Beta: its rules have been tested on test signals so far and may still be tuned from your feedback, so a project saved now can sound a little different after an update.</p>
+            </header>
+            <video class="guide-shot guide-video" poster="/assets/video/step_filter.jpg" controls playsinline preload="none" width="1280" height="720" aria-label="Step Filter presentation video"><source src="https://github.com/koulaxizis/null-jsfx/releases/download/media/step_filter.mp4" type="video/mp4"><source src="/assets/video/step_filter.mp4" type="video/mp4"></video>
+            <div class="page-actions">
+                <a class="featured-btn" href="/#download"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg><span>Download free</span></a>
+                <small>Part of NULL JSFX 4.0: 170 plugins, free and open source (MIT). Easiest with <a href="/#hub">NULL JSFX Hub</a>.</small>
+            </div>
+            <div class="guide-body">
+                <section class="guide-section">
+                    <h2>Listen</h2>
+                    <div class="live demo-big" data-live="step_filter" data-presets="{&quot;d&quot;:{&quot;1&quot;:100,&quot;2&quot;:20,&quot;3&quot;:60,&quot;4&quot;:20,&quot;5&quot;:80,&quot;6&quot;:20,&quot;7&quot;:50,&quot;8&quot;:30,&quot;9&quot;:100,&quot;10&quot;:20,&quot;11&quot;:60,&quot;12&quot;:20,&quot;13&quot;:90,&quot;14&quot;:40,&quot;15&quot;:70,&quot;16&quot;:10,&quot;17&quot;:16,&quot;18&quot;:2,&quot;19&quot;:200,&quot;20&quot;:5000,&quot;21&quot;:30,&quot;22&quot;:0,&quot;23&quot;:20,&quot;24&quot;:0,&quot;25&quot;:100},&quot;p&quot;:[[&quot;Default&quot;,{}],[&quot;Sixteenth Sweep&quot;,{&quot;1&quot;:0,&quot;2&quot;:7,&quot;3&quot;:13,&quot;5&quot;:27,&quot;6&quot;:33,&quot;7&quot;:40,&quot;8&quot;:47,&quot;9&quot;:53,&quot;10&quot;:60,&quot;11&quot;:67,&quot;12&quot;:73,&quot;13&quot;:80,&quot;14&quot;:87,&quot;15&quot;:93,&quot;16&quot;:100,&quot;21&quot;:45,&quot;23&quot;:60}],[&quot;Acid Steps&quot;,{&quot;1&quot;:90,&quot;2&quot;:10,&quot;4&quot;:10,&quot;5&quot;:100,&quot;6&quot;:30,&quot;7&quot;:10,&quot;8&quot;:70,&quot;9&quot;:90,&quot;10&quot;:10,&quot;11&quot;:40,&quot;12&quot;:10,&quot;13&quot;:100,&quot;14&quot;:50,&quot;15&quot;:20,&quot;16&quot;:80,&quot;19&quot;:150,&quot;20&quot;:4000,&quot;21&quot;:75,&quot;23&quot;:10}],[&quot;Eighth Note Wah&quot;,{&quot;1&quot;:20,&quot;2&quot;:80,&quot;3&quot;:30,&quot;4&quot;:90,&quot;5&quot;:20,&quot;6&quot;:70,&quot;7&quot;:40,&quot;8&quot;:100,&quot;17&quot;:8,&quot;18&quot;:1,&quot;19&quot;:500,&quot;20&quot;:6000,&quot;21&quot;:60,&quot;23&quot;:50}],[&quot;Hi Pass Pump&quot;,{&quot;3&quot;:50,&quot;17&quot;:4,&quot;18&quot;:0,&quot;19&quot;:30,&quot;20&quot;:600,&quot;21&quot;:20,&quot;22&quot;:2,&quot;23&quot;:70}],[&quot;Triplet Feel Five&quot;,{&quot;2&quot;:30,&quot;4&quot;:10,&quot;17&quot;:5,&quot;21&quot;:40,&quot;23&quot;:25}],[&quot;Slow Quarter Motion&quot;,{&quot;1&quot;:10,&quot;2&quot;:40,&quot;3&quot;:70,&quot;4&quot;:100,&quot;6&quot;:50,&quot;7&quot;:30,&quot;8&quot;:20,&quot;17&quot;:8,&quot;18&quot;:0,&quot;21&quot;:25,&quot;23&quot;:100}],[&quot;Generative Seed 7&quot;,{&quot;21&quot;:50,&quot;23&quot;:30,&quot;24&quot;:7}],[&quot;Generative Seed 42&quot;,{&quot;19&quot;:400,&quot;20&quot;:7000,&quot;21&quot;:55,&quot;24&quot;:42}],[&quot;Generative 32nds&quot;,{&quot;18&quot;:3,&quot;19&quot;:250,&quot;20&quot;:8000,&quot;21&quot;:65,&quot;23&quot;:0,&quot;24&quot;:101}],[&quot;Half Mix Motion&quot;,{&quot;21&quot;:40,&quot;23&quot;:40,&quot;25&quot;:50}]]}"><button type="button" class="live-play" aria-label="Play live: the loop through the plugin" title="Play live"><svg class="i-play" width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><polygon points="6 4 20 12 6 20" fill="currentColor"/></svg><svg class="i-stop" width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="6" width="12" height="12" fill="currentColor"/></svg></button><button type="button" class="live-ab" aria-pressed="false" title="Switch between the plugin and the dry loop"><span class="on">ON</span><span class="off">BYPASS</span></button>
+                        <label class="live-field">Loop <select class="live-loop"><option value="band">Band</option><option value="drums">Drums</option><option value="keys">Keys and bass</option></select></label>
+                        <label class="live-field">Preset <select class="live-preset"><option value="0">Default</option><option value="1">Sixteenth Sweep</option><option value="2">Acid Steps</option><option value="3">Eighth Note Wah</option><option value="4">Hi Pass Pump</option><option value="5">Triplet Feel Five</option><option value="6">Slow Quarter Motion</option><option value="7">Generative Seed 7</option><option value="8">Generative Seed 42</option><option value="9">Generative 32nds</option><option value="10">Half Mix Motion</option></select></label>
+                        <span class="demo-note">Live: the plugin itself runs in your browser on a loop of NULL JSFX instruments. Change the preset or bypass it while it plays.</span>
+                        <span class="live-status demo-note" role="status"></span>
+                    </div>
+                </section>
+                <section class="guide-section">
+                    <h2>Controls</h2>
+                    <ul class="guide-sliders"><li><span class="slider-name">Step 1</span><span class="slider-desc">0 to 100% — Step 1 position between Low (0%) and High (100%) on a musical scale</span></li><li><span class="slider-name">Step 2</span><span class="slider-desc">0 to 100% — Step 2 position between Low (0%) and High (100%) on a musical scale</span></li><li><span class="slider-name">Step 3</span><span class="slider-desc">0 to 100% — Step 3 position between Low (0%) and High (100%) on a musical scale</span></li><li><span class="slider-name">Step 4</span><span class="slider-desc">0 to 100% — Step 4 position between Low (0%) and High (100%) on a musical scale</span></li><li><span class="slider-name">Step 5</span><span class="slider-desc">0 to 100% — Step 5 position between Low (0%) and High (100%) on a musical scale</span></li><li><span class="slider-name">Step 6</span><span class="slider-desc">0 to 100% — Step 6 position between Low (0%) and High (100%) on a musical scale</span></li><li><span class="slider-name">Step 7</span><span class="slider-desc">0 to 100% — Step 7 position between Low (0%) and High (100%) on a musical scale</span></li><li><span class="slider-name">Step 8</span><span class="slider-desc">0 to 100% — Step 8 position between Low (0%) and High (100%) on a musical scale</span></li><li><span class="slider-name">Step 9</span><span class="slider-desc">0 to 100% — Step 9 position between Low (0%) and High (100%) on a musical scale</span></li><li><span class="slider-name">Step 10</span><span class="slider-desc">0 to 100% — Step 10 position between Low (0%) and High (100%) on a musical scale</span></li><li><span class="slider-name">Step 11</span><span class="slider-desc">0 to 100% — Step 11 position between Low (0%) and High (100%) on a musical scale</span></li><li><span class="slider-name">Step 12</span><span class="slider-desc">0 to 100% — Step 12 position between Low (0%) and High (100%) on a musical scale</span></li><li><span class="slider-name">Step 13</span><span class="slider-desc">0 to 100% — Step 13 position between Low (0%) and High (100%) on a musical scale</span></li><li><span class="slider-name">Step 14</span><span class="slider-desc">0 to 100% — Step 14 position between Low (0%) and High (100%) on a musical scale</span></li><li><span class="slider-name">Step 15</span><span class="slider-desc">0 to 100% — Step 15 position between Low (0%) and High (100%) on a musical scale</span></li><li><span class="slider-name">Step 16</span><span class="slider-desc">0 to 100% — Step 16 position between Low (0%) and High (100%) on a musical scale</span></li><li><span class="slider-name">Steps</span><span class="slider-desc">1 to 16 — How many of the 16 steps play before the sequence repeats (odd counts drift against the bar)</span></li><li><span class="slider-name">Step Length</span><span class="slider-desc">1/4 / 1/8 / 1/16 / 1/32 — Note value of one step at the host tempo</span></li><li><span class="slider-name">Low</span><span class="slider-desc">20 to 20000 Hz — Cutoff of a step at 0%</span></li><li><span class="slider-name">High</span><span class="slider-desc">20 to 20000 Hz — Cutoff of a step at 100% (below Low turns the sweep upside down)</span></li><li><span class="slider-name">Resonance</span><span class="slider-desc">0 to 100% — Resonance at the cutoff (0% = smooth, 100% = sharp and vocal)</span></li><li><span class="slider-name">Type</span><span class="slider-desc">Low Pass / Band Pass / High Pass — Low Pass, Band Pass or High Pass</span></li><li><span class="slider-name">Glide</span><span class="slider-desc">0 to 100% — How much of each step the cutoff spends gliding from the previous value (0% = hard steps)</span></li><li><span class="slider-name">Seed</span><span class="slider-desc">0 to 999 — 0: the Step sliders play; any other value plays a sequence drawn from it (the same Seed always gives the same steps)</span></li><li><span class="slider-name">Mix</span><span class="slider-desc">0 to 100% — Blend of the filtered and the dry signal</span></li></ul>
+                </section>
+                <section class="guide-section">
+                    <h2>Best uses</h2>
+                    <ul class="use-cases"><li>Rhythmic filter motion on pads and chords</li><li>Acid-style cutoff patterns on a bass line</li><li>Pulsing band-pass movement on drums or noise</li><li>Generated filter sequences to try ideas quickly</li></ul>
+                </section>
+                <section class="guide-section">
+                    <h2>Properties</h2>
+                    <p class="page-props">Signal chain: Input → state-variable filter (TPT, per channel) → Mix → Output. Up to 16 steps, one per Step Length at the host tempo and locked to the song position while the transport plays; each step sets the cutoff on a log scale between Low and High, with an optional raised-cosine glide. Seed draws 16 values with an exact Park-Miller generator, so the same Seed always plays the same sequence in every format. Resonance maps to Q 0.5-12; the cutoff stays below 0.45 of the sample rate. Stereo, zero latency.</p>
+                </section>
+                <section class="guide-section">
+                    <h2>Formats</h2>
+                    <ul class="guide-formats"><li><span class="format-tag">JSFX</span>JSFX for REAPER, with REAPER&#x27;s own sliders</li><li><span class="format-tag">GFX</span>JSFX GFX for REAPER, with its own interface</li><li><span class="format-tag">VST3</span>VST3 for any DAW</li><li><span class="format-tag">CLAP</span>CLAP for any DAW</li><li><span class="format-tag">LV2</span>LV2 for Linux DAWs such as Ardour, Carla and Qtractor</li></ul>
+                </section>
+                <section class="guide-section">
+                    <h2>Factory presets</h2>
+                    <p class="page-list">Sixteenth Sweep · Acid Steps · Eighth Note Wah · Hi Pass Pump · Triplet Feel Five · Slow Quarter Motion · Generative Seed 7 · Generative Seed 42 · Generative 32nds · Half Mix Motion</p>
+                </section>
+                <section class="guide-section">
+                    <h2>In the FX chains and Rack presets</h2>
+                    <p class="page-list">Generative Riff</p>
+                    <p class="page-more"><a href="/#fx-chains">See every FX chain</a></p>
+                </section>
+                <section class="guide-section">
+                    <h2>Try it</h2>
+                    <a class="try-studio guide-studio" href="https://useoros.online/studio/" target="_blank" rel="noopener"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8" fill="currentColor"/></svg><span class="try-studio-text"><b>Try it on orOS Studio</b><small>Add it to a track in your browser, with its own interface. Nothing to install.</small></span></a>
+                </section>
+            </div>
+        </article>
+        <section class="page-related">
+            <h2 class="section-title">Goes well with</h2>
+            <div class="related-grid"><a class="related-card" href="/plugins/envelope-follower/"><b>Envelope Follower</b><small>Auto-Wah &amp; Envelope Filter</small></a><a class="related-card" href="/plugins/octaver/"><b>Octaver</b><small>Analog Octave Divider</small></a><a class="related-card" href="/plugins/shaper/"><b>Shaper</b><small>Waveshaper with a Drawable Curve</small></a><a class="related-card" href="/plugins/stereo-width/"><b>Stereo Width</b><small>M/S Width with Mono Bass</small></a><a class="related-card" href="/plugins/wah/"><b>Wah</b><small>Wah Pedal, Auto-Wah &amp; LFO Wah</small></a><a class="related-card" href="/plugins/amp-simulator/"><b>Amp Simulator</b><small>Guitar &amp; Bass Amp, No Cabinet</small></a></div>
+            <p class="page-more"><a href="/">All 170 NULL JSFX plugins</a></p>
+        </section>
+    </main>
+    <footer class="site-footer">
+        <div class="footer-content">
+            Designed with &#9825; by <a href="https://koulaxizis.gr" target="_blank" rel="noopener">Christos Koulaxizis</a>.
+            <div class="footer-links">
+                <a href="https://ko-fi.com/koulaxizis" target="_blank" rel="noopener">Support on Ko-fi</a>
+                <span class="sep">&bull;</span>
+                <a href="https://github.com/koulaxizis/null-jsfx" target="_blank" rel="noopener">GitHub</a>
+                <span class="sep">&bull;</span>
+                <a href="/">nulljsfx.tech</a>
+            </div>
+        </div>
+    </footer>
+    <button id="theme-toggle" class="theme-toggle-floating" aria-label="Toggle color theme" title="Switch between light/dark theme">
+        <svg class="sun-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2 M12 21v2 M4.22 4.22l1.42 1.42 M18.36 18.36l1.42 1.42 M1 12h2 M21 12h2 M4.22 19.78l1.42-1.42 M18.36 5.64l1.42-1.42"/></svg>
+        <svg class="moon-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none;"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+    </button>
+    <script src="/assets/js/theme.js"></script>
+    <script src="/assets/js/demo.js"></script>
+    <script src="/assets/js/live.js"></script>
+</body>
+</html>

@@ -50,7 +50,8 @@ private:
     {
         using nullautopan::onGrid;
         fDsp.setParams(onGrid(fV[0], 0.1, 10.0, 0.1), fV[1], fV[2], fV[3] >= 0.5f, int(std::lround(fV[4])),
-                       int(std::lround(fV[5])), std::round(fV[6]));
+                       int(std::lround(fV[5])), std::round(fV[6]), fV[7] >= 0.5f, int(std::lround(fV[8])),
+                       std::round(fV[9]));
     }
 
     nullautopan::AutoPanProcessor fDsp;

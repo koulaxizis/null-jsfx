@@ -89,4 +89,55 @@ static const char* const kHints[] = {
     "Stereo position of the triangle (L100 to R100)",
 };
 
+// the parameters the header's dice moves (tools/build_presets.py dice()): index, range, step, log scale
+#define NULL_UI_DICE 1
+struct DiceParam {
+    uint32_t index;
+    float lo, hi, step;
+    bool log;
+};
+static const DiceParam kDice[] = {
+    { 0, 0.0f, 8.0f, 1.0f, false },
+    { 1, 0.0f, 1.0f, 1.0f, false },
+    { 2, 50.0f, 75.0f, 1.0f, false },
+    { 3, 0.0f, 100.0f, 1.0f, false },
+    { 4, 0.0f, 100.0f, 1.0f, false },
+    { 5, 0.0f, 100.0f, 1.0f, false },
+    { 6, 0.0f, 100.0f, 1.0f, false },
+    { 9, -12.0f, 12.0f, 0.1f, false },
+    { 10, 0.0f, 100.0f, 1.0f, false },
+    { 11, -100.0f, 100.0f, 1.0f, false },
+    { 13, -12.0f, 12.0f, 0.1f, false },
+    { 14, 0.0f, 100.0f, 1.0f, false },
+    { 15, -100.0f, 100.0f, 1.0f, false },
+    { 17, -12.0f, 12.0f, 0.1f, false },
+    { 18, 0.0f, 100.0f, 1.0f, false },
+    { 19, -100.0f, 100.0f, 1.0f, false },
+    { 21, -12.0f, 12.0f, 0.1f, false },
+    { 22, 0.0f, 100.0f, 1.0f, false },
+    { 23, -100.0f, 100.0f, 1.0f, false },
+    { 25, -12.0f, 12.0f, 0.1f, false },
+    { 26, 0.0f, 100.0f, 1.0f, false },
+    { 27, -100.0f, 100.0f, 1.0f, false },
+    { 29, -12.0f, 12.0f, 0.1f, false },
+    { 30, 0.0f, 100.0f, 1.0f, false },
+    { 31, -100.0f, 100.0f, 1.0f, false },
+    { 33, -12.0f, 12.0f, 0.1f, false },
+    { 34, 0.0f, 100.0f, 1.0f, false },
+    { 35, -100.0f, 100.0f, 1.0f, false },
+    { 37, -12.0f, 12.0f, 0.1f, false },
+    { 38, 0.0f, 100.0f, 1.0f, false },
+    { 39, -100.0f, 100.0f, 1.0f, false },
+    { 41, -12.0f, 12.0f, 0.1f, false },
+    { 42, 0.0f, 100.0f, 1.0f, false },
+    { 43, -100.0f, 100.0f, 1.0f, false },
+    { 45, -12.0f, 12.0f, 0.1f, false },
+    { 46, 0.0f, 100.0f, 1.0f, false },
+    { 47, -100.0f, 100.0f, 1.0f, false },
+    { 49, -12.0f, 12.0f, 0.1f, false },
+    { 50, 0.0f, 100.0f, 1.0f, false },
+    { 51, -100.0f, 100.0f, 1.0f, false },
+};
+static constexpr uint32_t kNumDice = sizeof(kDice) / sizeof(kDice[0]);
+
 } // namespace nullpresets

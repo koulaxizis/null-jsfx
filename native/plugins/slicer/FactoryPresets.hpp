@@ -8,24 +8,26 @@ namespace nullpresets {
 
 struct FactoryPreset {
     const char* name;
-    float values[8];
+    float values[10];
 };
 
 static const FactoryPreset kPresets[] = {
-    { "Default", { 1.0f, 50.0f, 1.0f, 1.0f, 0.0f, 25.0f, 100.0f, 100.0f } },
-    { "Light Shuffle", { 1.0f, 25.0f, 1.0f, 1.0f, 0.0f, 10.0f, 100.0f, 100.0f } },
-    { "Breakbeat Chop", { 1.0f, 70.0f, 3.0f, 1.0f, 10.0f, 30.0f, 100.0f, 100.0f } },
-    { "Reverse Pairs", { 2.0f, 50.0f, 1.0f, 1.0f, 0.0f, 0.0f, 100.0f, 100.0f } },
-    { "Stutter Fills", { 3.0f, 40.0f, 1.0f, 2.0f, 0.0f, 20.0f, 100.0f, 100.0f } },
-    { "Chaos (Seed 7)", { 5.0f, 100.0f, 7.0f, 1.0f, 30.0f, 40.0f, 100.0f, 100.0f } },
-    { "Choppy Gate", { 0.0f, 50.0f, 1.0f, 1.0f, 0.0f, 15.0f, 50.0f, 100.0f } },
-    { "Drum Bus Variation", { 1.0f, 35.0f, 11.0f, 1.0f, 0.0f, 15.0f, 100.0f, 60.0f } },
-    { "Backspin Ending", { 4.0f, 60.0f, 5.0f, 1.0f, 0.0f, 10.0f, 100.0f, 100.0f } },
-    { "Vocal Chop 16ths", { 3.0f, 30.0f, 1.0f, 1.0f, 0.0f, 35.0f, 80.0f, 100.0f } },
-    { "Glitch Reverse", { 5.0f, 60.0f, 42.0f, 2.0f, 50.0f, 30.0f, 100.0f, 100.0f } },
+    { "Default", { 1.0f, 50.0f, 1.0f, 1.0f, 0.0f, 25.0f, 100.0f, 100.0f, 0.0f, 0.0f } },
+    { "Light Shuffle", { 1.0f, 25.0f, 1.0f, 1.0f, 0.0f, 10.0f, 100.0f, 100.0f, 0.0f, 0.0f } },
+    { "Breakbeat Chop", { 1.0f, 70.0f, 3.0f, 1.0f, 10.0f, 30.0f, 100.0f, 100.0f, 0.0f, 0.0f } },
+    { "Reverse Pairs", { 2.0f, 50.0f, 1.0f, 1.0f, 0.0f, 0.0f, 100.0f, 100.0f, 0.0f, 0.0f } },
+    { "Stutter Fills", { 3.0f, 40.0f, 1.0f, 2.0f, 0.0f, 20.0f, 100.0f, 100.0f, 0.0f, 0.0f } },
+    { "Chaos (Seed 7)", { 5.0f, 100.0f, 7.0f, 1.0f, 30.0f, 40.0f, 100.0f, 100.0f, 0.0f, 0.0f } },
+    { "Choppy Gate", { 0.0f, 50.0f, 1.0f, 1.0f, 0.0f, 15.0f, 50.0f, 100.0f, 0.0f, 0.0f } },
+    { "Drum Bus Variation", { 1.0f, 35.0f, 11.0f, 1.0f, 0.0f, 15.0f, 100.0f, 60.0f, 0.0f, 0.0f } },
+    { "Backspin Ending", { 4.0f, 60.0f, 5.0f, 1.0f, 0.0f, 10.0f, 100.0f, 100.0f, 0.0f, 0.0f } },
+    { "Vocal Chop 16ths", { 3.0f, 30.0f, 1.0f, 1.0f, 0.0f, 35.0f, 80.0f, 100.0f, 0.0f, 0.0f } },
+    { "Glitch Reverse", { 5.0f, 60.0f, 42.0f, 2.0f, 50.0f, 30.0f, 100.0f, 100.0f, 0.0f, 0.0f } },
+    { "Generative Reroll Bars", { 5.0f, 60.0f, 9.0f, 1.0f, 0.0f, 25.0f, 100.0f, 100.0f, 1.0f, 0.0f } },
+    { "Generative Speed Chops", { 1.0f, 50.0f, 21.0f, 1.0f, 0.0f, 25.0f, 100.0f, 100.0f, 2.0f, 35.0f } },
 };
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
-static constexpr uint32_t kNumValues = 8;
+static constexpr uint32_t kNumValues = 10;
 
 // the hint line under the controls: a short help text per parameter (from tools/site_content.json)
 #define NULL_UI_HINTS 1
@@ -38,6 +40,28 @@ static const char* const kHints[] = {
     "Chance that a slice is retriggered, playing its first half twice",
     "Length of each slice (100% = full); lower values cut every slice short with a fade for a choppy, gated feel",
     "Blend of sliced and dry signal",
+    "Draws a new slice order every bar, 2 bars or 4 bars from Seed and the bar number, so the pattern keeps",
+    "Chance that a slice plays at half or double speed",
 };
+
+// the parameters the header's dice moves (tools/build_presets.py dice()): index, range, step, log scale
+#define NULL_UI_DICE 1
+struct DiceParam {
+    uint32_t index;
+    float lo, hi, step;
+    bool log;
+};
+static const DiceParam kDice[] = {
+    { 0, 0.0f, 5.0f, 1.0f, false },
+    { 1, 0.0f, 100.0f, 1.0f, false },
+    { 2, 1.0f, 999.0f, 1.0f, false },
+    { 3, 0.0f, 2.0f, 1.0f, false },
+    { 4, 0.0f, 100.0f, 1.0f, false },
+    { 5, 0.0f, 100.0f, 1.0f, false },
+    { 6, 0.0f, 100.0f, 1.0f, false },
+    { 8, 0.0f, 3.0f, 1.0f, false },
+    { 9, 0.0f, 100.0f, 1.0f, false },
+};
+static constexpr uint32_t kNumDice = sizeof(kDice) / sizeof(kDice[0]);
 
 } // namespace nullpresets

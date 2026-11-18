@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Beat Gen: free MIDI tool for REAPER, VST3, CLAP | NULL JSFX</title>
+    <meta name="description" content="Beat Gen: Generative Drum Patterns as MIDI. Free, open source MIDI tool for REAPER (JSFX) and any DAW (VST3, CLAP, LV2) on Windows, macOS and Linux.">
+    <link rel="canonical" href="https://nulljsfx.tech/plugins/beat-gen/">
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Beat Gen: Generative Drum Patterns as MIDI">
+    <meta property="og:description" content="Beat Gen: Generative Drum Patterns as MIDI. Free, open source MIDI tool for REAPER (JSFX) and any DAW (VST3, CLAP, LV2) on Windows, macOS and Linux.">
+    <meta property="og:url" content="https://nulljsfx.tech/plugins/beat-gen/">
+    <meta property="og:image" content="https://nulljsfx.tech/assets/video/beat_gen.jpg">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Beat Gen: Generative Drum Patterns as MIDI">
+    <meta name="twitter:description" content="Beat Gen: Generative Drum Patterns as MIDI. Free, open source MIDI tool for REAPER (JSFX) and any DAW (VST3, CLAP, LV2) on Windows, macOS and Linux.">
+    <meta name="twitter:image" content="https://nulljsfx.tech/assets/video/beat_gen.jpg">
+    <link rel="icon" type="image/svg+xml" href="/assets/img/favicon.svg">
+    <link rel="stylesheet" href="/assets/css/style.css">
+    <script type="application/ld+json">{"@context": "https://schema.org", "@type": "SoftwareApplication", "name": "NULL Beat Gen", "description": "Generative Drum Patterns as MIDI", "url": "https://nulljsfx.tech/plugins/beat-gen/", "image": "https://nulljsfx.tech/assets/video/beat_gen.jpg", "applicationCategory": "MultimediaApplication", "applicationSubCategory": "Audio MIDI tool", "operatingSystem": "Windows, macOS, Linux", "softwareVersion": "4.0", "license": "https://opensource.org/licenses/MIT", "offers": {"@type": "Offer", "price": "0", "priceCurrency": "EUR"}, "author": {"@type": "Person", "name": "Christos Koulaxizis"}, "isPartOf": {"@type": "SoftwareApplication", "name": "NULL JSFX", "url": "https://nulljsfx.tech/"}}</script>
+    <script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "NULL JSFX", "item": "https://nulljsfx.tech/"}, {"@type": "ListItem", "position": 2, "name": "MIDI", "item": "https://nulljsfx.tech/#midi"}, {"@type": "ListItem", "position": 3, "name": "Beat Gen", "item": "https://nulljsfx.tech/plugins/beat-gen/"}]}</script>
+</head>
+<body class="plugin-page">
+    <main>
+        <nav class="page-crumbs" aria-label="Breadcrumb">
+            <a href="/" class="page-home"><img src="/assets/img/favicon.svg" alt="NULL JSFX" width="28" height="28"></a>
+            <a href="/">NULL JSFX</a> <span>/</span> <a href="/#midi">MIDI</a> <span>/</span> <span>Beat Gen</span>
+        </nav>
+        <article class="page-plugin">
+            <header class="guide-header page-header">
+                <span class="guide-category">MIDI</span>
+                <h1>BEAT GEN <span class="beta-badge">BETA</span></h1>
+                <p>Generative Drum Patterns as MIDI</p>
+                <p class="beta-note">Beta: its rules have been tested on test signals so far and may still be tuned from your feedback, so a project saved now can sound a little different after an update.</p>
+            </header>
+            <video class="guide-shot guide-video" poster="/assets/video/beat_gen.jpg" controls playsinline preload="none" width="1280" height="720" aria-label="Beat Gen presentation video"><source src="https://github.com/koulaxizis/null-jsfx/releases/download/media/beat_gen.mp4" type="video/mp4"><source src="/assets/video/beat_gen.mp4" type="video/mp4"></video>
+            <div class="page-actions">
+                <a class="featured-btn" href="/#download"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg><span>Download free</span></a>
+                <small>Part of NULL JSFX 4.0: 170 plugins, free and open source (MIT). Easiest with <a href="/#hub">NULL JSFX Hub</a>.</small>
+            </div>
+            <div class="guide-body">
+                <section class="guide-section">
+                    <h2>Controls</h2>
+                    <ul class="guide-sliders"><li><span class="slider-name">Kick Density</span><span class="slider-desc">0 to 100% — How often the kick plays where the style allows it; a higher value only adds hits</span></li><li><span class="slider-name">Snare Density</span><span class="slider-desc">0 to 100% — How often the snare plays where the style allows it; a higher value only adds hits</span></li><li><span class="slider-name">Closed Hat Density</span><span class="slider-desc">0 to 100% — How often the closed hat plays where the style allows it; a higher value only adds hits</span></li><li><span class="slider-name">Open Hat Density</span><span class="slider-desc">0 to 100% — How often the open hat plays where the style allows it; a higher value only adds hits</span></li><li><span class="slider-name">Clap Density</span><span class="slider-desc">0 to 100% — How often the clap plays where the style allows it; a higher value only adds hits</span></li><li><span class="slider-name">Tom Density</span><span class="slider-desc">0 to 100% — How often the tom plays where the style allows it; a higher value only adds hits</span></li><li><span class="slider-name">Perc Density</span><span class="slider-desc">0 to 100% — How often the perc plays where the style allows it; a higher value only adds hits</span></li><li><span class="slider-name">Cymbal Density</span><span class="slider-desc">0 to 100% — How often the cymbal plays where the style allows it; a higher value only adds hits</span></li><li><span class="slider-name">Kick Steps</span><span class="slider-desc">1 to 16 — Length of the kick lane in steps; lanes of different lengths drift against each other (polymeter)</span></li><li><span class="slider-name">Snare Steps</span><span class="slider-desc">1 to 16 — Length of the snare lane in steps; lanes of different lengths drift against each other (polymeter)</span></li><li><span class="slider-name">Closed Hat Steps</span><span class="slider-desc">1 to 16 — Length of the closed hat lane in steps; lanes of different lengths drift against each other (polymeter)</span></li><li><span class="slider-name">Open Hat Steps</span><span class="slider-desc">1 to 16 — Length of the open hat lane in steps; lanes of different lengths drift against each other (polymeter)</span></li><li><span class="slider-name">Clap Steps</span><span class="slider-desc">1 to 16 — Length of the clap lane in steps; lanes of different lengths drift against each other (polymeter)</span></li><li><span class="slider-name">Tom Steps</span><span class="slider-desc">1 to 16 — Length of the tom lane in steps; lanes of different lengths drift against each other (polymeter)</span></li><li><span class="slider-name">Perc Steps</span><span class="slider-desc">1 to 16 — Length of the perc lane in steps; lanes of different lengths drift against each other (polymeter)</span></li><li><span class="slider-name">Cymbal Steps</span><span class="slider-desc">1 to 16 — Length of the cymbal lane in steps; lanes of different lengths drift against each other (polymeter)</span></li><li><span class="slider-name">Kick Note</span><span class="slider-desc">0 to 127 — MIDI note the kick lane sends (General MIDI drum map by default)</span></li><li><span class="slider-name">Snare Note</span><span class="slider-desc">0 to 127 — MIDI note the snare lane sends (General MIDI drum map by default)</span></li><li><span class="slider-name">Closed Hat Note</span><span class="slider-desc">0 to 127 — MIDI note the closed hat lane sends (General MIDI drum map by default)</span></li><li><span class="slider-name">Open Hat Note</span><span class="slider-desc">0 to 127 — MIDI note the open hat lane sends (General MIDI drum map by default)</span></li><li><span class="slider-name">Clap Note</span><span class="slider-desc">0 to 127 — MIDI note the clap lane sends (General MIDI drum map by default)</span></li><li><span class="slider-name">Tom Note</span><span class="slider-desc">0 to 127 — MIDI note the tom lane sends (General MIDI drum map by default)</span></li><li><span class="slider-name">Perc Note</span><span class="slider-desc">0 to 127 — MIDI note the perc lane sends (General MIDI drum map by default)</span></li><li><span class="slider-name">Cymbal Note</span><span class="slider-desc">0 to 127 — MIDI note the cymbal lane sends (General MIDI drum map by default)</span></li><li><span class="slider-name">Kick Lock</span><span class="slider-desc">Off / On — On: Mutate leaves the kick lane as it is</span></li><li><span class="slider-name">Snare Lock</span><span class="slider-desc">Off / On — On: Mutate leaves the snare lane as it is</span></li><li><span class="slider-name">Closed Hat Lock</span><span class="slider-desc">Off / On — On: Mutate leaves the closed hat lane as it is</span></li><li><span class="slider-name">Open Hat Lock</span><span class="slider-desc">Off / On — On: Mutate leaves the open hat lane as it is</span></li><li><span class="slider-name">Clap Lock</span><span class="slider-desc">Off / On — On: Mutate leaves the clap lane as it is</span></li><li><span class="slider-name">Tom Lock</span><span class="slider-desc">Off / On — On: Mutate leaves the tom lane as it is</span></li><li><span class="slider-name">Perc Lock</span><span class="slider-desc">Off / On — On: Mutate leaves the perc lane as it is</span></li><li><span class="slider-name">Cymbal Lock</span><span class="slider-desc">Off / On — On: Mutate leaves the cymbal lane as it is</span></li><li><span class="slider-name">Style</span><span class="slider-desc">Four on Floor / Breakbeat / Hip Hop / Trap / Random — The rhythm the lanes follow: Four on Floor, Breakbeat, Hip Hop, Trap or Random</span></li><li><span class="slider-name">Seed</span><span class="slider-desc">1 to 999 — Picks a different pattern; the same Seed always gives the same pattern</span></li><li><span class="slider-name">Rate</span><span class="slider-desc">1/8 / 1/16 / 1/32 / 1/16T — Note value of one step at the host tempo</span></li><li><span class="slider-name">Mutate</span><span class="slider-desc">0 to 100% — How much of the unlocked lanes is drawn anew every Mutate Every cycles (0% = the pattern stays as it is)</span></li><li><span class="slider-name">Mutate Every</span><span class="slider-desc">1 Cycle / 2 Cycles / 4 Cycles / 8 Cycles — How often Mutate draws a new variation, in cycles of 16 steps</span></li><li><span class="slider-name">Velocity</span><span class="slider-desc">1 to 127 — Velocity of the loudest hits</span></li><li><span class="slider-name">Velocity Range</span><span class="slider-desc">0 to 100% — How far the drawn velocities can fall below Velocity</span></li><li><span class="slider-name">Swing</span><span class="slider-desc">0 to 75% — Moves every second step later for a shuffled feel</span></li><li><span class="slider-name">Gate</span><span class="slider-desc">5 to 95% — Length of each note as a share of a step</span></li><li><span class="slider-name">Run</span><span class="slider-desc">Transport / Always — Transport: plays while the host plays, locked to its beat; Always: also runs while stopped</span></li><li><span class="slider-name">Channel</span><span class="slider-desc">1 / 2 / 3 / 4 / 5 / 6 / 7 / 8 / 9 / 10 / 11 / 12 / 13 / 14 / 15 / 16 — MIDI channel of the notes (10 = drums)</span></li></ul>
+                </section>
+                <section class="guide-section">
+                    <h2>Best uses</h2>
+                    <ul class="use-cases"><li>Fresh drum ideas for any NULL or third-party drum instrument</li><li>Evolving grooves that change every few bars but keep the kick steady</li><li>Polymetric percussion layers</li><li>A quick beat to write over</li></ul>
+                </section>
+                <section class="guide-section">
+                    <h2>Properties</h2>
+                    <p class="page-props">MIDI effect: 8 lanes of up to 16 steps drawn from a style&#x27;s weights, the lane&#x27;s Density and Seed with an exact Park-Miller generator (two draws per step: hit and velocity), so the same Seed always gives the same pattern in every format. Steps run at the host tempo and lock to the song position while the transport plays; Mutate redraws a share of the unlocked lanes per cycle from the song position, so a loop always plays the same variation. Incoming MIDI passes through; the audio passes through untouched.</p>
+                </section>
+                <section class="guide-section">
+                    <h2>Formats</h2>
+                    <ul class="guide-formats"><li><span class="format-tag">JSFX</span>JSFX for REAPER, with REAPER&#x27;s own sliders</li><li><span class="format-tag">GFX</span>JSFX GFX for REAPER, with its own interface</li><li><span class="format-tag">VST3</span>VST3 for any DAW</li><li><span class="format-tag">CLAP</span>CLAP for any DAW</li><li><span class="format-tag">LV2</span>LV2 for Linux DAWs such as Ardour, Carla and Qtractor</li></ul>
+                </section>
+                <section class="guide-section">
+                    <h2>Factory presets</h2>
+                    <p class="page-list">House Groove · Breakbeat Seed 12 · Boom Bap · Trap Rolls · Polymeter Drift · Mutating House · Evolving Breaks · Sparse Percussion · Half Speed Eighths · Free Running Jam</p>
+                </section>
+                <section class="guide-section">
+                    <h2>In the FX chains and Rack presets</h2>
+                    <p class="page-list">Generative Beat</p>
+                    <p class="page-more"><a href="/#fx-chains">See every FX chain</a></p>
+                </section>
+            </div>
+        </article>
+        <section class="page-related">
+            <h2 class="section-title">Goes well with</h2>
+            <div class="related-grid"><a class="related-card" href="/plugins/drum-trigger/"><b>Drum Trigger</b><small>Audio to MIDI Drum Trigger</small></a><a class="related-card" href="/plugins/euclid/"><b>Euclid</b><small>Euclidean Rhythm Generator</small></a><a class="related-card" href="/plugins/humanize/"><b>Humanize</b><small>Random Timing, Velocity &amp; Groove for MIDI</small></a><a class="related-card" href="/plugins/arpeggiator/"><b>Arpeggiator</b><small>Tempo-Synced Arpeggiator with Velocity Lane (MIDI)</small></a><a class="related-card" href="/plugins/assisted-comp/"><b>Assisted Comp</b><small>Compressor that sets itself from the track</small></a><a class="related-card" href="/plugins/assisted-delay/"><b>Assisted Delay</b><small>Delay that sets itself from the track</small></a></div>
+            <p class="page-more"><a href="/#midi">All 170 NULL JSFX plugins</a></p>
+        </section>
+    </main>
+    <footer class="site-footer">
+        <div class="footer-content">
+            Designed with &#9825; by <a href="https://koulaxizis.gr" target="_blank" rel="noopener">Christos Koulaxizis</a>.
+            <div class="footer-links">
+                <a href="https://ko-fi.com/koulaxizis" target="_blank" rel="noopener">Support on Ko-fi</a>
+                <span class="sep">&bull;</span>
+                <a href="https://github.com/koulaxizis/null-jsfx" target="_blank" rel="noopener">GitHub</a>
+                <span class="sep">&bull;</span>
+                <a href="/">nulljsfx.tech</a>
+            </div>
+        </div>
+    </footer>
+    <button id="theme-toggle" class="theme-toggle-floating" aria-label="Toggle color theme" title="Switch between light/dark theme">
+        <svg class="sun-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2 M12 21v2 M4.22 4.22l1.42 1.42 M18.36 18.36l1.42 1.42 M1 12h2 M21 12h2 M4.22 19.78l1.42-1.42 M18.36 5.64l1.42-1.42"/></svg>
+        <svg class="moon-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none;"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+    </button>
+    <script src="/assets/js/theme.js"></script>
+    <script src="/assets/js/demo.js"></script>
+</body>
+</html>

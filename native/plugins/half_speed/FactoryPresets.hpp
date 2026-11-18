@@ -38,4 +38,20 @@ static const char* const kHints[] = {
     "Shifts the cycle start by 0 to 3 beats from the bar line while the transport plays",
 };
 
+// the parameters the header's dice moves (tools/build_presets.py dice()): index, range, step, log scale
+#define NULL_UI_DICE 1
+struct DiceParam {
+    uint32_t index;
+    float lo, hi, step;
+    bool log;
+};
+static const DiceParam kDice[] = {
+    { 0, 0.0f, 3.0f, 1.0f, false },
+    { 1, 0.0f, 2.0f, 1.0f, false },
+    { 2, 0.0f, 1.0f, 1.0f, false },
+    { 3, 1000.0f, 20000.0f, 1.0f, true },
+    { 5, 0.0f, 3.0f, 1.0f, false },
+};
+static constexpr uint32_t kNumDice = sizeof(kDice) / sizeof(kDice[0]);
+
 } // namespace nullpresets

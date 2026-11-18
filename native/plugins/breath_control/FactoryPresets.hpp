@@ -36,4 +36,19 @@ static const char* const kHints[] = {
     "How much quieter breaths get: the gain applied while the level is below Threshold",
 };
 
+// the parameters the header's dice moves (tools/build_presets.py dice()): index, range, step, log scale
+#define NULL_UI_DICE 1
+struct DiceParam {
+    uint32_t index;
+    float lo, hi, step;
+    bool log;
+};
+static const DiceParam kDice[] = {
+    { 0, -70.0f, 0.0f, 0.5f, false },
+    { 1, 1.0f, 50.0f, 1.0f, false },
+    { 2, 20.0f, 1000.0f, 1.0f, false },
+    { 3, -24.0f, 0.0f, 1.0f, false },
+};
+static constexpr uint32_t kNumDice = sizeof(kDice) / sizeof(kDice[0]);
+
 } // namespace nullpresets

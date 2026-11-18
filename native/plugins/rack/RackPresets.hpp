@@ -3714,6 +3714,75 @@ static const PresetGlobal kP109Globals[] = {
     { "scene_morph", 0.0f, nullptr },
 };
 
+static const PresetValue kP110S0[] = {
+    { 0, 300.0f, "Cutoff" },
+    { 1, 3.0f, "Resonance" },
+    { 3, 0.0f, "Mode" },
+};
+static const PresetValue kP110S1[] = {
+    { 0, 15.0f, "Drive" },
+    { 2, 40.0f, "Mix" },
+    { 3, 0.0f, "Mode" },
+};
+static const PresetSlot kP110Slots[] = {
+    { "filter", kP110S0, 3, 0, 0, 100.0f, true },
+    { "saturation", kP110S1, 3, 0, 0, 100.0f, true },
+};
+static const PresetRoute kP110Routes[] = {
+    { "seq", 0, 0, 0.55f, "Cutoff" },
+};
+static const PresetGlobal kP110Globals[] = {
+    { "seq_steps", 16.0f, nullptr },
+    { "seq_sync", 0.0f, "1/16" },
+    { "seq_glide", 25.0f, nullptr },
+    { "seq_step1", 1.0f, nullptr },
+    { "seq_step2", 0.2f, nullptr },
+    { "seq_step3", 0.6f, nullptr },
+    { "seq_step4", 0.2f, nullptr },
+    { "seq_step5", 0.8f, nullptr },
+    { "seq_step6", 0.2f, nullptr },
+    { "seq_step7", 0.5f, nullptr },
+    { "seq_step8", 0.3f, nullptr },
+    { "seq_step9", 1.0f, nullptr },
+    { "seq_step10", 0.2f, nullptr },
+    { "seq_step11", 0.6f, nullptr },
+    { "seq_step12", 0.2f, nullptr },
+    { "seq_step13", 0.9f, nullptr },
+    { "seq_step14", 0.4f, nullptr },
+    { "seq_step15", 0.7f, nullptr },
+    { "seq_step16", 0.1f, nullptr },
+};
+
+static const PresetValue kP111S0[] = {
+    { 0, -100.0f, "Pan" },
+};
+static const PresetValue kP111S1[] = {
+    { 3, 1.0f, "Tempo Sync" },
+    { 4, 1.0f, "Subdivision" },
+    { 1, 25.0f, "Feedback" },
+    { 2, 15.0f, "Mix" },
+};
+static const PresetSlot kP111Slots[] = {
+    { "panner", kP111S0, 1, 0, 0, 100.0f, true },
+    { "delay", kP111S1, 4, 0, 0, 100.0f, true },
+};
+static const PresetRoute kP111Routes[] = {
+    { "seq", 0, 0, 1.0f, "Pan" },
+};
+static const PresetGlobal kP111Globals[] = {
+    { "seq_steps", 8.0f, nullptr },
+    { "seq_sync", 0.0f, "1/8" },
+    { "seq_glide", 40.0f, nullptr },
+    { "seq_step1", 0.0f, nullptr },
+    { "seq_step2", 1.0f, nullptr },
+    { "seq_step3", 0.25f, nullptr },
+    { "seq_step4", 0.75f, nullptr },
+    { "seq_step5", 0.5f, nullptr },
+    { "seq_step6", 1.0f, nullptr },
+    { "seq_step7", 0.0f, nullptr },
+    { "seq_step8", 0.5f, nullptr },
+};
+
 static const Preset kPresets[] = {
     { "Init", "Init", nullptr, 0, nullptr, 0, nullptr, 0 },
     { "Tube EQ", "Chain", kP1Slots, 2, nullptr, 0, nullptr, 0 },
@@ -3825,6 +3894,8 @@ static const Preset kPresets[] = {
     { "Keytracked Resonance", "Routing", kP107Slots, 3, kP107Routes, 3, nullptr, 0 },
     { "Velocity Drive", "Routing", kP108Slots, 3, kP108Routes, 4, nullptr, 0 },
     { "Scene Morph Build", "Routing", kP109Slots, 4, nullptr, 0, kP109Globals, 2, 3, kP109Scenes, 12 },
+    { "Sequenced Filter", "Routing", kP110Slots, 2, kP110Routes, 1, kP110Globals, 19 },
+    { "Sequenced Panner", "Routing", kP111Slots, 2, kP111Routes, 1, kP111Globals, 11 },
 };
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 
@@ -3917,6 +3988,8 @@ static const LogSlider kLogSliders[] = {
     { "spectral_ducker", 3 },
     { "spectral_ducker", 4 },
     { "spectral_ducker", 5 },
+    { "step_filter", 18 },
+    { "step_filter", 19 },
     { "step_fx", 20 },
     { "stereo_scope", 3 },
     { "string_ensemble", 3 },

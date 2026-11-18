@@ -49,4 +49,26 @@ static const char* const kHints[] = {
     "Blend of equalized and dry signal (0 to 100%), for subtle or parallel tone shaping",
 };
 
+// the parameters the header's dice moves (tools/build_presets.py dice()): index, range, step, log scale
+#define NULL_UI_DICE 1
+struct DiceParam {
+    uint32_t index;
+    float lo, hi, step;
+    bool log;
+};
+static const DiceParam kDice[] = {
+    { 0, -18.0f, 18.0f, 0.1f, false },
+    { 1, -18.0f, 18.0f, 0.1f, false },
+    { 2, -18.0f, 18.0f, 0.1f, false },
+    { 3, -18.0f, 18.0f, 0.1f, false },
+    { 4, -18.0f, 18.0f, 0.1f, false },
+    { 5, -18.0f, 18.0f, 0.1f, false },
+    { 6, -18.0f, 18.0f, 0.1f, false },
+    { 7, -18.0f, 18.0f, 0.1f, false },
+    { 8, -18.0f, 18.0f, 0.1f, false },
+    { 9, -18.0f, 18.0f, 0.1f, false },
+    { 10, 0.0f, 100.0f, 1.0f, false },
+};
+static constexpr uint32_t kNumDice = sizeof(kDice) / sizeof(kDice[0]);
+
 } // namespace nullpresets

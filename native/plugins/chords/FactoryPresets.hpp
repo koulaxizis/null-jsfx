@@ -8,29 +8,32 @@ namespace nullpresets {
 
 struct FactoryPreset {
     const char* name;
-    float values[11];
+    float values[16];
 };
 
 static const FactoryPreset kPresets[] = {
-    { "Default", { 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f } },
-    { "Seventh Chords", { 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f } },
-    { "Lush Ninths", { 0.0f, 0.0f, 0.0f, 2.0f, 0.0f, 2.0f, 0.0f, 0.0f, 0.0f, -20.0f, 0.0f } },
-    { "Neo Soul Drop 2", { 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f, 0.0f, 12.0f, 0.0f, -30.0f, 0.0f } },
-    { "Wide Pad", { 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 3.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f } },
-    { "Guitar Strum Down", { 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 2.0f, 0.0f, 30.0f, 1.0f, 20.0f, 0.0f } },
-    { "Alternating Strum", { 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 2.0f, 0.0f, 25.0f, 2.0f, 0.0f, 0.0f } },
-    { "Harp Roll", { 0.0f, 0.0f, 0.0f, 2.0f, 0.0f, 3.0f, 0.0f, 90.0f, 0.0f, 0.0f, 0.0f } },
-    { "Power Chords", { 0.0f, 0.0f, 0.0f, 5.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, 40.0f, 0.0f } },
-    { "Sus2 Shimmer", { 0.0f, 0.0f, 0.0f, 3.0f, 0.0f, 2.0f, 1.0f, 20.0f, 0.0f, 0.0f, 0.0f } },
-    { "Pop Progression", { 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f } },
-    { "Doo-Wop Ballad", { 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 15.0f, 0.0f, 0.0f, 1.0f } },
-    { "Jazz ii-V-I", { 1.0f, 0.0f, 0.0f, 2.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 4.0f } },
-    { "Canon Roll", { 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 2.0f, 0.0f, 120.0f, 0.0f, 0.0f, 5.0f } },
-    { "Epic Minor", { 1.0f, 9.0f, 0.0f, 0.0f, 0.0f, 3.0f, 0.0f, 0.0f, 0.0f, 30.0f, 6.0f } },
-    { "Spanish Cadence", { 1.0f, 9.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 40.0f, 1.0f, 0.0f, 7.0f } },
+    { "Default", { 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f } },
+    { "Seventh Chords", { 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f } },
+    { "Lush Ninths", { 0.0f, 0.0f, 0.0f, 2.0f, 0.0f, 2.0f, 0.0f, 0.0f, 0.0f, -20.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f } },
+    { "Neo Soul Drop 2", { 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f, 0.0f, 12.0f, 0.0f, -30.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f } },
+    { "Wide Pad", { 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 3.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f } },
+    { "Guitar Strum Down", { 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 2.0f, 0.0f, 30.0f, 1.0f, 20.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f } },
+    { "Alternating Strum", { 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 2.0f, 0.0f, 25.0f, 2.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f } },
+    { "Harp Roll", { 0.0f, 0.0f, 0.0f, 2.0f, 0.0f, 3.0f, 0.0f, 90.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f } },
+    { "Power Chords", { 0.0f, 0.0f, 0.0f, 5.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, 40.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f } },
+    { "Sus2 Shimmer", { 0.0f, 0.0f, 0.0f, 3.0f, 0.0f, 2.0f, 1.0f, 20.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f } },
+    { "Pop Progression", { 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f } },
+    { "Doo-Wop Ballad", { 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 15.0f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f } },
+    { "Jazz ii-V-I", { 1.0f, 0.0f, 0.0f, 2.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 4.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f } },
+    { "Canon Roll", { 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 2.0f, 0.0f, 120.0f, 0.0f, 0.0f, 5.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f } },
+    { "Epic Minor", { 1.0f, 9.0f, 0.0f, 0.0f, 0.0f, 3.0f, 0.0f, 0.0f, 0.0f, 30.0f, 6.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f } },
+    { "Spanish Cadence", { 1.0f, 9.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 40.0f, 1.0f, 0.0f, 7.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f } },
+    { "Generative Major Loop", { 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 7.0f, 0.0f, 0.0f, 1.0f } },
+    { "Generative Minor Eight", { 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 42.0f, 1.0f, 1.0f, 1.0f } },
+    { "Generative Fast Changes", { 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 2.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 123.0f, 0.0f, 0.0f, 2.0f } },
 };
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
-static constexpr uint32_t kNumValues = 11;
+static constexpr uint32_t kNumValues = 16;
 
 // the hint line under the controls: a short help text per parameter (from tools/site_content.json)
 #define NULL_UI_HINTS 1
@@ -46,6 +49,38 @@ static const char* const kHints[] = {
     "The order of the strum: upward, downward, or alternating with every chord",
     "Shapes the velocity of the chord notes: positive values play soft touches louder, negative values make",
     "The chord progression of Progression mode: C, D, E, F, G, A and B play its steps in turn (I-V-vi-IV",
+    "On: plays a progression made from Generate Seed, Length and Mood instead of the Progression list (Mode",
+    "Picks a different generated progression; the same seed always gives the same chords",
+    "How many chords the generated progression has: 4 or 8 (the last one always leads home)",
+    "Major or minor harmony for the generated progression",
+    "Moves to the next chord of the progression on its own, locked to the host's beat, while you hold the keys",
 };
+
+// the parameters the header's dice moves (tools/build_presets.py dice()): index, range, step, log scale
+#define NULL_UI_DICE 1
+struct DiceParam {
+    uint32_t index;
+    float lo, hi, step;
+    bool log;
+};
+static const DiceParam kDice[] = {
+    { 0, 0.0f, 1.0f, 1.0f, false },
+    { 1, 0.0f, 11.0f, 1.0f, false },
+    { 2, 0.0f, 8.0f, 1.0f, false },
+    { 3, 0.0f, 5.0f, 1.0f, false },
+    { 4, 0.0f, 3.0f, 1.0f, false },
+    { 5, 0.0f, 3.0f, 1.0f, false },
+    { 6, -2.0f, 2.0f, 1.0f, false },
+    { 7, 0.0f, 200.0f, 1.0f, false },
+    { 8, 0.0f, 2.0f, 1.0f, false },
+    { 9, -100.0f, 100.0f, 1.0f, false },
+    { 10, 0.0f, 8.0f, 1.0f, false },
+    { 11, 0.0f, 1.0f, 1.0f, false },
+    { 12, 1.0f, 999.0f, 1.0f, false },
+    { 13, 0.0f, 1.0f, 1.0f, false },
+    { 14, 0.0f, 1.0f, 1.0f, false },
+    { 15, 0.0f, 3.0f, 1.0f, false },
+};
+static constexpr uint32_t kNumDice = sizeof(kDice) / sizeof(kDice[0]);
 
 } // namespace nullpresets

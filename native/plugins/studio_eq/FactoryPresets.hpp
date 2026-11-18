@@ -84,4 +84,56 @@ static const char* const kHints[] = {
     "Zero Latency runs the bands as minimum-phase filters",
 };
 
+// the parameters the header's dice moves (tools/build_presets.py dice()): index, range, step, log scale
+#define NULL_UI_DICE 1
+struct DiceParam {
+    uint32_t index;
+    float lo, hi, step;
+    bool log;
+};
+static const DiceParam kDice[] = {
+    { 0, 0.0f, 7.0f, 1.0f, false },
+    { 1, 10.0f, 30000.0f, 1.0f, true },
+    { 3, 0.1f, 18.0f, 0.01f, true },
+    { 4, 0.0f, 7.0f, 1.0f, false },
+    { 5, 0.0f, 4.0f, 1.0f, false },
+    { 6, 0.0f, 7.0f, 1.0f, false },
+    { 7, 10.0f, 30000.0f, 1.0f, true },
+    { 9, 0.1f, 18.0f, 0.01f, true },
+    { 10, 0.0f, 7.0f, 1.0f, false },
+    { 11, 0.0f, 4.0f, 1.0f, false },
+    { 12, 0.0f, 7.0f, 1.0f, false },
+    { 13, 10.0f, 30000.0f, 1.0f, true },
+    { 15, 0.1f, 18.0f, 0.01f, true },
+    { 16, 0.0f, 7.0f, 1.0f, false },
+    { 17, 0.0f, 4.0f, 1.0f, false },
+    { 18, 0.0f, 7.0f, 1.0f, false },
+    { 19, 10.0f, 30000.0f, 1.0f, true },
+    { 21, 0.1f, 18.0f, 0.01f, true },
+    { 22, 0.0f, 7.0f, 1.0f, false },
+    { 23, 0.0f, 4.0f, 1.0f, false },
+    { 24, 0.0f, 7.0f, 1.0f, false },
+    { 25, 10.0f, 30000.0f, 1.0f, true },
+    { 27, 0.1f, 18.0f, 0.01f, true },
+    { 28, 0.0f, 7.0f, 1.0f, false },
+    { 29, 0.0f, 4.0f, 1.0f, false },
+    { 30, 0.0f, 7.0f, 1.0f, false },
+    { 31, 10.0f, 30000.0f, 1.0f, true },
+    { 33, 0.1f, 18.0f, 0.01f, true },
+    { 34, 0.0f, 7.0f, 1.0f, false },
+    { 35, 0.0f, 4.0f, 1.0f, false },
+    { 36, 0.0f, 7.0f, 1.0f, false },
+    { 37, 10.0f, 30000.0f, 1.0f, true },
+    { 39, 0.1f, 18.0f, 0.01f, true },
+    { 40, 0.0f, 7.0f, 1.0f, false },
+    { 41, 0.0f, 4.0f, 1.0f, false },
+    { 42, 0.0f, 7.0f, 1.0f, false },
+    { 43, 10.0f, 30000.0f, 1.0f, true },
+    { 45, 0.1f, 18.0f, 0.01f, true },
+    { 46, 0.0f, 7.0f, 1.0f, false },
+    { 47, 0.0f, 4.0f, 1.0f, false },
+    { 50, 0.0f, 1.0f, 1.0f, false },
+};
+static constexpr uint32_t kNumDice = sizeof(kDice) / sizeof(kDice[0]);
+
 } // namespace nullpresets

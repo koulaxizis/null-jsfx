@@ -58,4 +58,34 @@ static const char* const kHints[] = {
     "Voice: Tonewheel is the drawbar organ; Pipe turns it into a pipe organ, the drawbars become the stops",
 };
 
+// the parameters the header's dice moves (tools/build_presets.py dice()): index, range, step, log scale
+#define NULL_UI_DICE 1
+struct DiceParam {
+    uint32_t index;
+    float lo, hi, step;
+    bool log;
+};
+static const DiceParam kDice[] = {
+    { 0, 0.0f, 8.0f, 1.0f, false },
+    { 1, 0.0f, 8.0f, 1.0f, false },
+    { 2, 0.0f, 8.0f, 1.0f, false },
+    { 3, 0.0f, 8.0f, 1.0f, false },
+    { 4, 0.0f, 8.0f, 1.0f, false },
+    { 5, 0.0f, 8.0f, 1.0f, false },
+    { 6, 0.0f, 8.0f, 1.0f, false },
+    { 7, 0.0f, 8.0f, 1.0f, false },
+    { 8, 0.0f, 8.0f, 1.0f, false },
+    { 9, 0.0f, 1.0f, 1.0f, false },
+    { 10, 0.0f, 1.0f, 1.0f, false },
+    { 11, 0.0f, 1.0f, 1.0f, false },
+    { 13, 0.0f, 100.0f, 1.0f, false },
+    { 14, 0.0f, 6.0f, 1.0f, false },
+    { 15, 0.0f, 100.0f, 1.0f, false },
+    { 16, 0.0f, 3.0f, 1.0f, false },
+    { 17, 10.0f, 400.0f, 1.0f, false },
+    { 18, 0.0f, 100.0f, 1.0f, false },
+    { 20, 0.0f, 1.0f, 1.0f, false },
+};
+static constexpr uint32_t kNumDice = sizeof(kDice) / sizeof(kDice[0]);
+
 } // namespace nullpresets
