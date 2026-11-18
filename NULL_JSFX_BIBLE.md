@@ -296,7 +296,7 @@ The user picks formats, plugins and extras (on Linux the formats include LV2 in 
 | `hub_profiles.json` | the Hub's starter profiles (data, read by `build_catalog.py`) |
 | `build_bible.py` | Part III of this Bible (the registry); `--check` in CI |
 | `build_assisted.py` | the rule tables of the Assisted plugins from `assisted_targets.json`: the generated block in each Assisted JSFX and GFX file and `native/common/AssistedTargets.hpp`; checks the Target and Source sliders against the JSON; `--check` in CI |
-| `media_kit/build.py` | the media kits of NULL JSFX, orOS and noxpress and the combined kit (8 zips: `<Name>-Media-Kit.zip`, `<Name>-Wallpapers.zip`), rendered with Playwright from `media_kit/*.html`; `--previews DIR` writes the page previews. Run by `media-kit.yml` |
+| `media_kit/build.py` | the media kits of NULL JSFX, orOS and noxpress and the combined kit (8 zips: `<Name>-Media-Kit.zip`, `<Name>-Wallpapers.zip`), rendered with Playwright from `media_kit/*.html`; `--previews DIR` writes the page previews. Run by `media-kit.yml`. The press releases in `media_kit/text/press/` carry facts (versions, counts, formats) that the monthly media kit task checks against the three projects on the 18th |
 | `make_social_preview.py` | `assets/img/social-preview.jpg` (run it again when the plugin count changes) |
 | `video/` | the presentation videos ([tools/video/README.md](tools/video/README.md)) |
 | `gfx_render/`, `render_gfx_shots.sh` | GFX screenshots (`assets/img/gfx/`) |
@@ -2419,3 +2419,9 @@ entry and the Bible delta.
 - **Verified:** 19 assets on the release (17 packages, the two Android APKs); the catalog rebuilt on publish carries version 4.0 and the sha256 of all 18 other assets, equal to GitHub's digests; `hub/tests/release_smoke.sh 4.0` ok; `releases/latest/download/<name>` answers for the installers, the Hub, the APKs, the catalog and the macOS zip; the JSFX zip holds 336 JSFX and GFX files with the v4.0 footer (Choir included); nulljsfx.tech shows v4.0 and `/plugins/choir/` answers 200; the F-Droid repository lists 4.0 (40000) for both apps. The second-phase macOS check (Part VII, 2026-11-17): every macOS job on main at `2da6c5a` passed (native build with `--test`, the installers, the Hub build and core) and so did the release's macOS builds. This is CI on macOS runners, not a run on a real Mac.
 - **Files:** this Bible (VI.3, Part X).
 - **Version:** v4.0.
+
+### 2026-11-18 — tools (no version change) — Media kit press releases brought up to date
+- **Fixes:** the monthly media kit check found the press releases (EN and EL) still on the facts of 2026-11-02. NULL JSFX: 4.0 and 168 plugins (were 3.0 and 150), and the formats now name ARM64 on Windows and Linux and LV2 on Linux, as `llms.txt` and the 4.0 release do. orOS: 140 apps (was 132; orOS `README.md` at 7.48.00, 37 games unchanged). noxpress: 48 plugins (was 32; the signed `updates.json` on noxpress main). The release date line is now 18 November 2026. No wording beyond these facts changed.
+- **Files:** `tools/media_kit/text/press/*.md`, `NULL_JSFX_BIBLE.md` (Part II tools row, this entry).
+- **Tests (run on Linux):** `python3 tools/media_kit/build.py` with `--previews` on main before the change: all 8 zips built, the 8 previews byte-identical to the copies on the three sites. Marks, palettes and fonts compared with the three repos: no change since 2026-11-02. The 8 download links answer 302, the page size labels are within 10% of the assets. `python3 tests/bible_order.py` and `python3 tests/lint.py` after the change.
+- **Next:** `media-kit.yml` rebuilds the 8 zips on merge.

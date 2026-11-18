@@ -1,6 +1,6 @@
-# noxpress: 32 free WordPress and WooCommerce plugins, managed from one hub
+# noxpress: 48 free WordPress and WooCommerce plugins, managed from one hub
 
-**For immediate release · 2 November 2026**
+**For immediate release · 18 November 2026**
 
 noxpress is a collection of free, open-source (MIT) WordPress and WooCommerce plugins for shops and publishers, built to replace paid third-party plugins: revenue splitting with per-product VAT, store dashboards, shop filters, bundles, pre-orders, wishlists, checkout extras, store pickup, page caching, image optimisation, redirects, backups and more.
 

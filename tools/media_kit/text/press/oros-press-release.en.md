@@ -1,8 +1,8 @@
-# orOS: a static operating system in your browser, with 132 free apps
+# orOS: a static operating system in your browser, with 140 free apps
 
-**For immediate release · 2 November 2026**
+**For immediate release · 18 November 2026**
 
-orOS is a complete desktop in a web page: a menu, a taskbar, notifications, universal search and 132 apps, from notes, calendar, writer, spreadsheet and mail to maps, music, a DAW, business tools and 37 games. It runs at useoros.online, installs as an app, works offline and keeps its data on the user's device.
+orOS is a complete desktop in a web page: a menu, a taskbar, notifications, universal search and 140 apps, from notes, calendar, writer, spreadsheet and mail to maps, music, a DAW, business tools and 37 games. It runs at useoros.online, installs as an app, works offline and keeps its data on the user's device.
 
 - **Private by design:** no accounts and no trackers. Optional sync goes through the user's own Dropbox or WebDAV / Nextcloud server and is encrypted before it leaves the browser.
 - **Everywhere:** in the browser, as Windows and Linux installers, as orOS Portable on a USB stick, as a bootable USB (beta) and as Android apps.
