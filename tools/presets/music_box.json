@@ -1,0 +1,18 @@
+[
+  ["Lullaby", {"Decay": 120, "Brightness": 40, "Body": 60, "Mechanism": 20}],
+  ["Clean Comb", {"Body": 20, "Mechanism": 0}],
+  ["Antique Box", {"Brightness": 35, "Body": 70, "Box Size": 40, "Mechanism": 70}],
+  ["Big Wooden Box", {"Decay": 160, "Body": 90, "Box Size": 15, "Mechanism": 30}],
+  ["Tiny Trinket", {"Decay": 70, "Brightness": 70, "Body": 40, "Box Size": 85, "Mechanism": 40}],
+  ["Glass Bright", {"Brightness": 85, "Body": 25, "Mechanism": 10}],
+  ["Dark Velvet", {"Brightness": 15, "Body": 65, "Box Size": 30, "Mechanism": 15}],
+  ["Long Ring", {"Decay": 300, "Body": 50, "Mechanism": 20}],
+  ["Short Pluck", {"Decay": 40, "Brightness": 60, "Body": 50, "Mechanism": 40}],
+  ["Clockwork", {"Body": 55, "Mechanism": 100}],
+  ["Winding Down", {"Mechanism": 50, "Wind Down": 40}],
+  ["Last Turn", {"Mechanism": 70, "Wind Down": 100}],
+  ["Soft Hands", {"Velocity": 100, "Mechanism": 25}],
+  ["Even Pins", {"Velocity": 0}],
+  ["Wide Comb", {"Width": 100, "Body": 50}],
+  ["Mono Box", {"Width": 0, "Body": 60}]
+]

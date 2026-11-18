@@ -1,0 +1,306 @@
+desc:NULL Music Box
+author: Christos Koulaxizis
+tags: instrument music box musicbox comb tine pin cylinder lullaby celesta toy bell mechanism wind down modal synthesis midi
+//category: Instruments
+//NULL JSFX v4.0 • https://nulljsfx.tech • MIT License
+
+slider1:100<25,400,1>Decay (%)
+slider2:50<0,100,1>Brightness (%)
+slider3:50<0,100,1>Body (%)
+slider4:50<0,100,1>Box Size (%)
+slider5:30<0,100,1>Mechanism (%)
+slider6:0<0,100,1>Wind Down (%)
+slider7:60<0,100,1>Velocity (%)
+slider8:50<0,100,1>Width (%)
+slider9:0<-24,12,0.1>Volume (dB)
+
+in_pin:none
+out_pin:Left
+out_pin:Right
+
+@init
+  // A music box from modal synthesis (no samples), 32 tines. Every key is a tuned steel tine of
+  // the comb (a clamped bar: four modes at 1 : 5.93 : 16.2 : 31.7, decaying in 3.2, 0.7, 0.25
+  // and 0.09 s at C5, 0.62 times that per octave up), plucked by a pin. A tine plucked again
+  // while it rings adds to its motion (it is not reset), and with Mechanism up the pin meets
+  // the moving tine: a short buzz (a square at twice the pitch, 12 ms). Tines ring out: key up
+  // does nothing, all notes off (CC 123/120) damps every tine in about 10 ms. Brightness tilts
+  // the upper modes (x 0.5 to 2 per mode). Body adds the wooden box: four resonances (240, 510,
+  // 980, 1850 Hz, Q 6 to 12; Box Size moves them an octave down or up, the right channel 4%
+  // higher). Mechanism is the pin's click (high-passed noise, 1.5 ms; always a little) and the
+  // spring governor's whirr (band noise at 700 Hz, a 23 Hz flutter) while the box plays.
+  // Wind Down is the spring running out: every note comes a little later than the one before
+  // (10 ms more plus 10% of the delay so far, at 100%), and the governor slows, until the
+  // delay passes 3 s and the box stops; 1.5 s without a note winds it up again. The tines are
+  // spread by pitch over Width. Noise is exact Park-Miller.
+  //
+  // Memory: 0.. the MIDI of the block (4 per message), 2048.. the wind-down queue (3 per note),
+  // 2304.. per-tine values (32 each), 3072.. the modes (4 per tine, 128 each).
+  ext_noinit = 1;
+  ext_tail_size = -1;
+  NV = 32;
+  NM = 4;
+  MQ = 0;
+  WQ = 2048;
+  v_note = 2304; v_f = 2336; v_buzz = 2368; v_bph = 2400; v_gl = 2432; v_gr = 2464; v_dmp = 2496; v_lf = 2528;
+  p_s1 = 3072; p_s2 = 3200; p_cf = 3328; p_df = 3456; p_e = 3584; p_r = 3712;
+  tpi = 2 * $pi;
+
+  // one Park-Miller step (x * 16807 mod 2^31 - 1, exact in doubles)
+  function mb_pm(x)
+  (
+    x *= 16807;
+    x - floor(x / 2147483647) * 2147483647;
+  );
+
+  // an RBJ biquad (transposed direct form II) with a denormal guard
+  function bq_bp(f, q) instance(b0, b1, b2, a1, a2) local(w, al)
+  (
+    w = 2 * $pi * min(f, 0.45 * srate) / srate;
+    al = sin(w) / (2 * q);
+    b0 = al / (1 + al); b1 = 0; b2 = -b0;
+    a1 = -2 * cos(w) / (1 + al); a2 = (1 - al) / (1 + al);
+  );
+  function bq_hp(f, q) instance(b0, b1, b2, a1, a2) local(w, al)
+  (
+    w = 2 * $pi * min(f, 0.45 * srate) / srate;
+    al = sin(w) / (2 * q);
+    b0 = (1 + cos(w)) / 2 / (1 + al); b1 = -(1 + cos(w)) / (1 + al); b2 = b0;
+    a1 = -2 * cos(w) / (1 + al); a2 = (1 - al) / (1 + al);
+  );
+  function bq(x) instance(b0, b1, b2, a1, a2, z1, z2) local(y)
+  (
+    y = b0 * x + z1;
+    z1 = b1 * x - a1 * y + z2;
+    z2 = b2 * x - a2 * y;
+    abs(z1) < 0.000000000000000000001 ? z1 = 0;
+    abs(z2) < 0.000000000000000000001 ? z2 = 0;
+    y;
+  );
+
+  // pluck the tine for note n at velocity vel
+  function strike(n, vel) local(v, f, ba, ring, oc, vn, g, k, b, fr, t, rr, w, a)
+  (
+    f = -1;
+    v = 0;
+    loop(NV, f < 0 && v_note[v] == n ? f = v; v += 1;);
+    v = 0;
+    loop(NV, f < 0 && v_note[v] < 0 ? f = v; v += 1;);
+    f < 0 ? (
+      // all tines ringing: the quietest one
+      ba = 0;
+      v = 0;
+      loop(NV, f < 0 || v_lf[v] < ba ? ( f = v; ba = v_lf[v]; ); v += 1;);
+    );
+    v = f;
+    ring = 0;
+    v_note[v] == n ? (
+      b = v * NM;
+      loop(NM, ring += abs(p_s1[b]); b += 1;);
+      ring > 0.001 ? v_buzz[v] = min(1, ring * 4) * mech;
+    ) : (
+      b = v * NM;
+      loop(NM, p_s1[b] = 0; p_s2[b] = 0; p_e[b] = 0; b += 1;);
+      v_buzz[v] = 0;
+      v_bph[v] = 0;
+    );
+    v_note[v] = n;
+    v_dmp[v] = 0;
+    f = 440 * 2 ^ ((n - 69) / 12);
+    v_f[v] = f;
+    oc = (n - 72) / 12;
+    vn = vel / 127;
+    g = 1 - vs + vs * vn;
+    b = v * NM;
+    k = 0;
+    loop(NM,
+      fr = f * (k == 0 ? 1 : k == 1 ? 5.93 : k == 2 ? 16.2 : 31.7);
+      fr < 0.45 * srate ? (
+        t = (k == 0 ? 3.2 : k == 1 ? 0.7 : k == 2 ? 0.25 : 0.09) * dsc * 0.62 ^ oc;
+        t = min(t, 30);
+        rr = exp(-6.907755 / (t * srate));
+        w = tpi * fr / srate;
+        a = (k == 0 ? 1 : k == 1 ? 0.32 : k == 2 ? 0.12 : 0.05) * bri ^ k * g * (1 + 0.15 * k * vn);
+        p_cf[b] = 2 * rr * cos(w);
+        p_df[b] = rr * rr;
+        p_s1[b] += a * sin(w);
+        p_e[b] += a;
+        p_r[b] = rr;
+      ) : (
+        p_s1[b] = 0; p_s2[b] = 0; p_e[b] = 0;
+      );
+      b += 1;
+      k += 1;
+    );
+    t = max(-1, min(1, (n - 76) / 18)) * 0.5 * wd;
+    v_gl[v] = 1 - t;
+    v_gr[v] = 1 + t;
+    ck = max(ck, 0.02 * vn * (0.3 + mech));
+    st_idle = 0;
+  );
+
+  // a key: at once, or later as the spring runs down
+  function key(n, vel)
+  (
+    wd_amt > 0 ? (
+      !wd_dead ? (
+        wd_d < 0.5 ? strike(n, vel) : wq_n < 64 ? (
+          WQ[wq_n * 3] = cnt + wd_d;
+          WQ[wq_n * 3 + 1] = n;
+          WQ[wq_n * 3 + 2] = vel;
+          wq_n += 1;
+        );
+        wd_d = wd_d * (1 + 0.1 * wd_amt) + 0.01 * wd_amt * srate;
+        wd_d > 3 * srate ? wd_dead = 1;
+      );
+    ) : strike(n, vel);
+    wd_idle = 0;
+  );
+
+  function all_off() local(v)
+  (
+    v = 0;
+    loop(NV, v_note[v] >= 0 ? v_dmp[v] = 1; v += 1;);
+    wq_n = 0;
+    wd_d = 0; wd_dead = 0;
+  );
+
+  function midi_ev(st, d1, d2) local(t)
+  (
+    t = st & 0xF0;
+    t == 0x90 && d2 > 0 ? key(d1, d2) :
+    t == 0xB0 && (d1 == 123 || d1 == 120) ? all_off();
+  );
+
+  v = 0;
+  loop(NV, v_note[v] = -1; v_buzz[v] = 0; v_bph[v] = 0; v_dmp[v] = 0; v_lf[v] = 0; v += 1;);
+  memset(p_s1, 0, NV * NM); memset(p_s2, 0, NV * NM); memset(p_e, 0, NV * NM);
+  wq_n = 0; wd_d = 0; wd_dead = 0; wd_idle = 0; cnt = 0;
+  st_idle = 1000000000;
+  ck = 0; gov = 0; wh_g = 0;
+  seed_c = 12345; seed_w = 67890;
+  m_ofs = m_1 = m_2 = m_3 = 0;
+  bl1.z1 = bl1.z2 = bl2.z1 = bl2.z2 = bl3.z1 = bl3.z2 = bl4.z1 = bl4.z2 = 0;
+  br1.z1 = br1.z2 = br2.z1 = br2.z2 = br3.z1 = br3.z2 = br4.z1 = br4.z2 = 0;
+  hc.z1 = hc.z2 = hw.z1 = hw.z2 = 0;
+  hc.bq_hp(3000, 0.7);
+  hw.bq_bp(700, 1.5);
+  ck_c = exp(-1 / (0.0015 * srate));
+  bz_c = exp(-1 / (0.012 * srate));
+  dm_c = exp(-1 / (0.01 * srate));
+  wh_c = exp(-1 / (0.15 * srate));
+
+@slider
+  dsc = slider1 / 100;
+  bri = 2 ^ ((slider2 - 50) / 50);
+  body = slider3 / 100;
+  bx = 2 ^ ((50 - slider4) / 50);
+  bl1.bq_bp(240 * bx, 6); bl2.bq_bp(510 * bx, 8); bl3.bq_bp(980 * bx, 10); bl4.bq_bp(1850 * bx, 12);
+  br1.bq_bp(240 * bx * 1.04, 6); br2.bq_bp(510 * bx * 1.04, 8); br3.bq_bp(980 * bx * 1.04, 10); br4.bq_bp(1850 * bx * 1.04, 12);
+  mech = slider5 / 100;
+  wd_amt = slider6 / 100;
+  vs = slider7 / 100;
+  wd = slider8 / 100;
+  vol = 10 ^ (slider9 / 20);
+
+@block
+  // the MIDI of this block, played at its offsets in @sample
+  mq_n = 0;
+  while (midirecv(m_ofs, m_1, m_2, m_3)) (
+    // every message goes on to the next plugin too, so instruments can be layered
+    midisend(m_ofs, m_1, m_2, m_3);
+    mq_n < 512 ? (
+      MQ[mq_n * 4] = m_ofs;
+      MQ[mq_n * 4 + 1] = m_1;
+      MQ[mq_n * 4 + 2] = m_2;
+      MQ[mq_n * 4 + 3] = m_3;
+      mq_n += 1;
+    );
+  );
+  mq_i = 0;
+  si = 0;
+
+@sample
+  while (mq_i < mq_n && MQ[mq_i * 4] <= si) (
+    midi_ev(MQ[mq_i * 4 + 1], MQ[mq_i * 4 + 2], MQ[mq_i * 4 + 3]);
+    mq_i += 1;
+  );
+  si += 1;
+
+  // the notes the spring held back, when their time comes
+  wq_n > 0 ? (
+    q = 0;
+    while (q < wq_n) (
+      WQ[q * 3] <= cnt ? (
+        strike(WQ[q * 3 + 1], WQ[q * 3 + 2]);
+        wq_n -= 1;
+        WQ[q * 3] = WQ[wq_n * 3];
+        WQ[q * 3 + 1] = WQ[wq_n * 3 + 1];
+        WQ[q * 3 + 2] = WQ[wq_n * 3 + 2];
+      ) : q += 1;
+    );
+  );
+  cnt += 1;
+  wd_idle += 1;
+  wd_idle > 1.5 * srate && wq_n == 0 ? ( wd_d = 0; wd_dead = 0; );
+  st_idle += 1;
+
+  // the tines
+  sl = 0; sr = 0;
+  v = 0;
+  loop(NV,
+    v_note[v] >= 0 ? (
+      y = 0;
+      life = 0;
+      b = v * NM;
+      loop(NM,
+        p_e[b] > 0 ? (
+          r = p_cf[b] * p_s1[b] - p_df[b] * p_s2[b];
+          p_s2[b] = p_s1[b];
+          p_s1[b] = r;
+          y += r;
+          life += p_e[b];
+          p_e[b] *= p_r[b];
+          p_e[b] < 0.000001 ? p_e[b] = 0;
+          v_dmp[v] ? (
+            p_s1[b] *= dm_c; p_s2[b] *= dm_c; p_e[b] *= dm_c;
+          );
+        );
+        b += 1;
+      );
+      v_buzz[v] > 0.0001 ? (
+        v_bph[v] += 2 * v_f[v] / srate;
+        v_bph[v] -= floor(v_bph[v]);
+        y += v_buzz[v] * 0.25 * (v_bph[v] < 0.5 ? 1 : -1) * abs(p_s1[v * NM]);
+        v_buzz[v] *= bz_c;
+      );
+      v_lf[v] = life;
+      sl += y * v_gl[v];
+      sr += y * v_gr[v];
+      life < 0.00002 ? (
+        v_note[v] = -1;
+        b = v * NM;
+        loop(NM, p_s1[b] = 0; p_s2[b] = 0; p_e[b] = 0; b += 1;);
+        v_buzz[v] = 0;
+      );
+    );
+    v += 1;
+  );
+
+  // the box
+  bxl = bl1.bq(sl) * 0.6 + bl2.bq(sl) * 0.5 + bl3.bq(sl) * 0.35 + bl4.bq(sl) * 0.2;
+  bxr = br1.bq(sr) * 0.6 + br2.bq(sr) * 0.5 + br3.bq(sr) * 0.35 + br4.bq(sr) * 0.2;
+
+  // the mechanism: the pin's click and the governor's whirr while the box plays
+  seed_c = mb_pm(seed_c);
+  seed_w = mb_pm(seed_w);
+  c = hc.bq((seed_c / 1073741824 - 1) * ck);
+  ck *= ck_c;
+  ck < 0.0000001 ? ck = 0;
+  wh_g = wh_c * wh_g + (1 - wh_c) * (st_idle < 1.5 * srate ? 1 : 0);
+  gov += tpi * 23 * (1 - 0.5 * min(1, wd_d / (3 * srate))) / srate;
+  gov >= tpi ? gov -= tpi;
+  wh = hw.bq(seed_w / 1073741824 - 1) * 0.004 * mech * (0.6 + 0.4 * sin(gov)) * wh_g;
+
+  spl0 = (sl + bxl * body * 3 + c + wh) * 0.12 * vol;
+  spl1 = (sr + bxr * body * 3 + c * 0.9 + wh) * 0.12 * vol;
