@@ -11,6 +11,8 @@
 - εγγενή plugins VST3 και CLAP για κάθε DAW σε Windows, Linux και macOS (και για ARM64 σε Windows και Linux), και LV2 στο Linux·
 - modules για το Rack, εργοστασιακά presets και έτοιμες αλυσίδες εφέ για το REAPER.
 
+Μαζί με τη σουίτα έρχονται δύο δωρεάν εφαρμογές Android (beta): το Remote for DAWs χειρίζεται REAPER, Ardour/Mixbus, Bitwig Studio, Ableton Live, Cubase και FL Studio, με κάθε plugin του NULL JSFX στη δική του οθόνη, και το Remote for Mixers χειρίζεται ψηφιακές κονσόλες των Behringer, Midas, Allen & Heath και Yamaha. Και οι δύο υπάρχουν και στο F-Droid και στο Obtainium.
+
 Το NULL JSFX Hub εγκαθιστά, ενημερώνει και αφαιρεί τη σουίτα με ένα κλικ, και υπάρχουν installers για κάθε λειτουργικό σύστημα. Όλα κατεβαίνουν από τα GitHub releases του project. Δεν υπάρχουν λογαριασμοί, κλειδιά άδειας, διαφημίσεις ή επί πληρωμή εκδόσεις.
 
 > «Ήθελα ένα πλήρες σετ εργαλείων στούντιο που μπορεί να χρησιμοποιήσει και να μελετήσει ο καθένας, χωρίς paywalls. Το NULL JSFX μένει δωρεάν και ο κώδικας ανοιχτός.» (Χρήστος Κουλαξίζης, δημιουργός)
