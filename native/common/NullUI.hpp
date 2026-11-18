@@ -107,10 +107,11 @@ protected:
         stroke();
 
         beginPath();
-        moveTo(x + size * 0.30f, y + size * 0.75f);
-        lineTo(x + size * 0.30f, y + size * 0.25f);
-        lineTo(x + size * 0.70f, y + size * 0.75f);
+        // the mirrored "N" of assets/img/logo.svg, the same four points as ng_logo
+        moveTo(x + size * 0.30f, y + size * 0.25f);
+        lineTo(x + size * 0.30f, y + size * 0.75f);
         lineTo(x + size * 0.70f, y + size * 0.25f);
+        lineTo(x + size * 0.70f, y + size * 0.75f);
         strokePaint(linearGradient(x, y + size * 0.75f, x, y + size * 0.25f, col(theme::kIconLo), col(theme::kIconHi)));
         strokeWidth(size * 0.075f);
         lineJoin(ROUND);
