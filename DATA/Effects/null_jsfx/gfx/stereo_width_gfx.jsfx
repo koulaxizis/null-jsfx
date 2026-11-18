@@ -170,6 +170,8 @@ out_pin:Right
     i == 1 ? s = "Side level: 0% = mono, 100% = unchanged, 200% = twice as wide";
     i == 2 ? s = "Blend between original and processed signal";
     i == 3 ? s = "Below this frequency the signal is made mono and the width setting only applies above it (0 = off)";
+    i == 4 ? s = "Above this frequency the highs get their own width (0 = off, one width for everything)";
+    i == 5 ? s = "Width of the band above High Crossover (100% = unchanged, 0% = mono highs, 200% = extra wide)";
     s;
   );
 

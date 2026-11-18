@@ -182,6 +182,9 @@ out_pin:Right
     i == 5 ? s = "Level of the sibilance band above which the reduction starts (Manual only)";
     i == 6 ? s = "Caps how far the signal is turned down, while Reduction sets how quickly it gets there (-18 dB = no cap)";
     i == 7 ? s = "Plays only what is being removed, to tune Target and the threshold by ear";
+    i == 8 ? s = "Centre of the band that is turned down (0 = the Target frequency, as before)";
+    i == 9 ? s = "Width of the suppress band (narrow at 8, wide at 0.5)";
+    i == 10 ? s = "Band turns down a band around Suppress Freq; Shelf turns down everything above it";
     s;
   );
 

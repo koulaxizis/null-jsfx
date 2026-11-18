@@ -17,6 +17,23 @@ const guides = {
     studio: true,
     page: 'plugins/air/'
   },
+  'bass-presence': {
+    title: 'BASS PRESENCE',
+    subtitle: 'Bass You Can Hear on Small Speakers',
+    category: 'One Slider',
+    sliders: [
+      { name: 'Amount', range: '0 to 100', desc: 'How much of the bass\'s harmonics is added (0% = off)' }
+    ],
+    uses: ['Make a bass line readable on laptops, phones and earbuds', 'Add growl to a sub-heavy 808 without more low end', 'Check that a mix\'s low end still reads on small speakers', 'A gentle lift of the bass on the mix bus'],
+    properties: 'Signal chain: Input → mono lows below 120 Hz (two RBJ low-passes) → a curve that makes odd and even harmonics → only the harmonics (two 180 Hz high-passes and an 1.8 kHz low-pass) → added to both channels. The dry signal is untouched, so the real low end stays as it is; 0% is a bypass. Stereo, zero latency.',
+    formats: ['JSFX', 'GFX', 'VST3', 'CLAP', 'LV2'],
+    shot: 'assets/img/gfx/bass_presence.png',
+    video: 'assets/video/bass_presence.mp4',
+    studio: true,
+    demo: 'bass_presence',
+    beta: 'Beta: its rules have been tested on test signals so far and may still be tuned from your feedback, so a project saved now can sound a little different after an update.',
+    page: 'plugins/bass-presence/'
+  },
   'brighter': {
     title: 'BRIGHTER',
     subtitle: 'One-Knob Treble Lift',
@@ -726,10 +743,13 @@ const guides = {
       { name: 'Threshold Mode', range: 'Auto / Manual', desc: 'Auto uses the built-in detection level; Manual uses the Threshold control instead.' },
       { name: 'Threshold', range: '−60 to 0 dB', desc: 'Level of the sibilance band above which the reduction starts (Manual only).' },
       { name: 'Range', range: '−18 to 0 dB', desc: 'Caps how far the signal is turned down, while Reduction sets how quickly it gets there (-18 dB = no cap).' },
-      { name: 'Listen', range: 'Off / On', desc: 'Plays only what is being removed, to tune Target and the threshold by ear.' }
+      { name: 'Listen', range: 'Off / On', desc: 'Plays only what is being removed, to tune Target and the threshold by ear.' },
+      { name: 'Suppress Freq', range: '0 to 16000 Hz', desc: 'Centre of the band that is turned down (0 = the Target frequency, as before)' },
+      { name: 'Suppress Q', range: '0.5 to 8', desc: 'Width of the suppress band (narrow at 8, wide at 0.5)' },
+      { name: 'Suppress Shape', range: 'Band / Shelf', desc: 'Band turns down a band around Suppress Freq; Shelf turns down everything above it' }
     ],
     uses: ['Taming harsh S, T and Ch sounds on vocals', 'Softening sibilant voice-over and podcast speech', 'Reducing hissy cymbal splash on overheads', 'Controlling brittle highs on bright acoustic guitar'],
-    properties: 'Input → band-pass at Target (Q 2) → stereo-linked envelope follower (0.5 ms attack, 60 ms release) → band attenuation above a fixed −30 dB threshold, reaching full Reduction 12 dB above it → Output. Only the sibilant band is turned down; zero latency.',
+    properties: 'Input → band-pass at Target (Q 2) → stereo-linked envelope follower (0.5 ms attack, 60 ms release) → band attenuation above a fixed −30 dB threshold, reaching full Reduction 12 dB above it → Output. Only the sibilant band is turned down; zero latency. The suppress band can differ from the detect band: detect the sibilance at one frequency, turn down another band or a high shelf.',
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP', 'LV2'],
     shot: 'assets/img/gfx/deesser.png',
     video: 'assets/video/deesser.mp4',
@@ -1002,6 +1022,34 @@ const guides = {
     video: 'assets/video/glue_comp.mp4',
     studio: true,
     page: 'plugins/glue-comp/'
+  },
+  'hit-layer': {
+    title: 'HIT LAYER',
+    subtitle: 'A Tone and Noise Layer Under Every Hit',
+    category: 'Essentials',
+    sliders: [
+      { name: 'Threshold', range: '−60 to 0 dB', desc: 'Level a hit must pass to trigger the layer' },
+      { name: 'Tone', range: '30 to 2000 Hz', desc: 'Pitch of the tone the layer settles on' },
+      { name: 'Tone Level', range: '0 to 100%', desc: 'Level of the tone' },
+      { name: 'Tone Decay', range: '10 to 2000 ms', desc: 'Time the tone takes to fade by 60 dB' },
+      { name: 'Pitch Drop', range: '0 to 24 semitones', desc: 'How far above Tone the tone starts (it falls to Tone in about a third of Tone Decay)' },
+      { name: 'Noise Level', range: '0 to 100%', desc: 'Level of the noise burst' },
+      { name: 'Noise Decay', range: '5 to 1000 ms', desc: 'Time the noise takes to fade by 60 dB' },
+      { name: 'Noise Color', range: '200 to 16000 Hz', desc: 'Centre of the noise\'s band-pass (low = body, high = air and wires)' },
+      { name: 'Follow', range: '0 to 100%', desc: 'How much the layer follows the strength of each hit (0% = every hit the same)' },
+      { name: 'Width', range: '0 to 100%', desc: 'Gives the noise an independent right channel (0% = mono noise)' },
+      { name: 'Dry', range: '0 to 100%', desc: 'How much of the input is kept (0% = the layer alone)' },
+      { name: 'Output', range: '−24 to +12 dB', desc: 'Output level' }
+    ],
+    uses: ['A sub thump under a thin kick', 'Body and wires under a weak snare', 'Boom under toms', 'Air and sizzle under claps and rims'],
+    properties: 'Signal chain: Input → transient detector (a fast and a slow envelope of the mono sum; a hit is the fast one 6 dB over the slow one above Threshold, then 30 ms before the next) → a sine with a pitch drop and band-passed noise (exact Park-Miller, a state-variable band-pass) → added to the dry signal → Output. Each part fades by 60 dB over its decay; Follow scales the layer with the hit\'s strength over 24 dB. Stereo, zero latency.',
+    formats: ['JSFX', 'GFX', 'VST3', 'CLAP', 'LV2'],
+    shot: 'assets/img/gfx/hit_layer.png',
+    video: 'assets/video/hit_layer.mp4',
+    studio: true,
+    demo: 'hit_layer',
+    beta: 'Beta: its rules have been tested on test signals so far and may still be tuned from your feedback, so a project saved now can sound a little different after an update.',
+    page: 'plugins/hit-layer/'
   },
   'limiter': {
     title: 'LIMITER',
@@ -1277,10 +1325,13 @@ const guides = {
       { name: 'Atten Freq', range: '5 kHz / 10 kHz / 20 kHz', desc: 'The frequency of the high shelf cut.' },
       { name: 'High Atten', range: '0 to 10', desc: 'High shelf cut (down to −20 dB).' },
       { name: 'Tube', range: '0 to 100%', desc: 'Drive of the tube stage (even harmonics).' },
-      { name: 'Output', range: '−12 to +12 dB', desc: 'Output level.' }
+      { name: 'Output', range: '−12 to +12 dB', desc: 'Output level.' },
+      { name: 'Low Dynamic', range: '0 to 100%', desc: 'How much the low boost backs off when its band gets loud (0% = static, as a classic passive EQ)' },
+      { name: 'High Dynamic', range: '0 to 100%', desc: 'How much the high boost backs off when its band gets loud (0% = static)' },
+      { name: 'Dynamic Threshold', range: '−60 to 0 dB', desc: 'Level of the boosted band above which the dynamic boosts back off' }
     ],
     uses: ['Weight on kick and bass with boost and attenuation together', 'Air and presence on vocals', 'Broad tone shaping on the mix bus or master', 'Warming up with the tube stage'],
-    properties: 'Input → low shelf boost at 1.2 × Low Freq → low shelf cut at 2.2 × Low Freq → high peak at High Freq (Q from Bandwidth) → high shelf cut at Atten Freq (each skipped at 0) → tube stage (asymmetric tanh, 10 Hz DC blocker, skipped at 0%) → Output. Zero latency; every control at 0 leaves the sound untouched.',
+    properties: 'Input → low shelf boost at 1.2 × Low Freq → low shelf cut at 2.2 × Low Freq → high peak at High Freq (Q from Bandwidth) → high shelf cut at Atten Freq (each skipped at 0) → tube stage (asymmetric tanh, 10 Hz DC blocker, skipped at 0%) → Output. Zero latency; every control at 0 leaves the sound untouched. The Low and High boosts can be dynamic: above Dynamic Threshold they back off (up to Low/High Dynamic), so a boost lifts quiet passages without getting harsh on loud ones.',
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP', 'LV2'],
     shot: 'assets/img/gfx/passive_eq.png',
     video: 'assets/video/passive_eq.mp4',
@@ -1596,10 +1647,12 @@ const guides = {
     sliders: [
       { name: 'Width', range: '0 to 200%', desc: 'Side level: 0% = mono, 100% = unchanged, 200% = twice as wide.' },
       { name: 'Mix', range: '0 to 100%', desc: 'Blend between original and processed signal.' },
-      { name: 'Crossover', range: '0 to 500 Hz', desc: 'Below this frequency the signal is made mono and the width setting only applies above it (0 = off).' }
+      { name: 'Crossover', range: '0 to 500 Hz', desc: 'Below this frequency the signal is made mono and the width setting only applies above it (0 = off).' },
+      { name: 'High Crossover', range: '0 to 16000 Hz', desc: 'Above this frequency the highs get their own width (0 = off, one width for everything)' },
+      { name: 'High Width', range: '0 to 200%', desc: 'Width of the band above High Crossover (100% = unchanged, 0% = mono highs, 200% = extra wide)' }
     ],
     uses: ['Widening pads, synths and backing vocals', 'Keeping bass and kick mono while widening the top', 'Narrowing overly wide sources', 'Mastering stereo adjustments'],
-    properties: 'Input → Mid/Side split → optional one-pole crossover (lows mono, highs widened) → Side × Width → L/R → Dry/Wet Mix → Output. Zero latency.',
+    properties: 'Input → Mid/Side split → optional one-pole crossover (lows mono, highs widened) → Side × Width → L/R → Dry/Wet Mix → Output. Zero latency. With High Crossover set, the side signal above it (a one-pole split) gets High Width instead of Width.',
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP', 'LV2'],
     shot: 'assets/img/gfx/stereo_width.png',
     video: 'assets/video/stereo_width.mp4',
@@ -1686,10 +1739,12 @@ const guides = {
       { name: 'Mix', range: '0 to 100%', desc: 'Dry/wet blend (the dry signal is delayed to stay aligned with the wet path)' },
       { name: 'Tape Type', range: 'Classic / Type I / Type II / Type IV', desc: 'Tape formulation: Classic (open reel), Type I (ferric, warm, more hiss), Type II (chrome, more high-frequency headroom, brighter and quieter hiss) or Type IV (metal, cleanest and most extended)' },
       { name: 'Noise Reduction', range: 'Off / On', desc: 'Cassette-style noise reduction: a compander that boosts quiet highs up to 10 dB before the tape and cuts them after it, lowering the hiss with a slight breathing on loud highs' },
-      { name: 'Oversampling', range: 'Off / 2x / 4x', desc: 'Runs the saturation at 2x or 4x the sample rate (linear-phase halfband filters, 31 or 37 more samples of latency) so its harmonics do not fold back as aliasing; Off adds nothing.' }
+      { name: 'Oversampling', range: 'Off / 2x / 4x', desc: 'Runs the saturation at 2x or 4x the sample rate (linear-phase halfband filters, 31 or 37 more samples of latency) so its harmonics do not fold back as aliasing; Off adds nothing.' },
+      { name: 'Azimuth', range: '0 to 100%', desc: 'How far the right channel\'s head is tilted against the left (a tiny moving delay: the highs smear and move in the stereo image); 0% = aligned' },
+      { name: 'Dropouts', range: '0 to 100%', desc: 'How often and how deeply the level and the highs drop out, as on a worn cassette (0% = never)' }
     ],
     uses: ['Glue and warmth on the mix bus', 'Rounder low end and softer transients on drums and bass', 'Lo-fi, cassette-like wobble with Wow and Flutter turned up', 'Subtle analog colour on vocals and acoustic tracks'],
-    properties: 'Signal chain: Input → Wow/Flutter Modulated Delay (3 ms centre, cubic interpolation) → Pre-Emphasis → Drive → Asymmetric Saturation with memory (hysteresis-like) → De-Emphasis → Low Cut + Head Bump → Hiss → High-Frequency Loss → Mix → Output. The hiss is an exact Park-Miller generator. The dry signal is delayed by the same 3 ms, and the 3 ms latency is reported to the host for delay compensation. Oversampling (2x / 4x) runs the saturation stage at the higher rate and adds 31 / 37 samples.',
+    properties: 'Signal chain: Input → Wow/Flutter Modulated Delay (3 ms centre, cubic interpolation) → Pre-Emphasis → Drive → Asymmetric Saturation with memory (hysteresis-like) → De-Emphasis → Low Cut + Head Bump → Hiss → High-Frequency Loss → Mix → Output. The hiss is an exact Park-Miller generator. The dry signal is delayed by the same 3 ms, and the 3 ms latency is reported to the host for delay compensation. Oversampling (2x / 4x) runs the saturation stage at the higher rate and adds 31 / 37 samples. Azimuth delays the right channel by up to 0.25 ms, moving with the wow; Dropouts are short dips in level and highs (20-80 ms) drawn at random from an exact Park-Miller generator, so a render is the same every time.',
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP', 'LV2'],
     shot: 'assets/img/gfx/tape.png',
     video: 'assets/video/tape.mp4',
@@ -1920,6 +1975,34 @@ const guides = {
     studio: true,
     demo: 'amp_simulator',
     page: 'plugins/amp-simulator/'
+  },
+  'band-spin': {
+    title: 'BAND SPIN',
+    subtitle: 'Four Bands, Four Rotors',
+    category: 'Advanced',
+    sliders: [
+      { name: 'Crossover 1', range: '30 to 1000 Hz', desc: 'Crossover between the low and the low-mid band' },
+      { name: 'Crossover 2', range: '200 to 6000 Hz', desc: 'Crossover between the low-mid and the high-mid band' },
+      { name: 'Crossover 3', range: '1000 to 16000 Hz', desc: 'Crossover between the high-mid and the high band' },
+      { name: 'Speed 1', range: '0.05 to 10 Hz', desc: 'Turns per second of the low band\'s rotor' },
+      { name: 'Speed 2', range: '0.05 to 10 Hz', desc: 'Turns per second of the low-mid band\'s rotor' },
+      { name: 'Speed 3', range: '0.05 to 10 Hz', desc: 'Turns per second of the high-mid band\'s rotor' },
+      { name: 'Speed 4', range: '0.05 to 10 Hz', desc: 'Turns per second of the high band\'s rotor' },
+      { name: 'Volume', range: '0 to 100%', desc: 'How much a band dips as its rotor turns away' },
+      { name: 'Pan', range: '0 to 100%', desc: 'How far a band swings left and right' },
+      { name: 'Doppler', range: '0 to 100%', desc: 'How much a band\'s pitch bends as its rotor comes and goes (up to 1 ms of delay)' },
+      { name: 'Follow', range: '0 to 100%', desc: 'How much each rotor speeds up with its band\'s level (up to three times its Speed)' },
+      { name: 'Mix', range: '0 to 100%', desc: 'Blend with the bands summed without motion (in phase, so a partial Mix never combs)' }
+    ],
+    uses: ['Movement on pads and keys, a different speed in each band', 'Wide, swirling guitars', 'Highs that spin while the lows stay put', 'Drum buses that move more when they hit harder'],
+    properties: 'Signal chain: Input → Linkwitz-Riley 4th-order crossover into four bands (as in Band Splitter, with allpasses that keep them in phase) → per band a rotor: constant-power pan, a volume dip and a Doppler delay (linear interpolation) → summed → Mix → Output. The rotors have 0.3 s of inertia; Follow uses an envelope per band (10 ms up, 300 ms down). Stereo, zero latency.',
+    formats: ['JSFX', 'GFX', 'VST3', 'CLAP', 'LV2'],
+    shot: 'assets/img/gfx/band_spin.png',
+    video: 'assets/video/band_spin.mp4',
+    studio: true,
+    demo: 'band_spin',
+    beta: 'Beta: its rules have been tested on test signals so far and may still be tuned from your feedback, so a project saved now can sound a little different after an update.',
+    page: 'plugins/band-spin/'
   },
   'bass-management': {
     title: 'BASS MANAGEMENT',
@@ -2584,10 +2667,11 @@ const guides = {
       { name: 'Horn/Drum Balance', range: '0 to 100%', desc: 'Balance between the horn (highs) and drum (lows)' },
       { name: 'Drive', range: '0 to 100%', desc: 'Tube-amp style overdrive before the rotors' },
       { name: 'Width', range: '0 to 100%', desc: 'Angle between the virtual left/right mics' },
-      { name: 'Mix', range: '0 to 100%', desc: 'Dry/wet blend' }
+      { name: 'Mix', range: '0 to 100%', desc: 'Dry/wet blend' },
+      { name: 'Speed Follow', range: '0 to 100%', desc: 'How much the rotors speed up with the input level (0% = only the Speed switch)' }
     ],
     uses: ['Classic organ rotary sound', 'Swirling guitar and electric piano', 'Speed-ramp transitions via automation', 'Stereo movement on pads and vocals'],
-    properties: 'Signal chain: Input (summed to mono) → Drive → 800 Hz Crossover → Horn (0.8/6.7 Hz) + Drum (0.7/5.8 Hz) with AM and Doppler → Two Virtual Mics → Mix → Output. Rotors ramp with inertia (horn ~0.7 s, drum ~3 s, scaled by Acceleration); zero latency.',
+    properties: 'Signal chain: Input (summed to mono) → Drive → 800 Hz Crossover → Horn (0.8/6.7 Hz) + Drum (0.7/5.8 Hz) with AM and Doppler → Two Virtual Mics → Mix → Output. Rotors ramp with inertia (horn ~0.7 s, drum ~3 s, scaled by Acceleration); zero latency. Speed Follow pushes both rotors toward the fast speed as the input gets louder (an envelope, 10 ms up, 300 ms down).',
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP', 'LV2'],
     shot: 'assets/img/gfx/rotary_speaker.png',
     video: 'assets/video/rotary_speaker.mp4',
@@ -3482,6 +3566,29 @@ const guides = {
     shot: 'assets/img/gfx/modal_piano.png',
     video: 'assets/video/modal_piano.mp4',
     page: 'plugins/modal-piano/'
+  },
+  'music-box': {
+    title: 'MUSIC BOX',
+    subtitle: 'Steel Comb, Wooden Box, Wind-Down',
+    category: 'Instruments',
+    sliders: [
+      { name: 'Decay', range: '25 to 400%', desc: 'How long the tines ring (100% = 3.2 s for the lowest mode at C5)' },
+      { name: 'Brightness', range: '0 to 100%', desc: 'Level of the upper modes (bright and glassy up, soft and round down)' },
+      { name: 'Body', range: '0 to 100%', desc: 'How much of the wooden box\'s resonance is heard' },
+      { name: 'Box Size', range: '0 to 100%', desc: 'Size of the box: its resonances move an octave down (big) or up (small)' },
+      { name: 'Mechanism', range: '0 to 100%', desc: 'The pin\'s click and the spring governor\'s whirr, and the buzz of a ringing tine plucked again' },
+      { name: 'Wind Down', range: '0 to 100%', desc: 'The spring running out: every note comes a little later until the box stops (0% = off); 1.5 s without a note winds it again' },
+      { name: 'Velocity', range: '0 to 100%', desc: 'How much the velocity changes the level and the brightness' },
+      { name: 'Width', range: '0 to 100%', desc: 'How far the tines are spread by pitch' },
+      { name: 'Volume', range: '−24 to +12 dB', desc: 'Output level' }
+    ],
+    uses: ['Lullabies, film and game cues', 'Toy and nursery textures', 'Plucked bell layers on chords', 'A spring winding down for an ending'],
+    properties: 'An instrument: MIDI in, stereo out, no samples, 32 tines. Every key is a steel tine of the comb (four modes at 1 : 5.93 : 16.2 : 31.7, higher keys decaying faster), plucked by a pin; a ringing tine plucked again adds to its motion. A wooden box adds four resonances (240-1850 Hz, moved by Box Size), the mechanism adds the pin\'s click and the governor\'s whirr (exact Park-Miller noise), and Wind Down holds notes back more and more until the box stops. Tines ring out (key up does nothing); all notes off (CC 123/120) damps them in about 10 ms. Every MIDI message passes on. Sample-accurate and the same in the JSFX, the GFX version and the VST3/CLAP.',
+    formats: ['JSFX', 'GFX', 'VST3', 'CLAP', 'LV2'],
+    shot: 'assets/img/gfx/music_box.png',
+    video: 'assets/video/music_box.mp4',
+    beta: 'Beta: its rules have been tested on test signals so far and may still be tuned from your feedback, so a project saved now can sound a little different after an update.',
+    page: 'plugins/music-box/'
   },
   'organ': {
     title: 'ORGAN',

@@ -31,7 +31,7 @@ static constexpr uint32_t kNumValues = 1;
 // the hint line under the controls: a short help text per parameter (from tools/site_content.json)
 #define NULL_UI_HINTS 1
 static const char* const kHints[] = {
-    "",
+    "How much of the bass's harmonics is added (0% = off)",
 };
 
 // the parameters the header's dice moves (tools/build_presets.py dice()): index, range, step, log scale

@@ -1,6 +1,8 @@
 {
  "amp_simulator": "Sparkling Clean",
  "auto_pan": "Quarter Note Pan",
+ "band_spin": "Slow Swirl",
+ "bass_presence": "Laptop Bass",
  "brighter": "Muffled Rescue",
  "cabinet_simulator": "Clean Combo",
  "channel_utility": "Pad Hot Input",
@@ -31,6 +33,7 @@
  "grit": "Lo-Fi Drums",
  "half_speed": "Halftime Bar",
  "harmonizer": "Minor Harmony",
+ "hit_layer": "Kick Sub Thump",
  "kick_shaper": "Punchy Rock Kick",
  "ladder_filter": "Warm Bass Lowpass",
  "limiter": "Master Safety",

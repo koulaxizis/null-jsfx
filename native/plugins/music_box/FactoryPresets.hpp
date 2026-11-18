@@ -36,15 +36,15 @@ static constexpr uint32_t kNumValues = 9;
 // the hint line under the controls: a short help text per parameter (from tools/site_content.json)
 #define NULL_UI_HINTS 1
 static const char* const kHints[] = {
-    "",
-    "",
-    "",
-    "",
-    "",
-    "",
-    "",
-    "",
-    "",
+    "How long the tines ring (100% = 3.2 s for the lowest mode at C5)",
+    "Level of the upper modes (bright and glassy up, soft and round down)",
+    "How much of the wooden box's resonance is heard",
+    "Size of the box: its resonances move an octave down (big) or up (small)",
+    "The pin's click and the spring governor's whirr, and the buzz of a ringing tine plucked again",
+    "The spring running out: every note comes a little later until the box stops (0% = off)",
+    "How much the velocity changes the level and the brightness",
+    "How far the tines are spread by pitch",
+    "Output level",
 };
 
 // the parameters the header's dice moves (tools/build_presets.py dice()): index, range, step, log scale

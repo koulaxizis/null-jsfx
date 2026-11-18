@@ -43,8 +43,8 @@ static const char* const kHints[] = {
     "Tape formulation: Classic (open reel), Type I (ferric, warm, more hiss), Type II (chrome, more",
     "Cassette-style noise reduction: a compander that boosts quiet highs up to 10 dB before the tape and cuts",
     "Runs the saturation at 2x or 4x the sample rate (linear-phase halfband filters, 31 or 37 more samples of",
-    "",
-    "",
+    "How far the right channel's head is tilted against the left (a tiny moving delay: the highs smear and move",
+    "How often and how deeply the level and the highs drop out, as on a worn cassette (0% = never)",
 };
 
 // the parameters the header's dice moves (tools/build_presets.py dice()): index, range, step, log scale

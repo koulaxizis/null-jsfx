@@ -40,9 +40,9 @@ static const char* const kHints[] = {
     "Level of the sibilance band above which the reduction starts (Manual only)",
     "Caps how far the signal is turned down, while Reduction sets how quickly it gets there (-18 dB = no cap)",
     "Plays only what is being removed, to tune Target and the threshold by ear",
-    "",
-    "",
-    "",
+    "Centre of the band that is turned down (0 = the Target frequency, as before)",
+    "Width of the suppress band (narrow at 8, wide at 0.5)",
+    "Band turns down a band around Suppress Freq; Shelf turns down everything above it",
 };
 
 // the parameters the header's dice moves (tools/build_presets.py dice()): index, range, step, log scale

@@ -297,6 +297,15 @@ out_pin:Right
   function ng_hint_text(i) local(s)
   (
     s = "";
+    i == 1 ? s = "How long the tines ring (100% = 3.2 s for the lowest mode at C5)";
+    i == 2 ? s = "Level of the upper modes (bright and glassy up, soft and round down)";
+    i == 3 ? s = "How much of the wooden box's resonance is heard";
+    i == 4 ? s = "Size of the box: its resonances move an octave down (big) or up (small)";
+    i == 5 ? s = "The pin's click and the spring governor's whirr, and the buzz of a ringing tine plucked again";
+    i == 6 ? s = "The spring running out: every note comes a little later until the box stops (0% = off)";
+    i == 7 ? s = "How much the velocity changes the level and the brightness";
+    i == 8 ? s = "How far the tines are spread by pitch";
+    i == 9 ? s = "Output level";
     s;
   );
 

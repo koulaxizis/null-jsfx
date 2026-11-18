@@ -32,18 +32,18 @@ static constexpr uint32_t kNumValues = 12;
 // the hint line under the controls: a short help text per parameter (from tools/site_content.json)
 #define NULL_UI_HINTS 1
 static const char* const kHints[] = {
-    "",
-    "",
-    "",
-    "",
-    "",
-    "",
-    "",
-    "",
-    "",
-    "",
-    "",
-    "",
+    "Crossover between the low and the low-mid band",
+    "Crossover between the low-mid and the high-mid band",
+    "Crossover between the high-mid and the high band",
+    "Turns per second of the low band's rotor",
+    "Turns per second of the low-mid band's rotor",
+    "Turns per second of the high-mid band's rotor",
+    "Turns per second of the high band's rotor",
+    "How much a band dips as its rotor turns away",
+    "How far a band swings left and right",
+    "How much a band's pitch bends as its rotor comes and goes (up to 1 ms of delay)",
+    "How much each rotor speeds up with its band's level (up to three times its Speed)",
+    "Blend with the bands summed without motion (in phase, so a partial Mix never combs)",
 };
 
 // the parameters the header's dice moves (tools/build_presets.py dice()): index, range, step, log scale

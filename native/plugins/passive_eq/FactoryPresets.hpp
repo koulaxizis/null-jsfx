@@ -40,9 +40,9 @@ static const char* const kHints[] = {
     "High shelf cut (down to −20 dB)",
     "Drive of the tube stage (even harmonics)",
     "Output level",
-    "",
-    "",
-    "",
+    "How much the low boost backs off when its band gets loud (0% = static, as a classic passive EQ)",
+    "How much the high boost backs off when its band gets loud (0% = static)",
+    "Level of the boosted band above which the dynamic boosts back off",
 };
 
 // the parameters the header's dice moves (tools/build_presets.py dice()): index, range, step, log scale

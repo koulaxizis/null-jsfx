@@ -240,6 +240,9 @@ out_pin:Right
     i == 8 ? s = "High shelf cut (down to −20 dB)";
     i == 9 ? s = "Drive of the tube stage (even harmonics)";
     i == 10 ? s = "Output level";
+    i == 11 ? s = "How much the low boost backs off when its band gets loud (0% = static, as a classic passive EQ)";
+    i == 12 ? s = "How much the high boost backs off when its band gets loud (0% = static)";
+    i == 13 ? s = "Level of the boosted band above which the dynamic boosts back off";
     s;
   );
 

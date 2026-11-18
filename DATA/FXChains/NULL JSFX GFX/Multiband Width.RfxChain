@@ -13,7 +13,7 @@ FXID {9FAB1ACF-82D8-54FD-B784-2223DEBE3403}
 WAK 0 0
 BYPASS 0 0
 <JS null_jsfx/gfx/stereo_width_gfx.jsfx ""
-  125 100 0 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  125 100 0 0 100 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 >
 <JS_PINMAP
   6AMAABwAAADoAwAABgAAAAIAAAAEAAAAAAAAAAgAAAAAAAAAHAAAAOgDAAAGAAAAAgAAAAQAAAAAAAAACAAAAAAAAAA=
@@ -22,7 +22,7 @@ FXID {D2C1AA22-275D-502A-ADC6-96E4678F4BC2}
 WAK 0 0
 BYPASS 0 0
 <JS null_jsfx/gfx/stereo_width_gfx.jsfx ""
-  160 100 0 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  160 100 0 0 100 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 >
 <JS_PINMAP
   6AMAABwAAADoAwAABgAAAAIAAAAQAAAAAAAAACAAAAAAAAAAHAAAAOgDAAAGAAAAAgAAABAAAAAAAAAAIAAAAAAAAAA=

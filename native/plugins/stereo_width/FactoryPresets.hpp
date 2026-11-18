@@ -33,8 +33,8 @@ static const char* const kHints[] = {
     "Side level: 0% = mono, 100% = unchanged, 200% = twice as wide",
     "Blend between original and processed signal",
     "Below this frequency the signal is made mono and the width setting only applies above it (0 = off)",
-    "",
-    "",
+    "Above this frequency the highs get their own width (0 = off, one width for everything)",
+    "Width of the band above High Crossover (100% = unchanged, 0% = mono highs, 200% = extra wide)",
 };
 
 // the parameters the header's dice moves (tools/build_presets.py dice()): index, range, step, log scale

@@ -438,6 +438,8 @@ out_pin:Right
     i == 9 ? s = "Tape formulation: Classic (open reel), Type I (ferric, warm, more hiss), Type II (chrome, more";
     i == 10 ? s = "Cassette-style noise reduction: a compander that boosts quiet highs up to 10 dB before the tape and cuts";
     i == 11 ? s = "Runs the saturation at 2x or 4x the sample rate (linear-phase halfband filters, 31 or 37 more samples of";
+    i == 12 ? s = "How far the right channel's head is tilted against the left (a tiny moving delay: the highs smear and move";
+    i == 13 ? s = "How often and how deeply the level and the highs drop out, as on a worn cassette (0% = never)";
     s;
   );
 

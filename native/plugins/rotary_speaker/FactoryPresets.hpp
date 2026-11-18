@@ -36,7 +36,7 @@ static const char* const kHints[] = {
     "Tube-amp style overdrive before the rotors",
     "Angle between the virtual left/right mics",
     "Dry/wet blend",
-    "",
+    "How much the rotors speed up with the input level (0% = only the Speed switch)",
 };
 
 // the parameters the header's dice moves (tools/build_presets.py dice()): index, range, step, log scale

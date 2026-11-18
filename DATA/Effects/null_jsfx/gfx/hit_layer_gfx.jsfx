@@ -160,6 +160,18 @@ out_pin:Right
   function ng_hint_text(i) local(s)
   (
     s = "";
+    i == 1 ? s = "Level a hit must pass to trigger the layer";
+    i == 2 ? s = "Pitch of the tone the layer settles on";
+    i == 3 ? s = "Level of the tone";
+    i == 4 ? s = "Time the tone takes to fade by 60 dB";
+    i == 5 ? s = "How far above Tone the tone starts (it falls to Tone in about a third of Tone Decay)";
+    i == 6 ? s = "Level of the noise burst";
+    i == 7 ? s = "Time the noise takes to fade by 60 dB";
+    i == 8 ? s = "Centre of the noise's band-pass (low = body, high = air and wires)";
+    i == 9 ? s = "How much the layer follows the strength of each hit (0% = every hit the same)";
+    i == 10 ? s = "Gives the noise an independent right channel (0% = mono noise)";
+    i == 11 ? s = "How much of the input is kept (0% = the layer alone)";
+    i == 12 ? s = "Output level";
     s;
   );
 

@@ -34,18 +34,18 @@ static constexpr uint32_t kNumValues = 12;
 // the hint line under the controls: a short help text per parameter (from tools/site_content.json)
 #define NULL_UI_HINTS 1
 static const char* const kHints[] = {
-    "",
-    "",
-    "",
-    "",
-    "",
-    "",
-    "",
-    "",
-    "",
-    "",
-    "",
-    "",
+    "Level a hit must pass to trigger the layer",
+    "Pitch of the tone the layer settles on",
+    "Level of the tone",
+    "Time the tone takes to fade by 60 dB",
+    "How far above Tone the tone starts (it falls to Tone in about a third of Tone Decay)",
+    "Level of the noise burst",
+    "Time the noise takes to fade by 60 dB",
+    "Centre of the noise's band-pass (low = body, high = air and wires)",
+    "How much the layer follows the strength of each hit (0% = every hit the same)",
+    "Gives the noise an independent right channel (0% = mono noise)",
+    "How much of the input is kept (0% = the layer alone)",
+    "Output level",
 };
 
 // the parameters the header's dice moves (tools/build_presets.py dice()): index, range, step, log scale

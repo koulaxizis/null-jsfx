@@ -162,6 +162,7 @@ out_pin:Right
     i == 4 ? s = "Tube-amp style overdrive before the rotors";
     i == 5 ? s = "Angle between the virtual left/right mics";
     i == 6 ? s = "Dry/wet blend";
+    i == 7 ? s = "How much the rotors speed up with the input level (0% = only the Speed switch)";
     s;
   );
 

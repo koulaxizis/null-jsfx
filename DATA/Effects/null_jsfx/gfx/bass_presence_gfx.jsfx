@@ -142,6 +142,7 @@ out_pin:Right
   function ng_hint_text(i) local(s)
   (
     s = "";
+    i == 1 ? s = "How much of the bass's harmonics is added (0% = off)";
     s;
   );
 

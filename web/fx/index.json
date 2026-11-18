@@ -16,6 +16,20 @@
    "bytes": 38802
   },
   {
+   "id": "bass_presence",
+   "name": "Bass Presence",
+   "category": "One Slider",
+   "tags": "bass presence harmonics small speakers phone laptop psychoacoustic missing fundamental low end audible one knob gui",
+   "gfx": [
+    360,
+    240
+   ],
+   "ins": 2,
+   "outs": 2,
+   "sliders": 1,
+   "bytes": 42144
+  },
+  {
    "id": "brighter",
    "name": "Brighter",
    "category": "One Slider",
@@ -572,8 +586,8 @@
    ],
    "ins": 2,
    "outs": 2,
-   "sliders": 7,
-   "bytes": 56731
+   "sliders": 10,
+   "bytes": 62836
   },
   {
    "id": "delay",
@@ -714,6 +728,20 @@
    "outs": 2,
    "sliders": 7,
    "bytes": 53904
+  },
+  {
+   "id": "hit_layer",
+   "name": "Hit Layer",
+   "category": "Essentials",
+   "tags": "hit layer drum transient trigger enhancer snare kick tom sub tone noise body sizzle reinforce augment gui",
+   "gfx": [
+    480,
+    380
+   ],
+   "ins": 2,
+   "outs": 2,
+   "sliders": 12,
+   "bytes": 62494
   },
   {
    "id": "limiter",
@@ -862,12 +890,12 @@
    "tags": "eq equalizer passive program tube vintage low boost attenuate shelf air bandwidth mastering color gui",
    "gfx": [
     480,
-    380
+    466
    ],
    "ins": 2,
    "outs": 2,
-   "sliders": 10,
-   "bytes": 69330
+   "sliders": 13,
+   "bytes": 74888
   },
   {
    "id": "phase_align",
@@ -1048,8 +1076,8 @@
    ],
    "ins": 2,
    "outs": 2,
-   "sliders": 3,
-   "bytes": 44964
+   "sliders": 5,
+   "bytes": 48769
   },
   {
    "id": "studio_eq",
@@ -1072,12 +1100,12 @@
    "tags": "tape saturation analog warmth head bump wow flutter hiss machine gui",
    "gfx": [
     480,
-    380
+    466
    ],
    "ins": 2,
    "outs": 2,
-   "sliders": 11,
-   "bytes": 88226
+   "sliders": 13,
+   "bytes": 92488
   },
   {
    "id": "tape_echo",
@@ -1204,6 +1232,20 @@
    "outs": 2,
    "sliders": 12,
    "bytes": 93290
+  },
+  {
+   "id": "band_spin",
+   "name": "Band Spin",
+   "category": "Advanced",
+   "tags": "band spin multiband rotary rotor spin pan tremolo doppler motion movement follow crossover gui",
+   "gfx": [
+    480,
+    380
+   ],
+   "ins": 2,
+   "outs": 2,
+   "sliders": 12,
+   "bytes": 84000
   },
   {
    "id": "bass_management",
@@ -1632,12 +1674,12 @@
    "tags": "rotary leslie organ speaker doppler tremolo chorale horn drum gui",
    "gfx": [
     480,
-    294
+    380
    ],
    "ins": 2,
    "outs": 2,
-   "sliders": 6,
-   "bytes": 52659
+   "sliders": 7,
+   "bytes": 54557
   },
   {
    "id": "shimmer_reverb",
@@ -2088,6 +2130,20 @@
    "outs": 2,
    "sliders": 10,
    "bytes": 89079
+  },
+  {
+   "id": "music_box",
+   "name": "Music Box",
+   "category": "Instruments",
+   "tags": "instrument music box musicbox comb tine pin cylinder lullaby celesta toy bell mechanism wind down modal synthesis midi gui",
+   "gfx": [
+    560,
+    416
+   ],
+   "ins": 0,
+   "outs": 2,
+   "sliders": 9,
+   "bytes": 82237
   },
   {
    "id": "organ",

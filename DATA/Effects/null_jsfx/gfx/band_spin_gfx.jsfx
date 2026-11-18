@@ -223,6 +223,18 @@ out_pin:Right
   function ng_hint_text(i) local(s)
   (
     s = "";
+    i == 1 ? s = "Crossover between the low and the low-mid band";
+    i == 2 ? s = "Crossover between the low-mid and the high-mid band";
+    i == 3 ? s = "Crossover between the high-mid and the high band";
+    i == 4 ? s = "Turns per second of the low band's rotor";
+    i == 5 ? s = "Turns per second of the low-mid band's rotor";
+    i == 6 ? s = "Turns per second of the high-mid band's rotor";
+    i == 7 ? s = "Turns per second of the high band's rotor";
+    i == 8 ? s = "How much a band dips as its rotor turns away";
+    i == 9 ? s = "How far a band swings left and right";
+    i == 10 ? s = "How much a band's pitch bends as its rotor comes and goes (up to 1 ms of delay)";
+    i == 11 ? s = "How much each rotor speeds up with its band's level (up to three times its Speed)";
+    i == 12 ? s = "Blend with the bands summed without motion (in phase, so a partial Mix never combs)";
     s;
   );
 
