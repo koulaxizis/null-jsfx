@@ -97,7 +97,9 @@ desc:NULL JSFX shared GFX library
     gfx_roundrect(X(x), Y(y), w * ng_s, h * ng_s, 6 * ng_s, 1);
   );
 
-  // the site logo tile: rounded square with the grey-gradient "N", design units
+  // the site logo tile: rounded square with the grey-gradient mirrored "N" (as in
+  // assets/img/logo.svg: down the left stem, diagonal up to the top right, down the right
+  // stem), design units; drawLogo() in NullUI.hpp draws the same four points
   function ng_logo(x, y, size) local(px, py, sz, k, n, th, i)
   (
     px = X(x); py = Y(y); sz = size * ng_s;
@@ -112,9 +114,9 @@ desc:NULL JSFX shared GFX library
     loop(n + 1,
       k = (i / n - 0.5) * th;
       ng_mix(NG_ICON_A, NG_ICON_B, i / n, 1);
-      gfx_line(px + sz * 0.30 + k, py + sz * 0.75, px + sz * 0.30 + k, py + sz * 0.25, 1);
-      gfx_line(px + sz * 0.30 + k, py + sz * 0.25, px + sz * 0.70 + k, py + sz * 0.75, 1);
-      gfx_line(px + sz * 0.70 + k, py + sz * 0.75, px + sz * 0.70 + k, py + sz * 0.25, 1);
+      gfx_line(px + sz * 0.30 + k, py + sz * 0.25, px + sz * 0.30 + k, py + sz * 0.75, 1);
+      gfx_line(px + sz * 0.30 + k, py + sz * 0.75, px + sz * 0.70 + k, py + sz * 0.25, 1);
+      gfx_line(px + sz * 0.70 + k, py + sz * 0.25, px + sz * 0.70 + k, py + sz * 0.75, 1);
       i += 1;
     );
   );
