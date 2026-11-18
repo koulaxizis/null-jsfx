@@ -29,23 +29,32 @@ struct Params {
     double seed = 1.0;       // 1..999
     int slices = 1;          // 0..2: 8, 16, 32
     double reversePct = 0.0, repeatPct = 25.0, gatePct = 100.0, mixPct = 100.0;
+    int reroll = 0;          // 0..3: Off, every bar, every 2 bars, every 4 bars
+    double speedPct = 0.0;   // Speed Chance
 };
 
 // the bar's slices as the JSFX's @slider builds them
 struct Pattern {
     int ns = 16;
     double src[32] = {}, rv[32] = {}, rp[32] = {}, bs[32] = {}, fi[32] = {}, fo[32] = {};
+    double spd[32] = {}; // Speed: 0 none, 1 half, 2 double
 };
+
+// the seed Re-roll uses for block blk of bars (blk 0: the Seed itself), as the JSFX
+inline double rerollSeed(double seed, double blk)
+{
+    return seed + 1009.0 * (blk - 1000.0 * std::floor(blk / 1000.0));
+}
 
 inline int sliceCount(int s) { return s == 0 ? 8 : s == 1 ? 16 : 32; }
 
-inline Pattern makePattern(const Params& p)
+inline Pattern makePattern(const Params& p, double sd)
 {
     Pattern r;
     const int ns = sliceCount(p.slices);
     r.ns = ns;
     const double gate = p.gatePct / 100.0;
-    double seed = p.seed * 7919.0 + 13.0;
+    double seed = sd * 7919.0 + 13.0;
     auto prand = [&seed](double x) {
         seed *= 16807.0;
         seed -= std::floor(seed / 2147483647.0) * 2147483647.0;
@@ -62,6 +71,13 @@ inline Pattern makePattern(const Params& p)
         uq[j] = prand(100.0);
         r.src[j] = j;
         r.rv[j] = r.rp[j] = r.bs[j] = 0.0;
+    }
+    // Speed Chance's dice, after the others
+    double us[32], uh[32];
+    for (int j = 0; j < ns; ++j)
+    {
+        us[j] = prand(100.0);
+        uh[j] = prand(1.0);
     }
     if (p.pattern == 1)
     {
@@ -123,12 +139,14 @@ inline Pattern makePattern(const Params& p)
                 r.rv[j] = 1.0;
             r.rp[j] = uq[j] < p.repeatPct ? 1.0 : 0.0;
         }
+        r.spd[j] = r.bs[j] == 0.0 && r.rp[j] == 0.0 && us[j] < p.speedPct ? (uh[j] < 0.5 ? 1.0 : 2.0) : 0.0;
     }
     // fades only where the audio does not simply continue from the slice before
     for (int j = 0; j < ns; ++j)
     {
         const int k = j == 0 ? ns - 1 : j - 1;
         const bool c = gate >= 1.0 && r.bs[j] == 0.0 && r.bs[k] == 0.0 && r.rp[j] == 0.0 && r.rp[k] == 0.0 &&
+                       r.spd[j] == 0.0 && r.spd[k] == 0.0 &&
                        ((r.rv[j] == 0.0 && r.rv[k] == 0.0 && r.src[j] == r.src[k] + 1.0 - (j == 0 ? ns : 0)) ||
                         (j > 0 && r.rv[j] != 0.0 && r.rv[k] != 0.0 && r.src[j] == r.src[k] - 1.0));
         r.fi[j] = c ? 0.0 : 1.0;
@@ -136,6 +154,8 @@ inline Pattern makePattern(const Params& p)
     }
     return r;
 }
+
+inline Pattern makePattern(const Params& p) { return makePattern(p, p.seed); }
 
 class SlicerProcessor {
 public:
@@ -168,6 +188,7 @@ public:
         fJf = 1.0;
         fFull = 0.0;
         fFl = 0.0;
+        fBarc = 0.0;
         updateParams();
     }
 
@@ -181,6 +202,7 @@ public:
     // for the display: the position in the bar (0..1) and whether a whole bar was recorded
     double barPos() const noexcept { return fN / std::fmax(1.0, fBl); }
     bool full() const noexcept { return fFull != 0.0; }
+    double seedPlaying() const noexcept { return fSeedNow; } // the seed of the order playing (Re-roll)
 
     template <typename T>
     void process(const T* inL, const T* inR, T* outL, T* outR, uint32_t frames, double tempo, bool playing,
@@ -195,6 +217,7 @@ public:
         if (playing)
         {
             const double bar = std::floor(beatPos / 4.0);
+            fBarc = bar;
             const double nt = std::floor((beatPos - 4.0 * bar) * spb + 0.5);
             const double ct = bar - 2.0 * std::floor(bar / 2.0);
             const double at = ct * fBl + nt;
@@ -226,6 +249,18 @@ public:
                 fN = 0.0;
                 fCur = 1.0 - fCur;
                 fFull = 1.0;
+                fBarc += 1.0;
+            }
+            if (fP.reroll != 0)
+            {
+                // Re-roll: a new order for every block of bars
+                const double blk = std::floor(fBarc / fRrn);
+                if (std::fabs(blk - fBlkLast) >= 0.00001) // EEL2 != is fuzzy
+                {
+                    fBlkLast = blk;
+                    fSeedNow = rerollSeed(fP.seed, blk);
+                    fPat = makePattern(fP, fSeedNow);
+                }
             }
             const int wc = fCur != 0.0 ? 1 : 0;
             if (fN < fBmax - 2.0)
@@ -260,6 +295,17 @@ public:
                     env = std::fmin((o - h) / fFd, (ae - o) / fFd);
                 }
                 p = fPat.rv[j] != 0.0 ? fPat.src[j] * sl + sl - 1.0 - oo : fPat.src[j] * sl + oo;
+            }
+            else if (fPat.spd[j] != 0.0)
+            {
+                // Speed: half speed plays the slice's first half, double speed two slices
+                const double oo = fPat.spd[j] == 1.0 ? o * 0.5 : o * 2.0;
+                p = fPat.rv[j] != 0.0 ? fPat.src[j] * sl + sl - 1.0 - oo : fPat.src[j] * sl + oo;
+                if (p >= fBl)
+                    p -= fBl;
+                if (p < 0.0)
+                    p += fBl;
+                env = std::fmin(o / fFd, (ae - o) / fFd);
             }
             else
             {
@@ -299,6 +345,9 @@ private:
     void updateParams()
     {
         fPat = makePattern(fP);
+        fSeedNow = fP.seed;
+        fRrn = fP.reroll == 3 ? 4.0 : double(fP.reroll);
+        fBlkLast = -0.5;
         fGate = fP.gatePct / 100.0;
         fMix = fP.mixPct / 100.0;
     }
@@ -308,6 +357,7 @@ private:
     double fSr = 48000.0, fFd = 1.0, fBmax = 4.0, fBl = 1.0;
     nulljsfx::LazyClearBuffer fL[2], fR[2];
     double fN = 0.0, fCur = 0.0, fJf = 1.0, fFull = 0.0, fFl = 0.0, fGate = 1.0, fMix = 1.0;
+    double fBarc = 0.0, fBlkLast = -0.5, fRrn = 1.0, fSeedNow = 1.0;
 };
 
 } // namespace nullslicer

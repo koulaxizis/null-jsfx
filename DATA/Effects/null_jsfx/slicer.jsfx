@@ -12,6 +12,8 @@ slider5:0<0,100,1>Reverse Chance (%)
 slider6:25<0,100,1>Repeat Chance (%)
 slider7:100<0,100,1>Gate (%)
 slider8:100<0,100,1>Mix (%)
+slider9:0<0,3,1{Off,Every Bar,Every 2 Bars,Every 4 Bars}>Re-roll
+slider10:0<0,100,1>Speed Chance (%)
 
 in_pin:Left
 in_pin:Right
@@ -33,13 +35,22 @@ options:maxmem=33554432
   // Gate shortens every slice; each cut gets 2.5 ms fades, slices that continue the audio
   // seamlessly are not faded. While the transport plays the bar is locked to
   // the song position; stopped, it free-runs at the host tempo. Tempo is clamped to 40..300 bpm.
+  // Re-roll and Speed Chance (appended 2026-11-18): Re-roll makes a new order every 1, 2 or 4
+  // bars from Seed and the bar's position (the song's bar while it plays; the bars played since
+  // the start while stopped), the first block of bars keeping Seed's own order. Speed Chance lets
+  // each plain slice (not a repeat or a backspin) play at half speed (an octave down, its first
+  // half) or double speed (an octave up, two slices of audio), from two more dice per slice drawn
+  // after the others, so the order of a seed stays as it was.
   fd = max(1, floor(0.0025 * srate));         // fade length
   bmax = ceil(srate * 6) + 4;                 // one bar at 40 bpm
   pa = 4 * bmax;                              // pattern arrays after the two stereo bar buffers
   src = pa; rv = pa + 32; rp = pa + 64; bs = pa + 96; fi = pa + 128; fo = pa + 160;
   ua = pa + 192; up = pa + 224; ur = pa + 256; uq = pa + 288; lst = pa + 320; prm = pa + 352;
-  memset(0, 0, pa + 384);
-  freembuf(pa + 384);
+  us = pa + 384; uh = pa + 416; spd = pa + 448;
+  memset(0, 0, pa + 480);
+  freembuf(pa + 480);
+  barc = 0;    // bars played (Re-roll)
+  blk_last = -0.5;
   n = 0;       // sample within the bar
   cur = 0;     // bar buffer being recorded (the other one plays)
   jf = 1;      // fade-in after a jump of the song position
@@ -61,72 +72,84 @@ options:maxmem=33554432
     base[i] + (base[i + 1] - base[i]) * f;
   );
 
+  // the bar's slices from seed sd (the dice, four per slice in a fixed order, then two for Speed)
+  function sl_make(sd) local(i, j, k, m, t, c)
+  (
+    seed = sd * 7919 + 13;
+    loop(4, prand(1));
+    j = 0;
+    loop(ns,
+      ua[j] = prand(100); up[j] = prand(1); ur[j] = prand(100); uq[j] = prand(100);
+      src[j] = j; rv[j] = 0; rp[j] = 0; bs[j] = 0;
+      j += 1;
+    );
+    // Speed Chance's dice, after the others
+    j = 0;
+    loop(ns, us[j] = prand(100); uh[j] = prand(1); j += 1;);
+    pat == 1 ? (
+      // shuffle the picked slices among themselves (Fisher-Yates)
+      m = 0; j = 0;
+      loop(ns, ua[j] < slider2 ? (lst[m] = j; prm[m] = j; m += 1;); j += 1;);
+      i = m - 1;
+      while (i >= 1) (
+        k = floor(up[lst[i]] * (i + 1));
+        t = prm[i]; prm[i] = prm[k]; prm[k] = t;
+        i -= 1;
+      );
+      i = 0;
+      loop(m, src[lst[i]] = prm[i]; i += 1;);
+    );
+    pat == 2 ? (
+      // picked pairs play backwards as one piece
+      j = 0;
+      loop(ns / 2,
+        ua[j] < slider2 ? (src[j] = j + 1; src[j + 1] = j; rv[j] = 1; rv[j + 1] = 1;);
+        j += 2;
+      );
+    );
+    pat == 3 ? (
+      j = 1;
+      loop(ns - 1, ua[j] < slider2 ? src[j] = src[j - 1]; j += 1;);
+    );
+    pat == 4 ? (
+      j = 1;
+      loop(ns - 1, ua[j] < slider2 ? bs[j] = 1; j += 1;);
+    );
+    pat == 5 ? (
+      j = 0;
+      loop(ns, ua[j] < slider2 ? src[j] = floor(up[j] * ns); j += 1;);
+    );
+    j = 0;
+    loop(ns,
+      bs[j] ? (rv[j] = 0;) : (
+        ur[j] < slider5 ? rv[j] = 1;
+        rp[j] = uq[j] < slider6;
+      );
+      spd[j] = !bs[j] && !rp[j] && us[j] < slider10 ? (uh[j] < 0.5 ? 1 : 2) : 0;
+      j += 1;
+    );
+    // fades only where the audio does not simply continue from the slice before
+    j = 0;
+    loop(ns,
+      k = j == 0 ? ns - 1 : j - 1;
+      c = gate >= 1 && !bs[j] && !bs[k] && !rp[j] && !rp[k] && !spd[j] && !spd[k] && (
+        (!rv[j] && !rv[k] && src[j] == src[k] + 1 - (j == 0 ? ns : 0)) ||
+        (j > 0 && rv[j] && rv[k] && src[j] == src[k] - 1));
+      fi[j] = !c;
+      fo[k] = !c;
+      j += 1;
+    );
+  );
+
 @slider
   pat = slider1;
   ns = slider4 == 0 ? 8 : slider4 == 1 ? 16 : 32;
   gate = slider7 / 100;
   mix = slider8 / 100;
-  // the dice, four per slice in a fixed order
-  seed = slider3 * 7919 + 13;
-  loop(4, prand(1));
-  j = 0;
-  loop(ns,
-    ua[j] = prand(100); up[j] = prand(1); ur[j] = prand(100); uq[j] = prand(100);
-    src[j] = j; rv[j] = 0; rp[j] = 0; bs[j] = 0;
-    j += 1;
-  );
-  pat == 1 ? (
-    // shuffle the picked slices among themselves (Fisher-Yates)
-    m = 0; j = 0;
-    loop(ns, ua[j] < slider2 ? (lst[m] = j; prm[m] = j; m += 1;); j += 1;);
-    i = m - 1;
-    while (i >= 1) (
-      k = floor(up[lst[i]] * (i + 1));
-      t = prm[i]; prm[i] = prm[k]; prm[k] = t;
-      i -= 1;
-    );
-    i = 0;
-    loop(m, src[lst[i]] = prm[i]; i += 1;);
-  );
-  pat == 2 ? (
-    // picked pairs play backwards as one piece
-    j = 0;
-    loop(ns / 2,
-      ua[j] < slider2 ? (src[j] = j + 1; src[j + 1] = j; rv[j] = 1; rv[j + 1] = 1;);
-      j += 2;
-    );
-  );
-  pat == 3 ? (
-    j = 1;
-    loop(ns - 1, ua[j] < slider2 ? src[j] = src[j - 1]; j += 1;);
-  );
-  pat == 4 ? (
-    j = 1;
-    loop(ns - 1, ua[j] < slider2 ? bs[j] = 1; j += 1;);
-  );
-  pat == 5 ? (
-    j = 0;
-    loop(ns, ua[j] < slider2 ? src[j] = floor(up[j] * ns); j += 1;);
-  );
-  j = 0;
-  loop(ns,
-    bs[j] ? (rv[j] = 0;) : (
-      ur[j] < slider5 ? rv[j] = 1;
-      rp[j] = uq[j] < slider6;
-    );
-    j += 1;
-  );
-  // fades only where the audio does not simply continue from the slice before
-  j = 0;
-  loop(ns,
-    k = j == 0 ? ns - 1 : j - 1;
-    c = gate >= 1 && !bs[j] && !bs[k] && !rp[j] && !rp[k] && (
-      (!rv[j] && !rv[k] && src[j] == src[k] + 1 - (j == 0 ? ns : 0)) ||
-      (j > 0 && rv[j] && rv[k] && src[j] == src[k] - 1));
-    fi[j] = !c;
-    fo[k] = !c;
-    j += 1;
-  );
+  rroll = slider9;
+  rrn = slider9 == 3 ? 4 : slider9;
+  blk_last = -0.5;
+  sl_make(slider3);
 
 @block
   bpm = tempo > 0 ? tempo : 120;
@@ -137,6 +160,7 @@ options:maxmem=33554432
   play_state & 1 ? (
     // lock the bar to the song position; small drift is corrected, a jump fades in again
     sc_bar = floor(beat_position / 4);
+    barc = sc_bar;
     nt = floor((beat_position - 4 * sc_bar) * spb + 0.5);
     ct = sc_bar - 2 * floor(sc_bar / 2);
     at = ct * bl + nt;
@@ -151,7 +175,15 @@ options:maxmem=33554432
   );
 
 @sample
-  n >= bl ? (n = 0; cur = 1 - cur; full = 1;);
+  n >= bl ? (n = 0; cur = 1 - cur; full = 1; barc += 1;);
+  rroll ? (
+    // Re-roll: a new order for every block of bars
+    blk = floor(barc / rrn);
+    blk != blk_last ? (
+      blk_last = blk;
+      sl_make(slider3 + 1009 * (blk - 1000 * floor(blk / 1000)));
+    );
+  );
   wb = cur * 2 * bmax;
   n < bmax - 2 ? (
     wb[n] = spl0;
@@ -176,6 +208,13 @@ options:maxmem=33554432
       env = min((o - h) / fd, (ae - o) / fd);
     );
     p = rv[j] ? src[j] * sl + sl - 1 - oo : src[j] * sl + oo;
+  ) : spd[j] ? (
+    // Speed: half speed plays the slice's first half, double speed two slices (around the bar)
+    oo = spd[j] == 1 ? o * 0.5 : o * 2;
+    p = rv[j] ? src[j] * sl + sl - 1 - oo : src[j] * sl + oo;
+    p >= bl ? p -= bl;
+    p < 0 ? p += bl;
+    env = min(o / fd, (ae - o) / fd);
   ) : (
     p = rv[j] ? src[j] * sl + sl - 1 - o : src[j] * sl + o;
     env = min(fi[j] ? o / fd : 1, fo[j] || gate < 1 ? (ae - o) / fd : 1);

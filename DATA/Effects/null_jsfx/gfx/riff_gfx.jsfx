@@ -18,6 +18,10 @@ slider9:0<0,999,1>-Rhythm Lock
 slider10:30<0,100,1>-Velocity Range (%)
 slider11:25<0,100,1>-Accent (%)
 slider12:50<0,100,1>-Variation (%)
+slider13:0<0,100,1>-Mutate (%)
+slider14:1<0,3,1{1 Cycle,2 Cycles,4 Cycles,8 Cycles}>-Mutate Every
+slider15:0<0,1,1{Off,On}>-Legato
+slider16:0<0,1,1{Scale,Held Chord}>-Pitch Source
 
 in_pin:Left
 in_pin:Right
@@ -34,6 +38,12 @@ out_pin:Right
   // Lock (a seed for the rhythm alone, 0 = Off) keeps the rhythm while Seed rolls new notes. One
   // note sounds at a time and every note-on gets its note-off; the transport stopping or all
   // notes off ends it. The audio passes through untouched.
+  // Mutate (0 = Off) lets the riff evolve: every Mutate Every cycles of the pattern, a third
+  // Park-Miller stream re-draws that share of the steps (whether they play, and their note); a
+  // change of any setting starts again from the pattern of the seed. Legato holds each note until
+  // the next one starts, sending the new note-on before the old note-off (a repeated pitch is
+  // held), for mono synths that glide. Pitch Source Held Chord plays the degrees on the keys held
+  // (lowest first, then the octaves above) instead of the scale.
   ext_noinit = 1;
   STK = 0;      // the keys held, in the order pressed: input channel * 128 + note
   STV = 128;    // their velocities
@@ -43,7 +53,10 @@ out_pin:Right
   PVR = 320;    // its velocity draw (0..1)
   PAC = 352;    // 1 when accented
   SCL = 400;    // scales: 8 per scale, [0] = size, then the semitones
-  memset(0, 0, 500);
+  CHD = 500;    // the keys held for Held Chord, lowest first, without repeats
+  memset(0, 0, 640);
+  cyc = 0;          // pattern cycles counted for Mutate
+  mcount = 0;       // mutations made since the pattern was generated (for the display)
   stn = 0;          // keys held
   run = 0;          // 1 while the riff plays
   cur_note = -1;    // the note sounding (-1 = none), its channel and when it ends
@@ -87,6 +100,7 @@ out_pin:Right
   // the two Park-Miller streams in exact doubles: rhythm and pitch, each in [0, 1)
   function rf_rr() ( rs *= 16807; rs -= floor(rs / 2147483647) * 2147483647; rs / 2147483648; );
   function rf_pr() ( ps *= 16807; ps -= floor(ps / 2147483647) * 2147483647; ps / 2147483648; );
+  function rf_mr() ( ms *= 16807; ms -= floor(ms / 2147483647) * 2147483647; ms / 2147483648; );
 
   // the pattern: always 32 steps (Steps plays the first ones, so more steps add to the end)
   function rf_gen() local(i, g, v, a, p1, p2, p3, p4, m, sz, top, d, prev)
@@ -127,6 +141,50 @@ out_pin:Right
       prev = PDG[i];
       i += 1;
     );
+    ms = seed * 48271 + 29;
+    loop(4, rf_mr(););
+    cyc = 0;
+    mcount = 0;
+  );
+
+  // one mutation: every step but the first draws three values, and Mutate's share of them
+  // plays or rests anew and takes a new note of the range
+  function rf_mut() local(i, r, g, d, top)
+  (
+    top = SCL[scale * 8] * octs;
+    i = 1;
+    loop(31,
+      r = rf_mr(); g = rf_mr(); d = rf_mr();
+      r < mut ? (
+        PON[i] = g < dens;
+        PDG[i] = min(top, floor(d * (top + 1)));
+      );
+      i += 1;
+    );
+    mcount += 1;
+  );
+
+  // Held Chord: degree g on the keys held, lowest first, then the octaves above (the range of
+  // the scale's degrees spread over the keys)
+  function rf_chord(g) local(i, j, k, n, ins, gg)
+  (
+    k = 0;
+    i = 0;
+    loop(stn,
+      n = STK[i] & 127;
+      ins = 1;
+      j = 0;
+      while (ins && j < k) ( CHD[j] == n ? ins = 0; j += 1; );
+      ins ? (
+        j = k;
+        while (j > 0 && CHD[j - 1] > n) ( CHD[j] = CHD[j - 1]; j -= 1; );
+        CHD[j] = n;
+        k += 1;
+      );
+      i += 1;
+    );
+    gg = floor(g * k / SCL[scale * 8]);
+    CHD[gg % k] + 12 * floor(gg / k);
   );
 
   // the note degree g above the root plays when key n leads: the root is the scale note at or below n
@@ -164,21 +222,37 @@ out_pin:Right
   );
 
   // the next step, at time t (ex: its exact time)
-  function rf_step(t, ex) local(i, s, n)
+  function rf_step(t, ex) local(i, s, n, on0, ch0)
   (
     i = nk - steps * floor(nk / steps);
+    i == 0 && nk > 0 ? (
+      cyc += 1;
+      mut > 0 && cyc % mevery == 0 ? rf_mut();
+    );
     run ? (
       cur_step = i;
-      rf_off(t);
+      !leg ? rf_off(t);
       PON[i] ? (
         s = STK[stn - 1];
-        n = rf_note(s & 127, PDG[i]);
+        n = src ? rf_chord(PDG[i]) : rf_note(s & 127, PDG[i]);
         n >= 0 && n <= 127 ? (
-          cur_ch = floor(s / 128);
-          cur_note = n;
-          midisend(t - bpos, 0x90 | cur_ch, n, rf_vel(STV[stn - 1], i));
-          cur_off = max(t + 1, floor(ex + sl * nlen + 0.001));
+          leg && cur_note == n && cur_ch == floor(s / 128) ? (
+            // Legato: the same pitch is held
+            cur_off = NEVER;
+          ) : (
+            on0 = cur_note;
+            ch0 = cur_ch;
+            cur_ch = floor(s / 128);
+            cur_note = n;
+            midisend(t - bpos, 0x90 | cur_ch, n, rf_vel(STV[stn - 1], i));
+            leg && on0 >= 0 ? midisend(t - bpos, 0x80 | ch0, on0, 0);
+            cur_off = leg ? NEVER : max(t + 1, floor(ex + sl * nlen + 0.001));
+          );
+        ) : (
+          leg ? rf_off(t);
         );
+      ) : (
+        leg ? rf_off(t);
       );
     );
     last_k = nk;
@@ -251,7 +325,6 @@ out_pin:Right
       midisend(t - bpos, a, b, c);
     );
   );
-
   gfx_ext_retina = 1;
   function update()
   (
@@ -267,6 +340,10 @@ out_pin:Right
     vrng = slider10 / 100;
     acc = slider11 / 100;
     vari = slider12 / 100;
+    mut = slider13 / 100;
+    mevery = slider14 == 0 ? 1 : slider14 == 1 ? 2 : slider14 == 2 ? 4 : 8;
+    leg = slider15;
+    src = slider16;
     rf_gen();
   );
 
@@ -461,8 +538,8 @@ out_pin:Right
   spl0 = spl0;
   spl1 = spl1;
 
-@gfx 480 420
-  ng_knobs_begin("RIFF", "MIDI", 480, 160, 2, 0);
+@gfx 480 448
+  ng_knobs_begin("RIFF", "MIDI", 480, 160, 2, 1);
 
   // display: the key and scale, the leading key and the step (or PLAY A KEY), the Rhythm Lock
   // switch, and the pattern as a piano roll with the step playing lit
@@ -496,29 +573,40 @@ out_pin:Right
 
   rf_roll(24, 90, 432, 110);
 
-  ng_row(6);
-  ng_select_ctl(1, "KEY", "C|C#|D|D#|E|F|F#|G|G#|A|A#|B", 0) ? update();
-  ng_select_ctl(2, "SCALE", "MAJOR|MINOR|HARM|MELODIC|DORIAN|PHRYG|LYDIAN|MIXO|LOCRIAN|MAJ PENT|MIN PENT|BLUES", 0) ? update();
-  ng_select_ctl(6, "RATE", "1/8|1/16|1/32|1/8T|1/16T|1/32T", 0) ? update();
-  sprintf(#v5, "%d", slider5);
-  ng_knob_ctl(5, "STEPS", #v5, 4, 32, 16, 1, 0) ? update();
-  sprintf(#v7, "%d OCT", slider7);
-  ng_knob_ctl(7, "OCTAVES", #v7, 1, 3, 1, 1, 0) ? update();
-  sprintf(#v3, "%d", slider3);
-  ng_knob_ctl(3, "SEED", #v3, 1, 999, 1, 1, 0) ? update();
-  ng_row(6);
-  sprintf(#v4, "%d%%", slider4);
-  ng_knob_ctl(4, "DENSITY", #v4, 0, 100, 75, 1, 0) ? update();
-  sprintf(#v8, "%d%%", slider8);
-  ng_knob_ctl(8, "LENGTH", #v8, 10, 100, 80, 1, 0) ? update();
-  sprintf(#v12, "%d%%", slider12);
-  ng_knob_ctl(12, "VARIATION", #v12, 0, 100, 50, 1, 0) ? update();
-  sprintf(#v11, "%d%%", slider11);
-  ng_knob_ctl(11, "ACCENT", #v11, 0, 100, 25, 1, 0) ? update();
-  sprintf(#v10, "%d%%", slider10);
-  ng_knob_ctl(10, "VEL RANGE", #v10, 0, 100, 30, 1, 0) ? update();
-  slider9 > 0 ? sprintf(#v9, "%d", slider9) : strcpy(#v9, "OFF");
-  ng_knob_ctl(9, "RHYTHM LOCK", #v9, 0, 999, 0, 1, 0) ? update();
+  rf_page = ng_tabs("PATTERN|EVOLVE", rf_page);
+  rf_page == 0 ? (
+    ng_row(6);
+    ng_select_ctl(1, "KEY", "C|C#|D|D#|E|F|F#|G|G#|A|A#|B", 0) ? update();
+    ng_select_ctl(2, "SCALE", "MAJOR|MINOR|HARM|MELODIC|DORIAN|PHRYG|LYDIAN|MIXO|LOCRIAN|MAJ PENT|MIN PENT|BLUES", 0) ? update();
+    ng_select_ctl(6, "RATE", "1/8|1/16|1/32|1/8T|1/16T|1/32T", 0) ? update();
+    sprintf(#v5, "%d", slider5);
+    ng_knob_ctl(5, "STEPS", #v5, 4, 32, 16, 1, 0) ? update();
+    sprintf(#v7, "%d OCT", slider7);
+    ng_knob_ctl(7, "OCTAVES", #v7, 1, 3, 1, 1, 0) ? update();
+    sprintf(#v3, "%d", slider3);
+    ng_knob_ctl(3, "SEED", #v3, 1, 999, 1, 1, 0) ? update();
+    ng_row(6);
+    sprintf(#v4, "%d%%", slider4);
+    ng_knob_ctl(4, "DENSITY", #v4, 0, 100, 75, 1, 0) ? update();
+    sprintf(#v8, "%d%%", slider8);
+    ng_knob_ctl(8, "LENGTH", #v8, 10, 100, 80, 1, 0) ? update();
+    sprintf(#v12, "%d%%", slider12);
+    ng_knob_ctl(12, "VARIATION", #v12, 0, 100, 50, 1, 0) ? update();
+    sprintf(#v11, "%d%%", slider11);
+    ng_knob_ctl(11, "ACCENT", #v11, 0, 100, 25, 1, 0) ? update();
+    sprintf(#v10, "%d%%", slider10);
+    ng_knob_ctl(10, "VEL RANGE", #v10, 0, 100, 30, 1, 0) ? update();
+    slider9 > 0 ? sprintf(#v9, "%d", slider9) : strcpy(#v9, "OFF");
+    ng_knob_ctl(9, "RHYTHM LOCK", #v9, 0, 999, 0, 1, 0) ? update();
+  ) : (
+    // EVOLVE tab (appended 2026-11-18)
+    ng_row(4);
+    slider13 > 0 ? sprintf(#v13, "%d%%", slider13) : strcpy(#v13, "OFF");
+    ng_knob_ctl(13, "MUTATE", #v13, 0, 100, 0, 1, 0) ? update();
+    ng_select_ctl(14, "EVERY", "1 CYCLE|2 CYCLES|4 CYCLES|8 CYCLES", 0) ? update();
+    ng_select_ctl(15, "LEGATO", "OFF|ON", 0) ? update();
+    ng_select_ctl(16, "PITCH", "SCALE|HELD CHORD", 0) ? update();
+  );
 
   ng_end();
 

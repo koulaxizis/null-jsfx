@@ -17,6 +17,11 @@ slider8:0<0,200,1>-Strum (ms)
 slider9:0<0,2,1{Up,Down,Alternate}>-Strum Direction
 slider10:0<-100,100,1>-Velocity Curve (%)
 slider11:0<0,8,1{I-V-vi-IV,I-vi-IV-V,vi-IV-I-V,I-IV-vi-V,ii-V-I,Canon,i-VI-III-VII,i-VII-VI-V,i-iv-V-i}>-Progression
+slider12:0<0,1,1{Off,On}>-Generate
+slider13:1<1,999,1>-Generate Seed
+slider14:0<0,1,1{4 Chords,8 Chords}>-Generate Length
+slider15:0<0,1,1{Major,Minor}>-Generate Mood
+slider16:0<0,3,1{Off,Every 4 Beats,Every 2 Beats,Every Beat}>-Auto Advance
 
 in_pin:Left
 in_pin:Right
@@ -29,6 +34,13 @@ out_pin:Right
   // through untouched. Every note-on that goes out is remembered with the key that made it, so
   // the key's note-off always ends exactly those notes; strummed notes still waiting when the
   // key is released are never sent. A pitch two keys share stays on until both are released.
+  // Generate On replaces the progression with one generated from Generate Seed: it starts on the
+  // tonic, every next chord follows the last by the usual pulls of functional harmony (weighted
+  // draws of a Park-Miller stream, never the same chord twice), and the last chord leads home (IV
+  // or V in Major, V or VII in Minor, the V major). Auto Advance (Progression mode) moves the
+  // keys held on to the next step of the progression every 4, 2 or 1 beats: on the host's beat
+  // grid while it plays, from the first key pressed while it is stopped; every key held plays its
+  // next chord, and releasing every key starts again from the keys' own steps.
   ext_noinit = 1;
   ACT = 0;       // per input channel * 128 + note: 1 while the key is held
   SN = 2048;     // how many notes the key sounds
@@ -40,8 +52,17 @@ out_pin:Right
   SCL = 44100;   // scales: 8 per scale, [0] = size, then the semitones
   PRG = 44200;   // progressions: 20 per progression, [0] = steps, then degree and scale per step
   CT = 44400;    // a chord being built (see cd_build)
-  memset(0, 0, 44500);
+  VEL = 44500;   // per input channel * 128 + note: the velocity of the key held (Auto Advance)
+  memset(0, 0, 46600);
   qn = 0;
+  adv = 0;          // steps Auto Advance has moved on since a key was first held
+  was_play = 0;
+  aa_nk = 0;        // the next Auto Advance boundary: its count and its time
+  aa_nst = 0;
+  aa_last = -1000000000;
+  aa_run = 0;       // 1 while the stopped clock runs (a key held, the transport stopped)
+  play = 0;
+  NEVER = 2 ^ 60;
   bpos = 0;
   alt_dir = 0;
   last_note = -1;
@@ -124,7 +145,7 @@ out_pin:Right
       pc = n % 12;
       w = pc == 0 ? 0 : pc == 2 ? 1 : pc == 4 ? 2 : pc == 5 ? 3 : pc == 7 ? 4 : pc == 9 ? 5 : pc == 11 ? 6 : -1;
       w >= 0 ? (
-        k = w % PRG[prog * 20];
+        k = (w + adv) % PRG[prog * 20];
         d = PRG[prog * 20 + 1 + 2 * k];
         s = PRG[prog * 20 + 2 + 2 * k];
         root = n - pc + key + SCL[s * 8 + 1 + d];
@@ -250,6 +271,102 @@ out_pin:Right
     );
   );
 
+  // 1 when a key is held
+  function cd_any() local(i, f)
+  (
+    f = 0;
+    i = 0;
+    while (!f && i < 2048) ( ACT[i] ? f = 1; i += 1; );
+    f;
+  );
+
+  // the Park-Miller stream of Generate, in exact doubles, a value in [0, 1)
+  function cd_gr() ( gs *= 16807; gs -= floor(gs / 2147483647) * 2147483647; gs / 2147483648; );
+
+  // the chord after degree d: weighted pulls of functional harmony (Major: I ii iii IV V vi;
+  // Minor: i III iv V vi VII), returned as degree * 4 + scale
+  function cd_next(m, d) local(r, n)
+  (
+    r = cd_gr();
+    m == 0 ? (
+      n = d == 0 ? ( r < 3 / 12 ? 3 : r < 6 / 12 ? 4 : r < 9 / 12 ? 5 : r < 11 / 12 ? 1 : 2 ) :
+          d == 1 ? ( r < 4 / 6 ? 4 : r < 5 / 6 ? 3 : 5 ) :
+          d == 2 ? ( r < 3 / 5 ? 5 : 3 ) :
+          d == 3 ? ( r < 3 / 8 ? 4 : r < 6 / 8 ? 0 : r < 7 / 8 ? 1 : 5 ) :
+          d == 4 ? ( r < 4 / 8 ? 0 : r < 7 / 8 ? 5 : 3 ) :
+          ( r < 3 / 8 ? 3 : r < 5 / 8 ? 1 : r < 7 / 8 ? 4 : 2 );
+      n * 4;
+    ) : (
+      n = d == 0 ? ( r < 3 / 12 ? 3 : r < 6 / 12 ? 5 : r < 9 / 12 ? 6 : r < 11 / 12 ? 2 : 4 ) :
+          d == 2 ? ( r < 3 / 7 ? 5 : r < 5 / 7 ? 6 : 3 ) :
+          d == 3 ? ( r < 2 / 7 ? 4 : r < 4 / 7 ? 0 : r < 6 / 7 ? 6 : 5 ) :
+          d == 4 ? ( r < 4 / 6 ? 0 : 5 ) :
+          d == 5 ? ( r < 3 / 8 ? 6 : r < 5 / 8 ? 3 : r < 7 / 8 ? 2 : 0 ) :
+          ( r < 3 / 7 ? 0 : r < 6 / 7 ? 2 : 5 );
+      n * 4 + (n == 4 ? 2 : 1);
+    );
+  );
+
+  // Generate: the progression in slot 9, from Generate Seed
+  function cd_gen() local(n, k, d, e, r)
+  (
+    gs = gseed * 69621 + 17;
+    loop(4, cd_gr(););
+    n = glen ? 8 : 4;
+    PRG[9 * 20] = n;
+    cd_step(9, 0, 0, gmood ? 1 : 0);
+    d = 0;
+    k = 1;
+    loop(n - 1,
+      k == n - 1 ? (
+        // the last chord leads home
+        r = cd_gr();
+        gmood == 0 ? (
+          e = r < 0.5 ? 3 : 4;
+          e == d ? e = 7 - e;
+          e = e * 4;
+        ) : (
+          e = r < 0.5 ? 4 : 6;
+          e == d ? e = 10 - e;
+          e = e * 4 + (e == 4 ? 2 : 1);
+        );
+      ) : (
+        e = cd_next(gmood, d);
+      );
+      d = floor(e / 4);
+      cd_step(9, k, d, e - d * 4);
+      k += 1;
+    );
+  );
+
+  // Auto Advance: every key held plays the next step of the progression at time t
+  function cd_advance(t) local(i)
+  (
+    adv += 1;
+    i = 0;
+    loop(2048,
+      ACT[i] ? cd_note_on(t, floor(i / 128), i % 128, VEL[i]);
+      i += 1;
+    );
+  );
+
+  // the Auto Advance boundaries before time tend
+  function cd_adv_to(tend) local(ts, go)
+  (
+    go = 1;
+    while (go) (
+      ts = aa_on && (play || aa_run) ? max(bpos, floor(aa_nst + 0.001)) : NEVER;
+      ts < tend ? (
+        mode == 1 && cd_any() ? cd_advance(ts);
+        aa_last = aa_nk;
+        aa_nk += 1;
+        aa_nst = play ? bpos + (aa_nk * aa_pb - aa_b0) * aa_spb : aa_nst + aa_pb * aa_spb;
+      ) : (
+        go = 0;
+      );
+    );
+  );
+
   // one incoming message at time t
   function cd_in(t, a, b, c) local(st, ch, s, i)
   (
@@ -257,9 +374,13 @@ out_pin:Right
     ch = a & 0x0F;
     s = ch * 128 + b;
     st == 0x90 && c > 0 ? (
+      // stopped, the first key held starts the Auto Advance clock
+      aa_on && !play && !cd_any() ? ( aa_run = 1; aa_nk = 0; aa_nst = t + aa_pb * aa_spb; );
+      VEL[s] = c;
       cd_note_on(t, ch, b, c);
     ) : st == 0x80 || st == 0x90 ? (
       ACT[s] ? cd_release(t, s, st == 0x80 ? c : 0);
+      !cd_any() ? ( adv = 0; aa_run = 0; );
     ) : st == 0xA0 ? (
       // poly pressure goes to every note the key sounds
       i = 0;
@@ -271,6 +392,7 @@ out_pin:Right
       // all notes off: release every key of the channel first
       i = 0;
       loop(128, ACT[ch * 128 + i] ? cd_release(t, ch * 128 + i, 0); i += 1;);
+      !cd_any() ? ( adv = 0; aa_run = 0; );
       cd_put(t, a, b, c, -1);
     ) : (
       cd_put(t, a, b, c, -1);
@@ -295,7 +417,6 @@ out_pin:Right
       midisend(ofs, a, b, c);
     );
   );
-
   gfx_ext_retina = 1;
   function update()
   (
@@ -308,7 +429,13 @@ out_pin:Right
     octv = slider7;
     sdir = slider9;
     vexp = 2 ^ (-slider10 / 50);
-    prog = slider11;
+    gen = slider12;
+    gseed = slider13;
+    glen = slider14;
+    gmood = slider15;
+    aa = slider16;
+    gen ? cd_gen();
+    prog = gen ? 9 : slider11;
   );
 
   // ---- the display (memory past what the audio uses) -----------------------------------------
@@ -525,9 +652,26 @@ out_pin:Right
 
 @block
   st_samp = floor(slider8 * srate / 1000 + 0.5);
+  // Auto Advance's clock: on the host's beat grid while it plays
+  aa_on = aa > 0;
+  aa_pb = aa == 1 ? 4 : aa == 2 ? 2 : 1;
+  aa_spb = srate * 60 / max(tempo, 1);
+  play = play_state & 1;
+  play && !was_play ? aa_last = -1000000000;
+  // the transport stopping: keys still held go on from now, at the host's tempo
+  !play && was_play ? ( aa_run = cd_any(); aa_nk = 0; aa_nst = bpos + aa_pb * aa_spb; );
+  was_play = play;
+  play ? (
+    aa_b0 = beat_position;
+    aa_nk = ceil(aa_b0 / aa_pb - 0.000001);
+    aa_nk == aa_last ? aa_nk += 1;
+    aa_nst = bpos + (aa_nk * aa_pb - aa_b0) * aa_spb;
+  );
   while (midirecv(m_ofs, m_1, m_2, m_3)) (
+    cd_adv_to(bpos + m_ofs);
     cd_in(bpos + m_ofs, m_1, m_2, m_3);
   );
+  cd_adv_to(bpos + samplesblock);
   b_end = bpos + samplesblock;
   q_i = 0;
   while (q_i < qn && Q[q_i * 5] < b_end) (
@@ -546,8 +690,8 @@ out_pin:Right
   spl0 = spl0;
   spl1 = spl1;
 
-@gfx 480 400
-  ng_knobs_begin("CHORDS", "MIDI", 480, 140, 2, 0);
+@gfx 480 428
+  ng_knobs_begin("CHORDS", "MIDI", 480, 140, 2, 1);
 
   // display: the chord of the last key (before any, the tonic's from C4 as a preview, dimmed),
   // its symbol and degree, the scale's degrees (Chord) or the progression's steps (Progression)
@@ -581,7 +725,7 @@ out_pin:Right
   mode ? (
     g_w = g_n % 12;
     g_w = g_w == 0 ? 0 : g_w == 2 ? 1 : g_w == 4 ? 2 : g_w == 5 ? 3 : g_w == 7 ? 4 : g_w == 9 ? 5 : g_w == 11 ? 6 : -1;
-    g_w >= 0 ? g_hi = g_w % g_c;
+    g_w >= 0 ? g_hi = (g_w + adv) % g_c;
   ) : (
     GT[8] ? g_hi = GT[10];
   );
@@ -615,22 +759,34 @@ out_pin:Right
 
   kb_draw(24, 116, 432, 68, 36, 96, key);
 
-  ng_row(6);
-  ng_select_ctl(1, "MODE", "CHORD|PROG", 0) ? update();
-  ng_select_ctl(2, "KEY", "C|C#|D|D#|E|F|F#|G|G#|A|A#|B", 0) ? update();
-  ng_select_ctl(3, "SCALE", "MAJOR|MINOR|HARM|MELODIC|DORIAN|PHRYG|LYDIAN|MIXO|LOCRIAN", 0) ? update();
-  ng_select_ctl(4, "CHORD", "TRIAD|7TH|9TH|SUS2|SUS4|POWER", 0) ? update();
-  ng_select_ctl(5, "INVERSION", "ROOT|1ST|2ND|3RD", 0) ? update();
-  ng_select_ctl(6, "VOICING", "CLOSE|DROP 2|OPEN|WIDE", 0) ? update();
-  ng_row(5);
-  sprintf(#v7, slider7 > 0 ? "+%d" : "%d", slider7);
-  ng_knob_ctl(7, "OCTAVE", #v7, -2, 2, 0, 1, 1) ? update();
-  sprintf(#v8, "%d ms", slider8);
-  ng_knob_ctl(8, "STRUM", #v8, 0, 200, 0, 1, 0) ? update();
-  ng_select_ctl(9, "DIRECTION", "UP|DOWN|ALT", 0) ? update();
-  sprintf(#v10, slider10 > 0 ? "+%d%%" : "%d%%", slider10);
-  ng_knob_ctl(10, "VELOCITY", #v10, -100, 100, 0, 1, 1) ? update();
-  ng_select_ctl(11, "PROGRESSION", "POP|DOO-WOP|SAD POP|POP 2|JAZZ|CANON|EPIC|SPANISH|MINOR", 0) ? update();
+  cd_page = ng_tabs("CHORDS|GENERATE", cd_page);
+  cd_page == 0 ? (
+    ng_row(6);
+    ng_select_ctl(1, "MODE", "CHORD|PROG", 0) ? update();
+    ng_select_ctl(2, "KEY", "C|C#|D|D#|E|F|F#|G|G#|A|A#|B", 0) ? update();
+    ng_select_ctl(3, "SCALE", "MAJOR|MINOR|HARM|MELODIC|DORIAN|PHRYG|LYDIAN|MIXO|LOCRIAN", 0) ? update();
+    ng_select_ctl(4, "CHORD", "TRIAD|7TH|9TH|SUS2|SUS4|POWER", 0) ? update();
+    ng_select_ctl(5, "INVERSION", "ROOT|1ST|2ND|3RD", 0) ? update();
+    ng_select_ctl(6, "VOICING", "CLOSE|DROP 2|OPEN|WIDE", 0) ? update();
+    ng_row(5);
+    sprintf(#v7, slider7 > 0 ? "+%d" : "%d", slider7);
+    ng_knob_ctl(7, "OCTAVE", #v7, -2, 2, 0, 1, 1) ? update();
+    sprintf(#v8, "%d ms", slider8);
+    ng_knob_ctl(8, "STRUM", #v8, 0, 200, 0, 1, 0) ? update();
+    ng_select_ctl(9, "DIRECTION", "UP|DOWN|ALT", 0) ? update();
+    sprintf(#v10, slider10 > 0 ? "+%d%%" : "%d%%", slider10);
+    ng_knob_ctl(10, "VELOCITY", #v10, -100, 100, 0, 1, 1) ? update();
+    ng_select_ctl(11, "PROGRESSION", "POP|DOO-WOP|SAD POP|POP 2|JAZZ|CANON|EPIC|SPANISH|MINOR", 0) ? update();
+  ) : (
+    // GENERATE tab (appended 2026-11-18)
+    ng_row(5);
+    ng_select_ctl(12, "GENERATE", "OFF|ON", 0) ? update();
+    sprintf(#v13, "%d", slider13);
+    ng_knob_ctl(13, "SEED", #v13, 1, 999, 1, 1, 0) ? update();
+    ng_select_ctl(14, "LENGTH", "4 CHORDS|8 CHORDS", 0) ? update();
+    ng_select_ctl(15, "MOOD", "MAJOR|MINOR", 0) ? update();
+    ng_select_ctl(16, "ADVANCE", "OFF|4 BEATS|2 BEATS|1 BEAT", 0) ? update();
+  );
 
   ng_end();
 

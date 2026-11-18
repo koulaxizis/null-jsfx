@@ -41,6 +41,10 @@ static const NullKnobsUI::Control kControls[] = {
     { 24, NullKnobsUI::kSelect, "GENERATE", 0, 3, false },
     { 26, NullKnobsUI::kSelect, "STYLE", 0, 3, false },
     { 25, NullKnobsUI::kKnob, "DENSITY", 0, 3, false },
+    // Shape and Mutate (appended 2026-11-18)
+    { 27, NullKnobsUI::kSelect, "SHAPE", 1, 3, false },
+    { 28, NullKnobsUI::kKnob, "MUTATE", 1, 3, false },
+    { 29, NullKnobsUI::kSelect, "EVERY", 1, 3, false },
 };
 
 class UITranceGate : public NullKnobsUI
@@ -143,6 +147,8 @@ protected:
     {
         if (param == 18)
             std::snprintf(buf, n, "%.1f Hz", nulltrance::tenths(v));
+        else if (param == 28 && std::lround(v) <= 0)
+            std::snprintf(buf, n, "OFF");
         else
             NullKnobsUI::formatValue(param, v, buf, n);
     }

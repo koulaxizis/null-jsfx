@@ -63,6 +63,7 @@ protected:
         // the playhead (position in the bar) and whether a whole bar has been recorded
         taps.extra.store(float(fDsp.barPos()), std::memory_order_relaxed);
         taps.aux[0].store(fDsp.full() ? 1.0f : 0.0f, std::memory_order_relaxed);
+        taps.aux[1].store(float(fDsp.seedPlaying()), std::memory_order_relaxed);
     }
 
 private:

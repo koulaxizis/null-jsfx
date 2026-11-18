@@ -35,7 +35,17 @@ static constexpr int kMaxSteps = 32;
 struct Params {
     int key = 0, scale = 0, seed = 1, steps = 16, rate = 1, octs = 1, lock = 0;
     double dens = 0.75, nlen = 0.8, vrng = 0.3, acc = 0.25, vari = 0.5;
+    double mut = 0.0;           // Mutate (0..1, 0 = Off)
+    int mevery = 2;             // Mutate Every, in cycles (1, 2, 4, 8)
+    bool leg = false;           // Legato
+    bool chord = false;         // Pitch Source: Held Chord
 };
+
+// Mutate Every's option to cycles
+static int everyCycles(int opt)
+{
+    return opt == 0 ? 1 : opt == 1 ? 2 : opt == 2 ? 4 : 8;
+}
 
 // the step length in beats
 static double stepBeats(int rate)
@@ -58,6 +68,7 @@ struct Pattern {
     double vr[kMaxSteps] = {};
     bool acc[kMaxSteps] = {};
     int top = 7; // the highest degree (the range's top root)
+    double ms = 0.0; // the Mutate stream
 };
 
 // one Park-Miller step in exact doubles, a value in [0, 1)
@@ -110,6 +121,25 @@ static void generate(const Params& p, Pattern& o)
         o.deg[i] = std::min(top, d);
         prev = o.deg[i];
     }
+    o.ms = double(p.seed) * 48271.0 + 29.0;
+    for (int k = 0; k < 4; ++k)
+        pm(o.ms);
+}
+
+// one mutation (rf_mut): every step but the first draws three values, and Mutate's share of them
+// plays or rests anew and takes a new note of the range
+static void mutate(const Params& p, Pattern& o)
+{
+    const int top = kScales[p.scale][0] * p.octs;
+    for (int i = 1; i < kMaxSteps; ++i)
+    {
+        const double r = pm(o.ms), g = pm(o.ms), d = pm(o.ms);
+        if (r < p.mut)
+        {
+            o.on[i] = g < p.dens;
+            o.deg[i] = std::min(top, int(std::floor(d * double(top + 1))));
+        }
+    }
 }
 
 // the note degree g above the root plays when key n leads (the root: the scale note at or below n)
@@ -148,6 +178,8 @@ public:
         fNst = 0.0;
         fLastK = -1000000000.0;
         fOutN = 0;
+        fCyc = 0;
+        fMutations = 0;
     }
 
     // @slider
@@ -155,6 +187,8 @@ public:
     {
         fP = p;
         generate(fP, fPat);
+        fCyc = 0;
+        fMutations = 0;
     }
 
     // the start of @block: the host's tempo, whether it plays and its beat position
@@ -202,6 +236,7 @@ public:
     int step() const { return fRun ? fCurStep : -1; }
     int root() const { return fRun && fStn > 0 ? fStk[fStn - 1] & 127 : -1; }
     int sounding() const { return fCurNote; }
+    int mutations() const { return fMutations; }
 
 private:
     struct Out { uint32_t ofs; int a, b, c; };
@@ -237,26 +272,77 @@ private:
         fCurStep = -1;
     }
 
+    // Held Chord (rf_chord): degree g on the keys held, lowest first, then the octaves above
+    int chordNote(int g) const
+    {
+        int chd[kKeysMax];
+        int k = 0;
+        for (int i = 0; i < fStn; ++i)
+        {
+            const int n = fStk[i] & 127;
+            bool ins = true;
+            for (int j = 0; ins && j < k; ++j)
+                if (chd[j] == n)
+                    ins = false;
+            if (ins)
+            {
+                int j = k;
+                while (j > 0 && chd[j - 1] > n)
+                {
+                    chd[j] = chd[j - 1];
+                    --j;
+                }
+                chd[j] = n;
+                ++k;
+            }
+        }
+        const int gg = int(std::floor(double(g) * double(k) / double(kScales[fP.scale][0])));
+        return chd[gg % k] + 12 * (gg / k);
+    }
+
     void stepAt(double t, double ex)
     {
+        const double never = 1152921504606846976.0; // 2^60
         const int steps = fP.steps;
         const int i = int(fNk - double(steps) * std::floor(fNk / double(steps)));
+        if (i == 0 && fNk > 0.0)
+        {
+            ++fCyc;
+            if (fP.mut > 0.0 && fCyc % fP.mevery == 0)
+            {
+                mutate(fP, fPat);
+                ++fMutations;
+            }
+        }
         if (fRun)
         {
             fCurStep = i;
-            off(t);
+            if (!fP.leg)
+                off(t);
             if (fPat.on[i])
             {
                 const int s = fStk[fStn - 1];
-                const int n = noteFor(s & 127, fPat.deg[i], fP);
+                const int n = fP.chord ? chordNote(fPat.deg[i]) : noteFor(s & 127, fPat.deg[i], fP);
                 if (n >= 0 && n <= 127)
                 {
-                    fCurCh = s / 128;
-                    fCurNote = n;
-                    send(t, 0x90 | fCurCh, n, vel(fStv[fStn - 1], i));
-                    fCurOff = std::max(t + 1.0, std::floor(ex + fSl * fP.nlen + 0.001));
+                    if (fP.leg && fCurNote == n && fCurCh == s / 128)
+                        fCurOff = never; // Legato: the same pitch is held
+                    else
+                    {
+                        const int on0 = fCurNote, ch0 = fCurCh;
+                        fCurCh = s / 128;
+                        fCurNote = n;
+                        send(t, 0x90 | fCurCh, n, vel(fStv[fStn - 1], i));
+                        if (fP.leg && on0 >= 0)
+                            send(t, 0x80 | ch0, on0, 0);
+                        fCurOff = fP.leg ? never : std::max(t + 1.0, std::floor(ex + fSl * fP.nlen + 0.001));
+                    }
                 }
+                else if (fP.leg)
+                    off(t);
             }
+            else if (fP.leg)
+                off(t);
         }
         fLastK = fNk;
         fNk += 1.0;
@@ -368,6 +454,7 @@ private:
     bool fWasPlay = false, fPlay = false;
     double fNk = 0.0, fNst = 0.0, fLastK = -1000000000.0;
     double fSpb = 0.0, fSb = 0.25, fSl = 0.0, fB0 = 0.0;
+    int fCyc = 0, fMutations = 0;
     Out fOut[kOutMax];
     int fOutN = 0;
 };

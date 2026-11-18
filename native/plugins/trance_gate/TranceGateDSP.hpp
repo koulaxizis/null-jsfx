@@ -14,6 +14,10 @@
  * Generate, Density and Style (appended in 4.0): On plays a pattern made from Seed, Density and
  * Style in place of the Step sliders (generatePattern, applied by paramsFrom so the interface
  * shows the same steps); Off keeps the original code.
+ * Shape, Mutate and Mutate Every (appended 2026-11-18): Flow glides the gain from each step's level
+ * to the next one's over the step (a raised cosine); Mutate plays, every Mutate Every cycles of 16
+ * steps, a variation of the pattern drawn from Seed and the cycle's position (mutateInto). At Hard
+ * and Mutate 0 the original code runs.
  */
 
 #pragma once
@@ -33,6 +37,9 @@ struct Params {
     bool generate = false;
     double densityPct = 50.0;
     int style = 0;         // 0..4: Trance, Offbeat, Stutter, Half Time, Random
+    bool flow = false;     // Shape: Flow
+    double mutPct = 0.0;   // Mutate
+    int mutEvery = 2;      // Mutate Every, in cycles (1, 2, 4, 8)
 };
 
 // (x * y) mod 2147483647, exact in doubles (y split into 16-bit halves), as the JSFX's pm_mul
@@ -98,6 +105,26 @@ inline void generatePattern(Params& p) noexcept
     }
 }
 
+// Mutate: the variation of cycle block m (the JSFX's tg_mut), from the steps p.steps
+inline void mutateInto(const Params& p, double m, bool* pm) noexcept
+{
+    const double d = p.densityPct / 100.0, mut = p.mutPct / 100.0;
+    const char* str = genWeights(p.style);
+    for (int i = 0; i < 16; ++i)
+    {
+        if (m == 0.0)
+            pm[i] = p.steps[i];
+        else if (pmStep(m * 64.0 + i * 2.0 + 7919.0, p.seed) < mut)
+        {
+            const char c = str[i];
+            const double w = c >= '1' && c <= '9' ? double(c - '0') / 9.0 : 0.0;
+            pm[i] = p.generate ? pmStep(m * 64.0 + i * 2.0 + 7920.0, p.seed) < std::fmin(1.0, w * 2.0 * d) : !p.steps[i];
+        }
+        else
+            pm[i] = p.steps[i];
+    }
+}
+
 // The display (trance_gate_gfx.jsfx draws the same): the gain over the 16 steps as the
 // attack / release ramps shape it, as a polyline of up to 3 points per step. step = the
 // step duration in seconds. Writes up to 49 (t in steps, gain) points, returns the count.
@@ -143,6 +170,7 @@ public:
         fCur = 0;
         fRndPos = 0.0;
         fRndKeep = 1.0;
+        fRndKeepN = 1.0;
         updateParams();
     }
 
@@ -182,8 +210,25 @@ public:
             const double s = std::floor(fStepPos);
             const double cur = s - 16.0 * std::floor(s / 16.0);
             fCur = int(cur + 0.0001);
-            const double on = fP.steps[fCur & 15] ? 1.0 : 0.0;
-            double target;
+            double on, onN;
+            if (fMut > 0.0)
+            {
+                // Mutate: a new variation at every cycle block
+                const double mb = std::floor(std::floor(fRndPos) / (16.0 * fP.mutEvery));
+                if (std::fabs(mb - fMbLast) >= 0.00001) // EEL2 != is fuzzy
+                {
+                    fMbLast = mb;
+                    mutateInto(fP, mb, fPm);
+                }
+                on = fPm[fCur & 15] ? 1.0 : 0.0;
+                onN = fPm[(fCur + 1) & 15] ? 1.0 : 0.0;
+            }
+            else
+            {
+                on = fP.steps[fCur & 15] ? 1.0 : 0.0;
+                onN = fP.steps[(fCur + 1) & 15] ? 1.0 : 0.0;
+            }
+            double kc = 1.0, kn = 1.0;
             if (fProb < 1.0)
             {
                 // Probability: a new draw whenever the step changes
@@ -192,11 +237,20 @@ public:
                 {
                     fRndLast = ri;
                     fRndKeep = pmStep(ri, fP.seed) < fProb ? 1.0 : 0.0;
+                    if (fP.flow)
+                        fRndKeepN = pmStep(ri + 1.0, fP.seed) < fProb ? 1.0 : 0.0;
                 }
-                target = 1.0 - fDepth * (1.0 - on * fRndKeep);
+                kc = fRndKeep;
+                kn = fRndKeepN;
             }
-            else
-                target = 1.0 - fDepth * (1.0 - on);
+            double target = 1.0 - fDepth * (1.0 - on * kc);
+            if (fP.flow)
+            {
+                // Flow: from this step's level to the next one's over the step
+                const double tn = 1.0 - fDepth * (1.0 - onN * kn);
+                const double tf = fStepPos - std::floor(fStepPos);
+                target += (tn - target) * (0.5 - 0.5 * std::cos(3.141592653589793 * tf));
+            }
             if (target > fGain)
             {
                 fGain += fAttack;
@@ -223,12 +277,16 @@ private:
         fDepth = fP.depthPct / 100.0;
         fProb = fP.probPct / 100.0;
         fRndLast = -0.5;
+        fMut = fP.mutPct / 100.0;
+        fMbLast = -0.5;
     }
 
     Params fP;
     double fSr = 48000.0, fStepPos = 0.0, fStepInc = 0.0, fGain = 1.0;
     double fStepsPerBeat = 4.0, fAttack = 0.0, fRelease = 0.0, fDepth = 1.0;
     double fRndPos = 0.0, fRndLast = -0.5, fRndKeep = 1.0, fProb = 1.0;
+    double fRndKeepN = 1.0, fMut = 0.0, fMbLast = -0.5;
+    bool fPm[16] = {};
     int fCur = 0;
 };
 
