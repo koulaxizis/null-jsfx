@@ -15,6 +15,8 @@ slider8:100<0,100,1>Mix (%)
 slider9:0<0,3,1{Classic,Type I,Type II,Type IV}>Tape Type
 slider10:0<0,1,1{Off,On}>Noise Reduction
 slider11:0<0,2,1{Off,2x,4x}>Oversampling
+slider12:0<0,100,1>Azimuth (%)
+slider13:0<0,100,1>Dropouts (%)
 
 in_pin:Left
 in_pin:Right
@@ -40,6 +42,11 @@ out_pin:Right
   // Oversampling (appended in 2.7) runs the saturation at 2x or 4x the sample rate through the
   // halfband stages of NULL Saturation, so its harmonics do not fold back as aliasing; the
   // latency grows by 31 or 37 samples and the dry signal is read that much later to match.
+  // Azimuth and Dropouts (appended after 4.0, off at 0 %) are the worn deck: Azimuth reads the
+  // right channel up to 0.25 ms later than the left (a head out of line, wandering a little with
+  // the wow), so the highs smear and the mono sum dulls; Dropouts are short random losses of
+  // the tape's contact (20 to 80 ms, deeper and more often as it rises): the level dips and the
+  // top end goes dull. They are drawn every 64 samples from their own exact Park-Miller seed.
   buf_size = 1024;
   while (buf_size < ceil(0.008 * srate)) ( buf_size *= 2; );
   base = floor(0.003 * srate);
@@ -59,6 +66,9 @@ out_pin:Right
   wow_p1 = 0; wow_p2 = 0.3; flt_p1 = 0; flt_p2 = 0.6;
   seed_l = 13579;
   seed_r = 97531;
+  seed_d = 24680;
+  do_c = do_n = do_t = do_e = 0;
+  do_lp_l = do_lp_r = 0;
   sat_b = 0.1;                      // bias of the curve: even harmonics
   sat_a = 0.2;                      // memory of the saturator's own error
   sat_u_l = sat_y_l = sat_u_r = sat_y_r = 0;
@@ -304,6 +314,10 @@ out_pin:Right
   sat_comp = sat_curve(0.25) / sat_curve(0.25 * drive) / ((1 + sat_b * sat_b) ^ -1.5);
 
   wow_depth = wow * 0.002 * srate / 1.31;       // up to 2 ms
+  az_d = slider12 / 100 * 0.00025 * srate;     // up to 0.25 ms
+  do_amt = slider13 / 100;
+  do_k = 1 - exp(-1 / (0.003 * srate));        // 3 ms in and out
+  do_lc = 1 - exp(-2 * $pi * 2500 / srate);     // the dull top of a dropout
   flt_depth = flutter * 0.0001 * srate / 1.4;   // up to 0.1 ms
 
   // hiss colour (one-pole split at 3 kHz) and the compander (1.5 kHz high band, 2 / 60 ms)
@@ -334,7 +348,11 @@ out_pin:Right
   dly = base + wow_depth * (sin(2 * $pi * wow_p1) + 0.31 * sin(2 * $pi * wow_p2))
              + flt_depth * (sin(2 * $pi * flt_p1) + 0.4 * sin(2 * $pi * flt_p2));
   x_l = tap(buf_l, dly);
-  x_r = tap(buf_r, dly);
+  az_d > 0 ? (
+    x_r = tap(buf_r, dly + az_d * (1 + 0.3 * sin(2 * $pi * wow_p2)));
+  ) : (
+    x_r = tap(buf_r, dly);
+  );
   dry_l = buf_l[(wpos - base - lat) & (buf_size - 1)];
   dry_r = buf_r[(wpos - base - lat) & (buf_size - 1)];
   buf_l[wpos] = spl0;
@@ -396,6 +414,27 @@ out_pin:Right
     w_r = (w_r - nr_g * nr_a * (dh_r - dx_r)) / (1 + nr_g * nr_a);
     nr_h = nr_a * (dh_r + w_r - dx_r); dx_r = w_r; dh_r = nr_h;
     de_r += (abs(nr_h) > de_r ? nr_at : nr_rt) * (abs(nr_h) - de_r);
+  );
+
+  // dropouts: a new one may start every 64 samples (chance and depth grow with Dropouts)
+  do_amt > 0 ? (
+    do_c += 1;
+    do_c >= 64 ? (
+      do_c = 0;
+      seed_d *= 16807; seed_d -= floor(seed_d / 2147483647) * 2147483647;
+      do_n <= 0 && seed_d / 2147483647 < do_amt * do_amt * 0.004 ? (
+        seed_d *= 16807; seed_d -= floor(seed_d / 2147483647) * 2147483647;
+        do_n = floor((0.02 + 0.06 * seed_d / 2147483647) * srate);
+        seed_d *= 16807; seed_d -= floor(seed_d / 2147483647) * 2147483647;
+        do_t = do_amt * (0.3 + 0.6 * seed_d / 2147483647);
+      );
+    );
+    do_n > 0 ? do_n -= 1 : do_t = 0;
+    do_e += do_k * (do_t - do_e);
+    do_lp_l += do_lc * (w_l - do_lp_l);
+    do_lp_r += do_lc * (w_r - do_lp_r);
+    w_l = (w_l + (do_lp_l - w_l) * do_e) * (1 - 0.6 * do_e);
+    w_r = (w_r + (do_lp_r - w_r) * do_e) * (1 - 0.6 * do_e);
   );
 
   spl0 = (dry_l * (1 - mix) + w_l * mix) * out_gain;

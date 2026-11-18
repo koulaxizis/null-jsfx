@@ -3783,6 +3783,50 @@ static const PresetGlobal kP111Globals[] = {
     { "seq_step8", 0.5f, nullptr },
 };
 
+static const PresetValue kP112S0[] = {
+    { 8, 1.0f, "Custom" },
+    { 1, 2.0f, "Rate" },
+    { 2, 90.0f, "Depth" },
+    { 3, 4.0f, "Smooth" },
+    { 9, 100.0f, "Point 1" },
+    { 10, 85.0f, "Point 2" },
+    { 11, 55.0f, "Point 3" },
+    { 12, 30.0f, "Point 4" },
+    { 13, 15.0f, "Point 5" },
+    { 14, 8.0f, "Point 6" },
+    { 15, 0.0f, "Point 7" },
+    { 16, 0.0f, "Point 8" },
+    { 17, 60.0f, "Point 9" },
+    { 18, 100.0f, "Point 10" },
+    { 19, 70.0f, "Point 11" },
+    { 20, 40.0f, "Point 12" },
+    { 21, 20.0f, "Point 13" },
+    { 22, 10.0f, "Point 14" },
+    { 23, 0.0f, "Point 15" },
+    { 24, 0.0f, "Point 16" },
+};
+static const PresetValue kP112S1[] = {
+    { 17, 2.0f, "Step Length" },
+    { 18, 300.0f, "Low" },
+    { 19, 6000.0f, "High" },
+    { 20, 40.0f, "Resonance" },
+    { 22, 30.0f, "Glide" },
+};
+static const PresetValue kP112S2[] = {
+    { 3, 1.0f, "Tempo Sync" },
+    { 4, 1.0f, "Subdivision" },
+    { 1, 40.0f, "Feedback" },
+    { 2, 100.0f, "Mix" },
+};
+static const PresetSlot kP112Slots[] = {
+    { "volume_shaper", kP112S0, 20, 0, 0, 100.0f, true },
+    { "step_filter", kP112S1, 5, 0, 0, 100.0f, true },
+    { "delay", kP112S2, 4, 0, 0, 100.0f, true, 1 },
+};
+static const PresetGlobal kP112Globals[] = {
+    { "lane_mix", 25.0f, nullptr },
+};
+
 static const Preset kPresets[] = {
     { "Init", "Init", nullptr, 0, nullptr, 0, nullptr, 0 },
     { "Tube EQ", "Chain", kP1Slots, 2, nullptr, 0, nullptr, 0 },
@@ -3896,12 +3940,20 @@ static const Preset kPresets[] = {
     { "Scene Morph Build", "Routing", kP109Slots, 4, nullptr, 0, kP109Globals, 2, 3, kP109Scenes, 12 },
     { "Sequenced Filter", "Routing", kP110Slots, 2, kP110Routes, 1, kP110Globals, 19 },
     { "Sequenced Panner", "Routing", kP111Slots, 2, kP111Routes, 1, kP111Globals, 11 },
+    { "Looped Envelopes", "Routing", kP112Slots, 3, nullptr, 0, kP112Globals, 1 },
 };
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
 
 // the module sliders REAPER shows on a log scale (`:log` in the JSFX): knobs and modulation
 // move them in log space
 static const LogSlider kLogSliders[] = {
+    { "band_spin", 0 },
+    { "band_spin", 1 },
+    { "band_spin", 2 },
+    { "band_spin", 3 },
+    { "band_spin", 4 },
+    { "band_spin", 5 },
+    { "band_spin", 6 },
     { "band_splitter", 2 },
     { "band_splitter", 3 },
     { "band_splitter", 4 },
@@ -3952,6 +4004,10 @@ static const LogSlider kLogSliders[] = {
     { "granular", 9 },
     { "granular", 10 },
     { "half_speed", 3 },
+    { "hit_layer", 1 },
+    { "hit_layer", 3 },
+    { "hit_layer", 6 },
+    { "hit_layer", 7 },
     { "keys", 4 },
     { "kick", 3 },
     { "kick", 4 },

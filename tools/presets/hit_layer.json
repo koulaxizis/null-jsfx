@@ -1,0 +1,16 @@
+[
+  ["Kick Sub Thump", {"Threshold": -24, "Tone": 50, "Tone Level": 70, "Tone Decay": 300, "Pitch Drop": 12, "Noise Level": 0}],
+  ["Kick 808 Tail", {"Threshold": -24, "Tone": 45, "Tone Level": 80, "Tone Decay": 900, "Pitch Drop": 7, "Noise Level": 0, "Follow": 30}],
+  ["Kick Click", {"Tone": 60, "Tone Level": 40, "Tone Decay": 150, "Pitch Drop": 24, "Noise Level": 25, "Noise Decay": 10, "Noise Color": 6000}],
+  ["Snare Body", {"Threshold": -20, "Tone": 190, "Tone Level": 45, "Tone Decay": 90, "Pitch Drop": 5, "Noise Level": 20, "Noise Decay": 60}],
+  ["Snare Wires", {"Threshold": -20, "Tone Level": 0, "Noise Level": 55, "Noise Decay": 180, "Noise Color": 5000, "Width": 40}],
+  ["Snare Fat", {"Threshold": -20, "Tone": 170, "Tone Level": 50, "Tone Decay": 140, "Pitch Drop": 4, "Noise Level": 45, "Noise Decay": 200, "Noise Color": 3500, "Width": 30}],
+  ["Tom Boom", {"Threshold": -22, "Tone": 90, "Tone Level": 60, "Tone Decay": 450, "Pitch Drop": 6, "Noise Level": 10, "Noise Decay": 40}],
+  ["Floor Tom Deep", {"Threshold": -22, "Tone": 65, "Tone Level": 65, "Tone Decay": 600, "Pitch Drop": 5, "Noise Level": 5}],
+  ["Clap Air", {"Threshold": -18, "Tone Level": 0, "Noise Level": 60, "Noise Decay": 120, "Noise Color": 1800, "Width": 60}],
+  ["Rim Ping", {"Threshold": -18, "Tone": 820, "Tone Level": 35, "Tone Decay": 40, "Pitch Drop": 0, "Noise Level": 15, "Noise Decay": 15, "Noise Color": 9000}],
+  ["Layer Only", {"Tone Level": 100, "Noise Level": 60, "Dry": 0, "Output": 6}],
+  ["Even Hits", {"Follow": 0}],
+  ["Dynamic Hits", {"Follow": 100}],
+  ["Wide Sizzle", {"Tone Level": 20, "Noise Level": 50, "Noise Decay": 250, "Noise Color": 8000, "Width": 100}]
+]

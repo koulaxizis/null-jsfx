@@ -53,7 +53,7 @@ protected:
 private:
     void update()
     {
-        fDsp.setParams(nullstereowidth::paramsFor(value(0), value(1), value(2), getSampleRate()));
+        fDsp.setParams(nullstereowidth::paramsFor(value(0), value(1), value(2), getSampleRate(), value(3), value(4)));
     }
 
     nullstereowidth::StereoWidthProcessor fDsp;

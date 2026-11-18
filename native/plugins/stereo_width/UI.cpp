@@ -14,6 +14,8 @@ static const NullKnobsUI::Control kControls[] = {
     { 0, NullKnobsUI::kKnob, "WIDTH", 0, -1, true },
     { 1, NullKnobsUI::kKnob, "MIX", 0, -1, false },
     { 2, NullKnobsUI::kKnob, "CROSSOVER", 0, -1, false },
+    { 3, NullKnobsUI::kKnob, "HIGH XOVER", 0, -1, false },
+    { 4, NullKnobsUI::kKnob, "HIGH WIDTH", 0, -1, true },
 };
 
 class UIStereoWidth : public NullKnobsUI
@@ -75,9 +77,11 @@ protected:
         double sr = getSampleRate();
         if (!(sr > 0.0))
             sr = 48000.0;
-        const nullstereowidth::Params p = nullstereowidth::paramsFor(value(0), value(1), value(2), sr);
+        const nullstereowidth::Params p = nullstereowidth::paramsFor(value(0), value(1), value(2), sr, value(3), value(4));
         if (p.xover > 0.0)
             dashedV(freqX(float(p.xover)));
+        if (p.hxover > 0.0)
+            dashedV(freqX(float(std::fmin(p.hxover, 20000.0))));
 
         constexpr int n = 263;
         float xs[n], ys[n];
@@ -92,8 +96,10 @@ protected:
 
     void formatValue(uint32_t param, float v, char* buf, size_t n) override
     {
-        if (param == 2 && std::lround(v) == 0)
+        if ((param == 2 || param == 3) && std::lround(v) == 0)
             std::snprintf(buf, n, "OFF");
+        else if (param == 3 && v >= 1000.0f)
+            std::snprintf(buf, n, "%.1f kHz", double(v) / 1000.0);
         else
             NullKnobsUI::formatValue(param, v, buf, n);
     }

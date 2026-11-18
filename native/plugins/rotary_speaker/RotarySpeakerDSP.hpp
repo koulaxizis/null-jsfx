@@ -7,7 +7,8 @@
  * Leslie-style speaker. The mono sum goes through a tube-style soft clip (Drive), splits at
  * 800 Hz into a spinning horn (highs) and drum (lows); each rotor changes level and pitch
  * (Doppler) as it turns and two virtual microphones pick it up. The rotors follow Speed with
- * inertia (horn ~0.7 s, drum ~3 s, scaled by Acceleration).
+ * inertia (horn ~0.7 s, drum ~3 s, scaled by Acceleration). Speed Follow (off at 0%) lets an
+ * envelope of the input level push both rotors toward the fast speeds.
  */
 
 #pragma once
@@ -22,6 +23,7 @@ namespace nullrotary {
 struct Params {
     int speed = 0; // 0 slow (chorale), 1 fast (tremolo), 2 stop
     double accelPct = 100.0, balancePct = 50.0, drivePct = 20.0, widthPct = 80.0, mixPct = 100.0;
+    double followPct = 0.0;
 };
 
 // the amp's soft clip as the JSFX computes it, for drive = 1 + Drive% / 100 * 6 (display too)
@@ -46,6 +48,7 @@ public:
         fHornPh = 0.0; fDrumPh = 0.25;
         fHornF = 0.8; fDrumF = 0.7;
         fLp1 = fLp2 = 0.0;
+        fEnv = 0.0;
         updateParams();
     }
 
@@ -77,8 +80,20 @@ public:
             const double low = fLp2;
             const double high = x - fLp2;
 
-            fHornF = fHornC * fHornF + (1.0 - fHornC) * fHornTarget;
-            fDrumF = fDrumC * fDrumF + (1.0 - fDrumC) * fDrumTarget;
+            if (fFollow > 0.0)
+            {
+                const double sx = std::fabs(s0 + s1) * 0.5;
+                fEnv = sx > fEnv ? fEnvA * fEnv + (1.0 - fEnvA) * sx : fEnvR * fEnv + (1.0 - fEnvR) * sx;
+                double e = fEnv > 0.00001 ? std::max(0.0, std::min(1.0, (20.0 * std::log10(fEnv) + 40.0) / 40.0)) : 0.0;
+                e *= fFollow;
+                fHornF = fHornC * fHornF + (1.0 - fHornC) * (fHornTarget + (6.7 - fHornTarget) * e);
+                fDrumF = fDrumC * fDrumF + (1.0 - fDrumC) * (fDrumTarget + (5.8 - fDrumTarget) * e);
+            }
+            else
+            {
+                fHornF = fHornC * fHornF + (1.0 - fHornC) * fHornTarget;
+                fDrumF = fDrumC * fDrumF + (1.0 - fDrumC) * fDrumTarget;
+            }
             fHornPh += fHornF / fSr;
             if (fHornPh >= 1.0)
                 fHornPh -= 1.0;
@@ -124,6 +139,9 @@ private:
         fDrive = 1.0 + fP.drivePct / 100.0 * 6.0;
         fWidth = fP.widthPct / 100.0;
         fMix = fP.mixPct / 100.0;
+        fFollow = fP.followPct / 100.0;
+        fEnvA = std::exp(-1.0 / (0.01 * fSr));
+        fEnvR = std::exp(-1.0 / (0.3 * fSr));
         fXc = std::exp(-2.0 * M_PI * 800.0 / fSr);
     }
 
@@ -147,6 +165,7 @@ private:
     double fHornPh = 0.0, fDrumPh = 0.25, fHornF = 0.8, fDrumF = 0.7, fLp1 = 0.0, fLp2 = 0.0;
     double fHornTarget = 0.8, fDrumTarget = 0.7, fHornC = 0.0, fDrumC = 0.0;
     double fBal = 0.5, fDrive = 2.2, fWidth = 0.8, fMix = 1.0, fXc = 0.0;
+    double fFollow = 0.0, fEnvA = 0.0, fEnvR = 0.0, fEnv = 0.0;
 };
 
 } // namespace nullrotary

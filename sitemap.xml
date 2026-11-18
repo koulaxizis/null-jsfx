@@ -61,6 +61,12 @@
         <priority>0.8</priority>
     </url>
     <url>
+        <loc>https://nulljsfx.tech/plugins/band-spin/</loc>
+        <lastmod>2026-11-17</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.8</priority>
+    </url>
+    <url>
         <loc>https://nulljsfx.tech/plugins/band-splitter/</loc>
         <lastmod>2026-11-17</lastmod>
         <changefreq>monthly</changefreq>
@@ -74,6 +80,12 @@
     </url>
     <url>
         <loc>https://nulljsfx.tech/plugins/bass-management/</loc>
+        <lastmod>2026-11-17</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.8</priority>
+    </url>
+    <url>
+        <loc>https://nulljsfx.tech/plugins/bass-presence/</loc>
         <lastmod>2026-11-17</lastmod>
         <changefreq>monthly</changefreq>
         <priority>0.8</priority>
@@ -403,6 +415,12 @@
         <priority>0.8</priority>
     </url>
     <url>
+        <loc>https://nulljsfx.tech/plugins/hit-layer/</loc>
+        <lastmod>2026-11-17</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.8</priority>
+    </url>
+    <url>
         <loc>https://nulljsfx.tech/plugins/humanize/</loc>
         <lastmod>2026-11-17</lastmod>
         <changefreq>monthly</changefreq>
@@ -524,6 +542,12 @@
     </url>
     <url>
         <loc>https://nulljsfx.tech/plugins/multichannel-loudness/</loc>
+        <lastmod>2026-11-17</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.8</priority>
+    </url>
+    <url>
+        <loc>https://nulljsfx.tech/plugins/music-box/</loc>
         <lastmod>2026-11-17</lastmod>
         <changefreq>monthly</changefreq>
         <priority>0.8</priority>

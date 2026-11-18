@@ -238,6 +238,33 @@
     "properties": "Input → Sine LFO (free or tempo-synced) → opposite gain curves on L and R → Dry/Wet Mix → Output. Each channel keeps its own content (no channel crossfeed) and the effect has zero latency.",
     "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\">\n<defs><linearGradient id=\"icon-autopan\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs>\n<path d=\"M 16,24 L 10,32 L 16,40\" stroke=\"url(#icon-autopan)\" stroke-width=\"2.5\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/>\n<path d=\"M 48,24 L 54,32 L 48,40\" stroke=\"url(#icon-autopan)\" stroke-width=\"2.5\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/>\n<path d=\"M 10,32 L 54,32\" stroke=\"url(#icon-autopan)\" stroke-width=\"1.5\" opacity=\"0.3\" stroke-dasharray=\"3,3\"/>\n</svg>"
   },
+  "band_spin": {
+    "card_desc": "Four Bands, Four Rotors",
+    "keywords": "band spin multiband rotary rotor leslie auto pan tremolo doppler motion movement stereo follow crossover four band",
+    "slider_desc": [
+      "Crossover between the low and the low-mid band",
+      "Crossover between the low-mid and the high-mid band",
+      "Crossover between the high-mid and the high band",
+      "Turns per second of the low band's rotor",
+      "Turns per second of the low-mid band's rotor",
+      "Turns per second of the high-mid band's rotor",
+      "Turns per second of the high band's rotor",
+      "How much a band dips as its rotor turns away",
+      "How far a band swings left and right",
+      "How much a band's pitch bends as its rotor comes and goes (up to 1 ms of delay)",
+      "How much each rotor speeds up with its band's level (up to three times its Speed)",
+      "Blend with the bands summed without motion (in phase, so a partial Mix never combs)"
+    ],
+    "uses": [
+      "Movement on pads and keys, a different speed in each band",
+      "Wide, swirling guitars",
+      "Highs that spin while the lows stay put",
+      "Drum buses that move more when they hit harder"
+    ],
+    "properties": "Signal chain: Input → Linkwitz-Riley 4th-order crossover into four bands (as in Band Splitter, with allpasses that keep them in phase) → per band a rotor: constant-power pan, a volume dip and a Doppler delay (linear interpolation) → summed → Mix → Output. The rotors have 0.3 s of inertia; Follow uses an envelope per band (10 ms up, 300 ms down). Stereo, zero latency.",
+    "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-bspin\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><circle cx=\"16\" cy=\"20\" r=\"9\" fill=\"none\" stroke=\"url(#icon-bspin)\" stroke-width=\"3\"/><circle cx=\"48\" cy=\"20\" r=\"9\" fill=\"none\" stroke=\"url(#icon-bspin)\" stroke-width=\"3\"/><circle cx=\"16\" cy=\"46\" r=\"9\" fill=\"none\" stroke=\"url(#icon-bspin)\" stroke-width=\"3\"/><circle cx=\"48\" cy=\"46\" r=\"9\" fill=\"none\" stroke=\"url(#icon-bspin)\" stroke-width=\"3\"/><path d=\"M 16,20 L 22,14 M 48,20 L 54,26 M 16,46 L 10,52 M 48,46 L 42,40\" stroke=\"url(#icon-bspin)\" stroke-width=\"3\" stroke-linecap=\"round\"/></svg>",
+    "beta": true
+  },
   "band_splitter": {
     "card_desc": "Multiband Crossover Router",
     "keywords": "band splitter crossover multiband linkwitz-riley lr4 24 dB split merge routing channels parallel processing utility",
@@ -312,6 +339,22 @@
     ],
     "properties": "4th-order Linkwitz-Riley crossover: the high-pass on every main channel and the low-pass on their sum add up flat (measured within 0.0001 dB from 20 Hz to 10 kHz), so the managed system sums like the full-range one, with the crossover's phase turn. The sub plays on the LFE pin. No latency. In REAPER set the track to 12 channels and route the pins to your bed. The player on this site plays pins 1 and 2 only.",
     "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-bass_management\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><path d=\"M 6,18 C 24,18 28,20 32,32 C 36,44 40,52 58,52\" stroke=\"url(#icon-bass_management)\" stroke-width=\"2.5\" fill=\"none\"/><path d=\"M 6,52 C 24,52 28,44 32,32 C 36,20 40,18 58,18\" stroke=\"url(#icon-bass_management)\" stroke-width=\"2.5\" fill=\"none\" opacity=\"0.5\"/><circle cx=\"32\" cy=\"32\" r=\"3\" fill=\"url(#icon-bass_management)\"/></svg>"
+  },
+  "bass_presence": {
+    "card_desc": "Bass You Can Hear on Small Speakers",
+    "keywords": "bass presence harmonics psychoacoustic bass small speakers laptop phone earbuds missing fundamental low end enhancer sub harmonics one slider",
+    "slider_desc": [
+      "How much of the bass's harmonics is added (0% = off)"
+    ],
+    "uses": [
+      "Make a bass line readable on laptops, phones and earbuds",
+      "Add growl to a sub-heavy 808 without more low end",
+      "Check that a mix's low end still reads on small speakers",
+      "A gentle lift of the bass on the mix bus"
+    ],
+    "properties": "Signal chain: Input → mono lows below 120 Hz (two RBJ low-passes) → a curve that makes odd and even harmonics → only the harmonics (two 180 Hz high-passes and an 1.8 kHz low-pass) → added to both channels. The dry signal is untouched, so the real low end stays as it is; 0% is a bypass. Stereo, zero latency.",
+    "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-bassp\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><path d=\"M 6,40 Q 14,12 22,40 T 38,40\" fill=\"none\" stroke=\"url(#icon-bassp)\" stroke-width=\"4\" stroke-linecap=\"round\"/><path d=\"M 40,30 L 40,50 M 47,34 L 47,50 M 54,38 L 54,50 M 60,42 L 60,50\" stroke=\"url(#icon-bassp)\" stroke-width=\"4\" stroke-linecap=\"round\"/></svg>",
+    "beta": true
   },
   "beat_gen": {
     "card_desc": "Generative Drum Patterns as MIDI",
@@ -860,7 +903,10 @@
       "Auto uses the built-in detection level; Manual uses the Threshold control instead.",
       "Level of the sibilance band above which the reduction starts (Manual only).",
       "Caps how far the signal is turned down, while Reduction sets how quickly it gets there (-18 dB = no cap).",
-      "Plays only what is being removed, to tune Target and the threshold by ear."
+      "Plays only what is being removed, to tune Target and the threshold by ear.",
+      "Centre of the band that is turned down (0 = the Target frequency, as before)",
+      "Width of the suppress band (narrow at 8, wide at 0.5)",
+      "Band turns down a band around Suppress Freq; Shelf turns down everything above it"
     ],
     "uses": [
       "Taming harsh S, T and Ch sounds on vocals",
@@ -868,7 +914,7 @@
       "Reducing hissy cymbal splash on overheads",
       "Controlling brittle highs on bright acoustic guitar"
     ],
-    "properties": "Input → band-pass at Target (Q 2) → stereo-linked envelope follower (0.5 ms attack, 60 ms release) → band attenuation above a fixed −30 dB threshold, reaching full Reduction 12 dB above it → Output. Only the sibilant band is turned down; zero latency.",
+    "properties": "Input → band-pass at Target (Q 2) → stereo-linked envelope follower (0.5 ms attack, 60 ms release) → band attenuation above a fixed −30 dB threshold, reaching full Reduction 12 dB above it → Output. Only the sibilant band is turned down; zero latency. The suppress band can differ from the detect band: detect the sibilance at one frequency, turn down another band or a high shelf.",
     "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\">\n<defs><linearGradient id=\"icon-deess\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs>\n<path d=\"M 16,32 Q 24,20 32,32 Q 40,44 48,32\" stroke=\"url(#icon-deess)\" stroke-width=\"2.5\" fill=\"none\" stroke-linecap=\"round\" opacity=\"0.5\"/>\n<path d=\"M 16,32 Q 24,28 32,32 Q 40,36 48,32\" stroke=\"url(#icon-deess)\" stroke-width=\"2\" fill=\"none\" stroke-linecap=\"round\"/>\n<circle cx=\"32\" cy=\"28\" r=\"8\" stroke=\"url(#icon-deess)\" stroke-width=\"2\" fill=\"none\"/>\n<text x=\"32\" y=\"34\" font-family=\"'Segoe UI'\" font-size=\"12\" fill=\"url(#icon-deess)\" text-anchor=\"middle\">S</text>\n</svg>"
   },
   "delay": {
@@ -1623,6 +1669,33 @@
     "properties": "Signal chain: Input (summed to mono) → 2 to 4 Crossfading Delay-Line Pitch Shifters (50 ms window) → Detune + Delay → Equal-Power Spread → Equal-Power Dry/Wet Mix → Output. Fixed intervals (no key detection); Mix at 100% outputs only the harmony for printing to its own track; zero latency.",
     "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-harmonizer\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><path d=\"M8,18 Q16,10 24,18 T40,18 T56,18\" stroke=\"url(#icon-harmonizer)\" stroke-width=\"1.5\" fill=\"none\" stroke-linecap=\"round\" opacity=\"0.4\"/><path d=\"M8,32 Q16,22 24,32 T40,32 T56,32\" stroke=\"url(#icon-harmonizer)\" stroke-width=\"2.5\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M8,46 Q16,38 24,46 T40,46 T56,46\" stroke=\"url(#icon-harmonizer)\" stroke-width=\"1.5\" fill=\"none\" stroke-linecap=\"round\" opacity=\"0.4\"/></svg>"
   },
+  "hit_layer": {
+    "card_desc": "A Tone and Noise Layer Under Every Hit",
+    "keywords": "hit layer drum enhancer trigger transient augment kick sub thump snare body snare wires tom boom clap sizzle reinforce layer tone noise",
+    "slider_desc": [
+      "Level a hit must pass to trigger the layer",
+      "Pitch of the tone the layer settles on",
+      "Level of the tone",
+      "Time the tone takes to fade by 60 dB",
+      "How far above Tone the tone starts (it falls to Tone in about a third of Tone Decay)",
+      "Level of the noise burst",
+      "Time the noise takes to fade by 60 dB",
+      "Centre of the noise's band-pass (low = body, high = air and wires)",
+      "How much the layer follows the strength of each hit (0% = every hit the same)",
+      "Gives the noise an independent right channel (0% = mono noise)",
+      "How much of the input is kept (0% = the layer alone)",
+      "Output level"
+    ],
+    "uses": [
+      "A sub thump under a thin kick",
+      "Body and wires under a weak snare",
+      "Boom under toms",
+      "Air and sizzle under claps and rims"
+    ],
+    "properties": "Signal chain: Input → transient detector (a fast and a slow envelope of the mono sum; a hit is the fast one 6 dB over the slow one above Threshold, then 30 ms before the next) → a sine with a pitch drop and band-passed noise (exact Park-Miller, a state-variable band-pass) → added to the dry signal → Output. Each part fades by 60 dB over its decay; Follow scales the layer with the hit's strength over 24 dB. Stereo, zero latency.",
+    "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-hitl\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><path d=\"M 6,46 L 14,46 L 18,12 L 22,46 L 58,46\" fill=\"none\" stroke=\"url(#icon-hitl)\" stroke-width=\"3\" stroke-linejoin=\"round\" opacity=\"0.5\"/><path d=\"M 18,16 Q 24,46 40,46 L 58,46\" fill=\"none\" stroke=\"url(#icon-hitl)\" stroke-width=\"4\" stroke-linecap=\"round\"/></svg>",
+    "beta": true
+  },
   "humanize": {
     "card_desc": "Random Timing, Velocity & Groove for MIDI",
     "keywords": "midi humanize humanizer random timing velocity groove swing shuffle 8ths 16ths laid back push feel drums keys quantize seed",
@@ -2106,6 +2179,30 @@
     "properties": "ITU-R BS.1770-4 / EBU R128: every channel of the bed but the LFE is K-weighted and weighted by its place, 1.41 (+1.5 dB) for the speakers at 60 to 120 degrees (5.1 Ls/Rs, 7.1 sides) and 1.0 for the rest, then summed. Momentary, short-term, integrated (gated), loudness range (EBU Tech 3342) and the 4x true peak of every channel, LFE too. A 0 dBFS 997 Hz tone measures -3.01 LUFS on a front channel and -1.51 LUFS on a side, as the standard says. The audio passes through untouched. In REAPER set the track to 12 channels and route the pins to your bed. The player on this site plays pins 1 and 2 only.",
     "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-multichannel_loudness\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><rect x=\"6\" y=\"30\" width=\"6\" height=\"26\" fill=\"url(#icon-multichannel_loudness)\"/><rect x=\"15\" y=\"22\" width=\"6\" height=\"34\" fill=\"url(#icon-multichannel_loudness)\"/><rect x=\"24\" y=\"14\" width=\"6\" height=\"42\" fill=\"url(#icon-multichannel_loudness)\"/><rect x=\"33\" y=\"40\" width=\"6\" height=\"16\" fill=\"url(#icon-multichannel_loudness)\" opacity=\"0.5\"/><rect x=\"42\" y=\"24\" width=\"6\" height=\"32\" fill=\"url(#icon-multichannel_loudness)\"/><rect x=\"51\" y=\"28\" width=\"6\" height=\"28\" fill=\"url(#icon-multichannel_loudness)\"/><path d=\"M 4,12 L 60,12\" stroke=\"url(#icon-multichannel_loudness)\" stroke-width=\"1.5\" stroke-dasharray=\"3 3\"/></svg>"
   },
+  "music_box": {
+    "card_desc": "Steel Comb, Wooden Box, Wind-Down",
+    "keywords": "music box musicbox comb tines pins lullaby toy celesta bell mechanism clockwork wind down spring modal synthesis midi instrument",
+    "slider_desc": [
+      "How long the tines ring (100% = 3.2 s for the lowest mode at C5)",
+      "Level of the upper modes (bright and glassy up, soft and round down)",
+      "How much of the wooden box's resonance is heard",
+      "Size of the box: its resonances move an octave down (big) or up (small)",
+      "The pin's click and the spring governor's whirr, and the buzz of a ringing tine plucked again",
+      "The spring running out: every note comes a little later until the box stops (0% = off); 1.5 s without a note winds it again",
+      "How much the velocity changes the level and the brightness",
+      "How far the tines are spread by pitch",
+      "Output level"
+    ],
+    "uses": [
+      "Lullabies, film and game cues",
+      "Toy and nursery textures",
+      "Plucked bell layers on chords",
+      "A spring winding down for an ending"
+    ],
+    "properties": "An instrument: MIDI in, stereo out, no samples, 32 tines. Every key is a steel tine of the comb (four modes at 1 : 5.93 : 16.2 : 31.7, higher keys decaying faster), plucked by a pin; a ringing tine plucked again adds to its motion. A wooden box adds four resonances (240-1850 Hz, moved by Box Size), the mechanism adds the pin's click and the governor's whirr (exact Park-Miller noise), and Wind Down holds notes back more and more until the box stops. Tines ring out (key up does nothing); all notes off (CC 123/120) damps them in about 10 ms. Every MIDI message passes on. Sample-accurate and the same in the JSFX, the GFX version and the VST3/CLAP.",
+    "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-mbox\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><rect x=\"6\" y=\"12\" width=\"52\" height=\"6\" rx=\"1\" fill=\"url(#icon-mbox)\"/><path d=\"M 10,18 L 10,52 M 17,18 L 17,49 M 24,18 L 24,46 M 31,18 L 31,43 M 38,18 L 38,40 M 45,18 L 45,37 M 52,18 L 52,34\" stroke=\"url(#icon-mbox)\" stroke-width=\"4\" stroke-linecap=\"round\"/></svg>",
+    "beta": true
+  },
   "noise_generator": {
     "card_desc": "White, Pink & Brown Noise",
     "keywords": "noise generator white pink brown test signal calibration stereo",
@@ -2368,7 +2465,10 @@
       "The frequency of the high shelf cut.",
       "High shelf cut (down to −20 dB).",
       "Drive of the tube stage (even harmonics).",
-      "Output level."
+      "Output level.",
+      "How much the low boost backs off when its band gets loud (0% = static, as a classic passive EQ)",
+      "How much the high boost backs off when its band gets loud (0% = static)",
+      "Level of the boosted band above which the dynamic boosts back off"
     ],
     "uses": [
       "Weight on kick and bass with boost and attenuation together",
@@ -2376,7 +2476,7 @@
       "Broad tone shaping on the mix bus or master",
       "Warming up with the tube stage"
     ],
-    "properties": "Input → low shelf boost at 1.2 × Low Freq → low shelf cut at 2.2 × Low Freq → high peak at High Freq (Q from Bandwidth) → high shelf cut at Atten Freq (each skipped at 0) → tube stage (asymmetric tanh, 10 Hz DC blocker, skipped at 0%) → Output. Zero latency; every control at 0 leaves the sound untouched.",
+    "properties": "Input → low shelf boost at 1.2 × Low Freq → low shelf cut at 2.2 × Low Freq → high peak at High Freq (Q from Bandwidth) → high shelf cut at Atten Freq (each skipped at 0) → tube stage (asymmetric tanh, 10 Hz DC blocker, skipped at 0%) → Output. Zero latency; every control at 0 leaves the sound untouched. The Low and High boosts can be dynamic: above Dynamic Threshold they back off (up to Low/High Dynamic), so a boost lifts quiet passages without getting harsh on loud ones.",
     "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-peq\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><path d=\"M 4,40 Q 14,20 22,36 Q 28,46 34,40 L 40,40 Q 48,40 52,22 Q 56,34 60,40\" stroke=\"url(#icon-peq)\" stroke-width=\"2.5\" fill=\"none\" stroke-linecap=\"round\"/><path d=\"M 4,40 L 60,40\" stroke=\"url(#icon-peq)\" stroke-width=\"1\" opacity=\"0.3\"/></svg>"
   },
   "percussion": {
@@ -2881,7 +2981,8 @@
       "Balance between the horn (highs) and drum (lows)",
       "Tube-amp style overdrive before the rotors",
       "Angle between the virtual left/right mics",
-      "Dry/wet blend"
+      "Dry/wet blend",
+      "How much the rotors speed up with the input level (0% = only the Speed switch)"
     ],
     "uses": [
       "Classic organ rotary sound",
@@ -2889,7 +2990,7 @@
       "Speed-ramp transitions via automation",
       "Stereo movement on pads and vocals"
     ],
-    "properties": "Signal chain: Input (summed to mono) → Drive → 800 Hz Crossover → Horn (0.8/6.7 Hz) + Drum (0.7/5.8 Hz) with AM and Doppler → Two Virtual Mics → Mix → Output. Rotors ramp with inertia (horn ~0.7 s, drum ~3 s, scaled by Acceleration); zero latency.",
+    "properties": "Signal chain: Input (summed to mono) → Drive → 800 Hz Crossover → Horn (0.8/6.7 Hz) + Drum (0.7/5.8 Hz) with AM and Doppler → Two Virtual Mics → Mix → Output. Rotors ramp with inertia (horn ~0.7 s, drum ~3 s, scaled by Acceleration); zero latency. Speed Follow pushes both rotors toward the fast speed as the input gets louder (an envelope, 10 ms up, 300 ms down).",
     "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-rotary-speaker\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><circle cx=\"32\" cy=\"32\" r=\"24\" stroke=\"url(#icon-rotary-speaker)\" stroke-width=\"1.5\" fill=\"none\" stroke-linecap=\"round\" opacity=\"0.4\"/><path d=\"M32,12 A20,20 0 0 1 52,32 M52,32 L48,25 M52,32 L57,26\" stroke=\"url(#icon-rotary-speaker)\" stroke-width=\"2.5\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M32,52 A20,20 0 0 1 12,32 M12,32 L16,39 M12,32 L7,38\" stroke=\"url(#icon-rotary-speaker)\" stroke-width=\"2.5\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><circle cx=\"32\" cy=\"32\" r=\"5\" stroke=\"url(#icon-rotary-speaker)\" stroke-width=\"2.5\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/></svg>"
   },
   "sampler": {
@@ -3387,7 +3488,9 @@
     "slider_desc": [
       "Side level: 0% = mono, 100% = unchanged, 200% = twice as wide.",
       "Blend between original and processed signal.",
-      "Below this frequency the signal is made mono and the width setting only applies above it (0 = off)."
+      "Below this frequency the signal is made mono and the width setting only applies above it (0 = off).",
+      "Above this frequency the highs get their own width (0 = off, one width for everything)",
+      "Width of the band above High Crossover (100% = unchanged, 0% = mono highs, 200% = extra wide)"
     ],
     "uses": [
       "Widening pads, synths and backing vocals",
@@ -3395,7 +3498,7 @@
       "Narrowing overly wide sources",
       "Mastering stereo adjustments"
     ],
-    "properties": "Input → Mid/Side split → optional one-pole crossover (lows mono, highs widened) → Side × Width → L/R → Dry/Wet Mix → Output. Zero latency.",
+    "properties": "Input → Mid/Side split → optional one-pole crossover (lows mono, highs widened) → Side × Width → L/R → Dry/Wet Mix → Output. Zero latency. With High Crossover set, the side signal above it (a one-pole split) gets High Width instead of Width.",
     "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\">\n<defs><linearGradient id=\"icon-width\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs>\n<path d=\"M 8,32 L 20,32 M 44,32 L 56,32\" stroke=\"url(#icon-width)\" stroke-width=\"2\" opacity=\"0.4\"/>\n<path d=\"M 20,20 L 20,44 M 44,20 L 44,44\" stroke=\"url(#icon-width)\" stroke-width=\"2\"/>\n<circle cx=\"20\" cy=\"32\" r=\"4\" fill=\"url(#icon-width)\" opacity=\"0.5\"/>\n<circle cx=\"44\" cy=\"32\" r=\"4\" fill=\"url(#icon-width)\" opacity=\"0.5\"/>\n<path d=\"M 20,32 Q 32,24 44,32\" stroke=\"url(#icon-width)\" stroke-width=\"1.5\" fill=\"none\" opacity=\"0.3\"/>\n<path d=\"M 20,32 Q 32,40 44,32\" stroke=\"url(#icon-width)\" stroke-width=\"1.5\" fill=\"none\" opacity=\"0.3\"/>\n</svg>"
   },
   "stretch": {
@@ -3661,7 +3764,9 @@
       "Dry/wet blend (the dry signal is delayed to stay aligned with the wet path)",
       "Tape formulation: Classic (open reel), Type I (ferric, warm, more hiss), Type II (chrome, more high-frequency headroom, brighter and quieter hiss) or Type IV (metal, cleanest and most extended)",
       "Cassette-style noise reduction: a compander that boosts quiet highs up to 10 dB before the tape and cuts them after it, lowering the hiss with a slight breathing on loud highs",
-      "Runs the saturation at 2x or 4x the sample rate (linear-phase halfband filters, 31 or 37 more samples of latency) so its harmonics do not fold back as aliasing; Off adds nothing."
+      "Runs the saturation at 2x or 4x the sample rate (linear-phase halfband filters, 31 or 37 more samples of latency) so its harmonics do not fold back as aliasing; Off adds nothing.",
+      "How far the right channel's head is tilted against the left (a tiny moving delay: the highs smear and move in the stereo image); 0% = aligned",
+      "How often and how deeply the level and the highs drop out, as on a worn cassette (0% = never)"
     ],
     "uses": [
       "Glue and warmth on the mix bus",
@@ -3669,7 +3774,7 @@
       "Lo-fi, cassette-like wobble with Wow and Flutter turned up",
       "Subtle analog colour on vocals and acoustic tracks"
     ],
-    "properties": "Signal chain: Input → Wow/Flutter Modulated Delay (3 ms centre, cubic interpolation) → Pre-Emphasis → Drive → Asymmetric Saturation with memory (hysteresis-like) → De-Emphasis → Low Cut + Head Bump → Hiss → High-Frequency Loss → Mix → Output. The hiss is an exact Park-Miller generator. The dry signal is delayed by the same 3 ms, and the 3 ms latency is reported to the host for delay compensation. Oversampling (2x / 4x) runs the saturation stage at the higher rate and adds 31 / 37 samples.",
+    "properties": "Signal chain: Input → Wow/Flutter Modulated Delay (3 ms centre, cubic interpolation) → Pre-Emphasis → Drive → Asymmetric Saturation with memory (hysteresis-like) → De-Emphasis → Low Cut + Head Bump → Hiss → High-Frequency Loss → Mix → Output. The hiss is an exact Park-Miller generator. The dry signal is delayed by the same 3 ms, and the 3 ms latency is reported to the host for delay compensation. Oversampling (2x / 4x) runs the saturation stage at the higher rate and adds 31 / 37 samples. Azimuth delays the right channel by up to 0.25 ms, moving with the wow; Dropouts are short dips in level and highs (20-80 ms) drawn at random from an exact Park-Miller generator, so a render is the same every time.",
     "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-tape\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><rect x=\"8\" y=\"16\" width=\"48\" height=\"32\" rx=\"4\" stroke=\"url(#icon-tape)\" stroke-width=\"2\" fill=\"none\"/><circle cx=\"22\" cy=\"30\" r=\"6\" stroke=\"url(#icon-tape)\" stroke-width=\"2\" fill=\"none\"/><circle cx=\"42\" cy=\"30\" r=\"6\" stroke=\"url(#icon-tape)\" stroke-width=\"2\" fill=\"none\"/><circle cx=\"22\" cy=\"30\" r=\"1.5\" fill=\"#999999\"/><circle cx=\"42\" cy=\"30\" r=\"1.5\" fill=\"#999999\"/><path d=\"M 22,36 L 26,44 L 38,44 L 42,36\" stroke=\"url(#icon-tape)\" stroke-width=\"1.5\" fill=\"none\" opacity=\"0.6\"/></svg>"
   },
   "tape_echo": {

@@ -992,6 +992,16 @@ RACK_PRESETS = [
     ], [("seq", 1, "Pan", 1.0)],
         {"seq_steps": 8, "seq_sync": "1/8", "seq_glide": 40,
          "seq": [0, 1, 0.25, 0.75, 0.5, 1, 0, 0.5]}),
+    # ---- 2026-11-18 (Klevgrand-inspired): a drawn volume loop into a step filter, a delay lane
+    ("Looped Envelopes", "Routing", [
+        slot("volume_shaper", {"Custom": "On", "Rate": "1/4", "Depth": 90, "Smooth": 4,
+                               "Point 1": 100, "Point 2": 85, "Point 3": 55, "Point 4": 30, "Point 5": 15,
+                               "Point 6": 8, "Point 7": 0, "Point 8": 0, "Point 9": 60, "Point 10": 100,
+                               "Point 11": 70, "Point 12": 40, "Point 13": 20, "Point 14": 10, "Point 15": 0,
+                               "Point 16": 0}),
+        slot("step_filter", {"Step Length": "1/16", "Low": 300, "High": 6000, "Resonance": 40, "Glide": 30}),
+        slot("delay", {"Tempo Sync": "ON", "Subdivision": "1/8", "Feedback": 40, "Mix": 100}, lane="B"),
+    ], [], {"lane_mix": 25}),
 ]
 RACK_ONLY_40 = {"Vocal Polish", "Drum Crush", "Lo-Fi Fade", "Wide Space", "Master Glue", "Breakdown Filter",
                 "Tape Wobble", "Dub Throw", "Multiband Transient", "Mud-Free Space", "Side Space",

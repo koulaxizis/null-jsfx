@@ -15,15 +15,16 @@ static const NullKnobsUI::Control kControls[] = {
     { 1, NullKnobsUI::kKnob, "ACCEL", 0, -1, false },
     { 2, NullKnobsUI::kKnob, "BALANCE", 0, -1, true },
     { 3, NullKnobsUI::kKnob, "DRIVE", 0, -1, false },
-    { 4, NullKnobsUI::kKnob, "WIDTH", 0, -1, false },
-    { 5, NullKnobsUI::kKnob, "MIX", 0, -1, false },
+    { 4, NullKnobsUI::kKnob, "WIDTH", 1, -1, false },
+    { 5, NullKnobsUI::kKnob, "MIX", 1, -1, false },
+    { 6, NullKnobsUI::kKnob, "FOLLOW", 1, -1, false },
 };
 
 class UIRotarySpeaker : public NullKnobsUI
 {
 public:
     UIRotarySpeaker()
-        : NullKnobsUI({ "ROTARY SPEAKER", "ADVANCED", 480, 120, nullptr, 1, nullrotary::kUiSliders,
+        : NullKnobsUI({ "ROTARY SPEAKER", "ADVANCED", 480, 120, nullptr, 2, nullrotary::kUiSliders,
                         nullrotary::kNumSliders, kControls, sizeof(kControls) / sizeof(kControls[0]), true }) {}
 
 protected:

@@ -7,6 +7,8 @@ tags: stereo width mid side widening narrowing spread image crossover
 slider1:100<0,200,1>Width (%)
 slider2:100<0,100,1>Mix (%)
 slider3:0<0,500,1>Crossover (Hz)
+slider4:0<0,16000,10>High Crossover (Hz)
+slider5:100<0,200,1>High Width (%)
 
 in_pin:Left
 in_pin:Right
@@ -21,6 +23,9 @@ out_pin:Right
   lp_mid_l = 0;
   lp_mid_r = 0;
   lp_side = 0;
+  lp_hs = 0;
+  // High Crossover above 0 Hz splits the widened side once more (one pole): above it the side
+  // gets High Width instead of Width. At 0 Hz (the default) the plugin is as before.
 
 @slider
   width_pct = slider1 / 100;
@@ -30,6 +35,11 @@ out_pin:Right
   xover_freq > 0 ? (
     xover_coef = 1 - exp(-2 * 3.14159265358979 * xover_freq / srate);
   ) : xover_coef = 0;
+  hx_freq = slider4;
+  hw_pct = slider5 / 100;
+  hx_freq > 0 ? (
+    hx_coef = 1 - exp(-2 * 3.14159265358979 * min(hx_freq, 0.45 * srate) / srate);
+  ) : hx_coef = 0;
 
 @sample
   mid = (spl0 + spl1) * 0.5;
@@ -54,6 +64,14 @@ out_pin:Right
     // Full range mode
     out_l = mid + side * width_pct;
     out_r = mid - side * width_pct;
+  );
+  hx_freq > 0 ? (
+    // High band: the side above High Crossover gets High Width instead of Width
+    hb_in = xover_freq > 0 ? hp_side : side;
+    lp_hs = lp_hs + hx_coef * (hb_in - lp_hs);
+    hb_side = (hb_in - lp_hs) * (hw_pct - width_pct);
+    out_l += hb_side;
+    out_r -= hb_side;
   );
   
   spl0 = spl0 * (1 - mix_amt) + out_l * mix_amt;

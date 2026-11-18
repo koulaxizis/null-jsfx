@@ -22,13 +22,16 @@ static const NullKnobsUI::Control kControls[] = {
     { 7, NullKnobsUI::kKnob, "HIGH ATTEN", 1, -1, false },
     { 8, NullKnobsUI::kKnob, "TUBE", 1, -1, false },
     { 9, NullKnobsUI::kKnob, "OUTPUT", 1, -1, true },
+    { 10, NullKnobsUI::kKnob, "LOW DYN", 2, -1, false },
+    { 11, NullKnobsUI::kKnob, "HIGH DYN", 2, -1, false },
+    { 12, NullKnobsUI::kKnob, "DYN THRESH", 2, -1, false },
 };
 
 class UIPassiveEq : public NullKnobsUI
 {
 public:
     UIPassiveEq()
-        : NullKnobsUI({ "PASSIVE EQ", "ESSENTIALS", 480, 120, nullptr, 2, nullpassiveeq::kUiSliders,
+        : NullKnobsUI({ "PASSIVE EQ", "ESSENTIALS", 480, 120, nullptr, 3, nullpassiveeq::kUiSliders,
                         nullpassiveeq::kNumSliders, kControls, sizeof(kControls) / sizeof(kControls[0]), false }) {}
 
 protected:
@@ -67,6 +70,15 @@ protected:
             std::snprintf(buf, n, "%d%%", int(x));
         else if (param == 9)
             std::snprintf(buf, n, "%+.1f dB", x);
+        else if (param == 10 || param == 11)
+        {
+            if (x > 0.0)
+                std::snprintf(buf, n, "%d%%", int(x));
+            else
+                std::snprintf(buf, n, "STATIC");
+        }
+        else if (param == 12)
+            std::snprintf(buf, n, "%.1f dB", x);
         else if (param == 1 || param == 2 || param == 4 || param == 5 || param == 7)
             std::snprintf(buf, n, "%.1f", x);
         else

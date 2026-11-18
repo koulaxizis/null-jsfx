@@ -35,7 +35,7 @@
             <video class="guide-shot guide-video" poster="/assets/video/passive_eq.jpg" controls playsinline preload="none" width="1280" height="720" aria-label="Passive EQ presentation video"><source src="https://github.com/koulaxizis/null-jsfx/releases/download/media/passive_eq.mp4" type="video/mp4"><source src="/assets/video/passive_eq.mp4" type="video/mp4"></video>
             <div class="page-actions">
                 <a class="featured-btn" href="/#download"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg><span>Download free</span></a>
-                <small>Part of NULL JSFX 4.0: 170 plugins, free and open source (MIT). Easiest with <a href="/#hub">NULL JSFX Hub</a>.</small>
+                <small>Part of NULL JSFX 4.0: 174 plugins, free and open source (MIT). Easiest with <a href="/#hub">NULL JSFX Hub</a>.</small>
             </div>
             <div class="guide-body">
                 <section class="guide-section">
@@ -49,7 +49,7 @@
                 </section>
                 <section class="guide-section">
                     <h2>Controls</h2>
-                    <ul class="guide-sliders"><li><span class="slider-name">Low Freq</span><span class="slider-desc">20 Hz / 30 Hz / 60 Hz / 100 Hz — The low frequency for both low controls.</span></li><li><span class="slider-name">Low Boost</span><span class="slider-desc">0 to 10 — Low shelf boost (up to +13.5 dB).</span></li><li><span class="slider-name">Low Atten</span><span class="slider-desc">0 to 10 — Gentler low shelf cut a little higher; with Low Boost it gives the classic bump with a dip above it.</span></li><li><span class="slider-name">High Freq</span><span class="slider-desc">3 kHz / 4 kHz / 5 kHz / 8 kHz / 10 kHz / 12 kHz / 16 kHz — The frequency of the high peak.</span></li><li><span class="slider-name">High Boost</span><span class="slider-desc">0 to 10 — High peak boost (up to +18 dB).</span></li><li><span class="slider-name">Bandwidth</span><span class="slider-desc">0 to 10 — Width of the high peak: 0 is sharp, 10 is broad.</span></li><li><span class="slider-name">Atten Freq</span><span class="slider-desc">5 kHz / 10 kHz / 20 kHz — The frequency of the high shelf cut.</span></li><li><span class="slider-name">High Atten</span><span class="slider-desc">0 to 10 — High shelf cut (down to −20 dB).</span></li><li><span class="slider-name">Tube</span><span class="slider-desc">0 to 100% — Drive of the tube stage (even harmonics).</span></li><li><span class="slider-name">Output</span><span class="slider-desc">−12 to +12 dB — Output level.</span></li></ul>
+                    <ul class="guide-sliders"><li><span class="slider-name">Low Freq</span><span class="slider-desc">20 Hz / 30 Hz / 60 Hz / 100 Hz — The low frequency for both low controls.</span></li><li><span class="slider-name">Low Boost</span><span class="slider-desc">0 to 10 — Low shelf boost (up to +13.5 dB).</span></li><li><span class="slider-name">Low Atten</span><span class="slider-desc">0 to 10 — Gentler low shelf cut a little higher; with Low Boost it gives the classic bump with a dip above it.</span></li><li><span class="slider-name">High Freq</span><span class="slider-desc">3 kHz / 4 kHz / 5 kHz / 8 kHz / 10 kHz / 12 kHz / 16 kHz — The frequency of the high peak.</span></li><li><span class="slider-name">High Boost</span><span class="slider-desc">0 to 10 — High peak boost (up to +18 dB).</span></li><li><span class="slider-name">Bandwidth</span><span class="slider-desc">0 to 10 — Width of the high peak: 0 is sharp, 10 is broad.</span></li><li><span class="slider-name">Atten Freq</span><span class="slider-desc">5 kHz / 10 kHz / 20 kHz — The frequency of the high shelf cut.</span></li><li><span class="slider-name">High Atten</span><span class="slider-desc">0 to 10 — High shelf cut (down to −20 dB).</span></li><li><span class="slider-name">Tube</span><span class="slider-desc">0 to 100% — Drive of the tube stage (even harmonics).</span></li><li><span class="slider-name">Output</span><span class="slider-desc">−12 to +12 dB — Output level.</span></li><li><span class="slider-name">Low Dynamic</span><span class="slider-desc">0 to 100% — How much the low boost backs off when its band gets loud (0% = static, as a classic passive EQ)</span></li><li><span class="slider-name">High Dynamic</span><span class="slider-desc">0 to 100% — How much the high boost backs off when its band gets loud (0% = static)</span></li><li><span class="slider-name">Dynamic Threshold</span><span class="slider-desc">−60 to 0 dB — Level of the boosted band above which the dynamic boosts back off</span></li></ul>
                 </section>
                 <section class="guide-section">
                     <h2>Best uses</h2>
@@ -57,7 +57,7 @@
                 </section>
                 <section class="guide-section">
                     <h2>Properties</h2>
-                    <p class="page-props">Input → low shelf boost at 1.2 × Low Freq → low shelf cut at 2.2 × Low Freq → high peak at High Freq (Q from Bandwidth) → high shelf cut at Atten Freq (each skipped at 0) → tube stage (asymmetric tanh, 10 Hz DC blocker, skipped at 0%) → Output. Zero latency; every control at 0 leaves the sound untouched.</p>
+                    <p class="page-props">Input → low shelf boost at 1.2 × Low Freq → low shelf cut at 2.2 × Low Freq → high peak at High Freq (Q from Bandwidth) → high shelf cut at Atten Freq (each skipped at 0) → tube stage (asymmetric tanh, 10 Hz DC blocker, skipped at 0%) → Output. Zero latency; every control at 0 leaves the sound untouched. The Low and High boosts can be dynamic: above Dynamic Threshold they back off (up to Low/High Dynamic), so a boost lifts quiet passages without getting harsh on loud ones.</p>
                 </section>
                 <section class="guide-section">
                     <h2>Formats</h2>
@@ -76,7 +76,7 @@
         <section class="page-related">
             <h2 class="section-title">Goes well with</h2>
             <div class="related-grid"><a class="related-card" href="/plugins/clipper/"><b>Clipper</b><small>Oversampled Hard &amp; Soft Clipper</small></a><a class="related-card" href="/plugins/stereo-width/"><b>Stereo Width</b><small>M/S Width with Mono Bass</small></a><a class="related-card" href="/plugins/assisted-comp/"><b>Assisted Comp</b><small>Compressor that sets itself from the track</small></a><a class="related-card" href="/plugins/assisted-eq/"><b>Assisted EQ</b><small>EQ that sets itself from the track</small></a><a class="related-card" href="/plugins/band-splitter/"><b>Band Splitter</b><small>Multiband Crossover Router</small></a><a class="related-card" href="/plugins/de-clip/"><b>De-Clip</b><small>Rebuild Clipped Peaks</small></a></div>
-            <p class="page-more"><a href="/">All 170 NULL JSFX plugins</a></p>
+            <p class="page-more"><a href="/">All 174 NULL JSFX plugins</a></p>
         </section>
     </main>
     <footer class="site-footer">

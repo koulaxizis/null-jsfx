@@ -8,24 +8,24 @@ namespace nullpresets {
 
 struct FactoryPreset {
     const char* name;
-    float values[3];
+    float values[5];
 };
 
 static const FactoryPreset kPresets[] = {
-    { "Default", { 100.0f, 100.0f, 0.0f } },
-    { "Mono Check", { 0.0f, 100.0f, 0.0f } },
-    { "Gentle Widen", { 115.0f, 100.0f, 0.0f } },
-    { "Wide Pads", { 150.0f, 100.0f, 0.0f } },
-    { "Narrow Overheads", { 70.0f, 100.0f, 0.0f } },
-    { "Master Mono Lows", { 100.0f, 100.0f, 120.0f } },
-    { "Mono Bass Wide Top", { 130.0f, 100.0f, 150.0f } },
-    { "Extra Wide Synths", { 180.0f, 100.0f, 250.0f } },
-    { "Narrow Mono Lows", { 85.0f, 100.0f, 200.0f } },
-    { "Wide Backing Vocals", { 140.0f, 100.0f, 180.0f } },
-    { "Half Width Blend", { 200.0f, 50.0f, 0.0f } },
+    { "Default", { 100.0f, 100.0f, 0.0f, 0.0f, 100.0f } },
+    { "Mono Check", { 0.0f, 100.0f, 0.0f, 0.0f, 100.0f } },
+    { "Gentle Widen", { 115.0f, 100.0f, 0.0f, 0.0f, 100.0f } },
+    { "Wide Pads", { 150.0f, 100.0f, 0.0f, 0.0f, 100.0f } },
+    { "Narrow Overheads", { 70.0f, 100.0f, 0.0f, 0.0f, 100.0f } },
+    { "Master Mono Lows", { 100.0f, 100.0f, 120.0f, 0.0f, 100.0f } },
+    { "Mono Bass Wide Top", { 130.0f, 100.0f, 150.0f, 0.0f, 100.0f } },
+    { "Extra Wide Synths", { 180.0f, 100.0f, 250.0f, 0.0f, 100.0f } },
+    { "Narrow Mono Lows", { 85.0f, 100.0f, 200.0f, 0.0f, 100.0f } },
+    { "Wide Backing Vocals", { 140.0f, 100.0f, 180.0f, 0.0f, 100.0f } },
+    { "Half Width Blend", { 200.0f, 50.0f, 0.0f, 0.0f, 100.0f } },
 };
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
-static constexpr uint32_t kNumValues = 3;
+static constexpr uint32_t kNumValues = 5;
 
 // the hint line under the controls: a short help text per parameter (from tools/site_content.json)
 #define NULL_UI_HINTS 1
@@ -33,6 +33,8 @@ static const char* const kHints[] = {
     "Side level: 0% = mono, 100% = unchanged, 200% = twice as wide",
     "Blend between original and processed signal",
     "Below this frequency the signal is made mono and the width setting only applies above it (0 = off)",
+    "Above this frequency the highs get their own width (0 = off, one width for everything)",
+    "Width of the band above High Crossover (100% = unchanged, 0% = mono highs, 200% = extra wide)",
 };
 
 // the parameters the header's dice moves (tools/build_presets.py dice()): index, range, step, log scale
@@ -45,6 +47,8 @@ struct DiceParam {
 static const DiceParam kDice[] = {
     { 0, 0.0f, 200.0f, 1.0f, false },
     { 2, 0.0f, 500.0f, 1.0f, false },
+    { 3, 0.0f, 16000.0f, 10.0f, false },
+    { 4, 0.0f, 200.0f, 1.0f, false },
 };
 static constexpr uint32_t kNumDice = sizeof(kDice) / sizeof(kDice[0]);
 

@@ -23,9 +23,10 @@ static const char* const kSpeedShort[] = { "SLOW", "FAST", "STOP" };
     { "Horn/Drum Balance", "balance", 0.0f, 100.0f, 50.0f, "%", 1.0f },          \
     { "Drive", "drive", 0.0f, 100.0f, 20.0f, "%", 1.0f },                         \
     { "Width", "width", 0.0f, 100.0f, 80.0f, "%", 1.0f },                         \
-    { "Mix", "mix", 0.0f, 100.0f, 100.0f, "%", 1.0f },
+    { "Mix", "mix", 0.0f, 100.0f, 100.0f, "%", 1.0f },                            \
+    { "Speed Follow", "speed_follow", 0.0f, 100.0f, 0.0f, "%", 1.0f },
 
-// slider1..slider6 of rotary_speaker.jsfx, in order (the plugin's parameters)
+// slider1..slider7 of rotary_speaker.jsfx, in order (the plugin's parameters)
 static const DISTRHO::SliderInfo kSliders[] = { NULL_ROTARY_SLIDERS(kSpeedOptions) };
 // the same for the interface, with the short Speed labels
 static const DISTRHO::SliderInfo kUiSliders[] = { NULL_ROTARY_SLIDERS(kSpeedShort) };
@@ -44,6 +45,7 @@ inline Params paramsFrom(V value)
     p.drivePct = std::round(value(3));
     p.widthPct = std::round(value(4));
     p.mixPct = std::round(value(5));
+    p.followPct = std::round(value(6));
     return p;
 }
 

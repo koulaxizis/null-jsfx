@@ -39,7 +39,7 @@ FXID {3C2625DF-F947-5842-B251-46D564266AFF}
 WAK 0 0
 BYPASS 0 0
 <JS null_jsfx/stereo_width.jsfx ""
-  120 100 0 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  120 100 0 0 100 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 >
 <JS_PINMAP
   6AMAABwAAADoAwAABgAAAAIAAAAQAAAAAAAAACAAAAAAAAAAHAAAAOgDAAAGAAAAAgAAABAAAAAAAAAAIAAAAAAAAAA=

@@ -15,7 +15,7 @@ static const char* const kLowFreqOptions[] = { "20 Hz", "30 Hz", "60 Hz", "100 H
 static const char* const kHighFreqOptions[] = { "3 kHz", "4 kHz", "5 kHz", "8 kHz", "10 kHz", "12 kHz", "16 kHz" };
 static const char* const kAttenFreqOptions[] = { "5 kHz", "10 kHz", "20 kHz" };
 
-// slider1..slider10 of passive_eq.jsfx, in order
+// slider1..slider13 of passive_eq.jsfx, in order
 static const DISTRHO::SliderInfo kSliders[] = {
     { "Low Freq", "low_freq", 0.0f, 3.0f, 2.0f, "", 1.0f, kLowFreqOptions },
     { "Low Boost", "low_boost", 0.0f, 10.0f, 0.0f, "", 0.1f },
@@ -27,6 +27,9 @@ static const DISTRHO::SliderInfo kSliders[] = {
     { "High Atten", "high_atten", 0.0f, 10.0f, 0.0f, "", 0.1f },
     { "Tube", "tube", 0.0f, 100.0f, 0.0f, "%", 1.0f },
     { "Output", "output", -12.0f, 12.0f, 0.0f, "dB", 0.1f },
+    { "Low Dynamic", "low_dynamic", 0.0f, 100.0f, 0.0f, "%", 1.0f },
+    { "High Dynamic", "high_dynamic", 0.0f, 100.0f, 0.0f, "%", 1.0f },
+    { "Dynamic Threshold", "dynamic_threshold", -60.0f, 0.0f, -24.0f, "dB", 0.1f },
 };
 static constexpr uint32_t kNumSliders = sizeof(kSliders) / sizeof(kSliders[0]);
 
@@ -40,13 +43,13 @@ static const DISTRHO::SliderInfo kUiSliders[] = {
     { "High Freq", "high_freq", 0.0f, 6.0f, 3.0f, "", 1.0f, kUiHighFreq },
     kSliders[4], kSliders[5],
     { "Atten Freq", "atten_freq", 0.0f, 2.0f, 1.0f, "", 1.0f, kUiAttenFreq },
-    kSliders[7], kSliders[8], kSliders[9],
+    kSliders[7], kSliders[8], kSliders[9], kSliders[10], kSliders[11], kSliders[12],
 };
 
 // the JSFX's double for a host float (NullSliders.hpp)
 inline double sliderValue(uint32_t i, float v) noexcept { return DISTRHO::jsfxValue(kSliders[i], v); }
 
-// all ten values as the DSP's parameters
+// all thirteen values as the DSP's parameters
 template <class V>
 inline Params paramsFrom(V&& v)
 {
@@ -61,6 +64,9 @@ inline Params paramsFrom(V&& v)
     p.highAtten = v(7);
     p.tube = v(8);
     p.output = v(9);
+    p.lowDyn = v(10);
+    p.highDyn = v(11);
+    p.dynThreshold = v(12);
     return p;
 }
 

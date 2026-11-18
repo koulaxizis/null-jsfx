@@ -139,6 +139,9 @@ public:
         fWow1 = 0.0; fWow2 = 0.3; fFlt1 = 0.0; fFlt2 = 0.6;
         fSeedL = 13579.0;
         fSeedR = 97531.0;
+        fSeedD = 24680.0;
+        fDoC = fDoN = 0;
+        fDoT = fDoE = fDoLpL = fDoLpR = 0.0;
         fSatUL = fSatYL = fSatUR = fSatYR = 0.0;
         fNzL = fNzR = 0.0;
         fEnc[0] = fEnc[1] = fDec[0] = fDec[1] = Compander();
@@ -151,7 +154,7 @@ public:
         fOsPrev = -1;
     }
 
-    // @slider; s[0..10] = slider1..slider11
+    // @slider; s[0..12] = slider1..slider13
     void setParams(const double* s)
     {
         fDrive = std::pow(10.0, s[0] / 20.0);
@@ -179,6 +182,10 @@ public:
 
         fSatComp = satComp(fDrive, fSatB);
         fWowDepth = wow * 0.002 * fSr / 1.31;
+        fAzD = s[11] / 100.0 * 0.00025 * fSr;
+        fDoAmt = s[12] / 100.0;
+        fDoK = 1.0 - std::exp(-1.0 / (0.003 * fSr));
+        fDoLc = 1.0 - std::exp(-2.0 * kPi * 2500.0 / fSr);
         fFltDepth = flutter * 0.0001 * fSr / 1.4;
 
         fNcA = 1.0 - std::exp(-2.0 * kPi * 3000.0 / fSr);
@@ -213,7 +220,9 @@ public:
             fFlt2 += 11.3 / sr; if (fFlt2 >= 1.0) fFlt2 -= 1.0;
             const double dly = fBase + fWowDepth * (std::sin(2.0 * kPi * fWow1) + 0.31 * std::sin(2.0 * kPi * fWow2))
                                      + fFltDepth * (std::sin(2.0 * kPi * fFlt1) + 0.4 * std::sin(2.0 * kPi * fFlt2));
-            double xl = tap(fL, dly), xr = tap(fR, dly);
+            // Azimuth: the right channel read up to 0.25 ms later, wandering with the wow
+            double xl = tap(fL, dly);
+            double xr = fAzD > 0.0 ? tap(fR, dly + fAzD * (1.0 + 0.3 * std::sin(2.0 * kPi * fWow2))) : tap(fR, dly);
             const int dp = (fW - int(fBase) - fLat) & fMask;
             const double dryL = fL[size_t(dp)], dryR = fR[size_t(dp)];
             fL[size_t(fW)] = inL[n];
@@ -267,6 +276,33 @@ public:
             {
                 wl = decode(fDec[0], wl);
                 wr = decode(fDec[1], wr);
+            }
+
+            // dropouts: a new one may start every 64 samples (chance and depth grow with Dropouts)
+            if (fDoAmt > 0.0)
+            {
+                fDoC += 1;
+                if (fDoC >= 64)
+                {
+                    fDoC = 0;
+                    fSeedD *= 16807.0; fSeedD -= std::floor(fSeedD / 2147483647.0) * 2147483647.0;
+                    if (fDoN <= 0 && fSeedD / 2147483647.0 < fDoAmt * fDoAmt * 0.004)
+                    {
+                        fSeedD *= 16807.0; fSeedD -= std::floor(fSeedD / 2147483647.0) * 2147483647.0;
+                        fDoN = int(std::floor((0.02 + 0.06 * fSeedD / 2147483647.0) * sr));
+                        fSeedD *= 16807.0; fSeedD -= std::floor(fSeedD / 2147483647.0) * 2147483647.0;
+                        fDoT = fDoAmt * (0.3 + 0.6 * fSeedD / 2147483647.0);
+                    }
+                }
+                if (fDoN > 0)
+                    fDoN -= 1;
+                else
+                    fDoT = 0.0;
+                fDoE += fDoK * (fDoT - fDoE);
+                fDoLpL += fDoLc * (wl - fDoLpL);
+                fDoLpR += fDoLc * (wr - fDoLpR);
+                wl = (wl + (fDoLpL - wl) * fDoE) * (1.0 - 0.6 * fDoE);
+                wr = (wr + (fDoLpR - wr) * fDoE) * (1.0 - 0.6 * fDoE);
             }
 
             outL[n] = static_cast<T>((dryL * (1.0 - fMix) + wl * fMix) * fOut);
@@ -391,6 +427,9 @@ private:
     double fE1[32] = {}, fD1[32] = {}, fE2[12] = {}, fD2[12] = {};
     nullclipper::Channel fOsL, fOsR;
     int fOsf = 1, fLat = 0, fPad = 0, fPwL = 0, fPwR = 0, fOsPrev = -1;
+    double fAzD = 0.0, fDoAmt = 0.0, fDoK = 0.0, fDoLc = 0.0, fSeedD = 24680.0;
+    double fDoT = 0.0, fDoE = 0.0, fDoLpL = 0.0, fDoLpR = 0.0;
+    int fDoC = 0, fDoN = 0;
 };
 
 } // namespace nulltape

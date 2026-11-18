@@ -10,6 +10,7 @@ slider3:50<0,100,1>Horn/Drum Balance (%)
 slider4:20<0,100,1>Drive (%)
 slider5:80<0,100,1>Width (%)
 slider6:100<0,100,1>Mix (%)
+slider7:0<0,100,1>Speed Follow (%)
 
 in_pin:Left
 in_pin:Right
@@ -32,6 +33,10 @@ out_pin:Right
   horn_ph = 0; drum_ph = 0.25;
   horn_f = 0.8; drum_f = 0.7;
   lp1 = lp2 = 0;
+  // Speed Follow: an envelope of the input level (10 ms up, 300 ms down) pushes both rotors
+  // from the Speed setting toward the fast speeds, by Speed Follow at full level (-40 dBFS
+  // and below adds nothing, 0 dBFS adds the most). At 0% (the default) it is off.
+  sf_env = 0;
 
   function tap(buf, d) local(rp, i, f, i2)
   (
@@ -54,6 +59,9 @@ out_pin:Right
   drive = 1 + slider4 / 100 * 6;
   width = slider5 / 100;
   mix = slider6 / 100;
+  follow = slider7 / 100;
+  sf_a = exp(-1 / (0.01 * srate));
+  sf_r = exp(-1 / (0.3 * srate));
   xc = exp(-2 * $pi * 800 / srate);
 
 @sample
@@ -68,8 +76,17 @@ out_pin:Right
   low = lp2;
   high = x - lp2;
 
-  horn_f = horn_c * horn_f + (1 - horn_c) * horn_target;
-  drum_f = drum_c * drum_f + (1 - drum_c) * drum_target;
+  follow > 0 ? (
+    sf_x = abs(spl0 + spl1) * 0.5;
+    sf_env = sf_x > sf_env ? sf_a * sf_env + (1 - sf_a) * sf_x : sf_r * sf_env + (1 - sf_r) * sf_x;
+    sf_e = sf_env > 0.00001 ? max(0, min(1, (20 * log10(sf_env) + 40) / 40)) : 0;
+    sf_e *= follow;
+    horn_f = horn_c * horn_f + (1 - horn_c) * (horn_target + (6.7 - horn_target) * sf_e);
+    drum_f = drum_c * drum_f + (1 - drum_c) * (drum_target + (5.8 - drum_target) * sf_e);
+  ) : (
+    horn_f = horn_c * horn_f + (1 - horn_c) * horn_target;
+    drum_f = drum_c * drum_f + (1 - drum_c) * drum_target;
+  );
   horn_ph += horn_f / srate; horn_ph >= 1 ? horn_ph -= 1;
   drum_ph += drum_f / srate; drum_ph >= 1 ? drum_ph -= 1;
 

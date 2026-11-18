@@ -8,27 +8,27 @@ namespace nullpresets {
 
 struct FactoryPreset {
     const char* name;
-    float values[7];
+    float values[10];
 };
 
 static const FactoryPreset kPresets[] = {
-    { "Default", { 6000.0f, -6.0f, 0.0f, 0.0f, -30.0f, -18.0f, 0.0f } },
-    { "Male Vocal", { 5000.0f, -6.0f, 0.0f, 0.0f, -30.0f, -18.0f, 0.0f } },
-    { "Female Vocal", { 7000.0f, -6.0f, 0.0f, 0.0f, -30.0f, -18.0f, 0.0f } },
-    { "Podcast Speech", { 5500.0f, -8.0f, 0.0f, 0.0f, -30.0f, -18.0f, 0.0f } },
-    { "Gentle Sibilance", { 8000.0f, -3.0f, 0.0f, 0.0f, -30.0f, -18.0f, 0.0f } },
-    { "Harsh Sibilance", { 6500.0f, -12.0f, 0.0f, 0.0f, -30.0f, -18.0f, 0.0f } },
-    { "Cymbal Splash Tamer", { 9000.0f, -6.0f, 0.0f, 0.0f, -30.0f, -18.0f, 0.0f } },
-    { "Acoustic Guitar Glare", { 4500.0f, -4.0f, 0.0f, 0.0f, -30.0f, -18.0f, 0.0f } },
-    { "Gentle Vocal", { 6500.0f, -8.0f, 0.0f, 0.0f, -30.0f, -4.0f, 0.0f } },
-    { "Harsh Cymbals", { 9500.0f, -9.0f, 0.0f, 1.0f, -36.0f, -18.0f, 0.0f } },
-    { "Wide Vocal De-Ess", { 6000.0f, -6.0f, 1.0f, 0.0f, -30.0f, -18.0f, 0.0f } },
-    { "Quiet Voice", { 6000.0f, -6.0f, 0.0f, 1.0f, -45.0f, -18.0f, 0.0f } },
-    { "Broadcast Voice", { 5500.0f, -10.0f, 0.0f, 1.0f, -38.0f, -6.0f, 0.0f } },
-    { "Sibilance Listen", { 6500.0f, -12.0f, 0.0f, 0.0f, -30.0f, -18.0f, 1.0f } },
+    { "Default", { 6000.0f, -6.0f, 0.0f, 0.0f, -30.0f, -18.0f, 0.0f, 0.0f, 2.0f, 0.0f } },
+    { "Male Vocal", { 5000.0f, -6.0f, 0.0f, 0.0f, -30.0f, -18.0f, 0.0f, 0.0f, 2.0f, 0.0f } },
+    { "Female Vocal", { 7000.0f, -6.0f, 0.0f, 0.0f, -30.0f, -18.0f, 0.0f, 0.0f, 2.0f, 0.0f } },
+    { "Podcast Speech", { 5500.0f, -8.0f, 0.0f, 0.0f, -30.0f, -18.0f, 0.0f, 0.0f, 2.0f, 0.0f } },
+    { "Gentle Sibilance", { 8000.0f, -3.0f, 0.0f, 0.0f, -30.0f, -18.0f, 0.0f, 0.0f, 2.0f, 0.0f } },
+    { "Harsh Sibilance", { 6500.0f, -12.0f, 0.0f, 0.0f, -30.0f, -18.0f, 0.0f, 0.0f, 2.0f, 0.0f } },
+    { "Cymbal Splash Tamer", { 9000.0f, -6.0f, 0.0f, 0.0f, -30.0f, -18.0f, 0.0f, 0.0f, 2.0f, 0.0f } },
+    { "Acoustic Guitar Glare", { 4500.0f, -4.0f, 0.0f, 0.0f, -30.0f, -18.0f, 0.0f, 0.0f, 2.0f, 0.0f } },
+    { "Gentle Vocal", { 6500.0f, -8.0f, 0.0f, 0.0f, -30.0f, -4.0f, 0.0f, 0.0f, 2.0f, 0.0f } },
+    { "Harsh Cymbals", { 9500.0f, -9.0f, 0.0f, 1.0f, -36.0f, -18.0f, 0.0f, 0.0f, 2.0f, 0.0f } },
+    { "Wide Vocal De-Ess", { 6000.0f, -6.0f, 1.0f, 0.0f, -30.0f, -18.0f, 0.0f, 0.0f, 2.0f, 0.0f } },
+    { "Quiet Voice", { 6000.0f, -6.0f, 0.0f, 1.0f, -45.0f, -18.0f, 0.0f, 0.0f, 2.0f, 0.0f } },
+    { "Broadcast Voice", { 5500.0f, -10.0f, 0.0f, 1.0f, -38.0f, -6.0f, 0.0f, 0.0f, 2.0f, 0.0f } },
+    { "Sibilance Listen", { 6500.0f, -12.0f, 0.0f, 0.0f, -30.0f, -18.0f, 1.0f, 0.0f, 2.0f, 0.0f } },
 };
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
-static constexpr uint32_t kNumValues = 7;
+static constexpr uint32_t kNumValues = 10;
 
 // the hint line under the controls: a short help text per parameter (from tools/site_content.json)
 #define NULL_UI_HINTS 1
@@ -40,6 +40,9 @@ static const char* const kHints[] = {
     "Level of the sibilance band above which the reduction starts (Manual only)",
     "Caps how far the signal is turned down, while Reduction sets how quickly it gets there (-18 dB = no cap)",
     "Plays only what is being removed, to tune Target and the threshold by ear",
+    "Centre of the band that is turned down (0 = the Target frequency, as before)",
+    "Width of the suppress band (narrow at 8, wide at 0.5)",
+    "Band turns down a band around Suppress Freq; Shelf turns down everything above it",
 };
 
 // the parameters the header's dice moves (tools/build_presets.py dice()): index, range, step, log scale
@@ -57,6 +60,9 @@ static const DiceParam kDice[] = {
     { 4, -60.0f, 0.0f, 0.1f, false },
     { 5, -18.0f, 0.0f, 0.1f, false },
     { 6, 0.0f, 1.0f, 1.0f, false },
+    { 7, 0.0f, 16000.0f, 100.0f, false },
+    { 8, 0.5f, 8.0f, 0.1f, false },
+    { 9, 0.0f, 1.0f, 1.0f, false },
 };
 static constexpr uint32_t kNumDice = sizeof(kDice) / sizeof(kDice[0]);
 

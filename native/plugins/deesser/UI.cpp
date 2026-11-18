@@ -18,6 +18,9 @@ static const NullKnobsUI::Control kControls[] = {
     { 3, NullKnobsUI::kSelect, "DETECTION", 1, -1, false },
     { 4, NullKnobsUI::kKnob, "THRESHOLD", 1, -1, false },
     { 6, NullKnobsUI::kSelect, "LISTEN", 1, -1, false },
+    { 7, NullKnobsUI::kKnob, "SUPPRESS", 1, -1, false },
+    { 8, NullKnobsUI::kKnob, "SUPP. Q", 1, -1, false },
+    { 9, NullKnobsUI::kSelect, "SHAPE", 1, -1, false },
 };
 
 class UIDeEsser : public NullKnobsUI
@@ -73,8 +76,14 @@ protected:
         double maxCut = 1.0 - std::pow(10.0, value(1) / 20.0);
         if (value(5) > value(1))
             maxCut = std::min(maxCut, 1.0 - std::pow(10.0, value(5) / 20.0));
+        const double sq = std::round(double(value(8)) * 10.0) / 10.0;
+        const bool shelf = value(9) >= 0.5f;
+        const bool own = nulldeesser::suppressOwn(value(7), sq, shelf);
+        const nulldeesser::Coefs5 c5 = nulldeesser::suppressFilter(value(7), value(0), sq, shelf, sr);
         const auto resp = [&](double f, double cut) {
-            return wide ? 20.0 * std::log10(std::max(1.0 - cut, 0.00001)) : nulldeesser::responseDb(c, f, sr, cut);
+            return wide  ? 20.0 * std::log10(std::max(1.0 - cut, 0.00001))
+                   : own ? nulldeesser::responseDb5(c5, f, sr, cut)
+                         : nulldeesser::responseDb(c, f, sr, cut);
         };
         nulljsfx::Taps* t = taps();
         const double cut = t ? t->extra.load(std::memory_order_relaxed) : 0.0;
@@ -123,6 +132,15 @@ protected:
             std::snprintf(buf, n, "FULL");
         else if (param == 1 || param == 4 || param == 5)
             std::snprintf(buf, n, "%.1f dB", v);
+        else if (param == 7)
+        {
+            if (v > 0.0f)
+                std::snprintf(buf, n, "%.1f kHz", v / 1000.0f);
+            else
+                std::snprintf(buf, n, "TARGET");
+        }
+        else if (param == 8)
+            std::snprintf(buf, n, "%.1f", v);
         else
             NullKnobsUI::formatValue(param, v, buf, n);
     }

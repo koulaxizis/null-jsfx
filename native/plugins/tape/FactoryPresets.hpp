@@ -8,26 +8,26 @@ namespace nullpresets {
 
 struct FactoryPreset {
     const char* name;
-    float values[11];
+    float values[13];
 };
 
 static const FactoryPreset kPresets[] = {
-    { "Default", { 3.0f, 1.0f, 3.0f, 10.0f, 10.0f, 10.0f, 0.0f, 100.0f, 0.0f, 0.0f, 0.0f } },
-    { "Clean Mastering Tape", { 2.0f, 2.0f, 1.5f, 0.0f, 2.0f, 0.0f, 0.0f, 100.0f, 0.0f, 0.0f, 0.0f } },
-    { "Warm Mix Bus", { 6.0f, 1.0f, 3.0f, 5.0f, 5.0f, 5.0f, 0.0f, 100.0f, 0.0f, 0.0f, 0.0f } },
-    { "Vocal Tape Sheen", { 4.0f, 2.0f, 0.0f, 3.0f, 3.0f, 0.0f, 0.0f, 100.0f, 0.0f, 0.0f, 0.0f } },
-    { "Drum Tape Squash", { 14.0f, 1.0f, 4.0f, 0.0f, 5.0f, 0.0f, -1.0f, 100.0f, 0.0f, 0.0f, 0.0f } },
-    { "Bass Thickener", { 8.0f, 0.0f, 6.0f, 0.0f, 3.0f, 0.0f, -1.5f, 100.0f, 0.0f, 0.0f, 0.0f } },
-    { "Cassette Lo-Fi", { 9.0f, 0.0f, 4.0f, 45.0f, 35.0f, 40.0f, 0.0f, 100.0f, 0.0f, 0.0f, 0.0f } },
-    { "Worn Tape Warble", { 6.0f, 0.0f, 3.0f, 80.0f, 20.0f, 25.0f, 0.0f, 100.0f, 0.0f, 0.0f, 0.0f } },
-    { "Parallel Tape Color", { 18.0f, 1.0f, 3.0f, 0.0f, 0.0f, 0.0f, 0.0f, 40.0f, 0.0f, 0.0f, 0.0f } },
-    { "Cassette Type II", { 7.0f, 0.0f, 3.0f, 20.0f, 25.0f, 30.0f, 0.0f, 100.0f, 2.0f, 0.0f, 0.0f } },
-    { "Chrome With NR", { 6.0f, 0.0f, 2.5f, 12.0f, 15.0f, 35.0f, 0.0f, 100.0f, 2.0f, 1.0f, 0.0f } },
-    { "Ferric Demo Tape", { 10.0f, 0.0f, 4.0f, 35.0f, 30.0f, 35.0f, 0.0f, 100.0f, 1.0f, 0.0f, 0.0f } },
-    { "Metal Cassette Master", { 5.0f, 1.0f, 2.0f, 4.0f, 6.0f, 15.0f, 0.0f, 100.0f, 3.0f, 1.0f, 0.0f } },
+    { "Default", { 3.0f, 1.0f, 3.0f, 10.0f, 10.0f, 10.0f, 0.0f, 100.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f } },
+    { "Clean Mastering Tape", { 2.0f, 2.0f, 1.5f, 0.0f, 2.0f, 0.0f, 0.0f, 100.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f } },
+    { "Warm Mix Bus", { 6.0f, 1.0f, 3.0f, 5.0f, 5.0f, 5.0f, 0.0f, 100.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f } },
+    { "Vocal Tape Sheen", { 4.0f, 2.0f, 0.0f, 3.0f, 3.0f, 0.0f, 0.0f, 100.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f } },
+    { "Drum Tape Squash", { 14.0f, 1.0f, 4.0f, 0.0f, 5.0f, 0.0f, -1.0f, 100.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f } },
+    { "Bass Thickener", { 8.0f, 0.0f, 6.0f, 0.0f, 3.0f, 0.0f, -1.5f, 100.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f } },
+    { "Cassette Lo-Fi", { 9.0f, 0.0f, 4.0f, 45.0f, 35.0f, 40.0f, 0.0f, 100.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f } },
+    { "Worn Tape Warble", { 6.0f, 0.0f, 3.0f, 80.0f, 20.0f, 25.0f, 0.0f, 100.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f } },
+    { "Parallel Tape Color", { 18.0f, 1.0f, 3.0f, 0.0f, 0.0f, 0.0f, 0.0f, 40.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f } },
+    { "Cassette Type II", { 7.0f, 0.0f, 3.0f, 20.0f, 25.0f, 30.0f, 0.0f, 100.0f, 2.0f, 0.0f, 0.0f, 0.0f, 0.0f } },
+    { "Chrome With NR", { 6.0f, 0.0f, 2.5f, 12.0f, 15.0f, 35.0f, 0.0f, 100.0f, 2.0f, 1.0f, 0.0f, 0.0f, 0.0f } },
+    { "Ferric Demo Tape", { 10.0f, 0.0f, 4.0f, 35.0f, 30.0f, 35.0f, 0.0f, 100.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f } },
+    { "Metal Cassette Master", { 5.0f, 1.0f, 2.0f, 4.0f, 6.0f, 15.0f, 0.0f, 100.0f, 3.0f, 1.0f, 0.0f, 0.0f, 0.0f } },
 };
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
-static constexpr uint32_t kNumValues = 11;
+static constexpr uint32_t kNumValues = 13;
 
 // the hint line under the controls: a short help text per parameter (from tools/site_content.json)
 #define NULL_UI_HINTS 1
@@ -43,6 +43,8 @@ static const char* const kHints[] = {
     "Tape formulation: Classic (open reel), Type I (ferric, warm, more hiss), Type II (chrome, more",
     "Cassette-style noise reduction: a compander that boosts quiet highs up to 10 dB before the tape and cuts",
     "Runs the saturation at 2x or 4x the sample rate (linear-phase halfband filters, 31 or 37 more samples of",
+    "How far the right channel's head is tilted against the left (a tiny moving delay: the highs smear and move",
+    "How often and how deeply the level and the highs drop out, as on a worn cassette (0% = never)",
 };
 
 // the parameters the header's dice moves (tools/build_presets.py dice()): index, range, step, log scale
@@ -61,6 +63,8 @@ static const DiceParam kDice[] = {
     { 5, 0.0f, 100.0f, 1.0f, false },
     { 8, 0.0f, 3.0f, 1.0f, false },
     { 9, 0.0f, 1.0f, 1.0f, false },
+    { 11, 0.0f, 100.0f, 1.0f, false },
+    { 12, 0.0f, 100.0f, 1.0f, false },
 };
 static constexpr uint32_t kNumDice = sizeof(kDice) / sizeof(kDice[0]);
 
