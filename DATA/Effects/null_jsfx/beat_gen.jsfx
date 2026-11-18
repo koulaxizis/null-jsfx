@@ -1,0 +1,309 @@
+desc:NULL Beat Gen
+author: Christos Koulaxizis
+tags: beat generator generative drum pattern midi sequencer random seed mutate polymeter lock kick snare hat
+//category: MIDI
+//NULL JSFX v4.0 • https://nulljsfx.tech • MIT License
+
+slider1:50<0,100,1>Kick Density (%)
+slider2:40<0,100,1>Snare Density (%)
+slider3:70<0,100,1>Closed Hat Density (%)
+slider4:15<0,100,1>Open Hat Density (%)
+slider5:15<0,100,1>Clap Density (%)
+slider6:0<0,100,1>Tom Density (%)
+slider7:10<0,100,1>Perc Density (%)
+slider8:0<0,100,1>Cymbal Density (%)
+slider9:16<1,16,1>Kick Steps
+slider10:16<1,16,1>Snare Steps
+slider11:16<1,16,1>Closed Hat Steps
+slider12:16<1,16,1>Open Hat Steps
+slider13:16<1,16,1>Clap Steps
+slider14:16<1,16,1>Tom Steps
+slider15:16<1,16,1>Perc Steps
+slider16:16<1,16,1>Cymbal Steps
+slider17:36<0,127,1>Kick Note
+slider18:38<0,127,1>Snare Note
+slider19:42<0,127,1>Closed Hat Note
+slider20:46<0,127,1>Open Hat Note
+slider21:39<0,127,1>Clap Note
+slider22:45<0,127,1>Tom Note
+slider23:37<0,127,1>Perc Note
+slider24:51<0,127,1>Cymbal Note
+slider25:0<0,1,1{Off,On}>Kick Lock
+slider26:0<0,1,1{Off,On}>Snare Lock
+slider27:0<0,1,1{Off,On}>Closed Hat Lock
+slider28:0<0,1,1{Off,On}>Open Hat Lock
+slider29:0<0,1,1{Off,On}>Clap Lock
+slider30:0<0,1,1{Off,On}>Tom Lock
+slider31:0<0,1,1{Off,On}>Perc Lock
+slider32:0<0,1,1{Off,On}>Cymbal Lock
+slider33:0<0,4,1{Four on Floor,Breakbeat,Hip Hop,Trap,Random}>Style
+slider34:1<1,999,1>Seed
+slider35:1<0,3,1{1/8,1/16,1/32,1/16T}>Rate
+slider36:0<0,100,1>Mutate (%)
+slider37:1<0,3,1{1 Cycle,2 Cycles,4 Cycles,8 Cycles}>Mutate Every
+slider38:100<1,127,1>Velocity
+slider39:30<0,100,1>Velocity Range (%)
+slider40:0<0,75,1>Swing (%)
+slider41:50<5,95,1>Gate (%)
+slider42:0<0,1,1{Transport,Always}>Run
+slider43:9<0,15,1{1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16}>Channel
+
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
+
+@init
+  // A generative drum pattern as MIDI: 8 lanes (Kick, Snare, Closed Hat, Open Hat, Clap, Tom,
+  // Perc, Cymbal), each with its own Density, Steps (its length: lanes of other lengths drift
+  // against each other, a polymeter), Note and Lock. Style gives every lane a weight per step
+  // (1..9, or never); Seed draws two numbers per step of every lane (exact Park-Miller in
+  // doubles): the step plays when the first is under min(1, weight * 2 * Density), so the same
+  // Seed always makes the same pattern and a higher Density only adds hits; the second sets its
+  // velocity, Velocity lowered by up to Velocity Range. Mutate plays, every Mutate Every cycles
+  // of 16 steps, a variation: that share of the steps of the lanes not locked is drawn anew
+  // from Seed and the cycle's position (the first cycle block plays the pattern itself), so
+  // the same song position always plays the same variation.
+  // Timing as in Euclid: one step per Rate at the host's tempo. Transport: it plays while the
+  // host plays, locked to its beat. Always: it also runs while the host is stopped. Swing moves
+  // every second step later, up to 0.375 of a step at 75 %. A note lasts Gate of a step
+  // (shortened by the swing). Incoming MIDI passes through at its own sample, before the notes
+  // made at that sample; an all notes off (CC 120/123) also ends the notes sounding, and so
+  // does stopping. The audio passes through.
+  ext_noinit = 1;
+  Q = 0;                     // incoming messages of the block: offset, status, data 1, data 2
+  QMAX = 256;
+  wtab = 1024;               // style weights: 5 styles x 8 lanes x 16 steps (0..1)
+  hits = 1664;               // the pattern: 8 lanes x 16 steps
+  vels = 1792;               // its velocities
+  mhits = 1920;              // the variation Mutate plays
+  offl = 2048;               // per lane: samples until the note-off (0 = none sounding)
+  onn = 2056;                // per lane: the note sounding
+  onc = 2080;                // per lane: its channel
+  memset(wtab, 0, 1100);
+  qn = qi = 0;
+  last_s = -1000;
+  fb = 0;
+  cur_s = -1;                  // the global step that plays (-1 = none)
+  was_run = 0;
+  mb_last = -0.5;
+  mb_cur = 0;
+
+  // the styles' weights, a lane of 16 steps after another ('.' = never)
+  st_i = 0;
+  loop(5,
+    st_i == 0 ? strcpy(#bg_s, "9...9...9...9..3....9.......9...3.9.3.9.3.9.3.93..6...6...6...6.....9.......9..............3..53..3..3....3..3..9...............") :
+    st_i == 1 ? strcpy(#bg_s, "9.....6.3.9.........9..3..3.9..59595959595959595.......6.......6....5.......5...............5.533..3..3..3..3..36...............") :
+    st_i == 2 ? strcpy(#bg_s, "9......6.39.........9.......9...9.6.9.6.9.6.9.6...............5.....6.......6.................3....3.....3....3.5...............") :
+    st_i == 3 ? strcpy(#bg_s, "9.....6...9..3..........9.......9696969696969696...........5............9....................535..3.....3...3...5...............") :
+                strcpy(#bg_s, "55555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555");
+    k_i = 0;
+    loop(128,
+      c = str_getchar(#bg_s, k_i);
+      wtab[st_i * 128 + k_i] = c >= '1' && c <= '9' ? (c - '0') / 9 : 0;
+      k_i += 1;
+    );
+    st_i += 1;
+  );
+
+  // one Park-Miller step (x * 16807 mod 2^31 - 1, exact in doubles)
+  function bg_pm(x)
+  (
+    x *= 16807;
+    x - floor(x / 2147483647) * 2147483647;
+  );
+
+  // (x * y) mod 2147483647, exact in doubles: y split into 16-bit halves
+  function pm_mul(x, y) local(hi, r)
+  (
+    hi = floor(y / 65536);
+    r = x * hi;
+    r -= floor(r / 2147483647) * 2147483647;
+    r = r * 65536 + x * (y - hi * 65536);
+    r -= floor(r / 2147483647) * 2147483647;
+    r < 0 ? r += 2147483647;
+    r >= 2147483647 ? r -= 2147483647;
+    r;
+  );
+
+  // the Park-Miller value for step i of seed sd (0..1): (sd + 1) * 16807^(i + 8) mod 2^31 - 1
+  function pm_step(i, sd) local(e, b, p)
+  (
+    e = i - floor(i / 2147483646) * 2147483646 + 8;
+    b = 16807;
+    p = sd + 1;
+    while (e > 0) (
+      e - floor(e / 2) * 2 > 0 ? p = pm_mul(p, b);
+      b = pm_mul(b, b);
+      e = floor(e / 2);
+    );
+    p / 2147483647;
+  );
+
+  // the chance that step i of lane l plays
+  function bg_prob(l, i)
+  (
+    min(1, wtab[st * 128 + l * 16 + i] * 2 * slider(1 + l) / 100);
+  );
+
+  // the pattern from Style, Seed, the Densities and the velocities: always 2 draws per step
+  function bg_make() local(x, l, i, r)
+  (
+    x = seed * 31 + st * 1000 + 777;
+    loop(4, x = bg_pm(x));
+    l = 0;
+    loop(8,
+      i = 0;
+      loop(16,
+        x = bg_pm(x);
+        r = x / 2147483647;
+        hits[l * 16 + i] = r < bg_prob(l, i) ? 1 : 0;
+        x = bg_pm(x);
+        vels[l * 16 + i] = max(1, floor(vel * (1 - vr * x / 2147483647) + 0.5));
+        i += 1;
+      );
+      l += 1;
+    );
+  );
+
+  // Mutate: the variation of cycle block m into mhits[]
+  function bg_mut(m) local(l, i, k)
+  (
+    l = 0;
+    loop(8,
+      i = 0;
+      loop(16,
+        k = l * 16 + i;
+        m == 0 || slider(25 + l) >= 0.5 ? (
+          mhits[k] = hits[k];
+        ) : (
+          mhits[k] = pm_step(m * 1024 + l * 64 + i * 2 + 7919, seed) < mut ? (pm_step(m * 1024 + l * 64 + i * 2 + 7920, seed) < bg_prob(l, i) ? 1 : 0) : hits[k];
+        );
+        i += 1;
+      );
+      l += 1;
+    );
+  );
+
+  // the note-off of lane l, if it sounds
+  function bg_off(ofs, l)
+  (
+    offl[l] > 0 ? (
+      midisend(ofs, 0x80 | onc[l], onn[l], 0);
+      offl[l] = 0;
+    );
+  );
+
+  // global step s of the running position: every lane plays its own step of it
+  function bg_step(ofs, s) local(l, i, k, h)
+  (
+    cur_s = s;
+    mut > 0 ? (
+      mb_cur = floor(s / (16 * mev));
+      mb_cur != mb_last ? ( mb_last = mb_cur; bg_mut(mb_cur); );
+    );
+    l = 0;
+    loop(8,
+      i = s - floor(s / lens[l]) * lens[l];
+      k = l * 16 + i;
+      h = mut > 0 ? mhits[k] : hits[k];
+      h ? (
+        bg_off(ofs, l);
+        midisend(ofs, 0x90 | chan, notes[l], vels[k]);
+        onn[l] = notes[l];
+        onc[l] = chan;
+        offl[l] = len;
+      );
+      l += 1;
+    );
+  );
+  lens = 2064;               // per lane: Steps
+  notes = 2072;              // per lane: Note
+
+@slider
+  st = slider33;
+  seed = slider34;
+  sb = slider35 == 0 ? 0.5 : slider35 == 1 ? 0.25 : slider35 == 2 ? 0.125 : 1 / 6;
+  mut = slider36 / 100;
+  mev = slider37 == 0 ? 1 : slider37 == 1 ? 2 : slider37 == 2 ? 4 : 8;
+  vel = slider38;
+  vr = slider39 / 100;
+  swd = slider40 / 100 * 0.25;  // the delay of the odd steps, in pairs of steps
+  gate = slider41 / 100;
+  always = slider42;
+  chan = slider43;
+  l_i = 0;
+  loop(8,
+    lens[l_i] = slider(9 + l_i);
+    notes[l_i] = slider(17 + l_i);
+    l_i += 1;
+  );
+  bg_make();
+  mb_last = -0.5;
+
+@block
+  qn = qi = 0;
+  while (midirecv(ofs, m1, m2, m3)) (
+    qn < QMAX ? (
+      Q[qn * 4] = min(max(ofs, 0), samplesblock - 1);
+      Q[qn * 4 + 1] = m1;
+      Q[qn * 4 + 2] = m2;
+      Q[qn * 4 + 3] = m3;
+      qn += 1;
+    );
+  );
+  playing = play_state & 1;
+  run = playing || always;
+  b_inc = tempo / (60 * srate);
+  b_0 = playing ? beat_position : fb;
+  fb = b_0 + samplesblock * b_inc;
+  len = max(1, floor(gate * (1 - 2 * swd) * sb * 60 / tempo * srate));
+  si = 0;
+
+@sample
+  // the MIDI that came in at this sample goes first
+  while (qi < qn && Q[qi * 4] <= si) (
+    m1 = Q[qi * 4 + 1];
+    m2 = Q[qi * 4 + 2];
+    (m1 & 0xF0) == 0xB0 && (m2 == 120 || m2 == 123) ? (
+      l_j = 0;
+      loop(8, bg_off(si, l_j); l_j += 1;);
+    );
+    midisend(si, m1, m2, Q[qi * 4 + 3]);
+    qi += 1;
+  );
+  // the notes that are sounding end after Gate
+  l_j = 0;
+  loop(8,
+    offl[l_j] > 0 ? (
+      offl[l_j] -= 1;
+      offl[l_j] == 0 ? midisend(si, 0x80 | onc[l_j], onn[l_j], 0);
+    );
+    l_j += 1;
+  );
+  // a stop ends the notes and the position starts again
+  !run && was_run ? (
+    l_j = 0;
+    loop(8, bg_off(si, l_j); l_j += 1;);
+    last_s = -1000;
+    cur_s = -1;
+  );
+  was_run = run;
+  // steps, the odd ones moved later by Swing; a step plays when the position enters it
+  run ? (
+    bb = b_0 + si * b_inc;
+    bb >= 0 ? (
+      u = bb / sb;
+      pp = floor(u / 2 + 0.000001);
+      s = pp * 2 + (u / 2 - pp + 0.000001 >= 0.5 + swd ? 1 : 0);
+      s != last_s ? (
+        // at the start, only when it starts on the step's beginning
+        last_s > -1000 || u - (s & 1 ? 2 * pp + 1 + 2 * swd : 2 * pp) < 0.004 ? bg_step(si, s);
+        last_s = s;
+      );
+    );
+  );
+  si += 1;
+  // the audio passes through
+  spl0 = spl0;
+  spl1 = spl1;

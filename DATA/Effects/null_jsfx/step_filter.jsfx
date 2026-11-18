@@ -1,0 +1,133 @@
+desc:NULL Step Filter
+author: Christos Koulaxizis
+tags: step filter 16-step sequencer motion cutoff resonance glide tempo sync seed random generative
+//category: Essentials
+//NULL JSFX v4.0 • https://nulljsfx.tech • MIT License
+
+slider1:100<0,100,1>Step 1 (%)
+slider2:20<0,100,1>Step 2 (%)
+slider3:60<0,100,1>Step 3 (%)
+slider4:20<0,100,1>Step 4 (%)
+slider5:80<0,100,1>Step 5 (%)
+slider6:20<0,100,1>Step 6 (%)
+slider7:50<0,100,1>Step 7 (%)
+slider8:30<0,100,1>Step 8 (%)
+slider9:100<0,100,1>Step 9 (%)
+slider10:20<0,100,1>Step 10 (%)
+slider11:60<0,100,1>Step 11 (%)
+slider12:20<0,100,1>Step 12 (%)
+slider13:90<0,100,1>Step 13 (%)
+slider14:40<0,100,1>Step 14 (%)
+slider15:70<0,100,1>Step 15 (%)
+slider16:10<0,100,1>Step 16 (%)
+slider17:16<1,16,1>Steps
+slider18:2<0,3,1{1/4,1/8,1/16,1/32}>Step Length
+slider19:200<20,20000,1:log>Low (Hz)
+slider20:5000<20,20000,1:log>High (Hz)
+slider21:30<0,100,1>Resonance (%)
+slider22:0<0,2,1{Low Pass,Band Pass,High Pass}>Type
+slider23:20<0,100,1>Glide (%)
+slider24:0<0,999,1>Seed
+slider25:100<0,100,1>Mix (%)
+
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
+
+@init
+  ext_noinit = 1;              // play and seek keep tails and state, as in the VST3/CLAP
+  // A filter whose cutoff follows a sequence of up to 16 steps. One step = Step Length at the
+  // host tempo; while the transport plays the step is taken from beat_position, so the
+  // sequence stays locked to the bar grid; stopped, it free-runs at the host tempo.
+  // A step's value v (0..1) sets the cutoff Low * (High / Low)^v, so equal steps are equal
+  // musical intervals (High below Low turns the sweep around). Glide moves from the previous
+  // step's value to this one's over the first Glide share of the step (a raised cosine); 0%
+  // jumps. Seed 0 plays the Step sliders; any other Seed plays 16 values drawn from it (exact
+  // Park-Miller in doubles, in tenths), so the same Seed always plays the same sequence.
+  // The filter is a state-variable filter (topology-preserving transform, Zavalishin /
+  // Simper) per channel: Resonance 0..100% is Q 0.5..12 on a log scale; Band Pass is
+  // normalised to 0 dB at the cutoff. The cutoff stays below 0.45 of the sample rate (R25).
+  // Mix blends the filtered signal with the dry one.
+  SV = 0;              // the step values playing, 16 slots
+  step_pos = 0;
+  cur_step = 0;
+  ic1_l = 0; ic2_l = 0;
+  ic1_r = 0; ic2_r = 0;
+
+  // one Park-Miller step (x * 16807 mod 2^31 - 1, exact in doubles)
+  function sf_pm(x)
+  (
+    x *= 16807;
+    x - floor(x / 2147483647) * 2147483647;
+  );
+
+@slider
+  sf_n = max(1, min(16, floor(slider17 + 0.5)));
+  steps_per_beat = 2 ^ slider18;           // 1/4 -> 1, 1/8 -> 2, 1/16 -> 4, 1/32 -> 8
+  lo = slider19;
+  hi = slider20;
+  sf_k = 1 / (0.5 * 24 ^ (slider21 / 100)); // 1 / Q
+  sf_type = slider22;
+  glide = slider23 / 100;
+  mix = slider25 / 100;
+  slider24 >= 0.5 ? (
+    // Seed: 16 values in tenths
+    sf_x = slider24 * 13 + 4242;
+    loop(4, sf_x = sf_pm(sf_x));
+    sf_i = 0;
+    loop(16,
+      sf_x = sf_pm(sf_x);
+      SV[sf_i] = floor(sf_x / 2147483647 * 11) / 10;
+      sf_i += 1;
+    );
+  ) : (
+    SV[0] = slider1 / 100; SV[1] = slider2 / 100; SV[2] = slider3 / 100; SV[3] = slider4 / 100;
+    SV[4] = slider5 / 100; SV[5] = slider6 / 100; SV[6] = slider7 / 100; SV[7] = slider8 / 100;
+    SV[8] = slider9 / 100; SV[9] = slider10 / 100; SV[10] = slider11 / 100; SV[11] = slider12 / 100;
+    SV[12] = slider13 / 100; SV[13] = slider14 / 100; SV[14] = slider15 / 100; SV[15] = slider16 / 100;
+  );
+
+@block
+  bpm = tempo > 0 ? tempo : 120;
+  step_inc = bpm / 60 * steps_per_beat / srate;
+  // lock to the host grid while playing
+  play_state & 1 ? step_pos = beat_position * steps_per_beat;
+
+@sample
+  step_pos += step_inc;
+  // keep the free-running counter small (the synced one is re-read every block)
+  step_pos >= 16 * sf_n ? step_pos -= 16 * sf_n;
+  s = floor(step_pos);
+  cur_step = s - sf_n * floor(s / sf_n);   // also correct for negative positions (pre-roll)
+  v = SV[cur_step];
+  glide > 0 ? (
+    t = (step_pos - s) / glide;
+    t < 1 ? (
+      vp = SV[cur_step > 0 ? cur_step - 1 : sf_n - 1];
+      v = vp + (v - vp) * (0.5 - 0.5 * cos($pi * t));
+    );
+  );
+  fc = min(lo * (hi / lo) ^ v, 0.45 * srate);
+  g = tan($pi * fc / srate);
+  a1 = 1 / (1 + g * (g + sf_k));
+  a2 = g * a1;
+  a3 = g * a2;
+
+  x = spl0;
+  v3 = x - ic2_l;
+  v1 = a1 * ic1_l + a2 * v3;
+  v2 = ic2_l + a2 * ic1_l + a3 * v3;
+  ic1_l = 2 * v1 - ic1_l;
+  ic2_l = 2 * v2 - ic2_l;
+  y = sf_type == 0 ? v2 : sf_type == 1 ? sf_k * v1 : x - sf_k * v1 - v2;
+  spl0 = x + (y - x) * mix;
+
+  x = spl1;
+  v3 = x - ic2_r;
+  v1 = a1 * ic1_r + a2 * v3;
+  v2 = ic2_r + a2 * ic1_r + a3 * v3;
+  ic1_r = 2 * v1 - ic1_r;
+  ic2_r = 2 * v2 - ic2_r;
+  y = sf_type == 0 ? v2 : sf_type == 1 ? sf_k * v1 : x - sf_k * v1 - v2;
+  spl1 = x + (y - x) * mix;

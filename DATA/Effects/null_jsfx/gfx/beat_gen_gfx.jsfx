@@ -1,0 +1,503 @@
+desc:NULL Beat Gen GFX
+author: Christos Koulaxizis
+tags: beat generator generative drum pattern midi sequencer random seed mutate polymeter lock kick snare hat gui
+//category: MIDI
+//NULL JSFX v4.0 • https://nulljsfx.tech • MIT License
+
+import null_gfx.jsfx-inc
+
+slider1:50<0,100,1>-Kick Density (%)
+slider2:40<0,100,1>-Snare Density (%)
+slider3:70<0,100,1>-Closed Hat Density (%)
+slider4:15<0,100,1>-Open Hat Density (%)
+slider5:15<0,100,1>-Clap Density (%)
+slider6:0<0,100,1>-Tom Density (%)
+slider7:10<0,100,1>-Perc Density (%)
+slider8:0<0,100,1>-Cymbal Density (%)
+slider9:16<1,16,1>-Kick Steps
+slider10:16<1,16,1>-Snare Steps
+slider11:16<1,16,1>-Closed Hat Steps
+slider12:16<1,16,1>-Open Hat Steps
+slider13:16<1,16,1>-Clap Steps
+slider14:16<1,16,1>-Tom Steps
+slider15:16<1,16,1>-Perc Steps
+slider16:16<1,16,1>-Cymbal Steps
+slider17:36<0,127,1>-Kick Note
+slider18:38<0,127,1>-Snare Note
+slider19:42<0,127,1>-Closed Hat Note
+slider20:46<0,127,1>-Open Hat Note
+slider21:39<0,127,1>-Clap Note
+slider22:45<0,127,1>-Tom Note
+slider23:37<0,127,1>-Perc Note
+slider24:51<0,127,1>-Cymbal Note
+slider25:0<0,1,1{Off,On}>-Kick Lock
+slider26:0<0,1,1{Off,On}>-Snare Lock
+slider27:0<0,1,1{Off,On}>-Closed Hat Lock
+slider28:0<0,1,1{Off,On}>-Open Hat Lock
+slider29:0<0,1,1{Off,On}>-Clap Lock
+slider30:0<0,1,1{Off,On}>-Tom Lock
+slider31:0<0,1,1{Off,On}>-Perc Lock
+slider32:0<0,1,1{Off,On}>-Cymbal Lock
+slider33:0<0,4,1{Four on Floor,Breakbeat,Hip Hop,Trap,Random}>-Style
+slider34:1<1,999,1>-Seed
+slider35:1<0,3,1{1/8,1/16,1/32,1/16T}>-Rate
+slider36:0<0,100,1>-Mutate (%)
+slider37:1<0,3,1{1 Cycle,2 Cycles,4 Cycles,8 Cycles}>-Mutate Every
+slider38:100<1,127,1>-Velocity
+slider39:30<0,100,1>-Velocity Range (%)
+slider40:0<0,75,1>-Swing (%)
+slider41:50<5,95,1>-Gate (%)
+slider42:0<0,1,1{Transport,Always}>-Run
+slider43:9<0,15,1{1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16}>-Channel
+
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
+
+@init
+  // NULL Beat Gen (../beat_gen.jsfx) with its own interface: same MIDI code, plus @gfx.
+  // A generative drum pattern as MIDI: 8 lanes (Kick, Snare, Closed Hat, Open Hat, Clap, Tom,
+  // Perc, Cymbal), each with its own Density, Steps (its length: lanes of other lengths drift
+  // against each other, a polymeter), Note and Lock. Style gives every lane a weight per step
+  // (1..9, or never); Seed draws two numbers per step of every lane (exact Park-Miller in
+  // doubles): the step plays when the first is under min(1, weight * 2 * Density), so the same
+  // Seed always makes the same pattern and a higher Density only adds hits; the second sets its
+  // velocity, Velocity lowered by up to Velocity Range. Mutate plays, every Mutate Every cycles
+  // of 16 steps, a variation: that share of the steps of the lanes not locked is drawn anew
+  // from Seed and the cycle's position (the first cycle block plays the pattern itself), so
+  // the same song position always plays the same variation.
+  // Timing as in Euclid: one step per Rate at the host's tempo. Transport: it plays while the
+  // host plays, locked to its beat. Always: it also runs while the host is stopped. Swing moves
+  // every second step later, up to 0.375 of a step at 75 %. A note lasts Gate of a step
+  // (shortened by the swing). Incoming MIDI passes through at its own sample, before the notes
+  // made at that sample; an all notes off (CC 120/123) also ends the notes sounding, and so
+  // does stopping. The audio passes through.
+  ext_noinit = 1;
+  Q = 0;                     // incoming messages of the block: offset, status, data 1, data 2
+  QMAX = 256;
+  wtab = 1024;               // style weights: 5 styles x 8 lanes x 16 steps (0..1)
+  hits = 1664;               // the pattern: 8 lanes x 16 steps
+  vels = 1792;               // its velocities
+  mhits = 1920;              // the variation Mutate plays
+  offl = 2048;               // per lane: samples until the note-off (0 = none sounding)
+  onn = 2056;                // per lane: the note sounding
+  onc = 2080;                // per lane: its channel
+  memset(wtab, 0, 1100);
+  qn = qi = 0;
+  last_s = -1000;
+  fb = 0;
+  cur_s = -1;                  // the global step that plays (-1 = none)
+  was_run = 0;
+  mb_last = -0.5;
+  mb_cur = 0;
+
+  // the styles' weights, a lane of 16 steps after another ('.' = never)
+  st_i = 0;
+  loop(5,
+    st_i == 0 ? strcpy(#bg_s, "9...9...9...9..3....9.......9...3.9.3.9.3.9.3.93..6...6...6...6.....9.......9..............3..53..3..3....3..3..9...............") :
+    st_i == 1 ? strcpy(#bg_s, "9.....6.3.9.........9..3..3.9..59595959595959595.......6.......6....5.......5...............5.533..3..3..3..3..36...............") :
+    st_i == 2 ? strcpy(#bg_s, "9......6.39.........9.......9...9.6.9.6.9.6.9.6...............5.....6.......6.................3....3.....3....3.5...............") :
+    st_i == 3 ? strcpy(#bg_s, "9.....6...9..3..........9.......9696969696969696...........5............9....................535..3.....3...3...5...............") :
+                strcpy(#bg_s, "55555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555");
+    k_i = 0;
+    loop(128,
+      c = str_getchar(#bg_s, k_i);
+      wtab[st_i * 128 + k_i] = c >= '1' && c <= '9' ? (c - '0') / 9 : 0;
+      k_i += 1;
+    );
+    st_i += 1;
+  );
+
+  // one Park-Miller step (x * 16807 mod 2^31 - 1, exact in doubles)
+  function bg_pm(x)
+  (
+    x *= 16807;
+    x - floor(x / 2147483647) * 2147483647;
+  );
+
+  // (x * y) mod 2147483647, exact in doubles: y split into 16-bit halves
+  function pm_mul(x, y) local(hi, r)
+  (
+    hi = floor(y / 65536);
+    r = x * hi;
+    r -= floor(r / 2147483647) * 2147483647;
+    r = r * 65536 + x * (y - hi * 65536);
+    r -= floor(r / 2147483647) * 2147483647;
+    r < 0 ? r += 2147483647;
+    r >= 2147483647 ? r -= 2147483647;
+    r;
+  );
+
+  // the Park-Miller value for step i of seed sd (0..1): (sd + 1) * 16807^(i + 8) mod 2^31 - 1
+  function pm_step(i, sd) local(e, b, p)
+  (
+    e = i - floor(i / 2147483646) * 2147483646 + 8;
+    b = 16807;
+    p = sd + 1;
+    while (e > 0) (
+      e - floor(e / 2) * 2 > 0 ? p = pm_mul(p, b);
+      b = pm_mul(b, b);
+      e = floor(e / 2);
+    );
+    p / 2147483647;
+  );
+
+  // the chance that step i of lane l plays
+  function bg_prob(l, i)
+  (
+    min(1, wtab[st * 128 + l * 16 + i] * 2 * slider(1 + l) / 100);
+  );
+
+  // the pattern from Style, Seed, the Densities and the velocities: always 2 draws per step
+  function bg_make() local(x, l, i, r)
+  (
+    x = seed * 31 + st * 1000 + 777;
+    loop(4, x = bg_pm(x));
+    l = 0;
+    loop(8,
+      i = 0;
+      loop(16,
+        x = bg_pm(x);
+        r = x / 2147483647;
+        hits[l * 16 + i] = r < bg_prob(l, i) ? 1 : 0;
+        x = bg_pm(x);
+        vels[l * 16 + i] = max(1, floor(vel * (1 - vr * x / 2147483647) + 0.5));
+        i += 1;
+      );
+      l += 1;
+    );
+  );
+
+  // Mutate: the variation of cycle block m into mhits[]
+  function bg_mut(m) local(l, i, k)
+  (
+    l = 0;
+    loop(8,
+      i = 0;
+      loop(16,
+        k = l * 16 + i;
+        m == 0 || slider(25 + l) >= 0.5 ? (
+          mhits[k] = hits[k];
+        ) : (
+          mhits[k] = pm_step(m * 1024 + l * 64 + i * 2 + 7919, seed) < mut ? (pm_step(m * 1024 + l * 64 + i * 2 + 7920, seed) < bg_prob(l, i) ? 1 : 0) : hits[k];
+        );
+        i += 1;
+      );
+      l += 1;
+    );
+  );
+
+  // the note-off of lane l, if it sounds
+  function bg_off(ofs, l)
+  (
+    offl[l] > 0 ? (
+      midisend(ofs, 0x80 | onc[l], onn[l], 0);
+      offl[l] = 0;
+    );
+  );
+
+  // global step s of the running position: every lane plays its own step of it
+  function bg_step(ofs, s) local(l, i, k, h)
+  (
+    cur_s = s;
+    mut > 0 ? (
+      mb_cur = floor(s / (16 * mev));
+      mb_cur != mb_last ? ( mb_last = mb_cur; bg_mut(mb_cur); );
+    );
+    l = 0;
+    loop(8,
+      i = s - floor(s / lens[l]) * lens[l];
+      k = l * 16 + i;
+      h = mut > 0 ? mhits[k] : hits[k];
+      h ? (
+        bg_off(ofs, l);
+        midisend(ofs, 0x90 | chan, notes[l], vels[k]);
+        onn[l] = notes[l];
+        onc[l] = chan;
+        offl[l] = len;
+      );
+      l += 1;
+    );
+  );
+  lens = 2064;               // per lane: Steps
+  notes = 2072;              // per lane: Note
+
+  // the lanes' default Densities and Notes (the knobs' double-click values)
+  ddef = 2100;
+  ddef[0] = 50; ddef[1] = 40; ddef[2] = 70; ddef[3] = 15; ddef[4] = 15; ddef[5] = 0; ddef[6] = 10; ddef[7] = 0;
+  ndef = 2110;
+  ndef[0] = 36; ndef[1] = 38; ndef[2] = 42; ndef[3] = 46; ndef[4] = 39; ndef[5] = 45; ndef[6] = 37; ndef[7] = 51;
+  gfx_ext_retina = 1;
+
+  function update()
+  (
+    st = slider33;
+    seed = slider34;
+    sb = slider35 == 0 ? 0.5 : slider35 == 1 ? 0.25 : slider35 == 2 ? 0.125 : 1 / 6;
+    mut = slider36 / 100;
+    mev = slider37 == 0 ? 1 : slider37 == 1 ? 2 : slider37 == 2 ? 4 : 8;
+    vel = slider38;
+    vr = slider39 / 100;
+    swd = slider40 / 100 * 0.25;  // the delay of the odd steps, in pairs of steps
+    gate = slider41 / 100;
+    always = slider42;
+    chan = slider43;
+    l_i = 0;
+    loop(8,
+      lens[l_i] = slider(9 + l_i);
+      notes[l_i] = slider(17 + l_i);
+      l_i += 1;
+    );
+    bg_make();
+    mb_last = -0.5;
+  );
+
+  // ---- factory presets: generated by tools/build_presets.py, do not edit ----
+  ng_pre_n = 11;
+  strcpy(#ng_h_ix, "");
+  ng_hist_add(1); ng_hist_add(2); ng_hist_add(3); ng_hist_add(4); ng_hist_add(5); ng_hist_add(6); ng_hist_add(7); ng_hist_add(8); ng_hist_add(9); ng_hist_add(10); ng_hist_add(11); ng_hist_add(12); ng_hist_add(13); ng_hist_add(14); ng_hist_add(15); ng_hist_add(16); ng_hist_add(17); ng_hist_add(18); ng_hist_add(19); ng_hist_add(20); ng_hist_add(21); ng_hist_add(22); ng_hist_add(23); ng_hist_add(24); ng_hist_add(25); ng_hist_add(26); ng_hist_add(27); ng_hist_add(28); ng_hist_add(29); ng_hist_add(30); ng_hist_add(31); ng_hist_add(32); ng_hist_add(33); ng_hist_add(34); ng_hist_add(35); ng_hist_add(36); ng_hist_add(37); ng_hist_add(38); ng_hist_add(39); ng_hist_add(40); ng_hist_add(41); ng_hist_add(42); ng_hist_add(43);
+  ng_hist_init();
+
+  function ng_preset_load(p)
+  (
+    p == 0 ? ( ng_slider_set(1, 50); ng_slider_set(2, 40); ng_slider_set(3, 70); ng_slider_set(4, 15); ng_slider_set(5, 15); ng_slider_set(6, 0); ng_slider_set(7, 10); ng_slider_set(8, 0); ng_slider_set(9, 16); ng_slider_set(10, 16); ng_slider_set(11, 16); ng_slider_set(12, 16); ng_slider_set(13, 16); ng_slider_set(14, 16); ng_slider_set(15, 16); ng_slider_set(16, 16); ng_slider_set(17, 36); ng_slider_set(18, 38); ng_slider_set(19, 42); ng_slider_set(20, 46); ng_slider_set(21, 39); ng_slider_set(22, 45); ng_slider_set(23, 37); ng_slider_set(24, 51); ng_slider_set(25, 0); ng_slider_set(26, 0); ng_slider_set(27, 0); ng_slider_set(28, 0); ng_slider_set(29, 0); ng_slider_set(30, 0); ng_slider_set(31, 0); ng_slider_set(32, 0); ng_slider_set(33, 0); ng_slider_set(34, 1); ng_slider_set(35, 1); ng_slider_set(36, 0); ng_slider_set(37, 1); ng_slider_set(38, 100); ng_slider_set(39, 30); ng_slider_set(40, 0); ng_slider_set(41, 50); ng_slider_set(42, 0); ng_slider_set(43, 9); );
+    p == 1 ? ( ng_slider_set(1, 50); ng_slider_set(2, 0); ng_slider_set(3, 60); ng_slider_set(4, 50); ng_slider_set(5, 50); ng_slider_set(6, 0); ng_slider_set(7, 10); ng_slider_set(8, 0); ng_slider_set(9, 16); ng_slider_set(10, 16); ng_slider_set(11, 16); ng_slider_set(12, 16); ng_slider_set(13, 16); ng_slider_set(14, 16); ng_slider_set(15, 16); ng_slider_set(16, 16); ng_slider_set(17, 36); ng_slider_set(18, 38); ng_slider_set(19, 42); ng_slider_set(20, 46); ng_slider_set(21, 39); ng_slider_set(22, 45); ng_slider_set(23, 37); ng_slider_set(24, 51); ng_slider_set(25, 0); ng_slider_set(26, 0); ng_slider_set(27, 0); ng_slider_set(28, 0); ng_slider_set(29, 0); ng_slider_set(30, 0); ng_slider_set(31, 0); ng_slider_set(32, 0); ng_slider_set(33, 0); ng_slider_set(34, 3); ng_slider_set(35, 1); ng_slider_set(36, 0); ng_slider_set(37, 1); ng_slider_set(38, 100); ng_slider_set(39, 30); ng_slider_set(40, 10); ng_slider_set(41, 50); ng_slider_set(42, 0); ng_slider_set(43, 9); );
+    p == 2 ? ( ng_slider_set(1, 60); ng_slider_set(2, 55); ng_slider_set(3, 45); ng_slider_set(4, 15); ng_slider_set(5, 15); ng_slider_set(6, 0); ng_slider_set(7, 20); ng_slider_set(8, 0); ng_slider_set(9, 16); ng_slider_set(10, 16); ng_slider_set(11, 16); ng_slider_set(12, 16); ng_slider_set(13, 16); ng_slider_set(14, 16); ng_slider_set(15, 16); ng_slider_set(16, 16); ng_slider_set(17, 36); ng_slider_set(18, 38); ng_slider_set(19, 42); ng_slider_set(20, 46); ng_slider_set(21, 39); ng_slider_set(22, 45); ng_slider_set(23, 37); ng_slider_set(24, 51); ng_slider_set(25, 0); ng_slider_set(26, 0); ng_slider_set(27, 0); ng_slider_set(28, 0); ng_slider_set(29, 0); ng_slider_set(30, 0); ng_slider_set(31, 0); ng_slider_set(32, 0); ng_slider_set(33, 1); ng_slider_set(34, 12); ng_slider_set(35, 1); ng_slider_set(36, 0); ng_slider_set(37, 1); ng_slider_set(38, 100); ng_slider_set(39, 30); ng_slider_set(40, 0); ng_slider_set(41, 50); ng_slider_set(42, 0); ng_slider_set(43, 9); );
+    p == 3 ? ( ng_slider_set(1, 55); ng_slider_set(2, 50); ng_slider_set(3, 50); ng_slider_set(4, 15); ng_slider_set(5, 15); ng_slider_set(6, 0); ng_slider_set(7, 10); ng_slider_set(8, 0); ng_slider_set(9, 16); ng_slider_set(10, 16); ng_slider_set(11, 16); ng_slider_set(12, 16); ng_slider_set(13, 16); ng_slider_set(14, 16); ng_slider_set(15, 16); ng_slider_set(16, 16); ng_slider_set(17, 36); ng_slider_set(18, 38); ng_slider_set(19, 42); ng_slider_set(20, 46); ng_slider_set(21, 39); ng_slider_set(22, 45); ng_slider_set(23, 37); ng_slider_set(24, 51); ng_slider_set(25, 0); ng_slider_set(26, 0); ng_slider_set(27, 0); ng_slider_set(28, 0); ng_slider_set(29, 0); ng_slider_set(30, 0); ng_slider_set(31, 0); ng_slider_set(32, 0); ng_slider_set(33, 2); ng_slider_set(34, 5); ng_slider_set(35, 1); ng_slider_set(36, 0); ng_slider_set(37, 1); ng_slider_set(38, 100); ng_slider_set(39, 40); ng_slider_set(40, 30); ng_slider_set(41, 50); ng_slider_set(42, 0); ng_slider_set(43, 9); );
+    p == 4 ? ( ng_slider_set(1, 50); ng_slider_set(2, 40); ng_slider_set(3, 90); ng_slider_set(4, 15); ng_slider_set(5, 15); ng_slider_set(6, 40); ng_slider_set(7, 10); ng_slider_set(8, 0); ng_slider_set(9, 16); ng_slider_set(10, 16); ng_slider_set(11, 16); ng_slider_set(12, 16); ng_slider_set(13, 16); ng_slider_set(14, 16); ng_slider_set(15, 16); ng_slider_set(16, 16); ng_slider_set(17, 36); ng_slider_set(18, 38); ng_slider_set(19, 42); ng_slider_set(20, 46); ng_slider_set(21, 39); ng_slider_set(22, 45); ng_slider_set(23, 37); ng_slider_set(24, 51); ng_slider_set(25, 0); ng_slider_set(26, 0); ng_slider_set(27, 0); ng_slider_set(28, 0); ng_slider_set(29, 0); ng_slider_set(30, 0); ng_slider_set(31, 0); ng_slider_set(32, 0); ng_slider_set(33, 3); ng_slider_set(34, 9); ng_slider_set(35, 1); ng_slider_set(36, 0); ng_slider_set(37, 1); ng_slider_set(38, 100); ng_slider_set(39, 50); ng_slider_set(40, 0); ng_slider_set(41, 50); ng_slider_set(42, 0); ng_slider_set(43, 9); );
+    p == 5 ? ( ng_slider_set(1, 35); ng_slider_set(2, 25); ng_slider_set(3, 50); ng_slider_set(4, 15); ng_slider_set(5, 15); ng_slider_set(6, 0); ng_slider_set(7, 30); ng_slider_set(8, 0); ng_slider_set(9, 16); ng_slider_set(10, 12); ng_slider_set(11, 10); ng_slider_set(12, 16); ng_slider_set(13, 16); ng_slider_set(14, 16); ng_slider_set(15, 7); ng_slider_set(16, 16); ng_slider_set(17, 36); ng_slider_set(18, 38); ng_slider_set(19, 42); ng_slider_set(20, 46); ng_slider_set(21, 39); ng_slider_set(22, 45); ng_slider_set(23, 37); ng_slider_set(24, 51); ng_slider_set(25, 0); ng_slider_set(26, 0); ng_slider_set(27, 0); ng_slider_set(28, 0); ng_slider_set(29, 0); ng_slider_set(30, 0); ng_slider_set(31, 0); ng_slider_set(32, 0); ng_slider_set(33, 4); ng_slider_set(34, 21); ng_slider_set(35, 1); ng_slider_set(36, 0); ng_slider_set(37, 1); ng_slider_set(38, 100); ng_slider_set(39, 30); ng_slider_set(40, 0); ng_slider_set(41, 50); ng_slider_set(42, 0); ng_slider_set(43, 9); );
+    p == 6 ? ( ng_slider_set(1, 50); ng_slider_set(2, 40); ng_slider_set(3, 70); ng_slider_set(4, 40); ng_slider_set(5, 40); ng_slider_set(6, 0); ng_slider_set(7, 10); ng_slider_set(8, 0); ng_slider_set(9, 16); ng_slider_set(10, 16); ng_slider_set(11, 16); ng_slider_set(12, 16); ng_slider_set(13, 16); ng_slider_set(14, 16); ng_slider_set(15, 16); ng_slider_set(16, 16); ng_slider_set(17, 36); ng_slider_set(18, 38); ng_slider_set(19, 42); ng_slider_set(20, 46); ng_slider_set(21, 39); ng_slider_set(22, 45); ng_slider_set(23, 37); ng_slider_set(24, 51); ng_slider_set(25, 1); ng_slider_set(26, 0); ng_slider_set(27, 0); ng_slider_set(28, 0); ng_slider_set(29, 0); ng_slider_set(30, 0); ng_slider_set(31, 0); ng_slider_set(32, 0); ng_slider_set(33, 0); ng_slider_set(34, 7); ng_slider_set(35, 1); ng_slider_set(36, 30); ng_slider_set(37, 1); ng_slider_set(38, 100); ng_slider_set(39, 30); ng_slider_set(40, 0); ng_slider_set(41, 50); ng_slider_set(42, 0); ng_slider_set(43, 9); );
+    p == 7 ? ( ng_slider_set(1, 50); ng_slider_set(2, 40); ng_slider_set(3, 70); ng_slider_set(4, 15); ng_slider_set(5, 15); ng_slider_set(6, 0); ng_slider_set(7, 35); ng_slider_set(8, 0); ng_slider_set(9, 16); ng_slider_set(10, 16); ng_slider_set(11, 16); ng_slider_set(12, 16); ng_slider_set(13, 16); ng_slider_set(14, 16); ng_slider_set(15, 16); ng_slider_set(16, 16); ng_slider_set(17, 36); ng_slider_set(18, 38); ng_slider_set(19, 42); ng_slider_set(20, 46); ng_slider_set(21, 39); ng_slider_set(22, 45); ng_slider_set(23, 37); ng_slider_set(24, 51); ng_slider_set(25, 1); ng_slider_set(26, 1); ng_slider_set(27, 0); ng_slider_set(28, 0); ng_slider_set(29, 0); ng_slider_set(30, 0); ng_slider_set(31, 0); ng_slider_set(32, 0); ng_slider_set(33, 1); ng_slider_set(34, 33); ng_slider_set(35, 1); ng_slider_set(36, 45); ng_slider_set(37, 0); ng_slider_set(38, 100); ng_slider_set(39, 30); ng_slider_set(40, 0); ng_slider_set(41, 50); ng_slider_set(42, 0); ng_slider_set(43, 9); );
+    p == 8 ? ( ng_slider_set(1, 15); ng_slider_set(2, 10); ng_slider_set(3, 20); ng_slider_set(4, 0); ng_slider_set(5, 0); ng_slider_set(6, 15); ng_slider_set(7, 25); ng_slider_set(8, 0); ng_slider_set(9, 16); ng_slider_set(10, 16); ng_slider_set(11, 16); ng_slider_set(12, 16); ng_slider_set(13, 16); ng_slider_set(14, 16); ng_slider_set(15, 16); ng_slider_set(16, 16); ng_slider_set(17, 36); ng_slider_set(18, 38); ng_slider_set(19, 42); ng_slider_set(20, 46); ng_slider_set(21, 39); ng_slider_set(22, 45); ng_slider_set(23, 37); ng_slider_set(24, 51); ng_slider_set(25, 0); ng_slider_set(26, 0); ng_slider_set(27, 0); ng_slider_set(28, 0); ng_slider_set(29, 0); ng_slider_set(30, 0); ng_slider_set(31, 0); ng_slider_set(32, 0); ng_slider_set(33, 4); ng_slider_set(34, 4); ng_slider_set(35, 1); ng_slider_set(36, 0); ng_slider_set(37, 1); ng_slider_set(38, 100); ng_slider_set(39, 60); ng_slider_set(40, 0); ng_slider_set(41, 50); ng_slider_set(42, 0); ng_slider_set(43, 9); );
+    p == 9 ? ( ng_slider_set(1, 50); ng_slider_set(2, 40); ng_slider_set(3, 70); ng_slider_set(4, 15); ng_slider_set(5, 15); ng_slider_set(6, 0); ng_slider_set(7, 10); ng_slider_set(8, 0); ng_slider_set(9, 16); ng_slider_set(10, 16); ng_slider_set(11, 16); ng_slider_set(12, 16); ng_slider_set(13, 16); ng_slider_set(14, 16); ng_slider_set(15, 16); ng_slider_set(16, 16); ng_slider_set(17, 36); ng_slider_set(18, 38); ng_slider_set(19, 42); ng_slider_set(20, 46); ng_slider_set(21, 39); ng_slider_set(22, 45); ng_slider_set(23, 37); ng_slider_set(24, 51); ng_slider_set(25, 0); ng_slider_set(26, 0); ng_slider_set(27, 0); ng_slider_set(28, 0); ng_slider_set(29, 0); ng_slider_set(30, 0); ng_slider_set(31, 0); ng_slider_set(32, 0); ng_slider_set(33, 2); ng_slider_set(34, 18); ng_slider_set(35, 0); ng_slider_set(36, 0); ng_slider_set(37, 1); ng_slider_set(38, 100); ng_slider_set(39, 30); ng_slider_set(40, 0); ng_slider_set(41, 80); ng_slider_set(42, 0); ng_slider_set(43, 9); );
+    p == 10 ? ( ng_slider_set(1, 50); ng_slider_set(2, 40); ng_slider_set(3, 70); ng_slider_set(4, 15); ng_slider_set(5, 15); ng_slider_set(6, 0); ng_slider_set(7, 10); ng_slider_set(8, 0); ng_slider_set(9, 16); ng_slider_set(10, 16); ng_slider_set(11, 16); ng_slider_set(12, 16); ng_slider_set(13, 16); ng_slider_set(14, 16); ng_slider_set(15, 16); ng_slider_set(16, 16); ng_slider_set(17, 36); ng_slider_set(18, 38); ng_slider_set(19, 42); ng_slider_set(20, 46); ng_slider_set(21, 39); ng_slider_set(22, 45); ng_slider_set(23, 37); ng_slider_set(24, 51); ng_slider_set(25, 0); ng_slider_set(26, 0); ng_slider_set(27, 0); ng_slider_set(28, 0); ng_slider_set(29, 0); ng_slider_set(30, 0); ng_slider_set(31, 0); ng_slider_set(32, 0); ng_slider_set(33, 1); ng_slider_set(34, 64); ng_slider_set(35, 1); ng_slider_set(36, 25); ng_slider_set(37, 1); ng_slider_set(38, 100); ng_slider_set(39, 30); ng_slider_set(40, 0); ng_slider_set(41, 50); ng_slider_set(42, 1); ng_slider_set(43, 9); );
+  );
+
+  // the first preset every slider matches, or -1
+  function ng_preset_match() local(m)
+  (
+    m = -1;
+    m < 0 && ng_pre_eq(slider1, 50) && ng_pre_eq(slider2, 40) && ng_pre_eq(slider3, 70) && ng_pre_eq(slider4, 15) && ng_pre_eq(slider5, 15) && ng_pre_eq(slider6, 0) && ng_pre_eq(slider7, 10) && ng_pre_eq(slider8, 0) && ng_pre_eq(slider9, 16) && ng_pre_eq(slider10, 16) && ng_pre_eq(slider11, 16) && ng_pre_eq(slider12, 16) && ng_pre_eq(slider13, 16) && ng_pre_eq(slider14, 16) && ng_pre_eq(slider15, 16) && ng_pre_eq(slider16, 16) && ng_pre_eq(slider17, 36) && ng_pre_eq(slider18, 38) && ng_pre_eq(slider19, 42) && ng_pre_eq(slider20, 46) && ng_pre_eq(slider21, 39) && ng_pre_eq(slider22, 45) && ng_pre_eq(slider23, 37) && ng_pre_eq(slider24, 51) && ng_pre_eq(slider25, 0) && ng_pre_eq(slider26, 0) && ng_pre_eq(slider27, 0) && ng_pre_eq(slider28, 0) && ng_pre_eq(slider29, 0) && ng_pre_eq(slider30, 0) && ng_pre_eq(slider31, 0) && ng_pre_eq(slider32, 0) && ng_pre_eq(slider33, 0) && ng_pre_eq(slider34, 1) && ng_pre_eq(slider35, 1) && ng_pre_eq(slider36, 0) && ng_pre_eq(slider37, 1) && ng_pre_eq(slider38, 100) && ng_pre_eq(slider39, 30) && ng_pre_eq(slider40, 0) && ng_pre_eq(slider41, 50) && ng_pre_eq(slider42, 0) && ng_pre_eq(slider43, 9) ? m = 0;
+    m < 0 && ng_pre_eq(slider1, 50) && ng_pre_eq(slider2, 0) && ng_pre_eq(slider3, 60) && ng_pre_eq(slider4, 50) && ng_pre_eq(slider5, 50) && ng_pre_eq(slider6, 0) && ng_pre_eq(slider7, 10) && ng_pre_eq(slider8, 0) && ng_pre_eq(slider9, 16) && ng_pre_eq(slider10, 16) && ng_pre_eq(slider11, 16) && ng_pre_eq(slider12, 16) && ng_pre_eq(slider13, 16) && ng_pre_eq(slider14, 16) && ng_pre_eq(slider15, 16) && ng_pre_eq(slider16, 16) && ng_pre_eq(slider17, 36) && ng_pre_eq(slider18, 38) && ng_pre_eq(slider19, 42) && ng_pre_eq(slider20, 46) && ng_pre_eq(slider21, 39) && ng_pre_eq(slider22, 45) && ng_pre_eq(slider23, 37) && ng_pre_eq(slider24, 51) && ng_pre_eq(slider25, 0) && ng_pre_eq(slider26, 0) && ng_pre_eq(slider27, 0) && ng_pre_eq(slider28, 0) && ng_pre_eq(slider29, 0) && ng_pre_eq(slider30, 0) && ng_pre_eq(slider31, 0) && ng_pre_eq(slider32, 0) && ng_pre_eq(slider33, 0) && ng_pre_eq(slider34, 3) && ng_pre_eq(slider35, 1) && ng_pre_eq(slider36, 0) && ng_pre_eq(slider37, 1) && ng_pre_eq(slider38, 100) && ng_pre_eq(slider39, 30) && ng_pre_eq(slider40, 10) && ng_pre_eq(slider41, 50) && ng_pre_eq(slider42, 0) && ng_pre_eq(slider43, 9) ? m = 1;
+    m < 0 && ng_pre_eq(slider1, 60) && ng_pre_eq(slider2, 55) && ng_pre_eq(slider3, 45) && ng_pre_eq(slider4, 15) && ng_pre_eq(slider5, 15) && ng_pre_eq(slider6, 0) && ng_pre_eq(slider7, 20) && ng_pre_eq(slider8, 0) && ng_pre_eq(slider9, 16) && ng_pre_eq(slider10, 16) && ng_pre_eq(slider11, 16) && ng_pre_eq(slider12, 16) && ng_pre_eq(slider13, 16) && ng_pre_eq(slider14, 16) && ng_pre_eq(slider15, 16) && ng_pre_eq(slider16, 16) && ng_pre_eq(slider17, 36) && ng_pre_eq(slider18, 38) && ng_pre_eq(slider19, 42) && ng_pre_eq(slider20, 46) && ng_pre_eq(slider21, 39) && ng_pre_eq(slider22, 45) && ng_pre_eq(slider23, 37) && ng_pre_eq(slider24, 51) && ng_pre_eq(slider25, 0) && ng_pre_eq(slider26, 0) && ng_pre_eq(slider27, 0) && ng_pre_eq(slider28, 0) && ng_pre_eq(slider29, 0) && ng_pre_eq(slider30, 0) && ng_pre_eq(slider31, 0) && ng_pre_eq(slider32, 0) && ng_pre_eq(slider33, 1) && ng_pre_eq(slider34, 12) && ng_pre_eq(slider35, 1) && ng_pre_eq(slider36, 0) && ng_pre_eq(slider37, 1) && ng_pre_eq(slider38, 100) && ng_pre_eq(slider39, 30) && ng_pre_eq(slider40, 0) && ng_pre_eq(slider41, 50) && ng_pre_eq(slider42, 0) && ng_pre_eq(slider43, 9) ? m = 2;
+    m < 0 && ng_pre_eq(slider1, 55) && ng_pre_eq(slider2, 50) && ng_pre_eq(slider3, 50) && ng_pre_eq(slider4, 15) && ng_pre_eq(slider5, 15) && ng_pre_eq(slider6, 0) && ng_pre_eq(slider7, 10) && ng_pre_eq(slider8, 0) && ng_pre_eq(slider9, 16) && ng_pre_eq(slider10, 16) && ng_pre_eq(slider11, 16) && ng_pre_eq(slider12, 16) && ng_pre_eq(slider13, 16) && ng_pre_eq(slider14, 16) && ng_pre_eq(slider15, 16) && ng_pre_eq(slider16, 16) && ng_pre_eq(slider17, 36) && ng_pre_eq(slider18, 38) && ng_pre_eq(slider19, 42) && ng_pre_eq(slider20, 46) && ng_pre_eq(slider21, 39) && ng_pre_eq(slider22, 45) && ng_pre_eq(slider23, 37) && ng_pre_eq(slider24, 51) && ng_pre_eq(slider25, 0) && ng_pre_eq(slider26, 0) && ng_pre_eq(slider27, 0) && ng_pre_eq(slider28, 0) && ng_pre_eq(slider29, 0) && ng_pre_eq(slider30, 0) && ng_pre_eq(slider31, 0) && ng_pre_eq(slider32, 0) && ng_pre_eq(slider33, 2) && ng_pre_eq(slider34, 5) && ng_pre_eq(slider35, 1) && ng_pre_eq(slider36, 0) && ng_pre_eq(slider37, 1) && ng_pre_eq(slider38, 100) && ng_pre_eq(slider39, 40) && ng_pre_eq(slider40, 30) && ng_pre_eq(slider41, 50) && ng_pre_eq(slider42, 0) && ng_pre_eq(slider43, 9) ? m = 3;
+    m < 0 && ng_pre_eq(slider1, 50) && ng_pre_eq(slider2, 40) && ng_pre_eq(slider3, 90) && ng_pre_eq(slider4, 15) && ng_pre_eq(slider5, 15) && ng_pre_eq(slider6, 40) && ng_pre_eq(slider7, 10) && ng_pre_eq(slider8, 0) && ng_pre_eq(slider9, 16) && ng_pre_eq(slider10, 16) && ng_pre_eq(slider11, 16) && ng_pre_eq(slider12, 16) && ng_pre_eq(slider13, 16) && ng_pre_eq(slider14, 16) && ng_pre_eq(slider15, 16) && ng_pre_eq(slider16, 16) && ng_pre_eq(slider17, 36) && ng_pre_eq(slider18, 38) && ng_pre_eq(slider19, 42) && ng_pre_eq(slider20, 46) && ng_pre_eq(slider21, 39) && ng_pre_eq(slider22, 45) && ng_pre_eq(slider23, 37) && ng_pre_eq(slider24, 51) && ng_pre_eq(slider25, 0) && ng_pre_eq(slider26, 0) && ng_pre_eq(slider27, 0) && ng_pre_eq(slider28, 0) && ng_pre_eq(slider29, 0) && ng_pre_eq(slider30, 0) && ng_pre_eq(slider31, 0) && ng_pre_eq(slider32, 0) && ng_pre_eq(slider33, 3) && ng_pre_eq(slider34, 9) && ng_pre_eq(slider35, 1) && ng_pre_eq(slider36, 0) && ng_pre_eq(slider37, 1) && ng_pre_eq(slider38, 100) && ng_pre_eq(slider39, 50) && ng_pre_eq(slider40, 0) && ng_pre_eq(slider41, 50) && ng_pre_eq(slider42, 0) && ng_pre_eq(slider43, 9) ? m = 4;
+    m < 0 && ng_pre_eq(slider1, 35) && ng_pre_eq(slider2, 25) && ng_pre_eq(slider3, 50) && ng_pre_eq(slider4, 15) && ng_pre_eq(slider5, 15) && ng_pre_eq(slider6, 0) && ng_pre_eq(slider7, 30) && ng_pre_eq(slider8, 0) && ng_pre_eq(slider9, 16) && ng_pre_eq(slider10, 12) && ng_pre_eq(slider11, 10) && ng_pre_eq(slider12, 16) && ng_pre_eq(slider13, 16) && ng_pre_eq(slider14, 16) && ng_pre_eq(slider15, 7) && ng_pre_eq(slider16, 16) && ng_pre_eq(slider17, 36) && ng_pre_eq(slider18, 38) && ng_pre_eq(slider19, 42) && ng_pre_eq(slider20, 46) && ng_pre_eq(slider21, 39) && ng_pre_eq(slider22, 45) && ng_pre_eq(slider23, 37) && ng_pre_eq(slider24, 51) && ng_pre_eq(slider25, 0) && ng_pre_eq(slider26, 0) && ng_pre_eq(slider27, 0) && ng_pre_eq(slider28, 0) && ng_pre_eq(slider29, 0) && ng_pre_eq(slider30, 0) && ng_pre_eq(slider31, 0) && ng_pre_eq(slider32, 0) && ng_pre_eq(slider33, 4) && ng_pre_eq(slider34, 21) && ng_pre_eq(slider35, 1) && ng_pre_eq(slider36, 0) && ng_pre_eq(slider37, 1) && ng_pre_eq(slider38, 100) && ng_pre_eq(slider39, 30) && ng_pre_eq(slider40, 0) && ng_pre_eq(slider41, 50) && ng_pre_eq(slider42, 0) && ng_pre_eq(slider43, 9) ? m = 5;
+    m < 0 && ng_pre_eq(slider1, 50) && ng_pre_eq(slider2, 40) && ng_pre_eq(slider3, 70) && ng_pre_eq(slider4, 40) && ng_pre_eq(slider5, 40) && ng_pre_eq(slider6, 0) && ng_pre_eq(slider7, 10) && ng_pre_eq(slider8, 0) && ng_pre_eq(slider9, 16) && ng_pre_eq(slider10, 16) && ng_pre_eq(slider11, 16) && ng_pre_eq(slider12, 16) && ng_pre_eq(slider13, 16) && ng_pre_eq(slider14, 16) && ng_pre_eq(slider15, 16) && ng_pre_eq(slider16, 16) && ng_pre_eq(slider17, 36) && ng_pre_eq(slider18, 38) && ng_pre_eq(slider19, 42) && ng_pre_eq(slider20, 46) && ng_pre_eq(slider21, 39) && ng_pre_eq(slider22, 45) && ng_pre_eq(slider23, 37) && ng_pre_eq(slider24, 51) && ng_pre_eq(slider25, 1) && ng_pre_eq(slider26, 0) && ng_pre_eq(slider27, 0) && ng_pre_eq(slider28, 0) && ng_pre_eq(slider29, 0) && ng_pre_eq(slider30, 0) && ng_pre_eq(slider31, 0) && ng_pre_eq(slider32, 0) && ng_pre_eq(slider33, 0) && ng_pre_eq(slider34, 7) && ng_pre_eq(slider35, 1) && ng_pre_eq(slider36, 30) && ng_pre_eq(slider37, 1) && ng_pre_eq(slider38, 100) && ng_pre_eq(slider39, 30) && ng_pre_eq(slider40, 0) && ng_pre_eq(slider41, 50) && ng_pre_eq(slider42, 0) && ng_pre_eq(slider43, 9) ? m = 6;
+    m < 0 && ng_pre_eq(slider1, 50) && ng_pre_eq(slider2, 40) && ng_pre_eq(slider3, 70) && ng_pre_eq(slider4, 15) && ng_pre_eq(slider5, 15) && ng_pre_eq(slider6, 0) && ng_pre_eq(slider7, 35) && ng_pre_eq(slider8, 0) && ng_pre_eq(slider9, 16) && ng_pre_eq(slider10, 16) && ng_pre_eq(slider11, 16) && ng_pre_eq(slider12, 16) && ng_pre_eq(slider13, 16) && ng_pre_eq(slider14, 16) && ng_pre_eq(slider15, 16) && ng_pre_eq(slider16, 16) && ng_pre_eq(slider17, 36) && ng_pre_eq(slider18, 38) && ng_pre_eq(slider19, 42) && ng_pre_eq(slider20, 46) && ng_pre_eq(slider21, 39) && ng_pre_eq(slider22, 45) && ng_pre_eq(slider23, 37) && ng_pre_eq(slider24, 51) && ng_pre_eq(slider25, 1) && ng_pre_eq(slider26, 1) && ng_pre_eq(slider27, 0) && ng_pre_eq(slider28, 0) && ng_pre_eq(slider29, 0) && ng_pre_eq(slider30, 0) && ng_pre_eq(slider31, 0) && ng_pre_eq(slider32, 0) && ng_pre_eq(slider33, 1) && ng_pre_eq(slider34, 33) && ng_pre_eq(slider35, 1) && ng_pre_eq(slider36, 45) && ng_pre_eq(slider37, 0) && ng_pre_eq(slider38, 100) && ng_pre_eq(slider39, 30) && ng_pre_eq(slider40, 0) && ng_pre_eq(slider41, 50) && ng_pre_eq(slider42, 0) && ng_pre_eq(slider43, 9) ? m = 7;
+    m < 0 && ng_pre_eq(slider1, 15) && ng_pre_eq(slider2, 10) && ng_pre_eq(slider3, 20) && ng_pre_eq(slider4, 0) && ng_pre_eq(slider5, 0) && ng_pre_eq(slider6, 15) && ng_pre_eq(slider7, 25) && ng_pre_eq(slider8, 0) && ng_pre_eq(slider9, 16) && ng_pre_eq(slider10, 16) && ng_pre_eq(slider11, 16) && ng_pre_eq(slider12, 16) && ng_pre_eq(slider13, 16) && ng_pre_eq(slider14, 16) && ng_pre_eq(slider15, 16) && ng_pre_eq(slider16, 16) && ng_pre_eq(slider17, 36) && ng_pre_eq(slider18, 38) && ng_pre_eq(slider19, 42) && ng_pre_eq(slider20, 46) && ng_pre_eq(slider21, 39) && ng_pre_eq(slider22, 45) && ng_pre_eq(slider23, 37) && ng_pre_eq(slider24, 51) && ng_pre_eq(slider25, 0) && ng_pre_eq(slider26, 0) && ng_pre_eq(slider27, 0) && ng_pre_eq(slider28, 0) && ng_pre_eq(slider29, 0) && ng_pre_eq(slider30, 0) && ng_pre_eq(slider31, 0) && ng_pre_eq(slider32, 0) && ng_pre_eq(slider33, 4) && ng_pre_eq(slider34, 4) && ng_pre_eq(slider35, 1) && ng_pre_eq(slider36, 0) && ng_pre_eq(slider37, 1) && ng_pre_eq(slider38, 100) && ng_pre_eq(slider39, 60) && ng_pre_eq(slider40, 0) && ng_pre_eq(slider41, 50) && ng_pre_eq(slider42, 0) && ng_pre_eq(slider43, 9) ? m = 8;
+    m < 0 && ng_pre_eq(slider1, 50) && ng_pre_eq(slider2, 40) && ng_pre_eq(slider3, 70) && ng_pre_eq(slider4, 15) && ng_pre_eq(slider5, 15) && ng_pre_eq(slider6, 0) && ng_pre_eq(slider7, 10) && ng_pre_eq(slider8, 0) && ng_pre_eq(slider9, 16) && ng_pre_eq(slider10, 16) && ng_pre_eq(slider11, 16) && ng_pre_eq(slider12, 16) && ng_pre_eq(slider13, 16) && ng_pre_eq(slider14, 16) && ng_pre_eq(slider15, 16) && ng_pre_eq(slider16, 16) && ng_pre_eq(slider17, 36) && ng_pre_eq(slider18, 38) && ng_pre_eq(slider19, 42) && ng_pre_eq(slider20, 46) && ng_pre_eq(slider21, 39) && ng_pre_eq(slider22, 45) && ng_pre_eq(slider23, 37) && ng_pre_eq(slider24, 51) && ng_pre_eq(slider25, 0) && ng_pre_eq(slider26, 0) && ng_pre_eq(slider27, 0) && ng_pre_eq(slider28, 0) && ng_pre_eq(slider29, 0) && ng_pre_eq(slider30, 0) && ng_pre_eq(slider31, 0) && ng_pre_eq(slider32, 0) && ng_pre_eq(slider33, 2) && ng_pre_eq(slider34, 18) && ng_pre_eq(slider35, 0) && ng_pre_eq(slider36, 0) && ng_pre_eq(slider37, 1) && ng_pre_eq(slider38, 100) && ng_pre_eq(slider39, 30) && ng_pre_eq(slider40, 0) && ng_pre_eq(slider41, 80) && ng_pre_eq(slider42, 0) && ng_pre_eq(slider43, 9) ? m = 9;
+    m < 0 && ng_pre_eq(slider1, 50) && ng_pre_eq(slider2, 40) && ng_pre_eq(slider3, 70) && ng_pre_eq(slider4, 15) && ng_pre_eq(slider5, 15) && ng_pre_eq(slider6, 0) && ng_pre_eq(slider7, 10) && ng_pre_eq(slider8, 0) && ng_pre_eq(slider9, 16) && ng_pre_eq(slider10, 16) && ng_pre_eq(slider11, 16) && ng_pre_eq(slider12, 16) && ng_pre_eq(slider13, 16) && ng_pre_eq(slider14, 16) && ng_pre_eq(slider15, 16) && ng_pre_eq(slider16, 16) && ng_pre_eq(slider17, 36) && ng_pre_eq(slider18, 38) && ng_pre_eq(slider19, 42) && ng_pre_eq(slider20, 46) && ng_pre_eq(slider21, 39) && ng_pre_eq(slider22, 45) && ng_pre_eq(slider23, 37) && ng_pre_eq(slider24, 51) && ng_pre_eq(slider25, 0) && ng_pre_eq(slider26, 0) && ng_pre_eq(slider27, 0) && ng_pre_eq(slider28, 0) && ng_pre_eq(slider29, 0) && ng_pre_eq(slider30, 0) && ng_pre_eq(slider31, 0) && ng_pre_eq(slider32, 0) && ng_pre_eq(slider33, 1) && ng_pre_eq(slider34, 64) && ng_pre_eq(slider35, 1) && ng_pre_eq(slider36, 25) && ng_pre_eq(slider37, 1) && ng_pre_eq(slider38, 100) && ng_pre_eq(slider39, 30) && ng_pre_eq(slider40, 0) && ng_pre_eq(slider41, 50) && ng_pre_eq(slider42, 1) && ng_pre_eq(slider43, 9) ? m = 10;
+    m;
+  );
+
+  function ng_preset_name(p) local(s)
+  (
+    s = "";
+    p == 0 ? s = "Default";
+    p == 1 ? s = "House Groove";
+    p == 2 ? s = "Breakbeat Seed 12";
+    p == 3 ? s = "Boom Bap";
+    p == 4 ? s = "Trap Rolls";
+    p == 5 ? s = "Polymeter Drift";
+    p == 6 ? s = "Mutating House";
+    p == 7 ? s = "Evolving Breaks";
+    p == 8 ? s = "Sparse Percussion";
+    p == 9 ? s = "Half Speed Eighths";
+    p == 10 ? s = "Free Running Jam";
+    s;
+  );
+
+  // the hint line under the controls: a short help text per slider (from tools/site_content.json)
+  function ng_hint_text(i) local(s)
+  (
+    s = "";
+    s;
+  );
+
+  function ng_presets() local(i)
+  (
+    ng_hint_i > 0 && !ng_pre_open ? ng_hint(ng_hint_text(ng_hint_i));
+    ng_pre_req >= 0 ? ( ng_preset_load(ng_pre_req); update(); ng_pre_req = -1; );
+    ng_hist() ? update();
+    ng_pre_cur = ng_preset_match();
+    ng_pre_open ? (
+      ng_pre_menu_begin();
+      i = 0;
+      loop(ng_pre_n, ng_pre_item(i, ng_preset_name(i)); i += 1;);
+      ng_pre_menu_end();
+    );
+    strcpy(#ng_pre_name, ng_pre_cur >= 0 ? ng_preset_name(ng_pre_cur) : "CUSTOM");
+  );
+  // ---- end of factory presets ----
+
+@slider
+  update();
+
+@block
+  qn = qi = 0;
+  while (midirecv(ofs, m1, m2, m3)) (
+    qn < QMAX ? (
+      Q[qn * 4] = min(max(ofs, 0), samplesblock - 1);
+      Q[qn * 4 + 1] = m1;
+      Q[qn * 4 + 2] = m2;
+      Q[qn * 4 + 3] = m3;
+      qn += 1;
+    );
+  );
+  playing = play_state & 1;
+  run = playing || always;
+  b_inc = tempo / (60 * srate);
+  b_0 = playing ? beat_position : fb;
+  fb = b_0 + samplesblock * b_inc;
+  len = max(1, floor(gate * (1 - 2 * swd) * sb * 60 / tempo * srate));
+  si = 0;
+
+@sample
+  // the MIDI that came in at this sample goes first
+  while (qi < qn && Q[qi * 4] <= si) (
+    m1 = Q[qi * 4 + 1];
+    m2 = Q[qi * 4 + 2];
+    (m1 & 0xF0) == 0xB0 && (m2 == 120 || m2 == 123) ? (
+      l_j = 0;
+      loop(8, bg_off(si, l_j); l_j += 1;);
+    );
+    midisend(si, m1, m2, Q[qi * 4 + 3]);
+    qi += 1;
+  );
+  // the notes that are sounding end after Gate
+  l_j = 0;
+  loop(8,
+    offl[l_j] > 0 ? (
+      offl[l_j] -= 1;
+      offl[l_j] == 0 ? midisend(si, 0x80 | onc[l_j], onn[l_j], 0);
+    );
+    l_j += 1;
+  );
+  // a stop ends the notes and the position starts again
+  !run && was_run ? (
+    l_j = 0;
+    loop(8, bg_off(si, l_j); l_j += 1;);
+    last_s = -1000;
+    cur_s = -1;
+  );
+  was_run = run;
+  // steps, the odd ones moved later by Swing; a step plays when the position enters it
+  run ? (
+    bb = b_0 + si * b_inc;
+    bb >= 0 ? (
+      u = bb / sb;
+      pp = floor(u / 2 + 0.000001);
+      s = pp * 2 + (u / 2 - pp + 0.000001 >= 0.5 + swd ? 1 : 0);
+      s != last_s ? (
+        // at the start, only when it starts on the step's beginning
+        last_s > -1000 || u - (s & 1 ? 2 * pp + 1 + 2 * swd : 2 * pp) < 0.004 ? bg_step(si, s);
+        last_s = s;
+      );
+    );
+  );
+  si += 1;
+  // the audio passes through
+  spl0 = spl0;
+  spl1 = spl1;
+
+@gfx 480 408
+  ng_knobs_begin("BEAT GEN", "MIDI", 480, 120, 2, 1);
+
+  // display: one row per lane, one cell per step (brighter = louder), the steps past the
+  // lane's Steps dimmed, the step each lane plays outlined (Mutate's variation while it plays);
+  // a click on a lane's name switches its Lock (a locked lane's name is bright)
+  ng_plot(ng_vx + 58, ng_vy + 4, ng_vw - 62, ng_vh - 14);
+  bg_cw = ng_pw / 16;
+  bg_rh = ng_ph / 8;
+  ng_font(4, 7, 0);
+  bg_l = 0;
+  loop(8,
+    bg_y0 = ng_py + bg_l * bg_rh;
+    strcpy(#bg_n, bg_l == 0 ? "KICK" : bg_l == 1 ? "SNARE" : bg_l == 2 ? "CL HAT" : bg_l == 3 ? "OP HAT" :
+                  bg_l == 4 ? "CLAP" : bg_l == 5 ? "TOM" : bg_l == 6 ? "PERC" : "CYMBAL");
+    bg_lk = slider(25 + bg_l) >= 0.5;
+    ng_col(bg_lk ? NG_TEXT : NG_MUTED, 1);
+    ng_ptxt(#bg_n, ng_px - 6 * ng_s, bg_y0 + bg_rh / 2, 2);
+    bg_lk ? gfx_rect(ng_px - 54 * ng_s, bg_y0 + bg_rh / 2 - 2 * ng_s, 4 * ng_s, 4 * ng_s);
+    ng_click && mouse_x >= ng_px - 56 * ng_s && mouse_x < ng_px - 2 * ng_s && mouse_y >= bg_y0 && mouse_y < bg_y0 + bg_rh ? (
+      ng_slider_set(25 + bg_l, bg_lk ? 0 : 1) ? update();
+    );
+    bg_ln = lens[bg_l];
+    bg_cur = cur_s >= 0 ? cur_s - floor(cur_s / bg_ln) * bg_ln : -1;
+    bg_i = 0;
+    loop(16,
+      bg_k = bg_l * 16 + bg_i;
+      bg_h = mut > 0 ? mhits[bg_k] : hits[bg_k];
+      bg_x0 = ng_px + bg_i * bg_cw + ng_s;
+      bg_i >= bg_ln ? ng_col(NG_BG, 0.4) : bg_h ? ng_col(NG_ACCENT, 0.25 + 0.75 * vels[bg_k] / 127) : ng_col(NG_BG, 1);
+      gfx_rect(bg_x0, bg_y0 + ng_s, bg_cw - 2 * ng_s, bg_rh - 2 * ng_s);
+      bg_i == bg_cur ? (
+        ng_col(NG_TEXT, 1);
+        gfx_rect(bg_x0, bg_y0 + ng_s, bg_cw - 2 * ng_s, bg_rh - 2 * ng_s, 0);
+      );
+      bg_i += 1;
+    );
+    bg_l += 1;
+  );
+  ng_font(1, 7, 1);
+  ng_col(NG_MUTED, 1);
+  strcpy(#bg_t, st == 0 ? "FOUR ON FLOOR" : st == 1 ? "BREAKBEAT" : st == 2 ? "HIP HOP" : st == 3 ? "TRAP" : "RANDOM");
+  sprintf(#bg_t2, "%s   SEED %d   CH %d   %s", #bg_t, seed, chan + 1, always ? "ALWAYS" : (play_state & 1) ? "PLAYING" : "WAITS FOR PLAY");
+  ng_txt(#bg_t2, ng_vx + ng_vw / 2, ng_vy + ng_vh - 3, 1, 1);
+
+  bg_page = ng_tabs("PATTERN|DENSITY|STEPS|NOTES|LOCK", bg_page);
+  bg_page == 0 ? (
+    ng_row(6);
+    ng_select_ctl(33, "STYLE", "4 ON FLOOR|BREAKBEAT|HIP HOP|TRAP|RANDOM", 0) ? update();
+    sprintf(#v34, "%d", slider34);
+    ng_knob_ctl(34, "SEED", #v34, 1, 999, 1, 1, 0) ? update();
+    ng_select_ctl(35, "RATE", "1/8|1/16|1/32|1/16T", 0) ? update();
+    slider36 > 0 ? sprintf(#v36, "%d%%", slider36) : strcpy(#v36, "OFF");
+    ng_knob_ctl(36, "MUTATE", #v36, 0, 100, 0, 1, 0) ? update();
+    ng_select_ctl(37, "EVERY", "1 CYCLE|2 CYCLES|4 CYCLES|8 CYCLES", 0) ? update();
+    sprintf(#v40, "%d%%", slider40);
+    ng_knob_ctl(40, "SWING", #v40, 0, 75, 0, 1, 0) ? update();
+    ng_row(5);
+    sprintf(#v38, "%d", slider38);
+    ng_knob_ctl(38, "VELOCITY", #v38, 1, 127, 100, 1, 0) ? update();
+    sprintf(#v39, "%d%%", slider39);
+    ng_knob_ctl(39, "vels RANGE", #v39, 0, 100, 30, 1, 0) ? update();
+    sprintf(#v41, "%d%%", slider41);
+    ng_knob_ctl(41, "GATE", #v41, 5, 95, 50, 1, 0) ? update();
+    ng_select_ctl(42, "RUN", "HOST|ALWAYS", 0) ? update();
+    ng_select_ctl(43, "CHANNEL", "1|2|3|4|5|6|7|8|9|10|11|12|13|14|15|16", 0) ? update();
+  ) : (
+    // DENSITY, STEPS, NOTES and LOCK: one control per lane, four per row
+    bg_b = bg_page == 1 ? 0 : bg_page == 2 ? 8 : bg_page == 3 ? 16 : 24;
+    bg_j = 0;
+    loop(2,
+      ng_row(4);
+      loop(4,
+        bg_j += 1;
+        strcpy(#bg_l, bg_j == 1 ? "KICK" : bg_j == 2 ? "SNARE" : bg_j == 3 ? "CL HAT" : bg_j == 4 ? "OP HAT" :
+                      bg_j == 5 ? "CLAP" : bg_j == 6 ? "TOM" : bg_j == 7 ? "PERC" : "CYMBAL");
+        bg_page == 4 ? (
+          ng_select_ctl(bg_b + bg_j, #bg_l, "OFF|ON", 0) ? update();
+        ) : bg_page == 3 ? (
+          bg_nn = slider(bg_b + bg_j) % 12;
+          strcpy(#bg_nt, bg_nn == 0 ? "C" : bg_nn == 1 ? "C#" : bg_nn == 2 ? "D" : bg_nn == 3 ? "D#" : bg_nn == 4 ? "E" :
+                         bg_nn == 5 ? "F" : bg_nn == 6 ? "F#" : bg_nn == 7 ? "G" : bg_nn == 8 ? "G#" : bg_nn == 9 ? "A" :
+                         bg_nn == 10 ? "A#" : "B");
+          sprintf(#bg_v, "%s%d", #bg_nt, floor(slider(bg_b + bg_j) / 12) - 1);
+          ng_knob_ctl(bg_b + bg_j, #bg_l, #bg_v, 0, 127, ndef[bg_j - 1], 1, 0) ? update();
+        ) : bg_page == 2 ? (
+          sprintf(#bg_v, "%d", slider(bg_b + bg_j));
+          ng_knob_ctl(bg_b + bg_j, #bg_l, #bg_v, 1, 16, 16, 1, 0) ? update();
+        ) : (
+          sprintf(#bg_v, "%d%%", slider(bg_b + bg_j));
+          ng_knob_ctl(bg_b + bg_j, #bg_l, #bg_v, 0, 100, ddef[bg_j - 1], 1, 0) ? update();
+        );
+      );
+    );
+  );
+
+  ng_end();
+
+  ng_presets(); // the preset list (generated by tools/build_presets.py)

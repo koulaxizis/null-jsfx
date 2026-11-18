@@ -279,7 +279,7 @@ out_pin:Right
   );
 
   // the Park-Miller stream of Generate, in exact doubles, a value in [0, 1)
-  function cd_gr() ( gs *= 16807; gs -= floor(gs / 2147483647) * 2147483647; gs / 2147483648; );
+  function cd_gr() ( cd_gst *= 16807; cd_gst -= floor(cd_gst / 2147483647) * 2147483647; cd_gst / 2147483648; );
 
   // the chord after degree d: weighted pulls of functional harmony (Major: I ii iii IV V vi;
   // Minor: i III iv V vi VII), returned as degree * 4 + scale
@@ -308,7 +308,7 @@ out_pin:Right
   // Generate: the progression in slot 9, from Generate Seed
   function cd_gen() local(n, k, d, e, r)
   (
-    gs = gseed * 69621 + 17;
+    cd_gst = gseed * 69621 + 17;
     loop(4, cd_gr(););
     n = glen ? 8 : 4;
     PRG[9 * 20] = n;
