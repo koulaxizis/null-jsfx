@@ -1,6 +1,6 @@
 {
-  "display": 4688,
-  "total": 4688,
+  "display": 4690,
+  "total": 4690,
   "offset": 0,
   "updated": "2026-11-19",
   "assets": {
@@ -1018,7 +1018,7 @@
     },
     "766063601": {
       "file": "4.1/NULL-JSFX-Installer-Windows.exe",
-      "count": 7
+      "count": 9
     },
     "766063682": {
       "file": "4.1/NULL-JSFX-Installer-macOS.pkg",
