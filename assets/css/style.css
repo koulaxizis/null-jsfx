@@ -2428,3 +2428,1092 @@ a.download-option:hover {
     margin: 12px 0 0;
     font-size: 13px;
 }
+
+/* ---- FX chain pages (chains/<slug>/, tools/chain_pages.py) and the chain cards' small diagram ---- */
+.page-chain {
+    max-width: 1040px;
+    margin: 0 auto;
+}
+
+.chain-hero {
+    text-align: center;
+    padding: 8px 0 28px;
+}
+
+.chain-hero h1 {
+    font-size: 34px;
+    letter-spacing: 0.08em;
+    margin: 6px 0 8px;
+    color: var(--text);
+}
+
+.chain-hero p {
+    max-width: 620px;
+    margin: 0 auto;
+    font-size: 16px;
+    color: var(--muted);
+}
+
+.chain-hero .plugin-formats {
+    justify-content: center;
+    margin-top: 16px;
+}
+
+.chain-section {
+    margin-top: 36px;
+}
+
+.chain-section h2 {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin: 0 0 14px;
+}
+
+.chain-note {
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 10px;
+    max-width: 720px;
+}
+
+/* the signal-flow diagram: inline SVG, coloured from the theme */
+.chain-diagram-wrap {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.chain-diagram {
+    display: block;
+    margin: 0 auto;
+    max-width: 100%;
+    height: auto;
+}
+
+.chain-diagram text {
+    font-family: 'Noto Sans', 'Segoe UI', system-ui, sans-serif;
+    text-anchor: middle;
+}
+
+.cd-wire {
+    fill: none;
+    stroke: var(--muted);
+    stroke-width: 1.6;
+}
+
+.cd-pass {
+    stroke-dasharray: 2 4;
+    opacity: 0.7;
+}
+
+.cd-box {
+    fill: var(--card-bg);
+    stroke: var(--accent);
+    stroke-width: 1.2;
+}
+
+.cd-node {
+    fill: var(--border);
+    stroke: var(--muted);
+    stroke-width: 1;
+}
+
+.cd-term {
+    fill: var(--bg);
+    stroke: var(--muted);
+    stroke-width: 1.4;
+}
+
+.cd-src {
+    fill: var(--accent);
+}
+
+.cd-mod {
+    fill: none;
+    stroke: var(--accent);
+    stroke-width: 1.3;
+    stroke-dasharray: 4 4;
+    opacity: 0.85;
+}
+
+.cd-name {
+    fill: var(--text);
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+}
+
+.cd-term-label {
+    fill: var(--muted);
+    font-size: 8px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+}
+
+.cd-node-label,
+.cd-src-label {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+}
+
+.cd-node-label {
+    fill: var(--muted);
+}
+
+.cd-src-label {
+    fill: var(--bg);
+}
+
+.chain-diagram .cd-row-label,
+.chain-diagram .cd-row-sub {
+    text-anchor: start;
+}
+
+.cd-row-label {
+    fill: var(--text);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+}
+
+.cd-row-sub {
+    fill: var(--muted);
+    font-size: 10px;
+}
+
+/* the small diagram on a chain card */
+.chain-thumb {
+    display: flex;
+    align-items: center;
+    min-height: 70px;
+    margin: -4px 0 14px;
+    padding: 10px 12px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+}
+
+.cd-mini {
+    display: block;
+    max-width: 100%;
+    height: auto;
+}
+
+.cd-mini .cd-wire {
+    stroke-width: 1;
+}
+
+.cd-mini .cd-box {
+    stroke-width: 1;
+}
+
+.cd-mini .cd-mod {
+    stroke-width: 0.8;
+    stroke-dasharray: 2 2;
+}
+
+.chain-card h3 .card-link {
+    color: inherit;
+    text-decoration: none;
+}
+
+.chain-card h3 .card-link:hover {
+    text-decoration: underline;
+}
+
+/* the chain window: what REAPER opens, drawn by the site around the real GFX pictures */
+.chain-window {
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    background: #131211;
+    box-shadow: 0 24px 60px var(--shadow);
+}
+
+.cw-title {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 9px 14px;
+    font-size: 12px;
+    color: #999999;
+    background: #232220;
+    border-bottom: 1px solid #333333;
+}
+
+.cw-dots {
+    display: inline-flex;
+    gap: 6px;
+}
+
+.cw-dots i {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #444444;
+}
+
+.cw-body {
+    display: grid;
+    grid-template-columns: minmax(200px, 270px) 1fr;
+    min-height: 260px;
+}
+
+.cw-list {
+    list-style: none;
+    margin: 0;
+    padding: 8px;
+    border-right: 1px solid #333333;
+    background: #1b1a18;
+}
+
+.cw-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    padding: 7px 8px;
+    border: 0;
+    border-radius: 4px;
+    background: transparent;
+    color: #e0e0e0;
+    font: inherit;
+    font-size: 12px;
+    text-align: left;
+    cursor: pointer;
+}
+
+.cw-item:hover {
+    background: #2a2927;
+}
+
+.cw-item.on {
+    background: #c4c4c4;
+    color: #1b1a18;
+}
+
+.cw-check {
+    flex: none;
+    width: 10px;
+    height: 10px;
+    border: 1px solid currentColor;
+    border-radius: 2px;
+    background: currentColor;
+    opacity: 0.7;
+}
+
+.cw-view {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    background: #131211;
+}
+
+.cw-shot {
+    display: block;
+    max-width: 100%;
+    height: auto;
+    border-radius: 6px;
+}
+
+/* what each plugin is set to */
+.chain-settings {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+    gap: 12px;
+    margin-top: 14px;
+}
+
+.chain-setting {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px 16px;
+}
+
+.chain-setting h3 {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+}
+
+.chain-setting h3 a {
+    color: var(--text);
+    text-decoration: none;
+}
+
+.chain-setting h3 a:hover {
+    text-decoration: underline;
+}
+
+.chain-setting h3 small {
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 0.08em;
+}
+
+.cs-n {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    border: 1px solid var(--accent);
+    font-size: 10px;
+    color: var(--accent);
+}
+
+.chain-setting ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.chain-setting li {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    font-size: 12px;
+    padding: 3px 0;
+    border-bottom: 1px dashed var(--border);
+}
+
+.chain-setting li:last-child {
+    border-bottom: 0;
+}
+
+.chain-setting li span {
+    color: var(--muted);
+}
+
+.chain-setting li b {
+    font-weight: 600;
+    color: var(--text);
+    white-space: nowrap;
+}
+
+.chain-mods,
+.chain-steps-how {
+    margin: 0;
+    padding-left: 20px;
+    font-size: 13px;
+    line-height: 1.8;
+}
+
+.chain-mods small {
+    color: var(--muted);
+}
+
+.chain-steps-how a {
+    color: var(--text);
+}
+
+.page-chain .page-actions {
+    margin-top: 36px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    justify-content: center;
+}
+
+@media (max-width: 700px) {
+    .chain-hero h1 {
+        font-size: 26px;
+    }
+
+    .cw-body {
+        grid-template-columns: 1fr;
+    }
+
+    .cw-list {
+        border-right: 0;
+        border-bottom: 1px solid #333333;
+    }
+
+    .cw-view {
+        padding: 10px;
+    }
+}
+
+/* ---- Product pages (rack/, hub/, tools/product_pages.py) ---- */
+.page-product {
+    max-width: 1080px;
+    margin: 0 auto;
+}
+
+.pp-hero {
+    text-align: center;
+    padding: 12px 0 8px;
+}
+
+.pp-kicker {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--muted);
+}
+
+.pp-hero h1 {
+    font-size: clamp(32px, 6vw, 56px);
+    letter-spacing: 0.08em;
+    margin: 10px 0 12px;
+    color: var(--text);
+}
+
+.pp-lead {
+    max-width: 640px;
+    margin: 0 auto;
+    font-size: 17px;
+    line-height: 1.6;
+    color: var(--muted);
+}
+
+.pp-actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 12px;
+    margin: 24px 0 32px;
+}
+
+.pp-ghost {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 9px 18px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    font-size: 13px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: border-color 0.2s;
+}
+
+.pp-ghost:hover,
+.pp-ghost:focus-visible {
+    border-color: var(--accent);
+}
+
+.pp-window,
+.pp-render {
+    margin: 0 auto;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 24px 60px var(--shadow), 0 0 0 1px var(--border);
+}
+
+.pp-render figcaption {
+    padding: 8px 0;
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    color: var(--muted);
+    background: var(--bg-secondary);
+}
+
+.pp-window img,
+.pp-render img,
+.pp-shot {
+    display: block;
+    width: 100%;
+    height: auto;
+}
+
+.pp-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 1px;
+    margin: 40px 0;
+    background: var(--border);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.pp-stats div {
+    padding: 18px 12px;
+    text-align: center;
+    background: var(--bg);
+}
+
+.pp-stats b {
+    display: block;
+    font-size: 28px;
+    color: var(--text);
+}
+
+.pp-stats span {
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+}
+
+.pp-h {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin: 0 0 16px;
+}
+
+.pp-sub {
+    margin: -6px 0 16px;
+    color: var(--muted);
+    font-size: 14px;
+}
+
+.pp-tour,
+.pp-block {
+    margin: 56px 0;
+}
+
+.pp-video {
+    display: block;
+    width: 100%;
+    height: auto;
+    border-radius: 10px;
+    background: #000;
+}
+
+.pp-row {
+    display: grid;
+    grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+    align-items: center;
+    gap: 48px;
+    margin: 72px 0;
+}
+
+.pp-row.pp-flip .pp-text {
+    order: 2;
+}
+
+.pp-text h2 {
+    font-size: 26px;
+    margin: 8px 0 12px;
+    color: var(--text);
+}
+
+.pp-text p {
+    color: var(--muted);
+    line-height: 1.65;
+}
+
+.pp-points {
+    margin: 14px 0 0;
+    padding: 0;
+    list-style: none;
+}
+
+.pp-points li {
+    position: relative;
+    padding: 4px 0 4px 18px;
+    font-size: 14px;
+    color: var(--text);
+}
+
+.pp-points li::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 12px;
+    width: 8px;
+    height: 1px;
+    background: var(--accent);
+}
+
+.pp-media {
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 12px 36px var(--shadow), 0 0 0 1px var(--border);
+    background: var(--bg-secondary);
+}
+
+.pp-clip {
+    background: var(--bg-secondary);
+}
+
+.pp-diagram-wrap {
+    overflow-x: auto;
+    padding: 16px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: var(--bg-secondary);
+}
+
+.pp-diagram {
+    display: block;
+    width: 100%;
+    min-width: 640px;
+    height: auto;
+}
+
+.pp-d-wire,
+.pp-d-loop {
+    fill: none;
+    stroke: var(--muted);
+    stroke-width: 1.6;
+}
+
+.pp-d-loop {
+    stroke: var(--accent);
+    stroke-dasharray: 4 4;
+}
+
+.pp-d-head {
+    fill: var(--muted);
+}
+
+.pp-d-node {
+    fill: var(--card-bg);
+    stroke: var(--accent);
+    stroke-width: 1.2;
+}
+
+.pp-d-slot {
+    fill: var(--card-bg);
+    stroke: var(--border);
+    stroke-width: 1.2;
+}
+
+.pp-d-term {
+    fill: var(--bg);
+    stroke: var(--muted);
+    stroke-width: 1.4;
+}
+
+.pp-d-src {
+    fill: var(--accent);
+}
+
+.pp-d-t,
+.pp-d-s,
+.pp-d-tt,
+.pp-d-st,
+.pp-d-srct {
+    text-anchor: middle;
+}
+
+.pp-d-t {
+    fill: var(--text);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+}
+
+.pp-d-s,
+.pp-d-lane {
+    fill: var(--muted);
+    font-size: 10px;
+}
+
+.pp-d-lane {
+    font-weight: 700;
+    letter-spacing: 0.1em;
+}
+
+.pp-d-st {
+    fill: var(--text);
+    font-size: 11px;
+}
+
+.pp-d-tt {
+    fill: var(--muted);
+    font-size: 9px;
+    font-weight: 700;
+}
+
+.pp-d-srct {
+    fill: var(--bg);
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+}
+
+.pp-groups {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 24px;
+}
+
+.pp-group h3 {
+    font-size: 15px;
+    margin-bottom: 8px;
+    color: var(--text);
+}
+
+.pp-group h3 small {
+    color: var(--muted);
+    font-weight: 400;
+}
+
+.pp-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.pp-tags a,
+.pp-tags span {
+    padding: 3px 9px;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    font-size: 12px;
+    color: var(--muted);
+    text-decoration: none;
+}
+
+.pp-tags a {
+    color: var(--text);
+}
+
+.pp-tags a:hover,
+.pp-tags a:focus-visible {
+    border-color: var(--accent);
+}
+
+.pp-steps {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 16px;
+    padding: 0;
+    list-style: none;
+    counter-reset: pp-step;
+}
+
+.pp-steps li {
+    counter-increment: pp-step;
+    padding: 20px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: var(--card-bg);
+}
+
+.pp-steps li::before {
+    content: counter(pp-step, decimal-leading-zero);
+    display: block;
+    font-size: 12px;
+    letter-spacing: 0.12em;
+    color: var(--muted);
+}
+
+.pp-steps b {
+    display: block;
+    margin: 6px 0 4px;
+    font-size: 17px;
+    color: var(--text);
+}
+
+.pp-steps span {
+    font-size: 14px;
+    color: var(--muted);
+}
+
+.pp-get {
+    margin: 72px 0 24px;
+    padding: 40px 24px;
+    text-align: center;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: var(--bg-secondary);
+}
+
+.pp-get h2 {
+    font-size: 26px;
+    color: var(--text);
+}
+
+.pp-get p {
+    margin-top: 8px;
+    color: var(--muted);
+}
+
+.pp-get .pp-actions {
+    margin: 20px 0 12px;
+}
+
+.pp-get small {
+    color: var(--muted);
+}
+
+@media (max-width: 760px) {
+    .pp-row {
+        grid-template-columns: 1fr;
+        gap: 20px;
+        margin: 48px 0;
+    }
+
+    .pp-row.pp-flip .pp-text {
+        order: 0;
+    }
+
+    .pp-stats b {
+        font-size: 22px;
+    }
+}
+
+/* the homepage Hub and Rack cards link to their product page */
+.featured-more {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+    text-decoration: none;
+    border-bottom: 1px solid var(--border);
+}
+
+.featured-more::after {
+    content: " \2192";
+}
+
+.featured-more:hover,
+.featured-more:focus-visible {
+    border-color: var(--accent);
+}
+
+/* ---- /remotes/: the app screens in drawn tablet and phone frames ---- */
+.pp-devices {
+    position: relative;
+    max-width: 900px;
+    margin: 0 auto;
+    padding-right: 90px;
+}
+
+.pp-device {
+    background: #0c0c0b;
+    border: 1px solid #3a3a38;
+    box-shadow: 0 24px 60px var(--shadow);
+}
+
+.pp-device img {
+    display: block;
+    width: 100%;
+    height: auto;
+    border-radius: 6px;
+}
+
+.pp-tablet {
+    padding: 14px;
+    border-radius: 22px;
+}
+
+.pp-phone {
+    width: 240px;
+    max-width: 100%;
+    margin: 0 auto;
+    padding: 10px;
+    border-radius: 30px;
+}
+
+.pp-phone img {
+    border-radius: 20px;
+}
+
+.pp-devices .pp-phone {
+    position: absolute;
+    right: 0;
+    bottom: -28px;
+    width: 26%;
+    min-width: 120px;
+}
+
+.pp-media:has(.pp-device) {
+    border-radius: 0;
+    overflow: visible;
+    box-shadow: none;
+    background: none;
+}
+
+.pp-anchor {
+    margin: 96px 0 -24px;
+    padding-top: 24px;
+    border-top: 1px solid var(--border);
+    font-size: 30px;
+    letter-spacing: 0.04em;
+    color: var(--text);
+    scroll-margin-top: 24px;
+}
+
+.pp-anchor small {
+    margin-left: 8px;
+    padding: 2px 8px;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    vertical-align: middle;
+    color: var(--muted);
+}
+
+.pp-sub a {
+    color: var(--text);
+}
+
+.pp-center {
+    text-align: center;
+    max-width: 720px;
+    margin: 0 auto;
+}
+
+.pp-actions.pp-left {
+    justify-content: flex-start;
+    margin: 20px 0 0;
+}
+
+/* ---- the homepage section "One plugin, every form" (product_pages.forms_block) ---- */
+.forms {
+    margin: 48px 0;
+}
+
+.forms-lead {
+    max-width: 680px;
+    margin: -8px auto 24px;
+    text-align: center;
+    color: var(--muted);
+}
+
+.forms-lead a {
+    color: var(--text);
+}
+
+.fm-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 14px;
+}
+
+.fm-tile {
+    display: flex;
+    flex-direction: column;
+    margin: 0;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    background: var(--card-bg);
+}
+
+.fm-tile img {
+    display: block;
+    width: 100%;
+    height: 150px;
+    object-fit: cover;
+    object-position: top center;
+    background: #1b1a18;
+}
+
+.fm-tile figcaption {
+    padding: 10px 12px 12px;
+    margin-top: auto;
+}
+
+.fm-tile b {
+    display: block;
+    font-size: 13px;
+    color: var(--text);
+}
+
+.fm-tile span {
+    font-size: 12px;
+    color: var(--muted);
+}
+
+/* REAPER's plain slider list, drawn (no picture of REAPER) */
+.fm-jsfx {
+    height: 150px;
+    padding: 10px 12px;
+    overflow: hidden;
+    background: #e8e8e6;
+    color: #1b1a18;
+    font: 10px/1.2 system-ui, sans-serif;
+}
+
+.fm-slider {
+    display: grid;
+    grid-template-columns: 76px 1fr 40px;
+    align-items: center;
+    gap: 6px;
+    height: 14.5px;
+}
+
+.fm-tile .fm-slider span,
+.fm-tile .fm-slider b {
+    font-size: 10px;
+    color: #1b1a18;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    font-weight: 400;
+}
+
+.fm-slider b {
+    text-align: right;
+}
+
+.fm-slider i {
+    position: relative;
+    height: 3px;
+    background: #b5b5b2;
+}
+
+.fm-slider i::after {
+    content: "";
+    position: absolute;
+    top: -4px;
+    left: calc(var(--v) * 100% - 4px);
+    width: 8px;
+    height: 11px;
+    background: #6f6f6c;
+    border-radius: 2px;
+}
+
+@media (max-width: 760px) {
+    .pp-devices {
+        padding-right: 0;
+        padding-bottom: 20px;
+    }
+
+    .pp-devices .pp-phone {
+        bottom: -10px;
+        width: 30%;
+    }
+
+    .pp-tablet {
+        padding: 8px;
+        border-radius: 14px;
+    }
+}
+
+.fm-trailer {
+    max-width: 880px;
+    margin: 36px auto 0;
+}
+
+.fm-trailer h3 {
+    margin-bottom: 12px;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    text-align: center;
+    color: var(--muted);
+}
