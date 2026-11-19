@@ -54,6 +54,7 @@ VERSION = re.search(r'id="release-version">v([\d.]+)<', INDEX.read_text(encoding
 sys.dont_write_bytecode = True  # no __pycache__ in tools/
 sys.path.insert(0, str(ROOT / "tools"))
 from build_chains import CHAINS, RACK_PRESETS, rack_only  # noqa: E402
+import chain_pages  # noqa: E402  (the FX chain pages, chains/<slug>/)
 
 CATEGORIES = [
     ("One Slider", "one-slider", "One control, instant result. Turn it up until it sounds right."),
@@ -290,10 +291,13 @@ def chain_cards(plugins):
     on_site = {p["stem"]: p for p in plugins}
     nxt = ROOT / "tools/site_content_next.json"
     waiting = set(json.loads(nxt.read_text(encoding="utf-8"))) if nxt.exists() else set()
+    pages = {c["name"]: c for c in chain_pages.load()}
+    names_on_site = {s: p["name"] for s, p in on_site.items()}
     out = []
     for chain, steps_in, uses in sorted(chains, key=lambda c: c[0].lower()):
         if any(stem in waiting for stem, _ in steps_in):
             continue  # a plugin of the chain still waits off the site (site_content_next.json): so does the chain
+        cp = pages[chain]
         steps = []
         for stem, tag in steps_in:
             label = on_site[stem]["name"] if stem in on_site else \
@@ -306,7 +310,8 @@ def chain_cards(plugins):
         arrow = '<span class="chain-arrow" aria-hidden="true">&#8594;</span>'
         tags = "".join(f"<span>{t}</span>" for t in ["JSFX", "GFX"] + [u.upper() for u in uses])
         out.append(f"""                <article class="chain-card">
-                    <h3>{e(chain.upper())}</h3>
+                    <a class="chain-thumb" href="chains/{cp['slug']}/" tabindex="-1" aria-hidden="true">{chain_pages.diagram(cp, names_on_site, mini=True)}</a>
+                    <h3><a href="chains/{cp['slug']}/" class="card-link">{e(chain.upper())}</a></h3>
                     <p class="plugin-desc">{e(text[chain])}</p>
                     <div class="chain-steps">{arrow.join(steps)}</div>
                     <div class="plugin-formats">{tags}</div>
@@ -343,7 +348,7 @@ def tabs_block(plugins):
 {"".join(buttons)}                <button type="button" class="plugin-tab" role="tab" aria-selected="false" aria-controls="tab-chains" id="tab-btn-chains" data-tab="chains">FX Chains <span class="category-count">{chains.count("<article")}</span></button>
             </div>
 {"".join(panels)}            <div class="tab-panel" id="tab-chains" role="tabpanel" aria-labelledby="tab-btn-chains" hidden>
-                <p class="category-desc chains-desc">Ready-made REAPER FX chains of NULL JSFX plugins, in the JSFX download (<code>FXChains</code> folder, see <code>INSTALL.txt</code>). Load one with FX &#8594; Add FX chain; every plugin stays fully editable. Chains marked pin routing split the sound into bands or into mid and side; modulation ones move a control with an LFO, the input level or another control. Click a plugin for its guide.</p>
+                <p class="category-desc chains-desc">Ready-made REAPER FX chains of NULL JSFX plugins, in the JSFX download (<code>FXChains</code> folder, see <code>INSTALL.txt</code>). Load one with FX &#8594; Add FX chain; every plugin stays fully editable. Chains marked pin routing split the sound into bands or into mid and side; modulation ones move a control with an LFO, the input level or another control. Open a chain for its signal flow, how it opens in REAPER, its settings and, for many, a live listen; click a plugin for its guide.</p>
                 <div class="chain-grid">
 {chains}                </div>
             </div>
@@ -582,10 +587,27 @@ def page(p, plugins):
 """
 
 
+def site_chains(plugins):
+    """The chains that get a page: every chain of chain_pages.load() whose plugins are all on the site."""
+    nxt = ROOT / "tools/site_content_next.json"
+    waiting = set(json.loads(nxt.read_text(encoding="utf-8"))) if nxt.exists() else set()
+    return [c for c in chain_pages.load() if not any(s["stem"] in waiting for s in c["steps"])]
+
+
+def chain_page_files(plugins):
+    """[(path, html)] of the FX chain pages."""
+    chains = site_chains(plugins)
+    ctx = {"SITE": SITE, "VERSION": VERSION, "LIVE_BUTTONS": LIVE_BUTTONS, "LOOP_NAMES": LOOP_NAMES,
+           "n_plugins": len(plugins), "live_stems": {p["stem"] for p in plugins if p["live"]}}
+    on_site = {p["stem"]: p for p in plugins}
+    return [(chain_pages.PAGES / c["slug"] / "index.html", chain_pages.page(c, chains, on_site, ctx)) for c in chains]
+
+
 def sitemap(plugins):
     d, m, y = re.search(r'id="last-update">Released: (\d+)/(\d+)/(\d+)<', INDEX.read_text(encoding="utf-8")).groups()
     today = f"20{y}-{m}-{d}"  # the release date: changes with each release, not each run
     urls = [(SITE, "1.0", "weekly")] + [(SITE + p["page"], "0.8", "monthly") for p in plugins] + \
+        [(f"{SITE}chains/{c['slug']}/", "0.6", "monthly") for c in site_chains(plugins)] + \
         [(SITE + "supporters/", "0.5", "monthly"), (SITE + "media-kit/", "0.4", "yearly")]
     body = "".join(f"""    <url>
         <loc>{u}</loc>
@@ -647,9 +669,10 @@ def main(check):
         files.append((path, old, new))
     # whole files: the plugin pages and the sitemap
     for path, new in [(PAGES / p["page"].split("/")[1] / "index.html", page(p, plugins)) for p in plugins] + \
-            [(SITEMAP, sitemap(plugins))]:
+            chain_page_files(plugins) + [(SITEMAP, sitemap(plugins))]:
         files.append((path, path.read_text(encoding="utf-8") if path.exists() else None, new))
     gone = [d for d in PAGES.glob("*") if d.is_dir() and d.name not in {p["page"].split("/")[1] for p in plugins}]
+    gone += [d for d in chain_pages.PAGES.glob("*") if d.is_dir() and d.name not in {c["slug"] for c in site_chains(plugins)}]
     stale = [str(f.relative_to(ROOT)) for f, old, new in files if old != new] + [str(d.relative_to(ROOT)) for d in gone]
     if check:
         if stale:
