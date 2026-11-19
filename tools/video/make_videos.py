@@ -26,7 +26,7 @@ in (before) and what comes out (after), and a roll shows both sets of notes.
 Two files per plugin:
   assets/video/<plugin>.mp4      1280x720 H.264 for the site and the Hub (small, faststart)
   assets/video/<plugin>.jpg      its poster frame
-  <hq dir>/<plugin>.mp4          1920x1080 at higher quality (Ko-fi posts), with --hq <dir>
+  <hq dir>/<plugin>.mp4          1920x1080 at higher quality (posts), with --hq <dir>
 
 Usage: make_videos.py [--hq DIR] [--jobs N] [plugin ...]     (default: every GFX plugin)
 Needs ffmpeg, numpy and Pillow; builds gfx_video with tools/video/build.sh.
@@ -507,7 +507,7 @@ def master(mix, path):
 
 def encoder(stem, audio, hq_dir):
     """ffmpeg reading RGB24 1920x1080 frames on stdin: the 720p file for the repo and, with
-    hq_dir, the 1080p one for Ko-fi."""
+    hq_dir, the 1080p one for posts."""
     cmd = ["ffmpeg", "-y", "-loglevel", "error", "-f", "rawvideo", "-pix_fmt", "rgb24", "-s", f"{W}x{H}",
            "-r", str(FPS), "-i", "-", "-f", "f32le", "-ar", str(SR), "-ac", "2", "-i", str(audio)]
     if hq_dir:
@@ -930,7 +930,7 @@ def end_card(info):
     ctext(d, 460, "Free and open source  ·  JSFX  ·  GFX  ·  VST3  ·  CLAP", font(False, 34), SILVER)
     ctext(d, 520, "Windows  ·  Linux  ·  macOS", font(False, 30), MUTED)
     ctext(d, 640, "nulljsfx.tech", font(True, 56), TEXT)
-    ctext(d, 740, "Support the work: ko-fi.com/koulaxizis", font(False, 30), MUTED)
+    ctext(d, 740, "Support the work: nulljsfx.tech/support", font(False, 30), MUTED)
     return im
 
 

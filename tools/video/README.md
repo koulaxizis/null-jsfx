@@ -15,7 +15,7 @@ and the plugin pages stream them from there (the site's own copy is the fallback
 the site's copy: its CSP (`hub/app/tauri.conf.json`) allows media only from nulljsfx.tech, so the
 videos stay on Pages.
 
-Every script takes `--hq <dir>` to also write a 1920x1080 version at higher quality (for Ko-fi
-posts; not checked in). Run `tools/build_site.py` after adding a plugin's video. Audio is
+Every script takes `--hq <dir>` to also write a 1920x1080 version at higher quality (for posts;
+not checked in). Run `tools/build_site.py` after adding a plugin's video. Audio is
 mastered as a whole to about -16 LUFS, so before and after keep their real level difference.
 Needs ffmpeg, numpy, Pillow; the Rack also Xvfb, jackd2, xdotool and libjack; the Hub `cd hub && npm ci`.

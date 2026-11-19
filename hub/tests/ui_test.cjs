@@ -346,8 +346,8 @@ function check(cond, what) {
   // the Hub download link and the others open in the browser
   await page.click('#hub-update a[data-ext]');
   check((await calls()).some(([c, u]) => c === 'open' && u.endsWith('NULL-JSFX-Hub-Linux.AppImage')), 'the new Hub link opens the download');
-  await page.click('.side-foot a[href*="ko-fi"]');
-  check((await calls()).some(([c, u]) => c === 'open' && u.includes('ko-fi.com/koulaxizis')), 'Ko-fi link opens outside the Hub');
+  await page.click('.side-foot a[href*="/support/"]');
+  check((await calls()).some(([c, u]) => c === 'open' && u === 'https://nulljsfx.tech/support/'), 'the support link opens outside the Hub');
 
   // the Hub's CSP allows no inline handlers: they would silently do nothing there
   const src = fs.readFileSync(path.join(hub, 'ui/index.html'), 'utf8') + fs.readFileSync(path.join(hub, 'ui/hub.js'), 'utf8');

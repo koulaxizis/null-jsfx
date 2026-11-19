@@ -20,7 +20,7 @@ const EL = {
   "Release": "Έκδοση",
   "What's new": "Τι νέο υπάρχει",
   "Settings": "Ρυθμίσεις",
-  "Support on Ko-fi": "Στήριξη στο Ko-fi",
+  "Support NULL JSFX": "Στήριξε το NULL JSFX",
   "Search plugins, e.g. eq, reverb, vocal": "Αναζήτηση plugins, π.χ. eq, reverb, φωνή",
   "Formats to install": "Μορφές για εγκατάσταση",
   "Install as": "Εγκατάσταση ως",

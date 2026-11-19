@@ -104,11 +104,11 @@ begin
   ShellExecAsOriginalUser('open', 'https://useoros.online/studio/', '', '', SW_SHOWNORMAL, ewNoWait, Code);
 end;
 
-procedure KofiClick(Sender: TObject);
+procedure SupportClick(Sender: TObject);
 var
   Code: Integer;
 begin
-  ShellExecAsOriginalUser('open', 'https://ko-fi.com/koulaxizis', '', '', SW_SHOWNORMAL, ewNoWait, Code);
+  ShellExecAsOriginalUser('open', 'https://nulljsfx.tech/support/', '', '', SW_SHOWNORMAL, ewNoWait, Code);
 end;
 
 procedure InitializeWizard;
@@ -133,15 +133,15 @@ begin
   SupportText.Parent := WizardForm.FinishedPage;
   SupportText.AutoSize := False;
   SupportText.WordWrap := True;
-  SupportText.Caption := 'NULL JSFX is free and made by one person. If it helps your music, ' +
-    'a coffee keeps it going. Follow it on Ko-fi for news of every new version:';
+  SupportText.Caption := 'NULL JSFX is free and made by one person, and it stays that way. If it helps ' +
+    'your music, you can support it with a t-shirt, mug or sticker, or a one-time donation:';
   SupportLink := TNewStaticText.Create(WizardForm);
   SupportLink.Parent := WizardForm.FinishedPage;
-  SupportLink.Caption := 'Support and follow NULL JSFX on Ko-fi';
+  SupportLink.Caption := 'Ways to support NULL JSFX';
   SupportLink.Cursor := crHand;
   SupportLink.Font.Style := [fsUnderline];
   SupportLink.Font.Color := clHotLight;
-  SupportLink.OnClick := @KofiClick;
+  SupportLink.OnClick := @SupportClick;
 end;
 
 { Adds the factory presets in Src (a REAPER user preset file, presets\js-*.ini) to Dst in REAPER's

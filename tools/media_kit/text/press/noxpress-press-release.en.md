@@ -11,8 +11,8 @@ noxpress is a collection of free, open-source (MIT) WordPress and WooCommerce pl
 
 > "A small shop deserves the same tools as a big one, without a monthly bill for every feature." (Christos Koulaxizis, creator)
 
-**Links:** noxpress.tech · github.com/koulaxizis/noxpress · Support: ko-fi.com/koulaxizis
+**Links:** noxpress.tech · github.com/koulaxizis/noxpress · Support: noxpress.tech/support
 
 **Press contact:** koulaxizis@glarolykoi.net
 
-**About noxpress:** free MIT-licensed WordPress plugins by Christos Koulaxizis, funded only by voluntary support on Ko-fi. Logos and wallpapers are in the media kit at noxpress.tech.
+**About noxpress:** free MIT-licensed WordPress plugins by Christos Koulaxizis, supported by merch, one-time donations and paid services, with nothing unlocked. Logos and wallpapers are in the media kit at noxpress.tech.

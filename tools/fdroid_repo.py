@@ -34,7 +34,7 @@ AuthorName: NULL JSFX
 WebSite: https://nulljsfx.tech
 SourceCode: https://github.com/koulaxizis/null-jsfx
 IssueTracker: https://github.com/koulaxizis/null-jsfx/issues
-Donate: https://ko-fi.com/koulaxizis
+Donate: https://nulljsfx.tech/support/
 Categories:
   - Multimedia
 """
