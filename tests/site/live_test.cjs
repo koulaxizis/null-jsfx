@@ -2,7 +2,8 @@
 // served from the repo, a loop plays through the plugin's web version, and the sound that reaches
 // the speakers changes with the preset and with bypass. Also reads every plugin page's player data,
 // and does the same for the FX chain pages (chains/<slug>/): their chain data, their pictures, the
-// chain window and a whole chain playing live.
+// chain window and a whole chain playing live. Last, the product pages (rack/, hub/): every file they
+// show is there, and their silent loops start only when they come on screen.
 // Usage: node tests/site/live_test.cjs   (Playwright from tests/remote: npm ci there first)
 'use strict';
 const fs = require('fs');
@@ -14,7 +15,7 @@ const { chromium } = require(require.resolve('playwright', { paths: [path.join(r
 let failed = 0;
 function check(cond, what) { console.log(`${cond ? 'ok  ' : 'FAIL'} ${what}`); if (!cond) failed++; }
 
-const TYPES = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.mp3': 'audio/mpeg', '.json': 'application/json', '.svg': 'image/svg+xml', '.png': 'image/png', '.webp': 'image/webp', '.jpg': 'image/jpeg', '.woff2': 'font/woff2' };
+const TYPES = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.mp3': 'audio/mpeg', '.json': 'application/json', '.svg': 'image/svg+xml', '.png': 'image/png', '.webp': 'image/webp', '.jpg': 'image/jpeg', '.woff2': 'font/woff2', '.mp4': 'video/mp4' };
 const server = http.createServer((req, res) => {
   let p = decodeURIComponent(new URL(req.url, 'http://x').pathname);
   if (p.endsWith('/')) p += 'index.html';
@@ -60,6 +61,15 @@ const server = http.createServer((req, res) => {
   check(chainDirs.length > 80 && chainPlayers > 10 && !badChains.length, `${chainDirs.length} chain pages with their pictures, ${chainPlayers} with a live player ${badChains.join(' ')}`);
   check(!/data-live=/.test(fs.readFileSync(path.join(root, 'chains/acid-line/index.html'), 'utf8')), 'a chain with an instrument gets no live player');
   check(!/data-live=/.test(fs.readFileSync(path.join(root, 'chains/auto-filter/index.html'), 'utf8')), 'a chain with modulation gets no live player');
+
+  // the product pages: every picture, loop and poster they show is in the repo
+  for (const d of ['rack', 'hub']) {
+    const html = fs.readFileSync(path.join(root, d, 'index.html'), 'utf8');
+    const refs = [...html.matchAll(/(?:src|poster|srcset)="([^"]+)"/g)].flatMap((m) => m[1].split(',').map((x) => x.trim().split(' ')[0]))
+      .filter((u) => u.startsWith('/assets/'));
+    const missing = refs.filter((u) => !fs.existsSync(path.join(root, u)));
+    check(refs.length > 8 && !missing.length && (html.match(/data-clip/g) || []).length === 3, `/${d}/ shows ${refs.length} files, all there, and 3 loops ${missing.join(' ')}`);
+  }
 
   await new Promise((ok) => server.listen(0, '127.0.0.1', ok));
   const base = `http://127.0.0.1:${server.address().port}`;
@@ -121,6 +131,20 @@ const server = http.createServer((req, res) => {
   const dry = await centroid();
   check(dry > chained * 1.15, `the Lo-Fi chain darkens the loop and bypass brings it back (centroid ${chained.toFixed(0)} Hz, bypassed ${dry.toFixed(0)} Hz)`);
   check(errors.length === 0, `no errors on the chain page ${errors.join(' | ')}`);
+  // a product page: no errors, and a loop is only fetched once it is on screen
+  await page.goto(`${base}/rack/`);
+  await page.waitForTimeout(500);
+  const preloads = () => page.evaluate(() => [...document.querySelectorAll('video[data-clip]')].map((v) => v.preload));
+  check((await preloads()).every((p) => p === 'none'), 'the Rack page fetches no loop before it is seen');
+  await page.evaluate(() => document.querySelector('video[data-clip]').scrollIntoView({ block: 'center' }));
+  await page.waitForTimeout(800);
+  const after = await preloads();
+  check(after[0] === 'auto' && after.slice(1).includes('none'), `the loop on screen starts and the others wait (${after.join(' ')})`);
+  check(errors.length === 0, `no errors on the Rack page ${errors.join(' | ')}`);
+  const still = await browser.newPage({ reducedMotion: 'reduce' });
+  await still.goto(`${base}/hub/`);
+  await still.waitForTimeout(500);
+  check(await still.evaluate(() => [...document.querySelectorAll('video[data-clip]')].every((v) => v.controls && v.paused)), 'with reduced motion the loops stay still, with controls');
   await browser.close();
   server.close();
   console.log(failed ? `${failed} checks failed` : 'all checks passed');

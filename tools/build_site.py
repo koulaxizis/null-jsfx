@@ -54,7 +54,8 @@ VERSION = re.search(r'id="release-version">v([\d.]+)<', INDEX.read_text(encoding
 sys.dont_write_bytecode = True  # no __pycache__ in tools/
 sys.path.insert(0, str(ROOT / "tools"))
 from build_chains import CHAINS, RACK_PRESETS, rack_only  # noqa: E402
-import chain_pages  # noqa: E402  (the FX chain pages, chains/<slug>/)
+import chain_pages
+import product_pages  # noqa: E402  (the product pages, rack/ and hub/)
 
 CATEGORIES = [
     ("One Slider", "one-slider", "One control, instant result. Turn it up until it sounds right."),
@@ -608,6 +609,7 @@ def sitemap(plugins):
     today = f"20{y}-{m}-{d}"  # the release date: changes with each release, not each run
     urls = [(SITE, "1.0", "weekly")] + [(SITE + p["page"], "0.8", "monthly") for p in plugins] + \
         [(f"{SITE}chains/{c['slug']}/", "0.6", "monthly") for c in site_chains(plugins)] + \
+        [(SITE + "rack/", "0.9", "monthly"), (SITE + "hub/", "0.9", "monthly")] + \
         [(SITE + "supporters/", "0.5", "monthly"), (SITE + "media-kit/", "0.4", "yearly")]
     body = "".join(f"""    <url>
         <loc>{u}</loc>
@@ -666,10 +668,13 @@ def main(check):
         new = re.sub(r"\b\d+ (professional audio plugins|free audio plugins)", f"{len(plugins)} \\1", new)
         new = re.sub(r"\b(All |suite of )\d+( (?:audio )?plugins)", f"\\g<1>{len(plugins)}\\2", new)
         new = re.sub(r"\b\d+( ready-made FX chains| REAPER FX chains)", f"{n_chains}\\1", new)
+        new = re.sub(r"\b\d+ Rack presets", f"{len(product_pages.rack_presets())} Rack presets", new)
+        new = re.sub(r"\bof \d+ NULL modules", f"of {len(product_pages.rack_modules())} NULL modules", new)
         files.append((path, old, new))
-    # whole files: the plugin pages and the sitemap
+    # whole files: the plugin, chain and product (/rack/, /hub/) pages and the sitemap
     for path, new in [(PAGES / p["page"].split("/")[1] / "index.html", page(p, plugins)) for p in plugins] + \
-            chain_page_files(plugins) + [(SITEMAP, sitemap(plugins))]:
+            chain_page_files(plugins) + product_pages.files(plugins, site_chains(plugins), VERSION) + \
+            [(SITEMAP, sitemap(plugins))]:
         files.append((path, path.read_text(encoding="utf-8") if path.exists() else None, new))
     gone = [d for d in PAGES.glob("*") if d.is_dir() and d.name not in {p["page"].split("/")[1] for p in plugins}]
     gone += [d for d in chain_pages.PAGES.glob("*") if d.is_dir() and d.name not in {c["slug"] for c in site_chains(plugins)}]
