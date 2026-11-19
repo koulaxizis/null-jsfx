@@ -2494,3 +2494,10 @@ entry and the Bible delta.
 - **Tests (run on Linux):** `tests/lint.py` on all 348 JSFX and GFX (0 errors, with the version checks), `node web/tools/build.js --check`, `tools/build_site.py --check`, `tools/build_catalog.py --check` (175 entries with the Rack, 89 FX chains, 6 starter profiles), `tools/build_remote.py --check`, `tools/build_presets.py --check`, `tools/build_chains.py --check`, `cargo metadata --locked` in `hub/`, `tools/build_bible.py --check`, `tests/bible_order.py`.
 - **Next:** Claude runs the Release workflow with 4.1 once this is merged; Christos publishes the draft; Claude checks the assets, `release_smoke.sh 4.1`, the site links and the F-Droid repository and adds the 4.1 row to Part VI.3.
 - **Version:** v4.1.
+
+### 2026-11-19 · CI: more time for the macOS installer job
+- **Why:** the 4.1 Release run (44410737705) lost both macOS installers: job `installer-unix (macos-15)` hit its 30 minute limit while uploading them (built 9 min, tested 17 min, then about 2.7 GB to upload twice: the CI artifact and the release artifact). The packages grew with the 6 new plugins of 4.1.
+- **What:** `timeout-minutes` of `installer-unix` in `native.yml` 30 -> 60. The Release workflow is then run again with 4.1: it reuses the draft and rebuilds its assets (VI.2).
+- **Files:** `.github/workflows/native.yml`, this Bible (Part X).
+- **Tests:** only read here; the job runs in CI. `tests/bible_order.py`.
+- **Version:** v4.1 (no change).
