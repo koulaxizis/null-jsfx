@@ -22,6 +22,14 @@ catalog.notes = '## New\n- **NULL JSFX Hub**: install and update from one place\
 const odd = catalog.plugins.find((p) => p.id === 'chorus');
 Object.assign(odd, { guide: 'javascript:alert(1)', shot: 'http://example.invalid/x.png', video: 'file:///C:/x.mp4', demo: { url: 'data:audio/mp3,', preset: 'x' } });
 
+// the 3D render thumbnails on the cards: one that loads, one that cannot (offline) and falls
+// back to the screenshot, one that cannot and has no screenshot either
+const thumbs = catalog.plugins.filter((p) => p.shot && p.group !== 'extras').slice(0, 2);
+thumbs[0].thumb = thumbs[0].shot;
+thumbs[1].thumb = 'https://nulljsfx.tech/assets/hardware/none_thumb.webp';
+const bare = catalog.plugins.find((p) => p.group !== 'extras' && !thumbs.includes(p) && p !== odd);
+Object.assign(bare, { thumb: 'https://nulljsfx.tech/assets/hardware/none_thumb.webp', shot: null });
+
 const { mock } = require('./mock.cjs');
 
 // --- checks ----------------------------------------------------------------------------------
@@ -65,6 +73,11 @@ function check(cond, what) {
   await page.fill('#search', '');
   await page.waitForTimeout(100);
   if (shots) await page.screenshot({ path: path.join(shots, 'hub-plugins.png') });
+
+  await page.waitForTimeout(300);
+  check((await page.getAttribute(`.card[data-id="${thumbs[0].id}"] .shot img`, 'class')) === 'thumb', 'a card shows the 3D render thumbnail');
+  check((await page.getAttribute(`.card[data-id="${thumbs[1].id}"] .shot img`, 'src')) === thumbs[1].shot, 'a thumbnail that cannot load falls back to the screenshot');
+  check((await page.textContent(`.card[data-id="${bare.id}"] .shot`)).trim() === 'NULL', 'with neither, the card shows the placeholder');
 
   // Install from a card: the formats from Settings (all four)
   await page.click('.card[data-id="delay"] .card-foot button');

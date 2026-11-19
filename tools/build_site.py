@@ -25,6 +25,10 @@ GFX = PLUGINS / "gfx"
 NATIVE = ROOT / "native/plugins"
 SHOTS = ROOT / "assets/img/gfx"  # GFX interface screenshots, made by tools/render_gfx_shots.sh
 VIDEOS = ROOT / "assets/video"  # presentation videos and their posters, made by tools/video/make_videos.py
+# the 3D renders of each plugin as a hardware unit, rendered on Christos's PC (Bible II.8): <stem>.webp
+# hero 1600x900, <stem>_og.jpg 1200x630, <stem>.mp4 4 s orbit, <stem>_thumb.webp 480x270 (the Hub)
+HARDWARE = ROOT / "assets/hardware"
+HW_CAPTION = "3D render · software plugin"
 CONTENT = ROOT / "tools/site_content.json"
 INDEX = ROOT / "index.html"
 MODALS = ROOT / "assets/js/modals.js"
@@ -154,6 +158,12 @@ def live_presets(stem, category, in_studio):
             "p": [[name, {str(i + 1): num(vals[i]) for i in used if vals[i] != defaults[i]}] for name, vals in presets]}
 
 
+def hardware(stem):
+    """The plugin's 3D renders in assets/hardware/ (paths from the site root), None where a file is missing."""
+    names = {"hero": f"{stem}.webp", "og": f"{stem}_og.jpg", "orbit": f"{stem}.mp4", "thumb": f"{stem}_thumb.webp"}
+    return {k: f"assets/hardware/{n}" if (HARDWARE / n).is_file() else None for k, n in names.items()}
+
+
 def load():
     content = json.loads(CONTENT.read_text(encoding="utf-8"))
     plugins, errors = [], []
@@ -183,6 +193,7 @@ def load():
             "formats": formats(stem),
             "shot": f"assets/img/gfx/{stem}.png" if (SHOTS / f"{stem}.png").exists() else None,
             "video": f"assets/video/{stem}.mp4" if (VIDEOS / f"{stem}.mp4").exists() else None,
+            "hw": hardware(stem),
             "studio": stem in studio,
             "demo": demo_index.get(stem),
             "live": live_presets(stem, category, stem in studio),
@@ -431,7 +442,8 @@ def page(p, plugins):
                f"{p['name']}: {p['card_desc']}. Free: JSFX, VST3, CLAP, LV2.",
                f"{p['name']}: {p['card_desc']}.")
     poster = p["video"].rsplit("/", 1)[-1].replace(".mp4", ".jpg") if p["video"] else None
-    image = SITE + f"assets/video/{poster}" if poster else SITE + "assets/img/social-preview.jpg"
+    hw = p["hw"]
+    image = SITE + (hw["og"] or (f"assets/video/{poster}" if poster else "assets/img/social-preview.jpg"))
     ld = {
         "@context": "https://schema.org", "@type": "SoftwareApplication", "name": f"NULL {p['name']}",
         "description": p["card_desc"], "url": url, "image": image,
@@ -449,6 +461,15 @@ def page(p, plugins):
     media = (f'<video class="guide-shot guide-video" poster="/{p["video"][:-4]}.jpg" controls playsinline preload="none" width="1280" height="720" aria-label="{e(p["name"])} presentation video">'
              f'<source src="{MEDIA_VIDEOS}{p["stem"]}.mp4" type="video/mp4"><source src="/{p["video"]}" type="video/mp4"></video>'
              if p["video"] else f'<img class="guide-shot" src="/{p["shot"]}" alt="{e(p["name"])} interface" width="720" height="480">')
+    # the 3D render at the top, its caption, then the 4 s orbit (muted, looping, played by
+    # assets/js/orbit.js only while it is on screen)
+    hero = ""
+    if hw["hero"]:
+        hero = (f'\n            <figure class="hw-hero"><img src="/{hw["hero"]}" alt="{e(p["name"])}: 3D render of the plugin as a hardware unit" '
+                f'width="1600" height="900" fetchpriority="high"><figcaption>{e(HW_CAPTION)}</figcaption></figure>')
+        if hw["orbit"]:
+            hero += (f'\n            <video class="hw-orbit" muted loop playsinline preload="none" poster="/{hw["hero"]}" width="1280" height="720" '
+                     f'aria-label="{e(p["name"])}: the 3D render turning"><source src="/{hw["orbit"]}" type="video/mp4"></video>')
     sliders = "".join(f'<li><span class="slider-name">{e(n)}</span><span class="slider-desc">{e(r)} — {e(d)}</span></li>'
                       for n, r, d in p["sliders"])
     uses = "".join(f"<li>{e(u)}</li>" for u in p["uses"])
@@ -495,6 +516,9 @@ def page(p, plugins):
     related = "".join(f'<a class="related-card" href="/{q["page"]}"><b>{e(q["name"])}</b><small>{e(q["card_desc"])}</small></a>' for q in near)
     live_js = """
     <script src="/assets/js/live.js"></script>""" if p["live"] else ""
+    if hw["hero"] and hw["orbit"]:
+        live_js += """
+    <script src="/assets/js/orbit.js"></script>"""
     return f"""<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -523,7 +547,7 @@ def page(p, plugins):
             <a href="/" class="page-home"><img src="/assets/img/favicon.svg" alt="NULL JSFX" width="28" height="28"></a>
             <a href="/">NULL JSFX</a> <span>/</span> <a href="/{tab_hash}">{CATEGORY_TAB[p['category']]}</a> <span>/</span> <span>{e(p['name'])}</span>
         </nav>
-        <article class="page-plugin">
+        <article class="page-plugin">{hero}
             <header class="guide-header page-header">
                 <span class="guide-category">{e(p['category'])}</span>
                 <h1>{e(p['name'].upper())}{' ' + BETA_BADGE if p['beta'] else ''}</h1>

@@ -189,8 +189,10 @@ function shown() {
 
 function shotHtml(p, big) {
   // the plugin page plays the presentation video, with its poster until it starts
-  const video = safeUrl(p.video), shot = safeUrl(p.shot);
+  const video = safeUrl(p.video), shot = safeUrl(p.shot), thumb = safeUrl(p.thumb);
   if (big && video) return `<video src="${esc(video)}" poster="${esc(video.replace(/\.mp4$/, ".jpg"))}" controls playsinline preload="none"></video>`;
+  // a card shows the 3D render's thumbnail; if it cannot load, the screenshot, then the placeholder
+  if (!big && thumb) return `<img class="thumb" src="${esc(thumb)}" alt="" loading="lazy"${shot ? ` data-fallback="${esc(shot)}"` : ""}>`;
   return shot
     ? `<img src="${esc(shot)}" alt="" ${big ? "" : 'loading="lazy"'}>`
     : "NULL";
@@ -696,10 +698,20 @@ document.addEventListener("click", (e) => {
   const card = e.target.closest(".card");
   if (card) openDetail(card.dataset.id);
 });
-// a screenshot that can't load (offline) leaves the plain placeholder; the page's CSP allows no
-// inline handlers, so this listens for image errors on the whole page
+// a thumbnail or screenshot that can't load (offline) falls back to the screenshot, then to the
+// plain placeholder; the page's CSP allows no inline handlers, so this listens for image errors
+// on the whole page
 document.addEventListener("error", (e) => {
-  if (e.target.tagName === "IMG" && e.target.parentNode) e.target.replaceWith(document.createTextNode("NULL"));
+  const img = e.target;
+  if (img.tagName !== "IMG" || !img.parentNode) return;
+  if (img.dataset.fallback) {
+    const src = img.dataset.fallback;
+    delete img.dataset.fallback;
+    img.classList.remove("thumb");
+    img.src = src;
+    return;
+  }
+  img.replaceWith(document.createTextNode("NULL"));
 }, true);
 document.addEventListener("keydown", (e) => {
   if (e.key === "Escape" && !$("confirm").hidden) return closeConfirm();
