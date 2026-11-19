@@ -2346,3 +2346,8 @@ a.download-option:hover {
         border-radius: 15px;
     }
 }
+
+.apps-banner p.apps-banner-alt {
+    margin: 12px 0 0;
+    font-size: 13px;
+}
