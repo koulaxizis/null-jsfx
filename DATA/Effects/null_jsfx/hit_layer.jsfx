@@ -2,7 +2,7 @@ desc:NULL Hit Layer
 author: Christos Koulaxizis
 tags: hit layer drum transient trigger enhancer snare kick tom sub tone noise body sizzle reinforce augment
 //category: Essentials
-//NULL JSFX v4.1 • https://nulljsfx.tech • MIT License
+//NULL JSFX v4.1.1 • https://nulljsfx.tech • MIT License
 
 slider1:-24<-60,0,0.1>Threshold (dB)
 slider2:60<30,2000,1:log>Tone (Hz)
