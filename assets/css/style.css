@@ -3289,6 +3289,234 @@ a.download-option:hover {
     border-color: var(--accent);
 }
 
+/* ---- /remotes/: the app screens in drawn tablet and phone frames ---- */
+.pp-devices {
+    position: relative;
+    max-width: 900px;
+    margin: 0 auto;
+    padding-right: 90px;
+}
+
+.pp-device {
+    background: #0c0c0b;
+    border: 1px solid #3a3a38;
+    box-shadow: 0 24px 60px var(--shadow);
+}
+
+.pp-device img {
+    display: block;
+    width: 100%;
+    height: auto;
+    border-radius: 6px;
+}
+
+.pp-tablet {
+    padding: 14px;
+    border-radius: 22px;
+}
+
+.pp-phone {
+    width: 240px;
+    max-width: 100%;
+    margin: 0 auto;
+    padding: 10px;
+    border-radius: 30px;
+}
+
+.pp-phone img {
+    border-radius: 20px;
+}
+
+.pp-devices .pp-phone {
+    position: absolute;
+    right: 0;
+    bottom: -28px;
+    width: 26%;
+    min-width: 120px;
+}
+
+.pp-media:has(.pp-device) {
+    border-radius: 0;
+    overflow: visible;
+    box-shadow: none;
+    background: none;
+}
+
+.pp-anchor {
+    margin: 96px 0 -24px;
+    padding-top: 24px;
+    border-top: 1px solid var(--border);
+    font-size: 30px;
+    letter-spacing: 0.04em;
+    color: var(--text);
+    scroll-margin-top: 24px;
+}
+
+.pp-anchor small {
+    margin-left: 8px;
+    padding: 2px 8px;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    vertical-align: middle;
+    color: var(--muted);
+}
+
+.pp-sub a {
+    color: var(--text);
+}
+
+.pp-center {
+    text-align: center;
+    max-width: 720px;
+    margin: 0 auto;
+}
+
+.pp-actions.pp-left {
+    justify-content: flex-start;
+    margin: 20px 0 0;
+}
+
+/* ---- the homepage section "One plugin, every form" (product_pages.forms_block) ---- */
+.forms {
+    margin: 48px 0;
+}
+
+.forms-lead {
+    max-width: 680px;
+    margin: -8px auto 24px;
+    text-align: center;
+    color: var(--muted);
+}
+
+.forms-lead a {
+    color: var(--text);
+}
+
+.fm-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 14px;
+}
+
+.fm-tile {
+    display: flex;
+    flex-direction: column;
+    margin: 0;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    background: var(--card-bg);
+}
+
+.fm-tile img {
+    display: block;
+    width: 100%;
+    height: 150px;
+    object-fit: cover;
+    object-position: top center;
+    background: #1b1a18;
+}
+
+.fm-tile figcaption {
+    padding: 10px 12px 12px;
+    margin-top: auto;
+}
+
+.fm-tile b {
+    display: block;
+    font-size: 13px;
+    color: var(--text);
+}
+
+.fm-tile span {
+    font-size: 12px;
+    color: var(--muted);
+}
+
+/* REAPER's plain slider list, drawn (no picture of REAPER) */
+.fm-jsfx {
+    height: 150px;
+    padding: 10px 12px;
+    overflow: hidden;
+    background: #e8e8e6;
+    color: #1b1a18;
+    font: 10px/1.2 system-ui, sans-serif;
+}
+
+.fm-slider {
+    display: grid;
+    grid-template-columns: 76px 1fr 40px;
+    align-items: center;
+    gap: 6px;
+    height: 14.5px;
+}
+
+.fm-tile .fm-slider span,
+.fm-tile .fm-slider b {
+    font-size: 10px;
+    color: #1b1a18;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    font-weight: 400;
+}
+
+.fm-slider b {
+    text-align: right;
+}
+
+.fm-slider i {
+    position: relative;
+    height: 3px;
+    background: #b5b5b2;
+}
+
+.fm-slider i::after {
+    content: "";
+    position: absolute;
+    top: -4px;
+    left: calc(var(--v) * 100% - 4px);
+    width: 8px;
+    height: 11px;
+    background: #6f6f6c;
+    border-radius: 2px;
+}
+
+@media (max-width: 760px) {
+    .pp-devices {
+        padding-right: 0;
+        padding-bottom: 20px;
+    }
+
+    .pp-devices .pp-phone {
+        bottom: -10px;
+        width: 30%;
+    }
+
+    .pp-tablet {
+        padding: 8px;
+        border-radius: 14px;
+    }
+}
+
+.fm-trailer {
+    max-width: 880px;
+    margin: 36px auto 0;
+}
+
+.fm-trailer h3 {
+    margin-bottom: 12px;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    text-align: center;
+    color: var(--muted);
+
 /* Services: paid work booked on Ko-fi (index.html #services) */
 .services {
     margin-bottom: 48px;
