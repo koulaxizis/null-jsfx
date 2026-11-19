@@ -1,0 +1,168 @@
+{
+ "plugin": "spectrum_analyzer",
+ "image_size": [
+  1280.0,
+  1080.0
+ ],
+ "scale": 2.0,
+ "controls": [
+  {
+   "kind": "logo",
+   "x": 28.0,
+   "y": 20.0,
+   "w": 48.0,
+   "h": 48.0,
+   "label": "NULL JSFX"
+  },
+  {
+   "kind": "button",
+   "x": 818.0,
+   "y": 19.0,
+   "w": 28.0,
+   "h": 22.0,
+   "label": "header"
+  },
+  {
+   "kind": "button",
+   "x": 850.0,
+   "y": 19.0,
+   "w": 28.0,
+   "h": 22.0,
+   "label": "header"
+  },
+  {
+   "kind": "button",
+   "x": 890.0,
+   "y": 19.0,
+   "w": 28.0,
+   "h": 22.0,
+   "label": "header"
+  },
+  {
+   "kind": "button",
+   "x": 922.0,
+   "y": 19.0,
+   "w": 28.0,
+   "h": 22.0,
+   "label": "header"
+  },
+  {
+   "kind": "button",
+   "x": 954.0,
+   "y": 19.0,
+   "w": 40.0,
+   "h": 22.0,
+   "label": "header"
+  },
+  {
+   "kind": "button",
+   "x": 782.0,
+   "y": 19.0,
+   "w": 28.0,
+   "h": 22.0,
+   "label": "header"
+  },
+  {
+   "kind": "select",
+   "x": 952.0,
+   "y": 42.0,
+   "w": 300.0,
+   "h": 32.0,
+   "label": "PRESET"
+  },
+  {
+   "kind": "screen",
+   "x": 28.0,
+   "y": 108.0,
+   "w": 1224.0,
+   "h": 560.0
+  },
+  {
+   "kind": "panel",
+   "x": 28.0,
+   "y": 684.0,
+   "w": 1224.0,
+   "h": 368.0
+  },
+  {
+   "kind": "select",
+   "x": 252.7,
+   "y": 767.0,
+   "w": 178.7,
+   "h": 42.0,
+   "label": "FFT SIZE"
+  },
+  {
+   "kind": "knob",
+   "x": 512.7,
+   "y": 760.0,
+   "w": 56.0,
+   "h": 56.0,
+   "label": "SLOPE",
+   "v": 0.75,
+   "cx": 540.7,
+   "cy": 788.0,
+   "ring_radius": 48.0
+  },
+  {
+   "kind": "knob",
+   "x": 711.3,
+   "y": 760.0,
+   "w": 56.0,
+   "h": 56.0,
+   "label": "RELEASE",
+   "v": 0.15,
+   "cx": 739.3,
+   "cy": 788.0,
+   "ring_radius": 48.0
+  },
+  {
+   "kind": "select",
+   "x": 848.7,
+   "y": 767.0,
+   "w": 178.7,
+   "h": 42.0,
+   "label": "RANGE"
+  },
+  {
+   "kind": "select",
+   "x": 153.3,
+   "y": 939.0,
+   "w": 178.7,
+   "h": 42.0,
+   "label": "PEAK HOLD"
+  },
+  {
+   "kind": "select",
+   "x": 352.0,
+   "y": 939.0,
+   "w": 178.7,
+   "h": 42.0,
+   "label": "CHANNEL"
+  },
+  {
+   "kind": "select",
+   "x": 550.7,
+   "y": 939.0,
+   "w": 178.7,
+   "h": 42.0,
+   "label": "MONITOR"
+  },
+  {
+   "kind": "select",
+   "x": 749.3,
+   "y": 939.0,
+   "w": 178.7,
+   "h": 42.0,
+   "label": "VIEW"
+  },
+  {
+   "kind": "select",
+   "x": 948.0,
+   "y": 939.0,
+   "w": 178.7,
+   "h": 42.0,
+   "label": "SIDECHAIN"
+  }
+ ]
+}

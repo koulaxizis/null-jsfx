@@ -14,3 +14,4 @@ exclude:
   - "vendor/gems/"
   - "vendor/ruby/"
   - "assets/hardware/*.mp4"
+  - "native-ui-inputs"

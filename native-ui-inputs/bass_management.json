@@ -1,0 +1,156 @@
+{
+ "plugin": "bass_management",
+ "image_size": [
+  960.0,
+  920.0
+ ],
+ "scale": 2.0,
+ "controls": [
+  {
+   "kind": "logo",
+   "x": 28.0,
+   "y": 20.0,
+   "w": 48.0,
+   "h": 48.0,
+   "label": "NULL JSFX"
+  },
+  {
+   "kind": "button",
+   "x": 498.0,
+   "y": 19.0,
+   "w": 28.0,
+   "h": 22.0,
+   "label": "header"
+  },
+  {
+   "kind": "button",
+   "x": 530.0,
+   "y": 19.0,
+   "w": 28.0,
+   "h": 22.0,
+   "label": "header"
+  },
+  {
+   "kind": "button",
+   "x": 570.0,
+   "y": 19.0,
+   "w": 28.0,
+   "h": 22.0,
+   "label": "header"
+  },
+  {
+   "kind": "button",
+   "x": 602.0,
+   "y": 19.0,
+   "w": 28.0,
+   "h": 22.0,
+   "label": "header"
+  },
+  {
+   "kind": "button",
+   "x": 634.0,
+   "y": 19.0,
+   "w": 40.0,
+   "h": 22.0,
+   "label": "header"
+  },
+  {
+   "kind": "button",
+   "x": 462.0,
+   "y": 19.0,
+   "w": 28.0,
+   "h": 22.0,
+   "label": "header"
+  },
+  {
+   "kind": "select",
+   "x": 632.0,
+   "y": 42.0,
+   "w": 300.0,
+   "h": 32.0,
+   "label": "PRESET"
+  },
+  {
+   "kind": "screen",
+   "x": 28.0,
+   "y": 108.0,
+   "w": 904.0,
+   "h": 400.0
+  },
+  {
+   "kind": "panel",
+   "x": 28.0,
+   "y": 524.0,
+   "w": 904.0,
+   "h": 368.0
+  },
+  {
+   "kind": "select",
+   "x": 199.3,
+   "y": 607.0,
+   "w": 125.3,
+   "h": 42.0,
+   "label": "BED"
+  },
+  {
+   "kind": "knob",
+   "x": 379.3,
+   "y": 600.0,
+   "w": 56.0,
+   "h": 56.0,
+   "label": "CROSSOVER",
+   "v": 0.4307,
+   "cx": 407.3,
+   "cy": 628.0,
+   "ring_radius": 48.0
+  },
+  {
+   "kind": "select",
+   "x": 490.0,
+   "y": 607.0,
+   "w": 125.3,
+   "h": 42.0,
+   "label": "MAINS"
+  },
+  {
+   "kind": "select",
+   "x": 635.3,
+   "y": 607.0,
+   "w": 125.3,
+   "h": 42.0,
+   "label": "LFE GAIN"
+  },
+  {
+   "kind": "knob",
+   "x": 306.7,
+   "y": 772.0,
+   "w": 56.0,
+   "h": 56.0,
+   "label": "SUB LEVEL",
+   "v": 0.5,
+   "cx": 334.7,
+   "cy": 800.0,
+   "ring_radius": 48.0
+  },
+  {
+   "kind": "select",
+   "x": 417.3,
+   "y": 779.0,
+   "w": 125.3,
+   "h": 42.0,
+   "label": "LISTEN"
+  },
+  {
+   "kind": "knob",
+   "x": 597.3,
+   "y": 772.0,
+   "w": 56.0,
+   "h": 56.0,
+   "label": "OUTPUT",
+   "v": 0.6667,
+   "cx": 625.3,
+   "cy": 800.0,
+   "ring_radius": 48.0
+  }
+ ]
+}
