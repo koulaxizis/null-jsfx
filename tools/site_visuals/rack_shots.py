@@ -35,6 +35,7 @@ SHOTS = [
     ("sequencer", "Rhythm Engine", []),
     ("lanes", "Parallel Drum Smash", [SLOT(3)]),
     ("space", "Cosmic Space", [SLOT(3)]),
+    ("delay", "Rhythm Engine", [SLOT(4)]),  # the homepage "one plugin, every form": Delay as a Rack module
 ]
 
 # (file name, preset, clicks before filming, seconds, drags while filming [(start s, point, dy px, s)])

@@ -2,8 +2,8 @@
 // served from the repo, a loop plays through the plugin's web version, and the sound that reaches
 // the speakers changes with the preset and with bypass. Also reads every plugin page's player data,
 // and does the same for the FX chain pages (chains/<slug>/): their chain data, their pictures, the
-// chain window and a whole chain playing live. Last, the product pages (rack/, hub/): every file they
-// show is there, and their silent loops start only when they come on screen.
+// chain window and a whole chain playing live. Last, the product pages (rack/, hub/, remotes/) and the
+// homepage's "One plugin, every form": every file they show is there, and their silent loops start only when they come on screen.
 // Usage: node tests/site/live_test.cjs   (Playwright from tests/remote: npm ci there first)
 'use strict';
 const fs = require('fs');
@@ -62,13 +62,16 @@ const server = http.createServer((req, res) => {
   check(!/data-live=/.test(fs.readFileSync(path.join(root, 'chains/acid-line/index.html'), 'utf8')), 'a chain with an instrument gets no live player');
   check(!/data-live=/.test(fs.readFileSync(path.join(root, 'chains/auto-filter/index.html'), 'utf8')), 'a chain with modulation gets no live player');
 
-  // the product pages: every picture, loop and poster they show is in the repo
-  for (const d of ['rack', 'hub']) {
+  // the product pages and the homepage: every picture, loop and poster they show from /assets/ is in the repo
+  const home = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
+  check((home.match(/class="fm-tile"/g) || []).length === 5 && /poster="\/assets\/video\/trailer\.jpg"/.test(home), 'the homepage shows Delay in five forms and the trailer');
+  for (const d of ['rack', 'hub', 'remotes', '']) {
     const html = fs.readFileSync(path.join(root, d, 'index.html'), 'utf8');
     const refs = [...html.matchAll(/(?:src|poster|srcset)="([^"]+)"/g)].flatMap((m) => m[1].split(',').map((x) => x.trim().split(' ')[0]))
       .filter((u) => u.startsWith('/assets/'));
     const missing = refs.filter((u) => !fs.existsSync(path.join(root, u)));
-    check(refs.length > 8 && !missing.length && (html.match(/data-clip/g) || []).length === 3, `/${d}/ shows ${refs.length} files, all there, and 3 loops ${missing.join(' ')}`);
+    const loops = (html.match(/data-clip/g) || []).length;
+    check(refs.length > 5 && !missing.length && loops === (d === 'rack' || d === 'hub' ? 3 : 0), `/${d}${d ? '/' : ''} shows ${refs.length} files from the repo, all there, and ${loops} loops ${missing.join(' ')}`);
   }
 
   await new Promise((ok) => server.listen(0, '127.0.0.1', ok));
