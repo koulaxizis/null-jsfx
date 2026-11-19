@@ -304,7 +304,7 @@ class Shell(
     @JavascriptInterface
     fun haptic() = ui.haptic()
 
-    /** Opens an https link (the update download, the Ko-fi page) in the phone's browser. */
+    /** Opens an https link (the update download, the support page) in the phone's browser. */
     @JavascriptInterface
     fun openUrl(url: String) {
         if (!url.startsWith("https://")) return

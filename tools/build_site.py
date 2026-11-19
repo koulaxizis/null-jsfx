@@ -569,7 +569,9 @@ def page(p, plugins):
         <div class="footer-content">
             Designed with &#9825; by <a href="https://koulaxizis.gr" target="_blank" rel="noopener">Christos Koulaxizis</a>.
             <div class="footer-links">
-                <a href="https://ko-fi.com/koulaxizis" target="_blank" rel="noopener">Support on Ko-fi</a>
+                <a href="/support/">Support NULL JSFX</a>
+                <span class="sep">&bull;</span>
+                <a href="https://koulaxizis.gr/work-with-me/?lang=en#null-jsfx" target="_blank" rel="noopener">Work with me</a>
                 <span class="sep">&bull;</span>
                 <a href="https://github.com/koulaxizis/null-jsfx" target="_blank" rel="noopener">GitHub</a>
                 <span class="sep">&bull;</span>
@@ -610,7 +612,7 @@ def sitemap(plugins):
     urls = [(SITE, "1.0", "weekly")] + [(SITE + p["page"], "0.8", "monthly") for p in plugins] + \
         [(f"{SITE}chains/{c['slug']}/", "0.6", "monthly") for c in site_chains(plugins)] + \
         [(SITE + "rack/", "0.9", "monthly"), (SITE + "hub/", "0.9", "monthly"), (SITE + "remotes/", "0.8", "monthly")] + \
-        [(SITE + "supporters/", "0.5", "monthly"), (SITE + "media-kit/", "0.4", "yearly")]
+        [(SITE + "support/", "0.5", "monthly"), (SITE + "media-kit/", "0.4", "yearly")]
     body = "".join(f"""    <url>
         <loc>{u}</loc>
         <lastmod>{today}</lastmod>

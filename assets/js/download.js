@@ -1,8 +1,8 @@
 // Download modal: the Download button opens it (without JavaScript the button still leads to
 // the GitHub releases page). It suggests NULL JSFX Hub, the installer and the VST3/CLAP
 // package for the visitor's system.
-// The first download of a visit shows a short support step (Ko-fi: support, and follow for updates) with
-// "Skip to download"; later downloads in the same visit start right away.
+// A download shows a short support step (the /support/ page: merch, a one-time donation, services)
+// with "Skip to download" and "Don't show this again", at most once every 30 days (R22).
 (function () {
     const base = 'https://github.com/koulaxizis/null-jsfx/releases/latest/download/';
     const modal = document.getElementById('download-modal');
@@ -12,7 +12,28 @@
     const options = modal.querySelector('.download-options');
     const support = document.getElementById('download-support');
     const skip = document.getElementById('download-skip');
+    // R22: the support step shows at most once every 30 days in this browser
+    // (localStorage 'nulljsfx-support-seen', the time it last showed);
+    // "Don't show this again" ('nulljsfx-support-off') turns it off for good.
+    // Without storage it shows every time, as a plain step.
     const SEEN_KEY = 'nulljsfx-support-seen';
+    const OFF_KEY = 'nulljsfx-support-off';
+    const GAP = 30 * 24 * 60 * 60 * 1000;
+    const never = document.getElementById('support-never');
+    function supportDue() {
+        try {
+            if (localStorage.getItem(OFF_KEY) === '1') return false;
+            const t = parseInt(localStorage.getItem(SEEN_KEY) || '0', 10);
+            return !(t > 0 && Date.now() - t < GAP);
+        } catch (e) { return true; }
+    }
+    function markSupportSeen() {
+        try { localStorage.setItem(SEEN_KEY, String(Date.now())); } catch (e) { /* private mode */ }
+    }
+    function rememberChoice() {
+        if (!never || !never.checked) return;
+        try { localStorage.setItem(OFF_KEY, '1'); } catch (e) { /* private mode */ }
+    }
 
     function detectOS() {
         const ua = navigator.userAgent || '';
@@ -38,13 +59,6 @@
     document.getElementById('dl-hub').href = base + hub;
     document.getElementById('dl-hub-file').textContent = hub;
 
-    function supportSeen() {
-        try { return sessionStorage.getItem(SEEN_KEY) === '1'; } catch (e) { return false; }
-    }
-    function markSupportSeen() {
-        try { sessionStorage.setItem(SEEN_KEY, '1'); } catch (e) { /* private mode */ }
-    }
-
     function showOptions() {
         support.hidden = true;
         options.hidden = false;
@@ -52,7 +66,7 @@
     }
 
     window.openDownload = function () { showOptions(); modal.classList.add('active'); };
-    window.closeDownload = function () { modal.classList.remove('active'); };
+    window.closeDownload = function () { rememberChoice(); modal.classList.remove('active'); };
 
     // #download in the address (the plugin pages link there) opens the window
     if (location.hash === '#download') {
@@ -68,10 +82,10 @@
         if (e.target === modal) closeDownload();
     });
 
-    // every package link in the modal goes through the support step once per visit
+    // a package link goes through the support step when it is due
     options.querySelectorAll('a[href*="/releases/latest/download/"]').forEach(function (link) {
         link.addEventListener('click', function (e) {
-            if (supportSeen()) return;
+            if (!supportDue()) return;
             e.preventDefault();
             markSupportSeen();
             skip.href = link.href;
@@ -80,13 +94,12 @@
         });
     });
 
-    // after a visit to Ko-fi, the skip link reads as the way on
-    ['support-kofi', 'support-follow'].forEach(function (id) {
-        document.getElementById(id).addEventListener('click', function () {
-            skip.textContent = 'Continue to download →';
-        });
+    // after a visit to /support/, the skip link reads as the way on
+    document.getElementById('support-page').addEventListener('click', function () {
+        skip.textContent = 'Continue to download →';
     });
     skip.addEventListener('click', function () {
+        rememberChoice();
         setTimeout(closeDownload, 300);
     });
 })();

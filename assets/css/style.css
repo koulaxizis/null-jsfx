@@ -1391,6 +1391,23 @@ a.download-option:hover {
     text-decoration: underline;
 }
 
+.download-never {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 12px;
+    font-size: 11px;
+    color: var(--muted);
+    cursor: pointer;
+}
+
+.download-never input {
+    accent-color: var(--accent);
+    width: 14px;
+    height: 14px;
+}
+
 .support-btn {
     text-decoration: none;
     margin-right: 6px;

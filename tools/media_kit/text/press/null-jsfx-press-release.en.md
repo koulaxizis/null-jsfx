@@ -17,8 +17,8 @@ The NULL JSFX Hub installs, updates and removes the suite with one click, and in
 
 > "I wanted a complete set of studio tools that anyone can use and study, without paywalls. NULL JSFX stays free, and the code stays open." (Christos Koulaxizis, creator)
 
-**Links:** nulljsfx.tech · github.com/koulaxizis/null-jsfx · Support: ko-fi.com/koulaxizis
+**Links:** nulljsfx.tech · github.com/koulaxizis/null-jsfx · Support: nulljsfx.tech/support
 
 **Press contact:** koulaxizis@glarolykoi.net
 
-**About NULL JSFX:** a free MIT-licensed plugin suite by Christos Koulaxizis, funded only by voluntary support on Ko-fi. Logos, screenshots and wallpapers are in the media kit at nulljsfx.tech.
+**About NULL JSFX:** a free MIT-licensed plugin suite by Christos Koulaxizis, supported by merch, one-time donations and paid services, with nothing unlocked. Logos, screenshots and wallpapers are in the media kit at nulljsfx.tech.

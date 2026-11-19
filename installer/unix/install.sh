@@ -561,9 +561,9 @@ has "$EXTRAS" remote && say "Tablet remote: its bridge starts with REAPER (resta
 say "Remove it all later with: bash $(basename "$0") --uninstall"
 say "Try the effects in a browser too, as web plugins in orOS Studio: $STUDIO"
 say ""
-say "NULL JSFX is free and made by one person. If it helps your music, a coffee keeps it going."
-say "Follow it on Ko-fi for news of every new version:"
-say "  https://ko-fi.com/koulaxizis"
+say "NULL JSFX is free and made by one person, and it stays that way. If it helps your music,"
+say "you can support it with a t-shirt, mug or sticker, or a one-time donation:"
+say "  https://nulljsfx.tech/support/"
 if [ -n "$gui" ]; then
   exec 1>&4
   dialog info "$(sed '1,/^$/d' "$report" | sed '/^$/d')" || true

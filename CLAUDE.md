@@ -18,7 +18,7 @@ Never guess the contents of a file. Read it from the repo, or ask for it.
 - Released plugin identities (name, unique id, CLAP id, URI) never change.
 - Generated files are never edited by hand (Bible Part II.9). Run the generators and tests the change touches (Bible R15, Part V).
 - The version changes everywhere at once (Bible Part VI.1); `tests/lint.py` fails if `llms.txt` or `index.html` shows another version than `FOOTER`. Releases are published by the owner.
-- Free forever: no paywalls, licence keys, ads or nags. Support and news go through Ko-fi only.
+- Free forever: no paywalls, licence keys, ads or nags. Support goes through the /support/ page (merch on glarolykoi.net, a one-time Viva donation, paid services); nothing is unlocked. News goes to the release notes, the Hub notices and the Updates feed on koulaxizis.gr. No Ko-fi (Bible R21, R22).
 
 ## Every delivery ends with
 1. What changed, and why.

@@ -81,7 +81,7 @@ def end_card():
     mv.ctext(d, 460, "Free and open source  ·  no account  ·  no tracking", font(False, 34), mv.SILVER)
     mv.ctext(d, 520, "Download it from the latest release", font(False, 30), mv.MUTED)
     mv.ctext(d, 640, "nulljsfx.tech", font(True, 56), mv.TEXT)
-    mv.ctext(d, 740, "Support the work: ko-fi.com/koulaxizis", font(False, 30), mv.MUTED)
+    mv.ctext(d, 740, "Support the work: nulljsfx.tech/support", font(False, 30), mv.MUTED)
     return np.asarray(im)
 
 
