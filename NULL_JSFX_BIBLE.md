@@ -878,6 +878,7 @@ Since 2026-11-01 a release is built as a **draft** and published only when every
 | 3.3 | 2026-11-05 15:12 | Steadier remotes: X32/M32/X AIR read every value over lossy links and VPNs and again after a dropout, ping instead of meters for liveness, 4 s renewals, Scan with a VPN app on; WING, Allen & Heath, Yamaha, Bitwig/Live/Cubase/FL notice dead links and redial; Ardour asks twice; Harmonizer Sustain Pedal. 19 assets, `release_smoke.sh 3.3` ok, site links match the assets, F-Droid repo at 3.3 (30300) for both apps |
 | 3.3.1 | 2026-11-15 04:13 | Security fixes (plugins' state values, the CI secrets, Remote for DAWs pairing with a code on Bitwig and Live, the Hub's catalog and download checks, the installers, the Android apps; Part X, 2026-11-14). 19 assets, the published catalog carries the sha256 of all 18 other assets and they match GitHub's digests, `release_smoke.sh 3.3.1` ok, the site shows v3.3.1, F-Droid repo at 3.3.1 (30301) for both apps |
 | 4.0 | 2026-11-17 15:23 | Kilohearts-style plan (B21): 14 new plugins, beta (Echo One, Warmer, Closer, Smoother, Phase Distortion, Lo-Fi Comp, Spectral Blur, Bloom Delay, Strum, MIDI Monitor, Key Detect, Null Test, Choir, Wind; 168 plugins), Rack lanes A–D, up to 5 bands, MIDI input, new modulators, Remap, Scenes with Morph, 20 new Rack templates, 2,040 presets, 9 FX chains, Hub starter profiles, the live player on the plugin pages. 19 assets, the published catalog carries the sha256 of all 18 other assets and they match GitHub's digests, `release_smoke.sh 4.0` ok, the JSFX zip holds 336 files with the v4.0 footer, the site shows v4.0, F-Droid repo at 4.0 (40000) for both apps; every macOS job of the release and of main at `2da6c5a` green (build with `--test`, installers, Hub) |
+| 4.1 | 2026-11-19 07:21 | 6 new plugins (Step Filter, Beat Gen, Band Spin, Hit Layer, Bass Presence, Music Box; beta), the dice in every header, generative and Klevgrand-inspired upgrades, the mirrored N; 174 plugins, 89 FX chains |
 | media | 2026-10-19 (pre-release) | the videos, not a plugin release |
 
 ### VI.4 Hub rollback and updates
@@ -2501,3 +2502,9 @@ entry and the Bible delta.
 - **Files:** `.github/workflows/native.yml`, this Bible (Part X).
 - **Tests:** only read here; the job runs in CI. `tests/bible_order.py`.
 - **Version:** v4.1 (no change).
+
+### 2026-11-19 · 4.1 published — release check
+- **What:** Christos published 4.1 (2026-11-19 07:21 UTC), from the draft of Release run 44440398027 (the second run; the first lost the macOS installers to the job's time limit, fixed by #180). Claude checked it and added the 4.1 row to Part VI.3.
+- **Verified:** 19 assets on the release; the catalog rebuilt on publish carries version 4.1 and the sha256 of all 18 other assets, equal to GitHub's digests; `hub/tests/release_smoke.sh 4.1` ok; `releases/latest/download/<name>` answers a GET for the JSFX zip (a HEAD through the session's proxy answered 401, a GET with a range 206); nulljsfx.tech shows v4.1 and `/plugins/step-filter/` answers 200; the F-Droid repository lists 4.1 (40100) for both apps.
+- **Files:** this Bible (VI.3, Part X).
+- **Version:** v4.1.
