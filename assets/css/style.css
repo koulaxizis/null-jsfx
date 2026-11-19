@@ -2285,3 +2285,64 @@ a.download-option:hover {
 .live-status:empty {
     display: none;
 }
+
+/* Koulaxizis Apps: the one Android channel, its own card above the featured tools */
+.apps-banner {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    margin: 8px 0 40px;
+    padding: 24px 28px;
+    border: 2px solid var(--accent);
+    border-radius: 12px;
+    background: linear-gradient(135deg, rgba(196, 196, 196, 0.12) 0%, rgba(196, 196, 196, 0.02) 70%), var(--card-bg);
+    box-shadow: 0 0 0 4px var(--accent-ring);
+}
+
+.apps-banner-icon {
+    flex-shrink: 0;
+    width: 96px;
+    height: 96px;
+    border-radius: 22px;
+}
+
+.apps-banner-body {
+    min-width: 0;
+}
+
+.apps-banner h2 {
+    margin: 6px 0 8px;
+    font-size: 24px;
+    letter-spacing: 0.04em;
+}
+
+.apps-banner p {
+    margin: 0 0 16px;
+    color: var(--muted);
+    line-height: 1.6;
+}
+
+.apps-banner-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px 20px;
+}
+
+.apps-banner-more {
+    color: var(--text);
+}
+
+@media (max-width: 600px) {
+    .apps-banner {
+        flex-direction: column;
+        align-items: flex-start;
+        padding: 20px 16px;
+    }
+
+    .apps-banner-icon {
+        width: 64px;
+        height: 64px;
+        border-radius: 15px;
+    }
+}

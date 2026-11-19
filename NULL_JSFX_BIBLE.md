@@ -2516,3 +2516,10 @@ entry and the Bible delta.
 - **Files:** `index.html`, `llms.txt`, `android/README.md`, this Bible (R20, Part VII, Part X).
 - **Tests:** `tools/build_site.py --check`, `tests/lint.py`, `tests/bible_order.py` run locally; CI.
 - **Version:** v4.1 (no change).
+
+### 2026-11-19 · Site: Koulaxizis Apps gets its own card
+- **Why:** Christos asked for the app manager to be on every one of his sites with its own card that stands out (orOS thread «📦 Δικός μας app manager για Android», 2026-11-19).
+- **What:** `index.html` has a Koulaxizis Apps banner (`#koulaxizis-apps`) above "Hub, Rack & Remotes": its icon, a silver 2px border, what it holds, a button to the manager's APK (`koulaxizis/oros` release `koulaxizis-apps`) and a link to its install page. Styles `.apps-banner*` in `assets/css/style.css` keep the silver accent (R8). The icon is `assets/img/remote/koulaxizis-apps.png`, the manager's own launcher icon.
+- **Files:** `index.html`, `assets/css/style.css`, `assets/img/remote/koulaxizis-apps.png`, this Bible (Part X).
+- **Tests:** `tools/build_site.py --check`, `tests/lint.py`, `tests/bible_order.py` run locally; screenshots at 1280 and 360 px (no horizontal scroll); CI.
+- **Version:** v4.1 (no change).
