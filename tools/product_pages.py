@@ -1,5 +1,6 @@
-"""The product pages of the site: rack/index.html (NULL JSFX Rack) and hub/index.html (NULL JSFX
-Hub). Used by tools/build_site.py, so their counts (modules, presets, plugins, chains) come from
+"""The product pages of the site: rack/index.html (NULL JSFX Rack), hub/index.html (NULL JSFX
+Hub) and remotes/index.html (the three remote apps), plus the homepage section "One plugin, every
+form" (forms_block()). Used by tools/build_site.py, so their counts (modules, presets, plugins, chains) come from
 the repo and cannot drift. Their pictures and short loops are made by tools/site_visuals/
 (rack_shots.py, hub_shots.cjs, then publish.py into assets/img/{rack,hub}/ and assets/video/site/).
 
@@ -364,6 +365,158 @@ def hub_page(plugins, chains, version):
                  software_ld("NULL JSFX Hub", desc, url, image, version, {"applicationSubCategory": "Plugin manager"}))
 
 
+FDROID = ("fdroidrepos://koulaxizis.github.io/null-jsfx-fdroid/repo?fingerprint="
+          "1C071614D51503C5ED3260A1B69A0D44CEA6057A5DC6A3ACC3FA7AD130EF64EB")
+APK = "https://github.com/koulaxizis/null-jsfx/releases/latest/download/NULL-JSFX-Remote-{}-Android.apk"
+
+
+def device(kind, name, alt, w, h):
+    """A screen of a remote app in a drawn tablet or phone frame, or "" when the screen is missing."""
+    shot = picture("remotes", name, alt, w, h)
+    return f'<div class="pp-device pp-{kind}">{shot}</div>' if shot else ""
+
+
+def remotes_page(plugins, chains, version):
+    url = "https://nulljsfx.tech/remotes/"
+    desc = ("Free Android remotes from NULL JSFX: your DAW's mixer, transport and every NULL JSFX plugin, your "
+            "digital mixer, or orOS Studio, on your phone or tablet over Wi-Fi. No account, no Google.")
+    image = "https://nulljsfx.tech/assets/img/remote/remote-for-daws.jpg"
+    T, P, M = (1180, 820), (412, 860), (1280, 800)
+    more = ('Also in <a href="https://useoros.online/download/#koulaxizis-apps" target="_blank" rel="noopener">Koulaxizis Apps</a>, '
+            f'<a href="{FDROID}">our F-Droid repository</a> (F-Droid, Droid-ify) or Obtainium from <code>github.com/koulaxizis/null-jsfx</code>.')
+    hero = f"""
+            <header class="pp-hero">
+                <span class="pp-kicker">Free apps &middot; Android 8.0+ &middot; phone and tablet &middot; no Google</span>
+                <h1>NULL JSFX REMOTES</h1>
+                <p class="pp-lead">Walk away from the computer. Your DAW, your mixer or orOS Studio on your phone or tablet, over your own Wi-Fi.</p>
+                <div class="pp-actions">
+                    <a class="featured-btn" href="#daws"><span>Remote for DAWs</span></a>
+                    <a class="pp-ghost" href="#mixers"><span>Remote for Mixers</span></a>
+                    <a class="pp-ghost" href="#studio"><span>Remote for orOS Studio</span></a>
+                </div>
+                <div class="pp-devices">{device("tablet", "mixers-desk", "Remote for Mixers on a tablet: the channels of a Behringer X AIR", *M)}{device("phone", "daws-phone", "Remote for DAWs on a phone: the mixer of Bitwig Studio", *P)}</div>
+            </header>
+            {stats([(7, "DAW tabs"), (8, "console families"), (len(plugins), "plugins to control"), (0, "accounts")])}"""
+    daws = rows([
+        ("Mixer", "Your DAW's mixer and transport",
+         "Faders, pan, mute, solo and arm with meters, and the transport, for the DAW on your computer.",
+         ["REAPER, Ardour and Mixbus, Bitwig Studio, Ableton Live, Cubase and FL Studio",
+          "Finds REAPER on your network; Cubase and FL Studio over network MIDI"],
+         device("tablet", "daws-desk", "Remote for DAWs on a tablet: Ardour's mixer and transport", *T)),
+        ("Plugins", "The plugin's own interface",
+         "Open a track's FX and every NULL JSFX plugin shows the interface it has on the computer, with its presets and A/B. What you turn moves in the DAW.",
+         [], device("tablet", "daws-plugin", "Remote for DAWs: NULL Delay on an Ardour track", *T)),
+        ("Sends", "Sends and FX tracks", "Set the sends of a track to its FX tracks, as in the DAW.", [],
+         device("tablet", "daws-sends", "Remote for DAWs: the sends of a Bitwig track", *T)),
+        ("Mackie Control &middot; beta", "Any DAW with Mackie Control",
+         "Mixer, transport, meters and time display for Logic Pro, Studio One, Pro Tools, Cakewalk, Reason and other DAWs with Mackie Control, without plugins.",
+         [], device("tablet", "daws-mackie", "Remote for DAWs: the Mackie Control tab", *T)),
+    ])
+    mixers = rows([
+        ("Consoles", "Your digital mixer",
+         "It finds the console on your network and knows its model. Channels, buses, FX returns and main: faders, mute, solo, pan and meters.",
+         ["Behringer X AIR, X32 and WING, Midas M32", "Allen &amp; Heath SQ, Qu, CQ, dLive and Avantis; Yamaha CL, QL, TF and DM7"],
+         device("tablet", "mixers-wing", "Remote for Mixers on a tablet: a Behringer WING", *M)),
+        ("My mix", "A musician's own monitor mix",
+         "Lock the app to one bus and hand it to the drummer: they set their own monitor mix and nothing else.",
+         ["Monitor sends, DCAs and mute groups"], device("phone", "mixers-mymix", "Remote for Mixers on a phone: My mix, locked to one bus", *P)),
+        ("Any console", "One app, many desks",
+         "Allen &amp; Heath and Yamaha desks connect over the network too, with the same faders and mutes.", [],
+         device("tablet", "mixers-sq", "Remote for Mixers on a tablet: an Allen &amp; Heath SQ", *M)),
+    ])
+    studio = f"""
+            <section class="pp-row" id="studio">
+                <div class="pp-text">
+                    <span class="pp-kicker">Remote for orOS Studio</span>
+                    <h2>orOS Studio from your phone</h2>
+                    <p>Control orOS Studio on your computer while the sound plays there. Scan the QR code Studio shows and you are in.</p>
+                    <ul class="pp-points"><li>Every NULL JSFX effect with its own interface, presets and A/B</li><li>Pads and keys for the NULL instruments, recorded into MIDI clips</li></ul>
+                    <div class="pp-actions pp-left">
+                        <a class="featured-btn" href="https://github.com/koulaxizis/oros/releases/download/android-apks/oros-studioremote.apk" rel="noopener">{DOWNLOAD_ICON}<span>Get the APK</span></a>
+                        <a class="pp-ghost" href="https://useoros.online/studio/remote/" target="_blank" rel="noopener"><span>Or in a browser</span></a>
+                    </div>
+                </div>
+                <div class="pp-media"><img class="pp-shot" src="/assets/img/remote/oros-studio-remote.jpg" width="1280" height="720" loading="lazy" decoding="async" alt="Remote for orOS Studio on a phone: the mixer, the drum pads and a NULL JSFX effect chain"></div>
+            </section>"""
+
+    def get(kind):
+        return f"""
+            <div class="pp-actions">
+                <a class="featured-btn" href="{APK.format(kind)}" rel="noopener">{DOWNLOAD_ICON}<span>Get Remote for {kind}</span></a>
+            </div>
+            <p class="pp-sub pp-center">Beta: tested against software stand-ins, not yet on every real setup. {more}</p>"""
+    steps = """
+            <section class="pp-block">
+                <h2 class="pp-h">Three steps</h2>
+                <ol class="pp-steps">
+                    <li><b>Install</b><span>The APK from here, F-Droid, Obtainium or Koulaxizis Apps.</span></li>
+                    <li><b>Connect</b><span>Phone and computer or mixer on the same Wi-Fi: it finds REAPER and the consoles, or you type the address.</span></li>
+                    <li><b>Mix</b><span>From the stage, the booth or the couch.</span></li>
+                </ol>
+            </section>"""
+    body = (hero + '\n            <h2 class="pp-anchor" id="daws">Remote for DAWs <small>beta</small></h2>' + daws + get("DAWs")
+            + '\n            <h2 class="pp-anchor" id="mixers">Remote for Mixers <small>beta</small></h2>' + mixers + get("Mixers")
+            + studio + steps)
+    ld = {"@context": "https://schema.org", "@type": "ItemList", "name": "NULL JSFX remotes", "itemListElement": [
+        {"@type": "ListItem", "position": i + 1, "item": {"@type": "MobileApplication", "name": n, "operatingSystem": "Android 8.0+",
+         "applicationCategory": "MultimediaApplication", "offers": {"@type": "Offer", "price": "0", "priceCurrency": "EUR"}}}
+        for i, n in enumerate(["Remote for DAWs", "Remote for Mixers", "Remote for orOS Studio"])]}
+    return shell("NULL JSFX Remotes: your DAW and mixer on Android, free", desc, url, image, body, "Remotes", ld)
+
+
+def trailer_seconds():
+    """The trailer's length, from its mp4 (the duration in the movie header, so no ffprobe in CI)."""
+    import struct
+    data = (ROOT / "assets/video/trailer.mp4").read_bytes()
+    i = data.index(b"mvhd")
+    version = data[i + 4]
+    scale, length = struct.unpack(">IQ" if version else ">II", data[i + 24:i + 36] if version else data[i + 16:i + 24])
+    return length / scale
+
+
+def forms_block(plugins):
+    """The homepage section "One plugin, every form": Delay as JSFX, GFX, VST3/CLAP/LV2, a Rack module
+    and on the remote, from the pictures publish.py makes (a tile whose picture is missing is left out)."""
+    e = html.escape
+    delay = next(p for p in plugins if p["stem"] == "delay")
+    sliders = []
+    for line in (ROOT / "DATA/Effects/null_jsfx/delay.jsfx").read_text(encoding="utf-8").splitlines():
+        m = re.match(r"slider\d+:([-\d.]+)<([-\d.]+),([-\d.]+),[^{>]*(?:\{([^}]*)\})?>(.+)", line)
+        if m:
+            v, lo, hi, names, label = m.groups()
+            v, lo, hi = float(v), float(lo), float(hi)
+            shown = names.split(",")[int(v)] if names else f"{v:g}"
+            sliders.append((label, (v - lo) / (hi - lo) if hi > lo else 0, shown))
+    lines = "".join(f'<div class="fm-slider"><span>{e(label)}</span><i style="--v:{f:.3f}"></i><b>{e(shown)}</b></div>'
+                    for label, f, shown in sliders[:9])
+    jsfx = f'<div class="fm-jsfx" role="img" aria-label="Delay with REAPER\'s own sliders, drawn by the site">{lines}</div>'
+    tiles = [
+        ("JSFX", "REAPER's own sliders (drawn by the site)", jsfx),
+        ("GFX JSFX", "The NULL interface inside REAPER",
+         f'<img src="/{delay["shot"]}" width="960" height="816" loading="lazy" decoding="async" alt="Delay as GFX JSFX">'),
+        ("VST3 &middot; CLAP &middot; LV2", "Any DAW", picture("forms", "delay-native", "Delay as a VST3 and CLAP plugin", 960, 816, cls="fm-img")),
+        ("Rack module", "One of eight slots", picture("forms", "delay-rack", "Delay in the Rack's fourth slot", 960, 680, cls="fm-img")),
+        ("Remote", "On your tablet", picture("remotes", "daws-plugin", "Delay on Remote for DAWs", 1180, 820, cls="fm-img")),
+    ]
+    trailer = ""
+    if (ROOT / "assets/video/trailer.mp4").exists():  # tools/video/make_trailer.py
+        trailer = f"""
+            <div class="fm-trailer">
+                <h3>The whole suite in {round(trailer_seconds())} seconds</h3>
+                {video("trailer", "NULL JSFX trailer: plugins, the Rack, the Hub and the remotes")}
+            </div>"""
+    cards = "".join(f'\n                <figure class="fm-tile">{media}<figcaption><b>{t}</b><span>{c}</span></figcaption></figure>'
+                    for t, c, media in tiles if media)
+    return f"""        <section class="forms" aria-labelledby="forms-title">
+            <h2 class="section-title" id="forms-title">One plugin, every form</h2>
+            <p class="forms-lead">Every NULL effect comes in each form you need, and each one is tested to sound the same. Here is <a href="{delay["page"]}">Delay</a>; hear it in your browser on its page.</p>
+            <div class="fm-grid">{cards}
+            </div>{trailer}
+        </section>
+"""
+
+
 def files(plugins, chains, version):
     return [(ROOT / "rack/index.html", rack_page(plugins, chains, version)),
-            (ROOT / "hub/index.html", hub_page(plugins, chains, version))]
+            (ROOT / "hub/index.html", hub_page(plugins, chains, version)),
+            (ROOT / "remotes/index.html", remotes_page(plugins, chains, version))]
