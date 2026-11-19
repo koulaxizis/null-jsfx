@@ -2391,6 +2391,39 @@ a.download-option:hover {
     }
 }
 
+.apps-banner-other {
+    margin-top: 14px;
+    font-size: 13px;
+    color: var(--muted);
+}
+
+.apps-banner-other summary {
+    cursor: pointer;
+    min-height: 32px;
+    padding: 6px 0;
+}
+
+.apps-banner-other .dl-chans {
+    font-size: 12px;
+}
+
+.apps-banner-other .dl-chans[hidden] {
+    display: none;
+}
+
+.apps-banner .apps-banner-other p {
+    margin: 6px 0 0;
+    font-size: 13px;
+}
+
+.apps-banner-other a {
+    color: var(--text);
+}
+
+.apps-banner-other code.fp {
+    word-break: break-all;
+}
+
 .apps-banner p.apps-banner-alt {
     margin: 12px 0 0;
     font-size: 13px;

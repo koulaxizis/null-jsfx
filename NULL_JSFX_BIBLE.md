@@ -2539,3 +2539,10 @@ entry and the Bible delta.
 - **Files:** `tools/count_downloads.py`, `.github/workflows/downloads.yml`, `assets/js/downloads.js`, `index.html`, `assets/css/style.css`, this Bible (VI.5, Part X).
 - **Tests:** `android()` against a local fake counter (copy, keeps higher old counts, keeps old on failure); page rendered with a mock `downloads.json` at 1200 and 390 px; `tools/build_site.py --check`, `tests/lint.py`, `tests/bible_order.py`; CI. The live counter is read by the bot's next run (03:00 UTC or a manual run).
 - **Version:** v4.1 (no change).
+
+### 2026-11-19 · Site: the other ways in the Koulaxizis Apps banner
+- **Why:** Christos saw only a one-line hint where the F-Droid, Droid-ify and Obtainium ways should be (phone screenshot, 2026-11-19).
+- **What:** the banner's hint becomes a closed `<details id="other-ways">` "Other ways: F-Droid, Droid-ify, Obtainium" with their download counts in the summary (`data-dl-chans`, `assets/js/downloads.js`), the add-repository link, the address, the fingerprint, the Obtainium filters and the orOS repository for Remote for orOS Studio. Styles `.apps-banner-other`.
+- **Files:** `index.html`, `assets/css/style.css`, `assets/js/downloads.js`, this Bible (Part X).
+- **Tests:** rendered at 360 px with a mock `downloads.json` (no horizontal scroll); `tools/build_site.py --check`, `tests/lint.py`, `tests/bible_order.py`.
+- **Version:** v4.1 (no change).

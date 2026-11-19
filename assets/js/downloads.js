@@ -44,6 +44,16 @@
             box.textContent = parts.join(' · ');
             box.hidden = false;
         });
+        // data-dl-chans="prefix.": "(F-Droid N · Droid-ify N · Obtainium N)" over those packages
+        document.querySelectorAll('[data-dl-chans]').forEach((box) => {
+            const want = list(box.getAttribute('data-dl-chans'));
+            const parts = [['fdroid', ['fdroid', 'fdroid_org']], ['droidify', ['droidify']], ['obtainium', ['obtainium']]]
+                .map(([name, chs]) => [name, sum(apps, want, chs)]).filter(([, n]) => n > 0)
+                .map(([name, n]) => NAMES[name] + ' ' + fmt(n));
+            if (!parts.length) return;
+            box.textContent = '(' + parts.join(' · ') + ')';
+            box.hidden = false;
+        });
     }
     fetch('downloads.json', { cache: 'no-cache' }).then(function (r) {
         if (!r.ok) throw new Error('downloads.json ' + r.status);
