@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Small Speaker Check FX chain for REAPER | NULL JSFX</title>
+    <meta name="description" content="Mono, band-limited and mid-forward: hear the mix as a phone or small speaker would. Bypass it before rendering. A free REAPER FX chain of 5 NULL JSFX plugins.">
+    <link rel="canonical" href="https://nulljsfx.tech/chains/small-speaker-check/">
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Small Speaker Check: a free REAPER FX chain of NULL JSFX">
+    <meta property="og:description" content="Mono, band-limited and mid-forward: hear the mix as a phone or small speaker would. Bypass it before rendering. A free REAPER FX chain of 5 NULL JSFX plugins.">
+    <meta property="og:url" content="https://nulljsfx.tech/chains/small-speaker-check/">
+    <meta property="og:image" content="https://nulljsfx.tech/assets/img/chains/small-speaker-check/1.webp">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Small Speaker Check: a free REAPER FX chain of NULL JSFX">
+    <meta name="twitter:description" content="Mono, band-limited and mid-forward: hear the mix as a phone or small speaker would. Bypass it before rendering. A free REAPER FX chain of 5 NULL JSFX plugins.">
+    <meta name="twitter:image" content="https://nulljsfx.tech/assets/img/chains/small-speaker-check/1.webp">
+    <link rel="icon" type="image/svg+xml" href="/assets/img/favicon.svg">
+    <link rel="stylesheet" href="/assets/css/style.css">
+    <script type="application/ld+json">{"@context": "https://schema.org", "@type": "CreativeWork", "name": "Small Speaker Check (NULL JSFX FX chain)", "description": "Mono, band-limited and mid-forward: hear the mix as a phone or small speaker would. Bypass it before rendering.", "url": "https://nulljsfx.tech/chains/small-speaker-check/", "image": "https://nulljsfx.tech/assets/img/chains/small-speaker-check/1.webp", "license": "https://opensource.org/licenses/MIT", "author": {"@type": "Person", "name": "Christos Koulaxizis"}, "isPartOf": {"@type": "SoftwareApplication", "name": "NULL JSFX", "url": "https://nulljsfx.tech/"}}</script>
+    <script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "NULL JSFX", "item": "https://nulljsfx.tech/"}, {"@type": "ListItem", "position": 2, "name": "FX Chains", "item": "https://nulljsfx.tech/#fx-chains"}, {"@type": "ListItem", "position": 3, "name": "Small Speaker Check", "item": "https://nulljsfx.tech/chains/small-speaker-check/"}]}</script>
+</head>
+<body class="plugin-page chain-page">
+    <main>
+        <nav class="page-crumbs" aria-label="Breadcrumb">
+            <a href="/" class="page-home"><img src="/assets/img/favicon.svg" alt="NULL JSFX" width="28" height="28"></a>
+            <a href="/">NULL JSFX</a> <span>/</span> <a href="/#fx-chains">FX Chains</a> <span>/</span> <span>Small Speaker Check</span>
+        </nav>
+        <article class="page-chain">
+            <header class="chain-hero">
+                <span class="guide-category">FX chain &middot; 5 plugins &middot; Essentials &amp; One Slider</span>
+                <h1>SMALL SPEAKER CHECK</h1>
+                <p>Mono, band-limited and mid-forward: hear the mix as a phone or small speaker would. Bypass it before rendering.</p>
+                <div class="plugin-formats"><span>JSFX</span><span>GFX</span><span>RACK PRESET</span></div>
+            </header>
+            <section class="chain-section chain-flow">
+                <h2>Signal flow</h2>
+                <div class="chain-diagram-wrap"><svg class="chain-diagram" viewBox="0 0 1014 100" width="1014" height="100" style="min-width:558px" role="img" aria-label="Signal flow of Small Speaker Check"><circle class="cd-term" cx="26" cy="42" r="16"/><text class="cd-term-label" x="26" y="46">IN</text><path class="cd-wire" d="M42 42H72"/><rect class="cd-box" x="72" y="14" width="150" height="56" rx="6"/><text class="cd-name" x="147" y="47">Mono Maker</text><path class="cd-wire" d="M222 42H252"/><rect class="cd-box" x="252" y="14" width="150" height="56" rx="6"/><text class="cd-name" x="327" y="47">Filter</text><path class="cd-wire" d="M402 42H432"/><rect class="cd-box" x="432" y="14" width="150" height="56" rx="6"/><text class="cd-name" x="507" y="47">Filter</text><path class="cd-wire" d="M582 42H612"/><rect class="cd-box" x="612" y="14" width="150" height="56" rx="6"/><text class="cd-name" x="687" y="47">Parametric EQ</text><path class="cd-wire" d="M762 42H792"/><rect class="cd-box" x="792" y="14" width="150" height="56" rx="6"/><text class="cd-name" x="867" y="47">Saturation</text><path class="cd-wire" d="M942 42H972"/><circle class="cd-term" cx="988" cy="42" r="16"/><text class="cd-term-label" x="988" y="46">OUT</text></svg></div>
+            </section>
+                <section class="chain-section">
+                    <h2>As it opens in REAPER</h2>
+                    <div class="chain-window" data-slug="small-speaker-check">
+                        <div class="cw-title"><span class="cw-dots" aria-hidden="true"><i></i><i></i><i></i></span>FX: Small Speaker Check</div>
+                        <div class="cw-body">
+                            <ol class="cw-list"><li><button type="button" class="cw-item on" data-shot="1" data-w="720" data-h="480" data-alt="NULL Mono Maker GFX with the settings of the Small Speaker Check chain" aria-pressed="true"><span class="cw-check" aria-hidden="true"></span>JS: NULL Mono Maker GFX</button></li><li><button type="button" class="cw-item" data-shot="2" data-w="960" data-h="644" data-alt="NULL Filter GFX with the settings of the Small Speaker Check chain" aria-pressed="false"><span class="cw-check" aria-hidden="true"></span>JS: NULL Filter GFX</button></li><li><button type="button" class="cw-item" data-shot="3" data-w="960" data-h="644" data-alt="NULL Filter GFX with the settings of the Small Speaker Check chain" aria-pressed="false"><span class="cw-check" aria-hidden="true"></span>JS: NULL Filter GFX</button></li><li><button type="button" class="cw-item" data-shot="4" data-w="960" data-h="684" data-alt="NULL Parametric EQ GFX with the settings of the Small Speaker Check chain" aria-pressed="false"><span class="cw-check" aria-hidden="true"></span>JS: NULL Parametric EQ GFX</button></li><li><button type="button" class="cw-item" data-shot="5" data-w="960" data-h="760" data-alt="NULL Saturation GFX with the settings of the Small Speaker Check chain" aria-pressed="false"><span class="cw-check" aria-hidden="true"></span>JS: NULL Saturation GFX</button></li></ol>
+                            <div class="cw-view"><img class="cw-shot" src="/assets/img/chains/small-speaker-check/1.webp" width="720" height="480" alt="NULL Mono Maker GFX with the settings of the Small Speaker Check chain" loading="lazy" decoding="async"></div>
+                        </div>
+                    </div>
+                    <p class="chain-note">Click a plugin in the list to see it. The pictures are the real NULL JSFX GFX interfaces, drawn with this chain's settings; the window around them is drawn by this site, so REAPER's own frame looks a little different.</p>
+                </section>
+                <section class="chain-section">
+                    <h2>Listen <span class="beta-badge">BETA</span></h2>
+                    <div class="live demo-big" data-live="chain" data-chain="[{&quot;id&quot;:&quot;mono_maker&quot;,&quot;s&quot;:{&quot;1&quot;:100}},{&quot;id&quot;:&quot;filter&quot;,&quot;s&quot;:{&quot;1&quot;:400,&quot;2&quot;:0.7,&quot;3&quot;:0,&quot;4&quot;:1,&quot;5&quot;:0,&quot;6&quot;:0,&quot;7&quot;:1,&quot;8&quot;:0,&quot;9&quot;:0,&quot;10&quot;:0,&quot;11&quot;:10,&quot;12&quot;:150,&quot;13&quot;:0,&quot;14&quot;:0,&quot;15&quot;:0,&quot;16&quot;:0,&quot;17&quot;:0}},{&quot;id&quot;:&quot;filter&quot;,&quot;s&quot;:{&quot;1&quot;:3500,&quot;2&quot;:0.7,&quot;3&quot;:0,&quot;4&quot;:0,&quot;5&quot;:0,&quot;6&quot;:0,&quot;7&quot;:1,&quot;8&quot;:0,&quot;9&quot;:0,&quot;10&quot;:0,&quot;11&quot;:10,&quot;12&quot;:150,&quot;13&quot;:0,&quot;14&quot;:0,&quot;15&quot;:0,&quot;16&quot;:0,&quot;17&quot;:0}},{&quot;id&quot;:&quot;parametric_eq&quot;,&quot;s&quot;:{&quot;1&quot;:77,&quot;2&quot;:0,&quot;3&quot;:1,&quot;4&quot;:2,&quot;5&quot;:0,&quot;6&quot;:548,&quot;7&quot;:0,&quot;8&quot;:1,&quot;9&quot;:2,&quot;10&quot;:0,&quot;11&quot;:1000,&quot;12&quot;:4,&quot;13&quot;:1,&quot;14&quot;:2,&quot;15&quot;:0,&quot;16&quot;:10000,&quot;17&quot;:0,&quot;18&quot;:1,&quot;19&quot;:2,&quot;20&quot;:0,&quot;21&quot;:15000,&quot;22&quot;:0,&quot;23&quot;:1,&quot;24&quot;:2,&quot;25&quot;:0}},{&quot;id&quot;:&quot;saturation&quot;,&quot;s&quot;:{&quot;1&quot;:10,&quot;2&quot;:0,&quot;3&quot;:30,&quot;4&quot;:0,&quot;5&quot;:0,&quot;6&quot;:0,&quot;7&quot;:0,&quot;8&quot;:0,&quot;9&quot;:0,&quot;10&quot;:0,&quot;11&quot;:0}}]"><button type="button" class="live-play" aria-label="Play live: the loop through the plugin" title="Play live"><svg class="i-play" width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><polygon points="6 4 20 12 6 20" fill="currentColor"/></svg><svg class="i-stop" width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="6" width="12" height="12" fill="currentColor"/></svg></button><button type="button" class="live-ab" aria-pressed="false" title="Switch between the plugin and the dry loop"><span class="on">ON</span><span class="off">BYPASS</span></button>
+                        <label class="live-field">Loop <select class="live-loop"><option value="band">Band</option><option value="drums">Drums</option><option value="keys">Keys and bass</option></select></label>
+                        <span class="demo-note">Live: the whole chain runs in your browser on a loop of NULL JSFX instruments, every plugin with the chain's settings. Bypass it while it plays.</span>
+                        <span class="live-status demo-note" role="status"></span>
+                    </div>
+                    <p class="chain-note">Beta: the chain is played by the web version of each plugin, the same code as orOS Studio, which matches the plugins within the suite's tests (1e-6). Playing several plugins at once in a browser is new, so tell us if it stutters.</p>
+                </section>
+                <section class="chain-section">
+                    <h2>The settings</h2>
+                    <p class="chain-note">What the chain changes from each plugin's defaults. Every control stays free to change after you load it.</p>
+                    <div class="chain-settings">
+                        <article class="chain-setting">
+                            <h3><span class="cs-n">1</span><a href="/plugins/mono-maker/">Mono Maker</a></h3>
+                            <ul><li><span>Amount</span><b>100</b></li></ul>
+                        </article>
+                        <article class="chain-setting">
+                            <h3><span class="cs-n">2</span><a href="/plugins/filter/">Filter</a></h3>
+                            <ul><li><span>Cutoff</span><b>400 Hz</b></li><li><span>Resonance</span><b>0.7</b></li><li><span>Mode</span><b>High Pass</b></li></ul>
+                        </article>
+                        <article class="chain-setting">
+                            <h3><span class="cs-n">3</span><a href="/plugins/filter/">Filter</a></h3>
+                            <ul><li><span>Cutoff</span><b>3500 Hz</b></li><li><span>Resonance</span><b>0.7</b></li><li><span>Mode</span><b>Low Pass</b></li></ul>
+                        </article>
+                        <article class="chain-setting">
+                            <h3><span class="cs-n">4</span><a href="/plugins/parametric-eq/">Parametric EQ</a></h3>
+                            <ul><li><span>Mid High Freq</span><b>1000 Hz</b></li><li><span>Mid High Gain</span><b>4 dB</b></li><li><span>Mid High Q</span><b>1</b></li></ul>
+                        </article>
+                        <article class="chain-setting">
+                            <h3><span class="cs-n">5</span><a href="/plugins/saturation/">Saturation</a></h3>
+                            <ul><li><span>Drive</span><b>10%</b></li><li><span>Mix</span><b>30%</b></li><li><span>Mode</span><b>Tape</b></li></ul>
+                        </article>
+                    </div>
+                </section>
+                <section class="chain-section">
+                    <h2>Load it</h2>
+                    <ol class="chain-steps-how">
+                        <li>Install NULL JSFX with the <a href="/#hub">Hub</a> or the JSFX download: the chains come in its <code>FXChains</code> folder.</li>
+                        <li>In REAPER, open a track's FX window and pick <b>FX &#8594; Add FX chain</b>, then <b>NULL JSFX</b> (REAPER's sliders) or <b>NULL JSFX GFX</b> (our interfaces), then <b>Small Speaker Check</b>.</li>
+                        <li>In any other DAW: load the <a href="/#rack">NULL JSFX Rack</a> (VST3 or CLAP) and pick its preset <b>Small Speaker Check</b>.</li>
+                    </ol>
+                </section>
+            <div class="page-actions">
+                <a class="featured-btn" href="/#download"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg><span>Download free</span></a>
+                <small>Part of NULL JSFX 4.1: 174 plugins and 89 FX chains, free and open source (MIT).</small>
+            </div>
+        </article>
+        <section class="page-related">
+            <h2 class="section-title">More chains with these plugins</h2>
+            <div class="related-grid"><a class="related-card" href="/chains/mix-bus-finisher/"><b>Mix Bus Finisher</b><small>High-pass, glue, gentle multiband, a push EQ, wider highs, mono lows, a touch of OTT and a limiter for a mix bus.</small></a><a class="related-card" href="/chains/old-radio/"><b>Old Radio</b><small>Mono, a narrow band, tube drive, crackle and a little spring, with a low-pass that drifts like a weak signal.</small></a><a class="related-card" href="/chains/808-glue/"><b>808 Glue</b><small>A sub octave, tube drive, a soft clipper and mono lows to glue an 808; Amount drives and clips harder, Sub adds more sub.</small></a><a class="related-card" href="/chains/acid-line/"><b>Acid Line</b><small>A ready acid line on one track: Riff writes the notes from Key, Scale and Seed, the Bass plays them with glide and a resonant envelope, then a driven filter, tube saturation and a dotted-eighth delay.</small></a><a class="related-card" href="/chains/bass-enhancer/"><b>Bass Enhancer</b><small>Adds a sub octave and warmth, then keeps the low end mono.</small></a><a class="related-card" href="/chains/channel-strip/"><b>Channel Strip</b><small>Gate, a clean-up EQ, bus compression, de-essing and tape color in a classic console order; Amount compresses harder, Color adds drive.</small></a></div>
+            <p class="page-more"><a href="/#fx-chains">All 89 FX chains</a></p>
+        </section>
+    </main>
+    <footer class="site-footer">
+        <div class="footer-content">
+            Designed with &#9825; by <a href="https://koulaxizis.gr" target="_blank" rel="noopener">Christos Koulaxizis</a>.
+            <div class="footer-links">
+                <a href="https://ko-fi.com/koulaxizis" target="_blank" rel="noopener">Support on Ko-fi</a>
+                <span class="sep">&bull;</span>
+                <a href="https://github.com/koulaxizis/null-jsfx" target="_blank" rel="noopener">GitHub</a>
+                <span class="sep">&bull;</span>
+                <a href="/">nulljsfx.tech</a>
+            </div>
+        </div>
+    </footer>
+    <button id="theme-toggle" class="theme-toggle-floating" aria-label="Toggle color theme" title="Switch between light/dark theme">
+        <svg class="sun-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2 M12 21v2 M4.22 4.22l1.42 1.42 M18.36 18.36l1.42 1.42 M1 12h2 M21 12h2 M4.22 19.78l1.42-1.42 M18.36 5.64l1.42-1.42"/></svg>
+        <svg class="moon-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none;"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+    </button>
+    <script src="/assets/js/theme.js"></script>
+    <script src="/assets/js/chain.js"></script>
+    <script src="/assets/js/live.js"></script>
+</body>
+</html>

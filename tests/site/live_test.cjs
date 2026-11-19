@@ -1,6 +1,8 @@
 // Tests the live player of the plugin pages (assets/js/live.js) in a real browser: the page is
 // served from the repo, a loop plays through the plugin's web version, and the sound that reaches
-// the speakers changes with the preset and with bypass. Also reads every plugin page's player data.
+// the speakers changes with the preset and with bypass. Also reads every plugin page's player data,
+// and does the same for the FX chain pages (chains/<slug>/): their chain data, their pictures, the
+// chain window and a whole chain playing live.
 // Usage: node tests/site/live_test.cjs   (Playwright from tests/remote: npm ci there first)
 'use strict';
 const fs = require('fs');
@@ -12,7 +14,7 @@ const { chromium } = require(require.resolve('playwright', { paths: [path.join(r
 let failed = 0;
 function check(cond, what) { console.log(`${cond ? 'ok  ' : 'FAIL'} ${what}`); if (!cond) failed++; }
 
-const TYPES = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.mp3': 'audio/mpeg', '.json': 'application/json', '.svg': 'image/svg+xml', '.png': 'image/png', '.jpg': 'image/jpeg', '.woff2': 'font/woff2' };
+const TYPES = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.mp3': 'audio/mpeg', '.json': 'application/json', '.svg': 'image/svg+xml', '.png': 'image/png', '.webp': 'image/webp', '.jpg': 'image/jpeg', '.woff2': 'font/woff2' };
 const server = http.createServer((req, res) => {
   let p = decodeURIComponent(new URL(req.url, 'http://x').pathname);
   if (p.endsWith('/')) p += 'index.html';
@@ -39,6 +41,25 @@ const server = http.createServer((req, res) => {
   }
   check(players > 100 && !bad.length, `${players} plugin pages have a live player with good data ${bad.join(' ')}`);
   check(!/data-live=/.test(fs.readFileSync(path.join(root, 'plugins/drum-machine/index.html'), 'utf8')), 'an instrument gets no live player');
+
+  // every chain page: a picture for each plugin of its window, and good live data where it has a player
+  const chainDirs = fs.readdirSync(path.join(root, 'chains')).filter((d) => fs.existsSync(path.join(root, 'chains', d, 'index.html')));
+  let chainPlayers = 0, badChains = [];
+  for (const d of chainDirs) {
+    const html = fs.readFileSync(path.join(root, 'chains', d, 'index.html'), 'utf8');
+    const shots = (html.match(/class="cw-item[^"]*" data-shot="(\d+)"/g) || []).length;
+    if (!shots || !Array.from({ length: shots }, (_, k) => path.join(root, 'assets/img/chains', d, `${k + 1}.webp`)).every((f) => fs.existsSync(f))) badChains.push(d);
+    const m = html.match(/data-live="chain" data-chain="([^"]*)"/);
+    if (!m) continue;
+    chainPlayers++;
+    try {
+      const data = JSON.parse(m[1].replace(/&quot;/g, '"').replace(/&#x27;/g, "'").replace(/&amp;/g, '&'));
+      if (!data.length || !data.every((f) => fs.existsSync(path.join(root, 'web/fx', `${f.id}.js`)))) badChains.push(d);
+    } catch (e) { badChains.push(d); }
+  }
+  check(chainDirs.length > 80 && chainPlayers > 10 && !badChains.length, `${chainDirs.length} chain pages with their pictures, ${chainPlayers} with a live player ${badChains.join(' ')}`);
+  check(!/data-live=/.test(fs.readFileSync(path.join(root, 'chains/acid-line/index.html'), 'utf8')), 'a chain with an instrument gets no live player');
+  check(!/data-live=/.test(fs.readFileSync(path.join(root, 'chains/auto-filter/index.html'), 'utf8')), 'a chain with modulation gets no live player');
 
   await new Promise((ok) => server.listen(0, '127.0.0.1', ok));
   const base = `http://127.0.0.1:${server.address().port}`;
@@ -82,6 +103,24 @@ const server = http.createServer((req, res) => {
   await page.click('.live-play');
   check(!(await page.getAttribute('.live', 'class')).includes('demo-playing'), 'Stop stops it');
   check(errors.length === 0, `no errors on the page ${errors.join(' | ')}`);
+
+  // a chain page: the window shows the plugin picked in its list, and the whole chain plays live
+  await page.goto(`${base}/chains/lo-fi/`);
+  await page.click('.cw-item[data-shot="2"]');
+  await page.waitForFunction(() => { const i = document.querySelector('.cw-shot'); return i.complete && i.naturalWidth > 0 && /\/2\.webp$/.test(i.src); }, null, { timeout: 5000 }).catch(() => {});
+  check(await page.evaluate(() => { const i = document.querySelector('.cw-shot'); return /\/2\.webp$/.test(i.src) && i.naturalWidth === +i.getAttribute('width'); }),
+    'the chain window shows the second plugin when it is picked');
+  check(await page.$('svg.chain-diagram') !== null, 'the chain page has its signal-flow diagram');
+  await page.click('.live-play');
+  await page.waitForFunction(() => window.__level() > 0.01, null, { timeout: 15000 }).catch(() => {});
+  check((await level()) > 0.01, 'Play runs the loop through the whole chain');
+  await page.waitForTimeout(1000);
+  const chained = await centroid();
+  await page.click('.live-ab');
+  await page.waitForTimeout(1000);
+  const dry = await centroid();
+  check(dry > chained * 1.15, `the Lo-Fi chain darkens the loop and bypass brings it back (centroid ${chained.toFixed(0)} Hz, bypassed ${dry.toFixed(0)} Hz)`);
+  check(errors.length === 0, `no errors on the chain page ${errors.join(' | ')}`);
   await browser.close();
   server.close();
   console.log(failed ? `${failed} checks failed` : 'all checks passed');

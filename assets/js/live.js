@@ -1,7 +1,9 @@
 // Live player of a plugin page: a loop of NULL JSFX instruments (assets/audio/loops/, made by
 // tools/render_loops.js) plays through the plugin itself, run in the browser by the web version
 // (web/runtime, web/fx: the same code as orOS Studio). Bypass, the loop and the factory preset
-// can change while it plays. Nothing loads until Play is pressed.
+// can change while it plays. Nothing loads until Play is pressed. On an FX chain page
+// (chains/<slug>/, data-live="chain") the loop plays through every plugin of the chain, each with
+// the chain's settings (data-chain: [{id, s: {slider: value}}]), and bypass takes all of them out.
 (function () {
     'use strict';
     const script = document.currentScript;
@@ -41,6 +43,16 @@
         return v;
     }
 
+    /** what the element plays: [{uid, id, sliders}], one plugin or a whole chain */
+    function entries(el) {
+        if (el.dataset.live === 'chain') {
+            let list = [];
+            try { list = JSON.parse(el.dataset.chain || '[]'); } catch (e) { /* empty */ }
+            return list.map(function (f, k) { return { uid: UID + k, id: f.id, sliders: f.s || {} }; });
+        }
+        return [{ uid: UID, id: el.dataset.live, sliders: values(el, +el.querySelector('.live-preset').value) }];
+    }
+
     function render() {
         document.querySelectorAll('[data-live]').forEach(function (el) {
             el.classList.toggle('demo-playing', el === owner);
@@ -67,17 +79,20 @@
         render();
         status(el, 'Loading…');
         ctx = ctx || new (window.AudioContext || window.webkitAudioContext)();
-        const id = el.dataset.live;
+        const fx = entries(el);
         ready = ready || addScript(site + 'web/runtime/null-node.js');
         const want = el;
         ready
-            .then(function () { return Promise.all([window.NULLFXNode.load(ctx, site + 'web/', [id]), loop(el.querySelector('.live-loop').value)]); })
+            .then(function () {
+                return Promise.all([window.NULLFXNode.load(ctx, site + 'web/', fx.map(function (f) { return f.id; })),
+                    loop(el.querySelector('.live-loop').value)]);
+            })
             .then(function (r) {
                 if (owner !== want) return;
-                const preset = +el.querySelector('.live-preset').value;
                 const bypass = el.querySelector('.live-ab').getAttribute('aria-pressed') === 'true';
-                chain = new window.NULLFXNode.Chain(ctx, { chain: [{ uid: UID, id: id, sliders: values(el, preset), bypass: bypass }],
-                    time: { playing: true, tempo: 100, position: 0 } });
+                chain = new window.NULLFXNode.Chain(ctx, { chain: fx.map(function (f) {
+                    return { uid: f.uid, id: f.id, sliders: f.sliders, bypass: bypass };
+                }), time: { playing: true, tempo: 100, position: 0 } });
                 out = out || ctx.createGain();
                 out.connect(ctx.destination);
                 chain.node.connect(out);
@@ -94,7 +109,7 @@
     }
 
     function setPreset(el) {
-        if (owner !== el || !chain) return;
+        if (owner !== el || !chain || el.dataset.live === 'chain') return;
         const v = values(el, +el.querySelector('.live-preset').value);
         Object.keys(v).forEach(function (i) { chain.setSlider(UID, +i, v[i]); });
     }
@@ -103,7 +118,7 @@
         const ab = el.querySelector('.live-ab');
         const on = ab.getAttribute('aria-pressed') !== 'true';
         ab.setAttribute('aria-pressed', String(on));
-        if (owner === el && chain) chain.setBypass(UID, on);
+        if (owner === el && chain) entries(el).forEach(function (f) { chain.setBypass(f.uid, on); });
         render();
     }
 
