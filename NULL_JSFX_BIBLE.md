@@ -894,6 +894,7 @@ Since 2026-11-01 a release is built as a **draft** and published only when every
 - The file is committed only when `display` changes or a new asset appears, so now at most once per run (about once a day, plus a run when a release is published).
 - `--offset` subtracts our own downloads. It is 0 today.
 - State on 2026-10-26: total 926, display 500.
+- **Android (APPS-DL, 2026-11-19):** with `--android https://apps.koulaxizis.workers.dev/stats.json --android-pkgs …` the script also copies the counts per app and channel of the Koulaxizis Apps download counter (a Cloudflare Worker of the orOS project that serves our F-Droid repositories and counts each APK download by client: Koulaxizis Apps, F-Droid, Droid-ify, Obtainium, direct GitHub APK, f-droid.org by hand) into `android` (`{package: {channel: n}}`; never lower than before; the previous value stays when the counter cannot be read). The bot commits when they change too. The site still asks no other server: `assets/js/downloads.js` fills `data-dl` / `data-dl-break` elements from this file: "N downloads of the Android remotes" under the Download button, the Koulaxizis Apps banner (its own downloads and all our Android apps), and a count with its channels under each remote's APK button. Each line stays hidden while its number is 0.
 - `assets/js/downloads.js` reads it.
 
 ### VI.6 Supporters
@@ -2530,4 +2531,11 @@ entry and the Bible delta.
 - **What:** the small print of Remote for DAWs, Remote for Mixers and Remote for orOS Studio names, after the manager, our F-Droid repository (add link and address) for F-Droid and Droid-ify, and Obtainium with its APK filter (`Remote-DAWs`, `Remote-Mixers`); the Koulaxizis Apps banner has a small line pointing to them. `llms.txt` says the same. R20 records it.
 - **Files:** `index.html`, `assets/css/style.css`, `llms.txt`, this Bible (R20, Part VII, Part X).
 - **Tests:** `tools/build_site.py --check`, `tests/lint.py`, `tests/bible_order.py` run locally; CI.
+- **Version:** v4.1 (no change).
+
+### 2026-11-19 · Site: Android download counts per app and channel
+- **Why:** Christos wants the downloads of every APK shown per channel (Koulaxizis Apps, F-Droid, Droid-ify, Obtainium, direct), on every card, and a line under the main download, for trust (orOS thread «📦 Δικός μας app manager για Android», 2026-11-19, card «Μετρητής Cloudflare»).
+- **What:** `tools/count_downloads.py --android` copies the counter's numbers into `downloads.json` `android`; `downloads.yml` passes the counter address and our package prefixes; `assets/js/downloads.js` shows them (VI.5). `index.html`: a line under "N downloads", two lines in the Koulaxizis Apps banner, a count with channels under each remote's APK button; styles in `assets/css/style.css`.
+- **Files:** `tools/count_downloads.py`, `.github/workflows/downloads.yml`, `assets/js/downloads.js`, `index.html`, `assets/css/style.css`, this Bible (VI.5, Part X).
+- **Tests:** `android()` against a local fake counter (copy, keeps higher old counts, keeps old on failure); page rendered with a mock `downloads.json` at 1200 and 390 px; `tools/build_site.py --check`, `tests/lint.py`, `tests/bible_order.py`; CI. The live counter is read by the bot's next run (03:00 UTC or a manual run).
 - **Version:** v4.1 (no change).
