@@ -41,6 +41,14 @@ for p in "${plugins[@]}"; do
   if [ -z "$win" ]; then echo "$p: no window" >&2; kill $app 2>/dev/null || true; continue; fi
   xdotool windowmove "$win" 0 0 windowsize "$win" $(( uw * 2 )) $(( uh * 2 ))
   sleep 1.5
+  # a UI can be taller than DISTRHO_UI_DEFAULT_HEIGHT (NullKnobsUI::heightFor): its own size wins
+  if [ -s "$raw" ]; then
+    read -r rw rh < <(python3 -c 'import json,sys; d=json.load(open(sys.argv[1])); print(d["width"], d["height"])' "$raw")
+    if [ "$rw" != "$uw" ] || [ "$rh" != "$uh" ]; then
+      xdotool windowsize "$win" $(( rw * 2 )) $(( rh * 2 ))
+      sleep 1.5
+    fi
+  fi
   import -window "$win" "$out/$p.png"
   kill $app 2>/dev/null || true; wait $app 2>/dev/null || true
   python3 "$root/tools/hardware/layout.py" "$raw" "$out/$p.json" "$p" && rm -f "$raw"
