@@ -35,8 +35,8 @@ K = UI_W / 960
 PRESET_NAME = (118, 82)
 PRESET_ITEM = {  # in the open preset list
     "Drum Bus": (62, 281), "Mastering Chain": (75, 395), "Multiband Distortion": (439, 167),
-    "Auto Filter": (419, 243), "Build-Up": (770, 167), "Rhythm Engine": (605, 186),
-    "Parallel Drum Smash": (439, 585), "Psychedelic Echo": (608, 167), "Cosmic Space": (425, 566),
+    "Auto Filter": (419, 243), "Build-Up": (770, 167), "Rhythm Engine": (427, 623),
+    "Parallel Drum Smash": (439, 585), "Psychedelic Echo": (430, 604), "Cosmic Space": (425, 566),
 }
 SLOT = lambda i: (150, 161 + 35 * (i - 1))  # noqa: E731
 MOD = (386, 459)
