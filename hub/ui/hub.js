@@ -234,6 +234,7 @@ function render() {
   const hu = $("hub-update");
   hu.hidden = !V.hubUpdate;
   if (V.hubUpdate) hu.innerHTML = `<span>${esc(tr("A new NULL JSFX Hub ({v}) is out.", { v: V.hubUpdate[0] }))}</span><button id="hub-self" class="primary" ${busy ? "disabled" : ""}>${tr("Update the Hub")}</button><a href="${esc(safeUrl(V.hubUpdate[1], "https://nulljsfx.tech"))}" data-ext>${tr("or download it")}</a>`;
+  renderSupport(cat);
   $("release").textContent = cat ? `${tr("Release {v}", { v: cat.version })} · ${upd ? tr("{n} to update", { n: upd }) : tr("up to date")}` : tr("Offline");
   $("release").classList.toggle("hot", upd > 0);
   const ua = $("update-all");
@@ -647,17 +648,52 @@ function updateApply() {
   btn.textContent = parts.length ? parts.join(", ").replace(/^./, (c) => c.toUpperCase()) : tr("Apply");
 }
 
+// --- support card ----------------------------------------------------------------------------
+// Once per release, when something is installed, one quiet card asks for support on Ko-fi
+// (Bible R22, 2026-11-19). "Later" hides it until the next release, "Don't show again" for good.
+// It lives in the page's own storage, so it never touches the Rust settings.
+
+const SUPPORT_SEEN = "nulljsfx-support-release";
+const SUPPORT_OFF = "nulljsfx-support-off";
+function store(k, v) {
+  try {
+    if (v === undefined) return localStorage.getItem(k);
+    localStorage.setItem(k, v);
+  } catch (_) { /* no storage: the card simply shows again */ }
+  return null;
+}
+function renderSupport(cat) {
+  const sc = $("support-card");
+  const any = Object.keys(V.state.plugins).some(isInstalled);
+  const show = !!cat && any && store(SUPPORT_OFF) !== "1" && store(SUPPORT_SEEN) !== cat.version;
+  sc.hidden = !show;
+  if (!show) return;
+  sc.innerHTML = `<span>${esc(tr("NULL JSFX is free, made by one person and funded only on Ko-fi. If it helps your music, a 5 euro coffee pays for about a day of the tools it is built with."))}</span>`
+    + `<a class="primary-link" href="https://ko-fi.com/koulaxizis" data-ext data-support>${esc(tr("Buy a coffee"))}</a>`
+    + `<a href="https://ko-fi.com/koulaxizis/tiers" data-ext data-support>${esc(tr("Monthly, from 3 euro"))}</a>`
+    + `<button class="ghost" id="support-later">${esc(tr("Later"))}</button>`
+    + `<button class="ghost" id="support-never">${esc(tr("Don't show again"))}</button>`;
+}
+function supportDone(off) {
+  if (V.catalog) store(SUPPORT_SEEN, V.catalog.version);
+  if (off) store(SUPPORT_OFF, "1");
+  $("support-card").hidden = true;
+}
+
 // --- events ----------------------------------------------------------------------------------
 
 document.addEventListener("click", (e) => {
   const ext = e.target.closest("a[data-ext]");
   if (ext) {
     e.preventDefault();
+    if (ext.hasAttribute("data-support")) supportDone(false);
     const url = safeUrl(ext.getAttribute("href"));
     if (url) T.opener.openUrl(url);
     return;
   }
   if (e.target.closest("#hub-self")) return selfUpdate();
+  if (e.target.closest("#support-later")) return supportDone(false);
+  if (e.target.closest("#support-never")) return supportDone(true);
   const nav = e.target.closest("#nav button[data-view]");
   if (nav) {
     view = nav.dataset.view;

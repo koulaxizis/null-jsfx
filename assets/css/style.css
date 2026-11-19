@@ -3288,3 +3288,68 @@ a.download-option:hover {
 .featured-more:focus-visible {
     border-color: var(--accent);
 }
+
+/* Services: paid work booked on Ko-fi (index.html #services) */
+.services {
+    margin-bottom: 48px;
+}
+
+.services-intro,
+.services-note {
+    max-width: 640px;
+    margin: -8px auto 24px;
+    text-align: center;
+    font-size: 14px;
+    line-height: 1.6;
+    color: var(--muted);
+}
+
+.services-note {
+    margin: 16px auto 0;
+    font-size: 12px;
+}
+
+.services-note a {
+    color: var(--text);
+}
+
+.services-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 16px;
+}
+
+.service-card {
+    display: block;
+    padding: 20px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: var(--card-bg);
+    color: var(--text);
+    text-decoration: none;
+    transition: border-color 0.15s ease;
+}
+
+.service-card:hover,
+.service-card:focus-visible {
+    border-color: var(--accent);
+}
+
+.service-card h3 {
+    margin: 6px 0 8px;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.service-card p {
+    margin: 0;
+    font-size: 13px;
+    line-height: 1.6;
+    color: var(--muted);
+}
+
+.service-price {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--accent);
+}

@@ -205,6 +205,10 @@ window.NullShellNative = {
   await page.reload();
   check('and it stays hidden for that version', await page.locator('#update').isHidden());
   check('checked once, not on every start', apiCalls === 1, apiCalls);
+  await page.click('#tabs button:has-text("Settings")');
+  await page.click('button:has-text("Support on Ko-fi")');
+  check('Support on Ko-fi opens Ko-fi', (await calls()).some(c => c[0] === 'openUrl' && c[1] === 'https://ko-fi.com/koulaxizis'));
+  await page.click('#tabs button:has-text("REAPER")');
 
   await page.fill('[name=port]', String(server.address().port));
   await page.click('[data-scan]');

@@ -51,6 +51,10 @@
       const site = el('button', '', 'nulljsfx.tech');
       site.onclick = () => NullShell.openUrl('https://nulljsfx.tech/');
       about.appendChild(site);
+      // Ko-fi is the only way NULL JSFX is funded (Bible R22): a plain link, never a prompt.
+      const kofi = el('button', '', 'Support on Ko-fi');
+      kofi.onclick = () => NullShell.openUrl('https://ko-fi.com/koulaxizis');
+      about.appendChild(kofi);
       page.appendChild(about);
     },
   });

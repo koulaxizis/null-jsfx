@@ -1,7 +1,7 @@
 // Download modal: the Download button opens it (without JavaScript the button still leads to
 // the GitHub releases page). It suggests NULL JSFX Hub, the installer and the VST3/CLAP
 // package for the visitor's system.
-// The first download of a visit shows a short support step (Ko-fi: support, and follow for updates) with
+// The first download of a visit shows a short support step (Ko-fi: a coffee, a membership, and follow for updates) with
 // "Skip to download"; later downloads in the same visit start right away.
 (function () {
     const base = 'https://github.com/koulaxizis/null-jsfx/releases/latest/download/';
@@ -81,7 +81,7 @@
     });
 
     // after a visit to Ko-fi, the skip link reads as the way on
-    ['support-kofi', 'support-follow'].forEach(function (id) {
+    ['support-kofi', 'support-tiers', 'support-follow'].forEach(function (id) {
         document.getElementById(id).addEventListener('click', function () {
             skip.textContent = 'Continue to download →';
         });

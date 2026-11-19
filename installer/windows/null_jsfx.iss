@@ -133,8 +133,8 @@ begin
   SupportText.Parent := WizardForm.FinishedPage;
   SupportText.AutoSize := False;
   SupportText.WordWrap := True;
-  SupportText.Caption := 'NULL JSFX is free and made by one person. If it helps your music, ' +
-    'a coffee keeps it going. Follow it on Ko-fi for news of every new version:';
+  SupportText.Caption := 'NULL JSFX is free, made by one person and funded only on Ko-fi. ' +
+    'A 5 euro coffee pays for a day of its tools. Follow it there for every new version:';
   SupportLink := TNewStaticText.Create(WizardForm);
   SupportLink.Parent := WizardForm.FinishedPage;
   SupportLink.Caption := 'Support and follow NULL JSFX on Ko-fi';

@@ -171,6 +171,10 @@ input[type="checkbox"] { accent-color: var(--accent); width: 15px; height: 15px;
 .chip.new { color: #151413; background: var(--warn); border-color: var(--warn); font-weight: 600; }
 .banner { background: var(--card-hi); border: 1px solid var(--accent-dim); border-radius: 8px; padding: 10px 14px; margin-bottom: 14px; display: flex; gap: 14px; align-items: center; }
 .banner[hidden] { display: none; }
+.support-card span { flex: 1; }
+.support-card a { color: var(--text); white-space: nowrap; }
+.support-card a.primary-link { font-weight: 600; }
+.support-card button { padding: 3px 10px; font-size: 12px; white-space: nowrap; }
 .extras { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 14px; margin-top: 18px; }
 .extra { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; display: flex; flex-direction: column; gap: 6px; }
 .extra-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; }

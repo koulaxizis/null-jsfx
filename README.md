@@ -4,6 +4,8 @@
 
 Every plugin also comes as **GFX** JSFX with its own interface, as **VST3 / CLAP** for any DAW (Windows, macOS, Linux), as **LV2** on Linux, and most effects also as a module of the **Rack**. All versions of a plugin sound the same.
 
+Free forever, made by one person and funded only by people who use it: [buy a coffee on Ko-fi](https://ko-fi.com/koulaxizis) or [support it monthly](https://ko-fi.com/koulaxizis/tiers).
+
 ## Plugins
 
 Each plugin belongs to one of six categories, written on line 4 of its file:
@@ -75,7 +77,7 @@ Visit [nulljsfx.tech](https://nulljsfx.tech) for interactive guides and document
 
 NULL JSFX is free and open source, and it stays that way: no plugin or feature that has been released for free will ever be moved behind a paywall, and there are no license keys, ads or nags in the plugins.
 
-If the plugins help you, you can [buy Christos a coffee on Ko-fi](https://ko-fi.com/koulaxizis) or [become a monthly supporter](https://ko-fi.com/koulaxizis/tiers). The same Ko-fi page supports all of his open-source projects ([noxpress](https://noxpress.tech), [orOS](https://github.com/koulaxizis/oros) and NULL JSFX).
+Ko-fi is the only way this work is funded. If the plugins help you, a [€5 coffee on Ko-fi](https://ko-fi.com/koulaxizis) pays for about a day of the tools they are built with, and a [membership from €3 a month](https://ko-fi.com/koulaxizis/tiers) keeps them going. The same Ko-fi page supports all of his open-source projects ([noxpress](https://noxpress.tech), [orOS](https://github.com/koulaxizis/oros) and NULL JSFX).
 
 News of new versions and plugins goes out on Ko-fi only: [follow NULL JSFX on Ko-fi](https://ko-fi.com/koulaxizis) to get it.
 

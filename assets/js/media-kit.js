@@ -25,7 +25,7 @@
             modal.classList.add('active');
         });
     });
-    ['support-kofi', 'support-follow'].forEach(function (id) {
+    ['support-kofi', 'support-tiers', 'support-follow'].forEach(function (id) {
         document.getElementById(id).addEventListener('click', function () {
             skip.textContent = 'Continue to download →';
         });

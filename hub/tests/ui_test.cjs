@@ -58,6 +58,22 @@ function check(cond, what) {
   check((await page.locator('.card[data-id="tape"] .chip.new').count()) === 1, 'a new plugin carries a NEW mark');
   check((await page.textContent('#hub-update')).includes('A new NULL JSFX Hub (2.2)'), 'a newer Hub is announced');
 
+  // the support card: once per release, only with something installed, closable for good
+  check(await page.isVisible('#support-card'), 'the Ko-fi card shows for this release (Tilt is installed)');
+  check((await page.locator('#support-card a[href="https://ko-fi.com/koulaxizis"]').count()) === 1, 'the card links to Ko-fi');
+  await page.click('#support-later');
+  check(await page.isHidden('#support-card'), 'Later hides the card');
+  check((await page.evaluate(() => localStorage.getItem('nulljsfx-support-release'))) === catalog.version, 'Later remembers the release, so the card waits for the next one');
+  await page.evaluate(() => localStorage.removeItem('nulljsfx-support-release'));
+  await page.reload();
+  await page.waitForSelector('.card');
+  check(await page.isVisible('#support-card'), 'the card comes back for a release not seen yet');
+  await page.click('#support-never');
+  await page.evaluate(() => localStorage.removeItem('nulljsfx-support-release'));
+  await page.reload();
+  await page.waitForSelector('.card');
+  check(await page.isHidden('#support-card'), "Don't show again keeps it closed for every release");
+
   const cards = await page.locator('.card').count();
   await page.fill('#search', 'reverb');
   const n = await page.locator('.card').count();

@@ -385,8 +385,10 @@ def pkg_resources(res, version):
         "<p>Restart REAPER or your DAW, or rescan its plugins, to see NULL JSFX.</p>"
         "<p>To remove it later, open Library/Application Support/NULL JSFX in your home folder and "
         "double-click <b>Uninstall NULL JSFX.command</b>.</p>"
-        "<p>NULL JSFX is free and stays free. If it helps your music, you can support it on "
-        "<a href=\"https://ko-fi.com/koulaxizis\">Ko-fi</a>, and follow it there for news of every new version.</p></body></html>\n", encoding="utf-8")
+        "<p>NULL JSFX is free, made by one person and funded only on "
+        "<a href=\"https://ko-fi.com/koulaxizis\">Ko-fi</a>. A &euro;5 coffee pays for about a day of the "
+        "tools it is built with; a membership from &euro;3 a month keeps it going. Follow it there for news "
+        "of every new version.</p></body></html>\n", encoding="utf-8")
 
 
 def macos_pkg(args, plugs, chain_list):
