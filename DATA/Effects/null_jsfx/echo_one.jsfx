@@ -2,7 +2,7 @@ desc:NULL Echo One
 author: Christos Koulaxizis
 tags: delay echo slapback ping-pong tempo sync repeats filtered tape
 //category: One Slider
-//NULL JSFX v4.1 • https://nulljsfx.tech • MIT License
+//NULL JSFX v4.1.1 • https://nulljsfx.tech • MIT License
 
 slider1:40<0,100,1>Amount
 

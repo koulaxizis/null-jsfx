@@ -2,7 +2,7 @@ desc:NULL Null Test
 author: Christos Koulaxizis
 tags: null test difference residual compare a/b phase cancel polarity latency align gain match bit identical analyzer meter
 //category: Advanced
-//NULL JSFX v4.1 • https://nulljsfx.tech • MIT License
+//NULL JSFX v4.1.1 • https://nulljsfx.tech • MIT License
 
 slider1:2<0,2,1{Main,Sidechain,Difference}>Listen
 slider2:1<0,1,1{Manual,Auto}>Align

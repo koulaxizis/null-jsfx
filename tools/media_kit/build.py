@@ -27,7 +27,7 @@ SUBJ = {'null': 'null-jsfx', 'oros': 'oros', 'nox': 'noxpress', 'all': 'all-thre
 WALL_SIZES = [(3840, 2160, 'desktop-4k'), (5120, 2880, 'desktop-5k'), (2560, 1600, 'desktop-16x10'),
               (3440, 1440, 'ultrawide'), (1440, 3200, 'android'), (1320, 2868, 'iphone'),
               (2732, 2048, 'tablet-landscape'), (2048, 2732, 'tablet-portrait')]
-BANNERS = [('open-graph', 1200, 630, {}), ('kofi-x-header', 1500, 500, {'sw': '0.5', 'sh': '0.45'}),
+BANNERS = [('open-graph', 1200, 630, {}), ('x-header', 1500, 500, {'sw': '0.5', 'sh': '0.45'}),
            ('youtube-banner', 2560, 1440, {'sw': '0.55', 'sh': '0.26'}),
            ('facebook-cover', 1640, 624, {'sw': '0.5', 'oy': '0.42'}),
            ('linkedin-banner', 1584, 396, {'sw': '0.45', 'sh': '0.5'}),

@@ -2,7 +2,7 @@ desc:NULL Lo-Fi Comp
 author: Christos Koulaxizis
 tags: lofi lo-fi compressor pumping squash sample rate reduction bitcrusher wow drift beats vintage sampler
 //category: Essentials
-//NULL JSFX v4.1 • https://nulljsfx.tech • MIT License
+//NULL JSFX v4.1.1 • https://nulljsfx.tech • MIT License
 
 slider1:50<0,100,1>Squash (%)
 slider2:150<20,1000,1>Release (ms)

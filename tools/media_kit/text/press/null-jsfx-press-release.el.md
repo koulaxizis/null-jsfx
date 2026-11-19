@@ -17,8 +17,8 @@
 
 > «Ήθελα ένα πλήρες σετ εργαλείων στούντιο που μπορεί να χρησιμοποιήσει και να μελετήσει ο καθένας, χωρίς paywalls. Το NULL JSFX μένει δωρεάν και ο κώδικας ανοιχτός.» (Χρήστος Κουλαξίζης, δημιουργός)
 
-**Σύνδεσμοι:** nulljsfx.tech · github.com/koulaxizis/null-jsfx · Υποστήριξη: ko-fi.com/koulaxizis
+**Σύνδεσμοι:** nulljsfx.tech · github.com/koulaxizis/null-jsfx · Υποστήριξη: nulljsfx.tech/support
 
 **Επικοινωνία για τον Τύπο:** koulaxizis@glarolykoi.net
 
-**Σχετικά με το NULL JSFX:** δωρεάν σουίτα plugins με άδεια MIT από τον Χρήστο Κουλαξίζη, που στηρίζεται μόνο σε εθελοντική υποστήριξη στο Ko-fi. Λογότυπα, στιγμιότυπα και wallpapers υπάρχουν στο media kit στο nulljsfx.tech.
+**Σχετικά με το NULL JSFX:** δωρεάν σουίτα plugins με άδεια MIT από τον Χρήστο Κουλαξίζη, που στηρίζεται σε αγορές προϊόντων των projects, εφάπαξ δωρεές και πληρωμένες υπηρεσίες, χωρίς να ξεκλειδώνει τίποτα. Λογότυπα, στιγμιότυπα και wallpapers υπάρχουν στο media kit στο nulljsfx.tech.

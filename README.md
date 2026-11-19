@@ -78,11 +78,11 @@ Visit [nulljsfx.tech](https://nulljsfx.tech) for interactive guides and document
 
 NULL JSFX is free and open source, and it stays that way: no plugin or feature that has been released for free will ever be moved behind a paywall, and there are no license keys, ads or nags in the plugins.
 
-If the plugins help you, you can [buy Christos a coffee on Ko-fi](https://ko-fi.com/koulaxizis) or [become a monthly supporter](https://ko-fi.com/koulaxizis/tiers). The same Ko-fi page supports all of his open-source projects ([noxpress](https://noxpress.tech), [orOS](https://github.com/koulaxizis/oros) and NULL JSFX).
+If the plugins help you, you can [support NULL JSFX](https://nulljsfx.tech/support/) with a NULL JSFX t-shirt, mug or sticker, or a one-time donation. Nothing is unlocked: it only helps keep the work going.
 
-News of new versions and plugins goes out on Ko-fi only: [follow NULL JSFX on Ko-fi](https://ko-fi.com/koulaxizis) to get it.
+News of new versions and plugins: the [release notes](https://github.com/koulaxizis/null-jsfx/releases), the Hub's own notices and the [Updates feed on koulaxizis.gr](https://koulaxizis.gr/#updates), together with [noxpress](https://noxpress.tech) and [orOS](https://useoros.online).
 
-Need a hand? You can [book a service on Ko-fi](https://ko-fi.com/koulaxizis/commissions): ready FX chains for Reaper, preset packs or a custom effect.
+Need a hand? You can [hire me](https://koulaxizis.gr/work-with-me/?lang=en#null-jsfx) for a custom effect (from €150), a preset pack (€45) or starter FX chains for REAPER (€30).
 
 ## License
 
