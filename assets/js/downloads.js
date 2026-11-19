@@ -11,8 +11,8 @@
     const el = document.getElementById('download-count');
     if (typeof fetch !== 'function') return;
     const NAMES = { manager: 'Koulaxizis Apps', github: 'Direct APK', fdroid: 'F-Droid', droidify: 'Droid-ify',
-        obtainium: 'Obtainium', fdroid_org: 'f-droid.org', other: 'Other' };
-    const ORDER = ['manager', 'github', 'fdroid', 'droidify', 'obtainium', 'fdroid_org', 'other'];
+        obtainium: 'Obtainium', fdroid_org: 'f-droid.org', other: 'Other', estimate: 'before 19/11 (estimate)' };
+    const ORDER = ['manager', 'github', 'fdroid', 'droidify', 'obtainium', 'fdroid_org', 'other', 'estimate'];
     const list = (s) => String(s || '').split(',').map((x) => x.trim()).filter(Boolean);
     const fits = (want, pkg) => want.some((p) => p === pkg || (p.endsWith('.') && pkg.startsWith(p)));
     const fmt = (n) => n.toLocaleString('en-US');
