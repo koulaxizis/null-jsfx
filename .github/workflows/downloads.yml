@@ -5,7 +5,9 @@ name: Count downloads
 # each release asset. tools/count_downloads.py keeps a ledger by asset id that never lowers a
 # count, so the total does not drop when a release is deleted; the site shows the exact total.
 # downloads.json is committed to main only when the total changes or a new asset appears (at most
-# once a run, so about once a day); assets/js/downloads.js reads it.
+# once a run, so about once a day); assets/js/downloads.js reads it. It also copies the Android
+# apps' counts per channel from the Koulaxizis Apps download counter (APPS-DL) into "android", so
+# the site itself still asks no other server.
 
 on:
   schedule:
@@ -44,7 +46,9 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          result="$(python3 tools/count_downloads.py downloads.json --tags '^[0-9]')"
+          result="$(python3 tools/count_downloads.py downloads.json --tags '^[0-9]' \
+            --android https://apps.koulaxizis.workers.dev/stats.json \
+            --android-pkgs 'tech.nulljsfx.,online.useoros.,gr.koulaxizis.apps,tech.noxpress.,net.glarolykoi.')"
           echo "downloads.json: $result"
           if [ "$result" != changed ]; then
             exit 0

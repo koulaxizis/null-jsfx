@@ -2299,6 +2299,50 @@ a.download-option:hover {
     box-shadow: 0 0 0 4px var(--accent-ring);
 }
 
+.apps-banner p.apps-banner-count {
+    margin: 12px 0 0;
+    font-size: 14px;
+    color: var(--muted);
+}
+
+.apps-banner-count strong {
+    color: var(--text);
+    font-size: 18px;
+}
+
+.apps-banner p.apps-banner-count.sub {
+    margin-top: 2px;
+}
+
+.download-count.android-count {
+    margin-top: -10px;
+}
+
+.apps-banner-count.sub strong {
+    font-size: 15px;
+}
+
+.remote-count {
+    display: inline-flex;
+    flex-direction: column;
+    font-size: 13px;
+    color: var(--muted);
+}
+
+.remote-count strong {
+    color: var(--text);
+}
+
+.remote-break {
+    font-size: 11px;
+}
+
+.remote-count[hidden],
+.remote-break[hidden],
+.apps-banner-count[hidden] {
+    display: none;
+}
+
 .apps-banner-icon {
     flex-shrink: 0;
     width: 96px;
@@ -2345,6 +2389,39 @@ a.download-option:hover {
         height: 64px;
         border-radius: 15px;
     }
+}
+
+.apps-banner-other {
+    margin-top: 14px;
+    font-size: 13px;
+    color: var(--muted);
+}
+
+.apps-banner-other summary {
+    cursor: pointer;
+    min-height: 32px;
+    padding: 6px 0;
+}
+
+.apps-banner-other .dl-chans {
+    font-size: 12px;
+}
+
+.apps-banner-other .dl-chans[hidden] {
+    display: none;
+}
+
+.apps-banner .apps-banner-other p {
+    margin: 6px 0 0;
+    font-size: 13px;
+}
+
+.apps-banner-other a {
+    color: var(--text);
+}
+
+.apps-banner-other code.fp {
+    word-break: break-all;
 }
 
 .apps-banner p.apps-banner-alt {
