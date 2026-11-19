@@ -7,7 +7,7 @@ is tagged (comment=orbit-intro), so running this again leaves a video that has i
 make_videos.py calls it after every render, so new and re-rendered videos get the intro too.
 A plugin without an orbit is left as it is. The poster (<plugin>.jpg) does not change.
 
-Usage: orbit_intro.py [--jobs N] [plugin ...]     (default: every video that has an orbit)
+Usage: orbit_intro.py [--jobs N] [plugin ...]     (default: every plugin video that has an orbit)
 Needs ffmpeg and ffprobe.
 """
 import argparse
@@ -64,7 +64,9 @@ def main():
     ap.add_argument("plugins", nargs="*")
     ap.add_argument("--jobs", type=int, default=2)
     a = ap.parse_args()
-    names = a.plugins or sorted(p.stem for p in ORBITS.glob("*.mp4") if (VIDEOS / p.name).is_file())
+    # plugins only: assets/hardware/ also holds the Rack's and the Hub's renders, whose videos keep no intro
+    plugins = {p.stem for p in (ROOT / "DATA/Effects/null_jsfx").glob("*.jsfx")}
+    names = a.plugins or sorted(p.stem for p in ORBITS.glob("*.mp4") if p.stem in plugins and (VIDEOS / p.name).is_file())
     with ThreadPoolExecutor(a.jobs) as ex:
         for line in ex.map(prepend, names):
             print(line, flush=True)
