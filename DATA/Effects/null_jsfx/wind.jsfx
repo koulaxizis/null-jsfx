@@ -2,7 +2,7 @@ desc:NULL Wind
 author: Christos Koulaxizis
 tags: instrument wind woodwind brass flute clarinet saxophone sax trumpet physical model waveguide breath controller mono synth midi
 //category: Instruments
-//NULL JSFX v4.1 • https://nulljsfx.tech • MIT License
+//NULL JSFX v4.1.1 • https://nulljsfx.tech • MIT License
 
 slider1:0<0,3,1{Flute,Clarinet,Saxophone,Brass}>Model
 slider2:0<0,4,1{Velocity,Mod Wheel,Breath CC 2,Aftertouch,Expression CC 11}>Breath Source
