@@ -55,6 +55,10 @@ committed (`.gitignore` blocks `*.jks` and `*.keystore`).
 
 ## F-Droid, Droid-ify and Obtainium
 
+Since 2026-11-19 the site and docs point people only to **Koulaxizis Apps**
+(`gr.koulaxizis.apps`, koulaxizis/oros `koulaxizis-apps/`), our app manager, which reads the
+F-Droid repository below. Everything here keeps working for people who already use it.
+
 **Our F-Droid repository** (Christos, 2026-11-02): `https://koulaxizis.github.io/null-jsfx-fdroid/repo`.
 `.github/workflows/fdroid-repo.yml` runs on every published release: it builds the `fdroid`
 flavor of each app in `tools/fdroid_repo.py` `APPS` from the release tag, signed with the same
