@@ -2546,3 +2546,10 @@ entry and the Bible delta.
 - **Files:** `index.html`, `assets/css/style.css`, `assets/js/downloads.js`, this Bible (Part X).
 - **Tests:** rendered at 360 px with a mock `downloads.json` (no horizontal scroll); `tools/build_site.py --check`, `tests/lint.py`, `tests/bible_order.py`.
 - **Version:** v4.1 (no change).
+
+### 2026-11-19 · Repo: committed node_modules and Python bytecode removed
+- **Why:** the weekly repo cleanup (2026-11-19) found `tests/daws/node_modules/` (513 files of Playwright, about 11.8 MB, committed with c6c4fcf8 on 2026-11-02) and five `__pycache__/*.pyc` files in main. CI's `daws` job runs `npm ci` in `tests/daws`, so none of it is used. Christos approved the removal on the cleanup card.
+- **What:** the files leave the index (they stay in history; nothing is rewritten). `tests/daws/.gitignore` keeps `node_modules/` out, as `tests/mixers/.gitignore` and `tests/remote/.gitignore` do. A new root `.gitignore` keeps `__pycache__/` and `*.pyc` out.
+- **Files:** `tests/daws/node_modules/**` and `{native/test,tools,tools/video}/__pycache__/*.pyc` (removed), `tests/daws/.gitignore` and `.gitignore` (new), this Bible (Part X).
+- **Tests:** `tests/lint.py`, `tests/bible_order.py`, `tools/build_site.py --check`; `npm ci` and `node tests/daws/ardour_test.cjs` locally in a clean `tests/daws`; CI.
+- **Version:** v4.1 (no change).
