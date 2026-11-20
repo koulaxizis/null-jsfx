@@ -2581,9 +2581,9 @@ entry and the Bible delta.
 - **Tests:** `tools/build_site.py --check`, `tests/lint.py`, `tests/bible_order.py`, `tools/build_bible.py --check`; `tests/site/live_test.cjs` (all checks pass, with the container's Playwright); `tests/daws/ui_test.cjs` and `tests/mixers/ui_test.cjs` pass (they took the screens); `/remotes/` and the homepage section rendered at 1280 and 390 px in dark and light (no horizontal page scroll, no console errors); the trailer's frames looked at and its loudness measured (I -16.2 LUFS, true peak -0.8 dBFS). Not tried: real phones and tablets, Safari.
 
 ### 2026-11-19 · Repo: committed node_modules and Python bytecode removed
-- **Why:** the weekly repo cleanup (2026-11-19) found `tests/daws/node_modules/` (513 files of Playwright, about 11.8 MB, committed with c6c4fcf8 on 2026-11-02) and five `__pycache__/*.pyc` files in main. CI's `daws` job runs `npm ci` in `tests/daws`, so none of it is used. Christos approved the removal on the cleanup card.
+- **Why:** the weekly repo cleanup (2026-11-19) found `tests/daws/node_modules/` (513 files of Playwright, about 11.8 MB, committed with c6c4fcf8 on 2026-11-02) and five `__pycache__/*.pyc` files in main (a sixth, `tools/__pycache__/fdroid_repo.cpython-313.pyc`, came with #192 the same day). CI's `daws` job runs `npm ci` in `tests/daws`, so none of it is used. Christos approved the removal on the cleanup card.
 - **What:** the files leave the index (they stay in history; nothing is rewritten). `tests/daws/.gitignore` keeps `node_modules/` out, as `tests/mixers/.gitignore` and `tests/remote/.gitignore` do. A new root `.gitignore` keeps `__pycache__/` and `*.pyc` out.
-- **Files:** `tests/daws/node_modules/**` and `{native/test,tools,tools/video}/__pycache__/*.pyc` (removed), `tests/daws/.gitignore` and `.gitignore` (new), this Bible (Part X).
+- **Files:** `tests/daws/node_modules/**` and `{native/test,tools,tools/video}/__pycache__/*.pyc`, six files (removed), `tests/daws/.gitignore` and `.gitignore` (new), this Bible (Part X).
 - **Tests:** `tests/lint.py`, `tests/bible_order.py`, `tools/build_site.py --check`; `npm ci` and `node tests/daws/ardour_test.cjs` locally in a clean `tests/daws`; CI.
 - **Version:** v4.1 (no change).
 
