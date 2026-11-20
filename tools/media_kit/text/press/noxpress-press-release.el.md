@@ -11,8 +11,8 @@
 
 > «Ένα μικρό κατάστημα αξίζει τα ίδια εργαλεία με ένα μεγάλο, χωρίς μηνιαίο λογαριασμό για κάθε λειτουργία.» (Χρήστος Κουλαξίζης, δημιουργός)
 
-**Σύνδεσμοι:** noxpress.tech · github.com/koulaxizis/noxpress · Υποστήριξη: ko-fi.com/koulaxizis
+**Σύνδεσμοι:** noxpress.tech · github.com/koulaxizis/noxpress · Υποστήριξη: noxpress.tech/support
 
 **Επικοινωνία για τον Τύπο:** koulaxizis@glarolykoi.net
 
-**Σχετικά με το noxpress:** δωρεάν plugins WordPress με άδεια MIT από τον Χρήστο Κουλαξίζη, που στηρίζονται μόνο σε εθελοντική υποστήριξη στο Ko-fi. Λογότυπα και wallpapers υπάρχουν στο media kit στο noxpress.tech.
+**Σχετικά με το noxpress:** δωρεάν plugins WordPress με άδεια MIT από τον Χρήστο Κουλαξίζη, που στηρίζονται σε αγορές προϊόντων, εφάπαξ δωρεές και πληρωμένες υπηρεσίες, χωρίς να ξεκλειδώνουν τίποτα. Λογότυπα και wallpapers υπάρχουν στο media kit στο noxpress.tech.
