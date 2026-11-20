@@ -142,6 +142,8 @@ def plugins():
             "formats": fmts,
             "shot": SITE + p["shot"] if p["shot"] else None,
             "video": SITE + p["video"] if p["video"] else None,
+            # the card's picture: the 3D render's thumbnail (Bible II.8), the shot where it is missing
+            "thumb": SITE + p["hw"]["thumb"] if p["hw"]["thumb"] else None,
             "guide": f"{SITE}#{p['key']}",
             "presets": [name for name, _ in json.loads(presets.read_text(encoding="utf-8"))] if presets.exists() else [],
             "demo": {"url": f"{SITE}assets/audio/demos/{stem}.mp3", "preset": demo[stem]} if stem in demo else None,

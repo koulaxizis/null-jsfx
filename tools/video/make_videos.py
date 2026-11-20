@@ -4,8 +4,9 @@
 Each video plays the first 32 s (16 bars) of assets/audio/null-jsfx-loop.flac through the real plugin (the GFX JSFX, run by
 gfx_video with ysfx, the same DSP as every format) and films its own interface live, next to
 a spectrum and a level history of the signal before (grey) and after (silver). The script
-is: title, the loop bypassed, up to three factory presets with a quick before/after, a sweep
-of the main control, end card. tools/video/videos.json can change a plugin's script:
+is: the 4 s orbit of its 3D render (orbit_intro.py, where assets/hardware/ has one), title,
+the loop bypassed, up to three factory presets with a quick before/after, a sweep of the main
+control, end card. tools/video/videos.json can change a plugin's script:
   "presets": [names]          which factory presets (default: first, middle and last)
   "sweep": [slider, from, to] the control to turn (null: none), "sweep_base": preset to turn it on
   "input": hum|noise|clicks|plosives|sidechain  what goes in (default: the loop)
@@ -48,8 +49,10 @@ sys.dont_write_bytecode = True
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parent.parent
 sys.path.insert(0, str(HERE.parent))
+sys.path.insert(0, str(HERE))
 from build_chains import parse_sliders  # noqa: E402
 import build_presets  # noqa: E402
+from orbit_intro import FADE_S, ORBIT_S, prepend as orbit_intro  # noqa: E402
 
 PLUGINS = ROOT / "DATA/Effects/null_jsfx"
 GFX = PLUGINS / "gfx"
@@ -759,7 +762,9 @@ def render(stem, hq_dir, tool, loop):
         film(stem, info, script, st, lambda f: np.frombuffer(gfxp.stdout.read(uw * uh * 3), np.uint8).reshape(uh, uw, 3),
              dry, wet, ctl, tmp / "mix.f32", hq_dir, title_card(info), end_card(info))
         gfxp.wait()
-    return stem, total
+    # the 4 s orbit of the plugin's 3D render goes in front, where there is one (orbit_intro.py)
+    orbit_intro(stem)
+    return stem, total + (ORBIT_S - FADE_S if (ROOT / "assets/hardware" / f"{stem}.mp4").is_file() else 0)
 
 
 def play_instrument(tool, stem, preset, midi, nframes, n, tmp):

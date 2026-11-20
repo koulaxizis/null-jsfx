@@ -60,6 +60,7 @@ protected:
     // silver, held keys marked on top, the preview notes dotted
     void drawKeyboard(float x, float y, float w, float h, int lo, int hi, int tonic)
     {
+        layoutNote("keyboard", x, y, w, h, -1.0f, "");
         int nw = 0;
         for (int n = lo; n <= hi; ++n)
             nw += isWhite(n % 12);

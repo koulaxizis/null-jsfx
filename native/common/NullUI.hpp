@@ -19,7 +19,9 @@
 #include <algorithm>
 #include <cmath>
 #include <cstdio>
+#include <cstdlib>
 #include <cstring>
+#include <string>
 #include <vector>
 
 // the plugin's factory presets (written by tools/build_presets.py into the plugin's folder)
@@ -55,6 +57,48 @@ public:
     }
 
 protected:
+    // ---- layout export ------------------------------------------------------------------------
+    // For the 3D hardware renders (tools/hardware/layout.py): with NULL_UI_LAYOUT=<file> in the
+    // environment, every frame writes what it drew (cards, knobs, sliders, selectors, tabs, the
+    // header's buttons, keyboards; design units) to that file as JSON. Without it nothing is
+    // recorded and nothing is written.
+    struct LayoutItem { const char* kind; float x, y, w, h, v; std::string label; };
+    std::vector<LayoutItem> fLayoutItems;
+    const char* const fLayoutPath = std::getenv("NULL_UI_LAYOUT");
+    const char* fLayoutLabel = "";
+
+    void layoutNote(const char* kind, float x, float y, float w, float h, float v = -1.0f, const char* lbl = nullptr)
+    {
+        if (fLayoutPath)
+            fLayoutItems.push_back({ kind, x, y, w, h, v, lbl ? lbl : fLayoutLabel });
+    }
+
+    void layoutFlush()
+    {
+        fLayoutLabel = "";
+        if (!fLayoutPath)
+            return;
+        if (FILE* f = std::fopen(fLayoutPath, "w"))
+        {
+            std::fprintf(f, "{\"width\": %u, \"height\": %u, \"items\": [", kWidth, kHeight);
+            for (size_t i = 0; i < fLayoutItems.size(); ++i)
+            {
+                const LayoutItem& it = fLayoutItems[i];
+                std::string l;
+                for (char ch : it.label)
+                    if (ch == '"' || ch == '\\')
+                        l += '\\', l += ch;
+                    else if (ch >= ' ')
+                        l += ch;
+                std::fprintf(f, "%s\n {\"kind\": \"%s\", \"x\": %.2f, \"y\": %.2f, \"w\": %.2f, \"h\": %.2f, \"v\": %.4f, \"label\": \"%s\"}",
+                             i ? "," : "", it.kind, it.x, it.y, it.w, it.h, it.v, l.c_str());
+            }
+            std::fprintf(f, "\n]}\n");
+            std::fclose(f);
+        }
+        fLayoutItems.clear();
+    }
+
     // ---- helpers -----------------------------------------------------------------------------
 
     static Color col(uint32_t rgb, float alpha = 1.0f)
@@ -122,6 +166,8 @@ protected:
 
     void drawHeader(const char* name, const char* category)
     {
+        fLayoutItems.clear();
+        layoutNote("logo", 14.0f, 10.0f, 24.0f, 24.0f, -1.0f, "NULL JSFX");
         drawLogo(14.0f, 10.0f, 24.0f);
         label(46.0f, 15.0f, ALIGN_LEFT, 8.5f, 2.5f, theme::kMuted, "NULL JSFX", true);
         label(46.0f, 28.0f, ALIGN_LEFT, 15.0f, 2.0f, theme::kText, name, true);
@@ -241,6 +287,7 @@ protected:
     void drawPresetBox()
     {
         const float x0 = presetX(), y0 = kPresetY;
+        layoutNote("select", x0, y0, kPresetW, kPresetH, -1.0f, "PRESET");
         beginPath();
         roundedRect(x0 + 0.5f, y0 + 0.5f, kPresetW - 1.0f, kPresetH - 1.0f, 4.0f);
         fillColor(col(theme::kBackground));
@@ -586,6 +633,7 @@ protected:
         for (int b = 0; b < histButtons(); ++b)
         {
             const float x = histX(b), w = histW(b);
+            layoutNote("button", x, kHistY, w, kHistH, -1.0f, "header");
             const bool on = histOn(b), hover = on && b == fHistHover;
             const bool lit = (b == 2 && fHistAB == 0) || (b == 3 && fHistAB == 1);
             beginPath();
@@ -622,6 +670,7 @@ protected:
 
     void card(float x, float y, float w, float h)
     {
+        layoutNote("card", x, y, w, h, -1.0f, "");
         beginPath();
         roundedRect(x + 0.5f, y + 0.5f, w - 1.0f, h - 1.0f, 6.0f);
         fillColor(col(theme::kCard));
@@ -636,6 +685,7 @@ protected:
     {
         const float th = 6.0f;
         const float tx = x + norm * w;
+        layoutNote("slider", x, y - th * 0.5f, w, th, norm);
         const float f0 = bipolar ? x + w * 0.5f : x;
 
         beginPath();
@@ -683,6 +733,7 @@ protected:
     void drawKnob(float x, float y, float r, float norm, bool bipolar, bool lit)
     {
         const float tr = r + 10.0f, amax = 0.75f * float(M_PI);
+        layoutNote("knob", x - r, y - r, 2.0f * r, 2.0f * r, norm);
         const float ang = (norm * 2.0f - 1.0f) * amax, a0 = bipolar ? 0.0f : -amax;
         // NanoVG angles: 0 = right, clockwise; ours: 0 = up, clockwise
         const float off = -0.5f * float(M_PI);
@@ -1043,6 +1094,7 @@ protected:
         drawDisplay();
         drawSliderCard();
         drawPresetMenu();
+        layoutFlush();
     }
 
     float presetGet(uint32_t index) const override { return index == 0 ? fValue : 0.0f; }
@@ -1054,6 +1106,7 @@ protected:
 
     void drawSliderCard()
     {
+        fLayoutLabel = fInfo.label;
         card(14.0f, 172.0f, 332.0f, 54.0f);
         label(28.0f, 187.0f, ALIGN_LEFT, 8.5f, 2.0f, theme::kMuted, fInfo.label, true);
         char buf[64];
@@ -1397,6 +1450,7 @@ protected:
             const SliderInfo& in = fL.sliders[c.param];
             const float v = fValues[c.param];
             const bool lit = int(i) == fHover || int(i) == fDrag;
+            fLayoutLabel = c.label;
             label(cx, ry + 10.0f, ALIGN_CENTER, 7.5f, 1.5f, theme::kMuted, c.label, true);
             if (c.kind == kKnob)
             {
@@ -1407,6 +1461,7 @@ protected:
             else
             {
                 const float pw = cellW(i) - 10.0f;
+                layoutNote("select", cx - pw * 0.5f, ry + 33.5f, pw, 21.0f);
                 beginPath();
                 roundedRect(cx - pw * 0.5f + 0.5f, ry + 33.5f, pw - 1.0f, 21.0f, 4.0f);
                 fillColor(col(theme::kBackground));
@@ -1433,8 +1488,10 @@ protected:
                 drawArrow(cx + pw * 0.5f - 7.0f, ry + 44.0f, 1.0f);
             }
         }
+        fLayoutLabel = "";
         drawHint();
         drawPresetMenu();
+        layoutFlush();
     }
 
     // the hint line in the bottom margin: the help text of the control under the mouse (or being
@@ -1487,6 +1544,7 @@ protected:
             char name[32];
             std::snprintf(name, sizeof(name), "%.*s", int(len), p);
             const float tx = 22.0f + float(i) * (tw + 4.0f);
+            layoutNote("tab", tx, ty, tw, 20.0f, i == fPage ? 1.0f : 0.0f, name);
             beginPath();
             roundedRect(tx + 0.5f, ty + 0.5f, tw - 1.0f, 19.0f, 4.0f);
             fillColor(col(i == fPage ? 0x2d2b28 : theme::kBackground));

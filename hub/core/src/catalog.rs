@@ -79,6 +79,9 @@ pub struct Plugin {
     pub formats: Vec<Format>,
     #[serde(default)]
     pub shot: Option<String>,
+    /// the card's picture: a 480x270 WebP of the plugin's 3D render (the shot where it is missing)
+    #[serde(default)]
+    pub thumb: Option<String>,
     /// the presentation video (an MP4 on the site, its poster next to it as .jpg)
     #[serde(default)]
     pub video: Option<String>,
