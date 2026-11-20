@@ -4,12 +4,14 @@ name: Media
 # "media", so the site, the plugin pages and the Hub stream them from GitHub's release storage
 # instead of GitHub Pages. It is a pre-release, so it never becomes the latest release; the
 # download counter (tools/count_downloads.py) and the Hub's rollback list only count version tags.
-# A push to main uploads the videos it changed; a manual run uploads all of them.
+# A push to main uploads the videos it changed; a manual run uploads all of them. The 4 s orbits of
+# the 3D renders (assets/hardware/*.mp4) go there too, as <plugin>_orbit.mp4, and only there: the
+# site leaves them out of Pages (_config.yml) and plays them from the release (Bible II.8, B24).
 
 on:
   push:
     branches: [main]
-    paths: ["assets/video/**", ".github/workflows/media.yml"]
+    paths: ["assets/video/**", "assets/hardware/*.mp4", ".github/workflows/media.yml"]
   workflow_dispatch:
 
 permissions:
@@ -36,12 +38,22 @@ jobs:
           if ! gh release view media >/dev/null 2>&1; then
             gh release create media --prerelease --title "Media (videos for the site)" \
               --notes "The presentation videos the site, the plugin pages and NULL JSFX Hub play. Not a release of the plugins: get those from the latest release."
-            files=(assets/video/*.mp4)
+            files=(assets/video/*.mp4 assets/hardware/*.mp4)
           elif [ "${{ github.event_name }}" = workflow_dispatch ] || ! git rev-parse -q --verify HEAD^ >/dev/null; then
-            files=(assets/video/*.mp4)
+            files=(assets/video/*.mp4 assets/hardware/*.mp4)
           else
-            mapfile -t files < <(git diff --name-only --diff-filter=AM HEAD^ HEAD -- 'assets/video/*.mp4')
+            mapfile -t files < <(git diff --name-only --diff-filter=AM HEAD^ HEAD -- 'assets/video/*.mp4' 'assets/hardware/*.mp4')
           fi
+          # an orbit is uploaded as <plugin>_orbit.mp4: the release is flat and <plugin>.mp4 is the video
+          orbits="$(mktemp -d)"
+          for i in "${!files[@]}"; do
+            f="${files[$i]}"
+            [ -e "$f" ] || { unset 'files[i]'; continue; }
+            case "$f" in assets/hardware/*.mp4)
+              b="$(basename "$f" .mp4)"; cp "$f" "$orbits/${b}_orbit.mp4"; files[$i]="$orbits/${b}_orbit.mp4";;
+            esac
+          done
+          files=("${files[@]}")
           echo "uploading ${#files[@]} videos"
           # in batches, so one slow upload does not hold the whole list
           for ((i = 0; i < ${#files[@]}; i += 20)); do

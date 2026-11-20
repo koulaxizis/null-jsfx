@@ -1,0 +1,16 @@
+# GitHub Pages (Jekyll) settings. The 4 s orbits of the 3D renders stay out of the site, which
+# plays them from the "media" pre-release (.github/workflows/media.yml; Bible II.8, B24), so the
+# site keeps room under GitHub Pages' 1 GB. An exclude list replaces Jekyll's own, so its default
+# entries come first and everything else is published as before.
+exclude:
+  - ".sass-cache"
+  - ".jekyll-cache"
+  - "gemfiles"
+  - "Gemfile"
+  - "Gemfile.lock"
+  - "node_modules"
+  - "vendor/bundle/"
+  - "vendor/cache/"
+  - "vendor/gems/"
+  - "vendor/ruby/"
+  - "assets/hardware/*.mp4"

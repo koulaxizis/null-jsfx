@@ -1,5 +1,8 @@
 # NULL JSFX — Audio Without Noise
 
+<p align="center"><img src="assets/hardware/family.webp" alt="The NULL JSFX plugins as a family of hardware units, a 3D render" width="960"></p>
+<p align="center"><sub>3D render · software plugins</sub></p>
+
 174 professional audio plugins for Cockos Reaper. Pure EEL2 scripting, native sliders, zero dependencies. Free and open source.
 
 Every plugin also comes as **GFX** JSFX with its own interface, as **VST3 / CLAP** for any DAW (Windows, macOS, Linux), as **LV2** on Linux, and most effects also as a module of the **Rack**. All versions of a plugin sound the same.

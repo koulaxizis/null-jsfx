@@ -1,0 +1,13 @@
+![The NULL JSFX suite as a family of hardware units (3D render · software plugins)](https://nulljsfx.tech/assets/hardware/family.webp)
+
+## <version>: <three to five words on what is new>
+
+- **NEW PLUGINS** (beta where not tried for real): **NAME** (what it does, in a few words), ...
+- **NEW FEATURES**: ...
+- **FX CHAINS** for REAPER and **RACK** presets: ...
+- **FIXES**: ...
+- With their default settings the existing plugins sound as in <previous version>; the new options are off until you turn them on
+
+Android apps through Koulaxizis Apps: https://github.com/koulaxizis/oros/releases/download/koulaxizis-apps/koulaxizis-apps.apk
+
+Free forever. Support: https://ko-fi.com/koulaxizis
