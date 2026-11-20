@@ -1,8 +1,8 @@
 {
-  "display": 4690,
-  "total": 4690,
+  "display": 4976,
+  "total": 4976,
   "offset": 0,
-  "updated": "2026-11-19",
+  "updated": "2026-11-20",
   "assets": {
     "489296831": {
       "file": "1.0/null_jsfx.zip",
@@ -902,7 +902,7 @@
     },
     "759237384": {
       "file": "4.0/NULL-JSFX-Remote-DAWs-Android.apk",
-      "count": 5
+      "count": 9
     },
     "759237390": {
       "file": "4.0/NULL-JSFX-Remote-Mixers-Android.apk",
@@ -950,7 +950,7 @@
     },
     "759522561": {
       "file": "4.0/NULL-JSFX-JSFX.zip",
-      "count": 132
+      "count": 149
     },
     "759522670": {
       "file": "4.0/NULL-JSFX-VST3-CLAP-Linux-ARM64.zip",
@@ -958,7 +958,7 @@
     },
     "759524396": {
       "file": "4.0/NULL-JSFX-VST3-CLAP-Linux.zip",
-      "count": 60
+      "count": 77
     },
     "759526582": {
       "file": "4.0/NULL-JSFX-VST3-CLAP-Windows-ARM64.zip",
@@ -986,7 +986,7 @@
     },
     "765821379": {
       "file": "4.1/NULL-JSFX-Remote-DAWs-Android.apk",
-      "count": 2
+      "count": 3
     },
     "766060506": {
       "file": "4.1/NULL-JSFX-Hub-Linux.AppImage",
@@ -998,11 +998,11 @@
     },
     "766060849": {
       "file": "4.1/NULL-JSFX-Hub-Windows-Setup.exe",
-      "count": 4
+      "count": 31
     },
     "766060951": {
       "file": "4.1/NULL-JSFX-Hub-macOS.dmg",
-      "count": 2
+      "count": 4
     },
     "766061073": {
       "file": "4.1/NULL-JSFX-Installer-Linux-ARM64.sh",
@@ -1010,19 +1010,19 @@
     },
     "766062582": {
       "file": "4.1/NULL-JSFX-Installer-Linux.sh",
-      "count": 1
+      "count": 4
     },
     "766063471": {
       "file": "4.1/NULL-JSFX-Installer-Windows-ARM64.exe",
-      "count": 1
+      "count": 2
     },
     "766063601": {
       "file": "4.1/NULL-JSFX-Installer-Windows.exe",
-      "count": 9
+      "count": 27
     },
     "766063682": {
       "file": "4.1/NULL-JSFX-Installer-macOS.pkg",
-      "count": 1
+      "count": 8
     },
     "766065563": {
       "file": "4.1/NULL-JSFX-Installer-macOS.sh",
@@ -1030,7 +1030,7 @@
     },
     "766067346": {
       "file": "4.1/NULL-JSFX-JSFX.zip",
-      "count": 63
+      "count": 115
     },
     "766067398": {
       "file": "4.1/NULL-JSFX-VST3-CLAP-Linux-ARM64.zip",
@@ -1038,7 +1038,7 @@
     },
     "766068459": {
       "file": "4.1/NULL-JSFX-VST3-CLAP-Linux.zip",
-      "count": 61
+      "count": 90
     },
     "766069436": {
       "file": "4.1/NULL-JSFX-VST3-CLAP-Windows-ARM64.zip",
@@ -1046,217 +1046,299 @@
     },
     "766070078": {
       "file": "4.1/NULL-JSFX-VST3-CLAP-Windows.zip",
-      "count": 5
+      "count": 31
     },
     "766070446": {
       "file": "4.1/NULL-JSFX-VST3-CLAP-macOS.zip",
-      "count": 3
+      "count": 9
     },
     "766676444": {
       "file": "4.1/NULL-JSFX-Catalog.json",
-      "count": 11
+      "count": 44
+    },
+    "769358124": {
+      "file": "4.1.1/NULL-JSFX-Catalog.json",
+      "count": 0
+    },
+    "769378816": {
+      "file": "4.1.1/NULL-JSFX-Remote-DAWs-Android.apk",
+      "count": 1
+    },
+    "769378823": {
+      "file": "4.1.1/NULL-JSFX-Remote-Mixers-Android.apk",
+      "count": 1
+    },
+    "769638460": {
+      "file": "4.1.1/NULL-JSFX-Hub-Linux.AppImage",
+      "count": 1
+    },
+    "769638614": {
+      "file": "4.1.1/NULL-JSFX-Hub-Linux.deb",
+      "count": 1
+    },
+    "769638697": {
+      "file": "4.1.1/NULL-JSFX-Hub-Windows-Setup.exe",
+      "count": 2
+    },
+    "769638774": {
+      "file": "4.1.1/NULL-JSFX-Hub-macOS.dmg",
+      "count": 2
+    },
+    "769638830": {
+      "file": "4.1.1/NULL-JSFX-Installer-Linux-ARM64.sh",
+      "count": 1
+    },
+    "769639578": {
+      "file": "4.1.1/NULL-JSFX-Installer-Linux.sh",
+      "count": 2
+    },
+    "769640798": {
+      "file": "4.1.1/NULL-JSFX-Installer-Windows-ARM64.exe",
+      "count": 1
+    },
+    "769640891": {
+      "file": "4.1.1/NULL-JSFX-Installer-Windows.exe",
+      "count": 3
+    },
+    "769640993": {
+      "file": "4.1.1/NULL-JSFX-Installer-macOS.pkg",
+      "count": 5
+    },
+    "769643479": {
+      "file": "4.1.1/NULL-JSFX-Installer-macOS.sh",
+      "count": 1
+    },
+    "769644839": {
+      "file": "4.1.1/NULL-JSFX-JSFX.zip",
+      "count": 7
+    },
+    "769644885": {
+      "file": "4.1.1/NULL-JSFX-VST3-CLAP-Linux-ARM64.zip",
+      "count": 1
+    },
+    "769645937": {
+      "file": "4.1.1/NULL-JSFX-VST3-CLAP-Linux.zip",
+      "count": 1
+    },
+    "769646940": {
+      "file": "4.1.1/NULL-JSFX-VST3-CLAP-Windows-ARM64.zip",
+      "count": 1
+    },
+    "769647482": {
+      "file": "4.1.1/NULL-JSFX-VST3-CLAP-Windows.zip",
+      "count": 2
+    },
+    "769648115": {
+      "file": "4.1.1/NULL-JSFX-VST3-CLAP-macOS.zip",
+      "count": 6
+    },
+    "770511215": {
+      "file": "4.1.1/NULL-JSFX-Catalog.json",
+      "count": 4
     }
   },
   "android": {
     "gr.koulaxizis.apps": {
       "estimate": 10,
-      "github": 5
+      "github": 25
     },
     "net.glarolykoi.android": {
-      "github": 3,
+      "github": 4,
+      "manager": 2,
       "play_appilix": 10
     },
     "online.useoros.base": {
       "estimate": 2,
-      "github": 0
+      "github": 1
     },
     "online.useoros.bookmarks": {
       "estimate": 6,
-      "github": 0
+      "github": 1
     },
     "online.useoros.budget": {
       "estimate": 6,
-      "github": 0
+      "github": 1
     },
     "online.useoros.calculator": {
       "estimate": 6,
-      "github": 0
+      "github": 1
     },
     "online.useoros.calendar": {
       "estimate": 6,
-      "github": 0
+      "github": 1
     },
     "online.useoros.contacts": {
       "estimate": 6,
-      "github": 0
+      "github": 1
     },
     "online.useoros.crm": {
       "estimate": 6,
-      "github": 0
+      "github": 1
     },
     "online.useoros.cycle": {
       "estimate": 6,
-      "github": 0
+      "github": 2
     },
     "online.useoros.diary": {
       "estimate": 6,
-      "github": 0
+      "github": 1
     },
     "online.useoros.drive": {
       "estimate": 25,
-      "github": 0
+      "github": 1
     },
     "online.useoros.files": {
       "estimate": 6,
-      "github": 0
+      "github": 1
     },
     "online.useoros.forms": {
       "estimate": 6,
-      "github": 0
+      "github": 1
     },
     "online.useoros.games": {
       "estimate": 6,
-      "github": 0
+      "github": 1
     },
     "online.useoros.habits": {
       "estimate": 6,
-      "github": 0
+      "github": 1
     },
     "online.useoros.health": {
       "estimate": 6,
-      "github": 0
+      "github": 2
     },
     "online.useoros.invoices": {
       "estimate": 6,
-      "github": 0
+      "github": 1
     },
     "online.useoros.kanban": {
       "estimate": 6,
-      "github": 0
+      "github": 1
     },
     "online.useoros.library": {
       "estimate": 2,
-      "github": 0
+      "github": 1
     },
     "online.useoros.mail": {
       "estimate": 6,
-      "github": 0
+      "github": 2
     },
     "online.useoros.maps": {
       "estimate": 6,
-      "github": 0
+      "github": 1
     },
     "online.useoros.mindmap": {
       "estimate": 6,
-      "github": 0
+      "github": 1
     },
     "online.useoros.mood": {
       "estimate": 6,
-      "github": 0
+      "github": 1
     },
     "online.useoros.music": {
       "estimate": 6,
-      "github": 0
+      "github": 1
     },
     "online.useoros.notes": {
       "estimate": 6,
-      "github": 0
+      "github": 1
     },
     "online.useoros.passwords": {
       "estimate": 6,
-      "github": 0
+      "github": 1
     },
     "online.useoros.photolab": {
       "estimate": 6,
-      "github": 0
+      "github": 1
     },
     "online.useoros.podcasts": {
       "estimate": 6,
-      "github": 0
+      "github": 1
     },
     "online.useoros.radio": {
       "estimate": 6,
-      "github": 0
+      "github": 1
     },
     "online.useoros.reader": {
       "estimate": 6,
-      "github": 0
+      "github": 1
     },
     "online.useoros.scanner": {
       "estimate": 6,
-      "github": 0
+      "github": 1
     },
     "online.useoros.slides": {
       "estimate": 6,
-      "github": 0
+      "github": 1
     },
     "online.useoros.spreadsheet": {
       "estimate": 6,
-      "github": 0
+      "github": 1
     },
     "online.useoros.stock": {
       "estimate": 6,
-      "github": 0
+      "github": 1
     },
     "online.useoros.studioremote": {
       "estimate": 15,
-      "github": 0
+      "github": 1
     },
     "online.useoros.time": {
       "estimate": 6,
-      "github": 0
+      "github": 1
     },
     "online.useoros.timesheet": {
       "estimate": 6,
-      "github": 0
+      "github": 1
     },
     "online.useoros.todo": {
       "estimate": 6,
-      "github": 0
+      "github": 1
     },
     "online.useoros.transfer": {
       "estimate": 6,
-      "github": 0
+      "github": 1
     },
     "online.useoros.twa": {
       "estimate": 120,
-      "github": 0
+      "github": 1,
+      "manager": 2
     },
     "online.useoros.water": {
       "estimate": 6,
-      "github": 0
+      "github": 1
     },
     "online.useoros.weather": {
       "estimate": 6,
-      "github": 0
+      "github": 1
     },
     "online.useoros.wiki": {
       "estimate": 6,
-      "github": 0
+      "github": 1
     },
     "online.useoros.workouts": {
       "estimate": 6,
-      "github": 0
+      "github": 1
     },
     "online.useoros.writer": {
       "estimate": 6,
-      "github": 0
+      "github": 1
     },
     "tech.noxpress.liveoperator": {
       "estimate": 10,
-      "github": 42
+      "github": 44
     },
     "tech.noxpress.sitebridge": {
       "estimate": 14,
-      "github": 59
+      "github": 61
     },
     "tech.nulljsfx.remote.daws": {
       "estimate": 12,
-      "github": 52
+      "github": 58
     },
     "tech.nulljsfx.remote.mixers": {
       "estimate": 11,
-      "github": 45
+      "github": 46
     }
   }
 }
