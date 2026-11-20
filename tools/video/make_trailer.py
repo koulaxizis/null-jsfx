@@ -62,7 +62,11 @@ def card(out, seconds, lines, loop_at):
 
 
 def cut(out, stem, start, seconds):
-    """seconds of a presentation video from start (it names itself on screen), with short fades."""
+    """seconds of a presentation video from start (it names itself on screen), with short fades. start counts
+    from the video's own first frame: a video with the 3D orbit intro (tools/video/orbit_intro.py) starts later."""
+    from orbit_intro import FADE_S, ORBIT_S, has_intro
+    if has_intro(VIDEO / f"{stem}.mp4"):
+        start += ORBIT_S - FADE_S
     run("-ss", start, "-t", seconds, "-i", VIDEO / f"{stem}.mp4",
         "-vf", f"scale=1280:720,fps={FPS},fade=in:st=0:d=0.15,fade=out:st={seconds - 0.15}:d=0.15,format=yuv420p",
         "-af", f"afade=in:d=0.05,afade=out:st={seconds - 0.08}:d=0.08,aformat=sample_rates=48000:channel_layouts=stereo",
