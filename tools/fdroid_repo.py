@@ -6,8 +6,9 @@ APPS, signed with the same key as the APKs on our GitHub releases, and publishes
 `fdroid update` to GitHub Pages. F-Droid and Droid-ify add the repository; Obtainium reads it
 too. This script holds the parts that can be tested without the Android SDK:
 
-  meta <dir>               write <dir>/metadata/<package>.yml and the store texts from the
-                           fastlane folders of each app (android/app/src/<app>/fastlane)
+  meta <dir>               write <dir>/metadata/<package>.yml and the store texts, icon and
+                           phone screenshots from the fastlane folders of each app
+                           (android/app/src/<app>/fastlane)
   name <apk> <package> <versionCode>
                            print the file name the APK gets in the repository:
                            <package>_<versionCode>_<sha256 first 8>.apk (a new name for every
@@ -48,6 +49,7 @@ def fastlane_dir(app):
 
 def write_meta(out):
     """metadata/<pkg>.yml plus metadata/<pkg>/<locale>/ (title, short and full description,
+    phone screenshots,
     icon of each app), the layout `fdroid update` reads for a repository of ready APKs."""
     meta = os.path.join(out, "metadata")
     os.makedirs(meta, exist_ok=True)
@@ -77,6 +79,17 @@ def write_meta(out):
                     o.write(text + "\n")
             own = os.path.join(src, loc, "images", "icon.png")
             shutil.copyfile(own if os.path.isfile(own) else icon, os.path.join(dst, "images", "icon.png"))
+            # phone screenshots (fastlane images/phoneScreenshots/<n>.png|jpg, in number
+            # order): the app's own page in Koulaxizis Apps and F-Droid clients shows them
+            shots = os.path.join(src, loc, "images", "phoneScreenshots")
+            if os.path.isdir(shots):
+                names = sorted((f for f in os.listdir(shots) if re.fullmatch(r"[0-9]+\.(png|jpg)", f)),
+                               key=lambda f: int(f.split(".")[0]))
+                if names:
+                    out_dir = os.path.join(dst, "images", "phoneScreenshots")
+                    os.makedirs(out_dir, exist_ok=True)
+                    for f in names:
+                        shutil.copyfile(os.path.join(shots, f), os.path.join(out_dir, f))
         with open(os.path.join(meta, pkg + ".yml"), "w", encoding="utf-8") as o:
             o.write(COMMON)
     return sorted(APPS.values())
