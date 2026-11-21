@@ -1,6 +1,6 @@
 // Shared brand data for the media kit generator. Marks use the exact geometry
 // of each project's own icon source (null-jsfx hub/app/icons/icon.svg,
-// oros icon.svg, noxpress favicon.svg).
+// oros icon.svg, noxpress favicon.svg, waymark favicon.svg).
 const BRAND = {
   null: {
     name: 'NULL JSFX', tag: 'AUDIO WITHOUT NOISE', font: 'Noto', site: 'nulljsfx.tech',
@@ -30,6 +30,18 @@ const BRAND = {
     pal: {
       dark:  { bg0: '#2a1e5c', bg1: '#0d0f14', mid: '#15131f', fg: '#f6f4ff', sub: '#b7b2d6', acc: '#6d4aff', box: '#0d0f14', boxS: '#2e3240' },
       light: { bg0: '#dcd3ff', bg1: '#f7f6fb', mid: '#efecfb', fg: '#14121f', sub: '#6a6488', acc: '#6d4aff', box: '#ffffff', boxS: '#dcd7f5' }
+    }
+  },
+  way: {
+    name: 'WAYMARK', tag: 'TOOLS THAT KEEP THE SHOW ON TRACK', font: 'Inter', site: 'waymarked.site',
+    vb: 64,
+    // the official mark is a white map pin in a pine-green circle; without the circle the pin
+    // is drawn on its own in colour c
+    mark: (c, box) => (box ? `<circle cx="32" cy="32" r="30" fill="${box.fill}"/>` : '') +
+      `<path d="M32 14C24 14 18 20 18 28c0 10 14 24 14 24s14-14 14-24c0-8-6-14-14-14z" fill="none" stroke="${c}" stroke-width="3.5" stroke-linejoin="round"/><circle cx="32" cy="28" r="4.5" fill="${c}"/>`,
+    pal: {
+      dark:  { bg0: '#0a2b28', bg1: '#090e0e', mid: '#0d1a19', fg: '#f3f6f5', sub: '#88c5bd', acc: '#5ca89e', box: '#198378' },
+      light: { bg0: '#e2fcf7', bg1: '#f3f6f5', mid: '#eef6f4', fg: '#1a2120', sub: '#04534c', acc: '#066c64', box: '#198378' }
     }
   }
 };
