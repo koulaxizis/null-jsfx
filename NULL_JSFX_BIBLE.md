@@ -2626,3 +2626,11 @@ entry and the Bible delta.
 - **Files:** `tools/build_site.py`, `tools/product_pages.py`, `assets/js/orbit.js` (comment), generated `plugins/*/index.html`, `rack/index.html`, `hub/index.html`, `remotes/index.html`, this Bible (II.8, Part VII, Part X).
 - **Tests:** `tools/build_site.py --check`, `tests/lint.py`, `tests/bible_order.py`, `tools/build_bible.py --check`; checked that no generated page shows a 3D still next to an orbit.
 - **Version:** v4.1.1 (no change).
+
+### 2026-11-21 · Drum Machine: a seamless 360° orbit (trial)
+- **Why:** Christos found the orbit's repeat abrupt: each orbit was an arc that eased out and jumped back to its start. The PC render thread made a full 360° turn of the Drum Machine (rear jacks included, 8 s), and Christos asked to see it on its page before every orbit is made the same way (2026-11-21).
+- **What:** `assets/hardware/drum_machine.mp4` replaced by the 360° render (1280x720, 200 frames, the last frame flows into the first); `media.yml` publishes it as `drum_machine_orbit.mp4`. Nothing else changes; the other 175 orbits wait for his OK.
+- **Files:** `assets/hardware/drum_machine.mp4`, this Bible (Part X).
+- **Tests:** frame-difference check (step at the loop point within the normal frame step); `tests/bible_order.py`, `tools/build_bible.py --check`, `tools/build_site.py --check`.
+- **Version:** v4.1.1 (no change).
+
