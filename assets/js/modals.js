@@ -2428,10 +2428,12 @@ const guides = {
       { name: 'Attack', range: '0 to 100 ms', desc: 'How fast the gain opens when a sound rises above the noise' },
       { name: 'Release', range: '10 to 1000 ms', desc: 'How fast the gain closes back to the floor' },
       { name: 'Listen', range: 'Output / Removed noise', desc: 'Hear the cleaned output or only the removed noise' },
-      { name: 'Mix', range: '0 to 100%', desc: 'Dry/wet blend' }
+      { name: 'Mix', range: '0 to 100%', desc: 'Dry/wet blend' },
+      { name: 'Noise File', range: 'WAV file in REAPER/Data/null_jsfx_noise', desc: 'Beta: WAV of noise alone (room tone, hiss, hum) from REAPER’s Data/null_jsfx_noise folder: its first 60 s are averaged into the profile, as Learn would (used when Use Noise File = On)' },
+      { name: 'Use Noise File', range: 'Off / On', desc: 'On: the profile comes from the Noise File. Off clears a profile from the file or from Learn; a new Learn replaces the file’s profile' }
     ],
-    uses: ['Remove tape and preamp hiss', 'Clean room tone and air-conditioning rumble from dialogue', 'Tame a hum or buzz bed under guitars', 'Lower the noise floor of field and home recordings'],
-    properties: 'Signal chain: Input → 2048-Point FFT (4× overlap, Hann) → Noise Estimate (Learnt Profile or Auto Minimum Statistics) → Wiener-Like Gain with Floor → Time + Frequency Smoothing → Attack/Release → IFFT Overlap-Add → Mix → Output. One gain for both channels; latency 2047 samples (reported). The learnt profile lives in memory and is not saved with the project: learn again after a reload, or use Auto.',
+    uses: ['Remove tape and preamp hiss', 'Clean room tone and air-conditioning rumble from dialogue', 'Tame a hum or buzz bed under guitars', 'Lower the noise floor of field and home recordings', 'Learn the noise from a separate room-tone or hiss file instead of a passage of the track'],
+    properties: 'Signal chain: Input → 2048-Point FFT (4× overlap, Hann) → Noise Estimate (Learnt Profile, Profile from a Noise File, or Auto Minimum Statistics) → Wiener-Like Gain with Floor → Time + Frequency Smoothing → Attack/Release → IFFT Overlap-Add → Mix → Output. One gain for both channels; latency 2047 samples (reported). Since 4.2 (beta) the profile in use (learnt or from the file) is saved with the project and comes back without the file; a Noise File (WAV, mono or stereo, any sample rate, first 60 s) is read off the audio path, resampled and averaged exactly as Learn averages it while the same file plays.',
     formats: ['JSFX', 'GFX', 'VST3', 'CLAP', 'LV2'],
     shot: 'assets/img/gfx/noise_reduction.png',
     video: 'assets/video/noise_reduction.mp4',

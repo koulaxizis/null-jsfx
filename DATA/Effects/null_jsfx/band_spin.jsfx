@@ -2,7 +2,7 @@ desc:NULL Band Spin
 author: Christos Koulaxizis
 tags: band spin multiband rotary rotor spin pan tremolo doppler motion movement follow crossover
 //category: Advanced
-//NULL JSFX v4.1.1 • https://nulljsfx.tech • MIT License
+//NULL JSFX v4.2 • https://nulljsfx.tech • MIT License
 
 slider1:200<30,1000,1:log>Crossover 1 (Hz)
 slider2:1200<200,6000,1:log>Crossover 2 (Hz)

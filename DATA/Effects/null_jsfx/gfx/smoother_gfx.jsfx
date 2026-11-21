@@ -2,7 +2,7 @@ desc:NULL Smoother GFX
 author: Christos Koulaxizis
 tags: smoother smooth harsh harshness resonance dynamic eq soothe tame sibilance upper mids one knob gui
 //category: One Slider
-//NULL JSFX v4.1.1 • https://nulljsfx.tech • MIT License
+//NULL JSFX v4.2 • https://nulljsfx.tech • MIT License
 
 import null_gfx.jsfx-inc
 

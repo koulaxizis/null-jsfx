@@ -2,7 +2,7 @@ desc:NULL Wind GFX
 author: Christos Koulaxizis
 tags: instrument wind woodwind brass flute clarinet saxophone sax trumpet physical model waveguide breath controller mono synth midi gui
 //category: Instruments
-//NULL JSFX v4.1.1 • https://nulljsfx.tech • MIT License
+//NULL JSFX v4.2 • https://nulljsfx.tech • MIT License
 
 import null_gfx.jsfx-inc
 

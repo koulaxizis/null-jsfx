@@ -2,7 +2,7 @@ desc:NULL MIDI Monitor GFX
 author: Christos Koulaxizis
 tags: midi monitor viewer inspector debug log notes cc controller pitch bend pressure aftertouch mpe channel keyboard gui
 //category: MIDI
-//NULL JSFX v4.1.1 • https://nulljsfx.tech • MIT License
+//NULL JSFX v4.2 • https://nulljsfx.tech • MIT License
 
 import null_gfx.jsfx-inc
 

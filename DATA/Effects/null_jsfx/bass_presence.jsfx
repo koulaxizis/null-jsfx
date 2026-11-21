@@ -2,7 +2,7 @@ desc:NULL Bass Presence
 author: Christos Koulaxizis
 tags: bass presence harmonics small speakers phone laptop psychoacoustic missing fundamental low end audible one knob
 //category: One Slider
-//NULL JSFX v4.1.1 • https://nulljsfx.tech • MIT License
+//NULL JSFX v4.2 • https://nulljsfx.tech • MIT License
 
 slider1:40<0,100,1>Amount
 

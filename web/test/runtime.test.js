@@ -52,6 +52,75 @@ test("Convolution reads an IR file handed over by the page", function () {
   }
 });
 
+// 4.2: Noise Reduction learns its profile from a noise file handed over by the page (slider10,
+// "Noise File", with slider11 "Use Noise File" On) and saves it with @serialize
+function roomTone(n, ch, seed) {
+  // 16-bit values (k / 32768), as a WAV file is read; a low-passed noise per channel
+  var d = new Float64Array(n * ch), s = seed, lp = [0, 0];
+  for (var i = 0; i < n; i++)
+    for (var c = 0; c < ch; c++) {
+      s = (s * 16807) % 2147483647;
+      var x = s / 2147483647 * 2 - 1;
+      lp[c] = lp[c] * 0.9 + x * 0.1;
+      d[i * ch + c] = Math.round((0.06 * lp[c] + 0.004 * x) * 32767) / 32768;
+    }
+  return d;
+}
+
+test("Noise Reduction: the profile from a Noise File is Learn's, and comes back from the saved state", function () {
+  var FX = fx("noise_reduction"), sr = 48000, n = 3 * sr, BLK = 256;
+  assert.ok(FX.serialize && FX.usesFile);
+  var file = { channels: 2, srate: sr, data: roomTone(n, 2, 4242) };
+  var room = [new Float64Array(n), new Float64Array(n)];
+  for (var i = 0; i < n; i++) { room[0][i] = file.data[2 * i]; room[1][i] = file.data[2 * i + 1]; }
+  // the file, Use Noise File On
+  var a = new HOST.Effect(FX, R, { srate: sr, blockSize: BLK, sliders: { 11: 1 }, files: { slider10: file } });
+  var ya = run(a, room, n);
+  var sa = a.getState();
+  assert.deepStrictEqual(sa.slice(0, 3), [1312, 1, 1], "mark, version, source: the file");
+  assert.strictEqual(sa[3], sr);
+  assert.strictEqual(sa.length, 7 + 1025);
+  // Learn while the same file plays from its first sample gives exactly the same profile
+  var l = new HOST.Effect(FX, R, { srate: sr, blockSize: BLK, sliders: { 1: 1 } });
+  run(l, room, n);
+  l.setSlider(1, 0);
+  run(l, [new Float64Array(BLK), new Float64Array(BLK)], BLK);
+  var sl = l.getState();
+  assert.strictEqual(sl[2], 2, "source: Learn");
+  assert.deepStrictEqual(sl.slice(7), sa.slice(7), "the file's profile is Learn's");
+  // the profile works: the room tone comes down against the same render without it
+  var off = run(new HOST.Effect(FX, R, { srate: sr, blockSize: BLK }), room, n);
+  var e1 = 0, e0 = 0;
+  for (var j = sr; j < n; j++) { e1 += ya[0][j] * ya[0][j]; e0 += off[0][j] * off[0][j]; }
+  assert.ok(e1 < 0.25 * e0, "the room tone comes down by more than 6 dB (" + (10 * Math.log10(e1 / e0)).toFixed(1) + " dB)");
+  // saved state without the file: the same profile, the same sound
+  var b = new HOST.Effect(FX, R, { srate: sr, blockSize: BLK, sliders: { 11: 1 } });
+  b.setState(sa);
+  var yb = run(b, room, n);
+  var c = new HOST.Effect(FX, R, { srate: sr, blockSize: BLK, sliders: { 11: 1 }, files: { slider10: file } });
+  c.setState(sa);
+  var yc = run(c, room, n), d = 0;
+  for (var k = 0; k < n; k++) d = Math.max(d, Math.abs(yb[0][k] - yc[0][k]), Math.abs(yb[1][k] - yc[1][k]));
+  assert.strictEqual(d, 0, "with and without the file, a saved profile sounds the same");
+  assert.deepStrictEqual(b.getState(), sa);
+  // at another rate the saved profile is mapped by frequency (no file) or read again (file)
+  var m = new HOST.Effect(FX, R, { srate: 44100, blockSize: BLK, sliders: { 11: 1 } });
+  m.setState(sa);
+  run(m, room, BLK);
+  var sm = m.getState();
+  assert.strictEqual(sm[2], 1);
+  assert.strictEqual(sm[3], 44100);
+  // Use Noise File Off empties the profile
+  a.setSlider(11, 0);
+  run(a, room, BLK);
+  assert.strictEqual(a.getState()[2], 0, "Off: no profile");
+  assert.strictEqual(a.getState().length, 7);
+  // an older state (no @serialize data) changes nothing
+  var o = new HOST.Effect(FX, R, { srate: sr, blockSize: BLK });
+  o.setState([]);
+  assert.strictEqual(o.getState()[2], 0);
+});
+
 // a canvas stand-in: records nothing, measures text as 7 px per character
 function fakeCanvas() {
   var handlers = {};

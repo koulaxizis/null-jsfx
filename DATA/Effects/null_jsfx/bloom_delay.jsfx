@@ -2,7 +2,7 @@ desc:NULL Bloom Delay
 author: Christos Koulaxizis
 tags: bloom delay diffusion diffused echo reverb ambient modulation tempo sync feedback infinite pad wash
 //category: Advanced
-//NULL JSFX v4.1.1 • https://nulljsfx.tech • MIT License
+//NULL JSFX v4.2 • https://nulljsfx.tech • MIT License
 
 slider1:375<20,2000,1:log>Time (ms)
 slider2:0<0,7,1{Off,1/16,1/8,1/8 Dotted,1/4,1/4 Dotted,1/2,1/1}>Sync

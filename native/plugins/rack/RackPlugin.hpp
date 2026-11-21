@@ -20,7 +20,7 @@ class RackPluginBase : public Plugin
 {
 public:
     RackPluginBase(const nulljsfx::ModuleDesc* const* modules, uint32_t numModules)
-        : Plugin(rack::kNumParams, rack::kNumPresets, 4), // 4.0: + "scenes"
+        : Plugin(rack::kNumParams, rack::kNumPresets, 5), // 4.0: + "scenes", 4.2: + "noiseprofiles"
           fEngine(new rack::RackEngine(modules, numModules)) {}
 
     rack::RackEngine& engine() { return *fEngine; }

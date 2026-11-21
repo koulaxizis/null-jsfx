@@ -16,6 +16,7 @@
 #include "NullSliders.hpp"
 
 #include <cstdint>
+#include <string>
 
 namespace nulljsfx {
 
@@ -43,6 +44,12 @@ public:
 
     // latency in samples at the current settings (the JSFX pdc_delay), 0 for most modules
     virtual uint32_t latency() const { return 0; }
+
+    // 4.2: data a module keeps beyond its values (Noise Reduction's learnt profile), as a string;
+    // "" = none. Both are called off the audio thread; a module that has such data hands it to
+    // its process() without a lock. The Rack saves it in its "noiseprofiles" state.
+    virtual std::string saveData() const { return std::string(); }
+    virtual void loadData(const char*) {}
 };
 
 struct ModuleDesc {

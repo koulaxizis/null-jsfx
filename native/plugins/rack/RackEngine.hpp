@@ -528,9 +528,35 @@ public:
         for (uint32_t j = 0; j < kSlots; ++j)
             old[j] = std::move(moved[j].mod); // the instances nobody took
         fLock.unlock();
+        // 4.2: module data loaded with the state before the slots (DPF loads the states in key
+        // order, "noiseprofiles" before "slots") goes to the modules now in those slots
+        for (uint32_t i = 0; i < kSlots; ++i)
+        {
+            if (fSlot[i].mod && !fPendingData[i].empty())
+                fSlot[i].mod->loadData(fPendingData[i].c_str());
+            fPendingData[i].clear();
+        }
         // old[] is deleted here, outside the lock
         fVersion.fetch_add(1, std::memory_order_release);
         return ok;
+    }
+
+    // 4.2: the data of the module in each slot beyond its values (state "noiseprofiles"; "" =
+    // none), main thread only, like setSlots
+    std::string moduleData(uint32_t slot) const
+    {
+        return slot < kSlots && fSlot[slot].mod ? fSlot[slot].mod->saveData() : std::string();
+    }
+    // goes to the modules in the slots now and, if the slots are set next (a saved state), to
+    // the modules then in them
+    void setModuleData(const std::string data[kSlots])
+    {
+        for (uint32_t i = 0; i < kSlots; ++i)
+        {
+            fPendingData[i] = data[i];
+            if (fSlot[i].mod && !data[i].empty())
+                fSlot[i].mod->loadData(data[i].c_str());
+        }
     }
 
     bool setSlot(uint32_t slot, const char* id)
@@ -1872,6 +1898,7 @@ private:
     float fMin[kNumParams], fMax[kNumParams], fDef[kNumParams]; // the ranges, for setParam
     bool fLog[kNumParams] = {};
     Slot fSlot[kSlots];
+    std::string fPendingData[kSlots]; // 4.2: setModuleData for the next setSlots (main thread)
     Route fRoutes[kMaxRoutes];
     uint32_t fNumRoutes = 0;
     std::string fPresetName = "Init";

@@ -8,24 +8,24 @@ namespace nullpresets {
 
 struct FactoryPreset {
     const char* name;
-    float values[9];
+    float values[10];
 };
 
 static const FactoryPreset kPresets[] = {
-    { "Default", { 0.0f, 0.0f, 18.0f, 3.0f, 50.0f, 10.0f, 150.0f, 0.0f, 100.0f } },
-    { "Gentle Hiss Auto", { 0.0f, 1.0f, 9.0f, 3.0f, 60.0f, 10.0f, 200.0f, 0.0f, 100.0f } },
-    { "Dialogue Room Tone", { 0.0f, 1.0f, 15.0f, 4.0f, 50.0f, 5.0f, 120.0f, 0.0f, 100.0f } },
-    { "Hum Bed Reducer", { 0.0f, 1.0f, 20.0f, 5.0f, 30.0f, 10.0f, 200.0f, 0.0f, 100.0f } },
-    { "Music Hiss Subtle", { 0.0f, 0.0f, 6.0f, 2.0f, 70.0f, 15.0f, 300.0f, 0.0f, 100.0f } },
-    { "Fast Speech Profile", { 0.0f, 0.0f, 18.0f, 4.0f, 40.0f, 2.0f, 80.0f, 0.0f, 100.0f } },
-    { "Heavy Noise Cleanup", { 0.0f, 0.0f, 30.0f, 6.0f, 70.0f, 5.0f, 250.0f, 0.0f, 100.0f } },
-    { "Listen Removed Noise", { 0.0f, 1.0f, 18.0f, 3.0f, 50.0f, 10.0f, 150.0f, 1.0f, 100.0f } },
-    { "Field Recording Wind", { 0.0f, 1.0f, 8.0f, 4.0f, 70.0f, 20.0f, 300.0f, 0.0f, 100.0f } },
-    { "Guitar Amp Hiss", { 0.0f, 1.0f, 10.0f, 2.0f, 60.0f, 10.0f, 250.0f, 0.0f, 100.0f } },
-    { "Parallel Denoise", { 0.0f, 1.0f, 24.0f, 4.0f, 50.0f, 10.0f, 150.0f, 0.0f, 60.0f } },
+    { "Default", { 0.0f, 0.0f, 18.0f, 3.0f, 50.0f, 10.0f, 150.0f, 0.0f, 100.0f, 0.0f } },
+    { "Gentle Hiss Auto", { 0.0f, 1.0f, 9.0f, 3.0f, 60.0f, 10.0f, 200.0f, 0.0f, 100.0f, 0.0f } },
+    { "Dialogue Room Tone", { 0.0f, 1.0f, 15.0f, 4.0f, 50.0f, 5.0f, 120.0f, 0.0f, 100.0f, 0.0f } },
+    { "Hum Bed Reducer", { 0.0f, 1.0f, 20.0f, 5.0f, 30.0f, 10.0f, 200.0f, 0.0f, 100.0f, 0.0f } },
+    { "Music Hiss Subtle", { 0.0f, 0.0f, 6.0f, 2.0f, 70.0f, 15.0f, 300.0f, 0.0f, 100.0f, 0.0f } },
+    { "Fast Speech Profile", { 0.0f, 0.0f, 18.0f, 4.0f, 40.0f, 2.0f, 80.0f, 0.0f, 100.0f, 0.0f } },
+    { "Heavy Noise Cleanup", { 0.0f, 0.0f, 30.0f, 6.0f, 70.0f, 5.0f, 250.0f, 0.0f, 100.0f, 0.0f } },
+    { "Listen Removed Noise", { 0.0f, 1.0f, 18.0f, 3.0f, 50.0f, 10.0f, 150.0f, 1.0f, 100.0f, 0.0f } },
+    { "Field Recording Wind", { 0.0f, 1.0f, 8.0f, 4.0f, 70.0f, 20.0f, 300.0f, 0.0f, 100.0f, 0.0f } },
+    { "Guitar Amp Hiss", { 0.0f, 1.0f, 10.0f, 2.0f, 60.0f, 10.0f, 250.0f, 0.0f, 100.0f, 0.0f } },
+    { "Parallel Denoise", { 0.0f, 1.0f, 24.0f, 4.0f, 50.0f, 10.0f, 150.0f, 0.0f, 60.0f, 0.0f } },
 };
 static constexpr uint32_t kNumPresets = sizeof(kPresets) / sizeof(kPresets[0]);
-static constexpr uint32_t kNumValues = 9;
+static constexpr uint32_t kNumValues = 10;
 
 // the hint line under the controls: a short help text per parameter (from tools/site_content.json)
 #define NULL_UI_HINTS 1
@@ -39,6 +39,7 @@ static const char* const kHints[] = {
     "How fast the gain closes back to the floor",
     "Hear the cleaned output or only the removed noise",
     "Dry/wet blend",
+    "On: the profile comes from the Noise File. Off clears a profile from the file or from Learn",
 };
 
 // the parameters the header's dice moves (tools/build_presets.py dice()): index, range, step, log scale
@@ -59,5 +60,10 @@ static const DiceParam kDice[] = {
     { 7, 0.0f, 1.0f, 1.0f, false },
 };
 static constexpr uint32_t kNumDice = sizeof(kDice) / sizeof(kDice[0]);
+
+// the parameters the presets, A/B and undo leave alone (the switch of a file slider)
+#define NULL_UI_KEEP 1
+static const uint32_t kKeep[] = { 9 };
+static constexpr uint32_t kNumKeep = sizeof(kKeep) / sizeof(kKeep[0]);
 
 } // namespace nullpresets

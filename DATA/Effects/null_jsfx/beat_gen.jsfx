@@ -2,7 +2,7 @@ desc:NULL Beat Gen
 author: Christos Koulaxizis
 tags: beat generator generative drum pattern midi sequencer random seed mutate polymeter lock kick snare hat
 //category: MIDI
-//NULL JSFX v4.1.1 • https://nulljsfx.tech • MIT License
+//NULL JSFX v4.2 • https://nulljsfx.tech • MIT License
 
 slider1:50<0,100,1>Kick Density (%)
 slider2:40<0,100,1>Snare Density (%)
