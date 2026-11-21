@@ -2649,3 +2649,10 @@ entry and the Bible delta.
 - **Files:** `release-notes/TEMPLATE.md`, this Bible (Part X).
 - **Tests:** `tests/lint.py`, `tests/bible_order.py`, `tools/build_bible.py --check`; `git grep -i ko-fi` leaves only history, the `supporters/` redirect comment and the rules that forbid Ko-fi.
 - **Version:** v4.1.1 (no change).
+
+### 2026-11-21 · Old release notes on GitHub without Ko-fi
+- **Why:** Christos approved (orOS project, 2026-11-21, «Ναι!») replacing the Ko-fi links in the published release notes with the support page, so nobody lands on the old Ko-fi page (R21, R22).
+- **What:** `tools/release_notes_kofi.py` rewrites only the old lines in the release bodies on GitHub: «Support: ko-fi…» and «Support on Ko-fi» to `https://nulljsfx.tech/support/`, «Support and news» to the support page plus the Updates feed on koulaxizis.gr, «Follow NULL JSFX on Ko-fi…» to the Updates feed (`https://koulaxizis.gr/#updates`). Assets, tags, names and every other word stay; the 4.1.1 history lines that say Ko-fi is gone stay. The one-off workflow `release-notes-kofi.yml` runs it when it reaches main (or by hand); a second run changes nothing. 12 releases (2.1–4.1).
+- **Files:** `tools/release_notes_kofi.py`, `.github/workflows/release-notes-kofi.yml`, this Bible (Part X).
+- **Tests:** `release_notes_kofi.py --dry-run` against the real releases (12 rewritten, none still names ko-fi.com); `tests/lint.py`, `tests/bible_order.py`, `tools/build_bible.py --check`.
+- **Version:** v4.1.1 (no change).
