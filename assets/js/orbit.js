@@ -1,4 +1,4 @@
-// Plays the 4 s orbit of a plugin's 3D render (video.hw-orbit on the plugin pages) only while it
+// Plays the 4 s orbit of a 3D render (video.hw-orbit on the plugin, Rack and Hub pages) only while it
 // is on screen: muted, looping, nothing loaded before it is first seen (preload="none"). With
 // "reduce motion" set, it never starts by itself and shows its controls instead.
 (function () {

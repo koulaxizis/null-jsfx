@@ -59,8 +59,15 @@ def clip(name, label, w, h):
 
 
 def hero_media(kind, folder, name, alt, w, h):
-    """The 3D render when the 3D thread has made it, otherwise the interface in a window."""
+    """The 3D unit when the 3D thread has made it: its orbit (from the "media" release as <kind>_orbit.mp4,
+    played by assets/js/orbit.js while on screen) with the still as poster, or the still alone when there is
+    no orbit; otherwise the interface in a window. Never the still and the orbit together (Christos, 2026-11-21)."""
     render = HARDWARE / f"{kind}.webp"
+    if render.exists() and (HARDWARE / f"{kind}.mp4").exists():
+        return (f'<figure class="pp-render"><video class="hw-orbit" muted loop playsinline preload="none" '
+                f'poster="/assets/hardware/{kind}.webp" width="1280" height="720" aria-label="{html.escape(alt)}, 3D render, turning">'
+                f'<source src="{MEDIA_VIDEOS}{kind}_orbit.mp4" type="video/mp4"></video>'
+                f'<figcaption>3D render · software</figcaption></figure>')
     if render.exists():
         return (f'<figure class="pp-render"><img src="/assets/hardware/{kind}.webp" width="1600" height="900" '
                 f'alt="{html.escape(alt)}, 3D render" fetchpriority="high" decoding="async">'
@@ -175,6 +182,7 @@ def shell(title, desc, url, image, body, crumbs_name, ld):
 {FOOTER}
     <script src="/assets/js/theme.js"></script>
     <script src="/assets/js/clips.js"></script>
+    <script src="/assets/js/orbit.js"></script>
 </body>
 </html>
 """

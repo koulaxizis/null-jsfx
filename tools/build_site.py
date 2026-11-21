@@ -467,16 +467,18 @@ def page(p, plugins):
     media = (f'<video class="guide-shot guide-video" poster="/{p["video"][:-4]}.jpg" controls playsinline preload="none" width="1280" height="720" aria-label="{e(p["name"])} presentation video">'
              f'<source src="{MEDIA_VIDEOS}{p["stem"]}.mp4" type="video/mp4"><source src="/{p["video"]}" type="video/mp4"></video>'
              if p["video"] else f'<img class="guide-shot" src="/{p["shot"]}" alt="{e(p["name"])} interface" width="720" height="480">')
-    # the 3D render at the top, its caption, then the 4 s orbit (muted, looping, played by
-    # assets/js/orbit.js only while it is on screen), streamed only from the "media" release:
-    # _config.yml keeps the orbits off Pages (Christos, 2026-11-19, B24)
+    # the 3D unit at the top with its caption: the 4 s orbit (muted, looping, played by assets/js/orbit.js
+    # only while it is on screen, streamed only from the "media" release; _config.yml keeps the orbits off
+    # Pages, B24) with the still as its poster; the still alone only where there is no orbit. The still is
+    # also the og/twitter image (Christos, 2026-11-19 and 2026-11-21: never the image and the video together)
     hero = ""
-    if hw["hero"]:
+    if hw["hero"] and hw["orbit"]:
+        hero = (f'\n            <figure class="hw-hero"><video class="hw-orbit" muted loop playsinline preload="none" poster="/{hw["hero"]}" '
+                f'width="1280" height="720" aria-label="{e(p["name"])}: 3D render of the plugin as a hardware unit, turning">'
+                f'<source src="{MEDIA_VIDEOS}{p["stem"]}_orbit.mp4" type="video/mp4"></video><figcaption>{e(HW_CAPTION)}</figcaption></figure>')
+    elif hw["hero"]:
         hero = (f'\n            <figure class="hw-hero"><img src="/{hw["hero"]}" alt="{e(p["name"])}: 3D render of the plugin as a hardware unit" '
                 f'width="1600" height="900" fetchpriority="high"><figcaption>{e(HW_CAPTION)}</figcaption></figure>')
-        if hw["orbit"]:
-            hero += (f'\n            <video class="hw-orbit" muted loop playsinline preload="none" poster="/{hw["hero"]}" width="1280" height="720" '
-                     f'aria-label="{e(p["name"])}: the 3D render turning"><source src="{MEDIA_VIDEOS}{p["stem"]}_orbit.mp4" type="video/mp4"></video>')
     sliders = "".join(f'<li><span class="slider-name">{e(n)}</span><span class="slider-desc">{e(r)} — {e(d)}</span></li>'
                       for n, r, d in p["sliders"])
     uses = "".join(f"<li>{e(u)}</li>" for u in p["uses"])
