@@ -2642,3 +2642,10 @@ entry and the Bible delta.
 - **Tests:** `tools/build_site.py --check`, `tests/lint.py`, `tests/bible_order.py`, `tools/build_bible.py --check`, `tests/site/live_test.cjs`; headless Chromium: no `loop`, the stage rests (video opacity 0, the still shows) after `ended`, no page errors.
 - **Version:** v4.1.1 (no change).
 
+
+### 2026-11-21 · Release notes template: support link to /support/
+- **Why:** Christos confirmed that Ko-fi is gone completely (orOS project, 2026-11-21); the release notes template still ended with the old Ko-fi address, so the next release would have linked to it (R21, R22).
+- **What:** the last line of `release-notes/TEMPLATE.md` points to `https://nulljsfx.tech/support/`. Older release notes and changelog entries that name Ko-fi stay as history.
+- **Files:** `release-notes/TEMPLATE.md`, this Bible (Part X).
+- **Tests:** `tests/lint.py`, `tests/bible_order.py`, `tools/build_bible.py --check`; `git grep -i ko-fi` leaves only history, the `supporters/` redirect comment and the rules that forbid Ko-fi.
+- **Version:** v4.1.1 (no change).

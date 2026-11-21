@@ -10,4 +10,4 @@
 
 Android apps through Koulaxizis Apps: https://github.com/koulaxizis/oros/releases/download/koulaxizis-apps/koulaxizis-apps.apk
 
-Free forever. Support: https://ko-fi.com/koulaxizis
+Free forever. Support: https://nulljsfx.tech/support/
