@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
-"""Build the media kits of NULL JSFX, orOS and noxpress (and the combined kit).
+"""Build the media kits of NULL JSFX, orOS, noxpress and Waymark (and the combined kit).
 
 Renders wallpapers, logos, banners and Printful print files with headless Chromium
 (Playwright), writes palettes and SVG sources, copies fonts and texts, and packs the
 zips that the media-kit pre-release serves:
 
     <Project>-Media-Kit.zip and <Project>-Wallpapers.zip for NULL-JSFX, orOS,
-    noxpress and NULL-JSFX-orOS-noxpress (all three).
+    noxpress, Waymark and NULL-JSFX-orOS-noxpress (the family kit: all four since Waymark
+    joined on 2026-11-21; the file name stays so the sites' links keep working).
 
 Usage:  python3 tools/media_kit/build.py OUT_DIR [--previews DIR]
 
@@ -23,7 +24,7 @@ ROOT = os.path.dirname(os.path.dirname(HERE))
 NOTO = os.path.join(ROOT, 'hub', 'ui', 'fonts')
 TEXT = os.path.join(HERE, 'text')
 
-SUBJ = {'null': 'null-jsfx', 'oros': 'oros', 'nox': 'noxpress', 'all': 'all-three'}
+SUBJ = {'null': 'null-jsfx', 'oros': 'oros', 'nox': 'noxpress', 'way': 'waymark', 'all': 'all-three'}
 WALL_SIZES = [(3840, 2160, 'desktop-4k'), (5120, 2880, 'desktop-5k'), (2560, 1600, 'desktop-16x10'),
               (3440, 1440, 'ultrawide'), (1440, 3200, 'android'), (1320, 2868, 'iphone'),
               (2732, 2048, 'tablet-landscape'), (2048, 2732, 'tablet-portrait')]
@@ -34,8 +35,8 @@ BANNERS = [('open-graph', 1200, 630, {}), ('x-header', 1500, 500, {'sw': '0.5', 
            ('linkedin-company', 4200, 700, {'sw': '0.42', 'sh': '0.5'}), ('github-social', 1280, 640, {})]
 LOGO_VARIANTS = ['dark', 'white', 'black']
 KITS = {'null-jsfx': ('NULL-JSFX', ['null-jsfx']), 'oros': ('orOS', ['oros']),
-        'noxpress': ('noxpress', ['noxpress']),
-        'all-three': ('NULL-JSFX-orOS-noxpress', ['null-jsfx', 'oros', 'noxpress', 'all-three'])}
+        'noxpress': ('noxpress', ['noxpress']), 'waymark': ('Waymark', ['waymark']),
+        'all-three': ('NULL-JSFX-orOS-noxpress', ['null-jsfx', 'oros', 'noxpress', 'waymark', 'all-three'])}
 
 PAL = {
     'null-jsfx': [('Background', '#1b1a18'), ('Background deep', '#131211'), ('Card', '#232220'), ('Border', '#333333'),
@@ -47,6 +48,10 @@ PAL = {
     'noxpress': [('Background', '#0d0f14'), ('Panel', '#101218'), ('Panel 2', '#1d2029'), ('Border', '#2e3240'),
                  ('Text', '#eae8fa'), ('Heading', '#f6f4ff'), ('Muted', '#b7b2d6'), ('Violet', '#6d4aff'),
                  ('Violet hover', '#8263ff'), ('Link', '#beb1ff')],
+    # Waymark palette v1 (2026-11-21), dark theme tokens and the brand greens
+    'waymark': [('Background', '#090e0e'), ('Surface', '#1a2120'), ('Border', '#414a48'), ('Text', '#f3f6f5'),
+                ('Text secondary', '#b2b9b8'), ('Pine green', '#01796f'), ('Green 500', '#198378'),
+                ('Green 600', '#066c64'), ('Primary', '#5ca89e'), ('Primary hover', '#88c5bd')],
 }
 FONTS = {'null-jsfx': [os.path.join(NOTO, 'NotoSans-Regular.ttf'), os.path.join(NOTO, 'NotoSans-Bold.ttf'),
                        (os.path.join(NOTO, 'OFL.txt'), 'OFL.txt')],
@@ -54,7 +59,8 @@ FONTS = {'null-jsfx': [os.path.join(NOTO, 'NotoSans-Regular.ttf'), os.path.join(
                   'MPLUSRounded1c-Greek-medium.ttf', 'MPLUSRounded1c-Greek-bold.ttf',
                   'MPLUSRounded1c-Greek-extrabold.ttf', 'OFL-MPLUSRounded1c.txt',
                   (os.path.join(TEXT, 'fonts-oros-README.md'), 'README.md')],
-         'noxpress': ['Inter.ttf', ('Inter-OFL.txt', 'OFL.txt')]}
+         'noxpress': ['Inter.ttf', ('Inter-OFL.txt', 'OFL.txt')],
+         'waymark': ['Inter.ttf', ('Inter-OFL.txt', 'OFL.txt')]}
 SV = ('<linearGradient id="g" x1="0%" y1="100%" x2="0%" y2="0%"><stop offset="0%" stop-color="#9a9a9a"/>'
       '<stop offset="100%" stop-color="#d4d4d4"/></linearGradient>')
 SVGS = {
@@ -64,7 +70,18 @@ SVGS = {
              '<svg xmlns="http://www.w3.org/2000/svg" viewBox="36 84 440 340" fill="none"><path d="M256 104 L460 408 L52 408 Z M256 104 L342 246 L388 176 L460 408" stroke="{c}" stroke-width="20" stroke-linecap="round" stroke-linejoin="miter" stroke-miterlimit="3" fill="none"/></svg>', '#d4af37'),
     'noxpress': ('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="14" fill="#0d0f14"/><path d="M21 45V27a11 11 0 0 1 22 0v18" fill="none" stroke="#6d4aff" stroke-width="8" stroke-linecap="round"/></svg>',
                  '<svg xmlns="http://www.w3.org/2000/svg" viewBox="15 10 34 41"><path d="M21 45V27a11 11 0 0 1 22 0v18" fill="none" stroke="{c}" stroke-width="8" stroke-linecap="round"/></svg>', '#6d4aff'),
+    # the icon is the official mark of the waymark repo (favicon.svg), unchanged
+    'waymark': ('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><circle cx="32" cy="32" r="30" fill="#066c64"/><path d="M32 14C24 14 18 20 18 28c0 10 14 24 14 24s14-14 14-24c0-8-6-14-14-14z" fill="none" stroke="#fff" stroke-width="3.5" stroke-linejoin="round"/><circle cx="32" cy="28" r="4.5" fill="#fff"/></svg>',
+                '<svg xmlns="http://www.w3.org/2000/svg" viewBox="14 10 36 46"><path d="M32 14C24 14 18 20 18 28c0 10 14 24 14 24s14-14 14-24c0-8-6-14-14-14z" fill="none" stroke="{c}" stroke-width="3.5" stroke-linejoin="round"/><circle cx="32" cy="28" r="4.5" fill="{c}"/></svg>', '#5ca89e'),
 }
+# Kits with their own licence and guidelines (the shared ones name the other three projects),
+# and extra files: (source under text/ or images/, path in the zip)
+OWN_TEXT = {'waymark'}
+EXTRA = {'waymark': [('text/waymark/descriptions.en.md', 'press/waymark-descriptions.en.md'),
+                     ('text/waymark/descriptions.el.md', 'press/waymark-descriptions.el.md'),
+                     ('text/waymark/facts.en.md', 'press/waymark-facts.en.md'),
+                     ('text/waymark/facts.el.md', 'press/waymark-facts.el.md'),
+                     ('images/waymark-og-image.png', 'banners/waymark-site-og-image-1200x630.png')]}
 
 
 def rgb(h):
@@ -205,7 +222,9 @@ def pack(out, dest):
         add = lambda src, arc: z.write(src, f'{kit}/{arc}')
         add(f'{TEXT}/README-{k}.md', 'README.md')
         for f in ['LICENSE-media-kit.md', 'brand-guidelines.en.md', 'brand-guidelines.el.md']:
-            add(f'{TEXT}/{f}', f)
+            add(f'{TEXT}/{k}/{f}' if k in OWN_TEXT else f'{TEXT}/{f}', f)
+        for src, arc in EXTRA.get(k, []):
+            add(os.path.join(HERE, src), arc)
         add(f'{TEXT}/print-README.md', 'print/README.md')
         for p in parts:
             for sec in ['wallpapers', 'logos', 'banners', 'print', 'palettes', 'fonts']:

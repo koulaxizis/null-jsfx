@@ -22,7 +22,8 @@ function col(id) {
   const base = {
     null: { acc: 'url(#sv)', fg: dk ? '#d4d4d4' : '#232220', sub: dk ? '#8a8a8a' : '#5a5a5a', box: { fill: '#232220', stroke: '#4a4a4a' } },
     oros: { acc: dk ? '#d4af37' : '#b8860b', fg: dk ? '#f0ead9' : '#241f14', sub: dk ? '#a89f8a' : '#6a6050', box: { fill: '#1b1a18' } },
-    nox:  { acc: '#6d4aff', fg: dk ? '#f6f4ff' : '#14121f', sub: dk ? '#b7b2d6' : '#5a5478', box: { fill: '#0d0f14', stroke: '#2e3240' } }
+    nox:  { acc: '#6d4aff', fg: dk ? '#f6f4ff' : '#14121f', sub: dk ? '#b7b2d6' : '#5a5478', box: { fill: '#0d0f14', stroke: '#2e3240' } },
+    way:  { acc: dk ? '#5ca89e' : '#066c64', fg: dk ? '#f3f6f5' : '#1a2120', sub: dk ? '#88c5bd' : '#04534c', box: { fill: '#198378' } }
   }[id];
   if (mono) return { acc: mono, fg: mono, sub: mono, dot: mono, box: null, mono: true };
   return { ...base, dot: '#6d4aff' };
@@ -39,6 +40,7 @@ function iconAt(id, x, y, sz, boxed) {
   if (id === 'null' && !box) return mark('null', c.acc, x + sz / 2, y + sz / 2, sz * 1.6, null);
   if (id === 'oros' && !box) return mark('oros', c.acc, x + sz / 2, y + sz / 2, sz * 1.18, null);
   if (id === 'nox' && !box) return mark('nox', c.acc, x + sz / 2, y + sz / 2, sz * 1.7, null);
+  if (id === 'way') return box ? mark('way', '#ffffff', x + sz / 2, y + sz / 2, sz, box) : mark('way', c.acc, x + sz / 2, y + sz / 2, sz * 1.5, null);
   return mark(id, id === 'oros' && box ? '#d4af37' : c.acc, x + sz / 2, y + sz / 2, sz, box);
 }
 // wordmark with its baseline at y, starting at x (anchor start or middle)
@@ -51,6 +53,9 @@ function words(id, x, y, k, anchor) {
   } else if (id === 'oros') {
     s += `<text ${a} x="${x}" y="${y}" font-family="Nunito" font-weight="800" font-size="${k * 1.45}" fill="${c.fg}">orOS</text>`;
     if (TAG) s += `<text ${a} x="${x}" y="${y + k * 0.7}" font-family="Nunito" font-weight="600" font-size="${k * 0.42}" fill="${c.sub}">${BRAND.oros.tag}</text>`;
+  } else if (id === 'way') {
+    s += `<text ${a} x="${x}" y="${y}" font-family="Inter" font-weight="700" font-size="${k * 1.05}" letter-spacing="${k * 0.14}" fill="${c.fg}">WAYMARK</text>`;
+    if (TAG) s += `<text ${a} x="${x}" y="${y + k * 0.62}" font-family="Inter" font-weight="500" font-size="${k * 0.33}" letter-spacing="${k * 0.1}" fill="${c.sub}">${BRAND.way.tag}</text>`;
   } else {
     s += `<text ${a} x="${x}" y="${y}" font-family="Inter" font-weight="700" font-size="${k * 1.4}" letter-spacing="${-k * 0.042}" fill="${c.fg}">noxpress<tspan fill="${c.dot}">.</tspan></text>`;
     if (TAG) s += `<text ${a} x="${x}" y="${y + k * 0.7}" font-family="Inter" font-weight="500" font-size="${k * 0.45}" fill="${c.sub}">${BRAND.nox.tag}</text>`;
@@ -65,13 +70,13 @@ function lockup(id, dir) {
 function trio(sz, gap) {
   const c = V === 'white' || V === 'black';
   let s = '';
-  ['null', 'oros', 'nox'].forEach((id, i) => s += iconAt(id, i * (sz + gap), 0, sz, !c));
+  ['null', 'oros', 'nox', 'way'].forEach((id, i) => s += iconAt(id, i * (sz + gap), 0, sz, !c));
   return s;
 }
 function content() {
   if (KIND === 'icon') return ID === 'all' ? trio(300, 60) : iconAt(ID, 0, 0, 300, true);
   if (KIND === 'mark') return iconAt(ID, 0, 0, 300, false);
-  if (KIND === 'lockup-h') return ID === 'all' ? trio(300, 60) + `<text x="510" y="420" text-anchor="middle" font-family="Noto" font-size="54" letter-spacing="16" fill="${col('null').sub}">NULL JSFX · orOS · NOXPRESS</text>` : lockup(ID, 'h');
+  if (KIND === 'lockup-h') return ID === 'all' ? trio(300, 60) + `<text x="690" y="420" text-anchor="middle" font-family="Noto" font-size="54" letter-spacing="16" fill="${col('null').sub}">NULL JSFX · orOS · NOXPRESS · WAYMARK</text>` : lockup(ID, 'h');
   if (KIND === 'lockup-v') return lockup(ID, 'v');
   return '';
 }
@@ -84,7 +89,7 @@ function background(W, H) {
 }
 window.build = function () {
   const W = innerWidth, H = innerHeight;
-  const inner = (KIND === 'banner') ? (ID === 'all' ? trio(300, 60) + `<text x="510" y="420" text-anchor="middle" font-family="Noto" font-size="54" letter-spacing="16" fill="${V === 'light' ? '#55565a' : '#9a9a9a'}">NULL JSFX · orOS · NOXPRESS</text>` : lockup(ID, 'h'))
+  const inner = (KIND === 'banner') ? (ID === 'all' ? trio(300, 60) + `<text x="690" y="420" text-anchor="middle" font-family="Noto" font-size="54" letter-spacing="16" fill="${V === 'light' ? '#55565a' : '#9a9a9a'}">NULL JSFX · orOS · NOXPRESS · WAYMARK</text>` : lockup(ID, 'h'))
     : KIND === 'avatar' ? (ID === 'all' ? trio(300, 60) : iconAt(ID, 0, 0, 300, true)) : content();
   document.body.innerHTML = `<svg xmlns="${NS}" width="${W}" height="${H}"><defs>${DEFS}</defs><g id="bgl"></g><g id="c">${inner}</g></svg>`;
   const g = document.getElementById('c'), b = g.getBBox();

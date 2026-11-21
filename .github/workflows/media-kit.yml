@@ -1,11 +1,11 @@
 name: Media kit
 
-# Builds the media kits of NULL JSFX, orOS and noxpress and the combined kit
+# Builds the media kits of NULL JSFX, orOS, noxpress and Waymark and the combined family kit
 # (tools/media_kit/build.py) and keeps the zips on a pre-release called "media-kit", so the
-# three sites link to them from GitHub's release storage. Like "media", it is a pre-release:
+# sites link to them from GitHub's release storage. Like "media", it is a pre-release:
 # it never becomes the latest release, and the download counter and the Hub's rollback list
 # only count version tags. A push to main that changes the kit, or a manual run, rebuilds
-# and replaces all eight zips.
+# and replaces all ten zips.
 
 on:
   push:
@@ -45,7 +45,7 @@ jobs:
         run: |
           set -euo pipefail
           if ! gh release view media-kit >/dev/null 2>&1; then
-            gh release create media-kit --prerelease --title "Media kit (NULL JSFX, orOS, noxpress)" \
-              --notes "Wallpapers, logos, banners, print files, palettes, fonts and press texts for NULL JSFX, orOS and noxpress, each on its own and all three together. Free to use to present or write about the projects (see LICENSE-media-kit.md in each zip). Not a release of the plugins: get those from the latest release."
+            gh release create media-kit --prerelease --title "Media kit (NULL JSFX, orOS, noxpress, Waymark)" \
+              --notes "Wallpapers, logos, banners, print files, palettes, fonts and press texts for NULL JSFX, orOS, noxpress and Waymark, each on its own and all together. Free to use to present or write about the projects (see LICENSE-media-kit.md in each zip). Not a release of the plugins: get those from the latest release."
           fi
           gh release upload media-kit "$RUNNER_TEMP"/media-kit/zips/*.zip --clobber
