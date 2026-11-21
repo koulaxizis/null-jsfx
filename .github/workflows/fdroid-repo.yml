@@ -28,7 +28,7 @@ on:
   # throwaway keys made in the job (the real keys and the token never reach a pull request),
   # nothing pushed (a dry run; the repository is kept as a workflow artifact)
   pull_request:
-    paths: [".github/workflows/fdroid-repo.yml", "tools/fdroid_repo.py", "android/fdroid/**"]
+    paths: [".github/workflows/fdroid-repo.yml", "tools/fdroid_repo.py", "android/fdroid/**", "android/app/src/*/fastlane/**"]
   workflow_dispatch:
     inputs:
       release_tag:

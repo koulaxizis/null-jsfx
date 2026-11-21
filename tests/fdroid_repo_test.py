@@ -29,6 +29,10 @@ with tempfile.TemporaryDirectory() as d:
             check(os.path.getsize(os.path.join(loc, f)) > 0, p + ": " + f)
         short = open(os.path.join(loc, "short_description.txt"), encoding="utf-8").read().strip()
         check(len(short) <= 80, p + ": summary %d <= 80 characters" % len(short))
+        shots = os.path.join(loc, "images", "phoneScreenshots")
+        got = sorted(os.listdir(shots)) if os.path.isdir(shots) else []
+        check(got == ["1.png", "2.png", "3.png"], p + ": three phone screenshots in order")
+        check(all(open(os.path.join(shots, f), "rb").read(8).startswith(b"\x89PNG") for f in got), p + ": screenshots are PNG")
     icons = [open(os.path.join(d, "metadata", p, "en-US", "images", "icon.png"), "rb").read() for p in pkgs]
     repo_icon = open(os.path.join(fdroid_repo.ROOT, "android", "fdroid", "icon.png"), "rb").read()
     check(icons[0] != icons[1] and repo_icon not in icons, "each app has its own icon, not the repository's")
