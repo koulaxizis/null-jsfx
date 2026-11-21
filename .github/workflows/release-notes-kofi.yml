@@ -1,0 +1,27 @@
+name: Release notes without Ko-fi
+
+# One-off clean-up (Christos, 2026-11-21): rewrites the old Ko-fi support and "follow on Ko-fi"
+# lines in the bodies of published releases to /support/ and the Updates feed on koulaxizis.gr
+# (tools/release_notes_kofi.py). Only release text changes; assets and tags stay. It runs when
+# this file or the script reaches main, or by hand; a second run finds nothing to change.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/release-notes-kofi.yml
+      - tools/release_notes_kofi.py
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  rewrite:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - name: Rewrite the release bodies
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tools/release_notes_kofi.py
