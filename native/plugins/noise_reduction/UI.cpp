@@ -312,7 +312,7 @@ protected:
     {
         fontSize(8.0f * kNotoLineToEm);
         textLetterSpacing(0.0f);
-        Rectangle<float> r;
+        DGL_NAMESPACE::Rectangle<float> r; // qualified: <windows.h> (NoiseFile.hpp) declares a Rectangle() too
         return textBounds(0.0f, 0.0f, s, nullptr, r);
     }
 
