@@ -60,13 +60,14 @@ def clip(name, label, w, h):
 
 def hero_media(kind, folder, name, alt, w, h):
     """The 3D unit when the 3D thread has made it: its orbit (from the "media" release as <kind>_orbit.mp4,
-    played by assets/js/orbit.js while on screen) with the still as poster, or the still alone when there is
+    played once by assets/js/orbit.js, then it settles on the still) with the still as poster, or the still alone when there is
     no orbit; otherwise the interface in a window. Never the still and the orbit together (Christos, 2026-11-21)."""
     render = HARDWARE / f"{kind}.webp"
     if render.exists() and (HARDWARE / f"{kind}.mp4").exists():
-        return (f'<figure class="pp-render"><video class="hw-orbit" muted loop playsinline preload="none" '
+        return (f'<figure class="pp-render"><div class="hw-stage" style="background-image:url(/assets/hardware/{kind}.webp)">'
+                f'<video class="hw-orbit" muted playsinline preload="none" '
                 f'poster="/assets/hardware/{kind}.webp" width="1280" height="720" aria-label="{html.escape(alt)}, 3D render, turning">'
-                f'<source src="{MEDIA_VIDEOS}{kind}_orbit.mp4" type="video/mp4"></video>'
+                f'<source src="{MEDIA_VIDEOS}{kind}_orbit.mp4" type="video/mp4"></video></div>'
                 f'<figcaption>3D render · software</figcaption></figure>')
     if render.exists():
         return (f'<figure class="pp-render"><img src="/assets/hardware/{kind}.webp" width="1600" height="900" '

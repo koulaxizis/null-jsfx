@@ -3595,3 +3595,25 @@ a.download-option:hover {
     height: auto;
     aspect-ratio: 16 / 9;
 }
+
+/* the orbit plays once over its still (assets/js/orbit.js) and fades out onto it: no loop, no jump
+   (Christos, 2026-11-21); hover or a tap plays it again */
+.hw-stage {
+    position: relative;
+    background: #131211 center / cover no-repeat;
+    cursor: pointer;
+}
+
+.hw-stage .hw-orbit {
+    border: 0;
+    background: transparent;
+    transition: opacity 0.6s ease;
+}
+
+.hw-stage.hw-rest .hw-orbit {
+    opacity: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .hw-stage .hw-orbit { transition: none; }
+}
