@@ -9,8 +9,13 @@
  * bin while Learn is On) or, in Auto, a minimum-statistics tracker. The Wiener-like gain
  * 1 - (noise x Threshold)^2 / power (power smoothed over time and across frequency), floored by
  * Reduction, follows attack/release per bin, applied to both channels and overlap-added (Hann synthesis window).
- * The learnt profile survives activate() and is only cleared by a new sample rate, like the
+ * The learnt profile survives activate(); a new sample rate maps it by frequency, like the
  * JSFX's @init. Latency: N - 1 samples.
+ *
+ * 4.2: the profile can come from a file (Noise File, Use Noise File) or from the saved state.
+ * The file is read and analysed off the audio thread (NoiseFile.hpp, the JSFX's nf_analyse());
+ * the results reach the DSP as a Profiles message, which process() applies at a block start
+ * (takeProfiles(), then block(), the JSFX's @serialize read and @block), never allocating.
  */
 
 #pragma once
@@ -35,17 +40,82 @@ struct View {
     std::atomic<float> sampleRate { 48000.0f };
     std::atomic<float> learnt { 0.0f }; // seconds of learnt profile
     std::atomic<int> mode { 0 };        // 0 = profile, 1 = learning, 2 = auto
+    // 4.2: where the profile came from (0 none, 1 file, 2 Learn), the file cut at 60 s, the
+    // file unreadable
+    std::atomic<int> source { 0 };
+    std::atomic<bool> cut { false }, fileFailed { false };
+};
+
+// the profile of a noise file (NoiseFile.hpp analyseFile()): summed magnitudes over `frames`
+// frames, at `sampleRate`
+struct FileProfile {
+    bool ok = false, cut = false;
+    double frames = 0.0, sampleRate = 0.0;
+    double sum[kNB] = {};
+};
+
+// a profile as saved with the project (the JSFX's @serialize): average magnitudes in single
+// precision, the source (1 file, 2 Learn), Use Noise File and the 60 s cut when it was saved
+struct SavedProfile {
+    bool ok = false, gate = false, cut = false;
+    int src = 0;
+    float sampleRate = 0.0f, length = 0.0f;
+    float avg[kNB] = {};
+};
+
+// what the plugin hands the audio thread (NullMailbox.hpp; the newest wins, so it carries
+// everything): the profile of the current noise file, and the saved profile; a sequence
+// number that moved means a new file was chosen / a state was loaded
+struct Profiles {
+    uint32_t fileSeq = 0, savedSeq = 0;
+    FileProfile file;
+    SavedProfile saved;
+};
+
+// the profile in use, for the saved state: read by the plugin off the audio thread
+// (a sequence lock: odd while the audio thread writes)
+struct ProfileSnapshot {
+    std::atomic<uint32_t> seq { 0 };
+    std::atomic<int> src { 0 };
+    std::atomic<float> sampleRate { 0.0f }, length { 0.0f };
+    std::atomic<bool> gate { false }, cut { false };
+    std::atomic<float> avg[kNB] = {};
+
+    // the snapshot as a SavedProfile (ok = false when there is no profile)
+    SavedProfile read() const
+    {
+        SavedProfile s;
+        for (int tries = 0; tries < 1000; ++tries)
+        {
+            const uint32_t a = seq.load(std::memory_order_acquire);
+            if (a & 1u)
+                continue;
+            s.src = src.load(std::memory_order_relaxed);
+            s.sampleRate = sampleRate.load(std::memory_order_relaxed);
+            s.length = length.load(std::memory_order_relaxed);
+            s.gate = gate.load(std::memory_order_relaxed);
+            s.cut = cut.load(std::memory_order_relaxed);
+            for (int k = 0; k < kNB; ++k)
+                s.avg[k] = avg[k].load(std::memory_order_relaxed);
+            std::atomic_thread_fence(std::memory_order_acquire);
+            if (seq.load(std::memory_order_relaxed) == a)
+                break;
+        }
+        s.ok = s.src >= 1 && s.src <= 2;
+        return s;
+    }
 };
 
 class NoiseReducer {
 public:
     NoiseReducer()
         : fFftL(2 * kN), fFftR(2 * kN), fWin(kN), fInL(kN), fInR(kN), fOutL(kN), fOutR(kN), fPw(kNB), fGs(kNB),
-          fGt(kNB), fAp(kNB), fAm(kNB), fAs(kU * kNB), fNz(kNB), fDsp(kNB), fPsum(kNB)
+          fGt(kNB), fAp(kNB), fAm(kNB), fAs(kU * kNB), fNz(kNB), fDsp(kNB), fPsum(kNB), fPtmp(kNB), fFileSum(kNB)
     {
     }
 
     void setView(View* v) noexcept { fView = v; }
+    void setSnapshot(ProfileSnapshot* s) noexcept { fSnap = s; }
 
     static constexpr int latency() noexcept { return kN - 1; }
 
@@ -56,16 +126,30 @@ public:
         for (std::vector<double>* v : { &fWin, &fInL, &fInR, &fOutL, &fOutR, &fPw, &fGs, &fGt, &fAp, &fAm, &fAs,
                                         &fNz, &fDsp })
             std::fill(v->begin(), v->end(), 0.0);
-        // the profile survives @init (playback start); only a new sample rate clears it
+        for (int i = 0; i < kN; ++i)
+            fWin[size_t(i)] = 0.5 - 0.5 * std::cos(2.0 * M_PI * i / kN);
+        // the profile survives @init (playback start); a new sample rate maps it by frequency,
+        // and a profile from a file is read from the file again
         if (!(fProfSr == sr))
         {
-            std::fill(fPsum.begin(), fPsum.end(), 0.0);
-            fLcount = 0.0;
+            if (fLcount > 0.0 && fProfSr > 0.0)
+            {
+                for (int k = 0; k < kNB; ++k)
+                    fPtmp[size_t(k)] = fPsum[size_t(k)] / fLcount;
+                map(fProfSr);
+                if (fProfSrc == 1 && fGate)
+                    fNfReq = true;
+            }
+            else
+            {
+                std::fill(fPsum.begin(), fPsum.end(), 0.0);
+                fLcount = 0.0;
+                fProfSrc = 0;
+                fProfLen = 0.0;
+            }
             fLearning = false;
             fProfSr = sr;
         }
-        for (int i = 0; i < kN; ++i)
-            fWin[size_t(i)] = 0.5 - 0.5 * std::cos(2.0 * M_PI * i / kN);
         for (int i = 0; i < kNB; ++i)
         {
             fGs[size_t(i)] = 1.0;
@@ -82,6 +166,31 @@ public:
         fAstarted = false;
         if (fView)
             fView->sampleRate.store(float(sr), std::memory_order_relaxed);
+        publish();
+    }
+
+    // Use Noise File (slider11), read at the next block start like the JSFX's @block
+    void setGate(bool on) noexcept { fGate = on; }
+
+    // a Profiles message (audio thread, at a block start, before process()): a new file's
+    // profile, and a loaded state (the JSFX's @serialize read), which wins over the file
+    void takeProfiles(const Profiles& m) noexcept
+    {
+        std::copy(m.file.sum, m.file.sum + kNB, fFileSum.begin());
+        fFileOk = m.file.ok;
+        fFileCut = m.file.cut;
+        fFileFrames = m.file.frames;
+        fFileSr = m.file.sampleRate;
+        if (m.fileSeq != fFileSeq)
+        {
+            fFileSeq = m.fileSeq;
+            fFileChanged = true; // slider10 != nf_cur
+        }
+        if (m.savedSeq != fSavedSeq)
+        {
+            fSavedSeq = m.savedSeq;
+            loadSaved(m.saved);
+        }
     }
 
     // @slider (Threshold as the JSFX slider holds it, a multiple of 0.5)
@@ -103,6 +212,7 @@ public:
     template <typename T>
     void process(const T* inL, const T* inR, T* outL, T* outR, uint32_t frames)
     {
+        block();
         for (uint32_t n = 0; n < frames; ++n)
         {
             fInL[size_t(fIpos)] = inL[n];
@@ -132,6 +242,126 @@ public:
     }
 
 private:
+    // nr_map(): the profile at from_sr (average magnitudes in fPtmp) mapped to fSr by frequency,
+    // linear between bins, the top bin held above its Nyquist
+    void map(double fromSr) noexcept
+    {
+        for (int k = 0; k < kNB; ++k)
+        {
+            const double s = k * fSr / fromSr;
+            const double j = std::floor(s);
+            const double fr = s - j;
+            fPsum[size_t(k)] = j >= kNB - 1 ? fPtmp[size_t(kNB - 1)]
+                                            : fPtmp[size_t(j)] * (1.0 - fr) + fPtmp[size_t(j) + 1] * fr;
+        }
+        fLcount = 1.0;
+    }
+
+    // @serialize, reading: a saved profile replaces the one in use
+    void loadSaved(const SavedProfile& s) noexcept
+    {
+        if (!s.ok || s.src < 1 || s.src > 2 || !(s.sampleRate > 0.0f))
+            return;
+        const double ssr = s.sampleRate;
+        for (int k = 0; k < kNB; ++k)
+            fPtmp[size_t(k)] = s.avg[k];
+        if (std::fabs(ssr - fSr) < 0.5)
+        {
+            std::copy(fPtmp.begin(), fPtmp.end(), fPsum.begin());
+            fLcount = 1.0;
+        }
+        else
+            map(ssr);
+        fProfSrc = s.src;
+        fProfLen = s.length;
+        fProfSr = fSr;
+        fLearning = false;
+        fFileChanged = false;
+        fGateWas = s.gate;
+        fNfCut = s.cut;
+        fNfFail = false;
+        // at another sample rate a profile from a file is read from the file again, if it can be
+        fNfReq = std::fabs(ssr - fSr) >= 0.5 && s.src == 1 && s.gate;
+        publish();
+    }
+
+    // @block: the noise file. A new file, or Use Noise File switched On without a profile from a
+    // file, takes the file's profile; Use Noise File Off empties the profile.
+    void block() noexcept
+    {
+        const bool on = fGate;
+        bool changed = false;
+        if (fFileChanged)
+        {
+            fFileChanged = false;
+            if (on)
+                fNfReq = true;
+        }
+        if (on && !fGateWas && fProfSrc != 1)
+            fNfReq = true;
+        if (!on && fGateWas)
+        {
+            std::fill(fPsum.begin(), fPsum.end(), 0.0);
+            fLcount = 0.0;
+            fProfSrc = 0;
+            fProfLen = 0.0;
+            fNfReq = false;
+            fNfFail = false;
+            fNfCut = false;
+            changed = true;
+        }
+        fGateWas = on;
+        if (fNfReq && on)
+        {
+            // the file's profile must be at this sample rate: else wait for it (the plugin reads
+            // the file again after a sample rate change)
+            if (fFileOk && !(fFileSr == fSr))
+                return;
+            fNfCut = false;
+            fNfFail = true;
+            if (fFileOk)
+            {
+                std::copy(fFileSum.begin(), fFileSum.end(), fPsum.begin());
+                fLcount = fFileFrames;
+                fProfSrc = 1;
+                fProfLen = fFileFrames * kH / fSr;
+                fNfFail = false;
+                fNfCut = fFileCut;
+            }
+            changed = true;
+        }
+        fNfReq = false;
+        if (changed)
+            publish();
+    }
+
+    // the profile in use, for the saved state and the interface
+    void publish() noexcept
+    {
+        if (fView)
+        {
+            fView->source.store(fLcount > 0.0 ? fProfSrc : 0, std::memory_order_relaxed);
+            fView->cut.store(fNfCut, std::memory_order_relaxed);
+            fView->fileFailed.store(fNfFail, std::memory_order_relaxed);
+            fView->learnt.store(float(fProfLen), std::memory_order_relaxed);
+        }
+        if (!fSnap)
+            return;
+        const uint32_t s0 = fSnap->seq.load(std::memory_order_relaxed);
+        fSnap->seq.store(s0 + 1, std::memory_order_relaxed);
+        std::atomic_thread_fence(std::memory_order_release);
+        const int src = fLcount > 0.0 && fProfSrc >= 1 && fProfSrc <= 2 ? fProfSrc : 0;
+        fSnap->src.store(src, std::memory_order_relaxed);
+        fSnap->sampleRate.store(float(fSr), std::memory_order_relaxed);
+        fSnap->length.store(float(fProfLen), std::memory_order_relaxed);
+        fSnap->gate.store(fGate, std::memory_order_relaxed);
+        fSnap->cut.store(fNfCut, std::memory_order_relaxed);
+        if (src > 0)
+            for (int k = 0; k < kNB; ++k)
+                fSnap->avg[k].store(float(fPsum[size_t(k)] / fLcount), std::memory_order_relaxed);
+        fSnap->seq.store(s0 + 2, std::memory_order_release);
+    }
+
     void frame()
     {
         double* bl = fFftL.data();
@@ -155,6 +385,7 @@ private:
         {
             std::fill(fPsum.begin(), fPsum.end(), 0.0);
             fLcount = 0.0;
+            fProfSrc = 2;
         }
         fLearning = fLearn;
 
@@ -177,7 +408,10 @@ private:
         if (ready)
         {
             if (fLearning)
+            {
                 fLcount += 1.0;
+                fProfLen = fLcount * kH / fSr;
+            }
             fAstarted = true;
             fAfc += 1.0;
             if (fAfc >= fV)
@@ -265,14 +499,24 @@ private:
                 fView->noise[k] = float(fNz[size_t(k)]);
                 fView->gain[k] = float(fGs[size_t(k)]);
             }
-            fView->learnt.store(float(fLcount * kH / fSr), std::memory_order_relaxed);
             fView->mode.store(fAuto ? 2 : fLearning ? 1 : 0, std::memory_order_relaxed);
         }
+        if (fLearning)
+            publish();
     }
 
     View* fView = nullptr;
+    ProfileSnapshot* fSnap = nullptr;
     double fSr = 48000.0, fProfSr = 0.0;
     std::vector<double> fFftL, fFftR, fWin, fInL, fInR, fOutL, fOutR, fPw, fGs, fGt, fAp, fAm, fAs, fNz, fDsp, fPsum;
+    // 4.2: the profile's source (0 none, 1 file, 2 Learn) and length (s), the noise file's
+    // profile and its state (nf_req, nf_was, nf_fail, nf_cut of the JSFX)
+    std::vector<double> fPtmp, fFileSum;
+    int fProfSrc = 0;
+    double fProfLen = 0.0, fFileFrames = 0.0, fFileSr = 0.0;
+    uint32_t fFileSeq = 0, fSavedSeq = 0;
+    bool fGate = false, fGateWas = false, fNfReq = false, fNfFail = false, fNfCut = false;
+    bool fFileOk = false, fFileCut = false, fFileChanged = false;
     int fIpos = 0, fOpos = 0, fCnt = 0, fFilled = 0, fAslot = 0;
     double fAfc = 0.0, fV = 1.0, fAbias = 2.0, fLcount = 0.0, fOscale = 0.0, fAa = 0.0;
     bool fAstarted = false, fLearning = false;

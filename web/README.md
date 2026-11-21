@@ -68,8 +68,10 @@ played yet; `chain.setTimeAt(time, transport)` moves the transport at an exact s
 The null test plays the same MIDI into ysfx and JavaScript.
 
 `@serialize` runs too: `effect.getState()` returns the values the effect writes (a plain
-array), `effect.setState(state)` reads them back, and `chain.setState(uid, state)` does it
-in the worklet. A GFX view that edits state (the drum pattern) hands changes over with
+array, in single precision as REAPER saves them), `effect.setState(state)` reads them back,
+and `chain.setState(uid, state)` does it in the worklet; `await chain.getState(uid)` reads
+what an effect in the worklet saves now (4.2: the noise profile Noise Reduction learnt while it
+played, or read from its Noise File), for the page to store with its project. A GFX view that edits state (the drum pattern) hands changes over with
 `view.takeState()`; values the page sends to the audio (`pokes`) and short flags the audio
 sends back (`flash`) are listed per effect in `tools/build.js`.
 

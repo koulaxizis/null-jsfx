@@ -1,5 +1,10 @@
 /*
  * NULL JSFX - NoiseReduction as a Rack module: drives nullnr::NoiseReducer as plugins/noise_reduction/Plugin.cpp does
+ *
+ * 4.2: no Noise File and no new value (the Rack's indices stay fixed): Use Noise File is always
+ * Off here. The learnt profile is the module's data (saveData / loadData, the plugin's
+ * "noiseprofile" string), saved in the Rack's "noiseprofiles" state; a loaded profile comes back
+ * as the plugin's does with Use Noise File Off.
  * Copyright (C) 2026 Christos Koulaxizis / NULL JSFX
  * SPDX-License-Identifier: MIT
  */
@@ -9,6 +14,8 @@
 #include "NullModule.hpp"
 #include "../../noise_reduction/NoiseReductionDSP.hpp"
 #include "../../noise_reduction/NoiseReductionSliders.hpp"
+#include "../../noise_reduction/NoiseFile.hpp"
+#include "NullMailbox.hpp"
 
 #include <cmath>
 
@@ -19,8 +26,22 @@ class NoiseReductionModule final : public nulljsfx::Module {
 public:
     NoiseReductionModule()
     {
-        for (uint32_t i = 0; i < nullnr::kNumSliders; ++i)
+        for (uint32_t i = 0; i < nullnr::kNumModuleSliders; ++i)
             fV[i] = nullnr::kSliders[i].def;
+        fDsp.setSnapshot(&fSnap);
+    }
+
+    std::string saveData() const override { return nullnr::encodeProfile(fSnap.read()); }
+
+    void loadData(const char* data) override
+    {
+        nullnr::SavedProfile s;
+        if (!nullnr::decodeProfile(data, s))
+            return;
+        s.gate = false; // no Use Noise File in the Rack: Off, which keeps the profile
+        fMsg.saved = s;
+        ++fMsg.savedSeq;
+        fMail.post(new nullnr::Profiles(fMsg));
     }
 
     void setSampleRate(double sr) override
@@ -32,7 +53,7 @@ public:
 
     void setValue(uint32_t index, float v) override
     {
-        if (index >= nullnr::kNumSliders)
+        if (index >= nullnr::kNumModuleSliders)
             return;
         fV[index] = v;
         update();
@@ -41,6 +62,11 @@ public:
     void process(const float* inL, const float* inR, float* outL, float* outR, uint32_t frames,
                  const nulljsfx::ModuleTime&) override
     {
+        if (nullnr::Profiles* m = fMail.take())
+        {
+            fDsp.takeProfiles(*m);
+            fMail.giveBack(m);
+        }
         fDsp.process(inL, inR, outL, outR, frames);
     }
 
@@ -57,13 +83,16 @@ private:
     }
 
     nullnr::NoiseReducer fDsp;
-    float fV[nullnr::kNumSliders];
+    nullnr::ProfileSnapshot fSnap;
+    nulljsfx::Mailbox<nullnr::Profiles> fMail;
+    nullnr::Profiles fMsg; // what was last posted (loadData, off the audio thread)
+    float fV[nullnr::kNumModuleSliders];
 };
 
 inline nulljsfx::Module* create() { return new NoiseReductionModule(); }
 
 static const nulljsfx::ModuleDesc kDesc = { "noise_reduction", "Noise Reduction", "Advanced", nullnr::kSliders,
-                                            nullnr::kNumSliders, create };
+                                            nullnr::kNumModuleSliders, create };
 
 } // namespace noise_reduction
 } // namespace nullrack

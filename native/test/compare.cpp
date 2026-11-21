@@ -27,6 +27,10 @@
  * pins 3/4 (the sidechain port) get a separate key signal, a kick-like pattern with level steps.
  * File sliders (slider:/folder:default:Name) stay at their default and are not CLAP parameters:
  * the k-th other slider is the k-th CLAP parameter.
+ * Files (4.2): --data-root <dir> makes <dir> the JSFX's Data folder (where slider:/folder looks),
+ * --file <n>=<v> sets JSFX slider n (from 1, a file slider) to file number v of that folder, and
+ * --clap-state <key>=<value> loads that state into the CLAP before its parameters (as a host
+ * restoring a session does), e.g. Noise Reduction's noisefile=<path of the same file>.
  *
  * Surround beds (a JSFX with more than four input pins, up to twelve): pins 5-12 get eight more
  * channels made from the program and the key (delayed, scaled, some inverted), so every pin of
@@ -54,6 +58,8 @@
 #include <clap/ext/audio-ports.h>
 #include <clap/events.h>
 #include <clap/ext/params.h>
+#include <clap/ext/state.h>
+#include <clap/stream.h>
 #include <clap/fixedpoint.h>
 #include <clap/plugin-factory.h>
 #include <clap/plugin.h>
@@ -232,10 +238,17 @@ static bool endsWith(const std::string& s, const char* suf)
 
 struct Slider { uint32_t index; double min, max, def, inc; std::string name; bool path; };
 
+static std::string g_dataRoot;                                   // --data-root
+static std::vector<std::pair<uint32_t, double>> g_fileValues;     // --file n=v
+static std::vector<std::pair<std::string, std::string>> g_states; // --clap-state key=value
+
 static ysfx_t* loadJsfx(const char* path)
 {
     ysfx_config_t* cfg = ysfx_config_new();
+    ysfx_register_builtin_audio_formats(cfg);
     ysfx_guess_file_roots(cfg, path);
+    if (!g_dataRoot.empty())
+        ysfx_set_data_root(cfg, g_dataRoot.c_str());
     ysfx_t* fx = ysfx_new(cfg);
     ysfx_config_free(cfg);
     if (!ysfx_load_file(fx, path, 0) || !ysfx_compile(fx, ysfx_compile_no_gfx)) {
@@ -324,6 +337,8 @@ static bool renderJsfx(const char* path, double sr, const std::vector<Slider>& s
     ysfx_set_time_info(fx, &ti);
     for (size_t k = 0; k < sl.size(); ++k)
         ysfx_slider_set_value(fx, sl[k].index, values[k]);
+    for (const auto& fv : g_fileValues)
+        ysfx_slider_set_value(fx, fv.first - 1, fv.second);
     const uint32_t frames = uint32_t(in.l.size());
     // pins 3/4: the sidechain; 5-12: the rest of a surround bed
     const uint32_t numIns = ysfx_get_num_inputs(fx) > 4 ? std::min<uint32_t>(12, ysfx_get_num_inputs(fx))
@@ -437,6 +452,34 @@ static bool renderClap(const char* path, double sr, const std::vector<double>& v
     if (!plugin || !plugin->init(plugin)) {
         std::fprintf(stderr, "create/init failed\n");
         return false;
+    }
+
+    // --clap-state: DPF's state stream (keys and values, each ending in a 0 byte), loaded before
+    // the parameters
+    if (!g_states.empty()) {
+        const auto* st = static_cast<const clap_plugin_state_t*>(plugin->get_extension(plugin, CLAP_EXT_STATE));
+        if (!st) {
+            std::fprintf(stderr, "--clap-state: the CLAP has no state extension\n");
+            return false;
+        }
+        struct In { std::string data; size_t pos = 0; } src;
+        src.data.append("__dpf_state_begin__", 20);
+        for (const auto& kv : g_states) {
+            src.data.append(kv.first.c_str(), kv.first.size() + 1);
+            src.data.append(kv.second.c_str(), kv.second.size() + 1);
+        }
+        src.data.append("__dpf_state_end__", 18);
+        clap_istream_t is { &src, [](const clap_istream_t* s, void* buf, uint64_t size) -> int64_t {
+            auto* in = static_cast<In*>(s->ctx);
+            const size_t n = std::min<size_t>(size_t(size), in->data.size() - in->pos);
+            std::memcpy(buf, in->data.data() + in->pos, n);
+            in->pos += n;
+            return int64_t(n);
+        } };
+        if (!st->load(plugin, &is)) {
+            std::fprintf(stderr, "--clap-state: the CLAP refused the state\n");
+            return false;
+        }
     }
 
     const auto* params = static_cast<const clap_plugin_params_t*>(plugin->get_extension(plugin, CLAP_EXT_PARAMS));
@@ -600,13 +643,16 @@ static bool renderModule(const std::string& id, double sr, const std::vector<dou
         std::fprintf(stderr, "no Rack module named %s\n", id.c_str());
         return false;
     }
-    if (desc->numSliders != values.size()) {
+    // a module may stop short of the JSFX's last sliders: features the Rack does not have (Noise
+    // Reduction's Use Noise File, 4.2, which needs a file the Rack does not keep). They are left
+    // out here; without a file they do not change the sound.
+    if (desc->numSliders > values.size()) {
         std::fprintf(stderr, "module %s has %u sliders, the JSFX %zu (without file sliders)\n", id.c_str(), desc->numSliders, values.size());
         return false;
     }
     nulljsfx::Module* m = desc->create();
     // like the CLAP test: parameters (as float) first, then the sample rate (activate)
-    for (uint32_t k = 0; k < values.size(); ++k)
+    for (uint32_t k = 0; k < desc->numSliders; ++k)
         m->setValue(k, float(values[k]));
     m->setSampleRate(sr);
     const nulljsfx::ModuleTime time; // no transport, like the CLAP test host
@@ -615,7 +661,7 @@ static bool renderModule(const std::string& id, double sr, const std::vector<dou
     for (uint32_t pos = 0; pos < frames; pos += kBlock) {
         const uint32_t n = std::min(kBlock, frames - pos);
         for (; nextChange < changes.size() && changes[nextChange].at <= pos; ++nextChange)
-            for (uint32_t k = 0; k < changes[nextChange].values.size(); ++k)
+            for (uint32_t k = 0; k < changes[nextChange].values.size() && k < desc->numSliders; ++k)
                 m->setValue(k, float(changes[nextChange].values[k]));
         m->process(in.l.data() + pos, in.r.data() + pos, out[0].data() + pos, out[1].data() + pos, n, time);
     }
@@ -713,6 +759,20 @@ int main(int argc, char** argv)
             tol = std::atof(argv[i + 1]);
         else if (!std::strcmp(argv[i], "--rpl"))
             rpl = argv[i + 1];
+        else if (!std::strcmp(argv[i], "--data-root"))
+            g_dataRoot = argv[i + 1];
+        else if (!std::strcmp(argv[i], "--file") || !std::strcmp(argv[i], "--clap-state")) {
+            const std::string v = argv[i + 1];
+            const size_t eq = v.find('=');
+            if (eq == std::string::npos) {
+                std::fprintf(stderr, "%s needs key=value\n", argv[i]);
+                return 2;
+            }
+            if (argv[i][2] == 'f')
+                g_fileValues.push_back({ uint32_t(std::atoi(v.substr(0, eq).c_str())), std::atof(v.substr(eq + 1).c_str()) });
+            else
+                g_states.push_back({ v.substr(0, eq), v.substr(eq + 1) });
+        }
         else if (!std::strcmp(argv[i], "--changes"))
             withChanges = std::atoi(argv[i + 1]) != 0;
         else if (!std::strcmp(argv[i], "--sets")) {

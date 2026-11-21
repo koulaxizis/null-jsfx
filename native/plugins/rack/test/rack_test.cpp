@@ -35,6 +35,12 @@
  *   feedback    the loop repeats every kChunk samples and decays; 95 % on noise stays bounded
  *   sequencer   the steps, Steps, sync to the host beat and Glide
  *   keyed       Sidechain Ducker keys on the rack input delayed by the latency before it
+ *
+ * Added with 4.2:
+ *   module data the "noiseprofiles" state: Noise Reduction's learnt profile comes back in its slot
+ *               whether the state sets it before the slots (DPF's key order) or after them, and
+ *               follows a reorder; a new module and the other slots have none; the profile
+ *               reduces the noise in the rack
  */
 
 #include <functional>
@@ -815,6 +821,116 @@ static void testMidi()
     }
 }
 
+// ---- module data (4.2) ---------------------------------------------------------------------------
+
+static void testModuleData()
+{
+    auto mods = allModules(false);
+    const double sr = 48000.0;
+    RackEngine probe(mods.data(), uint32_t(mods.size()));
+    const nulljsfx::ModuleDesc* nr = probe.find("noise_reduction");
+    if (!nr)
+    {
+        std::printf("  noise_reduction not in this build, skipped\n");
+        return;
+    }
+    // a steady noise; Learn on it for 1 s in a module of its own
+    Stereo noise;
+    const size_t n = size_t(sr * 2.0);
+    noise.l.resize(n);
+    noise.r.resize(n);
+    uint32_t seed = 777;
+    double lp = 0.0;
+    for (size_t i = 0; i < n; ++i)
+    {
+        seed = seed * 1664525u + 1013904223u;
+        const double x = (double(seed >> 8) / double(1u << 24)) * 2.0 - 1.0;
+        lp += 0.1 * (x - lp);
+        noise.l[i] = noise.r[i] = float(0.05 * lp + 0.01 * x);
+    }
+    std::unique_ptr<nulljsfx::Module> m(nr->create());
+    m->setSampleRate(sr);
+    for (uint32_t v = 0; v < nr->numSliders; ++v)
+        m->setValue(v, nr->sliders[v].def);
+    CHECK(m->saveData().empty(), "a new Noise Reduction has data");
+    std::vector<float> ol(512), orr(512);
+    nulljsfx::ModuleTime mt;
+    m->setValue(0, 1.0f);
+    for (size_t pos = 0; pos + 512 <= size_t(sr); pos += 512)
+        m->process(noise.l.data() + pos, noise.r.data() + pos, ol.data(), orr.data(), 512, mt);
+    m->setValue(0, 0.0f);
+    m->process(noise.l.data(), noise.r.data(), ol.data(), orr.data(), 512, mt);
+    const std::string prof = m->saveData();
+    CHECK(prof.size() > 1000, "no profile after Learn (%zu characters)", prof.size());
+
+    std::string data[rack::kSlots], ids[rack::kSlots], back[rack::kSlots];
+    data[2] = prof;
+    ids[2] = "noise_reduction";
+    ids[5] = "noise_reduction";
+    // the state's order: "noiseprofiles" before "slots"
+    {
+        RackEngine e(mods.data(), uint32_t(mods.size()));
+        e.setSampleRate(sr);
+        e.setModuleData(data);
+        e.setSlots(ids);
+        Stereo out;
+        render(e, noise, out, 512); // the profile reaches the audio thread
+        for (uint32_t i = 0; i < rack::kSlots; ++i)
+            back[i] = e.moduleData(i);
+        CHECK(back[2] == prof && back[5].empty() && rack::formatSlots(back) == ",," + prof + ",,,,,",
+              "noiseprofiles before slots: slot 3 %s", back[2] == prof ? "ok" : "lost");
+        // the next change of slots brings nothing back
+        ids[6] = "noise_reduction";
+        e.setSlots(ids);
+        CHECK(e.moduleData(6).empty() && e.moduleData(2) == prof, "a later new module got a profile");
+        ids[6].clear();
+        // a reorder carries the profile with the module
+        std::string ro[rack::kSlots];
+        ro[0] = "noise_reduction";
+        ro[5] = "noise_reduction";
+        e.setSlots(ro);
+        render(e, noise, out, 512);
+        CHECK(e.moduleData(0) == prof, "the profile did not follow a reorder");
+    }
+    // ... and after the slots, into an engine that had other modules
+    {
+        RackEngine e(mods.data(), uint32_t(mods.size()));
+        e.setSampleRate(sr);
+        std::string first[rack::kSlots];
+        first[2] = "tilt";
+        e.setSlots(first);
+        e.setSlots(ids);
+        e.setModuleData(data);
+        Stereo out, plain;
+        render(e, noise, out, 512);
+        CHECK(e.moduleData(2) == prof && e.moduleData(0).empty(), "noiseprofiles after slots");
+        // the profile works in the rack: the noise comes down against the same rack without it
+        RackEngine f(mods.data(), uint32_t(mods.size()));
+        f.setSampleRate(sr);
+        f.setSlots(ids);
+        render(f, noise, plain, 512);
+        double a = 0.0, b = 0.0;
+        for (size_t i = size_t(sr); i < n; ++i)
+        {
+            a += double(out.l[i]) * out.l[i];
+            b += double(plain.l[i]) * plain.l[i];
+        }
+        CHECK(a < 0.5 * b, "the loaded profile does not reduce the noise (%.3g vs %.3g)", a, b);
+        std::printf("  noiseprofiles: %zu characters for one profile, the noise %.1f dB lower with it\n",
+                    rack::formatSlots(back).size(), 10.0 * std::log10(a / b));
+    }
+    // a damaged entry changes nothing
+    {
+        RackEngine e(mods.data(), uint32_t(mods.size()));
+        e.setSampleRate(sr);
+        std::string bad[rack::kSlots];
+        bad[2] = "AQ==";
+        e.setModuleData(bad);
+        e.setSlots(ids);
+        CHECK(e.moduleData(2).empty(), "a damaged profile was loaded");
+    }
+}
+
 // ---- scenes (4.0) --------------------------------------------------------------------------------
 
 static void testScenes()
@@ -1483,6 +1599,8 @@ int main()
     testScenes();
     std::printf("midi\n");
     testMidi();
+    std::printf("module data\n");
+    testModuleData();
     std::printf("threads\n");
     testThreads();
     testPresets();

@@ -23,7 +23,9 @@
  * State (strings): "slots" = 8 module ids separated by ',' (empty = empty slot), "routes" =
  * "source>slot.value:depth" separated by ';' (slot and value from 1, e.g. "lfo1>2.1:-0.25";
  * sources: kSourceSymbols, "seq" added after 2.1), "preset" = the name of the preset the rack was
- * loaded from.
+ * loaded from. 4.2: "noiseprofiles" = 8 entries separated by ',' as "slots", each the saved data
+ * of the module in that slot (Noise Reduction: its "noiseprofile" string, NoiseFile.hpp), empty
+ * for a slot without one (formatSlots / parseSlots).
  */
 
 #pragma once

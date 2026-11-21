@@ -219,6 +219,20 @@ protected:
 #endif
     }
 
+    // a parameter the presets, A/B and undo leave alone (FactoryPresets.hpp kKeep: the switch
+    // of a file slider, such as Noise Reduction's Use Noise File; 4.2)
+    static bool presetKept(uint32_t i)
+    {
+#if NULL_UI_PRESETS && defined(NULL_UI_KEEP)
+        for (uint32_t k = 0; k < nullpresets::kNumKeep; ++k)
+            if (nullpresets::kKeep[k] == i)
+                return true;
+#else
+        (void)i;
+#endif
+        return false;
+    }
+
     // the first preset every parameter matches (to 1e-4, relative above 1), or -1
     int presetMatch() const
     {
@@ -228,6 +242,8 @@ protected:
             bool same = true;
             for (uint32_t i = 0; i < nullpresets::kNumValues && same; ++i)
             {
+                if (presetKept(i))
+                    continue;
                 const float v = nullpresets::kPresets[p].values[i];
                 same = std::fabs(presetGet(i) - v) <= 1e-4f * std::max(1.0f, std::fabs(v));
             }
@@ -246,7 +262,7 @@ protected:
         for (uint32_t i = 0; i < nullpresets::kNumValues; ++i)
         {
             const float v = nullpresets::kPresets[p].values[i];
-            if (presetGet(i) == v)
+            if (presetKept(i) || presetGet(i) == v)
                 continue;
             editParameter(i, true);
             presetSet(i, v);
@@ -449,7 +465,7 @@ protected:
     bool histSame(const std::vector<float>& a) const
     {
         for (uint32_t i = 0; i < histCount() && i < a.size(); ++i)
-            if (a[i] != presetGet(i))
+            if (!presetKept(i) && a[i] != presetGet(i))
                 return false;
         return true;
     }
@@ -459,7 +475,7 @@ protected:
         fHistApplying = true;
         for (uint32_t i = 0; i < histCount() && i < a.size(); ++i)
         {
-            if (presetGet(i) == a[i])
+            if (presetKept(i) || presetGet(i) == a[i])
                 continue;
             editParameter(i, true);
             presetSet(i, a[i]);

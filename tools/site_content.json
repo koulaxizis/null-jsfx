@@ -2237,15 +2237,18 @@
       "How fast the gain opens when a sound rises above the noise",
       "How fast the gain closes back to the floor",
       "Hear the cleaned output or only the removed noise",
-      "Dry/wet blend"
+      "Dry/wet blend",
+      "Beta: WAV of noise alone (room tone, hiss, hum) from REAPER’s Data/null_jsfx_noise folder: its first 60 s are averaged into the profile, as Learn would (used when Use Noise File = On)",
+      "On: the profile comes from the Noise File. Off clears a profile from the file or from Learn; a new Learn replaces the file’s profile"
     ],
     "uses": [
       "Remove tape and preamp hiss",
       "Clean room tone and air-conditioning rumble from dialogue",
       "Tame a hum or buzz bed under guitars",
-      "Lower the noise floor of field and home recordings"
+      "Lower the noise floor of field and home recordings",
+      "Learn the noise from a separate room-tone or hiss file instead of a passage of the track"
     ],
-    "properties": "Signal chain: Input → 2048-Point FFT (4× overlap, Hann) → Noise Estimate (Learnt Profile or Auto Minimum Statistics) → Wiener-Like Gain with Floor → Time + Frequency Smoothing → Attack/Release → IFFT Overlap-Add → Mix → Output. One gain for both channels; latency 2047 samples (reported). The learnt profile lives in memory and is not saved with the project: learn again after a reload, or use Auto.",
+    "properties": "Signal chain: Input → 2048-Point FFT (4× overlap, Hann) → Noise Estimate (Learnt Profile, Profile from a Noise File, or Auto Minimum Statistics) → Wiener-Like Gain with Floor → Time + Frequency Smoothing → Attack/Release → IFFT Overlap-Add → Mix → Output. One gain for both channels; latency 2047 samples (reported). Since 4.2 (beta) the profile in use (learnt or from the file) is saved with the project and comes back without the file; a Noise File (WAV, mono or stereo, any sample rate, first 60 s) is read off the audio path, resampled and averaged exactly as Learn averages it while the same file plays.",
     "icon": "<svg viewBox=\"0 0 64 64\" width=\"48\" height=\"48\"><defs><linearGradient id=\"icon-noise-reduction\" x1=\"0%\" y1=\"100%\" x2=\"0%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888888\"/><stop offset=\"100%\" stop-color=\"#aaaaaa\"/></linearGradient></defs><path d=\"M8,44 L11,40 L14,46 L17,39 L20,45 L23,41 L26,46 L29,40 L32,44\" stroke=\"url(#icon-noise-reduction)\" stroke-width=\"1.5\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\" opacity=\"0.4\"/><path d=\"M8,20 C20,20 22,32 32,32 L56,32\" stroke=\"url(#icon-noise-reduction)\" stroke-width=\"2.5\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M36,44 L56,44\" stroke=\"url(#icon-noise-reduction)\" stroke-width=\"2.5\" fill=\"none\" stroke-linecap=\"round\"/><path d=\"M40,16 L52,16 M46,10 L46,22\" stroke=\"url(#icon-noise-reduction)\" stroke-width=\"1.5\" fill=\"none\" stroke-linecap=\"round\" opacity=\"0.4\"/></svg>"
   },
   "note_echo": {

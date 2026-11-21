@@ -15,6 +15,10 @@ slider_desc in tools/site_content.json (or tools/site_content_next.json for a pl
 the site) and cut to HINT_MAX characters, which the GFX and the native interface show under the
 controls while the mouse is over one (ng_hint_text in the GFX block, kHints in the header).
 File sliders (Convolution's IR File) are left out everywhere: a preset keeps the chosen file.
+So is the switch of a file slider, a slider named "Use <file slider's name>" (Noise Reduction's
+Use Noise File, 4.2): a preset, A/B, undo and the dice leave it alone, so a preset never drops
+the noise profile. It stays a VST3/CLAP parameter, so FactoryPresets.hpp keeps its value and
+lists it in kKeep, which the native interface skips.
 
 With --ini <dir> it also writes the same presets as REAPER user preset files, <dir>/js-*.ini,
 which REAPER reads from the presets folder of its resource path without importing anything.
@@ -82,6 +86,18 @@ def file_sliders(stem):
     """Indices (from 0) of the file sliders (slider:/folder:default:Name) of a plugin."""
     text = (PLUGINS / f"{stem}.jsfx").read_text(encoding="utf-8")
     return {int(m.group(1)) - 1 for m in re.finditer(r"^slider(\d+):/", text, re.M)}
+
+
+def kept_sliders(stem):
+    """The file sliders plus their switches: indices (from 0) of the sliders named
+    "Use <name of a file slider>" (4.2). Presets, A/B, undo and the dice leave all of them alone."""
+    text = (PLUGINS / f"{stem}.jsfx").read_text(encoding="utf-8")
+    names = {m.group(1).strip() for m in re.finditer(r"^slider\d+:/[^:\n]*:[^:\n]*:-?(.+)$", text, re.M)}
+    keep = set(file_sliders(stem))
+    for m in re.finditer(r"^slider(\d+):[^>\n]*>-?(.+)$", text, re.M):
+        if any(m.group(2).strip() == f"Use {n}" for n in names):
+            keep.add(int(m.group(1)) - 1)
+    return keep
 
 
 def steps(stem):
@@ -205,7 +221,7 @@ def write_ini(out):
     out.mkdir(parents=True, exist_ok=True)
     n = 0
     for path in sorted(PLUGINS.glob("*.jsfx")):
-        stem, presets, skip = path.stem, load(path.stem), file_sliders(path.stem)
+        stem, presets, skip = path.stem, load(path.stem), kept_sliders(path.stem)
         targets = [f"null_jsfx/{stem}.jsfx"]
         if (PLUGINS / "gfx" / f"{stem}_gfx.jsfx").exists():
             targets.append(f"null_jsfx/gfx/{stem}_gfx.jsfx")
@@ -219,14 +235,22 @@ def cfloat(v):
     return (str(int(v)) + ".0f") if float(v) == int(v) else repr(round(float(v), 6)) + "f"
 
 
-def header(stem, presets, files):
+def header(stem, presets, files, keep=frozenset()):
     """The C++ list: per preset its name and the value of every parameter (the sliders without
-    the file sliders, in order)."""
+    the file sliders, in order); kKeep lists the parameters of `keep` (the switches of file
+    sliders), which the interface's presets, A/B and undo leave alone."""
     n = len(presets[0][1]) - len(files)
     tips = [h for i, h in enumerate(hints(stem, len(presets[0][1]))) if i not in files]
     hrows = "\n".join("    " + json.dumps(h, ensure_ascii=False) + "," for h in tips)
     pos = [i for i in range(len(presets[0][1])) if i not in files]  # slider index -> parameter
-    roll = dice(stem, files)
+    roll = dice(stem, files | keep)
+    kept = [pos.index(i) for i in sorted(keep - files)]
+    kblock = "" if not kept else f"""
+// the parameters the presets, A/B and undo leave alone (the switch of a file slider)
+#define NULL_UI_KEEP 1
+static const uint32_t kKeep[] = {{ {", ".join(str(k) for k in kept)} }};
+static constexpr uint32_t kNumKeep = sizeof(kKeep) / sizeof(kKeep[0]);
+"""
     drows = "\n".join(f"    {{ {pos.index(i)}, {cfloat(lo)}, {cfloat(hi)}, {cfloat(st)}, {'true' if lg else 'false'} }},"
                       for i, lo, hi, st, lg in roll)
     dblock = "" if not roll else f"""
@@ -269,12 +293,14 @@ static constexpr uint32_t kNumValues = {n};
 static const char* const kHints[] = {{
 {hrows}
 }};
-{dblock}
+{dblock}{kblock}
 }} // namespace nullpresets
 """
 
 
 def gfx_block(stem, presets, files):
+    # `files`: the kept sliders (file sliders and their switches); hints skip only file sliders
+    fsl = file_sliders(stem)
     """EEL2 for the end of @init of <stem>_gfx.jsfx: the functions the header's preset selector
     (null_gfx.jsfx-inc) calls through ng_presets(), and the sliders A/B and undo/redo keep."""
     idx = [i for i in range(len(presets[0][1])) if i not in files]
@@ -300,7 +326,7 @@ def gfx_block(stem, presets, files):
             "  // the hint line under the controls: a short help text per slider (from tools/site_content.json)",
             "  function ng_hint_text(i) local(s)", "  (", '    s = "";']
     for k, h in enumerate(hints(stem, len(presets[0][1]))):
-        if h and k not in files:
+        if h and k not in fsl:
             out.append(f'    i == {k + 1} ? s = "{h}";')
     out += ["    s;", "  );", "",
             "  function ng_presets() local(i)", "  (",
@@ -353,7 +379,7 @@ def render(only=None):
         if only and stem not in only:
             continue
         presets = load(stem)
-        skip = file_sliders(stem)
+        skip = kept_sliders(stem)
         desc = (PLUGINS / f"{stem}.jsfx").read_text(encoding="utf-8").split("\n", 1)[0][len("desc:"):].strip()
         files[PLUGINS / f"{stem}.jsfx.rpl"] = rpl(desc, presets, skip)
         gfx = PLUGINS / "gfx" / f"{stem}_gfx.jsfx"
@@ -362,7 +388,7 @@ def render(only=None):
             files[PLUGINS / "gfx" / f"{stem}_gfx.jsfx.rpl"] = rpl(gdesc, presets, skip)
             files[gfx] = gfx_source(gfx, gfx_block(stem, presets, skip))
         if (NATIVE / stem / "Plugin.cpp").exists():
-            files[NATIVE / stem / "FactoryPresets.hpp"] = header(stem, presets, skip)
+            files[NATIVE / stem / "FactoryPresets.hpp"] = header(stem, presets, file_sliders(stem), skip)
     return files
 
 

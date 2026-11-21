@@ -2,7 +2,7 @@ desc:NULL Noise Reduction GFX
 author: Christos Koulaxizis
 tags: noise reduction denoise hiss hum room tone spectral subtraction restoration fft gui
 //category: Advanced
-//NULL JSFX v4.1.1 • https://nulljsfx.tech • MIT License
+//NULL JSFX v4.2 • https://nulljsfx.tech • MIT License
 
 import null_gfx.jsfx-inc
 
@@ -15,6 +15,8 @@ slider6:10<0,100,1>-Attack (ms)
 slider7:150<10,1000,1>-Release (ms)
 slider8:0<0,1,1{Output,Removed noise}>-Listen
 slider9:100<0,100,1>-Mix (%)
+slider10:/null_jsfx_noise:none:-Noise File
+slider11:0<0,1,1{Off,On}>-Use Noise File
 
 in_pin:Left
 in_pin:Right
@@ -35,9 +37,15 @@ out_pin:Right
   // by Reduction; the power is smoothed over time and across frequency (Smoothing) against
   // musical noise. The gain opens with Attack when a bin rises above the noise and falls
   // back with Release. One gain for both channels keeps the stereo image. Listen Removed
-  // noise plays what is taken away. The profile stays in memory while the plugin runs
-  // (also across playback starts); it is not saved with the project, so after a reload
-  // learn again or use Auto. Latency: 2047 samples (reported to REAPER).
+  // noise plays what is taken away. The profile can also come from a file: put
+  // .wav files of room tone in REAPER's Data/null_jsfx_noise folder, pick one in Noise File and
+  // switch Use Noise File On. The file (its first 60 s; mono or stereo, any sample rate,
+  // resampled to the project's rate like Convolution's IR File) is averaged exactly as Learn
+  // would average it while it plays from its first sample. It is read at the start of the next
+  // block, never in @sample. A live Learn replaces it; Use Noise File Off empties the profile.
+  // The profile in use, from a file or from Learn, is saved with the project (@serialize), so it
+  // comes back even when the file has moved; at another sample rate it is read from the file
+  // again, or else mapped by frequency. Latency: 2047 samples (reported to REAPER).
   N = 2048; H = N / 4; NB = N / 2 + 1;
   U = 4;                             // auto: sub-windows of the minimum search
   fft_l = 0; fft_r = 2 * N;          // 2N slots each, neither crosses a 65536 boundary
@@ -53,12 +61,45 @@ out_pin:Right
   nz = as + U * NB;                  // noise magnitude in use (display)
   dsp = nz + NB;                     // spectrum (display)
   psum = dsp + NB;                   // learnt profile: summed magnitudes
-  freembuf(psum + NB);
+  ptmp = psum + NB;                  // a profile as average magnitudes (file, state, new rate)
+  nf_l = ptmp + NB; nf_r = nf_l + N; // noise file: the last N resampled samples per channel
+  NFV = 65536;                       // noise file: values read per chunk
+  nf_buf = nf_r + N;                 // noise file: the chunk (interleaved)
+  freembuf(nf_buf + NFV);
   memset(win, 0, psum - win);
-  // the profile survives @init (playback start); only a new sample rate clears it
-  prof_sr != srate ? (memset(psum, 0, NB); lcount = 0; learning = 0; prof_sr = srate);
   i = 0;
   loop(N, win[i] = 0.5 - 0.5 * cos(2 * $pi * i / N); i += 1);
+
+  // the profile at sample rate from_sr (average magnitudes in ptmp) mapped to srate by
+  // frequency, linear between bins, the top bin held above its Nyquist
+  function nr_map(from_sr) local(k, s, j, fr)
+  (
+    k = 0;
+    loop(NB,
+      s = k * srate / from_sr;
+      j = floor(s);
+      fr = s - j;
+      psum[k] = j >= NB - 1 ? ptmp[NB - 1] : ptmp[j] * (1 - fr) + ptmp[j + 1] * fr;
+      k += 1;
+    );
+    lcount = 1;
+  );
+
+  // the profile survives @init (playback start); a new sample rate maps it by frequency, and
+  // a profile from a file is read from the file again
+  !nf_init ? (nf_init = 1; nf_cur = slider10);
+  prof_sr != srate ? (
+    lcount > 0 && prof_sr > 0 ? (
+      i = 0;
+      loop(NB, ptmp[i] = psum[i] / lcount; i += 1);
+      nr_map(prof_sr);
+      prof_src == 1 && slider11 >= 0.5 ? nf_req = 1;
+    ) : (
+      memset(psum, 0, NB); lcount = 0; prof_src = 0; prof_len = 0;
+    );
+    learning = 0;
+    prof_sr = srate;
+  );
   i = 0;
   loop(NB, gs[i] = 1; am[i] = 1000000000000000000000000000000; i += 1);
   i = 0;
@@ -92,7 +133,7 @@ out_pin:Right
     fft(fft_r, N); fft_permute(fft_r, N);
     ready = filled >= N;
     // Learn switched on: start a new profile
-    learn && !learning ? (memset(psum, 0, NB); lcount = 0);
+    learn && !learning ? (memset(psum, 0, NB); lcount = 0; prof_src = 2);
     learning = learn;
 
     k = 0;
@@ -111,7 +152,7 @@ out_pin:Right
       k += 1;
     );
     ready ? (
-      learning ? lcount += 1;
+      learning ? (lcount += 1; prof_len = lcount * H / srate);
       astarted = 1;
       afc += 1;
       afc >= V ? (
@@ -174,6 +215,96 @@ out_pin:Right
       out_l[p] += fft_l[2 * i] * w;
       out_r[p] += fft_r[2 * i] * w;
       i += 1;
+    );
+  );
+
+  // one analysis frame of the noise file: the last N resampled samples (ring nf_l/nf_r, oldest
+  // at ip), windowed and averaged per bin exactly as nr_frame() does while Learn is On
+  function nf_frame(ip) local(i, k, p, w, rl, il, rr, ir)
+  (
+    i = 0;
+    loop(N,
+      p = (ip + i) % N;
+      w = win[i];
+      fft_l[2 * i] = nf_l[p] * w; fft_l[2 * i + 1] = 0;
+      fft_r[2 * i] = nf_r[p] * w; fft_r[2 * i + 1] = 0;
+      i += 1;
+    );
+    fft(fft_l, N); fft_permute(fft_l, N);
+    fft(fft_r, N); fft_permute(fft_r, N);
+    k = 0;
+    loop(NB,
+      rl = fft_l[2 * k]; il = fft_l[2 * k + 1];
+      rr = fft_r[2 * k]; ir = fft_r[2 * k + 1];
+      ptmp[k] += (sqrt(rl * rl + il * il) + sqrt(rr * rr + ir * ir)) * 0.5;
+      k += 1;
+    );
+  );
+
+  // read the chosen noise file (its first 60 s), resample it to srate (linear, as Convolution's
+  // IR File) and average it as Learn would while it plays from its first sample: a frame every
+  // H samples once N have arrived. The profile changes only if the file gave at least one frame.
+  function nf_analyse() local(fh, nch, fsr, total, ratio, nout, cpf, i, p, f, q, b0, bn, keep, got, a, c, xl, xr, ip, fill, fc, nfr, left, cnt)
+  (
+    nf_fail = 1; nf_cut = 0;
+    fh = file_open(slider10);
+    fh >= 0 ? (
+      nch = fsr = 0;
+      file_riff(fh, nch, fsr);
+      nch > 0 && fsr > 0 ? (
+        total = floor(file_avail(fh) / nch);
+        total > floor(60 * fsr) ? (total = floor(60 * fsr); nf_cut = 1);
+        ratio = fsr / srate;
+        nout = floor(total / ratio);
+        cpf = floor(NFV / nch);
+        memset(ptmp, 0, NB);
+        b0 = 0; bn = 0; ip = 0; fill = 0; fc = 0; nfr = 0;
+        i = 0;
+        // EEL2 runs a loop() at most 2^20 times: blocks of 65536 samples
+        left = nout;
+        while (left > 0) (
+          cnt = min(left, 65536);
+          left -= cnt;
+          loop(cnt,
+            p = i * ratio;
+            f = p - floor(p);
+            p = floor(p);
+            q = min(p + 1, total - 1);
+            // the chunk holds the frames b0 .. b0 + bn - 1: read on when q is past it
+            q >= b0 + bn ? (
+              p > b0 + bn ? (file_mem(fh, nf_buf, (p - b0 - bn) * nch); bn = p - b0);
+              keep = b0 + bn - p;
+              memcpy(nf_buf, nf_buf + (p - b0) * nch, keep * nch);
+              b0 = p;
+              got = file_mem(fh, nf_buf + keep * nch, min(cpf - keep, total - b0 - keep) * nch);
+              bn = keep + floor(got / nch);
+              q = min(q, b0 + bn - 1);
+            );
+            a = (p - b0) * nch;
+            c = (q - b0) * nch;
+            xl = nf_buf[a] * (1 - f) + nf_buf[c] * f;
+            xr = nch > 1 ? nf_buf[a + 1] * (1 - f) + nf_buf[c + 1] * f : xl;
+            nf_l[ip] = xl;
+            nf_r[ip] = xr;
+            ip += 1; ip >= N ? ip = 0;
+            fill < N ? fill += 1;
+            fc += 1;
+            fc >= H ? (
+              fc = 0;
+              fill >= N ? (nf_frame(ip); nfr += 1);
+            );
+            i += 1;
+          );
+        );
+        nfr > 0 ? (
+          memcpy(psum, ptmp, NB);
+          lcount = nfr;
+          prof_src = 1;
+          prof_len = nfr * H / srate;
+          nf_fail = 0;
+        );
+      );
+      file_close(fh);
     );
   );
 
@@ -261,6 +392,7 @@ out_pin:Right
     i == 7 ? s = "How fast the gain closes back to the floor";
     i == 8 ? s = "Hear the cleaned output or only the removed noise";
     i == 9 ? s = "Dry/wet blend";
+    i == 11 ? s = "On: the profile comes from the Noise File. Off clears a profile from the file or from Learn";
     s;
   );
 
@@ -282,6 +414,53 @@ out_pin:Right
 
 @slider
   update();
+
+@block
+  // the noise file: a new file, or Use Noise File switched On without a profile from a file,
+  // is read here (at a block start, never in @sample); Use Noise File Off empties the profile
+  nf_on = slider11 >= 0.5;
+  slider10 != nf_cur ? (nf_cur = slider10; nf_on ? nf_req = 1);
+  nf_on && !nf_was && prof_src != 1 ? nf_req = 1;
+  !nf_on && nf_was ? (
+    memset(psum, 0, NB); lcount = 0; prof_src = 0; prof_len = 0;
+    nf_req = 0; nf_fail = 0; nf_cut = 0;
+  );
+  nf_was = nf_on;
+  nf_req && nf_on ? nf_analyse();
+  nf_req = 0;
+
+@serialize
+  // the profile in use (4.2), single precision as REAPER stores it: a mark (1312), the version
+  // (1), the source (0 none, 1 file, 2 Learn), its sample rate, its length (s), whether Use Noise
+  // File was On, whether the file was cut at 60 s, then the NB average magnitudes (only with a
+  // source). A saved profile comes before the file; an older state (no mark) changes nothing.
+  file_avail(0) >= 0 ? (
+    s_mark = s_ver = s_src = s_sr = s_len = s_gate = s_cut = 0;
+    file_var(0, s_mark);
+    s_mark == 1312 ? (
+      file_var(0, s_ver); file_var(0, s_src); file_var(0, s_sr); file_var(0, s_len);
+      file_var(0, s_gate); file_var(0, s_cut);
+      s_ver == 1 && s_src >= 1 && s_src <= 2 && s_sr > 0 && file_mem(0, ptmp, NB) == NB ? (
+        abs(s_sr - srate) < 0.5 ? (memcpy(psum, ptmp, NB); lcount = 1) : nr_map(s_sr);
+        prof_src = s_src; prof_len = s_len; prof_sr = srate; learning = 0;
+        nf_cur = slider10; nf_was = s_gate >= 0.5; nf_cut = s_cut; nf_fail = 0;
+        // at another sample rate a profile from a file is read from the file again, if it can be
+        nf_req = abs(s_sr - srate) >= 0.5 && s_src == 1 && s_gate >= 0.5;
+      );
+    );
+  ) : (
+    s_mark = 1312; s_ver = 1;
+    s_src = lcount > 0 ? prof_src : 0;
+    s_src < 1 || s_src > 2 ? s_src = 0;
+    s_sr = srate; s_len = prof_len; s_gate = slider11 >= 0.5; s_cut = nf_cut;
+    file_var(0, s_mark); file_var(0, s_ver); file_var(0, s_src); file_var(0, s_sr); file_var(0, s_len);
+    file_var(0, s_gate); file_var(0, s_cut);
+    s_src > 0 ? (
+      i = 0;
+      loop(NB, ptmp[i] = psum[i] / lcount; i += 1);
+      file_mem(0, ptmp, NB);
+    );
+  );
 
 @sample
   in_l[ipos] = spl0;
@@ -329,10 +508,13 @@ out_pin:Right
   ng_ptxt("1k", ng_freq_x(1000), ng_py + ng_ph + 10 * ng_s, 1);
   ng_ptxt("10k", ng_freq_x(10000), ng_py + ng_ph + 10 * ng_s, 1);
   // status on the left, legend on the right, above the plot
+  // the profile: learned live, from the noise file (first 60 s only of a longer file) or none
   auto_on ? strcpy(#nr_t, "AUTO") :
-    learning ? sprintf(#nr_t, "LEARNING %.1f S", lcount * H / srate) :
-    lcount > 0 ? sprintf(#nr_t, "PROFILE %.1f S", lcount * H / srate) :
-    strcpy(#nr_t, "NO PROFILE: LEARN OR AUTO");
+    learning ? sprintf(#nr_t, "LEARNING %.1f S", prof_len) :
+    lcount > 0 && prof_src == 1 ? sprintf(#nr_t, nf_cut ? "PROFILE: FROM FILE %.1f S (FIRST 60 S)" : "PROFILE: FROM FILE %.1f S", prof_len) :
+    lcount > 0 ? sprintf(#nr_t, "PROFILE: LEARNED %.1f S", prof_len) :
+    slider11 >= 0.5 && nf_fail ? strcpy(#nr_t, "PROFILE: NONE (FILE NOT READABLE)") :
+    strcpy(#nr_t, "PROFILE: NONE (LEARN, FILE OR AUTO)");
   ng_col(learning ? NG_TEXT : NG_MUTED, 1);
   ng_ptxt(#nr_t, ng_px, Y(ng_vy + 4), 0);
   ng_col(NG_ACCENT, 1);
@@ -395,12 +577,64 @@ out_pin:Right
   ng_knob_ctl(5, "SMOOTHING", #v5, 0, 100, 50, 1, 0) ? update();
   sprintf(#v9, "%d%%", slider9);
   ng_knob_ctl(9, "MIX", #v9, 0, 100, 100, 1, 0) ? update();
-  ng_row(3);
+  ng_row(6);
   sprintf(#v6, "%d ms", slider6);
   ng_knob_ctl(6, "ATTACK", #v6, 0, 100, 10, 1, 0) ? update();
   sprintf(#v7, "%d ms", slider7);
   ng_knob_ctl(7, "RELEASE", #v7, 10, 1000, 150, 1, 0) ? update();
   ng_select_ctl(8, "LISTEN", "OUTPUT|REMOVED", 0) ? update();
+
+  // the noise file (4.2): steps through the files of Data/null_jsfx_noise like Convolution's IR
+  // File (the number of the file in that folder), Use Noise File, and Clear, which switches it
+  // Off (the audio code then empties the profile)
+  (
+    nr_cx = ng_cellx + ng_cw / 2;
+    nr_ry = ng_rowy;
+    ng_hint_cell(10, nr_cx, nr_ry);
+    ng_cellx += ng_cw;
+    ng_font(1, 7.5, 1);
+    ng_col(NG_MUTED, 1);
+    ng_txt("NOISE FILE", nr_cx, nr_ry + 10, 1, 1.5);
+    nr_pw = ng_cw - 10;
+    nr_hv = mouse_x >= X(nr_cx - nr_pw / 2) && mouse_x < X(nr_cx + nr_pw / 2) && abs(mouse_y - Y(nr_ry + 44)) < 14 * ng_s;
+    ng_col(NG_BG, 1);
+    gfx_roundrect(X(nr_cx - nr_pw / 2), Y(nr_ry + 33), nr_pw * ng_s, 22 * ng_s, 4 * ng_s, 1);
+    gfx_rect(X(nr_cx - nr_pw / 2) + 1, Y(nr_ry + 33) + 1, nr_pw * ng_s - 1, 22 * ng_s - 1);
+    ng_col(nr_hv ? 0x45433f : NG_BORDER, 1);
+    gfx_roundrect(X(nr_cx - nr_pw / 2), Y(nr_ry + 33), nr_pw * ng_s, 22 * ng_s, 4 * ng_s, 1);
+    ng_font(1, 8, 1);
+    ng_col(slider11 >= 0.5 ? NG_TEXT : NG_MUTED, 1);
+    sprintf(#nr_f, "FILE %d", slider10 + 1);
+    ng_txt(#nr_f, nr_cx, nr_ry + 44, 1, 0.5);
+    ng_col(NG_MUTED, 1);
+    ng_arrow(nr_cx - nr_pw / 2 + 7, nr_ry + 44, -1);
+    ng_arrow(nr_cx + nr_pw / 2 - 7, nr_ry + 44, 1);
+    nr_v = slider10;
+    nr_hv && ng_click ? nr_v = mouse_x < X(nr_cx) ? max(0, slider10 - 1) : slider10 + 1;
+    nr_hv && mouse_wheel != 0 ? nr_v = mouse_wheel > 0 ? slider10 + 1 : max(0, slider10 - 1);
+    ng_slider_set(10, nr_v);
+  );
+  ng_select_ctl(11, "USE FILE", "OFF|ON", 0) ? update();
+  (
+    nr_cx = ng_cellx + ng_cw / 2;
+    nr_ry = ng_rowy;
+    ng_cellx += ng_cw;
+    nr_on = slider11 >= 0.5;
+    ng_font(1, 7.5, 1);
+    ng_col(NG_MUTED, 1);
+    ng_txt("PROFILE", nr_cx, nr_ry + 10, 1, 1.5);
+    nr_pw = ng_cw - 10;
+    nr_hv = nr_on && mouse_x >= X(nr_cx - nr_pw / 2) && mouse_x < X(nr_cx + nr_pw / 2) && abs(mouse_y - Y(nr_ry + 44)) < 14 * ng_s;
+    ng_col(NG_BG, 1);
+    gfx_roundrect(X(nr_cx - nr_pw / 2), Y(nr_ry + 33), nr_pw * ng_s, 22 * ng_s, 4 * ng_s, 1);
+    gfx_rect(X(nr_cx - nr_pw / 2) + 1, Y(nr_ry + 33) + 1, nr_pw * ng_s - 1, 22 * ng_s - 1);
+    ng_col(nr_hv ? NG_ACCENT : NG_BORDER, 1);
+    gfx_roundrect(X(nr_cx - nr_pw / 2), Y(nr_ry + 33), nr_pw * ng_s, 22 * ng_s, 4 * ng_s, 1);
+    ng_font(1, 8, 1);
+    ng_col(nr_on ? NG_TEXT : NG_MUTED, 1);
+    ng_txt("CLEAR", nr_cx, nr_ry + 44, 1, 0.5);
+    nr_hv && ng_click ? (ng_slider_set(11, 0); update());
+  );
 
   ng_end();
 

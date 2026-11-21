@@ -9,6 +9,9 @@
 #                           the JSFX (only when no plugins are given)
 #   6. tests/preset_test  - every factory preset of the plain JSFX given: finite, no blow-up, and no
 #                           level jump from Default beyond tests/preset_levels.txt
+#   7. tests/noise_file_test - (4.2) Noise Reduction's Noise File and saved profile: the JSFX, the
+#                           GFX JSFX and the native DSP on the fixed noise files of
+#                           tests/make_noise_wavs.py (when no plugins are given, or noise_reduction is)
 # Usage: tests/run.sh [plugin.jsfx ...]   (default: every plugin and every chain)
 #        tests/run.sh --build-only        only build ysfx and the test programs (native/scripts/build.sh)
 set -euo pipefail
@@ -57,6 +60,16 @@ if [ $assisted_new -eq 1 ]; then
     -o "$build/assisted_test"
 fi
 
+# the Noise File test compiles the native Noise Reduction headers it compares against
+nf_src=("$here/noise_file_test.cpp" "$build/ysfx/build/libysfx.a" "$root"/native/plugins/noise_reduction/*.hpp)
+nf_new=0
+[ -x "$build/noise_file_test" ] || nf_new=1
+for f in "${nf_src[@]}"; do [ "$f" -nt "$build/noise_file_test" ] && nf_new=1; done
+if [ $nf_new -eq 1 ]; then
+  g++ -O2 -std=c++17 -I "$build/ysfx/include" -I "$root/native/common" -I "$root/native/plugins/noise_reduction" \
+    "$here/noise_file_test.cpp" "$build/ysfx/build/libysfx.a" -lpthread -ldl -o "$build/noise_file_test"
+fi
+
 if [ "${1:-}" = --build-only ]; then exit 0; fi
 
 chains=0
@@ -68,6 +81,12 @@ if [ $chains -eq 1 ]; then
   "$build/chain_test" "$root/DATA/Effects" "$root"/DATA/FXChains/*/*.RfxChain || status=1
   "$build/jsfx_test" "$here/gfx_hist_test.jsfx" || status=1
   "$build/assisted_test" "$root/DATA/Effects/null_jsfx" || status=1
+fi
+nf=$chains
+for f in "$@"; do case "$f" in */noise_reduction.jsfx|*/noise_reduction_gfx.jsfx) nf=1 ;; esac; done
+if [ $nf -eq 1 ]; then
+  python3 "$here/make_noise_wavs.py" "$build/noise" >/dev/null
+  "$build/noise_file_test" "$root/DATA/Effects/null_jsfx" "$build/noise" || status=1
 fi
 # the presets of the plain JSFX given (the GFX versions carry the same ones), ten plugins per process;
 # not again in a run at other sample rates (NULL_TEST_RATES), which tests the same presets at 48 kHz

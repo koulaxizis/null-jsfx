@@ -136,3 +136,41 @@ add_test(NAME changes_gfx_room_tone COMMAND compare "${_jsfx_dir}/room_tone.jsfx
 if(NULL_RACK_MODULES AND "room_tone" IN_LIST NULL_RACK_MODULES)
   add_test(NAME changes_module_room_tone COMMAND module_compare "${_jsfx_dir}/room_tone.jsfx" "module:room_tone" --changes 1 --sets "${_rt_sets}")
 endif()
+
+# 4.2: Noise Reduction learns its profile from a Noise File. The fixed noise files of
+# tests/make_noise_wavs.py (a: 44.1 kHz stereo 16-bit, b: 48 kHz mono float, c: 65 s at
+# 22.05 kHz) go to the JSFX as slider10 (Data folder --data-root) and to the CLAP as its
+# "noisefile" state; the generated settings turn Use Noise File On, and --sets plays the file's
+# profile with Learn, Auto and Listen around it. tests/noise_file_test.cpp checks the profiles,
+# the saved state and the 60 s cut in more detail.
+find_package(Python3 COMPONENTS Interpreter)
+if(Python3_Interpreter_FOUND)
+  set(_nf_dir "${CMAKE_CURRENT_BINARY_DIR}/noise_files")
+  add_test(NAME noise_files_make COMMAND Python3::Interpreter
+    "${CMAKE_CURRENT_SOURCE_DIR}/../../tests/make_noise_wavs.py" "${_nf_dir}")
+  set_tests_properties(noise_files_make PROPERTIES FIXTURES_SETUP noise_files)
+  set(_nf_files a_room_44k_stereo16.wav b_room_48k_mono_f32.wav c_long_22k_mono16.wav)
+  # every slider in order, the Noise File (slider10) too: --file sets it
+  set(_nf_sets "0,0,18,3,50,10,150,0,100,0,1;0,0,30,0,80,5,300,1,100,0,1;1,0,18,3,50,10,150,0,100,0,1;0,1,12,6,20,20,100,0,70,0,1")
+  if(TARGET null_jsfx_noise_reduction-clap)
+    if(APPLE)
+      set(_nr_bin "${CMAKE_BINARY_DIR}/bin/null_jsfx_noise_reduction.clap/Contents/MacOS/null_jsfx_noise_reduction")
+    else()
+      set(_nr_bin "${CMAKE_BINARY_DIR}/bin/null_jsfx_noise_reduction.clap")
+    endif()
+  endif()
+  set(_k 0)
+  foreach(_f ${_nf_files})
+    if(TARGET null_jsfx_noise_reduction-clap)
+      add_test(NAME noisefile_${_k}_noise_reduction COMMAND compare "${_jsfx_dir}/noise_reduction.jsfx" "${_nr_bin}"
+        --data-root "${_nf_dir}" --file 10=${_k} --clap-state "noisefile=${_nf_dir}/null_jsfx_noise/${_f}"
+        --sets "${_nf_sets}")
+      set_tests_properties(noisefile_${_k}_noise_reduction PROPERTIES FIXTURES_REQUIRED noise_files)
+    endif()
+    add_test(NAME noisefile_${_k}_gfx_noise_reduction COMMAND compare "${_jsfx_dir}/noise_reduction.jsfx"
+      "${_jsfx_dir}/gfx/noise_reduction_gfx.jsfx" --tol 0 --data-root "${_nf_dir}" --file 10=${_k} --changes 1
+      --sets "${_nf_sets}")
+    set_tests_properties(noisefile_${_k}_gfx_noise_reduction PROPERTIES FIXTURES_REQUIRED noise_files)
+    math(EXPR _k "${_k} + 1")
+  endforeach()
+endif()
