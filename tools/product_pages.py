@@ -374,7 +374,7 @@ def hub_page(plugins, chains, version):
                  software_ld("NULL JSFX Hub", desc, url, image, version, {"applicationSubCategory": "Plugin manager"}))
 
 
-FDROID = ("fdroidrepos://koulaxizis.github.io/null-jsfx-fdroid/repo?fingerprint="
+FDROID = ("fdroidrepos://apps.koulaxizis.workers.dev/null-jsfx-fdroid/repo?fingerprint="
           "1C071614D51503C5ED3260A1B69A0D44CEA6057A5DC6A3ACC3FA7AD130EF64EB")
 APK = "https://github.com/koulaxizis/null-jsfx/releases/latest/download/NULL-JSFX-Remote-{}-Android.apk"
 
