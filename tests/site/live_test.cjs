@@ -64,7 +64,7 @@ const server = http.createServer((req, res) => {
 
   // the product pages and the homepage: every picture, loop and poster they show from /assets/ is in the repo
   const home = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
-  check((home.match(/class="fm-tile"/g) || []).length === 5 && /poster="\/assets\/video\/trailer\.jpg"/.test(home), 'the homepage shows Delay in five forms and the trailer');
+  check((home.match(/class="fm-tile"/g) || []).length === 5 && /poster="\/assets\/video\/trailer(-960\.webp|\.jpg)"/.test(home), 'the homepage shows Delay in five forms and the trailer');
   for (const d of ['rack', 'hub', 'remotes', '']) {
     const html = fs.readFileSync(path.join(root, d, 'index.html'), 'utf8');
     const refs = [...html.matchAll(/(?:src|poster|srcset)="([^"]+)"/g)].flatMap((m) => m[1].split(',').map((x) => x.trim().split(' ')[0]))

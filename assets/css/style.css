@@ -3617,3 +3617,99 @@ a.download-option:hover {
 @media (prefers-reduced-motion: reduce) {
     .hw-stage .hw-orbit { transition: none; }
 }
+
+/* Phones (Bible VII, 2026-11-22, monthly site check): every tap target at least 44 x 44 px
+   (WCAG 2.5.5 AAA, Apple and Android guidance) and running text at least 14 px. Desktop and
+   tablets keep the sizes above. Inline links grow their touch area with padding taken back by
+   a negative margin, and small round buttons with an invisible ::before, so the layout stays as
+   it is; chips, tabs, menus and buttons grow for real. Short labels (format pills, beta badges,
+   counts) stay small by design, at 11 px at least. */
+@media (max-width: 600px) {
+    html body :is(.card-link, .page-crumbs a, .featured-more, .chain-card h3 a, .chain-section h3 a) {
+        display: inline-block;
+        padding: 12px 2px;
+        margin: -12px -2px;
+    }
+
+    html body :is(.footer-links a, .footer-content a) {
+        display: inline-block;
+        padding: 15px 2px;
+        margin: -15px -2px;
+    }
+
+    html body .page-home {
+        display: inline-flex;
+        align-items: center;
+        min-height: 44px;
+        min-width: 44px;
+    }
+
+    html body .demo-play::before {
+        inset: -11px;
+    }
+
+    html body :is(.live-play, .live-ab) {
+        position: relative;
+    }
+
+    html body :is(.live-play, .live-ab)::before {
+        content: "";
+        position: absolute;
+        inset: -6px;
+    }
+
+    html body :is(.tag-chip, .plugin-tab, .cw-item, .featured-btn, .pp-ghost, .pp-tags a) {
+        min-height: 44px;
+    }
+
+    html body :is(.tag-chip, .pp-tags a) {
+        display: inline-flex;
+        align-items: center;
+    }
+
+    html body .live-field select {
+        min-height: 44px;
+        font-size: 14px;
+    }
+
+    html body :is(.theme-toggle-floating, .back-to-top) {
+        width: 44px;
+        height: 44px;
+    }
+
+    html body :is(.plugin-desc, .category-desc, .featured-points li, .featured-kicker, .featured-more,
+            .featured-btn span, .featured-actions small, .start-here li, .install-note, .install-note *,
+            .install-os dt, .install-os dd, .platform-note span, .free-forever a, .suite-features,
+            .fm-slider span, .fm-slider b, figcaption, figcaption *, .remote-count, .remote-count *,
+            .card-link, .tag-chip, .plugin-tab, .footer-links, .footer-content,
+            .guide-section h2, .guide-section .page-list, .guide-formats li, .use-cases li,
+            .related-card b, .related-card small, .page-crumbs, .page-more a, .page-actions small,
+            .live-field, .chain-section h2, .chain-note, .chain-steps-how li, .chain-section li,
+            .chain-section li *, .chain-card h3 a, .cw-item, .pp-tags a, .pp-tags span, .pp-kicker,
+            .pp-h, .pp-ghost span, .pp-anchor small, main dd code, main p code, main small, main small *,
+            .install-tip, .install-tip *, .changelog-btn, .apps-banner-more, .demo-note, .slider-name,
+            .slider-desc, .page-props, .try-studio-text, .try-studio-text *, .cw-title,
+            .download-option-desc, .chain-section h3 a, .platform-note a) {
+        font-size: 14px;
+    }
+
+    /* words inside a paragraph follow it, never below 14 px */
+    html body main p :is(strong, b, a, code) {
+        font-size: max(14px, 1em);
+    }
+
+    html body :is(.changelog-btn, .apps-banner-more, .apps-banner-other summary) {
+        min-height: 44px;
+    }
+
+    html body :is(.platform-note a, .site-header a, main small a) {
+        display: inline-block;
+        padding: 12px 2px;
+        margin: -12px -2px;
+    }
+
+    html body :is(.plugin-formats span, .format-tag, .beta-badge, .category-count, .remote-break,
+            .guide-category) {
+        font-size: 11px;
+    }
+}

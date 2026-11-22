@@ -4,12 +4,12 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Support NULL JSFX</title>
-<meta name="description" content="Three ways to support NULL JSFX, the free audio plugins for REAPER and any DAW: a t-shirt, mug or sticker, a one-time donation, or hiring me. Nothing is unlocked.">
+<meta name="description" content="Three ways to support NULL JSFX, the free audio plugins for REAPER and any DAW: a t-shirt, mug or sticker, a one-time donation, or hiring me.">
 <link rel="canonical" href="https://nulljsfx.tech/support/">
 <link rel="icon" type="image/svg+xml" href="/assets/img/favicon.svg">
 <meta property="og:type" content="website">
 <meta property="og:title" content="Support NULL JSFX">
-<meta property="og:description" content="Three ways to support NULL JSFX, the free audio plugins for REAPER and any DAW: a t-shirt, mug or sticker, a one-time donation, or hiring me. Nothing is unlocked.">
+<meta property="og:description" content="Three ways to support NULL JSFX, the free audio plugins for REAPER and any DAW: a t-shirt, mug or sticker, a one-time donation, or hiring me.">
 <meta property="og:url" content="https://nulljsfx.tech/support/">
 <meta property="og:site_name" content="NULL JSFX">
 <meta name="theme-color" content="#1b1a18">
@@ -88,6 +88,12 @@ footer p + p { margin-top: 6px; }
 	.product-link { padding: 7px; font-size: 0.85rem; }
 	.product-link img { margin-bottom: 4px; }
 	.product-price { font-size: 0.8rem; }
+}
+@media (max-width: 600px) {
+	/* phones: 44 px tap targets, 14 px text at least (monthly site check, 2026-11-22) */
+	.lang-toggle, .btn { min-height: 44px; }
+	.product-link, .product-price, .lang-toggle, .btn, .note, footer, p a { font-size: 14px; }
+	footer a { display: inline-block; padding: 12px 2px; margin: -12px -2px; }
 }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
 [data-theme="light"] {
