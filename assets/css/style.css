@@ -3618,6 +3618,35 @@ a.download-option:hover {
     .hw-stage .hw-orbit { transition: none; }
 }
 
+/* ---- Page not found (404.html, tools/not_found_page.py) ---- */
+.nf-hero {
+    padding: 48px 0 24px;
+}
+
+.nf-guess {
+    margin: 20px 0 0;
+    font-size: 17px;
+    color: var(--text);
+}
+
+.nf-guess a {
+    color: var(--accent);
+    font-weight: 600;
+}
+
+.nf-search {
+    max-width: 480px;
+    margin: 24px auto 0;
+}
+
+.nf-status {
+    display: block;
+    min-height: 1.4em;
+    margin-top: 8px;
+    font-size: 13px;
+    color: var(--muted);
+}
+
 /* Phones (Bible VII, 2026-11-22, monthly site check): every tap target at least 44 x 44 px
    (WCAG 2.5.5 AAA, Apple and Android guidance) and running text at least 14 px. Desktop and
    tablets keep the sizes above. Inline links grow their touch area with padding taken back by
