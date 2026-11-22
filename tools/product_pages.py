@@ -98,7 +98,9 @@ def stats(items):
 
 
 def video(stem, label):
-    return (f'<video class="pp-video" poster="/assets/video/{stem}.jpg" controls playsinline preload="none" width="1280" height="720" '
+    # the 960 px WebP copy of the poster (tools/site_images.py) when there is one: a phone loads a third of the bytes
+    poster = f"/assets/video/{stem}-960.webp" if (ROOT / f"assets/video/{stem}-960.webp").exists() else f"/assets/video/{stem}.jpg"
+    return (f'<video class="pp-video" poster="{poster}" controls playsinline preload="none" width="1280" height="720" '
             f'aria-label="{html.escape(label)}"><source src="{MEDIA_VIDEOS}{stem}.mp4" type="video/mp4">'
             f'<source src="/assets/video/{stem}.mp4" type="video/mp4"></video>')
 
@@ -215,7 +217,7 @@ def rack_page(plugins, chains, version):
     chain_slugs = {c["name"]: c["slug"] for c in chains}
     url = "https://nulljsfx.tech/rack/"
     desc = (f"NULL JSFX Rack: a free VST3 and CLAP plugin that holds up to eight of {len(modules)} NULL modules, "
-            "with lanes, bands, Mid/Side, macros, LFOs and a sequencer. Windows, macOS, Linux.")
+            "with lanes, bands, Mid/Side, macros, LFOs and a sequencer.")
     image = og_image("rack", "https://nulljsfx.tech/assets/img/rack/mastering.webp")
     W, H = 960, 680
     hero = f"""
@@ -300,7 +302,7 @@ def rack_page(plugins, chains, version):
 def hub_page(plugins, chains, version):
     url = "https://nulljsfx.tech/hub/"
     desc = (f"NULL JSFX Hub: a free app that installs, updates and removes all {len(plugins)} NULL JSFX plugins "
-            "as JSFX, GFX, VST3, CLAP and LV2. Windows, macOS, Linux. No account, no tracking.")
+            "as JSFX, GFX, VST3, CLAP and LV2. No account, no tracking.")
     image = og_image("hub", "https://nulljsfx.tech/assets/img/hub/plugins.webp")
     W, H = 1200, 750
     hero = f"""
@@ -387,8 +389,8 @@ def device(kind, name, alt, w, h):
 
 def remotes_page(plugins, chains, version):
     url = "https://nulljsfx.tech/remotes/"
-    desc = ("Free Android remotes from NULL JSFX: your DAW's mixer, transport and every NULL JSFX plugin, your "
-            "digital mixer, or orOS Studio, on your phone or tablet over Wi-Fi. No account, no Google.")
+    desc = ("Free Android remotes from NULL JSFX: your DAW's mixer and plugins, your digital mixer or orOS Studio, "
+            "on your phone or tablet over Wi-Fi. No account, no Google.")
     image = "https://nulljsfx.tech/assets/img/remote/remote-for-daws.jpg"
     T, P, M = (1180, 820), (412, 860), (1280, 800)
     more = ('Also in <a href="https://useoros.online/download/#koulaxizis-apps" target="_blank" rel="noopener">Koulaxizis Apps</a>, '

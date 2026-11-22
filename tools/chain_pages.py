@@ -338,10 +338,13 @@ def page(c, chains, on_site, ctx):
         title = f"{c['name']} FX chain for REAPER | NULL JSFX"
     if len(title) > 60:
         title = f"{c['name']} | NULL JSFX"
-    desc = f"{c['text']} A free REAPER FX chain of {n} NULL JSFX plugins: " + \
-        ", ".join(names.get(s["stem"]) or jsfx_name(s["stem"]) for s in c["steps"]) + "."
-    if len(desc) > 160:
-        desc = f"{c['text']} A free REAPER FX chain of {n} NULL JSFX plugins."
+    # the meta description: the longest of these that fits in 160 characters (search results cut the rest)
+    tail = f" A free REAPER FX chain of {n} NULL JSFX plugins"
+    clause = re.split(r"(?<=[.;!?])\s", c["text"])[0].rstrip(".;!?")
+    short = c["text"][:159].rsplit(" ", 1)[0].rstrip(",;:") + "…"
+    desc = next(d for d in (
+        f"{c['text']}{tail}: " + ", ".join(names.get(s["stem"]) or jsfx_name(s["stem"]) for s in c["steps"]) + ".",
+        f"{c['text']}{tail}.", f"{clause}.{tail}.", c["text"], f"{clause}.", short) if len(d) <= 160)
     first = c["items"][0][0]
     image = f"{site}assets/img/chains/{c['slug']}/1.webp"
     ld = {"@context": "https://schema.org", "@type": "CreativeWork", "name": f"{c['name']} (NULL JSFX FX chain)",

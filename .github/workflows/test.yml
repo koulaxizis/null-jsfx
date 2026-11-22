@@ -37,6 +37,8 @@ jobs:
       # code with the GFX versions, so they are enough here
       - run: NULL_TEST_RATES=8000,22050,1234.57,12345.68 tests/run.sh DATA/Effects/null_jsfx/*.jsfx
       - run: python3 tools/build_site.py --check
+      # the WebP copies of the home page's large pictures match their sources (tools/site_images.py)
+      - run: python3 tools/site_images.py --check
       # the pictures of the FX chain pages exist and match the chains (tools/site_visuals/chain_shots.py)
       - run: python3 tools/site_visuals/chain_shots.py --check
       - run: python3 tools/build_chains.py --check
