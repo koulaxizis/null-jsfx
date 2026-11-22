@@ -2,7 +2,10 @@ name: F-Droid repository
 
 # Our own F-Droid repository for the Android remotes (Bible II.10), so F-Droid, Droid-ify and
 # Obtainium install and update Remote for DAWs and Remote for Mixers:
-#   https://koulaxizis.github.io/null-jsfx-fdroid/repo
+#   https://apps.koulaxizis.workers.dev/null-jsfx-fdroid/repo
+# (our download counter, oros tools/apps-counter, which serves the GitHub Pages files of
+# https://koulaxizis.github.io/null-jsfx-fdroid/ unchanged; that address keeps working for
+# phones that added it before 2026-11-22)
 # On every published release it builds the "fdroid" flavor (no update notice of our own) of
 # each app in tools/fdroid_repo.py APPS from the release tag, signed with the same key as the
 # APKs on the release, so a phone can switch between the two without reinstalling. The index is
@@ -49,6 +52,7 @@ jobs:
     runs-on: ubuntu-24.04
     env:
       SITE: https://koulaxizis.github.io/null-jsfx-fdroid
+      REPO_URL: https://apps.koulaxizis.workers.dev/null-jsfx-fdroid/repo
       DEST: koulaxizis/null-jsfx-fdroid
     steps:
       - name: Secrets and release tag
@@ -174,7 +178,7 @@ jobs:
             | sed -n 's/^[[:space:]]*SHA256: //p' | head -1 | tr -d ':')
           echo "::notice::Repository fingerprint (index key SHA-256): $FP"
           cat > "$fd/config.yml" <<EOF
-          repo_url: $SITE/repo
+          repo_url: $REPO_URL
           repo_name: NULL JSFX
           repo_description: "The NULL JSFX Android remotes: Remote for DAWs and Remote for Mixers. Free and open source (MIT), free forever. https://nulljsfx.tech"
           repo_icon: icon.png
@@ -211,7 +215,7 @@ jobs:
           # NULL JSFX F-Droid repository
 
           The NULL JSFX Android remotes (Remote for DAWs, Remote for Mixers), kept up to date by
-          F-Droid, Droid-ify or Obtainium. Add this repository: $SITE/repo
+          F-Droid, Droid-ify or Obtainium. Add this repository: $REPO_URL
 
           Built by [koulaxizis/null-jsfx](https://github.com/koulaxizis/null-jsfx)
           (.github/workflows/fdroid-repo.yml) from release $TAG; do not edit by hand.

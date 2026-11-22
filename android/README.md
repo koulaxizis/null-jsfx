@@ -59,7 +59,9 @@ Since 2026-11-19 the site and docs point people only to **Koulaxizis Apps**
 (`gr.koulaxizis.apps`, koulaxizis/oros `koulaxizis-apps/`), our app manager, which reads the
 F-Droid repository below. Everything here keeps working for people who already use it.
 
-**Our F-Droid repository** (Christos, 2026-11-02): `https://koulaxizis.github.io/null-jsfx-fdroid/repo`.
+**Our F-Droid repository** (Christos, 2026-11-02): `https://apps.koulaxizis.workers.dev/null-jsfx-fdroid/repo`
+(since 2026-11-22 the address goes through our download counter, which serves the GitHub Pages files
+unchanged; `https://koulaxizis.github.io/null-jsfx-fdroid/repo` keeps working for phones that added it before).
 `.github/workflows/fdroid-repo.yml` runs on every published release: it builds the `fdroid`
 flavor of each app in `tools/fdroid_repo.py` `APPS` from the release tag, signed with the same
 key as the APKs on the release (so a phone can move between the two without reinstalling), and
