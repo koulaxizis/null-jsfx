@@ -9,6 +9,7 @@ The FX chains come from tools/build_chains.py, with one line of text each in
 tools/site_chains.json.
 
 Every plugin also gets its own page, plugins/<key>/index.html, and sitemap.xml lists them.
+The site's "page not found", 404.html, comes from tools/not_found_page.py.
 
 Usage: build_site.py           rewrite the generated blocks
        build_site.py --check   exit 1 if the site is out of date (used by CI)
@@ -60,6 +61,7 @@ sys.path.insert(0, str(ROOT / "tools"))
 from build_chains import CHAINS, RACK_PRESETS, rack_only  # noqa: E402
 import chain_pages
 import product_pages  # noqa: E402  (the product pages, rack/ and hub/)
+import not_found_page  # noqa: E402  (404.html)
 
 CATEGORIES = [
     ("One Slider", "one-slider", "One control, instant result. Turn it up until it sounds right."),
@@ -704,10 +706,10 @@ def main(check):
         new = re.sub(r"\bof \d+ NULL modules", f"of {len(product_pages.rack_modules())} NULL modules", new)
         texts[path] = new
     files += [(path, path.read_text(encoding="utf-8"), new) for path, new in texts.items()]
-    # whole files: the plugin, chain and product (/rack/, /hub/, /remotes/) pages and the sitemap
+    # whole files: the plugin, chain and product (/rack/, /hub/, /remotes/) pages, 404.html and the sitemap
     for path, new in [(PAGES / p["page"].split("/")[1] / "index.html", page(p, plugins)) for p in plugins] + \
             chain_page_files(plugins) + product_pages.files(plugins, site_chains(plugins), VERSION) + \
-            [(SITEMAP, sitemap(plugins))]:
+            [(ROOT / "404.html", not_found_page.page(plugins, site_chains(plugins))), (SITEMAP, sitemap(plugins))]:
         files.append((path, path.read_text(encoding="utf-8") if path.exists() else None, new))
     gone = [d for d in PAGES.glob("*") if d.is_dir() and d.name not in {p["page"].split("/")[1] for p in plugins}]
     gone += [d for d in chain_pages.PAGES.glob("*") if d.is_dir() and d.name not in {c["slug"] for c in site_chains(plugins)}]
