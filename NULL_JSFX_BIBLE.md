@@ -901,6 +901,8 @@ Since 2026-11-01 a release is built as a **draft** and published only when every
 | 3.3.1 | 2026-11-15 04:13 | Security fixes (plugins' state values, the CI secrets, Remote for DAWs pairing with a code on Bitwig and Live, the Hub's catalog and download checks, the installers, the Android apps; Part X, 2026-11-14). 19 assets, the published catalog carries the sha256 of all 18 other assets and they match GitHub's digests, `release_smoke.sh 3.3.1` ok, the site shows v3.3.1, F-Droid repo at 3.3.1 (30301) for both apps |
 | 4.0 | 2026-11-17 15:23 | Kilohearts-style plan (B21): 14 new plugins, beta (Echo One, Warmer, Closer, Smoother, Phase Distortion, Lo-Fi Comp, Spectral Blur, Bloom Delay, Strum, MIDI Monitor, Key Detect, Null Test, Choir, Wind; 168 plugins), Rack lanes A–D, up to 5 bands, MIDI input, new modulators, Remap, Scenes with Morph, 20 new Rack templates, 2,040 presets, 9 FX chains, Hub starter profiles, the live player on the plugin pages. 19 assets, the published catalog carries the sha256 of all 18 other assets and they match GitHub's digests, `release_smoke.sh 4.0` ok, the JSFX zip holds 336 files with the v4.0 footer, the site shows v4.0, F-Droid repo at 4.0 (40000) for both apps; every macOS job of the release and of main at `2da6c5a` green (build with `--test`, installers, Hub) |
 | 4.1 | 2026-11-19 07:21 | 6 new plugins (Step Filter, Beat Gen, Band Spin, Hit Layer, Bass Presence, Music Box; beta), the dice in every header, generative and Klevgrand-inspired upgrades, the mirrored N; 174 plugins, 89 FX chains |
+| 4.1.1 | 2026-11-20 04:56 | the support page (`/support/`) instead of Ko-fi in the Hub, the installers and the plugins; no sound change |
+| 4.2 | 2026-11-22 21:08 | Noise Reduction learns its profile from a Noise File and saves the profile with the project (beta); the site on phones, the 404 page, the new Noise Reduction render and video, the F-Droid address through the download counter. 19 assets, the published catalog carries the sha256 of all 18 other assets and they match GitHub's digests, `release_smoke.sh 4.2` ok, the JSFX zip holds 911 files with the v4.2 footer, the site shows v4.2 and its 18 download links answer, F-Droid repo at 4.2 (40200) for both apps |
 | media | 2026-10-19 (pre-release) | the videos, not a plugin release |
 
 ### VI.4 Hub rollback and updates
@@ -2728,3 +2730,11 @@ entry and the Bible delta.
 - **Files:** `release-notes/4.2.md`, `index.html`, `sitemap.xml` (generated, lastmod), this Bible (Part X).
 - **Tests:** `tests/lint.py`, `tests/bible_order.py`, `tools/build_bible.py --check`, `tools/build_site.py --check`. No plugin, DSP or package file changed.
 - **Version:** v4.2 (no change; Christos publishes the release).
+
+### 2026-11-22 · 4.2 published; release history rows for 4.1.1 and 4.2
+- **Why:** Christos published 4.2 (2026-11-22 21:08Z) from the draft the Release workflow built (run 45060118372 on `9889daf`, #207). VI.3 had no row for 4.1.1 either.
+- **What:** VI.3 rows for 4.1.1 and 4.2.
+- **Checks after publishing:** 19 assets; the catalog's sha256 match GitHub's digests for all 18 other assets; `hub/tests/release_smoke.sh 4.2` ok; `NULL-JSFX-JSFX.zip` (911 files) carries the v4.2 footer; nulljsfx.tech shows v4.2, `Released: 22/11/26`, and all 18 `releases/latest/download/` links of the home, Hub, Rack and Remotes pages answer 206 to a ranged GET; `fdroid-repo.yml` green, the index lists both apps at 4.2 (40200) with the address `https://apps.koulaxizis.workers.dev/null-jsfx-fdroid/repo` (read from GitHub Pages; workers.dev is not reachable from the cloud).
+- **Files:** this Bible (VI.3, Part X).
+- **Tests:** `tests/bible_order.py`, `tools/build_bible.py --check`.
+- **Version:** v4.2 (released).
