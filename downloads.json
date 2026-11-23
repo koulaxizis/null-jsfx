@@ -1,8 +1,8 @@
 {
-  "display": 5867,
-  "total": 5867,
+  "display": 6227,
+  "total": 6227,
   "offset": 0,
-  "updated": "2026-11-22",
+  "updated": "2026-11-23",
   "assets": {
     "489296831": {
       "file": "1.0/null_jsfx.zip",
@@ -902,7 +902,7 @@
     },
     "759237384": {
       "file": "4.0/NULL-JSFX-Remote-DAWs-Android.apk",
-      "count": 31
+      "count": 37
     },
     "759237390": {
       "file": "4.0/NULL-JSFX-Remote-Mixers-Android.apk",
@@ -1082,7 +1082,7 @@
     },
     "769638774": {
       "file": "4.1.1/NULL-JSFX-Hub-macOS.dmg",
-      "count": 26
+      "count": 27
     },
     "769638830": {
       "file": "4.1.1/NULL-JSFX-Installer-Linux-ARM64.sh",
@@ -1090,7 +1090,7 @@
     },
     "769639578": {
       "file": "4.1.1/NULL-JSFX-Installer-Linux.sh",
-      "count": 16
+      "count": 17
     },
     "769640798": {
       "file": "4.1.1/NULL-JSFX-Installer-Windows-ARM64.exe",
@@ -1110,7 +1110,7 @@
     },
     "769644839": {
       "file": "4.1.1/NULL-JSFX-JSFX.zip",
-      "count": 202
+      "count": 226
     },
     "769644885": {
       "file": "4.1.1/NULL-JSFX-VST3-CLAP-Linux-ARM64.zip",
@@ -1118,7 +1118,7 @@
     },
     "769645937": {
       "file": "4.1.1/NULL-JSFX-VST3-CLAP-Linux.zip",
-      "count": 44
+      "count": 55
     },
     "769646940": {
       "file": "4.1.1/NULL-JSFX-VST3-CLAP-Windows-ARM64.zip",
@@ -1130,11 +1130,11 @@
     },
     "769648115": {
       "file": "4.1.1/NULL-JSFX-VST3-CLAP-macOS.zip",
-      "count": 44
+      "count": 57
     },
     "770511215": {
       "file": "4.1.1/NULL-JSFX-Catalog.json",
-      "count": 129
+      "count": 130
     },
     "780176811": {
       "file": "4.2/NULL-JSFX-Catalog.json",
@@ -1142,81 +1142,85 @@
     },
     "780185263": {
       "file": "4.2/NULL-JSFX-Remote-Mixers-Android.apk",
-      "count": 0
+      "count": 3
     },
     "780185264": {
       "file": "4.2/NULL-JSFX-Remote-DAWs-Android.apk",
-      "count": 0
+      "count": 3
     },
     "780440666": {
       "file": "4.2/NULL-JSFX-Hub-Linux.AppImage",
-      "count": 0
+      "count": 4
     },
     "780440941": {
       "file": "4.2/NULL-JSFX-Hub-Linux.deb",
-      "count": 0
+      "count": 3
     },
     "780441027": {
       "file": "4.2/NULL-JSFX-Hub-Windows-Setup.exe",
-      "count": 0
+      "count": 24
     },
     "780441140": {
       "file": "4.2/NULL-JSFX-Hub-macOS.dmg",
-      "count": 0
+      "count": 5
     },
     "780441242": {
       "file": "4.2/NULL-JSFX-Installer-Linux-ARM64.sh",
-      "count": 0
+      "count": 3
     },
     "780442241": {
       "file": "4.2/NULL-JSFX-Installer-Linux.sh",
-      "count": 0
+      "count": 6
     },
     "780443448": {
       "file": "4.2/NULL-JSFX-Installer-Windows-ARM64.exe",
-      "count": 0
+      "count": 3
     },
     "780443559": {
       "file": "4.2/NULL-JSFX-Installer-Windows.exe",
-      "count": 0
+      "count": 21
     },
     "780443656": {
       "file": "4.2/NULL-JSFX-Installer-macOS.pkg",
-      "count": 0
+      "count": 6
     },
     "780445940": {
       "file": "4.2/NULL-JSFX-Installer-macOS.sh",
-      "count": 0
+      "count": 3
     },
     "780448085": {
       "file": "4.2/NULL-JSFX-JSFX.zip",
-      "count": 0
+      "count": 94
     },
     "780448136": {
       "file": "4.2/NULL-JSFX-VST3-CLAP-Linux-ARM64.zip",
-      "count": 0
+      "count": 3
     },
     "780449130": {
       "file": "4.2/NULL-JSFX-VST3-CLAP-Linux.zip",
-      "count": 0
+      "count": 41
     },
     "780450288": {
       "file": "4.2/NULL-JSFX-VST3-CLAP-Windows-ARM64.zip",
-      "count": 0
+      "count": 3
     },
     "780450830": {
       "file": "4.2/NULL-JSFX-VST3-CLAP-Windows.zip",
-      "count": 0
+      "count": 31
     },
     "780451355": {
       "file": "4.2/NULL-JSFX-VST3-CLAP-macOS.zip",
-      "count": 0
+      "count": 12
+    },
+    "780469924": {
+      "file": "4.2/NULL-JSFX-Catalog.json",
+      "count": 35
     }
   },
   "android": {
     "gr.koulaxizis.apps": {
       "estimate": 10,
-      "github": 112,
+      "github": 136,
       "manager": 3
     },
     "net.glarolykoi.android": {
@@ -1420,11 +1424,11 @@
     },
     "tech.nulljsfx.remote.daws": {
       "estimate": 12,
-      "github": 92
+      "github": 100
     },
     "tech.nulljsfx.remote.mixers": {
       "estimate": 11,
-      "github": 58
+      "github": 61
     }
   }
 }
