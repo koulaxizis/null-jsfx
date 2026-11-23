@@ -6,10 +6,16 @@
 // from remote/ and native/common/fonts, so the app and the tablet page served by REAPER are
 // always the same file.
 import java.util.Base64
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
+}
+
+kotlin {
+    // kotlinOptions is an error since Kotlin 2.2
+    compilerOptions { jvmTarget.set(JvmTarget.JVM_17) }
 }
 
 val repo: File = rootProject.projectDir.parentFile
@@ -89,7 +95,6 @@ android {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
-    kotlinOptions { jvmTarget = "17" }
 
     sourceSets {
         getByName("main") { assets.srcDir(repo.resolve("android/web")) }
@@ -152,6 +157,6 @@ androidComponents {
 }
 
 dependencies {
-    implementation("androidx.webkit:webkit:1.12.1")
+    implementation("androidx.webkit:webkit:1.18.0")
     testImplementation("junit:junit:4.13.2")
 }
