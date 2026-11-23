@@ -51,6 +51,14 @@
       const site = el('button', '', 'nulljsfx.tech');
       site.onclick = () => NullShell.openUrl('https://nulljsfx.tech/');
       about.appendChild(site);
+      // Privacy (2026-11-23): the app talks only to the hosts you pick on your network; the update check asks GitHub.
+      about.appendChild(el('div', 'muted', 'Privacy: no account and no tracking. The app talks only to the computers and mixers you pick on your network. To find new versions it asks GitHub, which sees your IP address.'));
+      const privacy = el('button', '', 'Privacy');
+      privacy.onclick = () => NullShell.openUrl('https://nulljsfx.tech/privacy/');
+      about.appendChild(privacy);
+      const licences = el('button', '', 'Licences');
+      licences.onclick = () => NullShell.openUrl('https://github.com/koulaxizis/null-jsfx/blob/main/THIRD_PARTY_NOTICES.md');
+      about.appendChild(licences);
       page.appendChild(about);
     },
   });

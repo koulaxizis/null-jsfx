@@ -166,7 +166,7 @@ if [ "$uninstall" = 1 ]; then
            "$VST3_DIR/NULL JSFX" "$CLAP_DIR/NULL JSFX" ${LV2_DIR:+"$LV2_DIR/NULL JSFX"}; do
     rmdir "$d" 2>/dev/null || true
   done
-  rm -f "$MANIFEST" "$DATA_DIR/INSTALL.txt" "$DATA_DIR/Remote-INSTALL.txt"
+  rm -f "$MANIFEST" "$DATA_DIR/INSTALL.txt" "$DATA_DIR/Remote-INSTALL.txt" "$DATA_DIR/LICENSE.md" "$DATA_DIR/THIRD_PARTY_NOTICES.md"
   rmdir "$DATA_DIR" 2>/dev/null || true
   say "Removed $n NULL JSFX items."
   exit 0
@@ -536,6 +536,9 @@ if has "$EXTRAS" fonts && has "$FORMATS" gfx; then
   [ "$TARGET_OS" = Linux ] && command -v fc-cache >/dev/null 2>&1 && fc-cache -f "$FONT_DIR" >/dev/null 2>&1 || true
 fi
 cp "$tmp/jsfx/INSTALL.txt" "$DATA_DIR/INSTALL.txt"
+for notice in LICENSE.md THIRD_PARTY_NOTICES.md; do
+  [ -f "$tmp/jsfx/$notice" ] && cp "$tmp/jsfx/$notice" "$DATA_DIR/$notice"
+done
 sort -u "$MANIFEST" > "$MANIFEST.new" && mv "$MANIFEST.new" "$MANIFEST"
 
 if [ "$TARGET_OS" = macOS ] && command -v xattr >/dev/null 2>&1; then

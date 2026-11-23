@@ -191,9 +191,31 @@ def check_versions():
     return errors
 
 
+def check_compliance():
+    """Privacy and licence notices (legal compliance check, 2026-11-23): the privacy page exists and
+    every footer links it, the site asks no third party for anything on load, and both release zips
+    carry LICENSE.md and THIRD_PARTY_NOTICES.md."""
+    errors = []
+    if not (ROOT / "privacy/index.html").exists():
+        errors.append("privacy/index.html is missing")
+    if not (ROOT / "THIRD_PARTY_NOTICES.md").exists():
+        errors.append("THIRD_PARTY_NOTICES.md is missing")
+    for name in ("index.html", "support/index.html", "tools/build_site.py", "tools/chain_pages.py"):
+        path = ROOT / name
+        if path.exists() and "/privacy/" not in path.read_text(encoding="utf-8") and 'href="privacy/"' not in path.read_text(encoding="utf-8"):
+            errors.append(f"{name}: the footer does not link the privacy page")
+    release_js = ROOT / "assets/js/release.js"
+    if release_js.exists() and "api.github.com" in release_js.read_text(encoding="utf-8"):
+        errors.append("assets/js/release.js asks api.github.com; the version comes from index.html")
+    native = ROOT / ".github/workflows/native.yml"
+    if native.exists() and native.read_text(encoding="utf-8").count('cp LICENSE.md THIRD_PARTY_NOTICES.md "$out/"') < 2:
+        errors.append("native.yml: both zips must copy LICENSE.md and THIRD_PARTY_NOTICES.md")
+    return errors
+
+
 def main(paths):
     failed = 0
-    version_errors = check_versions()
+    version_errors = check_versions() + check_compliance()
     if version_errors:
         print("LINT version")
         for e in version_errors:
@@ -207,7 +229,7 @@ def main(paths):
                 print(f"    {e}")
     print(f"\nlint: {failed} of {len(paths)} plugins have convention errors")
     if version_errors:
-        print(f"lint: release version mismatch outside the plugins (FOOTER says {VERSION})")
+        print(f"lint: release version or compliance check failed outside the plugins (FOOTER says {VERSION})")
     return 1 if failed or version_errors else 0
 
 
