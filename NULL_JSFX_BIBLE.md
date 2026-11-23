@@ -2747,3 +2747,10 @@ entry and the Bible delta.
 - **Files:** this Bible (0.5, Part VII, Part X).
 - **Tests:** `tests/bible_order.py`, `tools/build_bible.py --check`. No code, plugin or site file changed.
 - **Version:** v4.2 (no change).
+
+### 2026-11-23 · Hub: security updates of three Rust crates
+- **Why:** the weekly dependency check (2026-11-23) found three crates in `hub/Cargo.lock` with fixed RustSec advisories, all low severity: `url` 2.5.8 (RUSTSEC-2026-0592, fixed in 2.5.9), `webpki-root-certs` 1.0.9 (RUSTSEC-2026-0383, fixed in 1.0.10; it comes in through `rustls-platform-verifier`) and `rustix` 1.1.5 (RUSTSEC-2026-0486, fixed in 1.1.6).
+- **What:** `cargo update -p url -p webpki-root-certs -p rustix` in `hub/`: `url` 2.5.9, `form_urlencoded` 1.2.3 (which `url` 2.5.9 requires), `webpki-root-certs` 1.0.12 (the newest 1.0.x, with the freshest root certificates; published 2026-11-10), `rustix` 1.1.6. Cargo also moved six existing edges to versions already in the lock (`cssparser-macros` to `syn` 2.0.119; `errno`, `rustix`, `rustls`, `tempfile` and `winapi-util` to `windows-sys` 0.52.0, all inside their declared ranges); no other crate is added, removed or changed. `Cargo.toml` and the Hub's own version do not change; the next release carries it.
+- **Files:** `hub/Cargo.lock`, this Bible (Part X).
+- **Tests:** run on Linux: `cargo test -p null_hub_core` (15 of 15 and 4 of 4 pass), `node hub/tests/ui_test.cjs` (all checks passed), `tests/bible_order.py`, `tools/build_bible.py --check`. Only in CI: the app build on Windows, macOS and Linux (`hub/app` needs GTK, not in the container) and the osv-scanner pass of `security.yml` over the new lock.
+- **Version:** v4.2 (no change).
