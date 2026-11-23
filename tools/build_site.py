@@ -609,6 +609,8 @@ def page(p, plugins):
                 <span class="sep">&bull;</span>
                 <a href="/privacy/">Privacy</a>
                 <span class="sep">&bull;</span>
+                <a href="https://koulaxizis.gr/privacy/#controller" target="_blank" rel="noopener">Legal</a>
+                <span class="sep">&bull;</span>
                 <a href="/">nulljsfx.tech</a>
             </div>
         </div>

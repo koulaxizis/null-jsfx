@@ -200,10 +200,12 @@ def check_compliance():
         errors.append("privacy/index.html is missing")
     if not (ROOT / "THIRD_PARTY_NOTICES.md").exists():
         errors.append("THIRD_PARTY_NOTICES.md is missing")
-    for name in ("index.html", "support/index.html", "tools/build_site.py", "tools/chain_pages.py"):
+    for name in ("index.html", "support/index.html", "privacy/index.html", "tools/build_site.py", "tools/chain_pages.py"):
         path = ROOT / name
         if path.exists() and "/privacy/" not in path.read_text(encoding="utf-8") and 'href="privacy/"' not in path.read_text(encoding="utf-8"):
             errors.append(f"{name}: the footer does not link the privacy page")
+        if path.exists() and "https://koulaxizis.gr/privacy/#controller" not in path.read_text(encoding="utf-8"):
+            errors.append(f"{name}: the footer does not link the legal details on koulaxizis.gr")
     release_js = ROOT / "assets/js/release.js"
     if release_js.exists() and "api.github.com" in release_js.read_text(encoding="utf-8"):
         errors.append("assets/js/release.js asks api.github.com; the version comes from index.html")
