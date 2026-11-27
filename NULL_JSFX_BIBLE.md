@@ -2768,3 +2768,10 @@ entry and the Bible delta.
 - **Files:** this Bible (0.5, V.3, Part X).
 - **Tests:** `tests/bible_order.py`, `tools/build_bible.py --check`. No code, plugin or site file changed.
 - **Version:** v4.2 (no change).
+
+### 2026-11-27 · Presets: Band Spin "Tremolo Bands" Volume 80 -> 60
+- **Why:** the first monthly preset listening (2026-11-27) measured "Tremolo Bands" at +2.9 LU against Default on a music loop and +2.6 dBTP on a drum signal. Band Spin has no output slider to make it up, so the preset itself carries the level. Christos approved Volume 80 -> 60 on the run's card.
+- **What:** `tools/presets/band_spin.json`: "Tremolo Bands" Volume 60 (was 80); regenerated with `tools/build_presets.py` and `tools/build_site.py`. No DSP change.
+- **Files:** `tools/presets/band_spin.json`, generated `DATA/Effects/null_jsfx/band_spin.jsfx.rpl`, `gfx/band_spin_gfx.jsfx` (preset block), `gfx/band_spin_gfx.jsfx.rpl`, `native/plugins/band_spin/FactoryPresets.hpp`, `plugins/band-spin/index.html`, this Bible (Part X).
+- **Tests:** run: `tools/build_presets.py --check`, `tools/build_site.py --check`, `preset_test` on Band Spin (13 presets, 0 failed; Tremolo Bands +1.0 dB RMS vs Default in its own signal), and the routine's measurement: +2.0 LU vs Default on the loop (was +2.9), +1.6 dBTP on drums (was +2.6), -2.1 dBTP on the loop. In CI: `presets_band_spin` and the GFX/native builds.
+- **Version:** v4.2 (no change).
