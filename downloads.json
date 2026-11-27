@@ -1,8 +1,8 @@
 {
-  "display": 6984,
-  "total": 6984,
+  "display": 7214,
+  "total": 7214,
   "offset": 0,
-  "updated": "2026-11-26",
+  "updated": "2026-11-27",
   "assets": {
     "489296831": {
       "file": "1.0/null_jsfx.zip",
@@ -1142,11 +1142,11 @@
     },
     "780185263": {
       "file": "4.2/NULL-JSFX-Remote-Mixers-Android.apk",
-      "count": 3
+      "count": 6
     },
     "780185264": {
       "file": "4.2/NULL-JSFX-Remote-DAWs-Android.apk",
-      "count": 6
+      "count": 15
     },
     "780440666": {
       "file": "4.2/NULL-JSFX-Hub-Linux.AppImage",
@@ -1158,11 +1158,11 @@
     },
     "780441027": {
       "file": "4.2/NULL-JSFX-Hub-Windows-Setup.exe",
-      "count": 86
+      "count": 117
     },
     "780441140": {
       "file": "4.2/NULL-JSFX-Hub-macOS.dmg",
-      "count": 27
+      "count": 36
     },
     "780441242": {
       "file": "4.2/NULL-JSFX-Installer-Linux-ARM64.sh",
@@ -1170,7 +1170,7 @@
     },
     "780442241": {
       "file": "4.2/NULL-JSFX-Installer-Linux.sh",
-      "count": 15
+      "count": 16
     },
     "780443448": {
       "file": "4.2/NULL-JSFX-Installer-Windows-ARM64.exe",
@@ -1178,11 +1178,11 @@
     },
     "780443559": {
       "file": "4.2/NULL-JSFX-Installer-Windows.exe",
-      "count": 125
+      "count": 156
     },
     "780443656": {
       "file": "4.2/NULL-JSFX-Installer-macOS.pkg",
-      "count": 31
+      "count": 33
     },
     "780445940": {
       "file": "4.2/NULL-JSFX-Installer-macOS.sh",
@@ -1190,7 +1190,7 @@
     },
     "780448085": {
       "file": "4.2/NULL-JSFX-JSFX.zip",
-      "count": 310
+      "count": 361
     },
     "780448136": {
       "file": "4.2/NULL-JSFX-VST3-CLAP-Linux-ARM64.zip",
@@ -1198,7 +1198,7 @@
     },
     "780449130": {
       "file": "4.2/NULL-JSFX-VST3-CLAP-Linux.zip",
-      "count": 62
+      "count": 73
     },
     "780450288": {
       "file": "4.2/NULL-JSFX-VST3-CLAP-Windows-ARM64.zip",
@@ -1206,21 +1206,21 @@
     },
     "780450830": {
       "file": "4.2/NULL-JSFX-VST3-CLAP-Windows.zip",
-      "count": 142
+      "count": 172
     },
     "780451355": {
       "file": "4.2/NULL-JSFX-VST3-CLAP-macOS.zip",
-      "count": 33
+      "count": 41
     },
     "780469924": {
       "file": "4.2/NULL-JSFX-Catalog.json",
-      "count": 165
+      "count": 209
     }
   },
   "android": {
     "gr.koulaxizis.apps": {
       "estimate": 10,
-      "github": 168,
+      "github": 174,
       "manager": 3
     },
     "net.glarolykoi.android": {
@@ -1229,35 +1229,37 @@
       "play_appilix": 10
     },
     "online.useoros.assistant": {
-      "manager": 2
+      "manager": 3
     },
     "online.useoros.base": {
       "estimate": 2,
       "github": 3,
-      "manager": 1
+      "manager": 2
     },
     "online.useoros.bookmarks": {
       "estimate": 6,
       "github": 3,
-      "manager": 1
+      "manager": 2
     },
     "online.useoros.budget": {
       "estimate": 6,
-      "github": 3
+      "github": 3,
+      "manager": 1
     },
     "online.useoros.calculator": {
       "estimate": 6,
       "github": 3,
-      "manager": 7
+      "manager": 9
     },
     "online.useoros.calendar": {
       "estimate": 6,
       "github": 3,
-      "manager": 5
+      "manager": 6
     },
     "online.useoros.contacts": {
       "estimate": 6,
-      "github": 3
+      "github": 3,
+      "manager": 2
     },
     "online.useoros.crm": {
       "estimate": 6,
@@ -1273,11 +1275,13 @@
     },
     "online.useoros.drive": {
       "estimate": 25,
-      "github": 3
+      "github": 3,
+      "manager": 3
     },
     "online.useoros.files": {
       "estimate": 6,
-      "github": 3
+      "github": 3,
+      "manager": 2
     },
     "online.useoros.forms": {
       "estimate": 6,
@@ -1298,7 +1302,8 @@
     },
     "online.useoros.invoices": {
       "estimate": 6,
-      "github": 3
+      "github": 3,
+      "manager": 1
     },
     "online.useoros.kanban": {
       "estimate": 6,
@@ -1310,7 +1315,8 @@
     },
     "online.useoros.mail": {
       "estimate": 6,
-      "github": 4
+      "github": 4,
+      "manager": 2
     },
     "online.useoros.maps": {
       "estimate": 6,
@@ -1319,7 +1325,8 @@
     },
     "online.useoros.mindmap": {
       "estimate": 6,
-      "github": 3
+      "github": 3,
+      "manager": 1
     },
     "online.useoros.mood": {
       "estimate": 6,
@@ -1331,17 +1338,17 @@
       "manager": 6
     },
     "online.useoros.music_8096000": {
-      "manager": 1
+      "manager": 2
     },
     "online.useoros.notes": {
       "estimate": 6,
       "github": 3,
-      "manager": 5
+      "manager": 6
     },
     "online.useoros.passwords": {
       "estimate": 6,
       "github": 3,
-      "manager": 4
+      "manager": 5
     },
     "online.useoros.photolab": {
       "estimate": 6,
@@ -1355,7 +1362,7 @@
     "online.useoros.radio": {
       "estimate": 6,
       "github": 3,
-      "manager": 6
+      "manager": 7
     },
     "online.useoros.reader": {
       "estimate": 6,
@@ -1363,7 +1370,8 @@
     },
     "online.useoros.scanner": {
       "estimate": 6,
-      "github": 3
+      "github": 3,
+      "manager": 2
     },
     "online.useoros.slides": {
       "estimate": 6,
@@ -1379,7 +1387,8 @@
     },
     "online.useoros.studioremote": {
       "estimate": 15,
-      "github": 7
+      "github": 13,
+      "manager": 1
     },
     "online.useoros.time": {
       "estimate": 6,
@@ -1401,7 +1410,7 @@
     "online.useoros.twa": {
       "estimate": 120,
       "github": 3,
-      "manager": 7
+      "manager": 8
     },
     "online.useoros.twa_8091000": {
       "manager": 1
@@ -1436,11 +1445,13 @@
     },
     "tech.nulljsfx.remote.daws": {
       "estimate": 12,
-      "github": 106
+      "github": 115,
+      "manager": 1
     },
     "tech.nulljsfx.remote.mixers": {
       "estimate": 11,
-      "github": 61
+      "github": 64,
+      "manager": 1
     }
   }
 }
