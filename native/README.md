@@ -280,7 +280,10 @@ DPF ([DISTRHO Plugin Framework](https://github.com/DISTRHO/DPF), ISC) is fetched
 commit, with the patches above. `third_party/dpf/null-jsfx.patch` makes the CLAP wrapper call
 `clap_host_latency::changed()` only inside `activate()`, as the CLAP spec asks (a latency change
 while active requests a restart), and flushes subnormal output samples to zero in every format;
-both are checked by clap-validator. The font is Noto Sans (SIL OFL 1.1, `common/fonts/`),
+both are checked by clap-validator. It also sets flush-to-zero and denormals-are-zero (SSE MXCSR,
+or FZ in the AArch64 FPCR) for the duration of every `run()` and restores the host's mode after,
+so decaying filter and feedback state on the silence after a signal costs no microcode assists
+on a host that does not set them itself. The font is Noto Sans (SIL OFL 1.1, `common/fonts/`),
 embedded at configure time as `NullFonts.h`; the GFX JSFX ask REAPER for "Noto Sans" with a
 negative size so every OS uses the em size, and the JSFX package ships the fonts to install. On MSVC the Khronos GL headers in
 `third_party/khronos` (MIT) fill in the GL 2.0 types Windows lacks.
