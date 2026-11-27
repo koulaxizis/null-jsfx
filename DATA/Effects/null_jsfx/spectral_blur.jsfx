@@ -2,7 +2,7 @@ desc:NULL Spectral Blur
 author: Christos Koulaxizis
 tags: spectral blur smear shift frequency shifter tilt spectral gate fft texture ambient sound design
 //category: Advanced
-//NULL JSFX v4.2 • https://nulljsfx.tech • MIT License
+//NULL JSFX v4.2.1 • https://nulljsfx.tech • MIT License
 
 slider1:30<0,100,1>Smear (%)
 slider2:0<-2000,2000,1>Shift (Hz)

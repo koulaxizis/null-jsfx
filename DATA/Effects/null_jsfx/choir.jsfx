@@ -2,7 +2,7 @@ desc:NULL Choir
 author: Christos Koulaxizis
 tags: instrument choir vocal voices aah ooh formant vowel ensemble pad polyphonic synth mpe midi
 //category: Instruments
-//NULL JSFX v4.2 • https://nulljsfx.tech • MIT License
+//NULL JSFX v4.2.1 • https://nulljsfx.tech • MIT License
 
 slider1:0<0,4,0.01>Vowel
 slider2:8<1,8,1>Voices

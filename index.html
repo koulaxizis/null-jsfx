@@ -62,10 +62,10 @@
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                     <span class="btn-text">Download</span>
                     <div class="download-meta">
-                        <span><b id="release-version">v4.2</b></span>
+                        <span><b id="release-version">v4.2.1</b></span>
                         <span class="release-new" id="release-new" hidden>NEW</span>
                         <span class="sep">&bull;</span>
-                        <span id="last-update">Released: 22/11/26</span>
+                        <span id="last-update">Released: 28/11/26</span>
                     </div>
                 </div>
             </a>
@@ -277,7 +277,7 @@
             <div class="modal-content modal-download">
                 <button class="modal-close" onclick="closeDownload()">&times;</button>
                 <div class="changelog-header">
-                    <h3>Download NULL JSFX v4.2</h3>
+                    <h3>Download NULL JSFX v4.2.1</h3>
                     <p class="changelog-date">Free and open source. Pick what you need.</p>
                 </div>
                 <div class="download-support" id="download-support" hidden>
@@ -342,10 +342,18 @@
             <div class="modal-content modal-changelog">
                 <button class="modal-close" onclick="closeChangelog()">&times;</button>
                 <div class="changelog-header">
-                    <h3>Release Notes v4.2</h3>
+                    <h3>Release Notes v4.2.1</h3>
                     <p class="changelog-date">November 2026</p>
                 </div>
                 <div class="changelog-body">
+                    <div class="changelog-section">
+                        <h4 class="changelog-title">4.2.1: LIGHTER ON SILENCE</h4>
+                        <ul>
+                            <li><strong>VST3/CLAP</strong>: the native plugins no longer slow down on the silence after a sound in hosts that leave tiny numbers (denormals) on; up to 40 times less CPU on those tails. The sound is bit-identical</li>
+                            <li><strong>PRESET</strong>: Band Spin’s Tremolo Bands sits at a level closer to the other presets (Volume 60 instead of 80)</li>
+                            <li>Every other plugin sounds exactly as in 4.2; only the version line changes</li>
+                        </ul>
+                    </div>
                     <div class="changelog-section">
                         <h4 class="changelog-title">4.2: NOISE REDUCTION LEARNS FROM A FILE</h4>
                         <ul>

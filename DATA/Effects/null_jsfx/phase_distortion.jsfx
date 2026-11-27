@@ -2,7 +2,7 @@ desc:NULL Phase Distortion
 author: Christos Koulaxizis
 tags: phase distortion pd modulation delay fm self sidechain keyed bright digital grit sound design
 //category: Advanced
-//NULL JSFX v4.2 • https://nulljsfx.tech • MIT License
+//NULL JSFX v4.2.1 • https://nulljsfx.tech • MIT License
 
 slider1:50<0,100,1>Drive (%)
 slider2:2000<100,20000,1:log>Tone (Hz)

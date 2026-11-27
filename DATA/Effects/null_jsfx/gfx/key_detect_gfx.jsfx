@@ -2,7 +2,7 @@ desc:NULL Key Detect GFX
 author: Christos Koulaxizis
 tags: key detect detection tonality scale major minor chroma krumhansl temperley analyzer meter harmonic mixing gui
 //category: Advanced
-//NULL JSFX v4.2 • https://nulljsfx.tech • MIT License
+//NULL JSFX v4.2.1 • https://nulljsfx.tech • MIT License
 
 import null_gfx.jsfx-inc
 
