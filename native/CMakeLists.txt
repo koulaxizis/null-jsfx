@@ -69,7 +69,8 @@ endif()
 # Every third_party/dpf/*.patch is applied on top of the pinned commit, in name order (a local --dpf
 # checkout needs them applied by hand). The reset first makes the step idempotent.
 #   null-jsfx.patch   the CLAP wrapper calls clap_host_latency::changed() only inside activate(), as
-#                     the CLAP spec requires, and no output sample is subnormal (clap-validator)
+#                     the CLAP spec requires, no output sample is subnormal (clap-validator), and
+#                     run() flushes denormals (FTZ/DAZ) and restores the host's mode afterwards
 #   single-sample-blocks.patch  a host block of 1 sample is legal: no DPF assertion message
 #   state-load.patch  CLAP/VST3 state load: a string cut by a short stream read is not ended early
 #   state-reject.patch  CLAP state load: a state with none of the wrapper's sections is rejected

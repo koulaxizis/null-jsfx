@@ -130,19 +130,87 @@ index 59390921..94901f77 100644
  
         #if DISTRHO_PLUGIN_HAS_UI
 diff --git a/distrho/src/DistrhoPluginInternal.hpp b/distrho/src/DistrhoPluginInternal.hpp
-index d0bef80a..06f388f5 100644
+index d0bef80a..36d3e16d 100644
 --- a/distrho/src/DistrhoPluginInternal.hpp
 +++ b/distrho/src/DistrhoPluginInternal.hpp
-@@ -23,6 +23,8 @@
+@@ -23,10 +23,67 @@
  # include "DistrhoPluginVST.hpp"
  #endif
  
 +#include <cfloat>
 +#include <cmath>
++#include <cstdint>
  #include <set>
  
++#if defined(__SSE__) || defined(_M_X64) || (defined(_M_IX86_FP) && _M_IX86_FP >= 1)
++# include <xmmintrin.h>
++# define NULL_JSFX_FTZ_SSE 1
++#elif defined(_M_ARM64) || defined(_M_ARM64EC)
++# include <intrin.h>
++# define NULL_JSFX_FTZ_MSVC_ARM64 1
++#elif defined(__aarch64__)
++# define NULL_JSFX_FTZ_AARCH64 1
++#endif
++
  START_NAMESPACE_DISTRHO
-@@ -997,6 +999,9 @@ public:
+ 
++// -----------------------------------------------------------------------
++// NULL JSFX patch: flush denormals to zero while the plugin runs.
++// The DSP runs in double, and decaying filter, envelope and feedback state turns subnormal on the
++// silence after a signal, which costs microcode assists on every operation (3-40x slower on a
++// host that does not set FTZ/DAZ itself). The guard sets flush-to-zero and denormals-are-zero
++// (SSE MXCSR, or FZ in the AArch64 FPCR) for the duration of run() and restores the host's
++// mode afterwards, as JUCE's ScopedNoDenormals does. Values below ~2.2e-308 become 0, far below
++// the 1e-5 tolerance against the JSFX. Other targets keep the host's mode.
++
++class NullScopedFlushDenormals
++{
++public:
++   #if defined(NULL_JSFX_FTZ_SSE)
++    NullScopedFlushDenormals() noexcept : fSaved(_mm_getcsr()) { _mm_setcsr(fSaved | 0x8040u); } // FTZ | DAZ
++    ~NullScopedFlushDenormals() noexcept { _mm_setcsr(fSaved); }
++   #elif defined(NULL_JSFX_FTZ_MSVC_ARM64)
++    // FPCR is op0=3 op1=3 CRn=4 CRm=4 op2=0, ARM64_SYSREG(3,3,4,4,0)
++    NullScopedFlushDenormals() noexcept : fSaved(_ReadStatusReg(0x5A20)) { _WriteStatusReg(0x5A20, fSaved | (1ll << 24)); }
++    ~NullScopedFlushDenormals() noexcept { _WriteStatusReg(0x5A20, fSaved); }
++   #elif defined(NULL_JSFX_FTZ_AARCH64)
++    NullScopedFlushDenormals() noexcept
++    {
++        __asm__ __volatile__("mrs %0, fpcr" : "=r"(fSaved));
++        const uint64_t fz = fSaved | (UINT64_C(1) << 24);
++        __asm__ __volatile__("msr fpcr, %0" : : "r"(fz));
++    }
++    ~NullScopedFlushDenormals() noexcept { __asm__ __volatile__("msr fpcr, %0" : : "r"(fSaved)); }
++   #else
++    NullScopedFlushDenormals() noexcept {}
++   #endif
++
++private:
++   #if defined(NULL_JSFX_FTZ_SSE)
++    const unsigned int fSaved;
++   #elif defined(NULL_JSFX_FTZ_MSVC_ARM64)
++    const __int64 fSaved;
++   #elif defined(NULL_JSFX_FTZ_AARCH64)
++    uint64_t fSaved;
++   #endif
++
++    NullScopedFlushDenormals(const NullScopedFlushDenormals&) = delete;
++    NullScopedFlushDenormals& operator=(const NullScopedFlushDenormals&) = delete;
++};
++
+ // -----------------------------------------------------------------------
+ // Maxmimum values
+ 
+@@ -988,6 +1045,8 @@ public:
+         DISTRHO_SAFE_ASSERT_RETURN(fData != nullptr,);
+         DISTRHO_SAFE_ASSERT_RETURN(fPlugin != nullptr,);
+ 
++        const NullScopedFlushDenormals noDenormals;
++
+         if (! fIsActive)
+         {
+             fIsActive = true;
+@@ -997,6 +1056,9 @@ public:
          fData->isProcessing = true;
          fPlugin->run(inputs, outputs, frames, midiEvents, midiEventCount);
          fData->isProcessing = false;
@@ -152,7 +220,16 @@ index d0bef80a..06f388f5 100644
      }
     #else
      void run(const float** const inputs, float** const outputs, const uint32_t frames)
-@@ -1013,6 +1018,26 @@ public:
+@@ -1004,6 +1066,8 @@ public:
+         DISTRHO_SAFE_ASSERT_RETURN(fData != nullptr,);
+         DISTRHO_SAFE_ASSERT_RETURN(fPlugin != nullptr,);
+ 
++        const NullScopedFlushDenormals noDenormals;
++
+         if (! fIsActive)
+         {
+             fIsActive = true;
+@@ -1013,6 +1077,26 @@ public:
          fData->isProcessing = true;
          fPlugin->run(inputs, outputs, frames);
          fData->isProcessing = false;
