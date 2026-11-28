@@ -916,6 +916,7 @@ Since 2026-11-01 a release is built as a **draft** and published only when every
 | 4.1 | 2026-11-19 07:21 | 6 new plugins (Step Filter, Beat Gen, Band Spin, Hit Layer, Bass Presence, Music Box; beta), the dice in every header, generative and Klevgrand-inspired upgrades, the mirrored N; 174 plugins, 89 FX chains |
 | 4.1.1 | 2026-11-20 04:56 | the support page (`/support/`) instead of Ko-fi in the Hub, the installers and the plugins; no sound change |
 | 4.2 | 2026-11-22 21:08 | Noise Reduction learns its profile from a Noise File and saves the profile with the project (beta); the site on phones, the 404 page, the new Noise Reduction render and video, the F-Droid address through the download counter. 19 assets, the published catalog carries the sha256 of all 18 other assets and they match GitHub's digests, `release_smoke.sh 4.2` ok, the JSFX zip holds 911 files with the v4.2 footer, the site shows v4.2 and its 18 download links answer, F-Droid repo at 4.2 (40200) for both apps |
+| 4.2.1 | 2026-11-28 12:15 | native plugins flush denormals while they run (no slowdown on silence tails, bit-identical sound), Band Spin Tremolo Bands at Volume 60, the privacy page and the third-party licence notices in every package. 19 assets, the published catalog carries the sha256 of all 18 other assets and they match GitHub's digests, `release_smoke.sh 4.2.1` ok, the JSFX zip holds 913 files (348 `.jsfx`) with the v4.2.1 footer, the site shows v4.2.1 and its 18 download links point at assets of the release, F-Droid repo at 4.2.1 (40201) for both apps |
 | media | 2026-10-19 (pre-release) | the videos, not a plugin release |
 
 ### VI.4 Hub rollback and updates
@@ -2814,3 +2815,9 @@ entry and the Bible delta.
 - **Files:** as above, this Bible (VI.1, Part X).
 - **Tests:** run: `tests/lint.py` on all 348 `.jsfx` (0 errors), `tools/build_site.py --check` (up to date, 174 plugins), `node web/tools/build.js` (175 files), `tests/bible_order.py`, `tools/build_bible.py --check`. `web/test/run.sh` ran locally until its 600 s limit (every plugin it reached passed, up to Chorus GFX) and in full in CI. The native build with `--test`, the installers, the Hub and the validators run in CI on the PR.
 - **Version:** v4.2.1. **Next:** merge when green, run `release.yml` with 4.2.1, Christos publishes, then the post-release checks and the VI.3 row.
+
+### 2026-11-28 — release 4.2.1 published — VI.3 row
+- **Changes:** Christos published 4.2.1 on 2026-11-28 12:15 UTC from the draft of `release.yml` run 46105236223 (main `3e34164`). VI.3 gets its row.
+- **Tests:** run after publishing: 19 assets attached; the catalog's sha256 of the 18 other assets match GitHub's digests; `hub/tests/release_smoke.sh 4.2.1` ok; the JSFX zip (913 files) carries the v4.2.1 footer; nulljsfx.tech shows v4.2.1 and "Released: 28/11/26", and all 18 `releases/latest/download/` links name assets of 4.2.1 (each answers 302 to the file); the F-Droid index (GitHub Pages copy; the workers.dev address is not reachable from the session) lists Remote for DAWs and Remote for Mixers at 4.2.1 (40201).
+- **Files:** this Bible (VI.3, Part X).
+- **Version:** v4.2.1.
