@@ -6,7 +6,7 @@
   ["Drum Bus Wobble", {"Speed 1": 0.05, "Speed 2": 1.5, "Speed 3": 3, "Speed 4": 5, "Volume": 20, "Pan": 40, "Doppler": 0, "Follow": 60, "Mix": 60}],
   ["Level Follower", {"Speed 1": 0.3, "Speed 2": 0.6, "Speed 3": 1.2, "Speed 4": 2.4, "Follow": 100}],
   ["Seasick", {"Speed 1": 0.4, "Speed 2": 0.5, "Speed 3": 0.6, "Speed 4": 0.7, "Volume": 10, "Pan": 30, "Doppler": 100}],
-  ["Tremolo Bands", {"Speed 1": 2, "Speed 2": 3, "Speed 3": 4, "Speed 4": 6, "Volume": 80, "Pan": 0, "Doppler": 0}],
+  ["Tremolo Bands", {"Speed 1": 2, "Speed 2": 3, "Speed 3": 4, "Speed 4": 6, "Volume": 60, "Pan": 0, "Doppler": 0}],
   ["Auto Pan Split", {"Speed 1": 0.5, "Speed 2": 1, "Speed 3": 1.5, "Speed 4": 2, "Volume": 0, "Pan": 100, "Doppler": 0}],
   ["Vocal Air Spin", {"Crossover 3": 6000, "Speed 1": 0.05, "Speed 2": 0.05, "Speed 3": 0.05, "Speed 4": 1.8, "Volume": 20, "Pan": 70, "Doppler": 10, "Mix": 70}],
   ["Guitar Space", {"Speed 1": 0.3, "Speed 2": 0.7, "Speed 3": 1.6, "Speed 4": 3.2, "Volume": 30, "Pan": 50, "Doppler": 25, "Mix": 50}],
