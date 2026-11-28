@@ -153,6 +153,8 @@ def windows(args, plugs, chain_list):
     files.append(f"Source: {src(jsfx / 'fonts/OFL.txt')}; DestDir: \"{{app}}\"; DestName: NotoSans-OFL.txt; "
                  "Components: extra\\fonts; Flags: ignoreversion")
     files.append(f"Source: {src(jsfx / 'INSTALL.txt')}; DestDir: \"{{app}}\"; Flags: ignoreversion")
+    for notice in ("LICENSE.md", "THIRD_PARTY_NOTICES.md"):
+        files.append(f"Source: {src(jsfx / notice)}; DestDir: \"{{app}}\"; Flags: ignoreversion")
     (out / "components.iss").write_text("\n".join(comp + [""] + files) + "\n", encoding="utf-8-sig")
     print(f"build_installer: {out / 'components.iss'}: {len(plugs)} plugins, {len(chain_list)} FX chains")
 
@@ -324,6 +326,8 @@ def pkg_parts(args, plugs, chain_list, base):
     tree.append(("Extras", extras))
     core = Part(base, "base", "NULL JSFX", "")
     core.put(jsfx / "INSTALL.txt", f"{DATA_REL}/INSTALL.txt")
+    for notice in ("LICENSE.md", "THIRD_PARTY_NOTICES.md"):
+        core.put(jsfx / notice, f"{DATA_REL}/{notice}")
     core.put(ROOT / "installer/macos/uninstall.command", f"{DATA_REL}/Uninstall NULL JSFX.command")
     os.chmod(core.root / DATA_REL / "Uninstall NULL JSFX.command", 0o755)
     tree.insert(0, (None, [core]))

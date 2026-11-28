@@ -229,8 +229,8 @@ const EL = {
   "(plugins go into its NULL JSFX folder)": "(τα plugins μπαίνουν στον φάκελο NULL JSFX μέσα του)",
   "Use the usual folders": "Οι συνηθισμένοι φάκελοι",
   "Privacy": "Απόρρητο",
-  "To look for updates the Hub downloads the release list file from GitHub, where the plugins are released. It sends nothing about you or your computer: no account, no id, no list of what you installed.":
-    "Για να βρει ενημερώσεις, το Hub κατεβάζει το αρχείο της έκδοσης από το GitHub, όπου κυκλοφορούν τα plugins. Δεν στέλνει τίποτα για σένα ή τον υπολογιστή σου: ούτε λογαριασμό, ούτε αναγνωριστικό, ούτε λίστα με όσα εγκατέστησες.",
+  "To look for updates the Hub downloads the release list file from GitHub, where the plugins are released. GitHub sees your IP address, as with any download. The Hub sends nothing else about you or your computer: no account, no id, no list of what you installed. More at nulljsfx.tech/privacy.":
+    "Για να βρει ενημερώσεις, το Hub κατεβάζει το αρχείο της έκδοσης από το GitHub, όπου κυκλοφορούν τα plugins. Το GitHub βλέπει τη διεύθυνση IP σου, όπως σε κάθε λήψη. Το Hub δεν στέλνει τίποτε άλλο για σένα ή τον υπολογιστή σου: ούτε λογαριασμό, ούτε αναγνωριστικό, ούτε λίστα με όσα εγκατέστησες. Περισσότερα στο nulljsfx.tech/privacy.",
   "Save": "Αποθήκευση",
   "Saved.": "Αποθηκεύτηκε.",
   "Another computer": "Άλλος υπολογιστής",

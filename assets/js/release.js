@@ -1,42 +1,17 @@
-// Shows the latest GitHub release under the Download button: its version, its date and a
-// NEW tag for the first 30 days. Without the API (offline, rate limit) the page keeps the
-// version written in the HTML.
+// Shows a NEW tag under the Download button for the first 30 days after a release.
+// The version and the date are written into index.html with every release (Bible Part VI.1),
+// so the page makes no request to GitHub and stores nothing in the browser (privacy, 2026-11-23).
 (function () {
-    const API = 'https://api.github.com/repos/koulaxizis/null-jsfx/releases/latest';
-    const CACHE_KEY = 'nulljsfx-latest-release';
-    const CACHE_MS = 60 * 60 * 1000;
     const NEW_DAYS = 30;
-
-    function show(release) {
-        if (!release || !release.tag) return;
-        const version = document.getElementById('release-version');
-        const date = document.getElementById('last-update');
-        const tag = document.getElementById('release-new');
-        const published = new Date(release.published);
-        if (version) version.textContent = /^\d/.test(release.tag) ? 'v' + release.tag : release.tag;
-        if (date && !isNaN(published)) {
-            date.textContent = 'Released: ' + published.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: '2-digit' });
-        }
-        if (tag && !isNaN(published) && Date.now() - published.getTime() < NEW_DAYS * 86400000) {
-            tag.hidden = false;
-        }
+    // Up to 4.2 this script cached the GitHub API answer here; clear what old visits left.
+    try { localStorage.removeItem('nulljsfx-latest-release'); } catch (e) { /* storage off */ }
+    const date = document.getElementById('last-update');
+    const tag = document.getElementById('release-new');
+    if (!date || !tag) return;
+    const m = /(\d{2})\/(\d{2})\/(\d{2})/.exec(date.textContent);
+    if (!m) return;
+    const published = new Date(2000 + parseInt(m[3], 10), parseInt(m[2], 10) - 1, parseInt(m[1], 10));
+    if (!isNaN(published) && Date.now() - published.getTime() < NEW_DAYS * 86400000) {
+        tag.hidden = false;
     }
-
-    function cached() {
-        try {
-            const c = JSON.parse(localStorage.getItem(CACHE_KEY) || 'null');
-            return c && Date.now() - c.time < CACHE_MS ? c.release : null;
-        } catch (e) { return null; }
-    }
-
-    const hit = cached();
-    if (hit) { show(hit); return; }
-    fetch(API).then(function (r) {
-        if (!r.ok) throw new Error('GitHub API ' + r.status);
-        return r.json();
-    }).then(function (data) {
-        const release = { tag: data.tag_name, published: data.published_at };
-        try { localStorage.setItem(CACHE_KEY, JSON.stringify({ time: Date.now(), release: release })); } catch (e) { /* storage off */ }
-        show(release);
-    }).catch(function () { /* keep the HTML values */ });
 })();

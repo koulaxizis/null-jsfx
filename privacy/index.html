@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Privacy at NULL JSFX</title>
+<meta name="description" content="Privacy at NULL JSFX: no accounts, cookies or tracking; what GitHub sees when you visit, download or update, and your rights.">
+<link rel="canonical" href="https://nulljsfx.tech/privacy/">
+<link rel="icon" type="image/svg+xml" href="/assets/img/favicon.svg">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Privacy at NULL JSFX">
+<meta property="og:description" content="Privacy at NULL JSFX: no accounts, cookies or tracking; what GitHub sees when you visit, download or update, and your rights.">
+<meta property="og:url" content="https://nulljsfx.tech/privacy/">
+<meta property="og:site_name" content="NULL JSFX">
+<meta name="theme-color" content="#1b1a18">
+<style>
+:root {
+	--bg: #1b1a18;
+	--surface: #232220;
+	--border: #333333;
+	--text: #e0e0e0;
+	--muted: #a3a3a3;
+	--heading: #f2f2f2;
+	--accent: #c4c4c4;
+	--link: #d6d6d6;
+	--on-accent: #1b1a18;
+	--font: 'Segoe UI', system-ui, sans-serif;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+	background: var(--bg);
+	color: var(--text);
+	font: 16px/1.65 var(--font);
+	max-width: 960px;
+	margin: 0 auto;
+	padding: 0 24px;
+}
+a { color: var(--link); }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 4px; }
+header { padding: 64px 0 36px; }
+.header-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
+.wordmark { font-size: clamp(1.9rem, 5vw, 2.8rem); font-weight: 700; letter-spacing: -0.02em; color: var(--heading); text-decoration: none; }
+.wordmark .dot { color: var(--accent); }
+h1 { font-size: clamp(1.5rem, 4vw, 2rem); font-weight: 650; color: var(--heading); margin-top: 18px; letter-spacing: -0.01em; }
+.intro { color: var(--muted); margin-top: 10px; font-size: 1.05rem; max-width: 38em; }
+.lang-toggle {
+	flex-shrink: 0; margin-top: 8px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
+	color: var(--link); font: 600 0.8rem/1 var(--font); letter-spacing: 0.08em; text-transform: uppercase;
+	padding: 9px 14px; cursor: pointer; min-height: 36px;
+}
+.lang-toggle:hover { border-color: var(--accent); }
+section { padding: 28px 0; border-top: 1px solid var(--border); }
+h2 { font-size: 1.3rem; font-weight: 600; color: var(--heading); margin-bottom: 6px; }
+h3 { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.12em; color: var(--muted); margin: 22px 0 10px; font-weight: 600; }
+section > p { max-width: 42em; }
+.note { color: var(--muted); font-size: 0.92rem; margin-top: 14px; }
+.products { list-style: none; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin-top: 16px; }
+.product-link {
+	display: flex; flex-direction: column; gap: 4px; height: 100%; text-decoration: none; color: var(--text);
+	background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 12px; transition: border-color .15s ease;
+}
+.product-link:hover { border-color: var(--accent); }
+.product-link img { width: 100%; height: auto; aspect-ratio: 1; border-radius: 6px; background: #ece8e1; display: block; margin-bottom: 8px; }
+.product-name { font-weight: 600; color: var(--heading); }
+.product-price { color: var(--muted); font-size: 0.92rem; }
+.actions { margin-top: 18px; display: flex; flex-wrap: wrap; gap: 10px; }
+.btn {
+	display: inline-flex; align-items: center; min-height: 40px; padding: 8px 16px; border-radius: 6px; text-decoration: none;
+	font-size: 0.92rem; font-weight: 500; border: 1px solid var(--border); color: var(--text);
+}
+.btn:hover { border-color: var(--accent); color: var(--link); }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+.btn.primary:hover { filter: brightness(1.1); color: var(--on-accent); }
+.services { list-style: none; margin-top: 12px; max-width: 34em; }
+.services li { display: flex; justify-content: space-between; gap: 16px; padding: 9px 0; border-bottom: 1px solid var(--border); }
+.services .price { color: var(--muted); white-space: nowrap; }
+.free { margin-top: 4px; padding: 18px 20px; border: 1px solid var(--border); border-left: 3px solid var(--accent); border-radius: 8px; background: var(--surface); }
+footer { margin-top: 24px; padding: 24px 0 48px; border-top: 1px solid var(--border); color: var(--muted); font-size: 0.85rem; text-align: center; }
+footer a { color: var(--link); text-decoration: none; }
+footer a:hover { text-decoration: underline; }
+footer p + p { margin-top: 6px; }
+@media (max-width: 640px) {
+	body { padding: 0 16px; }
+	header { padding: 40px 0 28px; }
+	.products { gap: 8px; }
+	.product-link { padding: 7px; font-size: 0.85rem; }
+	.product-link img { margin-bottom: 4px; }
+	.product-price { font-size: 0.8rem; }
+}
+@media (max-width: 600px) {
+	/* phones: 44 px tap targets, 14 px text at least (monthly site check, 2026-11-22) */
+	.lang-toggle, .btn { min-height: 44px; }
+	.product-link, .product-price, .lang-toggle, .btn, .note, footer, p a { font-size: 14px; }
+	footer a { display: inline-block; padding: 12px 2px; margin: -12px -2px; }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+[data-theme="light"] {
+	--bg: #ffffff;
+	--surface: #f5f5f5;
+	--border: #dddddd;
+	--text: #1b1a18;
+	--muted: #5c5c5c;
+	--heading: #111111;
+	--accent: #555555;
+	--link: #333333;
+	--on-accent: #ffffff;
+}
+.wordmark img { height: 50px; width: auto; display: block; }
+
+.policy h2 { margin-top: 4px; }
+.policy p, .policy li { max-width: 44em; }
+.policy p + p, .policy p + ul, .policy ul + p { margin-top: 10px; }
+.policy ul { padding-left: 1.3em; }
+.policy li + li { margin-top: 6px; }
+.policy code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 0.9em; }
+.short { list-style: none; padding-left: 0 !important; }
+</style>
+</head>
+<body>
+
+<header>
+	<div class="header-row">
+		<div>
+			<a class="wordmark" href="/"><img src="/assets/img/logo.svg" alt="NULL JSFX" width="200" height="50"></a>
+			<h1 data-en="Privacy" data-el="Απόρρητο">Privacy</h1>
+			<p class="intro" data-en="What NULL JSFX, its website and its apps do with your data: almost nothing." data-el="Τι κάνουν με τα δεδομένα σου το NULL JSFX, το site και οι εφαρμογές του: σχεδόν τίποτα.">What NULL JSFX, its website and its apps do with your data: almost nothing.</p>
+		</div>
+		<button type="button" class="lang-toggle" id="langToggle" aria-label="Εναλλαγή γλώσσας / Switch language">ΕΛ</button>
+	</div>
+</header>
+
+<main class="policy">
+	<section id="short" aria-labelledby="shortTitle">
+		<h2 id="shortTitle" data-en="In short" data-el="Με λίγα λόγια">In short</h2>
+		<p data-en="NULL JSFX has no accounts, no cookies, no analytics, no ads and no tracking. We do not collect personal data about you, and the plugins themselves never connect to the internet." data-el="Το NULL JSFX δεν έχει λογαριασμούς, cookies, στατιστικά επισκεψιμότητας, διαφημίσεις ή παρακολούθηση. Δεν συλλέγουμε προσωπικά δεδομένα για σένα, και τα ίδια τα plugins δεν συνδέονται ποτέ στο internet.">NULL JSFX has no accounts, no cookies, no analytics, no ads and no tracking. We do not collect personal data about you, and the plugins themselves never connect to the internet.</p>
+		<p data-en="The website, the downloads and the update checks are served by GitHub, so GitHub sees your IP address, as any web server does. This page explains where that happens and what you can do about it." data-el="Το site, οι λήψεις και ο έλεγχος για ενημερώσεις εξυπηρετούνται από το GitHub, οπότε το GitHub βλέπει τη διεύθυνση IP σου, όπως κάθε web server. Η σελίδα αυτή εξηγεί πού γίνεται αυτό και τι μπορείς να κάνεις.">The website, the downloads and the update checks are served by GitHub, so GitHub sees your IP address, as any web server does. This page explains where that happens and what you can do about it.</p>
+	</section>
+	<section id="who" aria-labelledby="whoTitle">
+		<h2 id="whoTitle" data-en="Who is responsible" data-el="Ποιος είναι υπεύθυνος">Who is responsible</h2>
+		<p data-en="Christos Koulaxizis, Greece, who makes NULL JSFX. Write to koulaxizis@glarolykoi.net about anything on this page." data-el="Ο Christos Koulaxizis (Χρήστος Κουλαξίζης), Ελλάδα, που φτιάχνει το NULL JSFX. Γράψε στο koulaxizis@glarolykoi.net για οτιδήποτε σε αυτή τη σελίδα.">Christos Koulaxizis, Greece, who makes NULL JSFX. Write to koulaxizis@glarolykoi.net about anything on this page.</p>
+		<p><a href="https://koulaxizis.gr/privacy/#controller" rel="noopener" data-en="Full legal details (tax number and registry) are on koulaxizis.gr." data-el="Τα πλήρη νομικά στοιχεία (ΑΦΜ, ΓΕΜΗ) είναι στο koulaxizis.gr.">Full legal details (tax number and registry) are on koulaxizis.gr.</a></p>
+	</section>
+	<section id="site" aria-labelledby="siteTitle">
+		<h2 id="siteTitle" data-en="This website" data-el="Αυτό το site">This website</h2>
+		<p data-en="nulljsfx.tech is hosted on GitHub Pages (GitHub, Inc., USA). When you open a page, GitHub receives your IP address and browser details and keeps them in its own logs for security. We cannot see those logs. The fonts come from your own computer, and nothing is loaded from other companies." data-el="Το nulljsfx.tech φιλοξενείται στο GitHub Pages (GitHub, Inc., ΗΠΑ). Όταν ανοίγεις μια σελίδα, το GitHub λαμβάνει τη διεύθυνση IP σου και στοιχεία του browser και τα κρατά στα δικά του logs για λόγους ασφάλειας. Εμείς δεν βλέπουμε αυτά τα logs. Οι γραμματοσειρές είναι του δικού σου υπολογιστή, και τίποτα δεν φορτώνεται από άλλες εταιρείες.">nulljsfx.tech is hosted on GitHub Pages (GitHub, Inc., USA). When you open a page, GitHub receives your IP address and browser details and keeps them in its own logs for security. We cannot see those logs. The fonts come from your own computer, and nothing is loaded from other companies.</p>
+		<p data-en="The videos and the downloads are files on our GitHub releases. A video loads only when you press play, and a file only when you download it." data-el="Τα βίντεο και οι λήψεις είναι αρχεία στις εκδόσεις μας στο GitHub. Ένα βίντεο φορτώνει μόνο όταν πατήσεις play, και ένα αρχείο μόνο όταν το κατεβάσεις.">The videos and the downloads are files on our GitHub releases. A video loads only when you press play, and a file only when you download it.</p>
+	</section>
+	<section id="storage" aria-labelledby="storageTitle">
+		<h2 id="storageTitle" data-en="What your browser keeps" data-el="Τι κρατά ο browser σου">What your browser keeps</h2>
+		<p data-en="There are no cookies. The site keeps four small settings in your browser&#x27;s local storage so that it remembers your choices. They never leave your device:" data-el="Δεν υπάρχουν cookies. Το site κρατά τέσσερις μικρές ρυθμίσεις στον τοπικό χώρο (local storage) του browser σου, για να θυμάται τις επιλογές σου. Δεν φεύγουν ποτέ από τη συσκευή σου:">There are no cookies. The site keeps four small settings in your browser's local storage so that it remembers your choices. They never leave your device:</p>
+		<ul>
+			<li data-en="nulljsfx-theme: dark or light theme." data-el="nulljsfx-theme: σκούρο ή ανοιχτό θέμα.">nulljsfx-theme: dark or light theme.</li>
+			<li data-en="nulljsfx-lang: English or Greek, on the pages that have both." data-el="nulljsfx-lang: αγγλικά ή ελληνικά, στις σελίδες που έχουν και τα δύο.">nulljsfx-lang: English or Greek, on the pages that have both.</li>
+			<li data-en="nulljsfx-support-seen: when the support note before a download last showed, so that it shows at most once in 30 days." data-el="nulljsfx-support-seen: πότε εμφανίστηκε τελευταία φορά η σημείωση στήριξης πριν από μια λήψη, ώστε να εμφανίζεται το πολύ μία φορά στις 30 ημέρες.">nulljsfx-support-seen: when the support note before a download last showed, so that it shows at most once in 30 days.</li>
+			<li data-en="nulljsfx-support-off: that you chose “Don&#x27;t show this again”." data-el="nulljsfx-support-off: ότι επέλεξες «Να μην εμφανιστεί ξανά».">nulljsfx-support-off: that you chose “Don't show this again”.</li>
+		</ul>
+		<p data-en="You can delete them at any time by clearing this site&#x27;s data in your browser." data-el="Μπορείς να τις σβήσεις όποτε θέλεις, καθαρίζοντας τα δεδομένα του site στον browser σου.">You can delete them at any time by clearing this site's data in your browser.</p>
+	</section>
+	<section id="apps" aria-labelledby="appsTitle">
+		<h2 id="appsTitle" data-en="The apps" data-el="Οι εφαρμογές">The apps</h2>
+		<p data-en="The plugins (JSFX, VST3, CLAP, LV2, Rack) make no network connection at all." data-el="Τα plugins (JSFX, VST3, CLAP, LV2, Rack) δεν κάνουν καμία σύνδεση στο δίκτυο.">The plugins (JSFX, VST3, CLAP, LV2, Rack) make no network connection at all.</p>
+		<p data-en="NULL JSFX Hub downloads the release list from GitHub once a day, and the plugin files from GitHub when you install or update. GitHub sees your IP address, as with any download. The Hub sends no account, no identifier and no list of what you have installed." data-el="Το NULL JSFX Hub κατεβάζει τη λίστα εκδόσεων από το GitHub μία φορά την ημέρα, και τα αρχεία των plugins από το GitHub όταν εγκαθιστάς ή ενημερώνεις. Το GitHub βλέπει τη διεύθυνση IP σου, όπως σε κάθε λήψη. Το Hub δεν στέλνει λογαριασμό, αναγνωριστικό ή λίστα με όσα έχεις εγκαταστήσει.">NULL JSFX Hub downloads the release list from GitHub once a day, and the plugin files from GitHub when you install or update. GitHub sees your IP address, as with any download. The Hub sends no account, no identifier and no list of what you have installed.</p>
+		<p data-en="Remote for DAWs and Remote for Mixers (Android) talk only to the computers and mixers on your own network that you pick. The addresses you save stay on your phone. To tell you about a new version, the apps ask GitHub&#x27;s API for the latest release, which shows GitHub your IP address. They ask only for network access (Internet, network and Wi-Fi state, and multicast to find devices), and they are not backed up to the cloud. If you install them from our F-Droid repository or through Obtainium, those apps read our repository on GitHub too." data-el="Τα Remote for DAWs και Remote for Mixers (Android) μιλούν μόνο με τους υπολογιστές και τις κονσόλες του δικού σου δικτύου που επιλέγεις. Οι διευθύνσεις που αποθηκεύεις μένουν στο κινητό σου. Για να σε ενημερώσουν για νέα έκδοση, ρωτούν το API του GitHub ποια είναι η τελευταία έκδοση, οπότε το GitHub βλέπει τη διεύθυνση IP σου. Ζητούν μόνο πρόσβαση στο δίκτυο (Internet, κατάσταση δικτύου και Wi-Fi, και multicast για να βρίσκουν συσκευές), και δεν κρατούν αντίγραφα στο cloud. Αν τα εγκαταστήσεις από το δικό μας αποθετήριο F-Droid ή μέσω Obtainium, κι αυτές οι εφαρμογές διαβάζουν το αποθετήριό μας στο GitHub.">Remote for DAWs and Remote for Mixers (Android) talk only to the computers and mixers on your own network that you pick. The addresses you save stay on your phone. To tell you about a new version, the apps ask GitHub's API for the latest release, which shows GitHub your IP address. They ask only for network access (Internet, network and Wi-Fi state, and multicast to find devices), and they are not backed up to the cloud. If you install them from our F-Droid repository or through Obtainium, those apps read our repository on GitHub too.</p>
+		<p data-en="The tablet remote for REAPER is off unless you install it, and then it works only on your own network." data-el="Το tablet remote για το REAPER είναι κλειστό, εκτός αν το εγκαταστήσεις, και τότε δουλεύει μόνο μέσα στο δικό σου δίκτυο.">The tablet remote for REAPER is off unless you install it, and then it works only on your own network.</p>
+	</section>
+	<section id="contact" aria-labelledby="contactTitle">
+		<h2 id="contactTitle" data-en="When you write to us" data-el="Όταν μας γράφεις">When you write to us</h2>
+		<p data-en="If you email us, we use your address and message only to answer you, and we delete them at the latest one year after our last exchange. Issues and comments on GitHub are public and are kept by GitHub under its own terms." data-el="Αν μας στείλεις email, χρησιμοποιούμε τη διεύθυνση και το μήνυμά σου μόνο για να σου απαντήσουμε, και τα σβήνουμε το αργότερο έναν χρόνο μετά την τελευταία μας επικοινωνία. Τα issues και τα σχόλια στο GitHub είναι δημόσια και τα κρατά το GitHub με τους δικούς του όρους.">If you email us, we use your address and message only to answer you, and we delete them at the latest one year after our last exchange. Issues and comments on GitHub are public and are kept by GitHub under its own terms.</p>
+		<p data-en="Donations go through Viva&#x27;s payment page and merchandise is sold by the Glarolykoi shop. Each has its own privacy policy. We never see your card details." data-el="Οι δωρεές γίνονται μέσα από τη σελίδα πληρωμής της Viva και τα προϊόντα πουλιούνται από το κατάστημα των Γλαρόλυκων. Το καθένα έχει τη δική του πολιτική απορρήτου. Δεν βλέπουμε ποτέ τα στοιχεία της κάρτας σου.">Donations go through Viva's payment page and merchandise is sold by the Glarolykoi shop. Each has its own privacy policy. We never see your card details.</p>
+	</section>
+	<section id="law" aria-labelledby="lawTitle">
+		<h2 id="lawTitle" data-en="Legal basis and transfers" data-el="Νομική βάση και διαβιβάσεις">Legal basis and transfers</h2>
+		<p data-en="Serving the site and checking for updates rely on our legitimate interest in delivering free software safely (GDPR Article 6(1)(f)); answering your email relies on the same interest. GitHub, Inc. is in the United States; its Privacy Statement explains how it protects data that leaves the EU." data-el="Η λειτουργία του site και ο έλεγχος για ενημερώσεις βασίζονται στο έννομο συμφέρον μας να διανέμουμε δωρεάν λογισμικό με ασφάλεια (άρθρο 6 παρ. 1 στ΄ ΓΚΠΔ)· το ίδιο ισχύει για τις απαντήσεις στα email σου. Η GitHub, Inc. βρίσκεται στις ΗΠΑ· η δήλωση απορρήτου της εξηγεί πώς προστατεύει τα δεδομένα που φεύγουν από την ΕΕ.">Serving the site and checking for updates rely on our legitimate interest in delivering free software safely (GDPR Article 6(1)(f)); answering your email relies on the same interest. GitHub, Inc. is in the United States; its Privacy Statement explains how it protects data that leaves the EU.</p>
+	</section>
+	<section id="rights" aria-labelledby="rightsTitle">
+		<h2 id="rightsTitle" data-en="Your rights" data-el="Τα δικαιώματά σου">Your rights</h2>
+		<p data-en="You can ask to see, correct or delete what we hold about you, or object to its use, by writing to koulaxizis@glarolykoi.net. We answer within one month. You can also complain to the Hellenic Data Protection Authority (www.dpa.gr)." data-el="Μπορείς να ζητήσεις να δεις, να διορθώσεις ή να σβήσεις ό,τι κρατάμε για σένα, ή να αντιταχθείς στη χρήση του, γράφοντας στο koulaxizis@glarolykoi.net. Απαντάμε μέσα σε έναν μήνα. Μπορείς επίσης να υποβάλεις καταγγελία στην Αρχή Προστασίας Δεδομένων Προσωπικού Χαρακτήρα (www.dpa.gr).">You can ask to see, correct or delete what we hold about you, or object to its use, by writing to koulaxizis@glarolykoi.net. We answer within one month. You can also complain to the Hellenic Data Protection Authority (www.dpa.gr).</p>
+		<p data-en="Last updated: 23 November 2026." data-el="Τελευταία ενημέρωση: 23 Νοεμβρίου 2026.">Last updated: 23 November 2026.</p>
+	</section>
+</main>
+
+<footer>
+	<p><strong>NULL JSFX</strong> · <a href="/" data-en="All plugins" data-el="Όλα τα plugins">All plugins</a> · <a href="/support/" data-en="Support" data-el="Στήριξη">Support</a> · <a href="https://github.com/koulaxizis/null-jsfx" rel="noopener">GitHub</a> · <a href="mailto:koulaxizis@glarolykoi.net" data-en="Contact" data-el="Επικοινωνία">Contact</a> · <a href="https://koulaxizis.gr/privacy/#controller" rel="noopener" data-en="Legal details" data-el="Νομικά στοιχεία">Legal details</a></p>
+	<p data-en="Designed with ♡ by Christos Koulaxizis." data-el="Σχεδιάστηκε με ♡ από τον Christos Koulaxizis.">Designed with ♡ by Christos Koulaxizis.</p>
+</footer>
+
+<script>
+(function () {
+	'use strict';
+	/* EN / EL: every [data-en][data-el] node swaps its text; links swap too. Text only (textContent), never HTML. */
+	var KEY = "nulljsfx-lang";
+	var toggle = document.getElementById('langToggle');
+	var current = 'en';
+	function apply(lang) {
+		current = lang;
+		document.documentElement.lang = lang;
+		document.title = ('el' === lang) ? "\u0391\u03c0\u03cc\u03c1\u03c1\u03b7\u03c4\u03bf \u03c3\u03c4\u03bf NULL JSFX" : "Privacy at NULL JSFX";
+		toggle.textContent = ('el' === lang) ? 'EN' : 'ΕΛ';
+		var nodes = document.querySelectorAll('[data-en][data-el]');
+		for (var i = 0; i < nodes.length; i++) {
+			nodes[i].textContent = nodes[i].getAttribute('data-' + lang);
+		}
+		var links = document.querySelectorAll('[data-href-en]');
+		for (var j = 0; j < links.length; j++) {
+			links[j].setAttribute('href', links[j].getAttribute('data-href-' + lang));
+		}
+		var imgs = document.querySelectorAll('img[data-alt-el]');
+		for (var k = 0; k < imgs.length; k++) {
+			if (!imgs[k].hasAttribute('data-alt-en')) { imgs[k].setAttribute('data-alt-en', imgs[k].getAttribute('alt')); }
+			imgs[k].setAttribute('alt', imgs[k].getAttribute('data-alt-' + lang));
+		}
+		try { localStorage.setItem(KEY, lang); } catch (e) { /* blocked storage */ }
+	}
+	toggle.addEventListener('click', function () { apply('en' === current ? 'el' : 'en'); });
+	// ?lang=en|el (links from the other sites) wins over the saved choice.
+	var start = "en";
+	try {
+		var saved = localStorage.getItem(KEY);
+		if ('el' === saved || 'en' === saved) { start = saved; }
+	} catch (e) { /* blocked storage */ }
+	var m = /[?&]lang=(en|el)\b/.exec(location.search);
+	if (m) { start = m[1]; }
+	if (start !== 'en') { apply(start); }
+})();
+</script>
+<script src="/assets/js/theme.js"></script>
+</body>
+</html>
