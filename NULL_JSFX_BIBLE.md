@@ -849,7 +849,7 @@ From the legal compliance check of 2026-11-23 (report: Claude Doc https://claude
 
 ### VI.1 Where the version lives
 
-This list was checked against the 2.6 bump (`bc60d15`, PR #47) and its follow-up (#48, llms.txt) [verified 2026-10-26], and again against the 2.7 bump [verified 2026-10-28] the 2.9 bump [verified 2026-10-31], the 3.0 bump [verified 2026-11-01], the 3.1 bump [verified 2026-11-02], the 3.3 bump [verified 2026-11-05], the 3.3.1 bump [verified 2026-11-14], the 4.0 bump [verified 2026-11-17], the 4.1 bump [verified 2026-11-18], the 4.1.1 bump [verified 2026-11-19] and the 4.2 bump [verified 2026-11-21]. Change everything in it in one PR (R19).
+This list was checked against the 2.6 bump (`bc60d15`, PR #47) and its follow-up (#48, llms.txt) [verified 2026-10-26], and again against the 2.7 bump [verified 2026-10-28] the 2.9 bump [verified 2026-10-31], the 3.0 bump [verified 2026-11-01], the 3.1 bump [verified 2026-11-02], the 3.3 bump [verified 2026-11-05], the 3.3.1 bump [verified 2026-11-14], the 4.0 bump [verified 2026-11-17], the 4.1 bump [verified 2026-11-18], the 4.1.1 bump [verified 2026-11-19], the 4.2 bump [verified 2026-11-21] and the 4.2.1 bump [verified 2026-11-28]. Change everything in it in one PR (R19).
 
 | Place | What to change |
 |---|---|
@@ -2807,3 +2807,10 @@ entry and the Bible delta.
 - **Files:** `tools/presets/band_spin.json`, generated `DATA/Effects/null_jsfx/band_spin.jsfx.rpl`, `gfx/band_spin_gfx.jsfx` (preset block), `gfx/band_spin_gfx.jsfx.rpl`, `native/plugins/band_spin/FactoryPresets.hpp`, `plugins/band-spin/index.html`, `web/fx/band_spin.js` (`node web/tools/build.js`), this Bible (Part X).
 - **Tests:** run: `tools/build_presets.py --check`, `tools/build_site.py --check`, `web/test/run.sh` on Band Spin (max diff 6.8e-14), `preset_test` on Band Spin (13 presets, 0 failed; Tremolo Bands +1.0 dB RMS vs Default in its own signal), and the routine's measurement: +2.0 LU vs Default on the loop (was +2.9), +1.6 dBTP on drums (was +2.6), -2.1 dBTP on the loop. In CI: `presets_band_spin` and the GFX/native builds.
 - **Version:** v4.2 (no change).
+
+### 2026-11-28 — release 4.2.1 (version bump) — lighter on silence
+- **Why:** Christos chose a patch release, 4.2.1 ("Patch.", 2026-11-27), for the denormal fix of the native plugins (#216); the Band Spin preset level (#217) and the privacy page and licence notices (#210) go in with it.
+- **Changes:** the version moves from 4.2 to 4.2.1 in every place of VI.1: the footer of every plain and GFX `.jsfx` and of `null_gfx.jsfx-inc`, `FOOTER` in `tests/lint.py`, `web/tools/eel2js.js` (then `web/fx/*.js` regenerated), the remote's Lua bridge and page, `native/CMakeLists.txt` (`VERSION 4.2.1`), `hub/Cargo.toml` and the two Hub entries of `hub/Cargo.lock`, the doc comment in `hub/core/src/lib.rs`, `llms.txt`, and in `index.html` the version, "Released: 28/11/26", the Download and Release Notes headings and a 4.2.1 changelog section; `tools/build_site.py` regenerated the plugin, chain, Rack and Hub pages and `sitemap.xml`. New `release-notes/4.2.1.md` for the Release workflow (and a 4.2.1 section in `index.html`) naming the three. No DSP changed in this PR.
+- **Files:** as above, this Bible (VI.1, Part X).
+- **Tests:** run: `tests/lint.py` on all 348 `.jsfx` (0 errors), `tools/build_site.py --check` (up to date, 174 plugins), `node web/tools/build.js` (175 files), `tests/bible_order.py`, `tools/build_bible.py --check`. `web/test/run.sh` ran locally until its 600 s limit (every plugin it reached passed, up to Chorus GFX) and in full in CI. The native build with `--test`, the installers, the Hub and the validators run in CI on the PR.
+- **Version:** v4.2.1. **Next:** merge when green, run `release.yml` with 4.2.1, Christos publishes, then the post-release checks and the VI.3 row.
