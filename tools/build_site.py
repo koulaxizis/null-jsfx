@@ -605,6 +605,12 @@ def page(p, plugins):
                 <span class="sep">&bull;</span>
                 <a href="https://github.com/koulaxizis/null-jsfx" target="_blank" rel="noopener">GitHub</a>
                 <span class="sep">&bull;</span>
+                <a href="mailto:koulaxizis@glarolykoi.net">Contact</a>
+                <span class="sep">&bull;</span>
+                <a href="/privacy/">Privacy</a>
+                <span class="sep">&bull;</span>
+                <a href="https://koulaxizis.gr/privacy/#controller" target="_blank" rel="noopener">Legal</a>
+                <span class="sep">&bull;</span>
                 <a href="/">nulljsfx.tech</a>
             </div>
         </div>
@@ -642,7 +648,7 @@ def sitemap(plugins):
     urls = [(SITE, "1.0", "weekly")] + [(SITE + p["page"], "0.8", "monthly") for p in plugins] + \
         [(f"{SITE}chains/{c['slug']}/", "0.6", "monthly") for c in site_chains(plugins)] + \
         [(SITE + "rack/", "0.9", "monthly"), (SITE + "hub/", "0.9", "monthly"), (SITE + "remotes/", "0.8", "monthly")] + \
-        [(SITE + "support/", "0.5", "monthly"), (SITE + "media-kit/", "0.4", "yearly")]
+        [(SITE + "support/", "0.5", "monthly"), (SITE + "privacy/", "0.3", "yearly"), (SITE + "media-kit/", "0.4", "yearly")]
     body = "".join(f"""    <url>
         <loc>{u}</loc>
         <lastmod>{today}</lastmod>
